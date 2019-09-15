@@ -114,7 +114,7 @@ usage hints -> scroll down this file
 
 # Usage Hints
 
-#### savestates are configured here: system/state manager
+### savestates are configured here: system/state manager
 you can save/load direct within a file dialog or save/load/change slot by hotkeys.
 hotkeys can be assigned to any input device.
 you can specifiy a folder for hotkey driven states, otherwise the states will be saved
@@ -132,7 +132,7 @@ Note: a loaded state insert the control port devices which were active when gene
 the mapping of these devices is not touched.  
 when emulation core changes, older savestates can not be loaded anymore. you get an error message.
 
-#### keyboard layouts are configured here: input/configuration/
+### keyboard layouts are configured here: input/configuration/
 first select 'keyboard' in dropdown list.  
 in the bottom part of configuration window select your prefered keyboard layout and click 'Assign'.
 you can overmap single keys by your own.  
@@ -144,7 +144,7 @@ was produced with different keyboard layouts, like amiga.
 this way you get a description of the physical position of some keys in order to map them by yourself.  
 there is an alternate mapping for each input element. (i.e. shift left/right and plus) 
 
-#### control port devices
+### control port devices
 light guns/pens are controlled by OS screen cursor or by emulated screen cursor.
 
 * OS cursor:
@@ -161,14 +161,14 @@ keep in mind that c64 shares control lines internally between keyboard and devic
 some devices, like neos mouse or gunsticks, cause problems when c64 expects keyboard input.
 it's better to connect them after inputing the loading command.
 
-#### c64 prg is configured here: system/drives/memory
+### c64 prg is configured here: system/drives/memory
 after loading a memory image you can select it in the list view below.
 a double click or return causes a power cycle, memory injection and execution of 'run' command.
 use the 'injection' button to inject memory in the running system without executing 'run'.
 you can save a loaded or self coded program as 'prg' file by selecting 'Create' Tab.  
 a p64 image can not be mounted as a disk drive at the moment, so each included prg is on its own.
 
-#### disk is configured here: system/drives/disk drives
+### disk is configured here: system/drives/disk drives
 set the amount of connected disk drives in system menu.
 you can insert a disk writable or not. this can be switched later without reinserting the disk.
 you will see the directory of the disk in a list view below. 
@@ -177,7 +177,7 @@ create an empty disk by selecting 'Create' Tab.
 you can prepare up to 15 diskimages in system/disk swapper.
 assign disk swapper slots to hotkeys. during emulation you can insert them fast. (more usefull for amiga)
 
-#### c64 tape is configured here: system/drives/tape drives
+### c64 tape is configured here: system/drives/tape drives
 powering the emulator adds a tape control menu in main menu bar.
 you can map the control options as hotkeys too.
 set the amount of connected tape drives in system menu.
@@ -188,17 +188,17 @@ loading and writing the tape will be displayed with counter position in status b
 when software has stopped the tape, control menu 'play' / 'record' keeps hilighted
 because tape deck button is still pressed and software can resume later (i.e. load next level)
 
-#### c64 cartdrige is configured here: system/drives/modules
+### c64 cartdrige is configured here: system/drives/modules
 following custom mappers are supported: ocean, system 3, funplay, supergames, zaxxon  
 ultimax memory mode is supported
 
-#### c64 sid is configured here: system/management/feature
+### c64 sid is configured here: system/management/feature
 for 6581 emulation you should adjust 'filer bias' to simulate different center frequencies.  
 you can map sid control to hotkeys, so you can switch between the sid models with a joypad button press.  
 'Sid Hazard' is experimental modeling of all incomming voltages in Filter/Mixer
 as individual transistors instead of one virtual. (runs in own thread)
 
-#### shader support (opengl / direct3d)  
+### shader support (opengl / direct3d)  
 first you need shaders or write your own shaders.
 higan shader library is mostly supported.
 set shader folder and graphic driver in 'settings/video'.  
@@ -206,14 +206,14 @@ activate shaders in 'C64/shader/'.
 errors will be displayed in a message box.
 you can combine multiple shaders.
 
-#### border cropping
+### border cropping
 when removing complete border in combination with the option 'maintain screen ratio'
 a short border will remain.  
 there are some games which use sprites as background elements in border area.
 in this case you shouldn't remove the complete border but use free cropping instead.  
 for a realistic result you should use 'Monitor' option.
 
-#### compressed archives
+### compressed archives
 zip, gz, tar, tar.gz archives are supported.  
 for archives with more than one file a treeview widget will open.
 selected files in archives will be memorized when restarting the emulator.  
@@ -223,7 +223,7 @@ a compressed emulator image can not be inserted as writable.
 
 ## c64 creating turbo tapes
 
-#### method 1 (slow way)
+### method 1 (slow way)
 * create empty tape_1 for non 'turbo taped' games
 * create another empty tape_2 for turbo taped games
 * power on c64	
@@ -243,7 +243,7 @@ a compressed emulator image can not be inserted as writable.
 * now we save the game in turbo format: <-S "game"
 * restart and test it: load, run, <-L (compare by yourself how fast it loads), run
 
-#### method 2 (fast way)
+### method 2 (fast way)
 by the first way you can not save too big games because of the basic memory limit
 and you have to save and load the game in non turbo tape mode before.
 
