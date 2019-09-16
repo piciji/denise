@@ -53,7 +53,7 @@ auto pLabel::setText(std::string text) -> void {
     
 auto pLabel::setEnabled(bool enabled) -> void {
     
-    NSColor* textColor = [NSColor blackColor];
+    NSColor* textColor = [NSColor textColor];
     
     if(label.overrideForegroundColor()) {
         unsigned color = label.foregroundColor();

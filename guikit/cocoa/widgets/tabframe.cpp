@@ -47,7 +47,7 @@
                 unsigned iconSize = GUIKIT::pFont::size([cocoaTabFrame font], " ").height;
             
                 [[NSGraphicsContext currentContext] saveGraphicsState];
-                NSRect targetRect = NSMakeRect(tabRect.origin.x, tabRect.origin.y + 1, iconSize, iconSize);
+                NSRect targetRect = NSMakeRect(tabRect.origin.x, tabRect.origin.y + 0, iconSize, iconSize);
                 [image drawInRect:targetRect fromRect:NSZeroRect operation:NSCompositeSourceOver fraction:1.0 respectFlipped:YES hints:nil];
                 [[NSGraphicsContext currentContext] restoreGraphicsState];
             
@@ -56,7 +56,7 @@
             }
         }
     }
-    tabRect.origin.y += 1;
+    tabRect.origin.y += 0;
     [super drawLabel:shouldTruncateLabel inRect:tabRect];
 }
 @end
