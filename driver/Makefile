@@ -49,8 +49,10 @@ ifneq ($(findstring freetype,$(drv)),)
 	ifeq ($(platform),windows)
 	    drvlink += -lfreetype
 	else
-	    drvflags += $(shell freetype-config --cflags)	
-	    drvlink += $(shell freetype-config --static --libs)
+        #drvflags += $(shell freetype-config --cflags)
+        #drvlink += $(shell freetype-config --static --libs)
+        drvflags += `pkg-config --cflags freetype2`
+        drvlink += `pkg-config --static --libs freetype2`
 	endif
     endif
 endif

@@ -152,9 +152,9 @@ build: $(objects)
 	cp data/$(translationFolder)/* out/$(name).app/Contents/Resources/$(translationFolder)/
 	cp data/$(dataFolder)/* out/$(name).app/Contents/Resources/$(dataFolder)/
 	cp data/$(fontFolder)/* out/$(name).app/Contents/Resources/$(fontFolder)/
-	cp -R /opt/local/lib/libSDL2-2.0.0.dylib out/$(name).app/Contents/Frameworks/
-	cp -R /usr/local/lib/libfreetype.6.dylib out/$(name).app/Contents/Frameworks/
-	cp -R /opt/local/lib/libiconv.2.dylib out/$(name).app/Contents/Frameworks/
+	cp /usr/local/lib/libSDL2-2.0.0.dylib out/$(name).app/Contents/Frameworks/
+	cp /usr/local/lib/libfreetype.6.dylib out/$(name).app/Contents/Frameworks/
+	cp /usr/lib/libiconv.2.dylib out/$(name).app/Contents/Frameworks/
 	
 	sips -s format icns data/img/$(loname).png --out out/$(name).app/Contents/Resources/$(name).icns
 	$(strip $(compiler) -o out/$(name).app/Contents/MacOS/$(name) $(objects) $(link))
@@ -163,8 +163,8 @@ build: $(objects)
 	install_name_tool -id @executable_path/../Frameworks/libSDL2-2.0.0.dylib out/$(name).app/Contents/Frameworks/libSDL2-2.0.0.dylib	
 	install_name_tool -id @executable_path/../Frameworks/libiconv.2.dylib out/$(name).app/Contents/Frameworks/libiconv.2.dylib	
 	install_name_tool -change /usr/local/lib/libfreetype.6.dylib @executable_path/../Frameworks/libfreetype.6.dylib out/$(name).app/Contents/MacOS/$(name)
-	install_name_tool -change /opt/local/lib/libSDL2-2.0.0.dylib @executable_path/../Frameworks/libSDL2-2.0.0.dylib out/$(name).app/Contents/MacOS/$(name)
-	install_name_tool -change /opt/local/lib/libiconv.2.dylib @executable_path/../Frameworks/libiconv.2.dylib out/$(name).app/Contents/MacOS/$(name)
+	install_name_tool -change /usr/local/lib/libSDL2-2.0.0.dylib @executable_path/../Frameworks/libSDL2-2.0.0.dylib out/$(name).app/Contents/MacOS/$(name)
+	install_name_tool -change /usr/lib/libiconv.2.dylib @executable_path/../Frameworks/libiconv.2.dylib out/$(name).app/Contents/MacOS/$(name)
     else
 	$(strip $(compiler) -o out/$(name) $(objects) $(link))
     endif

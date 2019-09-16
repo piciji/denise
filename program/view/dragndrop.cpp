@@ -35,7 +35,7 @@ auto View::autoloadInit( std::vector<std::string>& files, bool silentError ) -> 
     for( auto& file : files ) {        
         ddControl.files.push_back( file );
         
-        if (++i == 4)
+        if (++i == 7)
             break;
     }        
 }
@@ -52,7 +52,6 @@ auto View::autoloadPostProcessing() -> void {
         return;
     }
         
-
     std::sort(ddControl.driveGroups.begin(), ddControl.driveGroups.end(), [ ](const Emulator::Interface::DriveGroup* lhs, const Emulator::Interface::DriveGroup* rhs) {
 
         if (lhs->isModuleSlot()) return true;
@@ -77,6 +76,14 @@ auto View::autoloadPostProcessing() -> void {
 
     } else {
 
+		for (auto& driveGroup : ddControl.emulator->driveGroups) {
+			
+			if (driveGroup.isDiskDrive() ||  driveGroup.isTapeDrive()) {
+				
+				emuConfigView->systemLayout->activateDrive(driveGroup, countImagesFor(&driveGroup) );				
+			}
+		}
+	
         if (!driveGroup->isModuleSlot()) {
             
             auto moduleDrive = ddControl.emulator->getModuleSlot(0);
@@ -154,21 +161,17 @@ auto View::autoloadFiles() -> void {
 
                         if (GUIKIT::Vector::find(ddControl.driveGroups, &driveGroup))
                             // only one file per group allowed
-                            return autoloadFiles();
+                            if (!driveGroup.isDiskDrive())
+                                return autoloadFiles();
 
                         if (!driveGroup.isTapeDrive() && (item->info.size > MAX_MEDIUM_SIZE))
                             goto errorSize;
 
                         ddControl.emulator = emulator;
+                        
                         ddControl.driveGroups.push_back(&driveGroup);
-
-                        auto autoStart = settings->get<bool>("autostart_dragndrop", false);
-
-                        if (!autoStart && (activeEmulator == emulator));
-                        else
-                            emuConfigView->systemLayout->activateDrive(driveGroup);
-
-                        emuConfigView->drivesLayout->insertImage({file, item, &driveGroup, nullptr});
+						
+                        emuConfigView->drivesLayout->insertImage(file, item, &driveGroup, countImagesFor(&driveGroup) - 1 );
 
                         return autoloadFiles();
                     }
@@ -190,4 +193,14 @@ errorSize:
     };
 
     archiveViewer->setView(items);
+}
+
+auto View::countImagesFor(Emulator::Interface::DriveGroup* driveGroup) -> unsigned {
+	
+	unsigned counter = 0;
+	for( auto _dG : ddControl.driveGroups) {
+		if (_dG == driveGroup)
+			counter++;
+	}
+	return counter;
 }

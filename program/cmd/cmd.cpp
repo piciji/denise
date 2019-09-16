@@ -64,12 +64,14 @@ auto Cmd::parse() -> void {
             updateFeature( getEmulator("C64"), LIBC64::Interface::FeatureIdCiaRev, 0 );
         }
         else if (arg == "-debugcart") {
-            dynamic_cast<LIBC64::Interface*>(getEmulator("C64"))->activateDebugCart();            
+            dynamic_cast<LIBC64::Interface*>(getEmulator("C64"))->activateDebugCart();   
+			dynamic_cast<LIBC64::Interface*>(getEmulator("C64"))->disableFilterCircuit();
             prepareDrives( getEmulator("C64") );
-          //  disableCpuWaster( getEmulator("C64") );
 			settings->set<bool>("audio_sync", false );
 			settings->set<bool>("video_sync", false );
 			settings->set<bool>("dynamic_rate_control", false );			
+            settings->set<bool>("fps", true );			
+            settings->set("video_screen_text", 2);
         }            
         else if (arg == "-limitcycles") {
             limitCyclesNext = 1;
@@ -81,9 +83,7 @@ auto Cmd::parse() -> void {
         else if (arg == "-no-gui") {
             noGui = 1;
             noDriver = 1;
-            dynamic_cast<LIBC64::Interface*>(getEmulator("C64"))->disableFilterCircuit();
-           // GUIKIT::Application::dummy = true;
-			
+            dynamic_cast<LIBC64::Interface*>(getEmulator("C64"))->disableFilterCircuit();			
         }
         else {
             std::string temp = arg;
@@ -156,29 +156,9 @@ auto Cmd::prepareDrives( Emulator::Interface* emulator ) -> void {
             settings->set<unsigned>( program->ident(emulator, driveGroup.name + "_count"), 1);
 		
 		else if (driveGroup.isTapeDrive())
-            settings->set<unsigned>( program->ident(emulator, driveGroup.name + "_count"), 0);
-        
-//        for(auto& drive : driveGroup.drives) {
-//            
-//            settings->remove( program->ident( emulator, drive.name + "_path") );
-//            settings->remove( program->ident( emulator, drive.name + "_file") );
-//            settings->remove( program->ident( emulator, drive.name + "_id") );
-//            settings->remove( program->ident( emulator, drive.name + "_wp") );
-//            settings->remove( program->ident( emulator, drive.name + "_wp_enabled") );
-//        }
+            settings->set<unsigned>( program->ident(emulator, driveGroup.name + "_count"), 0);        
     }
 }
-
-//auto Cmd::disableCpuWaster( Emulator::Interface* emulator ) -> void {
-//    
-//    for (auto& feature : emulator->features) {
-//        if (feature.id == LIBC64::Interface::FeatureId::FeatureIdPowerThread)
-//            settings->set<bool>( program->ident( emulator, feature.name ), false );
-//        
-//        if (feature.id == LIBC64::Interface::FeatureId::FeatureIdSidAccuracy)
-//            settings->set<bool>( program->ident( emulator, feature.name ), false );
-//    }           
-//}
 
 auto Cmd::collectAllowedSuffix() -> std::vector<std::string> {
     std::vector<std::string> allowedSuffix;

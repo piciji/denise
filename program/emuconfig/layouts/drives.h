@@ -145,7 +145,8 @@ struct DrivesLayout : GUIKIT::TabFrameLayout {
     auto createImage( unsigned groupId ) -> void;
     auto showDriveGroupLayout( Emulator::Interface::DriveGroup* driveGroup ) -> void;
     auto getDriveGroupLayout( Emulator::Interface::DriveGroup* driveGroup ) -> DriveGroupLayout*;   
-    auto insertImage( ImageInsertHelper iih ) -> void;  
+    auto insertImage( ImageInsertHelper iih ) -> void;
+    auto insertImage(GUIKIT::File* file, GUIKIT::File::Item* item, Emulator::Interface::DriveGroup* driveGroup, unsigned blockPos) -> void;
     auto eject( Emulator::Interface::DriveGroup* driveGroup ) -> void;
     auto drop( std::string filePath, DriveGroupLayout::Block* block = nullptr ) -> void;   
     auto colorListing( unsigned color, bool foreground ) -> void;

@@ -31,8 +31,6 @@ struct Cmd {
     
     auto prepareDrives( Emulator::Interface* emulator ) -> void;
     
-    //auto disableCpuWaster( Emulator::Interface* emulator ) -> void;
-    
     auto collectAllowedSuffix() -> std::vector<std::string>;
 };
 

@@ -47,7 +47,7 @@ auto FeatureLayout::build( Emulator::Interface* emulator ) -> void {
         block->checkBox.setText( feature.name );
         block->label.setText( feature.name );  
                 
-        block->dangerLabel.setForegroundColor(0x660033);
+        block->dangerLabel.setForegroundColor(0x990033);
     }
 }
 
@@ -105,7 +105,7 @@ auto DriveLayout::build( Emulator::Interface* emulator ) -> void {
         driveCounter.push_back(driveCount);
         
         if (driveGroup.isDiskDrive() && dynamic_cast<LIBC64::Interface*>(emulator) )
-            driveCount->name.setForegroundColor(0x660033);
+            driveCount->name.setForegroundColor(0x990033);
     }
 }
 
@@ -308,8 +308,11 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
 	}
 }
 
-auto SystemLayout::activateDrive( Emulator::Interface::DriveGroup& driveGroup ) -> void {
+auto SystemLayout::activateDrive( Emulator::Interface::DriveGroup& driveGroup, unsigned requestedCount ) -> void {
 
+    if (requestedCount > driveGroup.drives.size())
+        requestedCount = driveGroup.drives.size();
+    
     for (auto block : driveLayout.driveCounter) {
 
         auto& group = emulator->driveGroups[ block->typeId ];
@@ -321,12 +324,14 @@ auto SystemLayout::activateDrive( Emulator::Interface::DriveGroup& driveGroup ) 
         
         unsigned counter = settings->get<unsigned>( tabWindow->ident(ident), driveGroup.defaultUsage());
         
-        if (counter > 0)
+        if (counter >= requestedCount)
             break;
         
-        block->combo.setSelection( 1 );
-        settings->set<unsigned>( this->tabWindow->ident(ident), 1);
-        settings->remove( this->tabWindow->ident("access_floppy") );                    
+        block->combo.setSelection( requestedCount );
+        settings->set<unsigned>( this->tabWindow->ident(ident), requestedCount);
+        settings->remove( this->tabWindow->ident("access_floppy") );
+        
+        this->tabWindow->drivesLayout->updateVisibility( &driveGroup, requestedCount );
     }
 }
 

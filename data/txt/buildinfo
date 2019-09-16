@@ -48,18 +48,21 @@ download and unpack latest freetype source code v:2.9.1 at the moment
 OSX
 ---
 opengl, openal should already installed (system frameworks)
-SDL2 framework
+don't forget to update commandline tools, when upgrading OS
 /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+brew install pkg-config (if needed)
 brew install sdl2
-
-  install libsdl2
-  cp /opt/local/bin/sdl2-config /usr/bin/
+brew install libiconv (if needed)
 
 compile freetype
   download latest source
   ./configure --enable-static --without-zlib --without-bzip2
   make
   sudo make install
+
+Note for xcode users:
+- disable 'New Build System' or 'clean' command will not working anymore. [File->Project Settings->Build System]
+- set execution directory by 'edit scheme'. it's the button aside the play/stop button in top left.
 
 LINUX
 -----

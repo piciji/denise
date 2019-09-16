@@ -56,6 +56,7 @@ struct View : public GUIKIT::Window {
     auto autoloadFiles() -> void;
     auto autoloadPostProcessing() -> void;
     auto getSysMenu( Emulator::Interface* emulator ) -> SystemMenu*;
+    auto countImagesFor(Emulator::Interface::DriveGroup* driveGroup) -> unsigned;
     
     GUIKIT::Viewport viewport;    
     

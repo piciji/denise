@@ -968,4 +968,3 @@ auto View::getSysMenu( Emulator::Interface* emulator ) -> View::SystemMenu* {
     
     return nullptr;
 }
-

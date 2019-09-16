@@ -107,7 +107,7 @@ struct SystemLayout : GUIKIT::VerticalLayout {
 	auto updateFeatureWidget( FeatureLayout::Line::Block* block ) -> void;
     auto updateRuntimeFeatureWidgets( ) -> void;
     auto featureIdent( std::string ident ) -> std::string;
-    auto activateDrive( Emulator::Interface::DriveGroup& driveGroup ) -> void;
+    auto activateDrive( Emulator::Interface::DriveGroup& driveGroup, unsigned requestedCount ) -> void;
 
     SystemLayout( TabWindow* tabWindow );
 };

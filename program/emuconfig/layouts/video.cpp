@@ -107,6 +107,8 @@ VideoFirSharpLayout::VideoFirSharpLayout() {
     append(sharpRight, {0u, 0u});
     
     GUIKIT::RadioBox::setGroup( sharpLeft, natural, sharpRight );
+    
+    setAlignment(0.5);
 }
 
 VideoGpuOptionLayout::VideoGpuOptionLayout() {

@@ -717,6 +717,20 @@ auto DrivesLayout::showC64Listing( DriveGroupLayout* layout ) -> bool {
     return false;
 }
 
+auto DrivesLayout::insertImage(GUIKIT::File* file, GUIKIT::File::Item* item, Emulator::Interface::DriveGroup* driveGroup, unsigned blockPos) -> void {
+    
+    auto layout = getDriveGroupLayout( driveGroup );
+    
+    if (!layout)
+        return;
+
+    if (blockPos >= layout->blocks.size()) {
+        blockPos = 0;
+    }
+    
+    insertImage({ file, item, driveGroup, layout->blocks[blockPos] });
+}
+
 auto DrivesLayout::insertImage( ImageInsertHelper iih ) -> void {
     
     auto item = iih.item;
