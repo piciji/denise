@@ -339,6 +339,8 @@ auto pSystem::getExecutableDirectory() -> std::string {
     wchar_t path[MAX_PATH] = { 0 };
     GetModuleFileNameW(NULL, path, MAX_PATH);
     out = utf8_t(path);
+    std::replace( out.begin(), out.end(), '\\', '/');
+    out = File::getPath(out);
     return out;
 }
 
