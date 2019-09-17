@@ -10,6 +10,7 @@
 #include "../tools/status.h"
 #include "../firmware/manager.h"
 #include "../video/palette.h"
+#include "../cmd/cmd.h"
 
 #include <thread>
 #include <vector>
@@ -51,7 +52,7 @@ auto TabWindow::build() -> void {
     cocoa.keepMenuVisibilityOnDisplay();
     setDroppable();
 	
-    if (emulator->ident == "C64") {        
+    if (emulator->ident == "C64" && !cmd->debug) {
         GUIKIT::CustomFont* font = new GUIKIT::CustomFont;
         font->name = "C64 Pro Mono";
         font->data = (uint8_t*)Fonts::c64ProMono;

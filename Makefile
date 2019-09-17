@@ -177,7 +177,7 @@ install:
     ifeq ($(platform),windows)
 	$(call copy,data/$(translationFolder),out/$(translationFolder))	
 	$(call copy,data/$(dataFolder),out/$(dataFolder))
-	$(call copy,readme,out)
+	$(call copy,readme.md,out)
 
     ifneq ($(findstring i686,$(target)),)
 	$(call copy,data/libs/win32,out)
