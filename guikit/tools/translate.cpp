@@ -24,13 +24,19 @@ auto Translation::get(std::string ident, const std::vector<std::vector<std::stri
 		for(auto& data : list)
 			if(data.ident == test) {
 				out = data.text;
+                match = true;
 				break;
 			}				
 	}
 
     for(auto& replace : replaces) {
-        if (replace.size() != 2) continue;
-        String::replace(out, replace.at(0), replace.at(1));
+        if (replace.size() != 2)
+            continue;
+        
+        if (match)
+            String::replace(out, replace[0], replace[1]);
+        else
+            out += replace[1] + " ";
     }
 
     return out + (addColon ? ":" : "");

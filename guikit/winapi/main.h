@@ -522,6 +522,7 @@ struct pSystem {
     static auto getUserDataFolder() -> std::string;
     static auto getResourceFolder(std::string appIdent) -> std::string;
     static auto getWorkingDirectory() -> std::string;
+    static auto getExecutableDirectory() -> std::string;
     static auto getDesktopSize() -> Size;
     static auto sleep(unsigned milliSeconds) -> void;
     static auto isOffscreen( Geometry geometry ) -> bool;

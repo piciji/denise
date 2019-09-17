@@ -327,11 +327,19 @@ auto pSystem::getUserDataFolder() -> std::string {
 }
 
 auto pSystem::getResourceFolder(std::string appIdent) -> std::string {
-    return pApplication::currentWorkingDirectory();
+    return getExecutableDirectory();
 }
 
 auto pSystem::getWorkingDirectory() -> std::string {
     return pApplication::currentWorkingDirectory();
+}
+
+auto pSystem::getExecutableDirectory() -> std::string {
+    std::string out = "";
+    wchar_t path[MAX_PATH] = { 0 };
+    GetModuleFileNameW(NULL, path, MAX_PATH);
+    out = utf8_t(path);
+    return out;
 }
 
 auto pSystem::getDesktopSize() -> Size {
