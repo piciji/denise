@@ -19,9 +19,12 @@
 }
 @end
 
+@interface CocoaInnerMenu : NSMenu<NSMenuDelegate> {}
+@end
+
 @interface CocoaMenu : NSMenuItem {
 @public
-    NSMenu* cocoaMenu;
+    CocoaInnerMenu* cocoaMenu;
 }
 @end
 

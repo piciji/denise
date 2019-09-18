@@ -47,7 +47,7 @@ auto FeatureLayout::build( Emulator::Interface* emulator ) -> void {
         block->checkBox.setText( feature.name );
         block->label.setText( feature.name );  
                 
-        block->dangerLabel.setForegroundColor(0x990033);
+        block->dangerLabel.setForegroundColor(0xff4500);
     }
 }
 
@@ -105,7 +105,7 @@ auto DriveLayout::build( Emulator::Interface* emulator ) -> void {
         driveCounter.push_back(driveCount);
         
         if (driveGroup.isDiskDrive() && dynamic_cast<LIBC64::Interface*>(emulator) )
-            driveCount->name.setForegroundColor(0x990033);
+            driveCount->name.setForegroundColor(0xff4500);
     }
 }
 

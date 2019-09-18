@@ -40,3 +40,8 @@ Dynamic Rate Control (DRC) formula is copyrighted by RetroArch.
 cosine resampler is copyrighted by RetroArch.
 
 C64 TrueType v1.2/Style font is used for listing content in a gui listview
+
+freetype is a library for opengl to render text fonts
+https://www.freetype.org/
+
+bundled opengl Shader from following copyright holders: guest(r) - guest.r@gmail.com

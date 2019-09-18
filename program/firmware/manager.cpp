@@ -3,6 +3,7 @@
 #include "../tools/filesetting.h"
 #include "../program.h"
 #include "../states/states.h"
+#include "../cmd/cmd.h"
 #include <cstring>
 
 std::vector<FirmwareManager*> firmwareManagers;
@@ -32,8 +33,11 @@ auto FirmwareManager::useImage(Emulator::Interface::Firmware* firmware, unsigned
     
     auto image = findImage( firmware, storeLevel );
     
-    if (!image || !image->data)
+	if (!image)
         return false;
+	
+	if (!cmd->debug && !image->data)
+		return false;
     
     auto activeImage = findActiveImage( firmware );
     
@@ -153,7 +157,12 @@ auto FirmwareManager::insert() -> std::vector<std::string> {
     return missingFirmware;
 }
 
-auto FirmwareManager::loadImage( Emulator::Interface::Firmware* firmware, unsigned storeLevel ) -> bool {    
+auto FirmwareManager::loadImage( Emulator::Interface::Firmware* firmware, unsigned storeLevel ) -> bool {
+	if (storeLevel == 0 && cmd->debug) {
+		addImage(firmware, storeLevel, nullptr, 0);
+		return true;
+	}
+    
     FileSetting* setting = getSetting( firmware, storeLevel );    
     
     if (setting->path.empty())

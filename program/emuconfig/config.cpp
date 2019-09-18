@@ -232,4 +232,3 @@ auto TabWindow::changeTab() -> void {
 }
 
 }
-

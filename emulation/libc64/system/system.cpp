@@ -17,6 +17,10 @@
 
 #include "serialization.cpp"
 
+namespace Firmware {
+	#include "firmware.cpp"
+}
+
 namespace LIBC64 {
     
 System* system = nullptr;
@@ -432,21 +436,37 @@ System::~System() {
 }
 
 auto System::setFirmware( unsigned typeId, uint8_t* data, unsigned size ) -> void {
-
+	
     switch (typeId) {        
         case 0:
+			if (!data) {
+				data = (uint8_t*)Firmware::kernalRom;
+				size = sizeof(Firmware::kernalRom);
+			}
             kernalRomSize = size;
             kernalRom = data;
             break;
         case 1:
+			if (!data) {
+				data = (uint8_t*)Firmware::basicRom;
+				size = sizeof(Firmware::basicRom);
+			}
             basicRomSize = size;
             basicRom = data;
             break;
         case 2:
+			if (!data) {
+				data = (uint8_t*)Firmware::charRom;
+				size = sizeof(Firmware::charRom);
+			}
             charRomSize = size;
             charRom = data;
             break;
         case 3:
+			if (!data) {
+				data = (uint8_t*)Firmware::drive1541Rom;
+				size = sizeof(Firmware::drive1541Rom);
+			}
             iecBus->setFirmware( data, size );
             break;
     }   

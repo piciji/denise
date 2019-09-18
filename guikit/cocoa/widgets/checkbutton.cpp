@@ -22,7 +22,7 @@ namespace GUIKIT {
     
 auto pCheckButton::minimumSize() -> Size {
     Size size = pFont::size([cocoaView font], widget.text());
-    return {size.width + 22, size.height + 7};
+    return {size.width + 22, size.height + 6};
 }
 
 auto pCheckButton::setGeometry(Geometry geometry) -> void {

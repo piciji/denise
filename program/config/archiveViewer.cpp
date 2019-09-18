@@ -6,6 +6,7 @@
 ArchiveViewer* archiveViewer = nullptr;
 
 auto ArchiveViewer::build() -> void {
+    cocoa.keepMenuVisibilityOnDisplay();
     
     GUIKIT::Geometry defaultGeometry = {100, 100, 400, 350};
 

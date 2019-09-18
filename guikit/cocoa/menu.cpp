@@ -1,4 +1,19 @@
 
+@implementation CocoaInnerMenu : NSMenu
+
+-(id) initWith {
+    if(self = [super init]) {
+    }
+    
+    return self;
+}
+
+- (void) menuNeedsUpdate:(NSMenu*)menu {
+    [self resetCursorRects];
+}
+
+@end
+
 @implementation CocoaMenu : NSMenuItem
 
 -(id) initWith {
@@ -6,10 +21,17 @@
         cocoaMenu = [[NSMenu alloc] initWithTitle:@""];
         [cocoaMenu setAutoenablesItems:NO];
         [self setSubmenu:cocoaMenu];
+       // [self setDelegate:cocoaMenu];
+       // [cocoaMenu setTarget:self];
     }
     return self;
 }
--(NSMenu*) cocoaMenu { return cocoaMenu; }
+-(NSMenu*) cocoaMenu {
+    return cocoaMenu;
+}
+
+
+
 @end
 
 @implementation CocoaMenuItem : NSMenuItem
@@ -50,7 +72,7 @@
         menuRadioItem = &menuRadioItemReference;
         
         [self setTarget:self];
-        [self setOnStateImage:[NSImage imageNamed:@"NSMenuRadio"]];
+        [self setOnStateImage:[NSImage imageNamed:@"NSMenuCheckmark"]];
     }
     return self;
 }
@@ -92,7 +114,7 @@ auto pMenuBase::setIcon(Image& icon) -> void {
     @autoreleasepool {
         if (icon.empty()) {
             if (dynamic_cast<pMenuCheckItem*>(this)) [cocoaBase setOnStateImage:[NSImage imageNamed:@"NSMenuCheckmark"]];
-            else if (dynamic_cast<pMenuRadioItem*>(this)) [cocoaBase setOnStateImage:[NSImage imageNamed:@"NSMenuRadio"]];
+            else if (dynamic_cast<pMenuRadioItem*>(this)) [cocoaBase setOnStateImage:[NSImage imageNamed:@"NSMenuCheckmark"]];
             else [cocoaBase setImage:nil];
         } else {
             if (dynamic_cast<pMenuCheckItem*>(this) || dynamic_cast<pMenuRadioItem*>(this)) [cocoaBase setOnStateImage:NSMakeImage(icon, 15, 15)];
