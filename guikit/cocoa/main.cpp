@@ -70,6 +70,7 @@
         NSString* applicationName = [dictionary objectForKey:@"CFBundleDisplayName"];
 
         menuBar = [[NSMenu alloc] init];
+        menuBarContext = [[NSMenu alloc] init];
         NSMenuItem* item;
 
         NSMenu* appMenu = [[NSMenu alloc] init];
@@ -123,9 +124,9 @@
     if([event type] == NSRightMouseDown) {
         if (window->onContext) {
             if (window->onContext() && window->state.menus.size() > 0) {
-                [[menuBar itemAtIndex:0] setHidden: TRUE];
-                [NSMenu popUpContextMenu:menuBar withEvent:event forView:NULL];
-                [[menuBar itemAtIndex:0] setHidden: FALSE];
+              //  [[menuBar itemAtIndex:0] setHidden: TRUE];
+                [NSMenu popUpContextMenu:menuBarContext withEvent:event forView:NULL];
+                //[[menuBar itemAtIndex:0] setHidden: FALSE];
                 [self resetCursorRects];
             }
         }
@@ -196,6 +197,10 @@
 
 -(NSMenu*) menuBar {
     return menuBar;
+}
+
+-(NSMenu*) menuBarContext {
+    return menuBarContext;
 }
 
 -(void) menuAbout {
@@ -485,12 +490,14 @@ auto pWindow::append(Menu& menu) -> void {
             [menu.p.cocoaBase setImage:nil];
         
         [[cocoaWindow menuBar] addItem:menu.p.cocoaBase];
+        [[cocoaWindow menuBarContext] addItem:menu.p.cocoaBaseContext];
     }
 }
 
 auto pWindow::remove(Menu& menu) -> void {
     @autoreleasepool {
         [[cocoaWindow menuBar] removeItem:menu.p.cocoaBase];
+        [[cocoaWindow menuBarContext] removeItem:menu.p.cocoaBaseContext];
     }
 }
 

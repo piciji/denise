@@ -8,6 +8,7 @@
 @public
     GUIKIT::Window* window;
     NSMenu* menuBar;
+    NSMenu* menuBarContext;
     NSTextField* statusBar;
 }
 @end
@@ -19,12 +20,9 @@
 }
 @end
 
-@interface CocoaInnerMenu : NSMenu<NSMenuDelegate> {}
-@end
-
-@interface CocoaMenu : NSMenuItem {
+@interface CocoaMenu : NSMenuItem <NSMenuDelegate> {
 @public
-    CocoaInnerMenu* cocoaMenu;
+    NSMenu* cocoaMenu;
 }
 @end
 

@@ -152,8 +152,8 @@ build: $(objects)
 	cp data/$(translationFolder)/* out/$(name).app/Contents/Resources/$(translationFolder)/
 	cp data/$(dataFolder)/* out/$(name).app/Contents/Resources/$(dataFolder)/
 	cp data/$(fontFolder)/* out/$(name).app/Contents/Resources/$(fontFolder)/
-	cp /usr/local/lib/libSDL2-2.0.0.dylib out/$(name).app/Contents/Frameworks/
-	cp /usr/local/lib/libfreetype.6.dylib out/$(name).app/Contents/Frameworks/
+	install -m 755 /usr/local/lib/libSDL2-2.0.0.dylib out/$(name).app/Contents/Frameworks/
+	install -m 755 /usr/local/lib/libfreetype.6.dylib out/$(name).app/Contents/Frameworks/
 	install -m 755 /usr/lib/libiconv.2.dylib out/$(name).app/Contents/Frameworks/
 	
 	sips -s format icns data/img/$(loname).png --out out/$(name).app/Contents/Resources/$(name).icns

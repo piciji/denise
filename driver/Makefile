@@ -25,6 +25,7 @@ else
 endif
 # show in screen status text for opengl
 drv += freetype
+env :=
 
 
 # dont change following part
@@ -36,6 +37,7 @@ else ifeq ($(platform),macosx)
     drvflags = $(objcppflags)
     drvlink = -framework Cocoa
     drvlink += $(if $(findstring openal,$(drv)),-framework OpenAL)
+    env += /usr/local/bin/
 
 else
     drvflags = $(cppflags) 
@@ -49,16 +51,14 @@ ifneq ($(findstring freetype,$(drv)),)
 	ifeq ($(platform),windows)
 	    drvlink += -lfreetype
 	else
-        #drvflags += $(shell freetype-config --cflags)
-        #drvlink += $(shell freetype-config --static --libs)
-        drvflags += `pkg-config --cflags freetype2`
-        drvlink += `pkg-config --static --libs freetype2`
+            drvflags += `$(env)pkg-config --cflags freetype2`
+	    drvlink += `$(env)pkg-config --static --libs freetype2`
 	endif
     endif
 endif
 
 drvflags += $(foreach c,$(call strupper,$(drv)),-DDRV_$c)
-drvflags += $(if $(findstring sdl,$(drv)),$(shell sdl2-config --cflags))
+drvflags += $(if $(findstring sdl,$(drv)),$(shell $(env)sdl2-config --cflags))
 
 drvlink += $(if $(findstring direct3d,$(drv)),-ld3d9 -ld3dx9)
 drvlink += $(if $(findstring dsound,$(drv)),-ldsound)
@@ -67,7 +67,7 @@ drvlink += $(if $(findstring wgl,$(drv)),-lopengl32)
 drvlink += $(if $(findstring wasapi,$(drv)),-lksuser -luuid -lavrt)
 drvlink += $(if $(findstring iokit,$(drv)),-framework IOKIT)
 drvlink += $(if $(findstring cgl,$(drv)),-framework OpenGL)
-drvlink += $(if $(findstring sdl,$(drv)),$(shell sdl2-config --static-libs))
+drvlink += $(if $(findstring sdl,$(drv)),$(shell $(env)sdl2-config --static-libs))
 drvlink += $(if $(findstring glx,$(drv)),-lGL)
 drvlink += $(if $(findstring udev,$(drv)),-ludev)
 drvlink += $(if $(findstring pulseaudio,$(drv)),-lpulse)

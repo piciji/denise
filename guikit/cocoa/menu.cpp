@@ -1,19 +1,4 @@
 
-@implementation CocoaInnerMenu : NSMenu
-
--(id) initWith {
-    if(self = [super init]) {
-    }
-    
-    return self;
-}
-
-- (void) menuNeedsUpdate:(NSMenu*)menu {
-    [self resetCursorRects];
-}
-
-@end
-
 @implementation CocoaMenu : NSMenuItem
 
 -(id) initWith {
@@ -21,17 +6,28 @@
         cocoaMenu = [[NSMenu alloc] initWithTitle:@""];
         [cocoaMenu setAutoenablesItems:NO];
         [self setSubmenu:cocoaMenu];
-       // [self setDelegate:cocoaMenu];
-       // [cocoaMenu setTarget:self];
+  
+       // [cocoaMenu setDelegate:self];
+        //[cocoaMenu setTarget:self];
     }
     return self;
 }
 -(NSMenu*) cocoaMenu {
     return cocoaMenu;
 }
+/*
+- (void) menuNeedsUpdate:(NSMenu*)menu {
+    
+}
 
+- (BOOL)menu:(NSMenu *)menu 
+  updateItem:(NSMenuItem *)item 
+     atIndex:(NSInteger)index 
+shouldCancel:(BOOL)shouldCancel {
 
-
+    return YES;
+}
+*/
 @end
 
 @implementation CocoaMenuItem : NSMenuItem
@@ -88,24 +84,28 @@ namespace GUIKIT {
 pMenuBase::~pMenuBase() {
     @autoreleasepool {
         [cocoaBase release];
+        [cocoaBaseContext release];
     }
 }
 
 auto pMenuBase::setEnabled(bool enabled) -> void {
     @autoreleasepool {
         [cocoaBase setEnabled:enabled];
+        [cocoaBaseContext setEnabled:enabled];
     }
 }
 
 auto pMenuBase::setVisible(bool visible) -> void {
     @autoreleasepool {
         [cocoaBase setHidden:!visible];
+        [cocoaBaseContext setHidden:!visible];
     }
 }
 
 auto pMenuBase::setText(const std::string& text) -> void {
     @autoreleasepool {
         [cocoaBase setTitle:[NSString stringWithUTF8String:text.c_str()]];
+        [cocoaBaseContext setTitle:[NSString stringWithUTF8String:text.c_str()]];
     }
 }
 
@@ -116,9 +116,16 @@ auto pMenuBase::setIcon(Image& icon) -> void {
             if (dynamic_cast<pMenuCheckItem*>(this)) [cocoaBase setOnStateImage:[NSImage imageNamed:@"NSMenuCheckmark"]];
             else if (dynamic_cast<pMenuRadioItem*>(this)) [cocoaBase setOnStateImage:[NSImage imageNamed:@"NSMenuCheckmark"]];
             else [cocoaBase setImage:nil];
+            
+            if (dynamic_cast<pMenuCheckItem*>(this)) [cocoaBaseContext setOnStateImage:[NSImage imageNamed:@"NSMenuCheckmark"]];
+            else if (dynamic_cast<pMenuRadioItem*>(this)) [cocoaBaseContext setOnStateImage:[NSImage imageNamed:@"NSMenuCheckmark"]];
+            else [cocoaBaseContext setImage:nil];
         } else {
             if (dynamic_cast<pMenuCheckItem*>(this) || dynamic_cast<pMenuRadioItem*>(this)) [cocoaBase setOnStateImage:NSMakeImage(icon, 15, 15)];
             else [cocoaBase setImage:NSMakeImage(icon, 15, 15)];
+            
+            if (dynamic_cast<pMenuCheckItem*>(this) || dynamic_cast<pMenuRadioItem*>(this)) [cocoaBaseContext setOnStateImage:NSMakeImage(icon, 15, 15)];
+            else [cocoaBaseContext setImage:NSMakeImage(icon, 15, 15)];
         }
     }
 }
@@ -128,30 +135,32 @@ pMenu::pMenu(Menu& menu) : pMenuBase(menu), menu(menu) { }
 pMenu::~pMenu() {
     @autoreleasepool {
         [[cocoaBase cocoaMenu] release];
+        [[cocoaBaseContext cocoaMenu] release];
     }
 }
     
 auto pMenu::setIcon(Image& icon) -> void {
+    pMenuBase::setIcon( icon );
     
     if (menuBase.state.parentWindow && menuBase.state.parentWindow->p.disableIconsInTopMenu) {
         if ( menuBase.state.parentWindow->isApended(menu) ) {
             [cocoaBase setImage:nil];
             return;
         }
-    }
-    
-    pMenuBase::setIcon( icon );
+    }    
 }
 
 auto pMenu::init() -> void {
     @autoreleasepool {
         cocoaBase = [[CocoaMenu alloc] initWith];
+        cocoaBaseContext = [[CocoaMenu alloc] initWith];
     }
 }
     
 auto pMenu::setText(const std::string& text) -> void {
     @autoreleasepool {
         [[cocoaBase cocoaMenu]setTitle:[NSString stringWithUTF8String:text.c_str()]];
+        [[cocoaBaseContext cocoaMenu]setTitle:[NSString stringWithUTF8String:text.c_str()]];
     }
     pMenuBase::setText(text);
 }
@@ -159,12 +168,14 @@ auto pMenu::setText(const std::string& text) -> void {
 auto pMenu::append(MenuBase& item) -> void {
     @autoreleasepool {
         [[cocoaBase cocoaMenu] addItem:item.p.cocoaBase];
+        [[cocoaBaseContext cocoaMenu] addItem:item.p.cocoaBaseContext];
     }
 }
 
 auto pMenu::remove(MenuBase& item) -> void {
     @autoreleasepool {
         [[cocoaBase cocoaMenu] removeItem:item.p.cocoaBase];
+        [[cocoaBaseContext cocoaMenu] removeItem:item.p.cocoaBaseContext];
     }
 }
 
@@ -174,6 +185,7 @@ pMenuItem::pMenuItem(MenuItem& menuItem) : pMenuBase(menuItem), menuItem(menuIte
 auto pMenuItem::init() -> void {
     @autoreleasepool {
         cocoaBase = [[CocoaMenuItem alloc] initWith:menuItem];
+        cocoaBaseContext = [[CocoaMenuItem alloc] initWith:menuItem];
     }
 }
     
@@ -183,6 +195,7 @@ pMenuCheckItem::pMenuCheckItem(MenuCheckItem& menuCheckItem) : pMenuBase(menuChe
 auto pMenuCheckItem::init() -> void {
     @autoreleasepool {
         cocoaBase = [[CocoaMenuCheckItem alloc] initWith:menuCheckItem];
+        cocoaBaseContext = [[CocoaMenuCheckItem alloc] initWith:menuCheckItem];
     }
 }
 
@@ -190,6 +203,7 @@ auto pMenuCheckItem::setChecked(bool checked) -> void {
     @autoreleasepool {
         auto state = checked ? NSOnState : NSOffState;
         [cocoaBase setState:state];
+        [cocoaBaseContext setState:state];
     }
 }
 
@@ -199,6 +213,7 @@ pMenuRadioItem::pMenuRadioItem(MenuRadioItem& menuRadioItem) : pMenuBase(menuRad
 auto pMenuRadioItem::init() -> void {
     @autoreleasepool {
         cocoaBase = [[CocoaMenuRadioItem alloc] initWith:menuRadioItem];
+        cocoaBaseContext = [[CocoaMenuRadioItem alloc] initWith:menuRadioItem];
     }
 }
 
@@ -207,6 +222,7 @@ auto pMenuRadioItem::setChecked() -> void {
         for(auto& item : menuRadioItem.group) {
             auto state = (item == &menuRadioItem) ? NSOnState : NSOffState;
             [item->p.cocoaBase setState:state];
+            [item->p.cocoaBaseContext setState:state];
         }
     }
 }
@@ -217,6 +233,7 @@ pMenuSeparator::pMenuSeparator(MenuSeparator& menuSeparator) : pMenuBase(menuSep
 auto pMenuSeparator::init() -> void {
     @autoreleasepool {
         cocoaBase = [[NSMenuItem separatorItem] retain];
+        cocoaBaseContext = [[NSMenuItem separatorItem] retain];
     }
 }
     

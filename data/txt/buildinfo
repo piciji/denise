@@ -1,21 +1,94 @@
 
-There is a makefile in module 'drivers'. There you can remove some drivers, you don't need
-or don't want to install, like SDL2, freetype or openal. There are alternatives.
+There is a makefile in 'drivers' folder. There you can remove some drivers, you don't need
+or don't want to install, like SDL2, freetype or openal. simply ignore removed drivers in following installation guide.
 For example you could remove all audio drivers. The emulator will be running without audio.
 
 WINDOWS (XP and higher)
 -------
 install mingw32 or 64 (includes gnu compiler, directx, opengl, hid ... almost everything)
+https://sourceforge.net/projects/mingw-w64/
+run installer, ignore spaces if you want to change installation folder, select following options
+Version: latest
+Architecture: select i686 only if you want to build a 32 bit version of Denise
+Threads: posix
+Exception: seh (64 bit) or dwarf (32 bit)
+Build Revision: latest
 
 NOTE: in the following we need to include more headers / libraries to our mingw
-installation. The first include / lib folders you see in mingw main folder are NOT the
-target folders, therefore change to subfolder: x86_64-w64-mingw32
+installation folder. The first include / lib folders you see in mingw main folder are NOT the
+target folders, therefore change to subfolder: x86_64-w64-mingw32 (64 bit) or i686-w64-mingw32 (32 bit)
 
-install openal sdk: https://www.openal.org/downloads/
-  copy 32/64 bit lib OpenAL32.lib in mingw 32/64 lib folder
-  create folder AL in mingw 32/64 include folder and copy all header files into it
+openal: install sdk: https://www.openal.org/downloads/
+  copy 32 or 64 bit lib OpenAL32.lib in mingw lib folder
+  create folder AL in mingw include folder and copy all header files into it
 
-download and unpack latest freetype source code v:2.9.1 at the moment
+freetype: download and unpack latest source code
+  copy contents of freetype include folder to mingw include folder
+  i have already compiled a static link library for 32 and 64 bit.
+  copy it from denise source: data/libs/win(32)64/libfreetype.a to mingw lib folder
+
+install MSYS if you haven't already.
+  https://sourceforge.net/projects/mingw/files/MSYS/Base/msys-core/msys-1.0.11/MSYS-1.0.11.exe/download?use_mirror=netcologne
+  MSYS is a collection of GNU utilities such as bash, make, gawk and grep
+  to allow building of applications which depend on traditionally UNIX.  
+  run installed msys to get a command line prompt: change folder to denise source code
+  
+read on at: 'now build Denise' after compilation copy all contents in subfolder 'out' to any place you want.
+
+OSX
+---
+opengl, openal should already installed (system frameworks)
+don't forget to update commandline tools, when upgrading OS: xcode-select --install
+
+install brew: /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+brew install pkg-config
+brew install sdl2
+brew install libiconv (should be already installed)
+
+compile freetype
+  download latest source
+  ./configure --enable-static --without-zlib --without-bzip2
+  make
+  sudo make install
+
+LINUX
+-----
+please install following dependencies if you haven't already
+
+GTK+ 2: apt-get install libgtk2.0-dev
+OpenGL: apt-get install mesa-common-dev
+OpenAL: apt-get install libopenal-dev
+Pulseaudio: apt-get install libpulse-dev
+SDL2: apt-get install libsdl2-dev
+Udev: apt-get install libudev-dev
+
+---------------------------------------------
+---------------------------------------------
+
+now build Denise
+----------------
+change to projects root folder and type:
+
+make -f makefile	[windows, linux, osx]
+make install		[windows, linux]
+make uninstall		[linux]
+
+
+-----------------------------------------
+optional stuff, mostly to remember myself
+-----------------------------------------
+
+----------
+xcode OS X
+-----------
+disable 'New Build System' or 'clean' command will not working anymore. [File->Project Settings->Build System]
+set execution directory by 'edit scheme'. it's the button aside the play/stop buttons in top left.
+
+---------------------
+build freetype for Windows by yourself
+---------------------
+
+download and unpack latest freetype source code
   install MSYS if you haven't already.
   MSYS is a collection of GNU utilities such as bash, make, gawk and grep
   to allow building of applications which depend on traditionally UNIX.
@@ -44,44 +117,3 @@ download and unpack latest freetype source code v:2.9.1 at the moment
   otherwise remove the file from quarantine, delete freetype,
   unpack it again, disable antivir and try again.
   running in all these problems make installing freetype a tedious task.
-
-OSX
----
-opengl, openal should already installed (system frameworks)
-don't forget to update commandline tools, when upgrading OS: xcode-select --install
-install brew: /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-brew install pkg-config
-brew install sdl2
-brew install libiconv (should be already installed)
-
-compile freetype
-  download latest source
-  ./configure --enable-static --without-zlib --without-bzip2
-  make
-  sudo make install
-
-Note for xcode users:
-- disable 'New Build System' or 'clean' command will not working anymore. [File->Project Settings->Build System]
-- set execution directory by 'edit scheme'. it's the button aside the play/stop buttons in top left.
-
-LINUX
------
-please install following dependencies if you haven't already
-
-GTK+ 2: apt-get install libgtk2.0-dev
-OpenGL: apt-get install mesa-common-dev
-OpenAL: apt-get install libopenal-dev
-Pulseaudio: apt-get install libpulse-dev
-SDL2: apt-get install libsdl2-dev
-Udev: apt-get install libudev-dev
-
----------------------------------------------
----------------------------------------------
-
-now build Denise
-----------------
-change to projects root folder and type:
-
-make -f makefile	[windows, linux, osx]
-make install		[windows, linux]
-make uninstall		[linux]

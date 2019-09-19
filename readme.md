@@ -6,6 +6,10 @@ usage hints -> scroll down this file
 
 # changelog
 
+## 1.0.6 (not released yet, but changes are in master branch)
+* polished OS X UI ... looks ok now for Mojave dark theme
+* Windows command line support is now independant from working directory of caller
+
 ## 1.0.5
 * drag'n'drop support
 * firmware paths will be saved and applied for loaded save states

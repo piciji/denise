@@ -349,6 +349,7 @@ struct pTimer {
 struct pMenuBase {
     MenuBase& menuBase;
     NSMenuItem* cocoaBase = nullptr;
+    NSMenuItem* cocoaBaseContext = nullptr;
 
     auto setEnabled(bool enabled) -> void;
     auto setVisible(bool visible) -> void;
