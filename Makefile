@@ -162,9 +162,9 @@ build: $(objects)
 	install_name_tool -id @executable_path/../Frameworks/libfreetype.6.dylib out/$(name).app/Contents/Frameworks/libfreetype.6.dylib
 	install_name_tool -id @executable_path/../Frameworks/libSDL2-2.0.0.dylib out/$(name).app/Contents/Frameworks/libSDL2-2.0.0.dylib	
 	install_name_tool -id @executable_path/../Frameworks/libiconv.2.dylib out/$(name).app/Contents/Frameworks/libiconv.2.dylib	
-	install_name_tool -change /usr/local/lib/libfreetype.6.dylib @executable_path/../Frameworks/libfreetype.6.dylib out/$(name).app/Contents/MacOS/$(name)
-	install_name_tool -change /usr/local/lib/libSDL2-2.0.0.dylib @executable_path/../Frameworks/libSDL2-2.0.0.dylib out/$(name).app/Contents/MacOS/$(name)
-	install_name_tool -change /usr/lib/libiconv.2.dylib @executable_path/../Frameworks/libiconv.2.dylib out/$(name).app/Contents/MacOS/$(name)
+	install_name_tool -change `otool -D /usr/local/lib/libfreetype.6.dylib | cut -d':' -f2` @executable_path/../Frameworks/libfreetype.6.dylib out/$(name).app/Contents/MacOS/$(name)
+	install_name_tool -change `otool -D /usr/local/lib/libSDL2-2.0.0.dylib | cut -d':' -f2` @executable_path/../Frameworks/libSDL2-2.0.0.dylib out/$(name).app/Contents/MacOS/$(name)
+	install_name_tool -change `otool -D /usr/lib/libiconv.2.dylib | cut -d':' -f2` @executable_path/../Frameworks/libiconv.2.dylib out/$(name).app/Contents/MacOS/$(name)
     else
 	$(strip $(compiler) -o out/$(name) $(objects) $(link))
     endif
