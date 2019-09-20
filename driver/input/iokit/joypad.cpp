@@ -75,7 +75,7 @@ struct IokitJoypad {
         return !error;
     }
     
-    auto createDictionary(const UInt32 page, const UInt32 usage, bool& error ) -> CFDictionaryRef {
+    auto createDictionary(const uint32_t page, const uint32_t usage, bool& error ) -> CFDictionaryRef {
         
         CFDictionaryRef retval = NULL;
         CFNumberRef pageNumRef = CFNumberCreate(kCFAllocatorDefault, kCFNumberIntType, &page);
@@ -149,7 +149,7 @@ struct IokitJoypad {
 
     auto getDeviceInfo(IOHIDDeviceRef hidDevice, Joypad& jp) -> bool {
         
-        Uint32* guid32 = NULL;
+        uint32_t* guid32 = NULL;
         CFTypeRef refCF = NULL;
         CFArrayRef array = NULL;
 

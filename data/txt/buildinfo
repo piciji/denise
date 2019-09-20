@@ -9,7 +9,7 @@ install mingw32 or 64 (includes gnu compiler, directx, opengl, hid ... almost ev
 https://sourceforge.net/projects/mingw-w64/
 run installer, ignore spaces if you want to change installation folder, select following options
 Version: latest
-Architecture: select i686 only if you want to build a 32 bit version of Denise
+Architecture: x86_64, select i686 only if you want to build a 32 bit version of Denise
 Threads: posix
 Exception: seh (64 bit) or dwarf (32 bit)
 Build Revision: latest
@@ -19,6 +19,7 @@ installation folder. The first include / lib folders you see in mingw main folde
 target folders, therefore change to subfolder: x86_64-w64-mingw32 (64 bit) or i686-w64-mingw32 (32 bit)
 
 openal: install sdk: https://www.openal.org/downloads/
+  remeber installation folder and look into it
   copy 32 or 64 bit lib OpenAL32.lib in mingw lib folder
   create folder AL in mingw include folder and copy all header files into it
 
@@ -31,9 +32,9 @@ install MSYS if you haven't already.
   https://sourceforge.net/projects/mingw/files/MSYS/Base/msys-core/msys-1.0.11/MSYS-1.0.11.exe/download?use_mirror=netcologne
   MSYS is a collection of GNU utilities such as bash, make, gawk and grep
   to allow building of applications which depend on traditionally UNIX.  
-  run installed msys to get a command line prompt: change folder to denise source code
+  run installed msys to get a command line prompt.
   
-read on at: 'now build Denise' after compilation copy all contents in subfolder 'out' to any place you want.
+read on at 'now build Denise'. after compilation copy all contents in subfolder 'out' to any place you want.
 
 OSX
 ---
@@ -43,13 +44,14 @@ don't forget to update commandline tools, when upgrading OS: xcode-select --inst
 install brew: /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 brew install pkg-config
 brew install sdl2
-brew install libiconv (should be already installed)
 
 compile freetype
   download latest source
   ./configure --enable-static --without-zlib --without-bzip2
   make
   sudo make install
+
+read on at 'now build Denise'
 
 LINUX
 -----
@@ -79,7 +81,7 @@ optional stuff, mostly to remember myself
 -----------------------------------------
 
 ----------
-xcode OS X
+xcode OSX
 -----------
 disable 'New Build System' or 'clean' command will not working anymore. [File->Project Settings->Build System]
 set execution directory by 'edit scheme'. it's the button aside the play/stop buttons in top left.

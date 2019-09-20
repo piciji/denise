@@ -4,8 +4,9 @@
 
 # remove drivers you don't need or have problems on older OS like Win XP
 # it's possible to remove all drivers
-# sdlinput covers joypad support only and is not supported for windows
-# sdlinput shouldn't be needed, use it only if there are problems with native drivers, it may be removed completly someday
+# sdlinput covers joypad support only and is not supported for windows anymore.
+# sdlinput shouldn't be needed for any OS, use it only if there are problems with native drivers, it may be removed completly someday.
+# sdlinput for MacOS needs iokit driver, because it's a wrapper for iokit. 
 
 # some drivers like dinput (5, 7, 8) and xaudio (2.7, 2.8, 2.9) are supported in multiple versions.
 # i couldn't merge multiple versions in one object file. if you add one version per driver only
@@ -20,7 +21,7 @@ else ifeq ($(platform),macosx)
     drv += cgl openal coreaudio iokit sdlinput
 
 else
-    drv += glx openal pulseaudio xlib sdlinput udev
+    drv += glx openal pulseaudio xlib udev sdlinput
 
 endif
 # show in screen status text for opengl
@@ -34,16 +35,22 @@ ifeq ($(platform),windows)
     drvlink += $(if $(findstring openal,$(drv)),-lopenal32)
 
 else ifeq ($(platform),macosx)
+    env += /usr/local/bin/
     drvflags = $(objcppflags)
     drvlink = -framework Cocoa
     drvlink += $(if $(findstring openal,$(drv)),-framework OpenAL)
-    env += /usr/local/bin/
-
+    ifneq ($(findstring iokit,$(drv)),)
+	drvlink += $(if $(findstring sdl,$(drv)), $(shell $(env)sdl2-config --libs))
+    endif
+    
 else
     drvflags = $(cppflags) 
     drvflags += `pkg-config --cflags gtk+-2.0`
     drvlink = -lX11 -lXext -ldl -lXfixes
     drvlink += $(if $(findstring openal,$(drv)),-lopenal)
+    ifneq ($(findstring xlib,$(drv)),)
+	drvlink += $(if $(findstring sdl,$(drv)), $(shell $(env)sdl2-config --libs))
+    endif
 endif
 
 ifneq ($(findstring freetype,$(drv)),)
@@ -65,9 +72,11 @@ drvlink += $(if $(findstring dsound,$(drv)),-ldsound)
 drvlink += $(if $(findstring dinput,$(drv)),-ldinput -ldxguid)
 drvlink += $(if $(findstring wgl,$(drv)),-lopengl32)
 drvlink += $(if $(findstring wasapi,$(drv)),-lksuser -luuid -lavrt)
-drvlink += $(if $(findstring iokit,$(drv)),-framework IOKIT)
+# osx carbon UI is depracated for 64 bit. we need it for TIS services only. so it should be Catalina ready.
+drvlink += $(if $(findstring iokit,$(drv)),-framework IOKit -framework Carbon)
 drvlink += $(if $(findstring cgl,$(drv)),-framework OpenGL)
-drvlink += $(if $(findstring sdl,$(drv)),$(shell $(env)sdl2-config --static-libs))
+drvlink += $(if $(findstring coreaudio,$(drv)),-framework CoreAudio -framework AudioToolbox)
+
 drvlink += $(if $(findstring glx,$(drv)),-lGL)
 drvlink += $(if $(findstring udev,$(drv)),-ludev)
 drvlink += $(if $(findstring pulseaudio,$(drv)),-lpulse)
