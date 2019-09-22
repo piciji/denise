@@ -47,7 +47,16 @@ auto M6502::read( uint16_t addr, bool lastCycle ) -> uint8_t {
 		// normally a detected interrupt in last cycle can not be sampled the same cycle, so irq happens one opcode later
 		// in rdy repeated last cycle this is possible, because there is at least one cycle more running
         if (lastCycle)
-            sampleInterrupt();        
+            sampleInterrupt();    
+        
+        if (ctx->rdyInterrupt.active) {
+            M65Context* dummyContext = new M65Context;
+            dummyContext->rdyInterrupt.ctx = ctx;
+            dummyContext->rdyInterrupt.active = true;
+            dummyContext->IR = ctx->IR;
+            ctx = dummyContext;
+            break;
+        }
     }        
     
     ctx->db = busRead( addr ); //read bus (second half cycle)

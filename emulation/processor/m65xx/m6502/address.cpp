@@ -8,70 +8,66 @@ namespace MOS65FAMILY {
 // (d,x)
 auto M6502::indexedIndirectAdr() -> uint16_t {
 	
-	auto zeroPage = readPCInc();
-	read( zeroPage ); //need time for adding x register
+	ctx->mem.zeroPage = readPCInc<1>();
+	read<2>( ctx->mem.zeroPage ); //need time for adding x register
     
-	uint16_t absolute = loadZeroPage( zeroPage + ctx->x );
-	absolute |= loadZeroPage( zeroPage + ctx->x + 1 ) << 8;
+	ctx->mem.absolute = loadZeroPage<3>( ctx->mem.zeroPage + ctx->x );
+	ctx->mem.absolute |= loadZeroPage<4>( ctx->mem.zeroPage + ctx->x + 1 ) << 8;
 	
-	return absolute;
+	return ctx->mem.absolute;
 }
 
 // (d), y
 auto M6502::indirectIndexedAdr( bool forceExtraCycle ) -> uint16_t {
     
-    auto zeroPage = readPCInc();
+    ctx->mem.zeroPage = readPCInc<1>();
 
-    uint16_t absolute = loadZeroPage( zeroPage );
-    absolute |= loadZeroPage( zeroPage + 1 ) << 8;    
+    ctx->mem.absolute = loadZeroPage<2>( ctx->mem.zeroPage );
+    ctx->mem.absolute |= loadZeroPage<3>( ctx->mem.zeroPage + 1 ) << 8;    
 
-    uint16_t absIndexed = absolute + ctx->y;
+    ctx->mem.absIndexed = ctx->mem.absolute + ctx->y;
     
-	bool boundaryCrossing = PAGE_CROSSED(absolute, absolute + ctx->y); 
+    if (!ctx->jumpOut.active)
+        ctx->mem.boundaryCrossing = PAGE_CROSSED(ctx->mem.absolute, ctx->mem.absolute + ctx->y); 
 
-    if (forceExtraCycle | boundaryCrossing)
-        read((absolute & 0xff00) | (absIndexed & 0xff));
+    if (forceExtraCycle | ctx->mem.boundaryCrossing)
+        read<4>((ctx->mem.absolute & 0xff00) | (ctx->mem.absIndexed & 0xff));
 	
-	ctx->memory.absolute = absolute;
-	ctx->memory.boundaryCrossing = boundaryCrossing;
-	
-    return absIndexed;
+    return ctx->mem.absIndexed;
 }
 
 // d,x  d,y
 auto M6502::zeroPageIndexedAdr( uint8_t index ) -> uint8_t {
     
-    auto zeroPage = readPCInc();
-    loadZeroPage( zeroPage );
+    ctx->mem.zeroPage = readPCInc<1>();
+    loadZeroPage<2>( ctx->mem.zeroPage );
     
-    return zeroPage + index;
+    return ctx->mem.zeroPage + index;
 }
 
 // a
 auto M6502::absoluteAdr( ) -> uint16_t {
 	
-	uint16_t absolute = readPCInc();
-	absolute |= readPCInc() << 8;
+	ctx->mem.absolute = readPCInc<1>();
+	ctx->mem.absolute |= readPCInc<2>() << 8;
 	
-	return absolute;
+	return ctx->mem.absolute;
 }
 
 // a,x  a,y
 auto M6502::absoluteIndexedAdr( uint8_t index, bool forceExtraCycle ) -> uint16_t {
 	
-	uint16_t absolute = absoluteAdr();
+	absoluteAdr();
     
-	bool boundaryCrossing = PAGE_CROSSED(absolute, absolute + index);
+    if (!ctx->jumpOut.active)
+        ctx->mem.boundaryCrossing = PAGE_CROSSED(ctx->mem.absolute, ctx->mem.absolute + index);
 	
-	uint16_t absIndexed = absolute + index;
+	ctx->mem.absIndexed = ctx->mem.absolute + index;
 
-	if (forceExtraCycle | boundaryCrossing)
-		read((absolute & 0xff00) | (absIndexed & 0xff));
-	
-	ctx->memory.absolute = absolute;
-	ctx->memory.boundaryCrossing = boundaryCrossing;
+	if (forceExtraCycle | ctx->mem.boundaryCrossing)
+		read<3>((ctx->mem.absolute & 0xff00) | (ctx->mem.absIndexed & 0xff));
 
-	return absIndexed;
+	return ctx->mem.absIndexed;
 }
 
 }

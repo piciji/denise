@@ -116,7 +116,9 @@ struct M65Context {
     
     // need to memory a few values mostly for unstable undocumented opcodes
     struct {
-		unsigned absolute;
+		uint16_t absolute;
+        uint16_t absIndexed;
+        uint8_t zeroPage;
 		bool boundaryCrossing;
 		bool rdyLastCycle;
 		bool xaa; // or ane
@@ -124,7 +126,17 @@ struct M65Context {
         bool sei;
         bool storeFlags;
         uint8_t soBlock;
-	} memory;
+	} mem;
+        
+    // unlike VIC the c64 expansion port dma line is able to halt(rdy) cpu for a long time, e.g. reu, super cpu.
+    // but we need to jump out at least one time each frame to synchronize UI events.
+    // remember cycle position within opcode, save context, execute opcode in a dummy context, jump out ... do external stuff
+    // jump in, repeat execution of last opcode in dummy context till interrupted cycle, swap real context and finally go on.
+    struct {
+        uint8_t cycle = 0;
+        bool active = false;
+        M65Context* ctx = nullptr;
+    } jumpOut;
 	
     M65Context() {
         

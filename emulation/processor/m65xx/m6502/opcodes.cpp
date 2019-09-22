@@ -10,7 +10,7 @@ namespace MOS65FAMILY {
 //indexed indirect
 auto M6502::indexedIndirect( Alu alu ) -> void { 
 	    
-	A = ALU( read( indexedIndirectAdr(), LAST ) );
+	A = ALU( read<5>( indexedIndirectAdr(), LAST ) );
 }
 
 auto M6502::indexedIndirectW( uint8_t data ) -> void {
@@ -21,7 +21,7 @@ auto M6502::indexedIndirectW( uint8_t data ) -> void {
 //indirect indexed
 auto M6502::indirectIndexed( Alu alu ) -> void {
 	    
-	A = ALU( read( indirectIndexedAdr(), LAST ) );
+	A = ALU( read<5>( indirectIndexedAdr(), LAST ) );
 }
 
 auto M6502::indirectIndexedW( uint8_t data ) -> void {
@@ -32,12 +32,12 @@ auto M6502::indirectIndexedW( uint8_t data ) -> void {
 //zero page
 auto M6502::zeroPage( Alu alu, uint8_t& data ) -> void {
     
-    auto zeroPage = readPCInc();
+    ctx->mem.zeroPage = readPCInc<1>();
     
     if (alu)    
-        data = ALU( loadZeroPage( zeroPage, LAST ) );
+        data = ALU( loadZeroPage<2>( ctx->mem.zeroPage, LAST ) );
     else
-        loadZeroPage( zeroPage, LAST );
+        loadZeroPage<2>( ctx->mem.zeroPage, LAST );
 }
 
 auto M6502::zeroPage( Alu alu ) -> void {

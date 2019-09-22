@@ -249,7 +249,8 @@ auto M6502::process() -> void {
 	 * hence some opcodes process final logic during instruction fetch
 	 * for reduced code complexity it's emulated here without loss of accuracy
 	 */	
-    ctx->IR = readPCInc();
+    if (!ctx->rdyInterrupt.active)        
+        ctx->IR = readPCInc();
     /**
      * next cpu half cycle is decoding
      */    
