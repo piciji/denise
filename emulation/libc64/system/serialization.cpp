@@ -140,6 +140,7 @@ auto System::serialize(Emulator::Serializer& s) -> void {
     powerSupply->serialize( s );
     
     serialize6502( s, cpuCtx );    
+    //serialize6502( s, cpu-> );    
 }
 
 auto System::serialize6502( Emulator::Serializer& s, MOS65Context* cpuCtx ) -> void {
@@ -170,6 +171,7 @@ auto System::serialize6502( Emulator::Serializer& s, MOS65Context* cpuCtx ) -> v
     s.integer( cpuCtx->soLine );
     s.integer( cpuCtx->soDetect );
     s.integer( cpuCtx->soSampled );
+    s.integer( cpuCtx->resetCompleted );
     s.integer( cpuCtx->ddr );
     s.integer( cpuCtx->por );
     s.integer( cpuCtx->ioLines );
@@ -180,14 +182,22 @@ auto System::serialize6502( Emulator::Serializer& s, MOS65Context* cpuCtx ) -> v
     s.integer( cpuCtx->bit7.cycles );
     s.integer( cpuCtx->bit7.charge );
 
-    s.integer( cpuCtx->memory.absolute );
-    s.integer( cpuCtx->memory.boundaryCrossing );
-    s.integer( cpuCtx->memory.rdyLastCycle );
-    s.integer( cpuCtx->memory.xaa );
-    s.integer( cpuCtx->memory.cli );
-    s.integer( cpuCtx->memory.sei );
-    s.integer( cpuCtx->memory.storeFlags );
-    s.integer( cpuCtx->memory.soBlock );
+    s.integer( cpuCtx->absolute );
+    s.integer( cpuCtx->absIndexed );
+    s.integer( cpuCtx->zeroPage );
+    s.integer( cpuCtx->data );
+    s.integer( cpuCtx->dataH );
+    s.integer( cpuCtx->dataW );
+    s.integer( cpuCtx->vector );
+    s.integer( cpuCtx->displacement );
+        
+    s.integer( cpuCtx->boundaryCrossing );
+    s.integer( cpuCtx->rdyLastCycle );
+    s.integer( cpuCtx->xaa );
+    s.integer( cpuCtx->cli );
+    s.integer( cpuCtx->sei );
+    s.integer( cpuCtx->storeFlags );
+    s.integer( cpuCtx->soBlock );
 }
 
 }

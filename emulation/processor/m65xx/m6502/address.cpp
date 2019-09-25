@@ -3,73 +3,74 @@
 
 #define PAGE_CROSSED(x, y) ( ( (uint16_t)x >> 8 ) != ( (uint16_t)y >> 8) )
 
+#define GET_INDEX_REG regIndex == RegX ? X : ( regIndex == RegY ? Y : X )
+
 namespace MOS65FAMILY {
 
 // (d,x)
 auto M6502::indexedIndirectAdr() -> uint16_t {
 	
-	ctx->mem.zeroPage = readPCInc<1>();
-	read<2>( ctx->mem.zeroPage ); //need time for adding x register
+	ctx->zeroPage = readPCInc<1>();
+	read<2>( ctx->zeroPage ); //need time for adding x register
     
-	ctx->mem.absolute = loadZeroPage<3>( ctx->mem.zeroPage + ctx->x );
-	ctx->mem.absolute |= loadZeroPage<4>( ctx->mem.zeroPage + ctx->x + 1 ) << 8;
+	ctx->absolute = loadZeroPage<3>( ctx->zeroPage + ctx->x );
+	ctx->absolute |= loadZeroPage<4>( ctx->zeroPage + ctx->x + 1 ) << 8;
 	
-	return ctx->mem.absolute;
+	return ctx->absolute;
 }
 
 // (d), y
 auto M6502::indirectIndexedAdr( bool forceExtraCycle ) -> uint16_t {
     
-    ctx->mem.zeroPage = readPCInc<1>();
+    ctx->zeroPage = readPCInc<1>();
 
-    ctx->mem.absolute = loadZeroPage<2>( ctx->mem.zeroPage );
-    ctx->mem.absolute |= loadZeroPage<3>( ctx->mem.zeroPage + 1 ) << 8;    
+    ctx->absolute = loadZeroPage<2>( ctx->zeroPage );
+    ctx->absolute |= loadZeroPage<3>( ctx->zeroPage + 1 ) << 8;    
 
-    ctx->mem.absIndexed = ctx->mem.absolute + ctx->y;
+    ctx->absIndexed = ctx->absolute + ctx->y;
     
-    if (!ctx->jumpOut.active)
-        ctx->mem.boundaryCrossing = PAGE_CROSSED(ctx->mem.absolute, ctx->mem.absolute + ctx->y); 
+    ctx->boundaryCrossing = PAGE_CROSSED(ctx->absolute, ctx->absolute + ctx->y); 
 
-    if (forceExtraCycle | ctx->mem.boundaryCrossing)
-        read<4>((ctx->mem.absolute & 0xff00) | (ctx->mem.absIndexed & 0xff));
+    if (ctx->isDummy|| forceExtraCycle || ctx->boundaryCrossing)
+        read<4>((ctx->absolute & 0xff00) | (ctx->absIndexed & 0xff));
 	
-    return ctx->mem.absIndexed;
+    return ctx->absIndexed;
 }
 
 // d,x  d,y
-auto M6502::zeroPageIndexedAdr( uint8_t index ) -> uint8_t {
+template<M6502::Reg regIndex> auto M6502::zeroPageIndexedAdr( ) -> uint8_t {
     
-    ctx->mem.zeroPage = readPCInc<1>();
-    loadZeroPage<2>( ctx->mem.zeroPage );
+    ctx->zeroPage = readPCInc<1>();
+    loadZeroPage<2>( ctx->zeroPage );
     
-    return ctx->mem.zeroPage + index;
+    return ctx->zeroPage + (GET_INDEX_REG);
 }
 
 // a
 auto M6502::absoluteAdr( ) -> uint16_t {
 	
-	ctx->mem.absolute = readPCInc<1>();
-	ctx->mem.absolute |= readPCInc<2>() << 8;
+	ctx->absolute = readPCInc<1>();
+	ctx->absolute |= readPCInc<2>() << 8;
 	
-	return ctx->mem.absolute;
+	return ctx->absolute;
 }
 
 // a,x  a,y
-auto M6502::absoluteIndexedAdr( uint8_t index, bool forceExtraCycle ) -> uint16_t {
+template<M6502::Reg regIndex> auto M6502::absoluteIndexedAdr( bool forceExtraCycle ) -> uint16_t {
 	
 	absoluteAdr();
-    
-    if (!ctx->jumpOut.active)
-        ctx->mem.boundaryCrossing = PAGE_CROSSED(ctx->mem.absolute, ctx->mem.absolute + index);
+   
+    ctx->boundaryCrossing = PAGE_CROSSED(ctx->absolute, ctx->absolute + (GET_INDEX_REG));
 	
-	ctx->mem.absIndexed = ctx->mem.absolute + index;
+	ctx->absIndexed = ctx->absolute + (GET_INDEX_REG);
 
-	if (forceExtraCycle | ctx->mem.boundaryCrossing)
-		read<3>((ctx->mem.absolute & 0xff00) | (ctx->mem.absIndexed & 0xff));
+	if (ctx->isDummy || forceExtraCycle || ctx->boundaryCrossing)
+		read<3>((ctx->absolute & 0xff00) | (ctx->absIndexed & 0xff));
 
-	return ctx->mem.absIndexed;
+	return ctx->absIndexed;
 }
 
 }
 
 #undef PAGE_CROSSED
+#undef GET_INDEX_REG

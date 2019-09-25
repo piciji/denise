@@ -501,8 +501,8 @@ auto System::power( bool softReset ) -> void {
 	input->reset();
 
 	tape->reset();
-    glueLogic->reset();
-	
+    glueLogic->reset();	
+    
 	if (ntsc) {
 		powerSupply->init( C64_FREQUENCY_NTSC, 60 );
 		tape->setCyclesPerSecond( C64_FREQUENCY_NTSC );
@@ -515,7 +515,7 @@ auto System::power( bool softReset ) -> void {
     }
     initDebugCart();
     
-    iecBus->power();
+    iecBus->power();   
     
 	if( !softReset ) {
 		vicII->setNtsc( ntsc );
@@ -525,6 +525,8 @@ auto System::power( bool softReset ) -> void {
 		// vic hasn't a reset line ... means no change ?
 		cpu->reset();
 	}
+    // cpu doesn't leave halted state by reset request   
+    cpu->setRdy( false );
 	
     cpu->updateIoLines( 0x17, !tape->isEnabled() ? 0x20 : 0 );      
     events.clear();   

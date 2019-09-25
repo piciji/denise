@@ -75,6 +75,8 @@ struct M65Context {
     
     bool soSampled = false;        
     
+    bool resetCompleted = false;
+    
 	// 6510 cpu port
 	
     // 6510 data direction register
@@ -114,29 +116,31 @@ struct M65Context {
 		uint8_t charge;
 	} bit6, bit7;
     
-    // need to memory a few values mostly for unstable undocumented opcodes
-    struct {
-		uint16_t absolute;
-        uint16_t absIndexed;
-        uint8_t zeroPage;
-		bool boundaryCrossing;
-		bool rdyLastCycle;
-		bool xaa; // or ane
-        bool cli;
-        bool sei;
-        bool storeFlags;
-        uint8_t soBlock;
-	} mem;
+    // need to memory a few values mostly for unstable undocumented opcodes and resuming from dummy context
+    uint16_t absolute;
+    uint16_t absIndexed;
+    uint8_t zeroPage;
+    uint8_t data;
+    uint8_t dataH;
+    uint16_t dataW;
+    uint16_t vector;
+    int8_t displacement;
+
+    bool boundaryCrossing;
+    bool rdyLastCycle;
+    bool xaa; // or ane
+    bool cli;
+    bool sei;
+    bool storeFlags;
+    uint8_t soBlock;
         
     // unlike VIC the c64 expansion port dma line is able to halt(rdy) cpu for a long time, e.g. reu, super cpu.
     // but we need to jump out at least one time each frame to synchronize UI events.
     // remember cycle position within opcode, save context, execute opcode in a dummy context, jump out ... do external stuff
-    // jump in, repeat execution of last opcode in dummy context till interrupted cycle, swap real context and finally go on.
-    struct {
-        uint8_t cycle = 0;
-        bool active = false;
-        M65Context* ctx = nullptr;
-    } jumpOut;
+    // jump in, repeat execution of last opcode in dummy context till interrupted cycle, swap in real context and finally go on.
+
+    bool isDummy = false;
+    unsigned resumeCycle = 0;
 	
     M65Context() {
         

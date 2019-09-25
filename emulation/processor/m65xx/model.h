@@ -6,7 +6,7 @@
  * dont emulates the CMOS 65C02 ( Nec PC Engine )
  * 
  * usage: compile m6502.cpp and m6510.cpp, include this header in your program
- * NOTE: comment out following define so you don't need to compile m6510.cpp
+ * NOTE: when you commenting out following define, you don't need to compile m6510.cpp
  */
 #define SUPPORT_M6510
 
@@ -43,6 +43,12 @@ struct M65Model {
 	/** pulldown: external device force line low in input mode */  
     virtual auto updateIoLines( uint8_t pullup, uint8_t pulldown = 0 ) -> void {}
 	
+    /** jump out opcode when rdy is blocking execution. */
+    /** use this, if you need to update UI. auto resumes opcode at interrupted cycle with correct context */
+    /** it's slow, so don't use it for syncing purposes */
+    virtual auto leaveRdyHaltedOpcode( ) -> void = 0;
+
+    
 	/** 
      * set a prepared context by defining callbacks,
 	 * for resuming you have to set internal values too

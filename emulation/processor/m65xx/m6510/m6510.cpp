@@ -2,7 +2,7 @@
 #include "m6510.h"
 
 /**
- * the discharge time for bit 6 and 7 are temperature dependant
+ * the exact discharge time for bit 6 and 7 is temperature dependant.
  * it's hard to emulate in a digital environment
  */
 #define FALL_OFF_CYCLES 350000

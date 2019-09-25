@@ -3,7 +3,7 @@
 
 namespace MOS65FAMILY {
 
-auto M6502::read( uint16_t addr, bool lastCycle ) -> uint8_t {    
+template<uint8_t cycle> auto M6502::read( uint16_t addr, bool lastCycle ) -> uint8_t {         
     
     ctx->addrBus = addr;  
     
@@ -14,11 +14,22 @@ auto M6502::read( uint16_t addr, bool lastCycle ) -> uint8_t {
     if (lastCycle)
         sampleInterrupt(); 
     
-    ctx->memory.rdyLastCycle = false;
+    ctx->rdyLastCycle = false;
+    
+    if(ctx->isDummy) {
+        
+        if (ctx->resumeCycle == cycle) {
+            
+            restoreContext();
+            
+            addr = ctx->addrBus;
+        } else
+            return 0;
+    }  
     
     while( ctx->rdyLine ) { //cpu is halted in read mode only
         
-		ctx->memory.rdyLastCycle = true;
+		ctx->rdyLastCycle = true;
 		        		
         ctx->syncHi();                
         
@@ -26,7 +37,7 @@ auto M6502::read( uint16_t addr, bool lastCycle ) -> uint8_t {
         
         ctx->db = busWatch(); //on falling edge
         
-        if ( ctx->memory.xaa )
+        if ( ctx->xaa )
             A &= ctx->db;
                 
 		// rdy prolongs complete cycles, not half cycles
@@ -35,12 +46,12 @@ auto M6502::read( uint16_t addr, bool lastCycle ) -> uint8_t {
         handleSo();
         
         // cli or sei instruction executes now
-        if (ctx->memory.cli) {
+        if (ctx->cli) {
             I = false;
-            ctx->memory.cli = false;
-        } else if (ctx->memory.sei) {
+            ctx->cli = false;
+        } else if (ctx->sei) {
             I = true;
-            ctx->memory.sei = false;
+            ctx->sei = false;
         }
         
         // this behavior was observed in countless visual6502 tests
@@ -48,14 +59,11 @@ auto M6502::read( uint16_t addr, bool lastCycle ) -> uint8_t {
 		// in rdy repeated last cycle this is possible, because there is at least one cycle more running
         if (lastCycle)
             sampleInterrupt();    
-        
-        if (ctx->rdyInterrupt.active) {
-            M65Context* dummyContext = new M65Context;
-            dummyContext->rdyInterrupt.ctx = ctx;
-            dummyContext->rdyInterrupt.active = true;
-            dummyContext->IR = ctx->IR;
-            ctx = dummyContext;
-            break;
+       
+        if (dontBlockExecution) {
+            dontBlockExecution = false;
+            swapInDummyCtx( cycle );                                             
+            return 0;
         }
     }        
     
@@ -66,6 +74,17 @@ auto M6502::read( uint16_t addr, bool lastCycle ) -> uint8_t {
     detectInterrupt(); //happens during second half cycle ( falling edge of phi2 )
     
     return ctx->db;
+}
+
+auto M6502::swapInDummyCtx( unsigned resumeCycle ) -> void {    
+
+    dummyCtx->killed = ctx->killed;
+    dummyCtx->resumeCycle = resumeCycle;
+    dummyCtx->interruptSampled = ctx->interruptSampled;
+    dummyCtx->resetCompleted = ctx->resetCompleted;
+    dummyCtx->IR = ctx->IR;            
+
+    ctx = dummyCtx;   
 }
 
 auto M6502::write( uint16_t addr, uint8_t data, bool lastCycle ) -> void {    
@@ -92,9 +111,9 @@ auto M6502::write( uint16_t addr, uint8_t data, bool lastCycle ) -> void {
     detectInterrupt();	
 }
 
-auto M6502::loadZeroPage( uint8_t addr, bool lastCycle ) -> uint8_t {
+template<uint8_t cycle> auto M6502::loadZeroPage( uint8_t addr, bool lastCycle ) -> uint8_t {
     
-    return read( 0x0000 | addr, lastCycle );
+    return read<cycle>( 0x0000 | addr, lastCycle );
 }
 
 auto M6502::storeZeroPage( uint8_t addr, uint8_t data, bool lastCycle ) -> void {
@@ -102,14 +121,16 @@ auto M6502::storeZeroPage( uint8_t addr, uint8_t data, bool lastCycle ) -> void 
     write( 0x0000 | addr, data, lastCycle );
 }
 
-auto M6502::readPCInc( bool lastCycle ) -> uint8_t {
+template<uint8_t cycle> auto M6502::readPCInc( bool lastCycle ) -> uint8_t {
     
-    return read( ctx->pc++, lastCycle );
+    uint16_t addr = ctx->pc++;
+    
+    return read<cycle>( addr, lastCycle );
 }
 
-auto M6502::readPC( bool lastCycle ) -> uint8_t {
+template<uint8_t cycle> auto M6502::readPC( bool lastCycle ) -> uint8_t {
     
-    return read( ctx->pc, lastCycle );
+    return read<cycle>( ctx->pc, lastCycle );
 }
 
 auto M6502::pushStack( uint8_t data, bool lastCycle ) -> void {
@@ -117,14 +138,14 @@ auto M6502::pushStack( uint8_t data, bool lastCycle ) -> void {
     write( 0x100 | ctx->s--, data, lastCycle );
 }
 
-auto M6502::pullStack( bool lastCycle ) -> uint8_t {
+template<uint8_t cycle> auto M6502::pullStack( bool lastCycle ) -> uint8_t {
     
     /**
      * because of pre incrementing an idle cycle is needed before a series of pull requests.
      * bus is accessed with current sp for this idle cycle and value is discarded (rti, rts)
      */
     
-    return read( 0x100 | ++ctx->s, lastCycle );
+    return read<cycle>( 0x100 | ++ctx->s, lastCycle );
 }
 
 }

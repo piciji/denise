@@ -4,6 +4,16 @@
 #define PAGE_CROSSED(x, y) ( ( (uint16_t)x >> 8 ) != ( (uint16_t)y >> 8) )
 #define LAST true
 #define ALU (this->*alu)
+#define SAVE_REG( _reg, cmd ) switch(_reg) {case RegA: A = cmd; break; case RegS: S = cmd; break; \
+                                            case RegX: X = cmd; break; case RegY: Y = cmd; break; }
+
+#define GET_REG( _reg ) _reg == RegA ? A : (_reg == RegS ? S : (_reg == RegX ? X : (_reg == RegY ? Y : (_reg == RegAX ? (A & X) : A ))))
+
+#define SAVE_FLAG( val ) switch(flag) { case FlagC: C = val; break; case FlagN: N = val; break; \
+                                        case FlagZ: Z = val; break; case FlagV: V = val; break; \
+                                        case FlagI: I = val; break; case FlagD: D = val; break; }
+
+#define GET_FLAG flag == FlagC ? C : (flag == FlagN ? N : (flag == FlagZ ? Z : (flag == FlagV ? V : (flag == FlagI ? I : (flag == FlagD ? D : D) ))))
 
 namespace MOS65FAMILY {
 
@@ -13,9 +23,11 @@ auto M6502::indexedIndirect( Alu alu ) -> void {
 	A = ALU( read<5>( indexedIndirectAdr(), LAST ) );
 }
 
-auto M6502::indexedIndirectW( uint8_t data ) -> void {
-	   
-	write( indexedIndirectAdr(), data, LAST );
+template<M6502::Reg reg> auto M6502::indexedIndirectW( ) -> void {
+    
+    indexedIndirectAdr();
+    	       
+	write( ctx->absolute, GET_REG(reg), LAST );
 }
 
 //indirect indexed
@@ -24,153 +36,133 @@ auto M6502::indirectIndexed( Alu alu ) -> void {
 	A = ALU( read<5>( indirectIndexedAdr(), LAST ) );
 }
 
-auto M6502::indirectIndexedW( uint8_t data ) -> void {
+auto M6502::indirectIndexedW( ) -> void {
 	
-    write( indirectIndexedAdr( true ), data, LAST );    
+    write( indirectIndexedAdr( true ), A, LAST );    
 }
 
 //zero page
-auto M6502::zeroPage( Alu alu, uint8_t& data ) -> void {
+template<M6502::Reg reg> auto M6502::zeroPage( Alu alu ) -> void {
     
-    ctx->mem.zeroPage = readPCInc<1>();
+    ctx->zeroPage = readPCInc<1>();
     
-    if (alu)    
-        data = ALU( loadZeroPage<2>( ctx->mem.zeroPage, LAST ) );
-    else
-        loadZeroPage<2>( ctx->mem.zeroPage, LAST );
+    if (alu) {
+        SAVE_REG( reg, ALU( loadZeroPage<2>( ctx->zeroPage, LAST ) ) )
+    } else
+        loadZeroPage<2>( ctx->zeroPage, LAST );
 }
 
-auto M6502::zeroPage( Alu alu ) -> void {
-	
-	zeroPage( alu, A );
-}
-
-auto M6502::zeroPageW( uint8_t data ) -> void {
+template<M6502::Reg reg> auto M6502::zeroPageW( ) -> void {
     
-    auto zeroPage = readPCInc();
-    storeZeroPage( zeroPage, data, LAST );
+    ctx->zeroPage = readPCInc<1>();
+    storeZeroPage( ctx->zeroPage, GET_REG(reg), LAST );
 }
 
 auto M6502::zeroPageM( Alu alu ) -> void {
     
-    auto zeroPage = readPCInc();    
-    auto data = loadZeroPage( zeroPage );
+    ctx->zeroPage = readPCInc<1>();    
+    ctx->data = loadZeroPage<2>( ctx->zeroPage );
     
-    storeZeroPage( zeroPage, data ); // needs this cycle for ALU
-    storeZeroPage( zeroPage, ALU( data ), LAST );    
+    storeZeroPage( ctx->zeroPage, ctx->data ); // needs this cycle for ALU
+    storeZeroPage( ctx->zeroPage, ALU( ctx->data ), LAST );    
 }
 
 //zero page indexed
-auto M6502::zeroPageIndexed( uint8_t index, Alu alu, uint8_t& data ) -> void {
+template<M6502::Reg regIndex, M6502::Reg reg> auto M6502::zeroPageIndexed( Alu alu ) -> void {
     
-    uint8_t adr = zeroPageIndexedAdr( index );
+    ctx->zeroPage = zeroPageIndexedAdr<regIndex>( );
     
-    if (alu)
-        data = ALU( loadZeroPage( adr, LAST ) );
-    else
-        loadZeroPage( adr, LAST );
+    if (alu) {
+        SAVE_REG( reg, ALU( loadZeroPage<3>( ctx->zeroPage, LAST ) ) )
+    } else
+        loadZeroPage<3>( ctx->zeroPage, LAST );
 }
 
-auto M6502::zeroPageIndexed( uint8_t index, Alu alu ) -> void {
-	
-	zeroPageIndexed( index, alu, A );
-}
-
-auto M6502::zeroPageIndexedW( uint8_t index, uint8_t data ) -> void {
+template<M6502::Reg regIndex, M6502::Reg reg> auto M6502::zeroPageIndexedW() -> void {
     
-    uint8_t adr = zeroPageIndexedAdr( index );
-    storeZeroPage( adr, data, LAST );    
+    ctx->zeroPage = zeroPageIndexedAdr<regIndex>( );
+    storeZeroPage( ctx->zeroPage, GET_REG(reg), LAST );    
 }
 
 auto M6502::zeroPageIndexedM( Alu alu ) -> void {
     
-    uint8_t adr = zeroPageIndexedAdr( X );
+    ctx->zeroPage = zeroPageIndexedAdr<RegX>( );
     
-    auto data = loadZeroPage( adr );
-    storeZeroPage( adr, data );
-    storeZeroPage( adr, ALU( data ), LAST );
+    ctx->data = loadZeroPage<3>( ctx->zeroPage );
+    storeZeroPage( ctx->zeroPage, ctx->data );
+    storeZeroPage( ctx->zeroPage, ALU( ctx->data ), LAST );
 }
 
 //absolute
-auto M6502::absolute( Alu alu, uint8_t& data ) -> void {
+template<M6502::Reg reg> auto M6502::absolute( Alu alu ) -> void {
     
-    uint16_t absolute = absoluteAdr();
+    absoluteAdr();
 
-	if( alu )
-		data = ALU( read( absolute, LAST ) );
-	else
-		read( absolute, LAST );
+	if( alu ) {
+		SAVE_REG( reg, ALU( read<3>( ctx->absolute, LAST ) ) )
+	} else
+		read<3>( ctx->absolute, LAST );
 }
 
-auto M6502::absolute( Alu alu ) -> void {
-	
-	absolute( alu, A );
-}
-
-auto M6502::absoluteW( uint8_t data ) -> void {
+template<M6502::Reg reg> auto M6502::absoluteW( ) -> void {
     
-    write( absoluteAdr(), data, LAST );
+    write( absoluteAdr(), GET_REG(reg), LAST );
 }
 
 auto M6502::absoluteM( Alu alu ) -> void {
 
-	uint16_t absolute = absoluteAdr();
-    auto data = read( absolute );
+	absoluteAdr();
+    ctx->data = read<3>( ctx->absolute );
     
-    write( absolute, data );
-    write( absolute, ALU( data ), LAST );
+    write( ctx->absolute, ctx->data );
+    write( ctx->absolute, ALU( ctx->data ), LAST );
 }
 
 // absolute indexed
-auto M6502::absoluteIndexed( uint8_t index, Alu alu, uint8_t& data ) -> void {
+template<M6502::Reg regIndex, M6502::Reg reg> auto M6502::absoluteIndexed( Alu alu ) -> void {
     
-    uint16_t absIndexed = absoluteIndexedAdr( index );
+    absoluteIndexedAdr<regIndex>( );
 
 	if ( alu )
-		data = ALU( read( absIndexed, LAST ) );
+		SAVE_REG( reg, ALU( read<4>( ctx->absIndexed, LAST ) ) )
 	else
-		read( absIndexed, LAST );
+		read<4>( ctx->absIndexed, LAST );
 }
 
-auto M6502::absoluteIndexed( uint8_t index, Alu alu ) -> void {
-	
-	absoluteIndexed( index, alu, A);
-}
-
-auto M6502::absoluteIndexedW( uint8_t index, uint8_t data ) -> void {
+template<M6502::Reg regIndex, M6502::Reg reg> auto M6502::absoluteIndexedW( ) -> void {
     
-	uint16_t absIndexed = absoluteIndexedAdr( index, true );
+	absoluteIndexedAdr<regIndex>( true );
 		
-    write( absIndexed, data, LAST );
+    write( ctx->absIndexed, GET_REG(reg), LAST );
 }
 
-auto M6502::absoluteIndexedM( uint8_t index, Alu alu ) -> void {
+template<M6502::Reg regIndex> auto M6502::absoluteIndexedM( Alu alu ) -> void {
 	
-	uint16_t absIndexed = absoluteIndexedAdr( index, true );
+	absoluteIndexedAdr<regIndex>( true );
 	
-    auto data = read( absIndexed );
+    ctx->data = read<4>( ctx->absIndexed );
 
-    write( absIndexed, data );
+    write( ctx->absIndexed, ctx->data );
 
-    write( absIndexed, ALU( data ), LAST );
+    write( ctx->absIndexed, ALU( ctx->data ), LAST );
 }
 
 //immediate
-auto M6502::immediate( Alu alu, uint8_t& data ) -> void {
+template<M6502::Reg reg> auto M6502::immediate( Alu alu ) -> void {
 	
-	data = ALU( readPCInc( LAST ) );
+	SAVE_REG( reg, ALU( readPCInc<1>( LAST ) ) )
 }
 
 //implied
-auto M6502::implied(Alu alu, uint8_t& data) -> void {
+template<M6502::Reg reg> auto M6502::implied(Alu alu) -> void {
 	
-	readPC( LAST );
-	data = ALU( data );
+	readPC<1>( LAST );
+	SAVE_REG( reg, ALU( GET_REG( reg ) ) )
 }
 
 auto M6502::nop() -> void {
     
-    readPC( LAST );
+    readPC<1>( LAST );
 }
 
 auto M6502::brk() -> void {
@@ -180,135 +172,135 @@ auto M6502::brk() -> void {
 
 auto M6502::rti() -> void {
     
-    readPCInc();
-    read( 0x100 | S ); //cycle to pre increment sp, fetched value is discarded
+    readPCInc<1>();
+    read<2>( 0x100 | S ); //cycle to pre increment sp, fetched value is discarded
     
-    setFlags( pullStack() );
+    setFlags( pullStack<3>() );
     
-    PC = pullStack();
-    PC |= pullStack( LAST ) << 8;   
+    PC = pullStack<4>();
+    PC |= pullStack<5>( LAST ) << 8;   
 }
 
 auto M6502::rts() -> void {
     
-    readPCInc();
-    read( 0x100 | S );
+    readPCInc<1>();
+    read<2>( 0x100 | S );
         
-    PC = pullStack();
-    PC |= pullStack() << 8;   
+    PC = pullStack<3>();
+    PC |= pullStack<4>() << 8;   
     
-    readPCInc( LAST );
+    readPCInc<5>( LAST );
 }
 
-auto M6502::clear( bool& flag ) -> void {
+template<M6502::Flag flag> auto M6502::clear( ) -> void {
     // I flag change is too late and not recognized for interrupt sampling at the end of this opcode
     // but when cpu enters rdy wait mode then the flag change is recognized in second cycle
     // we mark an upcomming state change
 
-	ctx->memory.cli = &flag == &I;    
-    readPC( LAST );
-    ctx->memory.cli = false;
-    flag = false; 
+	ctx->cli = flag == FlagI;    
+    readPC<1>( LAST );
+    ctx->cli = false;
+    SAVE_FLAG( false )
     // prevent external change for next two cycles
-    ctx->memory.soBlock = &flag == &V ? 2 : 0;
+    ctx->soBlock = flag == FlagV ? 2 : 0;
 }
 
-auto M6502::set( bool& flag ) -> void {
+template<M6502::Flag flag> auto M6502::set( ) -> void {
 
-	ctx->memory.sei = &flag == &I;
-    readPC( LAST );
-    ctx->memory.sei = false;
-    flag = true; 
+	ctx->sei = flag == FlagI;
+    readPC<1>( LAST );
+    ctx->sei = false;
+    SAVE_FLAG( true )
 }
 
 auto M6502::jmpAbsolute() -> void {
     
-    uint16_t newPC = readPCInc();
-    newPC |= readPC( LAST ) << 8;
-    PC = newPC;
+    ctx->dataW = readPCInc<1>();
+    ctx->dataW |= readPC<2>( LAST ) << 8;
+    PC = ctx->dataW;
 }
 
 auto M6502::jmpIndirect() -> void {
     
-    uint8_t absoluteLo = readPCInc();
-    uint8_t absoluteHi = readPCInc();
+    ctx->data = readPCInc<1>();
+    ctx->dataH = readPCInc<2>();
     
-    uint16_t newPC = read( absoluteHi << 8 | absoluteLo++ );        
-    newPC |= read( absoluteHi << 8 | absoluteLo, LAST ) << 8;
+    ctx->dataW = read<3>( ctx->dataH << 8 | ctx->data++ );        
+    ctx->dataW |= read<4>( ctx->dataH << 8 | ctx->data, LAST ) << 8;
     
-    PC = newPC;
+    PC = ctx->dataW;
 }
 
 auto M6502::jsrAbsolute() -> void {
 
-    uint16_t newPC = readPCInc();
-    newPC |= readPC() << 8;   
+    ctx->dataW = readPCInc<1>();
+    ctx->dataW |= readPC<2>() << 8;   
     
     pushStack( PC >> 8 );
     pushStack( PC & 0xff );
 
-    readPC( LAST );
+    readPC<3>( LAST );
 
-    PC = newPC;
+    PC = ctx->dataW;
 }
 
-auto M6502::branch( bool& flag, bool state ) -> void {
+template<M6502::Flag flag> auto M6502::branch( bool state ) -> void {
     
-    int8_t displacement = readPCInc( LAST );  //polls here for interrupts always, even if branch is taken
+    ctx->displacement = readPCInc<1>( LAST );  //polls here for interrupts always, even if branch is taken
     
     // why so complicated? because of possible external change of overflow bit in third half cycle
-    if ( flag != state )
-        return;
-        
-    bool addCycle = PAGE_CROSSED( PC, PC + displacement );
+    if ( !ctx->isDummy && ((GET_FLAG) != state) )
+        return;            
     
-    readPC( ); //don't polls here, even if this is final cycle
+    readPC<2>( ); //don't polls here, even if this is final cycle
     
-    uint16_t branchPC = PC + displacement;
+    bool addCycle = PAGE_CROSSED( PC, PC + ctx->displacement );
     
-    if ( addCycle ) {                
+    ctx->dataW = PC + ctx->displacement;
+    
+    if ( ctx->isDummy || addCycle ) {                
         
-        setPCL( PC + displacement );
+        setPCL( PC + ctx->displacement );
         
-        readPC( LAST ); //polls here for a second time
+        readPC<3>( LAST ); //polls here for a second time
     }
     
-    PC = branchPC;
+    PC = ctx->dataW;
 }
 
-auto M6502::transfer(uint8_t src, uint8_t& target, bool flag) -> void {
+template<M6502::Reg src, M6502::Reg target> auto M6502::transfer(bool flag) -> void {
     
-    readPC( LAST );
-    target = flag ? this->_ld( src ) : src;    
+    readPC<1>( LAST );
+    SAVE_REG(target, ( flag ? this->_ld( GET_REG(src) ) : GET_REG(src) ) )   
 }
 //pull stack
 auto M6502::plp() -> void {
     
-    readPC();
-    read( 0x100 | S );
+    readPC<1>();
+    read<2>( 0x100 | S );
     
-    setFlags( pullStack( LAST ) );
+    setFlags( pullStack<3>( LAST ) );
 }
 
 auto M6502::pla() -> void {
     
-    readPC();
-    read( 0x100 | S );
+    readPC<1>();
+    read<2>( 0x100 | S );
     
-    A = this->_ld( pullStack( LAST ) );    
+    A = this->_ld( pullStack<3>( LAST ) );    
 }
 //push stack
 auto M6502::php() -> void {
     
-    readPC();
-    ctx->memory.storeFlags = true;
+    readPC<1>();
+    ctx->storeFlags = true;
     pushStack( getFlags() | 0x30, LAST );
-    ctx->memory.storeFlags = false;
+    ctx->storeFlags = false;
 }
 
 auto M6502::pha() -> void {
     
-    readPC();    
+    readPC<1>();    
     pushStack( A, LAST);
 }
 
@@ -317,3 +309,7 @@ auto M6502::pha() -> void {
 #undef PAGE_CROSSED
 #undef LAST
 #undef ALU
+#undef SAVE_REG
+#undef GET_REG
+#undef SAVE_FLAG
+#undef GET_FLAG

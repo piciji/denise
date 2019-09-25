@@ -6,6 +6,8 @@
 #define ALU (this->*alu)
 #define ALU2 (this->*alu2)
 
+#define GET_REG( _reg ) _reg == RegA ? A : (_reg == RegS ? S : (_reg == RegX ? X : (_reg == RegY ? Y : (_reg == RegAX ? (A & X) : A ))))
+
 namespace MOS65FAMILY {
 
 //lax
@@ -25,40 +27,40 @@ auto M6502::indirectIndexedLax( ) -> void {
 
 auto M6502::zeroPageLax() -> void {
 	
-	zeroPage( fp(ld), A );
+	zeroPage<RegA>( fp(ld) );
 	
 	X = A;
 }
 
 auto M6502::zeroPageIndexedLax() -> void {
 	
-	zeroPageIndexed( Y, fp(ld), A );
+	zeroPageIndexed<RegY, RegA>( fp(ld) );
 	
 	X = A;
 }
 
 auto M6502::absoluteLax() -> void {
 	
-	absolute( fp(ld), A );
+	absolute<RegA>( fp(ld) );
 	
 	X = A;
 }
 
 auto M6502::absoluteIndexedLax() -> void {
 	
-	absoluteIndexed( Y, fp(ld), A);
+	absoluteIndexed<RegY, RegA>( fp(ld) );
 	
 	X = A;
 }
 
 auto M6502::immediate() -> void {
 	
-	readPCInc( LAST );
+	readPCInc<1>( LAST );
 }
 
 auto M6502::immediateLax() -> void {
     
-	immediate( fp(lax), A );
+	immediate<RegA>( fp(lax) );
 	
 	X = A;
 }
@@ -66,115 +68,115 @@ auto M6502::immediateLax() -> void {
 //las
 auto M6502::absoluteIndexedLas() -> void {
 	
-	absoluteIndexed( Y, fp(las), A);
+	absoluteIndexed<RegY, RegA>( fp(las));
 	
 	X = S = A;
 }
 
 //shx, shy
-auto M6502::absoluteIndexedWSh( uint8_t index, uint8_t index2 ) -> void {
+template<M6502::Reg regIndex, M6502::Reg reg> auto M6502::absoluteIndexedWSh( ) -> void {
     
-    uint16_t absIndexed = absoluteIndexedAdr( index, true );    
+    absoluteIndexedAdr<regIndex>(  true );    
 	
-	H1AndedWrite( absIndexed, index2 );    
+	H1AndedWrite( GET_REG( reg ) );    
 }
 //ahx
 auto M6502::absoluteIndexedWAhx() -> void {
     
-    uint16_t absIndexed = absoluteIndexedAdr( Y, true );  
+    absoluteIndexedAdr<RegY>( true );  
 	
-	H1AndedWrite( absIndexed, A & X );	
+	H1AndedWrite( A & X );	
 }
 
 //tas
 auto M6502::absoluteIndexedWTas() -> void {
     
-    uint16_t absIndexed = absoluteIndexedAdr( Y, true );    		
+    absoluteIndexedAdr<RegY>( true );    		
 	
 	S = A & X;
 	
-	H1AndedWrite( absIndexed, A & X );
+	H1AndedWrite( A & X );
 }
 
 //anc
 auto M6502::immediateAnc() -> void {
 	
-	immediate( fp(and), A );	
+	immediate<RegA>( fp(and) );	
 	
 	C = N;
 }
 //alr
 auto M6502::immediateAlr() -> void {
     
-	A = (this->_lsr)( (this->_and)( readPCInc( LAST ) ) );
+	A = (this->_lsr)( (this->_and)( readPCInc<1>( LAST ) ) );
 }
 //arr
 auto M6502::immediateArr() -> void {
     
-	A = (this->_arr)( readPCInc( LAST ) );
+	A = (this->_arr)( readPCInc<1>( LAST ) );
 }
 //ane
 auto M6502::immediateAne() -> void {
     
-	ctx->memory.xaa = true;
+	ctx->xaa = true;
 
-    A = (this->_ane)( readPCInc( LAST ) );
+    A = (this->_ane)( readPCInc<1>( LAST ) );
 	
-	ctx->memory.xaa = false;
+	ctx->xaa = false;
 }
 //sbx
 auto M6502::immediateSbx() -> void {
 	
-	X = (this->_sbx)( readPCInc( LAST ) );
+	X = (this->_sbx)( readPCInc<1>( LAST ) );
 }
 
 //kill
 auto M6502::kill() -> void {
 
-    readPCInc();
+    readPCInc<1>();
     
-    read(0xffff);
-    read(0xfffe);
-    read(0xfffe);
+    read<2>(0xffff);
+    read<3>(0xfffe);
+    read<4>(0xfffe);
     
-    read(0xffff); //now reading from 0xffff endless
+    read<5>(0xffff); //now reading from 0xffff endless
 	
 	ctx->killed = true;
 }
 
 auto M6502::indexedIndirectM( Alu alu, Alu alu2 ) -> void {
     
-    auto absolute = indexedIndirectAdr();
+    indexedIndirectAdr();
     
-	uint8_t data = read( absolute );
-    write( absolute, data );
+	ctx->data = read<5>( ctx->absolute );
+    write( ctx->absolute, ctx->data );
     
-    data = ALU( data );
+    ctx->data = ALU( ctx->data );
     
-    write( absolute, data, LAST );
+    write( ctx->absolute, ctx->data, LAST );
     
-    A = ALU2( data );
+    A = ALU2( ctx->data );
 }
 
 auto M6502::indirectIndexedWAhx() -> void {
 	
-	uint16_t absIndexed = indirectIndexedAdr( true );
+	indirectIndexedAdr( true );
 	
-	H1AndedWrite( absIndexed, A & X );	
+	H1AndedWrite( A & X );	
 }
 
 auto M6502::indirectIndexedM( Alu alu, Alu alu2 ) -> void {
 	
-    auto absolute = indirectIndexedAdr( true );
+    indirectIndexedAdr( true );
     
-    uint8_t data = read( absolute );    
-    write( absolute, data );
+    ctx->data = read<5>( ctx->absIndexed );    
+    write( ctx->absIndexed, ctx->data );
     
-    data = ALU( data );
+    ctx->data = ALU( ctx->data );
     
-	write( absolute, data, LAST );
+	write( ctx->absIndexed, ctx->data, LAST );
     
-    A = ALU2( data );
+    A = ALU2( ctx->data );
 }
 
 auto M6502::zeroPageIndexedM( Alu alu, Alu alu2 ) -> void {
@@ -198,27 +200,27 @@ auto M6502::absoluteM( Alu alu, Alu alu2 ) -> void {
 	A = ALU2( ctx->db );
 }
 
-auto M6502::absoluteIndexedM( uint8_t index, Alu alu, Alu alu2 ) -> void {
+template<M6502::Reg regIndex> auto M6502::absoluteIndexedM( Alu alu, Alu alu2 ) -> void {
 
-	absoluteIndexedM( index, alu );
+	absoluteIndexedM<regIndex>( alu );
 			
 	A = ALU2( ctx->db );
 }
 
-auto M6502::H1AndedWrite( uint16_t absIndexed, uint8_t anded ) -> void {
+auto M6502::H1AndedWrite( uint8_t anded ) -> void {
 	
-	uint8_t strange = (ctx->memory.absolute >> 8) + 1;
+	uint8_t strange = (ctx->absolute >> 8) + 1;
 	strange &= anded;
 	
 	uint8_t data = anded;
 	
-	if ( !ctx->memory.rdyLastCycle )		
+	if ( !ctx->rdyLastCycle )		
 		data = strange;
 	
-	if (ctx->memory.boundaryCrossing)
-		absIndexed = (strange << 8) | (absIndexed & 0xff);
+	if (ctx->boundaryCrossing)
+		ctx->absIndexed = (strange << 8) | (ctx->absIndexed & 0xff);
     
-    write( absIndexed, data, LAST );
+    write( ctx->absIndexed, data, LAST );
 }
 
 }

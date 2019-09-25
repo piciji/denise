@@ -22,9 +22,13 @@ namespace MOS65FAMILY {
 
 struct M6502 : M65Model {
     
-    M6502() {}
+    M6502();
     
     M65Context* ctx = nullptr;
+    M65Context* dummyCtx = nullptr;
+    M65Context* workCtx = nullptr;
+    
+    bool dontBlockExecution = false;
     
 	auto power() -> void;
     virtual auto reset() -> void;
@@ -39,6 +43,11 @@ struct M6502 : M65Model {
     auto setContext( M65Context* context ) -> void;
     auto dataBus() -> uint8_t;	
     auto addressBus() -> uint16_t;
+    
+    auto leaveRdyHaltedOpcode() -> void;
+    
+    enum Reg { RegA, RegS, RegX, RegY, RegAX };
+    enum Flag { FlagC, FlagN, FlagZ, FlagV, FlagI, FlagD };
     
 protected:    
     using Alu = auto (M6502::*)(uint8_t) -> uint8_t;
@@ -55,15 +64,18 @@ protected:
 	virtual auto busRead( uint16_t addr ) -> uint8_t;
 	virtual auto busWrite( uint16_t addr, uint8_t data ) -> void;
     virtual auto busWatch() -> uint8_t;
+    auto resetRoutine() -> void;
+    auto restoreContext() -> void;
+    auto swapInDummyCtx(unsigned resumeCycle) -> void;
 	
     //memory
-    auto read( uint16_t addr, bool lastCycle = false ) -> uint8_t;
-    auto readPCInc( bool lastCycle = false ) -> uint8_t;
-    auto readPC( bool lastCycle = false ) -> uint8_t;
+    template<uint8_t cycle = 0> auto read( uint16_t addr, bool lastCycle = false ) -> uint8_t;
+    template<uint8_t cycle = 0> auto readPCInc( bool lastCycle = false ) -> uint8_t;
+    template<uint8_t cycle = 0> auto readPC( bool lastCycle = false ) -> uint8_t;
     auto write( uint16_t addr, uint8_t data, bool lastCycle = false ) -> void;
     auto pushStack( uint8_t data, bool lastCycle = false ) -> void;
-    auto pullStack( bool lastCycle = false ) -> uint8_t;   
-	auto loadZeroPage( uint8_t addr, bool lastCycle = false ) -> uint8_t;
+    template<uint8_t cycle = 0> auto pullStack( bool lastCycle = false ) -> uint8_t;   
+	template<uint8_t cycle = 0> auto loadZeroPage( uint8_t addr, bool lastCycle = false ) -> uint8_t;
 	auto storeZeroPage( uint8_t addr, uint8_t data, bool lastCycle = false ) -> void;
     
     //logic
@@ -92,76 +104,72 @@ protected:
 	//address
 	auto indexedIndirectAdr() -> uint16_t;
 	auto indirectIndexedAdr( bool forceExtraCycle = false ) -> uint16_t;
-	auto zeroPageIndexedAdr( uint8_t index ) -> uint8_t;
+	template<Reg regIndex> auto zeroPageIndexedAdr( ) -> uint8_t;
 	auto absoluteAdr( ) -> uint16_t;
-	auto absoluteIndexedAdr( uint8_t index, bool forceExtraCycle = false ) -> uint16_t;
+	template<Reg regIndex> auto absoluteIndexedAdr( bool forceExtraCycle = false ) -> uint16_t;
 	
     //opcodes
-	virtual auto indexedIndirect( Alu alu ) -> void;
-	virtual auto indexedIndirectW( uint8_t data ) -> void;
-	virtual auto indirectIndexed( Alu alu ) -> void;
-	virtual auto indirectIndexedW( uint8_t data ) -> void;
-	virtual auto zeroPage( Alu alu, uint8_t& data ) -> void;
-	virtual auto zeroPage( Alu alu = nullptr ) -> void;
-	virtual auto zeroPageW( uint8_t data ) -> void;
-	virtual auto zeroPageM( Alu alu ) -> void;	
-	virtual auto zeroPageIndexed( uint8_t index, Alu alu, uint8_t& data ) -> void;
-	virtual auto zeroPageIndexed( uint8_t index, Alu alu = nullptr ) -> void;
-	virtual auto zeroPageIndexedW( uint8_t index, uint8_t data ) -> void;
-	virtual auto zeroPageIndexedM( Alu alu ) -> void;
-	virtual auto absolute( Alu alu, uint8_t& data ) -> void;
-	virtual auto absolute( Alu alu = nullptr ) -> void;
-	virtual auto absoluteW( uint8_t data ) -> void;
-	virtual auto absoluteM( Alu alu ) -> void;
-	virtual auto absoluteIndexed( uint8_t index, Alu alu, uint8_t& data ) -> void;
-	virtual auto absoluteIndexed( uint8_t index, Alu alu = nullptr ) -> void;
-	virtual auto absoluteIndexedW( uint8_t index, uint8_t data ) -> void;
-	virtual auto absoluteIndexedM( uint8_t index, Alu alu ) -> void;
-	virtual auto immediate( Alu alu, uint8_t& data ) -> void;	
-	virtual auto implied(Alu alu, uint8_t& data) -> void;
-    virtual auto nop() -> void;
-    virtual auto rti() -> void;
-    virtual auto rts() -> void;
-    virtual auto brk() -> void;
-    virtual auto clear( bool& flag ) -> void;
-    virtual auto set( bool& flag ) -> void;
-    virtual auto jmpAbsolute() -> void;
-    virtual auto jmpIndirect() -> void;
-    virtual auto jsrAbsolute() -> void;
-    virtual auto branch( bool& flag, bool state ) -> void;
-    virtual auto plp() -> void;
-    virtual auto php() -> void;
-	virtual auto pha() -> void;
-	virtual auto pla() -> void;
-    virtual auto transfer(uint8_t src, uint8_t& target, bool flag) -> void;
+	auto indexedIndirect( Alu alu ) -> void;
+	template<Reg reg> auto indexedIndirectW( ) -> void;
+	auto indirectIndexed( Alu alu ) -> void;
+	auto indirectIndexedW( ) -> void;
+	template<Reg reg = RegA> auto zeroPage( Alu alu = nullptr) -> void;
+	template<Reg reg> auto zeroPageW( ) -> void;
+	auto zeroPageM( Alu alu ) -> void;	
+	template<Reg regIndex, Reg reg = RegA> auto zeroPageIndexed( Alu alu = nullptr ) -> void;
+	template<Reg regIndex, Reg reg> auto zeroPageIndexedW( ) -> void;
+	auto zeroPageIndexedM( Alu alu ) -> void;
+	template<Reg reg = RegA> auto absolute( Alu alu = nullptr ) -> void;
+	template<Reg reg = RegA> auto absoluteW( ) -> void;
+	auto absoluteM( Alu alu ) -> void;
+	template<Reg regIndex, Reg reg = RegA> auto absoluteIndexed( Alu alu = nullptr ) -> void;
+	template<Reg regIndex, Reg reg> auto absoluteIndexedW() -> void;
+	template<Reg regIndex> auto absoluteIndexedM( Alu alu ) -> void;
+	template<Reg reg> auto immediate( Alu alu ) -> void;	
+	template<Reg reg> auto implied(Alu alu) -> void;
+    auto nop() -> void;
+    auto rti() -> void;
+    auto rts() -> void;
+    auto brk() -> void;
+    template<Flag flag> auto clear( ) -> void;
+    template<Flag flag> auto set( ) -> void;
+    auto jmpAbsolute() -> void;
+    auto jmpIndirect() -> void;
+    auto jsrAbsolute() -> void;
+    template<Flag flag> auto branch( bool state ) -> void;
+    auto plp() -> void;
+    auto php() -> void;
+	auto pha() -> void;
+	auto pla() -> void;
+    template<Reg src, Reg target> auto transfer(bool flag) -> void;
     
 	//undocumented opcodes        
-	virtual auto indexedIndirectLax( ) -> void;
-	virtual auto indirectIndexedLax( ) -> void;
-    virtual auto zeroPageM( Alu alu, Alu alu2 ) -> void;
-	virtual auto zeroPageLax() -> void;
-	virtual auto zeroPageIndexedLax() -> void;
-	virtual auto absoluteLax() -> void;
-	virtual auto absoluteIndexedLax() -> void;
-    virtual auto immediate() -> void;
-	virtual auto immediateLax() -> void;
-	virtual auto absoluteIndexedLas() -> void;
-	virtual auto absoluteIndexedWSh( uint8_t index, uint8_t index2 ) -> void;
-	virtual auto absoluteIndexedWAhx() -> void;
-	virtual auto absoluteIndexedWTas() -> void;
-	virtual auto immediateAnc() -> void;
-	virtual auto immediateAlr() -> void;
-	virtual auto immediateArr() -> void;
-	virtual auto immediateAne() -> void;
-	virtual auto immediateSbx() -> void;
-	virtual auto kill() -> void;
-	virtual auto indexedIndirectM( Alu alu, Alu alu2 ) -> void;
-	virtual auto indirectIndexedWAhx() -> void;
-	virtual auto indirectIndexedM( Alu alu, Alu alu2 ) -> void;
-	virtual auto zeroPageIndexedM( Alu alu, Alu alu2 ) -> void;
-	virtual auto absoluteM( Alu alu, Alu alu2 ) -> void;
-	virtual auto absoluteIndexedM( uint8_t index, Alu alu, Alu alu2 ) -> void;
-	auto H1AndedWrite( uint16_t absIndexed, uint8_t anded ) -> void;
+	auto indexedIndirectLax( ) -> void;
+	auto indirectIndexedLax( ) -> void;
+    auto zeroPageM( Alu alu, Alu alu2 ) -> void;
+	auto zeroPageLax() -> void;
+	auto zeroPageIndexedLax() -> void;
+	auto absoluteLax() -> void;
+	auto absoluteIndexedLax() -> void;
+    auto immediate() -> void;
+	auto immediateLax() -> void;
+	auto absoluteIndexedLas() -> void;
+	template<Reg regIndex, Reg reg> auto absoluteIndexedWSh( ) -> void;
+	auto absoluteIndexedWAhx() -> void;
+	auto absoluteIndexedWTas() -> void;
+	auto immediateAnc() -> void;
+	auto immediateAlr() -> void;
+	auto immediateArr() -> void;
+	auto immediateAne() -> void;
+	auto immediateSbx() -> void;
+	auto kill() -> void;
+	auto indexedIndirectM( Alu alu, Alu alu2 ) -> void;
+	auto indirectIndexedWAhx() -> void;
+	auto indirectIndexedM( Alu alu, Alu alu2 ) -> void;
+	auto zeroPageIndexedM( Alu alu, Alu alu2 ) -> void;
+	auto absoluteM( Alu alu, Alu alu2 ) -> void;
+	template<Reg regIndex> auto absoluteIndexedM( Alu alu, Alu alu2 ) -> void;
+	auto H1AndedWrite( uint8_t anded ) -> void;
 };
 
 }

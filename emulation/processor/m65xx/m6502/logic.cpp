@@ -93,7 +93,7 @@ auto M6502::_bit( uint8_t data ) -> uint8_t {
     Z = (A & data) == 0;
     V = (data >> 6) & 1;
     N = negative( data );
-    ctx->memory.soBlock = 1;
+    ctx->soBlock = 1;
     
     return A;
 }
@@ -181,7 +181,7 @@ auto M6502::_adc( uint8_t data ) -> uint8_t {
     }    
     
     C = res >= 0x100;
-    ctx->memory.soBlock = 1;
+    ctx->soBlock = 1;
 	
     return (uint8_t) res;
 }
@@ -209,7 +209,7 @@ auto M6502::_sbc( uint8_t data ) -> uint8_t {
         
         res = res2;
     }
-    ctx->memory.soBlock = 1;
+    ctx->soBlock = 1;
        
     return (uint8_t)res;
 }
@@ -260,7 +260,7 @@ auto M6502::_arr( uint8_t data ) -> uint8_t {
     Z = zero( res );
     N = negative( res );
     
-    ctx->memory.soBlock = 1;
+    ctx->soBlock = 1;
 
     return res;
 }
