@@ -16,11 +16,11 @@ template<uint8_t cycle> auto M6502::read( uint16_t addr, bool lastCycle ) -> uin
     
     ctx->rdyLastCycle = false;
     
-    if(ctx->isDummy) {
+    if(workCtx->useDummy) {
         
-        if (ctx->resumeCycle == cycle) {
+        if (workCtx->resumeCycle == cycle) {
             
-            restoreContext();
+            restoreContext(); 
             
             addr = ctx->addrBus;
         } else
@@ -62,7 +62,10 @@ template<uint8_t cycle> auto M6502::read( uint16_t addr, bool lastCycle ) -> uin
        
         if (dontBlockExecution) {
             dontBlockExecution = false;
-            swapInDummyCtx( cycle );                                             
+            ctx->resumeCycle = cycle;
+            ctx->useDummy = true;
+            // swap dummy in
+            ctx = ctx->dummyCtx;                                           
             return 0;
         }
     }        
@@ -74,17 +77,6 @@ template<uint8_t cycle> auto M6502::read( uint16_t addr, bool lastCycle ) -> uin
     detectInterrupt(); //happens during second half cycle ( falling edge of phi2 )
     
     return ctx->db;
-}
-
-auto M6502::swapInDummyCtx( unsigned resumeCycle ) -> void {    
-
-    dummyCtx->killed = ctx->killed;
-    dummyCtx->resumeCycle = resumeCycle;
-    dummyCtx->interruptSampled = ctx->interruptSampled;
-    dummyCtx->resetCompleted = ctx->resetCompleted;
-    dummyCtx->IR = ctx->IR;            
-
-    ctx = dummyCtx;   
 }
 
 auto M6502::write( uint16_t addr, uint8_t data, bool lastCycle ) -> void {    

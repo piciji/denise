@@ -22,10 +22,9 @@ namespace MOS65FAMILY {
 
 struct M6502 : M65Model {
     
-    M6502();
+    M6502() {}
     
     M65Context* ctx = nullptr;
-    M65Context* dummyCtx = nullptr;
     M65Context* workCtx = nullptr;
     
     bool dontBlockExecution = false;
@@ -66,16 +65,15 @@ protected:
     virtual auto busWatch() -> uint8_t;
     auto resetRoutine() -> void;
     auto restoreContext() -> void;
-    auto swapInDummyCtx(unsigned resumeCycle) -> void;
 	
     //memory
-    template<uint8_t cycle = 0> auto read( uint16_t addr, bool lastCycle = false ) -> uint8_t;
-    template<uint8_t cycle = 0> auto readPCInc( bool lastCycle = false ) -> uint8_t;
-    template<uint8_t cycle = 0> auto readPC( bool lastCycle = false ) -> uint8_t;
+    template<uint8_t cycle> auto read( uint16_t addr, bool lastCycle = false ) -> uint8_t;
+    template<uint8_t cycle> auto readPCInc( bool lastCycle = false ) -> uint8_t;
+    template<uint8_t cycle> auto readPC( bool lastCycle = false ) -> uint8_t;
     auto write( uint16_t addr, uint8_t data, bool lastCycle = false ) -> void;
     auto pushStack( uint8_t data, bool lastCycle = false ) -> void;
-    template<uint8_t cycle = 0> auto pullStack( bool lastCycle = false ) -> uint8_t;   
-	template<uint8_t cycle = 0> auto loadZeroPage( uint8_t addr, bool lastCycle = false ) -> uint8_t;
+    template<uint8_t cycle> auto pullStack( bool lastCycle = false ) -> uint8_t;   
+	template<uint8_t cycle> auto loadZeroPage( uint8_t addr, bool lastCycle = false ) -> uint8_t;
 	auto storeZeroPage( uint8_t addr, uint8_t data, bool lastCycle = false ) -> void;
     
     //logic

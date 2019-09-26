@@ -139,10 +139,11 @@ struct M65Context {
     // remember cycle position within opcode, save context, execute opcode in a dummy context, jump out ... do external stuff
     // jump in, repeat execution of last opcode in dummy context till interrupted cycle, swap in real context and finally go on.
 
-    bool isDummy = false;
-    unsigned resumeCycle = 0;
+    bool useDummy = false;
+    uint8_t resumeCycle = 0;
+    M65Context* dummyCtx = nullptr;
 	
-    M65Context() {
+    M65Context(bool createDummy = true) {
         
         read = [](uint16_t) { return 0; };
         write = [](uint16_t, uint8_t) { };
@@ -150,6 +151,9 @@ struct M65Context {
         syncHi = []() {};
         syncLo = []() {};
 		updatePort = [](uint8_t, uint8_t) {};
+        
+        if (createDummy)
+            dummyCtx = new M65Context(false);
     }
 };
 

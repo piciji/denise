@@ -249,7 +249,7 @@ template<M6502::Flag flag> auto M6502::branch( bool state ) -> void {
     ctx->displacement = readPCInc<1>( LAST );  //polls here for interrupts always, even if branch is taken
     
     // why so complicated? because of possible external change of overflow bit in third half cycle
-    if ( !ctx->isDummy && ((GET_FLAG) != state) )
+    if ( !workCtx->useDummy && ((GET_FLAG) != state) )
         return;            
     
     readPC<2>( ); //don't polls here, even if this is final cycle
@@ -258,7 +258,7 @@ template<M6502::Flag flag> auto M6502::branch( bool state ) -> void {
     
     ctx->dataW = PC + ctx->displacement;
     
-    if ( ctx->isDummy || addCycle ) {                
+    if ( workCtx->useDummy || addCycle ) {                
         
         setPCL( PC + ctx->displacement );
         

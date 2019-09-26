@@ -139,8 +139,7 @@ auto System::serialize(Emulator::Serializer& s) -> void {
     glueLogic->serialize( s );
     powerSupply->serialize( s );
     
-    serialize6502( s, cpuCtx );    
-    //serialize6502( s, cpu-> );    
+    serialize6502( s, cpuCtx );       
 }
 
 auto System::serialize6502( Emulator::Serializer& s, MOS65Context* cpuCtx ) -> void {
@@ -198,6 +197,9 @@ auto System::serialize6502( Emulator::Serializer& s, MOS65Context* cpuCtx ) -> v
     s.integer( cpuCtx->sei );
     s.integer( cpuCtx->storeFlags );
     s.integer( cpuCtx->soBlock );
+    
+    s.integer( cpuCtx->useDummy );
+    s.integer( cpuCtx->resumeCycle );    
 }
 
 }

@@ -31,7 +31,7 @@ auto M6502::indirectIndexedAdr( bool forceExtraCycle ) -> uint16_t {
     
     ctx->boundaryCrossing = PAGE_CROSSED(ctx->absolute, ctx->absolute + ctx->y); 
 
-    if (ctx->isDummy|| forceExtraCycle || ctx->boundaryCrossing)
+    if (workCtx->useDummy|| forceExtraCycle || ctx->boundaryCrossing)
         read<4>((ctx->absolute & 0xff00) | (ctx->absIndexed & 0xff));
 	
     return ctx->absIndexed;
@@ -64,7 +64,7 @@ template<M6502::Reg regIndex> auto M6502::absoluteIndexedAdr( bool forceExtraCyc
 	
 	ctx->absIndexed = ctx->absolute + (GET_INDEX_REG);
 
-	if (ctx->isDummy || forceExtraCycle || ctx->boundaryCrossing)
+	if (workCtx->useDummy || forceExtraCycle || ctx->boundaryCrossing)
 		read<3>((ctx->absolute & 0xff00) | (ctx->absIndexed & 0xff));
 
 	return ctx->absIndexed;
