@@ -19,9 +19,9 @@ protected:
 	inline auto busWrite( uint16_t addr, uint8_t data ) -> void;
     inline auto busWatch() -> uint8_t;
 
-	auto updateLines() -> void;
-	auto chargeUndefinedBits( uint8_t newDdr ) -> void;
-	auto advanceCounter() -> void;
+	inline auto updateLines() -> void;
+	inline auto chargeUndefinedBits( uint8_t newDdr ) -> void;
+	inline auto advanceCounter() -> void;
 	
 };
 

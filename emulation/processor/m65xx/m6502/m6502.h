@@ -65,16 +65,16 @@ protected:
     virtual auto busWatch() -> uint8_t;
     auto resetRoutine() -> void;
     auto restoreContext() -> void;
-	
+    
     //memory
-    template<uint8_t cycle> auto read( uint16_t addr, bool lastCycle = false ) -> uint8_t;
-    template<uint8_t cycle> auto readPCInc( bool lastCycle = false ) -> uint8_t;
-    template<uint8_t cycle> auto readPC( bool lastCycle = false ) -> uint8_t;
-    auto write( uint16_t addr, uint8_t data, bool lastCycle = false ) -> void;
-    auto pushStack( uint8_t data, bool lastCycle = false ) -> void;
-    template<uint8_t cycle> auto pullStack( bool lastCycle = false ) -> uint8_t;   
-	template<uint8_t cycle> auto loadZeroPage( uint8_t addr, bool lastCycle = false ) -> uint8_t;
-	auto storeZeroPage( uint8_t addr, uint8_t data, bool lastCycle = false ) -> void;
+    template<uint8_t cycle> inline auto read( uint16_t addr, bool lastCycle = false ) -> uint8_t;
+    template<uint8_t cycle> inline auto readPCInc( bool lastCycle = false ) -> uint8_t;
+    template<uint8_t cycle> inline auto readPC( bool lastCycle = false ) -> uint8_t;
+    inline auto write( uint16_t addr, uint8_t data, bool lastCycle = false ) -> void;
+    inline auto pushStack( uint8_t data, bool lastCycle = false ) -> void;
+    template<uint8_t cycle> inline auto pullStack( bool lastCycle = false ) -> uint8_t;   
+	template<uint8_t cycle> inline auto loadZeroPage( uint8_t addr, bool lastCycle = false ) -> uint8_t;
+	inline auto storeZeroPage( uint8_t addr, uint8_t data, bool lastCycle = false ) -> void;
     
     //logic
     auto _and( uint8_t data ) -> uint8_t;

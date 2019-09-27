@@ -18,7 +18,7 @@ template<uint8_t cycle> auto M6502::read( uint16_t addr, bool lastCycle ) -> uin
     
     if(workCtx->useDummy) {
         
-        if (workCtx->resumeCycle == cycle) {
+        if ((workCtx->resumeCycle & 0xf) == cycle) {
             
             restoreContext(); 
             
@@ -103,34 +103,32 @@ auto M6502::write( uint16_t addr, uint8_t data, bool lastCycle ) -> void {
     detectInterrupt();	
 }
 
-template<uint8_t cycle> auto M6502::loadZeroPage( uint8_t addr, bool lastCycle ) -> uint8_t {
+template<uint8_t cycle> inline auto M6502::loadZeroPage( uint8_t addr, bool lastCycle ) -> uint8_t {
     
     return read<cycle>( 0x0000 | addr, lastCycle );
 }
 
-auto M6502::storeZeroPage( uint8_t addr, uint8_t data, bool lastCycle ) -> void {
+inline auto M6502::storeZeroPage( uint8_t addr, uint8_t data, bool lastCycle ) -> void {
     
     write( 0x0000 | addr, data, lastCycle );
 }
 
-template<uint8_t cycle> auto M6502::readPCInc( bool lastCycle ) -> uint8_t {
+template<uint8_t cycle> inline auto M6502::readPCInc( bool lastCycle ) -> uint8_t {
     
-    uint16_t addr = ctx->pc++;
-    
-    return read<cycle>( addr, lastCycle );
+    return read<cycle>( ctx->pc++, lastCycle );
 }
 
-template<uint8_t cycle> auto M6502::readPC( bool lastCycle ) -> uint8_t {
+template<uint8_t cycle> inline auto M6502::readPC( bool lastCycle ) -> uint8_t {
     
     return read<cycle>( ctx->pc, lastCycle );
 }
 
-auto M6502::pushStack( uint8_t data, bool lastCycle ) -> void {
+inline auto M6502::pushStack( uint8_t data, bool lastCycle ) -> void {
     
     write( 0x100 | ctx->s--, data, lastCycle );
 }
 
-template<uint8_t cycle> auto M6502::pullStack( bool lastCycle ) -> uint8_t {
+template<uint8_t cycle> inline auto M6502::pullStack( bool lastCycle ) -> uint8_t {
     
     /**
      * because of pre incrementing an idle cycle is needed before a series of pull requests.

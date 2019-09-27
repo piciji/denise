@@ -1,24 +1,5 @@
-//
-//#include "m6502.h"
-//
-//#define COMMA ,
-//#define op(id, name, ...) case id: return name(__VA_ARGS__);
-//#define fp(name) &M6502::_##name
-//#define UO //undocumented opcode but always predictable
-///**
-// * don't use these kind of opcodes
-// * some results differs between visual6502 and real cpu
-// * Visual6502 is a digital representation so it can not handle race conditions that good
-// * real cpu could produce different results, depending on a lot of things like heat, cpu version, bus usage and so on
-// */
-//#define UUO //unstable undocumented opcode
-//
-//namespace MOS65FAMILY {
-//
-//auto M6502::decode( uint8_t IR ) -> void {
-//
-//	switch( IR ) {
-		op(0x00, brk) 
+
+        op(0x00, brk) 
 		op(0x01, indexedIndirect, fp(ora)) 
 UO      op(0x02, kill) 
 UO      op(0x03, indexedIndirectM, fp(asl), fp(ora) ) //SLO (ASO)    
@@ -274,13 +255,3 @@ UO      op(0xfc, absoluteIndexed<RegX>)
 		op(0xfd, absoluteIndexed<RegX>, fp(sbc)) 
 		op(0xfe, absoluteIndexedM<RegX>, fp(inc)) 
 UO		op(0xff, absoluteIndexedM<RegX>, fp(inc), fp(sbc)) //ISC (ISB, INS) 				            
-//	}
-//}
-//
-//}
-//
-//#undef op
-//#undef fp
-//#undef UO
-//#undef UUO
-//#undef COMMA	
