@@ -66,11 +66,11 @@ protected:
     inline auto _pullStack( bool lastCycle = false ) -> uint8_t;
     inline auto _pushStack( uint8_t data, bool lastCycle = false ) -> void;
     
-    inline auto _indexedIndirectAdr() -> uint16_t;
-	inline auto _indirectIndexedAdr( bool forceExtraCycle = false ) -> uint16_t;
-	template<Reg regIndex> inline auto _zeroPageIndexedAdr( ) -> uint8_t;
-	inline auto _absoluteAdr( ) -> uint16_t;
-	template<Reg regIndex> inline auto _absoluteIndexedAdr( bool forceExtraCycle = false ) -> uint16_t;        
+    inline auto _indexedIndirectAdr() -> void;
+	inline auto _indirectIndexedAdr( bool forceExtraCycle = false ) -> void;
+	template<Reg regIndex> inline auto _zeroPageIndexedAdr( ) -> void;
+	inline auto _absoluteAdr( ) -> void;
+	template<Reg regIndex> inline auto _absoluteIndexedAdr( bool forceExtraCycle = false ) -> void;
     
     auto _indexedIndirect( Alu alu ) -> void;
 	template<Reg reg> auto _indexedIndirectW( ) -> void;

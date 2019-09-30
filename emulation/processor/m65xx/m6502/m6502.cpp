@@ -201,7 +201,7 @@ namespace MOS65FAMILY {
          * hence some opcodes process final logic during instruction fetch
          * for reduced code complexity it's emulated here without loss of accuracy
          */
-        ctx->IR = readPCInc<0>();
+        ctx->IR = std::move( readPCInc<0>() );
         
         /**
          * next cpu half cycle is decoding

@@ -132,7 +132,7 @@ template<M6502Reg regIndex, M6502Reg reg> auto M6502Custom::_zeroPageIndexed( Al
     
     switch(step++) {
         case 0:
-            ctx->zeroPage = _zeroPageIndexedAdr<regIndex>( );
+            _zeroPageIndexedAdr<regIndex>( );
             break;
         case 1:
             if (alu) {
@@ -149,7 +149,7 @@ template<M6502Reg regIndex, M6502Reg reg> auto M6502Custom::_zeroPageIndexedW( )
     
     switch(step++) {
         case 0:
-            ctx->zeroPage = _zeroPageIndexedAdr<regIndex>( );
+            _zeroPageIndexedAdr<regIndex>( );
             readNext = false;
             break;
         case 1:
@@ -163,7 +163,7 @@ auto M6502Custom::_zeroPageIndexedM( Alu alu ) -> void {
 
     switch(step++) {
         case 0:
-            ctx->zeroPage = _zeroPageIndexedAdr<RegX>( );
+            _zeroPageIndexedAdr<RegX>( );
             ctx->data = _loadZeroPage( ctx->zeroPage );
             _storeZeroPage( ctx->zeroPage, ctx->data );
             readNext = false;

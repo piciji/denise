@@ -19,12 +19,14 @@ namespace MOS65FAMILY {
 
 //indexed indirect
 auto M6502::indexedIndirect( Alu alu ) -> void { 
-	    
-	A = ALU( read<5>( indexedIndirectAdr(), LAST ) );
+    
+    indexedIndirectAdr();
+    
+	A = ALU( read<5>( ctx->absolute, LAST ) );
 }
 
 template<M6502::Reg reg> auto M6502::indexedIndirectW( ) -> void {
-    
+
     indexedIndirectAdr();
     	       
 	write( ctx->absolute, GET_REG(reg), LAST );
@@ -32,19 +34,23 @@ template<M6502::Reg reg> auto M6502::indexedIndirectW( ) -> void {
 
 //indirect indexed
 auto M6502::indirectIndexed( Alu alu ) -> void {
-	    
-	A = ALU( read<5>( indirectIndexedAdr(), LAST ) );
+
+    indirectIndexedAdr();
+    
+	A = ALU( read<5>( ctx->absIndexed, LAST ) );
 }
 
 auto M6502::indirectIndexedW( ) -> void {
-	
-    write( indirectIndexedAdr( true ), A, LAST );    
+
+    indirectIndexedAdr( true );
+    
+    write( ctx->absIndexed, A, LAST );    
 }
 
 //zero page
 template<M6502::Reg reg> auto M6502::zeroPage( Alu alu ) -> void {
-    
-    ctx->zeroPage = readPCInc<1>();
+
+    ctx->zeroPage = std::move( readPCInc<1>() );
     
     if (alu) {
         SAVE_REG( reg, ALU( loadZeroPage<2>( ctx->zeroPage, LAST ) ) )
@@ -53,15 +59,15 @@ template<M6502::Reg reg> auto M6502::zeroPage( Alu alu ) -> void {
 }
 
 template<M6502::Reg reg> auto M6502::zeroPageW( ) -> void {
-    
-    ctx->zeroPage = readPCInc<1>();
+
+    ctx->zeroPage = std::move( readPCInc<1>() );
     storeZeroPage( ctx->zeroPage, GET_REG(reg), LAST );
 }
 
 auto M6502::zeroPageM( Alu alu ) -> void {
-    
-    ctx->zeroPage = readPCInc<1>();    
-    ctx->data = loadZeroPage<2>( ctx->zeroPage );
+
+    ctx->zeroPage = std::move( readPCInc<1>() );    
+    ctx->data = std::move( loadZeroPage<2>( ctx->zeroPage ) );
     
     storeZeroPage( ctx->zeroPage, ctx->data ); // needs this cycle for ALU
     storeZeroPage( ctx->zeroPage, ALU( ctx->data ), LAST );    
@@ -69,8 +75,8 @@ auto M6502::zeroPageM( Alu alu ) -> void {
 
 //zero page indexed
 template<M6502::Reg regIndex, M6502::Reg reg> auto M6502::zeroPageIndexed( Alu alu ) -> void {
-    
-    ctx->zeroPage = zeroPageIndexedAdr<regIndex>( );
+
+    zeroPageIndexedAdr<regIndex>( );
     
     if (alu) {
         SAVE_REG( reg, ALU( loadZeroPage<3>( ctx->zeroPage, LAST ) ) )
@@ -79,23 +85,23 @@ template<M6502::Reg regIndex, M6502::Reg reg> auto M6502::zeroPageIndexed( Alu a
 }
 
 template<M6502::Reg regIndex, M6502::Reg reg> auto M6502::zeroPageIndexedW() -> void {
-    
-    ctx->zeroPage = zeroPageIndexedAdr<regIndex>( );
+
+    zeroPageIndexedAdr<regIndex>( );
     storeZeroPage( ctx->zeroPage, GET_REG(reg), LAST );    
 }
 
 auto M6502::zeroPageIndexedM( Alu alu ) -> void {
+
+    zeroPageIndexedAdr<RegX>( );
     
-    ctx->zeroPage = zeroPageIndexedAdr<RegX>( );
-    
-    ctx->data = loadZeroPage<3>( ctx->zeroPage );
+    ctx->data = std::move( loadZeroPage<3>( ctx->zeroPage ) );
     storeZeroPage( ctx->zeroPage, ctx->data );
     storeZeroPage( ctx->zeroPage, ALU( ctx->data ), LAST );
 }
 
 //absolute
 template<M6502::Reg reg> auto M6502::absolute( Alu alu ) -> void {
-    
+
     absoluteAdr();
 
 	if( alu ) {
@@ -105,14 +111,16 @@ template<M6502::Reg reg> auto M6502::absolute( Alu alu ) -> void {
 }
 
 template<M6502::Reg reg> auto M6502::absoluteW( ) -> void {
+
+    absoluteAdr();
     
-    write( absoluteAdr(), GET_REG(reg), LAST );
+    write( ctx->absolute, GET_REG(reg), LAST );
 }
 
 auto M6502::absoluteM( Alu alu ) -> void {
 
 	absoluteAdr();
-    ctx->data = read<3>( ctx->absolute );
+    ctx->data = std::move( read<3>( ctx->absolute ) );
     
     write( ctx->absolute, ctx->data );
     write( ctx->absolute, ALU( ctx->data ), LAST );
@@ -120,7 +128,7 @@ auto M6502::absoluteM( Alu alu ) -> void {
 
 // absolute indexed
 template<M6502::Reg regIndex, M6502::Reg reg> auto M6502::absoluteIndexed( Alu alu ) -> void {
-    
+
     absoluteIndexedAdr<regIndex>( );
 
 	if ( alu )
@@ -130,17 +138,17 @@ template<M6502::Reg regIndex, M6502::Reg reg> auto M6502::absoluteIndexed( Alu a
 }
 
 template<M6502::Reg regIndex, M6502::Reg reg> auto M6502::absoluteIndexedW( ) -> void {
-    
+
 	absoluteIndexedAdr<regIndex>( true );
 		
     write( ctx->absIndexed, GET_REG(reg), LAST );
 }
 
 template<M6502::Reg regIndex> auto M6502::absoluteIndexedM( Alu alu ) -> void {
-	
+
 	absoluteIndexedAdr<regIndex>( true );
 	
-    ctx->data = read<4>( ctx->absIndexed );
+    ctx->data = std::move( read<4>( ctx->absIndexed ) );
 
     write( ctx->absIndexed, ctx->data );
 
@@ -149,29 +157,29 @@ template<M6502::Reg regIndex> auto M6502::absoluteIndexedM( Alu alu ) -> void {
 
 //immediate
 template<M6502::Reg reg> auto M6502::immediate( Alu alu ) -> void {
-	
+
 	SAVE_REG( reg, ALU( readPCInc<1>( LAST ) ) )
 }
 
 //implied
 template<M6502::Reg reg> auto M6502::implied(Alu alu) -> void {
-	
+
 	readPC<1>( LAST );
 	SAVE_REG( reg, ALU( GET_REG( reg ) ) )
 }
 
 auto M6502::nop() -> void {
-    
+
     readPC<1>( LAST );
 }
 
 auto M6502::brk() -> void {
-    
+
     interrupt( true );
 }
 
 auto M6502::rti() -> void {
-    
+
     readPCInc<1>();
     read<2>( 0x100 | S ); //cycle to pre increment sp, fetched value is discarded
     
@@ -182,7 +190,7 @@ auto M6502::rti() -> void {
 }
 
 auto M6502::rts() -> void {
-    
+
     readPCInc<1>();
     read<2>( 0x100 | S );
         
@@ -214,27 +222,27 @@ template<M6502::Flag flag> auto M6502::set( ) -> void {
 }
 
 auto M6502::jmpAbsolute() -> void {
-    
-    ctx->dataW = readPCInc<1>();
-    ctx->dataW |= readPC<2>( LAST ) << 8;
+
+    ctx->dataW = std::move( readPCInc<1>() );
+    ctx->dataW |= std::move( readPC<2>( LAST ) ) << 8;
     PC = ctx->dataW;
 }
 
 auto M6502::jmpIndirect() -> void {
+
+    ctx->data = std::move( readPCInc<1>() );
+    ctx->dataH = std::move( readPCInc<2>() );
     
-    ctx->data = readPCInc<1>();
-    ctx->dataH = readPCInc<2>();
-    
-    ctx->dataW = read<3>( ctx->dataH << 8 | ctx->data++ );        
-    ctx->dataW |= read<4>( ctx->dataH << 8 | ctx->data, LAST ) << 8;
+    ctx->dataW = std::move( read<3>( ctx->dataH << 8 | ctx->data++ ) );        
+    ctx->dataW |= std::move( read<4>( ctx->dataH << 8 | ctx->data, LAST ) ) << 8;
     
     PC = ctx->dataW;
 }
 
 auto M6502::jsrAbsolute() -> void {
 
-    ctx->dataW = readPCInc<1>();
-    ctx->dataW |= readPC<2>() << 8;   
+    ctx->dataW = std::move( readPCInc<1>() );
+    ctx->dataW |= std::move( readPC<2>() ) << 8;   
     
     pushStack( PC >> 8 );
     pushStack( PC & 0xff );
@@ -245,8 +253,8 @@ auto M6502::jsrAbsolute() -> void {
 }
 
 template<M6502::Flag flag> auto M6502::branch( bool state ) -> void {
-    
-    ctx->displacement = readPCInc<1>( LAST );  //polls here for interrupts always, even if branch is taken
+
+    ctx->displacement = std::move( readPCInc<1>( LAST ) );  //polls here for interrupts always, even if branch is taken
     
     // why so complicated? because of possible external change of overflow bit in third half cycle
     if ( !workCtx->useDummy && ((GET_FLAG) != state) )
@@ -269,13 +277,13 @@ template<M6502::Flag flag> auto M6502::branch( bool state ) -> void {
 }
 
 template<M6502::Reg src, M6502::Reg target> auto M6502::transfer(bool flag) -> void {
-    
+
     readPC<1>( LAST );
     SAVE_REG(target, ( flag ? this->_ld( GET_REG(src) ) : GET_REG(src) ) )   
 }
 //pull stack
 auto M6502::plp() -> void {
-    
+
     readPC<1>();
     read<2>( 0x100 | S );
     
@@ -283,7 +291,7 @@ auto M6502::plp() -> void {
 }
 
 auto M6502::pla() -> void {
-    
+
     readPC<1>();
     read<2>( 0x100 | S );
     
@@ -291,7 +299,7 @@ auto M6502::pla() -> void {
 }
 //push stack
 auto M6502::php() -> void {
-    
+
     readPC<1>();
     ctx->storeFlags = true;
     pushStack( getFlags() | 0x30, LAST );
@@ -299,7 +307,7 @@ auto M6502::php() -> void {
 }
 
 auto M6502::pha() -> void {
-    
+
     readPC<1>();    
     pushStack( A, LAST);
 }

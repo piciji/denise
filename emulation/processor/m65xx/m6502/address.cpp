@@ -8,55 +8,49 @@
 namespace MOS65FAMILY {
 
 // (d,x)
-auto M6502::indexedIndirectAdr() -> uint16_t {
+auto M6502::indexedIndirectAdr() -> void {
 	
-	ctx->zeroPage = readPCInc<1>();
+	ctx->zeroPage = std::move( readPCInc<1>() );
 	read<2>( ctx->zeroPage ); //need time for adding x register
     
-	ctx->absolute = loadZeroPage<3>( ctx->zeroPage + ctx->x );
-	ctx->absolute |= loadZeroPage<4>( ctx->zeroPage + ctx->x + 1 ) << 8;
-	
-	return ctx->absolute;
+	ctx->absolute = std::move( loadZeroPage<3>( ctx->zeroPage + ctx->x ) );
+	ctx->absolute |= std::move( loadZeroPage<4>( ctx->zeroPage + ctx->x + 1 ) ) << 8;	
 }
 
 // (d), y
-auto M6502::indirectIndexedAdr( bool forceExtraCycle ) -> uint16_t {
+auto M6502::indirectIndexedAdr( bool forceExtraCycle ) -> void {
     
-    ctx->zeroPage = readPCInc<1>();
+    ctx->zeroPage = std::move( readPCInc<1>() );
 
-    ctx->absolute = loadZeroPage<2>( ctx->zeroPage );
-    ctx->absolute |= loadZeroPage<3>( ctx->zeroPage + 1 ) << 8;    
+    ctx->absolute = std::move( loadZeroPage<2>( ctx->zeroPage ) );
+    ctx->absolute |= std::move( loadZeroPage<3>( ctx->zeroPage + 1 ) ) << 8;    
 
     ctx->absIndexed = ctx->absolute + ctx->y;
     
     ctx->boundaryCrossing = PAGE_CROSSED(ctx->absolute, ctx->absolute + ctx->y); 
 
     if (workCtx->useDummy|| forceExtraCycle || ctx->boundaryCrossing)
-        read<4>((ctx->absolute & 0xff00) | (ctx->absIndexed & 0xff));
-	
-    return ctx->absIndexed;
+        read<4>((ctx->absolute & 0xff00) | (ctx->absIndexed & 0xff));	
 }
 
 // d,x  d,y
-template<M6502::Reg regIndex> auto M6502::zeroPageIndexedAdr( ) -> uint8_t {
+template<M6502::Reg regIndex> auto M6502::zeroPageIndexedAdr( ) -> void {
     
-    ctx->zeroPage = readPCInc<1>();
+    ctx->zeroPage = std::move( readPCInc<1>() );
     loadZeroPage<2>( ctx->zeroPage );
     
-    return ctx->zeroPage + (GET_INDEX_REG);
+    ctx->zeroPage += (GET_INDEX_REG);
 }
 
 // a
-auto M6502::absoluteAdr( ) -> uint16_t {
+auto M6502::absoluteAdr( ) -> void {
 	
-	ctx->absolute = readPCInc<1>();
-	ctx->absolute |= readPCInc<2>() << 8;
-	
-	return ctx->absolute;
+	ctx->absolute = std::move( readPCInc<1>() );
+	ctx->absolute |= std::move( readPCInc<2>() ) << 8;	
 }
 
 // a,x  a,y
-template<M6502::Reg regIndex> auto M6502::absoluteIndexedAdr( bool forceExtraCycle ) -> uint16_t {
+template<M6502::Reg regIndex> auto M6502::absoluteIndexedAdr( bool forceExtraCycle ) -> void {
 	
 	absoluteAdr();
    
@@ -66,8 +60,6 @@ template<M6502::Reg regIndex> auto M6502::absoluteIndexedAdr( bool forceExtraCyc
 
 	if (workCtx->useDummy || forceExtraCycle || ctx->boundaryCrossing)
 		read<3>((ctx->absolute & 0xff00) | (ctx->absIndexed & 0xff));
-
-	return ctx->absIndexed;
 }
 
 }

@@ -63,11 +63,11 @@ namespace MOS65FAMILY {
         pushStack(getFlags() | (software ? 0x30 : 0x20));
         ctx->storeFlags = false;
 
-        ctx->dataW = read<3>(ctx->vector);
+        ctx->dataW = std::move( read<3>(ctx->vector) );
 
         I = 1;
 
-        ctx->dataW |= read<4>(ctx->vector + 1) << 8;
+        ctx->dataW |= std::move( read<4>(ctx->vector + 1) ) << 8;
 
         PC = ctx->dataW;
         /**	 

@@ -5,10 +5,12 @@
  * emulates the NMOS 6502 (NES) and 6510 (C64) cpus 
  * dont emulates the CMOS 65C02 ( Nec PC Engine )
  * 
- * usage: compile m6502.cpp and m6510.cpp, include this header in your program
+ * usage: compile m6502.cpp and m6510.cpp, include this header in your program.
  * NOTE: when you commenting out following define, you don't need to compile m6510.cpp
  */
 #define SUPPORT_M6510
+/** comment out this line for performance reasons only, if there is no external overflow */
+//#define SUPPORT_SO
 
 #include "context.h"
 

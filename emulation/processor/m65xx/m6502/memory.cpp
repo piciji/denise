@@ -9,8 +9,9 @@ template<uint8_t cycle> auto M6502::read( uint16_t addr, bool lastCycle ) -> uin
     
     ctx->syncLo(); //put addr on bus (first half cycle)                
     
+#ifdef SUPPORT_SO    
     handleSo();
-	
+#endif	
     if (lastCycle)
         sampleInterrupt(); 
     
@@ -42,9 +43,9 @@ template<uint8_t cycle> auto M6502::read( uint16_t addr, bool lastCycle ) -> uin
                 
 		// rdy prolongs complete cycles, not half cycles
         ctx->syncLo();
-        
+#ifdef SUPPORT_SO            
         handleSo();
-        
+#endif       
         // cli or sei instruction executes now
         if (ctx->cli) {
             I = false;
@@ -89,9 +90,9 @@ auto M6502::write( uint16_t addr, uint8_t data, bool lastCycle ) -> void {
         sampleInterrupt();    
     
     ctx->db = data; 
-    
+#ifdef SUPPORT_SO        
     handleSo();
-            
+#endif            
 	// Beware: bus write and synchronisation happen in parallel 
     // doesn't necessary mean internal logic of other bus participant can use written value after second half cycle
     // thats why we do the write before syncHi. in the context of another bus participant the write should be pipelined

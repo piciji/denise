@@ -111,11 +111,11 @@ auto M6510::chargeUndefinedBits( uint8_t newDdr ) -> void {
 
 auto M6510::advanceCounter() -> void {
 	
-	if ( ctx->bit6.cycles > 0 )
+	if ( ctx->bit6.cycles )
 		if ( --ctx->bit6.cycles == 0 )
 			ctx->bit6.charge = 0;
 	
-	if ( ctx->bit7.cycles > 0 )
+	if ( ctx->bit7.cycles  )
 		if ( --ctx->bit7.cycles == 0 )
 			ctx->bit7.charge = 0;
 }
@@ -123,3 +123,4 @@ auto M6510::advanceCounter() -> void {
 }
 
 #undef FALL_OFF_CYCLES
+

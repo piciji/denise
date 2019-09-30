@@ -1,4 +1,17 @@
 
+/**
+ * there are some std::move calls in cpu code which doesn't seem to make any sense. so why ?
+ * this approach is able to jump out emulation of opcode during any read cycle in order to prevent stalling
+ * while rdy halts cpu for more than a frame. we need th handle UI events :-)
+ * that is working by swapping in a dummy context, progressing the rest of the opcode, jump out emulation and
+ * handle UI, jump back in opcode, progressing to interrupted cycle in dummy context, swap in real context and go on.
+ * ok back to the std::move calls. a lot of function returns are values which will be written to register.
+ * i.e. ctx->A = readPC(); 
+ * when the context is swapping in read cycle, 'ctx' should point to new context. the target address of the above assignment
+ * is seted before the function is called, means the write goes to old context instead of swapped in. 
+ * ctx->A = std::move( readPC() ); now the target address is specified after the function call.
+ */
+
 #pragma once
 
 #ifndef EXTERNAL_INCLUDE_6502
@@ -100,11 +113,11 @@ protected:
 	auto _lax( uint8_t data ) -> uint8_t;
 	
 	//address
-	auto indexedIndirectAdr() -> uint16_t;
-	auto indirectIndexedAdr( bool forceExtraCycle = false ) -> uint16_t;
-	template<Reg regIndex> auto zeroPageIndexedAdr( ) -> uint8_t;
-	auto absoluteAdr( ) -> uint16_t;
-	template<Reg regIndex> auto absoluteIndexedAdr( bool forceExtraCycle = false ) -> uint16_t;
+	auto indexedIndirectAdr() -> void;
+	auto indirectIndexedAdr( bool forceExtraCycle = false ) -> void;
+	template<Reg regIndex> auto zeroPageIndexedAdr( ) -> void;
+	auto absoluteAdr( ) -> void;
+	template<Reg regIndex> auto absoluteIndexedAdr( bool forceExtraCycle = false ) -> void;
 	
     //opcodes
 	auto indexedIndirect( Alu alu ) -> void;

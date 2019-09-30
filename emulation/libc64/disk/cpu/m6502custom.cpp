@@ -179,19 +179,17 @@ inline auto M6502Custom::_pullStack( bool lastCycle ) -> uint8_t {
 
 
 // (d,x)
-inline auto M6502Custom::_indexedIndirectAdr() -> uint16_t {
+inline auto M6502Custom::_indexedIndirectAdr() -> void {
 	
 	ctx->zeroPage = _readPCInc();
 	_read( ctx->zeroPage ); //need time for adding x register
     
 	ctx->absolute = _loadZeroPage( ctx->zeroPage + ctx->x );
-	ctx->absolute |= _loadZeroPage( ctx->zeroPage + ctx->x + 1 ) << 8;
-	
-	return ctx->absolute;
+	ctx->absolute |= _loadZeroPage( ctx->zeroPage + ctx->x + 1 ) << 8;	
 }
 
 // (d), y
-inline auto M6502Custom::_indirectIndexedAdr( bool forceExtraCycle ) -> uint16_t {
+inline auto M6502Custom::_indirectIndexedAdr( bool forceExtraCycle ) -> void {
     
     ctx->zeroPage = _readPCInc();
 
@@ -203,31 +201,27 @@ inline auto M6502Custom::_indirectIndexedAdr( bool forceExtraCycle ) -> uint16_t
     ctx->boundaryCrossing = PAGE_CROSSED(ctx->absolute, ctx->absolute + ctx->y); 
 
     if (forceExtraCycle || ctx->boundaryCrossing)
-        _read((ctx->absolute & 0xff00) | (ctx->absIndexed & 0xff));
-	
-    return ctx->absIndexed;
+        _read((ctx->absolute & 0xff00) | (ctx->absIndexed & 0xff));	
 }
 
 // d,x  d,y
-template<M6502Reg regIndex> inline auto M6502Custom::_zeroPageIndexedAdr( ) -> uint8_t {
+template<M6502Reg regIndex> inline auto M6502Custom::_zeroPageIndexedAdr( ) -> void {
     
     ctx->zeroPage = _readPCInc();
     _loadZeroPage( ctx->zeroPage );
     
-    return ctx->zeroPage + (GET_INDEX_REG);
+    ctx->zeroPage += (GET_INDEX_REG);
 }
 
 // a
-inline auto M6502Custom::_absoluteAdr( ) -> uint16_t {
+inline auto M6502Custom::_absoluteAdr( ) -> void {
 	
 	ctx->absolute = _readPCInc();
-	ctx->absolute |= _readPCInc() << 8;
-	
-	return ctx->absolute;
+	ctx->absolute |= _readPCInc() << 8;	
 }
 
 // a,x  a,y
-template<M6502Reg regIndex> inline auto M6502Custom::_absoluteIndexedAdr( bool forceExtraCycle ) -> uint16_t {
+template<M6502Reg regIndex> inline auto M6502Custom::_absoluteIndexedAdr( bool forceExtraCycle ) -> void {
 	
 	_absoluteAdr();
    
@@ -237,8 +231,6 @@ template<M6502Reg regIndex> inline auto M6502Custom::_absoluteIndexedAdr( bool f
 
 	if (forceExtraCycle || ctx->boundaryCrossing)
 		_read((ctx->absolute & 0xff00) | (ctx->absIndexed & 0xff));
-
-	return ctx->absIndexed;
 }
 
 auto M6502Custom::_interrupt(bool software) -> void {

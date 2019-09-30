@@ -148,7 +148,7 @@ auto M6502::indexedIndirectM( Alu alu, Alu alu2 ) -> void {
     
     indexedIndirectAdr();
     
-	ctx->data = read<5>( ctx->absolute );
+	ctx->data = std::move( read<5>( ctx->absolute ) );
     write( ctx->absolute, ctx->data );
     
     ctx->data = ALU( ctx->data );
@@ -169,7 +169,7 @@ auto M6502::indirectIndexedM( Alu alu, Alu alu2 ) -> void {
 	
     indirectIndexedAdr( true );
     
-    ctx->data = read<5>( ctx->absIndexed );    
+    ctx->data = std::move( read<5>( ctx->absIndexed ) );    
     write( ctx->absIndexed, ctx->data );
     
     ctx->data = ALU( ctx->data );
