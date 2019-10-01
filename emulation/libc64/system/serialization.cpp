@@ -115,7 +115,7 @@ auto System::serializeAll(Emulator::Serializer& s) -> void {
     cia2->serialize( s );
     vicII->serialize( s );
     sid->serialize( s );
-    cart->serialize( s );
+//    cart->serialize( s );
     tape->serialize( s ); 
     iecBus->serialize( s );
     input->serialize( s );

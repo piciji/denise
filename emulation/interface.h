@@ -340,8 +340,8 @@ struct Interface {
 	virtual auto createTapeImage(unsigned& imageSize) -> uint8_t* { return nullptr; }
     virtual auto selectTapeListing(unsigned driveId, unsigned pos) -> void { }
     // module handling
-    virtual auto insertModule(unsigned driveId, uint8_t* data, unsigned size) -> void {}
-    virtual auto ejectModule(unsigned driveId) -> void {}
+    virtual auto insertModule(uint8_t* data, unsigned size) -> void {}
+    virtual auto ejectModule() -> void {}
 	// memory 
 	virtual auto insertMemory(unsigned driveId, uint8_t* data, unsigned size) -> void {}
 	virtual auto ejectMemory(unsigned driveId) -> void {}	
@@ -419,7 +419,7 @@ struct Interface {
 		switch(type) {
 			case DriveGroup::Type::DiskDrive: insertDisk(driveId, data, size); break;
 			case DriveGroup::Type::TapeDrive: insertTape(driveId, data, size); break;
-			case DriveGroup::Type::ModuleSlot: insertModule(driveId, data, size); break;
+			case DriveGroup::Type::ModuleSlot: insertModule(data, size); break;
 			case DriveGroup::Type::Memory: insertMemory(driveId, data, size); break;
 			case DriveGroup::Type::HardDrive: break; //works differently, dont call it this way
 		}
@@ -440,7 +440,7 @@ struct Interface {
 			case DriveGroup::Type::DiskDrive: ejectDisk(driveId); break;
 			case DriveGroup::Type::TapeDrive: ejectTape(driveId); break;
 			case DriveGroup::Type::Memory: ejectMemory(driveId); break;
-			case DriveGroup::Type::ModuleSlot: ejectModule(driveId); break;
+			case DriveGroup::Type::ModuleSlot: ejectModule(); break;
 			case DriveGroup::Type::HardDrive: ejectHardDrive(driveId); break;
 		}		
 	}

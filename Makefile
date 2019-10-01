@@ -106,7 +106,7 @@ obj/ciaBase.o:	emulation/cia/base.cpp
 obj/cia6526.o:	emulation/cia/m6526.cpp
 obj/vic.o:	emulation/libc64/vic/vicII.cpp
 obj/systemC64.o:emulation/libc64/system/system.cpp	
-obj/cartC64.o:	emulation/libc64/cart/cart.cpp
+obj/cartC64.o:	emulation/libc64/expansionPort/gameCart/gameCart.cpp
 obj/sid.o:	emulation/libc64/sid/sid.cpp
 obj/tapeC64.o:	emulation/libc64/tape/tape.cpp
 obj/prg64.o:	emulation/libc64/prg/prg.cpp

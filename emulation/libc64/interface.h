@@ -20,6 +20,10 @@ struct Interface : Emulator::Interface {
         DriveGroupIdModuleSlot = 2, DriveGroupIdMemory = 3,
     };
     
+    enum class CartridgeId : int { None = -1, Default = 0, Default8k = 256, Default16k = 257, Ultimax = 258,
+            Ocean = 5, Funplay = 7, SuperGames = 8, System3 = 15, Zaxxon = 18,
+            Reu = 300 };
+    
     static const std::string Version;
     
     // petscii will be converted to ascii or screencodes to be viewed in host
@@ -62,8 +66,8 @@ struct Interface : Emulator::Interface {
     auto selectTapeListing(unsigned driveId, unsigned pos) -> void;
 
 	//module slot handling
-	auto insertModule(unsigned driveId, uint8_t* data, unsigned size) -> void;
-	auto ejectModule(unsigned driveId) -> void;
+	auto insertModule(uint8_t* data, unsigned size) -> void;
+	auto ejectModule() -> void;
 	
 	//memory
 	auto insertMemory(unsigned driveId, uint8_t* data, unsigned size) -> void;

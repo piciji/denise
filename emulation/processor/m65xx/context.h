@@ -3,8 +3,6 @@
 
 #include <functional>
 
-#include "../../../emulation/libc64/system/delegates.h"
-
 namespace MOS65FAMILY {       
     
 struct M65Context {
@@ -30,11 +28,6 @@ struct M65Context {
      */
     std::function<void ()> syncHi;
     std::function<void ()> syncLo;    
-    //Delegate<void> syncHi = DELEGATE(&M65Context::test, this);
-    //Delegate<void> syncLo = DELEGATE(&M65Context::test, this);
-    //Delegate<uint8_t, uint16_t> read = DELEGATE(&M65Context::testR, this);
-    auto test() -> void {}
-    auto testR(uint16_t adr) -> uint8_t { return 0; }
 	/** informs about cpu has updated port lines (6510 only)	 */
 	std::function<void (uint8_t, uint8_t)> updatePort;
     
