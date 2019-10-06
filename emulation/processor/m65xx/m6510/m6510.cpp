@@ -32,15 +32,25 @@ auto M6510::updateIoLines( uint8_t pullup, uint8_t pulldown ) -> void {
     updateLines();
 }
 
-inline auto M6510::busRead( uint16_t addr ) -> uint8_t {
-    // is rdy delaying a read from address 0/1 too, because there is no memory access ?
+auto M6510::setSo(bool state) -> void {
+    // external overflow is not supported by 6510
+}
+
+inline auto M6510::busRead( uint16_t addr ) -> uint8_t {        
+    
 	advanceCounter();
-	
-	if (addr == 0x0000)
-		return ctx->ddr;
-	
+    
+	if (addr == 0x0000) {
+        // address selection only
+        M6502::busRead( addr );
+        
+		return ctx->ddr;   
+    }
+    
 	if (addr == 0x0001) {
-		
+        // address selection only
+        M6502::busRead( addr );
+                
 		uint8_t data = ctx->ioLines;
 		
 		if ( !(ctx->ddr & 0x40) ) {
@@ -55,7 +65,7 @@ inline auto M6510::busRead( uint16_t addr ) -> uint8_t {
 		
 		return data;
 	}		
-	
+	  
 	return M6502::busRead( addr );
 }
 
@@ -75,8 +85,12 @@ inline auto M6510::busWrite( uint16_t addr, uint8_t data ) -> void {
 		updateLines();				
 	}
     
-	//places write on bus for $00 and $01 too
-	M6502::busWrite( addr, data );
+	// places write on bus for $00 and $01 too.
+    // it seems only the address is selected on bus in write mode but not the data.
+    // so the write happens with last data on bus and not this data.
+    // it's video data in case of c64, readed in first half cycle.
+    // address selection is not emulated, so check it external.
+    M6502::busWrite( addr, data );
 }
 
 inline auto M6510::busWatch() -> uint8_t {
@@ -123,4 +137,3 @@ auto M6510::advanceCounter() -> void {
 }
 
 #undef FALL_OFF_CYCLES
-

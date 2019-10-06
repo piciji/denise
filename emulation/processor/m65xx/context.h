@@ -11,17 +11,14 @@ struct M65Context {
 	std::function<uint8_t (uint16_t)> read;
     
     /** write byte to address */
-	std::function<void (uint16_t, uint8_t)> write;
-    
-    /** get last palced value from bus in case of cpu don't own bus */
-    std::function<uint8_t ()> watch;
+	std::function<void (uint16_t, uint8_t)> write;   
     
     /** informs about cpu has proceeded one half cycle
      *  alternates always between lo and hi cycle, lo + hi = 1 cpu cycle
      *  bus is always accessed each second half cycle ( there are no pure internal cpu cycles )
-     *  this results in some dummy accesses
-     *  hi cycle is internal operation which put address on bus
-     *  lo cycle stalls bus by reading or writing
+     *  this results in some dummy accesses.
+     *  lo cycle is internal operation which generates address
+     *  hi cycle stalls bus by reading or writing
      *  lo and hi cycles take same absolute time in relation to cpu frequency
      *  NOTE: this cycle exact emulation requires that you sync up all other bus participants immediately
      *  otherwise interupt recognition is not working properly
@@ -30,6 +27,13 @@ struct M65Context {
     std::function<void ()> syncLo;    
 	/** informs about cpu has updated port lines (6510 only)	 */
 	std::function<void (uint8_t, uint8_t)> updatePort;
+    
+    /** this callback is optional for undocumented ANE opcode while RDY is pulled low.
+     *  the cpu watches the BUS while in RDY mode. these values are discarded normally and
+     *  only the final value matters, when RDY is back to normal and the CPU goes on.
+     *  in case of ANE these intermediate vales are anded to register A
+     */    
+    std::function<uint8_t ()> watch;
     
     bool c;
     bool z;
@@ -46,6 +50,7 @@ struct M65Context {
     uint16_t pc;
     uint8_t db; //last readed or written value on bus
     uint16_t addrBus; //last puted address on bus
+    bool writeCycle;
     
     /** represents cpu pin not the internal state, because it's not detected immediately */
     bool irqLine = false;

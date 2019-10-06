@@ -311,4 +311,3 @@ auto VicII::power() -> void {
 }
 
 }
-

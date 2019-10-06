@@ -47,7 +47,7 @@ struct M6502 : M65Model {
     auto process() -> void;
     auto setIrq( bool state ) -> void;
     auto setNmi( bool state ) -> void;
-    auto setSo( bool state ) -> void;
+    virtual auto setSo( bool state ) -> void;
     auto setRdy( bool state ) -> void;
 	auto setMagicForAne( uint8_t magicAne ) -> void;
     auto getMagicForAne() -> uint8_t;
@@ -55,6 +55,7 @@ struct M6502 : M65Model {
     auto setContext( M65Context* context ) -> void;
     auto dataBus() -> uint8_t;	
     auto addressBus() -> uint16_t;
+    auto isWriteCycle() -> bool;
     
     auto leaveRdyHaltedOpcode() -> void;
     

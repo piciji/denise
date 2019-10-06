@@ -115,7 +115,7 @@ auto System::serializeAll(Emulator::Serializer& s) -> void {
     cia2->serialize( s );
     vicII->serialize( s );
     sid->serialize( s );
-//    cart->serialize( s );
+    expansionPort->serialize( s );
     tape->serialize( s ); 
     iecBus->serialize( s );
     input->serialize( s );
@@ -132,6 +132,7 @@ auto System::serialize(Emulator::Serializer& s) -> void {
     s.integer( vicBank );    
     s.integer( irqIncomming );
     s.integer( nmiIncomming );    
+    s.integer( rdyIncomming );   
     s.integer( ntsc );
     s.integer( kernalBootComplete );    
     keyBuffer->serialize( s );
@@ -158,6 +159,7 @@ auto System::serialize6502( Emulator::Serializer& s, MOS65Context* cpuCtx ) -> v
     s.integer( cpuCtx->pc );
     s.integer( cpuCtx->db );
     s.integer( cpuCtx->addrBus );
+    s.integer( cpuCtx->writeCycle );
     s.integer( cpuCtx->irqLine );
     s.integer( cpuCtx->nmiLine );
     s.integer( cpuCtx->nmiDetect );

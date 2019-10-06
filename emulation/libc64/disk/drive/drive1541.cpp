@@ -34,14 +34,14 @@ Drive1541::Drive1541(uint8_t number) {
     };
     
     cpuCtx->syncLo = [this]() {                
-        
+    
         if ( useAccuracy() )
             // one cpu cycle is 16 reference cycles.
             // we do only 6 instead of 8 in first half cycle because of a possible
             // external overflow is recognized by cpu within 400 ns.
             // overflow recognition happens in this emulation between syncLo and syncHi
             rotateG64( 6 );
-
+        
         via1->processLo();
         via2->processLo();  
     };

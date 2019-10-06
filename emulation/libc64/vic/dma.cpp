@@ -391,6 +391,20 @@ inline auto VicII::updateBAState() -> void {
 		aecDelay = 4;	
 }
 
+// a damn hack ... this is annoying
+auto VicII::reuBAState() -> bool {
+    // of course the expansion port sees the same BA state like cpu rdy line.
+    // there is a known case, when BA calculation takes more time within cycle.
+    // for cpu it doesn't matter, because it checks it later in cycle.
+    // Reu seems to check this sooner and can't recognize BA in this special cycle.
+    // yeah i know this is a hack, because VIC is not aware of REU.
+    // It's a limitation of half cycle accuracy.
+    
+    bool special = sprite[0].enabled && (cycle == 54) && (sprite[0].y == (vCounter & 0xff)) && !sprite[0].dma;
+    
+    return baLow && !special;
+}
+
 inline auto VicII::badLine() -> bool {
 			
 	return allowBadlines && (yScroll == (vCounter & 7));

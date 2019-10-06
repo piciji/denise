@@ -13,6 +13,7 @@ struct M6510 : M6502 {
 
     auto updateIoLines( uint8_t pullup, uint8_t pulldown = 0 ) -> void;
       
+    auto setSo(bool state) -> void;
 protected:
 	
 	inline auto busRead( uint16_t addr ) -> uint8_t;

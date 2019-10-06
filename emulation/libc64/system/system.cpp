@@ -8,13 +8,13 @@
 #include "../sid/sid.h"
 #include "keyBuffer.h"
 #include "gluelogic.h"
-#include "../cart/cart.h"
 #include "../../tools/crop.h"
 #include "../../tools/powersupply.h"
 #include "../../tools/serializer.h"
 #include "../../tools/rand.h"
 #include <cstring>
 
+#include "cartridge.cpp"
 #include "serialization.cpp"
 
 namespace Firmware {
@@ -33,7 +33,7 @@ System::System(Interface* interface) {
     colorRam = new uint8_t[ 1 * 1024 ];
     
 	vicII = new VicII;
-    cart = new Cart;
+    expansionPort = new ExpansionPort;
 	sid = new Sid( Sid::Type::MOS_6581, &events );
     input = new Input;
 	prg = new Prg;
@@ -51,7 +51,7 @@ System::System(Interface* interface) {
     cpuCtx = MOS65FAMILY::createContext();
     
     cpuCtx->read = [this]( uint16_t addr ) {
-        
+    
         return memoryCpu.read( addr );
     };
     
@@ -61,12 +61,14 @@ System::System(Interface* interface) {
     };
     
     cpuCtx->watch = [this]() {
-      
-        return vicII->getLastReadedValue();
+        // todo: what happens here while expansion port is dma'ing
+        //return vicII->getLastReadedValue();
+        return vicreada;
     };
     
     cpuCtx->syncLo = [this]() {
         events.process();
+        expansionPort->cycle();
         powerSupply->tick();        
         cia1->processLo();        
 		vicII->phase1();
@@ -100,7 +102,8 @@ System::System(Interface* interface) {
         tape->setMotorIn( ((lines & ddr) & 0x20) == 0 );
     };        
     
-    cpu->setContext( cpuCtx );       		
+    cpu->setContext( cpuCtx ); 
+    cpu->setSo(1);
     
     readRam = [this](uint16_t addr) {
 
@@ -139,12 +142,12 @@ System::System(Interface* interface) {
     
     readRomL = [this](uint16_t addr) {
 
-        return cart->romL( addr );
+        return expansionPort->readRomL( addr );
     };
 
     readRomH = [this](uint16_t addr) {
 
-        return cart->romH( addr );
+        return expansionPort->readRomH( addr );
     };
     
     writeUnmapped = [this](uint16_t addr, uint8_t value) {
@@ -156,29 +159,22 @@ System::System(Interface* interface) {
     };
 
     writeIo1Reg = [this](uint16_t addr, uint8_t value) {
-        if (cart->inUse())
-            cart->writeIo(true, addr, value);
+        expansionPort->writeIo1(addr, value);
     };
 
     readIo1Reg = [this](uint16_t addr) {
         
-		if (cart->inUse())
-			return cart->readIo(true, addr);
-			
-        return vicII->getLastReadedValue();
+        return expansionPort->readIo1(addr);			
     };
     
     writeIo2Reg = [this](uint16_t addr, uint8_t value) {
-        if (cart->inUse())
-            cart->writeIo(false, addr, value);
+
+        expansionPort->writeIo2(addr, value);
     };
 
     readIo2Reg = [this](uint16_t addr) {
 		
-        if (cart->inUse())
-			return cart->readIo(false, addr);
-		
-        return vicII->getLastReadedValue();
+        return expansionPort->readIo2(addr);		
     };
 
     writeSidReg = [this](uint16_t addr, uint8_t value) {
@@ -244,12 +240,19 @@ System::System(Interface* interface) {
     
     vicII->read = [this](uint16_t addr) {
         
-        return memoryVic.read( (addr & 0x3fff) | (vicBank << 14) );
+        vicreada = memoryVic.read( (addr & 0x3fff) | (vicBank << 14) );
+        
+        return vicreada;
     };
 	
 	vicII->readAec = [this]() {
         
-		return memoryCpu.read( cpu->addressBus() );        
+        //if (vicII->getAecDelay() == 3)        
+            return memoryCpu.read( cpu->addressBus() );        
+        
+        //return vicII->getLastReadedValue();
+        //return cpu->dataBus();
+        
     };
     
     vicII->isCharRomAccessed = [this](uint16_t addr) {
@@ -269,7 +272,7 @@ System::System(Interface* interface) {
         
         frameComplete = true;		
         
-        if ( !cart->inUse() )
+        if ( !expansionPort->isActive() )
             keyBuffer->process();
     };
 	
@@ -294,7 +297,13 @@ System::System(Interface* interface) {
     };
 
     vicII->setRdy = [this](bool state) {
-        cpu->setRdy( state );
+        if (state)
+            rdyIncomming |= 1;
+        else
+            rdyIncomming &= ~1;      
+        
+        cpu->setRdy( rdyIncomming != 0 );
+        //cpu->leaveRdyHaltedOpcode();
     };
     
     sid->audioRefresh = [this](int16_t sample) {
@@ -476,18 +485,15 @@ auto System::power( bool softReset ) -> void {
 
 	if( !softReset )
 		initRam();
-	
-    mode = 3; //exrom: 1, game: 1 -> normal usage, no cartridge
-    
-    if ( cart->inUse() ) {
-		mode = cart->init();
-    }   
+	    
+    mode = (expansionPort->isExrom() << 1) | expansionPort->isGame();
     
     vicBank = 0;
     mode <<= 3;
     mode |= 7; // charen = hiram = loram = 1 
     irqIncomming = 0;
 	nmiIncomming = 0;
+    rdyIncomming = 0;
     
 	memoryCpu.unmap(0x0, 0xff);
 	memoryVic.unmap(0x0, 0xff);
@@ -534,7 +540,7 @@ auto System::power( bool softReset ) -> void {
     kernalBootComplete = false;
     calcSerializationSize();
     
-    if ( !cart->inUse() ) {
+    if ( !expansionPort->isActive() ) {
         KeyBuffer::Action action;
         action.mode = KeyBuffer::Mode::WaitDelay;
         action.delay = 2;        
@@ -559,45 +565,29 @@ auto System::powerOff() -> void {
 auto System::initRam() -> void {
     bool oldHalfPage = 1;
     Emulator::Rand rand;
-    
-    for( unsigned i = 0; i <= 0x3fff; i++ ) {
+
+    for( unsigned i = 0; i <= 0xffff; i++ ) {
+        bool pattern = (i >> 6) & 1;
         bool halfPage = (i >> 7) & 1;
+        uint8_t val = pattern ? 0xff : 0x0;
         
-        if (oldHalfPage && !halfPage) {            
+        if (oldHalfPage && !halfPage) { 
+            // first byte of page
             ram[i] = rand.xorShift() & 0xff;
-            if (ram[i] == 0xff )
-                ram[i] = 0xfe;            
+            
+            if (ram[i] == val)
+                ram[i] = 0xf0;
+
+        } else {
+            
+            ram[i] = val; 
         }
-        else ram[i] = !halfPage ? 0xff : 0;        
         
-        oldHalfPage = halfPage;
+        oldHalfPage = halfPage;       
     }
-    
-    for( unsigned i = 0x4000; i <= 0xbfff; i++ ) {
-        bool halfPage = (i >> 7) & 1;
-        
-        if (oldHalfPage && !halfPage) {
-            ram[i] = rand.xorShift() & 0xff;
-            if (ram[i] == 0 )
-                ram[i] = 1;            
-        }
-        else ram[i] = !halfPage ? 0 : 0xff;        
-        
-        oldHalfPage = halfPage;
-    }
-    
-    for( unsigned i = 0xc000; i <= 0xffff; i++ ) {
-        bool halfPage = (i >> 7) & 1;
-        
-        if (oldHalfPage && !halfPage) {
-            ram[i] = rand.xorShift() & 0xff;
-            if (ram[i] == 0xff )
-                ram[i] = 0xfe;            
-        }
-        else ram[i] = !halfPage ? 0xff : 0;        
-        
-        oldHalfPage = halfPage;
-    }    
+    // typical demo works only for a few possible values at 0x3fff.
+    // could imagine that some real machines can not run this demo.
+    ram[0x3fff] = 0;      
 }
 
 auto System::run() -> void {
@@ -614,7 +604,7 @@ auto System::run() -> void {
     iecBus->randomizeRpm();
     
     while( !frameComplete ) {        
-        cpu->process(); 
+        cpu->process();             
         iecBus->syncDrives(); 
     }  
     

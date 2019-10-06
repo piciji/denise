@@ -3,11 +3,12 @@
 
 namespace MOS65FAMILY {
 
-template<uint8_t cycle> auto M6502::read( uint16_t addr, bool lastCycle ) -> uint8_t {         
+template<uint8_t cycle> auto M6502::read( uint16_t addr, bool lastCycle ) -> uint8_t {                  
     
-    ctx->addrBus = addr;  
+    ctx->syncLo();
     
-    ctx->syncLo(); //put addr on bus (first half cycle)                
+    ctx->addrBus = addr;
+    ctx->writeCycle = false;
     
 #ifdef SUPPORT_SO    
     handleSo();
@@ -80,11 +81,12 @@ template<uint8_t cycle> auto M6502::read( uint16_t addr, bool lastCycle ) -> uin
     return ctx->db;
 }
 
-auto M6502::write( uint16_t addr, uint8_t data, bool lastCycle ) -> void {    
-    
-    ctx->addrBus = addr;
+auto M6502::write( uint16_t addr, uint8_t data, bool lastCycle ) -> void {           
     
     ctx->syncLo();      
+    
+    ctx->addrBus = addr;
+    ctx->writeCycle = true;
     
     if (lastCycle)
         sampleInterrupt();    
@@ -94,7 +96,7 @@ auto M6502::write( uint16_t addr, uint8_t data, bool lastCycle ) -> void {
     handleSo();
 #endif            
 	// Beware: bus write and synchronisation happen in parallel 
-    // doesn't necessary mean internal logic of other bus participant can use written value after second half cycle
+    // doesn't necessary mean internal logic of other bus participant can use written value after second half cycle.
     // thats why we do the write before syncHi. in the context of another bus participant the write should be pipelined
 	// now and executed to a proper time within syncHi
 	busWrite( addr, ctx->db );          

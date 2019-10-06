@@ -182,7 +182,7 @@ inline auto Base::interruptControlOld() -> void {
         
         if (acknowledgeCycle & 1) {
             // interrupt and acknowledge cycle at the same time.
-            // msb is seted but there is no interrupted sended to cpu like new cia
+            // msb is seted but there is no interrupt sended to cpu like new cia
             icr = 0x80;
             irqCall( false );   
             // icr is reseted next cycle with zero or the interrupts incomming this cycle

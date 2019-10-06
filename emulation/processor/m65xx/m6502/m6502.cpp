@@ -75,6 +75,7 @@ namespace MOS65FAMILY {
         ctx->nmiDetect = ctx->interruptSampled = false;
         ctx->soLine = ctx->soDetect = ctx->soSampled = false;
         ctx->rdyLastCycle = false;
+        ctx->writeCycle = false;
 
         ctx->killed = false;
         ctx->xaa = false;
@@ -130,6 +131,10 @@ namespace MOS65FAMILY {
     auto M6502::addressBus() -> uint16_t {
         // last puted address on bus
         return ctx->addrBus;
+    }
+    
+    auto M6502::isWriteCycle() -> bool {
+        return ctx->writeCycle;
     }
 
     auto M6502::getFlags() -> uint8_t {

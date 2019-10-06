@@ -7,6 +7,7 @@
 #include "../../cia/m6526.h"
 #include "memory.h"
 #include "../../tools/event.h"
+#include "../expansionPort/expansionPort.h"
 
 #define C64_FREQUENCY_PAL 985248
 #define C64_FREQUENCY_NTSC 1022727
@@ -74,6 +75,7 @@ struct System {
     MOS65Context* cpuCtx;
     CIA::M6526* cia1;
     CIA::M6526* cia2;
+    ExpansionPort* expansionPort;
     
 	Emulator::PowerSupply* powerSupply;
     Input* input;
@@ -90,8 +92,10 @@ struct System {
     // achknowledging e.g. an irq from vic side doesn't mean the irq line on cpu changes immediately
     // if cia1 holds up an irq too, the cpu irq pin goes hi if both sources are hi
     
-    uint8_t irqIncomming; // bit 0: vicII, bit 1: cia1
-    uint8_t nmiIncomming; // bit 0: keyboard, bit 1: cia2
+    uint8_t irqIncomming; // bit 0: vicII, bit 1: cia1, bit 2: expansion port
+    uint8_t nmiIncomming; // bit 0: keyboard, bit 1: cia2, bit 2: expansion port
+    uint8_t rdyIncomming; // bit 0: vicII, bit 1: expansion port
+    uint8_t vicreada;
     
     bool ntsc = false;
     bool frameComplete = false;
@@ -128,7 +132,10 @@ struct System {
     auto unserialize(uint8_t* data, unsigned size) -> bool;
     auto serializeAll(Emulator::Serializer& s) -> void;
     auto serialize(Emulator::Serializer& s) -> void;
-    static auto serialize6502( Emulator::Serializer& s, MOS65Context* cpuCtx ) -> void;
+    static auto serialize6502( Emulator::Serializer& s, MOS65Context* cpuCtx ) -> void;    
+    
+    auto loadCartridge( Interface::CartridgeId cartridgeId, uint8_t* data = nullptr, unsigned size = 0 ) -> void;
+    auto unloadCartridge(bool reinit = true) -> void;
 };
 
 extern System* system;

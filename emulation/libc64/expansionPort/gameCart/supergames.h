@@ -1,26 +1,27 @@
 
 #pragma once
 
-#include "cart.h"
-#include "../system/system.h"
-
 namespace LIBC64 {
     
-struct SuperGamesMapper : Mapper {
+struct SuperGames : GameCart {
+    
+    SuperGames() : GameCart(false, false) {
+        
+    }
         
 	bool writeProtect;
 	
-    auto write( bool io1, uint16_t addr, uint8_t value ) -> void {
+    auto writeIo2( uint16_t addr, uint8_t value ) -> void {
         
-        if (writeProtect || io1 )
+        if (writeProtect)
             return;       
 				
 		system->changeExpansionPortMemoryMode( !!(value & 4), !!(value & 4) );
         
-        for( auto& chip : cart->chips ) {
+        for( auto& chip : chips ) {
             if (chip.bank == (value & 3) ) {
-                cart->cRomL = &chip;
-				cart->cRomH = &chip;
+                cRomL = &chip;
+				cRomH = &chip;
                 break;
             }            
         }
@@ -29,15 +30,23 @@ struct SuperGamesMapper : Mapper {
     }
     
     auto init() -> void {
-        cart->cRomL = &cart->chips[0];
-        cart->cRomH = &cart->chips[0];
+        cRomL = &chips[0];
+        cRomH = &chips[0];
 		writeProtect = false;
     }
 
+    auto assumeChips( ) -> void {
+    
+        GameCart::assumeChips( {16384} );
+    }
+    
     auto serialize(Emulator::Serializer& s) -> void {
         
         s.integer( writeProtect );
+        
+        GameCart::serialize( s );
     }
+    
 };
     
 }

@@ -1,18 +1,16 @@
 
 #pragma once
 
-#include "cart.h"
-#include "../system/system.h"
-
 namespace LIBC64 {
     
-struct FunplayMapper : Mapper {    
+struct Funplay : GameCart {    
 	
-    auto write( bool io1, uint16_t addr, uint8_t value ) -> void {
+    Funplay() : GameCart(false, false) {
         
-        if (!io1 )
-            return;       				
-		
+    }
+    
+    auto writeIo1( uint16_t addr, uint8_t value ) -> void {
+        
 		if ((value & 0xc6) == 0x86) {
 			system->changeExpansionPortMemoryMode( true, true );
 		} else if ((value & 0xc6) == 0) {
@@ -23,17 +21,17 @@ struct FunplayMapper : Mapper {
 		// value = ((value >> 3) & 7) | ((value & 1) << 3);
 		// chip header contains translated bank number
 		
-        for( auto& chip : cart->chips ) {
+        for( auto& chip : chips ) {
             if (chip.bank == (value & 0x39)) {
-                cart->cRomL = &chip;
+                cRomL = &chip;
                 break;
             }            
         }
     }
     
     auto init() -> void {
-        cart->cRomL = &cart->chips[0];
-        cart->cRomH = nullptr;
+        cRomL = &chips[0];
+        cRomH = nullptr;
     }
 
 };

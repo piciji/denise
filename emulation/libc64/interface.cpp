@@ -1,7 +1,6 @@
 
 #include "interface.h"
 #include "system/system.h"
-#include "cart/cart.h"
 #include "prg/prg.h"
 #include "tape/tape.h"
 #include "sid/sid.h"
@@ -14,7 +13,7 @@
 
 namespace LIBC64 {
 
-const std::string Interface::Version = "105";
+const std::string Interface::Version = "106";
     
 Interface::Interface() : Emulator::Interface( "C64" ) {        
     system = new System( this );
@@ -578,16 +577,14 @@ auto Interface::createTapeImage(unsigned& imageSize) -> uint8_t* {
 	return tape->createTap( imageSize );
 }
 
-auto Interface::insertModule(unsigned driveId, uint8_t* data, unsigned size) -> void {
-	if (driveId >= driveGroups[DriveGroupIdModuleSlot].drives.size()) return;
+auto Interface::insertModule(uint8_t* data, unsigned size) -> void {
     
-    cart->load( data, size );
+    system->loadCartridge( CartridgeId::Default, data, size );
 }
 
-auto Interface::ejectModule(unsigned driveId) -> void {
-	if (driveId >= driveGroups[DriveGroupIdModuleSlot].drives.size()) return;
+auto Interface::ejectModule() -> void {
     
-    cart->unload();
+    system->unloadCartridge();
 }
 
 auto Interface::insertMemory(unsigned driveId, uint8_t* data, unsigned size) -> void {

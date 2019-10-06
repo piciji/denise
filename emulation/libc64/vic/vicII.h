@@ -106,6 +106,9 @@ struct VicII {
     auto initColorWheel() -> void;
     auto getLuma(uint8_t index, bool newRevision) -> double;
     auto getChroma(uint8_t index) -> double; 
+    auto reuBAState() -> bool;
+    
+    auto getAecDelay() -> uint8_t { return aecDelay; }
    
 protected:    
     bool rev65; //true: 65xx chips, false: 85xx chips
@@ -133,7 +136,7 @@ protected:
     unsigned firstVisiblePixel;
 	unsigned xWrapAround;
 	
-	bool baLow; //connected to 6510 rdy
+	bool baLow; //connected to 6510 rdy and expansion port
     uint8_t aecDelay;
     bool spriteBa[9][65];
 	bool allowBadlines;
