@@ -183,28 +183,28 @@ auto M6502::zeroPageIndexedM( Alu alu, Alu alu2 ) -> void {
     
     zeroPageIndexedM( alu );
     
-    A = ALU2( ctx->db ); 
+    A = ALU2( ctx->data2 ); 
 }
 
 auto M6502::zeroPageM( Alu alu, Alu alu2 ) -> void {
     
     zeroPageM( alu );
     
-    A = ALU2( ctx->db );
+    A = ALU2( ctx->data2 );
 }
 
 auto M6502::absoluteM( Alu alu, Alu alu2 ) -> void {
 
     absoluteM( alu );
 	
-	A = ALU2( ctx->db );
+	A = ALU2( ctx->data2 );
 }
 
 template<M6502::Reg regIndex> auto M6502::absoluteIndexedM( Alu alu, Alu alu2 ) -> void {
 
 	absoluteIndexedM<regIndex>( alu );
 			
-	A = ALU2( ctx->db );
+	A = ALU2( ctx->data2 );
 }
 
 auto M6502::H1AndedWrite( uint8_t anded ) -> void {

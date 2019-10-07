@@ -60,10 +60,19 @@ System::System(Interface* interface) {
 		memoryCpu.write( addr, value );
     };
     
-    cpuCtx->watch = [this]() {
-        // todo: what happens here while expansion port is dma'ing
-        //return vicII->getLastReadedValue();
-        return vicreada;
+    cpuCtx->writeSelect = [this](uint16_t addr) {
+        // CPU doesn't update BUS.
+        // write uses last BUS value (always VIC in first half cycle)
+        // CPU signals address 0 or 1 only, no need for further checks.
+        this->ram[ addr ] = vicII->getLastReadedValue();
+    };
+    
+    cpuCtx->readSelect = [this]() {
+        
+        if (vicII->getAecDelay())
+            return vicII->getLastReadedValue();
+        
+        return cpu->dataBus();
     };
     
     cpuCtx->syncLo = [this]() {
@@ -111,12 +120,8 @@ System::System(Interface* interface) {
     };
     
     writeRam = [this](uint16_t addr, uint8_t value) {
-        
-        if (addr == 0 || addr == 1)            
-            this->ram[ addr ] = vicII->getLastReadedValue();
-        
-        else        
-            this->ram[ addr ] = value;
+    
+        this->ram[ addr ] = value;
     };
 
     readCharRom = [this](uint16_t addr) {
@@ -246,13 +251,11 @@ System::System(Interface* interface) {
     };
 	
 	vicII->readAec = [this]() {
-        
-        //if (vicII->getAecDelay() == 3)        
-            return memoryCpu.read( cpu->addressBus() );        
-        
-        //return vicII->getLastReadedValue();
-        //return cpu->dataBus();
-        
+                    
+        // we are in second half cycle and cpu still owns bus.
+        // at this point cpu is halted but address is already puted on bus.
+        // Vic reads from CPU address space for three cycles after BA is seted.
+        return memoryCpu.read( cpu->addressBus() );                
     };
     
     vicII->isCharRomAccessed = [this](uint16_t addr) {

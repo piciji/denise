@@ -6,9 +6,9 @@
  * doesn't emulates the CMOS 65C02 ( Nec PC Engine )
  * 
  * NOTE: doesn't emulates AEC line of 6510. you can manage this by yourself within callbacks for read/write.
- * if AEC line is pulled low, the external Bus is decoupled from 6510. 
+ * if AEC line is pulled low, the external BUS is decoupled from 6510. 
  * of course running the CPU without connected BUS doesn't make much sense. thats why AEC is mostly used with
- * RDY to stop the cpu. RDY stops CPU in read cycles only, means if AEC and RDY happens the same time you have to
+ * RDY to stop the CPU. RDY stops CPU in read cycles only, means if AEC and RDY happens the same time you have to
  * make sure that all write cycles before (3 in worst case) are not processed.
  * the C64 graphic chip lowers AEC 3 cycles after RDY, so you don't need to take care of AEC.
  * the C64 extension port DMA request lowers AEC/RDY same time, so take care of write cycles like explained above.

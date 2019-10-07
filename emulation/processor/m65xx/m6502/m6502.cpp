@@ -23,17 +23,21 @@ namespace MOS65FAMILY {
 
     inline auto M6502::busRead(uint16_t addr) -> uint8_t {
 
-        return ctx->read(addr);
+        ctx->dataBus = ctx->read(addr);
+        
+        return ctx->dataBus;
     }
 
     inline auto M6502::busWrite(uint16_t addr, uint8_t data) -> void {
 
+        ctx->dataBus = data;
+        
         ctx->write(addr, data);
     }
 
     inline auto M6502::busWatch() -> uint8_t {
 
-        return ctx->watch();
+        return ctx->readSelect();
     }
 
     auto M6502::leaveRdyHaltedOpcode() -> void {
@@ -57,8 +61,6 @@ namespace MOS65FAMILY {
         Y = 0x00;
         A = 0xaa;
         PC = 0x00ff;
-        ctx->db = 0;
-        ctx->addrBus = 0;
         ctx->rdyLine = false;
         setFlags(0x02);
 
@@ -125,7 +127,7 @@ namespace MOS65FAMILY {
 
     auto M6502::dataBus() -> uint8_t {
         // last used value on bus
-        return ctx->db;
+        return ctx->dataBus;
     }
 
     auto M6502::addressBus() -> uint16_t {

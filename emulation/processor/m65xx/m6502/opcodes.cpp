@@ -231,10 +231,10 @@ auto M6502::jmpAbsolute() -> void {
 auto M6502::jmpIndirect() -> void {
 
     ctx->data = std::move( readPCInc<1>() );
-    ctx->dataH = std::move( readPCInc<2>() );
+    ctx->data2 = std::move( readPCInc<2>() );
     
-    ctx->dataW = std::move( read<3>( ctx->dataH << 8 | ctx->data++ ) );        
-    ctx->dataW |= std::move( read<4>( ctx->dataH << 8 | ctx->data, LAST ) ) << 8;
+    ctx->dataW = std::move( read<3>( ctx->data2 << 8 | ctx->data++ ) );        
+    ctx->dataW |= std::move( read<4>( ctx->data2 << 8 | ctx->data, LAST ) ) << 8;
     
     PC = ctx->dataW;
 }

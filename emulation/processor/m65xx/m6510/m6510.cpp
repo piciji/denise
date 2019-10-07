@@ -41,16 +41,16 @@ inline auto M6510::busRead( uint16_t addr ) -> uint8_t {
 	advanceCounter();
     
 	if (addr == 0x0000) {
-        // address selection only
-        M6502::busRead( addr );
+        // read without updating data bus ?
+        ctx->readSelect();
         
 		return ctx->ddr;   
     }
     
 	if (addr == 0x0001) {
-        // address selection only
-        M6502::busRead( addr );
-                
+        // read without updating data bus ?
+        ctx->readSelect();
+        
 		uint8_t data = ctx->ioLines;
 		
 		if ( !(ctx->ddr & 0x40) ) {
@@ -73,24 +73,28 @@ inline auto M6510::busWrite( uint16_t addr, uint8_t data ) -> void {
     
 	advanceCounter();
 	
+    // places write on bus for $00 and $01 too. for these two addresses
+    // it seems only the address is selected on bus in write mode but not the data.
+    // so the write happens with last data on external bus and not this data.
+    // it's video data in case of c64, readed in first half cycle.
+    
 	if (addr == 0x0000) {						
 		
 		chargeUndefinedBits( data );
 		ctx->ddr = data;		
 		updateLines();
+        // don't update data bus, see eplanation above.        
+        ctx->writeSelect(addr);
 		
 	} else if (addr == 0x0001) {
 		
 		ctx->por = data;
-		updateLines();				
-	}
-    
-	// places write on bus for $00 and $01 too.
-    // it seems only the address is selected on bus in write mode but not the data.
-    // so the write happens with last data on bus and not this data.
-    // it's video data in case of c64, readed in first half cycle.
-    // address selection is not emulated, so check it external.
-    M6502::busWrite( addr, data );
+		updateLines();			
+        // don't update data bus, see eplanation above
+        ctx->writeSelect(addr);
+        
+	} else        
+        M6502::busWrite( addr, data );
 }
 
 inline auto M6510::busWatch() -> uint8_t {

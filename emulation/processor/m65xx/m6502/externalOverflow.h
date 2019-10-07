@@ -26,7 +26,7 @@ inline auto M6502::handleSo() -> void {
         // before this function call. so we have to inject the seted overflow
         // value just before second half cycle executes. 
         if (ctx->storeFlags) // php, interrupt, brk
-            ctx->db |= 1 << 6;
+            ctx->data2 |= 1 << 6;
     }
 
     // is detected in any first half cycle at ~400 ns    

@@ -108,39 +108,36 @@ inline auto M6502Custom::sampleIrq() -> void {
 }
 
 auto M6502Custom::_read( uint16_t addr, bool lastCycle ) -> uint8_t {         
+    static uint8_t data;
     
-    ctx->addrBus = addr;  
-    
-    ctx->syncLo();            
+    ctx->syncLo();                  
     
     handleSo();
 	
     if (lastCycle)
         sampleIrq();           
     
-    ctx->db = busRead( addr );
+    data = ctx->read(addr);
         
     ctx->syncHi();    
 	
     ctx->irqPending = ctx->irqLine;
     
-    return ctx->db;
+    return data;
 }
 
 auto M6502Custom::_write( uint16_t addr, uint8_t data, bool lastCycle ) -> void {    
     
-    ctx->addrBus = addr;
-    
-    ctx->syncLo();      
+    ctx->syncLo();
     
     if (lastCycle)
         sampleIrq();    
     
-    ctx->db = data; 
+    ctx->data2 = data; 
     
-    handleSo();
-            
-	busWrite( addr, ctx->db );          
+    handleSo();           
+    
+    ctx->write(addr, ctx->data2);
 	
 	ctx->syncHi();    
     

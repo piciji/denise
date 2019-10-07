@@ -4,6 +4,7 @@
 namespace MOS65FAMILY {
 
 template<uint8_t cycle> auto M6502::read( uint16_t addr, bool lastCycle ) -> uint8_t {                  
+    static uint8_t data;
     
     ctx->syncLo();
     
@@ -37,10 +38,10 @@ template<uint8_t cycle> auto M6502::read( uint16_t addr, bool lastCycle ) -> uin
         
         detectInterrupt(); 
         
-        ctx->db = busWatch(); //on falling edge
+        data = busWatch(); //on falling edge
         
         if ( ctx->xaa )
-            A &= ctx->db;
+            A &= data;
                 
 		// rdy prolongs complete cycles, not half cycles
         ctx->syncLo();
@@ -72,13 +73,13 @@ template<uint8_t cycle> auto M6502::read( uint16_t addr, bool lastCycle ) -> uin
         }
     }        
     
-    ctx->db = busRead( addr ); //read bus (second half cycle)
+    data = busRead( addr ); //read bus (second half cycle)
         
     ctx->syncHi();    
 	
     detectInterrupt(); //happens during second half cycle ( falling edge of phi2 )
     
-    return ctx->db;
+    return data;
 }
 
 auto M6502::write( uint16_t addr, uint8_t data, bool lastCycle ) -> void {           
@@ -91,7 +92,7 @@ auto M6502::write( uint16_t addr, uint8_t data, bool lastCycle ) -> void {
     if (lastCycle)
         sampleInterrupt();    
     
-    ctx->db = data; 
+    ctx->data2 = data; 
 #ifdef SUPPORT_SO        
     handleSo();
 #endif            
@@ -99,7 +100,7 @@ auto M6502::write( uint16_t addr, uint8_t data, bool lastCycle ) -> void {
     // doesn't necessary mean internal logic of other bus participant can use written value after second half cycle.
     // thats why we do the write before syncHi. in the context of another bus participant the write should be pipelined
 	// now and executed to a proper time within syncHi
-	busWrite( addr, ctx->db );          
+	busWrite( addr, ctx->data2 );          
 	
 	ctx->syncHi();    
     

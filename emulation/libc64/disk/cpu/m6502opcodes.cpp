@@ -409,11 +409,11 @@ auto M6502Custom::_jmpIndirect() -> void {
     switch(step++) {
         case 0:
             ctx->data = _readPCInc();
-            ctx->dataH = _readPCInc();
-            ctx->dataW = _read( ctx->dataH << 8 | ctx->data++ );        
+            ctx->data2 = _readPCInc();
+            ctx->dataW = _read( ctx->data2 << 8 | ctx->data++ );        
             break;
         case 1:
-            ctx->dataW |= _read( ctx->dataH << 8 | ctx->data, LAST ) << 8;
+            ctx->dataW |= _read( ctx->data2 << 8 | ctx->data, LAST ) << 8;
             PC = ctx->dataW;
             step = 0;
             break;            
@@ -797,7 +797,7 @@ auto M6502Custom::_zeroPageIndexedM( Alu alu, Alu alu2 ) -> void {
     _zeroPageIndexedM( alu );
     
     if (step == 0)
-        A = ALU2( ctx->db ); 
+        A = ALU2( ctx->data2 ); 
 }
 
 auto M6502Custom::_zeroPageM( Alu alu, Alu alu2 ) -> void {
@@ -805,7 +805,7 @@ auto M6502Custom::_zeroPageM( Alu alu, Alu alu2 ) -> void {
     _zeroPageM( alu );
     
     if (step == 0)
-        A = ALU2( ctx->db );
+        A = ALU2( ctx->data2 );
 }
 
 auto M6502Custom::_absoluteM( Alu alu, Alu alu2 ) -> void {
@@ -813,7 +813,7 @@ auto M6502Custom::_absoluteM( Alu alu, Alu alu2 ) -> void {
     _absoluteM( alu );
 	
     if (step == 0)
-        A = ALU2( ctx->db );
+        A = ALU2( ctx->data2 );
 }
 
 template<M6502Reg regIndex> auto M6502Custom::_absoluteIndexedM( Alu alu, Alu alu2 ) -> void {
@@ -821,7 +821,7 @@ template<M6502Reg regIndex> auto M6502Custom::_absoluteIndexedM( Alu alu, Alu al
 	_absoluteIndexedM<regIndex>( alu );
 			
     if (step == 0)
-        A = ALU2( ctx->db );
+        A = ALU2( ctx->data2 );
 }    
     
 }

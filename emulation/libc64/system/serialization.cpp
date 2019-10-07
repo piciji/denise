@@ -157,7 +157,7 @@ auto System::serialize6502( Emulator::Serializer& s, MOS65Context* cpuCtx ) -> v
     s.integer( cpuCtx->y );
     s.integer( cpuCtx->s );
     s.integer( cpuCtx->pc );
-    s.integer( cpuCtx->db );
+    s.integer( cpuCtx->dataBus );
     s.integer( cpuCtx->addrBus );
     s.integer( cpuCtx->writeCycle );
     s.integer( cpuCtx->irqLine );
@@ -187,7 +187,7 @@ auto System::serialize6502( Emulator::Serializer& s, MOS65Context* cpuCtx ) -> v
     s.integer( cpuCtx->absIndexed );
     s.integer( cpuCtx->zeroPage );
     s.integer( cpuCtx->data );
-    s.integer( cpuCtx->dataH );
+    s.integer( cpuCtx->data2 );
     s.integer( cpuCtx->dataW );
     s.integer( cpuCtx->vector );
     s.integer( cpuCtx->displacement );
