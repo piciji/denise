@@ -18,9 +18,26 @@ namespace MOS65FAMILY {
     auto M6502::setContext(M65Context* context) -> void {
         this->workCtx = context;
         
-        restoreContext();
+        if (context->useDummy)
+            setDummyContext();
+        else        
+            restoreContext();
     }
+    
+    inline auto M6502::setDummyContext() -> void {
 
+        workCtx->useDummy = true;
+        
+        ctx = workCtx->dummyCtx;                
+    }
+        
+    inline auto M6502::restoreContext() -> void {
+
+        workCtx->useDummy = false;
+        
+        ctx = workCtx;                
+    }
+    
     inline auto M6502::busRead(uint16_t addr) -> uint8_t {
 
         ctx->dataBus = ctx->read(addr);
@@ -87,14 +104,7 @@ namespace MOS65FAMILY {
         ctx->soBlock = 0;
         dontBlockExecution = false;
     }
-
-    inline auto M6502::restoreContext() -> void {
-
-        workCtx->useDummy = false;
-        
-        ctx = workCtx;                
-    }
-
+    
     auto M6502::setMagicForAne(uint8_t magicAne) -> void {
         ctx->magicAne = magicAne;
     }

@@ -38,10 +38,10 @@ template<uint8_t cycle> auto M6502::read( uint16_t addr, bool lastCycle ) -> uin
         
         detectInterrupt(); 
         
-        data = busWatch(); //on falling edge
+        ctx->dataBus = busWatch(); //on falling edge
         
         if ( ctx->xaa )
-            A &= data;
+            A &= ctx->dataBus;
                 
 		// rdy prolongs complete cycles, not half cycles
         ctx->syncLo();
@@ -65,10 +65,8 @@ template<uint8_t cycle> auto M6502::read( uint16_t addr, bool lastCycle ) -> uin
        
         if (dontBlockExecution) {
             dontBlockExecution = false;
-            ctx->resumeCycle = cycle;
-            ctx->useDummy = true;
-            // swap dummy in
-            ctx = ctx->dummyCtx;                                           
+            workCtx->resumeCycle = cycle;
+            setDummyContext();                                         
             return 0;
         }
     }        

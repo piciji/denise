@@ -95,7 +95,6 @@ struct System {
     uint8_t irqIncomming; // bit 0: vicII, bit 1: cia1, bit 2: expansion port
     uint8_t nmiIncomming; // bit 0: keyboard, bit 1: cia2, bit 2: expansion port
     uint8_t rdyIncomming; // bit 0: vicII, bit 1: expansion port
-    uint8_t vicreada;
     
     bool ntsc = false;
     bool frameComplete = false;

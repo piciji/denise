@@ -51,49 +51,68 @@ System::System(Interface* interface) {
     cpuCtx = MOS65FAMILY::createContext();
     
     cpuCtx->read = [this]( uint16_t addr ) {
-    
+        // we don't need to check for AEC low, which would decouple CPU from BUS.
+        // there is no situation, where AEC is pulled low without RDY pulled low.
+        // it wouldn't make any sense.
         return memoryCpu.read( addr );
     };
     
     cpuCtx->write = [this]( uint16_t addr, uint8_t value ) {
 	
+        if (expansionPort->isDma())
+            // DMA halts CPU in next read cycle, but a write cycle happened before.
+            // DMA pulls AEC low too at the same time.
+            // we can not write here, because CPU is decoupled from BUS.
+            return;
+        
 		memoryCpu.write( addr, value );
     };
     
     cpuCtx->writeSelect = [this](uint16_t addr) {
-        // CPU doesn't update BUS.
-        // write uses last BUS value (always VIC in first half cycle)
-        // CPU signals address 0 or 1 only, no need for further checks.
-        this->ram[ addr ] = vicII->getLastReadedValue();
+        
+        if (expansionPort->isDma())
+            return;
+        
+        // CPU doesn't update data BUS.
+        // write uses last BUS value (always VIC data from first half cycle)
+        // CPU signals address 0 or 1 this way only, no need for further checks.
+        this->ram[ addr ] = vicII->lastReadPhase1();
     };
     
     cpuCtx->readSelect = [this]() {
+        // CPU watches BUS in case of RDY.
         
-        if (vicII->getAecDelay())
-            return vicII->getLastReadedValue();
-        
-        return cpu->dataBus();
+        // vicII sends AEC to CPU, 3 cycles after it sends BA(RDY) to CPU.
+        // expansion port DMA pulls AEC low too.
+        if ( vicII->isAecLow() || expansionPort->isDma() )
+            // CPU is in tri-state and decoupled from BUS
+            return cpu->dataBus();
+
+        // CPU is BUS Master in second half cycle, so it reads last BUS value from first half cycle,
+        // which is always accessed by VIC.
+        return vicII->lastReadPhase1();
     };
     
     cpuCtx->syncLo = [this]() {
         events.process();
-        expansionPort->cycle();
         powerSupply->tick();        
         cia1->processLo();        
 		vicII->phase1();
         cia2->processLo();
-		sid->phase1();           
+		sid->phase1();    
+        expansionPort->cycleLo();
     };
     
     cpuCtx->syncHi = [this]() {               
         // let the cia1 process before Vic, so Vic can latch a lightpen trigger late this half cycle
+        expansionPort->cycleHi();
         cia1->processHi();        
 		vicII->phase2();
         cia2->processHi();
 		sid->phase2();
 		tape->clock();
         iecBus->countTicks();  
-        input->clock();
+        input->clock();        
     };
     
     cpuCtx->updatePort = [this](uint8_t lines, uint8_t ddr) {
@@ -160,7 +179,7 @@ System::System(Interface* interface) {
     };
     
     readUnmapped = [this](uint16_t addr) {
-        return vicII->getLastReadedValue();
+        return vicII->lastReadPhase1();
     };
 
     writeIo1Reg = [this](uint16_t addr, uint8_t value) {
@@ -238,24 +257,29 @@ System::System(Interface* interface) {
 
     readColorRam = [this](uint16_t addr) {
 
-        return (colorRam[ addr & 0x3ff ] & 0xf) | ( vicII->getLastReadedValue() & ~0xf );
+        return (colorRam[ addr & 0x3ff ] & 0xf) | ( vicII->lastReadPhase1() & ~0xf );
     };
 
     vicII->readColor = readColorRam;
     
     vicII->read = [this](uint16_t addr) {
         
-        vicreada = memoryVic.read( (addr & 0x3fff) | (vicBank << 14) );
-        
-        return vicreada;
+        return memoryVic.read( (addr & 0x3fff) | (vicBank << 14) );        
     };
 	
-	vicII->readAec = [this]() {
-                    
-        // we are in second half cycle and cpu still owns bus.
-        // at this point cpu is halted but address is already puted on bus.
-        // Vic reads from CPU address space for three cycles after BA is seted.
-        return memoryCpu.read( cpu->addressBus() );                
+	vicII->readCpu = [this]() {
+        // we are in second half cycle and VIC pulled BA low but doesn't own BUS.
+        // it takes 3 further cycles till VIC can access BUS in second half cycle.
+        // so this function is called for 3 cycles in a row.
+        // first we need to find out who is BUS Master? CPU or expansion port ?
+        if ( !expansionPort->isDma() )
+            // at this point CPU is only halted by BA(RDY) when entering a read cycle.
+            // even when cpu is halted the address is selected on BUS and the VIC reads
+            // in second half cycle from this address but not the CPU.            
+            return memoryCpu.read( cpu->addressBus() );
+        
+        // expansion port is BUS Master... same explanation as above
+        return memoryCpu.read( expansionPort->addressBus() );            
     };
     
     vicII->isCharRomAccessed = [this](uint16_t addr) {

@@ -14,7 +14,7 @@ auto System::loadCartridge( Interface::CartridgeId cartridgeId, uint8_t* data, u
             break;
             
         case Interface::CartridgeId::Reu:
-//            expansionPort = new Reu;
+            expansionPort = new Reu( size );            
             break;
             
         default:
@@ -43,23 +43,6 @@ auto System::loadCartridge( Interface::CartridgeId cartridgeId, uint8_t* data, u
         cpu->setIrq(irqIncomming != 0);
     };
 
-    expansionPort->listenAddrBus = [this](bool& writeAccess) {
-        
-        writeAccess = cpu->isWriteCycle();
-        
-        return cpu->addressBus();
-    };
-    
-    expansionPort->listenDataBus = [this]() {        
-        
-        return cpu->dataBus();
-    };
-    
-    expansionPort->vicBA = [this]() {   
-        
-        return vicII->reuBAState();
-    };
-    
     expansionPort->dmaCall = [this](bool state) {
         if (state)
             rdyIncomming |= 2;
@@ -68,6 +51,18 @@ auto System::loadCartridge( Interface::CartridgeId cartridgeId, uint8_t* data, u
         
         cpu->setRdy( rdyIncomming != 0 );
     };
+    
+    
+    if (cartridgeId == Interface::CartridgeId::Reu)
+        expansionPort->vicBA = [this]() {   
+
+            return vicII->reuBaLow();
+        };
+    else
+        expansionPort->vicBA = [this]() {   
+
+            return vicII->isBaLow();
+        };
 }
 
 auto System::unloadCartridge(bool reinit) -> void {

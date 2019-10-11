@@ -3,48 +3,73 @@
 
 #include "../expansionPort.h"
 
-#include "../../../tools/event.h"
-
 namespace LIBC64 {
     
 struct Reu : ExpansionPort {   
     
-    Reu(unsigned size);
+    Reu(unsigned size, uint8_t* rom = nullptr, unsigned romSize = 0);
     ~Reu();
     
     using Callback = std::function<void ()>;
-    Emulator::Events* events;
     
-    uint8_t status;      
-    
+    uint8_t status;          
     uint8_t command;
+    uint8_t intMask;    
+    uint8_t control;
     
-    uint16_t hostAddr;
+    struct {
+        uint16_t hostAddr;    
+        uint32_t reuAddr;
+        uint16_t transferLength;           
+    } reg;     
     
-    uint16_t reuAddr;
-    
-    uint8_t reuBank;
+    uint16_t hostAddr;    
+    uint32_t reuAddr;
+    uint16_t transferLength;
     
     unsigned size; // in kb
     uint8_t* data = nullptr;
     
-    uint16_t transferLength;
-    
-    uint8_t intMask;
-    
-    uint8_t addrControl;
+    uint8_t* rom;
+    unsigned romSize;
+        
+    uint32_t wrapAround;
+    uint32_t dramWrapAround;
     
     Callback setIrq;
     Callback unsetIrq;
     Callback setDma;
+    Callback finish;
     
     bool waitForStart;
+    uint8_t vicBaLow;
+    bool steal;
+    uint8_t value;
+    uint8_t value2;    
+    bool swapRead;   
     
-    auto cycle() -> void;
-    
-    auto writeIo2( uint16_t addr, uint8_t value ) -> void;
-    
+    auto writeIo2( uint16_t addr, uint8_t value ) -> void;    
     auto readIo2( uint16_t addr ) -> uint8_t;
+    auto readRomL(uint16_t addr) -> uint8_t;
+
+    auto cycleLo() -> void;
+    auto cycleHi() -> void;
+    
+    auto reset() -> void;   
+    auto serialize(Emulator::Serializer& s) -> void;
+    
+    auto incrementAddresses() -> void;
+    auto decrementTransferLength() -> void;
+    auto readReu() -> uint8_t;
+    auto writeReu(uint8_t value) -> void;
+    auto allowIrq() -> bool;
+    
+    inline auto stash() -> void;
+    inline auto fetch() -> void;
+    inline auto swap() -> void;
+    inline auto verify() -> void;
+    
+
 };    
     
 }

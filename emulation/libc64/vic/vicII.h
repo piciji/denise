@@ -41,7 +41,7 @@ struct VicII {
     std::function<void (bool)> setIrq;
     std::function<void (bool)> setRdy;
     std::function<void ( uint16_t*, unsigned, unsigned, unsigned)> videoRefresh;
-	std::function<uint16_t ()> readAec;
+	std::function<uint16_t ()> readCpu;
     std::function<bool (uint16_t)> isCharRomAccessed;
     std::function<void ()> midScreenCallback;
     std::function<void ()> vblankCallback;
@@ -94,7 +94,6 @@ struct VicII {
     auto setNtsc( bool state ) -> void;
 	auto setRevision65( bool state ) -> void;
     auto isRevision65() -> bool;
-    auto getLastReadedValue() -> uint8_t;
 	auto triggerLightPen( bool state ) -> void;
     auto triggerLightPen( bool state, uint8_t subCycle ) -> void;
     auto getHeight() -> unsigned { return vHeight; }
@@ -106,9 +105,11 @@ struct VicII {
     auto initColorWheel() -> void;
     auto getLuma(uint8_t index, bool newRevision) -> double;
     auto getChroma(uint8_t index) -> double; 
-    auto reuBAState() -> bool;
+    auto reuBaLow() -> bool;
     
-    auto getAecDelay() -> uint8_t { return aecDelay; }
+    auto lastReadPhase1() -> uint8_t { return lastReadPhi1; }
+    auto isAecLow() -> bool { return aecDelay == 0; }
+    auto isBaLow() -> bool { return baLow; }
    
 protected:    
     bool rev65; //true: 65xx chips, false: 85xx chips

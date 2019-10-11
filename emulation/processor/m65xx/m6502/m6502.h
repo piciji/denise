@@ -79,6 +79,7 @@ protected:
     virtual auto busWatch() -> uint8_t;
     auto resetRoutine() -> void;
     auto restoreContext() -> void;
+    auto setDummyContext() -> void;
     
     //memory
     template<uint8_t cycle> inline auto read( uint16_t addr, bool lastCycle = false ) -> uint8_t;

@@ -47,10 +47,6 @@ auto VicII::isRevision65() -> bool {
     return rev65;
 }
 
-auto VicII::getLastReadedValue() -> uint8_t {
-    return lastReadPhi1;
-}
-
 auto VicII::updateIrq( Interrupt interrupt ) -> void {       
     
     if ( interrupt != Interrupt::None ) {
