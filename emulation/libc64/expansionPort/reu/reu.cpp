@@ -1,30 +1,40 @@
 
-#include "reu.h"
 #include "../../system/system.h"
+#include "reu.h"
 
 namespace LIBC64 {
- 
-Reu::Reu(unsigned size, uint8_t* rom, unsigned romSize) {
-    this->active = true;
-    this->size = 128;
-    this->romSize = romSize;
-    this->rom = rom;
     
-    if (rom && romSize) 
-        exRom = false;
+auto Reu::setRom(uint8_t* rom, unsigned romSize) -> void {
+    ExpansionPort::setRom( rom, romSize );
     
-    auto& reuCart = system->interface->cartridges[1];
+    exRom = (rom && romSize) ? false : true;
+}
+
+auto Reu::isBootable( ) -> bool {
     
-    for( auto& memory : reuCart.memory ) {        
-        if (memory.size == size) {
-            this->size = size;            
-            break;
-        }
-    }
+    return !exRom;
+}
+
+auto Reu::setRam(unsigned size) -> void {    
     
-    size = this->size;
+    if (data && (size == this->size))
+        return;
+    
+    if(data)
+        delete[] data;
+        
+    this->size = size;
+        
+    data = new uint8_t[size * 1024];
+    std::memset(data, 0, size * 1024); 
+}
+    
+Reu::Reu() {
+    setId( Interface::ExpansionIdReu );
+    this->size = 128;    
     
     data = new uint8_t[size * 1024];
+    std::memset(data, 0, size * 1024);
     
     // when lower 19 bits of REU address reach this value, address wraps around to zero
     wrapAround = size == 128 ? 0x20000 : 0x80000;
@@ -171,7 +181,7 @@ inline auto Reu::verify() -> void {
         return;
 
     value = readReu();
-    value2 = system->memoryCpu.read(hostAddr);
+    value2 = system->memoryCpu.read( bus.addr = hostAddr);
 
     if (steal) {
         steal = false;
@@ -205,7 +215,7 @@ inline auto Reu::swap() -> void {
         if (vicBaLow & 1)
             return;
         value = readReu();
-        value2 = system->memoryCpu.read(hostAddr);
+        value2 = system->memoryCpu.read( bus.addr = hostAddr);
         
     } else {
 
@@ -221,7 +231,7 @@ inline auto Reu::swap() -> void {
         }
         
         writeReu(value2);
-        system->memoryCpu.write(hostAddr, value);
+        system->memoryCpu.write( bus.addr = hostAddr, value);
         incrementAddresses();      
         decrementTransferLength(); 
     }
@@ -242,7 +252,7 @@ inline auto Reu::fetch() -> void {
     }
     
     value = readReu();
-    system->memoryCpu.write( hostAddr, value );
+    system->memoryCpu.write( bus.addr = hostAddr, value );
     incrementAddresses();      
     decrementTransferLength();
 }
@@ -251,7 +261,7 @@ inline auto Reu::stash() -> void {
     if (vicBaLow & 1) // VIC needs this cycle
         return;
     
-    value = system->memoryCpu.read( hostAddr );
+    value = system->memoryCpu.read( bus.addr = hostAddr );
     writeReu( value );
     incrementAddresses();      
     decrementTransferLength();
@@ -376,6 +386,9 @@ auto Reu::allowIrq() -> bool {
 
 auto Reu::readRomL(uint16_t addr) -> uint8_t {
 	
+    if (!rom)
+        return ExpansionPort::readRomL( addr );
+    
     addr %= romSize;		
     
     return *(rom + addr);
@@ -395,7 +408,14 @@ auto Reu::serialize(Emulator::Serializer& s) -> void {
     s.integer( reuAddr );
     s.integer( transferLength );
     
-    s.integer( size );
+    unsigned _size = size;
+    
+    s.integer( _size );
+    if ( s.mode() == Emulator::Serializer::Mode::Load ) {
+        // when size mismatches, recreate
+        setRam( _size );
+    }
+    
     s.array( data, size * 1024 );
     
     s.integer( wrapAround );
@@ -406,7 +426,9 @@ auto Reu::serialize(Emulator::Serializer& s) -> void {
     s.integer( steal );
     s.integer( value );
     s.integer( value2 );
-    s.integer( swapRead );               
+    s.integer( swapRead );     
+    
+    ExpansionPort::serialize( s );
 }
 
 }

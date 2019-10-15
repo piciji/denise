@@ -20,9 +20,13 @@ struct Interface : Emulator::Interface {
         DriveGroupIdModuleSlot = 2, DriveGroupIdMemory = 3,
     };
     
-    enum class CartridgeId : int { None = -1, Default = 0, Default8k = 256, Default16k = 257, Ultimax = 258,
-            Ocean = 5, Funplay = 7, SuperGames = 8, System3 = 15, Zaxxon = 18,
-            Reu = 300 };
+    enum ExpansionId {
+        ExpansionIdNone = 0, ExpansionIdGame = 1, ExpansionIdReu = 2,
+    };
+    
+    enum class CartridgeId { Default = 0, Default8k = 256, Default16k = 257, Ultimax = 258,
+        Ocean = 5, Funplay = 7, SuperGames = 8, System3 = 15, Zaxxon = 18
+    };
     
     static const std::string Version;
     
@@ -76,6 +80,9 @@ struct Interface : Emulator::Interface {
 	auto getMemoryListing() -> std::vector<Emulator::Interface::Listing>;
 	auto selectMemoryListing(unsigned pos) -> bool;    
 
+    //expansion
+    auto setExpansionPort(unsigned expansionId) -> void;
+    
 	//savestates
     auto checkstate(uint8_t* data, unsigned size) -> bool;
 	auto savestate(unsigned& size) -> uint8_t*;
@@ -106,17 +113,19 @@ struct Interface : Emulator::Interface {
     
     auto setLineCallback(bool state, unsigned scanline = 0) -> void;
     auto setFinishVblankCallback(bool state) -> void;
+    
+    auto setMemory(unsigned typeId, unsigned memoryId) -> void;
 	
 private:
 	auto prepareDevices() -> void;
 	auto prepareDrives() -> void;
-	auto prepareMemory() -> void;
 	auto prepareFirmware() -> void;
-	auto prepareCpus() -> void;
 	auto prepareChipset() -> void;
     auto prepareFeatures() -> void;
     auto prepareStats() -> void;
     auto preparePalettes() -> void;
+    auto prepareExpansions() -> void;
+    auto prepareMemory() -> void;
 };
 
 }

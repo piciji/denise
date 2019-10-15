@@ -20,13 +20,35 @@ Interface::Interface() : Emulator::Interface( "C64" ) {
 
 	prepareDrives();
 	prepareFirmware();	
-	prepareMemory();
 	prepareDevices();
-	prepareCpus();
 	prepareChipset();
     prepareFeatures(); 
     prepareStats();
-    preparePalettes();
+    preparePalettes();    
+    prepareMemory();
+    prepareExpansions();
+}
+
+auto Interface::prepareMemory() -> void {
+    memoryTypes.push_back( {0, "REU", 0} );
+    
+    {   auto& memory = memoryTypes[0].memory;
+        memory.push_back( {0, 128} );
+        memory.push_back( {1, 256} );
+        memory.push_back( {2, 512} );
+        memory.push_back( {3, 1024} );
+        memory.push_back( {4, 2048} );
+        memory.push_back( {5, 4096} );
+        memory.push_back( {6, 8192} );
+        memory.push_back( {7, 16384} );
+    }
+}
+
+auto Interface::prepareExpansions() -> void {
+    
+    expansions.push_back( { ExpansionIdNone, "Empty", 0, nullptr } );
+    expansions.push_back( { ExpansionIdGame, "Game", 1, nullptr } );
+    expansions.push_back( { ExpansionIdReu, "REU", 1, &memoryTypes[0] } );
 }
 
 auto Interface::prepareStats() -> void {
@@ -214,14 +236,6 @@ auto Interface::prepareFirmware() -> void {
 	firmwares.push_back({1, "Basic"});
 	firmwares.push_back({2, "Char"});
     firmwares.push_back({3, "VC1541-II"});
-}
-
-auto Interface::prepareMemory() -> void {
-	memoryTypes.push_back( {0, "Chip", 0} );
-
-	{   auto& memory = memoryTypes[0].memory;
-		memory.push_back( {0, 64, "64 kb"} );
-	}
 }
 
 auto Interface::prepareDevices() -> void {
@@ -420,10 +434,6 @@ auto Interface::prepareDevices() -> void {
     }
 }
 
-auto Interface::prepareCpus() -> void {
-	cpus.push_back({0, "6510"});
-}
-
 auto Interface::connect(unsigned connectorId, unsigned deviceId) -> void {
     
     system->input->connectControlport( getConnector( connectorId ), getDevice( deviceId ) );
@@ -579,12 +589,21 @@ auto Interface::createTapeImage(unsigned& imageSize) -> uint8_t* {
 
 auto Interface::insertModule(uint8_t* data, unsigned size) -> void {
     
-    system->loadCartridge( CartridgeId::Default, data, size );
+    CartridgeId cartridgeId = CartridgeId::Default;
+    
+    if ((int)cartridgeId == 0xffff)
+        // called while loading a save state, we don't know the cartridge type at this point.
+        // remember rom file only and init cartridge later
+        system->unsetExpansion();
+    
+    system->expansionPort->setCartridgeId( cartridgeId );
+    
+    system->expansionPort->setRom( data, size );
 }
 
 auto Interface::ejectModule() -> void {
     
-    system->unloadCartridge();
+    system->unsetExpansion();
 }
 
 auto Interface::insertMemory(unsigned driveId, uint8_t* data, unsigned size) -> void {
@@ -772,6 +791,35 @@ auto Interface::setLineCallback(bool state, unsigned scanline) -> void {
 auto Interface::setFinishVblankCallback(bool state) -> void {
     
     vicII->lineCallback.finishVblank = state;
+}
+
+auto Interface::setMemory(unsigned typeId, unsigned memoryId) -> void {
+    
+    for( auto& expansion : expansions ) {
+        
+        if (expansion.id != system->expansionPort->id)
+            continue;
+        
+        if (expansion.memoryType->id == typeId) {
+            
+            auto memory = getMemoryById(*(expansion.memoryType), memoryId);
+            
+            if (memory)
+                system->expansionPort->setRam( memory->size );            
+        }
+        
+        break;
+    }
+}
+
+auto Interface::setExpansionPort(unsigned expansionId) -> void {
+    
+    for(auto& expansion : expansions) {
+        if (expansion.id == expansionId) {
+            system->setExpansion( expansion );
+            break;
+        }
+    }
 }
 
 }

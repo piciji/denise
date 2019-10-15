@@ -23,8 +23,6 @@ struct Interface : Emulator::Interface  {
     auto getConnectedDevice( Connector* connector ) -> Device*;
     
 	auto setCpu(unsigned cpuId) -> void;
-	auto setCpuTurbo(unsigned turbo) -> void;
-	auto turboSupported() -> bool { return true; }
 	auto setMemory(unsigned typeId, unsigned memoryId) -> void;
 	auto getMemory(unsigned typeId) -> Memory*;
 	auto setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> void;
@@ -64,6 +62,7 @@ private:
 	auto prepareFeatures() -> void;
 	auto prepareFirmware() -> void;
     auto prepareStats() -> void;
+    auto prepareExpansions() -> void;
 };
 	
 }

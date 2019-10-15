@@ -40,6 +40,27 @@ struct MemoryLayout : GUIKIT::FramedVerticalLayout {
     MemoryLayout();
 };
 
+struct ExpansionLayout : GUIKIT::FramedVerticalLayout {
+    
+    struct Line : GUIKIT::HorizontalLayout {
+        
+        struct Block {
+            unsigned expansionId;
+            GUIKIT::RadioBox box;
+        };
+        
+        std::vector<Block*> blocks;         
+        
+        Line();
+    };
+    
+    std::vector<Line*> lines;
+        
+    auto build( Emulator::Interface* emulator ) -> void;
+    
+    ExpansionLayout();  
+};
+
 struct DriveLayout : GUIKIT::FramedHorizontalLayout {
 
     struct DriveCount : GUIKIT::HorizontalLayout {
@@ -60,14 +81,7 @@ struct CpuLayout : GUIKIT::FramedVerticalLayout {
 	struct Selector : GUIKIT::HorizontalLayout {
 		std::vector<GUIKIT::RadioBox*> radios;
 	} selector;
-	
-    struct Turbo : GUIKIT::HorizontalLayout {		
-		GUIKIT::Label title;
-		GUIKIT::HorizontalSlider slider;
-		GUIKIT::Label label;
-		Turbo();
-	} turbo;
-	
+
     auto build( Emulator::Interface* emulator ) -> void;
 
     CpuLayout();
@@ -99,6 +113,7 @@ struct SystemLayout : GUIKIT::VerticalLayout {
     CpuLayout cpuLayout;
 	ChipsetLayout chipsetLayout;
     FeatureLayout featureLayout;
+    ExpansionLayout expansionLayout;
 
     auto translate() -> void;
 	auto setEnabled(bool state) -> void;
@@ -108,6 +123,8 @@ struct SystemLayout : GUIKIT::VerticalLayout {
     auto updateRuntimeFeatureWidgets( ) -> void;
     auto featureIdent( std::string ident ) -> std::string;
     auto activateDrive( Emulator::Interface::DriveGroup& driveGroup, unsigned requestedCount ) -> void;
-
+    auto updateExpansionMemory() -> void;
+    auto getSizeString( unsigned sizeInKb ) -> std::string;
+    
     SystemLayout( TabWindow* tabWindow );
 };

@@ -184,9 +184,9 @@ install:
 	$(call copy,readme.md,out)
 
     ifneq ($(findstring i686,$(target)),)
-	$(call copy,data/libs/win32,out)
+	$(call copy,data/libs/shared/win32,out)
     else
-	$(call copy,data/libs/win64,out)
+	$(call copy,data/libs/shared/win64,out)
     endif
 
     else ifeq ($(platform),macosx)

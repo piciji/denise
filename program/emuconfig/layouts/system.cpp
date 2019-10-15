@@ -21,16 +21,17 @@ FeatureLayout::FeatureLayout() {
 }
 
 auto FeatureLayout::build( Emulator::Interface* emulator ) -> void {
+    unsigned blocksPerLine = 4;
 	auto& features = emulator->features;
 	    
     Line* line;
     unsigned i = 0;
-    unsigned lineCount = (features.size() / 4);
-    lineCount += ((features.size() % 4) != 0) ? 1 : 0;
+    unsigned lineCount = (features.size() / blocksPerLine);
+    lineCount += ((features.size() % blocksPerLine) != 0) ? 1 : 0;
     
     for( auto& feature : features ) {
         
-        if ((i++ % 4) == 0) {
+        if ((i++ % blocksPerLine) == 0) {
             line = new Line();            
             lines.push_back( line );
             append( *line, {~0u, 0u}, ( lines.size() < lineCount ) ? 10 : 0 );
@@ -39,7 +40,7 @@ auto FeatureLayout::build( Emulator::Interface* emulator ) -> void {
         auto block = new Line::Block( feature.isSwitch() );
         line->blocks.push_back( block );
         block->typeId = feature.id;
-        line->append(*block, {0u, 0u}, ((i % 4) == 0) ? 0 : 15);
+        line->append(*block, {0u, 0u}, ((i % blocksPerLine) == 0) ? 0 : 15);
 
         if (feature.performanceHit)
             block->append(block->dangerLabel, {0u, 0u} );
@@ -49,6 +50,46 @@ auto FeatureLayout::build( Emulator::Interface* emulator ) -> void {
                 
         block->dangerLabel.setForegroundColor(0xff4500);
     }
+}
+
+auto ExpansionLayout::build( Emulator::Interface* emulator ) -> void {
+    unsigned blocksPerLine = 4;
+    auto& expansions = emulator->expansions;
+    
+    Line* line;
+    unsigned i = 0;
+    unsigned lineCount = (expansions.size() / blocksPerLine);
+    lineCount += ((expansions.size() % blocksPerLine) != 0) ? 1 : 0;
+    std::vector<GUIKIT::RadioBox*> radios;
+    
+    for( auto& expansion : expansions ) {
+        
+        if ((i++ % blocksPerLine) == 0) {
+            line = new Line();            
+            lines.push_back( line );
+            append( *line, {~0u, 0u}, ( lines.size() < lineCount ) ? 5 : 0 );
+        }
+        
+        auto block = new Line::Block( );
+        block->expansionId = expansion.id;        
+        line->blocks.push_back( block );
+        
+        line->append( block->box, {0u, 0u}, ((i % blocksPerLine) == 0) ? 0 : 10);
+        radios.push_back( &(block->box) );
+        
+        block->box.setText( expansion.name );
+    }
+    
+    GUIKIT::RadioBox::setGroup( radios );
+}
+
+ExpansionLayout::Line::Line() {
+    setAlignment(0.5);
+}
+
+ExpansionLayout::ExpansionLayout() {
+    setPadding(10);
+    setFont(GUIKIT::Font::system("bold"));    
 }
 
 MemoryLayout::Block::Block(bool disable) {
@@ -68,15 +109,15 @@ MemoryLayout::MemoryLayout() {
 
 auto MemoryLayout::build( Emulator::Interface* emulator ) -> void {
     auto& memoryTypes = emulator->memoryTypes;
-    for(auto& memoryType : memoryTypes ) {
-                
-        auto block = new Block( memoryType.memory.size() == 1 );
+    
+    for(auto& memoryType : memoryTypes ) {                
+        auto block = new Block( memoryType.memory.size() <= 1 );
         blocks.push_back( block );
         block->typeId = memoryType.id;
         append(*block, {~0u, 0u}, &memoryType != &memoryTypes.back() ? 7 : 0);
         block->slider.setLength( memoryType.memory.size() );
         block->name.setText( memoryType.name + ":" );
-    }   
+    }          
 }
 
 DriveLayout::DriveCount::DriveCount() {
@@ -109,14 +150,6 @@ auto DriveLayout::build( Emulator::Interface* emulator ) -> void {
     }
 }
 
-CpuLayout::Turbo::Turbo() {
-	append(title, {0u, 0u}, 7u);
-	append(slider, {~0u, 0u}, 7u);	
-	append(label, {35u, 0u});	
-	setAlignment( 0.5 );
-	slider.setLength(201);
-}
-
 CpuLayout::CpuLayout() {
     setPadding(10);
     setFont(GUIKIT::Font::system("bold"));	
@@ -124,6 +157,9 @@ CpuLayout::CpuLayout() {
 
 auto CpuLayout::build( Emulator::Interface* emulator ) -> void {
     auto& cpus = emulator->cpus;
+    if (!cpus.size())
+        return;
+    
     for(auto& cpu : cpus) {
         auto radio = new GUIKIT::RadioBox;
         selector.radios.push_back( radio );
@@ -132,10 +168,7 @@ auto CpuLayout::build( Emulator::Interface* emulator ) -> void {
     }
     GUIKIT::RadioBox::setGroup( selector.radios );	
     
-    append(selector, {~0u, 0u}, emulator->turboSupported() ? 5u : 0u);
-    
-    if ( emulator->turboSupported() )  
-        append(turbo, {~0u, 0u});
+    append(selector, {~0u, 0u});
 }
 
 ChipsetLayout::ChipsetLayout() {
@@ -166,15 +199,18 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
     driveLayout.build( emulator );
     featureLayout.build( emulator );
     chipsetLayout.build( emulator );
+    expansionLayout.build( emulator );
 
     setMargin(10);
-
+    
+    leftLayout.append(expansionLayout, {~0u, 0u}, 10);
     leftLayout.append(memoryLayout, {~0u, 0u}, 10);
     
     upperLayout.append(leftLayout, {~0u, 0u}, 10);
     rightLayout.append(driveLayout, {~0u, 0u}, 10);
 	
-	bottomLayout.append(cpuLayout, {~0u, 0u}, 10);
+    if (emulator->cpus.size())
+        bottomLayout.append(cpuLayout, {0u, 0u}, 10);
 	bottomLayout.append(chipsetLayout, {0u, 0u});
 	
     rightLayout.append(bottomLayout, {~0u, 0u});
@@ -186,32 +222,23 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
     if (featureLayout.lines.size() > 0)
         append(featureLayout, {~0u, 0u});
 
-    unsigned i = 0;
-    for ( auto radio : cpuLayout.selector.radios ) {
-        radio->onActivate = [this, i, radio]() {
-            settings->set<unsigned>( this->tabWindow->ident("cpu"), i );
-			cpuLayout.turbo.slider.setPosition(0);
-			cpuLayout.turbo.slider.onChange();
-        };
-        i++;
-    }
-	
-    cpuLayout.selector.radios[0]->setChecked();
-    for(auto& cpu : emulator->cpus) {
-        if (cpu.id == settings->get<unsigned>( tabWindow->ident("cpu"), 0)) {
-            cpuLayout.selector.radios[cpu.id]->setChecked();
+    if (emulator->cpus.size()) {        
+        unsigned i = 0;
+        for ( auto radio : cpuLayout.selector.radios ) {
+            radio->onActivate = [this, i, radio]() {
+                settings->set<unsigned>( this->tabWindow->ident("cpu"), i );
+            };
+            i++;
+        }
+
+        cpuLayout.selector.radios[0]->setChecked();
+        for(auto& cpu : emulator->cpus) {
+            if (cpu.id == settings->get<unsigned>( tabWindow->ident("cpu"), 0)) {
+                cpuLayout.selector.radios[cpu.id]->setChecked();
+            }
         }
     }
-	
-	cpuLayout.turbo.slider.onChange = [this]() {
-        unsigned pos = cpuLayout.turbo.slider.position();
-		settings->set<unsigned>( this->tabWindow->ident("cpu_turbo"), pos);
-		cpuLayout.turbo.label.setText( std::to_string( pos ) + " %");
-	};
-	
-	cpuLayout.turbo.label.setText( settings->get<std::string>( tabWindow->ident("cpu_turbo"), "0") + " %" );
-	cpuLayout.turbo.slider.setPosition( settings->get<unsigned>( tabWindow->ident("cpu_turbo"), 0) );
-
+		
     for( auto block : memoryLayout.blocks ) {
         auto& memoryType = emulator->memoryTypes[ block->typeId ];
         
@@ -219,13 +246,13 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
             unsigned id = block->slider.position();
             if (id >= memoryType.memory.size() ) return;
             settings->set<unsigned>( this->tabWindow->ident(memoryType.name + "_mem"), id);
-            block->value.setText( memoryType.memory[id].name );
+            block->value.setText( getSizeString( memoryType.memory[id].size ) );
         };
 
         unsigned id = settings->get<unsigned>(tabWindow->ident(memoryType.name + "_mem"), memoryType.defaultMemoryId);
         if (id >= memoryType.memory.size()) id = memoryType.defaultMemoryId;
         block->slider.setPosition(id);
-        block->value.setText(memoryType.memory[id].name);        
+        block->value.setText( getSizeString( memoryType.memory[id].size ) );        
     }
     
     for(auto block : driveLayout.driveCounter) {
@@ -245,6 +272,18 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
             counter = driveGroup.defaultUsage();
         
         block->combo.setSelection( counter );
+    }
+        
+    auto expansionId = settings->get<unsigned>( this->tabWindow->ident("expansion"), 0);
+    for ( auto line : expansionLayout.lines ) {
+        for( auto block : line->blocks ) {            
+            block->box.onActivate = [this, block]() {                
+                settings->set<unsigned>( this->tabWindow->ident("expansion"), block->expansionId);
+                updateExpansionMemory();
+            };
+            if (block->expansionId == expansionId)
+                block->box.setChecked();
+        }
     }
     
 	for( auto line : featureLayout.lines ) {
@@ -306,6 +345,8 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
 			settings->set( this->tabWindow->ident( "chipset" ), id );
 		};
 	}
+    
+    updateExpansionMemory();
 }
 
 auto SystemLayout::activateDrive( Emulator::Interface::DriveGroup& driveGroup, unsigned requestedCount ) -> void {
@@ -400,14 +441,9 @@ auto SystemLayout::translate() -> void {
     driveLayout.setText( trans->get("drives") );
     cpuLayout.setText("Cpu");
     
-    for( auto& radio : cpuLayout.selector.radios ) {
-        if (emulator->turboSupported())
-            radio->setTooltip( trans->get( radio->text() + "_speed") );
-    }
-    
-	cpuLayout.turbo.title.setText("Turbo:");
 	chipsetLayout.setText("Chipset");
     featureLayout.setText( trans->get("feature") );
+    expansionLayout.setText( trans->get("expansion_port") );
 
     for(auto block : driveLayout.driveCounter) {
         auto& driveGroup = emulator->driveGroups[ block->typeId ];
@@ -434,6 +470,13 @@ auto SystemLayout::translate() -> void {
             block->label.setText( trans->get( featureIdent( feature.name ) ) );  
         }
 	}
+    
+    for( auto line : expansionLayout.lines ) {
+        for( auto block : line->blocks ) {                               
+            auto& expansion = emulator->expansions[ block->expansionId ];
+            block->box.setText( trans->get( expansion.name ) );
+        }
+    }
 }
 
 auto SystemLayout::featureIdent( std::string ident ) -> std::string {
@@ -452,6 +495,49 @@ auto SystemLayout::setEnabled(bool state) -> void {
             auto& feature = emulator->features[ block->typeId ];
             
             block->setEnabled( state ? true : feature.runtimeChangeable );
+        }
+    }   
+    
+    if (state)
+        updateExpansionMemory();
+}
+
+auto SystemLayout::getSizeString( unsigned sizeInKb ) -> std::string {
+    
+    if (sizeInKb < 1024)
+        return std::to_string( sizeInKb ) + " kb";
+    
+    float _size = (float)sizeInKb / 1024.0;
+    
+    return GUIKIT::String::convertDoubleToString( _size, 1 ) + " mb";
+}
+
+auto SystemLayout::updateExpansionMemory() -> void {
+    
+    unsigned expansionIdSelected = 0;
+    
+    for ( auto line : expansionLayout.lines ) {
+        for( auto block : line->blocks ) {  
+            if (block->box.checked()) {
+                expansionIdSelected = block->expansionId;
+                break;
+            }                
+        }
+    }
+    
+    for( auto& expansion : emulator->expansions ) {
+        
+        if (!expansion.memoryType)
+            continue;
+        
+        for (auto block : memoryLayout.blocks) {
+            
+            if (block->typeId == expansion.memoryType->id) {
+                
+                block->setEnabled( expansion.id == expansionIdSelected );
+                
+                break;
+            }
         }
     }    
 }

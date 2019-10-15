@@ -14,27 +14,29 @@ struct ExpansionPort {
         // if no cart was connected in expansion port
         game = true;
         exRom = true;
-        active = false;
         dma = false;
+        
+        setId( Interface::ExpansionIdNone );
     }
+    
+    struct {
+        uint16_t addr;
+    } bus;
     
     // pins on startup, some carts change this during runtime
     bool exRom;
     bool game;
-    bool active; // something connected
     bool dma;
     
-    struct {
-        uint16_t addr;
-        uint8_t data;
-        bool write;
-    } bus;
+    uint8_t* rom = nullptr;
+    unsigned romSize = 0;
     
-    std::function<void (bool state)> irqCall;
+    Interface::ExpansionId id = Interface::ExpansionIdNone; // base type of expansion
+    Interface::CartridgeId cartridgeId = Interface::CartridgeId::Default; // header id
     
+    std::function<void (bool state)> irqCall;    
     std::function<void (bool state)> nmiCall;
-   
-    
+       
     std::function<bool ()> vicBA; // check if Vic needs bus
     std::function<void (bool state)> dmaCall; // change rdy and aec same time
     
@@ -44,13 +46,9 @@ struct ExpansionPort {
     
     virtual auto isGame( ) -> bool { return game; }
     
-    virtual auto isActive( ) -> bool { return active; }
+    virtual auto isBootable( ) -> bool { return false; }
     
     virtual auto addressBus() -> uint16_t { return bus.addr; }
-    
-    virtual auto dataBus() -> uint8_t { return bus.data; }
-    
-    virtual auto writeBus() -> bool { return bus.write; }    
     
     virtual auto readIo1( uint16_t addr ) -> uint8_t { return vicII->lastReadPhase1(); }
     
@@ -66,7 +64,14 @@ struct ExpansionPort {
     
     virtual auto writeRomL( uint16_t addr, uint8_t data ) -> void {}
     
-    virtual auto writeRomH( uint16_t addr, uint8_t data ) -> void {}    
+    virtual auto writeRomH( uint16_t addr, uint8_t data ) -> void {}        
+                    
+    virtual auto setRom(uint8_t* rom, unsigned romSize) -> void {
+        this->rom = rom;
+        this->romSize = romSize;
+    }
+    
+    virtual auto setRam(unsigned size) -> void {}
     
     virtual auto reset(bool state) -> void {}
     
@@ -74,8 +79,16 @@ struct ExpansionPort {
     
     virtual auto cycleHi() -> void {}   
     
-    virtual auto serialize(Emulator::Serializer& s) -> void {}
+    virtual auto serialize(Emulator::Serializer& s) -> void {
+        
+        s.integer( game );
+        s.integer( exRom );
+        s.integer( dma );
+        s.integer( bus.addr );
+    }
     
+    auto setId(Interface::ExpansionId id) -> void { this->id = id; }
+    auto setCartridgeId(Interface::CartridgeId cartridgeId) -> void { this->cartridgeId = cartridgeId; }
 };
     
 }

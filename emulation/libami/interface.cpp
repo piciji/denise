@@ -16,6 +16,7 @@ Interface::Interface() : Emulator::Interface( "Amiga" ) {
     prepareDevices();
     preparePalettes();
     prepareStats();
+    prepareExpansions();
 }
 
 auto Interface::prepareStats() -> void {
@@ -60,32 +61,38 @@ auto Interface::prepareCpus() -> void {
 }
 
 auto Interface::prepareMemory() -> void {
-    memoryTypes.push_back( {0, "Chip", 1} );
-    memoryTypes.push_back( {1, "Slow", 0} );
-    memoryTypes.push_back( {2, "Fast", 0} );
+    memoryTypes.push_back( {0, "Chip", 1} ); // built in memory
+    memoryTypes.push_back( {1, "Slow", 0} ); // extra memory slot in bottom area of amiga, not expansion port
+    memoryTypes.push_back( {2, "Fast", 0} ); // fast mem defined by inserted expansion
+    // fast ram is not configured here, but in expansion port area
 
     {   auto& memory = memoryTypes[0].memory;
-        memory.push_back( {0, 256, "256 kb"} );
-        memory.push_back( {1, 512, "512 kb"} );
-        memory.push_back( {2, 1024, "1 mb"} );
-        memory.push_back( {3, 1536, "1.5 mb"} );
-        memory.push_back( {4, 2048, "2 mb"} );
+        memory.push_back( {0, 256} );
+        memory.push_back( {1, 512} );
+        memory.push_back( {2, 1024} );
+        memory.push_back( {3, 1536} );
+        memory.push_back( {4, 2048} );
     }
 
     {   auto& memory = memoryTypes[1].memory;
-        memory.push_back( {0, 0, "0"} );
-        memory.push_back( {1, 512, "512 kb"} );
-        memory.push_back( {2, 1024, "1 mb"} );
-        memory.push_back( {3, 1536, "1.5 mb"} );
+        memory.push_back( {0, 0} );
+        memory.push_back( {1, 512} );
+        memory.push_back( {2, 1024} );
+        memory.push_back( {3, 1536} );
     }
-
+    
     {   auto& memory = memoryTypes[2].memory;
-        memory.push_back( {0, 0, "0"} );
-        memory.push_back( {1, 1024, "1 mb"} );
-        memory.push_back( {2, 2048, "2 mb"} );
-        memory.push_back( {3, 4096, "4 mb"} );
-        memory.push_back( {4, 8192, "8 mb"} );
-    }        
+        memory.push_back( {0, 1024} );
+        memory.push_back( {1, 2048} );
+        memory.push_back( {2, 4096} );
+        memory.push_back( {3, 8192} );
+    }
+}
+
+auto Interface::prepareExpansions() -> void {
+
+    expansions.push_back( { 0, "Empty", 0, nullptr } );
+    expansions.push_back( { 1, "Fast", 0, &memoryTypes[2] } );
 }
 
 auto Interface::prepareDevices() -> void {
@@ -266,10 +273,6 @@ auto Interface::getConnectedDevice( Connector* connector ) -> Device* {
 
 auto Interface::setCpu(unsigned cpuId) -> void {
     if (cpuId >= cpus.size()) cpuId = 0;
-}
-
-auto Interface::setCpuTurbo(unsigned turbo) -> void {
-
 }
 
 auto Interface::setMemory(unsigned typeId, unsigned memoryId) -> void {

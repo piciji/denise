@@ -7,7 +7,7 @@ namespace LIBC64 {
     
 struct Reu : ExpansionPort {   
     
-    Reu(unsigned size, uint8_t* rom = nullptr, unsigned romSize = 0);
+    Reu();
     ~Reu();
     
     using Callback = std::function<void ()>;
@@ -28,10 +28,7 @@ struct Reu : ExpansionPort {
     uint16_t transferLength;
     
     unsigned size; // in kb
-    uint8_t* data = nullptr;
-    
-    uint8_t* rom;
-    unsigned romSize;
+    uint8_t* data = nullptr;   
         
     uint32_t wrapAround;
     uint32_t dramWrapAround;
@@ -51,6 +48,8 @@ struct Reu : ExpansionPort {
     auto writeIo2( uint16_t addr, uint8_t value ) -> void;    
     auto readIo2( uint16_t addr ) -> uint8_t;
     auto readRomL(uint16_t addr) -> uint8_t;
+    auto setRom(uint8_t* rom, unsigned romSize) -> void;
+    auto setRam(unsigned size) -> void;
 
     auto cycleLo() -> void;
     auto cycleHi() -> void;
@@ -63,6 +62,7 @@ struct Reu : ExpansionPort {
     auto readReu() -> uint8_t;
     auto writeReu(uint8_t value) -> void;
     auto allowIrq() -> bool;
+    auto isBootable( ) -> bool;
     
     inline auto stash() -> void;
     inline auto fetch() -> void;

@@ -131,10 +131,11 @@ struct System {
     auto unserialize(uint8_t* data, unsigned size) -> bool;
     auto serializeAll(Emulator::Serializer& s) -> void;
     auto serialize(Emulator::Serializer& s) -> void;
-    static auto serialize6502( Emulator::Serializer& s, MOS65Context* cpuCtx ) -> void;    
+    auto serializeExpansion(Emulator::Serializer& s) -> void;
+    static auto serialize6502( Emulator::Serializer& s, MOS65Context* cpuCtx ) -> void;        
     
-    auto loadCartridge( Interface::CartridgeId cartridgeId, uint8_t* data = nullptr, unsigned size = 0 ) -> void;
-    auto unloadCartridge(bool reinit = true) -> void;
+    auto setExpansion( Emulator::Interface::Expansion& expansion ) -> void;
+    auto unsetExpansion() -> void;
 };
 
 extern System* system;

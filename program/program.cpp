@@ -148,6 +148,8 @@ auto Program::power( Emulator::Interface* emulator, bool showImageError ) -> voi
     std::vector<std::string> brokenPaths;
     std::vector<std::string> missingFirmware;
 
+    emulator->setExpansionPort( settings->get<unsigned>(ident(emulator, "expansion"), 0) );
+    
     // we need to update memory, cpu, chipset every power cycle.
     // a loaded state before could change the values internally.
     for (auto& memoryType : emulator->memoryTypes) {
@@ -157,7 +159,6 @@ auto Program::power( Emulator::Interface* emulator, bool showImageError ) -> voi
 
     emulator->setChipset(settings->get<unsigned>(ident(emulator, "chipset"), 0));
     emulator->setCpu(settings->get(ident(emulator, "cpu"), 0));
-    emulator->setCpuTurbo(settings->get(ident(emulator, "cpu_turbo"), 0));
         
     for(auto& driveGroup : emulator->driveGroups) {
         unsigned counter = settings->get( ident(emulator, driveGroup.name + "_count"), driveGroup.defaultUsage());

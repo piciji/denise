@@ -14,7 +14,7 @@
 #include "../../tools/rand.h"
 #include <cstring>
 
-#include "cartridge.cpp"
+#include "expansion.cpp"
 #include "serialization.cpp"
 
 namespace Firmware {
@@ -299,7 +299,7 @@ System::System(Interface* interface) {
         
         frameComplete = true;		
         
-        if ( !expansionPort->isActive() )
+        if ( !expansionPort->isBootable() )
             keyBuffer->process();
     };
 	
@@ -567,7 +567,7 @@ auto System::power( bool softReset ) -> void {
     kernalBootComplete = false;
     calcSerializationSize();
     
-    if ( !expansionPort->isActive() ) {
+    if ( !expansionPort->isBootable() ) {
         KeyBuffer::Action action;
         action.mode = KeyBuffer::Mode::WaitDelay;
         action.delay = 2;        

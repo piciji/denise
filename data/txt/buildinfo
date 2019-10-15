@@ -26,7 +26,7 @@ openal: install sdk: https://www.openal.org/downloads/
 freetype: download and unpack latest source code
   copy contents of freetype include folder to mingw include folder
   i have already compiled a static link library for 32 and 64 bit.
-  copy it from denise source: data/libs/win(32)64/libfreetype.a to mingw lib folder
+  copy it from denise source: data/libs/static/win(32)64/libfreetype.a to mingw lib folder
 
 install MSYS if you haven't already.
   https://sourceforge.net/projects/mingw/files/MSYS/Base/msys-core/msys-1.0.11/MSYS-1.0.11.exe/download?use_mirror=netcologne

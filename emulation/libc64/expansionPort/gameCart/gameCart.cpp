@@ -10,38 +10,46 @@
 
 namespace LIBC64 {
 
-GameCart::GameCart(bool game, bool exRom) {
+GameCart::GameCart(bool game, bool exrom) {
     
     this->game = game;
-    this->exRom = exRom;
+    this->exRom = exrom;
     
-    active = true;
     cRomH = nullptr;
     cRomL = nullptr;
+    
+    setId( Interface::ExpansionIdGame );
+}
+
+auto GameCart::setRom(uint8_t* rom, unsigned romSize) -> void {
+        
+    auto _cartridgeId = this->cartridgeId;
+    
+    delete this;
+    
+    system->expansionPort = GameCart::getInstance( _cartridgeId, rom, romSize );
 }
     
-auto GameCart::getInstance( Interface::CartridgeId cartridgeId, uint8_t* data, unsigned size ) -> ExpansionPort* {
+auto GameCart::getInstance( Interface::CartridgeId cartridgeId, uint8_t* rom, unsigned romSize ) -> ExpansionPort* {
     
-    if (!data || (size == 0) )
+    if (!rom || (romSize == 0) )
         return nullptr;
     
     GameCart* cart = create( cartridgeId );
     
-    cart->set( data, size );
+    cart->ExpansionPort::setRom( rom, romSize );    
     
-    // cart type from header
-    Interface::CartridgeId headerId;
-    
-    if( cart->readHeader( headerId ) ) {
+    if( cart->readHeader( ) ) {
         
-        if (headerId != cartridgeId) {
+        if (cart->cartridgeId != cartridgeId) {
+            cartridgeId = cart->cartridgeId;
             // if user doesn't request a specific cart and analyzing header detects a specific cart
-            delete cart;
+            delete cart;                        
             // lets recreate by detected type
-            return getInstance( headerId, data, size );
-            
+            return getInstance( cartridgeId, rom, romSize );            
         }        
-    }
+    } else
+        cart->cartridgeId = cartridgeId;
     
     if ( !cart->readChips() ) {
         // no chip headers found, we assume it by user requested type
@@ -89,14 +97,11 @@ auto GameCart::create( Interface::CartridgeId cartridgeId ) -> GameCart* {
     
     return cart;
 }
+        
+auto GameCart::readHeader( ) -> bool {
     
-auto GameCart::set(uint8_t* data, unsigned size) -> void {
-    
-    this->data = data;
-    this->size = size;
-}
-    
-auto GameCart::readHeader(Interface::CartridgeId& headerId ) -> bool {
+    data = rom;
+    size = romSize;
     
     if (size < (sizeof header))
         return false;
@@ -117,7 +122,7 @@ auto GameCart::readHeader(Interface::CartridgeId& headerId ) -> bool {
     data += headerLength;
     size -= headerLength;        
     
-    headerId = (Interface::CartridgeId)getWord(&header[0x16]);
+    cartridgeId = (Interface::CartridgeId)getWord(&header[0x16]);
     version = getWord(&header[0x14]);        
     exRom = header[0x18] & 1;
     game = header[0x19] & 1;
@@ -216,6 +221,9 @@ auto GameCart::assumeChips( std::vector<unsigned> sizes ) -> void {
 
 auto GameCart::readRomL(uint16_t addr) -> uint8_t {
 	
+    if (!cRomL)
+        return ExpansionPort::readRomL( addr );
+    
     addr %= cRomL->size;		
     
     return *(cRomL->ptr + addr);
@@ -256,15 +264,7 @@ auto GameCart::getWord( uint8_t* ptr ) -> uint16_t {
 }
 
 auto GameCart::serialize(Emulator::Serializer& s) -> void {
-    // don't overwrite 'active' by state file. it could happen that
-    // game cart image file is not available anymore.
-    bool stateIncludeCart = active;
-
-    s.integer(stateIncludeCart);
-
-    if (!stateIncludeCart)
-        return;
-
+    
     int romLId = cRomL ? cRomL->id : -1;
     int romHId = cRomH ? cRomH->id : -1;
 
@@ -275,7 +275,14 @@ auto GameCart::serialize(Emulator::Serializer& s) -> void {
 
         cRomL = ((romLId >= 0) && (romLId < chips.size())) ? &chips[romLId] : nullptr;
         cRomH = ((romLId >= 0) && (romHId < chips.size())) ? &chips[romHId] : nullptr;
-    }    
+    }   
+    
+    ExpansionPort::serialize( s );
+}
+
+auto GameCart::isBootable( ) -> bool {
+    
+    return true;
 }
     
 }

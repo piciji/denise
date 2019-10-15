@@ -120,6 +120,29 @@ struct Interface {
 
     std::vector<Connector> connectors;    
 
+    struct Memory {
+        unsigned id;
+        unsigned size;
+    };
+
+    struct MemoryType {
+        unsigned id;
+        std::string name;
+        unsigned defaultMemoryId;
+
+        std::vector<Memory> memory;
+    };
+
+    std::vector<MemoryType> memoryTypes; 
+    
+    struct Expansion {
+        unsigned id;
+        std::string name;
+        unsigned romSlots; // individual images, not ROM chips
+        MemoryType* memoryType;            
+    };
+    std::vector<Expansion> expansions;
+    
     struct DriveGroup;
     
     struct Drive {
@@ -147,23 +170,7 @@ struct Interface {
         std::vector<Drive> drives;
     };
 
-    std::vector<DriveGroup> driveGroups;   
-    
-    struct Memory {
-        unsigned id;
-        unsigned size;
-        std::string name;
-    };
-
-    struct MemoryType {
-        unsigned id;
-        std::string name;
-        unsigned defaultMemoryId;
-
-        std::vector<Memory> memory;
-    };
-
-    std::vector<MemoryType> memoryTypes;    
+    std::vector<DriveGroup> driveGroups;         
     
     struct Cpu {
         unsigned id;
@@ -348,6 +355,8 @@ struct Interface {
 	virtual auto getLoadedMemory(unsigned& size) -> uint8_t* { return nullptr; }
 	virtual auto getMemoryListing() -> std::vector<Listing> { return {}; }
 	virtual auto selectMemoryListing(unsigned pos) -> bool { return false; }	
+    // expansion port
+    virtual auto setExpansionPort(unsigned expansionId) -> void {}
 
     // savestates
     virtual auto checkstate(uint8_t* data, unsigned size) -> bool { return false; }    
@@ -375,9 +384,6 @@ struct Interface {
     
     virtual auto setCpu(unsigned cpuId) -> void {}
     virtual auto getCpu() -> unsigned { return 0; }
-    virtual auto setCpuTurbo(unsigned turbo) -> void {}
-    virtual auto getCpuTurbo() -> unsigned { return 0; }
-	virtual auto turboSupported() -> bool { return false; }
     virtual auto setMemory(unsigned typeId, unsigned memoryId) -> void {}
     virtual auto getMemory(unsigned typeId) -> Memory* { return nullptr; }
     // firmware will copied internally, so you can close the relevant file afterwards
@@ -518,7 +524,26 @@ struct Interface {
             return nullptr;
             
         return &connectors[ connectorId ];  
-    }           
+    } 
+    
+    auto getMemoryById( MemoryType& memoryType, unsigned memoryId ) -> Memory* {
+        
+        for(auto& memory : memoryType.memory) {
+            
+            if (memory.id == memoryId)
+                return &memory;
+        }
+        return nullptr;
+    }
+    
+    auto getExpansion( unsigned id ) -> Expansion* {
+        
+        for(auto& expansion : expansions) {
+            if (expansion.id == id)
+                return &expansion;
+        }
+        return nullptr;
+    }
 };
 
 }
