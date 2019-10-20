@@ -130,6 +130,8 @@ auto Program::init() -> void {
 		updateCrop( emulator );
         
         setPalette( emulator );
+        
+        setExpansionSelection( emulator );
     }   
     	
 	logger->setSavePath( GUIKIT::System::getUserDataFolder(appFolder()) );
@@ -148,7 +150,7 @@ auto Program::power( Emulator::Interface* emulator, bool showImageError ) -> voi
     std::vector<std::string> brokenPaths;
     std::vector<std::string> missingFirmware;
 
-    emulator->setExpansionPort( settings->get<unsigned>(ident(emulator, "expansion"), 0) );
+    emulator->setExpansion( settings->get<unsigned>(ident(emulator, "expansion"), 0) );
     
     // we need to update memory, cpu, chipset every power cycle.
     // a loaded state before could change the values internally.
@@ -160,40 +162,50 @@ auto Program::power( Emulator::Interface* emulator, bool showImageError ) -> voi
     emulator->setChipset(settings->get<unsigned>(ident(emulator, "chipset"), 0));
     emulator->setCpu(settings->get(ident(emulator, "cpu"), 0));
         
-    for(auto& driveGroup : emulator->driveGroups) {
-        unsigned counter = settings->get( ident(emulator, driveGroup.name + "_count"), driveGroup.defaultUsage());
-        emulator->setDrivesConnected( driveGroup.id, counter );
+    auto expansionMediaGroup = emulator->getExpansion()->mediaGroup;
+    
+    for(auto& mediaGroup : emulator->mediaGroups) {
 
-        needTapeControl |= driveGroup.isTapeDrive() && (counter > 0);
+        if (mediaGroup.isExpansion() && (&mediaGroup != expansionMediaGroup))            
+            // check which expansion type is needed
+            continue;    
+        
+        auto selectedMedia = mediaGroup.selected;
+        
+        unsigned counter = settings->get( ident(emulator, mediaGroup.name + "_count"), mediaGroup.defaultUsage());
+        // affects only drives, not cartridges or memory injection
+        emulator->setDrivesConnected( &mediaGroup, counter );
 
-        for(auto& drive : driveGroup.drives) {
-            auto setting = FileSetting::getInstance( ident(emulator, drive.name) );
+        needTapeControl |= mediaGroup.isTape() && (counter > 0);
+        
+        for(auto& media : mediaGroup.media) {            
+            
+            if (selectedMedia && (selectedMedia != &media) )
+                // only one media element at a time can be used for this group
+                continue;
+            
+            auto setting = FileSetting::getInstance( ident(emulator, media.name) );
 
-            drive.guid = uintptr_t(nullptr);
+            media.guid = uintptr_t(nullptr);
             GUIKIT::File* file = filePool->get( setting->path );
             if(!file)
                 continue;
 
-            if (!program->loadImageDataWhenOk( file, setting->id, &driveGroup, data )) {	                
+            if (!program->loadImageDataWhenOk( file, setting->id, &mediaGroup, data )) {	                
                 if ( showImageError && !GUIKIT::Vector::find( brokenPaths, setting->path ) )
                     brokenPaths.push_back( setting->path );
                 
                 continue;
             }            
-            drive.guid = uintptr_t(file);
+            media.guid = uintptr_t(file);
+            
+            emulator->insertMedium(&media, data, file->archiveDataSize(setting->id));
+            emulator->writeProtect(&media, file->isArchived() ? true : setting->writeProtect);
+            filePool->assign(ident(emulator, media.name + "store"), file);	           
 
-            if (driveGroup.isHardDrive()) {                
-                emulator->setHardDrive( drive.id, file->getSize() );
+            States::getInstance( activeEmulator )->updateImage( setting, &media );
 
-            } else {
-                emulator->insertMedium(driveGroup.type, drive.id, data, file->archiveDataSize(setting->id));
-                emulator->writeProtect(driveGroup.type, drive.id, file->isArchived() ? true : setting->writeProtect);
-                filePool->assign(ident(emulator, drive.name + "store"), file);	
-            }
-
-            States::getInstance( activeEmulator )->updateImage( setting, &drive );
-
-            filePool->assign(ident(emulator, drive.name), file);
+            filePool->assign(ident(emulator, media.name), file);
         }
     }
     
@@ -242,19 +254,19 @@ auto Program::powerOff() -> void {
     if ( activeEmulator ) {
         activeEmulator->powerOff();
         
-        for(auto& driveGroup : activeEmulator->driveGroups) {
-            for(auto& drive : driveGroup.drives) {
+        for(auto& mediaGroup : activeEmulator->mediaGroups) {
+            for(auto& media : mediaGroup.media) {
                 
-                if (drive.guid) {
-                    auto file = (GUIKIT::File*)drive.guid;
+                if (media.guid) {
+                    auto file = (GUIKIT::File*)media.guid;
                     // medium was written by emulation, lets update the listing
-                    if (file->wasDataChanged() && filePool->has( ident(activeEmulator, drive.name + "store"), file))                        
-                        EmuConfigView::TabWindow::getView( activeEmulator )->drivesLayout->updateListing( &drive );
+                    if (file->wasDataChanged() && filePool->has( ident(activeEmulator, media.name + "store"), file))                        
+                        EmuConfigView::TabWindow::getView( activeEmulator )->drivesLayout->updateListing( &media );
                 }                        
                 
-                filePool->assign( ident(activeEmulator, drive.name), nullptr);
-                activeEmulator->ejectMedium( driveGroup.type, drive.id );
-                States::getInstance( activeEmulator )->updateImage( nullptr, &drive );
+                filePool->assign( ident(activeEmulator, media.name), nullptr);
+                activeEmulator->ejectMedium( &media );
+                States::getInstance( activeEmulator )->updateImage( nullptr, &media );
             }				
         }		
 	}
@@ -397,8 +409,8 @@ auto Program::exit(int code) -> void {
         view->onClose();
 }
 
-auto Program::updateDriveState(unsigned typeId, unsigned driveId, unsigned mode, unsigned track) -> void {
-	status->updateDriveState(typeId, driveId, mode, track);
+auto Program::updateDriveState(Emulator::Interface::Media* media, unsigned mode, unsigned track) -> void {
+	status->updateDriveState(media, mode, track);
 }
 
 auto Program::appFolder() -> std::string {

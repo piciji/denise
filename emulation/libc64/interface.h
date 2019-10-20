@@ -15,17 +15,19 @@ struct Interface : Emulator::Interface {
         FeatureIdPowerThread = 8,
     };
     
-    enum DriveGroupId {
-        DriveGroupIdDisk = 0, DriveGroupIdTape = 1,
-        DriveGroupIdModuleSlot = 2, DriveGroupIdMemory = 3,
+    enum MediaGroupId {
+        MediaGroupIdDisk = 0, MediaGroupIdTape = 1,
+        MediaGroupIdMemory = 2, MediaGroupIdExpansionGame = 3, MediaGroupIdExpansionReu = 4
     };
     
     enum ExpansionId {
         ExpansionIdNone = 0, ExpansionIdGame = 1, ExpansionIdReu = 2,
     };
     
-    enum class CartridgeId { Default = 0, Default8k = 256, Default16k = 257, Ultimax = 258,
-        Ocean = 5, Funplay = 7, SuperGames = 8, System3 = 15, Zaxxon = 18
+    enum CartridgeId {
+        CartridgeIdDefault = 0, CartridgeIdDefault8k = 256, CartridgeIdDefault16k = 257,
+        CartridgeIdUltimax = 258, CartridgeIdOcean = 5, CartridgeIdFunplay = 7,
+        CartridgeIdSuperGames = 8, CartridgeIdSystem3 = 15, CartridgeIdZaxxon = 18
     };
     
     static const std::string Version;
@@ -49,39 +51,40 @@ struct Interface : Emulator::Interface {
 	
     auto convertPetsciiToScreencode(bool state) -> void;
 
-    auto setDrivesConnected(unsigned groupId, unsigned count) -> void;
-    auto getDrivesConnected(unsigned groupId) -> unsigned;
+    auto setDrivesConnected(MediaGroup* group, unsigned count) -> void;
+    auto getDrivesConnected(MediaGroup* group) -> unsigned;
 	//disk drive handling	
-	auto insertDisk(unsigned driveId, uint8_t* data, unsigned size) -> void;
-	auto writeProtectDisk(unsigned driveId, bool state) -> void;
-	auto ejectDisk(unsigned driveId) -> void;
+	auto insertDisk(Media* media, uint8_t* data, unsigned size) -> void;
+	auto writeProtectDisk(Media* media, bool state) -> void;
+	auto ejectDisk(Media* media) -> void;
 	auto getDiskImageSize(unsigned typeId, bool hd) -> unsigned;
 	auto createDiskImage(unsigned typeId, bool hd = false, std::string name = "", bool ffs = false) -> uint8_t*;        
-    auto getDiskListing(unsigned driveId) -> std::vector<Emulator::Interface::Listing>;
-    auto selectDiskListing(unsigned driveId, unsigned pos) -> void;
+    auto getDiskListing(Media* media) -> std::vector<Emulator::Interface::Listing>;
+    auto selectDiskListing(Media* media, unsigned pos) -> void;
 
 	//tape drive handling
-	auto insertTape(unsigned driveId, uint8_t* data, unsigned size) -> void;
-	auto writeProtectTape(unsigned driveId, bool state) -> void;
-	auto ejectTape(unsigned driveId) -> void;
+	auto insertTape(Media* media, uint8_t* data, unsigned size) -> void;
+	auto writeProtectTape(Media* media, bool state) -> void;
+	auto ejectTape(Media* media) -> void;
 	auto createTapeImage(unsigned& imageSize) -> uint8_t*;
-    auto controlTape(unsigned driveId, TapeMode mode) -> void;
-    auto getTapeControl(unsigned driveId) -> TapeMode;
-    auto selectTapeListing(unsigned driveId, unsigned pos) -> void;
+    auto controlTape(Media* media, TapeMode mode) -> void;
+    auto getTapeControl(Media* media) -> TapeMode;
+    auto selectTapeListing(Media* media, unsigned pos) -> void;
 
 	//module slot handling
-	auto insertModule(uint8_t* data, unsigned size) -> void;
-	auto ejectModule() -> void;
+	auto insertExpansionImage(Media* media, uint8_t* data, unsigned size) -> void;
+	auto ejectExpansionImage(Media* media) -> void;
 	
 	//memory
-	auto insertMemory(unsigned driveId, uint8_t* data, unsigned size) -> void;
-	auto ejectMemory(unsigned driveId) -> void;
+	auto insertMemory(Media* media, uint8_t* data, unsigned size) -> void;
+	auto ejectMemory(Media* media) -> void;
 	auto getLoadedMemory(unsigned& size) -> uint8_t*;
-	auto getMemoryListing() -> std::vector<Emulator::Interface::Listing>;
-	auto selectMemoryListing(unsigned pos) -> bool;    
+	auto getMemoryListing(Media* media) -> std::vector<Emulator::Interface::Listing>;
+	auto selectMemoryListing(Media* media, unsigned pos) -> bool;    
 
     //expansion
-    auto setExpansionPort(unsigned expansionId) -> void;
+    auto setExpansion(unsigned expansionId) -> void;
+    auto getExpansion() -> Expansion*;
     
 	//savestates
     auto checkstate(uint8_t* data, unsigned size) -> bool;
@@ -118,7 +121,7 @@ struct Interface : Emulator::Interface {
 	
 private:
 	auto prepareDevices() -> void;
-	auto prepareDrives() -> void;
+	auto prepareMedia() -> void;
 	auto prepareFirmware() -> void;
 	auto prepareChipset() -> void;
     auto prepareFeatures() -> void;

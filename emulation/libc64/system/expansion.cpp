@@ -17,7 +17,7 @@ auto System::serializeExpansion(Emulator::Serializer& s) -> void {
         unsigned romSize = expansionPort->romSize;
         Interface::CartridgeId cartridgeId = expansionPort->cartridgeId;
         
-        auto expansion = interface->getExpansion( expansionPort->id );
+        auto expansion = interface->getExpansionById( expansionPort->id );
 
         setExpansion( expansion ? *expansion : interface->expansions[0] );
         

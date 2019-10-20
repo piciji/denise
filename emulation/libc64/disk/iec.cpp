@@ -330,27 +330,34 @@ auto IecBus::randomizeRpm() -> void {
         drive->randomizeRpm();
 }
 
-auto IecBus::attach( uint8_t driveId, uint8_t* data, unsigned size ) -> void {
+auto IecBus::attach( Emulator::Interface::Media* media, uint8_t* data, unsigned size ) -> void {
     
-    drives[ driveId ]->attach( data, size );   
-}
-
-auto IecBus::detach( uint8_t driveId ) -> void {
-    drives[ driveId ]->detach();
-}
-
-auto IecBus::writeProtect( uint8_t driveId, bool state ) -> void {
-    drives[ driveId ]->setWriteProtect( state );
-}
-
-auto IecBus::getDiskListing(unsigned driveId) -> std::vector<Emulator::Interface::Listing>& {
+    if (!media)
+        return
     
-    return drives[ driveId ]->structure1541.getListing();
+    drives[ media->id ]->attach( media, data, size );   
 }
 
-auto IecBus::selectListing( unsigned driveId, unsigned pos ) -> void {
+auto IecBus::detach( Emulator::Interface::Media* media ) -> void {
     
-    drives[ driveId ]->structure1541.selectListing( driveId, pos );
+    if (!media)
+        return
+            
+    drives[ media->id ]->detach();
+}
+
+auto IecBus::writeProtect( Emulator::Interface::Media* media, bool state ) -> void {
+    drives[ media->id ]->setWriteProtect( state );
+}
+
+auto IecBus::getDiskListing(Emulator::Interface::Media* media) -> std::vector<Emulator::Interface::Listing>& {
+    
+    return drives[ media->id ]->structure1541.getListing();
+}
+
+auto IecBus::selectListing( Emulator::Interface::Media* media, unsigned pos ) -> void {
+    
+    drives[ media->id ]->structure1541.selectListing( media, pos );
 }
 
 auto IecBus::updateIdleState() -> void {

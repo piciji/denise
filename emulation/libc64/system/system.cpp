@@ -430,20 +430,20 @@ System::System(Interface* interface) {
 		
 		cia1->setFlag();
 	};
-	
+    
 	tape->updateState = [this](unsigned mode, unsigned counter) {
 		
-		this->interface->updateDriveState(Interface::DriveGroupIdTape, 0, mode, counter);
+		this->interface->updateDriveState(tape->getMedia(), mode, counter);
 	};
 	
 	tape->read = [this](uint8_t* buffer, unsigned length, unsigned offset) {
 		
-		return this->interface->readDrive(Interface::DriveGroupIdTape, 0, buffer, length, offset);
+		return this->interface->readMedia(tape->getMedia(), buffer, length, offset);
 	};
 	
 	tape->write = [this](uint8_t* buffer, unsigned length, unsigned offset) {
 		
-		return this->interface->writeDrive(Interface::DriveGroupIdTape, 0, buffer, length, offset);
+		return this->interface->writeMedia(tape->getMedia(), buffer, length, offset);
 	};
 
 	tape->senseOut = [this](bool state) {

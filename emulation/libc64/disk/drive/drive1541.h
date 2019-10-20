@@ -30,6 +30,7 @@ struct Drive1541 {
     uint8_t number;
     uint8_t* rom = nullptr;
     unsigned romSize = 0;    
+    Emulator::Interface::Media* media;
     
     Memory memory;
     Memory::Read readRam;
@@ -98,6 +99,7 @@ struct Drive1541 {
     auto power( ) -> void;
     auto powerOff( ) -> void;
     auto setViaTransition( bool state ) -> void;
+    auto getMedia() -> Emulator::Interface::Media* { return media; }
     
     auto updateBus() -> void;
     auto setFirmware(uint8_t* rom, unsigned romSize) -> void;
@@ -107,7 +109,7 @@ struct Drive1541 {
     auto writeBit( bool state ) -> void;
     auto readBit() -> bool;
     auto changeHalfTrack( int step ) -> void;
-    auto attach( uint8_t* data, unsigned size ) -> void;
+    auto attach( Emulator::Interface::Media* media, uint8_t* data, unsigned size ) -> void;
     auto detach() -> void;
     auto setWriteProtect(bool state) -> void;
     

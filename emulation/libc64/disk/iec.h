@@ -55,11 +55,11 @@ struct IecBus {
     inline auto countTicks() -> void { cycleCounter++; }
     auto randomizeRpm() -> void;
     auto setCpuCyclesPerSecond( unsigned cycles ) -> void;
-    auto attach( uint8_t driveId, uint8_t* data, unsigned size ) -> void;
-    auto detach( uint8_t driveId ) -> void;
-    auto writeProtect( uint8_t driveId, bool state ) -> void;    
-    auto getDiskListing(unsigned driveId) -> std::vector<Emulator::Interface::Listing>&;
-    auto selectListing( unsigned driveId, unsigned pos ) -> void;
+    auto attach( Emulator::Interface::Media* media, uint8_t* data, unsigned size ) -> void;
+    auto detach( Emulator::Interface::Media* media ) -> void;
+    auto writeProtect( Emulator::Interface::Media* media, bool state ) -> void;    
+    auto getDiskListing(Emulator::Interface::Media* media) -> std::vector<Emulator::Interface::Listing>&;
+    auto selectListing( Emulator::Interface::Media* media, unsigned pos ) -> void;
     auto serialize(Emulator::Serializer& s) -> void;
     auto setPowerThread( bool state ) -> void;
     auto updateIdleState() -> void;

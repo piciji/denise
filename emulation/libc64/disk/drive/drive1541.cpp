@@ -232,12 +232,12 @@ Drive1541::Drive1541(uint8_t number) {
     
     structure1541.write = [this](uint8_t* buffer, unsigned length, unsigned offset) {
 		
-		return system->interface->writeDrive( Interface::DriveGroupIdDisk, this->number, buffer, length, offset );
+		return system->interface->writeMedia( getMedia(), buffer, length, offset );
 	};
     
     updateState = [this]() {		
         
-		system->interface->updateDriveState( Interface::DriveGroupIdDisk, this->number, getTrackState(), (currentHalftrack + 2) / 2 );
+		system->interface->updateDriveState( getMedia(), getTrackState(), (currentHalftrack + 2) / 2 );
 	};
     
     remap();
@@ -384,7 +384,8 @@ auto Drive1541::detach() -> void {
     loaded = false;        
 }
 
-auto Drive1541::attach( uint8_t* data, unsigned size ) -> void {
+auto Drive1541::attach( Emulator::Interface::Media* media, uint8_t* data, unsigned size ) -> void {
+    this->media = media;
     detach();
     accum = 0;
     randCounter = 0;

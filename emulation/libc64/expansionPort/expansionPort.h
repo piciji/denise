@@ -32,7 +32,7 @@ struct ExpansionPort {
     unsigned romSize = 0;
     
     Interface::ExpansionId id = Interface::ExpansionIdNone; // base type of expansion
-    Interface::CartridgeId cartridgeId = Interface::CartridgeId::Default; // header id
+    Interface::CartridgeId cartridgeId = Interface::CartridgeIdDefault; // header id
     
     std::function<void (bool state)> irqCall;    
     std::function<void (bool state)> nmiCall;

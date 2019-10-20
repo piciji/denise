@@ -39,18 +39,18 @@ changes frequently
 to do C64
 ---------
 extension port interface
-  super cpu, REU, Dongles
-  more cart mapper, especially easy flash with write support
+  turbo chameleon 64, super cpu, REU, Dongles
+  Action Replay, easy flash with write support
 userport interface
   speed dos
   4 player adapter
 floppy
   1541 track change delay time
   non standard floppy models: 1571, 1581
-tape port 
-  dongles
+tape port   
   tape content listing in user interface, like the 1541
   click entries and load them without fast-forward to counter position before
+  dongles
 
 to do Amiga A500, A1200
 -----------------------

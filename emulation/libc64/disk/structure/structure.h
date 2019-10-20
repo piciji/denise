@@ -65,7 +65,7 @@ struct Structure1541 {
     auto detach() -> void;
     auto createListing( ) -> void;
     auto getListing( ) -> std::vector<Emulator::Interface::Listing>&;
-    auto selectListing( unsigned driveId, unsigned pos ) -> void;
+    auto selectListing( Emulator::Interface::Media* media, unsigned pos ) -> void;
     auto clearTrackData() -> void;
     
 private:    

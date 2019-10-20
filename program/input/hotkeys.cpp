@@ -109,28 +109,28 @@ auto InputManager::fireHotkey(Hotkey::Id id) -> void {
             if (!activeEmulator)
                 break;
 
-            auto defaultDrive = activeEmulator->getDiskDrive( 0 );
+            auto defaultMedia = activeEmulator->getDisk( 0 );
 
             // emulated system don't support floppy drives
-            if (!defaultDrive)
+            if (!defaultMedia)
                 break;
 
-            auto driveGroup = defaultDrive->group;
+            auto mediaGroup = defaultMedia->group;
 
-            auto driveId = settings->get<unsigned>(program->ident(activeEmulator, "access_floppy"), 0u, {0u, (unsigned)driveGroup->drives.size() - 1u});
-            unsigned enabledCount = settings->get<unsigned>( program->ident(activeEmulator, driveGroup->name + "_count"), driveGroup->defaultUsage());
-            if (enabledCount > driveGroup->drives.size())
-                enabledCount = driveGroup->defaultUsage();
+            auto mediaId = settings->get<unsigned>(program->ident(activeEmulator, "access_floppy"), 0u, {0u, (unsigned)mediaGroup->media.size() - 1u});
+            unsigned enabledCount = settings->get<unsigned>( program->ident(activeEmulator, mediaGroup->name + "_count"), mediaGroup->defaultUsage());
+            if (enabledCount > mediaGroup->media.size())
+                enabledCount = mediaGroup->defaultUsage();
 
-            driveId++; // switch to next
+            mediaId++; // switch to next
 
-            auto drive = defaultDrive;
+            auto media = defaultMedia;
 
-            if ( ( driveId < driveGroup->drives.size() ) && ( driveId < enabledCount ) )
-                drive = activeEmulator->getDiskDrive( driveId );                    
+            if ( ( mediaId < mediaGroup->media.size() ) && ( mediaId < enabledCount ) )
+                media = activeEmulator->getDisk( mediaId );                    
 
-            settings->set<unsigned>(program->ident(activeEmulator, "access_floppy"), drive->id, false);
-            status->addMessage( trans->get("access_floppy", {{"%drive%", drive->name}}) );								                    
+            settings->set<unsigned>(program->ident(activeEmulator, "access_floppy"), media->id, false);
+            status->addMessage( trans->get("access_floppy", {{"%drive%", media->name}}) );								                    
             break;
         }
         case Hotkey::Id::DiskSwapper:
@@ -177,11 +177,11 @@ auto InputManager::fireHotkey(Hotkey::Id id) -> void {
             if (!activeEmulator || !dynamic_cast<LIBC64::Interface*>(activeEmulator) )
                 break;
 
-            auto drive = activeEmulator->getTapeDrive( 0 );
-            if (!drive)
+            auto media = activeEmulator->getTape( 0 );
+            if (!media)
                 break;
 
-            unsigned driveCount = activeEmulator->getDrivesConnected( drive->group->id );            
+            unsigned driveCount = activeEmulator->getDrivesConnected( media->group );            
 
             if (driveCount == 0) {
                 status->addMessage( trans->get("tape_disconnect"), 3, true );
@@ -190,34 +190,34 @@ auto InputManager::fireHotkey(Hotkey::Id id) -> void {
 
             typedef Emulator::Interface::TapeMode TapeMode;
             
-            auto setting = FileSetting::getInstance( program->ident(activeEmulator, drive->name ) );
+            auto setting = FileSetting::getInstance( program->ident(activeEmulator, media->name ) );
 
             if (id == Hotkey::PlayTape) {
-                activeEmulator->controlTape( drive->id, TapeMode::Play );
+                activeEmulator->controlTape( media, TapeMode::Play );
                 status->addMessage( trans->get("tape_play_state") );
                 view->updateTapeIcons( TapeMode::Play );
             } else if (id == Hotkey::StopTape) {
-                activeEmulator->controlTape( drive->id, TapeMode::Stop );
+                activeEmulator->controlTape( media, TapeMode::Stop );
                 status->addMessage( trans->get("tape_stop_state") );
                 view->updateTapeIcons( TapeMode::Stop );
             } else if (id == Hotkey::RecordTape) {
                 if (!setting->writeProtect) {
-                    activeEmulator->controlTape( drive->id, TapeMode::Record );
+                    activeEmulator->controlTape( media, TapeMode::Record );
                     status->addMessage( trans->get("tape_record_state") );						
                     view->updateTapeIcons( TapeMode::Record );
                 } else
                     status->addMessage( trans->get("tape_record_wp_state"), 3, true );						
 
             } else if (id == Hotkey::ForwardTape) {
-                activeEmulator->controlTape( drive->id, TapeMode::Forward );
+                activeEmulator->controlTape( media, TapeMode::Forward );
                 //status->addMessage( trans->get("tape_forward_state") );                        
                 view->updateTapeIcons( TapeMode::Forward );
             } else if (id == Hotkey::RewindTape) {
-                activeEmulator->controlTape( drive->id, TapeMode::Rewind );
+                activeEmulator->controlTape( media, TapeMode::Rewind );
                 //status->addMessage( trans->get("tape_rewind_state") );
                 view->updateTapeIcons( TapeMode::Rewind );
             } else if (id == Hotkey::ResetTapeCounter) {
-                activeEmulator->controlTape( drive->id, TapeMode::ResetCounter );
+                activeEmulator->controlTape( media, TapeMode::ResetCounter );
                 status->addMessage( trans->get("tape_counter_reset") );
             } 															
             break;
@@ -260,10 +260,10 @@ auto InputManager::fireHotkey(Hotkey::Id id) -> void {
             if (!activeEmulator)
                 break;
 
-            auto driveId = settings->get<unsigned>(program->ident(activeEmulator, "access_floppy"), 0u, {0u, 3u});
+            auto mediaId = settings->get<unsigned>(program->ident(activeEmulator, "access_floppy"), 0u, {0u, 3u});
 
-            auto drive = activeEmulator->getDiskDrive( driveId );
-            if (!drive)
+            auto media = activeEmulator->getDisk( mediaId );
+            if (!media)
                 break;                                        
 
             uint8_t* data;						
@@ -280,15 +280,15 @@ auto InputManager::fireHotkey(Hotkey::Id id) -> void {
                 break;
             }
 
-            activeEmulator->ejectDisk( drive->id );
-            activeEmulator->insertDisk(drive->id, data, file->archiveDataSize(setting->id));
-            activeEmulator->writeProtectDisk(drive->id, file->isArchived() ? true : setting->writeProtect);
-            drive->guid = uintptr_t(file);
-            filePool->assign(program->ident(activeEmulator, drive->name), file);
+            activeEmulator->ejectDisk( media );
+            activeEmulator->insertDisk(media, data, file->archiveDataSize(setting->id));
+            activeEmulator->writeProtectDisk(media, file->isArchived() ? true : setting->writeProtect);
+            media->guid = uintptr_t(file);
+            filePool->assign(program->ident(activeEmulator, media->name), file);
             filePool->assign(program->ident(activeEmulator, "swapper_" + std::to_string(swapPos)), file);
             filePool->unloadOrphaned();
-            States::getInstance( activeEmulator )->updateImage( setting, drive );
-            status->addMessage( trans->get("insert_floppy", {{"%drive%", drive->name},{"%file%", setting->file}}) );		
+            States::getInstance( activeEmulator )->updateImage( setting, media );
+            status->addMessage( trans->get("insert_floppy", {{"%media%", media->name},{"%file%", setting->file}}) );		
             break;	
         }
     }

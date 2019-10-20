@@ -32,6 +32,12 @@ struct Cmd {
     auto prepareDrives( Emulator::Interface* emulator ) -> void;
     
     auto collectAllowedSuffix() -> std::vector<std::string>;
+    
+    auto setCycles(std::string arg) -> void;
+    
+    auto setReuSize(std::string arg) -> void;
+    
+    auto setAneMagic(std::string arg) -> void;
 };
 
 extern Cmd* cmd;

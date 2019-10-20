@@ -27,7 +27,7 @@ auto View::setDragnDrop() -> void {
 
 auto View::autoloadInit( std::vector<std::string>& files, bool silentError ) -> void {    
     ddControl.emulator = nullptr;
-    ddControl.driveGroups.clear();
+    ddControl.mediaGroups.clear();
     ddControl.silentError = silentError;
     ddControl.files.clear();
     
@@ -45,20 +45,20 @@ auto View::autoloadPostProcessing() -> void {
     if (ddControl.silentError)
         filePool->unloadOrphaned();
     
-    if (ddControl.driveGroups.size() == 0) {
+    if (ddControl.mediaGroups.size() == 0) {
         if (ddControl.silentError)
             program->exit(1);
         
         return;
     }
         
-    std::sort(ddControl.driveGroups.begin(), ddControl.driveGroups.end(), [ ](const Emulator::Interface::DriveGroup* lhs, const Emulator::Interface::DriveGroup* rhs) {
+    std::sort(ddControl.mediaGroups.begin(), ddControl.mediaGroups.end(), [ ](const Emulator::Interface::MediaGroup* lhs, const Emulator::Interface::MediaGroup* rhs) {
 
-        if (lhs->isModuleSlot()) return true;
-        if (rhs->isModuleSlot()) return false;
+        if (lhs->isExpansion()) return true;
+        if (rhs->isExpansion()) return false;
         if (lhs->isMemory()) return true;
         if (rhs->isMemory()) return false;
-        if (lhs->isDiskDrive()) return true;
+        if (lhs->isDisk()) return true;
         return false;
     });
 
@@ -66,37 +66,31 @@ auto View::autoloadPostProcessing() -> void {
 
     auto emuConfigView = EmuConfigView::TabWindow::getView(ddControl.emulator);
 
-    auto driveGroup = ddControl.driveGroups[0];
+    auto mediaGroup = ddControl.mediaGroups[0];
 
     if (!autoStart && (activeEmulator == ddControl.emulator)) {
 
         emuConfigView->show(EmuConfigView::TabWindow::Layout::Drives);
 
-        emuConfigView->drivesLayout->showDriveGroupLayout(driveGroup);
+        emuConfigView->drivesLayout->showDriveGroupLayout(mediaGroup);
 
     } else {
 
-		for (auto& driveGroup : ddControl.emulator->driveGroups) {
+		for (auto& mediaGroup : ddControl.emulator->mediaGroups) {
 			
-			if (driveGroup.isDiskDrive() ||  driveGroup.isTapeDrive()) {
+			if (mediaGroup.isDisk() || mediaGroup.isTape()) {
 				
-				emuConfigView->systemLayout->activateDrive(driveGroup, countImagesFor(&driveGroup) );				
+				emuConfigView->systemLayout->activateDrive(&mediaGroup, countImagesFor(&mediaGroup) );				
 			}
 		}
-	
-        if (!driveGroup->isModuleSlot()) {
-            
-            auto moduleDrive = ddControl.emulator->getModuleSlot(0);
-            
-            if (moduleDrive)
-                 emuConfigView->drivesLayout->eject( moduleDrive->group );
-        }                                               
-
+	                                            
+        emuConfigView->systemLayout->handleExpansionIfAutoBoot( mediaGroup->isExpansion() );
+        
         program->power(ddControl.emulator);
 
-        ddControl.emulator->selectListing(driveGroup->type, 0, 0);
+        ddControl.emulator->selectListing(&mediaGroup->media[0], 0);
 
-        if (driveGroup->isTapeDrive())
+        if (mediaGroup->isTape())
             updateTapeIcons(Emulator::Interface::TapeMode::Play);
 
         view->setFocused(300);
@@ -148,30 +142,43 @@ auto View::autoloadFiles() -> void {
 
             auto emuConfigView = EmuConfigView::TabWindow::getView(emulator);
 
-            for (auto& driveGroup : emulator->driveGroups) {
+            for (auto& mediaGroup : emulator->mediaGroups) {
 
-                if (driveGroup.isHardDrive())
+                if (mediaGroup.isHardDisk())
+                    continue;
+                
+                if (mediaGroup.isExpansion() && !mediaGroup.expansion->isGame())
                     continue;
 
-                auto driveSuffixList = driveGroup.suffix;
+                auto mediaSuffixList = mediaGroup.suffix;
 
-                for (auto& driveSuffix : driveSuffixList) {
+                for (auto& mediaSuffix : mediaSuffixList) {
 
-                    if (driveSuffix == fileSuffix) {
+                    if (mediaSuffix == fileSuffix) {
 
-                        if (GUIKIT::Vector::find(ddControl.driveGroups, &driveGroup))
+                        if (GUIKIT::Vector::find(ddControl.mediaGroups, &mediaGroup))
                             // only one file per group allowed
-                            if (!driveGroup.isDiskDrive())
+                            if (!mediaGroup.isDisk())
                                 return autoloadFiles();
 
-                        if (!driveGroup.isTapeDrive() && (item->info.size > MAX_MEDIUM_SIZE))
+                        if (!mediaGroup.isTape() && (item->info.size > MAX_MEDIUM_SIZE))
                             goto errorSize;
 
                         ddControl.emulator = emulator;
                         
-                        ddControl.driveGroups.push_back(&driveGroup);
-						
-                        emuConfigView->drivesLayout->insertImage(file, item, &driveGroup, countImagesFor(&driveGroup) - 1 );
+                        ddControl.mediaGroups.push_back(&mediaGroup);
+                        
+                        Emulator::Interface::Media* media = mediaGroup.selected;
+                        
+                        if (!media) {
+                            unsigned pos = countImagesFor(&mediaGroup);
+                            
+                            pos = std::min( pos, (unsigned)mediaGroup.media.size() );
+                            
+                            media = &mediaGroup.media[ pos - 1 ];                        
+                        }
+                            						
+                        emuConfigView->drivesLayout->insertImage(media, file, item );
 
                         return autoloadFiles();
                     }
@@ -195,12 +202,13 @@ errorSize:
     archiveViewer->setView(items);
 }
 
-auto View::countImagesFor(Emulator::Interface::DriveGroup* driveGroup) -> unsigned {
-	
+auto View::countImagesFor(Emulator::Interface::MediaGroup* mediaGroup) -> unsigned {
+    
 	unsigned counter = 0;
-	for( auto _dG : ddControl.driveGroups) {
-		if (_dG == driveGroup)
+	for( auto _dG : ddControl.mediaGroups) {
+		if (_dG == mediaGroup)
 			counter++;
-	}
+	}   
+    
 	return counter;
 }

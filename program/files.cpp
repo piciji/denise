@@ -21,14 +21,14 @@ auto Program::showOpenError( std::vector<std::string>& paths, bool warning ) -> 
         view->message->error(trans->get(transKey, { {replaceIdent, replace} }));
 }
 
-auto Program::loadImageDataWhenOk( GUIKIT::File* file, unsigned fileId, Emulator::Interface::DriveGroup* group, uint8_t*& data ) -> bool {
+auto Program::loadImageDataWhenOk( GUIKIT::File* file, unsigned fileId, Emulator::Interface::MediaGroup* group, uint8_t*& data ) -> bool {
     
     if (!file)
         return false;
     
     // hard disks will not preloaded
     // we check only for max size
-    if ( group->isHardDrive() ) {        
+    if ( group->isHardDisk() ) {        
         if (file->isArchived() ||
             !file->isSizeValid(MAX_HARDDISK_SIZE) || 
             !file->open(GUIKIT::File::Mode::Update)) {
@@ -43,11 +43,11 @@ auto Program::loadImageDataWhenOk( GUIKIT::File* file, unsigned fileId, Emulator
         return false;
 
     // check single file size
-    if ( !group->isTapeDrive() && !file->isSizeValid(fileId, MAX_MEDIUM_SIZE) )
+    if ( !group->isTape() && !file->isSizeValid(fileId, MAX_MEDIUM_SIZE) )
         return false;    
     
-    // non archived tape images will loaded in chunks when needed
-    if ( group->isTapeDrive() && !file->isArchived() ) {        
+    // non archived tape images will be loaded in chunks when needed
+    if ( group->isTape() && !file->isArchived() ) {        
 		data = nullptr;
 		auto items = file->scanArchive();
 		return !items.empty();
@@ -99,22 +99,52 @@ auto Program::errorFirmwareSize(GUIKIT::File::Item* item, Message* message ) -> 
 }
 
 
-auto Program::readDrive(unsigned groupId, unsigned driveId, uint8_t* buffer, unsigned length, unsigned offset) -> unsigned {
-	if (!activeEmulator)
+auto Program::readMedia(Emulator::Interface::Media* media, uint8_t* buffer, unsigned length, unsigned offset) -> unsigned {
+	if (!activeEmulator || !media->guid)
 		return 0;
-	
-    auto& drive = activeEmulator->driveGroups[groupId].drives[driveId];
-    if (!drive.guid) return 0;
-    auto file = (GUIKIT::File*)drive.guid;
+    
+    auto file = (GUIKIT::File*)media->guid;
     return file->read(buffer, length, offset);
 }
 
-auto Program::writeDrive(unsigned groupId, unsigned driveId, uint8_t* buffer, unsigned length, unsigned offset) -> unsigned {
-	if (!activeEmulator)
+auto Program::writeMedia(Emulator::Interface::Media* media, uint8_t* buffer, unsigned length, unsigned offset) -> unsigned {
+	if (!activeEmulator || !media->guid)
 		return 0;
-
-    auto& drive = activeEmulator->driveGroups[groupId].drives[driveId];
-    if (!drive.guid) return 0;
-    auto file = (GUIKIT::File*)drive.guid;
+    
+    auto file = (GUIKIT::File*)media->guid;
     return file->write(buffer, length, offset);
+}
+
+auto Program::setExpansionSelection( Emulator::Interface* emulator ) -> void {
+    
+    for( auto& mediaGroup : emulator->mediaGroups ) {
+        
+        if ( !mediaGroup.isExpansion() )
+            continue;
+        
+        if ( mediaGroup.selected ) {
+            
+            auto mediaId = settings->get<unsigned>( ident(emulator, mediaGroup.name + "_selected"), mediaGroup.media[0].id );
+            
+            auto media = emulator->getMedia( mediaGroup, mediaId );
+            
+            if (media)
+                mediaGroup.selected = media;
+        }                
+    }
+    
+    for ( auto& expansion : emulator->expansions ) {
+        
+        if (!expansion.mediaGroup || (expansion.pcbs.size() == 0) )
+            continue;
+        
+        for(auto& media : expansion.mediaGroup->media) {
+
+            auto pcbId = settings->get<unsigned>( ident(emulator, media.name + "_pcb"), expansion.pcbs[0].id );
+
+            auto pcbLayout = emulator->getPCB( expansion, pcbId );
+
+            media.pcbLayout = pcbLayout ? pcbLayout : &expansion.pcbs[0];
+        }
+    }
 }

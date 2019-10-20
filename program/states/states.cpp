@@ -137,22 +137,22 @@ auto States::loadImagePaths( GUIKIT::Settings* loadSettings ) -> void {
         
     auto setting = new FileSetting( loadSettings );
 
-    for( auto& driveGroup : emulator->driveGroups ) {
+    for( auto& mediaGroup : emulator->mediaGroups ) {
 
-        for( auto& drive : driveGroup.drives ) {
+        for( auto& media : mediaGroup.media ) {
 
-            setting->ident = drive.name;
+            setting->ident = media.name;
             setting->update();
 
             if (setting->path.empty()) {
-                emulator->ejectMedium( driveGroup.type, drive.id );
-                drive.guid = uintptr_t(nullptr);
-                filePool->assign(program->ident(emulator, drive.name), nullptr);  
-                updateImage( nullptr, &drive );
+                emulator->ejectMedium( &media );
+                media.guid = uintptr_t(nullptr);
+                filePool->assign(program->ident(emulator, media.name), nullptr);  
+                updateImage( nullptr, &media );
                 continue;
             }
             
-            InsertImage* inserted = findImage( &drive );
+            InsertImage* inserted = findImage( &media );
             
             if (inserted) {
                 if ((inserted->setting->path == setting->path)
@@ -165,24 +165,22 @@ auto States::loadImagePaths( GUIKIT::Settings* loadSettings ) -> void {
             if (!file)
                 continue;                           
 
-            uint8_t* data;
+            uint8_t* data = nullptr;
 
-            if (!program->loadImageDataWhenOk( file, setting->id, &driveGroup, data )) {
+            if (!program->loadImageDataWhenOk( file, setting->id, &mediaGroup, data )) {
                 if ( !GUIKIT::Vector::find( errorPaths, setting->path ) )
                     errorPaths.push_back(setting->path);
                 continue;
             }            
             
-            drive.guid = uintptr_t(file);
-            if (driveGroup.isHardDrive()) {                
-                emulator->setHardDrive( drive.id, file->getSize() );                
-            } else {                
-                emulator->ejectMedium( driveGroup.type, drive.id );
-                emulator->insertMedium( driveGroup.type, drive.id, data, file->archiveDataSize( setting->id ));
-                emulator->writeProtect( driveGroup.type, drive.id, file->isArchived() ? true : setting->writeProtect);
-            }            
-            filePool->assign(program->ident(emulator, drive.name), file);  
-            updateImage( setting, &drive );
+            media.guid = uintptr_t(file);
+              
+            emulator->ejectMedium( &media );
+            emulator->insertMedium( &media, data, file->archiveDataSize( setting->id ));
+            emulator->writeProtect( &media, file->isArchived() ? true : setting->writeProtect);
+                       
+            filePool->assign(program->ident(emulator, media.name), file);  
+            updateImage( setting, &media );
         }
     }
 
@@ -198,20 +196,20 @@ auto States::saveImagePaths( std::string path ) -> bool {
     return saveSettings->save( path );       
 }
 
-auto States::findImage( Emulator::Interface::Drive* drive ) -> InsertImage* {
+auto States::findImage( Emulator::Interface::Media* media ) -> InsertImage* {
 
     for (auto& insert : inserted) {
 
-        if (insert.drive == drive)            
+        if (insert.media == media)            
             return &insert;        
     }
     
     return nullptr;
 }
 
-auto States::updateImage( FileSetting* setting, Emulator::Interface::Drive* drive ) -> void {
+auto States::updateImage( FileSetting* setting, Emulator::Interface::Media* media ) -> void {
     
-    InsertImage* insert = findImage( drive );
+    InsertImage* insert = findImage( media );
     
     if ( insert ) {
         copySetting( insert->setting, setting );
@@ -220,10 +218,10 @@ auto States::updateImage( FileSetting* setting, Emulator::Interface::Drive* driv
 
     auto fileSetting = new FileSetting( saveSettings );
     
-    fileSetting->ident = drive->name;
+    fileSetting->ident = media->name;
     copySetting( fileSetting, setting );    
     
-    inserted.push_back( {fileSetting, drive} );
+    inserted.push_back( {fileSetting, media} );
 }
 
 auto States::findFirmware( Emulator::Interface::Firmware* firmware ) -> InsertFirmware* {
@@ -339,28 +337,31 @@ auto States::generateAutoPath() -> std::string {
 
 auto States::updateTapeMenu() -> void {
     
-    auto drive = activeEmulator->getTapeDrive(0);
-    if (!drive)
+    auto media = activeEmulator->getTape(0);
+    if (!media)
         return;
 
-    unsigned count = emulator->getDrivesConnected( drive->group->id );
+    unsigned count = emulator->getDrivesConnected( media->group );
     
     Emulator::Interface::TapeMode mode = Emulator::Interface::TapeMode::Unpressed;
     if (count)
-        mode = emulator->getTapeControl( drive->id );
+        mode = emulator->getTapeControl( media );
     
     view->showTapeMenu( count ? true : false, mode );
 }
 
 auto States::updateSaveable() -> void {
     
-    for( auto& driveGroup : emulator->driveGroups ) {
+    for( auto& mediaGroup : emulator->mediaGroups ) {
         
-        unsigned maxCount = emulator->getDrivesConnected( driveGroup.id );
+        if (mediaGroup.isExpansion() || mediaGroup.isMemory())
+            continue;
         
-        for( auto& drive : driveGroup.drives ) {
+        unsigned maxCount = emulator->getDrivesConnected( &mediaGroup );
+        
+        for( auto& media : mediaGroup.media ) {
             
-            auto insert = findImage( &drive );
+            auto insert = findImage( &media );
             
             if (!insert)
                 continue;

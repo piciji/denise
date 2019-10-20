@@ -16,8 +16,7 @@ struct Status {
 	bool critical;
 	
 	struct DriveState {
-        unsigned groupId;
-        unsigned driveId;
+        Emulator::Interface::Media* media;
 		enum Mode : uint8_t { NoOperation = 0, Read = 1, Write = 2, List = 3, ReadHalf = 4, WriteHalf = 5 } mode;
         unsigned track;
     };
@@ -33,16 +32,19 @@ struct Status {
         driveStates.clear();
 	}   
 	
-	auto updateDriveState(unsigned groupId, unsigned driveId, unsigned mode, unsigned track) -> void {
+	auto updateDriveState(Emulator::Interface::Media* media, unsigned mode, unsigned track) -> void {
+        if(!media)
+            return;
+        
 		for (auto& driveState : driveStates) {
-			if (driveState.groupId == groupId && driveState.driveId == driveId) {
+			if (driveState.media == media) {
 				driveState.mode = (DriveState::Mode)mode;
 				driveState.track = track;
 				update = true;
 				return;
 			}
 		}
-		driveStates.push_back({groupId, driveId, (DriveState::Mode)mode, track });
+		driveStates.push_back({media, (DriveState::Mode)mode, track });
 	}
 	
 	auto countFrames() -> void {
@@ -96,17 +98,17 @@ struct Status {
             if (!out.empty())
                 out += " | ";
             
-            auto& driveGroup = activeEmulator->driveGroups[driveState.groupId];
+            auto mediaGroup = driveState.media->group;
             
-			out += driveGroup.drives[driveState.driveId].name + ": ";
+			out += driveState.media->name + ": ";
 			switch (driveState.mode) {
 				case DriveState::Mode::Read:
                     out += "read ";
-                    halfTrack = ( dynamic_cast<LIBC64::Interface*>(activeEmulator) && driveGroup.isDiskDrive() ) ? ".0" : "";
+                    halfTrack = ( dynamic_cast<LIBC64::Interface*>(activeEmulator) && mediaGroup->isDisk() ) ? ".0" : "";
                     break;
 				case DriveState::Mode::Write:
                     out += "write ";
-                    halfTrack = ( dynamic_cast<LIBC64::Interface*>(activeEmulator) && driveGroup.isDiskDrive() ) ? ".0" : "";
+                    halfTrack = ( dynamic_cast<LIBC64::Interface*>(activeEmulator) && mediaGroup->isDisk() ) ? ".0" : "";
                     break;
                 case DriveState::Mode::ReadHalf:
                     out += "read ";

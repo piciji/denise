@@ -63,19 +63,20 @@ struct Program : Emulator::Interface::Bind {
     auto power( Emulator::Interface* emulator, bool showImageError = true ) -> void;
 	auto reset( Emulator::Interface* emulator ) -> void;
     auto powerOff() -> void;
-    auto readDrive(unsigned typeId, unsigned driveId, uint8_t* buffer, unsigned length, unsigned offset) -> unsigned override;
-    auto writeDrive(unsigned typeId, unsigned driveId, uint8_t* buffer, unsigned length, unsigned offset) -> unsigned override;
-    auto updateDriveState(unsigned typeId, unsigned driveId, unsigned mode, unsigned track) -> void override;
+    auto readMedia(Emulator::Interface::Media* media, uint8_t* buffer, unsigned length, unsigned offset) -> unsigned override;
+    auto writeMedia(Emulator::Interface::Media* media, uint8_t* buffer, unsigned length, unsigned offset) -> unsigned override;
+    auto updateDriveState(Emulator::Interface::Media* media, unsigned mode, unsigned track) -> void override;
 	auto log(std::string data, bool newLine = true) -> void override;
     auto exit(int code) -> void override;
 
-    auto loadImageDataWhenOk( GUIKIT::File* file, unsigned fileId, Emulator::Interface::DriveGroup* group, uint8_t*& data ) -> bool;
+    auto loadImageDataWhenOk( GUIKIT::File* file, unsigned fileId, Emulator::Interface::MediaGroup* group, uint8_t*& data ) -> bool;
     auto showOpenError( std::vector<std::string>& paths, bool warning = false ) -> void;
 	
     auto errorOpen(GUIKIT::File* file, GUIKIT::File::Item* item, Message* message ) -> void;
     auto errorArchiveSize(GUIKIT::File* file, Message* message ) -> void;
     auto errorMediumSize(GUIKIT::File::Item* item, Message* message ) -> void;
     auto errorFirmwareSize(GUIKIT::File::Item* item, Message* message ) -> void;
+    auto setExpansionSelection( Emulator::Interface* emulator ) -> void;
     
     //audio
     auto initAudio() -> void;

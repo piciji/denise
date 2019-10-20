@@ -56,7 +56,7 @@ struct View : public GUIKIT::Window {
     auto autoloadFiles() -> void;
     auto autoloadPostProcessing() -> void;
     auto getSysMenu( Emulator::Interface* emulator ) -> SystemMenu*;
-    auto countImagesFor(Emulator::Interface::DriveGroup* driveGroup) -> unsigned;
+    auto countImagesFor(Emulator::Interface::MediaGroup* mediaGroup) -> unsigned;
     
     GUIKIT::Viewport viewport;    
     
@@ -144,7 +144,7 @@ struct View : public GUIKIT::Window {
     
     struct {
         Emulator::Interface* emulator;
-        std::vector<Emulator::Interface::DriveGroup*> driveGroups;
+        std::vector<Emulator::Interface::MediaGroup*> mediaGroups;
         bool silentError = false;
         std::vector<std::string> files;        
     } ddControl;

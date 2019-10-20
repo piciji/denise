@@ -21,7 +21,7 @@ struct States {
     
     struct InsertImage {
         FileSetting* setting;        
-        Emulator::Interface::Drive* drive;
+        Emulator::Interface::Media* media;
     };
 
     std::vector<InsertImage> inserted;
@@ -55,9 +55,9 @@ struct States {
     
     auto saveImagePaths( std::string path ) -> bool;
     
-    auto updateImage( FileSetting* setting, Emulator::Interface::Drive* drive ) -> void;
+    auto updateImage( FileSetting* setting, Emulator::Interface::Media* media ) -> void;
     
-    auto findImage( Emulator::Interface::Drive* drive ) -> InsertImage*;
+    auto findImage( Emulator::Interface::Media* media ) -> InsertImage*;
     
     auto updateFirmware( FileSetting* setting, Emulator::Interface::Firmware* firmware ) -> void;
     

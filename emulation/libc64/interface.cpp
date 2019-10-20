@@ -18,7 +18,7 @@ const std::string Interface::Version = "106";
 Interface::Interface() : Emulator::Interface( "C64" ) {        
     system = new System( this );
 
-	prepareDrives();
+	prepareMedia();
 	prepareFirmware();	
 	prepareDevices();
 	prepareChipset();
@@ -44,11 +44,83 @@ auto Interface::prepareMemory() -> void {
     }
 }
 
+auto Interface::prepareMedia() -> void {
+	mediaGroups.push_back({MediaGroupIdDisk, "disk", MediaGroup::Type::Disk, {"d64", "g64"}, {"d64", "g64"} });
+	mediaGroups.push_back({MediaGroupIdTape, "tape", MediaGroup::Type::Tape, {"tap"}, {"tap"} });	
+	mediaGroups.push_back({MediaGroupIdMemory, "memory", MediaGroup::Type::Memory, {"prg", "p00", "t64"}, {"prg"}});
+    mediaGroups.push_back({MediaGroupIdExpansionGame, "game module", MediaGroup::Type::Expansion, {"bin, crt"}, {} });
+    mediaGroups.push_back({MediaGroupIdExpansionReu, "reu", MediaGroup::Type::Expansion, {"bin, crt"}, {} });
+
+	{   auto& group = mediaGroups[MediaGroupIdDisk];
+    
+		group.media.push_back({0, "Device 8", 0, &group, nullptr});
+		group.media.push_back({1, "Device 9", 0, &group, nullptr});
+		group.media.push_back({2, "Device 10", 0, &group, nullptr});
+		group.media.push_back({3, "Device 11", 0, &group, nullptr});
+        
+        group.selected = nullptr;
+        group.expansion = nullptr;
+	}
+
+	{   auto& group = mediaGroups[MediaGroupIdTape];
+		group.media.push_back({0, "Datasette", 0, &group, nullptr});
+        
+        group.selected = nullptr;
+        group.expansion = nullptr;
+	}
+	
+	{   auto& group = mediaGroups[MediaGroupIdMemory];
+		group.media.push_back({0, "Memory", 0, &group, nullptr});
+        
+        group.selected = nullptr;
+        group.expansion = nullptr;
+	}
+    
+    {   auto& group = mediaGroups[MediaGroupIdExpansionGame];
+		group.media.push_back({0, "Game Module 0", 0, &group, nullptr});
+        group.media.push_back({1, "Game Module 1", 0, &group, nullptr});
+        group.media.push_back({2, "Game Module 2", 0, &group, nullptr});
+        group.media.push_back({3, "Game Module 3", 0, &group, nullptr});
+        
+        group.selected = &group.media[0];   
+        group.expansion = nullptr;
+	}
+    
+    {   auto& group = mediaGroups[MediaGroupIdExpansionReu];
+		group.media.push_back({0, "REU 0", 0, &group, nullptr});
+        group.media.push_back({1, "REU 1", 0, &group, nullptr});
+        group.media.push_back({2, "REU 2", 0, &group, nullptr});
+        group.media.push_back({3, "REU 3", 0, &group, nullptr});
+        
+        group.selected = &group.media[0];
+        group.expansion = nullptr;
+	}
+}
+
 auto Interface::prepareExpansions() -> void {
     
-    expansions.push_back( { ExpansionIdNone, "Empty", 0, nullptr } );
-    expansions.push_back( { ExpansionIdGame, "Game", 1, nullptr } );
-    expansions.push_back( { ExpansionIdReu, "REU", 1, &memoryTypes[0] } );
+    expansions.push_back( { ExpansionIdNone, "Empty", Expansion::Type::Empty, nullptr, nullptr } );
+    expansions.push_back( { ExpansionIdGame, "Game", Expansion::Type::Game, nullptr, &mediaGroups[MediaGroupIdExpansionGame] } );
+    
+    {   auto& expansion = expansions.back();        
+        expansion.pcbs.push_back( {CartridgeIdDefault, "Default"} );
+        expansion.pcbs.push_back( {CartridgeIdDefault8k, "Default8k"} );
+        expansion.pcbs.push_back( {CartridgeIdDefault16k, "Default16k"} );
+        expansion.pcbs.push_back( {CartridgeIdUltimax, "Ultimax"} );
+        expansion.pcbs.push_back( {CartridgeIdOcean, "Ocean"} );
+        expansion.pcbs.push_back( {CartridgeIdFunplay, "Funplay"} );
+        expansion.pcbs.push_back( {CartridgeIdSuperGames, "SuperGames"} );
+        expansion.pcbs.push_back( {CartridgeIdSystem3, "System3"} );
+        expansion.pcbs.push_back( {CartridgeIdZaxxon, "Zaxxon"} );
+        
+        mediaGroups[MediaGroupIdExpansionGame].expansion = &expansion;
+    }
+    
+    expansions.push_back( { ExpansionIdReu, "REU", Expansion::Type::Ram, &memoryTypes[0], &mediaGroups[MediaGroupIdExpansionReu] } );     
+    
+    {   auto& expansion = expansions.back();  
+        mediaGroups[MediaGroupIdExpansionReu].expansion = &expansion;
+    }
 }
 
 auto Interface::prepareStats() -> void {
@@ -201,34 +273,6 @@ auto Interface::prepareFeatures() -> void {
 auto Interface::prepareChipset() -> void {    
     chipsets.push_back({0, "VIC-II 65xx"});
 	chipsets.push_back({1, "VIC-II 85xx"});
-}
-
-auto Interface::prepareDrives() -> void {
-	driveGroups.push_back({DriveGroupIdDisk, "disk", DriveGroup::Type::DiskDrive, {"d64", "g64"}, {"d64", "g64"} });
-	driveGroups.push_back({DriveGroupIdTape, "tape", DriveGroup::Type::TapeDrive, {"tap"}, {"tap"} });
-	driveGroups.push_back({DriveGroupIdModuleSlot, "module", DriveGroup::Type::ModuleSlot, {"crt"}});
-	driveGroups.push_back({DriveGroupIdMemory, "memory", DriveGroup::Type::Memory, {"prg", "p00", "t64"}, {"prg"}});
-
-	{   auto& group = driveGroups[DriveGroupIdDisk];
-    
-		group.drives.push_back({0, "Device 8", 0, &group});
-		group.drives.push_back({1, "Device 9", 0, &group});
-
-		group.drives.push_back({2, "Device 10", 0, &group});
-		group.drives.push_back({3, "Device 11", 0, &group});
-	}
-
-	{   auto& group = driveGroups[DriveGroupIdTape];
-		group.drives.push_back({0, "Datasette", 0, &group});
-	}
-	
-	{   auto& group = driveGroups[DriveGroupIdModuleSlot];
-		group.drives.push_back({0, "Module", 0, &group});
-	}
-	
-	{   auto& group = driveGroups[DriveGroupIdMemory];
-		group.drives.push_back({0, "Memory", 0, &group});
-	}
 }
 
 auto Interface::prepareFirmware() -> void {
@@ -483,44 +527,55 @@ auto Interface::getRegion() -> Region {
     return system->isNtsc() ? Region::Ntsc : Region::Pal;
 }
 
-auto Interface::setDrivesConnected(unsigned groupId, unsigned count) -> void {
-	if (groupId >= driveGroups.size()) return;
-	auto& driveGroup = driveGroups[groupId];
-	if (count > driveGroup.drives.size()) count = driveGroup.defaultUsage();
+auto Interface::setDrivesConnected(MediaGroup* group, unsigned count) -> void {
+    if (!group)
+        return;
+    
+	if (count > group->media.size())
+        count = group->defaultUsage();
 	
-	if (groupId == DriveGroupIdTape)
+	if (group->isTape())
 		tape->setEnabled( count != 0 );
-    else if (groupId == DriveGroupIdDisk)
+    
+    else if (group->isDisk())
         iecBus->setDrivesEnabled( count );
 }
 
-auto Interface::getDrivesConnected(unsigned groupId) -> unsigned { 
-    if (groupId >= driveGroups.size())
-        return 0;
+auto Interface::getDrivesConnected(MediaGroup* group) -> unsigned { 
+    if (!group)
+        return 1;
     
-    if (groupId == DriveGroupIdDisk)
+    if (group->isDisk())
         return iecBus->drivesConnected;
     
-    if (groupId == DriveGroupIdTape)
+    if (group->isTape())
         return tape->isEnabled() ? 1 : 0;
 
     return 1;
 }
 
-auto Interface::insertDisk(unsigned driveId, uint8_t* data, unsigned size) -> void {
-	if (driveId >= driveGroups[DriveGroupIdDisk].drives.size()) return;
-    iecBus->attach( driveId, data, size );
+auto Interface::insertDisk(Media* media, uint8_t* data, unsigned size) -> void {
     
+    if (!media || !media->group->isDisk())
+        return;
+    
+    iecBus->attach( media, data, size );    
 }
 
-auto Interface::writeProtectDisk(unsigned driveId, bool state) -> void {
-	if (driveId >= driveGroups[DriveGroupIdDisk].drives.size()) return;
-    iecBus->writeProtect( driveId, state );
+auto Interface::writeProtectDisk(Media* media, bool state) -> void {
+
+    if (!media || !media->group->isDisk())
+        return;
+    
+    iecBus->writeProtect( media, state );
 }
 
-auto Interface::ejectDisk(unsigned driveId) -> void {
-	if (driveId >= driveGroups[DriveGroupIdDisk].drives.size()) return;
-    iecBus->detach( driveId );
+auto Interface::ejectDisk(Media* media) -> void {
+
+    if (!media || !media->group->isDisk())
+        return;
+    
+    iecBus->detach( media );
 }
 
 auto Interface::createDiskImage(unsigned typeId, bool hd, std::string name, bool ffs) -> uint8_t* {
@@ -533,52 +588,51 @@ auto Interface::getDiskImageSize(unsigned typeId, bool hd) -> unsigned {
 	return Structure1541::imageSize( (Structure1541::Type) typeId );
 }
 
-auto Interface::getDiskListing(unsigned driveId) -> std::vector<Emulator::Interface::Listing> {
-    if (driveId >= driveGroups[DriveGroupIdDisk].drives.size()) 
+auto Interface::getDiskListing(Media* media) -> std::vector<Emulator::Interface::Listing> {
+    
+    if (!media)
         return {};
     
-    return iecBus->getDiskListing( driveId );
+    return iecBus->getDiskListing( media );
 }
 
-auto Interface::selectDiskListing(unsigned driveId, unsigned pos) -> void {
-    if (driveId >= driveGroups[DriveGroupIdDisk].drives.size()) 
+auto Interface::selectDiskListing(Media* media, unsigned pos) -> void {
+    
+    iecBus->selectListing( media, pos );
+}
+
+auto Interface::insertTape(Media* media, uint8_t* data, unsigned size) -> void {
+		
+    if (!media || !media->group->isTape())
         return;
     
-    iecBus->selectListing( driveId, pos );
+	tape->load( media, data, size );
 }
 
-auto Interface::insertTape(unsigned driveId, uint8_t* data, unsigned size) -> void {
-	if (driveId >= driveGroups[DriveGroupIdTape].drives.size()) return;
-	
-	tape->load( data, size );
-}
-
-auto Interface::writeProtectTape(unsigned driveId, bool state) -> void {
-	if (driveId >= driveGroups[DriveGroupIdTape].drives.size()) return;
+auto Interface::writeProtectTape(Media* media, bool state) -> void {
 	
 	tape->setWriteProtect( state );
 }
 
-auto Interface::ejectTape(unsigned driveId) -> void {
-	if (driveId >= driveGroups[DriveGroupIdTape].drives.size()) return;
+auto Interface::ejectTape(Media* media) -> void {
 		
 	tape->unload();
 }
 
-auto Interface::controlTape(unsigned driveId, TapeMode mode) -> void {
-    if (driveId >= driveGroups[DriveGroupIdTape].drives.size()) return;
+auto Interface::controlTape(Media* media, TapeMode mode) -> void {
 	
     tape->setMode( (Tape::Mode)mode );
 }
 
-auto Interface::getTapeControl(unsigned driveId) -> TapeMode {
-    if (driveId >= driveGroups[DriveGroupIdTape].drives.size()) 
+auto Interface::getTapeControl(Media* media) -> TapeMode {
+    
+    if (!media)
         return TapeMode::Stop;
     
     return (TapeMode)tape->getMode();
 }
 
-auto Interface::selectTapeListing(unsigned driveId, unsigned pos) -> void {
+auto Interface::selectTapeListing(Media* media, unsigned pos) -> void {
 	
 	tape->selectListing( pos );
 }
@@ -587,33 +641,30 @@ auto Interface::createTapeImage(unsigned& imageSize) -> uint8_t* {
 	return tape->createTap( imageSize );
 }
 
-auto Interface::insertModule(uint8_t* data, unsigned size) -> void {
+auto Interface::insertExpansionImage(Media* media, uint8_t* data, unsigned size) -> void {
     
-    CartridgeId cartridgeId = CartridgeId::Default;
+    if (!media || !media->group->isExpansion())
+        return;
     
-    if ((int)cartridgeId == 0xffff)
-        // called while loading a save state, we don't know the cartridge type at this point.
-        // remember rom file only and init cartridge later
-        system->unsetExpansion();
-    
-    system->expansionPort->setCartridgeId( cartridgeId );
+    system->expansionPort->setCartridgeId( (CartridgeId)(media->pcbLayout ? media->pcbLayout->id : 0) );
     
     system->expansionPort->setRom( data, size );
 }
 
-auto Interface::ejectModule() -> void {
+auto Interface::ejectExpansionImage(Media* media) -> void {
     
     system->unsetExpansion();
 }
 
-auto Interface::insertMemory(unsigned driveId, uint8_t* data, unsigned size) -> void {
-	if (driveId >= driveGroups[DriveGroupIdMemory].drives.size()) return;
+auto Interface::insertMemory(Media* media, uint8_t* data, unsigned size) -> void {
 		
+    if (!media || !media->group->isMemory())
+        return;
+    
 	prg->set( data, size );
 }
 
-auto Interface::ejectMemory(unsigned driveId) -> void {
-	if (driveId >= driveGroups[DriveGroupIdMemory].drives.size()) return;
+auto Interface::ejectMemory(Media* media) -> void {
 	
 	prg->unset();
 }
@@ -623,12 +674,12 @@ auto Interface::getLoadedMemory(unsigned& size) -> uint8_t* {
 	return prg->getMemory( size );
 }
 
-auto Interface::getMemoryListing() -> std::vector<Emulator::Interface::Listing> {
+auto Interface::getMemoryListing(Media* media) -> std::vector<Emulator::Interface::Listing> {
 	
 	return prg->getListing();
 }
 
-auto Interface::selectMemoryListing(unsigned pos) -> bool {
+auto Interface::selectMemoryListing(Media* media, unsigned pos) -> bool {
 	
 	return prg->select( pos );
 }
@@ -812,14 +863,19 @@ auto Interface::setMemory(unsigned typeId, unsigned memoryId) -> void {
     }
 }
 
-auto Interface::setExpansionPort(unsigned expansionId) -> void {
+auto Interface::setExpansion(unsigned expansionId) -> void {
     
-    for(auto& expansion : expansions) {
-        if (expansion.id == expansionId) {
-            system->setExpansion( expansion );
-            break;
-        }
-    }
+    auto expansion = getExpansionById( expansionId );
+    
+    if (!expansion)
+        return;
+    
+    system->setExpansion( *expansion );
+}
+
+auto Interface::getExpansion() -> Expansion* {
+
+    return getExpansionById( system->expansionPort->id );
 }
 
 }

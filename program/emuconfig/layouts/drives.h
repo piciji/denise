@@ -7,9 +7,9 @@ struct PathsLayout : GUIKIT::FramedVerticalLayout {
         GUIKIT::Button empty;
         GUIKIT::Button select;
         
-        Emulator::Interface::DriveGroup* driveGroup;
+        Emulator::Interface::MediaGroup* mediaGroup;
 
-        Block( Emulator::Interface::DriveGroup* driveGroup );
+        Block( Emulator::Interface::MediaGroup* mediaGroup );
     };
     std::vector<Block*> blocks; 
     
@@ -20,6 +20,7 @@ struct DriveGroupLayout : GUIKIT::FramedVerticalLayout {
 
     struct Block : GUIKIT::VerticalLayout {
         struct Header : GUIKIT::HorizontalLayout {
+            GUIKIT::RadioBox inUse;
             GUIKIT::Label deviceName;
             GUIKIT::CheckBox writeprotect;
             GUIKIT::Button eject;
@@ -29,6 +30,7 @@ struct DriveGroupLayout : GUIKIT::FramedVerticalLayout {
         } header;
 
         struct Selector : GUIKIT::HorizontalLayout {
+            GUIKIT::ComboButton combo;
             GUIKIT::LineEdit edit;
             GUIKIT::Button open;
             GUIKIT::Button openW;
@@ -36,13 +38,13 @@ struct DriveGroupLayout : GUIKIT::FramedVerticalLayout {
             Selector();
         } selector;
 
-        Emulator::Interface::Drive* drive;
+        Emulator::Interface::Media* media;
         bool openWritable;
         Block();
         std::vector<Emulator::Interface::Listing> listings;
     };
     std::vector<Block*> blocks;
-    Emulator::Interface::DriveGroup* driveGroup;
+    Emulator::Interface::MediaGroup* mediaGroup;
     GUIKIT::VerticalLayout blockContainer;
 	GUIKIT::Button inject;
 	GUIKIT::ListView listings; // for c64 disk and prg container formats
@@ -53,14 +55,7 @@ struct DriveGroupLayout : GUIKIT::FramedVerticalLayout {
     auto updateVisibility( unsigned count, bool init = false ) -> void;
     auto fillListing(DriveGroupLayout::Block* block) -> void;
 
-    DriveGroupLayout( Emulator::Interface::DriveGroup* driveGroup, TabWindow* tabWindow );
-};
-
-struct ImageInsertHelper {
-    GUIKIT::File* file;
-    GUIKIT::File::Item* item;
-    Emulator::Interface::DriveGroup* driveGroup;
-    DriveGroupLayout::Block* block;
+    DriveGroupLayout( Emulator::Interface::MediaGroup* mediaGroup, TabWindow* tabWindow );
 };
 
 struct TapeCreatorLayout : GUIKIT::FramedHorizontalLayout {
@@ -116,12 +111,12 @@ struct DrivesLayout : GUIKIT::TabFrameLayout {
     GUIKIT::Image diskImage;
     GUIKIT::Image hdImage;
     GUIKIT::Image tapeImage;
-    GUIKIT::Image moduleImage;
+    GUIKIT::Image expansionImage;
 	GUIKIT::Image memoryImage;
 	GUIKIT::Image addImage;    
     GUIKIT::Image pathImage;
     
-    std::vector<DriveGroupLayout*> driveGroupLayouts;
+    std::vector<DriveGroupLayout*> mediaGroupLayouts;
     std::vector<std::string> tabs;
     
 	GUIKIT::VerticalLayout creatorLayout;    
@@ -134,20 +129,20 @@ struct DrivesLayout : GUIKIT::TabFrameLayout {
 
     auto translate() -> void;
     auto updateDriveBlock(DriveGroupLayout::Block* block, FileSetting* setting) -> void;
-    auto updateVisibility( Emulator::Interface::DriveGroup* driveGroup, unsigned count ) -> void;
+    auto updateVisibility( Emulator::Interface::MediaGroup* mediaGroup, unsigned count ) -> void;
     auto bindSelectorAction( DriveGroupLayout* layout ) -> void;
     auto prepareCreator() -> void;
     auto preparePaths() -> void;	
-    auto updateListing( Emulator::Interface::Drive* drive ) -> void;
+    auto updateListing( Emulator::Interface::Media* media ) -> void;
 	auto preselectPath( std::string& groupName ) -> std::string;
 	auto savePath( std::string& groupName, std::string path ) -> void;
     auto showC64Listing( DriveGroupLayout* layout ) -> bool;
     auto createImage( unsigned groupId ) -> void;
-    auto showDriveGroupLayout( Emulator::Interface::DriveGroup* driveGroup ) -> void;
-    auto getDriveGroupLayout( Emulator::Interface::DriveGroup* driveGroup ) -> DriveGroupLayout*;   
-    auto insertImage( ImageInsertHelper iih ) -> void;
-    auto insertImage(GUIKIT::File* file, GUIKIT::File::Item* item, Emulator::Interface::DriveGroup* driveGroup, unsigned blockPos) -> void;
-    auto eject( Emulator::Interface::DriveGroup* driveGroup ) -> void;
+    auto showDriveGroupLayout( Emulator::Interface::MediaGroup* mediaGroup ) -> void;
+    auto getDriveGroupLayout( Emulator::Interface::MediaGroup* mediaGroup ) -> DriveGroupLayout*;   
+    auto insertImage( DriveGroupLayout* layout, DriveGroupLayout::Block* block, GUIKIT::File* file, GUIKIT::File::Item* item ) -> void;
+    auto insertImage( Emulator::Interface::Media* media, GUIKIT::File* file, GUIKIT::File::Item* item ) -> void;
+    auto eject( Emulator::Interface::MediaGroup* mediaGroup ) -> void;
     auto drop( std::string filePath, DriveGroupLayout::Block* block = nullptr ) -> void;   
     auto colorListing( unsigned color, bool foreground ) -> void;
 

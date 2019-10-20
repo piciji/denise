@@ -135,42 +135,60 @@ struct Interface {
 
     std::vector<MemoryType> memoryTypes; 
     
+    struct MediaGroup;
+    
+    // possible extra hardware a medium can have
+    struct PCBLayout {
+        unsigned id;
+        std::string name;
+    };
+    
     struct Expansion {
         unsigned id;
         std::string name;
-        unsigned romSlots; // individual images, not ROM chips
-        MemoryType* memoryType;            
+        enum Type : unsigned { Empty, Game, Ram, Eprom, TurboCart } type;
+        MemoryType* memoryType; // uses RAM
+        MediaGroup* mediaGroup; // uses ROM
+        
+        auto isEmpty() const -> bool { return type == Type::Empty; }
+        auto isGame() const -> bool { return type == Type::Game; }
+        auto isRam() const -> bool { return type == Type::Ram; }
+        auto isEprom() const -> bool { return type == Type::Eprom; }
+        auto isTurboCart() const -> bool { return type == Type::TurboCart; }
+        
+        std::vector<PCBLayout> pcbs;
     };
-    std::vector<Expansion> expansions;
+    std::vector<Expansion> expansions;       
     
-    struct DriveGroup;
-    
-    struct Drive {
+    struct Media {
         unsigned id;
         std::string name;
         uintptr_t guid; //free to use
-        DriveGroup* group;
-    };
+        MediaGroup* group;
+        PCBLayout* pcbLayout;
+    };   
 
-    struct DriveGroup {
+    struct MediaGroup {
         unsigned id;
         std::string name;        
-		enum Type : unsigned { DiskDrive, HardDrive, TapeDrive, ModuleSlot, Memory } type;
+		enum class Type : unsigned { Disk, HardDisk, Tape, Expansion, Memory } type;
         std::vector<std::string> suffix;
         std::vector<std::string> creatable;
+        Media* selected;
+        Expansion* expansion; // belongs to
         
-        auto isDiskDrive() const -> bool { return type == Type::DiskDrive; }
-        auto isHardDrive() const -> bool { return type == Type::HardDrive; }
-        auto isTapeDrive() const -> bool { return type == Type::TapeDrive; }
-		auto isModuleSlot() const -> bool { return type == Type::ModuleSlot; }
+        auto isDisk() const -> bool { return type == Type::Disk; }
+        auto isHardDisk() const -> bool { return type == Type::HardDisk; }
+        auto isTape() const -> bool { return type == Type::Tape; }
+		auto isExpansion() const -> bool { return type == Type::Expansion; }
 		auto isMemory() const -> bool { return type == Type::Memory; }
         //default count of connected drives
-        auto defaultUsage() -> unsigned { return type == Type::DiskDrive ? 1 : 0; }
-
-        std::vector<Drive> drives;
+        auto defaultUsage() -> unsigned { return type == Type::Disk ? 1 : 0; }       
+        
+        std::vector<Media> media;
     };
 
-    std::vector<DriveGroup> driveGroups;         
+    std::vector<MediaGroup> mediaGroups;         
     
     struct Cpu {
         unsigned id;
@@ -260,9 +278,9 @@ struct Interface {
         virtual auto inputPoll(uint16_t, uint16_t) -> int16_t { return 0; }
         virtual auto videoRefresh(const uint16_t*, unsigned, unsigned, unsigned) -> void {}
         virtual auto audioSample(int16_t, int16_t) -> void {}
-        virtual auto readDrive(unsigned, unsigned, uint8_t*, unsigned, unsigned) -> unsigned { return 0; }
-        virtual auto writeDrive(unsigned, unsigned, uint8_t*, unsigned, unsigned) -> unsigned { return 0; }
-        virtual auto updateDriveState(unsigned, unsigned, unsigned, unsigned) -> void {}
+        virtual auto readMedia(Media*, uint8_t*, unsigned, unsigned) -> unsigned { return 0; }
+        virtual auto writeMedia(Media*, uint8_t*, unsigned, unsigned) -> unsigned { return 0; }
+        virtual auto updateDriveState(Media*, unsigned, unsigned) -> void {}
         virtual auto log(std::string, bool) -> void {} //for debugging
         virtual auto exit( int code ) -> void {}
         virtual auto finishVBlank() -> void {}
@@ -290,16 +308,16 @@ struct Interface {
         bind->midScreenCallback();
     }
 
-    auto readDrive(unsigned groupId, unsigned driveId, uint8_t* buffer, unsigned length, unsigned offset) -> unsigned {
-        return bind->readDrive(groupId, driveId, buffer, length, offset);
+    auto readMedia(Media* media, uint8_t* buffer, unsigned length, unsigned offset) -> unsigned {
+        return bind->readMedia(media, buffer, length, offset);
     }
 
-    auto writeDrive(unsigned groupId, unsigned driveId, uint8_t* buffer, unsigned length, unsigned offset) -> unsigned {
-        return bind->writeDrive(groupId, driveId, buffer, length, offset);
+    auto writeMedia(Media* media, uint8_t* buffer, unsigned length, unsigned offset) -> unsigned {
+        return bind->writeMedia(media, buffer, length, offset);
     }
 
-    auto updateDriveState(unsigned groupId, unsigned driveId, unsigned mode, unsigned track) -> void {
-        bind->updateDriveState(groupId, driveId, mode, track); //mode: 0 - no operation, 1 - read, 2 - write, 3 - list
+    auto updateDriveState(Media* media, unsigned mode, unsigned track) -> void {
+        bind->updateDriveState(media, mode, track); //mode: 0 - no operation, 1 - read, 2 - write, 3 - list
     }
 
     auto log(const char* data, bool newLine = true) -> void {
@@ -324,39 +342,40 @@ struct Interface {
     }   
 
     // set amount of tape, disk, hard drives or module slots connected to the system
-    virtual auto setDrivesConnected(unsigned groupId, unsigned count) -> void {}
-    virtual auto getDrivesConnected(unsigned groupId) -> unsigned { return 0; }
+    virtual auto setDrivesConnected(MediaGroup* group, unsigned count) -> void {}
+    virtual auto getDrivesConnected(MediaGroup* group) -> unsigned { return 0; }
     // disk handling
-    virtual auto insertDisk(unsigned driveId, uint8_t* data, unsigned size) -> void {}
-    virtual auto writeProtectDisk(unsigned driveId, bool state) -> void {}
-    virtual auto ejectDisk(unsigned driveId) -> void { } 
+    virtual auto insertDisk(Media* media, uint8_t* data, unsigned size) -> void {}
+    virtual auto writeProtectDisk(Media* media, bool state) -> void {}
+    virtual auto ejectDisk(Media* media) -> void { } 
 	virtual auto getDiskImageSize(unsigned typeId, bool hd) -> unsigned { return 0; } //get size needed for a new disk image
 	virtual auto createDiskImage(unsigned typeId, bool hd = false, std::string name = "", bool ffs = false) -> uint8_t* { return nullptr; }        
-    virtual auto getDiskListing(unsigned driveId) -> std::vector<Listing> { return {}; }
-    virtual auto selectDiskListing(unsigned driveId, unsigned pos) -> void { }
+    virtual auto getDiskListing(Media* media) -> std::vector<Listing> { return {}; }
+    virtual auto selectDiskListing(Media* media, unsigned pos) -> void { }
     // hard disk handling
-    virtual auto setHardDrive(unsigned driveId, unsigned size) -> void {} //uses read and write callbacks above because of big data
-	virtual auto ejectHardDrive(unsigned driveId) -> void {}
+    virtual auto insertHardDisk(Media* media, unsigned size) -> void {} //uses read and write callbacks above because of big data
+	virtual auto ejectHardDisk(Media* media) -> void {}
     virtual auto createHardDrive(std::function<void (uint8_t* buffer, unsigned length, unsigned offset)> onCreate, unsigned size, std::string name = "") -> void {}
     // tape handling
-    virtual auto insertTape(unsigned driveId, uint8_t* data, unsigned size) -> void {}    
-    virtual auto writeProtectTape(unsigned driveId, bool state) -> void {}
-    virtual auto ejectTape(unsigned driveId) -> void { } 
-    virtual auto controlTape(unsigned driveId, TapeMode mode) -> void {}
-    virtual auto getTapeControl(unsigned driveId) -> TapeMode { return TapeMode::Unpressed; }
+    virtual auto insertTape(Media* media, uint8_t* data, unsigned size) -> void {}    
+    virtual auto writeProtectTape(Media* media, bool state) -> void {}
+    virtual auto ejectTape(Media* media) -> void { } 
+    virtual auto controlTape(Media* media, TapeMode mode) -> void {}
+    virtual auto getTapeControl(Media* media) -> TapeMode { return TapeMode::Unpressed; }
 	virtual auto createTapeImage(unsigned& imageSize) -> uint8_t* { return nullptr; }
-    virtual auto selectTapeListing(unsigned driveId, unsigned pos) -> void { }
-    // module handling
-    virtual auto insertModule(uint8_t* data, unsigned size) -> void {}
-    virtual auto ejectModule() -> void {}
+    virtual auto selectTapeListing(Media* media, unsigned pos) -> void { }
+    // expansion image handling
+    virtual auto insertExpansionImage(Media* media, uint8_t* data, unsigned size) -> void {}
+    virtual auto ejectExpansionImage(Media* media) -> void {}
 	// memory 
-	virtual auto insertMemory(unsigned driveId, uint8_t* data, unsigned size) -> void {}
-	virtual auto ejectMemory(unsigned driveId) -> void {}	
+	virtual auto insertMemory(Media* media, uint8_t* data, unsigned size) -> void {}
+	virtual auto ejectMemory(Media* media) -> void {}	
 	virtual auto getLoadedMemory(unsigned& size) -> uint8_t* { return nullptr; }
-	virtual auto getMemoryListing() -> std::vector<Listing> { return {}; }
-	virtual auto selectMemoryListing(unsigned pos) -> bool { return false; }	
+	virtual auto getMemoryListing(Media* media) -> std::vector<Listing> { return {}; }
+	virtual auto selectMemoryListing(Media* media, unsigned pos) -> bool { return false; }	
     // expansion port
-    virtual auto setExpansionPort(unsigned expansionId) -> void {}
+    virtual auto setExpansion(unsigned expansionId) -> void {}
+    virtual auto getExpansion() -> Expansion* { return nullptr; }
 
     // savestates
     virtual auto checkstate(uint8_t* data, unsigned size) -> bool { return false; }    
@@ -421,94 +440,84 @@ struct Interface {
     }
     
 	//shortcuts
-	auto insertMedium(unsigned type, unsigned driveId, uint8_t* data, unsigned size) -> void {
-		switch(type) {
-			case DriveGroup::Type::DiskDrive: insertDisk(driveId, data, size); break;
-			case DriveGroup::Type::TapeDrive: insertTape(driveId, data, size); break;
-			case DriveGroup::Type::ModuleSlot: insertModule(data, size); break;
-			case DriveGroup::Type::Memory: insertMemory(driveId, data, size); break;
-			case DriveGroup::Type::HardDrive: break; //works differently, dont call it this way
+	auto insertMedium(Media* media, uint8_t* data, unsigned size) -> void {
+		switch(media->group->type) {
+			case MediaGroup::Type::Disk: insertDisk(media, data, size); break;
+			case MediaGroup::Type::Tape: insertTape(media, data, size); break;
+			case MediaGroup::Type::Expansion: insertExpansionImage(media, data, size); break;
+			case MediaGroup::Type::Memory: insertMemory(media, data, size); break;
+			case MediaGroup::Type::HardDisk: insertHardDisk(media, size); break;
 		}
 	}
 	
-	auto writeProtect(unsigned type, unsigned driveId, bool state) -> void {
-		switch(type) {
-			case DriveGroup::Type::DiskDrive: writeProtectDisk(driveId, state); break;
-			case DriveGroup::Type::TapeDrive: writeProtectTape(driveId, state); break;
-			case DriveGroup::Type::ModuleSlot: break; //roms cant be written anyway
-			case DriveGroup::Type::Memory: break; //work mem is controlled by software
-			case DriveGroup::Type::HardDrive: break; //harddrives cant be set as writeprotected
+	auto writeProtect(Media* media, bool state) -> void {
+		switch(media->group->type) {
+			case MediaGroup::Type::Disk: writeProtectDisk(media, state); break;
+			case MediaGroup::Type::Tape: writeProtectTape(media, state); break;
+			case MediaGroup::Type::Expansion: break; //todo: epromer writes back
+			case MediaGroup::Type::Memory: break; //work mem is controlled by software
+			case MediaGroup::Type::HardDisk: break;
 		}
 	}
 	
-	auto ejectMedium(unsigned type, unsigned driveId) -> void {		
-		switch(type) {
-			case DriveGroup::Type::DiskDrive: ejectDisk(driveId); break;
-			case DriveGroup::Type::TapeDrive: ejectTape(driveId); break;
-			case DriveGroup::Type::Memory: ejectMemory(driveId); break;
-			case DriveGroup::Type::ModuleSlot: ejectModule(); break;
-			case DriveGroup::Type::HardDrive: ejectHardDrive(driveId); break;
+	auto ejectMedium(Media* media) -> void {		
+		switch(media->group->type) {
+			case MediaGroup::Type::Disk: ejectDisk(media); break;
+			case MediaGroup::Type::Tape: ejectTape(media); break;
+			case MediaGroup::Type::Memory: ejectMemory(media); break;
+			case MediaGroup::Type::Expansion: ejectExpansionImage(media); break;
+			case MediaGroup::Type::HardDisk: ejectHardDisk(media); break;
 		}		
 	}
     
-    auto getListing(unsigned type, unsigned driveId) -> std::vector<Listing> {
-        switch(type) {
-			case DriveGroup::Type::DiskDrive:
-                return getDiskListing( driveId );
-			case DriveGroup::Type::TapeDrive: break;
-			case DriveGroup::Type::Memory:
-                return getMemoryListing( );
-			case DriveGroup::Type::ModuleSlot: break;
-			case DriveGroup::Type::HardDrive: break;
+    auto getListing(Media* media) -> std::vector<Listing> {
+        switch(media->group->type) {
+			case MediaGroup::Type::Disk:
+                return getDiskListing( media );
+			case MediaGroup::Type::Tape: break;
+			case MediaGroup::Type::Memory:
+                return getMemoryListing( media );
+			case MediaGroup::Type::Expansion: break;
+			case MediaGroup::Type::HardDisk: break;
 		}	
         return {};
     }
     
-    auto selectListing(unsigned type, unsigned driveId, unsigned position) -> bool {
-        switch(type) {
-			case DriveGroup::Type::DiskDrive:
-                selectDiskListing( driveId, position );
+    auto selectListing(Media* media, unsigned position) -> bool {
+        switch(media->group->type) {
+			case MediaGroup::Type::Disk:
+                selectDiskListing( media, position );
                 return true;
-			case DriveGroup::Type::TapeDrive:
-                selectTapeListing( driveId, position );
+			case MediaGroup::Type::Tape:
+                selectTapeListing( media, position );
                 return true;
-			case DriveGroup::Type::Memory:
-                return selectMemoryListing( position );
-			case DriveGroup::Type::ModuleSlot: break;
-			case DriveGroup::Type::HardDrive: break;
+			case MediaGroup::Type::Memory:
+                return selectMemoryListing( media, position );
+			case MediaGroup::Type::Expansion: break;
+			case MediaGroup::Type::HardDisk: break;
 		}	
         return false;
     }
     
-    auto getDiskDrive( unsigned driveId ) -> Drive* {        
-        for(auto& driveGroup : driveGroups)            
-            if (driveGroup.isDiskDrive()) {                
-                if (driveGroup.drives.size() > driveId)
-                    return &driveGroup.drives[ driveId ];
+    auto getDisk( unsigned mediaId ) -> Media* {        
+        for(auto& mediaGroup : mediaGroups)            
+            if (mediaGroup.isDisk()) {                
+                if (mediaGroup.media.size() > mediaId)
+                    return &mediaGroup.media[ mediaId ];
             }
         
         return nullptr;
     }
     
-    auto getTapeDrive( unsigned driveId ) -> Drive* {        
-        for(auto& driveGroup : driveGroups)            
-            if (driveGroup.isTapeDrive()) {                
-                if (driveGroup.drives.size() > driveId)
-                    return &driveGroup.drives[ driveId ];
+    auto getTape( unsigned mediaId ) -> Media* {        
+        for(auto& mediaGroup : mediaGroups)            
+            if (mediaGroup.isTape()) {                
+                if (mediaGroup.media.size() > mediaId)
+                    return &mediaGroup.media[ mediaId ];
             }
         
         return nullptr;
-    } 
-    
-    auto getModuleSlot( unsigned driveId ) -> Drive* {        
-        for(auto& driveGroup : driveGroups)            
-            if (driveGroup.isModuleSlot()) {                
-                if (driveGroup.drives.size() > driveId)
-                    return &driveGroup.drives[ driveId ];
-            }
-        
-        return nullptr;
-    } 
+    }    
         
     auto getDevice( unsigned deviceId ) -> Device* {        
         
@@ -536,12 +545,34 @@ struct Interface {
         return nullptr;
     }
     
-    auto getExpansion( unsigned id ) -> Expansion* {
+    auto getExpansionById( unsigned id ) -> Expansion* {
         
         for(auto& expansion : expansions) {
             if (expansion.id == id)
                 return &expansion;
         }
+        return nullptr;
+    }
+    
+    auto getMedia( MediaGroup& group, unsigned mediaId ) -> Media* {
+        
+        for( auto& media : group.media ) {
+            
+            if (media.id == mediaId)
+                return &media;
+        }
+        
+        return nullptr;
+    }
+    
+    auto getPCB( Expansion& expansion, unsigned pcbId ) -> PCBLayout* {
+        
+        for( auto& pcb : expansion.pcbs ) {
+            
+            if (pcb.id == pcbId)
+                return &pcb;
+        }
+        
         return nullptr;
     }
 };

@@ -1,6 +1,6 @@
 
-PathsLayout::Block::Block(Emulator::Interface::DriveGroup* driveGroup) {
-    this->driveGroup = driveGroup;
+PathsLayout::Block::Block(Emulator::Interface::MediaGroup* mediaGroup) {
+    this->mediaGroup = mediaGroup;
         
     edit.setEditable(false);
     append(label, {90, 0u}, 10);
@@ -17,6 +17,7 @@ PathsLayout::PathsLayout() {
 
 DriveGroupLayout::Block::Header::Header() {
     deviceName.setFont(GUIKIT::Font::system("bold"));
+    append(inUse, {0u, 0u}, 5);
     append(deviceName, {0u, 0u}, 10);
     append(writeprotect, {0u, 0u}, 10);
     append(eject, {0u, 0u}, 10);
@@ -25,6 +26,7 @@ DriveGroupLayout::Block::Header::Header() {
 }
 
 DriveGroupLayout::Block::Selector::Selector() {
+    append(combo, {~0u, 0u}, 10);
     append(edit, {~0u, 0u}, 10);
     append(open, {0u, 0u}, 5);
     append(openW, {0u, 0u});
@@ -38,8 +40,8 @@ DriveGroupLayout::Block::Block() {
     append(selector, {~0u, 0u});
 }
 
-DriveGroupLayout::DriveGroupLayout( Emulator::Interface::DriveGroup* driveGroup, TabWindow* tabWindow ) {
-    this->driveGroup = driveGroup;
+DriveGroupLayout::DriveGroupLayout( Emulator::Interface::MediaGroup* mediaGroup, TabWindow* tabWindow ) {
+    this->mediaGroup = mediaGroup;
     this->tabWindow = tabWindow;
     
     setPadding(10);
@@ -119,21 +121,21 @@ HdCreatorLayout::HdCreatorLayout() {
 
 auto DrivesLayout::bindSelectorAction(DriveGroupLayout* layout) -> void {
 	
-    auto driveGroup = layout->driveGroup;
+    auto mediaGroup = layout->mediaGroup;
         
 	for (auto block : layout->blocks) {
 
-		auto setting = FileSetting::getInstance(tabWindow->ident(block->drive->name));
+		auto setting = FileSetting::getInstance(tabWindow->ident(block->media->name));
 					
-		if (driveGroup->isHardDrive()) {
+		if (mediaGroup->isHardDisk()) {
 
-			block->selector.open.onActivate = [this, block, driveGroup, setting]() {
+			block->selector.open.onActivate = [this, block, mediaGroup, setting]() {
 				
 				std::string filePath = GUIKIT::BrowserWindow()
                     .setWindow(*tabWindow)
-                    .setTitle(trans->get("select_" + driveGroup->name + "_image"))
-                    .setPath( preselectPath( driveGroup->name ) )
-                    .setFilters({ GUIKIT::BrowserWindow::transformFilter(trans->get(driveGroup->name + "_image"), driveGroup->suffix), trans->get("all_files")})
+                    .setTitle(trans->get("select_" + mediaGroup->name + "_image"))
+                    .setPath( preselectPath( mediaGroup->name ) )
+                    .setFilters({ GUIKIT::BrowserWindow::transformFilter(trans->get(mediaGroup->name + "_image"), mediaGroup->suffix), trans->get("all_files")})
                     .open();
 
 				if (filePath.empty())
@@ -142,7 +144,7 @@ auto DrivesLayout::bindSelectorAction(DriveGroupLayout* layout) -> void {
 				block->header.eject.onActivate();
 				GUIKIT::File testFile(filePath);
                 
-				savePath( driveGroup->name, testFile.getPath() );
+				savePath( mediaGroup->name, testFile.getPath() );
 
                 if (!testFile.isSizeValid(MAX_HARDDISK_SIZE)) {
 					mes->error(trans->get("file_size_error",{
@@ -177,16 +179,16 @@ auto DrivesLayout::bindSelectorAction(DriveGroupLayout* layout) -> void {
                 block->openWritable = false;
             };
             
-			block->selector.open.onActivate = [this, block, driveGroup, setting, layout]() {                
+			block->selector.open.onActivate = [this, block, mediaGroup, setting, layout]() {                
 
-                auto suffix = driveGroup->suffix;
+                auto suffix = mediaGroup->suffix;
                 GUIKIT::Vector::combine(suffix, GUIKIT::File::suppportedCompressionExtensions());    
                 
 				std::string filePath = GUIKIT::BrowserWindow()
 					.setWindow(*tabWindow)
-					.setTitle(trans->get("select_" + driveGroup->name + "_image"))
-					.setPath( preselectPath( driveGroup->name ) )
-					.setFilters({ GUIKIT::BrowserWindow::transformFilter(trans->get(driveGroup->name + "_image"), suffix ),
+					.setTitle(trans->get("select_" + mediaGroup->name + "_image"))
+					.setPath( preselectPath( mediaGroup->name ) )
+					.setFilters({ GUIKIT::BrowserWindow::transformFilter(trans->get(mediaGroup->name + "_image"), suffix ),
 						trans->get("all_files")})
 					.open();
 
@@ -197,7 +199,7 @@ auto DrivesLayout::bindSelectorAction(DriveGroupLayout* layout) -> void {
 				if (!file)
 					return;
 
-				savePath( driveGroup->name, file->getPath() );
+				savePath( mediaGroup->name, file->getPath() );
                 
 				if (file->getSize() > MAX_ARCHIVE_SIZE)
                     return program->errorArchiveSize( file, mes );				
@@ -207,47 +209,47 @@ auto DrivesLayout::bindSelectorAction(DriveGroupLayout* layout) -> void {
                 
 				auto& items = file->scanArchive();
 
-				archiveViewer->onCallback = [this, file, block, driveGroup](GUIKIT::File::Item* item) {
+				archiveViewer->onCallback = [this, file, block, layout](GUIKIT::File::Item* item) {
 
                     if (!item || (item->info.size == 0) )
                         return program->errorOpen( file, item, mes );                     
                     
-                    if (!driveGroup->isTapeDrive() && (item->info.size > MAX_MEDIUM_SIZE))
+                    if (!layout->mediaGroup->isTape() && (item->info.size > MAX_MEDIUM_SIZE))
                         return program->errorMediumSize( item, mes );                    
                     
-                    insertImage({file, item, driveGroup, block});                                       
+                    insertImage( layout, block, file, item );
 				};
 				archiveViewer->setView(items);
 			};
 
-			block->header.eject.onActivate = [this, driveGroup, block, setting, layout]() {
+			block->header.eject.onActivate = [this, mediaGroup, block, setting, layout]() {
                 
-                auto drive = block->drive;
+                auto media = block->media;
                 
-				if ( !driveGroup->isModuleSlot() ) {
-					emulator->ejectMedium(driveGroup->type, drive->id);
-					drive->guid = (uintptr_t)nullptr;
-					filePool->assign(tabWindow->ident(drive->name), nullptr);
-                    States::getInstance( emulator )->updateImage( nullptr, drive );
+				if ( !mediaGroup->isExpansion() ) {
+					emulator->ejectMedium(media);
+					media->guid = (uintptr_t)nullptr;
+					filePool->assign(tabWindow->ident(media->name), nullptr);
+                    States::getInstance( emulator )->updateImage( nullptr, media );
 				}		
 				
 				if ( showC64Listing( layout ) )
                     block->listings.clear();
                 
-                if (layout->selectedBlock->drive == drive)
+                if (layout->selectedBlock->media == media)
                     layout->listings.reset();
 				
-				if (driveGroup->isTapeDrive())
+				if (mediaGroup->isTape())
 					view->updateTapeIcons();
 				
-				filePool->assign(tabWindow->ident(drive->name + "store"), nullptr);
+				filePool->assign(tabWindow->ident(media->name + "store"), nullptr);
                 filePool->unloadOrphaned();
 
 				setting->init();
 				updateDriveBlock(block, setting);
 			};
 
-			block->header.writeprotect.onToggle = [this, block, setting, driveGroup]() {
+			block->header.writeprotect.onToggle = [this, block, setting, mediaGroup]() {
 				
 				bool state = block->header.writeprotect.checked();
 
@@ -257,9 +259,9 @@ auto DrivesLayout::bindSelectorAction(DriveGroupLayout* layout) -> void {
                     return;
 				}
 
-				emulator->writeProtect(driveGroup->type, block->drive->id, state);
+				emulator->writeProtect(block->media, state);
 				setting->setWriteProtect(state);
-                States::getInstance( emulator )->updateImage( setting, block->drive );
+                States::getInstance( emulator )->updateImage( setting, block->media );
 			};
 			
 			updateDriveBlock(block, setting);
@@ -275,17 +277,41 @@ auto DrivesLayout::bindSelectorAction(DriveGroupLayout* layout) -> void {
                 
                 drop( files[0], block );
             };
+            
+            block->header.inUse.onActivate = [this, layout, block]() {
+                
+                layout->mediaGroup->selected = block->media;
+                
+                settings->set<unsigned>(tabWindow->ident(layout->mediaGroup->name + "_selected"), block->media->id);
+            };
+            
+            block->selector.combo.onChange = [this, layout, block]() {
+                
+                int userData = block->selector.combo.userData();
+                
+                for( auto& pcb : layout->mediaGroup->expansion->pcbs ) {
+                    
+                    if (pcb.id == userData) {
+                        
+                        block->media->pcbLayout = &pcb; 
+                        
+                        settings->set<unsigned>(tabWindow->ident(block->media->name + "_pcb"), pcb.id);
+                        
+                        break;
+                    }
+                }                                
+            };
 		}
 
 		if ( showC64Listing( layout ) ) { //preload last listing
 			GUIKIT::File* file = filePool->get( setting->path );
 			uint8_t* data;
 
-            if (program->loadImageDataWhenOk(file, setting->id, driveGroup, data)) {
-				filePool->assign(tabWindow->ident(block->drive->name + "store"), file);
-                emulator->insertMedium(driveGroup->type, block->drive->id, data, file->archiveDataSize( setting->id ));
-                block->listings = emulator->getListing( driveGroup->type, block->drive->id );
-                if (block->drive->id == 0)
+            if (program->loadImageDataWhenOk(file, setting->id, mediaGroup, data)) {
+				filePool->assign(tabWindow->ident(block->media->name + "store"), file);
+                emulator->insertMedium(block->media, data, file->archiveDataSize( setting->id ));
+                block->listings = emulator->getListing( block->media );
+                if (block->media->id == 0)
                     layout->fillListing( block );				
 			}
 		}
@@ -293,20 +319,20 @@ auto DrivesLayout::bindSelectorAction(DriveGroupLayout* layout) -> void {
     
     if ( showC64Listing( layout ) ) {
 
-        layout->listings.onActivate = [this, layout, driveGroup]( ) {
+        layout->listings.onActivate = [this, layout, mediaGroup]( ) {
             
             auto selection = layout->listings.selection( );
             program->power( emulator );
-            emulator->selectListing( driveGroup->type, layout->selectedBlock->drive->id, selection );
+            emulator->selectListing( layout->selectedBlock->media, selection );
             view->setFocused(300);
         };
 
-        layout->inject.onActivate = [this, layout, driveGroup]() {
+        layout->inject.onActivate = [this, layout, mediaGroup]() {
 
             if (!layout->listings.selected())
                 return;
 
-            if ( emulator->selectListing( driveGroup->type, layout->selectedBlock->drive->id, layout->listings.selection( ) ) ) {
+            if ( emulator->selectListing( layout->selectedBlock->media, layout->listings.selection( ) ) ) {
                 status->addMessage( trans->get( "memory_injected" ) );
                 view->setFocused( 300 );
             }	
@@ -316,16 +342,16 @@ auto DrivesLayout::bindSelectorAction(DriveGroupLayout* layout) -> void {
 
 auto DrivesLayout::createImage( unsigned groupId ) -> void {
 
-    auto& driveGroup = emulator->driveGroups[ groupId ];
-    std::string title = driveGroup.name + "_image";
-    std::string suffix = driveGroup.suffix[0];
+    auto& mediaGroup = emulator->mediaGroups[ groupId ];
+    std::string title = mediaGroup.name + "_image";
+    std::string suffix = mediaGroup.suffix[0];
     GUIKIT::File file;
     GUIKIT::File* filePtr;
     std::string filePath;
     uint8_t* data = nullptr;
     unsigned size = 0;
 
-    if (driveGroup.isHardDrive()) {
+    if (mediaGroup.isHardDisk()) {
 
         try {
             size = std::stoi( hdCreatorLayout->creator.diskSize.text() );
@@ -337,7 +363,7 @@ auto DrivesLayout::createImage( unsigned groupId ) -> void {
             return;
         }        
         
-    } else if (driveGroup.isDiskDrive()) {
+    } else if (mediaGroup.isDisk()) {
         suffix = diskCreatorLayout->format.text();
         
         unsigned typeId = diskCreatorLayout->format.userData();
@@ -350,10 +376,10 @@ auto DrivesLayout::createImage( unsigned groupId ) -> void {
         
         size = emulator->getDiskImageSize(typeId, hd);
         
-    } else if (driveGroup.isTapeDrive()) {
+    } else if (mediaGroup.isTape()) {
         data = emulator->createTapeImage( size );
         
-    } else if (driveGroup.isMemory()) {
+    } else if (mediaGroup.isMemory()) {
         data = emulator->getLoadedMemory( size );
     }        
     
@@ -363,7 +389,7 @@ auto DrivesLayout::createImage( unsigned groupId ) -> void {
     filePath = GUIKIT::BrowserWindow()
         .setWindow(*tabWindow)
         .setTitle(trans->get( "blank_" + title ))
-        .setPath(preselectPath( driveGroup.name ))
+        .setPath(preselectPath( mediaGroup.name ))
         .setFilters({GUIKIT::BrowserWindow::transformFilter( trans->get( title ), {suffix}), trans->get("all_files")})
         .save();
 
@@ -391,7 +417,7 @@ auto DrivesLayout::createImage( unsigned groupId ) -> void {
         goto Done;
     }
 
-    savePath( driveGroup.name, file.getPath() );
+    savePath( mediaGroup.name, file.getPath() );
 
     if (data) {
         file.write( data, size );
@@ -434,10 +460,10 @@ auto DrivesLayout::createImage( unsigned groupId ) -> void {
 
 auto DrivesLayout::prepareCreator() -> void {
 
-    for (auto& driveGroup : emulator->driveGroups) {
-		auto groupId = driveGroup.id;
+    for (auto& mediaGroup : emulator->mediaGroups) {
+		auto groupId = mediaGroup.id;
 		
-        if (driveGroup.isHardDrive()) {
+        if (mediaGroup.isHardDisk()) {
 
             hdCreatorLayout = new HdCreatorLayout;
 
@@ -447,9 +473,9 @@ auto DrivesLayout::prepareCreator() -> void {
 
             creatorLayout.append(*hdCreatorLayout, {~0u, 0u}, 5);
 
-        } else if (driveGroup.isDiskDrive()) {
+        } else if (mediaGroup.isDisk()) {
 
-            diskCreatorLayout = new DiskCreatorLayout(emulator, driveGroup.creatable );
+            diskCreatorLayout = new DiskCreatorLayout(emulator, mediaGroup.creatable );
 
             diskCreatorLayout->button.onActivate = [this, groupId]() {
                 createImage( groupId );                
@@ -457,7 +483,7 @@ auto DrivesLayout::prepareCreator() -> void {
 
             creatorLayout.append(*diskCreatorLayout, {~0u, 0u}, 5);
 
-        } else if (driveGroup.isTapeDrive()) {
+        } else if (mediaGroup.isTape()) {
 
             tapeCreatorLayout = new TapeCreatorLayout;
 
@@ -467,7 +493,7 @@ auto DrivesLayout::prepareCreator() -> void {
 
             creatorLayout.append(*tapeCreatorLayout, {~0u, 0u}, 5);
 			
-        } else if (driveGroup.isMemory()) {
+        } else if (mediaGroup.isMemory()) {
 			
 			memoryCreatorLayout = new MemoryCreatorLayout;
 			
@@ -482,16 +508,16 @@ auto DrivesLayout::prepareCreator() -> void {
 
 auto DrivesLayout::preparePaths() -> void {
     
-    for (auto& driveGroup : emulator->driveGroups) {
+    for (auto& mediaGroup : emulator->mediaGroups) {
         
-        auto settingFolderIdent = tabWindow->ident( driveGroup.name + "_folder" );
+        auto settingFolderIdent = tabWindow->ident( mediaGroup.name + "_folder" );
         
-        auto block = new PathsLayout::Block( &driveGroup );
+        auto block = new PathsLayout::Block( &mediaGroup );
         
         pathsLayout.blocks.push_back( block );                
-        pathsLayout.append( *block,{~0u, 0u}, &driveGroup != &emulator->driveGroups.back() ? 5 : 0 );
+        pathsLayout.append( *block,{~0u, 0u}, &mediaGroup != &emulator->mediaGroups.back() ? 5 : 0 );
         
-        std::string title = "select_" + driveGroup.name + "_folder";
+        std::string title = "select_" + mediaGroup.name + "_folder";
 
         block->select.onActivate = [this, block, title, settingFolderIdent]() {
             auto path = GUIKIT::BrowserWindow()
@@ -526,48 +552,48 @@ DrivesLayout::DrivesLayout(TabWindow* tabWindow) {
     diskImage.loadPng((uint8_t*) Icons::disk, sizeof (Icons::disk));
     hdImage.loadPng((uint8_t*) Icons::drive, sizeof (Icons::drive));
 	tapeImage.loadPng((uint8_t*) Icons::tape, sizeof (Icons::tape));
-	moduleImage.loadPng((uint8_t*) Icons::memory, sizeof (Icons::memory));
+	expansionImage.loadPng((uint8_t*) Icons::memory, sizeof (Icons::memory));
 	memoryImage.loadPng((uint8_t*) Icons::memory, sizeof (Icons::memory));
     addImage.loadPng((uint8_t*) Icons::add, sizeof (Icons::add));
 	pathImage.loadPng((uint8_t*) Icons::folderOpen, sizeof (Icons::folderOpen));
     
     unsigned i = 0;
     
-    for( auto& driveGroup : emulator->driveGroups ) {            
+    for( auto& mediaGroup : emulator->mediaGroups ) {            
         
-        if ( driveGroup.isHardDrive() ) {
+        if ( mediaGroup.isHardDisk() ) {
             appendHeader("", hdImage);
             
-        } else if (driveGroup.isDiskDrive()) {
+        } else if (mediaGroup.isDisk()) {
             appendHeader("", diskImage);
             
-        } else if (driveGroup.isTapeDrive()) {
+        } else if (mediaGroup.isTape()) {
             appendHeader("", tapeImage);
             
-        } else if (driveGroup.isModuleSlot()) {
-            appendHeader("", moduleImage);
+        } else if (mediaGroup.isExpansion()) {
+            appendHeader("", expansionImage);
            
-		} else if (driveGroup.isMemory()) {
+		} else if (mediaGroup.isMemory()) {
             appendHeader("", memoryImage);
                         
         } else 
             continue;
         
-        DriveGroupLayout* driveGroupLayout = new DriveGroupLayout( &driveGroup, tabWindow );
+        DriveGroupLayout* mediaGroupLayout = new DriveGroupLayout( &mediaGroup, tabWindow );
         
-        driveGroupLayouts.push_back( driveGroupLayout );
+        mediaGroupLayouts.push_back( mediaGroupLayout );
         
-        driveGroupLayout->build( );
+        mediaGroupLayout->build( );
         
-        unsigned counter = settings->get( tabWindow->ident(driveGroup.name + "_count"), driveGroup.defaultUsage());
+        unsigned counter = settings->get( tabWindow->ident(mediaGroup.name + "_count"), mediaGroup.defaultUsage());
         
-        driveGroupLayout->updateVisibility( counter, true );
+        mediaGroupLayout->updateVisibility( counter, true );
         
-        tabs.push_back( driveGroup.name + "_drives");
+        tabs.push_back( mediaGroup.name + "_drives");
                 
-        setLayout(i++, *driveGroupLayout, {~0u, ~0u});   
+        setLayout(i++, *mediaGroupLayout, {~0u, ~0u});   
 		
-		bindSelectorAction( driveGroupLayout );
+		bindSelectorAction( mediaGroupLayout );
     }
     
     appendHeader("", addImage); 
@@ -591,24 +617,24 @@ auto DrivesLayout::updateDriveBlock(DriveGroupLayout::Block* block, FileSetting*
     block->header.writeprotect.setEnabled( setting->wpEnabled );
 }
 
-auto DrivesLayout::updateListing( Emulator::Interface::Drive* drive ) -> void {    
+auto DrivesLayout::updateListing( Emulator::Interface::Media* media ) -> void {    
     
-    auto driveGroupLayout = getDriveGroupLayout( drive->group );
+    auto mediaGroupLayout = getDriveGroupLayout( media->group );
     
-    if (!driveGroupLayout)
+    if (!mediaGroupLayout)
         return;
                 
-    if ( !showC64Listing( driveGroupLayout ) )
+    if ( !showC64Listing( mediaGroupLayout ) )
         return;
 
-    for( auto block : driveGroupLayout->blocks ) {
+    for( auto block : mediaGroupLayout->blocks ) {
 
-        if ( block->drive == drive ) {
+        if ( block->media == media ) {
 
-            block->listings = emulator->getListing( drive->group->type, drive->id );
+            block->listings = emulator->getListing( media );
 
-            if ( driveGroupLayout->selectedBlock->drive == drive )
-                driveGroupLayout->fillListing( block );
+            if ( mediaGroupLayout->selectedBlock->media == media )
+                mediaGroupLayout->fillListing( block );
 
             return;
         }
@@ -640,27 +666,27 @@ auto DrivesLayout::translate() -> void {
     for(auto& tab : tabs)
         setHeader(i++, trans->get(tab));
 
-    for( auto driveGroupLayout : driveGroupLayouts ) {
+    for( auto mediaGroupLayout : mediaGroupLayouts ) {
         
-        auto driveGroup = driveGroupLayout->driveGroup;
+        auto mediaGroup = mediaGroupLayout->mediaGroup;
         
-        driveGroupLayout->setText( trans->get( driveGroup->name + "_selector") );
-        driveGroupLayout->inject.setText( trans->get("memory_inject") );
+        mediaGroupLayout->setText( trans->get( mediaGroup->name + "_selector") );
+        mediaGroupLayout->inject.setText( trans->get("memory_inject") );
 
-        for ( auto& block : driveGroupLayout->blocks ) {
+        for ( auto& block : mediaGroupLayout->blocks ) {
             block->header.writeprotect.setText(trans->get("write_protected"));
             block->header.eject.setText(trans->get("eject"));
             block->selector.open.setText("...");
             block->selector.openW.setText(trans->get("open_w"));
             
-            if (driveGroup->isHardDrive()) {
+            if (mediaGroup->isHardDisk()) {
                 block->selector.open.setText(trans->get("open"));    
                 
-            } else if (driveGroup->isModuleSlot()) {
+            } else if (mediaGroup->isExpansion()) {
                 block->header.deviceName.setText( trans->get("module") );
                 block->selector.open.setText(trans->get("open") );                 
                 
-            } else if (driveGroup->isMemory()) {
+            } else if (mediaGroup->isMemory()) {
                 block->header.deviceName.setText(trans->get("memory"));
                 block->selector.open.setText(trans->get("open"));
                 block->selector.open.setTooltip(trans->get("c64_list_tip"));
@@ -698,7 +724,7 @@ auto DrivesLayout::translate() -> void {
     
     for(auto block : pathsLayout.blocks) {
         
-        block->label.setText( trans->get( block->driveGroup->name + "s" ) );
+        block->label.setText( trans->get( block->mediaGroup->name + "s" ) );
         block->empty.setText( trans->get("remove") );
         block->select.setText( trans->get("select") );
     }
@@ -709,36 +735,31 @@ auto DrivesLayout::showC64Listing( DriveGroupLayout* layout ) -> bool {
     if ( !dynamic_cast<LIBC64::Interface*>(emulator) )
         return false;
     
-    auto driveGroup = layout->driveGroup;
+    auto mediaGroup = layout->mediaGroup;
     
-    if ( driveGroup->isMemory() || driveGroup->isDiskDrive() )
+    if ( mediaGroup->isMemory() || mediaGroup->isDisk() )
         return true;
     
     return false;
 }
 
-auto DrivesLayout::insertImage(GUIKIT::File* file, GUIKIT::File::Item* item, Emulator::Interface::DriveGroup* driveGroup, unsigned blockPos) -> void {
+auto DrivesLayout::insertImage(Emulator::Interface::Media* media, GUIKIT::File* file, GUIKIT::File::Item* item) -> void {
     
-    auto layout = getDriveGroupLayout( driveGroup );
+    auto layout = getDriveGroupLayout( media->group );
     
     if (!layout)
         return;
 
-    if (blockPos >= layout->blocks.size()) {
-        blockPos = 0;
-    }
-    
-    insertImage({ file, item, driveGroup, layout->blocks[blockPos] });
+    for( auto block : layout->blocks ) {
+        
+        if (block->media == media) {
+            insertImage( layout, block, file, item );
+            break;
+        }
+    }        
 }
 
-auto DrivesLayout::insertImage( ImageInsertHelper iih ) -> void {
-    
-    auto item = iih.item;
-    auto file = iih.file;
-    auto block = iih.block;
-    auto driveGroup = iih.driveGroup;   
-    
-    auto layout = getDriveGroupLayout( driveGroup );
+auto DrivesLayout::insertImage( DriveGroupLayout* layout, DriveGroupLayout::Block* block, GUIKIT::File* file, GUIKIT::File::Item* item ) -> void {
    
     if (!layout)
         return;
@@ -746,38 +767,39 @@ auto DrivesLayout::insertImage( ImageInsertHelper iih ) -> void {
     if (!block)
         block = layout->blocks[0];                              
        
-    auto drive = block->drive;
-    auto setting = FileSetting::getInstance( tabWindow->ident(drive->name) );
+    auto media = block->media;
+    auto mediaGroup = layout->mediaGroup;
+    auto setting = FileSetting::getInstance( tabWindow->ident(media->name) );
 
     unsigned size = file->archiveDataSize(item->id);
 
     // unarchived tape files are writable which results in unpredictable filesizes
     // so they are loaded in chunks by an emulator callback
-    auto data = driveGroup->isTapeDrive() && !file->isArchived() ? nullptr
+    auto data = mediaGroup->isTape() && !file->isArchived() ? nullptr
         : file->archiveData(item->id);
 
     bool openWritable = !file->isArchived() && block->openWritable;
 
-    if (!driveGroup->isModuleSlot()) {
-        emulator->ejectMedium(driveGroup->type, drive->id);
+    if (!mediaGroup->isExpansion()) {
+        emulator->ejectMedium(media);
         
-        drive->guid = uintptr_t(file);
-        emulator->insertMedium(driveGroup->type, drive->id, data, size);
-        emulator->writeProtect(driveGroup->type, drive->id, !openWritable);
-        filePool->assign(tabWindow->ident(drive->name), file);
+        media->guid = uintptr_t(file);
+        emulator->insertMedium(media, data, size);
+        emulator->writeProtect(media, !openWritable);
+        filePool->assign(tabWindow->ident(media->name), file);
     }
 
     if (showC64Listing(layout)) {
         block->listings.clear();
-        block->listings = emulator->getListing(driveGroup->type, drive->id);        
+        block->listings = emulator->getListing(media);        
         block->selector.edit.setFocused();
         layout->fillListing(block);
     }
 
-    if (driveGroup->isTapeDrive())
+    if (mediaGroup->isTape())
         view->updateTapeIcons();
 
-    filePool->assign(tabWindow->ident(drive->name + "store"), file);    
+    filePool->assign(tabWindow->ident(media->name + "store"), file);    
     filePool->unloadOrphaned();
 
     setting->setPath(file->getFile());
@@ -786,38 +808,38 @@ auto DrivesLayout::insertImage( ImageInsertHelper iih ) -> void {
     setting->setWriteProtect(!openWritable);
     setting->setWpEnabled(!file->isArchived());
 
-    if (!driveGroup->isModuleSlot())
-        States::getInstance(emulator)->updateImage(setting, drive);
+    if (!mediaGroup->isExpansion())
+        States::getInstance(emulator)->updateImage(setting, media);
 
     updateDriveBlock(block, setting);  
 }
 
-auto DrivesLayout::eject( Emulator::Interface::DriveGroup* driveGroup ) -> void {
+auto DrivesLayout::eject( Emulator::Interface::MediaGroup* mediaGroup ) -> void {
     
-    auto layout = getDriveGroupLayout( driveGroup );
+    auto layout = getDriveGroupLayout( mediaGroup );
     
     for( auto block : layout->blocks)
         block->header.eject.onActivate();     
 }
 
-auto DrivesLayout::getDriveGroupLayout( Emulator::Interface::DriveGroup* driveGroup ) -> DriveGroupLayout* {
+auto DrivesLayout::getDriveGroupLayout( Emulator::Interface::MediaGroup* mediaGroup ) -> DriveGroupLayout* {
     
-    for (auto layout : driveGroupLayouts) {
+    for (auto layout : mediaGroupLayouts) {
         
-        if (layout->driveGroup == driveGroup)
+        if (layout->mediaGroup == mediaGroup)
             return layout;
     }
     
     return nullptr;
 }
 
-auto DrivesLayout::showDriveGroupLayout( Emulator::Interface::DriveGroup* driveGroup ) -> void {
+auto DrivesLayout::showDriveGroupLayout( Emulator::Interface::MediaGroup* mediaGroup ) -> void {
     
     unsigned i = 0;
     
-    for(auto layout : driveGroupLayouts) {
+    for(auto layout : mediaGroupLayouts) {
         
-        if (layout->driveGroup == driveGroup) {
+        if (layout->mediaGroup == mediaGroup) {
             setSelection( i );
             
             break;
@@ -828,7 +850,7 @@ auto DrivesLayout::showDriveGroupLayout( Emulator::Interface::DriveGroup* driveG
 }
 
 auto DrivesLayout::colorListing( unsigned color, bool foreground ) -> void {
-    for(auto layout : driveGroupLayouts) {
+    for(auto layout : mediaGroupLayouts) {
         if (foreground)
             layout->listings.setForegroundColor( color );
         else
@@ -839,22 +861,22 @@ auto DrivesLayout::colorListing( unsigned color, bool foreground ) -> void {
 auto DrivesLayout::drop( std::string filePath, DriveGroupLayout::Block* block ) -> void {    
     
     DriveGroupLayout* layout;
-    Emulator::Interface::DriveGroup* driveGroup;
+    Emulator::Interface::MediaGroup* mediaGroup;
     
     if (!block) {
-        layout = driveGroupLayouts[ selection() ];
+        layout = mediaGroupLayouts[ selection() ];
         
-        driveGroup = layout->driveGroup; 
+        mediaGroup = layout->mediaGroup; 
         
         block = layout->selectedBlock;
         
     } else {
-        driveGroup = block->drive->group;
+        mediaGroup = block->media->group;
         
-        layout = getDriveGroupLayout( driveGroup );
+        layout = getDriveGroupLayout( mediaGroup );
     }
     
-    if (driveGroup->isHardDrive())
+    if (mediaGroup->isHardDisk())
         return;
 
     GUIKIT::File* file = filePool->get(filePath);
@@ -866,23 +888,23 @@ auto DrivesLayout::drop( std::string filePath, DriveGroupLayout::Block* block ) 
 
     auto& items = file->scanArchive();
 
-    archiveViewer->onCallback = [this, file, block, driveGroup](GUIKIT::File::Item* item) {
+    archiveViewer->onCallback = [this, file, block, layout](GUIKIT::File::Item* item) {
 
         if (!item || (item->info.size == 0) )
             return program->errorOpen( file, item, mes );        
 
-        if (!driveGroup->isTapeDrive() && (item->info.size > MAX_MEDIUM_SIZE))
+        if (!layout->mediaGroup->isTape() && (item->info.size > MAX_MEDIUM_SIZE))
             return program->errorMediumSize( item, mes );            
 
-        insertImage({file, item, driveGroup, block});
+        insertImage( layout, block, file, item );        
     };
 
     archiveViewer->setView(items);
 }
 
-auto DrivesLayout::updateVisibility( Emulator::Interface::DriveGroup* driveGroup, unsigned count) -> void {
+auto DrivesLayout::updateVisibility( Emulator::Interface::MediaGroup* mediaGroup, unsigned count) -> void {
     
-    auto layout = getDriveGroupLayout( driveGroup );
+    auto layout = getDriveGroupLayout( mediaGroup );
     
     if (!layout)
         return;
@@ -949,25 +971,52 @@ auto DriveGroupLayout::fillListing( DriveGroupLayout::Block* block ) -> void {
 
 auto DriveGroupLayout::build() -> void {
 
-    auto addBlock = [&](std::string& name, Emulator::Interface::Drive* drive) {
+    auto addBlock = [&](Emulator::Interface::Media* media) {
         auto block = new Block;
-        block->drive = drive;
+        block->media = media;
         block->openWritable = false;
         blocks.push_back(block);
-        block->header.deviceName.setText(name + ":");
+        block->header.deviceName.setText(media->name + ":");
     };  
 
-    for (auto& drive : driveGroup->drives) {
-        addBlock(drive.name, &drive);
+    std::vector<GUIKIT::RadioBox*> radioGroup;
+    
+    for (auto& media : mediaGroup->media) {
+        addBlock(&media);
 
         auto& header = blocks[blocks.size() - 1]->header;
         auto& selector = blocks[blocks.size() - 1]->selector;
         
-        if (driveGroup->isHardDrive() || driveGroup->isModuleSlot() || driveGroup->isMemory()) {     
+        if (mediaGroup->isHardDisk() || mediaGroup->isExpansion() || mediaGroup->isMemory()) {     
             header.remove( header.writeprotect );
             selector.remove( selector.openW );
         }
+        
+        if (!mediaGroup->selected)
+            header.remove( header.inUse );
+        else {
+            radioGroup.push_back( &header.inUse );
+            if (mediaGroup->selected == &media)
+                header.inUse.setChecked();
+        }
+        
+        if (mediaGroup->isExpansion()) {            
+            if (mediaGroup->expansion->pcbs.size() == 0)
+                selector.remove( selector.combo );
+            else {
+                for (auto& pcb : mediaGroup->expansion->pcbs) {
+                    selector.combo.append( pcb.name, pcb.id );
+
+                    if (media.pcbLayout && media.pcbLayout->id == pcb.id)
+                        selector.combo.setSelection( selector.combo.rows() - 1 );
+                }
+            }
+        }
+        
     }
+    
+    if (radioGroup.size())
+        GUIKIT::RadioBox::setGroup( radioGroup );
     
     selectedBlock = blocks[0];
     
@@ -980,10 +1029,10 @@ auto DriveGroupLayout::build() -> void {
         if (tabWindow->useCustomFont)
             listings.setFont("C64 Pro Mono, 12");           
         
-        if ( driveGroup->isMemory( ) )
+        if ( mediaGroup->isMemory( ) )
             append( inject, {0u, 0u}, 3 );
             
-        if ( driveGroup->isMemory( ) || driveGroup->isDiskDrive() )
+        if ( mediaGroup->isMemory( ) || mediaGroup->isDisk() )
             append( listings, {~0u, ~0u} );
 	}
 }

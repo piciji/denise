@@ -13,9 +13,13 @@ struct Interface : Emulator::Interface  {
         FeatureIdLowPassFilter = 0,
     };
     
-    enum DriveGroupId {
-        DriveGroupIdDisk = 0, DriveGroupIdHardDisk = 1
+    enum MediaGroupId {
+        MediaGroupIdDisk = 0, MediaGroupIdHardDisk = 1
     };
+        
+    enum ExpansionId {
+        ExpansionIdNone = 0, ExpansionIdFast = 1,
+    };   
 
 	//controls
 	auto connect(unsigned connectorId, unsigned deviceId) -> void;
@@ -31,17 +35,17 @@ struct Interface : Emulator::Interface  {
 	auto setRegion(unsigned id) -> void; //0 - pal, 1 - ntsc
 
 	//drive handling
-	auto setDrivesConnected(unsigned groupId, unsigned count) -> void;
-	auto insertDisk(unsigned driveId, uint8_t* data, unsigned size) -> void;
-	auto writeProtectDisk(unsigned driveId, bool state) -> void;
-	auto ejectDisk(unsigned driveId) -> void;
-	auto setHardDrive(unsigned driveId, unsigned size) -> void; //uses read and write callbacks
-	auto ejectHardDrive(unsigned driveId) -> void;
+	auto setDrivesConnected(MediaGroup* group, unsigned count) -> void;
+	auto insertDisk(Media* media, uint8_t* data, unsigned size) -> void;
+	auto writeProtectDisk(Media* media, bool state) -> void;
+	auto ejectDisk(Media* media) -> void;
+	auto insertHardDisk(Media* media, unsigned size) -> void; //uses read and write callbacks
+	auto ejectHardDisk(Media* media) -> void;
 
 	//create blank images
 	auto getDiskImageSize(unsigned typeId, bool hd) -> unsigned; //get size needed for a new disk image
 	auto createDiskImage(unsigned typeId, bool hd = false, std::string name = "", bool ffs = false) -> uint8_t*;        
-	auto createHardDrive(std::function<void (uint8_t* buffer, unsigned length, unsigned offset)> onCreate, unsigned size, std::string name = "") -> void;
+	auto createHardDisk(std::function<void (uint8_t* buffer, unsigned length, unsigned offset)> onCreate, unsigned size, std::string name = "") -> void;
 
 	//savestates
 	auto savestateSize(void) -> unsigned; //get size needed for a new save state
@@ -56,7 +60,7 @@ private:
 	auto prepareDevices() -> void;
 	auto prepareMemory() -> void;
 	auto prepareCpus() -> void;
-	auto prepareDrives() -> void;
+	auto prepareMedia() -> void;
 	auto preparePalettes() -> void;
 	auto prepareChipset() -> void;
 	auto prepareFeatures() -> void;

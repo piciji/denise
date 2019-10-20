@@ -209,7 +209,8 @@ auto Tape::reset() -> void {
 	gapsRemaining = nextGap();
 }
 
-auto Tape::load(uint8_t* data, unsigned size) -> void {		
+auto Tape::load(Emulator::Interface::Media* media, uint8_t* data, unsigned size) -> void {		
+    this->media = media;
 	unload();
 	
 	this->data = data;

@@ -71,7 +71,7 @@ auto ExpansionLayout::build( Emulator::Interface* emulator ) -> void {
         }
         
         auto block = new Line::Block( );
-        block->expansionId = expansion.id;        
+        block->expansion = &expansion;        
         line->blocks.push_back( block );
         
         line->append( block->box, {0u, 0u}, ((i % blocksPerLine) == 0) ? 0 : 10);
@@ -113,7 +113,7 @@ auto MemoryLayout::build( Emulator::Interface* emulator ) -> void {
     for(auto& memoryType : memoryTypes ) {                
         auto block = new Block( memoryType.memory.size() <= 1 );
         blocks.push_back( block );
-        block->typeId = memoryType.id;
+        block->memoryType = &memoryType;
         append(*block, {~0u, 0u}, &memoryType != &memoryTypes.back() ? 7 : 0);
         block->slider.setLength( memoryType.memory.size() );
         block->name.setText( memoryType.name + ":" );
@@ -132,20 +132,20 @@ DriveLayout::DriveLayout() {
 }
 
 auto DriveLayout::build( Emulator::Interface* emulator ) -> void {
-    for(auto& driveGroup : emulator->driveGroups) {
-        if (driveGroup.isModuleSlot() || driveGroup.isMemory() )
+    for(auto& mediaGroup : emulator->mediaGroups) {
+        if (mediaGroup.isExpansion() || mediaGroup.isMemory() )
             continue;
         
         auto driveCount = new DriveCount;
-        driveCount->typeId = driveGroup.id;
+        driveCount->mediaGroup = &mediaGroup;
 
-        for(unsigned i = 0; i <= driveGroup.drives.size(); i++) {
+        for(unsigned i = 0; i <= mediaGroup.media.size(); i++) {
             driveCount->combo.append( std::to_string(i) );
         }
         append(*driveCount, {0u,0u}, 15u);
         driveCounter.push_back(driveCount);
         
-        if (driveGroup.isDiskDrive() && dynamic_cast<LIBC64::Interface*>(emulator) )
+        if (mediaGroup.isDisk() && dynamic_cast<LIBC64::Interface*>(emulator) )
             driveCount->name.setForegroundColor(0xff4500);
     }
 }
@@ -240,36 +240,36 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
     }
 		
     for( auto block : memoryLayout.blocks ) {
-        auto& memoryType = emulator->memoryTypes[ block->typeId ];
+        auto memoryType = block->memoryType;
         
         block->slider.onChange = [this, block, memoryType]() {
             unsigned id = block->slider.position();
-            if (id >= memoryType.memory.size() ) return;
-            settings->set<unsigned>( this->tabWindow->ident(memoryType.name + "_mem"), id);
-            block->value.setText( getSizeString( memoryType.memory[id].size ) );
+            if (id >= memoryType->memory.size() ) return;
+            settings->set<unsigned>( this->tabWindow->ident(memoryType->name + "_mem"), id);
+            block->value.setText( getSizeString( memoryType->memory[id].size ) );
         };
 
-        unsigned id = settings->get<unsigned>(tabWindow->ident(memoryType.name + "_mem"), memoryType.defaultMemoryId);
-        if (id >= memoryType.memory.size()) id = memoryType.defaultMemoryId;
+        unsigned id = settings->get<unsigned>(tabWindow->ident(memoryType->name + "_mem"), memoryType->defaultMemoryId);
+        if (id >= memoryType->memory.size())
+            id = memoryType->defaultMemoryId;
         block->slider.setPosition(id);
-        block->value.setText( getSizeString( memoryType.memory[id].size ) );        
+        block->value.setText( getSizeString( memoryType->memory[id].size ) );        
     }
     
     for(auto block : driveLayout.driveCounter) {
         
-        auto& driveGroup = emulator->driveGroups[ block->typeId ];
-        auto ident = driveGroup.name + "_count";
+        auto ident = block->mediaGroup->name + "_count";
         
         block->combo.onChange = [this, ident, block]() {
             settings->set<unsigned>( this->tabWindow->ident(ident), block->combo.selection());
-            auto& driveGroup = emulator->driveGroups[ block->typeId ];
-            this->tabWindow->drivesLayout->updateVisibility( &driveGroup, block->combo.selection() );
+
+            this->tabWindow->drivesLayout->updateVisibility( block->mediaGroup, block->combo.selection() );
             settings->remove( this->tabWindow->ident("access_floppy") );
         };
         
-        unsigned counter = settings->get<unsigned>( tabWindow->ident(ident), driveGroup.defaultUsage());
+        unsigned counter = settings->get<unsigned>( tabWindow->ident(ident), block->mediaGroup->defaultUsage());
         if (counter >= block->combo.rows())
-            counter = driveGroup.defaultUsage();
+            counter = block->mediaGroup->defaultUsage();
         
         block->combo.setSelection( counter );
     }
@@ -278,10 +278,10 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
     for ( auto line : expansionLayout.lines ) {
         for( auto block : line->blocks ) {            
             block->box.onActivate = [this, block]() {                
-                settings->set<unsigned>( this->tabWindow->ident("expansion"), block->expansionId);
+                settings->set<unsigned>( this->tabWindow->ident("expansion"), block->expansion->id);
                 updateExpansionMemory();
             };
-            if (block->expansionId == expansionId)
+            if (block->expansion->id == expansionId)
                 block->box.setChecked();
         }
     }
@@ -349,21 +349,19 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
     updateExpansionMemory();
 }
 
-auto SystemLayout::activateDrive( Emulator::Interface::DriveGroup& driveGroup, unsigned requestedCount ) -> void {
+auto SystemLayout::activateDrive( Emulator::Interface::MediaGroup* mediaGroup, unsigned requestedCount ) -> void {
 
-    if (requestedCount > driveGroup.drives.size())
-        requestedCount = driveGroup.drives.size();
+    if (requestedCount > mediaGroup->media.size())
+        requestedCount = mediaGroup->media.size();
     
     for (auto block : driveLayout.driveCounter) {
 
-        auto& group = emulator->driveGroups[ block->typeId ];
-        
-        if (&driveGroup != &group)
+        if (mediaGroup != block->mediaGroup)
             continue;
         
-        auto ident = driveGroup.name + "_count";
+        auto ident = mediaGroup->name + "_count";
         
-        unsigned counter = settings->get<unsigned>( tabWindow->ident(ident), driveGroup.defaultUsage());
+        unsigned counter = settings->get<unsigned>( tabWindow->ident(ident), mediaGroup->defaultUsage());
         
         if (counter >= requestedCount)
             break;
@@ -372,7 +370,7 @@ auto SystemLayout::activateDrive( Emulator::Interface::DriveGroup& driveGroup, u
         settings->set<unsigned>( this->tabWindow->ident(ident), requestedCount);
         settings->remove( this->tabWindow->ident("access_floppy") );
         
-        this->tabWindow->drivesLayout->updateVisibility( &driveGroup, requestedCount );
+        this->tabWindow->drivesLayout->updateVisibility( mediaGroup, requestedCount );
     }
 }
 
@@ -446,11 +444,11 @@ auto SystemLayout::translate() -> void {
     expansionLayout.setText( trans->get("expansion_port") );
 
     for(auto block : driveLayout.driveCounter) {
-        auto& driveGroup = emulator->driveGroups[ block->typeId ];
-        auto ident = driveGroup.name + "_drives";
+
+        auto ident = block->mediaGroup->name + "_drives";
         block->name.setText(trans->get(ident,{}, true));
         
-        if (driveGroup.isDiskDrive() && dynamic_cast<LIBC64::Interface*>(emulator) )
+        if (block->mediaGroup->isDisk() && dynamic_cast<LIBC64::Interface*>(emulator) )
             block->name.setTooltip(trans->get("cpu_warning_disk_info"));
     }        
 	
@@ -473,8 +471,7 @@ auto SystemLayout::translate() -> void {
     
     for( auto line : expansionLayout.lines ) {
         for( auto block : line->blocks ) {                               
-            auto& expansion = emulator->expansions[ block->expansionId ];
-            block->box.setText( trans->get( expansion.name ) );
+            block->box.setText( trans->get( block->expansion->name ) );
         }
     }
 }
@@ -514,12 +511,12 @@ auto SystemLayout::getSizeString( unsigned sizeInKb ) -> std::string {
 
 auto SystemLayout::updateExpansionMemory() -> void {
     
-    unsigned expansionIdSelected = 0;
+    Emulator::Interface::Expansion* expansionSelected = nullptr;
     
     for ( auto line : expansionLayout.lines ) {
         for( auto block : line->blocks ) {  
             if (block->box.checked()) {
-                expansionIdSelected = block->expansionId;
+                expansionSelected = block->expansion;
                 break;
             }                
         }
@@ -532,12 +529,48 @@ auto SystemLayout::updateExpansionMemory() -> void {
         
         for (auto block : memoryLayout.blocks) {
             
-            if (block->typeId == expansion.memoryType->id) {
+            if (block->memoryType == expansion.memoryType) {
                 
-                block->setEnabled( expansion.id == expansionIdSelected );
+                block->setEnabled( &expansion == expansionSelected );
                 
                 break;
             }
         }
     }    
+}
+
+auto SystemLayout::handleExpansionIfAutoBoot(bool cartNeeded) -> void {
+    
+    ExpansionLayout::Line::Block* noExpansion = nullptr;
+    ExpansionLayout::Line::Block* gameExpansion = nullptr;
+    
+    bool removeExpansion = false;
+    
+    for ( auto line : expansionLayout.lines ) {
+        for( auto block : line->blocks ) {            
+            
+            if (!noExpansion && block->expansion->isEmpty())
+                noExpansion = block;
+            
+            if (!gameExpansion && block->expansion->isGame())
+                gameExpansion = block;
+            
+            if (!cartNeeded && block->box.checked()) {                                                
+                if (block->expansion->isGame() || block->expansion->isEprom()) {
+                    // a rom only expansion like a game cartridge is in use
+                    removeExpansion = true;                    
+                }
+            }
+        }
+    }
+    
+    if(cartNeeded && gameExpansion) {
+        gameExpansion->box.setChecked();
+        gameExpansion->box.onActivate(); 
+    }
+    
+    if (removeExpansion && noExpansion) {
+        noExpansion->box.setChecked();
+        noExpansion->box.onActivate();        
+    }
 }

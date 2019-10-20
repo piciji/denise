@@ -237,7 +237,7 @@ auto Structure1541::getListing( ) -> std::vector<Emulator::Interface::Listing>& 
     return listings;
 }
 
-auto Structure1541::selectListing( unsigned driveId, unsigned pos ) -> void {
+auto Structure1541::selectListing( Emulator::Interface::Media* media, unsigned pos ) -> void {
     
     std::vector<uint8_t> entry;    
     
@@ -250,7 +250,7 @@ auto Structure1541::selectListing( unsigned driveId, unsigned pos ) -> void {
     
     entry.insert( entry.end(), { '"', ',' } );        
     
-    switch(driveId) {
+    switch(media->id) {
         case 0:
         default: entry.insert( entry.end(), '8' ); break;
         case 1: entry.insert( entry.end(), '9' ); break;

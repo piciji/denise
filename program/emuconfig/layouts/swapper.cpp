@@ -35,12 +35,12 @@ SwapperLayout::SwapperLayout( TabWindow* tabWindow ) {
         
         std::string suffix = "*";
         std::string folder = "";
-        for(auto& driveGroup : emulator->driveGroups) {
-            if (driveGroup.isDiskDrive()) {
-                auto _suffix = driveGroup.suffix;
+        for(auto& mediaGroup : emulator->mediaGroups) {
+            if (mediaGroup.isDisk()) {
+                auto _suffix = mediaGroup.suffix;
                 GUIKIT::Vector::combine(_suffix, GUIKIT::File::suppportedCompressionExtensions());    
                 suffix = GUIKIT::BrowserWindow::transformFilter(trans->get("disk_image"), _suffix );
-                folder = driveGroup.name;
+                folder = mediaGroup.name;
                 break;
             }                
         }

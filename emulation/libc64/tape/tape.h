@@ -3,6 +3,7 @@
 
 #include "../../tools/event.h"
 #include "../../tools/serializer.h"
+#include "../interface.h"
 
 #define TAPE_MOTOR_DELAY 32000
 #define TAPE_ZERO_GAP 20000
@@ -34,7 +35,7 @@ struct Tape {
 	auto writeIn(bool bit) -> void;
 	auto clock() -> void;
 	auto setMotorIn( bool state ) -> void;
-	auto load(uint8_t* data, unsigned size) -> void;
+	auto load(Emulator::Interface::Media* media, uint8_t* data, unsigned size) -> void;
     auto unload() -> void;
 	auto reset() -> void;
 	auto setWriteProtect(bool state) -> void;
@@ -44,9 +45,10 @@ struct Tape {
 	auto createTap( unsigned& imageSize ) -> uint8_t*;
     auto serialize(Emulator::Serializer& s) -> void;
     auto selectListing( unsigned pos ) -> void;
+    auto getMedia() -> Emulator::Interface::Media* { return media; }
 	
 protected:	
-	
+	Emulator::Interface::Media* media;
     Emulator::Events* events;
     std::function<void ()> worker;
     std::function<void ()> motorOff;

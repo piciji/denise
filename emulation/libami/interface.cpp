@@ -10,7 +10,7 @@ Interface::Interface() : Emulator::Interface( "Amiga" ) {
     prepareFirmware();
     prepareChipset();
     prepareFeatures();
-    prepareDrives();
+    prepareMedia();
     prepareCpus();
     prepareMemory();
     prepareDevices();
@@ -37,20 +37,20 @@ auto Interface::prepareFeatures() -> void {
     features.push_back({FeatureIdLowPassFilter, "Low Pass Filter", Feature::Type::Switch, 1}); //0 - off, 1 - on, means software decides
 }
 
-auto Interface::prepareDrives() -> void {
-    driveGroups.push_back({DriveGroupIdDisk, "disk", DriveGroup::Type::DiskDrive, {"adf", "adz"}, {"adf", "mfm"} });
-    driveGroups.push_back({DriveGroupIdHardDisk, "hd", DriveGroup::Type::HardDrive, {"hdf"}, {"hdf"} });
+auto Interface::prepareMedia() -> void {
+    mediaGroups.push_back({MediaGroupIdDisk, "disk", MediaGroup::Type::Disk, {"adf", "adz"}, {"adf", "mfm"} });
+    mediaGroups.push_back({MediaGroupIdHardDisk, "hd", MediaGroup::Type::HardDisk, {"hdf"}, {"hdf"} });
 
-    {   auto& group = driveGroups[DriveGroupIdDisk];
-        group.drives.push_back({0, "DF0", 0, &group});
-        group.drives.push_back({1, "DF1", 0, &group});
-        group.drives.push_back({2, "DF2", 0, &group});
-        group.drives.push_back({3, "DF3", 0, &group});
+    {   auto& group = mediaGroups[MediaGroupIdDisk];
+        group.media.push_back({0, "DF0", 0, &group, nullptr});
+        group.media.push_back({1, "DF1", 0, &group, nullptr});
+        group.media.push_back({2, "DF2", 0, &group, nullptr});
+        group.media.push_back({3, "DF3", 0, &group, nullptr});
     }
 
-    {   auto& group = driveGroups[DriveGroupIdHardDisk];
-        group.drives.push_back({0, "DH0", 0, &group});
-        group.drives.push_back({1, "DH1", 0, &group});
+    {   auto& group = mediaGroups[MediaGroupIdHardDisk];
+        group.media.push_back({0, "DH0", 0, &group, nullptr});
+        group.media.push_back({1, "DH1", 0, &group, nullptr});
     }        
 }
 
@@ -64,7 +64,6 @@ auto Interface::prepareMemory() -> void {
     memoryTypes.push_back( {0, "Chip", 1} ); // built in memory
     memoryTypes.push_back( {1, "Slow", 0} ); // extra memory slot in bottom area of amiga, not expansion port
     memoryTypes.push_back( {2, "Fast", 0} ); // fast mem defined by inserted expansion
-    // fast ram is not configured here, but in expansion port area
 
     {   auto& memory = memoryTypes[0].memory;
         memory.push_back( {0, 256} );
@@ -91,8 +90,8 @@ auto Interface::prepareMemory() -> void {
 
 auto Interface::prepareExpansions() -> void {
 
-    expansions.push_back( { 0, "Empty", 0, nullptr } );
-    expansions.push_back( { 1, "Fast", 0, &memoryTypes[2] } );
+    expansions.push_back( { ExpansionIdNone, "Empty", Expansion::Type::Empty, nullptr, nullptr } );
+    expansions.push_back( { ExpansionIdFast, "Fast", Expansion::Type::Ram, &memoryTypes[2], nullptr } );
 }
 
 auto Interface::prepareDevices() -> void {
@@ -326,32 +325,38 @@ auto Interface::setFeature(unsigned featureId, int value) -> void {
     return;
 }
 
-auto Interface::setDrivesConnected(unsigned groupId, unsigned count) -> void {
-    if (groupId >= driveGroups.size()) return;
-    auto& driveGroup = driveGroups[groupId];
-    if (count > driveGroup.drives.size()) count = driveGroup.defaultUsage();
+auto Interface::setDrivesConnected(MediaGroup* group, unsigned count) -> void {
+    
+    if (!group)
+        return;
+    
+    if (count > group->media.size())
+        count = group->defaultUsage();
 }
 
-auto Interface::insertDisk(unsigned driveId, uint8_t* data, unsigned size) -> void {
-    if (driveId >= driveGroups[DriveGroupIdDisk].drives.size()) return;
+auto Interface::insertDisk(Media* media, uint8_t* data, unsigned size) -> void {
+    if (!media || !media->group->isDisk())
+        return;
 }
 
-auto Interface::writeProtectDisk(unsigned driveId, bool state) -> void {
-    if (driveId >= driveGroups[DriveGroupIdDisk].drives.size()) return;
-
+auto Interface::writeProtectDisk(Media* media, bool state) -> void {
+    if (!media || !media->group->isDisk())
+        return;   
 }
 
-auto Interface::ejectDisk(unsigned driveId) -> void {
-    if (driveId >= driveGroups[DriveGroupIdDisk].drives.size()) return;
-
+auto Interface::ejectDisk(Media* media) -> void {
+    if (!media || !media->group->isDisk())
+        return;
 }
 
-auto Interface::setHardDrive(unsigned driveId, unsigned size) -> void {
-    if (driveId >= driveGroups[DriveGroupIdHardDisk].drives.size()) return;
+auto Interface::insertHardDisk(Media* media, unsigned size) -> void {
+    if (!media || !media->group->isHardDisk())
+        return;
 }
 
-auto Interface::ejectHardDrive(unsigned driveId) -> void {
-	if (driveId >= driveGroups[DriveGroupIdHardDisk].drives.size()) return;
+auto Interface::ejectHardDisk(Media* media) -> void {
+    if (!media || !media->group->isHardDisk())
+        return;
 }
 
 auto Interface::createDiskImage(unsigned typeId, bool hd, std::string name, bool ffs) -> uint8_t* {        
@@ -364,7 +369,7 @@ auto Interface::getDiskImageSize(unsigned typeId, bool hd) -> unsigned {
     return 0;
 }
 
-auto Interface::createHardDrive(std::function<void (uint8_t* buffer, unsigned length, unsigned offset)> onCreate, unsigned size, std::string name) -> void {
+auto Interface::createHardDisk(std::function<void (uint8_t* buffer, unsigned length, unsigned offset)> onCreate, unsigned size, std::string name) -> void {
     unsigned bufferLength = 10u * 1024u * 1024u;
     if (size > (512u * 1024u * 1024u) ) {
         bufferLength = 50u * 1024u * 1024u;

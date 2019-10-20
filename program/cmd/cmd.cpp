@@ -22,22 +22,27 @@ auto Cmd::parse() -> void {
     std::vector<std::string> allowedSuffix = collectAllowedSuffix();
     std::vector<std::string> paths;
     bool limitCyclesNext = false;
+    bool reuSizeNext = false;
+    bool aneMagicNext = false;
 
     for( auto& arg : arguments ) {
         if (limitCyclesNext) {
-            limitCyclesNext = 0;
-                        
-            if (GUIKIT::String::isNumber( arg )) {
-                unsigned cycles = 0;    
-                try {
-                    cycles = std::stoi(arg);
-                } catch(...) {}
-
-                dynamic_cast<LIBC64::Interface*>(getEmulator("C64"))->activateDebugCart( cycles );
-                
-                continue;
-            }            
+            limitCyclesNext = false;
+            setCycles( arg );
+            continue;          
         }          
+        
+        if (reuSizeNext) {
+            reuSizeNext = false;                        
+            setReuSize( arg );
+            continue;
+        }
+        
+        if (aneMagicNext) {
+            aneMagicNext = false;
+            setAneMagic( arg );
+            continue;
+        }
         
         if (arg == "-vic-6569R3") { // pal 
             updateChipset(getEmulator("C64"), 0, 1);
@@ -74,7 +79,13 @@ auto Cmd::parse() -> void {
             settings->set("video_screen_text", 2);
         }            
         else if (arg == "-limitcycles") {
-            limitCyclesNext = 1;
+            limitCyclesNext = true;
+        }
+        else if (arg == "-reu") {
+            reuSizeNext = true;
+        }
+        else if (arg == "-ane-magic") {
+            aneMagicNext = true;
         }
         else if (arg == "-no-driver") {
             dynamic_cast<LIBC64::Interface*>(getEmulator("C64"))->disableFilterCircuit();
@@ -150,13 +161,13 @@ auto Cmd::updateChipset( Emulator::Interface* emulator, unsigned ident, bool pal
 
 auto Cmd::prepareDrives( Emulator::Interface* emulator ) -> void {
     
-    for(auto& driveGroup : emulator->driveGroups) {
+    for(auto& mediaGroup : emulator->mediaGroups) {
         
-        if (driveGroup.isDiskDrive())
-            settings->set<unsigned>( program->ident(emulator, driveGroup.name + "_count"), 1);
+        if (mediaGroup.isDisk())
+            settings->set<unsigned>( program->ident(emulator, mediaGroup.name + "_count"), 1);
 		
-		else if (driveGroup.isTapeDrive())
-            settings->set<unsigned>( program->ident(emulator, driveGroup.name + "_count"), 0);        
+		else if (mediaGroup.isTape())
+            settings->set<unsigned>( program->ident(emulator, mediaGroup.name + "_count"), 0);        
     }
 }
 
@@ -164,9 +175,9 @@ auto Cmd::collectAllowedSuffix() -> std::vector<std::string> {
     std::vector<std::string> allowedSuffix;
     
     for( auto emulator : emulators ) {
-        for( auto& driveGroup : emulator->driveGroups ) {
+        for( auto& mediaGroup : emulator->mediaGroups ) {
             
-            for (auto suffix : driveGroup.suffix) {
+            for (auto suffix : mediaGroup.suffix) {
                 
                 GUIKIT::String::toLowerCase( suffix );
                 
@@ -176,4 +187,52 @@ auto Cmd::collectAllowedSuffix() -> std::vector<std::string> {
     }
         
     return allowedSuffix;
+}
+
+auto Cmd::setCycles(std::string arg) -> void {
+    
+    if (!GUIKIT::String::isNumber( arg ))
+        return;
+     
+    unsigned cycles = 0;
+    try {
+        cycles = std::stoi(arg);
+    } catch (...) {
+        return;
+    }
+
+    dynamic_cast<LIBC64::Interface*> (getEmulator("C64"))->activateDebugCart(cycles);  
+}
+
+auto Cmd::setAneMagic(std::string arg) -> void {
+    
+    auto magic = GUIKIT::String::convertHexToInt( arg, 0xee ) & 0xff;
+    
+    updateFeature( getEmulator("C64"), LIBC64::Interface::FeatureIdCpuAneMagic, magic );
+}
+
+auto Cmd::setReuSize(std::string arg) -> void {
+    
+    if (!GUIKIT::String::isNumber( arg ))
+        return;
+        
+    unsigned reuSize = 0;    
+    try {
+        reuSize = std::stoi(arg);
+    } catch(...) {
+        return;
+    }
+
+    auto emulator = getEmulator("C64");
+    auto& memoryType = emulator->memoryTypes[0];
+    auto& expansion = emulator->expansions[ LIBC64::Interface::ExpansionIdReu ];
+
+    for(auto& memory : memoryType.memory) {
+        if (memory.size == reuSize) {
+            
+            settings->set<unsigned>( program->ident(emulator, memoryType.name + "_mem"), memory.id);
+            
+            settings->set<unsigned>( program->ident(emulator, "expansion"), expansion.id);
+        }
+    }       
 }

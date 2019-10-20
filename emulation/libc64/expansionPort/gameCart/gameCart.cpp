@@ -25,9 +25,14 @@ auto GameCart::setRom(uint8_t* rom, unsigned romSize) -> void {
         
     auto _cartridgeId = this->cartridgeId;
     
+    auto newCart = GameCart::getInstance( _cartridgeId, rom, romSize );
+    
+    if (!newCart)
+        return;
+    
     delete this;
     
-    system->expansionPort = GameCart::getInstance( _cartridgeId, rom, romSize );
+    system->expansionPort = newCart;
 }
     
 auto GameCart::getInstance( Interface::CartridgeId cartridgeId, uint8_t* rom, unsigned romSize ) -> ExpansionPort* {
@@ -65,32 +70,32 @@ auto GameCart::create( Interface::CartridgeId cartridgeId ) -> GameCart* {
     GameCart* cart = nullptr;
     
     switch(cartridgeId) {
-        case Interface::CartridgeId::Funplay:
+        case Interface::CartridgeIdFunplay:
             cart = new Funplay;
             break;
-        case Interface::CartridgeId::Ocean:
+        case Interface::CartridgeIdOcean:
             cart = new Ocean;
             break;
-        case Interface::CartridgeId::System3:
+        case Interface::CartridgeIdSystem3:
             cart = new System3;
             break;
-        case Interface::CartridgeId::SuperGames:
+        case Interface::CartridgeIdSuperGames:
             cart = new SuperGames;            
             break;
-        case Interface::CartridgeId::Zaxxon:
+        case Interface::CartridgeIdZaxxon:
             cart = new Zaxxon;
             break;
-        case Interface::CartridgeId::Default:
-        case Interface::CartridgeId::Default8k:
+        case Interface::CartridgeIdDefault:
+        case Interface::CartridgeIdDefault8k:
         default:
             cart = new GameCart(true, false);
             break;            
             
-        case Interface::CartridgeId::Default16k:
+        case Interface::CartridgeIdDefault16k:
             cart = new Cart16k;
             break;            
             
-        case Interface::CartridgeId::Ultimax:
+        case Interface::CartridgeIdUltimax:
             cart = new GameCart(false, true);
             break;            
     }

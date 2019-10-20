@@ -26,7 +26,7 @@ struct FeatureLayout : GUIKIT::FramedVerticalLayout {
 
 struct MemoryLayout : GUIKIT::FramedVerticalLayout {
     struct Block : GUIKIT::HorizontalLayout {
-        unsigned typeId;
+        Emulator::Interface::MemoryType* memoryType;
         GUIKIT::Label name;
         GUIKIT::Label value;
         GUIKIT::HorizontalSlider slider;
@@ -45,7 +45,7 @@ struct ExpansionLayout : GUIKIT::FramedVerticalLayout {
     struct Line : GUIKIT::HorizontalLayout {
         
         struct Block {
-            unsigned expansionId;
+            Emulator::Interface::Expansion* expansion;
             GUIKIT::RadioBox box;
         };
         
@@ -64,7 +64,7 @@ struct ExpansionLayout : GUIKIT::FramedVerticalLayout {
 struct DriveLayout : GUIKIT::FramedHorizontalLayout {
 
     struct DriveCount : GUIKIT::HorizontalLayout {
-        unsigned typeId;
+        Emulator::Interface::MediaGroup* mediaGroup;
         GUIKIT::Label name;
         GUIKIT::ComboButton combo;
         DriveCount();
@@ -122,9 +122,10 @@ struct SystemLayout : GUIKIT::VerticalLayout {
 	auto updateFeatureWidget( FeatureLayout::Line::Block* block ) -> void;
     auto updateRuntimeFeatureWidgets( ) -> void;
     auto featureIdent( std::string ident ) -> std::string;
-    auto activateDrive( Emulator::Interface::DriveGroup& driveGroup, unsigned requestedCount ) -> void;
+    auto activateDrive( Emulator::Interface::MediaGroup* mediaGroup, unsigned requestedCount ) -> void;
     auto updateExpansionMemory() -> void;
     auto getSizeString( unsigned sizeInKb ) -> std::string;
+    auto handleExpansionIfAutoBoot(bool cartNeeded) -> void;
     
     SystemLayout( TabWindow* tabWindow );
 };
