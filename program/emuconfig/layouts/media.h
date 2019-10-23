@@ -16,7 +16,7 @@ struct PathsLayout : GUIKIT::FramedVerticalLayout {
     PathsLayout();
 };
 
-struct DriveGroupLayout : GUIKIT::FramedVerticalLayout {
+struct MediaGroupLayout : GUIKIT::FramedVerticalLayout {
 
     struct Block : GUIKIT::VerticalLayout {
         struct Header : GUIKIT::HorizontalLayout {
@@ -29,11 +29,12 @@ struct DriveGroupLayout : GUIKIT::FramedVerticalLayout {
             Header();
         } header;
 
-        struct Selector : GUIKIT::HorizontalLayout {
-            GUIKIT::ComboButton combo;
+        struct Selector : GUIKIT::HorizontalLayout {            
             GUIKIT::LineEdit edit;
+            GUIKIT::ComboButton combo;
             GUIKIT::Button open;
-            GUIKIT::Button openW;
+            GUIKIT::Widget spacer;
+            GUIKIT::Button openW;            
 
             Selector();
         } selector;
@@ -53,9 +54,10 @@ struct DriveGroupLayout : GUIKIT::FramedVerticalLayout {
     
     auto build() -> void;
     auto updateVisibility( unsigned count, bool init = false ) -> void;
-    auto fillListing(DriveGroupLayout::Block* block) -> void;
+    auto fillListing(MediaGroupLayout::Block* block) -> void;
+    auto showOnlyConnectedDevices() -> bool;
 
-    DriveGroupLayout( Emulator::Interface::MediaGroup* mediaGroup, TabWindow* tabWindow );
+    MediaGroupLayout( Emulator::Interface::MediaGroup* mediaGroup, TabWindow* tabWindow );
 };
 
 struct TapeCreatorLayout : GUIKIT::FramedHorizontalLayout {
@@ -104,7 +106,7 @@ struct HdCreatorLayout : GUIKIT::FramedVerticalLayout {
     HdCreatorLayout();
 };
 
-struct DrivesLayout : GUIKIT::TabFrameLayout {
+struct MediaLayout : GUIKIT::TabFrameLayout {
     TabWindow* tabWindow;
     Emulator::Interface* emulator;
     
@@ -116,7 +118,7 @@ struct DrivesLayout : GUIKIT::TabFrameLayout {
 	GUIKIT::Image addImage;    
     GUIKIT::Image pathImage;
     
-    std::vector<DriveGroupLayout*> mediaGroupLayouts;
+    std::vector<MediaGroupLayout*> mediaGroupLayouts;
     std::vector<std::string> tabs;
     
 	GUIKIT::VerticalLayout creatorLayout;    
@@ -128,23 +130,23 @@ struct DrivesLayout : GUIKIT::TabFrameLayout {
     PathsLayout pathsLayout;
 
     auto translate() -> void;
-    auto updateDriveBlock(DriveGroupLayout::Block* block, FileSetting* setting) -> void;
+    auto updateMediaBlock(MediaGroupLayout::Block* block, FileSetting* setting) -> void;
     auto updateVisibility( Emulator::Interface::MediaGroup* mediaGroup, unsigned count ) -> void;
-    auto bindSelectorAction( DriveGroupLayout* layout ) -> void;
+    auto bindSelectorAction( MediaGroupLayout* layout ) -> void;
     auto prepareCreator() -> void;
     auto preparePaths() -> void;	
     auto updateListing( Emulator::Interface::Media* media ) -> void;
 	auto preselectPath( std::string& groupName ) -> std::string;
 	auto savePath( std::string& groupName, std::string path ) -> void;
-    auto showC64Listing( DriveGroupLayout* layout ) -> bool;
+    auto showC64Listing( MediaGroupLayout* layout ) -> bool;
     auto createImage( unsigned groupId ) -> void;
-    auto showDriveGroupLayout( Emulator::Interface::MediaGroup* mediaGroup ) -> void;
-    auto getDriveGroupLayout( Emulator::Interface::MediaGroup* mediaGroup ) -> DriveGroupLayout*;   
-    auto insertImage( DriveGroupLayout* layout, DriveGroupLayout::Block* block, GUIKIT::File* file, GUIKIT::File::Item* item ) -> void;
+    auto showMediaGroupLayout( Emulator::Interface::MediaGroup* mediaGroup ) -> void;
+    auto getMediaGroupLayout( Emulator::Interface::MediaGroup* mediaGroup ) -> MediaGroupLayout*;   
+    auto insertImage( MediaGroupLayout* layout, MediaGroupLayout::Block* block, GUIKIT::File* file, GUIKIT::File::Item* item ) -> void;
     auto insertImage( Emulator::Interface::Media* media, GUIKIT::File* file, GUIKIT::File::Item* item ) -> void;
     auto eject( Emulator::Interface::MediaGroup* mediaGroup ) -> void;
-    auto drop( std::string filePath, DriveGroupLayout::Block* block = nullptr ) -> void;   
+    auto drop( std::string filePath, MediaGroupLayout::Block* block = nullptr ) -> void;   
     auto colorListing( unsigned color, bool foreground ) -> void;
 
-    DrivesLayout(TabWindow* tabWindow);
+    MediaLayout(TabWindow* tabWindow);
 };

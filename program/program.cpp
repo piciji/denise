@@ -261,7 +261,7 @@ auto Program::powerOff() -> void {
                     auto file = (GUIKIT::File*)media.guid;
                     // medium was written by emulation, lets update the listing
                     if (file->wasDataChanged() && filePool->has( ident(activeEmulator, media.name + "store"), file))                        
-                        EmuConfigView::TabWindow::getView( activeEmulator )->drivesLayout->updateListing( &media );
+                        EmuConfigView::TabWindow::getView( activeEmulator )->mediaLayout->updateListing( &media );
                 }                        
                 
                 filePool->assign( ident(activeEmulator, media.name), nullptr);

@@ -34,7 +34,7 @@ struct Interface : Emulator::Interface {
     
     // petscii will be converted to ascii or screencodes to be viewed in host
     bool convertToScreencode;
-
+ 
 	//controls
 	auto connect(unsigned connectorId, unsigned deviceId) -> void;
     auto connect(Connector* connector, Device* device) -> void;

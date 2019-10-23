@@ -360,7 +360,7 @@ auto InputManager::openMenu( Hotkey::Id id ) -> void {
         case Hotkey::Id::DiskSwapper:
             configView->showDelayed( EmuConfigView::TabWindow::Layout::Swapper ); break;
         case Hotkey::Id::Drives:
-            configView->showDelayed( EmuConfigView::TabWindow::Layout::Drives ); break;
+            configView->showDelayed( EmuConfigView::TabWindow::Layout::Media ); break;
         case Hotkey::Id::System:
             configView->showDelayed(EmuConfigView::TabWindow::Layout::System); break;
         case Hotkey::Id::Firmware:

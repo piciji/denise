@@ -132,8 +132,8 @@ auto VideoManager::updateListingColors() -> void {
     
     auto configView = EmuConfigView::TabWindow::getView( emulator );
     
-    configView->drivesLayout->colorListing( colorTable[14], 1 );
-    configView->drivesLayout->colorListing( colorTable[6], 0 );
+    configView->mediaLayout->colorListing( colorTable[14], 1 );
+    configView->mediaLayout->colorListing( colorTable[6], 0 );
 }
 
 auto VideoManager::generateC64ColorSpectrum() -> void {

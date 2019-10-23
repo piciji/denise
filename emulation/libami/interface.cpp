@@ -16,7 +16,7 @@ Interface::Interface() : Emulator::Interface( "Amiga" ) {
     prepareDevices();
     preparePalettes();
     prepareStats();
-    prepareExpansions();
+    //prepareExpansions();
 }
 
 auto Interface::prepareStats() -> void {
@@ -46,11 +46,17 @@ auto Interface::prepareMedia() -> void {
         group.media.push_back({1, "DF1", 0, &group, nullptr});
         group.media.push_back({2, "DF2", 0, &group, nullptr});
         group.media.push_back({3, "DF3", 0, &group, nullptr});
+        
+        group.selected = nullptr;
+        group.expansion = nullptr;
     }
 
     {   auto& group = mediaGroups[MediaGroupIdHardDisk];
         group.media.push_back({0, "DH0", 0, &group, nullptr});
         group.media.push_back({1, "DH1", 0, &group, nullptr});
+        
+        group.selected = nullptr;
+        group.expansion = nullptr;
     }        
 }
 
@@ -91,7 +97,8 @@ auto Interface::prepareMemory() -> void {
 auto Interface::prepareExpansions() -> void {
 
     expansions.push_back( { ExpansionIdNone, "Empty", Expansion::Type::Empty, nullptr, nullptr } );
-    expansions.push_back( { ExpansionIdFast, "Fast", Expansion::Type::Ram, &memoryTypes[2], nullptr } );
+    expansions.push_back( { ExpansionIdFast, "Fast", Expansion::Type::Ram, &memoryTypes[2], nullptr } );    
+    
 }
 
 auto Interface::prepareDevices() -> void {

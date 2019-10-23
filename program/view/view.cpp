@@ -639,12 +639,12 @@ auto View::buildMenu() -> void {
         
         sM.system->append(*GUIKIT::MenuSeparator::getInstance());
         
-        sM.drives = new GUIKIT::MenuItem;
-        sM.drives->setIcon( driveImage );
-        sM.drives->onActivate = [emuConfigView]() {
-		    emuConfigView->show(EmuConfigView::TabWindow::Layout::Drives);
+        sM.media = new GUIKIT::MenuItem;
+        sM.media->setIcon( driveImage );
+        sM.media->onActivate = [emuConfigView]() {
+		    emuConfigView->show(EmuConfigView::TabWindow::Layout::Media);
 	    };
-        sM.system->append( *sM.drives );
+        sM.system->append( *sM.media );
         
         sM.firmware = new GUIKIT::MenuItem;
         sM.firmware->setIcon( firmwareImage );
@@ -865,7 +865,7 @@ auto View::translate() -> void {
         sysMenu.reset->setText(trans->get("Soft Reset"));
         sysMenu.poweroff->setText(trans->get("power_off"));
         sysMenu.firmware->setText(trans->get("Firmware"));
-        sysMenu.drives->setText(trans->get("drives"));
+        sysMenu.media->setText(trans->get("Software"));
         sysMenu.diskSwapper->setText(trans->get("disk_swapper"));
         sysMenu.systemManagement->setText(trans->get("system_management"));
         sysMenu.saveState->setText(trans->get("states"));

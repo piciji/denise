@@ -19,13 +19,13 @@ struct TabWindow;
 #include "layouts/border.h"
 #include "layouts/video.h"
 #include "layouts/input.h"
-#include "layouts/drives.h"
+#include "layouts/media.h"
 #include "layouts/firmware.h"
 #include "layouts/palette.h"
 
 struct TabWindow : public GUIKIT::Window {
     
-    enum Layout : unsigned { Drives, System, Firmware, Swapper, States, Video, Palette, Border, Input };
+    enum Layout : unsigned { Media, System, Firmware, Swapper, States, Video, Palette, Border, Input };
     
     Emulator::Interface* emulator;
     bool useCustomFont = false;
@@ -34,7 +34,7 @@ struct TabWindow : public GUIKIT::Window {
     InputLayout* inputLayout = nullptr;
     SystemLayout* systemLayout = nullptr;
     FirmwareLayout* firmwareLayout = nullptr;
-    DrivesLayout* drivesLayout = nullptr;
+    MediaLayout* mediaLayout = nullptr;
     BorderLayout* borderLayout = nullptr;
     VideoLayout* videoLayout = nullptr;
     PaletteLayout* paletteLayout = nullptr;

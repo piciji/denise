@@ -461,6 +461,15 @@ System::System(Interface* interface) {
 		else
             cpu->updateIoLines( 0x7, 0x10 );	
 	};
+    
+    // connect keyboard
+    for( auto& device : interface->devices ) {
+        if (device.isKeyboard()) {
+            input->keyboard.setDevice( &device );        
+            break;
+        }
+    }
+    
 }    
 
 System::~System() {

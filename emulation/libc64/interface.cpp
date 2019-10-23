@@ -16,8 +16,7 @@ namespace LIBC64 {
 const std::string Interface::Version = "106";
     
 Interface::Interface() : Emulator::Interface( "C64" ) {        
-    system = new System( this );
-
+    
 	prepareMedia();
 	prepareFirmware();	
 	prepareDevices();
@@ -27,6 +26,8 @@ Interface::Interface() : Emulator::Interface( "C64" ) {
     preparePalettes();    
     prepareMemory();
     prepareExpansions();
+    
+    system = new System( this );    
 }
 
 auto Interface::prepareMemory() -> void {
@@ -45,11 +46,11 @@ auto Interface::prepareMemory() -> void {
 }
 
 auto Interface::prepareMedia() -> void {
-	mediaGroups.push_back({MediaGroupIdDisk, "disk", MediaGroup::Type::Disk, {"d64", "g64"}, {"d64", "g64"} });
-	mediaGroups.push_back({MediaGroupIdTape, "tape", MediaGroup::Type::Tape, {"tap"}, {"tap"} });	
-	mediaGroups.push_back({MediaGroupIdMemory, "memory", MediaGroup::Type::Memory, {"prg", "p00", "t64"}, {"prg"}});
-    mediaGroups.push_back({MediaGroupIdExpansionGame, "game module", MediaGroup::Type::Expansion, {"bin, crt"}, {} });
-    mediaGroups.push_back({MediaGroupIdExpansionReu, "reu", MediaGroup::Type::Expansion, {"bin, crt"}, {} });
+	mediaGroups.push_back({MediaGroupIdDisk, "Disk", MediaGroup::Type::Disk, {"d64", "g64"}, {"d64", "g64"} });
+	mediaGroups.push_back({MediaGroupIdTape, "Tape", MediaGroup::Type::Tape, {"tap"}, {"tap"} });	
+	mediaGroups.push_back({MediaGroupIdMemory, "Memory", MediaGroup::Type::Memory, {"prg", "p00", "t64"}, {"prg"} });
+    mediaGroups.push_back({MediaGroupIdExpansionGame, "Module", MediaGroup::Type::Expansion, {"bin, crt"}, {} });
+    mediaGroups.push_back({MediaGroupIdExpansionReu, "REU", MediaGroup::Type::Expansion, {"bin, crt"}, {""} });
 
 	{   auto& group = mediaGroups[MediaGroupIdDisk];
     
@@ -68,7 +69,7 @@ auto Interface::prepareMedia() -> void {
         group.selected = nullptr;
         group.expansion = nullptr;
 	}
-	
+    
 	{   auto& group = mediaGroups[MediaGroupIdMemory];
 		group.media.push_back({0, "Memory", 0, &group, nullptr});
         
@@ -77,20 +78,20 @@ auto Interface::prepareMedia() -> void {
 	}
     
     {   auto& group = mediaGroups[MediaGroupIdExpansionGame];
-		group.media.push_back({0, "Game Module 0", 0, &group, nullptr});
-        group.media.push_back({1, "Game Module 1", 0, &group, nullptr});
-        group.media.push_back({2, "Game Module 2", 0, &group, nullptr});
-        group.media.push_back({3, "Game Module 3", 0, &group, nullptr});
+		group.media.push_back({0, "Module 1", 0, &group, nullptr});
+        group.media.push_back({1, "Module 2", 0, &group, nullptr});
+        group.media.push_back({2, "Module 3", 0, &group, nullptr});
+        group.media.push_back({3, "Module 4", 0, &group, nullptr});
         
         group.selected = &group.media[0];   
         group.expansion = nullptr;
 	}
     
     {   auto& group = mediaGroups[MediaGroupIdExpansionReu];
-		group.media.push_back({0, "REU 0", 0, &group, nullptr});
-        group.media.push_back({1, "REU 1", 0, &group, nullptr});
-        group.media.push_back({2, "REU 2", 0, &group, nullptr});
-        group.media.push_back({3, "REU 3", 0, &group, nullptr});
+		group.media.push_back({0, "REU 1", 0, &group, nullptr});
+        group.media.push_back({1, "REU 2", 0, &group, nullptr});
+        group.media.push_back({2, "REU 3", 0, &group, nullptr});
+        group.media.push_back({3, "REU 4", 0, &group, nullptr});
         
         group.selected = &group.media[0];
         group.expansion = nullptr;
@@ -98,27 +99,25 @@ auto Interface::prepareMedia() -> void {
 }
 
 auto Interface::prepareExpansions() -> void {
-    
     expansions.push_back( { ExpansionIdNone, "Empty", Expansion::Type::Empty, nullptr, nullptr } );
-    expansions.push_back( { ExpansionIdGame, "Game", Expansion::Type::Game, nullptr, &mediaGroups[MediaGroupIdExpansionGame] } );
+    expansions.push_back( { ExpansionIdGame, "Game Cart", Expansion::Type::Game, nullptr, &mediaGroups[MediaGroupIdExpansionGame] } );
+    expansions.push_back( { ExpansionIdReu, "REU", Expansion::Type::Ram, &memoryTypes[0], &mediaGroups[MediaGroupIdExpansionReu] } );     
     
-    {   auto& expansion = expansions.back();        
+    {   auto& expansion = expansions[ExpansionIdGame];        
         expansion.pcbs.push_back( {CartridgeIdDefault, "Default"} );
-        expansion.pcbs.push_back( {CartridgeIdDefault8k, "Default8k"} );
-        expansion.pcbs.push_back( {CartridgeIdDefault16k, "Default16k"} );
+        expansion.pcbs.push_back( {CartridgeIdDefault8k, "Default 8k"} );
+        expansion.pcbs.push_back( {CartridgeIdDefault16k, "Default 16k"} );
         expansion.pcbs.push_back( {CartridgeIdUltimax, "Ultimax"} );
         expansion.pcbs.push_back( {CartridgeIdOcean, "Ocean"} );
         expansion.pcbs.push_back( {CartridgeIdFunplay, "Funplay"} );
-        expansion.pcbs.push_back( {CartridgeIdSuperGames, "SuperGames"} );
-        expansion.pcbs.push_back( {CartridgeIdSystem3, "System3"} );
+        expansion.pcbs.push_back( {CartridgeIdSuperGames, "Super Games"} );
+        expansion.pcbs.push_back( {CartridgeIdSystem3, "System 3"} );
         expansion.pcbs.push_back( {CartridgeIdZaxxon, "Zaxxon"} );
         
         mediaGroups[MediaGroupIdExpansionGame].expansion = &expansion;
     }
-    
-    expansions.push_back( { ExpansionIdReu, "REU", Expansion::Type::Ram, &memoryTypes[0], &mediaGroups[MediaGroupIdExpansionReu] } );     
-    
-    {   auto& expansion = expansions.back();  
+                
+    {   auto& expansion = expansions[ExpansionIdReu];        
         mediaGroups[MediaGroupIdExpansionReu].expansion = &expansion;
     }
 }
@@ -465,9 +464,7 @@ auto Interface::prepareDevices() -> void {
         device.addVirtual( "?", { 61, 47 }, Key::QuestionMark );
         device.addVirtual( "|", { 45, 47 }, Key::Pipe );
 		
-        devices.push_back(device); 
-        
-        system->input->keyboard.setDevice( &devices.back() );
+        devices.push_back(device);         
 	}
         
     for (auto& device : devices) {

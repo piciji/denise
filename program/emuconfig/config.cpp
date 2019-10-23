@@ -34,7 +34,7 @@ namespace Fonts {
 	
 #include "layouts/input.cpp"
 #include "layouts/system.cpp"
-#include "layouts/drives.cpp"
+#include "layouts/media.cpp"
 #include "layouts/video.cpp"
 #include "layouts/border.cpp"
 #include "layouts/states.cpp"
@@ -88,7 +88,7 @@ auto TabWindow::build() -> void {
     inputLayout = new InputLayout( this );
     systemLayout = new SystemLayout( this );
     firmwareLayout = new FirmwareLayout( this );
-    drivesLayout = new DrivesLayout( this );    
+    mediaLayout = new MediaLayout( this );    
     videoLayout = new VideoLayout( this );
     if (emulator->ident == "C64")
         paletteLayout = new PaletteLayout( this );
@@ -108,7 +108,7 @@ auto TabWindow::build() -> void {
     tab.appendHeader("", cropImage);
     tab.appendHeader("", joystickImage);                      
 
-    tab.setLayout(Layout::Drives, *drivesLayout, {~0u, ~0u} );
+    tab.setLayout(Layout::Media, *mediaLayout, {~0u, ~0u} );
     tab.setLayout(Layout::System, *systemLayout, {~0u, ~0u} );
     tab.setLayout(Layout::Firmware, *firmwareLayout, {~0u, ~0u} );
     tab.setLayout(Layout::Swapper, *swapperLayout, {~0u, ~0u} );
@@ -152,8 +152,8 @@ auto TabWindow::build() -> void {
         if ( tab.selection() == Layout::Firmware )
             firmwareLayout->drop( files[0] );
         
-        else if ( tab.selection() == Layout::Drives )
-            drivesLayout->drop( files[0] );
+        else if ( tab.selection() == Layout::Media )
+            mediaLayout->drop( files[0] );
     };
 
     translate();
@@ -165,7 +165,7 @@ auto TabWindow::translate() -> void {
     inputLayout->translate();
     systemLayout->translate();
     firmwareLayout->translate();
-    drivesLayout->translate();
+    mediaLayout->translate();
     borderLayout->translate();
     videoLayout->translate();
     statesLayout->translate();
@@ -176,7 +176,7 @@ auto TabWindow::translate() -> void {
     tab.setHeader(Layout::Input, trans->get("input"));
     tab.setHeader(Layout::System, trans->get("system"));
     tab.setHeader(Layout::Firmware, trans->get("firmware"));
-    tab.setHeader(Layout::Drives, trans->get("drives"));
+    tab.setHeader(Layout::Media, trans->get("Software"));
     tab.setHeader(Layout::Border, trans->get("border"));
     tab.setHeader(Layout::Video, trans->get("video"));
     tab.setHeader(Layout::States, trans->get("states"));
@@ -224,7 +224,7 @@ auto TabWindow::getView( Emulator::Interface* emulator ) -> TabWindow* {
 
 auto TabWindow::changeTab() -> void {
     
-    if (tab.selection() == Layout::Drives) {            
+    if (tab.selection() == Layout::Media) {            
         auto videoManager = VideoManager::getInstance( emulator );
         if (videoManager->needUpdate())
             videoManager->update();                    

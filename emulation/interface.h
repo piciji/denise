@@ -146,17 +146,16 @@ struct Interface {
     struct Expansion {
         unsigned id;
         std::string name;
-        enum Type : unsigned { Empty, Game, Ram, Eprom, TurboCart } type;
+        enum class Type : unsigned { Empty, Game, Ram, Eprom, TurboCart } type;
         MemoryType* memoryType; // uses RAM
         MediaGroup* mediaGroup; // uses ROM
+        std::vector<PCBLayout> pcbs;
         
         auto isEmpty() const -> bool { return type == Type::Empty; }
         auto isGame() const -> bool { return type == Type::Game; }
         auto isRam() const -> bool { return type == Type::Ram; }
         auto isEprom() const -> bool { return type == Type::Eprom; }
-        auto isTurboCart() const -> bool { return type == Type::TurboCart; }
-        
-        std::vector<PCBLayout> pcbs;
+        auto isTurboCart() const -> bool { return type == Type::TurboCart; }               
     };
     std::vector<Expansion> expansions;       
     
@@ -175,17 +174,17 @@ struct Interface {
         std::vector<std::string> suffix;
         std::vector<std::string> creatable;
         Media* selected;
-        Expansion* expansion; // belongs to
+        Expansion* expansion; // belongs to                
+        std::vector<Media> media;
         
         auto isDisk() const -> bool { return type == Type::Disk; }
         auto isHardDisk() const -> bool { return type == Type::HardDisk; }
         auto isTape() const -> bool { return type == Type::Tape; }
 		auto isExpansion() const -> bool { return type == Type::Expansion; }
 		auto isMemory() const -> bool { return type == Type::Memory; }
-        //default count of connected drives
+        auto isDrive() const -> bool { return isDisk() || isTape() || isHardDisk(); };
+        // default count of connected drives
         auto defaultUsage() -> unsigned { return type == Type::Disk ? 1 : 0; }       
-        
-        std::vector<Media> media;
     };
 
     std::vector<MediaGroup> mediaGroups;         
@@ -355,7 +354,7 @@ struct Interface {
     // hard disk handling
     virtual auto insertHardDisk(Media* media, unsigned size) -> void {} //uses read and write callbacks above because of big data
 	virtual auto ejectHardDisk(Media* media) -> void {}
-    virtual auto createHardDrive(std::function<void (uint8_t* buffer, unsigned length, unsigned offset)> onCreate, unsigned size, std::string name = "") -> void {}
+    virtual auto createHardDisk(std::function<void (uint8_t* buffer, unsigned length, unsigned offset)> onCreate, unsigned size, std::string name = "") -> void {}
     // tape handling
     virtual auto insertTape(Media* media, uint8_t* data, unsigned size) -> void {}    
     virtual auto writeProtectTape(Media* media, bool state) -> void {}

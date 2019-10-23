@@ -70,15 +70,15 @@ auto View::autoloadPostProcessing() -> void {
 
     if (!autoStart && (activeEmulator == ddControl.emulator)) {
 
-        emuConfigView->show(EmuConfigView::TabWindow::Layout::Drives);
+        emuConfigView->show(EmuConfigView::TabWindow::Layout::Media);
 
-        emuConfigView->drivesLayout->showDriveGroupLayout(mediaGroup);
+        emuConfigView->mediaLayout->showMediaGroupLayout(mediaGroup);
 
     } else {
 
 		for (auto& mediaGroup : ddControl.emulator->mediaGroups) {
 			
-			if (mediaGroup.isDisk() || mediaGroup.isTape()) {
+			if (mediaGroup.isDrive()) {
 				
 				emuConfigView->systemLayout->activateDrive(&mediaGroup, countImagesFor(&mediaGroup) );				
 			}
@@ -178,7 +178,7 @@ auto View::autoloadFiles() -> void {
                             media = &mediaGroup.media[ pos - 1 ];                        
                         }
                             						
-                        emuConfigView->drivesLayout->insertImage(media, file, item );
+                        emuConfigView->mediaLayout->insertImage(media, file, item );
 
                         return autoloadFiles();
                     }

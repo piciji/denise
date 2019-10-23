@@ -133,7 +133,7 @@ DriveLayout::DriveLayout() {
 
 auto DriveLayout::build( Emulator::Interface* emulator ) -> void {
     for(auto& mediaGroup : emulator->mediaGroups) {
-        if (mediaGroup.isExpansion() || mediaGroup.isMemory() )
+        if ( !mediaGroup.isDrive() )
             continue;
         
         auto driveCount = new DriveCount;
@@ -263,7 +263,8 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
         block->combo.onChange = [this, ident, block]() {
             settings->set<unsigned>( this->tabWindow->ident(ident), block->combo.selection());
 
-            this->tabWindow->drivesLayout->updateVisibility( block->mediaGroup, block->combo.selection() );
+            // check if media elements of group have to be rebuilt
+            this->tabWindow->mediaLayout->updateVisibility( block->mediaGroup, block->combo.selection() );
             settings->remove( this->tabWindow->ident("access_floppy") );
         };
         
@@ -370,7 +371,7 @@ auto SystemLayout::activateDrive( Emulator::Interface::MediaGroup* mediaGroup, u
         settings->set<unsigned>( this->tabWindow->ident(ident), requestedCount);
         settings->remove( this->tabWindow->ident("access_floppy") );
         
-        this->tabWindow->drivesLayout->updateVisibility( mediaGroup, requestedCount );
+        this->tabWindow->mediaLayout->updateVisibility( mediaGroup, requestedCount );
     }
 }
 

@@ -15,7 +15,7 @@ struct View : public GUIKIT::Window {
 		GUIKIT::MenuItem* reset;
         GUIKIT::MenuItem* poweroff;
         GUIKIT::MenuItem* firmware;
-        GUIKIT::MenuItem* drives;
+        GUIKIT::MenuItem* media;
         GUIKIT::MenuItem* diskSwapper;
         GUIKIT::MenuItem* systemManagement;
         GUIKIT::MenuItem* saveState;
