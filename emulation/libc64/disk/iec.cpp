@@ -332,16 +332,10 @@ auto IecBus::randomizeRpm() -> void {
 
 auto IecBus::attach( Emulator::Interface::Media* media, uint8_t* data, unsigned size ) -> void {
     
-    if (!media)
-        return
-    
     drives[ media->id ]->attach( media, data, size );   
 }
 
 auto IecBus::detach( Emulator::Interface::Media* media ) -> void {
-    
-    if (!media)
-        return
             
     drives[ media->id ]->detach();
 }

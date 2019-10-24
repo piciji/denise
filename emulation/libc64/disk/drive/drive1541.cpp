@@ -8,7 +8,9 @@ namespace LIBC64 {
     
 Drive1541::Drive1541(uint8_t number) {
      
-    this->number = number;           
+    this->number = number; 
+    
+    media = nullptr;
     
     ram = new uint8_t[ 2 * 1024 ];
     rom = nullptr;

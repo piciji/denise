@@ -15,6 +15,7 @@ Tape* tape = nullptr;
 
 Tape::Tape( Emulator::Events* events ) {
     
+    media = nullptr;
     this->events = events;
 	fetchData = new uint8_t[ TAPE_FETCH_SIZE ];
 	writeData = new uint8_t[ TAPE_WRITE_SIZE ];

@@ -155,8 +155,8 @@ auto Program::power( Emulator::Interface* emulator, bool showImageError ) -> voi
     // we need to update memory, cpu, chipset every power cycle.
     // a loaded state before could change the values internally.
     for (auto& memoryType : emulator->memoryTypes) {
-        unsigned memoryId = settings->get<unsigned>(ident(emulator, memoryType.name), memoryType.defaultMemoryId);
-        emulator->setMemory(memoryType.id, memoryId);
+        unsigned memoryId = settings->get<unsigned>(ident(emulator, memoryType.name + "_mem"), memoryType.defaultMemoryId);
+        emulator->setMemory(&memoryType, memoryId);
     }
 
     emulator->setChipset(settings->get<unsigned>(ident(emulator, "chipset"), 0));
@@ -167,7 +167,7 @@ auto Program::power( Emulator::Interface* emulator, bool showImageError ) -> voi
     for(auto& mediaGroup : emulator->mediaGroups) {
 
         if (mediaGroup.isExpansion() && (&mediaGroup != expansionMediaGroup))            
-            // check which expansion type is needed
+            // allow only expansion media groups for the currently used expansion
             continue;    
         
         auto selectedMedia = mediaGroup.selected;

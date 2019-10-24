@@ -46,8 +46,7 @@ struct Interface : Emulator::Interface {
 	auto powerOff() -> void;
 	auto run() -> void; //emulate one frame
 	auto setRegion(Region region) -> void;
-    auto getRegion() -> Region;
-	auto getMemory(unsigned typeId) -> Memory*;
+    auto getRegion() -> Region;	
 	
     auto convertPetsciiToScreencode(bool state) -> void;
 
@@ -117,7 +116,7 @@ struct Interface : Emulator::Interface {
     auto setLineCallback(bool state, unsigned scanline = 0) -> void;
     auto setFinishVblankCallback(bool state) -> void;
     
-    auto setMemory(unsigned typeId, unsigned memoryId) -> void;
+    auto setMemory(MemoryType* memoryType, unsigned memoryId) -> void;
 	
 private:
 	auto prepareDevices() -> void;

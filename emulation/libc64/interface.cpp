@@ -49,8 +49,8 @@ auto Interface::prepareMedia() -> void {
 	mediaGroups.push_back({MediaGroupIdDisk, "Disk", MediaGroup::Type::Disk, {"d64", "g64"}, {"d64", "g64"} });
 	mediaGroups.push_back({MediaGroupIdTape, "Tape", MediaGroup::Type::Tape, {"tap"}, {"tap"} });	
 	mediaGroups.push_back({MediaGroupIdMemory, "Memory", MediaGroup::Type::Memory, {"prg", "p00", "t64"}, {"prg"} });
-    mediaGroups.push_back({MediaGroupIdExpansionGame, "Module", MediaGroup::Type::Expansion, {"bin, crt"}, {} });
-    mediaGroups.push_back({MediaGroupIdExpansionReu, "REU", MediaGroup::Type::Expansion, {"bin, crt"}, {""} });
+    mediaGroups.push_back({MediaGroupIdExpansionGame, "Module", MediaGroup::Type::Expansion, {"bin", "crt"}, {} });
+    mediaGroups.push_back({MediaGroupIdExpansionReu, "REU", MediaGroup::Type::Expansion, {"bin", "crt"}, {""} });
 
 	{   auto& group = mediaGroups[MediaGroupIdDisk];
     
@@ -587,13 +587,16 @@ auto Interface::getDiskImageSize(unsigned typeId, bool hd) -> unsigned {
 
 auto Interface::getDiskListing(Media* media) -> std::vector<Emulator::Interface::Listing> {
     
-    if (!media)
+    if (!media || !media->group->isDisk())
         return {};
     
     return iecBus->getDiskListing( media );
 }
 
 auto Interface::selectDiskListing(Media* media, unsigned pos) -> void {
+    
+    if (!media || !media->group->isDisk())
+        return;
     
     iecBus->selectListing( media, pos );
 }
@@ -607,12 +610,18 @@ auto Interface::insertTape(Media* media, uint8_t* data, unsigned size) -> void {
 }
 
 auto Interface::writeProtectTape(Media* media, bool state) -> void {
+
+    if (!media || !media->group->isTape())
+        return;
 	
 	tape->setWriteProtect( state );
 }
 
 auto Interface::ejectTape(Media* media) -> void {
 		
+    if (!media || !media->group->isTape())
+        return;
+    
 	tape->unload();
 }
 
@@ -696,15 +705,6 @@ auto Interface::checkstate(uint8_t* data, unsigned size) -> bool {
 
 auto Interface::loadstate(uint8_t* data, unsigned size) -> bool {
 	return system->unserialize( data, size );
-}
-
-auto Interface::getMemory(unsigned typeId) -> Memory* {
-	if (typeId >= memoryTypes.size())
-        return nullptr;
-    
-	auto& type = memoryTypes[typeId];
-    
-    return &type.memory[0];
 }
 
 auto Interface::setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> void {
@@ -841,16 +841,19 @@ auto Interface::setFinishVblankCallback(bool state) -> void {
     vicII->lineCallback.finishVblank = state;
 }
 
-auto Interface::setMemory(unsigned typeId, unsigned memoryId) -> void {
+auto Interface::setMemory(MemoryType* memoryType, unsigned memoryId) -> void {
     
     for( auto& expansion : expansions ) {
+        
+        if (!expansion.memoryType)
+            continue;
         
         if (expansion.id != system->expansionPort->id)
             continue;
         
-        if (expansion.memoryType->id == typeId) {
+        if (expansion.memoryType == memoryType) {
             
-            auto memory = getMemoryById(*(expansion.memoryType), memoryId);
+            auto memory = getMemoryById(*memoryType, memoryId);
             
             if (memory)
                 system->expansionPort->setRam( memory->size );            

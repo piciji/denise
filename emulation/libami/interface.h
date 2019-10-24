@@ -27,8 +27,7 @@ struct Interface : Emulator::Interface  {
     auto getConnectedDevice( Connector* connector ) -> Device*;
     
 	auto setCpu(unsigned cpuId) -> void;
-	auto setMemory(unsigned typeId, unsigned memoryId) -> void;
-	auto getMemory(unsigned typeId) -> Memory*;
+	auto setMemory(MemoryType* memoryType, unsigned memoryId) -> void;
 	auto setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> void;
 	auto power() -> void;
 	auto run() -> void; //emulate one frame

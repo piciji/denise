@@ -402,8 +402,7 @@ struct Interface {
     
     virtual auto setCpu(unsigned cpuId) -> void {}
     virtual auto getCpu() -> unsigned { return 0; }
-    virtual auto setMemory(unsigned typeId, unsigned memoryId) -> void {}
-    virtual auto getMemory(unsigned typeId) -> Memory* { return nullptr; }
+    virtual auto setMemory(MemoryType* memoryType, unsigned memoryId) -> void {}
     // firmware will copied internally, so you can close the relevant file afterwards
     virtual auto setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> void {}
     

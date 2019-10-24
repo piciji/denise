@@ -281,15 +281,12 @@ auto Interface::setCpu(unsigned cpuId) -> void {
     if (cpuId >= cpus.size()) cpuId = 0;
 }
 
-auto Interface::setMemory(unsigned typeId, unsigned memoryId) -> void {
-    if (typeId >= memoryTypes.size()) return;
-    auto& type = memoryTypes[typeId];
-    if (memoryId >= type.memory.size()) memoryId = type.defaultMemoryId;
-}
-
-auto Interface::getMemory(unsigned typeId) -> Memory* {
-    if (typeId >= memoryTypes.size()) return nullptr;
-    return nullptr;
+auto Interface::setMemory(MemoryType* memoryType, unsigned memoryId) -> void {
+    if (!memoryType)
+        return;
+    
+    if (memoryId >= memoryType->memory.size())
+        memoryId = memoryType->defaultMemoryId;
 }
 
 auto Interface::setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> void {

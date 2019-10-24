@@ -47,15 +47,15 @@ auto System::setExpansion( Emulator::Interface::Expansion& expansion ) -> void {
             return; // no callbacks needed
             
         case Interface::ExpansionIdGame:
-            expansionPort = new Reu;
+            expansionPort = new GameCart;
             return; // no callbacks needed
             
         case Interface::ExpansionIdReu:
-            expansionPort = new GameCart;
+            expansionPort = new Reu;
             break;
     }
     // arm callbacks
-    expansionPort->irqCall = [this](bool state) {
+    expansionPort->nmiCall = [this](bool state) {
         if (state)
             nmiIncomming |= 4;
         else
@@ -64,7 +64,7 @@ auto System::setExpansion( Emulator::Interface::Expansion& expansion ) -> void {
         cpu->setNmi(nmiIncomming != 0);
     };
     
-    expansionPort->nmiCall = [this](bool state) {
+    expansionPort->irqCall = [this](bool state) {
         if (state)
             irqIncomming |= 4;
         else

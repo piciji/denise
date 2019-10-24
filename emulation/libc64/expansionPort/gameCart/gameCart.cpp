@@ -10,7 +10,7 @@
 
 namespace LIBC64 {
 
-GameCart::GameCart(bool game, bool exrom) {
+GameCart::GameCart(bool game, bool exrom) : ExpansionPort() {
     
     this->game = game;
     this->exRom = exrom;

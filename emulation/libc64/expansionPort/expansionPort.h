@@ -24,9 +24,9 @@ struct ExpansionPort {
     } bus;
     
     // pins on startup, some carts change this during runtime
-    bool exRom;
-    bool game;
-    bool dma;
+    bool exRom = true;
+    bool game = true;
+    bool dma = false;
     
     uint8_t* rom = nullptr;
     unsigned romSize = 0;

@@ -27,7 +27,7 @@ struct Reu : ExpansionPort {
     uint32_t reuAddr;
     uint16_t transferLength;
     
-    unsigned size; // in kb
+    unsigned size = 0; // in kb
     uint8_t* data = nullptr;   
         
     uint32_t wrapAround;

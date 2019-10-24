@@ -2,50 +2,12 @@
 #include "../../system/system.h"
 #include "reu.h"
 
-namespace LIBC64 {
+namespace LIBC64 {  
     
-auto Reu::setRom(uint8_t* rom, unsigned romSize) -> void {
-    ExpansionPort::setRom( rom, romSize );
-    
-    exRom = (rom && romSize) ? false : true;
-}
-
-auto Reu::isBootable( ) -> bool {
-    
-    return !exRom;
-}
-
-auto Reu::setRam(unsigned size) -> void {    
-    
-    if (data && (size == this->size))
-        return;
-    
-    if(data)
-        delete[] data;
-        
-    this->size = size;
-        
-    data = new uint8_t[size * 1024];
-    std::memset(data, 0, size * 1024); 
-}
-    
-Reu::Reu() {
+Reu::Reu() : ExpansionPort() {
     setId( Interface::ExpansionIdReu );
-    this->size = 128;    
-    
-    data = new uint8_t[size * 1024];
-    std::memset(data, 0, size * 1024);
-    
-    // when lower 19 bits of REU address reach this value, address wraps around to zero
-    wrapAround = size == 128 ? 0x20000 : 0x80000;
-    dramWrapAround = 0xffffff;
-    if (size == 128)
-        dramWrapAround = 0x1ffff;
-    else if (size == 256 || size == 512)
-        dramWrapAround = 0x7ffff;
-    
-    status = size == 128 ? 0 : 0x10;
-    
+    setRam( 128 );   
+
     setIrq = [this]() {
         
         irqCall( true ); // enable expansion port irq line
@@ -96,9 +58,47 @@ Reu::~Reu() {
         delete[] data;
 }
 
+auto Reu::setRom(uint8_t* rom, unsigned romSize) -> void {
+    ExpansionPort::setRom( rom, romSize );
+    
+    exRom = (rom && romSize) ? false : true;
+}
+
+auto Reu::isBootable( ) -> bool {
+    
+    return !exRom;
+}
+
+auto Reu::setRam(unsigned size) -> void {    
+    unsigned sizeInKb = size;
+
+    size *= 1024;
+    
+    if (data && (size == this->size))
+        return;
+    
+    if(data)
+        delete[] data;
+        
+    this->size = size;
+        
+    data = new uint8_t[size];
+    std::memset(data, 0, size); 
+    
+    // when lower 19 bits of REU address reach this value, address wraps around to zero
+    wrapAround = sizeInKb == 128 ? 0x20000 : 0x80000;
+    dramWrapAround = 0xffffff;
+    if (sizeInKb == 128)
+        dramWrapAround = 0x1ffff;
+    else if (sizeInKb == 256 || sizeInKb == 512)
+        dramWrapAround = 0x7ffff;
+    
+    status = sizeInKb == 128 ? 0 : 0x10;    
+}
+
 auto Reu::reset() -> void {
     
-    status = size == 128 ? 0 : 0x10;
+    status &= ~0xe0;
     
     command = 0x10; // FF00 trigger disabled    
     intMask = 0x1f;    
@@ -211,7 +211,7 @@ inline auto Reu::verify() -> void {
 
 inline auto Reu::swap() -> void {
     
-    if (swapRead) {
+    if (!swapRead) {
         if (vicBaLow & 1)
             return;
         value = readReu();
@@ -240,6 +240,7 @@ inline auto Reu::swap() -> void {
 }
 
 inline auto Reu::fetch() -> void {
+    
     if ((vicBaLow & 3) == 3) { // first BA cycle is usable for REU
         steal = true;
         return;
@@ -252,6 +253,7 @@ inline auto Reu::fetch() -> void {
     }
     
     value = readReu();
+    
     system->memoryCpu.write( bus.addr = hostAddr, value );
     incrementAddresses();      
     decrementTransferLength();
@@ -259,9 +261,10 @@ inline auto Reu::fetch() -> void {
 
 inline auto Reu::stash() -> void {
     if (vicBaLow & 1) // VIC needs this cycle
-        return;
+        return;        
     
-    value = system->memoryCpu.read( bus.addr = hostAddr );
+    value = system->memoryCpu.read( bus.addr = hostAddr );    
+    
     writeReu( value );
     incrementAddresses();      
     decrementTransferLength();
@@ -327,10 +330,12 @@ auto Reu::writeIo2( uint16_t addr, uint8_t value ) -> void {
         case 1:
             command = value;
             if (command & 0x80) {
+                waitForStart = true;
+                
                 if (command & 0x10) {                    
                     system->events.add( &setDma, 1, Emulator::Events::UpdateExisting );
-                } else
-                    waitForStart = true;
+                    waitForStart = false;
+                }                    
             }
             break;
         case 2:
@@ -395,6 +400,16 @@ auto Reu::readRomL(uint16_t addr) -> uint8_t {
 }
 
 auto Reu::serialize(Emulator::Serializer& s) -> void {
+        
+    unsigned _size = size;
+    
+    s.integer( _size );
+    if ( s.mode() == Emulator::Serializer::Mode::Load ) {
+        // when size mismatches, recreate
+        setRam( _size >> 10 );
+    }
+    
+    s.array( data, size );
     
     s.integer( status );
     s.integer( command );
@@ -407,16 +422,6 @@ auto Reu::serialize(Emulator::Serializer& s) -> void {
     s.integer( hostAddr );
     s.integer( reuAddr );
     s.integer( transferLength );
-    
-    unsigned _size = size;
-    
-    s.integer( _size );
-    if ( s.mode() == Emulator::Serializer::Mode::Load ) {
-        // when size mismatches, recreate
-        setRam( _size );
-    }
-    
-    s.array( data, size * 1024 );
     
     s.integer( wrapAround );
     s.integer( dramWrapAround );
