@@ -268,7 +268,8 @@ auto Program::powerOff() -> void {
                 activeEmulator->ejectMedium( &media );
                 States::getInstance( activeEmulator )->updateImage( nullptr, &media );
             }				
-        }		
+        }
+		activeEmulator->unsetExpansion();
 	}
 	isRunning = false;
 	for( auto emuConfigView : emuConfigViews )

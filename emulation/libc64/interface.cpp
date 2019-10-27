@@ -647,7 +647,7 @@ auto Interface::createTapeImage(unsigned& imageSize) -> uint8_t* {
 	return tape->createTap( imageSize );
 }
 
-auto Interface::insertExpansionImage(Media* media, uint8_t* data, unsigned size) -> void {
+auto Interface::assignExpansionImage(Media* media, uint8_t* data, unsigned size) -> void {
     
     if (!media || !media->group->isExpansion())
         return;
@@ -655,11 +655,6 @@ auto Interface::insertExpansionImage(Media* media, uint8_t* data, unsigned size)
     system->expansionPort->setCartridgeId( (CartridgeId)(media->pcbLayout ? media->pcbLayout->id : 0) );
     
     system->expansionPort->setRom( data, size );
-}
-
-auto Interface::ejectExpansionImage(Media* media) -> void {
-    
-    system->unsetExpansion();
 }
 
 auto Interface::insertMemory(Media* media, uint8_t* data, unsigned size) -> void {
@@ -871,6 +866,11 @@ auto Interface::setExpansion(unsigned expansionId) -> void {
         return;
     
     system->setExpansion( *expansion );
+}
+
+auto Interface::unsetExpansion() -> void {
+    
+    system->setExpansion( *getExpansionById( ExpansionIdNone ) );
 }
 
 auto Interface::getExpansion() -> Expansion* {

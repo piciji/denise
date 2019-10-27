@@ -7,9 +7,10 @@ namespace LIBC64 {
     
 struct Reu : ExpansionPort {   
     
-    Reu();
+    Reu(Emulator::Events* events);
     ~Reu();
     
+    Emulator::Events* events;
     using Callback = std::function<void ()>;
     
     uint8_t status;          
@@ -72,4 +73,5 @@ struct Reu : ExpansionPort {
 
 };    
     
+extern Reu* reu;
 }

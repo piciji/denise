@@ -28,34 +28,45 @@ auto System::serializeExpansion(Emulator::Serializer& s) -> void {
     expansionPort->serialize( s );
 }
     
-auto System::unsetExpansion() -> void {
-    if (expansionPort)
-        delete expansionPort;
-    
-    expansionPort = new ExpansionPort;
-}    
-    
 auto System::setExpansion( Emulator::Interface::Expansion& expansion ) -> void {
-    
-    if (expansionPort)
-        delete expansionPort;
     
     switch(expansion.id) {
         default:
         case Interface::ExpansionIdNone:
-            expansionPort = new ExpansionPort;
-            return; // no callbacks needed
+            expansionPort = noExpansion;
+            break;
             
         case Interface::ExpansionIdGame:
-            expansionPort = new GameCart;
-            return; // no callbacks needed
+            expansionPort = gameCart;
+            break;
             
         case Interface::ExpansionIdReu:
-            expansionPort = new Reu;
+            expansionPort = reu;
             break;
     }
-    // arm callbacks
-    expansionPort->nmiCall = [this](bool state) {
+    
+}  
+    
+auto System::createExpansions() -> void {
+    
+    reu = new Reu( &events );
+    gameCart = new GameCart;
+    noExpansion = new ExpansionPort;
+    
+    expansionPort = noExpansion;
+    
+    setExpansionCallbacks( reu );
+}
+
+auto System::destroyExpansions() -> void {
+    
+    delete reu;
+    delete gameCart;
+}
+
+auto System::setExpansionCallbacks( ExpansionPort* expansionPtr ) -> void {
+        
+    expansionPtr->nmiCall = [this](bool state) {
         if (state)
             nmiIncomming |= 4;
         else
@@ -64,7 +75,7 @@ auto System::setExpansion( Emulator::Interface::Expansion& expansion ) -> void {
         cpu->setNmi(nmiIncomming != 0);
     };
     
-    expansionPort->irqCall = [this](bool state) {
+    expansionPtr->irqCall = [this](bool state) {
         if (state)
             irqIncomming |= 4;
         else
@@ -73,7 +84,7 @@ auto System::setExpansion( Emulator::Interface::Expansion& expansion ) -> void {
         cpu->setIrq(irqIncomming != 0);
     };
 
-    expansionPort->dmaCall = [this](bool state) {
+    expansionPtr->dmaCall = [this](bool state) {
         if (state)
             rdyIncomming |= 2;
         else
@@ -82,17 +93,17 @@ auto System::setExpansion( Emulator::Interface::Expansion& expansion ) -> void {
         cpu->setRdy( rdyIncomming != 0 );
     };
     
-    if (expansion.id == Interface::ExpansionIdReu)
+    if (expansionPtr->id == Interface::ExpansionIdReu)
         
-        expansionPort->vicBA = [this]() {   
+        expansionPtr->vicBA = [this]() {   
 
             return vicII->reuBaLow();
         };
     else
-        expansionPort->vicBA = [this]() {   
+        expansionPtr->vicBA = [this]() {   
 
             return vicII->isBaLow();
         };
-}  
+}
     
 }

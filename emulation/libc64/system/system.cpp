@@ -32,8 +32,8 @@ System::System(Interface* interface) {
 	ram = new uint8_t[ 64 * 1024 ];
     colorRam = new uint8_t[ 1 * 1024 ];
     
-	vicII = new VicII;
-    expansionPort = new ExpansionPort;
+    createExpansions();
+	vicII = new VicII;    
 	sid = new Sid( Sid::Type::MOS_6581, &events );
     input = new Input;
 	prg = new Prg;
@@ -478,6 +478,7 @@ System::~System() {
     delete[] colorRam;
     delete iecBus;
     delete vicII;
+    destroyExpansions();
 }
 
 auto System::setFirmware( unsigned typeId, uint8_t* data, unsigned size ) -> void {
@@ -522,6 +523,8 @@ auto System::power( bool softReset ) -> void {
 	if( !softReset )
 		initRam();
 	    
+    expansionPort->reset();
+    
     mode = (expansionPort->isExrom() << 1) | expansionPort->isGame();
     
     vicBank = 0;
@@ -789,4 +792,3 @@ auto System::changeExpansionPortMemoryMode(bool exrom, bool game) -> void {
 }
 
 }
-

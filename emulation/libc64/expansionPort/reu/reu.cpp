@@ -4,7 +4,10 @@
 
 namespace LIBC64 {  
     
-Reu::Reu() : ExpansionPort() {
+Reu* reu = nullptr;       
+    
+Reu::Reu(Emulator::Events* events) : ExpansionPort() {
+    this->events = events;
     setId( Interface::ExpansionIdReu );
     setRam( 128 );   
 
@@ -23,18 +26,14 @@ Reu::Reu() : ExpansionPort() {
         swapRead = false;
         steal = false;
         dmaCall( true );
-        
-        hostAddr = reg.hostAddr;
-        reuAddr = reg.reuAddr;
-        transferLength = reg.transferLength;
     };
     
     finish = [this]() {
         
-        if (!(command & 0x20)) { // not autoload
-            reg.hostAddr = hostAddr;
-            reg.reuAddr = reuAddr;
-            reg.transferLength = transferLength;                        
+        if (command & 0x20) { // autoload
+            hostAddr = reg.hostAddr;
+            reuAddr = reg.reuAddr;
+            transferLength = reg.transferLength; 
         }
         
         if (allowIrq()) {
@@ -48,9 +47,7 @@ Reu::Reu() : ExpansionPort() {
         dmaCall( false );
     };
 
-    system->events.registerCallback( { {&setIrq, 1}, {&unsetIrq, 1}, {&setDma, 1}, {&finish, 1} } );    
-    
-    reset();
+    events->registerCallback( { {&setIrq, 1}, {&unsetIrq, 1}, {&setDma, 1}, {&finish, 1} } );        
 }    
 
 Reu::~Reu() {
@@ -72,7 +69,7 @@ auto Reu::isBootable( ) -> bool {
 auto Reu::setRam(unsigned size) -> void {    
     unsigned sizeInKb = size;
 
-    size *= 1024;
+    size <<= 10;
     
     if (data && (size == this->size))
         return;
@@ -82,8 +79,7 @@ auto Reu::setRam(unsigned size) -> void {
         
     this->size = size;
         
-    data = new uint8_t[size];
-    std::memset(data, 0, size); 
+    data = new uint8_t[size];     
     
     // when lower 19 bits of REU address reach this value, address wraps around to zero
     wrapAround = sizeInKb == 128 ? 0x20000 : 0x80000;
@@ -99,6 +95,7 @@ auto Reu::setRam(unsigned size) -> void {
 auto Reu::reset() -> void {
     
     status &= ~0xe0;
+    std::memset(data, 0, size);
     
     command = 0x10; // FF00 trigger disabled    
     intMask = 0x1f;    
@@ -192,7 +189,7 @@ inline auto Reu::verify() -> void {
             }
         }
 
-        system->events.add(&finish, 1, Emulator::Events::UpdateExisting);
+        events->add(&finish, 1, Emulator::Events::UpdateExisting);
         
         return;
     } 
@@ -274,7 +271,7 @@ inline auto Reu::decrementTransferLength() -> void {
     if (--transferLength == 0) {
         transferLength = 1;
         status |= 0x40;
-        system->events.add( &finish, 1, Emulator::Events::UpdateExisting );
+        events->add( &finish, 1, Emulator::Events::UpdateExisting );
     }
 }
 
@@ -290,24 +287,24 @@ auto Reu::readIo2( uint16_t addr ) -> uint8_t {
         case 0:
             val = status;
             status &= ~0xe0;
-            system->events.add( &unsetIrq, 1, Emulator::Events::UpdateExisting );
+            events->add( &unsetIrq, 1, Emulator::Events::UpdateExisting );
             break;
         case 1:
             return command;
         case 2:
-            return reg.hostAddr & 0xff;
+            return hostAddr & 0xff;
         case 3:
-            return (reg.hostAddr >> 8) & 0xff;
+            return (hostAddr >> 8) & 0xff;
         case 4:
-            return reg.reuAddr & 0xff;
+            return reuAddr & 0xff;
         case 5:
-            return (reg.reuAddr >> 8) & 0xff;
+            return (reuAddr >> 8) & 0xff;
         case 6:
-            return (reg.reuAddr >> 16) | 0xf8;
+            return (reuAddr >> 16) | 0xf8;
         case 7:
-            return reg.transferLength & 0xff;
+            return transferLength & 0xff;
         case 8:
-            return (reg.transferLength >> 8) & 0xff;
+            return (transferLength >> 8) & 0xff;
         case 9:
             return intMask | 0x1f;
         case 0xa:
@@ -333,31 +330,32 @@ auto Reu::writeIo2( uint16_t addr, uint8_t value ) -> void {
                 waitForStart = true;
                 
                 if (command & 0x10) {                    
-                    system->events.add( &setDma, 1, Emulator::Events::UpdateExisting );
+                    events->add( &setDma, 1, Emulator::Events::UpdateExisting );
                     waitForStart = false;
                 }                    
             }
             break;
         case 2:
-            reg.hostAddr = (reg.hostAddr & 0xff00) | value;
+            hostAddr = reg.hostAddr = (reg.hostAddr & 0xff00) | value;
             break;
         case 3:
-            reg.hostAddr = (reg.hostAddr & 0xff) | (value << 8);
+            hostAddr = reg.hostAddr = (reg.hostAddr & 0xff) | (value << 8);
             break;
         case 4:
-            reg.reuAddr = (reg.reuAddr & 0xffff00) | value;
+            reuAddr = reg.reuAddr = (reg.reuAddr & 0xffff00) | value;
             break;
         case 5:
-            reg.reuAddr = (reg.reuAddr & 0xff00ff) | (value << 8);
+            reuAddr = reg.reuAddr = (reg.reuAddr & 0xff00ff) | (value << 8);
             break;
         case 6:
             reg.reuAddr = (reg.reuAddr & 0xffff) | (value << 16);
+            reuAddr = (reuAddr & 0xffff) | (value << 16);
             break;
         case 7:
-            reg.transferLength = (reg.transferLength & 0xff00) | value;
+            transferLength = reg.transferLength = (reg.transferLength & 0xff00) | value;
             break;
         case 8:
-            reg.transferLength = (reg.transferLength & 0xff) | (value << 8);
+            transferLength = reg.transferLength = (reg.transferLength & 0xff) | (value << 8);
             break;
         case 9:
             intMask = value | 0x1f;
@@ -365,7 +363,7 @@ auto Reu::writeIo2( uint16_t addr, uint8_t value ) -> void {
             if (allowIrq()) {
                 // maybe intmask is activated after a finished transfer, but before reading status.
                 status |= 0x80;
-                system->events.add( &setIrq, 1, Emulator::Events::UpdateExisting );                
+                events->add( &setIrq, 1, Emulator::Events::UpdateExisting );                
             }
             
             break;

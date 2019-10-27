@@ -34,6 +34,9 @@ auto States::load( std::string path, bool prependFolder ) -> void {
     if (!activeEmulator || (activeEmulator != emulator) )
         program->power( emulator, !imageFileLoaded );      
     
+    // state creates needed expansion
+    emulator->unsetExpansion();
+    
     errorPaths.clear();
     
     if (imageFileLoaded) {

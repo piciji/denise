@@ -76,6 +76,7 @@ struct System {
     CIA::M6526* cia1;
     CIA::M6526* cia2;
     ExpansionPort* expansionPort;
+    ExpansionPort* noExpansion;
     
 	Emulator::PowerSupply* powerSupply;
     Input* input;
@@ -135,7 +136,10 @@ struct System {
     static auto serialize6502( Emulator::Serializer& s, MOS65Context* cpuCtx ) -> void;        
     
     auto setExpansion( Emulator::Interface::Expansion& expansion ) -> void;
-    auto unsetExpansion() -> void;
+    
+    auto createExpansions() -> void;
+    auto destroyExpansions() -> void;
+    auto setExpansionCallbacks( ExpansionPort* expansionPtr ) -> void;
 };
 
 extern System* system;

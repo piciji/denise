@@ -29,7 +29,7 @@ struct SuperGames : GameCart {
 		writeProtect = !!(value & 8);
     }
     
-    auto init() -> void {
+    auto reset() -> void {
         cRomL = &chips[0];
         cRomH = &chips[0];
 		writeProtect = false;

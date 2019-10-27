@@ -33,7 +33,7 @@ struct GameCart : ExpansionPort {
     auto readChips() -> bool;
     virtual auto assumeChips() -> void;
     auto assumeChips( std::vector<unsigned> sizes ) -> void;
-    virtual auto init() -> void;
+    virtual auto reset() -> void;
     auto setRom(uint8_t* rom, unsigned romSize) -> void;
     static auto create( Interface::CartridgeId cartridgeId ) -> GameCart*;
     
@@ -45,7 +45,9 @@ struct GameCart : ExpansionPort {
     auto getWord( uint8_t* ptr ) -> uint16_t;
     auto isBootable( ) -> bool;
     
-    static auto getInstance(Interface::CartridgeId cartridgeId, uint8_t* rom, unsigned romSize) -> ExpansionPort*;
+    static auto getInstance(Interface::CartridgeId cartridgeId, uint8_t* rom, unsigned romSize) -> GameCart*;
 };    
     
+extern GameCart* gameCart;   
+
 }

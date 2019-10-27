@@ -71,8 +71,7 @@ struct Interface : Emulator::Interface {
     auto selectTapeListing(Media* media, unsigned pos) -> void;
 
 	//module slot handling
-	auto insertExpansionImage(Media* media, uint8_t* data, unsigned size) -> void;
-	auto ejectExpansionImage(Media* media) -> void;
+	auto assignExpansionImage(Media* media, uint8_t* data, unsigned size) -> void;
 	
 	//memory
 	auto insertMemory(Media* media, uint8_t* data, unsigned size) -> void;
@@ -83,6 +82,7 @@ struct Interface : Emulator::Interface {
 
     //expansion
     auto setExpansion(unsigned expansionId) -> void;
+    auto unsetExpansion() -> void;
     auto getExpansion() -> Expansion*;
     
 	//savestates

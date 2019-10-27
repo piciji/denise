@@ -29,7 +29,20 @@ struct Funplay : GameCart {
         }
     }
     
-    auto init() -> void {
+    auto assumeChips( ) -> void {
+    
+        GameCart::assumeChips( );
+        
+        for (auto& chip : chips) {
+            
+            if (chip.bank > 7)                
+                chip.bank = chips[ (chip.bank - 8) ].bank + 1;
+            else
+                chip.bank <<= 3;
+        }
+    }
+    
+    auto reset() -> void {
         cRomL = &chips[0];
         cRomH = nullptr;
     }

@@ -10,6 +10,8 @@
 
 namespace LIBC64 {
 
+GameCart* gameCart = nullptr;
+    
 GameCart::GameCart(bool game, bool exrom) : ExpansionPort() {
     
     this->game = game;
@@ -32,10 +34,10 @@ auto GameCart::setRom(uint8_t* rom, unsigned romSize) -> void {
     
     delete this;
     
-    system->expansionPort = newCart;
+    system->expansionPort = gameCart = newCart;
 }
     
-auto GameCart::getInstance( Interface::CartridgeId cartridgeId, uint8_t* rom, unsigned romSize ) -> ExpansionPort* {
+auto GameCart::getInstance( Interface::CartridgeId cartridgeId, uint8_t* rom, unsigned romSize ) -> GameCart* {
     
     if (!rom || (romSize == 0) )
         return nullptr;
@@ -59,9 +61,7 @@ auto GameCart::getInstance( Interface::CartridgeId cartridgeId, uint8_t* rom, un
     if ( !cart->readChips() ) {
         // no chip headers found, we assume it by user requested type
         cart->assumeChips();
-    }
-    
-    cart->init();
+    }    
     
     return cart;
 }
@@ -70,7 +70,7 @@ auto GameCart::create( Interface::CartridgeId cartridgeId ) -> GameCart* {
     GameCart* cart = nullptr;
     
     switch(cartridgeId) {
-        case Interface::CartridgeIdFunplay:
+        case Interface::CartridgeIdFunplay:            
             cart = new Funplay;
             break;
         case Interface::CartridgeIdOcean:
@@ -128,10 +128,10 @@ auto GameCart::readHeader( ) -> bool {
     size -= headerLength;        
     
     cartridgeId = (Interface::CartridgeId)getWord(&header[0x16]);
+    
     version = getWord(&header[0x14]);        
     exRom = header[0x18] & 1;
     game = header[0x19] & 1;
-
     return true;
 }
 
@@ -221,7 +221,7 @@ auto GameCart::assumeChips( std::vector<unsigned> sizes ) -> void {
             break;
         
         ptr += chip.size;
-    }    
+    }        
 }
 
 auto GameCart::readRomL(uint16_t addr) -> uint8_t {
@@ -251,7 +251,7 @@ auto GameCart::readRomH(uint16_t addr) -> uint8_t {
     return *(cRomH->ptr + addr);
 }
 
-auto GameCart::init() -> void {
+auto GameCart::reset() -> void {
     
     cRomL = &chips[0];
     
@@ -291,3 +291,4 @@ auto GameCart::isBootable( ) -> bool {
 }
     
 }
+

@@ -364,8 +364,7 @@ struct Interface {
 	virtual auto createTapeImage(unsigned& imageSize) -> uint8_t* { return nullptr; }
     virtual auto selectTapeListing(Media* media, unsigned pos) -> void { }
     // expansion image handling
-    virtual auto insertExpansionImage(Media* media, uint8_t* data, unsigned size) -> void {}
-    virtual auto ejectExpansionImage(Media* media) -> void {}
+    virtual auto assignExpansionImage(Media* media, uint8_t* data, unsigned size) -> void {}
 	// memory 
 	virtual auto insertMemory(Media* media, uint8_t* data, unsigned size) -> void {}
 	virtual auto ejectMemory(Media* media) -> void {}	
@@ -374,6 +373,7 @@ struct Interface {
 	virtual auto selectMemoryListing(Media* media, unsigned pos) -> bool { return false; }	
     // expansion port
     virtual auto setExpansion(unsigned expansionId) -> void {}
+    virtual auto unsetExpansion() -> void {}
     virtual auto getExpansion() -> Expansion* { return nullptr; }
 
     // savestates
@@ -442,7 +442,7 @@ struct Interface {
 		switch(media->group->type) {
 			case MediaGroup::Type::Disk: insertDisk(media, data, size); break;
 			case MediaGroup::Type::Tape: insertTape(media, data, size); break;
-			case MediaGroup::Type::Expansion: insertExpansionImage(media, data, size); break;
+			case MediaGroup::Type::Expansion: assignExpansionImage(media, data, size); break;
 			case MediaGroup::Type::Memory: insertMemory(media, data, size); break;
 			case MediaGroup::Type::HardDisk: insertHardDisk(media, size); break;
 		}
@@ -463,7 +463,7 @@ struct Interface {
 			case MediaGroup::Type::Disk: ejectDisk(media); break;
 			case MediaGroup::Type::Tape: ejectTape(media); break;
 			case MediaGroup::Type::Memory: ejectMemory(media); break;
-			case MediaGroup::Type::Expansion: ejectExpansionImage(media); break;
+			case MediaGroup::Type::Expansion: break; // use unset to remove expansion
 			case MediaGroup::Type::HardDisk: ejectHardDisk(media); break;
 		}		
 	}

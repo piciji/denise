@@ -23,7 +23,7 @@ struct Ocean : GameCart {
         }        
     }
     
-    auto init() -> void {
+    auto reset() -> void {
         cRomL = &chips[0];
         cRomH = &chips[0];
     }

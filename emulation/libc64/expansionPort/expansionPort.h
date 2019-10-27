@@ -73,7 +73,7 @@ struct ExpansionPort {
     
     virtual auto setRam(unsigned size) -> void {}
     
-    virtual auto reset(bool state) -> void {}
+    virtual auto reset() -> void {}
     
     virtual auto cycleLo() -> void {}   
     
@@ -89,6 +89,6 @@ struct ExpansionPort {
     
     auto setId(Interface::ExpansionId id) -> void { this->id = id; }
     auto setCartridgeId(Interface::CartridgeId cartridgeId) -> void { this->cartridgeId = cartridgeId; }
-};
-    
+};   
+
 }

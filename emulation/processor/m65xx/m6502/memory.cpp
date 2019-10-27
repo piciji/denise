@@ -71,6 +71,19 @@ template<uint8_t cycle> auto M6502::read( uint16_t addr, bool lastCycle ) -> uin
         }
     }        
     
+    // Note: data have to be stable for only ~125 ns ... 
+    // in case of C64 at ~1 Mhz second half cycle lasts ~500 ns.
+    // means final value readed back could change within 375 ns.
+    // to modulate this best a synHi-Pre and syncHi-Post
+    // with the "read" in between would be best but what about performance.
+    // so better not.
+    // in most cases a value isn't change that late anymore and doing it after
+    // 'syncHi' is too late.
+    // if this is important you should handle it in 'busRead' call.
+    // I am aware of two cases in the c64 emulation were this plays a role.
+    // 1. for 6502 in disk drive 1541 -> read via to fetch readed value by drive mechanic
+    // 2. expansion port dma tricks used by easy flash kernal replacement.
+    
     data = busRead( addr ); //read bus (second half cycle)
         
     ctx->syncHi();    
@@ -94,7 +107,7 @@ auto M6502::write( uint16_t addr, uint8_t data, bool lastCycle ) -> void {
 #ifdef SUPPORT_SO        
     handleSo();
 #endif            
-	// Beware: bus write and synchronisation happen in parallel 
+	// Note: bus write and synchronisation happen in parallel 
     // doesn't necessary mean internal logic of other bus participant can use written value after second half cycle.
     // thats why we do the write before syncHi. in the context of another bus participant the write should be pipelined
 	// now and executed to a proper time within syncHi

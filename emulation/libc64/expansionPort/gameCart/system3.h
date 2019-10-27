@@ -5,7 +5,7 @@ namespace LIBC64 {
     
 struct System3 : GameCart {
     
-    System3() : GameCart(false, true) {
+    System3() : GameCart(true, false) {
         
     }
 
@@ -30,7 +30,7 @@ struct System3 : GameCart {
     }
 
 
-    auto init() -> void {
+    auto reset() -> void {
         cRomL = &chips[0];
     }
 

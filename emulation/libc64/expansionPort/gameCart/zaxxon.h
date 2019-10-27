@@ -5,7 +5,7 @@ namespace LIBC64 {
     
 struct Zaxxon : GameCart {
 
-    Zaxxon() : GameCart(true, true) {
+    Zaxxon() : GameCart(false, false) {
         
     }
 
@@ -19,7 +19,7 @@ struct Zaxxon : GameCart {
         return GameCart::readRomL( addr );
     }
 
-    auto init() -> void {
+    auto reset() -> void {
         cRomL = &chips[0];
         cRomH = &chips[1];
     }
