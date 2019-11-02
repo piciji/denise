@@ -7,9 +7,7 @@ struct SuperGames : GameCart {
     
     SuperGames() : GameCart(false, false) {
         
-    }
-        
-	bool writeProtect;
+    }        	
 	
     auto writeIo2( uint16_t addr, uint8_t value ) -> void {
         
@@ -38,14 +36,7 @@ struct SuperGames : GameCart {
     auto assumeChips( ) -> void {
     
         GameCart::assumeChips( {16384} );
-    }
-    
-    auto serialize(Emulator::Serializer& s) -> void {
-        
-        s.integer( writeProtect );
-        
-        GameCart::serialize( s );
-    }
+    }    
     
 };
     

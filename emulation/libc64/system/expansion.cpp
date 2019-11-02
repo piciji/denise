@@ -7,22 +7,15 @@ namespace LIBC64 {
  
 auto System::serializeExpansion(Emulator::Serializer& s) -> void {
     
-    s.integer( (unsigned&)expansionPort->id );
+    unsigned expansionPortId = expansionPort->id;
     
-    s.integer( (unsigned&)expansionPort->cartridgeId );
+    s.integer( expansionPortId );  
        
     if ( s.mode() == Emulator::Serializer::Mode::Load ) {
-
-        uint8_t* rom = expansionPort->rom;
-        unsigned romSize = expansionPort->romSize;
-        Interface::CartridgeId cartridgeId = expansionPort->cartridgeId;
         
-        auto expansion = interface->getExpansionById( expansionPort->id );
+        auto expansion = interface->getExpansionById( expansionPortId );
 
         setExpansion( expansion ? *expansion : interface->expansions[0] );
-        
-        expansionPort->setCartridgeId( cartridgeId );
-        expansionPort->setRom( rom, romSize );
     }
     
     expansionPort->serialize( s );
@@ -62,6 +55,7 @@ auto System::destroyExpansions() -> void {
     
     delete reu;
     delete gameCart;
+    delete noExpansion;
 }
 
 auto System::setExpansionCallbacks( ExpansionPort* expansionPtr ) -> void {

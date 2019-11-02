@@ -43,7 +43,7 @@ auto Program::loadImageDataWhenOk( GUIKIT::File* file, unsigned fileId, Emulator
         return false;
 
     // check single file size
-    if ( !group->isTape() && !file->isSizeValid(fileId, MAX_MEDIUM_SIZE) )
+    if ( !group->isTape() && !group->isMemory() && !file->isSizeValid(fileId, MAX_MEDIUM_SIZE) )
         return false;    
     
     // non archived tape images will be loaded in chunks when needed

@@ -172,7 +172,7 @@ inline auto VicII::advanceCycle() -> void {
         initVCounter = false;
 		lpLatched = false;	
 		// retrigger happens in last pixel of second cycle for all Vic types	
-		//lpTriggerDelay = !lpPin ? 1 : 0;
+		// lpTriggerDelay = !lpPin ? 1 : 0;
         triggerLightPen( lpPin, 3 );
 
         
@@ -201,8 +201,8 @@ inline auto VicII::advanceCycle() -> void {
 		
 		if ( vCounter == vStart ) {
             updateBorderData();
-            // we buffer all pixel data in non blanking area, of course a crt 
-            // can not display the whole non blanking area
+            // we buffer all pixel data in non blanking area, of course a CRT 
+            // can not display the whole non blanking area.
             // cropping is done later and not within Vic emulation
             visibleLine = true; // non v-blank
             if (lineCallback.finishVblank)
@@ -224,6 +224,7 @@ inline auto VicII::advanceCycle() -> void {
 		setLineBuffer();  
 
 	lastBusPhi2 = 0xff; // clear internal bus    
+    sprite0DmaLateBA = false;
 }
 
 inline auto VicII::setLineBuffer() -> void {
@@ -293,6 +294,10 @@ auto VicII::spriteDmaCheck() -> void {
             updateSpriteBaState(i, true);
             spr->mcBase = 0;
             spr->expandYFlop = 1;
+            
+            //if ( (spr == sprite0) && (cycle == (ntsc ? 55 : 54) ) )
+            if (spr == sprite0)
+                sprite0DmaLateBA = true;
         }
     }
 }
@@ -400,9 +405,7 @@ auto VicII::reuBaLow() -> bool {
     // yeah i know this is a hack, because VIC is not aware of REU.
     // it's a limitation of half cycle accuracy.
     
-    bool special = sprite[0].enabled && (cycle == 54) && (sprite[0].y == (vCounter & 0xff)) && !sprite[0].dma;
-    
-    return baLow && !special;
+    return baLow && !sprite0DmaLateBA;
 }
 
 inline auto VicII::badLine() -> bool {

@@ -16,6 +16,7 @@ struct Cmd {
     bool noDriver = false;
     bool noGui = false;
     bool debug = false;
+    bool lockRegion = false;
     
     auto set(int argc, char** argv) -> void;
     
@@ -27,7 +28,9 @@ struct Cmd {
     
     auto updateFeature( Emulator::Interface* emulator, unsigned ident, int value) -> void;
     
-    auto updateChipset( Emulator::Interface* emulator, unsigned ident, bool pal) -> void;
+    auto updateChipset( Emulator::Interface* emulator, unsigned ident) -> void;
+    
+    auto updateRegion( Emulator::Interface* emulator, bool pal ) -> void;
     
     auto prepareDrives( Emulator::Interface* emulator ) -> void;
     

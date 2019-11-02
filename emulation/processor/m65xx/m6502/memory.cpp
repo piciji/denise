@@ -5,11 +5,10 @@ namespace MOS65FAMILY {
 
 template<uint8_t cycle> auto M6502::read( uint16_t addr, bool lastCycle ) -> uint8_t {                  
     static uint8_t data;
-    
-    ctx->syncLo();
-    
     ctx->addrBus = addr;
     ctx->writeCycle = false;
+    
+    ctx->syncLo();            
     
 #ifdef SUPPORT_SO    
     handleSo();
@@ -94,11 +93,11 @@ template<uint8_t cycle> auto M6502::read( uint16_t addr, bool lastCycle ) -> uin
 }
 
 auto M6502::write( uint16_t addr, uint8_t data, bool lastCycle ) -> void {           
-    
-    ctx->syncLo();      
-    
+
     ctx->addrBus = addr;
     ctx->writeCycle = true;
+    
+    ctx->syncLo();          
     
     if (lastCycle)
         sampleInterrupt();    

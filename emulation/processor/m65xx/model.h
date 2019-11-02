@@ -63,7 +63,7 @@ struct M65Model {
     /** jump out opcode when rdy is blocking execution. */
     /** use this, if you need to update UI. auto resumes opcode at interrupted cycle with correct context */
     /** it's slow, so don't use it for syncing purposes */
-    virtual auto leaveRdyHaltedOpcode( ) -> void = 0;
+    virtual auto hintUnblockedExecution( ) -> void = 0;
 
     
 	/** 

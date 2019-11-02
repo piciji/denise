@@ -57,10 +57,7 @@ namespace MOS65FAMILY {
         return ctx->readSelect();
     }
 
-    auto M6502::leaveRdyHaltedOpcode() -> void {
-
-        if (!workCtx->rdyLine)
-            return;
+    auto M6502::hintUnblockedExecution() -> void {
 
         dontBlockExecution = true;
     }

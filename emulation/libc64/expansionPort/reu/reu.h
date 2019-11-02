@@ -29,7 +29,13 @@ struct Reu : ExpansionPort {
     uint16_t transferLength;
     
     unsigned size = 0; // in kb
-    uint8_t* data = nullptr;   
+    uint8_t* data = nullptr; 
+    
+    unsigned romSize = 0;
+    uint8_t* rom = nullptr; 
+    
+    unsigned dumpSize = 0;
+    uint8_t* dump = nullptr;
         
     uint32_t wrapAround;
     uint32_t dramWrapAround;
@@ -49,10 +55,12 @@ struct Reu : ExpansionPort {
     auto writeIo2( uint16_t addr, uint8_t value ) -> void;    
     auto readIo2( uint16_t addr ) -> uint8_t;
     auto readRomL(uint16_t addr) -> uint8_t;
-    auto setRom(uint8_t* rom, unsigned romSize) -> void;
-    auto setRam(unsigned size) -> void;
+    auto setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void;
+    auto prepareRam(unsigned size) -> void;
+    auto setRam( uint8_t* dump, unsigned dumpSize ) -> void;
+    auto unsetRam() -> void;
+    auto injectRam() -> void;
 
-    auto cycleLo() -> void;
     auto cycleHi() -> void;
     
     auto reset() -> void;   

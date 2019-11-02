@@ -9,7 +9,7 @@ Reu* reu = nullptr;
 Reu::Reu(Emulator::Events* events) : ExpansionPort() {
     this->events = events;
     setId( Interface::ExpansionIdReu );
-    setRam( 128 );   
+    prepareRam( 128 );   
 
     setIrq = [this]() {
         
@@ -55,8 +55,16 @@ Reu::~Reu() {
         delete[] data;
 }
 
-auto Reu::setRom(uint8_t* rom, unsigned romSize) -> void {
-    ExpansionPort::setRom( rom, romSize );
+auto Reu::setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void {
+    
+    if (rom && (romSize & 2) ) {
+        // simple check if prg header is attached
+        romSize -= 2;
+        rom += 2;
+    }
+    
+    this->rom = rom;
+    this->romSize = romSize;
     
     exRom = (rom && romSize) ? false : true;
 }
@@ -66,7 +74,7 @@ auto Reu::isBootable( ) -> bool {
     return !exRom;
 }
 
-auto Reu::setRam(unsigned size) -> void {    
+auto Reu::prepareRam(unsigned size) -> void {    
     unsigned sizeInKb = size;
 
     size <<= 10;
@@ -92,9 +100,27 @@ auto Reu::setRam(unsigned size) -> void {
     status = sizeInKb == 128 ? 0 : 0x10;    
 }
 
+auto Reu::setRam( uint8_t* dump, unsigned dumpSize ) -> void {
+    this->dump = dump;
+    this->dumpSize = dumpSize;
+}
+
+auto Reu::unsetRam() -> void {
+    this->dump = nullptr;
+    this->dumpSize = 0;
+}
+
+auto Reu::injectRam( ) -> void {
+
+    if (!dump || dumpSize == 0)
+        return;
+    
+    std::memcpy(data, dump, std::min(dumpSize, size) );
+}
+
 auto Reu::reset() -> void {
     
-    status &= ~0xe0;
+    status &= ~0xe0;    
     std::memset(data, 0, size);
     
     command = 0x10; // FF00 trigger disabled    
@@ -145,25 +171,22 @@ inline auto Reu::incrementAddresses() -> void {
     reuAddr = (reuAddr & 0xf80000) | incremented;
 }
 
-auto Reu::cycleLo() -> void {
-    
-    if (waitForStart && !dma) {        
-        // listen CPU bus usage        
-        if (system->cpu->isWriteCycle()) {            
-            if ( system->cpu->addressBus() == 0xff00 ) {
-                waitForStart = false;
-                setDma();
-            }
-        }
-    }  
-}
-
 auto Reu::cycleHi() -> void {
     vicBaLow <<= 1;
     vicBaLow |= vicBA();
     
-    if (!dma)
+    if (!dma) {
+        if (waitForStart) {
+            // listen CPU bus usage        
+            if (system->cpu->isWriteCycle()) {
+                if (system->cpu->addressBus() == 0xff00) {
+                    waitForStart = false;
+                    events->add( &setDma, 1, Emulator::Events::UpdateExisting );
+                }
+            }
+        }  
         return;
+    }
     
     switch ( command & 3 ) {
         case 0: stash(); break;
@@ -404,7 +427,7 @@ auto Reu::serialize(Emulator::Serializer& s) -> void {
     s.integer( _size );
     if ( s.mode() == Emulator::Serializer::Mode::Load ) {
         // when size mismatches, recreate
-        setRam( _size >> 10 );
+        prepareRam( _size >> 10 );
     }
     
     s.array( data, size );

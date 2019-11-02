@@ -95,7 +95,6 @@ auto VicII::triggerLightPen( bool state, uint8_t subCycle ) -> void {
 
 template<bool phi1> auto VicII::checkLightPen( ) -> void {
         
-    //if(lpLatched || !lpTrigger)
     if(lpPin || lpLatched || (phi1 != lpPhi1) )
         return;
 	
@@ -109,11 +108,10 @@ template<bool phi1> auto VicII::checkLightPen( ) -> void {
 	// this code fire between the half cycles in pixel 4.
 	// for the 8565 the latch happens by pixel 7, btw. pixel 6 would give the same.
 	// for the 6569 the latch happens one pixel later, but it's already the next
-	// 2 pixel block. 
+	// two pixel block. 
     lpx = xCounter >> 1;
 	// add one block for 85xx and 2 blocks for 65xx
 	lpx += lpTriggerDelay;
-	//lpTrigger = 0;
 	
     lpy = vCounter & 0xff;		
 
@@ -236,6 +234,7 @@ auto VicII::power() -> void {
     idleMode = true;    
     initVCounter = false;
     refreshCounter = 0xff;     
+    sprite0DmaLateBA = false;
 
     modeEcmBmm = modeMcm = 0;
     modeEcmBmmDma = modeMcmDma = 0;

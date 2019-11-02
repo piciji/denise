@@ -20,31 +20,40 @@ GameCart::GameCart(bool game, bool exrom) : ExpansionPort() {
     cRomH = nullptr;
     cRomL = nullptr;
     
+    rom = nullptr;
+    romSize = 0;
+    
     setId( Interface::ExpansionIdGame );
 }
 
-auto GameCart::setRom(uint8_t* rom, unsigned romSize) -> void {
+auto GameCart::setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void {
         
-    auto _cartridgeId = this->cartridgeId;
-    
-    auto newCart = GameCart::getInstance( _cartridgeId, rom, romSize );
-    
-    if (!newCart)
+    if ( (this->rom == nullptr) && (rom == nullptr) )
         return;
+    
+    auto _cartridgeId = media->pcbLayout ? media->pcbLayout->id : 0;
+    
+    auto newCart = GameCart::getInstance( (Interface::CartridgeId)_cartridgeId, rom, romSize );
+    
+    bool inUse = this == system->expansionPort;
     
     delete this;
     
-    system->expansionPort = gameCart = newCart;
+    gameCart = newCart;
+    
+    if (inUse)            
+        system->expansionPort = gameCart;
 }
     
 auto GameCart::getInstance( Interface::CartridgeId cartridgeId, uint8_t* rom, unsigned romSize ) -> GameCart* {
     
     if (!rom || (romSize == 0) )
-        return nullptr;
+        return new GameCart();
     
     GameCart* cart = create( cartridgeId );
     
-    cart->ExpansionPort::setRom( rom, romSize );    
+    cart->rom = rom;
+    cart->romSize = romSize;
     
     if( cart->readHeader( ) ) {
         
@@ -208,6 +217,7 @@ auto GameCart::assumeChips( std::vector<unsigned> sizes ) -> void {
         chip.size = lastChipSize;
         chip.ptr = ptr;
         chip.ptrHi = chip.size > 8192 ? chip.ptr + 8192 : nullptr;
+        chip.id = id;
         chip.bank = id++;
                 
         offset += chip.size;
@@ -270,6 +280,27 @@ auto GameCart::getWord( uint8_t* ptr ) -> uint16_t {
 
 auto GameCart::serialize(Emulator::Serializer& s) -> void {
     
+    unsigned _cartridgeId = cartridgeId;
+    s.integer(_cartridgeId);
+    
+    if (s.mode() == Emulator::Serializer::Mode::Load) {
+        
+        if (cartridgeId != _cartridgeId) { // oh kacke
+            // cartridge id of state mismatches with loaded one.
+            // reload again
+            auto newCart = GameCart::getInstance((Interface::CartridgeId)_cartridgeId, rom, romSize);
+
+            delete this;
+            
+            system->expansionPort = gameCart = newCart;            
+        }
+    }
+    
+    gameCart->serializeStep2( s );
+}
+
+auto GameCart::serializeStep2(Emulator::Serializer& s) -> void {
+    
     int romLId = cRomL ? cRomL->id : -1;
     int romHId = cRomH ? cRomH->id : -1;
 
@@ -280,9 +311,11 @@ auto GameCart::serialize(Emulator::Serializer& s) -> void {
 
         cRomL = ((romLId >= 0) && (romLId < chips.size())) ? &chips[romLId] : nullptr;
         cRomH = ((romLId >= 0) && (romHId < chips.size())) ? &chips[romHId] : nullptr;
-    }   
-    
-    ExpansionPort::serialize( s );
+    }
+
+    s.integer(writeProtect);
+
+    ExpansionPort::serialize(s);
 }
 
 auto GameCart::isBootable( ) -> bool {

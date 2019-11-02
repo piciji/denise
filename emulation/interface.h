@@ -164,6 +164,7 @@ struct Interface {
         std::string name;
         uintptr_t guid; //free to use
         MediaGroup* group;
+        Expansion* expansion; // belongs to 
         PCBLayout* pcbLayout;
     };   
 
@@ -173,8 +174,7 @@ struct Interface {
 		enum class Type : unsigned { Disk, HardDisk, Tape, Expansion, Memory } type;
         std::vector<std::string> suffix;
         std::vector<std::string> creatable;
-        Media* selected;
-        Expansion* expansion; // belongs to                
+        Media* selected;                       
         std::vector<Media> media;
         
         auto isDisk() const -> bool { return type == Type::Disk; }
@@ -185,6 +185,7 @@ struct Interface {
         auto isDrive() const -> bool { return isDisk() || isTape() || isHardDisk(); };
         // default count of connected drives
         auto defaultUsage() -> unsigned { return type == Type::Disk ? 1 : 0; }       
+        auto getExpansion() -> Expansion* { return media[0].expansion; }
     };
 
     std::vector<MediaGroup> mediaGroups;         
@@ -364,7 +365,8 @@ struct Interface {
 	virtual auto createTapeImage(unsigned& imageSize) -> uint8_t* { return nullptr; }
     virtual auto selectTapeListing(Media* media, unsigned pos) -> void { }
     // expansion image handling
-    virtual auto assignExpansionImage(Media* media, uint8_t* data, unsigned size) -> void {}
+    virtual auto insertExpansionImage(Media* media, uint8_t* data, unsigned size) -> void {}
+    virtual auto ejectExpansionImage(Media* media) -> void {}
 	// memory 
 	virtual auto insertMemory(Media* media, uint8_t* data, unsigned size) -> void {}
 	virtual auto ejectMemory(Media* media) -> void {}	
@@ -373,7 +375,7 @@ struct Interface {
 	virtual auto selectMemoryListing(Media* media, unsigned pos) -> bool { return false; }	
     // expansion port
     virtual auto setExpansion(unsigned expansionId) -> void {}
-    virtual auto unsetExpansion() -> void {}
+    virtual auto unsetExpansion() -> void {}    
     virtual auto getExpansion() -> Expansion* { return nullptr; }
 
     // savestates
@@ -442,7 +444,7 @@ struct Interface {
 		switch(media->group->type) {
 			case MediaGroup::Type::Disk: insertDisk(media, data, size); break;
 			case MediaGroup::Type::Tape: insertTape(media, data, size); break;
-			case MediaGroup::Type::Expansion: assignExpansionImage(media, data, size); break;
+			case MediaGroup::Type::Expansion: insertExpansionImage(media, data, size); break;
 			case MediaGroup::Type::Memory: insertMemory(media, data, size); break;
 			case MediaGroup::Type::HardDisk: insertHardDisk(media, size); break;
 		}
@@ -463,7 +465,7 @@ struct Interface {
 			case MediaGroup::Type::Disk: ejectDisk(media); break;
 			case MediaGroup::Type::Tape: ejectTape(media); break;
 			case MediaGroup::Type::Memory: ejectMemory(media); break;
-			case MediaGroup::Type::Expansion: break; // use unset to remove expansion
+			case MediaGroup::Type::Expansion: ejectExpansionImage(media); break;
 			case MediaGroup::Type::HardDisk: ejectHardDisk(media); break;
 		}		
 	}

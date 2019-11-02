@@ -45,16 +45,32 @@ auto Cmd::parse() -> void {
         }
         
         if (arg == "-vic-6569R3") { // pal 
-            updateChipset(getEmulator("C64"), 0, 1);
+            updateChipset(getEmulator("C64"), 0);
+            updateRegion(getEmulator("C64"), true);
+            lockRegion = true;
         }
         else if (arg == "-vic-8565") { // pal 
-            updateChipset(getEmulator("C64"), 1, 1);
+            updateChipset(getEmulator("C64"), 1);
+            updateRegion(getEmulator("C64"), true);
+            lockRegion = true;
         }
         else if (arg == "-vic-6567R8") { // ntsc 
-            updateChipset(getEmulator("C64"), 0, 0);
+            updateChipset(getEmulator("C64"), 0);
+            updateRegion(getEmulator("C64"), false);
+            lockRegion = true;
         }
         else if (arg == "-vic-8562") { // ntsc 
-            updateChipset(getEmulator("C64"), 1, 0);
+            updateChipset(getEmulator("C64"), 1);
+            updateRegion(getEmulator("C64"), false);
+            lockRegion = true;
+        }
+        else if (arg == "-pal") { // pal 
+            if (!lockRegion)
+                updateRegion(getEmulator("C64"), true);
+        }
+        else if (arg == "-ntsc") { // pal 
+            if (!lockRegion)
+                updateRegion(getEmulator("C64"), false);
         }
         else if (arg == "-sid-6581") {
             updateFeature( getEmulator("C64"), LIBC64::Interface::FeatureIdSid, 1 );
@@ -152,10 +168,13 @@ auto Cmd::updateFeature( Emulator::Interface* emulator, unsigned ident, int valu
     }
 }
 
-auto Cmd::updateChipset( Emulator::Interface* emulator, unsigned ident, bool pal) -> void {            
+auto Cmd::updateChipset( Emulator::Interface* emulator, unsigned ident) -> void {            
 
-    settings->set( program->ident( emulator, "chipset" ), ident );
+    settings->set( program->ident( emulator, "chipset" ), ident );   
+}
 
+auto Cmd::updateRegion( Emulator::Interface* emulator, bool pal ) -> void {
+    
     settings->set<unsigned>( program->ident( emulator, "video_region"), pal ? 0 : 1);
 }
 
@@ -223,14 +242,14 @@ auto Cmd::setReuSize(std::string arg) -> void {
         return;
     }
 
-    auto emulator = getEmulator("C64");
-    auto& memoryType = emulator->memoryTypes[0];
+    auto emulator = getEmulator("C64");    
     auto& expansion = emulator->expansions[ LIBC64::Interface::ExpansionIdReu ];
+    auto memoryType = expansion.memoryType;
 
-    for(auto& memory : memoryType.memory) {
+    for(auto& memory : memoryType->memory) {
         if (memory.size == reuSize) {
             
-            settings->set<unsigned>( program->ident(emulator, memoryType.name + "_mem"), memory.id);
+            settings->set<unsigned>( program->ident(emulator, memoryType->name + "_mem"), memory.id);
             
             settings->set<unsigned>( program->ident(emulator, "expansion"), expansion.id);
         }

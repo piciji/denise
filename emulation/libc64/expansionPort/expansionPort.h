@@ -11,11 +11,7 @@ namespace LIBC64 {
 struct ExpansionPort {
         
     ExpansionPort() {
-        // if no cart was connected in expansion port
-        game = true;
-        exRom = true;
-        dma = false;
-        
+
         setId( Interface::ExpansionIdNone );
     }
     
@@ -26,13 +22,9 @@ struct ExpansionPort {
     // pins on startup, some carts change this during runtime
     bool exRom = true;
     bool game = true;
-    bool dma = false;
-    
-    uint8_t* rom = nullptr;
-    unsigned romSize = 0;
+    bool dma = false;   
     
     Interface::ExpansionId id = Interface::ExpansionIdNone; // base type of expansion
-    Interface::CartridgeId cartridgeId = Interface::CartridgeIdDefault; // header id
     
     std::function<void (bool state)> irqCall;    
     std::function<void (bool state)> nmiCall;
@@ -66,14 +58,15 @@ struct ExpansionPort {
     
     virtual auto writeRomH( uint16_t addr, uint8_t data ) -> void {}        
                     
-    virtual auto setRom(uint8_t* rom, unsigned romSize) -> void {
-        this->rom = rom;
-        this->romSize = romSize;
+    virtual auto setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void {}
+    
+    virtual auto prepareRam(unsigned size) -> void {}
+    
+    virtual auto reset() -> void {
+        game = true;
+        exRom = true;
+        dma = false;
     }
-    
-    virtual auto setRam(unsigned size) -> void {}
-    
-    virtual auto reset() -> void {}
     
     virtual auto cycleLo() -> void {}   
     
@@ -88,7 +81,6 @@ struct ExpansionPort {
     }
     
     auto setId(Interface::ExpansionId id) -> void { this->id = id; }
-    auto setCartridgeId(Interface::CartridgeId cartridgeId) -> void { this->cartridgeId = cartridgeId; }
 };   
 
 }

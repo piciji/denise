@@ -7,6 +7,8 @@
 #include "vic/vicII.h"
 #include "input/input.h"
 #include "disk/iec.h"
+#include "expansionPort/gameCart/gameCart.h"
+#include "expansionPort/reu/reu.h"
 #include "disk/structure/structure.h"
 #include "system/gluelogic.h"
 #include "../tools/crop.h"
@@ -48,54 +50,52 @@ auto Interface::prepareMemory() -> void {
 auto Interface::prepareMedia() -> void {
 	mediaGroups.push_back({MediaGroupIdDisk, "Disk", MediaGroup::Type::Disk, {"d64", "g64"}, {"d64", "g64"} });
 	mediaGroups.push_back({MediaGroupIdTape, "Tape", MediaGroup::Type::Tape, {"tap"}, {"tap"} });	
-	mediaGroups.push_back({MediaGroupIdMemory, "Memory", MediaGroup::Type::Memory, {"prg", "p00", "t64"}, {"prg"} });
+	mediaGroups.push_back({MediaGroupIdMemory, "Memory", MediaGroup::Type::Memory, {"prg", "p00", "t64", "reu"}, {"prg"} });
     mediaGroups.push_back({MediaGroupIdExpansionGame, "Module", MediaGroup::Type::Expansion, {"bin", "crt"}, {} });
-    mediaGroups.push_back({MediaGroupIdExpansionReu, "REU", MediaGroup::Type::Expansion, {"bin", "crt"}, {""} });
+    mediaGroups.push_back({MediaGroupIdExpansionReu, "REU", MediaGroup::Type::Expansion, {"bin", "crt", "prg"}, {""} });
 
 	{   auto& group = mediaGroups[MediaGroupIdDisk];
     
-		group.media.push_back({0, "Device 8", 0, &group, nullptr});
-		group.media.push_back({1, "Device 9", 0, &group, nullptr});
-		group.media.push_back({2, "Device 10", 0, &group, nullptr});
-		group.media.push_back({3, "Device 11", 0, &group, nullptr});
-        
+		group.media.push_back({0, "Device 8", 0, &group});
+		group.media.push_back({1, "Device 9", 0, &group});
+		group.media.push_back({2, "Device 10", 0, &group});
+		group.media.push_back({3, "Device 11", 0, &group});
         group.selected = nullptr;
-        group.expansion = nullptr;
 	}
 
 	{   auto& group = mediaGroups[MediaGroupIdTape];
-		group.media.push_back({0, "Datasette", 0, &group, nullptr});
-        
+		group.media.push_back({0, "Datasette", 0, &group});
         group.selected = nullptr;
-        group.expansion = nullptr;
 	}
     
 	{   auto& group = mediaGroups[MediaGroupIdMemory];
-		group.media.push_back({0, "Memory", 0, &group, nullptr});
-        
+		group.media.push_back({0, "Memory", 0, &group});
+        group.media.push_back({1, "REU Memory", 0, &group});
         group.selected = nullptr;
-        group.expansion = nullptr;
 	}
     
     {   auto& group = mediaGroups[MediaGroupIdExpansionGame];
-		group.media.push_back({0, "Module 1", 0, &group, nullptr});
-        group.media.push_back({1, "Module 2", 0, &group, nullptr});
-        group.media.push_back({2, "Module 3", 0, &group, nullptr});
-        group.media.push_back({3, "Module 4", 0, &group, nullptr});
-        
-        group.selected = &group.media[0];   
-        group.expansion = nullptr;
+		group.media.push_back({0, "Module 1", 0, &group});
+        group.media.push_back({1, "Module 2", 0, &group});
+        group.media.push_back({2, "Module 3", 0, &group});
+        group.media.push_back({3, "Module 4", 0, &group});
+        group.selected = &group.media[0];  
 	}
     
     {   auto& group = mediaGroups[MediaGroupIdExpansionReu];
-		group.media.push_back({0, "REU 1", 0, &group, nullptr});
-        group.media.push_back({1, "REU 2", 0, &group, nullptr});
-        group.media.push_back({2, "REU 3", 0, &group, nullptr});
-        group.media.push_back({3, "REU 4", 0, &group, nullptr});
-        
-        group.selected = &group.media[0];
-        group.expansion = nullptr;
+		group.media.push_back({0, "REU 1", 0, &group});
+        group.media.push_back({1, "REU 2", 0, &group});
+        group.media.push_back({2, "REU 3", 0, &group});
+        group.media.push_back({3, "REU 4", 0, &group});
+        group.selected = &group.media[0];  
 	}
+    
+    for(auto& group : mediaGroups) {
+        for(auto& media : group.media) {
+            media.expansion = nullptr;
+            media.pcbLayout = nullptr;
+        }
+    }
 }
 
 auto Interface::prepareExpansions() -> void {
@@ -114,11 +114,16 @@ auto Interface::prepareExpansions() -> void {
         expansion.pcbs.push_back( {CartridgeIdSystem3, "System 3"} );
         expansion.pcbs.push_back( {CartridgeIdZaxxon, "Zaxxon"} );
         
-        mediaGroups[MediaGroupIdExpansionGame].expansion = &expansion;
+        for(auto& media : mediaGroups[MediaGroupIdExpansionGame].media)
+            media.expansion = &expansion;
     }
                 
     {   auto& expansion = expansions[ExpansionIdReu];        
-        mediaGroups[MediaGroupIdExpansionReu].expansion = &expansion;
+    
+        for(auto& media : mediaGroups[MediaGroupIdExpansionReu].media)
+            media.expansion = &expansion;
+    
+        mediaGroups[MediaGroupIdMemory].media[1].expansion = &expansion;
     }
 }
 
@@ -647,14 +652,25 @@ auto Interface::createTapeImage(unsigned& imageSize) -> uint8_t* {
 	return tape->createTap( imageSize );
 }
 
-auto Interface::assignExpansionImage(Media* media, uint8_t* data, unsigned size) -> void {
+auto Interface::insertExpansionImage(Media* media, uint8_t* data, unsigned size) -> void {
     
     if (!media || !media->group->isExpansion())
         return;
     
-    system->expansionPort->setCartridgeId( (CartridgeId)(media->pcbLayout ? media->pcbLayout->id : 0) );
+    if (media->expansion->id == ExpansionIdGame)
+        gameCart->setRom(media, data, size);
+    else if (media->group->getExpansion()->id == ExpansionIdReu)
+        reu->setRom(media, data, size);
+}
+
+auto Interface::ejectExpansionImage(Media* media) -> void {
+    if (!media || !media->group->isExpansion())
+        return;
     
-    system->expansionPort->setRom( data, size );
+    if (media->expansion->id == ExpansionIdGame)
+        gameCart->setRom(media, nullptr, 0);
+    else if (media->group->getExpansion()->id == ExpansionIdReu)
+        reu->setRom(media, nullptr, 0);
 }
 
 auto Interface::insertMemory(Media* media, uint8_t* data, unsigned size) -> void {
@@ -662,12 +678,20 @@ auto Interface::insertMemory(Media* media, uint8_t* data, unsigned size) -> void
     if (!media || !media->group->isMemory())
         return;
     
-	prg->set( data, size );
+    if (media->expansion && media->expansion->id == ExpansionIdReu)
+        reu->setRam(data, size);            
+    else // c64 memory
+        prg->set( data, size );
 }
 
 auto Interface::ejectMemory(Media* media) -> void {
-	
-	prg->unset();
+    if (!media || !media->group->isMemory())
+        return;
+        
+    if (media->expansion && media->expansion->id == ExpansionIdReu)
+        reu->unsetRam();
+    else
+        prg->unset();
 }
 
 auto Interface::getLoadedMemory(unsigned& size) -> uint8_t* {
@@ -676,13 +700,23 @@ auto Interface::getLoadedMemory(unsigned& size) -> uint8_t* {
 }
 
 auto Interface::getMemoryListing(Media* media) -> std::vector<Emulator::Interface::Listing> {
-	
+    if (!media || !media->group->isMemory())
+        return {};
+    
 	return prg->getListing();
 }
 
 auto Interface::selectMemoryListing(Media* media, unsigned pos) -> bool {
-	
-	return prg->select( pos );
+    if (!media || !media->group->isMemory())
+        return false;
+        
+    if (media->expansion && media->expansion->id == ExpansionIdReu) {
+        reu->injectRam();
+        return true;
+    }
+    
+    // c64 memory
+    return prg->select( pos );
 }
 
 auto Interface::convertPetsciiToScreencode(bool state) -> void {
@@ -851,7 +885,7 @@ auto Interface::setMemory(MemoryType* memoryType, unsigned memoryId) -> void {
             auto memory = getMemoryById(*memoryType, memoryId);
             
             if (memory)
-                system->expansionPort->setRam( memory->size );            
+                system->expansionPort->prepareRam( memory->size );            
         }
         
         break;

@@ -57,7 +57,7 @@ struct M6502 : M65Model {
     auto addressBus() -> uint16_t;
     auto isWriteCycle() -> bool;
     
-    auto leaveRdyHaltedOpcode() -> void;
+    auto hintUnblockedExecution() -> void;
     
     enum Reg { RegA, RegS, RegX, RegY, RegAX };
     enum Flag { FlagC, FlagN, FlagZ, FlagV, FlagI, FlagD };

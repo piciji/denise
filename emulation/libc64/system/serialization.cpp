@@ -114,11 +114,11 @@ auto System::serializeAll(Emulator::Serializer& s) -> void {
     cia1->serialize( s );
     cia2->serialize( s );
     vicII->serialize( s );
-    sid->serialize( s );
-    expansionPort->serialize( s );
+    sid->serialize( s );    
     tape->serialize( s ); 
     iecBus->serialize( s );
     input->serialize( s );
+    serializeExpansion( s );
     
     events.serialize( s );
 }    
@@ -142,7 +142,8 @@ auto System::serialize(Emulator::Serializer& s) -> void {
     
     serialize6502( s, cpuCtx );   
 
-    cpu->setContext( cpuCtx );
+    if (s.mode() == Emulator::Serializer::Mode::Load)
+        cpu->setContext( cpuCtx );
 }
 
 auto System::serialize6502( Emulator::Serializer& s, MOS65Context* cpuCtx ) -> void {

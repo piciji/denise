@@ -56,6 +56,7 @@ struct MediaGroupLayout : GUIKIT::FramedVerticalLayout {
     auto updateVisibility( unsigned count, bool init = false ) -> void;
     auto fillListing(MediaGroupLayout::Block* block) -> void;
     auto showOnlyConnectedDevices() -> bool;
+    auto getBlock(Emulator::Interface::Media* media) -> Block*;
 
     MediaGroupLayout( Emulator::Interface::MediaGroup* mediaGroup, TabWindow* tabWindow );
 };
@@ -138,7 +139,7 @@ struct MediaLayout : GUIKIT::TabFrameLayout {
     auto updateListing( Emulator::Interface::Media* media ) -> void;
 	auto preselectPath( std::string& groupName ) -> std::string;
 	auto savePath( std::string& groupName, std::string path ) -> void;
-    auto showC64Listing( MediaGroupLayout* layout ) -> bool;
+    auto showC64Listing( MediaGroupLayout* layout, MediaGroupLayout::Block* block = nullptr ) -> bool;
     auto createImage( unsigned groupId ) -> void;
     auto showMediaGroupLayout( Emulator::Interface::MediaGroup* mediaGroup ) -> void;
     auto getMediaGroupLayout( Emulator::Interface::MediaGroup* mediaGroup ) -> MediaGroupLayout*;   

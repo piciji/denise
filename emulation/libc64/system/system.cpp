@@ -301,6 +301,8 @@ System::System(Interface* interface) {
         
         if ( !expansionPort->isBootable() )
             keyBuffer->process();
+        
+        cpu->hintUnblockedExecution();
     };
 	
 	vicII->midScreenCallback = [this]() {
@@ -329,8 +331,7 @@ System::System(Interface* interface) {
         else
             rdyIncomming &= ~1;      
         
-        cpu->setRdy( rdyIncomming != 0 );
-        //cpu->leaveRdyHaltedOpcode();
+        cpu->setRdy( rdyIncomming != 0 );        
     };
     
     sid->audioRefresh = [this](int16_t sample) {
@@ -792,3 +793,4 @@ auto System::changeExpansionPortMemoryMode(bool exrom, bool game) -> void {
 }
 
 }
+

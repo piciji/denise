@@ -234,11 +234,12 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
                     States::getInstance( emulator )->updateImage( nullptr, media );
 				}		
 				
-				if ( showC64Listing( layout ) )
+				if ( showC64Listing( layout, block ) ) {
                     block->listings.clear();
-                
-                if (layout->selectedBlock->media == media)
-                    layout->listings.reset();
+                    
+                    if (layout->selectedBlock->media == media)
+                        layout->listings.reset();
+                }                
 				
 				if (mediaGroup->isTape())
 					view->updateTapeIcons();
@@ -268,8 +269,9 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
 			updateMediaBlock(block, setting);
             
             block->selector.edit.onFocus = [this, layout, block]() {
+                
                 layout->selectedBlock = block;
-                if ( showC64Listing( layout ) ) {
+                if ( showC64Listing( layout, block ) ) {
                     layout->fillListing( block );
                 }
             };
@@ -290,7 +292,7 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
                 
                 int userData = block->selector.combo.userData();
                 
-                for( auto& pcb : layout->mediaGroup->expansion->pcbs ) {
+                for( auto& pcb : layout->mediaGroup->getExpansion()->pcbs ) {
                     
                     if (pcb.id == userData) {
                         
@@ -304,7 +306,7 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
             };
 		}
 
-		if ( showC64Listing( layout ) ) { //preload last listing
+		if ( showC64Listing( layout, block ) ) { //preload last listing
 			GUIKIT::File* file = filePool->get( setting->path );
 			uint8_t* data;
 
@@ -320,20 +322,32 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
     
     if ( showC64Listing( layout ) ) {
 
-        layout->listings.onActivate = [this, layout, mediaGroup]( ) {
-            
+        layout->listings.onActivate = [this, layout]( ) {
             auto selection = layout->listings.selection( );
             program->power( emulator );
-            emulator->selectListing( layout->selectedBlock->media, selection );
+            
+            if (layout->mediaGroup->isMemory()) {
+                for (auto& media : layout->mediaGroup->media)
+                    emulator->selectListing(&media, layout->listings.selection() );                                        
+            } else
+                emulator->selectListing( layout->selectedBlock->media, selection );
+            
             view->setFocused(300);
         };
 
-        layout->inject.onActivate = [this, layout, mediaGroup]() {
+        layout->inject.onActivate = [this, layout]() {
 
             if (!layout->listings.selected())
                 return;
-
-            if ( emulator->selectListing( layout->selectedBlock->media, layout->listings.selection( ) ) ) {
+            
+            bool injected = true;
+            
+            for (auto& media : layout->mediaGroup->media) {                
+                if ( !emulator->selectListing( &media, layout->listings.selection( ) ) )
+                    injected = false;
+            }
+            
+            if ( injected ) {
                 status->addMessage( trans->get( "memory_injected" ) );
                 view->setFocused( 300 );
             }	
@@ -628,7 +642,7 @@ auto MediaLayout::updateListing( Emulator::Interface::Media* media ) -> void {
     if (!mediaGroupLayout)
         return;
                 
-    if ( !showC64Listing( mediaGroupLayout ) )
+    if ( !showC64Listing( mediaGroupLayout, mediaGroupLayout->getBlock( media ) ) )
         return;
 
     for( auto block : mediaGroupLayout->blocks ) {
@@ -682,7 +696,7 @@ auto MediaLayout::translate() -> void {
             block->header.eject.setText(trans->get("eject"));
             block->header.deviceName.setText( trans->get( block->media->name, {}, true ) );            
             
-            if (mediaGroup->isDrive() || (mediaGroup->isExpansion() && mediaGroup->expansion->isEprom() ) ) {
+            if (mediaGroup->isDrive() || (mediaGroup->isExpansion() && mediaGroup->getExpansion()->isEprom() ) ) {
                 block->selector.open.setText("...");
                 block->selector.openW.setText(trans->get("open_w"));                
             } else {
@@ -731,15 +745,19 @@ auto MediaLayout::translate() -> void {
     }
 }
 
-auto MediaLayout::showC64Listing( MediaGroupLayout* layout ) -> bool {
+auto MediaLayout::showC64Listing( MediaGroupLayout* layout, MediaGroupLayout::Block* block ) -> bool {
     
     if ( !dynamic_cast<LIBC64::Interface*>(emulator) )
         return false;
     
     auto mediaGroup = layout->mediaGroup;
     
-    if ( mediaGroup->isMemory() || mediaGroup->isDisk() )
+    if ( mediaGroup->isDisk() )
         return true;
+    
+    if ( mediaGroup->isMemory() )
+        if (!block || (layout->blocks[0] == block) )
+            return true;
     
     return false;
 }
@@ -790,7 +808,7 @@ auto MediaLayout::insertImage( MediaGroupLayout* layout, MediaGroupLayout::Block
         filePool->assign(tabWindow->ident(media->name), file);
     }
 
-    if (showC64Listing(layout)) {
+    if (showC64Listing(layout, block)) {
         block->listings.clear();
         block->listings = emulator->getListing(media);        
         block->selector.edit.setFocused();
@@ -799,6 +817,11 @@ auto MediaLayout::insertImage( MediaGroupLayout* layout, MediaGroupLayout::Block
 
     if (mediaGroup->isTape())
         view->updateTapeIcons();
+    
+    if (mediaGroup->selected && !block->header.inUse.checked() ) {
+        block->header.inUse.setChecked();
+        block->header.inUse.onActivate();
+    }
 
     filePool->assign(tabWindow->ident(media->name + "store"), file);    
     filePool->unloadOrphaned();
@@ -894,7 +917,7 @@ auto MediaLayout::drop( std::string filePath, MediaGroupLayout::Block* block ) -
         if (!item || (item->info.size == 0) )
             return program->errorOpen( file, item, mes );        
 
-        if (!layout->mediaGroup->isTape() && (item->info.size > MAX_MEDIUM_SIZE))
+        if (!layout->mediaGroup->isTape() && !layout->mediaGroup->isMemory() && (item->info.size > MAX_MEDIUM_SIZE))
             return program->errorMediumSize( item, mes );            
 
         insertImage( layout, block, file, item );        
@@ -930,9 +953,9 @@ auto MediaGroupLayout::updateVisibility( unsigned count, bool init ) -> void {
     for(auto block : blocks) {  
         
         if (count) {
-            block->setVisible(false);
+           // block->setVisible(false);
             blockContainer.append(*block,{~0u, 0u}, 4);      
-
+            
             if (!listingInVisibleBlock)
                 listingInVisibleBlock = block == selectedBlock;     
             
@@ -941,10 +964,23 @@ auto MediaGroupLayout::updateVisibility( unsigned count, bool init ) -> void {
             if (!init)
                 block->header.eject.onActivate(); 
         }
-    }
+    }    
     
     if (!listingInVisibleBlock)
         fillListing( blocks[0] );	  
+    
+    if (tabWindow->visible() && tabWindow->tab.selection() == TabWindow::Layout::Media && tabWindow->mediaLayout->selection() == mediaGroup->id)
+        this->setVisible();
+}
+
+auto MediaGroupLayout::getBlock(Emulator::Interface::Media* media) -> Block* {
+    for( auto block : blocks ) {
+        
+        if (block->media == media)
+            return block;        
+    } 
+    
+    return nullptr;
 }
 
 auto MediaGroupLayout::fillListing( MediaGroupLayout::Block* block ) -> void {
@@ -1000,7 +1036,7 @@ auto MediaGroupLayout::build() -> void {
         auto& header = block->header;
         auto& selector = block->selector;
         
-        if (mediaGroup->isDrive() || (mediaGroup->isExpansion() && mediaGroup->expansion->isEprom() ) );
+        if (mediaGroup->isDrive() || (mediaGroup->isExpansion() && mediaGroup->getExpansion()->isEprom() ) );
         else {     
             header.remove( header.writeprotect );
             selector.remove( selector.spacer );
@@ -1012,10 +1048,10 @@ auto MediaGroupLayout::build() -> void {
         else
             radioGroup.push_back( &header.inUse );       
         
-        if (!mediaGroup->isExpansion() || (mediaGroup->expansion->pcbs.size() == 0) )
+        if (!mediaGroup->isExpansion() || (mediaGroup->getExpansion()->pcbs.size() == 0) )
             selector.remove( selector.combo );
         else {
-            for (auto& pcb : mediaGroup->expansion->pcbs) {
+            for (auto& pcb : mediaGroup->getExpansion()->pcbs) {
                 selector.combo.append( pcb.name, pcb.id );
 
                 if (media.pcbLayout && (media.pcbLayout == &pcb) )

@@ -34,9 +34,6 @@ auto States::load( std::string path, bool prependFolder ) -> void {
     if (!activeEmulator || (activeEmulator != emulator) )
         program->power( emulator, !imageFileLoaded );      
     
-    // state creates needed expansion
-    emulator->unsetExpansion();
-    
     errorPaths.clear();
     
     if (imageFileLoaded) {
@@ -136,31 +133,56 @@ auto States::loadFirmwarePaths( GUIKIT::Settings* loadSettings ) -> void {
     }
 }
 
+auto States::oneMediumOnly(Emulator::Interface::MediaGroup* group, Emulator::Interface::Media* mediaInUse) -> void {
+    
+    for( auto& media : group->media ) {
+        
+        if (&media == mediaInUse)
+            continue;
+
+        media.guid = uintptr_t(nullptr);
+        filePool->assign(program->ident(emulator, media.name), nullptr);
+        updateImage(nullptr, &media);
+    }
+    
+    if (!mediaInUse)
+        emulator->ejectMedium( group->selected ); 
+}
+
 auto States::loadImagePaths( GUIKIT::Settings* loadSettings ) -> void {
         
     auto setting = new FileSetting( loadSettings );
 
     for( auto& mediaGroup : emulator->mediaGroups ) {
 
+        auto mediaSelected = mediaGroup.selected;
+        Emulator::Interface::Media* mediaInUse = nullptr;
+        
         for( auto& media : mediaGroup.media ) {
 
             setting->ident = media.name;
             setting->update();
 
             if (setting->path.empty()) {
-                emulator->ejectMedium( &media );
-                media.guid = uintptr_t(nullptr);
-                filePool->assign(program->ident(emulator, media.name), nullptr);  
-                updateImage( nullptr, &media );
+                if (!mediaSelected ) {
+                    emulator->ejectMedium( &media );
+                    media.guid = uintptr_t(nullptr);
+                    filePool->assign(program->ident(emulator, media.name), nullptr);  
+                    updateImage( nullptr, &media );
+                }
                 continue;
             }
+            
+            mediaInUse = mediaSelected;
             
             InsertImage* inserted = findImage( &media );
             
             if (inserted) {
                 if ((inserted->setting->path == setting->path)
-                    && (inserted->setting->id == setting->id))
+                    && (inserted->setting->id == setting->id)) {
+                    mediaInUse = &media;
                     continue;
+                }
             }
             
             GUIKIT::File* file = filePool->get( setting->path );
@@ -176,6 +198,8 @@ auto States::loadImagePaths( GUIKIT::Settings* loadSettings ) -> void {
                 continue;
             }            
             
+            mediaInUse = &media;
+            
             media.guid = uintptr_t(file);
               
             emulator->ejectMedium( &media );
@@ -183,8 +207,11 @@ auto States::loadImagePaths( GUIKIT::Settings* loadSettings ) -> void {
             emulator->writeProtect( &media, file->isArchived() ? true : setting->writeProtect);
                        
             filePool->assign(program->ident(emulator, media.name), file);  
-            updateImage( setting, &media );
+            updateImage( setting, &media );            
         }
+                        
+        if (mediaSelected)
+            oneMediumOnly( &mediaGroup, mediaInUse);            
     }
 
     filePool->unloadOrphaned();
@@ -355,12 +382,17 @@ auto States::updateTapeMenu() -> void {
 
 auto States::updateSaveable() -> void {
     
+    auto expansionMediaGroup = emulator->getExpansion()->mediaGroup;    
+    
     for( auto& mediaGroup : emulator->mediaGroups ) {
-        
-        if (mediaGroup.isExpansion() || mediaGroup.isMemory())
-            continue;
-        
-        unsigned maxCount = emulator->getDrivesConnected( &mediaGroup );
+
+        // memory group saves only first main system memory media in case of
+        // state is generated during boot before injection can be done.
+        // all other memory dumps, mostly expansion memory, will be inserted
+        // during boot before a save state is generatable.
+        unsigned maxCount = 1;
+        if (mediaGroup.isDrive())
+            maxCount = emulator->getDrivesConnected( &mediaGroup );
         
         for( auto& media : mediaGroup.media ) {
             
@@ -369,7 +401,14 @@ auto States::updateSaveable() -> void {
             if (!insert)
                 continue;
             
-            insert->setting->setSaveable( maxCount > 0 );
+            if (mediaGroup.isExpansion()) {
+                if (expansionMediaGroup != &mediaGroup)
+                    insert->setting->setSaveable( false );
+                else
+                    insert->setting->setSaveable( !insert->setting->path.empty() );
+                
+            } else
+                insert->setting->setSaveable( maxCount > 0 );
             
             if (maxCount)
                 maxCount--;

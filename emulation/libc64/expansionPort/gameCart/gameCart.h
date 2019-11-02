@@ -26,20 +26,26 @@ struct GameCart : ExpansionPort {
     Chip* cRomL;
     Chip* cRomH;
     
+    Interface::CartridgeId cartridgeId;        
+    uint8_t* rom = nullptr; 
+    unsigned romSize = 0;
+    
     uint8_t* data = nullptr;
-    unsigned size;
+    unsigned size = 0;
+    bool writeProtect = false;
     
     auto readHeader() -> bool;
     auto readChips() -> bool;
     virtual auto assumeChips() -> void;
     auto assumeChips( std::vector<unsigned> sizes ) -> void;
     virtual auto reset() -> void;
-    auto setRom(uint8_t* rom, unsigned romSize) -> void;
+    auto setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void;
     static auto create( Interface::CartridgeId cartridgeId ) -> GameCart*;
     
     virtual auto readRomL(uint16_t addr) -> uint8_t;
     virtual auto readRomH(uint16_t addr) -> uint8_t;   
-    virtual auto serialize(Emulator::Serializer& s) -> void;
+    auto serialize(Emulator::Serializer& s) -> void;
+    auto serializeStep2(Emulator::Serializer& s) -> void;
     
     auto getDWord( uint8_t* ptr ) -> uint32_t;
     auto getWord( uint8_t* ptr ) -> uint16_t;

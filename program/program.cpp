@@ -162,23 +162,27 @@ auto Program::power( Emulator::Interface* emulator, bool showImageError ) -> voi
     emulator->setChipset(settings->get<unsigned>(ident(emulator, "chipset"), 0));
     emulator->setCpu(settings->get(ident(emulator, "cpu"), 0));
         
-    auto expansionMediaGroup = emulator->getExpansion()->mediaGroup;
+    auto expansion = emulator->getExpansion();
     
     for(auto& mediaGroup : emulator->mediaGroups) {
 
-        if (mediaGroup.isExpansion() && (&mediaGroup != expansionMediaGroup))            
+        if (mediaGroup.isExpansion() && (&mediaGroup != expansion->mediaGroup))            
             // allow only expansion media groups for the currently used expansion
             continue;    
         
         auto selectedMedia = mediaGroup.selected;
         
-        unsigned counter = settings->get( ident(emulator, mediaGroup.name + "_count"), mediaGroup.defaultUsage());
-        // affects only drives, not cartridges or memory injection
-        emulator->setDrivesConnected( &mediaGroup, counter );
-
-        needTapeControl |= mediaGroup.isTape() && (counter > 0);
+        if(mediaGroup.isDrive()) {
+            unsigned counter = settings->get( ident(emulator, mediaGroup.name + "_count"), mediaGroup.defaultUsage());        
+            emulator->setDrivesConnected( &mediaGroup, counter );
+            needTapeControl |= mediaGroup.isTape() && (counter > 0);
+        }                
         
         for(auto& media : mediaGroup.media) {            
+
+            if (mediaGroup.isMemory() && media.expansion && (media.expansion != expansion))
+                // this memory dump belongs to an expansion, which is not in use this time
+                continue; 
             
             if (selectedMedia && (selectedMedia != &media) )
                 // only one media element at a time can be used for this group

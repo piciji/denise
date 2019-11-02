@@ -16,7 +16,7 @@ Interface::Interface() : Emulator::Interface( "Amiga" ) {
     prepareDevices();
     preparePalettes();
     prepareStats();
-    //prepareExpansions();
+    prepareExpansions();
 }
 
 auto Interface::prepareStats() -> void {
@@ -42,22 +42,25 @@ auto Interface::prepareMedia() -> void {
     mediaGroups.push_back({MediaGroupIdHardDisk, "hd", MediaGroup::Type::HardDisk, {"hdf"}, {"hdf"} });
 
     {   auto& group = mediaGroups[MediaGroupIdDisk];
-        group.media.push_back({0, "DF0", 0, &group, nullptr});
-        group.media.push_back({1, "DF1", 0, &group, nullptr});
-        group.media.push_back({2, "DF2", 0, &group, nullptr});
-        group.media.push_back({3, "DF3", 0, &group, nullptr});
-        
+        group.media.push_back({0, "DF0", 0, &group});
+        group.media.push_back({1, "DF1", 0, &group});
+        group.media.push_back({2, "DF2", 0, &group});
+        group.media.push_back({3, "DF3", 0, &group});
         group.selected = nullptr;
-        group.expansion = nullptr;
     }
 
     {   auto& group = mediaGroups[MediaGroupIdHardDisk];
-        group.media.push_back({0, "DH0", 0, &group, nullptr});
-        group.media.push_back({1, "DH1", 0, &group, nullptr});
-        
+        group.media.push_back({0, "DH0", 0, &group});
+        group.media.push_back({1, "DH1", 0, &group});
         group.selected = nullptr;
-        group.expansion = nullptr;
-    }        
+    }  
+    
+    for(auto& group : mediaGroups) {        
+        for(auto& media : group.media) {
+            media.expansion = nullptr;
+            media.pcbLayout = nullptr;
+        }
+    }
 }
 
 auto Interface::prepareCpus() -> void {

@@ -88,7 +88,11 @@ auto View::autoloadPostProcessing() -> void {
         
         program->power(ddControl.emulator);
 
-        ddControl.emulator->selectListing(&mediaGroup->media[0], 0);
+        if (mediaGroup->isMemory()) {
+            for (auto& media : mediaGroup->media)
+                ddControl.emulator->selectListing(&media, 0); 
+        } else                
+            ddControl.emulator->selectListing(&mediaGroup->media[0], 0);
 
         if (mediaGroup->isTape())
             updateTapeIcons(Emulator::Interface::TapeMode::Play);
@@ -147,7 +151,8 @@ auto View::autoloadFiles() -> void {
                 if (mediaGroup.isHardDisk())
                     continue;
                 
-                if (mediaGroup.isExpansion() && !mediaGroup.expansion->isGame())
+                if (mediaGroup.isExpansion() && !mediaGroup.getExpansion()->isGame())
+                    // todo: distinguish between more expansion types
                     continue;
 
                 auto mediaSuffixList = mediaGroup.suffix;
@@ -155,27 +160,26 @@ auto View::autoloadFiles() -> void {
                 for (auto& mediaSuffix : mediaSuffixList) {
 
                     if (mediaSuffix == fileSuffix) {
+                        
+                        unsigned alreadyInUse = countImagesFor(&mediaGroup);
+                        Emulator::Interface::Media* media = mediaGroup.selected;
+                        
+                        if ( (media && alreadyInUse) || (alreadyInUse >= mediaGroup.media.size()))
+                            return autoloadFiles();
 
-                        if (GUIKIT::Vector::find(ddControl.mediaGroups, &mediaGroup))
-                            // only one file per group allowed
-                            if (!mediaGroup.isDisk())
-                                return autoloadFiles();
-
-                        if (!mediaGroup.isTape() && (item->info.size > MAX_MEDIUM_SIZE))
+                        if (!mediaGroup.isTape() && !mediaGroup.isMemory() && (item->info.size > MAX_MEDIUM_SIZE))
                             goto errorSize;
 
                         ddControl.emulator = emulator;
                         
-                        ddControl.mediaGroups.push_back(&mediaGroup);
+                        ddControl.mediaGroups.push_back(&mediaGroup);                        
                         
-                        Emulator::Interface::Media* media = mediaGroup.selected;
-                        
-                        if (!media) {
-                            unsigned pos = countImagesFor(&mediaGroup);
-                            
-                            pos = std::min( pos, (unsigned)mediaGroup.media.size() );
-                            
-                            media = &mediaGroup.media[ pos - 1 ];                        
+                        if (!media) {                          
+                            if (mediaGroup.isMemory())
+                                // todo: distinguish between more memory types
+                                media = (item->info.size >= (128 * 1024)) ? &mediaGroup.media[1] : &mediaGroup.media[0];
+                            else
+                                media = &mediaGroup.media[ alreadyInUse ];                                                
                         }
                             						
                         emuConfigView->mediaLayout->insertImage(media, file, item );
