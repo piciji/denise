@@ -953,7 +953,7 @@ auto MediaGroupLayout::updateVisibility( unsigned count, bool init ) -> void {
     for(auto block : blocks) {  
         
         if (count) {
-           // block->setVisible(false);
+            block->setVisible(false);
             blockContainer.append(*block,{~0u, 0u}, 4);      
             
             if (!listingInVisibleBlock)

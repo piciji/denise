@@ -100,7 +100,7 @@ System::System(Interface* interface) {
 		vicII->phase1();
         cia2->processLo();
 		sid->phase1();    
-        expansionPort->cycleLo();
+        //expansionPort->cycleLo();
     };
     
     cpuCtx->syncHi = [this]() {               

@@ -77,13 +77,15 @@ struct Memory {
 	}
     
     inline auto read( uint16_t addr ) -> uint8_t {
-
-        return (*reads[ addr >> 8 ])( (offsets[ addr >> 8 ] << 8) | (addr & 0xff) );
+        uint8_t page = addr >> 8;
+        
+        return (*reads[ page ])( (offsets[ page ] << 8) | (addr & 0xff) );
     }
 
     inline auto write( uint16_t addr, uint8_t data ) -> void {    
-
-        (*writes[ addr >> 8 ])( (offsetsW[ addr >> 8 ] << 8) | (addr & 0xff), data );
+        uint8_t page = addr >> 8;
+        
+        (*writes[ page ])( (offsetsW[ page ] << 8) | (addr & 0xff), data );
     }
     
     auto isLocation( uint8_t page, Read* read ) -> bool {
