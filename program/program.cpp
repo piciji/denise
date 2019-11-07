@@ -234,6 +234,7 @@ auto Program::power( Emulator::Interface* emulator, bool showImageError ) -> voi
 		emuConfigView->update();	
 	view->update();	
     view->setCursor( activeEmulator );
+    view->updateFreeze( activeEmulator );
 
 	if (needTapeControl)
 		view->showTapeMenu( true );
@@ -291,6 +292,7 @@ auto Program::powerOff() -> void {
     activeEmulator = nullptr;
     activeVideoManager = nullptr;
     filePool->unloadOrphaned();
+    view->updateFreeze(nullptr);
 }
 
 auto Program::loop() -> void {

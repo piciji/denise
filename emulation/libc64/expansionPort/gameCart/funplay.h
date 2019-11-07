@@ -31,7 +31,7 @@ struct Funplay : GameCart {
     
     auto assumeChips( ) -> void {
     
-        GameCart::assumeChips( );
+        Cart::assumeChips( );
         
         for (auto& chip : chips) {
             
@@ -43,7 +43,9 @@ struct Funplay : GameCart {
     }
     
     auto reset() -> void {
-        cRomL = &chips[0];
+        
+        cRomL = getChip(0);
+        
         cRomH = nullptr;
     }
 

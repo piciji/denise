@@ -14,6 +14,7 @@ struct View : public GUIKIT::Window {
         GUIKIT::MenuItem* poweron;
 		GUIKIT::MenuItem* reset;
         GUIKIT::MenuItem* poweroff;
+        GUIKIT::MenuItem* freeze;
         GUIKIT::MenuItem* firmware;
         GUIKIT::MenuItem* media;
         GUIKIT::MenuItem* diskSwapper;
@@ -40,6 +41,7 @@ struct View : public GUIKIT::Window {
 	auto removeMenuTree( GUIKIT::Menu* menu = nullptr ) -> void;
 	auto showTapeMenu( bool show, Emulator::Interface::TapeMode mode = Emulator::Interface::TapeMode::Unpressed ) -> void;
     auto updateTapeIcons( Emulator::Interface::TapeMode mode = Emulator::Interface::TapeMode::Unpressed ) -> void;
+    auto updateFreeze( Emulator::Interface* emulator ) -> void;
 
     auto buildMenu() -> void;
     auto updateViewport() -> void;
@@ -109,6 +111,7 @@ struct View : public GUIKIT::Window {
     GUIKIT::Image filterImage;
     GUIKIT::Image powerImage;
     GUIKIT::Image poweroffImage;
+    GUIKIT::Image freezeImage;
     GUIKIT::Image firmwareImage;
     GUIKIT::Image driveImage;
     GUIKIT::Image swapperImage;

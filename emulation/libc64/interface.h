@@ -17,17 +17,20 @@ struct Interface : Emulator::Interface {
     
     enum MediaGroupId {
         MediaGroupIdDisk = 0, MediaGroupIdTape = 1,
-        MediaGroupIdMemory = 2, MediaGroupIdExpansionGame = 3, MediaGroupIdExpansionReu = 4
+        MediaGroupIdMemory = 2, MediaGroupIdExpansionGame = 3, MediaGroupIdExpansionReu = 4,
+        MediaGroupIdExpansionActionReplay = 5,
     };
     
     enum ExpansionId {
-        ExpansionIdNone = 0, ExpansionIdGame = 1, ExpansionIdReu = 2,
+        ExpansionIdNone = 0, ExpansionIdGame = 1, ExpansionIdReu = 2, ExpansionIdActionReplay = 3,
     };
     
     enum CartridgeId {
         CartridgeIdDefault = 0, CartridgeIdDefault8k = 256, CartridgeIdDefault16k = 257,
         CartridgeIdUltimax = 258, CartridgeIdOcean = 5, CartridgeIdFunplay = 7,
-        CartridgeIdSuperGames = 8, CartridgeIdSystem3 = 15, CartridgeIdZaxxon = 18
+        CartridgeIdSuperGames = 8, CartridgeIdSystem3 = 15, CartridgeIdZaxxon = 18,
+        CartridgeIdActionReplayMK2 = 50, CartridgeIdActionReplayMK3 = 35,
+        CartridgeIdActionReplayMK4 = 30, CartridgeIdActionReplayV41AndHigher = 1, 
     };
     
     static const std::string Version;
@@ -119,6 +122,8 @@ struct Interface : Emulator::Interface {
     
     auto setMemory(MemoryType* memoryType, unsigned memoryId) -> void;
 	
+    auto hasFreezerButton() -> bool;
+    auto freeze() -> void;
 private:
 	auto prepareDevices() -> void;
 	auto prepareMedia() -> void;

@@ -9,6 +9,7 @@
 #include "disk/iec.h"
 #include "expansionPort/gameCart/gameCart.h"
 #include "expansionPort/reu/reu.h"
+#include "expansionPort/actionReplay/actionReplay.h"
 #include "disk/structure/structure.h"
 #include "system/gluelogic.h"
 #include "../tools/crop.h"
@@ -53,6 +54,7 @@ auto Interface::prepareMedia() -> void {
 	mediaGroups.push_back({MediaGroupIdMemory, "Memory", MediaGroup::Type::Memory, {"prg", "p00", "t64", "reu"}, {"prg"} });
     mediaGroups.push_back({MediaGroupIdExpansionGame, "Module", MediaGroup::Type::Expansion, {"bin", "crt"}, {} });
     mediaGroups.push_back({MediaGroupIdExpansionReu, "REU", MediaGroup::Type::Expansion, {"bin", "crt", "prg"}, {""} });
+    mediaGroups.push_back({MediaGroupIdExpansionActionReplay, "Action Replay", MediaGroup::Type::Expansion, {"bin", "crt"}, {""} });
 
 	{   auto& group = mediaGroups[MediaGroupIdDisk];
     
@@ -90,6 +92,15 @@ auto Interface::prepareMedia() -> void {
         group.selected = &group.media[0];  
 	}
     
+    {   auto& group = mediaGroups[MediaGroupIdExpansionActionReplay];
+		group.media.push_back({0, "Action Replay 1", 0, &group});
+        group.media.push_back({1, "Action Replay 2", 0, &group});
+        group.media.push_back({2, "Action Replay 3", 0, &group});
+        group.media.push_back({3, "Action Replay 4", 0, &group});
+        group.selected = &group.media[0];  
+	}
+
+    
     for(auto& group : mediaGroups) {
         for(auto& media : group.media) {
             media.expansion = nullptr;
@@ -101,7 +112,8 @@ auto Interface::prepareMedia() -> void {
 auto Interface::prepareExpansions() -> void {
     expansions.push_back( { ExpansionIdNone, "Empty", Expansion::Type::Empty, nullptr, nullptr } );
     expansions.push_back( { ExpansionIdGame, "Game Cart", Expansion::Type::Game, nullptr, &mediaGroups[MediaGroupIdExpansionGame] } );
-    expansions.push_back( { ExpansionIdReu, "REU", Expansion::Type::Ram, &memoryTypes[0], &mediaGroups[MediaGroupIdExpansionReu] } );     
+    expansions.push_back( { ExpansionIdReu, "REU", Expansion::Type::Ram, &memoryTypes[0], &mediaGroups[MediaGroupIdExpansionReu] } );    
+    expansions.push_back( { ExpansionIdActionReplay, "Action Replay", Expansion::Type::Freezer, nullptr, &mediaGroups[MediaGroupIdExpansionActionReplay] } );     
     
     {   auto& expansion = expansions[ExpansionIdGame];        
         expansion.pcbs.push_back( {CartridgeIdDefault, "Default"} );
@@ -124,6 +136,17 @@ auto Interface::prepareExpansions() -> void {
             media.expansion = &expansion;
     
         mediaGroups[MediaGroupIdMemory].media[1].expansion = &expansion;
+    }
+    
+    {   auto& expansion = expansions[ExpansionIdActionReplay];        
+        expansion.pcbs.push_back( {CartridgeIdDefault, "Default"} );
+        expansion.pcbs.push_back( {CartridgeIdActionReplayMK2, "Action Replay MK2"} );
+        expansion.pcbs.push_back( {CartridgeIdActionReplayMK3, "Action Replay MK3"} );
+        expansion.pcbs.push_back( {CartridgeIdActionReplayMK4, "Action Replay MK4"} );
+        expansion.pcbs.push_back( {CartridgeIdActionReplayV41AndHigher, "Action Replay V4"} );
+        
+        for(auto& media : mediaGroups[MediaGroupIdExpansionActionReplay].media)
+            media.expansion = &expansion;
     }
 }
 
@@ -267,7 +290,7 @@ auto Interface::prepareFeatures() -> void {
     // distinguish between old and new ( 6526a ) cia chips
     features.push_back({FeatureIdCiaRev, "Cia 6526a/6526", Feature::Type::Switch, 1, false, false});
     // ANE magic byte value depends on cpu manufacturer and unemulatable behaviour like heat
-    features.push_back({FeatureIdCpuAneMagic, "ANE Magic Byte", Feature::Type::Hex, 0xee, false, false, { 0, 0xff }});
+    features.push_back({FeatureIdCpuAneMagic, "ANE Magic Byte", Feature::Type::Hex, 0xef, false, false, { 0, 0xff }});
     // c64c use custom ic instead of discrete glue logic
     features.push_back({FeatureIdGlueLogic, "Custom IC Glue Logic", Feature::Type::Switch, 0, false, false});
     // disk drive thread consumes a single core 100%, usefull when emulating more than two drives
@@ -661,6 +684,8 @@ auto Interface::insertExpansionImage(Media* media, uint8_t* data, unsigned size)
         gameCart->setRom(media, data, size);
     else if (media->group->getExpansion()->id == ExpansionIdReu)
         reu->setRom(media, data, size);
+    else if (media->group->getExpansion()->id == ExpansionIdActionReplay)
+        actionReplay->setRom(media, data, size);
 }
 
 auto Interface::ejectExpansionImage(Media* media) -> void {
@@ -671,6 +696,8 @@ auto Interface::ejectExpansionImage(Media* media) -> void {
         gameCart->setRom(media, nullptr, 0);
     else if (media->group->getExpansion()->id == ExpansionIdReu)
         reu->setRom(media, nullptr, 0);
+    else if (media->group->getExpansion()->id == ExpansionIdActionReplay)
+        actionReplay->setRom(media, nullptr, 0);
 }
 
 auto Interface::insertMemory(Media* media, uint8_t* data, unsigned size) -> void {
@@ -910,6 +937,14 @@ auto Interface::unsetExpansion() -> void {
 auto Interface::getExpansion() -> Expansion* {
 
     return getExpansionById( system->expansionPort->id );
+}
+
+auto Interface::hasFreezerButton() -> bool {
+    return system->expansionPort->hasFreezeButton();
+}
+
+auto Interface::freeze() -> void {
+    system->expansionPort->freeze();
 }
 
 }

@@ -146,7 +146,7 @@ struct Interface {
     struct Expansion {
         unsigned id;
         std::string name;
-        enum class Type : unsigned { Empty, Game, Ram, Eprom, TurboCart } type;
+        enum class Type : unsigned { Empty, Game, Ram, Eprom, TurboCart, Freezer } type;
         MemoryType* memoryType; // uses RAM
         MediaGroup* mediaGroup; // uses ROM
         std::vector<PCBLayout> pcbs;
@@ -377,6 +377,9 @@ struct Interface {
     virtual auto setExpansion(unsigned expansionId) -> void {}
     virtual auto unsetExpansion() -> void {}    
     virtual auto getExpansion() -> Expansion* { return nullptr; }
+    // freezer carts
+    virtual auto hasFreezerButton() -> bool { return false; }
+    virtual auto freeze() -> void {}
 
     // savestates
     virtual auto checkstate(uint8_t* data, unsigned size) -> bool { return false; }    

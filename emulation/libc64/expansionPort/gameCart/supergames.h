@@ -6,8 +6,10 @@ namespace LIBC64 {
 struct SuperGames : GameCart {
     
     SuperGames() : GameCart(false, false) {
-        
-    }        	
+        writeProtect = false;
+    }       
+
+    bool writeProtect = false; 	
 	
     auto writeIo2( uint16_t addr, uint8_t value ) -> void {
         
@@ -28,16 +30,23 @@ struct SuperGames : GameCart {
     }
     
     auto reset() -> void {
-        cRomL = &chips[0];
-        cRomH = &chips[0];
+        cRomL = getChip(0);
+        cRomH = getChip(0);
+
 		writeProtect = false;
     }
 
     auto assumeChips( ) -> void {
     
-        GameCart::assumeChips( {16384} );
+        Cart::assumeChips( {16384} );
     }    
     
+    auto serializeStep2(Emulator::Serializer& s) -> void {
+    
+        Cart::serializeStep2( s );
+
+        s.integer(writeProtect);   
+    }
 };
     
 }

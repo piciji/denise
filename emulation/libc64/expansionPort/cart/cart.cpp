@@ -1,0 +1,302 @@
+
+#include "cart.h"
+#include "../../system/system.h"
+
+namespace LIBC64 {
+    
+Cart::Cart(bool game, bool exrom) : ExpansionPort() {
+    
+    this->game = game;
+    this->exRom = exrom;
+    
+    cRomH = nullptr;
+    cRomL = nullptr;
+    
+    rom = nullptr;
+    romSize = 0;
+    
+    data = nullptr;
+    size = 0;
+}
+
+auto Cart::setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void {
+        
+    if ( (this->rom == nullptr) && (rom == nullptr) )
+        return;
+    
+    auto _cartridgeId = media->pcbLayout ? media->pcbLayout->id : 0;
+    
+    auto newCart = rebuild( (Interface::CartridgeId)_cartridgeId, rom, romSize );
+  
+    assign( newCart );
+}
+    
+auto Cart::rebuild( Interface::CartridgeId cartridgeId, uint8_t* _rom, unsigned _romSize ) -> Cart* {
+    
+    if (!_rom || (_romSize == 0) )
+        return create( Interface::CartridgeIdDefault );
+    
+    Cart* cart = create( cartridgeId );
+    
+    cart->rom = _rom;
+    cart->romSize = _romSize;
+    
+    if( cart->readHeader( ) ) {
+        
+        if (cart->cartridgeId != cartridgeId) {
+            cartridgeId = cart->cartridgeId;
+            // if user doesn't request a specific cart and analyzing header detects a specific cart
+            delete cart;                        
+            // lets recreate by detected type
+            return rebuild( cartridgeId, _rom, _romSize );            
+        }        
+    } else
+        cart->cartridgeId = cartridgeId;
+    
+    if ( !cart->readChips() ) {
+        // no chip headers found, we assume it by user requested type
+        cart->assumeChips();
+    }    
+    
+    return cart;
+}
+        
+auto Cart::readHeader( ) -> bool {
+    
+    data = rom;
+    size = romSize;
+    
+    if (!rom)
+        return false;
+    
+    if (size < (sizeof header))
+        return false;
+
+    std::memcpy(header, data, sizeof header);
+
+    if (std::memcmp(header, "C64 CARTRIDGE   ", 16))
+        return false;
+
+    uint32_t headerLength = getDWord(&header[0x10]);
+
+    if (headerLength < (sizeof header))
+        return false;
+
+    if (size <= headerLength)
+        return false;
+    
+    data += headerLength;
+    size -= headerLength;        
+    
+    cartridgeId = (Interface::CartridgeId)getWord(&header[0x16]);
+    
+    version = getWord(&header[0x14]);        
+    exRom = header[0x18] & 1;
+    game = header[0x19] & 1;
+    return true;
+}
+
+auto Cart::readChips() -> bool {
+    if (!data || (size == 0) )
+        return false;
+    
+    chips.clear();
+    uint8_t* ptr = data;
+    unsigned offset = 0;
+    unsigned id = 0;
+    
+    uint8_t cheader[16]; //chip header
+    
+    while(1) {
+                        
+        offset += sizeof cheader;
+        
+        if ( offset >= size )
+            break;
+        
+        std::memcpy(cheader, ptr, sizeof cheader);
+        
+        if (std::memcmp(cheader, "CHIP", 4))
+            break;
+        
+        ptr += sizeof cheader;
+        
+        Chip chip;
+        chip.id = id++;
+        chip.type = (Chip::Type)getWord(&cheader[0x8]);
+        chip.bank = getWord(&cheader[0xa]);
+        chip.addr = getWord(&cheader[0xc]);
+        chip.size = getWord(&cheader[0xe]);
+        chip.offset = offset;
+        chip.ptr = ptr;        
+		
+        offset += chip.size;
+        
+        if (offset > size)
+            chip.size -= offset - size;
+        
+        if (chip.size == 0)
+            break;
+        
+        chip.ptrHi = chip.size > 8192 ? chip.ptr + 8192 : nullptr;
+        
+        chips.push_back( chip );
+
+        if (offset >= size)
+            break;
+        
+        ptr += chip.size;
+    }
+    
+    if ( chips.size() == 0 )
+        return false;
+    
+    return true;
+}
+
+auto Cart::assumeChips( ) -> void {
+    
+    assumeChips( {8192} );
+}
+
+auto Cart::assumeChips( std::vector<unsigned> sizes ) -> void {
+    
+    if (!data || (size == 0) )
+        return;
+    
+    uint8_t* ptr = data;
+    unsigned offset = 0;
+    unsigned id = 0;
+    unsigned lastChipSize = 8192;
+    
+    while(true) {
+        
+        lastChipSize = id < sizes.size() ? sizes[id] : lastChipSize;
+        
+        Chip chip;
+        chip.size = lastChipSize;
+        chip.ptr = ptr;        
+        chip.id = id;
+        chip.bank = id++;
+                
+        offset += chip.size;
+        
+        if (offset > size)
+            chip.size -= offset - size;
+        
+        if (chip.size == 0)
+            break;
+        
+        chip.ptrHi = chip.size > 8192 ? chip.ptr + 8192 : nullptr;
+        
+        chips.push_back( chip );    
+        
+        if (offset >= size)
+            break;
+        
+        ptr += chip.size;
+    }        
+}
+
+auto Cart::readRomL(uint16_t addr) -> uint8_t {
+	
+    if (!cRomL)
+        return ExpansionPort::readRomL( addr );
+    
+    addr %= cRomL->size;		
+    
+    return *(cRomL->ptr + addr);
+}
+    
+auto Cart::readRomH(uint16_t addr) -> uint8_t {
+
+    if (!cRomH)
+        return ExpansionPort::readRomH( addr );
+    
+    if (cRomH->ptrHi) {		
+		
+        addr %= cRomH->size - 8192;				
+        
+        return *( cRomH->ptrHi + addr);        
+    }
+	
+    addr %= cRomH->size;		
+
+    return *(cRomH->ptr + addr);
+}
+
+auto Cart::reset() -> void {  
+    
+    cRomL = getChip(0);
+    
+    cRomH = chips.size() > 1 ? getChip(1) : getChip(0);
+}
+
+auto Cart::getDWord( uint8_t* ptr ) -> uint32_t {
+    
+    return ptr[0] << 24 | ptr[1] << 16 | ptr[2] << 8 | ptr[3];
+}
+
+auto Cart::getWord( uint8_t* ptr ) -> uint16_t {
+    
+    return ptr[0] << 8 | ptr[1];
+}
+
+auto Cart::serialize(Emulator::Serializer& s) -> void {
+    
+    unsigned _cartridgeId = cartridgeId;
+    s.integer(_cartridgeId);
+    
+    if (s.mode() == Emulator::Serializer::Mode::Load) {
+        
+        if (cartridgeId != _cartridgeId) { // oh kacke
+            // cartridge id of state mismatches with loaded one.
+            // it seems the cart which was loaded while creating this save state
+            // isn't present anymore.
+            // we need to reload the expected expansion and not the loaded one in order
+            // to unserialize the right data.
+            // probably the loaded state is unusable but we don't want to crash the emulation
+            // on top of that when data is unserialized in wrong environment.
+            
+            auto cart = create( (Interface::CartridgeId)_cartridgeId );
+            cart->rom = rom;
+            cart->romSize = romSize;
+            cart->readHeader();
+            // force cart id from state.
+            cart->cartridgeId = (Interface::CartridgeId)_cartridgeId;
+            if (!cart->readChips())
+                cart->assumeChips();            
+            
+            assign( cart );            
+            cart->serializeStep2( s );
+            
+            return;
+        }
+    }
+    
+    serializeStep2( s );
+}
+
+auto Cart::serializeStep2(Emulator::Serializer& s) -> void {
+    
+    int romLId = cRomL ? cRomL->id : -1;
+    int romHId = cRomH ? cRomH->id : -1;
+
+    s.integer(romLId);
+    s.integer(romHId);
+
+    if (s.mode() == Emulator::Serializer::Mode::Load) {
+
+        cRomL = ((romLId >= 0) && (romLId < chips.size())) ? &chips[romLId] : nullptr;
+        cRomH = ((romLId >= 0) && (romHId < chips.size())) ? &chips[romHId] : nullptr;
+    }
+
+    ExpansionPort::serialize(s);
+}
+
+auto Cart::isBootable( ) -> bool {
+    
+    return true;
+}
+    
+}

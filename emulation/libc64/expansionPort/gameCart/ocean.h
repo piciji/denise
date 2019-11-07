@@ -11,6 +11,9 @@ struct Ocean : GameCart {
     
     auto writeIo1( uint16_t addr, uint8_t value ) -> void {
         
+        if (!getChip(0))
+            return;
+        
         value &= 63;
         value %= chips.size();
         
@@ -24,8 +27,9 @@ struct Ocean : GameCart {
     }
     
     auto reset() -> void {
-        cRomL = &chips[0];
-        cRomH = &chips[0];
+        
+        cRomL = getChip(0);
+        cRomH = getChip(0);
     }
 
 };

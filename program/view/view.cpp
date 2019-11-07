@@ -468,6 +468,8 @@ auto View::buildMenu() -> void {
     filterImage.setResourceId( ID_FILTER );
     powerImage.loadPng((uint8_t*)power, sizeof(power)); 
     powerImage.setResourceId( ID_POWER );
+    freezeImage.loadPng((uint8_t*)power, sizeof(power)); 
+    freezeImage.setResourceId( ID_POWER );
 	poweroffImage.loadPng((uint8_t*)shutdown, sizeof(shutdown));
     poweroffImage.setResourceId( ID_SHUTDOWN );
     firmwareImage.loadPng((uint8_t*)memory, sizeof(memory));
@@ -554,6 +556,13 @@ auto View::buildMenu() -> void {
 		    program->powerOff();
 	    };	
         sM.system->append( *sM.poweroff );
+        
+        sM.freeze = new GUIKIT::MenuItem;
+        sM.freeze->setIcon( freezeImage );
+        sM.freeze->onActivate = [emulator]() {
+		    emulator->freeze();
+	    };	
+        sM.system->append( *sM.freeze );
         
         sM.system->append(*GUIKIT::MenuSeparator::getInstance());
         
@@ -967,4 +976,14 @@ auto View::getSysMenu( Emulator::Interface* emulator ) -> View::SystemMenu* {
     }
     
     return nullptr;
+}
+
+auto View::updateFreeze( Emulator::Interface* emulator ) -> void {
+
+    for (auto& sM : sysMenus) {
+        if ((sM.emulator == emulator) && emulator->hasFreezerButton())
+            sM.freeze->setEnabled( true );
+        else
+            sM.freeze->setEnabled( false );
+    }
 }

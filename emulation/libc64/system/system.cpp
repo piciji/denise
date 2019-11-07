@@ -100,7 +100,7 @@ System::System(Interface* interface) {
 		vicII->phase1();
         cia2->processLo();
 		sid->phase1();    
-        //expansionPort->cycleLo();
+        expansionPort->cycleLo();
     };
     
     cpuCtx->syncHi = [this]() {               
@@ -172,6 +172,26 @@ System::System(Interface* interface) {
     readRomH = [this](uint16_t addr) {
 
         return expansionPort->readRomH( addr );
+    };
+    
+    writeRomL = [this](uint16_t addr, uint8_t value) {
+
+        return expansionPort->writeRomL( addr, value );
+    };
+
+    writeRomH = [this](uint16_t addr, uint8_t value) {
+
+        return expansionPort->writeRomH( addr, value );
+    };
+    
+    writeUltimaxRomL = [this](uint16_t addr, uint8_t value) {
+
+        return expansionPort->writeUltimaxRomL( addr, value );
+    };
+
+    writeUltimaxRomH = [this](uint16_t addr, uint8_t value) {
+
+        return expansionPort->writeUltimaxRomH( addr, value );
     };
     
     writeUnmapped = [this](uint16_t addr, uint8_t value) {
@@ -682,11 +702,11 @@ auto System::remapCpu( ) -> void {
     // 80 - 9f
     if ( ultimax ) {
         memoryCpu.map( &readRomL, 0x80, 0x9f);
-		memoryCpu.map( &writeUnmapped, 0x80, 0x9f, Memory::Mode::Direct );
+		memoryCpu.map( &writeUltimaxRomL, 0x80, 0x9f, Memory::Mode::Direct );
     
     } else if ( (cartMode == 0 || cartMode == 1) && ramMode == 3 ) {
         memoryCpu.map( &readRomL, 0x80, 0x9f);
-		memoryCpu.map( &writeRam, 0x80, 0x9f, Memory::Mode::Direct );
+		memoryCpu.map( &writeRomL, 0x80, 0x9f, Memory::Mode::Direct );
     } else
 		memoryCpu.map( &readRam, &writeRam, 0x80, 0x9f, Memory::Mode::Direct );
 	
@@ -701,7 +721,7 @@ auto System::remapCpu( ) -> void {
     } else if (cartMode == 0 && (ramMode == 2 || ramMode == 3) ) {
         
 		memoryCpu.map( &readRomH, 0xa0, 0xbf );
-        memoryCpu.map( &writeRam, 0xa0, 0xbf, Memory::Mode::Direct );
+        memoryCpu.map( &writeRomH, 0xa0, 0xbf, Memory::Mode::Direct );
     } else
         memoryCpu.map( &readRam, &writeRam, 0xa0, 0xbf, Memory::Mode::Direct );
     
@@ -737,7 +757,7 @@ auto System::remapCpu( ) -> void {
     // e0 - ff
     if ( ultimax ) {
         memoryCpu.map( &readRomH, 0xe0, 0xff);
-		memoryCpu.map( &writeUnmapped, 0xe0, 0xff, Memory::Mode::Direct );
+		memoryCpu.map( &writeUltimaxRomH, 0xe0, 0xff, Memory::Mode::Direct );
 		
     } else if (ramMode == 2 || ramMode == 3) {
         memoryCpu.map( &readKernalRom, 0xe0, 0xff, Memory::Mode::Linear, 0, kernalRomSize );

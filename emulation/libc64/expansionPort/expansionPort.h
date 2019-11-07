@@ -2,6 +2,7 @@
 #pragma once
 
 #include "../vic/vicII.h"
+#include "../system/system.h"
 
 namespace LIBC64 {
     
@@ -14,6 +15,8 @@ struct ExpansionPort {
 
         setId( Interface::ExpansionIdNone );
     }
+    
+    virtual ~ExpansionPort() {}
     
     struct {
         uint16_t addr;
@@ -31,6 +34,10 @@ struct ExpansionPort {
        
     std::function<bool ()> vicBA; // check if Vic needs bus
     std::function<void (bool state)> dmaCall; // change rdy and aec same time
+    
+    virtual auto hasFreezeButton() -> bool { return false; }
+    
+    virtual auto freeze() -> void {}
     
     virtual auto isDma() -> bool { return dma; }
     
@@ -54,9 +61,17 @@ struct ExpansionPort {
     
     virtual auto readRomH( uint16_t addr ) -> uint8_t { return vicII->lastReadPhase1(); }
     
-    virtual auto writeRomL( uint16_t addr, uint8_t data ) -> void {}
+    virtual auto writeRomL( uint16_t addr, uint8_t data ) -> void {        
+        system->writeRam( addr, data );
+    }
     
-    virtual auto writeRomH( uint16_t addr, uint8_t data ) -> void {}        
+    virtual auto writeRomH( uint16_t addr, uint8_t data ) -> void {
+        system->writeRam( addr, data );
+    }  
+    
+    virtual auto writeUltimaxRomL( uint16_t addr, uint8_t data ) -> void { }
+    
+    virtual auto writeUltimaxRomH( uint16_t addr, uint8_t data ) -> void { }   
                     
     virtual auto setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void {}
     

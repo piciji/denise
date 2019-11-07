@@ -33,14 +33,16 @@ template<uint8_t cycle> auto M6502::read( uint16_t addr, bool lastCycle ) -> uin
         
 		ctx->rdyLastCycle = true;
 		        		
+        ctx->dataBus = busWatch(); //on falling edge
+        
+//        if ( ctx->xaa )
+//            influence is not understood yet     
+//            A &= ctx->dataBus;
+        
         ctx->syncHi();                
         
         detectInterrupt(); 
         
-        ctx->dataBus = busWatch(); //on falling edge
-        
-        if ( ctx->xaa )
-            A &= ctx->dataBus;
                 
 		// rdy prolongs complete cycles, not half cycles
         ctx->syncLo();

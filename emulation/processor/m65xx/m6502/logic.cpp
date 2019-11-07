@@ -299,9 +299,9 @@ auto M6502::_ane( uint8_t data ) -> uint8_t { //xaa
 
 auto M6502::_lax( uint8_t data ) -> uint8_t {
     
-    uint8_t magic = 0xee;
+    //uint8_t magic = 0xee;
     
-    data = (A | magic) & data;
+    data = (A | ctx->magicAne) & data;
     
     Z = zero( data );
     N = negative( data );

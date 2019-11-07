@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include <random>
+
 namespace Emulator {
 
 struct Rand {
@@ -23,6 +25,10 @@ struct Rand {
         return xorShift32 ^= (xorShift32 << 5);
     }
 
+    static auto rand( unsigned min, unsigned max ) -> unsigned {
+        
+        return min + ::rand() / (RAND_MAX / (max - min + 1) + 1);
+    }
 };
 
 }

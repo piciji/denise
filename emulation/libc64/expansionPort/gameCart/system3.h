@@ -10,6 +10,8 @@ struct System3 : GameCart {
     }
 
     auto writeIo1( uint16_t addr, uint8_t value ) -> void {
+        if (!getChip(0))
+            return;
 
         addr &= 63;
         addr %= chips.size();
@@ -24,14 +26,15 @@ struct System3 : GameCart {
 
     auto readIo1( uint16_t addr ) -> uint8_t {
    
-        cRomL = &chips[0];
+        cRomL = getChip(0);
 
         return ExpansionPort::readIo1( addr );
     }
 
 
-    auto reset() -> void {
-        cRomL = &chips[0];
+    auto reset() -> void {        
+        cRomL = getChip(0);
+        cRomH = nullptr;
     }
 
 };    

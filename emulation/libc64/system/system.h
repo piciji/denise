@@ -7,7 +7,6 @@
 #include "../../cia/m6526.h"
 #include "memory.h"
 #include "../../tools/event.h"
-#include "../expansionPort/expansionPort.h"
 
 #define C64_FREQUENCY_PAL 985248
 #define C64_FREQUENCY_NTSC 1022727
@@ -25,6 +24,7 @@ namespace LIBC64 {
 struct Input;    
 struct KeyBuffer;	
 struct GlueLogic;
+struct ExpansionPort;
 
 struct System {   
     
@@ -57,6 +57,11 @@ struct System {
     Memory::Read readBasicRom; 
     Memory::Read readRomL;
     Memory::Read readRomH;
+    Memory::Write writeRomL;
+    Memory::Write writeRomH;
+    Memory::Write writeUltimaxRomL;
+    Memory::Write writeUltimaxRomH;
+
     
     Memory memoryCpu;
     Memory memoryVic;

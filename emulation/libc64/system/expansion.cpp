@@ -2,6 +2,7 @@
 #include "system.h"
 #include "../expansionPort/gameCart/gameCart.h"
 #include "../expansionPort/reu/reu.h"
+#include "../expansionPort/actionReplay/actionReplay.h"
 
 namespace LIBC64 {
  
@@ -36,6 +37,10 @@ auto System::setExpansion( Emulator::Interface::Expansion& expansion ) -> void {
         case Interface::ExpansionIdReu:
             expansionPort = reu;
             break;
+            
+        case Interface::ExpansionIdActionReplay:
+            expansionPort = actionReplay;
+            break;
     }
     
 }  
@@ -45,16 +50,19 @@ auto System::createExpansions() -> void {
     reu = new Reu( &events );
     gameCart = new GameCart;
     noExpansion = new ExpansionPort;
+    actionReplay = new ActionReplay;
     
     expansionPort = noExpansion;
     
     setExpansionCallbacks( reu );
+    setExpansionCallbacks( actionReplay );
 }
 
 auto System::destroyExpansions() -> void {
     
     delete reu;
     delete gameCart;
+    delete actionReplay;
     delete noExpansion;
 }
 
