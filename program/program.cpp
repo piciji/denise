@@ -77,7 +77,6 @@ Program::Program(int& argc, char** argv) {
 }
 
 auto Program::addEmulators() -> void {
-
     auto emulatorC64 = new LIBC64::Interface;
     emulatorC64->bind = this;
     emulators.push_back( emulatorC64 );

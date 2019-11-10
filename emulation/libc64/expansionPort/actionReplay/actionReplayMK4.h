@@ -7,7 +7,7 @@ struct ActionReplayMK4 : ActionReplay {
 
     ActionReplayMK4() : ActionReplay(true, false) {
         
-    }
+    }    
     
     bool enable = true;
     
@@ -28,17 +28,20 @@ struct ActionReplayMK4 : ActionReplay {
     
     auto readIo2( uint16_t addr ) -> uint8_t {
         
+        addr = (0x1f << 8) | (addr & 0xff); // last page of selected rom bank
+        Chip* chip = cRomL;
+                
         if (!enable)
-            return 0;
+            chip = getChip(3);        
         
-        if (!cRomL)
+        if (!chip)
             return ExpansionPort::readRomL( addr );
             
-        addr = (0x1f << 8) | (addr & 0xff); // last page of selected rom bank
-        return *(cRomL->ptr + addr);
+        return *(chip->ptr + addr);
     }    
     
     auto didFreeze() -> void {
+        nmiCall(false);
         enable = true;
         cRomH = cRomL = getChip(0);
     }
@@ -50,7 +53,7 @@ struct ActionReplayMK4 : ActionReplay {
         
     auto serializeStep2(Emulator::Serializer& s) -> void {
     
-        ActionReplay::serializeStep2( s );
+        Freezer::serializeStep2( s );
 
         s.integer( enable );
     }

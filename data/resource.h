@@ -32,4 +32,5 @@
 #define ID_REWINDHI     32030
 #define ID_PALETTE      32031
 #define ID_CROP         32032
+#define ID_FREEZE       32033
         

@@ -540,24 +540,24 @@ auto SystemLayout::updateExpansionMemory() -> void {
     }    
 }
 
-auto SystemLayout::handleExpansionIfAutoBoot(bool cartNeeded) -> void {
+auto SystemLayout::handleExpansionIfAutoBoot(Emulator::Interface::Expansion* newExpansion) -> void {
     
-    ExpansionLayout::Line::Block* noExpansion = nullptr;
-    ExpansionLayout::Line::Block* gameExpansion = nullptr;
+    ExpansionLayout::Line::Block* noExpansionLayout = nullptr;
+    ExpansionLayout::Line::Block* newExpansionLayout = nullptr;
     
     bool removeExpansion = false;
     
     for ( auto line : expansionLayout.lines ) {
         for( auto block : line->blocks ) {            
             
-            if (!noExpansion && block->expansion->isEmpty())
-                noExpansion = block;
+            if (!noExpansionLayout && block->expansion->isEmpty())
+                noExpansionLayout = block;
             
-            if (!gameExpansion && block->expansion->isGame())
-                gameExpansion = block;
+            if (!newExpansionLayout && (block->expansion == newExpansion) )
+                newExpansionLayout = block;
             
-            if (!cartNeeded && block->box.checked()) {                                                
-                if (block->expansion->isGame() || block->expansion->isEprom()) {
+            if (!newExpansion && block->box.checked()) {                                                
+                if (block->expansion->isGame() || block->expansion->isEprom() || block->expansion->isFreezer()) {
                     // a rom only expansion like a game cartridge is in use
                     removeExpansion = true;                    
                 }
@@ -565,13 +565,13 @@ auto SystemLayout::handleExpansionIfAutoBoot(bool cartNeeded) -> void {
         }
     }
     
-    if(cartNeeded && gameExpansion) {
-        gameExpansion->box.setChecked();
-        gameExpansion->box.onActivate(); 
+    if(newExpansion && newExpansionLayout) {
+        newExpansionLayout->box.setChecked();
+        newExpansionLayout->box.onActivate(); 
     }
     
-    if (removeExpansion && noExpansion) {
-        noExpansion->box.setChecked();
-        noExpansion->box.onActivate();        
+    if (removeExpansion && noExpansionLayout) {
+        noExpansionLayout->box.setChecked();
+        noExpansionLayout->box.onActivate();        
     }
 }

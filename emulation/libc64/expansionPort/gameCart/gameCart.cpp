@@ -50,7 +50,6 @@ auto GameCart::create( Interface::CartridgeId cartridgeId ) -> Cart* {
             break;
         case Interface::CartridgeIdDefault:
         case Interface::CartridgeIdDefault8k:
-        default:
             cart = new GameCart(true, false);
             break;            
             
@@ -60,10 +59,17 @@ auto GameCart::create( Interface::CartridgeId cartridgeId ) -> Cart* {
             
         case Interface::CartridgeIdUltimax:
             cart = new GameCart(false, true);
+            break;  
+            
+        default:
+            // forgot a rom
+            cart = new GameCart;
             break;            
+
     }
     
     return cart;
 }
     
 }
+

@@ -682,9 +682,9 @@ auto Interface::insertExpansionImage(Media* media, uint8_t* data, unsigned size)
     
     if (media->expansion->id == ExpansionIdGame)
         gameCart->setRom(media, data, size);
-    else if (media->group->getExpansion()->id == ExpansionIdReu)
+    else if (media->expansion->id == ExpansionIdReu)
         reu->setRom(media, data, size);
-    else if (media->group->getExpansion()->id == ExpansionIdActionReplay)
+    else if (media->expansion->id == ExpansionIdActionReplay)
         actionReplay->setRom(media, data, size);
 }
 
@@ -694,9 +694,9 @@ auto Interface::ejectExpansionImage(Media* media) -> void {
     
     if (media->expansion->id == ExpansionIdGame)
         gameCart->setRom(media, nullptr, 0);
-    else if (media->group->getExpansion()->id == ExpansionIdReu)
+    else if (media->expansion->id == ExpansionIdReu)
         reu->setRom(media, nullptr, 0);
-    else if (media->group->getExpansion()->id == ExpansionIdActionReplay)
+    else if (media->expansion->id == ExpansionIdActionReplay)
         actionReplay->setRom(media, nullptr, 0);
 }
 
@@ -945,6 +945,11 @@ auto Interface::hasFreezerButton() -> bool {
 
 auto Interface::freeze() -> void {
     system->expansionPort->freeze();
+}
+
+auto Interface::analyzeExpansion(uint8_t* data, unsigned size) -> Expansion* {
+    
+    return system->analyzeExpansion( data, size );
 }
 
 }

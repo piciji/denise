@@ -10,6 +10,8 @@ struct ActionReplayV4 : ActionReplay {
         ram = new uint8_t[ 8 * 1024 ];
     }
     
+    auto isBootable( ) -> bool { return true; }    
+    
     ~ActionReplayV4() {
         delete[] ram;
     }
@@ -25,10 +27,12 @@ struct ActionReplayV4 : ActionReplay {
         
         uint8_t bank = (value >> 3) & 3;
 
-        cRomL = getChip( bank & 3 );
-        cRomH = getChip( bank & 3 );
+        cRomH = cRomL = getChip( bank & 3 );
         
-        system->changeExpansionPortMemoryMode((value >> 1) & 1, (value & 1) ^ 1 );     
+        exRom = (value >> 1) & 1;
+        game = (value & 1) ^ 1;
+        
+        system->changeExpansionPortMemoryMode( exRom, game );     
         
         useRam = (value & 0x20) ? true : false;
         
@@ -41,14 +45,18 @@ struct ActionReplayV4 : ActionReplay {
     
     auto readIo2( uint16_t addr ) -> uint8_t {
         
-        if (!enable || !cRomL)
-            return ExpansionPort::readRomL( addr );
-            
-        if (useRam)
+        addr = (0x1f << 8) | (addr & 0xff); // last page of selected rom bank
+        Chip* chip = cRomL;
+                
+        if (!enable)
+            chip = getChip(3);        
+        else if (useRam)
             return ram[ (0x1f << 8) | (addr & 0xff) ];
         
-        addr = (0x1f << 8) | (addr & 0xff); // last page of selected rom bank
-        return *(cRomL->ptr + addr);
+        if (!chip)
+            return ExpansionPort::readRomL( addr );
+            
+        return *(chip->ptr + addr);        
     }    
     
     auto writeIo2( uint16_t addr, uint8_t value ) -> void {
@@ -84,12 +92,12 @@ struct ActionReplayV4 : ActionReplay {
     }
     
     auto didFreeze() -> void {
+        cRomH = cRomL = getChip(0);
         enable = true;
     }
     
     auto reset() -> void {
-        cRomL = getChip(1);
-        cRomH = getChip(1);
+        cRomH = cRomL = getChip(0);
         enable = true;
         useRam = false;
         std::memset(ram, 0, 8 * 1024);
@@ -97,7 +105,7 @@ struct ActionReplayV4 : ActionReplay {
         
     auto serializeStep2(Emulator::Serializer& s) -> void {
     
-        ActionReplay::serializeStep2( s );
+        Freezer::serializeStep2( s );
 
         s.integer( enable );        
         s.integer( useRam );        

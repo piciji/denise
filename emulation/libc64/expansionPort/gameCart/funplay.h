@@ -12,9 +12,9 @@ struct Funplay : GameCart {
     auto writeIo1( uint16_t addr, uint8_t value ) -> void {
         
 		if ((value & 0xc6) == 0x86) {
-			system->changeExpansionPortMemoryMode( true, true );
+			system->changeExpansionPortMemoryMode( exRom = true, game = true );
 		} else if ((value & 0xc6) == 0) {
-			system->changeExpansionPortMemoryMode( false, true );
+			system->changeExpansionPortMemoryMode( exRom = false, game = true );
 		}
 				   
 		// linear bank order [0 - 15] in memory can be determined:

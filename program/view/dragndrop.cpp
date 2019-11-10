@@ -84,7 +84,7 @@ auto View::autoloadPostProcessing() -> void {
 			}
 		}
 	                                            
-        emuConfigView->systemLayout->handleExpansionIfAutoBoot( mediaGroup->isExpansion() );
+        emuConfigView->systemLayout->handleExpansionIfAutoBoot( mediaGroup->isExpansion() ? mediaGroup->getExpansion() : nullptr );
         
         program->power(ddControl.emulator);
 
@@ -150,16 +150,19 @@ auto View::autoloadFiles() -> void {
 
                 if (mediaGroup.isHardDisk())
                     continue;
-                
-                if (mediaGroup.isExpansion() && !mediaGroup.getExpansion()->isGame())
-                    // todo: distinguish between more expansion types
-                    continue;
 
                 auto mediaSuffixList = mediaGroup.suffix;
 
                 for (auto& mediaSuffix : mediaSuffixList) {
 
                     if (mediaSuffix == fileSuffix) {
+                        
+                        if (mediaGroup.isExpansion()) {
+                            auto analyzedExpansion = emulator->analyzeExpansion( file->archiveData(item->id), item->info.size );
+                            
+                            if (analyzedExpansion != mediaGroup.getExpansion())
+                                continue;
+                        }                                                
                         
                         unsigned alreadyInUse = countImagesFor(&mediaGroup);
                         Emulator::Interface::Media* media = mediaGroup.selected;
@@ -176,7 +179,7 @@ auto View::autoloadFiles() -> void {
                         
                         if (!media) {                          
                             if (mediaGroup.isMemory())
-                                // todo: distinguish between more memory types
+                                // todo: handle this better
                                 media = (item->info.size >= (128 * 1024)) ? &mediaGroup.media[1] : &mediaGroup.media[0];
                             else
                                 media = &mediaGroup.media[ alreadyInUse ];                                                

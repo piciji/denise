@@ -156,6 +156,7 @@ struct Interface {
         auto isRam() const -> bool { return type == Type::Ram; }
         auto isEprom() const -> bool { return type == Type::Eprom; }
         auto isTurboCart() const -> bool { return type == Type::TurboCart; }               
+        auto isFreezer() const -> bool { return type == Type::Freezer; }      
     };
     std::vector<Expansion> expansions;       
     
@@ -377,6 +378,7 @@ struct Interface {
     virtual auto setExpansion(unsigned expansionId) -> void {}
     virtual auto unsetExpansion() -> void {}    
     virtual auto getExpansion() -> Expansion* { return nullptr; }
+    virtual auto analyzeExpansion(uint8_t* data, unsigned size) -> Expansion* { return nullptr; }
     // freezer carts
     virtual auto hasFreezerButton() -> bool { return false; }
     virtual auto freeze() -> void {}

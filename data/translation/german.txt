@@ -393,3 +393,4 @@ reu_image = REU-Abbild
 select_reu_image = REU-Abbild auswählen ...
 game cart = Spielmodul
 REU memory = REU Speicher
+freeze = Einfrieren

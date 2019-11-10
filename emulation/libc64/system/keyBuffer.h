@@ -41,11 +41,12 @@ struct KeyBuffer {
     
     std::vector<Action> queue;
     
-    auto add( Action action ) -> void {
+    auto add( Action action, bool inSeconds = true ) -> void {
         
         action.position = 0;
         
-        action.delay = (system->ntsc ? 60 : 50) * action.delay;
+        if (inSeconds)
+            action.delay = (system->ntsc ? 60 : 50) * action.delay;
         
         if (action.delay)
             action.delay++;

@@ -393,3 +393,4 @@ reu_image = REU image
 select_reu_image = select REU image ...
 game cart = Game module
 REU memory = REU memory
+freeze = Freeze

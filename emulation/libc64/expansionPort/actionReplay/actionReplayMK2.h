@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include "actionReplay.h"
+
 namespace LIBC64 {      
     
 struct ActionReplayMK2 : ActionReplay {
@@ -10,7 +12,7 @@ struct ActionReplayMK2 : ActionReplay {
     }
     
     unsigned disableCounter = 0;
-    unsigned enableCounter = 0;
+    unsigned enableCounter = 0;    
 
     auto readIo1( uint16_t addr ) -> uint8_t {
         enable();
@@ -76,7 +78,7 @@ struct ActionReplayMK2 : ActionReplay {
         
     auto serializeStep2(Emulator::Serializer& s) -> void {
     
-        ActionReplay::serializeStep2( s );
+        Freezer::serializeStep2( s );
 
         s.integer(disableCounter);   
         s.integer(enableCounter);   

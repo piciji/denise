@@ -16,7 +16,10 @@ struct SuperGames : GameCart {
         if (writeProtect)
             return;       
 				
-		system->changeExpansionPortMemoryMode( !!(value & 4), !!(value & 4) );
+        exRom = !!(value & 4);
+        game = !!(value & 4);
+        
+		system->changeExpansionPortMemoryMode( exRom, game );
         
         for( auto& chip : chips ) {
             if (chip.bank == (value & 3) ) {

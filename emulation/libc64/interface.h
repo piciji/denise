@@ -26,6 +26,7 @@ struct Interface : Emulator::Interface {
     };
     
     enum CartridgeId {
+        CartridgeIdNoRom = 0xffff,
         CartridgeIdDefault = 0, CartridgeIdDefault8k = 256, CartridgeIdDefault16k = 257,
         CartridgeIdUltimax = 258, CartridgeIdOcean = 5, CartridgeIdFunplay = 7,
         CartridgeIdSuperGames = 8, CartridgeIdSystem3 = 15, CartridgeIdZaxxon = 18,
@@ -88,6 +89,7 @@ struct Interface : Emulator::Interface {
     auto setExpansion(unsigned expansionId) -> void;
     auto unsetExpansion() -> void;
     auto getExpansion() -> Expansion*;
+    auto analyzeExpansion(uint8_t* data, unsigned size) -> Expansion*;
     
 	//savestates
     auto checkstate(uint8_t* data, unsigned size) -> bool;

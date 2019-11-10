@@ -232,7 +232,9 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
 					media->guid = (uintptr_t)nullptr;
 					filePool->assign(tabWindow->ident(media->name), nullptr);
                     States::getInstance( emulator )->updateImage( nullptr, media );
-				}		
+				} else
+                    States::getInstance(emulator)->forcePowerNextLoad = true;
+                
 				
 				if ( showC64Listing( layout, block ) ) {
                     block->listings.clear();
@@ -834,6 +836,8 @@ auto MediaLayout::insertImage( MediaGroupLayout* layout, MediaGroupLayout::Block
 
     if (!mediaGroup->isExpansion())
         States::getInstance(emulator)->updateImage(setting, media);
+    else
+        States::getInstance(emulator)->forcePowerNextLoad = true;
 
     updateMediaBlock(block, setting);  
 }

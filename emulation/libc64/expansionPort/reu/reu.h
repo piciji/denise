@@ -78,6 +78,7 @@ struct Reu : ExpansionPort {
     inline auto swap() -> void;
     inline auto verify() -> void;
     
+    auto hasRom() -> bool { return rom ? true : false; }
 
 };    
     

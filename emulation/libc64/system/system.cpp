@@ -12,6 +12,7 @@
 #include "../../tools/powersupply.h"
 #include "../../tools/serializer.h"
 #include "../../tools/rand.h"
+#include "../expansionPort/actionReplay/actionReplayMK2.h"
 #include <cstring>
 
 #include "expansion.cpp"
@@ -602,17 +603,25 @@ auto System::power( bool softReset ) -> void {
     
     if ( !expansionPort->isBootable() ) {
         KeyBuffer::Action action;
+                
         action.mode = KeyBuffer::Mode::WaitDelay;
-        action.delay = 2;        
-        system->keyBuffer->add( action );
-
+        action.delay = (interface->getExpansion()->isFreezer() && expansionPort->hasRom())
+            ? 1 : 2;        
+        action.delay = 2;
+        system->keyBuffer->add( action );        
+                
         action.mode = KeyBuffer::Mode::WaitFor;
         action.buffer = {'R', 'E', 'A', 'D', 'Y', '.'};  
+        
+        if (dynamic_cast<ActionReplayMK2*>(expansionPort))
+            action.buffer = {'L', 'O', 'A', 'D', 'E', 'R'};  
+
         action.delay = 0;           
         action.blinkingCursor = true;
         action.callbackId = 1;
         action.callback = [this]() { kernalBootComplete = true; };
-        system->keyBuffer->add( action );       
+        system->keyBuffer->add( action );   
+        
     }        
 }
 

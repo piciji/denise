@@ -393,3 +393,4 @@ reu_image =
 select_reu_image = 
 game cart = 
 REU memory = 
+freeze = 

@@ -31,7 +31,7 @@ auto States::load( std::string path, bool prependFolder ) -> void {
     GUIKIT::Settings loadSettings;    
     bool imageFileLoaded = loadSettings.load( path + ".images" );
             
-    if (!activeEmulator || (activeEmulator != emulator) )
+    if (forcePowerNextLoad || !activeEmulator || (activeEmulator != emulator) )
         program->power( emulator, !imageFileLoaded );      
     
     errorPaths.clear();
@@ -52,6 +52,8 @@ auto States::load( std::string path, bool prependFolder ) -> void {
     updateTapeMenu();
     
     updateRegion();
+    
+    forcePowerNextLoad = false;
 }
 
 auto States::save( std::string path, bool prependFolder ) -> void {

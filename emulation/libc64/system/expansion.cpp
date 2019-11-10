@@ -49,8 +49,8 @@ auto System::createExpansions() -> void {
     
     reu = new Reu( &events );
     gameCart = new GameCart;
-    noExpansion = new ExpansionPort;
     actionReplay = new ActionReplay;
+    noExpansion = new ExpansionPort;    
     
     expansionPort = noExpansion;
     
@@ -64,6 +64,31 @@ auto System::destroyExpansions() -> void {
     delete gameCart;
     delete actionReplay;
     delete noExpansion;
+}
+
+auto System::analyzeExpansion(uint8_t* data, unsigned size) -> Emulator::Interface::Expansion* {
+    
+    auto cart = new Cart;
+    cart->rom = data;
+    cart->romSize = size;
+    Emulator::Interface::Expansion* useExpansion = &interface->expansions[Interface::ExpansionIdGame];
+    
+    if (!cart->readHeader())
+        goto end;
+    
+    switch(cart->cartridgeId) {
+        case Interface::CartridgeIdActionReplayMK2:
+        case Interface::CartridgeIdActionReplayMK3:
+        case Interface::CartridgeIdActionReplayMK4:
+        case Interface::CartridgeIdActionReplayV41AndHigher:
+            useExpansion = &interface->expansions[Interface::ExpansionIdActionReplay];
+            break;            
+    }    
+    
+    end:
+            
+    delete cart;
+    return useExpansion;
 }
 
 auto System::setExpansionCallbacks( ExpansionPort* expansionPtr ) -> void {

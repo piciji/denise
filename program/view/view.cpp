@@ -468,8 +468,8 @@ auto View::buildMenu() -> void {
     filterImage.setResourceId( ID_FILTER );
     powerImage.loadPng((uint8_t*)power, sizeof(power)); 
     powerImage.setResourceId( ID_POWER );
-    freezeImage.loadPng((uint8_t*)power, sizeof(power)); 
-    freezeImage.setResourceId( ID_POWER );
+    freezeImage.loadPng((uint8_t*)freeze, sizeof(freeze)); 
+    freezeImage.setResourceId( ID_FREEZE );
 	poweroffImage.loadPng((uint8_t*)shutdown, sizeof(shutdown));
     poweroffImage.setResourceId( ID_SHUTDOWN );
     firmwareImage.loadPng((uint8_t*)memory, sizeof(memory));
@@ -544,12 +544,6 @@ auto View::buildMenu() -> void {
 		    program->power(emulator);
 	    };	
         sM.system->append( *sM.poweron );
-        sM.reset = new GUIKIT::MenuItem;
-        sM.reset->onActivate = [emulator]() {
-		    program->reset(emulator);
-	    };	
-        sM.reset->setIcon( powerImage );
-        sM.system->append( *sM.reset );
         sM.poweroff = new GUIKIT::MenuItem;
         sM.poweroff->setIcon( poweroffImage );
         sM.poweroff->onActivate = []() {
@@ -557,11 +551,20 @@ auto View::buildMenu() -> void {
 	    };	
         sM.system->append( *sM.poweroff );
         
+        sM.system->append(*GUIKIT::MenuSeparator::getInstance());
+        
+        sM.reset = new GUIKIT::MenuItem;
+        sM.reset->onActivate = [emulator]() {
+		    program->reset(emulator);
+	    };	
+        sM.reset->setIcon( powerImage );
+        sM.system->append( *sM.reset );
         sM.freeze = new GUIKIT::MenuItem;
         sM.freeze->setIcon( freezeImage );
         sM.freeze->onActivate = [emulator]() {
 		    emulator->freeze();
 	    };	
+        sM.freeze->setEnabled(false);
         sM.system->append( *sM.freeze );
         
         sM.system->append(*GUIKIT::MenuSeparator::getInstance());
@@ -873,6 +876,7 @@ auto View::translate() -> void {
         sysMenu.poweron->setText(trans->get("power"));
         sysMenu.reset->setText(trans->get("Soft Reset"));
         sysMenu.poweroff->setText(trans->get("power_off"));
+        sysMenu.freeze->setText(trans->get("Freeze"));
         sysMenu.firmware->setText(trans->get("Firmware"));
         sysMenu.media->setText(trans->get("Software"));
         sysMenu.diskSwapper->setText(trans->get("disk_swapper"));

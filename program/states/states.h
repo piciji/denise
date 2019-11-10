@@ -18,6 +18,7 @@ struct States {
     GUIKIT::Settings* saveSettings;
     Emulator::Interface* emulator;
     std::vector<std::string> errorPaths;
+    bool forcePowerNextLoad = false;
     
     struct InsertImage {
         FileSetting* setting;        

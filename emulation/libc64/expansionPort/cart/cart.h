@@ -49,17 +49,17 @@ struct Cart : ExpansionPort {
     virtual auto serializeStep2(Emulator::Serializer& s) -> void;
     
     auto getDWord( uint8_t* ptr ) -> uint32_t;
-    auto getWord( uint8_t* ptr ) -> uint16_t;
-    auto isBootable( ) -> bool;
+    auto getWord( uint8_t* ptr ) -> uint16_t;    
         
     auto rebuild(Interface::CartridgeId cartridgeId, uint8_t* _rom, unsigned _romSize) -> Cart*;
-    virtual auto create( Interface::CartridgeId cartridgeId ) -> Cart* = 0;
-    virtual auto assign(Cart* cart) -> void = 0;
+    virtual auto create( Interface::CartridgeId cartridgeId ) -> Cart* { return nullptr; }
+    virtual auto assign(Cart* cart) -> void {}
     
     auto getChip( unsigned index ) -> Chip* {
         return chips.size() > index ? &chips[index] : nullptr;
     }
     
+    auto hasRom() -> bool { return rom ? true : false; }
 };    
    
 

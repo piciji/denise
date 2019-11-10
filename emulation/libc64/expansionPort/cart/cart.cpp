@@ -14,6 +14,7 @@ Cart::Cart(bool game, bool exrom) : ExpansionPort() {
     
     rom = nullptr;
     romSize = 0;
+    cartridgeId = Interface::CartridgeIdNoRom;
     
     data = nullptr;
     size = 0;
@@ -34,7 +35,7 @@ auto Cart::setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romS
 auto Cart::rebuild( Interface::CartridgeId cartridgeId, uint8_t* _rom, unsigned _romSize ) -> Cart* {
     
     if (!_rom || (_romSize == 0) )
-        return create( Interface::CartridgeIdDefault );
+        cartridgeId = Interface::CartridgeIdNoRom;
     
     Cart* cart = create( cartridgeId );
     
@@ -253,15 +254,19 @@ auto Cart::serialize(Emulator::Serializer& s) -> void {
             // cartridge id of state mismatches with loaded one.
             // it seems the cart which was loaded while creating this save state
             // isn't present anymore.
-            // we need to reload the expected expansion and not the loaded one in order
+            // we need to reload the expected cartridge and not the loaded one in order
             // to unserialize the right data.
             // probably the loaded state is unusable but we don't want to crash the emulation
-            // on top of that when data is unserialized in wrong environment.
+            // on top of that when data is unserialized in wrong order.
             
             auto cart = create( (Interface::CartridgeId)_cartridgeId );
-            cart->rom = rom;
-            cart->romSize = romSize;
-            cart->readHeader();
+            
+            if (_cartridgeId != Interface::CartridgeIdNoRom) {
+                cart->rom = rom;
+                cart->romSize = romSize;
+                cart->readHeader();
+            }
+            
             // force cart id from state.
             cart->cartridgeId = (Interface::CartridgeId)_cartridgeId;
             if (!cart->readChips())
@@ -292,11 +297,6 @@ auto Cart::serializeStep2(Emulator::Serializer& s) -> void {
     }
 
     ExpansionPort::serialize(s);
-}
-
-auto Cart::isBootable( ) -> bool {
-    
-    return true;
 }
     
 }

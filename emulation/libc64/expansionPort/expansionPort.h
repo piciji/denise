@@ -47,6 +47,8 @@ struct ExpansionPort {
     
     virtual auto isBootable( ) -> bool { return false; }
     
+    virtual auto hasRom() -> bool { return false; }
+    
     virtual auto addressBus() -> uint16_t { return bus.addr; }
     
     virtual auto readIo1( uint16_t addr ) -> uint8_t { return vicII->lastReadPhase1(); }
@@ -95,7 +97,7 @@ struct ExpansionPort {
         s.integer( bus.addr );
     }
     
-    auto setId(Interface::ExpansionId id) -> void { this->id = id; }
+    auto setId(Interface::ExpansionId id) -> void { this->id = id; }    
 };   
 
 }

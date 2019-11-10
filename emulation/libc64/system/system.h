@@ -145,6 +145,7 @@ struct System {
     auto createExpansions() -> void;
     auto destroyExpansions() -> void;
     auto setExpansionCallbacks( ExpansionPort* expansionPtr ) -> void;
+    auto analyzeExpansion(uint8_t* data, unsigned size) -> Emulator::Interface::Expansion*;
 };
 
 extern System* system;
