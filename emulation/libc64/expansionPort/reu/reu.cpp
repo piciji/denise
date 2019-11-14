@@ -171,22 +171,25 @@ inline auto Reu::incrementAddresses() -> void {
     reuAddr = (reuAddr & 0xf80000) | incremented;
 }
 
+auto Reu::cycleLo() -> void {
+    
+    if (waitForStart) {
+        // listen CPU bus usage        
+        if (system->cpu->isWriteCycle()) {
+            if (system->cpu->addressBus() == 0xff00) {
+                waitForStart = false;
+                events->add(&setDma, 1, Emulator::Events::UpdateExisting);
+            }
+        }
+    }  
+}
+
 auto Reu::cycleHi() -> void {
     vicBaLow <<= 1;
     vicBaLow |= vicBA();
     
-    if (!dma) {
-        if (waitForStart) {
-            // listen CPU bus usage        
-            if (system->cpu->isWriteCycle()) {
-                if (system->cpu->addressBus() == 0xff00) {
-                    waitForStart = false;
-                    events->add( &setDma, 1, Emulator::Events::UpdateExisting );
-                }
-            }
-        }  
+    if (!dma)
         return;
-    }
     
     switch ( command & 3 ) {
         case 0: stash(); break;

@@ -61,6 +61,7 @@ struct Reu : ExpansionPort {
     auto unsetRam() -> void;
     auto injectRam() -> void;
 
+    auto cycleLo() -> void;
     auto cycleHi() -> void;
     
     auto reset() -> void;   
