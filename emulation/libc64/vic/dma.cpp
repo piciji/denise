@@ -171,16 +171,16 @@ inline auto VicII::advanceCycle() -> void {
         vCounter = 0;
         initVCounter = false;
 		lpLatched = false;	
-		// retrigger happens in last pixel of second cycle for all Vic types	
-		// lpTriggerDelay = !lpPin ? 1 : 0;
-        triggerLightPen( lpPin, 3 );
-
+		// retrigger happens in last pixel of second cycle for all Vic types,
+        // if lp line is held low in beginning of cycle
+        if (!lpPin)
+            triggerLightPen( false, 3 );
         
 		display.vcBase = display.vc = 0;
 		refreshCounter = 0xff;
 		allowBadlines = false;
-    }    
-		
+    }   
+    
 	if (++cycle == lineCycles) {		
 		cycle = 0;  
 		
@@ -191,7 +191,7 @@ inline auto VicII::advanceCycle() -> void {
 		if (++vCounter == (ntsc ? 263 : 312) ) {
 			// last line is not reseted this cycle but next
 			vCounter = ntsc ? 262 : 311;
-			initVCounter = true;			
+			initVCounter = true;	
 		} else {
 			// when vCounter increments to 0x30 we check for DEN
             // the above check in this function would miss the first cycle in line

@@ -21,7 +21,7 @@ template<bool phi1> inline auto VicII::sequencer(  ) -> void {
     
     draw<phi1>(  );
     
-    bool xCounterLock = ntsc && (cycle == 61);
+    bool xCounterLock = ntsc && ( (!phi1 && cycle == 60) || (phi1 && cycle == 61) );
         
     if (!xCounterLock)
         xCounter += 4;
@@ -48,7 +48,7 @@ template<bool phi1> inline auto VicII::sequencerPix0(  ) -> void {
         // or each xCounter increment is latched and compared a cycle later with
         // sprite x positions.
         // we take the latch between the half cycles in order to keep aligned with
-        // xCounter wrap around value of 0x1f8 or 0x200 for ntsc.
+        // xCounter "wrap around" value of 0x1f8 or 0x200 for ntsc.
         // so we dont't need to wrap around the sprite-x compare positions too.
         xCounterSprites = xCounterLatch;   
         xCounterLatch = xCounter;

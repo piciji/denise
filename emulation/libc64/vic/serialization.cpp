@@ -56,6 +56,7 @@ auto VicII::serialize(Emulator::Serializer& s) -> void {
     s.integer( irqEnable );
     s.integer( lpLatched );
     s.integer( lpPin );
+    s.integer( lpTrigger );
     s.integer( lpTriggerDelay );
     s.integer( lpPhi1 );
     s.integer( rSel );

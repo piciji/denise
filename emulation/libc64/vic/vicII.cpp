@@ -69,58 +69,67 @@ auto VicII::getCurrentLinePtr() -> uint16_t* {
 }
 
 auto VicII::triggerLightPen( bool state ) -> void {
-	// trigger by writing to cia
+	// trigger by writing to cia        
     lpPin = state;
-	
-	if (lpPin)
-		return;	    
     
-	lpTriggerDelay = rev65 ? 2 : 1;
+	if (lpPin || lpTrigger)
+		return;	    
+
+    lpTrigger = !lpLatched;
     lpPhi1 = false;
+	lpTriggerDelay = rev65 ? 2 : 1;    
 }
 
 auto VicII::triggerLightPen( bool state, uint8_t subCycle ) -> void {
-    lpPin = state;
-	
-	if (lpPin)
-		return;	    
+    lpPin = state;	  
     
-    lpPhi1 = true;
-    lpTriggerDelay = subCycle & 1;
+    if (lpPin)
+		return;	 
     
-    if (subCycle & 2)
-        // happens in second half cycle
-        lpPhi1 = false;            
+    lpTrigger = !lpLatched;
+    lpPhi1 = (subCycle & 2) ? false : true;
+    lpTriggerDelay = subCycle & 1;          
 }
 
 template<bool phi1> auto VicII::checkLightPen( ) -> void {
-        
-    if(lpPin || lpLatched || (phi1 != lpPhi1) )
+
+    if (!lpTrigger || (phi1 != lpPhi1))
         return;
-	
+    
+    lpTrigger = false;
 	lpLatched = true;
-	
-	if ( (vCounter == (ntsc ? 261 : 311)) && (cycle > 0) )
-		return;
-        
+        	
+    // last line doesn't latch lpx or lpy.
+    if (vCounter == (ntsc ? 262 : 311) )
+		return;             
+    
     // 2 adjacent pixel [4,5] [6,7] give the same value for lpx, because of
 	// the last bit is shifted out. it's a division by 2.
-	// this code fire between the half cycles in pixel 4.
+	// this code fires between the half cycles in pixel 4.
 	// for the 8565 the latch happens by pixel 7, btw. pixel 6 would give the same.
 	// for the 6569 the latch happens one pixel later, but it's already the next
 	// two pixel block. 
-    lpx = xCounter >> 1;
-	// add one block for 85xx and 2 blocks for 65xx
-	lpx += lpTriggerDelay;
-	
-    lpy = vCounter & 0xff;		
 
+    lpx = xCounter >> 1;	
+	lpx += lpTriggerDelay;
+    
+    // vCounter is incremented in second half cycle of last line cycle.
+    // if this latch happens in last pixel (like the 85xx) vCounter is already
+    // incremented. I don't know if a latch in second to last pixel recognizes 
+    // incremented vCounter too. From a CIA point of view it happens only in last or
+    // first pixel of next cycle. From a Light Gun(Pen) point of view it could happen
+    // an any cycle pixel, but vCounter increments in non visible area... means no problem
+    
+    if (!phi1 && (cycle == (lineCycles - 1) ))
+        lpy = (vCounter + 1) & 0xff;		
+    else
+        lpy = vCounter & 0xff;		
+    
     if (phi1)
         updateIrq( Interrupt::LP );
     else        
         // cpu mustn't recognize it this cycle, but next
         lpIrqPending = true;        
-        
 }
 
 auto VicII::getCyclesForNextLightTrigger( int x, int y, uint8_t& cyclePixel ) -> unsigned {
@@ -223,6 +232,7 @@ auto VicII::power() -> void {
     lpLatched = false;  
     lpPin = true;
 	lpTriggerDelay = 0;
+    lpTrigger = false;
     controlReg1 = 0;
     controlReg2 = 0;
     linePos = 0;
@@ -302,7 +312,7 @@ auto VicII::power() -> void {
     spritePending = 0;
     updateMc = 0;
     updatePrioExpand = 0;
-    cAccessArea = 0;
+    cAccessArea = 0;    
 }
 
 }

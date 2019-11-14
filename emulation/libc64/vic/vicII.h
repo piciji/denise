@@ -178,7 +178,8 @@ protected:
 	bool vFlipFlopShadow;
     bool idleMode;
     bool initVCounter;    
-	
+    bool lpTrigger;
+    
 	uint8_t refreshCounter;    
     // ntsc: 6567R8 (65 cycles), pal: 6569 (63 cycles)
     bool ntsc;
