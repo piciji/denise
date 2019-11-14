@@ -6,9 +6,16 @@ usage hints -> scroll down this file
 
 # changelog
 
-## 1.0.6 (not released yet, but changes are in master branch)
+## 1.0.6
 * polished OS X UI ... looks ok now for Mojave dark theme
 * Windows command line support is now independant from working directory of caller
+* added option to manually save settings
+* reworked expansion port emulation
+    * added REU support with additional 8k rom
+    * added Action Replay MK2, MK3, MK4, V4.1 and higher
+    * support Cartridge bin format
+* GIT repo is public now
+* simplified build process
 
 ## 1.0.5
 * drag'n'drop support

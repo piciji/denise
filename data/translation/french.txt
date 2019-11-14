@@ -394,3 +394,6 @@ select_reu_image =
 game cart = 
 REU memory = 
 freeze = 
+action replay_insert = 
+action replay_image = 
+select_action replay_image = 

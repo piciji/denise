@@ -394,3 +394,6 @@ select_reu_image = REU-Abbild auswählen ...
 game cart = Spielmodul
 REU memory = REU Speicher
 freeze = Einfrieren
+action replay_insert = Action Replay einstecken
+action replay_image = Action Replay Abbild
+select_action replay_image = Action Replay Abbild auswählen ...
