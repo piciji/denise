@@ -1,0 +1,8 @@
+nbproject/
+obj/*
+!obj/.gitkeep
+out/*
+!out/.gitkeep
+denise.xcodeproj
+.idea/
+._*

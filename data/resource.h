@@ -1,0 +1,35 @@
+
+#define ID_GLOBE        32000
+#define ID_FILTER       32001
+#define ID_POWER        32002
+#define ID_DISPLAY      32003
+#define ID_TOOLS        32004
+#define ID_DRIVE        32005
+#define ID_JOYSTICK     32006
+#define ID_PLUG         32007
+#define ID_DISK         32008
+#define ID_SCRIPT       32009
+#define ID_SWAPPER      32010
+#define ID_SYSTEM       32011
+#define ID_QUIT         32012
+#define ID_VOLUME       32013
+#define ID_ADD          32014
+#define ID_MEMORY       32015
+#define ID_TAPE         32016
+#define ID_SHUTDOWN     32017
+#define ID_KEYBOARD     32018
+#define ID_COLOR        32019
+#define ID_COUNTER      32020
+#define ID_PLAY         32021
+#define ID_PLAYHI       32022
+#define ID_RECORD       32023
+#define ID_RECORDHI     32024
+#define ID_STOP         32025
+#define ID_STOPHI       32026
+#define ID_FORWARD      32027
+#define ID_FORWARDHI    32028
+#define ID_REWIND       32029
+#define ID_REWINDHI     32030
+#define ID_PALETTE      32031
+#define ID_CROP         32032
+        

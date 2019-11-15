@@ -1,0 +1,194 @@
+
+#include "manager.h"
+#include "../tools/filesetting.h"
+#include "../program.h"
+#include "../states/states.h"
+#include <cstring>
+
+std::vector<FirmwareManager*> firmwareManagers;
+
+FirmwareManager::FirmwareManager(Emulator::Interface* emulator) {
+    this->emulator = emulator;
+}
+
+FirmwareManager::~FirmwareManager() {
+    
+    for (auto& image : imagesStore) {
+        auto activeImage = findActiveImage( image.firmware );
+        
+        if (activeImage && (image.data == activeImage->data) )
+            activeImage->data = nullptr;
+        
+        if (image.data)
+            delete[] image.data;
+    }
+    
+    for (auto& image : imagesActive)
+        if (image.data)
+            delete[] image.data;
+}
+
+auto FirmwareManager::useImage(Emulator::Interface::Firmware* firmware, unsigned storeLevel) -> bool {
+    
+    auto image = findImage( firmware, storeLevel );
+    
+    if (!image || !image->data)
+        return false;
+    
+    auto activeImage = findActiveImage( firmware );
+    
+    if (!activeImage) {
+        imagesActive.push_back({ firmware, image->data, image->size });
+        
+    } else {
+        
+        if (activeImage->data) {
+            if ( !dataInStore( activeImage ) )
+                delete[] activeImage->data;
+        }
+        
+        activeImage->data = image->data;
+        activeImage->size = image->size;
+    }     
+    
+    emulator->setFirmware(firmware->id, image->data, image->size);
+    
+    States::getInstance( emulator )->updateFirmware( getSetting( firmware, storeLevel ), firmware );
+    
+    return true;
+}
+
+auto FirmwareManager::addImage(Emulator::Interface::Firmware* firmware, unsigned storeLevel, uint8_t* data, unsigned size) -> void {
+    
+    auto image = findImage( firmware, storeLevel );
+    
+    if (!image) {        
+        imagesStore.push_back({ firmware, data, size, storeLevel });        
+        
+    } else {
+        
+        if ( image->data ) {            
+            auto activeImage = findActiveImage( firmware );
+            
+            if ( !activeImage || (image->data != activeImage->data ) )           
+                delete[] image->data;
+        }
+                
+        image->data = data;
+        image->size = size;
+    }    
+}
+
+auto FirmwareManager::dataInStore( Image* forImage ) -> bool {
+    
+    for (auto& image : imagesStore) {          
+        if (image.firmware == forImage->firmware && image.data == forImage->data)
+            return true;
+    }
+    
+    return false;
+}
+
+auto FirmwareManager::findImage( Emulator::Interface::Firmware* firmware, unsigned storeLevel ) -> Image* {
+
+    for (auto& image : imagesStore) {
+
+        if (image.firmware == firmware && image.storeLevel == storeLevel)            
+            return &image;        
+    }
+    
+    return nullptr;
+}
+
+auto FirmwareManager::findActiveImage( Emulator::Interface::Firmware* firmware ) -> Image* {
+
+    for (auto& image : imagesActive) {
+
+        if (image.firmware == firmware)            
+            return &image;        
+    }
+    
+    return nullptr;
+}
+
+auto FirmwareManager::getInstance( Emulator::Interface* emulator ) -> FirmwareManager* {
+	
+	for (auto firmwareManager : firmwareManagers) {
+		if (firmwareManager->emulator == emulator)
+			return firmwareManager;
+	}
+    
+	return nullptr;
+}
+
+auto FirmwareManager::insert() -> std::vector<std::string> {
+    
+    missingFirmware.clear();
+    
+    auto storeLevel = settings->get<unsigned>( program->ident(emulator, "use_firmware"), 0 ); 
+    
+    for (auto& firmware : emulator->firmwares ) {
+        
+        unsigned useLevel = storeLevel;
+        
+        while(1) {                               
+            
+            if (useImage( &firmware, useLevel))
+                break;
+
+            if (loadImage( &firmware, useLevel)) {
+                if (useImage( &firmware, useLevel))
+                    break;
+            }
+
+            if (useLevel == 0)
+                // already default firmware
+                break;
+
+            // switch back to default firmware and try again
+            useLevel = 0;
+        } 
+    }   
+    
+    return missingFirmware;
+}
+
+auto FirmwareManager::loadImage( Emulator::Interface::Firmware* firmware, unsigned storeLevel ) -> bool {    
+    FileSetting* setting = getSetting( firmware, storeLevel );    
+    
+    if (setting->path.empty())
+        return false;
+    
+    GUIKIT::File file( setting->path );
+    uint8_t* data = nullptr;
+
+    if (file.isSizeValid(MAX_ARCHIVE_SIZE) &&
+        file.isSizeValid(setting->id, MAX_FIRMWARE_SIZE) &&
+        ((data = file.archiveData(setting->id)) != nullptr)
+    ) {    
+        unsigned size = file.archiveDataSize(setting->id);
+        uint8_t* useData = new uint8_t[size];
+        std::memcpy(useData, data, size);
+        addImage(firmware, storeLevel, useData, size);
+        
+        return true;
+    }
+    
+    if (!GUIKIT::Vector::find(missingFirmware, setting->path))
+        missingFirmware.push_back(setting->path);
+    
+    return false;
+}
+
+auto FirmwareManager::getSetting( Emulator::Interface::Firmware* firmware, unsigned storeLevel ) -> FileSetting* {
+    FileSetting* setting = 
+        FileSetting::getInstance(program->ident(emulator, firmware->name + "_" + std::to_string( storeLevel )));
+
+    if (storeLevel == 0) {
+        setting->id = 0;
+        setting->path = program->dataFolder() + firmware->name;
+        setting->setSaveable(false);
+    }
+    
+    return setting;
+}

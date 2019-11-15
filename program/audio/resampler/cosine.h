@@ -1,0 +1,252 @@
+/*  RetroArch - A frontend for libretro.
+ *  Copyright (C) 2014-2017 - Ali Bouhlel ( aliaspider@gmail.com )
+ *
+ *  RetroArch is free software: you can redistribute it and/or modify it under the terms
+ *  of the GNU General Public License as published by the Free Software Found-
+ *  ation, either version 3 of the License, or (at your option) any later version.
+ *
+ *  RetroArch is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ *  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ *  PURPOSE.  See the GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with RetroArch.
+ *  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/*
+ * modification: same algorithm with modified context
+ */
+
+#pragma once 
+
+#include <functional>
+#include <math.h>
+
+#include "data.h"
+
+namespace Resampler {
+/* Convoluted Cosine Resampler */
+struct Cosine {    
+    
+    struct FrameBuffer {
+        double l;
+        double r;
+    };
+    
+    static inline auto cc_int(double x, double b) -> double {
+        double val = x * b;
+
+        val = val * (1 - 0.25 * val * val * (3.0 - val * val));
+
+        return (val > 0.5) ? 0.5 : (val < -0.5) ? -0.5 : val;
+    }
+
+    #define cc_kernel(x, b)    ((cc_int((x) + 0.5, (b)) - cc_int((x) - 0.5, (b))))
+
+    static inline auto add_to(const FrameBuffer* source, FrameBuffer* target, double ratio) -> void {
+        target->l += source->l * ratio;
+        target->r += source->r * ratio;
+    }
+    
+    auto setData( Data* rData ) -> void {
+        this->rData = rData;
+    }
+    
+    auto process( ) -> void {
+        
+        resampler(  );
+    }
+    
+    auto reset(double ratio, unsigned inChannels) -> void {       
+
+        for (int i = 0; i < 4; i++) {
+            buffer[i].l = 0.0;
+            buffer[i].r = 0.0;
+        }
+        
+        rData->ratio = ratio;
+        rData->inChannels = inChannels;
+        
+        if (ratio < 0.75) {
+            // down sample
+            distance = 0.0;       
+
+            if (inChannels == 1) {
+                
+                resampler = [this]() {               
+
+                    double* inp = rData->in;
+
+                    double* inpMax = inp + rData->inputFrames;
+
+                    FrameBuffer* outp = (FrameBuffer*) rData->out;
+
+                    double ratio = 1.0 / rData->ratio;
+
+                    double b = rData->ratio; /* cutoff frequency. */
+
+                    while (inp != inpMax) {
+
+                        buffer[0].l += *inp * cc_kernel(distance, b);
+                        buffer[1].l += *inp * cc_kernel(distance - ratio, b);
+                        buffer[2].l += *inp * cc_kernel(distance - ratio - ratio, b);                          
+                        
+                        distance++;
+                        inp++;
+
+                        if (distance > (ratio + 0.5)) {
+                            // resue calculation
+                            buffer[0].r = buffer[0].l;
+                            *outp = buffer[0];
+
+                            buffer[0] = buffer[1];
+                            buffer[1] = buffer[2];
+
+                            buffer[2].l = 0.0;
+                            buffer[2].r = 0.0;
+
+                            distance -= ratio;
+                            outp++;
+                        }
+                    }
+
+                    rData->outputFrames = outp - (FrameBuffer*)rData->out;
+                };
+                
+            } else {
+                resampler = [this]() {               
+
+                    FrameBuffer* inp = (FrameBuffer*) rData->in;
+
+                    FrameBuffer* inpMax = (FrameBuffer*) (inp + rData->inputFrames);
+
+                    FrameBuffer* outp = (FrameBuffer*) rData->out;
+
+                    double ratio = 1.0 / rData->ratio;
+
+                    double b = rData->ratio; /* cutoff frequency. */
+
+                    while (inp != inpMax) {
+                        add_to(inp, buffer + 0, cc_kernel(distance, b));
+                        add_to(inp, buffer + 1, cc_kernel(distance - ratio, b));
+                        add_to(inp, buffer + 2, cc_kernel(distance - ratio - ratio, b));
+
+                        distance++;
+                        inp++;
+
+                        if (distance > (ratio + 0.5)) {
+                            *outp = buffer[0];
+
+                            buffer[0] = buffer[1];
+                            buffer[1] = buffer[2];
+
+                            buffer[2].l = 0.0;
+                            buffer[2].r = 0.0;
+
+                            distance -= ratio;
+                            outp++;
+                        }
+                    }
+
+                    rData->outputFrames = outp - (FrameBuffer*)rData->out;
+                };
+            }            
+            
+        } else {
+            // up sample
+            distance = 2.0;
+            
+            if (inChannels == 1) {
+                
+                resampler = [this]() {
+
+                    double* inp = rData->in;
+
+                    double* inpMax = inp + rData->inputFrames;
+
+                    FrameBuffer* outp = (FrameBuffer*) rData->out;
+
+                    double b = fmin(rData->ratio, 1.00); /* cutoff frequency. */
+                    double ratio = 1.0 / rData->ratio;
+
+                    while (inp != inpMax) {
+                        buffer[0] = buffer[1];
+                        buffer[1] = buffer[2];
+                        buffer[2] = buffer[3];
+                        buffer[3].l = *inp;
+
+                        while (distance < 1.0) {
+
+                            outp->l = 0.0;
+                            outp->r = 0.0;
+
+                            for (int i = 0; i < 4; i++) {                                
+                                double temp = cc_kernel(distance + 1.0 - i, b);
+                                outp->l += buffer[i].l * temp;
+                            }
+                            // resue calculation
+                            outp->r = outp->l;
+
+                            distance += ratio;
+                            outp++;
+                        }
+
+                        distance -= 1.0;
+                        inp++;
+                    }
+
+                    rData->outputFrames = outp - (FrameBuffer*)rData->out;
+                };
+                
+            } else {
+            
+                resampler = [this]() {
+
+                    FrameBuffer* inp = (FrameBuffer*) rData->in;
+
+                    FrameBuffer* inpMax = (FrameBuffer*) (inp + rData->inputFrames);
+
+                    FrameBuffer* outp = (FrameBuffer*) rData->out;
+
+                    double b = fminf(rData->ratio, 1.00); /* cutoff frequency. */
+                    double ratio = 1.0 / rData->ratio;
+
+                    while (inp != inpMax) {
+                        buffer[0] = buffer[1];
+                        buffer[1] = buffer[2];
+                        buffer[2] = buffer[3];
+                        buffer[3] = *inp;
+
+                        while (distance < 1.0) {
+
+                            outp->l = 0.0;
+                            outp->r = 0.0;
+
+                            for (int i = 0; i < 4; i++) {
+
+                                double temp = cc_kernel(distance + 1.0 - i, b);
+                                outp->l += buffer[i].l * temp;
+                                outp->r += buffer[i].r * temp;
+                            }
+
+                            distance += ratio;
+                            outp++;
+                        }
+
+                        distance -= 1.0;
+                        inp++;
+                    }
+
+                    rData->outputFrames = outp - (FrameBuffer*)rData->out;
+                };
+            }
+        }
+    }
+    
+    double distance;    
+    FrameBuffer buffer[4];
+    std::function<void ()> resampler;
+    Data* rData = nullptr;
+};
+
+}

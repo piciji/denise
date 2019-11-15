@@ -1,0 +1,522 @@
+
+#include "tar.h"
+#include "../decode/zip.h"
+#include "../decode/gzip.h"
+
+File::File( std::string filePath ) {
+    setFile( filePath );
+    tar = new Tar;
+    zip = new Zip;
+    gzip = new Gzip;
+}
+
+File::~File() {
+    unload();
+    delete tar;
+    delete zip;
+    delete gzip;
+}
+
+File::File(const File& source) {
+    operator=(source);
+}
+
+File& File::operator=(const File& source) {
+    if(this == &source) return *this;
+
+    filePath = source.filePath;
+    type = source.type;
+
+    tar = new Tar;
+    zip = new Zip;
+    gzip = new Gzip;
+
+    data = nullptr;
+    items.clear();
+    fp = nullptr;
+    fileInfo = source.fileInfo;
+    
+    dataChanged = false;
+
+    return *this;
+}
+
+auto File::setFile(std::string filePath) -> void {
+    this->filePath = filePath;
+    detectType();
+    setStats( filePath, fileInfo);
+}
+
+auto File::detectType() -> void {
+    std::string ext = getExtension();
+    if (ext.size() > 0)
+        ext = "." + ext;
+    
+    if ( String::endsWith( ext, ".zip" ) ) type = Type::Zip;
+    else if ( String::endsWith( ext, ".tar.gz" ) ) type = Type::TarGz;
+    else if ( String::endsWith( ext, ".gz" ) ) type = Type::Gzip;
+    else if ( String::endsWith( ext, ".tar" ) ) type = Type::Tar;
+    else if ( String::endsWith( ext, ".tgz" ) ) type = Type::TarGz;    
+    else if ( String::endsWith( ext, ".z" ) ) type = Type::TarGz;
+    else type = Type::Default;
+}
+
+auto File::freeData(uint8_t** dataPtr) -> void {
+    if(*dataPtr) delete[](*dataPtr);
+    *dataPtr = nullptr;
+}
+
+auto File::close() -> void {
+    if(fp) fclose(fp);
+    fp = nullptr;
+}
+
+auto File::unload() -> void {
+    freeData(&data);
+    if(type == Type::Zip) for(auto& file : zip->files) freeData(&file.data);
+    items.clear();
+    filePath = "";
+    fileInfo.size = 0;
+    fileInfo.name = fileInfo.date = "";
+    type = Type::Default;
+    mode = Mode::Read;
+    tar->files.clear();
+    zip->files.clear();
+    gzip->freeData();
+    close();
+    dataChanged = false;
+}
+
+auto File::reset() -> void {
+    auto _path = filePath;
+    unload();
+    setFile( _path );    
+}
+
+auto File::open(Mode mode, bool createFolderIfNotExists) -> bool {
+    if (filePath.empty()) return false;
+    if (createFolderIfNotExists) {
+        if ( !isDir( getPath() ) ) createDir( getPath() );
+    }
+    close();
+    switch(this->mode = mode) {
+    #ifdef GUIKIT_WINAPI
+        case Mode::Read:    fp = _wfopen( utf16_t(filePath), L"rb"); break;
+        case Mode::Write:   fp = _wfopen( utf16_t(filePath), L"wb"); break;
+        case Mode::Update:  fp = _wfopen( utf16_t(filePath), L"rb+"); break;
+    #else
+        case Mode::Read:    fp = fopen( filePath.c_str(), "rb"); break;
+        case Mode::Write:   fp = fopen( filePath.c_str(), "wb"); break;
+        case Mode::Update:  fp = fopen( filePath.c_str(), "rb+"); break;
+    #endif
+    }
+
+    if (!fp)
+        return false;
+    
+    return true;
+}
+
+auto File::read() -> uint8_t* {
+	if ( !fp || mode == Mode::Write || fileInfo.size == 0 )
+		return nullptr;
+	
+    freeData(&data);
+    data = new uint8_t[fileInfo.size];
+    fseek(fp, 0, SEEK_SET);
+    unsigned bytesRead = fread(data, 1, fileInfo.size, fp);
+    
+    return bytesRead ? data : nullptr;
+}
+
+auto File::write() -> bool {
+    if (!fp || !data || mode == Mode::Read)
+        return false;
+    
+    fseek(fp, 0, SEEK_SET);
+    unsigned bytesWritten = fwrite(data, 1, fileInfo.size, fp);
+    fflush( fp );
+    dataChanged = true;
+    return bytesWritten && (bytesWritten == fileInfo.size);
+}
+
+auto File::read(uint8_t* buffer, unsigned length, unsigned offset) -> unsigned {
+    if (!fp || mode == Mode::Write )
+		return 0;
+    
+	if (fseek(fp, offset, SEEK_SET))
+		return 0;
+
+	return fread(buffer, 1, length, fp);
+}
+
+auto File::write(const uint8_t* buffer, unsigned length, unsigned offset) -> unsigned {
+    if (!fp || mode == Mode::Read)
+        return 0;
+    
+    if (fseek(fp, offset, SEEK_SET))
+		return 0;
+    
+    auto bytesWritten = fwrite(buffer, 1, length, fp);
+    fflush( fp );
+    dataChanged = true;
+    return bytesWritten;
+}
+
+auto File::scanArchive() -> std::vector<File::Item>& {
+    if (!items.empty())
+        return items;
+    if (!open( type == Type::Default ? Mode::Update : Mode::Read ))
+        return items;
+    
+    Item item;
+    item.id = 0;
+
+    switch(type) {
+        default:
+            item.info = fileInfo;
+            item.info.name = getFileName();
+            items.push_back(item);
+            break;
+        case Type::Gzip:
+        case Type::TarGz:
+            if ( !read() ) break;
+            if ( !gzip->decompress(data, fileInfo.size) ) {
+                gzip->freeData();
+                freeData( &data );
+                break;
+            }
+            freeData( &data );
+
+            if (type == Type::Gzip) {
+                item.info.name = gzip->filename;
+                item.info.size = gzip->size;
+                item.info.date = gzip->date;
+                items.push_back(item);
+                break;
+            }
+            if ( !tar->open(gzip->data, gzip->size) ) {                
+                gzip->freeData();
+                break;
+            }
+            // fall through
+        case Type::Tar:
+            if (type == Type::Tar) {
+                if ( !read() ) break;
+                if ( !tar->open(data, fileInfo.size) ) {
+                    freeData( &data );
+                    break;
+                }
+            }
+            for( auto& file : tar->files ) {
+                item.info.name = file.name;
+                item.info.size = file.size;
+                item.info.date = file.date;
+                item.isDirectory = file.isDirectory;
+                items.push_back(item);
+                item.id++;
+            }
+            connectItems();
+            break;
+        case Type::Zip:
+            if ( !zip->open(fp, fileInfo.size) ) break;
+
+            for ( auto& file : zip->files ) {
+                item.info.name = file.name;
+                item.info.size = file.size;
+                item.info.date = file.date;
+                item.isDirectory = file.isDirectory;
+                items.push_back(item);
+                item.id++;
+            }
+            connectItems();
+            break;
+    }
+    return items;
+}
+
+auto File::archiveDataSize(unsigned id) -> unsigned {
+    if (dataChanged)
+        reset();
+    
+    scanArchive();
+    return id >= items.size() ? 0 : items[id].info.size;
+}
+
+auto File::archiveData(unsigned id) -> uint8_t* {
+    if (dataChanged)
+        reset();
+        
+    scanArchive();
+
+    if (id >= items.size()) return nullptr;
+    if (items[id].info.size == 0) return nullptr;
+
+    switch(type) {
+        default:
+            return data ? data : read();
+        case Type::Gzip:
+            return gzip->data;
+        case Type::TarGz:
+        case Type::Tar:
+            return tar->files[id].data;
+        case Type::Zip:
+            auto& zipFile = zip->files[id];
+            if (zipFile.isDirectory) return nullptr;
+
+            uint8_t* dataPtr = zipFile.data;
+            if (dataPtr == nullptr) {
+                dataPtr = zip->extract( zipFile );
+            }
+            return dataPtr;
+    }
+}
+
+auto File::connectItems() -> void {
+    
+    for(auto& item : items) {
+        std::string path;
+        auto parts = String::split(item.info.name, '/');
+        if (parts.size() < 2) continue;
+        parts.pop_back();
+        for(auto& part : parts) path += part + "/";
+
+        for(auto& parent : items) {
+            if (!parent.isDirectory) continue;
+
+            if (path == parent.info.name) {
+                parent.childs.push_back(&item);
+                item.parent = &parent;
+                break;
+            }
+        }
+    }
+    for(auto& item : items) {
+        auto parts = String::split(item.info.name, '/');
+        if (parts.size() < 1) continue;
+        item.info.name = parts[parts.size() - 1];
+    }
+}
+
+auto File::getFileName(bool removeExtension) -> std::string {
+    std::string _fn = filePath;
+    std::size_t start = _fn.find_last_of("/");
+    if (start != std::string::npos) _fn = _fn.substr(start + 1);
+    if (!removeExtension) return _fn;
+    std::size_t end = _fn.find_first_of(".");
+    if (end != std::string::npos) _fn = _fn.erase(end);
+    return _fn;
+}
+
+auto File::getExtension() -> std::string {
+    std::string _fn = filePath;
+    String::remove(_fn, {".."});
+    std::size_t end = _fn.find_first_of(".");
+    if (end == std::string::npos) return "";
+    return _fn.substr(end + 1);
+}
+
+auto File::getPath() -> std::string {
+    return getPath( filePath );
+}
+
+auto File::del( ) -> bool {
+    #ifdef GUIKIT_WINAPI
+        int result = _wunlink( utf16_t( filePath ) );
+    #else
+        int result = unlink( filePath.c_str() );
+    #endif
+    return result == 0;
+}
+
+//static
+auto File::getPath( std::string _fn ) -> std::string {
+       
+    std::size_t end = _fn.find_last_of("/");
+    if (end == std::string::npos)
+        return _fn;
+    return _fn.erase(end + 1);
+}
+
+auto File::getFolderList( std::string path, const std::string& subStr ) -> std::vector<File::Info> {
+    std::vector<Info> list;
+    Info info;
+#ifdef GUIKIT_WINAPI
+    _WDIR* dir = _wopendir ( utf16_t( path ) );
+#else
+    DIR* dir = opendir ( path.c_str() );
+#endif
+
+    if (dir == NULL) return {};
+
+#ifdef GUIKIT_WINAPI
+    struct _wdirent* ent;
+    while ((ent = _wreaddir (dir)) != NULL) {
+        info.name = utf8_t( ent->d_name );
+#else
+    struct dirent* ent;
+    while ((ent = readdir (dir)) != NULL) {
+        info.name = (std::string)ent->d_name;
+#endif
+        if (info.name == "." || info.name == "..") continue;
+		if (!subStr.empty()) {
+			if(!String::foundSubStr(info.name, subStr)) continue;
+		}
+
+        setStats( beautifyPath(path) + info.name, info );
+
+        list.push_back( info );
+    }
+    return list;
+}
+
+auto File::setStats(std::string path, Info& info) -> void {
+    if (path.empty()) return;
+    struct tm* _tm;
+    info.date = "";
+    info.size = 0;
+    info.exists = true;
+
+#ifdef GUIKIT_WINAPI
+    struct __stat64 statbuf;
+    if (_wstat64( utf16_t( path ), &statbuf ) != 0 ) {
+        info.exists = false;
+        return;
+    }
+    _tm = _localtime64(&statbuf.st_mtime);
+#else
+    struct stat statbuf;
+    if (stat( path.c_str(), &statbuf ) != 0 ) {
+        info.exists = false;
+        return;
+    }
+    _tm = localtime(&statbuf.st_mtime);
+#endif
+
+    info.date = asctime( _tm );
+    String::replace(info.date, "\n", "");
+    info.size = statbuf.st_size;
+}
+
+auto File::isDir( std::string path ) -> bool {
+    int s = path.length();
+    if(s < 2) return false;
+
+#ifdef GUIKIT_WINAPI
+    if (path.at( s - 1 ) == '/' ) path = path.substr(0, s - 1);
+    struct __stat64 statbuf;
+    if (_wstat64( utf16_t( path ), &statbuf ) != 0 ) return false;
+#else
+    struct stat statbuf;
+    if (stat( path.c_str(), &statbuf ) != 0 ) return false;
+#endif
+    return statbuf.st_mode & S_IFDIR;
+}
+
+auto File::createDir( std::string path, std::string basePath ) -> bool {
+    
+    if (basePath.empty())
+        // parent folder have to exist
+        return _createDir( path );   
+    
+    // when base path exists, we try to create all sub folder beginning
+    // from base path. this way we can create not existing parent folders too
+    for (std::string::iterator iter = path.begin(); iter != path.end();) {
+        std::string::iterator newIter = std::find(iter, path.end(), '/');
+        std::string newPath = basePath + std::string( path.begin(), newIter );
+
+        if (!isDir( newPath ))
+            if (!_createDir( newPath ))
+                return false;
+                
+        iter = newIter;
+        if (newIter != path.end())
+            ++iter;
+    }
+    
+    return true;
+}
+
+auto File::_createDir( std::string path ) -> bool {
+    
+#ifdef GUIKIT_WINAPI
+    int result = _wmkdir( utf16_t( path ) );
+#else
+    int result = mkdir( path.c_str(), S_IRWXU );
+#endif
+    return result == 0;
+}
+
+auto File::beautifyPath( std::string path ) -> std::string {
+    if (path.length() == 0) {
+        return path;
+    }
+    std::replace( path.begin(), path.end(), '\\', '/');
+
+    std::size_t pos = path.find_last_of("/");
+    if ( (pos == std::string::npos) || (pos != (path.length()-1) ) ) path += "/";
+    return path;
+}
+
+auto File::isSizeValid(unsigned maxSize) -> bool {
+    return getSize() > 0 && getSize() <= maxSize;
+}
+
+auto File::isSizeValid(unsigned fileId, unsigned maxSize) -> bool {
+    unsigned size = archiveDataSize(fileId);
+    return size > 0 && size <= maxSize;
+}
+
+auto File::isArchived() -> bool {
+    return getType() != GUIKIT::File::Type::Default;
+}
+
+auto File::SizeFormated(uint64_t bytes) -> std::string {
+    uint64_t val;
+
+    if (bytes < 1024)
+        return String::addThousandSeparator(bytes) + " Bytes";
+
+    if (bytes < (1024 * 1024)) {
+        val = ((double(bytes) / 1024.0) * 100) + 0.5;
+        return String::addThousandSeparator((double) val / 100.0) + " KB";
+    }
+
+    val = ((double(bytes) / 1024.0 / 1024.0) * 100) + 0.5;
+    return String::addThousandSeparator((double) val / 100.0) + " MB";
+}
+
+auto File::getOffsetDataStringFromBinary( std::string inFile, std::string outFile ) -> bool {
+    bool error = false;
+    File fileIn( inFile );
+    File fileOut( outFile );
+
+    try {
+        if (!fileOut.open(File::Mode::Write, true) ) throw "";
+        if (!fileIn.open(File::Mode::Read) ) throw "";
+
+        unsigned char* data = fileIn.read();
+        if (data == nullptr) throw "";
+
+        auto fp = fileOut.getHandle();
+        std::string out = "";
+
+        for(int i = 0; i < fileIn.getSize(); i++) {
+            if ( data[i] == 0x00 )
+                continue;            
+			
+			out += std::to_string( i ) + "," + std::to_string( data[i] ) + ",";
+        }
+		
+        std::string elementCount = "size: " + std::to_string( fileIn.getSize() ) + "\n";
+        fputs( elementCount.c_str(), fp );
+        fputs( out.c_str(), fp );
+    } catch(...) {
+        error = true;
+    }
+
+    fileIn.unload();
+    fileOut.unload();
+    return !error;    
+    
+}

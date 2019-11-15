@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=pigui
+Comment=gui toolkit
+Exec=./.local/bin/pigui
+Icon=pigui.png
+Terminal=false
+Type=Application
+Categories=gui;toolkit;

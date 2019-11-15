@@ -1,0 +1,78 @@
+
+#pragma once
+
+#include <vector>
+#include <string>
+#include "../../guikit/api.h"
+#include "../tools/filesetting.h"
+#include "../view/view.h"
+#include "../emuconfig/config.h"
+#include "../tools/filepool.h"
+#include "../tools/status.h"
+#include "../input/manager.h"
+
+struct States {        
+    
+    States(Emulator::Interface* emulator);
+        
+    GUIKIT::Settings* saveSettings;
+    Emulator::Interface* emulator;
+    std::vector<std::string> errorPaths;
+    
+    struct InsertImage {
+        FileSetting* setting;        
+        Emulator::Interface::Drive* drive;
+    };
+
+    std::vector<InsertImage> inserted;
+    
+    struct InsertFirmware {
+        FileSetting* setting;        
+        Emulator::Interface::Firmware* firmware;
+    };
+        
+    std::vector<InsertFirmware> insertedFirmware;
+    
+    auto statesFolder() -> std::string;  
+    
+    auto generateAutoPath() -> std::string;
+    
+    auto load( std::string path = "", bool prependFolder = false ) -> void;
+    
+    auto updateConnectedDevices() -> void;
+    
+    auto updateTapeMenu() -> void;
+    
+    auto updateFeatures() -> void;
+    
+    auto statusMessage( std::string langKey, std::string replacer ) -> void;
+    
+    auto save( std::string path = "", bool prependFolder = false ) -> void;  
+    
+    auto loadImagePaths( GUIKIT::Settings* loadSettings ) -> void;
+    
+    auto loadFirmwarePaths( GUIKIT::Settings* loadSettings ) -> void;
+    
+    auto saveImagePaths( std::string path ) -> bool;
+    
+    auto updateImage( FileSetting* setting, Emulator::Interface::Drive* drive ) -> void;
+    
+    auto findImage( Emulator::Interface::Drive* drive ) -> InsertImage*;
+    
+    auto updateFirmware( FileSetting* setting, Emulator::Interface::Firmware* firmware ) -> void;
+    
+    auto findFirmware( Emulator::Interface::Firmware* firmware ) -> InsertFirmware*;
+    
+    auto copySetting( FileSetting* target, FileSetting* src ) -> void;
+    
+    auto changeSlot( bool down ) -> void;    
+    
+    auto updateSaveable() -> void;
+    
+    auto updateRegion() -> void;
+    
+    static auto getInstance( Emulator::Interface* emulator ) -> States*;
+    static auto getInstanceAuto() -> States*;    
+};
+
+extern std::vector<States*> states;

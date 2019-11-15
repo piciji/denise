@@ -1,0 +1,162 @@
+
+#include "sid.h"
+
+namespace LIBC64 {
+
+auto Sid::readIO( uint8_t addr ) -> uint8_t {
+    addr &= 0x1f;
+    
+    switch( addr ) {
+        case 0x19:
+        case 0x1a:
+            // sid has two AD converters. AD conversion is not emulated directly,
+            // because we simply don't have a voltage to convert from.
+            // we fetch resulting digital value directly from input emulation.
+            if (!events->has( &callPotUpdate )) {
+                potX = getPotX();
+                potY = getPotY();
+                events->add( &callPotUpdate, 512, Emulator::Events::Action::WhenNotExistsOnly );
+            }
+            lastBusValue = addr == 0x19 ? potX : potY;
+            databusDecay = databusDecayTime;
+            break;
+		case 0x1b:
+			lastBusValue = voice[2].osc3 >> 4;
+            databusDecay = databusDecayTime;
+            break;
+        case 0x1c:
+            lastBusValue = envelope[2].env3;
+            databusDecay = databusDecayTime;
+            break;
+    }
+    
+    return lastBusValue;
+}
+
+auto Sid::writeIOPipelined(uint8_t addr, uint8_t value) -> void {
+	
+	registerWrite.addr = addr;
+	registerWrite.value = value;
+	registerWrite.pipelined = true;
+}
+
+auto Sid::writeIO( uint8_t addr, uint8_t value, bool updateFilterToo ) -> void {
+ 
+    addr &= 0x1f;
+    lastBusValue = value;
+    databusDecay = databusDecayTime;
+    
+    switch( addr ) {
+        
+        case 0x0:
+            voice[0].setFrequencyLo( value );
+            break;
+            
+        case 0x1:
+            voice[0].setFrequencyHi( value );
+            break;
+        
+        case 0x2:
+            voice[0].setPwLo( value );
+            break;
+            
+        case 0x3:
+            voice[0].setPwHi( value );
+            break;
+            
+        case 0x4:
+            envelope[0].control( value & 1 );
+            voice[0].setControl( value );       
+            break;
+            
+        case 0x5:
+            envelope[0].setAttackDecay( value );
+            break;
+            
+        case 0x6:
+            envelope[0].setSustainRelease( value );
+            break;
+
+        case 0x7:
+            voice[1].setFrequencyLo( value );
+            break;
+            
+        case 0x8:
+            voice[1].setFrequencyHi( value );
+            break;
+            
+        case 0x9:
+            voice[1].setPwLo( value );
+            break;
+            
+        case 0xa:
+            voice[1].setPwHi( value );
+            break;
+            
+        case 0xb:
+            envelope[1].control( value & 1 );
+            voice[1].setControl( value );
+            break;
+            
+        case 0xc:
+            envelope[1].setAttackDecay( value );
+            break;
+            
+        case 0xd:
+            envelope[1].setSustainRelease( value );
+            break;
+
+        case 0xe:
+            voice[2].setFrequencyLo( value );
+            break;
+            
+        case 0xf:
+            voice[2].setFrequencyHi( value );
+            break;
+            
+        case 0x10:
+            voice[2].setPwLo( value );
+            break;
+            
+        case 0x11:
+            voice[2].setPwHi( value );
+            break;
+            
+        case 0x12:
+            envelope[2].control( value & 1 );
+            voice[2].setControl( value );
+            break;
+            
+        case 0x13:
+            envelope[2].setAttackDecay( value );
+            break;
+            
+        case 0x14:
+            envelope[2].setSustainRelease( value );
+            break;		
+    }
+	
+	if(updateFilterToo)
+		writeIOFilter( addr, value );
+}
+
+auto Sid::writeIOFilter( uint8_t addr, uint8_t value ) -> void {
+	addr &= 0x1f;
+	
+	switch(addr) {
+		case 0x15:
+			filter.writeFcLow( value );
+			break;
+		case 0x16:
+			filter.writeFcHi( value );
+			break;
+		case 0x17:
+			filter.writeResFilt( value );
+			break;
+		case 0x18:
+			filter.writeModeVol( value );
+			break;
+	}
+}
+
+}

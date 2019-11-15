@@ -1,0 +1,125 @@
+
+#include "m6510.h"
+
+/**
+ * the discharge time for bit 6 and 7 are temperature dependant
+ * it's hard to emulate in a digital environment
+ */
+#define FALL_OFF_CYCLES 350000
+
+namespace MOS65FAMILY {
+    
+auto M65Model::create6510() -> M65Model* {
+	return new M6510;
+}
+	
+auto M6510::reset() -> void {
+    
+	ctx->ddr = 0; //input mode
+	ctx->por = 0;
+	ctx->ioLines = 0;
+	
+	ctx->bit6.cycles = ctx->bit7.cycles = 0;
+	ctx->bit6.charge = ctx->bit7.charge = 0;
+	
+	M6502::reset();
+}
+
+auto M6510::updateIoLines( uint8_t pullup, uint8_t pulldown ) -> void {    
+    ctx->pullup = pullup;
+    ctx->pulldown = pulldown;
+    
+    updateLines();
+}
+
+inline auto M6510::busRead( uint16_t addr ) -> uint8_t {
+    // is rdy delaying a read from address 0/1 too, because there is no memory access ?
+	advanceCounter();
+	
+	if (addr == 0x0000)
+		return ctx->ddr;
+	
+	if (addr == 0x0001) {
+		
+		uint8_t data = ctx->ioLines;
+		
+		if ( !(ctx->ddr & 0x40) ) {
+			data &= ~0x40;
+			data |= ctx->bit6.charge;
+		}
+
+		if ( !(ctx->ddr & 0x80) ) {
+			data &= ~0x80;
+			data |= ctx->bit7.charge;
+		}
+		
+		return data;
+	}		
+	
+	return M6502::busRead( addr );
+}
+
+inline auto M6510::busWrite( uint16_t addr, uint8_t data ) -> void {
+    
+	advanceCounter();
+	
+	if (addr == 0x0000) {						
+		
+		chargeUndefinedBits( data );
+		ctx->ddr = data;		
+		updateLines();
+		
+	} else if (addr == 0x0001) {
+		
+		ctx->por = data;
+		updateLines();				
+	}
+    
+	//places write on bus for $00 and $01 too
+	M6502::busWrite( addr, data );
+}
+
+inline auto M6510::busWatch() -> uint8_t {
+    
+    advanceCounter();
+    
+    return M6502::busWatch();    
+}
+
+auto M6510::updateLines() -> void {			
+
+	ctx->ioLines = ( ctx->por & ctx->ddr ) | ( ~ctx->ddr & ( (ctx->pullup | ctx->ioLines) & ~ctx->pulldown ) );
+	
+    //external device can distingish between input and output because of voltage level 
+	ctx->updatePort( ctx->ioLines, ctx->ddr );
+}
+
+auto M6510::chargeUndefinedBits( uint8_t newDdr ) -> void {
+	
+	if ( (ctx->ddr & 0x80) && !(newDdr & 0x80) ) {
+	
+		ctx->bit7.cycles = FALL_OFF_CYCLES;
+		ctx->bit7.charge = ctx->por & 0x80;
+	}
+	
+	if ( (ctx->ddr & 0x40) && !(newDdr & 0x40) ) {
+	
+		ctx->bit6.cycles = FALL_OFF_CYCLES;
+		ctx->bit6.charge = ctx->por & 0x40;
+	}
+}
+
+auto M6510::advanceCounter() -> void {
+	
+	if ( ctx->bit6.cycles > 0 )
+		if ( --ctx->bit6.cycles == 0 )
+			ctx->bit6.charge = 0;
+	
+	if ( ctx->bit7.cycles > 0 )
+		if ( --ctx->bit7.cycles == 0 )
+			ctx->bit7.charge = 0;
+}
+
+}
+
+#undef FALL_OFF_CYCLES

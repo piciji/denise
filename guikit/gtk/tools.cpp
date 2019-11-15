@@ -1,0 +1,254 @@
+
+#include <fontconfig/fontconfig.h>
+#include <clocale>
+
+//timer
+static auto Timer_trigger(pTimer* self) -> guint {
+    if(self->timer.onFinished) self->timer.onFinished();
+
+    self->gtimer = 0;
+    if(self->timer.state.enabled) {
+        self->gtimer = g_timeout_add(self->timer.state.interval, (GSourceFunc)Timer_trigger, (gpointer)self);
+    }
+    return false;
+}
+
+auto pTimer::setEnabled(bool enabled) -> void {
+    killTimer();
+    if (!enabled) return;
+    gtimer = g_timeout_add(timer.state.interval, (GSourceFunc)Timer_trigger, (gpointer)this);
+}
+
+auto pTimer::setInterval(unsigned interval) -> void {
+    setEnabled(timer.enabled());
+}
+
+auto pTimer::killTimer() -> void {
+    if(gtimer) g_source_remove(gtimer);
+    gtimer = 0;
+}
+
+//color
+static auto CreateColor(uint8_t r, uint8_t g, uint8_t b) -> GdkColor {
+    GdkColor color;
+    color.pixel = (r << 16) | (g << 8) | (b << 0);
+    color.red = (r << 8) | (r << 0);
+    color.green = (g << 8) | (g << 0);
+    color.blue = (b << 8) | (b << 0);
+    return color;
+}
+
+auto CreatePixbuf(Image& image, unsigned size) -> GdkPixbuf* {
+	if (image.empty())
+		return nullptr;
+	
+    GdkPixbuf* pixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB, true, 8, image.width, image.height);
+    memcpy(gdk_pixbuf_get_pixels(pixbuf), image.data, image.width * image.height * 4);
+    if(size) {
+        GdkPixbuf* pixbufScaled = gdk_pixbuf_scale_simple(pixbuf, size, size, GDK_INTERP_BILINEAR);
+        if(G_IS_OBJECT(pixbuf)) g_object_unref(pixbuf);
+        return pixbufScaled;
+    }
+    return pixbuf;
+}
+
+auto CreateImage(Image& image, unsigned size) -> GtkImage* {
+    GdkPixbuf* pixbuf = CreatePixbuf(image, size);
+	if (!pixbuf)
+		return nullptr;
+    GtkImage* gtkImage = (GtkImage*)gtk_image_new_from_pixbuf(pixbuf);
+    if(G_IS_OBJECT(pixbuf)) g_object_unref(pixbuf);
+    return gtkImage;
+}
+
+//cursor
+auto CreateCursor( GtkWidget* widget, GdkPixbuf* pixbuf, unsigned hotSpotX, unsigned hotSpotY ) -> GdkCursor* {
+    
+    return gdk_cursor_new_from_pixbuf( gtk_widget_get_display( widget ), pixbuf, hotSpotX, hotSpotY );                
+}
+
+auto SetCursor( GtkWidget* widget, GdkCursor* cursor ) -> void {
+    
+    gdk_window_set_cursor( gtk_widget_get_window(widget), cursor );
+}
+
+//drag'n'drop
+auto getDropPaths(GtkSelectionData* data) -> std::vector<std::string> {
+    std::vector<std::string> paths;
+    gchar** uris = gtk_selection_data_get_uris(data);
+    if(uris == nullptr) return {};
+
+    for(unsigned n = 0; uris[n] != nullptr; n++) {
+        gchar* pathname = g_filename_from_uri(uris[n], nullptr, nullptr);
+        if(pathname == nullptr) continue;
+
+        std::string path = pathname;
+        g_free(pathname);
+
+        if (File::isDir(path) && path.back() != '/') path.push_back('/');
+        paths.push_back(path);
+    }
+
+    g_strfreev(uris);
+    return paths;
+}
+//system
+auto pSystem::getUserDataFolder() -> std::string {
+    std::string out = "";
+    struct passwd* userinfo = getpwuid(getuid());
+    out = userinfo->pw_dir;
+    out = File::beautifyPath(out);
+	if (out.length() == 0) out = "./";
+    out += ".config/";
+    return out;
+}
+
+auto pSystem::getResourceFolder(std::string appIdent) -> std::string {
+	std::string out = "";
+    struct passwd* userinfo = getpwuid(getuid());
+    out = userinfo->pw_dir;
+    out = File::beautifyPath(out);
+	if (out.length() == 0) out = "./";
+    out += ".local/" + appIdent;
+    return out;
+}
+
+auto pSystem::getIconFolder() -> std::string {
+	std::string out = "";
+    struct passwd* userinfo = getpwuid(getuid());
+    out = userinfo->pw_dir;
+    out = File::beautifyPath(out);
+	if (out.length() == 0) out = "./";
+    out += ".local/share/icons/";
+    return out;
+}
+
+auto pSystem::getWorkingDirectory() -> std::string {
+    char cwd[PATH_MAX] = "";
+    if (getcwd(cwd, sizeof(cwd)) != NULL) return (std::string)cwd;
+    return "./";
+}
+
+auto pSystem::getDesktopSize() -> Size {
+    return {
+        gdk_screen_get_width(gdk_screen_get_default()),
+        gdk_screen_get_height(gdk_screen_get_default())
+    };
+}
+
+auto pSystem::sleep(unsigned milliSeconds) -> void {
+    usleep( milliSeconds * 1000 );
+}
+
+auto pSystem::getOSLang() -> System::Language {
+    
+    auto result = setlocale(LC_ALL, NULL);
+    
+    std::string str = result;
+    
+    GUIKIT::String::toLowerCase( str );
+    
+    if (str.find("de") != std::string::npos)
+        return System::Language::DE;
+    
+    if (str.find("fr") != std::string::npos)
+        return System::Language::FR;
+    
+    if (str.find("us") != std::string::npos)
+        return System::Language::US;
+
+    return System::Language::UK;
+}
+
+//font
+auto pFont::system(unsigned size, std::string style) -> std::string {
+    std::string family = "";
+    gchar* fontName = 0;
+    g_object_get(gtk_settings_get_default(), "gtk-font-name", &fontName, NULL);
+    std::string font = fontName;
+    std::vector<std::string> tokens = String::split(font, ' ');
+    for(auto& token : tokens ) {
+        if (String::isNumber(token)) {
+            if (size == 0) size = std::stoi(token);
+        } else {
+            family += token + " ";
+        }
+    }
+
+    if (family.empty()) family = "Sans";
+    if (size == 0) size = 9;
+    if(style == "") style = "Normal";
+
+    return family + ", " + std::to_string(size) + ", " + style;
+}
+
+auto pFont::add( CustomFont* customFont ) -> bool {
+
+    const FcChar8* file = (const FcChar8 *) customFont->filePath.c_str();
+    
+    return FcConfigAppFontAddFile(FcConfigGetCurrent(), file);
+}
+
+auto pFont::create(std::string desc) -> PangoFontDescription* {
+    std::vector<std::string> tokens = String::split(desc, ',');
+
+    std::string family = "Sans";
+    unsigned size = 8u;
+    bool bold = false, italic = false;
+
+    if(tokens.at(0) != "") family = tokens.at(0);
+    if(tokens.size() >= 2  && String::isNumber(tokens.at(1))) size = std::stoi(tokens.at(1));
+
+    if(tokens.size() >= 3) {
+        for(unsigned i = 2; i < tokens.size(); i++) {
+            std::string style = String::toLowerCase( tokens.at( i ) );
+            bold |= String::foundSubStr(style, "bold");
+            italic |= String::foundSubStr(style, "italic");
+        }
+    }
+
+    PangoFontDescription* font = pango_font_description_new();
+    pango_font_description_set_family(font, family.c_str());
+    pango_font_description_set_size(font, size * PANGO_SCALE);
+    pango_font_description_set_weight(font, !bold ? PANGO_WEIGHT_NORMAL : PANGO_WEIGHT_BOLD);
+    pango_font_description_set_style(font, !italic ? PANGO_STYLE_NORMAL : PANGO_STYLE_OBLIQUE);
+    return font;
+}
+
+auto pFont::free(PangoFontDescription* font) -> void {
+    if(font) pango_font_description_free(font);
+    font = nullptr;
+}
+
+auto pFont::size(PangoFontDescription* font, std::string text) -> Size {
+    PangoContext* context = gdk_pango_context_get_for_screen(gdk_screen_get_default());
+    PangoLayout* layout = pango_layout_new(context);
+    pango_layout_set_font_description(layout, font);
+    pango_layout_set_text(layout, text.c_str(), -1);
+    int width = 0, height = 0;
+    pango_layout_get_pixel_size(layout, &width, &height);
+    if(G_IS_OBJECT((gpointer)layout)) g_object_unref((gpointer)layout);
+    return {width, height};
+}
+
+auto pFont::size(std::string font, std::string text) -> Size {
+    auto description = create(font);
+    Size size = pFont::size(description, text);
+    free(description);
+    return size;
+}
+
+auto pFont::setFont(GtkWidget* widget, std::string font) -> PangoFontDescription* {
+    auto gtkFont = pFont::create(font);
+    pFont::setFont(widget, (gpointer)gtkFont);
+    return gtkFont;
+}
+
+auto pFont::setFont(GtkWidget* widget, gpointer font) -> void {
+    if(font == nullptr) return;
+    gtk_widget_modify_font(widget, (PangoFontDescription*)font);
+    
+    if(GTK_IS_CONTAINER(widget)) {
+        gtk_container_foreach(GTK_CONTAINER(widget), (GtkCallback)pFont::setFont, font);
+    }
+}

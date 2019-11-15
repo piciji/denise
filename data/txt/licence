@@ -1,0 +1,42 @@
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License as
+published by the Free Software Foundation; either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+02111-1307  USA
+
+
+copyright holders
+-----------------
+
+module "guikit" is based on "phoenix" used in old versions of bsnes/higan, https://byuu.org/
+It's rewritten from scratch and fixes more than 50 bugs.
+differences are mostly widget nesting, menu/status toggling during fullscreen toggling,
+layouting, added treeview widget for all platforms ...
+
+module "driver" is based of "ruby" used in actual higan, https://byuu.org/
+it's rewritten and extended by additional drivers like raw joypad (windows),
+core audio (osx), iokit for joypad and keyboard (osx)
+
+"Sid" emulation code, especially sid filter, is taken from actual vice code and extended by
+emulating multiple incomming voltages as separate transistors instead of one virtual.
+If you understand german language and interested in mathematical/
+physically background of sid filter you should read my comments in the filter source code.
+I have analyzed and understood this code line by line. Each line of code is described in detail.
+"VicII" register change timings are the findings of the vice team. I am thankful for it.
+c64 keyboard matrix timings are the findings of the vice team.
+http://vice-emu.sourceforge.net/
+
+Dynamic Rate Control (DRC) formula is copyrighted by RetroArch.
+cosine resampler is copyrighted by RetroArch.
+
+C64 TrueType v1.2/Style font is used for listing content in a gui listview

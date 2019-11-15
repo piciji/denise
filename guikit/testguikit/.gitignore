@@ -1,0 +1,5 @@
+nbproject/
+obj/*
+!obj/.gitkeep
+out/*
+!out/.gitkeep

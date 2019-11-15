@@ -1,0 +1,460 @@
+
+InputSelector::InputSelector() {
+    append(device, {~0u, 0u}, 20);
+    append(plugin, {0u, 0u}, 10);
+    setAlignment(0.5);
+}
+
+InputControl::InputControl() {
+    mapper.setEnabled(false);
+    erase.setEnabled(false);
+    linker.setEnabled(false);
+    mapperAlt.setEnabled(false);
+    eraseAlt.setEnabled(false);
+    linkerAlt.setEnabled(false);
+
+    append(mapper, {0u, 0u}, 10);     
+	append(linker, {0u, 0u}, 10);     
+    append(erase, {0u, 0u});
+    append(spacer, {~0u, 0u});
+    append(alternate, {0u, 0u}, 5);  
+    append(mapperAlt, {0u, 0u}, 10);     
+	append(linkerAlt, {0u, 0u}, 10);     
+    append(eraseAlt, {0u, 0u});   
+    
+    setAlignment( 0.5 );
+}
+
+InputMapControl::InputMapControl() {
+    append(keyLayoutLabel, {0u, 0u}, 5);
+    append(keyLayout, {0u, 0u}, 10);
+    append(automap, {0u, 0u});
+    append(spacer, {~0u, 0u});
+    append(reset, {0u, 0u});    
+    
+    setAlignment( 0.5 );
+    
+    automap.setEnabled( false );   
+    keyLayout.setEnabled( false );    
+    keyLayout.append( "", -1 );
+    
+    for ( auto& keyboardLayout : InputManager::keyboardLayouts ) {     
+        keyLayout.append( "", (unsigned)keyboardLayout.type ); 
+    }
+}
+
+InputAssign::InputAssign() {    
+    append(infoLabel, {~0u, 0u}, 10);
+    append(assignLabel, {0u, 0u}, 10);
+    append(overwriteRadio, {0u, 0u}, 3);
+    append(appendRadio, {0u, 0u});
+    GUIKIT::RadioBox::setGroup( overwriteRadio, appendRadio );
+    overwriteRadio.setChecked();
+    setAlignment(0.5);
+}
+
+InputLayout::InputLayout(TabWindow* tabWindow) {
+    this->tabWindow = tabWindow;
+    this->emulator = tabWindow->emulator;
+    
+    setMargin(10);
+
+    inputList.setHeaderText( { "", "", "", "" } );
+    inputList.setHeaderVisible();
+    
+    controllerImage.loadPng((uint8_t*)Icons::controller, sizeof(Icons::controller));
+    mouseImage.loadPng((uint8_t*)Icons::mouse, sizeof(Icons::mouse));
+    keyboardImage.loadPng((uint8_t*)Icons::keyboard, sizeof(Icons::keyboard));
+    virtualKeyImage.loadPng((uint8_t*)Icons::virtualKey, sizeof(Icons::virtualKey));
+    lightgunImage.loadPng((uint8_t*)Icons::lightgun, sizeof(Icons::lightgun));
+    lightpenImage.loadPng((uint8_t*)Icons::lightpen, sizeof(Icons::lightpen));
+    
+    for(auto& connector : emulator->connectors) {
+        auto pluginConnector = new GUIKIT::CheckButton;
+        pluginConnector->setText( connector.name );
+        
+        Emulator::Interface::Connector* connectorPtr = &connector;
+        
+        pluginConnector->onToggle = [&, pluginConnector, connectorPtr]() {
+            
+            auto device = emulator->getUnplugDevice();
+            
+            if (pluginConnector->checked())
+                device = emulator->getDevice( deviceId() );
+            
+            this->emulator->connect( connectorPtr, device );
+            
+            InputManager::getManager( this->emulator )->updateMappingsInUse();
+            
+            settings->set<unsigned>( this->tabWindow->ident(connectorPtr->name), device->id);
+            
+            view->checkInputDevice( emulator, connectorPtr, device );
+            
+            view->setCursor( emulator );
+        };
+        
+        selector.append( *pluginConnector, {0u, 0u}, 20 );
+        
+        selector.connectorButtons.push_back( { pluginConnector, &connector } );
+    }
+
+    append(selector, {~0u, 0u}, 10);
+    append(assigner, {~0u, 0u}, 10);
+    append(inputList, {~0u, ~0u}, 10);
+    append(control, {~0u, 0u}, 10);
+    append(mapControl, {~0u, 0u});
+
+    captureTimer.setInterval(3500);
+    pollTimer.setInterval(50);
+
+    mapControl.reset.onActivate = [this]() {
+        if (!mes->question( trans->get("reset_device_question") ))
+			return;
+
+        stopCapture();
+                
+		InputManager::getManager( this->emulator )->unmapDevice( deviceId() );        
+    
+		update();
+    };
+
+    control.erase.onActivate = [this]() {         
+        eraseSelected();
+    };
+
+    control.eraseAlt.onActivate = [this]() {        
+        eraseSelected( true );
+    };
+	
+	control.linker.onActivate = [this]() {
+        linkSelected();
+	};
+
+    control.linkerAlt.onActivate = [this]() {
+        linkSelected( true );
+    };
+    
+    control.mapper.onActivate = [this]() {  
+        mapSelected();
+    };
+    
+    control.mapperAlt.onActivate = [this]() {  
+        mapSelected( true );
+    };
+    
+    inputList.onActivate = [this]() {		
+		mapSelected();
+    };
+
+    mapControl.automap.onActivate = [&]() {
+        
+        auto selection = mapControl.keyLayout.selection();
+        
+        if (selection == 0)
+            return;
+        
+        if ( mes->question( trans->get("layout_map_question") ) ) {
+            
+            InputManager::getManager( this->emulator )->unmapDevice( deviceId() );                
+            
+            auto type = mapControl.keyLayout.userData( selection );
+            
+            InputManager::getManager( this->emulator )->autoAssign( (KeyboardLayout::Type)type, true );
+            
+            InputManager::getManager( this->emulator )->updateMappingsInUse();
+            
+            update();
+        }
+    };
+    
+    mapControl.keyLayout.onChange = [&]() {
+        
+        settings->set<int>( emulator->ident + "_keyboard_layout", mapControl.keyLayout.userData() );
+        
+        update();        
+    };
+
+    inputList.onChange = [&]() {
+        displayInputCall();
+        std::string inputIdent;
+        auto mapping = getMappingOfSelected(inputIdent);
+        
+        control.erase.setEnabled( inputList.selected() );
+		control.linker.setEnabled( inputList.selected() );
+        control.mapper.setEnabled( inputList.selected() );
+        control.eraseAlt.setEnabled(!mapping->isAnalog() && inputList.selected());
+        control.linkerAlt.setEnabled(!mapping->isAnalog() && inputList.selected());
+        control.mapperAlt.setEnabled( !mapping->isAnalog() && inputList.selected() );
+    };    
+    
+    updateLayout();
+}
+
+auto InputLayout::stopCapture() -> void {
+    pollTimer.setEnabled(false);
+    captureTimer.setEnabled(false);
+    InputManager::captureObject = nullptr;
+    displayInputCall();
+}
+
+auto InputLayout::loadDeviceList() -> void {
+    selector.device.reset();
+    bool firstInputListLoaded = false;
+    
+    for (auto& device : emulator->devices) {
+        if (device.inputs.size() == 0)
+            continue;
+        
+        selector.device.append( trans->get( device.name ), device.id );
+        if (!firstInputListLoaded) {
+            loadInputList( device.id );
+            firstInputListLoaded = true;
+        }
+    }
+
+    selector.device.onChange = [&]() {
+        stopCapture();
+        update();
+    };
+    stopCapture();
+}
+
+auto InputLayout::loadInputList(unsigned deviceId) -> void {
+    inputList.reset();
+    control.erase.setEnabled(false);
+	control.linker.setEnabled(false);
+    control.mapper.setEnabled(false);
+    control.eraseAlt.setEnabled(false);
+	control.linkerAlt.setEnabled(false);
+    control.mapperAlt.setEnabled(false);
+
+    auto& device = emulator->devices[deviceId];
+    GUIKIT::Image* image = nullptr;
+    
+    if (device.isJoypad())
+        image = &controllerImage;
+    else if (device.isMouse() || device.isPaddles())
+        image = &mouseImage;
+    else if (device.isLightGun())
+        image = &lightgunImage;
+    else if (device.isLightPen())
+        image = &lightpenImage;
+    else 
+        image = &keyboardImage;
+    
+    auto layoutType = settings->get<int>( emulator->ident + "_keyboard_layout", InputManager::assumeLayoutType() );
+    
+    for (auto& input : emulator->devices[deviceId].inputs) {
+        
+        std::string useName = input.name;
+        
+        for(auto& layout : input.layouts) {
+            if ( (KeyboardLayout::Type) layout.type == layoutType ) {
+                useName = layout.name;
+                break;
+            }
+        }
+                    
+        appendListEntry( useName, (InputMapping*)input.guid, image );
+    }
+    
+    mapControl.keyLayout.setEnabled( device.isKeyboard() );    
+    mapControl.automap.setEnabled( device.isKeyboard() && mapControl.keyLayout.selection() != 0 );
+    updateConnectorButtons();
+    enableConnectorButtons();
+}
+
+auto InputLayout::updateLayout() -> void {
+    
+    auto layout = settings->get<int>( emulator->ident + "_keyboard_layout", InputManager::assumeLayoutType() );
+    
+    for( unsigned row = 0; row < mapControl.keyLayout.rows(); row++ ) {
+        
+        if ( layout == mapControl.keyLayout.userData( row ) ) {
+            mapControl.keyLayout.setSelection( row );
+            break;
+        }
+    }
+}
+
+auto InputLayout::appendListEntry(std::string& name, InputMapping* mapping, GUIKIT::Image* image) -> void {
+    
+    if (mapping->shadowMap.size() > 0)
+        image = &virtualKeyImage;
+    
+    inputList.append({ "", trans->get( name ), mapping->getDescription(), 
+        mapping->alternate ? mapping->alternate->getDescription() : "" });
+    inputList.setImage( inputList.rowCount() - 1, 0, *image );
+}
+
+auto InputLayout::updateListEntry(unsigned selection, InputMapping* mapping) -> void {
+    unsigned column = !mapping->parent ? 2 : 3;
+    inputList.setText(selection, column,  mapping->getDescription() );
+    inputList.setSelection(selection);
+}
+
+auto InputLayout::translate() -> void {
+    stopCapture();
+    selector.plugin.setText( trans->get("plugin", {}, true) );
+    inputList.setHeaderText({ "", trans->get("input"), trans->get("map"), trans->get("alternate_map")});
+    mapControl.reset.setText( trans->get( "reset" ) );
+    mapControl.reset.setTooltip( trans->get( "reset_device_info" ) );
+    control.erase.setText( trans->get( "erase" ) );
+    control.erase.setTooltip( trans->get( "erase_device_info" ) );
+    control.eraseAlt.setText( trans->get( "erase" ) );
+    control.eraseAlt.setTooltip( trans->get( "erase_device_info" ) );
+	control.linker.setText( trans->get( "and_or_connection" ) );   
+    control.linkerAlt.setText( trans->get( "and_or_connection" ) );       
+    control.mapper.setText( trans->get( "assign" ) );
+    control.mapperAlt.setText( trans->get( "assign" ) );
+    control.alternate.setText( trans->get( "alternate", {}, true ) );
+    
+    mapControl.keyLayoutLabel.setText( trans->get("layout") );
+    mapControl.keyLayout.setTooltip( trans->get("keyboard_layout_tip") );
+    mapControl.automap.setText( trans->get("assign") );
+    
+    assigner.overwriteRadio.setText( trans->get("overwrite") );
+    assigner.appendRadio.setText( trans->get("append") );
+    assigner.assignLabel.setText( trans->get("assignment", {}, true) );
+    
+    unsigned i = 0;
+    mapControl.keyLayout.setText( i++, trans->get("generic"));    
+    for ( auto& keyboardLayout : InputManager::keyboardLayouts ) {
+        mapControl.keyLayout.setText( i++, trans->get( keyboardLayout.language ) + " ( " + keyboardLayout.code + " )" );   
+    }
+}
+
+auto InputLayout::displayInputCall() -> void {
+    std::string text = trans->get("register_input");
+    
+    if (inputList.selected()) {
+        auto selection = inputList.selection();    
+        
+        if ( inputList.getImage( selection, 0 ) == &virtualKeyImage )
+            text = trans->get("register_vkey");
+    }    
+    
+    assigner.infoLabel.setFont( GUIKIT::Font::system() );
+    assigner.infoLabel.setText( text );
+}
+
+auto InputLayout::deviceId() -> unsigned {
+    return selector.device.userData();
+}
+
+auto InputLayout::inputId() -> unsigned {
+    return inputList.selection();
+}
+
+auto InputLayout::getMappingOfSelected(std::string& inputIdent) -> InputMapping* {
+	
+	auto input = emulator->devices[ deviceId() ].inputs[ inputId() ];	
+	inputIdent = input.name;	
+	
+	return (InputMapping*)input.guid;
+}
+
+auto InputLayout::update() -> void {
+	loadInputList( deviceId() );
+}
+
+auto InputLayout::updateConnectorButtons() -> void {
+    
+    for(auto& connectorButton : selector.connectorButtons) {
+        
+        auto device = emulator->getConnectedDevice( connectorButton.connector );
+        
+        bool willCheck = deviceId() == device->id;
+        
+        if (willCheck != connectorButton.checkButton->checked() )        
+            connectorButton.checkButton->setChecked( willCheck );
+    }
+}
+
+auto InputLayout::enableConnectorButtons() -> void {
+    
+    auto device = emulator->getDevice( deviceId() );
+    
+    for(auto& connectorButton : selector.connectorButtons)        
+        connectorButton.checkButton->setEnabled( !device->isKeyboard() );   
+}
+
+auto InputLayout::eraseSelected( bool alternate ) -> void {
+    if (!inputList.selected())
+        return;
+
+    stopCapture();
+
+    std::string inputIdent;
+    auto mapping = getMappingOfSelected(inputIdent);
+    
+    if (alternate && !mapping->alternate)
+        return;
+    
+    if (alternate)
+        mapping = mapping->alternate;
+
+    mapping->init();
+    
+    InputManager::getManager(emulator)->updateMappingsInUse();
+        
+    updateListEntry(inputId(), mapping);
+}
+
+auto InputLayout::linkSelected( bool alternate ) -> void {
+
+    if (!inputList.selected())
+        return;
+
+    stopCapture();
+
+    std::string inputIdent;
+    auto mapping = getMappingOfSelected(inputIdent);
+    
+    if (alternate && !mapping->alternate)
+        return;
+
+    if (alternate)
+        mapping = mapping->alternate;
+
+    mapping->swapLinker();
+    updateListEntry(inputId(), mapping);
+
+    InputManager::getManager(emulator)->sort();
+    InputManager::getManager(emulator)->priorizeConnectedDevicesOverKeyboard();
+}
+
+auto InputLayout::mapSelected( bool alternate ) -> void {
+    if (InputManager::captureObject)
+        return;
+        
+    std::string inputIdent;
+    auto mapping = getMappingOfSelected(inputIdent);
+    
+    if (alternate && !mapping->alternate)
+        return;
+    
+    if (alternate)
+        mapping = mapping->alternate;
+
+    assigner.infoLabel.setFont(GUIKIT::Font::system("Bold"));
+    assigner.infoLabel.setText(trans->get("press_key",{
+        {"%trigger%", trans->get(inputIdent)}}));
+
+    unsigned selection = inputId();
+    InputManager::capture(mapping);
+
+    captureTimer.setEnabled();
+    pollTimer.setEnabled();
+    bool overwriteMode = assigner.overwriteRadio.checked();
+
+    pollTimer.onFinished = [&, mapping, selection, overwriteMode]() {
+        if (InputManager::capture(overwriteMode)) {
+            stopCapture();
+            updateListEntry(selection, mapping);
+        }
+    };
+    captureTimer.onFinished = [&]() {
+        stopCapture();
+    };
+}

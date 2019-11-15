@@ -1,0 +1,84 @@
+
+There is a makefile in module 'drivers'. There you can remove some drivers, you don't need
+or don't want to install, like SDL2, freetype or openal. There are alternatives.
+For example you could remove all audio drivers. The emulator will be running without audio.
+
+WINDOWS (XP and higher)
+-------
+install mingw32 or 64 (includes gnu compiler, directx, opengl, hid ... almost everything)
+
+NOTE: in the following we need to include more headers / libraries to our mingw
+installation. The first include / lib folders you see in mingw main folder are NOT the
+target folders, therefore change to subfolder: x86_64-w64-mingw32
+
+install openal sdk: https://www.openal.org/downloads/
+  copy 32/64 bit lib OpenAL32.lib in mingw 32/64 lib folder
+  create folder AL in mingw 32/64 include folder and copy all header files into it
+
+download and unpack latest freetype source code v:2.9.1 at the moment
+  install MSYS if you haven't already.
+  MSYS is a collection of GNU utilities such as bash, make, gawk and grep
+  to allow building of applications which depend on traditionally UNIX.
+  first run postinstall/pi.bat from msys install folder, follow the dialog
+  and input the mingw installation path.
+  afterwards there should be a file in msys etc folder /etc/fstab
+  if the postinstall procedure isn't working properly rename /etc/fstab.sample
+  in /etc/fstab and insert the mingw folder by yourself.
+  hints: use slashes instead of backslashes, in my case it looks like this:
+  C:/mingw64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64	/mingw
+  now start msys and you get a special cmd
+  switch to freetype folder 
+  input: ./configure --enable-static --without-zlib --without-bzip2
+  mingw make isn't working here, use msys make instead
+  in my case it looks like this: C:/msys/1.0/bin/make
+  finally we get a static library in freetype folder: objs/.libs
+  copy objs/.libs/libfreetype.a to your mingw lib folder
+  copy all files from freetype include folder to your mingw include folder
+  NOTE: keep in mind if you want to build Denise as 32 or 64 bit version.
+  freetype have to be build the same version. therefore assign a 32 or 64 bit
+  mingw installation in the before mentioned fstab file.
+  NOTE: maybe you have to reinstall msys when building an app for 32 and 64 bit
+  in my case changing mingw path in fstab file wasn't detected a second time.
+  NOTE: antivir interrupts configure task with a false positive.
+  disabling antivir afterwards and try again isn't enough so do it before.
+  otherwise remove the file from quarantine, delete freetype,
+  unpack it again, disable antivir and try again.
+  running in all these problems make installing freetype a tedious task.
+
+OSX
+---
+opengl, openal should already installed (system frameworks)
+SDL2 framework
+/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+brew install sdl2
+
+  install libsdl2
+  cp /opt/local/bin/sdl2-config /usr/bin/
+
+compile freetype
+  download latest source
+  ./configure --enable-static --without-zlib --without-bzip2
+  make
+  sudo make install
+
+LINUX
+-----
+please install following dependencies if you haven't already
+
+GTK+ 2: apt-get install libgtk2.0-dev
+OpenGL: apt-get install mesa-common-dev
+OpenAL: apt-get install libopenal-dev
+Pulseaudio: apt-get install libpulse-dev
+SDL2: apt-get install libsdl2-dev
+Udev: apt-get install libudev-dev
+
+---------------------------------------------
+---------------------------------------------
+
+now build Denise
+----------------
+change to projects root folder and type:
+
+make -f makefile	[windows, linux, osx]
+make install		[windows, linux]
+make uninstall		[linux]
