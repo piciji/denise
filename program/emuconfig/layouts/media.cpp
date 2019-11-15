@@ -17,6 +17,7 @@ PathsLayout::PathsLayout() {
 
 MediaGroupLayout::Block::Header::Header() {
     deviceName.setFont(GUIKIT::Font::system("bold"));
+    inUse.setFont(GUIKIT::Font::system("bold"));
     append(inUse, {0u, 0u}, 5);
     append(deviceName, {0u, 0u}, 10);
     append(writeprotect, {0u, 0u}, 10);
@@ -697,6 +698,7 @@ auto MediaLayout::translate() -> void {
             block->header.writeprotect.setText(trans->get("write_protected"));
             block->header.eject.setText(trans->get("eject"));
             block->header.deviceName.setText( trans->get( block->media->name, {}, true ) );            
+            block->header.inUse.setText( trans->get( block->media->name, {}, true ) );            
             
             if (mediaGroup->isDrive() || (mediaGroup->isExpansion() && mediaGroup->getExpansion()->isEprom() ) ) {
                 block->selector.open.setText("...");
@@ -1020,7 +1022,6 @@ auto MediaGroupLayout::build() -> void {
         block->media = media;
         block->openWritable = false;
         blocks.push_back(block);
-        block->header.deviceName.setText(media->name + ":");
         
         if ( !showOnlyConnectedDevices() )
             blockContainer.append(*block, {~0u, 0u}, 4);
@@ -1045,8 +1046,10 @@ auto MediaGroupLayout::build() -> void {
         
         if (!mediaGroup->selected)
             header.remove( header.inUse );
-        else
-            radioGroup.push_back( &header.inUse );       
+        else {
+            header.remove( header.deviceName );
+            radioGroup.push_back( &header.inUse );                   
+        }
         
         if (!mediaGroup->isExpansion() || (mediaGroup->getExpansion()->pcbs.size() == 0) )
             selector.remove( selector.combo );
