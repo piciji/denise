@@ -95,25 +95,26 @@ auto Prg::inject( ) -> void {
 auto Prg::getMemory(unsigned& prgSize) -> uint8_t* {
     uint8_t* ram = system->ram;
 
-    unsigned _end = ram[0x2d] | (ram[0x2e] << 8);
+    unsigned _start = ram[0x2b] | (ram[0x2c] << 8);
+    unsigned _end = ram[0x2d] | (ram[0x2e] << 8);    
 
-    if (_end < 0x0801)
+    if (_end <= _start)
         return nullptr;
 
     if (_end > (64 * 1024))
         return nullptr;
 
-    _end -= 0x0801;
+    _end -= _start;
 
     prgSize = _end + 2;
 
     uint8_t* prgData = new uint8_t[ prgSize ];
 
-    prgData[0] = 0x01;
-    prgData[1] = 0x08;
+    prgData[0] = ram[0x2b];
+    prgData[1] = ram[0x2c];
 
     for( unsigned i = 0; i < _end; i++ )
-        prgData[ i + 2 ] = ram[0x0801 + i];
+        prgData[ i + 2 ] = ram[_start + i];
 
     return prgData;
 }

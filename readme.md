@@ -14,7 +14,7 @@ usage hints -> scroll down this file
     * added REU support with additional 8k rom
     * added Action Replay MK2, MK3, MK4, V4.1 and higher
     * support Cartridge bin format
-* GIT repo is public now
+* GIT repo is public now: [Bitbucket](https://bitbucket.org/piciji/denise/src/master/)
 * simplified build process
 
 ## 1.0.5

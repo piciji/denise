@@ -957,7 +957,6 @@ auto MediaGroupLayout::updateVisibility( unsigned count, bool init ) -> void {
     for(auto block : blocks) {  
         
         if (count) {
-            block->setVisible(false);
             blockContainer.append(*block,{~0u, 0u}, 4);      
             
             if (!listingInVisibleBlock)
@@ -972,9 +971,6 @@ auto MediaGroupLayout::updateVisibility( unsigned count, bool init ) -> void {
     
     if (!listingInVisibleBlock)
         fillListing( blocks[0] );	  
-    
-    if (tabWindow->visible() && tabWindow->tab.selection() == TabWindow::Layout::Media && tabWindow->mediaLayout->selection() == mediaGroup->id)
-        this->setVisible();
 }
 
 auto MediaGroupLayout::getBlock(Emulator::Interface::Media* media) -> Block* {

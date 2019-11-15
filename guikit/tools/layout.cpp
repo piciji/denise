@@ -2,6 +2,8 @@
 auto Layout::append(Sizable& sizable, Size size, unsigned spacing) -> void {
     for(auto& child : children) if(child.sizable == &sizable) return;
     children.push_back({&sizable, size, {0,0}, spacing, 0});
+    sizable.setVisible( visible() );
+    
     synchronizeLayout();
     if(window()) window()->synchronizeLayout();
 }
