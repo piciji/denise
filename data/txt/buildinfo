@@ -7,7 +7,7 @@ WINDOWS (XP and higher)
 -------
 install mingw32 or 64 (includes gnu compiler, directx, opengl, hid ... almost everything)
 https://sourceforge.net/projects/mingw-w64/
-run installer, ignore spaces if you want to change installation folder, select following options
+run installer, prevent spaces if you want to change installation folder, select following options
 Version: latest
 Architecture: x86_64, select i686 only if you want to build a 32 bit version of Denise
 Threads: posix
