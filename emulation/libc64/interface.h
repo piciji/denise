@@ -12,17 +12,18 @@ struct Interface : Emulator::Interface {
     enum FeatureId {
         FeatureIdSid = 0, FeatureIdFilter = 1, FeatureIdDigiboost = 2, FeatureIdBias = 3,
         FeatureIdSidAccuracy = 4, FeatureIdCiaRev = 5, FeatureIdCpuAneMagic = 6, FeatureIdGlueLogic = 7,
-        FeatureIdPowerThread = 8,
+        FeatureIdPowerThread = 8, FeatureIdEasyFlashBootJumper = 9,
     };
     
     enum MediaGroupId {
         MediaGroupIdDisk = 0, MediaGroupIdTape = 1,
         MediaGroupIdMemory = 2, MediaGroupIdExpansionGame = 3, MediaGroupIdExpansionReu = 4,
-        MediaGroupIdExpansionActionReplay = 5,
+        MediaGroupIdExpansionActionReplay = 5, MediaGroupIdExpansionEasyFlash = 6,
     };
     
     enum ExpansionId {
         ExpansionIdNone = 0, ExpansionIdGame = 1, ExpansionIdReu = 2, ExpansionIdActionReplay = 3,
+        ExpansionIdEasyFlash = 4,
     };
     
     enum CartridgeId {
@@ -32,6 +33,7 @@ struct Interface : Emulator::Interface {
         CartridgeIdSuperGames = 8, CartridgeIdSystem3 = 15, CartridgeIdZaxxon = 18,
         CartridgeIdActionReplayMK2 = 50, CartridgeIdActionReplayMK3 = 35,
         CartridgeIdActionReplayMK4 = 30, CartridgeIdActionReplayV41AndHigher = 1, 
+        CartridgeIdEasyFlash = 32,
     };
     
     static const std::string Version;
@@ -76,7 +78,9 @@ struct Interface : Emulator::Interface {
 
 	//module slot handling
 	auto insertExpansionImage(Media* media, uint8_t* data, unsigned size) -> void;
+    auto writeProtectExpansion(Media* media, bool state) -> void;
     auto ejectExpansionImage(Media* media) -> void;
+    auto createExpansionImage(MediaGroup* group, unsigned& imageSize) -> uint8_t*;
 	
 	//memory
 	auto insertMemory(Media* media, uint8_t* data, unsigned size) -> void;

@@ -1,0 +1,344 @@
+
+#include "../../system/system.h"
+#include "easyFlash.h"
+
+namespace LIBC64 {  
+    
+EasyFlash* easyFlash = nullptr;  
+
+#include "eapi.h"
+
+EasyFlash::EasyFlash(Emulator::Events* events) : Cart(false, true),
+    flashLo(Emulator::Flash040::TypeB),
+    flashHi(Emulator::Flash040::TypeB) {
+    
+    this->events = events;
+    
+    this->media = nullptr;
+    
+    this->jumperBoot = true;
+    
+    this->writeProtect = true;
+    
+    init();
+    
+    setId( Interface::ExpansionIdEasyFlash );
+}
+
+EasyFlash::~EasyFlash() {
+    delete[] dataLo;
+    delete[] dataHi;
+}
+
+auto EasyFlash::init( ) -> void {
+    
+    dataLo = new uint8_t[ 512 * 1024 ];
+    dataHi = new uint8_t[ 512 * 1024 ];
+    
+    flashLo.setData( dataLo );
+    flashHi.setData( dataHi );
+    
+    flashLo.setEvents( events );
+    flashHi.setEvents( events );   
+}
+
+auto EasyFlash::setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void {
+    
+    if ( (this->rom == nullptr) && (rom == nullptr) )
+        return;
+        
+    write();
+    
+    this->media = media;
+    this->rom = rom;
+    this->romSize = romSize;
+    this->cartridgeId = Interface::CartridgeIdEasyFlash;
+    this->binFormat = false;
+    
+    if (!readHeader())
+        binFormat = true;
+        
+    if ( !readChips() )
+        assumeChips();  
+                   
+    std::memset(dataLo, 0xff, 512 * 1024 );
+    std::memset(dataHi, 0xff, 512 * 1024 );
+    unsigned offset = 0;
+    
+    for(auto& chip : chips) {
+
+        if (chip.bank >= 64)
+            break;
+        
+        offset = chip.bank << 13;
+        
+        if (!chip.ptrHi) {                        
+                        
+            if (chip.addr & 0x2000)
+                std::memcpy( dataHi + offset, chip.ptr, chip.size );   
+            else
+                std::memcpy( dataLo + offset, chip.ptr, chip.size );
+            
+        } else {
+            // when ptrHi exists, chip size is more than 8192 bytes            
+            std::memcpy( dataLo + offset, chip.ptr, 0x2000 );            
+            std::memcpy( dataHi + offset, chip.ptrHi, std::min(chip.size - 0x2000, 0x2000) );
+        }            
+    }
+    
+    if (std::memcmp(&dataHi[0x1800], "eapi", 4) == 0) {
+        std::memcpy(dataHi + 0x1800, eapi, 768);
+    }
+}
+
+auto EasyFlash::assumeChips( ) -> void {
+    Cart::assumeChips( );
+    
+    bool toggle = false;
+    for(auto& chip : chips) {
+                
+        chip.addr = toggle ? 0xa000 : 0x8000;
+        chip.bank = chip.id >> 1;
+        
+        toggle ^= 1;
+    }
+}
+
+auto EasyFlash::write() -> void {
+    
+    if (writeProtect || !media || (!flashLo.dirty && !flashHi.dirty) )
+        return;
+    
+    system->interface->truncateMedia( media );
+    
+    unsigned offset = 0;
+    
+    if (!binFormat) {
+        uint8_t header[64];
+        buildHeader(&header[0], 0x20, false, true, "EasyFlash Cartridge" );
+        system->interface->writeMedia(media, &header[0], 0x40, 0);
+        offset += 0x40;
+    }    
+    
+    if (!chips.size()) {
+        Chip chip;
+        chip.size = 0x2000;
+        chip.type = Chip::Type::FlashRom;
+        chips.push_back( chip );
+    }
+
+    Chip* chip = &chips[0];
+    uint8_t cheader[16];
+
+    bool crt8k = chip->size == 0x2000;
+    
+    for (unsigned b = 0; b < 64; b++ ) {
+
+        if (binFormat) {
+            system->interface->writeMedia(media, dataLo + b * 0x2000, 0x2000, offset);
+            offset += 0x2000;
+
+            system->interface->writeMedia(media, dataHi + b * 0x2000, 0x2000, offset);
+            offset += 0x2000;
+
+            continue;
+        }
+        // crt format 
+        chip->bank = b;
+        
+        bool writeBankLo = !checkForEmptyBank(dataLo + b * 0x2000);
+        bool writeBankHi = !checkForEmptyBank(dataHi + b * 0x2000);
+                
+        if ( writeBankLo || (!crt8k && writeBankHi) ) {            
+            chip->addr = 0x8000;
+            buildChipHeader( &cheader[0], *chip );
+            system->interface->writeMedia(media, &cheader[0], 16, offset);
+            offset += 16;
+            system->interface->writeMedia(media, dataLo + b * 0x2000, 0x2000, offset);
+            offset += 0x2000;   
+        }                                
+        
+        if (crt8k && writeBankHi) {
+            chip->addr = 0xa000;
+            buildChipHeader(&cheader[0], *chip);
+            system->interface->writeMedia(media, &cheader[0], 16, offset);
+            offset += 16;
+        }                
+
+        if (writeBankHi || (!crt8k && writeBankLo) ) {
+            system->interface->writeMedia(media, dataHi + b * 0x2000, 0x2000, offset);
+            offset += 0x2000;
+        }
+    }
+    
+    flashLo.dirty = false;
+    flashHi.dirty = false;
+}
+
+auto EasyFlash::checkForEmptyBank(uint8_t* ptr) -> bool {
+    
+    for(unsigned i = 0; i < 0x2000; i++) {
+        if (ptr[i] != 0xff)
+            return false;
+    }
+    return true;
+}
+
+auto EasyFlash::assign( Cart* cart ) -> void {
+    // don't rebuild
+}
+
+auto EasyFlash::create( Interface::CartridgeId cartridgeId ) -> Cart* {
+    // don't rebuild
+    return easyFlash;
+}
+
+auto EasyFlash::reset() -> void {
+    
+    std::memset(ram, 0xff, 256);
+    
+    bank = 0;
+    game = !jumperBoot;
+    exRom = true;
+    
+    flashLo.reset();
+    flashHi.reset();
+}
+
+auto EasyFlash::writeIo1( uint16_t addr, uint8_t value ) -> void {
+    
+    if ((addr & 2) == 0) {
+        bank = value & 0x3f;
+        
+    } else {
+        system->interface->updateDriveState(media, (value & 0x80) ? 6 : 0, 0);
+        
+        bool mode = value & 4;
+        
+        value = ~value;
+        
+        exRom = (value >> 1) & 1;
+        game = value & 1;
+        
+        if (game && !mode)
+            game = !jumperBoot;                   
+                  
+        system->changeExpansionPortMemoryMode( exRom, game );            
+    }   
+}
+
+auto EasyFlash::writeIo2( uint16_t addr, uint8_t value ) -> void {
+    
+    ram[ addr & 0xff ] = value;
+}
+
+auto EasyFlash::readIo2( uint16_t addr ) -> uint8_t {
+    
+    return ram[ addr & 0xff ];
+}
+
+auto EasyFlash::readRomL( uint16_t addr ) -> uint8_t {
+    
+    return flashLo.read( bank * 0x2000 + (addr & 0x1fff) );
+}
+
+auto EasyFlash::writeRomL( uint16_t addr, uint8_t data ) -> void {
+    
+    flashLo.write( bank * 0x2000 + (addr & 0x1fff), data );
+    
+    ExpansionPort::writeRomL( addr, data );
+}
+
+auto EasyFlash::readRomH( uint16_t addr ) -> uint8_t {
+    
+    return flashHi.read( bank * 0x2000 + (addr & 0x1fff) );
+}
+
+auto EasyFlash::writeRomH( uint16_t addr, uint8_t data ) -> void {
+    
+    flashHi.write( bank * 0x2000 + (addr & 0x1fff), data );
+    
+    ExpansionPort::writeRomH( addr, data );
+}
+
+auto EasyFlash::writeUltimaxRomL( uint16_t addr, uint8_t data ) -> void {
+
+    flashLo.write( bank * 0x2000 + (addr & 0x1fff), data );
+
+    ExpansionPort::writeUltimaxRomL( addr, data );
+}
+
+auto EasyFlash::writeUltimaxRomH( uint16_t addr, uint8_t data ) -> void {
+
+    flashHi.write( bank * 0x2000 + (addr & 0x1fff), data );
+
+    ExpansionPort::writeUltimaxRomH( addr, data );
+}
+
+auto EasyFlash::serialize(Emulator::Serializer& s) -> void {
+    
+    s.integer( (uint16_t&)cartridgeId );
+    
+    s.integer( jumperBoot );
+    
+    s.integer( binFormat );
+    
+    s.integer( bank );
+    
+    s.integer( writeProtect );
+    
+    s.array( ram );
+    
+    s.integer(flashLo.dirty);
+    s.integer(flashLo.byteToProgram);
+    s.array(flashLo.eraseMask);
+    
+    s.integer(flashHi.dirty);
+    s.integer(flashHi.byteToProgram);
+    s.array(flashHi.eraseMask);
+    
+    if (flashLo.dirty)
+        s.array(dataLo, 512 * 1024);    
+
+    if (flashHi.dirty)
+        s.array(dataHi, 512 * 1024);    
+    
+    ExpansionPort::serialize(s);        
+}
+
+auto EasyFlash::createFlash(unsigned& imageSize) -> uint8_t* {
+    imageSize = 64 + 16 + 16 + 16 * 1024;
+    
+    uint8_t* buffer = new uint8_t[ imageSize ];
+    std::memset(buffer, 0xff, imageSize);
+    
+    uint8_t header[64];
+    buildHeader(&header[0], 0x20, false, true, "EasyFlash Cartridge" );
+    
+    std::memcpy(buffer, &header, 64);
+    
+    Chip chip;
+    chip.bank = 0;
+    chip.size = 0x2000;
+    chip.type = Chip::Type::FlashRom;
+    chip.addr = 0x8000;
+    
+    uint8_t cheader[16];
+    buildChipHeader( &cheader[0], chip );
+    
+    std::memcpy(buffer + 64, &cheader, 16);
+    
+    chip.addr = 0xa000;
+    buildChipHeader( &cheader[0], chip );
+    
+    std::memcpy(buffer + 64 + 16 + 0x2000, &cheader, 16);
+    
+    return buffer;
+}
+
+auto EasyFlash::setWriteProtect(bool state) -> void {
+    
+    writeProtect = state;
+}
+
+}

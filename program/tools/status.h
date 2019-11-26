@@ -17,7 +17,7 @@ struct Status {
 	
 	struct DriveState {
         Emulator::Interface::Media* media;
-		enum Mode : uint8_t { NoOperation = 0, Read = 1, Write = 2, List = 3, ReadHalf = 4, WriteHalf = 5 } mode;
+		enum Mode : uint8_t { NoOperation = 0, Read = 1, Write = 2, List = 3, ReadHalf = 4, WriteHalf = 5, LedCart = 6 } mode;
         unsigned track;
     };
     std::vector<DriveState> driveStates;
@@ -96,11 +96,15 @@ struct Status {
 				continue;
 			
             if (!out.empty())
-                out += " | ";
+                out += " | ";            
             
             auto mediaGroup = driveState.media->group;
             
-			out += driveState.media->name + ": ";
+            if (mediaGroup->isExpansion())
+                out += mediaGroup->name + ": ";
+            else
+                out += driveState.media->name + ": ";
+            
 			switch (driveState.mode) {
 				case DriveState::Mode::Read:
                     out += "read ";
@@ -121,9 +125,14 @@ struct Status {
 				case DriveState::Mode::List:
                     halfTrack = "";
                     break; // show track number permanently
+                case DriveState::Mode::LedCart:
+                    halfTrack = "";
+                    out += "LED ";
+                    break;
 			}
 			
-			out += std::to_string( driveState.track ) + halfTrack;
+            if (!mediaGroup->isExpansion())
+                out += std::to_string( driveState.track ) + halfTrack;
 		}
         
 		if (showFps)

@@ -448,3 +448,4 @@ auto Program::rememberNotToSaveSettings() -> void {
 	
 	tempSettings.save( settingsFile() );
 }
+

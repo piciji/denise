@@ -85,6 +85,13 @@ struct MemoryCreatorLayout : GUIKIT::FramedHorizontalLayout {
 	MemoryCreatorLayout();
 };
 
+struct CartCreatorLayout : GUIKIT::FramedHorizontalLayout {	
+    GUIKIT::ComboButton format;
+    GUIKIT::Button button;
+	
+	CartCreatorLayout();
+};
+
 struct HdCreatorLayout : GUIKIT::FramedVerticalLayout {
 
     struct Creator : GUIKIT::HorizontalLayout {
@@ -127,6 +134,7 @@ struct MediaLayout : GUIKIT::TabFrameLayout {
     HdCreatorLayout* hdCreatorLayout = nullptr;
     DiskCreatorLayout* diskCreatorLayout = nullptr;
 	MemoryCreatorLayout* memoryCreatorLayout = nullptr;
+    CartCreatorLayout* flashCreatorLayout = nullptr;
     
     PathsLayout pathsLayout;
 
@@ -140,7 +148,7 @@ struct MediaLayout : GUIKIT::TabFrameLayout {
 	auto preselectPath( std::string& groupName ) -> std::string;
 	auto savePath( std::string& groupName, std::string path ) -> void;
     auto showC64Listing( MediaGroupLayout* layout, MediaGroupLayout::Block* block = nullptr ) -> bool;
-    auto createImage( unsigned groupId ) -> void;
+    auto createImage( Emulator::Interface::MediaGroup* mediaGroup ) -> void;
     auto showMediaGroupLayout( Emulator::Interface::MediaGroup* mediaGroup ) -> void;
     auto getMediaGroupLayout( Emulator::Interface::MediaGroup* mediaGroup ) -> MediaGroupLayout*;   
     auto insertImage( MediaGroupLayout* layout, MediaGroupLayout::Block* block, GUIKIT::File* file, GUIKIT::File::Item* item ) -> void;
@@ -148,6 +156,7 @@ struct MediaLayout : GUIKIT::TabFrameLayout {
     auto eject( Emulator::Interface::MediaGroup* mediaGroup ) -> void;
     auto drop( std::string filePath, MediaGroupLayout::Block* block = nullptr ) -> void;   
     auto colorListing( unsigned color, bool foreground ) -> void;
+    auto getMediaGroupTransIdent( Emulator::Interface::MediaGroup* mediaGroup ) -> std::string;
 
     MediaLayout(TabWindow* tabWindow);
 };

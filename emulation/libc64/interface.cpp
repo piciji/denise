@@ -10,6 +10,7 @@
 #include "expansionPort/gameCart/gameCart.h"
 #include "expansionPort/reu/reu.h"
 #include "expansionPort/actionReplay/actionReplay.h"
+#include "expansionPort/easyFlash/easyFlash.h"
 #include "disk/structure/structure.h"
 #include "system/gluelogic.h"
 #include "../tools/crop.h"
@@ -54,7 +55,8 @@ auto Interface::prepareMedia() -> void {
 	mediaGroups.push_back({MediaGroupIdMemory, "Memory", MediaGroup::Type::Memory, {"prg", "p00", "t64", "reu"}, {"prg"} });
     mediaGroups.push_back({MediaGroupIdExpansionGame, "Module", MediaGroup::Type::Expansion, {"bin", "crt"}, {} });
     mediaGroups.push_back({MediaGroupIdExpansionReu, "REU", MediaGroup::Type::Expansion, {"bin", "crt", "prg"}, {""} });
-    mediaGroups.push_back({MediaGroupIdExpansionActionReplay, "Action Replay", MediaGroup::Type::Expansion, {"bin", "crt"}, {""} });
+    mediaGroups.push_back({MediaGroupIdExpansionActionReplay, "Action Replay", MediaGroup::Type::Expansion, {"bin", "crt"}, {} });
+    mediaGroups.push_back({MediaGroupIdExpansionEasyFlash, "EasyFlash", MediaGroup::Type::Expansion, {"bin", "crt"}, {"crt"} });
 
 	{   auto& group = mediaGroups[MediaGroupIdDisk];
     
@@ -100,6 +102,13 @@ auto Interface::prepareMedia() -> void {
         group.selected = &group.media[0];  
 	}
 
+    {   auto& group = mediaGroups[MediaGroupIdExpansionEasyFlash];
+		group.media.push_back({0, "Easy Flash 1", 0, &group});
+        group.media.push_back({1, "Easy Flash 2", 0, &group});
+        group.media.push_back({2, "Easy Flash 3", 0, &group});
+        group.media.push_back({3, "Easy Flash 4", 0, &group});
+        group.selected = &group.media[0];  
+	}
     
     for(auto& group : mediaGroups) {
         for(auto& media : group.media) {
@@ -114,6 +123,7 @@ auto Interface::prepareExpansions() -> void {
     expansions.push_back( { ExpansionIdGame, "Game Cart", Expansion::Type::Game, nullptr, &mediaGroups[MediaGroupIdExpansionGame] } );
     expansions.push_back( { ExpansionIdReu, "REU", Expansion::Type::Ram, &memoryTypes[0], &mediaGroups[MediaGroupIdExpansionReu] } );    
     expansions.push_back( { ExpansionIdActionReplay, "Action Replay", Expansion::Type::Freezer, nullptr, &mediaGroups[MediaGroupIdExpansionActionReplay] } );     
+    expansions.push_back( { ExpansionIdEasyFlash, "EasyFlash", Expansion::Type::Flash, nullptr, &mediaGroups[MediaGroupIdExpansionEasyFlash] } );     
     
     {   auto& expansion = expansions[ExpansionIdGame];        
         expansion.pcbs.push_back( {CartridgeIdDefault, "Default"} );
@@ -147,6 +157,12 @@ auto Interface::prepareExpansions() -> void {
         
         for(auto& media : mediaGroups[MediaGroupIdExpansionActionReplay].media)
             media.expansion = &expansion;
+    }
+    
+    {   auto& expansion = expansions[ExpansionIdEasyFlash];        
+    
+        for(auto& media : mediaGroups[MediaGroupIdExpansionEasyFlash].media)
+            media.expansion = &expansion;    
     }
 }
 
@@ -294,7 +310,10 @@ auto Interface::prepareFeatures() -> void {
     // c64c use custom ic instead of discrete glue logic
     features.push_back({FeatureIdGlueLogic, "Custom IC Glue Logic", Feature::Type::Switch, 0, false, false});
     // disk drive thread consumes a single core 100%, usefull when emulating more than two drives
-    features.push_back({FeatureIdPowerThread, "Disk Core 100%", Feature::Type::Switch, 0, true, true});
+    features.push_back({FeatureIdPowerThread, "Disk Core 100%", Feature::Type::Switch, 0, true, true});    
+    // Boot jumper position of EasyFlash cartridge
+    features.push_back({FeatureIdEasyFlashBootJumper, "EasyFlash Boot Jumper", Feature::Type::Switch, 1, true, false});
+
 }
 
 auto Interface::prepareChipset() -> void {    
@@ -686,6 +705,18 @@ auto Interface::insertExpansionImage(Media* media, uint8_t* data, unsigned size)
         reu->setRom(media, data, size);
     else if (media->expansion->id == ExpansionIdActionReplay)
         actionReplay->setRom(media, data, size);
+    else if (media->expansion->id == ExpansionIdEasyFlash)
+        easyFlash->setRom(media, data, size);
+
+}
+
+auto Interface::writeProtectExpansion(Media* media, bool state) -> void {
+    
+    if (!media || !media->group->isExpansion())
+        return;
+    
+    if (media->expansion->id == ExpansionIdEasyFlash)
+        easyFlash->setWriteProtect( state );
 }
 
 auto Interface::ejectExpansionImage(Media* media) -> void {
@@ -698,6 +729,19 @@ auto Interface::ejectExpansionImage(Media* media) -> void {
         reu->setRom(media, nullptr, 0);
     else if (media->expansion->id == ExpansionIdActionReplay)
         actionReplay->setRom(media, nullptr, 0);
+    else if (media->expansion->id == ExpansionIdEasyFlash)
+        easyFlash->setRom(media, nullptr, 0);
+}
+
+auto Interface::createExpansionImage(MediaGroup* group, unsigned& imageSize) -> uint8_t* {
+    
+    if (!group->isExpansion())
+        return nullptr;
+    
+    if (group->getExpansion()->id == ExpansionIdEasyFlash)
+        return easyFlash->createFlash(imageSize);
+    
+    return nullptr;
 }
 
 auto Interface::insertMemory(Media* media, uint8_t* data, unsigned size) -> void {
@@ -800,6 +844,9 @@ auto Interface::setFeature(unsigned featureId, int value) -> void {
             break;
         case FeatureIdPowerThread:
             iecBus->setPowerThread( value & 1 );
+            break;
+        case FeatureIdEasyFlashBootJumper:
+            easyFlash->setBootJumper( value & 1 );
             break;
     }    
 }

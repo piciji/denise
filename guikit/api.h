@@ -960,6 +960,7 @@ struct File {
 	auto read(uint8_t* buffer, unsigned length, unsigned offset = 0) -> unsigned;
     auto write() -> bool;
     auto write(const uint8_t* buffer, unsigned length, unsigned offset = 0) -> unsigned;
+    auto truncate() -> bool;
     auto getSize() const -> uint64_t { return fileInfo.size; }
     auto exists() const -> bool { return fileInfo.exists; }
     auto getDate() const -> std::string { return fileInfo.date; }

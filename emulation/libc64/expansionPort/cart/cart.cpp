@@ -1,5 +1,6 @@
 
 #include "cart.h"
+#include "../../../tools/buffer.h"
 #include "../../system/system.h"
 
 namespace LIBC64 {
@@ -70,6 +71,8 @@ auto Cart::readHeader( ) -> bool {
     if (!rom)
         return false;
     
+    uint8_t header[64];
+    
     if (size < (sizeof header))
         return false;
 
@@ -78,30 +81,31 @@ auto Cart::readHeader( ) -> bool {
     if (std::memcmp(header, "C64 CARTRIDGE   ", 16))
         return false;
 
-    uint32_t headerLength = getDWord(&header[0x10]);
+    uint32_t headerLength = Emulator::copyBufferToIntBigEndian<uint32_t>(&header[0x10]);
 
     if (headerLength < (sizeof header))
         return false;
 
-    if (size <= headerLength)
+    if (size < headerLength)
         return false;
     
     data += headerLength;
     size -= headerLength;        
     
-    cartridgeId = (Interface::CartridgeId)getWord(&header[0x16]);
+    cartridgeId = (Interface::CartridgeId)Emulator::copyBufferToIntBigEndian<uint16_t>(&header[0x16]);
     
-    version = getWord(&header[0x14]);        
+    version = Emulator::copyBufferToIntBigEndian<uint16_t>(&header[0x14]);        
     exRom = header[0x18] & 1;
     game = header[0x19] & 1;
     return true;
 }
 
 auto Cart::readChips() -> bool {
+    chips.clear();
+    
     if (!data || (size == 0) )
         return false;
-    
-    chips.clear();
+        
     uint8_t* ptr = data;
     unsigned offset = 0;
     unsigned id = 0;
@@ -124,10 +128,10 @@ auto Cart::readChips() -> bool {
         
         Chip chip;
         chip.id = id++;
-        chip.type = (Chip::Type)getWord(&cheader[0x8]);
-        chip.bank = getWord(&cheader[0xa]);
-        chip.addr = getWord(&cheader[0xc]);
-        chip.size = getWord(&cheader[0xe]);
+        chip.type = (Chip::Type)Emulator::copyBufferToIntBigEndian<uint16_t>(&cheader[0x8]);
+        chip.bank = Emulator::copyBufferToIntBigEndian<uint16_t>(&cheader[0xa]);
+        chip.addr = Emulator::copyBufferToIntBigEndian<uint16_t>(&cheader[0xc]);
+        chip.size = Emulator::copyBufferToIntBigEndian<uint16_t>(&cheader[0xe]);
         chip.offset = offset;
         chip.ptr = ptr;        
 		
@@ -233,16 +237,6 @@ auto Cart::reset() -> void {
     cRomH = chips.size() > 1 ? getChip(1) : getChip(0);
 }
 
-auto Cart::getDWord( uint8_t* ptr ) -> uint32_t {
-    
-    return ptr[0] << 24 | ptr[1] << 16 | ptr[2] << 8 | ptr[3];
-}
-
-auto Cart::getWord( uint8_t* ptr ) -> uint16_t {
-    
-    return ptr[0] << 8 | ptr[1];
-}
-
 auto Cart::serialize(Emulator::Serializer& s) -> void {
     
     unsigned _cartridgeId = cartridgeId;
@@ -297,6 +291,40 @@ auto Cart::serializeStep2(Emulator::Serializer& s) -> void {
     }
 
     ExpansionPort::serialize(s);
+}
+
+auto Cart::buildHeader(uint8_t* header, uint16_t _type, bool _game, bool _exrom, std::string _name ) -> void {
+    
+    std::memset( header, 0, 64 );
+    
+    std::memcpy( header, "C64 CARTRIDGE   ", 16 );
+    
+    Emulator::copyIntToBufferBigEndian<uint32_t>( header + 0x10, 0x40 );
+    
+    Emulator::copyIntToBufferBigEndian<uint16_t>( header + 0x14, 0x100 );
+    
+    Emulator::copyIntToBufferBigEndian<uint16_t>( header + 0x16, _type );
+    
+    header[0x18] = _exrom;
+    
+    header[0x19] = _game;    
+    
+    std::memcpy( header + 0x20, _name.c_str(), _name.size() );        
+}
+
+auto Cart::buildChipHeader(uint8_t* header, Chip& chip) -> void {    
+    
+    std::memcpy( header, "CHIP", 4 );
+    
+    Emulator::copyIntToBufferBigEndian<uint32_t>( header + 0x4, chip.size + 0x10 );
+    
+    Emulator::copyIntToBufferBigEndian<uint16_t>( header + 0x8, chip.type );
+    
+    Emulator::copyIntToBufferBigEndian<uint16_t>( header + 0xa, chip.bank );
+    
+    Emulator::copyIntToBufferBigEndian<uint16_t>( header + 0xc, chip.addr );
+    
+    Emulator::copyIntToBufferBigEndian<uint16_t>( header + 0xe, chip.size );
 }
     
 }

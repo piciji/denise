@@ -9,8 +9,7 @@ namespace LIBC64 {
 struct Cart : ExpansionPort {
     
     Cart(bool game = true, bool exrom = false);
-    
-    uint8_t header[64];
+        
     uint16_t version;
     
     struct Chip {
@@ -33,23 +32,20 @@ struct Cart : ExpansionPort {
     unsigned romSize = 0;
     
     uint8_t* data = nullptr;
-    unsigned size = 0;
-
+    unsigned size = 0;    
+    
     
     auto readHeader() -> bool;
     auto readChips() -> bool;
     virtual auto assumeChips() -> void;
     auto assumeChips( std::vector<unsigned> sizes ) -> void;
     virtual auto reset() -> void;
-    auto setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void;    
+    virtual auto setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void;    
     
     virtual auto readRomL(uint16_t addr) -> uint8_t;
     virtual auto readRomH(uint16_t addr) -> uint8_t;   
-    auto serialize(Emulator::Serializer& s) -> void;
+    virtual auto serialize(Emulator::Serializer& s) -> void;
     virtual auto serializeStep2(Emulator::Serializer& s) -> void;
-    
-    auto getDWord( uint8_t* ptr ) -> uint32_t;
-    auto getWord( uint8_t* ptr ) -> uint16_t;    
         
     auto rebuild(Interface::CartridgeId cartridgeId, uint8_t* _rom, unsigned _romSize) -> Cart*;
     virtual auto create( Interface::CartridgeId cartridgeId ) -> Cart* { return nullptr; }
@@ -60,6 +56,9 @@ struct Cart : ExpansionPort {
     }
     
     auto hasRom() -> bool { return rom ? true : false; }
+    
+    auto buildHeader(uint8_t* header, uint16_t _type, bool _game, bool _exrom, std::string _name ) -> void;
+    auto buildChipHeader(uint8_t* header, Chip& chip) -> void;
 };    
    
 

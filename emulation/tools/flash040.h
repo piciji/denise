@@ -1,13 +1,15 @@
 
-#include "events.h"
+#pragma once
+
+#include "event.h"
 
 namespace Emulator {
 
-struct Flash {
+struct Flash040 {
 	
     enum Type { TypeNormal, TypeB, Type010, Type032BA01Swap, Type064 } type;
     
-    Flash(Type type) {
+    Flash040(Type type) {
         
         this->type = type;
         this->manufacturerId = 1;
@@ -16,10 +18,10 @@ struct Flash {
         this->size = 524288;
         this->sectorSize = 65536;
         this->sectorBytes = 1;
-        this->unlock1addr = 0x5555;
-        this->unlock2addr = 0x2aaa;
-        this->unlock1mask = 0x7fff;
-        this->unlock2mask = 0x7fff;
+        this->unlock1Addr = 0x5555;
+        this->unlock2Addr = 0x2aaa;
+        this->unlock1Mask = 0x7fff;
+        this->unlock2Mask = 0x7fff;
         this->statusToggleBits = 0x40;
         this->eraseSectorTimeoutCycles = 80;
         this->eraseSectorCycles = 1000000;
@@ -31,10 +33,10 @@ struct Flash {
                 break;
                 
             case TypeB:
-                this->unlock1addr = 0x555;
-                this->unlock2addr = 0x2aa;
-                this->unlock1mask = 0x7ff;
-                this->unlock2mask = 0x7ff;
+                this->unlock1Addr = 0x555;
+                this->unlock2Addr = 0x2aa;
+                this->unlock1Mask = 0x7ff;
+                this->unlock2Mask = 0x7ff;
                 this->eraseSectorTimeoutCycles = 50;
                 this->eraseChipCycles = 8000000;
                 break;
@@ -51,10 +53,10 @@ struct Flash {
                 this->deviceId = 0x41;
                 this->size = 4194304;
                 this->sectorBytes = 8;
-                this->unlock1addr = 0x556;
-                this->unlock2addr = 0x2a9;
-                this->unlock1mask = 0x7ff;
-                this->unlock2mask = 0x7ff;
+                this->unlock1Addr = 0x556;
+                this->unlock2Addr = 0x2a9;
+                this->unlock1Mask = 0x7ff;
+                this->unlock2Mask = 0x7ff;
                 this->statusToggleBits = 0x44;
                 this->eraseSectorTimeoutCycles = 50;
                 this->eraseChipCycles = 64000000;
@@ -65,10 +67,10 @@ struct Flash {
                 this->deviceIdAddr = 2;
                 this->size = 8388608;
                 this->sectorBytes = 16;
-                this->unlock1addr = 0xaaa;
-                this->unlock2addr = 0x555;
-                this->unlock1mask = 0xfff;
-                this->unlock2mask = 0xfff;
+                this->unlock1Addr = 0xaaa;
+                this->unlock2Addr = 0x555;
+                this->unlock1Mask = 0xfff;
+                this->unlock2Mask = 0xfff;
                 this->eraseSectorTimeoutCycles = 50;
                 this->eraseSectorCycles = 500000;
                 this->eraseChipCycles = 64000000;
@@ -84,6 +86,8 @@ struct Flash {
             mask >>= 1;
             this->sectorShift++;
         }
+        
+        reset();
     }
 	
 	enum class State {  Read, unlock1, unlock2, AutoSelect, Program, ProgramError, EraseUnlock1, EraseUnlock2,
@@ -91,13 +95,13 @@ struct Flash {
 	
 	using Callback = std::function<void ()>;
 	Callback erase;
+    Callback clock;
 	
 	Events* events;
 	uint8_t* data = nullptr;
 	uint8_t byteToProgram;
 	uint8_t eraseMask[16];
 	bool dirty = false;
-	uint8_t clock = 0;
 
 	uint32_t size;
 	uint32_t sectorSize;
@@ -106,10 +110,10 @@ struct Flash {
     uint8_t manufacturerId;
     uint8_t deviceId;
     uint8_t deviceIdAddr;
-    uint32_t unlock1addr;
-    uint32_t unlock2addr;
-    uint32_t unlock1mask;
-    uint32_t unlock2mask;
+    uint32_t unlock1Addr;
+    uint32_t unlock2Addr;
+    uint32_t unlock1Mask;
+    uint32_t unlock2Mask;
     uint8_t statusToggleBits;
     unsigned eraseSectorTimeoutCycles;
     unsigned eraseSectorCycles;
@@ -124,11 +128,17 @@ struct Flash {
 		
 		this->events = events;
 		
+        clock = [this]() {
+            
+            if (state == State::ProgramError)
+                this->events->add( &clock, 252, Emulator::Events::UpdateExisting );
+        };
+        
 		erase = [this]() {
 
 			switch (state) {
 				case State::SectorEraseTimeout:
-					events->add( &erase, eraseSectorCycles, Emulator::Events::UpdateExisting );
+					this->events->add( &erase, eraseSectorCycles, Emulator::Events::UpdateExisting );
 					state = State::SectorErase;
 					break;
                     
@@ -149,7 +159,7 @@ struct Flash {
                     for ( uint8_t i = 0; i < this->sectorBytes; i++ ) {
                         if ( eraseMask[i] ) {
                             // there are more sectors to erase
-                            events->add( &erase, eraseSectorCycles, Emulator::Events::UpdateExisting );
+                            this->events->add( &erase, eraseSectorCycles, Emulator::Events::UpdateExisting );
                             return;
                         }
                     }
@@ -169,7 +179,7 @@ struct Flash {
                         
 		};
 		
-		events->registerCallback( { {&erase, 1} } );   
+		events->registerCallback( { {&erase, 1}, {&clock, 1} } );   
 	}
 	
 	auto reset() -> void {        
@@ -178,7 +188,6 @@ struct Flash {
         byteToProgram = 0;
         clearEraseMask();
         dirty = false;
-        clock = 0;
     }
     
 	auto unlock1(uint32_t addr) -> bool {
@@ -214,10 +223,6 @@ struct Flash {
             eraseMask[i] = 0;
     }     
 	
-	auto sync() -> void {
-		clock++;
-	}
-	
     auto read( uint32_t addr ) -> uint8_t {
 
         switch (state) {
@@ -243,8 +248,8 @@ struct Flash {
                 return data[addr];                
             }
 
-            case State:::ProgramError:
-                return ((byteToProgram ^ 0x80) & 0x80) | ((clock & 2) << 5) | (1 << 5);         
+            case State::ProgramError:
+                return ((byteToProgram ^ 0x80) & 0x80) | (( events->delay(&clock) & 2) << 5) | (1 << 5);         
 
             case State::SectorEraseSuspend:
             case State::ChipErase:
@@ -301,7 +306,8 @@ struct Flash {
 				if (programByte(addr, value)) {
 					state = baseState;
 				} else {
-					state = State::ProgramError;
+                    state = State::ProgramError;
+                    this->events->add( &clock, 254, Emulator::Events::UpdateExisting );					
 				}
 				break;
 				
@@ -322,14 +328,14 @@ struct Flash {
 				break;
 				
 			case State::EraseSelect:
-				if (unlock1(addr) && (byte == 0x10)) {
+				if (unlock1(addr) && (value == 0x10)) {
 					state = State::ChipErase;
 					byteToProgram = 0;
 					events->add( &erase, eraseChipCycles, Emulator::Events::UpdateExisting );
-				} else if (byte == 0x30) {
+				} else if (value == 0x30) {
 					addSectorForErase(addr);
 					byteToProgram = 0;
-					state = SectorEraseTimeout;
+					state = State::SectorEraseTimeout;
                     events->add( &erase, eraseSectorTimeoutCycles, Emulator::Events::UpdateExisting );
 				} else {
 					state = baseState;
@@ -337,7 +343,7 @@ struct Flash {
 				break;
                 
             case State::SectorEraseTimeout:
-                if (byte == 0x30) {
+                if (value == 0x30) {
                     addSectorForErase(addr);
                 } else {
                     state = baseState;
@@ -347,14 +353,14 @@ struct Flash {
                 break;
 
             case State::SectorErase:
-                if (byte == 0xb0) {
-                    state = SectorEraseSuspend;
+                if (value == 0xb0) {
+                    state = State::SectorEraseSuspend;
                     events->remove( &erase );
                 }
                 break;
 
             case State::SectorEraseSuspend:
-                if (byte == 0x30) {
+                if (value == 0x30) {
                     state = State::SectorErase;
                     events->add( &erase, eraseSectorCycles, Emulator::Events::UpdateExisting );
                 }
@@ -362,10 +368,10 @@ struct Flash {
 
             case State::ProgramError:
             case State::AutoSelect:
-                if (unlock1(addr) && (byte == 0xaa)) {
+                if (unlock1(addr) && (value == 0xaa)) {
                     state = State::unlock1;
                     
-                } else if (byte == 0xf0) {
+                } else if (value == 0xf0) {
                     state = State::Read;
                     baseState = State::Read;
                 }

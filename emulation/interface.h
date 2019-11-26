@@ -146,7 +146,7 @@ struct Interface {
     struct Expansion {
         unsigned id;
         std::string name;
-        enum class Type : unsigned { Empty, Game, Ram, Eprom, TurboCart, Freezer } type;
+        enum class Type : unsigned { Empty, Game, Ram, Eprom, Flash, TurboCart, Freezer } type;
         MemoryType* memoryType; // uses RAM
         MediaGroup* mediaGroup; // uses ROM
         std::vector<PCBLayout> pcbs;
@@ -155,6 +155,7 @@ struct Interface {
         auto isGame() const -> bool { return type == Type::Game; }
         auto isRam() const -> bool { return type == Type::Ram; }
         auto isEprom() const -> bool { return type == Type::Eprom; }
+        auto isFlash() const -> bool { return type == Type::Flash; }
         auto isTurboCart() const -> bool { return type == Type::TurboCart; }               
         auto isFreezer() const -> bool { return type == Type::Freezer; }      
     };
@@ -184,9 +185,11 @@ struct Interface {
 		auto isExpansion() const -> bool { return type == Type::Expansion; }
 		auto isMemory() const -> bool { return type == Type::Memory; }
         auto isDrive() const -> bool { return isDisk() || isTape() || isHardDisk(); };
+        auto isWritable() const -> bool { return isDrive() || (
+                   isExpansion() && (getExpansion()->isFlash() || getExpansion()->isEprom())); }
         // default count of connected drives
         auto defaultUsage() -> unsigned { return type == Type::Disk ? 1 : 0; }       
-        auto getExpansion() -> Expansion* { return media[0].expansion; }
+        auto getExpansion() const -> Expansion* { return media[0].expansion; }
     };
 
     std::vector<MediaGroup> mediaGroups;         
@@ -281,6 +284,7 @@ struct Interface {
         virtual auto audioSample(int16_t, int16_t) -> void {}
         virtual auto readMedia(Media*, uint8_t*, unsigned, unsigned) -> unsigned { return 0; }
         virtual auto writeMedia(Media*, uint8_t*, unsigned, unsigned) -> unsigned { return 0; }
+        virtual auto truncateMedia(Media* ) -> bool { return false; }
         virtual auto updateDriveState(Media*, unsigned, unsigned) -> void {}
         virtual auto log(std::string, bool) -> void {} //for debugging
         virtual auto exit( int code ) -> void {}
@@ -315,6 +319,10 @@ struct Interface {
 
     auto writeMedia(Media* media, uint8_t* buffer, unsigned length, unsigned offset) -> unsigned {
         return bind->writeMedia(media, buffer, length, offset);
+    }
+    
+    auto truncateMedia(Media* media) -> bool {
+        return bind->truncateMedia( media );
     }
 
     auto updateDriveState(Media* media, unsigned mode, unsigned track) -> void {
@@ -368,6 +376,8 @@ struct Interface {
     // expansion image handling
     virtual auto insertExpansionImage(Media* media, uint8_t* data, unsigned size) -> void {}
     virtual auto ejectExpansionImage(Media* media) -> void {}
+    virtual auto writeProtectExpansion(Media* media, bool state) -> void {}
+    virtual auto createExpansionImage(MediaGroup* group, unsigned& imageSize) -> uint8_t* { return nullptr; }
 	// memory 
 	virtual auto insertMemory(Media* media, uint8_t* data, unsigned size) -> void {}
 	virtual auto ejectMemory(Media* media) -> void {}	
@@ -378,7 +388,7 @@ struct Interface {
     virtual auto setExpansion(unsigned expansionId) -> void {}
     virtual auto unsetExpansion() -> void {}    
     virtual auto getExpansion() -> Expansion* { return nullptr; }
-    virtual auto analyzeExpansion(uint8_t* data, unsigned size) -> Expansion* { return nullptr; }
+    virtual auto analyzeExpansion(uint8_t* data, unsigned size) -> Expansion* { return nullptr; }    
     // freezer carts
     virtual auto hasFreezerButton() -> bool { return false; }
     virtual auto freeze() -> void {}
@@ -459,7 +469,7 @@ struct Interface {
 		switch(media->group->type) {
 			case MediaGroup::Type::Disk: writeProtectDisk(media, state); break;
 			case MediaGroup::Type::Tape: writeProtectTape(media, state); break;
-			case MediaGroup::Type::Expansion: break; //todo: epromer writes back
+			case MediaGroup::Type::Expansion: writeProtectExpansion(media, state); break;
 			case MediaGroup::Type::Memory: break; //work mem is controlled by software
 			case MediaGroup::Type::HardDisk: break;
 		}

@@ -118,7 +118,7 @@ auto File::open(Mode mode, bool createFolderIfNotExists) -> bool {
 }
 
 auto File::read() -> uint8_t* {
-	if ( !fp || mode == Mode::Write || fileInfo.size == 0 )
+	if ( !fp || mode == Mode::Write )
 		return nullptr;
 	
     freeData(&data);
@@ -153,7 +153,7 @@ auto File::read(uint8_t* buffer, unsigned length, unsigned offset) -> unsigned {
 auto File::write(const uint8_t* buffer, unsigned length, unsigned offset) -> unsigned {
     if (!fp || mode == Mode::Read)
         return 0;
-    
+
     if (fseek(fp, offset, SEEK_SET))
 		return 0;
     
@@ -161,6 +161,16 @@ auto File::write(const uint8_t* buffer, unsigned length, unsigned offset) -> uns
     fflush( fp );
     dataChanged = true;
     return bytesWritten;
+}
+
+auto File::truncate() -> bool {
+
+    if (mode == Mode::Read)
+        return false;
+
+    int result = ftruncate(fileno(fp), 0);        
+
+    return result == 0;
 }
 
 auto File::scanArchive() -> std::vector<File::Item>& {

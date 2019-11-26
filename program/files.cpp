@@ -115,6 +115,15 @@ auto Program::writeMedia(Emulator::Interface::Media* media, uint8_t* buffer, uns
     return file->write(buffer, length, offset);
 }
 
+auto Program::truncateMedia(Emulator::Interface::Media* media) -> bool {
+    if (!activeEmulator || !media->guid)
+		return false;
+    
+    auto file = (GUIKIT::File*)media->guid;
+    
+    return file->truncate();
+}
+
 auto Program::setExpansionSelection( Emulator::Interface* emulator ) -> void {
     
     for( auto& mediaGroup : emulator->mediaGroups ) {

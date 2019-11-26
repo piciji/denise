@@ -557,8 +557,9 @@ auto SystemLayout::handleExpansionIfAutoBoot(Emulator::Interface::Expansion* new
                 newExpansionLayout = block;
             
             if (!newExpansion && block->box.checked()) {                                                
-                if (block->expansion->isGame() || block->expansion->isEprom() || block->expansion->isFreezer()) {
-                    // a rom only expansion like a game cartridge is in use
+                if (block->expansion->isGame() || block->expansion->isEprom()
+                       || block->expansion->isFlash() || block->expansion->isFreezer()) {
+                    // a booting image expansion type is in use
                     removeExpansion = true;                    
                 }
             }

@@ -65,6 +65,7 @@ struct Program : Emulator::Interface::Bind {
     auto powerOff() -> void;
     auto readMedia(Emulator::Interface::Media* media, uint8_t* buffer, unsigned length, unsigned offset) -> unsigned override;
     auto writeMedia(Emulator::Interface::Media* media, uint8_t* buffer, unsigned length, unsigned offset) -> unsigned override;
+    auto truncateMedia(Emulator::Interface::Media* media) -> bool override;
     auto updateDriveState(Emulator::Interface::Media* media, unsigned mode, unsigned track) -> void override;
 	auto log(std::string data, bool newLine = true) -> void override;
     auto exit(int code) -> void override;
