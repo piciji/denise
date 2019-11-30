@@ -83,6 +83,8 @@ auto Interface::prepareMedia() -> void {
         group.media.push_back({1, "Module 2", 0, &group});
         group.media.push_back({2, "Module 3", 0, &group});
         group.media.push_back({3, "Module 4", 0, &group});
+        group.media.push_back({4, "Module 5", 0, &group});
+        group.media.push_back({5, "Module 6", 0, &group});
         group.selected = &group.media[0];  
 	}
     
@@ -107,6 +109,8 @@ auto Interface::prepareMedia() -> void {
         group.media.push_back({1, "EasyFlash 2", 0, &group});
         group.media.push_back({2, "EasyFlash 3", 0, &group});
         group.media.push_back({3, "EasyFlash 4", 0, &group});
+        group.media.push_back({4, "EasyFlash 5", 0, &group});
+        group.media.push_back({5, "EasyFlash 6", 0, &group});
         group.selected = &group.media[0];  
 	}
     

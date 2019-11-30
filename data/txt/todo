@@ -16,6 +16,7 @@ c64 gun sticks, magnum light phaser, stack light rifle
 c64 savestates
 c64C (custom ic logic)
 c64 custom color palettes + color spectrum emulation
+c64 REU, ActionReplay, EasyFlash
 
 completed features for all emu cores
 ------------------------------------
@@ -39,10 +40,9 @@ changes frequently
 to do C64
 ---------
 extension port interface
-  turbo chameleon 64, super cpu, REU, Dongles
-  Action Replay, easy flash with write support
+  SuperCPU, Turbo Chameleon 64, Dongles
 userport interface
-  speed dos
+  SpeedDOS
   4 player adapter
 floppy
   1541 track change delay time
@@ -77,5 +77,5 @@ rewind support
 debug monitor for developers
 directx 10 and higher
 vulkan support
-Slang Shader support
+SPIR-V Shader support
 RetroArch Shader support
