@@ -12,7 +12,7 @@ struct Interface : Emulator::Interface {
     enum FeatureId {
         FeatureIdSid = 0, FeatureIdFilter = 1, FeatureIdDigiboost = 2, FeatureIdBias = 3,
         FeatureIdSidAccuracy = 4, FeatureIdCiaRev = 5, FeatureIdCpuAneMagic = 6, FeatureIdGlueLogic = 7,
-        FeatureIdPowerThread = 8, FeatureIdEasyFlashBootJumper = 9,
+        FeatureIdPowerThread = 8
     };
     
     enum MediaGroupId {
@@ -33,7 +33,7 @@ struct Interface : Emulator::Interface {
         CartridgeIdSuperGames = 8, CartridgeIdSystem3 = 15, CartridgeIdZaxxon = 18,
         CartridgeIdActionReplayMK2 = 50, CartridgeIdActionReplayMK3 = 35,
         CartridgeIdActionReplayMK4 = 30, CartridgeIdActionReplayV41AndHigher = 1, 
-        CartridgeIdEasyFlash = 32,
+        CartridgeIdEasyFlash = 32, CartridgeIdEasyFlashNoBoot = 259,
     };
     
     static const std::string Version;

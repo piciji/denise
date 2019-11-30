@@ -928,7 +928,7 @@ auto View::translate() -> void {
     //osx extra menu
     cocoa.setTitleForAppMenuItem(GUIKIT::Window::Cocoa::AppMenuItem::About, trans->get("about", {{"%app%", APP_NAME}}));
     cocoa.setTitleForAppMenuItem(GUIKIT::Window::Cocoa::AppMenuItem::Preferences, trans->get("preferences"));
-    cocoa.setTitleForAppMenuItem(GUIKIT::Window::Cocoa::AppMenuItem::Hide, trans->get("hide", {{"%app%", APP_NAME}}));
+    cocoa.setTitleForAppMenuItem(GUIKIT::Window::Cocoa::AppMenuItem::Hide, trans->get("hide_app", {{"%app%", APP_NAME}}));
     cocoa.setTitleForAppMenuItem(GUIKIT::Window::Cocoa::AppMenuItem::HideOthers, trans->get("hide_others"));
     cocoa.setTitleForAppMenuItem(GUIKIT::Window::Cocoa::AppMenuItem::ShowAll, trans->get("show_all"));
     cocoa.setTitleForAppMenuItem(GUIKIT::Window::Cocoa::AppMenuItem::Quit, trans->get("quit", {{"%app%", APP_NAME}}));          
@@ -990,4 +990,22 @@ auto View::updateFreeze( Emulator::Interface* emulator ) -> void {
         else
             sM.freeze->setEnabled( false );
     }
+}
+
+auto View::questionToWrite(Emulator::Interface::Media* media) -> bool {
+    
+    auto file = (GUIKIT::File*)media->guid;
+    
+    if (file->isArchived())
+        // archive, removing of write protection is not supported
+        return false;
+    
+    std::string mediaIdent = media->group->isExpansion() ? media->group->name : media->name;
+    
+    bool state = message->question( trans->get("override_write_protection", {{"%media%", mediaIdent}}) );
+    
+    if (state)        
+        EmuConfigView::TabWindow::getView( activeEmulator )->mediaLayout->disableWriteProtection(media);
+    
+    return state;
 }

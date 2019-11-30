@@ -75,7 +75,9 @@ struct Status {
     }
 	
 	auto show() -> void {
-		if (!update) return;
+		if (!update)
+            return;
+        
 		update = false;
 
 		if (messageSecondsLeft != 0) {
@@ -127,7 +129,7 @@ struct Status {
                     break; // show track number permanently
                 case DriveState::Mode::LedCart:
                     halfTrack = "";
-                    out += "LED ";
+                    out += "LED";
                     break;
 			}
 			

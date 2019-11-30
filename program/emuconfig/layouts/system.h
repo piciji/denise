@@ -4,7 +4,7 @@ struct FeatureLayout : GUIKIT::FramedVerticalLayout {
     struct Line : GUIKIT::HorizontalLayout {
         
         struct Block : GUIKIT::HorizontalLayout {
-            unsigned typeId;
+            Emulator::Interface::Feature* feature;
             GUIKIT::CheckBox checkBox;
             GUIKIT::Label label;
             GUIKIT::LineEdit lineEdit;

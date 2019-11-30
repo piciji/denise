@@ -152,6 +152,8 @@ struct View : public GUIKIT::Window {
         std::vector<std::string> files;        
     } ddControl;
 	
+    auto questionToWrite(Emulator::Interface::Media* media) -> bool;
+    
     View();
 };
 

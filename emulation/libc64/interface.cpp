@@ -17,7 +17,7 @@
 
 namespace LIBC64 {
 
-const std::string Interface::Version = "106";
+const std::string Interface::Version = "1061";
     
 Interface::Interface() : Emulator::Interface( "C64" ) {        
     
@@ -103,10 +103,10 @@ auto Interface::prepareMedia() -> void {
 	}
 
     {   auto& group = mediaGroups[MediaGroupIdExpansionEasyFlash];
-		group.media.push_back({0, "Easy Flash 1", 0, &group});
-        group.media.push_back({1, "Easy Flash 2", 0, &group});
-        group.media.push_back({2, "Easy Flash 3", 0, &group});
-        group.media.push_back({3, "Easy Flash 4", 0, &group});
+		group.media.push_back({0, "EasyFlash 1", 0, &group});
+        group.media.push_back({1, "EasyFlash 2", 0, &group});
+        group.media.push_back({2, "EasyFlash 3", 0, &group});
+        group.media.push_back({3, "EasyFlash 4", 0, &group});
         group.selected = &group.media[0];  
 	}
     
@@ -160,6 +160,8 @@ auto Interface::prepareExpansions() -> void {
     }
     
     {   auto& expansion = expansions[ExpansionIdEasyFlash];        
+        expansion.pcbs.push_back( {CartridgeIdEasyFlash, "boot"} );
+        expansion.pcbs.push_back( {CartridgeIdEasyFlashNoBoot, "hide"} );
     
         for(auto& media : mediaGroups[MediaGroupIdExpansionEasyFlash].media)
             media.expansion = &expansion;    
@@ -311,9 +313,6 @@ auto Interface::prepareFeatures() -> void {
     features.push_back({FeatureIdGlueLogic, "Custom IC Glue Logic", Feature::Type::Switch, 0, false, false});
     // disk drive thread consumes a single core 100%, usefull when emulating more than two drives
     features.push_back({FeatureIdPowerThread, "Disk Core 100%", Feature::Type::Switch, 0, true, true});    
-    // Boot jumper position of EasyFlash cartridge
-    features.push_back({FeatureIdEasyFlashBootJumper, "EasyFlash Boot Jumper", Feature::Type::Switch, 1, true, false});
-
 }
 
 auto Interface::prepareChipset() -> void {    
@@ -845,9 +844,6 @@ auto Interface::setFeature(unsigned featureId, int value) -> void {
         case FeatureIdPowerThread:
             iecBus->setPowerThread( value & 1 );
             break;
-        case FeatureIdEasyFlashBootJumper:
-            easyFlash->setBootJumper( value & 1 );
-            break;
     }    
 }
 
@@ -871,7 +867,7 @@ auto Interface::getFeature(unsigned featureId) -> int {
         case FeatureIdGlueLogic:
             return (int)system->glueLogic->type;
         case FeatureIdPowerThread:
-            return iecBus->cpuBurner;                
+            return iecBus->cpuBurner;
     }    
     return 0;
 }

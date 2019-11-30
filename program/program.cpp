@@ -126,6 +126,7 @@ auto Program::init() -> void {
 
 		for (auto& feature : emulator->features)
 			emulator->setFeature( feature.id, settings->get<int>( ident(emulator, feature.name), feature.defaultValue, feature.range) );				
+        
 		updateCrop( emulator );
         
         setPalette( emulator );
@@ -449,3 +450,7 @@ auto Program::rememberNotToSaveSettings() -> void {
 	tempSettings.save( settingsFile() );
 }
 
+auto Program::questionToWrite(Emulator::Interface::Media* media) -> bool {
+    
+    return view->questionToWrite(media);
+}

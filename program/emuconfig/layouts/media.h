@@ -157,6 +157,7 @@ struct MediaLayout : GUIKIT::TabFrameLayout {
     auto drop( std::string filePath, MediaGroupLayout::Block* block = nullptr ) -> void;   
     auto colorListing( unsigned color, bool foreground ) -> void;
     auto getMediaGroupTransIdent( Emulator::Interface::MediaGroup* mediaGroup ) -> std::string;
+    auto disableWriteProtection(Emulator::Interface::Media* media) -> void;
 
     MediaLayout(TabWindow* tabWindow);
 };

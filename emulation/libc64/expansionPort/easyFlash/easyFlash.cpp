@@ -16,8 +16,6 @@ EasyFlash::EasyFlash(Emulator::Events* events) : Cart(false, true),
     
     this->media = nullptr;
     
-    this->jumperBoot = true;
-    
     this->writeProtect = true;
     
     init();
@@ -40,23 +38,34 @@ auto EasyFlash::init( ) -> void {
     
     flashLo.setEvents( events );
     flashHi.setEvents( events );   
+    
+    flashLo.written = []() {
+        system->serializationSize += 512 * 1024;
+    };
+
+    flashHi.written = []() {
+        system->serializationSize += 512 * 1024;
+    };
 }
 
 auto EasyFlash::setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void {
     
     if ( (this->rom == nullptr) && (rom == nullptr) )
         return;
-        
-    write();
+      
+    if (this->rom && (rom == nullptr))
+        // unset
+        write();
     
     this->media = media;
     this->rom = rom;
-    this->romSize = romSize;
-    this->cartridgeId = Interface::CartridgeIdEasyFlash;
+    this->romSize = romSize;    
     this->binFormat = false;
     
     if (!readHeader())
         binFormat = true;
+    
+    this->cartridgeId = (Interface::CartridgeId)media->pcbLayout->id;
         
     if ( !readChips() )
         assumeChips();  
@@ -106,8 +115,13 @@ auto EasyFlash::assumeChips( ) -> void {
 
 auto EasyFlash::write() -> void {
     
-    if (writeProtect || !media || (!flashLo.dirty && !flashHi.dirty) )
+    if (!media || !media->guid || (!flashLo.dirty && !flashHi.dirty) )
         return;
+        
+    if (writeProtect) {
+        if (!system->interface->questionToWrite(media))
+            return;
+    }
     
     system->interface->truncateMedia( media );
     
@@ -196,14 +210,18 @@ auto EasyFlash::create( Interface::CartridgeId cartridgeId ) -> Cart* {
 auto EasyFlash::reset() -> void {
     
     std::memset(ram, 0xff, 256);
-    
+   
     bank = 0;
-    game = !jumperBoot;
+    game = cartridgeId == Interface::CartridgeIdEasyFlashNoBoot;
     exRom = true;
     
     flashLo.reset();
     flashHi.reset();
 }
+
+auto EasyFlash::isBootable( ) -> bool {
+    return cartridgeId == Interface::CartridgeIdEasyFlash;
+}  
 
 auto EasyFlash::writeIo1( uint16_t addr, uint8_t value ) -> void {
     
@@ -211,7 +229,9 @@ auto EasyFlash::writeIo1( uint16_t addr, uint8_t value ) -> void {
         bank = value & 0x3f;
         
     } else {
-        system->interface->updateDriveState(media, (value & 0x80) ? 6 : 0, 0);
+        // too short for textual representation.
+        // needs LED icons in status bar
+        //system->interface->updateDriveState(media, (value & 0x80) ? 6 : 0, 0);
         
         bool mode = value & 4;
         
@@ -221,7 +241,7 @@ auto EasyFlash::writeIo1( uint16_t addr, uint8_t value ) -> void {
         game = value & 1;
         
         if (game && !mode)
-            game = !jumperBoot;                   
+            game = cartridgeId == Interface::CartridgeIdEasyFlashNoBoot;                 
                   
         system->changeExpansionPortMemoryMode( exRom, game );            
     }   
@@ -277,25 +297,14 @@ auto EasyFlash::writeUltimaxRomH( uint16_t addr, uint8_t data ) -> void {
 
 auto EasyFlash::serialize(Emulator::Serializer& s) -> void {
     
-    s.integer( (uint16_t&)cartridgeId );
-    
-    s.integer( jumperBoot );
-    
-    s.integer( binFormat );
+    s.integer( (uint16_t&)cartridgeId );    
     
     s.integer( bank );
     
-    s.integer( writeProtect );
-    
     s.array( ram );
     
-    s.integer(flashLo.dirty);
-    s.integer(flashLo.byteToProgram);
-    s.array(flashLo.eraseMask);
-    
-    s.integer(flashHi.dirty);
-    s.integer(flashHi.byteToProgram);
-    s.array(flashHi.eraseMask);
+    flashLo.serialize(s);
+    flashHi.serialize(s);
     
     if (flashLo.dirty)
         s.array(dataLo, 512 * 1024);    

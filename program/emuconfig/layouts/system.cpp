@@ -39,7 +39,7 @@ auto FeatureLayout::build( Emulator::Interface* emulator ) -> void {
         
         auto block = new Line::Block( feature.isSwitch() );
         line->blocks.push_back( block );
-        block->typeId = feature.id;
+        block->feature = &feature;
         line->append(*block, {0u, 0u}, ((i % blocksPerLine) == 0) ? 0 : 15);
 
         if (feature.performanceHit)
@@ -290,33 +290,31 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
 	for( auto line : featureLayout.lines ) {
         
         for( auto block : line->blocks ) {
-            
-            auto& feature = emulator->features[ block->typeId ];
 
-            if (feature.isSwitch() ) {	
+            auto feature = block->feature;
+            
+            if (feature->isSwitch() ) {	
 
                 block->checkBox.onToggle = [this, block, feature]( ) {
 
-                    settings->set<bool>( this->tabWindow->ident( feature.name ), block->checkBox.checked( ) );
+                    settings->set<bool>( this->tabWindow->ident( feature->name ), block->checkBox.checked( ) );
 
-                    emulator->setFeature( feature.id, block->checkBox.checked( ) );
+                    emulator->setFeature( feature->id, block->checkBox.checked( ) );
                 };
 
             } else {
 
-                block->lineEdit.onChange = [this, block]() {
-
-                    auto& feature = emulator->features[ block->typeId ];
-
+                block->lineEdit.onChange = [this, block, feature]() {
+                                        
                     int val;
                     auto str = block->lineEdit.text();
 
-                    if ( feature.isHex() ) {                    
-                        val = GUIKIT::String::convertHexToInt( str, feature.defaultValue );
+                    if ( feature->isHex() ) {                    
+                        val = GUIKIT::String::convertHexToInt( str, feature->defaultValue );
                     } else
                         val = block->lineEdit.value();
 
-                    auto range = feature.range;
+                    auto range = feature->range;
 
                     if (val < range[0])
                         val = range[0];
@@ -324,9 +322,9 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
                     if (val > range[1])
                         val = range[1];
 
-                    settings->set<int>( this->tabWindow->ident( feature.name ), val );
+                    settings->set<int>( this->tabWindow->ident( feature->name ), val );
 
-                    emulator->setFeature( feature.id, val );
+                    emulator->setFeature( feature->id, val );
                 };			
             }
 
@@ -378,7 +376,7 @@ auto SystemLayout::activateDrive( Emulator::Interface::MediaGroup* mediaGroup, u
 auto SystemLayout::toggleFeature(unsigned id) -> bool {
 	for(auto line : featureLayout.lines) {
         for( auto block : line->blocks ) {            
-            if (block->typeId == id) {
+            if (block->feature->id == id) {
                 bool newState = block->checkBox.checked() ^ 1;
                 block->checkBox.setChecked( newState );
                 block->checkBox.onToggle();
@@ -393,9 +391,7 @@ auto SystemLayout::updateRuntimeFeatureWidgets( ) -> void {
     for (auto line : featureLayout.lines) {
         for (auto block : line->blocks) {
             
-            auto& feature = emulator->features[ block->typeId ];
-            
-            if (!feature.runtimeChangeable)
+            if (!block->feature->runtimeChangeable)
                 continue;
             
             updateFeatureWidget( block );
@@ -404,16 +400,16 @@ auto SystemLayout::updateRuntimeFeatureWidgets( ) -> void {
 }
 
 auto SystemLayout::updateFeatureWidget( FeatureLayout::Line::Block* block ) -> void {	
-	auto& feature = emulator->features[ block->typeId ];
+	auto feature = block->feature;
 	
-	if (feature.isSwitch() ) {
-		block->checkBox.setChecked( settings->get<bool>( tabWindow->ident( feature.name ), feature.defaultValue ) );
+	if (feature->isSwitch() ) {
+		block->checkBox.setChecked( settings->get<bool>( tabWindow->ident( feature->name ), feature->defaultValue ) );
 		return;
 	}
 	
-	auto _val = settings->get<int>( tabWindow->ident( feature.name ), feature.defaultValue, feature.range );
+	auto _val = settings->get<int>( tabWindow->ident( feature->name ), feature->defaultValue, feature->range );
 
-	if ( feature.isHex() )                 
+	if ( feature->isHex() )                 
 		block->lineEdit.setText( GUIKIT::String::convertIntToHex( _val ) );
 	else            
 		block->lineEdit.setValue( _val );	
@@ -421,10 +417,11 @@ auto SystemLayout::updateFeatureWidget( FeatureLayout::Line::Block* block ) -> v
 
 auto SystemLayout::updateFeature(unsigned id, int step) -> int {
     for(auto line : featureLayout.lines) {
-        for( auto block : line->blocks ) {                        
-            if (block->typeId == id) {
-                auto& feature = emulator->features[ block->typeId ];
-                auto newValue = settings->get<int>( tabWindow->ident( feature.name ), feature.defaultValue, feature.range );
+        for( auto block : line->blocks ) {
+            auto feature = block->feature;
+            
+            if (feature->id == id) {
+                auto newValue = settings->get<int>( tabWindow->ident( feature->name ), feature->defaultValue, feature->range );
                 newValue += step;						
                 block->lineEdit.setValue( newValue );            
                 block->lineEdit.onChange();
@@ -455,18 +452,18 @@ auto SystemLayout::translate() -> void {
 	
     for( auto line : featureLayout.lines ) {
         for( auto block : line->blocks ) {                               
-            auto& feature = emulator->features[ block->typeId ];
+            auto feature = block->feature;
 
-            if (feature.isSwitch() )
-                block->checkBox.setTooltip( trans->get( featureIdent( feature.name ) + "_info" ) );
+            if (feature->isSwitch() )
+                block->checkBox.setTooltip( trans->get( featureIdent( feature->name ) + "_info" ) );
             else
-                block->label.setTooltip( trans->get( featureIdent( feature.name ) + "_info" ) );
+                block->label.setTooltip( trans->get( featureIdent( feature->name ) + "_info" ) );
 
             block->dangerLabel.setTooltip( trans->get("cpu_warning_info") );  
             block->dangerLabel.setText( " [" + trans->get("cpu_warning") + "]" );  
             
-            block->checkBox.setText( trans->get( featureIdent( feature.name ) ) );
-            block->label.setText( trans->get( featureIdent( feature.name ) ) );  
+            block->checkBox.setText( trans->get( featureIdent( feature->name ) ) );
+            block->label.setText( trans->get( featureIdent( feature->name ) ) );  
         }
 	}
     
@@ -490,9 +487,9 @@ auto SystemLayout::setEnabled(bool state) -> void {
         
         for( auto block : line->blocks ) {
             
-            auto& feature = emulator->features[ block->typeId ];
+            auto feature = block->feature;
             
-            block->setEnabled( state ? true : feature.runtimeChangeable );
+            block->setEnabled( state ? true : feature->runtimeChangeable );
         }
     }   
     

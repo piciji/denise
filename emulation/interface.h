@@ -290,6 +290,7 @@ struct Interface {
         virtual auto exit( int code ) -> void {}
         virtual auto finishVBlank() -> void {}
         virtual auto midScreenCallback( ) -> void {}
+        virtual auto questionToWrite(Media* media) -> bool { return false; }
     };
     Bind* bind = nullptr;
 
@@ -327,6 +328,10 @@ struct Interface {
 
     auto updateDriveState(Media* media, unsigned mode, unsigned track) -> void {
         bind->updateDriveState(media, mode, track); //mode: 0 - no operation, 1 - read, 2 - write, 3 - list
+    }
+    
+    auto questionToWrite(Media* media) -> bool {
+        return bind->questionToWrite(media);
     }
 
     auto log(const char* data, bool newLine = true) -> void {

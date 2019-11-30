@@ -1,4 +1,6 @@
 
+// this code is a modified version of VICE (AM)29F0[14]0(B) Flash emulation
+
 #pragma once
 
 #include "event.h"
@@ -96,6 +98,7 @@ struct Flash040 {
 	using Callback = std::function<void ()>;
 	Callback erase;
     Callback clock;
+    Callback written;
 	
 	Events* events;
 	uint8_t* data = nullptr;
@@ -151,6 +154,8 @@ struct Flash040 {
                             eraseMask[pos] &= ~mask;
                             
                             std::memset( &data[ sector * sectorSize ], 0xff, sectorSize);
+                            if (!dirty)
+                                written();
                             dirty = true;                            							
 							break;
 						}
@@ -169,6 +174,8 @@ struct Flash040 {
 
 				case State::ChipErase:
                     std::memset( data, 0xff, size );
+                    if (!dirty)
+                        written();
                     dirty = true;
 					state = baseState;		
 					break;
@@ -205,6 +212,8 @@ struct Flash040 {
 
 		byteToProgram = value;
 		data[addr] = newData;
+        if (!dirty)
+            written();
 		dirty = true;
 
 		return newData == value;
@@ -382,6 +391,14 @@ struct Flash040 {
                 break;
 		}
 	}
+    
+    auto serialize(Emulator::Serializer& s) -> void {
+        s.integer(dirty);
+        s.integer(byteToProgram);
+        s.integer((uint8_t&)state);
+        s.integer((uint8_t&)baseState);
+        s.array(eraseMask);        
+    }
 };
 
 }

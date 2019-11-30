@@ -9,7 +9,7 @@ auto Translation::get(std::string ident, const std::vector<std::vector<std::stri
     for(auto& data : list) {
         if(data.ident == ident) {
 			match = true;
-            out = data.text;
+            out = !data.text.empty() ? data.text : String::trim( ident );
             if (!digit.empty())
 				out += " " + digit;
             break;
@@ -23,7 +23,7 @@ auto Translation::get(std::string ident, const std::vector<std::vector<std::stri
 		
 		for(auto& data : list)
 			if(data.ident == test) {
-				out = data.text;
+				out = !data.text.empty() ? data.text : String::trim( ident );
                 match = true;
 				break;
 			}				

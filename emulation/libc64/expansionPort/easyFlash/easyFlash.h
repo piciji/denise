@@ -12,7 +12,6 @@ struct EasyFlash : Cart {
     ~EasyFlash();
     
     Emulator::Events* events;
-    using Callback = std::function<void ()>;
     
     Emulator::Flash040 flashLo;
     Emulator::Flash040 flashHi;
@@ -20,16 +19,11 @@ struct EasyFlash : Cart {
     uint8_t* dataLo;
     uint8_t* dataHi;
     uint8_t bank;
-    bool jumperBoot;
     bool binFormat;
     bool writeProtect;
     uint8_t ram[256];
     Emulator::Interface::Media* media;
     static uint8_t eapi[768];
-    
-    auto setBootJumper(bool state) -> void {
-        jumperBoot = state;
-    }
     
     auto writeIo1( uint16_t addr, uint8_t value ) -> void;
     
@@ -67,7 +61,7 @@ struct EasyFlash : Cart {
 
     auto serialize(Emulator::Serializer& s) -> void;
     
-    auto isBootable( ) -> bool { return jumperBoot; }  
+    auto isBootable( ) -> bool; 
 };
 
 extern EasyFlash* easyFlash;

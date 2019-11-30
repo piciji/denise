@@ -16,7 +16,7 @@
 #endif
 #define SETTINGS_FILE "settings.ini"
 #define DEFAULT_TRANS_FILE "english.txt"
-#define VERSION "1.0.6"
+#define VERSION "1.0.6 + ef"
 #define LICENSE "GPLv3"
 #define AUTHOR "PiCiJi"
 
@@ -68,6 +68,7 @@ struct Program : Emulator::Interface::Bind {
     auto truncateMedia(Emulator::Interface::Media* media) -> bool override;
     auto updateDriveState(Emulator::Interface::Media* media, unsigned mode, unsigned track) -> void override;
 	auto log(std::string data, bool newLine = true) -> void override;
+    auto questionToWrite(Emulator::Interface::Media* media) -> bool override;
     auto exit(int code) -> void override;
 
     auto loadImageDataWhenOk( GUIKIT::File* file, unsigned fileId, Emulator::Interface::MediaGroup* group, uint8_t*& data ) -> bool;

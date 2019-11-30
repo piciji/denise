@@ -237,12 +237,16 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
                 auto media = block->media;
                 
 				if ( !mediaGroup->isExpansion() ) {
-					emulator->ejectMedium(media);
-					media->guid = (uintptr_t)nullptr;
+					emulator->ejectMedium(media);					
 					filePool->assign(tabWindow->ident(media->name), nullptr);
                     States::getInstance( emulator )->updateImage( nullptr, media );
 				} else
                     States::getInstance(emulator)->forcePowerNextLoad = true;
+                
+                // an expansion can't be removed while emulation is running.
+                // but we have to cut the file link or EasyFlash could
+                // write back data, even when user has removed file from UI.
+                media->guid = (uintptr_t)nullptr;
                 
 				
 				if ( showC64Listing( layout, block ) ) {
@@ -734,7 +738,7 @@ auto MediaLayout::translate() -> void {
         mediaGroupLayout->setText( trans->get( mediaGroup->name + "_insert") );
         mediaGroupLayout->inject.setText( trans->get("memory_inject") );
 
-        for ( auto& block : mediaGroupLayout->blocks ) {
+        for ( auto block : mediaGroupLayout->blocks ) {
             block->header.writeprotect.setText(trans->get("write_protected"));
             block->header.eject.setText(trans->get("eject"));
             block->header.deviceName.setText( trans->get( block->media->name, {}, true ) );            
@@ -749,6 +753,13 @@ auto MediaLayout::translate() -> void {
                 
             if (mediaGroup->isMemory()) {                
                 block->selector.open.setTooltip(trans->get("c64_list_tip"));
+            }
+            
+            if (mediaGroup->isExpansion()) {
+                unsigned id = 0;
+                for( auto& pcb : mediaGroup->getExpansion()->pcbs ) {
+                    block->selector.combo.setText(id++, trans->get( pcb.name ));
+                }
             }
         }        
     }
@@ -864,6 +875,12 @@ auto MediaLayout::insertImage( MediaGroupLayout* layout, MediaGroupLayout::Block
         emulator->insertMedium(media, data, size);
         emulator->writeProtect(media, !openWritable);
         filePool->assign(tabWindow->ident(media->name), file);
+    } else {
+        
+        if (block->selector.combo.visible()) {
+            block->selector.combo.setSelection(0);
+            block->selector.combo.onChange();
+        }
     }
 
     if (showC64Listing(layout, block)) {
@@ -994,6 +1011,27 @@ auto MediaLayout::updateVisibility( Emulator::Interface::MediaGroup* mediaGroup,
         return;
     
     layout->updateVisibility( count );
+}
+
+auto MediaLayout::disableWriteProtection(Emulator::Interface::Media* media) -> void {
+    
+    auto layout = getMediaGroupLayout(media->group);
+    
+    if (!layout)
+        return;
+    
+    for(auto block : layout->blocks) {
+        
+        if (block->media == media) {
+                        
+            if (block->header.writeprotect.checked()) {                
+                block->header.writeprotect.setChecked(false);
+                block->header.writeprotect.onToggle();
+            }
+                               
+            break;
+        }
+    }
 }
 
 // MediaGroupLayout
