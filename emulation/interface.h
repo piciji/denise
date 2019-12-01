@@ -53,10 +53,6 @@ struct Interface {
 	Interface( std::string ident ) {
         this->ident = ident;        
     }
-
-    // Note: all id fields in the following structs have to match the vector position of the struct container.
-    // sure these id fields are redundant. it's one and only purpose is to access the container vector fast 
-    // instead of iterating the whole vector to look for a specific element
 	
     struct Device {
         unsigned id;

@@ -16,7 +16,7 @@ c64 gun sticks, magnum light phaser, stack light rifle
 c64 savestates
 c64C (custom ic logic)
 c64 custom color palettes + color spectrum emulation
-c64 REU, ActionReplay, EasyFlash
+c64 REU, ActionReplay, EasyFlash + write support
 
 completed features for all emu cores
 ------------------------------------

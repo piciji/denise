@@ -6,6 +6,9 @@ usage hints -> scroll down this file
 
 # changelog
 
+## 1.0.7
+* added EasyFlash support
+
 ## 1.0.6
 * polished OS X UI ... looks ok now for Mojave dark theme
 * Windows command line support is now independant from working directory of caller

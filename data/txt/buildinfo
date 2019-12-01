@@ -71,7 +71,7 @@ now build Denise
 ----------------
 change to projects root folder and type:
 
-make -f makefile	[windows, linux, osx]
+make                [windows, linux, osx]
 make install		[windows, linux]
 make uninstall		[linux]
 

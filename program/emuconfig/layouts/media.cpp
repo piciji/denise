@@ -875,11 +875,10 @@ auto MediaLayout::insertImage( MediaGroupLayout* layout, MediaGroupLayout::Block
         emulator->insertMedium(media, data, size);
         emulator->writeProtect(media, !openWritable);
         filePool->assign(tabWindow->ident(media->name), file);
-    } else {
-        
-        if (block->selector.combo.visible()) {
+    } else {        
+        if (mediaGroup->getExpansion()->pcbs.size()) {
             block->selector.combo.setSelection(0);
-            block->selector.combo.onChange();
+            block->selector.combo.onChange();        
         }
     }
 
