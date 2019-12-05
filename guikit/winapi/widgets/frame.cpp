@@ -1,12 +1,11 @@
 
 auto pFrame::minimumSize() -> Size {
-    //Size size = pFont::size(hfont, widget.text());
     Size size = getMinimumSize();
     
     size.width += 4 + (borderSize() << 1);
     size.height >>= 1;
     if (widget.text().empty()) size.height = 0;
-
+	
     size.height += borderSize() << 1;
     return size;
 }

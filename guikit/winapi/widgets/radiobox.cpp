@@ -1,8 +1,10 @@
 
 auto pRadioBox::minimumSize() -> Size {
-    //Size size = pFont::size(hfont, widget.text());
-    Size size = getMinimumSize();
-    return {size.width + 18, size.height + 4};
+	Size size = getMinimumSize();
+	
+	static Size containerSize = pWidget::getScaledContainerSize( {18, 4} );
+	
+	return {size.width + containerSize.width, size.height + containerSize.height};
 }
 
 auto pRadioBox::setChecked() -> void {

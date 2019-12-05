@@ -1,9 +1,12 @@
 
 auto pSlider::minimumSize() -> Size {
+	
+	static Size containerSize = pWidget::getScaledContainerSize( {25, 25} );	
+	
     if (slider.orientation == Slider::Orientation::VERTICAL)
-        return {25, 0};
+        return {containerSize.width, 0};
         
-    return {0, 25};
+    return {0, containerSize.height};
 }
 
 auto pSlider::setGeometry(Geometry geometry) -> void {

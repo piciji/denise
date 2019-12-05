@@ -38,6 +38,7 @@ pTimer::~pTimer() {
 }
 //font
 auto pFont::system(unsigned size, std::string style) -> std::string {
+    static float dpiX = dpi().x;
     NONCLIENTMETRICS metrics;
     metrics.cbSize = sizeof(NONCLIENTMETRICS);
     ::SystemParametersInfo(SPI_GETNONCLIENTMETRICS, sizeof(NONCLIENTMETRICS), &metrics, 0);
@@ -45,7 +46,7 @@ auto pFont::system(unsigned size, std::string style) -> std::string {
     std::string family = utf8_t(metrics.lfMessageFont.lfFaceName);
 
     if (size == 0) {
-        size = (std::abs(metrics.lfMessageFont.lfHeight) / 96.0) * 72.0;
+		size = float(std::abs(metrics.lfMessageFont.lfHeight)) * 72.0 / dpiX;
     }
 
     if(style == "") style = "Normal";
@@ -60,6 +61,7 @@ auto pFont::create(uint8_t* data, unsigned size) -> HFONT {
 }
 
 auto pFont::create(std::string desc) -> HFONT {
+    static float dpiX = dpi().x;
     std::vector<std::string> tokens = String::split(desc, ',');
 
     std::string family = "Default";
@@ -76,13 +78,21 @@ auto pFont::create(std::string desc) -> HFONT {
             italic |= String::foundSubStr(style, "italic");
         }
     }
-
+	
     HFONT _hfont = CreateFont(
-        -(size * 96.0 / 72.0 + 0.5),
+        -((float)size * dpiX / 72.0 + 0.5),
         0, 0, 0, !bold ? FW_NORMAL : FW_BOLD, italic,
         0, 0, 0, 0, 0, 0, 0, utf16_t(family) );
 		
 	return _hfont;	
+}
+
+auto pFont::dpi() -> Position {
+    HDC hdc = GetDC(0);
+    auto dpiX = (float)GetDeviceCaps(hdc, LOGPIXELSX);
+    auto dpiY = (float)GetDeviceCaps(hdc, LOGPIXELSY);
+    ReleaseDC(0, hdc);
+    return {dpiX, dpiY};
 }
 
 auto pFont::free(HFONT& hfont) -> void {

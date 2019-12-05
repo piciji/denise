@@ -1,6 +1,9 @@
 
 auto pProgressBar::minimumSize() -> Size {
-    return {0, 23};
+	
+	static Size containerSize = pWidget::getScaledContainerSize( {0, 23} );
+	
+    return containerSize;
 }
 
 auto pProgressBar::create() -> void {

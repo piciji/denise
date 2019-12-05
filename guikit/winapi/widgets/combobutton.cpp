@@ -13,6 +13,8 @@ auto pComboButton::append(std::string text) -> void {
 
 auto pComboButton::minimumSize() -> Size {
 
+	static Size containerSize = pWidget::getScaledContainerSize( {24, 8} );	
+	
     if (calculatedMinimumSize.updated)
         return calculatedMinimumSize.minimumSize; 
     
@@ -22,8 +24,9 @@ auto pComboButton::minimumSize() -> Size {
     
     calculatedMinimumSize.updated = true;
     
-    calculatedMinimumSize.minimumSize = {maximumWidth + 24, pFont::size(hfont, " ").height + 8};
-    
+    calculatedMinimumSize.minimumSize = {maximumWidth + containerSize.width,
+											pFont::size(hfont, " ").height + containerSize.height};
+	
     return calculatedMinimumSize.minimumSize;
 }
 

@@ -121,3 +121,13 @@ auto pWidget::createTooltip() -> void {
         CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
         GetParent(hwnd), NULL, GetModuleHandle(0), 0);
 }
+
+auto pWidget::getScaledContainerSize( Size size ) -> Size {
+	static float dpiX = pFont::dpi().x;
+	static float dpiY = pFont::dpi().y;
+	
+	size.width = (unsigned)((float)(size.width) * dpiX / 96.0);
+	size.height = (unsigned)((float)(size.height) * dpiY / 96.0);
+	
+	return size;
+}

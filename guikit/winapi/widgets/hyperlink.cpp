@@ -1,6 +1,5 @@
 
 auto pHyperlink::minimumSize() -> Size {
-    //Size size = pFont::size(hfont, widget.text());
     Size size = getMinimumSize();
     return {size.width, size.height};
 }

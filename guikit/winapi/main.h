@@ -132,6 +132,7 @@ struct pWidget {
     auto setTooltip(std::string tooltip) -> void;
     auto createTooltip() -> void;
     auto getMinimumSize() -> Size;
+	auto getScaledContainerSize( Size size ) -> Size;
     virtual auto init() -> void {}
 
     pWidget(Widget& widget);
@@ -516,6 +517,7 @@ struct pFont {
     static auto size(HFONT hfont, std::string text) -> Size;
     static auto size(std::string font, std::string text) -> Size;
 	static auto findMemoryFont(std::string name) -> HFONT;
+    static auto dpi() -> Position;
 };
 
 struct pSystem {

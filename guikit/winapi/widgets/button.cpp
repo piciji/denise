@@ -1,6 +1,5 @@
 
 auto pButton::minimumSize() -> Size {
-    //Size size = pFont::size(hfont, widget.text());
     Size size = getMinimumSize();
     
     return {size.width + 20, size.height + 8};
