@@ -1,6 +1,11 @@
 
 auto Layout::append(Sizable& sizable, Size size, unsigned spacing) -> void {
-    for(auto& child : children) if(child.sizable == &sizable) return;
+    for(auto& child : children)
+		if(child.sizable == &sizable)
+			return;
+	
+	size = pWidget::getScaledContainerSize( size );
+	
     children.push_back({&sizable, size, {0,0}, spacing, 0});
     sizable.setVisible( visible() );
     
@@ -313,11 +318,19 @@ FramedHorizontalLayout::Frame::Frame() : Widget(*new pFrame(*this)), p((pFrame&)
     p.init();
 }
 
+auto FramedHorizontalLayout::setPadding(unsigned padding) -> void {
+	state.padding = pWidget::getScaledDim( padding );
+}
+
 FramedHorizontalLayout::FramedHorizontalLayout() { frameWidget = new Frame; }
 
 FramedVerticalLayout::Frame::Frame() : Widget(*new pFrame(*this)), p((pFrame&)Widget::p) {
     state.isContainer = true;
     p.init();
+}
+
+auto FramedVerticalLayout::setPadding(unsigned padding) -> void {
+	state.padding = pWidget::getScaledDim( padding );
 }
 
 FramedVerticalLayout::FramedVerticalLayout() { frameWidget = new Frame; }

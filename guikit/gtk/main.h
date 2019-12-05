@@ -88,6 +88,10 @@ struct pWidget {
     virtual auto init() -> void {}
     virtual auto getContainerWidget(int selection = -1) -> GtkWidget* { return nullptr; }
     virtual auto getDisplacement() -> Position { return {0,0}; }
+	static auto getScaledContainerSize( Size size ) -> Size {
+		return size;
+	}
+	static auto getScaledDim( unsigned& value ) -> unsigned {}
 
     pWidget(Widget& widget);
     virtual ~pWidget();

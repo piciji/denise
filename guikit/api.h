@@ -730,7 +730,7 @@ protected:
 struct FramedHorizontalLayout : HorizontalLayout {    
     auto setFont(const std::string& font) -> void;
     auto setText(const std::string& text) -> void;
-    auto setPadding(unsigned padding) -> void { state.padding = padding; }
+    auto setPadding(unsigned padding) -> void;
     FramedHorizontalLayout();
 
 protected: 
@@ -749,7 +749,7 @@ protected:
 struct FramedVerticalLayout : VerticalLayout {
     auto setFont(const std::string& font) -> void;
     auto setText(const std::string& text) -> void;
-    auto setPadding(unsigned padding) -> void { state.padding = padding; }
+    auto setPadding(unsigned padding) -> void;
     FramedVerticalLayout();
 
 protected:

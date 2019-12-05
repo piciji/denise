@@ -25,7 +25,7 @@ auto pComboButton::minimumSize() -> Size {
     calculatedMinimumSize.updated = true;
     
     calculatedMinimumSize.minimumSize = {maximumWidth + containerSize.width,
-											pFont::size(hfont, " ").height + containerSize.height};
+											pFont::size(hfont, " ").height + 8}; // don't use scaled height
 	
     return calculatedMinimumSize.minimumSize;
 }

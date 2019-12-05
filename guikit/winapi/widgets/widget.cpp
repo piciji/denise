@@ -126,8 +126,19 @@ auto pWidget::getScaledContainerSize( Size size ) -> Size {
 	static float dpiX = pFont::dpi().x;
 	static float dpiY = pFont::dpi().y;
 	
-	size.width = (unsigned)((float)(size.width) * dpiX / 96.0);
-	size.height = (unsigned)((float)(size.height) * dpiY / 96.0);
+	if (size.width == Size::Minimum || size.width == Size::Maximum);
+	else
+		size.width = (unsigned)((float)(size.width) * dpiX / 96.0);
+	
+	if (size.height == Size::Minimum || size.height == Size::Maximum);
+	else
+		size.height = (unsigned)((float)(size.height) * dpiY / 96.0);
 	
 	return size;
+}
+
+auto pWidget::getScaledDim( unsigned& value ) -> unsigned {
+	static float dpiY = pFont::dpi().y;
+	
+	return (unsigned)((float)(value) * dpiY / 96.0);
 }

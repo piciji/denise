@@ -77,6 +77,10 @@ struct pWidget {
     virtual auto setForegroundColor(unsigned color) -> void {}
     auto add() -> void;
     virtual auto init() -> void {}
+	static auto getScaledContainerSize( Size size ) -> Size {
+		return size;
+	}
+	static auto getScaledDim( unsigned& value ) -> unsigned {}
 
     pWidget(Widget& widget);
     virtual ~pWidget();
