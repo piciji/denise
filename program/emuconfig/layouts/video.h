@@ -8,6 +8,7 @@ struct VideoSliderLayout : GUIKIT::HorizontalLayout {
     std::string unit = "";
     bool withActivator;
 
+    auto getLabelMinimumWidth() -> unsigned;
     VideoSliderLayout(bool withActivator = false, std::string unit = "%");
 };
 
@@ -79,6 +80,7 @@ struct VideoMaskTypeLayout : GUIKIT::HorizontalLayout {
     GUIKIT::RadioBox shadowMask;
     GUIKIT::RadioBox slotMask;
     
+    auto getLabelMinimumWidth() -> unsigned;
     VideoMaskTypeLayout();
 };
 

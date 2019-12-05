@@ -1,17 +1,24 @@
 
 VideoSliderLayout::VideoSliderLayout(bool withActivator, std::string unit) {
 	if (withActivator)
-		append(active, {175u, 0u});
+		append(active, {175u, 0u}, 10);
 	else
-		append(name, {175u, 0u});
+		append(name, {175u, 0u}, 10);
 		
-    append(value, {52u, 0u});
+    append(value, {55u, 0u});
     append(slider, {~0u, 0u});
     
     setAlignment(0.5);
     
     this->withActivator = withActivator;
     this->unit = unit;
+}
+
+auto VideoSliderLayout::getLabelMinimumWidth() -> unsigned {
+    if (withActivator)
+        return active.minimumSize().width;
+    
+    return name.minimumSize().width;
 }
 
 VideoModeLayout::VideoModeLayout(bool withSpectrum) {
@@ -119,7 +126,7 @@ VideoGpuOptionLayout::VideoGpuOptionLayout() {
 }
 
 VideoMaskTypeLayout::VideoMaskTypeLayout() {
-    append(type, {175u, 0u});
+    append(type, {175u, 0u}, 10);
     append(apertureMask, {0u, 0u}, 10);
     append(shadowMask, {0u, 0u}, 10);
     append(slotMask, {0u, 0u});
@@ -129,13 +136,17 @@ VideoMaskTypeLayout::VideoMaskTypeLayout() {
     setAlignment(0.5);
 }
 
+auto VideoMaskTypeLayout::getLabelMinimumWidth() -> unsigned {
+    return type.minimumSize().width;
+}
+
 VideoGpuBaseLayout::VideoGpuBaseLayout() :
 firFilter(false, ""),
 luminance(false),
 lightFromCenter(true)
 {
     
-    append(option, {~0u, 0u}, 2);
+    append(option, {~0u, 0u}, 3);
     append(firSharp, {~0u, 0u}, 2);
     append(firFilter, {~0u, 0u}, 2);
     append(lightFromCenter, {~0u, 0u}, 2);
@@ -795,6 +806,27 @@ auto VideoLayout::translate() -> void {
     vicIIGlitch.phi0.active.setText(trans->get("phi_glitch",{}, true));
     vicIIGlitch.ras.active.setText(trans->get("ras_glitch",{}, true));
     vicIIGlitch.cas.active.setText(trans->get("cas_glitch",{}, true));
+    
+    std::vector<std::vector<GUIKIT::Layout*>> aligner = {
+        {&base.saturation, &base.gamma, &base.brightness, &base.contrast, &base.phase, &crt.phaseError, &crt.hanoverBars, &crt.scanlines, &crt.blur, &crt.lumaRise, &crt.lumaFall},
+        {&gpuBase.firFilter, &gpuBase.lightFromCenter, &gpuBase.luminance, &mask.level, &mask.luminance, &mask.type, &mask.dpi, &mask.pitch, &bloom.glow, &bloom.radius, &bloom.variance, &bloom.weight},
+        {&crtGlitch.lumaNoise, &crtGlitch.chromaNoise, &crtGlitch.randomLineOffset, &crtGlitch.radialDistortion, &vicIIGlitch.aec, &vicIIGlitch.ba, &vicIIGlitch.phi0, &vicIIGlitch.ras, &vicIIGlitch.cas}
+    };
+       
+    for(auto& page : aligner ) {
+        unsigned neededWidth = 0;    
+        
+        for(auto sL : page) {
+            if (dynamic_cast<VideoSliderLayout*>(sL))
+                neededWidth = std::max(neededWidth, dynamic_cast<VideoSliderLayout*>(sL)->getLabelMinimumWidth() );
+            
+            else if (dynamic_cast<VideoMaskTypeLayout*>(sL))
+                neededWidth = std::max(neededWidth, dynamic_cast<VideoMaskTypeLayout*>(sL)->getLabelMinimumWidth() );                        
+        }            
+        
+        for(auto sL : page)
+            sL->children[ 0 ].size.width = neededWidth;
+    }
 }
 
 auto VideoLayout::sliderIdent() -> std::string {
