@@ -55,7 +55,8 @@ FirmwareLayout::FirmwareLayout(TabWindow* tabWindow) {
         // container for custom roms
         auto container = new FirmwareContainer();
         container->storeLevel = i;
-        container->setPadding(3);     
+        container->setPadding(10);     
+        container->setFont(GUIKIT::Font::system("bold"));
         container->selectedGroup = radioBox;
 
         for (auto& firmware : emulator->firmwares) {
@@ -102,8 +103,6 @@ FirmwareLayout::FirmwareLayout(TabWindow* tabWindow) {
                 assign( files[0], block, setting );
             };
         }
-
-        container->setPadding( 7 );
         
         containers.push_back(container);
 
