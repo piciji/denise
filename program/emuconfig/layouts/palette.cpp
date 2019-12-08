@@ -2,7 +2,7 @@
 PaletteColorLayout::PaletteColorLayout(unsigned editWidth, unsigned canvasHeight) {   
 
     append( color, {~0u, 0u}, 5 );
-    append( canvas, {(float)canvasHeight * 1.5, canvasHeight}, 10 );
+    append( canvas, {(unsigned)((float)canvasHeight * 1.5), canvasHeight}, 10 );
     append( hex, {0u, 0u}, 1 );
     append( edit, {editWidth, 0u} );
     
