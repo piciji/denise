@@ -97,6 +97,8 @@
 * fullscreen when emulator startup
 * auto put loaded image name in savestate description field
 * separate settings file by emulation cores
+* media auto start should reuse already opened instance
 
 # bugs
-* GUIKIT: OS scaling option results in wrong widget layouting   **-> UNDER PROGRESS**
+* RawInput: PS/2 keyboard not detected, 8bitdo M30 Controller not working
+* doesn't work: https://csdb.dk/release/?id=69879

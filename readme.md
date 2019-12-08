@@ -8,6 +8,7 @@ usage hints -> scroll down this file
 
 ## 1.0.7
 * added EasyFlash support
+* fixed widget layouting, when app/text scaling is activated by Windows OS
 
 ## 1.0.6
 * polished OS X UI ... looks ok now for Mojave dark theme

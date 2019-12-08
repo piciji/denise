@@ -137,7 +137,7 @@ auto pWidget::getScaledContainerSize( Size size ) -> Size {
 	return size;
 }
 
-auto pWidget::getScaledDim( unsigned& value ) -> unsigned {
+auto pWidget::getScaledDim( unsigned value ) -> unsigned {
 	static float dpiY = pFont::dpi().y;
 	
 	return (unsigned)((float)(value) * dpiY / 96.0);

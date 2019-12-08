@@ -1,11 +1,14 @@
 
-FeatureLayout::Line::Block::Block(bool switched) {
-	
-	if (switched) {
+FeatureLayout::Line::Block::Block(Emulator::Interface::Feature* feature) {
+	this->feature = feature;
+    
+	if (feature->isSwitch()) {
 		append(checkBox, {0u, 0u} );	
 	} else {
+        GUIKIT::LineEdit tester;
+        tester.setText( feature->isHex() ? "0xFF" : std::to_string(feature->range[0]) );
 		append(label, {0u, 0u}, 5 );
-		append(lineEdit, {42u, 0u} );
+		append(lineEdit, {tester.minimumSize().width, 0u} );
 	}
         
 	setAlignment(0.5);
@@ -37,9 +40,8 @@ auto FeatureLayout::build( Emulator::Interface* emulator ) -> void {
             append( *line, {~0u, 0u}, ( lines.size() < lineCount ) ? 10 : 0 );
         }
         
-        auto block = new Line::Block( feature.isSwitch() );
+        auto block = new Line::Block( &feature );
         line->blocks.push_back( block );
-        block->feature = &feature;
         line->append(*block, {0u, 0u}, ((i % blocksPerLine) == 0) ? 0 : 15);
 
         if (feature.performanceHit)
@@ -92,14 +94,10 @@ ExpansionLayout::ExpansionLayout() {
     setFont(GUIKIT::Font::system("bold"));    
 }
 
-MemoryLayout::Block::Block(bool disable) {
-    append(name, {60, 0u});
-    append(value, {50, 0u});
-    append(slider, {~0u, 0u});
-    setAlignment(0.5);
-    
-    if (disable)
-        slider.setEnabled(false);
+MemoryLayout::Block::Block() :
+    sliderLayout("mb")            
+{
+    append(sliderLayout, {~0u, ~0u} );
 }
 
 MemoryLayout::MemoryLayout() {
@@ -111,12 +109,12 @@ auto MemoryLayout::build( Emulator::Interface* emulator ) -> void {
     auto& memoryTypes = emulator->memoryTypes;
     
     for(auto& memoryType : memoryTypes ) {                
-        auto block = new Block( memoryType.memory.size() <= 1 );
+        auto block = new Block();
         blocks.push_back( block );
         block->memoryType = &memoryType;
         append(*block, {~0u, 0u}, &memoryType != &memoryTypes.back() ? 7 : 0);
-        block->slider.setLength( memoryType.memory.size() );
-        block->name.setText( memoryType.name + ":" );
+        block->sliderLayout.slider.setLength( memoryType.memory.size() );
+        block->sliderLayout.name.setText( memoryType.name + ":" );
     }          
 }
 
@@ -242,18 +240,18 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
     for( auto block : memoryLayout.blocks ) {
         auto memoryType = block->memoryType;
         
-        block->slider.onChange = [this, block, memoryType]() {
-            unsigned id = block->slider.position();
+        block->sliderLayout.slider.onChange = [this, block, memoryType]() {
+            unsigned id = block->sliderLayout.slider.position();
             if (id >= memoryType->memory.size() ) return;
             settings->set<unsigned>( this->tabWindow->ident(memoryType->name + "_mem"), id);
-            block->value.setText( getSizeString( memoryType->memory[id].size ) );
+            block->sliderLayout.value.setText( getSizeString( memoryType->memory[id].size ) );
         };
 
         unsigned id = settings->get<unsigned>(tabWindow->ident(memoryType->name + "_mem"), memoryType->defaultMemoryId);
         if (id >= memoryType->memory.size())
             id = memoryType->defaultMemoryId;
-        block->slider.setPosition(id);
-        block->value.setText( getSizeString( memoryType->memory[id].size ) );        
+        block->sliderLayout.slider.setPosition(id);
+        block->sliderLayout.value.setText( getSizeString( memoryType->memory[id].size ) );        
     }
     
     for(auto block : driveLayout.driveCounter) {
@@ -285,7 +283,7 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
             if (block->expansion->id == expansionId)
                 block->box.setChecked();
         }
-    }
+    }   
     
 	for( auto line : featureLayout.lines ) {
         
@@ -472,6 +470,13 @@ auto SystemLayout::translate() -> void {
             block->box.setText( trans->get( block->expansion->name ) );
         }
     }
+    
+    std::vector<SliderLayout*> sliderLayouts;
+    for(auto block : memoryLayout.blocks ) {    
+        sliderLayouts.push_back( &block->sliderLayout );
+    }
+    
+    SliderLayout::scale(sliderLayouts, "1024 mb");
 }
 
 auto SystemLayout::featureIdent( std::string ident ) -> std::string {

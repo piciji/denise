@@ -36,7 +36,9 @@ SwitchesLayout::SwitchesLayout() {
 SettingsLayout::SettingsLayout() {
     setMargin(10);
 
-    upperLayout.append(lang, {~0u, 100}, 10);
+    switches.synchronizeLayout();
+    
+    upperLayout.append(lang, {~0u, ~0u}, 10);
     upperLayout.append(switches, {~0u, 0u});
     append(upperLayout, {~0u, 0u}, 10);    
     append(about, {~0u, 0u});    

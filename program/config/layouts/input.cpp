@@ -21,7 +21,7 @@ InputControl::InputControl() {
 
 Sensitivity::Sensitivity() {
     append(senseLabel, {0u, 0u}, 10);
-    append(senseValue, {20u, 0u}, 10);
+    append(senseValue, {0u, 0u}, 10);
     append(senseSlider, {~0u, 0u});    
     
     senseSlider.setLength(16);

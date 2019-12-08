@@ -133,7 +133,7 @@ struct pWidget {
     auto createTooltip() -> void;
     auto getMinimumSize() -> Size;
 	static auto getScaledContainerSize( Size size ) -> Size;
-	static auto getScaledDim( unsigned& value ) -> unsigned;
+	static auto getScaledDim( unsigned value ) -> unsigned;
     virtual auto init() -> void {}
 
     pWidget(Widget& widget);

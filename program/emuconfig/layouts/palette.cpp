@@ -1,10 +1,10 @@
 
-PaletteColorLayout::PaletteColorLayout() {   
-    
+PaletteColorLayout::PaletteColorLayout(unsigned editWidth, unsigned canvasHeight) {   
+
     append( color, {~0u, 0u}, 5 );
-    append( canvas, {30u, 20u}, 10 );
+    append( canvas, {(float)canvasHeight * 1.5, canvasHeight}, 10 );
     append( hex, {0u, 0u}, 1 );
-    append( edit, {58u, 0u} );
+    append( edit, {editWidth, 0u} );
     
     hex.setText( "0x" );
     hex.setForegroundColor( 0x333333 );
@@ -15,7 +15,7 @@ PaletteColorLayout::PaletteColorLayout() {
 }
 
 PaletteControlLayout::PaletteControlLayout() {    
-    append( title, {180u, 0u});
+    append( title, {200u, 0u});
     append( spacer, {~0u, 0u} );
     append( ownPalette, {0u, 0u}, 10 );    
     append( create, {0u, 0u}, 10 );    
@@ -33,24 +33,19 @@ PaletteSaveLayout::PaletteSaveLayout() {
     setAlignment( 0.5 );
 }
 
-PaletteSliderLayout::PaletteSliderLayout() {
-    append( color, {50u, 0u}, 10);
-    append( value, {20u, 0u}, 10);
-    append( slider, {~0u, 0u} );
-    
-    slider.setLength( 256 );
-    
-    setAlignment( 0.5 );
-}
+PaletteDetailLayout::PaletteDetailLayout::Right::Right() : 
+    r(""), g(""), b("")
+{ }
 
 PaletteDetailLayout::PaletteDetailLayout() {
-    
-    left.append( left.canvas, {100u, 100u} );
+        
     right.append( right.r, {~0u, 30u}, 10 );
     right.append( right.g, {~0u, 30u}, 10 );
     right.append( right.b, {~0u, 30u} );
     
-    append(left, {0u, 0u}, 10);
+    left.append( left.canvas, {100u, ~0u} );
+    
+    append(left, {0u, ~0u}, 10);
     append(right, {~0u, 0u});
     
     left.canvas.setBorderColor(1, 0x333333);
@@ -67,6 +62,10 @@ PaletteLayout::PaletteLayout(TabWindow* tabWindow) {
     updateList();
     PaletteManager* paletteManager = PaletteManager::getInstance( emulator );
     GUIKIT::HorizontalLayout* colorLine = nullptr;
+    
+    detailLayout.right.r.slider.setLength(256);
+    detailLayout.right.g.slider.setLength(256);
+    detailLayout.right.b.slider.setLength(256);
     
     paletteLayout.append(controlLayout, {~0u, 0u}, 10);
     
@@ -85,6 +84,14 @@ PaletteLayout::PaletteLayout(TabWindow* tabWindow) {
         listView.setText( listView.selection(), 0, palette.name );
     };
     
+    GUIKIT::LineEdit test1;
+    test1.setText( "bbbbbb" );
+    auto editWidth = test1.minimumSize().width;
+    
+    GUIKIT::LineEdit test2;
+    test2.setText("F");    
+    auto canvasHeight = test2.minimumSize().height - 2;
+    
     for(unsigned i = 0; i < paletteManager->getSize(); i++ ) {
 
         if ((i % 3) == 0) {
@@ -96,7 +103,7 @@ PaletteLayout::PaletteLayout(TabWindow* tabWindow) {
             colorLine = new GUIKIT::HorizontalLayout;
         } 
         
-        PaletteColorLayout* colorLayout = new PaletteColorLayout;
+        PaletteColorLayout* colorLayout = new PaletteColorLayout( editWidth, canvasHeight );
         
         colorLayout->pos = i;        
         
@@ -165,14 +172,14 @@ PaletteLayout::PaletteLayout(TabWindow* tabWindow) {
 
     colorLines.push_back(colorLine);
     paletteLayout.append(*colorLine,{~0u, 0u}, 10);        
+    paletteLayout.append(detailLayout, {~0u, 0u}, 10); 
     
     setPalette( getSelectedPalette() );
     
-    main.append( listView, {150u, 320u}, 10 );
+    main.append( listView, {180u, paletteLayout.minimumSize().height - 10}, 10 );
     main.append( paletteLayout, {~0u, 0u} );  
-    append(main, {~0u, 0u}, 10);
+    append(main, {~0u, 0u}, 10);    
     
-    paletteLayout.append(detailLayout, {~0u, 0u}, 10); 
     paletteLayout.append(saveLayout,{~0u, 0u} );
     
     listView.onChange = [this]() {
@@ -379,9 +386,9 @@ auto PaletteLayout::translate() -> void {
         colorLayout->color.setText( trans->get( paletteManager->getIdent( colorLayout->pos ) ) );
     }
     
-    detailLayout.right.r.color.setText( trans->get("red") );
-    detailLayout.right.g.color.setText( trans->get("green") );
-    detailLayout.right.b.color.setText( trans->get("blue") );
+    detailLayout.right.r.name.setText( trans->get("red", {}, true ));
+    detailLayout.right.g.name.setText( trans->get("green", {}, true ));
+    detailLayout.right.b.name.setText( trans->get("blue", {}, true ));
     
     controlLayout.ownPalette.setText( trans->get("own_palette", {}, true) );
     controlLayout.create.setText( trans->get("create") );
@@ -390,6 +397,8 @@ auto PaletteLayout::translate() -> void {
     saveLayout.title.setText( trans->get("save", {}, true) );
     saveLayout.allChanges.setText( trans->get("all_changes") );
     saveLayout.onExit.setText( trans->get("save_on_exit") );
+
+    SliderLayout::scale({&detailLayout.right.r, &detailLayout.right.g, &detailLayout.right.b}, "255");
 }
 
 auto PaletteLayout::markSelectedColor( PaletteColorLayout* selectColorLayout ) -> void {

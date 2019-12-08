@@ -13,6 +13,7 @@ namespace EmuConfigView {
 
 struct TabWindow;
 	
+#include "../config/slider.h"
 #include "layouts/system.h"
 #include "layouts/swapper.h"
 #include "layouts/states.h"

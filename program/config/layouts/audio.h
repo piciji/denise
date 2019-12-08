@@ -9,20 +9,11 @@ struct AudioControlLayout : GUIKIT::HorizontalLayout {
     AudioControlLayout();
 };
 
-struct AudioSliderLayout : GUIKIT::HorizontalLayout {
-    GUIKIT::Label name;
-    GUIKIT::Label value;
-    GUIKIT::HorizontalSlider slider;
-    GUIKIT::Button button;
-
-    AudioSliderLayout();
-};
-
 struct AudioLayout : GUIKIT::VerticalLayout {
 
     AudioControlLayout control;
-    AudioSliderLayout latency;    
-    AudioSliderLayout volume;                
+    SliderLayout latency;    
+    SliderLayout volume;                
     
 	GUIKIT::FramedVerticalLayout frame;
     

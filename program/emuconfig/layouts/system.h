@@ -10,7 +10,7 @@ struct FeatureLayout : GUIKIT::FramedVerticalLayout {
             GUIKIT::LineEdit lineEdit;
             GUIKIT::Label dangerLabel;
 
-            Block(bool switched);
+            Block(Emulator::Interface::Feature* feature);
         };
         std::vector<Block*> blocks;       
         
@@ -27,11 +27,8 @@ struct FeatureLayout : GUIKIT::FramedVerticalLayout {
 struct MemoryLayout : GUIKIT::FramedVerticalLayout {
     struct Block : GUIKIT::HorizontalLayout {
         Emulator::Interface::MemoryType* memoryType;
-        GUIKIT::Label name;
-        GUIKIT::Label value;
-        GUIKIT::HorizontalSlider slider;
-
-        Block(bool disable);
+        SliderLayout sliderLayout;
+        Block();
     };
     std::vector<Block*> blocks;
 

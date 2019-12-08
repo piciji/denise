@@ -4,8 +4,6 @@ auto Layout::append(Sizable& sizable, Size size, unsigned spacing) -> void {
 		if(child.sizable == &sizable)
 			return;
 	
-	size = pWidget::getScaledContainerSize( size );
-	
     children.push_back({&sizable, size, {0,0}, spacing, 0});
     sizable.setVisible( visible() );
     

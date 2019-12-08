@@ -1,17 +1,4 @@
 
-struct VideoSliderLayout : GUIKIT::HorizontalLayout {    
-    GUIKIT::Label name;
-    GUIKIT::CheckBox active;
-    GUIKIT::Label value;
-    GUIKIT::HorizontalSlider slider;
-    
-    std::string unit = "";
-    bool withActivator;
-
-    auto getLabelMinimumWidth() -> unsigned;
-    VideoSliderLayout(bool withActivator = false, std::string unit = "%");
-};
-
 struct VideoModeLayout : GUIKIT::HorizontalLayout {
     GUIKIT::RadioBox palette;
     GUIKIT::RadioBox spectrum; 
@@ -39,22 +26,22 @@ struct VideoBaseLayout : GUIKIT::FramedVerticalLayout {
     VideoModeLayout mode;
     VideoOptionLayout option;
             
-    VideoSliderLayout saturation;
-    VideoSliderLayout gamma;
-    VideoSliderLayout brightness;        	
-    VideoSliderLayout contrast;   
-    VideoSliderLayout phase;  
+    SliderLayout saturation;
+    SliderLayout gamma;
+    SliderLayout brightness;        	
+    SliderLayout contrast;   
+    SliderLayout phase;  
     
     VideoBaseLayout(bool withSpectrum);
 };
 
 struct VideoCrtLayout : GUIKIT::FramedVerticalLayout {
-    VideoSliderLayout phaseError; 
-    VideoSliderLayout hanoverBars;
-    VideoSliderLayout scanlines;
-    VideoSliderLayout blur;   
-    VideoSliderLayout lumaRise;
-    VideoSliderLayout lumaFall;
+    SliderLayout phaseError; 
+    SliderLayout hanoverBars;
+    SliderLayout scanlines;
+    SliderLayout blur;   
+    SliderLayout lumaRise;
+    SliderLayout lumaFall;
     
     VideoCrtLayout();
 };
@@ -80,57 +67,56 @@ struct VideoMaskTypeLayout : GUIKIT::HorizontalLayout {
     GUIKIT::RadioBox shadowMask;
     GUIKIT::RadioBox slotMask;
     
-    auto getLabelMinimumWidth() -> unsigned;
     VideoMaskTypeLayout();
 };
 
 struct VideoGpuBaseLayout : GUIKIT::FramedVerticalLayout {
     
     VideoGpuOptionLayout option;
-    VideoSliderLayout firFilter;
+    SliderLayout firFilter;
     VideoFirSharpLayout firSharp;
-    VideoSliderLayout lightFromCenter;
-    VideoSliderLayout luminance;
+    SliderLayout lightFromCenter;
+    SliderLayout luminance;
     
     VideoGpuBaseLayout();
 };
 
 struct VideoMaskLayout : GUIKIT::FramedVerticalLayout {
     
-    VideoSliderLayout level;
-    VideoSliderLayout luminance;
+    SliderLayout level;
+    SliderLayout luminance;
     VideoMaskTypeLayout type;
-    VideoSliderLayout dpi;
-    VideoSliderLayout pitch;
+    SliderLayout dpi;
+    SliderLayout pitch;
     
     VideoMaskLayout();
 };
 
 struct VideoBloomLayout : GUIKIT::FramedVerticalLayout {
-    VideoSliderLayout glow;
-    VideoSliderLayout radius;
-    VideoSliderLayout variance;
-    VideoSliderLayout weight;
+    SliderLayout glow;
+    SliderLayout radius;
+    SliderLayout variance;
+    SliderLayout weight;
     
     VideoBloomLayout();
 };
 
 struct VideoCrtGlitchLayout : GUIKIT::FramedVerticalLayout {
-    VideoSliderLayout lumaNoise;
-    VideoSliderLayout chromaNoise;
-    VideoSliderLayout randomLineOffset;
-    VideoSliderLayout radialDistortion;
+    SliderLayout lumaNoise;
+    SliderLayout chromaNoise;
+    SliderLayout randomLineOffset;
+    SliderLayout radialDistortion;
     
     VideoCrtGlitchLayout();
 };
 
 struct VideoVicIIGlitchLayout : GUIKIT::FramedVerticalLayout {
     GUIKIT::Button toggleAll;
-    VideoSliderLayout aec;
-    VideoSliderLayout ba;
-    VideoSliderLayout phi0;
-    VideoSliderLayout ras;
-    VideoSliderLayout cas;
+    SliderLayout aec;
+    SliderLayout ba;
+    SliderLayout phi0;
+    SliderLayout ras;
+    SliderLayout cas;
     
     VideoVicIIGlitchLayout();
 };
@@ -158,7 +144,7 @@ struct VideoLayout : GUIKIT::TabFrameLayout {
     auto updatePresets() -> void;
     auto updateVisibillity() -> void;
     
-    template<typename T> auto setSliderAction( VideoSliderLayout* layout, std::string baseIdent, std::function<void ( T value )> callBack, std::function<T ( unsigned position )> callTransfer = [](unsigned position) { return position; } ) -> void;
+    template<typename T> auto setSliderAction( SliderLayout* layout, std::string baseIdent, std::function<void ( T value )> callBack, std::function<T ( unsigned position )> callTransfer = [](unsigned position) { return position; } ) -> void;
     auto vManager() -> VideoManager* { return VideoManager::getInstance(emulator); }
     
     VideoLayout(TabWindow* tabWindow);

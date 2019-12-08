@@ -1,7 +1,7 @@
 
 auto pLineEdit::minimumSize() -> Size {
     Size size = pFont::size(pfont, lineEdit.text());
-    return {size.width + 10, size.height + 8};
+    return {size.width + 20, size.height + 8};
 }
 
 auto pLineEdit::setEditable(bool editable) -> void {

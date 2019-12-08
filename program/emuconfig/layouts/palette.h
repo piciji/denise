@@ -6,7 +6,7 @@ struct PaletteColorLayout : GUIKIT::HorizontalLayout {
     GUIKIT::LineEdit edit;
     unsigned pos;
     
-    PaletteColorLayout();
+    PaletteColorLayout(unsigned editWidth, unsigned canvasHeight);
 };
 
 struct PaletteControlLayout : GUIKIT::HorizontalLayout {
@@ -28,14 +28,6 @@ struct PaletteSaveLayout : GUIKIT::HorizontalLayout {
     PaletteSaveLayout();
 };
 
-struct PaletteSliderLayout : GUIKIT::HorizontalLayout {
-    GUIKIT::Label color;
-    GUIKIT::Label value;
-    GUIKIT::HorizontalSlider slider;
-    
-    PaletteSliderLayout();
-};
-
 struct PaletteDetailLayout : GUIKIT::HorizontalLayout {
     
     struct Left : GUIKIT::VerticalLayout {
@@ -43,9 +35,11 @@ struct PaletteDetailLayout : GUIKIT::HorizontalLayout {
     } left;
     
     struct Right : GUIKIT::VerticalLayout {
-        PaletteSliderLayout r;
-        PaletteSliderLayout g;
-        PaletteSliderLayout b;
+        SliderLayout r;
+        SliderLayout g;
+        SliderLayout b;
+        
+        Right();
     } right;
     
     PaletteDetailLayout();

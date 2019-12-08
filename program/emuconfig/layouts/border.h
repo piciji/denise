@@ -1,12 +1,4 @@
 
-struct BorderSliderLayout : GUIKIT::HorizontalLayout {
-    GUIKIT::Label name;
-    GUIKIT::Label value;
-    GUIKIT::HorizontalSlider slider;
-    GUIKIT::Button button;
-
-    BorderSliderLayout();
-};
 
 struct BorderLayout : GUIKIT::VerticalLayout {
 
@@ -15,10 +7,10 @@ struct BorderLayout : GUIKIT::VerticalLayout {
 		
 	GUIKIT::FramedVerticalLayout cropLayout;
 	
-	BorderSliderLayout cropLeft;
-	BorderSliderLayout cropRight;
-	BorderSliderLayout cropTop;
-	BorderSliderLayout cropBottom;
+	SliderLayout cropLeft;
+	SliderLayout cropRight;
+	SliderLayout cropTop;
+	SliderLayout cropBottom;
 			
 	GUIKIT::CheckBox cropAspectCorrect;
 	

@@ -1,26 +1,4 @@
 
-VideoSliderLayout::VideoSliderLayout(bool withActivator, std::string unit) {
-	if (withActivator)
-		append(active, {175u, 0u}, 10);
-	else
-		append(name, {175u, 0u}, 10);
-		
-    append(value, {55u, 0u});
-    append(slider, {~0u, 0u});
-    
-    setAlignment(0.5);
-    
-    this->withActivator = withActivator;
-    this->unit = unit;
-}
-
-auto VideoSliderLayout::getLabelMinimumWidth() -> unsigned {
-    if (withActivator)
-        return active.minimumSize().width;
-    
-    return name.minimumSize().width;
-}
-
 VideoModeLayout::VideoModeLayout(bool withSpectrum) {
     
     if (withSpectrum) {
@@ -58,7 +36,7 @@ VideoOptionLayout::VideoOptionLayout(bool withSpectrum) {
 VideoBaseLayout::VideoBaseLayout(bool withSpectrum) :
 mode(withSpectrum),
 option(withSpectrum),
-phase(false, "°") 
+phase("°", false) 
 {
     append(mode, {~0u, 0u}, 2);
     append(option, {~0u, 0u}, 2);
@@ -82,12 +60,12 @@ phase(false, "°")
 }
 
 VideoCrtLayout::VideoCrtLayout() : 
-phaseError(true, "°"),
-hanoverBars(true),
-scanlines(true),
-blur(true),
-lumaRise(true, "px"),
-lumaFall(true, "px")
+phaseError("°", true),
+hanoverBars("%", true),
+scanlines("%", true),
+blur("%", true),
+lumaRise("px", true),
+lumaFall("px", true)
 {
     append(phaseError,{~0u, 0u}, 2);
     append(hanoverBars,{~0u, 0u}, 2);
@@ -136,14 +114,10 @@ VideoMaskTypeLayout::VideoMaskTypeLayout() {
     setAlignment(0.5);
 }
 
-auto VideoMaskTypeLayout::getLabelMinimumWidth() -> unsigned {
-    return type.minimumSize().width;
-}
-
 VideoGpuBaseLayout::VideoGpuBaseLayout() :
-firFilter(false, ""),
-luminance(false),
-lightFromCenter(true)
+firFilter("", false),
+luminance("%", false),
+lightFromCenter("%", true)
 {
     
     append(option, {~0u, 0u}, 3);
@@ -161,10 +135,10 @@ lightFromCenter(true)
 }
 
 VideoMaskLayout::VideoMaskLayout() :
-level(true),
-pitch(false, "mm"),
-dpi(false, "dpi"),
-luminance(false) {
+level("%", true),
+pitch("mm", false),
+dpi("dpi", false),
+luminance("%", false) {
     append(level,{~0u, 0u}, 2);
     append(luminance,{~0u, 0u}, 2);
     append(type,{~0u, 0u}, 2);
@@ -181,10 +155,10 @@ luminance(false) {
 }
 
 VideoBloomLayout::VideoBloomLayout() :
-glow(true),
-radius(false, "px"),
-variance(false, ""),
-weight(true, "")
+glow("%", true),
+radius("px", false),
+variance("", false),
+weight("", true)
 {
 	append(glow, {~0u, 0u}, 2);
     append(weight, {~0u, 0u}, 2);
@@ -201,10 +175,10 @@ weight(true, "")
 }
 
 VideoCrtGlitchLayout::VideoCrtGlitchLayout() :
-lumaNoise(true),
-chromaNoise(true),
-radialDistortion(true),
-randomLineOffset(true) {
+lumaNoise("%", true),
+chromaNoise("%", true),
+radialDistortion("%", true),
+randomLineOffset("%", true) {
 
     append(lumaNoise,{~0u, 0u}, 2);
     append(chromaNoise,{~0u, 0u}, 2);
@@ -221,11 +195,11 @@ randomLineOffset(true) {
 }
 
 VideoVicIIGlitchLayout::VideoVicIIGlitchLayout() :
-aec(true),
-ba(true),
-phi0(true),
-ras(true),
-cas(true) {
+aec("%", true),
+ba("%", true),
+phi0("%", true),
+ras("%", true),
+cas("%", true) {
     append(aec,{~0u, 0u}, 2);
     append(ba,{~0u, 0u}, 2);
     append(phi0,{~0u, 0u}, 2);
@@ -494,7 +468,7 @@ base( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) )
     updatePresets();
 }
 
-template<typename T> auto VideoLayout::setSliderAction( VideoSliderLayout* layout, std::string baseIdent, std::function<void ( T value )> callBack, std::function<T ( unsigned position )> callTransfer ) -> void {
+template<typename T> auto VideoLayout::setSliderAction( SliderLayout* layout, std::string baseIdent, std::function<void ( T value )> callBack, std::function<T ( unsigned position )> callTransfer ) -> void {
     		
     if (layout->withActivator)
         layout->active.onToggle = [this, layout, baseIdent, callBack, callTransfer]() {
@@ -807,26 +781,14 @@ auto VideoLayout::translate() -> void {
     vicIIGlitch.ras.active.setText(trans->get("ras_glitch",{}, true));
     vicIIGlitch.cas.active.setText(trans->get("cas_glitch",{}, true));
     
-    std::vector<std::vector<GUIKIT::Layout*>> aligner = {
-        {&base.saturation, &base.gamma, &base.brightness, &base.contrast, &base.phase, &crt.phaseError, &crt.hanoverBars, &crt.scanlines, &crt.blur, &crt.lumaRise, &crt.lumaFall},
-        {&gpuBase.firFilter, &gpuBase.lightFromCenter, &gpuBase.luminance, &mask.level, &mask.luminance, &mask.type, &mask.dpi, &mask.pitch, &bloom.glow, &bloom.radius, &bloom.variance, &bloom.weight},
-        {&crtGlitch.lumaNoise, &crtGlitch.chromaNoise, &crtGlitch.randomLineOffset, &crtGlitch.radialDistortion, &vicIIGlitch.aec, &vicIIGlitch.ba, &vicIIGlitch.phi0, &vicIIGlitch.ras, &vicIIGlitch.cas}
-    };
-       
-    for(auto& page : aligner ) {
-        unsigned neededWidth = 0;    
-        
-        for(auto sL : page) {
-            if (dynamic_cast<VideoSliderLayout*>(sL))
-                neededWidth = std::max(neededWidth, dynamic_cast<VideoSliderLayout*>(sL)->getLabelMinimumWidth() );
-            
-            else if (dynamic_cast<VideoMaskTypeLayout*>(sL))
-                neededWidth = std::max(neededWidth, dynamic_cast<VideoMaskTypeLayout*>(sL)->getLabelMinimumWidth() );                        
-        }            
-        
-        for(auto sL : page)
-            sL->children[ 0 ].size.width = neededWidth;
-    }
+    SliderLayout::scale({&base.saturation, &base.gamma, &base.brightness, &base.contrast, &base.phase, &crt.phaseError, &crt.hanoverBars, &crt.scanlines, &crt.blur, &crt.lumaRise, &crt.lumaFall},
+        "280 %");
+    unsigned neededWidth = SliderLayout::scale({&gpuBase.firFilter, &gpuBase.lightFromCenter, &gpuBase.luminance, &mask.level, &mask.luminance, &mask.dpi, &mask.pitch, &bloom.glow, &bloom.radius, &bloom.variance, &bloom.weight},
+        "1.00 mm", mask.type.type.minimumSize().width );
+    SliderLayout::scale({&crtGlitch.lumaNoise, &crtGlitch.chromaNoise, &crtGlitch.randomLineOffset, &crtGlitch.radialDistortion, &vicIIGlitch.aec, &vicIIGlitch.ba, &vicIIGlitch.phi0, &vicIIGlitch.ras, &vicIIGlitch.cas},
+        "100.0 %");
+    
+    mask.type.children[ 0 ].size.width = neededWidth;
 }
 
 auto VideoLayout::sliderIdent() -> std::string {

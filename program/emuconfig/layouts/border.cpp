@@ -1,14 +1,10 @@
 
-BorderSliderLayout::BorderSliderLayout() {
-    append(name, {90u, 0u});
-    append(value, {55u, 0u});
-    append(slider, {~0u, 0u}, 10);
-    append(button, {0u, 0u} );
-    
-    setAlignment(0.5);
-}
-
-BorderLayout::BorderLayout(TabWindow* tabWindow) {
+BorderLayout::BorderLayout(TabWindow* tabWindow) : 
+cropLeft("px"),
+cropRight("px"),
+cropTop("px"),
+cropBottom("px")
+{
     
     this->tabWindow = tabWindow;
     this->emulator = tabWindow->emulator;
@@ -27,11 +23,6 @@ BorderLayout::BorderLayout(TabWindow* tabWindow) {
 	
 	cropLayout.setFont(GUIKIT::Font::system("bold"));    
 	append(cropLayout, {~0u, 0u}, 10);
-		
-	cropLeft.remove(cropLeft.button);
-	cropRight.remove(cropRight.button);
-	cropTop.remove(cropTop.button);
-	cropBottom.remove(cropBottom.button);
 	
 	cropLeft.slider.setLength(101);
 	cropRight.slider.setLength(101);
@@ -86,46 +77,46 @@ BorderLayout::BorderLayout(TabWindow* tabWindow) {
 	cropLeft.slider.onChange = [this]() {
 		auto value = cropLeft.slider.position();
 		settings->set<unsigned>( this->tabWindow->ident("crop_left"), value);
-		cropLeft.value.setText( std::to_string( value ) + " Pixel" );
+		cropLeft.value.setText( std::to_string( value ) + " px" );
 		program->updateCrop( emulator );
 	};
 
 	cropRight.slider.onChange = [this]( ) {
 		auto value = cropRight.slider.position( );
 		settings->set<unsigned>( this->tabWindow->ident( "crop_right" ), value );
-		cropRight.value.setText( std::to_string( value ) + " Pixel" );
+		cropRight.value.setText( std::to_string( value ) + " px" );
 		program->updateCrop( emulator );
 	};
 
 	cropTop.slider.onChange = [this]( ) {
 		auto value = cropTop.slider.position( );
 		settings->set<unsigned>( this->tabWindow->ident( "crop_top" ), value );
-		cropTop.value.setText( std::to_string( value ) + " Pixel" );
+		cropTop.value.setText( std::to_string( value ) + " px" );
 		program->updateCrop( emulator );
 	};
 
 	cropBottom.slider.onChange = [this]( ) {
 		auto value = cropBottom.slider.position( );
 		settings->set<unsigned>( this->tabWindow->ident( "crop_bottom" ), value );
-		cropBottom.value.setText( std::to_string( value ) + " Pixel" );
+		cropBottom.value.setText( std::to_string( value ) + " px" );
 		program->updateCrop( emulator );
 	};
     	
 	auto valLeft = settings->get<unsigned>(tabWindow->ident("crop_left"), 0, {0u,100u});
     cropLeft.slider.setPosition(valLeft);
-    cropLeft.value.setText( std::to_string( valLeft ) + " Pixel" );
+    cropLeft.value.setText( std::to_string( valLeft ) + " px" );
 	
 	auto valRight = settings->get<unsigned>(tabWindow->ident("crop_right"), 0, {0u,100u});
     cropRight.slider.setPosition(valRight);
-    cropRight.value.setText( std::to_string( valRight ) + " Pixel" );
+    cropRight.value.setText( std::to_string( valRight ) + " px" );
 	
 	auto valTop = settings->get<unsigned>(tabWindow->ident("crop_top"), 0, {0u,100u});
     cropTop.slider.setPosition(valTop);
-    cropTop.value.setText( std::to_string( valTop ) + " Pixel" );
+    cropTop.value.setText( std::to_string( valTop ) + " px" );
 	
 	auto valBottom = settings->get<unsigned>(tabWindow->ident("crop_bottom"), 0, {0u,100u});
     cropBottom.slider.setPosition(valBottom);
-    cropBottom.value.setText( std::to_string( valBottom ) + " Pixel" );
+    cropBottom.value.setText( std::to_string( valBottom ) + " px" );
 
 	auto valCropType = settings->get<unsigned>(tabWindow->ident("crop_type"), 0, {0u,4u});
 	if (valCropType == 1) cropMonitor.setChecked();
@@ -166,4 +157,6 @@ auto BorderLayout::translate() -> void {
 	
 	cropAspectCorrect.setText( trans->get("crop_aspect_correct") );
 	cropLayout.setText( trans->get("crop") );
+    
+    SliderLayout::scale({&cropLeft, &cropRight, &cropTop, &cropBottom}, "100 px");
 }

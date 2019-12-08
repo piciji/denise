@@ -19,7 +19,7 @@ auto pLineEdit::setDroppable(bool droppable) -> void {
 
 auto pLineEdit::minimumSize() -> Size {
     Size size = getMinimumSize();
-    return {size.width + 24, size.height + 6};
+    return {size.width + 16, size.height + 6};
 }
 
 auto pLineEdit::setEditable(bool editable) -> void {

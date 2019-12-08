@@ -93,7 +93,7 @@ InputLayout::InputLayout(TabWindow* tabWindow) {
             view->setCursor( emulator );
         };
         
-        selector.append( *pluginConnector, {0u, 0u}, 20 );
+        selector.append( *pluginConnector, {0u, 0u}, &emulator->connectors.back() == &connector ? 0 : 20 );
         
         selector.connectorButtons.push_back( { pluginConnector, &connector } );
     }

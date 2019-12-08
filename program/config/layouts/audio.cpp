@@ -1,24 +1,19 @@
 
-AudioSliderLayout::AudioSliderLayout() {
-    append(name, {0u, 0u}, 10);
-    append(value, {50u, 0u});
-    append(slider, {~0u, 0u}, 10);
-    append(button, {0u, 0u});
-
-    setAlignment(0.5);
-}
-
 AudioControlLayout::AudioControlLayout() {
+    GUIKIT::LineEdit test;
+    test.setText( "0.0005" );
     append(frequencyLabel, {0u, 0u}, 10);
     append(frequencyCombo, {0u, 0u}, 20);
     append(reverb, {0u, 0u}, 20);
     append(maxRateLabel, {0u, 0u}, 5);
-    append(maxRateEdit, {60u, 0u});
+    append(maxRateEdit, {test.minimumSize().width, 0u});
     
     setAlignment( 0.5 );
 }
 
-AudioLayout::AudioLayout() {
+AudioLayout::AudioLayout() : 
+latency("ms"),
+volume("%", false, true) {
     setMargin(10);
 
     frame.append(control, {~0u, 0u}, 20);
@@ -30,7 +25,6 @@ AudioLayout::AudioLayout() {
 
     volume.slider.setLength(101);
     latency.slider.setLength(120);
-    latency.remove( latency.button );
 
     control.frequencyCombo.append( "44100 Hz", 44100 );
     control.frequencyCombo.append( "48000 Hz", 48000 );
@@ -75,7 +69,7 @@ AudioLayout::AudioLayout() {
         audioManager->setVolume();
     };
     
-    volume.button.onActivate = [this]() {
+    volume.defaultButton.onActivate = [this]() {
         settings->set<unsigned>("audio_volume", 100);
         volume.value.setText( std::to_string( 100 ) + " %" );
         volume.slider.setPosition( 100 );
@@ -129,11 +123,13 @@ auto AudioLayout::translate() -> void {
     latency.name.setText( trans->get("latency", {}, true) );
     control.frequencyLabel.setText( trans->get("frequency", {}, true) );
 
-    volume.button.setText( trans->get("Max") );
+    volume.defaultButton.setText( trans->get("Max") );
     
     driverLayout.name.setText( trans->get("driver", {}, true) );
     
     control.reverb.setText( trans->get("Reverb") );
     control.maxRateLabel.setText( trans->get("drc_delta", {}, true) );
     control.maxRateLabel.setTooltip( trans->get("drc_delta_tooltip") );
+    
+    SliderLayout::scale({&latency, &volume}, "120 ms");
 }

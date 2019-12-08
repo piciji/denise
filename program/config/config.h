@@ -8,6 +8,7 @@ struct InputMapping;
 
 namespace ConfigView {
 
+#include "slider.h"
 #include "layouts/driver.h"
 #include "layouts/audio.h"
 #include "layouts/video.h"

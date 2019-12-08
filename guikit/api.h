@@ -1167,6 +1167,12 @@ struct Vector {
         return std::find(v.begin(), v.end(), element) != v.end();
     }
     template<typename T>
+    static auto findPos(std::vector<T>& v, T element) -> int {
+		for (unsigned i = 0; i < v.size(); i++)
+			if (v[i] == element) return i;
+		return -1;
+	}
+    template<typename T>
     static auto combine(std::vector<T>& target, const std::vector<T>& source) -> void {
         target.insert( target.end(), source.begin(), source.end() );
     }
