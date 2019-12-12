@@ -142,6 +142,7 @@ auto VicII::serialize(Emulator::Serializer& s) -> void {
     s.integer( updatePrioExpand );
     s.integer( cAccessArea );
     s.integer( sprite0DmaLateBA );
+    s.integer( disableEcmBmmTogether );
 }
 
 }

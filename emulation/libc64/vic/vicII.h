@@ -266,6 +266,7 @@ protected:
     bool updatePrioExpand;
     bool cAccessArea;
     bool sprite0DmaLateBA;
+    bool disableEcmBmmTogether;
             		
     auto updateIrq( Interrupt interrupt = None ) -> void;
 	template<bool phi1> auto checkLightPen( ) -> void;	

@@ -313,6 +313,8 @@ auto VicII::power() -> void {
     updateMc = 0;
     updatePrioExpand = 0;
     cAccessArea = 0;    
+    disableEcmBmmTogether = false;
 }
 
 }
+
