@@ -3,17 +3,30 @@
 
 struct CRC32 {
 
+    CRC32() {
+        
+    }
+    
 	CRC32(uint8_t* data, unsigned size) {
-		auto p = data;
+        
+		calc(data, size);
+	}
+
+    auto calc(uint8_t* data, unsigned size) -> void {
+        auto p = data;
 		
 		while (size--) {
 			checksum = (checksum >> 8) ^ table(checksum ^ *p++);
 		}
-	}
-
+    }
+        
 	auto value() const -> uint32_t {
 		return ~checksum;
 	}
+           
+    auto init(uint32_t value = 0) -> void {
+        checksum = value;
+    }
 	
 private:
 	static auto table(uint8_t index) -> uint32_t {

@@ -98,6 +98,7 @@ struct Program : Emulator::Interface::Bind {
     auto setPalette( Emulator::Interface* emulator ) -> void;
     auto finishVBlank() -> void;
     auto midScreenCallback() -> void;
+    auto saveExitScreenshot() -> void;
     
     //input
     auto initInput() -> void;

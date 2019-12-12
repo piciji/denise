@@ -412,6 +412,10 @@ auto Program::log(std::string data, bool newLine) -> void {
 
 auto Program::exit(int code) -> void {
     GUIKIT::Application::exitCode = code;
+
+    if (!cmd->screenshotPath.empty())
+        saveExitScreenshot();
+    
     if (isRunning)
         view->onClose();
 }
@@ -454,3 +458,4 @@ auto Program::questionToWrite(Emulator::Interface::Media* media) -> bool {
     
     return view->questionToWrite(media);
 }
+

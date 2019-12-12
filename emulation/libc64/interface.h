@@ -113,6 +113,9 @@ struct Interface : Emulator::Interface {
     auto cropHeight() -> unsigned;
     auto cropTop() -> unsigned;
     auto cropLeft() -> unsigned;
+    auto cropData() -> uint16_t*;
+    auto cropPitch() -> unsigned;
+
 	
 	auto setChipset(unsigned chipsetId) -> void;
     auto getChipset() -> unsigned;
