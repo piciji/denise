@@ -58,6 +58,7 @@ struct Interface : Emulator::Interface {
 
     auto setDrivesConnected(MediaGroup* group, unsigned count) -> void;
     auto getDrivesConnected(MediaGroup* group) -> unsigned;
+    auto setDriveSpeed(MediaGroup* group, double rpm, double wobble) -> void;
 	//disk drive handling	
 	auto insertDisk(Media* media, uint8_t* data, unsigned size) -> void;
 	auto writeProtectDisk(Media* media, bool state) -> void;
@@ -66,7 +67,7 @@ struct Interface : Emulator::Interface {
 	auto createDiskImage(unsigned typeId, bool hd = false, std::string name = "", bool ffs = false) -> uint8_t*;        
     auto getDiskListing(Media* media) -> std::vector<Emulator::Interface::Listing>;
     auto selectDiskListing(Media* media, unsigned pos) -> void;
-
+    
 	//tape drive handling
 	auto insertTape(Media* media, uint8_t* data, unsigned size) -> void;
 	auto writeProtectTape(Media* media, bool state) -> void;

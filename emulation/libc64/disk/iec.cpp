@@ -313,6 +313,11 @@ auto IecBus::setDrivesEnabled( uint8_t count ) -> void {
     
     threaded = drivesEnabled.size() > 0; 
 }
+
+auto IecBus::setDriveSpeed(double rpm, double wobble) -> void {
+    for( auto drive : drives )
+        drive->setSpeed( rpm, wobble );
+}
     
 auto IecBus::setFirmware(uint8_t* rom, unsigned romSize) -> void {
     

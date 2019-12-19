@@ -405,3 +405,5 @@ blank_easyflash_image =
 boot = 
 hide = 
 override_write_protection = 
+speed = 
+variation = 

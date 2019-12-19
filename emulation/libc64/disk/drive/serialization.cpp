@@ -17,6 +17,7 @@ auto Drive1541::serialize(Emulator::Serializer& s) -> void {
     s.integer( byteReadyOverflow );
     s.integer( readMode );
     s.integer( headOffset );
+    s.integer( stepDirection );
     s.integer( bitCounter );
     s.integer( refCyclesPerRevolution300rpm );
     s.integer( refCyclesPerRevolution );
@@ -27,7 +28,6 @@ auto Drive1541::serialize(Emulator::Serializer& s) -> void {
     s.integer( randomizer.xorShift32 );
     s.integer( randCounter );
     s.integer( alternateRefTiming );
-    s.integer( readValue );
     s.integer( writeValue );
     s.integer( readBuffer );
     s.integer( writeBuffer );
@@ -39,7 +39,15 @@ auto Drive1541::serialize(Emulator::Serializer& s) -> void {
     s.integer( loaded );
     s.integer( clockOut );
     s.integer( dataOut );
-    s.integer( atnOut );    
+    s.integer( atnOut );
+    s.integer( motorOff.slowDown );
+    s.integer( motorOff.decelerationPoint );
+    s.integer( motorOff.delay );
+    s.integer( motorOff.pos );
+    s.vector( motorOff.chunkSize );
+    
+    s.integer( rpm );
+    s.integer( wobble );
     
     if (s.mode() == Emulator::Serializer::Mode::Load) {
         gcrTrack = structure1541.getTrackPtr( currentHalftrack );

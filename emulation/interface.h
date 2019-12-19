@@ -354,6 +354,7 @@ struct Interface {
     // set amount of tape, disk, hard drives or module slots connected to the system
     virtual auto setDrivesConnected(MediaGroup* group, unsigned count) -> void {}
     virtual auto getDrivesConnected(MediaGroup* group) -> unsigned { return 0; }
+    virtual auto setDriveSpeed(MediaGroup* group, double rpm, double wobble) -> void {}
     // disk handling
     virtual auto insertDisk(Media* media, uint8_t* data, unsigned size) -> void {}
     virtual auto writeProtectDisk(Media* media, bool state) -> void {}
@@ -362,6 +363,7 @@ struct Interface {
 	virtual auto createDiskImage(unsigned typeId, bool hd = false, std::string name = "", bool ffs = false) -> uint8_t* { return nullptr; }        
     virtual auto getDiskListing(Media* media) -> std::vector<Listing> { return {}; }
     virtual auto selectDiskListing(Media* media, unsigned pos) -> void { }
+    
     // hard disk handling
     virtual auto insertHardDisk(Media* media, unsigned size) -> void {} //uses read and write callbacks above because of big data
 	virtual auto ejectHardDisk(Media* media) -> void {}

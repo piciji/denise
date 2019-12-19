@@ -53,7 +53,7 @@ Drive1541::Drive1541(uint8_t number) {
         processDelays();
         
         if ( useAccuracy() )            
-            // in case of a via 2 read there are 14 ref cycles processed already
+            // in case of a via 2 read, there are 14 ref cycles processed already
             rotateG64( alternateRefTiming ? 2 : 10 );
         else
             rotateD64();
@@ -176,15 +176,10 @@ Drive1541::Drive1541(uint8_t number) {
         if (port == Via::Port::B) {
             
             if (lines->iob & 4) { // stepper motor works only when drive motor is active
-                
-                int step = ( (lines->iob & 3) - (currentHalftrack & 3) ) & 3;
 
-                if (step == 3)
-                    step = -1;
+                uint8_t step = ((lines->iob & 3) - (currentHalftrack & 3)) & 3;
 
-                // this part is not fully emulated and understood
-                // a step of 2 is applied in some cases only, so it's better to not apply it at all for now                
-                if ( step == 1 || step == -1 )
+                if (step != 0)                
                     changeHalfTrack( step );                
             }                            
             
@@ -192,7 +187,9 @@ Drive1541::Drive1541(uint8_t number) {
 
             if ((lines->iob ^ lines->iobOld) & 4) {
                 // motor switched between on/off 
-                motorOn = (lines->iob & 4) != 0;
+                 motorOn = (lines->iob & 4) != 0;
+                 if (!motorOn)
+                    motorOffInit();
                 
                 updateState( );
             }
@@ -212,11 +209,13 @@ Drive1541::Drive1541(uint8_t number) {
                 | (lines->prb & lines->ddrb); // output mode
         }
         
-        // check if a disc change delay is active
-        if ( attachDelay || detachDelay || attachDetachDelay )
-           readValue = 0; 
+        uint8_t value = 0;
         
-        return (readValue & ~lines->ddra) | ( lines->pra & lines->ddra );
+        if ( !readMode || attachDelay || detachDelay || attachDetachDelay );
+        else
+            value = readBuffer & 0xff;
+        
+        return (value & ~lines->ddra) | ( lines->pra & lines->ddra );
     };
     
     via2->ca2Out = [this]( bool state ) {
@@ -243,6 +242,9 @@ Drive1541::Drive1541(uint8_t number) {
 	};
     
     remap();
+    
+    for(unsigned i = 0; i < motorOff.CHUNKS; i++)
+        motorOff.chunkSize.push_back( 0 );
 } 
 
 Drive1541::~Drive1541() {    
@@ -319,14 +321,16 @@ auto Drive1541::power( ) -> void {
     randomizer.initXorShift( 0x1234abcd );
     
     motorOn = false;
+    motorOff.slowDown = false;
     readBuffer = writeBuffer = 0;
     writeValue = 0x55;
-    readValue = 0;
     bitCounter = 0;
     accum = 0;
     headOffset = 0;
     randomizeRpm();
     currentHalftrack = 17 * 2;
+    stepDirection = 0;
+    
     changeHalfTrack(0);
 }
 
@@ -366,7 +370,7 @@ auto Drive1541::setViaTransition( bool state ) -> void {
 }
 
 inline auto Drive1541::processDelays() -> void {
-    
+
     if (detachDelay)
         detachDelay--;
     else if (attachDetachDelay)
@@ -382,6 +386,7 @@ auto Drive1541::detach() -> void {
         detachDelay = DISC_DELAY;
     
     structure1541.detach();
+    motorOff.slowDown = false;
     
     loaded = false;        
 }
@@ -457,6 +462,13 @@ inline auto Drive1541::getTrackState() -> TrackState {
 
 inline auto Drive1541::useAccuracy() -> bool {    
     return structure1541.type == Structure1541::Type::G64;
+}
+
+auto Drive1541::setSpeed(double rpm, double wobble) -> void {
+    
+    this->rpm = rpm * 100.0 + 0.5;
+    this->wobble = wobble * 100.0 + 0.5;
+
 }
 
 }

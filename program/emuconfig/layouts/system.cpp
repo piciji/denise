@@ -118,13 +118,13 @@ auto MemoryLayout::build( Emulator::Interface* emulator ) -> void {
     }          
 }
 
-DriveLayout::DriveCount::DriveCount() {
+DriveLayout::DriveCountFrame::DriveCount::DriveCount() {
     append(name, {0u, 0u}, 5);
     append(combo, {0u, 0u});
     setAlignment(0.5);
 }
 
-DriveLayout::DriveLayout() {
+DriveLayout::DriveLayout() : speed("RPM"), wobble("RPM") {
     setPadding(10);
     setFont(GUIKIT::Font::system("bold"));
 }
@@ -134,18 +134,25 @@ auto DriveLayout::build( Emulator::Interface* emulator ) -> void {
         if ( !mediaGroup.isDrive() )
             continue;
         
-        auto driveCount = new DriveCount;
+        auto driveCount = new DriveCountFrame::DriveCount;
         driveCount->mediaGroup = &mediaGroup;
 
         for(unsigned i = 0; i <= mediaGroup.media.size(); i++) {
             driveCount->combo.append( std::to_string(i) );
         }
-        append(*driveCount, {0u,0u}, 15u);
-        driveCounter.push_back(driveCount);
+        driveCountFrame.append(*driveCount, {0u,0u}, 15u);
+        driveCountFrame.driveCounter.push_back(driveCount);
         
         if (mediaGroup.isDisk() && dynamic_cast<LIBC64::Interface*>(emulator) )
             driveCount->name.setForegroundColor(0xff4500);
     }
+    
+    append( driveCountFrame, {~0u, 0u}, 5 );
+    append( speed, {~0u, 0u}, 5);
+    append( wobble, {~0u, 0u});
+    
+    speed.slider.setLength( 501 );
+    wobble.slider.setLength( 51 );
 }
 
 CpuLayout::CpuLayout() {
@@ -254,7 +261,7 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
         block->sliderLayout.value.setText( getSizeString( memoryType->memory[id].size ) );        
     }
     
-    for(auto block : driveLayout.driveCounter) {
+    for(auto block : driveLayout.driveCountFrame.driveCounter) {
         
         auto ident = block->mediaGroup->name + "_count";
         
@@ -271,8 +278,44 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
             counter = block->mediaGroup->defaultUsage();
         
         block->combo.setSelection( counter );
-    }
         
+        if (block->mediaGroup->isDisk()) {
+            
+            auto ident = block->mediaGroup->name;
+            
+            driveLayout.speed.slider.onChange = [this, block, ident]() {                
+                
+                auto position = driveLayout.speed.slider.position();
+
+                double speed = (double)(position) / 10.0 + 275.0;
+
+                driveLayout.speed.value.setText(GUIKIT::String::formatFloatingPoint(speed, 1) + " RPM");
+                
+                settings->set<double>(this->tabWindow->ident(ident + "_speed"), speed);
+            };                       
+            
+            driveLayout.wobble.slider.onChange = [this, block, ident]() {
+                
+                auto position = driveLayout.wobble.slider.position();
+
+                double wobble = (double) position / 10.0;
+
+                driveLayout.wobble.value.setText(GUIKIT::String::formatFloatingPoint(wobble, 2) + " RPM");                
+
+                settings->set<double>(this->tabWindow->ident(ident + "_wobble"), wobble);
+            };
+            
+            double wobble = settings->get<double>(this->tabWindow->ident(ident + "_wobble"), 0.5, {0.0, 5.0});
+            double speed = settings->get<double>(this->tabWindow->ident(ident + "_speed"), 300.0, {275.0, 325.0});
+                        
+            driveLayout.wobble.value.setText(GUIKIT::String::formatFloatingPoint(wobble, 2) + " RPM");
+            driveLayout.speed.value.setText(GUIKIT::String::formatFloatingPoint(speed, 1) + " RPM");
+            
+            driveLayout.wobble.slider.setPosition( wobble * 10.0 );
+            driveLayout.speed.slider.setPosition( (speed - 275.0) * 10.0 );
+        }
+    }
+               
     auto expansionId = settings->get<unsigned>( this->tabWindow->ident("expansion"), 0);
     for ( auto line : expansionLayout.lines ) {
         for( auto block : line->blocks ) {            
@@ -351,7 +394,7 @@ auto SystemLayout::activateDrive( Emulator::Interface::MediaGroup* mediaGroup, u
     if (requestedCount > mediaGroup->media.size())
         requestedCount = mediaGroup->media.size();
     
-    for (auto block : driveLayout.driveCounter) {
+    for (auto block : driveLayout.driveCountFrame.driveCounter) {
 
         if (mediaGroup != block->mediaGroup)
             continue;
@@ -439,7 +482,7 @@ auto SystemLayout::translate() -> void {
     featureLayout.setText( trans->get("feature") );
     expansionLayout.setText( trans->get("expansion_port") );
 
-    for(auto block : driveLayout.driveCounter) {
+    for(auto block : driveLayout.driveCountFrame.driveCounter) {
 
         auto ident = block->mediaGroup->name + "_drives";
         block->name.setText(trans->get(ident,{}, true));
@@ -477,6 +520,15 @@ auto SystemLayout::translate() -> void {
     }
     
     SliderLayout::scale(sliderLayouts, "1024 mb");
+        
+    driveLayout.speed.name.setText( trans->get("Speed", {}, true) );
+    driveLayout.wobble.name.setText( trans->get("Variation", {}, true) );
+    
+    sliderLayouts.clear();    
+    sliderLayouts.push_back( &driveLayout.speed );
+    sliderLayouts.push_back( &driveLayout.wobble );
+
+    SliderLayout::scale(sliderLayouts, "300.0 RPM");
 }
 
 auto SystemLayout::featureIdent( std::string ident ) -> std::string {

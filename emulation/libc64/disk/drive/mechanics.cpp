@@ -5,7 +5,7 @@ namespace LIBC64 {
     
 auto Drive1541::rotateD64() -> void {    
     
-    if (!motorOn)
+    if (!motorRun())
         return;
 
     // d64 images are cracked versions of originals, the copy protection is removed
@@ -69,10 +69,9 @@ auto Drive1541::rotateD64() -> void {
         if (~readBuffer & 0x3ff) {
             // no sync 
             if (++bitCounter == 8) {
-                bitCounter = 0;
-                readValue = readBuffer & 0xff;       
+                bitCounter = 0;   
 
-                writeBuffer = readValue; // because of shared bus
+                writeBuffer = readBuffer & 0xff; // because of shared bus
 
                 if (byteReadyOverflow)
                     cpu->setSo( 1 );
@@ -114,7 +113,7 @@ auto Drive1541::rotateD64() -> void {
     
 auto Drive1541::rotateG64( unsigned refCycles ) -> void {   
 
-    if (!motorOn)
+    if (!motorRun())
         return;
     
     // the g64 format contains user and structure data, simply all bits of a track
@@ -206,8 +205,7 @@ auto Drive1541::rotateG64( unsigned refCycles ) -> void {
                         
                         if (++bitCounter == 8) {
                             bitCounter = 0;
-                            readValue = readBuffer & 0xff;
-                            writeBuffer = readValue;
+                            writeBuffer = readBuffer & 0xff;
 
                             if (byteReadyOverflow) {
                                 // cpu low cycle should progress only 6 reference cycles instead of 8.
@@ -343,6 +341,61 @@ inline auto Drive1541::writeBit( bool state ) -> void {
     written = true; // track data has changed, host have to write back
 }
 
+auto Drive1541::motorRun() -> bool {
+
+    if (motorOn)
+        return true;
+
+    if (!motorOff.slowDown)
+        return false;
+
+    if (motorOff.delay) {
+        motorOff.delay--;
+        return true;
+    }
+
+    // Star Trekking game needs emulation of motor slow down
+    unsigned decelerationPoint = motorOff.decelerationPoint;
+    if (motorOff.chunkSize[decelerationPoint])
+        motorOff.chunkSize[decelerationPoint]--;
+
+    if (motorOff.chunkSize[decelerationPoint] == 0) {
+        if (motorOff.decelerationPoint)
+            motorOff.decelerationPoint--;
+        else {
+            motorOff.slowDown = false;
+            return false;
+        }
+    }
+
+    if (motorOff.pos++ <= decelerationPoint)
+        return true;
+
+    if (motorOff.pos == (motorOff.CHUNKS + 1) )
+        motorOff.pos = 0;
+
+    return false;
+}
+
+auto Drive1541::motorOffInit() -> void {
+
+    motorOff.delay = 30000 + (rand() % 10000);
+    unsigned slowDownCycles = 100000;
+
+    unsigned chunkSize = slowDownCycles / motorOff.CHUNKS;
+    unsigned rest = slowDownCycles % motorOff.CHUNKS;
+
+    for(unsigned i = 0; i < motorOff.CHUNKS; i++)
+        motorOff.chunkSize[i] = chunkSize;
+
+    for(unsigned i = 0; i < rest; i++)
+        motorOff.chunkSize[i % motorOff.CHUNKS]++;
+
+    motorOff.decelerationPoint = motorOff.CHUNKS - 1;
+    motorOff.pos = 0;
+    motorOff.slowDown = true;
+}
+
 auto Drive1541::randomizeRpm() -> void {
     
     // drive speed is 300 rounds per minute
@@ -351,7 +404,7 @@ auto Drive1541::randomizeRpm() -> void {
     // generating random integer numbers is easier, lets scale up
     // 0.5 rpm * 100 = 50
     // 300 rpm * 100 = 30000
-    unsigned adjusted = 30000 + (rand() % 51) - 25;
+    unsigned adjusted = rpm + (rand() % (wobble + 1) ) - (wobble / 2);
     // there are fixed values how many bits passed the r/w head each second within a speed zone.
     // however these values are valid for a rotation speed of exactly 300 rpm
     // we solve this by a simple proportion:
@@ -373,16 +426,62 @@ auto Drive1541::randomizeRpm() -> void {
     refCyclesPerRevolution = (30000ULL * refCyclesPerRevolution300rpm) / adjusted;    
 }
 
-auto Drive1541::changeHalfTrack( int step ) -> void {
+// 1 - 0 = 1
+// 2 - 1 = 1
+// 3 - 2 = 1
+// 0 - 3 = 1
+// 1 - 0 = 1
+// 2 - 1 = 1
+// 1 - 2 = (-1) 3
+// 0 - 1 = (-1) 3
+// 3 - 0 = 3
+// 2 - 3 = (-1) 3
+
+auto Drive1541::updateStepper( uint8_t step ) -> bool {
+    
+    if (step == 1) {        
+        if (currentHalftrack < ((MAX_TRACKS_1541 * 2) - 1) ) {
+            currentHalftrack++;
+            stepDirection = 1;
+            return true;            
+        }
+            
+        stepDirection = -1;
+        
+    } else if (step == 3) {
+        
+        if (currentHalftrack > 0) {
+            currentHalftrack--;
+            stepDirection = -1;
+            return true;
+        }
+            
+        stepDirection = 1;
+        
+    } else if (step == 2) {
+        // Primitive 7 Sins uses this method
+        if (stepDirection == 1) {            
+            if (currentHalftrack & 1) {
+                if (updateStepper(1))
+                    return updateStepper(1);
+            }
+            
+        } else if (stepDirection == -1) {
+            if ((currentHalftrack & 1) == 0) {
+                if (updateStepper(3))
+                    return updateStepper(3);
+            }
+        } 
+    }
+    
+    return false;
+}
+
+auto Drive1541::changeHalfTrack( uint8_t step ) -> void {
     
     writeTrack();
-    
-    int newHalftrack = currentHalftrack + step;
-    
-    if ( newHalftrack >= (MAX_TRACKS_1541 * 2) ); // upper limit, no change
-    else if (newHalftrack < 0); // lower limit, no change
-    else
-        currentHalftrack = newHalftrack; // change half track
+                    
+    updateStepper( step );
        
     unsigned oldTrackSize = gcrTrack->size;
 
@@ -401,7 +500,6 @@ auto Drive1541::changeHalfTrack( int step ) -> void {
      else
         headOffset = 0;
     
-    // track change delay is not emulated yet. therefore emulated drive runs faster than original.
     updateState( );    
 }
 

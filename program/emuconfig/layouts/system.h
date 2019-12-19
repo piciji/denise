@@ -58,15 +58,21 @@ struct ExpansionLayout : GUIKIT::FramedVerticalLayout {
     ExpansionLayout();  
 };
 
-struct DriveLayout : GUIKIT::FramedHorizontalLayout {
+struct DriveLayout : GUIKIT::FramedVerticalLayout {
 
-    struct DriveCount : GUIKIT::HorizontalLayout {
-        Emulator::Interface::MediaGroup* mediaGroup;
-        GUIKIT::Label name;
-        GUIKIT::ComboButton combo;
-        DriveCount();
-    };
-    std::vector<DriveCount*> driveCounter;
+    struct DriveCountFrame : GUIKIT::HorizontalLayout {
+        struct DriveCount : GUIKIT::HorizontalLayout {
+            Emulator::Interface::MediaGroup* mediaGroup;
+            GUIKIT::Label name;
+            GUIKIT::ComboButton combo;
+            DriveCount();
+        };
+        std::vector<DriveCount*> driveCounter;
+        
+    } driveCountFrame;
+    
+    SliderLayout speed;
+    SliderLayout wobble;
 
     auto build( Emulator::Interface* emulator ) -> void;
 

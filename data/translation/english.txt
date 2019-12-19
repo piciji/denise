@@ -405,3 +405,5 @@ blank_easyflash_image = select a new EasyFlash image ...
 boot = Boot
 hide = Hide
 override_write_protection = It was not possible to write on "%media%", because of an activated write protection. Do you want to remove write protection now?
+speed = Speed
+variation = Variation

@@ -176,6 +176,12 @@ auto Program::power( Emulator::Interface* emulator, bool showImageError ) -> voi
             unsigned counter = settings->get( ident(emulator, mediaGroup.name + "_count"), mediaGroup.defaultUsage());        
             emulator->setDrivesConnected( &mediaGroup, counter );
             needTapeControl |= mediaGroup.isTape() && (counter > 0);
+            
+            if (mediaGroup.isDisk()) {
+                double wobble = settings->get<double>(ident(emulator, mediaGroup.name + "_wobble"), 0.5, {0.0, 5.0});
+                double speed = settings->get<double>(ident(emulator, mediaGroup.name + "_speed"), 300.0, {275.0, 325.0});                
+                emulator->setDriveSpeed( &mediaGroup, speed, wobble );
+            }
         }                
         
         for(auto& media : mediaGroup.media) {            

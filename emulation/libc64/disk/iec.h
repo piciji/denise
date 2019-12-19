@@ -51,6 +51,7 @@ struct IecBus {
     auto waitForDrives() -> void;
     auto syncDrives( int32_t _syncPos = 0, bool ciaAccess = false ) -> void;
     auto setDrivesEnabled( uint8_t count ) -> void;
+    auto setDriveSpeed(double rpm, double wobble) -> void;
     auto setFirmware(uint8_t* rom, unsigned romSize) -> void;
     inline auto countTicks() -> void { cycleCounter++; }
     auto randomizeRpm() -> void;

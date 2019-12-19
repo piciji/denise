@@ -405,3 +405,5 @@ blank_easyflash_image = neues EasyFlash Abbild auswählen ...
 boot = Booten
 hide = Ausblenden
 override_write_protection = Ein Schreibvorgang auf "%media%" konnte nicht ausgeführt werden, da der Schreibschutz aktiviert ist. Soll der Schreibschutz jetzt aufgehoben werden?
+speed = Geschwindigkeit
+variation = Schwankung

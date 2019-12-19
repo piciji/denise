@@ -601,6 +601,12 @@ auto Interface::getDrivesConnected(MediaGroup* group) -> unsigned {
     return 1;
 }
 
+auto Interface::setDriveSpeed(MediaGroup* group, double rpm, double wobble) -> void {
+    
+    if (group->isDisk())
+        iecBus->setDriveSpeed(rpm, wobble);
+}
+
 auto Interface::insertDisk(Media* media, uint8_t* data, unsigned size) -> void {
     
     if (!media || !media->group->isDisk())

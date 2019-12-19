@@ -31,6 +31,15 @@ struct Drive1541 {
     uint8_t* rom = nullptr;
     unsigned romSize = 0;    
     Emulator::Interface::Media* media;
+
+    struct MotorOff {
+        bool slowDown = false;
+        const unsigned CHUNKS = 20;
+        std::vector<unsigned> chunkSize;
+        unsigned decelerationPoint;
+        unsigned delay;
+        unsigned pos;
+    } motorOff;
     
     Memory memory;
     Memory::Read readRam;
@@ -57,7 +66,8 @@ struct Drive1541 {
         
     Structure1541::GcrTrack* gcrTrack = new Structure1541::GcrTrack;
     
-    uint8_t currentHalftrack = 17 * 2;    
+    uint8_t currentHalftrack;
+    int stepDirection = 0;
     
     unsigned speedZone = 0;
     bool byteReadyOverflow = true; // random initialization ?
@@ -75,7 +85,6 @@ struct Drive1541 {
     unsigned randCounter;
     bool alternateRefTiming;
     
-    uint8_t readValue;
     uint8_t writeValue;
     unsigned readBuffer;
     unsigned writeBuffer;
@@ -91,7 +100,10 @@ struct Drive1541 {
     
     bool clockOut;
     bool dataOut;
-    bool atnOut;          
+    bool atnOut;    
+    
+    unsigned rpm = 30000;
+    unsigned wobble = 50;
     
     auto calculateRefCyclesPerRevolution() -> void;
     
@@ -108,15 +120,19 @@ struct Drive1541 {
     auto randomizeRpm() -> void;
     auto writeBit( bool state ) -> void;
     auto readBit() -> bool;
-    auto changeHalfTrack( int step ) -> void;
+    auto changeHalfTrack( uint8_t step ) -> void;
     auto attach( Emulator::Interface::Media* media, uint8_t* data, unsigned size ) -> void;
     auto detach() -> void;
     auto setWriteProtect(bool state) -> void;
+    auto setSpeed( double rpm, double wobble ) -> void;
     
     auto processDelays() -> void;
     auto syncFound() -> uint8_t;
     auto writeprotectSense() -> uint8_t;
     auto writeTrack() -> void;
+    auto updateStepper( uint8_t step ) -> bool;
+    auto motorRun() -> bool;
+    auto motorOffInit() -> void;
     
     auto getTrackState() -> TrackState;
     auto useAccuracy() -> bool;
