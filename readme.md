@@ -9,6 +9,11 @@ usage hints -> scroll down this file
 ## 1.0.7
 * added EasyFlash support
 * fixed widget layouting, when app/text scaling is activated by Windows OS
+* added screenshot generation for testbench
+* added double step function of drive head motor
+* added drive motor deceleration
+* drive motor speed and wobble are adjustable by user
+* removed read latch from drive mechanic, only VIA is latching readed byte.
 
 ## 1.0.6
 * polished OS X UI ... looks ok now for Mojave dark theme

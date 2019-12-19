@@ -97,8 +97,11 @@
 * fullscreen when emulator startup
 * auto put loaded image name in savestate description field
 * separate settings file by emulation cores
-* media auto start should reuse already opened instance
+* media auto start should reuse already opened instance (disable in UI)
+* rework some UI tags
+* rework key mapping UI to be more intuitive
+* removed joypads shouldn't be forgot
 
 # bugs
 * RawInput: PS/2 keyboard not detected, 8bitdo M30 Controller not working
-* doesn't work: https://csdb.dk/release/?id=69879
+* combined key presses (ALT + W) shouldn't seperate trigger when releasing keys
