@@ -658,31 +658,6 @@ auto System::initRam() -> void {
     // typical demo works only for a few possible values at 0x3fff.
     // could imagine that some real machines can not run this demo.
     ram[0x3fff] = 0; 
-
-    auto r6 = vicII->isRevision65();
-    // for vicii_reg_timing.prg test to work
-    ram[14 * 1024 + 10] = r6 ? 0x00 : 0x00;
-    ram[14 * 1024 + 11] = r6 ? 0xff : 0x00;
-    ram[14 * 1024 + 12] = r6 ? 0x00 : 0x00;
-    ram[14 * 1024 + 13] = r6 ? 0xff : 0x00;
-    ram[14 * 1024 + 14] = r6 ? 0x04 : 0x00;
-    ram[14 * 1024 + 15] = r6 ? 0x04 : 0x00;
-    ram[14 * 1024 + 16] = r6 ? 0x00 : 0x00;
-    ram[14 * 1024 + 17] = r6 ? 0xff : 0x01;
-    ram[14 * 1024 + 18] = r6 ? 0x00 : 0x7f;
-    ram[14 * 1024 + 19] = r6 ? 0xff : 0x7f;
-    ram[14 * 1024 + 20] = r6 ? 0x00 : 0x7f;
-    ram[14 * 1024 + 21] = r6 ? 0xff : 0x7c;
-    ram[14 * 1024 + 22] = r6 ? 0x00 : 0x00;
-    ram[14 * 1024 + 23] = r6 ? 0xff : 0x00;
-    ram[14 * 1024 + 24] = r6 ? 0x00 : 0xff;
-    ram[14 * 1024 + 25] = r6 ? 0xff : 0xff;
-    ram[14 * 1024 + 26] = r6 ? 0x00 : 0xff;
-    ram[14 * 1024 + 27] = r6 ? 0xff : 0xff;
-    ram[14 * 1024 + 28] = r6 ? 0x00 : 0xe0;
-    ram[14 * 1024 + 29] = r6 ? 0xff : 0x00;
-    ram[14 * 1024 + 30] = r6 ? 0x00 : 0x00;
-    ram[14 * 1024 + 31] = r6 ? 0xff : 0x0f;
 }
 
 auto System::run() -> void {
