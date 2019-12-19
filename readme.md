@@ -6,11 +6,11 @@ usage hints -> scroll down this file
 
 # changelog
 
-## 1.0.7
+## 1.0.7 (NOT RELEASED YET, in master branch)
 * added EasyFlash support
 * fixed widget layouting, when app/text scaling is activated by Windows OS
 * added screenshot generation for testbench
-* added double step function of drive head motor
+* added double step function of drive head motor (Primitive 7 Sins)
 * added drive motor deceleration
 * drive motor speed and wobble are adjustable by user
 * removed read latch from drive mechanic, only VIA is latching readed byte.
