@@ -912,6 +912,14 @@ auto Interface::cropLeft() -> unsigned {
     return system->crop->latest.left;
 }
 
+auto Interface::cropData() -> uint16_t* {
+    return system->crop->latest.frame;
+}
+
+auto Interface::cropPitch() -> unsigned {
+    return system->crop->latest.linePitch;
+}
+
 auto Interface::setChipset(unsigned chipsetId) -> void {
 	if (chipsetId >= chipsets.size()) return;
 	

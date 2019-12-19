@@ -1,5 +1,6 @@
 
 #include "decode/png.h"
+#include "encode/png.h"
 
 Image::Image(unsigned width, unsigned height, uint8_t* src, Format format)
 : format(format) {
@@ -99,6 +100,17 @@ auto Image::loadPng(const uint8_t* src, unsigned size) -> bool {
     }
 
     return true;
+}
+
+auto Image::generatePng( uint8_t* rgbData, unsigned width, unsigned height, unsigned& pngSize ) -> uint8_t* {
+    
+    ENCODE::Png png;
+    
+    auto pngData = png.generate( rgbData, width, height );
+    
+    pngSize = png.fileSize;
+    
+    return pngData;
 }
 
 auto Image::empty() -> bool {

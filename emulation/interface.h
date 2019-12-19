@@ -440,6 +440,8 @@ struct Interface {
     virtual auto cropHeight() -> unsigned { return 0; }
     virtual auto cropTop() -> unsigned { return 0; }
     virtual auto cropLeft() -> unsigned { return 0; }
+    virtual auto cropData() -> uint16_t* { return nullptr; }
+    virtual auto cropPitch() -> unsigned { return 0; }
     
     virtual auto runCycles(unsigned cycles) -> void {}
     

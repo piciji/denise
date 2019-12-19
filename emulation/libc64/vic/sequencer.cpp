@@ -81,6 +81,11 @@ template<bool phi1> inline auto VicII::sequencerPix0(  ) -> void {
 }
 
 template<bool phi1> inline auto VicII::sequencerPix1(  ) -> void {
+
+    if (phi1) {                            
+        if (rev65 && disableEcmBmmTogether)
+            modeEcmBmmSequencer &= modeEcmBmm;            
+    }
     
     graphicSequencer( phi1 ? 5 : 1 );
     triggerSprites( xCounterSprites + 1 );

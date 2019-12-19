@@ -138,8 +138,10 @@ auto VicII::writeIO( uint8_t addr, uint8_t value ) -> void {
             controlReg1 = value;
             irqLine &= 0xff;
             irqLine |= ((value >> 7) & 1) << 8;
-            modeEcmBmm = ((value >> 6) & 1) << 2;
-            modeEcmBmm |= ((value >> 5) & 1) << 1;
+            uint8_t testEcmBmm = ((value >> 6) & 1) << 2;
+            testEcmBmm |= ((value >> 5) & 1) << 1;            
+            disableEcmBmmTogether = (testEcmBmm == 0) && ((modeEcmBmm & 6) == 6);            
+            modeEcmBmm = testEcmBmm;
             den = (value >> 4) & 1;
             rSel = (value >> 3) & 1;
             borderTop = rSel ? 51 : 55;

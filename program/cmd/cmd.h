@@ -17,6 +17,7 @@ struct Cmd {
     bool noGui = false;
     bool debug = false;
     bool lockRegion = false;
+    std::string screenshotPath = "";
     
     auto set(int argc, char** argv) -> void;
     

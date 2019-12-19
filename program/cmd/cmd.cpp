@@ -24,6 +24,7 @@ auto Cmd::parse() -> void {
     bool limitCyclesNext = false;
     bool reuSizeNext = false;
     bool aneMagicNext = false;
+    bool screenshotPathNext = false;
 
     for( auto& arg : arguments ) {
         if (limitCyclesNext) {
@@ -41,6 +42,13 @@ auto Cmd::parse() -> void {
         if (aneMagicNext) {
             aneMagicNext = false;
             setAneMagic( arg );
+            continue;
+        }
+        
+        if (screenshotPathNext) {
+            screenshotPathNext = false;     	
+            settings->set<unsigned>( program->ident( getEmulator("C64"), "crop_type"), (unsigned)Emulator::Interface::CropType::Monitor );            
+            screenshotPath = arg; 
             continue;
         }
         
@@ -112,7 +120,10 @@ auto Cmd::parse() -> void {
             noDriver = 1;
             dynamic_cast<LIBC64::Interface*>(getEmulator("C64"))->disableFilterCircuit();			
         }
-        else {
+        else if (arg == "-exitscreenshot") {
+            screenshotPathNext = true;
+            
+        } else {
             std::string temp = arg;
             GUIKIT::String::toLowerCase( temp );
             
