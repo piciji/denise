@@ -133,7 +133,6 @@ auto Structure1541::writeG64(const GcrTrack* trackPtr, unsigned halfTrack) -> bo
     
     // now we write the changed track out to raw file, either overwrite the old one
     // or append it at end of file, see above
-    //copyWordToBuffer( buf, trackPtr->size );
     Emulator::copyIntToBuffer<uint16_t>( buf, (uint16_t)trackPtr->size );
 
     // first 2 bytes are track length
@@ -160,7 +159,6 @@ auto Structure1541::writeG64(const GcrTrack* trackPtr, unsigned halfTrack) -> bo
 
     if (appendTrack) {
         // for a new appended track we need to update the offset in header area
-        //copyDwordToBuffer( buf, offset );
         Emulator::copyIntToBuffer( buf, offset );
         
         if ( write( buf, 4, 12 + (halfTrack * 4) ) != 4 )
@@ -177,7 +175,6 @@ auto Structure1541::writeG64(const GcrTrack* trackPtr, unsigned halfTrack) -> bo
         // we write the typical speedzone of a track to raw file.
         // NOTE: there is no known software using this feature
         
-        //copyDwordToBuffer( buf, speedzone( (halfTrack + 2) / 2) );
         Emulator::copyIntToBuffer<uint32_t>( buf, speedzone( (halfTrack + 2) / 2) );
         
         if ( write( buf, 4, 12 + (MAX_TRACKS_1541 * 2 * 4) + (halfTrack * 4) ) != 4 )
@@ -221,7 +218,6 @@ auto Structure1541::createG64( std::string diskName ) -> uint8_t* {
     
     ptr[9] = MAX_TRACKS * 2;
     
-//    copyWordToBuffer( &ptr[10], maxBytes );
     Emulator::copyIntToBuffer<uint16_t>( &ptr[10], maxBytes );    
     
     ptr += 12;
@@ -237,7 +233,6 @@ auto Structure1541::createG64( std::string diskName ) -> uint8_t* {
         // in main header the maximum amount of bytes for a track is specified. so we make 
         // that amount of room for each track to avoid realigning of multiple tracks later on.
         // furthermore we keep in mind that each track begins with a 2 byte length value.
-        //copyDwordToBuffer( &ptr[ track * 2 * 4 ], 12 + MAX_TRACKS_1541 * 2 * 8 + track * (maxBytes + 2) );        
         Emulator::copyIntToBuffer<uint32_t>( &ptr[ track * 2 * 4 ], 12 + MAX_TRACKS_1541 * 2 * 8 + track * (maxBytes + 2) );    
     }
     
@@ -245,7 +240,6 @@ auto Structure1541::createG64( std::string diskName ) -> uint8_t* {
     
     for( unsigned track = 0; track < TYPICAL_TRACKS; track++ )
         // we use the typical speedzone for a track
-        //copyDwordToBuffer( &ptr[ track * 2 * 4 ], speedzone( track + 1 ) );
         Emulator::copyIntToBuffer<uint32_t>( &ptr[ track * 2 * 4 ], speedzone( track + 1 ) );
     
     ptr += MAX_TRACKS_1541 * 2 * 4;    
@@ -256,7 +250,6 @@ auto Structure1541::createG64( std::string diskName ) -> uint8_t* {
         
         unsigned trackSize = countBytes( track );
         
-        //copyWordToBuffer( ptr, trackSize );
         Emulator::copyIntToBuffer<uint16_t>( ptr, trackSize );    
         
         ptr += 2;

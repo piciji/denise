@@ -67,6 +67,7 @@ struct Structure1541 {
     auto getListing( ) -> std::vector<Emulator::Interface::Listing>&;
     auto selectListing( Emulator::Interface::Media* media, unsigned pos ) -> void;
     auto clearTrackData() -> void;
+    auto getLogicalTrack(uint8_t _track, int offset) -> uint8_t;
     
 private:    
     uint8_t* rawData;

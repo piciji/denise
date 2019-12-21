@@ -13,7 +13,8 @@ usage hints -> scroll down this file
 * added double step function of drive head motor (Primitive 7 Sins)
 * added drive motor deceleration
 * drive motor speed and wobble are adjustable by user
-* removed read latch from drive mechanic, only VIA is latching readed byte.
+* removed read latch from drive mechanic, only VIA is latching readed byte
+* distinguish between physical and logical tracks for disk content preview in UI
 
 ## 1.0.6
 * polished OS X UI ... looks ok now for Mojave dark theme

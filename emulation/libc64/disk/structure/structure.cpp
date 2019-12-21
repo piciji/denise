@@ -149,6 +149,18 @@ auto Structure1541::imageSize( Type newType ) -> unsigned {
     return 0;
 }
 
+auto Structure1541::getLogicalTrack(uint8_t _track, int offset) -> uint8_t {
+    
+    int logicalTrack = _track + offset;
+
+    if (logicalTrack > tracks)
+        logicalTrack -= tracks;
+    else if (logicalTrack < 1)
+        logicalTrack += tracks;   
+    
+    return (uint8_t)logicalTrack;        
+}
+
 auto Structure1541::createListing( ) -> void {
     
     if (!rawData || (type == Type::Unknown))
@@ -162,14 +174,70 @@ auto Structure1541::createListing( ) -> void {
         
     unsigned id = 0;
     
-    uint8_t buffer[256];    
+    uint8_t buffer[256];  
+    uint8_t _track = 18;
+    uint8_t _sector = 0;
+    int trackOffset = 0;
+    uint8_t tries = tracks + 1;
     
-    decodeSector( &gcrTrack[17 * 2], buffer, 0 );
+    while (--tries) {        
+        decodeSector( &gcrTrack[(_track - 1) * 2], buffer, _sector );
+        uint8_t _trackLogical = buffer[0];
+        
+        if (_trackLogical == 18)
+            break;
+        
+        if ((_trackLogical == 0) || (_trackLogical > tracks)) {   
+            _track = getLogicalTrack(_track, 1);
+        } else {
+        
+            trackOffset = _track - _trackLogical;
+        
+            _track = getLogicalTrack(_track, trackOffset);
+        }        
+    }    
+    
+    if (!tries) {
+        trackOffset = 0;
+        _track = 18;
+        decodeSector( &gcrTrack[(_track - 1) * 2], buffer, _sector );
+    }
+    
+    unsigned freeBlocks = 0;
+    
+    for (uint8_t track = 1; track <= 35; track++) {
+        
+        uint8_t* bamPtr = track <= TYPICAL_TRACKS
+            ? &buffer[4 + 4 * (track - 1)] 
+            : &buffer[192 + 4 * (track - TYPICAL_TRACKS - 1)]; // speed dos
+        
+        if (track != 18) {
+            /**
+             * detailed map about used sectors, should be identical with count in first byte
+             */            
+//            unsigned sectorMap =  bamPtr[1] << 16;
+//            sectorMap |=  bamPtr[2] << 8;
+//            auto sectors = countSectors( track );
+//            sectors -= 16;
+//            
+//            uint8_t mask = 0;
+//            for(unsigned i = 0; i < sectors; i++)               
+//                mask |= 1 << i;           
+//            
+//            sectorMap |= bamPtr[3] & mask;
+//            
+//            for(unsigned i = 0; i < 24; i++)
+//                if (sectorMap & (1 << i) )
+//                    freeBlocks++;
+            
+            freeBlocks += *bamPtr;
+        }
+    }
     
     listings.push_back( { id++, listing.buildHeadline( buffer + 0x90, buffer + 0xa5, buffer + 0xa2 ) } );
-    loader.push_back( {'*'} );
-        
-    decodeSector( &gcrTrack[17 * 2], buffer, 1 );
+    loader.push_back( {'*'} );            
+    
+    decodeSector( &gcrTrack[(_track - 1) * 2], buffer, ++_sector );
     
     uint8_t* ptr = &buffer[0];
     
@@ -193,8 +261,10 @@ auto Structure1541::createListing( ) -> void {
             if (entry > 250)                
                 break;
             
-            uint8_t _track = buffer[0];
-            uint8_t _sector = buffer[1]; 
+            _track = buffer[0];
+            _sector = buffer[1]; 
+            
+            _track = getLogicalTrack(_track, trackOffset);
                         
             if (_track > tracks)
                 break;
@@ -207,20 +277,6 @@ auto Structure1541::createListing( ) -> void {
             
             ptr = &buffer[0];
         }        
-    }
-    
-    decodeSector( &gcrTrack[17 * 2], buffer, 0 );
-    
-    unsigned freeBlocks = 0;
-    
-    for (uint8_t track = 1; track <= tracks; track++) {
-        
-        uint8_t* bamPtr = track <= TYPICAL_TRACKS
-            ? &buffer[4 + 4 * (track - 1)] 
-            : &buffer[192 + 4 * (track - TYPICAL_TRACKS - 1)];
-        
-        if (track != 18)
-            freeBlocks += *bamPtr;
     }
     
     listings.push_back( { id++, listing.buildFreeLine( freeBlocks ) } );

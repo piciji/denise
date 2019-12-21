@@ -76,7 +76,7 @@
 * lisa aga	
 
 # todo for all systems
-* screenshots for VICE testbench    **-> UNDER PROGRESS**
+* screenshots for VICE testbench
 * autoload for all media types with D64/T64 viewer in file dialog
 * screenshots/movie recording
 * screenshots for savestates
@@ -97,11 +97,16 @@
 * fullscreen when emulator startup
 * auto put loaded image name in savestate description field
 * separate settings file by emulation cores
-* media auto start should reuse already opened instance (disable in UI)
-* rework some UI tags
-* rework key mapping UI to be more intuitive
-* removed joypads shouldn't be forgot
+* auto start should reuse already opened instance (enable in UI)
+* rework some UI tags to make host menu better understandable for user
+* remove all C64 individual stuff from host menu (mostly hotkeys)
+* rework key mapping UI to be more intuitive (and/or, overwrite/append)
+* unplugged joypads shouldn't be forgot
+* autofire with frequency (don't forget override logic)
+* switch joyports as hotkey
+* load/save custom settings
+* load PRG files from disk as simple RAM insertion for reduced loading times
 
 # bugs
 * RawInput: PS/2 keyboard not detected, 8bitdo M30 Controller not working
-* combined key presses (ALT + W) shouldn't seperate trigger when releasing keys
+* combined key presses (ALT + W) shouldn't trigger when releasing single keys
