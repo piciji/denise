@@ -1,39 +1,4 @@
 
-# completed emulation
-* cpu 68000 / 68010
-* cpu 6502 / 6510	
-* cia 6526 / 8520	
-* vicII 6569R3 / 8565 / 6567R8 / 8562
-* sid 6581 / 8580
-* c64 system / memory / ultimax
-* c64 8k/16k standard cartridges
-* c64 game cartridge mapper (ocean, system 3, funplay, supergames, zaxxon)
-* c64 memory injection (prg, p00, T64) + save memory to file
-* c64 tape + write support
-* c64 multi diskdrive 1541-II + write support (d64, g64)
-* c64 mouse 1351, mouse neos, paddles, inkwell lightpen, stack lightpen
-* c64 gun sticks, magnum light phaser, stack light rifle
-* c64 savestates
-* c64C (custom ic logic)
-* c64 custom color palettes + color spectrum emulation
-* c64 ActionReplay MK2, MK3, MK4, V 4.1 - 6
-* c64 REU
-* c64 EasyFlash + write support
-
-# completed features for all emu cores
-* multi driver support
-* platform independant OS UI support
-* Dynamic Rate Control
-* external GLSL shader support
-* PAL/CRT emulation ( cpu driven or GLSL shader)
-* Command line support
-* Drag'n'drop
-* multi bios support
-* multi keyboard layouts
-* free border cropping
-* Hotkeys
-* disk swapper (more usefull for amiga)
-
 # todo's are not ordered by priority. changes frequently
 ## to do C64
 * expansion port
@@ -106,7 +71,44 @@
 * switch joyports as hotkey
 * load/save custom settings
 * load PRG files from disk as simple RAM insertion for reduced loading times
+* UI switch to invert RAM init pattern
 
 # bugs
 * RawInput: PS/2 keyboard not detected, 8bitdo M30 Controller not working
 * combined key presses (ALT + W) shouldn't trigger when releasing single keys
+
+
+# completed emulation
+* cpu 68000 / 68010
+* cpu 6502 / 6510	
+* cia 6526 / 8520	
+* vicII 6569R3 / 8565 / 6567R8 / 8562
+* sid 6581 / 8580
+* c64 system / memory / ultimax
+* c64 8k/16k standard cartridges
+* c64 game cartridge mapper (ocean, system 3, funplay, supergames, zaxxon)
+* c64 memory injection (prg, p00, T64) + save memory to file
+* c64 tape + write support
+* c64 multi diskdrive 1541-II + write support (d64, g64)
+* c64 mouse 1351, mouse neos, paddles, inkwell lightpen, stack lightpen
+* c64 gun sticks, magnum light phaser, stack light rifle
+* c64 savestates
+* c64C (custom ic logic)
+* c64 custom color palettes + color spectrum emulation
+* c64 ActionReplay MK2, MK3, MK4, V 4.1 - 6
+* c64 REU
+* c64 EasyFlash + write support
+
+# completed features for all emu cores
+* multi driver support
+* platform independant OS UI support
+* Dynamic Rate Control
+* external GLSL shader support
+* PAL/CRT emulation ( cpu driven or GLSL shader)
+* Command line support
+* Drag'n'drop
+* multi bios support
+* multi keyboard layouts
+* free border cropping
+* Hotkeys
+* disk swapper (more usefull for amiga)
