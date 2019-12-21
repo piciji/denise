@@ -1,8 +1,8 @@
 
-[todo](https://bitbucket.org/piciji/denise/src/master/data/txt/todo.md)
-[build info](https://bitbucket.org/piciji/denise/src/master/data/txt/buildinfo)
-[license](https://bitbucket.org/piciji/denise/src/master/data/txt/licence)
-usage hints -> scroll down this file  
+* [todo](https://bitbucket.org/piciji/denise/src/master/data/txt/todo.md)
+* [build info](https://bitbucket.org/piciji/denise/src/master/data/txt/buildinfo)
+* [license](https://bitbucket.org/piciji/denise/src/master/data/txt/licence)
+* usage hints -> scroll down this file  
 
 # changelog
 
