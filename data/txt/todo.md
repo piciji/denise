@@ -5,7 +5,7 @@
     * RetroReplay
     * simple non game mapper: Simons Basic, Magic Formel, WarpSpeed, ...
     * EasyFlash 3
-    * Final Cartridge
+    * Final Cartridge 3
     * GeoRAM
     * MMC64
     * MMC Replay    
@@ -66,7 +66,7 @@
 * remove all C64 individual stuff from host menu (mostly hotkeys)
 * rework key mapping UI to be more intuitive (and/or, overwrite/append)
 * unplugged joypads shouldn't be forgot
-* autofire with frequency (don't forget override logic)
+* autofire with frequency, option to fire without button press (don't forget override logic)
 * switch joyports as hotkey
 * load/save custom settings
 * load PRG files from disk as simple RAM insertion for reduced loading times
