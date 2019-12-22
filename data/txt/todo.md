@@ -26,6 +26,7 @@
     * click entries and load them without fast-forward to counter position before
     * dongles
 * pseudo stereo SID
+* autoload for all media types with D64/T64 viewer in file dialog
 
 # to do Amiga A500, A1200
 * 68000/68010 opcode tester
@@ -41,8 +42,6 @@
 * lisa aga	
 
 # todo for all systems
-* screenshots for VICE testbench
-* autoload for all media types with D64/T64 viewer in file dialog
 * screenshots/movie recording
 * screenshots for savestates
 * run frame ahead for reduced input lag
@@ -72,6 +71,7 @@
 * load/save custom settings
 * load PRG files from disk as simple RAM insertion for reduced loading times
 * UI switch to invert RAM init pattern
+* write (SID/PAULA) output to WAV 
 
 # bugs
 * RawInput: PS/2 keyboard not detected, 8bitdo M30 Controller not working
@@ -112,3 +112,4 @@
 * free border cropping
 * Hotkeys
 * disk swapper (more usefull for amiga)
+* screenshots for VICE testbench

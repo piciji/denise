@@ -681,8 +681,8 @@ auto Shader::buildLumaLatency() -> std::string {
 			float y = ySrc;
 			float yTarget; 
 			float yDiff = 0.0;
-			float yDirection;
-            float yChanged;
+			int yDirection;
+            int yChanged;
             float _lumaRise = lumaRise;
             float _lumaFall = lumaFall;
 		)";
@@ -703,17 +703,16 @@ auto Shader::buildLumaLatency() -> std::string {
         out += " yTarget = texture(source[0], xy + vec2( " + _doubleToStr(pos) + " , 0.0)).x; ";
 
         out += R"(
-				// check for a change of luma between 2 adjacent pixel
-				yChanged = abs( sign(ySrc - yTarget) );
-				ySrc = yTarget;						
-				yDiff = mix(yDiff, yTarget - y, yChanged);			
-				yDirection = sign( yTarget - y );
+                // check for a change of luma between 2 adjacent pixel
+                yChanged = ySrc == yTarget ? 0 : 1;
+                ySrc = yTarget;
+                yDiff = yChanged == 1 ? (yTarget - y) : yDiff;
+				yDirection = int( sign( yTarget - y ) );
 
-				// in shaders we want to avoid if/else for performance reasons
 				// a direction of 0 means no change, a direction of 1 means 'rise' only
 				// a direction of -1 means 'fall' only
-				y = mix(y, max(y + (yDiff * _lumaFall), yTarget), max( -yDirection, 0.0));
-				y = mix(y, min(y + (yDiff * _lumaRise), yTarget), max( yDirection, 0.0));			
+                y = yDirection == 1 ? min(y + (yDiff * _lumaRise), yTarget) :
+                    (yDirection == -1 ? max(y + (yDiff * _lumaFall), yTarget) : y);		
 			)";
     }
 

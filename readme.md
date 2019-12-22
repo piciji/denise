@@ -12,9 +12,10 @@
 * added screenshot generation for testbench
 * added double step function of drive head motor (Primitive 7 Sins)
 * added drive motor deceleration
-* drive motor speed and wobble are adjustable by user
+* added slider to adjust drive motor speed and wobble
 * removed read latch from drive mechanic, only VIA is latching readed byte
 * distinguish between physical and logical tracks for disk content preview in UI
+* fixed a rare bug in gpu driven RF Modulation, when disabling luma 'fall' but not 'rise'
 
 ## 1.0.6
 * polished OS X UI ... looks ok now for Mojave dark theme
