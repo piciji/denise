@@ -1,6 +1,5 @@
 
 #include "vicII.h"
-#include "../system/system.h"
 
 namespace LIBC64 {
 

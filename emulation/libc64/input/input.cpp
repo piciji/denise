@@ -264,12 +264,6 @@ auto Input::readPotY() -> uint8_t {
     }
 }
 
-auto Input::clock() -> void {
-    
-    controlPort1->tick();
-    controlPort2->tick();
-}
-
 auto Input::reset() -> void {
     lines = nullptr;
     potMask = 1;

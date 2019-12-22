@@ -148,9 +148,9 @@ struct Sid {
 		auto setNoiseOutput() -> void;
 		auto writeShiftRegister() -> void;
         auto doPreWriteback( uint8_t waveformPrev ) -> bool;
-		auto setWaveformOutput() -> void;
+		inline auto setWaveformOutput() -> void;
 		auto setSyncSource( Voice* source ) -> void;
-		auto synchronize() -> void;
+		inline auto synchronize() -> void;
         auto reset() -> void;		
         auto output() -> int;
         auto registerCallbacks() -> void;
@@ -198,7 +198,7 @@ struct Sid {
         auto setSustainRelease( uint8_t value ) -> void;
         auto sustainComparator() -> uint8_t;
         auto updateExponentialPeriod() -> void;
-		auto clock() -> void;
+		inline auto clock() -> void;
         
         auto reset() -> void;
         

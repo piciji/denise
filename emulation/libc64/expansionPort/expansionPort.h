@@ -85,9 +85,9 @@ struct ExpansionPort {
         dma = false;
     }
     
-    virtual auto cycleLo() -> void {}   
+    virtual inline auto cycleLo() -> void {}   
     
-    virtual auto cycleHi() -> void {}   
+    virtual inline auto cycleHi() -> void {}   
     
     virtual auto serialize(Emulator::Serializer& s) -> void {
         

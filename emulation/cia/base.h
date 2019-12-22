@@ -54,8 +54,8 @@ struct Base {
      * hi cycle 4/10 of e-clock (cpu register access)
 	 * lo cycle 6/10 of e-clock
 	 */	
-    virtual auto processHi() -> void;
-    virtual auto processLo() -> void;
+    auto processHi() -> void;
+    auto processLo() -> void;
 	
 	/**
 	 * shift in bits
