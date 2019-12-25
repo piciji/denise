@@ -407,3 +407,5 @@ hide = Hide
 override_write_protection = It was not possible to write on "%media%", because of an activated write protection. Do you want to remove write protection now?
 speed = Speed
 variation = Variation
+Toggle_fastforward = Fast-Forward
+Toggle_fastforward_aggressive = Fast-Forward (ignore sprite collision)

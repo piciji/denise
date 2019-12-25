@@ -17,7 +17,7 @@
 
 namespace LIBC64 {
 
-const std::string Interface::Version = "1061";
+const std::string Interface::Version = "1062";
     
 Interface::Interface() : Emulator::Interface( "C64" ) {        
     
@@ -935,8 +935,9 @@ auto Interface::activateDebugCart( unsigned limitCycles ) -> void {
     system->setDebugCart( true, limitCycles );    
 }
 
-auto Interface::disableFilterCircuit() -> void {
-    sid->setDisableFilterMixer();
+auto Interface::fastForward(unsigned config) -> void {
+    
+    system->setFastForward( config );
 }
 
 auto Interface::getLuma(uint8_t index, bool newRevision) -> double {

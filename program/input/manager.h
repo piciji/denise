@@ -61,7 +61,7 @@ struct Hotkey {
 		DiskSwap0, DiskSwap1, DiskSwap2, DiskSwap3, DiskSwap4, DiskSwap5, DiskSwap6,
         DiskSwap7, DiskSwap8, DiskSwap9, DiskSwap10, DiskSwap11,
         DiskSwap12, DiskSwap13, DiskSwap14,
-        ToggleSync, Video, Palette, Border, System, Firmware, Input
+        ToggleFastForward, ToggleFastForwardAggressive, Video, Palette, Border, System, Firmware, Input
     } id;
     std::string name;
     uintptr_t guid;

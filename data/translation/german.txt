@@ -407,3 +407,5 @@ hide = Ausblenden
 override_write_protection = Ein Schreibvorgang auf "%media%" konnte nicht ausgeführt werden, da der Schreibschutz aktiviert ist. Soll der Schreibschutz jetzt aufgehoben werden?
 speed = Geschwindigkeit
 variation = Schwankung
+Toggle_fastforward = Beschleunigen
+Toggle_fastforward_aggressive = Beschleunigen (Sprite Kollision ignorieren)

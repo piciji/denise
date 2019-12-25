@@ -85,8 +85,8 @@ struct VicII {
 	auto setBorderData() -> void;
     
 	auto power() -> void;    
-    auto phase1() -> void;
-    auto phase2() -> void;    
+    template<bool _useSequencer> auto phase1() -> void;
+    template<bool _useSequencer> auto phase2() -> void;    
 	
     auto writeIO(uint8_t addr, uint8_t value) -> void;
 	auto writeIOPipelined(uint8_t addr, uint8_t value) -> void;
@@ -94,6 +94,8 @@ struct VicII {
     auto setNtsc( bool state ) -> void;
 	auto setRevision65( bool state ) -> void;
     auto isRevision65() -> bool;
+    auto disableSequencer( bool state ) -> void;
+    auto useSequencer() -> bool;
 	auto triggerLightPen( bool state ) -> void;
     auto triggerLightPen( bool state, uint8_t subCycle ) -> void;
     auto getHeight() -> unsigned { return vHeight; }
@@ -267,6 +269,13 @@ protected:
     bool cAccessArea;
     bool sprite0DmaLateBA;
     bool disableEcmBmmTogether;
+    uint16_t xLookUpPalPhi1[63];
+    uint16_t xLookUpPalPhi2[63];
+    uint16_t xLookUpNtscPhi1[65];
+    uint16_t xLookUpNtscPhi2[65];
+    uint16_t* xLookupPtrPhi1;
+    uint16_t* xLookupPtrPhi2;
+    bool enableSequencer = true;
             		
     auto updateIrq( Interrupt interrupt = None ) -> void;
 	template<bool phi1> auto checkLightPen( ) -> void;	
@@ -317,6 +326,7 @@ protected:
 	template<bool phi1> auto draw65( uint8_t x, uint8_t x1 ) -> void;
 	template<bool phi1> auto draw85( uint8_t x ) -> void;
 	template<bool phi1> auto draw() -> void;        
+    void buildXCounterLookupTable();
 };
 
 extern VicII* vicII;

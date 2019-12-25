@@ -487,6 +487,7 @@ struct RadioBox : Widget {
     template<typename... Args> static void setGroup(Args&&... args) { setGroup({&std::forward<Args>(args)...}); }
     static auto setGroup(std::vector<RadioBox*> group) -> void;
     auto setChecked() -> void;
+    auto activate() -> void;
     auto checked() const -> bool { return state.checked; }
 
     struct {

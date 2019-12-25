@@ -37,7 +37,7 @@ Sid::Sid( Type type, Emulator::Events* events ) : filter( this ) {
     }
 	
 	moreAccuracy = false;
-    enableFilterMixer = true;
+    audioOut = true;
 	idle = true;
 	ready = false;
     powerOn = false;
@@ -187,29 +187,31 @@ auto Sid::phase1() -> void {
 
 auto Sid::phase2() -> void {
 	
-	if (moreAccuracy) {
-		// filter calculations are threaded
-		while ( ready.load() ) { }
+    if (audioOut) {    
+        if (moreAccuracy) {
+            // filter calculations are threaded
+            while ( ready.load() ) { }
 
-		v1 = voice[0].output();
-		v2 = voice[1].output();
-		v3 = voice[2].output();
-		
-		registerWriteThreaded = registerWrite;
-		
-		ready = true;        
-		
-	} else if (enableFilterMixer) {
-		
-		filter.clock(voice[0].output(), voice[1].output(), voice[2].output());
+            v1 = voice[0].output();
+            v2 = voice[1].output();
+            v3 = voice[2].output();
 
-		externalFilter.clock( filter.output() );	    
+            registerWriteThreaded = registerWrite;
 
-        if (++sampleCounter == SID_SAMPLE_COUNTER ) {
-            audioRefresh( externalFilter.output( ) );
-            sampleCounter = 0;
+            ready = true;        
+
+        } else {
+
+            filter.clock(voice[0].output(), voice[1].output(), voice[2].output());
+
+            externalFilter.clock( filter.output() );	    
+
+            if (++sampleCounter == SID_SAMPLE_COUNTER ) {
+                audioRefresh( externalFilter.output( ) );
+                sampleCounter = 0;
+            }
         }
-	}
+    }
 	  	
     // bus values decay after a certain amount of time.
     // decay time differs between single bits.
@@ -223,7 +225,7 @@ auto Sid::phase2() -> void {
 		// register write is Sid internal valid at the end of second half cycle ?
 		// don't do a possible filter register update here for threaded version
 		// it could be done during calculation and crash		
-		writeIO( registerWrite.addr, registerWrite.value, !moreAccuracy );
+		writeIO( registerWrite.addr, registerWrite.value, !audioOut || !moreAccuracy );
 	}	
 }
     

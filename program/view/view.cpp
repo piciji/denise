@@ -761,6 +761,7 @@ auto View::buildMenu() -> void {
     settingsMenu.append(audioSyncItem);
     videoSyncItem.onToggle = [&]() {
         settings->set<bool>("video_sync", videoSyncItem.checked() );
+        program->fastForward( false );
         program->setVideoSynchronize();
     };
     if ( settings->get<bool>("video_sync", false) ) videoSyncItem.setChecked();

@@ -6,7 +6,8 @@ std::vector<Hotkey::Id> InputManager::hotkeyTriggers;
 auto InputManager::setHotkeys() -> void {
     hotkeys.push_back( {Hotkey::Id::Pause, "Pause"} );
     hotkeys.push_back( {Hotkey::Id::Fullscreen, "Fullscreen"} );
-    hotkeys.push_back( {Hotkey::Id::ToggleSync, "Toggle_sync"} );
+    hotkeys.push_back( {Hotkey::Id::ToggleFastForward, "Toggle_fastforward"} );
+    hotkeys.push_back( {Hotkey::Id::ToggleFastForwardAggressive, "Toggle_fastforward_aggressive"} );
     hotkeys.push_back( {Hotkey::Id::CaptureMouse, "Capture_mouse"} );    
 	hotkeys.push_back( {Hotkey::Id::Drives, "Drives"} );	
     hotkeys.push_back( {Hotkey::Id::System, "System"} );
@@ -58,41 +59,30 @@ auto InputManager::fireHotkey(Hotkey::Id id) -> void {
     typedef LIBAMI::Interface AmigaInterface;
     
     switch ( id ) {
-        case Hotkey::Id::ToggleSync: {
-            auto aSync = settings->get<bool>("audio_sync", true);
-            auto vSync = settings->get<bool>("video_sync", false);
-            auto rControl = settings->get<bool>("dynamic_rate_control", false);
+        case Hotkey::Id::ToggleFastForward:
+        case Hotkey::Id::ToggleFastForwardAggressive: {
+            if (!activeEmulator)
+                break;                        
             
-            std::function<void (bool, bool, bool)> updateSync;
-            
-            updateSync = [](bool aSync, bool vSync, bool rControl) {
-                if (aSync)
-                    view->audioSyncItem.toggle();                
+            bool ff = settings->get<bool>("fast_forward", false);
+            bool ffa = settings->get<bool>("fast_forward_aggressive", false);   
+            bool aggressive = id == Hotkey::Id::ToggleFastForwardAggressive;
+
+            if ( (!aggressive && ffa) || (aggressive && ff) ) {
+                // switch modes (already active)
+                unsigned val = (unsigned)Emulator::Interface::FastForward::NoAudioOut | (unsigned)Emulator::Interface::FastForward::ReduceVideoOutput;
+                if (id == Hotkey::Id::ToggleFastForwardAggressive)
+                    val |= (unsigned)Emulator::Interface::FastForward::NoVideoSequencer;
+
+                activeEmulator->fastForward( val );
+                settings->set<bool>("fast_forward_aggressive", aggressive, false);
+                settings->set<bool>("fast_forward", !aggressive, false);
                 
-                if (vSync)
-                    view->videoSyncItem.toggle();                
-                
-                if (rControl)
-                    view->dynamicRateControl.toggle();                
-            };
-            
-            if (aSync || vSync || rControl) {
-                updateSync(aSync, vSync, rControl);
-                // don't save these settings permanently
-                settings->set<bool>("video_sync_temp", vSync, false );
-                settings->set<bool>("audio_sync_temp", aSync, false );
-                settings->set<bool>("dynamic_rate_control_temp", rControl, false );
-                
-            } else {
-                aSync = settings->get<bool>("audio_sync_temp", true);
-                vSync = settings->get<bool>("video_sync_temp", true);
-                rControl = settings->get<bool>("dynamic_rate_control_temp", true);
-                
-                updateSync(aSync, vSync, rControl);
-            }
-            
-            break;
-        }
+            } else                
+                program->fastForward( !ff && !ffa, id == Hotkey::Id::ToggleFastForwardAggressive);
+                  
+        } break;        
+        
         case Hotkey::Id::Fullscreen:
             view->setFullScreen( !view->fullScreen() );
             break;
@@ -296,11 +286,20 @@ auto InputManager::fireHotkey(Hotkey::Id id) -> void {
 }
 
 auto InputManager::pollHotkeys() -> void {
+    bool _ignoreSecond = false;
+    
     for( auto& hotkey : hotkeys ) {
         InputMapping* mapping = (InputMapping*)hotkey.guid;
         
-        if ( mapping->state )
+        if ( mapping->state ) {
+            if (hotkey.id == Hotkey::Id::ToggleFastForward || hotkey.id == Hotkey::Id::ToggleFastForwardAggressive) {
+                if (_ignoreSecond)
+                    continue;
+            
+                _ignoreSecond = true;
+            }
             fireHotkey( hotkey.id );        
+        }
     }
     
     if (hotkeyTriggers.size() == 0)

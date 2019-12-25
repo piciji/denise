@@ -121,6 +121,11 @@ auto System::serializeAll(Emulator::Serializer& s) -> void {
     serializeExpansion( s );
     
     events.serialize( s );
+    
+    if (s.mode() == Emulator::Serializer::Mode::Load) {
+        cpu->setContext( cpuCtx );
+        dispatcha();
+    }
 }    
     
 auto System::serialize(Emulator::Serializer& s) -> void {
@@ -141,9 +146,6 @@ auto System::serialize(Emulator::Serializer& s) -> void {
     powerSupply->serialize( s );
     
     serialize6502( s, cpuCtx );   
-
-    if (s.mode() == Emulator::Serializer::Mode::Load)
-        cpu->setContext( cpuCtx );
 }
 
 auto System::serialize6502( Emulator::Serializer& s, MOS65Context* cpuCtx ) -> void {

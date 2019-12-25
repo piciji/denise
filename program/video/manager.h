@@ -151,7 +151,7 @@ struct VideoManager {
     uint8_t preCalc[256 * 3];
     uint8_t preCalcScanline[512 * 3];    
     float preCalcScanlineF[512 * 3];  
-
+    
     // precalc blur for rf modulated luma change
     int32_t preCalcLumaCenter[0xffff + 1];
     int32_t preCalcLumaNeighbour[0xffff + 1];

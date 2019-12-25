@@ -10,7 +10,7 @@ struct Status {
 	bool update;
 	unsigned messageSecondsLeft;
 	std::string message;
-	unsigned fps, fps_collect;
+	unsigned fps, fpsCollect;
 	time_t prev_t, curr_t;
 	bool showFps;
 	bool critical;
@@ -27,7 +27,7 @@ struct Status {
 		critical = false;
 		message = "";
 		messageSecondsLeft = 0;
-		fps = fps_collect = 0;
+		fps = fpsCollect = 0;
 		showFps = settings->get<bool>("fps", false);        
         driveStates.clear();
 	}   
@@ -48,11 +48,12 @@ struct Status {
 	}
 	
 	auto countFrames() -> void {
-		fps_collect++;
+		fpsCollect++;
 		time(&curr_t);
+        
 		if (curr_t != prev_t) {
-			fps = fps_collect;
-			fps_collect = 0;
+			fps = fpsCollect;
+			fpsCollect = 0;
 			if (messageSecondsLeft > 0) {
 				messageSecondsLeft--;
 			}

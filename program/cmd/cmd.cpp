@@ -25,6 +25,7 @@ auto Cmd::parse() -> void {
     bool reuSizeNext = false;
     bool aneMagicNext = false;
     bool screenshotPathNext = false;
+    typedef Emulator::Interface EmuInt;
 
     for( auto& arg : arguments ) {
         if (limitCyclesNext) {
@@ -47,7 +48,7 @@ auto Cmd::parse() -> void {
         
         if (screenshotPathNext) {
             screenshotPathNext = false;     	
-            settings->set<unsigned>( program->ident( getEmulator("C64"), "crop_type"), (unsigned)Emulator::Interface::CropType::Monitor );            
+            settings->set<unsigned>( program->ident( getEmulator("C64"), "crop_type"), (unsigned)EmuInt::CropType::Monitor );            
             screenshotPath = arg; 
             continue;
         }
@@ -94,7 +95,7 @@ auto Cmd::parse() -> void {
         }
         else if (arg == "-debugcart") {
             dynamic_cast<LIBC64::Interface*>(getEmulator("C64"))->activateDebugCart();   
-			dynamic_cast<LIBC64::Interface*>(getEmulator("C64"))->disableFilterCircuit();
+			dynamic_cast<LIBC64::Interface*>(getEmulator("C64"))->fastForward( (unsigned)EmuInt::FastForward::NoAudioOut );
             prepareDrives( getEmulator("C64") );
 			settings->set<bool>("audio_sync", false );
 			settings->set<bool>("video_sync", false );
@@ -112,13 +113,13 @@ auto Cmd::parse() -> void {
             aneMagicNext = true;
         }
         else if (arg == "-no-driver") {
-            dynamic_cast<LIBC64::Interface*>(getEmulator("C64"))->disableFilterCircuit();
+            dynamic_cast<LIBC64::Interface*>(getEmulator("C64"))->fastForward( (unsigned)EmuInt::FastForward::NoAudioOut | (unsigned)EmuInt::FastForward::NoVideoOut );
             noDriver = 1;
         }
         else if (arg == "-no-gui") {
             noGui = 1;
             noDriver = 1;
-            dynamic_cast<LIBC64::Interface*>(getEmulator("C64"))->disableFilterCircuit();			
+            dynamic_cast<LIBC64::Interface*>(getEmulator("C64"))->fastForward( (unsigned)EmuInt::FastForward::NoAudioOut | (unsigned)EmuInt::FastForward::NoVideoOut );			
         }
         else if (arg == "-exitscreenshot") {
             screenshotPathNext = true;

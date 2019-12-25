@@ -350,11 +350,13 @@ base( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) )
     
     base.mode.crtCpu.onActivate = [this]() {
         settings->set<unsigned>(this->tabWindow->ident("video_crt"), (unsigned)VideoManager::CrtMode::Cpu);
+        program->fastForward( false );
 		updatePresets();
     };
     
     base.mode.crtGpu.onActivate = [this]() {
         settings->set<unsigned>(this->tabWindow->ident("video_crt"), (unsigned)VideoManager::CrtMode::Gpu);
+        program->fastForward( false );
 		updatePresets();
     };    
     

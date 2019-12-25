@@ -7,8 +7,8 @@
 
 namespace LIBC64 {
     
-template<bool phi1> inline auto VicII::sequencer(  ) -> void {        
-    	
+template<bool phi1> inline auto VicII::sequencer(  ) -> void {            	    
+    
     sequencerPix0<phi1>(  );
     
     sequencerPix1<phi1>(  );
@@ -20,14 +20,6 @@ template<bool phi1> inline auto VicII::sequencer(  ) -> void {
     borderArea<phi1>(  );
     
     draw<phi1>(  );
-    
-    bool xCounterLock = ntsc && ( (!phi1 && cycle == 60) || (phi1 && cycle == 61) );
-        
-    if (!xCounterLock)
-        xCounter += 4;
-    
-    if (xCounter == xWrapAround)
-        xCounter = 0;	// happens always at the end of phase 1
 }
 
 template<bool phi1> inline auto VicII::sequencerPix0(  ) -> void {   
@@ -426,9 +418,9 @@ template<bool phi1> inline auto VicII::borderArea(  ) -> void {
         return;
     }
     
-    // set border for the first three pixel of second half cycle only
-    // thats a bit annoying the sequencer, which process 4 pixel, runs before
-    // general cycle logic in this emulation, because it's more comfortable
+    // set border for the first three pixel of second half cycle only.
+    // thats a bit annoying. the sequencer, which process 4 pixel, runs before
+    // general cycle logic in this emulation, because it's more comfortable.
     // when hflip changes in first half cycle, the switch happens after 3 pixel
     // in sequencer processing for cSel == 0
     std::memset( render, 0x20, 3 );   
@@ -438,7 +430,7 @@ template<bool phi1> inline auto VicII::draw65( uint8_t x, uint8_t x1 ) -> void {
     // color regs will be evaluated one pixel sooner than 85xx chips
     // a register change, which can happen between the half cycles, will
     // show the old value one pixel more
-  //  uint8_t x1 = (x + 1) & 7;
+    // uint8_t x1 = (x + 1) & 7;
     
     renderPipe[x1] = colorUse[ renderPipe[x1] ];
     
@@ -482,16 +474,7 @@ template<bool phi1> inline auto VicII::draw(  ) -> void {
         draw85<phi1>( phi1 ? 2 : 6 );
         draw85<phi1>( phi1 ? 3 : 7 );        
     }
-    
-	if ( phi1 ) {		
-		if(lastColorReg != 0xff)
-			// is updated between the half cycles
-			colorUse[ lastColorReg ] = colorReg[ lastColorReg ];      		
-	} else
-		// we reset last color reg a little bit later, because of
-		// we have to find out for the new vics if it is accessed
-		// in the next pixel, see grey dot bug
-		lastColorReg = 0xff;	                
+    	                
 }
 
 }

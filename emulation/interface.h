@@ -47,6 +47,7 @@ struct Interface {
     
     enum class CropType { Off = 0, Monitor = 1, Auto = 2, SemiAuto = 3, Free = 4 };
     enum class TapeMode { Stop = 0, Play = 1, Record = 2, Forward = 3, Rewind = 4, ResetCounter = 5, Unpressed = 6 };
+    enum class FastForward { NoAudioOut = 1, NoVideoOut = 2, ReduceVideoOutput = 4, NoVideoSequencer = 8 };
     
     std::string ident;
     
@@ -448,6 +449,8 @@ struct Interface {
     //sets alternative per line callbacks
     virtual auto setLineCallback(bool state, unsigned scanline = 0) -> void {}
     virtual auto setFinishVblankCallback(bool state) -> void {}
+    
+    virtual auto fastForward(unsigned config) -> void {}
     
     auto getStatsForSelectedRegion() -> Stats& {  
         auto region = getRegion();

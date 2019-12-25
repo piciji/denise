@@ -122,7 +122,7 @@ struct Interface : Emulator::Interface {
     auto getChipset() -> unsigned;
     
     auto activateDebugCart( unsigned limitCycles = 0 ) -> void;
-    auto disableFilterCircuit() -> void;
+    auto fastForward(unsigned config) -> void;
     
     auto getLuma(uint8_t index, bool newRevision) -> double;
     auto getChroma(uint8_t index) -> double; 

@@ -16,6 +16,7 @@
 #include <cstring>
 
 #include "expansion.cpp"
+#include "scheduler.cpp"
 #include "serialization.cpp"
 
 namespace Firmware {
@@ -25,7 +26,7 @@ namespace Firmware {
 namespace LIBC64 {
     
 System* system = nullptr;
-    
+  
 System::System(Interface* interface) {
     
     this->interface = interface;
@@ -92,28 +93,6 @@ System::System(Interface* interface) {
         // CPU is BUS Master in second half cycle, so it reads last BUS value from first half cycle,
         // which is always accessed by VIC.
         return vicII->lastReadPhase1();
-    };
-    
-    cpuCtx->syncLo = [this]() {
-        events.process();
-        powerSupply->tick();        
-        cia1->processLo();        
-		vicII->phase1();
-        cia2->processLo();
-		sid->phase1();    
-        expansionPort->cycleLo();
-    };
-    
-    cpuCtx->syncHi = [this]() {               
-        // let the cia1 process before Vic, so Vic can latch a lightpen trigger late this half cycle
-        expansionPort->cycleHi();
-        cia1->processHi();        
-		vicII->phase2();
-        cia2->processHi();
-		sid->phase2();
-		tape->clock();
-        iecBus->countTicks();  
-        input->clock();        
     };
     
     cpuCtx->updatePort = [this](uint8_t lines, uint8_t ddr) {
@@ -311,11 +290,30 @@ System::System(Interface* interface) {
     };
     
     vicII->videoRefresh = [this]( uint16_t* frame, unsigned width, unsigned height, unsigned linePitch) {
-		
+        
 		crop->apply( frame, width, height, linePitch );
         // for lightguns
         input->drawCursor();
 		
+        if (fastForward.config & (unsigned)Interface::FastForward::NoVideoOut)
+            frame = nullptr;
+        
+        else if (fastForward.renderNext) {
+            fastForward.renderNext = false;
+            vicII->disableSequencer( fastForward.config & (unsigned)Interface::FastForward::NoVideoSequencer );
+            dispatcha();
+            
+        } else if (fastForward.config & (unsigned)Interface::FastForward::ReduceVideoOutput) {
+            frame = nullptr;
+            
+            if ((++fastForward.frameCounter & 15) == 0) {                                
+                fastForward.frameCounter = 0;
+                vicII->disableSequencer( false );
+                dispatcha();
+                fastForward.renderNext = true;
+            }
+        }
+            
         this->interface->videoRefresh( frame, width, height, linePitch );
         
         frameComplete = true;		
@@ -330,7 +328,7 @@ System::System(Interface* interface) {
 		
 		input->drawCursor(true);
 		
-		this->interface->midScreenCallback();
+        this->interface->midScreenCallback();
 	};
 	
 	vicII->vblankCallback = [this]() {
@@ -490,8 +488,7 @@ System::System(Interface* interface) {
             input->keyboard.setDevice( &device );        
             break;
         }
-    }
-    
+    }    
 }    
 
 System::~System() {
@@ -601,6 +598,10 @@ auto System::power( bool softReset ) -> void {
     kernalBootComplete = false;
     calcSerializationSize();
     
+    fastForward.frameCounter = 0;
+    fastForward.renderNext = false;
+    dispatcha();
+    
     if ( !expansionPort->isBootable() ) {
         KeyBuffer::Action action;
                 
@@ -620,8 +621,7 @@ auto System::power( bool softReset ) -> void {
         action.blinkingCursor = true;
         action.callbackId = 1;
         action.callback = [this]() { kernalBootComplete = true; };
-        system->keyBuffer->add( action );   
-        
+        system->keyBuffer->add( action );           
     }        
 }
 
@@ -820,6 +820,13 @@ auto System::changeExpansionPortMemoryMode(bool exrom, bool game) -> void {
 		remapVic();
 	
 	remapCpu();
+}
+
+auto System::setFastForward( unsigned config ) -> void {    
+    fastForward.config = config;
+    sid->disableAudioOut(config & (unsigned) Emulator::Interface::FastForward::NoAudioOut);
+    vicII->disableSequencer(config & (unsigned) Emulator::Interface::FastForward::NoVideoSequencer);
+    dispatcha();
 }
 
 }

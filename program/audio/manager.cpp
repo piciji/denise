@@ -156,9 +156,6 @@ auto AudioManager::process( int16_t sampleLeft, int16_t sampleRight ) -> void {
 
     bufferPos = 0;
     
-    if (cmd->noDriver)
-        return;
-    
     rData.in = &buffer[0];
     rData.inputFrames = stat.stereoSound ? bufferSize >> 1 : bufferSize;
     

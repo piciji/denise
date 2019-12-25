@@ -57,7 +57,7 @@ ifeq ($(pgo),instrument)
     flags += -fprofile-generate
     link += -lgcov
 else ifeq ($(pgo),optimize)
-    flags += -fprofile-use
+    flags += -fprofile-use -fprofile-correction
 endif
 
 include guikit/Makefile

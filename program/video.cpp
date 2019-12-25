@@ -61,11 +61,9 @@ auto Program::midScreenCallback() -> void {
 auto Program::videoRefresh(const uint16_t* frame, unsigned width, unsigned height, unsigned linePitch) -> void {
     
     status->countFrames();
-    
-    if (cmd->noDriver)
-        return;
 	
-	activeVideoManager->renderFrame(frame, width, height, linePitch);
+    if (frame)
+        activeVideoManager->renderFrame(frame, width, height, linePitch);
 }
 
 auto Program::blackScreen() -> void {
@@ -134,6 +132,57 @@ auto Program::updateCrop( Emulator::Interface* emulator ) -> void {
         activeVideoManager->reinitThread();
         activeVideoManager->shader.recreate = true;        
     }
+}
+
+auto Program::fastForward( bool activate, bool aggressive ) -> void {
+    if (!activeEmulator)
+        return;
+    
+    unsigned forward = 0;
+    auto vSync = settings->get<bool>("video_sync", false);
+    VideoManager::CrtMode crtMode = (VideoManager::CrtMode)settings->get<unsigned>(program->ident(activeEmulator, "video_crt"), (unsigned)VideoManager::CrtMode::None, {0u, 2u});
+
+    if (activate) {                        
+        if (vSync)
+            view->videoSyncItem.toggle();
+
+        settings->set<bool>("video_sync_temp", vSync, false); // remember vsync
+
+        if (crtMode != VideoManager::CrtMode::None)
+            EmuConfigView::TabWindow::getView(activeEmulator)->videoLayout->base.mode.crtNone.activate();
+
+        settings->set<unsigned>("video_crt_temp", (unsigned)crtMode, false); // remember crt mode
+
+        forward = (unsigned)Emulator::Interface::FastForward::NoAudioOut | (unsigned)Emulator::Interface::FastForward::ReduceVideoOutput;
+        if (aggressive)
+            forward |= (unsigned)Emulator::Interface::FastForward::NoVideoSequencer;
+
+        if (aggressive)
+            settings->set<bool>("fast_forward_aggressive", activate, false);
+        else
+            settings->set<bool>("fast_forward", activate, false);
+
+    } else {
+        auto vSyncTemp = settings->get<bool>("video_sync_temp", false);
+        VideoManager::CrtMode crtModeTemp = (VideoManager::CrtMode)settings->get<unsigned>("video_crt_temp", (unsigned)VideoManager::CrtMode::None, {0u, 2u});
+        
+        if (vSyncTemp && !vSync)
+            view->videoSyncItem.toggle();
+
+        if (crtMode == VideoManager::CrtMode::None) {
+            if (crtModeTemp == VideoManager::CrtMode::Cpu)
+                EmuConfigView::TabWindow::getView(activeEmulator)->videoLayout->base.mode.crtCpu.activate();
+            else if (crtModeTemp == VideoManager::CrtMode::Gpu)
+                EmuConfigView::TabWindow::getView(activeEmulator)->videoLayout->base.mode.crtGpu.activate();
+        }
+        
+        settings->set<bool>("video_sync_temp", false, false);
+        settings->set<unsigned>("video_crt_temp", (unsigned)VideoManager::CrtMode::None, false);
+        settings->set<bool>("fast_forward_aggressive", false, false);
+        settings->set<bool>("fast_forward", false, false);
+    }
+
+    activeEmulator->fastForward( forward );
 }
 
 auto Program::saveExitScreenshot() -> void {        

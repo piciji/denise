@@ -26,6 +26,7 @@ VicII::VicII() {
     sprite7 = &sprite[7];
     
     initColorWheel();
+    buildXCounterLookupTable();
     
 	lineCallback.use = false;
 	lineCallback.finishVblank = false;
@@ -41,6 +42,14 @@ auto VicII::setNtsc( bool state ) -> void {
 // revision 65xx / 85xx
 auto VicII::setRevision65( bool state ) -> void {
 	rev65 = state;
+}
+
+auto VicII::disableSequencer(bool state) -> void {
+    enableSequencer = !state;
+}
+
+auto VicII::useSequencer() -> bool {
+    return enableSequencer;
 }
 
 auto VicII::isRevision65() -> bool {
@@ -188,6 +197,45 @@ auto VicII::setBorderData() -> void {
 	}	
 }
 
+auto VicII::buildXCounterLookupTable() -> void {       
+
+    uint16_t* ptr;
+    
+    for ( unsigned r = 0; r < 2; r++ ) {
+        bool _pal = r == 0;
+        unsigned x = _pal ? 404 : 412;
+      //  x += 4;
+        
+        unsigned xWrapAround = _pal ? 0x1f8 : 0x200;
+        
+        for ( unsigned c = 0; c < (_pal ? 63 : 65); c++ ) {
+
+            for (unsigned p = 0; p < 2; p++) {
+
+                bool phi1 = p == 0;
+                
+                if (_pal)
+                    ptr = phi1 ? &xLookUpPalPhi1[c] : &xLookUpPalPhi2[c];                        
+                else
+                    ptr = phi1 ? &xLookUpNtscPhi1[c] : &xLookUpNtscPhi2[c];                                        
+
+                *ptr = x;
+
+                bool xCounterLock = !_pal && ((!phi1 && c == 60) || (phi1 && c == 61));
+
+                if (!xCounterLock)
+                    x += 4;
+
+                if (x == xWrapAround)
+                    x = 0;	// happens always at the end of phase 1                        
+            }
+        }
+    }
+    
+    xLookupPtrPhi1 = &xLookUpPalPhi1[0];
+    xLookupPtrPhi2 = &xLookUpPalPhi2[0];
+}
+
 auto VicII::power() -> void {
     registerWrite.pipelined = false;
 	crop.leftOverscan = ntsc ? (56 - 32) : (46 - 32);
@@ -210,12 +258,13 @@ auto VicII::power() -> void {
     xCounter = ntsc ? 412 : 404;    
     xCounterLatch = xCounterSprites = xCounter;
     xCounter += 8; // to compensate first advance cycle
+    xLookupPtrPhi1 = ntsc ? &xLookUpNtscPhi1[0] : &xLookUpPalPhi1[0];
+    xLookupPtrPhi2 = ntsc ? &xLookUpNtscPhi2[0] : &xLookUpPalPhi2[0];
     vStart = ntsc ? 23 : 9;
 	vHeight = ntsc ? 253 : 293; // max possible display height  
     hWidth =  ntsc ? 420 : 406; // max possible display width  
     firstVisiblePixel = ntsc ? 76 : 86;
     lineCycles = ntsc ? 65 : 63;
-	xWrapAround = ntsc ? 0x200 : 0x1f8;
 	baLow = false;
     aecDelay = 0;
     std::memset(spriteBa, 0, sizeof spriteBa);
@@ -316,5 +365,10 @@ auto VicII::power() -> void {
     disableEcmBmmTogether = false;
 }
 
-}
+template auto VicII::phase1<true>() -> void;
+template auto VicII::phase1<false>() -> void;
 
+template auto VicII::phase2<true>() -> void;
+template auto VicII::phase2<false>() -> void;
+
+}

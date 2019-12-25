@@ -407,3 +407,5 @@ hide =
 override_write_protection = 
 speed = 
 variation = 
+Toggle_fastforward = 
+Toggle_fastforward_aggressive = 

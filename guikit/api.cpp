@@ -587,6 +587,12 @@ auto RadioBox::setChecked() -> void {
     p.setChecked();
 }
 
+auto RadioBox::activate() -> void {
+    if (_A::dummy) return;
+    setChecked();
+    if(onActivate) onActivate();
+}
+
 RadioBox::RadioBox() : Widget(*new pRadioBox(*this)), p((pRadioBox&)Widget::p) { if (!_A::dummy) p.init(); }
 
 auto ProgressBar::setPosition(unsigned position) -> void {

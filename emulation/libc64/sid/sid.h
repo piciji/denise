@@ -66,8 +66,8 @@ struct Sid {
     auto registerCallbacks() -> void;
     auto serialize(Emulator::Serializer& s) -> void;
     auto updateIdleState() -> void;    
-    auto setDisableFilterMixer() -> void {
-        enableFilterMixer = false;
+    auto disableAudioOut(bool state) -> void {
+        audioOut = !state;
     }
     
     uint8_t lastBusValue;
@@ -83,7 +83,7 @@ struct Sid {
     
 	bool moreAccuracy = false;
     bool powerOn;
-    bool enableFilterMixer = true;
+    bool audioOut = true;
     
 	std::atomic<bool> ready;
 	std::atomic<bool> idle;

@@ -3,11 +3,14 @@
 
 namespace LIBC64 {
 
-auto VicII::phase1() -> void {	
+template<bool _useSequencer> auto VicII::phase1() -> void {	
     advanceCycle();
+    xCounter = xLookupPtrPhi1[cycle];
     checkLightPen<true>();
     setLineInterrupt();	
-    sequencer<true>(  );    		
+
+    if (_useSequencer)
+        sequencer<true>(  );    		
             
     switch( cycle )  {
         case 0: ntsc ? fetchSpriteS1( 3 )		: fetchSpriteP( 3 );	break;		
@@ -90,15 +93,22 @@ auto VicII::phase1() -> void {
 		case 63: fetchSpriteS1( 2 ); break;		
 		case 64: fetchSpriteP( 3 ); break;
     }
+    
+    if(lastColorReg != 0xff)
+        // is updated between the half cycles
+        colorUse[ lastColorReg ] = colorReg[ lastColorReg ];  
 	
 	borderControl();
 	updateBAState();
 	clearCollisions();
 }
 
-auto VicII::phase2() -> void {
+template<bool _useSequencer> auto VicII::phase2() -> void {
+    xCounter = xLookupPtrPhi2[cycle];
 	checkLightPen<false>();
-    sequencer<false>(  );
+
+    if (_useSequencer)
+        sequencer<false>(  );      
     
     switch( cycle )  {
 		case 0: ntsc ? fetchSpriteS2( 3 )		: fetchSpriteS0( 3 );	break;		
@@ -147,6 +157,10 @@ auto VicII::phase2() -> void {
     // copy state of ECM / BMM directly before a possible write in order
     // to delay it one cycle for DMA fetch logic
     modeEcmBmmDma = modeEcmBmm;	
+    // we reset last color reg a little bit later, because of
+    // we have to find out for the new vics if it is accessed
+    // in the next pixel, see grey dot bug
+    lastColorReg = 0xff;	                
 }
 
 inline auto VicII::advanceCycle() -> void {    
@@ -218,9 +232,8 @@ inline auto VicII::advanceCycle() -> void {
 			lineVCounter = 0;
 		} else if (lineCallback.use && (lineVCounter == lineCallback.line))
             midScreenCallback();
-	}    
-	
-	if (cycle == 1)
+        
+	} else if (cycle == 1)
 		setLineBuffer();  
 
 	lastBusPhi2 = 0xff; // clear internal bus    

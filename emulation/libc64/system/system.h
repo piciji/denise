@@ -61,7 +61,6 @@ struct System {
     Memory::Write writeRomH;
     Memory::Write writeUltimaxRomL;
     Memory::Write writeUltimaxRomH;
-
     
     Memory memoryCpu;
     Memory memoryVic;
@@ -107,6 +106,12 @@ struct System {
     Emulator::Serializer serializer;
     bool kernalBootComplete = false;
     
+    struct {
+        unsigned config;
+        unsigned frameCounter;
+        bool renderNext;
+    } fastForward;
+    
     #include "testbench.h"
     
     auto setFirmware( unsigned typeId, uint8_t* data, unsigned size ) -> void;
@@ -146,6 +151,9 @@ struct System {
     auto destroyExpansions() -> void;
     auto setExpansionCallbacks( ExpansionPort* expansionPtr ) -> void;
     auto analyzeExpansion(uint8_t* data, unsigned size) -> Emulator::Interface::Expansion*;
+    
+    auto dispatcha() -> void;
+    auto setFastForward( unsigned config ) -> void;
 };
 
 extern System* system;

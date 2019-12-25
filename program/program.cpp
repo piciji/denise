@@ -263,6 +263,7 @@ auto Program::reset( Emulator::Interface* emulator ) -> void {
 auto Program::powerOff() -> void {    
     
     if ( activeEmulator ) {
+        fastForward( false );
         activeEmulator->powerOff();
         
         for(auto& mediaGroup : activeEmulator->mediaGroups) {
@@ -464,4 +465,3 @@ auto Program::questionToWrite(Emulator::Interface::Media* media) -> bool {
     
     return view->questionToWrite(media);
 }
-
