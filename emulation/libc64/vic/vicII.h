@@ -137,7 +137,6 @@ protected:
     unsigned hWidth;
     unsigned lineCycles;
     unsigned firstVisiblePixel;
-	unsigned xWrapAround;
 	
 	bool baLow; //connected to 6510 rdy and expansion port
     uint8_t aecDelay;
