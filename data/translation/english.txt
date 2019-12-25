@@ -408,4 +408,4 @@ override_write_protection = It was not possible to write on "%media%", because o
 speed = Speed
 variation = Variation
 Toggle_fastforward = Fast-Forward
-Toggle_fastforward_aggressive = Fast-Forward (ignore sprite collision)
+Toggle_fastforward_aggressive = Fast-Forward (aggressive)

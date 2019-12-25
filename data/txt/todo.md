@@ -73,6 +73,7 @@
 * load PRG files from disk as simple RAM insertion for reduced loading times
 * UI switch to invert RAM init pattern
 * write (SID/PAULA) output to WAV 
+* 8-way digital input
 
 # bugs
 * RawInput: PS/2 keyboard not detected, 8bitdo M30 Controller not working

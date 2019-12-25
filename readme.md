@@ -16,6 +16,7 @@
 * removed read latch from drive mechanic, only VIA is latching readed byte
 * distinguish between physical and logical tracks for disk content preview in UI
 * fixed a rare bug in gpu driven RF Modulation, when disabling luma 'fall' but not 'rise'
+* added a new aggressive fast-forward mode, which disables VIC-II Sequencer for a few frames
 
 ## 1.0.6
 * polished OS X UI ... looks ok now for Mojave dark theme
