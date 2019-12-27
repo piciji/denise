@@ -71,11 +71,11 @@ struct Png {
                     blockSize = remain;
 
                 uint8_t bheader[] = {  // 5 bytes long
-                    (remain <= DEFLATE_MAX_BLOCK_SIZE) ? 1 : 0,
-                    (blockSize >> 0) & 0xff,
-                    (blockSize >> 8) & 0xff,
-                    (blockSize >> 0) ^ 0xff,
-                    (blockSize >> 8) ^ 0xff,
+                    (uint8_t)((remain <= DEFLATE_MAX_BLOCK_SIZE) ? 1 : 0),
+                    (uint8_t)((blockSize >> 0) & 0xff),
+                    (uint8_t)((blockSize >> 8) & 0xff),
+                    (uint8_t)((blockSize >> 0) ^ 0xff),
+                    (uint8_t)((blockSize >> 8) ^ 0xff),
                 };
 
                 std::memcpy( ptr, bheader, sizeof(bheader) );

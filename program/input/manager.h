@@ -101,6 +101,7 @@ struct InputManager {
 	Emulator::Interface* emulator = nullptr;
 	std::vector<InputMapping*> mappings;
     std::vector<InputMapping*> mappingsInUse;
+    InputMapping* andTrigger = nullptr;
     static std::vector<Hotkey::Id> hotkeyTriggers;
 	
 	static auto getManager( Emulator::Interface* emulator ) -> InputManager*;

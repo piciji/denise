@@ -68,6 +68,16 @@ auto InputManager::update() -> void {
     uiMouse.updated = false;
     InputMapping* useMapping;
 	
+    if (andTrigger) {
+        for (auto& hid : andTrigger->hids) {
+            if (andTrigger->adjustDigitalValue<false>(hid) != 0)
+                goto goon;
+        }
+        andTrigger = nullptr;
+    }
+    
+goon:
+    
 	for(auto mapping : mappingsInUse) {		       
 
         useMapping = mapping;
@@ -75,7 +85,8 @@ auto InputManager::update() -> void {
             useMapping = mapping->parent;
                 
         if (!mapping->isAnalog()) {
-            if ( (mapping->sortedNext == nullptr) && (useMapping->state != 0) )            
+            if ( (mapping->sortedNext == nullptr) && (useMapping->state != 0) )
+                // parent or alternate mapping has already triggered, no need to check the other one
                 continue;        
 
             useMapping->state = 0;
@@ -88,13 +99,13 @@ auto InputManager::update() -> void {
 		if (hidSize == 0 )
             continue;
         
-        if ( ignoreBelow ) {
+       /* if ( ignoreBelow ) {
             if (!mapping->anded)
                 continue;
             
             if (hidSize < ignoreBelow)
                 continue;            
-        }    
+        }*/
         
         if (mapping->isAnalog()) {
             
@@ -146,6 +157,20 @@ auto InputManager::update() -> void {
 					if (aSwitch && (mapping->adjustDigitalValue<true>( hid ) != 0) )
                         continue;					
                     
+                    if (andTrigger) {
+                        bool _goon = false;
+                        for (auto& andHid : andTrigger->hids) {
+                            
+                            if (hid.device == andHid.device && hid.group == andHid.group && hid.input == andHid.input) {
+                                _goon = true;
+                                break;
+                            }
+                                
+                        }
+                        if (_goon)
+                            continue;
+                    }
+                    
                     useMapping->state = value;
                     for(auto shadow : useMapping->shadowMap)
                         shadows.push_back( shadow );
@@ -155,6 +180,9 @@ auto InputManager::update() -> void {
 			}
 		} else { //anded	
 
+            if (hidSize < ignoreBelow)
+                continue;
+            
             bool atLeastOneKeyHasSwitched = false; //some keys are hold and final key is switched
 
             for (auto& hid : hids) {
@@ -167,6 +195,7 @@ auto InputManager::update() -> void {
             }
 
             if (!aSwitch || atLeastOneKeyHasSwitched) {
+                andTrigger = mapping;
                 useMapping->state = 1;
                 for (auto shadow : useMapping->shadowMap)
                     shadows.push_back(shadow);
