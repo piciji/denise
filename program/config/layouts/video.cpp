@@ -287,8 +287,8 @@ auto VideoLayout::translate() -> void {
 	paths.shader.empty.setText(trans->get("remove"));
 
     videoFrameAdjust.setText( trans->get("frequency_correction") );
-    videoFrameAdjust.pal.setText("Pal:");
-    videoFrameAdjust.ntsc.setText("Ntsc:");
+    videoFrameAdjust.pal.setText("PAL:");
+    videoFrameAdjust.ntsc.setText("NTSC:");
     videoFrameAdjust.overrideExactFrequency.setText( trans->get("override_exact_frequency") );
     videoFrameAdjust.overrideExactFrequency.setTooltip( trans->get("override_exact_frequency_tooltip") );
 }

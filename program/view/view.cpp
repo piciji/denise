@@ -324,7 +324,7 @@ auto View::setConnectors() -> void {
         for(auto& connector : emulator->connectors) {
 
             connectorMenu = new GUIKIT::Menu;
-            connectorMenu->setText(connector.name);
+            connectorMenu->setText( trans->get( connector.name ) );
             connectorMenu->setIcon(plugImage);
             connectorMenu->setVisible();
 
@@ -899,8 +899,8 @@ auto View::translate() -> void {
     
     settingsMenu.setText( trans->get("settings"));
     filterMenu.setText( trans->get("filter"));
-    videoNearestItem.setText("Video Nearest");
-    videoLinearItem.setText("Video Linear");
+    videoNearestItem.setText( trans->get("Video Nearest") );
+    videoLinearItem.setText( trans->get("Video Linear") );
 
 	videoItem.setText( trans->get("video") );
 	audioItem.setText( trans->get("audio") );
@@ -916,7 +916,7 @@ auto View::translate() -> void {
     configItem.setText( trans->get("settings"));	
     saveItem.setText( trans->get("save_changes"));
 	
-	tapeControlMenu.setText( "Datasette" );
+	tapeControlMenu.setText( trans->get("Datasette") );
 	tapePlayItem.setText( trans->get("tape_play_key") );
 	tapeStopItem.setText( trans->get("tape_stop_key") );
 	tapeRecordItem.setText( trans->get("tape_record_key") );

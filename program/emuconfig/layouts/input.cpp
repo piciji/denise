@@ -71,7 +71,7 @@ InputLayout::InputLayout(TabWindow* tabWindow) {
     
     for(auto& connector : emulator->connectors) {
         auto pluginConnector = new GUIKIT::CheckButton;
-        pluginConnector->setText( connector.name );
+        pluginConnector->setText( trans->get( connector.name ) );
         
         Emulator::Interface::Connector* connectorPtr = &connector;
         
@@ -322,6 +322,9 @@ auto InputLayout::translate() -> void {
     for ( auto& keyboardLayout : InputManager::keyboardLayouts ) {
         mapControl.keyLayout.setText( i++, trans->get( keyboardLayout.language ) + " ( " + keyboardLayout.code + " )" );   
     }
+    
+    for(auto& connectorButton : selector.connectorButtons) 
+        connectorButton.checkButton->setText( trans->get( connectorButton.connector->name ) );
 }
 
 auto InputLayout::displayInputCall() -> void {

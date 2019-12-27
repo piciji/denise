@@ -438,7 +438,7 @@ void MainGui::build() {
     videoNearestItem.setText("Video Nearest");
     videoLinearItem.setText("Video Linear");
     audioLowpassItem.setText("Audio Low Pass");
-videoLinearItem.setChecked();
+    videoLinearItem.setChecked();
 
     regionMenu.setText("region");
     palItem.setText("Pal");
