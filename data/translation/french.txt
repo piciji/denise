@@ -424,3 +424,6 @@ Toggle_fastforward =
 Toggle_fastforward_aggressive = 
 Version = 
 Port = 
+REU = REU
+Action Replay = Action Replay
+EasyFlash = EasyFlash

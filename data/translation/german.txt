@@ -424,3 +424,6 @@ Toggle_fastforward = Vorspulen
 Toggle_fastforward_aggressive = Vorspulen (aggressiv)
 Version = Version
 Port = Port
+REU = REU
+Action Replay = Action Replay
+EasyFlash = EasyFlash
