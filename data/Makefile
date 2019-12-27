@@ -32,8 +32,8 @@ ifeq ($(compiler),)
     endif
 endif
 
-cppflags := -x c++ -std=c++14
-objcppflags := -x objective-c++ -std=c++14
+cppflags := -x c++ -std=c++17
+objcppflags := -x objective-c++ -std=c++17
 	
 compile = \
     $(strip \

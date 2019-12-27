@@ -46,10 +46,10 @@ InputMapControl::InputMapControl() {
 InputAssign::InputAssign() {    
     append(infoLabel, {~0u, 0u}, 10);
     append(assignLabel, {0u, 0u}, 10);
-    append(overwriteRadio, {0u, 0u}, 3);
-    append(appendRadio, {0u, 0u});
+    append(appendRadio, {0u, 0u}, 3);
+    append(overwriteRadio, {0u, 0u});    
     GUIKIT::RadioBox::setGroup( overwriteRadio, appendRadio );
-    overwriteRadio.setChecked();
+    appendRadio.setChecked();
     setAlignment(0.5);
 }
 

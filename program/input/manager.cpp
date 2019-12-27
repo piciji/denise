@@ -68,15 +68,7 @@ auto InputManager::update() -> void {
     uiMouse.updated = false;
     InputMapping* useMapping;
 	
-    if (andTrigger) {
-        for (auto& hid : andTrigger->hids) {
-            if (andTrigger->adjustDigitalValue<false>(hid) != 0)
-                goto goon;
-        }
-        andTrigger = nullptr;
-    }
-    
-goon:
+    updateAndTrigger();    
     
 	for(auto mapping : mappingsInUse) {		       
 
@@ -98,14 +90,6 @@ goon:
         
 		if (hidSize == 0 )
             continue;
-        
-       /* if ( ignoreBelow ) {
-            if (!mapping->anded)
-                continue;
-            
-            if (hidSize < ignoreBelow)
-                continue;            
-        }*/
         
         if (mapping->isAnalog()) {
             
@@ -157,19 +141,8 @@ goon:
 					if (aSwitch && (mapping->adjustDigitalValue<true>( hid ) != 0) )
                         continue;					
                     
-                    if (andTrigger) {
-                        bool _goon = false;
-                        for (auto& andHid : andTrigger->hids) {
-                            
-                            if (hid.device == andHid.device && hid.group == andHid.group && hid.input == andHid.input) {
-                                _goon = true;
-                                break;
-                            }
-                                
-                        }
-                        if (_goon)
-                            continue;
-                    }
+                    if (blockedByAndTrigger( hid ))
+                        continue;
                     
                     useMapping->state = value;
                     for(auto shadow : useMapping->shadowMap)
@@ -180,7 +153,7 @@ goon:
 			}
 		} else { //anded	
 
-            if (hidSize < ignoreBelow)
+            if (ignoreBelow && (hidSize < ignoreBelow))
                 continue;
             
             bool atLeastOneKeyHasSwitched = false; //some keys are hold and final key is switched
@@ -195,7 +168,9 @@ goon:
             }
 
             if (!aSwitch || atLeastOneKeyHasSwitched) {
-                andTrigger = mapping;
+                
+                addAndTrigger(mapping);
+                
                 useMapping->state = 1;
                 for (auto shadow : useMapping->shadowMap)
                     shadows.push_back(shadow);
@@ -214,6 +189,54 @@ goon:
     if(shadows.size())
         for(auto shadow : shadows)
             shadow->state = 1;
+}
+
+inline auto InputManager::updateAndTrigger() -> void {
+    
+    if (andTriggers.size() == 0)
+        return;
+    
+    std::vector<InputMapping*> toDelete;
+    
+    for(auto andTrigger : andTriggers ) {
+        bool next = false;
+        
+        for (auto& hid : andTrigger->hids) {
+            if (andTrigger->adjustDigitalValue<false>(hid) != 0) {
+                next = true;
+                break;
+            }                
+        }
+        
+        if (next)
+            continue;
+        
+        toDelete.push_back( andTrigger );
+    }
+    
+    for (auto delMapping : toDelete)        
+        GUIKIT::Vector::eraseVectorElement( andTriggers, delMapping );    
+}
+
+inline auto InputManager::addAndTrigger(InputMapping* newTrigger) -> void {
+    
+    for(auto andTrigger : andTriggers ) {
+        if (andTrigger == newTrigger)
+            return;
+    }
+    
+    andTriggers.push_back(newTrigger);
+}
+
+inline auto InputManager::blockedByAndTrigger(InputMapping::Assign& hid) -> bool {
+    
+    for(auto andTrigger : andTriggers ) {
+        for (auto& andHid : andTrigger->hids) {
+            if (hid.device == andHid.device && hid.group == andHid.group && hid.input == andHid.input)
+                return true;            
+        }
+    }
+    return false;
 }
 
 auto InputManager::updateMappingsInUse() -> void {

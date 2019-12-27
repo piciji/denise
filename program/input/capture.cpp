@@ -31,6 +31,8 @@ auto InputManager::fetch() -> void {
 auto InputManager::capture(InputMapping* _captureObject) -> void {
     if (captureObject) return;
     captureObject = _captureObject;
+    for (auto manager : inputManagers)
+        manager->andTriggers.clear();
     retry = 0;
     fetch();
 }

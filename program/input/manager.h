@@ -1,6 +1,5 @@
 
-#ifndef INPUTMANAGER_H
-#define INPUTMANAGER_H
+#pragma once
 
 #include "../../driver/driver.h"
 #include "../../guikit/api.h"
@@ -101,7 +100,8 @@ struct InputManager {
 	Emulator::Interface* emulator = nullptr;
 	std::vector<InputMapping*> mappings;
     std::vector<InputMapping*> mappingsInUse;
-    InputMapping* andTrigger = nullptr;
+    std::vector<InputMapping*> andTriggers;
+
     static std::vector<Hotkey::Id> hotkeyTriggers;
 	
 	static auto getManager( Emulator::Interface* emulator ) -> InputManager*;
@@ -136,8 +136,10 @@ struct InputManager {
     auto updateMappingsInUse() -> void;
     auto matchButtons( Emulator::Interface::Device::Input* emuInput, Hid::Input* hidInput ) -> bool;
     auto priorizeConnectedDevicesOverKeyboard() -> void;
+    
+    inline auto updateAndTrigger() -> void;
+    inline auto addAndTrigger(InputMapping* newTrigger) -> void;
+    inline auto blockedByAndTrigger(InputMapping::Assign& hid) -> bool;
 };
 
 extern std::vector<InputManager*> inputManagers;
-
-#endif

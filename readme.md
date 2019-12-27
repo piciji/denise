@@ -17,6 +17,8 @@
 * distinguish between physical and logical tracks for disk content preview in UI
 * fixed a rare bug in gpu driven RF Modulation, when disabling luma 'fall' but not 'rise'
 * added a new aggressive fast-forward mode, which disables VIC-II Sequencer for a few frames
+* combined key presses (ALT + W) don't trigger single keys when partially released
+    * i.e. if ALT is released a few milliseconds sooner than 'W', it doesn't print a 'W'
 
 ## 1.0.6
 * polished OS X UI ... looks ok now for Mojave dark theme

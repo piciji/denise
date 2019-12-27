@@ -65,7 +65,6 @@
 * auto start should reuse already opened instance (enable in UI)
 * rework some UI tags to make host menu better understandable for user
 * remove all C64 individual stuff from host menu (mostly hotkeys)
-* rework key mapping UI to be more intuitive (and/or, overwrite/append)
 * unplugged joypads shouldn't be forgot
 * autofire with frequency, option to fire without button press (don't forget override logic)
 * switch joyports as hotkey
@@ -77,7 +76,6 @@
 
 # bugs
 * RawInput: PS/2 keyboard not detected, 8bitdo M30 Controller not working
-* combined key presses (ALT + W) shouldn't trigger when releasing single keys
 
 
 # completed emulation
