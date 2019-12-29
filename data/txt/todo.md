@@ -73,9 +73,11 @@
 * UI switch to invert RAM init pattern
 * write (SID/PAULA) output to WAV 
 * 8-way digital input
+* need tooltip to distinguish between open readable/writable
+* open non archives as read only from OS point of view
 
 # bugs
-* RawInput: PS/2 keyboard not detected, 8bitdo M30 Controller not working
+
 
 
 # completed emulation

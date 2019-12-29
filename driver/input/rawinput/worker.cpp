@@ -61,33 +61,40 @@ struct RawWorker {
 			LeaveCriticalSection( &mcsSc );
 		}			
 		
-		if (msg != WM_INPUT) return DefWindowProc(hwnd, msg, wparam, lparam);
+		if (msg != WM_INPUT)
+            return DefWindowProc(hwnd, msg, wparam, lparam);
 
 		unsigned size = 0;
 		GetRawInputData((HRAWINPUT) lparam, RID_INPUT, NULL, &size, sizeof (RAWINPUTHEADER));
-		RAWINPUT* input = new RAWINPUT[size];
-		GetRawInputData((HRAWINPUT) lparam, RID_INPUT, input, &size, sizeof (RAWINPUTHEADER));
-		
-		EnterCriticalSection( &mcsSc );
+        
+        if (size) {
+            RAWINPUT* input = new RAWINPUT[size];
+            GetRawInputData((HRAWINPUT) lparam, RID_INPUT, input, &size, sizeof (RAWINPUTHEADER));
 
-		if (input->header.dwType == RIM_TYPEKEYBOARD) {
-			keyboard.update(input);
-		}
+            EnterCriticalSection( &mcsSc );
 
-		if (input->header.dwType == RIM_TYPEMOUSE) {
-			mouse.update(input);
-		}
-		
-		if (input->header.dwType == RIM_TYPEHID) {
-            if (!libError)
-                joypad.update(input);
-		}
+            if (input->header.dwType == RIM_TYPEKEYBOARD) {
+                keyboard.update(input);
+            }
 
-		LeaveCriticalSection( &mcsSc );
-		LRESULT result = DefRawInputProc(&input, size, sizeof (RAWINPUTHEADER));
-		delete[] input;
-		
-		return result;
+            if (input->header.dwType == RIM_TYPEMOUSE) {
+                mouse.update(input);
+            }
+
+            if (input->header.dwType == RIM_TYPEHID) {
+                if (!libError)
+                    joypad.update(input);
+            }
+
+            LeaveCriticalSection( &mcsSc );
+            
+            LRESULT result = DefRawInputProc(&input, size, sizeof (RAWINPUTHEADER));
+            delete[] input;
+
+            return result;        
+        }
+        
+        return DefWindowProc(hwnd, msg, wparam, lparam);
 	}
 	
 	auto run() -> void {		
@@ -110,7 +117,7 @@ struct RawWorker {
         initDevices();
 		keyboard.init(); // no multi keyboard support (at the moment)
 		
-		RAWINPUTDEVICE riDevice[ 3 ];
+		RAWINPUTDEVICE riDevice[ 4 ];
 		
 		riDevice[0].usUsagePage = 1;
 		riDevice[0].usUsage = 6; //Keyboard
@@ -126,8 +133,13 @@ struct RawWorker {
 		riDevice[2].usUsage = 4; //Joypads
 		riDevice[2].dwFlags = 0;
 		riDevice[2].hwndTarget = hwnd;	
+        
+        riDevice[3].usUsagePage = 1;
+		riDevice[3].usUsage = 5; //Joysticks
+		riDevice[3].dwFlags = 0;
+		riDevice[3].hwndTarget = hwnd;	        
 				
-		RegisterRawInputDevices(riDevice, 3, sizeof(RAWINPUTDEVICE));
+		RegisterRawInputDevices(riDevice, 4, sizeof(RAWINPUTDEVICE));
 				
 		EnterCriticalSection( &mcsSc );
 		ready = true;
