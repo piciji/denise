@@ -13,6 +13,7 @@
 std::vector<InputManager*> inputManagers;
 InputMapping* InputManager::captureObject = nullptr;
 unsigned InputManager::retry = 0;
+bool InputManager::driverChange = false;
 std::vector<Hid::Device*> InputManager::hidDevices;
 std::vector<InputManager::DeviceRemap> InputManager::remapDevices;
 std::vector<Hotkey> InputManager::hotkeys;

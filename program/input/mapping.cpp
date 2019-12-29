@@ -34,6 +34,8 @@ auto InputMapping::checkSanity(Hid::Device* device, unsigned groupId, unsigned i
 }
 
 auto InputMapping::updateSetting() -> void {
+    hasUnknownAssignment = false;
+    
     if (hids.size() == 0) {
         setting->value = "";
         return;
@@ -194,9 +196,12 @@ auto InputMapping::getDescription() -> std::string {
         if (hid.qualifier == Qualifier::Lo)
             out += ".Lo";
                     
-		if (++pos < hids.size())
+		if ( (++pos < hids.size()) || hasUnknownAssignment)
 			out += " " + (anded ? trans->get("and") : trans->get("or")) + " ";
 	}
+    
+    if (hasUnknownAssignment)
+        out += trans->get("unknown_device");
 	
 	#undef _transhr
 	return out;	
@@ -204,12 +209,13 @@ auto InputMapping::getDescription() -> std::string {
 
 auto InputMapping::swapLinker() -> void {
         
-    if (this->isAnalog())
+    if (this->isAnalog() || setting->value.empty() || (hids.size() < 2))
         anded = 0;
     else
         anded ^= 1;
-    
-	updateSetting();
+            
+    if (!setting->value.empty())
+       setting->value.replace(0, 1, anded ? "1" : "0" );
 }
 
 auto InputMapping::sortHidsByValue() -> void {

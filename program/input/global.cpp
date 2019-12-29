@@ -330,7 +330,7 @@ auto InputManager::autoAssignHotkeys() -> void {
 
 // load settings data at application start, reload only when host devices changing
 // missing devices will be removed
-auto InputManager::bindHids() -> void {	
+auto InputManager::bindHids( ) -> void {	
 	for (auto manager : inputManagers) {
 		for(auto mapping : manager->mappings) {
             while(1) {
@@ -342,6 +342,7 @@ auto InputManager::bindHids() -> void {
                     goto Done;
                 
                 mapping->anded = parts[0] != "0";
+                mapping->hasUnknownAssignment = false;
                 GUIKIT::Vector::eraseVectorPos(parts, 0);
 
                 for(;;) {
@@ -363,14 +364,18 @@ auto InputManager::bindHids() -> void {
 
                             else mapping->hids.push_back({ hidDevice, &hidDevice->group(groupId),
                                     &hidDevice->group(groupId).inputs[inputId], qualifier, 0 });							
-                        }
+                        } else if (!driverChange)
+                            mapping->hasUnknownAssignment = true;
+                        
                     } catch (...) { /* conversion to uint failed */  }
 
                     GUIKIT::Vector::eraseVectorPos(parts, 0, 4);
                 }
 
             Done:
-                mapping->updateSetting(); //restructure setting in case of corruption or removed devices
+                if (driverChange)
+                    // remove unknown devices when driver is changing
+                    mapping->updateSetting(); //restructure setting in case of corruption or removed devices
                 
                 if (!mapping->alternate)
                     break;
@@ -384,15 +389,20 @@ auto InputManager::bindHids() -> void {
         else
             manager->sort();        
 	}
+    clearLastDeviceState();
+}
+
+auto InputManager::clearLastDeviceState() -> void {
+    for (auto& remap : remapDevices)
+        delete remap.remember;    
+    
+    remapDevices.clear();
+    driverChange = false;
 }
 
 auto InputManager::rememberLastDeviceState() -> void {
     
-    for (auto& remap : remapDevices) {
-        delete remap.remember;
-    }
-    
-    remapDevices.clear();
+    clearLastDeviceState();
     Hid::Device* remember;
     
     for (auto hidDevice : hidDevices) {
@@ -413,6 +423,8 @@ auto InputManager::rememberLastDeviceState() -> void {
         
         remapDevices.push_back( { remember, nullptr } );
     }
+    
+    driverChange = true;
 }
 
 auto InputManager::assignChangedDeviceState() -> void {

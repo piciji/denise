@@ -34,6 +34,7 @@ struct InputMapping {
 	bool anded = false; // mappings linked together as and/or 	
 	GUIKIT::Setting* setting;
     int16_t state;
+    bool hasUnknownAssignment = false;
 	
 	auto isAnalog() -> bool { return type == Analog; }
     auto isSwitch() -> bool { return type == Switch; }
@@ -103,6 +104,7 @@ struct InputManager {
     std::vector<InputMapping*> andTriggers;
 
     static std::vector<Hotkey::Id> hotkeyTriggers;
+    static bool driverChange;
 	
 	static auto getManager( Emulator::Interface* emulator ) -> InputManager*;
 	static auto build() -> void;
@@ -122,6 +124,7 @@ struct InputManager {
 	static auto unmapHotkeys() -> void;
     static auto assumeLayoutType() -> KeyboardLayout::Type;
     static auto rememberLastDeviceState() -> void;
+    static auto clearLastDeviceState() -> void;
     static auto assignChangedDeviceState() -> void;
     static auto getDeviceFromIdent( unsigned id ) -> Hid::Device*;
     static auto openMenu( Hotkey::Id id ) -> void;

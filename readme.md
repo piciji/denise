@@ -20,6 +20,7 @@
 * combined key presses (ALT + W) don't trigger single keys when partially released
     * i.e. if ALT is released a few milliseconds sooner than 'W', it doesn't print a 'W'
 * bugfixed RawInput: some joystick types were not registered
+* unplugged joypads will not be forgot anymore
 
 ## 1.0.6
 * polished OS X UI ... looks ok now for Mojave dark theme
