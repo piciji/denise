@@ -77,6 +77,17 @@ auto String::foundSubStr(std::string& str, std::string subStr) -> bool {
     return found != std::string::npos;
 }
 
+auto String::findString(const std::string& strHaystack, const std::string& strNeedle) -> bool {
+    
+    auto it = std::search(
+        strHaystack.begin(), strHaystack.end(),
+        strNeedle.begin(),   strNeedle.end(),
+        [](char ch1, char ch2) { return std::tolower(ch1) == std::tolower(ch2); }
+    );
+    
+    return (it != strHaystack.end() );
+}
+
 auto String::endsWith(std::string& str, std::string suffix) -> bool {
     
     return str.size() >= suffix.size() && 0 == str.compare( str.size() - suffix.size(), suffix.size(), suffix );

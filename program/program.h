@@ -20,8 +20,7 @@
 #define LICENSE "GPLv3"
 #define AUTHOR "PiCiJi"
 
-#define MAX_ARCHIVE_SIZE 100u * 1024u * 1024u
-#define MAX_MEDIUM_SIZE 5u * 1024u * 1024u
+#define MAX_MEDIUM_SIZE 100u * 1024u * 1024u
 #define MAX_FIRMWARE_SIZE 512u * 1024u
 #define MAX_HARDDISK_SIZE 4095u * 1024u * 1024u
 
@@ -60,7 +59,7 @@ struct Program : Emulator::Interface::Bind {
 
     auto init() -> void;
     auto addEmulators() -> void;
-    auto power( Emulator::Interface* emulator, bool showImageError = true ) -> void;
+    auto power( Emulator::Interface* emulator, bool regular = true ) -> void;
 	auto reset( Emulator::Interface* emulator ) -> void;
     auto powerOff() -> void;
     auto readMedia(Emulator::Interface::Media* media, uint8_t* buffer, unsigned length, unsigned offset) -> unsigned override;
@@ -75,8 +74,7 @@ struct Program : Emulator::Interface::Bind {
     auto showOpenError( std::vector<std::string>& paths, bool warning = false ) -> void;
 	
     auto errorOpen(GUIKIT::File* file, GUIKIT::File::Item* item, Message* message ) -> void;
-    auto errorArchiveSize(GUIKIT::File* file, Message* message ) -> void;
-    auto errorMediumSize(GUIKIT::File::Item* item, Message* message ) -> void;
+    auto errorMediumSize(GUIKIT::File* file, Message* message ) -> void;
     auto errorFirmwareSize(GUIKIT::File::Item* item, Message* message ) -> void;
     auto setExpansionSelection( Emulator::Interface* emulator ) -> void;
     

@@ -370,7 +370,7 @@ auto File::getFolderList( std::string path, const std::string& subStr ) -> std::
 #endif
         if (info.name == "." || info.name == "..") continue;
 		if (!subStr.empty()) {
-			if(!String::foundSubStr(info.name, subStr)) continue;
+			if(!String::findString(info.name, subStr)) continue;
 		}
 
         setStats( beautifyPath(path) + info.name, info );

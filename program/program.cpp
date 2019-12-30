@@ -139,7 +139,7 @@ auto Program::init() -> void {
     isRunning = isPause = false;
 }
 
-auto Program::power( Emulator::Interface* emulator, bool showImageError ) -> void {    
+auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {    
     bool emuSwap = activeEmulator != emulator;
     powerOff();			
     
@@ -202,7 +202,7 @@ auto Program::power( Emulator::Interface* emulator, bool showImageError ) -> voi
                 continue;
 
             if (!program->loadImageDataWhenOk( file, setting->id, &mediaGroup, data )) {	                
-                if ( showImageError && !GUIKIT::Vector::find( brokenPaths, setting->path ) )
+                if ( regular && !GUIKIT::Vector::find( brokenPaths, setting->path ) )
                     brokenPaths.push_back( setting->path );
                 
                 continue;
@@ -216,6 +216,9 @@ auto Program::power( Emulator::Interface* emulator, bool showImageError ) -> voi
             States::getInstance( activeEmulator )->updateImage( setting, &media );
 
             filePool->assign(ident(emulator, media.name), file);
+            
+            if (regular && mediaGroup.isExpansion())
+                EmuConfigView::TabWindow::getView( activeEmulator )->statesLayout->updateSaveIdent( setting->file );
         }
     }
     

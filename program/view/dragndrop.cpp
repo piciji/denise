@@ -114,9 +114,9 @@ auto View::autoloadFiles() -> void {
     if (!file)
         return autoloadFiles();
 
-    if (file->getSize() > MAX_ARCHIVE_SIZE) {
+    if (!file->isSizeValid(MAX_MEDIUM_SIZE)) {
         if (!ddControl.silentError)
-            program->errorArchiveSize(file, message);
+            program->errorMediumSize(file, message);
 
         return autoloadFiles();
     }
@@ -170,9 +170,6 @@ auto View::autoloadFiles() -> void {
                         if ( (media && alreadyInUse) || (alreadyInUse >= mediaGroup.media.size()))
                             return autoloadFiles();
 
-                        if (!mediaGroup.isTape() && !mediaGroup.isMemory() && (item->info.size > MAX_MEDIUM_SIZE))
-                            goto errorSize;
-
                         ddControl.emulator = emulator;
                         
                         ddControl.mediaGroups.push_back(&mediaGroup);                        
@@ -198,12 +195,6 @@ errorOpen:
             program->errorOpen(file, item, message);
 
         return autoloadFiles();
-
-errorSize:
-        if (!ddControl.silentError)
-            program->errorMediumSize(item, message);
-
-        return autoloadFiles();        
     };
 
     archiveViewer->setView(items);

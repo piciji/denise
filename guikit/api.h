@@ -1130,6 +1130,7 @@ struct String {
     static auto split(const std::string& str, char delimiter) -> std::vector<std::string>;
     static auto unsplit( const std::vector<std::string>& parts, std::string delimiter ) -> std::string;
     static auto foundSubStr(std::string& str, std::string subStr) -> bool;
+    static auto findString(const std::string& strHaystack, const std::string& strNeedle) -> bool; // ignore case
     static auto endsWith(std::string& str, std::string suffix) -> bool;
     static auto removeQuote(std::string& str) -> std::string&;
     static auto remove(std::string& str, const std::vector<std::string>& subStr) -> std::string&;

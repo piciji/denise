@@ -59,23 +59,15 @@ SwapperLayout::SwapperLayout( TabWindow* tabWindow ) {
         
         savePath( folder, file->getPath() );
 
-		if (!file->isSizeValid(MAX_ARCHIVE_SIZE)) {
-			mes->error(trans->get("file_size_error",{
-				{"%path%", filePath},
-				{"%size%", GUIKIT::File::SizeFormated(MAX_ARCHIVE_SIZE)}}));
-			return;
-		}
+		if (!file->isSizeValid(MAX_MEDIUM_SIZE))
+            return program->errorMediumSize( file, mes );  
+		
 		auto& items = file->scanArchive();
 
 		archiveViewer->onCallback = [this, file](GUIKIT::File::Item* item) {
-			if (item == nullptr) {
-				return mes->error(trans->get(file->isArchived() ? "archive_error" : "file_open_error", {{"%path%", file->getFile()}}));
-			}
-			if (item->info.size > MAX_MEDIUM_SIZE) {
-				return mes->error(trans->get("file_size_error",{
-					{"%path%", item->info.name},
-					{"%size%", GUIKIT::File::SizeFormated(MAX_MEDIUM_SIZE)}}));
-			}
+			if (!item || (item->info.size == 0))
+				return mes->error(trans->get(file->isArchived() ? "archive_error" : "file_open_error", {{"%path%", file->getFile()}}));			
+            
 			if(!listView.selected()) return;
 			auto pos = listView.selection();
 			

@@ -56,16 +56,15 @@
 * RetroArch Shader support
 * 7z support
 * refactoring Linux GTK2 UI to GTK3
+* use a CI system like AppVeyor
 
 # todo improvements
 * fullscreen with custom refresh rate
 * fullscreen when emulator startup
-* auto put loaded image name in savestate description field
 * separate settings file by emulation cores
 * auto start should reuse already opened instance (enable in UI)
 * rework some UI tags to make host menu better understandable for user
 * remove all C64 individual stuff from host menu (mostly hotkeys)
-* unplugged joypads shouldn't be forgot
 * autofire with frequency, option to fire without button press (don't forget override logic)
 * switch joyports as hotkey
 * load/save custom settings

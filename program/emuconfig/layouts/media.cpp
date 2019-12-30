@@ -211,8 +211,8 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
 
 				savePath( mediaGroup->name, file->getPath() );
                 
-				if (file->getSize() > MAX_ARCHIVE_SIZE)
-                    return program->errorArchiveSize( file, mes );				
+				if (!file->isSizeValid(MAX_MEDIUM_SIZE))
+                    return program->errorMediumSize( file, mes );				
                 
                 if ( block->openWritable && file->isArchived())
                     mes->warning(trans->get("archive_wp_tooltip"));
@@ -223,10 +223,7 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
 
                     if (!item || (item->info.size == 0) )
                         return program->errorOpen( file, item, mes );                     
-                    
-                    if (!layout->mediaGroup->isTape() && (item->info.size > MAX_MEDIUM_SIZE))
-                        return program->errorMediumSize( item, mes );                    
-                    
+                                        
                     insertImage( layout, block, file, item );
 				};
 				archiveViewer->setView(items);
@@ -340,12 +337,26 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
         layout->listings.onActivate = [this, layout]( ) {
             auto selection = layout->listings.selection( );
             program->power( emulator );
+            Emulator::Interface::Media* mediaForSaveIdent = nullptr;
             
             if (layout->mediaGroup->isMemory()) {
-                for (auto& media : layout->mediaGroup->media)
-                    emulator->selectListing(&media, layout->listings.selection() );                                        
-            } else
+                for (auto& media : layout->mediaGroup->media) {
+                    emulator->selectListing(&media, layout->listings.selection() ); 
+                    
+                    if (!media.expansion) 
+                        mediaForSaveIdent = &media;                    
+                }                
+
+            } else {
                 emulator->selectListing( layout->selectedBlock->media, selection );
+                mediaForSaveIdent = layout->selectedBlock->media;
+            }
+            
+            if (mediaForSaveIdent) {
+                auto setting = FileSetting::getInstance(tabWindow->ident(mediaForSaveIdent->name));
+                if (setting)
+                    tabWindow->statesLayout->updateSaveIdent(setting->file);
+            }
             
             view->setFocused(300);
         };
@@ -912,6 +923,9 @@ auto MediaLayout::insertImage( MediaGroupLayout* layout, MediaGroupLayout::Block
         States::getInstance(emulator)->forcePowerNextLoad = true;
 
     updateMediaBlock(block, setting);  
+    
+    if (mediaGroup->isDrive())
+        tabWindow->statesLayout->updateSaveIdent( setting->file );
 }
 
 auto MediaLayout::eject( Emulator::Interface::MediaGroup* mediaGroup ) -> void {
@@ -983,8 +997,8 @@ auto MediaLayout::drop( std::string filePath, MediaGroupLayout::Block* block ) -
     if (!file)
         return;
 
-    if (file->getSize() > MAX_ARCHIVE_SIZE)     
-        return program->errorArchiveSize( file, mes );    
+    if (!file->isSizeValid(MAX_MEDIUM_SIZE))  
+        return program->errorMediumSize( file, mes );    
 
     auto& items = file->scanArchive();
 
@@ -992,9 +1006,6 @@ auto MediaLayout::drop( std::string filePath, MediaGroupLayout::Block* block ) -
 
         if (!item || (item->info.size == 0) )
             return program->errorOpen( file, item, mes );        
-
-        if (!layout->mediaGroup->isTape() && !layout->mediaGroup->isMemory() && (item->info.size > MAX_MEDIUM_SIZE))
-            return program->errorMediumSize( item, mes );            
 
         insertImage( layout, block, file, item );        
     };

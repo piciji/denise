@@ -1089,4 +1089,3 @@ auto System::getOSLang() -> Language {
 }
 
 }
-

@@ -68,7 +68,7 @@ StatesLayout::StatesLayout(TabWindow* tabWindow) {
 		
 		if (filePath.empty()) return;
             
-        settings->set<std::string>( this->tabWindow->ident( "save_direct_folder" ),  GUIKIT::File::getPath( filePath ) ); 
+        settings->set<std::string>( this->tabWindow->ident( "save_direct_folder" ), GUIKIT::File::getPath( filePath ) ); 
 		
         States::getInstance(emulator)->load(filePath);
         view->setFocused(300);
@@ -95,7 +95,13 @@ StatesLayout::StatesLayout(TabWindow* tabWindow) {
 	fastSave.listView.onActivate = [this]() {
 		auto selection = fastSave.listView.selection();
 		auto pos = fastSave.listView.text(selection, 0);
-		settings->set<unsigned>( this->tabWindow->ident("save_slot"), std::stoul(pos));        
+		settings->set<unsigned>( this->tabWindow->ident("save_slot"), std::stoul(pos));   
+        
+        unsigned statePos = 0;
+        std::string baseName = splitFile( fastSave.listView.text(selection, 1), statePos );
+        fastSave.top.edit.setText( baseName );
+        settings->set<std::string>( this->tabWindow->ident("save_ident"), baseName);
+        
         States::getInstance( emulator )->load( fastSave.listView.text(selection, 1), true );
         view->setFocused(300);
 	};	
@@ -116,16 +122,8 @@ StatesLayout::StatesLayout(TabWindow* tabWindow) {
             if (GUIKIT::String::endsWith(info.name, ".images"))
                 continue;
             
-			auto parts = GUIKIT::String::split(info.name, '_');
-			if (parts.size() < 2) continue;
-			auto ident = parts[ parts.size() - 1 ];
-			
-			unsigned statePos;
-			try {
-				statePos = std::stoi( ident );
-			} catch(...) { 
-                statePos = 0;
-            }
+            unsigned statePos = 0;
+            splitFile( info.name, statePos );
             
 			lines.push_back( {statePos, info.name, info.date} );
 		}
@@ -159,6 +157,29 @@ StatesLayout::StatesLayout(TabWindow* tabWindow) {
     statePath.edit.setText(settings->get<std::string>(tabWindow->ident("states_folder"), ""));
 }
 
+auto StatesLayout::splitFile( std::string file, unsigned& pos ) -> std::string {
+    
+    auto parts = GUIKIT::String::split( file, '_' );
+    if (parts.size() < 2)
+        return file;
+    
+    auto ident = parts[ parts.size() - 1 ];
+    
+    try {
+        pos = std::stoi( ident );
+    } catch(...) { 
+        pos = 0;
+    }
+    
+    std::size_t end = file.find_last_of("_");
+    if (end == std::string::npos)
+        return file;
+    
+    file = file.erase(end);
+
+    return file;
+}
+
 auto StatesLayout::translate() -> void {
 
     fastSave.top.label.setText( trans->get("labelling", {}, true) );
@@ -175,4 +196,13 @@ auto StatesLayout::translate() -> void {
     statePath.label.setText( trans->get("folder", {}, true) );
     statePath.empty.setText( trans->get("remove") );
     statePath.select.setText( trans->get("select") );
+}
+
+auto StatesLayout::updateSaveIdent( std::string fileName ) -> void {
+    std::size_t end = fileName.find_first_of(".");
+    if (end != std::string::npos)
+        fileName = fileName.erase(end);
+    
+    fastSave.top.edit.setText( fileName );
+    fastSave.top.edit.onChange();
 }

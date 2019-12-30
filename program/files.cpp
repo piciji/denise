@@ -39,12 +39,8 @@ auto Program::loadImageDataWhenOk( GUIKIT::File* file, unsigned fileId, Emulator
         return true;
     }
     
-    if (!file->isSizeValid(MAX_ARCHIVE_SIZE))
+    if (!file->isSizeValid(MAX_MEDIUM_SIZE))
         return false;
-
-    // check single file size
-    if ( !group->isTape() && !group->isMemory() && !file->isSizeValid(fileId, MAX_MEDIUM_SIZE) )
-        return false;    
     
     // non archived tape images will be loaded in chunks when needed
     if ( group->isTape() && !file->isArchived() ) {        
@@ -68,21 +64,11 @@ auto Program::errorOpen(GUIKIT::File* file, GUIKIT::File::Item* item, Message* m
     filePool->unloadOrphaned();
 }
 
-auto Program::errorArchiveSize(GUIKIT::File* file, Message* message ) -> void {
+auto Program::errorMediumSize(GUIKIT::File* file, Message* message ) -> void {
 
     message->error(trans->get("file_size_error",{
         {"%path%", file->getPath()},
-        {"%size%", GUIKIT::File::SizeFormated(MAX_ARCHIVE_SIZE)}
-    }));
-    
-    filePool->unloadOrphaned();
-}
-
-auto Program::errorMediumSize(GUIKIT::File::Item* item, Message* message ) -> void {
-
-    message->error(trans->get("file_size_error",{
-        { "%path%", item->info.name},
-        { "%size%", GUIKIT::File::SizeFormated( MAX_MEDIUM_SIZE )}
+        {"%size%", GUIKIT::File::SizeFormated(MAX_MEDIUM_SIZE)}
     }));
     
     filePool->unloadOrphaned();

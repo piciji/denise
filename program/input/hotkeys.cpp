@@ -262,8 +262,7 @@ auto InputManager::fireHotkey(Hotkey::Id id) -> void {
             auto setting = FileSetting::getInstance( program->ident(activeEmulator, "swapper_" + std::to_string(swapPos)) );
             GUIKIT::File* file = filePool->get( setting->path );
 
-            if (!file || !file->isSizeValid(MAX_ARCHIVE_SIZE) ||
-                !file->isSizeValid(setting->id, MAX_MEDIUM_SIZE) ||
+            if (!file || !file->isSizeValid(MAX_MEDIUM_SIZE) ||                
                 ((data = file->archiveData(setting->id)) == nullptr)
             ) {  
                 status->addMessage(trans->get("file_open_error", {{ "%path%", setting->file }}), 2, true);
