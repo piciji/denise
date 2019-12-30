@@ -22,6 +22,7 @@
 * bugfixed RawInput: some joystick types were not registered
 * unplugged joypads will not be forgot anymore
 * transfer file names of loaded software to the savestate description field
+* added diagonal joypad directions as optional virtual keys to activate it by single keyboard stroke
 
 ## 1.0.6
 * polished OS X UI ... looks ok now for Mojave dark theme

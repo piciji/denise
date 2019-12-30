@@ -348,6 +348,11 @@ auto Interface::prepareDevices() -> void {
 		device.inputs.push_back( {3, "Right"} );
 		device.inputs.push_back( {4, "Button 1"} );
         
+        device.addVirtual( "Diagonal Up-Right", { 0, 3 }, Key::JoyUpRight );
+        device.addVirtual( "Diagonal Down-Right", { 1, 3 }, Key::JoyDownRight );
+        device.addVirtual( "Diagonal Up-Left", { 0, 2 }, Key::JoyUpLeft );
+        device.addVirtual( "Diagonal Down-Left", { 1, 2 }, Key::JoyDownLeft );
+        
         devices.push_back(device);
         
         device.id = id++;

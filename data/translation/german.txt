@@ -428,3 +428,7 @@ REU = REU
 Action Replay = Action Replay
 EasyFlash = EasyFlash
 unknown_device = unbekanntes Gerät
+Diagonal Up-Right = Oben Rechts (optional)
+Diagonal Down-Right = Unten Rechts (optional)
+Diagonal Up-Left = Oben Links (optional)
+Diagonal Down-Left = Unten Links (optional)

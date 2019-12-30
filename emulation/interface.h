@@ -42,7 +42,9 @@ struct Interface {
         ShiftAnd0, ShiftAnd1, ShiftAnd2, ShiftAnd3, ShiftAnd4, 
         ShiftAnd5, ShiftAnd6, ShiftAnd7, ShiftAnd8, ShiftAnd9, 
         
-        AltAnd2,        
+        AltAnd2, 
+        
+        JoyUpRight, JoyDownRight, JoyUpLeft, JoyDownLeft,
     };
     
     enum class CropType { Off = 0, Monitor = 1, Auto = 2, SemiAuto = 3, Free = 4 };

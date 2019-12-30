@@ -71,7 +71,6 @@
 * load PRG files from disk as simple RAM insertion for reduced loading times
 * UI switch to invert RAM init pattern
 * write (SID/PAULA) output to WAV 
-* 8-way digital input
 * need tooltip to distinguish between open readable/writable
 * open non archives as read only from OS point of view
 
