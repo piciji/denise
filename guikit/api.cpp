@@ -103,6 +103,14 @@ auto Application::initialize() -> void {
     }
 }
 
+auto Application::Cocoa::didRestartAppUntranslocated() -> bool {
+    #if GUIKIT_COCOA
+        return pSystem::handleUrlTranslocation();
+    #endif
+
+    return false;
+}
+
 //window
 std::vector<CustomFont*> Window::customFonts;
 

@@ -179,6 +179,59 @@ auto pSystem::getOSLang() -> System::Language {
     return System::Language::UK;
 }
 
+auto pSystem::isTranslocated() -> bool {
+    
+    Boolean(*mySecTranslocateIsTranslocatedURL)(CFURLRef path, bool* isTranslocated, CFErrorRef* __nullable error) = NULL; //flag for API request
+    bool isTranslocated = false;
+    void* handle = NULL;
+
+    //open security framework
+    handle = dlopen("/System/Library/Frameworks/Security.framework/Security", RTLD_LAZY);
+
+    if (!handle)
+        return false;
+    
+    mySecTranslocateIsTranslocatedURL = dlsym(handle, "SecTranslocateIsTranslocatedURL");
+
+    if (!mySecTranslocateIsTranslocatedURL)
+        return false;
+        
+    mySecTranslocateIsTranslocatedURL((__bridge CFURLRef)[NSURL fileURLWithPath : [[NSBundle mainBundle] bundlePath]], &isTranslocated, NULL);
+
+    return isTranslocated;
+}
+
+auto pSystem::getUntranslocatedURL() -> NSURL* {
+    
+    NSURL* untranslocatedURL = nil; //function def for ‘SecTranslocateCreateOriginalPathForURL’
+    CFURLRef __nullable(*mySecTranslocateCreateOriginalPathForURL)(CFURLRef translocatedPath, CFErrorRef * __nullable error);
+    //get original URL
+    untranslocatedURL = (__bridge NSURL*) mySecTranslocateCreateOriginalPathForURL((__bridge CFURLRef) appPath, NULL);
+    
+    return untranslocatedURL;
+}
+
+auto pSystem::handleUrlTranslocation() -> bool {
+    
+    if (!isTranslocated())
+        return false;
+    
+    NSURL* untranslocatedURL = nil;
+    
+    untranslocatedURL = getUntranslocatedURL();
+    
+    if (nil != untranslocatedURL) {
+        //remove quarantine attributes of original
+        execTask(XATTR, @[@"-cr", untranslocatedURL.path]);
+        //relaunch original
+        // ->use ‘open’ as allows two instances of app (this instance is exiting)
+        execTask(OPEN, @[@"-n", @"-a", @"--args", untranslocatedURL.path]);
+        
+        return true;
+    }
+    
+    return false;
+}
     
 //font
 auto pFont::system(unsigned size, std::string style) -> std::string {
