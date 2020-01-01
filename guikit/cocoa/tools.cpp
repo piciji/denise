@@ -181,7 +181,7 @@ auto pSystem::getOSLang() -> System::Language {
 
 auto pSystem::isTranslocated() -> bool {
     
-    Boolean(*mySecTranslocateIsTranslocatedURL)(CFURLRef path, bool* isTranslocated, CFErrorRef* __nullable error) = NULL; //flag for API request
+    Boolean (*mySecTranslocateIsTranslocatedURL)(CFURLRef path, bool* isTranslocated, CFErrorRef* __nullable error) = NULL; //flag for API request
     bool isTranslocated = false;
     void* handle = NULL;
 
@@ -191,9 +191,9 @@ auto pSystem::isTranslocated() -> bool {
     if (!handle)
         return false;
     
-    mySecTranslocateIsTranslocatedURL = dlsym(handle, "SecTranslocateIsTranslocatedURL");
+    *(void**)(&mySecTranslocateIsTranslocatedURL) = dlsym(handle, "SecTranslocateIsTranslocatedURL");
 
-    if (!mySecTranslocateIsTranslocatedURL)
+    if (!mySecTranslocateIsTranslocatedURL || (dlerror() != NULL))
         return false;
         
     mySecTranslocateIsTranslocatedURL((__bridge CFURLRef)[NSURL fileURLWithPath : [[NSBundle mainBundle] bundlePath]], &isTranslocated, NULL);
@@ -202,32 +202,104 @@ auto pSystem::isTranslocated() -> bool {
 }
 
 auto pSystem::getUntranslocatedURL() -> NSURL* {
+    void* handle = NULL;
+    NSURL* uri = nil;
+    // Running on macOS < 10.12
+    if (floor(NSAppKitVersionNumber) <= 1404)
+        return nil;
     
-    NSURL* untranslocatedURL = nil; //function def for ‘SecTranslocateCreateOriginalPathForURL’
-    CFURLRef __nullable(*mySecTranslocateCreateOriginalPathForURL)(CFURLRef translocatedPath, CFErrorRef * __nullable error);
+    handle = dlopen("/System/Library/Frameworks/Security.framework/Security", RTLD_LAZY);
+    
+    // Failed to load security framework
+    if (handle == NULL)
+        return nil;
+    
+    Boolean (*mySecTranslocateIsTranslocatedURL)(CFURLRef path, bool *isTranslocated, CFErrorRef * __nullable error);
+    *(void**)(&mySecTranslocateIsTranslocatedURL) = dlsym(handle, "SecTranslocateIsTranslocatedURL");
+    
+    if(dlerror() != NULL)
+        return nil;
+    
+    CFURLRef __nullable (*mySecTranslocateCreateOriginalPathForURL)(CFURLRef translocatedPath, CFErrorRef * __nullable error);
+    *(void**)(&mySecTranslocateCreateOriginalPathForURL) = dlsym(handle, "SecTranslocateCreateOriginalPathForURL");
+    
+    if(dlerror() != NULL)
+        return nil;
+
+    if (mySecTranslocateIsTranslocatedURL == NULL || mySecTranslocateCreateOriginalPathForURL == NULL)
+        return nil;
+    
+    bool isTranslocated = false;
+    //CFURLRef pathURLRef = CFURLCreateWithFileSystemPath(kCFAllocatorDefault, (__bridge CFStringRef)path, kCFURLPOSIXPathStyle, false);
+    
+    if (mySecTranslocateIsTranslocatedURL((__bridge CFURLRef)[NSURL fileURLWithPath : [[NSBundle mainBundle] bundlePath]], &isTranslocated, NULL)) {
+        if (isTranslocated) {
+            uri = (__bridge NSURL*)mySecTranslocateCreateOriginalPathForURL((__bridge CFURLRef)[NSURL fileURLWithPath : [[NSBundle mainBundle] bundlePath]], NULL);
+            
+            //uri = [(NSURL*)(resolvedURL) path];
+        }
+    }
+    
+    //CFRelease(pathURLRef);
+    return uri;
+    
+    
+    //NSURL* untranslocatedURL = nil; //function def for ‘SecTranslocateCreateOriginalPathForURL’
+    //CFURLRef __nullable(*mySecTranslocateCreateOriginalPathForURL)(CFURLRef translocatedPath, CFErrorRef * __nullable error);
     //get original URL
-    untranslocatedURL = (__bridge NSURL*) mySecTranslocateCreateOriginalPathForURL((__bridge CFURLRef) appPath, NULL);
+    //untranslocatedURL = (__bridge NSURL*) mySecTranslocateCreateOriginalPathForURL((__bridge CFURLRef) appPath, NULL);
     
-    return untranslocatedURL;
+    //return untranslocatedURL;
 }
 
 auto pSystem::handleUrlTranslocation() -> bool {
     
-    if (!isTranslocated())
-        return false;
+    //if (!isTranslocated())
+      //  return false;
     
     NSURL* untranslocatedURL = nil;
     
     untranslocatedURL = getUntranslocatedURL();
     
     if (nil != untranslocatedURL) {
+        
+        std::string bar([untranslocatedURL.path UTF8String]);
+        
+        MessageWindow()
+        // .setWindow(*window)
+        .setTitle("translocation")
+        .setText( bar )
+        .warning();
+
+        NSLog(untranslocatedURL.path);
         //remove quarantine attributes of original
-        execTask(XATTR, @[@"-cr", untranslocatedURL.path]);
+        //execTask(XATTR, @[@"-cr", untranslocatedURL.path]);
+        NSTask *task = [[NSTask alloc] init];
+        task.launchPath = @"xattr";
+        task.arguments = @[@"-cr", untranslocatedURL.path];
+        //task.standardOutput = pipe;
+        [task launch];
+
+        NSTask *task2 = [[NSTask alloc] init];
+        task2.launchPath = @"OPEN";
+        task2.arguments = @[@"-n", @"-a", @"--args", untranslocatedURL.path];
+        //task2.standardOutput = pipe;
+        
+        [task2 launch];
+
         //relaunch original
         // ->use ‘open’ as allows two instances of app (this instance is exiting)
-        execTask(OPEN, @[@"-n", @"-a", @"--args", untranslocatedURL.path]);
+        //execTask(OPEN, @[@"-n", @"-a", @"--args", untranslocatedURL.path]);
         
         return true;
+    } else {
+        MessageWindow()
+       // .setWindow(*window)
+        .setTitle("translocation")
+        .setText( "non translocated" )
+        .warning();
+        
+        NSLog(@"not translocated");
     }
     
     return false;

@@ -1,6 +1,7 @@
 
 #include "interface.h"
 #include <pwd.h>
+#include <dlfcn.h>
 
 namespace GUIKIT {
 
