@@ -36,9 +36,6 @@ VideoManager* activeVideoManager = nullptr;
 #include "input.cpp"
 
 int main(int argc, char** argv) {  
-    if (GUIKIT::Application::Cocoa::didRestartAppUntranslocated())
-        // never happen for NON Cocoa
-        return 0;
     Program program(argc, argv);
     GUIKIT::Application::processEvents();
     GUIKIT::Application::run();

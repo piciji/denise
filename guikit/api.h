@@ -154,7 +154,6 @@ struct Application {
         static std::function<void ()> onPreferences;
         static std::function<void ()> onQuit;
         static std::function<void ()> onDock;
-        static auto didRestartAppUntranslocated() -> bool;
     };
 
     Application() = delete;
