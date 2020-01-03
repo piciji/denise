@@ -27,7 +27,7 @@ link :=
 ifeq ($(platform),windows)
     link += -static
 else ifeq ($(platform),macosx)
-    flags += -w -stdlib=libc++ -march=native
+    flags += -w -stdlib=libc++
     link += -lc++ -lobjc
 else
     flags += -march=native
@@ -37,8 +37,9 @@ endif
 ifeq ($(DEBUG), 0)
     flags += -O3
 
+    link += -s
     ifeq ($(platform),windows)
-	link += -mwindows -s
+	link += -mwindows
     endif
 else
     flags += -O0 -g
