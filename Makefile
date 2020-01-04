@@ -36,8 +36,8 @@ endif
 
 ifeq ($(DEBUG), 0)
     flags += -O3
-
     link += -s
+
     ifeq ($(platform),windows)
 	link += -mwindows
     endif
@@ -152,11 +152,13 @@ build: $(objects)
 	mkdir out/$(name).app/Contents/Resources/$(translationFolder)
 	mkdir out/$(name).app/Contents/Resources/$(dataFolder)
 	mkdir out/$(name).app/Contents/Resources/$(fontFolder)
+	mkdir out/$(name).app/Contents/Resources/shader
 
 	cp data/Info.plist out/$(name).app/Contents/Info.plist
 	cp data/$(translationFolder)/* out/$(name).app/Contents/Resources/$(translationFolder)/
 	cp data/$(dataFolder)/* out/$(name).app/Contents/Resources/$(dataFolder)/
 	cp data/$(fontFolder)/* out/$(name).app/Contents/Resources/$(fontFolder)/
+	cp data/shader/* out/$(name).app/Contents/Resources/shader/
 	
 	sips -s format icns data/img/$(loname).png --out out/$(name).app/Contents/Resources/$(name).icns
 	$(strip $(compiler) -o out/$(name).app/Contents/MacOS/$(name) $(objects) $(link))
@@ -185,12 +187,13 @@ install:
     ifeq ($(platform),windows)
 	$(call copy,data/$(translationFolder),out/$(translationFolder))	
 	$(call copy,data/$(dataFolder),out/$(dataFolder))
+	$(call copy,data/shader,out/shader, /S)
 	$(call copy,readme.md,out)
 
     ifneq ($(findstring i686,$(target)),)
-	$(call copy,data/libs/shared/win32,out)
+	$(call copy,"data/libs/shared/win32/*.dll",out)
     else
-	$(call copy,data/libs/shared/win64,out)
+	$(call copy,"data/libs/shared/win64/*.dll",out)
     endif
 
     else ifeq ($(platform),macosx)
@@ -201,6 +204,7 @@ install:
 	mkdir -p $(prefix)/$(loname)/$(translationFolder)/
 	mkdir -p $(prefix)/$(loname)/$(dataFolder)/
 	mkdir -p $(prefix)/$(loname)/$(fontFolder)/
+	mkdir -p $(prefix)/$(loname)/shader/
 
 	install -D -m 755 out/$(name) $(prefix)/bin/$(name)
 	install -D -m 644 data/img/$(loname).png $(prefix)/share/icons/$(loname).png
@@ -208,6 +212,7 @@ install:
 	install -D -m 644 data/$(translationFolder)/* $(prefix)/$(loname)/$(translationFolder)
 	install -D -m 644 data/$(dataFolder)/* $(prefix)/$(loname)/$(dataFolder)
 	install -D -m 644 data/$(fontFolder)/* $(prefix)/$(loname)/$(fontFolder)
+	install -D -m 644 data/shader/* $(prefix)/$(loname)/shader
     endif
 
 uninstall:

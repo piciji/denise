@@ -7,6 +7,7 @@
 # changelog
 
 ## 1.0.7 (NOT RELEASED YET, in master branch)
+* fixed a critical bug that caused OSX builds to use illegal instructions for some architectures
 * added EasyFlash support
 * fixed widget layouting, when app/text scaling is activated by Windows OS
 * added screenshot generation for testbench
@@ -23,6 +24,8 @@
 * unplugged joypads will not be forgot anymore
 * transfer file names of loaded software to the savestate description field
 * added diagonal joypad directions as optional virtual keys to activate it by single keyboard stroke
+* added japanese translation [thanks to Ulgon]
+* launch associated files in fullscreen (from command line, or file association)
 
 ## 1.0.6
 * polished OS X UI ... looks ok now for Mojave dark theme

@@ -60,7 +60,6 @@
 
 # todo improvements
 * fullscreen with custom refresh rate
-* fullscreen when emulator startup
 * separate settings file by emulation cores
 * auto start should reuse already opened instance (enable in UI)
 * rework some UI tags to make host menu better understandable for user
@@ -71,11 +70,10 @@
 * load PRG files from disk as simple RAM insertion for reduced loading times
 * UI switch to invert RAM init pattern
 * write (SID/PAULA) output to WAV 
-* need tooltip to distinguish between open readable/writable
-* open non archives as read only from OS point of view
+* open files as read only from OS point of view
 
 # bugs
-
+* Raphnet Adapter for N64 doesn't work with RawInput
 
 
 # completed emulation
