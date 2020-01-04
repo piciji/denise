@@ -18,15 +18,14 @@ NOTE: in the following we need to include more headers / libraries to our mingw
 installation folder. The first include / lib folders you see in mingw main folder are NOT the
 target folders, therefore change to subfolder: x86_64-w64-mingw32 (64 bit) or i686-w64-mingw32 (32 bit)
 
-openal: install sdk: https://www.openal.org/downloads/
-  remeber installation folder and look into it
-  copy 32 or 64 bit lib OpenAL32.lib in mingw lib folder
-  create folder AL in mingw include folder and copy all header files into it
+openal: (32 or 64 bit)
+  copy: data/libs/shared/win(32)64/OpenAL32.lib to mingw lib folder
+  copy folder with contents: data/libs/include/AL to mingw include folder
 
-freetype: download and unpack latest source code
-  copy contents of freetype include folder to mingw include folder
-  i have already compiled a static link library for 32 and 64 bit.
-  copy it from denise source: data/libs/static/win(32)64/libfreetype.a to mingw lib folder
+freetype: (32 or 64 bit)
+  copy: data/libs/static/win(32)64/libfreetype.a to mingw lib folder
+  copy: data/libs/include/ft2build.h to mingw include folder
+  copy folder with contents: data/libs/include/freetype to mingw include folder
 
 install MSYS if you haven't already.
   https://sourceforge.net/projects/mingw/files/MSYS/Base/msys-core/msys-1.0.11/MSYS-1.0.11.exe/download?use_mirror=netcologne
