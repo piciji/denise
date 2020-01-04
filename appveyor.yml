@@ -33,8 +33,8 @@ install:
 before_build:
   - set Path=%CD%\%MINGW_DIR%\bin;%Path%     
   - cmd: xcopy /I /Y /S "data\libs\include" "%MINGW_LIBS%\include"
-  - cmd: xcopy /I /Y "data\libs\shared\%WINDOWS%\OpenAL32.lib" "%MINGW_LIBS%\lib\OpenAL32.lib"
-  - cmd: xcopy /I /Y "data\libs\static\%WINDOWS%\libfreetype.a" "%MINGW_LIBS%\lib\libfreetype.a"
+  - cmd: xcopy /I /Y "data\libs\shared\%WINDOWS%\OpenAL32.lib" "%MINGW_LIBS%\lib"
+  - cmd: xcopy /I /Y "data\libs\static\%WINDOWS%\libfreetype.a" "%MINGW_LIBS%\lib"
   
 build_script:
   - cmd: C:\MinGW\msys\1.0\bin\bash -c "cd C:/projects/denise && make && make install"
