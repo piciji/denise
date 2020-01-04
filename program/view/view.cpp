@@ -417,6 +417,10 @@ auto View::updateShader() -> void {
     
 	std::vector<GUIKIT::File::Info> shaderList;
 	auto folder = settings->get<std::string>("shader_folder", "");
+    
+    if (folder.empty())
+        folder = program->shaderFolder();
+    
     if (!folder.empty())
 		shaderList = GUIKIT::File::getFolderList(folder);	
     

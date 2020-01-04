@@ -14,6 +14,9 @@
 #ifndef FONT_FOLDER
 #define FONT_FOLDER "fonts"
 #endif
+#ifndef SHADER_FOLDER
+#define SHADER_FOLDER "shader"
+#endif
 #define SETTINGS_FILE "settings.ini"
 #define DEFAULT_TRANS_FILE "english.txt"
 #define VERSION "1.0.6 + ef"
@@ -49,6 +52,7 @@ struct Program : Emulator::Interface::Bind {
     auto translationFolder() -> std::string;
     auto dataFolder() -> std::string;
     auto fontFolder() -> std::string;
+    auto shaderFolder() -> std::string;
 	auto statesFolder(Emulator::Interface* emulator) -> std::string;
 	auto appFolder() -> std::string;
 	auto ident( Emulator::Interface* emulator, std::string name ) -> std::string;

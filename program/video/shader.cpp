@@ -362,6 +362,9 @@ auto Shader::loadExternal() -> bool {
 
     auto folder = settings->get<std::string>("shader_folder", "");
     if (folder.empty())
+        folder = program->shaderFolder();
+    
+    if (folder.empty())
         return true;
 
     folder = GUIKIT::File::beautifyPath(folder);

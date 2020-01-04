@@ -416,6 +416,11 @@ auto Program::settingsFile() -> std::string {
 	return GUIKIT::System::getUserDataFolder(appFolder()) + SETTINGS_FILE;
 } 
 
+auto Program::shaderFolder() -> std::string {
+    return GUIKIT::System::getResourceFolder(appFolder()) + SHADER_FOLDER;
+}
+
+
 auto Program::log(std::string data, bool newLine) -> void {
 	logger->log(data, newLine);
 }
