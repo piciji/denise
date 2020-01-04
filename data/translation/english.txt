@@ -432,3 +432,4 @@ Diagonal Up-Right = Up Right (optional)
 Diagonal Down-Right = Down Right (optional)
 Diagonal Up-Left = Up Left (optional)
 Diagonal Down-Left = Down Left (optional)
+open_fullscreen = Launch associated file in fullscreen

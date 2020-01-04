@@ -154,6 +154,10 @@ auto Cmd::autoloadImages() -> void {
     view->autoloadInit( arguments, 1 );
     
     view->autoloadFiles();
+    
+    if (!debug && !noDriver && !noGui && settings->get<bool>("open_fullscreen", false)) {
+        view->setFullScreen(true);
+    }
 }
 
 auto Cmd::getEmulator( std::string ident ) -> Emulator::Interface* {

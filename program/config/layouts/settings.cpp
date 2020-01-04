@@ -29,7 +29,8 @@ SwitchesLayout::SwitchesLayout() {
     append(aspectCorrect, {~0u, 0u}, 3);
 	append(pause, {~0u, 0u}, 3);
     append(autostartDragnDrop, {~0u, 0u}, 3);
-    append(saveSettingsOnExit, {~0u, 0u});
+    append(saveSettingsOnExit, {~0u, 0u}, 3);
+    append(openFullscreen, {~0u, 0u});
     setFont(GUIKIT::Font::system("bold"));
 }
 
@@ -76,6 +77,10 @@ SettingsLayout::SettingsLayout() {
         settings->set<bool>("pause_focus_loss", switches.pause.checked());
     };
     
+    switches.openFullscreen.setChecked(settings->get<bool>("open_fullscreen", false));
+    switches.openFullscreen.onToggle = [&]() {
+        settings->set<bool>("open_fullscreen", switches.openFullscreen.checked());
+    };
 
     setLang();
     
@@ -167,6 +172,7 @@ auto SettingsLayout::translate() -> void {
 	switches.pause.setText(trans->get("pause_focus_loss"));
     switches.autostartDragnDrop.setText(trans->get("autostart_dragndrop"));
     switches.saveSettingsOnExit.setText(trans->get("save_changes_on_exit"));
+    switches.openFullscreen.setText(trans->get("open_fullscreen"));
 
     about.left.license.setText( trans->get("license", {}, true) + " " + LICENSE );
     about.left.author.setText( trans->get("author", {}, true) + " " + AUTHOR );

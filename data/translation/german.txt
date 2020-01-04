@@ -432,3 +432,4 @@ Diagonal Up-Right = Oben Rechts (optional)
 Diagonal Down-Right = Unten Rechts (optional)
 Diagonal Up-Left = Oben Links (optional)
 Diagonal Down-Left = Unten Links (optional)
+open_fullscreen = verknüpfte Datei im Vollbild starten

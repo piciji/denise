@@ -432,3 +432,4 @@ Diagonal Up-Right =
 Diagonal Down-Right = 
 Diagonal Up-Left = 
 Diagonal Down-Left = 
+open_fullscreen = 

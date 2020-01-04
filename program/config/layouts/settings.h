@@ -10,6 +10,7 @@ struct SwitchesLayout : GUIKIT::FramedVerticalLayout {
 	GUIKIT::CheckBox pause;
     GUIKIT::CheckBox autostartDragnDrop;
     GUIKIT::CheckBox saveSettingsOnExit;
+    GUIKIT::CheckBox openFullscreen;
     SwitchesLayout();
 };
 
