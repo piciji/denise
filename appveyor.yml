@@ -37,7 +37,7 @@ before_build:
   - cmd: xcopy /I /Y "data\libs\static\%WINDOWS%\libfreetype.a" "%MINGW_LIBS%\lib"
   
 build_script:
-  - cmd: C:\MinGW\msys\1.0\bin\bash -c "cd C:/projects/denise && make && make install"
+  - cmd: C:\msys64\bin\bash -c "cd C:/projects/denise && make && make install"
   
 artifacts:
   - path: out
