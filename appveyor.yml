@@ -31,7 +31,7 @@ before_build:
   - cmd: xcopy /I /Y /S "data\libs\include" "%MINGW_LIBS%\include"
   - cmd: xcopy /I /Y "data\libs\shared\%WINDOWS%\OpenAL32.lib" "%MINGW_LIBS%\lib"
   - cmd: xcopy /I /Y "data\libs\static\%WINDOWS%\libfreetype.a" "%MINGW_LIBS%\lib"
-  - cmd: del "out/.gitkeep"
+  - cmd: del out\.gitkeep
   
 build_script:
   - cmd: mingw32-make && mingw32-make install
@@ -41,5 +41,5 @@ artifacts:
     name: 'Denise_dev_{build}'
     type: zip
      
-cache:
+#cache:
   # - '%MINGW_ARCHIVE%'
