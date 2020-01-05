@@ -37,9 +37,10 @@ before_build:
   - cmd: xcopy /I /Y "data\libs\static\%WINDOWS%\libfreetype.a" "%MINGW_LIBS%\lib"
   
 build_script:
-  - cmd: C:\msys64\usr\bin\bash -c "cd C:/projects/denise && make && make install"
+  - cmd: make && make install
   
 artifacts:
   - path: out
     name: Denise_dev_{build}
     type: zip
+    
