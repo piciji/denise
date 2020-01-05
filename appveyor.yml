@@ -39,14 +39,14 @@ install:
   
 before_build:  
   - if "%build_mode%"=="mingw" set Path=%CD%\%mingw_dir%\bin;%Path%
-  - if "%build_mode%"=="mingw" cmd: xcopy /I /Y /S "data\libs\include" "%mingw_libs%\include"
-  - if "%build_mode%"=="mingw" (cmd: xcopy /I /Y "data\libs\shared\%Target%\OpenAL32.lib" "%mingw_libs%\lib")
-  - if "%build_mode%"=="mingw" (cmd: xcopy /I /Y "data\libs\static\%Target%\libfreetype.a" "%mingw_libs%\lib")
-  - if "%build_mode%"=="mingw" (cmd: del out\.gitkeep)
+  - cmd: if "%build_mode%"=="mingw" (xcopy /I /Y /S "data\libs\include" "%mingw_libs%\include")
+  - cmd: if "%build_mode%"=="mingw" (xcopy /I /Y "data\libs\shared\%Target%\OpenAL32.lib" "%mingw_libs%\lib")
+  - cmd: if "%build_mode%"=="mingw" (xcopy /I /Y "data\libs\static\%Target%\libfreetype.a" "%mingw_libs%\lib")
+  - cmd: if "%build_mode%"=="mingw" (del out\.gitkeep)
   - echo %build_mode%
   
 build_script:
-  - if "%build_mode%"=="mingw" (cmd: mingw32-make && mingw32-make install)
+  - cmd: if "%build_mode%"=="mingw" (mingw32-make && mingw32-make install)
   - echo %build_mode%
   
 artifacts:
