@@ -37,16 +37,17 @@ install:
   - if "%build_mode%"=="mingw" (if not exist "%mingw_archive%" appveyor DownloadFile "%mingw_url%" -FileName "%mingw_archive%")
   - if "%build_mode%"=="mingw" (7z x -y "%mingw_archive%" > nul)
   
-before_build:
-  - echo %mingw_dir%
-  - if "%build_mode%"=="mingw" (cmd: set Path=%CD%\%mingw_dir%\bin;%Path%)
-  - if "%build_mode%"=="mingw" (cmd: xcopy /I /Y /S "data\libs\include" "%mingw_libs%\include")
+before_build:  
+  - if "%build_mode%"=="mingw" set Path=%CD%\%mingw_dir%\bin;%Path%
+  - if "%build_mode%"=="mingw" cmd: xcopy /I /Y /S "data\libs\include" "%mingw_libs%\include"
   - if "%build_mode%"=="mingw" (cmd: xcopy /I /Y "data\libs\shared\%Target%\OpenAL32.lib" "%mingw_libs%\lib")
   - if "%build_mode%"=="mingw" (cmd: xcopy /I /Y "data\libs\static\%Target%\libfreetype.a" "%mingw_libs%\lib")
   - if "%build_mode%"=="mingw" (cmd: del out\.gitkeep)
+  - echo %build_mode%
   
 build_script:
   - if "%build_mode%"=="mingw" (cmd: mingw32-make && mingw32-make install)
+  - echo %build_mode%
   
 artifacts:
   - path: out
