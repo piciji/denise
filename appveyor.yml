@@ -6,10 +6,6 @@ skip_commits:
     - data/*
     - '**/*.md'
 
-cache:
-  - x86_64-8.1.0-release-posix-seh-rt_v6-rev0.7z
-  - i686-8.1.0-release-posix-dwarf-rt_v6-rev0.7z
-
 image:
   - Visual Studio 2019
 
@@ -35,12 +31,15 @@ before_build:
   - cmd: xcopy /I /Y /S "data\libs\include" "%MINGW_LIBS%\include"
   - cmd: xcopy /I /Y "data\libs\shared\%WINDOWS%\OpenAL32.lib" "%MINGW_LIBS%\lib"
   - cmd: xcopy /I /Y "data\libs\static\%WINDOWS%\libfreetype.a" "%MINGW_LIBS%\lib"
+  - cmd: del out/.gitkeep
   
 build_script:
   - cmd: mingw32-make && mingw32-make install
   
 artifacts:
   - path: out
-    name: Denise_dev_{build}
+    name: 'Denise_dev_{build}'
     type: zip
-    
+     
+cache:
+  # - '%MINGW_ARCHIVE%'
