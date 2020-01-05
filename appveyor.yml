@@ -37,7 +37,7 @@ before_build:
   - cmd: xcopy /I /Y "data\libs\static\%WINDOWS%\libfreetype.a" "%MINGW_LIBS%\lib"
   
 build_script:
-  - cmd: make && make install
+  - cmd: mingw32-make && mingw32-make install
   
 artifacts:
   - path: out
