@@ -54,7 +54,7 @@ struct View : public GUIKIT::Window {
     auto loadCursor() -> void;
     auto setCursor( Emulator::Interface* emulator ) -> void;
     auto setDragnDrop() -> void;
-    auto autoloadInit( std::vector<std::string>& files, bool silentError ) -> void;
+    auto autoloadInit( std::vector<std::string> files, bool silentError ) -> void;
     auto autoloadFiles() -> void;
     auto autoloadPostProcessing() -> void;
     auto getSysMenu( Emulator::Interface* emulator ) -> SystemMenu*;

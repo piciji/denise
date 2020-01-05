@@ -53,6 +53,7 @@ std::function<void ()> Application::Cocoa::onAbout;
 std::function<void ()> Application::Cocoa::onPreferences;
 std::function<void ()> Application::Cocoa::onQuit;
 std::function<void ()> Application::Cocoa::onDock;
+std::function<void (std::string fileName)> Application::Cocoa::onOpenFile;
 
 typedef Application _A;
 

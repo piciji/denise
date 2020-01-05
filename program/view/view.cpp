@@ -103,6 +103,17 @@ auto View::build() -> void {
 		audioDriver->clear();
 	};
 
+    GUIKIT::Application::Cocoa::onOpenFile = [this] (std::string fileName) {
+        
+        view->autoloadInit( {fileName}, false );
+        
+        view->autoloadFiles();
+        
+        if (!cmd->debug && !cmd->noDriver && !cmd->noGui && settings->get<bool>("open_fullscreen", false)) {
+            view->setFullScreen(true);
+        }
+    };
+    
     //osx extra menu points
     GUIKIT::Application::Cocoa::onQuit = [this] {
         onClose();

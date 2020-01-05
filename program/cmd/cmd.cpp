@@ -14,7 +14,7 @@ auto Cmd::set(int argc, char** argv) -> void {
         if ( (std::string)argv[i] == "-debugcart" )
             debug = true;            
     }  
-    
+
 }
 
 auto Cmd::parse() -> void {
