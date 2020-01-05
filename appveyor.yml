@@ -17,17 +17,17 @@ environment:
       Target: win32
       
 init:
-  - set mingw_base_url = https://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20
-  - if "%Target%"=="win64" ( set build_mode=mingw )
-  - if "%Target%"=="win32" ( set build_mode=mingw )
-  - if "%Target%"=="win64" ( set mingw_archive=x86_64-8.1.0-release-posix-seh-rt_v6-rev0.7z )
-  - if "%Target%"=="win32" ( set mingw_archive=i686-8.1.0-release-posix-dwarf-rt_v6-rev0.7z )
-  - if "%Target%"=="win64" ( set mingw_dir=mingw64 )
-  - if "%Target%"=="win32" ( set mingw_dir=mingw32 )
-  - if "%Target%"=="win64" ( set mingw_libs='%mingw_dir%\x86_64-w64-mingw32' )
-  - if "%Target%"=="win32" ( set mingw_libs='%mingw_dir%\i686-w64-mingw32' )
-  - if "%Target%"=="win64" ( set mingw_url='%mingw_base_url%Win64/Personal%20Builds/mingw-builds/8.1.0/threads-posix/seh/%mingw_archive%' )
-  - if "%Target%"=="win32" ( set mingw_url='%mingw_base_url%Win32/Personal%20Builds/mingw-builds/8.1.0/threads-posix/dwarf/%mingw_archive%' )
+  - set mingw_base_url=https://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20
+  - if "%Target%"=="win64" ( set build_mode=mingw)
+  - if "%Target%"=="win32" ( set build_mode=mingw)
+  - if "%Target%"=="win64" ( set mingw_archive=x86_64-8.1.0-release-posix-seh-rt_v6-rev0.7z)
+  - if "%Target%"=="win32" ( set mingw_archive=i686-8.1.0-release-posix-dwarf-rt_v6-rev0.7z)
+  - if "%Target%"=="win64" ( set mingw_dir=mingw64)
+  - if "%Target%"=="win32" ( set mingw_dir=mingw32)
+  - if "%Target%"=="win64" ( set mingw_libs='%mingw_dir%\x86_64-w64-mingw32')
+  - if "%Target%"=="win32" ( set mingw_libs='%mingw_dir%\i686-w64-mingw32')
+  - if "%Target%"=="win64" ( set mingw_url='%mingw_base_url%Win64/Personal%20Builds/mingw-builds/8.1.0/threads-posix/seh/%mingw_archive%')
+  - if "%Target%"=="win32" ( set mingw_url='%mingw_base_url%Win32/Personal%20Builds/mingw-builds/8.1.0/threads-posix/dwarf/%mingw_archive%')
   - echo %mingw_base_url%
   - echo %build_mode%
   - echo %mingw_archive%
@@ -36,15 +36,15 @@ init:
   - echo %mingw_url%
           
 install:  
-  - if "%build_mode%"=="mingw" ( if not exist "%mingw_archive%" appveyor DownloadFile "%mingw_url%" -FileName "%mingw_archive%" )
+  - if "%build_mode%"=="mingw" ( if not exist "%mingw_archive%" appveyor DownloadFile "%mingw_url%" -FileName "%mingw_archive%")
   - if "%build_mode%"=="mingw" ( 7z x -y "%mingw_archive%" > nul )
   
 before_build:
-  - if "%build_mode%"=="mingw" ( set "Path=%CD%\%mingw_dir%\bin;%Path%" )
-  - if "%build_mode%"=="mingw" ( cmd: xcopy /I /Y /S "data\libs\include" "%mingw_libs%\include" )
-  - if "%build_mode%"=="mingw" ( cmd: xcopy /I /Y "data\libs\shared\%Target%\OpenAL32.lib" "%mingw_libs%\lib" )
-  - if "%build_mode%"=="mingw" ( cmd: xcopy /I /Y "data\libs\static\%Target%\libfreetype.a" "%mingw_libs%\lib" )
-  - if "%build_mode%"=="mingw" ( cmd: del out\.gitkeep )
+  - if "%build_mode%"=="mingw" ( set Path=%CD%\%mingw_dir%\bin;%Path%)
+  - if "%build_mode%"=="mingw" ( cmd: xcopy /I /Y /S "data\libs\include" "%mingw_libs%\include")
+  - if "%build_mode%"=="mingw" ( cmd: xcopy /I /Y "data\libs\shared\%Target%\OpenAL32.lib" "%mingw_libs%\lib")
+  - if "%build_mode%"=="mingw" ( cmd: xcopy /I /Y "data\libs\static\%Target%\libfreetype.a" "%mingw_libs%\lib")
+  - if "%build_mode%"=="mingw" ( cmd: del out\.gitkeep)
   
 build_script:
   - if "%build_mode%"=="mingw" ( cmd: mingw32-make && mingw32-make install )
@@ -55,4 +55,4 @@ artifacts:
     type: zip
      
 cache:
-  - if "%build_mode%"=="mingw" ( '%mingw_archive%' )
+  - if "%build_mode%"=="mingw" ('%mingw_archive%')
