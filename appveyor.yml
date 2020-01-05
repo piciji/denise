@@ -17,16 +17,16 @@ environment:
       Target: win32
       
 init:
-  - if "%Target%"=="win64" ( set build_mode=mingw)
-  - if "%Target%"=="win32" ( set build_mode=mingw)
-  - if "%Target%"=="win64" ( set mingw_archive=x86_64-8.1.0-release-posix-seh-rt_v6-rev0.7z)
-  - if "%Target%"=="win32" ( set mingw_archive=i686-8.1.0-release-posix-dwarf-rt_v6-rev0.7z)
-  - if "%Target%"=="win64" ( set mingw_dir=mingw64)
-  - if "%Target%"=="win32" ( set mingw_dir=mingw32)
-  - if "%Target%"=="win64" ( set mingw_libs='%mingw_dir%\x86_64-w64-mingw32')
-  - if "%Target%"=="win32" ( set mingw_libs='%mingw_dir%\i686-w64-mingw32')
-  - if "%Target%"=="win64" ( set mingw_url='https://sourceforge.net/projects/mingw-w64/files/Toolchains\%20targetting\%20Win64/Personal%20Builds/mingw-builds/8.1.0/threads-posix/seh/%mingw_archive%')
-  - if "%Target%"=="win32" ( set mingw_url='https://sourceforge.net/projects/mingw-w64/files/Toolchains\%20targetting\%20Win32/Personal%20Builds/mingw-builds/8.1.0/threads-posix/dwarf/%mingw_archive%')
+  - if "%Target%"=="win64" (build_mode: mingw)
+  - if "%Target%"=="win32" (build_mode: mingw)
+  - if "%Target%"=="win64" (mingw_archive: x86_64-8.1.0-release-posix-seh-rt_v6-rev0.7z)
+  - if "%Target%"=="win32" (mingw_archive: i686-8.1.0-release-posix-dwarf-rt_v6-rev0.7z)
+  - if "%Target%"=="win64" (mingw_dir: mingw64)
+  - if "%Target%"=="win32" (mingw_dir: mingw32)
+  - if "%Target%"=="win64" (mingw_libs: '%mingw_dir%\x86_64-w64-mingw32')
+  - if "%Target%"=="win32" (mingw_libs: '%mingw_dir%\i686-w64-mingw32')
+  - if "%Target%"=="win64" (mingw_url: 'https://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20Win64/Personal%20Builds/mingw-builds/8.1.0/threads-posix/seh/%mingw_archive%')
+  - if "%Target%"=="win32" (mingw_url: 'https://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20Win32/Personal%20Builds/mingw-builds/8.1.0/threads-posix/dwarf/%mingw_archive%')
   - echo %build_mode%
   - echo %mingw_archive%
   - echo %mingw_dir%
