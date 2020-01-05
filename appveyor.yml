@@ -10,14 +10,14 @@ image:
   - Visual Studio 2019
 
 environment:
-  matrix:
-    - MINGW_DIR: mingw64
-      WINDOWS: win64
+  matrix:      
+    - OS: win64 
+      MINGW_DIR: mingw64      
       MINGW_URL: https://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20Win64/Personal%20Builds/mingw-builds/8.1.0/threads-posix/seh/x86_64-8.1.0-release-posix-seh-rt_v6-rev0.7z
       MINGW_ARCHIVE: x86_64-8.1.0-release-posix-seh-rt_v6-rev0.7z
       MINGW_LIBS: '%MINGW_DIR%\x86_64-w64-mingw32' 
-    - MINGW_DIR: mingw32
-      WINDOWS: win32
+    - OS: win32
+      MINGW_DIR: mingw32
       MINGW_URL: https://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20Win32/Personal%20Builds/mingw-builds/8.1.0/threads-posix/dwarf/i686-8.1.0-release-posix-dwarf-rt_v6-rev0.7z
       MINGW_ARCHIVE: i686-8.1.0-release-posix-dwarf-rt_v6-rev0.7z
       MINGW_LIBS:  '%MINGW_DIR%\i686-w64-mingw32'
@@ -29,8 +29,8 @@ install:
 before_build:
   - set Path=%CD%\%MINGW_DIR%\bin;%Path%     
   - cmd: xcopy /I /Y /S "data\libs\include" "%MINGW_LIBS%\include"
-  - cmd: xcopy /I /Y "data\libs\shared\%WINDOWS%\OpenAL32.lib" "%MINGW_LIBS%\lib"
-  - cmd: xcopy /I /Y "data\libs\static\%WINDOWS%\libfreetype.a" "%MINGW_LIBS%\lib"
+  - cmd: xcopy /I /Y "data\libs\shared\%OS%\OpenAL32.lib" "%MINGW_LIBS%\lib"
+  - cmd: xcopy /I /Y "data\libs\static\%OS%\libfreetype.a" "%MINGW_LIBS%\lib"
   - cmd: del out\.gitkeep
   
 build_script:
@@ -38,8 +38,8 @@ build_script:
   
 artifacts:
   - path: out
-    name: 'Denise_dev_{build}'
+    name: 'Denise_%OS%'
     type: zip
      
-#cache:
-  # - '%MINGW_ARCHIVE%'
+cache:
+  - '%MINGW_ARCHIVE%'
