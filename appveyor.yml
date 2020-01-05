@@ -27,11 +27,6 @@ init:
   - if "%Target%"=="win32" ( set mingw_libs=%mingw_dir%\i686-w64-mingw32)
   - if "%Target%"=="win64" ( set mingw_url=https://sourceforge.net/projects/mingw-w64/files/Toolchains targetting Win64/Personal Builds/mingw-builds/8.1.0/threads-posix/seh/%mingw_archive%)
   - if "%Target%"=="win32" ( set mingw_url=https://sourceforge.net/projects/mingw-w64/files/Toolchains targetting Win32/Personal Builds/mingw-builds/8.1.0/threads-posix/dwarf/%mingw_archive%)
-  - echo %build_mode%
-  - echo %mingw_archive%
-  - echo %mingw_dir%
-  - echo %mingw_libs%
-  - echo %mingw_url%
           
 install:  
   - if "%build_mode%"=="mingw" (if not exist "%mingw_archive%" appveyor DownloadFile "%mingw_url%" -FileName "%mingw_archive%")
@@ -43,11 +38,9 @@ before_build:
   - cmd: if "%build_mode%"=="mingw" (xcopy /I /Y "data\libs\shared\%Target%\OpenAL32.lib" "%mingw_libs%\lib")
   - cmd: if "%build_mode%"=="mingw" (xcopy /I /Y "data\libs\static\%Target%\libfreetype.a" "%mingw_libs%\lib")
   - cmd: if "%build_mode%"=="mingw" (del out\.gitkeep)
-  - echo %build_mode%
   
 build_script:
   - cmd: if "%build_mode%"=="mingw" (mingw32-make && mingw32-make install)
-  - echo %build_mode%
   
 artifacts:
   - path: out
@@ -55,4 +48,4 @@ artifacts:
     type: zip
      
 cache:
-  - if "%build_mode%"=="mingw" ('%mingw_archive%')
+  - if "%build_mode%"=="mingw" (%mingw_archive%)

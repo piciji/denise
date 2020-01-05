@@ -71,9 +71,11 @@
 * UI switch to invert RAM init pattern
 * write (SID/PAULA) output to WAV 
 * open files as read only from OS point of view
+* set "integer scaling" multiplicator without sizing application window
 
 # bugs
 * Raphnet Adapter for N64 doesn't work with RawInput
+* japanese characters aren't displayed correctly in OpenGL onscreen text
 
 
 # completed emulation

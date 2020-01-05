@@ -27,11 +27,11 @@ freetype: (32 or 64 bit)
   copy: data/libs/include/ft2build.h to mingw include folder
   copy folder with contents: data/libs/include/freetype to mingw include folder
 
-install MSYS if you haven't already.
-  https://sourceforge.net/projects/mingw/files/MSYS/Base/msys-core/msys-1.0.11/MSYS-1.0.11.exe/download?use_mirror=netcologne
-  MSYS is a collection of GNU utilities such as bash, make, gawk and grep
-  to allow building of applications which depend on traditionally UNIX.  
-  run installed msys to get a command line prompt.
+open a cmd: (input cmd in windows search)
+  we need to set mingw 32 or 64 bit to system environment variables
+  input: set Path=<mingw_path>\mingw(32)64\bin;%Path%
+  replace <mingw_path> with your specific mingw installation path
+  i recommend to rename 'bin\mingw32-make.exe' to 'make.exe'
   
 read on at 'now build Denise'. after compilation copy all contents in subfolder 'out' to any place you want.
 
