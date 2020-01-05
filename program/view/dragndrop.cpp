@@ -25,7 +25,7 @@ auto View::setDragnDrop() -> void {
     };        
 }
 
-auto View::autoloadInit( std::vector<std::string>& files, bool silentError ) -> void {    
+auto View::autoloadInit( std::vector<std::string> files, bool silentError ) -> void {    
     ddControl.emulator = nullptr;
     ddControl.mediaGroups.clear();
     ddControl.silentError = silentError;

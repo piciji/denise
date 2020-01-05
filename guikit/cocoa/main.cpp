@@ -33,6 +33,15 @@
     return NSTerminateCancel;
 }
 
+-(BOOL)application:(NSApplication*)sender openFile:(NSString*)filename {
+    using GUIKIT::Application;
+    if(!Application::Cocoa::onOpenFile)
+        return NO;
+    
+    Application::Cocoa::onOpenFile(std::string([filename UTF8String]));
+    return YES;
+}
+
 -(BOOL) applicationShouldHandleReopen:(NSApplication*)application hasVisibleWindows:(BOOL)flag {
     
     using GUIKIT::Application;

@@ -158,7 +158,7 @@ build: $(objects)
 	cp data/$(translationFolder)/* out/$(name).app/Contents/Resources/$(translationFolder)/
 	cp data/$(dataFolder)/* out/$(name).app/Contents/Resources/$(dataFolder)/
 	cp data/$(fontFolder)/* out/$(name).app/Contents/Resources/$(fontFolder)/
-	cp data/shader/* out/$(name).app/Contents/Resources/shader/
+	cp -r data/shader/* out/$(name).app/Contents/Resources/shader/
 	
 	sips -s format icns data/img/$(loname).png --out out/$(name).app/Contents/Resources/$(name).icns
 	$(strip $(compiler) -o out/$(name).app/Contents/MacOS/$(name) $(objects) $(link))
