@@ -108,11 +108,10 @@ for:
     - sh: sudo cp data/fonts/* out/fonts/
     - sh: sudo cp -r data/shader/* out/shader/
     - sh: sudo cp data/install.sh out/
-    - tar -zcf 'Denise_%Target%'.tar.gz /out
+    - tar -zcf 'Denise_%Target%'.tar.gz -C out .
     
   artifacts:
-  - path: 'out/*.tar.gz'
-    name: 'Denise_%Target%'
+  - path: 'Denise_%Target%.tar.gz'   
     
 -  
   matrix:
@@ -142,11 +141,7 @@ for:
   after_build:
     - sh: sudo rm out/.gitkeep
     - sh: sudo cp data/readme_macOS.txt out/
-    - tar -zcf 'Denise_%Target%'.tar.gz /out
+    - tar -zcf 'Denise_%Target%'.tar.gz -C out .
     
   artifacts:
-  - path: 'out/*.tar.gz'
-    name: 'Denise_%Target%'
-
-
-     
+  - path: 'Denise_%Target%.tar.gz'
