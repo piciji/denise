@@ -48,7 +48,7 @@ for:
   
   build_script:
    - cmd: mingw32-make && mingw32-make install
--
+
   
 artifacts:
   - path: out
