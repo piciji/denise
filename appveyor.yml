@@ -131,15 +131,15 @@ for:
     - '%freetype_src%'
       
   install:
+    #- if not exist "%freetype_src%" appveyor DownloadFile "%freetype_url%" -FileName "%freetype_src%"
+    - sh: test -e "%freetype_src%" && echo "File exists" || curl "%freetype_url%" --output "%freetype_src%"
+    - tar -zxf "%freetype_src%"
     - sh: '/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"'
     - sh: brew install pkg-config
-    - sh: brew install sdl2
-    #- if not exist "%freetype_src%" appveyor DownloadFile "%freetype_url%" -FileName "%freetype_src%"
-    - sh: if not exist "%freetype_src%" (curl "%freetype_url%" --output "%freetype_src%")
-    - tar -zxf "%freetype_src%"
-    - sh: cd freetype-2.9.1
+    - sh: brew install sdl2   
     
   build_script:
+    - sh: cd freetype-2.9.1
     - sh: ./configure --enable-static --without-zlib --without-bzip2 && make && make install
     - sh: cd..  
     - sh: make
