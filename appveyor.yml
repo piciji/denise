@@ -68,12 +68,12 @@ for:
       - image: Ubuntu
       
   install:
-    - sh: sudo apt-get install libgtk2.0-dev
-    - sh: sudo apt-get install mesa-common-dev
-    - sh: sudo apt-get install libopenal-dev
-    - sh: sudo apt-get install libpulse-dev
-    - sh: sudo apt-get install libsdl2-dev
-    - sh: sudo apt-get install libudev-dev
+    - sh: sudo apt-get --yes --force-yes install libgtk2.0-dev
+    - sh: sudo apt-get --yes --force-yes install mesa-common-dev
+    - sh: sudo apt-get --yes --force-yes install libopenal-dev
+    - sh: sudo apt-get --yes --force-yes install libpulse-dev
+    - sh: sudo apt-get --yes --force-yes install libsdl2-dev
+    - sh: sudo apt-get --yes --force-yes install libudev-dev
     
   build_script:
     - sh: make
@@ -90,6 +90,7 @@ for:
     - sh: sudo cp data/data/* out/data/
     - sh: sudo cp data/fonts/* out/fonts/
     - sh: sudo cp -r data/shader/* out/shader/
+    - sh: sudo cp data/install.sh out/
   
 artifacts:
   - path: out
