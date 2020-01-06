@@ -121,24 +121,14 @@ for:
 -  
   matrix:
     only:
-      - image: macos-mojave
-      
-  environment:
-    freetype_src: freetype-2.9.1.tar.gz
-    freetype_url: https://download.savannah.gnu.org/releases/freetype/'%freetype_src%'
-      
-  init:
-    #- set freetype_src=freetype-2.9.1.tar.gz
-    #- set freetype_url=https://download.savannah.gnu.org/releases/freetype/'%freetype_src%'
-    - 'echo %freetype_src%'
-    - echo %freetype_url%
+      - image: macos-mojave      
     
-  #cache:
-   # - '%freetype_src%'
+  cache:
+    - freetype-2.9.1.tar.gz
       
   install:
-    #- if not exist "%freetype_src%" appveyor DownloadFile "%freetype_url%" -FileName "%freetype_src%"
-    - sh: test -e %freetype_src% && echo "File exists" || curl %freetype_url% --output %freetype_src%
+    - if not exist "freetype-2.9.1.tar.gz" appveyor DownloadFile "https://download.savannah.gnu.org/releases/freetype/freetype-2.9.1.tar.gz" -FileName "freetype-2.9.1.tar.gz"
+    # - sh: test -e %freetype_src% && echo "File exists" || curl %freetype_url% --output %freetype_src%
     - tar -zxf "%freetype_src%"
     - sh: '/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"'
     - sh: brew install pkg-config
