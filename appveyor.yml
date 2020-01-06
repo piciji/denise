@@ -90,15 +90,15 @@ for:
       - image: Ubuntu
       
   install:
-    - sh: sudo apt-get --yes --force-yes install libgtk2.0-dev
-    - sh: sudo apt-get --yes --force-yes install mesa-common-dev
-    - sh: sudo apt-get --yes --force-yes install libopenal-dev
-    - sh: sudo apt-get --yes --force-yes install libpulse-dev
-    - sh: sudo apt-get --yes --force-yes install libsdl2-dev
-    - sh: sudo apt-get --yes --force-yes install libudev-dev
+    #- sh: sudo apt-get --yes --force-yes install libgtk2.0-dev
+    #- sh: sudo apt-get --yes --force-yes install mesa-common-dev
+    #- sh: sudo apt-get --yes --force-yes install libopenal-dev
+    #- sh: sudo apt-get --yes --force-yes install libpulse-dev
+    #- sh: sudo apt-get --yes --force-yes install libsdl2-dev
+    #- sh: sudo apt-get --yes --force-yes install libudev-dev
     
   build_script:
-    - sh: make
+    #- sh: make
   
   after_build:
     - sh: sudo rm out/.gitkeep
@@ -113,7 +113,7 @@ for:
     - sh: sudo cp data/fonts/* out/fonts/
     - sh: sudo cp -r data/shader/* out/shader/
     - sh: sudo cp data/install.sh out/
-    - tar -zcf Denise_%Target%.tar.gz -C out .
+    - sh: sudo tar -zcf Denise_%Target%.tar.gz -C out .
     
   artifacts:
     - path: 'Denise_%Target%.tar.gz'   
@@ -142,7 +142,7 @@ for:
   after_build:
     - sh: sudo rm out/.gitkeep
     - sh: sudo cp data/txt/readme_macOS.txt out/
-    - tar -zcf Denise_%Target%.tar.gz -C out .
+    - tar -zcf 'Denise_%Target%'.tar.gz -C out .
     
   artifacts:
     - path: 'Denise_%Target%.tar.gz'
