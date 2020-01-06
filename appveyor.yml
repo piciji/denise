@@ -123,14 +123,18 @@ for:
     only:
       - image: macos-mojave
       
+  environment:
+    freetype_src: freetype-2.9.1.tar.gz
+    freetype_url: https://download.savannah.gnu.org/releases/freetype/'%freetype_src%'
+      
   init:
-    - set freetype_src=freetype-2.9.1.tar.gz
-    - set freetype_url=https://download.savannah.gnu.org/releases/freetype/'%freetype_src%'
-    - echo %freetype_src%
+    #- set freetype_src=freetype-2.9.1.tar.gz
+    #- set freetype_url=https://download.savannah.gnu.org/releases/freetype/'%freetype_src%'
+    - 'echo %freetype_src%'
     - echo %freetype_url%
     
-  cache:
-    - '%freetype_src%'
+  #cache:
+   # - '%freetype_src%'
       
   install:
     #- if not exist "%freetype_src%" appveyor DownloadFile "%freetype_url%" -FileName "%freetype_src%"
