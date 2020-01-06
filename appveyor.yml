@@ -142,7 +142,7 @@ for:
     
   after_build:
     - sh: sudo rm out/.gitkeep
-    - sh: sudo cp data/readme_macOS.txt out/
+    - sh: sudo cp data/txt/readme_macOS.txt out/
     - tar -zcf 'Denise_%Target%'.tar.gz -C out .
     
   artifacts:
