@@ -7,8 +7,8 @@ skip_commits:
     - '**/*.md'
 
 image:
-  - macos-mojave
   - Ubuntu
+  - macos-mojave  
   - Visual Studio 2019   
   
 branches:
@@ -77,12 +77,12 @@ for:
     - cmd: del out\.gitkeep
   
   build_script:
-   - cmd: mingw32-make && mingw32-make install
+    - cmd: mingw32-make && mingw32-make install
    
   artifacts:
-  - path: out
-    name: 'Denise_%Target%'
-    type: zip
+    - path: out
+      name: 'Denise_%Target%'
+      type: zip
    
 -
   matrix:
@@ -113,10 +113,10 @@ for:
     - sh: sudo cp data/fonts/* out/fonts/
     - sh: sudo cp -r data/shader/* out/shader/
     - sh: sudo cp data/install.sh out/
-    - tar -zcf 'Denise_%Target%'.tar.gz -C out .
+    - tar -zcf Denise_%Target%.tar.gz -C out .
     
   artifacts:
-  - path: 'Denise_%Target%.tar.gz'   
+    - path: 'Denise_%Target%.tar.gz'   
     
 -  
   matrix:
@@ -127,7 +127,6 @@ for:
     - freetype-2.9.1.tar.gz
       
   install:
-   # - if not exist freetype-2.9.1.tar.gz appveyor DownloadFile https://download.savannah.gnu.org/releases/freetype/freetype-2.9.1.tar.gz -FileName freetype-2.9.1.tar.gz
     - sh: test -e freetype-2.9.1.tar.gz && echo "File exists" || curl -L https://download.savannah.gnu.org/releases/freetype/freetype-2.9.1.tar.gz --output freetype-2.9.1.tar.gz
     - tar -zvxf freetype-2.9.1.tar.gz
     - sh: '/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"'
@@ -143,7 +142,7 @@ for:
   after_build:
     - sh: sudo rm out/.gitkeep
     - sh: sudo cp data/txt/readme_macOS.txt out/
-    - tar -zcf 'Denise_%Target%'.tar.gz -C out .
+    - tar -zcf Denise_%Target%.tar.gz -C out .
     
   artifacts:
-  - path: 'Denise_%Target%.tar.gz'
+    - path: 'Denise_%Target%.tar.gz'
