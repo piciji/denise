@@ -120,7 +120,7 @@ for:
       
   init:
     - set freetype_src=freetype-2.9.1.tar.gz
-    - set freetype_url=https://sourceforge.net/projects/freetype/files/freetype2/2.9.1/%freetype_src%
+    - set freetype_url=https://download.savannah.gnu.org/releases/freetype/%freetype_src%
     
   cache:
     - '%freetype_src%'
