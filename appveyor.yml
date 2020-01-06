@@ -8,44 +8,50 @@ skip_commits:
 
 image:
   - Visual Studio 2019
+  #- Ubuntu
+  #- Maces
 
-environment:
-  matrix:      
-    - Job: Windows 64-bit 
-      Target: win64
-    - Job: Windows 32-bit
-      Target: win32
+for:
+-    
+  matrix:
+    only:
+      - image: Visual Studio 2019
+        Job: Windows 64-bit
+        Target: win64
+      - image: Visual Studio 2019
+        Job: Windows 32-bit
+        Target: win32
       
-init:
-  - if "%Target%"=="win64" ( set build_mode=mingw)
-  - if "%Target%"=="win32" ( set build_mode=mingw)
-  - if "%Target%"=="win64" ( set mingw_archive=x86_64-8.1.0-release-posix-seh-rt_v6-rev0.7z)
-  - if "%Target%"=="win32" ( set mingw_archive=i686-8.1.0-release-posix-dwarf-rt_v6-rev0.7z)
-  - if "%Target%"=="win64" ( set mingw_dir=mingw64)
-  - if "%Target%"=="win32" ( set mingw_dir=mingw32)
-  - if "%Target%"=="win64" ( set mingw_libs=%mingw_dir%\x86_64-w64-mingw32)
-  - if "%Target%"=="win32" ( set mingw_libs=%mingw_dir%\i686-w64-mingw32)
-  - if "%Target%"=="win64" ( set mingw_url=https://sourceforge.net/projects/mingw-w64/files/Toolchains targetting Win64/Personal Builds/mingw-builds/8.1.0/threads-posix/seh/%mingw_archive%)
-  - if "%Target%"=="win32" ( set mingw_url=https://sourceforge.net/projects/mingw-w64/files/Toolchains targetting Win32/Personal Builds/mingw-builds/8.1.0/threads-posix/dwarf/%mingw_archive%)
-          
-install:  
-  - if "%build_mode%"=="mingw" (if not exist "%mingw_archive%" appveyor DownloadFile "%mingw_url%" -FileName "%mingw_archive%")
-  - if "%build_mode%"=="mingw" (7z x -y "%mingw_archive%" > nul)
+  init:
+    - if "%Target%"=="win64" ( set mingw_archive=x86_64-8.1.0-release-posix-seh-rt_v6-rev0.7z)
+    - if "%Target%"=="win32" ( set mingw_archive=i686-8.1.0-release-posix-dwarf-rt_v6-rev0.7z)
+    - if "%Target%"=="win64" ( set mingw_dir=mingw64)
+    - if "%Target%"=="win32" ( set mingw_dir=mingw32)
+    - if "%Target%"=="win64" ( set mingw_libs=%mingw_dir%\x86_64-w64-mingw32)
+    - if "%Target%"=="win32" ( set mingw_libs=%mingw_dir%\i686-w64-mingw32)
+    - if "%Target%"=="win64" ( set mingw_url=https://sourceforge.net/projects/mingw-w64/files/Toolchains targetting Win64/Personal Builds/mingw-builds/8.1.0/threads-posix/seh/%mingw_archive%)
+    - if "%Target%"=="win32" ( set mingw_url=https://sourceforge.net/projects/mingw-w64/files/Toolchains targetting Win32/Personal Builds/mingw-builds/8.1.0/threads-posix/dwarf/%mingw_archive%)
+      
+  cache:
+    - '%mingw_archive%'
+      
+  install:  
+    - if not exist "%mingw_archive%" appveyor DownloadFile "%mingw_url%" -FileName "%mingw_archive%"
+    - 7z x -y "%mingw_archive%" > nul
   
-before_build:  
-  - if "%build_mode%"=="mingw" set Path=%CD%\%mingw_dir%\bin;%Path%
-  - cmd: if "%build_mode%"=="mingw" (xcopy /I /Y /S "data\libs\include" "%mingw_libs%\include")
-  - cmd: if "%build_mode%"=="mingw" (xcopy /I /Y "data\libs\shared\%Target%\OpenAL32.lib" "%mingw_libs%\lib")
-  - cmd: if "%build_mode%"=="mingw" (xcopy /I /Y "data\libs\static\%Target%\libfreetype.a" "%mingw_libs%\lib")
-  - cmd: if "%build_mode%"=="mingw" (del out\.gitkeep)
+  before_build:  
+    - set Path=%CD%\%mingw_dir%\bin;%Path%
+    - cmd: xcopy /I /Y /S "data\libs\include" "%mingw_libs%\include"
+    - cmd: xcopy /I /Y "data\libs\shared\%Target%\OpenAL32.lib" "%mingw_libs%\lib"
+    - cmd: xcopy /I /Y "data\libs\static\%Target%\libfreetype.a" "%mingw_libs%\lib"
+    - cmd: del out\.gitkeep
   
-build_script:
-  - cmd: if "%build_mode%"=="mingw" (mingw32-make && mingw32-make install)
+  build_script:
+   - cmd: mingw32-make && mingw32-make install
+-
   
 artifacts:
   - path: out
     name: 'Denise_%Target%'
     type: zip
      
-cache:
-  - if "%build_mode%"=="mingw" (%mingw_archive%)
