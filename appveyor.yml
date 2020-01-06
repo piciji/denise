@@ -121,7 +121,7 @@ for:
     - sh: brew install pkg-config
     - sh: brew install sdl2
     - if not exist "%freetype_src%" appveyor DownloadFile "%freetype_url%" -FileName "%freetype_src%"
-    - sh: tar -zxvf "%freetype_src%" > nul
+    - sh: tar -zxvf "%freetype_src%"
     - sh: cd freetype-2.9.1
     
   build_script:
