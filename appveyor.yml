@@ -10,17 +10,19 @@ image:
   - Visual Studio 2019
   #- Ubuntu
   #- Maces
+  
+environment:
+  matrix:
+    - Job: Windows 64-bit
+      Target: win64
+    - Job: Windows 32-bit
+      Target: win32
 
 for:
 -    
   matrix:
     only:
-      - image: Visual Studio 2019
-        Job: Windows 64-bit
-        Target: win64
-      - image: Visual Studio 2019
-        Job: Windows 32-bit
-        Target: win32
+      - image: Visual Studio 2019        
       
   init:
     - if "%Target%"=="win64" ( set mingw_archive=x86_64-8.1.0-release-posix-seh-rt_v6-rev0.7z)
