@@ -9,7 +9,12 @@ skip_commits:
 image:
   - macos-mojave
   - Ubuntu
-  - Visual Studio 2019    
+  - Visual Studio 2019   
+  
+branches:
+  only:
+    - master
+    - appveyor
   
 environment:
   matrix:
@@ -129,7 +134,8 @@ for:
     - sh: '/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"'
     - sh: brew install pkg-config
     - sh: brew install sdl2
-    - if not exist "%freetype_src%" appveyor DownloadFile "%freetype_url%" -FileName "%freetype_src%"
+    #- if not exist "%freetype_src%" appveyor DownloadFile "%freetype_url%" -FileName "%freetype_src%"
+    - sh: if not exist "%freetype_src%" (curl "%freetype_url%" --output "%freetype_src%")
     - tar -zxf "%freetype_src%"
     - sh: cd freetype-2.9.1
     
