@@ -129,7 +129,7 @@ for:
   install:
    # - if not exist freetype-2.9.1.tar.gz appveyor DownloadFile https://download.savannah.gnu.org/releases/freetype/freetype-2.9.1.tar.gz -FileName freetype-2.9.1.tar.gz
     - sh: test -e freetype-2.9.1.tar.gz && echo "File exists" || curl https://download.savannah.gnu.org/releases/freetype/freetype-2.9.1.tar.gz --output freetype-2.9.1.tar.gz
-    - tar -zxf "%freetype_src%"
+    - tar -zxf freetype-2.9.1.tar.gz
     - sh: '/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"'
     - sh: brew install pkg-config
     - sh: brew install sdl2   
