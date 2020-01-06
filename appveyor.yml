@@ -8,8 +8,8 @@ skip_commits:
 
 image:
   - Ubuntu
-  - macos-mojave  
-  - Visual Studio 2019   
+  - Visual Studio 2019
+  - macos-mojave
   
 branches:
   only:
@@ -18,14 +18,14 @@ branches:
   
 environment:
   matrix:
-    - Job: macOS 64-bit
-      Target: macos
     - Job: Linux 64-bit
       Target: linux
     - Job: Windows 64-bit
       Target: win64
     - Job: Windows 32-bit
       Target: win32
+    - Job: macOS 64-bit
+      Target: macos
 
 matrix:
   exclude:
@@ -113,10 +113,10 @@ for:
     - sh: sudo cp data/fonts/* out/fonts/
     - sh: sudo cp -r data/shader/* out/shader/
     - sh: sudo cp data/install.sh out/
-    - sh: sudo tar -zcf Denise_%Target%.tar.gz -C out .
+    - sh: sudo tar -zcf Denise_linux.tar.gz -C out .
     
   artifacts:
-    - path: 'Denise_%Target%.tar.gz'   
+    - path: 'Denise_linux.tar.gz'   
     
 -  
   matrix:
@@ -142,7 +142,7 @@ for:
   after_build:
     - sh: sudo rm out/.gitkeep
     - sh: sudo cp data/txt/readme_macOS.txt out/
-    - sh: sudo tar -zcf Denise_%Target%.tar.gz -C out .
+    - sh: sudo tar -zcf Denise_macOS.tar.gz -C out .
     
   artifacts:
-    - path: 'Denise_%Target%.tar.gz'
+    - path: 'Denise_macOS.tar.gz'
