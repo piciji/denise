@@ -30,7 +30,6 @@ else ifeq ($(platform),macosx)
     flags += -w -stdlib=libc++
     link += -lc++ -lobjc
 else
-    flags += -march=native
     link += -lpthread
 endif
 
@@ -157,7 +156,7 @@ build: $(objects)
 	cp data/Info.plist out/$(name).app/Contents/Info.plist
 	cp data/$(translationFolder)/* out/$(name).app/Contents/Resources/$(translationFolder)/
 	cp data/$(dataFolder)/* out/$(name).app/Contents/Resources/$(dataFolder)/
-	cp data/$(fontFolder)/* out/$(name).app/Contents/Resources/$(fontFolder)/
+	cp data/$(fontFolder)/*.ttf out/$(name).app/Contents/Resources/$(fontFolder)/
 	cp -r data/shader/* out/$(name).app/Contents/Resources/shader/
 	
 	sips -s format icns data/img/$(loname).png --out out/$(name).app/Contents/Resources/$(name).icns
@@ -211,7 +210,7 @@ install:
 	install -D -m 644 data/$(loname).desktop $(prefix)/share/applications/$(loname).desktop
 	install -D -m 644 data/$(translationFolder)/* $(prefix)/$(loname)/$(translationFolder)
 	install -D -m 644 data/$(dataFolder)/* $(prefix)/$(loname)/$(dataFolder)
-	install -D -m 644 data/$(fontFolder)/* $(prefix)/$(loname)/$(fontFolder)
+	install -D -m 644 data/$(fontFolder)/*.ttf $(prefix)/$(loname)/$(fontFolder)
 	install -D -m 644 data/shader/* $(prefix)/$(loname)/shader
     endif
 

@@ -38,14 +38,14 @@ read on at 'now build Denise'. after compilation copy all contents in subfolder 
 OSX
 ---
 opengl, openal should already installed (system frameworks)
-don't forget to update commandline tools, when upgrading OS: xcode-select --install
+don't forget to update SDK (commandline tools), when upgrading OS: xcode-select --install
 
 install brew: /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 brew install pkg-config
 brew install sdl2
 
 compile freetype
-  download latest source
+  download source of version 2.9.1 (newer versions should work, but were not tested)
   ./configure --enable-static --without-zlib --without-bzip2
   make
   sudo make install
