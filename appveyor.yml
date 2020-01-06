@@ -7,18 +7,18 @@ skip_commits:
     - '**/*.md'
 
 image:
-  - Visual Studio 2019
   - Ubuntu
+  - Visual Studio 2019  
   #- Maces
   
 environment:
   matrix:
+    - Job: Linux 64-bit
+      Target: linux
     - Job: Windows 64-bit
       Target: win64
     - Job: Windows 32-bit
       Target: win32
-    - Job: Linux 64-bit
-      Target: linux
 
 matrix:
   exclude:
