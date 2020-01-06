@@ -40,7 +40,7 @@ OSX
 opengl, openal should already installed (system frameworks)
 don't forget to update SDK (commandline tools), when upgrading OS: xcode-select --install
 
-install brew: /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+install brew first: /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 brew install pkg-config
 brew install sdl2
 
