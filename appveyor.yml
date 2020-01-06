@@ -121,10 +121,7 @@ for:
 -  
   matrix:
     only:
-      - image: macos-mojave      
-    
-  cache:
-    - freetype-2.9.1.tar.gz
+      - image: macos-mojave          
       
   install:
     - sh: test -e freetype-2.9.1.tar.gz && echo "File exists" || curl -L https://download.savannah.gnu.org/releases/freetype/freetype-2.9.1.tar.gz --output freetype-2.9.1.tar.gz
@@ -146,3 +143,6 @@ for:
     
   artifacts:
     - path: 'Denise_macOS.tar.gz'
+    
+  cache:
+    - freetype-2.9.1.tar.gz
