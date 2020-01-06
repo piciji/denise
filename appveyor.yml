@@ -9,7 +9,7 @@ skip_commits:
 image:
   - Ubuntu
   - Visual Studio 2019  
-  #- Maces
+  #- macos-mojave
   
 environment:
   matrix:
@@ -68,28 +68,28 @@ for:
       - image: Ubuntu
       
   install:
-    - cmd: apt-get install libgtk2.0-dev
-    - cmd: apt-get install mesa-common-dev
-    - cmd: apt-get install libopenal-dev
-    - cmd: apt-get install libpulse-dev
-    - cmd: apt-get install libsdl2-dev
-    - cmd: apt-get install libudev-dev
+    - sh: apt-get install libgtk2.0-dev
+    - sh: apt-get install mesa-common-dev
+    - sh: apt-get install libopenal-dev
+    - sh: apt-get install libpulse-dev
+    - sh: apt-get install libsdl2-dev
+    - sh: apt-get install libudev-dev
     
   build_script:
-    - cmd: make
+    - sh: make
   
   after_build:
-    - cmd: rm out/.gitkeep
-    - cmd: mkdir -p out/translation
-    - cmd: mkdir -p out/data
-    - cmd: mkdir -p out/fonts
-    - cmd: mkdir -p out/shader
-    - cmd: cp data/img/denise.png out/
-    - cmd: cp data/denise.desktop out/
-    - cmd: cp data/translation/* out/translation/
-    - cmd: cp data/data/* out/data/
-    - cmd: cp data/fonts/* out/fonts/
-    - cmd: cp -r data/shader/* out/shader/
+    - sh: rm out/.gitkeep
+    - sh: mkdir -p out/translation
+    - sh: mkdir -p out/data
+    - sh: mkdir -p out/fonts
+    - sh: mkdir -p out/shader
+    - sh: cp data/img/denise.png out/
+    - sh: cp data/denise.desktop out/
+    - sh: cp data/translation/* out/translation/
+    - sh: cp data/data/* out/data/
+    - sh: cp data/fonts/* out/fonts/
+    - sh: cp -r data/shader/* out/shader/
   
 artifacts:
   - path: out
