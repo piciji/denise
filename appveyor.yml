@@ -8,7 +8,7 @@ skip_commits:
 
 image:
   - Visual Studio 2019
-  #- Ubuntu
+  - Ubuntu
   #- Maces
   
 environment:
@@ -16,6 +16,17 @@ environment:
     - Job: Windows 64-bit
       Target: win64
     - Job: Windows 32-bit
+      Target: win32
+    - Job: Linux 64-bit
+      Target: linux
+
+matrix:
+  exclude:
+    - image: Visual Studio 2019
+      Target: linux
+    - image: Ubuntu
+      Target: win64
+    - image: Ubuntu
       Target: win32
 
 for:
@@ -50,7 +61,35 @@ for:
   
   build_script:
    - cmd: mingw32-make && mingw32-make install
-
+   
+-
+  matrix:
+    only:
+      - image: Ubuntu
+      
+  install:
+    - cmd: apt-get install libgtk2.0-dev
+    - cmd: apt-get install mesa-common-dev
+    - cmd: apt-get install libopenal-dev
+    - cmd: apt-get install libpulse-dev
+    - cmd: apt-get install libsdl2-dev
+    - cmd: apt-get install libudev-dev
+    
+  build_script:
+    - cmd: make
+  
+  after_build:
+    - cmd: rm out/.gitkeep
+    - cmd: mkdir -p out/translation
+    - cmd: mkdir -p out/data
+    - cmd: mkdir -p out/fonts
+    - cmd: mkdir -p out/shader
+    - cmd: cp data/img/denise.png out/
+    - cmd: cp data/denise.desktop out/
+    - cmd: cp data/translation/* out/translation/
+    - cmd: cp data/data/* out/data/
+    - cmd: cp data/fonts/* out/fonts/
+    - cmd: cp -r data/shader/* out/shader/
   
 artifacts:
   - path: out
