@@ -160,6 +160,7 @@ build: $(objects)
 	cp -r data/shader/* out/$(name).app/Contents/Resources/shader/
 	
 	#sips -s format icns data/img/$(loname).png --out out/$(name).app/Contents/Resources/$(name).icns
+	if [ -f out/icon.iconset ]; then rm -r out/icon.iconset; fi
 	mkdir out/icon.iconset
 
 	sips data/img/$(loname).png -Z 1024 --out out/icon.iconset/icon_512x512@2x.png
@@ -175,7 +176,7 @@ build: $(objects)
 
 	iconutil -c icns out/icon.iconset --output out/$(name).app/Contents/Resources/$(name).icns
 	
-	rm out/icon.iconset
+	rm -r out/icon.iconset
 
 	$(strip $(compiler) -o out/$(name).app/Contents/MacOS/$(name) $(objects) $(link))
 	
