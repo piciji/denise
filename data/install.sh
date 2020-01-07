@@ -1,11 +1,7 @@
 #!/bin/bash
 
-sudo apt-get install libgtk2.0-dev
-sudo apt-get install mesa-common-dev
-sudo apt-get install libopenal-dev
-sudo apt-get install libpulse-dev
-sudo apt-get install libsdl2-dev
-sudo apt-get install libudev-dev
+sudo apt-get install libsdl2-2.0-0
+sudo apt-get install libgtk2.0-0
 
 prefix=~/.local
 mkdir -p $prefix/bin/
@@ -22,4 +18,4 @@ install -D -m 644 denise.desktop $prefix/share/applications/denise.desktop
 install -D -m 644 translation/* $prefix/denise/translation
 install -D -m 644 data/* $prefix/denise/data
 install -D -m 644 fonts/*.ttf $prefix/denise/fonts
-install -D -m 644 shader/* $prefix/denise/shader
+cp -r shader/* $prefix/denise/shader/

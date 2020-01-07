@@ -211,7 +211,7 @@ install:
 	install -D -m 644 data/$(translationFolder)/* $(prefix)/$(loname)/$(translationFolder)
 	install -D -m 644 data/$(dataFolder)/* $(prefix)/$(loname)/$(dataFolder)
 	install -D -m 644 data/$(fontFolder)/*.ttf $(prefix)/$(loname)/$(fontFolder)
-	install -D -m 644 data/shader/* $(prefix)/$(loname)/shader
+	cp -r data/shader/* $(prefix)/$(loname)/shader/
     endif
 
 uninstall:

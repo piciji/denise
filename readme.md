@@ -24,6 +24,7 @@
 * unplugged joypads will not be forgot anymore
 * transfer file names of loaded software to the savestate description field
 * added diagonal joypad directions as optional virtual keys to activate it by single keyboard stroke
+* added new application icon [thanks to Retrofan]
 * added japanese translation [thanks to Ulgon]
 * launch associated files in fullscreen (from command line, or file association)
 

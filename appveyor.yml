@@ -18,14 +18,14 @@ branches:
   
 environment:
   matrix:
+    - Job: macOS 64-bit
+      Target: macos
     - Job: Linux 64-bit
       Target: linux
     - Job: Windows 64-bit
       Target: win64
     - Job: Windows 32-bit
       Target: win32
-    - Job: macOS 64-bit
-      Target: macos
 
 matrix:
   exclude:
@@ -123,12 +123,15 @@ for:
     only:
       - image: macos-mojave          
       
-  install:
+  install:      
     - sh: test -e freetype-2.9.1.tar.gz && echo "File exists" || curl -L https://download.savannah.gnu.org/releases/freetype/freetype-2.9.1.tar.gz --output freetype-2.9.1.tar.gz
     - tar -zvxf freetype-2.9.1.tar.gz
     - sh: '/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"'
     - sh: brew install pkg-config
     - sh: brew install sdl2   
+    
+  before_build:
+    - sh: export MACOSX_DEPLOYMENT_TARGET=10.12
     
   build_script:
     - sh: cd freetype-2.9.1
