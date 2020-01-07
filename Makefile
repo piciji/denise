@@ -159,7 +159,24 @@ build: $(objects)
 	cp data/$(fontFolder)/*.ttf out/$(name).app/Contents/Resources/$(fontFolder)/
 	cp -r data/shader/* out/$(name).app/Contents/Resources/shader/
 	
-	sips -s format icns data/img/$(loname).png --out out/$(name).app/Contents/Resources/$(name).icns
+	#sips -s format icns data/img/$(loname).png --out out/$(name).app/Contents/Resources/$(name).icns
+	mkdir out/icon.iconset
+
+	sips data/img/$(loname).png -Z 1024 --out out/icon.iconset/icon_512x512@2x.png
+	sips data/img/$(loname).png -Z 512 --out out/icon.iconset/icon_512x512.png
+	sips data/img/$(loname).png -Z 512 --out out/icon.iconset/icon_256x256@2x.png
+	sips data/img/$(loname).png -Z 256 --out out/icon.iconset/icon_256x256.png
+	sips data/img/$(loname).png -Z 256 --out out/icon.iconset/icon_128x128@2x.png
+	sips data/img/$(loname).png -Z 128 --out out/icon.iconset/icon_128x128.png
+	sips data/img/$(loname).png -Z 64 --out out/icon.iconset/icon_32x32@2x.png
+	sips data/img/$(loname).png -Z 32 --out out/icon.iconset/icon_32x32.png
+	sips data/img/$(loname).png -Z 32 --out out/icon.iconset/icon_16x16@2x.png
+	sips data/img/$(loname).png -Z 16 --out out/icon.iconset/icon_16x16.png
+
+	iconutil -c icns out/icon.iconset --output out/$(name).app/Contents/Resources/$(name).icns
+	
+	rm out/icon.iconset
+
 	$(strip $(compiler) -o out/$(name).app/Contents/MacOS/$(name) $(objects) $(link))
 	
     ifneq ($(findstring freetype,$(drv)),)
