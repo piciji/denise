@@ -39,6 +39,12 @@
 }
 
 -(void) drawLabel:(BOOL)shouldTruncateLabel inRect:(NSRect)tabRect {
+    
+#ifndef NSAppKitVersionNumber10_14
+    bool _mojaveMin = false;
+#else
+    bool _mojaveMin = NSAppKitVersionNumber >= NSAppKitVersionNumber10_14;
+#endif
     signed selection = [cocoaTabFrame indexOfTabViewItem:self];
     if(selection >= 0) {
         if(p->cocoaImages.size() > selection) {
@@ -47,7 +53,7 @@
                 unsigned iconSize = GUIKIT::pFont::size([cocoaTabFrame font], " ").height;
             
                 [[NSGraphicsContext currentContext] saveGraphicsState];
-                NSRect targetRect = NSMakeRect(tabRect.origin.x, tabRect.origin.y + 0, iconSize, iconSize);
+                NSRect targetRect = NSMakeRect(tabRect.origin.x, tabRect.origin.y + (_mojaveMin ? 0 : 1), iconSize, iconSize);
                 [image drawInRect:targetRect fromRect:NSZeroRect operation:NSCompositeSourceOver fraction:1.0 respectFlipped:YES hints:nil];
                 [[NSGraphicsContext currentContext] restoreGraphicsState];
             
@@ -56,7 +62,7 @@
             }
         }
     }
-    tabRect.origin.y += 0;
+    tabRect.origin.y += _mojaveMin ? 0 : 1;
     [super drawLabel:shouldTruncateLabel inRect:tabRect];
 }
 @end

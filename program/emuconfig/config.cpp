@@ -62,7 +62,7 @@ auto TabWindow::build() -> void {
         ((LIBC64::Interface*) emulator)->convertPetsciiToScreencode( useCustomFont );
     }
     
-    GUIKIT::Geometry defaultGeometry = {100, 100, 850, 450};
+    GUIKIT::Geometry defaultGeometry = {100, 100, 850, 540};
     
     GUIKIT::Geometry geometry = {settings->get<int>(ident("screen_settings_x"), defaultGeometry.x)
         ,settings->get<int>(ident("screen_settings_y"), defaultGeometry.y)
