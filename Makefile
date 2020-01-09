@@ -172,7 +172,8 @@ build: $(objects)
 	sips data/img/$(loname).png -Z 64 --out out/icon.iconset/icon_32x32@2x.png
 	sips data/img/$(loname).png -Z 32 --out out/icon.iconset/icon_32x32.png
 	sips data/img/$(loname).png -Z 32 --out out/icon.iconset/icon_16x16@2x.png
-	sips data/img/$(loname).png -Z 16 --out out/icon.iconset/icon_16x16.png
+	#sips data/img/$(loname).png -Z 16 --out out/icon.iconset/icon_16x16.png
+	cp data/img/$(loname)_16.png out/icon.iconset/icon_16x16.png
 
 	iconutil -c icns out/icon.iconset --output out/$(name).app/Contents/Resources/$(name).icns
 	

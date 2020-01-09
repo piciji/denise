@@ -27,6 +27,7 @@
 * added new application icon [thanks to Retrofan]
 * added japanese translation [thanks to Ulgon]
 * launch associated files in fullscreen (from command line, or file association)
+* fixed a few minor macOS display bugs
 
 ## 1.0.6
 * polished OS X UI ... looks ok now for Mojave dark theme

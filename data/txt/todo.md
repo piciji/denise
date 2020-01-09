@@ -72,14 +72,11 @@
 * write (SID/PAULA) output to WAV 
 * open files as read only from OS point of view
 * set "integer scaling" multiplicator without sizing application window
-* remove macOS one pixel status bar border
-* increase initial size of settings windows
 
 # bugs
 * Raphnet Adapter for N64 doesn't work with RawInput
 * japanese characters aren't displayed correctly in OpenGL onscreen text
-* macOS main window title bar color differs from settings title bar color
-* macOS Tabframe Widget title differs between High Sierra and Mojave by one pixel
+* more Ram Init pattern problems (https://csdb.dk/release/?id=172238  https://csdb.dk/release/?id=172347)
 
 
 # completed emulation
