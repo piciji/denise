@@ -56,11 +56,10 @@ auto pHyperlink::setUri( std::string uri, std::string wrap ) -> void {
 }
 
 auto pHyperlink::updateLink() -> void {
-	std::string link = "";
 	std::string text = hyperlink.text();
 	std::string uri = hyperlink.uri();
 	std::string wrap = hyperlink.wrap();
-	
+    
 	if (wrap.empty())
 		wrap = uri;
         
@@ -68,24 +67,34 @@ auto pHyperlink::updateLink() -> void {
         hyperlink.setText( wrap );
     }
     
-    NSURL* url = [NSURL URLWithString:[NSString stringWithUTF8String:uri.c_str()]];
+    @autoreleasepool {
+        NSURL* url = [NSURL URLWithString:[NSString stringWithUTF8String:uri.c_str()]];
 
-    NSAttributedString* attrString = [cocoaView attributedStringValue];
+        NSAttributedString* attrString = [cocoaView attributedStringValue];
 
-    NSMutableAttributedString* attr = [[NSMutableAttributedString alloc] initWithAttributedString:attrString];
-    
-    NSRange range = NSMakeRange(0, [attr length]);
-    
-    std::size_t found = text.find( wrap );
-    
-    if (found != std::string::npos)
-        range = NSMakeRange(found, wrap.size());
+        NSMutableAttributedString* attr = [[NSMutableAttributedString alloc] initWithAttributedString:attrString];
+        
+        NSRange range = NSMakeRange(0, [attr length]);
+        
+        std::size_t found = text.find( wrap );
+        
+        if (found != std::string::npos) {
+            NSTextField* wrapField = [[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 0, 0) ];
+            [wrapField setStringValue:[NSString stringWithUTF8String:wrap.c_str()]];
 
-    [attr addAttribute:NSLinkAttributeName value:url range:range];
-    [attr addAttribute:NSForegroundColorAttributeName value:[NSColor blueColor] range:range ];
-    [attr addAttribute:NSUnderlineStyleAttributeName value:[NSNumber numberWithInt:NSUnderlineStyleSingle] range:range];
+            NSAttributedString* attrStringWrap = [wrapField attributedStringValue];
+            
+            NSMutableAttributedString* attrWrap = [[NSMutableAttributedString alloc] initWithAttributedString:attrStringWrap];
+            
+            range = NSMakeRange(found, [attrWrap length]);
+        }
 
-    [cocoaView setAttributedStringValue:attr];
+        [attr addAttribute:NSLinkAttributeName value:url range:range];
+        [attr addAttribute:NSForegroundColorAttributeName value:[NSColor blueColor] range:range ];
+        [attr addAttribute:NSUnderlineStyleAttributeName value:[NSNumber numberWithInt:NSUnderlineStyleSingle] range:range];
+
+        [cocoaView setAttributedStringValue:attr];
+    }
 }
     
 auto pHyperlink::setEnabled(bool enabled) -> void {
@@ -115,3 +124,4 @@ auto pHyperlink::init() -> void {
 }   
     
 }       
+

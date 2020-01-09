@@ -29,7 +29,7 @@ auto TabWindow::build() -> void {
     winapi.disableBackgroundRedrawDuringResize();
     cocoa.keepMenuVisibilityOnDisplay();
 
-    GUIKIT::Geometry defaultGeometry = {100, 100, 650, 400};
+    GUIKIT::Geometry defaultGeometry = {100, 100, 650, 420};
     
     GUIKIT::Geometry geometry = {settings->get<int>("screen_settings_x", defaultGeometry.x)
         ,settings->get<int>("screen_settings_y", defaultGeometry.y)

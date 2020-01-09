@@ -119,8 +119,8 @@
         statusBar = [[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 0, 0)];
         [statusBar setAlignment:NSLeftTextAlignment];
         [statusBar setBordered:NO];
-        [statusBar setBezeled:YES];
-        [statusBar setBezelStyle:NSTextFieldSquareBezel];
+        [statusBar setBezeled:NO];
+        //[statusBar setBezelStyle:NSTextFieldSquareBezel];
         [statusBar setEditable:NO];
         [statusBar setHidden:YES];
 
@@ -386,7 +386,7 @@ auto pWindow::setBackgroundColor(unsigned color) -> void {
             colorWithCalibratedRed:((color>>16) & 0xff) / 255.0
             green:((color>>8) & 0xff) / 255.0
             blue:(color & 0xff) / 255.0
-            alpha: 1.0]
+            alpha: 0.0]
          ];
     }
 }
@@ -453,7 +453,7 @@ auto pWindow::setFullScreen(bool fullScreen) -> void {
 auto pWindow::statusBarHeight() -> unsigned {
     if(!window.statusVisible()) return 0;
     NSFont* font = [[cocoaWindow statusBar] font];
-    return pFont::size(font, " ").height + 6;
+    return pFont::size(font, " ").height + 2;
 }
 
 auto pWindow::statusBarReposition() -> void {
