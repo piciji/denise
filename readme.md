@@ -1,8 +1,10 @@
 
-* [todo](https://bitbucket.org/piciji/denise/src/master/data/txt/todo.md)
-* [build info](https://bitbucket.org/piciji/denise/src/master/data/txt/buildinfo)
-* [license](https://bitbucket.org/piciji/denise/src/master/data/txt/licence)
-* usage hints -> scroll down this file  
+[![Build status](https://ci.appveyor.com/api/projects/status/5xq83txi0tfv222a?svg=true)](https://ci.appveyor.com/project/piciji/denise)
+
+![GitHub Logo](data/img/logo.png)
+Format: ![Denise](https://sourceforge.net/projects/deniseemu/)
+
+* [todo](https://bitbucket.org/piciji/denise/src/master/data/txt/todo.md) - [build info](https://bitbucket.org/piciji/denise/src/master/data/txt/buildinfo) - [license](https://bitbucket.org/piciji/denise/src/master/data/txt/licence)
 
 # changelog
 
@@ -25,6 +27,7 @@
 * transfer file names of loaded software to the savestate description field
 * added diagonal joypad directions as optional virtual keys to activate it by single keyboard stroke
 * added new application icon [thanks to Retrofan]
+* added new application logo in project pages [thanks to Retrofan]
 * added japanese translation [thanks to Ulgon]
 * launch associated files in fullscreen (from command line, or file association)
 * fixed a few minor macOS display bugs
