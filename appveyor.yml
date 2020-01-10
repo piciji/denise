@@ -15,17 +15,18 @@ branches:
   only:
     - master
     - appveyor
+    - /v\d*\.\d*\.\d*/
   
 environment:
   matrix:
     - Job: macOS 64-bit
       Target: macos
-    - Job: Linux 64-bit
-      Target: linux
     - Job: Windows 64-bit
       Target: win64
     - Job: Windows 32-bit
       Target: win32
+    - Job: Linux 64-bit
+      Target: linux
 
 matrix:
   exclude:
@@ -79,10 +80,20 @@ for:
   build_script:
     - cmd: mingw32-make && mingw32-make install
    
+  after_build:
+    - ps: |
+        if($env:APPVEYOR_REPO_TAG -eq "false") {
+          $zipTarget = -join("denise_", $env:Target, "_build_", $env:APPVEYOR_REPO_COMMIT.Substring(0, 7), ".zip");
+          $zipSrc = -join("denise_", $env:Target, "_build_", $env:APPVEYOR_REPO_COMMIT.Substring(0, 7));
+          
+        } else {
+          $zipTarget = -join("denise_", $env:Target, "_", $env:APPVEYOR_REPO_TAG_NAME, ".zip");
+          $zipSrc = -join("denise_", $env:Target, "_", $env:APPVEYOR_REPO_TAG_NAME);                  
+        }
+        ren out $zipSrc; Compress-Archive -Path $zipSrc -DestinationPath $zipTarget 
+   
   artifacts:
-    - path: out
-      name: 'Denise_%Target%'
-      type: zip
+    - path: 'denise*.zip'
    
 -
   matrix:
@@ -110,13 +121,24 @@ for:
     - sh: sudo cp data/denise.desktop out/
     - sh: sudo cp data/translation/* out/translation/
     - sh: sudo cp data/data/* out/data/
-    - sh: sudo cp data/fonts/* out/fonts/
+    - sh: sudo cp data/fonts/*.ttf out/fonts/
     - sh: sudo cp -r data/shader/* out/shader/
     - sh: sudo cp data/install.sh out/
-    - sh: sudo tar -zcf Denise_linux.tar.gz -C out .
+    - sh: |
+        if [ "${APPVEYOR_REPO_TAG}" == "false" ]
+        then
+          export gzTarget=denise_linux_build_$(echo ${APPVEYOR_REPO_COMMIT} | cut -c 1-7).tar.gz
+          export gzSrc=denise_linux_build_$(echo ${APPVEYOR_REPO_COMMIT} | cut -c 1-7)          
+          
+        else        
+          export gzTarget=denise_linux_${APPVEYOR_REPO_TAG_NAME}.tar.gz
+          export gzSrc=denise_linux_${APPVEYOR_REPO_TAG_NAME}                    
+        fi
+        
+        sudo mv out "${gzSrc}" && sudo tar -zcf "${gzTarget}" "${gzSrc}"    
     
   artifacts:
-    - path: 'Denise_linux.tar.gz'   
+    - path: 'denise*.tar.gz'  
     
 -  
   matrix:
@@ -142,10 +164,31 @@ for:
   after_build:
     - sh: sudo rm out/.gitkeep
     - sh: sudo cp data/txt/readme_macOS.txt out/
-    - sh: sudo tar -zcf Denise_macOS.tar.gz -C out .
+    - sh: |
+        if [ "${APPVEYOR_REPO_TAG}" == "false" ]
+        then
+          export gzTarget=denise_osx_build_$(echo ${APPVEYOR_REPO_COMMIT} | cut -c 1-7).tar.gz
+          export gzSrc=denise_osx_build_$(echo ${APPVEYOR_REPO_COMMIT} | cut -c 1-7)          
+          
+        else        
+          export gzTarget=denise_osx_${APPVEYOR_REPO_TAG_NAME}.tar.gz
+          export gzSrc=denise_osx_${APPVEYOR_REPO_TAG_NAME}                    
+        fi
+        
+        sudo mv out "${gzSrc}" && sudo tar -zcf "${gzTarget}" "${gzSrc}"
     
   artifacts:
-    - path: 'Denise_macOS.tar.gz'
+    - path: 'denise*.tar.gz'
     
-  cache:
-    - freetype-2.9.1.tar.gz
+
+deploy:
+  - provider: FTP
+    host: frs.sourceforge.net
+    protocol: sftp
+    username: piciji
+    password:
+      secure: sR9ZwMKR1AJo63ywiqVomw==
+    folder: ../../../../frs/project/deniseemu/${APPVEYOR_REPO_TAG_NAME}
+    on:
+      APPVEYOR_REPO_TAG: true
+

@@ -6,7 +6,7 @@
 
 # changelog
 
-## 1.0.7 (NOT RELEASED YET, in master branch)
+## 1.0.7
 * fixed a critical bug that caused OSX builds to use illegal instructions for some architectures
 * added EasyFlash support
 * fixed widget layouting, when app/text scaling is activated by Windows OS
