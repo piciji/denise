@@ -7,9 +7,9 @@ skip_commits:
     - '**/*.md'
 
 image:
-  - Ubuntu
-  - Visual Studio 2019
   - macos-mojave
+  - Ubuntu
+  - Visual Studio 2019  
   
 branches:
   only:
