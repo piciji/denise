@@ -184,7 +184,7 @@ for:
     - path: 'denise*.tar.gz'
     
 
-#deploy:
+deploy:
 #  - provider: FTP
 #    host: frs.sourceforge.net
 #    protocol: sftp
