@@ -152,6 +152,9 @@ for:
     - sh: brew install pkg-config
     - sh: brew install sdl2   
     
+  cache:
+    - freetype-2.9.1.tar.gz
+    
   before_build:
     - sh: export MACOSX_DEPLOYMENT_TARGET=10.12
     
