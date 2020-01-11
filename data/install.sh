@@ -19,3 +19,4 @@ install -D -m 644 translation/* $prefix/denise/translation
 install -D -m 644 data/* $prefix/denise/data
 install -D -m 644 fonts/*.ttf $prefix/denise/fonts
 cp -r shader/* $prefix/denise/shader/
+echo "Installation complete"
