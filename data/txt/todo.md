@@ -72,6 +72,7 @@
 * write (SID/PAULA) output to WAV 
 * open files as read only from OS point of view
 * set "integer scaling" multiplicator without sizing application window
+* Hotkeys for Power/Softreset
 
 # bugs
 * Raphnet Adapter for N64 doesn't work with RawInput
