@@ -1,9 +1,9 @@
 
 [![Build status](https://ci.appveyor.com/api/projects/status/5xq83txi0tfv222a?svg=true)](https://ci.appveyor.com/project/piciji/denise)
 
-![Denise Logo](data/img/logo.png)
+![Denise Logo](https://deniseemu.sourceforge.io/logo.png)
 
-[todo](https://bitbucket.org/piciji/denise/src/master/data/txt/todo.md) - [build info](https://bitbucket.org/piciji/denise/src/master/data/txt/buildinfo) - [license](https://bitbucket.org/piciji/denise/src/master/data/txt/licence)
+[Downloads](https://sourceforge.net/projects/deniseemu/files/) - [Todo](https://bitbucket.org/piciji/denise/src/master/data/txt/todo.md) - [IssueTracker](https://bitbucket.org/piciji/denise/issues) - [Nightlies](https://ci.appveyor.com/project/piciji/denise/history) - [Build info](https://bitbucket.org/piciji/denise/src/master/data/txt/buildinfo) - [License](https://bitbucket.org/piciji/denise/src/master/data/txt/licence)
 
 # changelog
 
