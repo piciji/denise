@@ -492,7 +492,7 @@ struct RadioBox : Widget {
     auto checked() const -> bool { return state.checked; }
 
     struct {
-        bool checked = true;
+        bool checked = false;
         std::vector<RadioBox*> group;
     } state;
 
