@@ -596,6 +596,9 @@ auto SystemLayout::updateExpansionMemory() -> void {
 
 auto SystemLayout::handleExpansionIfAutoBoot(Emulator::Interface::Expansion* newExpansion) -> void {
     
+    if (GUIKIT::Application::dummy)
+        return;
+    
     ExpansionLayout::Line::Block* noExpansionLayout = nullptr;
     ExpansionLayout::Line::Block* newExpansionLayout = nullptr;
     
