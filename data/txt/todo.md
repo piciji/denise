@@ -73,9 +73,11 @@
 * open files as read only from OS point of view
 * set "integer scaling" multiplicator without sizing application window
 * Hotkeys for Power/Softreset
+* png Overlay for 16:9 fullscreen
+* save/load additional settings files in App folder
 
 # bugs
-* Raphnet Adapter for N64 doesn't work with RawInput
+* Raphnet Adapter for N64, Xbox Controller don't work with RawInput
 * japanese characters aren't displayed correctly in OpenGL onscreen text
 * more Ram Init pattern problems (https://csdb.dk/release/?id=172238  https://csdb.dk/release/?id=172347)
 
