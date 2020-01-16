@@ -23,7 +23,7 @@ struct Interface : Emulator::Interface {
     
     enum ExpansionId {
         ExpansionIdNone = 0, ExpansionIdGame = 1, ExpansionIdReu = 2, ExpansionIdActionReplay = 3,
-        ExpansionIdEasyFlash = 4,
+        ExpansionIdEasyFlash = 4, ExpansionIdRetroReplay = 5,
     };
     
     enum CartridgeId {
@@ -33,7 +33,7 @@ struct Interface : Emulator::Interface {
         CartridgeIdSuperGames = 8, CartridgeIdSystem3 = 15, CartridgeIdZaxxon = 18,
         CartridgeIdActionReplayMK2 = 50, CartridgeIdActionReplayMK3 = 35,
         CartridgeIdActionReplayMK4 = 30, CartridgeIdActionReplayV41AndHigher = 1, 
-        CartridgeIdEasyFlash = 32, CartridgeIdEasyFlashNoBoot = 259,
+        CartridgeIdEasyFlash = 32, CartridgeIdEasyFlashNoBoot = 259, CartridgeIdRetroReplay = 260, CartridgeIdNordicReplay = 261
     };
     
     static const std::string Version;
