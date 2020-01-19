@@ -142,6 +142,11 @@ struct Interface {
         std::string name;
     };
     
+    struct Jumper {
+        unsigned id;
+        std::string name;
+    };
+    
     struct Expansion {
         unsigned id;
         std::string name;
@@ -149,6 +154,7 @@ struct Interface {
         MemoryType* memoryType; // uses RAM
         MediaGroup* mediaGroup; // uses ROM
         std::vector<PCBLayout> pcbs;
+        std::vector<Jumper> jumper;
         
         auto isEmpty() const -> bool { return type == Type::Empty; }
         auto isGame() const -> bool { return type == Type::Game; }

@@ -163,13 +163,25 @@ auto Interface::prepareExpansions() -> void {
             media.expansion = &expansion;
     }
     
-    {   auto& expansion = expansions[ExpansionIdEasyFlash];        
-        expansion.pcbs.push_back( {CartridgeIdEasyFlash, "boot"} );
-        expansion.pcbs.push_back( {CartridgeIdEasyFlashNoBoot, "hide"} );
+    {   auto& expansion = expansions[ExpansionIdEasyFlash];
+    
+        expansion.jumper.push_back( {0, "boot"} );
     
         for(auto& media : mediaGroups[MediaGroupIdExpansionEasyFlash].media)
             media.expansion = &expansion;    
     }
+    
+    {   auto& expansion = expansions[ExpansionIdRetroReplay];        
+        expansion.pcbs.push_back( {CartridgeIdRetroReplay, "Retro Replay"} );
+        expansion.pcbs.push_back( {CartridgeIdNordicReplay, "Nordic Replay"} );
+        
+        expansion.jumper.push_back( {0, "bank"} );
+        expansion.jumper.push_back( {1, "flash"} );
+    
+        for(auto& media : mediaGroups[MediaGroupIdExpansionEasyFlash].media)
+            media.expansion = &expansion;    
+    }
+
 }
 
 auto Interface::prepareStats() -> void {

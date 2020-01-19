@@ -33,7 +33,7 @@ struct Interface : Emulator::Interface {
         CartridgeIdSuperGames = 8, CartridgeIdSystem3 = 15, CartridgeIdZaxxon = 18,
         CartridgeIdActionReplayMK2 = 50, CartridgeIdActionReplayMK3 = 35,
         CartridgeIdActionReplayMK4 = 30, CartridgeIdActionReplayV41AndHigher = 1, 
-        CartridgeIdEasyFlash = 32, CartridgeIdEasyFlashNoBoot = 259, CartridgeIdRetroReplay = 260, CartridgeIdNordicReplay = 261
+        CartridgeIdEasyFlash = 32, CartridgeIdRetroReplay = 36, CartridgeIdNordicReplay = 261
     };
     
     static const std::string Version;

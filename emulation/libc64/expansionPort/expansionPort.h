@@ -74,6 +74,10 @@ struct ExpansionPort {
     virtual auto writeUltimaxRomL( uint16_t addr, uint8_t data ) -> void { }
     
     virtual auto writeUltimaxRomH( uint16_t addr, uint8_t data ) -> void { }   
+
+    virtual auto readUltimaxA0( uint16_t addr ) -> uint8_t { return vicII->lastReadPhase1(); }
+        
+    virtual auto writeUltimaxA0( uint16_t addr, uint8_t data ) -> void { }
                     
     virtual auto setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void {}
     
