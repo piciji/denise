@@ -1,6 +1,7 @@
 
 #include "retroReplay.h"
 #include "../../system/system.h"
+#include "memoryHandler.cpp"
 
 namespace LIBC64 {
 
@@ -41,38 +42,6 @@ auto RetroReplay::init( ) -> void {
     };
 }
 
-auto RetroReplay::setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void {
-    if ((this->rom == nullptr) && (rom == nullptr))
-        return;
-
-    if (this->rom && (rom == nullptr))
-        // unset
-        write();        
-
-    this->media = media;
-    this->rom = rom;
-    this->romSize = romSize;
-    this->binFormat = false;
-
-    if (!readHeader()) {
-        binFormat = true;
-        cartridgeId = media->pcbLayout ? media->pcbLayout->id : Interface::CartridgeIdRetroReplay;
-    }    
-    
-    if (!readChips())
-        assumeChips();  
-    
-    std::memset(flashData, 0xff, 128 * 1024 );
-
-    for (auto& chip : chips) {
-
-        if (chip.bank >= 16)
-            break;
-
-        std::memcpy(flashData + (chip.bank << 13), chip.ptr, chip.size);
-    }
-}
-
 auto RetroReplay::assign( Cart* cart ) -> void {
     // don't rebuild
 }
@@ -88,7 +57,7 @@ auto RetroReplay::writeIo1( uint16_t addr, uint8_t value ) -> void {
         return;    
         
     switch(addr & 0xff) {
-        case 0:            
+        case 0: {           
             bool disableFreeze = !!(value & 0x40);       
             if (disableFreeze) {
                 frozen = false; 
@@ -114,7 +83,7 @@ auto RetroReplay::writeIo1( uint16_t addr, uint8_t value ) -> void {
             
             updateRamBank();
             system->changeExpansionPortMemoryMode(exRom, game);            
-            break;
+        } break;
             
         case 1:
             bank = ((value >> 3) & 3) | ((value >> 5) & 4);
@@ -134,7 +103,7 @@ auto RetroReplay::writeIo1( uint16_t addr, uint8_t value ) -> void {
             
         default:
             if (reuMapping && !frozen && ramMode)            
-                ram[ ramBank | 0x1e00 | (addr & 0xff) ] = value; 
+                ram[ getRamAddr( 0x1e00 | (addr & 0xff)) ] = value; 
             
             break;
     }
@@ -146,7 +115,7 @@ auto RetroReplay::writeIo2( uint16_t addr, uint8_t value ) -> void {
         return;  
 
     if (!reuMapping && !frozen && ramMode)
-        ram[ ramBank | 0x1f00 | (addr & 0xff) ] = value; 
+        ram[ getRamAddr( 0x1f00 | (addr & 0xff)) ] = value; 
 }
 
 auto RetroReplay::readIo1( uint16_t addr ) -> uint8_t {
@@ -156,11 +125,11 @@ auto RetroReplay::readIo1( uint16_t addr ) -> uint8_t {
     addr &= 0xff;
     
     if (addr == 0 || addr == 1)        
-        return ((bank & 4) << 5) | (reuMapping << 6) | ((bank & 8) << 2) | ((bank & 3) << 3) | (frozen << 2) | (allowBank << 1) | flashJumper;        
+        return ((bank & 4) << 5) | (reuMapping << 6) | ((bank & 8) << 2) | ((bank & 3) << 3) | (freezeArmed << 2) | (allowBank << 1) | flashJumper;        
     
     if (reuMapping && !frozen) {
         if (ramMode)
-            return ram[ ramBank | 0x1e00 | (addr & 0xff) ];
+            return ram[ getRamAddr( 0x1e00 | (addr & 0xff)) ];
     
         if (game)                   
             return flash.read(  getFlashAddr( (0xde00 | addr) & 0x1fff ) );
@@ -177,7 +146,7 @@ auto RetroReplay::readIo2( uint16_t addr ) -> uint8_t {
     
     if (!reuMapping && !frozen) {
         if (ramMode)
-            return ram[ ramBank | 0x1f00 | (addr & 0xff) ];
+            return ram[ getRamAddr( 0x1f00 | (addr & 0xff)) ];
     
         if (game)        
             return flash.read(  getFlashAddr( (0xdf00 | addr) & 0x1fff ) );
@@ -186,12 +155,10 @@ auto RetroReplay::readIo2( uint16_t addr ) -> uint8_t {
     return 0;
 }
 
-auto RetroReplay::updateRamBank() -> void {
+
+inline auto RetroReplay::getRamAddr( uint16_t addr ) -> uint16_t {
     
-    ramBank = 0;
-    
-    if (allowBank)
-        ramBank |= (bank & 3) << 13;
+    return (allowBank ? ((bank & 3) << 13) : 0) | addr;
 }
 
 template<bool specialCase> inline auto RetroReplay::getFlashAddr( uint32_t addr ) -> uint32_t {
@@ -232,7 +199,7 @@ auto RetroReplay::readRomL( uint16_t addr ) -> uint8_t {
         return flash.read( getFlashAddr( addr & 0x1fff ) );
     
     if (ramMode)
-        return ram[ ramBank | (addr & 0x1fff) ];
+        return ram[ getRamAddr(addr & 0x1fff) ];
     
     if (!game && !exRom) // 16 k config
         return ExpansionPort::readRomL(addr);
@@ -278,7 +245,7 @@ auto RetroReplay::readRomH( uint16_t addr ) -> uint8_t {
             return flash.read( getFlashAddr<true>( addr & 0x1fff ) );
         }
         
-        return ram[ ramBank | (addr & 0x1fff) ];
+        return ram[ getRamAddr(addr & 0x1fff) ];
     }
     
     if (allowBank || !ramMode)
@@ -292,7 +259,7 @@ auto RetroReplay::writeRomH( uint16_t addr, uint8_t data ) -> void {
     if (flashJumper || !alternateRam || frozen)
         return;
     
-    ram[ ramBank | (addr & 0x1fff) ] = data;
+    ram[ getRamAddr(addr & 0x1fff) ] = data;
     
     ExpansionPort::writeRomH( addr, data );
 }
@@ -303,25 +270,31 @@ auto RetroReplay::readUltimaxA0( uint16_t addr ) -> uint8_t {
     if (flashJumper || !alternateRam || !frozen)
         return ExpansionPort::readUltimaxA0(addr);
     
-    return ram[ ramBank | (addr & 0x1fff) ];
+    return ram[ getRamAddr(addr & 0x1fff) ];
 }
 
 auto RetroReplay::writeUltimaxA0( uint16_t addr, uint8_t data ) -> void {
     if (flashJumper || !alternateRam || !frozen)
         return;
     
-    ram[ ramBank | (addr & 0x1fff) ] = data;
+    ram[ getRamAddr(addr & 0x1fff) ] = data;
 }
 
 // writeUltimaxRomH at $e0 is not mapped by retroReplay
 
 auto RetroReplay::didFreeze() -> void {
+    if (noFreeze)
+        return;
+    
     frozen = true;
     enabled = true;
+    bank = 0;
+    ramMode = false;
+    alternateRam = false;
 }
 
 auto RetroReplay::blockFreeze() -> bool {
-    return flashJumper || noFreeze;
+    return flashJumper;
 }
 
 auto RetroReplay::reset() -> void {
@@ -337,7 +310,6 @@ auto RetroReplay::reset() -> void {
     allowBank = false;
     noFreeze = false;
     reuMapping = false;
-    ramBank = 0;
     
     if (flashJumper)
         exRom = true;  
@@ -350,72 +322,6 @@ auto RetroReplay::setWriteProtect(bool state) -> void {
     
     writeProtect = state;
 }
-    
-auto RetroReplay::write() -> void {
-    
-    if (!media || !media->guid || !flash.dirty)
-        return;
-        
-    if (writeProtect) {
-        if (!system->interface->questionToWrite(media))
-            return;
-    }
-    
-    system->interface->truncateMedia( media );
-    
-    unsigned offset = 0;
-    
-    if (!binFormat) {
-        uint8_t header[64];
-        buildHeader(&header[0], 0x20, true, false, "RetroReplay Cartridge" );
-        system->interface->writeMedia(media, &header[0], 0x40, 0);
-        offset += 0x40;
-    }    
-    
-    if (!chips.size()) {
-        Chip chip;
-        chip.size = 0x2000;
-        chip.type = Chip::Type::FlashRom;
-        chips.push_back( chip );
-    }
-
-    Chip* chip = &chips[0];
-    uint8_t cheader[16];
-    
-    for (unsigned b = 0; b < 16; b++ ) {
-
-        if (binFormat) {
-            system->interface->writeMedia(media, flashData + b * 0x2000, 0x2000, offset);
-            offset += 0x2000;
-
-            continue;
-        }
-        // crt format 
-        chip->bank = b;
-        
-        bool writeBank = !checkForEmptyBank(flashData + b * 0x2000);
-                
-        if ( writeBank ) {            
-            chip->addr = 0x8000;
-            buildChipHeader( &cheader[0], *chip );
-            system->interface->writeMedia(media, &cheader[0], 16, offset);
-            offset += 16;
-            system->interface->writeMedia(media, flashData + b * 0x2000, 0x2000, offset);
-            offset += 0x2000;   
-        }                                
-    }
-    
-    flash.dirty = false;
-}
-
-auto RetroReplay::checkForEmptyBank(uint8_t* ptr) -> bool {
-    
-    for(unsigned i = 0; i < 0x2000; i++) {
-        if (ptr[i] != 0xff)
-            return false;
-    }
-    return true;
-}
 
 auto RetroReplay::isBootable( ) -> bool {
     return !flashJumper;
@@ -427,12 +333,23 @@ auto RetroReplay::serialize(Emulator::Serializer& s) -> void {
     
     s.integer( bank );
     
-    s.array( ram );
+    s.array( ram, 32 * 1024 );
     
     flash.serialize(s);
     
     if (flash.dirty)
-        s.array(flashData, 128 * 1024);    
+        s.array(flashData, 128 * 1024);   
+    
+    s.integer( flashJumper );
+    s.integer( bankJumper );
+    s.integer( enabled );
+    s.integer( frozen );
+    s.integer( ramMode );
+    s.integer( alternateRam );
+    s.integer( allowBank );
+    s.integer( noFreeze );
+    s.integer( reuMapping );
+    s.integer( writeOnce );
     
     ExpansionPort::serialize(s);        
 }

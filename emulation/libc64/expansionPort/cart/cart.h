@@ -59,6 +59,7 @@ struct Cart : ExpansionPort {
     
     auto buildHeader(uint8_t* header, uint16_t _type, bool _game, bool _exrom, std::string _name ) -> void;
     auto buildChipHeader(uint8_t* header, Chip& chip) -> void;
+    auto checkForEmptyFlashBank(uint8_t* ptr) -> bool;
 };    
    
 

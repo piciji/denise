@@ -18,6 +18,8 @@ EasyFlash::EasyFlash(Emulator::Events* events) : Cart(false, true),
     
     this->writeProtect = true;
     
+    this->bootJumper = true;
+    
     init();
     
     setId( Interface::ExpansionIdEasyFlash );
@@ -65,7 +67,7 @@ auto EasyFlash::setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned
     if (!readHeader())
         binFormat = true;
     
-    this->cartridgeId = (Interface::CartridgeId)media->pcbLayout->id;
+    this->cartridgeId = Interface::CartridgeIdEasyFlash;
         
     if ( !readChips() )
         assumeChips();  
@@ -160,8 +162,8 @@ auto EasyFlash::write() -> void {
         // crt format 
         chip->bank = b;
         
-        bool writeBankLo = !checkForEmptyBank(dataLo + b * 0x2000);
-        bool writeBankHi = !checkForEmptyBank(dataHi + b * 0x2000);
+        bool writeBankLo = !checkForEmptyFlashBank(dataLo + b * 0x2000);
+        bool writeBankHi = !checkForEmptyFlashBank(dataHi + b * 0x2000);
                 
         if ( writeBankLo || (!crt8k && writeBankHi) ) {            
             chip->addr = 0x8000;
@@ -189,15 +191,6 @@ auto EasyFlash::write() -> void {
     flashHi.dirty = false;
 }
 
-auto EasyFlash::checkForEmptyBank(uint8_t* ptr) -> bool {
-    
-    for(unsigned i = 0; i < 0x2000; i++) {
-        if (ptr[i] != 0xff)
-            return false;
-    }
-    return true;
-}
-
 auto EasyFlash::assign( Cart* cart ) -> void {
     // don't rebuild
 }
@@ -212,7 +205,7 @@ auto EasyFlash::reset() -> void {
     std::memset(ram, 0xff, 256);
    
     bank = 0;
-    game = cartridgeId == Interface::CartridgeIdEasyFlashNoBoot;
+    game = !bootJumper;
     exRom = true;
     
     flashLo.reset();
@@ -220,7 +213,7 @@ auto EasyFlash::reset() -> void {
 }
 
 auto EasyFlash::isBootable( ) -> bool {
-    return cartridgeId == Interface::CartridgeIdEasyFlash;
+    return bootJumper;
 }  
 
 auto EasyFlash::writeIo1( uint16_t addr, uint8_t value ) -> void {
@@ -241,7 +234,7 @@ auto EasyFlash::writeIo1( uint16_t addr, uint8_t value ) -> void {
         game = value & 1;
         
         if (game && !mode)
-            game = cartridgeId == Interface::CartridgeIdEasyFlashNoBoot;                 
+            game = !bootJumper;                 
                   
         system->changeExpansionPortMemoryMode( exRom, game );            
     }   
@@ -301,6 +294,8 @@ auto EasyFlash::serialize(Emulator::Serializer& s) -> void {
     
     s.integer( bank );
     
+    s.integer( bootJumper );
+    
     s.array( ram );
     
     flashLo.serialize(s);
@@ -348,6 +343,11 @@ auto EasyFlash::createFlash(unsigned& imageSize) -> uint8_t* {
 auto EasyFlash::setWriteProtect(bool state) -> void {
     
     writeProtect = state;
+}
+
+auto EasyFlash::setJumper( unsigned jumperId, bool state ) -> void {
+    
+    bootJumper = state;
 }
 
 }

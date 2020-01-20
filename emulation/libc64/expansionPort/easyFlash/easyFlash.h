@@ -24,6 +24,7 @@ struct EasyFlash : Cart {
     uint8_t ram[256];
     Emulator::Interface::Media* media;
     static uint8_t eapi[768];
+    bool bootJumper;
     
     auto writeIo1( uint16_t addr, uint8_t value ) -> void;
     
@@ -53,8 +54,6 @@ struct EasyFlash : Cart {
     
     auto write() -> void;   
     
-    auto checkForEmptyBank(uint8_t* ptr) -> bool;
-    
     auto createFlash(unsigned& imageSize) -> uint8_t*;
     
     auto setWriteProtect(bool state) -> void;
@@ -62,6 +61,8 @@ struct EasyFlash : Cart {
     auto serialize(Emulator::Serializer& s) -> void;
     
     auto isBootable( ) -> bool; 
+    
+    auto setJumper( unsigned jumperId, bool state ) -> void;
 };
 
 extern EasyFlash* easyFlash;

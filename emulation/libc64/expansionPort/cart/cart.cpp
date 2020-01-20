@@ -327,4 +327,13 @@ auto Cart::buildChipHeader(uint8_t* header, Chip& chip) -> void {
     Emulator::copyIntToBufferBigEndian<uint16_t>( header + 0xe, chip.size );
 }
     
+auto Cart::checkForEmptyFlashBank(uint8_t* ptr) -> bool {
+    
+    for(unsigned i = 0; i < 0x2000; i++) {
+        if (ptr[i] != 0xff)
+            return false;
+    }
+    return true;
+}
+
 }

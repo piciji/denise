@@ -12,8 +12,7 @@ struct RetroReplay : Freezer {
     
     ~RetroReplay();
     
-    auto create( Interface::CartridgeId cartridgeId ) -> Cart*;
-    
+    auto create( Interface::CartridgeId cartridgeId ) -> Cart*;    
     auto assign(Cart* cart) -> void;
     
     auto setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void;
@@ -24,6 +23,7 @@ struct RetroReplay : Freezer {
     auto updateRamBank() -> void;
     auto setJumper( unsigned jumperId, bool state ) -> void;
     template<bool specialCase = false> auto getFlashAddr( uint32_t addr ) -> uint32_t;
+    auto getRamAddr( uint16_t addr ) -> uint16_t;
     auto init() -> void;
     
     auto readRomL( uint16_t addr ) -> uint8_t;
@@ -41,9 +41,9 @@ struct RetroReplay : Freezer {
     auto reset() -> void;
     auto setWriteProtect(bool state) -> void;
     auto write() -> void;
-    auto checkForEmptyBank(uint8_t* ptr) -> bool;
     auto isBootable( ) -> bool; 
     auto serialize(Emulator::Serializer& s) -> void;
+    auto createFlash(unsigned& imageSize) -> uint8_t*;
 
     Emulator::Interface::Media* media;
     bool binFormat;
@@ -64,7 +64,6 @@ struct RetroReplay : Freezer {
     bool noFreeze;
     bool reuMapping;
     bool writeOnce;
-    uint16_t ramBank;
     bool writeProtect;
 };    
     
