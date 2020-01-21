@@ -4,6 +4,7 @@
 #include "../expansionPort/reu/reu.h"
 #include "../expansionPort/actionReplay/actionReplay.h"
 #include "../expansionPort/easyFlash/easyFlash.h"
+#include "../expansionPort/retroReplay/retroReplay.h"
 
 namespace LIBC64 {
  

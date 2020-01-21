@@ -18,7 +18,7 @@ EasyFlash::EasyFlash(Emulator::Events* events) : Cart(false, true),
     
     this->writeProtect = true;
     
-    this->bootJumper = true;
+    this->flashJumper = false;
     
     init();
     
@@ -205,7 +205,7 @@ auto EasyFlash::reset() -> void {
     std::memset(ram, 0xff, 256);
    
     bank = 0;
-    game = !bootJumper;
+    game = flashJumper;
     exRom = true;
     
     flashLo.reset();
@@ -213,7 +213,7 @@ auto EasyFlash::reset() -> void {
 }
 
 auto EasyFlash::isBootable( ) -> bool {
-    return bootJumper;
+    return !flashJumper;
 }  
 
 auto EasyFlash::writeIo1( uint16_t addr, uint8_t value ) -> void {
@@ -224,7 +224,7 @@ auto EasyFlash::writeIo1( uint16_t addr, uint8_t value ) -> void {
     } else {
         // too short for textual representation.
         // needs LED icons in status bar
-        //system->interface->updateDriveState(media, (value & 0x80) ? 6 : 0, 0);
+        // system->interface->updateDriveState(media, (value & 0x80) ? 6 : 0, 0);
         
         bool mode = value & 4;
         
@@ -234,7 +234,7 @@ auto EasyFlash::writeIo1( uint16_t addr, uint8_t value ) -> void {
         game = value & 1;
         
         if (game && !mode)
-            game = !bootJumper;                 
+            game = flashJumper;                 
                   
         system->changeExpansionPortMemoryMode( exRom, game );            
     }   
@@ -294,7 +294,7 @@ auto EasyFlash::serialize(Emulator::Serializer& s) -> void {
     
     s.integer( bank );
     
-    s.integer( bootJumper );
+    s.integer( flashJumper );
     
     s.array( ram );
     
@@ -347,7 +347,7 @@ auto EasyFlash::setWriteProtect(bool state) -> void {
 
 auto EasyFlash::setJumper( unsigned jumperId, bool state ) -> void {
     
-    bootJumper = state;
+    flashJumper = state;
 }
 
 }

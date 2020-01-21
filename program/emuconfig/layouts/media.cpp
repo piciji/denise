@@ -15,29 +15,62 @@ PathsLayout::PathsLayout() {
     setPadding(10);
 }
 
-MediaGroupLayout::Block::Header::Header() {
+MediaGroupLayout::Block::Header::Header(Emulator::Interface::Media* media) {
+    
     deviceName.setFont(GUIKIT::Font::system("bold"));
     inUse.setFont(GUIKIT::Font::system("bold"));
-    append(inUse, {0u, 0u}, 5);
-    append(deviceName, {0u, 0u}, 10);
-    append(writeprotect, {0u, 0u}, 10);
+    if (media->group->selected)
+        append(inUse, {0u, 0u}, 5);
+    else
+        append(deviceName, {0u, 0u}, 10);
+        
+    if (media->group->isWritable())
+        append(writeprotect, {0u, 0u}, 10);
     append(eject, {0u, 0u}, 10);
     append(fileName, {~0u, 0u});
     setAlignment(0.5);
 }
 
-MediaGroupLayout::Block::Selector::Selector() {    
+MediaGroupLayout::Block::Selector::Selector(Emulator::Interface::Media* media) {    
+       
     append(edit, {~0u, 0u}, 10);
-    append(combo, {0u, 0u}, 10);
+    
+    if (media->expansion && (media->expansion->pcbs.size() > 0) ) {
+        for (auto& pcb : media->expansion->pcbs) {
+            combo.append( pcb.name, pcb.id );
+
+            if (media->pcbLayout && (media->pcbLayout == &pcb) )
+                combo.setSelection( combo.rows() - 1 );
+        }
+        
+        append(combo, {0u, 0u}, 10);      
+    }
+                  
+    if (media->expansion && (media->expansion->jumpers.size() > 0) ) { 
+        append(jumperLabel, {~0u, 0u}, 2 );
+        
+        for(auto& jumper : media->expansion->jumpers) {
+            auto jumpChecker = new GUIKIT::CheckBox;
+            jumpChecker->setText( jumper.name );
+
+            append(*jumpChecker, {0u, 0u}, 5);
+
+            jumpers.push_back( jumpChecker );
+        }        
+    }
+        
     append(open, {0u, 0u});
-    append(spacer, {0u, 0u}, 5);
-    append(openW, {0u, 0u});
+    if (media->group->isWritable()) {
+        append(spacer, {0u, 0u}, 5);
+        append(openW, {0u, 0u});
+    }
+    
     setAlignment(0.5);
     edit.setEditable(false);
     edit.setDroppable();
 }
 
-MediaGroupLayout::Block::Block() {
+MediaGroupLayout::Block::Block(Emulator::Interface::Media* media) : media(media), header(media), selector(media) {
     append(header, {~0u, 0u}, 2);
     append(selector, {~0u, 0u});
 }
@@ -771,6 +804,15 @@ auto MediaLayout::translate() -> void {
                 for( auto& pcb : mediaGroup->getExpansion()->pcbs ) {
                     block->selector.combo.setText(id++, trans->get( pcb.name ));
                 }
+                      
+                block->selector.jumperLabel.setText( trans->get("jumper", {}, true) );
+                
+                for(auto& jumper : mediaGroup->getExpansion()->jumpers) {
+
+                    auto jumperBox = block->selector.jumpers[jumper.id];
+
+                    jumperBox->setText( trans->get( jumper.name ) );
+                }        
             }
         }        
     }
@@ -1120,8 +1162,7 @@ auto MediaGroupLayout::showOnlyConnectedDevices() -> bool {
 auto MediaGroupLayout::build() -> void {
 
     auto addBlock = [&](Emulator::Interface::Media* media) -> MediaGroupLayout::Block* {
-        auto block = new Block;
-        block->media = media;
+        auto block = new Block( media );
         block->openWritable = false;
         blocks.push_back(block);
         
@@ -1139,29 +1180,52 @@ auto MediaGroupLayout::build() -> void {
         auto& header = block->header;
         auto& selector = block->selector;
         
-        if (!mediaGroup->isWritable()) {
-            header.remove( header.writeprotect );
-            selector.remove( selector.spacer );
-            selector.remove( selector.openW );
-        }
+        if (mediaGroup->selected)
+            radioGroup.push_back( &header.inUse );           
         
-        if (!mediaGroup->selected)
-            header.remove( header.inUse );
-        else {
-            header.remove( header.deviceName );
-            radioGroup.push_back( &header.inUse );                   
-        }
+//        if (!mediaGroup->isWritable()) {
+//            header.remove( header.writeprotect );
+//            selector.remove( selector.spacer );
+//            selector.remove( selector.openW );
+//        }
+//        
+//        if (!mediaGroup->selected)
+//            header.remove( header.inUse );
+//        else {
+//            header.remove( header.deviceName );
+//            radioGroup.push_back( &header.inUse );                   
+//        }
+//        
+//        if (!mediaGroup->isExpansion() || (mediaGroup->getExpansion()->pcbs.size() == 0) )
+//            selector.remove( selector.combo );
+//        else {
+//            for (auto& pcb : mediaGroup->getExpansion()->pcbs) {
+//                selector.combo.append( pcb.name, pcb.id );
+//
+//                if (media.pcbLayout && (media.pcbLayout == &pcb) )
+//                    selector.combo.setSelection( selector.combo.rows() - 1 );
+//            }
+//        }
         
-        if (!mediaGroup->isExpansion() || (mediaGroup->getExpansion()->pcbs.size() == 0) )
-            selector.remove( selector.combo );
-        else {
-            for (auto& pcb : mediaGroup->getExpansion()->pcbs) {
-                selector.combo.append( pcb.name, pcb.id );
-
-                if (media.pcbLayout && (media.pcbLayout == &pcb) )
-                    selector.combo.setSelection( selector.combo.rows() - 1 );
+        if (media.expansion) {
+            for(auto& jumper : media.expansion->jumpers) {
+                
+                auto jumperBox = selector.jumpers[jumper.id];
+                
+                std::string saveIdent = media.name + "_jumper_" + jumper.name;
+                
+                bool state = settings->get<bool>( tabWindow->ident(saveIdent), false );
+                
+                jumperBox->setChecked( state );                                
+                
+                jumperBox->onToggle = [this, jumperBox, saveIdent]() {
+                    
+                    bool state = jumperBox->checked();
+                    
+                    settings->set<bool>( this->tabWindow->ident( saveIdent ), state );
+                };
             }
-        }        
+        }
     }
     
     if (radioGroup.size()) {

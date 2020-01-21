@@ -89,6 +89,8 @@ struct ExpansionPort {
         dma = false;
     }
     
+    virtual auto setJumper( unsigned jumperId, bool state ) -> void {}
+    
     virtual inline auto cycleLo() -> void {}   
     
     virtual inline auto cycleHi() -> void {}   
@@ -101,7 +103,7 @@ struct ExpansionPort {
         s.integer( bus.addr );
     }
     
-    auto setId(Interface::ExpansionId id) -> void { this->id = id; }    
+    auto setId(Interface::ExpansionId id) -> void { this->id = id; }           
 };   
 
 }

@@ -12,6 +12,27 @@ struct RetroReplay : Freezer {
     
     ~RetroReplay();
     
+    Emulator::Interface::Media* media;
+    bool binFormat;
+    
+    Emulator::Flash040 flash;
+    Emulator::Events* events;
+    uint8_t* flashData;
+    uint8_t* ram = nullptr;
+    bool flashJumper;
+    bool bankJumper;
+    bool enabled;
+    uint8_t bank;
+    bool frozen;
+    bool ramMode;
+    
+    bool alternateRam;
+    bool allowBank;
+    bool noFreeze;
+    bool reuMapping;
+    bool writeOnce;
+    bool writeProtect;
+    
     auto create( Interface::CartridgeId cartridgeId ) -> Cart*;    
     auto assign(Cart* cart) -> void;
     
@@ -20,7 +41,6 @@ struct RetroReplay : Freezer {
     auto writeIo2( uint16_t addr, uint8_t value ) -> void;
     auto readIo1( uint16_t addr ) -> uint8_t;
     auto readIo2( uint16_t addr ) -> uint8_t;
-    auto updateRamBank() -> void;
     auto setJumper( unsigned jumperId, bool state ) -> void;
     template<bool specialCase = false> auto getFlashAddr( uint32_t addr ) -> uint32_t;
     auto getRamAddr( uint16_t addr ) -> uint16_t;
@@ -44,27 +64,6 @@ struct RetroReplay : Freezer {
     auto isBootable( ) -> bool; 
     auto serialize(Emulator::Serializer& s) -> void;
     auto createFlash(unsigned& imageSize) -> uint8_t*;
-
-    Emulator::Interface::Media* media;
-    bool binFormat;
-    
-    Emulator::Flash040 flash;
-    Emulator::Events* events;
-    uint8_t* flashData;
-    uint8_t* ram = nullptr;
-    bool flashJumper;
-    bool bankJumper;
-    bool enabled;
-    uint8_t bank;
-    bool frozen;
-    bool ramMode;
-    
-    bool alternateRam;
-    bool allowBank;
-    bool noFreeze;
-    bool reuMapping;
-    bool writeOnce;
-    bool writeProtect;
 };    
     
 extern RetroReplay* retroReplay;   

@@ -81,7 +81,6 @@ auto RetroReplay::writeIo1( uint16_t addr, uint8_t value ) -> void {
             // nordic replay + ram mode + 16k config
             alternateRam = (cartridgeId == Interface::CartridgeIdNordicReplay) && !disableFreeze && ramMode && enabled && !game && !exRom;                      
             
-            updateRamBank();
             system->changeExpansionPortMemoryMode(exRom, game);            
         } break;
             
@@ -98,7 +97,6 @@ auto RetroReplay::writeIo1( uint16_t addr, uint8_t value ) -> void {
                 reuMapping = flashJumper ? false : !!(value & 0x40);
             }
             
-            updateRamBank();
             break;
             
         default:

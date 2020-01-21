@@ -443,8 +443,10 @@ inline auto Drive1541::writeTrack() -> void {
     if (!loaded)
         return;
     
-    if (writeProtected)
-        return;
+    if (writeProtected) {
+        if (!system->interface->questionToWrite(media))
+            return;
+    }
     
     structure1541.writeTrack( gcrTrack, currentHalftrack );        
 }

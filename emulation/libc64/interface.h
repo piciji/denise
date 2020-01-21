@@ -18,7 +18,7 @@ struct Interface : Emulator::Interface {
     enum MediaGroupId {
         MediaGroupIdDisk = 0, MediaGroupIdTape = 1,
         MediaGroupIdMemory = 2, MediaGroupIdExpansionGame = 3, MediaGroupIdExpansionReu = 4,
-        MediaGroupIdExpansionActionReplay = 5, MediaGroupIdExpansionEasyFlash = 6,
+        MediaGroupIdExpansionActionReplay = 5, MediaGroupIdExpansionEasyFlash = 6, MediaGroupIdExpansionRetroReplay = 7,
     };
     
     enum ExpansionId {
@@ -95,6 +95,7 @@ struct Interface : Emulator::Interface {
     auto unsetExpansion() -> void;
     auto getExpansion() -> Expansion*;
     auto analyzeExpansion(uint8_t* data, unsigned size) -> Expansion*;
+    auto setExpansionJumper( Media* media, unsigned jumperId, bool state ) -> void;
     
 	//savestates
     auto checkstate(uint8_t* data, unsigned size) -> bool;

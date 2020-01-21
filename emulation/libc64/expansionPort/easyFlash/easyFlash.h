@@ -24,7 +24,7 @@ struct EasyFlash : Cart {
     uint8_t ram[256];
     Emulator::Interface::Media* media;
     static uint8_t eapi[768];
-    bool bootJumper;
+    bool flashJumper;
     
     auto writeIo1( uint16_t addr, uint8_t value ) -> void;
     
