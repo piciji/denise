@@ -47,7 +47,7 @@ MediaGroupLayout::Block::Selector::Selector(Emulator::Interface::Media* media) {
     }
                   
     if (media->expansion && (media->expansion->jumpers.size() > 0) ) { 
-        append(jumperLabel, {~0u, 0u}, 2 );
+        append(jumperLabel, {0u, 0u}, 5 );
         
         for(auto& jumper : media->expansion->jumpers) {
             auto jumpChecker = new GUIKIT::CheckBox;
@@ -350,6 +350,26 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
                 }                                
             };
 		}
+
+        if (block->media->expansion) {
+            for (auto& jumper : block->media->expansion->jumpers) {
+
+                unsigned jumperId = jumper.id;
+
+                auto jumperBox = block->selector.jumpers[jumperId];
+
+                std::string saveIdent = block->media->name + "_jumper_" + jumper.name;
+
+                jumperBox->onToggle = [this, jumperBox, saveIdent, block, jumperId]() {
+
+                    bool state = jumperBox->checked();
+
+                    settings->set<bool>(this->tabWindow->ident(saveIdent), state);
+
+                    this->emulator->setExpansionJumper(block->media, jumperId, state);
+                };
+            }
+        }
 
 		if ( showC64Listing( layout, block ) ) { //preload last listing
 			GUIKIT::File* file = filePool->get( setting->path );
@@ -1217,13 +1237,6 @@ auto MediaGroupLayout::build() -> void {
                 bool state = settings->get<bool>( tabWindow->ident(saveIdent), false );
                 
                 jumperBox->setChecked( state );                                
-                
-                jumperBox->onToggle = [this, jumperBox, saveIdent]() {
-                    
-                    bool state = jumperBox->checked();
-                    
-                    settings->set<bool>( this->tabWindow->ident( saveIdent ), state );
-                };
             }
         }
     }

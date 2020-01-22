@@ -217,8 +217,15 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
 
             filePool->assign(ident(emulator, media.name), file);
             
-            if (regular && mediaGroup.isExpansion())
-                EmuConfigView::TabWindow::getView( activeEmulator )->statesLayout->updateSaveIdent( setting->file );
+            if (mediaGroup.isExpansion()) {
+                for(auto& jumper : media.expansion->jumpers) {
+                    bool state = settings->get<bool>( ident(emulator,  media.name + "_jumper_" + jumper.name), false );
+                    emulator->setExpansionJumper( &media, jumper.id, state );
+                }
+                
+                if (regular)
+                    EmuConfigView::TabWindow::getView( activeEmulator )->statesLayout->updateSaveIdent( setting->file );
+            }            
         }
     }
     

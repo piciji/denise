@@ -96,6 +96,7 @@ struct Interface : Emulator::Interface {
     auto getExpansion() -> Expansion*;
     auto analyzeExpansion(uint8_t* data, unsigned size) -> Expansion*;
     auto setExpansionJumper( Media* media, unsigned jumperId, bool state ) -> void;
+    auto getExpansionJumper( Media* media, unsigned jumperId ) -> bool;
     
 	//savestates
     auto checkstate(uint8_t* data, unsigned size) -> bool;

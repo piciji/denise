@@ -350,4 +350,9 @@ auto EasyFlash::setJumper( unsigned jumperId, bool state ) -> void {
     flashJumper = state;
 }
 
+auto EasyFlash::getJumper( unsigned jumperId ) -> bool {
+    
+    return flashJumper;
+}
+
 }

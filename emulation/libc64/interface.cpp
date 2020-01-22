@@ -1043,11 +1043,27 @@ auto Interface::setExpansionJumper( Media* media, unsigned jumperId, bool state 
     if (!media || !media->group->isExpansion())
         return;
     
-    if (media->expansion->id == ExpansionIdEasyFlash)    
-        easyFlash->setJumper( jumperId, state );
+    if (media->expansion->id == ExpansionIdEasyFlash) {
+        if (easyFlash->media == media)
+            easyFlash->setJumper( jumperId, state );
     
-    else if (media->expansion->id == ExpansionIdRetroReplay)    
-        retroReplay->setJumper( jumperId, state );
+    } else if (media->expansion->id == ExpansionIdRetroReplay) {        
+        if (retroReplay->media == media)
+            retroReplay->setJumper( jumperId, state );
+    }
+}
+
+auto Interface::getExpansionJumper( Media* media, unsigned jumperId ) -> bool {
+    if (!media || !media->group->isExpansion())
+        return false;
+
+    if (media->expansion->id == ExpansionIdEasyFlash)
+        return easyFlash->getJumper(jumperId);
+
+    else if (media->expansion->id == ExpansionIdRetroReplay)
+        return retroReplay->getJumper(jumperId);
+    
+    return false;
 }
 
 auto Interface::hasFreezerButton() -> bool {

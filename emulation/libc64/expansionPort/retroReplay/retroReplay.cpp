@@ -187,6 +187,14 @@ auto RetroReplay::setJumper( unsigned jumperId, bool state ) -> void {
     }
 }
 
+auto RetroReplay::getJumper( unsigned jumperId ) -> bool {
+    
+    if (jumperId == 0) // bank jumper
+        return bankJumper;
+                
+    return flashJumper;
+}
+
 // 80 - 9f [8k, 16k, ultimax]
 auto RetroReplay::readRomL( uint16_t addr ) -> uint8_t {
     

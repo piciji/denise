@@ -63,6 +63,8 @@ struct EasyFlash : Cart {
     auto isBootable( ) -> bool; 
     
     auto setJumper( unsigned jumperId, bool state ) -> void;
+    
+    auto getJumper( unsigned jumperId ) -> bool;
 };
 
 extern EasyFlash* easyFlash;

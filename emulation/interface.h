@@ -403,6 +403,7 @@ struct Interface {
     virtual auto getExpansion() -> Expansion* { return nullptr; }
     virtual auto analyzeExpansion(uint8_t* data, unsigned size) -> Expansion* { return nullptr; }    
     virtual auto setExpansionJumper( Media* media, unsigned jumperId, bool state ) -> void {}
+    virtual auto getExpansionJumper( Media* media, unsigned jumperId ) -> bool { return false; }
     // freezer carts
     virtual auto hasFreezerButton() -> bool { return false; }
     virtual auto freeze() -> void {}

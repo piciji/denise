@@ -42,6 +42,7 @@ struct RetroReplay : Freezer {
     auto readIo1( uint16_t addr ) -> uint8_t;
     auto readIo2( uint16_t addr ) -> uint8_t;
     auto setJumper( unsigned jumperId, bool state ) -> void;
+    auto getJumper( unsigned jumperId ) -> bool;
     template<bool specialCase = false> auto getFlashAddr( uint32_t addr ) -> uint32_t;
     auto getRamAddr( uint16_t addr ) -> uint16_t;
     auto init() -> void;
