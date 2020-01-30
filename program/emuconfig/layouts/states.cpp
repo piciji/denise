@@ -24,7 +24,8 @@ FastSaveLayout::FastSaveLayout() {
     listView.setHeaderVisible();
 	listView.setHeaderText( { "", "", "" } );
     
-    append(top,{~0u, 0u}, 10);
+    append(top,{~0u, 0u}, 5);
+    append(autoSaveIdent,{~0u, 0u}, 5);
     append(listView,{~0u, ~0u});
 }
 
@@ -57,6 +58,15 @@ StatesLayout::StatesLayout(TabWindow* tabWindow) {
 		settings->set<std::string>( this->tabWindow->ident("save_ident"), fastSave.top.edit.text());
 		settings->set<unsigned>( this->tabWindow->ident("save_slot"), 0);
 	};
+    
+    fastSave.autoSaveIdent.onToggle = [this]() {
+        
+        settings->set<bool>( this->tabWindow->ident("auto_save_ident"), fastSave.autoSaveIdent.checked());
+    };
+    
+    fastSave.autoSaveIdent.setChecked( settings->get<bool>( this->tabWindow->ident("auto_save_ident"), true) );
+    
+    settings->set<bool>( this->tabWindow->ident("auto_save_ident"), fastSave.autoSaveIdent.checked());
 	
 	directSave.load.onActivate = [this]() {
 		std::string filePath = GUIKIT::BrowserWindow()
@@ -186,6 +196,7 @@ auto StatesLayout::translate() -> void {
     fastSave.top.find.setText( trans->get("find") );
 	fastSave.top.hotkeys.setText( trans->get("hotkeys") );
     fastSave.listView.setHeaderText({"#", trans->get("file"), trans->get("date")});
+    fastSave.autoSaveIdent.setText( trans->get("auto_save_identifier") );
     
     directSave.load.setText( trans->get("load") );
     directSave.save.setText( trans->get("save") );
@@ -195,11 +206,15 @@ auto StatesLayout::translate() -> void {
     
     statePath.label.setText( trans->get("folder", {}, true) );
     statePath.empty.setText( trans->get("remove") );
-    statePath.select.setText( trans->get("select") );
+    statePath.select.setText( trans->get("select") );        
 }
 
 auto StatesLayout::updateSaveIdent( std::string fileName ) -> void {
-    std::size_t end = fileName.find_first_of(".");
+    
+    if (!settings->get<bool>( this->tabWindow->ident("auto_save_ident"), true))
+        return;
+    
+    std::size_t end = fileName.find_last_of(".");
     if (end != std::string::npos)
         fileName = fileName.erase(end);
     

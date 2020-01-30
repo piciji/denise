@@ -1,0 +1,80 @@
+#pragma once
+
+#include "../../interface.h"
+#include "../../../tools/flash040.h"
+#include "../cart/freezer.h"
+
+namespace LIBC64 {
+    
+struct RetroReplay : Freezer {
+    
+    RetroReplay(Emulator::Events* events);
+    
+    ~RetroReplay();
+    
+    Emulator::Interface::Media* media;
+    bool binFormat;
+    
+    Emulator::Flash040 flash;
+    Emulator::Events* events;
+    uint8_t* flashData;
+    uint8_t* ram = nullptr;
+    bool flashJumper;
+    bool bankJumper;
+    bool enabled;
+    uint8_t bank;
+    bool frozen;
+    bool ramMode;
+    
+    bool nordicPower;
+    bool allowBank;
+    bool noFreeze;
+    bool reuMapping;
+    bool writeOnce;
+    bool writeProtect;
+    
+    bool requestedGame;
+    bool requestedExRom;
+    
+    auto create( Interface::CartridgeId cartridgeId ) -> Cart*;    
+    auto assign(Cart* cart) -> void;
+    
+    auto setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void;
+    auto writeIo1( uint16_t addr, uint8_t value ) -> void;
+    auto writeIo2( uint16_t addr, uint8_t value ) -> void;
+    auto readIo1( uint16_t addr ) -> uint8_t;
+    auto readIo2( uint16_t addr ) -> uint8_t;
+    auto setJumper( unsigned jumperId, bool state ) -> void;
+    auto getJumper( unsigned jumperId ) -> bool;
+    template<bool specialCase = false> auto getFlashAddr( uint32_t addr ) -> uint32_t;
+    template<bool ignoreAllowBank = false> auto getRamAddr( uint16_t addr ) -> uint16_t;
+    auto init() -> void;
+    
+    auto readRomL( uint16_t addr ) -> uint8_t;
+    auto writeRomL( uint16_t addr, uint8_t data ) -> void;
+    auto listenToWritesAt80To9F(uint16_t addr, uint8_t data ) -> void;
+    auto writeUltimaxRomL( uint16_t addr, uint8_t data ) -> void;
+    
+    auto readRomH( uint16_t addr ) -> uint8_t;
+    auto readUltimaxA0( uint16_t addr ) -> uint8_t;
+    
+    
+    auto writeRomH( uint16_t addr, uint8_t data ) -> void;
+    auto writeUltimaxA0( uint16_t addr, uint8_t data ) -> void;
+    
+    auto cycleLo() -> void;
+    auto cycleHi() -> void;
+    
+    auto didFreeze() -> void;
+    auto blockFreeze() -> bool;
+    auto reset() -> void;
+    auto setWriteProtect(bool state) -> void;
+    auto write() -> void;
+    auto isBootable( ) -> bool; 
+    auto serialize(Emulator::Serializer& s) -> void;
+    auto createFlash(unsigned& imageSize) -> uint8_t*;
+};    
+    
+extern RetroReplay* retroReplay;   
+
+}

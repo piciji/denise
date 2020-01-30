@@ -81,6 +81,7 @@ struct Program : Emulator::Interface::Bind {
     auto errorMediumSize(GUIKIT::File* file, Message* message ) -> void;
     auto errorFirmwareSize(GUIKIT::File::Item* item, Message* message ) -> void;
     auto setExpansionSelection( Emulator::Interface* emulator ) -> void;
+    auto updateSaveIdent(Emulator::Interface::Media* media, std::string file = "") -> void;
     
     //audio
     auto initAudio() -> void;

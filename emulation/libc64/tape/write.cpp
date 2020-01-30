@@ -1,11 +1,13 @@
 
 #include "tape.h"
+#include "../system/system.h"
 
 namespace LIBC64 {
 
 auto Tape::setWriteProtect(bool state) -> void {
 	
 	writeProtect = state;
+    disableWriteProtectQuestion = false;
 }
 
 auto Tape::writeIn(bool bit) -> void {
@@ -15,13 +17,23 @@ auto Tape::writeIn(bool bit) -> void {
 	writeBit = bit;	
 	
 	if (!writeBit)
-		return;
-	
-	if (!enabled || !loaded || data || !motorIn || writeProtect || mode != Mode::Record)
+		return;    
+    
+	if (!enabled || !loaded || data || !motorIn || mode != Mode::Record)
 		return;
 	
     if (cyclesElapsed <= 7)
         return;
+            
+    if (writeProtect) {
+        if (disableWriteProtectQuestion)
+            return;
+        
+        if (!system->interface->questionToWrite(media)) {
+            disableWriteProtectQuestion = true;
+            return;
+        }
+    }
     
     if (cyclesElapsed <= (255 * 8 + 7) ) {
 		

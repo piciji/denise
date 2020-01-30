@@ -72,6 +72,8 @@ struct States {
     
     auto updateRegion() -> void;
     
+    auto updateExpansionJumper() -> void;
+    
     auto oneMediumOnly(Emulator::Interface::MediaGroup* group, Emulator::Interface::Media* mediaInUse) -> void;
     
     static auto getInstance( Emulator::Interface* emulator ) -> States*;

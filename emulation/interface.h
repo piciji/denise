@@ -142,21 +142,28 @@ struct Interface {
         std::string name;
     };
     
-    struct Expansion {
+    struct Jumper {
         unsigned id;
         std::string name;
-        enum class Type : unsigned { Empty, Game, Ram, Eprom, Flash, TurboCart, Freezer } type;
+    };
+    
+    struct Expansion {
+        unsigned id;
+        std::string name;        
+        unsigned typeFlags;
         MemoryType* memoryType; // uses RAM
         MediaGroup* mediaGroup; // uses ROM
         std::vector<PCBLayout> pcbs;
+        std::vector<Jumper> jumpers;
+        enum Type : unsigned { Empty = 0, Game = 1, Ram = 2, Eprom = 4, Flash = 8, TurboCart = 16, Freezer = 32 };
         
-        auto isEmpty() const -> bool { return type == Type::Empty; }
-        auto isGame() const -> bool { return type == Type::Game; }
-        auto isRam() const -> bool { return type == Type::Ram; }
-        auto isEprom() const -> bool { return type == Type::Eprom; }
-        auto isFlash() const -> bool { return type == Type::Flash; }
-        auto isTurboCart() const -> bool { return type == Type::TurboCart; }               
-        auto isFreezer() const -> bool { return type == Type::Freezer; }      
+        auto isEmpty() const -> bool { return typeFlags == (unsigned)Type::Empty; }
+        auto isGame() const -> bool { return typeFlags & Type::Game; }
+        auto isRam() const -> bool { return typeFlags & Type::Ram; }
+        auto isEprom() const -> bool { return typeFlags & Type::Eprom; }
+        auto isFlash() const -> bool { return typeFlags & Type::Flash; }
+        auto isTurboCart() const -> bool { return typeFlags & Type::TurboCart; }               
+        auto isFreezer() const -> bool { return typeFlags & Type::Freezer; }      
     };
     std::vector<Expansion> expansions;       
     
@@ -395,6 +402,8 @@ struct Interface {
     virtual auto unsetExpansion() -> void {}    
     virtual auto getExpansion() -> Expansion* { return nullptr; }
     virtual auto analyzeExpansion(uint8_t* data, unsigned size) -> Expansion* { return nullptr; }    
+    virtual auto setExpansionJumper( Media* media, unsigned jumperId, bool state ) -> void {}
+    virtual auto getExpansionJumper( Media* media, unsigned jumperId ) -> bool { return false; }
     // freezer carts
     virtual auto hasFreezerButton() -> bool { return false; }
     virtual auto freeze() -> void {}

@@ -137,14 +137,21 @@ struct Status {
             if (!mediaGroup->isExpansion())
                 out += std::to_string( driveState.track ) + halfTrack;
 		}
-        
-		if (showFps)
-			out += " | fps: " + std::to_string(fps);            		
+                
+		if (showFps) {
+            if (!out.empty())
+                out += " | ";   
+
+			out += "fps: " + std::to_string(fps);            		
+        }
         
         auto& drcS = audioManager->statistics;
         
-        if (drcS.enable) {                        
-            out += " | DRC Puffer: " + GUIKIT::String::formatFloatingPoint( drcS.current, 2 ) + "% ";                        
+        if (drcS.enable) {  
+            if (!out.empty())
+                out += " | ";   
+            
+            out += "DRC Puffer: " + GUIKIT::String::formatFloatingPoint( drcS.current, 2 ) + "% ";                        
             out += "[ " + GUIKIT::String::formatFloatingPoint( drcS.min, 2 ) + " : " + GUIKIT::String::formatFloatingPoint( drcS.max, 2 ) + " ]";
             out += " Ø " + GUIKIT::String::formatFloatingPoint( drcS.average, 2 ) + "%";
         }            

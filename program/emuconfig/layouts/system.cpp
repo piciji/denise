@@ -339,6 +339,9 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
                 block->checkBox.onToggle = [this, block, feature]( ) {
 
                     settings->set<bool>( this->tabWindow->ident( feature->name ), block->checkBox.checked( ) );
+                    
+                    if (feature->performanceHit)
+                        program->fastForward( false );
 
                     emulator->setFeature( feature->id, block->checkBox.checked( ) );
                 };

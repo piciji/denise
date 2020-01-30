@@ -1012,11 +1012,15 @@ auto View::questionToWrite(Emulator::Interface::Media* media) -> bool {
     
     auto file = (GUIKIT::File*)media->guid;
     
-    if (file->isArchived())
+    if (file->isArchived() || cmd->debug)
         // archive, removing of write protection is not supported
+        // no dialog in debug mode
         return false;
     
     std::string mediaIdent = media->group->isExpansion() ? media->group->name : media->name;
+    
+    if (exclusiveFullscreen())
+        setFullScreen( false );
     
     bool state = message->question( trans->get("override_write_protection", {{"%media%", mediaIdent}}) );
     

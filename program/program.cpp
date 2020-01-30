@@ -217,8 +217,15 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
 
             filePool->assign(ident(emulator, media.name), file);
             
-            if (regular && mediaGroup.isExpansion())
-                EmuConfigView::TabWindow::getView( activeEmulator )->statesLayout->updateSaveIdent( setting->file );
+            if (mediaGroup.isExpansion()) {
+                for(auto& jumper : media.expansion->jumpers) {
+                    bool state = settings->get<bool>( ident(emulator,  media.name + "_jumper_" + jumper.name), false );
+                    emulator->setExpansionJumper( &media, jumper.id, state );
+                }                
+            }   
+            
+            if (regular)
+                updateSaveIdent( &media, setting->file );
         }
     }
     
@@ -303,6 +310,7 @@ auto Program::powerOff() -> void {
     activeVideoManager = nullptr;
     filePool->unloadOrphaned();
     view->updateFreeze(nullptr);
+    updateSaveIdent( nullptr );
 }
 
 auto Program::loop() -> void {
@@ -473,3 +481,4 @@ auto Program::questionToWrite(Emulator::Interface::Media* media) -> bool {
     
     return view->questionToWrite(media);
 }
+

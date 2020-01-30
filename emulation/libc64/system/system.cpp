@@ -122,6 +122,13 @@ System::System(Interface* interface) {
     
         this->ram[ addr ] = value;
     };
+    
+    writeRamAt80To9F = [this](uint16_t addr, uint8_t value) {
+        // some Cartridges listen here and writes value in their own RAM
+        expansionPort->listenToWritesAt80To9F(addr, value);
+        
+        this->ram[ addr ] = value;
+    };
 
     readCharRom = [this](uint16_t addr) {
         if ( !this->charRom ) 
@@ -156,22 +163,32 @@ System::System(Interface* interface) {
     
     writeRomL = [this](uint16_t addr, uint8_t value) {
 
-        return expansionPort->writeRomL( addr, value );
+        expansionPort->writeRomL( addr, value );
     };
 
     writeRomH = [this](uint16_t addr, uint8_t value) {
 
-        return expansionPort->writeRomH( addr, value );
+        expansionPort->writeRomH( addr, value );
     };
     
     writeUltimaxRomL = [this](uint16_t addr, uint8_t value) {
 
-        return expansionPort->writeUltimaxRomL( addr, value );
+        expansionPort->writeUltimaxRomL( addr, value );
     };
 
     writeUltimaxRomH = [this](uint16_t addr, uint8_t value) {
 
-        return expansionPort->writeUltimaxRomH( addr, value );
+        expansionPort->writeUltimaxRomH( addr, value );
+    };
+    
+    readUltimaxA0 = [this](uint16_t addr) {
+
+        return expansionPort->readUltimaxA0( addr );
+    };
+    
+    writeUltimaxA0 = [this](uint16_t addr, uint8_t value) {
+
+        expansionPort->writeUltimaxA0( addr, value );
     };
     
     writeUnmapped = [this](uint16_t addr, uint8_t value) {
@@ -718,11 +735,11 @@ auto System::remapCpu( ) -> void {
         memoryCpu.map( &readRomL, 0x80, 0x9f);
 		memoryCpu.map( &writeRomL, 0x80, 0x9f, Memory::Mode::Direct );
     } else
-		memoryCpu.map( &readRam, &writeRam, 0x80, 0x9f, Memory::Mode::Direct );
+		memoryCpu.map( &readRam, &writeRamAt80To9F, 0x80, 0x9f, Memory::Mode::Direct );
 	
     // a0 - bf
     if ( ultimax )
-        memoryCpu.map( &readUnmapped, &writeUnmapped, 0xa0, 0xbf, Memory::Mode::Direct );
+        memoryCpu.map( &readUltimaxA0, &writeUltimaxA0, 0xa0, 0xbf, Memory::Mode::Direct );
     
     else if ( (cartMode == 1 || cartMode == 3) && ramMode == 3 ) {
 		memoryCpu.map( &readBasicRom, 0xa0, 0xbf, Memory::Mode::Linear, 0, basicRomSize );
@@ -797,6 +814,9 @@ auto System::remapVic( ) -> void {
 		memoryVic.map( &readRomH, 0x30, 0x3f, Memory::Mode::Linear, 16 ); //upper half
 		memoryVic.map( &readRomH, 0x70, 0x7f );
 		memoryVic.map( &readRam, 0x80, 0x9f, Memory::Mode::Direct );	
+        
+        memoryVic.map( &readUltimaxA0, 0xa0, 0xaf, Memory::Mode::Direct );
+        
 		memoryVic.map( &readRomH, 0xb0, 0xbf );
 		memoryVic.map( &readRam, 0xd0, 0xef, Memory::Mode::Direct );	
 		memoryVic.map( &readRomH, 0xf0, 0xff );
@@ -822,11 +842,13 @@ auto System::changeExpansionPortMemoryMode(bool exrom, bool game) -> void {
 	remapCpu();
 }
 
-auto System::setFastForward( unsigned config ) -> void {    
+auto System::setFastForward( unsigned config ) -> void {  
     fastForward.config = config;
     sid->disableAudioOut(config & (unsigned) Emulator::Interface::FastForward::NoAudioOut);
     vicII->disableSequencer(config & (unsigned) Emulator::Interface::FastForward::NoVideoSequencer);
+    iecBus->setFastForward(config & (unsigned) Emulator::Interface::FastForward::NoVideoSequencer);
     dispatcha();
 }
 
 }
+

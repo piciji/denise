@@ -91,6 +91,11 @@ struct ActionReplayV4 : ActionReplay {
         ExpansionPort::writeUltimaxRomL( addr, data );
     }
     
+    auto listenToWritesAt80To9F(uint16_t addr, uint8_t data ) -> void {
+        if (useRam)
+            ram[ addr & 0x1fff ] = data;
+    }
+    
     auto didFreeze() -> void {
         cRomH = cRomL = getChip(0);
         enable = true;

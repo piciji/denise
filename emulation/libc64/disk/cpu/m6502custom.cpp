@@ -33,6 +33,8 @@ auto M6502Custom::power() -> void {
     M6502::power();
     
     step = 0;        
+    
+    readNext = true;
 }
 
 auto M6502Custom::reset() -> void {

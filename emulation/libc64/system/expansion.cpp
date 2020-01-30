@@ -4,6 +4,7 @@
 #include "../expansionPort/reu/reu.h"
 #include "../expansionPort/actionReplay/actionReplay.h"
 #include "../expansionPort/easyFlash/easyFlash.h"
+#include "../expansionPort/retroReplay/retroReplay.h"
 
 namespace LIBC64 {
  
@@ -46,6 +47,10 @@ auto System::setExpansion( Emulator::Interface::Expansion& expansion ) -> void {
         case Interface::ExpansionIdEasyFlash:
             expansionPort = easyFlash;
             break;
+            
+        case Interface::ExpansionIdRetroReplay:
+            expansionPort = retroReplay;
+            break;
     }
     
 }  
@@ -56,12 +61,14 @@ auto System::createExpansions() -> void {
     gameCart = new GameCart;
     actionReplay = new ActionReplay;
     easyFlash = new EasyFlash( &events );
+    retroReplay = new RetroReplay( &events );
     noExpansion = new ExpansionPort;    
     
     expansionPort = noExpansion;
     
     setExpansionCallbacks( reu );
     setExpansionCallbacks( actionReplay );
+    setExpansionCallbacks( retroReplay );
 }
 
 auto System::destroyExpansions() -> void {
@@ -70,6 +77,7 @@ auto System::destroyExpansions() -> void {
     delete gameCart;
     delete actionReplay;
     delete easyFlash;
+    delete retroReplay;
     delete noExpansion;
 }
 
@@ -92,6 +100,9 @@ auto System::analyzeExpansion(uint8_t* data, unsigned size) -> Emulator::Interfa
             break; 
         case Interface::CartridgeIdEasyFlash:
             useExpansion = &interface->expansions[Interface::ExpansionIdEasyFlash];
+            break;
+        case Interface::CartridgeIdRetroReplay:
+            useExpansion = &interface->expansions[Interface::ExpansionIdRetroReplay];
             break;
     }    
     

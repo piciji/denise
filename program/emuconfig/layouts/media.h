@@ -26,22 +26,24 @@ struct MediaGroupLayout : GUIKIT::FramedVerticalLayout {
             GUIKIT::Button eject;
             GUIKIT::Label fileName;
 
-            Header();
+            Header(Emulator::Interface::Media* media);
         } header;
 
         struct Selector : GUIKIT::HorizontalLayout {            
             GUIKIT::LineEdit edit;
-            GUIKIT::ComboButton combo;
+            GUIKIT::ComboButton combo;          
+            GUIKIT::Label jumperLabel;
+            std::vector<GUIKIT::CheckBox*> jumpers;
             GUIKIT::Button open;
             GUIKIT::Widget spacer;
             GUIKIT::Button openW;            
 
-            Selector();
+            Selector(Emulator::Interface::Media* media);
         } selector;
 
         Emulator::Interface::Media* media;
         bool openWritable;
-        Block();
+        Block(Emulator::Interface::Media* media);
         std::vector<Emulator::Interface::Listing> listings;
     };
     std::vector<Block*> blocks;
@@ -158,6 +160,8 @@ struct MediaLayout : GUIKIT::TabFrameLayout {
     auto colorListing( unsigned color, bool foreground ) -> void;
     auto getMediaGroupTransIdent( Emulator::Interface::MediaGroup* mediaGroup ) -> std::string;
     auto disableWriteProtection(Emulator::Interface::Media* media) -> void;
+    auto updateJumper(Emulator::Interface::Media* media) -> void;
+    auto changeWriteProtection(Emulator::Interface::Media* media, bool state) -> void;
 
     MediaLayout(TabWindow* tabWindow);
 };

@@ -96,6 +96,7 @@ struct Drive1541 {
     bool motorOn = false;
     bool written = false;
     bool writeProtected = true;
+    bool disableWriteProtectQuestion = false;
     bool loaded = false;
     
     bool clockOut;
@@ -130,6 +131,7 @@ struct Drive1541 {
     auto syncFound() -> uint8_t;
     auto writeprotectSense() -> uint8_t;
     auto writeTrack() -> void;
+    auto informUserToRemoveWriteProtection() -> void;
     auto updateStepper( uint8_t step ) -> bool;
     auto motorRun() -> bool;
     auto motorOffInit() -> void;

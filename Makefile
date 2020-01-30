@@ -18,7 +18,8 @@ objects += input audio video palette shader
 objects += guikit libami libC64
 objects += driver dinput5 dinput7 dinput8 xaudio27 xaudio28 xaudio29
 #objects += m68000
-objects += m6502 m6510 ciaBase cia6526 vic systemC64 cartC64 gameCartC64 actionReplayC64 reuC64 easyFlashC64 sid tapeC64 inputC64 controlPortC64
+objects += m6502 m6510 ciaBase cia6526 vic systemC64 sid tapeC64 inputC64 controlPortC64
+objects += cartC64 gameCartC64 actionReplayC64 reuC64 easyFlashC64 retroReplayC64
 objects += via iec prg64 drive1541 m6502custom structure1541
 
 flags := -DAPP_NAME="\"$(name)\"" -DTRANSLATION_FOLDER="\"$(translationFolder)/\"" -DDATA_FOLDER="\"$(dataFolder)/\""
@@ -111,6 +112,7 @@ obj/gameCartC64.o: emulation/libc64/expansionPort/gameCart/gameCart.cpp
 obj/actionReplayC64.o: emulation/libc64/expansionPort/actionReplay/actionReplay.cpp
 obj/reuC64.o:	emulation/libc64/expansionPort/reu/reu.cpp
 obj/easyFlashC64.o: emulation/libc64/expansionPort/easyFlash/easyFlash.cpp
+obj/retroReplayC64.o: emulation/libc64/expansionPort/retroReplay/retroReplay.cpp
 obj/sid.o:	emulation/libc64/sid/sid.cpp
 obj/tapeC64.o:	emulation/libc64/tape/tape.cpp
 obj/prg64.o:	emulation/libc64/prg/prg.cpp

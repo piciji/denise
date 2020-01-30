@@ -18,12 +18,12 @@ struct Interface : Emulator::Interface {
     enum MediaGroupId {
         MediaGroupIdDisk = 0, MediaGroupIdTape = 1,
         MediaGroupIdMemory = 2, MediaGroupIdExpansionGame = 3, MediaGroupIdExpansionReu = 4,
-        MediaGroupIdExpansionActionReplay = 5, MediaGroupIdExpansionEasyFlash = 6,
+        MediaGroupIdExpansionActionReplay = 5, MediaGroupIdExpansionEasyFlash = 6, MediaGroupIdExpansionRetroReplay = 7,
     };
     
     enum ExpansionId {
         ExpansionIdNone = 0, ExpansionIdGame = 1, ExpansionIdReu = 2, ExpansionIdActionReplay = 3,
-        ExpansionIdEasyFlash = 4,
+        ExpansionIdEasyFlash = 4, ExpansionIdRetroReplay = 5,
     };
     
     enum CartridgeId {
@@ -33,7 +33,7 @@ struct Interface : Emulator::Interface {
         CartridgeIdSuperGames = 8, CartridgeIdSystem3 = 15, CartridgeIdZaxxon = 18,
         CartridgeIdActionReplayMK2 = 50, CartridgeIdActionReplayMK3 = 35,
         CartridgeIdActionReplayMK4 = 30, CartridgeIdActionReplayV41AndHigher = 1, 
-        CartridgeIdEasyFlash = 32, CartridgeIdEasyFlashNoBoot = 259,
+        CartridgeIdEasyFlash = 32, CartridgeIdRetroReplay = 36, CartridgeIdNordicReplay = 261
     };
     
     static const std::string Version;
@@ -95,6 +95,8 @@ struct Interface : Emulator::Interface {
     auto unsetExpansion() -> void;
     auto getExpansion() -> Expansion*;
     auto analyzeExpansion(uint8_t* data, unsigned size) -> Expansion*;
+    auto setExpansionJumper( Media* media, unsigned jumperId, bool state ) -> void;
+    auto getExpansionJumper( Media* media, unsigned jumperId ) -> bool;
     
 	//savestates
     auto checkstate(uint8_t* data, unsigned size) -> bool;
