@@ -53,7 +53,7 @@ SettingsLayout::SettingsLayout() {
         settings->set<bool>("statusbar_fullscreen", switches.fullscreenStatusbar.checked());
     };
 
-    switches.aspectCorrect.setChecked(settings->get<bool>("aspect_correct", false));
+    switches.aspectCorrect.setChecked(settings->get<bool>("aspect_correct", true));
     switches.aspectCorrect.onToggle = [&]() {
         settings->set<bool>("aspect_correct", switches.aspectCorrect.checked());
         view->updateViewport();

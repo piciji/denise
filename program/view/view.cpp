@@ -250,7 +250,7 @@ auto View::updateViewport() -> void {
 		geometry.height = _height;
 	}
 	
-	if (settings->get<bool>("aspect_correct", false)) {
+	if (settings->get<bool>("aspect_correct", true)) {
 		
 		while(1) {
 			_height = geometry.height;

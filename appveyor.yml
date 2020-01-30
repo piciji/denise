@@ -19,14 +19,14 @@ branches:
   
 environment:
   matrix:
+    - Job: Linux 64-bit
+      Target: linux
     - Job: macOS 64-bit
       Target: macos
     - Job: Windows 64-bit
       Target: win64
     - Job: Windows 32-bit
       Target: win32
-    - Job: Linux 64-bit
-      Target: linux
 
 matrix:
   exclude:
@@ -101,8 +101,9 @@ for:
       - image: Ubuntu
       
   install:
-    - sh: sudo apt-get --yes --force-yes install libgtk2.0-dev
+    - sh: sudo apt-get --yes --force-yes update    
     - sh: sudo apt-get --yes --force-yes install mesa-common-dev
+    - sh: sudo apt-get --yes --force-yes install libgtk2.0-dev
     - sh: sudo apt-get --yes --force-yes install libopenal-dev
     - sh: sudo apt-get --yes --force-yes install libpulse-dev
     - sh: sudo apt-get --yes --force-yes install libsdl2-dev

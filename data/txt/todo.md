@@ -57,29 +57,38 @@
 * 7z support
 * refactoring Linux GTK2 UI to GTK3
 * use a CI system like AppVeyor
+* Netplay
 
 # todo improvements
 * fullscreen with custom refresh rate
-* separate settings file by emulation cores
+* separate setting file by emulation cores
 * auto start should reuse already opened instance (enable in UI)
 * rework some UI tags to make host menu better understandable for user
 * remove all C64 individual stuff from host menu (mostly hotkeys)
-* autofire with frequency, option to fire without button press (don't forget override logic)
+* autofire with frequency and option to fire without button press (don't forget override logic)
 * switch joyports as hotkey
-* load/save custom settings
 * load PRG files from disk as simple RAM insertion for reduced loading times
 * UI switch to invert RAM init pattern
 * write (SID/PAULA) output to WAV 
 * open files as read only from OS point of view
 * set "integer scaling" multiplicator without sizing application window
 * Hotkeys for Power/Softreset
-* png Overlay for 16:9 fullscreen
-* save/load additional settings files in App folder
+* png overlay for 16:9 fullscreen
+* allow input if there is no focus
+* SID 8580 sounds more powerfull in other emulators (maybe a bug or an additional audio effect?)
+* build OSX DMG installer
+* render placeholder picuture if emulator window is present but no running emulation
+* save/load additional settings files in App folder (mostly for per game key maps)
+* need --help command to describe command line usage
+* restructure firmware window 
+* possibility to swap CHAR roms during runtime
 
 # bugs
 * Raphnet Adapter for N64, Xbox Controller don't work with RawInput
 * japanese characters aren't displayed correctly in OpenGL onscreen text
 * more Ram Init pattern problems (https://csdb.dk/release/?id=172238  https://csdb.dk/release/?id=172347)
+* same host input element can't trigger multiple emulated input elements
+* can't input "*" without releasing modifier key
 
 
 # completed emulation
