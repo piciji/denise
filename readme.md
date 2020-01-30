@@ -7,6 +7,10 @@
 
 # changelog
 
+## 1.0.8 (not yet released)
+* added Retro/Nordic Replay support
+* added confirmation dialog to disable write protection while trying to write on protected media
+
 ## 1.0.7
 * fixed a critical bug that caused OSX builds to use illegal instructions for some architectures
 * added EasyFlash support

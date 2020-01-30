@@ -1,8 +1,7 @@
 
 # todo's are not ordered by priority. changes frequently
 ## to do C64
-* expansion port
-    * RetroReplay
+* expansion port    
     * simple non game mapper: Simons Basic, Magic Formel, WarpSpeed, ...
     * EasyFlash 3
     * Final Cartridge 3
@@ -75,7 +74,7 @@
 * Hotkeys for Power/Softreset
 * png overlay for 16:9 fullscreen
 * allow input if there is no focus
-* SID 8580 sounds more powerfull in other emulators (maybe a bug or an additional audio effect?)
+* SID 8580 sounds more powerfull in other emulators (maybe a bug or an additional audio effect?) (https://csdb.dk/release/?id=187116)
 * build OSX DMG installer
 * render placeholder picuture if emulator window is present but no running emulation
 * save/load additional settings files in App folder (mostly for per game key maps)
@@ -111,6 +110,7 @@
 * c64 ActionReplay MK2, MK3, MK4, V 4.1 - 6
 * c64 REU
 * c64 EasyFlash + write support
+* RetroReplay / Nordic Replay + write support
 
 # completed features for all emu cores
 * multi driver support
