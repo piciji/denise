@@ -97,8 +97,15 @@ IecBus::~IecBus() {
 
 auto IecBus::setPowerThread( bool state ) -> void {
 
-    cpuBurner = state;
+    cpuBurnerRequested = cpuBurner = state;
+    
+    updateIdleState();          
+}
 
+auto IecBus::setFastForward( bool state ) -> void {
+
+    cpuBurner = (state && (drivesConnected > 1) ) ? state : cpuBurnerRequested;
+    
     updateIdleState();          
 }
 
@@ -192,6 +199,9 @@ auto IecBus::syncDrives( int32_t _syncPos, bool ciaAccess ) -> void {
     for (auto drive : drivesEnabled) {
         drive->cycleCounter -= _temp;
         drive->synced = drive->cycleCounter >= syncPos;
+        
+        if (drive->written && drive->writeProtected)
+            drive->informUserToRemoveWriteProtection();        
     }
         
     cycleCounter = 0; // reset for next run 
@@ -227,6 +237,7 @@ auto IecBus::power() -> void {
     ready = false;
 
     powerOn = true;
+    cpuBurner = cpuBurnerRequested;
     updateIdleState();
 
     syncPos = 0;

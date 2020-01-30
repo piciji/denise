@@ -66,6 +66,7 @@ protected:
 	Mode nextMode;
 	unsigned writePos;
 	bool writeProtect = false;
+    bool disableWriteProtectQuestion = false;
 	bool writeBit;
     unsigned cyclesElapsed;
     uint64_t cycles;

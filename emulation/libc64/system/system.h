@@ -35,6 +35,7 @@ struct System {
     Memory::Write writeUnmapped;
     Memory::Read readRam;
     Memory::Write writeRam;
+    Memory::Write writeRamAt80To9F;
     Memory::Read readVicReg;
     Memory::Write writeVicReg;
     Memory::Read readSidReg;
@@ -63,7 +64,7 @@ struct System {
     Memory::Write writeUltimaxRomL;
     Memory::Write writeUltimaxRomH;
     // in ultimax mode a cartridge can map following areas freely.
-    // add more when emulating a cartridge which maps something in unmapped spaces
+    // will add more when emulating a cartridge which maps something in unmapped spaces
     Memory::Read readUltimaxA0;
     Memory::Write writeUltimaxA0;    
     

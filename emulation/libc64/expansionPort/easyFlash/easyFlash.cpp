@@ -296,6 +296,8 @@ auto EasyFlash::serialize(Emulator::Serializer& s) -> void {
     
     s.integer( flashJumper );
     
+    s.integer( writeProtect );
+    
     s.array( ram );
     
     flashLo.serialize(s);

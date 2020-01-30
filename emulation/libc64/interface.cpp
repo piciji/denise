@@ -121,6 +121,8 @@ auto Interface::prepareMedia() -> void {
         group.media.push_back({1, "RetroReplay 2", 0, &group});
         group.media.push_back({2, "RetroReplay 3", 0, &group});
         group.media.push_back({3, "RetroReplay 4", 0, &group});
+        group.media.push_back({4, "RetroReplay 5", 0, &group});
+        group.media.push_back({5, "RetroReplay 6", 0, &group});
         group.selected = &group.media[0];  
 	}
     
@@ -754,10 +756,13 @@ auto Interface::writeProtectExpansion(Media* media, bool state) -> void {
     if (!media || !media->group->isExpansion())
         return;
     
-    if (media->expansion->id == ExpansionIdEasyFlash)
-        easyFlash->setWriteProtect( state );
-    else if (media->expansion->id == ExpansionIdRetroReplay)
-        retroReplay->setWriteProtect( state );
+    if (media->expansion->id == ExpansionIdEasyFlash) {
+        if (easyFlash->media == media)
+            easyFlash->setWriteProtect( state );
+    } else if (media->expansion->id == ExpansionIdRetroReplay) {
+        if (retroReplay->media == media)
+            retroReplay->setWriteProtect( state );
+    }
 }
 
 auto Interface::ejectExpansionImage(Media* media) -> void {

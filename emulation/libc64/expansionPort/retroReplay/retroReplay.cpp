@@ -51,35 +51,80 @@ auto RetroReplay::create( Interface::CartridgeId cartridgeId ) -> Cart* {
     return retroReplay;
 }
 
+auto RetroReplay::cycleHi() -> void {
+    
+    if (flashJumper) {        
+        game = true;
+        exRom = true;
+        system->changeExpansionPortMemoryMode(exRom, game);
+    }
+    
+    Freezer::cycleHi();
+}
+
+auto RetroReplay::cycleLo() -> void {        
+    
+    if (flashJumper) {
+        uint16_t _addr = system->cpu->addressBus();
+        
+        if (_addr >= 0x8000 && _addr <= 0x9fff) {
+            exRom = requestedExRom;
+            game = requestedGame;
+            system->changeExpansionPortMemoryMode(exRom, game);   
+        } 
+    }
+    
+    Freezer::cycleLo();
+}
+
 auto RetroReplay::writeIo1( uint16_t addr, uint8_t value ) -> void {
     
     if (!enabled)
         return;    
         
     switch(addr & 0xff) {
-        case 0: {           
-            bool disableFreeze = !!(value & 0x40);       
+        case 0: {    
+            exRom = (value >> 1) & 1;
+            game = (value & 1) ^ 1;
+            bank = ((value >> 3) & 3) | ((value >> 5) & 4);
+            ramMode = !!(value & 0x20);            
+            bool disableFreeze = !!(value & 0x40);                            
+                                
+            // nordic replay in nordic power mode
+            nordicPower = (cartridgeId == Interface::CartridgeIdNordicReplay) && !disableFreeze && ramMode && enabled && game && exRom;
+                        
+            if (nordicPower) { // switch to 16k config
+                exRom = false;
+                game = false;
+            }
+
             if (disableFreeze) {
                 frozen = false; 
                 nmiCall(false);
+                irqCall(false);
+            }            
+                         
+            if (frozen) { // keep Ultimax
+                exRom = true;
+                game = false;
             }
-            
-            if (value & 4) { // disable cart
+ 
+            if (flashJumper) { 
+                // memorize mapping bits 0 and 1 for later
+                // disable cart mapping
+                // apply the requested (memorized) mapping if an address between $8000 and $9fff hits the BUS in second half cycle
+                // disable cart mapping again, so VIC reads in first half cycle are definitely not in possible Ultimax mode
+                requestedGame = (value & 1) ^ 1;
+                requestedExRom = (value >> 1) & 1;
+                game = true;
+                exRom = true;               
+            }
+                    
+            if (value & 4) { // disable cart mapping and cart registers
                 enabled = false;
                 exRom = true;
-                game = true;
-            } else if (frozen) {
-                // keep Ultimax
-            } else {
-                exRom = (value >> 1) & 1;
-                game = (value & 1) ^ 1;                
+                game = true;                
             }
-            
-            bank = ((value >> 3) & 3) | ((value >> 5) & 4);
-            ramMode = !!(value & 0x20);
-                                
-            // nordic replay + ram mode + 16k config
-            alternateRam = (cartridgeId == Interface::CartridgeIdNordicReplay) && !disableFreeze && ramMode && enabled && !game && !exRom;                      
             
             system->changeExpansionPortMemoryMode(exRom, game);            
         } break;
@@ -107,6 +152,28 @@ auto RetroReplay::writeIo1( uint16_t addr, uint8_t value ) -> void {
     }
 }
 
+auto RetroReplay::readIo1( uint16_t addr ) -> uint8_t {
+    
+    if (!enabled)
+        return 0; 
+    
+    addr &= 0xff;
+    
+    if (addr == 0 || addr == 1)        
+        return ((bank & 4) << 5) | (reuMapping << 6) | ((bank & 8) << 2) | ((bank & 3) << 3) | (freezeArmed << 2) | (allowBank << 1) | flashJumper;        
+    
+    if (!reuMapping || frozen)
+        return 0;
+        
+    if (ramMode)
+        return ram[ getRamAddr( 0x1e00 | addr) ];
+
+    if (game)                         
+        return flash.read( getFlashAddr( (0xde00 | addr) & 0x1fff ) );
+    
+    return 0;
+}
+
 auto RetroReplay::writeIo2( uint16_t addr, uint8_t value ) -> void {
 
     if (!enabled)
@@ -116,134 +183,79 @@ auto RetroReplay::writeIo2( uint16_t addr, uint8_t value ) -> void {
         ram[ getRamAddr( 0x1f00 | (addr & 0xff)) ] = value; 
 }
 
-auto RetroReplay::readIo1( uint16_t addr ) -> uint8_t {
-    if (!enabled)
-        return 0; 
-    
-    addr &= 0xff;
-    
-    if (addr == 0 || addr == 1)        
-        return ((bank & 4) << 5) | (reuMapping << 6) | ((bank & 8) << 2) | ((bank & 3) << 3) | (freezeArmed << 2) | (allowBank << 1) | flashJumper;        
-    
-    if (reuMapping && !frozen) {
-        if (ramMode)
-            return ram[ getRamAddr( 0x1e00 | (addr & 0xff)) ];
-    
-        if (game)                   
-            return flash.read(  getFlashAddr( (0xde00 | addr) & 0x1fff ) );
-    }
-    
-    return 0;
-}
-
 auto RetroReplay::readIo2( uint16_t addr ) -> uint8_t {
-    if (!enabled)
+
+    if (!enabled || reuMapping || frozen)
         return 0; 
     
     addr &= 0xff;
     
-    if (!reuMapping && !frozen) {
-        if (ramMode)
-            return ram[ getRamAddr( 0x1f00 | (addr & 0xff)) ];
-    
-        if (game)        
-            return flash.read(  getFlashAddr( (0xdf00 | addr) & 0x1fff ) );
-    }
+    if (ramMode)
+        return ram[ getRamAddr( 0x1f00 | addr) ];
+
+    if (game)        
+        return flash.read( getFlashAddr( (0xdf00 | addr) & 0x1fff ) );
     
     return 0;
-}
-
-
-inline auto RetroReplay::getRamAddr( uint16_t addr ) -> uint16_t {
-    
-    return (allowBank ? ((bank & 3) << 13) : 0) | addr;
-}
-
-template<bool specialCase> inline auto RetroReplay::getFlashAddr( uint32_t addr ) -> uint32_t {
-    
-    uint8_t _bank = bank;
-    
-    if (specialCase)
-        _bank = bank & ~3;
-    
-    if (!bankJumper)  // access only upper 64 k
-        return 0x10000 | addr | ((_bank & 7) << 13);
-    
-    return addr | (_bank << 13); // access full 128 k
-}
-
-auto RetroReplay::setJumper( unsigned jumperId, bool state ) -> void {
-    
-    if (jumperId == 0) { // bank jumper
-        bankJumper = state;
-            
-        
-    } if (jumperId == 1) { // flash jumper
-        
-        if (flashJumper && !state)
-            writeOnce = false;
-
-        flashJumper = state;        
-    }
-}
-
-auto RetroReplay::getJumper( unsigned jumperId ) -> bool {
-    
-    if (jumperId == 0) // bank jumper
-        return bankJumper;
-                
-    return flashJumper;
 }
 
 // 80 - 9f [8k, 16k, ultimax]
 auto RetroReplay::readRomL( uint16_t addr ) -> uint8_t {
-    
+
     if (frozen)
         return ExpansionPort::readRomL(addr);
     
-    if (alternateRam)
+    if (nordicPower)
         return flash.read( getFlashAddr( addr & 0x1fff ) );
     
     if (ramMode)
-        return ram[ getRamAddr(addr & 0x1fff) ];
+        return ram[ getRamAddr<true>(addr & 0x1fff) ];
     
     if (!game && !exRom) // 16 k config
         return ExpansionPort::readRomL(addr);
     
     return flash.read( getFlashAddr( addr & 0x1fff ) );
 }
-
+// 80 - 9f [8k, 16k]
 auto RetroReplay::writeRomL( uint16_t addr, uint8_t data ) -> void {
-    
+
     if (flashJumper) {
-        if (ramMode)
-            ram[ ((bank & 3) << 13) | (addr & 0x1fff) ] = data;
-        else
-            flash.write(getFlashAddr(addr & 0x1fff), data); 
+        if (ramMode) {
+            ram[ getRamAddr<true>(addr & 0x1fff) ] = data;
+            return;
+        }
+        flash.write(getFlashAddr(addr & 0x1fff), data); 
+        
     } else {
         
         if ( (cartridgeId == Interface::CartridgeIdNordicReplay) && ramMode )
-            ram[ ((bank & 3) << 13) | (addr & 0x1fff) ] = data;
+            ram[ getRamAddr<true>(addr & 0x1fff) ] = data;
     }
     
     ExpansionPort::writeRomL( addr, data );
 }
 
-auto RetroReplay::writeUltimaxRomL( uint16_t addr, uint8_t data ) -> void {
-    
-    if (ramMode)
-        ram[ ((bank & 3) << 13) | (addr & 0x1fff) ] = data;
-    else if (flashJumper)        
-        flash.write( getFlashAddr( addr & 0x1fff ), data );        
+// 80 - 9f accepts writes while there is no cartridge mapped in this area
+auto RetroReplay::listenToWritesAt80To9F(uint16_t addr, uint8_t data ) -> void {
+    // C64 ram will be written in an external process, doesn't matter if 'writeRomL' allows it or not.
+    // because in this mode (C64 config) cartridge can listen only but not prevent the C64 RAM write   
+    writeRomL( addr, data );
 }
 
-// a0 - bf [16k] , e0 - ff [ultimax]
+// 80 - 9f [Ultimax]
+auto RetroReplay::writeUltimaxRomL( uint16_t addr, uint8_t data ) -> void {
+
+    if (ramMode)
+        ram[ getRamAddr<true>(addr & 0x1fff) ] = data;
+    else if (flashJumper)        
+        flash.write( getFlashAddr( addr & 0x1fff ), data );     
+}
+
+// a0 - bf [16k], e0 - ff [ultimax]
+// Note: following mappings are not accessible while flash jumper is set
 auto RetroReplay::readRomH( uint16_t addr ) -> uint8_t {
-    
-    if (flashJumper)
-        return ExpansionPort::readRomH(addr);
         
-    if (alternateRam) {
+    if (nordicPower) {
         if (frozen) {
             if (allowBank)
                 return flash.read( getFlashAddr( addr & 0x1fff ) );
@@ -259,10 +271,10 @@ auto RetroReplay::readRomH( uint16_t addr ) -> uint8_t {
     
     return flash.read( getFlashAddr<true>( addr & 0x1fff ) );
 }
-
+// a0 - bf [16k]
 auto RetroReplay::writeRomH( uint16_t addr, uint8_t data ) -> void {    
-    
-    if (flashJumper || !alternateRam || frozen)
+
+    if (!nordicPower || frozen)
         return;
     
     ram[ getRamAddr(addr & 0x1fff) ] = data;
@@ -270,23 +282,46 @@ auto RetroReplay::writeRomH( uint16_t addr, uint8_t data ) -> void {
     ExpansionPort::writeRomH( addr, data );
 }
 
+// writeUltimaxRomH at $e0 is not mapped by retroReplay ?
+
 // a0 - bf [ultimax] [NordicReplay only]
 auto RetroReplay::readUltimaxA0( uint16_t addr ) -> uint8_t {
-    
-    if (flashJumper || !alternateRam || !frozen)
+
+    if (!nordicPower || !frozen)
         return ExpansionPort::readUltimaxA0(addr);
     
     return ram[ getRamAddr(addr & 0x1fff) ];
 }
 
+// a0 - bf [ultimax] [NordicReplay only]
 auto RetroReplay::writeUltimaxA0( uint16_t addr, uint8_t data ) -> void {
-    if (flashJumper || !alternateRam || !frozen)
+
+    if (!nordicPower || !frozen)
         return;
     
     ram[ getRamAddr(addr & 0x1fff) ] = data;
 }
 
-// writeUltimaxRomH at $e0 is not mapped by retroReplay
+template<bool ignoreAllowBank> inline auto RetroReplay::getRamAddr( uint16_t addr ) -> uint16_t {
+    
+    if (ignoreAllowBank || allowBank)
+        return ((bank & 3) << 13) | addr;
+    
+    return addr;
+}
+
+template<bool specialCase> inline auto RetroReplay::getFlashAddr( uint32_t addr ) -> uint32_t {
+    
+    uint8_t _bank = bank;
+    
+    if (specialCase)
+        _bank = bank & ~3;
+    
+    if (!bankJumper)  // access only upper 64 k
+        return 0x10000 | addr | ((_bank & 7) << 13);
+    
+    return addr | (_bank << 13); // access full 128 k
+}
 
 auto RetroReplay::didFreeze() -> void {
     if (noFreeze)
@@ -296,7 +331,7 @@ auto RetroReplay::didFreeze() -> void {
     enabled = true;
     bank = 0;
     ramMode = false;
-    alternateRam = false;
+    nordicPower = false;
 }
 
 auto RetroReplay::blockFreeze() -> bool {
@@ -308,17 +343,17 @@ auto RetroReplay::reset() -> void {
     enabled = true;
     frozen = false;
     writeOnce = false;
-    exRom = false;
-    game = true;
+    exRom = requestedExRom = false;
+    game = requestedGame = true;
     bank = 0;
     ramMode = false;
-    alternateRam = false;
+    nordicPower = false;
     allowBank = false;
     noFreeze = false;
     reuMapping = false;
     
     if (flashJumper)
-        exRom = true;  
+        exRom = requestedExRom = true;            
 
     std::memset(ram, 0, 32 * 1024);
     flash.reset();
@@ -351,13 +386,41 @@ auto RetroReplay::serialize(Emulator::Serializer& s) -> void {
     s.integer( enabled );
     s.integer( frozen );
     s.integer( ramMode );
-    s.integer( alternateRam );
+    s.integer( nordicPower );
     s.integer( allowBank );
     s.integer( noFreeze );
     s.integer( reuMapping );
     s.integer( writeOnce );
+    s.integer( requestedGame );
+    s.integer( requestedExRom );
+    s.integer( writeProtect );
     
-    ExpansionPort::serialize(s);        
+    Freezer::serializeStep2( s );
+    
+    cRomL = cRomH = nullptr;
 }
+
+auto RetroReplay::setJumper( unsigned jumperId, bool state ) -> void {
+    
+    if (jumperId == 0) { // bank jumper
+        bankJumper = state;
+                    
+    } if (jumperId == 1) { // flash jumper
+        
+        if (flashJumper && !state)
+            writeOnce = false;
+
+        flashJumper = state;        
+    }
+}
+
+auto RetroReplay::getJumper( unsigned jumperId ) -> bool {
+    
+    if (jumperId == 0) // bank jumper
+        return bankJumper;
+                
+    return flashJumper;
+}
+
 
 }

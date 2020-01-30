@@ -122,6 +122,13 @@ System::System(Interface* interface) {
     
         this->ram[ addr ] = value;
     };
+    
+    writeRamAt80To9F = [this](uint16_t addr, uint8_t value) {
+        // some Cartridges listen here and writes value in their own RAM
+        expansionPort->listenToWritesAt80To9F(addr, value);
+        
+        this->ram[ addr ] = value;
+    };
 
     readCharRom = [this](uint16_t addr) {
         if ( !this->charRom ) 
@@ -728,7 +735,7 @@ auto System::remapCpu( ) -> void {
         memoryCpu.map( &readRomL, 0x80, 0x9f);
 		memoryCpu.map( &writeRomL, 0x80, 0x9f, Memory::Mode::Direct );
     } else
-		memoryCpu.map( &readRam, &writeRam, 0x80, 0x9f, Memory::Mode::Direct );
+		memoryCpu.map( &readRam, &writeRamAt80To9F, 0x80, 0x9f, Memory::Mode::Direct );
 	
     // a0 - bf
     if ( ultimax )
@@ -835,11 +842,13 @@ auto System::changeExpansionPortMemoryMode(bool exrom, bool game) -> void {
 	remapCpu();
 }
 
-auto System::setFastForward( unsigned config ) -> void {    
+auto System::setFastForward( unsigned config ) -> void {  
     fastForward.config = config;
     sid->disableAudioOut(config & (unsigned) Emulator::Interface::FastForward::NoAudioOut);
     vicII->disableSequencer(config & (unsigned) Emulator::Interface::FastForward::NoVideoSequencer);
+    iecBus->setFastForward(config & (unsigned) Emulator::Interface::FastForward::NoVideoSequencer);
     dispatcha();
 }
 
 }
+

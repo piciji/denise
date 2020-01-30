@@ -7,6 +7,7 @@ namespace LIBC64 {
 auto Tape::setWriteProtect(bool state) -> void {
 	
 	writeProtect = state;
+    disableWriteProtectQuestion = false;
 }
 
 auto Tape::writeIn(bool bit) -> void {
@@ -23,10 +24,15 @@ auto Tape::writeIn(bool bit) -> void {
 	
     if (cyclesElapsed <= 7)
         return;
-    
+            
     if (writeProtect) {
-        if (!system->interface->questionToWrite(media))
+        if (disableWriteProtectQuestion)
             return;
+        
+        if (!system->interface->questionToWrite(media)) {
+            disableWriteProtectQuestion = true;
+            return;
+        }
     }
     
     if (cyclesElapsed <= (255 * 8 + 7) ) {

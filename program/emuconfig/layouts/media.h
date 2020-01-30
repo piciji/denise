@@ -160,6 +160,8 @@ struct MediaLayout : GUIKIT::TabFrameLayout {
     auto colorListing( unsigned color, bool foreground ) -> void;
     auto getMediaGroupTransIdent( Emulator::Interface::MediaGroup* mediaGroup ) -> std::string;
     auto disableWriteProtection(Emulator::Interface::Media* media) -> void;
+    auto updateJumper(Emulator::Interface::Media* media) -> void;
+    auto changeWriteProtection(Emulator::Interface::Media* media, bool state) -> void;
 
     MediaLayout(TabWindow* tabWindow);
 };

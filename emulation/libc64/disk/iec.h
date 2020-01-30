@@ -37,6 +37,7 @@ struct IecBus {
     uint8_t drivesConnected;
     std::condition_variable cv;
     bool cpuBurner;
+    bool cpuBurnerRequested;
     bool powerOn;
     
     auto writeCia( uint8_t byte ) -> void;
@@ -63,6 +64,7 @@ struct IecBus {
     auto selectListing( Emulator::Interface::Media* media, unsigned pos ) -> void;
     auto serialize(Emulator::Serializer& s) -> void;
     auto setPowerThread( bool state ) -> void;
+    auto setFastForward( bool state ) -> void;
     auto updateIdleState() -> void;
 };
    

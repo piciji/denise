@@ -1106,6 +1106,58 @@ auto MediaLayout::disableWriteProtection(Emulator::Interface::Media* media) -> v
     }
 }
 
+auto MediaLayout::changeWriteProtection(Emulator::Interface::Media* media, bool state) -> void {
+    
+    auto layout = getMediaGroupLayout(media->group);
+    
+    if (!layout)
+        return;
+    
+    for(auto block : layout->blocks) {
+        
+        if (block->media == media) {
+                
+            block->header.writeprotect.setEnabled();
+            block->header.writeprotect.setChecked(state);
+             
+            break;
+        }
+    }
+}
+
+auto MediaLayout::updateJumper(Emulator::Interface::Media* media) -> void {
+    
+    auto layout = getMediaGroupLayout(media->group);
+    
+    if (!layout)
+        return;
+    
+    for(auto block : layout->blocks) {
+        
+        if (media && (block->media != media))
+            continue;        
+
+        for (auto& jumper : media->group->getExpansion()->jumpers) {
+
+            auto jumperBox = block->selector.jumpers[jumper.id];
+            
+            bool state = emulator->getExpansionJumper( media, jumper.id );
+
+            if (state != jumperBox->checked()) {  
+                std::string saveIdent = block->media->name + "_jumper_" + jumper.name;
+
+                settings->set<bool>(this->tabWindow->ident(saveIdent), state);
+
+                jumperBox->setChecked(state);
+            }
+        }  
+        
+        if (media)        
+            break;
+    }    
+
+}
+
 // MediaGroupLayout
 auto MediaGroupLayout::updateVisibility( unsigned count, bool init ) -> void {
     
@@ -1202,31 +1254,7 @@ auto MediaGroupLayout::build() -> void {
         
         if (mediaGroup->selected)
             radioGroup.push_back( &header.inUse );           
-        
-//        if (!mediaGroup->isWritable()) {
-//            header.remove( header.writeprotect );
-//            selector.remove( selector.spacer );
-//            selector.remove( selector.openW );
-//        }
-//        
-//        if (!mediaGroup->selected)
-//            header.remove( header.inUse );
-//        else {
-//            header.remove( header.deviceName );
-//            radioGroup.push_back( &header.inUse );                   
-//        }
-//        
-//        if (!mediaGroup->isExpansion() || (mediaGroup->getExpansion()->pcbs.size() == 0) )
-//            selector.remove( selector.combo );
-//        else {
-//            for (auto& pcb : mediaGroup->getExpansion()->pcbs) {
-//                selector.combo.append( pcb.name, pcb.id );
-//
-//                if (media.pcbLayout && (media.pcbLayout == &pcb) )
-//                    selector.combo.setSelection( selector.combo.rows() - 1 );
-//            }
-//        }
-        
+                
         if (media.expansion) {
             for(auto& jumper : media.expansion->jumpers) {
                 

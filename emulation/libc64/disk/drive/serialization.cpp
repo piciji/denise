@@ -45,6 +45,8 @@ auto Drive1541::serialize(Emulator::Serializer& s) -> void {
     s.integer( motorOff.delay );
     s.integer( motorOff.pos );
     s.vector( motorOff.chunkSize );
+    s.integer( disableWriteProtectQuestion );
+    s.integer( writeProtected );
     
     s.integer( rpm );
     s.integer( wobble );

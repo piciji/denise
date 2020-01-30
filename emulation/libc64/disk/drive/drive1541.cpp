@@ -330,6 +330,7 @@ auto Drive1541::power( ) -> void {
     randomizeRpm();
     currentHalftrack = 17 * 2;
     stepDirection = 0;
+    disableWriteProtectQuestion = false;
     
     changeHalfTrack(0);
 }
@@ -414,6 +415,7 @@ auto Drive1541::attach( Emulator::Interface::Media* media, uint8_t* data, unsign
 auto Drive1541::setWriteProtect(bool state) -> void {
     
     writeProtected = state;
+    disableWriteProtectQuestion = false;
 }
 
 auto Drive1541::writeprotectSense() -> uint8_t {
@@ -443,12 +445,21 @@ inline auto Drive1541::writeTrack() -> void {
     if (!loaded)
         return;
     
-    if (writeProtected) {
-        if (!system->interface->questionToWrite(media))
-            return;
-    }
+    if (writeProtected)
+        return;   
     
     structure1541.writeTrack( gcrTrack, currentHalftrack );        
+}
+
+auto Drive1541::informUserToRemoveWriteProtection() -> void {
+    if (!writeProtected)
+        return;
+        
+    if (disableWriteProtectQuestion)
+        return;
+
+    if (!system->interface->questionToWrite(media))
+        disableWriteProtectQuestion = true;
 }
 
 inline auto Drive1541::getTrackState() -> TrackState {

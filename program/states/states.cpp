@@ -53,6 +53,8 @@ auto States::load( std::string path, bool prependFolder ) -> void {
     
     updateRegion();
     
+    updateExpansionJumper();
+    
     forcePowerNextLoad = false;
 }
 
@@ -175,19 +177,23 @@ auto States::loadImagePaths( GUIKIT::Settings* loadSettings ) -> void {
                 continue;
             }
             
-            mediaInUse = mediaSelected;
+            if (mediaSelected)
+                mediaInUse = mediaSelected;
+            else
+                mediaInUse = &media;
             
-            InsertImage* inserted = findImage( &media );
+            InsertImage* inserted = findImage( mediaInUse );
+            
+            GUIKIT::File* file = filePool->get( setting->path );
+            bool writeProtection = file->isArchived() ? true : setting->writeProtect;
             
             if (inserted) {
                 if ((inserted->setting->path == setting->path)
-                    && (inserted->setting->id == setting->id)) {
-                    mediaInUse = &media;
+                    && (inserted->setting->id == setting->id)) {   
+                    EmuConfigView::TabWindow::getView( emulator )->mediaLayout->changeWriteProtection( mediaInUse, writeProtection );                    
                     continue;
                 }
-            }
-            
-            GUIKIT::File* file = filePool->get( setting->path );
+            }                        
             
             if (!file)
                 continue;                           
@@ -200,16 +206,15 @@ auto States::loadImagePaths( GUIKIT::Settings* loadSettings ) -> void {
                 continue;
             }            
             
-            mediaInUse = &media;
-            
-            media.guid = uintptr_t(file);
-              
-            emulator->ejectMedium( &media );
-            emulator->insertMedium( &media, data, file->archiveDataSize( setting->id ));
-            emulator->writeProtect( &media, file->isArchived() ? true : setting->writeProtect);
+            mediaInUse->guid = uintptr_t(file);
+                          
+            emulator->ejectMedium( mediaInUse );
+            emulator->insertMedium( mediaInUse, data, file->archiveDataSize( setting->id ));
+            // no need to set write protection state, because it belongs to serialization frame.
+            EmuConfigView::TabWindow::getView( emulator )->mediaLayout->changeWriteProtection( mediaInUse, writeProtection );
                        
-            filePool->assign(program->ident(emulator, media.name), file);  
-            updateImage( setting, &media );            
+            filePool->assign(program->ident(emulator, mediaInUse->name), file);  
+            updateImage( setting, mediaInUse );                          
         }
                         
         if (mediaSelected)
@@ -388,7 +393,7 @@ auto States::updateSaveable() -> void {
     
     for( auto& mediaGroup : emulator->mediaGroups ) {
 
-        // memory group saves only first main system memory media in case of
+        // memory group saves only PRG media in case of
         // state is generated during boot before injection can be done.
         // all other memory dumps, mostly expansion memory, will be inserted
         // during boot before a save state is generatable.
@@ -491,4 +496,16 @@ auto States::updateRegion() -> void {
     VideoManager::getInstance( this->emulator )->reloadSettings();
     
     audioManager->power();
+}
+
+auto States::updateExpansionJumper() -> void {
+        
+    for( auto& mediaGroup : emulator->mediaGroups ) {
+        
+        if (!mediaGroup.isExpansion() || (mediaGroup.getExpansion()->jumpers.size() == 0) )
+            continue;        
+                    
+        EmuConfigView::TabWindow::getView( emulator )->mediaLayout->updateJumper( mediaGroup.selected );
+    }
+        
 }

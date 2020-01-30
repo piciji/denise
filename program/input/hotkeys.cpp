@@ -190,12 +190,11 @@ auto InputManager::fireHotkey(Hotkey::Id id) -> void {
                 activeEmulator->controlTape( media, TapeMode::Stop );
                 status->addMessage( trans->get("tape_stop_state") );
                 view->updateTapeIcons( TapeMode::Stop );
-            } else if (id == Hotkey::RecordTape) {
-                if (!setting->writeProtect) {
-                    activeEmulator->controlTape( media, TapeMode::Record );
-                    status->addMessage( trans->get("tape_record_state") );						
-                    view->updateTapeIcons( TapeMode::Record );
-                } else
+            } else if (id == Hotkey::RecordTape) {              
+                activeEmulator->controlTape( media, TapeMode::Record );
+                status->addMessage( trans->get("tape_record_state") );						
+                view->updateTapeIcons( TapeMode::Record );
+                if (setting->writeProtect)
                     status->addMessage( trans->get("tape_record_wp_state"), 3, true );						
 
             } else if (id == Hotkey::ForwardTape) {

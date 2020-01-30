@@ -143,3 +143,20 @@ auto Program::setExpansionSelection( Emulator::Interface* emulator ) -> void {
         }
     }
 }
+
+auto Program::updateSaveIdent(Emulator::Interface::Media* media, std::string file) -> void {
+    
+    static Emulator::Interface::Media* _media = nullptr;
+    
+    if (!media) {
+        _media = nullptr;
+        return;
+    }
+    
+    if (media->group->isExpansion() || !_media
+    || (media->group->isDisk() && !_media->group->isDisk() && !_media->group->isExpansion())
+    || (media->group->isTape() && !_media->group->isDisk() && !_media->group->isExpansion())) {
+        EmuConfigView::TabWindow::getView( activeEmulator )->statesLayout->updateSaveIdent( file );
+        _media = media;
+    }
+}

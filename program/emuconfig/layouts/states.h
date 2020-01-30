@@ -8,6 +8,8 @@ struct FastSaveLayout : GUIKIT::FramedVerticalLayout {
         
         Top();
     } top;
+    
+    GUIKIT::CheckBox autoSaveIdent;
     GUIKIT::ListView listView;
     
     FastSaveLayout();

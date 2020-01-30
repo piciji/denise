@@ -26,12 +26,15 @@ struct RetroReplay : Freezer {
     bool frozen;
     bool ramMode;
     
-    bool alternateRam;
+    bool nordicPower;
     bool allowBank;
     bool noFreeze;
     bool reuMapping;
     bool writeOnce;
     bool writeProtect;
+    
+    bool requestedGame;
+    bool requestedExRom;
     
     auto create( Interface::CartridgeId cartridgeId ) -> Cart*;    
     auto assign(Cart* cart) -> void;
@@ -44,18 +47,23 @@ struct RetroReplay : Freezer {
     auto setJumper( unsigned jumperId, bool state ) -> void;
     auto getJumper( unsigned jumperId ) -> bool;
     template<bool specialCase = false> auto getFlashAddr( uint32_t addr ) -> uint32_t;
-    auto getRamAddr( uint16_t addr ) -> uint16_t;
+    template<bool ignoreAllowBank = false> auto getRamAddr( uint16_t addr ) -> uint16_t;
     auto init() -> void;
     
     auto readRomL( uint16_t addr ) -> uint8_t;
+    auto writeRomL( uint16_t addr, uint8_t data ) -> void;
+    auto listenToWritesAt80To9F(uint16_t addr, uint8_t data ) -> void;
+    auto writeUltimaxRomL( uint16_t addr, uint8_t data ) -> void;
+    
     auto readRomH( uint16_t addr ) -> uint8_t;
     auto readUltimaxA0( uint16_t addr ) -> uint8_t;
     
-    auto writeRomL( uint16_t addr, uint8_t data ) -> void;
+    
     auto writeRomH( uint16_t addr, uint8_t data ) -> void;
     auto writeUltimaxA0( uint16_t addr, uint8_t data ) -> void;
     
-    auto writeUltimaxRomL( uint16_t addr, uint8_t data ) -> void;
+    auto cycleLo() -> void;
+    auto cycleHi() -> void;
     
     auto didFreeze() -> void;
     auto blockFreeze() -> bool;

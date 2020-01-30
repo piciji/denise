@@ -244,7 +244,12 @@ auto Cart::serialize(Emulator::Serializer& s) -> void {
     
     if (s.mode() == Emulator::Serializer::Mode::Load) {
         
-        if (cartridgeId != _cartridgeId) { // oh kacke
+        if ( (_cartridgeId == Interface::CartridgeIdDefault) && 
+                (cartridgeId == Interface::CartridgeIdDefault8k || cartridgeId == Interface::CartridgeIdDefault16k || cartridgeId == Interface::CartridgeIdUltimax ));
+        // standard cartridge was saved from a CRT and reloaded from a BIN.
+        // don't recreate because standard CRT cart id is same for 8k, 16k and ultimax.
+        // serialization frame is identical for all cartridges, so no problem
+        else if (cartridgeId != _cartridgeId) { // oh kacke
             // cartridge id of state mismatches with loaded one.
             // it seems the cart which was loaded while creating this save state
             // isn't present anymore.

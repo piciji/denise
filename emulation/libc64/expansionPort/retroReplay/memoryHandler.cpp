@@ -56,7 +56,7 @@ auto RetroReplay::write() -> void {
     
     if (!binFormat) {
         uint8_t header[64];
-        buildHeader(&header[0], 0x20, true, false, "RetroReplay Cartridge" );
+        buildHeader(&header[0], 0x24, true, false, "RetroReplay Cartridge" );
         system->interface->writeMedia(media, &header[0], 0x40, 0);
         offset += 0x40;
     }    
