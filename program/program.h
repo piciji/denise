@@ -19,7 +19,7 @@
 #endif
 #define SETTINGS_FILE "settings.ini"
 #define DEFAULT_TRANS_FILE "english.txt"
-#define VERSION "1.0.7"
+#define VERSION "1.0.7.1"
 #define LICENSE "GPLv3"
 #define AUTHOR "PiCiJi"
 
