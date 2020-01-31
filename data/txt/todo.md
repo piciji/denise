@@ -55,7 +55,6 @@
 * RetroArch Shader support
 * 7z support
 * refactoring Linux GTK2 UI to GTK3
-* use a CI system like AppVeyor
 * Netplay
 
 # todo improvements
@@ -80,14 +79,12 @@
 * save/load additional settings files in App folder (mostly for per game key maps)
 * need --help command to describe command line usage
 * restructure firmware window 
-* possibility to swap CHAR roms during runtime
+* possibility to swap CHAR roms during runtime (https://csdb.dk/release/?id=168452)
 
 # bugs
 * Raphnet Adapter for N64, Xbox Controller don't work with RawInput
 * japanese characters aren't displayed correctly in OpenGL onscreen text
 * more Ram Init pattern problems (https://csdb.dk/release/?id=172238  https://csdb.dk/release/?id=172347)
-* same host input element can't trigger multiple emulated input elements
-* can't input "*" without releasing modifier key
 
 
 # completed emulation
@@ -126,3 +123,4 @@
 * Hotkeys
 * disk swapper (more usefull for amiga)
 * screenshots for VICE testbench
+* use a CI system for automated builds (AppVeyor)

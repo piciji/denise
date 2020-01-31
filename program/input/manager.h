@@ -36,8 +36,8 @@ struct InputMapping {
     int16_t state;
     bool hasUnknownAssignment = false;
 	
-	auto isAnalog() -> bool { return type == Analog; }
-    auto isSwitch() -> bool { return type == Switch; }
+	auto isAnalog() const -> bool { return type == Analog; }
+    auto isSwitch() const -> bool { return type == Switch; }
 	auto checkSanity(Hid::Device* device, unsigned groupId, unsigned inputId) -> unsigned;
 	auto updateSetting() -> void;
     template<bool useOldValue> auto adjustDigitalValue( Assign& hid ) -> int16_t;
@@ -85,6 +85,7 @@ struct InputManager {
     static InputMapping* captureObject;
     static unsigned retry;
 	static std::vector<Hid::Device*> hidDevices;
+    static bool urgentUpdate;
     
     struct DeviceRemap {
         Hid::Device* remember;
@@ -139,6 +140,7 @@ struct InputManager {
     auto updateMappingsInUse() -> void;
     auto matchButtons( Emulator::Interface::Device::Input* emuInput, Hid::Input* hidInput ) -> bool;
     auto priorizeConnectedDevicesOverKeyboard() -> void;
+    auto alternateSort() -> void;
     
     inline auto updateAndTrigger() -> void;
     inline auto addAndTrigger(InputMapping* newTrigger) -> void;

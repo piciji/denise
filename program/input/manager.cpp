@@ -14,6 +14,7 @@ std::vector<InputManager*> inputManagers;
 InputMapping* InputManager::captureObject = nullptr;
 unsigned InputManager::retry = 0;
 bool InputManager::driverChange = false;
+bool InputManager::urgentUpdate = true;
 std::vector<Hid::Device*> InputManager::hidDevices;
 std::vector<InputManager::DeviceRemap> InputManager::remapDevices;
 std::vector<Hotkey> InputManager::hotkeys;
@@ -41,7 +42,9 @@ auto InputManager::addMapping(InputMapping* mapping) -> void {
 
 auto InputManager::addMappingInUse(InputMapping* mapping) -> void {
     
-    mappingsInUse.push_back( mapping );
+    if (mapping->hids.size() > 0)
+        mappingsInUse.push_back( mapping );
+    
     if (mapping->alternate && (mapping->alternate->hids.size() > 0) )
         mappingsInUse.push_back( mapping->alternate );
 }
@@ -61,6 +64,13 @@ auto InputManager::unmapDevice(unsigned deviceId) -> void {
 }
 
 auto InputManager::update() -> void {
+    
+    if (InputManager::urgentUpdate) {
+        alternateSort();
+        andTriggers.clear();
+        InputManager::urgentUpdate = false;
+    }
+    
 	int16_t value;
     unsigned ignoreBelow = 0;
     std::vector<InputMapping*> shadows;
@@ -126,6 +136,9 @@ auto InputManager::update() -> void {
             
         } else if (!mapping->anded || (hidSize == 1) ) { //ored
             
+            if (ignoreBelow)
+                continue;
+            
 			for(auto& hid : hids) {
                 
 			#ifdef DEBUG_INPUT_CHANGE
@@ -170,7 +183,14 @@ auto InputManager::update() -> void {
 
             if (!aSwitch || atLeastOneKeyHasSwitched) {
                 
-                addAndTrigger(mapping);
+                if (aSwitch)
+                    addAndTrigger(mapping);
+                else {
+                    for (auto& hid : hids) {
+                        if (blockedByAndTrigger( hid ))
+                            goto Next;
+                    }                    
+                }
                 
                 useMapping->state = 1;
                 for (auto shadow : useMapping->shadowMap)
@@ -271,9 +291,15 @@ auto InputManager::updateMappingsInUse() -> void {
 auto InputManager::sort() -> void {
 	//always sort longest "and" connected mappers first
 	std::sort(mappingsInUse.begin(), mappingsInUse.end(), [ ](const InputMapping* lhs, const InputMapping* rhs) {
-		return lhs->anded == rhs->anded ? lhs->hids.size() > rhs->hids.size() : lhs->anded;
+		//return lhs->anded == rhs->anded ? lhs->hids.size() > rhs->hids.size() : lhs->anded;
+        return (lhs->anded == rhs->anded) ? ((lhs->hids.size() == rhs->hids.size()) ? (lhs->isSwitch() > rhs->isSwitch()) : (lhs->hids.size() > rhs->hids.size())) : lhs->anded;
 	});
+        
+    // this is needed because hotplug mappings are shared.
+    InputManager::urgentUpdate = true;
+}
 
+auto InputManager::alternateSort() -> void {
     std::vector<InputMapping*> temp;
     
     for(auto mapping : mappingsInUse) {
@@ -294,4 +320,3 @@ auto InputManager::sort() -> void {
         }
     }
 }
-

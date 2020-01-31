@@ -423,8 +423,7 @@ auto InputLayout::linkSelected( bool alternate ) -> void {
     mapping->swapLinker();
     updateListEntry(inputId(), mapping);
 
-    InputManager::getManager(emulator)->sort();
-    InputManager::getManager(emulator)->priorizeConnectedDevicesOverKeyboard();
+    InputManager::getManager(emulator)->updateMappingsInUse();
 }
 
 auto InputLayout::mapSelected( bool alternate ) -> void {

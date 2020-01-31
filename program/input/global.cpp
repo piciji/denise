@@ -206,7 +206,7 @@ auto InputManager::matchButtons( Emulator::Interface::Device::Input* emuInput, H
 }
 
 auto InputManager::priorizeConnectedDevicesOverKeyboard() -> void {
-    
+
     for(auto mapping : mappingsInUse) {        
         for(auto& hid : mapping->hids)
             hid.disable = false;
@@ -257,7 +257,7 @@ auto InputManager::priorizeConnectedDevicesOverKeyboard() -> void {
                 if (mapper->hids.size() == 0)
                     goto NextMapper;
 
-                if ( mapper->anded && (mapper->hids.size() > 1))
+                if (mapper->hids.size() > 1)
                     goto NextMapper;
 
                 for (auto& hid : mapper->hids) {
@@ -271,7 +271,7 @@ auto InputManager::priorizeConnectedDevicesOverKeyboard() -> void {
                             if (keyboardMapper->hids.size() == 0)
                                 goto NextKeyboardMapper;
 
-                            if (keyboardMapper->anded && (keyboardMapper->hids.size() > 1))
+                            if (keyboardMapper->hids.size() > 1)
                                 goto NextKeyboardMapper;
 
                             for (auto& keyboardHid : keyboardMapper->hids) {
@@ -384,10 +384,7 @@ auto InputManager::bindHids( ) -> void {
             }
         }
 
-        if (manager->emulator)
-            manager->updateMappingsInUse();
-        else
-            manager->sort();        
+        manager->updateMappingsInUse();
 	}
     clearLastDeviceState();
 }

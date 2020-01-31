@@ -311,6 +311,7 @@ auto Program::powerOff() -> void {
     filePool->unloadOrphaned();
     view->updateFreeze(nullptr);
     updateSaveIdent( nullptr );
+    InputManager::urgentUpdate = true;
 }
 
 auto Program::loop() -> void {
