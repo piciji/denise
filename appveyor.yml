@@ -19,10 +19,10 @@ branches:
   
 environment:
   matrix:
-    - Job: Linux 64-bit
-      Target: linux
     - Job: macOS 64-bit
       Target: macos
+    - Job: Linux 64-bit
+      Target: linux
     - Job: Windows 64-bit
       Target: win64
     - Job: Windows 32-bit
@@ -163,26 +163,24 @@ for:
     - sh: cd freetype-2.9.1
     - sh: ./configure --enable-static --without-zlib --without-bzip2 && make && make install
     - sh: cd ..  
-    - sh: make
+    - sh: make && make install
     
   after_build:
-    - sh: sudo rm out/.gitkeep
-    - sh: sudo cp data/txt/readme_macOS.txt out/
     - sh: |
         if [ "${APPVEYOR_REPO_TAG}" == "false" ]
         then
-          export gzTarget=denise_osx_build_$(echo ${APPVEYOR_REPO_COMMIT} | cut -c 1-7).tar.gz
-          export gzSrc=denise_osx_build_$(echo ${APPVEYOR_REPO_COMMIT} | cut -c 1-7)          
+          export gzTarget=denise_osx_build_$(echo ${APPVEYOR_REPO_COMMIT} | cut -c 1-7).dmg
+          export gzSrc=out/Denise.dmg
           
         else        
-          export gzTarget=denise_osx_${APPVEYOR_REPO_TAG_NAME}.tar.gz
-          export gzSrc=denise_osx_${APPVEYOR_REPO_TAG_NAME}                    
+          export gzTarget=denise_osx_${APPVEYOR_REPO_TAG_NAME}.dmg
+          export gzSrc=out/Denise.dmg
         fi
         
-        sudo mv out "${gzSrc}" && sudo tar -zcf "${gzTarget}" "${gzSrc}"
+        sudo mv "${gzSrc}" "${gzTarget}"
     
   artifacts:
-    - path: 'denise*.tar.gz'
+    - path: 'denise*.dmg'
     
 
 deploy:
