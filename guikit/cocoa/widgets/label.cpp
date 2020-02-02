@@ -58,7 +58,7 @@ auto pLabel::setEnabled(bool enabled) -> void {
     if(label.overrideForegroundColor()) {
         unsigned color = label.foregroundColor();
         textColor = [NSColor
-                     colorWithSRGBRed:((color>>16) & 0xff) / 255.0
+                     colorWithDeviceRed:((color>>16) & 0xff) / 255.0
                      green:((color>>8) & 0xff) / 255.0
                      blue:(color & 0xff) / 255.0
                      alpha: 1.0];

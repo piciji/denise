@@ -43,6 +43,7 @@ don't forget to update SDK (commandline tools), when upgrading OS: xcode-select 
 install brew first: /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 brew install pkg-config
 brew install sdl2
+sudo easy_install pip && sudo pip install dmgbuild
 
 compile freetype
   download source of version 2.9.1 (newer versions should work, but were not tested)
@@ -71,7 +72,7 @@ now build Denise
 change to projects root folder and type:
 
 make                [windows, linux, osx]
-make install		[windows, linux]
+make install		[windows, linux, osx]
 make uninstall		[linux]
 
 

@@ -65,8 +65,8 @@ badge_icon = icon_from_app(application)
 
 # Where to put the icons
 icon_locations = {
-    appname:        (40, 230),
-    'Applications': (335, 230)
+    appname:        (108, 231),
+    'Applications': (404, 231)
     }
 
 # .. Window configuration ......................................................
@@ -101,7 +101,7 @@ show_sidebar = False
 sidebar_width = 180
 
 # Window position in ((x, y), (w, h)) format
-window_rect = ((100, 100), (512, 380))
+window_rect = ((100, 100), (512, 385))
 
 # Select the default view; must be one of
 #
@@ -127,7 +127,7 @@ grid_offset = (0, 0)
 grid_spacing = 100
 scroll_position = (0, 0)
 label_pos = 'bottom' # or 'right'
-text_size = 16
+text_size = 12
 icon_size = 128
 
 # .. List view configuration ...................................................

@@ -73,7 +73,7 @@
         [self setDelegate:self];
         [self setReleasedWhenClosed:NO];
         [self setTitle:@""];
-        [self setColorSpace: [NSColorSpace sRGBColorSpace]];
+        [self setColorSpace: [NSColorSpace deviceRGBColorSpace]];
 
         NSBundle* bundle = [NSBundle mainBundle];
         NSDictionary* dictionary = [bundle infoDictionary];
@@ -384,7 +384,7 @@ auto pWindow::setMenuVisible(bool visible) -> void {
 auto pWindow::setBackgroundColor(unsigned color) -> void {
     @autoreleasepool {
         [cocoaWindow setBackgroundColor:[NSColor
-            colorWithSRGBRed:((color>>16) & 0xff) / 255.0
+            colorWithDeviceRed:((color>>16) & 0xff) / 255.0
             green:((color>>8) & 0xff) / 255.0
             blue:(color & 0xff) / 255.0
             alpha: 0.0]
