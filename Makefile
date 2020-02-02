@@ -215,6 +215,7 @@ install:
     endif
 
     else ifeq ($(platform),macosx)
+	dmgbuild -s ../data/dmgSettings.py "Denise" Denise.dmg
     else
 	mkdir -p $(prefix)/bin/
 	mkdir -p $(prefix)/share/icons/
