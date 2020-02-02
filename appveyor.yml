@@ -7,8 +7,8 @@ skip_commits:
     - '**/*.md'
 
 image:
-  - Ubuntu
   - macos-mojave  
+  - Ubuntu  
   - Visual Studio 2019  
   
 branches:
@@ -151,7 +151,7 @@ for:
     - tar -zvxf freetype-2.9.1.tar.gz
     #- sh: '/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"'
     #- sh: brew install pkg-config    
-    - sh: easy_install pip && pip install dmgbuild
+    - sh: sudo easy_install pip && pip install dmgbuild
     - sh: brew install sdl2
     
   cache:
