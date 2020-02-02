@@ -74,7 +74,6 @@
 * png overlay for 16:9 fullscreen
 * allow input if there is no focus
 * SID 8580 sounds more powerfull in other emulators (maybe a bug or an additional audio effect?) (https://csdb.dk/release/?id=187116)
-* build OSX DMG installer
 * render placeholder picuture if emulator window is present but no running emulation
 * save/load additional settings files in App folder (mostly for per game key maps)
 * need --help command to describe command line usage
