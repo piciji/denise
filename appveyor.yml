@@ -194,4 +194,3 @@ deploy:
 #    folder: ../../../../frs/project/deniseemu/${APPVEYOR_REPO_TAG_NAME}
 #    on:
 #      APPVEYOR_REPO_TAG: true
-
