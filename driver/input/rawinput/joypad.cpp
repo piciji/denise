@@ -18,7 +18,7 @@ struct RawJoypad {
 		};
 		std::vector<Hats> hats;
         
-        int16_t axis[6];
+        int16_t axis[6] = {0};
         uint8_t axisMap[6];
 	};
 	std::vector<Joypad> joypads;
@@ -198,15 +198,24 @@ struct RawJoypad {
 		
 		for (unsigned i = 0; i < data.Caps.NumberInputValueCaps; i++) {
 			RJ_STEP( HidP_GetUsageValue( HidP_Input, data.pValueCaps[i].UsagePage, 0, data.pValueCaps[i].Range.UsageMin, &value, data.pPreparsedData,
-				(PCHAR) input->data.hid.bRawData, input->data.hid.dwSizeHid) == HIDP_STATUS_SUCCESS )
-					
+				(PCHAR) input->data.hid.bRawData, input->data.hid.dwSizeHid) == HIDP_STATUS_SUCCESS )					
+                    
 			switch (data.pValueCaps[i].Range.UsageMin) {
-				case 0x30: pJoypad->axis[0] = (LONG) value - 128; break;
-				case 0x31: pJoypad->axis[1] = (LONG) value - 128; break;
-				case 0x32: pJoypad->axis[2] = (LONG) value - 128; break;
-				case 0x33: pJoypad->axis[3] = (LONG) value - 128; break;
-				case 0x34: pJoypad->axis[4] = (LONG) value - 128; break;
-				case 0x35: pJoypad->axis[5] = (LONG) value - 128; break;
+                case 0x30:
+                case 0x31:
+                case 0x32:
+                case 0x33:
+                case 0x34:
+                case 0x35: {
+                    signed range = data.pValueCaps[i].LogicalMax - data.pValueCaps[i].LogicalMin;
+                    if (range == 0)
+                        range = 1;
+                    
+                    int32_t _value = ((int32_t)value - data.pValueCaps[i].LogicalMin) * 65535ll / range - 32767;
+                    
+                    pJoypad->axis[data.pValueCaps[i].Range.UsageMin & 7] = sclamp<16>( _value);
+                } break;
+                
 				case 0x39: // Hat Switch
 					if (hat == pJoypad->hats.size())
 						break;
@@ -237,7 +246,7 @@ struct RawJoypad {
             
 			for(auto& input : jp.hid->axes().inputs) {
                 
-                input.setValue( (jp.axis[ jp.axisMap[ input.id ] ]) << 8 );                
+                input.setValue( jp.axis[ jp.axisMap[ input.id ] ] );                
 			}
             
             if(ts == 0)

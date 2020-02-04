@@ -33,21 +33,23 @@ struct RawWorker {
 		GetRawInputDeviceList(list, &deviceCount, sizeof (RAWINPUTDEVICELIST));
 
 		for (unsigned n = 0; n < deviceCount; n++) {
+            
+            unsigned pos = deviceCount - n - 1; // add devices in reverse 
 			RID_DEVICE_INFO info;
 			unsigned size;
 			info.cbSize = size = sizeof (RID_DEVICE_INFO);
-			GetRawInputDeviceInfo(list[n].hDevice, RIDI_DEVICEINFO, &info, &size);
+			GetRawInputDeviceInfo(list[pos].hDevice, RIDI_DEVICEINFO, &info, &size);
 
 			if (info.dwType == RIM_TYPEHID) {
 				if (info.hid.usUsagePage != 1 || (info.hid.usUsage != 4 && info.hid.usUsage != 5))
 					continue;
 					
                 if (!libError)
-                    joypad.add( list[n].hDevice );
+                    joypad.add( list[pos].hDevice );
                 
 			} else if (info.dwType == RIM_TYPEMOUSE) {
 					
-				mouse.add( list[n].hDevice );                
+				mouse.add( list[pos].hDevice );                
             }
 		}
 
