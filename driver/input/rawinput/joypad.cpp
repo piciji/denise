@@ -207,23 +207,44 @@ struct RawJoypad {
                 case 0x33:
                 case 0x34:
                 case 0x35: {
-                    signed range = data.pValueCaps[i].LogicalMax - data.pValueCaps[i].LogicalMin;
-                    if (range == 0)
-                        range = 1;
-                    
-                    int32_t _value = ((int32_t)value - data.pValueCaps[i].LogicalMin) * 65535ll / range - 32767;
-                    
-                    pJoypad->axis[data.pValueCaps[i].Range.UsageMin & 7] = sclamp<16>( _value);
+                    if (pJoypad->isXInputDevice) {
+                        
+                        pJoypad->axis[data.pValueCaps[i].Range.UsageMin & 7] = sclamp<16>( value - 32767 );
+                        
+                    } else {
+                        signed range = data.pValueCaps[i].LogicalMax - data.pValueCaps[i].LogicalMin;
+                        if (range == 0) {
+                            pJoypad->axis[data.pValueCaps[i].Range.UsageMin & 7] = sclamp<16>( ((value & 0xff) - 128) << 8 );
+                            
+                        } else {                            
+                            int32_t _value = ((((int32_t)value - data.pValueCaps[i].LogicalMin) * 65535ll) / range) - 32767;
+
+                            pJoypad->axis[data.pValueCaps[i].Range.UsageMin & 7] = sclamp<16>( _value);
+                        }
+                            
+                    }
                 } break;
                 
 				case 0x39: // Hat Switch
 					if (hat == pJoypad->hats.size())
 						break;
-					pJoypad->hats[hat].x = (value == 5 || value == 6 || value == 7) ? -32768
-							: ( (value == 1 || value == 2 || value == 3) ? +32767 : 0 );
-					pJoypad->hats[hat].y = (value == 7 || value == 0 || value == 1) ? -32768
-							: ( (value == 3 || value == 4 || value == 5) ? +32767 : 0 );
-					hat++;
+                    
+                    if (pJoypad->isXInputDevice) {
+                        pJoypad->hats[hat].x = (value == 6 || value == 7 || value == 8) ? -32768
+                                : ( (value == 2 || value == 3 || value == 4) ? +32767 : 0 );
+                        
+                        pJoypad->hats[hat].y = (value == 4 || value == 5 || value == 6) ? -32768
+                                : ( (value == 8 || value == 1 || value == 2) ? +32767 : 0 );                                                
+                    } else {
+                    
+                        pJoypad->hats[hat].x = (value == 5 || value == 6 || value == 7) ? -32768
+                                : ( (value == 1 || value == 2 || value == 3) ? +32767 : 0 );
+                        pJoypad->hats[hat].y = (value == 7 || value == 0 || value == 1) ? -32768
+                                : ( (value == 3 || value == 4 || value == 5) ? +32767 : 0 );                                          
+                    }
+                    
+                    hat++;
+                    
 					break;
 			}
 		}

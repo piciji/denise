@@ -153,10 +153,10 @@ template<bool useOldValue> auto InputMapping::adjustDigitalValue( Assign& hid ) 
     
     // joypad hat, trigger or axis
     if (qualifier == Qualifier::Lo) 
-        return value < -16384;
+        return value <= -8192;
 
     else if (qualifier == Qualifier::Hi)
-        return value > +16384;
+        return value >= +8192;
     
     return value; // should not happen     
 }
