@@ -24,6 +24,8 @@ auto InputManager::init() -> void {
         if (!manager->emulator)
             continue;
         
+        manager->updateAnalogTrigger();
+        
         std::string ident = manager->emulator->ident;
         
         auto alreadyMapped = settings->get<bool>( ident + "_automapped", false);    
@@ -61,7 +63,7 @@ auto InputManager::setMappings() -> void {
             
 	for (auto manager : inputManagers) {
 		if (manager->emulator) {			
-            for (auto& device : manager->emulator->devices) {                                        
+            for (auto& device : manager->emulator->devices) {  
                 for (auto& input : device.inputs) {
 
                     std::string settingIdent = manager->emulator->ident + "_" + device.name + "_" + std::to_string(input.id);
@@ -76,7 +78,7 @@ auto InputManager::setMappings() -> void {
                     mapper->alternate = nullptr;
                     mapper->inputManager = manager;
                     input.guid = (uintptr_t) mapper;
-
+                    
                     for( auto& inputId : input.shadowMap ) {
                         auto inputPtr = &device.inputs[ inputId ];
 
@@ -488,4 +490,30 @@ auto InputManager::getDeviceFromIdent( unsigned id ) -> Hid::Device* {
     }
     
     return nullptr;
+}
+
+auto InputManager::updateAnalogTrigger() -> void {
+    
+    int tresholdLo = 200;
+    int tresholdHi = 100;
+    
+    for (auto& device : emulator->devices) {
+        if (!device.isJoypad())
+            continue;        
+        
+        auto triggerPercent = settings->get<unsigned>(program->ident(emulator, "analogtrigger_" + device.name), 50u, { 0u, 100u});  
+        
+        for (auto& input : device.inputs) {
+            
+            auto mapper = (InputMapping*)input.guid;                        
+            
+            mapper->analogTrigger = (triggerPercent * 32768) / 100;
+            
+            mapper->analogTrigger = std::min( std::max(mapper->analogTrigger, tresholdLo), 32768 - tresholdHi);
+            
+            if (mapper->alternate)
+                mapper->alternate->analogTrigger = mapper->analogTrigger;
+        }        
+        
+    }
 }

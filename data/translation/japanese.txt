@@ -442,3 +442,4 @@ retroreplay_image =
 select_retroreplay_image = 
 blank_retroreplay_image = 
 auto_save_identifier = 
+analog_trigger = 

@@ -25,14 +25,16 @@ InputControl::InputControl() {
     setAlignment( 0.5 );
 }
 
-InputMapControl::InputMapControl() {
+InputMapControl::InputMapControl() : analogTrigger("%") {
     append(keyLayoutLabel, {0u, 0u}, 5);
     append(keyLayout, {0u, 0u}, 10);
-    append(automap, {0u, 0u});
-    append(spacer, {~0u, 0u});
+    append(automap, {0u, 0u}, 10);
+    append(analogTrigger, {~0u, 0u}, 10);    
     append(reset, {0u, 0u});    
     
     setAlignment( 0.5 );
+    
+    analogTrigger.slider.setLength(101);    
     
     automap.setEnabled( false );   
     keyLayout.setEnabled( false );    
@@ -185,6 +187,19 @@ InputLayout::InputLayout(TabWindow* tabWindow) {
         control.eraseAlt.setEnabled(!mapping->isAnalog() && inputList.selected());
         control.linkerAlt.setEnabled(!mapping->isAnalog() && inputList.selected());
         control.mapperAlt.setEnabled( !mapping->isAnalog() && inputList.selected() );
+    };
+
+    mapControl.analogTrigger.slider.onChange = [this]() {
+        
+        auto& device = emulator->devices[ deviceId() ];
+        
+        unsigned position = mapControl.analogTrigger.slider.position();
+        
+        mapControl.analogTrigger.value.setText( std::to_string(position) + " " + mapControl.analogTrigger.unit );    
+    
+        settings->set<unsigned>(this->tabWindow->ident("analogtrigger_" + device.name), position);
+        
+        InputManager::getManager( this->emulator )->updateAnalogTrigger();
     };    
     
     updateLayout();
@@ -260,8 +275,22 @@ auto InputLayout::loadInputList(unsigned deviceId) -> void {
     
     mapControl.keyLayout.setEnabled( device.isKeyboard() );    
     mapControl.automap.setEnabled( device.isKeyboard() && mapControl.keyLayout.selection() != 0 );
+    mapControl.analogTrigger.setEnabled( device.isJoypad() );
+    
     updateConnectorButtons();
     enableConnectorButtons();
+    updateAnalogTrigger();
+}
+
+auto InputLayout::updateAnalogTrigger() -> void {
+    
+    auto& device = emulator->devices[ deviceId() ];
+    
+    auto position = settings->get<unsigned>(this->tabWindow->ident("analogtrigger_" + device.name), 50u, {0u, 100u});
+        
+    mapControl.analogTrigger.value.setText( std::to_string(position) + " " + mapControl.analogTrigger.unit );
+    
+    mapControl.analogTrigger.slider.setPosition( position );
 }
 
 auto InputLayout::updateLayout() -> void {
@@ -312,6 +341,7 @@ auto InputLayout::translate() -> void {
     mapControl.keyLayoutLabel.setText( trans->get("layout") );
     mapControl.keyLayout.setTooltip( trans->get("keyboard_layout_tip") );
     mapControl.automap.setText( trans->get("assign") );
+    mapControl.analogTrigger.name.setText( trans->get("analog_trigger", {}, true) );
     
     assigner.overwriteRadio.setText( trans->get("overwrite") );
     assigner.appendRadio.setText( trans->get("append") );
@@ -325,6 +355,8 @@ auto InputLayout::translate() -> void {
     
     for(auto& connectorButton : selector.connectorButtons) 
         connectorButton.checkButton->setText( trans->get( connectorButton.connector->name ) );
+    
+    SliderLayout::scale({&mapControl.analogTrigger}, "100 %");
 }
 
 auto InputLayout::displayInputCall() -> void {

@@ -30,7 +30,7 @@ struct InputMapControl : GUIKIT::HorizontalLayout {
     GUIKIT::Label keyLayoutLabel;
     GUIKIT::ComboButton keyLayout;
     GUIKIT::Button automap;
-    GUIKIT::Widget spacer;
+    SliderLayout analogTrigger;
     GUIKIT::Button reset;
     
     InputMapControl();
@@ -67,7 +67,8 @@ struct InputLayout : GUIKIT::VerticalLayout {
     auto eraseSelected( bool alternate = false ) -> void;
     auto linkSelected( bool alternate = false ) -> void;
     auto mapSelected( bool alternate = false ) -> void;
-
+    auto updateAnalogTrigger() -> void;
+    
     InputSelector selector;
     InputControl control;
     InputMapControl mapControl;

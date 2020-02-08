@@ -35,6 +35,7 @@ struct InputMapping {
 	GUIKIT::Setting* setting;
     int16_t state;
     bool hasUnknownAssignment = false;
+    int analogTrigger = 16384;
 	
 	auto isAnalog() const -> bool { return type == Analog; }
     auto isSwitch() const -> bool { return type == Switch; }
@@ -141,6 +142,7 @@ struct InputManager {
     auto matchButtons( Emulator::Interface::Device::Input* emuInput, Hid::Input* hidInput ) -> bool;
     auto priorizeConnectedDevicesOverKeyboard() -> void;
     auto alternateSort() -> void;
+    auto updateAnalogTrigger() -> void;
     
     inline auto updateAndTrigger() -> void;
     inline auto addAndTrigger(InputMapping* newTrigger) -> void;
