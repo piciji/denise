@@ -10,7 +10,9 @@
 ## 1.0.8 (not yet released)
 * added Retro/Nordic Replay support
 * added confirmation dialog to disable write protection while trying to write on protected media
-* added macOS DMG installer [thanks to Retrofan for background]
+* added macOS DMG installer [thanks to Retrofan for background image]
+* added xInput emulation for Windows rawInput driver [XBOX Controller, xMode devices]
+* fixed a few input handling bugs
 
 ## 1.0.7
 * fixed a critical bug that caused OSX builds to use illegal instructions for some architectures

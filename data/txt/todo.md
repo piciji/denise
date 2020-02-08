@@ -81,7 +81,6 @@
 * possibility to swap CHAR roms during runtime (https://csdb.dk/release/?id=168452)
 
 # bugs
-* Raphnet Adapter for N64, Xbox Controller don't work with RawInput
 * japanese characters aren't displayed correctly in OpenGL onscreen text
 * more Ram Init pattern problems (https://csdb.dk/release/?id=172238  https://csdb.dk/release/?id=172347)
 
