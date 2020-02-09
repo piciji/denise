@@ -12,7 +12,7 @@ auto pHyperlink::create() -> void {
         utf16_t( generate() ),
         WS_CHILD | WS_TABSTOP, 
         0, 0, 0, 0, 
-        hyperlink.window()->p.hwnd, (HMENU)hyperlink.id, GetModuleHandle(0), 0);
+        hyperlink.window()->p.hwnd, (HMENU)(unsigned long long)hyperlink.id, GetModuleHandle(0), 0);
     
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)&hyperlink);
 }

@@ -41,7 +41,7 @@ auto pSlider::create() -> void {
     hwnd = CreateWindow(
         TRACKBAR_CLASS, L"", WS_CHILD | WS_TABSTOP | TBS_NOTICKS | TBS_BOTH |
         (slider.orientation == Slider::Orientation::VERTICAL ? TBS_VERT : TBS_HORZ),
-        0, 0, 0, 0, slider.window()->p.hwnd, (HMENU)slider.id, GetModuleHandle(0), 0);
+        0, 0, 0, 0, slider.window()->p.hwnd, (HMENU)(unsigned long long)slider.id, GetModuleHandle(0), 0);
 
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)&slider);
 }

@@ -31,10 +31,12 @@ namespace GUIKIT {
 
 std::vector<Base*> Base::objects;
 
-Base* Base::find(unsigned id) {
+auto Base::find(unsigned id) -> Base* {
     id -= 100;
-    if (objects.size() <= id ) return nullptr;
-    return objects.at(id);
+    if (objects.size() <= id )
+        return nullptr;
+    
+    return objects[id];
 }
 
 Base::Base() {
@@ -1087,6 +1089,10 @@ auto System::isOffscreen( Geometry geometry ) -> bool {
 
 auto System::getOSLang() -> Language {
     return pSystem::getOSLang();
+}
+
+auto System::printToCmd( std::string str ) -> void {
+    pSystem::printToCmd( str );
 }
 
 }

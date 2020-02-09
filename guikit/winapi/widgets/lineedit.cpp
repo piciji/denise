@@ -6,7 +6,7 @@ auto pLineEdit::create() -> void {
     hwnd = CreateWindowEx(
         WS_EX_CLIENTEDGE, L"EDIT", L"",
         WS_CHILD | WS_TABSTOP | ES_AUTOHSCROLL | ES_AUTOVSCROLL,
-        0, 0, 0, 0, lineEdit.window()->p.hwnd, (HMENU)lineEdit.id, GetModuleHandle(0), 0 );
+        0, 0, 0, 0, lineEdit.window()->p.hwnd, (HMENU)(unsigned long long)lineEdit.id, GetModuleHandle(0), 0 );
 
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)&lineEdit);
     wndprocOrig = (WNDPROC)SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)subclassWndProc);    

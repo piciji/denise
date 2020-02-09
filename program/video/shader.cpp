@@ -519,7 +519,7 @@ auto Shader::removeActiveShader(std::string shader) -> void {
 
 auto Shader::getActiveShaders() -> std::vector<std::string> {
     auto activeShaders = settings->get<std::string>(program->ident(vManager->emulator, "shader"), "");
-    return GUIKIT::String::split(activeShaders, '###');
+    return GUIKIT::String::explode(activeShaders, "###");
 }
 
 auto Shader::clean(std::vector<ShaderPass*>& passes) -> void {

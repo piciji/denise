@@ -38,6 +38,30 @@ auto String::split(const std::string& str, char delimiter) -> std::vector<std::s
     return tokens;
 }
 
+auto String::explode(std::string str, std::string delimiter) -> std::vector<std::string> {
+
+    std::vector<std::string> tokens;
+    std::string::size_type n;
+    
+    while(true) {
+        
+        n = str.find( delimiter );
+        
+        if (n == std::string::npos) {
+            tokens.push_back( str );
+            break;
+        }
+        
+        std::string token = str.substr(0, n);
+        
+        tokens.push_back( token );
+        
+        str = str.substr(n + delimiter.size());
+    }
+    
+    return tokens;
+}
+
 auto String::unsplit( const std::vector<std::string>& parts, std::string delimiter ) -> std::string {
 
     std::string str = "";

@@ -20,7 +20,8 @@ auto pListView::append(const std::vector<std::string>& list) -> void {
     item.mask = LVIF_TEXT;
     item.iItem = row;
     item.iSubItem = 0;
-    item.pszText = L"";
+    utf16_t wtext("");
+    item.pszText = wtext;
     locked = true;
     ListView_InsertItem(hwnd, &item);
     locked = false;
@@ -125,7 +126,7 @@ auto pListView::create() -> void {
     hwnd = CreateWindowEx(
         WS_EX_CLIENTEDGE, WC_LISTVIEW, L"",
         WS_CHILD | WS_TABSTOP | LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_NOSORTHEADER | LVS_NOCOLUMNHEADER,
-        0, 0, 0, 0, listView.window()->p.hwnd, (HMENU)listView.id, GetModuleHandle(0), 0);
+        0, 0, 0, 0, listView.window()->p.hwnd, (HMENU)(unsigned long long)listView.id, GetModuleHandle(0), 0);
 
     ListView_SetExtendedListViewStyle(hwnd, LVS_EX_FULLROWSELECT | LVS_EX_SUBITEMIMAGES);
 	

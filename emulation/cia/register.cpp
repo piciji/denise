@@ -57,6 +57,8 @@ auto Base::read( unsigned pos ) -> uint8_t {
         case 0xf:						
 			return timer[T_B].control & 0xef;
 	}
+    
+    __builtin_unreachable(); 
 }
 
 // the write is internal valid at the end of second half cycle.

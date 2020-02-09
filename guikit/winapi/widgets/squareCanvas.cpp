@@ -4,7 +4,7 @@ auto pSquareCanvas::create() -> void {
     destroy(hwndTip);
     hwnd = CreateWindow(L"STATIC", L"",
         WS_CHILD,
-        0, 0, 0, 0, squareCanvas.window()->p.hwnd, (HMENU)squareCanvas.id, GetModuleHandle(0), 0);
+        0, 0, 0, 0, squareCanvas.window()->p.hwnd, (HMENU)(unsigned long long)squareCanvas.id, GetModuleHandle(0), 0);
     
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)&squareCanvas);
     wndprocOrig = (WNDPROC)SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)subclassWndProc);

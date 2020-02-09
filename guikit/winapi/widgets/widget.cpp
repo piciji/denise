@@ -116,7 +116,7 @@ auto pWidget::setTooltip(std::string tooltip) -> void {
 
 auto pWidget::createTooltip() -> void {
 
-    hwndTip = CreateWindowEx(NULL, TOOLTIPS_CLASS, NULL,
+    hwndTip = CreateWindowEx(0, TOOLTIPS_CLASS, NULL,
         WS_POPUP |TTS_ALWAYSTIP | TTS_BALLOON,
         CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
         GetParent(hwnd), NULL, GetModuleHandle(0), 0);

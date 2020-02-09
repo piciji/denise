@@ -383,7 +383,7 @@ auto pWindow::frameMargin() -> Geometry {
         GetClientRect(hstatus, &src);
         statusHeight = src.bottom - src.top;
     }
-    return {abs(rc.left), abs(rc.top) + menuHeight , (rc.right - rc.left), (rc.bottom - rc.top) + statusHeight + menuHeight };
+    return {(signed)(abs(rc.left)), (signed)(abs(rc.top) + menuHeight), (unsigned)(rc.right - rc.left), (unsigned)((rc.bottom - rc.top) + statusHeight + menuHeight) };
 }
 
 auto pWindow::setGeometry(Geometry geometry) -> void {
@@ -452,7 +452,7 @@ auto pWindow::setFullScreen(bool fullScreen) -> void {
         info.cbSize = sizeof(MONITORINFOEX);
         GetMonitorInfo(monitor, &info);
         RECT rc = info.rcMonitor;
-        Geometry geometry = {rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top};
+        Geometry geometry = {(signed)rc.left, (signed)rc.top, (unsigned)(rc.right - rc.left), (unsigned)(rc.bottom - rc.top) };
         SetWindowLongPtr(hwnd, GWL_STYLE, WS_VISIBLE | WS_POPUP);
         Geometry margin = frameMargin();
         setGeometry({

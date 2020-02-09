@@ -23,7 +23,7 @@ auto pRadioBox::create() -> void {
     hwnd = CreateWindow(
         L"BUTTON", L"",
         WS_CHILD | WS_TABSTOP | BS_RADIOBUTTON,
-        0, 0, 0, 0, radioBox.window()->p.hwnd, (HMENU)radioBox.id, GetModuleHandle(0), 0);
+        0, 0, 0, 0, radioBox.window()->p.hwnd, (HMENU)(unsigned long long)radioBox.id, GetModuleHandle(0), 0);
 
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)&radioBox);
 }

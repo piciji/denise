@@ -12,7 +12,7 @@ auto pProgressBar::create() -> void {
     
     hwnd = CreateWindow(PROGRESS_CLASS, L"",
         WS_CHILD | PBS_SMOOTH,
-        0, 0, 0, 0, progressBar.window()->p.hwnd, (HMENU)progressBar.id, GetModuleHandle(0), 0);
+        0, 0, 0, 0, progressBar.window()->p.hwnd, (HMENU)(unsigned long long)progressBar.id, GetModuleHandle(0), 0);
     
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)&progressBar);
     SendMessage(hwnd, PBM_SETRANGE, 0, MAKELPARAM(0, 100));

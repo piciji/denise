@@ -99,6 +99,8 @@ struct Wasapi : public Audio {
         Wasapi* wasapi = (Wasapi*)data;
         
         wasapi->worker();
+        
+        return 0;
     }       
         
     auto worker() -> void {

@@ -89,8 +89,8 @@ auto pFont::create(std::string desc) -> HFONT {
 
 auto pFont::dpi() -> Position {
     HDC hdc = GetDC(0);
-    auto dpiX = (float)GetDeviceCaps(hdc, LOGPIXELSX);
-    auto dpiY = (float)GetDeviceCaps(hdc, LOGPIXELSY);
+    auto dpiX = GetDeviceCaps(hdc, LOGPIXELSX);
+    auto dpiY = GetDeviceCaps(hdc, LOGPIXELSY);
     ReleaseDC(0, hdc);
     return {dpiX, dpiY};
 }
@@ -116,7 +116,7 @@ auto pFont::size(HFONT hfont, std::string text) -> Size {
     RECT rc = {0, 0, 0, 0};
     DrawText(hdc, utf16_t(text.c_str()), -1, &rc, DT_CALCRECT);
     ReleaseDC(0, hdc);
-    return {rc.right, rc.bottom};
+    return {(unsigned)rc.right, (unsigned)rc.bottom};
 }
 
 //UTF-8 <> UTF-16 string converter
@@ -355,7 +355,7 @@ auto pSystem::getExecutableDirectory() -> std::string {
 }
 
 auto pSystem::getDesktopSize() -> Size {
-    return {GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN)};
+    return {(unsigned)GetSystemMetrics(SM_CXSCREEN), (unsigned)GetSystemMetrics(SM_CYSCREEN)};
 }
 
 auto pSystem::sleep(unsigned milliSeconds) -> void {
@@ -385,6 +385,21 @@ auto pSystem::getOSLang() -> System::Language {
         return System::Language::FR;
 
     return System::Language::UK;
+}
+
+auto pSystem::printToCmd( std::string str ) -> void {
+    
+    static bool isAttached = false;
+    
+    if (!isAttached && AttachConsole( ATTACH_PARENT_PROCESS )) {
+        freopen("CON", "w", stdout);
+        isAttached = true;
+    }
+    
+    if (!isAttached)
+        return;
+    
+    fwprintf(stdout, utf16_t( str ) );
 }
 
 auto getVersion() -> unsigned {

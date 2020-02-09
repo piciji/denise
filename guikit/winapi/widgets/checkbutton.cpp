@@ -16,7 +16,7 @@ auto pCheckButton::create() -> void {
     
     hwnd = CreateWindow(L"BUTTON", L"",
         WS_CHILD | WS_TABSTOP | BS_CHECKBOX | BS_PUSHLIKE,
-        0, 0, 0, 0, checkButton.window()->p.hwnd, (HMENU)checkButton.id, GetModuleHandle(0), 0);
+        0, 0, 0, 0, checkButton.window()->p.hwnd, (HMENU)(unsigned long long)checkButton.id, GetModuleHandle(0), 0);
     
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)&checkButton);    
 }

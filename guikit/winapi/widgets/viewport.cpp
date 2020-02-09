@@ -5,7 +5,7 @@ auto pViewport::create() -> void {
     
     hwnd = CreateWindow(L"app_viewport", L"",
         WS_CHILD | WS_DISABLED,
-        0, 0, 0, 0, viewport.window()->p.hwnd, (HMENU)viewport.id, GetModuleHandle(0), 0);
+        0, 0, 0, 0, viewport.window()->p.hwnd, (HMENU)(unsigned long long)viewport.id, GetModuleHandle(0), 0);
 
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)&viewport);
 }

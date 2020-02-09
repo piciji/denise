@@ -145,7 +145,7 @@ auto pTreeView::create() -> void {
     hwnd = CreateWindowEx(
         WS_EX_CLIENTEDGE, WC_TREEVIEW, L"",
         WS_CHILD | WS_TABSTOP | WS_BORDER | TVS_HASLINES | TVS_SHOWSELALWAYS,
-        0, 0, 0, 0, treeView.window()->p.hwnd, (HMENU)treeView.id, GetModuleHandle(0), 0);
+        0, 0, 0, 0, treeView.window()->p.hwnd, (HMENU)(unsigned long long)treeView.id, GetModuleHandle(0), 0);
 
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)&treeView);
     wndprocOrig = (WNDPROC)SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)subclassWndProc);

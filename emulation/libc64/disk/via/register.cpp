@@ -113,6 +113,8 @@ auto Via::read( unsigned pos ) -> uint8_t {
         case 0xe:
 			return ier | 0x80;
 	}
+    
+    __builtin_unreachable();
 }
     
 auto Via::writePipelined(unsigned pos, uint8_t value) -> void {

@@ -530,6 +530,7 @@ struct pSystem {
     static auto sleep(unsigned milliSeconds) -> void;
     static auto isOffscreen( Geometry geometry ) -> bool;
     static auto getOSLang() -> System::Language;
+    static auto printToCmd( std::string str ) -> void;
 };
 
 struct utf16_t {

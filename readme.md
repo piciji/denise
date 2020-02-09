@@ -13,6 +13,7 @@
 * added macOS DMG installer [thanks to Retrofan for background image]
 * added xInput emulation for Windows rawInput driver [XBOX Controller, xMode devices]
 * fixed a few input handling bugs
+* added slider for analog trigger point when using for digital inputs
 
 ## 1.0.7
 * fixed a critical bug that caused OSX builds to use illegal instructions for some architectures

@@ -29,7 +29,8 @@ auto pTabFrame::append(std::string text, Image* image) -> void {
     unsigned selection = TabCtrl_GetItemCount(hwnd);
     TCITEM item;
     item.mask = TCIF_TEXT;
-    item.pszText = L"";
+    utf16_t wtext("");
+    item.pszText = wtext;
     TabCtrl_InsertItem(hwnd, selection, &item);
     setText(selection, text);
     if(image && !image->empty()) setImage(selection, *image);
@@ -102,7 +103,7 @@ auto pTabFrame::create() -> void {
     destroy();
     hwnd = CreateWindow(WC_TABCONTROL, L"",
         WS_CHILD | WS_TABSTOP,
-        0, 0, 0, 0, tabFrame.window()->p.hwnd, (HMENU)tabFrame.id, GetModuleHandle(0), 0);
+        0, 0, 0, 0, tabFrame.window()->p.hwnd, (HMENU)(unsigned long long)tabFrame.id, GetModuleHandle(0), 0);
 
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)&tabFrame);
     wndprocOrig = (WNDPROC)SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)subclassWndProc);

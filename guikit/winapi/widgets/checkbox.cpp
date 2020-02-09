@@ -27,7 +27,7 @@ auto pCheckBox::create() -> void {
     hwnd = CreateWindow(
         L"BUTTON", L"",
         WS_CHILD | WS_TABSTOP | BS_CHECKBOX,
-        0, 0, 0, 0, checkBox.window()->p.hwnd, (HMENU)checkBox.id, GetModuleHandle(0), 0
+        0, 0, 0, 0, checkBox.window()->p.hwnd, (HMENU)(unsigned long long)checkBox.id, GetModuleHandle(0), 0
     );
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)&checkBox);
 }
