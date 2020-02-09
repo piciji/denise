@@ -160,6 +160,11 @@ auto pSystem::getOSLang() -> System::Language {
     return System::Language::UK;
 }
 
+auto pSystem::printToCmd( std::string str ) -> void {
+	
+	fprintf(stdout, str.c_str() );
+}
+
 //font
 auto pFont::system(unsigned size, std::string style) -> std::string {
     std::string family = "";

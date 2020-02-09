@@ -536,6 +536,7 @@ struct pSystem {
     static auto sleep(unsigned milliSeconds) -> void;
     static auto isOffscreen( Geometry geometry ) -> bool { return false; } 
     static auto getOSLang() -> System::Language;
+    static auto printToCmd( std::string str ) -> void;
 };
 
 static auto getDropPaths(GtkSelectionData* data) -> std::vector<std::string>;
