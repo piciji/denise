@@ -113,7 +113,7 @@ struct Program : Emulator::Interface::Bind {
     auto couldDeviceBlockSecondMouseButton( ) -> bool;
     auto absoluteMouseToEmu( Emulator::Interface* emulator ) -> GUIKIT::Position;
 
-    Program(int& argc, char** argv);
+    Program();
 };
 
 extern Program* program;

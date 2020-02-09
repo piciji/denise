@@ -3,7 +3,27 @@
 #include "../view/view.h"
     
 auto Cmd::set(int argc, char** argv) -> void {
-
+    
+    options.push_back( {"-v, --version", "Output program version", ""} );    
+    options.push_back( {"-h, --help", "Output this help screen", ""} );    
+    options.push_back( {"-vic-6569R3", "Select VIC-II 6569R3 and PAL mode", ""} );
+    options.push_back( {"-vic-8565", "Select VIC-II 8565 and PAL mode", ""} );
+    options.push_back( {"-vic-6567R8", "Select VIC-II 6567R8 and NTSC mode", ""} );
+    options.push_back( {"-vic-8562", "Select VIC-II 6562 and NTSC mode", ""} );
+    options.push_back( {"-pal", "Select PAL Mode", ""} );
+    options.push_back( {"-ntsc", "Select NTSC Mode", ""} );
+    options.push_back( {"-sid-6581", "Select SID 6581", ""} );
+    options.push_back( {"-sid-8580", "Select SID 8580", ""} );
+    options.push_back( {"-cia-6526a", "Select CIA 6526a", ""} );
+    options.push_back( {"-cia-6526", "Select CIA 6526", ""} );
+    options.push_back( {"-reu", "Emulate REU Expansion", "<size in kb>"} );
+    options.push_back( {"-debugcart", "Generate exit codes for VICE Testbench", ""} );    
+    options.push_back( {"-limitcycles", "Specify number of cycles to run before quitting with an error (checks at complete frames)", "<cycles>"} );
+    options.push_back( {"-exitscreenshot", "Save screen to PNG file, when exiting App", "<filePath>"} );    
+    options.push_back( {"-ane-magic", "Force CPU to use this value for ANE and LAX opcode", "<value>"} );
+    options.push_back( {"-no-driver", "Run without video, audio, input drivers", ""} );
+    options.push_back( {"-no-gui", "Open without graphical user interface and force -no-driver", ""} );    
+    
     for (unsigned i = 0; i < argc; i++) {
 
         arguments.push_back( argv[i] );
@@ -11,10 +31,47 @@ auto Cmd::set(int argc, char** argv) -> void {
         if ( (std::string)argv[i] == "-no-gui" )
             GUIKIT::Application::dummy = true;
         
-        if ( (std::string)argv[i] == "-debugcart" )
+        else if ( (std::string)argv[i] == "-debugcart" )
             debug = true;            
+        
+        else if ( (std::string)argv[i] == "-h" )
+            helpRequested = true;
+        
+        else if ( (std::string)argv[i] == "--help" )
+            helpRequested = true;
+        
+        else if ( (std::string)argv[i] == "-v" )
+            versionRequested = true;
+        
+        else if ( (std::string)argv[i] == "--version" )
+            versionRequested = true;
     }  
 
+}
+
+auto Cmd::printHelp() -> void {
+    
+    GUIKIT::System::printToCmd( "\n" );
+    
+    if (versionRequested) {
+        
+        GUIKIT::System::printToCmd( "Version: " + (std::string)VERSION + "\n" );
+        
+        return;
+    }    
+    
+    GUIKIT::System::printToCmd( "Usage: Denise [option]... [image path]... \n\n" );
+    GUIKIT::System::printToCmd( "Available command-line options:\n" );
+    
+    for(auto& option : options) {                
+        
+        if (!option.param.empty())
+            GUIKIT::System::printToCmd( option.ident + " " + option.param + "\n" );
+        else
+            GUIKIT::System::printToCmd( option.ident + "\n" );
+        
+        GUIKIT::System::printToCmd( "\t" + option.description + "\n" );
+    }
 }
 
 auto Cmd::parse() -> void {

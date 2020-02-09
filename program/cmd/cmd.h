@@ -10,6 +10,14 @@ struct Cmd {
         set(argc, argv);
     }
     
+    struct Options {
+        std::string ident;
+        std::string description;
+        std::string param;
+    };
+    
+    std::vector<Options> options;
+    
     std::vector<std::string> arguments;
 
     bool autoload = false;
@@ -17,6 +25,8 @@ struct Cmd {
     bool noGui = false;
     bool debug = false;
     bool lockRegion = false;
+    bool helpRequested = false;
+    bool versionRequested = false;
     std::string screenshotPath = "";
     
     auto set(int argc, char** argv) -> void;
@@ -42,6 +52,8 @@ struct Cmd {
     auto setReuSize(std::string arg) -> void;
     
     auto setAneMagic(std::string arg) -> void;
+    
+    auto printHelp() -> void;
 };
 
 extern Cmd* cmd;

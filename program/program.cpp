@@ -36,13 +36,19 @@ VideoManager* activeVideoManager = nullptr;
 #include "input.cpp"
 
 int main(int argc, char** argv) {  
-    Program program(argc, argv);
+    cmd = new Cmd(argc, argv);
+    if (cmd->helpRequested || cmd->versionRequested) {
+        cmd->printHelp();
+        return 0;
+    }
+    
+    Program program;
     GUIKIT::Application::processEvents();
     GUIKIT::Application::run();
     return GUIKIT::Application::exitCode;
 }
 
-Program::Program(int& argc, char** argv) {	  	
+Program::Program() {	  	        
     program = this;    
     GUIKIT::Application::loop = [this]() { loop(); };    
     GUIKIT::Application::name = APP_NAME;        
@@ -55,7 +61,7 @@ Program::Program(int& argc, char** argv) {
 	filePool = new FilePool(10);
 	status = new Status;
     audioManager = new AudioManager;
-    cmd = new Cmd(argc, argv);
+    
     
     addEmulators();
     init();	  
@@ -73,7 +79,7 @@ Program::Program(int& argc, char** argv) {
 	initAudio();
 	initVideo();
     
-    cmd->autoloadImages();    
+    cmd->autoloadImages();   
 }
 
 auto Program::addEmulators() -> void {
