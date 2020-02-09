@@ -39,11 +39,11 @@ auto String::split(const std::string& str, char delimiter) -> std::vector<std::s
 }
 
 auto String::explode(std::string str, std::string delimiter) -> std::vector<std::string> {
-
-    trim(str);
     
     if (str.empty())
         return {};
+        
+    std::string token;
     
     std::vector<std::string> tokens;
     std::string::size_type n;
@@ -53,15 +53,25 @@ auto String::explode(std::string str, std::string delimiter) -> std::vector<std:
         n = str.find( delimiter );
         
         if (n == std::string::npos) {
-            tokens.push_back( str );
+            token = str;
+            trim( token );
+            if (!token.empty())
+                tokens.push_back( token );
             break;
         }
         
-        std::string token = str.substr(0, n);
+        token = str.substr(0, n);
         
-        tokens.push_back( token );
+        trim( token );
         
-        str = str.substr(n + delimiter.size());
+        if (!token.empty())
+            tokens.push_back( token );
+        
+        n += delimiter.size();
+        if (n >= str.size())
+            break;
+        
+        str = str.substr(n);
     }
     
     return tokens;

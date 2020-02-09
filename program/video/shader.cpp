@@ -96,8 +96,7 @@ auto Shader::getPrimary(std::vector<ShaderPass*>& passes) -> ShaderPass* {
 }  
 
 auto Shader::removeIncompleteShader() -> void {
-		
-	std::string activeShaders = "";
+			
 	std::vector<std::string> shaders;
 	std::vector<ShaderPass*> usePasses;		
 	
@@ -133,10 +132,16 @@ auto Shader::removeIncompleteShader() -> void {
 	
 	GUIKIT::String::removeDuplicates( shaders );
 	
-	for(auto& s : shaders)
-		activeShaders += s + "###";
+    std::string shaderList = "";    
+	for(auto& s : shaders) {
+        
+        if (!shaderList.empty())
+            shaderList += "###";
+        
+		shaderList += s;
+    }
 	
-	settings->set<std::string>(program->ident(vManager->emulator, "shader"), activeShaders);
+	settings->set<std::string>(program->ident(vManager->emulator, "shader"), shaderList);
 }      
 
 auto Shader::loadInternal() -> void {
@@ -486,8 +491,14 @@ auto Shader::loadShader(std::string path, std::string shaderFile, ShaderPass* pa
 auto Shader::addActiveShader(std::string shader) -> void {
     auto ident = program->ident(vManager->emulator, "shader");
 
-    auto activeShaders = settings->get<std::string>(ident, "");
-    settings->set<std::string>(ident, activeShaders + "###" + shader);
+    std::string shaderList = "";
+    
+    for (auto& activeShader : getActiveShaders())
+        shaderList += activeShader + "###";    
+    
+    shaderList += shader;            
+    
+    settings->set<std::string>(ident, shaderList);
     
 	bool error = !loadExternal(); 
 	    
@@ -503,9 +514,14 @@ auto Shader::removeActiveShader(std::string shader) -> void {
 
     for (auto& activeShader : getActiveShaders()) {
         if (shader != activeShader) {
-            shaderList += activeShader + "###";
+            
+            if (!shaderList.empty())
+                shaderList += "###";
+                
+            shaderList += activeShader;
         }
     }
+    
     settings->set<std::string>(program->ident(vManager->emulator, "shader"), shaderList);
     
 	bool error = !loadExternal(); 
