@@ -40,6 +40,11 @@ auto String::split(const std::string& str, char delimiter) -> std::vector<std::s
 
 auto String::explode(std::string str, std::string delimiter) -> std::vector<std::string> {
 
+    trim(str);
+    
+    if (str.empty())
+        return {};
+    
     std::vector<std::string> tokens;
     std::string::size_type n;
     
