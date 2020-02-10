@@ -437,6 +437,7 @@ struct pSystem {
     static auto sleep(unsigned milliSeconds) -> void;
     static auto isOffscreen( Geometry geometry ) -> bool { return false; }
     static auto getOSLang() -> System::Language;
+    static auto printToCmd( std::string str ) -> void;
 };
 
 auto NSMakeImage(Image& image, unsigned width = 0, unsigned height = 0) -> NSImage*;

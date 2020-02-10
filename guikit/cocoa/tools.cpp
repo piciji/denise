@@ -137,6 +137,12 @@ auto pSystem::getDesktopSize() -> Size {
 auto pSystem::sleep(unsigned milliSeconds) -> void {
     usleep( milliSeconds * 1000 );
 }
+
+auto pSystem::printToCmd( std::string str ) -> void {
+	
+	fprintf(stdout, str.c_str() );
+}
+
 //drag'n'drop
 auto DropPathsOperation(id<NSDraggingInfo> sender) -> NSDragOperation {
     NSPasteboard* pboard = [sender draggingPasteboard];
