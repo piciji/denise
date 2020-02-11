@@ -23,13 +23,14 @@ struct FileChunk {
     }
 
     auto getByte(unsigned fileOffset) -> uint8_t {
+        size_t r;
         if (!fp) return 0;
         if (fileOffset >= fsize) return 0;
 
         if (fsize <= buffferSize) {
             if (!fetched) {
                 fseek(fp, 0, SEEK_SET);
-                fread(buffer, 1, fsize, fp);
+                r = fread(buffer, 1, fsize, fp);
                 fetched = true;
             }
             return buffer[fileOffset];
@@ -47,7 +48,7 @@ struct FileChunk {
                 seekPos = fsize - buffferSize;
             }
             fseek(fp, seekPos, SEEK_SET);
-            fread(buffer, 1, buffferSize, fp);
+            r = fread(buffer, 1, buffferSize, fp);
 
             bufferOffset = seekPos;
             bufferPos = fileOffset - bufferOffset;

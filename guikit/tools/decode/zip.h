@@ -119,6 +119,7 @@ struct Zip {
     }
 
     auto extract(File& file) -> uint8_t* {
+        size_t r;
         unsigned offsetNL = read(file.offset + 26, 2);
         unsigned offsetEL = read(file.offset + 28, 2);
         unsigned srcOffset = file.offset + 30 + offsetNL + offsetEL;
@@ -126,13 +127,13 @@ struct Zip {
         if(file.cmode == 0) {
             file.data = new uint8_t[file.size];
             fseek(fp, srcOffset, SEEK_SET);
-            fread(file.data, 1, file.size, fp);
+            r = fread(file.data, 1, file.size, fp);
 
         } else if(file.cmode == 8) {
             file.data = new uint8_t[file.size];
             uint8_t* srcData = new uint8_t[file.csize];
             fseek(fp, srcOffset, SEEK_SET);
-            fread(srcData, 1, file.csize, fp);
+            r = fread(srcData, 1, file.csize, fp);
 
             if( !Decode::inflate(file.data, file.size, srcData, file.csize) ) {
                 delete[](file.data);

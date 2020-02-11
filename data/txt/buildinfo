@@ -64,6 +64,9 @@ Pulseaudio: apt-get install libpulse-dev
 SDL2: apt-get install libsdl2-dev
 Udev: apt-get install libudev-dev
 
+- fix possible problem with missing -lGL
+sudo rm /usr/lib/x86_64-linux-gnu/libGL.so
+sudo ln -s /usr/lib/libGL.so.1 /usr/lib/x86_64-linux-gnu/libGL.so
 ---------------------------------------------
 ---------------------------------------------
 

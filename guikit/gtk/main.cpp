@@ -295,7 +295,7 @@ Geometry pWindow::geometry() {
     if(window.fullScreen()) {
         GtkAllocation allocation;
         gtk_widget_get_allocation(mainDisplay, &allocation);
-        return {0, 0, allocation.width, allocation.height};
+        return {0, 0, (unsigned)allocation.width, (unsigned)allocation.height};
     }
     return window.state.geometry;
 }

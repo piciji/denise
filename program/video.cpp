@@ -19,7 +19,6 @@ auto Program::initVideo() -> void {
     setVideoFilter();
     
     if ( !videoDriver->init( view->getViewportHandle() ) ) {
-        view->message->error("shader error");
         delete videoDriver;
         videoDriver = new DRIVER::Video;
     }

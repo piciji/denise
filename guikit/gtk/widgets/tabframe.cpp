@@ -10,10 +10,10 @@ auto pTabFrame::getDisplacement() -> Position {
     auto style = gtk_rc_get_style (gtkWidget);        
     
     if (style) {
-        return { style->xthickness, minimumSize().height };
+        return { (signed)style->xthickness, (signed)minimumSize().height };
     }    
     
-    return {0, minimumSize().height};
+    return {0, (signed)minimumSize().height};
 }
 
 auto pTabFrame::append(std::string text, Image* image) -> void {

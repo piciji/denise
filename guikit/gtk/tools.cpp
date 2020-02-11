@@ -131,8 +131,8 @@ auto pSystem::getWorkingDirectory() -> std::string {
 
 auto pSystem::getDesktopSize() -> Size {
     return {
-        gdk_screen_get_width(gdk_screen_get_default()),
-        gdk_screen_get_height(gdk_screen_get_default())
+        (unsigned)gdk_screen_get_width(gdk_screen_get_default()),
+        (unsigned)gdk_screen_get_height(gdk_screen_get_default())
     };
 }
 
@@ -162,7 +162,7 @@ auto pSystem::getOSLang() -> System::Language {
 
 auto pSystem::printToCmd( std::string str ) -> void {
 	
-	fprintf(stdout, str.c_str() );
+	fprintf(stdout, "%s", str.c_str() );
 }
 
 //font
@@ -233,7 +233,7 @@ auto pFont::size(PangoFontDescription* font, std::string text) -> Size {
     int width = 0, height = 0;
     pango_layout_get_pixel_size(layout, &width, &height);
     if(G_IS_OBJECT((gpointer)layout)) g_object_unref((gpointer)layout);
-    return {width, height};
+    return {(unsigned)width, (unsigned)height};
 }
 
 auto pFont::size(std::string font, std::string text) -> Size {

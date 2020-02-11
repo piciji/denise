@@ -4,9 +4,9 @@ auto pFrame::frameSize() -> Size {
     auto style = gtk_rc_get_style(gtkWidget);
     
     if (style) {
-        return {style->xthickness, style->ythickness};
+        return {(unsigned)style->xthickness, (unsigned)style->ythickness};
     }
-    return {1,1};
+    return {1u,1u};
 }
 
 auto pFrame::borderSize() -> unsigned {
@@ -36,7 +36,7 @@ auto pFrame::setGeometry(Geometry geometry) -> void {
 auto pFrame::getDisplacement() -> Position {
     Size size = pFont::size(pfont, widget.text());
     if (widget.text().empty()) size.height >>= 1, size.height += 1;
-    return { frameSize().width, size.height };
+    return { (signed)frameSize().width, (signed)size.height };
 }
 
 
