@@ -615,6 +615,7 @@ auto System::power( bool softReset ) -> void {
     kernalBootComplete = false;
     calcSerializationSize();
     
+	fastForward.config = 0;
     fastForward.frameCounter = 0;
     fastForward.renderNext = false;
     dispatcha();

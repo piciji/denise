@@ -16,7 +16,10 @@ include data/Makefile
 objects := program view config emuconfig archiveviewer states firmware cmd
 objects += input audio video palette shader
 objects += guikit libami libC64
-objects += driver dinput5 dinput7 dinput8 xaudio27 xaudio28 xaudio29
+objects += driver
+ifeq ($(platform),windows)
+    objects += dinput5 dinput7 dinput8 xaudio27 xaudio28 xaudio29
+endif
 #objects += m68000
 objects += m6502 m6510 ciaBase cia6526 vic systemC64 sid tapeC64 inputC64 controlPortC64
 objects += cartC64 gameCartC64 actionReplayC64 reuC64 easyFlashC64 retroReplayC64
@@ -83,6 +86,7 @@ obj/guikit.o: guikit/api.cpp
 obj/driver.o: driver/driver.cpp
 	$(compiler) $(drvflags) $(flags) -c $< -o $@
 
+ifeq ($(platform),windows)
 obj/dinput5.o:	driver/input/dinput/v5.cpp
 	$(compiler) $(drvflags) $(flags) -c $< -o $@
 obj/dinput7.o:	driver/input/dinput/v7.cpp
@@ -96,7 +100,7 @@ obj/xaudio28.o:	driver/audio/xaudio2/xaudio28.cpp
 	$(compiler) $(drvflags) $(flags) -c $< -o $@
 obj/xaudio29.o:	driver/audio/xaudio2/xaudio29.cpp
 	$(compiler) $(drvflags) $(flags) -c $< -o $@
-	
+endif	
 
 obj/libami.o:	emulation/libami/interface.cpp
 obj/libC64.o:	emulation/libc64/interface.cpp
