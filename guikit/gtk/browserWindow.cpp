@@ -6,8 +6,8 @@ auto pBrowserWindow::file(BrowserWindow::State& state, bool save) -> std::string
         !state.title.empty() ? state.title.c_str() : (save ? "Save File" : "Open File"),
         state.window ? GTK_WINDOW(state.window->p.widget) : (GtkWindow*)nullptr,
         save ? GTK_FILE_CHOOSER_ACTION_SAVE : GTK_FILE_CHOOSER_ACTION_OPEN,
-        GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-        save ? GTK_STOCK_SAVE : GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
+        g_dgettext("gtk30", "_Cancel"), GTK_RESPONSE_CANCEL,
+        save ? g_dgettext("gtk30", "_Save") : g_dgettext("gtk30", "_Open"), GTK_RESPONSE_ACCEPT,
         (const gchar*)nullptr );
 
     if(!state.path.empty())
@@ -47,8 +47,8 @@ auto pBrowserWindow::directory(BrowserWindow::State& state) -> std::string {
         !state.title.empty() ? state.title.c_str() : "Select Directory",
         state.window ? GTK_WINDOW(state.window->p.widget) : (GtkWindow*)nullptr,
         GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER,
-        GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-        GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
+        g_dgettext("gtk30", "_Cancel"), GTK_RESPONSE_CANCEL,
+        g_dgettext("gtk30", "_Open"), GTK_RESPONSE_ACCEPT,
         (const gchar*)nullptr
     );
 

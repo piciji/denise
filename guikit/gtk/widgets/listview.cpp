@@ -1,6 +1,6 @@
 
 auto pListView::focused() -> bool {
-    return GTK_WIDGET_HAS_FOCUS(subWidget);
+    return gtk_widget_has_focus(subWidget);
 }
 
 auto pListView::setFocused() -> void {
@@ -113,7 +113,7 @@ auto pListView::create() -> void {
         gtk_widget_show(cell.label);
     }
 
-    gtk_tree_view_set_rules_hint(GTK_TREE_VIEW(subWidget), headerText.size() >= 2);
+    //gtk_tree_view_set_rules_hint(GTK_TREE_VIEW(subWidget), headerText.size() >= 2);
     gtk_tree_view_set_search_column(GTK_TREE_VIEW(subWidget), -1);
 
     g_signal_connect(G_OBJECT(subWidget), "cursor-changed", G_CALLBACK(pListView::onChange), (gpointer)&listView);
@@ -197,13 +197,19 @@ auto pListView::setImage(unsigned selection, unsigned position, Image& image) ->
 auto pListView::setBackgroundColor(unsigned color) -> void {
     if( !subWidget || !widget.overrideBackgroundColor() )
         return;
-    GdkColor gdkColor = CreateColor( (color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff );
-    gtk_widget_modify_base(subWidget, GTK_STATE_NORMAL, &gdkColor);
+	
+	std::string _color = "rgb(" + std::to_string( (color >> 16) & 0xff ) + ", " + std::to_string( (color >> 8) & 0xff )
+		+ ", " + std::to_string( color & 0xff ) + ")";
+	
+	pSystem::applyCss( subWidget, "treeview { background-color: " + _color + " }" );
 }
 
 auto pListView::setForegroundColor(unsigned color) -> void {
     if( !subWidget || !widget.overrideForegroundColor() )
         return;
-    GdkColor gdkColor = CreateColor( (color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff );
-    gtk_widget_modify_text(subWidget, GTK_STATE_NORMAL, &gdkColor);
+
+	std::string _color = "rgb(" + std::to_string( (color >> 16) & 0xff ) + ", " + std::to_string( (color >> 8) & 0xff )
+		+ ", " + std::to_string( color & 0xff ) + ")";
+	
+	pSystem::applyCss( subWidget, "treeview { color: " + _color + " }" );
 }

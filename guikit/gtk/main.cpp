@@ -45,23 +45,35 @@ auto pApplication::quit() -> void {
 
 auto pApplication::initialize() -> void {
     gtk_init(nullptr, nullptr);
-}
+}  
 
 //window
-static auto Window_expose(GtkWidget* widget, GdkEvent* event, Window* window) -> gboolean {
-    if(!window->p.overrideBackgroundColor) return false;
-    cairo_t* context = gdk_cairo_create(widget->window);
+static auto Window_draw(GtkWidget* widget, cairo_t* context, Window* window) -> gboolean {
+	
+    if(!window->p.overrideBackgroundColor) {		
+		auto style = gtk_widget_get_style_context(widget);
+		GtkAllocation allocation;
+		gtk_widget_get_allocation(widget, &allocation);
+		gtk_render_background(style, context, 0, 0, allocation.width, allocation.height);
+		return false;
+	}
 
     unsigned color = window->p.backgroundColor;
     double red   = (double)((color >> 16) & 0xff) / 255.0;
     double green = (double)((color >> 8) & 0xff) / 255.0;
     double blue  = (double)((color >> 0) & 0xff) / 255.0;
+	
+    if(gdk_screen_is_composited(gdk_screen_get_default())
+    && gdk_screen_get_rgba_visual(gdk_screen_get_default())
+    ) {
+		cairo_set_source_rgba(context, red, green, blue, 1.0);
+    } else {
+		cairo_set_source_rgb(context, red, green, blue);
+    }
 
-    cairo_set_source_rgb(context, red, green, blue);
-
-    cairo_set_operator(context, CAIRO_OPERATOR_SOURCE);
+	cairo_set_operator(context, CAIRO_OPERATOR_SOURCE);
     cairo_paint(context);
-    cairo_destroy(context);
+		
     return false;
 }
 
@@ -97,11 +109,11 @@ static auto Window_configure(GtkWidget* widget, GdkEvent* event, Window* window)
 
 static auto Window_sizeAllocate(GtkWidget* widget, GtkAllocation* allocation, Window* window) -> void {
     if( !window->visible() ) return;
-
+	
     if( allocation->width == window->p.lastAllocation.width
     && allocation->height == window->p.lastAllocation.height ) return;
-
-    if( !window->fullScreen() ) {
+	
+    if( !window->fullScreen() && !window->p.locked ) {
         window->state.geometry.width  = allocation->width;
         window->state.geometry.height = allocation->height;
     }
@@ -115,9 +127,25 @@ static auto Window_sizeAllocate(GtkWidget* widget, GtkAllocation* allocation, Wi
     window->p.lastAllocation = *allocation;
 }
 
-static auto Window_sizeRequest(GtkWidget* widget, GtkRequisition* requisition, Window* window) -> void {
+/*static auto Window_sizeRequest(GtkWidget* widget, GtkRequisition* requisition, Window* window) -> void {
     requisition->width  = window->state.geometry.width;
     requisition->height = window->state.geometry.height;
+}*/
+
+static auto Window_getPreferredWidth(GtkWidget* widget, int* minimalWidth, int* naturalWidth) -> void {
+  
+	if(auto p = (pWindow*)g_object_get_data(G_OBJECT(widget), "window")) {		
+		*minimalWidth = 1;
+		*naturalWidth = p->window.state.geometry.width;  
+	}	
+}
+
+static auto Window_getPreferredHeight(GtkWidget* widget, int* minimalHeight, int* naturalHeight) -> void {
+  
+	if(auto p = (pWindow*)g_object_get_data(G_OBJECT(widget), "window")) {		
+		*minimalHeight = 1;
+		*naturalHeight = p->window.state.geometry.height;
+	}
 }
 
 static auto Window_onButtonPressed(GtkWidget* widget, GdkEventButton* event, Window* window) -> gboolean {
@@ -125,21 +153,35 @@ static auto Window_onButtonPressed(GtkWidget* widget, GdkEventButton* event, Win
 	if (event->type == GDK_BUTTON_PRESS && event->button == 3) {		
 		if (!window->onContext) return false;
 		if (!window->onContext()) return false;
-		gtk_menu_popup(GTK_MENU(window->p.contextMenu), nullptr, nullptr, nullptr, nullptr, 0, gtk_get_current_event_time());
+		//gtk_menu_popup(GTK_MENU(window->p.contextMenu), nullptr, nullptr, nullptr, nullptr, 0, gtk_get_current_event_time());
+		gtk_menu_popup_at_pointer(GTK_MENU(window->p.contextMenu), nullptr);
 	}
 	return true;
 }
 
 pWindow::pWindow(Window& window) : window(window) {
+		
     lastAllocation.width  = lastAllocation.height = 0;
     widget = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+	
+	#include "css.cpp"
+	
+	GtkCssProvider* cssProvider = gtk_css_provider_new();
+	gtk_css_provider_load_from_data(cssProvider, css.c_str(), -1, NULL);
+	gtk_style_context_add_provider_for_screen(gdk_screen_get_default(),
+								   GTK_STYLE_PROVIDER(cssProvider),
+								   GTK_STYLE_PROVIDER_PRIORITY_USER);
     
     setIcon( pSystem::getIconFolder() );
 
+	auto visual = gdk_screen_get_rgba_visual(gdk_screen_get_default());
+	if(!visual) visual = gdk_screen_get_system_visual(gdk_screen_get_default());
+	if(visual) gtk_widget_set_visual(widget, visual);
+	
 	gtk_widget_add_events(widget, GDK_BUTTON_PRESS_MASK | GDK_CONFIGURE);
     gtk_widget_set_app_paintable(widget, true);
 
-    verticalLayout = gtk_vbox_new(false, 0);
+    verticalLayout = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     gtk_container_add(GTK_CONTAINER(widget), verticalLayout);
     gtk_widget_show(verticalLayout);
 
@@ -151,26 +193,46 @@ pWindow::pWindow(Window& window) : window(window) {
     gtk_box_pack_start(GTK_BOX(verticalLayout), mainDisplay, true, true, 0);
     gtk_widget_show(mainDisplay);
 
-    statusContainer = gtk_event_box_new();
+    //statusContainer = gtk_event_box_new();
     status = gtk_statusbar_new();
+	
+//    gtk_container_add(GTK_CONTAINER(statusContainer), status);
+    gtk_box_pack_start(GTK_BOX(verticalLayout), status, false, false, 0);
+   // gtk_widget_show(statusContainer);
 
-    gtk_container_add(GTK_CONTAINER(statusContainer), status);
-    gtk_box_pack_start(GTK_BOX(verticalLayout), statusContainer, false, false, 0);
-    gtk_widget_show(statusContainer);
-
+	gtk_widget_set_margin_top(GTK_WIDGET(status), 0);
+	gtk_widget_set_margin_bottom(GTK_WIDGET(status), 0);
+	gtk_widget_set_margin_start(GTK_WIDGET(status), 0);
+	gtk_widget_set_margin_end(GTK_WIDGET(status), 0);
+	
+//	pSystem::applyCss( status, "statusbar { margin-left: 0px; margin-right: 0px; margin-top: 0px; margin-bottom: 0px; }" );
+	
+	//GdkColor gdkColor = CreateColor( 0xff, 0xff, 0xff );
+	//gtk_widget_modify_bg(status, GTK_STATE_NORMAL, &gdkColor);
+	
     setResizable(window.resizable());
     setGeometry(geometry());
     setStatusFont(Font::system());
 
     g_signal_connect(G_OBJECT(widget), "delete-event", G_CALLBACK(Window_close), (gpointer)&window);
-    g_signal_connect(G_OBJECT(mainDisplay), "expose-event", G_CALLBACK(Window_expose), (gpointer)&window);
+    //g_signal_connect(G_OBJECT(mainDisplay), "expose-event", G_CALLBACK(Window_expose), (gpointer)&window);
+	g_signal_connect(G_OBJECT(widget), "draw", G_CALLBACK(Window_draw), (gpointer)&window);
+	
     g_signal_connect(G_OBJECT(widget), "configure-event", G_CALLBACK(Window_configure), (gpointer)&window);
     g_signal_connect(G_OBJECT(widget), "drag-data-received", G_CALLBACK(Window_drop), (gpointer)&window);
 
     g_signal_connect(G_OBJECT(mainDisplay), "size-allocate", G_CALLBACK(Window_sizeAllocate), (gpointer)&window);
-    g_signal_connect(G_OBJECT(mainDisplay), "size-request", G_CALLBACK(Window_sizeRequest), (gpointer)&window);
+    //g_signal_connect(G_OBJECT(mainDisplay), "size-request", G_CALLBACK(Window_sizeRequest), (gpointer)&window);
 	g_signal_connect(G_OBJECT(widget), "button-press-event", G_CALLBACK(Window_onButtonPressed), (gpointer)&window);
+	
+	auto widgetClass = GTK_WIDGET_GET_CLASS(mainDisplay);
+	widgetClass->get_preferred_width  = Window_getPreferredWidth;
+	widgetClass->get_preferred_height = Window_getPreferredHeight;
+	
+	g_object_set_data(G_OBJECT(widget), "window", (gpointer)this);
+	g_object_set_data(G_OBJECT(mainDisplay), "window", (gpointer)this);
 
+	
     timer.setInterval(50);
     timer.onFinished = [this]() {
         timer.setEnabled(false);
@@ -178,26 +240,26 @@ pWindow::pWindow(Window& window) : window(window) {
     };
 }
 
-uintptr_t pWindow::handle() {
+auto pWindow::handle() -> uintptr_t {
     //return GDK_WINDOW_XID(gtk_widget_get_window(widget));
     return (uintptr_t)gtk_widget_get_window(widget);
     //return (uintptr_t)widget;
 }
 
-void pWindow::setDroppable(bool droppable) {
+auto pWindow::setDroppable(bool droppable) -> void {
     gtk_drag_dest_set(widget, GTK_DEST_DEFAULT_ALL, nullptr, 0, GDK_ACTION_COPY);
     if(droppable) gtk_drag_dest_add_uri_targets(widget);
 }
 
-void pWindow::setFocused() {
+auto pWindow::setFocused() -> void {
     gtk_window_present(GTK_WINDOW(widget));
 }
 
-void pWindow::setVisible(bool visible) {
+auto pWindow::setVisible(bool visible) -> void {
     if (!window.menuVisible()) //dirty hack:
         /* if menu is not enabled when showing window, first calculation of menu size gives wrong results
          */
-        gtk_widget_set_visible(menu, true);
+       gtk_widget_set_visible(menu, true);
     
     gtk_widget_set_visible(widget, visible);
     
@@ -208,27 +270,28 @@ void pWindow::setVisible(bool visible) {
     setGeometry( geometry() );
 }
 
-void pWindow::setResizable(bool resizable) {
+auto pWindow::setResizable(bool resizable) -> void {
     gtk_window_set_resizable(GTK_WINDOW(widget), resizable);
-    gtk_statusbar_set_has_resize_grip(GTK_STATUSBAR(status), resizable);
+    //gtk_statusbar_set_has_resize_grip(GTK_STATUSBAR(status), resizable);
+	//gtk_window_set_has_resize_grip(GTK_WINDOW(widget), resizable);
 }
 
-void pWindow::setStatusFont(std::string font) {
+auto pWindow::setStatusFont(std::string font) -> void {
     PangoFontDescription* pStatusfont = pFont::setFont(status, font);
-    statusHeight = pFont::size(pStatusfont, " ").height + 2;
+    statusHeight = pFont::size(pStatusfont, " ").height + 8;
     pFont::free(pStatusfont);
 }
 
-void pWindow::setTitle(std::string text) {
+auto pWindow::setTitle(std::string text) -> void {
     gtk_window_set_title(GTK_WINDOW(widget), text.c_str());
 }
 
-void pWindow::setStatusText(std::string text) {
+auto pWindow::setStatusText(std::string text) -> void {
     gtk_statusbar_pop(GTK_STATUSBAR(status), 1);
     gtk_statusbar_push(GTK_STATUSBAR(status), 1, text.c_str());
 }
 
-void pWindow::setMenuVisible(bool visible) {
+auto pWindow::setMenuVisible(bool visible) -> void {
     gtk_widget_set_visible(menu, visible);
     if (!visible) menuHeight = 0;
     if (!gtk_widget_get_visible(widget)) return;
@@ -239,7 +302,7 @@ void pWindow::setMenuVisible(bool visible) {
     resize( geometry() );
 }
 
-void pWindow::calcMenuHeight() {
+auto pWindow::calcMenuHeight() -> void {
     menuHeight = 0;
 
     if(gtk_widget_get_visible(menu)) {
@@ -249,7 +312,25 @@ void pWindow::calcMenuHeight() {
     }
 }
 
-void pWindow::setStatusVisible(bool visible) {
+//auto pWindow::calcStatusHeight() -> void {
+//    statusHeight = 0;
+//
+//    if(gtk_widget_get_visible(status)) {
+//		
+//		auto _time = getTimestampInMilliseconds();
+//		while(getTimestampInMilliseconds() - _time < 20) {
+//			GtkAllocation allocation;
+//			gtk_widget_get_allocation(status, &allocation);
+//			
+//			if(allocation.height > 1) {
+//				statusHeight = allocation.height;
+//				break;
+//			}
+//		}
+//    }
+//}
+
+auto pWindow::setStatusVisible(bool visible) -> void {
     gtk_widget_set_visible(status, visible);
     if (!gtk_widget_get_visible(widget)) return;
 
@@ -267,8 +348,9 @@ bool pWindow::focused() {
 }
 
 void pWindow::resize(Geometry geo) {
-    gtk_window_resize(GTK_WINDOW(widget), geo.width, geo.height + (gtk_widget_get_visible(status) ?  statusHeight : 0) + menuHeight );
-    gtk_widget_set_size_request(mainDisplay, geo.width, geo.height);
+    gtk_window_resize(GTK_WINDOW(widget), geo.width, geo.height + (gtk_widget_get_visible(status) ? statusHeight : 0) + menuHeight );
+   // gtk_widget_set_size_request(mainDisplay, geo.width, geo.height);
+	//gtk_window_set_default_size( GTK_WINDOW(widget), geo.width, geo.height );
 }
 
 void pWindow::setGeometry(Geometry geometry) {
@@ -319,10 +401,10 @@ void pWindow::setFullScreen(bool fullScreen) {
 }
 
 void pWindow::append(Menu& menu) {
-	gtk_menu_shell_append(GTK_MENU_SHELL(this->contextMenu), menu.p.cwidget);	
-    gtk_menu_shell_append(GTK_MENU_SHELL(this->menu), menu.p.widget);    	
-	gtk_widget_show(menu.p.widget);
-	gtk_widget_show(menu.p.cwidget);
+	gtk_menu_shell_append(GTK_MENU_SHELL(this->contextMenu), menu.p.elementC.widget);	
+    gtk_menu_shell_append(GTK_MENU_SHELL(this->menu), menu.p.element.widget);    	
+	gtk_widget_show(menu.p.element.widget);
+	gtk_widget_show(menu.p.elementC.widget);
 }
 
 void pWindow::remove(Menu& menu) {
@@ -357,7 +439,7 @@ auto pWindow::changeCursor( Image& image, unsigned hotSpotX, unsigned hotSpotY )
     } 
     
     if (cursor)
-        gdk_cursor_unref( cursor );
+        g_object_unref( cursor );
     
     cursor = nullptr;
 
@@ -375,9 +457,9 @@ auto pWindow::changeCursor( Image& image, unsigned hotSpotX, unsigned hotSpotY )
 auto pWindow::setDefaultCursor() -> void {
     
     if (cursor)
-        gdk_cursor_unref( cursor );
+        g_object_unref( cursor );
     
-    cursor = gdk_cursor_new( GDK_ARROW );
+    cursor = gdk_cursor_new_for_display( gdk_screen_get_display(gdk_screen_get_default()), GDK_ARROW );
     
     if (cursor)
         SetCursor( widget, cursor );

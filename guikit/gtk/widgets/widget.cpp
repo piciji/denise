@@ -14,7 +14,7 @@ auto pWidget::destroy() -> void {
 }
 
 auto pWidget::focused() -> bool { 
-    return gtkWidget && GTK_WIDGET_HAS_FOCUS(gtkWidget);
+    return gtkWidget && gtk_widget_has_focus(gtkWidget);
 }
 
 auto pWidget::setFocused() -> void {
@@ -99,16 +99,14 @@ auto pWidget::add() -> void {
 
 auto pWidget::setBackgroundColor(unsigned color) -> void {
     if( !gtkWidget || !widget.overrideBackgroundColor() )
-        return;
-    GdkColor gdkColor = CreateColor( (color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff );
-    gtk_widget_modify_bg(gtkWidget, GTK_STATE_NORMAL, &gdkColor);
-    gtk_widget_modify_base(gtkWidget, GTK_STATE_NORMAL, &gdkColor);
+        return;	    
+	
 }
 
 auto pWidget::setForegroundColor(unsigned color) -> void {
     if( !gtkWidget || !widget.overrideForegroundColor() )
         return;
-    GdkColor gdkColor = CreateColor( (color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff );
-    gtk_widget_modify_fg(gtkWidget, GTK_STATE_NORMAL, &gdkColor);
-    gtk_widget_modify_text(gtkWidget, GTK_STATE_NORMAL, &gdkColor);
+   // GdkColor gdkColor = CreateColor( (color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff );
+   // gtk_widget_modify_fg(gtkWidget, GTK_STATE_NORMAL, &gdkColor);
+  //  gtk_widget_modify_text(gtkWidget, GTK_STATE_NORMAL, &gdkColor);
 }

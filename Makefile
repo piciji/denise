@@ -34,7 +34,7 @@ else ifeq ($(platform),macosx)
     flags += -w -stdlib=libc++
     link += -lc++ -lobjc
 else
-    link += -lpthread
+    link += -lpthread -no-pie
 endif
 
 ifeq ($(DEBUG), 0)

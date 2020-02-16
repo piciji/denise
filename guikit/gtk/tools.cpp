@@ -130,10 +130,11 @@ auto pSystem::getWorkingDirectory() -> std::string {
 }
 
 auto pSystem::getDesktopSize() -> Size {
-    return {
-        (unsigned)gdk_screen_get_width(gdk_screen_get_default()),
-        (unsigned)gdk_screen_get_height(gdk_screen_get_default())
-    };
+	
+	GdkRectangle workarea = {0};
+	gdk_monitor_get_workarea( gdk_display_get_primary_monitor(gdk_display_get_default() ), &workarea);
+	
+    return { (unsigned)workarea.width, (unsigned)workarea.height };
 }
 
 auto pSystem::sleep(unsigned milliSeconds) -> void {
@@ -163,6 +164,27 @@ auto pSystem::getOSLang() -> System::Language {
 auto pSystem::printToCmd( std::string str ) -> void {
 	
 	fprintf(stdout, "%s", str.c_str() );
+}
+
+auto pSystem::applyCss( GtkWidget* gtkWidget, std::string css ) -> void {
+	
+	GtkCssProvider* cssProvider = gtk_css_provider_new();
+	
+	gtk_css_provider_load_from_data(cssProvider, css.c_str(), -1, NULL);
+	
+	gtk_style_context_add_provider(gtk_widget_get_style_context(gtkWidget),
+								   GTK_STYLE_PROVIDER(cssProvider),
+								   GTK_STYLE_PROVIDER_PRIORITY_USER);
+	
+	g_object_unref(cssProvider);
+}
+
+auto pSystem::getColorCss( unsigned color ) -> std::string {
+	
+	std::string _color = "rgb(" + std::to_string( (color >> 16) & 0xff ) + ", " + std::to_string( (color >> 8) & 0xff )
+		+ ", " + std::to_string( color & 0xff ) + ")";
+	
+	return _color;
 }
 
 //font
@@ -251,9 +273,63 @@ auto pFont::setFont(GtkWidget* widget, std::string font) -> PangoFontDescription
 
 auto pFont::setFont(GtkWidget* widget, gpointer font) -> void {
     if(font == nullptr) return;
-    gtk_widget_modify_font(widget, (PangoFontDescription*)font);
-    
+	
+	convertCss(widget, (PangoFontDescription*)font);
+	
+	pSystem::applyCss( widget, convertCss(widget, (PangoFontDescription*)font) );
+	
+//    gtk_widget_override_font(widget, (PangoFontDescription*)font);
+//
     if(GTK_IS_CONTAINER(widget)) {
         gtk_container_foreach(GTK_CONTAINER(widget), (GtkCallback)pFont::setFont, font);
     }
+}
+
+auto pFont::convertCss(GtkWidget* widget, PangoFontDescription* font) -> std::string {
+	
+	auto family = pango_font_description_get_family( font );
+	
+	auto size = pango_font_description_get_size( font );
+	auto isAbsolute = pango_font_description_get_size_is_absolute( font );
+	
+	if (isAbsolute) {
+		size /= PANGO_SCALE;
+	} else {
+		size = gdk_screen_get_resolution (gdk_screen_get_default()) * (size / PANGO_SCALE) / 72.0;
+	}
+	
+	auto weight = pango_font_description_get_weight( font );
+	
+	auto style = pango_font_description_get_style( font );
+	
+	auto ident = uintptr_t(widget);
+	
+	std::string cssIdent = "custom_font_" + std::to_string( ident );
+	
+	auto context = gtk_widget_get_style_context(widget);
+	
+	auto classes = gtk_style_context_list_classes( context );
+	
+	for (GList* link = classes; link; link = link->next) {
+		
+		auto _class = static_cast<gchar*>(link->data);
+		
+		if (_class == cssIdent) {
+			gtk_style_context_remove_class( context, _class );
+			break;
+		}
+	}
+	
+	g_list_free(classes);
+	
+	gtk_style_context_add_class (context, cssIdent.c_str());	
+	
+	std::string fontFamily = "font-family: " + (std::string)family + ";";
+	std::string fontSize = "font-size: " + std::to_string(size) + "px;";	
+	std::string fontWeight = "font-weight: " + (std::string)(weight == PANGO_WEIGHT_BOLD ? "bold" : "normal") + ";";
+	std::string fontStyle = "font-style: " + (std::string)(style == PANGO_STYLE_ITALIC ? "italic" : "normal") + ";";
+	
+	std::string css = "." + cssIdent + " {" + fontFamily + fontSize + fontWeight + fontStyle + "}";
+	
+	return css;			
 }

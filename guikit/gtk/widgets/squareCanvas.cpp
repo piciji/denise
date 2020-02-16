@@ -7,7 +7,8 @@ auto pSquareCanvas::create() -> void {
 
     g_signal_connect(G_OBJECT(gtkWidget), "button-press-event", G_CALLBACK(pSquareCanvas::mousePress), (gpointer)this);
     g_signal_connect(G_OBJECT(gtkWidget), "button-release-event", G_CALLBACK(pSquareCanvas::mouseRelease), (gpointer)this);
-    g_signal_connect(G_OBJECT(gtkWidget), "expose-event", G_CALLBACK(pSquareCanvas::expose), (gpointer)this);
+    //g_signal_connect(G_OBJECT(gtkWidget), "expose-event", G_CALLBACK(pSquareCanvas::expose), (gpointer)this);
+	g_signal_connect(G_OBJECT(gtkWidget), "draw", G_CALLBACK(pSquareCanvas::expose), (gpointer)this);
 }
 
 auto pSquareCanvas::destroy() -> void {
@@ -101,7 +102,17 @@ auto pSquareCanvas::expose(GtkWidget* widget, GdkEventExpose* event, pSquareCanv
     unsigned width = self->squareCanvas.Widget::state.geometry.width;
     unsigned height = self->squareCanvas.Widget::state.geometry.height;
 
-    gdk_draw_pixbuf(gtk_widget_get_window(self->gtkWidget), nullptr, self->surface, 0, 0, 0, 0, width, height, GDK_RGB_DITHER_NONE, 0, 0);
+    //gdk_draw_pixbuf(gtk_widget_get_window(self->gtkWidget), nullptr, self->surface, 0, 0, 0, 0, width, height, GDK_RGB_DITHER_NONE, 0, 0);
+	
+//	cairo_t* cr = gdk_cairo_create ( gtk_widget_get_window(self->gtkWidget) );
+	
+	GdkDrawingContext* gdc = gdk_window_begin_draw_frame( gtk_widget_get_window( self->gtkWidget ), cairo_region_create());
+	cairo_t* cr = gdk_drawing_context_get_cairo_context( gdc );	
+	
+	gdk_cairo_set_source_pixbuf (cr, self->surface, 0, 0);
+	cairo_paint (cr);
+	//cairo_destroy (cr);
+	gdk_window_end_draw_frame(gtk_widget_get_window(self->gtkWidget), gdc);
     
     return true;
 }

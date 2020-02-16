@@ -18,9 +18,9 @@ auto pSlider::create() -> void {
     destroy();
 
     if (slider.orientation == Slider::Orientation::VERTICAL) {
-        gtkWidget = gtk_vscale_new_with_range(0, 100, 1);
+        gtkWidget = gtk_scale_new_with_range(GTK_ORIENTATION_VERTICAL, 0, 100, 1);
     } else {
-        gtkWidget = gtk_hscale_new_with_range(0, 100, 1);
+        gtkWidget = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0, 100, 1);
     }
 
     gtk_scale_set_draw_value(GTK_SCALE(gtkWidget), false);

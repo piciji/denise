@@ -1,7 +1,15 @@
 
 auto pCheckBox::minimumSize() -> Size {
     Size size = pFont::size(pfont, widget.text());
-    return {size.width + 28, size.height + 4};
+	
+	auto context = gtk_widget_get_style_context (gtkWidget);
+    auto state = gtk_widget_get_state_flags (gtkWidget);
+	GtkBorder padding;
+	
+	gtk_style_context_get_padding (context, state, &padding);
+		
+    return {size.width + padding.left + padding.right + 14,
+		size.height + padding.top + padding.bottom + 2};
 }
 
 auto pCheckBox::setChecked(bool checked) -> void {

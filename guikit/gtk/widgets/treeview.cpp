@@ -250,7 +250,7 @@ auto pTreeView::clearImages() -> void {
 }
 
 auto pTreeView::focused() -> bool {
-    return GTK_WIDGET_HAS_FOCUS(subWidget);
+    return gtk_widget_has_focus(subWidget);
 }
 
 auto pTreeView::setFocused() -> void {
@@ -261,14 +261,18 @@ auto pTreeView::setBackgroundColor(unsigned color) -> void {
     if( !subWidget || !widget.overrideBackgroundColor() )
         return;
 
-    GdkColor gdkColor = CreateColor( (color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff );
-    gtk_widget_modify_base(subWidget, GTK_STATE_NORMAL, &gdkColor);
+	std::string _color = "rgb(" + std::to_string( (color >> 16) & 0xff ) + ", " + std::to_string( (color >> 8) & 0xff )
+		+ ", " + std::to_string( color & 0xff ) + ")";
+	
+	pSystem::applyCss( subWidget, "treeview { background-color: " + _color + " }" );
 }
 
 auto pTreeView::setForegroundColor(unsigned color) -> void {
     if( !subWidget || !widget.overrideForegroundColor() )
         return;
 
-    GdkColor gdkColor = CreateColor( (color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff );
-    gtk_widget_modify_text(subWidget, GTK_STATE_NORMAL, &gdkColor);
+	std::string _color = "rgb(" + std::to_string( (color >> 16) & 0xff ) + ", " + std::to_string( (color >> 8) & 0xff )
+		+ ", " + std::to_string( color & 0xff ) + ")";
+	
+	pSystem::applyCss( subWidget, "treeview { color: " + _color + " }" );
 }

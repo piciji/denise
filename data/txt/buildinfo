@@ -57,7 +57,7 @@ LINUX
 -----
 please install following dependencies if you haven't already
 
-GTK+ 2: apt-get install libgtk2.0-dev
+GTK+ 3: apt-get install libgtk-3-dev
 OpenGL: apt-get install mesa-common-dev
 OpenAL: apt-get install libopenal-dev
 Pulseaudio: apt-get install libpulse-dev

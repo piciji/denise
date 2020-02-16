@@ -39,7 +39,9 @@ auto pHyperlink::updateLink() -> void {
 auto pHyperlink::create() -> void {
     destroy();
     gtkWidget = gtk_label_new( NULL );
-    gtk_misc_set_alignment(GTK_MISC(gtkWidget), 0.0, 0.5);	
+    //gtk_misc_set_alignment(GTK_MISC(gtkWidget), 0.0, 0.5);	
+	gtk_label_set_xalign(GTK_LABEL(gtkWidget), 0.0 );
+	gtk_label_set_yalign(GTK_LABEL(gtkWidget), 0.5 );
 }
 
 auto pHyperlink::init() -> void {

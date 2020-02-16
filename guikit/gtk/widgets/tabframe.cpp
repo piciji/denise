@@ -7,13 +7,13 @@ auto pTabFrame::minimumSize() -> Size {
 
 auto pTabFrame::getDisplacement() -> Position {
     
-    auto style = gtk_rc_get_style (gtkWidget);        
+//    auto style = gtk_rc_get_style (gtkWidget);        
+//	
+//    if (style) {
+//        return { (signed)style->xthickness, (signed)minimumSize().height };
+//    }    
     
-    if (style) {
-        return { (signed)style->xthickness, (signed)minimumSize().height };
-    }    
-    
-    return {0, (signed)minimumSize().height};
+    return {1, (signed)minimumSize().height};
 }
 
 auto pTabFrame::append(std::string text, Image* image) -> void {
@@ -21,7 +21,7 @@ auto pTabFrame::append(std::string text, Image* image) -> void {
 
     Tab tab;
     tab.child = gtk_fixed_new();
-    tab.container = gtk_hbox_new(false, 0);
+    tab.container = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
     tab.image = gtk_image_new();
     tab.title = gtk_label_new( text.c_str() );
     tabs.push_back(tab);
@@ -86,7 +86,7 @@ auto pTabFrame::onChange(GtkNotebook* notebook, GtkWidget* page, unsigned select
 auto pTabFrame::create() -> void {
     destroy();
     gtkWidget = gtk_notebook_new();
-    gtk_notebook_set_show_border(GTK_NOTEBOOK(gtkWidget), false);
+    gtk_notebook_set_show_border(GTK_NOTEBOOK(gtkWidget), true);
     gtk_notebook_set_tab_pos(GTK_NOTEBOOK(gtkWidget), GTK_POS_TOP);
     g_signal_connect(G_OBJECT(gtkWidget), "switch-page", G_CALLBACK(pTabFrame::onChange), (gpointer)&tabFrame);
 }

@@ -1,7 +1,17 @@
 
 auto pButton::minimumSize() -> Size {
     Size size = pFont::size(pfont, widget.text());
-    return {size.width + 20, size.height + 10};
+	
+	auto context = gtk_widget_get_style_context (gtkWidget);
+    auto state = gtk_widget_get_state_flags (gtkWidget);
+	GtkBorder padding;
+	GtkBorder border;
+	
+	gtk_style_context_get_padding (context, state, &padding);
+	gtk_style_context_get_border (context, state, &border);
+		
+    return {size.width + padding.left + padding.right + border.left + border.right + 10,
+		size.height + padding.top + padding.bottom + border.top + border.bottom + 10};
 }
 
 auto pButton::setText(std::string text) -> void {
@@ -12,7 +22,7 @@ auto pButton::setText(std::string text) -> void {
 auto pButton::create() -> void {
     destroy();
     gtkWidget = gtk_button_new();
-    g_signal_connect_swapped(G_OBJECT(gtkWidget), "clicked", G_CALLBACK(pButton::onActivate), (gpointer)&button);
+    g_signal_connect_swapped(G_OBJECT(gtkWidget), "clicked", G_CALLBACK(pButton::onActivate), (gpointer)&button);	
 }
 
 auto pButton::init() -> void {
@@ -23,4 +33,3 @@ auto pButton::init() -> void {
 auto pButton::onActivate(Button* self) -> void {
     if(self->onActivate) self->onActivate();
 }
-

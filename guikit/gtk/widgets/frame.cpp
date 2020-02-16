@@ -1,11 +1,6 @@
 
 auto pFrame::frameSize() -> Size {
-    
-    auto style = gtk_rc_get_style(gtkWidget);
-    
-    if (style) {
-        return {(unsigned)style->xthickness, (unsigned)style->ythickness};
-    }
+	
     return {1u,1u};
 }
 
@@ -18,8 +13,8 @@ auto pFrame::minimumSize() -> Size {
     size.width += 4 + (frameSize().width << 1);
     size.height >>= 1;
     if (widget.text().empty()) size.height = 0;
-
-    size.height += (frameSize().height << 1) + 1;
+	
+    size.height += (frameSize().height << 1) + 2;
     return size;
 }
 
@@ -30,12 +25,19 @@ auto pFrame::setGeometry(Geometry geometry) -> void {
     geometry.y -= size.height;
     geometry.height += size.height;
 
+	// place label 5 px from left
+	gfloat _align = 5.0 / (gfloat)geometry.width;
+	
+	gtk_frame_set_label_align(GTK_FRAME(gtkWidget), _align, 0.5);
+	
     pWidget::setGeometry(geometry);
 }
 
 auto pFrame::getDisplacement() -> Position {
     Size size = pFont::size(pfont, widget.text());
-    if (widget.text().empty()) size.height >>= 1, size.height += 1;
+    if (widget.text().empty()) size.height >>= 1;
+	size.height += 2;
+		
     return { (signed)frameSize().width, (signed)size.height };
 }
 
@@ -54,7 +56,8 @@ auto pFrame::setEnabled(bool enabled) -> void {
 auto pFrame::create() -> void {
     destroy();
     if(box) gtk_widget_destroy(box);
-    gtkWidget = gtk_frame_new("");
+    gtkWidget = gtk_frame_new("");	
+	
     box = gtk_fixed_new();
     gtk_widget_show(box);
     gtk_container_add(GTK_CONTAINER(gtkWidget), box);

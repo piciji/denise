@@ -45,7 +45,7 @@ else ifeq ($(platform),macosx)
     
 else
     drvflags = $(cppflags) 
-    drvflags += `pkg-config --cflags gtk+-2.0`
+    drvflags += `pkg-config --cflags gtk+-3.0`
     drvlink = -lX11 -lXext -ldl -lXfixes
     drvlink += $(if $(findstring openal,$(drv)),-lopenal)
     ifneq ($(findstring xlib,$(drv)),)

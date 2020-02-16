@@ -1,7 +1,17 @@
 
 auto pLineEdit::minimumSize() -> Size {
     Size size = pFont::size(pfont, lineEdit.text());
-    return {size.width + 20, size.height + 8};
+	
+	auto context = gtk_widget_get_style_context (gtkWidget);
+    auto state = gtk_widget_get_state_flags (gtkWidget);
+	GtkBorder padding;
+	GtkBorder border;
+	
+	gtk_style_context_get_padding (context, state, &padding);
+	gtk_style_context_get_border (context, state, &border);
+	
+    return {size.width + padding.left + padding.right + border.left + border.right + 0,
+		size.height + padding.top + padding.bottom + border.top + border.bottom + 10};
 }
 
 auto pLineEdit::setEditable(bool editable) -> void {
@@ -16,6 +26,7 @@ auto pLineEdit::setEditable(bool editable) -> void {
 auto pLineEdit::setText(std::string text) -> void {
     locked = true;
     gtk_entry_set_text(GTK_ENTRY(gtkWidget), text.c_str());
+	gtk_entry_set_width_chars(GTK_ENTRY(gtkWidget), text.size());
     locked = false;
 }
 
@@ -41,8 +52,7 @@ auto pLineEdit::onFocus(LineEdit* self) -> bool {
 
 auto pLineEdit::create() -> void {
     destroy();
-    gtkWidget = gtk_entry_new();
-    
+    gtkWidget = gtk_entry_new();    
     g_signal_connect_swapped(G_OBJECT(gtkWidget), "changed", G_CALLBACK(pLineEdit::onChange), (gpointer)&lineEdit);
     g_signal_connect_swapped(G_OBJECT(gtkWidget), "focus-in-event", G_CALLBACK(pLineEdit::onFocus), (gpointer)&lineEdit);
     g_signal_connect(G_OBJECT(gtkWidget), "drag-data-received", G_CALLBACK(pLineEdit::dropEvent), (gpointer)&lineEdit);

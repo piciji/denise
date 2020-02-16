@@ -1,7 +1,7 @@
 #!/bin/bash
 
 sudo apt-get install libsdl2-2.0-0
-sudo apt-get install libgtk2.0-0
+sudo apt-get install libgtk-3-0
 
 prefix=~/.local
 mkdir -p $prefix/bin/

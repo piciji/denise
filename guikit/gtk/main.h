@@ -120,6 +120,7 @@ struct pLabel : pWidget {
     auto init() -> void;
     auto create() -> void;
     auto setAlign( Label::Align align ) -> void;
+	auto setForegroundColor(unsigned color) -> void;
 
     pLabel(Label& label) : pWidget(label), label(label) { }
 };
@@ -363,6 +364,7 @@ struct pViewport : public pWidget {
     static auto mouseMove(GtkWidget* widget, GdkEventButton* event, pViewport* self) -> gboolean;
     static auto mousePress(GtkWidget* widget, GdkEventButton* event, pViewport* self) -> gboolean;
     static auto mouseRelease(GtkWidget* widget, GdkEventButton* event, pViewport* self) -> gboolean;
+	static auto drawEvent(GtkWidget* widget, cairo_t* context, pViewport* self) -> gboolean;
 
     auto init() -> void;
     auto create() -> void;
@@ -430,21 +432,25 @@ struct pTimer {
 
 struct pMenuBase {
     MenuBase& menuBase;
-    GtkWidget* widget;
-	GtkWidget* cwidget;
-    GtkImage* gtkImage = nullptr;
-	GtkImage* cgtkImage = nullptr;
-
+	
+	struct Element {
+		GtkWidget* widget = nullptr;
+		GtkWidget* box = nullptr;
+		GtkImage* gtkImage = nullptr;		
+		GtkWidget* label = nullptr;
+	} element, elementC;
+	
     bool locked = false;
 
     auto setEnabled(bool enabled) -> void;
     auto setVisible(bool visible) -> void;
     auto setText(const std::string& text) -> void;
     auto setIcon(Image& icon) -> void;
-    virtual auto destroy() -> void;
-    auto destroyImage() -> void;
+    auto destroy(Element& el) -> void;
+	virtual auto destroy() -> void;
     virtual auto rebuild() -> void;
     virtual auto init() -> void {}
+	auto updateItemBox(Element& el) -> void;
 
     pMenuBase(MenuBase& menuBase) : menuBase(menuBase) {}
     virtual ~pMenuBase();
@@ -452,8 +458,8 @@ struct pMenuBase {
 
 struct pMenu : pMenuBase {
     Menu& menu;
-    GtkWidget* gtkMenu;
-	GtkWidget* cgtkMenu;
+    GtkWidget* gtkMenu = nullptr;
+	GtkWidget* cgtkMenu = nullptr;
 
     auto append(MenuBase& item) -> void;
     auto remove(MenuBase& item) -> void;
@@ -525,6 +531,7 @@ struct pFont {
     static auto free(PangoFontDescription* font) -> void;
     static auto size(PangoFontDescription* font, std::string text) -> Size;
     static auto size(std::string font, std::string text) -> Size;
+	static auto convertCss(GtkWidget* widget, PangoFontDescription* font) -> std::string;
 };
 
 struct pSystem {
@@ -537,6 +544,8 @@ struct pSystem {
     static auto isOffscreen( Geometry geometry ) -> bool { return false; } 
     static auto getOSLang() -> System::Language;
     static auto printToCmd( std::string str ) -> void;
+	static auto applyCss( GtkWidget* gtkWidget, std::string css ) -> void;
+	static auto getColorCss( unsigned color ) -> std::string;
 };
 
 static auto getDropPaths(GtkSelectionData* data) -> std::vector<std::string>;
