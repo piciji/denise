@@ -90,42 +90,15 @@ static auto Window_drop(GtkWidget* widget, GdkDragContext* context, gint x, gint
     if(window->onDrop) window->onDrop(paths);
 }
 
-static auto Window_configure(GtkWidget* widget, GdkEvent* event, Window* window) -> gboolean {
-    if( !gtk_widget_get_realized(window->p.widget) ) return false;
-    if( !window->visible() ) return false;
-    if( window->fullScreen() ) return false;
 
-    GdkWindow* gdkWindow = gtk_widget_get_window(widget);
-    GdkRectangle border;
-    gdk_window_get_frame_extents(gdkWindow, &border);
-
-    if(border.x != window->state.geometry.x || border.y != window->state.geometry.y) {
-        window->state.geometry.x = border.x;
-        window->state.geometry.y = border.y;
-        if(window->onMove) window->onMove();
-    }
-    return false;
+static auto Window_configure(GtkWidget* widget, GdkEvent* event, pWindow* p) -> gboolean {
+	p->moveWindow( event);
 }
 
-static auto Window_sizeAllocate(GtkWidget* widget, GtkAllocation* allocation, Window* window) -> void {
-    if( !window->visible() ) return;
-	
-    if( allocation->width == window->p.lastAllocation.width
-    && allocation->height == window->p.lastAllocation.height ) return;
-	
-    if( !window->fullScreen() && !window->p.locked ) {
-        window->state.geometry.width  = allocation->width;
-        window->state.geometry.height = allocation->height;
-    }
-
-    if(window->state.layout) {
-        Geometry layoutGeometry = window->geometry();
-        layoutGeometry.x = layoutGeometry.y = 0;
-        window->state.layout->setGeometry(layoutGeometry);
-    }
-    if( window->onSize) window->onSize();
-    window->p.lastAllocation = *allocation;
+static auto Window_sizeAllocate(GtkWidget* widget, GtkAllocation* allocation, pWindow* p) -> void {
+	p->sizeWindow(allocation);
 }
+
 
 /*static auto Window_sizeRequest(GtkWidget* widget, GtkRequisition* requisition, Window* window) -> void {
     requisition->width  = window->state.geometry.width;
@@ -193,12 +166,12 @@ pWindow::pWindow(Window& window) : window(window) {
     gtk_box_pack_start(GTK_BOX(verticalLayout), mainDisplay, true, true, 0);
     gtk_widget_show(mainDisplay);
 
-    //statusContainer = gtk_event_box_new();
+    statusContainer = gtk_event_box_new();
     status = gtk_statusbar_new();
 	
-//    gtk_container_add(GTK_CONTAINER(statusContainer), status);
-    gtk_box_pack_start(GTK_BOX(verticalLayout), status, false, false, 0);
-   // gtk_widget_show(statusContainer);
+    gtk_container_add(GTK_CONTAINER(statusContainer), status);
+    gtk_box_pack_start(GTK_BOX(verticalLayout), statusContainer, false, false, 0);
+    gtk_widget_show(statusContainer);
 
 	gtk_widget_set_margin_top(GTK_WIDGET(status), 0);
 	gtk_widget_set_margin_bottom(GTK_WIDGET(status), 0);
@@ -211,17 +184,18 @@ pWindow::pWindow(Window& window) : window(window) {
 	//gtk_widget_modify_bg(status, GTK_STATE_NORMAL, &gdkColor);
 	
     setResizable(window.resizable());
-    setGeometry(geometry());
+   // setGeometry(geometry());
     setStatusFont(Font::system());
 
     g_signal_connect(G_OBJECT(widget), "delete-event", G_CALLBACK(Window_close), (gpointer)&window);
     //g_signal_connect(G_OBJECT(mainDisplay), "expose-event", G_CALLBACK(Window_expose), (gpointer)&window);
 	g_signal_connect(G_OBJECT(widget), "draw", G_CALLBACK(Window_draw), (gpointer)&window);
 	
-    g_signal_connect(G_OBJECT(widget), "configure-event", G_CALLBACK(Window_configure), (gpointer)&window);
+    g_signal_connect(G_OBJECT(widget), "configure-event", G_CALLBACK(Window_configure), (gpointer)this);
     g_signal_connect(G_OBJECT(widget), "drag-data-received", G_CALLBACK(Window_drop), (gpointer)&window);
 
-    g_signal_connect(G_OBJECT(mainDisplay), "size-allocate", G_CALLBACK(Window_sizeAllocate), (gpointer)&window);
+    g_signal_connect(G_OBJECT(mainDisplay), "size-allocate", G_CALLBACK(Window_sizeAllocate), (gpointer)this);
+	//g_signal_connect(G_OBJECT(mainDisplay), "size-allocate", G_CALLBACK(Window_sizeAllocate2), (gpointer)this);
     //g_signal_connect(G_OBJECT(mainDisplay), "size-request", G_CALLBACK(Window_sizeRequest), (gpointer)&window);
 	g_signal_connect(G_OBJECT(widget), "button-press-event", G_CALLBACK(Window_onButtonPressed), (gpointer)&window);
 	
@@ -233,10 +207,23 @@ pWindow::pWindow(Window& window) : window(window) {
 	g_object_set_data(G_OBJECT(mainDisplay), "window", (gpointer)this);
 
 	
-    timer.setInterval(50);
+    timer.setInterval(100);
     timer.onFinished = [this]() {
         timer.setEnabled(false);
         locked = false;
+    };
+	
+	timerResize.setInterval(50);
+	timerResize.onFinished = [this]() {
+        timerResize.setEnabled(false);
+		
+		if(this->window.state.layout) {
+			Geometry layoutGeometry = this->window.geometry();
+			layoutGeometry.x = layoutGeometry.y = 0;
+			this->window.state.layout->setGeometry(layoutGeometry);
+		}
+		
+		if( this->window.onSize) this->window.onSize();
     };
 }
 
@@ -253,21 +240,6 @@ auto pWindow::setDroppable(bool droppable) -> void {
 
 auto pWindow::setFocused() -> void {
     gtk_window_present(GTK_WINDOW(widget));
-}
-
-auto pWindow::setVisible(bool visible) -> void {
-    if (!window.menuVisible()) //dirty hack:
-        /* if menu is not enabled when showing window, first calculation of menu size gives wrong results
-         */
-       gtk_widget_set_visible(menu, true);
-    
-    gtk_widget_set_visible(widget, visible);
-    
-    if (!window.menuVisible()) //dirty hack (tail)
-        gtk_widget_set_visible(menu, false);
-    
-    if (!visible) return;
-    setGeometry( geometry() );
 }
 
 auto pWindow::setResizable(bool resizable) -> void {
@@ -291,26 +263,7 @@ auto pWindow::setStatusText(std::string text) -> void {
     gtk_statusbar_push(GTK_STATUSBAR(status), 1, text.c_str());
 }
 
-auto pWindow::setMenuVisible(bool visible) -> void {
-    gtk_widget_set_visible(menu, visible);
-    if (!visible) menuHeight = 0;
-    if (!gtk_widget_get_visible(widget)) return;
 
-    calcMenuHeight();
-
-    if (window.fullScreen()) gtk_window_fullscreen(GTK_WINDOW(widget));
-    resize( geometry() );
-}
-
-auto pWindow::calcMenuHeight() -> void {
-    menuHeight = 0;
-
-    if(gtk_widget_get_visible(menu)) {
-        GtkAllocation allocation;
-        gtk_widget_get_allocation(menu, &allocation);
-        menuHeight = allocation.height;
-    }
-}
 
 //auto pWindow::calcStatusHeight() -> void {
 //    statusHeight = 0;
@@ -330,13 +283,6 @@ auto pWindow::calcMenuHeight() -> void {
 //    }
 //}
 
-auto pWindow::setStatusVisible(bool visible) -> void {
-    gtk_widget_set_visible(status, visible);
-    if (!gtk_widget_get_visible(widget)) return;
-
-    if (window.fullScreen()) gtk_window_fullscreen(GTK_WINDOW(widget));
-    resize( geometry() );
-}
 
 void pWindow::setBackgroundColor(unsigned color) {
     backgroundColor = color;
@@ -347,58 +293,7 @@ bool pWindow::focused() {
     return gtk_window_is_active(GTK_WINDOW(widget));
 }
 
-void pWindow::resize(Geometry geo) {
-    gtk_window_resize(GTK_WINDOW(widget), geo.width, geo.height + (gtk_widget_get_visible(status) ? statusHeight : 0) + menuHeight );
-   // gtk_widget_set_size_request(mainDisplay, geo.width, geo.height);
-	//gtk_window_set_default_size( GTK_WINDOW(widget), geo.width, geo.height );
-}
 
-void pWindow::setGeometry(Geometry geometry) {
-    if (!gtk_widget_get_visible(widget)) return;
-    calcMenuHeight();
-
-    gtk_window_move(GTK_WINDOW(widget), geometry.x , geometry.y );
-
-    GdkGeometry geom;
-    geom.min_width  = window.resizable() ? 1 : geometry.width;
-    geom.min_height = window.resizable() ? 1 : geometry.height;
-    gtk_window_set_geometry_hints(GTK_WINDOW(widget), GTK_WIDGET(mainDisplay), &geom, GDK_HINT_MIN_SIZE);
-
-    resize(geometry);
-
-    if(window.state.layout) {
-        Geometry layoutGeometry = this->geometry();
-        layoutGeometry.x = layoutGeometry.y = 0;
-        window.state.layout->setGeometry(layoutGeometry);
-    }
-}
-
-Geometry pWindow::geometry() {
-    if(window.fullScreen()) {
-        GtkAllocation allocation;
-        gtk_widget_get_allocation(mainDisplay, &allocation);
-        return {0, 0, (unsigned)allocation.width, (unsigned)allocation.height};
-    }
-    return window.state.geometry;
-}
-
-bool pWindow::fullScreenToggleDelayed() {
-    if(locked) timer.setEnabled();
-    return locked;
-}
-
-void pWindow::setFullScreen(bool fullScreen) {
-    if (!window.resizable()) return;
-    locked = true;
-    timer.setEnabled();
-
-    if(!fullScreen) {
-        gtk_window_unfullscreen(GTK_WINDOW(widget));
-        setGeometry(window.state.geometry);
-    } else {
-        gtk_window_fullscreen(GTK_WINDOW(widget));
-    }
-}
 
 void pWindow::append(Menu& menu) {
 	gtk_menu_shell_append(GTK_MENU_SHELL(this->contextMenu), menu.p.elementC.widget);	
@@ -481,6 +376,231 @@ auto pWindow::setIcon( std::string path ) -> bool {
     }
 
     return false;    
+}
+
+// part 1
+static auto Window_sizeAllocate2(GtkWidget* widget, GtkAllocation* allocation, pWindow* p) -> void {
+
+	p->synchronizeSize();
+}
+
+auto pWindow::synchronizeSize() -> void {
+	if (!gtk_widget_get_realized(widget)) return;
+	if (!gtk_widget_get_visible(widget)) return;
+
+	calcMenuHeight();
+	GtkAllocation allocation;
+	gtk_widget_get_allocation(widget, &allocation);
+	allocation.height -= menuHeight;
+	allocation.height -= (gtk_widget_get_visible(status) ? statusHeight : 0);
+
+	if (allocation.width != lastAllocation.width || allocation.height != lastAllocation.height) {
+        window.state.geometry.width  = allocation.width;
+        window.state.geometry.height = allocation.height;
+		
+		setGeometry(geometry());
+		
+		if( window.onSize) window.onSize();
+
+		GtkAllocation rectangle;
+		gtk_widget_get_allocation(widget, &rectangle);
+		//g_signal_emit_by_name(G_OBJECT(widget), "size-allocate", &rectangle, (gpointer)this, nullptr);
+	}
+
+	lastAllocation = allocation;
+}
+
+// part 2 
+
+auto pWindow::moveWindow(GdkEvent* event) -> gboolean {
+    if( !gtk_widget_get_realized(widget) ) return false;
+    if( !window.visible() ) return false;
+    if( window.fullScreen() ) return false;
+
+    GdkWindow* gdkWindow = gtk_widget_get_window(widget);
+    GdkRectangle border;
+    gdk_window_get_frame_extents(gdkWindow, &border);
+
+    if(border.x != window.state.geometry.x || border.y != window.state.geometry.y) {
+        window.state.geometry.x = border.x;
+        window.state.geometry.y = border.y;
+        if(window.onMove) window.onMove();
+    }
+    return false;
+}
+
+auto pWindow::setVisible(bool visible) -> void {
+	//locked = true;
+	if (!menuHeightBugHandled) {
+		
+		menuHeightBugHandled = true;
+		
+		if (!window.menuVisible()) {
+//			gtk_widget_set_visible(menu, true);
+//			gtk_widget_set_visible(widget, true);
+//			gtk_widget_set_visible(menu, false); 
+//			gtk_widget_set_visible(widget, false);
+//			menuHeight = 0;
+		}
+		
+	}
+	
+	
+   // if (!window.menuVisible()) //dirty hack:
+        /* if menu is not enabled when showing window, first calculation of menu size gives wrong results
+         */
+	//	gtk_widget_set_visible(menu, true);
+    
+	if (visible) {
+
+//
+//    gtk_window_move(GTK_WINDOW(widget), geometry().x , geometry().y );
+//
+//    GdkGeometry geom;
+//    geom.min_width  = window.resizable() ? 1 : geometry().width;
+//    geom.min_height = window.resizable() ? 1 : geometry().height;
+//    gtk_window_set_geometry_hints(GTK_WINDOW(widget), GTK_WIDGET(mainDisplay), &geom, GDK_HINT_MIN_SIZE);
+
+//    resize(geometry());
+//	
+//	    if(window.state.layout) {
+//        Geometry layoutGeometry = this->geometry();
+//        layoutGeometry.x = layoutGeometry.y = 0;
+//        window.state.layout->setGeometry(layoutGeometry);
+//    }
+		setGeometry( geometry() );
+	}
+		//setGeometry( geometry() );
+	
+    gtk_widget_set_visible(widget, visible);
+	
+    
+    //if (!window.menuVisible()) //dirty hack (tail)
+      //  gtk_widget_set_visible(menu, false);   
+	
+	//if (visible) {
+	//	calcMenuHeight();
+	//	setGeometry( geometry() );
+
+	//}
+	//locked = false;
+		//
+	//	setGeometry( geometry() );
+}
+
+auto pWindow::setMenuVisible(bool visible) -> void {
+    gtk_widget_set_visible(menu, visible);
+		
+//	while (gtk_events_pending())
+//		gtk_main_iteration();
+
+	
+    if (!visible) menuHeight = 0;
+    if (!gtk_widget_get_visible(widget)) return;
+
+    calcMenuHeight();
+
+    if (window.fullScreen()) gtk_window_fullscreen(GTK_WINDOW(widget));
+	
+	
+    resize( geometry() );
+}
+
+auto pWindow::calcMenuHeight() -> void {
+    menuHeight = 0;
+
+    if(gtk_widget_get_visible(menu)) {
+        GtkAllocation allocation;
+        gtk_widget_get_allocation(menu, &allocation);
+        menuHeight = allocation.height;
+    }
+}
+
+auto pWindow::setStatusVisible(bool visible) -> void {
+    gtk_widget_set_visible(status, visible);
+    if (!gtk_widget_get_visible(widget)) return;
+
+    if (window.fullScreen()) gtk_window_fullscreen(GTK_WINDOW(widget));
+	
+	
+    resize( geometry() );
+		
+}
+
+auto pWindow::sizeWindow(GtkAllocation* allocation) -> void {
+	
+    if( !window.visible() ) return;
+	
+    if( allocation->width == lastAllocation.width
+    && allocation->height == lastAllocation.height ) return;
+	
+    if( !window.fullScreen() && !locked ) {
+        window.state.geometry.width  = allocation->width;
+        window.state.geometry.height = allocation->height;
+    }
+
+	timerResize.setEnabled();
+	
+//    if(window.state.layout) {
+//        Geometry layoutGeometry = window.geometry();
+//        layoutGeometry.x = layoutGeometry.y = 0;
+//        window.state.layout->setGeometry(layoutGeometry);
+//    }
+    //if( window.onSize) window.onSize();
+    lastAllocation = *allocation;
+}
+
+void pWindow::resize(Geometry geo) {
+    gtk_window_resize(GTK_WINDOW(widget), geo.width, geo.height + (gtk_widget_get_visible(status) ? statusHeight : 0) + menuHeight );
+   // gtk_widget_set_size_request(mainDisplay, geo.width, geo.height);
+//	gtk_window_set_default_size( GTK_WINDOW(widget), geo.width, geo.height + (gtk_widget_get_visible(status) ? statusHeight : 0) + menuHeight );
+}
+
+void pWindow::setGeometry(Geometry geometry) {
+   // if (!gtk_widget_get_visible(widget)) return;
+    calcMenuHeight();
+
+    gtk_window_move(GTK_WINDOW(widget), geometry.x , geometry.y );
+
+    GdkGeometry geom;
+    geom.min_width  = window.resizable() ? 1 : geometry.width;
+    geom.min_height = window.resizable() ? 1 : geometry.height;
+    gtk_window_set_geometry_hints(GTK_WINDOW(widget), GTK_WIDGET(mainDisplay), &geom, GDK_HINT_MIN_SIZE);
+
+    resize(geometry);
+
+    if(window.state.layout) {
+        Geometry layoutGeometry = this->geometry();
+        layoutGeometry.x = layoutGeometry.y = 0;
+        window.state.layout->setGeometry(layoutGeometry);
+    }
+}
+
+Geometry pWindow::geometry() {
+    if(window.fullScreen()) {
+        GtkAllocation allocation;
+        gtk_widget_get_allocation(mainDisplay, &allocation);
+        return {0, 0, (unsigned)allocation.width, (unsigned)allocation.height};
+    }
+    return window.state.geometry;
+}
+
+bool pWindow::fullScreenToggleDelayed() {
+    if(locked) timer.setEnabled();
+    return locked;
+}
+
+void pWindow::setFullScreen(bool fullScreen) {
+    if (!window.resizable()) return;
+    locked = true;
+    timer.setEnabled();
+
+    if(!fullScreen) {
+        gtk_window_unfullscreen(GTK_WINDOW(widget));
+        setGeometry(window.state.geometry);
+    } else {
+        gtk_window_fullscreen(GTK_WINDOW(widget));
+    }
 }
 
 }

@@ -28,7 +28,9 @@ struct pWindow {
     unsigned menuHeight = 0;
     PangoFontDescription* pStatusfont = nullptr;
     bool locked = false;
+	bool menuHeightBugHandled = false;
     Timer timer;
+	Timer timerResize;
     GdkCursor* cursor = nullptr;
 
     auto append(Menu& menu) -> void;
@@ -59,6 +61,10 @@ struct pWindow {
     auto changeCursor( Image& image, unsigned hotSpotX, unsigned hotSpotY ) -> void;
     auto setDefaultCursor() -> void;
     auto setIcon( std::string path ) -> bool;
+	auto synchronizeSize() -> void;
+	
+	auto moveWindow(GdkEvent* event) -> gboolean;
+	auto sizeWindow(GtkAllocation* allocation) -> void;
     
     static auto addCustomFont( CustomFont* customFont ) -> bool;
 
@@ -69,7 +75,7 @@ struct pWidget {
     Widget& widget;
     GtkWidget* gtkWidget = nullptr;
     PangoFontDescription* pfont = nullptr;
-    bool locked = false;
+    bool locked = false;	
 
     virtual auto focused() -> bool;
     virtual auto setFocused() -> void;
