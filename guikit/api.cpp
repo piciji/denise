@@ -1096,4 +1096,3 @@ auto System::printToCmd( std::string str ) -> void {
 }
 
 }
-

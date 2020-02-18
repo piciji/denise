@@ -92,11 +92,12 @@ static auto Window_drop(GtkWidget* widget, GdkDragContext* context, gint x, gint
 
 
 static auto Window_configure(GtkWidget* widget, GdkEvent* event, pWindow* p) -> gboolean {
-	p->moveWindow( event);
+	p->moveWindow( event );
+	return false;
 }
 
 static auto Window_sizeAllocate(GtkWidget* widget, GtkAllocation* allocation, pWindow* p) -> void {
-	p->sizeWindow(allocation);
+	p->sizeWindow( allocation );
 }
 
 
@@ -412,10 +413,10 @@ auto pWindow::synchronizeSize() -> void {
 
 // part 2 
 
-auto pWindow::moveWindow(GdkEvent* event) -> gboolean {
-    if( !gtk_widget_get_realized(widget) ) return false;
-    if( !window.visible() ) return false;
-    if( window.fullScreen() ) return false;
+auto pWindow::moveWindow(GdkEvent* event) -> void {
+    if( !gtk_widget_get_realized(widget) ) return;
+    if( !window.visible() ) return;
+    if( window.fullScreen() ) return;
 
     GdkWindow* gdkWindow = gtk_widget_get_window(widget);
     GdkRectangle border;
@@ -426,7 +427,6 @@ auto pWindow::moveWindow(GdkEvent* event) -> gboolean {
         window.state.geometry.y = border.y;
         if(window.onMove) window.onMove();
     }
-    return false;
 }
 
 auto pWindow::setVisible(bool visible) -> void {
@@ -472,7 +472,31 @@ auto pWindow::setVisible(bool visible) -> void {
 	}
 		//setGeometry( geometry() );
 	
+	if (!window.menuVisible())
+		gtk_widget_set_visible(menu, true);
+	
     gtk_widget_set_visible(widget, visible);
+	
+		//while (gtk_events_pending())
+		//gtk_main_iteration();
+	
+	
+	
+	if (!window.menuVisible())
+		setMenuVisible(false);
+		//gtk_widget_set_visible(menu, false);
+	else if (visible) {
+		setMenuVisible(true);
+//		  GtkAllocation rectangle;
+  //  gtk_widget_get_allocation(widget, &rectangle);
+	//	g_signal_emit_by_name(G_OBJECT(widget), "size-allocate", &rectangle, (gpointer)this, nullptr);
+//		 calcMenuHeight();
+//		     GdkGeometry geom;
+//    geom.min_width  = window.resizable() ? 1 : geometry().width;
+//    geom.min_height = window.resizable() ? 1 : geometry().height;
+//		 gtk_window_set_geometry_hints(GTK_WINDOW(widget), GTK_WIDGET(mainDisplay), &geom, GDK_HINT_MIN_SIZE);
+//		 resize( geometry() );
+	}
 	
     
     //if (!window.menuVisible()) //dirty hack (tail)
@@ -506,13 +530,14 @@ auto pWindow::setMenuVisible(bool visible) -> void {
     resize( geometry() );
 }
 
+
 auto pWindow::calcMenuHeight() -> void {
     menuHeight = 0;
 
     if(gtk_widget_get_visible(menu)) {
         GtkAllocation allocation;
         gtk_widget_get_allocation(menu, &allocation);
-        menuHeight = allocation.height;
+        menuHeight = allocation.height;				
     }
 }
 
@@ -530,6 +555,7 @@ auto pWindow::setStatusVisible(bool visible) -> void {
 auto pWindow::sizeWindow(GtkAllocation* allocation) -> void {
 	
     if( !window.visible() ) return;
+	if (!gtk_widget_get_realized(widget)) return;
 	
     if( allocation->width == lastAllocation.width
     && allocation->height == lastAllocation.height ) return;
@@ -538,7 +564,7 @@ auto pWindow::sizeWindow(GtkAllocation* allocation) -> void {
         window.state.geometry.width  = allocation->width;
         window.state.geometry.height = allocation->height;
     }
-
+	
 	timerResize.setEnabled();
 	
 //    if(window.state.layout) {
@@ -558,6 +584,7 @@ void pWindow::resize(Geometry geo) {
 
 void pWindow::setGeometry(Geometry geometry) {
    // if (!gtk_widget_get_visible(widget)) return;
+	if (!window.state.visible) return;
     calcMenuHeight();
 
     gtk_window_move(GTK_WINDOW(widget), geometry.x , geometry.y );

@@ -63,7 +63,7 @@ struct pWindow {
     auto setIcon( std::string path ) -> bool;
 	auto synchronizeSize() -> void;
 	
-	auto moveWindow(GdkEvent* event) -> gboolean;
+	auto moveWindow(GdkEvent* event) -> void;
 	auto sizeWindow(GtkAllocation* allocation) -> void;
     
     static auto addCustomFont( CustomFont* customFont ) -> bool;
