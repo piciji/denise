@@ -54,7 +54,6 @@
 * SPIR-V Shader support
 * RetroArch Shader support
 * 7z support
-* refactoring Linux GTK2 UI to GTK3
 * Netplay
 
 # todo improvements
