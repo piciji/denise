@@ -12,12 +12,6 @@ auto pViewport::create() -> void {
     g_signal_connect(G_OBJECT(gtkWidget), "leave-notify-event", G_CALLBACK(pViewport::mouseLeave), (gpointer)this);
     g_signal_connect(G_OBJECT(gtkWidget), "motion-notify-event", G_CALLBACK(pViewport::mouseMove), (gpointer)this);
 	g_signal_connect(G_OBJECT(gtkWidget), "draw", G_CALLBACK(pViewport::drawEvent), (gpointer)this);
-
-    //GdkColor color;
-    //color.pixel = color.red = color.green = color.blue = 0;
-    //gtk_widget_modify_bg(gtkWidget, GTK_STATE_NORMAL, &color);
-	
-	//pSystem::applyCss( gtkWidget, "drawing_area { background-color: " + pSystem::getColorCss( 0xff << 16 ) + " }" );
 }
 
 auto pViewport::init() -> void {

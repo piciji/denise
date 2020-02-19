@@ -28,7 +28,6 @@ struct pWindow {
     unsigned menuHeight = 0;
     PangoFontDescription* pStatusfont = nullptr;
     bool locked = false;
-	bool menuHeightBugHandled = false;
     Timer timer;
 	Timer timerResize;
     GdkCursor* cursor = nullptr;
@@ -193,6 +192,7 @@ struct pCheckBox : pWidget {
     CheckBox& checkBox;
 
     auto minimumSize() -> Size;
+	auto setGeometry(Geometry geometry) -> void;
     auto setChecked(bool checked) -> void;
     auto setText(std::string text) -> void;
     static auto onToggle(GtkToggleButton* toggleButton, CheckBox* self) -> void;
@@ -236,6 +236,7 @@ struct pRadioBox : pWidget {
     RadioBox& radioBox;
 
     auto minimumSize() -> Size;
+	auto setGeometry(Geometry geometry) -> void;
     auto setChecked() -> void;
     auto setGroup(const std::vector<RadioBox*>& group) -> void;
 

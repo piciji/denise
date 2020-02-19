@@ -14,7 +14,7 @@ auto pComboButton::minimumSize() -> Size {
 	gtk_style_context_get_padding (context, state, &padding);
 	
     Size size = pFont::size(pfont, " ");
-    return {maximumWidth + padding.left + padding.right + 20, size.height + padding.top + padding.bottom + 12};
+    return {maximumWidth + padding.left + padding.right + 26, size.height + padding.top + padding.bottom + 12};
 }
 
 auto pComboButton::remove(unsigned selection) -> void {

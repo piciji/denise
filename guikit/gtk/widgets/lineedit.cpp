@@ -10,7 +10,7 @@ auto pLineEdit::minimumSize() -> Size {
 	gtk_style_context_get_padding (context, state, &padding);
 	gtk_style_context_get_border (context, state, &border);
 	
-    return {size.width + padding.left + padding.right + border.left + border.right + 0,
+    return {size.width + padding.left + padding.right + border.left + border.right + 2,
 		size.height + padding.top + padding.bottom + border.top + border.bottom + 10};
 }
 

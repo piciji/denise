@@ -12,6 +12,11 @@ auto pCheckBox::minimumSize() -> Size {
 		size.height + padding.top + padding.bottom + 2};
 }
 
+auto pCheckBox::setGeometry(Geometry geometry) -> void {
+	geometry.x -= 2;
+	pWidget::setGeometry( geometry );
+}
+
 auto pCheckBox::setChecked(bool checked) -> void {
     locked = true;
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(gtkWidget), checked);

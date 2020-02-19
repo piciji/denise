@@ -106,7 +106,4 @@ auto pWidget::setBackgroundColor(unsigned color) -> void {
 auto pWidget::setForegroundColor(unsigned color) -> void {
     if( !gtkWidget || !widget.overrideForegroundColor() )
         return;
-   // GdkColor gdkColor = CreateColor( (color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff );
-   // gtk_widget_modify_fg(gtkWidget, GTK_STATE_NORMAL, &gdkColor);
-  //  gtk_widget_modify_text(gtkWidget, GTK_STATE_NORMAL, &gdkColor);
 }

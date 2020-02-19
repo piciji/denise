@@ -14,6 +14,13 @@
 			padding-bottom: 0px;
 		}
 		
+		radiobutton {
+			padding-left: 0px;
+			padding-right: 4px;
+			padding-top: 0px;
+			padding-bottom: 0px;
+		}
+		
 		combobox {
 			padding-left: 0px;
 			padding-right: 0px;

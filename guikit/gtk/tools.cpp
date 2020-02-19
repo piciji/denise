@@ -274,12 +274,8 @@ auto pFont::setFont(GtkWidget* widget, std::string font) -> PangoFontDescription
 auto pFont::setFont(GtkWidget* widget, gpointer font) -> void {
     if(font == nullptr) return;
 	
-	convertCss(widget, (PangoFontDescription*)font);
-	
 	pSystem::applyCss( widget, convertCss(widget, (PangoFontDescription*)font) );
-	
-//    gtk_widget_override_font(widget, (PangoFontDescription*)font);
-//
+
     if(GTK_IS_CONTAINER(widget)) {
         gtk_container_foreach(GTK_CONTAINER(widget), (GtkCallback)pFont::setFont, font);
     }
@@ -292,11 +288,15 @@ auto pFont::convertCss(GtkWidget* widget, PangoFontDescription* font) -> std::st
 	auto size = pango_font_description_get_size( font );
 	auto isAbsolute = pango_font_description_get_size_is_absolute( font );
 	
+	float pt; 
+	
 	if (isAbsolute) {
-		size /= PANGO_SCALE;
+		pt = (float)size / (float)PANGO_SCALE;
 	} else {
-		size = gdk_screen_get_resolution (gdk_screen_get_default()) * (size / PANGO_SCALE) / 72.0;
+		pt = (float)gdk_screen_get_resolution (gdk_screen_get_default()) * ((float)size / (float)PANGO_SCALE) / 72.0;
 	}
+	
+	pt *= 0.75; // convert px to pt
 	
 	auto weight = pango_font_description_get_weight( font );
 	
@@ -325,7 +325,7 @@ auto pFont::convertCss(GtkWidget* widget, PangoFontDescription* font) -> std::st
 	gtk_style_context_add_class (context, cssIdent.c_str());	
 	
 	std::string fontFamily = "font-family: " + (std::string)family + ";";
-	std::string fontSize = "font-size: " + std::to_string(size) + "px;";	
+	std::string fontSize = "font-size: " + GUIKIT::String::convertDoubleToString( pt, 2 ) + "pt;";	
 	std::string fontWeight = "font-weight: " + (std::string)(weight == PANGO_WEIGHT_BOLD ? "bold" : "normal") + ";";
 	std::string fontStyle = "font-style: " + (std::string)(style == PANGO_STYLE_ITALIC ? "italic" : "normal") + ";";
 	
