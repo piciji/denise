@@ -119,9 +119,9 @@ auto pTreeView::remove(TreeViewItem& item) -> void {
     item.p.invalidateParent();
 }
 
-auto pTreeView::reset() -> void {
-    gtk_tree_store_clear(gtkTreeStore);
+auto pTreeView::reset() -> void {    
     for(auto item : treeView.state.items) item->p.invalidateParent();
+	gtk_tree_store_clear(gtkTreeStore);
     clearImages();
 }
 
@@ -154,7 +154,7 @@ auto pTreeView::create() -> void {
     gtk_tree_view_column_set_attributes(gtkTreeViewColumn, gtkCellText, "text", 1, nullptr);
 
     gtk_tree_view_append_column(gtkTreeView, gtkTreeViewColumn);
-    gtk_tree_view_set_search_column(gtkTreeView, 1);
+    //gtk_tree_view_set_search_column(gtkTreeView, -1);
 
     g_signal_connect(G_OBJECT(subWidget), "row-activated", G_CALLBACK(pTreeView::onActivate), (gpointer)&treeView);
     g_signal_connect(G_OBJECT(gtkTreeSelection), "changed", G_CALLBACK(pTreeView::onChange), (gpointer)&treeView);

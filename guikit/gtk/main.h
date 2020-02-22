@@ -224,7 +224,7 @@ struct pSlider : pWidget {
     auto minimumSize() -> Size;
     auto setLength(unsigned length) -> void;
     auto setPosition(unsigned position) -> void;
-
+	
     auto init() -> void;
     auto create() -> void;
     static auto onChange(GtkRange* gtkRange, Slider* self) -> void;
@@ -411,6 +411,7 @@ struct pTabFrame : pWidget {
     std::vector<Tab> tabs;
 
     auto minimumSize() -> Size;
+	auto borderSize() -> unsigned;
     auto init() -> void;
     auto create() -> void;
     auto append(std::string text, Image* image) -> void;

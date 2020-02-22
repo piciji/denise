@@ -9,16 +9,34 @@
 		
 		checkbutton {
 			padding-left: 0px;
-			padding-right: 4px;
+			padding-right: 0px;
 			padding-top: 0px;
-			padding-bottom: 0px;
-		}
+			padding-bottom: 0px;		
+		}		
 		
 		radiobutton {
 			padding-left: 0px;
-			padding-right: 4px;
+			padding-right: 0px;
 			padding-top: 0px;
-			padding-bottom: 0px;
+			padding-bottom: 0px;		
+		}
+		
+		checkbutton > check {
+			min-width: 16px;
+			min-height: 16px;
+			margin-left: 0px;
+			margin-right: 4px;
+			margin-top: 0px;
+			margin-bottom: 0px;		
+		}
+		
+		radiobutton > radio {
+			min-width: 16px;
+			min-height: 16px;
+			margin-left: 0px;
+			margin-right: 4px;
+			margin-top: 0px;
+			margin-bottom: 0px;		
 		}
 		
 		combobox {
@@ -29,11 +47,12 @@
 		}
 		
 		entry {
+			min-height: 0px;
 			padding-left: 3px;
 			padding-right: 3px;
-			padding-top: 0px;
-			padding-bottom: 0px;
-		}
+			padding-top: 5px;
+			padding-bottom: 5px;
+		}	
 		
 		frame {
 			padding: 0px;
@@ -49,6 +68,10 @@
 			border-style: solid;
 		}
 		
+		notebook tab  {
+			min-height: 25px;
+		}
+		
 		statusbar {
 			background-color: white;
 		}
@@ -57,4 +80,8 @@
 			padding-left: 25px;
 		}
 
+		scale {
+			padding: 3px 0px;
+		}
+		
 	)";

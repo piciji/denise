@@ -1,19 +1,12 @@
 
 auto pCheckBox::minimumSize() -> Size {
     Size size = pFont::size(pfont, widget.text());
-	
-	auto context = gtk_widget_get_style_context (gtkWidget);
-    auto state = gtk_widget_get_state_flags (gtkWidget);
-	GtkBorder padding;
-	
-	gtk_style_context_get_padding (context, state, &padding);
 		
-    return {size.width + padding.left + padding.right + 14,
-		size.height + padding.top + padding.bottom + 2};
+    return {size.width + 16 + 4, size.height + 2};
 }
 
 auto pCheckBox::setGeometry(Geometry geometry) -> void {
-	geometry.x -= 2;
+	//geometry.x -= 2;
 	pWidget::setGeometry( geometry );
 }
 

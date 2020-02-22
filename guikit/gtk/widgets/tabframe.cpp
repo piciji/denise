@@ -1,18 +1,26 @@
 
+auto pTabFrame::borderSize() -> unsigned {
+    
+	auto context = gtk_widget_get_style_context (gtkWidget);
+    auto state = gtk_widget_get_state_flags (gtkWidget);
+	GtkBorder border;	
+
+	gtk_style_context_get_border (context, state, &border);
+	
+	return border.top;
+}
+
 auto pTabFrame::minimumSize() -> Size {
     std::string text = tabFrame.text(0);
-    Size size = pFont::size(pfont, text);
-    return {size.width + (borderSize() << 1) + 55, size.height + (borderSize() << 1) + 10 };
+    Size size = pFont::size(pfont, text);		
+	
+	auto _border = borderSize();
+	
+    return {size.width + (_border << 1) + 55, (_border << 1) + 30 };
 }
 
 auto pTabFrame::getDisplacement() -> Position {
-    
-//    auto style = gtk_rc_get_style (gtkWidget);        
-//	
-//    if (style) {
-//        return { (signed)style->xthickness, (signed)minimumSize().height };
-//    }    
-    
+        
     return {1, (signed)minimumSize().height};
 }
 

@@ -48,7 +48,8 @@ auto pApplication::initialize() -> void {
 }  
 
 //window
-static auto Window_draw(GtkWidget* widget, cairo_t* context, Window* window) -> gboolean {
+
+static auto Window_draw_main(GtkWidget* widget, cairo_t* context, Window* window) -> gboolean {
 	
     if(!window->p.overrideBackgroundColor) {		
 		auto style = gtk_widget_get_style_context(widget);
@@ -75,6 +76,15 @@ static auto Window_draw(GtkWidget* widget, cairo_t* context, Window* window) -> 
     cairo_paint(context);
 		
     return false;
+}
+
+static auto Window_draw(GtkWidget* widget, cairo_t* context, Window* window) -> gboolean {
+	  	
+	auto style = gtk_widget_get_style_context(widget);
+	GtkAllocation allocation;
+	gtk_widget_get_allocation(widget, &allocation);
+	gtk_render_background(style, context, 0, 0, allocation.width, allocation.height);
+	return false;
 }
 
 static auto Window_close(GtkWidget* widget, GdkEvent* event, Window* window) -> gint {
@@ -176,6 +186,7 @@ pWindow::pWindow(Window& window) : window(window) {
 
     g_signal_connect(G_OBJECT(widget), "delete-event", G_CALLBACK(Window_close), (gpointer)&window);
 	g_signal_connect(G_OBJECT(widget), "draw", G_CALLBACK(Window_draw), (gpointer)&window);
+	g_signal_connect(G_OBJECT(mainDisplay), "draw", G_CALLBACK(Window_draw_main), (gpointer)&window);
 	
     g_signal_connect(G_OBJECT(widget), "configure-event", G_CALLBACK(Window_configure), (gpointer)this);
 	g_signal_connect(G_OBJECT(mainDisplay), "size-allocate", G_CALLBACK(Window_sizeAllocate), (gpointer)this);
