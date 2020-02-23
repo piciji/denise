@@ -12,6 +12,8 @@
 
 bool VideoManager::threaded = true;
 bool VideoManager::shaderInputPrecision = false;
+bool VideoManager::aspectCorrect = true;
+bool VideoManager::integerScaling = false;
 
 std::vector<VideoManager*> videoManagers;
 

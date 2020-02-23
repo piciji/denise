@@ -23,7 +23,6 @@ VideoModeLayout::VideoModeLayout(bool withSpectrum) {
 }
 
 VideoOptionLayout::VideoOptionLayout(bool withSpectrum) {
-    append(integerScaling, {0u, 0u}, 10);
     
     if (withSpectrum) {
         append(newLuma, {0u, 0u}, 10);    	    
@@ -305,14 +304,7 @@ base( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) )
         settings->set<bool>( this->tabWindow->ident( "video_crt_real_gamma" + this->sliderIdent()), state);
         vManager()->setCrtRealGamma( state );
     };
-    
-    base.option.integerScaling.onToggle = [this]() {
-        bool state = base.option.integerScaling.checked();   
-        settings->set<bool>( this->tabWindow->ident( "video_integer_scaling"), state);
-        vManager()->useIntegerScaling( state );
-        view->updateViewport();
-    };
-    
+        
     mask.type.apertureMask.onActivate = [this]() {
         settings->set<unsigned>( this->tabWindow->ident("video_mask_type" + this->sliderIdent()), (unsigned)VideoManager::MaskType::Aperture);
         vManager()->setMaskType( VideoManager::MaskType::Aperture );
@@ -444,9 +436,7 @@ base( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) )
         vicIIGlitch.phi0.active.onToggle();
         vicIIGlitch.ras.active.onToggle();
         vicIIGlitch.cas.active.onToggle();
-    };
-        
-    base.option.integerScaling.setChecked( settings->get<bool>( tabWindow->ident("video_integer_scaling"), false) );
+    };        
     
     VideoManager::CrtMode crtMode = (VideoManager::CrtMode)settings->get<unsigned>(this->tabWindow->ident("video_crt"), (unsigned)VideoManager::CrtMode::None, {0u, 2u});
     
@@ -725,7 +715,6 @@ auto VideoLayout::translate() -> void {
     base.phase.name.setText( trans->get("phase", {}, true) );
     base.option.newLuma.setText( trans->get("new_luma") );
     base.option.crtRealGamma.setText( trans->get("crt_real_gamma") );
-	base.option.integerScaling.setText( trans->get("integer_scaling") );
     base.mode.palette.setText( trans->get("palette") );
     base.mode.spectrum.setText( trans->get("color_spectrum") );    
     base.mode.reset.setText( trans->get("reset") );

@@ -7,21 +7,28 @@ struct InScreenTextLayout : GUIKIT::FramedVerticalLayout {
     InScreenTextLayout();
 };
 
-struct CrtEmulation : GUIKIT::FramedVerticalLayout {
+struct CrtEmulationLayout : GUIKIT::FramedVerticalLayout {
     GUIKIT::CheckBox threadMode;
     GUIKIT::CheckBox shaderInputPrecision;
     
-    CrtEmulation();
+    CrtEmulationLayout();
 };
 
-struct VideoFrameAdjust : GUIKIT::FramedHorizontalLayout {
+struct VideoGeometryLayout : GUIKIT::FramedVerticalLayout {
+    GUIKIT::CheckBox aspectCorrect;
+    GUIKIT::CheckBox integerScaling;
+    
+    VideoGeometryLayout();
+};
+
+struct VideoFrameAdjustLayout : GUIKIT::FramedHorizontalLayout {
     GUIKIT::CheckBox overrideExactFrequency;
     GUIKIT::Label pal;
     GUIKIT::LineEdit palFrequency;    
     GUIKIT::Label ntsc;
     GUIKIT::LineEdit ntscFrequency;    
     
-    VideoFrameAdjust();
+    VideoFrameAdjustLayout();
 };
 
 struct PathsLayout : GUIKIT::FramedVerticalLayout {
@@ -48,8 +55,9 @@ struct VideoSettingsLayout : GUIKIT::FramedHorizontalLayout {
 
 struct VideoLayout : GUIKIT::VerticalLayout {
     InScreenTextLayout screenTextLayout;
-    VideoFrameAdjust videoFrameAdjust;
-    CrtEmulation crtEmulation;
+    VideoFrameAdjustLayout videoFrameAdjust;
+    CrtEmulationLayout crtEmulation;
+	VideoGeometryLayout videoGeometry;
 
     VideoSettingsLayout videoSettingsLayout;
     PathsLayout paths;

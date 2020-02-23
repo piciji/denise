@@ -230,7 +230,7 @@ auto View::updateViewport() -> void {
     geometry.x = geometry.y = 0;
     
     if (activeVideoManager) {
-        integerScaling = activeVideoManager->integerScaling;
+        integerScaling = VideoManager::integerScaling;
         currentHeight = activeVideoManager->currentHeight;
         
         if ((currentHeight == 0) || (geometry.height < currentHeight))
@@ -250,7 +250,7 @@ auto View::updateViewport() -> void {
 		geometry.height = _height;
 	}
 	
-	if (settings->get<bool>("aspect_correct", true)) {
+	if (VideoManager::aspectCorrect) {
 		
 		while(1) {
 			_height = geometry.height;

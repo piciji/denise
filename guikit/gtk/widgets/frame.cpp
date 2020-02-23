@@ -26,7 +26,7 @@ auto pFrame::setGeometry(Geometry geometry) -> void {
     geometry.height += size.height;
 
 	// place label 5 px from left
-	gfloat _align = 5.0 / (gfloat)geometry.width;
+	gfloat _align = 5.0 / (gfloat)(geometry.width - size.width);
 	
 	gtk_frame_set_label_align(GTK_FRAME(gtkWidget), _align, 0.5);
 	

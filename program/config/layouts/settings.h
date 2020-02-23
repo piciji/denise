@@ -6,7 +6,6 @@ struct LangLayout : GUIKIT::FramedHorizontalLayout {
 
 struct SwitchesLayout : GUIKIT::FramedVerticalLayout {
     GUIKIT::CheckBox fullscreenStatusbar;
-    GUIKIT::CheckBox aspectCorrect;
 	GUIKIT::CheckBox pause;
     GUIKIT::CheckBox autostartDragnDrop;
     GUIKIT::CheckBox saveSettingsOnExit;

@@ -38,7 +38,8 @@ auto pTabFrame::append(std::string text, Image* image) -> void {
     gtk_widget_show(tab.container);
     gtk_widget_show(tab.image);
     gtk_widget_show(tab.title);
-    gtk_box_pack_start(GTK_BOX(tab.container), tab.image, false, false, 0);
+	if(image && !image->empty())
+		gtk_box_pack_start(GTK_BOX(tab.container), tab.image, false, false, 0);
     gtk_box_pack_start(GTK_BOX(tab.container), tab.title, false, false, 2);
     locked = true;
     gtk_notebook_append_page(GTK_NOTEBOOK(gtkWidget), tab.child, tab.container);

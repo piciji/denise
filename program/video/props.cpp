@@ -2,6 +2,35 @@
 #include "manager.h"
 #include "../program.h"
 
+auto VideoManager::setIntegerScaling(bool state) -> void {    
+    integerScaling = state;
+}
+
+auto VideoManager::setAspectCorrect(bool state) -> void {
+	aspectCorrect = state;
+}
+
+auto VideoManager::setThreaded(bool state) -> void {	
+    
+    unlockDriver(); 
+
+    threaded = state;
+	
+	for (auto videoManager : videoManagers) {
+		videoManager->emulator->setFinishVblankCallback( (videoManager->crtMode == CrtMode::Cpu) && threaded );
+		videoManager->emulator->setLineCallback( (videoManager->crtMode == CrtMode::Cpu) && threaded );		
+		videoManager->reinitThread();
+	}		
+}
+
+auto VideoManager::setShaderInputPrecision(bool state) -> void {
+    shaderInputPrecision = state;
+    for (auto videoManager : videoManagers) {
+        videoManager->colorTableUpdated = false;
+		videoManager->shader.recreate = true;
+    }    
+}
+
 auto VideoManager::usePal(bool state) -> void {
 	pal = state;        
 	shader.recreate = true;
@@ -24,36 +53,11 @@ auto VideoManager::setCrtMode(CrtMode _mode) -> void {
     colorTableUpdated = false;
 }
 
-auto VideoManager::useIntegerScaling(bool state) -> void {    
-    integerScaling = state;
-}
-
 auto VideoManager::setPalette(Emulator::Interface::Palette* palette) -> void {        
     this->palette = palette;
     
     if (!colorSpectrum)
         colorTableUpdated = false;	
-}
-
-auto VideoManager::setThreaded(bool state) -> void {	
-    
-    unlockDriver(); 
-
-    threaded = state;
-	
-	for (auto videoManager : videoManagers) {
-		videoManager->emulator->setFinishVblankCallback( (videoManager->crtMode == CrtMode::Cpu) && threaded );
-		videoManager->emulator->setLineCallback( (videoManager->crtMode == CrtMode::Cpu) && threaded );		
-		videoManager->reinitThread();
-	}		
-}
-
-auto VideoManager::setShaderInputPrecision(bool state) -> void {
-    shaderInputPrecision = state;
-    for (auto videoManager : videoManagers) {
-        videoManager->colorTableUpdated = false;
-		videoManager->shader.recreate = true;
-    }    
 }
 
 auto VideoManager::setSaturation(int saturation) -> void {    
@@ -356,10 +360,6 @@ auto VideoManager::getSettings() -> std::tuple<VPARAMST> {
     bool _useSpectrum = settings->get<bool>(program->ident(emulator, "video_spectrum"), true);    
     unsigned _region = settings->get<unsigned>(program->ident(emulator, "video_region"), 0u,{0u, 1u});
     unsigned _crtMode = settings->get<unsigned>(program->ident(emulator, "video_crt"), (unsigned)CrtMode::None, {0u, 2u});
-    
-    bool _integerScaling = settings->get<bool>(program->ident(emulator, "video_integer_scaling"), false);
-    bool _crtThreaded = settings->get<bool>("video_crt_threaded", true);
-	bool _shaderInputPrecision = settings->get<bool>("video_crt_shader_input_precision", false);        
 
     auto modeIdent = getModeIdent();
     
@@ -477,8 +477,9 @@ auto VideoManager::reloadSettings() -> void {
     useColorSpectrum(_useSpectrum);
     setCrtMode( (CrtMode)_crtMode );
     
-    useIntegerScaling(_integerScaling);
     setCrtRealGamma( _crtRealGamma );
-    VideoManager::setThreaded(_crtThreaded);
-	VideoManager::setShaderInputPrecision(_shaderInputPrecision);
+	
+	// update only, crt mode could be changed
+    VideoManager::setThreaded( VideoManager::threaded ); 
+	VideoManager::setShaderInputPrecision( VideoManager::shaderInputPrecision );
 }

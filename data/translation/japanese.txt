@@ -215,7 +215,6 @@ exclusive_fullscreen_tooltip = 全画面モード時にホットキーによる�
 and_or_connection = + 又は /
 enabled = オン
 tip_intelligent_screentext = ステータスバー非表示の時のみ有効
-state_text = OSDによる状態表示
 toggle_menu = メニューバーの表示/非表示
 toggle_status = ステータスバーの表示/非表示
 tape_play_state = データレコーダー>*PLAY中*
@@ -443,3 +442,5 @@ select_retroreplay_image =
 blank_retroreplay_image = 
 auto_save_identifier = 
 analog_trigger = 
+screen_status = state_text = OSDによる状態表示
+geometry = 

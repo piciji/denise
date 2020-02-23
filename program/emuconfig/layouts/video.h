@@ -15,7 +15,6 @@ struct VideoModeLayout : GUIKIT::HorizontalLayout {
 };
 
 struct VideoOptionLayout : GUIKIT::HorizontalLayout {
-    GUIKIT::CheckBox integerScaling;
     GUIKIT::CheckBox newLuma;     
     GUIKIT::CheckBox crtRealGamma;
     

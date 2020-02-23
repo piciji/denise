@@ -215,7 +215,6 @@ exclusive_fullscreen_tooltip = est seulement enclenché quand l'émulation eest 
 and_or_connection = et / ou
 enabled = activé
 tip_intelligent_screentext = C'est activé quand la barre de statut est désactivé.
-state_text = Texte d'état
 toggle_menu = Passer sur la barre de menu
 toggle_status = Passer sur la barre de statut
 tape_play_state = Le bouton de lecture Datasette a été pressé
@@ -443,3 +442,5 @@ select_retroreplay_image =
 blank_retroreplay_image = 
 auto_save_identifier = 
 analog_trigger = 
+screen_status = state_text = Texte d'état
+geometry = 

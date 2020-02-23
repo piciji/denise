@@ -7,7 +7,7 @@
 #include <condition_variable>
 #include "shader.h"
 
-#define VPARAMS _useSpectrum, _crtMode, _region, _integerScaling, _crtThreaded, _shaderInputPrecision, \
+#define VPARAMS _useSpectrum, _crtMode, _region, \
     _saturation, _contrast, _gamma, _brightness, _phase, _usePhaseError, _phaseError,  \
     _newLuma, _crtRealGamma, _hanoverBars, _useHanoverBars, \
     _useBlur, _blur, _useScanlines, _scanlines, _useLumaRise, _lumaRise, _useLumaFall, _lumaFall, \
@@ -18,7 +18,7 @@
     _hires, _distortionHires, _maskType, _luminance, _useLightFromCenter, _lightFromCenter, \
     _useRandomLineOffset, _randomLineOffset
 
-#define VPARAMST bool, unsigned, unsigned, bool, bool, bool, \
+#define VPARAMST bool, unsigned, unsigned, \
     unsigned, unsigned, unsigned, unsigned, int, bool, float, \
     bool, bool, int, bool, \
     bool, unsigned, bool, unsigned, bool, float, bool, float, \
@@ -61,8 +61,13 @@ struct VideoManager {
         
     static bool threaded;
     static bool shaderInputPrecision;
+	static bool integerScaling;
+	static bool aspectCorrect;
+	
     static auto setThreaded(bool state) -> void;
     static auto setShaderInputPrecision(bool state) -> void;
+    static auto setAspectCorrect(bool state) -> void;
+    static auto setIntegerScaling(bool state) -> void;
     
     enum class MaskType : unsigned { Aperture = 0u, ShadowMask = 1u, SlotMask = 2u } maskType;
     enum class CrtMode : unsigned { None = 0u, Cpu = 1u, Gpu = 2u } crtMode;
@@ -113,8 +118,7 @@ struct VideoManager {
     int32_t hanoverBars;
     int32_t hanoverBarsAlt;
         
-    double blur;
-    bool integerScaling;
+    double blur;    
     unsigned currentHeight;
     uint8_t scanlines;
     
@@ -216,7 +220,6 @@ struct VideoManager {
     auto usePal(bool state) -> void; // pal or ntsc
     auto useColorSpectrum(bool state) -> void; // color spectrum or palette
     auto setCrtMode(CrtMode _mode) -> void;
-    auto useIntegerScaling(bool state) -> void;
     
     auto setSaturation(int saturation) -> void;
     auto setBrightness(int brightness) -> void;

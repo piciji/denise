@@ -26,7 +26,6 @@ LangLayout::LangLayout() {
 SwitchesLayout::SwitchesLayout() {
     setPadding(10);
     append(fullscreenStatusbar, {~0u, 0u}, 3);
-    append(aspectCorrect, {~0u, 0u}, 3);
 	append(pause, {~0u, 0u}, 3);
     append(autostartDragnDrop, {~0u, 0u}, 3);
     append(saveSettingsOnExit, {~0u, 0u}, 3);
@@ -51,12 +50,6 @@ SettingsLayout::SettingsLayout() {
             view->updateViewport();
 		}
         settings->set<bool>("statusbar_fullscreen", switches.fullscreenStatusbar.checked());
-    };
-
-    switches.aspectCorrect.setChecked(settings->get<bool>("aspect_correct", true));
-    switches.aspectCorrect.onToggle = [&]() {
-        settings->set<bool>("aspect_correct", switches.aspectCorrect.checked());
-        view->updateViewport();
     };
 	
 	switches.autostartDragnDrop.setChecked(settings->get<bool>("autostart_dragndrop", false));
@@ -168,7 +161,6 @@ auto SettingsLayout::translate() -> void {
     switches.setText( trans->get("settings") );
 
     switches.fullscreenStatusbar.setText( trans->get("statusbar_fullscreen") );
-    switches.aspectCorrect.setText(trans->get("aspect_ratio"));
 	switches.pause.setText(trans->get("pause_focus_loss"));
     switches.autostartDragnDrop.setText(trans->get("autostart_dragndrop"));
     switches.saveSettingsOnExit.setText(trans->get("save_changes_on_exit"));

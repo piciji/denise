@@ -17,7 +17,7 @@ auto Program::initVideo() -> void {
     setVideoSynchronize();
     setVideoHardSync();
     setVideoFilter();
-    
+	    
     if ( !videoDriver->init( view->getViewportHandle() ) ) {
         delete videoDriver;
         videoDriver = new DRIVER::Video;
@@ -32,6 +32,11 @@ auto Program::initVideo() -> void {
         
     for( auto emulator : emulators )        
         VideoManager::getInstance( emulator )->reloadSettings();
+	
+	VideoManager::setAspectCorrect( settings->get<bool>("aspect_correct", true) );
+	VideoManager::setIntegerScaling( settings->get<bool>("integer_scaling", false) );
+	VideoManager::setShaderInputPrecision( settings->get<bool>("shader_input_precision", false) );
+	VideoManager::setThreaded( settings->get<bool>("crt_threaded", true) );
 }
 
 auto Program::getVideoDriver() -> std::string {

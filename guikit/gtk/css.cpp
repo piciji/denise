@@ -12,14 +12,7 @@
 			padding-right: 0px;
 			padding-top: 0px;
 			padding-bottom: 0px;		
-		}		
-		
-		radiobutton {
-			padding-left: 0px;
-			padding-right: 0px;
-			padding-top: 0px;
-			padding-bottom: 0px;		
-		}
+		}	
 		
 		checkbutton > check {
 			min-width: 16px;
@@ -30,6 +23,18 @@
 			margin-bottom: 0px;		
 		}
 		
+		checkbutton > label {
+			padding: 0px;
+			margin: 0px;
+		}		
+		
+		radiobutton {
+			padding-left: 0px;
+			padding-right: 0px;
+			padding-top: 0px;
+			padding-bottom: 0px;		
+		}
+		
 		radiobutton > radio {
 			min-width: 16px;
 			min-height: 16px;
@@ -38,6 +43,11 @@
 			margin-top: 0px;
 			margin-bottom: 0px;		
 		}
+		
+		radiobutton > label {
+			padding: 0px;
+			margin: 0px;
+		}	
 		
 		combobox {
 			padding-left: 0px;

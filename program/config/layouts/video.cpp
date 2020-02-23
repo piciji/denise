@@ -1,5 +1,5 @@
 
-CrtEmulation::CrtEmulation() {
+CrtEmulationLayout::CrtEmulationLayout() {
     append( threadMode, {0u, 0u}, 5 );
     append( shaderInputPrecision, {0u, 0u} );
     
@@ -8,13 +8,21 @@ CrtEmulation::CrtEmulation() {
 }
 
 InScreenTextLayout::InScreenTextLayout() {
-    append(option1, {~0u, 0u}, 5);
-    append(option2, {~0u, 0u}, 5);
-    append(option3, {~0u, 0u});
+    append(option1, {0u, 0u}, 5);
+    append(option2, {0u, 0u}, 5);
+    append(option3, {0u, 0u});
     
     GUIKIT::RadioBox::setGroup(option1, option2, option3 );
     setPadding(10);
     setFont(GUIKIT::Font::system("bold"));
+}
+
+VideoGeometryLayout::VideoGeometryLayout() {
+	append( aspectCorrect, {0u, 0u}, 5 );
+	append( integerScaling, {0u, 0u} );
+	
+	setPadding(10);
+	setFont(GUIKIT::Font::system("bold"));
 }
 
 PathsLayout::Block::Block() {
@@ -32,7 +40,7 @@ PathsLayout::PathsLayout() {
     setFont(GUIKIT::Font::system("bold"));
 }
 
-VideoFrameAdjust::VideoFrameAdjust() {
+VideoFrameAdjustLayout::VideoFrameAdjustLayout() {
     append(overrideExactFrequency, {0u, 0u}, 10);
     append(pal, {0u, 0u}, 2);
     append(palFrequency, {60u, 0u}, 10);
@@ -191,8 +199,9 @@ VideoLayout::VideoLayout() {
 
 	paths.shader.edit.setText( settings->get<std::string>("shader_folder", "") );
     
-    hLayout.append(screenTextLayout, {0u, 0u}, 30);
-    hLayout.append(crtEmulation, {0u, 0u});
+	hLayout.append(videoGeometry, {~0u, 0u}, 20);
+    hLayout.append(screenTextLayout, {~0u, 0u}, 20);
+    hLayout.append(crtEmulation, {~0u, 0u});
     append(hLayout, {~0u, 0u});
         
     screenTextLayout.option1.onActivate = [this]() {
@@ -231,22 +240,40 @@ VideoLayout::VideoLayout() {
     videoFrameAdjust.ntscFrequency.onChange = [this]() {
         settings->set<std::string>("video_ntsc", videoFrameAdjust.ntscFrequency.text() );
         audioManager->setResampler();
-    };
-    
-    crtEmulation.threadMode.onToggle = [this]() {
-        settings->set<bool>("video_crt_threaded", crtEmulation.threadMode.checked());
-        VideoManager::setThreaded( crtEmulation.threadMode.checked() );
-    };
-    
-    crtEmulation.shaderInputPrecision.onToggle = [this]() {
-        settings->set<bool>("video_crt_shader_input_precision", crtEmulation.shaderInputPrecision.checked());
-        VideoManager::setShaderInputPrecision( crtEmulation.shaderInputPrecision.checked() );
-    };
-    
-    crtEmulation.threadMode.setChecked( settings->get<bool>("video_crt_threaded", true) );
-    crtEmulation.shaderInputPrecision.setChecked( settings->get<bool>("video_crt_shader_input_precision", false) );
+    };    
+            
     videoFrameAdjust.palFrequency.setText( GUIKIT::String::formatFloatingPoint( settings->get<double>("video_pal", 50.0, {25.0, 100.0}) ) );
     videoFrameAdjust.ntscFrequency.setText( GUIKIT::String::formatFloatingPoint( settings->get<double>("video_ntsc", 60.0, {30.0, 120.0}) ) );
+		
+    videoGeometry.aspectCorrect.setChecked( settings->get<bool>("aspect_correct", true) );
+    videoGeometry.aspectCorrect.onToggle = [&]() {
+		bool state = videoGeometry.aspectCorrect.checked();		
+        settings->set<bool>("aspect_correct", state);
+		VideoManager::setAspectCorrect( state );
+        view->updateViewport();
+    };
+	
+	videoGeometry.integerScaling.setChecked( settings->get<bool>("integer_scaling", false) );
+    videoGeometry.integerScaling.onToggle = [&]() {
+		bool state = videoGeometry.integerScaling.checked();		
+        settings->set<bool>("integer_scaling", state);
+		VideoManager::setIntegerScaling( state );
+        view->updateViewport();
+    };
+	
+	crtEmulation.threadMode.setChecked( settings->get<bool>("crt_threaded", true) );
+	crtEmulation.threadMode.onToggle = [this]() {
+		bool state = crtEmulation.threadMode.checked();		
+        settings->set<bool>("crt_threaded", state);
+        VideoManager::setThreaded( state );
+    };
+    
+	crtEmulation.shaderInputPrecision.setChecked( settings->get<bool>("crt_shader_input_precision", false) );
+    crtEmulation.shaderInputPrecision.onToggle = [this]() {
+		bool state = crtEmulation.shaderInputPrecision.checked();		
+        settings->set<bool>("crt_shader_input_precision", state);
+        VideoManager::setShaderInputPrecision( state );
+    };
     
     updateFrequencyLayout();
 }
@@ -273,11 +300,15 @@ auto VideoLayout::translate() -> void {
     screenTextLayout.option2.setText( trans->get("intelligent") );
     screenTextLayout.option2.setTooltip( trans->get("tip_intelligent_screentext") );
     screenTextLayout.option3.setText( trans->get("enabled") );
-    screenTextLayout.setText( trans->get("state_text") );
+    screenTextLayout.setText( trans->get("screen_status") );
     
     crtEmulation.threadMode.setText( trans->get("crt_threaded") );
     crtEmulation.shaderInputPrecision.setText( trans->get("color_channel_32bit") );
     crtEmulation.setText( trans->get("crt_emulation") );
+	
+	videoGeometry.setText(trans->get("geometry"));
+	videoGeometry.aspectCorrect.setText(trans->get("aspect_ratio"));
+	videoGeometry.integerScaling.setText(trans->get("integer_scaling"));
     
     driverLayout.name.setText( trans->get("driver", {}, true) );
     
