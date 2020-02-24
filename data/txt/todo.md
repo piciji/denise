@@ -63,7 +63,6 @@
 * rework some UI tags to make host menu better understandable for user
 * remove all C64 individual stuff from host menu (mostly hotkeys)
 * autofire with frequency and option to fire without button press (don't forget override logic)
-* switch joyports as hotkey
 * load PRG files from disk as simple RAM insertion for reduced loading times
 * UI switch to invert RAM init pattern
 * write (SID/PAULA) output to WAV 

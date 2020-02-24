@@ -242,12 +242,9 @@ custom_ic_glue_logic_info = チェックするとカスタムICのglueロジッ�
 low_pass_filter_info = チェックを入れると自動的にローパスフィルタがかかる
 digiboost_on = 8580のdigiブーストON
 digiboost_off = 8580のdigiブーストOFF
-audio_filter_on = オーディオフィルタON
-audio_filter_off = オーディオフィルタOFF
 sid_6581_on = SID 6581でサウンド出力
 sid_8580_on = SID 8580でサウンド出力
 sid_bias_change = SIDの適正閾値: %state%
-Activate_filter = SIDフィルタのトグル
 Swap_sid = SIDチップの変更
 Digi_boost = SID 8580のdigiブースト
 adjust_bias_up = SIDの適正閾値アップ 
@@ -441,6 +438,9 @@ retroreplay_image =
 select_retroreplay_image = 
 blank_retroreplay_image = 
 auto_save_identifier = 
-analog_trigger = 
 screen_status = state_text = OSDによる状態表示
 geometry = 
+sid_filter_toggle = Activate_filter = SIDフィルタのトグル
+sid_filter_on = audio_filter_on = オーディオフィルタON
+sid_filter_off = audio_filter_off = オーディオフィルタOFF
+swap_input_devices = 

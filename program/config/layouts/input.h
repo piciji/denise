@@ -42,7 +42,7 @@ struct InputLayout : GUIKIT::VerticalLayout {
     auto eraseSelected( bool alternate = false ) -> void;
     auto linkSelected( bool alternate = false ) -> void;
     auto mapSelected( bool alternate = false ) -> void;
-    auto stopCapture() -> void;
+    auto stopCapture() -> void;	
 	
     GUIKIT::Button reset;
     GUIKIT::HorizontalLayout driverWrapper;    

@@ -82,6 +82,7 @@ struct Program : Emulator::Interface::Bind {
     auto errorFirmwareSize(GUIKIT::File::Item* item, Message* message ) -> void;
     auto setExpansionSelection( Emulator::Interface* emulator ) -> void;
     auto updateSaveIdent(Emulator::Interface::Media* media, std::string file = "") -> void;
+	auto getLastUsedEmu() -> Emulator::Interface*;
     
     //audio
     auto initAudio() -> void;

@@ -489,3 +489,22 @@ auto Program::questionToWrite(Emulator::Interface::Media* media) -> bool {
     return view->questionToWrite(media);
 }
 
+auto Program::getLastUsedEmu() -> Emulator::Interface* {
+	
+	auto ident = settings->get<std::string>("last_used_emu", "");
+	Emulator::Interface* defaultEmu = nullptr;
+
+	for (auto emulator : emulators) {
+
+		if (dynamic_cast<LIBC64::Interface*>(emulator))
+            defaultEmu = emulator;
+		
+		if (emulator->ident == ident)
+			return emulator;		
+	}
+	
+	return defaultEmu;
+}
+
+
+

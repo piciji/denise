@@ -16,6 +16,7 @@
 * added slider for analog trigger point when using for digital inputs
 * added help output in console: Denise -h
 * refactored GTK2 to GTK3 for Linux port
+* switch controller ports via hotkey
 
 ## 1.0.7
 * fixed a critical bug that caused OSX builds to use illegal instructions for some architectures

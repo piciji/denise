@@ -256,34 +256,35 @@ auto pWindow::setStatusText(std::string text) -> void {
     gtk_statusbar_push(GTK_STATUSBAR(status), 1, text.c_str());
 }
 
-void pWindow::setBackgroundColor(unsigned color) {
+auto pWindow::setBackgroundColor(unsigned color) -> void {
     backgroundColor = color;
     overrideBackgroundColor = true;
 }
 
-bool pWindow::focused() {
+auto pWindow::focused() -> bool {
     return gtk_window_is_active(GTK_WINDOW(widget));
 }
 
-void pWindow::append(Menu& menu) {
+auto pWindow::append(Menu& menu) -> void {
 	gtk_menu_shell_append(GTK_MENU_SHELL(this->contextMenu), menu.p.elementC.widget);	
     gtk_menu_shell_append(GTK_MENU_SHELL(this->menu), menu.p.element.widget);    	
 	gtk_widget_show(menu.p.element.widget);
 	gtk_widget_show(menu.p.elementC.widget);
 }
 
-void pWindow::remove(Menu& menu) {
+auto pWindow::remove(Menu& menu) -> void {
     menu.p.rebuild();
 }
-void pWindow::append(Widget& widget) {
+
+auto pWindow::append(Widget& widget) -> void {
     widget.p.add();
 }
 
-void pWindow::remove(Widget& widget) {
+auto pWindow::remove(Widget& widget) -> void {
     widget.p.init();
 }
 
-void pWindow::append(Layout& layout) {
+auto pWindow::append(Layout& layout) -> void {
     Geometry geometry = this->geometry();
     geometry.x = geometry.y = 0;
     layout.setGeometry(geometry);
@@ -435,11 +436,11 @@ auto pWindow::sizeWindow(GtkAllocation* allocation) -> void {
     lastAllocation = *allocation;
 }
 
-void pWindow::resize(Geometry geo) {
+auto pWindow::resize(Geometry geo) -> void {
     gtk_window_resize(GTK_WINDOW(widget), geo.width, geo.height + (gtk_widget_get_visible(status) ? statusHeight : 0) + menuHeight );
 }
 
-void pWindow::setGeometry(Geometry geometry) {
+auto pWindow::setGeometry(Geometry geometry) -> void {
 
 	if (!window.state.visible) return;
     calcMenuHeight();
@@ -460,7 +461,7 @@ void pWindow::setGeometry(Geometry geometry) {
     }
 }
 
-Geometry pWindow::geometry() {
+auto pWindow::geometry() -> Geometry {
     if(window.fullScreen()) {
         GtkAllocation allocation;
         gtk_widget_get_allocation(mainDisplay, &allocation);
@@ -469,12 +470,12 @@ Geometry pWindow::geometry() {
     return window.state.geometry;
 }
 
-bool pWindow::fullScreenToggleDelayed() {
+auto pWindow::fullScreenToggleDelayed() -> bool {
     if(locked) timer.setEnabled();
     return locked;
 }
 
-void pWindow::setFullScreen(bool fullScreen) {
+auto pWindow::setFullScreen(bool fullScreen) -> void {
     if (!window.resizable()) return;
     locked = true;
     timer.setEnabled();

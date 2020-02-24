@@ -159,6 +159,10 @@ auto InputManager::update() -> void {
                         continue;
                     
                     useMapping->state = value;
+					
+					if (!mapping->emuDevice)
+						hotkeyTriggers.push_back( useMapping );						
+					
                     for(auto shadow : useMapping->shadowMap)
                         shadows.push_back( shadow );
 
@@ -193,6 +197,10 @@ auto InputManager::update() -> void {
                 }
                 
                 useMapping->state = 1;
+				
+				if (!mapping->emuDevice)
+					hotkeyTriggers.push_back( useMapping );						
+				
                 for (auto shadow : useMapping->shadowMap)
                     shadows.push_back(shadow);
             }
@@ -260,6 +268,17 @@ inline auto InputManager::blockedByAndTrigger(InputMapping::Assign& hid) -> bool
     return false;
 }
 
+auto InputManager::updateAllMappingsInUse( bool emuOnly ) -> void {
+	
+	for (auto manager : inputManagers) {
+		
+		if (emuOnly && !manager->emulator)
+			continue;
+			
+		manager->updateMappingsInUse();		
+	}
+}
+
 auto InputManager::updateMappingsInUse() -> void {
     
     std::vector<Emulator::Interface::Device*> connectedDevices;
@@ -320,3 +339,4 @@ auto InputManager::alternateSort() -> void {
         }
     }
 }
+

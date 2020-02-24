@@ -58,18 +58,22 @@ auto InputMapping::init() -> void {
 	updateSetting();
 }
 
-auto InputMapping::applyMouseSense( int16_t value ) -> int16_t {
+auto InputMapping::applyMouseSensitivity( int16_t value ) -> int16_t {
 
-    static auto mouseSensePtr = settings->getOrInit<unsigned>("mousesense", 40u, {5u, 80u});
+    //static auto mouseSensePtr = settings->getOrInit<unsigned>("mousesense", 40u, {5u, 80u});
 
-    return value * (int16_t) (unsigned) (*mouseSensePtr) / 40;
+    //return value * (int16_t) (unsigned) (*mouseSensePtr) / 40;
+	
+	return value * analogSensitivity / 50;
 }
 
-auto InputMapping::applyAnalogSense( int16_t value ) -> int16_t {
+auto InputMapping::applyAxisSensitivity( int16_t value ) -> int16_t {
 
-    static auto analogSensePtr = settings->getOrInit<unsigned>("analogsense", 40u, {5u, 80u});
+    //static auto analogSensePtr = settings->getOrInit<unsigned>("analogsense", 40u, {5u, 80u});
 
-    value = (value * (int16_t) (unsigned) (*analogSensePtr) / 40) >> 10;
+    //value = (value * (int16_t) (unsigned) (*analogSensePtr) / 40) >> 10;
+	
+	value = (value * analogSensitivity / 50) >> 10;
     
     // some analog joypads show minimal movement in resting state.
     if ( value == 1 || value == -1 )
@@ -118,13 +122,13 @@ template<bool lightMode> auto InputMapping::adjustAnalogValue( Assign& hid ) -> 
             
         } else {
             
-            value = applyMouseSense( value );    
+            value = applyMouseSensitivity( value );    
         }
         
     } else if (device->isJoypad()) {        
         
         if (groupId == Hid::Joypad::GroupID::Axis)            
-            value = applyAnalogSense( value );        
+            value = applyAxisSensitivity( value );        
 
         // no, don't use hats for analog movement.
         // we simply add the smallest possible delta.
@@ -153,10 +157,10 @@ template<bool useOldValue> auto InputMapping::adjustDigitalValue( Assign& hid ) 
     
     // joypad hat, trigger or axis
     if (qualifier == Qualifier::Lo) 
-        return value < -analogTrigger;
+        return value < -analogSensitivity;
 
     else if (qualifier == Qualifier::Hi)
-        return value > analogTrigger;
+        return value > analogSensitivity;
     
     return value; // should not happen     
 }
@@ -235,6 +239,7 @@ auto InputMapping::generateAlternate() -> void {
     this->alternate->type = this->type;
     this->alternate->anded = this->anded;
     this->alternate->emuDevice = this->emuDevice;
+	this->alternate->hotkeyId = this->hotkeyId;
     this->alternate->alternate = nullptr;
     this->alternate->inputManager = this->inputManager;
     

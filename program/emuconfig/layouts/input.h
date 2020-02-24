@@ -1,6 +1,8 @@
 
 struct InputSelector : GUIKIT::HorizontalLayout {
     GUIKIT::ComboButton device;
+	GUIKIT::CheckButton hotkeys;
+	GUIKIT::Widget spacer;
     GUIKIT::Label plugin;
     
     struct AssignedConnector {
@@ -30,7 +32,7 @@ struct InputMapControl : GUIKIT::HorizontalLayout {
     GUIKIT::Label keyLayoutLabel;
     GUIKIT::ComboButton keyLayout;
     GUIKIT::Button automap;
-    SliderLayout analogTrigger;
+    SliderLayout analogSensitivity;
     GUIKIT::Button reset;
     
     InputMapControl();
@@ -52,6 +54,7 @@ struct InputLayout : GUIKIT::VerticalLayout {
 
     auto translate() -> void;
     auto loadDeviceList() -> void;
+	auto loadHotkeyList() -> void;
     auto loadInputList(unsigned deviceId) -> void;
     auto appendListEntry(std::string& name, InputMapping* mapping, GUIKIT::Image* image) -> void;
     auto updateListEntry(unsigned selection, InputMapping* mapping) -> void;
@@ -67,7 +70,8 @@ struct InputLayout : GUIKIT::VerticalLayout {
     auto eraseSelected( bool alternate = false ) -> void;
     auto linkSelected( bool alternate = false ) -> void;
     auto mapSelected( bool alternate = false ) -> void;
-    auto updateAnalogTrigger() -> void;
+    auto updateAnalogSensitivity() -> void;
+	auto hotkeyMode() -> bool;
     
     InputSelector selector;
     InputControl control;

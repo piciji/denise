@@ -1,40 +1,18 @@
 
 #include "manager.h"
 
-std::vector<Hotkey::Id> InputManager::hotkeyTriggers;
+std::vector<InputMapping*> InputManager::hotkeyTriggers;
 
 auto InputManager::setHotkeys() -> void {
     hotkeys.push_back( {Hotkey::Id::Pause, "Pause"} );
     hotkeys.push_back( {Hotkey::Id::Fullscreen, "Fullscreen"} );
     hotkeys.push_back( {Hotkey::Id::ToggleFastForward, "Toggle_fastforward"} );
     hotkeys.push_back( {Hotkey::Id::ToggleFastForwardAggressive, "Toggle_fastforward_aggressive"} );
-    hotkeys.push_back( {Hotkey::Id::CaptureMouse, "Capture_mouse"} );    
-	hotkeys.push_back( {Hotkey::Id::Drives, "Drives"} );	
-    hotkeys.push_back( {Hotkey::Id::System, "System"} );
-    hotkeys.push_back( {Hotkey::Id::Firmware, "Firmware"} );
-    hotkeys.push_back( {Hotkey::Id::DiskSwapper, "Disk_swapper"} );
-    hotkeys.push_back( {Hotkey::Id::States, "States"} );    
-    hotkeys.push_back( {Hotkey::Id::Video, "Video"} );
-    hotkeys.push_back( {Hotkey::Id::Palette, "Palette"} );
-    hotkeys.push_back( {Hotkey::Id::Border, "Border"} );
-    hotkeys.push_back( {Hotkey::Id::Input, "Input"} );
-    hotkeys.push_back( {Hotkey::Id::Savestate, "Savestate"} );
-    hotkeys.push_back( {Hotkey::Id::Loadstate, "Loadstate"} );
-    hotkeys.push_back( {Hotkey::Id::IncSlot, "Incslot"} );
-    hotkeys.push_back( {Hotkey::Id::DecSlot, "Decslot"} );
+    hotkeys.push_back( {Hotkey::Id::CaptureMouse, "Capture_mouse"} );        
+    
     hotkeys.push_back( {Hotkey::Id::ToggleMenu, "Toggle_menu"} );
     hotkeys.push_back( {Hotkey::Id::ToggleStatus, "Toggle_status"} );	
-	hotkeys.push_back( {Hotkey::Id::ActivateFilter, "Activate_filter"} );
-	hotkeys.push_back( {Hotkey::Id::SwapSid, "Swap_sid"} );
-	hotkeys.push_back( {Hotkey::Id::DigiBoost, "Digi_boost"} );	
-    hotkeys.push_back( {Hotkey::Id::AdjustBiasUp, "adjust_bias_up"} );	
-    hotkeys.push_back( {Hotkey::Id::AdjustBiasDown, "adjust_bias_down"} );	
-	hotkeys.push_back( {Hotkey::Id::PlayTape, "tape_play_key"} );
-	hotkeys.push_back( {Hotkey::Id::StopTape, "tape_stop_key"} );
-	hotkeys.push_back( {Hotkey::Id::RecordTape, "tape_record_key"} );
-    hotkeys.push_back( {Hotkey::Id::ForwardTape, "tape_forward_key"} );
-    hotkeys.push_back( {Hotkey::Id::RewindTape, "tape_rewind_key"} );
-	hotkeys.push_back( {Hotkey::Id::ResetTapeCounter, "tape_counter_reset_key"} );
+	
     hotkeys.push_back( {Hotkey::Id::FloppyAccess, "select_disk_drive"} );
     hotkeys.push_back( {Hotkey::Id::DiskSwap0, "Disk_swapper_call0"} );
     hotkeys.push_back( {Hotkey::Id::DiskSwap1, "Disk_swapper_call1"} );
@@ -53,12 +31,61 @@ auto InputManager::setHotkeys() -> void {
     hotkeys.push_back( {Hotkey::Id::DiskSwap14, "Disk_swapper_call14"} );
 }
 
-auto InputManager::fireHotkey(Hotkey::Id id) -> void {
+auto InputManager::setCustomHotkeys() -> void {
+	
+	customHotkeys.push_back( {Hotkey::Id::Loadstate, "Loadstate", true} );
+	customHotkeys.push_back( {Hotkey::Id::Savestate, "Savestate", true} );
+	customHotkeys.push_back( {Hotkey::Id::IncSlot, "Incslot", true} );
+    customHotkeys.push_back( {Hotkey::Id::DecSlot, "Decslot", true} );
+	customHotkeys.push_back( {Hotkey::Id::SwapInputDevices, "swap_input_devices", true} );
+
+	if (dynamic_cast<LIBC64::Interface*>(emulator) ) {
+		customHotkeys.push_back( {Hotkey::Id::ToggleSidFilter, "sid_filter_toggle", false} );
+		customHotkeys.push_back( {Hotkey::Id::SwapSid, "Swap_sid", false} );
+		customHotkeys.push_back( {Hotkey::Id::DigiBoost, "Digi_boost", false} );	
+		customHotkeys.push_back( {Hotkey::Id::AdjustBiasUp, "adjust_bias_up", false} );	
+		customHotkeys.push_back( {Hotkey::Id::AdjustBiasDown, "adjust_bias_down", false} );	
+		
+		customHotkeys.push_back( {Hotkey::Id::PlayTape, "tape_play_key", false} );
+		customHotkeys.push_back( {Hotkey::Id::StopTape, "tape_stop_key", false} );
+		customHotkeys.push_back( {Hotkey::Id::RecordTape, "tape_record_key", false} );
+		customHotkeys.push_back( {Hotkey::Id::ForwardTape, "tape_forward_key", false} );
+		customHotkeys.push_back( {Hotkey::Id::RewindTape, "tape_rewind_key", false} );
+		customHotkeys.push_back( {Hotkey::Id::ResetTapeCounter, "tape_counter_reset_key", false} );
+	}	
+
+	customHotkeys.push_back( {Hotkey::Id::Software, "Software", true} );	
+    customHotkeys.push_back( {Hotkey::Id::System, "System", true} );
+    customHotkeys.push_back( {Hotkey::Id::Firmware, "Firmware", true} );
+    customHotkeys.push_back( {Hotkey::Id::DiskSwapper, "Disk_swapper", true} );
+    customHotkeys.push_back( {Hotkey::Id::States, "States", true} );    
+    customHotkeys.push_back( {Hotkey::Id::Video, "Video", true} );
+    customHotkeys.push_back( {Hotkey::Id::Palette, "Palette", true} );
+    customHotkeys.push_back( {Hotkey::Id::Border, "Border", true} );
+    customHotkeys.push_back( {Hotkey::Id::Input, "Input", true} );
+}
+
+auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> void {
     
     typedef LIBC64::Interface C64Interface;
     typedef LIBAMI::Interface AmigaInterface;
     
     switch ( id ) {
+		case Hotkey::Id::SwapInputDevices: {
+			auto connector1 = emulator->getConnector( 0 );
+            auto connectedDevice1 = emulator->getConnectedDevice( connector1 );
+            
+            auto connector2 = emulator->getConnector( 1 );
+            auto connectedDevice2 = emulator->getConnectedDevice( connector2 );
+            
+            emulator->connect( connector1, connectedDevice2 );
+            emulator->connect( connector2, connectedDevice1 );
+			
+			view->checkInputDevice( emulator, connector1, connectedDevice2 );
+			view->checkInputDevice( emulator, connector2, connectedDevice1 );
+			
+			EmuConfigView::TabWindow::getView(emulator)->inputLayout->updateConnectorButtons();
+		} break;
         case Hotkey::Id::ToggleFastForward:
         case Hotkey::Id::ToggleFastForwardAggressive: {
             if (!activeEmulator)
@@ -124,18 +151,15 @@ auto InputManager::fireHotkey(Hotkey::Id id) -> void {
             break;
         }
         case Hotkey::Id::DiskSwapper:
-        case Hotkey::Id::Drives:
+        case Hotkey::Id::Software:
         case Hotkey::Id::Video:
         case Hotkey::Id::Palette:
         case Hotkey::Id::Border:
         case Hotkey::Id::Firmware:
         case Hotkey::Id::System:
         case Hotkey::Id::Input:
-            openMenu( id );
-            break;        
-        case Hotkey::Id::States:		            
-            EmuConfigView::TabWindow::getView( States::getInstanceAuto()->emulator )
-                ->showDelayed( EmuConfigView::TabWindow::Layout::States );
+		case Hotkey::Id::States:	
+            openMenu( emulator, id );
             break;
         case Hotkey::Id::Pause:
             program->isPause ^= 1;
@@ -143,13 +167,13 @@ auto InputManager::fireHotkey(Hotkey::Id id) -> void {
             break;
         case Hotkey::IncSlot:
         case Hotkey::DecSlot: 
-            States::getInstanceAuto( )->changeSlot( id == Hotkey::DecSlot );
+            States::getInstance( emulator )->changeSlot( id == Hotkey::DecSlot );
             break;
         case Hotkey::Loadstate:
-            States::getInstanceAuto( )->load();
+            States::getInstance( emulator )->load();
             break;
         case Hotkey::Savestate:
-            States::getInstanceAuto( )->save();
+            States::getInstance( emulator )->save();
             break;
         case Hotkey::ToggleMenu:
             if(!view->fullScreen()) view->updateMenuBar( true );
@@ -226,12 +250,12 @@ auto InputManager::fireHotkey(Hotkey::Id id) -> void {
             bool state = view->systemLayout->toggleFeature( C64Interface::FeatureIdSid );
             status->addMessage( trans->get( state ? "sid_6581_on" : "sid_8580_on" ) );
         } break;
-        case Hotkey::Id::ActivateFilter: {
+        case Hotkey::Id::ToggleSidFilter: {
             if (!activeEmulator || !dynamic_cast<LIBC64::Interface*>(activeEmulator))
                 break;
             auto view = EmuConfigView::TabWindow::getView( activeEmulator );
             bool state = view->systemLayout->toggleFeature( C64Interface::FeatureIdFilter );
-            status->addMessage( trans->get( state ? "audio_filter_on" : "audio_filter_off" ) );
+            status->addMessage( trans->get( state ? "sid_filter_on" : "sid_filter_off" ) );
         } break;
         case Hotkey::AdjustBiasUp:
         case Hotkey::AdjustBiasDown: {
@@ -284,33 +308,114 @@ auto InputManager::fireHotkey(Hotkey::Id id) -> void {
 }
 
 auto InputManager::pollHotkeys() -> void {
-    bool _ignoreSecond = false;
-    
-    for( auto& hotkey : hotkeys ) {
-        InputMapping* mapping = (InputMapping*)hotkey.guid;
-        
-        if ( mapping->state ) {
-            if (hotkey.id == Hotkey::Id::ToggleFastForward || hotkey.id == Hotkey::Id::ToggleFastForwardAggressive) {
-                if (_ignoreSecond)
-                    continue;
-            
-                _ignoreSecond = true;
-            }
-            fireHotkey( hotkey.id );        
-        }
-    }
-    
-    if (hotkeyTriggers.size() == 0)
-        return;
-    
-    for( auto& id : hotkeyTriggers )
-        fireHotkey( id );        
-    
-    hotkeyTriggers.clear();
+	
+	if (hotkeyTriggers.size() == 0)
+		return;
+	
+	std::vector<InputMapping*> useTrigger;
+	InputMapping* viewOpen = nullptr;
+	InputMapping* fastForward = nullptr;
+	InputMapping* stateHandler = nullptr;
+	InputMapping* deviceSwapper = nullptr;
+	
+	auto useEmu = activeEmulator;
+	
+	for( auto trigger : hotkeyTriggers ) {
+		
+		switch(trigger->hotkeyId) {
+			case Hotkey::Id::SwapInputDevices:
+				if (!useEmu) 
+					useEmu = program->getLastUsedEmu();	
+								
+				if (!deviceSwapper)
+					deviceSwapper = trigger;				
+				else if (useEmu == trigger->inputManager->emulator)
+					deviceSwapper = trigger;
+				
+				break;
+			
+			case Hotkey::Id::DiskSwapper:
+			case Hotkey::Id::Software:
+			case Hotkey::Id::Video:
+			case Hotkey::Id::Palette:
+			case Hotkey::Id::Border:
+			case Hotkey::Id::Firmware:
+			case Hotkey::Id::System:
+			case Hotkey::Id::Input:
+			case Hotkey::Id::States:
+				if (!useEmu) 
+					useEmu = program->getLastUsedEmu();				
+				
+				if (!viewOpen)
+					viewOpen = trigger;				
+				
+				else if (useEmu == trigger->inputManager->emulator)
+					viewOpen = trigger;
+				
+				break;
+				
+			case Hotkey::Id::ToggleFastForward:
+			case Hotkey::Id::ToggleFastForwardAggressive:
+				if(!fastForward)
+					fastForward = trigger;
+				break;
+				
+			case Hotkey::IncSlot:
+			case Hotkey::DecSlot: 
+			case Hotkey::Loadstate:
+			case Hotkey::Savestate:
+				if (!useEmu) 
+					useEmu = program->getLastUsedEmu();				
+
+				if (!stateHandler)
+					stateHandler = trigger;				
+				
+				else if (useEmu == trigger->inputManager->emulator)
+					stateHandler = trigger;
+				break;
+				
+			default:
+				if (!GUIKIT::Vector::find( useTrigger, trigger ))
+					useTrigger.push_back( trigger );
+				break;			
+		}		
+	}
+	
+	if (viewOpen)
+		useTrigger.push_back( viewOpen );
+
+	if(fastForward)
+		useTrigger.push_back( fastForward );
+	
+	if(stateHandler)
+		useTrigger.push_back( stateHandler );
+	
+	if(deviceSwapper)
+		useTrigger.push_back( deviceSwapper );
+	
+	for( auto trigger : useTrigger )			
+		fireHotkey( trigger->inputManager ? trigger->inputManager->emulator : nullptr, (Hotkey::Id)trigger->hotkeyId );   
+	
+	hotkeyTriggers.clear();		
 }
 
-auto InputManager::activateHotkey(Hotkey::Id id) -> void {
-    hotkeyTriggers.push_back( id );
+auto InputManager::activateHotkey(Hotkey::Id id, Emulator::Interface* emulator) -> void {
+	
+	for (auto manager : inputManagers) {
+		if (emulator && emulator != manager->emulator)
+			continue;
+		
+		for( auto mapping : manager->mappings ) {
+			
+			if (mapping->emuDevice)
+				continue;
+			
+			if (mapping->hotkeyId == id) {
+				hotkeyTriggers.push_back( mapping );
+				return;
+			}
+		}
+	}	
 }
 
 auto InputManager::unmapHotkeys() -> void {
@@ -323,29 +428,31 @@ auto InputManager::unmapHotkeys() -> void {
         if (mapping->alternate)
             mapping->alternate->init();
     }
-    for (auto manager : inputManagers)
-        manager->updateMappingsInUse();
+	
+	InputManager::updateAllMappingsInUse();
 }
 
-auto InputManager::openMenu( Hotkey::Id id ) -> void {
-    Emulator::Interface* emu = activeEmulator;
-    
-    if (!emu) {
-        auto ident = settings->get<std::string>("last_used_emu", "C64");
+auto InputManager::unmapCustomHotkeys() -> void {
+	
+	for(auto& hotkey : customHotkeys) {
+		
+		auto mapping = (InputMapping*)hotkey.guid;
         
-        for(auto emulator : emulators) {
-            
-            if (emulator->ident == ident) {
-                emu = emulator;
-                break;
-            }
-        }
-    }
+        mapping->init();
+
+        if (mapping->alternate)
+            mapping->alternate->init();
+	}
+	// there are emulator specific hotkeys which are active for another emulator cores, like 'load state'
+	InputManager::updateAllMappingsInUse(true);
+}
+
+auto InputManager::openMenu( Emulator::Interface* emulator, Hotkey::Id id ) -> void {	
     
-    if (!emu)
+    if (!emulator)
         return;
     
-    auto configView = EmuConfigView::TabWindow::getView( emu );
+    auto configView = EmuConfigView::TabWindow::getView( emulator );
     
     switch(id) {
         case Hotkey::Id::Video:
@@ -356,7 +463,7 @@ auto InputManager::openMenu( Hotkey::Id id ) -> void {
             configView->showDelayed( EmuConfigView::TabWindow::Layout::Palette ); break;
         case Hotkey::Id::DiskSwapper:
             configView->showDelayed( EmuConfigView::TabWindow::Layout::Swapper ); break;
-        case Hotkey::Id::Drives:
+        case Hotkey::Id::Software:
             configView->showDelayed( EmuConfigView::TabWindow::Layout::Media ); break;
         case Hotkey::Id::System:
             configView->showDelayed(EmuConfigView::TabWindow::Layout::System); break;
@@ -364,5 +471,7 @@ auto InputManager::openMenu( Hotkey::Id id ) -> void {
             configView->showDelayed( EmuConfigView::TabWindow::Layout::Firmware ); break;
         case Hotkey::Id::Input:
             configView->showDelayed( EmuConfigView::TabWindow::Layout::Input ); break;
+		case Hotkey::Id::States:
+            configView->showDelayed( EmuConfigView::TabWindow::Layout::States ); break;
     }
 }

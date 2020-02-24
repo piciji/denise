@@ -24,7 +24,7 @@ auto InputManager::init() -> void {
         if (!manager->emulator)
             continue;
         
-        manager->updateAnalogTrigger();
+        manager->updateAnalogSensitivity();
         
         std::string ident = manager->emulator->ident;
         
@@ -91,16 +91,41 @@ auto InputManager::setMappings() -> void {
                         mapper->generateAlternate();
                 }
             }
+			
+			manager->setCustomHotkeys();
+			
+			for(auto& item : manager->customHotkeys) {
+				InputMapping* mapper = new InputMapping;
+				mapper->setting = settings->add( manager->emulator->ident + "_hotkey_" + std::to_string(item.id) );
+				mapper->state = 0;
+				mapper->type = InputMapping::Type::Switch;
+				mapper->anded = 1;
+				mapper->emuDevice = nullptr;
+				mapper->hotkeyId = item.id;
+				mapper->parent = nullptr;
+				mapper->inputManager = manager;
+				item.guid = (uintptr_t) mapper;
+
+				if (item.share) {
+					for (auto _manager : inputManagers)
+						_manager->addMapping( mapper ); //hotkeys are shared between all manager instances
+				} else
+					manager->addMapping( mapper );
+
+				mapper->generateAlternate();
+			}
 		}
 	}
 	
 	for(auto& item : hotkeys) {
+		item.share = true; // always share global hotkeys
         InputMapping* mapper = new InputMapping;
 		mapper->setting = settings->add( "hotkey_" + std::to_string(item.id) );
         mapper->state = 0;
         mapper->type = InputMapping::Type::Switch;
 		mapper->anded = 1;
         mapper->emuDevice = nullptr;
+		mapper->hotkeyId = item.id;
         mapper->parent = nullptr;
         mapper->inputManager = nullptr; // shared mapper don't belong to a specific manager
         item.guid = (uintptr_t) mapper;
@@ -492,27 +517,35 @@ auto InputManager::getDeviceFromIdent( unsigned id ) -> Hid::Device* {
     return nullptr;
 }
 
-auto InputManager::updateAnalogTrigger() -> void {
+auto InputManager::updateAnalogSensitivity(Emulator::Interface::Device* updateDevice) -> void {
     
     int tresholdLo = 200;
     int tresholdHi = 100;
     
     for (auto& device : emulator->devices) {
-        if (!device.isJoypad())
-            continue;        
         
-        auto triggerPercent = settings->get<unsigned>(program->ident(emulator, "analogtrigger_" + device.name), 50u, { 0u, 100u});  
+		if (updateDevice && updateDevice != &device)
+			continue;
+		
+        auto sensePercent = settings->get<unsigned>(program->ident(emulator, "analog_sensitivity_" + device.name), 50u, { 0u, 100u});
+
+		int sense = sensePercent;
+				
+		if (device.isJoypad()) {
+			sense = (sensePercent * 32768) / 100;
+
+			sense = std::min(std::max(sense, tresholdLo), 32768 - tresholdHi);		
+		} else
+			sense = std::max( 5, sense );
         
         for (auto& input : device.inputs) {
             
             auto mapper = (InputMapping*)input.guid;                        
             
-            mapper->analogTrigger = (triggerPercent * 32768) / 100;
-            
-            mapper->analogTrigger = std::min( std::max(mapper->analogTrigger, tresholdLo), 32768 - tresholdHi);
-            
+			mapper->analogSensitivity = sense;			
+			
             if (mapper->alternate)
-                mapper->alternate->analogTrigger = mapper->analogTrigger;
+                mapper->alternate->analogSensitivity = mapper->analogSensitivity;
         }        
         
     }

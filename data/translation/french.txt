@@ -242,12 +242,9 @@ custom_ic_glue_logic_info = si activél'ic glue logic personnalié est actif, si
 low_pass_filter_info = si activé, le logiciel décide du filtre passe-bas
 digiboost_on = 8580 digi boost est actif
 digiboost_off = 8580 digi boost est inactif
-audio_filter_on = le filtre audio est émulé
-audio_filter_off = le filtre audio est désactivé
 sid_6581_on = Sid 6581 est émulé
 sid_8580_on = Sid 8580 est émulé
 sid_bias_change = Valeur Bias du Sid : %state%
-Activate_filter = Activer le filtre audio
 Swap_sid = Echange des modèles de Sid
 Digi_boost = Sid 8580 digi boost
 adjust_bias_up = augmenter le Bias du Sid 
@@ -441,6 +438,9 @@ retroreplay_image =
 select_retroreplay_image = 
 blank_retroreplay_image = 
 auto_save_identifier = 
-analog_trigger = 
 screen_status = state_text = Texte d'état
 geometry = 
+sid_filter_toggle = Activate_filter = Activer le filtre audio
+sid_filter_on = audio_filter_on = le filtre audio est émulé
+sid_filter_off = audio_filter_off = le filtre audio est désactivé
+swap_input_devices = 

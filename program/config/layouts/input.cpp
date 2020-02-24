@@ -238,8 +238,7 @@ auto InputLayout::eraseSelected( bool alternate ) -> void {
 
     mapping->init();
 
-    for (auto manager : inputManagers)
-        manager->updateMappingsInUse();
+	InputManager::updateAllMappingsInUse();
         
     updateListEntry(inputId(), mapping);
 }

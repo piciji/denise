@@ -97,9 +97,7 @@ auto InputManager::capture( bool overwriteExisting ) -> bool {
 		captureObject->updateSetting();
 		captureObject = nullptr;
         retry = 0;
-		for (auto manager : inputManagers)
-            manager->updateMappingsInUse();         
-        
+		updateAllMappingsInUse();        
 		return true;
 	}
     
