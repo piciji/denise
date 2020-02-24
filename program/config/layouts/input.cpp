@@ -19,16 +19,6 @@ InputControl::InputControl() {
     setAlignment( 0.5 );
 }
 
-Sensitivity::Sensitivity() {
-    append(senseLabel, {0u, 0u}, 10);
-    append(senseValue, {0u, 0u}, 10);
-    append(senseSlider, {~0u, 0u});    
-    
-    senseSlider.setLength(16);
-    
-    setAlignment( 0.5 );
-}
-
 InputAssign::InputAssign() {    
     append(infoLabel, {~0u, 0u}, 10);
     append(assignLabel, {0u, 0u}, 10);
@@ -62,12 +52,6 @@ InputLayout::InputLayout() {
 	}
     if (driverLayout.combo.rows() > 0) driverWrapper.append(driverLayout, {~0u, 0u});
     if (driverLayout.combo.rows() == 1) driverLayout.setEnabled(false);
-    
-    sensitivityLayout.append( mouseSensitivity, {~0u, 0u}, 30 );
-    sensitivityLayout.append( analogSensitivity, {~0u, 0u} );
-    
-    sensitivityLayout.setPadding(5);
-    append(sensitivityLayout, {~0u, 0u});
 
     captureTimer.setInterval(3500);
     pollTimer.setInterval(50);
@@ -124,35 +108,7 @@ InputLayout::InputLayout() {
 		settings->set<std::string>("input_driver", driverLayout.combo.text());
         InputManager::rememberLastDeviceState();
 		program->initInput();
-	};
-    
-    mouseSensitivity.senseSlider.onChange = [this]() {
-        
-        unsigned pos = mouseSensitivity.senseSlider.position();
-        pos = (pos + 1) * 5;
-        
-        settings->set<unsigned>( "mousesense", pos );
-		mouseSensitivity.senseValue.setText( std::to_string( pos ) );
-    };
-    
-    unsigned ms = settings->get<unsigned>( "mousesense", 40, {5, 80});
-    
-    mouseSensitivity.senseValue.setText( std::to_string( ms ) );
-	mouseSensitivity.senseSlider.setPosition( (ms / 5) - 1 );
-    
-    analogSensitivity.senseSlider.onChange = [this]() {
-        
-        unsigned pos = analogSensitivity.senseSlider.position();
-        pos = (pos + 1) * 5;
-        
-        settings->set<unsigned>( "analogsense", pos );
-		analogSensitivity.senseValue.setText( std::to_string( pos ) );
-    };
-    
-    ms = settings->get<unsigned>( "analogsense", 40, {5, 80});
-    
-    analogSensitivity.senseValue.setText( std::to_string( ms ) );
-	analogSensitivity.senseSlider.setPosition( (ms / 5) - 1 );
+	};    
     
     stopCapture();
 }
@@ -202,9 +158,6 @@ auto InputLayout::translate() -> void {
     assigner.assignLabel.setText( trans->get("assignment", {}, true) );
 
 	driverLayout.name.setText( trans->get("driver", {}, true) );
-    
-    mouseSensitivity.senseLabel.setText( trans->get("mouse_sensitivity", {}, true) );
-    analogSensitivity.senseLabel.setText( trans->get("analog_sensitivity", {}, true) );
 }
 
 auto InputLayout::displayInputCall() -> void {

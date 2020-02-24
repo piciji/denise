@@ -58,20 +58,12 @@ auto InputMapping::init() -> void {
 	updateSetting();
 }
 
-auto InputMapping::applyMouseSensitivity( int16_t value ) -> int16_t {
-
-    //static auto mouseSensePtr = settings->getOrInit<unsigned>("mousesense", 40u, {5u, 80u});
-
-    //return value * (int16_t) (unsigned) (*mouseSensePtr) / 40;
+inline auto InputMapping::applyMouseSensitivity( int16_t value ) -> int16_t {
 	
 	return value * analogSensitivity / 50;
 }
 
-auto InputMapping::applyAxisSensitivity( int16_t value ) -> int16_t {
-
-    //static auto analogSensePtr = settings->getOrInit<unsigned>("analogsense", 40u, {5u, 80u});
-
-    //value = (value * (int16_t) (unsigned) (*analogSensePtr) / 40) >> 10;
+inline auto InputMapping::applyAxisSensitivity( int16_t value ) -> int16_t {
 	
 	value = (value * analogSensitivity / 50) >> 10;
     

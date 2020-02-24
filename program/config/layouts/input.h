@@ -12,14 +12,6 @@ struct InputControl : GUIKIT::HorizontalLayout {
     InputControl();
 };
 
-struct Sensitivity : GUIKIT::HorizontalLayout {
-    GUIKIT::Label senseLabel;
-    GUIKIT::Label senseValue;
-    GUIKIT::HorizontalSlider senseSlider;    
-    
-    Sensitivity();
-};
-
 struct InputAssign : GUIKIT::HorizontalLayout {
     GUIKIT::Label infoLabel;
     GUIKIT::Label assignLabel;
@@ -49,12 +41,9 @@ struct InputLayout : GUIKIT::VerticalLayout {
 	DriverLayout driverLayout;
 
     InputControl control;
-    Sensitivity mouseSensitivity;
-    Sensitivity analogSensitivity;
 
     InputAssign assigner;
     GUIKIT::ListView inputList;
-    GUIKIT::FramedHorizontalLayout sensitivityLayout;
 
     GUIKIT::Timer pollTimer;
     GUIKIT::Timer captureTimer;
