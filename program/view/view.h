@@ -79,10 +79,7 @@ struct View : public GUIKIT::Window {
 
     std::vector<InputMenu> inputMenus;
 
-    GUIKIT::Menu settingsMenu;
-        GUIKIT::Menu filterMenu;
-            GUIKIT::MenuRadioItem videoNearestItem;
-            GUIKIT::MenuRadioItem videoLinearItem;
+    GUIKIT::Menu optionsMenu;
 			
 		GUIKIT::MenuItem audioItem;			
         GUIKIT::MenuItem videoItem;
@@ -96,7 +93,7 @@ struct View : public GUIKIT::Window {
         GUIKIT::MenuCheckItem fpsItem;
         GUIKIT::MenuCheckItem audioBufferItem;
 
-        GUIKIT::MenuItem configItem;		
+        GUIKIT::MenuItem settingsItem;		
         GUIKIT::MenuItem saveItem;	
 
 	GUIKIT::Menu tapeControlMenu;
@@ -108,7 +105,6 @@ struct View : public GUIKIT::Window {
 		GUIKIT::MenuItem tapeResetCounterItem;
 		
     GUIKIT::Image regionImage;
-    GUIKIT::Image filterImage;
     GUIKIT::Image powerImage;
     GUIKIT::Image poweroffImage;
     GUIKIT::Image freezeImage;

@@ -4,9 +4,7 @@ struct VideoModeLayout : GUIKIT::HorizontalLayout {
     GUIKIT::RadioBox spectrum; 
     GUIKIT::RadioBox crtNone;
     GUIKIT::RadioBox crtCpu;
-    GUIKIT::RadioBox crtGpu;    
-    GUIKIT::RadioBox pal;
-    GUIKIT::RadioBox ntsc;
+    GUIKIT::RadioBox crtGpu;    	
 
     GUIKIT::Widget spacer;
     GUIKIT::Button reset;
@@ -17,6 +15,7 @@ struct VideoModeLayout : GUIKIT::HorizontalLayout {
 struct VideoOptionLayout : GUIKIT::HorizontalLayout {
     GUIKIT::CheckBox newLuma;     
     GUIKIT::CheckBox crtRealGamma;
+	GUIKIT::CheckBox linearInterpolation;
     
     VideoOptionLayout(bool withSpectrum);
 };
@@ -39,10 +38,15 @@ struct VideoCrtLayout : GUIKIT::FramedVerticalLayout {
     SliderLayout hanoverBars;
     SliderLayout scanlines;
     SliderLayout blur;   
-    SliderLayout lumaRise;
-    SliderLayout lumaFall;
     
     VideoCrtLayout();
+};
+
+struct VideoHFLayout : GUIKIT::FramedVerticalLayout {
+    SliderLayout lumaRise;
+    SliderLayout lumaFall;
+	
+	VideoHFLayout();
 };
 
 struct VideoFirSharpLayout : GUIKIT::HorizontalLayout {   
@@ -128,6 +132,7 @@ struct VideoLayout : GUIKIT::TabFrameLayout {
     GUIKIT::VerticalLayout tab1;
         VideoBaseLayout base;
         VideoCrtLayout crt;
+		VideoHFLayout hf;
 
     GUIKIT::VerticalLayout tab2;
         VideoGpuBaseLayout gpuBase;

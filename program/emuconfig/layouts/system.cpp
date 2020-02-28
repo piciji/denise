@@ -182,6 +182,15 @@ ChipsetLayout::ChipsetLayout() {
     append(selector, {~0u, 0u}, 5u);
 }
 
+RegionLayout::RegionLayout() {
+	setPadding(10);
+    setFont(GUIKIT::Font::system("bold"));
+    append(pal, {0u, 0u}, 10u);
+	append(ntsc, {0u, 0u});
+	
+	GUIKIT::RadioBox::setGroup(pal, ntsc);
+}
+
 auto ChipsetLayout::build( Emulator::Interface* emulator ) -> void {
 	
 	auto& chipsets = emulator->chipsets;
@@ -216,7 +225,9 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
 	
     if (emulator->cpus.size())
         bottomLayout.append(cpuLayout, {0u, 0u}, 10);
-	bottomLayout.append(chipsetLayout, {0u, 0u});
+		
+	bottomLayout.append(regionLayout, {0u, 0u}, 10);
+	bottomLayout.append(chipsetLayout, {0u, 0u});	
 	
     rightLayout.append(bottomLayout, {~0u, 0u});
 
@@ -388,6 +399,45 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
 			settings->set( this->tabWindow->ident( "chipset" ), id );
 		};
 	}
+	
+	regionLayout.pal.onActivate = [this]() {
+        if (this->emulator == activeEmulator) {
+            if (!mes->question( trans->get("region_change") )) {
+                regionLayout.ntsc.setChecked();
+                return;
+            }
+        }
+        
+        settings->set<unsigned>(this->tabWindow->ident("video_region"), 0);
+		this->tabWindow->videoLayout->updatePresets();
+
+        view->getSysMenu( this->emulator )->pal->setChecked();
+        
+        if (activeEmulator)
+            program->power(activeEmulator);
+    };
+    
+    regionLayout.ntsc.onActivate = [this]() {
+        if (this->emulator == activeEmulator) {
+            if (!mes->question( trans->get("region_change") )) {
+                regionLayout.pal.setChecked();
+                return;
+            }
+        }
+        
+        settings->set<unsigned>(this->tabWindow->ident("video_region"), 1);
+		this->tabWindow->videoLayout->updatePresets();
+
+        view->getSysMenu( this->emulator )->ntsc->setChecked();
+        
+        if (activeEmulator)
+            program->power(activeEmulator);
+    };
+	
+	if (settings->get<unsigned>( tabWindow->ident("video_region"), 0, {0u, 1u}) == 0 )
+        regionLayout.pal.setChecked();
+    else
+        regionLayout.ntsc.setChecked();
     
     updateExpansionMemory();
 }
@@ -480,10 +530,14 @@ auto SystemLayout::translate() -> void {
     memoryLayout.setText( trans->get("memory") );
     driveLayout.setText( trans->get("drives") );
     cpuLayout.setText("Cpu");
+	regionLayout.setText( trans->get("region") );
     
 	chipsetLayout.setText("Chipset");
     featureLayout.setText( trans->get("feature") );
     expansionLayout.setText( trans->get("expansion_port") );
+	
+	regionLayout.pal.setText( trans->get("PAL") );
+    regionLayout.ntsc.setText( trans->get("NTSC") );      
 
     for(auto block : driveLayout.driveCountFrame.driveCounter) {
 
@@ -541,6 +595,7 @@ auto SystemLayout::featureIdent( std::string ident ) -> std::string {
 
 auto SystemLayout::setEnabled(bool state) -> void {
     upperLayout.setEnabled( state );
+	regionLayout.setEnabled( true );
         
 	// some features are changeable during emulation        
     for( auto line : featureLayout.lines ) {

@@ -101,6 +101,13 @@ struct ChipsetLayout : GUIKIT::FramedHorizontalLayout {
     ChipsetLayout();
 };
 
+struct RegionLayout : GUIKIT::FramedHorizontalLayout {
+	GUIKIT::RadioBox pal;
+    GUIKIT::RadioBox ntsc;
+	
+    RegionLayout();
+};
+
 struct SystemLayout : GUIKIT::VerticalLayout {
     
     TabWindow* tabWindow;
@@ -115,6 +122,7 @@ struct SystemLayout : GUIKIT::VerticalLayout {
     DriveLayout driveLayout;
     CpuLayout cpuLayout;
 	ChipsetLayout chipsetLayout;
+	RegionLayout regionLayout;
     FeatureLayout featureLayout;
     ExpansionLayout expansionLayout;
 

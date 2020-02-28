@@ -246,7 +246,8 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
     audioManager->power();
     
     if (emuSwap)
-        activeVideoManager->shader.recreate = true;
+		setVideoFilter();	
+	
     activeEmulator->power();
     isRunning = true;
 	isPause = false;

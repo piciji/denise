@@ -129,7 +129,11 @@ auto View::build() -> void {
     GUIKIT::Application::Cocoa::onPreferences = [this] {
         configView->show(ConfigView::TabWindow::Layout::Settings);
     };
-    
+    	
+	GUIKIT::Application::Cocoa::onSavePreferences = [this]() {
+		program->saveSettings();
+	};
+	
     GUIKIT::Application::Cocoa::onDock = [this] {
         view->setFocused();
     };
@@ -479,8 +483,6 @@ auto View::buildMenu() -> void {
     #include "../../data/resource.h" // for win xp only 
     regionImage.loadPng((uint8_t*)globe, sizeof(globe));
     regionImage.setResourceId( ID_GLOBE );
-    filterImage.loadPng((uint8_t*)filter, sizeof(filter));
-    filterImage.setResourceId( ID_FILTER );
     powerImage.loadPng((uint8_t*)power, sizeof(power)); 
     powerImage.setResourceId( ID_POWER );
     freezeImage.loadPng((uint8_t*)freeze, sizeof(freeze)); 
@@ -543,8 +545,6 @@ auto View::buildMenu() -> void {
     counterImage.setResourceId( ID_COUNTER );
     diskImage.loadPng((uint8_t*) disk, sizeof (disk));
     diskImage.setResourceId( ID_DISK );
-	
-    GUIKIT::MenuRadioItem::setGroup(videoNearestItem, videoLinearItem);
 		
     for(auto emulator : emulators) {
         auto emuConfigView = EmuConfigView::TabWindow::getView( emulator );        
@@ -640,7 +640,7 @@ auto View::buildMenu() -> void {
             
             settings->set<unsigned>(program->ident(emulator, "video_region"), 0u);
             VideoManager::getInstance( emulator )->reloadSettings();
-            emuConfigView->videoLayout->base.mode.pal.setChecked();
+            emuConfigView->systemLayout->regionLayout.pal.setChecked();
             emuConfigView->videoLayout->updatePresets();
 
             if (activeEmulator)
@@ -657,7 +657,7 @@ auto View::buildMenu() -> void {
 
             settings->set<unsigned>(program->ident(emulator, "video_region"), 1u);
             VideoManager::getInstance( emulator )->reloadSettings();
-            emuConfigView->videoLayout->base.mode.ntsc.setChecked();
+            emuConfigView->systemLayout->regionLayout.ntsc.setChecked();
             emuConfigView->videoLayout->updatePresets();
 
             if (activeEmulator)
@@ -728,104 +728,90 @@ auto View::buildMenu() -> void {
         append(*iM.input);
     }
     
-    settingsMenu.setIcon(toolsImage);
-    append(settingsMenu);
-    	
-    filterMenu.setIcon(filterImage);
-    settingsMenu.append(filterMenu);
-    videoNearestItem.onActivate = [&]() {
-        settings->set<unsigned>("video_filter", 0);
-        program->setVideoFilter();		
-    };
-    videoLinearItem.onActivate = [&]() {
-        settings->set<unsigned>("video_filter", 1);
-        program->setVideoFilter();
-    };
-    switch( settings->get<unsigned>("video_filter", 1u, {0u, 1u}) ) {
-        case 0: videoNearestItem.setChecked(); break;
-        case 1: videoLinearItem.setChecked(); break;
-    }
-    filterMenu.append(videoNearestItem);
-    filterMenu.append(videoLinearItem);	
+    optionsMenu.setIcon(toolsImage);
+    append(optionsMenu);
 
-	videoItem.setIcon( displayImage );
-    videoItem.onActivate = []() {
-        configView->show(ConfigView::TabWindow::Layout::Video);
-    };
+	if(!GUIKIT::Application::isCocoa()) {
+		videoItem.setIcon( displayImage );
+		videoItem.onActivate = []() {
+			configView->show(ConfigView::TabWindow::Layout::Video);
+		};
 
-	settingsMenu.append(videoItem);		    
-	
-	audioItem.onActivate = []() {
-        configView->show(ConfigView::TabWindow::Layout::Audio);
-    };	
-	audioItem.setIcon( volumeImage );
-	settingsMenu.append(audioItem);
+		optionsMenu.append(videoItem);		    
+
+		audioItem.onActivate = []() {
+			configView->show(ConfigView::TabWindow::Layout::Audio);
+		};	
+		audioItem.setIcon( volumeImage );
+		optionsMenu.append(audioItem);
+
+		inputItem.onActivate = []() {
+			configView->show(ConfigView::TabWindow::Layout::Input);
+		};	
+		inputItem.setIcon( keyboardImage );
+		optionsMenu.append(inputItem);
+		
+		settingsItem.onActivate = []() {
+			configView->show(ConfigView::TabWindow::Layout::Settings);
+		};
+		settingsItem.setIcon(toolsImage);
+		optionsMenu.append(settingsItem);
+		
+		optionsMenu.append(*GUIKIT::MenuSeparator::getInstance());
+	}
     
-    inputItem.onActivate = []() {
-        configView->show(ConfigView::TabWindow::Layout::Input);
-    };	
-	inputItem.setIcon( keyboardImage );
-	settingsMenu.append(inputItem);
-	
-    settingsMenu.append(*GUIKIT::MenuSeparator::getInstance());
     audioSyncItem.onToggle = [&]() {
         settings->set<bool>("audio_sync", audioSyncItem.checked() );
         audioManager->setSynchronize();
     };
     if ( settings->get<bool>("audio_sync", true) ) audioSyncItem.setChecked();
-    settingsMenu.append(audioSyncItem);
+    optionsMenu.append(audioSyncItem);
     videoSyncItem.onToggle = [&]() {
         settings->set<bool>("video_sync", videoSyncItem.checked() );
         program->fastForward( false );
         program->setVideoSynchronize();
     };
     if ( settings->get<bool>("video_sync", false) ) videoSyncItem.setChecked();
-    settingsMenu.append(videoSyncItem);
+    optionsMenu.append(videoSyncItem);
 
     dynamicRateControl.onToggle = [&]() {
         settings->set<bool>("dynamic_rate_control", dynamicRateControl.checked() );
         audioManager->setRateControl();
     };
     if ( settings->get<bool>("dynamic_rate_control", false) ) dynamicRateControl.setChecked();
-    settingsMenu.append(dynamicRateControl);
+    optionsMenu.append(dynamicRateControl);
 
-    
-    
-    settingsMenu.append(*GUIKIT::MenuSeparator::getInstance());
+        
+    optionsMenu.append(*GUIKIT::MenuSeparator::getInstance());
     muteItem.onToggle = [&]() {
         settings->set<bool>("audio_mute", muteItem.checked() );
         audioManager->setVolume();
     };
     if ( settings->get<bool>("audio_mute", false) ) muteItem.setChecked();
-    settingsMenu.append(muteItem);
+    optionsMenu.append(muteItem);
     fpsItem.onToggle = [&]() {
         settings->set<bool>("fps", fpsItem.checked() );
 		status->showFps = fpsItem.checked();
     };
     if ( settings->get<bool>("fps", false) ) fpsItem.setChecked();
-    settingsMenu.append(fpsItem);
+    optionsMenu.append(fpsItem);
     
     audioBufferItem.onToggle = [&]() {
         settings->set<bool>("show_audio_buffer", audioBufferItem.checked() );
 		audioManager->setStatistics();
     };
     if ( settings->get<bool>("show_audio_buffer", false) ) audioBufferItem.setChecked();
-    settingsMenu.append(audioBufferItem);
+    optionsMenu.append(audioBufferItem);
 
-    settingsMenu.append(*GUIKIT::MenuSeparator::getInstance());
-   
-    configItem.onActivate = []() {
-        configView->show(ConfigView::TabWindow::Layout::Settings);
-    };
-    configItem.setIcon(toolsImage);
-    settingsMenu.append(configItem);
-    
-    saveItem.onActivate = [this]() {
-		program->saveSettings();
-    };
-    saveItem.setIcon(diskImage);
-    settingsMenu.append(saveItem);
-	
+	if(!GUIKIT::Application::isCocoa()) {
+		optionsMenu.append(*GUIKIT::MenuSeparator::getInstance());
+
+		saveItem.onActivate = [this]() {
+			program->saveSettings();
+		};
+		saveItem.setIcon(diskImage);
+		optionsMenu.append(saveItem);
+	}
 	// prepare Tape Control	
 	tapeControlMenu.setIcon( tapeImage );
 	
@@ -912,14 +898,18 @@ auto View::translate() -> void {
         iM.input->setText( trans->get("input") );
     }
     
-    settingsMenu.setText( trans->get("settings"));
-    filterMenu.setText( trans->get("filter"));
-    videoNearestItem.setText( trans->get("Video Nearest") );
-    videoLinearItem.setText( trans->get("Video Linear") );
+    optionsMenu.setText( trans->get("options"));
+//    filterMenu.setText( trans->get("filter"));
+  //  videoNearestItem.setText( trans->get("Video Nearest") );
+    //videoLinearItem.setText( trans->get("Video Linear") );
 
-	videoItem.setText( trans->get("video") );
-	audioItem.setText( trans->get("audio") );
-    inputItem.setText( trans->get("input") );
+	if(!GUIKIT::Application::isCocoa()) {
+		videoItem.setText( trans->get("video") );
+		audioItem.setText( trans->get("audio") );
+		inputItem.setText( trans->get("input") );
+		settingsItem.setText( trans->get("settings"));
+	}
+	
     audioSyncItem.setText( trans->get("sync_audio"));
     videoSyncItem.setText( trans->get("sync_video"));
     dynamicRateControl.setText( trans->get("dynamic_rate_control"));
@@ -927,9 +917,8 @@ auto View::translate() -> void {
     muteItem.setText( trans->get("mute_audio"));
     fpsItem.setText( trans->get("show_fps"));
     audioBufferItem.setText( trans->get("show_audio_buffer"));
-
-    configItem.setText( trans->get("settings"));	
-    saveItem.setText( trans->get("save_changes"));
+    	
+    saveItem.setText( trans->get("save_preferences"));
 	
 	tapeControlMenu.setText( trans->get("Datasette") );
 	tapePlayItem.setText( trans->get("tape_play_key") );
@@ -944,6 +933,7 @@ auto View::translate() -> void {
     //osx extra menu
     cocoa.setTitleForAppMenuItem(GUIKIT::Window::Cocoa::AppMenuItem::About, trans->get("about", {{"%app%", APP_NAME}}));
     cocoa.setTitleForAppMenuItem(GUIKIT::Window::Cocoa::AppMenuItem::Preferences, trans->get("preferences"));
+	cocoa.setTitleForAppMenuItem(GUIKIT::Window::Cocoa::AppMenuItem::SavePreferences, trans->get("save_preferences"));		
     cocoa.setTitleForAppMenuItem(GUIKIT::Window::Cocoa::AppMenuItem::Hide, trans->get("hide_app", {{"%app%", APP_NAME}}));
     cocoa.setTitleForAppMenuItem(GUIKIT::Window::Cocoa::AppMenuItem::HideOthers, trans->get("hide_others"));
     cocoa.setTitleForAppMenuItem(GUIKIT::Window::Cocoa::AppMenuItem::ShowAll, trans->get("show_all"));

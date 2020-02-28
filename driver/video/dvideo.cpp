@@ -26,7 +26,7 @@ struct DVideo : Video {
 
     struct {
         bool synchronize;
-        Filter filter;
+        Filter filter = Video::Filter::Nearest;
 		std::vector<ShaderPass*> passes = {};
         HWND handle;
         HWND parent;
@@ -433,6 +433,9 @@ struct DVideo : Video {
     }
 
     auto setFilter(Filter filter) -> void {
+		if (filter == settings.filter)
+			return;
+		
         settings.filter = filter;
         updateFilter();
     }

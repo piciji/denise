@@ -1,23 +1,22 @@
 
+#define regionLayout tabWindow->systemLayout->regionLayout
+
 VideoModeLayout::VideoModeLayout(bool withSpectrum) {
     
     if (withSpectrum) {
-        append(palette,{0u, 0u}, 5);
+        append(palette,{0u, 0u}, 10);
         append(spectrum,{0u, 0u}, 20);
     }
     
-    append(crtNone,{0u, 0u}, 5);
-    append(crtCpu,{0u, 0u}, 5);
-    append(crtGpu,{0u, 0u}, 20);    
-    
-    append(pal,{0u, 0u}, 5);
-    append(ntsc,{0u, 0u});
+    append(crtNone,{0u, 0u}, 10);
+    append(crtCpu,{0u, 0u}, 10);
+    append(crtGpu,{0u, 0u});    
+    	
     append(spacer,{~0u, 0u});
     append(reset,{0u, 0u});
 
     GUIKIT::RadioBox::setGroup(palette, spectrum);
-    GUIKIT::RadioBox::setGroup(crtNone, crtCpu, crtGpu);
-    GUIKIT::RadioBox::setGroup(pal, ntsc);
+    GUIKIT::RadioBox::setGroup(crtNone, crtCpu, crtGpu);    
 
     setAlignment(0.5);
 }
@@ -26,8 +25,10 @@ VideoOptionLayout::VideoOptionLayout(bool withSpectrum) {
     
     if (withSpectrum) {
         append(newLuma, {0u, 0u}, 10);    	    
-        append(crtRealGamma, {0u, 0u});    
+        append(crtRealGamma, {0u, 0u}, 10);    
     }
+	
+	append(linearInterpolation, {0u, 0u});
     
     setAlignment(0.5);
 }
@@ -46,7 +47,7 @@ phase("°", false)
     append(saturation, {~0u, 0u}, 2);        
     append(contrast, {~0u, 0u}, 2);     
     append(brightness, {~0u, 0u}, 2);
-    append(gamma, {~0u, 0u}, 2);    
+    append(gamma, {~0u, 0u});    
 
     saturation.slider.setLength(201);
     gamma.slider.setLength(251);
@@ -62,22 +63,30 @@ VideoCrtLayout::VideoCrtLayout() :
 phaseError("°", true),
 hanoverBars("%", true),
 scanlines("%", true),
-blur("%", true),
-lumaRise("px", true),
-lumaFall("px", true)
+blur("%", true)
 {
     append(phaseError,{~0u, 0u}, 2);
     append(hanoverBars,{~0u, 0u}, 2);
     append(scanlines,{~0u, 0u}, 2);
-    append(blur,{~0u, 0u}, 2);
-    append(lumaRise,{~0u, 0u}, 2);
-    append(lumaFall,{~0u, 0u}, 2);
+    append(blur,{~0u, 0u});
     
     phaseError.slider.setLength(181); // -45° <-> 45°  ( 0.5 steps )
 	hanoverBars.slider.setLength(201); // saturation change -100% <-> 100%
 	scanlines.slider.setLength(101);
 	blur.slider.setLength(101);
-    lumaRise.slider.setLength(31);
+    
+    setFont(GUIKIT::Font::system("bold"));    
+    setPadding(8);
+}
+
+VideoHFLayout::VideoHFLayout() : 
+lumaRise("px", true),
+lumaFall("px", true)
+{
+	append(lumaRise,{~0u, 0u}, 2);
+    append(lumaFall,{~0u, 0u});
+	
+	lumaRise.slider.setLength(31);
 	lumaFall.slider.setLength(31);
     
     setFont(GUIKIT::Font::system("bold"));    
@@ -116,9 +125,7 @@ VideoMaskTypeLayout::VideoMaskTypeLayout() {
 VideoGpuBaseLayout::VideoGpuBaseLayout() :
 firFilter("", false),
 luminance("%", false),
-lightFromCenter("%", true)
-{
-    
+lightFromCenter("%", true) {    
     append(option, {~0u, 0u}, 3);
     append(firSharp, {~0u, 0u}, 2);
     append(firFilter, {~0u, 0u}, 2);
@@ -230,7 +237,8 @@ base( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) )
     setPadding(10);
 
     tab1.append(base, {~0u, 0u}, 10);
-    tab1.append(crt, {~0u, 0u});
+    tab1.append(crt, {~0u, 0u}, 10);
+	tab1.append(hf, {~0u, 0u});
     
     tab2.append(gpuBase, {~0u, 0u}, 10);
     tab2.append(mask, {~0u, 0u}, 10);
@@ -277,9 +285,9 @@ base( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) )
         [this](unsigned position) { return (float)position / 10.0f; } );
     setSliderAction<float>( &vicIIGlitch.cas, "cas_glitch", [this](float value) { vManager()->setCasGlitch( value ); },
         [this](unsigned position) { return (float)position / 10.0f; } );
-    setSliderAction<float>( &crt.lumaRise, "luma_rise", [this](float value) { vManager()->setLumaRise( value ); },
+    setSliderAction<float>( &hf.lumaRise, "luma_rise", [this](float value) { vManager()->setLumaRise( value ); },
         [this](unsigned position) { return ((float)position / 10.0f) + 1.0; } );
-    setSliderAction<float>( &crt.lumaFall, "luma_fall", [this](float value) { vManager()->setLumaFall( value ); },
+    setSliderAction<float>( &hf.lumaFall, "luma_fall", [this](float value) { vManager()->setLumaFall( value ); },
         [this](unsigned position) { return ((float)position / 10.0f) + 1.0; } );
     setSliderAction<unsigned>( &gpuBase.lightFromCenter, "light_from_center", [this](unsigned value) { vManager()->setLightFromCenter( value ); } );
     setSliderAction<unsigned>( &gpuBase.luminance, "luminance", [this](unsigned value) { vManager()->setLuminance( value ); } );
@@ -304,6 +312,14 @@ base( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) )
         settings->set<bool>( this->tabWindow->ident( "video_crt_real_gamma" + this->sliderIdent()), state);
         vManager()->setCrtRealGamma( state );
     };
+	
+	base.option.linearInterpolation.onToggle = [this]() {
+		
+		settings->set<unsigned>(this->tabWindow->ident("video_filter"), base.option.linearInterpolation.checked() ? 1 : 0 );
+        program->setVideoFilter();
+	};
+	
+	base.option.linearInterpolation.setChecked( settings->get<unsigned>(tabWindow->ident("video_filter"), 1u, {0u, 1u}) );
         
     mask.type.apertureMask.onActivate = [this]() {
         settings->set<unsigned>( this->tabWindow->ident("video_mask_type" + this->sliderIdent()), (unsigned)VideoManager::MaskType::Aperture);
@@ -362,42 +378,8 @@ base( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) )
         bool state = gpuBase.option.hires.checked();
         settings->set<bool>(this->tabWindow->ident("video_hires" + this->sliderIdent()), state);
 		vManager()->useHires( state );
-    };
-    
-    base.mode.pal.onActivate = [this]() {
-        if (this->emulator == activeEmulator) {
-            if (!mes->question( trans->get("region_change") )) {
-                base.mode.ntsc.setChecked();
-                return;
-            }
-        }
-        
-        settings->set<unsigned>(this->tabWindow->ident("video_region"), 0);
-		updatePresets();
-
-        view->getSysMenu( this->emulator )->pal->setChecked();
-        
-        if (activeEmulator)
-            program->power(activeEmulator);
-    };
-    
-    base.mode.ntsc.onActivate = [this]() {
-        if (this->emulator == activeEmulator) {
-            if (!mes->question( trans->get("region_change") )) {
-                base.mode.pal.setChecked();
-                return;
-            }
-        }
-        
-        settings->set<unsigned>(this->tabWindow->ident("video_region"), 1);
-		updatePresets();
-
-        view->getSysMenu( this->emulator )->ntsc->setChecked();
-        
-        if (activeEmulator)
-            program->power(activeEmulator);
-    };
-
+    };    
+	
     gpuBase.firSharp.sharpLeft.onActivate = [this]() {
         
         settings->set<int>(this->tabWindow->ident("video_fir_filter_sharp" + this->sliderIdent()), -1);
@@ -451,11 +433,6 @@ base( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) )
         base.mode.spectrum.setChecked();
     else
         base.mode.palette.setChecked();
-    
-    if (settings->get<unsigned>( tabWindow->ident("video_region"), 0, {0u, 1u}) == 0 )
-        base.mode.pal.setChecked();
-    else
-        base.mode.ntsc.setChecked();
         
     updatePresets();
 }
@@ -537,12 +514,12 @@ auto VideoLayout::updatePresets() -> void {
     crt.blur.active.setChecked( _useBlur );	
     crt.blur.slider.setPosition( _blur );
     crt.blur.value.setText( std::to_string(_blur) + " %" );	
-	crt.lumaRise.active.setChecked( _useLumaRise );	
-    crt.lumaRise.slider.setPosition( (unsigned)((_lumaRise - 1.0) * 10.0) );
-    crt.lumaRise.value.setText( GUIKIT::String::formatFloatingPoint(_lumaRise, 1) + " px" );
-    crt.lumaFall.active.setChecked( _useLumaFall );	
-    crt.lumaFall.slider.setPosition( (unsigned)((_lumaFall - 1.0) * 10.0) );
-    crt.lumaFall.value.setText( GUIKIT::String::formatFloatingPoint(_lumaFall, 1) + " px" );
+	hf.lumaRise.active.setChecked( _useLumaRise );	
+    hf.lumaRise.slider.setPosition( (unsigned)((_lumaRise - 1.0) * 10.0) );
+    hf.lumaRise.value.setText( GUIKIT::String::formatFloatingPoint(_lumaRise, 1) + " px" );
+    hf.lumaFall.active.setChecked( _useLumaFall );	
+    hf.lumaFall.slider.setPosition( (unsigned)((_lumaFall - 1.0) * 10.0) );
+    hf.lumaFall.value.setText( GUIKIT::String::formatFloatingPoint(_lumaFall, 1) + " px" );
 
     // shader features    
     crtGlitch.chromaNoise.active.setChecked( _useChromaNoise );	
@@ -638,15 +615,15 @@ auto VideoLayout::updateVisibillity() -> void {
 	crt.setEnabled( crtChecked );	
     if (crtChecked) {
         crt.phaseError.slider.setEnabled( crt.phaseError.active.checked() );
-        crt.hanoverBars.setEnabled( base.mode.pal.checked() );
-        crt.hanoverBars.slider.setEnabled( base.mode.pal.checked() && crt.hanoverBars.active.checked() );	
+        crt.hanoverBars.setEnabled( regionLayout.pal.checked() );
+        crt.hanoverBars.slider.setEnabled( regionLayout.pal.checked() && crt.hanoverBars.active.checked() );	
         crt.scanlines.slider.setEnabled( crt.scanlines.active.checked() );
         crt.blur.slider.setEnabled(  crt.blur.active.checked() );
-        crt.lumaRise.slider.setEnabled( crt.lumaRise.active.checked() );
-        crt.lumaFall.slider.setEnabled( crt.lumaFall.active.checked() );
+        hf.lumaRise.slider.setEnabled( hf.lumaRise.active.checked() );
+        hf.lumaFall.slider.setEnabled( hf.lumaFall.active.checked() );
     }
     
-    base.option.crtRealGamma.setEnabled( crtChecked && base.mode.palette.checked() && base.mode.pal.checked() );
+    base.option.crtRealGamma.setEnabled( crtChecked && base.mode.palette.checked() && regionLayout.pal.checked() );
 	
     if (videoDriver->shaderFormat() != DRIVER::Video::ShaderType::GLSL) {
         if (videoDriver->shaderFormat() == DRIVER::Video::ShaderType::HLSL) {
@@ -715,11 +692,10 @@ auto VideoLayout::translate() -> void {
     base.phase.name.setText( trans->get("phase", {}, true) );
     base.option.newLuma.setText( trans->get("new_luma") );
     base.option.crtRealGamma.setText( trans->get("crt_real_gamma") );
+	base.option.linearInterpolation.setText( trans->get("linear_interpolation") );
     base.mode.palette.setText( trans->get("palette") );
     base.mode.spectrum.setText( trans->get("color_spectrum") );    
-    base.mode.reset.setText( trans->get("reset") );
-    base.mode.pal.setText( trans->get("PAL") );
-    base.mode.ntsc.setText( trans->get("NTSC") );      
+    base.mode.reset.setText( trans->get("reset") );	
     base.mode.crtNone.setText( trans->get("crt_none") );
     base.mode.crtCpu.setText( trans->get("crt_cpu") );
     base.mode.crtGpu.setText( trans->get("crt_gpu") );
@@ -729,8 +705,9 @@ auto VideoLayout::translate() -> void {
 	crt.hanoverBars.active.setText( trans->get("hanover_bars", {}, true) );
 	crt.scanlines.active.setText( trans->get("scanlines", {}, true) );
 	crt.blur.active.setText( trans->get("blur", {}, true) );
-	crt.lumaRise.active.setText( trans->get("luma_rise", {}, true) );
-    crt.lumaFall.active.setText( trans->get("luma_fall", {}, true) );
+	hf.setText(trans->get("rf_modulation"));
+	hf.lumaRise.active.setText( trans->get("luma_rise", {}, true) );
+    hf.lumaFall.active.setText( trans->get("luma_fall", {}, true) );
 
     gpuBase.setText(trans->get("GPU"));
     gpuBase.option.distortionHires.setText( trans->get("distortion_hires") );
@@ -772,7 +749,7 @@ auto VideoLayout::translate() -> void {
     vicIIGlitch.ras.active.setText(trans->get("ras_glitch",{}, true));
     vicIIGlitch.cas.active.setText(trans->get("cas_glitch",{}, true));
     
-    SliderLayout::scale({&base.saturation, &base.gamma, &base.brightness, &base.contrast, &base.phase, &crt.phaseError, &crt.hanoverBars, &crt.scanlines, &crt.blur, &crt.lumaRise, &crt.lumaFall},
+    SliderLayout::scale({&base.saturation, &base.gamma, &base.brightness, &base.contrast, &base.phase, &crt.phaseError, &crt.hanoverBars, &crt.scanlines, &crt.blur, &hf.lumaRise, &hf.lumaFall},
         "-100 %");
     unsigned neededWidth = SliderLayout::scale({&gpuBase.firFilter, &gpuBase.lightFromCenter, &gpuBase.luminance, &mask.level, &mask.luminance, &mask.dpi, &mask.pitch, &bloom.glow, &bloom.radius, &bloom.variance, &bloom.weight},
         "0.00 mm", mask.type.type.minimumSize().width );
@@ -784,7 +761,7 @@ auto VideoLayout::translate() -> void {
 
 auto VideoLayout::sliderIdent() -> std::string {
 	
-	std::string ident = base.mode.pal.checked() ? "_pal" : "_ntsc";
+	std::string ident = regionLayout.pal.checked() ? "_pal" : "_ntsc";
 	
     if (dynamic_cast<LIBC64::Interface*>(emulator) && base.mode.spectrum.checked())
         ident += "_spectrum";

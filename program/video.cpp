@@ -16,7 +16,7 @@ auto Program::initVideo() -> void {
     
     setVideoSynchronize();
     setVideoHardSync();
-    setVideoFilter();
+    //setVideoFilter();
 	    
     if ( !videoDriver->init( view->getViewportHandle() ) ) {
         delete videoDriver;
@@ -102,7 +102,8 @@ auto Program::hintExclusiveFullscreen() -> void {
 }
 
 auto Program::setVideoFilter() -> void {
-    videoDriver->setFilter( (DRIVER::Video::Filter)settings->get<unsigned>("video_filter", 1u, {0u, 1u}) );
+	if (activeEmulator)			
+		videoDriver->setFilter( (DRIVER::Video::Filter)settings->get<unsigned>(ident(activeEmulator, "video_filter"), 1u, {0u, 1u}) );
 	
 	if (activeVideoManager)
         activeVideoManager->shader.recreate = true;

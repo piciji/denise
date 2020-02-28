@@ -3,15 +3,15 @@
 
 typedef Emulator::Interface::Key EmuKey;
 
-auto InputManager::automap( KeyboardLayout::Type type, Emulator::Interface::Key key ) -> std::vector<std::vector<Hid::Key>> {{
+auto InputManager::automap( KeyboardLayout::Type type, Emulator::Interface::Key key ) -> std::vector<std::vector<Hid::Key>> {
     
     // Note: the Hid key identifier correspond to the uk layout (reference layout) .
     // for other layouts you have to translate the visible key to the uk key at a given position
     
-    if(GUIKIT::Application::isCocoa()) {{ 
+    if(GUIKIT::Application::isCocoa()) {
         // mac keyboard differs slightly from a pc keyboard.
         
-        switch(type) {{
+        switch(type) {
             case KeyboardLayout::Type::Fr:
                 if ( key == EmuKey::NumberSign ) return {{Hid::Key::Grave}};
                 if ( key == EmuKey::At ) return {{Hid::Key::Grave, Hid::Key::ShiftRight}, {Hid::Key::Grave, Hid::Key::ShiftLeft}};
@@ -54,8 +54,8 @@ auto InputManager::automap( KeyboardLayout::Type type, Emulator::Interface::Key 
                 if ( key == EmuKey::ShiftAnd2 ) return {{Hid::Key::Apostrophe, Hid::Key::ShiftRight}};
                 if ( key == EmuKey::ShiftShared7 ) return {{Hid::Key::NumberSign, Hid::Key::ShiftRight}};
                 break;
-        }}
-    }}
+        }
+    }
     
     if ( key == EmuKey::A ) return {{Hid::Key::A}};
     if ( key == EmuKey::B ) return {{Hid::Key::B}};
@@ -141,7 +141,7 @@ auto InputManager::automap( KeyboardLayout::Type type, Emulator::Interface::Key 
     if ( key == EmuKey::NumEnter ) return {{Hid::Key::NumEnter}};
     if ( key == EmuKey::NumComma ) return {{Hid::Key::NumComma}};                                                            
     
-    switch(type) {{
+    switch(type) {
         case KeyboardLayout::Type::Fr:
             if ( key == EmuKey::D0 ) return {{Hid::Key::D0, Hid::Key::ShiftRight}, {Hid::Key::D0, Hid::Key::ShiftLeft}};
             if ( key == EmuKey::D1 ) return {{Hid::Key::D1, Hid::Key::ShiftRight}, {Hid::Key::D1, Hid::Key::ShiftLeft}};
@@ -333,7 +333,7 @@ auto InputManager::automap( KeyboardLayout::Type type, Emulator::Interface::Key 
             if ( key == EmuKey::Period ) return {{Hid::Key::Period}};
             if ( key == EmuKey::Comma ) return {{Hid::Key::Comma}};     
             break;
-    }}
+    }
     
     return {{}};
-}}
+}

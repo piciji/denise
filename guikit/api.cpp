@@ -53,6 +53,7 @@ std::string Application::name = "";
 std::function<void ()> Application::loop = nullptr;
 std::function<void ()> Application::Cocoa::onAbout;
 std::function<void ()> Application::Cocoa::onPreferences;
+std::function<void ()> Application::Cocoa::onSavePreferences;
 std::function<void ()> Application::Cocoa::onQuit;
 std::function<void ()> Application::Cocoa::onDock;
 std::function<void (std::string fileName)> Application::Cocoa::onOpenFile;

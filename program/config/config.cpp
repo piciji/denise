@@ -52,13 +52,13 @@ auto TabWindow::build() -> void {
     videoLayout = new VideoLayout;
     inputLayout = new InputLayout;
 
-    tab.appendHeader("", volumeImage);
-    tab.appendHeader("", displayImage);
+	tab.appendHeader("", displayImage);
+    tab.appendHeader("", volumeImage);    
     tab.appendHeader("", keyboardImage);
     tab.appendHeader("", toolsImage);                                
 
-    tab.setLayout(Layout::Audio, *audioLayout, {~0u, ~0u} );
-    tab.setLayout(Layout::Video, *videoLayout, {~0u, ~0u} );
+	tab.setLayout(Layout::Video, *videoLayout, {~0u, ~0u} );
+    tab.setLayout(Layout::Audio, *audioLayout, {~0u, ~0u} );    
     tab.setLayout(Layout::Input, *inputLayout, {~0u, ~0u} );
     tab.setLayout(Layout::Settings, *settingsLayout, {~0u, ~0u} );                               
 
@@ -96,11 +96,13 @@ auto TabWindow::translate() -> void {
     settingsLayout->translate();
     videoLayout->translate();
     audioLayout->translate();    
-
-    tab.setHeader(Layout::Settings, trans->get("settings"));
+    
     tab.setHeader(Layout::Video, trans->get("video"));
     tab.setHeader(Layout::Audio, trans->get("audio"));
     tab.setHeader(Layout::Input, trans->get("input"));
+	tab.setHeader(Layout::Settings, 
+		trans->get( GUIKIT::Application::isCocoa() ? "generic" : "settings")
+	);
 }
 
 auto TabWindow::showDelayed(Layout layout) -> void {
@@ -121,4 +123,3 @@ auto TabWindow::show(Layout layout) -> void {
 }
 
 }
-

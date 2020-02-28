@@ -96,6 +96,11 @@
         item = [[[NSMenuItem alloc] initWithTitle:@"Preferences" action:@selector(menuPreferences) keyEquivalent:@","] autorelease];
         [item setTarget:self];
         [appMenu addItem:item];
+		
+		item = [[[NSMenuItem alloc] initWithTitle:@"Save Preferences" action:@selector(menuSavePreferences) keyEquivalent:@""] autorelease];
+        [item setTarget:self];
+        [appMenu addItem:item];
+		
         [appMenu addItem:[NSMenuItem separatorItem]];
 
         item = [[[NSMenuItem alloc] initWithTitle:[NSString stringWithFormat:@"Hide %@", applicationName] action:@selector(hide:) keyEquivalent:@"h"] autorelease];
@@ -221,6 +226,11 @@
 -(void) menuPreferences {
     using GUIKIT::Application;
     if(Application::Cocoa::onPreferences) Application::Cocoa::onPreferences();
+}
+
+-(void) menuSavePreferences {
+    using GUIKIT::Application;
+    if(Application::Cocoa::onSavePreferences) Application::Cocoa::onSavePreferences();
 }
 
 -(void) menuQuit {

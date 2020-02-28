@@ -411,8 +411,6 @@ Stack Light Pen = Stack Light Pen
 reverb = Echo
 Soft Reset = Redémarrage logiciel
 shader = Shader
-Video Nearest = Vidéo plus près
-Video Linear = Vidéo Linéaire
 Datasette = Datasette
 speed = Vitesse
 variation = Variation
@@ -444,3 +442,6 @@ sid_filter_toggle = Activate_filter = Activer le filtre audio
 sid_filter_on = audio_filter_on = le filtre audio est émulé
 sid_filter_off = audio_filter_off = le filtre audio est désactivé
 swap_input_devices = 
+linear_interpolation = Video Linear = Vidéo Linéaire
+save_preferences = 
+rf_modulation = 

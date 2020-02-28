@@ -17,18 +17,18 @@ namespace ConfigView {
 
 struct TabWindow : public GUIKIT::Window {
     
-    enum Layout : unsigned { Audio, Video, Input, Settings };
+    enum Layout : unsigned { Video, Audio, Input, Settings };
     
     Message* message;
-    AudioLayout* audioLayout = nullptr;
-    VideoLayout* videoLayout = nullptr;
+	VideoLayout* videoLayout = nullptr;
+    AudioLayout* audioLayout = nullptr;    
     InputLayout* inputLayout = nullptr;    
     SettingsLayout* settingsLayout = nullptr;    
 
     GUIKIT::TabFrameLayout tab;
     
-    GUIKIT::Image volumeImage;
-    GUIKIT::Image displayImage;
+	GUIKIT::Image displayImage;
+    GUIKIT::Image volumeImage;    
     GUIKIT::Image keyboardImage;
     GUIKIT::Image toolsImage;    
 	
