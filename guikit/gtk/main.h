@@ -60,7 +60,6 @@ struct pWindow {
     auto changeCursor( Image& image, unsigned hotSpotX, unsigned hotSpotY ) -> void;
     auto setDefaultCursor() -> void;
     auto setIcon( std::string path ) -> bool;
-	auto synchronizeSize() -> void;
 	
 	auto moveWindow(GdkEvent* event) -> void;
 	auto sizeWindow(GtkAllocation* allocation) -> void;
@@ -75,6 +74,7 @@ struct pWidget {
     GtkWidget* gtkWidget = nullptr;
     PangoFontDescription* pfont = nullptr;
     bool locked = false;	
+	GtkWidget* parentWidget = nullptr;
 
     virtual auto focused() -> bool;
     virtual auto setFocused() -> void;

@@ -54,8 +54,11 @@ auto pFrame::setEnabled(bool enabled) -> void {
 }
 
 auto pFrame::create() -> void {
+	if(box)
+		gtk_widget_destroy(box);
+	
     destroy();
-    if(box) gtk_widget_destroy(box);
+    
     gtkWidget = gtk_frame_new("");	
 	
     box = gtk_fixed_new();

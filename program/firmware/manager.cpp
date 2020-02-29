@@ -125,6 +125,17 @@ auto FirmwareManager::getInstance( Emulator::Interface* emulator ) -> FirmwareMa
 	return nullptr;
 }
 
+auto FirmwareManager::swapIn(Emulator::Interface::Firmware* firmware, unsigned i) -> std::vector<std::string> {
+	
+	missingFirmware.clear();
+	
+	if (!useImage( firmware, i))
+		if (loadImage( firmware, i))
+			useImage( firmware, i);                                
+	
+	return missingFirmware;
+}
+
 auto FirmwareManager::insert() -> std::vector<std::string> {
     
     missingFirmware.clear();

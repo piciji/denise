@@ -11,6 +11,7 @@ pWidget::~pWidget() {
 auto pWidget::destroy() -> void {
     if(gtkWidget) gtk_widget_destroy(gtkWidget);
     gtkWidget = nullptr;
+	parentWidget = nullptr;
 }
 
 auto pWidget::focused() -> bool { 
@@ -60,7 +61,7 @@ auto pWidget::setGeometry(Geometry geometry) -> void {
 		gtk_widget_set_visible(gtkWidget, true);
 	
     gtk_fixed_move(GTK_FIXED(parentGtk), gtkWidget, geometry.x, geometry.y);		
-    gtk_widget_set_size_request(gtkWidget, geometry.width, geometry.height);
+    gtk_widget_set_size_request(gtkWidget, geometry.width, geometry.height);	
 	
 	if (!widget.visible()) 
 		gtk_widget_set_visible(gtkWidget, false);
@@ -92,8 +93,11 @@ auto pWidget::add() -> void {
         if (!parentGtk) {
             parentGtk = widget.window()->p.mainDisplay;
         }
-        
-        gtk_container_add(GTK_CONTAINER( parentGtk), gtkWidget);                        
+		
+		if (parentGtk != parentWidget)
+			gtk_container_add(GTK_CONTAINER( parentGtk), gtkWidget);   
+		
+		parentWidget = parentGtk;
     }        
     
     setFont( widget.font() );

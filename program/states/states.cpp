@@ -483,11 +483,11 @@ auto States::updateRegion() -> void {
     auto cfgView = EmuConfigView::TabWindow::getView( emulator );
     
     if (stateRegion == 0) {
-        cfgView->videoLayout->base.mode.pal.setChecked();
+		cfgView->systemLayout->regionLayout.pal.setChecked();
         view->getSysMenu(emulator)->pal->setChecked();
         
     } else {
-        cfgView->videoLayout->base.mode.ntsc.setChecked();
+		cfgView->systemLayout->regionLayout.ntsc.setChecked();
         view->getSysMenu(emulator)->ntsc->setChecked();        
     }
     

@@ -445,3 +445,5 @@ swap_input_devices = Eingabegeräte tauschen
 linear_interpolation = lineare Interpolation
 save_preferences = Einstellungen speichern
 rf_modulation = HF-Modulation
+swap_char = Char-Rom tauschen
+swap = tauschen

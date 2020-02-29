@@ -8,7 +8,7 @@ auto Layout::append(Sizable& sizable, Size size, unsigned spacing) -> void {
     sizable.setVisible( visible() );
     
     synchronizeLayout();
-    if(window()) window()->synchronizeLayout();
+    //if(window()) window()->synchronizeLayout();
 }
 
 auto Layout::append(Sizable& sizable) -> void {
@@ -46,7 +46,7 @@ auto Layout::remove(Sizable& sizable) -> void {
             }
             children.erase(children.begin() + pos);
             cut(sizable);
-            if(window()) window()->synchronizeLayout();
+            //if(window()) window()->synchronizeLayout();
             break;
         }
         pos++;

@@ -1187,6 +1187,8 @@ auto MediaGroupLayout::updateVisibility( unsigned count, bool init ) -> void {
         }
     }    
     
+	tabWindow->synchronizeLayout();
+	
     if (!listingInVisibleBlock)
         fillListing( blocks[0] );	  
 }
