@@ -464,7 +464,7 @@ auto InputManager::openMenu( Emulator::Interface* emulator, Hotkey::Id id ) -> v
         case Hotkey::Id::DiskSwapper:
             configView->showDelayed( EmuConfigView::TabWindow::Layout::Swapper ); break;
         case Hotkey::Id::Software:
-            configView->showDelayed( EmuConfigView::TabWindow::Layout::Media ); break;
+            MediaView::MediaWindow::getView( emulator )->showDelayed(); break;
         case Hotkey::Id::System:
             configView->showDelayed(EmuConfigView::TabWindow::Layout::System); break;
         case Hotkey::Id::Firmware:

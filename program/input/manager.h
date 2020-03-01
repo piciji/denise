@@ -5,6 +5,7 @@
 #include "../../guikit/api.h"
 #include "../../emulation/interface.h"
 #include "../states/states.h"
+#include "../media/media.h"
 
 //#define DEBUG_INPUT_CHANGE
 

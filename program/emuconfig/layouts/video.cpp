@@ -236,8 +236,8 @@ base( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) )
     setMargin(10);
     setPadding(10);
 
-    tab1.append(base, {~0u, 0u}, 10);
-    tab1.append(crt, {~0u, 0u}, 10);
+    tab1.append(base, {~0u, 0u}, 5);
+    tab1.append(crt, {~0u, 0u}, 5);
 	tab1.append(hf, {~0u, 0u});
     
     tab2.append(gpuBase, {~0u, 0u}, 10);

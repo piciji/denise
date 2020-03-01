@@ -20,22 +20,19 @@ struct TabWindow;
 #include "layouts/border.h"
 #include "layouts/video.h"
 #include "layouts/input.h"
-#include "layouts/media.h"
 #include "layouts/firmware.h"
 #include "layouts/palette.h"
 
 struct TabWindow : public GUIKIT::Window {
     
-    enum Layout : unsigned { Media, System, Firmware, Swapper, States, Video, Palette, Border, Input };
+    enum Layout : unsigned { System, Input, States, Video, Palette, Firmware, Border, Swapper };
     
     Emulator::Interface* emulator;
-    bool useCustomFont = false;
     
     Message* message;
     InputLayout* inputLayout = nullptr;
     SystemLayout* systemLayout = nullptr;
     FirmwareLayout* firmwareLayout = nullptr;
-    MediaLayout* mediaLayout = nullptr;
     BorderLayout* borderLayout = nullptr;
     VideoLayout* videoLayout = nullptr;
     PaletteLayout* paletteLayout = nullptr;
@@ -47,7 +44,6 @@ struct TabWindow : public GUIKIT::Window {
     GUIKIT::Image joystickImage;
     GUIKIT::Image systemImage;
     GUIKIT::Image memoryImage;
-    GUIKIT::Image driveImage;
     GUIKIT::Image cropImage;
     GUIKIT::Image displayImage;
     GUIKIT::Image scriptImage;    
@@ -62,7 +58,6 @@ struct TabWindow : public GUIKIT::Window {
 	auto showDelayed(Layout layout) -> void;
     auto update() -> void;
     auto ident( std::string name ) -> std::string;
-    auto changeTab() -> void;
 	static auto getView( Emulator::Interface* emulator ) -> TabWindow*;
 
     TabWindow(Emulator::Interface* emulator);

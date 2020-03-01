@@ -1,4 +1,16 @@
 
+#pragma once
+
+struct Message;
+struct FileSetting;
+
+#include "../../guikit/api.h"
+#include "../program.h"
+
+namespace MediaView {
+
+struct MediaWindow;
+
 struct PathsLayout : GUIKIT::FramedVerticalLayout {
 
     struct Block : GUIKIT::HorizontalLayout {
@@ -52,7 +64,7 @@ struct MediaGroupLayout : GUIKIT::FramedVerticalLayout {
 	GUIKIT::Button inject;
 	GUIKIT::ListView listings; // for c64 disk and prg container formats
     Block* selectedBlock = nullptr;
-    TabWindow* tabWindow;
+    MediaWindow* mediaWindow;
     
     auto build() -> void;
     auto updateVisibility( unsigned count, bool init = false ) -> void;
@@ -60,7 +72,7 @@ struct MediaGroupLayout : GUIKIT::FramedVerticalLayout {
     auto showOnlyConnectedDevices() -> bool;
     auto getBlock(Emulator::Interface::Media* media) -> Block*;
 
-    MediaGroupLayout( Emulator::Interface::MediaGroup* mediaGroup, TabWindow* tabWindow );
+    MediaGroupLayout( Emulator::Interface::MediaGroup* mediaGroup, MediaWindow* mediaWindow );
 };
 
 struct TapeCreatorLayout : GUIKIT::FramedHorizontalLayout {
@@ -116,11 +128,15 @@ struct HdCreatorLayout : GUIKIT::FramedVerticalLayout {
     HdCreatorLayout();
 };
 
-struct MediaLayout : GUIKIT::TabFrameLayout {
-    TabWindow* tabWindow;
-    Emulator::Interface* emulator;
+struct MediaWindow : public GUIKIT::Window {
     
-    GUIKIT::Image diskImage;
+    Emulator::Interface* emulator;
+    bool useCustomFont = false;
+	Message* message;
+	
+	GUIKIT::TabFrameLayout tabView;
+	
+	GUIKIT::Image diskImage;
     GUIKIT::Image hdImage;
     GUIKIT::Image tapeImage;
     GUIKIT::Image expansionImage;
@@ -139,8 +155,16 @@ struct MediaLayout : GUIKIT::TabFrameLayout {
     CartCreatorLayout* flashCreatorLayout = nullptr;
     
     PathsLayout pathsLayout;
+    	
+	GUIKIT::Timer mtimer;
 
-    auto translate() -> void;
+    auto build() -> void;	
+    auto show() -> void;
+	auto showDelayed() -> void;
+    auto ident( std::string name ) -> std::string;
+	static auto getView( Emulator::Interface* emulator ) -> MediaWindow*;
+	
+	auto translate() -> void;
     auto updateMediaBlock(MediaGroupLayout::Block* block, FileSetting* setting) -> void;
     auto updateVisibility( Emulator::Interface::MediaGroup* mediaGroup, unsigned count ) -> void;
     auto bindSelectorAction( MediaGroupLayout* layout ) -> void;
@@ -163,5 +187,9 @@ struct MediaLayout : GUIKIT::TabFrameLayout {
     auto updateJumper(Emulator::Interface::Media* media) -> void;
     auto changeWriteProtection(Emulator::Interface::Media* media, bool state) -> void;
 
-    MediaLayout(TabWindow* tabWindow);
+    MediaWindow(Emulator::Interface* emulator);
 };
+
+}
+
+extern std::vector<MediaView::MediaWindow*> mediaViews;

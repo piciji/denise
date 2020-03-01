@@ -11,6 +11,7 @@
 #include "../firmware/manager.h"
 #include "../video/palette.h"
 #include "../cmd/cmd.h"
+#include "../media/media.h"
 
 #include <thread>
 #include <vector>
@@ -34,7 +35,7 @@ namespace Fonts {
 	
 #include "layouts/input.cpp"
 #include "layouts/system.cpp"
-#include "layouts/media.cpp"
+//#include "layouts/media.cpp"
 #include "layouts/video.cpp"
 #include "layouts/border.cpp"
 #include "layouts/states.cpp"
@@ -51,17 +52,7 @@ auto TabWindow::build() -> void {
     winapi.disableBackgroundRedrawDuringResize();
     cocoa.keepMenuVisibilityOnDisplay();
     setDroppable();
-	
-    if (emulator->ident == "C64" && !cmd->debug) {
-        GUIKIT::CustomFont* font = new GUIKIT::CustomFont;
-        font->name = "C64 Pro Mono";
-        font->data = (uint8_t*)Fonts::c64ProMono;
-        font->size = sizeof(Fonts::c64ProMono);	
-        font->filePath = program->fontFolder() + "/C64_Pro_Mono-STYLE.ttf";
-        useCustomFont = TabWindow::addCustomFont( font );
-        ((LIBC64::Interface*) emulator)->convertPetsciiToScreencode( useCustomFont );
-    }
-    
+	    
     GUIKIT::Geometry defaultGeometry = {100, 100, 850, 540};
     
     GUIKIT::Geometry geometry = {settings->get<int>(ident("screen_settings_x"), defaultGeometry.x)
@@ -78,7 +69,6 @@ auto TabWindow::build() -> void {
     joystickImage.loadPng((uint8_t*)Icons::joystick, sizeof(Icons::joystick));
     systemImage.loadPng((uint8_t*)Icons::system, sizeof(Icons::system));
     memoryImage.loadPng((uint8_t*)Icons::memory, sizeof(Icons::memory));
-    driveImage.loadPng((uint8_t*)Icons::drive, sizeof(Icons::drive));
     cropImage.loadPng((uint8_t*)Icons::crop, sizeof(Icons::crop));
     displayImage.loadPng((uint8_t*)Icons::display, sizeof(Icons::display));
     scriptImage.loadPng((uint8_t*)Icons::script, sizeof(Icons::script));
@@ -88,7 +78,6 @@ auto TabWindow::build() -> void {
     inputLayout = new InputLayout( this );
     systemLayout = new SystemLayout( this );
     firmwareLayout = new FirmwareLayout( this );
-    mediaLayout = new MediaLayout( this );    
     videoLayout = new VideoLayout( this );
     if (emulator->ident == "C64")
         paletteLayout = new PaletteLayout( this );
@@ -96,37 +85,32 @@ auto TabWindow::build() -> void {
     statesLayout = new StatesLayout( this );
     swapperLayout = new SwapperLayout( this );
 
-    tab.appendHeader("", driveImage);
     tab.appendHeader("", systemImage);
-    tab.appendHeader("", memoryImage);   
-    tab.appendHeader("", swapperImage);
-    tab.appendHeader("", scriptImage);    
-    tab.appendHeader("", displayImage);
-    if (emulator->ident == "C64")
+	tab.appendHeader("", joystickImage); 
+	tab.appendHeader("", scriptImage); 
+	tab.appendHeader("", displayImage);
+	if (emulator->ident == "C64")
         tab.appendHeader("", paletteImage);
-    
-    tab.appendHeader("", cropImage);
-    tab.appendHeader("", joystickImage);                      
 
-    tab.setLayout(Layout::Media, *mediaLayout, {~0u, ~0u} );
+    tab.appendHeader("", memoryImage);   
+	tab.appendHeader("", cropImage);
+    tab.appendHeader("", swapperImage);
+                                            
+
     tab.setLayout(Layout::System, *systemLayout, {~0u, ~0u} );
-    tab.setLayout(Layout::Firmware, *firmwareLayout, {~0u, ~0u} );
-    tab.setLayout(Layout::Swapper, *swapperLayout, {~0u, ~0u} );
-    tab.setLayout(Layout::States, *statesLayout, {~0u, ~0u} );    
-    tab.setLayout(Layout::Video, *videoLayout, {~0u, ~0u} );
-    if (emulator->ident == "C64")
+	tab.setLayout(Layout::Input, *inputLayout, {~0u, ~0u} );
+	tab.setLayout(Layout::States, *statesLayout, {~0u, ~0u} );    
+	tab.setLayout(Layout::Video, *videoLayout, {~0u, ~0u} );
+	if (emulator->ident == "C64")
         tab.setLayout(Layout::Palette, *paletteLayout, {~0u, ~0u} );
-        
-    tab.setLayout(Layout::Border, *borderLayout, {~0u, ~0u} );
-    tab.setLayout(Layout::Input, *inputLayout, {~0u, ~0u} );
+
+    tab.setLayout(Layout::Firmware, *firmwareLayout, {~0u, ~0u} );
+	tab.setLayout(Layout::Border, *borderLayout, {~0u, ~0u} );
+    tab.setLayout(Layout::Swapper, *swapperLayout, {~0u, ~0u} );                        
 
     tab.setMargin(10);
     tab.setSelection(0);
     
-    tab.onChange = [this]() {          
-        changeTab();               
-    };
-
     append(tab);
 
     onClose = [this]() {
@@ -151,9 +135,6 @@ auto TabWindow::build() -> void {
     onDrop = [&]( std::vector<std::string> files ) {
         if ( tab.selection() == Layout::Firmware )
             firmwareLayout->drop( files[0] );
-        
-        else if ( tab.selection() == Layout::Media )
-            mediaLayout->drop( files[0] );
     };
 
     translate();
@@ -165,7 +146,6 @@ auto TabWindow::translate() -> void {
     inputLayout->translate();
     systemLayout->translate();
     firmwareLayout->translate();
-    mediaLayout->translate();
     borderLayout->translate();
     videoLayout->translate();
     statesLayout->translate();
@@ -176,7 +156,6 @@ auto TabWindow::translate() -> void {
     tab.setHeader(Layout::Input, trans->get("input"));
     tab.setHeader(Layout::System, trans->get("system"));
     tab.setHeader(Layout::Firmware, trans->get("firmware"));
-    tab.setHeader(Layout::Media, trans->get("Software"));
     tab.setHeader(Layout::Border, trans->get("border"));
     tab.setHeader(Layout::Video, trans->get("video"));
     tab.setHeader(Layout::States, trans->get("states"));
@@ -198,7 +177,6 @@ auto TabWindow::showDelayed(Layout layout) -> void {
 
 auto TabWindow::show(Layout layout) -> void {					
     tab.setSelection( (unsigned)layout );	
-    changeTab();
     setVisible();
 	setFocused();
 }
@@ -220,15 +198,6 @@ auto TabWindow::getView( Emulator::Interface* emulator ) -> TabWindow* {
 			return view;
 	}
 	return nullptr;
-}
-
-auto TabWindow::changeTab() -> void {
-    
-    if (tab.selection() == Layout::Media) {            
-        auto videoManager = VideoManager::getInstance( emulator );
-        if (videoManager->needUpdate())
-            videoManager->update();                    
-    }   
 }
 
 }

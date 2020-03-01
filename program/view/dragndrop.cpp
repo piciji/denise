@@ -1,8 +1,6 @@
 
 #include "view.h"
 #include "../tools/filepool.h"
-#include "../config/archiveViewer.h"
-#include "../emuconfig/config.h"
 
 auto View::setDragnDrop() -> void {
     
@@ -65,14 +63,16 @@ auto View::autoloadPostProcessing() -> void {
     auto autoStart = settings->get<bool>("autostart_dragndrop", false);
 
     auto emuConfigView = EmuConfigView::TabWindow::getView(ddControl.emulator);
+	
+	auto mediaView = MediaView::MediaWindow::getView(ddControl.emulator);
 
     auto mediaGroup = ddControl.mediaGroups[0];
 
     if (!autoStart && (activeEmulator == ddControl.emulator)) {
 
-        emuConfigView->show(EmuConfigView::TabWindow::Layout::Media);
+        mediaView->setVisible();		
 
-        emuConfigView->mediaLayout->showMediaGroupLayout(mediaGroup);
+        mediaView->showMediaGroupLayout(mediaGroup);
 
     } else {
 
@@ -144,7 +144,7 @@ auto View::autoloadFiles() -> void {
             if (ddControl.emulator && ddControl.emulator != emulator)
                 continue;
 
-            auto emuConfigView = EmuConfigView::TabWindow::getView(emulator);
+            auto mediaView = MediaView::MediaWindow::getView(emulator);
 
             for (auto& mediaGroup : emulator->mediaGroups) {
 
@@ -182,7 +182,7 @@ auto View::autoloadFiles() -> void {
                                 media = &mediaGroup.media[ alreadyInUse ];                                                
                         }
                             						
-                        emuConfigView->mediaLayout->insertImage(media, file, item );
+                        mediaView->insertImage(media, file, item );
 
                         return autoloadFiles();
                     }

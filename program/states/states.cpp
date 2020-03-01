@@ -1,6 +1,7 @@
 
 #include "states.h"
 #include "../firmware/manager.h"
+#include "../media/media.h"
 
 std::vector<States*> states;
 
@@ -190,7 +191,7 @@ auto States::loadImagePaths( GUIKIT::Settings* loadSettings ) -> void {
             if (inserted) {
                 if ((inserted->setting->path == setting->path)
                     && (inserted->setting->id == setting->id)) {   
-                    EmuConfigView::TabWindow::getView( emulator )->mediaLayout->changeWriteProtection( mediaInUse, writeProtection );                    
+                    MediaView::MediaWindow::getView( emulator )->changeWriteProtection( mediaInUse, writeProtection );                    
                     continue;
                 }
             }                        
@@ -211,7 +212,7 @@ auto States::loadImagePaths( GUIKIT::Settings* loadSettings ) -> void {
             emulator->ejectMedium( mediaInUse );
             emulator->insertMedium( mediaInUse, data, file->archiveDataSize( setting->id ));
             // no need to set write protection state, because it belongs to serialization frame.
-            EmuConfigView::TabWindow::getView( emulator )->mediaLayout->changeWriteProtection( mediaInUse, writeProtection );
+            MediaView::MediaWindow::getView( emulator )->changeWriteProtection( mediaInUse, writeProtection );
                        
             filePool->assign(program->ident(emulator, mediaInUse->name), file);  
             updateImage( setting, mediaInUse );                          
@@ -505,7 +506,7 @@ auto States::updateExpansionJumper() -> void {
         if (!mediaGroup.isExpansion() || (mediaGroup.getExpansion()->jumpers.size() == 0) )
             continue;        
                     
-        EmuConfigView::TabWindow::getView( emulator )->mediaLayout->updateJumper( mediaGroup.selected );
+        MediaView::MediaWindow::getView( emulator )->updateJumper( mediaGroup.selected );
     }
         
 }

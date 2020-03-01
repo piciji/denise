@@ -211,7 +211,7 @@ struct VideoManager {
     
     static auto getInstance( Emulator::Interface* emulator ) -> VideoManager*;
     static auto unlockDriver() -> void;
-    
+	static auto updateWhenNotRunning() -> void;    
     
     auto useRfModulation() -> bool;
     auto useLineGlitch() -> bool;

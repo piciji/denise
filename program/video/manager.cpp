@@ -6,6 +6,7 @@
 #include "manager.h"
 #include "../../emulation/libc64/interface.h"
 #include "../emuconfig/config.h"
+#include "../media/media.h"
 #include "../view/view.h"
 #include "props.cpp"
 #include "../../driver/tools/shaderpass.h"
@@ -25,6 +26,14 @@ auto VideoManager::getInstance( Emulator::Interface* emulator ) -> VideoManager*
 	}
     
 	return nullptr;
+}
+
+auto VideoManager::updateWhenNotRunning() -> void {
+	
+	for (auto videoManager : videoManagers) {
+		if (videoManager->needUpdate())
+			videoManager->update();
+	}
 }
 
 VideoManager::VideoManager(Emulator::Interface* emulator) : shader(this) {
@@ -132,10 +141,10 @@ auto VideoManager::updateListingColors() -> void {
     if (emulator->ident != "C64")
         return;
     
-    auto configView = EmuConfigView::TabWindow::getView( emulator );
+    auto mediaView = MediaView::MediaWindow::getView( emulator );
     
-    configView->mediaLayout->colorListing( colorTable[14], 1 );
-    configView->mediaLayout->colorListing( colorTable[6], 0 );
+    mediaView->colorListing( colorTable[14], 1 );
+    mediaView->colorListing( colorTable[6], 0 );
 }
 
 auto VideoManager::generateC64ColorSpectrum() -> void {

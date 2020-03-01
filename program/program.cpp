@@ -3,6 +3,7 @@
 #include "view/view.h"
 #include "config/config.h"
 #include "emuconfig/config.h"
+#include "media/media.h"
 #include "config/archiveViewer.h"
 #include "input/manager.h"
 #include "tools/filesetting.h"
@@ -69,6 +70,10 @@ Program::Program() {
     InputManager::build();
     view->build();
     configView->build();
+	
+	for( auto mediaView : mediaViews )
+        mediaView->build();
+	
     for( auto emuConfigView : emuConfigViews )
         emuConfigView->build();
 
@@ -99,6 +104,8 @@ auto Program::addEmulators() -> void {
         inputManagers.push_back( new InputManager( emulator ) );
         
         emuConfigViews.push_back( new EmuConfigView::TabWindow( emulator ) );
+		
+		mediaViews.push_back( new MediaView::MediaWindow( emulator ) );
         
         states.push_back( new States( emulator ) );
         
@@ -290,7 +297,7 @@ auto Program::powerOff() -> void {
                     auto file = (GUIKIT::File*)media.guid;
                     // medium was written by emulation, lets update the listing
                     if (file->wasDataChanged() && filePool->has( ident(activeEmulator, media.name + "store"), file))                        
-                        EmuConfigView::TabWindow::getView( activeEmulator )->mediaLayout->updateListing( &media );
+                        MediaView::MediaWindow::getView( activeEmulator )->updateListing( &media );
                 }                        
                 
                 filePool->assign( ident(activeEmulator, media.name), nullptr);
@@ -331,6 +338,7 @@ auto Program::loop() -> void {
         
 		audioDriver->clear();
 		GUIKIT::System::sleep( 20 );
+		VideoManager::updateWhenNotRunning();
 	}
     status->show();
 }
@@ -341,7 +349,11 @@ auto Program::willPoll() -> bool {
     if( isFocused || configView->focused() )
         return true;
     
-    for(auto emuConfigView : emuConfigViews)
+    for(auto mediaView : mediaViews)
+        if (mediaView->focused())
+            return true;
+	
+	for(auto emuConfigView : emuConfigViews)
         if (emuConfigView->focused())
             return true;
     

@@ -13,7 +13,7 @@ target := $(shell g++ --version | grep i686)
 
 include data/Makefile
 
-objects := program view config emuconfig archiveviewer states firmware cmd
+objects := program view config emuconfig mediaview archiveviewer states firmware cmd
 objects += input audio video palette shader
 objects += guikit libami libC64
 objects += driver
@@ -134,6 +134,7 @@ obj/input.o:		program/input/manager.cpp
 obj/view.o:		program/view/view.cpp
 obj/config.o:		program/config/config.cpp
 obj/emuconfig.o:	program/emuconfig/config.cpp
+obj/mediaview.o:	program/media/media.cpp
 obj/archiveviewer.o:	program/config/archiveViewer.cpp
 obj/states.o:		program/states/states.cpp
 obj/audio.o:		program/audio/manager.cpp

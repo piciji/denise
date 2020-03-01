@@ -1,14 +1,15 @@
 
 #include "view.h"
-#include "dragndrop.cpp"
 #include "../program.h"
 #include "../config/config.h"
 #include "../emuconfig/config.h"
+#include "../media/media.h"
 #include "../tools/status.h"
 #include "../input/manager.h"
 #include "../config/archiveViewer.h"
 #include "../audio/manager.h"
 #include "../cmd/cmd.h"
+#include "dragndrop.cpp"
 
 View* view = nullptr;
 
@@ -548,6 +549,7 @@ auto View::buildMenu() -> void {
 		
     for(auto emulator : emulators) {
         auto emuConfigView = EmuConfigView::TabWindow::getView( emulator );        
+		auto mediaView = MediaView::MediaWindow::getView( emulator ); 
         SystemMenu sM;
         
         sM.emulator = emulator;
@@ -668,8 +670,8 @@ auto View::buildMenu() -> void {
         
         sM.media = new GUIKIT::MenuItem;
         sM.media->setIcon( driveImage );
-        sM.media->onActivate = [emuConfigView]() {
-		    emuConfigView->show(EmuConfigView::TabWindow::Layout::Media);
+        sM.media->onActivate = [mediaView]() {
+		    mediaView->show();
 	    };
         sM.system->append( *sM.media );
         
@@ -1015,7 +1017,8 @@ auto View::questionToWrite(Emulator::Interface::Media* media) -> bool {
     bool state = message->question( trans->get("override_write_protection", {{"%media%", mediaIdent}}) );
     
     if (state)        
-        EmuConfigView::TabWindow::getView( activeEmulator )->mediaLayout->disableWriteProtection(media);
+        MediaView::MediaWindow::getView( activeEmulator )->disableWriteProtection(media);
     
     return state;
 }
+

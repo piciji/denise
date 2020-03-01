@@ -99,12 +99,19 @@ auto SettingsLayout::changeLang() -> void {
     view->translate();
     
     configView->translate();
+	
+	for( auto mediaView : mediaViews )
+		mediaView->translate();	
+	
 	for( auto emuConfigView : emuConfigViews )
 		emuConfigView->translate();	
 	
 	configView->inputLayout->loadInputList();	
 	for( auto emuConfigView : emuConfigViews )
 		emuConfigView->inputLayout->loadDeviceList();
+	
+	for( auto mediaView : mediaViews )
+		mediaView->synchronizeLayout();	
 	
     configView->synchronizeLayout();	
 	for( auto emuConfigView : emuConfigViews )
