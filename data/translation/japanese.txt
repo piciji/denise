@@ -447,3 +447,5 @@ save_preferences =
 rf_modulation = 
 swap_char = 
 swap = 
+presentation = 
+control = 

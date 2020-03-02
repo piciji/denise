@@ -447,3 +447,5 @@ save_preferences = Einstellungen speichern
 rf_modulation = HF-Modulation
 swap_char = Char-Rom tauschen
 swap = tauschen
+presentation = Präsentation
+control = Steuerung

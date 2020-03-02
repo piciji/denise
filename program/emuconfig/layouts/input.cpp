@@ -554,3 +554,11 @@ auto InputLayout::hotkeyMode() -> bool {
 	
 	return selector.hotkeys.checked();
 }
+
+auto InputLayout::triggerHotkeyMode() -> void {
+	if (hotkeyMode())
+		return;
+	
+	selector.hotkeys.setChecked();
+	selector.hotkeys.onToggle();
+}

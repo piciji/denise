@@ -331,7 +331,7 @@ auto View::setConnectors() -> void {
     
     for(auto& iM : inputMenus) {
         
-        removeMenuTree( iM.input );
+        removeMenuTree( iM.control );
         
         iM.inputDevices.clear();
         
@@ -375,10 +375,10 @@ auto View::setConnectors() -> void {
             if (checkItem)
                 checkItem->setChecked();
 
-            iM.input->append(*connectorMenu);
+            iM.control->append(*connectorMenu);
         }
         
-        iM.input->append( *new GUIKIT::MenuSeparator );
+        iM.control->append( *new GUIKIT::MenuSeparator );
         
         inputItem = new GUIKIT::MenuItem;
 		inputItem->setText( trans->get("swap_devices") );
@@ -404,28 +404,19 @@ auto View::setConnectors() -> void {
         };
         
         inputItem->setIcon(swapperImage);
-        iM.input->append(*inputItem);
+        iM.control->append(*inputItem);
         
-		inputItem = new GUIKIT::MenuItem;
-		inputItem->setText( trans->get("config") );
-		
-		inputItem->onActivate = [emulator]() {
-			auto emuConfigView = EmuConfigView::TabWindow::getView( emulator );
-			emuConfigView->show(EmuConfigView::TabWindow::Layout::Input);
-		};
-		inputItem->setIcon(toolsImage);
-		iM.input->append(*inputItem);  
+		if(!GUIKIT::Application::isCocoa()) {
+			inputItem = new GUIKIT::MenuItem;
+			inputItem->setText( trans->get("config") );
 
-        iM.input->append(*new GUIKIT::MenuSeparator);
-
-        inputItem = new GUIKIT::MenuItem;
-
-        inputItem->onActivate = []() {
-            configView->show(ConfigView::TabWindow::Layout::Input);
-        };
-        inputItem->setIcon(keyboardImage);
-        inputItem->setText(trans->get("hotkeys"));
-        iM.input->append(*inputItem);
+			inputItem->onActivate = [emulator]() {
+				auto emuConfigView = EmuConfigView::TabWindow::getView( emulator );
+				emuConfigView->show(EmuConfigView::TabWindow::Layout::Control);
+			};
+			inputItem->setIcon(toolsImage);
+			iM.control->append(*inputItem); 
+		}
     }
 }
 
@@ -585,33 +576,71 @@ auto View::buildMenu() -> void {
         sM.system->append( *sM.freeze );
         
         sM.system->append(*GUIKIT::MenuSeparator::getInstance());
-        
-        sM.video = new GUIKIT::MenuItem;
-        sM.video->setIcon( displayImage );
-        sM.video->onActivate = [emuConfigView]() {
-		    emuConfigView->show(EmuConfigView::TabWindow::Layout::Video);
+		
+		sM.media = new GUIKIT::MenuItem;
+        sM.media->setIcon( driveImage );
+        sM.media->onActivate = [mediaView]() {
+		    mediaView->show();
 	    };
-        sM.system->append( *sM.video );
+        sM.system->append( *sM.media );
+		
+		sM.system->append(*GUIKIT::MenuSeparator::getInstance());
+        
+		sM.systemManagement = new GUIKIT::MenuItem;
+        sM.systemManagement->setIcon( systemImage );
+        sM.systemManagement->onActivate = [emuConfigView]() {
+		    emuConfigView->show(EmuConfigView::TabWindow::Layout::System);
+	    };
+        sM.system->append( *sM.systemManagement );
+		
+		if(!GUIKIT::Application::isCocoa()) {
 
-        if ( dynamic_cast<LIBC64::Interface*>(emulator)) {
-            sM.palette = new GUIKIT::MenuItem;
-            sM.palette->setIcon(paletteImage);
-            sM.palette->onActivate = [emuConfigView]() {
-                emuConfigView->show(EmuConfigView::TabWindow::Layout::Palette);
-            };
-            sM.system->append(*sM.palette);
-        }
-        
-        sM.border = new GUIKIT::MenuItem;
-        sM.border->setIcon( cropImage );
-        sM.border->onActivate = [emuConfigView]() {
-		    emuConfigView->show(EmuConfigView::TabWindow::Layout::Border);
-	    };
-        sM.system->append( *sM.border );
-        
-        sM.shaderMenu = new GUIKIT::Menu;
-        sM.shaderMenu->setIcon( colorImage );
-        sM.system->append( *sM.shaderMenu );
+			sM.saveState = new GUIKIT::MenuItem;
+			sM.saveState->setIcon( scriptImage );
+			sM.saveState->onActivate = [emuConfigView]() {
+				emuConfigView->show(EmuConfigView::TabWindow::Layout::States);
+			};
+			sM.system->append( *sM.saveState );
+
+			sM.presentation = new GUIKIT::MenuItem;
+			sM.presentation->setIcon( displayImage );
+			sM.presentation->onActivate = [emuConfigView]() {
+				emuConfigView->show(EmuConfigView::TabWindow::Layout::Presentaion);
+			};
+			sM.system->append( *sM.presentation );
+
+			if ( dynamic_cast<LIBC64::Interface*>(emulator)) {
+				sM.palette = new GUIKIT::MenuItem;
+				sM.palette->setIcon(paletteImage);
+				sM.palette->onActivate = [emuConfigView]() {
+					emuConfigView->show(EmuConfigView::TabWindow::Layout::Palette);
+				};
+				sM.system->append(*sM.palette);
+			}
+
+			sM.firmware = new GUIKIT::MenuItem;
+			sM.firmware->setIcon( firmwareImage );
+			sM.firmware->onActivate = [emuConfigView]() {
+				emuConfigView->show(EmuConfigView::TabWindow::Layout::Firmware);
+			};
+			sM.system->append( *sM.firmware );
+
+			sM.border = new GUIKIT::MenuItem;
+			sM.border->setIcon( cropImage );
+			sM.border->onActivate = [emuConfigView]() {
+				emuConfigView->show(EmuConfigView::TabWindow::Layout::Border);
+			};
+			sM.system->append( *sM.border );
+
+			sM.diskSwapper = new GUIKIT::MenuItem;
+			sM.diskSwapper->setIcon( swapperImage );
+			sM.diskSwapper->onActivate = [emuConfigView]() {
+				emuConfigView->show(EmuConfigView::TabWindow::Layout::Swapper);
+			};
+			sM.system->append( *sM.diskSwapper );
+		}
+		
+		sM.system->append(*GUIKIT::MenuSeparator::getInstance());						
         
         sM.regionMenu = new GUIKIT::Menu;
         sM.regionMenu->setIcon( regionImage );
@@ -665,51 +694,21 @@ auto View::buildMenu() -> void {
             if (activeEmulator)
                 program->power(activeEmulator);
         };
-        
-        sM.system->append(*GUIKIT::MenuSeparator::getInstance());
-        
-        sM.media = new GUIKIT::MenuItem;
-        sM.media->setIcon( driveImage );
-        sM.media->onActivate = [mediaView]() {
-		    mediaView->show();
-	    };
-        sM.system->append( *sM.media );
-        
-        sM.firmware = new GUIKIT::MenuItem;
-        sM.firmware->setIcon( firmwareImage );
-        sM.firmware->onActivate = [emuConfigView]() {
-		    emuConfigView->show(EmuConfigView::TabWindow::Layout::Firmware);
-	    };
-        sM.system->append( *sM.firmware );
+        	
+		sM.shaderMenu = new GUIKIT::Menu;
+        sM.shaderMenu->setIcon( colorImage );
+        sM.system->append( *sM.shaderMenu );
+		
+		if(!GUIKIT::Application::isCocoa()) {
+			sM.system->append(*GUIKIT::MenuSeparator::getInstance());
 
-        sM.diskSwapper = new GUIKIT::MenuItem;
-        sM.diskSwapper->setIcon( swapperImage );
-        sM.diskSwapper->onActivate = [emuConfigView]() {
-		    emuConfigView->show(EmuConfigView::TabWindow::Layout::Swapper);
-	    };
-        sM.system->append( *sM.diskSwapper );
-        sM.system->append(*GUIKIT::MenuSeparator::getInstance());       
-        
-        sM.systemManagement = new GUIKIT::MenuItem;
-        sM.systemManagement->setIcon( systemImage );
-        sM.systemManagement->onActivate = [emuConfigView]() {
-		    emuConfigView->show(EmuConfigView::TabWindow::Layout::System);
-	    };
-        sM.system->append( *sM.systemManagement );
-        sM.saveState = new GUIKIT::MenuItem;
-        sM.saveState->setIcon( scriptImage );
-        sM.saveState->onActivate = [emuConfigView]() {
-		    emuConfigView->show(EmuConfigView::TabWindow::Layout::States);
-	    };
-        sM.system->append( *sM.saveState );
-
-        sM.system->append(*GUIKIT::MenuSeparator::getInstance());
-        sM.exit = new GUIKIT::MenuItem;
-        sM.exit->setIcon( quitImage );
-        sM.exit->onActivate = [this]() {
-		    onClose();
-	    };	
-        sM.system->append( *sM.exit );
+			sM.exit = new GUIKIT::MenuItem;
+			sM.exit->setIcon( quitImage );
+			sM.exit->onActivate = [this]() {
+				onClose();
+			};	
+			sM.system->append( *sM.exit );
+		}
         
         sysMenus.push_back( sM );
         
@@ -720,14 +719,14 @@ auto View::buildMenu() -> void {
             
         InputMenu iM;
         iM.emulator = emulator;
-        iM.input = new GUIKIT::Menu;
-        iM.input->setIcon(joystickImage);
+        iM.control = new GUIKIT::Menu;
+        iM.control->setIcon(joystickImage);
         inputMenus.push_back(iM);
         
         if (dynamic_cast<LIBAMI::Interface*> (emulator))
-            iM.input->setEnabled(false);
+            iM.control->setEnabled(false);
             
-        append(*iM.input);
+        append(*iM.control);
     }
     
     optionsMenu.setIcon(toolsImage);
@@ -886,7 +885,7 @@ auto View::translate() -> void {
         sysMenu.diskSwapper->setText(trans->get("disk_swapper"));
         sysMenu.systemManagement->setText(trans->get("system_management"));
         sysMenu.saveState->setText(trans->get("states"));
-        sysMenu.video->setText(trans->get("Video"));
+        sysMenu.presentation->setText(trans->get("Presentation"));
         sysMenu.palette->setText(trans->get("Palette"));
         sysMenu.border->setText(trans->get("Border"));
         sysMenu.shaderMenu->setText(trans->get("Shader"));
@@ -897,13 +896,10 @@ auto View::translate() -> void {
     }    
     
     for(auto& iM : inputMenus) {
-        iM.input->setText( trans->get("input") );
+        iM.control->setText( trans->get("control") );
     }
     
     optionsMenu.setText( trans->get("options"));
-//    filterMenu.setText( trans->get("filter"));
-  //  videoNearestItem.setText( trans->get("Video Nearest") );
-    //videoLinearItem.setText( trans->get("Video Linear") );
 
 	if(!GUIKIT::Application::isCocoa()) {
 		videoItem.setText( trans->get("video") );

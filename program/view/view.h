@@ -21,7 +21,7 @@ struct View : public GUIKIT::Window {
         GUIKIT::MenuItem* systemManagement;
         GUIKIT::MenuItem* saveState;
         GUIKIT::Menu* shaderMenu;
-        GUIKIT::MenuItem* video;
+        GUIKIT::MenuItem* presentation;
         GUIKIT::MenuItem* palette;
         GUIKIT::Menu* regionMenu;
             GUIKIT::MenuRadioItem* pal;
@@ -72,7 +72,7 @@ struct View : public GUIKIT::Window {
     
     struct InputMenu {
         Emulator::Interface* emulator;
-        GUIKIT::Menu* input;
+        GUIKIT::Menu* control;
         
         std::vector<InputDevice> inputDevices;
     };

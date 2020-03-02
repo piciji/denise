@@ -35,7 +35,6 @@ namespace Fonts {
 	
 #include "layouts/input.cpp"
 #include "layouts/system.cpp"
-//#include "layouts/media.cpp"
 #include "layouts/video.cpp"
 #include "layouts/border.cpp"
 #include "layouts/states.cpp"
@@ -98,9 +97,9 @@ auto TabWindow::build() -> void {
                                             
 
     tab.setLayout(Layout::System, *systemLayout, {~0u, ~0u} );
-	tab.setLayout(Layout::Input, *inputLayout, {~0u, ~0u} );
+	tab.setLayout(Layout::Control, *inputLayout, {~0u, ~0u} );
 	tab.setLayout(Layout::States, *statesLayout, {~0u, ~0u} );    
-	tab.setLayout(Layout::Video, *videoLayout, {~0u, ~0u} );
+	tab.setLayout(Layout::Presentation, *videoLayout, {~0u, ~0u} );
 	if (emulator->ident == "C64")
         tab.setLayout(Layout::Palette, *paletteLayout, {~0u, ~0u} );
 
@@ -153,11 +152,11 @@ auto TabWindow::translate() -> void {
     if (paletteLayout)
         paletteLayout->translate();
 
-    tab.setHeader(Layout::Input, trans->get("input"));
+    tab.setHeader(Layout::Control, trans->get("control"));
     tab.setHeader(Layout::System, trans->get("system"));
     tab.setHeader(Layout::Firmware, trans->get("firmware"));
     tab.setHeader(Layout::Border, trans->get("border"));
-    tab.setHeader(Layout::Video, trans->get("video"));
+    tab.setHeader(Layout::Presentation, trans->get("presentation"));
     tab.setHeader(Layout::States, trans->get("states"));
     tab.setHeader(Layout::Swapper, trans->get("disk_swapper"));
     if (emulator->ident == "C64")

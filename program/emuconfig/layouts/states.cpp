@@ -50,8 +50,10 @@ StatesLayout::StatesLayout(TabWindow* tabWindow) {
     append(directSave,{~0u, 0u}, 10);
     append(statePath,{~0u, 0u});
 	
-	fastSave.top.hotkeys.onActivate = []() {
-		configView->show( ConfigView::TabWindow::Layout::Input );
+	fastSave.top.hotkeys.onActivate = [this]() {		
+		auto emuConfigView = EmuConfigView::TabWindow::getView( this->emulator );
+		emuConfigView->show(EmuConfigView::TabWindow::Layout::Control);
+		emuConfigView->inputLayout->triggerHotkeyMode();
 	};
 	
 	fastSave.top.edit.onChange = [this]() {

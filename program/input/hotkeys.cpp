@@ -56,13 +56,13 @@ auto InputManager::setCustomHotkeys() -> void {
 
 	customHotkeys.push_back( {Hotkey::Id::Software, "Software", true} );	
     customHotkeys.push_back( {Hotkey::Id::System, "System", true} );
+	customHotkeys.push_back( {Hotkey::Id::Control, "Control", true} );
+	customHotkeys.push_back( {Hotkey::Id::States, "States", true} );
+	customHotkeys.push_back( {Hotkey::Id::Presentation, "Presentation", true} );
+	customHotkeys.push_back( {Hotkey::Id::Palette, "Palette", true} );
     customHotkeys.push_back( {Hotkey::Id::Firmware, "Firmware", true} );
-    customHotkeys.push_back( {Hotkey::Id::DiskSwapper, "Disk_swapper", true} );
-    customHotkeys.push_back( {Hotkey::Id::States, "States", true} );    
-    customHotkeys.push_back( {Hotkey::Id::Video, "Video", true} );
-    customHotkeys.push_back( {Hotkey::Id::Palette, "Palette", true} );
-    customHotkeys.push_back( {Hotkey::Id::Border, "Border", true} );
-    customHotkeys.push_back( {Hotkey::Id::Input, "Input", true} );
+	customHotkeys.push_back( {Hotkey::Id::Border, "Border", true} );
+    customHotkeys.push_back( {Hotkey::Id::DiskSwapper, "Disk_swapper", true} );                        
 }
 
 auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> void {
@@ -152,12 +152,12 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
         }
         case Hotkey::Id::DiskSwapper:
         case Hotkey::Id::Software:
-        case Hotkey::Id::Video:
+        case Hotkey::Id::Presentation:
         case Hotkey::Id::Palette:
         case Hotkey::Id::Border:
         case Hotkey::Id::Firmware:
         case Hotkey::Id::System:
-        case Hotkey::Id::Input:
+        case Hotkey::Id::Control:
 		case Hotkey::Id::States:	
             openMenu( emulator, id );
             break;
@@ -336,12 +336,12 @@ auto InputManager::pollHotkeys() -> void {
 			
 			case Hotkey::Id::DiskSwapper:
 			case Hotkey::Id::Software:
-			case Hotkey::Id::Video:
+			case Hotkey::Id::Presentation:
 			case Hotkey::Id::Palette:
 			case Hotkey::Id::Border:
 			case Hotkey::Id::Firmware:
 			case Hotkey::Id::System:
-			case Hotkey::Id::Input:
+			case Hotkey::Id::Control:
 			case Hotkey::Id::States:
 				if (!useEmu) 
 					useEmu = program->getLastUsedEmu();				
@@ -455,8 +455,8 @@ auto InputManager::openMenu( Emulator::Interface* emulator, Hotkey::Id id ) -> v
     auto configView = EmuConfigView::TabWindow::getView( emulator );
     
     switch(id) {
-        case Hotkey::Id::Video:
-            configView->showDelayed( EmuConfigView::TabWindow::Layout::Video ); break;
+        case Hotkey::Id::Presentation:
+            configView->showDelayed( EmuConfigView::TabWindow::Layout::Presentation ); break;
         case Hotkey::Id::Border:
             configView->showDelayed( EmuConfigView::TabWindow::Layout::Border ); break;
         case Hotkey::Id::Palette:
@@ -469,8 +469,8 @@ auto InputManager::openMenu( Emulator::Interface* emulator, Hotkey::Id id ) -> v
             configView->showDelayed(EmuConfigView::TabWindow::Layout::System); break;
         case Hotkey::Id::Firmware:
             configView->showDelayed( EmuConfigView::TabWindow::Layout::Firmware ); break;
-        case Hotkey::Id::Input:
-            configView->showDelayed( EmuConfigView::TabWindow::Layout::Input ); break;
+        case Hotkey::Id::Control:
+            configView->showDelayed( EmuConfigView::TabWindow::Layout::Control ); break;
 		case Hotkey::Id::States:
             configView->showDelayed( EmuConfigView::TabWindow::Layout::States ); break;
     }

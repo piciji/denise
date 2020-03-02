@@ -72,6 +72,7 @@ struct InputLayout : GUIKIT::VerticalLayout {
     auto mapSelected( bool alternate = false ) -> void;
     auto updateAnalogSensitivity() -> void;
 	auto hotkeyMode() -> bool;
+	auto triggerHotkeyMode() -> void;
     
     InputSelector selector;
     InputControl control;

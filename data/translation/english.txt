@@ -447,4 +447,5 @@ save_preferences = Save Preferences
 rf_modulation = RF-Modulation
 swap_char = Swap Char-Rom
 swap = swap
-
+presentation = Presentation
+control = Control

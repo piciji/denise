@@ -25,7 +25,7 @@ struct TabWindow;
 
 struct TabWindow : public GUIKIT::Window {
     
-    enum Layout : unsigned { System, Input, States, Video, Palette, Firmware, Border, Swapper };
+    enum Layout : unsigned { System, Control, States, Presentation, Palette, Firmware, Border, Swapper };
     
     Emulator::Interface* emulator;
     
