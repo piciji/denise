@@ -72,13 +72,13 @@ struct View : public GUIKIT::Window {
     
     struct InputMenu {
         Emulator::Interface* emulator;
-        GUIKIT::Menu* control;
         
         std::vector<InputDevice> inputDevices;
     };
 
     std::vector<InputMenu> inputMenus;
 
+    GUIKIT::Menu controlMenu;
     GUIKIT::Menu optionsMenu;
 			
 		GUIKIT::MenuItem audioItem;			

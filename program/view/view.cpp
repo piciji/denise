@@ -329,9 +329,9 @@ auto View::setConnectors() -> void {
     GUIKIT::Menu* connectorMenu;
     GUIKIT::MenuItem* inputItem;
     
+    removeMenuTree( &controlMenu );
+    
     for(auto& iM : inputMenus) {
-        
-        removeMenuTree( iM.control );
         
         iM.inputDevices.clear();
         
@@ -340,7 +340,7 @@ auto View::setConnectors() -> void {
         for(auto& connector : emulator->connectors) {
 
             connectorMenu = new GUIKIT::Menu;
-            connectorMenu->setText( trans->get( connector.name ) );
+            connectorMenu->setText(emulator->ident + " " + trans->get( connector.name ) );
             connectorMenu->setIcon(plugImage);
             connectorMenu->setVisible();
 
@@ -353,7 +353,7 @@ auto View::setConnectors() -> void {
                     continue;
 
                 auto item = new GUIKIT::MenuRadioItem;
-                item->setText(trans->get(device.name));
+                item->setText( trans->get(device.name));
 
                 item->onActivate = [emulator, connector, device]() {
                     settings->set<unsigned>(program->ident(emulator, connector.name), device.id);
@@ -375,13 +375,14 @@ auto View::setConnectors() -> void {
             if (checkItem)
                 checkItem->setChecked();
 
-            iM.control->append(*connectorMenu);
+            controlMenu.append(*connectorMenu);
+            
+            if ( !dynamic_cast<LIBC64::Interface*>(emulator))
+                connectorMenu->setEnabled(false);
         }
         
-        iM.control->append( *new GUIKIT::MenuSeparator );
-        
         inputItem = new GUIKIT::MenuItem;
-		inputItem->setText( trans->get("swap_devices") );
+		inputItem->setText(emulator->ident + " " + trans->get("swap_devices") );
         
         inputItem->onActivate = [emulator]() {
             
@@ -404,19 +405,25 @@ auto View::setConnectors() -> void {
         };
         
         inputItem->setIcon(swapperImage);
-        iM.control->append(*inputItem);
+        controlMenu.append(*inputItem);
+        if ( !dynamic_cast<LIBC64::Interface*>(emulator))
+            inputItem->setEnabled(false);
         
 		if(!GUIKIT::Application::isCocoa()) {
 			inputItem = new GUIKIT::MenuItem;
-			inputItem->setText( trans->get("config") );
+			inputItem->setText(emulator->ident + " " + trans->get("config") );
 
 			inputItem->onActivate = [emulator]() {
 				auto emuConfigView = EmuConfigView::TabWindow::getView( emulator );
 				emuConfigView->show(EmuConfigView::TabWindow::Layout::Control);
 			};
 			inputItem->setIcon(toolsImage);
-			iM.control->append(*inputItem); 
+			controlMenu.append(*inputItem);
+            if ( !dynamic_cast<LIBC64::Interface*>(emulator))
+                inputItem->setEnabled(false);
+
 		}
+        controlMenu.append( *new GUIKIT::MenuSeparator );
     }
 }
 
@@ -719,16 +726,12 @@ auto View::buildMenu() -> void {
             
         InputMenu iM;
         iM.emulator = emulator;
-        iM.control = new GUIKIT::Menu;
-        iM.control->setIcon(joystickImage);
         inputMenus.push_back(iM);
-        
-        if (dynamic_cast<LIBAMI::Interface*> (emulator))
-            iM.control->setEnabled(false);
-            
-        append(*iM.control);
     }
-    
+
+    controlMenu.setIcon(joystickImage);
+    append(controlMenu);
+
     optionsMenu.setIcon(toolsImage);
     append(optionsMenu);
 
@@ -899,9 +902,7 @@ auto View::translate() -> void {
             sysMenu.exit->setText(trans->get("Exit"));
     }    
     
-    for(auto& iM : inputMenus) {
-        iM.control->setText( trans->get("control") );
-    }
+    controlMenu.setText( trans->get("control") );
     
     optionsMenu.setText( trans->get("options"));
 
