@@ -746,7 +746,7 @@ auto MediaWindow::translate() -> void {
     
     unsigned i = 0;
 	
-	setTitle( trans->get("software") );
+	setTitle( trans->get("software") + " - " + emulator->ident );
     for(auto& tab : tabs)
         tabView.setHeader(i++, trans->get(tab));
 

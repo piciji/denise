@@ -90,7 +90,7 @@ auto TabWindow::build() -> void {
 }
 
 auto TabWindow::translate() -> void {
-    setTitle( trans->get("config") );
+    setTitle( APP_NAME " " + trans->get("settings") );
 
 	inputLayout->translate();
     settingsLayout->translate();
@@ -100,9 +100,7 @@ auto TabWindow::translate() -> void {
     tab.setHeader(Layout::Video, trans->get("video"));
     tab.setHeader(Layout::Audio, trans->get("audio"));
     tab.setHeader(Layout::Input, trans->get("input"));
-	tab.setHeader(Layout::Settings, 
-		trans->get( GUIKIT::Application::isCocoa() ? "generic" : "settings")
-	);
+	tab.setHeader(Layout::Settings, trans->get( "generic" ));
 }
 
 auto TabWindow::showDelayed(Layout layout) -> void {
