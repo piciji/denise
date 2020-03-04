@@ -47,6 +47,7 @@ struct pWindow {
     auto sizeEvent() -> void;
     auto fullScreenToggleDelayed() -> bool { return fullScreenToggleDelay; }
     auto setTitleForAppMenuItem(Window::Cocoa::AppMenuItem appMenuItem, std::string title) -> void;
+    auto setHiddenForAppMenuItem(Window::Cocoa::AppMenuItem appMenuItem, bool state) -> void;
     auto isOffscreen() -> bool { return false; } 
     auto handle() -> uintptr_t;
     auto changeCursor( Image& image, unsigned hotSpotX, unsigned hotSpotY ) -> void;

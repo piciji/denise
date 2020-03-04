@@ -53,7 +53,7 @@ std::string Application::name = "";
 std::function<void ()> Application::loop = nullptr;
 std::function<void ()> Application::Cocoa::onAbout;
 std::function<void ()> Application::Cocoa::onPreferences;
-std::function<void ()> Application::Cocoa::onSavePreferences;
+std::function<void ()> Application::Cocoa::onCustom1;
 std::function<void ()> Application::Cocoa::onQuit;
 std::function<void ()> Application::Cocoa::onDock;
 std::function<void (std::string fileName)> Application::Cocoa::onOpenFile;
@@ -324,6 +324,13 @@ auto Window::Cocoa::setTitleForAppMenuItem(AppMenuItem appMenuItem, std::string 
 #endif
 }
 
+auto Window::Cocoa::setHiddenForAppMenuItem(AppMenuItem appMenuItem, bool state) -> void {
+    if (_A::dummy) return;
+#if GUIKIT_COCOA
+    window.p.setHiddenForAppMenuItem(appMenuItem, state);
+#endif
+}
+    
 auto Window::Cocoa::keepMenuVisibilityOnDisplay(bool state) -> void {
     if (_A::dummy) return;
 #if GUIKIT_COCOA
@@ -1097,3 +1104,4 @@ auto System::printToCmd( std::string str ) -> void {
 }
 
 }
+

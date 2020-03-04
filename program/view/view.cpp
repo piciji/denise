@@ -131,7 +131,7 @@ auto View::build() -> void {
         configView->show(ConfigView::TabWindow::Layout::Settings);
     };
     	
-	GUIKIT::Application::Cocoa::onSavePreferences = [this]() {
+	GUIKIT::Application::Cocoa::onCustom1 = [this]() {
 		program->saveSettings();
 	};
 	
@@ -605,7 +605,7 @@ auto View::buildMenu() -> void {
 			sM.presentation = new GUIKIT::MenuItem;
 			sM.presentation->setIcon( displayImage );
 			sM.presentation->onActivate = [emuConfigView]() {
-				emuConfigView->show(EmuConfigView::TabWindow::Layout::Presentaion);
+				emuConfigView->show(EmuConfigView::TabWindow::Layout::Presentation);
 			};
 			sM.system->append( *sM.presentation );
 
@@ -880,19 +880,23 @@ auto View::translate() -> void {
         sysMenu.reset->setText(trans->get("Soft Reset"));
         sysMenu.poweroff->setText(trans->get("power_off"));
         sysMenu.freeze->setText(trans->get("Freeze"));
-        sysMenu.firmware->setText(trans->get("Firmware"));
         sysMenu.media->setText(trans->get("Software"));
-        sysMenu.diskSwapper->setText(trans->get("disk_swapper"));
         sysMenu.systemManagement->setText(trans->get("system_management"));
-        sysMenu.saveState->setText(trans->get("states"));
-        sysMenu.presentation->setText(trans->get("Presentation"));
-        sysMenu.palette->setText(trans->get("Palette"));
-        sysMenu.border->setText(trans->get("Border"));
+
+        if(!GUIKIT::Application::isCocoa()) {
+            sysMenu.firmware->setText(trans->get("Firmware"));
+            sysMenu.diskSwapper->setText(trans->get("disk_swapper"));
+            sysMenu.saveState->setText(trans->get("states"));
+            sysMenu.presentation->setText(trans->get("Presentation"));
+            sysMenu.palette->setText(trans->get("Palette"));
+            sysMenu.border->setText(trans->get("Border"));
+        }
         sysMenu.shaderMenu->setText(trans->get("Shader"));
         sysMenu.regionMenu->setText( trans->get("region") );
         sysMenu.pal->setText( "PAL" );
         sysMenu.ntsc->setText( "NTSC" );
-        sysMenu.exit->setText(trans->get("Exit"));
+        if(!GUIKIT::Application::isCocoa())
+            sysMenu.exit->setText(trans->get("Exit"));
     }    
     
     for(auto& iM : inputMenus) {
@@ -915,8 +919,9 @@ auto View::translate() -> void {
     muteItem.setText( trans->get("mute_audio"));
     fpsItem.setText( trans->get("show_fps"));
     audioBufferItem.setText( trans->get("show_audio_buffer"));
-    	
-    saveItem.setText( trans->get("save_preferences"));
+    
+    if(!GUIKIT::Application::isCocoa())
+        saveItem.setText( trans->get("save_preferences"));
 	
 	tapeControlMenu.setText( trans->get("Datasette") );
 	tapePlayItem.setText( trans->get("tape_play_key") );
@@ -931,11 +936,14 @@ auto View::translate() -> void {
     //osx extra menu
     cocoa.setTitleForAppMenuItem(GUIKIT::Window::Cocoa::AppMenuItem::About, trans->get("about", {{"%app%", APP_NAME}}));
     cocoa.setTitleForAppMenuItem(GUIKIT::Window::Cocoa::AppMenuItem::Preferences, trans->get("preferences"));
-	cocoa.setTitleForAppMenuItem(GUIKIT::Window::Cocoa::AppMenuItem::SavePreferences, trans->get("save_preferences"));		
+	cocoa.setTitleForAppMenuItem(GUIKIT::Window::Cocoa::AppMenuItem::Custom1, trans->get("save_preferences"));
     cocoa.setTitleForAppMenuItem(GUIKIT::Window::Cocoa::AppMenuItem::Hide, trans->get("hide_app", {{"%app%", APP_NAME}}));
     cocoa.setTitleForAppMenuItem(GUIKIT::Window::Cocoa::AppMenuItem::HideOthers, trans->get("hide_others"));
     cocoa.setTitleForAppMenuItem(GUIKIT::Window::Cocoa::AppMenuItem::ShowAll, trans->get("show_all"));
-    cocoa.setTitleForAppMenuItem(GUIKIT::Window::Cocoa::AppMenuItem::Quit, trans->get("quit", {{"%app%", APP_NAME}}));          
+    cocoa.setTitleForAppMenuItem(GUIKIT::Window::Cocoa::AppMenuItem::Quit, trans->get("quit", {{"%app%", APP_NAME}}));
+    
+    //cocoa.setHiddenForAppMenuItem(GUIKIT::Window::Cocoa::AppMenuItem::Custom1, true);
+
 }
 
 auto View::getViewportHandle() -> uintptr_t {

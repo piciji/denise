@@ -1,6 +1,6 @@
 
 /**
- * v 1.2.
+ * v 1.3
  * guikit is a fork of higans old phoenix library (not used anymore), https://byuu.org/
  * it's rewritten from scratch and fixes more than 50 bugs.
  * differences are mostly widget nesting, menu/status toggling during fullscreen and
@@ -152,7 +152,7 @@ struct Application {
     struct Cocoa {
         static std::function<void ()> onAbout;
         static std::function<void ()> onPreferences;
-		static std::function<void ()> onSavePreferences;
+		static std::function<void ()> onCustom1;
         static std::function<void ()> onQuit;
         static std::function<void ()> onDock;
         static std::function<void (std::string fileName)> onOpenFile;
@@ -170,8 +170,9 @@ struct Window : Base {
 
     struct Cocoa {
         Window& window;
-        enum AppMenuItem : unsigned { About = 0, Preferences = 2, SavePreferences = 3, Hide = 5, HideOthers = 6, ShowAll = 7, Quit = 9 };
+        enum AppMenuItem : unsigned { About = 0, Preferences = 2, Custom1 = 3, Hide = 5, HideOthers = 6, ShowAll = 7, Quit = 9 };
         auto setTitleForAppMenuItem(AppMenuItem appMenuItem, std::string title) -> void;
+        auto setHiddenForAppMenuItem(AppMenuItem appMenuItem, bool state) -> void;
         auto keepMenuVisibilityOnDisplay(bool state = true) -> void;
         auto setDisableIconsInTopMenu(bool state) -> void;
         Cocoa(Window& window) : window(window) {}

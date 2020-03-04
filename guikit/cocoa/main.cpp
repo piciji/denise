@@ -97,7 +97,7 @@
         [item setTarget:self];
         [appMenu addItem:item];
 		
-		item = [[[NSMenuItem alloc] initWithTitle:@"Save Preferences" action:@selector(menuSavePreferences) keyEquivalent:@""] autorelease];
+		item = [[[NSMenuItem alloc] initWithTitle:@"Custom1" action:@selector(menuCustom1) keyEquivalent:@""] autorelease];
         [item setTarget:self];
         [appMenu addItem:item];
 		
@@ -162,7 +162,8 @@
 }
 
 -(void) windowDidBecomeMain:(NSNotification*)notification {
-    [NSApp setMainMenu:menuBar];
+    if (window->state.menus.size() > 0)
+        [NSApp setMainMenu:menuBar];
 }
 
 -(void) windowDidMove:(NSNotification*)notification {
@@ -228,9 +229,9 @@
     if(Application::Cocoa::onPreferences) Application::Cocoa::onPreferences();
 }
 
--(void) menuSavePreferences {
+-(void) menuCustom1 {
     using GUIKIT::Application;
-    if(Application::Cocoa::onSavePreferences) Application::Cocoa::onSavePreferences();
+    if(Application::Cocoa::onCustom1) Application::Cocoa::onCustom1();
 }
 
 -(void) menuQuit {
@@ -254,10 +255,14 @@
 namespace GUIKIT {
 
 CocoaDelegate* pApplication::cocoaDelegate = nullptr;
+    NSTimer* appTimer = nullptr;
 
 auto pApplication::run() -> void {
     if(Application::loop) {
-        NSTimer* timer = [NSTimer scheduledTimerWithTimeInterval:0.0 target:cocoaDelegate selector:@selector(run:) userInfo:nil repeats:YES];
+        appTimer = [NSTimer scheduledTimerWithTimeInterval:0.0 target:cocoaDelegate selector:@selector(run:) userInfo:nil repeats:YES];
+        
+        // prevent blocking while menu popups
+        [[NSRunLoop currentRunLoop] addTimer:appTimer forMode:NSEventTrackingRunLoopMode];
     }
 
     @autoreleasepool {
@@ -279,6 +284,7 @@ auto pApplication::processEvents() -> void {
 
 auto pApplication::quit() -> void {
     @autoreleasepool {
+        [appTimer invalidate];
         [NSApp stop:nil];
         NSEvent* event = [NSEvent otherEventWithType:NSApplicationDefined location:NSMakePoint(0, 0) modifierFlags:0 timestamp:0.0 windowNumber:0 context:nil subtype:0 data1:0 data2:0];
         [NSApp postEvent:event atStart:true];
@@ -297,6 +303,13 @@ auto pApplication::initialize() -> void {
 pWindow::pWindow(Window& window) : window(window) {
     @autoreleasepool {
         cocoaWindow = [[CocoaWindow alloc] initWith:window];
+        
+        static bool once = true;
+        
+        if (once) {
+            once = false;
+            [NSApp setMainMenu:[cocoaWindow menuBar]];
+        }
     }
 }
 
@@ -312,6 +325,10 @@ auto pWindow::handle() -> uintptr_t {
 
 auto pWindow::setTitleForAppMenuItem(Window::Cocoa::AppMenuItem appMenuItem, std::string title) -> void {
     [[[[[cocoaWindow menuBar] itemAtIndex:0] submenu] itemAtIndex:appMenuItem] setTitle:[NSString stringWithUTF8String:title.c_str()]];
+}
+    
+auto pWindow::setHiddenForAppMenuItem(Window::Cocoa::AppMenuItem appMenuItem, bool state) -> void {
+    [[[[[cocoaWindow menuBar] itemAtIndex:0] submenu] itemAtIndex:appMenuItem] setHidden: state];
 }
 
 auto pWindow::setDroppable(bool droppable) -> void {
