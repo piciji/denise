@@ -118,11 +118,13 @@ for:
     - sh: sudo mkdir -p out/data
     - sh: sudo mkdir -p out/fonts
     - sh: sudo mkdir -p out/shader
+    #- sh: sudo mkdir -p out/img
     - sh: sudo cp data/img/denise.png out/
     - sh: sudo cp data/denise.desktop out/
     - sh: sudo cp data/translation/* out/translation/
     - sh: sudo cp data/data/* out/data/
     - sh: sudo cp data/fonts/*.ttf out/fonts/
+    #- sh: sudo cp data/img/bundle/* out/img/
     - sh: sudo cp -r data/shader/* out/shader/
     - sh: sudo cp data/install.sh out/
     - sh: |
@@ -153,7 +155,6 @@ for:
     #- sh: brew install pkg-config    
     - sh: sudo easy_install pip && sudo pip install dmgbuild
     - sh: brew install sdl2
-    - sh: brew install libpng
     
   cache:
     - freetype-2.9.1.tar.gz
@@ -163,7 +164,7 @@ for:
     
   build_script:
     - sh: cd freetype-2.9.1
-    - sh: ./configure --enable-static --without-zlib --without-bzip2 && make && make install
+    - sh: ./configure --enable-static --without-zlib --without-bzip2 --without-png && make && make install
     - sh: cd ..  
     - sh: make && make install
     
