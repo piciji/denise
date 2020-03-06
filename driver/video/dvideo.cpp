@@ -1,5 +1,6 @@
 
 #include "../tools/win.h"
+#include "../tools/tools.h"
 #include <d3d9.h>
 #include <d3dx9.h>
 #include <math.h>
@@ -20,8 +21,8 @@ struct DVideo : Video {
 	std::vector<LPD3DXEFFECT> effects;
 	ID3DXFont* mFont;
 	const unsigned FONT_WIDTH = 1024;
-	unsigned textureWidth;
-	unsigned textureHeight;
+	unsigned textureWidth = 0;
+	unsigned textureHeight = 0;
 
     unsigned inputWidth, inputHeight;
 	RECT outScreen;
@@ -190,10 +191,6 @@ struct DVideo : Video {
 		textureWidth = 0;
 		textureHeight = 0;
 		resize(inputWidth = 256, inputHeight = 256);
-		
-//		if (texture) texture->Release();
-//		lpD3DDevice->CreateTexture(512, 1024, 1, flags.t_usage, D3DFMT_X8R8G8B8,
-//				static_cast<D3DPOOL> (flags.t_pool), &texture, NULL);
 
 		D3DXCreateFont(lpD3DDevice, 15, 0, 0, 0, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS,
 				DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE, TEXT("Source Code Pro"), &mFont);
@@ -270,7 +267,7 @@ struct DVideo : Video {
 
 		lpD3DDevice->GetDeviceCaps(&d3dcaps);
 
-		caps.dynamic = bool(d3dcaps.Caps2 & D3DCAPS2_DYNAMICTEXTURES);
+		caps.dynamic = !!(d3dcaps.Caps2 & D3DCAPS2_DYNAMICTEXTURES);
 		caps.shader = d3dcaps.PixelShaderVersion > D3DPS_VERSION(1, 4);
 
 		if (caps.dynamic) {
@@ -317,7 +314,7 @@ struct DVideo : Video {
             return;
 
 		lpD3DDevice->BeginScene();
-		setVertex(inputWidth, inputHeight, 512, 1024, outLeft, outTop, outWidth, outHeight);
+		setVertex(inputWidth, inputHeight, textureWidth, textureHeight, outLeft, outTop, outWidth, outHeight);
 		lpD3DDevice->SetTexture(0, texture);
 
 		if (!disallowShader && caps.shader && effects.size() > 0) {
@@ -435,17 +432,20 @@ struct DVideo : Video {
 	}
 	
 	auto resize(unsigned width, unsigned height) -> void {
-		if(textureWidth >= width && textureHeight >= height) return;
+		//if(textureWidth >= width && textureHeight >= height) return;
 
-		textureWidth = roundUpPowerOfTwo( std::max(width, textureWidth) );
-		textureHeight = roundUpPowerOfTwo( std::max(height, textureHeight) );
+//		textureWidth = roundUpPowerOfTwo( std::max(width, textureWidth) );
+//		textureHeight = roundUpPowerOfTwo( std::max(height, textureHeight) );
+        
+        textureWidth = roundUpPowerOfTwo( width );
+		textureHeight = roundUpPowerOfTwo( height );
 
 		if(d3dcaps.MaxTextureWidth < textureWidth || d3dcaps.MaxTextureWidth < textureHeight) return;
 
 		if(texture)
 			texture->Release();
 		
-		_device->CreateTexture( textureWidth, textureHeight, 1, flags.t_usage, D3DFMT_X8R8G8B8,
+		lpD3DDevice->CreateTexture( textureWidth, textureHeight, 1, flags.t_usage, D3DFMT_X8R8G8B8,
 			static_cast<D3DPOOL> (flags.t_pool), &texture, nullptr);
 	}	  
 	
