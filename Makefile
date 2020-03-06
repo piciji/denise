@@ -8,6 +8,8 @@ name := Denise
 translationFolder := translation
 dataFolder := data
 fontFolder := fonts
+shaderFolder := shader
+imgFolder := img
 prefix := $(HOME)/.local
 target := $(shell g++ --version | grep i686)
 
@@ -25,7 +27,8 @@ objects += m6502 m6510 ciaBase cia6526 vic systemC64 sid tapeC64 inputC64 contro
 objects += cartC64 gameCartC64 actionReplayC64 reuC64 easyFlashC64 retroReplayC64
 objects += via iec prg64 drive1541 m6502custom structure1541
 
-flags := -DAPP_NAME="\"$(name)\"" -DTRANSLATION_FOLDER="\"$(translationFolder)/\"" -DDATA_FOLDER="\"$(dataFolder)/\""
+prgflags := -DAPP_NAME="\"$(name)\"" -DTRANSLATION_FOLDER="\"$(translationFolder)/\"" -DDATA_FOLDER="\"$(dataFolder)/\"" -DSHADER_FOLDER="\"$(shaderFolder)/\"" -DIMG_FOLDER="\"$(imgFolder)/\""
+flags :=
 link :=
 
 ifeq ($(platform),windows)
@@ -130,6 +133,7 @@ obj/m6502custom.o:emulation/libc64/disk/cpu/m6502custom.cpp
 obj/structure1541.o:emulation/libc64/disk/structure/structure.cpp
 
 obj/program.o:		program/program.cpp
+	$(compiler) $(cppflags) $(prgflags) $(flags) $1 -c $< -o $@
 obj/input.o:		program/input/manager.cpp
 obj/view.o:		program/view/view.cpp
 obj/config.o:		program/config/config.cpp
@@ -158,31 +162,17 @@ build: $(objects)
 	mkdir out/$(name).app/Contents/Resources/$(translationFolder)
 	mkdir out/$(name).app/Contents/Resources/$(dataFolder)
 	mkdir out/$(name).app/Contents/Resources/$(fontFolder)
-	mkdir out/$(name).app/Contents/Resources/shader
+	mkdir out/$(name).app/Contents/Resources/$(shaderFolder)
+	mkdir out/$(name).app/Contents/Resources/$(imgFolder)
 
 	cp data/Info.plist out/$(name).app/Contents/Info.plist
 	cp data/$(translationFolder)/* out/$(name).app/Contents/Resources/$(translationFolder)/
 	cp data/$(dataFolder)/* out/$(name).app/Contents/Resources/$(dataFolder)/
 	cp data/$(fontFolder)/*.ttf out/$(name).app/Contents/Resources/$(fontFolder)/
-	cp -r data/shader/* out/$(name).app/Contents/Resources/shader/
+	cp data/$(imgFolder)/bundle/* out/$(name).app/Contents/Resources/$(imgFolder)/
+	cp -r data/shader/* out/$(name).app/Contents/Resources/$(shaderFolder)/
 	
 	cp data/img/$(loname).icns out/$(name).app/Contents/Resources/$(name).icns
-	#sips -s format icns data/img/$(loname).png --out out/$(name).app/Contents/Resources/$(name).icns
-	#if [ -f out/icon.iconset ]; then rm -r out/icon.iconset; fi
-	#mkdir out/icon.iconset
-	#sips data/img/$(loname).png -Z 1024 --out out/icon.iconset/icon_512x512@2x.png
-	#sips data/img/$(loname).png -Z 512 --out out/icon.iconset/icon_512x512.png
-	#sips data/img/$(loname).png -Z 512 --out out/icon.iconset/icon_256x256@2x.png
-	#sips data/img/$(loname).png -Z 256 --out out/icon.iconset/icon_256x256.png
-	#sips data/img/$(loname).png -Z 256 --out out/icon.iconset/icon_128x128@2x.png
-	#sips data/img/$(loname).png -Z 128 --out out/icon.iconset/icon_128x128.png
-	#sips data/img/$(loname).png -Z 64 --out out/icon.iconset/icon_32x32@2x.png
-	#sips data/img/$(loname).png -Z 32 --out out/icon.iconset/icon_32x32.png
-	#sips data/img/$(loname).png -Z 32 --out out/icon.iconset/icon_16x16@2x.png
-	#sips data/img/$(loname).png -Z 16 --out out/icon.iconset/icon_16x16.png
-	#cp data/img/$(loname)_16.png out/icon.iconset/icon_16x16.png
-	#iconutil -c icns out/icon.iconset --output out/$(name).app/Contents/Resources/$(name).icns	
-	#rm -r out/icon.iconset
 
 	$(strip $(compiler) -o out/$(name).app/Contents/MacOS/$(name) $(objects) $(link))
 	
@@ -210,7 +200,8 @@ install:
     ifeq ($(platform),windows)
 	$(call copy,data/$(translationFolder),out/$(translationFolder))	
 	$(call copy,data/$(dataFolder),out/$(dataFolder))
-	$(call copy,data/shader,out/shader, /S)
+	$(call copy,data/$(imgFolder)/bundle,out/$(imgFolder))
+	$(call copy,data/shader,out/$(shaderFolder), /S)
 	$(call copy,readme.md,out)
 
     ifneq ($(findstring i686,$(target)),)
@@ -228,7 +219,8 @@ install:
 	mkdir -p $(prefix)/$(loname)/$(translationFolder)/
 	mkdir -p $(prefix)/$(loname)/$(dataFolder)/
 	mkdir -p $(prefix)/$(loname)/$(fontFolder)/
-	mkdir -p $(prefix)/$(loname)/shader/
+	mkdir -p $(prefix)/$(loname)/$(imgFolder)/
+	mkdir -p $(prefix)/$(loname)/$(shaderFolder)/
 
 	install -D -m 755 out/$(name) $(prefix)/bin/$(name)
 	install -D -m 644 data/img/$(loname).png $(prefix)/share/icons/$(loname).png
@@ -236,7 +228,8 @@ install:
 	install -D -m 644 data/$(translationFolder)/* $(prefix)/$(loname)/$(translationFolder)
 	install -D -m 644 data/$(dataFolder)/* $(prefix)/$(loname)/$(dataFolder)
 	install -D -m 644 data/$(fontFolder)/*.ttf $(prefix)/$(loname)/$(fontFolder)
-	cp -r data/shader/* $(prefix)/$(loname)/shader/
+	install -D -m 644 data/$(imgFolder)/bundle/* $(prefix)/$(loname)/$(imgFolder)
+	cp -r data/$(shaderFolder)/* $(prefix)/$(loname)/$(shaderFolder)/
     endif
 
 uninstall:

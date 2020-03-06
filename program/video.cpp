@@ -22,6 +22,8 @@ auto Program::initVideo() -> void {
         delete videoDriver;
         videoDriver = new DRIVER::Video;
     }
+	
+	videoDriver->setFilter( DRIVER::Video::Filter::Linear );
 
     if (activeVideoManager)
         activeVideoManager->reinitThread(true);    
@@ -37,6 +39,10 @@ auto Program::initVideo() -> void {
 	VideoManager::setIntegerScaling( settings->get<bool>("integer_scaling", false) );
 	VideoManager::setShaderInputPrecision( settings->get<bool>("shader_input_precision", false) );
 	VideoManager::setThreaded( settings->get<bool>("crt_threaded", true) );
+	
+	if (!cmd->debug) {
+		loadPlaceholder();
+	}
 }
 
 auto Program::getVideoDriver() -> std::string {
@@ -70,23 +76,57 @@ auto Program::videoRefresh(const uint16_t* frame, unsigned width, unsigned heigh
         activeVideoManager->renderFrame(frame, width, height, linePitch);
 }
 
-auto Program::blackScreen() -> void {
-    unsigned gpu_pitch;
+auto Program::loadPlaceholder() -> void {
+
+	GUIKIT::File file( imgFolder() + "startscreen.png" );
+	
+	if (!file.open())
+		return;
+	
+	uint8_t* data = file.read();
+	
+	if (!data)
+		return;	
+	
+	if (!placeholder.loadPng( data, file.getSize() ))
+		return;			
+}
+
+auto Program::renderPlaceholder() -> void {
+		
+	if (cmd->debug || isRunning)
+		return;
+	
+	unsigned gpu_pitch;
     unsigned* gpu_data = 0;
     unsigned _w, _h;
+	uint8_t* data = placeholder.data;	
+	
+	if (!placeholder.empty()) {
+		if (videoDriver->lock(gpu_data, gpu_pitch, placeholder.width, placeholder.height)) {
 
-    if (videoDriver->lock(gpu_data, gpu_pitch, 512, 512)) {
+			for (_h = 0; _h < placeholder.height; _h++) {
+				for (_w = 0; _w < placeholder.width; _w++) {
+					*gpu_data++ = data[0] << 16 | data[1] << 8 | data[2];
+					data += 4;
+				}
+				gpu_data += gpu_pitch - (placeholder.width );
+			}
+		}
+	} else { // blackscreen
+		if (videoDriver->lock(gpu_data, gpu_pitch, 512, 512)) {
 
-        for (_h = 0; _h < 512; _h++) {
-            for (_w = 0; _w < 512; _w++) {
-                *gpu_data++ = 0;
-            }
-            gpu_data += gpu_pitch - 512;
-        }
-
-        videoDriver->unlock();
-        videoDriver->redraw();
-    }
+			for (_h = 0; _h < 512; _h++) {
+				for (_w = 0; _w < 512; _w++) {
+					*gpu_data++ = 0;
+				}
+				gpu_data += gpu_pitch - 512;
+			}
+		}
+	}
+	
+	videoDriver->unlock();
+	videoDriver->redraw(true);
 }
 
 auto Program::setVideoSynchronize() -> void {

@@ -17,6 +17,9 @@
 #ifndef SHADER_FOLDER
 #define SHADER_FOLDER "shader"
 #endif
+#ifndef IMG_FOLDER
+#define IMG_FOLDER "img"
+#endif
 #define SETTINGS_FILE "settings.ini"
 #define DEFAULT_TRANS_FILE "english.txt"
 #define VERSION "1.0.7.1"
@@ -43,6 +46,7 @@ struct Program : Emulator::Interface::Bind {
     bool isRunning;
 	bool isPause;
     bool isFocused;
+	GUIKIT::Image placeholder;
 
     auto quit() -> void;
     auto loop() -> void;
@@ -52,6 +56,7 @@ struct Program : Emulator::Interface::Bind {
     auto translationFolder() -> std::string;
     auto dataFolder() -> std::string;
     auto fontFolder() -> std::string;
+	auto imgFolder() -> std::string;
     auto shaderFolder() -> std::string;
 	auto statesFolder(Emulator::Interface* emulator) -> std::string;
 	auto appFolder() -> std::string;
@@ -60,6 +65,7 @@ struct Program : Emulator::Interface::Bind {
     auto saveSettings() -> void;
     auto settingsFile() -> std::string;
     auto rememberNotToSaveSettings() -> void;
+	auto loadPlaceholder() -> void;
 
     auto init() -> void;
     auto addEmulators() -> void;
@@ -83,6 +89,7 @@ struct Program : Emulator::Interface::Bind {
     auto setExpansionSelection( Emulator::Interface* emulator ) -> void;
     auto updateSaveIdent(Emulator::Interface::Media* media, std::string file = "") -> void;
 	auto getLastUsedEmu() -> Emulator::Interface*;
+	auto getEmulator( std::string ident ) -> Emulator::Interface*;
     
     //audio
     auto initAudio() -> void;
@@ -93,7 +100,7 @@ struct Program : Emulator::Interface::Bind {
     auto initVideo() -> void;
 	auto getVideoDriver() -> std::string;
     auto videoRefresh(const uint16_t* frame, unsigned width, unsigned height, unsigned linePitch) -> void override;
-    auto blackScreen() -> void;
+    auto renderPlaceholder() -> void;
     auto setVideoSynchronize() -> void;
     auto setVideoHardSync() -> void;
 	auto hintExclusiveFullscreen() -> void;

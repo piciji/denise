@@ -28,7 +28,7 @@ struct Video {
     virtual auto lock(float*& data, unsigned& pitch, unsigned width, unsigned height) -> bool { return false; }
     virtual auto lock(int32_t*& data, unsigned& pitch, unsigned width, unsigned height) -> bool { return false; }
     virtual auto unlock() -> void {}
-    virtual auto redraw() -> void {}
+    virtual auto redraw(bool disallowShader = false) -> void {}
     virtual auto clear() -> void {}
     virtual auto setFilter(Filter filter) -> void {}
 	virtual auto setShader(std::vector<ShaderPass*> passes) -> void {}    

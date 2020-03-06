@@ -1,7 +1,7 @@
 
 #include "cmd.h"
-#include "../view/view.h"
-    
+#include "../view/view.h"    
+
 auto Cmd::set(int argc, char** argv) -> void {
     
     options.push_back( {"-v, --version", "Output program version", ""} );    
@@ -83,6 +83,7 @@ auto Cmd::parse() -> void {
     bool aneMagicNext = false;
     bool screenshotPathNext = false;
     typedef Emulator::Interface EmuInt;
+	auto emuC64 = program->getEmulator("C64");
 
     for( auto& arg : arguments ) {
         if (limitCyclesNext) {
@@ -105,55 +106,55 @@ auto Cmd::parse() -> void {
         
         if (screenshotPathNext) {
             screenshotPathNext = false;     	
-            settings->set<unsigned>( program->ident( getEmulator("C64"), "crop_type"), (unsigned)EmuInt::CropType::Monitor );            
+            settings->set<unsigned>( program->ident( emuC64, "crop_type"), (unsigned)EmuInt::CropType::Monitor );            
             screenshotPath = arg; 
             continue;
         }
         
         if (arg == "-vic-6569R3") { // pal 
-            updateChipset(getEmulator("C64"), 0);
-            updateRegion(getEmulator("C64"), true);
+            updateChipset(emuC64, 0);
+            updateRegion(emuC64, true);
             lockRegion = true;
         }
         else if (arg == "-vic-8565") { // pal 
-            updateChipset(getEmulator("C64"), 1);
-            updateRegion(getEmulator("C64"), true);
+            updateChipset(emuC64, 1);
+            updateRegion(emuC64, true);
             lockRegion = true;
         }
         else if (arg == "-vic-6567R8") { // ntsc 
-            updateChipset(getEmulator("C64"), 0);
-            updateRegion(getEmulator("C64"), false);
+            updateChipset(emuC64, 0);
+            updateRegion(emuC64, false);
             lockRegion = true;
         }
         else if (arg == "-vic-8562") { // ntsc 
-            updateChipset(getEmulator("C64"), 1);
-            updateRegion(getEmulator("C64"), false);
+            updateChipset(emuC64, 1);
+            updateRegion(emuC64, false);
             lockRegion = true;
         }
         else if (arg == "-pal") { // pal 
             if (!lockRegion)
-                updateRegion(getEmulator("C64"), true);
+                updateRegion(emuC64, true);
         }
         else if (arg == "-ntsc") { // pal 
             if (!lockRegion)
-                updateRegion(getEmulator("C64"), false);
+                updateRegion(emuC64, false);
         }
         else if (arg == "-sid-6581") {
-            updateFeature( getEmulator("C64"), LIBC64::Interface::FeatureIdSid, 1 );
+            updateFeature( emuC64, LIBC64::Interface::FeatureIdSid, 1 );
         }
         else if (arg == "-sid-8580") {
-            updateFeature( getEmulator("C64"), LIBC64::Interface::FeatureIdSid, 0 );
+            updateFeature( emuC64, LIBC64::Interface::FeatureIdSid, 0 );
         }
         else if (arg == "-cia-6526a") {
-            updateFeature( getEmulator("C64"), LIBC64::Interface::FeatureIdCiaRev, 1 );
+            updateFeature( emuC64, LIBC64::Interface::FeatureIdCiaRev, 1 );
         }
         else if (arg == "-cia-6526") {
-            updateFeature( getEmulator("C64"), LIBC64::Interface::FeatureIdCiaRev, 0 );
+            updateFeature( emuC64, LIBC64::Interface::FeatureIdCiaRev, 0 );
         }
         else if (arg == "-debugcart") {
-            dynamic_cast<LIBC64::Interface*>(getEmulator("C64"))->activateDebugCart();   
-			dynamic_cast<LIBC64::Interface*>(getEmulator("C64"))->fastForward( (unsigned)EmuInt::FastForward::NoAudioOut );
-            prepareDrives( getEmulator("C64") );
+            dynamic_cast<LIBC64::Interface*>(emuC64)->activateDebugCart();   
+			dynamic_cast<LIBC64::Interface*>(emuC64)->fastForward( (unsigned)EmuInt::FastForward::NoAudioOut );
+            prepareDrives( emuC64 );
 			settings->set<bool>("audio_sync", false );
 			settings->set<bool>("video_sync", false );
 			settings->set<bool>("dynamic_rate_control", false );			
@@ -170,13 +171,13 @@ auto Cmd::parse() -> void {
             aneMagicNext = true;
         }
         else if (arg == "-no-driver") {
-            dynamic_cast<LIBC64::Interface*>(getEmulator("C64"))->fastForward( (unsigned)EmuInt::FastForward::NoAudioOut | (unsigned)EmuInt::FastForward::NoVideoOut );
+            dynamic_cast<LIBC64::Interface*>(emuC64)->fastForward( (unsigned)EmuInt::FastForward::NoAudioOut | (unsigned)EmuInt::FastForward::NoVideoOut );
             noDriver = 1;
         }
         else if (arg == "-no-gui") {
             noGui = 1;
             noDriver = 1;
-            dynamic_cast<LIBC64::Interface*>(getEmulator("C64"))->fastForward( (unsigned)EmuInt::FastForward::NoAudioOut | (unsigned)EmuInt::FastForward::NoVideoOut );			
+            dynamic_cast<LIBC64::Interface*>(emuC64)->fastForward( (unsigned)EmuInt::FastForward::NoAudioOut | (unsigned)EmuInt::FastForward::NoVideoOut );			
         }
         else if (arg == "-exitscreenshot") {
             screenshotPathNext = true;
@@ -215,17 +216,6 @@ auto Cmd::autoloadImages() -> void {
     if (!debug && !noDriver && !noGui && settings->get<bool>("open_fullscreen", false)) {
         view->setFullScreen(true);
     }
-}
-
-auto Cmd::getEmulator( std::string ident ) -> Emulator::Interface* {
-
-    for( auto emulator : emulators ) {
-
-        if (ident == "C64" && dynamic_cast<LIBC64::Interface*>(emulator) ) 
-            return emulator;            
-    }
-    
-    return nullptr;
 }
 
 auto Cmd::updateFeature( Emulator::Interface* emulator, unsigned ident, int value) -> void {
@@ -293,14 +283,14 @@ auto Cmd::setCycles(std::string arg) -> void {
         return;
     }
 
-    dynamic_cast<LIBC64::Interface*> (getEmulator("C64"))->activateDebugCart(cycles);  
+    dynamic_cast<LIBC64::Interface*>( program->getEmulator("C64") )->activateDebugCart(cycles);  
 }
 
 auto Cmd::setAneMagic(std::string arg) -> void {
     
     auto magic = GUIKIT::String::convertHexToInt( arg, 0xee ) & 0xff;
     
-    updateFeature( getEmulator("C64"), LIBC64::Interface::FeatureIdCpuAneMagic, magic );
+    updateFeature( program->getEmulator("C64"), LIBC64::Interface::FeatureIdCpuAneMagic, magic );
 }
 
 auto Cmd::setReuSize(std::string arg) -> void {
@@ -315,7 +305,7 @@ auto Cmd::setReuSize(std::string arg) -> void {
         return;
     }
 
-    auto emulator = getEmulator("C64");    
+    auto emulator = program->getEmulator("C64");    
     auto& expansion = emulator->expansions[ LIBC64::Interface::ExpansionIdReu ];
     auto memoryType = expansion.memoryType;
 

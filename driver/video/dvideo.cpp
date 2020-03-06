@@ -20,6 +20,8 @@ struct DVideo : Video {
 	std::vector<LPD3DXEFFECT> effects;
 	ID3DXFont* mFont;
 	const unsigned FONT_WIDTH = 1024;
+	unsigned textureWidth;
+	unsigned textureHeight;
 
     unsigned inputWidth, inputHeight;
 	RECT outScreen;
@@ -185,9 +187,13 @@ struct DVideo : Video {
 
 		lpD3DDevice->CreateVertexBuffer(sizeof (d3dvertex) * 4, flags.v_usage, D3DVERTEX, static_cast<D3DPOOL> (flags.v_pool), &vertex_buffer, NULL);
 
-		if (texture) texture->Release();
-		lpD3DDevice->CreateTexture(512, 1024, 1, flags.t_usage, D3DFMT_X8R8G8B8,
-				static_cast<D3DPOOL> (flags.t_pool), &texture, NULL);
+		textureWidth = 0;
+		textureHeight = 0;
+		resize(inputWidth = 256, inputHeight = 256);
+		
+//		if (texture) texture->Release();
+//		lpD3DDevice->CreateTexture(512, 1024, 1, flags.t_usage, D3DFMT_X8R8G8B8,
+//				static_cast<D3DPOOL> (flags.t_pool), &texture, NULL);
 
 		D3DXCreateFont(lpD3DDevice, 15, 0, 0, 0, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS,
 				DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE, TEXT("Source Code Pro"), &mFont);
@@ -291,7 +297,7 @@ struct DVideo : Video {
         return init();
     }
 
-    auto redraw() -> void {
+    auto redraw(bool disallowShader = false) -> void {
 		if (lost && !recover()) return;
 
 		unsigned outWidth = outScreen.right;
@@ -314,7 +320,7 @@ struct DVideo : Video {
 		setVertex(inputWidth, inputHeight, 512, 1024, outLeft, outTop, outWidth, outHeight);
 		lpD3DDevice->SetTexture(0, texture);
 
-		if (caps.shader && effects.size() > 0) {
+		if (!disallowShader && caps.shader && effects.size() > 0) {
 			D3DXVECTOR4 inputSize;
 			inputSize.x = inputWidth;
 			inputSize.y = inputHeight;
@@ -391,9 +397,12 @@ struct DVideo : Video {
 	}
 	
     auto lock(unsigned*& data, unsigned& pitch, unsigned width, unsigned height) -> bool {
-		inputWidth = width;
-		inputHeight = height;
 		if (lost && !recover()) return false;
+		
+		if(width != inputWidth || height != inputHeight) {
+			resize( inputWidth = width, inputHeight = height );
+		}
+		
 		texture->GetSurfaceLevel(0, &surface);
 
 		surface->LockRect(&d3dlr, 0, flags.lock);
@@ -424,7 +433,22 @@ struct DVideo : Video {
 		surface->UnlockRect();
 		dxRelease(surface);
 	}
+	
+	auto resize(unsigned width, unsigned height) -> void {
+		if(textureWidth >= width && textureHeight >= height) return;
 
+		textureWidth = roundUpPowerOfTwo( std::max(width, textureWidth) );
+		textureHeight = roundUpPowerOfTwo( std::max(height, textureHeight) );
+
+		if(d3dcaps.MaxTextureWidth < textureWidth || d3dcaps.MaxTextureWidth < textureHeight) return;
+
+		if(texture)
+			texture->Release();
+		
+		_device->CreateTexture( textureWidth, textureHeight, 1, flags.t_usage, D3DFMT_X8R8G8B8,
+			static_cast<D3DPOOL> (flags.t_pool), &texture, nullptr);
+	}	  
+	
     auto synchronize(bool state) -> void {
         settings.synchronize = state;
         if (!settings.handle) return;

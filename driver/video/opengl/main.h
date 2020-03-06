@@ -164,7 +164,7 @@ auto OpenGL::clear() -> void {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-auto OpenGL::refresh() -> void {
+auto OpenGL::refresh(bool disallowShader) -> void {
 	clear();
             
 	glActiveTexture(GL_TEXTURE0);
@@ -192,6 +192,7 @@ auto OpenGL::refresh() -> void {
     unsigned targetHeight;
     OpenGLProgram* pLast = nullptr;
     
+	if (!disallowShader)
 	for(auto& p : programs) {
         
         if (p.crop.active) {

@@ -96,12 +96,12 @@ struct CGL : public Video, OpenGL {
             [view unlockFocus];
         }
     }
-    void redraw() {
+    void redraw(bool disallowShader = false) {
         @autoreleasepool {
             if([view lockFocusIfCanDraw]) {
                 auto area = [view frame];
                 outputWidth = area.size.width, outputHeight = area.size.height;
-                OpenGL::refresh();
+                OpenGL::refresh(disallowShader);
                 [[view openGLContext] flushBuffer];
                 if(settings.hardSync && settings.synchronize) glFinish();
                 [view unlockFocus];

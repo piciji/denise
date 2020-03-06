@@ -182,7 +182,7 @@ struct GLX : public Video, OpenGL {
         if(glx.doubleBuffer) glXSwapBuffers(display, glxwindow);
     }
 
-    auto redraw() -> void {
+    auto redraw(bool disallowShader = false) -> void {
         XWindowAttributes parent, child;
         XGetWindowAttributes(display, handle, &parent);
         XGetWindowAttributes(display, xwindow, &child);
@@ -192,7 +192,7 @@ struct GLX : public Video, OpenGL {
         }
 
         outputWidth = parent.width, outputHeight = parent.height;
-        OpenGL::refresh();
+        OpenGL::refresh(disallowShader);
         if(glx.doubleBuffer) glXSwapBuffers(display, glxwindow);
         if(settings.hardSync && settings.synchronize) glFinish();
     }

@@ -84,7 +84,7 @@ Program::Program() {
 	initAudio();
 	initVideo();
     
-    cmd->autoloadImages();   
+    cmd->autoloadImages();		
 }
 
 auto Program::addEmulators() -> void {
@@ -319,6 +319,7 @@ auto Program::powerOff() -> void {
         activeVideoManager->powerOff();
 	videoDriver->clear();
 	videoDriver->hintExclusiveFullscreen( false );
+	videoDriver->setFilter( DRIVER::Video::Filter::Linear );
 	audioDriver->clear();    
     activeEmulator = nullptr;
     activeVideoManager = nullptr;
@@ -448,6 +449,9 @@ auto Program::shaderFolder() -> std::string {
     return GUIKIT::System::getResourceFolder(appFolder()) + SHADER_FOLDER;
 }
 
+auto Program::imgFolder() -> std::string {
+    return GUIKIT::System::getResourceFolder(appFolder()) + IMG_FOLDER;
+}
 
 auto Program::log(std::string data, bool newLine) -> void {
 	logger->log(data, newLine);
@@ -519,5 +523,14 @@ auto Program::getLastUsedEmu() -> Emulator::Interface* {
 	return defaultEmu;
 }
 
+auto Program::getEmulator( std::string ident ) -> Emulator::Interface* {
 
+    for( auto emulator : emulators ) {
+
+        if (emulator->ident == ident) 
+            return emulator;            
+    }
+    
+    return nullptr;
+}
 

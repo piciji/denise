@@ -35,8 +35,6 @@ struct Cmd {
     
     auto autoloadImages() -> void;
     
-    auto getEmulator( std::string ident ) -> Emulator::Interface*;
-    
     auto updateFeature( Emulator::Interface* emulator, unsigned ident, int value) -> void;
     
     auto updateChipset( Emulator::Interface* emulator, unsigned ident) -> void;

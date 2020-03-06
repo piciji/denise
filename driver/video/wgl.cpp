@@ -77,11 +77,11 @@ struct WGL : Video, OpenGL {
 		SwapBuffers(display);
 	}
 
-	auto redraw() -> void {
+	auto redraw(bool disallowShader = false) -> void {
 		RECT rc;
 		GetClientRect(handle, &rc);
 		outputWidth = rc.right - rc.left, outputHeight = rc.bottom - rc.top;
-		OpenGL::refresh();
+		OpenGL::refresh(disallowShader);
 		SwapBuffers(display);
         if(settings.hardSync && settings.synchronize) glFinish();
         //OpenGL::hardSync();

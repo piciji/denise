@@ -101,7 +101,7 @@ struct OpenGL : OpenGLProgram {
     auto lock(float*& data, unsigned& pitch) -> bool;
     auto lock(int32_t*& data, unsigned& pitch) -> bool;
 	auto clear() -> void;
-	auto refresh() -> void;
+	auto refresh(bool disallowShader = false) -> void;
 	auto init() -> bool;
 	auto term() -> void;
     auto hardSync(unsigned frames = 0) -> void;

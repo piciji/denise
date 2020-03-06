@@ -81,6 +81,7 @@ auto View::build() -> void {
         }
         updateViewport();
 		audioDriver->clear();
+		//placeholderTimer.setEnabled(true);
     };
 	
 	onContext = [this]() {
@@ -139,6 +140,40 @@ auto View::build() -> void {
         view->setFocused();
     };
         
+	placeholderTimer.setInterval(20);
+	placeholderTimer.onFinished = [this]() {
+		placeholderTimer.setEnabled(false);		
+		program->renderPlaceholder();
+		program->renderPlaceholder();
+	};
+	
+	viewport.onMousePress = [this](GUIKIT::Mouse::Button button) {
+		
+		if (program->isRunning || (button != GUIKIT::Mouse::Button::Left))
+			return;
+		
+		auto p = viewport.getMousePosition();
+		
+		unsigned _w = settings->get<unsigned>("screen_width", 0);
+		unsigned _h = settings->get<unsigned>("screen_height", 0);
+		bool aspect = settings->get<bool>("aspect_correct", true);
+		
+		GUIKIT::Position a(0,0);
+		GUIKIT::Position b(_w * (aspect ? 1.35 : 1.52), 0);
+		GUIKIT::Position c(0 , _h * 0.75);
+		
+		bool upperTriangle = (((a.y - b.y) * (p.x - a.x) + (b.x - a.x) * (p.y - a.y)) < 0 ||
+        ((b.y - c.y) * (p.x - b.x) + (c.x - b.x) * (p.y - b.y)) < 0 ||
+        ((c.y - a.y) * (p.x - c.x) + (a.x - c.x) * (p.y - c.y)) < 0) ? false : true;
+		
+		if (upperTriangle) {
+			program->power( program->getEmulator("C64") );
+			//GUIKIT::Window::setStatusText("c64");
+		} else {
+			//GUIKIT::Window::setStatusText("amiga");
+		}
+	};
+	
     setDragnDrop();        
 }
 
@@ -221,10 +256,8 @@ auto View::setStatusText(const std::string& text, bool critical) -> void {
         if(statusVisible()) GUIKIT::Window::setStatusText(text);
         videoDriver->showMessage( text, critical );          
     }   
-    
-    if(!program->isRunning || program->isPause ) {
-        program->blackScreen();
-    }        
+        
+	program->renderPlaceholder();        
 }
 
 auto View::updateViewport() -> void {
@@ -286,6 +319,7 @@ auto View::updateViewport() -> void {
 		}
 	}
 	viewport.setGeometry( geometry ); 
+	placeholderTimer.setEnabled(true);
 }
 
 auto View::checkInputDevice( Emulator::Interface* emulator, Emulator::Interface::Connector* connector, Emulator::Interface::Device* device ) -> void {
@@ -561,8 +595,9 @@ auto View::buildMenu() -> void {
         sM.system->append( *sM.poweron );
         sM.poweroff = new GUIKIT::MenuItem;
         sM.poweroff->setIcon( poweroffImage );
-        sM.poweroff->onActivate = []() {
+        sM.poweroff->onActivate = [this]() {
 		    program->powerOff();
+			this->updateViewport();
 	    };	
         sM.system->append( *sM.poweroff );
         

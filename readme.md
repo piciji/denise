@@ -16,7 +16,13 @@
 * added slider for analog trigger point when using for digital inputs
 * added help output in console: Denise -h
 * refactored GTK2 to GTK3 for Linux port
-* switch controller ports via hotkey
+* added hotkey to switch controller ports
+* added hotkeys to trigger power and soft reset
+* reworked menu structure and moved some settings in order to find them faster
+* moved some global hotkeys to emulator specific hotkeys, i.e. load/save states, SID control
+* reworked firmware view
+* added posibillity to swap in CHAR roms during active emulation
+* show placeholder picture when emulator is opened but still not running an emulation [thanks to Retrofan]
 
 ## 1.0.7
 * fixed a critical bug that caused OSX builds to use illegal instructions for some architectures

@@ -7,6 +7,7 @@
 
 struct View : public GUIKIT::Window {
     Message* message;
+	GUIKIT::Timer placeholderTimer;
     
     struct SystemMenu {
         Emulator::Interface* emulator;
