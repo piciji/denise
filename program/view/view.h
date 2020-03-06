@@ -90,6 +90,8 @@ struct View : public GUIKIT::Window {
         GUIKIT::MenuCheckItem audioSyncItem;        
         GUIKIT::MenuCheckItem dynamicRateControl;
 
+        GUIKIT::MenuItem fullscreenItem;
+    
         GUIKIT::MenuCheckItem muteItem;
         GUIKIT::MenuCheckItem fpsItem;
         GUIKIT::MenuCheckItem audioBufferItem;

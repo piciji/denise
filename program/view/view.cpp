@@ -70,7 +70,9 @@ auto View::build() -> void {
         if (fullScreen()) {
 			bool showStatus = !view->exclusiveFullscreen() && settings->get("statusbar_fullscreen", false);
             setStatusVisible( showStatus );
-            setMenuVisible(false);
+            
+            if(!GUIKIT::Application::isCocoa())
+                setMenuVisible(false);
         } else {
             updateMenuBar();
             updateStatusBar();
@@ -819,9 +821,18 @@ auto View::buildMenu() -> void {
     };
     if ( settings->get<bool>("dynamic_rate_control", false) ) dynamicRateControl.setChecked();
     optionsMenu.append(dynamicRateControl);
-
         
     optionsMenu.append(*GUIKIT::MenuSeparator::getInstance());
+        
+    fullscreenItem.onActivate = [this]() {
+        inputDriver->mUnacquire();
+        GUIKIT::Window::setFullScreen(!fullScreen());
+    };
+        
+    optionsMenu.append(fullscreenItem);
+        
+    optionsMenu.append(*GUIKIT::MenuSeparator::getInstance());
+            
     muteItem.onToggle = [&]() {
         settings->set<bool>("audio_mute", muteItem.checked() );
         audioManager->setVolume();
@@ -952,6 +963,8 @@ auto View::translate() -> void {
     videoSyncItem.setText( trans->get("sync_video"));
     dynamicRateControl.setText( trans->get("dynamic_rate_control"));
 
+    fullscreenItem.setText( trans->get("fullscreen"));
+    
     muteItem.setText( trans->get("mute_audio"));
     fpsItem.setText( trans->get("show_fps"));
     audioBufferItem.setText( trans->get("show_audio_buffer"));

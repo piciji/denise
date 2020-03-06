@@ -38,7 +38,7 @@ template<typename T> auto uniqueDeviceName(std::vector<T>& devices, std::string 
 	return cmpname;
 }
 
-constexpr inline auto roundUpPowerOfTwo(uintmax_t x) -> uintmax {
+constexpr inline auto roundUpPowerOfTwo(uintmax_t x) -> uintmax_t {
 	
 	if( (x & (x - 1) ) == 0 )
 		return x;

@@ -57,6 +57,26 @@
     if(!Application::isQuit) Application::loop();    
 }
 
+- (void)beganTracking:(NSNotification*)notification {
+
+    using GUIKIT::pApplication;
+    pApplication::setAppTimer();
+    
+    [[NSRunLoop currentRunLoop] addTimer:pApplication::appTimer forMode:NSEventTrackingRunLoopMode];
+}
+
+- (void)endTracking:(NSNotification*)notification {
+    
+    using GUIKIT::pApplication;
+    pApplication::setAppTimer();
+    
+   /*[pApplication::appTimer invalidate];
+    
+    pApplication::appTimer = [NSTimer scheduledTimerWithTimeInterval:0.0 target:pApplication::cocoaDelegate selector:@selector(run:) userInfo:nil repeats:YES];
+    */
+    [[NSRunLoop currentRunLoop] addTimer:pApplication::appTimer forMode:NSDefaultRunLoopMode];
+}
+
 @end
 
 @implementation CocoaWindow : NSWindow
@@ -132,6 +152,11 @@
 
         [[self contentView] addSubview:statusBar positioned:NSWindowBelow relativeTo:nil];
     }
+    
+    if(GUIKIT::Application::loop) {
+        GUIKIT::pApplication::oberserveMenu( menuBarContext );
+    }
+    
     return self;
 }
 
@@ -255,21 +280,36 @@
 namespace GUIKIT {
 
 CocoaDelegate* pApplication::cocoaDelegate = nullptr;
-    NSTimer* appTimer = nullptr;
+NSTimer* pApplication::appTimer = nullptr;
 
 auto pApplication::run() -> void {
     if(Application::loop) {
-        appTimer = [NSTimer scheduledTimerWithTimeInterval:0.0 target:cocoaDelegate selector:@selector(run:) userInfo:nil repeats:YES];
-        
-        // prevent blocking while menu popups
-        [[NSRunLoop currentRunLoop] addTimer:appTimer forMode:NSEventTrackingRunLoopMode];
+        setAppTimer();
+        oberserveMenu( [NSApp mainMenu] );
     }
+    
 
     @autoreleasepool {
         [NSApp run];
     }
 }
 
+auto pApplication::oberserveMenu(NSMenu* menu) -> void {
+    NSNotificationCenter* notificationCenter = [NSNotificationCenter defaultCenter];
+    
+    [notificationCenter addObserver:cocoaDelegate selector:@selector(beganTracking:) name:NSMenuDidBeginTrackingNotification object:menu];
+    
+    [notificationCenter addObserver:cocoaDelegate selector:@selector(endTracking:) name:NSMenuDidEndTrackingNotification object:menu];
+}
+    
+auto pApplication::setAppTimer() -> void {
+    
+    if (appTimer)
+        [appTimer invalidate];
+    
+    appTimer = [NSTimer scheduledTimerWithTimeInterval:0.0 target:cocoaDelegate selector:@selector(run:) userInfo:nil repeats:YES];
+}
+    
 auto pApplication::processEvents() -> void {
     @autoreleasepool {
         while(!Application::isQuit) {

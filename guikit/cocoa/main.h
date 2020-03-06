@@ -6,10 +6,13 @@ namespace GUIKIT {
 
 struct pApplication {
     static CocoaDelegate* cocoaDelegate;
-    static void run();
-    static void processEvents();
-    static void quit();
-    static void initialize();
+    static NSTimer* appTimer;
+    static auto run() -> void;
+    static auto processEvents() -> void;
+    static auto quit() -> void;
+    static auto initialize() -> void;
+    static auto setAppTimer() -> void;
+    static auto oberserveMenu(NSMenu* menu) -> void;
 };
 
 struct pWindow {
