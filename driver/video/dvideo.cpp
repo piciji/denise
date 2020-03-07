@@ -432,15 +432,21 @@ struct DVideo : Video {
 	}
 	
 	auto resize(unsigned width, unsigned height) -> void {
-		//if(textureWidth >= width && textureHeight >= height) return;
-
-//		textureWidth = roundUpPowerOfTwo( std::max(width, textureWidth) );
-//		textureHeight = roundUpPowerOfTwo( std::max(height, textureHeight) );
         
-        textureWidth = roundUpPowerOfTwo( width );
-		textureHeight = roundUpPowerOfTwo( height );
-
-		if(d3dcaps.MaxTextureWidth < textureWidth || d3dcaps.MaxTextureWidth < textureHeight) return;
+        width = roundUpPowerOfTwo( width );
+		height = roundUpPowerOfTwo( height );
+        
+        if (width == textureWidth && height == textureHeight)
+            return;
+        
+        textureWidth = width;
+        textureHeight = height;
+        
+        if(d3dcaps.MaxTextureWidth < textureWidth)
+            textureWidth = d3dcaps.MaxTextureWidth;
+        
+        if (d3dcaps.MaxTextureHeight < textureHeight)
+            textureHeight = d3dcaps.MaxTextureHeight;
 
 		if(texture)
 			texture->Release();

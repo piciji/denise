@@ -245,10 +245,15 @@ auto Window::setStatusVisible(bool visible) -> void {
 
 auto Window::setMenuVisible(bool visible) -> void {
     if (_A::dummy) return;
+    if (Application::isCocoa() && !visible && fullScreen())
+        // macOS hides the menu in fullscreen.
+        // moving mouse to upper screen border make it visible
+        // so don't prevent this behaviour 
+        return;
     state.menuVisible = visible;
     p.setMenuVisible(visible);
 }
-
+    
 auto Window::setFullScreen(bool fullScreen) -> void {
     if (_A::dummy) return;
     if (p.fullScreenToggleDelayed()) {
@@ -1104,4 +1109,3 @@ auto System::printToCmd( std::string str ) -> void {
 }
 
 }
-

@@ -206,6 +206,8 @@
 
 -(void) windowDidEnterFullScreen:(NSNotification*)notification {
     window->p.fullScreenToggleDelay = false;
+    if (!window->menuVisible())
+        window->setMenuVisible(true);
 }
 
 -(void) windowWillExitFullScreen:(NSNotification*)notification {

@@ -70,9 +70,7 @@ auto View::build() -> void {
         if (fullScreen()) {
 			bool showStatus = !view->exclusiveFullscreen() && settings->get("statusbar_fullscreen", false);
             setStatusVisible( showStatus );
-            
-            if(!GUIKIT::Application::isCocoa())
-                setMenuVisible(false);
+            setMenuVisible(false);
         } else {
             updateMenuBar();
             updateStatusBar();
@@ -83,7 +81,8 @@ auto View::build() -> void {
         }
         updateViewport();
 		audioDriver->clear();
-		//placeholderTimer.setEnabled(true);
+        if (!program->isRunning)
+            GUIKIT::Window::setStatusText("");
     };
 	
 	onContext = [this]() {
