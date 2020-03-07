@@ -199,6 +199,16 @@
     window->p.sizeEvent();
 }
 
+-(void)windowDidMiniaturize:(NSNotification*)notification {
+    if (window->onMinimize)
+        window->onMinimize();
+}
+
+-(void)windowDidDeminiaturize:(NSNotification*)notification {
+    if (window->onUnminimize)
+        window->onUnminimize();
+}
+
 -(void) windowWillEnterFullScreen:(NSNotification*)notification {
     window->state.fullScreen = true;
     window->p.fullScreenToggleDelay = true;
@@ -646,6 +656,20 @@ auto pWindow::setDefaultCursor() -> void {
             [customCursor release];
         
         customCursor = nullptr;
+        
+        [cocoaWindow resetCursorRects];
+    }
+}
+    
+auto pWindow::setPointerCursor() -> void {
+    @autoreleasepool {
+        
+        if (customCursor)
+            [customCursor release];
+        
+        customCursor = nullptr;
+        
+        //[[NSCursor pointingHandCursor] set];
         
         [cocoaWindow resetCursorRects];
     }

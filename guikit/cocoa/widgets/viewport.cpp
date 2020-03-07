@@ -58,7 +58,7 @@
     viewport->state.mousePos.y = geo.height - ceil(mouseLoc.y);
     viewport->state.mousePos.x = floor(mouseLoc.x);
     
-    if(viewport->onMouseMove) viewport->onMouseMove({viewport->state.mousePos.x, viewport->state.mousePos.y});
+    if(viewport->onMouseMove) viewport->onMouseMove(viewport->state.mousePos);
 }
 
 -(void) mouseExited:(NSEvent*)event {
@@ -79,10 +79,15 @@
 -(void) resetCursorRects {
     [self discardCursorRects];
 
-    if (!viewport->Sizable::state.window || !viewport->Sizable::state.window->p.customCursor)
+    if (!viewport->Sizable::state.window)
         return;
     
-    [self addCursorRect: [self bounds] cursor: viewport->Sizable::state.window->p.customCursor];
+    if (viewport->Sizable::state.window->p.customCursor)
+        [self addCursorRect: [self bounds] cursor: viewport->Sizable::state.window->p.customCursor];
+    else {
+        if (viewport->Sizable::state.window->cursor == GUIKIT::Window::Cursor::Pointer)
+            [self addCursorRect: [self bounds] cursor: [NSCursor pointingHandCursor]];
+    }
 }
 
 @end

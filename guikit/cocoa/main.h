@@ -55,6 +55,7 @@ struct pWindow {
     auto handle() -> uintptr_t;
     auto changeCursor( Image& image, unsigned hotSpotX, unsigned hotSpotY ) -> void;
     auto setDefaultCursor() -> void;
+    auto setPointerCursor() -> void;
     bool disableIconsInTopMenu = false;
 
     static auto addCustomFont(CustomFont* customFont) -> bool;
