@@ -92,6 +92,7 @@ struct pWindow {
     auto updateMenu() -> void;
     auto changeCursor( Image& image, unsigned hotSpotX, unsigned hotSpotY ) -> void;
     auto setDefaultCursor() -> void;
+    auto setPointerCursor() -> void;
 	static auto addCustomFont( CustomFont* customFont ) -> bool;
     static auto CALLBACK wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
 

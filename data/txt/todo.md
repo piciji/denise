@@ -28,6 +28,7 @@
 * pseudo stereo SID
 * autoload for all media types with D64/T64 viewer in file dialog
 * color banding
+* support to put clipboard in C64
 
 # to do Amiga A500, A1200
 * 68000/68010 opcode tester

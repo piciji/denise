@@ -60,6 +60,8 @@ struct View : public GUIKIT::Window {
     auto autoloadPostProcessing() -> void;
     auto getSysMenu( Emulator::Interface* emulator ) -> SystemMenu*;
     auto countImagesFor(Emulator::Interface::MediaGroup* mediaGroup) -> unsigned;
+    auto cursorForPlacholderInUpperTriangle(GUIKIT::Position& p) -> bool;
+    auto cursorForPlacholderInUpperTriangle() -> bool;
     
     GUIKIT::Viewport viewport;    
     

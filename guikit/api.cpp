@@ -304,17 +304,37 @@ auto Window::changeCursor( Image& image, unsigned hotSpotX, unsigned hotSpotY ) 
     
     state.cursorImage = &image;
     
+    cursor = image.empty() ? Cursor::Default : Cursor::Image;
+    
     p.changeCursor( image, hotSpotX, hotSpotY );
 }
 
 auto Window::setDefaultCursor( ) -> void {
     if (_A::dummy) return;
-    if (!state.cursorImage)
+   // if (!state.cursorImage)
+     //   return;
+    
+    if (cursor == Cursor::Default)
         return;
+    
+    cursor = Cursor::Default;
     
     state.cursorImage = nullptr;
     
     p.setDefaultCursor();
+}
+
+auto Window::setPointerCursor( ) -> void {
+    if (_A::dummy) return;
+    
+    if (cursor == Cursor::Pointer)
+        return;
+    
+    cursor = Cursor::Pointer;
+    
+    state.cursorImage = nullptr;
+    
+    p.setPointerCursor();
 }
 
 auto Window::handle() -> uintptr_t {
@@ -814,7 +834,7 @@ auto Viewport::setDroppable(bool droppable) -> void {
     p.setDroppable(droppable);
 }
 
-auto Viewport::getMousePosition() -> Position {
+auto Viewport::getMousePosition() -> Position& {
     
     return state.mousePos;
 }
@@ -1109,3 +1129,4 @@ auto System::printToCmd( std::string str ) -> void {
 }
 
 }
+

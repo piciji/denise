@@ -97,6 +97,10 @@ auto View::build() -> void {
 		}		
 		return allow;
 	};
+    
+    onUnminimize = [this]() {
+        this->updateViewport();        
+    };
 	
 	winapi.onMenu = []() {
 		audioDriver->clear();
@@ -151,34 +155,53 @@ auto View::build() -> void {
 	viewport.onMousePress = [this](GUIKIT::Mouse::Button button) {
 		
 		if (program->isRunning || (button != GUIKIT::Mouse::Button::Left))
-			return;
+			return;	
 		
-		auto p = viewport.getMousePosition();
-		
-		unsigned _w = settings->get<unsigned>("screen_width", 0);
-		unsigned _h = settings->get<unsigned>("screen_height", 0);
-		bool aspect = settings->get<bool>("aspect_correct", true);
-		
-		GUIKIT::Position a(0,0);
-		GUIKIT::Position b(_w * (aspect ? 1.35 : 1.52), 0);
-		GUIKIT::Position c(0 , _h * 0.75);
-		
-		bool upperTriangle = (((a.y - b.y) * (p.x - a.x) + (b.x - a.x) * (p.y - a.y)) < 0 ||
-        ((b.y - c.y) * (p.x - b.x) + (c.x - b.x) * (p.y - b.y)) < 0 ||
-        ((c.y - a.y) * (p.x - c.x) + (a.x - c.x) * (p.y - c.y)) < 0) ? false : true;
-		
-		if (upperTriangle) {
+		if (cursorForPlacholderInUpperTriangle()) {
 			program->power( program->getEmulator("C64") );
-			//GUIKIT::Window::setStatusText("c64");
 		} else {
-			//GUIKIT::Window::setStatusText("amiga");
+			
 		}
 	};
+    
+    viewport.onMouseMove = [this](GUIKIT::Position& pos) {
+        
+        if (program->isRunning)
+            return;
+        
+        GUIKIT::Window::setStatusText( std::to_string(pos.x) + " " + std::to_string(pos.y) );
+                        
+        if (cursorForPlacholderInUpperTriangle(pos)) {
+            view->setPointerCursor();
+		} else {
+            view->setDefaultCursor();
+		}
+    };
 	
     setDragnDrop();        
 }
 
+auto View::cursorForPlacholderInUpperTriangle() -> bool {
+    
+    return cursorForPlacholderInUpperTriangle( viewport.getMousePosition() );
+}
+
+auto View::cursorForPlacholderInUpperTriangle(GUIKIT::Position& p) -> bool {
+    
+    signed _w = viewport.geometry().width;
+    signed _h = viewport.geometry().height;
+
+    GUIKIT::Position a(0,0);
+    GUIKIT::Position b(_w * 1.55, 0);
+    GUIKIT::Position c(0 , _h * 0.75);
+
+    return (((a.y - b.y) * (p.x - a.x) + (b.x - a.x) * (p.y - a.y)) < 0 ||
+    ((b.y - c.y) * (p.x - b.x) + (c.x - b.x) * (p.y - b.y)) < 0 ||
+    ((c.y - a.y) * (p.x - c.x) + (a.x - c.x) * (p.y - c.y)) < 0) ? false : true;        
+}
+
 auto View::show() -> void {
+    program->setVideoManagerGlobals();
     setVisible();
     updateViewport();
 }
@@ -599,6 +622,12 @@ auto View::buildMenu() -> void {
         sM.poweroff->onActivate = [this]() {
 		    program->powerOff();
 			this->updateViewport();
+            
+            if (cursorForPlacholderInUpperTriangle()) {
+                view->setPointerCursor();
+            } else {
+                view->setDefaultCursor();
+            }
 	    };	
         sM.system->append( *sM.poweroff );
         

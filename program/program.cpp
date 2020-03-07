@@ -311,8 +311,7 @@ auto Program::powerOff() -> void {
 	for( auto emuConfigView : emuConfigViews )
 		emuConfigView->update();
 	
-	view->showTapeMenu( false );
-    view->setDefaultCursor();
+	view->showTapeMenu( false );    
 	
 	status->init(true);
     if (activeVideoManager)

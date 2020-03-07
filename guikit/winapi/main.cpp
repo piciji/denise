@@ -284,9 +284,15 @@ auto CALLBACK pWindow::wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam
 			break;
 		case WM_ACTIVATEAPP:
 			if ((LOWORD(wparam) == WA_ACTIVE) || (LOWORD(wparam) == WA_CLICKACTIVE)) {
-				
+				if (window.onUnminimize)
+                    window.onUnminimize();
+                    
 			} else if (LOWORD(wparam) == WA_INACTIVE) {
-				if(window.fullScreen()) ShowWindow( hwnd, SW_MINIMIZE );
+				if(window.fullScreen())
+                    ShowWindow( hwnd, SW_MINIMIZE );
+                
+                if(window.onMinimize)
+                    window.onMinimize();
 			}
 			break;
         case WM_SETCURSOR:
@@ -580,6 +586,13 @@ auto pWindow::setDefaultCursor() -> void {
         DestroyCursor( hCursor );
         
     hCursor = LoadCursor(0, IDC_ARROW); 
+}
+
+auto pWindow::setPointerCursor() -> void {
+    if (hCursor)
+        DestroyCursor( hCursor );
+        
+    hCursor = LoadCursor(0, IDC_HAND); 
 }
 
 auto pWindow::addCustomFont( CustomFont* customFont ) -> bool {

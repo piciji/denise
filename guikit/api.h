@@ -167,6 +167,10 @@ struct Window : Base {
     std::function<void ()> onSize = nullptr;
     std::function<void (std::vector<std::string>)> onDrop = nullptr;
 	std::function<bool ()> onContext = nullptr;
+    std::function<void ()> onMinimize = nullptr;
+    std::function<void ()> onUnminimize = nullptr;
+    
+    enum class Cursor { Default, Pointer, Image } cursor = Cursor::Default;
 
     struct Cocoa {
         Window& window;
@@ -226,6 +230,7 @@ struct Window : Base {
     auto geometry() -> Geometry;
     auto changeCursor( Image& image, unsigned hotSpotX, unsigned hotSpotY ) -> void;
     auto setDefaultCursor( ) -> void;
+    auto setPointerCursor( ) -> void;
 	
 	static auto addCustomFont( CustomFont* customFont ) -> bool;
 
@@ -605,7 +610,7 @@ struct TreeView : Widget {
 
 struct Viewport : Widget {
     std::function<void (std::vector<std::string>)> onDrop = nullptr;
-    std::function<void (Position)> onMouseMove = nullptr;
+    std::function<void (Position&)> onMouseMove = nullptr;
     std::function<void ()> onMouseLeave = nullptr;
     std::function<void (Mouse::Button)> onMousePress = nullptr;
     std::function<void (Mouse::Button)> onMouseRelease = nullptr;
@@ -615,7 +620,7 @@ struct Viewport : Widget {
     auto droppable() -> bool const { return state.droppable; }
     auto handle() -> uintptr_t;
     auto setDroppable(bool droppable = true) -> void;
-    auto getMousePosition() -> Position;
+    auto getMousePosition() -> Position&;
 
     struct {
         bool droppable = false;

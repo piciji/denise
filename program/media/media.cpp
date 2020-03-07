@@ -78,7 +78,7 @@ auto MediaWindow::build() -> void {
         ((LIBC64::Interface*) emulator)->convertPetsciiToScreencode( useCustomFont );
     }
     
-    GUIKIT::Geometry defaultGeometry = {100, 100, 850, 540};
+    GUIKIT::Geometry defaultGeometry = {100, 100, 900, 500};
     
     GUIKIT::Geometry geometry = {settings->get<int>(ident("screen_media_x"), defaultGeometry.x)
         ,settings->get<int>(ident("screen_media_y"), defaultGeometry.y)

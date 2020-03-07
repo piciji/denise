@@ -97,6 +97,7 @@ struct Program : Emulator::Interface::Bind {
     auto audioSample(int16_t sampleLeft, int16_t sampleRight) -> void override;
     
     //video
+    auto setVideoManagerGlobals() -> void;
     auto initVideo() -> void;
 	auto getVideoDriver() -> std::string;
     auto videoRefresh(const uint16_t* frame, unsigned width, unsigned height, unsigned linePitch) -> void override;

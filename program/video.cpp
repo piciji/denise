@@ -35,14 +35,17 @@ auto Program::initVideo() -> void {
     for( auto emulator : emulators )        
         VideoManager::getInstance( emulator )->reloadSettings();
 	
-	VideoManager::setAspectCorrect( settings->get<bool>("aspect_correct", true) );
-	VideoManager::setIntegerScaling( settings->get<bool>("integer_scaling", false) );
 	VideoManager::setShaderInputPrecision( settings->get<bool>("shader_input_precision", false) );
 	VideoManager::setThreaded( settings->get<bool>("crt_threaded", true) );
 	
 	if (!cmd->debug) {
 		loadPlaceholder();
 	}
+}
+
+auto Program::setVideoManagerGlobals() -> void {
+	VideoManager::setAspectCorrect( settings->get<bool>("aspect_correct", true) );
+	VideoManager::setIntegerScaling( settings->get<bool>("integer_scaling", false) );
 }
 
 auto Program::getVideoDriver() -> std::string {
