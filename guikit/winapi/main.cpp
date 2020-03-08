@@ -211,7 +211,15 @@ auto CALLBACK pApplication::wndProc(WNDPROC windowProc, HWND hwnd, UINT msg, WPA
 					return true;
 			}
 			break;
-		}			
+		}		
+        case WM_ENTERIDLE: {
+            MSG _msg;
+            while(!PeekMessage(&_msg, 0, 0, 0, PM_NOREMOVE)) {
+                if (Application::loop)
+                    Application::loop();
+            }            
+            break;
+        }
     }
     return windowProc(hwnd, msg, wparam, lparam);
 }

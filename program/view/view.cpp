@@ -103,7 +103,7 @@ auto View::build() -> void {
     };
 	
 	winapi.onMenu = []() {
-		audioDriver->clear();
+	//	audioDriver->clear();
 	};
 	
 	GUIKIT::BrowserWindow::onCall = []() {
