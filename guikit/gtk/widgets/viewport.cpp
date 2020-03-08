@@ -42,11 +42,12 @@ auto pViewport::mouseLeave(GtkWidget* widget, GdkEventButton* event, pViewport* 
 }
 
 auto pViewport::mouseMove(GtkWidget* widget, GdkEventButton* event, pViewport* self) -> gboolean {
-    if(self->viewport.onMouseMove) 
-        self->viewport.onMouseMove({(signed)event->x, (signed)event->y});
         
     self->viewport.state.mousePos.x = event->x;
     self->viewport.state.mousePos.y = event->y;
+	
+	if(self->viewport.onMouseMove) 
+        self->viewport.onMouseMove(self->viewport.state.mousePos);
         
     return true;
 }

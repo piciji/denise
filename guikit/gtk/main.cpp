@@ -336,7 +336,7 @@ auto pWindow::setPointerCursor() -> void {
     if (cursor)
         g_object_unref( cursor );
             
-    cursor = gdk_cursor_new_for_display( gdk_screen_get_display(gdk_screen_get_default()), GDK_POINTER );
+    cursor = gdk_cursor_new_for_display( gdk_screen_get_display(gdk_screen_get_default()), GDK_HAND2 );
             
     if (cursor)
         SetCursor( widget, cursor );
