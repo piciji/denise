@@ -330,6 +330,17 @@ auto pWindow::setDefaultCursor() -> void {
     if (cursor)
         SetCursor( widget, cursor );
 }
+    
+auto pWindow::setPointerCursor() -> void {
+        
+    if (cursor)
+        g_object_unref( cursor );
+            
+    cursor = gdk_cursor_new_for_display( gdk_screen_get_display(gdk_screen_get_default()), GDK_POINTER );
+            
+    if (cursor)
+        SetCursor( widget, cursor );
+}
 
 auto pWindow::setIcon( std::string path ) -> bool {
    

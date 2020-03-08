@@ -59,6 +59,7 @@ struct pWindow {
     auto handle() -> uintptr_t;
     auto changeCursor( Image& image, unsigned hotSpotX, unsigned hotSpotY ) -> void;
     auto setDefaultCursor() -> void;
+    auto setPointerCursor() -> void;
     auto setIcon( std::string path ) -> bool;
 	
 	auto moveWindow(GdkEvent* event) -> void;
