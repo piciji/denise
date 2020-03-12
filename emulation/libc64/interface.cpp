@@ -18,7 +18,7 @@
 
 namespace LIBC64 {
 
-const std::string Interface::Version = "1071";
+const std::string Interface::Version = "1072";
     
 Interface::Interface() : Emulator::Interface( "C64" ) {        
     
@@ -54,11 +54,11 @@ auto Interface::prepareMedia() -> void {
 	mediaGroups.push_back({MediaGroupIdDisk, "Disk", MediaGroup::Type::Disk, {"d64", "g64"}, {"d64", "g64"} });
 	mediaGroups.push_back({MediaGroupIdTape, "Tape", MediaGroup::Type::Tape, {"tap"}, {"tap"} });	
 	mediaGroups.push_back({MediaGroupIdMemory, "Memory", MediaGroup::Type::Memory, {"prg", "p00", "t64", "reu"}, {"prg"} });
-    mediaGroups.push_back({MediaGroupIdExpansionGame, "Module", MediaGroup::Type::Expansion, {"bin", "crt"}, {} });
+    mediaGroups.push_back({MediaGroupIdExpansionGame, "Game Cartridge", MediaGroup::Type::Expansion, {"bin", "crt"}, {} });
     mediaGroups.push_back({MediaGroupIdExpansionReu, "REU", MediaGroup::Type::Expansion, {"bin", "crt", "prg"}, {""} });
     mediaGroups.push_back({MediaGroupIdExpansionActionReplay, "Action Replay", MediaGroup::Type::Expansion, {"bin", "crt"}, {} });
     mediaGroups.push_back({MediaGroupIdExpansionEasyFlash, "EasyFlash", MediaGroup::Type::Expansion, {"bin", "crt"}, {"crt"} });
-    mediaGroups.push_back({MediaGroupIdExpansionRetroReplay, "RetroReplay", MediaGroup::Type::Expansion, {"bin", "crt"}, {"crt"} });
+    mediaGroups.push_back({MediaGroupIdExpansionRetroReplay, "Retro Replay", MediaGroup::Type::Expansion, {"bin", "crt"}, {"crt"} });
 
 	{   auto& group = mediaGroups[MediaGroupIdDisk];
     
@@ -117,12 +117,12 @@ auto Interface::prepareMedia() -> void {
 	}
     
     {   auto& group = mediaGroups[MediaGroupIdExpansionRetroReplay];
-		group.media.push_back({0, "RetroReplay 1", 0, &group});
-        group.media.push_back({1, "RetroReplay 2", 0, &group});
-        group.media.push_back({2, "RetroReplay 3", 0, &group});
-        group.media.push_back({3, "RetroReplay 4", 0, &group});
-        group.media.push_back({4, "RetroReplay 5", 0, &group});
-        group.media.push_back({5, "RetroReplay 6", 0, &group});
+		group.media.push_back({0, "Retro Replay 1", 0, &group});
+        group.media.push_back({1, "Retro Replay 2", 0, &group});
+        group.media.push_back({2, "Retro Replay 3", 0, &group});
+        group.media.push_back({3, "Retro Replay 4", 0, &group});
+        group.media.push_back({4, "Retro Replay 5", 0, &group});
+        group.media.push_back({5, "Retro Replay 6", 0, &group});
         group.selected = &group.media[0];  
 	}
     
@@ -136,11 +136,11 @@ auto Interface::prepareMedia() -> void {
 
 auto Interface::prepareExpansions() -> void {
     expansions.push_back( { ExpansionIdNone, "Empty", Expansion::Type::Empty, nullptr, nullptr } );
-    expansions.push_back( { ExpansionIdGame, "Game Cart", Expansion::Type::Game, nullptr, &mediaGroups[MediaGroupIdExpansionGame] } );
+    expansions.push_back( { ExpansionIdGame, "Game Cartridge", Expansion::Type::Game, nullptr, &mediaGroups[MediaGroupIdExpansionGame] } );
     expansions.push_back( { ExpansionIdReu, "REU", Expansion::Type::Ram, &memoryTypes[0], &mediaGroups[MediaGroupIdExpansionReu] } );    
     expansions.push_back( { ExpansionIdActionReplay, "Action Replay", Expansion::Type::Freezer, nullptr, &mediaGroups[MediaGroupIdExpansionActionReplay] } );     
     expansions.push_back( { ExpansionIdEasyFlash, "EasyFlash", Expansion::Type::Flash, nullptr, &mediaGroups[MediaGroupIdExpansionEasyFlash] } );     
-    expansions.push_back( { ExpansionIdRetroReplay, "RetroReplay", Expansion::Type::Freezer | Expansion::Type::Flash, nullptr, &mediaGroups[MediaGroupIdExpansionRetroReplay] } );     
+    expansions.push_back( { ExpansionIdRetroReplay, "Retro Replay", Expansion::Type::Freezer | Expansion::Type::Flash, nullptr, &mediaGroups[MediaGroupIdExpansionRetroReplay] } );     
     
     
     {   auto& expansion = expansions[ExpansionIdGame];        

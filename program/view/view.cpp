@@ -983,7 +983,7 @@ auto View::translate() -> void {
 	if(!GUIKIT::Application::isCocoa()) {
 		videoItem.setText( trans->get("video") );
 		audioItem.setText( trans->get("audio") );
-		inputItem.setText( trans->get("input") );
+		inputItem.setText( trans->get("input") + "/" + trans->get("hotkeys") );
 		settingsItem.setText( trans->get("settings"));
 	}
 	

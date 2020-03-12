@@ -143,6 +143,7 @@ auto FixedLayout::append(Widget& widget, Geometry geometry) -> void {
 }
 
 auto FixedLayout::setGeometry(Geometry geometry) -> void {
+    state.containerGeometry = geometry;
     auto children = this->children;
     for(auto& child : children) {
 
@@ -199,6 +200,8 @@ auto HorizontalLayout::minimumSize() -> Size {
 }
 
 auto HorizontalLayout::setGeometry(Geometry containerGeometry) -> void {
+    state.containerGeometry = containerGeometry;
+    
     auto children = this->children;
     for(auto& child : children) {
         if(child.size.width  == Size::Minimum) child.size.width  = child.sizable->minimumSize().width;
@@ -269,6 +272,7 @@ auto VerticalLayout::minimumSize() -> Size {
 }
 
 auto VerticalLayout::setGeometry(Geometry containerGeometry) -> void {
+    state.containerGeometry = containerGeometry;
     auto children = this->children;
     for(auto& child : children) {
         if(child.size.width  == Size::Minimum) child.size.width  = child.sizable->minimumSize().width;
@@ -454,6 +458,7 @@ auto TabFrameLayout::minimumSize() -> Size {
 }
 
 auto TabFrameLayout::setGeometry(Geometry containerGeometry) -> void {
+    state.containerGeometry = containerGeometry;
     Geometry geometry = containerGeometry;
 
     addDisplacement(geometry, state.margin);

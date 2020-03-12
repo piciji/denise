@@ -1,11 +1,7 @@
 
 /**
- * v 1.3
- * guikit is a fork of higans old phoenix library (not used anymore), https://byuu.org/
- * it's rewritten from scratch and fixes more than 50 bugs.
- * differences are mostly widget nesting, menu/status toggling during fullscreen and
- * layouting, custom cursor, custom fonts from file
- * added treeview widget for all platforms
+ * v 1.35
+ * guikit is a based on higans phoenix library https://byuu.org/
  */
 
 #ifndef GUIKIT_H
@@ -634,6 +630,7 @@ struct Viewport : Widget {
 struct Layout : Sizable {
     auto append(Sizable& sizable, Size size, unsigned spacing = 0) -> void;
     auto remove(Sizable& sizable) -> void;
+    auto getGeometry() -> Geometry { return state.containerGeometry; }
 
     auto synchronizeLayout() -> void;
     auto setEnabled(bool enabled = true) -> void;
@@ -658,6 +655,7 @@ struct Layout : Sizable {
         double alignment = 0.0;
         unsigned margin = 0;
         unsigned padding = 0;
+        Geometry containerGeometry;
     } state;
     
     ~Layout();
@@ -733,7 +731,7 @@ protected:
 
 struct HorizontalLayout : Layout {
     auto minimumSize() -> Size;
-protected:
+//protected:
     auto setGeometry(Geometry geometry) -> void;
 };
 
@@ -752,7 +750,7 @@ protected:
 
 struct VerticalLayout : Layout {
     auto minimumSize() -> Size;
-protected:
+//protected:
     auto setGeometry(Geometry geometry) -> void;
 };
 
@@ -1189,6 +1187,14 @@ struct Vector {
     static auto combine(std::vector<T>& target, const std::vector<T>& source) -> void {
         target.insert( target.end(), source.begin(), source.end() );
     }
+    template <typename T> 
+    static auto concat(std::vector<T>& v1, std::vector<T>& v2) -> std::vector<T> {
+        std::vector<T> concated = std::vector<T>();
+        copy(v1.begin(), v1.end(), back_inserter( concated ));
+        copy(v2.begin(), v2.end(), back_inserter( concated ));
+        return concated;
+    }
+    
     Vector() = delete;
 };
 

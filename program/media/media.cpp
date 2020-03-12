@@ -128,7 +128,7 @@ auto MediaWindow::build() -> void {
     addImage.loadPng((uint8_t*) Icons::add, sizeof (Icons::add));
 	pathImage.loadPng((uint8_t*) Icons::folderOpen, sizeof (Icons::folderOpen));
     
-    unsigned i = 0;
+    unsigned i = 0;   
     
     for( auto& mediaGroup : emulator->mediaGroups ) {            
         
@@ -142,7 +142,7 @@ auto MediaWindow::build() -> void {
             tabView.appendHeader("", tapeImage);
             
         } else if (mediaGroup.isExpansion()) {
-            tabView.appendHeader("", expansionImage);
+            cartList.append( {mediaGroup.name} );            
            
 		} else if (mediaGroup.isMemory()) {
             tabView.appendHeader("", memoryImage);
@@ -150,9 +150,7 @@ auto MediaWindow::build() -> void {
         } else 
             continue;
         
-        MediaGroupLayout* mediaGroupLayout = new MediaGroupLayout( &mediaGroup, this );
-        
-        mediaGroupLayouts.push_back( mediaGroupLayout );
+        MediaGroupLayout* mediaGroupLayout = new MediaGroupLayout( &mediaGroup, this );        
         
         mediaGroupLayout->build( );
         
@@ -163,11 +161,49 @@ auto MediaWindow::build() -> void {
             mediaGroupLayout->updateVisibility( counter, true );
         }        
         
-        tabs.push_back( getMediaGroupTransIdent(&mediaGroup) );
+        if (!mediaGroup.isExpansion()) {
+            mediaGroupLayouts.push_back( mediaGroupLayout );
+            
+            tabs.push_back( getMediaGroupTransIdent(&mediaGroup) );
                 
-        tabView.setLayout(i++, *mediaGroupLayout, {~0u, ~0u});   
-		
+            tabView.setLayout(i++, *mediaGroupLayout, {~0u, ~0u});   
+		} else {
+            cartLayouts.push_back( mediaGroupLayout );
+        }
+        
 		bindSelectorAction( mediaGroupLayout );
+    }             
+        
+    if (cartLayouts.size()) {
+        cartList.setHeaderText( { "" } );
+		cartList.setHeaderVisible( false );        
+        cartSelectorFrame.append( cartList, {130u, 200u} );
+        cartSelectorFrame.setPadding(10);
+        cartSelectorFrame.setFont( GUIKIT::Font::system("bold") );
+        
+        tabView.appendHeader("", expansionImage); 
+        tabs.push_back( "cartridges" );    
+        tabView.setLayout(i++, cartWrapper, {~0u, 0u});       
+        cartWrapper.append( cartSelectorFrame, {0u, 0u}, 20 );
+        cartWrapper.append( cartContent, {~0u, 0u} );
+        
+        cartContent.append( *cartLayouts[0], {~0u, 0} );
+        cartList.setSelection(0);
+        
+        cartList.onChange = [this]() {
+            
+            if (!cartList.selected())
+                return;
+            
+            auto selection = cartList.selection();
+            
+            for(auto layout : this->cartLayouts)
+                cartContent.remove( *layout );                 
+            
+            cartContent.append( *cartLayouts[selection], {~0u, 0} );
+            
+            cartContent.setGeometry( cartContent.getGeometry() );            
+        };
     }
     
     tabView.appendHeader("", addImage); 
@@ -180,8 +216,7 @@ auto MediaWindow::build() -> void {
     preparePaths();        
     tabView.setLayout(i++, pathsLayout, {~0u, 0u});
     
-    tabView.setSelection(0);
-	
+    tabView.setSelection(0);	
 	
     translate();
 }
@@ -667,7 +702,7 @@ auto MediaWindow::preparePaths() -> void {
         std::string title = "select_" + mediaGroup.name + "_folder";
         
         if (mediaGroup.isExpansion())
-            title = "select_module_folder";        
+            title = "select_cartridge_folder";        
 
         block->select.onActivate = [this, block, title, settingFolderIdent]() {
             auto path = GUIKIT::BrowserWindow()
@@ -749,13 +784,20 @@ auto MediaWindow::translate() -> void {
 	setTitle( trans->get("software") + " - " + emulator->ident );
     for(auto& tab : tabs)
         tabView.setHeader(i++, trans->get(tab));
+    
+    i = 0;
+    cartSelectorFrame.setText( trans->get("cartridges") );   
 
-    for( auto mediaGroupLayout : mediaGroupLayouts ) {
+    for( auto mediaGroupLayout : GUIKIT::Vector::concat(mediaGroupLayouts, cartLayouts) ) {
         
         auto mediaGroup = mediaGroupLayout->mediaGroup;
         
         mediaGroupLayout->setText( trans->get( mediaGroup->name + "_insert") );
         mediaGroupLayout->inject.setText( trans->get("memory_inject") );
+        
+        if (mediaGroup->isExpansion()) {
+            cartList.setText( i++, 0, trans->get( mediaGroup->name ) ); 
+        }
 
         for ( auto block : mediaGroupLayout->blocks ) {
             block->header.writeprotect.setText(trans->get("write_protected"));
@@ -836,7 +878,7 @@ auto MediaWindow::translate() -> void {
 auto MediaWindow::getMediaGroupTransIdent( Emulator::Interface::MediaGroup* mediaGroup ) -> std::string {
     auto ident = mediaGroup->name;
     
-    if (mediaGroup->isDrive() || (mediaGroup->isExpansion() && mediaGroup->getExpansion()->isGame()) )
+    if (mediaGroup->isDrive())
         ident += "s";
     
     return ident;
@@ -955,7 +997,7 @@ auto MediaWindow::eject( Emulator::Interface::MediaGroup* mediaGroup ) -> void {
 
 auto MediaWindow::getMediaGroupLayout( Emulator::Interface::MediaGroup* mediaGroup ) -> MediaGroupLayout* {
     
-    for (auto layout : mediaGroupLayouts) {
+    for (auto layout : GUIKIT::Vector::concat(mediaGroupLayouts, cartLayouts) ) {
         
         if (layout->mediaGroup == mediaGroup)
             return layout;
@@ -973,10 +1015,24 @@ auto MediaWindow::showMediaGroupLayout( Emulator::Interface::MediaGroup* mediaGr
         if (layout->mediaGroup == mediaGroup) {
             tabView.setSelection( i );
             
-            break;
+            return;
         }
         
         i++;
+    }
+    
+    unsigned j = 0;
+    
+    for(auto layout : cartLayouts) {
+        
+        if (layout->mediaGroup == mediaGroup) {
+            tabView.setSelection( i );
+            cartList.setSelection( j );
+            cartList.onChange();
+            return;
+        }
+        
+        j++;
     }
 }
 
@@ -991,12 +1047,27 @@ auto MediaWindow::colorListing( unsigned color, bool foreground ) -> void {
 
 auto MediaWindow::drop( std::string filePath, MediaGroupLayout::Block* block ) -> void {    
     
-    MediaGroupLayout* layout;
+    MediaGroupLayout* layout = nullptr;
     Emulator::Interface::MediaGroup* mediaGroup;
     
     if (!block) {
-        layout = mediaGroupLayouts[ tabView.selection() ];
+        unsigned pos = tabView.selection();
         
+        if (pos < mediaGroupLayouts.size()) {
+            layout = mediaGroupLayouts[ pos ];    
+            
+        } else if (pos == mediaGroupLayouts.size()) {
+            
+             pos = cartList.selection();
+             
+             if (pos < cartLayouts.size()) {
+                 layout = cartLayouts[ pos ];    
+             }
+        }
+        
+        if (!layout)
+            return;
+                
         mediaGroup = layout->mediaGroup; 
         
         block = layout->selectedBlock;

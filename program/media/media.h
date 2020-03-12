@@ -153,6 +153,12 @@ struct MediaWindow : public GUIKIT::Window {
     DiskCreatorLayout* diskCreatorLayout = nullptr;
 	MemoryCreatorLayout* memoryCreatorLayout = nullptr;
     CartCreatorLayout* flashCreatorLayout = nullptr;
+        
+    GUIKIT::HorizontalLayout cartWrapper;
+    GUIKIT::FramedVerticalLayout cartSelectorFrame;
+    GUIKIT::ListView cartList;
+    GUIKIT::VerticalLayout cartContent;
+    std::vector<MediaGroupLayout*> cartLayouts;
     
     PathsLayout pathsLayout;
     	
