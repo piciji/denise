@@ -17,7 +17,7 @@ struct Interface : Emulator::Interface {
     
     enum MediaGroupId {
         MediaGroupIdDisk = 0, MediaGroupIdTape = 1,
-        MediaGroupIdMemory = 2, MediaGroupIdExpansionGame = 3, MediaGroupIdExpansionReu = 4,
+        MediaGroupIdProgram = 2, MediaGroupIdExpansionGame = 3, MediaGroupIdExpansionReu = 4,
         MediaGroupIdExpansionActionReplay = 5, MediaGroupIdExpansionEasyFlash = 6, MediaGroupIdExpansionRetroReplay = 7,
     };
     
@@ -83,12 +83,12 @@ struct Interface : Emulator::Interface {
     auto ejectExpansionImage(Media* media) -> void;
     auto createExpansionImage(MediaGroup* group, unsigned& imageSize) -> uint8_t*;
 	
-	//memory
-	auto insertMemory(Media* media, uint8_t* data, unsigned size) -> void;
-	auto ejectMemory(Media* media) -> void;
-	auto getLoadedMemory(unsigned& size) -> uint8_t*;
-	auto getMemoryListing(Media* media) -> std::vector<Emulator::Interface::Listing>;
-	auto selectMemoryListing(Media* media, unsigned pos) -> bool;    
+	//program
+	auto insertProgram(Media* media, uint8_t* data, unsigned size) -> void;
+	auto ejectProgram(Media* media) -> void;
+	auto getLoadedProgram(unsigned& size) -> uint8_t*;
+	auto getProgramListing(Media* media) -> std::vector<Emulator::Interface::Listing>;
+	auto selectProgramListing(Media* media, unsigned pos) -> bool;    
 
     //expansion
     auto setExpansion(unsigned expansionId) -> void;

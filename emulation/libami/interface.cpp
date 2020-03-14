@@ -55,10 +55,12 @@ auto Interface::prepareMedia() -> void {
         group.selected = nullptr;
     }  
     
-    for(auto& group : mediaGroups) {        
-        for(auto& media : group.media) {
-            media.expansion = nullptr;
+    for(auto& group : mediaGroups) {    
+        group.expansion = nullptr;
+        
+        for(auto& media : group.media) {            
             media.pcbLayout = nullptr;
+            media.memoryDump = false;
         }
     }
 }

@@ -8,7 +8,8 @@
 namespace LIBC64 {		
 
 struct Prg {
-	
+    Emulator::Interface::Media* media = nullptr;
+    
 	// loaded file
 	uint8_t* data = nullptr;
 	unsigned size = 0;
@@ -46,7 +47,9 @@ struct Prg {
 	auto isPrg() -> bool;	
 	auto saneSize() -> void;		
 	auto find( std::vector<uint8_t> match, unsigned offset = 0 ) -> bool;
+    
+    static auto getInstance(Emulator::Interface::Media* media) -> Prg*;
 };
 
-extern Prg* prg;
+extern std::vector<Prg*> prgs;
 } 

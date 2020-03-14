@@ -114,16 +114,13 @@ auto Program::setExpansionSelection( Emulator::Interface* emulator ) -> void {
     
     for( auto& mediaGroup : emulator->mediaGroups ) {
         
-        if ( !mediaGroup.isExpansion() )
-            continue;
-        
         if ( mediaGroup.selected ) {
             
             auto mediaId = settings->get<unsigned>( ident(emulator, mediaGroup.name + "_selected"), mediaGroup.media[0].id );
             
             auto media = emulator->getMedia( mediaGroup, mediaId );
             
-            if (media)
+            if (media && !media->memoryDump)
                 mediaGroup.selected = media;
         }                
     }

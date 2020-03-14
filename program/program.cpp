@@ -198,12 +198,8 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
         }                
         
         for(auto& media : mediaGroup.media) {            
-
-            if (mediaGroup.isMemory() && media.expansion && (media.expansion != expansion))
-                // this memory dump belongs to an expansion, which is not in use this time
-                continue; 
             
-            if (selectedMedia && (selectedMedia != &media) )
+            if (selectedMedia && !media.memoryDump && (selectedMedia != &media) )
                 // only one media element at a time can be used for this group
                 continue;
             
@@ -231,7 +227,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
             filePool->assign(ident(emulator, media.name), file);
             
             if (mediaGroup.isExpansion()) {
-                for(auto& jumper : media.expansion->jumpers) {
+                for(auto& jumper : mediaGroup.expansion->jumpers) {
                     bool state = settings->get<bool>( ident(emulator,  media.name + "_jumper_" + jumper.name), false );
                     emulator->setExpansionJumper( &media, jumper.id, state );
                 }                
@@ -532,4 +528,3 @@ auto Program::getEmulator( std::string ident ) -> Emulator::Interface* {
     
     return nullptr;
 }
-

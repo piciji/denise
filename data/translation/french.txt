@@ -33,7 +33,6 @@ exit = Quitter
 disks = Disques
 hds = Disques Durs
 tapes = Cassettes
-memorys = Mémoire
 system_management = Gestion du Système
 state = Etat
 states = Gestionnaire d'Etat
@@ -112,13 +111,10 @@ disk_drives = Lecteurs de Disque
 select_disk_drive = Sélectionner un lecteur de Disque
 hd_drives = Disques Durs
 tape_drives = Lecteur de Cassettes
-memory_drives = Mémoire
-memory = Mémoire
 select_states_folder = Sélectionner le dossier de la sauvegarde d'état
 select_disk_folder = Sélectionner le dossier disques
 select_hd_folder = Sélectionner le dossier disque dur
 select_tape_folder = Sélectionner le dossier cassettes
-select_memory_folder = Sélectionner le dossier programme
 select_shader_folder = Sélectionner le dossier shader
 all_files = Tous les fichiers (*)
 description = Description
@@ -134,10 +130,6 @@ hd_creator = Créer les disques durs
 hd_insert = Ajouter un disque dur
 tape_creator = Créer une cassette images
 tape_insert = Insérer les cassettes
-memory_insert = Injecter la mémoire
-memory_creator = Sauvegarder le programme chargé
-memory_inject = Mettre le programme sélectionné dans la mémoire
-memory_injected = le programme a été entrée dans la mémoire.
 size_in_mb = Taille (MB)
 format = Format
 high_density = haute densité
@@ -175,13 +167,10 @@ firmware_image = image du firmware
 disk_image = image du lecteur de cassette
 tape_image = image de la cassette
 hd_image = image du disque dur
-memory_image = image de la mémoire
 select_firmware_image = Sélectionner l'image du firmware %type% ...
 select_disk_image = Sélectionner l'image du disque ...
 select_hd_image = Sélectionner l'image du disque dur ..
 select_tape_image = Sélectionner l'image de la cassette ...
-select_memory_image = Sélectionner l'image de la mémoire ...
-blank_memory_image = Sélectionner l'image de la mémoire vide ...
 blank_disk_image = Sélectionner l'image d'une disquette vide ....
 blank_tape_image = Sélectionner l'image d'une cassette vide ...
 blank_hd_image = Sélectionner l'image d'un disque dur vide ...
@@ -447,3 +436,12 @@ game cartridge_insert = module_insert = Insérer les modules
 select_cartridge_folder = select_module_folder = Sélectionner le dossier modules
 select_game cartridge_image = select_module_image = Sélectionner l'image de la rom ...
 game cartridge_image = module_image = image du module
+programs = 
+select_program_folder = select_memory_folder = Sélectionner le dossier programme
+program_insert = memory_insert = Injecter la mémoire
+program_creator = memory_creator = Sauvegarder le programme chargé
+program_inject = memory_inject = Mettre le programme sélectionné dans la mémoire
+program_injected = memory_injected = le programme a été entrée dans la mémoire.
+program_image = memory_image = image de la mémoire
+select_program_image = select_memory_image = Sélectionner l'image de la mémoire ...
+blank_program_image = blank_memory_image = Sélectionner l'image de la mémoire vide ...

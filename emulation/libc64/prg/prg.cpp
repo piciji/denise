@@ -6,7 +6,7 @@
 
 namespace LIBC64 {
 	
-Prg* prg = nullptr;    
+std::vector<Prg*> prgs;    
     
 auto Prg::select( unsigned pos ) -> bool {
 
@@ -262,6 +262,16 @@ auto Prg::find( std::vector<uint8_t> match, unsigned offset ) -> bool {
             return false;
 
     return true;
+}
+
+auto Prg::getInstance(Emulator::Interface::Media* media) -> Prg* {
+    
+    for(auto prg : prgs) {
+        if (prg->media == media )
+            return prg;
+    }
+    
+    return nullptr;
 }
 
 }

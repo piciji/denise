@@ -66,6 +66,16 @@ struct KeyBuffer {
 
 	}   
     
+    auto isPrgInjectionInQueue() -> bool {
+        
+        for(auto& action : queue) {
+            if (action.callbackId == 2)
+                return true;
+        }
+        
+        return false;
+    }
+    
     auto serialize(Emulator::Serializer& s) -> void {
         
         uint8_t vSize = queue.size();
@@ -81,9 +91,10 @@ struct KeyBuffer {
                 
                 if (action.callbackId == 1)
                     action.callback = []() { system->kernalBootComplete = true; };
-                    
-                else if (action.callbackId == 2)
-                    action.callback = []() { prg->inject(); };
+                  
+                // state generation before prg injection will be prevented now
+                // else if (action.callbackId == 2)
+                //    action.callback = []() { system->prgInUse->inject(); };
                     
                 else if (action.callbackId == 3)
                     action.callback = []() { tape->setMode( Tape::Mode::Play ); };

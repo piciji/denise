@@ -142,7 +142,7 @@ auto States::oneMediumOnly(Emulator::Interface::MediaGroup* group, Emulator::Int
     
     for( auto& media : group->media ) {
         
-        if (&media == mediaInUse)
+        if ((&media == mediaInUse) || media.memoryDump)
             continue;
 
         media.guid = uintptr_t(nullptr);
@@ -159,6 +159,9 @@ auto States::loadImagePaths( GUIKIT::Settings* loadSettings ) -> void {
     auto setting = new FileSetting( loadSettings );
 
     for( auto& mediaGroup : emulator->mediaGroups ) {
+        
+        if (mediaGroup.isProgram())
+            continue;
 
         auto mediaSelected = mediaGroup.selected;
         Emulator::Interface::Media* mediaInUse = nullptr;
@@ -169,7 +172,7 @@ auto States::loadImagePaths( GUIKIT::Settings* loadSettings ) -> void {
             setting->update();
 
             if (setting->path.empty()) {
-                if (!mediaSelected ) {
+                if (!mediaSelected || media.memoryDump) {
                     emulator->ejectMedium( &media );
                     media.guid = uintptr_t(nullptr);
                     filePool->assign(program->ident(emulator, media.name), nullptr);  
@@ -178,7 +181,7 @@ auto States::loadImagePaths( GUIKIT::Settings* loadSettings ) -> void {
                 continue;
             }
             
-            if (mediaSelected)
+            if (mediaSelected && !media.memoryDump)
                 mediaInUse = mediaSelected;
             else
                 mediaInUse = &media;
@@ -394,10 +397,6 @@ auto States::updateSaveable() -> void {
     
     for( auto& mediaGroup : emulator->mediaGroups ) {
 
-        // memory group saves only PRG media in case of
-        // state is generated during boot before injection can be done.
-        // all other memory dumps, mostly expansion memory, will be inserted
-        // during boot before a save state is generatable.
         unsigned maxCount = 1;
         if (mediaGroup.isDrive())
             maxCount = emulator->getDrivesConnected( &mediaGroup );
@@ -410,12 +409,15 @@ auto States::updateSaveable() -> void {
                 continue;
             
             if (mediaGroup.isExpansion()) {
-                if (expansionMediaGroup != &mediaGroup)
+                if (media.memoryDump || (expansionMediaGroup != &mediaGroup))
                     insert->setting->setSaveable( false );
                 else
                     insert->setting->setSaveable( !insert->setting->path.empty() );
                 
-            } else
+            } else if (mediaGroup.isProgram()) {
+                insert->setting->setSaveable( false );
+                
+            } else                
                 insert->setting->setSaveable( maxCount > 0 );
             
             if (maxCount)
@@ -503,7 +505,7 @@ auto States::updateExpansionJumper() -> void {
         
     for( auto& mediaGroup : emulator->mediaGroups ) {
         
-        if (!mediaGroup.isExpansion() || (mediaGroup.getExpansion()->jumpers.size() == 0) )
+        if (!mediaGroup.isExpansion() || (mediaGroup.expansion->jumpers.size() == 0) )
             continue;        
                     
         MediaView::MediaWindow::getView( emulator )->updateJumper( mediaGroup.selected );

@@ -53,9 +53,9 @@ auto Interface::prepareMemory() -> void {
 auto Interface::prepareMedia() -> void {
 	mediaGroups.push_back({MediaGroupIdDisk, "Disk", MediaGroup::Type::Disk, {"d64", "g64"}, {"d64", "g64"} });
 	mediaGroups.push_back({MediaGroupIdTape, "Tape", MediaGroup::Type::Tape, {"tap"}, {"tap"} });	
-	mediaGroups.push_back({MediaGroupIdMemory, "Memory", MediaGroup::Type::Memory, {"prg", "p00", "t64", "reu"}, {"prg"} });
+	mediaGroups.push_back({MediaGroupIdProgram, "Program", MediaGroup::Type::Program, {"prg", "p00", "t64"}, {"prg"} });
     mediaGroups.push_back({MediaGroupIdExpansionGame, "Game Cartridge", MediaGroup::Type::Expansion, {"bin", "crt"}, {} });
-    mediaGroups.push_back({MediaGroupIdExpansionReu, "REU", MediaGroup::Type::Expansion, {"bin", "crt", "prg"}, {""} });
+    mediaGroups.push_back({MediaGroupIdExpansionReu, "REU", MediaGroup::Type::Expansion, {"bin", "crt", "prg", "reu"}, {""} });
     mediaGroups.push_back({MediaGroupIdExpansionActionReplay, "Action Replay", MediaGroup::Type::Expansion, {"bin", "crt"}, {} });
     mediaGroups.push_back({MediaGroupIdExpansionEasyFlash, "EasyFlash", MediaGroup::Type::Expansion, {"bin", "crt"}, {"crt"} });
     mediaGroups.push_back({MediaGroupIdExpansionRetroReplay, "Retro Replay", MediaGroup::Type::Expansion, {"bin", "crt"}, {"crt"} });
@@ -74,10 +74,13 @@ auto Interface::prepareMedia() -> void {
         group.selected = nullptr;
 	}
     
-	{   auto& group = mediaGroups[MediaGroupIdMemory];
-		group.media.push_back({0, "Memory", 0, &group});
-        group.media.push_back({1, "REU Memory", 0, &group});
-        group.selected = nullptr;
+	{   auto& group = mediaGroups[MediaGroupIdProgram];
+		group.media.push_back({0, "Program 1", 0, &group});
+        group.media.push_back({1, "Program 2", 0, &group});
+        group.media.push_back({2, "Program 3", 0, &group});
+        group.media.push_back({3, "Program 4", 0, &group});
+
+        group.selected = &group.media[0];
 	}
     
     {   auto& group = mediaGroups[MediaGroupIdExpansionGame];
@@ -95,6 +98,7 @@ auto Interface::prepareMedia() -> void {
         group.media.push_back({1, "REU 2", 0, &group});
         group.media.push_back({2, "REU 3", 0, &group});
         group.media.push_back({3, "REU 4", 0, &group});
+        group.media.push_back({4, "REU Memory", 0, &group});
         group.selected = &group.media[0];  
 	}
     
@@ -127,11 +131,15 @@ auto Interface::prepareMedia() -> void {
 	}
     
     for(auto& group : mediaGroups) {
+        group.expansion = nullptr;
+        
         for(auto& media : group.media) {
-            media.expansion = nullptr;
             media.pcbLayout = nullptr;
+            media.memoryDump = false;
         }
     }
+       
+    mediaGroups[MediaGroupIdExpansionReu].media[4].memoryDump = true;
 }
 
 auto Interface::prepareExpansions() -> void {
@@ -154,16 +162,12 @@ auto Interface::prepareExpansions() -> void {
         expansion.pcbs.push_back( {CartridgeIdSystem3, "System 3"} );
         expansion.pcbs.push_back( {CartridgeIdZaxxon, "Zaxxon"} );
         
-        for(auto& media : mediaGroups[MediaGroupIdExpansionGame].media)
-            media.expansion = &expansion;
+        mediaGroups[MediaGroupIdExpansionGame].expansion = &expansion;
     }
                 
     {   auto& expansion = expansions[ExpansionIdReu];        
     
-        for(auto& media : mediaGroups[MediaGroupIdExpansionReu].media)
-            media.expansion = &expansion;
-    
-        mediaGroups[MediaGroupIdMemory].media[1].expansion = &expansion;
+        mediaGroups[MediaGroupIdExpansionReu].expansion = &expansion;
     }
     
     {   auto& expansion = expansions[ExpansionIdActionReplay];        
@@ -173,16 +177,14 @@ auto Interface::prepareExpansions() -> void {
         expansion.pcbs.push_back( {CartridgeIdActionReplayMK4, "Action Replay MK4"} );
         expansion.pcbs.push_back( {CartridgeIdActionReplayV41AndHigher, "Action Replay V4"} );
         
-        for(auto& media : mediaGroups[MediaGroupIdExpansionActionReplay].media)
-            media.expansion = &expansion;
+        mediaGroups[MediaGroupIdExpansionActionReplay].expansion = &expansion;
     }
     
     {   auto& expansion = expansions[ExpansionIdEasyFlash];
     
         expansion.jumpers.push_back( {0, "flash"} );
     
-        for(auto& media : mediaGroups[MediaGroupIdExpansionEasyFlash].media)
-            media.expansion = &expansion;    
+        mediaGroups[MediaGroupIdExpansionEasyFlash].expansion = &expansion;
     }
     
     {   auto& expansion = expansions[ExpansionIdRetroReplay];        
@@ -192,8 +194,7 @@ auto Interface::prepareExpansions() -> void {
         expansion.jumpers.push_back( {0, "bank"} );
         expansion.jumpers.push_back( {1, "flash"} );
     
-        for(auto& media : mediaGroups[MediaGroupIdExpansionRetroReplay].media)
-            media.expansion = &expansion;    
+        mediaGroups[MediaGroupIdExpansionRetroReplay].expansion = &expansion;
     }
 
 }
@@ -736,48 +737,55 @@ auto Interface::createTapeImage(unsigned& imageSize) -> uint8_t* {
 
 auto Interface::insertExpansionImage(Media* media, uint8_t* data, unsigned size) -> void {
     
-    if (!media || !media->group->isExpansion())
-        return;
+    auto group = media->group;
     
-    if (media->expansion->id == ExpansionIdGame)
+    if (!media || !group->isExpansion())
+        return;        
+    
+    if (group->expansion->id == ExpansionIdGame)
         gameCart->setRom(media, data, size);
-    else if (media->expansion->id == ExpansionIdReu)
-        reu->setRom(media, data, size);
-    else if (media->expansion->id == ExpansionIdActionReplay)
+    else if (group->expansion->id == ExpansionIdReu)
+        media->memoryDump ? reu->setRam(data, size) : reu->setRom(media, data, size);
+    else if (group->expansion->id == ExpansionIdActionReplay)
         actionReplay->setRom(media, data, size);
-    else if (media->expansion->id == ExpansionIdEasyFlash)
+    else if (group->expansion->id == ExpansionIdEasyFlash)
         easyFlash->setRom(media, data, size);
-    else if (media->expansion->id == ExpansionIdRetroReplay)
+    else if (group->expansion->id == ExpansionIdRetroReplay)
         retroReplay->setRom(media, data, size);
 }
 
 auto Interface::writeProtectExpansion(Media* media, bool state) -> void {
     
-    if (!media || !media->group->isExpansion())
+    auto group = media->group;
+    
+    if (!media || !group->isExpansion())
         return;
     
-    if (media->expansion->id == ExpansionIdEasyFlash) {
+    if (group->expansion->id == ExpansionIdEasyFlash) {
         if (easyFlash->media == media)
             easyFlash->setWriteProtect( state );
-    } else if (media->expansion->id == ExpansionIdRetroReplay) {
+    } else if (group->expansion->id == ExpansionIdRetroReplay) {
         if (retroReplay->media == media)
             retroReplay->setWriteProtect( state );
     }
 }
 
 auto Interface::ejectExpansionImage(Media* media) -> void {
-    if (!media || !media->group->isExpansion())
+    
+    auto group = media->group;
+    
+    if (!media || !group->isExpansion())
         return;
     
-    if (media->expansion->id == ExpansionIdGame)
+    if (group->expansion->id == ExpansionIdGame)
         gameCart->setRom(media, nullptr, 0);
-    else if (media->expansion->id == ExpansionIdReu)
-        reu->setRom(media, nullptr, 0);
-    else if (media->expansion->id == ExpansionIdActionReplay)
+    else if (group->expansion->id == ExpansionIdReu) {
+        media->memoryDump ? reu->unsetRam() : reu->setRom(media, nullptr, 0);
+    } else if (group->expansion->id == ExpansionIdActionReplay)
         actionReplay->setRom(media, nullptr, 0);
-    else if (media->expansion->id == ExpansionIdEasyFlash)
+    else if (group->expansion->id == ExpansionIdEasyFlash)
         easyFlash->setRom(media, nullptr, 0);
-    else if (media->expansion->id == ExpansionIdRetroReplay)
+    else if (group->expansion->id == ExpansionIdRetroReplay)
         retroReplay->setRom(media, nullptr, 0);
 }
 
@@ -786,58 +794,63 @@ auto Interface::createExpansionImage(MediaGroup* group, unsigned& imageSize) -> 
     if (!group->isExpansion())
         return nullptr;
     
-    if (group->getExpansion()->id == ExpansionIdEasyFlash)
+    if (group->expansion->id == ExpansionIdEasyFlash)
         return easyFlash->createFlash(imageSize);
     
-    if (group->getExpansion()->id == ExpansionIdRetroReplay)
+    if (group->expansion->id == ExpansionIdRetroReplay)
         return retroReplay->createFlash(imageSize);
     
     return nullptr;
 }
 
-auto Interface::insertMemory(Media* media, uint8_t* data, unsigned size) -> void {
+auto Interface::insertProgram(Media* media, uint8_t* data, unsigned size) -> void {
 		
-    if (!media || !media->group->isMemory())
+    if (!media || !media->group->isProgram())
         return;
     
-    if (media->expansion && media->expansion->id == ExpansionIdReu)
-        reu->setRam(data, size);            
-    else // c64 memory
-        prg->set( data, size );
-}
-
-auto Interface::ejectMemory(Media* media) -> void {
-    if (!media || !media->group->isMemory())
+    auto prg = Prg::getInstance( media );
+    if (!prg)
         return;
-        
-    if (media->expansion && media->expansion->id == ExpansionIdReu)
-        reu->unsetRam();
-    else
-        prg->unset();
+    
+    system->prgInUse = prg;
+    prg->set( data, size );
 }
 
-auto Interface::getLoadedMemory(unsigned& size) -> uint8_t* {
+auto Interface::ejectProgram(Media* media) -> void {
+    if (!media || !media->group->isProgram())
+        return;
+    
+    auto prg = Prg::getInstance( media );
+    if (!prg)
+        return;
+    prg->unset();
+}
+
+auto Interface::getLoadedProgram(unsigned& size) -> uint8_t* {
 	
-	return prg->getMemory( size );
+	return system->prgInUse->getMemory( size );
 }
 
-auto Interface::getMemoryListing(Media* media) -> std::vector<Emulator::Interface::Listing> {
-    if (!media || !media->group->isMemory())
+auto Interface::getProgramListing(Media* media) -> std::vector<Emulator::Interface::Listing> {
+    if (!media || !media->group->isProgram())
         return {};
     
+    auto prg = Prg::getInstance( media );
+    if (!prg)
+        return {};
+        
 	return prg->getListing();
 }
 
-auto Interface::selectMemoryListing(Media* media, unsigned pos) -> bool {
-    if (!media || !media->group->isMemory())
+auto Interface::selectProgramListing(Media* media, unsigned pos) -> bool {
+    if (!media || !media->group->isProgram())
         return false;
-        
-    if (media->expansion && media->expansion->id == ExpansionIdReu) {
-        reu->injectRam();
-        return true;
-    }
     
     // c64 memory
+    auto prg = Prg::getInstance( media );
+    if (!prg)
+        return false;
+    system->prgInUse = prg;
     return prg->select( pos );
 }
 
@@ -1045,27 +1058,32 @@ auto Interface::getExpansion() -> Expansion* {
 
 auto Interface::setExpansionJumper( Media* media, unsigned jumperId, bool state ) -> void {
     
-    if (!media || !media->group->isExpansion())
+    auto group = media->group;
+    
+    if (!media || !group->isExpansion())
         return;
     
-    if (media->expansion->id == ExpansionIdEasyFlash) {
+    if (group->expansion->id == ExpansionIdEasyFlash) {
         if (easyFlash->media == media)
             easyFlash->setJumper( jumperId, state );
     
-    } else if (media->expansion->id == ExpansionIdRetroReplay) {        
+    } else if (group->expansion->id == ExpansionIdRetroReplay) {        
         if (retroReplay->media == media)
             retroReplay->setJumper( jumperId, state );
     }
 }
 
 auto Interface::getExpansionJumper( Media* media, unsigned jumperId ) -> bool {
-    if (!media || !media->group->isExpansion())
+    
+    auto group = media->group;
+    
+    if (!media || !group->isExpansion())
         return false;
 
-    if (media->expansion->id == ExpansionIdEasyFlash)
+    if (group->expansion->id == ExpansionIdEasyFlash)
         return easyFlash->getJumper(jumperId);
 
-    else if (media->expansion->id == ExpansionIdRetroReplay)
+    else if (group->expansion->id == ExpansionIdRetroReplay)
         return retroReplay->getJumper(jumperId);
     
     return false;

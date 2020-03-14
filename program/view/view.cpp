@@ -169,7 +169,7 @@ auto View::build() -> void {
         if (program->isRunning)
             return;
         
-        GUIKIT::Window::setStatusText( std::to_string(pos.x) + " " + std::to_string(pos.y) );
+        //GUIKIT::Window::setStatusText( std::to_string(pos.x) + " " + std::to_string(pos.y) );
                         
         if (cursorForPlacholderInUpperTriangle(pos)) {
             view->setPointerCursor();

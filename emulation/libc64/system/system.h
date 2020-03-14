@@ -21,6 +21,7 @@ namespace Emulator {
 
 namespace LIBC64 {
 
+struct Prg;
 struct Input;    
 struct KeyBuffer;	
 struct GlueLogic;
@@ -87,6 +88,7 @@ struct System {
     CIA::M6526* cia2;
     ExpansionPort* expansionPort;
     ExpansionPort* noExpansion;
+    Prg* prgInUse = nullptr;
     
 	Emulator::PowerSupply* powerSupply;
     Input* input;

@@ -102,7 +102,7 @@ auto Reu::prepareRam(unsigned size) -> void {
 
 auto Reu::setRam( uint8_t* dump, unsigned dumpSize ) -> void {
     this->dump = dump;
-    this->dumpSize = dumpSize;
+    this->dumpSize = dumpSize;       
 }
 
 auto Reu::unsetRam() -> void {
@@ -122,6 +122,7 @@ auto Reu::reset() -> void {
     
     status &= ~0xe0;    
     std::memset(data, 0, size);
+    injectRam( );
     
     command = 0x10; // FF00 trigger disabled    
     intMask = 0x1f;    
@@ -135,6 +136,7 @@ auto Reu::reset() -> void {
     vicBaLow = 0;
     steal = false;
     swapRead = false;
+    dma = false;
 }
 
 inline auto Reu::readReu() -> uint8_t {

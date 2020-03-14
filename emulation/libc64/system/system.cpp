@@ -38,7 +38,13 @@ System::System(Interface* interface) {
 	vicII = new VicII;    
 	sid = new Sid( Sid::Type::MOS_6581, &events );
     input = new Input;
-	prg = new Prg;
+    for (auto& media : interface->mediaGroups[Interface::MediaGroupIdProgram].media) {
+        auto prg = new Prg;
+        prg->media = &media;
+        prgs.push_back( prg );
+    }    
+	prgInUse = prgs[0];
+    
     keyBuffer = new KeyBuffer;
     glueLogic = new GlueLogic( &events );
 	crop = new Emulator::Crop;
@@ -852,4 +858,3 @@ auto System::setFastForward( unsigned config ) -> void {
 }
 
 }
-

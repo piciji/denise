@@ -19,7 +19,7 @@ MediaGroupLayout::Block::Header::Header(Emulator::Interface::Media* media) {
     
     deviceName.setFont(GUIKIT::Font::system("bold"));
     inUse.setFont(GUIKIT::Font::system("bold"));
-    if (media->group->selected)
+    if (!media->memoryDump && media->group->selected)
         append(inUse, {0u, 0u}, 5);
     else
         append(deviceName, {0u, 0u}, 10);
@@ -34,9 +34,10 @@ MediaGroupLayout::Block::Header::Header(Emulator::Interface::Media* media) {
 MediaGroupLayout::Block::Selector::Selector(Emulator::Interface::Media* media) {    
        
     append(edit, {~0u, 0u}, 10);
+    auto group = media->group;
     
-    if (media->expansion && (media->expansion->pcbs.size() > 0) ) {
-        for (auto& pcb : media->expansion->pcbs) {
+    if (group->expansion && (group->expansion->pcbs.size() > 0) ) {
+        for (auto& pcb : group->expansion->pcbs) {
             combo.append( pcb.name, pcb.id );
 
             if (media->pcbLayout && (media->pcbLayout == &pcb) )
@@ -46,10 +47,10 @@ MediaGroupLayout::Block::Selector::Selector(Emulator::Interface::Media* media) {
         append(combo, {0u, 0u}, 10);      
     }
                   
-    if (media->expansion && (media->expansion->jumpers.size() > 0) ) { 
+    if (group->expansion && (group->expansion->jumpers.size() > 0) ) { 
         append(jumperLabel, {0u, 0u}, 5 );
         
-        for(auto& jumper : media->expansion->jumpers) {
+        for(auto& jumper : group->expansion->jumpers) {
             auto jumpChecker = new GUIKIT::CheckBox;
             jumpChecker->setText( jumper.name );
 
@@ -257,11 +258,11 @@ auto MediaGroupLayout::build() -> void {
         auto& header = block->header;
         auto& selector = block->selector;
         
-        if (mediaGroup->selected)
+        if (!media.memoryDump && mediaGroup->selected)
             radioGroup.push_back( &header.inUse );           
                 
-        if (media.expansion) {
-            for(auto& jumper : media.expansion->jumpers) {
+        if (mediaGroup->expansion) {
+            for(auto& jumper : mediaGroup->expansion->jumpers) {
                 
                 auto jumperBox = selector.jumpers[jumper.id];
                 
@@ -293,10 +294,10 @@ auto MediaGroupLayout::build() -> void {
         if (mediaWindow->useCustomFont)
             listings.setFont("C64 Pro Mono, 12");           
         
-        if ( mediaGroup->isMemory( ) )
+        if ( mediaGroup->isProgram( ) )
             append( inject, {0u, 0u}, 3 );
             
-        if ( mediaGroup->isMemory( ) || mediaGroup->isDisk() )
+        if ( mediaGroup->isProgram( ) || mediaGroup->isDisk() )
             append( listings, {~0u, ~0u} );
 	}
 }

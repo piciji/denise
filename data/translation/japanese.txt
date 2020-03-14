@@ -33,7 +33,6 @@ exit = 終了
 disks = ディスク
 hds = ハードディスク
 tapes = テープ
-memorys = メモリ
 system_management = 全システムの設定
 state = ステートセーブ
 states = ステートセーブ管理
@@ -112,13 +111,10 @@ disk_drives = ディスクドライブ
 select_disk_drive = ディスクドライブを選択
 hd_drives = ハードディスク
 tape_drives = カセットテープ
-memory_drives = メモリデバイス
-memory = プログラムファイル
 select_states_folder = セーブステートのフォルダを選択
 select_disk_folder = ディスクのフォルダを選択
 select_hd_folder = HDDのフォルダを選択
 select_tape_folder = テープのフォルダを選択
-select_memory_folder = プログラムのフォルダを選択
 select_shader_folder = シェーダーのフォルダを選択
 all_files = 全てのファイル (*)
 description = 説明
@@ -134,10 +130,6 @@ hd_creator = HDDイメージを作成
 hd_insert = HDDをセット
 tape_creator = テープイメージを作成
 tape_insert = テープイメージをセット
-memory_insert = プログラムをセット
-memory_creator = ロードしたプログラムをセーブ
-memory_inject = 選択したプログラムをRAMにロード
-memory_injected = プログラムがロードされました
 size_in_mb = 容量 (MB)
 format = フォーマット
 high_density = HD (高密度)
@@ -175,13 +167,10 @@ firmware_image = ファームウェアのイメージ
 disk_image = フロッピーイメージ
 tape_image = テープイメージ
 hd_image = HDDイメージ
-memory_image = プログラムのイメージ
 select_firmware_image = %type% のファームウェアイメージを選択 ...
 select_disk_image = ディスクイメージを選択 ...
 select_hd_image = HDDイメージを選択 ...
 select_tape_image = テープイメージを選択 ...
-select_memory_image = プログラムを選択 ...
-blank_memory_image = 新しいプログラムを選択 ...
 blank_disk_image = 空のフロッピーイメージを選択 ...
 blank_tape_image = 空のテープイメージを選択 ...
 blank_hd_image = 空のHDDイメージを選択 ...
@@ -447,3 +436,13 @@ game cartridge_insert = module_insert = カートリッジをセット
 select_cartridge_folder = select_module_folder = カートリッジのフォルダを選択
 select_game cartridge_image = select_module_image = ROMイメージを選択 ...
 game cartridge_image = module_image = カートリッジのイメージ
+programs = 
+select_program_folder = select_memory_folder = プログラムのフォルダを選択
+program_insert = memory_insert = プログラムをセット
+program_creator = memory_creator = ロードしたプログラムをセーブ
+program_inject = memory_inject = 選択したプログラムをRAMにロード
+program_injected = memory_injected = プログラムがロードされました
+program_image = memory_image = プログラムのイメージ
+select_program_image = select_memory_image = プログラムを選択 ...
+blank_program_image = blank_memory_image = 新しいプログラムを選択 ...
+

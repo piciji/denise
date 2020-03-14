@@ -179,7 +179,7 @@ struct MediaWindow : public GUIKIT::Window {
     auto updateListing( Emulator::Interface::Media* media ) -> void;
 	auto preselectPath( std::string& groupName ) -> std::string;
 	auto savePath( std::string& groupName, std::string path ) -> void;
-    auto showC64Listing( MediaGroupLayout* layout, MediaGroupLayout::Block* block = nullptr ) -> bool;
+    auto showC64Listing( MediaGroupLayout* layout ) -> bool;
     auto createImage( Emulator::Interface::MediaGroup* mediaGroup ) -> void;
     auto showMediaGroupLayout( Emulator::Interface::MediaGroup* mediaGroup ) -> void;
     auto getMediaGroupLayout( Emulator::Interface::MediaGroup* mediaGroup ) -> MediaGroupLayout*;   

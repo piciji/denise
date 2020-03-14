@@ -171,31 +171,31 @@ struct Interface {
         unsigned id;
         std::string name;
         uintptr_t guid; //free to use
-        MediaGroup* group;
-        Expansion* expansion; // belongs to 
+        MediaGroup* group;        
         PCBLayout* pcbLayout;
+        bool memoryDump;
     };   
 
     struct MediaGroup {
         unsigned id;
         std::string name;        
-		enum class Type : unsigned { Disk, HardDisk, Tape, Expansion, Memory } type;
+		enum class Type : unsigned { Disk, HardDisk, Tape, Expansion, Program } type;
         std::vector<std::string> suffix;
         std::vector<std::string> creatable;
-        Media* selected;                       
+        Media* selected; 
+        Expansion* expansion;
         std::vector<Media> media;
         
         auto isDisk() const -> bool { return type == Type::Disk; }
         auto isHardDisk() const -> bool { return type == Type::HardDisk; }
         auto isTape() const -> bool { return type == Type::Tape; }
 		auto isExpansion() const -> bool { return type == Type::Expansion; }
-		auto isMemory() const -> bool { return type == Type::Memory; }
+		auto isProgram() const -> bool { return type == Type::Program; }
         auto isDrive() const -> bool { return isDisk() || isTape() || isHardDisk(); };
         auto isWritable() const -> bool { return isDrive() || (
-                   isExpansion() && (getExpansion()->isFlash() || getExpansion()->isEprom())); }
+                   isExpansion() && (expansion->isFlash() || expansion->isEprom())); }
         // default count of connected drives
         auto defaultUsage() -> unsigned { return type == Type::Disk ? 1 : 0; }       
-        auto getExpansion() const -> Expansion* { return media[0].expansion; }
     };
 
     std::vector<MediaGroup> mediaGroups;         
@@ -391,12 +391,12 @@ struct Interface {
     virtual auto ejectExpansionImage(Media* media) -> void {}
     virtual auto writeProtectExpansion(Media* media, bool state) -> void {}
     virtual auto createExpansionImage(MediaGroup* group, unsigned& imageSize) -> uint8_t* { return nullptr; }
-	// memory 
-	virtual auto insertMemory(Media* media, uint8_t* data, unsigned size) -> void {}
-	virtual auto ejectMemory(Media* media) -> void {}	
-	virtual auto getLoadedMemory(unsigned& size) -> uint8_t* { return nullptr; }
-	virtual auto getMemoryListing(Media* media) -> std::vector<Listing> { return {}; }
-	virtual auto selectMemoryListing(Media* media, unsigned pos) -> bool { return false; }	
+	// program 
+	virtual auto insertProgram(Media* media, uint8_t* data, unsigned size) -> void {}
+	virtual auto ejectProgram(Media* media) -> void {}	
+	virtual auto getLoadedProgram(unsigned& size) -> uint8_t* { return nullptr; }
+	virtual auto getProgramListing(Media* media) -> std::vector<Listing> { return {}; }
+	virtual auto selectProgramListing(Media* media, unsigned pos) -> bool { return false; }	
     // expansion port
     virtual auto setExpansion(unsigned expansionId) -> void {}
     virtual auto unsetExpansion() -> void {}    
@@ -479,7 +479,7 @@ struct Interface {
 			case MediaGroup::Type::Disk: insertDisk(media, data, size); break;
 			case MediaGroup::Type::Tape: insertTape(media, data, size); break;
 			case MediaGroup::Type::Expansion: insertExpansionImage(media, data, size); break;
-			case MediaGroup::Type::Memory: insertMemory(media, data, size); break;
+			case MediaGroup::Type::Program: insertProgram(media, data, size); break;
 			case MediaGroup::Type::HardDisk: insertHardDisk(media, size); break;
 		}
 	}
@@ -489,7 +489,7 @@ struct Interface {
 			case MediaGroup::Type::Disk: writeProtectDisk(media, state); break;
 			case MediaGroup::Type::Tape: writeProtectTape(media, state); break;
 			case MediaGroup::Type::Expansion: writeProtectExpansion(media, state); break;
-			case MediaGroup::Type::Memory: break; //work mem is controlled by software
+			case MediaGroup::Type::Program: break;
 			case MediaGroup::Type::HardDisk: break;
 		}
 	}
@@ -498,7 +498,7 @@ struct Interface {
 		switch(media->group->type) {
 			case MediaGroup::Type::Disk: ejectDisk(media); break;
 			case MediaGroup::Type::Tape: ejectTape(media); break;
-			case MediaGroup::Type::Memory: ejectMemory(media); break;
+			case MediaGroup::Type::Program: ejectProgram(media); break;
 			case MediaGroup::Type::Expansion: ejectExpansionImage(media); break;
 			case MediaGroup::Type::HardDisk: ejectHardDisk(media); break;
 		}		
@@ -509,8 +509,8 @@ struct Interface {
 			case MediaGroup::Type::Disk:
                 return getDiskListing( media );
 			case MediaGroup::Type::Tape: break;
-			case MediaGroup::Type::Memory:
-                return getMemoryListing( media );
+			case MediaGroup::Type::Program:
+                return getProgramListing( media );
 			case MediaGroup::Type::Expansion: break;
 			case MediaGroup::Type::HardDisk: break;
 		}	
@@ -525,8 +525,8 @@ struct Interface {
 			case MediaGroup::Type::Tape:
                 selectTapeListing( media, position );
                 return true;
-			case MediaGroup::Type::Memory:
-                return selectMemoryListing( media, position );
+			case MediaGroup::Type::Program:
+                return selectProgramListing( media, position );
 			case MediaGroup::Type::Expansion: break;
 			case MediaGroup::Type::HardDisk: break;
 		}	

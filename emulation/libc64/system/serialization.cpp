@@ -22,6 +22,9 @@ auto System::calcSerializationSize() -> void {
 
 auto System::serialize(unsigned& size) -> uint8_t* {   
     
+    if (keyBuffer->isPrgInjectionInQueue())
+        return nullptr;
+    
     Emulator::Serializer s( serializationSize );
     
     unsigned signature = 0x433634; // always constant for each emulation core
@@ -140,8 +143,8 @@ auto System::serialize(Emulator::Serializer& s) -> void {
     s.integer( rdyIncomming );   
     s.integer( ntsc );
     s.integer( kernalBootComplete );    
-    keyBuffer->serialize( s );
-    prg->serialize( s );
+    keyBuffer->serialize( s );    
+    prgInUse->serialize( s );
     glueLogic->serialize( s );
     powerSupply->serialize( s );
     

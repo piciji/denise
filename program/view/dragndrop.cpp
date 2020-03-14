@@ -54,8 +54,8 @@ auto View::autoloadPostProcessing() -> void {
 
         if (lhs->isExpansion()) return true;
         if (rhs->isExpansion()) return false;
-        if (lhs->isMemory()) return true;
-        if (rhs->isMemory()) return false;
+        if (lhs->isProgram()) return true;
+        if (rhs->isProgram()) return false;
         if (lhs->isDisk()) return true;
         return false;
     });
@@ -84,14 +84,14 @@ auto View::autoloadPostProcessing() -> void {
 			}
 		}
 	                                            
-        emuConfigView->systemLayout->handleExpansionIfAutoBoot( mediaGroup->isExpansion() ? mediaGroup->getExpansion() : nullptr );
+        emuConfigView->systemLayout->handleExpansionIfAutoBoot( mediaGroup->isExpansion() ? mediaGroup->expansion : nullptr );
         
         program->power(ddControl.emulator);
 
-        if (mediaGroup->isMemory()) {
-            for (auto& media : mediaGroup->media)
-                ddControl.emulator->selectListing(&media, 0); 
-        } else                
+//        if (mediaGroup->isMemory()) {
+//            for (auto& media : mediaGroup->media)
+//                ddControl.emulator->selectListing(&media, 0); 
+//        } else                
             ddControl.emulator->selectListing(&mediaGroup->media[0], 0);
 
         if (mediaGroup->isTape())
@@ -160,7 +160,7 @@ auto View::autoloadFiles() -> void {
                         if (mediaGroup.isExpansion()) {
                             auto analyzedExpansion = emulator->analyzeExpansion( file->archiveData(item->id), item->info.size );
                             
-                            if (analyzedExpansion != mediaGroup.getExpansion())
+                            if (analyzedExpansion != mediaGroup.expansion)
                                 continue;
                         }                                                
                         
@@ -175,10 +175,10 @@ auto View::autoloadFiles() -> void {
                         ddControl.mediaGroups.push_back(&mediaGroup);                        
                         
                         if (!media) {                          
-                            if (mediaGroup.isMemory())
+                         //   if (mediaGroup.isMemory())
                                 // todo: handle this better
-                                media = (item->info.size >= (128 * 1024)) ? &mediaGroup.media[1] : &mediaGroup.media[0];
-                            else
+                           //     media = (item->info.size >= (128 * 1024)) ? &mediaGroup.media[1] : &mediaGroup.media[0];
+                           // else
                                 media = &mediaGroup.media[ alreadyInUse ];                                                
                         }
                             						
