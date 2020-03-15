@@ -1,6 +1,6 @@
 
 /**
- * v 1.35
+ * v 1.4
  * guikit is a based on higans phoenix library https://byuu.org/
  */
 
@@ -627,10 +627,9 @@ struct Viewport : Widget {
     Viewport();
 };
 
-struct Layout : Sizable {
+struct Layout : Sizable {        
     auto append(Sizable& sizable, Size size, unsigned spacing = 0) -> void;
     auto remove(Sizable& sizable) -> void;
-    auto getGeometry() -> Geometry { return state.containerGeometry; }
 
     auto synchronizeLayout() -> void;
     auto setEnabled(bool enabled = true) -> void;
@@ -641,6 +640,8 @@ struct Layout : Sizable {
     auto reset() -> void;
     static auto getParentWidget( Widget* widget, int& selection) -> Widget*;
     auto getFrameInnerGeometry(Geometry geometry) -> Geometry;
+    static auto getParentTabOrSwitchLayout(Sizable* sizable) -> Layout*;
+    static auto getTopMostTabOrSwitchLayout(Layout* layout) -> Layout*;
 
     struct Children {
         Sizable* sizable;
@@ -655,7 +656,6 @@ struct Layout : Sizable {
         double alignment = 0.0;
         unsigned margin = 0;
         unsigned padding = 0;
-        Geometry containerGeometry;
     } state;
     
     ~Layout();
@@ -677,10 +677,29 @@ protected:
     auto setGeometry(Geometry geometry) -> void;
 };
 
+struct SwitchLayout : Layout {
+    
+    auto setLayout(unsigned selection, Layout& layout, Size size) -> void;
+    auto remove(unsigned selection) -> void;
+    auto append(Sizable& sizable, Size size, unsigned spacing = 0) -> void = delete;
+    auto setAlignment(double alignment) -> void = delete;
+    auto minimumSize() -> Size;
+    auto setVisible(bool visible = true) -> void;
+    auto setSelection(unsigned selection) -> void;
+    auto selection() const -> unsigned;
+    
+    struct {
+        unsigned selection = 0;
+    } state;
+protected:
+    auto setGeometry(Geometry geometry) -> void;  
+};
+
 struct TabFrameLayout : Layout {
     friend class pTabFrame;
     friend class pApplication;
     friend class pLabel;
+    friend class Layout;
 
     std::function<void ()> onChange = nullptr;
 
@@ -731,7 +750,7 @@ protected:
 
 struct HorizontalLayout : Layout {
     auto minimumSize() -> Size;
-//protected:
+protected:
     auto setGeometry(Geometry geometry) -> void;
 };
 
@@ -750,7 +769,7 @@ protected:
 
 struct VerticalLayout : Layout {
     auto minimumSize() -> Size;
-//protected:
+protected:
     auto setGeometry(Geometry geometry) -> void;
 };
 

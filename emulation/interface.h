@@ -391,6 +391,7 @@ struct Interface {
     virtual auto ejectExpansionImage(Media* media) -> void {}
     virtual auto writeProtectExpansion(Media* media, bool state) -> void {}
     virtual auto createExpansionImage(MediaGroup* group, unsigned& imageSize) -> uint8_t* { return nullptr; }
+    virtual auto getMediaForCustomFileSuffix(std::string suffix) -> Media* { return nullptr; }
 	// program 
 	virtual auto insertProgram(Media* media, uint8_t* data, unsigned size) -> void {}
 	virtual auto ejectProgram(Media* media) -> void {}	
@@ -434,9 +435,9 @@ struct Interface {
     
     virtual auto setCpu(unsigned cpuId) -> void {}
     virtual auto getCpu() -> unsigned { return 0; }
-    virtual auto setMemory(MemoryType* memoryType, unsigned memoryId) -> void {}
-    // firmware will copied internally, so you can close the relevant file afterwards
+    virtual auto setMemory(MemoryType* memoryType, unsigned memoryId) -> void {}    
     virtual auto setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> void {}
+    virtual auto getCharRom() -> Firmware* { return nullptr; }
     
     virtual auto power() -> void {} //hard reset
 	virtual auto reset() -> void {} //soft reset

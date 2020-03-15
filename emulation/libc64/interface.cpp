@@ -803,6 +803,18 @@ auto Interface::createExpansionImage(MediaGroup* group, unsigned& imageSize) -> 
     return nullptr;
 }
 
+auto Interface::getMediaForCustomFileSuffix(std::string suffix) -> Media* {
+    
+    if (suffix == "reu") {
+        for(auto& media : mediaGroups[MediaGroupIdExpansionReu].media) {
+            if (media.memoryDump)
+                return &media;
+        }
+    }
+        
+    return nullptr;
+}
+
 auto Interface::insertProgram(Media* media, uint8_t* data, unsigned size) -> void {
 		
     if (!media || !media->group->isProgram())
@@ -875,6 +887,10 @@ auto Interface::setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> vo
 	if (typeId >= firmwares.size()) return;
     
     system->setFirmware( typeId, data, size );
+}
+
+auto Interface::getCharRom() -> Firmware* {
+    return &firmwares[2];
 }
 
 auto Interface::setFeature(unsigned featureId, int value) -> void {    

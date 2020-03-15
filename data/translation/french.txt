@@ -426,8 +426,6 @@ swap_input_devices =
 linear_interpolation = Video Linear = Vidéo Linéaire
 save_preferences = 
 rf_modulation = 
-swap_char = 
-swap = 
 presentation = 
 control = 
 cartridges = modules = Modules

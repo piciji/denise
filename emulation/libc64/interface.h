@@ -77,11 +77,12 @@ struct Interface : Emulator::Interface {
     auto getTapeControl(Media* media) -> TapeMode;
     auto selectTapeListing(Media* media, unsigned pos) -> void;
 
-	//module slot handling
+	//expansion handling
 	auto insertExpansionImage(Media* media, uint8_t* data, unsigned size) -> void;
     auto writeProtectExpansion(Media* media, bool state) -> void;
     auto ejectExpansionImage(Media* media) -> void;
     auto createExpansionImage(MediaGroup* group, unsigned& imageSize) -> uint8_t*;
+    auto getMediaForCustomFileSuffix(std::string suffix) -> Media*;
 	
 	//program
 	auto insertProgram(Media* media, uint8_t* data, unsigned size) -> void;
@@ -105,6 +106,7 @@ struct Interface : Emulator::Interface {
 
 	//firmware
 	auto setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> void;
+    auto getCharRom() -> Firmware*;
 	
 	//features
     auto setFeature(unsigned featureId, int value) -> void;

@@ -142,8 +142,7 @@ auto FixedLayout::append(Widget& widget, Geometry geometry) -> void {
     if(window()) window()->synchronizeLayout();
 }
 
-auto FixedLayout::setGeometry(Geometry geometry) -> void {
-    state.containerGeometry = geometry;
+auto FixedLayout::setGeometry(Geometry geometry) -> void {    
     auto children = this->children;
     for(auto& child : children) {
 
@@ -200,7 +199,6 @@ auto HorizontalLayout::minimumSize() -> Size {
 }
 
 auto HorizontalLayout::setGeometry(Geometry containerGeometry) -> void {
-    state.containerGeometry = containerGeometry;
     
     auto children = this->children;
     for(auto& child : children) {
@@ -272,7 +270,7 @@ auto VerticalLayout::minimumSize() -> Size {
 }
 
 auto VerticalLayout::setGeometry(Geometry containerGeometry) -> void {
-    state.containerGeometry = containerGeometry;
+
     auto children = this->children;
     for(auto& child : children) {
         if(child.size.width  == Size::Minimum) child.size.width  = child.sizable->minimumSize().width;
@@ -458,7 +456,7 @@ auto TabFrameLayout::minimumSize() -> Size {
 }
 
 auto TabFrameLayout::setGeometry(Geometry containerGeometry) -> void {
-    state.containerGeometry = containerGeometry;
+
     Geometry geometry = containerGeometry;
 
     addDisplacement(geometry, state.margin);
@@ -520,4 +518,106 @@ auto TabFrameLayout::setImage(unsigned selection, Image& image) -> void {
     if(selection >= getTabFrame()->tabs()) return;
     getTabFrame()->state.images.at(selection) = &image;
     getTabFrame()->p.setImage(selection, image);
+}
+
+// switch layout
+
+auto SwitchLayout::setLayout(unsigned selection, Layout& layout, Size size) -> void {
+    bool found = false;
+    for(auto& child : children) {
+        if(selection == child.selection) {
+            child.sizable = &layout;
+            found = true;
+            break;
+        }
+    }
+    if(!found) children.push_back({&layout, size, {0,0}, 0, selection});
+    synchronizeLayout();
+    if(window()) window()->synchronizeLayout();
+}
+
+auto SwitchLayout::remove(unsigned selection) -> void {
+
+    for(auto& child : children) {
+        if(selection == child.selection) {
+            Layout::remove(*child.sizable);
+            break;
+        }
+    }
+}
+
+auto SwitchLayout::setSelection(unsigned selection) -> void {
+    state.selection = selection;    
+    Layout* top = Layout::getTopMostTabOrSwitchLayout(this);
+    top->setVisible();
+}
+
+auto SwitchLayout::selection() const -> unsigned { return state.selection; }
+
+auto SwitchLayout::setVisible(bool visible) -> void {
+    Sizable::state.visible = visible;
+
+    for(auto& child : children) {
+        bool v = visible && (state.selection == child.selection);
+        child.sizable->setVisible(v);
+    }
+}
+
+auto SwitchLayout::setGeometry(Geometry containerGeometry) -> void {
+    //state.containerGeometry = containerGeometry;
+    Geometry geometry = containerGeometry;
+
+    addDisplacement(geometry, Layout::state.margin);    
+
+    auto children = this->children;
+    for(auto& child : children) {
+        if(child.size.width  == Size::Minimum) child.size.width  = child.sizable->minimumSize().width;
+        if(child.size.height == Size::Minimum) child.size.height = child.sizable->minimumSize().height;
+
+        child.size.width = std::min(child.size.width, geometry.width);
+        child.size.height = std::min(child.size.height, geometry.height);
+
+        Geometry childGeometry = {geometry.x, geometry.y, child.size.width, child.size.height};
+        child.sizable->setGeometry(childGeometry);
+    }
+}
+
+auto SwitchLayout::minimumSize() -> Size {
+    Size min;
+
+    for(auto& child : children) {
+        min.width  = std::max(min.width,  child.sizable->minimumSize().width);
+        min.height = std::max(min.height, child.sizable->minimumSize().height);
+    }
+
+    min.width += Layout::state.margin * 2;
+    min.height += Layout::state.margin * 2;
+
+    return min;
+}
+
+
+
+auto Layout::getParentTabOrSwitchLayout(Sizable* sizable) -> Layout* {
+    if (dynamic_cast<TabFrameLayout::TabFrame*>(sizable)) return nullptr;
+
+    while(sizable) {
+        if(sizable->parent() && dynamic_cast<TabFrameLayout*>(sizable->parent()))
+            return (Layout*)sizable->parent();
+        
+        if(sizable->parent() && dynamic_cast<SwitchLayout*>(sizable->parent()))
+            return (Layout*)sizable->parent();       
+        
+        sizable = sizable->state.parent;
+    }
+    
+    return nullptr;
+}
+
+auto Layout::getTopMostTabOrSwitchLayout(Layout* layout) -> Layout* {
+    
+    while( Layout* topLayout = Layout::getParentTabOrSwitchLayout(layout) )
+        layout = topLayout;   
+    
+    return layout;
 }

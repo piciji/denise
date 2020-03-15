@@ -126,9 +126,7 @@ auto MediaWindow::build() -> void {
 	expansionImage.loadPng((uint8_t*) Icons::memory, sizeof (Icons::memory));
 	memoryImage.loadPng((uint8_t*) Icons::memory, sizeof (Icons::memory));
     addImage.loadPng((uint8_t*) Icons::add, sizeof (Icons::add));
-	pathImage.loadPng((uint8_t*) Icons::folderOpen, sizeof (Icons::folderOpen));
-    
-    unsigned i = 0;   
+	pathImage.loadPng((uint8_t*) Icons::folderOpen, sizeof (Icons::folderOpen));       
     
     for( auto& mediaGroup : emulator->mediaGroups ) {            
         
@@ -166,9 +164,10 @@ auto MediaWindow::build() -> void {
             
             tabs.push_back( getMediaGroupTransIdent(&mediaGroup) );
                 
-            tabView.setLayout(i++, *mediaGroupLayout, {~0u, ~0u});   
+            tabView.setLayout(tabs.size() - 1, *mediaGroupLayout, {~0u, ~0u});   
 		} else {
             cartLayouts.push_back( mediaGroupLayout );
+            carts.setLayout( cartLayouts.size() - 1, *mediaGroupLayout, {~0u, 0u} );
         }
         
 		bindSelectorAction( mediaGroupLayout );
@@ -183,11 +182,10 @@ auto MediaWindow::build() -> void {
         
         tabView.appendHeader("", expansionImage); 
         tabs.push_back( "cartridges" );    
-        tabView.setLayout(i++, cartWrapper, {~0u, 0u});       
+        tabView.setLayout(tabs.size() - 1, cartWrapper, {~0u, 0u});       
         cartWrapper.append( cartSelectorFrame, {0u, 0u}, 20 );
-        cartWrapper.append( cartContent, {~0u, 0u} );
-        
-        cartContent.append( *cartLayouts[0], {~0u, 0} );
+        cartWrapper.append( carts, {~0u, ~0u} );
+                
         cartList.setSelection(0);
         
         cartList.onChange = [this]() {
@@ -195,26 +193,19 @@ auto MediaWindow::build() -> void {
             if (!cartList.selected())
                 return;
             
-            auto selection = cartList.selection();
-            
-            for(auto layout : this->cartLayouts)
-                cartContent.remove( *layout );                 
-            
-            cartContent.append( *cartLayouts[selection], {~0u, 0} );
-            
-            cartContent.setGeometry( cartContent.getGeometry() );            
+            carts.setSelection( cartList.selection() );
         };
     }
     
     tabView.appendHeader("", addImage); 
     tabs.push_back("create");    
     prepareCreator();
-    tabView.setLayout(i++, creatorLayout, {~0u, 0u});  
+    tabView.setLayout(tabs.size(), creatorLayout, {~0u, 0u});  
     
     tabView.appendHeader("", pathImage); 
     tabs.push_back("paths");
     preparePaths();        
-    tabView.setLayout(i++, pathsLayout, {~0u, 0u});
+    tabView.setLayout(tabs.size(), pathsLayout, {~0u, 0u});
     
     tabView.setSelection(0);	
 	

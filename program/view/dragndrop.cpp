@@ -87,11 +87,10 @@ auto View::autoloadPostProcessing() -> void {
         emuConfigView->systemLayout->handleExpansionIfAutoBoot( mediaGroup->isExpansion() ? mediaGroup->expansion : nullptr );
         
         program->power(ddControl.emulator);
-
-//        if (mediaGroup->isMemory()) {
-//            for (auto& media : mediaGroup->media)
-//                ddControl.emulator->selectListing(&media, 0); 
-//        } else                
+        
+        if (mediaGroup->selected)
+            ddControl.emulator->selectListing(mediaGroup->selected, 0);
+        else
             ddControl.emulator->selectListing(&mediaGroup->media[0], 0);
 
         if (mediaGroup->isTape())
@@ -157,7 +156,18 @@ auto View::autoloadFiles() -> void {
 
                     if (mediaSuffix == fileSuffix) {
                         
-                        if (mediaGroup.isExpansion()) {
+                        Emulator::Interface::Media* media = nullptr;
+                        
+                        if (media = emulator->getMediaForCustomFileSuffix(fileSuffix)) {
+                            // this is a special case for inserting memory dumps, C64 REU
+                            EmuConfigView::TabWindow::getView(emulator)->systemLayout->handleExpansionIfAutoBoot( mediaGroup.expansion );
+                            ddControl.emulator = emulator;
+                            mediaView->insertImage(media, file, item );
+
+                            return autoloadFiles();
+                        }
+                        
+                        if (mediaGroup.isExpansion()) {                                
                             auto analyzedExpansion = emulator->analyzeExpansion( file->archiveData(item->id), item->info.size );
                             
                             if (analyzedExpansion != mediaGroup.expansion)
@@ -165,7 +175,7 @@ auto View::autoloadFiles() -> void {
                         }                                                
                         
                         unsigned alreadyInUse = countImagesFor(&mediaGroup);
-                        Emulator::Interface::Media* media = mediaGroup.selected;
+                        media = mediaGroup.selected;
                         
                         if ( (media && alreadyInUse) || (alreadyInUse >= mediaGroup.media.size()))
                             return autoloadFiles();
@@ -174,13 +184,8 @@ auto View::autoloadFiles() -> void {
                         
                         ddControl.mediaGroups.push_back(&mediaGroup);                        
                         
-                        if (!media) {                          
-                         //   if (mediaGroup.isMemory())
-                                // todo: handle this better
-                           //     media = (item->info.size >= (128 * 1024)) ? &mediaGroup.media[1] : &mediaGroup.media[0];
-                           // else
-                                media = &mediaGroup.media[ alreadyInUse ];                                                
-                        }
+                        if (!media)
+                            media = &mediaGroup.media[ alreadyInUse ];                      
                             						
                         mediaView->insertImage(media, file, item );
 
