@@ -3,7 +3,6 @@ struct FirmwareContainer : GUIKIT::FramedVerticalLayout {
     
     struct Block : GUIKIT::VerticalLayout {
         unsigned typeId;   
-		unsigned position;
 		
         FirmwareContainer* parent;        
 
@@ -18,12 +17,11 @@ struct FirmwareContainer : GUIKIT::FramedVerticalLayout {
             GUIKIT::LineEdit edit;
             GUIKIT::Button open;
             GUIKIT::Button eject;
-			GUIKIT::Button swapIn;
 
-            Bottom(bool useSwap = false);
+            Bottom();
         } bottom;
 
-        Block(bool useSwap = false);
+        Block();
     };
     
     unsigned storeLevel;
@@ -38,16 +36,16 @@ struct FirmwareLayout : GUIKIT::VerticalLayout {
     FirmwareManager* manager;
     
     std::vector<FirmwareContainer*> containers;
+    GUIKIT::SwitchLayout switchLayout;
     FirmwareContainer::Block* selectedBlock = nullptr;        
     GUIKIT::HorizontalLayout customSelectorLayout;  
 	std::vector<GUIKIT::RadioBox*> selectorBoxes;  
-	GUIKIT::Widget spacer;
-	GUIKIT::CheckButton hotSwapButton;
     
     auto assign( std::string path, FirmwareContainer::Block* block, FileSetting* setting ) -> void;
     auto translate() -> void;
     auto drop( std::string path ) -> void;
 	auto updateVisibility() -> void;
+    auto hotSwap( unsigned storeLevel ) -> void;
     
     FirmwareLayout( TabWindow* tabWindow );
 };

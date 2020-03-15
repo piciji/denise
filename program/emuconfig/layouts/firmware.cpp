@@ -6,19 +6,17 @@ FirmwareContainer::Block::Top::Top() {
     fileLabelTitle.setFont(GUIKIT::Font::system("bold"));
 }
 
-FirmwareContainer::Block::Bottom::Bottom(bool useSwap) {
+FirmwareContainer::Block::Bottom::Bottom() {
     edit.setEditable(false);
     edit.setDroppable(true);
     append(edit, {~0u,0u}, 5);
     append(open, {0u,0u}, 5);
-    append(eject, {0u,0u}, useSwap ? 5 : 0);
-	if (useSwap)
-		append(swapIn, {0u,0u});
+    append(eject, {0u,0u});
 		
     setAlignment(0.5);
 }
 
-FirmwareContainer::Block::Block(bool useSwap) : bottom(useSwap) {        
+FirmwareContainer::Block::Block() {        
     append(top, {~0u,0u}, 2);
     append(bottom, {~0u,0u});
 }
@@ -31,6 +29,7 @@ FirmwareLayout::FirmwareLayout(TabWindow* tabWindow) {
     auto firmwareInUse = settings->get<unsigned>( this->tabWindow->ident("use_firmware"), 0, {0, manager->maxSets} );
     
     append(customSelectorLayout, {~0u, 0u}, 10);   
+    append(switchLayout, {~0u, ~0u}); 
     
 	auto defaultBox = new GUIKIT::RadioBox;
 	
@@ -40,6 +39,7 @@ FirmwareLayout::FirmwareLayout(TabWindow* tabWindow) {
         // default firmware
         settings->set<unsigned>( this->tabWindow->ident("use_firmware"), 0 );
 		updateVisibility();
+        hotSwap(0);
     };
 
     customSelectorLayout.append( *defaultBox, {0u, 0u}, 10 );        
@@ -54,6 +54,8 @@ FirmwareLayout::FirmwareLayout(TabWindow* tabWindow) {
             
             settings->set<unsigned>( this->tabWindow->ident("use_firmware"), i );
 			updateVisibility();
+            
+            hotSwap(i);                
         };
 
         customSelectorLayout.append( *radioBox, {0u, 0u}, i == manager->maxSets ? 0 : 10 );        
@@ -110,95 +112,9 @@ FirmwareLayout::FirmwareLayout(TabWindow* tabWindow) {
         }
         
         containers.push_back(container);
+        switchLayout.setLayout(i - 1, *container, {~0u, ~0u});
     }    
-	
-	// add 4 char rom swapper
-	if ( dynamic_cast<LIBC64::Interface*>(emulator) ) {
-		
-		auto& firmware = emulator->firmwares[2];
-		
-		auto container = new FirmwareContainer();
-        container->setPadding(10);     
-        container->setFont(GUIKIT::Font::system("bold"));
-		
-		for(unsigned i = 0; i < 4; i++) {
-			auto block = new FirmwareContainer::Block(true);
-            block->typeId = firmware.id;            
-			block->position = i;
-            block->parent = container;
-            container->blocks.push_back(block);
-            container->append(*block,{~0u, 0u}, i == 3 ? 0 : 5);
-
-			auto setting = manager->getSetting( &firmware, manager->swapStartLevel + i );
-            block->top.fileLabelTitle.setText(trans->get(firmware.name,{}, true));
-            block->top.fileLabel.setText(setting->file);
-            block->bottom.edit.setText(setting->path);
-
-            block->bottom.eject.onActivate = [this, block,  setting]() {
-                auto& firmware = emulator->firmwares[block->typeId];
-                block->bottom.edit.setText("");
-                block->top.fileLabel.setText("");
-                setting->init();
-				this->manager->addImage(&firmware, this->manager->swapStartLevel + block->position, nullptr, 0);
-                selectedBlock = block;
-            };
-
-            block->bottom.edit.onFocus = [this, block]() {
-                selectedBlock = block;
-            };
-
-            block->bottom.open.onActivate = [this, block, setting]() {
-                auto& firmware = emulator->firmwares[block->typeId];
-
-                std::string filePath = GUIKIT::BrowserWindow()
-                    .setWindow(*this->tabWindow)
-                    .setTitle(trans->get("select_firmware_image",{
-                        {"%type%", firmware.name}
-                    }))
-                    .setFilters({trans->get("firmware_image") + " (*)"})
-                    .setPath(settings->get<std::string>(this->tabWindow->ident("firmware_path"), ""))
-                    .open();
-
-                assign(filePath, block, setting);
-            };
-			
-			block->bottom.swapIn.onActivate = [this, block, setting]() {
-				auto& firmware = emulator->firmwares[block->typeId];
-				
-				auto missigFirmware = this->manager->swapIn( &firmware, this->manager->swapStartLevel + block->position );
-				
-				program->showOpenError( missigFirmware );
-			};
-            
-            block->bottom.edit.onDrop = [this, block, setting](std::vector<std::string> files) {
-                assign( files[0], block, setting );
-            };
-		}
-		
-		customSelectorLayout.append( spacer, {~0u, 0u} );  
-		customSelectorLayout.append( hotSwapButton, {0u, 0u} );		
-		
-		hotSwapButton.onToggle = [this]() {
-			
-			if (!hotSwapButton.checked()) {
-				updateVisibility();
-				return;
-			}
-			
-			if (selectedBlock)	
-				remove(*selectedBlock->parent);	
-			
-			append(*containers.back(), {~0u, 0u});
-			
-			selectedBlock = containers.back()->blocks[0];
-			
-			this->tabWindow->synchronizeLayout();
-		};
-		
-		containers.push_back(container);
-	}	
-	
-   
+		  
     GUIKIT::RadioBox::setGroup( selectorBoxes ); 
     
     if (selectorBoxes.size() > firmwareInUse) {
@@ -210,27 +126,36 @@ FirmwareLayout::FirmwareLayout(TabWindow* tabWindow) {
     setMargin( 10 );    
 }
 
+auto FirmwareLayout::hotSwap( unsigned storeLevel ) -> void {
+    if (emulator == activeEmulator) {
+
+        auto firmware = emulator->getCharRom();
+
+        if (firmware) {
+            auto missigFirmware = this->manager->swapIn( firmware, storeLevel );
+
+            program->showOpenError( missigFirmware );              
+        }
+    }
+}
+
 auto FirmwareLayout::updateVisibility() -> void {
-	
-	hotSwapButton.setChecked(false);
 	
 	auto firmwareInUse = settings->get<unsigned>( this->tabWindow->ident("use_firmware"), 0, {0, manager->maxSets} );
 	
-	if (selectedBlock)	
-		remove(*selectedBlock->parent);	
-	
 	if (firmwareInUse == 0) {
 		selectedBlock = nullptr;
+        switchLayout.setEnabled( false );
 		return;
 	}
 	
+    switchLayout.setEnabled( true );
+    
 	if (selectorBoxes.size() >= firmwareInUse) {
-		append(*containers[firmwareInUse-1], {~0u, 0u});
-		 
+		//append(*containers[firmwareInUse-1], {~0u, 0u});
+        switchLayout.setSelection( firmwareInUse-1 );
 		selectedBlock = containers[firmwareInUse-1]->blocks[0];
 	}
-	
-	tabWindow->synchronizeLayout();
 }
 
 auto FirmwareLayout::assign(std::string path, FirmwareContainer::Block* block, FileSetting* setting ) -> void {
@@ -264,8 +189,6 @@ auto FirmwareLayout::assign(std::string path, FirmwareContainer::Block* block, F
         setting->setPath(file->getFile());
         setting->setFile(item->info.name);
         setting->setId(item->id);
-        
-		bool swapBlock = block->parent == containers.back();
 				
 		uint8_t* data = file->archiveData(item->id);
 		unsigned size = file->archiveDataSize( item->id );
@@ -273,12 +196,13 @@ auto FirmwareLayout::assign(std::string path, FirmwareContainer::Block* block, F
 		uint8_t* copy = new uint8_t[size];
 		std::memcpy(copy, data, size);
 
-		this->manager->addImage( &firmware,
-			swapBlock ? (this->manager->swapStartLevel + block->position) : block->parent->storeLevel, copy, size );
+		this->manager->addImage( &firmware, block->parent->storeLevel, copy, size );       
 		
         selectedBlock = block;
         
         filePool->unloadOrphaned();
+        
+        hotSwap( block->parent->storeLevel );
     };
 
     archiveViewer->setView(items);
@@ -294,24 +218,16 @@ auto FirmwareLayout::translate() -> void {
         for( auto block : container->blocks ) {        
             block->bottom.open.setText( trans->get("open") );
             block->bottom.eject.setText( trans->get("eject") );
-			block->bottom.swapIn.setText( trans->get("swap") );
         }   
-        
-		if (containers.back() == container) {
-			container->setText( trans->get( "Config" ) );
-			
-		} else {
+        	
+        std::string label = "Config " + std::to_string(i);
+
+        container->setText( trans->get( label ) );
+
+        selectorBoxes[i]->setText( trans->get( label ) );
 		
-			std::string label = "Config " + std::to_string(i);
-        
-		    container->setText( trans->get( label ) );
-		
-			selectorBoxes[i]->setText( trans->get( label ) );
-		}
 		i++;
-    }    
-	
-	hotSwapButton.setText( trans->get( "swap_char" ) );
+    }    	
 }
 
 auto FirmwareLayout::drop( std::string path ) -> void {
@@ -321,12 +237,8 @@ auto FirmwareLayout::drop( std::string path ) -> void {
         for( auto block : container->blocks ) {
             if ( block == selectedBlock ) {            
                 auto& firmware = emulator->firmwares[block->typeId];    
-				
-				bool swapBlock = containers.back() == container;
-				
-				
-				assign( path, block, manager->getSetting( &firmware,
-					swapBlock ? (manager->swapStartLevel + block->position) : container->storeLevel ) );
+								
+				assign( path, block, manager->getSetting( &firmware, container->storeLevel ) );
 								
                 break;
             }

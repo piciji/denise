@@ -83,6 +83,36 @@ auto FirmwareManager::addImage(Emulator::Interface::Firmware* firmware, unsigned
     }    
 }
 
+auto FirmwareManager::swapIn(Emulator::Interface::Firmware* firmware, unsigned storeLevel) -> std::vector<std::string> {
+	
+	missingFirmware.clear();
+	    
+    insertFirmware( firmware, storeLevel );
+	
+	return missingFirmware;
+}
+
+auto FirmwareManager::insertFirmware(Emulator::Interface::Firmware* firmware, unsigned storeLevel) -> void {
+    
+    while(1) {                               
+
+        if (useImage( firmware, storeLevel))
+            break;
+
+        if (loadImage( firmware, storeLevel)) {
+            if (useImage( firmware, storeLevel))
+                break;
+        }
+
+        if (storeLevel == 0)
+            // already default firmware
+            break;
+
+        // switch back to default firmware and try again
+        storeLevel = 0;
+    }     
+}
+
 auto FirmwareManager::dataInStore( Image* forImage ) -> bool {
     
     for (auto& image : imagesStore) {          
@@ -125,17 +155,6 @@ auto FirmwareManager::getInstance( Emulator::Interface* emulator ) -> FirmwareMa
 	return nullptr;
 }
 
-auto FirmwareManager::swapIn(Emulator::Interface::Firmware* firmware, unsigned i) -> std::vector<std::string> {
-	
-	missingFirmware.clear();
-	
-	if (!useImage( firmware, i))
-		if (loadImage( firmware, i))
-			useImage( firmware, i);                                
-	
-	return missingFirmware;
-}
-
 auto FirmwareManager::insert() -> std::vector<std::string> {
     
     missingFirmware.clear();
@@ -144,25 +163,7 @@ auto FirmwareManager::insert() -> std::vector<std::string> {
     
     for (auto& firmware : emulator->firmwares ) {
         
-        unsigned useLevel = storeLevel;
-        
-        while(1) {                               
-            
-            if (useImage( &firmware, useLevel))
-                break;
-
-            if (loadImage( &firmware, useLevel)) {
-                if (useImage( &firmware, useLevel))
-                    break;
-            }
-
-            if (useLevel == 0)
-                // already default firmware
-                break;
-
-            // switch back to default firmware and try again
-            useLevel = 0;
-        } 
+        insertFirmware( &firmware, storeLevel );
     }   
     
     return missingFirmware;

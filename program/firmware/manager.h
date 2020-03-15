@@ -7,8 +7,7 @@ struct FileSetting;
 
 struct FirmwareManager {
     
-    const unsigned maxSets = 3;
-	const unsigned swapStartLevel = 20; // keep space for more possible sets
+    const unsigned maxSets = 5;
     
     Emulator::Interface* emulator;
     
@@ -31,8 +30,9 @@ struct FirmwareManager {
     auto dataInStore( Image* forImage ) -> bool;
     auto loadImage( Emulator::Interface::Firmware* firmware, unsigned storeLevel ) -> bool;
     auto insert() -> std::vector<std::string>;
+    auto insertFirmware(Emulator::Interface::Firmware* firmware, unsigned storeLevel) -> void;
     auto getSetting( Emulator::Interface::Firmware* firmware, unsigned storeLevel ) -> FileSetting*;
-	auto swapIn(Emulator::Interface::Firmware* firmware, unsigned i) -> std::vector<std::string>;
+	auto swapIn(Emulator::Interface::Firmware* firmware, unsigned storeLevel) -> std::vector<std::string>;
     
     static auto getInstance( Emulator::Interface* emulator ) -> FirmwareManager*;
     FirmwareManager(Emulator::Interface* emulator);
