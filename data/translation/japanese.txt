@@ -443,4 +443,5 @@ program_injected = memory_injected = プログラムがロードされました
 program_image = memory_image = プログラムのイメージ
 select_program_image = select_memory_image = プログラムを選択 ...
 blank_program_image = blank_memory_image = 新しいプログラムを選択 ...
-
+multi load = 
+select image = 

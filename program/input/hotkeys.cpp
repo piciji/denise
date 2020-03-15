@@ -40,6 +40,7 @@ auto InputManager::setCustomHotkeys() -> void {
 	customHotkeys.push_back( {Hotkey::Id::SwapInputDevices, "swap_input_devices", true} );
 	customHotkeys.push_back( {Hotkey::Id::Power, "power", true} );
 	customHotkeys.push_back( {Hotkey::Id::SoftReset, "Soft Reset", true} );
+    customHotkeys.push_back( {Hotkey::Id::MultiLoad, "multi load", true} );
 
 	if (dynamic_cast<LIBC64::Interface*>(emulator) ) {
 		customHotkeys.push_back( {Hotkey::Id::ToggleSidFilter, "sid_filter_toggle", false} );
@@ -55,7 +56,7 @@ auto InputManager::setCustomHotkeys() -> void {
 		customHotkeys.push_back( {Hotkey::Id::RewindTape, "tape_rewind_key", false} );
 		customHotkeys.push_back( {Hotkey::Id::ResetTapeCounter, "tape_counter_reset_key", false} );
 	}	
-
+    
 	customHotkeys.push_back( {Hotkey::Id::Software, "Software", true} );	
     customHotkeys.push_back( {Hotkey::Id::System, "System", true} );
 	customHotkeys.push_back( {Hotkey::Id::Control, "Control", true} );
@@ -124,6 +125,23 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
 			program->reset(emulator);
 			break;
 			
+        case Hotkey::MultiLoad: {
+                
+            std::string filePath = GUIKIT::BrowserWindow()
+                .setWindow(*view)
+                .setTitle(trans->get("select image"))
+                .setPath(settings->get<std::string>(program->ident(emulator, "multiload_path"), ""))
+                .setFilters({trans->get("all_files")})
+                .open();
+                
+            if (!filePath.empty()) {
+                settings->set<std::string>(program->ident(emulator, "multiload_path"), GUIKIT::File::getPath( filePath ) );
+                view->autoloadInit( {filePath}, false );
+                view->autoloadFiles();
+            }
+                                
+            break;
+        }
         case Hotkey::Id::CaptureMouse:
             if (inputDriver->mIsAcquired()) {
                 inputDriver->mUnacquire();					
@@ -329,6 +347,7 @@ auto InputManager::pollHotkeys() -> void {
 	InputMapping* stateHandler = nullptr;
 	InputMapping* deviceSwapper = nullptr;
 	InputMapping* starter = nullptr;
+    InputMapping* multiLoad = nullptr;
 	
 	auto useEmu = activeEmulator;
 	
@@ -398,9 +417,20 @@ auto InputManager::pollHotkeys() -> void {
 					starter = trigger;
 				break;
 				
+            case Hotkey::MultiLoad:
+				if (!useEmu) 
+					useEmu = program->getLastUsedEmu();				
+
+				if (!multiLoad)
+					multiLoad = trigger;				
+				
+				else if (useEmu == trigger->inputManager->emulator)
+					multiLoad = trigger;
+				break;
+                
 			default:
-				if (!GUIKIT::Vector::find( useTrigger, trigger ))
-					useTrigger.push_back( trigger );
+				if (!GUIKIT::Vector::find( useTrigger, multiLoad ))
+					useTrigger.push_back( multiLoad );
 				break;			
 		}		
 	}
@@ -419,6 +449,9 @@ auto InputManager::pollHotkeys() -> void {
 	
 	if (starter)
 		useTrigger.push_back( starter );
+    
+    if (multiLoad)
+		useTrigger.push_back( multiLoad );
 	
 	for( auto trigger : useTrigger )			
 		fireHotkey( trigger->inputManager ? trigger->inputManager->emulator : nullptr, (Hotkey::Id)trigger->hotkeyId );   
