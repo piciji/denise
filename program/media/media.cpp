@@ -200,12 +200,12 @@ auto MediaWindow::build() -> void {
     tabView.appendHeader("", addImage); 
     tabs.push_back("create");    
     prepareCreator();
-    tabView.setLayout(tabs.size(), creatorLayout, {~0u, 0u});  
+    tabView.setLayout(tabs.size() - 1, creatorLayout, {~0u, 0u});  
     
     tabView.appendHeader("", pathImage); 
     tabs.push_back("paths");
     preparePaths();        
-    tabView.setLayout(tabs.size(), pathsLayout, {~0u, 0u});
+    tabView.setLayout(tabs.size() - 1, pathsLayout, {~0u, 0u});
     
     tabView.setSelection(0);	
 	

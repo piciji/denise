@@ -178,6 +178,11 @@ auto View::build() -> void {
 		}
     };
 	
+	viewport.onMouseLeave = [this]() {
+		if (!program->isRunning)
+			view->setDefaultCursor();
+	};
+	
     setDragnDrop();        
 }
 

@@ -429,8 +429,8 @@ auto InputManager::pollHotkeys() -> void {
 				break;
                 
 			default:
-				if (!GUIKIT::Vector::find( useTrigger, multiLoad ))
-					useTrigger.push_back( multiLoad );
+				if (!GUIKIT::Vector::find( useTrigger, trigger ))
+					useTrigger.push_back( trigger );
 				break;			
 		}		
 	}
