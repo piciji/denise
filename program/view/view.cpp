@@ -654,7 +654,26 @@ auto View::buildMenu() -> void {
         
         sM.system->append(*GUIKIT::MenuSeparator::getInstance());
 		
-		sM.media = new GUIKIT::MenuItem;
+		sM.multiLoad = new GUIKIT::MenuItem;
+        sM.multiLoad->setIcon( driveImage );
+        sM.multiLoad->onActivate = [this, emulator]() {
+            
+            std::string filePath = GUIKIT::BrowserWindow()
+                .setWindow(*this)
+                .setTitle(trans->get("select image"))
+                .setPath(settings->get<std::string>(program->ident(emulator, "multiload_path"), ""))
+                .setFilters({trans->get("all_files")})
+                .open();
+                
+            if (!filePath.empty()) {
+                settings->set<std::string>(program->ident(emulator, "multiload_path"), GUIKIT::File::getPath( filePath ) );
+                this->autoloadInit( {filePath}, false );
+                this->autoloadFiles();
+            }
+	    };
+        sM.system->append( *sM.multiLoad );
+        
+        sM.media = new GUIKIT::MenuItem;
         sM.media->setIcon( driveImage );
         sM.media->onActivate = [mediaView]() {
 		    mediaView->show();
@@ -962,6 +981,7 @@ auto View::translate() -> void {
         sysMenu.reset->setText(trans->get("Soft Reset"));
         sysMenu.poweroff->setText(trans->get("power_off"));
         sysMenu.freeze->setText(trans->get("Freeze"));
+        sysMenu.multiLoad->setText(trans->get("multi load"));
         sysMenu.media->setText(trans->get("Software"));
         sysMenu.systemManagement->setText(trans->get("system_management"));
 

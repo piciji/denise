@@ -68,7 +68,7 @@ auto View::autoloadPostProcessing() -> void {
 
     auto mediaGroup = ddControl.mediaGroups[0];
 
-    if (!autoStart && (activeEmulator == ddControl.emulator)) {
+    if (!mediaGroup->isExpansion() && !autoStart && (activeEmulator == ddControl.emulator)) {
 
         mediaView->setVisible();		
 

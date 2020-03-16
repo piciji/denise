@@ -125,21 +125,8 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
 			program->reset(emulator);
 			break;
 			
-        case Hotkey::MultiLoad: {
-                
-            std::string filePath = GUIKIT::BrowserWindow()
-                .setWindow(*view)
-                .setTitle(trans->get("select image"))
-                .setPath(settings->get<std::string>(program->ident(emulator, "multiload_path"), ""))
-                .setFilters({trans->get("all_files")})
-                .open();
-                
-            if (!filePath.empty()) {
-                settings->set<std::string>(program->ident(emulator, "multiload_path"), GUIKIT::File::getPath( filePath ) );
-                view->autoloadInit( {filePath}, false );
-                view->autoloadFiles();
-            }
-                                
+        case Hotkey::MultiLoad: {                
+            view->sysMenus[0].multiLoad->onActivate();                                
             break;
         }
         case Hotkey::Id::CaptureMouse:
