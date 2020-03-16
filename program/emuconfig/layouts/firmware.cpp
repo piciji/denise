@@ -29,22 +29,9 @@ FirmwareLayout::FirmwareLayout(TabWindow* tabWindow) {
     auto firmwareInUse = settings->get<unsigned>( this->tabWindow->ident("use_firmware"), 0, {0, manager->maxSets} );
     
     append(customSelectorLayout, {~0u, 0u}, 10);   
-    append(switchLayout, {~0u, ~0u}); 
+    append(switchLayout, {~0u, ~0u});
     
-	auto defaultBox = new GUIKIT::RadioBox;
-	
-    selectorBoxes.push_back( defaultBox );
-    
-    defaultBox->onActivate = [this]() {
-        // default firmware
-        settings->set<unsigned>( this->tabWindow->ident("use_firmware"), 0 );
-		updateVisibility();
-        hotSwap(0);
-    };
-
-    customSelectorLayout.append( *defaultBox, {0u, 0u}, 10 );        
-    
-    for (unsigned i = 1; i <= manager->maxSets; i++) {
+    for (unsigned i = 0; i <= manager->maxSets; i++) {
         
         auto radioBox = new GUIKIT::RadioBox;
         
@@ -65,7 +52,8 @@ FirmwareLayout::FirmwareLayout(TabWindow* tabWindow) {
         container->storeLevel = i;
         container->setPadding(10);     
         container->setFont(GUIKIT::Font::system("bold"));
-
+        
+        if (i > 0)
         for (auto& firmware : emulator->firmwares) {
             auto block = new FirmwareContainer::Block;
             block->typeId = firmware.id;            
@@ -85,6 +73,7 @@ FirmwareLayout::FirmwareLayout(TabWindow* tabWindow) {
                 setting->init();
                 this->manager->addImage(&firmware, container->storeLevel, nullptr, 0);
                 selectedBlock = block;
+                hotSwap( block->parent->storeLevel );
             };
 
             block->bottom.edit.onFocus = [this, block]() {
@@ -112,7 +101,7 @@ FirmwareLayout::FirmwareLayout(TabWindow* tabWindow) {
         }
         
         containers.push_back(container);
-        switchLayout.setLayout(i - 1, *container, {~0u, ~0u});
+        switchLayout.setLayout(i, *container, {~0u, ~0u});
     }    
 		  
     GUIKIT::RadioBox::setGroup( selectorBoxes ); 
@@ -142,19 +131,10 @@ auto FirmwareLayout::hotSwap( unsigned storeLevel ) -> void {
 auto FirmwareLayout::updateVisibility() -> void {
 	
 	auto firmwareInUse = settings->get<unsigned>( this->tabWindow->ident("use_firmware"), 0, {0, manager->maxSets} );
-	
-	if (firmwareInUse == 0) {
-		selectedBlock = nullptr;
-        switchLayout.setEnabled( false );
-		return;
-	}
-	
-    switchLayout.setEnabled( true );
     
 	if (selectorBoxes.size() >= firmwareInUse) {
-		//append(*containers[firmwareInUse-1], {~0u, 0u});
-        switchLayout.setSelection( firmwareInUse-1 );
-		selectedBlock = containers[firmwareInUse-1]->blocks[0];
+        switchLayout.setSelection( firmwareInUse );
+        selectedBlock = firmwareInUse == 0 ? nullptr : containers[firmwareInUse]->blocks[0];
 	}
 }
 
@@ -212,9 +192,14 @@ auto FirmwareLayout::translate() -> void {
     
     unsigned i = 0;
 	
-	selectorBoxes[i++]->setText( trans->get("default") );
     
-    for (auto container : containers ) {        
+    for (auto container : containers ) {
+        
+        if (i == 0) {
+            selectorBoxes[i++]->setText( trans->get("default") );
+            continue;
+        }
+        
         for( auto block : container->blocks ) {        
             block->bottom.open.setText( trans->get("open") );
             block->bottom.eject.setText( trans->get("eject") );
