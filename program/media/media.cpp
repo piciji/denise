@@ -183,7 +183,7 @@ auto MediaWindow::build() -> void {
         tabView.appendHeader("", expansionImage); 
         tabs.push_back( "cartridges" );    
         tabView.setLayout(tabs.size() - 1, cartWrapper, {~0u, 0u});       
-        cartWrapper.append( cartSelectorFrame, {0u, 0u}, 20 );
+        cartWrapper.append( cartSelectorFrame, {0u, 0u}, 10 );
         cartWrapper.append( carts, {~0u, ~0u} );
                 
         cartList.setSelection(0);
@@ -264,13 +264,7 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
 
 			block->selector.edit.setText(setting->path);
 
-		} else {
-            
-            block->selector.openW.onActivate = [this, block]() {                
-                block->openWritable = true;
-                block->selector.open.onActivate();
-                block->openWritable = false;
-            };
+		} else {            
             
 			block->selector.open.onActivate = [this, block, mediaGroup, setting, layout]() {                
 
@@ -296,9 +290,6 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
                 
 				if (!file->isSizeValid(MAX_MEDIUM_SIZE))
                     return program->errorMediumSize( file, message );				
-                
-                if ( block->openWritable && file->isArchived())
-                    message->warning(trans->get("archive_wp_tooltip"));
                 
 				auto& items = file->scanArchive();
 
@@ -793,12 +784,7 @@ auto MediaWindow::translate() -> void {
             block->header.deviceName.setText( trans->get( block->media->name, {}, true ) );            
             block->header.inUse.setText( trans->get( block->media->name, {}, true ) );            
             
-            if (mediaGroup->isWritable()) {
-                block->selector.open.setText("...");
-                block->selector.openW.setText(trans->get("open_w"));                
-            } else {
-                block->selector.open.setText(trans->get("open") );                 
-            }
+            block->selector.open.setText("...");
                 
             if (mediaGroup->isProgram()) {                
                 block->selector.open.setTooltip(trans->get("c64_list_tip"));
@@ -920,14 +906,12 @@ auto MediaWindow::insertImage( MediaGroupLayout* layout, MediaGroupLayout::Block
     auto data = mediaGroup->isTape() && !file->isArchived() ? nullptr
         : file->archiveData(item->id);
 
-    bool openWritable = !file->isArchived() && block->openWritable;
-
     if (!mediaGroup->isExpansion()) {
         emulator->ejectMedium(media);
         
         media->guid = uintptr_t(file);
         emulator->insertMedium(media, data, size);
-        emulator->writeProtect(media, !openWritable);
+        emulator->writeProtect(media, true);
         filePool->assign(ident(media->name), file);
     } else {        
         if (mediaGroup->expansion->pcbs.size()) {
@@ -957,7 +941,7 @@ auto MediaWindow::insertImage( MediaGroupLayout* layout, MediaGroupLayout::Block
     setting->setPath(file->getFile());
     setting->setFile(item->info.name);
     setting->setId(item->id);
-    setting->setWriteProtect(!openWritable);
+    setting->setWriteProtect(true);
     setting->setWpEnabled(!file->isArchived());
 
     if (!mediaGroup->isExpansion())

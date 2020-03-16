@@ -61,10 +61,6 @@ MediaGroupLayout::Block::Selector::Selector(Emulator::Interface::Media* media) {
     }
         
     append(open, {0u, 0u});
-    if (media->group->isWritable()) {
-        append(spacer, {0u, 0u}, 5);
-        append(openW, {0u, 0u});
-    }
     
     setAlignment(0.5);
     edit.setEditable(false);
@@ -241,7 +237,6 @@ auto MediaGroupLayout::build() -> void {
 
     auto addBlock = [&](Emulator::Interface::Media* media) -> MediaGroupLayout::Block* {
         auto block = new Block( media );
-        block->openWritable = false;
         blocks.push_back(block);
         
         if ( !showOnlyConnectedDevices() )

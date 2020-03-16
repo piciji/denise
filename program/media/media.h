@@ -47,14 +47,12 @@ struct MediaGroupLayout : GUIKIT::FramedVerticalLayout {
             GUIKIT::Label jumperLabel;
             std::vector<GUIKIT::CheckBox*> jumpers;
             GUIKIT::Button open;
-            GUIKIT::Widget spacer;
-            GUIKIT::Button openW;            
+            GUIKIT::Widget spacer;          
 
             Selector(Emulator::Interface::Media* media);
         } selector;
 
         Emulator::Interface::Media* media;
-        bool openWritable;
         Block(Emulator::Interface::Media* media);
         std::vector<Emulator::Interface::Listing> listings;
     };
