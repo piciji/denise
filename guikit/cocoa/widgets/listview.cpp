@@ -45,7 +45,7 @@
     if(listView->overrideForegroundColor()) {
         unsigned color = listView->foregroundColor();
         textColor = [NSColor
-                     colorWithDeviceRed:((color>>16) & 0xff) / 255.0
+                     colorWithSRGBRed:((color>>16) & 0xff) / 255.0
                      green:((color>>8) & 0xff) / 255.0
                      blue:(color & 0xff) / 255.0
                      alpha: 1.0];
@@ -314,7 +314,7 @@ auto pListView::releaseRowImages(unsigned selection) -> void {
 auto pListView::setBackgroundColor(unsigned color) -> void {
     
     NSColor* bg = [NSColor
-        colorWithDeviceRed:((color>>16) & 0xff) / 255.0
+        colorWithSRGBRed:((color>>16) & 0xff) / 255.0
         green:((color>>8) & 0xff) / 255.0
         blue:(color & 0xff) / 255.0
         alpha: 1.0];
