@@ -247,7 +247,6 @@ cursor down = カーソル下
 cursor left = カーソル左
 cursor up = カーソル上
 plugin = プラグイン
-swap_devices = ジョイポート入れ替え
 mouse 1351 = マウス 1351：
 mouse neos = マウス Neos：
 mouse_sensitivity = マウスの感度
@@ -422,7 +421,7 @@ geometry =
 sid_filter_toggle = Activate_filter = SIDフィルタのトグル
 sid_filter_on = audio_filter_on = オーディオフィルタON
 sid_filter_off = audio_filter_off = オーディオフィルタOFF
-swap_input_devices = 
+swap_ports = swap_devices = ジョイポート入れ替え
 linear_interpolation = Video Linear = 倍数リニア
 save_preferences = 
 rf_modulation = 

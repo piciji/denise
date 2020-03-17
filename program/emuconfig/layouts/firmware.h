@@ -35,7 +35,7 @@ struct FirmwareLayout : GUIKIT::VerticalLayout {
     Emulator::Interface* emulator;     
     FirmwareManager* manager;
     
-    std::vector<FirmwareContainer*> containers;
+    std::vector<GUIKIT::Layout*> containers;
     GUIKIT::SwitchLayout switchLayout;
     FirmwareContainer::Block* selectedBlock = nullptr;        
     GUIKIT::HorizontalLayout customSelectorLayout;  

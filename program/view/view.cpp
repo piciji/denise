@@ -445,7 +445,7 @@ auto View::setConnectors() -> void {
         }
         
         inputItem = new GUIKIT::MenuItem;
-		inputItem->setText(emulator->ident + " " + trans->get("swap_devices") );
+		inputItem->setText(emulator->ident + " " + trans->get("swap_ports") );
         
         inputItem->onActivate = [emulator]() {
             
@@ -1008,7 +1008,7 @@ auto View::translate() -> void {
 	if(!GUIKIT::Application::isCocoa()) {
 		videoItem.setText( trans->get("video") );
 		audioItem.setText( trans->get("audio") );
-		inputItem.setText( trans->get("input") + "/" + trans->get("hotkeys") );
+		inputItem.setText( trans->get("input") + " / " + trans->get("hotkeys") );
 		settingsItem.setText( trans->get("settings"));
 	}
 	

@@ -46,62 +46,68 @@ FirmwareLayout::FirmwareLayout(TabWindow* tabWindow) {
         };
 
         customSelectorLayout.append( *radioBox, {0u, 0u}, i == manager->maxSets ? 0 : 10 );        
+        GUIKIT::Layout* myContainer;     
         
-        // container for custom roms
-        auto container = new FirmwareContainer();
-        container->storeLevel = i;
-        container->setPadding(10);     
-        container->setFont(GUIKIT::Font::system("bold"));
-        
-        if (i > 0)
-        for (auto& firmware : emulator->firmwares) {
-            auto block = new FirmwareContainer::Block;
-            block->typeId = firmware.id;            
-            block->parent = container;
-            container->blocks.push_back(block);
-            container->append(*block,{~0u, 0u}, &emulator->firmwares.back() == &firmware ? 0 : 5);
-
-            auto setting = manager->getSetting( &firmware, i );
-            block->top.fileLabelTitle.setText(trans->get(firmware.name,{}, true));
-            block->top.fileLabel.setText(setting->file);
-            block->bottom.edit.setText(setting->path);
-
-            block->bottom.eject.onActivate = [this, block, container, setting]() {
-                auto& firmware = emulator->firmwares[block->typeId];
-                block->bottom.edit.setText("");
-                block->top.fileLabel.setText("");
-                setting->init();
-                this->manager->addImage(&firmware, container->storeLevel, nullptr, 0);
-                selectedBlock = block;
-                hotSwap( block->parent->storeLevel );
-            };
-
-            block->bottom.edit.onFocus = [this, block]() {
-                selectedBlock = block;
-            };
-
-            block->bottom.open.onActivate = [this, block, setting]() {
-                auto& firmware = emulator->firmwares[block->typeId];
-
-                std::string filePath = GUIKIT::BrowserWindow()
-                    .setWindow(*this->tabWindow)
-                    .setTitle(trans->get("select_firmware_image",{
-                        {"%type%", firmware.name}
-                    }))
-                    .setFilters({trans->get("firmware_image") + " (*)"})
-                    .setPath(settings->get<std::string>(this->tabWindow->ident("firmware_path"), ""))
-                    .open();
-
-                assign(filePath, block, setting);
-            };
+        if (i == 0) {
+            myContainer = new GUIKIT::VerticalLayout;
             
-            block->bottom.edit.onDrop = [this, block, setting](std::vector<std::string> files) {
-                assign( files[0], block, setting );
-            };
+        } else {
+            auto container = new FirmwareContainer();
+            container->storeLevel = i;
+            container->setPadding(10);     
+            container->setFont(GUIKIT::Font::system("bold"));   
+            
+            for (auto& firmware : emulator->firmwares) {
+                auto block = new FirmwareContainer::Block;
+                block->typeId = firmware.id;            
+                block->parent = container;
+                container->blocks.push_back(block);
+                container->append(*block,{~0u, 0u}, &emulator->firmwares.back() == &firmware ? 0 : 5);
+
+                auto setting = manager->getSetting( &firmware, i );
+                block->top.fileLabelTitle.setText(trans->get(firmware.name,{}, true));
+                block->top.fileLabel.setText(setting->file);
+                block->bottom.edit.setText(setting->path);
+
+                block->bottom.eject.onActivate = [this, block, container, setting]() {
+                    auto& firmware = emulator->firmwares[block->typeId];
+                    block->bottom.edit.setText("");
+                    block->top.fileLabel.setText("");
+                    setting->init();
+                    this->manager->addImage(&firmware, container->storeLevel, nullptr, 0);
+                    selectedBlock = block;
+                    hotSwap( block->parent->storeLevel );
+                };
+
+                block->bottom.edit.onFocus = [this, block]() {
+                    selectedBlock = block;
+                };
+
+                block->bottom.open.onActivate = [this, block, setting]() {
+                    auto& firmware = emulator->firmwares[block->typeId];
+
+                    std::string filePath = GUIKIT::BrowserWindow()
+                        .setWindow(*this->tabWindow)
+                        .setTitle(trans->get("select_firmware_image",{
+                            {"%type%", firmware.name}
+                        }))
+                        .setFilters({trans->get("firmware_image") + " (*)"})
+                        .setPath(settings->get<std::string>(this->tabWindow->ident("firmware_path"), ""))
+                        .open();
+
+                    assign(filePath, block, setting);
+                };
+
+                block->bottom.edit.onDrop = [this, block, setting](std::vector<std::string> files) {
+                    assign( files[0], block, setting );
+                };
+            }
+            
+            myContainer = container;
         }
         
-        containers.push_back(container);
-        switchLayout.setLayout(i, *container, {~0u, ~0u});
+        containers.push_back(myContainer);
+        switchLayout.setLayout(i, *myContainer, {~0u, ~0u});
     }    
 		  
     GUIKIT::RadioBox::setGroup( selectorBoxes ); 
@@ -134,7 +140,7 @@ auto FirmwareLayout::updateVisibility() -> void {
     
 	if (selectorBoxes.size() >= firmwareInUse) {
         switchLayout.setSelection( firmwareInUse );
-        selectedBlock = firmwareInUse == 0 ? nullptr : containers[firmwareInUse]->blocks[0];
+        selectedBlock = firmwareInUse == 0 ? nullptr : ((FirmwareContainer*)containers[firmwareInUse])->blocks[0];
 	}
 }
 
@@ -193,21 +199,23 @@ auto FirmwareLayout::translate() -> void {
     unsigned i = 0;
 	
     
-    for (auto container : containers ) {
+    for (auto container : containers ) {                
         
         if (i == 0) {
             selectorBoxes[i++]->setText( trans->get("default") );
             continue;
         }
         
-        for( auto block : container->blocks ) {        
+        auto fContainer = (FirmwareContainer*)container;
+        
+        for( auto block : fContainer->blocks ) {        
             block->bottom.open.setText( trans->get("open") );
             block->bottom.eject.setText( trans->get("eject") );
         }   
         	
         std::string label = "Config " + std::to_string(i);
 
-        container->setText( trans->get( label ) );
+        fContainer->setText( trans->get( label ) );
 
         selectorBoxes[i]->setText( trans->get( label ) );
 		
@@ -219,11 +227,16 @@ auto FirmwareLayout::drop( std::string path ) -> void {
     
     for (auto container : containers ) {     
 		
-        for( auto block : container->blocks ) {
+        if (!dynamic_cast<FirmwareContainer*>(container))
+            continue;
+        
+        auto fContainer = (FirmwareContainer*)container;
+        
+        for( auto block : fContainer->blocks ) {
             if ( block == selectedBlock ) {            
                 auto& firmware = emulator->firmwares[block->typeId];    
 								
-				assign( path, block, manager->getSetting( &firmware, container->storeLevel ) );
+				assign( path, block, manager->getSetting( &firmware, fContainer->storeLevel ) );
 								
                 break;
             }

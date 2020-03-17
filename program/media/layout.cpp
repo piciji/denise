@@ -225,7 +225,7 @@ auto MediaGroupLayout::fillListing( MediaGroupLayout::Block* block ) -> void {
 		std::string str = std::string( (const char*) utf8.data( ), utf8.size( ) );
 
 		listings.append( { str } );
-	}
+	}   
 }
 
 auto MediaGroupLayout::showOnlyConnectedDevices() -> bool {

@@ -73,6 +73,7 @@
 * SID 8580 sounds more powerfull in other emulators (maybe a bug or an additional audio effect?) (https://csdb.dk/release/?id=187116)
 * save/load additional settings files in App folder (mostly for per game key maps)
 * add Depixelizing technic (http://johanneskopf.de/publications/pixelart/index.html)
+* add confirmation question when quiting Denise Alt+F4
 
 # bugs
 * japanese characters aren't displayed correctly in OpenGL onscreen text

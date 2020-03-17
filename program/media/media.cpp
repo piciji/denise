@@ -459,12 +459,17 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
 
         layout->inject.onActivate = [this, layout]() {
 
-            if (!layout->listings.selected() || (activeEmulator != emulator) )
+            if (activeEmulator != emulator)
                 return;
+            
+            unsigned selection = layout->listings.selection( );
+            
+            if (!layout->listings.selected() && layout->listings.rowCount() > 0)
+                selection = 0;
             
             auto media = layout->selectedBlock->media;
                                     
-            if ( emulator->selectListing( media, layout->listings.selection( ) ) ) {
+            if ( emulator->selectListing( media, selection ) ) {
                 status->addMessage( trans->get( "program_injected" ) );
                 view->setFocused( 300 );                
             }
@@ -1153,3 +1158,4 @@ auto MediaWindow::updateJumper(Emulator::Interface::Media* media) -> void {
 }
 
 }
+

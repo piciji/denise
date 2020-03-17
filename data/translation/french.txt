@@ -247,7 +247,6 @@ cursor down = curseur bas
 cursor left = curseur gauche
 cursor up = curseur haut
 plugin = Plugin
-swap_devices = Echanger de périphériques
 mouse 1351 = Souris 1351
 mouse neos = Souris Neos
 mouse_sensitivity = Sensibilité de la souris
@@ -422,7 +421,7 @@ geometry =
 sid_filter_toggle = Activate_filter = Activer le filtre audio
 sid_filter_on = audio_filter_on = le filtre audio est émulé
 sid_filter_off = audio_filter_off = le filtre audio est désactivé
-swap_input_devices = 
+swap_ports = swap_devices = Echanger de périphériques
 linear_interpolation = Video Linear = Vidéo Linéaire
 save_preferences = 
 rf_modulation = 

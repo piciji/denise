@@ -37,7 +37,7 @@ auto InputManager::setCustomHotkeys() -> void {
 	customHotkeys.push_back( {Hotkey::Id::Savestate, "Savestate", true} );
 	customHotkeys.push_back( {Hotkey::Id::IncSlot, "Incslot", true} );
     customHotkeys.push_back( {Hotkey::Id::DecSlot, "Decslot", true} );
-	customHotkeys.push_back( {Hotkey::Id::SwapInputDevices, "swap_input_devices", true} );
+	customHotkeys.push_back( {Hotkey::Id::SwapInputDevices, "swap_ports", true} );
 	customHotkeys.push_back( {Hotkey::Id::Power, "power", true} );
 	customHotkeys.push_back( {Hotkey::Id::SoftReset, "Soft Reset", true} );
     customHotkeys.push_back( {Hotkey::Id::MultiLoad, "multi load", true} );
