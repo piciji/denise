@@ -1,15 +1,16 @@
 
 #define UNICODE
-#define WINVER 0x0500
-#define _WIN32_WINNT 0x0500
+#define WINVER 0x0600
+#define _WIN32_WINNT 0x0600
 #define WIN32_LEAN_AND_MEAN
 #define VC_EXTRALEAN
 
 #include <windows.h>
-#include <shlobj.h>
 #define _WIN32_WINNT 0x0600
 #include <uxtheme.h>
-#define _WIN32_WINNT 0x0500
+#include <shobjidl.h>
+#include <shlobj.h>
+#define _WIN32_WINNT 0x0600
 #include <Shellapi.h>
 #include <shlwapi.h>
 #include <Commdlg.h>
@@ -500,6 +501,7 @@ struct pMenuSeparator : pMenuBase {
 struct pBrowserWindow {
     static auto directory(BrowserWindow::State& state) -> std::string;
     static auto file(BrowserWindow::State& state, bool save) -> std::string;
+    static auto open(BrowserWindow::State& state) -> std::string;
 };
 
 struct pMessageWindow {

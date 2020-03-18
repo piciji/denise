@@ -15,7 +15,78 @@ static auto CALLBACK BrowserWindowCallbackProc(HWND hwnd, UINT msg, LPARAM lpara
     return 0;
 }
 
+auto pBrowserWindow::open(BrowserWindow::State& state) -> std::string {
+    std::string name = "";
+    HRESULT hr;         
+
+    COMDLG_FILTERSPEC aFileTypes[ state.filters.size() ];
+    
+    unsigned i = 0;
+    for(auto& filter : state.filters) {
+        std::vector<std::string> tokens = String::split(filter, '(');
+
+        if(tokens.size() != 2) continue;
+        std::string part = tokens[1];
+        part.pop_back();
+        
+        String::delSpaces(part);
+        std::replace( part.begin(), part.end(), ',', ';');
+                        
+        aFileTypes[i++] = { utf16_t(tokens[0]), utf16_t(part) };
+    }
+
+    IFileOpenDialog* pDlg;
+    
+    hr = CoCreateInstance(CLSID_FileOpenDialog, NULL, CLSCTX_ALL, 
+        IID_IFileOpenDialog, reinterpret_cast<void**>(&pDlg));
+    
+    if ( FAILED(hr) )
+        return "";
+
+    pDlg->SetFileTypes ( state.filters.size(), aFileTypes );
+    
+    utf16_t wtitle(state.title.c_str());
+    
+    std::string path = state.path;
+    std::replace( path.begin(), path.end(), '/', '\\');
+    
+    utf16_t wpath(path.c_str());
+    
+    IShellItem* location;
+    SHCreateItemFromParsingName(wpath, nullptr, IID_IShellItem, reinterpret_cast<void **>(&location));
+    
+    pDlg->SetTitle ( wtitle );
+    pDlg->SetFolder( location );
+    
+    hr = pDlg->Show ( state.window->p.hwnd );
+    
+    if ( SUCCEEDED(hr) ) {
+        
+        IShellItem* pItem;
+ 
+        hr = pDlg->GetResult ( &pItem );
+ 
+        if ( SUCCEEDED(hr) ) {
+            LPOLESTR pwsz = NULL;
+ 
+            hr = pItem->GetDisplayName ( SIGDN_FILESYSPATH, &pwsz );
+ 
+            if ( SUCCEEDED(hr) ) {
+                std::string name = utf8_t(pwsz);
+                std::replace( name.begin(), name.end(), '\\', '/');
+              //  CoTaskMemFree ( pwsz );
+            }
+        }
+    }
+    
+    return name;
+}
+
 auto pBrowserWindow::file(BrowserWindow::State& state, bool save) -> std::string {
+    
+    if (!save && (pApplication::version >= WindowsVista)) 
+        return open(state);
+    
     pApplication::currentWorkingDirectory(); //unfortunately file dialog overwrites cwd, so get it before, if not already done
     std::string path = state.path;
     utf16_t wtitle(state.title.c_str());
