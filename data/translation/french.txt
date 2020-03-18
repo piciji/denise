@@ -111,6 +111,7 @@ disk_drives = Lecteurs de Disque
 select_disk_drive = Sélectionner un lecteur de Disque
 hd_drives = Disques Durs
 tape_drives = Lecteur de Cassettes
+memory = Mémoire
 select_states_folder = Sélectionner le dossier de la sauvegarde d'état
 select_disk_folder = Sélectionner le dossier disques
 select_hd_folder = Sélectionner le dossier disque dur

@@ -111,6 +111,7 @@ disk_drives = Disk drives
 select_disk_drive = select disk drive
 hd_drives = Hard drives
 tape_drives = Tape drives
+memory = Memory
 select_states_folder = select savestate folder
 select_disk_folder = select disks folder
 select_hd_folder = select hard disks folder

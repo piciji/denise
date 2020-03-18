@@ -111,6 +111,7 @@ disk_drives = Diskettenlaufwerke
 select_disk_drive = Diskettenlaufwerk auswählen
 hd_drives = Festplatten
 tape_drives = Kassettenlaufwerke
+memory = Speicher
 select_states_folder = Spielstandverzeichnis auswählen
 select_disk_folder = Diskettenverzeichnis auswählen
 select_hd_folder = Festplattenverzeichnis auswählen
