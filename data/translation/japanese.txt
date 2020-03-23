@@ -111,6 +111,7 @@ disk_drives = ディスクドライブ
 select_disk_drive = ディスクドライブを選択
 hd_drives = ハードディスク
 tape_drives = カセットテープ
+memory = プログラムファイル
 select_states_folder = セーブステートのフォルダを選択
 select_disk_folder = ディスクのフォルダを選択
 select_hd_folder = HDDのフォルダを選択
