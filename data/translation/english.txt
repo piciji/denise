@@ -444,3 +444,7 @@ select_program_image = select program image ...
 blank_program_image = select a new program image ...
 multi load = Multi Loader
 select image = select image
+autoload = Autoload
+insert and run = Insert + Boot
+insert cartridge = Insert Cartridge
+remove cartridge = Remove Cartridge

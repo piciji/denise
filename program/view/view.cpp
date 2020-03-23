@@ -112,7 +112,7 @@ auto View::build() -> void {
 
     GUIKIT::Application::Cocoa::onOpenFile = [this] (std::string fileName) {
         
-        view->autoloadInit( {fileName}, false );
+        view->autoloadInit( {fileName}, false, 2 );
         
         view->autoloadFiles();
         
@@ -657,19 +657,8 @@ auto View::buildMenu() -> void {
 		sM.multiLoad = new GUIKIT::MenuItem;
         sM.multiLoad->setIcon( driveImage );
         sM.multiLoad->onActivate = [this, emulator]() {
-            
-            std::string filePath = GUIKIT::BrowserWindow()
-                .setWindow(*this)
-                .setTitle(trans->get("select image"))
-                .setPath(settings->get<std::string>(program->ident(emulator, "multiload_path"), ""))
-                .setFilters({trans->get("all_files")})
-                .open();
-                
-            if (!filePath.empty()) {
-                settings->set<std::string>(program->ident(emulator, "multiload_path"), GUIKIT::File::getPath( filePath ) );
-                this->autoloadInit( {filePath}, false );
-                this->autoloadFiles();
-            }
+
+            MediaView::MediaWindow::getView( emulator )->multiLoad();
 	    };
         sM.system->append( *sM.multiLoad );
         
@@ -1127,4 +1116,3 @@ auto View::questionToWrite(Emulator::Interface::Media* media) -> bool {
     
     return state;
 }
-

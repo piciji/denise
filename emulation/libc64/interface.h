@@ -66,6 +66,7 @@ struct Interface : Emulator::Interface {
 	auto getDiskImageSize(unsigned typeId, bool hd) -> unsigned;
 	auto createDiskImage(unsigned typeId, bool hd = false, std::string name = "", bool ffs = false) -> uint8_t*;        
     auto getDiskListing(Media* media) -> std::vector<Emulator::Interface::Listing>;
+    auto getDiskPreview(uint8_t* data, unsigned size) -> std::vector<Emulator::Interface::Listing>;
     auto selectDiskListing(Media* media, unsigned pos) -> void;
     
 	//tape drive handling
@@ -89,6 +90,7 @@ struct Interface : Emulator::Interface {
 	auto ejectProgram(Media* media) -> void;
 	auto getLoadedProgram(unsigned& size) -> uint8_t*;
 	auto getProgramListing(Media* media) -> std::vector<Emulator::Interface::Listing>;
+    auto getProgramPreview(uint8_t* data, unsigned size) -> std::vector<Emulator::Interface::Listing>;
 	auto selectProgramListing(Media* media, unsigned pos) -> bool;    
 
     //expansion

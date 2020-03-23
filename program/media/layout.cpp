@@ -190,7 +190,7 @@ auto MediaGroupLayout::updateVisibility( unsigned count, bool init ) -> void {
 	mediaWindow->synchronizeLayout();
 	
     if (!listingInVisibleBlock)
-        fillListing( blocks[0] );	  
+        updateListing( blocks[0] );	  
 }
 
 auto MediaGroupLayout::getBlock(Emulator::Interface::Media* media) -> Block* {
@@ -203,29 +203,34 @@ auto MediaGroupLayout::getBlock(Emulator::Interface::Media* media) -> Block* {
     return nullptr;
 }
 
-auto MediaGroupLayout::fillListing( MediaGroupLayout::Block* block ) -> void {
+auto MediaGroupLayout::updateListing( MediaGroupLayout::Block* block ) -> void {
 
     selectedBlock = block;
-            
-	listings.reset( );
+    
+    fillListing( block->listings );            
+}
 
-	for ( auto& listing : block->listings ) {
+auto MediaGroupLayout::fillListing( std::vector<Emulator::Interface::Listing>& emuListings ) -> void {
+    
+    listings.reset();
 
-		std::vector<uint8_t> utf8;
+    for (auto& listing : emuListings) {
 
-		for ( auto& code : listing.line ) {
+        std::vector<uint8_t> utf8;
 
-			unsigned useCode = code;
-			if ( mediaWindow->useCustomFont )
-				useCode |= 0xee << 8;
+        for (auto& code : listing.line) {
 
-			GUIKIT::Utf8::encode( useCode, utf8 );
-		}
+            unsigned useCode = code;
+            if (mediaWindow->useCustomFont)
+                useCode |= 0xee << 8;
 
-		std::string str = std::string( (const char*) utf8.data( ), utf8.size( ) );
+            GUIKIT::Utf8::encode(useCode, utf8);
+        }
 
-		listings.append( { str } );
-	}   
+        std::string str = std::string((const char*) utf8.data(), utf8.size());
+
+        listings.append({str});
+    }  
 }
 
 auto MediaGroupLayout::showOnlyConnectedDevices() -> bool {
@@ -249,6 +254,7 @@ auto MediaGroupLayout::build() -> void {
     
     for (auto& media : mediaGroup->media) {
         auto block = addBlock(&media);
+        block->layout = this;
 
         auto& header = block->header;
         auto& selector = block->selector;

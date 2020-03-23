@@ -444,3 +444,6 @@ select_program_image = select_memory_image = Sélectionner l'image de la mémoir
 blank_program_image = blank_memory_image = Sélectionner l'image de la mémoire vide ...
 multi load = 
 select image = 
+autoload = 
+insert cartridge = 
+remove cartridge = 

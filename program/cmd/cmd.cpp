@@ -46,7 +46,6 @@ auto Cmd::set(int argc, char** argv) -> void {
         else if ( (std::string)argv[i] == "--version" )
             versionRequested = true;
     }  
-
 }
 
 auto Cmd::printHelp() -> void {
@@ -209,7 +208,7 @@ auto Cmd::autoloadImages() -> void {
         return;
     }
     
-    view->autoloadInit( arguments, 1 );
+    view->autoloadInit( arguments, true, 2 );
     
     view->autoloadFiles();
     

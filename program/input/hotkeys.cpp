@@ -126,7 +126,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
 			break;
 			
         case Hotkey::MultiLoad: {                
-            view->sysMenus[0].multiLoad->onActivate();                                
+            MediaView::MediaWindow::getView( emulator )->multiLoad();
             break;
         }
         case Hotkey::Id::CaptureMouse:

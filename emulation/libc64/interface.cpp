@@ -681,6 +681,16 @@ auto Interface::getDiskListing(Media* media) -> std::vector<Emulator::Interface:
     return iecBus->getDiskListing( media );
 }
 
+auto Interface::getDiskPreview(uint8_t* data, unsigned size) -> std::vector<Emulator::Interface::Listing> {
+    
+    Structure1541 structure;
+    
+    if (!structure.attach( data, size ))
+        return {};
+        
+    return structure.getListing();
+}
+
 auto Interface::selectDiskListing(Media* media, unsigned pos) -> void {
     
     if (!media || !media->group->isDisk())
@@ -852,6 +862,13 @@ auto Interface::getProgramListing(Media* media) -> std::vector<Emulator::Interfa
         return {};
         
 	return prg->getListing();
+}
+
+auto Interface::getProgramPreview(uint8_t* data, unsigned size) -> std::vector<Emulator::Interface::Listing> {
+    
+    Prg prg;
+    prg.set(data, size);
+    return prg.getListing();
 }
 
 auto Interface::selectProgramListing(Media* media, unsigned pos) -> bool {

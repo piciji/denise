@@ -152,7 +152,8 @@ auto Program::init() -> void {
     isRunning = isPause = false;
 }
 
-auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {    
+auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {                  
+    
     bool emuSwap = activeEmulator != emulator;
     powerOff();			
     
@@ -247,6 +248,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
     
     emulator->setRegion( (Emulator::Interface::Region) settings->get<unsigned>( ident(emulator, "video_region"), 0u, {0u, 1u}) );
     audioManager->power();
+    renderPlaceholder(true);
     
     if (emuSwap)
 		setVideoFilter();	
@@ -528,3 +530,4 @@ auto Program::getEmulator( std::string ident ) -> Emulator::Interface* {
     
     return nullptr;
 }
+

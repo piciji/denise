@@ -101,7 +101,7 @@ struct Program : Emulator::Interface::Bind {
     auto initVideo() -> void;
 	auto getVideoDriver() -> std::string;
     auto videoRefresh(const uint16_t* frame, unsigned width, unsigned height, unsigned linePitch) -> void override;
-    auto renderPlaceholder() -> void;
+    auto renderPlaceholder(bool blackScreen = false) -> void;
     auto setVideoSynchronize() -> void;
     auto setVideoHardSync() -> void;
 	auto hintExclusiveFullscreen() -> void;

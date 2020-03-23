@@ -52,9 +52,10 @@ struct MediaGroupLayout : GUIKIT::FramedVerticalLayout {
             Selector(Emulator::Interface::Media* media);
         } selector;
 
-        Emulator::Interface::Media* media;
-        Block(Emulator::Interface::Media* media);
+        Emulator::Interface::Media* media;        
         std::vector<Emulator::Interface::Listing> listings;
+        MediaGroupLayout* layout;
+        Block(Emulator::Interface::Media* media);
     };
     std::vector<Block*> blocks;
     Emulator::Interface::MediaGroup* mediaGroup;
@@ -66,7 +67,8 @@ struct MediaGroupLayout : GUIKIT::FramedVerticalLayout {
     
     auto build() -> void;
     auto updateVisibility( unsigned count, bool init = false ) -> void;
-    auto fillListing(MediaGroupLayout::Block* block) -> void;
+    auto updateListing(MediaGroupLayout::Block* block) -> void;
+    auto fillListing( std::vector<Emulator::Interface::Listing>& emuListings ) -> void;
     auto showOnlyConnectedDevices() -> bool;
     auto getBlock(Emulator::Interface::Media* media) -> Block*;
 
@@ -132,8 +134,10 @@ struct MediaWindow : public GUIKIT::Window {
     bool useCustomFont = false;
 	Message* message;
 	
-	GUIKIT::TabFrameLayout tabView;
-	
+    GUIKIT::BrowserWindow* fileDialogPtr = nullptr;
+    
+	GUIKIT::TabFrameLayout tabView;	
+    
 	GUIKIT::Image diskImage;
     GUIKIT::Image hdImage;
     GUIKIT::Image tapeImage;
@@ -156,11 +160,18 @@ struct MediaWindow : public GUIKIT::Window {
     GUIKIT::HorizontalLayout cartWrapper;
     GUIKIT::FramedVerticalLayout cartSelectorFrame;
     GUIKIT::ListView cartList;
+    GUIKIT::Button insertCart;
+    GUIKIT::Button removeCart;
     std::vector<MediaGroupLayout*> cartLayouts;
     
     PathsLayout pathsLayout;
     	
 	GUIKIT::Timer mtimer;
+    
+    struct {
+        MediaGroupLayout::Block* block = nullptr;
+        std::string filePath;
+    } lastPreview;
 
     auto build() -> void;	
     auto show() -> void;
@@ -181,7 +192,7 @@ struct MediaWindow : public GUIKIT::Window {
     auto createImage( Emulator::Interface::MediaGroup* mediaGroup ) -> void;
     auto showMediaGroupLayout( Emulator::Interface::MediaGroup* mediaGroup ) -> void;
     auto getMediaGroupLayout( Emulator::Interface::MediaGroup* mediaGroup ) -> MediaGroupLayout*;   
-    auto insertImage( MediaGroupLayout* layout, MediaGroupLayout::Block* block, GUIKIT::File* file, GUIKIT::File::Item* item ) -> void;
+    auto insertImage( MediaGroupLayout::Block* block, GUIKIT::File* file, GUIKIT::File::Item* item ) -> void;
     auto insertImage( Emulator::Interface::Media* media, GUIKIT::File* file, GUIKIT::File::Item* item ) -> void;
     auto eject( Emulator::Interface::MediaGroup* mediaGroup ) -> void;
     auto drop( std::string filePath, MediaGroupLayout::Block* block = nullptr ) -> void;   
@@ -190,6 +201,11 @@ struct MediaWindow : public GUIKIT::Window {
     auto disableWriteProtection(Emulator::Interface::Media* media) -> void;
     auto updateJumper(Emulator::Interface::Media* media) -> void;
     auto changeWriteProtection(Emulator::Interface::Media* media, bool state) -> void;
+    auto previewFile( std::string file, MediaGroupLayout::Block* block = nullptr ) -> void;
+    auto getActiveLayout() -> MediaGroupLayout*;
+    auto resetListings() -> void;
+    auto insertFile( MediaGroupLayout::Block* block, std::string filePath, bool autoLoad = false) -> bool;
+    auto multiLoad() -> void;
 
     MediaWindow(Emulator::Interface* emulator);
 };

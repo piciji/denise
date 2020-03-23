@@ -444,3 +444,6 @@ select_program_image = Programmabbild auswählen ...
 blank_program_image = neues Programmabbild auswählen ...
 multi load = Multi-Lader
 select image = Abbild auswählen
+autoload = Auto Start
+insert cartridge = Modul einlegen
+remove cartridge = Modul auswerfen

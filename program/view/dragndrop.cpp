@@ -17,16 +17,17 @@ auto View::setDragnDrop() -> void {
     
     viewport.onDrop = [this]( std::vector<std::string> files ) {
 
-        autoloadInit( files, false );
+        autoloadInit( files, false, 0 );
         
         autoloadFiles();            
     };        
 }
 
-auto View::autoloadInit( std::vector<std::string> files, bool silentError ) -> void {    
+auto View::autoloadInit( std::vector<std::string> files, bool silentError, unsigned restartMode ) -> void {    
     ddControl.emulator = nullptr;
     ddControl.mediaGroups.clear();
     ddControl.silentError = silentError;
+    ddControl.restartMode = restartMode;
     ddControl.files.clear();
     
     unsigned i = 0;
@@ -60,7 +61,14 @@ auto View::autoloadPostProcessing() -> void {
         return false;
     });
 
-    auto autoStart = settings->get<bool>("autostart_dragndrop", false);
+    auto autoStart = true;
+    
+    if (ddControl.restartMode == 0)
+        autoStart = settings->get<bool>("autostart_dragndrop", false);
+    else if (ddControl.restartMode == 1)
+        autoStart = false;
+    else if (ddControl.restartMode == 2)
+        autoStart = true;    
 
     auto emuConfigView = EmuConfigView::TabWindow::getView(ddControl.emulator);
 	

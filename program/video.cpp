@@ -95,7 +95,7 @@ auto Program::loadPlaceholder() -> void {
 		return;			
 }
 
-auto Program::renderPlaceholder() -> void {
+auto Program::renderPlaceholder(bool blackScreen) -> void {
 		
 	if (cmd->debug || isRunning)
 		return;
@@ -105,7 +105,7 @@ auto Program::renderPlaceholder() -> void {
     unsigned _w, _h;
 	uint8_t* data = placeholder.data;	
 	
-	if (!placeholder.empty()) {
+	if (!blackScreen && !placeholder.empty()) {
 		if (videoDriver->lock(gpu_data, gpu_pitch, placeholder.width, placeholder.height)) {
 
 			for (_h = 0; _h < placeholder.height; _h++) {
@@ -117,13 +117,13 @@ auto Program::renderPlaceholder() -> void {
 			}
 		}
 	} else { // blackscreen
-		if (videoDriver->lock(gpu_data, gpu_pitch, 512, 512)) {
+		if (videoDriver->lock(gpu_data, gpu_pitch, 256, 256)) {
 
-			for (_h = 0; _h < 512; _h++) {
-				for (_w = 0; _w < 512; _w++) {
+			for (_h = 0; _h < 256; _h++) {
+				for (_w = 0; _w < 256; _w++) {
 					*gpu_data++ = 0;
 				}
-				gpu_data += gpu_pitch - 512;
+				gpu_data += gpu_pitch - 256;
 			}
 		}
 	}

@@ -432,8 +432,9 @@ struct DVideo : Video {
 	}
 	
 	auto resize(unsigned width, unsigned height) -> void {
+        // width + 1: read the comment directly above of this 
         
-        width = roundUpPowerOfTwo( width );
+        width = roundUpPowerOfTwo( width + 1 );
 		height = roundUpPowerOfTwo( height );
         
         if (width == textureWidth && height == textureHeight)

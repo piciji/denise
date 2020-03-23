@@ -498,10 +498,50 @@ struct pMenuSeparator : pMenuBase {
     pMenuSeparator(MenuSeparator& menuSeparator) : pMenuBase(menuSeparator), menuSeparator(menuSeparator) {}
 };
 
+struct FileDialogEventHandler :
+    public IFileDialogControlEvents,
+    public IFileDialogEvents
+{
+
+    BrowserWindow::State* state;
+    std::string filePath = "";
+    IFileDialog* pDlg = nullptr;
+    
+    STDMETHODIMP QueryInterface(REFIID riid, void** ppvObject);
+    STDMETHODIMP_(ULONG) AddRef() { return 1; };
+    STDMETHODIMP_(ULONG) Release() { return 1; }
+
+    // IFileDialogEvents
+    STDMETHODIMP OnFileOk(IFileDialog* pfd);
+    STDMETHODIMP OnFolderChanging(IFileDialog* pfd, IShellItem* psiFolder);
+    STDMETHODIMP OnFolderChange(IFileDialog* pfd);
+    STDMETHODIMP OnSelectionChange(IFileDialog* pfd);
+    STDMETHODIMP OnShareViolation(IFileDialog* pfd, IShellItem* psi, FDE_SHAREVIOLATION_RESPONSE* pResponse);
+    STDMETHODIMP OnTypeChange(IFileDialog* pfd);
+    STDMETHODIMP OnOverwrite(IFileDialog* pfd, IShellItem* psi, FDE_OVERWRITE_RESPONSE* pResponse);
+    
+    // IFileDialogControlEvents methods
+    IFACEMETHODIMP OnItemSelected(IFileDialogCustomize* pfdc, DWORD dwIDCtl, DWORD dwIDItem) { return S_OK; };
+    IFACEMETHODIMP OnButtonClicked(IFileDialogCustomize*, DWORD);
+    IFACEMETHODIMP OnCheckButtonToggled(IFileDialogCustomize*, DWORD, BOOL) { return S_OK; };
+    IFACEMETHODIMP OnControlActivating(IFileDialogCustomize*, DWORD) { return S_OK; };  
+    
+    auto getFilePath() -> std::string;
+};
+
 struct pBrowserWindow {
-    static auto directory(BrowserWindow::State& state) -> std::string;
-    static auto file(BrowserWindow::State& state, bool save) -> std::string;
-    static auto open(BrowserWindow::State& state) -> std::string;
+    BrowserWindow& browserWindow;
+    IFileDialog* pDlg = nullptr;
+    FileDialogEventHandler* pDialogEventHandler = nullptr;
+    DWORD cookie;
+    
+    auto directory() -> std::string;
+    auto file(bool save) -> std::string;
+    auto fileVista(bool save) -> std::string;
+    auto close() -> void; 
+    
+    pBrowserWindow(BrowserWindow& browserWindow);
+    ~pBrowserWindow();
 };
 
 struct pMessageWindow {

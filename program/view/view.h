@@ -56,7 +56,7 @@ struct View : public GUIKIT::Window {
     auto loadCursor() -> void;
     auto setCursor( Emulator::Interface* emulator ) -> void;
     auto setDragnDrop() -> void;
-    auto autoloadInit( std::vector<std::string> files, bool silentError ) -> void;
+    auto autoloadInit( std::vector<std::string> files, bool silentError, unsigned restartMode ) -> void;
     auto autoloadFiles() -> void;
     auto autoloadPostProcessing() -> void;
     auto getSysMenu( Emulator::Interface* emulator ) -> SystemMenu*;
@@ -151,6 +151,7 @@ struct View : public GUIKIT::Window {
         Emulator::Interface* emulator;
         std::vector<Emulator::Interface::MediaGroup*> mediaGroups;
         bool silentError = false;
+        unsigned restartMode = 0; // 0 = drag'n'drop, 1 = multi load, 2 = auto load
         std::vector<std::string> files;        
     } ddControl;
 	

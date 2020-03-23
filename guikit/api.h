@@ -47,6 +47,7 @@ struct pTreeView;
 struct pViewport;
 struct pFrame;
 struct pTabFrame;
+struct pBrowserWindow;
 struct Zip;
 struct Gzip;
 struct Tar;
@@ -885,27 +886,39 @@ struct Timer : Base {
 };
 
 struct BrowserWindow {
-	static std::function<void ()> onCall;
-	
+	static std::function<void ()> onCall;	    
+    
     auto directory() -> std::string;
     auto open() -> std::string;
     auto save() -> std::string;
+    auto close() -> void;
     auto setFilters(std::vector<std::string> filters) -> BrowserWindow&;
     auto setWindow(Window& window) -> BrowserWindow&;
     auto setPath(const std::string& path) -> BrowserWindow&;
     auto setTitle(const std::string& title) -> BrowserWindow&;
+    auto setOnChangeCallback( std::function<void (std::string file)> onSelectionChange ) -> BrowserWindow&;
+    auto addCustomButton( std::string text, std::function<bool (std::string filePath)> onClick ) -> BrowserWindow&;
+    
     static auto transformFilter( std::string description, const std::vector<std::string>& suffix ) -> std::string;
-	static auto transformFilter( std::string description, const std::string& suffix ) -> std::string;
-
+	static auto transformFilter( std::string description, const std::string& suffix ) -> std::string;   
+    
+    struct CustomButton {
+        std::string text;
+        std::function<bool (std::string filePath)> onClick = nullptr;
+    };
+    
     struct State {
         std::vector<std::string> filters;
         Window* window = nullptr;
         std::string path = "";
         std::string title = "";
+        std::function<void (std::string filePath)> onSelectionChange = nullptr;
+        std::vector<CustomButton> buttons;
     } state;
 
-    BrowserWindow() {}
-    ~BrowserWindow() {}
+    pBrowserWindow& p;    
+    BrowserWindow();
+    ~BrowserWindow();
 };
 
 struct MessageWindow {

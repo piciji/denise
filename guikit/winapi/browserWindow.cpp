@@ -1,4 +1,145 @@
 
+STDMETHODIMP FileDialogEventHandler::OnFileOk ( IFileDialog* pfd )
+{
+    return S_OK;    // allow the dialog to close
+}
+
+STDMETHODIMP FileDialogEventHandler::OnFolderChanging ( IFileDialog* pfd, IShellItem* psiFolder )
+{
+    return S_OK;    // allow the change
+}
+
+STDMETHODIMP FileDialogEventHandler::OnFolderChange ( IFileDialog* pfd )
+{
+    return S_OK;
+}
+
+STDMETHODIMP FileDialogEventHandler::OnSelectionChange ( IFileDialog* pfd )
+{                
+    LPOLESTR pwsz = NULL;
+    IShellItem* pItem;
+    std::string path = "";
+            
+    HRESULT hr = pfd->GetFolder(&pItem);
+        
+    if ( SUCCEEDED(hr)) {
+        
+        hr = pItem->GetDisplayName ( SIGDN_FILESYSPATH, &pwsz );
+
+        if ( SUCCEEDED(hr) ) {
+            
+            path = utf8_t(pwsz);
+            std::replace( path.begin(), path.end(), '\\', '/');
+            CoTaskMemFree ( pwsz );
+        }
+    }
+    
+    hr = pfd->GetFileName( &pwsz );    
+        
+    if ( SUCCEEDED(hr)) {
+        
+        std::string name = utf8_t(pwsz);       
+
+        path += "/" + name;
+        
+        if (!name.empty() && !path.empty() && path != filePath) {
+            if ( state && state->onSelectionChange)
+                state->onSelectionChange(path);
+            
+            filePath = path;
+        }
+        
+        CoTaskMemFree ( pwsz );
+    }               
+
+    return S_OK;
+}
+
+auto FileDialogEventHandler::getFilePath() -> std::string {
+    LPOLESTR pwsz = NULL;
+    IShellItem* pItem;
+    std::string path = "";
+            
+    HRESULT hr = pDlg->GetFolder(&pItem);
+        
+    if ( SUCCEEDED(hr)) {
+        
+        hr = pItem->GetDisplayName ( SIGDN_FILESYSPATH, &pwsz );
+
+        if ( SUCCEEDED(hr) ) {
+            
+            path = utf8_t(pwsz);
+            std::replace( path.begin(), path.end(), '\\', '/');
+            CoTaskMemFree ( pwsz );
+        }
+    }
+    
+    hr = pDlg->GetFileName( &pwsz );    
+        
+    if ( SUCCEEDED(hr)) {
+        
+        std::string name = utf8_t(pwsz);       
+
+        path += "/" + name;
+        
+        CoTaskMemFree ( pwsz );
+    }    
+    
+    return path;
+}
+
+STDMETHODIMP FileDialogEventHandler::OnShareViolation (
+    IFileDialog* pfd, IShellItem* psi, FDE_SHAREVIOLATION_RESPONSE* pResponse )
+{
+    return S_OK;
+}
+
+STDMETHODIMP FileDialogEventHandler::OnTypeChange ( IFileDialog* pfd )
+{
+    
+    return S_OK;
+}
+
+STDMETHODIMP FileDialogEventHandler::OnOverwrite (
+    IFileDialog* pfd, IShellItem* psi, FDE_OVERWRITE_RESPONSE* pResponse )
+{
+    return S_OK;
+}
+
+STDMETHODIMP FileDialogEventHandler::QueryInterface(REFIID riid, void** ppvObject) { 
+    *ppvObject = NULL;
+    
+    if (riid == IID_IFileDialogEvents) {
+        *ppvObject = (IFileDialogEvents*)this;
+        return S_OK;
+    }
+    
+    if (riid == IID_IFileDialogControlEvents) {
+        *ppvObject = (IFileDialogControlEvents*)this;
+        return S_OK;
+    }    
+    
+    return E_NOINTERFACE;
+}
+
+
+STDMETHODIMP FileDialogEventHandler::OnButtonClicked ( IFileDialogCustomize* pfdc, DWORD dwIDCtl ) {
+    
+    auto id = dwIDCtl - 1000;
+    
+    if (id < state->buttons.size()) {
+        
+        auto button = state->buttons[id];
+        
+        if (button.onClick)
+            if ( button.onClick( getFilePath() ) )
+                pDlg->Close( S_OK );
+    }
+    
+    return S_OK;
+}
+
+
 static auto CALLBACK BrowserWindowCallbackProc(HWND hwnd, UINT msg, LPARAM lparam, LPARAM lpdata) -> int {
     if(msg == BFFM_INITIALIZED) {
         if(lpdata) {
@@ -15,35 +156,57 @@ static auto CALLBACK BrowserWindowCallbackProc(HWND hwnd, UINT msg, LPARAM lpara
     return 0;
 }
 
-auto pBrowserWindow::open(BrowserWindow::State& state) -> std::string {
+auto pBrowserWindow::fileVista(bool save) -> std::string {
+    auto& state = browserWindow.state;
     std::string name = "";
-    HRESULT hr;         
-
+    HRESULT hr;      
+    
     COMDLG_FILTERSPEC aFileTypes[ state.filters.size() ];
+    
+    utf16_t* utfConvert[state.filters.size() << 1];
     
     unsigned i = 0;
     for(auto& filter : state.filters) {
         std::vector<std::string> tokens = String::split(filter, '(');
 
-        if(tokens.size() != 2) continue;
-        std::string part = tokens[1];
-        part.pop_back();
+        if(tokens.size() != 2)
+            continue;
         
-        String::delSpaces(part);
-        std::replace( part.begin(), part.end(), ',', ';');
-                        
-        aFileTypes[i++] = { utf16_t(tokens[0]), utf16_t(part) };
-    }
+        std::string part1 = tokens[0];
+        String::delSpaces(part1);
+        
+        std::string part2 = tokens[1];
+        part2.pop_back();        
+        String::delSpaces(part2);
+        
+        std::replace( part2.begin(), part2.end(), ',', ';');
+        
+        utfConvert[(i << 1) + 0] = new utf16_t( part1 );
+        utfConvert[(i << 1) + 1] = new utf16_t( part2 );
 
-    IFileOpenDialog* pDlg;
+        aFileTypes[i] = { *utfConvert[(i << 1) + 0], *utfConvert[(i << 1) + 1] };
+        
+        i++;
+    }   
     
-    hr = CoCreateInstance(CLSID_FileOpenDialog, NULL, CLSCTX_ALL, 
-        IID_IFileOpenDialog, reinterpret_cast<void**>(&pDlg));
+    if (save)
+        hr = CoCreateInstance(CLSID_FileSaveDialog, NULL, CLSCTX_ALL, 
+            IID_IFileSaveDialog, reinterpret_cast<void**>(&pDlg));
+    else
+        hr = CoCreateInstance(CLSID_FileOpenDialog, NULL, CLSCTX_ALL, 
+            IID_IFileOpenDialog, reinterpret_cast<void**>(&pDlg));
     
     if ( FAILED(hr) )
         return "";
-
+ 
+    pDialogEventHandler = new FileDialogEventHandler;    
+    pDialogEventHandler->state = &state;
+    pDialogEventHandler->pDlg = pDlg;
+    
     pDlg->SetFileTypes ( state.filters.size(), aFileTypes );
+    
+    for(i = 0; i < (state.filters.size() << 1); i++ )
+        delete utfConvert[i];
     
     utf16_t wtitle(state.title.c_str());
     
@@ -58,7 +221,25 @@ auto pBrowserWindow::open(BrowserWindow::State& state) -> std::string {
     pDlg->SetTitle ( wtitle );
     pDlg->SetFolder( location );
     
-    hr = pDlg->Show ( state.window->p.hwnd );
+    
+    if (state.buttons.size() > 0) {        
+        IFileDialogCustomize* pDlgc = nullptr;
+        hr = pDlg->QueryInterface(IID_IFileDialogCustomize, reinterpret_cast<void**>(&pDlgc) );
+
+        if ( SUCCEEDED(hr) ) {
+            
+            unsigned i = 0;
+            for(auto& button : state.buttons) {
+                                
+                pDlgc->AddPushButton(1000 + i++, utf16_t(button.text) );
+                //pDlgc->MakeProminent(1000 + i++);
+            }
+        }    
+    }    
+    
+    pDlg->Advise(pDialogEventHandler, &cookie);  
+    hr = pDlg->Show ( state.window ? state.window->p.hwnd : nullptr );
+    pDlg->Unadvise(cookie);    
     
     if ( SUCCEEDED(hr) ) {
         
@@ -72,20 +253,28 @@ auto pBrowserWindow::open(BrowserWindow::State& state) -> std::string {
             hr = pItem->GetDisplayName ( SIGDN_FILESYSPATH, &pwsz );
  
             if ( SUCCEEDED(hr) ) {
-                std::string name = utf8_t(pwsz);
+                name = utf8_t(pwsz);
                 std::replace( name.begin(), name.end(), '\\', '/');
-              //  CoTaskMemFree ( pwsz );
+                CoTaskMemFree ( pwsz );
             }
         }
     }
     
+    delete pDialogEventHandler;
+    pDialogEventHandler = nullptr;
+    
+    pDlg->Release();
+    pDlg = nullptr;
+    
     return name;
 }
 
-auto pBrowserWindow::file(BrowserWindow::State& state, bool save) -> std::string {
+auto pBrowserWindow::file(bool save) -> std::string {
     
-    if (!save && (pApplication::version >= WindowsVista)) 
-        return open(state);
+    auto& state = browserWindow.state;
+    
+    if (pApplication::version >= WindowsVista) 
+        return fileVista(save);
     
     pApplication::currentWorkingDirectory(); //unfortunately file dialog overwrites cwd, so get it before, if not already done
     std::string path = state.path;
@@ -140,10 +329,12 @@ auto pBrowserWindow::file(BrowserWindow::State& state, bool save) -> std::string
     return name;
 }
 
-auto pBrowserWindow::directory(BrowserWindow::State& state) -> std::string {
+auto pBrowserWindow::directory() -> std::string {
+    auto& state = browserWindow.state;
+    
     pApplication::currentWorkingDirectory();
     wchar_t wname[PATH_MAX + 1] = L"";
-    utf16_t wtitle( state.title );
+    utf16_t wtitle( browserWindow.state.title );
 
     BROWSEINFO bi;
     bi.hwndOwner = state.window ? state.window->p.hwnd : 0;
@@ -172,4 +363,39 @@ auto pBrowserWindow::directory(BrowserWindow::State& state) -> std::string {
     std::replace( name.begin(), name.end(), '\\', '/');
     if (name.back() != '/') name.push_back('/');
     return name;
+}
+
+auto pBrowserWindow::close() -> void {    
+    // close from external
+    if (pDlg) {   
+        IOleWindow* pWindow;
+        HRESULT hr = pDlg->QueryInterface(IID_PPV_ARGS(&pWindow));
+        if (SUCCEEDED(hr)) {
+            HWND hwndDialog;
+            hr = pWindow->GetWindow(&hwndDialog);
+        
+            if (SUCCEEDED(hr)) {
+                PostMessage(hwndDialog, WM_COMMAND, IDCANCEL, 0); //end dialog
+            }
+        }
+    }
+}
+
+pBrowserWindow::pBrowserWindow(BrowserWindow& browserWindow) : browserWindow(browserWindow) {
+    
+}
+
+pBrowserWindow::~pBrowserWindow() {
+    
+    if (pDlg) {
+        pDlg->Release();
+    }
+    
+    if (pDialogEventHandler) {
+        delete pDialogEventHandler;
+    }
+    
+    pDialogEventHandler = nullptr;
+    
+    pDlg = nullptr;
 }

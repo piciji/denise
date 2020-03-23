@@ -968,19 +968,26 @@ auto Timer::setInterval(unsigned intervalInMs) -> void {
 //browserWindow
 std::function<void ()> BrowserWindow::onCall = nullptr;
 
+BrowserWindow::BrowserWindow() : p(*new pBrowserWindow(*this)) { }
+BrowserWindow::~BrowserWindow() { delete &p; }
+
 auto BrowserWindow::directory() -> std::string {
     if (onCall) onCall();
-    return pBrowserWindow::directory(state);
+    return p.directory();
 }
 
 auto BrowserWindow::open() -> std::string {
 	if (onCall) onCall();
-    return pBrowserWindow::file(state, false);
+    return p.file(false);
 }
 
 auto BrowserWindow::save() -> std::string {
 	if (onCall) onCall();
-    return pBrowserWindow::file(state, true);
+    return p.file(true);
+}
+
+auto BrowserWindow::close() -> void {
+    p.close();
 }
 
 auto BrowserWindow::setFilters(std::vector<std::string> filters) -> BrowserWindow& {
@@ -1000,6 +1007,16 @@ auto BrowserWindow::setPath(const std::string& path) -> BrowserWindow& {
 
 auto BrowserWindow::setTitle(const std::string& title) -> BrowserWindow& {
     state.title = title;
+    return *this;
+}
+
+auto BrowserWindow::setOnChangeCallback( std::function<void (std::string filePath)> onSelectionChange ) -> BrowserWindow& {
+    state.onSelectionChange = onSelectionChange;
+    return *this;
+}
+
+auto BrowserWindow::addCustomButton( std::string text, std::function<bool (std::string filePath)> onClick ) -> BrowserWindow& {    
+    state.buttons.push_back({text, onClick});            
     return *this;
 }
 

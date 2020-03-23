@@ -372,6 +372,7 @@ struct Interface {
 	virtual auto getDiskImageSize(unsigned typeId, bool hd) -> unsigned { return 0; } //get size needed for a new disk image
 	virtual auto createDiskImage(unsigned typeId, bool hd = false, std::string name = "", bool ffs = false) -> uint8_t* { return nullptr; }        
     virtual auto getDiskListing(Media* media) -> std::vector<Listing> { return {}; }
+    virtual auto getDiskPreview(uint8_t* data, unsigned size) -> std::vector<Listing> { return {}; }
     virtual auto selectDiskListing(Media* media, unsigned pos) -> void { }
     
     // hard disk handling
@@ -397,6 +398,7 @@ struct Interface {
 	virtual auto ejectProgram(Media* media) -> void {}	
 	virtual auto getLoadedProgram(unsigned& size) -> uint8_t* { return nullptr; }
 	virtual auto getProgramListing(Media* media) -> std::vector<Listing> { return {}; }
+    virtual auto getProgramPreview(uint8_t* data, unsigned size) -> std::vector<Listing> { return {}; }
 	virtual auto selectProgramListing(Media* media, unsigned pos) -> bool { return false; }	
     // expansion port
     virtual auto setExpansion(unsigned expansionId) -> void {}

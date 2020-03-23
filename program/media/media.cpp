@@ -117,6 +117,13 @@ auto MediaWindow::build() -> void {
 		this->drop( files[0] );
     };
     
+    tabView.onChange = [this]() {
+        if (fileDialogPtr) {
+            lastPreview.block = nullptr;
+            resetListings();
+        }
+    };
+    
     tabView.setMargin(10);
 	tabView.setPadding(10);
 
@@ -176,7 +183,9 @@ auto MediaWindow::build() -> void {
     if (cartLayouts.size()) {
         cartList.setHeaderText( { "" } );
 		cartList.setHeaderVisible( false );        
-        cartSelectorFrame.append( cartList, {130u, 200u} );
+        cartSelectorFrame.append( cartList, {130u, 200u}, 10 );
+        cartSelectorFrame.append( insertCart, {0u, 0u}, 10 );
+        cartSelectorFrame.append( removeCart, {0u, 0u} );
         cartSelectorFrame.setPadding(10);
         cartSelectorFrame.setFont( GUIKIT::Font::system("bold") );
         
@@ -225,7 +234,6 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
 			block->selector.open.onActivate = [this, block, mediaGroup, setting]() {
 				
 				std::string filePath = GUIKIT::BrowserWindow()
-                    .setWindow(*this)
                     .setTitle(trans->get("select_" + mediaGroup->name + "_image"))
                     .setPath( preselectPath( mediaGroup->name ) )
                     .setFilters({ GUIKIT::BrowserWindow::transformFilter(trans->get(mediaGroup->name + "_image"), mediaGroup->suffix), trans->get("all_files")})
@@ -267,40 +275,51 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
 		} else {            
             
 			block->selector.open.onActivate = [this, block, mediaGroup, setting, layout]() {                
-
+                
+                auto media = block->media;
+                
                 auto suffix = mediaGroup->suffix;
                 GUIKIT::Vector::combine(suffix, GUIKIT::File::suppportedCompressionExtensions());    
                 
-				std::string filePath = GUIKIT::BrowserWindow()
-					.setWindow(*this)
-					.setTitle(trans->get("select_" + mediaGroup->name + "_image"))
-					.setPath( preselectPath( mediaGroup->name ) )
-					.setFilters({ GUIKIT::BrowserWindow::transformFilter(trans->get(mediaGroup->name + "_image"), suffix ),
-						trans->get("all_files")})
-					.open();
-
-				if (filePath.empty())
-					return;
-
-				GUIKIT::File* file = filePool->get(filePath);
-				if (!file)
-					return;
-
-				savePath( mediaGroup->name, file->getPath() );
+                if (fileDialogPtr) {
+                    fileDialogPtr->close();
+                    lastPreview.block = nullptr;
+                    resetListings();
+                }
                 
-				if (!file->isSizeValid(MAX_MEDIUM_SIZE))
-                    return program->errorMediumSize( file, message );				
+                GUIKIT::BrowserWindow fileDialog;
+                fileDialogPtr = &fileDialog;
                 
-				auto& items = file->scanArchive();
+                fileDialog.setTitle(trans->get("select_" + mediaGroup->name + "_image"));
+                
+                fileDialog.setPath( preselectPath( mediaGroup->name ) );
+                
+                fileDialog.setFilters({ GUIKIT::BrowserWindow::transformFilter(trans->get(mediaGroup->name + "_image"), suffix ),
+						trans->get("all_files")});
+                        
+                fileDialog.setOnChangeCallback( [this, block](std::string file) {
 
-				archiveViewer->onCallback = [this, file, block, layout](GUIKIT::File::Item* item) {
-
-                    if (!item || (item->info.size == 0) )
-                        return program->errorOpen( file, item, message );                     
-                                        
-                    insertImage( layout, block, file, item );
-				};
-				archiveViewer->setView(items);
+                    this->previewFile(file, block);
+                } );
+                fileDialog.addCustomButton( trans->get("autoload"), [this, block, mediaGroup, layout](std::string filePath) {
+                    
+                    if (filePath.empty())
+                        return false;
+                    
+                    return insertFile(block, filePath, true);
+                } );                       
+                
+                std::string filePath = fileDialog.open();
+                
+                fileDialogPtr = nullptr;
+                
+				if (filePath.empty()) {
+                    lastPreview.block = nullptr;
+                    resetListings();
+					return;
+                }
+                
+                insertFile(block, filePath);
 			};
 
 			block->header.eject.onActivate = [this, mediaGroup, block, setting, layout]() {
@@ -355,6 +374,7 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
 			updateMediaBlock(block, setting);
             
             block->selector.edit.onFocus = [this, layout, block]() {
+                lastPreview.block = nullptr;
                 
                 layout->selectedBlock = block;
                 
@@ -365,7 +385,7 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
                 }
                 
                 if ( showC64Listing( layout ) )
-                    layout->fillListing( block );                
+                    layout->updateListing( block );                
             };
             
             block->selector.edit.onDrop = [this, layout, block]( std::vector<std::string> files ) {
@@ -374,6 +394,7 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
             };
             
             block->header.inUse.onActivate = [this, layout, block]() {
+                lastPreview.block = nullptr;
                 
                 layout->mediaGroup->selected = block->media;
                 
@@ -382,7 +403,7 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
                 settings->set<unsigned>(ident(layout->mediaGroup->name + "_selected"), block->media->id);
                 
                 if ( showC64Listing( layout ) )
-                    layout->fillListing( block );                
+                    layout->updateListing( block );                
             };
             
             block->selector.combo.onChange = [this, layout, block]() {
@@ -434,10 +455,10 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
                 
                 if (mediaGroup->selected ) {
                     if (mediaGroup->selected == block->media)
-                        layout->fillListing( block );			
+                        layout->updateListing( block );			
                     
                 } else if (block->media->id == 0)
-                    layout->fillListing( block );				
+                    layout->updateListing( block );				
 			}
 		}
 	}
@@ -445,12 +466,27 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
     if ( showC64Listing( layout ) ) {
 
         layout->listings.onActivate = [this, layout]( ) {
+            
             auto selection = layout->listings.selection( );
+            
+            if (fileDialogPtr) {
+                fileDialogPtr->close();
+                fileDialogPtr = nullptr;
+                
+                if (lastPreview.block && lastPreview.block->layout == layout)
+                    insertFile(lastPreview.block, lastPreview.filePath);                                
+            }
+                       
+            auto media = layout->selectedBlock->media;
+            
+            EmuConfigView::TabWindow::getView(this->emulator)->systemLayout
+                ->handleExpansionIfAutoBoot( media->group->isExpansion() ? media->group->expansion : nullptr );
+            
             program->power( emulator );
 
-            emulator->selectListing( layout->selectedBlock->media, selection );
+            emulator->selectListing( media, selection );
        
-            auto setting = FileSetting::getInstance(ident(layout->selectedBlock->media->name));
+            auto setting = FileSetting::getInstance(ident(media->name));
             if (setting)
                 EmuConfigView::TabWindow::getView(emulator)->statesLayout->updateSaveIdent(setting->file);            
             
@@ -475,6 +511,32 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
             }
         };
     }
+    
+    insertCart.onActivate = [this]() {
+        
+        unsigned selection = 0;
+        
+        if (cartList.selected())
+            selection = cartList.selection();        
+        
+        if ( selection >= cartLayouts.size() )
+            selection = 0;
+        
+        auto layout = cartLayouts[selection];
+        
+        EmuConfigView::TabWindow::getView(this->emulator)->systemLayout
+            ->handleExpansionIfAutoBoot( layout->mediaGroup->expansion );
+        
+        program->power( emulator );
+    };
+    
+    removeCart.onActivate = [this]() {        
+        
+        EmuConfigView::TabWindow::getView(this->emulator)->systemLayout
+            ->handleExpansionIfAutoBoot( nullptr, true );
+        
+        program->power( emulator );
+    };
 }
 
 auto MediaWindow::createImage( Emulator::Interface::MediaGroup* mediaGroup ) -> void {
@@ -735,7 +797,7 @@ auto MediaWindow::updateListing( Emulator::Interface::Media* media ) -> void {
             block->listings = emulator->getListing( media );
 
             if ( mediaGroupLayout->selectedBlock->media == media )
-                mediaGroupLayout->fillListing( block );
+                mediaGroupLayout->updateListing( block );
 
             return;
         }
@@ -771,6 +833,8 @@ auto MediaWindow::translate() -> void {
     
     i = 0;
     cartSelectorFrame.setText( trans->get("cartridges") );   
+    insertCart.setText( trans->get("insert cartridge") );
+    removeCart.setText( trans->get("remove cartridge") );
 
     for( auto mediaGroupLayout : GUIKIT::Vector::concat(mediaGroupLayouts, cartLayouts) ) {
         
@@ -886,19 +950,19 @@ auto MediaWindow::insertImage(Emulator::Interface::Media* media, GUIKIT::File* f
     for( auto block : layout->blocks ) {
         
         if (block->media == media) {
-            insertImage( layout, block, file, item );
+            insertImage( block, file, item );
             break;
         }
     }        
 }
 
-auto MediaWindow::insertImage( MediaGroupLayout* layout, MediaGroupLayout::Block* block, GUIKIT::File* file, GUIKIT::File::Item* item ) -> void {
+auto MediaWindow::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* file, GUIKIT::File::Item* item ) -> void {
    
-    if (!layout)
-        return;
-
     if (!block)
-        block = layout->blocks[0];                              
+        return;
+    
+    lastPreview.block = nullptr;
+    auto layout = block->layout;
        
     auto media = block->media;
     auto mediaGroup = layout->mediaGroup;
@@ -929,7 +993,7 @@ auto MediaWindow::insertImage( MediaGroupLayout* layout, MediaGroupLayout::Block
         block->listings.clear();
         block->listings = emulator->getListing(media);        
         block->selector.edit.setFocused();
-        layout->fillListing(block);
+        layout->updateListing(block);
     }
 
     if (mediaGroup->isTape())
@@ -986,8 +1050,10 @@ auto MediaWindow::showMediaGroupLayout( Emulator::Interface::MediaGroup* mediaGr
     for(auto layout : mediaGroupLayouts) {
         
         if (layout->mediaGroup == mediaGroup) {
-            tabView.setSelection( i );
             
+            if (tabView.selection() != i) {
+                tabView.setSelection( i );
+            }
             return;
         }
         
@@ -1007,6 +1073,32 @@ auto MediaWindow::showMediaGroupLayout( Emulator::Interface::MediaGroup* mediaGr
         
         j++;
     }
+}
+
+auto MediaWindow::getActiveLayout() -> MediaGroupLayout* {
+
+    unsigned i = 0;
+
+    for (auto layout : mediaGroupLayouts) {
+        
+        if (tabView.selection() == i)
+            return layout;
+                
+        i++;
+    }
+    
+    i = 0;
+    
+    if (cartList.selected())
+        for(auto layout : cartLayouts) {
+
+            if(cartList.selection() == i)
+                return layout;
+
+            i++;
+        }
+    
+    return nullptr;
 }
 
 auto MediaWindow::colorListing( unsigned color, bool foreground ) -> void {
@@ -1063,12 +1155,12 @@ auto MediaWindow::drop( std::string filePath, MediaGroupLayout::Block* block ) -
 
     auto& items = file->scanArchive();
 
-    archiveViewer->onCallback = [this, file, block, layout](GUIKIT::File::Item* item) {
+    archiveViewer->onCallback = [this, file, block](GUIKIT::File::Item* item) {
 
         if (!item || (item->info.size == 0) )
             return program->errorOpen( file, item, message );        
 
-        insertImage( layout, block, file, item );        
+        insertImage( block, file, item );        
     };
 
     archiveViewer->setView(items);
@@ -1154,7 +1246,213 @@ auto MediaWindow::updateJumper(Emulator::Interface::Media* media) -> void {
         if (media)        
             break;
     }    
+}
 
+auto MediaWindow::previewFile( std::string filePath, MediaGroupLayout::Block* block ) -> void {
+    lastPreview.block = nullptr;
+    MediaGroupLayout* layout = nullptr;
+    
+    if (block) {
+        layout = block->layout;
+
+        if ( !showC64Listing(layout) )
+            return;
+    }
+    
+    lastPreview.filePath = filePath;    
+    
+    std::vector<Emulator::Interface::Listing> listings;   
+    GUIKIT::File file;
+    Emulator::Interface::MediaGroup* group = nullptr;
+    std::string fileName;
+    std::string extension = "";
+    std::size_t end;
+    uint8_t* data;
+    
+    file.setFile( filePath );
+    
+    auto items = file.scanArchive();         
+    
+    if (items.size() > 1)
+        goto clearList;   
+    
+    data = file.archiveData( 0 );
+    
+    if (!data)
+        goto clearList;
+        
+    fileName = items[0].info.name;    
+    end = fileName.find_last_of(".");
+    
+    if (end != std::string::npos)
+        extension = fileName.substr(end + 1);
+    
+    GUIKIT::String::toLowerCase( extension );            
+    
+    for(auto& mediaGroup : emulator->mediaGroups) {
+        
+        if (block && (block->media->group != &mediaGroup) )
+            continue;
+        
+        if (mediaGroup.isDisk()) {
+            if (extension == "d64" || extension == "g64") {
+                listings = emulator->getDiskPreview(data, file.archiveDataSize(0));
+                group = &mediaGroup;
+                break;
+            }            
+        }
+        
+        if (mediaGroup.isProgram()) {
+            if (extension == "t64" || extension == "prg" || extension == "p00") {
+                listings = emulator->getProgramPreview(data, file.archiveDataSize(0));        
+                group = &mediaGroup;
+                break;
+            }
+        }
+    }
+    
+    if (!group)
+        goto clearList;   
+    
+    layout = getMediaGroupLayout( group );
+    layout->fillListing( listings );
+
+    if (!block)
+        block = layout->getBlock( group->selected ? group->selected : &group->media[0] );
+    
+    lastPreview.block = block;
+    
+    if (!visible())
+        setVisible();
+    
+    showMediaGroupLayout( group );
+
+    return;
+    
+    clearList:
+        if (!layout) {
+            resetListings();
+            //layout = getActiveLayout();
+        }
+        else  
+        //if (layout)
+            layout->fillListing( listings );
+    
+        lastPreview.block = nullptr;	
+}
+
+auto MediaWindow::resetListings() -> void {
+    
+    for(auto layout : mediaGroupLayouts) {
+        
+        if (!showC64Listing(layout))
+            continue;
+        
+        layout->updateListing( layout->selectedBlock ); 
+    }
+}
+
+auto MediaWindow::insertFile( MediaGroupLayout::Block* block, std::string filePath, bool autoLoad ) -> bool {
+    
+    GUIKIT::File* file = filePool->get(filePath);
+    if (!file)
+        return false;
+                    
+    savePath( block->media->group->name, file->getPath() );
+
+    if (!file->isSizeValid(MAX_MEDIUM_SIZE))
+        return program->errorMediumSize( file, message ), true;				
+
+    auto& items = file->scanArchive();
+
+    archiveViewer->onCallback = [this, file, block, autoLoad](GUIKIT::File::Item* item) {
+
+        if (!item || (item->info.size == 0) )
+            return program->errorOpen( file, item, message );                     
+
+        insertImage( block, file, item );
+        
+        if (autoLoad) {
+            auto mediaGroup = block->media->group;
+            auto emuConfigView = EmuConfigView::TabWindow::getView(this->emulator);
+            
+            if (mediaGroup->isDrive())				
+				emuConfigView->systemLayout->activateDrive(mediaGroup, 1 );			
+            
+            emuConfigView->systemLayout->handleExpansionIfAutoBoot( mediaGroup->isExpansion() ? mediaGroup->expansion : nullptr );
+
+            program->power(this->emulator);
+
+            if (mediaGroup->selected)
+                emulator->selectListing(mediaGroup->selected, 0);
+            else
+                emulator->selectListing(block->media, 0);
+
+            if (mediaGroup->isTape())
+                view->updateTapeIcons(Emulator::Interface::TapeMode::Play);
+
+            view->setFocused(300);
+        }
+    };
+    archiveViewer->setView(items);
+    
+    return true;
+}
+
+auto MediaWindow::multiLoad() -> void {
+    
+    if (fileDialogPtr) {
+        fileDialogPtr->close();
+        lastPreview.block = nullptr;
+        resetListings();
+    }
+
+    GUIKIT::BrowserWindow fileDialog;
+    fileDialogPtr = &fileDialog;
+
+    fileDialog.setTitle(trans->get("select image"));
+
+    fileDialog.setPath( settings->get<std::string>( ident("multiload_path"), "") );
+
+    fileDialog.setFilters({trans->get("all_files")});
+
+    fileDialog.setOnChangeCallback( [this](std::string file) {
+
+        this->previewFile(file);
+        
+        settings->set<std::string>(ident("multiload_path"), GUIKIT::File::getPath( file ) );
+    } );
+    fileDialog.addCustomButton( trans->get("autoload"), [this](std::string filePath) {
+
+        if (filePath.empty())
+            return false;
+
+        settings->set<std::string>(ident("multiload_path"), GUIKIT::File::getPath( filePath ) );
+        
+        view->autoloadInit( {filePath}, false, 2 );
+        view->autoloadFiles();
+        
+        resetListings();
+        
+        return true;
+    } );                       
+
+    std::string filePath = fileDialog.open();
+
+    fileDialogPtr = nullptr;
+
+    if (filePath.empty()) {
+        lastPreview.block = nullptr;
+        resetListings();
+        return;
+    }
+    
+    settings->set<std::string>(ident("multiload_path"), GUIKIT::File::getPath( filePath ) );
+
+    view->autoloadInit( {filePath}, false, 1 );
+    view->autoloadFiles();
+    
+    resetListings();
 }
 
 }
