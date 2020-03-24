@@ -150,10 +150,37 @@ auto Program::updateSaveIdent(Emulator::Interface::Media* media, std::string fil
         return;
     }
     
-    if (media->group->isExpansion() || !_media
-    || (media->group->isDisk() && !_media->group->isDisk() && !_media->group->isExpansion())
-    || (media->group->isTape() && !_media->group->isDisk() && !_media->group->isExpansion())) {
+    if ( (!_media  && !media->group->isProgram())
+        || (media->group->isDisk() && !_media->group->isDisk() )  // only first drive  
+        || (media->group->isTape() && !_media->group->isDisk() )) { // only tape if there is no disk
+    
+    
+//    if (media->group->isExpansion() || !_media
+//    || (media->group->isDisk() && !_media->group->isDisk() && !_media->group->isExpansion())
+//    || (media->group->isTape() && !_media->group->isDisk() && !_media->group->isExpansion())) {
         EmuConfigView::TabWindow::getView( activeEmulator )->statesLayout->updateSaveIdent( file );
         _media = media;
     }
+}
+
+auto Program::removeBootableExpansion() -> void {
+    
+    if (!activeEmulator || !activeEmulator->isExpansionBootable())
+        return;
+    
+    auto expansion = activeEmulator->getExpansion();
+    
+    if (!expansion)
+        return;
+    
+    for( auto& media : expansion->mediaGroup->media) {
+        activeEmulator->ejectMedium( &media );
+        States::getInstance( activeEmulator )->updateImage( nullptr, &media );
+    }
+    
+    activeEmulator->unsetExpansion();
+    
+    EmuConfigView::TabWindow::getView(activeEmulator)->systemLayout->setExpansion( nullptr );
+    
+    activeEmulator->power();
 }

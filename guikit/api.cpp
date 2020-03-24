@@ -201,6 +201,15 @@ auto Window::setVisible(bool visible) -> void {
     p.setVisible(visible);
 }
 
+auto Window::restore() -> void {
+    if (_A::dummy) return;
+    p.restore();
+}
+
+auto Window::setForeground() -> void {
+    p.setForeground();
+}
+
 auto Window::setFocused() -> void {
     if (_A::dummy) return;
     p.setFocused();
@@ -290,6 +299,11 @@ auto Window::synchronizeLayout() -> void {
 auto Window::focused() -> bool {
     if (_A::dummy) return true;
     return p.focused();
+}
+
+auto Window::minimized() -> bool {
+    if (_A::dummy) return false;
+    return p.minimized();
 }
 
 auto Window::geometry() -> Geometry {
@@ -990,6 +1004,10 @@ auto BrowserWindow::close() -> void {
     p.close();
 }
 
+auto BrowserWindow::setForeground() -> void {
+    p.setForeground();
+}
+
 auto BrowserWindow::setFilters(std::vector<std::string> filters) -> BrowserWindow& {
     state.filters = filters;
     return *this;
@@ -1146,3 +1164,4 @@ auto System::printToCmd( std::string str ) -> void {
 }
 
 }
+

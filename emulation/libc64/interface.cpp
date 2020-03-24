@@ -813,6 +813,10 @@ auto Interface::createExpansionImage(MediaGroup* group, unsigned& imageSize) -> 
     return nullptr;
 }
 
+auto Interface::isExpansionBootable() -> bool {
+    return system->expansionPort->isBootable();
+}
+
 auto Interface::getMediaForCustomFileSuffix(std::string suffix) -> Media* {
     
     if (suffix == "reu") {

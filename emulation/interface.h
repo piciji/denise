@@ -393,6 +393,8 @@ struct Interface {
     virtual auto writeProtectExpansion(Media* media, bool state) -> void {}
     virtual auto createExpansionImage(MediaGroup* group, unsigned& imageSize) -> uint8_t* { return nullptr; }
     virtual auto getMediaForCustomFileSuffix(std::string suffix) -> Media* { return nullptr; }
+    virtual auto isExpansionBootable() -> bool { return false; }
+    
 	// program 
 	virtual auto insertProgram(Media* media, uint8_t* data, unsigned size) -> void {}
 	virtual auto ejectProgram(Media* media) -> void {}	

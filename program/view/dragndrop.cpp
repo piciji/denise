@@ -91,10 +91,20 @@ auto View::autoloadPostProcessing() -> void {
 				emuConfigView->systemLayout->activateDrive(&mediaGroup, countImagesFor(&mediaGroup) );				
 			}
 		}
-	                                            
-        emuConfigView->systemLayout->handleExpansionIfAutoBoot( mediaGroup->isExpansion() ? mediaGroup->expansion : nullptr );
         
-        program->power(ddControl.emulator);
+        if (mediaGroup->isExpansion())
+            emuConfigView->systemLayout->setExpansion( mediaGroup->expansion );
+
+        program->power( ddControl.emulator );
+
+        if (!mediaGroup->isExpansion()) {
+//            if (ddControl.emulator->isExpansionBootable()) {
+//                emuConfigView->systemLayout->setExpansion( nullptr );
+//                ddControl.emulator->unsetExpansion();
+//                ddControl.emulator->power();
+//            }
+            program->removeBootableExpansion();
+        }                
         
         if (mediaGroup->selected)
             ddControl.emulator->selectListing(mediaGroup->selected, 0);
@@ -102,7 +112,7 @@ auto View::autoloadPostProcessing() -> void {
             ddControl.emulator->selectListing(&mediaGroup->media[0], 0);
 
         if (mediaGroup->isTape())
-            updateTapeIcons(Emulator::Interface::TapeMode::Play);
+            updateTapeIcons(Emulator::Interface::TapeMode::Play);        
 
         view->setFocused(300);
     }
@@ -168,7 +178,7 @@ auto View::autoloadFiles() -> void {
                         
                         if (media = emulator->getMediaForCustomFileSuffix(fileSuffix)) {
                             // this is a special case for inserting memory dumps, C64 REU
-                            EmuConfigView::TabWindow::getView(emulator)->systemLayout->handleExpansionIfAutoBoot( mediaGroup.expansion );
+                            EmuConfigView::TabWindow::getView(emulator)->systemLayout->setExpansion( mediaGroup.expansion );
                             ddControl.emulator = emulator;
                             mediaView->insertImage(media, file, item );
 

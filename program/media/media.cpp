@@ -479,10 +479,15 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
                        
             auto media = layout->selectedBlock->media;
             
-            EmuConfigView::TabWindow::getView(this->emulator)->systemLayout
-                ->handleExpansionIfAutoBoot( media->group->isExpansion() ? media->group->expansion : nullptr );
-            
             program->power( emulator );
+            
+//            if (emulator->isExpansionBootable()) {
+//                EmuConfigView::TabWindow::getView(this->emulator)->systemLayout->setExpansion( nullptr );
+//                emulator->unsetExpansion();
+//                this->emulator->power();
+//            }
+            
+            program->removeBootableExpansion();
 
             emulator->selectListing( media, selection );
        
@@ -525,7 +530,7 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
         auto layout = cartLayouts[selection];
         
         EmuConfigView::TabWindow::getView(this->emulator)->systemLayout
-            ->handleExpansionIfAutoBoot( layout->mediaGroup->expansion );
+            ->setExpansion( layout->mediaGroup->expansion );
         
         program->power( emulator );
     };
@@ -533,7 +538,7 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
     removeCart.onActivate = [this]() {        
         
         EmuConfigView::TabWindow::getView(this->emulator)->systemLayout
-            ->handleExpansionIfAutoBoot( nullptr, true );
+            ->setExpansion( nullptr );
         
         program->power( emulator );
     };
@@ -1321,12 +1326,17 @@ auto MediaWindow::previewFile( std::string filePath, MediaGroupLayout::Block* bl
         block = layout->getBlock( group->selected ? group->selected : &group->media[0] );
     
     lastPreview.block = block;
-    
-    if (!visible())
-        setVisible();
-    
+       
     showMediaGroupLayout( group );
 
+    if ( !visible() )
+        setVisible();
+    else if ( minimized() ) {
+        restore(); 
+    } else if ( !focused() ) {
+        setForeground();
+        fileDialogPtr->setForeground();
+    }
     return;
     
     clearList:
@@ -1379,9 +1389,20 @@ auto MediaWindow::insertFile( MediaGroupLayout::Block* block, std::string filePa
             if (mediaGroup->isDrive())				
 				emuConfigView->systemLayout->activateDrive(mediaGroup, 1 );			
             
-            emuConfigView->systemLayout->handleExpansionIfAutoBoot( mediaGroup->isExpansion() ? mediaGroup->expansion : nullptr );
-
-            program->power(this->emulator);
+            
+            if (mediaGroup->isExpansion())
+                emuConfigView->systemLayout->setExpansion( mediaGroup->expansion );
+            
+            program->power( emulator );
+            
+            if (!mediaGroup->isExpansion()) {
+//                if (emulator->isExpansionBootable()) {
+//                    emuConfigView->systemLayout->setExpansion( nullptr );
+//                    emulator->unsetExpansion();
+//                    this->emulator->power();
+//                }
+                program->removeBootableExpansion();
+            }
 
             if (mediaGroup->selected)
                 emulator->selectListing(mediaGroup->selected, 0);
@@ -1409,7 +1430,7 @@ auto MediaWindow::multiLoad() -> void {
 
     GUIKIT::BrowserWindow fileDialog;
     fileDialogPtr = &fileDialog;
-
+    
     fileDialog.setTitle(trans->get("select image"));
 
     fileDialog.setPath( settings->get<std::string>( ident("multiload_path"), "") );

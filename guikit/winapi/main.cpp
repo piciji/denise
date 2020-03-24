@@ -326,6 +326,10 @@ auto pWindow::setVisible(bool visible) -> void {
     ShowWindow(hwnd, visible ? SW_SHOWNORMAL : SW_HIDE);
 }
 
+auto pWindow::restore() -> void {
+    ShowWindow(hwnd, SW_RESTORE);
+}
+
 auto pWindow::setResizable(bool resizable) -> void {
     SetWindowLongPtr(hwnd, GWL_STYLE, resizable ? ResizableStyle : FixedStyle);
     if( !window.fullScreen() ) setGeometry(window.state.geometry);
@@ -367,6 +371,11 @@ auto pWindow::setBackgroundColor(unsigned color) -> void {
 
 auto pWindow::focused() -> bool {
     return GetForegroundWindow() == hwnd;
+}
+
+auto pWindow::minimized() -> bool {
+    
+    return IsIconic( hwnd );
 }
 
 auto pWindow::frameMargin() -> Geometry {
@@ -419,6 +428,10 @@ auto pWindow::setGeometry(Geometry geometry) -> void {
         window.state.layout->setGeometry(geom);
     }
     locked = false;
+}
+
+auto pWindow::setForeground() -> void {
+    SetForegroundWindow(hwnd);
 }
 
 auto pWindow::isOffscreen() -> bool {

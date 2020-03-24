@@ -198,7 +198,7 @@ auto pBrowserWindow::fileVista(bool save) -> std::string {
     
     if ( FAILED(hr) )
         return "";
- 
+    
     pDialogEventHandler = new FileDialogEventHandler;    
     pDialogEventHandler->state = &state;
     pDialogEventHandler->pDlg = pDlg;
@@ -238,7 +238,14 @@ auto pBrowserWindow::fileVista(bool save) -> std::string {
     }    
     
     pDlg->Advise(pDialogEventHandler, &cookie);  
-    hr = pDlg->Show ( state.window ? state.window->p.hwnd : nullptr );
+
+    if (!state.window) {        
+        dummyParent = CreateWindow(L"fileDialogDummy", L"fileDialogDummy", WS_OVERLAPPEDWINDOW, 0, 0, 0, 0, nullptr, nullptr, nullptr, nullptr);
+
+        SetWindowLongPtr(dummyParent, GWLP_USERDATA, (LONG_PTR)this);
+    }
+        
+    hr = pDlg->Show ( state.window ? state.window->p.hwnd : dummyParent );
     pDlg->Unadvise(cookie);    
     
     if ( SUCCEEDED(hr) ) {
@@ -365,8 +372,27 @@ auto pBrowserWindow::directory() -> std::string {
     return name;
 }
 
-auto pBrowserWindow::close() -> void {    
-    // close from external
+auto CALLBACK pBrowserWindow::CustomWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT {
+    pBrowserWindow* worker = (pBrowserWindow*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
+    return worker->wndProc(hwnd, msg, wparam, lparam);
+}
+
+auto pBrowserWindow::wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT {
+
+    switch(msg) {
+        case WM_ENTERIDLE: {
+            MSG _msg;
+            while(!PeekMessage(&_msg, 0, 0, 0, PM_NOREMOVE)) {
+                if (Application::loop)
+                    Application::loop();
+            }            
+            break;
+        }
+    }
+    return DefWindowProc(hwnd, msg, wparam, lparam);
+}
+
+auto pBrowserWindow::getHwnd() -> HWND {
     if (pDlg) {   
         IOleWindow* pWindow;
         HRESULT hr = pDlg->QueryInterface(IID_PPV_ARGS(&pWindow));
@@ -375,14 +401,49 @@ auto pBrowserWindow::close() -> void {
             hr = pWindow->GetWindow(&hwndDialog);
         
             if (SUCCEEDED(hr)) {
-                PostMessage(hwndDialog, WM_COMMAND, IDCANCEL, 0); //end dialog
+                return hwndDialog;
             }
         }
     }
+    return nullptr;
+}
+
+auto pBrowserWindow::setForeground() -> void {
+    auto hwnd = getHwnd();
+    
+    if (hwnd)
+        SetForegroundWindow( hwnd );
+}
+
+
+auto pBrowserWindow::close() -> void {    
+    // close from external
+    auto hwnd = getHwnd();
+    
+    if (hwnd)
+        PostMessage(hwnd, WM_COMMAND, IDCANCEL, 0); //end dialog
 }
 
 pBrowserWindow::pBrowserWindow(BrowserWindow& browserWindow) : browserWindow(browserWindow) {
     
+    static bool initialized = false;
+    
+    if (!initialized) {
+        WNDCLASS wc;
+        wc.cbClsExtra = 0;
+        wc.cbWndExtra = 0;
+        wc.hbrBackground = 0;
+        wc.hCursor = nullptr;
+        wc.hIcon = nullptr;
+        wc.hInstance = GetModuleHandle(0);
+        wc.lpfnWndProc = pBrowserWindow::CustomWndProc;
+        wc.lpszClassName = L"fileDialogDummy";
+        wc.lpszMenuName = 0;
+        wc.style = CS_VREDRAW | CS_HREDRAW;
+        RegisterClass(&wc);
+        
+        initialized = true;
+    }
 }
 
 pBrowserWindow::~pBrowserWindow() {
@@ -398,4 +459,7 @@ pBrowserWindow::~pBrowserWindow() {
     pDialogEventHandler = nullptr;
     
     pDlg = nullptr;
+    
+    if (dummyParent)
+        DestroyWindow(dummyParent);
 }

@@ -84,6 +84,7 @@ struct Interface : Emulator::Interface {
     auto ejectExpansionImage(Media* media) -> void;
     auto createExpansionImage(MediaGroup* group, unsigned& imageSize) -> uint8_t*;
     auto getMediaForCustomFileSuffix(std::string suffix) -> Media*;
+    auto isExpansionBootable() -> bool;
 	
 	//program
 	auto insertProgram(Media* media, uint8_t* data, unsigned size) -> void;

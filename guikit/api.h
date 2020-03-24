@@ -165,7 +165,7 @@ struct Window : Base {
     std::function<void (std::vector<std::string>)> onDrop = nullptr;
 	std::function<bool ()> onContext = nullptr;
     std::function<void ()> onMinimize = nullptr;
-    std::function<void ()> onUnminimize = nullptr;
+    std::function<void ()> onUnminimize = nullptr;    
     
     enum class Cursor { Default, Pointer, Image } cursor = Cursor::Default;
 
@@ -198,6 +198,7 @@ struct Window : Base {
     }
     auto setBackgroundColor(unsigned color) -> void;
     auto setVisible(bool visible = true) -> void;
+    auto restore() -> void; // from minimized
     auto setFocused() -> void;
 	auto setFocused(unsigned delay) -> void;
     auto setStatusFont(const std::string& font) -> void;
@@ -213,6 +214,7 @@ struct Window : Base {
     auto setDroppable(bool droppable = true) -> void;
     auto synchronizeLayout() -> void;
     auto handle() -> uintptr_t;
+    auto setForeground() -> void;
 
     auto focused() -> bool;
     auto visible() const -> bool { return state.visible; }
@@ -221,6 +223,7 @@ struct Window : Base {
     auto menuVisible() const -> bool { return state.menuVisible; }
     auto statusVisible() const -> bool { return state.statusVisible; }
     auto droppable() const -> bool { return state.droppable; }
+    auto minimized() -> bool;
     auto title() const -> std::string { return state.title; }
     auto statusText() const -> std::string { return state.statusText; }
     auto widgetFont() const -> std::string { return state.widgetFont; }
@@ -892,6 +895,7 @@ struct BrowserWindow {
     auto open() -> std::string;
     auto save() -> std::string;
     auto close() -> void;
+    auto setForeground() -> void;
     auto setFilters(std::vector<std::string> filters) -> BrowserWindow&;
     auto setWindow(Window& window) -> BrowserWindow&;
     auto setPath(const std::string& path) -> BrowserWindow&;

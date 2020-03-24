@@ -71,6 +71,7 @@ struct pWindow {
     auto setBackgroundColor(unsigned color) -> void;
     auto setFocused() -> void;
     auto setVisible(bool visible) -> void;
+    auto restore() -> void;
     auto setResizable(bool resizable) -> void;
     auto setStatusText(std::string text) -> void;
     auto setTitle(std::string text) -> void;
@@ -82,8 +83,10 @@ struct pWindow {
     auto frameMargin() -> Geometry;
     auto geometry() -> Geometry;
     auto focused() -> bool;
+    auto minimized() -> bool;
     auto isOffscreen() -> bool;
     auto handle() -> uintptr_t;
+    auto setForeground() -> void;
 
     auto onEraseBackground() -> bool;
     auto onClose() -> void;
@@ -534,11 +537,18 @@ struct pBrowserWindow {
     IFileDialog* pDlg = nullptr;
     FileDialogEventHandler* pDialogEventHandler = nullptr;
     DWORD cookie;
+    HWND dummyParent = nullptr;
     
     auto directory() -> std::string;
     auto file(bool save) -> std::string;
     auto fileVista(bool save) -> std::string;
     auto close() -> void; 
+    auto setForeground() -> void;
+    
+    auto getHwnd() -> HWND;
+    
+    static auto CALLBACK CustomWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
+    auto wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
     
     pBrowserWindow(BrowserWindow& browserWindow);
     ~pBrowserWindow();

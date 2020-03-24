@@ -652,47 +652,73 @@ auto SystemLayout::updateExpansionMemory() -> void {
     }    
 }
 
-auto SystemLayout::handleExpansionIfAutoBoot(Emulator::Interface::Expansion* newExpansion, bool forceRemove) -> void {
-    
-    ExpansionLayout::Line::Block* noExpansionLayout = nullptr;
-    ExpansionLayout::Line::Block* newExpansionLayout = nullptr;
-    
-    bool removeExpansion = false;
+auto SystemLayout::setExpansion( Emulator::Interface::Expansion* newExpansion ) -> void {
     
     for ( auto line : expansionLayout.lines ) {
-        for( auto block : line->blocks ) {            
+        for( auto block : line->blocks ) {   
             
-            if (!noExpansionLayout && block->expansion->isEmpty())
-                noExpansionLayout = block;
-            
-            if (!newExpansionLayout && (block->expansion == newExpansion) )
-                newExpansionLayout = block;            
-            
-            if (!newExpansion && block->box.checked()) {      
-                if (forceRemove)
-                    removeExpansion = true; 
-                
-                else if (block->expansion->isGame() || block->expansion->isEprom()
-                       || block->expansion->isFlash() || block->expansion->isFreezer()) {
-                    // a booting image expansion type is in use
-                    removeExpansion = true;                    
-                } else if ( block->expansion->isRam() && block->expansion->mediaGroup->selected ) {
-                    
-                    auto setting = FileSetting::getInstance( tabWindow->ident(block->expansion->mediaGroup->selected->name) );
-                    
-                    if (!setting->path.empty())
-                        removeExpansion = true;                    
+            if (!newExpansion) {
+                if (block->expansion->isEmpty()) {
+                    if (!block->box.checked()) {
+                        block->box.setChecked();
+                        block->box.onActivate(); 
+                    }
+                    return;
                 }
             }
+            
+            else if (block->expansion == newExpansion) {
+                if (!block->box.checked()) {
+                    block->box.setChecked();
+                    block->box.onActivate(); 
+                }
+                return;
+            }                
         }
     }
-    
-    if(newExpansion && newExpansionLayout) {
-        newExpansionLayout->box.setChecked();
-        newExpansionLayout->box.onActivate(); 
-        
-    } else if (removeExpansion && noExpansionLayout) {
-        noExpansionLayout->box.setChecked();
-        noExpansionLayout->box.onActivate();        
-    }
 }
+
+//auto SystemLayout::handleExpansionIfAutoBoot(Emulator::Interface::Expansion* newExpansion, bool forceRemove) -> void {
+//    
+//    ExpansionLayout::Line::Block* noExpansionLayout = nullptr;
+//    ExpansionLayout::Line::Block* newExpansionLayout = nullptr;
+//    
+//    bool removeExpansion = false;
+//    
+//    for ( auto line : expansionLayout.lines ) {
+//        for( auto block : line->blocks ) {            
+//            
+//            if (!noExpansionLayout && block->expansion->isEmpty())
+//                noExpansionLayout = block;
+//            
+//            if (!newExpansionLayout && (block->expansion == newExpansion) )
+//                newExpansionLayout = block;            
+//            
+//            if (!newExpansion && block->box.checked()) {      
+//                if (forceRemove)
+//                    removeExpansion = true; 
+//                  
+//                else if (block->expansion->isGame() || block->expansion->isEprom()
+//                       || block->expansion->isFlash() || block->expansion->isFreezer()) {
+//                    // a booting image expansion type is in use
+//                    removeExpansion = true;                    
+//                } else if ( block->expansion->isRam() && block->expansion->mediaGroup->selected ) {
+//                    
+//                    auto setting = FileSetting::getInstance( tabWindow->ident(block->expansion->mediaGroup->selected->name) );
+//                    
+//                    if (!setting->path.empty())
+//                        removeExpansion = true;                    
+//                }
+//            }
+//        }
+//    }
+//    
+//    if(newExpansion && newExpansionLayout) {
+//        newExpansionLayout->box.setChecked();
+//        newExpansionLayout->box.onActivate(); 
+//        
+//    } else if (removeExpansion && noExpansionLayout) {
+//        noExpansionLayout->box.setChecked();
+//        noExpansionLayout->box.onActivate();        
+//    }
+//}
