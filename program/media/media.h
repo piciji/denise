@@ -203,7 +203,7 @@ struct MediaWindow : public GUIKIT::Window {
     auto changeWriteProtection(Emulator::Interface::Media* media, bool state) -> void;
     auto previewFile( std::string file, MediaGroupLayout::Block* block = nullptr ) -> void;
     auto getActiveLayout() -> MediaGroupLayout*;
-    auto resetListings() -> void;
+    auto resetPreview(bool light = false) -> void;
     auto insertFile( MediaGroupLayout::Block* block, std::string filePath, bool autoLoad = false) -> bool;
     auto multiLoad() -> void;
 

@@ -37,7 +37,7 @@ auto pFrame::create() -> void {
 }
 
 auto pFrame::rebuild() -> void {
-    create();
+    create();        
     setFont( widget.font() );
     pWidget::setText(widget.text());
     pWidget::rebuild();

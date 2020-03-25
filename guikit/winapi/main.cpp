@@ -115,7 +115,7 @@ auto CALLBACK pApplication::wndProc(WNDPROC windowProc, HWND hwnd, UINT msg, WPA
 
     Window& window = dynamic_cast<Window*>(base) ? (Window&)*base : *((Widget*)base)->window();
 
-    switch(msg) {
+    switch(msg) {       
         case WM_CTLCOLORBTN:
         case WM_CTLCOLORSTATIC: {
             Base* base = (Base*)GetWindowLongPtr((HWND)lparam, GWLP_USERDATA);
@@ -124,7 +124,7 @@ auto CALLBACK pApplication::wndProc(WNDPROC windowProc, HWND hwnd, UINT msg, WPA
             if (dynamic_cast<LineEdit*>(base)) {
                 return windowProc(hwnd, WM_CTLCOLOREDIT, wparam, lparam);
             }
-
+            
             TabFrameLayout* tabFrameLayout = TabFrameLayout::getParentTabFrame( (Sizable*)base );
             if (tabFrameLayout) {
                 if (!IsAppThemed()) break;

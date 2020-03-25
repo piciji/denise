@@ -462,6 +462,13 @@ auto Widget::setForegroundColor(unsigned color) -> void {
     p.setForegroundColor(color);
 }
 
+auto Widget::resetForegroundColor() -> void {
+    if (_A::dummy) return;
+    state.overrideForegroundColor = false;
+    state.foregroundColor = 0;
+    p.setForegroundColor(0);
+}
+
 Widget::Widget() : p(*new pWidget(*this)), Sizable() { }
 Widget::Widget(pWidget& p) : p(p), Sizable() { }
 Widget::~Widget() { delete &p; }

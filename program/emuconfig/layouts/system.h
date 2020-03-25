@@ -136,7 +136,6 @@ struct SystemLayout : GUIKIT::VerticalLayout {
     auto activateDrive( Emulator::Interface::MediaGroup* mediaGroup, unsigned requestedCount ) -> void;
     auto updateExpansionMemory() -> void;
     auto getSizeString( unsigned sizeInKb ) -> std::string;
-   // auto handleExpansionIfAutoBoot(Emulator::Interface::Expansion* newExpansion, bool forceRemove = false) -> void;
     auto setExpansion( Emulator::Interface::Expansion* newExpansion ) -> void;
     
     SystemLayout( TabWindow* tabWindow );

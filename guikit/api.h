@@ -308,6 +308,7 @@ struct Widget : Sizable {
     // supported for label, listview, treeview
     // gtk line edit
     auto setForegroundColor(unsigned color) -> void;
+    auto resetForegroundColor() -> void;
 
     struct {
         Geometry geometry = {0, 0, 0, 0};
@@ -762,6 +763,7 @@ struct FramedHorizontalLayout : HorizontalLayout {
     auto setFont(const std::string& font) -> void;
     auto setText(const std::string& text) -> void;
     auto setPadding(unsigned padding) -> void;
+    auto setForegroundColor(unsigned color) -> void;
     FramedHorizontalLayout();
 
 protected: 
@@ -781,6 +783,7 @@ struct FramedVerticalLayout : VerticalLayout {
     auto setFont(const std::string& font) -> void;
     auto setText(const std::string& text) -> void;
     auto setPadding(unsigned padding) -> void;
+    auto setForegroundColor(unsigned color) -> void;
     FramedVerticalLayout();
 
 protected:

@@ -148,16 +148,19 @@ auto Program::updateSaveIdent(Emulator::Interface::Media* media, std::string fil
     if (!media) {
         _media = nullptr;
         return;
-    }
+    }        
     
-    if ( (!_media  && !media->group->isProgram())
-        || (media->group->isDisk() && !_media->group->isDisk() )  // only first drive  
-        || (media->group->isTape() && !_media->group->isDisk() )) { // only tape if there is no disk
+    if (view->ddControl.mediaGroups.size()) {
+        // drag'n'drop happened
+        if (view->ddControl.mediaGroups[0] == media->group)
+            EmuConfigView::TabWindow::getView( activeEmulator )->statesLayout->updateSaveIdent( file );
+        
+        return;
+    }        
     
-    
-//    if (media->group->isExpansion() || !_media
-//    || (media->group->isDisk() && !_media->group->isDisk() && !_media->group->isExpansion())
-//    || (media->group->isTape() && !_media->group->isDisk() && !_media->group->isExpansion())) {
+    if ( media->group->isExpansion() || (!_media  && !media->group->isProgram())
+    || (media->group->isDisk() && !_media->group->isDisk() && !_media->group->isExpansion())
+    || (media->group->isTape() && !_media->group->isDisk() && !_media->group->isExpansion())) {
         EmuConfigView::TabWindow::getView( activeEmulator )->statesLayout->updateSaveIdent( file );
         _media = media;
     }
@@ -174,6 +177,7 @@ auto Program::removeBootableExpansion() -> void {
         return;
     
     for( auto& media : expansion->mediaGroup->media) {
+        filePool->assign( ident(activeEmulator, media.name), nullptr);
         activeEmulator->ejectMedium( &media );
         States::getInstance( activeEmulator )->updateImage( nullptr, &media );
     }

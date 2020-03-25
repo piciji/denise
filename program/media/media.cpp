@@ -119,8 +119,7 @@ auto MediaWindow::build() -> void {
     
     tabView.onChange = [this]() {
         if (fileDialogPtr) {
-            lastPreview.block = nullptr;
-            resetListings();
+            resetPreview();
         }
     };
     
@@ -283,8 +282,7 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
                 
                 if (fileDialogPtr) {
                     fileDialogPtr->close();
-                    lastPreview.block = nullptr;
-                    resetListings();
+                    resetPreview();
                 }
                 
                 GUIKIT::BrowserWindow fileDialog;
@@ -299,7 +297,8 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
                         
                 fileDialog.setOnChangeCallback( [this, block](std::string file) {
 
-                    this->previewFile(file, block);
+                    if (settings->get<bool>("enable_software_preview", false))
+                        this->previewFile(file, block);
                 } );
                 fileDialog.addCustomButton( trans->get("autoload"), [this, block, mediaGroup, layout](std::string filePath) {
                     
@@ -314,8 +313,7 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
                 fileDialogPtr = nullptr;
                 
 				if (filePath.empty()) {
-                    lastPreview.block = nullptr;
-                    resetListings();
+                    resetPreview();
 					return;
                 }
                 
@@ -374,7 +372,7 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
 			updateMediaBlock(block, setting);
             
             block->selector.edit.onFocus = [this, layout, block]() {
-                lastPreview.block = nullptr;
+                resetPreview(true);
                 
                 layout->selectedBlock = block;
                 
@@ -394,7 +392,7 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
             };
             
             block->header.inUse.onActivate = [this, layout, block]() {
-                lastPreview.block = nullptr;
+                resetPreview(true);
                 
                 layout->mediaGroup->selected = block->media;
                 
@@ -480,12 +478,6 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
             auto media = layout->selectedBlock->media;
             
             program->power( emulator );
-            
-//            if (emulator->isExpansionBootable()) {
-//                EmuConfigView::TabWindow::getView(this->emulator)->systemLayout->setExpansion( nullptr );
-//                emulator->unsetExpansion();
-//                this->emulator->power();
-//            }
             
             program->removeBootableExpansion();
 
@@ -966,7 +958,7 @@ auto MediaWindow::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* fil
     if (!block)
         return;
     
-    lastPreview.block = nullptr;
+    resetPreview(true);
     auto layout = block->layout;
        
     auto media = block->media;
@@ -1254,19 +1246,21 @@ auto MediaWindow::updateJumper(Emulator::Interface::Media* media) -> void {
 }
 
 auto MediaWindow::previewFile( std::string filePath, MediaGroupLayout::Block* block ) -> void {
-    lastPreview.block = nullptr;
+    
     MediaGroupLayout* layout = nullptr;
     
     if (block) {
         layout = block->layout;
 
-        if ( !showC64Listing(layout) )
+        if ( !showC64Listing(layout) ) {
+            lastPreview.block = nullptr;
             return;
+        }
     }
     
     lastPreview.filePath = filePath;    
     
-    std::vector<Emulator::Interface::Listing> listings;   
+    std::vector<Emulator::Interface::Listing> listings;       
     GUIKIT::File file;
     Emulator::Interface::MediaGroup* group = nullptr;
     std::string fileName;
@@ -1321,9 +1315,15 @@ auto MediaWindow::previewFile( std::string filePath, MediaGroupLayout::Block* bl
     
     layout = getMediaGroupLayout( group );
     layout->fillListing( listings );
-
+    
     if (!block)
         block = layout->getBlock( group->selected ? group->selected : &group->media[0] );
+    
+    if (!lastPreview.block) {
+        block->header.fileName.setText( trans->get("Preview") );
+        block->header.fileName.setFont( GUIKIT::Font::system("bold") );
+        block->header.fileName.setForegroundColor( 0xff4500 );
+    }
     
     lastPreview.block = block;
        
@@ -1333,33 +1333,39 @@ auto MediaWindow::previewFile( std::string filePath, MediaGroupLayout::Block* bl
         setVisible();
     else if ( minimized() ) {
         restore(); 
-    } else if ( !focused() ) {
+    } else if ( !focused() && view->fullScreen() ) {
         setForeground();
         fileDialogPtr->setForeground();
     }
     return;
     
     clearList:
-        if (!layout) {
-            resetListings();
-            //layout = getActiveLayout();
-        }
-        else  
-        //if (layout)
-            layout->fillListing( listings );
-    
-        lastPreview.block = nullptr;	
+        if (lastPreview.block)
+            resetPreview();
 }
 
-auto MediaWindow::resetListings() -> void {
+auto MediaWindow::resetPreview( bool light ) -> void {
     
     for(auto layout : mediaGroupLayouts) {
         
         if (!showC64Listing(layout))
             continue;
         
-        layout->updateListing( layout->selectedBlock ); 
-    }
+        if (!light)
+            layout->updateListing( layout->selectedBlock ); 
+        
+        for (auto block : layout->blocks) {
+            
+            if (block->header.fileName.overrideForegroundColor()) {
+                auto setting = FileSetting::getInstance( ident(block->media->name) );
+                block->header.fileName.setText( setting ? setting->file : "" );
+                block->header.fileName.setFont( GUIKIT::Font::system() );
+                block->header.fileName.resetForegroundColor();                
+            }            
+        }
+    }   
+    
+    lastPreview.block = nullptr;
 }
 
 auto MediaWindow::insertFile( MediaGroupLayout::Block* block, std::string filePath, bool autoLoad ) -> bool {
@@ -1388,27 +1394,22 @@ auto MediaWindow::insertFile( MediaGroupLayout::Block* block, std::string filePa
             
             if (mediaGroup->isDrive())				
 				emuConfigView->systemLayout->activateDrive(mediaGroup, 1 );			
-            
-            
+                        
             if (mediaGroup->isExpansion())
                 emuConfigView->systemLayout->setExpansion( mediaGroup->expansion );
             
             program->power( emulator );
             
-            if (!mediaGroup->isExpansion()) {
-//                if (emulator->isExpansionBootable()) {
-//                    emuConfigView->systemLayout->setExpansion( nullptr );
-//                    emulator->unsetExpansion();
-//                    this->emulator->power();
-//                }
-                program->removeBootableExpansion();
-            }
+            if (!mediaGroup->isExpansion())
+                program->removeBootableExpansion();           
 
             if (mediaGroup->selected)
                 emulator->selectListing(mediaGroup->selected, 0);
             else
                 emulator->selectListing(block->media, 0);
 
+            EmuConfigView::TabWindow::getView(emulator)->statesLayout->updateSaveIdent( file->getFileName() );
+            
             if (mediaGroup->isTape())
                 view->updateTapeIcons(Emulator::Interface::TapeMode::Play);
 
@@ -1424,8 +1425,7 @@ auto MediaWindow::multiLoad() -> void {
     
     if (fileDialogPtr) {
         fileDialogPtr->close();
-        lastPreview.block = nullptr;
-        resetListings();
+        resetPreview();
     }
 
     GUIKIT::BrowserWindow fileDialog;
@@ -1439,7 +1439,8 @@ auto MediaWindow::multiLoad() -> void {
 
     fileDialog.setOnChangeCallback( [this](std::string file) {
 
-        this->previewFile(file);
+        if (settings->get<bool>("enable_software_preview", false))
+            this->previewFile(file);
         
         settings->set<std::string>(ident("multiload_path"), GUIKIT::File::getPath( file ) );
     } );
@@ -1453,7 +1454,7 @@ auto MediaWindow::multiLoad() -> void {
         view->autoloadInit( {filePath}, false, 2 );
         view->autoloadFiles();
         
-        resetListings();
+        resetPreview();
         
         return true;
     } );                       
@@ -1463,8 +1464,7 @@ auto MediaWindow::multiLoad() -> void {
     fileDialogPtr = nullptr;
 
     if (filePath.empty()) {
-        lastPreview.block = nullptr;
-        resetListings();
+        resetPreview();
         return;
     }
     
@@ -1473,7 +1473,7 @@ auto MediaWindow::multiLoad() -> void {
     view->autoloadInit( {filePath}, false, 1 );
     view->autoloadFiles();
     
-    resetListings();
+    resetPreview();
 }
 
 }

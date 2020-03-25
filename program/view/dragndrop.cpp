@@ -97,14 +97,8 @@ auto View::autoloadPostProcessing() -> void {
 
         program->power( ddControl.emulator );
 
-        if (!mediaGroup->isExpansion()) {
-//            if (ddControl.emulator->isExpansionBootable()) {
-//                emuConfigView->systemLayout->setExpansion( nullptr );
-//                ddControl.emulator->unsetExpansion();
-//                ddControl.emulator->power();
-//            }
-            program->removeBootableExpansion();
-        }                
+        if (!mediaGroup->isExpansion())
+            program->removeBootableExpansion();        
         
         if (mediaGroup->selected)
             ddControl.emulator->selectListing(mediaGroup->selected, 0);
@@ -116,6 +110,8 @@ auto View::autoloadPostProcessing() -> void {
 
         view->setFocused(300);
     }
+    
+    ddControl.mediaGroups.clear();
 }
 
 auto View::autoloadFiles() -> void {

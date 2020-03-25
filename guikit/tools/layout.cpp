@@ -322,6 +322,10 @@ auto FramedHorizontalLayout::setPadding(unsigned padding) -> void {
 	state.padding = pWidget::getScaledDim( padding );
 }
 
+auto FramedHorizontalLayout::setForegroundColor(unsigned color) -> void {
+    frameWidget->p.widget.setForegroundColor( color );
+}
+
 FramedHorizontalLayout::FramedHorizontalLayout() { frameWidget = new Frame; }
 
 FramedVerticalLayout::Frame::Frame() : Widget(*new pFrame(*this)), p((pFrame&)Widget::p) {
@@ -331,6 +335,10 @@ FramedVerticalLayout::Frame::Frame() : Widget(*new pFrame(*this)), p((pFrame&)Wi
 
 auto FramedVerticalLayout::setPadding(unsigned padding) -> void {
 	state.padding = pWidget::getScaledDim( padding );
+}
+
+auto FramedVerticalLayout::setForegroundColor(unsigned color) -> void {
+    frameWidget->p.widget.setForegroundColor( color );
 }
 
 FramedVerticalLayout::FramedVerticalLayout() { frameWidget = new Frame; }
