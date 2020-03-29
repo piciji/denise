@@ -208,7 +208,7 @@ auto Cmd::autoloadImages() -> void {
         return;
     }
     
-    view->autoloadInit( arguments, true, 2 );
+    view->autoloadInit( arguments, true, View::AutoLoad::AutoStart );
     
     view->autoloadFiles();
     

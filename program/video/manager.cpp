@@ -143,8 +143,8 @@ auto VideoManager::updateListingColors() -> void {
     
     auto mediaView = MediaView::MediaWindow::getView( emulator );
     
-    mediaView->colorListing( colorTable[14], 1 );
-    mediaView->colorListing( colorTable[6], 0 );
+    mediaView->colorListing( colorTable[14], true );
+    mediaView->colorListing( colorTable[6], false );
 }
 
 auto VideoManager::generateC64ColorSpectrum() -> void {

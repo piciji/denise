@@ -1,16 +1,15 @@
 
 #define UNICODE
 #define WINVER 0x0600
+#undef _WIN32_WINNT
 #define _WIN32_WINNT 0x0600
 #define WIN32_LEAN_AND_MEAN
 #define VC_EXTRALEAN
 
 #include <windows.h>
-#define _WIN32_WINNT 0x0600
-#include <uxtheme.h>
 #include <shobjidl.h>
+#include <uxtheme.h>
 #include <shlobj.h>
-#define _WIN32_WINNT 0x0600
 #include <Shellapi.h>
 #include <shlwapi.h>
 #include <Commdlg.h>
@@ -321,7 +320,7 @@ struct pListView : pWidget {
 	auto setBackgroundColor(unsigned color) -> void;
 	auto setForegroundColor(unsigned color) -> void;
 
-    static auto CALLBACK subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
+    static auto CALLBACK subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;    
     auto onCustomDraw(LPARAM lparam) -> LRESULT;
     auto onChange(LPARAM lparam) -> void;
     auto onActivate() -> void;
@@ -503,8 +502,7 @@ struct pMenuSeparator : pMenuBase {
 
 struct FileDialogEventHandler :
     public IFileDialogControlEvents,
-    public IFileDialogEvents
-{
+    public IFileDialogEvents {
 
     BrowserWindow::State* state;
     std::string filePath = "";
@@ -515,21 +513,21 @@ struct FileDialogEventHandler :
     STDMETHODIMP_(ULONG) Release() { return 1; }
 
     // IFileDialogEvents
-    STDMETHODIMP OnFileOk(IFileDialog* pfd);
-    STDMETHODIMP OnFolderChanging(IFileDialog* pfd, IShellItem* psiFolder);
-    STDMETHODIMP OnFolderChange(IFileDialog* pfd);
+    STDMETHODIMP OnFileOk(IFileDialog* pfd) { return S_OK; };
+    STDMETHODIMP OnFolderChanging(IFileDialog* pfd, IShellItem* psiFolder) { return S_OK; };
+    STDMETHODIMP OnFolderChange(IFileDialog* pfd) { return S_OK; };
     STDMETHODIMP OnSelectionChange(IFileDialog* pfd);
-    STDMETHODIMP OnShareViolation(IFileDialog* pfd, IShellItem* psi, FDE_SHAREVIOLATION_RESPONSE* pResponse);
-    STDMETHODIMP OnTypeChange(IFileDialog* pfd);
-    STDMETHODIMP OnOverwrite(IFileDialog* pfd, IShellItem* psi, FDE_OVERWRITE_RESPONSE* pResponse);
+    STDMETHODIMP OnShareViolation(IFileDialog* pfd, IShellItem* psi, FDE_SHAREVIOLATION_RESPONSE* pResponse) { return S_OK; };
+    STDMETHODIMP OnTypeChange(IFileDialog* pfd) { return S_OK; };
+    STDMETHODIMP OnOverwrite(IFileDialog* pfd, IShellItem* psi, FDE_OVERWRITE_RESPONSE* pResponse) { return S_OK; };
     
     // IFileDialogControlEvents methods
     IFACEMETHODIMP OnItemSelected(IFileDialogCustomize* pfdc, DWORD dwIDCtl, DWORD dwIDItem) { return S_OK; };
-    IFACEMETHODIMP OnButtonClicked(IFileDialogCustomize*, DWORD);
+    IFACEMETHODIMP OnButtonClicked(IFileDialogCustomize* pfdc, DWORD dwIDCtl);
     IFACEMETHODIMP OnCheckButtonToggled(IFileDialogCustomize*, DWORD, BOOL) { return S_OK; };
-    IFACEMETHODIMP OnControlActivating(IFileDialogCustomize*, DWORD) { return S_OK; };  
+    IFACEMETHODIMP OnControlActivating(IFileDialogCustomize* pfdc, DWORD dwIDCtl) { return S_OK; };
     
-    auto getFilePath() -> std::string;
+    auto getFilePath(IFileDialog* pfd) -> std::string;
 };
 
 struct pBrowserWindow {
@@ -537,17 +535,42 @@ struct pBrowserWindow {
     IFileDialog* pDlg = nullptr;
     FileDialogEventHandler* pDialogEventHandler = nullptr;
     DWORD cookie;
-    HWND dummyParent = nullptr;
+    static HWND dummyParent;
+    HFONT listFont = nullptr;
+    HBRUSH listBgBrush = nullptr;
+    std::string selectedPath = "";
+    unsigned contentSelection = 0;
+    HWND dialogHwnd = nullptr;
+    
+    struct Button {
+        HWND hwnd;    
+        int width;
+        int height;
+        int relativeX;
+        int relativeY;
+    };    
+    std::vector<Button> buttons;
+    
+    bool inited = false;
+    int widthCustomView = 0;
+    int customGapTop = 0;
+    int customGapBottom = 0;
+    int listRelativeX = 0;
+    int listWidth = 0;
     
     auto directory() -> std::string;
     auto file(bool save) -> std::string;
     auto fileVista(bool save) -> std::string;
     auto close() -> void; 
     auto setForeground() -> void;
+    auto resize(HWND fileDialogView, bool init = false) -> void;
+    auto contentViewSelection() -> unsigned;
     
-    auto getHwnd() -> HWND;
+    auto getIFileParent() -> HWND;
     
+    static auto CALLBACK PathCallbackProc(HWND hwnd, UINT msg, LPARAM lparam, LPARAM lpdata) -> int;
     static auto CALLBACK CustomWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
+    static auto CALLBACK OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) -> UINT_PTR;
     auto wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
     
     pBrowserWindow(BrowserWindow& browserWindow);

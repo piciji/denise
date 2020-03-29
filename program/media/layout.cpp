@@ -214,23 +214,16 @@ auto MediaGroupLayout::fillListing( std::vector<Emulator::Interface::Listing>& e
     
     listings.reset();
 
-    for (auto& listing : emuListings) {
+    for( auto listing : mediaWindow->convertListing( emuListings ) )        
+        listings.append({listing});
+}
 
-        std::vector<uint8_t> utf8;
+auto MediaGroupLayout::fillListing( std::vector<std::string>& emuListings ) -> void {
+    
+    listings.reset();
 
-        for (auto& code : listing.line) {
-
-            unsigned useCode = code;
-            if (mediaWindow->useCustomFont)
-                useCode |= 0xee << 8;
-
-            GUIKIT::Utf8::encode(useCode, utf8);
-        }
-
-        std::string str = std::string((const char*) utf8.data(), utf8.size());
-
-        listings.append({str});
-    }  
+    for( auto listing : emuListings )        
+        listings.append({listing});    
 }
 
 auto MediaGroupLayout::showOnlyConnectedDevices() -> bool {

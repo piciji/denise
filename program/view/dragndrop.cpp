@@ -17,17 +17,18 @@ auto View::setDragnDrop() -> void {
     
     viewport.onDrop = [this]( std::vector<std::string> files ) {
 
-        autoloadInit( files, false, 0 );
+        autoloadInit( files, false, AutoLoad::DragnDrop );
         
         autoloadFiles();            
     };        
 }
 
-auto View::autoloadInit( std::vector<std::string> files, bool silentError, unsigned restartMode ) -> void {    
+auto View::autoloadInit( std::vector<std::string> files, bool silentError, AutoLoad autoLoad, unsigned selection ) -> void {    
     ddControl.emulator = nullptr;
     ddControl.mediaGroups.clear();
     ddControl.silentError = silentError;
-    ddControl.restartMode = restartMode;
+    ddControl.autoLoad = autoLoad;
+    ddControl.selection = selection;
     ddControl.files.clear();
     
     unsigned i = 0;
@@ -61,22 +62,28 @@ auto View::autoloadPostProcessing() -> void {
         return false;
     });
 
-    auto autoStart = true;
+    auto mediaGroup = ddControl.mediaGroups[0];
+    bool autoStart = true;
+    FileSetting* setting = nullptr;
     
-    if (ddControl.restartMode == 0)
+    if (ddControl.autoLoad == AutoLoad::DragnDrop) {
         autoStart = settings->get<bool>("autostart_dragndrop", false);
-    else if (ddControl.restartMode == 1)
+        if (!autoStart) {
+            if (mediaGroup->isExpansion() || mediaGroup->isProgram())
+                autoStart = true;
+            else if (!activeEmulator || (activeEmulator != ddControl.emulator) )
+                autoStart = true;
+        }
+    } else if (ddControl.autoLoad == AutoLoad::Open)
         autoStart = false;
-    else if (ddControl.restartMode == 2)
+    else if (ddControl.autoLoad == AutoLoad::AutoStart)
         autoStart = true;    
 
     auto emuConfigView = EmuConfigView::TabWindow::getView(ddControl.emulator);
 	
 	auto mediaView = MediaView::MediaWindow::getView(ddControl.emulator);
-
-    auto mediaGroup = ddControl.mediaGroups[0];
-
-    if (!mediaGroup->isExpansion() && !autoStart && (activeEmulator == ddControl.emulator)) {
+    
+    if (!autoStart) {
 
         mediaView->setVisible();		
 
@@ -100,14 +107,20 @@ auto View::autoloadPostProcessing() -> void {
         if (!mediaGroup->isExpansion())
             program->removeBootableExpansion();        
         
-        if (mediaGroup->selected)
-            ddControl.emulator->selectListing(mediaGroup->selected, 0);
-        else
-            ddControl.emulator->selectListing(&mediaGroup->media[0], 0);
-
+        if (mediaGroup->selected) {
+            ddControl.emulator->selectListing(mediaGroup->selected, ddControl.selection);
+            setting = FileSetting::getInstance( program->ident( ddControl.emulator, mediaGroup->selected->name ) );
+        } else {
+            ddControl.emulator->selectListing(&mediaGroup->media[0], ddControl.selection);
+            setting = FileSetting::getInstance( program->ident( ddControl.emulator, mediaGroup->media[0].name ) );
+        }
+        
+        if (setting)
+            emuConfigView->statesLayout->updateSaveIdent(setting->file);  
+        
         if (mediaGroup->isTape())
-            updateTapeIcons(Emulator::Interface::TapeMode::Play);        
-
+            updateTapeIcons(Emulator::Interface::TapeMode::Play);  
+        
         view->setFocused(300);
     }
     

@@ -112,7 +112,7 @@ auto View::build() -> void {
 
     GUIKIT::Application::Cocoa::onOpenFile = [this] (std::string fileName) {
         
-        view->autoloadInit( {fileName}, false, 2 );
+        view->autoloadInit( {fileName}, false, AutoLoad::AutoStart );
         
         view->autoloadFiles();
         
@@ -1116,3 +1116,4 @@ auto View::questionToWrite(Emulator::Interface::Media* media) -> bool {
     
     return state;
 }
+

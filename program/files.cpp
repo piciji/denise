@@ -150,15 +150,7 @@ auto Program::updateSaveIdent(Emulator::Interface::Media* media, std::string fil
         return;
     }        
     
-    if (view->ddControl.mediaGroups.size()) {
-        // drag'n'drop happened
-        if (view->ddControl.mediaGroups[0] == media->group)
-            EmuConfigView::TabWindow::getView( activeEmulator )->statesLayout->updateSaveIdent( file );
-        
-        return;
-    }        
-    
-    if ( media->group->isExpansion() || (!_media  && !media->group->isProgram())
+    if ( media->group->isExpansion() || (!_media && !media->group->isProgram())
     || (media->group->isDisk() && !_media->group->isDisk() && !_media->group->isExpansion())
     || (media->group->isTape() && !_media->group->isDisk() && !_media->group->isExpansion())) {
         EmuConfigView::TabWindow::getView( activeEmulator )->statesLayout->updateSaveIdent( file );

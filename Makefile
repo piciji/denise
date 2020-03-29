@@ -100,9 +100,9 @@ obj/dinput8.o:	driver/input/dinput/v8.cpp
 obj/xaudio27.o:	driver/audio/xaudio2/xaudio27.cpp
 	$(compiler) $(drvflags) $(flags) -c $< -o $@	
 obj/xaudio28.o:	driver/audio/xaudio2/xaudio28.cpp
-	$(compiler) $(drvflags) $(flags) -c $< -o $@
+	$(compiler) $(drvflags) $(flags) -Wno-attributes -c $< -o $@
 obj/xaudio29.o:	driver/audio/xaudio2/xaudio29.cpp
-	$(compiler) $(drvflags) $(flags) -c $< -o $@
+	$(compiler) $(drvflags) $(flags) -Wno-attributes -c $< -o $@
 endif	
 
 obj/libami.o:	emulation/libami/interface.cpp

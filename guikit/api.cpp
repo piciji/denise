@@ -1015,6 +1015,39 @@ auto BrowserWindow::setForeground() -> void {
     p.setForeground();
 }
 
+auto BrowserWindow::setTemplateId(int id) -> BrowserWindow& {
+    state.templateId = id;
+    return *this;
+}
+
+auto BrowserWindow::resizeTemplate(bool resize, int adjust) -> BrowserWindow& {
+    state.resizeTemplate = resize;
+    state.resizeAdjust = adjust;
+    return *this;
+}
+
+auto BrowserWindow::addContentView(unsigned id, std::function<bool (std::string filePath, unsigned selection)> onDblClick) -> BrowserWindow& {
+    state.contentView.id = id;
+    state.contentView.onDblClick = onDblClick;
+    return *this;
+}
+
+auto BrowserWindow::customizeContentView(std::string font, unsigned foregroundColor, unsigned backgroundColor) -> BrowserWindow& {  
+    state.contentView.font = font;
+    state.contentView.foregroundColor = foregroundColor;
+    state.contentView.backgroundColor = backgroundColor;
+    return *this;
+}
+
+auto BrowserWindow::getContentViewSelection() -> unsigned {
+    return p.contentViewSelection();
+}
+
+auto BrowserWindow::setAlternateHandling(bool alternate) -> BrowserWindow& {
+    state.alternateHandling = alternate;
+    return *this;
+}
+
 auto BrowserWindow::setFilters(std::vector<std::string> filters) -> BrowserWindow& {
     state.filters = filters;
     return *this;
@@ -1035,13 +1068,19 @@ auto BrowserWindow::setTitle(const std::string& title) -> BrowserWindow& {
     return *this;
 }
 
-auto BrowserWindow::setOnChangeCallback( std::function<void (std::string filePath)> onSelectionChange ) -> BrowserWindow& {
+auto BrowserWindow::setOnChangeCallback( std::function<std::vector<std::string> (std::string filePath)> onSelectionChange ) -> BrowserWindow& {
     state.onSelectionChange = onSelectionChange;
     return *this;
 }
 
-auto BrowserWindow::addCustomButton( std::string text, std::function<bool (std::string filePath)> onClick ) -> BrowserWindow& {    
-    state.buttons.push_back({text, onClick});            
+auto BrowserWindow::addCustomButton( std::string text, std::function<bool (std::string filePath, unsigned selection)> onClick, unsigned id ) -> BrowserWindow& {
+    state.buttons.push_back({text, onClick, id});            
+    return *this;
+}
+
+auto BrowserWindow::setDefaultButtonText(std::string textOk, std::string textCancel) -> BrowserWindow& {
+    state.textOk = textOk;
+    state.textCancel = textCancel;
     return *this;
 }
 

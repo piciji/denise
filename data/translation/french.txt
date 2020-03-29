@@ -449,4 +449,4 @@ autoload =
 insert cartridge = 
 remove cartridge = 
 Preview = 
-enable software preview = 
+alternate software preview = 

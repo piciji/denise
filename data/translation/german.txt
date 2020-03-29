@@ -449,4 +449,4 @@ autoload = Auto Start
 insert cartridge = Modul einlegen
 remove cartridge = Modul auswerfen
 Preview = Vorschau
-enable software preview = Software Vorschau einschalten
+alternate software preview = alternative Software Vorschau

@@ -30,7 +30,7 @@ SwitchesLayout::SwitchesLayout() {
     append(autostartDragnDrop, {~0u, 0u}, 3);
     append(saveSettingsOnExit, {~0u, 0u}, 3);
     append(openFullscreen, {~0u, 0u}, 3);
-    append(enableSoftwarePreview, {~0u, 0u});
+    append(alternateSoftwarePreview, {~0u, 0u});
     setFont(GUIKIT::Font::system("bold"));
 }
 
@@ -76,9 +76,9 @@ SettingsLayout::SettingsLayout() {
         settings->set<bool>("open_fullscreen", switches.openFullscreen.checked());
     };
     
-    switches.enableSoftwarePreview.setChecked(settings->get<bool>("enable_software_preview", false));
-    switches.enableSoftwarePreview.onToggle = [&]() {
-        settings->set<bool>("enable_software_preview", switches.enableSoftwarePreview.checked());
+    switches.alternateSoftwarePreview.setChecked(settings->get<bool>("alternate_software_preview", false));
+    switches.alternateSoftwarePreview.onToggle = [&]() {
+        settings->set<bool>("alternate_software_preview", switches.alternateSoftwarePreview.checked());
     };
 
 
@@ -179,7 +179,7 @@ auto SettingsLayout::translate() -> void {
     switches.autostartDragnDrop.setText(trans->get("autostart_dragndrop"));
     switches.saveSettingsOnExit.setText(trans->get("save_changes_on_exit"));
     switches.openFullscreen.setText(trans->get("open_fullscreen"));
-    switches.enableSoftwarePreview.setText(trans->get("enable software preview"));
+    switches.alternateSoftwarePreview.setText(trans->get("alternate software preview"));
 
     about.left.license.setText( trans->get("license", {}, true) + " " + LICENSE );
     about.left.author.setText( trans->get("author", {}, true) + " " + AUTHOR );

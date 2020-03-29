@@ -8,6 +8,7 @@
 struct View : public GUIKIT::Window {
     Message* message;
 	GUIKIT::Timer placeholderTimer;
+    enum class AutoLoad { DragnDrop = 0, Open = 1, AutoStart = 2 };
     
     struct SystemMenu {
         Emulator::Interface* emulator;
@@ -56,7 +57,7 @@ struct View : public GUIKIT::Window {
     auto loadCursor() -> void;
     auto setCursor( Emulator::Interface* emulator ) -> void;
     auto setDragnDrop() -> void;
-    auto autoloadInit( std::vector<std::string> files, bool silentError, unsigned restartMode ) -> void;
+    auto autoloadInit( std::vector<std::string> files, bool silentError, AutoLoad autoLoad, unsigned selection = 0 ) -> void;
     auto autoloadFiles() -> void;
     auto autoloadPostProcessing() -> void;
     auto getSysMenu( Emulator::Interface* emulator ) -> SystemMenu*;
@@ -146,13 +147,14 @@ struct View : public GUIKIT::Window {
     
     GUIKIT::Image pencilImage;
     GUIKIT::Image crosshairImage;
-    
+            
     struct {
         Emulator::Interface* emulator;
         std::vector<Emulator::Interface::MediaGroup*> mediaGroups;
         bool silentError = false;
-        unsigned restartMode = 0; // 0 = drag'n'drop, 1 = multi load, 2 = auto load
-        std::vector<std::string> files;        
+        AutoLoad autoLoad = AutoLoad::AutoStart;
+        std::vector<std::string> files; 
+        unsigned selection = 0;
     } ddControl;
 	
     auto questionToWrite(Emulator::Interface::Media* media) -> bool;

@@ -903,24 +903,50 @@ struct BrowserWindow {
     auto setWindow(Window& window) -> BrowserWindow&;
     auto setPath(const std::string& path) -> BrowserWindow&;
     auto setTitle(const std::string& title) -> BrowserWindow&;
-    auto setOnChangeCallback( std::function<void (std::string file)> onSelectionChange ) -> BrowserWindow&;
-    auto addCustomButton( std::string text, std::function<bool (std::string filePath)> onClick ) -> BrowserWindow&;
+    auto setOnChangeCallback( std::function<std::vector<std::string> (std::string file)> onSelectionChange ) -> BrowserWindow&;
+    auto addCustomButton( std::string text, std::function<bool (std::string filePath, unsigned selection)> onClick, unsigned id = 0 ) -> BrowserWindow&;
+    auto setDefaultButtonText(std::string textOk, std::string textCancel = "") -> BrowserWindow&;
+    auto setAlternateHandling(bool alternate) -> BrowserWindow&;
+
+    auto setTemplateId(int id) -> BrowserWindow&;
+    auto addContentView(unsigned id, std::function<bool (std::string filePath, unsigned selection)> onDblClick) -> BrowserWindow&;
+    auto customizeContentView(std::string font, unsigned foregroundColor, unsigned backgroundColor) -> BrowserWindow&;   
+    auto getContentViewSelection() -> unsigned;
+    auto resizeTemplate(bool resize, int adjust = 0) -> BrowserWindow&;    
     
     static auto transformFilter( std::string description, const std::vector<std::string>& suffix ) -> std::string;
 	static auto transformFilter( std::string description, const std::string& suffix ) -> std::string;   
     
-    struct CustomButton {
+    struct CustomButton {        
         std::string text;
-        std::function<bool (std::string filePath)> onClick = nullptr;
+        std::function<bool (std::string filePath, unsigned selection)> onClick = nullptr;        
+        unsigned id = 0; // for template usage
     };
     
+    // for displaying file content
+    struct ContentView {
+        unsigned id = 0; // for template usage
+        std::string font = "";
+        unsigned foregroundColor = 0;
+        unsigned backgroundColor = 0xffffff;        
+        std::function<bool (std::string filePath, unsigned selection)> onDblClick = nullptr; 
+    };
+        
     struct State {
         std::vector<std::string> filters;
         Window* window = nullptr;
         std::string path = "";
         std::string title = "";
-        std::function<void (std::string filePath)> onSelectionChange = nullptr;
+        std::function<std::vector<std::string> (std::string filePath)> onSelectionChange = nullptr;
+        std::function<void (std::string filePath, unsigned selection)> onListClick = nullptr;
         std::vector<CustomButton> buttons;
+        ContentView contentView;
+        bool alternateHandling = false; 
+        int templateId = -1;
+        bool resizeTemplate = false;
+        int resizeAdjust = 0;
+        std::string textOk = "";
+        std::string textCancel = "";
     } state;
 
     pBrowserWindow& p;    
