@@ -34,14 +34,14 @@ auto pLabel::setGeometry(Geometry geometry) -> void {
     auto offset = geometry;
     
     if(widgetHeight > height) {
-       unsigned diff = widgetHeight - height;
-       offset.y += diff >> 1;
-       offset.height -= diff >> 1;
+        unsigned diff = widgetHeight - height;
+        offset.y += diff >> 1;
+        offset.height -= diff >> 1;
     }
     
     pWidget::setGeometry({
-        offset.x - 2, offset.y - 2,
-        offset.width + 4, offset.height + 4
+        offset.x - 2, offset.y - 3,
+        offset.width + 4, offset.height + 6
     });
 }
     
