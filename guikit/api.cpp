@@ -351,6 +351,11 @@ auto Window::setPointerCursor( ) -> void {
     p.setPointerCursor();
 }
 
+auto Window::setDelayedSizing(bool delayed) -> void {
+    state.delayedSizing = delayed;
+}
+
+    
 auto Window::handle() -> uintptr_t {
     if (_A::dummy) return 0;
     return p.handle();

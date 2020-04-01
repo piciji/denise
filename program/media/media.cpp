@@ -68,6 +68,7 @@ auto MediaWindow::build() -> void {
     winapi.disableBackgroundRedrawDuringResize();
     cocoa.keepMenuVisibilityOnDisplay();
     setDroppable();
+    setDelayedSizing(true);
 	
     alternateFileDialog = settings->getOrInit("alternate_software_preview", false);
     

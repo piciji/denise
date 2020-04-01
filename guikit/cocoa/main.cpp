@@ -196,7 +196,10 @@
 }
 
 -(void) windowDidResize:(NSNotification*)notification {
-    window->p.sizeEvent();
+    if (window->state.delayedSizing)
+        window->p.timerResize.setEnabled();
+    else
+        window->p.sizeEvent();
 }
 
 -(void)windowDidMiniaturize:(NSNotification*)notification {
@@ -362,6 +365,13 @@ pWindow::pWindow(Window& window) : window(window) {
             once = false;
             [NSApp setMainMenu:[cocoaWindow menuBar]];
         }
+        
+        timerResize.setInterval(50);
+        timerResize.onFinished = [this]() {
+            sizeEvent();
+            timerResize.setEnabled(false);
+        };
+
     }
 }
 
@@ -466,7 +476,7 @@ auto pWindow::setBackgroundColor(unsigned color) -> void {
             colorWithSRGBRed:((color>>16) & 0xff) / 255.0
             green:((color>>8) & 0xff) / 255.0
             blue:(color & 0xff) / 255.0
-            alpha: 0.0]
+            alpha: 1.0]
          ];
     }
 }

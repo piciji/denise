@@ -228,11 +228,11 @@ auto pBrowserWindow::buildView() -> void {
         if (listView)
             _y -= maxButtonHeight;
         
-        [gButton->p.cocoaView setFrame:NSMakeRect(_x, _y, minimumSize.width, minimumSize.height + 4)];
+        [gButton->p.cocoaView setFrame:NSMakeRect(_x, _y, minimumSize.width + 4, minimumSize.height + 4)];
         
         if (listView) {
             _y -= 5;
-            maxButtonWidth = std::max(maxButtonWidth, minimumSize.width );
+            maxButtonWidth = std::max(maxButtonWidth, minimumSize.width + 4 );
         } else {
             maxButtonWidth += minimumSize.width + 4;
             maxContentHeight = maxButtonHeight + 4;
