@@ -1375,7 +1375,7 @@ auto MediaWindow::previewFile( std::string filePath, MediaGroupLayout::Block* bl
             setVisible();
         else if ( minimized() ) {
             restore(); 
-        } else if ( !focused() && view->fullScreen() ) {
+        } else if ( !GUIKIT::Application::isCocoa() && !focused() && view->fullScreen() ) {
             setForeground();
             if (fileDialogPtr && fileDialogPtr->visible())
                 fileDialogPtr->setForeground();
