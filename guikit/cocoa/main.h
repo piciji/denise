@@ -56,6 +56,10 @@ struct pWindow {
     auto changeCursor( Image& image, unsigned hotSpotX, unsigned hotSpotY ) -> void;
     auto setDefaultCursor() -> void;
     auto setPointerCursor() -> void;
+    auto restore() -> void;
+    auto minimized() -> bool;
+    auto setForeground() -> void;
+    
     bool disableIconsInTopMenu = false;
 
     static auto addCustomFont(CustomFont* customFont) -> bool;
@@ -67,6 +71,7 @@ struct pWindow {
 struct pWidget {
     Widget& widget;
     NSView* cocoaView = nullptr;
+    bool locked = false;
 
     virtual auto focused() -> bool;
     virtual auto setFocused() -> void;
@@ -413,8 +418,26 @@ struct pMenuSeparator : pMenuBase {
 };
 
 struct pBrowserWindow {
-    static auto directory(BrowserWindow::State& state) -> std::string;
-    static auto file(BrowserWindow::State& state, bool save) -> std::string;
+    CocoaFileDialog* dialogDelegate = nil;
+    NSSavePanel* panel = nil;
+    BrowserWindow& browserWindow;
+    std::string selectedPath = "";
+    
+    NSView* accessoryView = nil;
+    ListView* listView = nullptr;
+    std::vector<Button*> buttons;
+    
+    auto directory() -> std::string;
+    auto file(bool save) -> std::string;
+    auto close() -> void;
+    auto setForeground() -> void;
+    auto contentViewSelection() -> unsigned;
+    auto detached() -> bool;
+    auto visible() -> bool;
+
+    auto buildView() -> void;
+    pBrowserWindow(BrowserWindow& browserWindow);
+    ~pBrowserWindow();
 };
 
 struct pMessageWindow {

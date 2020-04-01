@@ -897,6 +897,8 @@ struct BrowserWindow {
     auto directory() -> std::string;
     auto open() -> std::string;
     auto save() -> std::string;
+    auto detached() -> bool;
+    auto visible() -> bool;
     auto close() -> void;
     auto setForeground() -> void;
     auto setFilters(std::vector<std::string> filters) -> BrowserWindow&;
@@ -910,7 +912,9 @@ struct BrowserWindow {
 
     auto setTemplateId(int id) -> BrowserWindow&;
     auto addContentView(unsigned id, std::function<bool (std::string filePath, unsigned selection)> onDblClick) -> BrowserWindow&;
-    auto customizeContentView(std::string font, unsigned foregroundColor, unsigned backgroundColor) -> BrowserWindow&;   
+    auto customizeContentView(std::string font, unsigned foregroundColor, unsigned backgroundColor) -> BrowserWindow&;
+    // callbacks for cocoa modeless dialog
+    auto setCallbacks( std::function<void (std::string filePath, unsigned selection)> onOkClick, std::function<void ()> onCancelClick ) -> BrowserWindow&;
     auto getContentViewSelection() -> unsigned;
     auto resizeTemplate(bool resize, int adjust = 0) -> BrowserWindow&;    
     
@@ -938,7 +942,8 @@ struct BrowserWindow {
         std::string path = "";
         std::string title = "";
         std::function<std::vector<std::string> (std::string filePath)> onSelectionChange = nullptr;
-        std::function<void (std::string filePath, unsigned selection)> onListClick = nullptr;
+        std::function<void (std::string filePath, unsigned selection)> onOkClick = nullptr;
+        std::function<void ()> onCancelClick = nullptr;
         std::vector<CustomButton> buttons;
         ContentView contentView;
         bool alternateHandling = false; 

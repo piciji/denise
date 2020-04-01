@@ -9,6 +9,8 @@
 }
 
 -(void) tabView:(NSTabView*)tabView didSelectTabViewItem:(NSTabViewItem*)tabViewItem {
+    if (p->locked)
+        return;
     p->tabFrame.state.selection = [tabView indexOfTabViewItem:tabViewItem];
     if(p->tabFrame.onChange) p->tabFrame.onChange();
 }
@@ -126,7 +128,9 @@ auto pTabFrame::setText(unsigned selection, std::string text) -> void {
 auto pTabFrame::setSelection(unsigned selection) -> void {
     @autoreleasepool {
         CocoaTabFrameItem* item = tabs[selection];
+        locked = true;
         [cocoaView selectTabViewItem:item];
+        locked = false;
     }
 }
 

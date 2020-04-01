@@ -674,5 +674,19 @@ auto pWindow::setPointerCursor() -> void {
         [cocoaWindow resetCursorRects];
     }
 }
+ 
+auto pWindow::minimized() -> bool {
+    return [cocoaWindow isMiniaturized];
+}
+    
+auto pWindow::restore() -> void {
+    
+    if (minimized())
+        [cocoaWindow deminiaturize:nil];
+}
+   
+auto pWindow::setForeground() -> void {
+    setFocused();
+}
     
 }

@@ -178,3 +178,9 @@
     GUIKIT::Hyperlink* hyperlink;
 }
 @end
+
+@interface CocoaFileDialog : NSObject<NSOpenSavePanelDelegate> {
+@public
+    GUIKIT::BrowserWindow* browserWindow;
+}
+@end

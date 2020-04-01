@@ -1014,7 +1014,15 @@ auto BrowserWindow::close() -> void {
 auto BrowserWindow::setForeground() -> void {
     p.setForeground();
 }
+    
+auto BrowserWindow::detached() -> bool {
+    return p.detached();
+}
 
+auto BrowserWindow::visible() -> bool {
+    return p.visible();
+}
+    
 auto BrowserWindow::setTemplateId(int id) -> BrowserWindow& {
     state.templateId = id;
     return *this;
@@ -1039,6 +1047,13 @@ auto BrowserWindow::customizeContentView(std::string font, unsigned foregroundCo
     return *this;
 }
 
+auto BrowserWindow::setCallbacks( std::function<void (std::string filePath, unsigned selection)> onOkClick, std::function<void ()> onCancelClick ) -> BrowserWindow& {
+    state.onOkClick = onOkClick;
+    state.onCancelClick = onCancelClick;
+    return *this;
+}
+
+    
 auto BrowserWindow::getContentViewSelection() -> unsigned {
     return p.contentViewSelection();
 }
@@ -1210,4 +1225,3 @@ auto System::printToCmd( std::string str ) -> void {
 }
 
 }
-

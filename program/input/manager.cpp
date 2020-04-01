@@ -339,3 +339,4 @@ auto InputManager::alternateSort() -> void {
         }
     }
 }
+

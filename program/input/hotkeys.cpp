@@ -125,7 +125,8 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
 			program->reset(emulator);
 			break;
 			
-        case Hotkey::MultiLoad: {                
+        case Hotkey::MultiLoad: {
+            inputDriver->mUnacquire();
             MediaView::MediaWindow::getView( emulator )->multiLoad();
             break;
         }

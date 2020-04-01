@@ -327,7 +327,7 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
                 if (state->contentView.font != "")
                     context->listFont = pFont::create( state->contentView.font );
                 else
-                    context->listFont = pFont::create( pFont::system(0, "") );
+                    context->listFont = pFont::create( Font::system() );
 
                 SendMessage(listBox, WM_SETFONT, (WPARAM)context->listFont, 0);
             }

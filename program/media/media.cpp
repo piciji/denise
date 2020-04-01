@@ -121,7 +121,7 @@ auto MediaWindow::build() -> void {
     };
     
     tabView.onChange = [this]() {
-        if (fileDialogPtr) {
+        if (fileDialogPtr && fileDialogPtr->visible()) {
             resetPreview();
         }
     };
@@ -285,34 +285,34 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
                 
                 if (fileDialogPtr) {
                     fileDialogPtr->close();
+                    delete fileDialogPtr;
                     resetPreview();
                 }
                 
-                GUIKIT::BrowserWindow fileDialog;
-                fileDialogPtr = &fileDialog;
+                fileDialogPtr = new GUIKIT::BrowserWindow;
                 
-                fileDialog.setAlternateHandling( *alternateFileDialog );
+                fileDialogPtr->setAlternateHandling( *alternateFileDialog );
                 
-                fileDialog.setTemplateId( IDD_FILE_TEMPLATE );  
+                fileDialogPtr->setTemplateId( IDD_FILE_TEMPLATE );
                 
-                fileDialog.resizeTemplate( true, -8 );
+                fileDialogPtr->resizeTemplate( true, -8 );
                 
-                fileDialog.setTitle(trans->get("select_" + mediaGroup->name + "_image"));
+                fileDialogPtr->setTitle(trans->get("select_" + mediaGroup->name + "_image"));
                 
-                fileDialog.setPath( preselectPath( mediaGroup->name ) );
+                fileDialogPtr->setPath( preselectPath( mediaGroup->name ) );
                 
-                fileDialog.setFilters({ GUIKIT::BrowserWindow::transformFilter(trans->get(mediaGroup->name + "_image"), suffix ),
+                fileDialogPtr->setFilters({ GUIKIT::BrowserWindow::transformFilter(trans->get(mediaGroup->name + "_image"), suffix ),
 						trans->get("all_files")});
                         
-                fileDialog.customizeContentView( useCustomFont ? "C64 Pro Mono, 10" : "",
+                fileDialogPtr->customizeContentView( useCustomFont ? "C64 Pro Mono, 10" : "",
                     mediaGroupLayouts[0]->listings.foregroundColor(), mediaGroupLayouts[0]->listings.backgroundColor());
                         
-                fileDialog.setOnChangeCallback( [this, block](std::string file) {
+                fileDialogPtr->setOnChangeCallback( [this, block](std::string file) {
 
                     return this->previewFile(file, block);
                 } );
                 
-                fileDialog.addCustomButton( trans->get("autoload"), [this, block, mediaGroup, layout](std::string filePath, unsigned selection) {
+                fileDialogPtr->addCustomButton( trans->get("autoload"), [this, block, mediaGroup, layout](std::string filePath, unsigned selection) {
                     
                     if (filePath.empty())
                         return false;
@@ -320,16 +320,24 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
                     return insertFile(block, filePath, true, selection);
                 }, IDC_BUTTON );    
 
-                fileDialog.addContentView(IDC_LIST, [this, block](std::string filePath, unsigned selection) {
+                fileDialogPtr->addContentView(IDC_LIST, [this, block](std::string filePath, unsigned selection) {
                     if (filePath.empty())
                         return false;
 
                     return insertFile(block, filePath, true, selection);
                 });
                 
-                std::string filePath = fileDialog.open();
+                fileDialogPtr->setCallbacks( [this, block](std::string filePath, unsigned selection) {
+                    
+                    insertFile(block, filePath);
+                }, [this]() {
+                    resetPreview();
+                } );
                 
-                fileDialogPtr = nullptr;
+                std::string filePath = fileDialogPtr->open();
+                
+                if (fileDialogPtr->detached())
+                    return;
                 
 				if (filePath.empty()) {
                     resetPreview();
@@ -486,10 +494,11 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
             
             auto selection = layout->listings.selection( );
             
-            if (fileDialogPtr) {
+            if (fileDialogPtr && fileDialogPtr->visible()) {
                 fileDialogPtr->close();
+                delete fileDialogPtr;
                 fileDialogPtr = nullptr;
-                
+
                 if (lastPreview.block && lastPreview.block->layout == layout)
                     insertFile(lastPreview.block, lastPreview.filePath);                                
             }
@@ -1367,7 +1376,8 @@ auto MediaWindow::previewFile( std::string filePath, MediaGroupLayout::Block* bl
             restore(); 
         } else if ( !focused() && view->fullScreen() ) {
             setForeground();
-            fileDialogPtr->setForeground();
+            if (fileDialogPtr && fileDialogPtr->visible())
+                fileDialogPtr->setForeground();
         }
     }
     
@@ -1462,16 +1472,16 @@ auto MediaWindow::multiLoad() -> void {
     if (fileDialogPtr) {
         fileDialogPtr->close();
         resetPreview();
+        delete fileDialogPtr;
     }
 
-    GUIKIT::BrowserWindow fileDialog;
-    fileDialogPtr = &fileDialog;
+    fileDialogPtr = new GUIKIT::BrowserWindow;
     
-    fileDialog.setAlternateHandling( *alternateFileDialog );
+    fileDialogPtr->setAlternateHandling( *alternateFileDialog );
     
-    fileDialog.setTemplateId( IDD_FILE_TEMPLATE );    
+    fileDialogPtr->setTemplateId( IDD_FILE_TEMPLATE );
     
-    fileDialog.addContentView( IDC_LIST, [this](std::string filePath, unsigned selection) {
+    fileDialogPtr->addContentView( IDC_LIST, [this](std::string filePath, unsigned selection) {
         if (filePath.empty())
             return false;
 
@@ -1485,16 +1495,16 @@ auto MediaWindow::multiLoad() -> void {
         return true;
     } );
     
-    fileDialog.customizeContentView( useCustomFont ? "C64 Pro Mono, 10" : "",
+    fileDialogPtr->customizeContentView( useCustomFont ? "C64 Pro Mono, 10" : "",
         mediaGroupLayouts[0]->listings.foregroundColor(), mediaGroupLayouts[0]->listings.backgroundColor());
     
-    fileDialog.setTitle(trans->get("select image"));
+    fileDialogPtr->setTitle(trans->get("select image"));
 
-    fileDialog.setPath( settings->get<std::string>( ident("multiload_path"), "") );
+    fileDialogPtr->setPath( settings->get<std::string>( ident("multiload_path"), "") );
 
-    fileDialog.setFilters({trans->get("all_files")});
+    fileDialogPtr->setFilters({trans->get("all_files")});
 
-    fileDialog.setOnChangeCallback( [this](std::string file) {
+    fileDialogPtr->setOnChangeCallback( [this](std::string file) {
         
         auto listings = this->previewFile(file);
         
@@ -1503,7 +1513,7 @@ auto MediaWindow::multiLoad() -> void {
         
         return listings;
     } );
-    fileDialog.addCustomButton( trans->get("open"), [this](std::string filePath, unsigned selection) {
+    fileDialogPtr->addCustomButton( trans->get("open"), [this](std::string filePath, unsigned selection) {
 
         if (filePath.empty())
             return false;
@@ -1518,15 +1528,29 @@ auto MediaWindow::multiLoad() -> void {
         return true;
     }, IDC_BUTTON );       
     
-    fileDialog.resizeTemplate( true, -8 );
+    fileDialogPtr->setCallbacks( [this](std::string filePath, unsigned selection) {
+        settings->set<std::string>(ident("multiload_path"), GUIKIT::File::getPath( filePath ) );
+        
+        view->autoloadInit( {filePath}, false, View::AutoLoad::AutoStart, selection );
+        view->autoloadFiles();
+        
+        resetPreview();
+    }, [this]() {
+        resetPreview();
+    } );
     
-    fileDialog.setDefaultButtonText(  trans->get("autoload") );
+    fileDialogPtr->resizeTemplate( true, -8 );
     
-//    fileDialog.setWindow( *view );
+    fileDialogPtr->setDefaultButtonText(  trans->get("autoload") );
+    
+//    fileDialogPtr->setWindow( *view );
 
-    std::string filePath = fileDialog.open();
+    std::string filePath = fileDialogPtr->open();
 
-    fileDialogPtr = nullptr;
+    if (fileDialogPtr->detached())
+        // cocoa doesn't block for modeless dialog
+        // it handles OK state in callback
+        return;
 
     if (filePath.empty()) {
         resetPreview();
@@ -1535,7 +1559,7 @@ auto MediaWindow::multiLoad() -> void {
         
     settings->set<std::string>(ident("multiload_path"), GUIKIT::File::getPath( filePath ) );
 
-    view->autoloadInit( {filePath}, false, View::AutoLoad::AutoStart, fileDialog.getContentViewSelection() );
+    view->autoloadInit( {filePath}, false, View::AutoLoad::AutoStart, fileDialogPtr->getContentViewSelection() );
     view->autoloadFiles();
     
     resetPreview();
