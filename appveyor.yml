@@ -9,7 +9,7 @@ skip_commits:
 image:
   - macos-mojave
   #- Ubuntu  
-  #- Visual Studio 2019        
+  - Visual Studio 2019        
   
 branches:
   only:

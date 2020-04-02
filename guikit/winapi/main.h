@@ -564,6 +564,8 @@ struct pBrowserWindow {
     auto close() -> void; 
     auto setForeground() -> void;
     auto resize(HWND fileDialogView, bool init = false) -> void;
+    auto detached() -> bool { return false; }
+    auto visible() -> bool;
     auto contentViewSelection() -> unsigned;
     
     auto getIFileParent() -> HWND;

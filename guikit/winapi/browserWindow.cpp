@@ -189,32 +189,35 @@ auto pBrowserWindow::fileVista(bool save) -> std::string {
         SetWindowLongPtr(dummyParent, GWLP_USERDATA, (LONG_PTR)this);
         
     hr = pDlg->Show ( state.window ? state.window->p.hwnd : dummyParent );
-    pDlg->Unadvise(cookie);    
     
+    if(!pDlg || !SUCCEEDED(hr))
+        return "";     
+    
+    pDlg->Unadvise(cookie);  
+    
+    IShellItem* pItem;
+
+    hr = pDlg->GetResult ( &pItem );
+
     if ( SUCCEEDED(hr) ) {
-        
-        IShellItem* pItem;
- 
-        hr = pDlg->GetResult ( &pItem );
- 
+        LPOLESTR pwsz = NULL;
+
+        hr = pItem->GetDisplayName ( SIGDN_FILESYSPATH, &pwsz );
+
         if ( SUCCEEDED(hr) ) {
-            LPOLESTR pwsz = NULL;
- 
-            hr = pItem->GetDisplayName ( SIGDN_FILESYSPATH, &pwsz );
- 
-            if ( SUCCEEDED(hr) ) {
-                name = utf8_t(pwsz);
-                std::replace( name.begin(), name.end(), '\\', '/');
-                CoTaskMemFree ( pwsz );
-            }
+            name = utf8_t(pwsz);
+            std::replace( name.begin(), name.end(), '\\', '/');
+            CoTaskMemFree ( pwsz );
         }
     }
-    
-    delete pDialogEventHandler;
+                        
+    if (pDialogEventHandler)
+        delete pDialogEventHandler;
     pDialogEventHandler = nullptr;
     
     pDlg->Release();
     pDlg = nullptr;
+    dialogHwnd = nullptr;
     
     return name;
 }
@@ -288,6 +291,7 @@ auto pBrowserWindow::file(bool save) -> std::string {
     if(!result) return "";
     std::string name = utf8_t(wname);
     std::replace( name.begin(), name.end(), '\\', '/');
+    dialogHwnd = nullptr;
     return name;
 }
 
@@ -532,9 +536,19 @@ auto pBrowserWindow::close() -> void {
     
     if (!dialogHwnd && pDlg)
         dialogHwnd = getIFileParent();
+
+    if (dialogHwnd)
+        PostMessage(dialogHwnd, WM_COMMAND, IDCANCEL, 0); //end dialog    
+}
+
+auto pBrowserWindow::visible() -> bool {
+    if (!dialogHwnd && pDlg)
+        dialogHwnd = getIFileParent();
     
     if (dialogHwnd)
-        PostMessage(dialogHwnd, WM_COMMAND, IDCANCEL, 0); //end dialog
+        return IsWindowVisible(dialogHwnd);
+    
+    return false;
 }
 
 pBrowserWindow::pBrowserWindow(BrowserWindow& browserWindow) : browserWindow(browserWindow) {

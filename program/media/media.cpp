@@ -123,6 +123,7 @@ auto MediaWindow::build() -> void {
     
     tabView.onChange = [this]() {
         if (fileDialogPtr && fileDialogPtr->visible()) {
+         //   message->warning("dialog tab change");
             resetPreview();
         }
     };
@@ -337,10 +338,11 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
                 
                 std::string filePath = fileDialogPtr->open();
                 
-                if (fileDialogPtr->detached())
+                if (fileDialogPtr && fileDialogPtr->detached())
                     return;
                 
 				if (filePath.empty()) {
+                    //message->warning("cancel software");
                     resetPreview();
 					return;
                 }
@@ -496,6 +498,7 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
             auto selection = layout->listings.selection( );
             
             if (fileDialogPtr && fileDialogPtr->visible()) {
+                //message->warning("dialog autostart");
                 fileDialogPtr->close();
                 delete fileDialogPtr;
                 fileDialogPtr = nullptr;
@@ -1548,19 +1551,20 @@ auto MediaWindow::multiLoad() -> void {
 
     std::string filePath = fileDialogPtr->open();
 
-    if (fileDialogPtr->detached())
+    if (fileDialogPtr && fileDialogPtr->detached())
         // cocoa doesn't block for modeless dialog
         // it handles OK state in callback
         return;
 
     if (filePath.empty()) {
+   //     message->warning("cancel multi");
         resetPreview();
         return;
     }
         
     settings->set<std::string>(ident("multiload_path"), GUIKIT::File::getPath( filePath ) );
 
-    view->autoloadInit( {filePath}, false, View::AutoLoad::AutoStart, fileDialogPtr->getContentViewSelection() );
+    view->autoloadInit( {filePath}, false, View::AutoLoad::AutoStart, fileDialogPtr ? fileDialogPtr->getContentViewSelection() : 0 );
     view->autoloadFiles();
     
     resetPreview();
