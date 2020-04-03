@@ -74,6 +74,9 @@
 * save/load additional settings files in App folder (mostly for per game key maps)
 * add Depixelizing technic (http://johanneskopf.de/publications/pixelart/index.html)
 * add confirmation question when quiting Denise Alt+F4
+* add low latency vsync
+* mount OS folder as D64
+* question user about disk write action when disk is removed
 
 # bugs
 * japanese characters aren't displayed correctly in OpenGL onscreen text
