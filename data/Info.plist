@@ -8,6 +8,8 @@
 	<string>Denise</string>
 	<key>CFBundleIconFile</key>
 	<string>Denise.icns</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.PiCiJi.Denise</string>
     <key>NSHighResolutionCapable</key>
     <string>True</string>
     <key>CFBundleDocumentTypes</key>
@@ -15,10 +17,50 @@
         <dict>
             <key>CFBundleTypeExtensions</key>
             <array>
-                <string>*</string>
+                <string>D64</string>
+                <string>G64</string>
             </array>
+            <key>CFBundleTypeIconFile</key>
+            <string></string>
             <key>CFBundleTypeName</key>
-            <string>All Files</string>
+            <string>C64 Disk Image</string>
+            <key>CFBundleTypeRole</key>
+            <string>Viewer</string>
+        </dict>
+        <dict>
+            <key>CFBundleTypeExtensions</key>
+            <array>
+                <string>TAP</string>
+            </array>
+            <key>CFBundleTypeIconFile</key>
+            <string></string>
+            <key>CFBundleTypeName</key>
+            <string>C64 Tape Image</string>
+            <key>CFBundleTypeRole</key>
+            <string>Viewer</string>
+        </dict>
+        <dict>
+            <key>CFBundleTypeExtensions</key>
+            <array>
+                <string>PRG</string>
+                <string>T64</string>
+            </array>
+            <key>CFBundleTypeIconFile</key>
+            <string></string>
+            <key>CFBundleTypeName</key>
+            <string>C64 Program Image</string>
+            <key>CFBundleTypeRole</key>
+            <string>Viewer</string>
+        </dict>
+        <dict>
+            <key>CFBundleTypeExtensions</key>
+            <array>
+                <string>CRT</string>
+            </array>
+            <key>CFBundleTypeIconFile</key>
+            <string></string>
+            <key>CFBundleTypeName</key>
+            <string>C64 Cartridge Image</string>
             <key>CFBundleTypeRole</key>
             <string>Viewer</string>
         </dict>
