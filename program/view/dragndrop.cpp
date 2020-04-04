@@ -85,7 +85,10 @@ auto View::autoloadPostProcessing() -> void {
     
     if (!autoStart) {
 
-        mediaView->setVisible();		
+        if (!mediaView->visible())
+            mediaView->setVisible();
+            
+        mediaView->setFocused();
 
         mediaView->showMediaGroupLayout(mediaGroup);
 
