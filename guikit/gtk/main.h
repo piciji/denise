@@ -31,6 +31,7 @@ struct pWindow {
     Timer timer;
 	Timer timerResize;
     GdkCursor* cursor = nullptr;
+	bool isMinimized = false;
 
     auto append(Menu& menu) -> void;
     auto append(Widget& widget) -> void;
@@ -61,6 +62,9 @@ struct pWindow {
     auto setDefaultCursor() -> void;
     auto setPointerCursor() -> void;
     auto setIcon( std::string path ) -> bool;
+	auto minimized() -> bool;
+	auto restore() -> void;
+	auto setForeground() -> void;
 	
 	auto moveWindow(GdkEvent* event) -> void;
 	auto sizeWindow(GtkAllocation* allocation) -> void;
@@ -518,8 +522,27 @@ struct pMenuSeparator : pMenuBase {
 };
 
 struct pBrowserWindow {
-    static auto directory(BrowserWindow::State& state) -> std::string;
-    static auto file(BrowserWindow::State& state, bool save) -> std::string;
+	BrowserWindow& browserWindow;
+	GtkWidget* dialog = nullptr;
+	ListView* listView = nullptr;
+	std::string selectedPath = "";
+    unsigned contentSelection = 0;
+	
+    auto directory() -> std::string;
+    auto file(bool save) -> std::string;
+	auto close() -> void;
+	auto detached() -> bool { return false; }
+	auto visible() -> bool;
+	auto setForeground() -> void;
+	
+	auto createPreview() -> GtkWidget*;
+	auto contentViewSelection() -> unsigned;
+	
+	static auto responseHandler(GtkDialog* dialog, gint responseId, gpointer data) -> void;
+	static auto selectionHandler(GtkFileChooser* chooser, gpointer data) -> void;
+	
+	pBrowserWindow(BrowserWindow& browserWindow);
+	~pBrowserWindow();
 };
 
 struct pMessageWindow {

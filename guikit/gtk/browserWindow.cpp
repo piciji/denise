@@ -1,8 +1,51 @@
 
-auto pBrowserWindow::file(BrowserWindow::State& state, bool save) -> std::string {
-    std::string name;
+pBrowserWindow::pBrowserWindow(BrowserWindow& browserWindow) : browserWindow(browserWindow) {
+	
+}
 
-    GtkWidget* dialog = gtk_file_chooser_dialog_new(
+auto pBrowserWindow::responseHandler(GtkDialog* dialog, gint responseId, gpointer data) -> void {
+  
+	pBrowserWindow* instance = (pBrowserWindow*)data;
+
+	auto& state = instance->browserWindow.state;
+	
+	for(auto& button : state.buttons) {
+		
+		if (button.id == responseId) {
+			
+			if (button.onClick) {
+				if ( button.onClick( instance->selectedPath, instance->contentSelection ) )					
+					gtk_window_close( (GtkWindow*)instance->dialog );
+					
+			}
+			break;
+		}		        
+	}
+}
+
+auto pBrowserWindow::selectionHandler(GtkFileChooser* chooser, gpointer data) -> void {
+  
+	pBrowserWindow* instance = (pBrowserWindow*)data;
+	
+	auto& state = instance->browserWindow.state;
+	
+	auto fileName = gtk_file_chooser_get_filename(chooser);
+	
+	std::string path = (std::string)fileName;
+	
+	if (!path.empty() && path != instance->selectedPath) {
+        if (state.onSelectionChange)
+            state.onSelectionChange(path);
+
+        instance->selectedPath = path;
+    }  
+}
+
+auto pBrowserWindow::file(bool save) -> std::string {
+    std::string name  = "";
+	auto& state = browserWindow.state;
+
+    dialog = gtk_file_chooser_dialog_new(
         !state.title.empty() ? state.title.c_str() : (save ? "Save File" : "Open File"),
         state.window ? GTK_WINDOW(state.window->p.widget) : (GtkWindow*)nullptr,
         save ? GTK_FILE_CHOOSER_ACTION_SAVE : GTK_FILE_CHOOSER_ACTION_OPEN,
@@ -13,6 +56,14 @@ auto pBrowserWindow::file(BrowserWindow::State& state, bool save) -> std::string
     if(!state.path.empty())
         gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(dialog), state.path.c_str());
 
+//	for(auto& button : state.buttons) {
+//		
+//		gtk_dialog_add_button( (GtkDialog*)dialog, button.text.c_str(), button.id );
+//	}
+//	
+//	if (state.buttons.size())
+//		g_signal_connect(dialog, "response", G_CALLBACK(pBrowserWindow::responseHandler), (gpointer)this);
+	
     for(auto& filter : state.filters) {
         std::vector<std::string> tokens = String::split(filter, '(');
         if(tokens.size() != 2) continue;
@@ -26,22 +77,50 @@ auto pBrowserWindow::file(BrowserWindow::State& state, bool save) -> std::string
             gtk_file_filter_add_pattern(gtkFilter, token.c_str());
             gtk_file_filter_add_pattern(gtkFilter, String::toUpperCase( token ).c_str());
         }
-        gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), gtkFilter);
+        gtk_file_chooser_add_filter((GtkFileChooser*)dialog, gtkFilter);
     }
-
+	
+//	g_signal_connect(dialog, "selection-changed", G_CALLBACK(pBrowserWindow::selectionHandler), (gpointer)this);	
+	
     if(gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
         char* temp = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
         name = temp;
         g_free(temp);
-    }
-
-    gtk_widget_destroy(dialog);
+    }   
     
     return name;
 }
 
-auto pBrowserWindow::directory(BrowserWindow::State& state) -> std::string {
+auto pBrowserWindow::createPreview() -> GtkWidget* {
+	auto& state = browserWindow.state;
+	GtkWidget* grid = gtk_grid_new();
+	
+	if (state.contentView.id) {
+        listView = new ListView;
+        listView->setHeaderText({""});
+        listView->setHeaderVisible( false );
+        listView->setBackgroundColor( state.contentView.backgroundColor );
+        listView->setForegroundColor( state.contentView.foregroundColor );
+        listView->onActivate = [this]() {
+            if (browserWindow.state.contentView.onDblClick) {
+                browserWindow.state.contentView.onDblClick( selectedPath, contentViewSelection() );
+            }
+        };
+        
+        if (!state.contentView.font.empty())
+            listView->setFont( state.contentView.font );
+        
+		listView->setGeometry({0, 0, 200, 150});
+
+		gtk_grid_attach(GTK_GRID(grid), listView->p.gtkWidget, 0, 0, 1, 1);
+    }
+	
+	return grid;
+}
+
+auto pBrowserWindow::directory() -> std::string {
     std::string name = "";
+	auto& state = browserWindow.state;
 
     GtkWidget* dialog = gtk_file_chooser_dialog_new(
         !state.title.empty() ? state.title.c_str() : "Select Directory",
@@ -65,4 +144,38 @@ auto pBrowserWindow::directory(BrowserWindow::State& state) -> std::string {
     if(!name.empty() && (name.back() != '/')) name.push_back('/');
     
     return name;
+}
+
+auto pBrowserWindow::contentViewSelection() -> unsigned {
+        
+    return contentSelection;
+}
+
+auto pBrowserWindow::close() -> void {
+	if (dialog)
+		gtk_window_close( (GtkWindow*)dialog );
+}
+
+auto pBrowserWindow::visible() -> bool {
+	
+	if (dialog)
+		return gtk_window_is_active(GTK_WINDOW(dialog));
+	
+	return false;
+}
+
+
+auto pBrowserWindow::setForeground() -> void {
+	if (dialog)
+		gtk_window_present(GTK_WINDOW(dialog));
+}
+
+pBrowserWindow::~pBrowserWindow() {
+	if (listView)
+		delete listView;
+	
+	if (dialog)
+		gtk_widget_destroy(dialog);
+	
+	dialog = nullptr;
 }

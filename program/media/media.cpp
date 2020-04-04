@@ -1547,7 +1547,7 @@ auto MediaWindow::multiLoad() -> void {
     
     fileDialogPtr->setDefaultButtonText(  trans->get("autoload") );
     
-//    fileDialogPtr->setWindow( *view );
+  //  fileDialogPtr->setWindow( *view );
 
     std::string filePath = fileDialogPtr->open();
 

@@ -135,6 +135,14 @@ static auto Window_onButtonPressed(GtkWidget* widget, GdkEventButton* event, Win
 	return true;
 }
 
+static auto Window_stateChange(GtkWidget* widget, GdkEventWindowState* event, Window* window) -> gboolean {
+	window->p.isMinimized = false;
+	
+	if(event->new_window_state & GDK_WINDOW_STATE_ICONIFIED) {
+		window->p.isMinimized = true;
+	}	
+}
+
 pWindow::pWindow(Window& window) : window(window) {
 		
     lastAllocation.width  = lastAllocation.height = 0;
@@ -193,6 +201,7 @@ pWindow::pWindow(Window& window) : window(window) {
 	
     g_signal_connect(G_OBJECT(widget), "drag-data-received", G_CALLBACK(Window_drop), (gpointer)&window);    
 	g_signal_connect(G_OBJECT(widget), "button-press-event", G_CALLBACK(Window_onButtonPressed), (gpointer)&window);
+	g_signal_connect(G_OBJECT(widget), "window-state-event", G_CALLBACK(Window_stateChange), (gpointer)&window);
 	
 	auto widgetClass = GTK_WIDGET_GET_CLASS(mainDisplay);
 	widgetClass->get_preferred_width  = Window_getPreferredWidth;
@@ -484,6 +493,19 @@ auto pWindow::geometry() -> Geometry {
 auto pWindow::fullScreenToggleDelayed() -> bool {
     if(locked) timer.setEnabled();
     return locked;
+}
+
+auto pWindow::minimized() -> bool {
+	return isMinimized;
+}
+
+auto pWindow::restore() -> void {
+	
+	gtk_window_deiconify(GTK_WINDOW(widget));
+}
+
+auto pWindow::setForeground() -> void {
+    setFocused();
 }
 
 auto pWindow::setFullScreen(bool fullScreen) -> void {
