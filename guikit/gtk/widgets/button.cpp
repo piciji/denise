@@ -1,6 +1,6 @@
 
 auto pButton::minimumSize() -> Size {
-    Size size = pFont::size(pfont, widget.text());
+    Size size = getMinimumSize();
 	
 	auto context = gtk_widget_get_style_context (gtkWidget);
     auto state = gtk_widget_get_state_flags (gtkWidget);

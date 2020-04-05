@@ -9,7 +9,7 @@ auto pFrame::borderSize() -> unsigned {
 }
 
 auto pFrame::minimumSize() -> Size {
-    Size size = pFont::size(pfont, widget.text());
+    Size size = getMinimumSize();
     size.width += 4 + (frameSize().width << 1);
     size.height >>= 1;
     if (widget.text().empty()) size.height = 0;

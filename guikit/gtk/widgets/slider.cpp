@@ -10,7 +10,9 @@ auto pSlider::minimumSize() -> Size {
 	
 	gtk_style_context_get_padding (context, state, &padding);
 	
-    if (slider.orientation == Slider::Orientation::VERTICAL) return {(unsigned)(minLength + padding.left + padding.right), 0};
+    if (slider.orientation == Slider::Orientation::VERTICAL)
+		return {(unsigned)(minLength + padding.left + padding.right), 0};
+		
     return {0, (unsigned)(minLength + padding.top + padding.bottom) };
 }
 

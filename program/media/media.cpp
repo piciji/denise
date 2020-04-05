@@ -116,6 +116,11 @@ auto MediaWindow::build() -> void {
         settings->set<unsigned>( ident("screen_media_height"), geometry.height);
     };
     
+	onFocus = [this]() {
+		if (fileDialogPtr && fileDialogPtr->visible())
+			fileDialogPtr->setForeground();		
+	};
+	
     onDrop = [this]( std::vector<std::string> files ) {
         
 		this->drop( files[0] );
@@ -123,8 +128,8 @@ auto MediaWindow::build() -> void {
     
     tabView.onChange = [this]() {
         if (fileDialogPtr && fileDialogPtr->visible()) {
-         //   message->warning("dialog tab change");
-            resetPreview();
+			//message->warning("dialog tab change");
+			resetPreview();
         }
     };
     
@@ -336,10 +341,14 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
                     resetPreview();
                 } );
                 
+				fileDialogPtr->setWindow( *view ).setNonModal();
+				
                 std::string filePath = fileDialogPtr->open();
                 
-                if (fileDialogPtr && fileDialogPtr->detached())
+                if (fileDialogPtr && fileDialogPtr->detached()) {
+					//message->warning("detached software");
                     return;
+				}
                 
 				if (filePath.empty()) {
                     //message->warning("cancel software");
@@ -1130,14 +1139,14 @@ auto MediaWindow::getActiveLayout() -> MediaGroupLayout* {
     return nullptr;
 }
 
-auto MediaWindow::colorListing( unsigned color, bool foreground ) -> void {
+auto MediaWindow::colorListing( unsigned color, bool foreground ) -> void {	
     for(auto layout : mediaGroupLayouts) {
         if (foreground)
             layout->listings.setForegroundColor( color );
         else
             layout->listings.setBackgroundColor( color );
-    }
-    
+    }    	
+	
     if (!foreground) {
         auto layout = getActiveLayout();
         if (layout) {
@@ -1372,13 +1381,13 @@ auto MediaWindow::previewFile( std::string filePath, MediaGroupLayout::Block* bl
     lastPreview.block = block;
        
     showMediaGroupLayout( group );
-
+	
     if (*alternateFileDialog) {
         if ( !visible() )
             setVisible();
         else if ( minimized() ) {
             restore(); 
-        } else if ( !GUIKIT::Application::isCocoa() && !focused() && view->fullScreen() ) {
+        } else if ( GUIKIT::Application::isWinApi() && !focused() && view->fullScreen() ) {
             setForeground();
             if (fileDialogPtr && fileDialogPtr->visible())
                 fileDialogPtr->setForeground();
@@ -1545,19 +1554,21 @@ auto MediaWindow::multiLoad() -> void {
     
     fileDialogPtr->resizeTemplate( true, -8 );
     
-    fileDialogPtr->setDefaultButtonText(  trans->get("autoload") );
+    fileDialogPtr->setDefaultButtonText( trans->get("autoload") );
     
-  //  fileDialogPtr->setWindow( *view );
+    fileDialogPtr->setWindow( *view ).setNonModal();
 
     std::string filePath = fileDialogPtr->open();
 
-    if (fileDialogPtr && fileDialogPtr->detached())
-        // cocoa doesn't block for modeless dialog
+    if (fileDialogPtr && fileDialogPtr->detached()) {
+        // cocoa/gtk doesn't block for modeless dialog
         // it handles OK state in callback
+		//message->warning("detached multi");
         return;
-
+	}
+	
     if (filePath.empty()) {
-   //     message->warning("cancel multi");
+        //message->warning("cancel multi");
         resetPreview();
         return;
     }

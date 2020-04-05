@@ -11,12 +11,19 @@ auto pTabFrame::borderSize() -> unsigned {
 }
 
 auto pTabFrame::minimumSize() -> Size {
+	if (calculatedMinimumSize.updated)
+        return calculatedMinimumSize.minimumSize; 
+		
     std::string text = tabFrame.text(0);
-    Size size = pFont::size(pfont, text);		
+    Size size = pFont::size(pfont, text);	
+
+	calculatedMinimumSize.updated = true;	
 	
 	auto _border = borderSize();
 	
-    return {size.width + (_border << 1) + 55, (_border << 1) + 30 };
+    calculatedMinimumSize.minimumSize = {size.width + (_border << 1) + 55, (_border << 1) + 30 };
+	
+	return calculatedMinimumSize.minimumSize;
 }
 
 auto pTabFrame::getDisplacement() -> Position {
@@ -26,7 +33,7 @@ auto pTabFrame::getDisplacement() -> Position {
 
 auto pTabFrame::append(std::string text, Image* image) -> void {
     unsigned selection = tabFrame.state.header.size() - 1;
-
+	calculatedMinimumSize.updated = false;
     Tab tab;
     tab.child = gtk_fixed_new();
     tab.container = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
@@ -77,6 +84,7 @@ auto pTabFrame::setImage(unsigned selection, Image& image) -> void {
 }
 
 auto pTabFrame::setText(unsigned selection, std::string text) -> void {
+	calculatedMinimumSize.updated = false;
     gtk_label_set_text(GTK_LABEL(tabs[selection].title), text.c_str());
 }
 

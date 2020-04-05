@@ -179,7 +179,26 @@ auto pSystem::applyCss( GtkWidget* gtkWidget, std::string css ) -> void {
 	g_object_unref(cssProvider);
 }
 
-auto pSystem::getColorCss( unsigned color ) -> std::string {
+auto pSystem::addCssClass(GtkWidget* widget, std::string cssClass) -> void {
+	
+	auto context = gtk_widget_get_style_context(widget);
+	
+	if (context)
+		gtk_style_context_add_class( context, cssClass.c_str() );	
+}
+
+auto pSystem::removeCssClass(GtkWidget* widget, std::string cssClass) -> void {
+	
+	auto context = gtk_widget_get_style_context(widget);
+	
+	if (context)
+		gtk_style_context_remove_class( context, cssClass.c_str() );	
+}
+
+auto pSystem::getColorCss( unsigned color, bool useComplementaryColor ) -> std::string {
+	
+	if (useComplementaryColor)
+		color = 0xffffff - color;
 	
 	std::string _color = "rgb(" + std::to_string( (color >> 16) & 0xff ) + ", " + std::to_string( (color >> 8) & 0xff )
 		+ ", " + std::to_string( color & 0xff ) + ")";

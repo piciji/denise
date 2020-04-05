@@ -2,11 +2,16 @@
 auto pComboButton::append(std::string text) -> void {
     gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(gtkWidget), text.c_str());
     if(comboButton.rows() == 1) comboButton.setSelection(0);
+	calculatedMinimumSize.updated = false;
 }
 
 auto pComboButton::minimumSize() -> Size {
+	if (calculatedMinimumSize.updated)
+        return calculatedMinimumSize.minimumSize; 
+		
     unsigned maximumWidth = 0;
-    for(auto& item : comboButton.state.rows) maximumWidth = std::max(maximumWidth, pFont::size(pfont, item).width);
+    for(auto& item : comboButton.state.rows)
+		maximumWidth = std::max(maximumWidth, pFont::size(pfont, item).width);
 
 	auto context = gtk_widget_get_style_context (gtkWidget);
     auto state = gtk_widget_get_state_flags (gtkWidget);
@@ -14,7 +19,11 @@ auto pComboButton::minimumSize() -> Size {
 	gtk_style_context_get_padding (context, state, &padding);
 	
     Size size = pFont::size(pfont, " ");
-    return {maximumWidth + padding.left + padding.right + 26, size.height + padding.top + padding.bottom + 12};
+	calculatedMinimumSize.updated = true;
+	
+	calculatedMinimumSize.minimumSize = {maximumWidth + padding.left + padding.right + 26, size.height + padding.top + padding.bottom + 12};
+	
+    return calculatedMinimumSize.minimumSize;
 }
 
 auto pComboButton::remove(unsigned selection) -> void {
@@ -42,6 +51,7 @@ auto pComboButton::setText(unsigned selection, std::string text) -> void {
     gtk_combo_box_text_remove(GTK_COMBO_BOX_TEXT(gtkWidget), selection);
     gtk_combo_box_text_insert_text(GTK_COMBO_BOX_TEXT(gtkWidget), selection, text.c_str());
     gtk_combo_box_set_active(GTK_COMBO_BOX(gtkWidget), comboButton.selection());
+	calculatedMinimumSize.updated = false;
     locked = false;
 }
 

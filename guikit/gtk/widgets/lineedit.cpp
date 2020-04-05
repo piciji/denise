@@ -1,6 +1,6 @@
 
 auto pLineEdit::minimumSize() -> Size {
-    Size size = pFont::size(pfont, lineEdit.text());
+    Size size = getMinimumSize();
 	
 	auto context = gtk_widget_get_style_context (gtkWidget);
     auto state = gtk_widget_get_state_flags (gtkWidget);
@@ -25,6 +25,7 @@ auto pLineEdit::setEditable(bool editable) -> void {
 
 auto pLineEdit::setText(std::string text) -> void {
     locked = true;
+	calculatedMinimumSize.updated = false;
     gtk_entry_set_text(GTK_ENTRY(gtkWidget), text.c_str());
     locked = false;
 }

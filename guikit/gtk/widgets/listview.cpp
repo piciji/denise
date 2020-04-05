@@ -195,21 +195,30 @@ auto pListView::setImage(unsigned selection, unsigned position, Image& image) ->
 }
 
 auto pListView::setBackgroundColor(unsigned color) -> void {
-    if( !subWidget || !widget.overrideBackgroundColor() )
-        return;
+	if (!subWidget)
+		return;
 	
-	std::string _color = "rgb(" + std::to_string( (color >> 16) & 0xff ) + ", " + std::to_string( (color >> 8) & 0xff )
-		+ ", " + std::to_string( color & 0xff ) + ")";
+	pSystem::removeCssClass(subWidget, "customBackgroundColor");
 	
-	pSystem::applyCss( subWidget, "treeview { background-color: " + _color + " }" );
+    if( !widget.overrideBackgroundColor() )
+        return;	
+	
+	pSystem::addCssClass(subWidget, "customBackgroundColor");
+	
+	pSystem::applyCss( subWidget, ".customBackgroundColor { background-color: " + pSystem::getColorCss( color ) + "; } " +
+	"treeview:selected { border: 1px solid " + pSystem::getColorCss( color, true ) + ";} " );
 }
 
 auto pListView::setForegroundColor(unsigned color) -> void {
-    if( !subWidget || !widget.overrideForegroundColor() )
-        return;
-
-	std::string _color = "rgb(" + std::to_string( (color >> 16) & 0xff ) + ", " + std::to_string( (color >> 8) & 0xff )
-		+ ", " + std::to_string( color & 0xff ) + ")";
+	if (!subWidget)
+		return;
 	
-	pSystem::applyCss( subWidget, "treeview { color: " + _color + " }" );
+	pSystem::removeCssClass(subWidget, "customColor");
+	
+    if( !widget.overrideForegroundColor() )
+        return;
+	
+	pSystem::addCssClass(subWidget, "customColor");
+	
+	pSystem::applyCss( subWidget, ".customColor { color: " + pSystem::getColorCss( color ) + "; }" );
 }

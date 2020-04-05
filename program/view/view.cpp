@@ -145,7 +145,7 @@ auto View::build() -> void {
         view->setFocused();
     };
         
-	placeholderTimer.setInterval(20);
+	placeholderTimer.setInterval(40);
 	placeholderTimer.onFinished = [this]() {
 		placeholderTimer.setEnabled(false);		
 		program->renderPlaceholder();

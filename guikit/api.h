@@ -165,7 +165,8 @@ struct Window : Base {
     std::function<void (std::vector<std::string>)> onDrop = nullptr;
 	std::function<bool ()> onContext = nullptr;
     std::function<void ()> onMinimize = nullptr;
-    std::function<void ()> onUnminimize = nullptr;    
+    std::function<void ()> onUnminimize = nullptr; 
+	std::function<void ()> onFocus = nullptr;
     
     enum class Cursor { Default, Pointer, Image } cursor = Cursor::Default;
 
@@ -910,7 +911,9 @@ struct BrowserWindow {
     auto setOnChangeCallback( std::function<std::vector<std::string> (std::string file)> onSelectionChange ) -> BrowserWindow&;
     auto addCustomButton( std::string text, std::function<bool (std::string filePath, unsigned selection)> onClick, unsigned id = 0 ) -> BrowserWindow&;
     auto setDefaultButtonText(std::string textOk, std::string textCancel = "") -> BrowserWindow&;
+	// winapi only: distinguish between XP mode (listview possible, XP dialog) or Vista mode (OS dialog, listview not possible)
     auto setAlternateHandling(bool alternate) -> BrowserWindow&;
+	auto setNonModal() -> BrowserWindow&;
 
     auto setTemplateId(int id) -> BrowserWindow&;
     auto addContentView(unsigned id, std::function<bool (std::string filePath, unsigned selection)> onDblClick) -> BrowserWindow&;
@@ -954,6 +957,7 @@ struct BrowserWindow {
         int resizeAdjust = 0;
         std::string textOk = "";
         std::string textCancel = "";
+		bool modal = true;
     } state;
 
     pBrowserWindow& p;    

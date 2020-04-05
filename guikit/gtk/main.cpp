@@ -140,7 +140,12 @@ static auto Window_stateChange(GtkWidget* widget, GdkEventWindowState* event, Wi
 	
 	if(event->new_window_state & GDK_WINDOW_STATE_ICONIFIED) {
 		window->p.isMinimized = true;
-	}	
+		if(window->onMinimize)
+			window->onMinimize();
+	} else if(event->new_window_state & GDK_WINDOW_STATE_FOCUSED) {
+		if (window->onFocus)
+			window->onFocus();
+	}
 }
 
 pWindow::pWindow(Window& window) : window(window) {
@@ -502,10 +507,13 @@ auto pWindow::minimized() -> bool {
 auto pWindow::restore() -> void {
 	
 	gtk_window_deiconify(GTK_WINDOW(widget));
+	
+	setFocused();
 }
 
 auto pWindow::setForeground() -> void {
-    setFocused();
+   // gtk_window_set_focus( GTK_WINDOW(widget), nullptr );
+	setFocused();
 }
 
 auto pWindow::setFullScreen(bool fullScreen) -> void {

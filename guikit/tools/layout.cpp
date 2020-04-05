@@ -572,7 +572,6 @@ auto SwitchLayout::setVisible(bool visible) -> void {
 }
 
 auto SwitchLayout::setGeometry(Geometry containerGeometry) -> void {
-    //state.containerGeometry = containerGeometry;
     Geometry geometry = containerGeometry;
 
     addDisplacement(geometry, Layout::state.margin);    

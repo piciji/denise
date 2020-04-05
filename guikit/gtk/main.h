@@ -80,6 +80,11 @@ struct pWidget {
     PangoFontDescription* pfont = nullptr;
     bool locked = false;	
 	GtkWidget* parentWidget = nullptr;
+	
+	struct {
+        bool updated = false;
+        Size minimumSize = {0, 0};
+    } calculatedMinimumSize;
 
     virtual auto focused() -> bool;
     virtual auto setFocused() -> void;
@@ -93,6 +98,7 @@ struct pWidget {
     virtual auto destroy() -> void;
     virtual auto setForegroundColor(unsigned color) -> void;
     virtual auto setBackgroundColor(unsigned color) -> void;
+	auto getMinimumSize() -> Size;
     auto setTooltip(std::string tooltip) -> void;
     auto add() -> void;
     virtual auto init() -> void {}
@@ -526,12 +532,11 @@ struct pBrowserWindow {
 	GtkWidget* dialog = nullptr;
 	ListView* listView = nullptr;
 	std::string selectedPath = "";
-    unsigned contentSelection = 0;
 	
     auto directory() -> std::string;
     auto file(bool save) -> std::string;
 	auto close() -> void;
-	auto detached() -> bool { return false; }
+	auto detached() -> bool;
 	auto visible() -> bool;
 	auto setForeground() -> void;
 	
@@ -577,7 +582,10 @@ struct pSystem {
     static auto getOSLang() -> System::Language;
     static auto printToCmd( std::string str ) -> void;
 	static auto applyCss( GtkWidget* gtkWidget, std::string css ) -> void;
-	static auto getColorCss( unsigned color ) -> std::string;
+	static auto addCssClass(GtkWidget* widget, std::string cssClass) -> void;
+	static auto removeCssClass(GtkWidget* widget, std::string cssClass) -> void;
+	static auto getColorCss( unsigned color, bool useComplementaryColor = false ) -> std::string;
+
 };
 
 static auto getDropPaths(GtkSelectionData* data) -> std::vector<std::string>;

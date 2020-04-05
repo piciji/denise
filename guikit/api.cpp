@@ -1012,6 +1012,11 @@ auto BrowserWindow::save() -> std::string {
     return p.file(true);
 }
 
+auto BrowserWindow::setNonModal() -> BrowserWindow& {
+	state.modal = false;
+	return *this;
+}
+
 auto BrowserWindow::close() -> void {
     p.close();
 }
@@ -1230,3 +1235,4 @@ auto System::printToCmd( std::string str ) -> void {
 }
 
 }
+

@@ -25,6 +25,18 @@ auto pWidget::setFocused() -> void {
 auto pWidget::setFont(std::string font) -> void {
     pFont::free(pfont);
     pfont = gtkWidget ? pFont::setFont(gtkWidget, font) : pFont::create(font);
+	calculatedMinimumSize.updated = false;
+}
+
+inline auto pWidget::getMinimumSize() -> Size {
+    if (calculatedMinimumSize.updated)
+        return calculatedMinimumSize.minimumSize;        
+    
+    calculatedMinimumSize.minimumSize = pFont::size(pfont, widget.text());
+
+    calculatedMinimumSize.updated = true;
+    
+    return calculatedMinimumSize.minimumSize;
 }
 
 auto pWidget::setEnabled(bool enabled) -> void {

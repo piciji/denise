@@ -1,11 +1,11 @@
 
 auto pHyperlink::minimumSize() -> Size {
-    Size size = pFont::size(pfont, widget.text());
+    Size size = getMinimumSize();
     return {size.width, size.height};
 }
 
 auto pHyperlink::setText(std::string text) -> void {
-
+	
 	updateLink();
 }
 
@@ -15,6 +15,7 @@ auto pHyperlink::setUri( std::string uri, std::string wrap ) -> void {
 }
 
 auto pHyperlink::updateLink() -> void {
+	calculatedMinimumSize.updated = false;
 	std::string link = "";
 	std::string text = hyperlink.text();
 	std::string uri = hyperlink.uri();
