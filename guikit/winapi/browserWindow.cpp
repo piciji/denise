@@ -332,6 +332,8 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
                     context->listFont = pFont::create( Font::system() );
 
                 SendMessage(listBox, WM_SETFONT, (WPARAM)context->listFont, 0);
+                
+                SendMessage(listBox, LB_SETITEMHEIGHT, 0, 14);
             }
             auto colorBg = state->contentView.backgroundColor;                        
             context->listBgBrush = CreateSolidBrush( RGB((colorBg >> 16) & 0xff, (colorBg >> 8) & 0xff, colorBg & 0xff) );

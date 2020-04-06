@@ -1522,7 +1522,7 @@ auto MediaWindow::multiLoad() -> void {
         return true;
     } );
     
-    fileDialogPtr->customizeContentView( useCustomFont ? "C64 Pro Mono, 10" : "",
+    fileDialogPtr->customizeContentView( useCustomFont ? "C64 Pro Mono, 9" : "",
         mediaGroupLayouts[0]->listings.foregroundColor(), mediaGroupLayouts[0]->listings.backgroundColor());
     
     fileDialogPtr->setTitle(trans->get("select image"));
