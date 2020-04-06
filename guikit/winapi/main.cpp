@@ -290,19 +290,26 @@ auto CALLBACK pWindow::wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam
         case WM_ERASEBKGND: 
 			if(window.p.onEraseBackground()) return true;
 			break;
-		case WM_ACTIVATEAPP:
-			if ((LOWORD(wparam) == WA_ACTIVE) || (LOWORD(wparam) == WA_CLICKACTIVE)) {
+        case WM_ACTIVATE:            
+			if ((LOWORD(wparam) == WA_ACTIVE) && (LOWORD(wparam) != WA_CLICKACTIVE)) {
 				if (window.onUnminimize)
                     window.onUnminimize();
-                    
-			} else if (LOWORD(wparam) == WA_INACTIVE) {
-				if(window.fullScreen())
-                    ShowWindow( hwnd, SW_MINIMIZE );
-                
+                                    
+			} else if (LOWORD(wparam) == WA_INACTIVE) {                
                 if(window.onMinimize)
                     window.onMinimize();
 			}
 			break;
+		case WM_ACTIVATEAPP:            
+			if (LOWORD(wparam) == WA_INACTIVE) {
+				if(window.fullScreen())
+                    ShowWindow( hwnd, SW_MINIMIZE );
+			}
+			break;
+        case WM_SETFOCUS:
+            if (window.onFocus)
+                window.onFocus();
+            break;
         case WM_SETCURSOR:
             if (LOWORD(lparam) == HTCLIENT) {
                 SetCursor( window.p.hCursor );

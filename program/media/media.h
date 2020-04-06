@@ -169,6 +169,7 @@ struct MediaWindow : public GUIKIT::Window {
     PathsLayout pathsLayout;
     	
 	GUIKIT::Timer mtimer;
+    GUIKIT::Timer ftimer;
     
     struct {
         MediaGroupLayout::Block* block = nullptr;

@@ -69,6 +69,15 @@ auto MediaWindow::build() -> void {
     cocoa.keepMenuVisibilityOnDisplay();
     setDroppable();
     setDelayedSizing(true);
+    
+    ftimer.setInterval(150);
+	
+	ftimer.onFinished = [this]() {
+		ftimer.setEnabled(false);
+        
+        if (fileDialogPtr && fileDialogPtr->visible())
+			fileDialogPtr->setForeground();        
+	};
 	
     alternateFileDialog = settings->getOrInit("alternate_software_preview", false);
     
@@ -117,9 +126,12 @@ auto MediaWindow::build() -> void {
     };
     
 	onFocus = [this]() {
-		if (fileDialogPtr && fileDialogPtr->visible())
-			fileDialogPtr->setForeground();		
-	};
+       // view->setStatusText("focus");
+		//if (ftimer.enabled() && fileDialogPtr && fileDialogPtr->visible()) {
+            //message->warning("focus");
+		//	fileDialogPtr->setForeground();		            
+      //  }
+	};    
 	
     onDrop = [this]( std::vector<std::string> files ) {
         
@@ -1383,10 +1395,12 @@ auto MediaWindow::previewFile( std::string filePath, MediaGroupLayout::Block* bl
     showMediaGroupLayout( group );
 	
     if (*alternateFileDialog) {
-        if ( !visible() )
+        if ( !visible() ) {
             setVisible();
-        else if ( minimized() ) {
+            ftimer.setEnabled();
+        } else if ( minimized() ) {
             restore(); 
+            ftimer.setEnabled();
         } else if ( GUIKIT::Application::isWinApi() && !focused() && view->fullScreen() ) {
             setForeground();
             if (fileDialogPtr && fileDialogPtr->visible())

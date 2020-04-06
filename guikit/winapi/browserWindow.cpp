@@ -6,12 +6,12 @@ HWND pBrowserWindow::dummyParent = nullptr;
 STDMETHODIMP FileDialogEventHandler::OnSelectionChange ( IFileDialog* pfd ) {
     std::string path = getFilePath(pfd);
     
-    if (!path.empty() && path != filePath) {
+  //  if (!path.empty() && path != filePath) {
         if (state && state->onSelectionChange)
             state->onSelectionChange(path);
 
         filePath = path;
-    }  
+   // }  
 
     return S_OK;
 }
@@ -175,10 +175,8 @@ auto pBrowserWindow::fileVista(bool save) -> std::string {
         if ( SUCCEEDED(hr) ) {
             
             unsigned i = 0;
-            for(auto& button : state.buttons) {
-                                
+            for(auto& button : state.buttons) {                                
                 pDlgc->AddPushButton(1000 + i++, utf16_t(button.text) );
-                //pDlgc->MakeProminent(1000 + i++);
             }
         }    
     }    
@@ -188,7 +186,7 @@ auto pBrowserWindow::fileVista(bool save) -> std::string {
     if (dummyParent)
         SetWindowLongPtr(dummyParent, GWLP_USERDATA, (LONG_PTR)this);
         
-    hr = pDlg->Show ( state.window ? state.window->p.hwnd : dummyParent );
+    hr = pDlg->Show ( (state.window && state.modal) ? state.window->p.hwnd : dummyParent );
     
     if(!pDlg || !SUCCEEDED(hr))
         return "";     
@@ -270,7 +268,7 @@ auto pBrowserWindow::file(bool save) -> std::string {
     OPENFILENAME ofn;
     memset(&ofn, 0, sizeof(OPENFILENAME));
     ofn.lStructSize = sizeof(OPENFILENAME);
-    ofn.hwndOwner = state.window ? state.window->p.hwnd : dummyParent;
+    ofn.hwndOwner = (state.window && state.modal) ? state.window->p.hwnd : dummyParent;
     ofn.lpstrFilter = wfilters;
     ofn.lpstrInitialDir = wpath;
     ofn.lpstrFile = wname;
