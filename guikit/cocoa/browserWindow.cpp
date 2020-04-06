@@ -108,7 +108,7 @@ auto pBrowserWindow::file(bool save) -> std::string {
         dialogDelegate = [[CocoaFileDialog alloc] initWith: browserWindow];
         [panel setDelegate: dialogDelegate];
         
-        if (!state.window) {
+        if (!state.modal) {
             __block BrowserWindow* _browserWindow = &browserWindow;
             [panel beginWithCompletionHandler:^(NSInteger result){
              
@@ -177,14 +177,15 @@ auto pBrowserWindow::buildView() -> void {
         listView->setForegroundColor( state.contentView.foregroundColor );
         listView->onActivate = [this]() {
             if (browserWindow.state.contentView.onDblClick) {
-                browserWindow.state.contentView.onDblClick( selectedPath, contentViewSelection() );
+                if (browserWindow.state.contentView.onDblClick( selectedPath, contentViewSelection() ) )
+                    close();
             }
         };
         
         if (!state.contentView.font.empty())
             listView->setFont( state.contentView.font );
         
-        maxListWidth = 420;
+        maxListWidth = 470;
         maxListHeight = 176;
         maxContentHeight = maxListHeight + 4;
             
@@ -300,7 +301,7 @@ auto pBrowserWindow::contentViewSelection() -> unsigned {
 }
     
 auto pBrowserWindow::detached() -> bool {
-    return browserWindow.state.window == nullptr;
+    return !browserWindow.state.modal;
 }
     
 auto pBrowserWindow::visible() -> bool {

@@ -124,14 +124,6 @@ auto MediaWindow::build() -> void {
         settings->set<unsigned>( ident("screen_media_width"), geometry.width);
         settings->set<unsigned>( ident("screen_media_height"), geometry.height);
     };
-    
-	onFocus = [this]() {
-       // view->setStatusText("focus");
-		//if (ftimer.enabled() && fileDialogPtr && fileDialogPtr->visible()) {
-            //message->warning("focus");
-		//	fileDialogPtr->setForeground();		            
-      //  }
-	};    
 	
     onDrop = [this]( std::vector<std::string> files ) {
         
