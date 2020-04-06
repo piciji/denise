@@ -78,9 +78,16 @@ pTabFrame::~pTabFrame() {
 }
 
 auto pTabFrame::minimumSize() -> Size {
+    if (calculatedMinimumSize.updated)
+        return calculatedMinimumSize.minimumSize; 
+        
     std::string text = tabFrame.text(0);
     Size size = pFont::size([cocoaView font], text);
-    return {size.width + (borderSize() << 1) + 55, size.height + (borderSize() << 1) + 4 };
+    
+    calculatedMinimumSize.updated = true;   
+    calculatedMinimumSize.minimumSize = {size.width + (borderSize() << 1) + 55, size.height + (borderSize() << 1) + 4 };
+    
+    return calculatedMinimumSize.minimumSize;
 }
     
 auto pTabFrame::setGeometry(Geometry geometry) -> void {
@@ -99,6 +106,7 @@ auto pTabFrame::append(std::string text, Image* image) -> void {
         cocoaImages.push_back(nil);
     }
     if(image) setImage(cocoaImages.size() - 1, *image);
+    calculatedMinimumSize.updated = false;
 }
 
 auto pTabFrame::remove(unsigned selection) -> void {
@@ -116,6 +124,7 @@ auto pTabFrame::setImage(unsigned selection, Image& image) -> void {
         [cocoaImages.at(selection) release];
         cocoaImages.at(selection) = NSMakeImage(image);
     }
+    calculatedMinimumSize.updated = false;
 }
 
 auto pTabFrame::setText(unsigned selection, std::string text) -> void {
@@ -123,6 +132,7 @@ auto pTabFrame::setText(unsigned selection, std::string text) -> void {
         CocoaTabFrameItem* item = tabs[selection];
         [item setLabel:[NSString stringWithUTF8String:text.c_str()]];
     }
+    calculatedMinimumSize.updated = false;
 }
 
 auto pTabFrame::setSelection(unsigned selection) -> void {

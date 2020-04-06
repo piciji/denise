@@ -19,7 +19,7 @@
 namespace GUIKIT {
     
 auto pButton::minimumSize() -> Size {
-    Size size = pFont::size([cocoaView font], widget.text());
+    Size size = getMinimumSize();
     return {size.width + 22, size.height + 6};
 }
     
@@ -34,6 +34,7 @@ auto pButton::setText(std::string text) -> void {
     @autoreleasepool {
         [cocoaView setTitle:[NSString stringWithUTF8String:text.c_str()]];
     }
+    calculatedMinimumSize.updated = false;
 }
 
 auto pButton::init() -> void {

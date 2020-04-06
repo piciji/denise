@@ -40,7 +40,7 @@ auto InputManager::setCustomHotkeys() -> void {
 	customHotkeys.push_back( {Hotkey::Id::SwapInputDevices, "swap_ports", true} );
 	customHotkeys.push_back( {Hotkey::Id::Power, "power", true} );
 	customHotkeys.push_back( {Hotkey::Id::SoftReset, "Soft Reset", true} );
-    customHotkeys.push_back( {Hotkey::Id::MultiLoad, "multi load", true} );
+    customHotkeys.push_back( {Hotkey::Id::AnyLoad, "load software", true} );
 
 	if (dynamic_cast<LIBC64::Interface*>(emulator) ) {
 		customHotkeys.push_back( {Hotkey::Id::ToggleSidFilter, "sid_filter_toggle", false} );
@@ -125,9 +125,9 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
 			program->reset(emulator);
 			break;
 			
-        case Hotkey::MultiLoad: {
+        case Hotkey::AnyLoad: {
             inputDriver->mUnacquire();
-            MediaView::MediaWindow::getView( emulator )->multiLoad();
+            MediaView::MediaWindow::getView( emulator )->anyLoad();
             break;
         }
         case Hotkey::Id::CaptureMouse:
@@ -335,7 +335,7 @@ auto InputManager::pollHotkeys() -> void {
 	InputMapping* stateHandler = nullptr;
 	InputMapping* deviceSwapper = nullptr;
 	InputMapping* starter = nullptr;
-    InputMapping* multiLoad = nullptr;
+    InputMapping* anyLoad = nullptr;
 	
 	auto useEmu = activeEmulator;
 	
@@ -405,15 +405,15 @@ auto InputManager::pollHotkeys() -> void {
 					starter = trigger;
 				break;
 				
-            case Hotkey::MultiLoad:
+            case Hotkey::AnyLoad:
 				if (!useEmu) 
 					useEmu = program->getLastUsedEmu();				
 
-				if (!multiLoad)
-					multiLoad = trigger;				
+				if (!anyLoad)
+					anyLoad = trigger;				
 				
 				else if (useEmu == trigger->inputManager->emulator)
-					multiLoad = trigger;
+					anyLoad = trigger;
 				break;
                 
 			default:
@@ -438,8 +438,8 @@ auto InputManager::pollHotkeys() -> void {
 	if (starter)
 		useTrigger.push_back( starter );
     
-    if (multiLoad)
-		useTrigger.push_back( multiLoad );
+    if (anyLoad)
+		useTrigger.push_back( anyLoad );
 	
 	for( auto trigger : useTrigger )			
 		fireHotkey( trigger->inputManager ? trigger->inputManager->emulator : nullptr, (Hotkey::Id)trigger->hotkeyId );   

@@ -208,7 +208,7 @@ struct MediaWindow : public GUIKIT::Window {
     auto getActiveLayout() -> MediaGroupLayout*;
     auto resetPreview(bool light = false) -> void;
     auto insertFile( MediaGroupLayout::Block* block, std::string filePath, bool autoLoad = false, unsigned selection = 0) -> bool;
-    auto multiLoad() -> void;
+    auto anyLoad() -> void;
     auto convertListing( std::vector<Emulator::Interface::Listing>& emuListings ) -> std::vector<std::string>;
 
     MediaWindow(Emulator::Interface* emulator);

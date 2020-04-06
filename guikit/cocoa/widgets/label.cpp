@@ -17,7 +17,7 @@
 namespace GUIKIT {
     
 auto pLabel::minimumSize() -> Size {
-    Size size = pFont::size([cocoaView font], widget.text());
+    Size size = getMinimumSize();
     return {size.width + 1, size.height + 4};
 }
 
@@ -49,6 +49,7 @@ auto pLabel::setText(std::string text) -> void {
     @autoreleasepool {
         [cocoaView setStringValue:[NSString stringWithUTF8String:text.c_str()]];
     }
+    calculatedMinimumSize.updated = false;
 }
     
 auto pLabel::setEnabled(bool enabled) -> void {

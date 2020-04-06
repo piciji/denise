@@ -23,7 +23,7 @@
 namespace GUIKIT {
     
 auto pHyperlink::minimumSize() -> Size {
-    Size size = pFont::size([cocoaView font], widget.text());
+    Size size = getMinimumSize();
     return {size.width + 1, size.height + 4};
 }
     
@@ -48,6 +48,7 @@ auto pHyperlink::setText(std::string text) -> void {
     @autoreleasepool {
         [cocoaView setStringValue:[NSString stringWithUTF8String:text.c_str()]];
     }
+    calculatedMinimumSize.updated = false;
 }
 
 auto pHyperlink::setUri( std::string uri, std::string wrap ) -> void {
@@ -56,6 +57,7 @@ auto pHyperlink::setUri( std::string uri, std::string wrap ) -> void {
 }
 
 auto pHyperlink::updateLink() -> void {
+    calculatedMinimumSize.updated = false;
 	std::string text = hyperlink.text();
 	std::string uri = hyperlink.uri();
 	std::string wrap = hyperlink.wrap();

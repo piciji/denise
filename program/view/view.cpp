@@ -654,13 +654,13 @@ auto View::buildMenu() -> void {
         
         sM.system->append(*GUIKIT::MenuSeparator::getInstance());
 		
-		sM.multiLoad = new GUIKIT::MenuItem;
-        sM.multiLoad->setIcon( driveImage );
-        sM.multiLoad->onActivate = [this, emulator]() {
+		sM.loadSoftware = new GUIKIT::MenuItem;
+        sM.loadSoftware->setIcon( driveImage );
+        sM.loadSoftware->onActivate = [this, emulator]() {
 
-            MediaView::MediaWindow::getView( emulator )->multiLoad();
+            MediaView::MediaWindow::getView( emulator )->anyLoad();
 	    };
-        sM.system->append( *sM.multiLoad );
+        sM.system->append( *sM.loadSoftware );
         
         sM.media = new GUIKIT::MenuItem;
         sM.media->setIcon( driveImage );
@@ -970,7 +970,7 @@ auto View::translate() -> void {
         sysMenu.reset->setText(trans->get("Soft Reset"));
         sysMenu.poweroff->setText(trans->get("power_off"));
         sysMenu.freeze->setText(trans->get("Freeze"));
-        sysMenu.multiLoad->setText(trans->get("multi load"));
+        sysMenu.loadSoftware->setText(trans->get("load software"));
         sysMenu.media->setText(trans->get("Software"));
         sysMenu.systemManagement->setText(trans->get("system_management"));
 

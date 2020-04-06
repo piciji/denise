@@ -18,7 +18,7 @@ struct View : public GUIKIT::Window {
         GUIKIT::MenuItem* poweroff;
         GUIKIT::MenuItem* freeze;
         GUIKIT::MenuItem* firmware;
-        GUIKIT::MenuItem* multiLoad;
+        GUIKIT::MenuItem* loadSoftware;
         GUIKIT::MenuItem* media;
         GUIKIT::MenuItem* diskSwapper;
         GUIKIT::MenuItem* systemManagement;

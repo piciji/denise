@@ -55,7 +55,7 @@
 namespace GUIKIT {
 
 auto pLineEdit::minimumSize() -> Size {
-    Size size = pFont::size([cocoaView font], widget.text());
+    Size size = getMinimumSize();
     return {size.width + 10, size.height + 6};
 }
 
@@ -89,6 +89,7 @@ auto pLineEdit::setText(std::string text) -> void {
     @autoreleasepool{
         [cocoaView setStringValue : [NSString stringWithUTF8String : text.c_str()]];
     }
+    calculatedMinimumSize.updated = false;
 }
 
 auto pLineEdit::init() -> void {

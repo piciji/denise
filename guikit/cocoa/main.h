@@ -74,6 +74,11 @@ struct pWidget {
     NSView* cocoaView = nullptr;
     bool locked = false;
 
+    struct {
+        bool updated = false;
+        Size minimumSize = {0, 0};
+    } calculatedMinimumSize;
+    
     virtual auto focused() -> bool;
     virtual auto setFocused() -> void;
     virtual auto minimumSize() -> Size { return {0,0}; }
@@ -86,6 +91,7 @@ struct pWidget {
     virtual auto setTooltip(std::string tooltip) -> void;
     virtual auto setBackgroundColor(unsigned color) -> void {}
     virtual auto setForegroundColor(unsigned color) -> void {}
+    auto getMinimumSize() -> Size;
     auto add() -> void;
     virtual auto init() -> void {}
 	static auto getScaledDim( unsigned value ) -> unsigned { return value; }

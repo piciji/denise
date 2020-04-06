@@ -12,12 +12,20 @@
 namespace GUIKIT {
     
 auto pFrame::minimumSize() -> Size {
+    
+    if (calculatedMinimumSize.updated)
+        return calculatedMinimumSize.minimumSize; 
+    
     Size size = pFont::size([cocoaView titleFont], widget.text());
     size.width += 4 + (borderSize() << 1);
     if (widget.text().empty()) size.height = 0;
     
-    size.height += borderSize() << 1;
-    return size;
+    size.height += borderSize() << 1;    
+    
+    calculatedMinimumSize.updated = true;   
+    calculatedMinimumSize.minimumSize = size;
+    
+    return calculatedMinimumSize.minimumSize;
 }
 
 auto pFrame::setGeometry(Geometry geometry) -> void {
@@ -34,12 +42,14 @@ auto pFrame::setText(std::string text) -> void {
     @autoreleasepool {
         [cocoaView setTitle:[NSString stringWithUTF8String:text.c_str()]];
     }
+    calculatedMinimumSize.updated = false;
 }
 
 auto pFrame::setFont(std::string font) -> void {
     @autoreleasepool {
         [cocoaView setTitleFont:pFont::cocoaFont(font)];
     }
+    calculatedMinimumSize.updated = false;
 }
 
 auto pFrame::init() -> void {

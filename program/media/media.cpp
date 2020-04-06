@@ -68,7 +68,7 @@ auto MediaWindow::build() -> void {
     winapi.disableBackgroundRedrawDuringResize();
     cocoa.keepMenuVisibilityOnDisplay();
     setDroppable();
-    setDelayedSizing(true);
+    //setDelayedSizing(true);
     
     ftimer.setInterval(150);
 	
@@ -318,7 +318,7 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
                     return this->previewFile(file, block);
                 } );
                 
-                fileDialogPtr->addCustomButton( trans->get("autoload"), [this, block, mediaGroup, layout](std::string filePath, unsigned selection) {
+                fileDialogPtr->addCustomButton( trans->get("auto start"), [this, block, mediaGroup, layout](std::string filePath, unsigned selection) {
                     
                     if (filePath.empty())
                         return false;
@@ -1486,7 +1486,7 @@ auto MediaWindow::insertFile( MediaGroupLayout::Block* block, std::string filePa
     return true;
 }
 
-auto MediaWindow::multiLoad() -> void {
+auto MediaWindow::anyLoad() -> void {
     
     if (fileDialogPtr) {
         fileDialogPtr->close();
@@ -1503,7 +1503,7 @@ auto MediaWindow::multiLoad() -> void {
 			if (filePath.empty())
 				return false;
 
-			settings->set<std::string>(ident("multiload_path"), GUIKIT::File::getPath( filePath ) );
+			settings->set<std::string>(ident("anyload_path"), GUIKIT::File::getPath( filePath ) );
 
 			view->autoloadInit( {filePath}, false, View::AutoLoad::AutoStart, selection );
 			view->autoloadFiles();
@@ -1519,7 +1519,7 @@ auto MediaWindow::multiLoad() -> void {
 	
     fileDialogPtr->setTitle(trans->get("select image"));
 
-    fileDialogPtr->setPath( settings->get<std::string>( ident("multiload_path"), "") );
+    fileDialogPtr->setPath( settings->get<std::string>( ident("anyload_path"), "") );
 
     fileDialogPtr->setFilters({trans->get("all_files")});
 
@@ -1528,7 +1528,7 @@ auto MediaWindow::multiLoad() -> void {
         auto listings = this->previewFile(file);
         
         if (listings.size())
-            settings->set<std::string>(ident("multiload_path"), GUIKIT::File::getPath( file ) );
+            settings->set<std::string>(ident("anyload_path"), GUIKIT::File::getPath( file ) );
         
         return listings;
     } );
@@ -1537,7 +1537,7 @@ auto MediaWindow::multiLoad() -> void {
         if (filePath.empty())
             return false;
 
-        settings->set<std::string>(ident("multiload_path"), GUIKIT::File::getPath( filePath ) );
+        settings->set<std::string>(ident("anyload_path"), GUIKIT::File::getPath( filePath ) );
         
         view->autoloadInit( {filePath}, false, View::AutoLoad::Open );
         view->autoloadFiles();
@@ -1548,7 +1548,7 @@ auto MediaWindow::multiLoad() -> void {
     }, IDC_BUTTON );       
     
     fileDialogPtr->setCallbacks( [this](std::string filePath, unsigned selection) {
-        settings->set<std::string>(ident("multiload_path"), GUIKIT::File::getPath( filePath ) );
+        settings->set<std::string>(ident("anyload_path"), GUIKIT::File::getPath( filePath ) );
         
         view->autoloadInit( {filePath}, false, View::AutoLoad::AutoStart, selection );
         view->autoloadFiles();
@@ -1560,7 +1560,7 @@ auto MediaWindow::multiLoad() -> void {
     
     fileDialogPtr->resizeTemplate( true, -8 );
     
-    fileDialogPtr->setDefaultButtonText( trans->get("autoload") );
+    fileDialogPtr->setDefaultButtonText( trans->get("auto start") );
     
     fileDialogPtr->setWindow( *view ).setNonModal();
 
@@ -1579,7 +1579,7 @@ auto MediaWindow::multiLoad() -> void {
         return;
     }
         
-    settings->set<std::string>(ident("multiload_path"), GUIKIT::File::getPath( filePath ) );
+    settings->set<std::string>(ident("anyload_path"), GUIKIT::File::getPath( filePath ) );
 
     view->autoloadInit( {filePath}, false, View::AutoLoad::AutoStart, fileDialogPtr ? fileDialogPtr->getContentViewSelection() : 0 );
     view->autoloadFiles();

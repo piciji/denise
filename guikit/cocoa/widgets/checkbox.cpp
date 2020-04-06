@@ -21,7 +21,7 @@
 namespace GUIKIT {
     
 auto pCheckBox::minimumSize() -> Size {
-    Size size = pFont::size([cocoaView font], widget.text());
+    Size size = getMinimumSize();
     return {size.width + 20, size.height};
 }
     
@@ -42,6 +42,7 @@ auto pCheckBox::setText(std::string text) -> void {
     @autoreleasepool {
         [cocoaView setTitle:[NSString stringWithUTF8String:text.c_str()]];
     }
+    calculatedMinimumSize.updated = false;
 }
 
 auto pCheckBox::init() -> void {

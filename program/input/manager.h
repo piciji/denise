@@ -66,7 +66,7 @@ struct Hotkey {
         DiskSwap7, DiskSwap8, DiskSwap9, DiskSwap10, DiskSwap11,
         DiskSwap12, DiskSwap13, DiskSwap14,
         ToggleFastForward, ToggleFastForwardAggressive, Presentation, Palette, Border, System, Firmware, Control,
-		SwapInputDevices, Power, SoftReset, MultiLoad
+		SwapInputDevices, Power, SoftReset, AnyLoad
     } id;
     std::string name;
 	bool share;

@@ -21,8 +21,15 @@
 namespace GUIKIT {
         
 auto pRadioBox::minimumSize() -> Size {
+    if (calculatedMinimumSize.updated)
+        return calculatedMinimumSize.minimumSize; 
+        
     Size size = pFont::size([inner font], widget.text());
-    return {size.width + 22, size.height + 1};
+    
+    calculatedMinimumSize.updated = true;   
+    calculatedMinimumSize.minimumSize = {size.width + 22, size.height + 1};
+    
+    return calculatedMinimumSize.minimumSize;
 }
     
 auto pRadioBox::setGeometry(Geometry geometry) -> void {
@@ -50,6 +57,7 @@ auto pRadioBox::setText(std::string text) -> void {
     @autoreleasepool {
         [inner setTitle:[NSString stringWithUTF8String:text.c_str()]];
     }
+    calculatedMinimumSize.updated = false;
 }
 
 auto pRadioBox::init() -> void {
@@ -89,6 +97,7 @@ auto pRadioBox::setFont(std::string font) -> void {
 			[inner setFont:pFont::cocoaFont(font)];
 		}
 	}
+    calculatedMinimumSize.updated = false;
 }
 
 auto pRadioBox::setEnabled(bool enabled) -> void {
