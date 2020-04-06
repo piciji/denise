@@ -346,7 +346,10 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
         } 
         
         case WM_CTLCOLORLISTBOX: {
-            auto colorFg = state->contentView.foregroundColor;            
+            auto colorBg = state->contentView.backgroundColor;
+            auto colorFg = state->contentView.foregroundColor;                  
+            
+            SetBkColor((HDC)wParam, RGB((colorBg >> 16) & 0xff, (colorBg >> 8) & 0xff, colorBg & 0xff)); 
             SetTextColor((HDC)wParam, RGB((colorFg >> 16) & 0xff, (colorFg >> 8) & 0xff, colorFg & 0xff) );
             return (LRESULT)context->listBgBrush;
         }       
