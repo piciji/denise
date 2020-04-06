@@ -68,7 +68,6 @@ auto MediaWindow::build() -> void {
     winapi.disableBackgroundRedrawDuringResize();
     cocoa.keepMenuVisibilityOnDisplay();
     setDroppable();
-    //setDelayedSizing(true);
     
     ftimer.setInterval(150);
 	

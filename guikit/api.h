@@ -232,7 +232,6 @@ struct Window : Base {
     auto changeCursor( Image& image, unsigned hotSpotX, unsigned hotSpotY ) -> void;
     auto setDefaultCursor( ) -> void;
     auto setPointerCursor( ) -> void;
-    auto setDelayedSizing(bool delayed) -> void;
 	
 	static auto addCustomFont( CustomFont* customFont ) -> bool;
 
@@ -243,7 +242,6 @@ struct Window : Base {
         bool statusVisible = false;
         bool visible = false;
         bool droppable = false;
-        bool delayedSizing = false;
         std::string title;
         std::string statusText;
         Geometry geometry = {100, 100, 400, 300};

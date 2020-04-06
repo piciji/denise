@@ -196,10 +196,7 @@
 }
 
 -(void) windowDidResize:(NSNotification*)notification {
-    if (window->state.delayedSizing)
-        window->p.timerResize.setEnabled();
-    else
-        window->p.sizeEvent();
+    window->p.sizeEvent();
 }
 
 -(void)windowDidMiniaturize:(NSNotification*)notification {
@@ -365,13 +362,6 @@ pWindow::pWindow(Window& window) : window(window) {
             once = false;
             [NSApp setMainMenu:[cocoaWindow menuBar]];
         }
-        
-        timerResize.setInterval(50);
-        timerResize.onFinished = [this]() {
-            sizeEvent();
-            timerResize.setEnabled(false);
-        };
-
     }
 }
 
