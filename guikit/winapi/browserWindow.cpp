@@ -225,7 +225,7 @@ auto pBrowserWindow::file(bool save) -> std::string {
     
     auto& state = browserWindow.state;
     
-    if (state.alternateHandling && (pApplication::version >= WindowsVista))
+    if (!state.contentView.id && (pApplication::version >= WindowsVista))
         return fileVista(save);
     
     pApplication::currentWorkingDirectory(); //unfortunately file dialog overwrites cwd, so get it before, if not already done

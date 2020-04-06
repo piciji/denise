@@ -911,8 +911,6 @@ struct BrowserWindow {
     auto setOnChangeCallback( std::function<std::vector<std::string> (std::string file)> onSelectionChange ) -> BrowserWindow&;
     auto addCustomButton( std::string text, std::function<bool (std::string filePath, unsigned selection)> onClick, unsigned id = 0 ) -> BrowserWindow&;
     auto setDefaultButtonText(std::string textOk, std::string textCancel = "") -> BrowserWindow&;
-	// winapi only: distinguish between XP mode (listview possible, XP dialog) or Vista mode (OS dialog, listview not possible)
-    auto setAlternateHandling(bool alternate) -> BrowserWindow&;
 	auto setNonModal() -> BrowserWindow&;
 
     auto setTemplateId(int id) -> BrowserWindow&;
@@ -951,7 +949,6 @@ struct BrowserWindow {
         std::function<void ()> onCancelClick = nullptr;
         std::vector<CustomButton> buttons;
         ContentView contentView;
-        bool alternateHandling = false; 
         int templateId = -1;
         bool resizeTemplate = false;
         int resizeAdjust = 0;

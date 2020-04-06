@@ -1068,11 +1068,6 @@ auto BrowserWindow::getContentViewSelection() -> unsigned {
     return p.contentViewSelection();
 }
 
-auto BrowserWindow::setAlternateHandling(bool alternate) -> BrowserWindow& {
-    state.alternateHandling = alternate;
-    return *this;
-}
-
 auto BrowserWindow::setFilters(std::vector<std::string> filters) -> BrowserWindow& {
     state.filters = filters;
     return *this;

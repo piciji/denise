@@ -310,8 +310,6 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
                 
                 fileDialogPtr = new GUIKIT::BrowserWindow;
                 
-                fileDialogPtr->setAlternateHandling( *alternateFileDialog );
-                
                 fileDialogPtr->setTemplateId( IDD_FILE_TEMPLATE );
                 
                 fileDialogPtr->resizeTemplate( true, -8 );
@@ -322,10 +320,7 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
                 
                 fileDialogPtr->setFilters({ GUIKIT::BrowserWindow::transformFilter(trans->get(mediaGroup->name + "_image"), suffix ),
 						trans->get("all_files")});
-                        
-                fileDialogPtr->customizeContentView( useCustomFont ? "C64 Pro Mono, 10" : "",
-                    mediaGroupLayouts[0]->listings.foregroundColor(), mediaGroupLayouts[0]->listings.backgroundColor());
-                        
+                                                
                 fileDialogPtr->setOnChangeCallback( [this, block](std::string file) {
 
                     return this->previewFile(file, block);
@@ -339,13 +334,18 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
                     return insertFile(block, filePath, true, selection);
                 }, IDC_BUTTON );    
 
-                fileDialogPtr->addContentView(IDC_LIST, [this, block](std::string filePath, unsigned selection) {
-                    if (filePath.empty())
-                        return false;
+				if (!*alternateFileDialog) {
+					fileDialogPtr->addContentView(IDC_LIST, [this, block](std::string filePath, unsigned selection) {
+						if (filePath.empty())
+							return false;
 
-                    return insertFile(block, filePath, true, selection);
-                });
-                
+						return insertFile(block, filePath, true, selection);
+					});
+					
+					fileDialogPtr->customizeContentView( useCustomFont ? "C64 Pro Mono, 10" : "",
+						mediaGroupLayouts[0]->listings.foregroundColor(), mediaGroupLayouts[0]->listings.backgroundColor());
+                }
+				
                 fileDialogPtr->setCallbacks( [this, block](std::string filePath, unsigned selection) {
                     
                     insertFile(block, filePath);
@@ -1504,27 +1504,27 @@ auto MediaWindow::multiLoad() -> void {
 
     fileDialogPtr = new GUIKIT::BrowserWindow;
     
-    fileDialogPtr->setAlternateHandling( *alternateFileDialog );
-    
     fileDialogPtr->setTemplateId( IDD_FILE_TEMPLATE );
     
-    fileDialogPtr->addContentView( IDC_LIST, [this](std::string filePath, unsigned selection) {
-        if (filePath.empty())
-            return false;
+	if (!*alternateFileDialog) {
+		fileDialogPtr->addContentView( IDC_LIST, [this](std::string filePath, unsigned selection) {
+			if (filePath.empty())
+				return false;
 
-        settings->set<std::string>(ident("multiload_path"), GUIKIT::File::getPath( filePath ) );
-        
-        view->autoloadInit( {filePath}, false, View::AutoLoad::AutoStart, selection );
-        view->autoloadFiles();
-        
-        resetPreview();
-        
-        return true;
-    } );
-    
-    fileDialogPtr->customizeContentView( useCustomFont ? "C64 Pro Mono, 11" : "",
-        mediaGroupLayouts[0]->listings.foregroundColor(), mediaGroupLayouts[0]->listings.backgroundColor());
-    
+			settings->set<std::string>(ident("multiload_path"), GUIKIT::File::getPath( filePath ) );
+
+			view->autoloadInit( {filePath}, false, View::AutoLoad::AutoStart, selection );
+			view->autoloadFiles();
+
+			resetPreview();
+
+			return true;
+		} );
+
+		fileDialogPtr->customizeContentView( useCustomFont ? "C64 Pro Mono, 11" : "",
+			mediaGroupLayouts[0]->listings.foregroundColor(), mediaGroupLayouts[0]->listings.backgroundColor());
+    }
+	
     fileDialogPtr->setTitle(trans->get("select image"));
 
     fileDialogPtr->setPath( settings->get<std::string>( ident("multiload_path"), "") );

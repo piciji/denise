@@ -249,7 +249,7 @@ auto pBrowserWindow::buildView() -> void {
     [accessoryView setFrame:NSMakeRect(0, 0, maxContentWidth, maxContentHeight)];
     
     [panel setAccessoryView: accessoryView];
-    if (state.alternateHandling)
+    if (!state.contentView.id)
         [panel setAccessoryViewDisclosed:NO];
     else
         [panel setAccessoryViewDisclosed:YES];
