@@ -94,4 +94,8 @@
 			padding: 3px 0px;
 		}
 		
+		scrolledwindow undershoot.top, scrolledwindow undershoot.right, scrolledwindow undershoot.bottom, scrolledwindow undershoot.left {
+			background-image: none;
+		}
+		
 	)";

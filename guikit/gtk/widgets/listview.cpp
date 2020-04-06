@@ -94,6 +94,8 @@ auto pListView::create() -> void {
         gtype.push_back(GDK_TYPE_PIXBUF);
 
         cell.text = gtk_cell_renderer_text_new();
+		g_object_set(G_OBJECT(cell.text), "ypad", 0, nullptr);
+		
         gtk_tree_view_column_pack_start(cell.column, cell.text, false);
         gtk_tree_view_column_set_attributes(cell.column, cell.text, "text", gtype.size(), nullptr);
         gtype.push_back(G_TYPE_STRING);
