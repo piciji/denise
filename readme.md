@@ -9,7 +9,6 @@
 
 ## 1.0.8 (not yet released)
 * added Retro/Nordic Replay support
-* added confirmation dialog to disable write protection while trying to write on protected media
 * added macOS DMG installer [thanks to Retrofan for background image]
 * added xInput emulation for Windows rawInput driver [XBOX Controller, xMode devices]
 * fixed a few input handling bugs
@@ -22,8 +21,10 @@
 * moved some global hotkeys to emulator specific hotkeys, i.e. load/save states, SID control
 * reworked firmware view
 * added posibillity to swap in CHAR roms during active emulation
+* reworked software view
 * show placeholder picture when emulator is opened but still not running an emulation [thanks to Retrofan]
 * autoload for all media types with D64/T64 viewer in file dialog
+* added possibility to associate files with Denise for macOS
 
 ## 1.0.7
 * fixed a critical bug that caused OSX builds to use illegal instructions for some architectures
