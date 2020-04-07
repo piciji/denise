@@ -23,6 +23,7 @@
 * reworked firmware view
 * added posibillity to swap in CHAR roms during active emulation
 * show placeholder picture when emulator is opened but still not running an emulation [thanks to Retrofan]
+* autoload for all media types with D64/T64 viewer in file dialog
 
 ## 1.0.7
 * fixed a critical bug that caused OSX builds to use illegal instructions for some architectures

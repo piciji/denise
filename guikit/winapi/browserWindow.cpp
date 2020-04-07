@@ -327,13 +327,15 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
             
             if (listBox) {
                 if (state->contentView.font != "")
-                    context->listFont = pFont::create( state->contentView.font );
+                    context->listFont = pFont::create( state->contentView.font, -1 );
                 else
                     context->listFont = pFont::create( Font::system() );
 
                 SendMessage(listBox, WM_SETFONT, (WPARAM)context->listFont, 0);
                 
-                SendMessage(listBox, LB_SETITEMHEIGHT, 0, 16);
+                auto size = pFont::size(context->listFont, " ");
+                
+                SendMessage(listBox, LB_SETITEMHEIGHT, 0, size.height + 1);
             }
             auto colorBg = state->contentView.backgroundColor;                        
             context->listBgBrush = CreateSolidBrush( RGB((colorBg >> 16) & 0xff, (colorBg >> 8) & 0xff, colorBg & 0xff) );
@@ -448,6 +450,7 @@ auto pBrowserWindow::resize( HWND fileDialogView, bool init ) -> void {
     if (!inited || !browserWindow.state.resizeTemplate)
         return;
     
+    static signed dpiX = pFont::dpi().x;
     RECT rDialogView;
     RECT rCustomView;
     RECT rListBox;
@@ -509,7 +512,7 @@ auto pBrowserWindow::resize( HWND fileDialogView, bool init ) -> void {
         buttonTotalHeight = std::max(buttonTotalHeight, button.relativeY + button.height);
     }
     
-    int contentHeight = dialogHeight - buttonTotalHeight - customGapTop - customGapBottom + browserWindow.state.resizeAdjust;
+    int contentHeight = dialogHeight - buttonTotalHeight - customGapTop - customGapBottom + (browserWindow.state.resizeAdjust * dpiX) / 72;
     
     if (listBox) {       
         

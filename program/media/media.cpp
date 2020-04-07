@@ -303,7 +303,7 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
                 
                 fileDialogPtr->setTemplateId( IDD_FILE_TEMPLATE );
                 
-                fileDialogPtr->resizeTemplate( true, -8 );
+                fileDialogPtr->resizeTemplate( true, -6 );
                 
                 fileDialogPtr->setTitle(trans->get("select_" + mediaGroup->name + "_image"));
                 
@@ -333,7 +333,7 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
 						return insertFile(block, filePath, true, selection);
 					});
 					
-					fileDialogPtr->customizeContentView( useCustomFont ? "C64 Pro Mono, 10" : "",
+					fileDialogPtr->customizeContentView( useCustomFont ? "C64 Pro Mono, 11" : "",
 						mediaGroupLayouts[0]->listings.foregroundColor(), mediaGroupLayouts[0]->listings.backgroundColor());
                 }
 				
@@ -1557,7 +1557,7 @@ auto MediaWindow::anyLoad() -> void {
         resetPreview();
     } );
     
-    fileDialogPtr->resizeTemplate( true, -8 );
+    fileDialogPtr->resizeTemplate( true, -6 );
     
     fileDialogPtr->setDefaultButtonText( trans->get("auto start") );
     

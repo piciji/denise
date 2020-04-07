@@ -26,9 +26,8 @@
     * click entries and load them without fast-forward to counter position before
     * dongles
 * pseudo stereo SID
-* autoload for all media types with D64/T64 viewer in file dialog
 * color banding
-* support to put clipboard in C64
+* support to put clipboard in C64 memory
 
 # to do Amiga A500, A1200
 * 68000/68010 opcode tester
@@ -49,6 +48,7 @@
 * run frame ahead for reduced input lag
 * drive leds / sounds 
 * beam racing
+* low latency vsync
 * rewind support
 * debug monitor for developers
 * directx 10 and higher
@@ -63,20 +63,19 @@
 * separate setting file by emulation cores
 * auto start should reuse already opened instance (enable in UI)
 * autofire with frequency and option to fire without button press (don't forget override logic)
-* load PRG files from disk as simple RAM insertion for reduced loading times
+* load PRG files from disk as simple RAM insertion for reduced loading times [quickload]
 * UI switch to invert RAM init pattern
 * write (SID/PAULA) output to WAV 
 * open files as read only from OS point of view
-* set "integer scaling" multiplicator without sizing application window
-* png overlay for 16:9 fullscreen
+* set "integer scaling" multiplicator without sizing application window OR recalculate while resizing (never show black border)
+* PNG overlay for 16:9 fullscreen
 * allow input if there is no focus
 * SID 8580 sounds more powerfull in other emulators (maybe a bug or an additional audio effect?) (https://csdb.dk/release/?id=187116)
 * save/load additional settings files in App folder (mostly for per game key maps)
 * add Depixelizing technic (http://johanneskopf.de/publications/pixelart/index.html)
 * add confirmation question when quiting Denise Alt+F4
-* add low latency vsync
 * mount OS folder as D64
-* question user about disk write action when disk is removed
+* if the disk is read-only, it is written temporarily and asked if it should be stored permanently when the floppy disk is ejected
 
 # bugs
 * japanese characters aren't displayed correctly in OpenGL onscreen text
@@ -104,7 +103,6 @@
 * c64 REU
 * c64 EasyFlash + write support
 * c64 RetroReplay / Nordic Replay + write support
-* c64 swap in CHAR roms during active emulation
 
 # completed features for all emu cores
 * multi driver support
