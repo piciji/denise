@@ -1485,7 +1485,12 @@ auto MediaWindow::insertFile( MediaGroupLayout::Block* block, std::string filePa
     return true;
 }
 
+#define HideMouseIfWasBefore if (mIsAcquiredBefore && !inputDriver->mIsAcquired() && view->fullScreen() && fileDialogPtr && fileDialogPtr->detached()) inputDriver->mAcquire();
+
 auto MediaWindow::anyLoad() -> void {
+    
+    bool mIsAcquiredBefore = inputDriver->mIsAcquired();    
+    inputDriver->mUnacquire();
     
     if (fileDialogPtr) {
         fileDialogPtr->close();
@@ -1498,7 +1503,7 @@ auto MediaWindow::anyLoad() -> void {
     fileDialogPtr->setTemplateId( IDD_FILE_TEMPLATE );
     
 	if (!*alternateFileDialog) {
-		fileDialogPtr->addContentView( IDC_LIST, [this](std::string filePath, unsigned selection) {
+		fileDialogPtr->addContentView( IDC_LIST, [this, mIsAcquiredBefore](std::string filePath, unsigned selection) {
 			if (filePath.empty())
 				return false;
 
@@ -1509,6 +1514,8 @@ auto MediaWindow::anyLoad() -> void {
 
 			resetPreview();
 
+            HideMouseIfWasBefore
+            
 			return true;
 		} );
 
@@ -1531,7 +1538,7 @@ auto MediaWindow::anyLoad() -> void {
         
         return listings;
     } );
-    fileDialogPtr->addCustomButton( trans->get("open"), [this](std::string filePath, unsigned selection) {
+    fileDialogPtr->addCustomButton( trans->get("open"), [this, mIsAcquiredBefore](std::string filePath, unsigned selection) {
 
         if (filePath.empty())
             return false;
@@ -1543,18 +1550,25 @@ auto MediaWindow::anyLoad() -> void {
         
         resetPreview();
         
+        HideMouseIfWasBefore
+        
         return true;
     }, IDC_BUTTON );       
     
-    fileDialogPtr->setCallbacks( [this](std::string filePath, unsigned selection) {
+    fileDialogPtr->setCallbacks( [this, mIsAcquiredBefore](std::string filePath, unsigned selection) {
         settings->set<std::string>(ident("anyload_path"), GUIKIT::File::getPath( filePath ) );
         
         view->autoloadInit( {filePath}, false, View::AutoLoad::AutoStart, selection );
         view->autoloadFiles();
         
         resetPreview();
-    }, [this]() {
+        
+        HideMouseIfWasBefore
+        
+    }, [this, mIsAcquiredBefore]() {
         resetPreview();
+        
+        HideMouseIfWasBefore
     } );
     
     fileDialogPtr->resizeTemplate( true, -6 );
@@ -1570,20 +1584,19 @@ auto MediaWindow::anyLoad() -> void {
         // it handles OK state in callback
 		//message->warning("detached multi");
         return;
-	}
-	
-    if (filePath.empty()) {
-        //message->warning("cancel multi");
-        resetPreview();
-        return;
-    }
-        
-    settings->set<std::string>(ident("anyload_path"), GUIKIT::File::getPath( filePath ) );
+	}        
+    
+    if ( !filePath.empty() ) {
+        settings->set<std::string>(ident("anyload_path"), GUIKIT::File::getPath( filePath ) );
 
-    view->autoloadInit( {filePath}, false, View::AutoLoad::AutoStart, fileDialogPtr ? fileDialogPtr->getContentViewSelection() : 0 );
-    view->autoloadFiles();
+        view->autoloadInit( {filePath}, false, View::AutoLoad::AutoStart, fileDialogPtr ? fileDialogPtr->getContentViewSelection() : 0 );
+        view->autoloadFiles();
+    } //else
+        //message->warning("cancel multi");
     
     resetPreview();
+    if (mIsAcquiredBefore && view->fullScreen())
+        inputDriver->mAcquire();
 }
 
 auto MediaWindow::convertListing( std::vector<Emulator::Interface::Listing>& emuListings ) -> std::vector<std::string> {

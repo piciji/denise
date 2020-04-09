@@ -125,11 +125,10 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
 			program->reset(emulator);
 			break;
 			
-        case Hotkey::AnyLoad: {
-            inputDriver->mUnacquire();
+        case Hotkey::AnyLoad:           
             MediaView::MediaWindow::getView( emulator )->anyLoad();
             break;
-        }
+            
         case Hotkey::Id::CaptureMouse:
             if (inputDriver->mIsAcquired()) {
                 inputDriver->mUnacquire();					
@@ -441,10 +440,10 @@ auto InputManager::pollHotkeys() -> void {
     if (anyLoad)
 		useTrigger.push_back( anyLoad );
 	
+    hotkeyTriggers.clear();
+    
 	for( auto trigger : useTrigger )			
-		fireHotkey( trigger->inputManager ? trigger->inputManager->emulator : nullptr, (Hotkey::Id)trigger->hotkeyId );   
-	
-	hotkeyTriggers.clear();		
+		fireHotkey( trigger->inputManager ? trigger->inputManager->emulator : nullptr, (Hotkey::Id)trigger->hotkeyId );   		
 }
 
 auto InputManager::activateHotkey(Hotkey::Id id, Emulator::Interface* emulator) -> void {
