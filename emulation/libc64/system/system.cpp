@@ -459,7 +459,7 @@ System::System(Interface* interface) {
 		bottom = vicII->crop.bottomOverscan;
 		left = vicII->crop.leftOverscan;
 		right = vicII->crop.rightOverscan;
-	};
+	};    
 
 	powerSupply->addCallback( [this]( ) {
 		cia1->tod( );

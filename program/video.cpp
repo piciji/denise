@@ -171,7 +171,7 @@ auto Program::updateCrop( Emulator::Interface* emulator ) -> void {
 	auto top = settings->get<unsigned>(ident(emulator, "crop_top"), 0, {0u,100u});
 	auto bottom = settings->get<unsigned>(ident(emulator, "crop_bottom"), 0, {0u,100u});
 	
-	auto type = settings->get<unsigned>(ident(emulator, "crop_type"), 0, {0u,4u});
+	auto type = settings->get<unsigned>(ident(emulator, "crop_type"), (unsigned)Emulator::Interface::CropType::Monitor, {0u,4u});
 	auto aspectCorrect = settings->get<bool>(ident(emulator, "crop_aspect_correct"), 0);
 	
 	emulator->crop( (Emulator::Interface::CropType) type, aspectCorrect, left, right, top, bottom );

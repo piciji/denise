@@ -44,7 +44,7 @@ cropBottom("px")
 		updateVisibillity();
 		program->updateCrop( emulator );
 	};
-	
+    
 	cropMonitor.onActivate = [this]( ) {
 		settings->set<unsigned>( this->tabWindow->ident( "crop_type" ), (unsigned)CropType::Monitor );
 		updateVisibillity();
@@ -118,11 +118,11 @@ cropBottom("px")
     cropBottom.slider.setPosition(valBottom);
     cropBottom.value.setText( std::to_string( valBottom ) + " px" );
 
-	auto valCropType = settings->get<unsigned>(tabWindow->ident("crop_type"), 0, {0u,4u});
+	auto valCropType = settings->get<unsigned>(tabWindow->ident("crop_type"), (unsigned)CropType::Monitor, {0u,4u});
 	if (valCropType == 1) cropMonitor.setChecked();
 	else if (valCropType == 2) cropAuto.setChecked();
 	else if (valCropType == 3) cropSemiAuto.setChecked();
-	else if (valCropType == 4) cropFree.setChecked();	
+	else if (valCropType == 4) cropFree.setChecked();
 	else cropOff.setChecked();
 	
 	auto valCropAC = settings->get<bool>(tabWindow->ident("crop_aspect_correct"), 0);
@@ -132,7 +132,7 @@ cropBottom("px")
 }
 
 auto BorderLayout::updateVisibillity() -> void {
-	auto val = settings->get<unsigned>(tabWindow->ident("crop_type"), 0);
+	auto val = settings->get<unsigned>(tabWindow->ident("crop_type"), (unsigned)Emulator::Interface::CropType::Monitor, {0u,4u});
 	
 	cropLeft.setEnabled( val == 3 || val == 4 );
 	cropRight.setEnabled( val == 4 );
@@ -150,13 +150,13 @@ auto BorderLayout::translate() -> void {
 	cropBottom.name.setText( trans->get("down", {},true) );
 	
 	cropOff.setText( trans->get("disabled") );
-	cropMonitor.setText( trans->get("crop_monitor") );
-	cropAuto.setText( trans->get("crop_auto") );
-	cropSemiAuto.setText( trans->get("crop_semi_auto") );
-	cropFree.setText( trans->get("crop_free") );
+	cropMonitor.setText( trans->get("monitor") );
+	cropAuto.setText( trans->get("crop complete") );
+	cropSemiAuto.setText( trans->get("crop all sides equally") );
+	cropFree.setText( trans->get("crop each side manually") );
 	
-	cropAspectCorrect.setText( trans->get("crop_aspect_correct") );
-	cropLayout.setText( trans->get("crop") );
+	cropAspectCorrect.setText( trans->get("maintain display ratio") );
+	cropLayout.setText( trans->get("crop border") );
     
     SliderLayout::scale({&cropLeft, &cropRight, &cropTop, &cropBottom}, "100 px");
 }

@@ -443,7 +443,7 @@ template<bool phi1> inline auto VicII::draw65( uint8_t x, uint8_t x1 ) -> void {
 
 template<bool phi1> inline auto VicII::draw85( uint8_t x ) -> void {
         
-    // if register change a pixel before is accessed now
+    // if same color register was written a cycle before and is accessed on fifth pixel the grey dot bug will happen
     if ( x == 4 && (lastColorReg == renderPipe[4]) )
         renderPipe[x] = 0x0f; // grey dot for newer chips
     else

@@ -18,7 +18,7 @@
 
 namespace LIBC64 {
 
-const std::string Interface::Version = "1072";
+const std::string Interface::Version = "1074";
     
 Interface::Interface() : Emulator::Interface( "C64" ) {        
     
@@ -344,6 +344,8 @@ auto Interface::prepareFeatures() -> void {
     features.push_back({FeatureIdGlueLogic, "Custom IC Glue Logic", Feature::Type::Switch, 0, false, false});
     // disk drive thread consumes a single core 100%, usefull when emulating more than two drives
     features.push_back({FeatureIdPowerThread, "Disk Core 100%", Feature::Type::Switch, 0, true, true});    
+    // emulate the buggy vertical line in first two border pixels
+    features.push_back({FeatureIdLeftLineAnomaly, "Left Line Anomaly", Feature::Type::Switch, 0, true, false});    
 }
 
 auto Interface::prepareChipset() -> void {    
@@ -946,6 +948,9 @@ auto Interface::setFeature(unsigned featureId, int value) -> void {
         case FeatureIdPowerThread:
             iecBus->setPowerThread( value & 1 );
             break;
+        case FeatureIdLeftLineAnomaly:
+            vicII->setVerticalLineAnomaly( value & 1 );
+            break;
     }    
 }
 
@@ -970,6 +975,8 @@ auto Interface::getFeature(unsigned featureId) -> int {
             return (int)system->glueLogic->type;
         case FeatureIdPowerThread:
             return iecBus->cpuBurner;
+        case FeatureIdLeftLineAnomaly:
+            return vicII->isVerticalLineAnomaly();
     }    
     return 0;
 }

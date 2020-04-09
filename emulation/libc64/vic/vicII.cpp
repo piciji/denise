@@ -29,6 +29,7 @@ VicII::VicII() {
     buildXCounterLookupTable();
     
 	lineCallback.use = false;
+    lineCallback.line = 0;
 	lineCallback.finishVblank = false;
 }
 
@@ -56,6 +57,14 @@ auto VicII::isRevision65() -> bool {
     return rev65;
 }
 
+auto VicII::setVerticalLineAnomaly(bool state) -> void {
+    leftVerticalLineAnomaly = state;
+}
+
+auto VicII::isVerticalLineAnomaly() -> bool {
+    return leftVerticalLineAnomaly;
+}
+    
 auto VicII::updateIrq( Interrupt interrupt ) -> void {       
     
     if ( interrupt != Interrupt::None ) {

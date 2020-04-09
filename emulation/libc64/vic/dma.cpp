@@ -159,7 +159,7 @@ template<bool _useSequencer> auto VicII::phase2() -> void {
     modeEcmBmmDma = modeEcmBmm;	
     // we reset last color reg a little bit later, because of
     // we have to find out for the new vics if it is accessed
-    // in the next pixel, see grey dot bug
+    // in the fifth pixel, see grey dot bug
     lastColorReg = 0xff;	                
 }
 
@@ -224,20 +224,41 @@ inline auto VicII::advanceCycle() -> void {
 			
         } else if ( lineVCounter == vHeight ) {
             visibleLine = false; // v-blank
+            
+            if (leftVerticalLineAnomaly)
+                insertFirstLineAnomaly( lineCallback.line, lineVCounter );
+            
             // push out the frame to host
             // we crop the h-blanking area before
             videoRefresh( frameBuffer + firstVisiblePixel, 
                 hWidth, lineVCounter, VIC_MAX_LINE_LENGTH - hWidth
             );
 			lineVCounter = 0;
-		} else if (lineCallback.use && (lineVCounter == lineCallback.line))
+		} else if (lineCallback.use && (lineVCounter == lineCallback.line)) {
+            if (leftVerticalLineAnomaly)
+                insertFirstLineAnomaly( 0, lineVCounter );
+            
             midScreenCallback();
+        }
         
 	} else if (cycle == 1)
 		setLineBuffer();  
 
 	lastBusPhi2 = 0xff; // clear internal bus    
     sprite0DmaLateBA = false;
+}
+
+auto VicII::insertFirstLineAnomaly(unsigned start, unsigned end) -> void {
+    
+    uint16_t* ptr = frameBuffer + (start * VIC_MAX_LINE_LENGTH) + firstVisiblePixel;
+    
+    for(unsigned i = start; i < end; i++) {        
+        
+        *ptr = 1;
+        *(ptr + 1) = 1;
+        
+        ptr += VIC_MAX_LINE_LENGTH;
+    }
 }
 
 inline auto VicII::setLineBuffer() -> void {

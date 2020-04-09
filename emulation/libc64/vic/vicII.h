@@ -112,9 +112,13 @@ struct VicII {
     auto lastReadPhase1() -> uint8_t { return lastReadPhi1; }
     auto isAecLow() -> bool { return aecDelay == 0; }
     auto isBaLow() -> bool { return baLow; }
+    
+    auto setVerticalLineAnomaly(bool state) -> void;
+    auto isVerticalLineAnomaly() -> bool;
    
 protected:    
     bool rev65; //true: 65xx chips, false: 85xx chips
+    bool leftVerticalLineAnomaly = false;
     
     double luma[2][16];
     double chroma[16]; // as angle on color wheel
@@ -306,6 +310,7 @@ protected:
 	auto fetchC() -> void;
     auto addrG( uint8_t useMode ) -> uint16_t;
     auto fetchG() -> void;    
+    auto insertFirstLineAnomaly(unsigned start, unsigned end) -> void;
 	
 	//sequencer
 	template<bool phi1> auto sequencer(  ) -> void;

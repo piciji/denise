@@ -142,6 +142,7 @@ auto VicII::serialize(Emulator::Serializer& s) -> void {
     s.integer( cAccessArea );
     s.integer( sprite0DmaLateBA );
     s.integer( disableEcmBmmTogether );
+    s.integer( leftVerticalLineAnomaly );
     
     xLookupPtrPhi1 = ntsc ? &xLookUpNtscPhi1[0] : &xLookUpPalPhi1[0];
     xLookupPtrPhi2 = ntsc ? &xLookUpNtscPhi2[0] : &xLookUpPalPhi2[0];

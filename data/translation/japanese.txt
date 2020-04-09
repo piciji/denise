@@ -232,12 +232,6 @@ Swap_sid = SIDチップの変更
 Digi_boost = SID 8580のdigiブースト
 adjust_bias_up = SIDの適正閾値アップ 
 adjust_bias_down = SIDの適正閾値ダウン
-crop = ボーダーの縮小
-crop_auto = ボーダーなし
-crop_monitor = モニタのオーバースキャンに合わせる
-crop_semi_auto = 四方を一括縮小
-crop_free = 四方を個別に縮小
-crop_aspect_correct = ボーダー調整後もアスペクト比を維持
 c64_list_tip = 'Run'コマンドはプログラムをダブルクリックした時のみ自動起動。既にシステムが起動している場合はメモリに読み込まれるのみとなります
 french = フランス語配列
 german = ドイツ語配列
@@ -450,3 +444,10 @@ insert cartridge =
 remove cartridge = 
 Preview = 
 alternate software preview = 
+crop border = crop = ボーダーの縮小
+crop complete = crop_auto = ボーダーなし
+monitor = crop_monitor = モニタのオーバースキャンに合わせる
+crop all sides equally = crop_semi_auto = 四方を一括縮小
+crop each side manually = crop_free = 四方を個別に縮小
+maintain display ratio = crop_aspect_correct = ボーダー調整後もアスペクト比を維持
+Left_Line_Anomaly = 

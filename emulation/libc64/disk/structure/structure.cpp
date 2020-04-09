@@ -336,7 +336,7 @@ auto Structure1541::selectListing( Emulator::Interface::Media* media, unsigned p
     
     action.mode = KeyBuffer::Mode::WaitFor;
     action.buffer = {'R', 'E', 'A', 'D', 'Y', '.'};  
-    action.delay = 120;    
+    action.delay = 180;    
     action.alternateBuffer.clear();
     action.blinkingCursor = true;
     system->keyBuffer->add( action );

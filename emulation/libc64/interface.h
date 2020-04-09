@@ -12,7 +12,7 @@ struct Interface : Emulator::Interface {
     enum FeatureId {
         FeatureIdSid = 0, FeatureIdFilter = 1, FeatureIdDigiboost = 2, FeatureIdBias = 3,
         FeatureIdSidAccuracy = 4, FeatureIdCiaRev = 5, FeatureIdCpuAneMagic = 6, FeatureIdGlueLogic = 7,
-        FeatureIdPowerThread = 8
+        FeatureIdPowerThread = 8, FeatureIdLeftLineAnomaly = 9
     };
     
     enum MediaGroupId {

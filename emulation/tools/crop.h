@@ -53,7 +53,7 @@ struct Crop {
 		
 		} else if( settings.type == CropType::Monitor ) {		
 			monitorBorderCallback( top, bottom, left, right );            
-			
+            
         } else if( settings.type == CropType::SemiAuto ) {
 			top = settings.left;
 			left = settings.left;
