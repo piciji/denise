@@ -451,3 +451,8 @@ crop all sides equally = crop_semi_auto = Réduire la constante pour tous les c�
 crop each side manually = crop_free = réduire manuellement pour chaque côté
 maintain display ratio = crop_aspect_correct = conserver les proportions
 Left_Line_Anomaly = 
+Left_Line_Anomaly_info = 
+Off = 
+Solid White = 
+Register Color = 
+

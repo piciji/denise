@@ -226,11 +226,11 @@ auto VicII::writeIO( uint8_t addr, uint8_t value ) -> void {
         case 0x1f:
             break; //not writable
             
-        case 0x20:
-		case 0x21:
-        case 0x22: 
-        case 0x23: 
-        case 0x24:
+        case 0x20:			
+		case 0x21:			
+        case 0x22:			
+        case 0x23:			
+        case 0x24:			
 		case 0x25:
         case 0x26:
 		case 0x27:

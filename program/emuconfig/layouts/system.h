@@ -6,6 +6,7 @@ struct FeatureLayout : GUIKIT::FramedVerticalLayout {
         struct Block : GUIKIT::HorizontalLayout {
             Emulator::Interface::Feature* feature;
             GUIKIT::CheckBox checkBox;
+			std::vector<GUIKIT::RadioBox*> options;
             GUIKIT::Label label;
             GUIKIT::LineEdit lineEdit;
             GUIKIT::Label dangerLabel;
@@ -129,7 +130,7 @@ struct SystemLayout : GUIKIT::VerticalLayout {
     auto translate() -> void;
 	auto setEnabled(bool state) -> void;
 	auto toggleFeature( unsigned id ) -> bool;
-    auto updateFeature( unsigned id, int step ) -> int;
+    auto stepRangeFeature( unsigned id, int step ) -> int;
 	auto updateFeatureWidget( FeatureLayout::Line::Block* block ) -> void;
     auto updateRuntimeFeatureWidgets( ) -> void;
     auto featureIdent( std::string ident ) -> std::string;

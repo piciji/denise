@@ -1487,10 +1487,7 @@ auto MediaWindow::insertFile( MediaGroupLayout::Block* block, std::string filePa
 
 #define HideMouseIfWasBefore if (mIsAcquiredBefore && !inputDriver->mIsAcquired() && view->fullScreen() && fileDialogPtr && fileDialogPtr->detached()) inputDriver->mAcquire();
 
-auto MediaWindow::anyLoad() -> void {
-    
-    bool mIsAcquiredBefore = inputDriver->mIsAcquired();    
-    inputDriver->mUnacquire();
+auto MediaWindow::anyLoad( bool mIsAcquiredBefore ) -> void {
     
     if (fileDialogPtr) {
         fileDialogPtr->close();

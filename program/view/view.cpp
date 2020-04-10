@@ -152,6 +152,8 @@ auto View::build() -> void {
 		program->renderPlaceholder();
 	};
 	
+	autoloadTimer.setInterval(40);
+	
 	viewport.onMousePress = [this](GUIKIT::Mouse::Button button) {
 		
 		if (program->isRunning || (button != GUIKIT::Mouse::Button::Left))
@@ -184,6 +186,20 @@ auto View::build() -> void {
 	};
 	
     setDragnDrop();        
+}
+
+auto View::setAutoload( Emulator::Interface* emulator ) -> void {
+
+	bool mIsAcquiredBefore = inputDriver->mIsAcquired();
+	if (mIsAcquiredBefore)
+		inputDriver->mUnacquire();
+	
+	autoloadTimer.onFinished = [this, emulator, mIsAcquiredBefore]() {
+		autoloadTimer.setEnabled(false);		
+		MediaView::MediaWindow::getView( emulator )->anyLoad( mIsAcquiredBefore );
+	};
+	
+	autoloadTimer.setEnabled();
 }
 
 auto View::cursorForPlacholderInUpperTriangle() -> bool {
@@ -656,9 +672,8 @@ auto View::buildMenu() -> void {
 		
 		sM.loadSoftware = new GUIKIT::MenuItem;
         sM.loadSoftware->setIcon( driveImage );
-        sM.loadSoftware->onActivate = [this, emulator]() {
-
-            MediaView::MediaWindow::getView( emulator )->anyLoad();
+        sM.loadSoftware->onActivate = [this, emulator]() {			
+            setAutoload( emulator );
 	    };
         sM.system->append( *sM.loadSoftware );
         

@@ -29,6 +29,8 @@
 #define VIC_MODE_MCM(_mode) (_mode & 1)
 #define VIC_MODE_BMM(_mode) (_mode & 2)
 #define VIC_MODE_ECM(_mode) (_mode & 4)
+#define LEFT_LINE_ANOMALY 3500
+#define LEFT_LINE_ANOMALY_ONE_PIX (LEFT_LINE_ANOMALY - 700)
 
 namespace LIBC64 {  
     
@@ -77,9 +79,14 @@ struct VicII {
     struct {
         bool use;
         unsigned line;
-        bool finishVblank;
-        
+        bool finishVblank;        
     } lineCallback;    
+	
+	struct {
+		uint8_t mode = 0;
+		unsigned framePos = 1;
+		bool permanent = false;
+	} leftLineAnomaly;
 	
 	auto updateBorderData() -> void;
 	auto setBorderData() -> void;
@@ -113,12 +120,11 @@ struct VicII {
     auto isAecLow() -> bool { return aecDelay == 0; }
     auto isBaLow() -> bool { return baLow; }
     
-    auto setVerticalLineAnomaly(bool state) -> void;
-    auto isVerticalLineAnomaly() -> bool;
+    auto setVerticalLineAnomaly(uint8_t mode) -> void;
+    auto getVerticalLineAnomaly() -> uint8_t;
    
 protected:    
     bool rev65; //true: 65xx chips, false: 85xx chips
-    bool leftVerticalLineAnomaly = false;
     
     double luma[2][16];
     double chroma[16]; // as angle on color wheel
@@ -310,7 +316,9 @@ protected:
 	auto fetchC() -> void;
     auto addrG( uint8_t useMode ) -> uint16_t;
     auto fetchG() -> void;    
-    auto insertFirstLineAnomaly(unsigned start, unsigned end) -> void;
+    template<bool permanent> auto insertFirstLineAnomaly(unsigned start, unsigned end) -> void;
+	auto insertFirstLineAnomaly(unsigned start, unsigned end) -> void;
+	auto initVerticalLineAnomaly() -> void;
 	
 	//sequencer
 	template<bool phi1> auto sequencer(  ) -> void;

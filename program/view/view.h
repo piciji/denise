@@ -8,6 +8,7 @@
 struct View : public GUIKIT::Window {
     Message* message;
 	GUIKIT::Timer placeholderTimer;
+	GUIKIT::Timer autoloadTimer;
     enum class AutoLoad { DragnDrop = 0, Open = 1, AutoStart = 2 };
     
     struct SystemMenu {
@@ -45,6 +46,7 @@ struct View : public GUIKIT::Window {
 	auto showTapeMenu( bool show, Emulator::Interface::TapeMode mode = Emulator::Interface::TapeMode::Unpressed ) -> void;
     auto updateTapeIcons( Emulator::Interface::TapeMode mode = Emulator::Interface::TapeMode::Unpressed ) -> void;
     auto updateFreeze( Emulator::Interface* emulator ) -> void;
+	auto setAutoload(Emulator::Interface* emulator) -> void;
 
     auto buildMenu() -> void;
     auto updateViewport() -> void;

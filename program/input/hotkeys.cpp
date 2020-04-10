@@ -126,7 +126,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
 			break;
 			
         case Hotkey::AnyLoad:           
-            MediaView::MediaWindow::getView( emulator )->anyLoad();
+            view->setAutoload( emulator );
             break;
             
         case Hotkey::Id::CaptureMouse:
@@ -278,7 +278,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             if (!activeEmulator || !dynamic_cast<LIBC64::Interface*>(activeEmulator))
                 break;
             auto view = EmuConfigView::TabWindow::getView( activeEmulator );
-            int state = view->systemLayout->updateFeature( C64Interface::FeatureIdBias, id == Hotkey::AdjustBiasUp ? 100: -100 );
+            int state = view->systemLayout->stepRangeFeature( C64Interface::FeatureIdBias, id == Hotkey::AdjustBiasUp ? 100: -100 );
             status->addMessage( trans->get( "sid_bias_change", {{"%state%", std::to_string(state) }} ) );                    
         } break;
         case Hotkey::DiskSwap0: case Hotkey::DiskSwap1: case Hotkey::DiskSwap2:

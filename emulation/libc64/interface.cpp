@@ -345,7 +345,7 @@ auto Interface::prepareFeatures() -> void {
     // disk drive thread consumes a single core 100%, usefull when emulating more than two drives
     features.push_back({FeatureIdPowerThread, "Disk Core 100%", Feature::Type::Switch, 0, true, true});    
     // emulate the buggy vertical line in first two border pixels
-    features.push_back({FeatureIdLeftLineAnomaly, "Left Line Anomaly", Feature::Type::Switch, 0, true, false});    
+    features.push_back({FeatureIdLeftLineAnomaly, "Left Line Anomaly", Feature::Type::Radio, 0, true, false, {0, 2}, {"Off", "Solid White", "Register Color"}});    
 }
 
 auto Interface::prepareChipset() -> void {    
@@ -949,7 +949,7 @@ auto Interface::setFeature(unsigned featureId, int value) -> void {
             iecBus->setPowerThread( value & 1 );
             break;
         case FeatureIdLeftLineAnomaly:
-            vicII->setVerticalLineAnomaly( value & 1 );
+            vicII->setVerticalLineAnomaly( (unsigned)value );
             break;
     }    
 }
@@ -976,7 +976,7 @@ auto Interface::getFeature(unsigned featureId) -> int {
         case FeatureIdPowerThread:
             return iecBus->cpuBurner;
         case FeatureIdLeftLineAnomaly:
-            return vicII->isVerticalLineAnomaly();
+            return (int)vicII->getVerticalLineAnomaly();
     }    
     return 0;
 }

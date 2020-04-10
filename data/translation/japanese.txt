@@ -451,3 +451,7 @@ crop all sides equally = crop_semi_auto = 四方を一括縮小
 crop each side manually = crop_free = 四方を個別に縮小
 maintain display ratio = crop_aspect_correct = ボーダー調整後もアスペクト比を維持
 Left_Line_Anomaly = 
+Left_Line_Anomaly_info = 
+Off = 
+Solid White = 
+Register Color = 

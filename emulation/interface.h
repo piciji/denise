@@ -216,15 +216,18 @@ struct Interface {
 	// custom features  
 	struct Feature {
 		unsigned id;
-		std::string name;
-		enum Type : unsigned { Switch, Range, Hex } type;
+		std::string name;		
+		enum Type : unsigned { Switch, Range, Hex, Radio } type;
 		int defaultValue;
         bool runtimeChangeable;
         bool performanceHit;
 		std::vector<int> range;
+		std::vector<std::string> options;
 
+		auto isRadio() -> bool { return type == Type::Radio; }
 		auto isSwitch() -> bool { return type == Type::Switch; }
         auto isHex() -> bool { return type == Type::Hex; }
+		auto isRange() -> bool { return type == Type::Range; }
 	};
 	std::vector<Feature> features;
 	

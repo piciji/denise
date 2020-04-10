@@ -57,12 +57,15 @@ auto VicII::isRevision65() -> bool {
     return rev65;
 }
 
-auto VicII::setVerticalLineAnomaly(bool state) -> void {
-    leftVerticalLineAnomaly = state;
+auto VicII::setVerticalLineAnomaly(uint8_t mode) -> void {
+    leftLineAnomaly.mode = mode;
+	
+	if (mode)
+		initVerticalLineAnomaly();	
 }
 
-auto VicII::isVerticalLineAnomaly() -> bool {
-    return leftVerticalLineAnomaly;
+auto VicII::getVerticalLineAnomaly() -> uint8_t {
+    return leftLineAnomaly.mode;
 }
     
 auto VicII::updateIrq( Interrupt interrupt ) -> void {       
@@ -204,6 +207,12 @@ auto VicII::setBorderData() -> void {
 		crop.top = ntsc ? 32 : 46;
 		crop.bottom = ntsc ? 29 : 55;
 	}	
+}
+
+auto VicII::initVerticalLineAnomaly() -> void {		
+	
+	leftLineAnomaly.framePos = LEFT_LINE_ANOMALY;
+	leftLineAnomaly.permanent = false;	
 }
 
 auto VicII::buildXCounterLookupTable() -> void {       
@@ -372,6 +381,8 @@ auto VicII::power() -> void {
     updatePrioExpand = 0;
     cAccessArea = 0;    
     disableEcmBmmTogether = false;
+	
+	initVerticalLineAnomaly();
 }
 
 template auto VicII::phase1<true>() -> void;

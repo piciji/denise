@@ -451,3 +451,7 @@ crop all sides equally = Allseitig gleichmäßig abschneiden
 crop each side manually = jede Seite manuell abschneiden
 maintain display ratio = Anzeigeverhältnis stets einhalten
 Left_Line_Anomaly = linke vertikale Linie
+Left_Line_Anomaly_info = Die Linie ist nur sichtbar, wenn der Rahmen vollständig sichtbar ist.
+Off = Aus
+Solid White = Stabil Weiß
+Register Color = Register Farbe

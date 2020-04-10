@@ -3,7 +3,18 @@ FeatureLayout::Line::Block::Block(Emulator::Interface::Feature* feature) {
 	this->feature = feature;
     
 	if (feature->isSwitch()) {
-		append(checkBox, {0u, 0u} );	
+		append(checkBox, {0u, 0u} );
+		
+	} else if (feature->isRadio()) {		
+		append(label, {0u, 0u}, 5 );
+		
+		for(auto& option : feature->options) {
+			auto radio = new GUIKIT::RadioBox;
+			options.push_back( radio );
+			append( *radio, {0u, 0u}, &feature->options.back() == &option ? 0 : 5 );	
+		}
+		GUIKIT::RadioBox::setGroup( options );
+	
 	} else {
         GUIKIT::LineEdit tester;
         tester.setText( feature->isHex() ? "0xFF" : std::to_string(feature->range[0]) );
@@ -49,6 +60,11 @@ auto FeatureLayout::build( Emulator::Interface* emulator ) -> void {
         
         block->checkBox.setText( feature.name );
         block->label.setText( feature.name );  
+		
+		unsigned j = 0;
+		for (auto option : block->options) {
+			option->setText( feature.options[j++] );
+		}
                 
         block->dangerLabel.setForegroundColor(0xff4500);
     }
@@ -357,6 +373,23 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
                     emulator->setFeature( feature->id, block->checkBox.checked( ) );
                 };
 
+			} else if (feature->isRadio() ) {	
+				unsigned val = 0;
+				for( auto option : block->options ) {
+					
+					option->onActivate = [this, block, feature, val]() {
+
+						settings->set<unsigned>(this->tabWindow->ident(feature->name), val);
+
+						if (feature->performanceHit)
+							program->fastForward( false );
+						
+						
+						emulator->setFeature( feature->id, val );
+					};
+					val++;
+				}
+				
             } else {
 
                 block->lineEdit.onChange = [this, block, feature]() {
@@ -500,6 +533,20 @@ auto SystemLayout::updateFeatureWidget( FeatureLayout::Line::Block* block ) -> v
 		block->checkBox.setChecked( settings->get<bool>( tabWindow->ident( feature->name ), feature->defaultValue ) );
 		return;
 	}
+		
+	if (feature->isRadio() ) {
+		auto usedVal = settings->get<unsigned>( tabWindow->ident( feature->name ), feature->defaultValue );
+		
+		unsigned val = 0;
+		for(auto option : block->options) {
+			if ( val++ == usedVal) {
+				option->setChecked();
+				break;
+			}
+		}
+		
+		return;
+	}
 	
 	auto _val = settings->get<int>( tabWindow->ident( feature->name ), feature->defaultValue, feature->range );
 
@@ -509,7 +556,7 @@ auto SystemLayout::updateFeatureWidget( FeatureLayout::Line::Block* block ) -> v
 		block->lineEdit.setValue( _val );	
 }
 
-auto SystemLayout::updateFeature(unsigned id, int step) -> int {
+auto SystemLayout::stepRangeFeature(unsigned id, int step) -> int {
     for(auto line : featureLayout.lines) {
         for( auto block : line->blocks ) {
             auto feature = block->feature;
@@ -554,14 +601,22 @@ auto SystemLayout::translate() -> void {
 
             if (feature->isSwitch() )
                 block->checkBox.setTooltip( trans->get( featureIdent( feature->name ) + "_info" ) );
-            else
+			
+			else if (feature->isRadio() ) {
+				unsigned pos = 0;
+				for(auto option : block->options) {
+					option->setText( trans->get( feature->options[pos++] ) );
+				}
+				block->label.setTooltip( trans->get( featureIdent( feature->name ) + "_info" ) );
+				
+            } else
                 block->label.setTooltip( trans->get( featureIdent( feature->name ) + "_info" ) );
 
             block->dangerLabel.setTooltip( trans->get("cpu_warning_info") );  
             block->dangerLabel.setText( " [" + trans->get("cpu_warning") + "]" );  
             
             block->checkBox.setText( trans->get( featureIdent( feature->name ) ) );
-            block->label.setText( trans->get( featureIdent( feature->name ) ) );  
+            block->label.setText( trans->get( featureIdent( feature->name ), {}, feature->isRadio() ) );  
         }
 	}
     
