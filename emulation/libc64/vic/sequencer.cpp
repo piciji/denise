@@ -402,6 +402,7 @@ template<bool phi1> inline auto VicII::borderArea(  ) -> void {
     
     if ( !hFlipFlop )
         // no border area
+        // sprites are only visible in border area if hFlipFlop is off 
         return;
     
 	// so if hflip keeps seted, the first we have todo in the following

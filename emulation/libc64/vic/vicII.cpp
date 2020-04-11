@@ -5,6 +5,7 @@
 #include "sequencer.cpp"
 #include "serialization.cpp"
 #include "colorWheel.cpp"
+#include "verticalLineAnomaly.cpp"
 
 namespace LIBC64 {
 	

@@ -316,8 +316,8 @@ protected:
 	auto fetchC() -> void;
     auto addrG( uint8_t useMode ) -> uint16_t;
     auto fetchG() -> void;    
-    template<bool permanent> auto insertFirstLineAnomaly(unsigned start, unsigned end) -> void;
-	auto insertFirstLineAnomaly(unsigned start, unsigned end) -> void;
+    template<bool permanent> auto insertVerticalLineAnomaly(unsigned start, unsigned end) -> void;
+	auto insertVerticalLineAnomaly(unsigned start, unsigned end) -> void;
 	auto initVerticalLineAnomaly() -> void;
 	
 	//sequencer

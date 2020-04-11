@@ -25,6 +25,7 @@
 * show placeholder picture when emulator is opened but still not running an emulation [thanks to Retrofan]
 * autoload for all media types with D64/T64 viewer in file dialog
 * added possibility to associate files with Denise for macOS
+* emulated left vertical line in overscan area
 
 ## 1.0.7
 * fixed a critical bug that caused OSX builds to use illegal instructions for some architectures

@@ -226,7 +226,7 @@ inline auto VicII::advanceCycle() -> void {
             visibleLine = false; // v-blank
             
             if (leftLineAnomaly.mode)
-                insertFirstLineAnomaly( lineCallback.line, lineVCounter );
+                insertVerticalLineAnomaly( lineCallback.line, lineVCounter );
             
             // push out the frame to host
             // we crop the h-blanking area before
@@ -236,7 +236,7 @@ inline auto VicII::advanceCycle() -> void {
 			lineVCounter = 0;
 		} else if (lineCallback.use && (lineVCounter == lineCallback.line)) {
             if (leftLineAnomaly.mode)
-                insertFirstLineAnomaly( 0, lineVCounter );
+                insertVerticalLineAnomaly( 0, lineVCounter );
             
             midScreenCallback();
         }
@@ -246,73 +246,6 @@ inline auto VicII::advanceCycle() -> void {
 
 	lastBusPhi2 = 0xff; // clear internal bus    
     sprite0DmaLateBA = false;
-}
-
-auto VicII::insertFirstLineAnomaly(unsigned start, unsigned end) -> void {
-	
-	if (!leftLineAnomaly.permanent && (start == 0) ) {
-		leftLineAnomaly.framePos--;
-		if (leftLineAnomaly.framePos == 0)
-			leftLineAnomaly.permanent = true;							
-	}
-	
-	if (leftLineAnomaly.permanent)
-		insertFirstLineAnomaly<true>( start, end );
-	else
-		insertFirstLineAnomaly<false>( start, end );
-}
-
-template<bool permanent> auto VicII::insertFirstLineAnomaly(unsigned start, unsigned end) -> void {
-    
-    uint16_t* ptr = frameBuffer + (start * VIC_MAX_LINE_LENGTH) + firstVisiblePixel;
-    uint8_t _colorReg = leftLineAnomaly.mode == 1 ? 1 : colorReg[ 0x23 ];
-	
-	unsigned moreLikely = 0;
-	
-    for(unsigned i = start; i < end; i++) {        
-        
-		if (permanent) {			
-			*ptr = _colorReg;
-			*(ptr + 1) = _colorReg;
-		
-		} else if (leftLineAnomaly.mode == 1) {
-			*ptr = _colorReg;
-			if (leftLineAnomaly.framePos < LEFT_LINE_ANOMALY_ONE_PIX)
-				*(ptr + 1) = _colorReg;
-			
-		} else {			
-			
-			if (moreLikely) {
-				moreLikely--;
-				
-				if (moreLikely & 1) {
-					*ptr = _colorReg;							
-					*(ptr + 1) = _colorReg;	
-				} else {
-					if ((rand() % 2) == 0)
-						*ptr = _colorReg;
-				}					
-					
-				goto Next;
-			}
-
-			if ( (rand() % 50 ) == 0  ) {
-				moreLikely = rand() % 6;
-				if (moreLikely & 1)
-					moreLikely++;
-				
-				if ((rand() % 2) == 0)
-					*ptr = _colorReg;
-				
-			} else {				
-				*ptr = _colorReg;								
-				*(ptr + 1) = _colorReg;					
-			}
-		}
-		   
-		Next:
-        ptr += VIC_MAX_LINE_LENGTH;
-    }	
 }
 
 inline auto VicII::setLineBuffer() -> void {
