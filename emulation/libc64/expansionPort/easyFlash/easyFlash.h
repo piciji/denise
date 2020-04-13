@@ -57,6 +57,8 @@ struct EasyFlash : Cart {
     auto createFlash(unsigned& imageSize) -> uint8_t*;
     
     auto setWriteProtect(bool state) -> void;
+    
+    auto isWriteProtected() -> bool;
 
     auto serialize(Emulator::Serializer& s) -> void;
     

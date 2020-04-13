@@ -11,6 +11,7 @@ struct SwitchesLayout : GUIKIT::FramedVerticalLayout {
     GUIKIT::CheckBox saveSettingsOnExit;
     GUIKIT::CheckBox openFullscreen;
     GUIKIT::CheckBox alternateSoftwarePreview;
+    GUIKIT::CheckBox questionMediaWrite;
     SwitchesLayout();
 };
 

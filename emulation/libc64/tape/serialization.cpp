@@ -35,7 +35,7 @@ auto Tape::serialize(Emulator::Serializer& s) -> void {
     s.integer( (uint8_t&)currentCounter.cstate );
     s.integer( currentCounter.counter );
     s.integer( writeProtect );
-    s.integer( disableWriteProtectQuestion );
+    s.integer( writeQuestionState );
 
     if (s.mode() == Emulator::Serializer::Mode::Load) {
         updateState( currentCounter.cstate, currentCounter.counter );

@@ -455,3 +455,5 @@ Left_Line_Anomaly_info = Die Linie ist nur sichtbar, wenn der Rahmen vollständi
 Off = Aus
 Solid White = Stabil Weiß
 Register Color = Register Farbe
+confirm writes = Schreibvorgänge bestätigen
+question permanent write = Soll der Schreibvorgang auf "%media%" jetzt permanent gespeichert werden?

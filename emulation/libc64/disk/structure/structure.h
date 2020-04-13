@@ -9,6 +9,7 @@
 #include "../../../tools/gcr.h"
 #include "../../../interface.h"
 #include "../../../tools/buffer.h"
+#include "../../../tools/serializer.h"
 
 namespace LIBC64 {
 
@@ -49,6 +50,7 @@ struct Structure1541 {
         uint8_t* data = nullptr;
         unsigned size = 0; 
         unsigned bits = 0;
+        bool written = false;
     };
     
     std::vector<Emulator::Interface::Listing> listings;
@@ -68,6 +70,9 @@ struct Structure1541 {
     auto selectListing( Emulator::Interface::Media* media, unsigned pos ) -> void;
     auto clearTrackData() -> void;
     auto getLogicalTrack(uint8_t _track, int offset) -> uint8_t;
+    auto storeWrittenTracks() -> void;
+    auto getStateImageSize() -> unsigned;
+    auto serialize(Emulator::Serializer& s, bool written) -> void;    
     
 private:    
     uint8_t* rawData;

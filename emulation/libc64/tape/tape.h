@@ -39,6 +39,7 @@ struct Tape {
     auto unload() -> void;
 	auto reset() -> void;
 	auto setWriteProtect(bool state) -> void;
+    auto isWriteProtected() -> bool;
 	auto setCyclesPerSecond( unsigned value ) -> void;	
 	auto setMode( unsigned mode ) -> void;
     auto getMode( ) -> Mode;
@@ -66,7 +67,7 @@ protected:
 	Mode nextMode;
 	unsigned writePos;
 	bool writeProtect = false;
-    bool disableWriteProtectQuestion = false;
+    uint8_t writeQuestionState = 0;
 	bool writeBit;
     unsigned cyclesElapsed;
     uint64_t cycles;

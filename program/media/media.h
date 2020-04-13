@@ -201,9 +201,8 @@ struct MediaWindow : public GUIKIT::Window {
     auto drop( std::string filePath, MediaGroupLayout::Block* block = nullptr ) -> void;   
     auto colorListing( unsigned color, bool foreground ) -> void;
     auto getMediaGroupTransIdent( Emulator::Interface::MediaGroup* mediaGroup ) -> std::string;
-    auto disableWriteProtection(Emulator::Interface::Media* media) -> void;
     auto updateJumper(Emulator::Interface::Media* media) -> void;
-    auto changeWriteProtection(Emulator::Interface::Media* media, bool state) -> void;
+    auto updateWriteProtection( Emulator::Interface::Media* media, bool state ) -> void;
     auto previewFile( std::string file, MediaGroupLayout::Block* block = nullptr ) -> std::vector<std::string>;
     auto getActiveLayout() -> MediaGroupLayout*;
     auto resetPreview(bool light = false) -> void;

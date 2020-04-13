@@ -69,6 +69,7 @@ struct RetroReplay : Freezer {
     auto blockFreeze() -> bool;
     auto reset() -> void;
     auto setWriteProtect(bool state) -> void;
+    auto isWriteProtected() -> bool;
     auto write() -> void;
     auto isBootable( ) -> bool; 
     auto serialize(Emulator::Serializer& s) -> void;

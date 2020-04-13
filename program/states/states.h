@@ -50,7 +50,7 @@ struct States {
     
     auto save( std::string path = "", bool prependFolder = false ) -> void;  
     
-    auto loadImagePaths( GUIKIT::Settings* loadSettings ) -> void;
+    auto loadImagePaths( GUIKIT::Settings* loadSettings ) -> std::vector<Emulator::Interface::Media*>;
     
     auto loadFirmwarePaths( GUIKIT::Settings* loadSettings ) -> void;
     
@@ -73,6 +73,8 @@ struct States {
     auto updateRegion() -> void;
     
     auto updateExpansionJumper() -> void;
+    
+    auto updateWriteProtection(std::vector<Emulator::Interface::Media*> loadedMedia) -> void;
     
     auto oneMediumOnly(Emulator::Interface::MediaGroup* group, Emulator::Interface::Media* mediaInUse) -> void;
     

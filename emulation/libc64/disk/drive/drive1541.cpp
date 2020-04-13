@@ -330,13 +330,12 @@ auto Drive1541::power( ) -> void {
     randomizeRpm();
     currentHalftrack = 17 * 2;
     stepDirection = 0;
-    disableWriteProtectQuestion = false;
     
     changeHalfTrack(0);
 }
 
 auto Drive1541::powerOff( ) -> void {  
-    writeTrack();  
+    write();  
     motorOn = false;
     updateState( );
 }
@@ -381,7 +380,7 @@ inline auto Drive1541::processDelays() -> void {
 }
 
 auto Drive1541::detach() -> void {
-    writeTrack();
+    write();
     
     if (loaded)
         detachDelay = DISC_DELAY;
@@ -414,8 +413,7 @@ auto Drive1541::attach( Emulator::Interface::Media* media, uint8_t* data, unsign
 
 auto Drive1541::setWriteProtect(bool state) -> void {
     
-    writeProtected = state;
-    disableWriteProtectQuestion = false;
+    writeProtected = state;        
 }
 
 auto Drive1541::writeprotectSense() -> uint8_t {
@@ -435,31 +433,24 @@ auto Drive1541::writeprotectSense() -> uint8_t {
     return writeProtected ? 0 : 0x10;
 }
 
-inline auto Drive1541::writeTrack() -> void {
+auto Drive1541::write() -> void {
     
     if (!written)
         return;
     
     written = false;
     
+    auto _imageSize = structure1541.getStateImageSize();
+    if (system->serializationSize > _imageSize)
+        system->serializationSize -= _imageSize;
+    
     if (!loaded)
-        return;
-    
-    if (writeProtected)
-        return;   
-    
-    structure1541.writeTrack( gcrTrack, currentHalftrack );        
-}
-
-auto Drive1541::informUserToRemoveWriteProtection() -> void {
-    if (!writeProtected)
-        return;
-        
-    if (disableWriteProtectQuestion)
         return;
 
     if (!system->interface->questionToWrite(media))
-        disableWriteProtectQuestion = true;
+        return;
+    
+    structure1541.storeWrittenTracks();
 }
 
 inline auto Drive1541::getTrackState() -> TrackState {
@@ -485,4 +476,3 @@ auto Drive1541::setSpeed(double rpm, double wobble) -> void {
 }
 
 }
-

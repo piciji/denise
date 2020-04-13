@@ -25,6 +25,7 @@ Structure1541::Structure1541() {
         gcrTrack[i].data = nullptr;
         gcrTrack[i].size = 0;
         gcrTrack[i].bits = 0;
+        gcrTrack[i].written = false;
     }
 }   
 
@@ -62,6 +63,7 @@ auto Structure1541::clearTrackData() -> void {
         trackPtr->data = nullptr;
         trackPtr->size = 0;
         trackPtr->bits = 0;
+        trackPtr->written = false;
     }
     
     if (errorMap)
@@ -438,6 +440,81 @@ auto Structure1541::writeTrack( const GcrTrack* trackPtr, uint8_t halfTrack ) ->
             writeG64( trackPtr, halfTrack );
             break;
     }
+}
+
+auto Structure1541::storeWrittenTracks() -> void {
+    
+    for ( unsigned halfTrack = 0; halfTrack < (MAX_TRACKS * 2); halfTrack++ ) {
+        
+        GcrTrack* gcrTrack = getTrackPtr( halfTrack );
+        
+        if (!gcrTrack->written || !gcrTrack->size)
+            continue;
+        
+        writeTrack( gcrTrack, halfTrack );
+        
+        gcrTrack->written = false;
+    }
+}
+
+auto Structure1541::serialize(Emulator::Serializer& s, bool written) -> void {
+    // serialize structure only, if at least one bit was written
+    
+    s.integer( rawSize );
+    
+    s.integer( tracks );
+    
+    s.integer( maxHalfTracks );
+    
+    s.integer( maxTrackLength );
+    
+    s.integer( (int&)type );
+    
+    if (!written || (s.mode() == Emulator::Serializer::Mode::Size))
+        return;
+    
+    for (unsigned halfTrack = 0; halfTrack < (MAX_TRACKS * 2); halfTrack++) {
+
+        GcrTrack* gcrTrack = getTrackPtr(halfTrack);
+
+        unsigned _trackSize = gcrTrack->size;
+        
+        s.integer( gcrTrack->written );     
+        
+        s.integer( gcrTrack->size );        
+            
+        if (s.mode() == Emulator::Serializer::Mode::Load) {
+            gcrTrack->bits = gcrTrack->size << 3;           
+            
+            if (_trackSize != gcrTrack->size) {
+                
+                if (gcrTrack->data)
+                    delete[] gcrTrack->data;
+
+                gcrTrack->data = nullptr;
+                    
+                if (gcrTrack->size) 
+                    gcrTrack->data = new uint8_t[ gcrTrack->size ];   
+            }                                                                      
+        }
+        
+        if (gcrTrack->size)
+            s.array( gcrTrack->data, gcrTrack->size );
+    }
+}
+
+auto Structure1541::getStateImageSize() -> unsigned {
+    
+    unsigned neededSize = 0;
+    
+    for (unsigned halfTrack = 0; halfTrack < (MAX_TRACKS * 2); halfTrack++) {
+
+        GcrTrack* gcrTrack = getTrackPtr( halfTrack );
+
+        neededSize += 1 + 4 + gcrTrack->size;
+    }
+    
+    return neededSize;
 }
 
 auto Structure1541::getTrackPtr( uint8_t halfTrack ) -> GcrTrack* {

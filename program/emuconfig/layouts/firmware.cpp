@@ -152,6 +152,8 @@ auto FirmwareLayout::assign(std::string path, FirmwareContainer::Block* block, F
     GUIKIT::File* file = filePool->get( path );
     if (!file)
         return;
+    
+    file->setReadOnly();
     // remember path
     settings->set<std::string>(this->tabWindow->ident("firmware_path"), file->getPath());
 

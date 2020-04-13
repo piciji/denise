@@ -37,8 +37,9 @@ auto States::load( std::string path, bool prependFolder ) -> void {
     
     errorPaths.clear();
     
+    std::vector<Emulator::Interface::Media*> loadedMedia;
     if (imageFileLoaded) {
-        loadImagePaths( &loadSettings );        
+        loadedMedia = loadImagePaths( &loadSettings );        
         loadFirmwarePaths( &loadSettings );
     }
         
@@ -46,6 +47,8 @@ auto States::load( std::string path, bool prependFolder ) -> void {
 
     emulator->loadstate( data, file.getSize() );
 
+    updateWriteProtection( loadedMedia );
+    
     updateFeatures();
 
     updateConnectedDevices();
@@ -154,8 +157,9 @@ auto States::oneMediumOnly(Emulator::Interface::MediaGroup* group, Emulator::Int
         emulator->ejectMedium( group->selected ); 
 }
 
-auto States::loadImagePaths( GUIKIT::Settings* loadSettings ) -> void {
-        
+auto States::loadImagePaths( GUIKIT::Settings* loadSettings ) -> std::vector<Emulator::Interface::Media*> {
+    std::vector<Emulator::Interface::Media*> loadedMedia;
+    
     auto setting = new FileSetting( loadSettings );
 
     for( auto& mediaGroup : emulator->mediaGroups ) {
@@ -189,12 +193,12 @@ auto States::loadImagePaths( GUIKIT::Settings* loadSettings ) -> void {
             InsertImage* inserted = findImage( mediaInUse );
             
             GUIKIT::File* file = filePool->get( setting->path );
-            bool writeProtection = file->isArchived() ? true : setting->writeProtect;
             
             if (inserted) {
                 if ((inserted->setting->path == setting->path)
-                    && (inserted->setting->id == setting->id)) {   
-                    MediaView::MediaWindow::getView( emulator )->changeWriteProtection( mediaInUse, writeProtection );                    
+                    && (inserted->setting->id == setting->id)) {  
+                    if (!GUIKIT::Vector::find( loadedMedia, mediaInUse ))
+                        loadedMedia.push_back( mediaInUse );
                     continue;
                 }
             }                        
@@ -214,8 +218,9 @@ auto States::loadImagePaths( GUIKIT::Settings* loadSettings ) -> void {
                           
             emulator->ejectMedium( mediaInUse );
             emulator->insertMedium( mediaInUse, data, file->archiveDataSize( setting->id ));
-            // no need to set write protection state, because it belongs to serialization frame.
-            MediaView::MediaWindow::getView( emulator )->changeWriteProtection( mediaInUse, writeProtection );
+                       
+            if (!GUIKIT::Vector::find( loadedMedia, mediaInUse ))
+                loadedMedia.push_back( mediaInUse );
                        
             filePool->assign(program->ident(emulator, mediaInUse->name), file);  
             updateImage( setting, mediaInUse );                          
@@ -228,6 +233,8 @@ auto States::loadImagePaths( GUIKIT::Settings* loadSettings ) -> void {
     filePool->unloadOrphaned();
 
     delete setting;
+    
+    return loadedMedia;
 }
 
 auto States::saveImagePaths( std::string path ) -> bool {
@@ -298,8 +305,6 @@ auto States::copySetting( FileSetting* target, FileSetting* src ) -> void {
     target->setPath( src ? src->path : "" );
 
     target->setId( src ? src->id : 0 );
-
-    target->setWriteProtect( src ? src->writeProtect : true );
 }
 
 auto States::getInstance( Emulator::Interface* emulator ) -> States* {
@@ -412,13 +417,13 @@ auto States::updateSaveable() -> void {
                 if (media.memoryDump || (expansionMediaGroup != &mediaGroup))
                     insert->setting->setSaveable( false );
                 else
-                    insert->setting->setSaveable( !insert->setting->path.empty() );
+                    insert->setting->setSaveable( !insert->setting->path.empty(), true );
                 
             } else if (mediaGroup.isProgram()) {
                 insert->setting->setSaveable( false );
                 
             } else                
-                insert->setting->setSaveable( maxCount > 0 );
+                insert->setting->setSaveable( maxCount > 0, true );
             
             if (maxCount)
                 maxCount--;
@@ -509,6 +514,21 @@ auto States::updateExpansionJumper() -> void {
             continue;        
                     
         MediaView::MediaWindow::getView( emulator )->updateJumper( mediaGroup.selected );
-    }
+    }        
+}
+
+auto States::updateWriteProtection(std::vector<Emulator::Interface::Media*> loadedMedia) -> void {
+    
+    for (auto media : loadedMedia) {
         
+        auto file = (GUIKIT::File*)media->guid;
+        
+        bool forceWp = file && (file->isArchived() || file->isReadOnly());
+        
+        if (forceWp)
+            // override write protection of state, i.e. file permissions were changed between saving and loading a state
+            emulator->writeProtect( media, true );
+        
+        MediaView::MediaWindow::getView( activeEmulator )->updateWriteProtection( media, emulator->isWriteProtected(media) );
+    }       
 }

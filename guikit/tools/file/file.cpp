@@ -37,6 +37,7 @@ File& File::operator=(const File& source) {
     fileInfo = source.fileInfo;
     
     dataChanged = false;
+    readOnly = false;
 
     return *this;
 }
@@ -85,6 +86,7 @@ auto File::unload() -> void {
     gzip->freeData();
     close();
     dataChanged = false;
+    readOnly = false;
 }
 
 auto File::reset() -> void {
@@ -94,9 +96,12 @@ auto File::reset() -> void {
 }
 
 auto File::open(Mode mode, bool createFolderIfNotExists) -> bool {
-    if (filePath.empty()) return false;
+    if (filePath.empty())
+        return false;
+    
     if (createFolderIfNotExists) {
-        if ( !isDir( getPath() ) ) createDir( getPath() );
+        if ( !isDir( getPath() ) )
+            createDir( getPath() );
     }
     close();
     switch(this->mode = mode) {
@@ -111,10 +116,23 @@ auto File::open(Mode mode, bool createFolderIfNotExists) -> bool {
     #endif
     }
 
-    if (!fp)
-        return false;
-    
-    return true;
+    if (fp)
+        return true;
+            
+    if ( this->mode == Mode::Update ) {
+    #ifdef GUIKIT_WINAPI
+        fp = _wfopen( utf16_t(filePath), L"rb");
+    #else
+        fp = fopen( filePath.c_str(), "rb");
+    #endif        
+        if (fp) {
+            this->mode = Mode::Read;
+            this->readOnly = true;
+            return true;
+        }
+    }
+
+    return false;
 }
 
 auto File::read() -> uint8_t* {
@@ -176,7 +194,7 @@ auto File::truncate() -> bool {
 auto File::scanArchive() -> std::vector<File::Item>& {
     if (!items.empty())
         return items;
-    if (!open( type == Type::Default ? Mode::Update : Mode::Read ))
+    if (!open( (type == Type::Default && !readOnly) ? Mode::Update : Mode::Read ))
         return items;
     
     Item item;

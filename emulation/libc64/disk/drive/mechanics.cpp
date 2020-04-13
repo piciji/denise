@@ -330,7 +330,7 @@ inline auto Drive1541::writeBit( bool state ) -> void {
     if ( headOffset >= gcrTrack->bits )
         headOffset = 0; // wrap around the ring buffer 
     
-    if (!trackPtr)
+    if (!trackPtr || writeProtected)
         return;
         
     if (state)
@@ -338,7 +338,12 @@ inline auto Drive1541::writeBit( bool state ) -> void {
     else
         trackPtr[byte] &= ~(1 << bit);    
     
-    written = true; // track data has changed, host have to write back
+    if (!written)
+        system->serializationSize += structure1541.getStateImageSize();
+    
+    gcrTrack->written = true; // track data has changed, host have to write back    
+    
+    written = true;
 }
 
 auto Drive1541::motorRun() -> bool {
@@ -478,8 +483,6 @@ auto Drive1541::updateStepper( uint8_t step ) -> bool {
 }
 
 auto Drive1541::changeHalfTrack( uint8_t step ) -> void {
-    
-    writeTrack();
                     
     updateStepper( step );
        

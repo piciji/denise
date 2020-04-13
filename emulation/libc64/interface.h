@@ -62,6 +62,7 @@ struct Interface : Emulator::Interface {
 	//disk drive handling	
 	auto insertDisk(Media* media, uint8_t* data, unsigned size) -> void;
 	auto writeProtectDisk(Media* media, bool state) -> void;
+    auto isWriteProtectedDisk(Media* media) -> bool;
 	auto ejectDisk(Media* media) -> void;
 	auto getDiskImageSize(unsigned typeId, bool hd) -> unsigned;
 	auto createDiskImage(unsigned typeId, bool hd = false, std::string name = "", bool ffs = false) -> uint8_t*;        
@@ -72,6 +73,7 @@ struct Interface : Emulator::Interface {
 	//tape drive handling
 	auto insertTape(Media* media, uint8_t* data, unsigned size) -> void;
 	auto writeProtectTape(Media* media, bool state) -> void;
+    auto isWriteProtectedTape(Media* media) -> bool;
 	auto ejectTape(Media* media) -> void;
 	auto createTapeImage(unsigned& imageSize) -> uint8_t*;
     auto controlTape(Media* media, TapeMode mode) -> void;
@@ -81,6 +83,7 @@ struct Interface : Emulator::Interface {
 	//expansion handling
 	auto insertExpansionImage(Media* media, uint8_t* data, unsigned size) -> void;
     auto writeProtectExpansion(Media* media, bool state) -> void;
+    auto isWriteProtectedExpansion(Media* media) -> bool;
     auto ejectExpansionImage(Media* media) -> void;
     auto createExpansionImage(MediaGroup* group, unsigned& imageSize) -> uint8_t*;
     auto getMediaForCustomFileSuffix(std::string suffix) -> Media*;

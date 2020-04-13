@@ -220,7 +220,8 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
             media.guid = uintptr_t(file);
             
             emulator->insertMedium(&media, data, file->archiveDataSize(setting->id));
-            emulator->writeProtect(&media, file->isArchived() ? true : setting->writeProtect);
+            emulator->writeProtect(&media, (file->isArchived() || file->isReadOnly()) ? true : setting->writeProtect);
+            MediaView::MediaWindow::getView( activeEmulator )->updateWriteProtection( &media, setting->writeProtect );
             filePool->assign(ident(emulator, media.name + "store"), file);	           
 
             States::getInstance( activeEmulator )->updateImage( setting, &media );

@@ -199,9 +199,6 @@ auto IecBus::syncDrives( int32_t _syncPos, bool ciaAccess ) -> void {
     for (auto drive : drivesEnabled) {
         drive->cycleCounter -= _temp;
         drive->synced = drive->cycleCounter >= syncPos;
-        
-        if (drive->written && drive->writeProtected)
-            drive->informUserToRemoveWriteProtection();        
     }
         
     cycleCounter = 0; // reset for next run 
@@ -358,6 +355,10 @@ auto IecBus::detach( Emulator::Interface::Media* media ) -> void {
 
 auto IecBus::writeProtect( Emulator::Interface::Media* media, bool state ) -> void {
     drives[ media->id ]->setWriteProtect( state );
+}
+
+auto IecBus::isWriteProtected( Emulator::Interface::Media* media ) -> bool {
+    return drives[ media->id ]->writeProtected;
 }
 
 auto IecBus::getDiskListing(Emulator::Interface::Media* media) -> std::vector<Emulator::Interface::Listing>& {

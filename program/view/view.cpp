@@ -53,9 +53,12 @@ auto View::build() -> void {
         
 		for(auto emuConfigView : emuConfigViews)
 			emuConfigView->setVisible(false);
-			
-        GUIKIT::Application::quit();
+        
+        for(auto mediaView : mediaViews)
+			mediaView->setVisible(false);
+			        
         program->quit();
+        GUIKIT::Application::quit();
     };
     
     onMove = [this]() {
@@ -1114,7 +1117,7 @@ auto View::questionToWrite(Emulator::Interface::Media* media) -> bool {
     
     auto file = (GUIKIT::File*)media->guid;
     
-    if (file->isArchived() || cmd->debug)
+    if (file->isArchived() || file->isReadOnly() || cmd->debug)
         // archive, removing of write protection is not supported
         // no dialog in debug mode
         return false;
@@ -1124,10 +1127,10 @@ auto View::questionToWrite(Emulator::Interface::Media* media) -> bool {
     if (exclusiveFullscreen())
         setFullScreen( false );
     
-    bool state = message->question( trans->get("override_write_protection", {{"%media%", mediaIdent}}) );
+    bool state = !settings->get<bool>("question_media_write", true);
     
-    if (state)        
-        MediaView::MediaWindow::getView( activeEmulator )->disableWriteProtection(media);
+    if (!state)
+        state = message->question( trans->get("question permanent write", {{"%media%", mediaIdent}}) );
     
     return state;
 }

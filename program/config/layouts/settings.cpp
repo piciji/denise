@@ -30,7 +30,8 @@ SwitchesLayout::SwitchesLayout() {
     append(autostartDragnDrop, {~0u, 0u}, 3);
     append(saveSettingsOnExit, {~0u, 0u}, 3);
     append(openFullscreen, {~0u, 0u}, 3);
-    append(alternateSoftwarePreview, {~0u, 0u});
+    append(alternateSoftwarePreview, {~0u, 0u}, 3);
+    append(questionMediaWrite, {~0u, 0u});
     setFont(GUIKIT::Font::system("bold"));
 }
 
@@ -81,6 +82,10 @@ SettingsLayout::SettingsLayout() {
         settings->set<bool>("alternate_software_preview", switches.alternateSoftwarePreview.checked());
     };
 
+    switches.questionMediaWrite.setChecked(settings->get<bool>("question_media_write", true));
+    switches.questionMediaWrite.onToggle = [this]() {
+        settings->set<bool>("question_media_write", switches.questionMediaWrite.checked());
+    };
 
     setLang();
     
@@ -180,6 +185,7 @@ auto SettingsLayout::translate() -> void {
     switches.saveSettingsOnExit.setText(trans->get("save_changes_on_exit"));
     switches.openFullscreen.setText(trans->get("open_fullscreen"));
     switches.alternateSoftwarePreview.setText(trans->get("alternate software preview"));
+    switches.questionMediaWrite.setText(trans->get("confirm writes"));
 
     about.left.license.setText( trans->get("license", {}, true) + " " + LICENSE );
     about.left.author.setText( trans->get("author", {}, true) + " " + AUTHOR );

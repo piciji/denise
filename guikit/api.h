@@ -1050,6 +1050,9 @@ struct File {
     auto getExtension() -> std::string;
     auto getHandle() -> FILE* { return fp; }
     auto del() -> bool;
+    
+    auto setReadOnly() -> void { readOnly = true; }
+    auto isReadOnly() -> bool { return readOnly; }
     // inform about data was changed by another task handling the same file
     auto forceDataChange() -> void { dataChanged = true; }
     auto wasDataChanged() -> bool { return dataChanged; }
@@ -1101,6 +1104,8 @@ private:
     FILE* fp = nullptr;
     uint8_t* data = nullptr;
     bool dataChanged = false;
+    bool readOnly = false;
+    
     Zip* zip;
     Gzip* gzip;
     Tar* tar;

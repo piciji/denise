@@ -18,7 +18,7 @@
 
 namespace LIBC64 {
 
-const std::string Interface::Version = "1074";
+const std::string Interface::Version = "1075";
     
 Interface::Interface() : Emulator::Interface( "C64" ) {        
     
@@ -657,6 +657,14 @@ auto Interface::writeProtectDisk(Media* media, bool state) -> void {
     iecBus->writeProtect( media, state );
 }
 
+auto Interface::isWriteProtectedDisk(Media* media) -> bool {
+
+    if (!media || !media->group->isDisk())
+        return false;
+    
+    return iecBus->isWriteProtected( media );
+}
+
 auto Interface::ejectDisk(Media* media) -> void {
 
     if (!media || !media->group->isDisk())
@@ -715,6 +723,14 @@ auto Interface::writeProtectTape(Media* media, bool state) -> void {
         return;
 	
 	tape->setWriteProtect( state );
+}
+
+auto Interface::isWriteProtectedTape(Media* media) -> bool {
+
+    if (!media || !media->group->isTape())
+        return false;
+	
+	return tape->isWriteProtected( );
 }
 
 auto Interface::ejectTape(Media* media) -> void {
@@ -780,6 +796,23 @@ auto Interface::writeProtectExpansion(Media* media, bool state) -> void {
         if (retroReplay->media == media)
             retroReplay->setWriteProtect( state );
     }
+}
+
+auto Interface::isWriteProtectedExpansion(Media* media) -> bool {
+    
+    auto group = media->group;
+    
+    if (!media || !group->isExpansion())
+        return false;
+    
+    if (group->expansion->id == ExpansionIdEasyFlash) {
+        if (easyFlash->media == media)
+            return easyFlash->isWriteProtected( );
+    } else if (group->expansion->id == ExpansionIdRetroReplay) {
+        if (retroReplay->media == media)
+            return retroReplay->isWriteProtected(  );
+    }
+    return false;
 }
 
 auto Interface::ejectExpansionImage(Media* media) -> void {

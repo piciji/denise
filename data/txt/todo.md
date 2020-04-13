@@ -66,7 +66,6 @@
 * load PRG files from disk as simple RAM insertion for reduced loading times [quickload]
 * UI switch to invert RAM init pattern
 * write (SID/PAULA) output to WAV 
-* open files as read only from OS point of view
 * set "integer scaling" multiplicator without sizing application window OR recalculate while resizing (never show black border)
 * PNG overlay for 16:9 fullscreen
 * allow input if there is no focus
@@ -75,7 +74,7 @@
 * add Depixelizing technic (http://johanneskopf.de/publications/pixelart/index.html)
 * add confirmation question when quiting Denise Alt+F4
 * mount OS folder as D64
-* if the disk is read-only, it is written temporarily and asked if it should be stored permanently when the floppy disk is ejected
+
 
 # bugs
 * works only with old CIA's, check if new ones have to work too https://csdb.dk/release/?id=100412 (crash title screen)

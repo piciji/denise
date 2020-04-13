@@ -371,6 +371,7 @@ struct Interface {
     // disk handling
     virtual auto insertDisk(Media* media, uint8_t* data, unsigned size) -> void {}
     virtual auto writeProtectDisk(Media* media, bool state) -> void {}
+    virtual auto isWriteProtectedDisk(Media* media) -> bool { return false; }
     virtual auto ejectDisk(Media* media) -> void { } 
 	virtual auto getDiskImageSize(unsigned typeId, bool hd) -> unsigned { return 0; } //get size needed for a new disk image
 	virtual auto createDiskImage(unsigned typeId, bool hd = false, std::string name = "", bool ffs = false) -> uint8_t* { return nullptr; }        
@@ -385,6 +386,7 @@ struct Interface {
     // tape handling
     virtual auto insertTape(Media* media, uint8_t* data, unsigned size) -> void {}    
     virtual auto writeProtectTape(Media* media, bool state) -> void {}
+    virtual auto isWriteProtectedTape(Media* media) -> bool { return false; }
     virtual auto ejectTape(Media* media) -> void { } 
     virtual auto controlTape(Media* media, TapeMode mode) -> void {}
     virtual auto getTapeControl(Media* media) -> TapeMode { return TapeMode::Unpressed; }
@@ -394,6 +396,7 @@ struct Interface {
     virtual auto insertExpansionImage(Media* media, uint8_t* data, unsigned size) -> void {}
     virtual auto ejectExpansionImage(Media* media) -> void {}
     virtual auto writeProtectExpansion(Media* media, bool state) -> void {}
+    virtual auto isWriteProtectedExpansion(Media* media) -> bool { return false; }
     virtual auto createExpansionImage(MediaGroup* group, unsigned& imageSize) -> uint8_t* { return nullptr; }
     virtual auto getMediaForCustomFileSuffix(std::string suffix) -> Media* { return nullptr; }
     virtual auto isExpansionBootable() -> bool { return false; }
@@ -500,6 +503,17 @@ struct Interface {
 			case MediaGroup::Type::Program: break;
 			case MediaGroup::Type::HardDisk: break;
 		}
+	}
+
+	auto isWriteProtected(Media* media) -> bool {
+		switch(media->group->type) {
+			case MediaGroup::Type::Disk: return isWriteProtectedDisk(media);
+			case MediaGroup::Type::Tape: return isWriteProtectedTape(media);
+			case MediaGroup::Type::Expansion: return isWriteProtectedExpansion(media);
+			case MediaGroup::Type::Program: break;
+			case MediaGroup::Type::HardDisk: break;
+		}
+        return false;
 	}
 	
 	auto ejectMedium(Media* media) -> void {		

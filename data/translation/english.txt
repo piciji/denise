@@ -455,3 +455,5 @@ Left_Line_Anomaly_info = the line is visible only when the border is fully visib
 Off = Off
 Solid White = Solid White
 Register Color = Register Color
+confirm writes = Confirm Writes
+question permanent write = Do you want to save the write to "%media%" permanently now?

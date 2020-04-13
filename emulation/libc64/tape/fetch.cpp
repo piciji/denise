@@ -53,7 +53,7 @@ auto Tape::nextGap() -> unsigned {
         return shortGap( byteBefore );
     }
 	
-	// if the byte 4 bytes before is zero it could be the start
+	// if the byte, four bytes before is zero it could be the start
 	// of a long gap ... wait maybe its one of the 3 bytes of a sooner
 	// long gap, then the previous gap would be short too ... damn
 	// so a non zero results in a short gap always but a zero could be

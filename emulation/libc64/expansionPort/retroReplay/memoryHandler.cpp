@@ -42,13 +42,11 @@ auto RetroReplay::setRom(Emulator::Interface::Media* media, uint8_t* rom, unsign
 
 auto RetroReplay::write() -> void {
     
-    if (!media || !media->guid || !flash.dirty)
+    if (!media || !media->guid || !flash.dirty || writeProtect)
         return;
         
-    if (writeProtect) {
-        if (!system->interface->questionToWrite(media))
-            return;
-    }
+    if (!system->interface->questionToWrite(media))
+        return;
     
     system->interface->truncateMedia( media );
     

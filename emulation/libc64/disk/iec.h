@@ -60,6 +60,7 @@ struct IecBus {
     auto attach( Emulator::Interface::Media* media, uint8_t* data, unsigned size ) -> void;
     auto detach( Emulator::Interface::Media* media ) -> void;
     auto writeProtect( Emulator::Interface::Media* media, bool state ) -> void;    
+    auto isWriteProtected( Emulator::Interface::Media* media ) -> bool;    
     auto getDiskListing(Emulator::Interface::Media* media) -> std::vector<Emulator::Interface::Listing>&;
     auto selectListing( Emulator::Interface::Media* media, unsigned pos ) -> void;
     auto serialize(Emulator::Serializer& s) -> void;

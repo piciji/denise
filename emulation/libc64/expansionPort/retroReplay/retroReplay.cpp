@@ -364,6 +364,10 @@ auto RetroReplay::setWriteProtect(bool state) -> void {
     writeProtect = state;
 }
 
+auto RetroReplay::isWriteProtected() -> bool {
+    return writeProtect;
+}
+
 auto RetroReplay::isBootable( ) -> bool {
     return !flashJumper;
 } 

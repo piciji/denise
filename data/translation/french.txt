@@ -455,4 +455,5 @@ Left_Line_Anomaly_info =
 Off = 
 Solid White = 
 Register Color = 
-
+confirm writes = 
+question permanent write = 

@@ -117,13 +117,11 @@ auto EasyFlash::assumeChips( ) -> void {
 
 auto EasyFlash::write() -> void {
     
-    if (!media || !media->guid || (!flashLo.dirty && !flashHi.dirty) )
+    if (!media || !media->guid || (!flashLo.dirty && !flashHi.dirty) || writeProtect )
         return;
         
-    if (writeProtect) {
-        if (!system->interface->questionToWrite(media))
-            return;
-    }
+    if (!system->interface->questionToWrite(media))
+        return;    
     
     system->interface->truncateMedia( media );
     
@@ -345,6 +343,10 @@ auto EasyFlash::createFlash(unsigned& imageSize) -> uint8_t* {
 auto EasyFlash::setWriteProtect(bool state) -> void {
     
     writeProtect = state;
+}
+
+auto EasyFlash::isWriteProtected() -> bool {
+    return writeProtect;
 }
 
 auto EasyFlash::setJumper( unsigned jumperId, bool state ) -> void {

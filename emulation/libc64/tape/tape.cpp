@@ -192,7 +192,7 @@ auto Tape::setMode( unsigned mode ) -> void {
 }
 
 auto Tape::reset() -> void {
-    disableWriteProtectQuestion = false;
+    writeQuestionState = 0;
     counter = 0;
 	counterOffset = 0;
 	writePos = 0;
@@ -254,6 +254,7 @@ auto Tape::unload() -> void {
 	this->data = 0;
 	loaded = false;
 	motorIn = false;
+    writeQuestionState = 0;
 	gapsRemaining = 0;
 	updateState( CounterState::NoOperation, 0 );
     currentCounter.cstate = CounterState::NoOperation;
@@ -332,4 +333,3 @@ auto Tape::selectListing( unsigned pos ) -> void {
 }
 
 }
-

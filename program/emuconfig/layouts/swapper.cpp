@@ -22,8 +22,7 @@ SwapperLayout::SwapperLayout( TabWindow* tabWindow ) {
 	listView.onChange = [this]() {
 		auto pos = listView.selection();
 		auto setting = getSetting( pos );
-		controls.writeProtect.setChecked( setting->writeProtect );
-		controls.writeProtect.setEnabled( setting->wpEnabled );
+		controls.writeProtect.setChecked( setting->writeProtect );		
 	};
 	
 	listView.onActivate = [this](){
@@ -77,11 +76,13 @@ SwapperLayout::SwapperLayout( TabWindow* tabWindow ) {
 			setting->setPath( file->getFile() );
 			setting->setFile( item->info.name );
 			setting->setId( item->id );
-			setting->setWriteProtect( true );
-			setting->setWpEnabled( !file->isArchived() );
-
-			listView.setText(pos, {std::to_string(pos), file->getFile(), item->info.name});
-			controls.writeProtect.setEnabled();	
+            listView.setText(pos, {std::to_string(pos), file->getFile(), item->info.name});
+            
+            bool forceWP = file->isArchived() || file->isReadOnly();
+            
+			setting->setWriteProtect( forceWP );		
+			controls.writeProtect.setEnabled( !forceWP );
+            controls.writeProtect.setChecked( forceWP );
 		};
 		archiveViewer->setView(items);
 	};
@@ -103,17 +104,9 @@ SwapperLayout::SwapperLayout( TabWindow* tabWindow ) {
 	controls.writeProtect.onToggle = [&]() {
 		if(!listView.selected()) return;
 		auto pos = listView.selection();
-        auto setting = getSetting( pos );
-		
+        auto setting = getSetting( pos );		
 		bool state = controls.writeProtect.checked();
-		if (!state) {			
-			if ( !setting->wpEnabled ) {
-				controls.writeProtect.setChecked();
-				controls.writeProtect.setEnabled(false);
-				mes->warning(trans->get("archive_wp_tooltip"));
-				return;
-			}
-		}
+
         setting->setWriteProtect( state );        
 	};
 	

@@ -219,8 +219,6 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             }                        
 
             typedef Emulator::Interface::TapeMode TapeMode;
-            
-            auto setting = FileSetting::getInstance( program->ident(activeEmulator, media->name ) );
 
             if (id == Hotkey::PlayTape) {
                 activeEmulator->controlTape( media, TapeMode::Play );
@@ -234,7 +232,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
                 activeEmulator->controlTape( media, TapeMode::Record );
                 status->addMessage( trans->get("tape_record_state") );						
                 view->updateTapeIcons( TapeMode::Record );
-                if (setting->writeProtect)
+                if (activeEmulator->isWriteProtected( media ))
                     status->addMessage( trans->get("tape_record_wp_state"), 3, true );						
 
             } else if (id == Hotkey::ForwardTape) {
@@ -310,13 +308,15 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
 
             activeEmulator->ejectDisk( media );
             activeEmulator->insertDisk(media, data, file->archiveDataSize(setting->id));
-            activeEmulator->writeProtectDisk(media, file->isArchived() ? true : setting->writeProtect);
+            activeEmulator->writeProtectDisk(media, (file->isArchived() || file->isReadOnly()) ? true : setting->writeProtect);
             media->guid = uintptr_t(file);
+            MediaView::MediaWindow::getView( activeEmulator )->updateWriteProtection( media, setting->writeProtect );
             filePool->assign(program->ident(activeEmulator, media->name), file);
             filePool->assign(program->ident(activeEmulator, "swapper_" + std::to_string(swapPos)), file);
             filePool->unloadOrphaned();
+            EmuConfigView::TabWindow::getView(activeEmulator)->statesLayout->updateSaveIdent( setting->file );
             States::getInstance( activeEmulator )->updateImage( setting, media );
-            status->addMessage( trans->get("insert_floppy", {{"%media%", media->name},{"%file%", setting->file}}) );		
+            status->addMessage( trans->get("insert_floppy", {{"%drive%", media->name},{"%file%", setting->file}}) );		
             break;	
         }
     }

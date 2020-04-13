@@ -26,6 +26,9 @@
 * autoload for all media types with D64/T64 viewer in file dialog
 * added possibility to associate files with Denise for macOS
 * emulated left vertical line in overscan area
+* added confirmation dialog to write on disk/tape/flash permanently 
+* open files as read only from OS point of view, if not able to open it in read/write mode
+
 
 ## 1.0.7
 * fixed a critical bug that caused OSX builds to use illegal instructions for some architectures

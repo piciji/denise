@@ -45,7 +45,6 @@ auto Drive1541::serialize(Emulator::Serializer& s) -> void {
     s.integer( motorOff.delay );
     s.integer( motorOff.pos );
     s.vector( motorOff.chunkSize );
-    s.integer( disableWriteProtectQuestion );
     s.integer( writeProtected );
     
     s.integer( rpm );
@@ -55,6 +54,8 @@ auto Drive1541::serialize(Emulator::Serializer& s) -> void {
         gcrTrack = structure1541.getTrackPtr( currentHalftrack );
         updateState();
     }
+       
+    structure1541.serialize( s, written );
     
     via1->serialize( s );
     via2->serialize( s );

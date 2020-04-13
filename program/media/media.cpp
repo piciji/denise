@@ -399,16 +399,11 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
 			block->header.writeprotect.onToggle = [this, block, setting, mediaGroup]() {
 				
 				bool state = block->header.writeprotect.checked();
-
-				if (!state && !setting->wpEnabled) {
-                    block->header.writeprotect.setChecked();
-                    block->header.writeprotect.setEnabled(false);
-                    return;
-				}
-
+                
 				emulator->writeProtect(block->media, state);
+                // wp is shared between main image, save states and disk swapper.
+                // i.e. if save state changes it, it's valid for main image too (to keep it simple)
 				setting->setWriteProtect(state);
-                States::getInstance( emulator )->updateImage( setting, block->media );
 			};
 			
 			updateMediaBlock(block, setting);
@@ -817,8 +812,8 @@ auto MediaWindow::updateMediaBlock(MediaGroupLayout::Block* block, FileSetting* 
 
     block->selector.edit.setText( setting->path );
     block->header.fileName.setText( setting->file );
-    block->header.writeprotect.setChecked( setting->writeProtect );
-    block->header.writeprotect.setEnabled( setting->wpEnabled );
+    
+    updateWriteProtection( block->media, setting->writeProtect );
 }
 
 auto MediaWindow::updateListing( Emulator::Interface::Media* media ) -> void {    
@@ -1051,8 +1046,7 @@ auto MediaWindow::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* fil
     setting->setPath(file->getFile());
     setting->setFile(item->info.name);
     setting->setId(item->id);
-    setting->setWriteProtect(true);
-    setting->setWpEnabled(!file->isArchived());
+    setting->setWriteProtect(false);
 
     if (!mediaGroup->isExpansion())
         States::getInstance(emulator)->updateImage(setting, media);
@@ -1226,8 +1220,19 @@ auto MediaWindow::updateVisibility( Emulator::Interface::MediaGroup* mediaGroup,
     layout->updateVisibility( count );
 }
 
-auto MediaWindow::disableWriteProtection(Emulator::Interface::Media* media) -> void {
+auto MediaWindow::updateWriteProtection( Emulator::Interface::Media* media, bool state ) -> void {
+            
+    bool enabled = false;
     
+    auto file = (GUIKIT::File*)media->guid;
+    
+    if (!file)
+        enabled = true;    
+    else if (file->isArchived() || file->isReadOnly())
+        state = true;
+    else
+        enabled = true;
+        
     auto layout = getMediaGroupLayout(media->group);
     
     if (!layout)
@@ -1237,30 +1242,16 @@ auto MediaWindow::disableWriteProtection(Emulator::Interface::Media* media) -> v
         
         if (block->media == media) {
                         
-            if (block->header.writeprotect.checked()) {                
-                block->header.writeprotect.setChecked(false);
-                block->header.writeprotect.onToggle();
-            }
+            auto setting = FileSetting::getInstance( this->ident( media->name ) );
+            
+            if (state != block->header.writeprotect.checked())            
+                block->header.writeprotect.setChecked( state );                            
+            
+            if (enabled != block->header.writeprotect.enabled())               
+                block->header.writeprotect.setEnabled( enabled );                            
+            
+            setting->setWriteProtect( state );
                                
-            break;
-        }
-    }
-}
-
-auto MediaWindow::changeWriteProtection(Emulator::Interface::Media* media, bool state) -> void {
-    
-    auto layout = getMediaGroupLayout(media->group);
-    
-    if (!layout)
-        return;
-    
-    for(auto block : layout->blocks) {
-        
-        if (block->media == media) {
-                
-            block->header.writeprotect.setEnabled();
-            block->header.writeprotect.setChecked(state);
-             
             break;
         }
     }
@@ -1323,7 +1314,7 @@ auto MediaWindow::previewFile( std::string filePath, MediaGroupLayout::Block* bl
     uint8_t* data;
     
     file.setFile( filePath );
-    
+    file.setReadOnly();
     auto items = file.scanArchive();         
     
     if (items.size() > 1)
