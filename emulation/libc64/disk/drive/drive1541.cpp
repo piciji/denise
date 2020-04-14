@@ -9,6 +9,7 @@ namespace LIBC64 {
 Drive1541::Drive1541(uint8_t number) {
      
     this->number = number; 
+	structure1541.number = number;
     
     media = nullptr;
     

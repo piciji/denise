@@ -236,8 +236,8 @@ auto Structure1541::createListing( ) -> void {
         }
     }
     
-    listings.push_back( { id++, listing.buildHeadline( buffer + 0x90, buffer + 0xa5, buffer + 0xa2 ) } );
-    loader.push_back( {'*'} );            
+    listings.push_back( { id++, listing.buildHeadline( buffer + 0x90, buffer + 0xa5, buffer + 0xa2 ), listing.decodeToScreencode( buildLoadCommand({'*'}, true) ) } );
+	loader.push_back( {'*'} );  
     
     decodeSector( &gcrTrack[(_track - 1) * 2], buffer, ++_sector );
     
@@ -250,8 +250,8 @@ auto Structure1541::createListing( ) -> void {
         unsigned listingSize = *(ptr + 0x1f) * 256 + *(ptr + 0x1e);        
         
         if ( *(ptr + 0x2) != 0 ) {       
-            listings.push_back( { id++, listing.buildListing( ptr + 0x5, listingSize, *(ptr + 0x2) ) } );
-            loader.push_back( listing.loader );
+            listings.push_back( { id++, listing.buildListing( ptr + 0x5, listingSize, *(ptr + 0x2) ), listing.decodeToScreencode( buildLoadCommand( listing.loader, true ) ) } );
+			loader.push_back( listing.loader );
         }
         
         ptr += 0x20;
@@ -281,8 +281,8 @@ auto Structure1541::createListing( ) -> void {
         }        
     }
     
-    listings.push_back( { id++, listing.buildFreeLine( freeBlocks ) } );
-    loader.push_back( {'*'} );
+    listings.push_back( { id++, listing.buildFreeLine( freeBlocks ), listing.decodeToScreencode( buildLoadCommand({'*'}, true) ) } );
+	loader.push_back( {'*'} );
 }
 
 auto Structure1541::getListing( ) -> std::vector<Emulator::Interface::Listing>& {
@@ -295,33 +295,41 @@ auto Structure1541::getListing( ) -> std::vector<Emulator::Interface::Listing>& 
     return listings;
 }
 
-auto Structure1541::selectListing( Emulator::Interface::Media* media, unsigned pos ) -> void {
+auto Structure1541::buildLoadCommand( std::vector<uint8_t> loadPath, bool forShow ) -> std::vector<uint8_t> {
     
-    std::vector<uint8_t> entry;    
+	if (forShow)
+		loadPath.insert( loadPath.begin(), { 'L', 'O', 'A', 'D', ' ', '"' } );    	
+	else
+		loadPath.insert( loadPath.begin(), { 'L', 'O', 'A', 'D', '"' } );    	
+	
+    loadPath.insert( loadPath.end(), { '"', ',' } );        
     
-    if (pos >= loader.size())
-        entry.push_back( '*' );
-    else
-        entry = loader[pos];
-    
-    entry.insert( entry.begin(), { 'L', 'O', 'A', 'D', '"' } );
-    
-    entry.insert( entry.end(), { '"', ',' } );        
-    
-    switch(media->id) {
+    switch(number) {
         case 0:
-        default: entry.insert( entry.end(), '8' ); break;
-        case 1: entry.insert( entry.end(), '9' ); break;
-        case 2: entry.insert( entry.end(), {'1', '0' } ); break;
-        case 3: entry.insert( entry.end(), {'1', '1' } ); break;
+        default: loadPath.insert( loadPath.end(), '8' ); break;
+        case 1: loadPath.insert( loadPath.end(), '9' ); break;
+        case 2: loadPath.insert( loadPath.end(), {'1', '0' } ); break;
+        case 3: loadPath.insert( loadPath.end(), {'1', '1' } ); break;
     }
-               
-    entry.insert( entry.end(), { ',', '1', '\r' } );        
-    
+       
+	if (forShow)
+		loadPath.insert( loadPath.end(), { ',', '1' } );   	
+	else
+		loadPath.insert( loadPath.end(), { ',', '1', '\r' } );   	
+	
+	return loadPath;
+}
+
+auto Structure1541::selectListing( Emulator::Interface::Media* media, unsigned pos ) -> void {
+	
     KeyBuffer::Action action;
     
     action.mode = KeyBuffer::Mode::Input;
-    action.buffer = entry;    
+	if (pos < listings.size())
+		action.buffer = buildLoadCommand( loader[pos] );    
+	else
+		action.buffer = buildLoadCommand({'*'});
+			
     system->keyBuffer->add( action );
     
     action.mode = KeyBuffer::Mode::WaitFor;
@@ -523,3 +531,4 @@ auto Structure1541::getTrackPtr( uint8_t halfTrack ) -> GcrTrack* {
 }
 
 }
+

@@ -213,17 +213,26 @@ auto MediaGroupLayout::updateListing( MediaGroupLayout::Block* block ) -> void {
 auto MediaGroupLayout::fillListing( std::vector<Emulator::Interface::Listing>& emuListings ) -> void {
     
     listings.reset();
+		
+    for( auto listing : mediaWindow->convertListing( emuListings, false ) )
+        listings.append({listing});									
+	
+	unsigned i = 0;
+	for( auto listing : mediaWindow->convertListing( emuListings, true ) )
+        listings.setRowTooltip(i++, listing);
 
-    for( auto listing : mediaWindow->convertListing( emuListings ) )        
-        listings.append({listing});
 }
 
-auto MediaGroupLayout::fillListing( std::vector<std::string>& emuListings ) -> void {
+auto MediaGroupLayout::fillListing( std::vector<GUIKIT::BrowserWindow::Listing>& emuListings ) -> void {
     
     listings.reset();
 
     for( auto listing : emuListings )        
-        listings.append({listing});    
+        listings.append({listing.entry});  
+		
+	unsigned i = 0;
+	for( auto listing : emuListings )
+        listings.setRowTooltip(i++, listing.tooltip);
 }
 
 auto MediaGroupLayout::showOnlyConnectedDevices() -> bool {

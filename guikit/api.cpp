@@ -666,6 +666,7 @@ auto ListView::append(const std::vector<std::string>& row) -> void {
     std::vector<Image*> images;
     for (unsigned i = 0; i < row.size(); i++) images.push_back(nullptr);
     state.images.push_back(images);
+	state.rowTooltips.push_back({});
     p.append(row);
 }
 
@@ -674,6 +675,7 @@ auto ListView::remove(unsigned selection) -> void {
     if(selection >= state.rows.size()) return;
     state.rows.erase(state.rows.begin() + selection);
     state.images.erase(state.images.begin() + selection);
+	state.rowTooltips.erase(state.rowTooltips.begin() + selection);
     p.remove(selection);
 }
 
@@ -683,6 +685,7 @@ auto ListView::reset() -> void {
     state.selection = 0;
     state.rows.clear();
     state.images.clear();
+	state.rowTooltips.clear();
     p.reset();
 }
 
@@ -757,6 +760,19 @@ auto ListView::text(unsigned selection, unsigned position) -> std::string {
     std::vector<std::string>& row = state.rows.at(selection);
     if(position >= row.size()) return "";
     return row.at(position);
+}
+
+auto ListView::setRowTooltip(unsigned selection, std::string tooltip ) -> void {
+	if (_A::dummy) return;
+    if(selection >= state.rowTooltips.size()) return;
+	state.rowTooltips[selection] = tooltip;
+	p.setRowTooltip(selection, tooltip);
+}
+
+auto ListView::getRowTooltip(unsigned selection) -> std::string {
+	if (_A::dummy) return "";
+    if(selection >= state.rowTooltips.size()) return "";
+	return state.rowTooltips[selection];
 }
 
 ListView::ListView() : Widget(*new pListView(*this)), p((pListView&)Widget::p) { if (!_A::dummy) p.init(); }
@@ -1083,7 +1099,7 @@ auto BrowserWindow::setTitle(const std::string& title) -> BrowserWindow& {
     return *this;
 }
 
-auto BrowserWindow::setOnChangeCallback( std::function<std::vector<std::string> (std::string filePath)> onSelectionChange ) -> BrowserWindow& {
+auto BrowserWindow::setOnChangeCallback( std::function<std::vector<BrowserWindow::Listing> (std::string filePath)> onSelectionChange ) -> BrowserWindow& {
     state.onSelectionChange = onSelectionChange;
     return *this;
 }

@@ -69,7 +69,7 @@ struct MediaGroupLayout : GUIKIT::FramedVerticalLayout {
     auto updateVisibility( unsigned count, bool init = false ) -> void;
     auto updateListing(MediaGroupLayout::Block* block) -> void;
     auto fillListing( std::vector<Emulator::Interface::Listing>& emuListings ) -> void;
-    auto fillListing( std::vector<std::string>& emuListings ) -> void;
+    auto fillListing( std::vector<GUIKIT::BrowserWindow::Listing>& emuListings ) -> void;
     auto showOnlyConnectedDevices() -> bool;
     auto getBlock(Emulator::Interface::Media* media) -> Block*;
 
@@ -203,12 +203,13 @@ struct MediaWindow : public GUIKIT::Window {
     auto getMediaGroupTransIdent( Emulator::Interface::MediaGroup* mediaGroup ) -> std::string;
     auto updateJumper(Emulator::Interface::Media* media) -> void;
     auto updateWriteProtection( Emulator::Interface::Media* media, bool state ) -> void;
-    auto previewFile( std::string file, MediaGroupLayout::Block* block = nullptr ) -> std::vector<std::string>;
+    auto previewFile( std::string file, MediaGroupLayout::Block* block = nullptr ) -> std::vector<GUIKIT::BrowserWindow::Listing>;
     auto getActiveLayout() -> MediaGroupLayout*;
     auto resetPreview(bool light = false) -> void;
     auto insertFile( MediaGroupLayout::Block* block, std::string filePath, bool autoLoad = false, unsigned selection = 0) -> bool;
     auto anyLoad( bool mIsAcquiredBefore ) -> void;
-    auto convertListing( std::vector<Emulator::Interface::Listing>& emuListings ) -> std::vector<std::string>;
+    auto convertListing( std::vector<Emulator::Interface::Listing>& emuListings, bool loadCommand ) -> std::vector<std::string>;
+	auto convertListing( std::vector<Emulator::Interface::Listing>& emuListings ) -> std::vector<GUIKIT::BrowserWindow::Listing>;
 
     MediaWindow(Emulator::Interface* emulator);
 };

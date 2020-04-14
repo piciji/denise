@@ -53,12 +53,17 @@ auto pBrowserWindow::selectionHandler(GtkFileChooser* chooser, gpointer data) ->
             instance->listView->reset();
 				
         if (state.onSelectionChange) {
-            auto rows = state.onSelectionChange(path);
+            auto listings = state.onSelectionChange(path);
 			
 			if (instance->listView) {
-                for(auto& row : rows) {
-                    instance->listView->append({row});
+                for(auto& listing : listings) {
+                    instance->listView->append({listing.entry});
                 }
+				unsigned i = 0;
+                for(auto& listing : listings) {
+                    instance->listView->setRowTooltip(i++, listing.tooltip);
+                }
+				
             }
 		}
         instance->selectedPath = path;
@@ -150,7 +155,7 @@ auto pBrowserWindow::createPreview() -> GtkWidget* {
 	if (!state.contentView.font.empty())
 		listView->setFont( state.contentView.font );
 
-	gtk_widget_set_size_request(listView->p.gtkWidget, 380, -1);	
+	gtk_widget_set_size_request(listView->p.gtkWidget, 380, 0);	
 
 	return listView->p.gtkWidget;
 }

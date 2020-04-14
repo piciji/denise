@@ -243,6 +243,7 @@ struct Interface {
 	struct Listing {
 		unsigned id;
 		std::vector<uint8_t> line; // host is responsible for conversion, e.g. c64 use petscii charset
+		std::vector<uint8_t> loadCommand;
 	};	
     
     enum Region : uint8_t { Pal = 0, Ntsc = 1 };
@@ -376,7 +377,7 @@ struct Interface {
 	virtual auto getDiskImageSize(unsigned typeId, bool hd) -> unsigned { return 0; } //get size needed for a new disk image
 	virtual auto createDiskImage(unsigned typeId, bool hd = false, std::string name = "", bool ffs = false) -> uint8_t* { return nullptr; }        
     virtual auto getDiskListing(Media* media) -> std::vector<Listing> { return {}; }
-    virtual auto getDiskPreview(uint8_t* data, unsigned size) -> std::vector<Listing> { return {}; }
+    virtual auto getDiskPreview(uint8_t* data, unsigned size, Media* media = nullptr) -> std::vector<Listing> { return {}; }
     virtual auto selectDiskListing(Media* media, unsigned pos) -> void { }
     
     // hard disk handling

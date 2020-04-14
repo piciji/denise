@@ -691,9 +691,10 @@ auto Interface::getDiskListing(Media* media) -> std::vector<Emulator::Interface:
     return iecBus->getDiskListing( media );
 }
 
-auto Interface::getDiskPreview(uint8_t* data, unsigned size) -> std::vector<Emulator::Interface::Listing> {
+auto Interface::getDiskPreview(uint8_t* data, unsigned size, Media* media) -> std::vector<Emulator::Interface::Listing> {
     
     Structure1541 structure;
+	structure.number = media ? media->id : 0;
     
     if (!structure.attach( data, size ))
         return {};
@@ -1180,3 +1181,4 @@ auto Interface::analyzeExpansion(uint8_t* data, unsigned size) -> Expansion* {
 }
 
 }
+

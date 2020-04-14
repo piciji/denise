@@ -85,7 +85,7 @@ auto MediaWindow::build() -> void {
         font->name = "C64 Pro Mono";
         font->data = (uint8_t*)Fonts::c64ProMono;
         font->size = sizeof(Fonts::c64ProMono);	
-        font->filePath = program->fontFolder() + "/C64_Pro_Mono-STYLE.ttf";
+        font->filePath = program->fontFolder() + "/C64_Pro_Mono-STYLE121.ttf";
         useCustomFont = MediaWindow::addCustomFont( font );
         ((LIBC64::Interface*) emulator)->convertPetsciiToScreencode( useCustomFont );
     }
@@ -1289,7 +1289,7 @@ auto MediaWindow::updateJumper(Emulator::Interface::Media* media) -> void {
     }    
 }
 
-auto MediaWindow::previewFile( std::string filePath, MediaGroupLayout::Block* block ) -> std::vector<std::string> {
+auto MediaWindow::previewFile( std::string filePath, MediaGroupLayout::Block* block ) -> std::vector<GUIKIT::BrowserWindow::Listing> {
     
     MediaGroupLayout* layout = nullptr;
     
@@ -1305,7 +1305,7 @@ auto MediaWindow::previewFile( std::string filePath, MediaGroupLayout::Block* bl
     lastPreview.filePath = filePath;    
     
     std::vector<Emulator::Interface::Listing> listings;       
-    std::vector<std::string> convertedListings;
+    std::vector<GUIKIT::BrowserWindow::Listing> convertedListings;
     GUIKIT::File file;
     Emulator::Interface::MediaGroup* group = nullptr;
     std::string fileName;
@@ -1340,7 +1340,7 @@ auto MediaWindow::previewFile( std::string filePath, MediaGroupLayout::Block* bl
         
         if (mediaGroup.isDisk()) {
             if (extension == "d64" || extension == "g64") {
-                listings = emulator->getDiskPreview(data, file.archiveDataSize(0));
+                listings = emulator->getDiskPreview(data, file.archiveDataSize(0), block ? block->media : nullptr);
                 group = &mediaGroup;
                 break;
             }            
@@ -1587,7 +1587,7 @@ auto MediaWindow::anyLoad( bool mIsAcquiredBefore ) -> void {
         inputDriver->mAcquire();
 }
 
-auto MediaWindow::convertListing( std::vector<Emulator::Interface::Listing>& emuListings ) -> std::vector<std::string> {
+auto MediaWindow::convertListing( std::vector<Emulator::Interface::Listing>& emuListings, bool loadCommand ) -> std::vector<std::string> {
 
     std::vector<std::string> list;
     
@@ -1595,16 +1595,56 @@ auto MediaWindow::convertListing( std::vector<Emulator::Interface::Listing>& emu
 
         std::vector<uint8_t> utf8;
 
-        for (auto& code : listing.line) {
+        for (auto& code : (loadCommand ? listing.loadCommand : listing.line) ) {
 
-            unsigned useCode = code;
+			unsigned useCode = code;
             if (useCustomFont)
                 useCode |= 0xee << 8;
-
+			
             GUIKIT::Utf8::encode(useCode, utf8);
         }
 
         list.push_back( std::string((const char*) utf8.data(), utf8.size()) );
+    }  
+    
+    return list;
+}
+
+auto MediaWindow::convertListing( std::vector<Emulator::Interface::Listing>& emuListings ) -> std::vector<GUIKIT::BrowserWindow::Listing> {
+
+    std::vector<GUIKIT::BrowserWindow::Listing> list;
+    
+    for (auto& listing : emuListings) {
+
+		GUIKIT::BrowserWindow::Listing browserListing;
+		
+        std::vector<uint8_t> utf8;
+
+        for (auto& code : listing.line ) {
+
+			unsigned useCode = code;
+            if (useCustomFont)
+                useCode |= 0xee << 8;
+			
+            GUIKIT::Utf8::encode(useCode, utf8);
+        }
+
+        browserListing.entry = std::string((const char*) utf8.data(), utf8.size());
+		
+		utf8.clear();
+
+        for (auto& code : listing.loadCommand ) {
+
+			unsigned useCode = code;
+            if (useCustomFont)
+                useCode |= 0xee << 8;
+			
+            GUIKIT::Utf8::encode(useCode, utf8);
+        }
+		
+		browserListing.tooltip = std::string((const char*) utf8.data(), utf8.size());
+		
+		list.push_back( browserListing );
     }  
     
     return list;

@@ -39,7 +39,7 @@ struct Interface : Emulator::Interface {
     static const std::string Version;
     
     // petscii will be converted to ascii or screencodes to be viewed in host
-    bool convertToScreencode;
+    bool convertToScreencode = false;
  
 	//controls
 	auto connect(unsigned connectorId, unsigned deviceId) -> void;
@@ -67,7 +67,7 @@ struct Interface : Emulator::Interface {
 	auto getDiskImageSize(unsigned typeId, bool hd) -> unsigned;
 	auto createDiskImage(unsigned typeId, bool hd = false, std::string name = "", bool ffs = false) -> uint8_t*;        
     auto getDiskListing(Media* media) -> std::vector<Emulator::Interface::Listing>;
-    auto getDiskPreview(uint8_t* data, unsigned size) -> std::vector<Emulator::Interface::Listing>;
+    auto getDiskPreview(uint8_t* data, unsigned size, Media* media = nullptr) -> std::vector<Emulator::Interface::Listing>;
     auto selectDiskListing(Media* media, unsigned pos) -> void;
     
 	//tape drive handling

@@ -284,7 +284,7 @@ struct pListView : pWidget {
         GtkWidget* label;
     };
     std::vector<GtkColumn> column;
-
+	
     auto append(const std::vector<std::string>& list) -> void;
     auto autoSizeColumns() -> void;
     auto remove(unsigned selection) -> void;
@@ -302,10 +302,12 @@ struct pListView : pWidget {
     auto setFocused() -> void;
     auto setForegroundColor(unsigned color) -> void;
     auto setBackgroundColor(unsigned color) -> void;
+	auto setRowTooltip(unsigned selection, std::string tooltip) -> void;
 
     auto destroy() -> void;
     static auto onActivate(GtkTreeView* treeView, GtkTreePath* path, GtkTreeViewColumn* column, ListView* self) -> void;
     static auto onChange(GtkTreeView* treeView, ListView* self) -> void;
+	static auto onTooltip(GtkWidget* widget, gint x, gint y, gboolean keyboard_tip, GtkTooltip* tooltip, ListView* self) -> gboolean;
 
     pListView(ListView& listView) : pWidget(listView), listView(listView) { }
     ~pListView() { destroy(); }

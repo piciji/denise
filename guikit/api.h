@@ -546,6 +546,8 @@ struct ListView : Widget {
     auto text(unsigned selection, unsigned position) -> std::string;
     auto text() -> std::string = delete;
     auto setText(const std::string& text) -> void = delete;
+	auto setRowTooltip(unsigned selection, std::string tooltip ) -> void;
+	auto getRowTooltip(unsigned selection) -> std::string;
 
     struct {
         bool headerVisible = false;
@@ -553,6 +555,7 @@ struct ListView : Widget {
         bool selected = false;
         std::vector<std::string> header;
         std::vector<std::vector<std::string>> rows;
+		std::vector<std::string> rowTooltips;
         std::vector<std::vector<Image*>> images;
     } state;
 
@@ -893,7 +896,12 @@ struct Timer : Base {
 };
 
 struct BrowserWindow {
-	static std::function<void ()> onCall;	    
+	static std::function<void ()> onCall;	
+
+	struct Listing {
+		std::string entry;
+		std::string tooltip = "";
+	};    
     
     auto directory() -> std::string;
     auto open() -> std::string;
@@ -906,7 +914,7 @@ struct BrowserWindow {
     auto setWindow(Window& window) -> BrowserWindow&;
     auto setPath(const std::string& path) -> BrowserWindow&;
     auto setTitle(const std::string& title) -> BrowserWindow&;
-    auto setOnChangeCallback( std::function<std::vector<std::string> (std::string file)> onSelectionChange ) -> BrowserWindow&;
+    auto setOnChangeCallback( std::function<std::vector<BrowserWindow::Listing> (std::string file)> onSelectionChange ) -> BrowserWindow&;
     auto addCustomButton( std::string text, std::function<bool (std::string filePath, unsigned selection)> onClick, unsigned id = 0 ) -> BrowserWindow&;
     auto setDefaultButtonText(std::string textOk, std::string textCancel = "") -> BrowserWindow&;
 	auto setNonModal() -> BrowserWindow&;
@@ -935,14 +943,14 @@ struct BrowserWindow {
         unsigned foregroundColor = 0;
         unsigned backgroundColor = 0xffffff;        
         std::function<bool (std::string filePath, unsigned selection)> onDblClick = nullptr; 
-    };
-        
+    };        
+	
     struct State {
         std::vector<std::string> filters;
         Window* window = nullptr;
         std::string path = "";
         std::string title = "";
-        std::function<std::vector<std::string> (std::string filePath)> onSelectionChange = nullptr;
+        std::function<std::vector<Listing> (std::string filePath)> onSelectionChange = nullptr;
         std::function<void (std::string filePath, unsigned selection)> onOkClick = nullptr;
         std::function<void ()> onCancelClick = nullptr;
         std::vector<CustomButton> buttons;

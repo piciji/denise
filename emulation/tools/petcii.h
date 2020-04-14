@@ -74,12 +74,14 @@ struct PetciiConversion {
         return decodeToScreencode( petcii ) + 0x80;
     }
     
-    auto decodeToScreencode( uint8_t petcii ) -> uint8_t {        
+    auto decodeToScreencode( uint8_t petcii ) -> uint8_t {        	
 		
 		if (petcii >= 0x40 && petcii <= 0x5f) {
 			return (uint8_t) (petcii - 0x40);
 		} else if (petcii >= 0x60 && petcii <= 0x7f) {
 			return (uint8_t) (petcii - 0x20);
+		} else if (petcii >= 0x80 && petcii <= 0x9f) {
+			return (uint8_t) (petcii + 0x40);
 		} else if (petcii >= 0xa0 && petcii <= 0xbf) {
 			return (uint8_t) (petcii - 0x40);
 		} else if (petcii >= 0xc0 && petcii <= 0xfe) {

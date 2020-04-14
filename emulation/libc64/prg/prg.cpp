@@ -126,12 +126,24 @@ auto Prg::createListing() -> void {
     unsigned id = 0;
 
     if (headlinePtr)
-        listings.push_back( { id, listing.buildHeadline( headlinePtr ) } );
+        listings.push_back( { id, listing.buildHeadline( headlinePtr ), listing.decodeToScreencode( {'R','U','N', ' ', '"', '*', '"'} ) } );
 
     for (auto& chunk : chunks) {
         unsigned listingSize = (chunk.size / 254) + ( (chunk.size % 254) ? 1 : 0);
-        listings.push_back( { id++, listing.buildListing( chunk.namePtr, listingSize, 0x82 ) } );
+        listings.push_back( { id++, listing.buildListing( chunk.namePtr, listingSize, 0x82 ), listing.decodeToScreencode( buildLoadCommand( listing.loader ) ) } );
     }
+}
+
+auto Prg::buildLoadCommand( std::vector<uint8_t> loadPath ) -> std::vector<uint8_t> {
+    
+	if (!loadPath.size())
+		loadPath.insert( loadPath.begin(), '*' );
+	
+	loadPath.insert( loadPath.begin(), { 'R', 'U', 'N', ' ', '"' } );    		
+	
+	loadPath.insert( loadPath.end(), '"' );
+	
+	return loadPath;
 }
 
 auto Prg::getListing() -> std::vector<Emulator::Interface::Listing> {

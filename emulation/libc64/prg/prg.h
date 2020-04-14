@@ -47,6 +47,7 @@ struct Prg {
 	auto isPrg() -> bool;	
 	auto saneSize() -> void;		
 	auto find( std::vector<uint8_t> match, unsigned offset = 0 ) -> bool;
+	auto buildLoadCommand( std::vector<uint8_t> loadPath ) -> std::vector<uint8_t>;
     
     static auto getInstance(Emulator::Interface::Media* media) -> Prg*;
 };

@@ -28,6 +28,7 @@ struct Structure1541 {
     static const uint8_t GAPS_IN_SPEEDZONE[4];
     
     enum class Type { D64 = 0, G64 = 1, P64 = 2, Unknown = -1 } type; 
+	uint8_t number;
     
     std::function<unsigned (uint8_t*, unsigned, unsigned)> write = [](uint8_t* buffer, unsigned length, unsigned offset){ return 0; };    
     
@@ -65,9 +66,10 @@ struct Structure1541 {
     auto writeTrack( const GcrTrack* trackPtr, uint8_t halfTrack ) -> void;
     auto attach( uint8_t* data, unsigned size ) -> bool;
     auto detach() -> void;
-    auto createListing( ) -> void;
-    auto getListing( ) -> std::vector<Emulator::Interface::Listing>&;
+    auto createListing() -> void;
+    auto getListing() -> std::vector<Emulator::Interface::Listing>&;
     auto selectListing( Emulator::Interface::Media* media, unsigned pos ) -> void;
+	auto buildLoadCommand( std::vector<uint8_t> loadPath, bool forShow = false ) -> std::vector<uint8_t>;
     auto clearTrackData() -> void;
     auto getLogicalTrack(uint8_t _track, int offset) -> uint8_t;
     auto storeWrittenTracks() -> void;

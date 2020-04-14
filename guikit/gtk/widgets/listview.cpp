@@ -94,7 +94,8 @@ auto pListView::create() -> void {
         gtype.push_back(GDK_TYPE_PIXBUF);
 
         cell.text = gtk_cell_renderer_text_new();
-		g_object_set(G_OBJECT(cell.text), "ypad", 0, nullptr);
+		//g_object_set(G_OBJECT(cell.text), "ypad", 0, nullptr);
+		gtk_cell_renderer_set_padding(cell.text, 0, 0);
 		
         gtk_tree_view_column_pack_start(cell.column, cell.text, false);
         gtk_tree_view_column_set_attributes(cell.column, cell.text, "text", gtype.size(), nullptr);
@@ -108,6 +109,7 @@ auto pListView::create() -> void {
     store = gtk_list_store_newv(gtype.size(), gtype.data());
     subWidget = gtk_tree_view_new_with_model(GTK_TREE_MODEL(store));
     gtk_container_add(GTK_CONTAINER(gtkWidget), subWidget);
+	gtk_widget_set_has_tooltip(GTK_WIDGET(subWidget), TRUE);
 
     for(auto& cell : column) {
         gtk_tree_view_column_set_widget(GTK_TREE_VIEW_COLUMN(cell.column), cell.label);
@@ -119,8 +121,9 @@ auto pListView::create() -> void {
     gtk_tree_view_set_search_column(GTK_TREE_VIEW(subWidget), -1);
 
     g_signal_connect(G_OBJECT(subWidget), "cursor-changed", G_CALLBACK(pListView::onChange), (gpointer)&listView);
-    g_signal_connect(G_OBJECT(subWidget), "row-activated", G_CALLBACK(pListView::onActivate), (gpointer)&listView);
-    
+    g_signal_connect(G_OBJECT(subWidget), "row-activated", G_CALLBACK(pListView::onActivate), (gpointer)&listView);	
+    g_signal_connect(G_OBJECT(subWidget), "query-tooltip", G_CALLBACK(pListView::onTooltip), (gpointer)&listView);
+	
     gtk_widget_show(subWidget);
 }
 
@@ -179,6 +182,43 @@ auto pListView::onChange(GtkTreeView* treeView, ListView* self) -> void {
     }
 }
 
+auto pListView::onTooltip(GtkWidget* widget, gint x, gint y, gboolean keyboard_tip, GtkTooltip* tooltip, ListView* self) -> gboolean {
+
+	GtkTreeIter iter;
+	GtkTreePath* path;
+	GtkTreeModel* model;
+	
+	gboolean found = FALSE;
+	std::string tooltipText = "";
+
+	if (!gtk_tree_view_get_tooltip_context(GTK_TREE_VIEW(widget), &x, &y, keyboard_tip, &model, &path, &iter))
+		return FALSE;
+
+	char* pathname = gtk_tree_path_to_string(path);
+	int hoverSelection = -1;
+	
+	try {
+		hoverSelection = std::stoi(pathname);
+	} catch (...) { }
+	
+	if (hoverSelection >= 0) {
+		
+		if (hoverSelection < self->state.rowTooltips.size())
+			tooltipText = self->state.rowTooltips[hoverSelection];
+
+		if (!tooltipText.empty()) {
+			gtk_tooltip_set_text(tooltip, tooltipText.c_str() );
+			gtk_tree_view_set_tooltip_row(GTK_TREE_VIEW(widget), tooltip, path);
+			found = true;
+		}
+	}
+	
+	g_free(pathname);
+	gtk_tree_path_free(path);
+	
+	return found;
+}
+
 auto pListView::setImage(unsigned selection, unsigned position, Image& image) -> void {
     GtkTreeModel* model = gtk_tree_view_get_model(GTK_TREE_VIEW(subWidget));
     GtkTreeIter iter;
@@ -223,4 +263,9 @@ auto pListView::setForegroundColor(unsigned color) -> void {
 	pSystem::addCssClass(subWidget, "customColor");
 	
 	pSystem::applyCss( subWidget, ".customColor { color: " + pSystem::getColorCss( color ) + "; }" );
+}
+
+auto pListView::setRowTooltip(unsigned selection, std::string tooltip) -> void {
+	
+
 }

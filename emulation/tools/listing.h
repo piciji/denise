@@ -146,6 +146,18 @@ struct C64Listing {
         return convertToScreencode ? conv.decodeToScreencodeHi( petscii )
                 : conv.decode( petscii );
     }
+	
+	auto decodeToScreencode( std::vector<uint8_t> line ) -> std::vector<uint8_t> {
+		
+		std::vector<uint8_t> out;
+		
+		for ( auto& code : line ) {
+			
+			out.push_back( decodeToScreencode(code) );
+		}
+		
+		return out;
+	}
 };
 
 }
