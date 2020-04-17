@@ -112,11 +112,89 @@ auto CALLBACK pListView::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPA
     Window* window = (Window*)listView->Sizable::state.window;
     if(window == nullptr) return DefWindowProc(hwnd, msg, wparam, lparam);
 
-    switch(msg) {
+    switch(msg) {        
         case WM_GETDLGCODE:
-            if (wparam != VK_TAB) return DLGC_WANTALLKEYS;
+            if (wparam != VK_TAB)
+                return DLGC_WANTALLKEYS;
+            break;
+
+        case WM_MOUSEMOVE: {
+            if (!listView->state.rowTooltips.size())
+                break;
+            
+            if ((wparam & MK_LBUTTON) == 0) {
+                LVHITTESTINFO ht = {0};
+                ht.pt.x = LOWORD(lparam);
+                ht.pt.y = HIWORD(lparam);
+                ListView_SubItemHitTest(hwnd, &ht);                
+                int curItem = ht.iItem;
+
+                if (curItem >= 0) {
+                    if ( listView->p.lastItem != curItem ) {
+                        RECT rect;
+                        ListView_GetItemRect(hwnd, curItem, &rect, LVIR_BOUNDS);
+                        listView->p.updateRowToolTip( hwnd, curItem, rect );
+                    }
+                }
+
+                listView->p.relayMesssageToToolTip(hwnd, msg, wparam, lparam);
+            }
+        } break;
+        
     }
     return CallWindowProc(listView->p.wndprocOrig, hwnd, msg, wparam, lparam);
+}
+
+auto pListView::relayMesssageToToolTip(HWND hwnd, UINT umsg, WPARAM wparam, LPARAM lparam) -> void {
+        
+    if (!hwndTip)
+        return;
+    
+    MSG msg;
+    msg.hwnd    = hwnd;
+    msg.message = umsg;
+    msg.wParam  = wparam;
+    msg.lParam  = lparam;
+    msg.pt.x    = LOWORD(lparam);
+    msg.pt.y    = HIWORD(lparam);
+    
+    SendMessage( hwndTip, TTM_RELAYEVENT, 0, (LPARAM)&msg);
+}
+
+auto pListView::updateRowToolTip(HWND hwnd, int curItem, RECT rect) -> void {
+    
+    if (!hwndTip)
+        createTooltip();
+    
+    auto& toolTips = listView.state.rowTooltips;
+    
+    if (toolTips.size() <= curItem)
+        return;     
+   
+    lastItem = curItem;
+               
+    TOOLINFO toolInfo = { 0 };
+    toolInfo.cbSize = sizeof(toolInfo);
+    toolInfo.hwnd = hwnd;
+    
+    while ( SendMessage(hwndTip, TTM_ENUMTOOLS, 0, (LPARAM)&toolInfo) ) {
+        SendMessage(hwndTip, TTM_DELTOOL, 0, (LPARAM)&toolInfo);
+    }
+    
+    if (toolTips[curItem].empty())
+        return;
+    
+    utf16_t wtooltip( toolTips[curItem] );
+    
+    toolInfo.uFlags = 0;
+    toolInfo.uId = curItem;
+    toolInfo.rect.left    = rect.left;
+    toolInfo.rect.top     = rect.top;
+    toolInfo.rect.right   = rect.right;
+    toolInfo.rect.bottom  = rect.bottom;         
+    toolInfo.lpszText = wtooltip;
+    
+    SendMessage(hwndTip, TTM_ADDTOOL, 0, (LPARAM)&toolInfo);
 }
 
 auto pListView::create() -> void {
@@ -129,9 +207,35 @@ auto pListView::create() -> void {
         0, 0, 0, 0, listView.window()->p.hwnd, (HMENU)(unsigned long long)listView.id, GetModuleHandle(0), 0);
 
     ListView_SetExtendedListViewStyle(hwnd, LVS_EX_FULLROWSELECT | LVS_EX_SUBITEMIMAGES);
-	
+    
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)&listView);
-    wndprocOrig = (WNDPROC)SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)subclassWndProc);
+    wndprocOrig = (WNDPROC)SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)subclassWndProc);  
+    
+    lastItem = -1;
+}
+
+auto pListView::createTooltip(bool useBallon) -> void {
+    
+    pWidget::createTooltip( useBallon );
+
+    SetWindowTheme(hwndTip, L" ", L" "); // to make coloring work
+    RECT rectSetMargin = {5, 5, 5, 3};
+    SendMessage(hwndTip, TTM_SETMARGIN, 0, (LPARAM)&rectSetMargin);  
+    
+    auto& widgetState = listView.Widget::state;
+    
+    if (listView.state.colorRowTooltips && widgetState.overrideBackgroundColor) {
+        unsigned color = widgetState.backgroundColor;
+        SendMessage(hwndTip, TTM_SETTIPBKCOLOR, RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff), 0);    
+    }
+
+    if (listView.state.colorRowTooltips && widgetState.overrideForegroundColor) {
+        unsigned color = widgetState.foregroundColor;
+        SendMessage(hwndTip, TTM_SETTIPTEXTCOLOR, RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff), 0);
+    }
+    
+    if (hfont)
+        SendMessage(hwndTip, WM_SETFONT, (WPARAM)hfont, 0);     
 }
 
 auto pListView::rebuild() -> void {
@@ -152,7 +256,7 @@ auto pListView::setFont(std::string font) -> void {
     pWidget::setFont(font);
     reset();
     setContent();
-    buildImageList();
+    buildImageList();         
 }
 
 auto pListView::setContent() -> void {
@@ -281,7 +385,7 @@ auto pListView::buildImageList() -> void {
 auto pListView::setBackgroundColor(unsigned color) -> void {	
 	if (!hwnd) return;
 	ListView_SetBkColor( hwnd, RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff) );
-	ListView_SetTextBkColor( hwnd, RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff) );
+	ListView_SetTextBkColor( hwnd, RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff) );      
 }
 
 auto pListView::setForegroundColor(unsigned color) -> void {

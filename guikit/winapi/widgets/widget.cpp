@@ -114,12 +114,12 @@ auto pWidget::setTooltip(std::string tooltip) -> void {
     SendMessage(hwndTip, TTM_ADDTOOL, 0, (LPARAM)&toolInfo);
 }
 
-auto pWidget::createTooltip() -> void {
+auto pWidget::createTooltip(bool useBallon) -> void {
 
     hwndTip = CreateWindowEx(0, TOOLTIPS_CLASS, NULL,
-        WS_POPUP |TTS_ALWAYSTIP | TTS_BALLOON,
+        WS_POPUP | TTS_ALWAYSTIP | TTS_USEVISUALSTYLE | ( useBallon ? TTS_BALLOON : 0),
         CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-        GetParent(hwnd), NULL, GetModuleHandle(0), 0);
+        hwnd, NULL, GetModuleHandle(0), 0);    
 }
 
 auto pWidget::getScaledContainerSize( Size size ) -> Size {

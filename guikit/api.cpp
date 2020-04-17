@@ -775,6 +775,10 @@ auto ListView::getRowTooltip(unsigned selection) -> std::string {
 	return state.rowTooltips[selection];
 }
 
+auto ListView::colorRowTooltips(bool colorTip) -> void {
+    state.colorRowTooltips = colorTip;
+}
+
 ListView::ListView() : Widget(*new pListView(*this)), p((pListView&)Widget::p) { if (!_A::dummy) p.init(); }
 
 auto TreeViewItem::append(TreeViewItem& item) -> void {
@@ -1061,10 +1065,11 @@ auto BrowserWindow::addContentView(unsigned id, std::function<bool (std::string 
     return *this;
 }
 
-auto BrowserWindow::customizeContentView(std::string font, unsigned foregroundColor, unsigned backgroundColor) -> BrowserWindow& {  
-    state.contentView.font = font;
+auto BrowserWindow::customizeContentView(std::string font, int foregroundColor, int backgroundColor, bool colorTooltips) -> BrowserWindow& {  
+    state.contentView.font = font;    
     state.contentView.foregroundColor = foregroundColor;
     state.contentView.backgroundColor = backgroundColor;
+    state.contentView.colorTooltips = colorTooltips;
     return *this;
 }
 

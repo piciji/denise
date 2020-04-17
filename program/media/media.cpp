@@ -334,7 +334,7 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
 					});
 					
 					fileDialogPtr->customizeContentView( useCustomFont ? "C64 Pro Mono, 11" : "",
-						mediaGroupLayouts[0]->listings.foregroundColor(), mediaGroupLayouts[0]->listings.backgroundColor());
+						mediaGroupLayouts[0]->listings.foregroundColor() & 0xffffff, mediaGroupLayouts[0]->listings.backgroundColor() & 0xffffff, true);
                 }
 				
                 fileDialogPtr->setCallbacks( [this, block](std::string filePath, unsigned selection) {
@@ -1508,7 +1508,7 @@ auto MediaWindow::anyLoad( bool mIsAcquiredBefore ) -> void {
 		} );
 
 		fileDialogPtr->customizeContentView( useCustomFont ? "C64 Pro Mono, 11" : "",
-			mediaGroupLayouts[0]->listings.foregroundColor(), mediaGroupLayouts[0]->listings.backgroundColor());
+			mediaGroupLayouts[0]->listings.foregroundColor() & 0xffffff, mediaGroupLayouts[0]->listings.backgroundColor() & 0xffffff, true);
     }
 	
     fileDialogPtr->setTitle(trans->get("select image"));

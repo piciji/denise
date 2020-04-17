@@ -293,6 +293,33 @@ auto pBrowserWindow::file(bool save) -> std::string {
     return name;
 }
 
+auto pBrowserWindow::createTooltip(HWND hwnd) -> void {
+    
+    auto colorBg = browserWindow.state.contentView.backgroundColor;    
+    auto colorFg = browserWindow.state.contentView.foregroundColor;  
+    auto colorTooltips = browserWindow.state.contentView.colorTooltips;
+            
+    hwndTip = CreateWindowEx(0, TOOLTIPS_CLASS, NULL,
+            WS_POPUP | TTS_ALWAYSTIP | TTS_USEVISUALSTYLE,
+            CW_USEDEFAULT, CW_USEDEFAULT,
+            CW_USEDEFAULT, CW_USEDEFAULT,
+            hwnd, NULL, GetModuleHandle(0), 0);
+
+    if (colorTooltips && (colorFg >= 0 || colorBg >= 0))
+        SetWindowTheme(hwndTip, L" ", L" ");
+
+    if (colorTooltips && colorFg >= 0)
+        SendMessage(hwndTip, TTM_SETTIPTEXTCOLOR, RGB((colorFg >> 16) & 0xff, (colorFg >> 8) & 0xff, colorFg & 0xff), 0);
+    if (colorTooltips && colorBg >= 0)
+        SendMessage(hwndTip, TTM_SETTIPBKCOLOR, RGB((colorBg >> 16) & 0xff, (colorBg >> 8) & 0xff, colorBg & 0xff), 0);
+
+    if (listFont)
+        SendMessage(hwndTip, WM_SETFONT, (WPARAM)listFont, 0);                                                  
+
+    RECT rectSetMargin = {5, 5, 5, 3};
+    SendMessage(hwndTip, TTM_SETMARGIN, 0, (LPARAM)&rectSetMargin);  
+}
+
 auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) -> UINT_PTR {
     
     TCHAR wFilePath[256];
@@ -335,14 +362,20 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
                 
                 auto size = pFont::size(context->listFont, " ");
                 
-                SendMessage(listBox, LB_SETITEMHEIGHT, 0, size.height + 1);
+                SendMessage(listBox, LB_SETITEMHEIGHT, 0, size.height);
             }
-            auto colorBg = state->contentView.backgroundColor;                        
-            context->listBgBrush = CreateSolidBrush( RGB((colorBg >> 16) & 0xff, (colorBg >> 8) & 0xff, colorBg & 0xff) );
+            auto colorBg = state->contentView.backgroundColor;                
+            if (colorBg >= 0)
+                context->listBgBrush = CreateSolidBrush( RGB((colorBg >> 16) & 0xff, (colorBg >> 8) & 0xff, colorBg & 0xff) );
             
             for(auto& button : state->buttons) {
                 SetDlgItemText(hDlg, button.id, (LPCWSTR)utf16_t(button.text) );
             }                            
+                                  
+            SetWindowLongPtr(listBox, GWLP_USERDATA, (LONG_PTR)context);
+            WNDPROC wndprocOrig = (WNDPROC)SetWindowLongPtr(listBox, GWLP_WNDPROC, (LONG_PTR)subclassListbox);
+            SetProp( listBox, L"OLDWNDPROC", (HANDLE)wndprocOrig );
+            context->lastItem = -1;
             
             SetWindowLongPtr(hDlg, DWLP_USER, lParam);
             
@@ -353,9 +386,14 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
             auto colorBg = state->contentView.backgroundColor;
             auto colorFg = state->contentView.foregroundColor;                  
             
-            SetBkColor((HDC)wParam, RGB((colorBg >> 16) & 0xff, (colorBg >> 8) & 0xff, colorBg & 0xff)); 
-            SetTextColor((HDC)wParam, RGB((colorFg >> 16) & 0xff, (colorFg >> 8) & 0xff, colorFg & 0xff) );
-            return (LRESULT)context->listBgBrush;
+            if (colorBg >= 0)
+                SetBkColor((HDC)wParam, RGB((colorBg >> 16) & 0xff, (colorBg >> 8) & 0xff, colorBg & 0xff)); 
+            if (colorFg >= 0)
+                SetTextColor((HDC)wParam, RGB((colorFg >> 16) & 0xff, (colorFg >> 8) & 0xff, colorFg & 0xff) );
+            
+            if (colorBg >= 0)
+                return (LRESULT)context->listBgBrush;
+            break;
         }       
         
         case WM_NOTIFY: {
@@ -367,8 +405,10 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
                 
             } else if ( ((OFNOTIFY*)lParam)->hdr.code == CDN_SELCHANGE ) {
                 
-                if (listBox)
+                if (listBox) {
                     SendMessage(listBox, LB_RESETCONTENT, 0, 0);
+                    context->toolTips.clear();
+                }
             
                 if (SendMessage(((OFNOTIFY*)lParam)->hdr.hwndFrom, CDM_GETFILEPATH, 256, (LPARAM)wFilePath) >= 0) {
                     
@@ -383,9 +423,11 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
                             if (listBox) {
                                 unsigned maximumWidth = 0;                                                            
                                 for( auto& row : rows ) {                                
-                                    SendMessage( listBox, LB_ADDSTRING, 0, (LPARAM)(wchar_t*)utf16_t(row) );
+                                    SendMessage( listBox, LB_ADDSTRING, 0, (LPARAM)(wchar_t*)utf16_t(row.entry) );
 
-                                    maximumWidth = std::max(maximumWidth, pFont::size(context->listFont, row).width);
+                                    maximumWidth = std::max(maximumWidth, pFont::size(context->listFont, row.entry).width);
+                                    
+                                    context->toolTips.push_back( row.tooltip );
                                 }
 
                                 SendMessage( listBox, LB_SETHORIZONTALEXTENT, maximumWidth, 0);
@@ -444,6 +486,93 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
     }
     
     return FALSE;
+}
+
+auto CALLBACK pBrowserWindow::subclassListbox(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT {
+    
+    pBrowserWindow* instance = (pBrowserWindow*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
+    WNDPROC lpOldWndProc = (WNDPROC)GetProp( hwnd, L"OLDWNDPROC" );
+
+    switch (msg) {
+        case WM_LBUTTONDOWN:
+        case WM_LBUTTONUP:
+        case WM_MBUTTONDOWN: 
+        case WM_MBUTTONUP:
+        case WM_RBUTTONDOWN:
+        case WM_RBUTTONUP:
+            instance->relayMesssageToToolTip(hwnd, msg, wparam, lparam);
+            break;
+        
+        case WM_MOUSEMOVE: {
+            if ((wparam & MK_LBUTTON) == 0) {
+                POINT point;
+                point.x = LOWORD(lparam);
+                point.y = HIWORD(lparam);
+                MapWindowPoints( hwnd, nullptr, (LPPOINT)&point, 1 );
+                int curItem = LBItemFromPt( hwnd, point, false );
+
+                if (curItem >= 0) {
+                    if ( instance->lastItem != curItem ) {
+                        RECT rect;
+                        SendMessage(hwnd, LB_GETITEMRECT, curItem, (LPARAM)&rect);
+                        instance->setToolTip( hwnd, curItem, rect );
+                    }
+                }
+
+                instance->relayMesssageToToolTip(hwnd, msg, wparam, lparam);
+            }
+        } break;
+    }
+    
+    return CallWindowProc(lpOldWndProc, hwnd, msg, wparam, lparam);
+}
+
+auto pBrowserWindow::relayMesssageToToolTip(HWND hwnd, UINT umsg, WPARAM wparam, LPARAM lparam) -> void {
+    if (!hwndTip)
+        return;
+    
+    MSG msg;
+    msg.hwnd    = hwnd;
+    msg.message = umsg;
+    msg.wParam  = wparam;
+    msg.lParam  = lparam;
+    msg.pt.x    = LOWORD(lparam);
+    msg.pt.y    = HIWORD(lparam);
+    
+    SendMessage( hwndTip, TTM_RELAYEVENT, 0, (LPARAM)&msg);
+}
+
+auto pBrowserWindow::setToolTip(HWND hwnd, int curItem, RECT rect) -> void {
+    
+    if (!hwndTip)
+        createTooltip(hwnd);
+    
+    if (toolTips.size() <= curItem)
+        return;    
+   
+    lastItem = curItem;
+               
+    TOOLINFO toolInfo = { 0 };
+    toolInfo.cbSize = sizeof(toolInfo);
+    toolInfo.hwnd = hwnd;
+    
+    while ( SendMessage(hwndTip, TTM_ENUMTOOLS, 0, (LPARAM)&toolInfo) )
+        SendMessage(hwndTip, TTM_DELTOOL, 0, (LPARAM)&toolInfo);
+    
+    if (toolTips[curItem].empty())
+        return;
+    
+    utf16_t wtooltip( toolTips[curItem] );
+    
+    toolInfo.uFlags = 0;
+    toolInfo.uId = curItem;
+    toolInfo.rect.left    = rect.left;
+    toolInfo.rect.top     = rect.top;
+    toolInfo.rect.right   = rect.right;
+    toolInfo.rect.bottom  = rect.bottom;         
+    toolInfo.lpszText = wtooltip;
+    
+    SendMessage(hwndTip, TTM_ADDTOOL, 0, (LPARAM)&toolInfo);
 }
 
 auto pBrowserWindow::resize( HWND fileDialogView, bool init ) -> void {
@@ -620,6 +749,9 @@ pBrowserWindow::~pBrowserWindow() {
     if (pDialogEventHandler)
         delete pDialogEventHandler;    
     
+    if (hwndTip)
+        DestroyWindow(hwndTip);
+    
     pDialogEventHandler = nullptr;
     
     pDlg = nullptr;    
@@ -629,6 +761,8 @@ pBrowserWindow::~pBrowserWindow() {
     listFont = nullptr;
     
     dialogHwnd = nullptr;
+    
+    hwndTip = nullptr;
 }
 
 auto pBrowserWindow::directory() -> std::string {

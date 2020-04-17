@@ -293,6 +293,7 @@ auto MediaGroupLayout::build() -> void {
     if ( dynamic_cast<LIBC64::Interface*>(mediaWindow->emulator)) {
 		listings.setHeaderText( { "" } );
 		listings.setHeaderVisible( false );
+        listings.colorRowTooltips( true );
 
         if (mediaWindow->useCustomFont)
             listings.setFont("C64 Pro Mono, 12");           

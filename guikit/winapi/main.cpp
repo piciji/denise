@@ -115,7 +115,7 @@ auto CALLBACK pApplication::wndProc(WNDPROC windowProc, HWND hwnd, UINT msg, WPA
 
     Window& window = dynamic_cast<Window*>(base) ? (Window&)*base : *((Widget*)base)->window();
 
-    switch(msg) {       
+    switch(msg) {         
         case WM_CTLCOLORBTN:
         case WM_CTLCOLORSTATIC: {
             Base* base = (Base*)GetWindowLongPtr((HWND)lparam, GWLP_USERDATA);

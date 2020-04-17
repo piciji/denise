@@ -249,8 +249,15 @@ auto Structure1541::createListing( ) -> void {
         
         unsigned listingSize = *(ptr + 0x1f) * 256 + *(ptr + 0x1e);        
         
-        if ( *(ptr + 0x2) != 0 ) {       
-            listings.push_back( { id++, listing.buildListing( ptr + 0x5, listingSize, *(ptr + 0x2) ), listing.decodeToScreencode( buildLoadCommand( listing.loader, true ) ) } );
+        if ( *(ptr + 0x2) != 0 ) {     
+            std::vector<uint8_t> entry = listing.buildListing( ptr + 0x5, listingSize, *(ptr + 0x2) );
+            
+            std::vector<uint8_t> loadCommand;
+            
+            if (listingSize)
+                loadCommand = listing.decodeToScreencode( buildLoadCommand( listing.loader, true ) );
+            
+            listings.push_back( { id++, entry, loadCommand } );
 			loader.push_back( listing.loader );
         }
         

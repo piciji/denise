@@ -134,7 +134,7 @@ struct pWidget {
     auto destroy(HWND& handle) -> void;
     auto destroyImageList() -> void;
     auto setTooltip(std::string tooltip) -> void;
-    auto createTooltip() -> void;
+    virtual auto createTooltip(bool useBallon = true) -> void;
     auto getMinimumSize() -> Size;
 	static auto getScaledContainerSize( Size size ) -> Size;
 	static auto getScaledDim( unsigned value ) -> unsigned;
@@ -297,6 +297,7 @@ struct pProgressBar : pWidget {
 struct pListView : pWidget {
     ListView& listView;
     std::vector<Image*> images;
+    int lastItem = -1;       
 
     auto append(const std::vector<std::string>& list) -> void;
     auto autoSizeColumns() -> void;
@@ -319,9 +320,14 @@ struct pListView : pWidget {
     auto addToImageList(Image& image, unsigned size) -> void;
 	auto setBackgroundColor(unsigned color) -> void;
 	auto setForegroundColor(unsigned color) -> void;
+    auto setRowTooltip(unsigned selection, std::string tooltip) -> void {}
+    auto relayMesssageToToolTip(HWND hwnd, UINT umsg, WPARAM wparam, LPARAM lparam) -> void;
+    auto updateRowToolTip(HWND hwnd, int curItem, RECT rect) -> void;
 
     static auto CALLBACK subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;    
     auto onCustomDraw(LPARAM lparam) -> LRESULT;
+    auto createTooltip(bool useBallon = false) -> void;
+    
     auto onChange(LPARAM lparam) -> void;
     auto onActivate() -> void;
 
@@ -541,6 +547,9 @@ struct pBrowserWindow {
     std::string selectedPath = "";
     unsigned contentSelection = 0;
     HWND dialogHwnd = nullptr;
+    HWND hwndTip = nullptr;
+    int lastItem = -1;
+    std::vector<std::string> toolTips;
     
     struct Button {
         HWND hwnd;    
@@ -567,6 +576,9 @@ struct pBrowserWindow {
     auto detached() -> bool { return false; }
     auto visible() -> bool;
     auto contentViewSelection() -> unsigned;
+    auto createTooltip(HWND hwnd) -> void;
+    auto setToolTip(HWND hwnd, int curItem, RECT rect) -> void;
+    auto relayMesssageToToolTip(HWND hwnd, UINT umsg, WPARAM wparam, LPARAM lparam) -> void;
     
     auto getIFileParent() -> HWND;
     
@@ -574,6 +586,8 @@ struct pBrowserWindow {
     static auto CALLBACK CustomWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
     static auto CALLBACK OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) -> UINT_PTR;
     auto wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
+    
+    static auto CALLBACK subclassListbox(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
     
     pBrowserWindow(BrowserWindow& browserWindow);
     ~pBrowserWindow();

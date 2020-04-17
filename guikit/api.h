@@ -548,11 +548,13 @@ struct ListView : Widget {
     auto setText(const std::string& text) -> void = delete;
 	auto setRowTooltip(unsigned selection, std::string tooltip ) -> void;
 	auto getRowTooltip(unsigned selection) -> std::string;
+    auto colorRowTooltips(bool colorTip) -> void;
 
     struct {
         bool headerVisible = false;
         unsigned selection = 0;
         bool selected = false;
+        bool colorRowTooltips = false;
         std::vector<std::string> header;
         std::vector<std::vector<std::string>> rows;
 		std::vector<std::string> rowTooltips;
@@ -921,7 +923,7 @@ struct BrowserWindow {
 
     auto setTemplateId(int id) -> BrowserWindow&;
     auto addContentView(unsigned id, std::function<bool (std::string filePath, unsigned selection)> onDblClick) -> BrowserWindow&;
-    auto customizeContentView(std::string font, unsigned foregroundColor, unsigned backgroundColor) -> BrowserWindow&;
+    auto customizeContentView(std::string font, int foregroundColor = -1, int backgroundColor = -1, bool colorTooltips = false ) -> BrowserWindow&;
     // callbacks for cocoa modeless dialog
     auto setCallbacks( std::function<void (std::string filePath, unsigned selection)> onOkClick, std::function<void ()> onCancelClick ) -> BrowserWindow&;
     auto getContentViewSelection() -> unsigned;
@@ -940,8 +942,9 @@ struct BrowserWindow {
     struct ContentView {
         unsigned id = 0; // for template usage
         std::string font = "";
-        unsigned foregroundColor = 0;
-        unsigned backgroundColor = 0xffffff;        
+        int foregroundColor = -1;
+        int backgroundColor = -1;   
+        bool colorTooltips = false;
         std::function<bool (std::string filePath, unsigned selection)> onDblClick = nullptr; 
     };        
 	
