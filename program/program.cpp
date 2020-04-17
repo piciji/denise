@@ -49,7 +49,7 @@ int main(int argc, char** argv) {
     return GUIKIT::Application::exitCode;
 }
 
-Program::Program() {	  	        
+Program::Program() {	        
     program = this;    
     GUIKIT::Application::loop = [this]() { loop(); };    
     GUIKIT::Application::name = APP_NAME;        
