@@ -39,6 +39,9 @@ auto pBrowserWindow::selectionHandler(GtkFileChooser* chooser, gpointer data) ->
   
 	pBrowserWindow* instance = (pBrowserWindow*)data;
 	
+	if (instance->listView)
+		gtk_file_chooser_set_preview_widget_active(chooser, true);
+	
 	auto& state = instance->browserWindow.state;
 	
 	auto fileNamePtr = gtk_file_chooser_get_filename(chooser);
@@ -87,7 +90,7 @@ auto pBrowserWindow::file(bool save) -> std::string {
         state.window ? GTK_WINDOW(state.window->p.widget) : (GtkWindow*)nullptr,
         save ? GTK_FILE_CHOOSER_ACTION_SAVE : GTK_FILE_CHOOSER_ACTION_OPEN,
         0, (const gchar*)nullptr );
-
+	
     if(!state.path.empty())
         gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(dialog), state.path.c_str());
 
@@ -144,6 +147,7 @@ auto pBrowserWindow::createPreview() -> GtkWidget* {
 	listView->setHeaderVisible( false );
 	listView->setBackgroundColor( state.contentView.backgroundColor );
 	listView->setForegroundColor( state.contentView.foregroundColor );
+	listView->colorRowTooltips( true );
 	listView->onActivate = [this]() {
 		if (browserWindow.state.contentView.onDblClick) {
 			if (browserWindow.state.contentView.onDblClick( selectedPath, contentViewSelection() )) {

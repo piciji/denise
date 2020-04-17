@@ -128,7 +128,15 @@ auto pListView::create() -> void {
 }
 
 auto pListView::destroy() -> void {
-    if(subWidget) gtk_widget_destroy(subWidget);
+    if(subWidget)
+		gtk_widget_destroy(subWidget);
+
+	if (customTooltipLabel)
+		delete customTooltipLabel;
+
+	if (customTooltip)
+		gtk_widget_destroy(GTK_WIDGET(customTooltip));
+	
     pWidget::destroy();
 }
 
@@ -184,6 +192,9 @@ auto pListView::onChange(GtkTreeView* treeView, ListView* self) -> void {
 
 auto pListView::onTooltip(GtkWidget* widget, gint x, gint y, gboolean keyboard_tip, GtkTooltip* tooltip, ListView* self) -> gboolean {
 
+	if (!self->state.rowTooltips.size())
+		return false;
+			
 	GtkTreeIter iter;
 	GtkTreePath* path;
 	GtkTreeModel* model;
@@ -207,8 +218,20 @@ auto pListView::onTooltip(GtkWidget* widget, gint x, gint y, gboolean keyboard_t
 			tooltipText = self->state.rowTooltips[hoverSelection];
 
 		if (!tooltipText.empty()) {
-			gtk_tooltip_set_text(tooltip, tooltipText.c_str() );
+			
+			if (self->state.colorRowTooltips) {
+				if (!self->p.customTooltip)
+					self->p.createCustomTooltip();
+				
+				self->p.customTooltipLabel->setText( tooltipText );
+				auto size = self->p.customTooltipLabel->minimumSize();
+				gtk_window_resize(GTK_WINDOW(self->p.customTooltip), size.width, size.height );	
+												
+			} else
+				gtk_tooltip_set_text(tooltip, tooltipText.c_str() );	
+														
 			gtk_tree_view_set_tooltip_row(GTK_TREE_VIEW(widget), tooltip, path);
+			
 			found = true;
 		}
 	}
@@ -217,6 +240,27 @@ auto pListView::onTooltip(GtkWidget* widget, gint x, gint y, gboolean keyboard_t
 	gtk_tree_path_free(path);
 	
 	return found;
+}
+
+auto pListView::createCustomTooltip() -> void {
+	
+	customTooltip = gtk_window_new( GTK_WINDOW_POPUP );
+
+	auto verticalLayout = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+    gtk_container_add(GTK_CONTAINER(customTooltip), verticalLayout);
+    gtk_widget_show(verticalLayout);
+	
+	customTooltipLabel = new Label;
+	customTooltipLabel->setForegroundColor(listView.Widget::state.foregroundColor);
+	customTooltipLabel->setBackgroundColor(listView.Widget::state.backgroundColor);
+	customTooltipLabel->setVisible();
+	
+	pSystem::addCssClass(customTooltipLabel->p.gtkWidget, "somePadding");	
+	pSystem::applyCss( customTooltipLabel->p.gtkWidget, ".somePadding { padding: 4px;} " );
+	
+	gtk_container_add(GTK_CONTAINER(verticalLayout), customTooltipLabel->p.gtkWidget);
+	
+	gtk_widget_set_tooltip_window(subWidget, GTK_WINDOW(customTooltip));
 }
 
 auto pListView::setImage(unsigned selection, unsigned position, Image& image) -> void {
@@ -263,9 +307,4 @@ auto pListView::setForegroundColor(unsigned color) -> void {
 	pSystem::addCssClass(subWidget, "customColor");
 	
 	pSystem::applyCss( subWidget, ".customColor { color: " + pSystem::getColorCss( color ) + "; }" );
-}
-
-auto pListView::setRowTooltip(unsigned selection, std::string tooltip) -> void {
-	
-
 }

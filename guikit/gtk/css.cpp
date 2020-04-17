@@ -1,11 +1,5 @@
 
 	std::string css = R"(
-		button {
-			padding-left: 2px;
-			padding-right: 2px;
-			padding-top: 0px;
-			padding-bottom: 0px;
-		}
 		
 		checkbutton {
 			padding-left: 0px;
@@ -56,6 +50,13 @@
 			padding-bottom: 0px;
 		}
 		
+		combobox button {
+			padding-left: 2px;
+			padding-right: 2px;
+			padding-top: 0px;
+			padding-bottom: 0px;
+		}
+		
 		entry {
 			min-height: 0px;
 			padding-left: 3px;
@@ -71,7 +72,7 @@
 		label {
 			padding: 0px;
 		}
-
+		
 		notebook {
 			padding: 0px;
 			border-width: 1px;

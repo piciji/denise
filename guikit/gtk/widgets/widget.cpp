@@ -120,12 +120,35 @@ auto pWidget::add() -> void {
 }
 
 auto pWidget::setBackgroundColor(unsigned color) -> void {
-    if( !gtkWidget || !widget.overrideBackgroundColor() )
-        return;	    
+	if( !gtkWidget)
+		return;
 	
+	pSystem::removeCssClass(gtkWidget, "customBgColor");
+	
+    if( !widget.overrideBackgroundColor() )
+        return;	    			
+	
+	std::string _color = "rgb(" + std::to_string( (color >> 16) & 0xff ) + ", " + std::to_string( (color >> 8) & 0xff )
+		+ ", " + std::to_string( color & 0xff ) + ")";
+	
+	pSystem::addCssClass(gtkWidget, "customBgColor");
+	
+	pSystem::applyCss( gtkWidget, ".customBgColor { background-color: " + _color + " }" );
 }
 
 auto pWidget::setForegroundColor(unsigned color) -> void {
-    if( !gtkWidget || !widget.overrideForegroundColor() )
-        return;
+	if( !gtkWidget)
+		return;
+
+	pSystem::removeCssClass(gtkWidget, "customTextColor");
+	
+    if( !widget.overrideForegroundColor() )
+        return;	
+
+	std::string _color = "rgb(" + std::to_string((color >> 16) & 0xff) + ", " + std::to_string((color >> 8) & 0xff)
+		+ ", " + std::to_string(color & 0xff) + ")";
+
+	pSystem::addCssClass(gtkWidget, "customTextColor");
+
+	pSystem::applyCss(gtkWidget, ".customTextColor { color: " + _color + " }");
 }

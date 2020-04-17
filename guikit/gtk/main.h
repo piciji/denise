@@ -136,7 +136,6 @@ struct pLabel : pWidget {
     auto init() -> void;
     auto create() -> void;
     auto setAlign( Label::Align align ) -> void;
-	auto setForegroundColor(unsigned color) -> void;
 
     pLabel(Label& label) : pWidget(label), label(label) { }
 };
@@ -276,6 +275,9 @@ struct pListView : pWidget {
 
     GtkWidget* subWidget = nullptr;
     GtkListStore* store = nullptr;
+	
+	GtkWidget* customTooltip = nullptr;
+	Label* customTooltipLabel = nullptr;
 
     struct GtkColumn {
         GtkTreeViewColumn* column;
@@ -302,7 +304,8 @@ struct pListView : pWidget {
     auto setFocused() -> void;
     auto setForegroundColor(unsigned color) -> void;
     auto setBackgroundColor(unsigned color) -> void;
-	auto setRowTooltip(unsigned selection, std::string tooltip) -> void;
+	auto setRowTooltip(unsigned selection, std::string tooltip) -> void {}
+	auto createCustomTooltip() -> void;
 
     auto destroy() -> void;
     static auto onActivate(GtkTreeView* treeView, GtkTreePath* path, GtkTreeViewColumn* column, ListView* self) -> void;
