@@ -37,7 +37,11 @@
 
             if (listView) {
                 for(auto& row : rows) {
-                    listView->append({row});
+                    listView->append({row.entry});
+                }
+                unsigned i = 0;
+                for(auto& row : rows) {
+                    listView->setRowTooltip(i++, row.tooltip);
                 }
             }
         }
@@ -173,8 +177,11 @@ auto pBrowserWindow::buildView() -> void {
         listView = new ListView;
         listView->setHeaderText({""});
         listView->setHeaderVisible( false );
-        listView->setBackgroundColor( state.contentView.backgroundColor );
-        listView->setForegroundColor( state.contentView.foregroundColor );
+        if (state.contentView.overrideBackgroundColor)
+            listView->setBackgroundColor( state.contentView.backgroundColor );
+        if (state.contentView.overrideForegroundColor)
+            listView->setForegroundColor( state.contentView.foregroundColor );
+        listView->colorRowTooltips( state.contentView.colorTooltips );
         listView->onActivate = [this]() {
             if (browserWindow.state.contentView.onDblClick) {
                 if (browserWindow.state.contentView.onDblClick( selectedPath, contentViewSelection() ) )

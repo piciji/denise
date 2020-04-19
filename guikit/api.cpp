@@ -777,6 +777,7 @@ auto ListView::getRowTooltip(unsigned selection) -> std::string {
 
 auto ListView::colorRowTooltips(bool colorTip) -> void {
     state.colorRowTooltips = colorTip;
+    p.colorRowTooltips( colorTip );
 }
 
 ListView::ListView() : Widget(*new pListView(*this)), p((pListView&)Widget::p) { if (!_A::dummy) p.init(); }
@@ -1064,11 +1065,22 @@ auto BrowserWindow::addContentView(unsigned id, std::function<bool (std::string 
     state.contentView.onDblClick = onDblClick;
     return *this;
 }
-
-auto BrowserWindow::customizeContentView(std::string font, int foregroundColor, int backgroundColor, bool colorTooltips) -> BrowserWindow& {  
-    state.contentView.font = font;    
-    state.contentView.foregroundColor = foregroundColor;
-    state.contentView.backgroundColor = backgroundColor;
+    
+auto BrowserWindow::setContentViewFont(std::string font) -> BrowserWindow& {
+    state.contentView.font = font;
+    return *this;
+}
+auto BrowserWindow::setContentViewBackground(unsigned color) -> BrowserWindow& {
+    state.contentView.backgroundColor = color;
+    state.contentView.overrideBackgroundColor = true;
+    return *this;
+}
+auto BrowserWindow::setContentViewForeground(unsigned color) -> BrowserWindow& {
+    state.contentView.foregroundColor = color;
+    state.contentView.overrideForegroundColor = true;
+    return *this;
+}
+auto BrowserWindow::setContentViewColorTooltips(bool colorTooltips) -> BrowserWindow& {
     state.contentView.colorTooltips = colorTooltips;
     return *this;
 }

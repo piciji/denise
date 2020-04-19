@@ -105,11 +105,7 @@ auto pHyperlink::setEnabled(bool enabled) -> void {
     
     if(hyperlink.overrideForegroundColor()) {
         unsigned color = hyperlink.foregroundColor();
-        textColor = [NSColor
-                     colorWithSRGBRed:((color>>16) & 0xff) / 255.0
-                     green:((color>>8) & 0xff) / 255.0
-                     blue:(color & 0xff) / 255.0
-                     alpha: 1.0];
+        textColor = pHelper::getColor( color );
     }
     
     [cocoaView setTextColor: enabled ? textColor : [NSColor grayColor]];

@@ -1,6 +1,14 @@
 
 @implementation CocoaListViewContent : NSTableView
 
+-(id) initWith:(GUIKIT::ListView&)listViewReference {
+    if(self = [super initWithFrame:NSMakeRect(0, 0, 0, 0)]) {
+        listView = &listViewReference;
+    }
+    
+    return self;
+}
+
 -(void) keyDown:(NSEvent*)event {
     auto character = [[event characters] characterAtIndex:0];
     if(character == NSEnterCharacter || character == NSCarriageReturnCharacter) {
@@ -11,6 +19,65 @@
     }
     [super keyDown:event];
 }
+
+-(void) updateTrackingAreas {
+    if(!listView->p.useCustomTooltip)
+        return;
+    
+    if(trackingArea != nil) {
+        [self removeTrackingArea:trackingArea];
+        [trackingArea release];
+    }
+    
+    int opts = (NSTrackingMouseEnteredAndExited | NSTrackingMouseMoved | NSTrackingActiveAlways);
+    trackingArea = [ [NSTrackingArea alloc] initWithRect:[self bounds] options:opts owner:self userInfo:nil];
+    [self addTrackingArea:trackingArea];
+}
+
+-(void) mouseEntered:(NSEvent*)event {
+    listView->p.mouseIsOver = true;
+}
+
+-(void) mouseExited:(NSEvent*)event {
+    listView->p.mouseIsOver = false;
+    if (!listView->p.useCustomTooltip)
+        return;
+    
+    if (!listView->p.tooltip)
+        listView->p.createCustomTooltip();
+        
+    [listView->p.tooltip orderOut:nil];
+}
+
+-(void) mouseMoved:(NSEvent*)event {
+    
+    if (!listView->p.mouseIsOver || !listView->p.useCustomTooltip)
+        return;
+
+    auto& toolTips = listView->state.rowTooltips;
+    if (!toolTips.size())
+        return;
+
+    auto mouseOverRow = [self rowAtPoint:[self convertPoint:[event locationInWindow] fromView:nil]];
+    
+    if (!listView->p.tooltip)
+        listView->p.createCustomTooltip();
+
+    if (mouseOverRow < 0 || mouseOverRow >= toolTips.size()) {
+        [listView->p.tooltip orderOut:nil];
+        return;
+    }
+    
+    if (toolTips[mouseOverRow].empty()) {
+        [listView->p.tooltip orderOut:nil];
+        return;
+    }
+    NSString* text = [NSString stringWithUTF8String:toolTips[mouseOverRow].c_str()];
+    
+    [listView->p.tooltip setTooltip:text];
+    [listView->p.tooltip orderFront:nil];
+}
+
 @end
 
 @implementation CocoaListViewCell : NSTextFieldCell
@@ -37,18 +104,14 @@
     }
     
     NSRect textRect = NSMakeRect(
-        frame.origin.x + textDisplacement, frame.origin.y,
-        frame.size.width - textDisplacement, frame.size.height);
+                                 frame.origin.x + textDisplacement, frame.origin.y + listView->p.fontAdjust.yOffset,
+                                 frame.size.width - textDisplacement, frame.size.height + listView->p.fontAdjust.height);
     
     NSColor* textColor = [self isHighlighted] ? [NSColor alternateSelectedControlTextColor] : [NSColor textColor];
     
     if(listView->overrideForegroundColor()) {
         unsigned color = listView->foregroundColor();
-        textColor = [NSColor
-                     colorWithSRGBRed:((color>>16) & 0xff) / 255.0
-                     green:((color>>8) & 0xff) / 255.0
-                     blue:(color & 0xff) / 255.0
-                     alpha: 1.0];
+        textColor = GUIKIT::pHelper::getColor( color );
     }
     
     [text drawInRect:textRect withAttributes:@{ NSForegroundColorAttributeName:textColor, NSFontAttributeName:[self font] }];
@@ -60,7 +123,8 @@
 -(id) initWith:(GUIKIT::ListView&)listViewReference {
     if(self = [super initWithFrame:NSMakeRect(0, 0, 0, 0)]) {
         listView = &listViewReference;
-        content = [[CocoaListViewContent alloc] initWithFrame:NSMakeRect(0, 0, 0, 0)];
+        
+        content = [[CocoaListViewContent alloc] initWith:listViewReference];
         
         [self setDocumentView:content];
         [self setBorderType:NSBezelBorder];
@@ -99,14 +163,35 @@
 }
 
 -(void) setFont:(NSFont*)fontPointer {
-    if(!fontPointer) fontPointer = [NSFont systemFontOfSize:12];
+    bool c64ProMono11 = GUIKIT::String::findString(listView->font(), "C64 Pro Mono, 11");
+    bool c64ProMono12 = GUIKIT::String::findString(listView->font(), "C64 Pro Mono, 12");
+
+    listView->p.fontAdjust.rowHeight = 0;
+    listView->p.fontAdjust.yOffset = -1;
+    listView->p.fontAdjust.height = 0;
+    
+    if (c64ProMono11) {
+        listView->p.fontAdjust.rowHeight = 3;
+        listView->p.fontAdjust.yOffset = -2;
+        listView->p.fontAdjust.height = 2;
+    } else if (c64ProMono12) {
+        listView->p.fontAdjust.rowHeight = 5;
+        listView->p.fontAdjust.yOffset = -4;
+        listView->p.fontAdjust.height = 4;
+    }
+
+    if(!fontPointer)
+        fontPointer = [NSFont systemFontOfSize:18];
     [fontPointer retain];
     if(font) [font release];
     font = fontPointer;
     
     unsigned fontHeight = GUIKIT::pFont::size(font, " ").height;
     [content setFont:font];
-    [content setRowHeight:fontHeight];
+    [content setRowHeight:fontHeight - listView->p.fontAdjust.rowHeight ];
+    if (c64ProMono11 || c64ProMono12)
+        [content setIntercellSpacing:NSMakeSize(0.0, 0.0)];
+
     [self reloadColumns];
 }
 
@@ -172,6 +257,28 @@
     if([content clickedRow] >= 0) {
         [self activate:self];
     }
+}
+
+- (NSString*) tableView:(NSTableView *)tableView
+toolTipForCell:(NSCell*)cell
+rect:(NSRectPointer)rect
+tableColumn:(NSTableColumn*)tableColumn
+row:(NSInteger)row
+mouseLocation:(NSPoint)mouseLocation {
+    auto& toolTips = listView->state.rowTooltips;
+
+    if (listView->p.useCustomTooltip || !toolTips.size())
+        return nil;
+
+    if (row >= toolTips.size())
+        return nil;
+    
+    if (toolTips[row].empty())
+        return nil;
+    
+    NSString* text = [NSString stringWithUTF8String:toolTips[row].c_str()];
+    
+    return text;
 }
 
 @end
@@ -294,6 +401,8 @@ auto pListView::setEnabled(bool enabled) -> void {
 auto pListView::setGeometry(Geometry geometry) -> void {
     pWidget::setGeometry(geometry);
     autoSizeColumns();
+    if (useCustomTooltip)
+        [[cocoaView content] updateTrackingAreas];
 }
     
 auto pListView::releaseAllImages() -> void {
@@ -313,15 +422,68 @@ auto pListView::releaseRowImages(unsigned selection) -> void {
  
 auto pListView::setBackgroundColor(unsigned color) -> void {
     
-    NSColor* bg = [NSColor
-        colorWithSRGBRed:((color>>16) & 0xff) / 255.0
-        green:((color>>8) & 0xff) / 255.0
-        blue:(color & 0xff) / 255.0
-        alpha: 1.0];
+    NSColor* bg = pHelper::getColor( color );
     
     @autoreleasepool {
         if (cocoaView)
             [[cocoaView content] setBackgroundColor: bg];
+    }
+    updateTooltipUsage();
+}
+    
+auto pListView::setForegroundColor(unsigned color) -> void {
+    updateTooltipUsage();
+}
+
+auto pListView::setFont(std::string font) -> void {
+    updateTooltipUsage();
+    pWidget::setFont(font);
+}
+    
+auto pListView::createCustomTooltip() -> void {
+    @autoreleasepool {
+        
+        tooltip = [[TooltipWindow alloc] initWithContentRect:NSMakeRect(0, 0, 0, 0) styleMask:NSBorderlessWindowMask backing:NSBackingStoreBuffered defer:NO];
+        
+        if (cocoaView)
+            [tooltip setFont: [cocoaView font] ];
+        
+        if (listView.state.colorRowTooltips) {
+            
+            if (listView.Widget::state.overrideBackgroundColor) {
+                [tooltip setBackgroundColor: pHelper::getColor(listView.Widget::state.backgroundColor) ];
+            }
+            if (listView.Widget::state.overrideForegroundColor) {
+                [tooltip setTextColor: pHelper::getColor(listView.Widget::state.foregroundColor) ];
+            }
+        }
+    }
+}
+    
+auto pListView::updateTooltipUsage() -> void {
+    useCustomTooltip = false;
+    
+    if (listView.state.colorRowTooltips && (listView.Widget::state.overrideBackgroundColor || listView.Widget::state.overrideForegroundColor) )
+        useCustomTooltip = true;
+    else if ( listView.font() != Font::system() )
+        useCustomTooltip = true;
+
+    if (tooltip) {
+        [tooltip release];
+        tooltip = nullptr;
+    }
+}
+    
+auto pListView::colorRowTooltips( bool colorTip ) -> void {
+    updateTooltipUsage();
+}
+
+pListView::~pListView() {
+    releaseAllImages();
+    
+    @autoreleasepool {
+        if (tooltip)
+            [tooltip release];
     }
 }
     

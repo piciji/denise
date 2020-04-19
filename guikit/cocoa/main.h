@@ -254,6 +254,15 @@ struct pProgressBar : pWidget {
 struct pListView : pWidget {
     ListView& listView;
     std::vector<std::vector<NSImage*>> images;
+    bool mouseIsOver = false;
+    bool useCustomTooltip = false;
+    TooltipWindow* tooltip = nullptr;
+    
+    struct {
+        int rowHeight;
+        int yOffset;
+        int height;
+    } fontAdjust;
 
     auto append(const std::vector<std::string>& list) -> void;
     auto autoSizeColumns() -> void;
@@ -270,10 +279,16 @@ struct pListView : pWidget {
     auto setImage(unsigned selection, unsigned position, Image& image) -> void;
     auto releaseRowImages(unsigned selection) -> void;
     auto releaseAllImages() -> void;
+    auto setForegroundColor(unsigned color) -> void;
     auto setBackgroundColor(unsigned color) -> void;
+    auto setFont(std::string font) -> void;
+    auto setRowTooltip(unsigned selection, std::string tooltip) -> void {}
+    auto createCustomTooltip() -> void;
+    auto updateTooltipUsage() -> void;
+    auto colorRowTooltips( bool colorTip ) -> void;
 
     pListView(ListView& listView) : pWidget(listView), listView(listView) { }
-    ~pListView() { releaseAllImages(); }
+    ~pListView();
 };
     
 struct pTreeViewItem {
@@ -472,6 +487,10 @@ struct pSystem {
     static auto isOffscreen( Geometry geometry ) -> bool { return false; }
     static auto getOSLang() -> System::Language;
     static auto printToCmd( std::string str ) -> void;
+};
+    
+struct pHelper {
+    static auto getColor(unsigned color) -> NSColor*;
 };
 
 auto NSMakeImage(Image& image, unsigned width = 0, unsigned height = 0) -> NSImage*;

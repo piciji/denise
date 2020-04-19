@@ -13,6 +13,16 @@
 }
 @end
 
+@interface TooltipWindow : NSWindow {
+@public
+    NSTextField* textField;
+@private
+    GUIKIT::Timer timer;
+    BOOL needUpdate;
+    BOOL dismissLock;
+}
+@end
+
 @interface CocoaTimer : NSObject {
 @public
     GUIKIT::Timer* timer;
@@ -111,7 +121,10 @@
 }
 @end
 
-@interface CocoaListViewContent : NSTableView {}
+@interface CocoaListViewContent : NSTableView {
+    GUIKIT::ListView* listView;
+    NSTrackingArea* trackingArea;
+}
 @end
 
 @interface CocoaListViewCell : NSTextFieldCell {
@@ -184,3 +197,4 @@
     GUIKIT::BrowserWindow* browserWindow;
 }
 @end
+

@@ -5,6 +5,7 @@
 #include "menu.cpp"
 #include "browserWindow.cpp"
 #include "messageWindow.cpp"
+#include "tooltip.m"
 
 #include "widgets/widget.cpp"   
 #include "widgets/button.cpp"   
@@ -467,11 +468,7 @@ auto pWindow::setBackgroundColor(unsigned color) -> void {
         
         [_view setWantsLayer:YES];
         
-        [_view.layer setBackgroundColor:[NSColor
-            colorWithSRGBRed:((color>>16) & 0xff) / 255.0
-            green:((color>>8) & 0xff) / 255.0
-            blue:(color & 0xff) / 255.0
-            alpha: 1.0].CGColor
+        [_view.layer setBackgroundColor:pHelper::getColor(color).CGColor
          ];
     }
 }
@@ -695,3 +692,4 @@ auto pWindow::setForeground() -> void {
 }
     
 }
+

@@ -52,11 +52,7 @@
     
     if(treeView->overrideForegroundColor()) {
         unsigned color = treeView->foregroundColor();
-        textColor = [NSColor
-                     colorWithSRGBRed:((color>>16) & 0xff) / 255.0
-                     green:((color>>8) & 0xff) / 255.0
-                     blue:(color & 0xff) / 255.0
-                     alpha: 1.0];
+        textColor = GUIKIT::pHelper::getColor( color );
     }
     
     [text drawInRect:textRect withAttributes:@{ NSForegroundColorAttributeName:textColor, NSFontAttributeName:[self font] }];
@@ -346,11 +342,7 @@ namespace GUIKIT {
     
     auto pTreeView::setBackgroundColor(unsigned color) -> void {
         
-        NSColor* bg = [NSColor
-                       colorWithSRGBRed:((color>>16) & 0xff) / 255.0
-                       green:((color>>8) & 0xff) / 255.0
-                       blue:(color & 0xff) / 255.0
-                       alpha: 1.0];
+        NSColor* bg = pHelper::getColor( color );
         
         @autoreleasepool {
             if (cocoaView)

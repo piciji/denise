@@ -923,7 +923,11 @@ struct BrowserWindow {
 
     auto setTemplateId(int id) -> BrowserWindow&;
     auto addContentView(unsigned id, std::function<bool (std::string filePath, unsigned selection)> onDblClick) -> BrowserWindow&;
-    auto customizeContentView(std::string font, int foregroundColor = -1, int backgroundColor = -1, bool colorTooltips = false ) -> BrowserWindow&;
+    auto setContentViewFont(std::string font) -> BrowserWindow&;
+    auto setContentViewBackground(unsigned color) -> BrowserWindow&;
+    auto setContentViewForeground(unsigned color) -> BrowserWindow&;
+    auto setContentViewColorTooltips(bool colorTooltips) -> BrowserWindow&;
+    
     // callbacks for cocoa modeless dialog
     auto setCallbacks( std::function<void (std::string filePath, unsigned selection)> onOkClick, std::function<void ()> onCancelClick ) -> BrowserWindow&;
     auto getContentViewSelection() -> unsigned;
@@ -942,8 +946,10 @@ struct BrowserWindow {
     struct ContentView {
         unsigned id = 0; // for template usage
         std::string font = "";
-        int foregroundColor = -1;
-        int backgroundColor = -1;   
+        unsigned foregroundColor = 0;
+        bool overrideForegroundColor = false;
+        unsigned backgroundColor = 0;
+        bool overrideBackgroundColor = false;
         bool colorTooltips = false;
         std::function<bool (std::string filePath, unsigned selection)> onDblClick = nullptr; 
     };        

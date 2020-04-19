@@ -333,8 +333,10 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
 						return insertFile(block, filePath, true, selection);
 					});
 					
-					fileDialogPtr->customizeContentView( useCustomFont ? "C64 Pro Mono, 11" : "",
-						mediaGroupLayouts[0]->listings.foregroundColor() & 0xffffff, mediaGroupLayouts[0]->listings.backgroundColor() & 0xffffff, true);
+                    fileDialogPtr->setContentViewFont(useCustomFont ? "C64 Pro Mono, 11" : "");
+                    fileDialogPtr->setContentViewBackground(mediaGroupLayouts[0]->listings.backgroundColor());
+                    fileDialogPtr->setContentViewForeground(mediaGroupLayouts[0]->listings.foregroundColor());
+                    fileDialogPtr->setContentViewColorTooltips(true);
                 }
 				
                 fileDialogPtr->setCallbacks( [this, block](std::string filePath, unsigned selection) {
@@ -1507,8 +1509,10 @@ auto MediaWindow::anyLoad( bool mIsAcquiredBefore ) -> void {
 			return true;
 		} );
 
-		fileDialogPtr->customizeContentView( useCustomFont ? "C64 Pro Mono, 11" : "",
-			mediaGroupLayouts[0]->listings.foregroundColor() & 0xffffff, mediaGroupLayouts[0]->listings.backgroundColor() & 0xffffff, true);
+        fileDialogPtr->setContentViewFont(useCustomFont ? "C64 Pro Mono, 11" : "");
+        fileDialogPtr->setContentViewBackground(mediaGroupLayouts[0]->listings.backgroundColor());
+        fileDialogPtr->setContentViewForeground(mediaGroupLayouts[0]->listings.foregroundColor());
+        fileDialogPtr->setContentViewColorTooltips(true);
     }
 	
     fileDialogPtr->setTitle(trans->get("select image"));

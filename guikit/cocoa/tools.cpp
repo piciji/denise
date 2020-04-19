@@ -256,5 +256,13 @@ auto pFont::add( CustomFont* customFont ) -> bool {
     return true;
 }
 
+auto pHelper::getColor(unsigned color) -> NSColor* {
+    return [NSColor
+         colorWithSRGBRed:((color>>16) & 0xff) / 255.0
+         green:((color>>8) & 0xff) / 255.0
+         blue:(color & 0xff) / 255.0
+         alpha: 1.0];
+
+}
     
 }
