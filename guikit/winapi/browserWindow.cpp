@@ -296,7 +296,9 @@ auto pBrowserWindow::file(bool save) -> std::string {
 auto pBrowserWindow::createTooltip(HWND hwnd) -> void {
     
     auto colorBg = browserWindow.state.contentView.backgroundColor;    
+    auto overrideBg = browserWindow.state.contentView.overrideBackgroundColor;    
     auto colorFg = browserWindow.state.contentView.foregroundColor;  
+    auto overrideFg = browserWindow.state.contentView.overrideForegroundColor;    
     auto colorTooltips = browserWindow.state.contentView.colorTooltips;
             
     hwndTip = CreateWindowEx(0, TOOLTIPS_CLASS, NULL,
@@ -305,12 +307,12 @@ auto pBrowserWindow::createTooltip(HWND hwnd) -> void {
             CW_USEDEFAULT, CW_USEDEFAULT,
             hwnd, NULL, GetModuleHandle(0), 0);
 
-    if (colorTooltips && (colorFg >= 0 || colorBg >= 0))
+    if (colorTooltips && (overrideBg || overrideFg))
         SetWindowTheme(hwndTip, L" ", L" ");
 
-    if (colorTooltips && colorFg >= 0)
+    if (colorTooltips && overrideFg)
         SendMessage(hwndTip, TTM_SETTIPTEXTCOLOR, RGB((colorFg >> 16) & 0xff, (colorFg >> 8) & 0xff, colorFg & 0xff), 0);
-    if (colorTooltips && colorBg >= 0)
+    if (colorTooltips && overrideBg)
         SendMessage(hwndTip, TTM_SETTIPBKCOLOR, RGB((colorBg >> 16) & 0xff, (colorBg >> 8) & 0xff, colorBg & 0xff), 0);
 
     if (listFont)
@@ -365,7 +367,7 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
                 SendMessage(listBox, LB_SETITEMHEIGHT, 0, size.height);
             }
             auto colorBg = state->contentView.backgroundColor;                
-            if (colorBg >= 0)
+            if (state->contentView.overrideBackgroundColor)
                 context->listBgBrush = CreateSolidBrush( RGB((colorBg >> 16) & 0xff, (colorBg >> 8) & 0xff, colorBg & 0xff) );
             
             for(auto& button : state->buttons) {
@@ -386,12 +388,12 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
             auto colorBg = state->contentView.backgroundColor;
             auto colorFg = state->contentView.foregroundColor;                  
             
-            if (colorBg >= 0)
+            if (state->contentView.overrideBackgroundColor)
                 SetBkColor((HDC)wParam, RGB((colorBg >> 16) & 0xff, (colorBg >> 8) & 0xff, colorBg & 0xff)); 
-            if (colorFg >= 0)
+            if (state->contentView.overrideForegroundColor)
                 SetTextColor((HDC)wParam, RGB((colorFg >> 16) & 0xff, (colorFg >> 8) & 0xff, colorFg & 0xff) );
             
-            if (colorBg >= 0)
+            if (state->contentView.overrideBackgroundColor)
                 return (LRESULT)context->listBgBrush;
             break;
         }       

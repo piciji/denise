@@ -112,7 +112,7 @@ auto CALLBACK pListView::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPA
     Window* window = (Window*)listView->Sizable::state.window;
     if(window == nullptr) return DefWindowProc(hwnd, msg, wparam, lparam);
 
-    switch(msg) {        
+    switch(msg) {    
         case WM_GETDLGCODE:
             if (wparam != VK_TAB)
                 return DLGC_WANTALLKEYS;
@@ -197,17 +197,29 @@ auto pListView::updateRowToolTip(HWND hwnd, int curItem, RECT rect) -> void {
     SendMessage(hwndTip, TTM_ADDTOOL, 0, (LPARAM)&toolInfo);
 }
 
+auto pListView::clearBrush() -> void {
+    if (bgBrush)
+        DeleteObject(bgBrush);
+    if (hiBrush)
+        DeleteObject(hiBrush);
+                
+    bgBrush = nullptr;
+    hiBrush = nullptr;
+}
+
 auto pListView::create() -> void {
     destroy();
-    destroy(hwndTip);
+    destroy(hwndTip); 
+    clearBrush();
     
     hwnd = CreateWindowEx(
         WS_EX_CLIENTEDGE, WC_LISTVIEW, L"",
-        WS_CHILD | WS_TABSTOP | LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_NOSORTHEADER | LVS_NOCOLUMNHEADER,
-        0, 0, 0, 0, listView.window()->p.hwnd, (HMENU)(unsigned long long)listView.id, GetModuleHandle(0), 0);
+        WS_CHILD | WS_TABSTOP | LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_NOSORTHEADER | LVS_NOCOLUMNHEADER | 
+            (String::findString(listView.font(), "C64 Pro Mono") ? LVS_OWNERDRAWFIXED : 0),
+        0, 0, 0, 0, listView.window()->p.hwnd, (HMENU)(unsigned long long)listView.id, GetModuleHandle(0), 0);        
 
     ListView_SetExtendedListViewStyle(hwnd, LVS_EX_FULLROWSELECT | LVS_EX_SUBITEMIMAGES);
-    
+
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)&listView);
     wndprocOrig = (WNDPROC)SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)subclassWndProc);  
     
@@ -346,14 +358,14 @@ auto pListView::addToImageList(Image& image, unsigned size) -> void {
     DeleteObject(bitmap);
 }
 
-auto pListView::buildImageList() -> void {
+auto pListView::buildImageList() -> void {    
     images.clear();
 
     ListView_SetImageList(hwnd, NULL, LVSIL_SMALL);
     if(imageList) ImageList_Destroy(imageList);
     unsigned size = pFont::size(hfont, " ").height;
     imageList = ImageList_Create(size, size, ILC_COLOR32, 1, 0);
-
+    
     if (listView.countImages() == 0) return;
     auto& list = listView.state.images;
 
@@ -385,10 +397,66 @@ auto pListView::buildImageList() -> void {
 auto pListView::setBackgroundColor(unsigned color) -> void {	
 	if (!hwnd) return;
 	ListView_SetBkColor( hwnd, RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff) );
-	ListView_SetTextBkColor( hwnd, RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff) );      
+	ListView_SetTextBkColor( hwnd, RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff) ); 
+    
+    clearBrush();
 }
 
 auto pListView::setForegroundColor(unsigned color) -> void {
 	if (!hwnd) return;
 	ListView_SetTextColor( hwnd, RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff) );
+}
+
+auto pListView::measureItem(LPMEASUREITEMSTRUCT lpmis) -> void {
+    
+    if (!hfont)
+        return;
+    
+    auto size = getMinimumSize();
+    
+    lpmis->itemHeight = size.height;
+}
+
+auto pListView::drawItem(LPDRAWITEMSTRUCT lDraw) -> void {
+    
+    HBRUSH hBrush;
+    COLORREF colorRef;
+    
+    if (lDraw->itemState & ODS_SELECTED) {
+        if (!hiBrush)
+            hiBrush = CreateSolidBrush( GetSysColor( COLOR_HIGHLIGHT ) );
+        
+        hBrush = hiBrush;
+        
+        colorRef = GetSysColor( COLOR_HIGHLIGHTTEXT );
+    } else {
+        if (!bgBrush) {
+            if (listView.Widget::state.overrideBackgroundColor) {
+                unsigned color = listView.Widget::state.backgroundColor;
+                bgBrush = CreateSolidBrush( RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff) );
+            } else
+                bgBrush = CreateSolidBrush( GetSysColor( COLOR_WINDOW ) );                                    
+        }
+        
+        hBrush = bgBrush;
+        
+        if (listView.Widget::state.overrideForegroundColor) {
+            unsigned color = listView.Widget::state.foregroundColor;
+
+            colorRef = RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff);
+        } else
+            colorRef = GetSysColor( COLOR_WINDOWTEXT );
+    }
+        
+    auto lRow = lDraw->rcItem;
+    
+    FillRect(lDraw->hDC, &lRow, hBrush);
+
+    wchar_t lBuf[100];
+
+    ListView_GetItemText(lDraw->hwndItem, lDraw->itemID, 0, (LPTSTR) lBuf, 100);
+    
+    SetTextColor(lDraw->hDC, colorRef);
+    
+    DrawText(lDraw->hDC, lBuf, -1, &lRow, DT_LEFT | DT_NOPREFIX);
 }

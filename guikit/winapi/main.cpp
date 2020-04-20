@@ -115,7 +115,7 @@ auto CALLBACK pApplication::wndProc(WNDPROC windowProc, HWND hwnd, UINT msg, WPA
 
     Window& window = dynamic_cast<Window*>(base) ? (Window&)*base : *((Widget*)base)->window();
 
-    switch(msg) {         
+    switch(msg) {  
         case WM_CTLCOLORBTN:
         case WM_CTLCOLORSTATIC: {
             Base* base = (Base*)GetWindowLongPtr((HWND)lparam, GWLP_USERDATA);
@@ -202,14 +202,34 @@ auto CALLBACK pApplication::wndProc(WNDPROC windowProc, HWND hwnd, UINT msg, WPA
 				if (pMenuBase::measureItem(lpmis))
 					return true;
 			}
+            
+            else if ( (lpmis != NULL) && (lpmis->CtlType == ODT_LISTVIEW) ) {
+                unsigned id = LOWORD(wparam);
+                HWND control = GetDlgItem(hwnd, id);
+                base = (Base*) GetWindowLongPtr(control, GWLP_USERDATA);
+                if(dynamic_cast<ListView*>(base)) {
+                    ((ListView*)base)->p.measureItem( lpmis );
+                    return true;
+                }
+            }
 			break;
 		}
 		case WM_DRAWITEM: {
-			LPDRAWITEMSTRUCT lpdis = (LPDRAWITEMSTRUCT) lparam;
-			if ((lpdis != NULL) && (lpdis->CtlType == ODT_MENU)) {
-				if (pMenuBase::drawItem(lpdis))
+			LPDRAWITEMSTRUCT lDraw = (LPDRAWITEMSTRUCT) lparam;
+			if ((lDraw != NULL) && (lDraw->CtlType == ODT_MENU)) {
+				if (pMenuBase::drawItem(lDraw))
 					return true;
 			}
+
+            else if ((lDraw != NULL) && (lDraw->CtlType == ODT_LISTVIEW)) {
+                unsigned id = LOWORD(wparam);
+                HWND control = GetDlgItem(hwnd, id);
+                base = (Base*) GetWindowLongPtr(control, GWLP_USERDATA);
+                if (dynamic_cast<ListView*> (base)) {
+                    ((ListView*) base)->p.drawItem(lDraw);
+                    return true;
+                }
+            }
 			break;
 		}		
         case WM_ENTERIDLE: {

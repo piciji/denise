@@ -104,8 +104,8 @@
     }
     
     NSRect textRect = NSMakeRect(
-                                 frame.origin.x + textDisplacement, frame.origin.y + listView->p.fontAdjust.yOffset,
-                                 frame.size.width - textDisplacement, frame.size.height + listView->p.fontAdjust.height);
+        frame.origin.x + textDisplacement, frame.origin.y + listView->p.fontAdjust.yOffset,
+        frame.size.width - textDisplacement, frame.size.height + listView->p.fontAdjust.height);
     
     NSColor* textColor = [self isHighlighted] ? [NSColor alternateSelectedControlTextColor] : [NSColor textColor];
     

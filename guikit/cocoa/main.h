@@ -259,9 +259,9 @@ struct pListView : pWidget {
     TooltipWindow* tooltip = nullptr;
     
     struct {
-        int rowHeight;
-        int yOffset;
-        int height;
+        int rowHeight = 0;
+        int yOffset = -1;
+        int height = 0;
     } fontAdjust;
 
     auto append(const std::vector<std::string>& list) -> void;

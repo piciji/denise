@@ -108,7 +108,7 @@ struct pWidget {
     HWND hwnd;
     HWND hwndTip;
     HIMAGELIST imageList = nullptr;
-    HFONT hfont;
+    HFONT hfont = nullptr;
     WNDPROC wndprocOrig;
     bool locked = false;
     
@@ -297,7 +297,11 @@ struct pProgressBar : pWidget {
 struct pListView : pWidget {
     ListView& listView;
     std::vector<Image*> images;
-    int lastItem = -1;       
+    int lastItem = -1;
+    
+    // for ownerdraw
+    HBRUSH bgBrush = nullptr;
+    HBRUSH hiBrush = nullptr;    
 
     auto append(const std::vector<std::string>& list) -> void;
     auto autoSizeColumns() -> void;
@@ -323,6 +327,7 @@ struct pListView : pWidget {
     auto setRowTooltip(unsigned selection, std::string tooltip) -> void {}
     auto relayMesssageToToolTip(HWND hwnd, UINT umsg, WPARAM wparam, LPARAM lparam) -> void;
     auto updateRowToolTip(HWND hwnd, int curItem, RECT rect) -> void;
+    auto colorRowTooltips( bool colorTip ) -> void {}
 
     static auto CALLBACK subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;    
     auto onCustomDraw(LPARAM lparam) -> LRESULT;
@@ -330,6 +335,10 @@ struct pListView : pWidget {
     
     auto onChange(LPARAM lparam) -> void;
     auto onActivate() -> void;
+    
+    auto measureItem(LPMEASUREITEMSTRUCT lpmis) -> void;
+    auto drawItem(LPDRAWITEMSTRUCT lDraw) -> void;
+    auto clearBrush() -> void;
 
     pListView(ListView& listView) : pWidget(listView), listView(listView) {}
 };
