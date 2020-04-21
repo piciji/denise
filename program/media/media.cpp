@@ -1509,7 +1509,7 @@ auto MediaWindow::anyLoad( bool mIsAcquiredBefore ) -> void {
 			return true;
 		} );
 
-        fileDialogPtr->setContentViewFont(useCustomFont ? "C64 Pro Mono, 11" : "");
+        fileDialogPtr->setContentViewFont(useCustomFont ? "C64 Pro Mono, 12" : "");
         fileDialogPtr->setContentViewBackground(mediaGroupLayouts[0]->listings.backgroundColor());
         fileDialogPtr->setContentViewForeground(mediaGroupLayouts[0]->listings.foregroundColor());
         fileDialogPtr->setContentViewColorTooltips(true);
