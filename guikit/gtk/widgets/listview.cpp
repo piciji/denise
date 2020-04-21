@@ -157,8 +157,17 @@ auto pListView::init() -> void {
 }
 
 auto pListView::setFont(std::string font) -> void {
+	pSystem::removeCssClass(subWidget, "removeRowSpacing");
+	
     pWidget::setFont(font);
-    for(auto& cell : column) pFont::setFont(cell.label, pfont);
+    for(auto& cell : column)
+		pFont::setFont(cell.label, pfont);
+	
+	if (String::findString(font, "C64 Pro Mono")) {
+		pSystem::addCssClass(subWidget, "removeRowSpacing");
+
+		pSystem::applyCss(subWidget, ".removeRowSpacing { padding: 0px; -GtkTreeView-expander-size: 12; -GtkTreeView-vertical-separator: 0; }");
+	}
 }
 
 auto pListView::onActivate(GtkTreeView* treeView, GtkTreePath* path, GtkTreeViewColumn* column, ListView* self) -> void {

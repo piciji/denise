@@ -145,9 +145,11 @@ auto pBrowserWindow::createPreview() -> GtkWidget* {
 	listView = new ListView;
 	listView->setHeaderText({""});
 	listView->setHeaderVisible( false );
-	listView->setBackgroundColor( state.contentView.backgroundColor );
-	listView->setForegroundColor( state.contentView.foregroundColor );
-	listView->colorRowTooltips( true );
+	if (state.contentView.overrideBackgroundColor)
+		listView->setBackgroundColor( state.contentView.backgroundColor );
+	if (state.contentView.overrideForegroundColor)
+		listView->setForegroundColor( state.contentView.foregroundColor );
+	listView->colorRowTooltips( state.contentView.colorTooltips );
 	listView->onActivate = [this]() {
 		if (browserWindow.state.contentView.onDblClick) {
 			if (browserWindow.state.contentView.onDblClick( selectedPath, contentViewSelection() )) {
