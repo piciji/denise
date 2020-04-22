@@ -60,7 +60,7 @@ auto pFont::create(uint8_t* data, unsigned size) -> HFONT {
 	return (HFONT)AddFontMemResourceEx( data, size, NULL, &nFonts );
 }
 
-auto pFont::create(std::string desc, int adjustForNonStandardDpi) -> HFONT {
+auto pFont::create(std::string desc) -> HFONT {
     static float dpiX = dpi().x;
     std::vector<std::string> tokens = String::split(desc, ',');
 
@@ -78,9 +78,6 @@ auto pFont::create(std::string desc, int adjustForNonStandardDpi) -> HFONT {
             italic |= String::foundSubStr(style, "italic");
         }
     }
-    
-    if (dpiX != 96)
-        size += adjustForNonStandardDpi;
 	
     HFONT _hfont = CreateFont(
         -((float)size * dpiX / 72.0 + 0.5),

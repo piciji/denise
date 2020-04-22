@@ -582,6 +582,7 @@ struct pBrowserWindow {
     auto close() -> void; 
     auto setForeground() -> void;
     auto resize(HWND fileDialogView, bool init = false) -> void;
+    auto adjustDialogByScreenResolution(HWND fileDialogView, HWND listBox) -> void;
     auto detached() -> bool { return false; }
     auto visible() -> bool;
     auto contentViewSelection() -> unsigned;
@@ -613,7 +614,7 @@ struct pMessageWindow {
 
 struct pFont {
     static auto system(unsigned size, std::string style) -> std::string;
-    static auto create(std::string desc, int adjustForNonStandardDpi = 0) -> HFONT;
+    static auto create(std::string desc) -> HFONT;
 	static auto create(uint8_t* data, unsigned size) -> HFONT;
     static auto free(HFONT& hfont) -> void;
     static auto size(HFONT hfont, std::string text) -> Size;

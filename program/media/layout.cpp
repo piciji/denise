@@ -187,7 +187,7 @@ auto MediaGroupLayout::updateVisibility( unsigned count, bool init ) -> void {
         }
     }    
     
-	mediaWindow->synchronizeLayout();
+	synchronizeLayout();
 	
     if (!listingInVisibleBlock)
         updateListing( blocks[0] );	  
@@ -295,8 +295,9 @@ auto MediaGroupLayout::build() -> void {
 		listings.setHeaderVisible( false );
         listings.colorRowTooltips( true );
 
-        if (mediaWindow->useCustomFont)
-            listings.setFont("C64 Pro Mono, 12");           
+        unsigned _fontSize = settings->get<unsigned>("software_preview_fontsize", 12, {6, 14});
+        
+        applyFont(_fontSize);
         
         if ( mediaGroup->isProgram( ) )
             append( inject, {0u, 0u}, 3 );
@@ -304,4 +305,12 @@ auto MediaGroupLayout::build() -> void {
         if ( mediaGroup->isProgram( ) || mediaGroup->isDisk() )
             append( listings, {~0u, ~0u} );
 	}
+}
+
+auto MediaGroupLayout::applyFont(unsigned fontSize) -> void {
+
+    if (mediaWindow->useCustomFont)
+        listings.setFont("C64 Pro, " + std::to_string(fontSize), true);
+    else
+        listings.setFont(GUIKIT::Font::system(fontSize));     
 }

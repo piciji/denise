@@ -457,3 +457,7 @@ Solid White = Stabil Weiß
 Register Color = Register Farbe
 confirm writes = Schreibvorgänge bestätigen
 question permanent write = Soll der Schreibvorgang auf "%media%" jetzt permanent gespeichert werden?
+Software Preview = Software Vorschau
+Font Size = Schriftgröße
+Dialog Font Size = Dialog Schriftgröße
+Dialog Preview Width = Dialog Vorschau Breite

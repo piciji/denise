@@ -72,6 +72,7 @@ struct MediaGroupLayout : GUIKIT::FramedVerticalLayout {
     auto fillListing( std::vector<GUIKIT::BrowserWindow::Listing>& emuListings ) -> void;
     auto showOnlyConnectedDevices() -> bool;
     auto getBlock(Emulator::Interface::Media* media) -> Block*;
+    auto applyFont(unsigned fontSize) -> void;
 
     MediaGroupLayout( Emulator::Interface::MediaGroup* mediaGroup, MediaWindow* mediaWindow );
 };
@@ -210,6 +211,8 @@ struct MediaWindow : public GUIKIT::Window {
     auto anyLoad( bool mIsAcquiredBefore ) -> void;
     auto convertListing( std::vector<Emulator::Interface::Listing>& emuListings, bool loadCommand ) -> std::vector<std::string>;
 	auto convertListing( std::vector<Emulator::Interface::Listing>& emuListings ) -> std::vector<GUIKIT::BrowserWindow::Listing>;
+    auto updateListingFont( unsigned fontSize ) -> void;
+    auto applyPreviewFont(unsigned fontSize) -> void;
 
     MediaWindow(Emulator::Interface* emulator);
 };

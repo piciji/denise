@@ -457,3 +457,7 @@ Solid White =
 Register Color = 
 confirm writes = 
 question permanent write = 
+Software Preview = 
+Font Size = 
+Dialog Font Size = 
+Dialog Preview Width = 

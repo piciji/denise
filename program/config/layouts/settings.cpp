@@ -35,14 +35,40 @@ SwitchesLayout::SwitchesLayout() {
     setFont(GUIKIT::Font::system("bold"));
 }
 
+PreviewLayout::PreviewLayout() {
+    setPadding(10);
+    setFont(GUIKIT::Font::system("bold"));
+    
+    previewBox.setHeaderText( { "" } );
+    previewBox.setHeaderVisible( false );
+    
+    append( control, {~0u, 0u} );    
+}
+
+PreviewLayout::Control::Control() {
+    GUIKIT::Label test;
+    test.setText("600 px");
+
+    append(fontSize,{0u, 0u}, 5);
+    append(fontSizeCombo,{0u, 0u}, 5);
+    append(dialogFontSize,{0u, 0u}, 5);
+    append(dialogFontSizeCombo,{0u, 0u}, 5);
+    append(dialogPreviewWidth,{0u, 0u}, 5);
+    append(dialogPreviewWidthValue,{test.minimumSize().width + 3, 0u}, 5);
+    append(dialogPreviewWidthSlider,{~0u, 0u});
+
+    dialogPreviewWidthSlider.setLength(501);
+
+    setAlignment(0.5);    
+}
+
 SettingsLayout::SettingsLayout() {
     setMargin(10);
-
-    switches.synchronizeLayout();
     
     upperLayout.append(lang, {~0u, ~0u}, 10);
     upperLayout.append(switches, {~0u, 0u});
-    append(upperLayout, {~0u, 0u}, 10);    
+    append(upperLayout, {~0u, 0u}, 10);  
+    append(previewLayout, {~0u, 0u}, 10);
     append(about, {~0u, 0u});    
 
     switches.fullscreenStatusbar.setChecked( settings->get<bool>("statusbar_fullscreen", false) );
@@ -92,6 +118,120 @@ SettingsLayout::SettingsLayout() {
     lang.listView.onChange = [&]() {
         changeLang();
     };
+    
+    for(unsigned i = 6; i <= 14; i++) {
+        previewLayout.control.fontSizeCombo.append(std::to_string(i), i);
+        previewLayout.control.dialogFontSizeCombo.append(std::to_string(i), i);
+    }
+    
+    previewLayout.control.fontSizeCombo.onChange = [this]() {
+        
+        settings->set<unsigned>("software_preview_fontsize", previewLayout.control.fontSizeCombo.userData());
+        
+        for( auto mediaView : mediaViews )
+            mediaView->updateListingFont( previewLayout.control.fontSizeCombo.userData() );
+    };
+    
+    previewLayout.control.fontSizeCombo.setSelection( settings->get<unsigned>("software_preview_fontsize", 12, {6, 14}) - 6 );
+    
+    
+    previewLayout.control.dialogFontSizeCombo.onChange = [this]() {
+        
+        settings->set<unsigned>("dialog_software_preview_fontsize", previewLayout.control.dialogFontSizeCombo.userData());
+        
+        previewTimer.setEnabled(true);
+    };
+    
+    previewLayout.control.dialogFontSizeCombo.setSelection( settings->get<unsigned>("dialog_software_preview_fontsize", 11, {6, 14}) - 6 );
+    
+    previewLayout.control.dialogPreviewWidthSlider.onChange = [this]() {
+        
+        unsigned pos = previewLayout.control.dialogPreviewWidthSlider.position();
+        
+        previewLayout.control.dialogPreviewWidthValue.setText( std::to_string( pos + 200 ) + " px" );                
+        
+        settings->set<unsigned>("dialog_software_preview_width", pos + 200 );
+        
+        previewTimer.setEnabled(true);
+    };
+    
+    previewLayout.control.dialogPreviewWidthSlider.setPosition( settings->get<unsigned>("dialog_software_preview_width", 445, {200, 700}) - 200 );
+    
+    previewLayout.control.dialogPreviewWidthValue.setText( std::to_string( previewLayout.control.dialogPreviewWidthSlider.position() + 200 ) + " px" );
+    
+    previewLayout.previewBox.setBackgroundColor( 0xaaaaaa );
+    
+    previewTimer.setInterval( 100 );
+    
+    previewTimer.onFinished = [this]() {
+        previewTimer.setEnabled(false);
+        
+        setPreviewContent();
+        
+        unsigned newWidth = settings->get<unsigned>("dialog_software_preview_width", 445, {200, 700});
+
+        if (previewLayout.has(previewLayout.previewBox))
+            previewLayout.update( previewLayout.previewBox, {newWidth, 60u} );
+        else {
+            previewLayout.update( previewLayout.control, 10 );
+            previewLayout.append( previewLayout.previewBox, {newWidth, 60u} );
+        }
+
+        synchronizeLayout();
+    };    
+}
+
+auto SettingsLayout::removePreview() -> void {
+    
+    if (previewLayout.remove( previewLayout.previewBox )) { 
+        previewLayout.update( previewLayout.control, 0 );
+        synchronizeLayout();
+    }
+}
+
+auto SettingsLayout::setPreviewContent() -> void {
+    
+    bool useCustomFont = false;
+    
+    for (auto& mediaView : mediaViews) {
+        if (mediaView->useCustomFont) {
+            useCustomFont = true;
+            break;
+        }
+    }
+
+    auto fontSize = settings->get<unsigned>("dialog_software_preview_fontsize", 11, {6, 14});
+    
+    if (useCustomFont)
+        previewLayout.previewBox.setFont("C64 Pro, " + std::to_string(fontSize), true);  
+    else
+        previewLayout.previewBox.setFont( GUIKIT::Font::system(fontSize) );  
+    
+    if (previewLayout.previewBox.rowCount())
+        return;
+    
+    std::vector<uint8_t> line = {0x30, 0x20, 0x20, 0x20, 0x20, 0x22, 0x20, 0x44, 0x45, 0x4e, 0x49, 0x53, 0x45, 0x20, 0x20, 0x44, 0x45, 0x4e, 0x49, 0x53, 0x45, 0x20, 0x22, 0x20, 0x50, 0x52, 0x47, 0x3c};
+    
+    if(useCustomFont)
+        line = {0x30, 0x20, 0x20, 0x20, 0x20, 0x22, 0x20, 4, 5, 0xe, 9, 0x13, 5, 0x20, 0x20, 4, 5, 0xe, 9, 0x13, 5, 0x20, 0x22, 0x20, 0x10, 0x12, 7, 0x3c};
+    
+    std::vector<uint8_t> utf8;
+    
+    for (auto& code : line) {
+
+        unsigned useCode = code;
+        if (useCustomFont)
+            useCode |= 0xee << 8;
+
+        GUIKIT::Utf8::encode(useCode, utf8);
+    }
+        
+    std::string out = std::string((const char*) utf8.data(), utf8.size());
+    
+    for (unsigned i = 0; i < 8; i++) {
+        
+        previewLayout.previewBox.append( {out} );
+    }
 }
 
 auto SettingsLayout::changeLang() -> void {
@@ -197,4 +337,10 @@ auto SettingsLayout::translate() -> void {
 	about.right.icons8.setText("Icons8: " + link);
 	about.right.icons8.setUri("http://www.icons8.com", link);
 	about.right.icons8.setTooltip("http://www.icons8.com");
+    
+    previewLayout.setText( trans->get("Software Preview") );
+    previewLayout.control.fontSize.setText( trans->get("Font Size", {}, true) );
+    previewLayout.control.dialogFontSize.setText( trans->get("Dialog Font Size", {}, true) );
+    previewLayout.control.dialogPreviewWidth.setText( trans->get("Dialog Preview Width", {}, true) );
 }
+

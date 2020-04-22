@@ -89,10 +89,10 @@ auto pWidget::rebuild() -> void {
 auto pWidget::setGeometry(Geometry geometry) -> void {
     if (!hwnd)
         return;
-    
+        
     SetWindowPos(hwnd, NULL, geometry.x, geometry.y, geometry.width, geometry.height, SWP_NOZORDER);
     if(widget.onSize)
-        widget.onSize();
+        widget.onSize();        
 }
 
 auto pWidget::setTooltip(std::string tooltip) -> void {

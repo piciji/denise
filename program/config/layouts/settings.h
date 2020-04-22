@@ -15,6 +15,24 @@ struct SwitchesLayout : GUIKIT::FramedVerticalLayout {
     SwitchesLayout();
 };
 
+struct PreviewLayout : GUIKIT::FramedVerticalLayout {
+    struct Control : GUIKIT::HorizontalLayout {
+        GUIKIT::Label fontSize;
+        GUIKIT::ComboButton fontSizeCombo;
+        GUIKIT::Label dialogFontSize;
+        GUIKIT::ComboButton dialogFontSizeCombo;
+        GUIKIT::Label dialogPreviewWidth;
+        GUIKIT::Label dialogPreviewWidthValue;
+        GUIKIT::HorizontalSlider dialogPreviewWidthSlider;
+        
+        Control();
+    } control;
+    
+    GUIKIT::ListView previewBox;
+    
+    PreviewLayout();
+};
+
 struct AboutLayout : GUIKIT::FramedHorizontalLayout {
     
     struct Left : GUIKIT::VerticalLayout {
@@ -36,12 +54,16 @@ struct SettingsLayout : GUIKIT::VerticalLayout {
     LangLayout lang;
     SwitchesLayout switches;    
     AboutLayout about;    
+    PreviewLayout previewLayout;
     std::vector<GUIKIT::Image*> images;
+    GUIKIT::Timer previewTimer;
 
     auto setLang() -> void;
     auto changeLang() -> void;
     auto addLangImage(unsigned selection, std::string file) -> void;
+    auto setPreviewContent() -> void;
     auto translate() -> void;
+    auto removePreview() -> void;
     SettingsLayout();
     ~SettingsLayout();
 };

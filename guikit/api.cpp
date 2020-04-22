@@ -161,7 +161,7 @@ auto Window::append(Layout& layout) -> void {
     state.layout = &layout;
     layout.Sizable::state.parent = nullptr;
     layout.Sizable::state.window = this;
-    layout.synchronizeLayout();
+    layout.updateLayout();
     p.append(layout);
 }
 
@@ -408,9 +408,10 @@ auto Widget::setFocused() -> void {
     return p.setFocused();
 }
 
-auto Widget::setFont(const std::string& font) -> void {
+auto Widget::setFont(const std::string& font, bool specialFont) -> void {
     if (_A::dummy) return;
     state.font = font;
+    state.specialFont = specialFont;
     p.setFont(font);
 }
 
@@ -1066,10 +1067,17 @@ auto BrowserWindow::addContentView(unsigned id, std::function<bool (std::string 
     return *this;
 }
     
-auto BrowserWindow::setContentViewFont(std::string font) -> BrowserWindow& {
+auto BrowserWindow::setContentViewFont(std::string font, bool specialFont) -> BrowserWindow& {
     state.contentView.font = font;
+    state.contentView.specialFont = specialFont;
     return *this;
 }
+
+auto BrowserWindow::setContentViewWidth(unsigned boxWidth) -> BrowserWindow& {
+    state.contentView.width = boxWidth;
+    return *this;
+}
+
 auto BrowserWindow::setContentViewBackground(unsigned color) -> BrowserWindow& {
     state.contentView.backgroundColor = color;
     state.contentView.overrideBackgroundColor = true;
@@ -1258,4 +1266,3 @@ auto System::printToCmd( std::string str ) -> void {
 }
 
 }
-

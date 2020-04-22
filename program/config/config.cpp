@@ -64,8 +64,12 @@ auto TabWindow::build() -> void {
 
     tab.setMargin(10);
     tab.setSelection(0);
-
+        
     append(tab);
+    
+    tab.onChange = [this]() {
+        settingsLayout->removePreview();
+    };
 
     onClose = [this]() {
         setVisible(false);
@@ -121,3 +125,4 @@ auto TabWindow::show(Layout layout) -> void {
 }
 
 }
+

@@ -20,6 +20,7 @@ auto pHyperlink::create() -> void {
 auto pHyperlink::setText(std::string text) -> void {
     calculatedMinimumSize.updated = false;
     rebuild();
+    setGeometry( widget.geometry() );
 }
 
 auto pHyperlink::rebuild() -> void {
@@ -30,6 +31,7 @@ auto pHyperlink::rebuild() -> void {
 
 auto pHyperlink::setUri( std::string uri, std::string wrap ) -> void {
     rebuild();
+    setGeometry( widget.geometry() );
 }
 
 auto pHyperlink::generate() -> std::string {

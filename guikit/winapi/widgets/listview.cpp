@@ -214,8 +214,8 @@ auto pListView::create() -> void {
     
     hwnd = CreateWindowEx(
         WS_EX_CLIENTEDGE, WC_LISTVIEW, L"",
-        WS_CHILD | WS_TABSTOP | LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_NOSORTHEADER | LVS_NOCOLUMNHEADER | 
-            (String::findString(listView.font(), "C64 Pro Mono") ? LVS_OWNERDRAWFIXED : 0),
+        WS_CHILD | WS_TABSTOP | LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_NOSORTHEADER | LVS_NOCOLUMNHEADER | WS_HSCROLL | 
+            ( listView.specialFont() ? LVS_OWNERDRAWFIXED : 0),
         0, 0, 0, 0, listView.window()->p.hwnd, (HMENU)(unsigned long long)listView.id, GetModuleHandle(0), 0);        
 
     ListView_SetExtendedListViewStyle(hwnd, LVS_EX_FULLROWSELECT | LVS_EX_SUBITEMIMAGES);
@@ -265,10 +265,16 @@ auto pListView::rebuild() -> void {
 }
 
 auto pListView::setFont(std::string font) -> void {
-    pWidget::setFont(font);
+    if (hwnd && listView.specialFont()) {
+        rebuild();
+        setGeometry( widget.geometry() );
+        return;
+    }
+    
+    pWidget::setFont(font);    
     reset();
     setContent();
-    buildImageList();         
+    buildImageList();           
 }
 
 auto pListView::setContent() -> void {
@@ -400,11 +406,13 @@ auto pListView::setBackgroundColor(unsigned color) -> void {
 	ListView_SetTextBkColor( hwnd, RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff) ); 
     
     clearBrush();
+    destroy(hwndTip); 
 }
 
 auto pListView::setForegroundColor(unsigned color) -> void {
 	if (!hwnd) return;
 	ListView_SetTextColor( hwnd, RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff) );
+    destroy(hwndTip); 
 }
 
 auto pListView::measureItem(LPMEASUREITEMSTRUCT lpmis) -> void {

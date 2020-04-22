@@ -356,7 +356,7 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
             
             if (listBox) {
                 if (state->contentView.font != "")
-                    context->listFont = pFont::create( state->contentView.font, -1 );
+                    context->listFont = pFont::create( state->contentView.font );
                 else
                     context->listFont = pFont::create( Font::system() );
 
@@ -378,6 +378,9 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
             WNDPROC wndprocOrig = (WNDPROC)SetWindowLongPtr(listBox, GWLP_WNDPROC, (LONG_PTR)subclassListbox);
             SetProp( listBox, L"OLDWNDPROC", (HANDLE)wndprocOrig );
             context->lastItem = -1;
+            
+            if (listBox)
+                context->adjustDialogByScreenResolution(hDlg, listBox);
             
             SetWindowLongPtr(hDlg, DWLP_USER, lParam);
             
@@ -432,7 +435,7 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
                                     context->toolTips.push_back( row.tooltip );
                                 }
 
-                                SendMessage( listBox, LB_SETHORIZONTALEXTENT, maximumWidth, 0);
+                                SendMessage( listBox, LB_SETHORIZONTALEXTENT, maximumWidth + 8, 0);
                             }
                         }
                     }                                        
@@ -575,6 +578,29 @@ auto pBrowserWindow::setToolTip(HWND hwnd, int curItem, RECT rect) -> void {
     toolInfo.lpszText = wtooltip;
     
     SendMessage(hwndTip, TTM_ADDTOOL, 0, (LPARAM)&toolInfo);
+}
+
+auto pBrowserWindow::adjustDialogByScreenResolution(HWND fileDialogView, HWND listBox) -> void {
+   
+    RECT rDialogView;
+    RECT rListBox;
+    
+    GetClientRect(fileDialogView, &rDialogView);
+    GetWindowRect(listBox, &rListBox);   
+    
+    // 12 -> 472
+    // 11 -> 445    
+    // 10 -> 390
+    // 9  -> 362
+    // 8  -> 332
+       
+    auto newWidth = browserWindow.state.contentView.width;
+    
+    auto _listWidth = std::abs(rListBox.right - rListBox.left);
+    
+    SetWindowPos(listBox, 0, 0, 0, newWidth, std::abs(rListBox.bottom - rListBox.top), SWP_NOMOVE);   
+    
+    SetWindowPos(fileDialogView, 0, 0, 0, std::abs(rDialogView.right - rDialogView.left) - _listWidth + newWidth,  std::abs(rDialogView.bottom - rDialogView.top), SWP_NOMOVE);
 }
 
 auto pBrowserWindow::resize( HWND fileDialogView, bool init ) -> void {

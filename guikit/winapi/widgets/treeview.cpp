@@ -218,7 +218,7 @@ auto pTreeView::setFont(std::string font) -> void {
     pWidget::setFont(font);
     if (!hwnd) return;
     rebuild();
-    treeView.window()->synchronizeLayout();
+    setGeometry( widget.geometry() );
 }
 
 auto pTreeView::onActivate() -> void {

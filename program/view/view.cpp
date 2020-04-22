@@ -61,7 +61,7 @@ auto View::build() -> void {
         GUIKIT::Application::quit();
     };
     
-    onMove = [this]() {
+    onMove = [this]() { 
         if (fullScreen()) return;
         GUIKIT::Geometry geometry = this->geometry();
         settings->set<int>("screen_x", geometry.x);
@@ -77,7 +77,7 @@ auto View::build() -> void {
         } else {
             updateMenuBar();
             updateStatusBar();
-
+            
             GUIKIT::Geometry geometry = this->geometry();
             settings->set<int>("screen_width", geometry.width);
             settings->set<int>("screen_height", geometry.height);

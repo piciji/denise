@@ -285,6 +285,7 @@ struct Widget : Sizable {
     std::function<void ()> onSize = nullptr;
 
     auto font() -> std::string;
+    auto specialFont() -> bool { return state.specialFont; }
     auto geometry() const -> Geometry { return state.geometry; }
     auto text() -> std::string { return state.text; }
     auto tooltip() -> std::string { return state.tooltip; }
@@ -298,7 +299,9 @@ struct Widget : Sizable {
     auto setFocused() -> void;
     auto setEnabled(bool enabled = true) -> void;
     auto setVisible(bool visible = true) -> void;
-    auto setFont(const std::string& font) -> void;
+    // "special font" hint is only handled in listviews at the moment.
+    // in this case vertical spacing in completly removed.
+    auto setFont(const std::string& font, bool specialFont = false) -> void;
     auto minimumSize() -> Size;
     auto setGeometry(Geometry geometry) -> void; //use this to control geometry manually for widgets without layout, layouts set widget geometry automatically
     auto setText(const std::string& text) -> void;
@@ -314,6 +317,7 @@ struct Widget : Sizable {
     struct {
         Geometry geometry = {0, 0, 0, 0};
         std::string font;
+        bool specialFont = false;
         std::string text;
         std::string tooltip;
         unsigned foregroundColor = 0;
@@ -639,10 +643,22 @@ struct Viewport : Widget {
 };
 
 struct Layout : Sizable {        
+    struct Children {
+        Sizable* sizable;
+        Size size;
+        Position position;
+        unsigned spacing;
+        unsigned selection;
+    };
+    
     auto append(Sizable& sizable, Size size, unsigned spacing = 0) -> void;
-    auto remove(Sizable& sizable) -> void;
+    auto remove(Sizable& sizable) -> bool;
 
+    auto updateLayout() -> void;
     auto synchronizeLayout() -> void;
+    auto has(Sizable& sizable) -> Children*;
+    auto update(Sizable& sizable, Size size, unsigned spacing = 0) -> void;
+    auto update(Sizable& sizable, unsigned spacing) -> void;
     auto setEnabled(bool enabled = true) -> void;
     virtual auto setVisible(bool visible = true) -> void;
 
@@ -654,16 +670,10 @@ struct Layout : Sizable {
     static auto getParentTabOrSwitchLayout(Sizable* sizable) -> Layout*;
     static auto getTopMostTabOrSwitchLayout(Layout* layout) -> Layout*;
 
-    struct Children {
-        Sizable* sizable;
-        Size size;
-        Position position;
-        unsigned spacing;
-        unsigned selection;
-    };
     std::vector<Children> children;
 
     struct {
+        Geometry geometry = {0, 0, 0, 0};
         double alignment = 0.0;
         unsigned margin = 0;
         unsigned padding = 0;
@@ -923,7 +933,8 @@ struct BrowserWindow {
 
     auto setTemplateId(int id) -> BrowserWindow&;
     auto addContentView(unsigned id, std::function<bool (std::string filePath, unsigned selection)> onDblClick) -> BrowserWindow&;
-    auto setContentViewFont(std::string font) -> BrowserWindow&;
+    auto setContentViewFont(std::string font, bool specialFont = false) -> BrowserWindow&;
+    auto setContentViewWidth(unsigned boxWidth) -> BrowserWindow&;
     auto setContentViewBackground(unsigned color) -> BrowserWindow&;
     auto setContentViewForeground(unsigned color) -> BrowserWindow&;
     auto setContentViewColorTooltips(bool colorTooltips) -> BrowserWindow&;
@@ -946,6 +957,8 @@ struct BrowserWindow {
     struct ContentView {
         unsigned id = 0; // for template usage
         std::string font = "";
+        bool specialFont = false;
+        unsigned width = 250;
         unsigned foregroundColor = 0;
         bool overrideForegroundColor = false;
         unsigned backgroundColor = 0;

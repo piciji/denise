@@ -457,3 +457,7 @@ Solid White = Solid White
 Register Color = Register Color
 confirm writes = Confirm Writes
 question permanent write = Do you want to save the write to "%media%" permanently now?
+Software Preview = Software Preview
+Font Size = Font Size
+Dialog Font Size = Dialogue Font Size
+Dialog Preview Width = Dialogue Vorschau Breite

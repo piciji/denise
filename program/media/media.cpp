@@ -80,12 +80,13 @@ auto MediaWindow::build() -> void {
 	
     alternateFileDialog = settings->getOrInit("alternate_software_preview", false);
     
+    
 	if (emulator->ident == "C64" && !cmd->debug) {
         GUIKIT::CustomFont* font = new GUIKIT::CustomFont;
-        font->name = "C64 Pro Mono";
-        font->data = (uint8_t*)Fonts::c64ProMono;
-        font->size = sizeof(Fonts::c64ProMono);	
-        font->filePath = program->fontFolder() + "/C64_Pro_Mono-STYLE121.ttf";
+        font->name = "C64 Pro";
+        font->data = (uint8_t*)Fonts::c64Pro;
+        font->size = sizeof(Fonts::c64Pro);	
+        font->filePath = program->fontFolder() + "/C64_Pro-STYLE121.ttf";
         useCustomFont = MediaWindow::addCustomFont( font );
         ((LIBC64::Interface*) emulator)->convertPetsciiToScreencode( useCustomFont );
     }
@@ -332,8 +333,10 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
 
 						return insertFile(block, filePath, true, selection);
 					});
-									
-                    fileDialogPtr->setContentViewFont(useCustomFont ? "C64 Pro Mono, 12" : "");
+									                    
+                    applyPreviewFont( settings->get<unsigned>("dialog_software_preview_fontsize", 11, {6, 14}) );
+                    fileDialogPtr->setContentViewWidth( settings->get<unsigned>("dialog_software_preview_width", 445, {200, 700}) );
+                    
                     fileDialogPtr->setContentViewBackground(mediaGroupLayouts[0]->listings.backgroundColor());
                     fileDialogPtr->setContentViewForeground(mediaGroupLayouts[0]->listings.foregroundColor());
                     fileDialogPtr->setContentViewColorTooltips(true);
@@ -1509,7 +1512,9 @@ auto MediaWindow::anyLoad( bool mIsAcquiredBefore ) -> void {
 			return true;
 		} );
 
-        fileDialogPtr->setContentViewFont(useCustomFont ? "C64 Pro Mono, 12" : "");
+        applyPreviewFont( settings->get<unsigned>("dialog_software_preview_fontsize", 11, {6, 14}) );
+        fileDialogPtr->setContentViewWidth( settings->get<unsigned>("dialog_software_preview_width", 445, {200, 700}) );
+        
         fileDialogPtr->setContentViewBackground(mediaGroupLayouts[0]->listings.backgroundColor());
         fileDialogPtr->setContentViewForeground(mediaGroupLayouts[0]->listings.foregroundColor());
         fileDialogPtr->setContentViewColorTooltips(true);
@@ -1654,4 +1659,24 @@ auto MediaWindow::convertListing( std::vector<Emulator::Interface::Listing>& emu
     return list;
 }
 
+auto MediaWindow::updateListingFont( unsigned fontSize ) -> void {
+    
+    if ( !dynamic_cast<LIBC64::Interface*>(emulator)) 
+        return;
+    
+    for(auto layout : mediaGroupLayouts) {
+        
+        layout->applyFont( fontSize );
+    }
 }
+
+auto MediaWindow::applyPreviewFont(unsigned fontSize) -> void {
+
+    if (useCustomFont)
+        fileDialogPtr->setContentViewFont("C64 Pro, " + std::to_string(fontSize), true);
+    else
+        fileDialogPtr->setContentViewFont(GUIKIT::Font::system(fontSize));     
+}
+
+}
+

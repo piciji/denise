@@ -1,13 +1,45 @@
 
+auto Layout::synchronizeLayout() -> void {
+    setGeometry( state.geometry );
+}
+
+auto Layout::has(Sizable& sizable) -> Children* {
+    for (auto& child : children)
+        if (child.sizable == &sizable)
+            return &child;
+    
+    return nullptr;
+}
+
+auto Layout::update(Sizable& sizable, unsigned spacing) -> void {
+    Children* child = has(sizable);
+
+    if (!child)
+        return;
+
+    child->spacing = spacing;
+}
+
+auto Layout::update(Sizable& sizable, Size size, unsigned spacing) -> void {
+    
+    Children* child = has(sizable);
+    
+    if (!child)
+        return;
+        
+    child->size = size;
+    child->spacing = spacing;
+}
+
 auto Layout::append(Sizable& sizable, Size size, unsigned spacing) -> void {
-    for(auto& child : children)
-		if(child.sizable == &sizable)
-			return;
 	
+    if (has(sizable))
+        return;
+    
     children.push_back({&sizable, size, {0,0}, spacing, 0});
     sizable.setVisible( visible() );
     
-    synchronizeLayout();
+    updateLayout();
     //if(window()) window()->synchronizeLayout();
 }
 
@@ -18,7 +50,7 @@ auto Layout::append(Sizable& sizable) -> void {
 
     if(dynamic_cast<Layout*>(&sizable)) {
         Layout& layout = (Layout&)sizable;
-        layout.synchronizeLayout();
+        layout.updateLayout();
     }
 
     if(dynamic_cast<Widget*>(&sizable)) {
@@ -27,7 +59,7 @@ auto Layout::append(Sizable& sizable) -> void {
     }
 }
 
-auto Layout::synchronizeLayout() -> void {
+auto Layout::updateLayout() -> void {
     if (window() && frameWidget) window()->append(*frameWidget);
 
     if (window() && dynamic_cast<TabFrameLayout*>(this)) {
@@ -37,7 +69,7 @@ auto Layout::synchronizeLayout() -> void {
     for(auto& child : children) append(*child.sizable);
 }
 
-auto Layout::remove(Sizable& sizable) -> void {
+auto Layout::remove(Sizable& sizable) -> bool {
     unsigned pos = 0;
     for(auto& child : children) {
         if(child.sizable == &sizable) {
@@ -47,10 +79,11 @@ auto Layout::remove(Sizable& sizable) -> void {
             children.erase(children.begin() + pos);
             cut(sizable);
             //if(window()) window()->synchronizeLayout();
-            break;
+            return true;
         }
         pos++;
     }
+    return false;
 }
 
 auto Layout::cut(Sizable& sizable) -> void {
@@ -138,11 +171,12 @@ auto Layout::addFrameSize(Size min) -> Size {
 auto FixedLayout::append(Widget& widget, Geometry geometry) -> void {
     for(auto& child : children) if(child.sizable == &widget) return;
     children.push_back({&widget, geometry.size(), geometry.position(), 0, 0});
-    synchronizeLayout();
+    updateLayout();
     if(window()) window()->synchronizeLayout();
 }
 
-auto FixedLayout::setGeometry(Geometry geometry) -> void {    
+auto FixedLayout::setGeometry(Geometry geometry) -> void {   
+    state.geometry = geometry;
     auto children = this->children;
     for(auto& child : children) {
 
@@ -199,7 +233,7 @@ auto HorizontalLayout::minimumSize() -> Size {
 }
 
 auto HorizontalLayout::setGeometry(Geometry containerGeometry) -> void {
-    
+    state.geometry = containerGeometry;
     auto children = this->children;
     for(auto& child : children) {
         if(child.size.width  == Size::Minimum) child.size.width  = child.sizable->minimumSize().width;
@@ -270,7 +304,7 @@ auto VerticalLayout::minimumSize() -> Size {
 }
 
 auto VerticalLayout::setGeometry(Geometry containerGeometry) -> void {
-
+    state.geometry = containerGeometry;
     auto children = this->children;
     for(auto& child : children) {
         if(child.size.width  == Size::Minimum) child.size.width  = child.sizable->minimumSize().width;
@@ -428,7 +462,7 @@ auto TabFrameLayout::setLayout(unsigned selection, Layout& layout, Size size) ->
         }
     }
     if(!found) children.push_back({&layout, size, {0,0}, 0, selection});
-    synchronizeLayout();
+    updateLayout();
     if(window()) window()->synchronizeLayout();
 }
 
@@ -464,7 +498,7 @@ auto TabFrameLayout::minimumSize() -> Size {
 }
 
 auto TabFrameLayout::setGeometry(Geometry containerGeometry) -> void {
-
+    state.geometry = containerGeometry;
     Geometry geometry = containerGeometry;
 
     addDisplacement(geometry, state.margin);
@@ -540,7 +574,7 @@ auto SwitchLayout::setLayout(unsigned selection, Layout& layout, Size size) -> v
         }
     }
     if(!found) children.push_back({&layout, size, {0,0}, 0, selection});
-    synchronizeLayout();
+    updateLayout();
     if(window()) window()->synchronizeLayout();
 }
 
@@ -572,6 +606,7 @@ auto SwitchLayout::setVisible(bool visible) -> void {
 }
 
 auto SwitchLayout::setGeometry(Geometry containerGeometry) -> void {
+    Layout::state.geometry = containerGeometry;
     Geometry geometry = containerGeometry;
 
     addDisplacement(geometry, Layout::state.margin);    
