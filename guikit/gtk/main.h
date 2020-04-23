@@ -575,6 +575,7 @@ struct pFont {
     static auto size(PangoFontDescription* font, std::string text) -> Size;
     static auto size(std::string font, std::string text) -> Size;
 	static auto convertCss(GtkWidget* widget, PangoFontDescription* font) -> std::string;
+	static auto scale( unsigned pixel ) -> unsigned;
 };
 
 struct pSystem {

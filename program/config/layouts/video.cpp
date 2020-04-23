@@ -42,9 +42,9 @@ PathsLayout::PathsLayout() {
 
 VideoFrameAdjustLayout::VideoFrameAdjustLayout() {
     append(overrideExactFrequency, {0u, 0u}, 10);
-    append(pal, {0u, 0u}, 2);
+    append(pal, {0u, 0u}, 5);
     append(palFrequency, {60u, 0u}, 10);
-    append(ntsc, {0u, 0u}, 2);
+    append(ntsc, {0u, 0u}, 5);
     append(ntscFrequency, {60u, 0u}, 10);
     setAlignment(0.5);
     setPadding( 10 );

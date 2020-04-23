@@ -237,7 +237,7 @@ auto pFont::add( CustomFont* customFont ) -> bool {
 
 auto pFont::create(std::string desc) -> PangoFontDescription* {
     std::vector<std::string> tokens = String::split(desc, ',');
-
+	
     std::string family = "Sans";
     unsigned size = 8u;
     bool bold = false, italic = false;
@@ -272,9 +272,16 @@ auto pFont::size(PangoFontDescription* font, std::string text) -> Size {
     pango_layout_set_font_description(layout, font);
     pango_layout_set_text(layout, text.c_str(), -1);
     int width = 0, height = 0;
-    pango_layout_get_pixel_size(layout, &width, &height);
+    pango_layout_get_pixel_size(layout, &width, &height);	
     if(G_IS_OBJECT((gpointer)layout)) g_object_unref((gpointer)layout);
     return {(unsigned)width, (unsigned)height};
+}
+
+inline auto pFont::scale( unsigned pixel ) -> unsigned {
+	
+	static double dpi = gdk_screen_get_resolution (gdk_screen_get_default());
+	
+	return (unsigned) ((double)pixel * dpi / 96.0 + 0.5);
 }
 
 auto pFont::size(std::string font, std::string text) -> Size {
@@ -296,7 +303,7 @@ auto pFont::setFont(GtkWidget* widget, gpointer font) -> void {
 	pSystem::applyCss( widget, convertCss(widget, (PangoFontDescription*)font) );
 
     if(GTK_IS_CONTAINER(widget)) {
-        gtk_container_foreach(GTK_CONTAINER(widget), (GtkCallback)pFont::setFont, font);
+        gtk_container_foreach(GTK_CONTAINER(widget), (GtkCallback)pFont::setFont, font);		
     }
 }
 
@@ -312,9 +319,13 @@ auto pFont::convertCss(GtkWidget* widget, PangoFontDescription* font) -> std::st
 	if (isAbsolute) {
 		pt = (float)size / (float)PANGO_SCALE;
 	} else {
-		pt = (float)gdk_screen_get_resolution (gdk_screen_get_default()) * ((float)size / (float)PANGO_SCALE) / 72.0;
+		//pt = (float)gdk_screen_get_resolution (gdk_screen_get_default()) * ((float)size / (float)PANGO_SCALE) / 72.0;
+		
+		// use standard dpi, not the real one like in line above. otherwise it doesn't look right for OS scaled fonts
+		// pango font seems to normalize to standard dpi by itsself.
+		pt = 96.0 * ((float)size / (float)PANGO_SCALE) / 72.0;
 	}
-	
+		
 	pt *= 0.75; // convert px to pt
 	
 	auto weight = pango_font_description_get_weight( font );
@@ -344,7 +355,7 @@ auto pFont::convertCss(GtkWidget* widget, PangoFontDescription* font) -> std::st
 	gtk_style_context_add_class (context, cssIdent.c_str());	
 	
 	std::string fontFamily = "font-family: " + (std::string)family + ";";
-	std::string fontSize = "font-size: " + GUIKIT::String::convertDoubleToString( pt, 2 ) + "pt;";	
+	std::string fontSize = "font-size: " + GUIKIT::String::convertDoubleToString( pt, 2 ) + "pt;";		
 	std::string fontWeight = "font-weight: " + (std::string)(weight == PANGO_WEIGHT_BOLD ? "bold" : "normal") + ";";
 	std::string fontStyle = "font-style: " + (std::string)(style == PANGO_STYLE_ITALIC ? "italic" : "normal") + ";";
 	

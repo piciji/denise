@@ -2,7 +2,7 @@
 AudioControlLayout::AudioControlLayout() {
     GUIKIT::LineEdit test;
     test.setText( "0.0005" );
-    append(frequencyLabel, {0u, 0u}, 10);
+    append(frequencyLabel, {0u, 0u}, 5);
     append(frequencyCombo, {0u, 0u}, 20);
     append(reverb, {0u, 0u}, 20);
     append(maxRateLabel, {0u, 0u}, 5);
@@ -18,7 +18,7 @@ volume("%", false, true) {
 
     frame.append(control, {~0u, 0u}, 20);
     frame.append(latency, {~0u, 0u}, 10);
-    frame.append(volume, {~0u, 0u}, 10);
+    frame.append(volume, {~0u, 0u});
 	frame.setPadding(10);
     
 	append(frame, {~0u, 0u}, 10);

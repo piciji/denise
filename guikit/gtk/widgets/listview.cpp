@@ -163,10 +163,13 @@ auto pListView::setFont(std::string font) -> void {
     for(auto& cell : column)
 		pFont::setFont(cell.label, pfont);
 	
-	if (String::findString(font, "C64 Pro Mono")) {
+	if (customTooltipLabel)
+		customTooltipLabel->setFont( listView.font() );
+	
+	if (listView.specialFont()) {
 		pSystem::addCssClass(subWidget, "removeRowSpacing");
 
-		pSystem::applyCss(subWidget, ".removeRowSpacing { padding: 0px; -GtkTreeView-expander-size: 12; -GtkTreeView-vertical-separator: 0; }");
+		pSystem::applyCss(subWidget, ".removeRowSpacing { padding: 0px; -GtkTreeView-expander-size: 0; -GtkTreeView-vertical-separator: 0; -GtkTreeView-horizontal-separator: 0; }");
 	}
 }
 
@@ -262,6 +265,7 @@ auto pListView::createCustomTooltip() -> void {
 	customTooltipLabel = new Label;
 	customTooltipLabel->setForegroundColor(listView.Widget::state.foregroundColor);
 	customTooltipLabel->setBackgroundColor(listView.Widget::state.backgroundColor);
+	customTooltipLabel->setFont( listView.font() );
 	customTooltipLabel->setVisible();
 	
 	pSystem::addCssClass(customTooltipLabel->p.gtkWidget, "somePadding");	

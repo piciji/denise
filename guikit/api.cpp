@@ -1225,6 +1225,11 @@ auto Font::system(const std::string& style) -> std::string {
 auto Font::size(const std::string& font, const std::string& text) -> Size {
     return pFont::size(font, text);
 }
+
+auto Font::scale( unsigned pixel ) -> unsigned {
+	return pFont::scale( pixel );
+}
+
 //system
 auto System::getUserDataFolder(std::string appIdent) -> std::string {
     std::string out = pSystem::getUserDataFolder();

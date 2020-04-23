@@ -93,11 +93,13 @@ auto Layout::cut(Sizable& sizable) -> void {
     }
     if(dynamic_cast<Layout*>(&sizable)) {
         Layout& layout = (Layout&)sizable;
-        if(layout.window() && layout.frameWidget) layout.window()->remove(*layout.frameWidget);
+		if (layout.frameWidget) {
+			if (layout.window()) layout.window()->remove(*layout.frameWidget);
+			((Sizable*)layout.frameWidget)->state.parent = nullptr;
+		}
     }
 
     sizable.state.parent = nullptr;
-    if (frameWidget) ((Sizable*)frameWidget)->state.parent = nullptr;
     sizable.state.window = nullptr;
 }
 

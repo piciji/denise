@@ -159,9 +159,14 @@ auto pBrowserWindow::createPreview() -> GtkWidget* {
 	};
 
 	if (!state.contentView.font.empty())
-		listView->setFont( state.contentView.font );
-
-	gtk_widget_set_size_request(listView->p.gtkWidget, 380, 0);	
+		listView->setFont( state.contentView.font, state.contentView.specialFont );
+		
+	unsigned margin = 5;
+	
+	gtk_widget_set_size_request(listView->p.gtkWidget, state.contentView.width + margin, 0);	
+	
+	pSystem::addCssClass(listView->p.gtkWidget, "someMargin");	
+	pSystem::applyCss( listView->p.gtkWidget, ".someMargin { margin-right: " + std::to_string(margin) + "px;} " );
 
 	return listView->p.gtkWidget;
 }

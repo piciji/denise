@@ -196,7 +196,7 @@ auto MediaWindow::build() -> void {
     if (cartLayouts.size()) {
         cartList.setHeaderText( { "" } );
 		cartList.setHeaderVisible( false );        
-        cartSelectorFrame.append( cartList, {130u, 200u}, 10 );
+        cartSelectorFrame.append( cartList, { GUIKIT::Font::scale(130), GUIKIT::Font::scale(200)}, 10 );
         cartSelectorFrame.append( insertCart, {0u, 0u}, 10 );
         cartSelectorFrame.append( removeCart, {0u, 0u} );
         cartSelectorFrame.setPadding(10);
@@ -951,12 +951,19 @@ auto MediaWindow::translate() -> void {
         flashCreatorLayout->button.setText(trans->get("create"));         
     }
     
+	unsigned neededWidth = 90;
+	
     for(auto block : pathsLayout.blocks) {
-        
+        				
         block->label.setText( trans->get( getMediaGroupTransIdent(block->mediaGroup) ) );
         block->empty.setText( trans->get("remove") );
         block->select.setText( trans->get("select") );
+		
+		neededWidth = std::max(neededWidth, block->label.minimumSize().width );
     }
+	
+	for(auto block : pathsLayout.blocks)	
+		block->update( block->label, { neededWidth, 0u }, 10 );	
 }
 
 auto MediaWindow::getMediaGroupTransIdent( Emulator::Interface::MediaGroup* mediaGroup ) -> std::string {

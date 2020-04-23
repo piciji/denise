@@ -176,7 +176,7 @@ PaletteLayout::PaletteLayout(TabWindow* tabWindow) {
     
     setPalette( getSelectedPalette() );
     
-    main.append( listView, {180u, paletteLayout.minimumSize().height - 10}, 10 );
+    main.append( listView, { GUIKIT::Font::scale( 180 ), paletteLayout.minimumSize().height - 10}, 10 );
     main.append( paletteLayout, {~0u, 0u} );  
     append(main, {~0u, 0u}, 10);    
     

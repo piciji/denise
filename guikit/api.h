@@ -1031,6 +1031,7 @@ struct Font {
     static auto system(unsigned size, const std::string& style = "") -> std::string;
     static auto system(const std::string& style = "") -> std::string;
     static auto size(const std::string& font, const std::string& text) -> Size;
+	static auto scale( unsigned pixel ) -> unsigned;
     Font() = delete;
 };
 

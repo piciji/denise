@@ -460,4 +460,4 @@ question permanent write = Do you want to save the write to "%media%" permanentl
 Software Preview = Software Preview
 Font Size = Font Size
 Dialog Font Size = Dialogue Font Size
-Dialog Preview Width = Dialogue Vorschau Breite
+Dialog Preview Width = Dialogue Preview Width
