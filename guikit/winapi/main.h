@@ -621,6 +621,7 @@ struct pFont {
     static auto size(std::string font, std::string text) -> Size;
 	static auto findMemoryFont(std::string name) -> HFONT;
     static auto dpi() -> Position;
+    static auto scale( unsigned pixel ) -> unsigned;
 };
 
 struct pSystem {

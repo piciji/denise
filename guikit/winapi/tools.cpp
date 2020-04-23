@@ -119,6 +119,12 @@ auto pFont::size(HFONT hfont, std::string text) -> Size {
     return {(unsigned)rc.right, (unsigned)rc.bottom};
 }
 
+auto pFont::scale( unsigned pixel ) -> unsigned {
+    static float dpiX = dpi().x;
+
+    return (float)pixel * dpiX / 96.0 + 0.5;
+}
+
 //UTF-8 <> UTF-16 string converter
 utf16_t::utf16_t(const std::string& str, unsigned CodePage) {
     unsigned length = MultiByteToWideChar(CodePage, 0, str.c_str(), -1, nullptr, 0);
