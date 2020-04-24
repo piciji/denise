@@ -218,6 +218,7 @@ auto pFont::cocoaFont(std::string desc) -> NSFont* {
             if (String::foundSubStr(style, "expanded")) traits |= NSExpandedFontMask;
             if (String::foundSubStr(style, "condensed")) traits |= NSCondensedFontMask;
             if (String::foundSubStr(style, "smallcaps")) traits |= NSSmallCapsFontMask;
+
         }
     }
     size *= 1.5;  //scale to point sizes
@@ -256,6 +257,22 @@ auto pFont::add( CustomFont* customFont ) -> bool {
     return true;
 }
 
+auto pFont::scale( unsigned pixel ) -> unsigned {
+    
+    return pixel;
+}
+    
+auto pFont::getSizeFromString(std::string desc) -> unsigned {
+    
+    unsigned size = 0;
+    std::vector<std::string> tokens = String::split(desc, ',');
+
+    if(tokens.size() >= 2  && String::isNumber(tokens[1]))
+        size = std::stoi( tokens[1] );
+
+    return size;
+}
+    
 auto pHelper::getColor(unsigned color) -> NSColor* {
     return [NSColor
          colorWithSRGBRed:((color>>16) & 0xff) / 255.0

@@ -476,6 +476,8 @@ struct pFont {
     static auto cocoaFont(std::string desc) -> NSFont*;
     static auto size(NSFont* font, std::string text) -> Size;
     static auto add( CustomFont* customFont ) -> bool;
+    static auto scale( unsigned pixel ) -> unsigned;
+    static auto getSizeFromString(std::string desc) -> unsigned;
 };
 
 struct pSystem {

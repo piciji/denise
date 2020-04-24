@@ -4,6 +4,7 @@
 -(id) initWith:(GUIKIT::ListView&)listViewReference {
     if(self = [super initWithFrame:NSMakeRect(0, 0, 0, 0)]) {
         listView = &listViewReference;
+        [self setRowSizeStyle: NSTableViewRowSizeStyleCustom];
     }
     
     return self;
@@ -129,7 +130,10 @@
         [self setDocumentView:content];
         [self setBorderType:NSBezelBorder];
         [self setHasVerticalScroller:YES];
-        
+        [self setHasHorizontalScroller:YES];
+        [self setAutomaticallyAdjustsContentInsets:NO];
+        [self setContentInsets:NSEdgeInsetsMake(2, 2, 2, 2)];
+
         [content setDataSource:self];
         [content setDelegate:self];
         [content setTarget:self];
@@ -163,21 +167,30 @@
 }
 
 -(void) setFont:(NSFont*)fontPointer {
-    bool c64ProMono11 = GUIKIT::String::findString(listView->font(), "C64 Pro Mono, 11");
-    bool c64ProMono12 = GUIKIT::String::findString(listView->font(), "C64 Pro Mono, 12");
-
+    
     listView->p.fontAdjust.rowHeight = 0;
     listView->p.fontAdjust.yOffset = -1;
     listView->p.fontAdjust.height = 0;
     
-    if (c64ProMono11) {
-        listView->p.fontAdjust.rowHeight = 3;
-        listView->p.fontAdjust.yOffset = -2;
-        listView->p.fontAdjust.height = 2;
-    } else if (c64ProMono12) {
-        listView->p.fontAdjust.rowHeight = 5;
-        listView->p.fontAdjust.yOffset = -4;
-        listView->p.fontAdjust.height = 4;
+    if (listView->specialFont()) {
+        // this is a hack to completly remove row spacing
+        unsigned fontSize = GUIKIT::pFont::getSizeFromString( listView->font() );
+        
+        if (fontSize == 6 || fontSize == 7 || fontSize == 11) {
+            listView->p.fontAdjust.rowHeight = -3;
+            listView->p.fontAdjust.yOffset = -2;
+            listView->p.fontAdjust.height = 2;
+            
+        } else if ( fontSize == 8 || fontSize == 9 || fontSize == 12 || fontSize == 13 || fontSize == 14 ) {
+            listView->p.fontAdjust.rowHeight = -5;
+            listView->p.fontAdjust.yOffset = -4;
+            listView->p.fontAdjust.height = 4;
+            
+        } else if ( fontSize == 10 ) {
+            listView->p.fontAdjust.rowHeight = -4;
+            listView->p.fontAdjust.yOffset = -3;
+            listView->p.fontAdjust.height = 3;
+        }
     }
 
     if(!fontPointer)
@@ -186,12 +199,14 @@
     if(font) [font release];
     font = fontPointer;
     
-    unsigned fontHeight = GUIKIT::pFont::size(font, " ").height;
+    unsigned fontHeight = GUIKIT::pFont::size(font, "O").height;
     [content setFont:font];
-    [content setRowHeight:fontHeight - listView->p.fontAdjust.rowHeight ];
-    if (c64ProMono11 || c64ProMono12)
+    [content setRowHeight:fontHeight + listView->p.fontAdjust.rowHeight ];
+    
+    if (listView->specialFont()) {
         [content setIntercellSpacing:NSMakeSize(0.0, 0.0)];
-
+    }
+    
     [self reloadColumns];
 }
 
@@ -300,12 +315,14 @@ auto pListView::autoSizeColumns() -> void {
             }
             [tableColumn setWidth:minimumWidth];
         }
-        [[cocoaView content] sizeLastColumnToFit];
+        // would disable horizantal scrollbar of nsscrollview
+     //   [[cocoaView content] sizeLastColumnToFit];
     }
 }
 
 auto pListView::append(const std::vector<std::string>& list) -> void {
     @autoreleasepool {
+
         [[cocoaView content] reloadData];
     }
     std::vector<NSImage*> image;
@@ -425,8 +442,10 @@ auto pListView::setBackgroundColor(unsigned color) -> void {
     NSColor* bg = pHelper::getColor( color );
     
     @autoreleasepool {
-        if (cocoaView)
+        if (cocoaView) {
+            [cocoaView setBackgroundColor: bg];
             [[cocoaView content] setBackgroundColor: bg];
+        }
     }
     updateTooltipUsage();
 }
@@ -436,8 +455,12 @@ auto pListView::setForegroundColor(unsigned color) -> void {
 }
 
 auto pListView::setFont(std::string font) -> void {
+    if (!listView.specialFont())
+        [cocoaView setContentInsets:NSEdgeInsetsMake(0, 2, 0, 2)];
+    
     updateTooltipUsage();
     pWidget::setFont(font);
+    setGeometry( listView.geometry() );
 }
     
 auto pListView::createCustomTooltip() -> void {

@@ -190,9 +190,9 @@ auto pBrowserWindow::buildView() -> void {
         };
         
         if (!state.contentView.font.empty())
-            listView->setFont( state.contentView.font );
+            listView->setFont( state.contentView.font, state.contentView.specialFont );
         
-        maxListWidth = 470;
+        maxListWidth = state.contentView.width;
         maxListHeight = 176;
         maxContentHeight = maxListHeight + 4;
             
