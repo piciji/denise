@@ -461,3 +461,4 @@ Software Preview = Software Vorschau
 Font Size = Schriftgröße
 Dialog Font Size = Dialog Schriftgröße
 Dialog Preview Width = Dialog Vorschau Breite
+Show Tooltips = Tooltips anzeigen

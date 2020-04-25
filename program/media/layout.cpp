@@ -217,6 +217,9 @@ auto MediaGroupLayout::fillListing( std::vector<Emulator::Interface::Listing>& e
     for( auto listing : mediaWindow->convertListing( emuListings, false ) )
         listings.append({listing});									
 	
+    if (!settings->get<bool>("software_preview_tooltips", true ))
+        return;
+        
 	unsigned i = 0;
 	for( auto listing : mediaWindow->convertListing( emuListings, true ) )
         listings.setRowTooltip(i++, listing);
@@ -230,6 +233,9 @@ auto MediaGroupLayout::fillListing( std::vector<GUIKIT::BrowserWindow::Listing>&
     for( auto listing : emuListings )        
         listings.append({listing.entry});  
 		
+    if (!settings->get<bool>("software_preview_tooltips", true ))
+        return;
+        
 	unsigned i = 0;
 	for( auto listing : emuListings )
         listings.setRowTooltip(i++, listing.tooltip);

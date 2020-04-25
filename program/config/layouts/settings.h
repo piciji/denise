@@ -28,6 +28,7 @@ struct PreviewLayout : GUIKIT::FramedVerticalLayout {
         Control();
     } control;
     
+    GUIKIT::CheckBox tooltips;
     GUIKIT::ListView previewBox;
     
     PreviewLayout();

@@ -2,7 +2,7 @@
 auto pCheckBox::minimumSize() -> Size {
     Size size = getMinimumSize();
 	
-	static Size containerSize = pWidget::getScaledContainerSize( {18, 4} );
+	static Size containerSize = pWidget::getScaledContainerSize( {18, 2} );
 	
 	return {size.width + containerSize.width, size.height + containerSize.height};
 }

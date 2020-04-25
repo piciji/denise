@@ -42,7 +42,8 @@ PreviewLayout::PreviewLayout() {
     previewBox.setHeaderText( { "" } );
     previewBox.setHeaderVisible( false );
     
-    append( control, {~0u, 0u} );    
+    append( control, {~0u, 0u}, 3 );    
+    append( tooltips, {0u, 0u} );    
 }
 
 PreviewLayout::Control::Control() {
@@ -158,6 +159,14 @@ SettingsLayout::SettingsLayout() {
     previewLayout.control.dialogPreviewWidthSlider.setPosition( settings->get<unsigned>("dialog_software_preview_width", 445, {200, 700}) - 200 );
     
     previewLayout.control.dialogPreviewWidthValue.setText( std::to_string( previewLayout.control.dialogPreviewWidthSlider.position() + 200 ) + " px" );
+        
+    previewLayout.tooltips.onToggle = [this]() {
+        bool state = previewLayout.tooltips.checked();
+        
+        settings->set<bool>("software_preview_tooltips", state );
+    };
+    
+    previewLayout.tooltips.setChecked( settings->get<bool>("software_preview_tooltips", true ) );
     
     previewLayout.previewBox.setBackgroundColor( 0xaaaaaa );
     
@@ -173,7 +182,7 @@ SettingsLayout::SettingsLayout() {
         if (previewLayout.has(previewLayout.previewBox))
             previewLayout.update( previewLayout.previewBox, {newWidth, 60u} );
         else {
-            previewLayout.update( previewLayout.control, 10 );
+            previewLayout.update( previewLayout.tooltips, 10 );
             previewLayout.append( previewLayout.previewBox, {newWidth, 60u} );
         }
 
@@ -184,7 +193,7 @@ SettingsLayout::SettingsLayout() {
 auto SettingsLayout::removePreview() -> void {
     
     if (previewLayout.remove( previewLayout.previewBox )) { 
-        previewLayout.update( previewLayout.control, 0 );
+        previewLayout.update( previewLayout.tooltips, 0 );
         synchronizeLayout();
     }
 }
@@ -342,5 +351,6 @@ auto SettingsLayout::translate() -> void {
     previewLayout.control.fontSize.setText( trans->get("Font Size", {}, true) );
     previewLayout.control.dialogFontSize.setText( trans->get("Dialog Font Size", {}, true) );
     previewLayout.control.dialogPreviewWidth.setText( trans->get("Dialog Preview Width", {}, true) );
+    previewLayout.tooltips.setText( trans->get("Show Tooltips") );
 }
 

@@ -1630,6 +1630,8 @@ auto MediaWindow::convertListing( std::vector<Emulator::Interface::Listing>& emu
 
     std::vector<GUIKIT::BrowserWindow::Listing> list;
     
+    bool useTooltips = settings->get<bool>("software_preview_tooltips", true );
+    
     for (auto& listing : emuListings) {
 
 		GUIKIT::BrowserWindow::Listing browserListing;
@@ -1647,19 +1649,21 @@ auto MediaWindow::convertListing( std::vector<Emulator::Interface::Listing>& emu
 
         browserListing.entry = std::string((const char*) utf8.data(), utf8.size());
 		
-		utf8.clear();
+        if (useTooltips) {                    
+            utf8.clear();
 
-        for (auto& code : listing.loadCommand ) {
+            for (auto& code : listing.loadCommand ) {
 
-			unsigned useCode = code;
-            if (useCustomFont)
-                useCode |= 0xee << 8;
-			
-            GUIKIT::Utf8::encode(useCode, utf8);
+                unsigned useCode = code;
+                if (useCustomFont)
+                    useCode |= 0xee << 8;
+
+                GUIKIT::Utf8::encode(useCode, utf8);
+            }
+
+            browserListing.tooltip = std::string((const char*) utf8.data(), utf8.size());		
         }
-		
-		browserListing.tooltip = std::string((const char*) utf8.data(), utf8.size());
-		
+        
 		list.push_back( browserListing );
     }  
     
@@ -1686,4 +1690,3 @@ auto MediaWindow::applyPreviewFont(unsigned fontSize) -> void {
 }
 
 }
-
