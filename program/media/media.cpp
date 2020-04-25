@@ -1681,6 +1681,19 @@ auto MediaWindow::updateListingFont( unsigned fontSize ) -> void {
     }
 }
 
+auto MediaWindow::updateListings( ) -> void {
+    
+    if ( !dynamic_cast<LIBC64::Interface*>(emulator)) 
+        return;
+    
+    for(auto layout : mediaGroupLayouts) {
+        
+        if ( showC64Listing( layout ) )
+            layout->updateListing( layout->selectedBlock );
+    }
+}
+
+
 auto MediaWindow::applyPreviewFont(unsigned fontSize) -> void {
 
     if (useCustomFont)

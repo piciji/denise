@@ -164,6 +164,13 @@ SettingsLayout::SettingsLayout() {
         bool state = previewLayout.tooltips.checked();
         
         settings->set<bool>("software_preview_tooltips", state );
+        
+        for( auto mediaView : mediaViews )
+            mediaView->updateListings();
+        
+        previewLayout.previewBox.reset();
+        
+        previewTimer.setEnabled(true);
     };
     
     previewLayout.tooltips.setChecked( settings->get<bool>("software_preview_tooltips", true ) );
@@ -214,15 +221,20 @@ auto SettingsLayout::setPreviewContent() -> void {
     if (useCustomFont)
         previewLayout.previewBox.setFont("C64 Pro, " + std::to_string(fontSize), true);  
     else
-        previewLayout.previewBox.setFont( GUIKIT::Font::system(fontSize) );  
+        previewLayout.previewBox.setFont( GUIKIT::Font::system(fontSize) );          
     
     if (previewLayout.previewBox.rowCount())
         return;
     
-    std::vector<uint8_t> line = {0x30, 0x20, 0x20, 0x20, 0x20, 0x22, 0x20, 0x44, 0x45, 0x4e, 0x49, 0x53, 0x45, 0x20, 0x20, 0x44, 0x45, 0x4e, 0x49, 0x53, 0x45, 0x20, 0x22, 0x20, 0x50, 0x52, 0x47, 0x3c};
+    bool useTooltips = settings->get<bool>("software_preview_tooltips", true );
     
-    if(useCustomFont)
+    std::vector<uint8_t> line = {0x30, 0x20, 0x20, 0x20, 0x20, 0x22, 0x20, 0x44, 0x45, 0x4e, 0x49, 0x53, 0x45, 0x20, 0x20, 0x44, 0x45, 0x4e, 0x49, 0x53, 0x45, 0x20, 0x22, 0x20, 0x50, 0x52, 0x47, 0x3c};
+    std::vector<uint8_t> tooltipLine = { 0x4c, 0x4f, 0x41, 0x44, 0x20, 0x22, 0x44, 0x45, 0x4e, 0x49, 0x53, 0x45, 0x22, 0x2c, 0x38, 0x2c, 0x31 };
+    
+    if(useCustomFont) {
         line = {0x30, 0x20, 0x20, 0x20, 0x20, 0x22, 0x20, 4, 5, 0xe, 9, 0x13, 5, 0x20, 0x20, 4, 5, 0xe, 9, 0x13, 5, 0x20, 0x22, 0x20, 0x10, 0x12, 7, 0x3c};
+        tooltipLine = { 0x0c, 0x0f, 0x01, 0x04, 0x20, 0x22, 0x4, 0x5, 0xe, 0x9, 0x13, 0x5, 0x22, 0x2c, 0x38, 0x2c, 0x31 };
+    }
     
     std::vector<uint8_t> utf8;
     
@@ -236,10 +248,28 @@ auto SettingsLayout::setPreviewContent() -> void {
     }
         
     std::string out = std::string((const char*) utf8.data(), utf8.size());
+    std::string outTooltip  = "";
+    
+    if (useTooltips) {
+        utf8.clear();
+
+        for (auto& code : tooltipLine) {
+
+            unsigned useCode = code;
+            if (useCustomFont)
+                useCode |= 0xee << 8;
+
+            GUIKIT::Utf8::encode(useCode, utf8);
+        }
+
+        outTooltip = std::string((const char*) utf8.data(), utf8.size());
+    }
     
     for (unsigned i = 0; i < 8; i++) {
         
-        previewLayout.previewBox.append( {out} );
+        previewLayout.previewBox.append( {out} );        
+        if (useTooltips)
+            previewLayout.previewBox.setRowTooltip(i, outTooltip );
     }
 }
 

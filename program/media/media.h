@@ -212,6 +212,7 @@ struct MediaWindow : public GUIKIT::Window {
     auto convertListing( std::vector<Emulator::Interface::Listing>& emuListings, bool loadCommand ) -> std::vector<std::string>;
 	auto convertListing( std::vector<Emulator::Interface::Listing>& emuListings ) -> std::vector<GUIKIT::BrowserWindow::Listing>;
     auto updateListingFont( unsigned fontSize ) -> void;
+    auto updateListings( ) -> void;
     auto applyPreviewFont(unsigned fontSize) -> void;
 
     MediaWindow(Emulator::Interface* emulator);
