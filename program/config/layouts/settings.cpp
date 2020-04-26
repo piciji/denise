@@ -42,25 +42,37 @@ PreviewLayout::PreviewLayout() {
     previewBox.setHeaderText( { "" } );
     previewBox.setHeaderVisible( false );
     
-    append( control, {~0u, 0u}, 3 );    
-    append( tooltips, {0u, 0u} );    
+    append( top, {0u, 0u}, 5 );    
+    append( bottom, {~0u, 0u} );    
 }
 
-PreviewLayout::Control::Control() {
-    GUIKIT::Label test;
-    test.setText("600 px");
-
+PreviewLayout::Top::Top() {
     append(fontSize,{0u, 0u}, 5);
     append(fontSizeCombo,{0u, 0u}, 5);
     append(dialogFontSize,{0u, 0u}, 5);
-    append(dialogFontSizeCombo,{0u, 0u}, 5);
-    append(dialogPreviewWidth,{0u, 0u}, 5);
-    append(dialogPreviewWidthValue,{test.minimumSize().width + 3, 0u}, 5);
-    append(dialogPreviewWidthSlider,{~0u, 0u});
-
-    dialogPreviewWidthSlider.setLength(501);
+    append(dialogFontSizeCombo,{0u, 0u}, 20);
+    append(tooltips,{0u, 0u});
 
     setAlignment(0.5);    
+}
+
+PreviewLayout::Bottom::Bottom() :
+dialogWidth("px"),
+dialogHeight("px")
+{
+    append(dialog,{0u, 0u}, 5);
+    append(dialogWidth,{~0u, 0u}, 10);
+    
+    if (GUIKIT::Application::isCocoa())
+        append(dialogHeight,{~0u, 0u});
+        
+    dialogWidth.updateValueWidth("600 px", 5);
+    dialogHeight.updateValueWidth("600 px", 5);
+    
+    dialogWidth.slider.setLength(401);
+	dialogHeight.slider.setLength(501);
+    
+    setAlignment(0.5);
 }
 
 SettingsLayout::SettingsLayout() {
@@ -121,47 +133,61 @@ SettingsLayout::SettingsLayout() {
     };
     
     for(unsigned i = 6; i <= 14; i++) {
-        previewLayout.control.fontSizeCombo.append(std::to_string(i), i);
-        previewLayout.control.dialogFontSizeCombo.append(std::to_string(i), i);
+        previewLayout.top.fontSizeCombo.append(std::to_string(i), i);
+        previewLayout.top.dialogFontSizeCombo.append(std::to_string(i), i);
     }
     
-    previewLayout.control.fontSizeCombo.onChange = [this]() {
+    previewLayout.top.fontSizeCombo.onChange = [this]() {
         
-        settings->set<unsigned>("software_preview_fontsize", previewLayout.control.fontSizeCombo.userData());
+        settings->set<unsigned>("software_preview_fontsize", previewLayout.top.fontSizeCombo.userData());
         
         for( auto mediaView : mediaViews )
-            mediaView->updateListingFont( previewLayout.control.fontSizeCombo.userData() );
+            mediaView->updateListingFont( previewLayout.top.fontSizeCombo.userData() );
     };
     
-    previewLayout.control.fontSizeCombo.setSelection( settings->get<unsigned>("software_preview_fontsize", 12, {6, 14}) - 6 );
+    previewLayout.top.fontSizeCombo.setSelection( settings->get<unsigned>("software_preview_fontsize", 12, {6, 14}) - 6 );
     
     
-    previewLayout.control.dialogFontSizeCombo.onChange = [this]() {
+    previewLayout.top.dialogFontSizeCombo.onChange = [this]() {
         
-        settings->set<unsigned>("dialog_software_preview_fontsize", previewLayout.control.dialogFontSizeCombo.userData());
+        settings->set<unsigned>("dialog_software_preview_fontsize", previewLayout.top.dialogFontSizeCombo.userData());
         
         previewTimer.setEnabled(true);
     };
     
-    previewLayout.control.dialogFontSizeCombo.setSelection( settings->get<unsigned>("dialog_software_preview_fontsize", 11, {6, 14}) - 6 );
+    previewLayout.top.dialogFontSizeCombo.setSelection( settings->get<unsigned>("dialog_software_preview_fontsize", 11, {6, 14}) - 6 );
     
-    previewLayout.control.dialogPreviewWidthSlider.onChange = [this]() {
+    previewLayout.bottom.dialogWidth.slider.onChange = [this]() {
         
-        unsigned pos = previewLayout.control.dialogPreviewWidthSlider.position();
+        unsigned pos = previewLayout.bottom.dialogWidth.slider.position();
         
-        previewLayout.control.dialogPreviewWidthValue.setText( std::to_string( pos + 200 ) + " px" );                
+        previewLayout.bottom.dialogWidth.value.setText( std::to_string( pos + 200 ) + " px" );                
         
         settings->set<unsigned>("dialog_software_preview_width", pos + 200 );
         
         previewTimer.setEnabled(true);
     };
     
-    previewLayout.control.dialogPreviewWidthSlider.setPosition( settings->get<unsigned>("dialog_software_preview_width", 445, {200, 700}) - 200 );
+    previewLayout.bottom.dialogWidth.slider.setPosition( settings->get<unsigned>("dialog_software_preview_width", 450, {200, 600}) - 200 );
     
-    previewLayout.control.dialogPreviewWidthValue.setText( std::to_string( previewLayout.control.dialogPreviewWidthSlider.position() + 200 ) + " px" );
+    previewLayout.bottom.dialogWidth.value.setText( std::to_string( previewLayout.bottom.dialogWidth.slider.position() + 200 ) + " px" );            
+    
+    
+    previewLayout.bottom.dialogHeight.slider.onChange = [this]() {
         
-    previewLayout.tooltips.onToggle = [this]() {
-        bool state = previewLayout.tooltips.checked();
+        unsigned pos = previewLayout.bottom.dialogHeight.slider.position();
+        
+        previewLayout.bottom.dialogHeight.value.setText( std::to_string( pos + 100 ) + " px" );                
+        
+        settings->set<unsigned>("dialog_software_preview_height", pos + 100 );        
+    };
+    
+    previewLayout.bottom.dialogHeight.slider.setPosition( settings->get<unsigned>("dialog_software_preview_height", 200, {100, 600}) - 100 );
+    
+    previewLayout.bottom.dialogHeight.value.setText( std::to_string( previewLayout.bottom.dialogHeight.slider.position() + 100 ) + " px" );
+         
+    previewLayout.top.tooltips.onToggle = [this]() {
+        bool state = previewLayout.top.tooltips.checked();
         
         settings->set<bool>("software_preview_tooltips", state );
         
@@ -173,7 +199,7 @@ SettingsLayout::SettingsLayout() {
         previewTimer.setEnabled(true);
     };
     
-    previewLayout.tooltips.setChecked( settings->get<bool>("software_preview_tooltips", true ) );
+    previewLayout.top.tooltips.setChecked( settings->get<bool>("software_preview_tooltips", true ) );
     
     previewLayout.previewBox.setBackgroundColor( 0xaaaaaa );
     
@@ -184,12 +210,12 @@ SettingsLayout::SettingsLayout() {
         
         setPreviewContent();
         
-        unsigned newWidth = settings->get<unsigned>("dialog_software_preview_width", 445, {200, 700});
+        unsigned newWidth = settings->get<unsigned>("dialog_software_preview_width", 450, {200, 600});
 
         if (previewLayout.has(previewLayout.previewBox))
             previewLayout.update( previewLayout.previewBox, {newWidth, 60u} );
         else {
-            previewLayout.update( previewLayout.tooltips, 10 );
+            previewLayout.update( previewLayout.bottom, 10 );
             previewLayout.append( previewLayout.previewBox, {newWidth, 60u} );
         }
 
@@ -200,7 +226,7 @@ SettingsLayout::SettingsLayout() {
 auto SettingsLayout::removePreview() -> void {
     
     if (previewLayout.remove( previewLayout.previewBox )) { 
-        previewLayout.update( previewLayout.tooltips, 0 );
+        previewLayout.update( previewLayout.bottom, 0 );
         synchronizeLayout();
     }
 }
@@ -378,9 +404,13 @@ auto SettingsLayout::translate() -> void {
 	about.right.icons8.setTooltip("http://www.icons8.com");
     
     previewLayout.setText( trans->get("Software Preview") );
-    previewLayout.control.fontSize.setText( trans->get("Font Size", {}, true) );
-    previewLayout.control.dialogFontSize.setText( trans->get("Dialog Font Size", {}, true) );
-    previewLayout.control.dialogPreviewWidth.setText( trans->get("Dialog Preview Width", {}, true) );
-    previewLayout.tooltips.setText( trans->get("Show Tooltips") );
+    previewLayout.top.fontSize.setText( trans->get("Font Size", {}, true) );
+    previewLayout.top.dialogFontSize.setText( trans->get("Dialog Font Size", {}, true) );    
+    previewLayout.top.tooltips.setText( trans->get("Show Tooltips") );
+    
+    previewLayout.bottom.dialog.setText( trans->get("Dialog Preview")  );
+    previewLayout.bottom.dialogWidth.name.setText( trans->get("Width", {}, true) );
+    previewLayout.bottom.dialogHeight.name.setText( trans->get("Height", {}, true) );
+    
 }
 

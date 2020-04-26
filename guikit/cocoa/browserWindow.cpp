@@ -193,7 +193,7 @@ auto pBrowserWindow::buildView() -> void {
             listView->setFont( state.contentView.font, state.contentView.specialFont );
         
         maxListWidth = state.contentView.width;
-        maxListHeight = 176;
+        maxListHeight = state.contentView.height;
         maxContentHeight = maxListHeight + 4;
             
         [listView->p.cocoaView setFrame:NSMakeRect(_x, _y, maxListWidth, maxListHeight)];

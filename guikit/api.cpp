@@ -1078,6 +1078,11 @@ auto BrowserWindow::setContentViewWidth(unsigned boxWidth) -> BrowserWindow& {
     return *this;
 }
 
+auto BrowserWindow::setContentViewHeight(unsigned boxHeight) -> BrowserWindow& {
+    state.contentView.height = boxHeight;
+    return *this;
+}
+
 auto BrowserWindow::setContentViewBackground(unsigned color) -> BrowserWindow& {
     state.contentView.backgroundColor = color;
     state.contentView.overrideBackgroundColor = true;

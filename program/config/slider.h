@@ -36,6 +36,19 @@ struct SliderLayout : GUIKIT::HorizontalLayout {
         return name.minimumSize().width;
     }
     
+    auto updateValueWidth( std::string maxValue, unsigned spacing = 10 ) -> void {
+
+        if (withActivator)
+            update(active,{0u, 0u}, spacing);
+        else
+            update(name,{0u, 0u}, spacing);
+        
+        GUIKIT::Label test;
+        test.setText( maxValue ); 
+        
+        update( value, {test.minimumSize().width, 0u}, 8 );
+    }
+    
     static auto scale( std::vector<SliderLayout*> sliders, std::string maxValue, unsigned neededWidth = 0) -> unsigned {
 
         GUIKIT::Label test;

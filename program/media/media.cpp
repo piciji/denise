@@ -335,7 +335,8 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
 					});
 									                    
                     applyPreviewFont( settings->get<unsigned>("dialog_software_preview_fontsize", 11, {6, 14}) );
-                    fileDialogPtr->setContentViewWidth( settings->get<unsigned>("dialog_software_preview_width", 445, {200, 700}) );
+                    fileDialogPtr->setContentViewWidth( settings->get<unsigned>("dialog_software_preview_width", 450, {200, 600}) );
+                    fileDialogPtr->setContentViewHeight( settings->get<unsigned>("dialog_software_preview_height", 200, {100, 600}) );
                     
                     fileDialogPtr->setContentViewBackground(mediaGroupLayouts[0]->listings.backgroundColor());
                     fileDialogPtr->setContentViewForeground(mediaGroupLayouts[0]->listings.foregroundColor());
@@ -1520,7 +1521,8 @@ auto MediaWindow::anyLoad( bool mIsAcquiredBefore ) -> void {
 		} );
 
         applyPreviewFont( settings->get<unsigned>("dialog_software_preview_fontsize", 11, {6, 14}) );
-        fileDialogPtr->setContentViewWidth( settings->get<unsigned>("dialog_software_preview_width", 445, {200, 700}) );
+        fileDialogPtr->setContentViewWidth( settings->get<unsigned>("dialog_software_preview_width", 450, {200, 600}) );
+        fileDialogPtr->setContentViewHeight( settings->get<unsigned>("dialog_software_preview_height", 200, {100, 600}) );
         
         fileDialogPtr->setContentViewBackground(mediaGroupLayouts[0]->listings.backgroundColor());
         fileDialogPtr->setContentViewForeground(mediaGroupLayouts[0]->listings.foregroundColor());

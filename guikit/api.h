@@ -935,6 +935,7 @@ struct BrowserWindow {
     auto addContentView(unsigned id, std::function<bool (std::string filePath, unsigned selection)> onDblClick) -> BrowserWindow&;
     auto setContentViewFont(std::string font, bool specialFont = false) -> BrowserWindow&;
     auto setContentViewWidth(unsigned boxWidth) -> BrowserWindow&;
+    auto setContentViewHeight(unsigned boxHeight) -> BrowserWindow&;
     auto setContentViewBackground(unsigned color) -> BrowserWindow&;
     auto setContentViewForeground(unsigned color) -> BrowserWindow&;
     auto setContentViewColorTooltips(bool colorTooltips) -> BrowserWindow&;
@@ -958,7 +959,8 @@ struct BrowserWindow {
         unsigned id = 0; // for template usage
         std::string font = "";
         bool specialFont = false;
-        unsigned width = 250;
+        unsigned width = 450;
+        unsigned height = 200;
         unsigned foregroundColor = 0;
         bool overrideForegroundColor = false;
         unsigned backgroundColor = 0;

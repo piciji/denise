@@ -16,19 +16,25 @@ struct SwitchesLayout : GUIKIT::FramedVerticalLayout {
 };
 
 struct PreviewLayout : GUIKIT::FramedVerticalLayout {
-    struct Control : GUIKIT::HorizontalLayout {
+    
+    struct Top : GUIKIT::HorizontalLayout {
         GUIKIT::Label fontSize;
         GUIKIT::ComboButton fontSizeCombo;
         GUIKIT::Label dialogFontSize;
         GUIKIT::ComboButton dialogFontSizeCombo;
-        GUIKIT::Label dialogPreviewWidth;
-        GUIKIT::Label dialogPreviewWidthValue;
-        GUIKIT::HorizontalSlider dialogPreviewWidthSlider;
+        GUIKIT::CheckBox tooltips;
         
-        Control();
-    } control;
+        Top();
+    } top;
     
-    GUIKIT::CheckBox tooltips;
+    struct Bottom : GUIKIT::HorizontalLayout {
+        GUIKIT::Label dialog;
+        SliderLayout dialogWidth;
+        SliderLayout dialogHeight;
+        
+        Bottom();
+    } bottom;     
+        
     GUIKIT::ListView previewBox;
     
     PreviewLayout();
