@@ -402,65 +402,65 @@ Diagonal Down-Right = Bas Droit (en option)
 Diagonal Up-Left = Haut Gauche (en option)
 Diagonal Down-Left = Bas Gauche (en option)
 open_fullscreen = Lancer les fichiers associés en Plein Ecran
-jumper = 
-flash = 
-bank = 
-Retro Replay = 
-retro replay_insert = 
-retro replay_image = 
-select_retro replay_image = 
-blank_retro replay_image = 
-auto_save_identifier = 
-screen_status = state_text = Texte d'état
-geometry = 
-sid_filter_toggle = Activate_filter = Activer le filtre audio
-sid_filter_on = audio_filter_on = le filtre audio est émulé
-sid_filter_off = audio_filter_off = le filtre audio est désactivé
-swap_ports = swap_devices = Echanger de périphériques
-linear_interpolation = Video Linear = Vidéo Linéaire
-save_preferences = 
-rf_modulation = 
-presentation = 
-control = 
-cartridges = modules = Modules
-game cartridge = game cart = Module de jeu
-game cartridge_insert = module_insert = Insérer les modules
-select_cartridge_folder = select_module_folder = Sélectionner le dossier modules
-select_game cartridge_image = select_module_image = Sélectionner l'image de la rom ...
-game cartridge_image = module_image = image du module
-programs = 
-select_program_folder = select_memory_folder = Sélectionner le dossier programme
-program_insert = memory_insert = Injecter la mémoire
-program_creator = memory_creator = Sauvegarder le programme chargé
-program_inject = memory_inject = Mettre le programme sélectionné dans la mémoire
-program_injected = memory_injected = le programme a été entrée dans la mémoire.
-program_image = memory_image = image de la mémoire
-select_program_image = select_memory_image = Sélectionner l'image de la mémoire ...
-blank_program_image = blank_memory_image = Sélectionner l'image de la mémoire vide ...
-select image = 
-auto start = 
-load software = 
-insert cartridge = 
-remove cartridge = 
-Preview = 
-alternate software preview = 
-crop border = crop = Couper la bordure
-crop complete = crop_auto = supprimer toute la bordure
-monitor = crop_monitor = surbalayage du moniteur
-crop all sides equally = crop_semi_auto = Réduire la constante pour tous les côtés
-crop each side manually = crop_free = réduire manuellement pour chaque côté
-maintain display ratio = crop_aspect_correct = conserver les proportions
-Left_Line_Anomaly = 
-Left_Line_Anomaly_info = 
-Off = 
-Solid White = 
-Register Color = 
-confirm writes = 
-question permanent write = 
-Software Preview = 
-Font Size = 
-Dialog Font Size = 
-Dialog Preview = 
-Show Tooltips = 
-Width = 
-Height = 
+jumper = jumper
+flash = flash 
+bank = banque
+Retro Replay = Retro Replay
+retro replay_insert = Insérer le Retro Replay 
+retro replay_image =  Image Retro Replay
+select_retro replay_image = Sélectionner une Image Retro Replay ...
+blank_retro replay_image = Sélectionner une Nouvelle Image Retro Replay ...
+auto_savestate_identifier = Insérer un Identifieur de Sauvegarde d'Etat Automatiquement
+screen_status = Statut sur l4Ecran
+geometry = Géométrie
+sid_filter_toggle = Basculer sur le Filtre SID
+sid_filter_on = le filtre SID est émulé
+sid_filter_off = le filtre SID est désactivé
+swap_ports = Echanger de ports
+linear_interpolation = Interpolation Linéaire
+save_preferences = Sauvegarder les Préférences
+rf_modulation = Modulation RF
+presentation = Présentation
+control = Contrôle
+cartridges = Cartouches
+game cartridge = Cartouche de Jeu
+game cartridge_insert = Insérer une Cartouche de Jeu
+select_cartridge_folder = Sélectionner le dossier Cartouche
+select_game cartridge_image = Sélectionner une Image de la Cartouche de Jeu ...
+game cartridge_image = image de la Cartouche de Jeu
+programs = Programmes
+select_program_folder = Sélectionner le dossier Programme
+program_insert = Injecter dans Programme
+program_creator = Sauvegarder le programme chargé
+program_inject = Mettre le programme sélectionné dans la mémoire
+program_injected = le programme a été entrée dans la mémoire.
+program_image = image du programme
+select_program_image = Sélectionner l'image du Programme ...
+blank_program_image = Sélectionner une nouvelle Image du Programme ...
+select image = Sélectionner une Image
+auto start = Démarrer Automatiquement
+load software = Charger un Logiciel
+insert cartridge = Insérer une Cartouche
+remove cartridge = Retirer une Cartouche
+Preview = Aperçu
+alternate software preview =  Apercçu du Logiciel Alternatif
+crop border = Couper la bordure
+crop complete = Bordure Complète
+monitor = Moniteur
+crop all sides equally = Couper tous les côtés de manière égale
+crop each side manually = Couper manuellement chaque côté
+maintain display ratio = Conserver les proportions d'affichage
+Left_Line_Anomaly = Ligne Vertical à Gauche
+Left_Line_Anomaly_info = La ligne est visible uniquement quand la bordure est totalement visible
+Off = Off
+Solid White = Blanc Solide
+Register Color = Registre Couleur
+confirm writes = Confirmer les écritures
+question permanent write = Voulez vous sauvegarder l'écriture vers "%media%" de manière permanente, maintenant ?
+Software Preview = Apercçu Logiciel
+Font Size = Taille de la Police
+Dialog Font Size = Taille de la Police du Dialogue
+Dialog Preview = Aperçu du Dialogue
+Show Tooltips = Afficher les Astuces
+Width = Largeur
+Height = Hauteur

@@ -25,10 +25,11 @@
 * show placeholder picture when emulator is opened but still not running an emulation [thanks to Retrofan]
 * autoload for all media types with D64/T64 viewer in file dialog
 * added possibility to associate files with Denise for macOS
-* emulated left vertical line in overscan area
+* emulated left vertical line anomaly in overscan area
 * added confirmation dialog to write on disk/tape/flash permanently 
 * open files as read only from OS point of view, if not able to open it in read/write mode
-
+* added possibility to customize D64 preview box in file dialog
+* improved D64 preview generation in UI to better match original
 
 ## 1.0.7
 * fixed a critical bug that caused OSX builds to use illegal instructions for some architectures

@@ -198,7 +198,7 @@ auto StatesLayout::translate() -> void {
     fastSave.top.find.setText( trans->get("find") );
 	fastSave.top.hotkeys.setText( trans->get("hotkeys") );
     fastSave.listView.setHeaderText({"#", trans->get("file"), trans->get("date")});
-    fastSave.autoSaveIdent.setText( trans->get("auto_save_identifier") );
+    fastSave.autoSaveIdent.setText( trans->get("auto_savestate_identifier") );
     
     directSave.load.setText( trans->get("load") );
     directSave.save.setText( trans->get("save") );

@@ -410,7 +410,7 @@ retro replay_insert =
 retro replay_image = 
 select_retro replay_image = 
 blank_retro replay_image = 
-auto_save_identifier = 
+auto_savestate_identifier = 
 screen_status = state_text = OSDによる状態表示
 geometry = 
 sid_filter_toggle = Activate_filter = SIDフィルタのトグル
