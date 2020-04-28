@@ -21,6 +21,7 @@
 * floppy
     * 1541 track change delay time
     * non standard floppy models: 1571, 1581
+    * p64 emulation
 * tape port   
     * tape content listing in user interface, like the 1541
     * click entries and load them without fast-forward to counter position before

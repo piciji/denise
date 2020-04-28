@@ -7,7 +7,7 @@
 
 # changelog
 
-## 1.0.8 (not yet released)
+## 1.0.8
 * added Retro/Nordic Replay support
 * added macOS DMG installer [thanks to Retrofan for background image]
 * added xInput emulation for Windows rawInput driver [XBOX Controller, xMode devices]
