@@ -19,13 +19,10 @@ copyright holders
 -----------------
 
 module "guikit" is based on "phoenix" used in old versions of bsnes/higan, https://byuu.org/
-It's rewritten from scratch and fixes more than 50 bugs.
-differences are mostly widget nesting, menu/status toggling during fullscreen toggling,
-layouting, added treeview widget for all platforms ...
+it's rewritten from scratch
 
 module "driver" is based of "ruby" used in actual higan, https://byuu.org/
-it's rewritten and extended by additional drivers like raw joypad (windows),
-core audio (osx), iokit for joypad and keyboard (osx)
+it's rewritten
 
 "Sid" emulation code, especially sid filter, is taken from actual vice code and extended by
 emulating multiple incomming voltages as separate transistors instead of one virtual.
@@ -39,7 +36,7 @@ http://vice-emu.sourceforge.net/
 Dynamic Rate Control (DRC) formula is copyrighted by RetroArch.
 cosine resampler is copyrighted by RetroArch.
 
-C64 TrueType v1.2/Style font is used for listing content in a gui listview
+C64 TrueType v1.2.1/Style font is used for listing content in a gui listview
 
 freetype is a library for opengl to render text fonts
 https://www.freetype.org/
