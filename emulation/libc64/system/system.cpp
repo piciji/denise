@@ -337,7 +337,8 @@ System::System(Interface* interface) {
             }
         }
             
-        this->interface->videoRefresh( frame, width, height, linePitch );
+        if (!vicII->lineCallback.silence)
+            this->interface->videoRefresh( frame, width, height, linePitch );
         
         frameComplete = true;		
         
@@ -684,8 +685,11 @@ auto System::initRam() -> void {
     ram[0x3fff] = 0; 
 }
 
-auto System::run() -> void {
+auto System::run(bool silence) -> void {
     frameComplete = false;
+    sid->disableAudioOut( silence );
+    vicII->lineCallback.silenceNext = silence;
+    
     input->poll();
     // of course real system sends restore when key is pressed, but polling each cycle for this is useless
     // because host updates pressed keys once per frame only

@@ -80,6 +80,8 @@ struct VicII {
         bool use;
         unsigned line;
         bool finishVblank;        
+        bool silence;
+        bool silenceNext;
     } lineCallback;    
 	
 	struct {

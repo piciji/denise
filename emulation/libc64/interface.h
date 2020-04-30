@@ -50,7 +50,7 @@ struct Interface : Emulator::Interface {
 	auto power() -> void;
 	auto reset() -> void;
 	auto powerOff() -> void;
-	auto run() -> void; //emulate one frame
+	auto run(bool silence = false) -> void; //emulate one frame
 	auto setRegion(Region region) -> void;
     auto getRegion() -> Region;	
 	

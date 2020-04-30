@@ -133,7 +133,7 @@ struct System {
     
     auto power(bool softReset = false) -> void;
 	auto powerOff() -> void;
-    auto run() -> void;
+    auto run(bool silence = false) -> void;
     auto initRam() -> void;
     
     auto getCyclesPerSecond() -> unsigned {

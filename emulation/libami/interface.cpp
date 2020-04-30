@@ -302,7 +302,7 @@ auto Interface::power() -> void {
     
 }
 
-auto Interface::run() -> void {
+auto Interface::run(bool silence) -> void {
     static uint16_t* frame = new uint16_t[200 * 200];
 
     for (unsigned i = 0; i < 533; i++) {

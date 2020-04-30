@@ -596,8 +596,8 @@ auto Interface::powerOff() -> void {
 	system->powerOff();
 }
 
-auto Interface::run() -> void {    
-    system->run();
+auto Interface::run(bool silence) -> void {    
+    system->run(silence);
 }
 
 auto Interface::setRegion(Region region) -> void {
