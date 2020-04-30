@@ -464,3 +464,5 @@ Dialog Preview = Dialogue Preview
 Show Tooltips = Show Tooltips
 Width = Width
 Height = Height
+Trigger = Trigger
+Touch = Touch

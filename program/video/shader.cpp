@@ -152,7 +152,7 @@ auto Shader::loadInternal() -> void {
     if(videoDriver->shaderFormat() != DRIVER::Video::ShaderType::GLSL)
         return;
     
-    auto filter = settings->get<unsigned>("video_filter", 1u, {0u, 1u});
+    auto filter = settings->get<unsigned>( program->ident(vManager->emulator, "video_filter"), 1u, {0u, 1u});
     ShaderPass* pass;
 
 	if (vManager->crtMode == VideoManager::CrtMode::Gpu) {
