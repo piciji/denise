@@ -466,3 +466,4 @@ Width = Largeur
 Height = Hauteur
 Trigger = Trigger
 Touch = Touch
+Chipset = Chipset

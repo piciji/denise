@@ -18,8 +18,8 @@ struct SwapperLayout : GUIKIT::VerticalLayout {
 
     auto translate() -> void;
 	auto getSetting( unsigned pos ) -> FileSetting*;
-    auto preselectPath( std::string& groupName ) -> std::string;
-	auto savePath( std::string& groupName, std::string path ) -> void;
+    auto preselectPath( ) -> std::string;
+	auto savePath( std::string path ) -> void;
     
     SwapperLayout(TabWindow* tabWindow);
 };
