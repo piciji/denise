@@ -645,6 +645,7 @@ auto View::buildMenu() -> void {
         sM.poweroff->setIcon( poweroffImage );
         sM.poweroff->onActivate = [this]() {
 		    program->powerOff();
+            videoDriver->setFilter( DRIVER::Video::Filter::Linear );
 			this->updateViewport();
             
             if (cursorForPlacholderInUpperTriangle()) {

@@ -317,7 +317,6 @@ auto Program::powerOff() -> void {
         activeVideoManager->powerOff();
 	videoDriver->clear();
 	videoDriver->hintExclusiveFullscreen( false );
-	videoDriver->setFilter( DRIVER::Video::Filter::Linear );
 	audioDriver->clear();    
     activeEmulator = nullptr;
     activeVideoManager = nullptr;

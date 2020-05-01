@@ -195,7 +195,7 @@ auto CpuLayout::build( Emulator::Interface* emulator ) -> void {
 ChipsetLayout::ChipsetLayout() {
 	setPadding(10);
     setFont(GUIKIT::Font::system("bold"));
-    append(selector, {~0u, 0u}, 5u);
+    append(selector, {~0u, 0u});
 }
 
 RegionLayout::RegionLayout() {
@@ -215,7 +215,7 @@ auto ChipsetLayout::build( Emulator::Interface* emulator ) -> void {
         auto radio = new GUIKIT::RadioBox;
         selector.radios.push_back( radio );
         radio->setText( chipset.name );
-        selector.append(*radio, {0u, 0u}, &chipset != &chipsets.back() ? 15 : 0);
+        selector.append(*radio, {0u, 0u}, &chipset != &chipsets.back() ? 10 : 0);
     }
     GUIKIT::RadioBox::setGroup( selector.radios );	
 }
@@ -579,7 +579,7 @@ auto SystemLayout::translate() -> void {
     cpuLayout.setText("Cpu");
 	regionLayout.setText( trans->get("region") );
     
-	chipsetLayout.setText("Chipset");
+	chipsetLayout.setText( trans->get("Chipset") );
     featureLayout.setText( trans->get("feature") );
     expansionLayout.setText( trans->get("expansion_port") );
 	

@@ -111,7 +111,7 @@ disk_drives = ディスクドライブ
 select_disk_drive = ディスクドライブを選択
 hd_drives = ハードディスク
 tape_drives = カセットテープ
-memory = プログラムファイル
+memory = 外部メモリのサイズ
 select_states_folder = セーブステートのフォルダを選択
 select_disk_folder = ディスクのフォルダを選択
 select_hd_folder = HDDのフォルダを選択
@@ -402,65 +402,68 @@ Diagonal Down-Right = 右下 (オプショナル)
 Diagonal Up-Left = 左上 (オプショナル)
 Diagonal Down-Left = 左下 (オプショナル)
 open_fullscreen = ファイルの自動実行と共にフルスクリーンに切り替え
-jumper = 
-flash = 
-bank = 
-Retro Replay = 
-retro replay_insert = 
-retro replay_image = 
-select_retro replay_image = 
-blank_retro replay_image = 
-auto_savestate_identifier = 
-screen_status = state_text = OSDによる状態表示
-geometry = 
-sid_filter_toggle = Activate_filter = SIDフィルタのトグル
-sid_filter_on = audio_filter_on = オーディオフィルタON
-sid_filter_off = audio_filter_off = オーディオフィルタOFF
-swap_ports = swap_devices = ジョイポート入れ替え
-linear_interpolation = Video Linear = 倍数リニア
-save_preferences = 
-rf_modulation = 
-presentation = 
-control = 
-cartridges = modules = カートリッジ
-game cartridge = game cart = ROMカートリッジ
-game cartridge_insert = module_insert = カートリッジをセット
-select_cartridge_folder = select_module_folder = カートリッジのフォルダを選択
-select_game cartridge_image = select_module_image = ROMイメージを選択 ...
-game cartridge_image = module_image = カートリッジのイメージ
-programs = 
-select_program_folder = select_memory_folder = プログラムのフォルダを選択
-program_insert = memory_insert = プログラムをセット
-program_creator = memory_creator = ロードしたプログラムをセーブ
-program_inject = memory_inject = 選択したプログラムをRAMにロード
-program_injected = memory_injected = プログラムがロードされました
-program_image = memory_image = プログラムのイメージ
-select_program_image = select_memory_image = プログラムを選択 ...
-blank_program_image = blank_memory_image = 新しいプログラムを選択 ...
-select image = 
-auto start = 
-load software = 
-insert cartridge = 
-remove cartridge = 
-Preview = 
-alternate software preview = 
-crop border = crop = ボーダーの縮小
-crop complete = crop_auto = ボーダーなし
-monitor = crop_monitor = モニタのオーバースキャンに合わせる
-crop all sides equally = crop_semi_auto = 四方を一括縮小
-crop each side manually = crop_free = 四方を個別に縮小
-maintain display ratio = crop_aspect_correct = ボーダー調整後もアスペクト比を維持
-Left_Line_Anomaly = 
-Left_Line_Anomaly_info = 
-Off = 
-Solid White = 
-Register Color = 
-confirm writes = 
-question permanent write = 
-Software Preview = 
-Font Size = 
-Dialog Font Size = 
-Dialog Preview = 
-Show Tooltips = 
-Width = 
-Height = 
+jumper = ジャンパー
+flash = フラッシュ
+bank = バンク
+Retro Replay = レトロリプレイ
+retro replay_insert = レトロリプレイカートの挿入
+retro replay_image = レトロリプレイのカートリッジイメージ
+select_retro replay_image = レトロリプレイのイメージを選択
+blank_retro replay_image = 空のレトロリプレイのイメージ
+auto_savestate_identifier = 自動ステートセーブの通知
+screen_status = OSDによる状態表示
+geometry = 画面の比率
+sid_filter_toggle = SIDフィルタのトグル
+sid_filter_on = オーディオフィルタON
+sid_filter_off = オーディオフィルタOFF
+swap_ports = ジョイポート入れ替え
+linear_interpolation = 倍数リニア
+save_preferences = 設定をセーブ
+rf_modulation = RFモジュレータ
+presentation = 描画オプション
+control = 入力機器
+cartridges = カートリッジ
+game cartridge = ROMカートリッジ
+game cartridge_insert = カートリッジをセット
+select_cartridge_folder = カートリッジのフォルダを選択
+select_game cartridge_image = ROMイメージを選択 ...
+game cartridge_image = カートリッジのイメージ
+programs = プログラム
+select_program_folder = プログラムのフォルダを選択
+program_insert = プログラムをセット
+program_creator = ロードしたプログラムをセーブ
+program_inject = 選択したプログラムをRAMにロード
+program_injected = プログラムがロードされました
+program_image = プログラムのイメージ
+select_program_image = プログラムイメージを選択 ...
+blank_program_image = 新しいプログラムイメージ ...
+select image = イメージを選択
+auto start = オートスタート
+load software = ソフトの読み込み
+insert cartridge = カートリッジを挿入
+remove cartridge = カートリッジを抜く
+Preview = プレビュー
+alternate software preview = オプションウィンドウでソフトウェア内部をプレビュー
+crop border = ボーダーの縮小
+crop complete = ボーダーなし
+monitor = モニタのオーバースキャンに合わせる
+crop all sides equally = 四方を一括縮小
+crop each side manually = 四方を個別に縮小
+maintain display ratio = ボーダー調整後もアスペクト比を維持
+Left_Line_Anomaly = 垂直縞
+Left_Line_Anomaly_info = 垂直縞はボーダーが表示されている時のみ描画されます
+Off = オフ
+Solid White = 白色
+Register Color = レジスタを反映
+confirm writes = 書き込み確認
+question permanent write = セーブ時の変更を"%media%"に書き込みますか？
+Software Preview = ソフトウェア内部のプレビュー
+Font Size = フォントのサイズ
+Dialog Font Size = ダイアログのフォントサイズ
+Dialog Preview = ダイアログのプレビュー
+Show Tooltips = ツールチップの表示
+Width = 幅
+Height = 高さ
+Trigger = 引き金
+Touch = タッチ
+Chipset = チップセット

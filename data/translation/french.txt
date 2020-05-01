@@ -464,3 +464,6 @@ Dialog Preview = Aperçu du Dialogue
 Show Tooltips = Afficher les Astuces
 Width = Largeur
 Height = Hauteur
+Trigger = Trigger
+Touch = Touch
+Chipset = Chipset

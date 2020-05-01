@@ -33,13 +33,12 @@ SwapperLayout::SwapperLayout( TabWindow* tabWindow ) {
 		if(!listView.selected()) return;
         
         std::string suffix = "*";
-        std::string folder = "";
+
         for(auto& mediaGroup : emulator->mediaGroups) {
             if (mediaGroup.isDisk()) {
                 auto _suffix = mediaGroup.suffix;
                 GUIKIT::Vector::combine(_suffix, GUIKIT::File::suppportedCompressionExtensions());    
                 suffix = GUIKIT::BrowserWindow::transformFilter(trans->get("disk_image"), _suffix );
-                folder = mediaGroup.name;
                 break;
             }                
         }
@@ -47,7 +46,7 @@ SwapperLayout::SwapperLayout( TabWindow* tabWindow ) {
 		std::string filePath = GUIKIT::BrowserWindow()
 			.setWindow( *this->tabWindow )
 			.setTitle( trans->get("select_disk_image") )
-			.setPath( preselectPath( folder ) )
+			.setPath( preselectPath( ) )
 			.setFilters({ suffix,
 				trans->get("all_files")})
 			.open();
@@ -56,7 +55,7 @@ SwapperLayout::SwapperLayout( TabWindow* tabWindow ) {
 		controls.ejectButton.onActivate();			
 		GUIKIT::File* file = filePool->get(filePath);
         
-        savePath( folder, file->getPath() );
+        savePath( file->getPath() );
 
 		if (!file->isSizeValid(MAX_MEDIUM_SIZE))
             return program->errorMediumSize( file, mes );  
@@ -127,21 +126,18 @@ auto SwapperLayout::getSetting( unsigned pos ) -> FileSetting* {
 	return FileSetting::getInstance( tabWindow->ident("swapper_" + std::to_string( pos ) ) );
 }
 
-auto SwapperLayout::preselectPath( std::string& groupName ) -> std::string {
+auto SwapperLayout::preselectPath( ) -> std::string {
 	
-	auto baseFolderIdent = tabWindow->ident( groupName + "_folder" );
+	auto baseFolderIdent = tabWindow->ident( "disk_folder_swap" );
 
-	auto path = settings->get<std::string>( baseFolderIdent, "" );
-	
-	if ( path == "" )
-		path = settings->get<std::string>( baseFolderIdent + "_swap", "" );
+	auto path = settings->get<std::string>( baseFolderIdent, "" );	
 	
 	return path;
 }
 
-auto SwapperLayout::savePath( std::string& groupName, std::string path ) -> void {
+auto SwapperLayout::savePath( std::string path ) -> void {
 	
-	auto baseFolderIdent = tabWindow->ident( groupName + "_folder" );
+	auto baseFolderIdent = tabWindow->ident( "disk_folder_swap" );
 	
-	settings->set<std::string>(baseFolderIdent + "_swap", path);
+	settings->set<std::string>(baseFolderIdent, path);
 }
