@@ -37,7 +37,12 @@ auto Program::getInputDriver() -> std::string {
 	return DRIVER::Input::preferred();
 }
 
-auto Program::inputPoll( uint16_t deviceId, uint16_t inputId) -> int16_t {
+auto Program::jitPoll() -> bool {
+    
+    return InputManager::jitPoll();
+}
+
+auto Program::inputPoll( uint16_t deviceId, uint16_t inputId) -> int16_t {            
     auto guid = activeEmulator->devices[deviceId].inputs[inputId].guid;
     auto mapping = (InputMapping*)guid;
     if(mapping && isFocused)

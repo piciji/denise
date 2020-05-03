@@ -93,6 +93,13 @@ struct InputManager {
 	static std::vector<Hid::Device*> hidDevices;
     static bool urgentUpdate;
     
+    struct JIT { // Just In Time Polling
+        uint64_t lastTimestamp = 0;
+        bool enable = false;
+    }; 
+    
+    static JIT jit;
+    
     struct DeviceRemap {
         Hid::Device* remember;
         Hid::Device* current;
@@ -137,6 +144,8 @@ struct InputManager {
     static auto getDeviceFromIdent( unsigned id ) -> Hid::Device*;
     static auto openMenu( Emulator::Interface* emulator, Hotkey::Id id ) -> void;
 	static auto updateAllMappingsInUse( bool emuOnly = false ) -> void;
+    static auto jitPoll() -> bool;
+    static auto resetJit() -> void;
 	
     auto autoAssign( KeyboardLayout::Type type, bool keyboardOnly = true ) -> void;
 	auto addMapping(InputMapping* mapping) -> void;
@@ -151,7 +160,7 @@ struct InputManager {
     auto alternateSort() -> void;
     auto updateAnalogSensitivity(Emulator::Interface::Device* updateDevice = nullptr) -> void;
 	auto setCustomHotkeys() -> void;
-	auto unmapCustomHotkeys() -> void;
+	auto unmapCustomHotkeys() -> void;    
     
     inline auto updateAndTrigger() -> void;
     inline auto addAndTrigger(InputMapping* newTrigger) -> void;

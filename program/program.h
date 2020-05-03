@@ -122,6 +122,7 @@ struct Program : Emulator::Interface::Bind {
     auto isAnalogDeviceConnected( ) -> bool;
     auto couldDeviceBlockSecondMouseButton( ) -> bool;
     auto absoluteMouseToEmu( Emulator::Interface* emulator ) -> GUIKIT::Position;
+    auto jitPoll() -> bool;
 
     Program();
 };

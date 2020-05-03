@@ -124,6 +124,8 @@ struct VicII {
     
     auto setVerticalLineAnomaly(uint8_t mode) -> void;
     auto getVerticalLineAnomaly() -> uint8_t;
+    
+    auto getVcounter() -> unsigned { return vCounter; }
    
 protected:    
     bool rev65; //true: 65xx chips, false: 85xx chips

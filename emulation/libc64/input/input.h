@@ -21,6 +21,11 @@ struct Input {
     CIA::Base::Lines* lines = nullptr;
     uint8_t potMask;
     
+    struct Jit {
+        bool enable = false;
+        bool midscreen = false;
+    } jit;
+    
     auto connectControlport( Interface::Connector* connector, Interface::Device* device ) -> void;
     auto getConnectedDevice( Interface::Connector* connector ) -> Interface::Device*;
     auto getCursorPosition( Interface::Device* device, int16_t& x, int16_t& y ) -> bool;
@@ -38,6 +43,8 @@ struct Input {
     
     auto restore() -> bool;
     auto reset() -> void;
+    
+    auto jitPoll() -> void;
     
     auto readPotX() -> uint8_t;
     auto readPotY() -> uint8_t;

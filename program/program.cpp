@@ -324,6 +324,7 @@ auto Program::powerOff() -> void {
     view->updateFreeze(nullptr);
     updateSaveIdent( nullptr );
     InputManager::urgentUpdate = true;
+    InputManager::resetJit();
 }
 
 auto Program::loop() -> void {

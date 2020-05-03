@@ -59,6 +59,8 @@ auto States::load( std::string path, bool prependFolder ) -> void {
     
     updateExpansionJumper();
     
+    InputManager::resetJit();
+    
     forcePowerNextLoad = false;
 }
 

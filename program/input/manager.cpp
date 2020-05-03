@@ -7,6 +7,7 @@
 #include "../tools/filepool.h"
 #include "../tools/filesetting.h"
 #include "../tools/status.h"
+#include "../tools/chronos.h"
 #include <algorithm>
 #include <cstdlib>
 
@@ -24,6 +25,7 @@ std::vector<KeyboardLayout> InputManager::keyboardLayouts = {
     {KeyboardLayout::Type::Uk, "english", "uk"},
     {KeyboardLayout::Type::Us, "english", "us"},
 };
+InputManager::JIT InputManager::jit;
 
 #include "hotkeys.cpp"
 #include "global.cpp"

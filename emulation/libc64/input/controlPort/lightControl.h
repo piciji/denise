@@ -269,7 +269,7 @@ struct LightControl : ControlPort {
         y = posY;
         
         // disable cursor rendering
-        device->userData &= 1;
+        device->userData |= 1;
         
         return true;
     }
@@ -287,6 +287,11 @@ struct LightControl : ControlPort {
         s.integer( button1Pressed );
         s.integer( button2Pressed );
     }
+    
+    auto useJitPolling() -> bool {
+        return false;
+    }
+
 };
 
 }

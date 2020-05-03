@@ -16,6 +16,10 @@ struct Joypad : ControlPort {
         
         return out;
     }
+    
+    auto useJitPolling() -> bool {
+        return true;
+    }
 };
 
 }

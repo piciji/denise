@@ -18,6 +18,8 @@ auto Input::readCiaPortA( CIA::Base::Lines* lines ) -> uint8_t {
     
     this->lines = lines;
     
+    jitPoll();
+    
     uint8_t val = 0xff; // default high: no activity 
     // [ reading game port 2 ]
 	// cia1 port A reads the state of game port 2
@@ -85,9 +87,11 @@ auto Input::moreThanTwoRowsActivated( uint8_t row ) -> bool {
     return 0;
 }
 
-auto Input::readCiaPortB( CIA::Base::Lines* lines ) -> uint8_t {
+auto Input::readCiaPortB( CIA::Base::Lines* lines ) -> uint8_t {         
     
     this->lines = lines;    
+    
+    jitPoll();
     
     uint8_t val = 0xff;
     // [ reading game port 1 ]
@@ -176,15 +180,38 @@ auto Input::writeCiaPortB( CIA::Base::Lines* lines ) -> void {
     controlPort1->write( lines->iob );
 }
 
+inline auto Input::jitPoll() -> void {
+    if (jit.enable && system->interface->jitPoll()) {
+        keyboard.poll();
+        updateLightpen(!lines ? 0xff : lines->ioa, !lines ? 0xff : lines->iob);
+        jit.midscreen = true;
+        //system->interface->log("update", true);
+    } else {
+      //  system->interface->log("too soon", true);        
+    } 
+    
+    //system->interface->log(vicII->getVcounter(), false);
+
+}
+
 auto Input::poll() -> void {
 	
-	keyboard.poll(); 
+    bool jitDisable = !jit.enable || !jit.midscreen;
+    
+    //system->interface->log("jit ", true);
+    //system->interface->log( !jitDisable ? "on" : "off", false );
+    
+    if ( jitDisable )
+        keyboard.poll(); 
     
     controlPort1->poll();
     controlPort2->poll();
     
-	// changed keyboard or joyport state can trigger lightpen    
-	updateLightpen( !lines ? 0xff : lines->ioa, !lines ? 0xff : lines->iob );
+    if (jitDisable)
+        // changed keyboard or joyport state can trigger lightpen    
+        updateLightpen( !lines ? 0xff : lines->ioa, !lines ? 0xff : lines->iob );
+    
+    jit.midscreen = false;
 }
 
 auto Input::drawCursor(bool midScreen) -> void {
@@ -270,6 +297,7 @@ auto Input::reset() -> void {
     keyboard.reset();
     controlPort1->reset();
     controlPort2->reset();
+    jit.midscreen = false;
 }
 
 auto Input::connectControlport( Interface::Connector* connector, Interface::Device* device ) -> void {
@@ -286,6 +314,9 @@ auto Input::connectControlport( Interface::Connector* connector, Interface::Devi
         delete *controlPort;
     
     *controlPort = ControlPort::create( device );
+    
+    jit.enable = controlPort1->useJitPolling() && controlPort2->useJitPolling();
+    jit.enable = false; 
     
     (*controlPort)->reset();
 }
@@ -342,6 +373,9 @@ auto Input::serialize(Emulator::Serializer& s) -> void {
         
         controlPort->serialize( s );
     }
+    
+    if ( s.mode() == Emulator::Serializer::Mode::Load ) 
+        jit.midscreen = false;
 }
 
 }

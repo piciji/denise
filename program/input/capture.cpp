@@ -1,12 +1,45 @@
 
 #include "manager.h"
 
-auto InputManager::poll() -> void {
-    if (captureObject) return;
+auto InputManager::resetJit() -> void {
+    jit.enable = false;
+    jit.lastTimestamp = 0;
+}
 
-    fetch();
-    getManager( activeEmulator )->update();
+auto InputManager::poll() -> void {
+    if (captureObject)
+        return;
+
+    if (!jit.enable) {
+        fetch();
+        getManager(activeEmulator)->update();
+       // logger->log("normal", true);
+    } else {
+        jit.enable = false;
+        //logger->log("jit", true);
+    }
+            
     pollHotkeys();
+}
+
+auto InputManager::jitPoll() -> bool {
+    if (captureObject)
+        return false;
+    
+    auto ts = Chronos::getTimestampInMilliseconds();
+    
+    if ((ts - jit.lastTimestamp) > 4) {        
+        
+        jit.lastTimestamp = ts;
+        
+        fetch();
+        getManager( activeEmulator )->update();
+        jit.enable = true;
+        
+        return true;
+    }       
+    
+    return false;
 }
 
 auto InputManager::fetch() -> void {

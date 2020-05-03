@@ -289,6 +289,7 @@ struct Interface {
 
     //callbacks
     struct Bind {
+        virtual auto jitPoll() -> bool { return false; }
         virtual auto inputPoll(uint16_t, uint16_t) -> int16_t { return 0; }
         virtual auto videoRefresh(const uint16_t*, unsigned, unsigned, unsigned) -> void {}
         virtual auto audioSample(int16_t, int16_t) -> void {}
@@ -304,6 +305,10 @@ struct Interface {
     };
     Bind* bind = nullptr;
 
+    auto jitPoll() -> bool {
+        return bind->jitPoll();
+    }
+    
     auto inputPoll(uint16_t deviceId, uint16_t inputId) -> int16_t {
         return bind->inputPoll(deviceId, inputId);
     }

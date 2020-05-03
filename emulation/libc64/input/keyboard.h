@@ -23,12 +23,12 @@ struct Keyboard {
     uint8_t rows[8];
 	
 	// force command
-	struct {
-		std::vector<uint8_t> feed;
-		unsigned pos;
-		unsigned repeat;
-		bool ready = false;
-	} command;
+//	struct {
+//		std::vector<uint8_t> feed;
+//		unsigned pos;
+//		unsigned repeat;
+//		bool ready = false;
+//	} command;
     
     auto setDevice( Interface::Device* device ) -> void {       
         
@@ -57,8 +57,8 @@ struct Keyboard {
             }
         }  
         
-        if (command.ready)
-            forceCommand( );
+//        if (command.ready)
+//            forceCommand( );
         
         bool shiftLockPressedBefore = shiftLockPressed;
 		
@@ -155,41 +155,41 @@ struct Keyboard {
 	}
    
 	// use key ids defined in interface.cpp
-	auto setCommand( std::vector<uint8_t> data ) -> void {
-		command.feed = data;
-		command.pos = 0;
-		command.repeat = 0;
-		command.ready = true;
-	}
+//	auto setCommand( std::vector<uint8_t> data ) -> void {
+//		command.feed = data;
+//		command.pos = 0;
+//		command.repeat = 0;
+//		command.ready = true;
+//	}
 			
-	auto forceCommand( ) -> void {
-		
-		uint8_t _id = command.feed[ command.pos ];
-		
-		for (unsigned i = 0; i < 8; i++) {			
-			
-            for (unsigned j = 0; j < 8; j++) {
-
-                if (id[i][j] == _id) {
-
-                    rows[i] |= 1 << j;
-                    cols[j] |= 1 << i;
-
-                    // kernal expects key pressed some time
-                    if (++command.repeat >= 5) {
-                        command.repeat = 0;
-
-                        if (++command.pos >= command.feed.size() ) {
-                            command.ready = false;							
-                        }
-                    }
-
-                    return;
-                }											
-            }				
-
-		}
-	}
+//	auto forceCommand( ) -> void {
+//		
+//		uint8_t _id = command.feed[ command.pos ];
+//		
+//		for (unsigned i = 0; i < 8; i++) {			
+//			
+//            for (unsigned j = 0; j < 8; j++) {
+//
+//                if (id[i][j] == _id) {
+//
+//                    rows[i] |= 1 << j;
+//                    cols[j] |= 1 << i;
+//
+//                    // kernal expects key pressed some time
+//                    if (++command.repeat >= 5) {
+//                        command.repeat = 0;
+//
+//                        if (++command.pos >= command.feed.size() ) {
+//                            command.ready = false;							
+//                        }
+//                    }
+//
+//                    return;
+//                }											
+//            }				
+//
+//		}
+//	}
     
     auto serialize( Emulator::Serializer& s ) -> void {
         
