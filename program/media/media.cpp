@@ -570,6 +570,8 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
             ->setExpansion( layout->mediaGroup->expansion );
         
         program->power( emulator );
+        
+        view->setFocused( 300 );                
     };
     
     removeCart.onActivate = [this]() {        
@@ -578,6 +580,8 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
             ->setExpansion( nullptr );
         
         program->power( emulator );
+        
+        view->setFocused( 300 );                
     };
 }
 

@@ -18,7 +18,7 @@ auto Input::readCiaPortA( CIA::Base::Lines* lines ) -> uint8_t {
     
     this->lines = lines;
     
-    jitPoll();
+    //jitPoll();
     
     uint8_t val = 0xff; // default high: no activity 
     // [ reading game port 2 ]
@@ -91,7 +91,7 @@ auto Input::readCiaPortB( CIA::Base::Lines* lines ) -> uint8_t {
     
     this->lines = lines;    
     
-    jitPoll();
+  //  jitPoll();
     
     uint8_t val = 0xff;
     // [ reading game port 1 ]
