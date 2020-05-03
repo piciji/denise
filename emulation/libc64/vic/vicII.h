@@ -337,7 +337,7 @@ protected:
 	auto updateMc6569() -> void;
 	auto updateMc8565() -> void;	
 	auto spriteSequencer(  ) -> void;
-    template<uint8_t sprPos> inline auto spriteSequencer( Sprite* spr, Sprite*& sprUse, uint8_t& collision ) -> void;
+    template<uint8_t sprPos> auto spriteSequencer( Sprite* spr, Sprite*& sprUse, uint8_t& collision ) -> void;
 	template<bool phi1> auto borderArea(  ) -> void;
 	template<bool phi1> auto draw65( uint8_t x, uint8_t x1 ) -> void;
 	template<bool phi1> auto draw85( uint8_t x ) -> void;

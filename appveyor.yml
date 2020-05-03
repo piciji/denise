@@ -7,16 +7,16 @@ skip_commits:
     - '**/*.md'
 
 image:
+  - Visual Studio 2019     
+  - Ubuntu         
   - macos-mojave
-  - Ubuntu  
-  - Visual Studio 2019        
   
 branches:
   only:
     - master
     - appveyor
     - /v\d*\.\d*\.\d*/
-    - extended_file_dialog
+    - run_ahead
   
 environment:
   matrix:

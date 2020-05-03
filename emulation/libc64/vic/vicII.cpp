@@ -396,4 +396,3 @@ template auto VicII::phase2<true>() -> void;
 template auto VicII::phase2<false>() -> void;
 
 }
-

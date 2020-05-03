@@ -163,7 +163,7 @@ template<bool _useSequencer> auto VicII::phase2() -> void {
     lastColorReg = 0xff;	                
 }
 
-inline auto VicII::advanceCycle() -> void {    
+__attribute__((always_inline)) auto VicII::advanceCycle() -> void {    
     // first we apply a possible register write at beginning of a new cycle
     // instead of cycle end, because of irq state changes by writing to 0x19 
     // or 0x1a mustn't be recognized by cpu in previous cycle.
@@ -195,7 +195,7 @@ inline auto VicII::advanceCycle() -> void {
 		allowBadlines = false;
     }   
     
-	if (++cycle == lineCycles) {		
+	if (++cycle == lineCycles) {	
 		cycle = 0;  
 		
 		// Note: line complete but vcounter is not incremented at this point

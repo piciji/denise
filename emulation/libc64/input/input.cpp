@@ -18,7 +18,7 @@ auto Input::readCiaPortA( CIA::Base::Lines* lines ) -> uint8_t {
     
     this->lines = lines;
     
-    //jitPoll();
+    jitPoll();
     
     uint8_t val = 0xff; // default high: no activity 
     // [ reading game port 2 ]
@@ -91,7 +91,7 @@ auto Input::readCiaPortB( CIA::Base::Lines* lines ) -> uint8_t {
     
     this->lines = lines;    
     
-  //  jitPoll();
+    jitPoll();
     
     uint8_t val = 0xff;
     // [ reading game port 1 ]
@@ -185,9 +185,9 @@ inline auto Input::jitPoll() -> void {
         keyboard.poll();
         updateLightpen(!lines ? 0xff : lines->ioa, !lines ? 0xff : lines->iob);
         jit.midscreen = true;
-        //system->interface->log("update", true);
+       // system->interface->log("update", true);
     } else {
-      //  system->interface->log("too soon", true);        
+       // system->interface->log("too soon", true);        
     } 
     
     //system->interface->log(vicII->getVcounter(), false);
@@ -316,7 +316,7 @@ auto Input::connectControlport( Interface::Connector* connector, Interface::Devi
     *controlPort = ControlPort::create( device );
     
     jit.enable = controlPort1->useJitPolling() && controlPort2->useJitPolling();
-    jit.enable = false; 
+    //jit.enable = false; 
     
     (*controlPort)->reset();
 }

@@ -13,10 +13,10 @@ auto InputManager::poll() -> void {
     if (!jit.enable) {
         fetch();
         getManager(activeEmulator)->update();
-       // logger->log("normal", true);
+      //  logger->log("normal", true);
     } else {
         jit.enable = false;
-        //logger->log("jit", true);
+      //  logger->log("jit", true);
     }
             
     pollHotkeys();
