@@ -146,6 +146,7 @@ static auto Window_stateChange(GtkWidget* widget, GdkEventWindowState* event, Wi
 		if (window->onFocus)
 			window->onFocus();
 	}
+	return false;
 }
 
 pWindow::pWindow(Window& window) : window(window) {

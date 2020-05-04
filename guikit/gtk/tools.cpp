@@ -132,7 +132,14 @@ auto pSystem::getWorkingDirectory() -> std::string {
 auto pSystem::getDesktopSize() -> Size {
 	
 	GdkRectangle workarea = {0};
-	gdk_monitor_get_workarea( gdk_display_get_primary_monitor(gdk_display_get_default() ), &workarea);
+	
+	auto monitor = gdk_display_get_primary_monitor(gdk_display_get_default() );
+	
+	if (!monitor) {
+		monitor = gdk_display_get_monitor( gdk_display_get_default(), 0 );
+	}
+	
+	gdk_monitor_get_workarea( monitor, &workarea);
 	
     return { (unsigned)workarea.width, (unsigned)workarea.height };
 }

@@ -78,4 +78,5 @@ auto pViewport::mouseRelease(GtkWidget* widget, GdkEventButton* event, pViewport
 auto pViewport::drawEvent(GtkWidget* widget, cairo_t* context, pViewport* self) -> gboolean {
 	cairo_set_source_rgba(context, 0.0, 0.0, 0.0, 1.0);
 	cairo_paint(context);
+	return true;
 }
