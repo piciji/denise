@@ -166,6 +166,7 @@ inline auto Base::interruptControl() -> void {
             irqCall( true );
         
     } else if (acknowledgeCycle & 1) {
+		icr &= ~0x7f;
         // interrupt is not incomming or is not allowed by icr mask and
         // this is an acknowledge cycle
         irqCall( false );
@@ -195,7 +196,7 @@ inline auto Base::interruptControlOld() -> void {
         }
         
     } else if (acknowledgeCycle & 1) {
-        // same behaviour like new cia but all interrupt sources will be reseted
+        // same behaviour like new cia, all interrupt sources will be reseted
         // but not the msb of icr, matters when a second read in register 0d happens
         icr &= ~0x7f;
 		
