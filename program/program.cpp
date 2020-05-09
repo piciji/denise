@@ -331,19 +331,19 @@ auto Program::loop() -> void {
     if( willPoll() ) InputManager::poll();
 	
 	if( willRun() ) {
-//        activeEmulator->run(true);
-//        
-//        unsigned size;
-//        uint8_t* data = activeEmulator->savestate( size );
-//        
-//        activeEmulator->run(true);
+      //  activeEmulator->run(true);
+        
+        unsigned size;
+      //  uint8_t* data = activeEmulator->savestate( size );
+        
+       // activeEmulator->run(true);
         
         activeEmulator->run();
         
-       // if (data) {
-     //       activeEmulator->loadstate( data, size );
+      //  if (data) {
+        //    activeEmulator->loadstate( data, size );
             // don't delete state data, serializter handles this by itself
-        //}
+     //   }
         
 	} else {
         if (GUIKIT::Application::exitCode)

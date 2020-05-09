@@ -49,7 +49,6 @@
 * run frame ahead for reduced input lag
 * drive leds / sounds 
 * beam racing
-* low latency vsync
 * rewind support
 * debug monitor for developers
 * directx 10 and higher
@@ -58,6 +57,7 @@
 * RetroArch Shader support
 * 7z support
 * Netplay
+* load savestates per drag'n'drop and from File Explorer
 
 # todo improvements
 * fullscreen with custom refresh rate
@@ -75,7 +75,6 @@
 * add Depixelizing technic (http://johanneskopf.de/publications/pixelart/index.html)
 * add confirmation question when quiting Denise Alt+F4
 * mount OS folder as D64
-
 
 # bugs
 * japanese characters aren't displayed correctly in OpenGL onscreen text

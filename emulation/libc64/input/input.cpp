@@ -316,7 +316,7 @@ auto Input::connectControlport( Interface::Connector* connector, Interface::Devi
     *controlPort = ControlPort::create( device );
     
     jit.enable = controlPort1->useJitPolling() && controlPort2->useJitPolling();
-    //jit.enable = false; 
+    jit.enable = false; 
     
     (*controlPort)->reset();
 }
