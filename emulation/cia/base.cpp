@@ -25,8 +25,8 @@ crb( timer[T_B].control )
 	irqCall = [](bool state) {};
     serialCall = [](bool bit) {};
 	
-	for( unsigned i = 0; i < 2; i++ ) {	
-		       
+	for( unsigned i = 0; i < 2; i++ ) {			       
+		
 		timer[i].start = [this,i]() { timer[i].run |= 1; };
 
 		timer[i].step = [this,i]() { 
@@ -74,6 +74,7 @@ auto Base::reset() -> void {
 	
 	sdrValid = false;
     cnt = true;
+	ciaShiftRespawnBug = false;
 	
 	registerWrite.pipelined = false;
     
@@ -125,7 +126,6 @@ auto Base::processLo() -> void {
     acknowledgeCycle <<= 1;      
 	maskWriteCycle <<= 1;    
 }
-
 
 auto Base::processHi() -> void {	
         	
@@ -195,7 +195,7 @@ inline auto Base::interruptControlOld() -> void {
         }
         
     } else if (acknowledgeCycle & 1) {
-        // same behaviour like new cia but all interrupt sources will be reseted
+        // same behaviour like new cia, but all interrupt sources will be reseted
         // but not the msb of icr, matters when a second read in register 0d happens
         icr &= ~0x7f;
 		
@@ -307,32 +307,63 @@ auto Base::isNewVersion() -> bool {
 }
 
 // following serial and cnt emulation is experimental
-
 auto Base::serialOut() -> void {
-	//timer A defines speed for this		
-	
-	// you could write new sdr value while out shifting hasn't finished.
-	// in this case new sdr will be pipelined and used for next byte
-	if (sdrValid && (shiftCount == 0) ) {
-		sdrValid = false;
-		shift = sdr;		
-		shiftCount = 15;
-		cnt = 0;
-	}			
+	//timer A defines speed for this								
 	
 	if ( shiftCount ) {		
+		cnt ^= 1;
+		
 		if (!cnt) {			
 			bool bit = (shift >> 7) & 1;
 			shift <<= 1;
-			serialCall( bit );
-		}
-		
-		if (--shiftCount == 0)
-			// serial interrupt happens a few cycles after Timer A underflows
-			serialDelay |= 8; // bit 3 -> 4 cycle delay ???
-		
-		cnt ^= 1;
-	}    
+			serialCall( bit );				
+
+		} else {
+
+			if (--shiftCount == 1) {
+				// serial interrupt happens a few cycles after Timer A underflows
+				serialDelay |= 16; // bit 3 -> 4 cycle delay
+			}
+			
+		}		
+	}    	
+	
+	if (sdrValid) {
+		// first underflow loads shift register.
+		// if shift is alredy in progress, it happens parallel and is valid next underflow
+		sdrValid = false;
+		shift = sdr;			
+		shiftCount = 8;
+		cnt = true;
+	}	
+}
+
+auto Base::serialFlagRespawn() -> void {
+	auto pT = &timer[T_A];
+	
+	// first line is not really understood
+	if (!ciaShiftRespawnBug && cnt && pT->counter == pT->latch);
+
+	else if (shiftCount == 1 && cnt && pT->counter == (pT->latch - 2));
+
+	else if (cnt && (pT->counter != (pT->latch - 1))
+		&& (newVersion ? (pT->counter != (pT->latch - 3)) : true)
+
+		) {
+		handleInterrupt(8);
+
+	} else if (!cnt && (
+		(pT->counter == (pT->latch - 4))
+		|| (pT->counter == (pT->latch - 3))
+		|| (pT->counter == (pT->latch - 2))
+		|| (pT->counter == (pT->latch - 1))
+		)) {
+		handleInterrupt(8);
+	};
+
+	shiftCount = 0;
+
+	ciaShiftRespawnBug = true;
 }
 
 /**
@@ -342,7 +373,7 @@ auto Base::serialIn( bool bit ) -> void {
     // external device generates pulse 0 -> 1 on cnt pin to inform cia
 	// that sp pin has valid data
 	// for simplicity we do both steps in one operation
-    cnt = 1;
+    cnt = true;
 	
     if (cra & 0x40) //SP pin is defined as output
         return;
@@ -360,7 +391,7 @@ auto Base::serialIn( bool bit ) -> void {
         shiftCount = 0;
         //transfer complete
 		sdr = shift;
-        serialDelay |= 8; // ???
+        serialDelay |= 16; 
     }
 }
 
@@ -413,6 +444,7 @@ auto Base::serialize(Emulator::Serializer& s) -> void {
     s.integer( flagRaised );
     s.integer( sdr );
     s.integer( sdrValid );
+	s.integer( ciaShiftRespawnBug );
     s.integer( cnt );
     s.integer( shift );
     s.integer( shiftCount );

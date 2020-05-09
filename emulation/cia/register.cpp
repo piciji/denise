@@ -43,12 +43,12 @@ auto Base::read( unsigned pos ) -> uint8_t {
 			//hence is handled in child class
 			return 0;
 			
-		case 0xc:
+		case 0xc:				
             return sdr;
 			
-		case 0xd: {      						
-			acknowledgeCycle |= 1;
-			
+		case 0xd: {      
+			acknowledgeCycle |= 1;			
+				
             return icr;
 		}
         case 0xe:
@@ -153,10 +153,9 @@ auto Base::write( unsigned pos, uint8_t value ) -> void {
 		case 0xc:
 			sdr = value;
 			
-			if ( timer[T_A].control & 0x40 ) // sdr output
+			if ( timer[T_A].control & 0x40 ) { // sdr output
                 sdrValid = true;
-			else
-				shiftCount = 0; // not sure ???
+			}
 			
 			break;
             
@@ -168,7 +167,9 @@ auto Base::write( unsigned pos, uint8_t value ) -> void {
 			
 			maskWriteCycle |= 1;
             
-            handleInterrupt( 0 );
+			if ((acknowledgeCycle & 2) == 0)
+				handleInterrupt( 0 );
+			
 			break;
 			
 		case 0xe:  
@@ -199,13 +200,20 @@ auto Base::write( unsigned pos, uint8_t value ) -> void {
             
             else {
                 // start + phase in
-                if ( (value & 1) && !(value & 0x20) )
+                if ( (value & 1) && !(value & 0x20) ) {
                     events->add( &(pT->start), 2, Emulator::Events::WhenNotExistsOnly );
-                else
+					
+					// experimental shift flag respawn
+					if (shiftCount && (pos == 0xe) && !pT->oneshot && !pT->run)
+						serialFlagRespawn();								
+					
+                } else {
+					
                     // stop the timer is delayed by one cycle
                     events->add( &(pT->stop), 2, Emulator::Events::WhenNotExistsOnly );                
+				}
             }
-			
+						
             pT->control = value;        									
             break;
 	}

@@ -168,6 +168,7 @@ protected:
 	
 	uint8_t icrmask;
     uint8_t icr;
+	bool ciaShiftRespawnBug;
 	
 	struct {
 		bool pipelined;
@@ -178,6 +179,7 @@ protected:
     auto timerAUnderflow() -> void;
 	auto timerBUnderflow() -> void;
 	auto serialOut() -> void;
+	auto serialFlagRespawn() -> void;
     auto handleInterrupt( uint8_t number ) -> void;
 	virtual auto processTod() -> void = 0;
 	template<uint8_t timerId> auto decrement() -> void;

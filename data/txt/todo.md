@@ -78,7 +78,6 @@
 
 
 # bugs
-* works only with old CIA's, check if new ones have to work too https://csdb.dk/release/?id=100412 (crash title screen)
 * japanese characters aren't displayed correctly in OpenGL onscreen text
 * more Ram Init pattern problems (https://csdb.dk/release/?id=172238  https://csdb.dk/release/?id=172347)
 
