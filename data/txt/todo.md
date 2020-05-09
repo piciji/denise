@@ -49,7 +49,6 @@
 * run frame ahead for reduced input lag
 * drive leds / sounds 
 * beam racing
-* low latency vsync
 * rewind support
 * debug monitor for developers
 * directx 10 and higher
@@ -75,6 +74,7 @@
 * add Depixelizing technic (http://johanneskopf.de/publications/pixelart/index.html)
 * add confirmation question when quiting Denise Alt+F4
 * mount OS folder as D64
+* load savestates per drag'n'drop or within File Explorer
 
 
 # bugs
