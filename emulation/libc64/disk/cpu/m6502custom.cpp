@@ -112,7 +112,7 @@ inline auto M6502Custom::sampleIrq() -> void {
 auto M6502Custom::_read( uint16_t addr, bool lastCycle ) -> uint8_t {         
     static uint8_t data;
     
-    ctx->syncLo();                  
+    ctx->sync();                  
     
     handleSo();
 	
@@ -130,7 +130,7 @@ auto M6502Custom::_read( uint16_t addr, bool lastCycle ) -> uint8_t {
 
 auto M6502Custom::_write( uint16_t addr, uint8_t data, bool lastCycle ) -> void {    
     
-    ctx->syncLo();
+    ctx->sync();
     
     if (lastCycle)
         sampleIrq();    

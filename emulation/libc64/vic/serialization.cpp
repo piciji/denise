@@ -15,12 +15,10 @@ auto VicII::serialize(Emulator::Serializer& s) -> void {
     s.integer( crop.bottomOverscan );
     s.integer( crop.leftOverscan );
     s.integer( crop.rightOverscan );
-    s.integer( registerWrite.pipelined );
-    s.integer( registerWrite.addr );
-    s.integer( registerWrite.value );
     s.integer( rev65 );
     s.integer( lastReadPhi1 );
-    s.integer( lastBusPhi2 ); 
+    s.integer( lastSpriteShift ); 
+    
     s.array( render );
     s.array( renderPipe );
     s.array( colorReg );
@@ -40,9 +38,10 @@ auto VicII::serialize(Emulator::Serializer& s) -> void {
     s.integer( aecDelay ); 
     s.array( spriteBa );
     s.integer( allowBadlines );
+    s.integer( badLine );
     s.integer( irqLine );
     s.integer( lineIrqMatched );
-    s.integer( lpIrqPending );
+    s.integer( irqLatchPending );
     s.integer( den );
     s.integer( borderTop );
     s.integer( borderBottom );
@@ -90,12 +89,15 @@ auto VicII::serialize(Emulator::Serializer& s) -> void {
     s.integer( display.cBufferPipe2 );
     s.integer( display.xScroll );
     s.integer( display.gBuffer );
+    s.integer( display.gBufferUse );
     s.integer( display.gBufferPipe1 );
     s.integer( display.gBufferPipe2 );
     s.integer( display.enable );
     s.integer( display.dmli );
     s.integer( display.gBufferShift );
     s.integer( display.gBits );
+    
+    uint8_t spriteOpenBusPos = 0xff;
     
     for( unsigned i = 0; i < 8; i++ ) {
         Sprite& spr = sprite[i];
@@ -123,17 +125,20 @@ auto VicII::serialize(Emulator::Serializer& s) -> void {
         s.integer( spr.mcFlop );
         s.integer( spr.expandYFlop );
         s.integer( spr.expandXFlop );
-        s.integer( spr.colorCode );        
+        s.integer( spr.colorCode );    
+        
+        if (spriteOpenBus && (&spr == spriteOpenBus))
+            spriteOpenBusPos = i;
     }
     
     s.integer( spriteTrigger );
-    s.integer( spriteDisplay );
     s.integer( spritePending );
     s.integer( spriteForegroundCollided );
+    s.integer( spriteForegroundCollidedRead );
     s.integer( spriteSpriteCollided );
+    s.integer( spriteSpriteCollidedRead );
     s.integer( spriteDmaCycle1 );
     s.integer( spriteDmaCycle2 );
-    s.integer( spriteDisplayCycle );
     s.integer( clearCollision );
     s.integer( canSpriteSpriteCollisionIrq );
     s.integer( canSpriteForegroundCollisionIrq );
@@ -145,9 +150,23 @@ auto VicII::serialize(Emulator::Serializer& s) -> void {
     s.integer( leftLineAnomaly.mode );
 	s.integer( leftLineAnomaly.permanent );
 	s.integer( leftLineAnomaly.framePos );
+    s.integer( spriteOpenBusPos );
     
     xLookupPtrPhi1 = ntsc ? &xLookUpNtscPhi1[0] : &xLookUpPalPhi1[0];
-    xLookupPtrPhi2 = ntsc ? &xLookUpNtscPhi2[0] : &xLookUpPalPhi2[0];
+    xLookupPtrPhi2 = ntsc ? &xLookUpNtscPhi2[0] : &xLookUpPalPhi2[0];    
+    
+    if (s.mode() == Emulator::Serializer::Mode::Load) {
+        switch(cycle) {
+            case 15: onHalfCycle = [this]() { borderLeft<true>(); }; break;
+            case 16: onHalfCycle = [this]() { borderLeft<false>(); }; break;
+            case 53: if(!ntsc) onHalfCycle = [this]() { spriteDmaCheck(); }; break;
+            case 54: onHalfCycle = [this]() { borderRight<true>(); spriteDmaCheck(); }; break;
+            case 55: onHalfCycle = [this]() { borderRight<false>(); if(ntsc) spriteDmaCheck(); }; break;
+            default: onHalfCycle = nullptr;
+        }
+        
+        spriteOpenBus = spriteOpenBusPos == 0xff ? nullptr : &sprite[spriteOpenBusPos];
+    }
 }
 
 }

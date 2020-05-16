@@ -34,6 +34,26 @@ struct Freezer : Cart {
         writesInARow = 0;
     }
 
+    virtual auto clock() -> void {
+
+        if (freezeArmed && metCondition()) {
+            exRom = true;
+            game = false;
+            system->changeExpansionPortMemoryMode(exRom, game);
+            freezeArmed = false;
+            writesInARow = 0;
+            didFreeze();
+        }
+
+        if (cyclesTillFreeze && (--cyclesTillFreeze == 0)) {
+            nmiCall(true);
+            if (unbeatable)
+                irqCall(true);
+
+            freezeArmed = true;
+        }
+    }
+    
     virtual auto cycleLo() -> void {
 
         if (!freezeArmed)

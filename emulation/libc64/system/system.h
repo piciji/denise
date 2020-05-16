@@ -161,7 +161,7 @@ struct System {
     auto analyzeExpansion(uint8_t* data, unsigned size) -> Emulator::Interface::Expansion*;
     
     auto dispatcha() -> void;
-    auto setFastForward( unsigned config ) -> void;
+    auto setFastForward( unsigned config ) -> void;    
 };
 
 extern System* system;

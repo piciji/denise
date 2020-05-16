@@ -17,6 +17,7 @@ struct RetroReplay : Freezer {
     
     Emulator::Flash040 flash;
     Emulator::Events* events;
+    std::function<void ()> flashModeReset;
     uint8_t* flashData;
     uint8_t* ram = nullptr;
     bool flashJumper;
@@ -62,8 +63,7 @@ struct RetroReplay : Freezer {
     auto writeRomH( uint16_t addr, uint8_t data ) -> void;
     auto writeUltimaxA0( uint16_t addr, uint8_t data ) -> void;
     
-    auto cycleLo() -> void;
-    auto cycleHi() -> void;
+    auto clock() -> void;
     
     auto didFreeze() -> void;
     auto blockFreeze() -> bool;

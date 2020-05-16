@@ -74,10 +74,6 @@ Sid::Sid( Type type, Emulator::Events* events ) : filter( this ) {
                 sampleCounter = 0;
             }
 
-			if(registerWriteThreaded.pipelined)
-				// if filter update, do it now
-				writeIOFilter( this->registerWriteThreaded.addr, this->registerWriteThreaded.value );
-
 			this->ready = false;
 		}
 	});	
@@ -97,12 +93,29 @@ auto Sid::registerCallbacks() -> void {
     }
 }
 
+auto Sid::disableAudioOut(bool state) -> void {
+    if (moreAccuracy && registerWrite.pipelined) {
+        // wait for worker thread
+        while (ready.load()) {}
+        applyFilterWrite();
+    }
+        
+    audioOut = !state;
+}
+
 auto Sid::setMoreAccuracy(bool state) -> void {
-	
+
+    if (moreAccuracy && registerWrite.pipelined) {
+        // wait for worker thread
+        while (ready.load()) {}
+        applyFilterWrite();
+    }
+    
 	moreAccuracy = state;
 	updateIdleState();
     
 	ready = false;	
+    applyFilterWrite();
     
     if (moreAccuracy)
         filter.multiPrecalculate();
@@ -170,33 +183,31 @@ auto Sid::powerOff() -> void {
     powerOn = false;
 }
 
-auto Sid::phase1() -> void {
+auto Sid::clock() -> void {
     
-    for( unsigned i = 0; i < 3; i++ ) {
+    for (unsigned i = 0; i < 3; i++) {
         //both happens in parallel
         envelope[i].clock();
         voice[i].clock();
     }
-	
-	for( unsigned i = 0; i < 3; i++ )
-		voice[i].synchronize();
-	
-	for( unsigned i = 0; i < 3; i++ )
-		voice[i].setWaveformOutput();
-}
 
-auto Sid::phase2() -> void {
-	
+    for (unsigned i = 0; i < 3; i++)
+        voice[i].synchronize();
+
+    for (unsigned i = 0; i < 3; i++)
+        voice[i].setWaveformOutput();
+    
     if (audioOut) {    
-        if (moreAccuracy) {
+        if (moreAccuracy) {            
+            
             // filter calculations are threaded
             while ( ready.load() ) { }
+
+            applyFilterWrite();
 
             v1 = voice[0].output();
             v2 = voice[1].output();
             v3 = voice[2].output();
-
-            registerWriteThreaded = registerWrite;
 
             ready = true;        
 
@@ -211,7 +222,7 @@ auto Sid::phase2() -> void {
                 sampleCounter = 0;
             }
         }
-    }
+    } 
 	  	
     // bus values decay after a certain amount of time.
     // decay time differs between single bits.
@@ -219,14 +230,7 @@ auto Sid::phase2() -> void {
     // but approximate time till all bits are decayed
     if (databusDecay > 0 && --databusDecay == 0 )
         lastBusValue = 0;
-
-	if ( registerWrite.pipelined ) {
-		registerWrite.pipelined = false;
-		// register write is Sid internal valid at the end of second half cycle ?
-		// don't do a possible filter register update here for threaded version
-		// it could be done during calculation and crash		
-		writeIO( registerWrite.addr, registerWrite.value, !audioOut || !moreAccuracy );
-	}	
+    
 }
     
 }

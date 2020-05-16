@@ -28,8 +28,7 @@ struct M65Context {
      */
     std::function<uint8_t ()> readSelect;
     
-    /** informs about cpu has proceeded one half cycle.
-     *  alternates always between lo and hi cycle, lo + hi = 1 cpu cycle
+    /** informs about cpu has proceeded a cycle.
      *  BUS is always accessed each second half cycle ( there are no pure internal cpu cycles )
      *  this results in some dummy accesses, mostly when CPU needs time for address calculation.
      *  lo cycle is internal operation which generates addresses.
@@ -37,9 +36,11 @@ struct M65Context {
      *  lo and hi cycles take same absolute time in relation to cpu frequency.
      *  NOTE: this cycle exact emulation requires that you sync up all other bus participants immediately
      *  otherwise interupt recognition is not working properly.
-     */
+     */    
+    /** sync one cycle or a half in combination with syncHi */
+    std::function<void ()> sync;
+    /** optional for half cycle stepping */
     std::function<void ()> syncHi;
-    std::function<void ()> syncLo;    
 	/** informs about cpu has updated port lines (6510 only)	 */
 	std::function<void (uint8_t, uint8_t)> updatePort;
     
@@ -170,7 +171,7 @@ struct M65Context {
         writeSelect = [](uint16_t) { };
         readSelect = []() { return 0; };
         syncHi = []() {};
-        syncLo = []() {};        
+        sync = []() {};
 		updatePort = [](uint8_t, uint8_t) {};
         
         if (createDummy)

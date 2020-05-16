@@ -173,8 +173,8 @@ inline auto Reu::incrementAddresses() -> void {
     reuAddr = (reuAddr & 0xf80000) | incremented;
 }
 
-auto Reu::cycleLo() -> void {
-    
+auto Reu::clock() -> void {
+
     if (waitForStart) {
         // listen CPU bus usage        
         if (system->cpu->isWriteCycle()) {
@@ -184,21 +184,19 @@ auto Reu::cycleLo() -> void {
             }
         }
     }  
-}
 
-auto Reu::cycleHi() -> void {
     vicBaLow <<= 1;
     vicBaLow |= vicBA();
-    
+
     if (!dma)
         return;
-    
-    switch ( command & 3 ) {
+
+    switch (command & 3) {
         case 0: stash(); break;
         case 1: fetch(); break;
         case 2: swap(); break;
         case 3: verify(); break;
-    }      
+    }   
 }
 
 inline auto Reu::verify() -> void {

@@ -55,20 +55,18 @@ struct Sid {
     auto setDigiBoost( bool state ) -> void;
     auto updateDigiBoost( bool state ) -> void;
     auto readIO( uint8_t addr ) -> uint8_t;
-    auto writeIO( uint8_t addr, uint8_t value, bool updateFilterToo = true ) -> void;
+    auto writeIO( uint8_t addr, uint8_t value ) -> void;
 	auto writeIOPipelined(uint8_t addr, uint8_t value) -> void;
 	auto writeIOFilter( uint8_t addr, uint8_t value ) -> void;
+    auto applyFilterWrite() -> void;
     auto reset() -> void;
 	auto powerOff() -> void;
-    auto phase1() -> void;
-	auto phase2() -> void;
+    auto clock() -> void;
 	auto setMoreAccuracy(bool state) -> void;
     auto registerCallbacks() -> void;
     auto serialize(Emulator::Serializer& s) -> void;
     auto updateIdleState() -> void;    
-    auto disableAudioOut(bool state) -> void {
-        audioOut = !state;
-    }
+    auto disableAudioOut(bool state) -> void;
     
     uint8_t lastBusValue;
     unsigned databusDecay;
@@ -79,7 +77,7 @@ struct Sid {
 		bool pipelined;
 		uint8_t addr;
 		uint8_t value;
-	} registerWrite, registerWriteThreaded;	       
+	} registerWrite;	       
     
 	bool moreAccuracy = false;
     bool powerOn;

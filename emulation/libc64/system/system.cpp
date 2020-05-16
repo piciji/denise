@@ -59,14 +59,12 @@ System::System(Interface* interface) {
     cpuCtx = MOS65FAMILY::createContext();
     
     cpuCtx->read = [this]( uint16_t addr ) {
-        // we don't need to check for AEC low, which would decouple CPU from BUS.
-        // there is no situation, where AEC is pulled low without RDY pulled low.
-        // it wouldn't make any sense.
+        
         return memoryCpu.read( addr );
     };
     
     cpuCtx->write = [this]( uint16_t addr, uint8_t value ) {
-	
+        
         if (expansionPort->isDma())
             // DMA halts CPU in next read cycle, but a write cycle happened before.
             // DMA pulls AEC low too at the same time.
@@ -226,7 +224,7 @@ System::System(Interface* interface) {
 
     writeSidReg = [this](uint16_t addr, uint8_t value) {
         
-        sid->writeIOPipelined( addr, value );
+        sid->writeIO( addr, value );
     };
 
     writeDebugReg = [this](uint16_t addr, uint8_t value) {
@@ -235,7 +233,7 @@ System::System(Interface* interface) {
             debugCart.exit = true;
         }
             
-        sid->writeIOPipelined(addr, value);
+        sid->writeIO(addr, value);
     };
 
     readSidReg = [this](uint16_t addr) {
@@ -245,17 +243,17 @@ System::System(Interface* interface) {
 
     writeVicReg = [this](uint16_t addr, uint8_t value) {
         
-        vicII->writeIOPipelined( addr & 0xff, value );
+        vicII->writeReg( addr & 0xff, value );
     };
 
     readVicReg = [this](uint16_t addr) {
 
-        return vicII->readIO( addr & 0xff );
+        return vicII->readReg( addr & 0xff );
     };
     
     writeCia1Reg = [this](uint16_t addr, uint8_t value) {
 
-        cia1->writePipelined( addr, value );
+        cia1->write( addr, value );
     };
 
     readCia1Reg = [this](uint16_t addr) {
@@ -265,7 +263,7 @@ System::System(Interface* interface) {
 
     writeCia2Reg = [this](uint16_t addr, uint8_t value) {
 		
-        cia2->writePipelined( addr, value );
+        cia2->write( addr, value );
     };
 
     readCia2Reg = [this](uint16_t addr) {

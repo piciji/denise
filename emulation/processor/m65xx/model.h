@@ -24,6 +24,7 @@
  * 2. or for performance reasons, if the line is not in use for your 6502
  */
 //#define SUPPORT_SO
+//#define SUPPORT_HALF_CYCLE
 
 #include "context.h"
 

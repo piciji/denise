@@ -9,7 +9,7 @@ IecBus* iecBus;
 // 2. main thread transfers amount of consumed cycles to drive thread
 // 3. drive thread runs for this amount of cycles
 // 4. main thread doesn't wait for drive thread and goes on (real parallel)
-// 5. depends on which thread finish his work first, threads waits for each other
+// 5. depending on which thread finish his work first, threads waits for each other
 // 6. go to second step and repeat
 // NOTE: main thread runs a few cycles or stops before a iec read/write, then
 // synchronizes with drive thread and goes on. in case of iec access, main thread
@@ -240,7 +240,7 @@ auto IecBus::power() -> void {
     syncPos = 0;
     syncPosRead = (int32_t)(-0.455 * (double)cpuCylcesPerSecond);
     syncPosWrite = (int32_t)(0.455 * (double)cpuCylcesPerSecond);
-    cycleCounter = 0;
+    cycleCounter = ~0;
             
     for( auto drive : drivesEnabled ) {                   
         drive->power();

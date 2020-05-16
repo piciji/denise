@@ -96,9 +96,7 @@ struct ExpansionPort {
     
     virtual auto setJumper( unsigned jumperId, bool state ) -> void {}
     
-    virtual inline auto cycleLo() -> void {}   
-    
-    virtual inline auto cycleHi() -> void {}   
+    virtual inline auto clock() -> void {}   
     
     virtual auto serialize(Emulator::Serializer& s) -> void {
         

@@ -3,7 +3,7 @@
 
 namespace LIBC64 {
 
-auto VicII::readIO( uint8_t addr ) -> uint8_t {
+auto VicII::readReg( uint8_t addr ) -> uint8_t {
 	uint8_t value = 0;
 	addr &= 0x3f;
     
@@ -80,12 +80,12 @@ auto VicII::readIO( uint8_t addr ) -> uint8_t {
 			break;
         }        
         case 0x1e: {
-			value = spriteSpriteCollided;
+			value = spriteSpriteCollidedRead;
 			clearCollision = 0x1e;			
 			break;
         }
         case 0x1f: {
-			value = spriteForegroundCollided;
+			value = spriteForegroundCollidedRead;
 			clearCollision = 0x1f;			
 			break;
         }        
@@ -97,21 +97,14 @@ auto VicII::readIO( uint8_t addr ) -> uint8_t {
 			value = colorReg[ addr ] | 0xf0;
 			break;
     }
-	
-	lastBusPhi2 = value;
+
+    if (spriteOpenBus)
+        updateSpriteWithBusValue(value);
 	
 	return value;
 }
 
-// the write happens concurrent to Vic second half cycle
-auto VicII::writeIOPipelined(uint8_t addr, uint8_t value) -> void {	
-	registerWrite.addr = addr & 0x3f;
-	registerWrite.value = value;
-	registerWrite.pipelined = true;
-	lastBusPhi2 = value; // bus value could be used second half cycle for sprite fetches
-}
-
-auto VicII::writeIO( uint8_t addr, uint8_t value ) -> void {
+auto VicII::writeReg( uint8_t addr, uint8_t value ) -> void {
     addr &= 0x3f;
 	
     switch( addr ) {        
@@ -193,12 +186,12 @@ auto VicII::writeIO( uint8_t addr, uint8_t value ) -> void {
         case 0x19: {
 			// seted bits: disable, unseted bits: no change
 			irqLatch &= ~((value & 0xf) | 0x80);		
-            updateIrq();            
+            irqLatchPending |= 0x80;
         } break;
         
         case 0x1a: {
             irqEnable = value & 15;
-            updateIrq();
+            irqLatchPending |= 0x80;
         } break;
         case 0x1b: {
             for( unsigned i = 0; i < 8; i++ )
@@ -249,6 +242,9 @@ auto VicII::writeIO( uint8_t addr, uint8_t value ) -> void {
             // 2f - 3f
             break;
     }
+    
+    if (spriteOpenBus)
+        updateSpriteWithBusValue(value);
 }
 
 }
