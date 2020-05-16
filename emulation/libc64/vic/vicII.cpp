@@ -312,6 +312,7 @@ auto VicII::power() -> void {
     hFlipFlop = true;
     vFlipFlop = vFlipFlopShadow = true;
     idleMode = true;    
+	idleModeTemp = true;
     initVCounter = false;
     refreshCounter = 0xff;     
     sprite0DmaLateBA = false;

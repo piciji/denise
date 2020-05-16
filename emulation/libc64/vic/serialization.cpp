@@ -68,6 +68,7 @@ auto VicII::serialize(Emulator::Serializer& s) -> void {
     s.integer( vFlipFlop );
     s.integer( vFlipFlopShadow );
     s.integer( idleMode );
+	s.integer( idleModeTemp );
     s.integer( initVCounter );
     s.integer( refreshCounter );
     s.integer( ntsc );

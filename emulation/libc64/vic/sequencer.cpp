@@ -146,7 +146,7 @@ template<bool phi1> inline auto VicII::sequencerPix2( ) -> void {
 			updateMc8565();
 		
         if (updatePrioExpand) {
-            updatePrioExpand = 0;
+            updatePrioExpand = false;
             
             for(unsigned i=0; i < 8; i++) {
                 sprite[i].usePrioMD = sprite[i].prioMD;
@@ -201,9 +201,9 @@ template<bool phi1> inline auto VicII::sequencerPix3(  ) -> void {
         if (!rev65)
             modeEcmBmmSequencer = modeEcmBmm; // update ECM & BMM
                
-            for( unsigned i = 0; i < 8; i++ )
-                // changed sprite x register have 4 pixel delay
-                sprite[i].useX = sprite[i].x;
+		for( unsigned i = 0; i < 8; i++ )
+			// changed sprite x register have 4 pixel delay
+			sprite[i].useX = sprite[i].x;
 		        
     } else {
 		xCounterSprites += 4;

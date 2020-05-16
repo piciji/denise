@@ -394,6 +394,8 @@ auto VicII::reuBaLow() -> bool {
 inline auto VicII::updateBadLine() -> void {
 			
 	badLine = allowBadlines && (yScroll == (vCounter & 7));
+	
+	idleModeTemp = idleMode;
 }
 
 inline auto VicII::borderControl() -> void {
@@ -542,7 +544,7 @@ auto VicII::fetchG() -> void {
     else
         useMode = modeEcmBmmDma; //is delayed one cycle for 85xx chips
     
-    if ( idleMode ) {
+    if ( idleModeTemp ) {
         addr = VIC_MODE_ECM(useMode) ? 0x39ff : 0x3fff;
 		
     } else {

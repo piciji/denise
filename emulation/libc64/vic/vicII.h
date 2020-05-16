@@ -180,6 +180,7 @@ protected:
     bool vFlipFlop;
 	bool vFlipFlopShadow;
     bool idleMode;
+	bool idleModeTemp;
     bool initVCounter;    
     bool lpTrigger;
     
