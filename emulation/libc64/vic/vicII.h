@@ -48,7 +48,7 @@ struct VicII {
     std::function<void ()> midScreenCallback;
     std::function<void ()> vblankCallback;
     
-    enum Interrupt { None = -1, Raster = 0, MBC = 1, MMC = 2, LP = 3 };		   
+    enum Interrupt { Raster = 0, MBC = 1, MMC = 2, LP = 3, Update = 4 };		   
     
 	// vic emulation code buffers visible data for whole non blanking area.
 	// following struct contains pixel widths to crop away complete border or
@@ -69,12 +69,6 @@ struct VicII {
 		unsigned leftOverscan;
 		unsigned rightOverscan;
     } crop;
-
-	struct {
-		bool pipelined;
-		uint8_t addr;
-		uint8_t value;
-	} registerWrite;
     
     struct {
         bool use;
@@ -94,12 +88,10 @@ struct VicII {
 	auto setBorderData() -> void;
     
 	auto power() -> void;    
-    template<bool _useSequencer> auto phase1() -> void;
-    template<bool _useSequencer> auto phase2() -> void;    
+    template<bool _useSequencer> auto clock() -> void;   
 	
-    auto writeIO(uint8_t addr, uint8_t value) -> void;
-	auto writeIOPipelined(uint8_t addr, uint8_t value) -> void;
-    auto readIO(uint8_t addr) -> uint8_t;
+    auto writeReg(uint8_t addr, uint8_t value) -> void;
+    auto readReg(uint8_t addr) -> uint8_t;
     auto setNtsc( bool state ) -> void;
 	auto setRevision65( bool state ) -> void;
     auto isRevision65() -> bool;
@@ -134,7 +126,6 @@ protected:
     double chroma[16]; // as angle on color wheel
     
 	uint8_t lastReadPhi1;
-	uint8_t lastBusPhi2;
     uint8_t render[4];
     uint8_t renderPipe[8];
     uint8_t colorReg[0x2f];
@@ -156,10 +147,11 @@ protected:
     uint8_t aecDelay;
     bool spriteBa[9][65];
 	bool allowBadlines;
+    bool badLine;
 	
     uint16_t irqLine;
 	bool lineIrqMatched;
-	bool lpIrqPending;
+    uint8_t irqLatchPending;
     
     bool den;
     unsigned borderTop;
@@ -192,6 +184,7 @@ protected:
     bool vFlipFlop;
 	bool vFlipFlopShadow;
     bool idleMode;
+	bool idleModeTemp;
     bool initVCounter;    
     bool lpTrigger;
     
@@ -225,6 +218,7 @@ protected:
         uint16_t cBufferPipe2;
         uint8_t xScroll;
         uint8_t gBuffer;
+        bool gBufferUse;
         uint8_t gBufferPipe1;
         uint8_t gBufferPipe2;
 		bool enable;
@@ -263,17 +257,18 @@ protected:
 		bool expandYFlop;
         bool expandXFlop;
         uint8_t colorCode;
-    } sprite[8], *sprite0, *sprite1, *sprite2, *sprite3, *sprite4, *sprite5, *sprite6, *sprite7;
-	
+    } sprite[8], *sprite0, *sprite1, *sprite2, *sprite3, *sprite4, *sprite5, *sprite6, *sprite7, *spriteOpenBus;
+    
+    uint8_t lastSpriteShift;	
     uint8_t spriteTrigger;
-    uint8_t spriteDisplay;
     uint8_t spritePending;
     
 	uint8_t spriteForegroundCollided;
-	uint8_t spriteSpriteCollided;    
+    uint8_t spriteForegroundCollidedRead;
+	uint8_t spriteSpriteCollided;
+    uint8_t spriteSpriteCollidedRead;    
     uint8_t spriteDmaCycle1;
     uint8_t spriteDmaCycle2;
-    bool spriteDisplayCycle;
 	uint8_t clearCollision;
 	bool canSpriteSpriteCollisionIrq;
 	bool canSpriteForegroundCollisionIrq;
@@ -290,7 +285,7 @@ protected:
     uint16_t* xLookupPtrPhi2;
     bool enableSequencer = true;
             		
-    auto updateIrq( Interrupt interrupt = None ) -> void;
+    auto updateIrq( Interrupt interrupt = Update ) -> void;
 	template<bool phi1> auto checkLightPen( ) -> void;	
 	
 	//dma
@@ -306,26 +301,28 @@ protected:
 	auto updateVc() -> void;
 	auto updateRc() -> void;
 	auto updateBAState() -> void;	      
-    auto badLine() -> bool;
+    auto updateBadLine() -> void;
 	auto borderControl() -> void;
-	auto borderLeft( bool c17 ) -> void;
-	auto borderRight( bool c56 ) -> void;
+	template<bool first> auto borderLeft( ) -> void;
+	template<bool first> auto borderRight( ) -> void;
 	auto idleCycle() -> void;
 	auto refresh() -> void;
-	auto fetchSpriteP( uint8_t pos ) -> void;
+	template<uint8_t pos> auto fetchSpriteP(  ) -> void;
     auto fetchSpriteS0( uint8_t pos ) -> void;
-    auto fetchSpriteS1( uint8_t pos ) -> void;
+    template<uint8_t pos> auto fetchSpriteS1(  ) -> void;
     auto fetchSpriteS2( uint8_t pos ) -> void;    
-    auto fetchSpriteSPhi2( uint8_t pos, bool last ) -> void;
+    auto fetchSpriteSPhi2( uint8_t pos ) -> void;
 	auto fetchC() -> void;
     auto addrG( uint8_t useMode ) -> uint16_t;
     auto fetchG() -> void;    
     template<bool permanent> auto insertVerticalLineAnomaly(unsigned start, unsigned end) -> void;
 	auto insertVerticalLineAnomaly(unsigned start, unsigned end) -> void;
 	auto initVerticalLineAnomaly() -> void;
+    auto updateSpriteWithBusValue(uint8_t value) -> void;
 	
 	//sequencer
-	template<bool phi1> auto sequencer(  ) -> void;
+	auto sequencer( ) -> void;
+    auto sequencerSilent( ) -> void;
 	template<bool phi1> auto sequencerPix0(  ) -> void;
 	template<bool phi1> auto sequencerPix1(  ) -> void;
 	template<bool phi1> auto sequencerPix2(  ) -> void;
@@ -342,7 +339,8 @@ protected:
 	template<bool phi1> auto draw65( uint8_t x, uint8_t x1 ) -> void;
 	template<bool phi1> auto draw85( uint8_t x ) -> void;
 	template<bool phi1> auto draw() -> void;        
-    void buildXCounterLookupTable();
+    void buildXCounterLookupTable();    
+    std::function<void ()> onHalfCycle = nullptr;
 };
 
 extern VicII* vicII;

@@ -21,9 +21,6 @@ auto Sid::serialize(Emulator::Serializer& s) -> void {
     s.integer( registerWrite.pipelined );
     s.integer( registerWrite.addr );
     s.integer( registerWrite.value );
-    s.integer( registerWriteThreaded.pipelined );
-    s.integer( registerWriteThreaded.addr );
-    s.integer( registerWriteThreaded.value );
     //s.integer( moreAccuracy );
     s.integer( reserved );
     s.integer( sampleCounter );

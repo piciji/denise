@@ -1,181 +1,146 @@
 
 #include "vicII.h"
 
-namespace LIBC64 {
+namespace LIBC64 {    
 
-template<bool _useSequencer> auto VicII::phase1() -> void {	
+template<bool _useSequencer> auto VicII::clock() -> void {
     advanceCycle();
-    xCounter = xLookupPtrPhi1[cycle];
-    checkLightPen<true>();
-    setLineInterrupt();	
+    updateBadLine();
+    setLineInterrupt();
 
     if (_useSequencer)
-        sequencer<true>(  );    		
-            
-    switch( cycle )  {
-        case 0: ntsc ? fetchSpriteS1( 3 )		: fetchSpriteP( 3 );	break;		
-		case 1: ntsc ? fetchSpriteP( 4 )		: fetchSpriteS1( 3 );	break;
-		case 2: ntsc ? fetchSpriteS1( 4 )		: fetchSpriteP( 4 );	break;	
-		case 3: ntsc ? fetchSpriteP( 5 )		: fetchSpriteS1( 4 );	break;		
-		case 4: ntsc ? fetchSpriteS1( 5 )		: fetchSpriteP( 5 );	break;		
-		case 5: ntsc ? fetchSpriteP( 6 )		: fetchSpriteS1( 5 );	break;		
-		case 6: ntsc ? fetchSpriteS1( 6 )		: fetchSpriteP( 6 );	break;		
-		case 7: ntsc ? fetchSpriteP( 7 )		: fetchSpriteS1( 6 );	break;		
-		case 8: ntsc ? fetchSpriteS1( 7 )		: fetchSpriteP( 7 );	break;		
-		case 9: ntsc ? idleCycle()              : fetchSpriteS1( 7 );	break;		
-		case 10: refresh();                             				break;		
-		case 11: refresh();	cAccessArea = 1;                			break;		
-		case 12: refresh();                                 			break;		
-		case 13: refresh();                                     		break;		
-		case 14: refresh();                                     		break;		
-		case 15: 
-			display.enable = true;
-			fetchG();
-			break;
-		case 16:
-			borderLeft( true );
-			fetchG();
-			break;
-		case 17:
-			borderLeft( false );
-			fetchG();
-			break;		
-		case 18: case 19:
-		case 20: case 21: case 22: case 23: case 24:
-		case 25: case 26: case 27: case 28: case 29:
-		case 30: case 31: case 32: case 33: case 34:
-		case 35: case 36: case 37: case 38: case 39:
-		case 40: case 41: case 42: case 43: case 44:
-		case 45: case 46: case 47: case 48: case 49:
-		case 50: case 51: case 52: case 53:
-            fetchG();
+        sequencer();  
+    else
+        sequencerSilent();
+
+    switch (cycle) {
+        case 0: if (ntsc)   { fetchSpriteS1<3>(); fetchSpriteS2(3); } 
+                else        { fetchSpriteP<3>(); fetchSpriteS0(3); }
+                break;
+        case 1: if (ntsc)   { fetchSpriteP<4>(); fetchSpriteS0(4); }
+                else        { fetchSpriteS1<3>(); fetchSpriteS2(3); }
+                break;
+        case 2: if (ntsc)   { fetchSpriteS1<4>(); fetchSpriteS2(4); }
+                else        { fetchSpriteP<4>(); fetchSpriteS0(4); }
+                break;
+        case 3: if(ntsc)    { fetchSpriteP<5>(); fetchSpriteS0( 5 ); }
+                else        { fetchSpriteS1<4>(); fetchSpriteS2( 4 ); }
+                break;
+        case 4: if(ntsc)    { fetchSpriteS1<5>(); fetchSpriteS2(5); }
+                else        { fetchSpriteP<5>(); fetchSpriteS0(5); }
+                break;
+        case 5: if(ntsc)    { fetchSpriteP<6>(); fetchSpriteS0(6); }
+                else        { fetchSpriteS1<5>(); fetchSpriteS2(5); }
+                break;
+        case 6: if(ntsc)    { fetchSpriteS1<6>(); fetchSpriteS2(6); }
+                else        { fetchSpriteP<6>(); fetchSpriteS0(6); }
+                break;
+        case 7: if(ntsc)    { fetchSpriteP<7>(); fetchSpriteS0(7); }
+                else        { fetchSpriteS1<6>(); fetchSpriteS2(6); }
+                break;
+        case 8: if(ntsc)    { fetchSpriteS1<7>(); fetchSpriteS2(7); }
+                else        { fetchSpriteP<7>(); fetchSpriteS0(7); }
+                break;
+        case 9: if(ntsc)    { idleCycle(); }
+                else        { fetchSpriteS1<7>(); fetchSpriteS2( 7 ); }
+                break;
+        case 10: refresh();
+            cAccessArea = true;
             break;
-		case 54: 
-            cAccessArea = 0;
-			if(!ntsc)
-				spriteDmaCheck();
-			fetchG();
-			break;
-			
-		case 55: 
-			borderRight(true);
-			spriteDmaCheck();
-			idleCycle();
-			break;					
-		case 56:
-			borderRight(false);
-			if(ntsc)
-				spriteDmaCheck();
-			idleCycle();	
-			break;						
-		case 57:
-			if(ntsc) {
-				idleCycle();
-			} else {
-				spriteDisplayCheck();
-				fetchSpriteP( 0 );
-			}			
-			break;
-		
-		case 58:
-			if(ntsc) {
-				spriteDisplayCheck();
-				fetchSpriteP( 0 );
-			} else {
-				fetchSpriteS1( 0 );
-			}
-			break;
-				
-		case 59: ntsc ? fetchSpriteS1( 0 )		: fetchSpriteP( 1 );	break;	
-		case 60: ntsc ? fetchSpriteP( 1 )		: fetchSpriteS1( 1 );	break;		
-		case 61: ntsc ? fetchSpriteS1( 1 )		: fetchSpriteP( 2 );	break;		
-		case 62: ntsc ? fetchSpriteP( 2 )		: fetchSpriteS1( 2 );	break;		
-		case 63: fetchSpriteS1( 2 ); break;		
-		case 64: fetchSpriteP( 3 ); break;
-    }
-    
-    if(lastColorReg != 0xff)
-        // is updated between the half cycles
-        colorUse[ lastColorReg ] = colorReg[ lastColorReg ];  
-	
-	borderControl();
-	updateBAState();
-	clearCollisions();
-}
+        case 11: refresh();            
+            break;
+        case 12: refresh();
+            break;
+        case 13: refresh(); updateVc();
+            break;
+        case 14: refresh(); fetchC();
+            display.enable = true;
+            break;
+        case 15:            
+            fetchG();
+            spriteUpdateBase();
+            fetchC();
+            onHalfCycle = [this]() { borderLeft<true>(); };
+            break;
+        case 16:
+            fetchG();
+            fetchC();
+            onHalfCycle = [this]() { borderLeft<false>(); };
+            break;
+        case 17: case 18: case 19:
+        case 20: case 21: case 22: case 23: case 24:
+        case 25: case 26: case 27: case 28: case 29:
+        case 30: case 31: case 32: case 33: case 34:
+        case 35: case 36: case 37: case 38: case 39:
+        case 40: case 41: case 42: case 43: case 44:
+        case 45: case 46: case 47: case 48: case 49:
+        case 50: case 51: case 52:
+            fetchG();
+            fetchC();            
+            break;
+        case 53:
+            fetchG();
+            fetchC();            
+            cAccessArea = false;
+            if (!ntsc)
+                onHalfCycle = [this]() { spriteDmaCheck(); };
+            break;
+        case 54:    
+            fetchG();
+            display.enable = false;
+            onHalfCycle = [this]() { borderRight<true>(); spriteDmaCheck(); };
+            break;
+        case 55:
+            idleCycle();
+            spriteFlip();
+            onHalfCycle = [this]() { borderRight<false>(); if(ntsc) spriteDmaCheck(); };
+            break;
+        case 56:
+            if (!ntsc)
+                spriteDmaCycle1 = 0x80;
+            idleCycle();
+            break;
+        case 57:    if (ntsc)   { idleCycle(); updateRc(); spriteDmaCycle1 = 0x80; }
+                    else        { spriteDisplayCheck(); fetchSpriteP<0>(); updateRc(); fetchSpriteS0(0); }            
+                    break;
+        case 58:    if (ntsc)   { spriteDisplayCheck(); fetchSpriteP<0>(); fetchSpriteS0(0); }
+                    else        { fetchSpriteS1<0>(); fetchSpriteS2(0); }
+                    break;
+        case 59:    if (ntsc)   { fetchSpriteS1<0>(); fetchSpriteS2(0); }
+                    else        { fetchSpriteP<1>(); fetchSpriteS0(1); }
+                    break;
+        case 60:    if (ntsc)   { fetchSpriteP<1>(); fetchSpriteS0(1); }
+                    else        { fetchSpriteS1<1>(); fetchSpriteS2(1); }
+                    break;
+        case 61:    if (ntsc)   { fetchSpriteS1<1>(); fetchSpriteS2(1); }
+                    else        { fetchSpriteP<2>(); fetchSpriteS0(2); }
+                    break;
+        case 62:    if (ntsc)   { fetchSpriteP<2>(); fetchSpriteS0(2); }
+                    else        { fetchSpriteS1<2>(); fetchSpriteS2(2); }
+                    break;
+        // ntsc only
+        case 63:    fetchSpriteS1<2>(); fetchSpriteS2(2);
+                    break;
+        case 64:    fetchSpriteP<3>(); fetchSpriteS0(3);
+                    break;
+    }        
 
-template<bool _useSequencer> auto VicII::phase2() -> void {
-    xCounter = xLookupPtrPhi2[cycle];
-	checkLightPen<false>();
-
-    if (_useSequencer)
-        sequencer<false>(  );      
-    
-    switch( cycle )  {
-		case 0: ntsc ? fetchSpriteS2( 3 )		: fetchSpriteS0( 3 );	break;		
-		case 1: ntsc ? fetchSpriteS0( 4 )		: fetchSpriteS2( 3 );	break;
-		case 2: ntsc ? fetchSpriteS2( 4 )		: fetchSpriteS0( 4 );	break;
-		case 3: ntsc ? fetchSpriteS0( 5 )		: fetchSpriteS2( 4 );	break;		
-		case 4: ntsc ? fetchSpriteS2( 5 )		: fetchSpriteS0( 5 );	break;		
-		case 5: ntsc ? fetchSpriteS0( 6 )		: fetchSpriteS2( 5 );	break;		
-		case 6: ntsc ? fetchSpriteS2( 6 )		: fetchSpriteS0( 6 );	break;	
-		case 7: ntsc ? fetchSpriteS0( 7 )		: fetchSpriteS2( 6 );	break;		
-		case 8: ntsc ? fetchSpriteS2( 7 )		: fetchSpriteS0( 7 );	break;		
-		case 9: if (!ntsc) fetchSpriteS2( 7 );                          break;		
-		case 10:														break;		
-		case 11:														break;		
-		case 12:														break;		
-		case 13: updateVc();											break;			
-		case 14: fetchC();												break;				
-		case 15:
-			spriteUpdateBase();
-			fetchC();
-			break;
-		case 16: case 17: case 18: case 19:
-		case 20: case 21: case 22: case 23: case 24:
-		case 25: case 26: case 27: case 28: case 29:
-		case 30: case 31: case 32: case 33: case 34:
-		case 35: case 36: case 37: case 38: case 39:
-		case 40: case 41: case 42: case 43: case 44:
-		case 45: case 46: case 47: case 48: case 49:
-		case 50: case 51: case 52: case 53:			
-			fetchC();
-			break;			
-		case 54: display.enable = false;								break;			
-		case 55: spriteFlip();											break;			
-		case 56:														break;			
-		case 57: updateRc();
-			if (!ntsc) fetchSpriteS0( 0 );								break;		
-		case 58: ntsc ? fetchSpriteS0( 0 )		: fetchSpriteS2( 0 );	break;		
-		case 59: ntsc ? fetchSpriteS2( 0 )		: fetchSpriteS0( 1 );	break;		
-		case 60: ntsc ? fetchSpriteS0( 1 )		: fetchSpriteS2( 1 );	break;		
-		case 61: ntsc ? fetchSpriteS2( 1 )		: fetchSpriteS0( 2 );	break;		
-		case 62: ntsc ? fetchSpriteS0( 2 )		: fetchSpriteS2( 2 );	break;		
-		case 63: fetchSpriteS2( 2 ); break;		
-		case 64: fetchSpriteS0( 3 ); break;
-    }
-	
     // copy state of ECM / BMM directly before a possible write in order
     // to delay it one cycle for DMA fetch logic
-    modeEcmBmmDma = modeEcmBmm;	
+    modeEcmBmmDma = modeEcmBmm;
     // we reset last color reg a little bit later, because of
     // we have to find out for the new vics if it is accessed
     // in the fifth pixel, see grey dot bug
-    lastColorReg = 0xff;	                
-}
+    lastColorReg = 0xff;	         
+}    
 
-__attribute__((always_inline)) auto VicII::advanceCycle() -> void {    
-    // first we apply a possible register write at beginning of a new cycle
-    // instead of cycle end, because of irq state changes by writing to 0x19 
-    // or 0x1a mustn't be recognized by cpu in previous cycle.
-    if (registerWrite.pipelined ) {
-		registerWrite.pipelined = false;
-		writeIO( registerWrite.addr, registerWrite.value );
-	}
-    
-	if (lpIrqPending) {
-		lpIrqPending = false;
-		updateIrq( Interrupt::LP );
-	}
+__attribute__((always_inline))  auto VicII::advanceCycle() -> void {    
+
+    if (irqLatchPending) {
+        irqLatch |= irqLatchPending & 0x7f;
+        updateIrq();
+        irqLatchPending = 0;
+    } 
 	
 	// a written DEN bit in last cycle of 0x30 is recognized
     if ( !allowBadlines && (vCounter == 0x30) && den )
@@ -247,7 +212,7 @@ __attribute__((always_inline)) auto VicII::advanceCycle() -> void {
 	} else if (cycle == 1)
 		setLineBuffer();  
 
-	lastBusPhi2 = 0xff; // clear internal bus    
+    spriteOpenBus = nullptr;
     sprite0DmaLateBA = false;
 }
 
@@ -274,7 +239,9 @@ inline auto VicII::setLineInterrupt() -> void {
 }
 
 inline auto VicII::clearCollisions() -> void {
-	
+    spriteSpriteCollidedRead = spriteSpriteCollided;
+    spriteForegroundCollidedRead = spriteForegroundCollided;
+
 	// is cleared one cycle after read, means collisions in second half
 	// and following first half cycle will be ignored
 	if (clearCollision == 0x1e)
@@ -308,7 +275,7 @@ auto VicII::spriteUpdateBase() -> void {
     }
 }
 // cycle: 55-1 + 56-1
-auto VicII::spriteDmaCheck() -> void {
+inline auto VicII::spriteDmaCheck() -> void {
     
     for( uint8_t i = 0; i < 8; i++ ) {
         Sprite* spr = &sprite[i];
@@ -337,7 +304,6 @@ auto VicII::spriteFlip() -> void {
 }
 // cycle: 58-1
 auto VicII::spriteDisplayCheck() -> void {
-    spriteDisplayCycle = true;
             
     for( uint8_t i = 0; i < 8; i++ ) {
 		Sprite* spr = &sprite[i];
@@ -346,9 +312,9 @@ auto VicII::spriteDisplayCheck() -> void {
         
         if (spr->dma) {
             if (spr->enabled && ( (vCounter & 0xff) == spr->y ) )  
-                spriteDisplay |= 1 << i;
+                spritePending |= 1 << i;
         } else 
-            spriteDisplay &= ~(1 << i);
+            spritePending &= ~(1 << i);
     }    
 }
 
@@ -383,7 +349,7 @@ inline auto VicII::updateSpriteBaState( uint8_t sprNr, bool dmaActive ) -> void 
 auto VicII::updateVc() -> void {
 	display.vc = display.vcBase;
 	display.vmli = 0;
-	if (badLine())
+	if (badLine)
 		display.rc = 0;
 }
 // cycle: 58-2
@@ -392,7 +358,7 @@ auto VicII::updateRc() -> void {
 		display.vcBase = display.vc;
 		idleMode = true;            
 	} 
-	if (!idleMode || badLine()) {
+	if (!idleMode || badLine) {
 		display.rc = (display.rc + 1) & 7;
 		idleMode = false;            
 	}		
@@ -400,13 +366,11 @@ auto VicII::updateRc() -> void {
 
 inline auto VicII::updateBAState() -> void {
 	
-	bool _badLine = badLine();
-	
-	if (_badLine)
+	if (badLine)
 		idleMode = false;	
     
     if (cAccessArea) // 11 <= cycle <= 53
-        baLow = _badLine; // for "c" accesses, no sprites pos
+        baLow = badLine; // for "c" accesses, no sprites pos
         
     else
 		baLow = spriteBa[8][ cycle ]; // for "s" accesses    
@@ -426,15 +390,15 @@ auto VicII::reuBaLow() -> bool {
     // there is a known case, when BA calculation takes more time within cycle.
     // for cpu it doesn't matter, because it checks later in cycle.
     // REU seems to check this sooner and can't recognize BA in this special cycle.
-    // yeah i know this is a hack, because VIC is not aware of REU.
-    // it's a limitation of half cycle accuracy.
     
     return baLow && !sprite0DmaLateBA;
 }
 
-inline auto VicII::badLine() -> bool {
+inline auto VicII::updateBadLine() -> void {
 			
-	return allowBadlines && (yScroll == (vCounter & 7));
+	badLine = allowBadlines && (yScroll == (vCounter & 7));
+	
+	idleModeTemp = idleMode;
 }
 
 inline auto VicII::borderControl() -> void {
@@ -449,9 +413,9 @@ inline auto VicII::borderControl() -> void {
         vFlipFlop = vFlipFlopShadow;
 }
 
-auto VicII::borderLeft( bool c17 ) -> void {
+template<bool first> auto VicII::borderLeft(  ) -> void {
 	
-	if ((cSel && c17) || (!cSel && !c17)) {
+	if ((cSel && first) || (!cSel && !first)) {
 		if (vCounter == borderBottom) 
 			vFlipFlopShadow = true;
 		
@@ -462,9 +426,9 @@ auto VicII::borderLeft( bool c17 ) -> void {
 	}
 }
 
-auto VicII::borderRight( bool c56 ) -> void {
+template<bool first> auto VicII::borderRight( ) -> void {
 	
-	if ((!cSel && c56) || (cSel && !c56))
+	if ((!cSel && first) || (cSel && !first))
 		hFlipFlop = 1;
 }
 
@@ -476,9 +440,9 @@ auto VicII::refresh() -> void {
     lastReadPhi1 = read( (0x3f << 8) | refreshCounter-- );
 }
 
-auto VicII::fetchSpriteP( uint8_t pos ) -> void {
+template<uint8_t pos> auto VicII::fetchSpriteP(  ) -> void {
     
-	spriteDmaCycle1 = 0x80 | pos;    
+    spriteDmaCycle2 = 0x80 | pos;    
 	
     Sprite* spr = &sprite[pos];
     
@@ -487,36 +451,46 @@ auto VicII::fetchSpriteP( uint8_t pos ) -> void {
 
 auto VicII::fetchSpriteS0( uint8_t pos ) -> void {    
     
-    fetchSpriteSPhi2( pos, false );
+    lastSpriteShift = 16;
+    fetchSpriteSPhi2( pos );
 }
 
 auto VicII::fetchSpriteS2( uint8_t pos ) -> void {    
-    
-    fetchSpriteSPhi2( pos, true );
+    lastSpriteShift = 0;
+    fetchSpriteSPhi2( pos );
 }
 
-auto VicII::fetchSpriteSPhi2( uint8_t pos, bool last ) -> void {	
+inline auto VicII::fetchSpriteSPhi2( uint8_t pos ) -> void {	
 	
     Sprite* spr = &sprite[pos];
+    spriteOpenBus = spr;
     
-	uint8_t value = lastBusPhi2;
+	uint8_t value = 0xff;    	
 	
-	if ( spr->dma ) {		
-		if ( !aecDelay )
-			value = read( (spr->dataP << 6) | spr->mc );
-		
-		spr->mc++;
-		spr->mc &= 63;	
+	if ( spr->dma ) {	
+		if ( !aecDelay ) {
+            value = read( (spr->dataP << 6) | spr->mc );
+            spriteOpenBus = nullptr;
+        }
+        
+        spr->mc++;
+        spr->mc &= 63;
 	}
     
-	uint8_t shift = last ? 0 : 16;
-	
-	spr->dataS &= ~(0xff << shift);
-	spr->dataS |= value << shift;
+    spr->dataS &= ~(0xff << lastSpriteShift);
+    spr->dataS |= value << lastSpriteShift;        
 }
 
-auto VicII::fetchSpriteS1( uint8_t pos ) -> void {    
-    spriteDmaCycle2 = 0x80 | pos;
+auto VicII::updateSpriteWithBusValue(uint8_t value) -> void {
+    spriteOpenBus->dataS &= ~(0xff << lastSpriteShift);
+    spriteOpenBus->dataS |= value << lastSpriteShift;
+    spriteOpenBus = nullptr;
+}
+
+template<uint8_t pos> auto VicII::fetchSpriteS1( ) -> void {    
+    
+    if (pos != 7)
+        spriteDmaCycle1 = 0x80 | (pos + 1);
 	
     Sprite* spr = &sprite[pos];
 	
@@ -573,7 +547,7 @@ auto VicII::fetchG() -> void {
     else
         useMode = modeEcmBmmDma; //is delayed one cycle for 85xx chips
     
-    if ( idleMode ) {
+    if ( idleModeTemp ) {
         addr = VIC_MODE_ECM(useMode) ? 0x39ff : 0x3fff;
 		
     } else {
@@ -601,7 +575,13 @@ auto VicII::fetchG() -> void {
     }    
     
     lastReadPhi1 = read( addr );    
-    display.gBuffer = lastReadPhi1;    
+    
+    display.gBuffer = lastReadPhi1; 
+    
+    if (display.gBufferUse) {
+        display.gBufferPipe1 = display.gBuffer;
+        display.gBufferUse = false;
+    }
 }
 
 }

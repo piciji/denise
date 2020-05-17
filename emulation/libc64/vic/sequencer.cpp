@@ -7,19 +7,70 @@
 
 namespace LIBC64 {
     
-template<bool phi1> inline auto VicII::sequencer(  ) -> void {            	    
+inline auto VicII::sequencer(  ) -> void {            	    
+
+    xCounter = xLookupPtrPhi1[cycle];
+    checkLightPen<true>();
     
-    sequencerPix0<phi1>(  );
+    sequencerPix0<true>(  );
     
-    sequencerPix1<phi1>(  );
+    sequencerPix1<true>(  );
     
-    sequencerPix2<phi1>(  );
+    sequencerPix2<true>(  );
     
-    sequencerPix3<phi1>(  );
+    sequencerPix3<true>(  );
     
-    borderArea<phi1>(  );
+    borderArea<true>(  );
     
-    draw<phi1>(  );
+    draw<true>(  );
+
+    if (onHalfCycle) {
+        onHalfCycle();
+        onHalfCycle = nullptr;
+    }
+    
+    borderControl();
+    clearCollisions();
+    updateBAState();
+    
+    xCounter = xLookupPtrPhi2[cycle];
+    checkLightPen<false>();
+
+    if (lastColorReg != 0xff)
+        colorUse[ lastColorReg ] = colorReg[ lastColorReg ];
+    
+    sequencerPix0<false>();
+
+    sequencerPix1<false>();
+
+    sequencerPix2<false>();
+
+    sequencerPix3<false>();
+
+    borderArea<false>();
+
+    draw<false>();
+}
+
+inline auto VicII::sequencerSilent(  ) -> void {            	    
+
+    xCounter = xLookupPtrPhi1[cycle];
+    checkLightPen<true>();    
+
+    if (onHalfCycle) {
+        onHalfCycle();
+        onHalfCycle = nullptr;
+    }
+    
+    borderControl();
+    clearCollisions();
+    updateBAState();
+    
+    xCounter = xLookupPtrPhi2[cycle];
+    checkLightPen<false>();
+
+    if (lastColorReg != 0xff)
+        colorUse[ lastColorReg ] = colorReg[ lastColorReg ];
 }
 
 template<bool phi1> inline auto VicII::sequencerPix0(  ) -> void {   
@@ -28,11 +79,11 @@ template<bool phi1> inline auto VicII::sequencerPix0(  ) -> void {
 		if (rev65)
             modeEcmBmmSequencer |= modeEcmBmm; // 0 -> 1 transitions: update ECM + BMM directly after write half cycle       
         
-        if ( spriteDmaCycle2 & 0x80 )
+        if ( spriteDmaCycle2 & 0x40 )
             sprite[spriteDmaCycle2 & 7].dataShiftReg = sprite[spriteDmaCycle2 & 7].dataS;
 
     } else {
-
+       
         // like graphic processing, sprite processing is delayed 8 pixel too.
         // the x-coordinate of a sprite is compared with the x counter, which
         // is 8 pixel in the past to keep alignment with the background.
@@ -95,7 +146,7 @@ template<bool phi1> inline auto VicII::sequencerPix2( ) -> void {
 			updateMc8565();
 		
         if (updatePrioExpand) {
-            updatePrioExpand = 0;
+            updatePrioExpand = false;
             
             for(unsigned i=0; i < 8; i++) {
                 sprite[i].usePrioMD = sprite[i].prioMD;
@@ -105,8 +156,10 @@ template<bool phi1> inline auto VicII::sequencerPix2( ) -> void {
         
 	} else {
 		
-		if ( spriteDmaCycle2 & 0x80 ) // when sprite dma completes this cycle
+		if ( spriteDmaCycle2 & 0x80 ) { // when sprite dma completes this cycle
             sprite[spriteDmaCycle2 & 7].active = false;                                     
+            spriteDmaCycle2 |= 0x40;
+        }
 	}
 	
 	graphicSequencer( phi1 ? 6 : 2 );
@@ -123,18 +176,20 @@ template<bool phi1> inline auto VicII::sequencerPix3(  ) -> void {
 		
         modeMcmSequencer = modeMcm;
         
-		if ( spriteDmaCycle2 & 0x80 ) 
+		if ( spriteDmaCycle2 & 0x40 ) {
             sprite[spriteDmaCycle2 & 7].halt = false;
-
-		spriteDmaCycle1 = spriteDmaCycle2 = 0;
+            spriteDmaCycle2 = 0;
+        }
 		
 		if (updateMc && rev65)
 			updateMc6569();
 		
 	} else {
 		
-		if ( spriteDmaCycle1 & 0x80 ) // first sprite dma cycle
-            sprite[spriteDmaCycle1 & 7].halt = true;		                    		
+		if ( spriteDmaCycle1 & 0x80 )  {// first sprite dma cycle
+            sprite[spriteDmaCycle1 & 7].halt = true;	
+            spriteDmaCycle1 = 0;
+        }
     }
 			
 	graphicSequencer( phi1 ? 7 : 3 );
@@ -146,16 +201,11 @@ template<bool phi1> inline auto VicII::sequencerPix3(  ) -> void {
         if (!rev65)
             modeEcmBmmSequencer = modeEcmBmm; // update ECM & BMM
                
-            for( unsigned i = 0; i < 8; i++ )
-                // changed sprite x register have 4 pixel delay
-                sprite[i].useX = sprite[i].x;
+		for( unsigned i = 0; i < 8; i++ )
+			// changed sprite x register have 4 pixel delay
+			sprite[i].useX = sprite[i].x;
 		        
     } else {
-		
-		if (spriteDisplayCycle) { // when sprite display cycle in first half passed
-            spritePending = spriteDisplay;        
-            spriteDisplayCycle = false;		
-		}
 		xCounterSprites += 4;
     }            
 }
@@ -167,6 +217,8 @@ inline auto VicII::pipeGraphic() -> void {
 	
 	if (display.enable && !vFlipFlop) {
 		display.gBufferPipe1 = display.gBuffer;
+        display.gBufferUse = true;
+        
 		display.xScroll = controlReg2 & 7;
 
 		if (!idleMode) 
@@ -174,8 +226,10 @@ inline auto VicII::pipeGraphic() -> void {
 		else
 			display.cBufferPipe1 = 0;
 
-	} else 
+	} else {
 		display.gBufferPipe1 = 0;
+        display.gBufferUse = false;
+    }
 
 	if (display.enable)
 		display.dmli++;
@@ -336,7 +390,7 @@ inline auto VicII::spriteSequencer(  ) -> void {
             if (sprUse->shiftOut == 1) display.color = 0x25; // mc color register 1
             else if (sprUse->shiftOut == 3) display.color = 0x26; // mc color register 2
             else if (sprUse->shiftOut == 2) display.color = sprUse->colorCode; // sprite color
-            // shiftOut == 0 can not be happen at this point
+            // shiftOut == 0 can not happen at this point
         }
 
         if (display.isForeground())

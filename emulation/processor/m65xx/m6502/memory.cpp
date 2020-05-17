@@ -8,7 +8,7 @@ template<uint8_t cycle> auto M6502::read( uint16_t addr, bool lastCycle ) -> uin
     ctx->addrBus = addr;
     ctx->writeCycle = false;
     
-    ctx->syncLo();            
+    ctx->sync();
     
 #ifdef SUPPORT_SO    
     handleSo();
@@ -38,14 +38,15 @@ template<uint8_t cycle> auto M6502::read( uint16_t addr, bool lastCycle ) -> uin
 //        if ( ctx->xaa )
 //            influence is not understood yet     
 //            A &= ctx->dataBus;
-        
+#ifdef SUPPORT_HALF_CYCLE        
         ctx->syncHi();                
-        
+#endif        
         detectInterrupt(); 
-        
+                        
                 
 		// rdy prolongs complete cycles, not half cycles
-        ctx->syncLo();
+        ctx->sync();
+        
 #ifdef SUPPORT_SO            
         handleSo();
 #endif       
@@ -75,7 +76,7 @@ template<uint8_t cycle> auto M6502::read( uint16_t addr, bool lastCycle ) -> uin
     // Note: data have to be stable for only ~125 ns ... 
     // in case of C64 at ~1 Mhz second half cycle lasts ~500 ns.
     // means final value readed back could change within 375 ns.
-    // to modulate this best a synHi-Pre and syncHi-Post
+    // to modulate this best a syncHi-Pre and syncHi-Post
     // with the "read" in between would be best but what about performance.
     // so better not.
     // in most cases a value isn't change that late anymore and doing it after
@@ -86,9 +87,9 @@ template<uint8_t cycle> auto M6502::read( uint16_t addr, bool lastCycle ) -> uin
     // 2. expansion port dma tricks used by easy flash kernal replacement.
     
     data = busRead( addr ); //read bus (second half cycle)
-        
+#ifdef SUPPORT_HALF_CYCLE	
     ctx->syncHi();    
-	
+#endif	
     detectInterrupt(); //happens during second half cycle ( falling edge of phi2 )
     
     return data;
@@ -99,7 +100,7 @@ auto M6502::write( uint16_t addr, uint8_t data, bool lastCycle ) -> void {
     ctx->addrBus = addr;
     ctx->writeCycle = true;
     
-    ctx->syncLo();          
+    ctx->sync();       
     
     if (lastCycle)
         sampleInterrupt();    
@@ -113,9 +114,10 @@ auto M6502::write( uint16_t addr, uint8_t data, bool lastCycle ) -> void {
     // thats why we do the write before syncHi. in the context of another bus participant the write should be pipelined
 	// now and executed to a proper time within syncHi
 	busWrite( addr, ctx->data2 );          
-	
-	ctx->syncHi();    
     
+#ifdef SUPPORT_HALF_CYCLE
+	ctx->syncHi();    
+#endif    
     detectInterrupt();	
 }
 

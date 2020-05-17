@@ -24,16 +24,16 @@ auto Base::read( unsigned pos ) -> uint8_t {
 			return lines.ddrb;
             
         case 4:
-			return timer[T_A].counter & 0xff;
+			return timer[T_A].counterRead & 0xff;
             
         case 5:
-			return timer[T_A].counter >> 8;
+			return timer[T_A].counterRead >> 8;
             
         case 6:
-			return timer[T_B].counter & 0xff;
+			return timer[T_B].counterRead & 0xff;
             
         case 7:
-			return timer[T_B].counter >> 8;
+			return timer[T_B].counterRead >> 8;
             
 		case 8:
 		case 9:
@@ -59,15 +59,6 @@ auto Base::read( unsigned pos ) -> uint8_t {
 	}
     
     __builtin_unreachable(); 
-}
-
-// the write is internal valid at the end of second half cycle.
-// the Vic should be synced before, in order to get right value in case of lightpen trigger
-
-auto Base::writePipelined(unsigned pos, uint8_t value) -> void {
-	registerWrite.addr = pos & 0xf;
-	registerWrite.value = value;
-	registerWrite.pipelined = true;
 }
 
 auto Base::write( unsigned pos, uint8_t value ) -> void {

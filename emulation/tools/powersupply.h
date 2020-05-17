@@ -40,7 +40,7 @@ struct PowerSupply {
 		callbacks.push_back( callback );
 	}
 	
-	auto tick() -> void {
+	auto clock() -> void {
 		
 		if (--ticks == 0) {			
 			for (auto& callback : callbacks)

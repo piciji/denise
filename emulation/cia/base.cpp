@@ -41,8 +41,11 @@ crb( timer[T_B].control )
 
 		timer[i].forceLoad = [this,i]() { timer[i].forceloadCycle = 1; };
         
+        timer[i].disableForceLoad = [this,i]() { timer[i].forceloadCycle = 0; };
+        
         events->registerCallback(
-            { {&(timer[i].start), 1}, {&(timer[i].step), 1}, {&(timer[i].stop), 1}, {&(timer[i].disableOneshot), 1}, {&(timer[i].forceLoad), 2} }
+            { {&(timer[i].start), 1}, {&(timer[i].step), 1}, {&(timer[i].stop), 1}, {&(timer[i].disableOneshot), 1},
+                {&(timer[i].forceLoad), 2}, {&(timer[i].disableForceLoad), 1} }
         );
 	}
     
@@ -75,8 +78,6 @@ auto Base::reset() -> void {
 	sdrValid = false;
     cnt = true;
 	ciaShiftRespawnBug = false;
-	
-	registerWrite.pipelined = false;
     
 	acknowledgeCycle = 0;	
 	maskWriteCycle = 0;
@@ -90,7 +91,7 @@ auto Base::reset() -> void {
 		timer[i].oneshot = 0;
 		timer[i].underflowCycle = 0;
 		timer[i].forceloadCycle = 0;
-		timer[i].latch = timer[i].counter = 0xffff;
+		timer[i].latch = timer[i].counter = timer[i].counterRead = 0xffff;
         timer[i].control = 0;
         timer[i].toggle = true;
 	}
@@ -99,53 +100,44 @@ auto Base::reset() -> void {
 #endif    
 }
 
-auto Base::processLo() -> void {               
-    
+auto Base::clock() -> void {
+    // don't disable it at cycle end, because of a possible register write afterwards
+    timer[0].underflowCycle = timer[1].underflowCycle = false;
+        
 #ifndef CIA_GLOBAL_EVENTS      
-	events->process();
+    events->process();
 #endif    
     // collect all incomming interrupt sources of this cycle
-	icrTemp = 0; 
-	
-    updateState<T_B>( );
-	updateState<T_A>( );	
-	
-	if (flagRaised) {
-		flagRaised = false;
-		handleInterrupt( 0x10 );
-	}		
-	
-	processTod( );	
-    
-    if (serialDelay & 1)
-        handleInterrupt( 8 );           
-  	
-	newVersion ? interruptControl() : interruptControlOld();
-       
-    serialDelay >>= 1; 
-    acknowledgeCycle <<= 1;      
-	maskWriteCycle <<= 1;    
-}
+    icrTemp = 0;
 
-auto Base::processHi() -> void {	
-        	
+    updateState<T_B>();
+    updateState<T_A>();
+
+    if (flagRaised) {
+        flagRaised = false;
+        handleInterrupt(0x10);
+    }
+
+    processTod();
+
+    if (serialDelay & 1)
+        handleInterrupt(8);
+
+    newVersion ? interruptControl() : interruptControlOld();
+
+    serialDelay >>= 1;
+    acknowledgeCycle <<= 1;
+    maskWriteCycle <<= 1;  
+
+    // hi cycle
     intDelay >>= 1;
-	
-    decrement<T_B>( );
-	decrement<T_A>( );	
-	 
-	// cpu write access only, read access happens between the half cycles
-	if ( registerWrite.pipelined ) {
-		registerWrite.pipelined = false;
-		write( registerWrite.addr, registerWrite.value );
-	}
-	
-    // disable possible force load or underflow cycle
-	timer[0].forceloadCycle = timer[1].forceloadCycle = false;
-	timer[0].underflowCycle = timer[1].underflowCycle = false;
+
+    decrement<T_B>();
+    decrement<T_A>();
+
     // disable possible single step
-	timer[0].run &= ~2;
-	timer[1].run &= ~2;	     
+    timer[0].run &= ~2;
+    timer[1].run &= ~2;	 
 }
 
 inline auto Base::interruptControl() -> void {
@@ -227,7 +219,8 @@ auto Base::handleInterrupt( uint8_t number ) -> void {
 
 template<uint8_t timerId> inline auto Base::decrement( ) -> void {
 	Timer* pTimer = &timer[timerId];		
-	
+	pTimer->counterRead = pTimer->counter;
+    
 	// run: phase in or a single step in cascade mode
 	if (pTimer->counter && pTimer->run)
 		pTimer->counter--;
@@ -243,6 +236,9 @@ template<uint8_t timerId> inline auto Base::updateState( ) -> void {
 	}
 	
 	if ( pTimer->forceloadCycle ) {
+        // a possible force load placed by register write get priority, so run this sooner
+        events->add( &(pTimer->disableForceLoad), 1, Emulator::Events::BeforeOthers ); 
+        
 		pTimer->counter = pTimer->latch;
 		
         if ( pTimer->run == 1 )        
@@ -431,6 +427,7 @@ auto Base::serialize(Emulator::Serializer& s) -> void {
         s.integer( t.forceloadCycle );
         s.integer( t.latch );
         s.integer( t.counter );
+        s.integer( t.counterRead );
         s.integer( t.control );
         s.integer( t.toggle );        
     }
@@ -450,9 +447,6 @@ auto Base::serialize(Emulator::Serializer& s) -> void {
     s.integer( shiftCount );
     s.integer( icrmask );
     s.integer( icr );
-    s.integer( registerWrite.pipelined );
-    s.integer( registerWrite.addr );
-    s.integer( registerWrite.value );
 }
 
 }

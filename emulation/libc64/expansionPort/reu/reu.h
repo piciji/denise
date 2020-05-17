@@ -61,9 +61,7 @@ struct Reu : ExpansionPort {
     auto unsetRam() -> void;
     auto injectRam() -> void;
 
-    auto cycleLo() -> void;
-    auto cycleHi() -> void;
-    
+    auto clock() -> void;    
     auto reset() -> void;   
     auto serialize(Emulator::Serializer& s) -> void;
     

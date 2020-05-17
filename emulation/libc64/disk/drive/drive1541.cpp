@@ -36,7 +36,7 @@ Drive1541::Drive1541(uint8_t number) {
 		memory.write( addr, value );
     };
     
-    cpuCtx->syncLo = [this]() {                
+    cpuCtx->sync = [this]() {                
     
         if ( useAccuracy() )
             // one cpu cycle is 16 reference cycles.

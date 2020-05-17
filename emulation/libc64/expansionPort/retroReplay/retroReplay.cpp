@@ -19,7 +19,15 @@ RetroReplay::RetroReplay(Emulator::Events* events) : Freezer( true, false ), fla
     
     this->media = nullptr;
     
-    this->writeProtect = true;        
+    this->writeProtect = true;       
+    
+    flashModeReset = [this]() {
+        game = true;
+        exRom = true;
+        system->changeExpansionPortMemoryMode(exRom, game);
+    };
+    
+    events->registerCallback({&flashModeReset, 1});
     
     init();
     
@@ -51,18 +59,7 @@ auto RetroReplay::create( Interface::CartridgeId cartridgeId ) -> Cart* {
     return retroReplay;
 }
 
-auto RetroReplay::cycleHi() -> void {
-    
-    if (flashJumper) {        
-        game = true;
-        exRom = true;
-        system->changeExpansionPortMemoryMode(exRom, game);
-    }
-    
-    Freezer::cycleHi();
-}
-
-auto RetroReplay::cycleLo() -> void {        
+auto RetroReplay::clock() -> void {
     
     if (flashJumper) {
         uint16_t _addr = system->cpu->addressBus();
@@ -71,10 +68,11 @@ auto RetroReplay::cycleLo() -> void {
             exRom = requestedExRom;
             game = requestedGame;
             system->changeExpansionPortMemoryMode(exRom, game);   
+            events->add( &flashModeReset, 1, Emulator::Events::UpdateExisting );
         } 
     }
     
-    Freezer::cycleLo();
+    Freezer::clock();
 }
 
 auto RetroReplay::writeIo1( uint16_t addr, uint8_t value ) -> void {

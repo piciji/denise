@@ -7,7 +7,6 @@
 
 #include "../tools/event.h"
 #include "../tools/serializer.h"
-// todo: serial out have to be tested
 
 namespace CIA {
     
@@ -41,7 +40,6 @@ struct Base {
 	
     virtual auto read(unsigned pos) -> uint8_t;
     virtual auto write(unsigned pos, uint8_t value) -> void;
-	auto writePipelined(unsigned pos, uint8_t value) -> void;
     virtual auto reset() -> void;
 	/**
 	 * define it in derived class
@@ -50,12 +48,10 @@ struct Base {
 	
 	/**
      * amiga 500: a cia clock lasts 10 cpu cycles
-     * c64: a cia clock lasts a whole cpu cycle
      * hi cycle 4/10 of e-clock (cpu register access)
 	 * lo cycle 6/10 of e-clock
 	 */	
-    auto processHi() -> void;
-    auto processLo() -> void;
+    auto clock() -> void;
 	
 	/**
 	 * shift in bits
@@ -137,9 +133,11 @@ protected:
 		Callback step;		
 		Callback disableOneshot;
 		Callback forceLoad;
+        Callback disableForceLoad;
 		
 		uint16_t latch;
 		uint16_t counter;
+        uint16_t counterRead;
 		
         uint8_t control;
         
@@ -169,13 +167,7 @@ protected:
 	uint8_t icrmask;
     uint8_t icr;
 	bool ciaShiftRespawnBug;
-	
-	struct {
-		bool pipelined;
-		uint8_t addr;
-		uint8_t value;
-	} registerWrite;
-        	
+	        	
     auto timerAUnderflow() -> void;
 	auto timerBUnderflow() -> void;
 	auto serialOut() -> void;
@@ -186,7 +178,7 @@ protected:
 	template<uint8_t timerId> auto updateState() -> void;
     auto adjustBit6And7( uint8_t& inOut ) -> void;
     auto interruptControl() -> void;
-    auto interruptControlOld() -> void;
+    auto interruptControlOld() -> void;    
 };
 
 }

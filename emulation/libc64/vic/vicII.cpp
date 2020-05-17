@@ -74,7 +74,7 @@ auto VicII::getVerticalLineAnomaly() -> uint8_t {
     
 auto VicII::updateIrq( Interrupt interrupt ) -> void {       
     
-    if ( interrupt != Interrupt::None ) {
+    if ( interrupt != Interrupt::Update ) {
         irqLatch |= 1 << interrupt;
     }
     
@@ -102,7 +102,10 @@ auto VicII::triggerLightPen( bool state ) -> void {
 
     lpTrigger = !lpLatched;
     lpPhi1 = false;
-	lpTriggerDelay = rev65 ? 2 : 1;    
+	lpTriggerDelay = rev65 ? 2 : 1;  
+    
+    xCounter = xLookupPtrPhi2[cycle];
+    checkLightPen<false>( );
 }
 
 auto VicII::triggerLightPen( bool state, uint8_t subCycle ) -> void {
@@ -154,7 +157,7 @@ template<bool phi1> auto VicII::checkLightPen( ) -> void {
         updateIrq( Interrupt::LP );
     else        
         // cpu mustn't recognize it this cycle, but next
-        lpIrqPending = true;        
+        irqLatchPending |= 0x80 | (1 << Interrupt::LP);      
 }
 
 auto VicII::getCyclesForNextLightTrigger( int x, int y, uint8_t& cyclePixel ) -> unsigned {
@@ -259,14 +262,12 @@ auto VicII::buildXCounterLookupTable() -> void {
 }
 
 auto VicII::power() -> void {
-    registerWrite.pipelined = false;
 	crop.leftOverscan = ntsc ? (56 - 32) : (46 - 32);
 	crop.rightOverscan = ntsc ? (44 - 32) : (40 - 32);
 	crop.topOverscan = ntsc ? 5 : 7;
 	crop.bottomOverscan = ntsc ? 1 : 14;
 	
     lastReadPhi1 = 0;
-    lastBusPhi2 = 0xff;
     std::memset(renderPipe, 0, 8);
     memset(colorReg, 0, sizeof(colorReg));
     memset(colorUse, 0, sizeof(colorUse));
@@ -291,9 +292,10 @@ auto VicII::power() -> void {
     aecDelay = 0;
     std::memset(spriteBa, 0, sizeof spriteBa);
 	allowBadlines = false;
+    badLine = false;
     irqLine = 0;
     lineIrqMatched = false;
-    lpIrqPending = false;
+    irqLatchPending = 0;
     lpx = 0;
     lpy = 0;
     vm = 0;
@@ -313,6 +315,7 @@ auto VicII::power() -> void {
     hFlipFlop = true;
     vFlipFlop = vFlipFlopShadow = true;
     idleMode = true;    
+	idleModeTemp = true;
     initVCounter = false;
     refreshCounter = 0xff;     
     sprite0DmaLateBA = false;
@@ -332,6 +335,7 @@ auto VicII::power() -> void {
     display.cBufferPipe1 = display.cBufferPipe2 = 0;
     display.xScroll = 0;
     display.gBuffer = display.gBufferPipe1 = display.gBufferPipe2 = 0;
+    display.gBufferUse = false;
     display.enable = false;
     display.dmli = 0;
     display.gBufferShift = 0;
@@ -366,33 +370,32 @@ auto VicII::power() -> void {
         sprite[i].expandXFlop = false;
         sprite[i].colorCode = 0x27 + i;
     }
+    spriteOpenBus = nullptr;
+    lastSpriteShift = 16;
     
     spriteForegroundCollided = 0;
+    spriteForegroundCollidedRead = 0;
     spriteSpriteCollided = 0;
+    spriteSpriteCollidedRead = 0;
     spriteDmaCycle1 = 0;
     spriteDmaCycle2 = 0;
-    spriteDisplayCycle = 0;
     canSpriteSpriteCollisionIrq = false;
     canSpriteForegroundCollisionIrq = false;
     
-    writeIO( 0x11, controlReg1 );
-    writeIO( 0x16, controlReg2 );
+    writeReg( 0x11, controlReg1 );
+    writeReg( 0x16, controlReg2 );
     
     spriteTrigger = 0;
-    spriteDisplay = 0;
     spritePending = 0;
     updateMc = 0;
     updatePrioExpand = 0;
     cAccessArea = 0;    
     disableEcmBmmTogether = false;
-	
+	onHalfCycle = nullptr;
 	initVerticalLineAnomaly();
 }
 
-template auto VicII::phase1<true>() -> void;
-template auto VicII::phase1<false>() -> void;
-
-template auto VicII::phase2<true>() -> void;
-template auto VicII::phase2<false>() -> void;
+template auto VicII::clock<true>() -> void;
+template auto VicII::clock<false>() -> void;
 
 }

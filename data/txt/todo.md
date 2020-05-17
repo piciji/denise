@@ -75,6 +75,7 @@
 * add Depixelizing technic (http://johanneskopf.de/publications/pixelart/index.html)
 * add confirmation question when quiting Denise Alt+F4
 * mount OS folder as D64
+* load savestates per drag'n'drop or within File Explorer
 
 # bugs
 * japanese characters aren't displayed correctly in OpenGL onscreen text
