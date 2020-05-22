@@ -249,7 +249,8 @@ auto System::unserializeLight() -> void {
     input->serialize(s);
     serializeExpansion(s);
 
-    events.serialize(s);
+    events.serialize(s);    
+    cpu->setContext(cpuCtx);        
     
     remapVic();
     remapCpu();  
