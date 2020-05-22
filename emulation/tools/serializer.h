@@ -8,7 +8,7 @@
 #include <cstring>
 #include <vector>
 
-namespace Emulator {
+namespace Emulator {      
     
 struct Serializer {
     
@@ -164,11 +164,31 @@ struct Serializer {
             delete[] _data;
     }
 
-private:
+protected:
     Mode _mode = Size;
     uint8_t* _data = nullptr;
     unsigned _size = 0;
     unsigned _capacity = 0;
 };
+
+struct MemSerializer : Serializer {
+
+    auto setMode( Mode mode ) -> void {
+        this->_mode = mode;
+        this->_size = 0;
+    }
+    
+    auto setData(unsigned capacity) -> void {
+        
+        if (!this->_data || (this->_capacity != capacity)) {
+            if (this->_data)
+                delete[] this->_data;
+                
+            this->_data = new uint8_t[capacity];
+        }
+        
+        this->_capacity = capacity;
+    }
+}; 
 
 }

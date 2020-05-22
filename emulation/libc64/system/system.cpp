@@ -4,6 +4,7 @@
 #include "../prg/prg.h"
 #include "../tape/tape.h"
 #include "../vic/vicII.h"
+//#include "../vicFast/vicIIFast.h"
 #include "../disk/iec.h"
 #include "../sid/sid.h"
 #include "keyBuffer.h"
@@ -312,9 +313,11 @@ System::System(Interface* interface) {
     
     vicII->videoRefresh = [this]( uint16_t* frame, unsigned width, unsigned height, unsigned linePitch) {
         
-		crop->apply( frame, width, height, linePitch );
-        // for lightguns
-        input->drawCursor();
+        if (!runAhead.pos) {
+            crop->apply( frame, width, height, linePitch );
+            // for lightguns
+            input->drawCursor();
+        }
 		
         if (fastForward.config & (unsigned)Interface::FastForward::NoVideoOut)
             frame = nullptr;
@@ -335,8 +338,8 @@ System::System(Interface* interface) {
             }
         }
             
-        if (!vicII->lineCallback.silence)
-            this->interface->videoRefresh( frame, width, height, linePitch );
+        if (!runAhead.pos)
+            this->interface->videoRefresh( frame, width, height, linePitch );                
         
         frameComplete = true;		
         
@@ -348,13 +351,17 @@ System::System(Interface* interface) {
 	
 	vicII->midScreenCallback = [this]() {
 		
+        if (runAhead.pos)
+            return;
+        
 		input->drawCursor(true);
 		
         this->interface->midScreenCallback();
 	};
 	
 	vicII->vblankCallback = [this]() {
-		this->interface->finishVBlank();
+        if (!runAhead.pos)
+            this->interface->finishVBlank();
 	};
     
     vicII->setIrq = [this]( bool state ) {
@@ -376,8 +383,8 @@ System::System(Interface* interface) {
     };
     
     sid->audioRefresh = [this](int16_t sample) {
-        
-        this->interface->audioSample( sample, sample );
+        if (!runAhead.pos)
+            this->interface->audioSample( sample, sample );
     };
     
     sid->getPotX = [this]() {
@@ -683,10 +690,17 @@ auto System::initRam() -> void {
     ram[0x3fff] = 0; 
 }
 
-auto System::run(bool silence) -> void {
+auto System::setRunAhead(unsigned frames) -> void {
+    runAhead.frames = frames;
+}
+
+auto System::setRunAheadAccuracy(bool state) -> void {
+    runAhead.accuracy = state;
+}
+
+auto System::run() -> void {
     frameComplete = false;
-    sid->disableAudioOut( silence );
-    vicII->lineCallback.silenceNext = silence;
+    runAhead.pos = 0;
     
     input->poll();
     // of course real system sends restore when key is pressed, but polling each cycle for this is useless
@@ -698,11 +712,40 @@ auto System::run(bool silence) -> void {
 
     cpu->setNmi(nmiIncomming != 0);
     iecBus->randomizeRpm();
+
+    bool useRunAhead = !fastForward.config && runAhead.frames && !keyBuffer->isPrgInjectionInQueue();
     
+    if (useRunAhead) {        
+        runAhead.pos = runAhead.frames;
+        vicII->disableSequencer( !runAhead.accuracy );
+        dispatcha();
+    }
+        
+    labelRunAhead:    
+            
     while( !frameComplete ) {        
         cpu->process();             
         iecBus->syncDrives(); 
-    }  
+    } 
+
+    if (useRunAhead) {
+        if (runAhead.frames == runAhead.pos) {
+            serializeLight();
+        }
+
+        if (runAhead.pos) {
+            if (--runAhead.pos == 0) {
+                if (!vicII->useSequencer()) {
+                    vicII->disableSequencer(false);
+                    dispatcha();
+                }
+            }
+            frameComplete = false;
+            goto labelRunAhead;
+        }
+
+        unserializeLight();  
+    }
     
     checkDebugCart();
 }
@@ -860,3 +903,4 @@ auto System::setFastForward( unsigned config ) -> void {
 }
 
 }
+

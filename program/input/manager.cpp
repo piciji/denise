@@ -341,3 +341,9 @@ auto InputManager::alternateSort() -> void {
         }
     }
 }
+
+auto InputManager::resetRunAhead() -> void {
+    settings->set<unsigned>("runahead", 0, false);
+    if (activeEmulator)
+        activeEmulator->runAhead( 0 );
+}

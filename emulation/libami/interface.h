@@ -30,7 +30,7 @@ struct Interface : Emulator::Interface  {
 	auto setMemory(MemoryType* memoryType, unsigned memoryId) -> void;
 	auto setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> void;
 	auto power() -> void;
-	auto run(bool silence = false) -> void; //emulate one frame
+	auto run() -> void; //emulate one frame
 	auto setRegion(unsigned id) -> void; //0 - pal, 1 - ntsc
 
 	//drive handling

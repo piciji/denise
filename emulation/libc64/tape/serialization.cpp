@@ -42,4 +42,13 @@ auto Tape::serialize(Emulator::Serializer& s) -> void {
     }
 }
 
+auto Tape::serializeLight(Emulator::Serializer& s) -> void {
+    
+    s.integer( enabled );  
+    
+    if (s.mode() == Emulator::Serializer::Mode::Save) {
+        enabled = false;
+    }
+}
+
 }

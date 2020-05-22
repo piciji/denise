@@ -596,8 +596,16 @@ auto Interface::powerOff() -> void {
 	system->powerOff();
 }
 
-auto Interface::run(bool silence) -> void {    
-    system->run(silence);
+auto Interface::run() -> void {    
+    system->run();
+}
+
+auto Interface::runAhead(unsigned frames) -> void {
+    system->setRunAhead( frames );
+}
+
+auto Interface::runAheadAccuracy(bool state) -> void {
+    system->setRunAheadAccuracy( state );
 }
 
 auto Interface::setRegion(Region region) -> void {

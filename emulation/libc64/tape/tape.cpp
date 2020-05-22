@@ -22,13 +22,14 @@ Tape::Tape( Emulator::Events* events ) {
 	    
     // events
     motorOff = [this]() {
-
+        if (!enabled)
+            return;
         motorIn = false;        
         updateCounter();
     };
 
     worker = [this]() {
-        if (!motorIn || mode == Mode::Stop || mode == Mode::Record)
+        if (!enabled || !motorIn || mode == Mode::Stop || mode == Mode::Record)
             return;
         
         if (directionForward != lastDirectionForward) {            
@@ -83,6 +84,9 @@ Tape::Tape( Emulator::Events* events ) {
     };     
 	
 	delayMode = [this]() {
+        if( !enabled)
+            return;
+        
 		setMode( nextMode );
 	};        
 
@@ -290,7 +294,7 @@ auto Tape::readHeader() -> bool {
 
 auto Tape::clock() -> void {    
     
-	if (mode == Mode::Record)
+	if ( (mode == Mode::Record) && enabled)
 		cyclesElapsed++;
 }
 

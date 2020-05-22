@@ -163,7 +163,7 @@ auto VicII::serialize(Emulator::Serializer& s) -> void {
             case 53: if(!ntsc) onHalfCycle = [this]() { spriteDmaCheck(); }; break;
             case 54: onHalfCycle = [this]() { borderRight<true>(); spriteDmaCheck(); }; break;
             case 55: onHalfCycle = [this]() { borderRight<false>(); if(ntsc) spriteDmaCheck(); }; break;
-            default: onHalfCycle = nullptr;
+            default: onHalfCycle = nullptr; break;
         }
         
         spriteOpenBus = spriteOpenBusPos == 0xff ? nullptr : &sprite[spriteOpenBusPos];

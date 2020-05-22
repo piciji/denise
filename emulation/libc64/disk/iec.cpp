@@ -257,21 +257,23 @@ auto IecBus::writeCia( uint8_t byte ) -> void {
     clockOut = (byte >> 4) & 1;
     dataOut = (byte >> 5) & 1;
     
-    if (atnBefore != atnOut) { 
-        for( auto drive : drivesEnabled ) {
-            // attention please :-) there is a transition of ca1 pin ( via 1 chip )
-            // for all connected drives.
-            // NOTE: drive cpus can't give back control after each single cycle,
-            // means drive cpus could run ahead a few cycles when syncing back.
-            // but a drive cpu can give back control before an interrupt sample cycle,
-            // so we can not miss an interrupt when main thread triggers a ca1 transition
-            // and drive thread runs ahead.
-            drive->setViaTransition( atnOut ? 0 : 1 );
-        }
-    }                               
-    
-    for (auto drive : drivesEnabled)       
-        drive->updateBus(); // because of possible atn change 
+    if (drivesConnected) {
+        if (atnBefore != atnOut) { 
+            for( auto drive : drivesEnabled ) {
+                // attention please :-) there is a transition of ca1 pin ( via 1 chip )
+                // for all connected drives.
+                // NOTE: drive cpus can't give back control after each single cycle,
+                // means drive cpus could run ahead a few cycles when syncing back.
+                // but a drive cpu can give back control before an interrupt sample cycle,
+                // so we can not miss an interrupt when main thread triggers a ca1 transition
+                // and drive thread runs ahead.
+                drive->setViaTransition( atnOut ? 0 : 1 );
+            }
+        }                               
+
+        for (auto drive : drivesEnabled)       
+            drive->updateBus(); // because of possible atn change 
+    }
     
     updatePort();  
 }
@@ -399,6 +401,24 @@ auto IecBus::serialize(Emulator::Serializer& s) -> void {
     
     for (auto drive : drivesEnabled)        
         drive->serialize( s );
+}
+
+auto IecBus::serializeLight(Emulator::Serializer& s) -> void {
+    
+    waitForDrives();
+    
+    s.integer( cycleCounter );
+    s.integer( atnOut );
+    s.integer( clockOut );
+    s.integer( dataOut );
+    s.integer( port );
+    
+    s.integer( drivesConnected );
+    
+    if (s.mode() == Emulator::Serializer::Mode::Save) {
+        // disable all drives for runahead
+        drivesConnected = 0;
+    }
 }
 
 }

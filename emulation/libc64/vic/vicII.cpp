@@ -6,6 +6,7 @@
 #include "serialization.cpp"
 #include "colorWheel.cpp"
 #include "verticalLineAnomaly.cpp"
+#include "silence.cpp"
 
 namespace LIBC64 {
 	
@@ -32,9 +33,6 @@ VicII::VicII() {
 	lineCallback.use = false;
     lineCallback.line = 0;
 	lineCallback.finishVblank = false;
-    
-    lineCallback.silence = false;
-    lineCallback.silenceNext = false;
 }
 
 VicII::~VicII() {

@@ -13,6 +13,10 @@ auto InputManager::setHotkeys() -> void {
     hotkeys.push_back( {Hotkey::Id::ToggleMenu, "Toggle_menu"} );
     hotkeys.push_back( {Hotkey::Id::ToggleStatus, "Toggle_status"} );	
 	
+    hotkeys.push_back( {Hotkey::Id::RunAheadUp, "runahead up"} );	
+    hotkeys.push_back( {Hotkey::Id::RunAheadDown, "runahead down"} );	
+    hotkeys.push_back( {Hotkey::Id::RunAheadToggleMode, "runahead toggle mode"} );	
+    
     hotkeys.push_back( {Hotkey::Id::FloppyAccess, "select_disk_drive"} );
     hotkeys.push_back( {Hotkey::Id::DiskSwap0, "Disk_swapper_call0"} );
     hotkeys.push_back( {Hotkey::Id::DiskSwap1, "Disk_swapper_call1"} );
@@ -74,6 +78,39 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
     typedef LIBAMI::Interface AmigaInterface;
     
     switch ( id ) {
+        case Hotkey::Id::RunAheadDown:
+        case Hotkey::Id::RunAheadUp: {
+            if (!activeEmulator)
+                break;   
+            
+            unsigned pos = settings->get<unsigned>("runahead", 0);
+            bool down = id == Hotkey::Id::RunAheadDown;
+            
+            if ( down && (pos == 0) )
+                break;
+            else if ( !down && (pos == 10) )
+                break;
+
+            pos += down ? -1 : 1;
+            settings->set<unsigned>("runahead", pos, false);
+            activeEmulator->runAhead( pos );
+
+            status->addMessage( trans->get( "runahead input latency", {{"%count%", std::to_string(pos) }} ) );  
+
+        } break;
+            
+        case Hotkey::Id::RunAheadToggleMode: {
+            if (!activeEmulator)
+                break;
+            
+            bool state = settings->get<bool>("runahead_accuracy", false);
+            state ^= 1;
+            settings->set<bool>("runahead_accuracy", state, false);            
+            activeEmulator->runAheadAccuracy( state );
+            
+            status->addMessage( trans->get( state ? "runahead accuracy mode" : "runahead performance mode" ) );  
+        } break;
+        
 		case Hotkey::Id::SwapInputDevices: {
 			auto connector1 = emulator->getConnector( 0 );
             auto connectedDevice1 = emulator->getConnectedDevice( connector1 );

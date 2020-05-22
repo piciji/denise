@@ -222,7 +222,7 @@ auto Sid::clock() -> void {
                 sampleCounter = 0;
             }
         }
-    } 
+    }
 	  	
     // bus values decay after a certain amount of time.
     // decay time differs between single bits.

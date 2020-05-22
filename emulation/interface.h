@@ -458,7 +458,9 @@ struct Interface {
     virtual auto power() -> void {} //hard reset
 	virtual auto reset() -> void {} //soft reset
 	virtual auto powerOff() -> void {} //shutdown system
-    virtual auto run(bool silence = false) -> void {} //emulate one frame
+    virtual auto run() -> void {} //emulate one frame
+    virtual auto runAhead(unsigned frames) -> void {}
+    virtual auto runAheadAccuracy(bool state) -> void {}
     virtual auto setRegion(Region region) -> void {} 
     virtual auto getRegion() -> Region { return Region::Pal; }
     

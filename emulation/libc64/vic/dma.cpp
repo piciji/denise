@@ -134,7 +134,7 @@ template<bool _useSequencer> auto VicII::clock() -> void {
     lastColorReg = 0xff;	         
 }    
 
-__attribute__((always_inline))  auto VicII::advanceCycle() -> void {    
+__attribute__((always_inline)) auto VicII::advanceCycle() -> void {    
 
     if (irqLatchPending) {
         irqLatch |= irqLatchPending & 0x7f;
@@ -184,11 +184,9 @@ __attribute__((always_inline))  auto VicII::advanceCycle() -> void {
             // can not display the whole non blanking area.
             // cropping is done later and not within Vic emulation
             visibleLine = true; // non v-blank
-            if (!lineCallback.silence && lineCallback.finishVblank)
+            if (lineCallback.finishVblank)
                 vblankCallback();
-            
-            lineCallback.silence = lineCallback.silenceNext;
-			
+            			
         } else if ( lineVCounter == vHeight ) {
             visibleLine = false; // v-blank
             
@@ -205,8 +203,7 @@ __attribute__((always_inline))  auto VicII::advanceCycle() -> void {
             if (leftLineAnomaly.mode)
                 insertVerticalLineAnomaly( 0, lineVCounter );
             
-            if (!lineCallback.silence)
-                midScreenCallback();
+            midScreenCallback();
         }
         
 	} else if (cycle == 1)

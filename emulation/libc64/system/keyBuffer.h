@@ -68,6 +68,9 @@ struct KeyBuffer {
     
     auto isPrgInjectionInQueue() -> bool {
         
+        if (!queue.size())
+            return false;
+        
         for(auto& action : queue) {
             if (action.callbackId == 2)
                 return true;

@@ -66,7 +66,8 @@ struct Hotkey {
         DiskSwap7, DiskSwap8, DiskSwap9, DiskSwap10, DiskSwap11,
         DiskSwap12, DiskSwap13, DiskSwap14,
         ToggleFastForward, ToggleFastForwardAggressive, Presentation, Palette, Border, System, Firmware, Control,
-		SwapInputDevices, Power, SoftReset, AnyLoad
+		SwapInputDevices, Power, SoftReset, AnyLoad,
+        RunAheadUp, RunAheadDown, RunAheadToggleMode,
     } id;
     std::string name;
 	bool share;
@@ -146,6 +147,7 @@ struct InputManager {
 	static auto updateAllMappingsInUse( bool emuOnly = false ) -> void;
     static auto jitPoll() -> bool;
     static auto resetJit() -> void;
+    static auto resetRunAhead() -> void;
 	
     auto autoAssign( KeyboardLayout::Type type, bool keyboardOnly = true ) -> void;
 	auto addMapping(InputMapping* mapping) -> void;
@@ -160,7 +162,7 @@ struct InputManager {
     auto alternateSort() -> void;
     auto updateAnalogSensitivity(Emulator::Interface::Device* updateDevice = nullptr) -> void;
 	auto setCustomHotkeys() -> void;
-	auto unmapCustomHotkeys() -> void;    
+	auto unmapCustomHotkeys() -> void;        
     
     inline auto updateAndTrigger() -> void;
     inline auto addAndTrigger(InputMapping* newTrigger) -> void;

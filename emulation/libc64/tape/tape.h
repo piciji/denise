@@ -45,6 +45,7 @@ struct Tape {
     auto getMode( ) -> Mode;
 	auto createTap( unsigned& imageSize ) -> uint8_t*;
     auto serialize(Emulator::Serializer& s) -> void;
+    auto serializeLight(Emulator::Serializer& s) -> void;
     auto selectListing( unsigned pos ) -> void;
     auto getMedia() -> Emulator::Interface::Media* { return media; }
 	

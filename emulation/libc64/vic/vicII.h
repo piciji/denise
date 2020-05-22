@@ -74,8 +74,6 @@ struct VicII {
         bool use;
         unsigned line;
         bool finishVblank;        
-        bool silence;
-        bool silenceNext;
     } lineCallback;    
 	
 	struct {
@@ -88,7 +86,8 @@ struct VicII {
 	auto setBorderData() -> void;
     
 	auto power() -> void;    
-    template<bool _useSequencer> auto clock() -> void;   
+    template<bool _useSequencer> auto clock() -> void;
+    auto clockSilence() -> void;    
 	
     auto writeReg(uint8_t addr, uint8_t value) -> void;
     auto readReg(uint8_t addr) -> uint8_t;
@@ -319,6 +318,7 @@ protected:
 	auto insertVerticalLineAnomaly(unsigned start, unsigned end) -> void;
 	auto initVerticalLineAnomaly() -> void;
     auto updateSpriteWithBusValue(uint8_t value) -> void;
+    template<bool doubleStep = false> auto dummySpriteDma(Sprite* spr) -> void;
 	
 	//sequencer
 	auto sequencer( ) -> void;
@@ -340,7 +340,7 @@ protected:
 	template<bool phi1> auto draw85( uint8_t x ) -> void;
 	template<bool phi1> auto draw() -> void;        
     void buildXCounterLookupTable();    
-    std::function<void ()> onHalfCycle = nullptr;
+    std::function<void ()> onHalfCycle = nullptr;        
 };
 
 extern VicII* vicII;

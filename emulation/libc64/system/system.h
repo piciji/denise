@@ -111,7 +111,7 @@ struct System {
     
     bool ntsc = false;
     bool frameComplete = false;
-    Emulator::Serializer serializer;
+    Emulator::Serializer serializer;    
     bool kernalBootComplete = false;
     
     struct {
@@ -119,6 +119,13 @@ struct System {
         unsigned frameCounter;
         bool renderNext;
     } fastForward;
+    
+    struct {
+        unsigned frames = 0;
+        unsigned pos = 0;
+        bool accuracy = false;
+        Emulator::MemSerializer serializer;
+    } runAhead;
     
     #include "testbench.h"
     
@@ -133,7 +140,7 @@ struct System {
     
     auto power(bool softReset = false) -> void;
 	auto powerOff() -> void;
-    auto run(bool silence = false) -> void;
+    auto run() -> void;
     auto initRam() -> void;
     
     auto getCyclesPerSecond() -> unsigned {
@@ -146,6 +153,8 @@ struct System {
     
     auto calcSerializationSize() -> void;
     auto serialize(unsigned& size) -> uint8_t*;
+    auto serializeLight() -> void;
+    auto unserializeLight() -> void;
     auto checkSerialization(uint8_t* data, unsigned size) -> bool;
     auto unserialize(uint8_t* data, unsigned size) -> bool;
     auto serializeAll(Emulator::Serializer& s) -> void;
@@ -162,6 +171,8 @@ struct System {
     
     auto dispatcha() -> void;
     auto setFastForward( unsigned config ) -> void;    
+    auto setRunAhead(unsigned frames) -> void;
+    auto setRunAheadAccuracy(bool state) -> void;
 };
 
 extern System* system;

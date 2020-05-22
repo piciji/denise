@@ -15,7 +15,7 @@ auto Tape::isWriteProtected() -> bool {
 }
 
 auto Tape::writeIn(bool bit) -> void {
-    if (writeBit == bit)
+    if (!enabled || (writeBit == bit))
 		return;
 	
 	writeBit = bit;	
@@ -23,7 +23,7 @@ auto Tape::writeIn(bool bit) -> void {
 	if (!writeBit)
 		return;    
     
-	if (!enabled || !loaded || data || !motorIn || mode != Mode::Record)
+	if (!loaded || data || !motorIn || mode != Mode::Record)
 		return;
 	
     if (cyclesElapsed <= 7)

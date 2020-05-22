@@ -212,4 +212,47 @@ auto System::serialize6502( Emulator::Serializer& s, MOS65Context* cpuCtx ) -> v
     s.integer( cpuCtx->resumeCycle );    
 }
 
+// for runahead
+auto System::serializeLight() -> void {   
+      
+    auto& s = runAhead.serializer;
+    
+    s.setData( serializationSize );
+    s.setMode( Emulator::Serializer::Mode::Save );
+    
+    serialize(s);
+    cia1->serialize(s);
+    cia2->serialize(s);
+    vicII->serialize(s);
+    sid->serialize(s);
+    tape->serializeLight(s);
+    iecBus->serializeLight(s);
+    input->serialize(s);
+    serializeExpansion(s);
+
+    events.serialize(s);
+}
+
+auto System::unserializeLight() -> void {   
+      
+    auto& s = runAhead.serializer;
+    
+    s.setMode( Emulator::Serializer::Mode::Load );
+    
+    serialize(s);
+    cia1->serialize(s);
+    cia2->serialize(s);
+    vicII->serialize(s);
+    sid->serialize(s);
+    tape->serializeLight(s);
+    iecBus->serializeLight(s);
+    input->serialize(s);
+    serializeExpansion(s);
+
+    events.serialize(s);
+    
+    remapVic();
+    remapCpu();  
+}
+
 }

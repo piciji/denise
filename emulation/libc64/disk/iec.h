@@ -64,6 +64,7 @@ struct IecBus {
     auto getDiskListing(Emulator::Interface::Media* media) -> std::vector<Emulator::Interface::Listing>&;
     auto selectListing( Emulator::Interface::Media* media, unsigned pos ) -> void;
     auto serialize(Emulator::Serializer& s) -> void;
+    auto serializeLight(Emulator::Serializer& s) -> void;
     auto setPowerThread( bool state ) -> void;
     auto setFastForward( bool state ) -> void;
     auto updateIdleState() -> void;
