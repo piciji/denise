@@ -173,12 +173,12 @@ inline auto IecBus::waitForDrives() -> void {
     }
 }
 
-auto IecBus::syncDrives( int32_t _syncPos, bool ciaAccess ) -> void {
+auto IecBus::syncDrives( int64_t _syncPos, bool ciaAccess ) -> void {
     // no disk drives connected
     if ( drivesConnected == 0 )
         return;
       
-    if (!ciaAccess && (cycleCounter < (cpuBurner ? 100 : 1000) ) )
+    if (!ciaAccess && (cycleCounter < (cpuBurner ? 100 : 20000) ) )
         return;
     
     if (threaded)
@@ -194,7 +194,7 @@ auto IecBus::syncDrives( int32_t _syncPos, bool ciaAccess ) -> void {
     // x cpu cycles = x drive cycles
     // cpu clock * x drive cycles = drive clock * x cpu cycles                
     // drive->cycleCounter -= cycleCounterTemp * 1000000; // cpu cycles * drive clock 
-    int32_t _temp = cycleCounter * 1000000;
+    int64_t _temp = cycleCounter * 1000000;
     
     for (auto drive : drivesEnabled) {
         drive->cycleCounter -= _temp;
@@ -230,6 +230,7 @@ auto IecBus::power() -> void {
     atnOut = clockOut = dataOut = 1;
     
     port = 0xc0;
+    lastByte = 0;
     
     ready = false;
 
@@ -238,8 +239,8 @@ auto IecBus::power() -> void {
     updateIdleState();
 
     syncPos = 0;
-    syncPosRead = (int32_t)(-0.455 * (double)cpuCylcesPerSecond);
-    syncPosWrite = (int32_t)(0.455 * (double)cpuCylcesPerSecond);
+    syncPosRead = (int64_t)(-0.455 * (double)cpuCylcesPerSecond);
+    syncPosWrite = (int64_t)(0.455 * (double)cpuCylcesPerSecond);
     cycleCounter = ~0;
             
     for( auto drive : drivesEnabled ) {                   
@@ -247,7 +248,7 @@ auto IecBus::power() -> void {
     }
 }
     
-auto IecBus::writeCia( uint8_t byte ) -> void {
+auto IecBus::writeCia( uint8_t byte ) -> bool {
     // let drives catch up
     syncDrives( syncPosWrite, true );      
     
@@ -276,6 +277,14 @@ auto IecBus::writeCia( uint8_t byte ) -> void {
     }
     
     updatePort();  
+    
+    byte &= 0x38;
+    
+    bool change = byte != lastByte;
+    
+    lastByte = byte;
+    
+    return change;
 }
 
 auto IecBus::updatePort() -> void {
@@ -393,6 +402,7 @@ auto IecBus::serialize(Emulator::Serializer& s) -> void {
     s.integer( cycleCounter );
     s.integer( cpuCylcesPerSecond );
     s.integer( drivesConnected );
+    s.integer( lastByte );
        
     if (s.mode() == Emulator::Serializer::Mode::Load) {
         setDrivesEnabled( drivesConnected );
@@ -412,6 +422,7 @@ auto IecBus::serializeLight(Emulator::Serializer& s) -> void {
     s.integer( clockOut );
     s.integer( dataOut );
     s.integer( port );
+    s.integer( lastByte );
     
     s.integer( drivesConnected );
     

@@ -465,9 +465,6 @@ auto States::updateFeatures() -> void {
 
     for(auto& feature : emulator->features) {
 
-        if (!feature.runtimeChangeable)
-            continue;                        
-
         int value = emulator->getFeature( feature.id );
 
         if (feature.isSwitch() )

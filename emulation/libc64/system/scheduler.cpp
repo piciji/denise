@@ -63,7 +63,7 @@ auto System::dispatcha() -> void {
             events.process();
             powerSupply->clock();
             cia1->clock();
-            vicII->clock<true>();
+            vicII->clock();
             cia2->clock();
             sid->clock();
             tape->clock();
@@ -78,7 +78,7 @@ auto System::dispatcha() -> void {
             events.process();
             powerSupply->clock();
             cia1->clock();
-            vicII->clock<true>();
+            vicII->clock();
             cia2->clock();
             sid->clock();
             tape->clock();

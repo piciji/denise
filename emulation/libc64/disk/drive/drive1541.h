@@ -57,7 +57,7 @@ struct Drive1541 {
     M6502Custom* cpu;
     MOS65Context* cpuCtx;
     Structure1541 structure1541;
-    int32_t cycleCounter;
+    int64_t cycleCounter;
     bool synced;
     uint8_t irqIncomming;
     uint8_t* ram = nullptr;

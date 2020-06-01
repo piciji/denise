@@ -31,7 +31,9 @@ struct GlueLogic {
     
     auto serialize(Emulator::Serializer& s) -> void {        
         
-        s.integer( vbankBefore );        
+        s.integer( vbankBefore );   
+        
+        s.integer( (uint8_t&) type );
     }
     
     auto setType( Type type ) -> void {

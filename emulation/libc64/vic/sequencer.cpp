@@ -7,10 +7,10 @@
 
 namespace LIBC64 {
     
-inline auto VicII::sequencer(  ) -> void {            	    
+inline auto VicIICycle::sequencer(  ) -> void {            	    
 
     xCounter = xLookupPtrPhi1[cycle];
-    checkLightPen<true>();
+    VicIIBase::checkLightPen<true>();
     
     sequencerPix0<true>(  );
     
@@ -34,7 +34,7 @@ inline auto VicII::sequencer(  ) -> void {
     updateBAState();
     
     xCounter = xLookupPtrPhi2[cycle];
-    checkLightPen<false>();
+    VicIIBase::checkLightPen<false>();
 
     if (lastColorReg != 0xff)
         colorUse[ lastColorReg ] = colorReg[ lastColorReg ];
@@ -52,28 +52,7 @@ inline auto VicII::sequencer(  ) -> void {
     draw<false>();
 }
 
-inline auto VicII::sequencerSilent(  ) -> void {            	    
-
-    xCounter = xLookupPtrPhi1[cycle];
-    checkLightPen<true>();    
-
-    if (onHalfCycle) {
-        onHalfCycle();
-        onHalfCycle = nullptr;
-    }
-    
-    borderControl();
-    clearCollisions();
-    updateBAState();
-    
-    xCounter = xLookupPtrPhi2[cycle];
-    checkLightPen<false>();
-
-    if (lastColorReg != 0xff)
-        colorUse[ lastColorReg ] = colorReg[ lastColorReg ];
-}
-
-template<bool phi1> inline auto VicII::sequencerPix0(  ) -> void {   
+template<bool phi1> inline auto VicIICycle::sequencerPix0(  ) -> void {   
 	
     if (phi1) {			
 		if (rev65)
@@ -123,7 +102,7 @@ template<bool phi1> inline auto VicII::sequencerPix0(  ) -> void {
     render[0] = display.color;
 }
 
-template<bool phi1> inline auto VicII::sequencerPix1(  ) -> void {
+template<bool phi1> inline auto VicIICycle::sequencerPix1(  ) -> void {
 
     if (phi1) {                            
         if (rev65 && disableEcmBmmTogether)
@@ -136,7 +115,7 @@ template<bool phi1> inline auto VicII::sequencerPix1(  ) -> void {
     render[1] = display.color;
 }
 
-template<bool phi1> inline auto VicII::sequencerPix2( ) -> void {
+template<bool phi1> inline auto VicIICycle::sequencerPix2( ) -> void {
 	
     if (phi1) {
         if (rev65)
@@ -168,7 +147,7 @@ template<bool phi1> inline auto VicII::sequencerPix2( ) -> void {
     render[2] = display.color;
 }
 
-template<bool phi1> inline auto VicII::sequencerPix3(  ) -> void {
+template<bool phi1> inline auto VicIICycle::sequencerPix3(  ) -> void {
     
     if (phi1) {
 		if ( modeMcm && !modeMcmSequencer )
@@ -210,7 +189,7 @@ template<bool phi1> inline auto VicII::sequencerPix3(  ) -> void {
     }            
 }
 
-inline auto VicII::pipeGraphic() -> void {
+inline auto VicIICycle::pipeGraphic() -> void {
 	// 8 pixel delay before processing starts
 	display.cBufferPipe2 = display.cBufferPipe1;
 	display.gBufferPipe2 = display.gBufferPipe1;
@@ -219,7 +198,7 @@ inline auto VicII::pipeGraphic() -> void {
 		display.gBufferPipe1 = display.gBuffer;
         display.gBufferUse = true;
         
-		display.xScroll = controlReg2 & 7;
+		display.xScroll = xScroll;
 
 		if (!idleMode) 
 			display.cBufferPipe1 = display.cBuffer[display.dmli];
@@ -237,7 +216,7 @@ inline auto VicII::pipeGraphic() -> void {
 		display.dmli = 0;
 }
 
-inline auto VicII::graphicSequencer( uint8_t x ) -> void {
+inline auto VicIICycle::graphicSequencer( uint8_t x ) -> void {
 		
 	if ( x == display.xScroll ) {
 		display.gBufferShift = display.gBufferPipe2;
@@ -300,7 +279,7 @@ inline auto VicII::graphicSequencer( uint8_t x ) -> void {
 	}
 }
 
-inline auto VicII::triggerSprites( uint16_t xPos ) -> void {
+inline auto VicIICycle::triggerSprites( uint16_t xPos ) -> void {
     
     if ( !spriteTrigger || !spritePending )
         return;
@@ -319,7 +298,7 @@ inline auto VicII::triggerSprites( uint16_t xPos ) -> void {
     triggerSprites<7>( xPos ); 
 }
 
-template<uint8_t sprPos> inline auto VicII::triggerSprites( uint16_t xPos ) -> void {
+template<uint8_t sprPos> inline auto VicIICycle::triggerSprites( uint16_t xPos ) -> void {
     
     Sprite* spr = &sprite[sprPos];
 
@@ -334,7 +313,7 @@ template<uint8_t sprPos> inline auto VicII::triggerSprites( uint16_t xPos ) -> v
         }
 }
 
-inline auto VicII::updateMc6569() -> void {
+inline auto VicIICycle::updateMc6569() -> void {
     
     for(unsigned i=0; i < 8; i++) {
         Sprite& spr = sprite[i];
@@ -349,7 +328,7 @@ inline auto VicII::updateMc6569() -> void {
     updateMc = false;
 }
 
-inline auto VicII::updateMc8565() -> void {
+inline auto VicIICycle::updateMc8565() -> void {
     
     for(unsigned i=0; i < 8; i++) {
         Sprite& spr = sprite[i];
@@ -365,7 +344,7 @@ inline auto VicII::updateMc8565() -> void {
     updateMc = false;
 }
 
-inline auto VicII::spriteSequencer(  ) -> void {
+inline auto VicIICycle::spriteSequencer(  ) -> void {
     Sprite* sprUse = nullptr;
 	uint8_t collision = 0;
     
@@ -404,7 +383,7 @@ inline auto VicII::spriteSequencer(  ) -> void {
     }    
 }
 
-template<uint8_t sprPos> inline auto VicII::spriteSequencer( Sprite* spr, Sprite*& sprUse, uint8_t& collision ) -> void {
+template<uint8_t sprPos> inline auto VicIICycle::spriteSequencer( Sprite* spr, Sprite*& sprUse, uint8_t& collision ) -> void {
 			
     // active, but no data left or last "shift Out" contains no data anymore (transparent)
     if ( !(spr->dataShiftReg || spr->shiftOut) ) {
@@ -452,7 +431,7 @@ template<uint8_t sprPos> inline auto VicII::spriteSequencer( Sprite* spr, Sprite
     }
 }
 
-template<bool phi1> inline auto VicII::borderArea(  ) -> void {
+template<bool phi1> inline auto VicIICycle::borderArea(  ) -> void {
     
     if ( !hFlipFlop )
         // no border area
@@ -481,7 +460,7 @@ template<bool phi1> inline auto VicII::borderArea(  ) -> void {
     std::memset( render, 0x20, 3 );   
 }
 
-template<bool phi1> inline auto VicII::draw65( uint8_t x, uint8_t x1 ) -> void {
+template<bool phi1> inline auto VicIICycle::draw65( uint8_t x, uint8_t x1 ) -> void {
     // color regs will be evaluated one pixel sooner than 85xx chips
     // a register change, which can happen between the half cycles, will
     // show the old value one pixel more
@@ -496,7 +475,7 @@ template<bool phi1> inline auto VicII::draw65( uint8_t x, uint8_t x1 ) -> void {
     renderPipe[x] = render[ x & 3 ];
 }
 
-template<bool phi1> inline auto VicII::draw85( uint8_t x ) -> void {
+template<bool phi1> inline auto VicIICycle::draw85( uint8_t x ) -> void {
         
     // if same color register was written a cycle before and is accessed on fifth pixel the grey dot bug will happen
     if ( x == 4 && (lastColorReg == renderPipe[4]) )
@@ -516,7 +495,7 @@ template<bool phi1> inline auto VicII::draw85( uint8_t x ) -> void {
     renderPipe[x] = render[ x & 3 ];
 }
 
-template<bool phi1> inline auto VicII::draw(  ) -> void {
+template<bool phi1> inline auto VicIICycle::draw(  ) -> void {
         
     if (rev65) {
         draw65<phi1>( phi1 ? 0 : 4, phi1 ? 1 : 5 );

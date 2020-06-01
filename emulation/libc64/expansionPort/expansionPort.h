@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "../vic/vicII.h"
+#include "../vic/base.h"
 #include "../system/system.h"
 
 namespace LIBC64 {

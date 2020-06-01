@@ -2,7 +2,7 @@
 
 namespace LIBC64 {    
 
-auto VicII::clockSilence() -> void {
+auto VicIICycle::clockSilence() -> void {
     if (irqLatchPending) {
         irqLatch |= irqLatchPending & 0x7f;
         updateIrq();
@@ -164,7 +164,7 @@ auto VicII::clockSilence() -> void {
     lastColorReg = 0xff;
 }
 
-template<bool doubleStep> inline auto VicII::dummySpriteDma(Sprite* spr) -> void {
+template<bool doubleStep> inline auto VicIICycle::dummySpriteDma(Sprite* spr) -> void {
     if ( spr->dma ) {
         spr->mc++;
         spr->mc &= 63;

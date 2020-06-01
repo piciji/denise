@@ -219,8 +219,6 @@ struct Interface {
 		std::string name;		
 		enum Type : unsigned { Switch, Range, Hex, Radio } type;
 		int defaultValue;
-        bool runtimeChangeable;
-        bool performanceHit;
 		std::vector<int> range;
 		std::vector<std::string> options;
 
@@ -231,6 +229,11 @@ struct Interface {
 	};
 	std::vector<Feature> features;
 	
+    struct Performance {
+        unsigned id;
+        std::string name;	
+    };
+    
 	struct Chipset {
 		unsigned id;
 		std::string name;		
@@ -474,7 +477,12 @@ struct Interface {
     virtual auto cropData() -> uint16_t* { return nullptr; }
     virtual auto cropPitch() -> unsigned { return 0; }
     
-    virtual auto runCycles(unsigned cycles) -> void {}
+    // performance amd accuracy
+    virtual auto videoCycleAccuracy(bool state) -> void {}
+    virtual auto videoScanlineThread(bool state) -> void {}
+    virtual auto diskHighLoadThread(bool state) -> void {}
+    virtual auto diskIdle(bool state) -> void {}
+    virtual auto audioRealtimeThread(bool state) -> void {}
     
     //sets alternative per line callbacks
     virtual auto setLineCallback(bool state, unsigned scanline = 0) -> void {}

@@ -3,15 +3,12 @@
 
 namespace LIBC64 {    
 
-template<bool _useSequencer> auto VicII::clock() -> void {
+auto VicIICycle::clock() -> void {
     advanceCycle();
     updateBadLine();
     setLineInterrupt();
 
-    if (_useSequencer)
-        sequencer();  
-    else
-        sequencerSilent();
+    sequencer();  
 
     switch (cycle) {
         case 0: if (ntsc)   { fetchSpriteS1<3>(); fetchSpriteS2(3); } 
@@ -134,7 +131,7 @@ template<bool _useSequencer> auto VicII::clock() -> void {
     lastColorReg = 0xff;	         
 }    
 
-__attribute__((always_inline)) auto VicII::advanceCycle() -> void {    
+__attribute__((always_inline)) auto VicIICycle::advanceCycle() -> void {    
 
     if (irqLatchPending) {
         irqLatch |= irqLatchPending & 0x7f;
@@ -213,31 +210,7 @@ __attribute__((always_inline)) auto VicII::advanceCycle() -> void {
     sprite0DmaLateBA = false;
 }
 
-inline auto VicII::setLineBuffer() -> void {
-    if (!visibleLine)
-        return;
-    
-    linePtr = frameBuffer + lineVCounter * VIC_MAX_LINE_LENGTH;
-    lineVCounter++;
-    linePos = 0;
-}
-
-inline auto VicII::setLineInterrupt() -> void {
-    
-	if (vCounter == irqLine) {
-		if (!lineIrqMatched) {
-			updateIrq( Interrupt::Raster );
-			lineIrqMatched = true;
-		}
-		return;
-	}
-	
-	lineIrqMatched = false;		
-}
-
-inline auto VicII::clearCollisions() -> void {
-    spriteSpriteCollidedRead = spriteSpriteCollided;
-    spriteForegroundCollidedRead = spriteForegroundCollided;
+inline auto VicIICycle::clearCollisions() -> void {
 
 	// is cleared one cycle after read, means collisions in second half
 	// and following first half cycle will be ignored
@@ -247,6 +220,9 @@ inline auto VicII::clearCollisions() -> void {
 		spriteForegroundCollided = 0;
 	
 	clearCollision = 0;
+
+    spriteSpriteCollidedRead = spriteSpriteCollided;
+    spriteForegroundCollidedRead = spriteForegroundCollided;
 	
 	if (canSpriteSpriteCollisionIrq && spriteSpriteCollided)
 		updateIrq( Interrupt::MMC );
@@ -256,7 +232,7 @@ inline auto VicII::clearCollisions() -> void {
 }
 
 // cycle: 16-2
-auto VicII::spriteUpdateBase() -> void {
+auto VicIICycle::spriteUpdateBase() -> void {
 
     for( uint8_t i = 0; i < 8; i++ ) {
 		Sprite* spr = &sprite[i];
@@ -272,7 +248,7 @@ auto VicII::spriteUpdateBase() -> void {
     }
 }
 // cycle: 55-1 + 56-1
-inline auto VicII::spriteDmaCheck() -> void {
+inline auto VicIICycle::spriteDmaCheck() -> void {
     
     for( uint8_t i = 0; i < 8; i++ ) {
         Sprite* spr = &sprite[i];
@@ -290,7 +266,7 @@ inline auto VicII::spriteDmaCheck() -> void {
     }
 }
 // cycle: 56-2
-auto VicII::spriteFlip() -> void {
+auto VicIICycle::spriteFlip() -> void {
 
     for( uint8_t i = 0; i < 8; i++ ) {
 		Sprite* spr = &sprite[i];
@@ -300,7 +276,7 @@ auto VicII::spriteFlip() -> void {
     }    
 }
 // cycle: 58-1
-auto VicII::spriteDisplayCheck() -> void {
+auto VicIICycle::spriteDisplayCheck() -> void {
             
     for( uint8_t i = 0; i < 8; i++ ) {
 		Sprite* spr = &sprite[i];
@@ -315,42 +291,15 @@ auto VicII::spriteDisplayCheck() -> void {
     }    
 }
 
-inline auto VicII::updateSpriteBaState( uint8_t sprNr, bool dmaActive ) -> void {
-	// update BA line state for sprites
-	// 5 cycles: 3 to finish possible cpu writes, 2 to use the bus in second phase of cycle
-	// up to 3 cpu cycles are wasted because of the bad design
-	// e.g. dma for sprite 0 and 2 stop cpu read during non dma sprite 1 too 
-	// because of allowing a cpu read wouldn't give enough time to retake the bus for sprite 2
-	// The three take over cycles are hard coded in vic design
-	// e.g. dma for sprite 0 and 3 allow cpu one read access in between
-	unsigned start = (ntsc ? 55 : 54) + (sprNr << 1);
-	start %= lineCycles;
-	
-	for(auto i = 0; i < 5; i++) {
-		unsigned pos = (start + i) % lineCycles;
-		
-		spriteBa[sprNr][ pos ] = dmaActive;		
-		spriteBa[8][pos] = dmaActive;
-		if (dmaActive)
-			continue;
-		//if any other sprite needs this position keep baLow state
-		for( auto j = 0; j < 8; j++ ) {
-			if (spriteBa[j][pos]) {
-				spriteBa[8][pos] = true;
-				break;
-			}
-		}
-	}
-}
 // cycle: 14-2
-auto VicII::updateVc() -> void {
+auto VicIICycle::updateVc() -> void {
 	display.vc = display.vcBase;
 	display.vmli = 0;
 	if (badLine)
 		display.rc = 0;
 }
 // cycle: 58-2
-auto VicII::updateRc() -> void {
+auto VicIICycle::updateRc() -> void {
 	if (display.rc == 7) {
 		display.vcBase = display.vc;
 		idleMode = true;            
@@ -361,7 +310,7 @@ auto VicII::updateRc() -> void {
 	}		
 }
 
-inline auto VicII::updateBAState() -> void {
+inline auto VicIICycle::updateBAState() -> void {
 	
 	if (badLine)
 		idleMode = false;	
@@ -382,7 +331,7 @@ inline auto VicII::updateBAState() -> void {
 }
 
 // a damn hack ... this is annoying
-auto VicII::reuBaLow() -> bool {
+auto VicIICycle::reuBaLow() -> bool {
     // of course the expansion port sees the same BA state like CPU RDY line.
     // there is a known case, when BA calculation takes more time within cycle.
     // for cpu it doesn't matter, because it checks later in cycle.
@@ -391,14 +340,14 @@ auto VicII::reuBaLow() -> bool {
     return baLow && !sprite0DmaLateBA;
 }
 
-inline auto VicII::updateBadLine() -> void {
+inline auto VicIICycle::updateBadLine() -> void {
 			
 	badLine = allowBadlines && (yScroll == (vCounter & 7));
 	
 	idleModeTemp = idleMode;
 }
 
-inline auto VicII::borderControl() -> void {
+inline auto VicIICycle::borderControl() -> void {
     
     if (den && (vCounter == borderTop))        
         vFlipFlop = vFlipFlopShadow = false;           
@@ -410,7 +359,7 @@ inline auto VicII::borderControl() -> void {
         vFlipFlop = vFlipFlopShadow;
 }
 
-template<bool first> auto VicII::borderLeft(  ) -> void {
+template<bool first> auto VicIICycle::borderLeft(  ) -> void {
 	
 	if ((cSel && first) || (!cSel && !first)) {
 		if (vCounter == borderBottom) 
@@ -423,21 +372,21 @@ template<bool first> auto VicII::borderLeft(  ) -> void {
 	}
 }
 
-template<bool first> auto VicII::borderRight( ) -> void {
+template<bool first> auto VicIICycle::borderRight( ) -> void {
 	
 	if ((!cSel && first) || (cSel && !first))
 		hFlipFlop = 1;
 }
 
-auto VicII::idleCycle() -> void {
+auto VicIICycle::idleCycle() -> void {
     lastReadPhi1 = read( 0x3fff );
 }
 
-auto VicII::refresh() -> void {
+auto VicIICycle::refresh() -> void {
     lastReadPhi1 = read( (0x3f << 8) | refreshCounter-- );
 }
 
-template<uint8_t pos> auto VicII::fetchSpriteP(  ) -> void {
+template<uint8_t pos> auto VicIICycle::fetchSpriteP(  ) -> void {
     
     spriteDmaCycle2 = 0x80 | pos;    
 	
@@ -446,18 +395,18 @@ template<uint8_t pos> auto VicII::fetchSpriteP(  ) -> void {
     spr->dataP = lastReadPhi1 = read( (vm << 10) | 0x3f8 | (pos & 7) );	
 }
 
-auto VicII::fetchSpriteS0( uint8_t pos ) -> void {    
+auto VicIICycle::fetchSpriteS0( uint8_t pos ) -> void {    
     
     lastSpriteShift = 16;
     fetchSpriteSPhi2( pos );
 }
 
-auto VicII::fetchSpriteS2( uint8_t pos ) -> void {    
+auto VicIICycle::fetchSpriteS2( uint8_t pos ) -> void {    
     lastSpriteShift = 0;
     fetchSpriteSPhi2( pos );
 }
 
-inline auto VicII::fetchSpriteSPhi2( uint8_t pos ) -> void {	
+inline auto VicIICycle::fetchSpriteSPhi2( uint8_t pos ) -> void {	
 	
     Sprite* spr = &sprite[pos];
     spriteOpenBus = spr;
@@ -478,13 +427,9 @@ inline auto VicII::fetchSpriteSPhi2( uint8_t pos ) -> void {
     spr->dataS |= value << lastSpriteShift;        
 }
 
-auto VicII::updateSpriteWithBusValue(uint8_t value) -> void {
-    spriteOpenBus->dataS &= ~(0xff << lastSpriteShift);
-    spriteOpenBus->dataS |= value << lastSpriteShift;
-    spriteOpenBus = nullptr;
-}
 
-template<uint8_t pos> auto VicII::fetchSpriteS1( ) -> void {    
+
+template<uint8_t pos> auto VicIICycle::fetchSpriteS1( ) -> void {    
     
     if (pos != 7)
         spriteDmaCycle1 = 0x80 | (pos + 1);
@@ -503,7 +448,7 @@ template<uint8_t pos> auto VicII::fetchSpriteS1( ) -> void {
 	spr->dataS |= lastReadPhi1 << 8;
 }
 
-auto VicII::fetchC() -> void {
+auto VicIICycle::fetchC() -> void {
     if (!baLow)
         return;
         
@@ -514,7 +459,7 @@ auto VicII::fetchC() -> void {
 	display.cBuffer[ display.vmli ] = ((color & 0xf) << 8) | dataC;
 }
 
-auto VicII::addrG( uint8_t useMode ) -> uint16_t {
+auto VicIICycle::addrG( uint8_t useMode ) -> uint16_t {
     
     uint16_t addr = display.rc;
 
@@ -534,7 +479,7 @@ auto VicII::addrG( uint8_t useMode ) -> uint16_t {
     return addr;
 }
 
-auto VicII::fetchG() -> void {        
+auto VicIICycle::fetchG() -> void {        
     
     uint16_t addr;
     uint8_t useMode;

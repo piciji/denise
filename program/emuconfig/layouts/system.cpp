@@ -34,6 +34,24 @@ FeatureLayout::FeatureLayout() {
     setFont(GUIKIT::Font::system("bold"));    
 }
 
+AccuracyLayout::Block::Block() {    
+    append(videoCycleAccuracy, {0u, 0u}, 10);
+    append(videoScanlineThread, {0u, 0u}, 10);
+    append(diskHighLoadThread, {0u, 0u}, 10);
+    append(diskIdle, {0u, 0u}, 10);
+    append(audioRealtimeThread, {0u, 0u});   
+    
+    setAlignment(0.5);
+}
+
+AccuracyLayout::AccuracyLayout() {
+    setPadding(10);
+    append( dangerLabel, {0u, 0u}, 5 );
+    append( block, {0u, 0u} );
+    dangerLabel.setForegroundColor(0xff4500);
+    setFont(GUIKIT::Font::system("bold"));    
+}
+
 auto FeatureLayout::build( Emulator::Interface* emulator ) -> void {
     unsigned blocksPerLine = 4;
 	auto& features = emulator->features;
@@ -55,8 +73,6 @@ auto FeatureLayout::build( Emulator::Interface* emulator ) -> void {
         line->blocks.push_back( block );
         line->append(*block, {0u, 0u}, ((i % blocksPerLine) == 0) ? 0 : 15);
 
-        if (feature.performanceHit)
-            block->append(block->dangerLabel, {0u, 0u} );
         
         block->checkBox.setText( feature.name );
         block->label.setText( feature.name );  
@@ -64,9 +80,7 @@ auto FeatureLayout::build( Emulator::Interface* emulator ) -> void {
 		unsigned j = 0;
 		for (auto option : block->options) {
 			option->setText( feature.options[j++] );
-		}
-                
-        block->dangerLabel.setForegroundColor(0xff4500);
+		}                        
     }
 }
 
@@ -252,7 +266,9 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
     append(upperLayout, {~0u, 0u}, 10);
     
     if (featureLayout.lines.size() > 0)
-        append(featureLayout, {~0u, 0u});
+        append(featureLayout, {~0u, 0u}, 10);
+        
+    append(accuracyLayout, {~0u, 0u});
 
     if (emulator->cpus.size()) {        
         unsigned i = 0;
@@ -366,9 +382,6 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
                 block->checkBox.onToggle = [this, block, feature]( ) {
 
                     settings->set<bool>( this->tabWindow->ident( feature->name ), block->checkBox.checked( ) );
-                    
-                    if (feature->performanceHit)
-                        program->fastForward( false );
 
                     emulator->setFeature( feature->id, block->checkBox.checked( ) );
                 };
@@ -380,10 +393,6 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
 					option->onActivate = [this, block, feature, val]() {
 
 						settings->set<unsigned>(this->tabWindow->ident(feature->name), val);
-
-						if (feature->performanceHit)
-							program->fastForward( false );
-						
 						
 						emulator->setFeature( feature->id, val );
 					};
@@ -472,6 +481,72 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
     else
         regionLayout.ntsc.setChecked();
     
+    accuracyLayout.block.videoCycleAccuracy.onToggle = [this]() {
+
+        bool state = accuracyLayout.block.videoCycleAccuracy.checked();
+        
+        settings->set<bool>(this->tabWindow->ident("video_cycle_accuracy"), state);
+
+        program->fastForward(false);
+
+        emulator->videoCycleAccuracy(state);
+    };
+    
+    accuracyLayout.block.videoCycleAccuracy.setChecked( settings->get<bool>(this->tabWindow->ident("video_cycle_accuracy"), false) );
+    
+    accuracyLayout.block.videoScanlineThread.onToggle = [this]() {
+
+        bool state = accuracyLayout.block.videoScanlineThread.checked();
+        
+        settings->set<bool>(this->tabWindow->ident("video_scanline_thread"), state);
+
+        program->fastForward(false);
+
+        emulator->videoScanlineThread(state);
+    };    
+    
+    accuracyLayout.block.videoScanlineThread.setChecked( settings->get<bool>(this->tabWindow->ident("video_scanline_thread"), false) );
+    
+    accuracyLayout.block.diskHighLoadThread.onToggle = [this]() {
+
+        bool state = accuracyLayout.block.diskHighLoadThread.checked();
+        
+        settings->set<bool>(this->tabWindow->ident("disk_highload_thread"), state);
+
+        program->fastForward(false);
+
+        emulator->diskHighLoadThread(state);
+    };  
+    
+    accuracyLayout.block.diskHighLoadThread.setChecked( settings->get<bool>(this->tabWindow->ident("disk_highload_thread"), false) );
+
+    accuracyLayout.block.diskIdle.onToggle = [this]() {
+
+        bool state = accuracyLayout.block.diskIdle.checked();
+        
+        settings->set<bool>(this->tabWindow->ident("disk_idle"), state);
+
+        program->fastForward(false);
+
+        emulator->diskIdle(state);
+    };  
+    
+    accuracyLayout.block.diskIdle.setChecked( settings->get<bool>(this->tabWindow->ident("disk_idle"), false) );
+
+    
+    accuracyLayout.block.audioRealtimeThread.onToggle = [this]() {
+
+        bool state = accuracyLayout.block.audioRealtimeThread.checked();
+        
+        settings->set<bool>(this->tabWindow->ident("audio_realtime_thread"), state);
+
+        program->fastForward(false);
+
+        emulator->audioRealtimeThread(state);
+    }; 
+    
+    accuracyLayout.block.audioRealtimeThread.setChecked( settings->get<bool>(this->tabWindow->ident("audio_realtime_thread"), false) );
+    
     updateExpansionMemory();
 }
 
@@ -517,10 +592,7 @@ auto SystemLayout::toggleFeature(unsigned id) -> bool {
 auto SystemLayout::updateRuntimeFeatureWidgets( ) -> void {
     for (auto line : featureLayout.lines) {
         for (auto block : line->blocks) {
-            
-            if (!block->feature->runtimeChangeable)
-                continue;
-            
+                        
             updateFeatureWidget( block );
         }
     }
@@ -611,9 +683,6 @@ auto SystemLayout::translate() -> void {
 				
             } else
                 block->label.setTooltip( trans->get( featureIdent( feature->name ) + "_info" ) );
-
-            block->dangerLabel.setTooltip( trans->get("cpu_warning_info") );  
-            block->dangerLabel.setText( " [" + trans->get("cpu_warning") + "]" );  
             
             block->checkBox.setText( trans->get( featureIdent( feature->name ) ) );
             block->label.setText( trans->get( featureIdent( feature->name ), {}, feature->isRadio() ) );  
@@ -641,6 +710,20 @@ auto SystemLayout::translate() -> void {
     sliderLayouts.push_back( &driveLayout.wobble );
 
     SliderLayout::scale(sliderLayouts, "300.0 RPM");
+    
+    accuracyLayout.setText( trans->get("accuracy and performance") ); 
+    accuracyLayout.dangerLabel.setText( "[" + trans->get("cpu load") + "]" );  
+    accuracyLayout.dangerLabel.setTooltip( trans->get("cpu load info") );  
+    accuracyLayout.block.videoCycleAccuracy.setText( trans->get("video cycle accuracy") );
+    accuracyLayout.block.videoCycleAccuracy.setTooltip( trans->get("video cycle accuracy info") );
+    accuracyLayout.block.videoScanlineThread.setText( trans->get("video scanline thread") );
+    accuracyLayout.block.videoScanlineThread.setTooltip( trans->get("video scanline thread info") );
+    accuracyLayout.block.diskHighLoadThread.setText( trans->get("disk highload thread") );
+    accuracyLayout.block.diskHighLoadThread.setTooltip( trans->get("disk highload thread info") );
+    accuracyLayout.block.diskIdle.setText( trans->get("disk idle") );
+    accuracyLayout.block.diskIdle.setTooltip( trans->get("disk idle info") );
+    accuracyLayout.block.audioRealtimeThread.setText( trans->get("audio realtime thread") );
+    accuracyLayout.block.audioRealtimeThread.setTooltip( trans->get("audio realtime thread info") );
 }
 
 auto SystemLayout::featureIdent( std::string ident ) -> std::string {
@@ -651,17 +734,6 @@ auto SystemLayout::featureIdent( std::string ident ) -> std::string {
 auto SystemLayout::setEnabled(bool state) -> void {
     upperLayout.setEnabled( state );
 	regionLayout.setEnabled( true );
-        
-	// some features are changeable during emulation        
-    for( auto line : featureLayout.lines ) {
-        
-        for( auto block : line->blocks ) {
-            
-            auto feature = block->feature;
-            
-            block->setEnabled( state ? true : feature->runtimeChangeable );
-        }
-    }   
     
     if (state)
         updateExpansionMemory();

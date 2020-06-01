@@ -23,7 +23,7 @@ ifeq ($(platform),windows)
     objects += dinput5 dinput7 dinput8 xaudio27 xaudio28 xaudio29
 endif
 #objects += m68000
-objects += m6502 m6510 ciaBase cia6526 vic systemC64 sid tapeC64 inputC64 controlPortC64
+objects += m6502 m6510 ciaBase cia6526 vicIIBase vicIICycle vicIIFast systemC64 sid tapeC64 inputC64 controlPortC64
 objects += cartC64 gameCartC64 actionReplayC64 reuC64 easyFlashC64 retroReplayC64
 objects += via iec prg64 drive1541 m6502custom structure1541
 
@@ -112,7 +112,9 @@ obj/m6502.o:	emulation/processor/m65xx/m6502/m6502.cpp
 obj/m6510.o:	emulation/processor/m65xx/m6510/m6510.cpp
 obj/ciaBase.o:	emulation/cia/base.cpp	
 obj/cia6526.o:	emulation/cia/m6526.cpp
-obj/vic.o:	emulation/libc64/vic/vicII.cpp
+obj/vicIIBase.o:emulation/libc64/vic/base.cpp
+obj/vicIICycle.o:emulation/libc64/vic/vicII.cpp
+obj/vicIIFast.o:emulation/libc64/vic/fast/vicIIFast.cpp
 obj/systemC64.o:emulation/libc64/system/system.cpp	
 obj/cartC64.o:	emulation/libc64/expansionPort/cart/cart.cpp
 obj/gameCartC64.o: emulation/libc64/expansionPort/gameCart/gameCart.cpp

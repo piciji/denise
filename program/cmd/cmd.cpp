@@ -159,6 +159,7 @@ auto Cmd::parse() -> void {
 			settings->set<bool>("dynamic_rate_control", false );			
             settings->set<bool>("fps", true );			
             settings->set("video_screen_text", 2);
+            settings->set<bool>( program->ident( emuC64, "video_cycle_accuracy"), true );            
         }            
         else if (arg == "-limitcycles") {
             limitCyclesNext = true;

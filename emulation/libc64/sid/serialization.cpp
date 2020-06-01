@@ -9,10 +9,7 @@ auto Sid::serialize(Emulator::Serializer& s) -> void {
         // wait for worker thread
 		while ( ready.load() ) { }
     }
-    
-    // reserved for more accuracy
-    bool reserved = false;
-    
+        
     s.integer( (uint8_t&) type );
     s.integer( digiBoost );
     s.integer( lastBusValue );
@@ -21,8 +18,6 @@ auto Sid::serialize(Emulator::Serializer& s) -> void {
     s.integer( registerWrite.pipelined );
     s.integer( registerWrite.addr );
     s.integer( registerWrite.value );
-    //s.integer( moreAccuracy );
-    s.integer( reserved );
     s.integer( sampleCounter );
     s.integer( potX );
     s.integer( potY );

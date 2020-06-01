@@ -218,7 +218,6 @@ sid_6581/8580_info = チェックするとSIDチップを6581にし、未チェ�
 sid_filter_info = チェックするとロー/ハイパスフィルタを有効化
 sid_8580_digi_boost_info = レジスタの変化に合わせてdigiブーストをかける
 sid_filter_bias_info = 6581チップの適正閾値[-5000から5000]を指定し、ノイズ効果の発生を調整
-sid_hazard_info = 電圧高下によるフィルタ/ミキサーの変動を個々のトランジスタレベルで再現。デフォルトは擬似的にまとめて扱う
 cia_6526a/6526_info = チェックするとCIAチップを新型の6526aにし、未チェック時は旧型の6526に
 ane_magic_byte_info = チップの差異によって適用値が変化。Mastertronic製Burnerローダーは"0xff"で通常は"0xee"
 custom_ic_glue_logic_info = チェックするとカスタムICのglueロジックを有効化。未チェック時は一般的なものを使用
@@ -246,9 +245,6 @@ mouse 1351 = マウス 1351：
 mouse neos = マウス Neos：
 mouse_sensitivity = マウスの感度
 analog_sensitivity = アナログ入力の感度
-disk_core_100%_info = フロッピードライブが3台以上ある場合のみ有効
-cpu_warning = Cpu高負荷
-cpu_warning_info = CPUパワーを最大使用。ノートパソコンなどの非力なマシンでは非推奨
 cpu_warning_disk_info = フロッピードライブが増えるとCPU負荷が高まります
 assignment = 指定
 overwrite = 上書き
@@ -258,11 +254,9 @@ sid_6581/8580 = SIDチップ 6581/8580
 sid_filter = SIDフィルタ
 sid_8580_digi_boost = 8580のDigiブースト
 sid_filter_bias = SIDフィルタの閾値
-sid_hazard = SIDチップのハザード
 cia_6526a/6526 = CIAチップ 6526a/6526
 ane_magic_byte = ANE Magic Byte
 custom_ic_glue_logic = カスタムICのGlueロジック
-disk_core_100% = ディスクドライブのエミュレート負荷 100%
 low_pass_filter = ローパスフィルタ
 dynamic_rate_control = モニタ周波数のダイナミック制御 (DRC)
 override_exact_frequency = モニタの固定周波数
@@ -473,3 +467,16 @@ runahead toggle mode =
 runahead input latency = 
 runahead performance mode = 
 runahead accuracy mode = 
+accuracy and performance = 
+cpu load = cpu_warning = Cpu高負荷
+cpu load info = cpu_warning_info = CPUパワーを最大使用。ノートパソコンなどの非力なマシンでは非推奨
+video cycle accuracy = 
+video cycle accuracy info = 
+video scanline thread = 
+video scanline thread info = 
+disk highload thread = disk_core_100% = ディスクドライブのエミュレート負荷 100%
+disk highload thread info = disk_core_100%_info = フロッピードライブが3台以上ある場合のみ有効
+disk idle = 
+disk idle info = 
+audio realtime thread = sid_hazard = SIDチップのハザード
+audio realtime thread info = sid_hazard_info = 電圧高下によるフィルタ/ミキサーの変動を個々のトランジスタレベルで再現。デフォルトは擬似的にまとめて扱う

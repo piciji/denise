@@ -1,9 +1,9 @@
 
-#include "vicII.h"
+#include "base.h"
 
 namespace LIBC64 {
     
-auto VicII::insertVerticalLineAnomaly(unsigned start, unsigned end) -> void {
+auto VicIIBase::insertVerticalLineAnomaly(unsigned start, unsigned end) -> void {
 	
 	if (!leftLineAnomaly.permanent && (start == 0) ) {
 		leftLineAnomaly.framePos--;
@@ -17,7 +17,7 @@ auto VicII::insertVerticalLineAnomaly(unsigned start, unsigned end) -> void {
 		insertVerticalLineAnomaly<false>( start, end );
 }
 
-template<bool permanent> auto VicII::insertVerticalLineAnomaly(unsigned start, unsigned end) -> void {
+template<bool permanent> auto VicIIBase::insertVerticalLineAnomaly(unsigned start, unsigned end) -> void {
     
     uint16_t* ptr = frameBuffer + (start * VIC_MAX_LINE_LENGTH) + firstVisiblePixel + 1;
     uint8_t _colorReg = leftLineAnomaly.mode == 1 ? 1 : colorReg[ 0x23 ];

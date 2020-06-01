@@ -101,7 +101,7 @@ auto System::unserialize(uint8_t* data, unsigned size) -> bool {
         return false;
     
     if( std::string(version) != Interface::Version)
-        return false;   
+        return false;          
     
     serializeAll(s);
     
@@ -112,6 +112,12 @@ auto System::unserialize(uint8_t* data, unsigned size) -> bool {
 }    
     
 auto System::serializeAll(Emulator::Serializer& s) -> void {
+
+    bool useCycleRenderer = vicII == vicIICycle;
+    s.integer(useCycleRenderer);
+
+    if (s.mode() == Emulator::Serializer::Mode::Load)
+        setCycleRenderer( useCycleRenderer );    
     
     serialize( s );
     cia1->serialize( s );
@@ -124,14 +130,24 @@ auto System::serializeAll(Emulator::Serializer& s) -> void {
     serializeExpansion( s );
     
     events.serialize( s );
-    
-    if (s.mode() == Emulator::Serializer::Mode::Load) {
+        
+    if (s.mode() == Emulator::Serializer::Mode::Load) {        
         cpu->setContext( cpuCtx );
         dispatcha();
     }
 }    
     
+inline auto System::serializeDiskIdle(Emulator::Serializer& s) -> void {
+    s.integer( diskSilence.idle );
+    s.integer( diskSilence.idleFrames );
+
+    if (!diskSilence.active && (s.mode() == Emulator::Serializer::Mode::Load))
+        diskSilence.idle = false;    
+}
+
 auto System::serialize(Emulator::Serializer& s) -> void {
+    
+    serializeDiskIdle( s );
     
     s.array( ram, 64 * 1024 );
     s.array( colorRam, 1 * 1024 );    
@@ -146,7 +162,7 @@ auto System::serialize(Emulator::Serializer& s) -> void {
     keyBuffer->serialize( s );    
     prgInUse->serialize( s );
     glueLogic->serialize( s );
-    powerSupply->serialize( s );
+    powerSupply->serialize( s );    
     
     serialize6502( s, cpuCtx );   
 }

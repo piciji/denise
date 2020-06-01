@@ -3,11 +3,11 @@
  * color spectrum emulation by Pepto (new Colodore version)
  */
 
-#include "vicII.h"
+#include "base.h"
 
 namespace LIBC64 { 
     
-auto VicII::initColorWheel() -> void {
+auto VicIIBase::initColorWheel() -> void {
     double sector = 360.0 / 16.0;
     double origin = sector / 2.0;
     
@@ -55,12 +55,12 @@ auto VicII::initColorWheel() -> void {
     }
 }
 
-auto VicII::getLuma(uint8_t index, bool newRevision) -> double {
+auto VicIIBase::getLuma(uint8_t index, bool newRevision) -> double {
     
     return luma[ newRevision ? 0 : 1 ][ index & 15 ];
 }
 
-auto VicII::getChroma(uint8_t index) -> double {
+auto VicIIBase::getChroma(uint8_t index) -> double {
     
     return chroma[ index & 15 ];
 }

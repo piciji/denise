@@ -25,12 +25,13 @@ struct IecBus {
     bool atnOut;
     bool clockOut;
     bool dataOut;
+    uint8_t lastByte;
     uint8_t port;
-    int32_t syncPos;
-    int32_t syncPosRead;
-    int32_t syncPosWrite;
-    unsigned cycleCounter;
-    int32_t cpuCylcesPerSecond;
+    int64_t syncPos;
+    int64_t syncPosRead;
+    int64_t syncPosWrite;
+    int64_t cycleCounter;
+    int64_t cpuCylcesPerSecond;
     std::atomic<bool> ready;
     std::atomic<bool> idle;
     bool threaded = false;
@@ -38,9 +39,9 @@ struct IecBus {
     std::condition_variable cv;
     bool cpuBurner;
     bool cpuBurnerRequested;
-    bool powerOn;
+    bool powerOn;           
     
-    auto writeCia( uint8_t byte ) -> void;
+    auto writeCia( uint8_t byte ) -> bool;
     auto readCia() -> uint8_t;
     auto readVia() -> uint8_t;
     
@@ -50,7 +51,8 @@ struct IecBus {
     
     auto updatePort() -> void;
     auto waitForDrives() -> void;
-    auto syncDrives( int32_t _syncPos = 0, bool ciaAccess = false ) -> void;
+    auto syncDrives( int64_t _syncPos = 0, bool ciaAccess = false ) -> void;
+    inline auto resetTicks() -> void { cycleCounter &= 0x3ff; }
     auto setDrivesEnabled( uint8_t count ) -> void;
     auto setDriveSpeed(double rpm, double wobble) -> void;
     auto setFirmware(uint8_t* rom, unsigned romSize) -> void;

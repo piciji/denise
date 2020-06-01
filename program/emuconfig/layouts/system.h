@@ -1,4 +1,21 @@
 
+struct AccuracyLayout : GUIKIT::FramedVerticalLayout {
+    
+    GUIKIT::Label dangerLabel;
+    
+    struct Block : GUIKIT::HorizontalLayout {
+        GUIKIT::CheckBox videoCycleAccuracy;
+        GUIKIT::CheckBox videoScanlineThread;
+        GUIKIT::CheckBox diskHighLoadThread;
+        GUIKIT::CheckBox diskIdle
+        GUIKIT::CheckBox audioRealtimeThread;
+        
+        Block();
+    } block;
+    
+    AccuracyLayout();
+};
+
 struct FeatureLayout : GUIKIT::FramedVerticalLayout {
     
     struct Line : GUIKIT::HorizontalLayout {
@@ -9,7 +26,6 @@ struct FeatureLayout : GUIKIT::FramedVerticalLayout {
 			std::vector<GUIKIT::RadioBox*> options;
             GUIKIT::Label label;
             GUIKIT::LineEdit lineEdit;
-            GUIKIT::Label dangerLabel;
 
             Block(Emulator::Interface::Feature* feature);
         };
@@ -125,6 +141,7 @@ struct SystemLayout : GUIKIT::VerticalLayout {
 	ChipsetLayout chipsetLayout;
 	RegionLayout regionLayout;
     FeatureLayout featureLayout;
+    AccuracyLayout accuracyLayout;
     ExpansionLayout expansionLayout;
 
     auto translate() -> void;

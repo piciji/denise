@@ -4,7 +4,8 @@
 #include "prg/prg.h"
 #include "tape/tape.h"
 #include "sid/sid.h"
-#include "vic/vicII.h"
+#include "vic/base.h"
+#include "vic/fast/vicIIFast.h"
 #include "input/input.h"
 #include "disk/iec.h"
 #include "expansionPort/gameCart/gameCart.h"
@@ -18,7 +19,7 @@
 
 namespace LIBC64 {
 
-const std::string Interface::Version = "1083";
+const std::string Interface::Version = "1085";
     
 Interface::Interface() : Emulator::Interface( "C64" ) {        
     
@@ -326,26 +327,21 @@ auto Interface::preparePalettes() -> void {
 
 auto Interface::prepareFeatures() -> void {
 	// use old Sid 6581 instead of the newer 8580
-	features.push_back({FeatureIdSid, "Sid 6581/8580", Feature::Type::Switch, 0, true, false});	
+	features.push_back({FeatureIdSid, "Sid 6581/8580", Feature::Type::Switch, 0});	
 	// 0 - off, 1 - on, means software decides
-    features.push_back({FeatureIdFilter, "Sid Filter", Feature::Type::Switch, 1, true, false});
+    features.push_back({FeatureIdFilter, "Sid Filter", Feature::Type::Switch, 1});
 	// amplifies Sid 8580 digi sounds
-	features.push_back({FeatureIdDigiboost, "Sid 8580 Digi Boost", Feature::Type::Switch, 0, true, false});
+	features.push_back({FeatureIdDigiboost, "Sid 8580 Digi Boost", Feature::Type::Switch, 0});
 	// adjust center frequency for Sid 6581
-	features.push_back({FeatureIdBias, "Sid Filter Bias", Feature::Type::Range, 500, true, false, {-5000, 5000} });
-	// experimental accuracy: runs in concurrent thread beacause of on the fly calculation
-	// each voltage input for mixer / filter is modelled as individual transistor
-	features.push_back({FeatureIdSidAccuracy, "Sid Hazard", Feature::Type::Switch, 0, true, true});
+	features.push_back({FeatureIdBias, "Sid Filter Bias", Feature::Type::Range, 500, {-5000, 5000} });
     // distinguish between old and new ( 6526a ) cia chips
-    features.push_back({FeatureIdCiaRev, "Cia 6526a/6526", Feature::Type::Switch, 1, false, false});
+    features.push_back({FeatureIdCiaRev, "Cia 6526a/6526", Feature::Type::Switch, 1});
     // ANE magic byte value depends on cpu manufacturer and unemulatable behaviour like heat
-    features.push_back({FeatureIdCpuAneMagic, "ANE Magic Byte", Feature::Type::Hex, 0xef, false, false, { 0, 0xff }});
+    features.push_back({FeatureIdCpuAneMagic, "ANE Magic Byte", Feature::Type::Hex, 0xef, { 0, 0xff }});
     // c64c use custom ic instead of discrete glue logic
-    features.push_back({FeatureIdGlueLogic, "Custom IC Glue Logic", Feature::Type::Switch, 0, false, false});
-    // disk drive thread consumes a single core 100%, usefull when emulating more than two drives
-    features.push_back({FeatureIdPowerThread, "Disk Core 100%", Feature::Type::Switch, 0, true, true});    
+    features.push_back({FeatureIdGlueLogic, "Custom IC Glue Logic", Feature::Type::Switch, 0});
     // emulate the buggy vertical line in first two border pixels
-    features.push_back({FeatureIdLeftLineAnomaly, "Left Line Anomaly", Feature::Type::Radio, 0, true, false, {0, 2}, {"Off", "Solid White", "Register Color"}});    
+    features.push_back({FeatureIdLeftLineAnomaly, "Left Line Anomaly", Feature::Type::Radio, 0, {0, 2}, {"Off", "Solid White", "Register Color"}});         
 }
 
 auto Interface::prepareChipset() -> void {    
@@ -973,9 +969,6 @@ auto Interface::setFeature(unsigned featureId, int value) -> void {
 		case FeatureIdBias:
 			sid->filter.adjustFilterBias( value );
 			break;
-		case FeatureIdSidAccuracy:
-			sid->setMoreAccuracy( value & 1 );
-			break;
         case FeatureIdCiaRev:
             system->cia1->setNewVersion( value & 1 );
             system->cia2->setNewVersion( value & 1 );
@@ -986,9 +979,6 @@ auto Interface::setFeature(unsigned featureId, int value) -> void {
             break;
         case FeatureIdGlueLogic:
             system->glueLogic->setType( (GlueLogic::Type)(value & 1) );
-            break;
-        case FeatureIdPowerThread:
-            iecBus->setPowerThread( value & 1 );
             break;
         case FeatureIdLeftLineAnomaly:
             vicII->setVerticalLineAnomaly( (unsigned)value );
@@ -1007,18 +997,15 @@ auto Interface::getFeature(unsigned featureId) -> int {
             return sid->digiBoost;
 		case FeatureIdBias:
 			return sid->filter.bias;
-		case FeatureIdSidAccuracy:
-			return sid->moreAccuracy;
         case FeatureIdCiaRev:
             return system->cia1->isNewVersion();
         case FeatureIdCpuAneMagic:
             return system->cpu->getMagicForAne();
         case FeatureIdGlueLogic:
             return (int)system->glueLogic->type;
-        case FeatureIdPowerThread:
-            return iecBus->cpuBurner;
         case FeatureIdLeftLineAnomaly:
             return (int)vicII->getVerticalLineAnomaly();
+                
     }    
     return 0;
 }
@@ -1188,5 +1175,26 @@ auto Interface::analyzeExpansion(uint8_t* data, unsigned size) -> Expansion* {
     return system->analyzeExpansion( data, size );
 }
 
+auto Interface::videoCycleAccuracy(bool state) -> void {
+    system->cycleRendererNextBoot = state;
 }
 
+auto Interface::videoScanlineThread(bool state) -> void {
+    vicIIFast->setThreading( state );
+}
+
+auto Interface::diskHighLoadThread(bool state) -> void {
+    iecBus->setPowerThread( state );
+}
+
+auto Interface::diskIdle(bool state) -> void {
+    system->diskSilence.active = state;
+    system->diskSilence.idle = false;
+    system->diskSilence.idleFrames = 0;
+}
+
+auto Interface::audioRealtimeThread(bool state) -> void {
+    sid->setMoreAccuracy( state );
+}
+
+}

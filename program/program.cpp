@@ -145,11 +145,21 @@ auto Program::init() -> void {
         setPalette( emulator );
         
         setExpansionSelection( emulator );
+        
+        setAccuracy( emulator );
     }   
     	
 	logger->setSavePath( GUIKIT::System::getUserDataFolder(appFolder()) );
         
     isRunning = isPause = false;
+}
+
+auto Program::setAccuracy(Emulator::Interface* emulator) -> void {
+    emulator->videoCycleAccuracy( settings->get<bool>( ident(emulator, "video_cycle_accuracy"), false) );
+    emulator->videoScanlineThread( settings->get<bool>( ident(emulator, "video_scanline_thread"), false) );
+    emulator->diskHighLoadThread( settings->get<bool>( ident(emulator, "disk_highload_thread"), false) );
+    emulator->diskIdle( settings->get<bool>( ident(emulator, "disk_idle"), false) );
+    emulator->audioRealtimeThread( settings->get<bool>( ident(emulator, "audio_realtime_thread"), false) );
 }
 
 auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {                  

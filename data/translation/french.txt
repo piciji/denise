@@ -218,7 +218,6 @@ sid_6581/8580_info = si activé, le Sid 6581 est actif, sinon on passe sur le Si
 sid_filter_info = si activé, le logiciel décide du bas, haut et du filtre de la bande pass
 sid_8580_digi_boost_info = une tension affectée par une résistance est connectée à l'entrée vocale externe Sid pour amplifier les sons digitals
 sid_filter_bias_info = réglage de la fréquence centrale du Sid 6581 dans une plage de [-5000...5000] pour réduire le bruit
-sid_hazard_info = modélisation expérimentale de toutes les tensions entrantes dans le filtre/mélangeur sous forme de transistors individuels au lieu d'un seul transistor virtuel
 cia_6526a/6526_info = si les nouvelles puces Cia 6526a sont activées, sinon les anciennes puces 6526 sont actives
 ane_magic_byte_info = La valeur dépend en partie du fabricant de la puce. Les jeux avec Mastertronic Burner Loader attendent 0xff, la valeur commune est 0xee.
 custom_ic_glue_logic_info = si activél'ic glue logic personnalié est actif, sinon glue logic discret est actif
@@ -246,9 +245,6 @@ mouse 1351 = Souris 1351
 mouse neos = Souris Neos
 mouse_sensitivity = Sensibilité de la souris
 analog_sensitivity = Sensibilité Analogique
-disk_core_100%_info = ce paramètre n'est utile que s'il y a trois disques ou plus.
-cpu_warning = Avertissement du CPU
-cpu_warning_info = consomme 100 % du noyau du processeur. Ce n'est pas recommandé pour les portables qui accélèrent dans certains cas.
 cpu_warning_disk_info = il faudra des ressources cpu supplémentaires pour chaque lecteur de disque supplémentaire sélectionné.
 assignment = Assigné
 overwrite = réécrire
@@ -258,11 +254,9 @@ sid_6581/8580 = Sid 6581/8580
 sid_filter = Filtre Sid
 sid_8580_digi_boost = Boost Numérique Sid 8580
 sid_filter_bias = Filtre de Polarisation Sid
-sid_hazard = Hazard Sid
 cia_6526a/6526 = Cia 6526a/6526
 ane_magic_byte = Byte ANE Magic
 custom_ic_glue_logic = Ic Glue Logic Personnalisé
-disk_core_100% = Noyau Disque 100%
 low_pass_filter = Filtre Low Pass
 dynamic_rate_control = Contrôle Dynamique du Taux (DRC)
 override_exact_frequency = priorité sur la fréquence exacte
@@ -473,3 +467,16 @@ runahead toggle mode =
 runahead input latency = 
 runahead performance mode = 
 runahead accuracy mode = 
+accuracy and performance = 
+cpu load = cpu_warning = Avertissement du CPU
+cpu load info = cpu_warning_info = consomme 100 % du noyau du processeur. Ce n'est pas recommandé pour les portables qui accélèrent dans certains cas.
+video cycle accuracy = 
+video cycle accuracy info = 
+video scanline thread = 
+video scanline thread info = 
+disk highload thread = disk_core_100% = Noyau Disque 100%
+disk highload thread info = disk_core_100%_info = ce paramètre n'est utile que s'il y a trois disques ou plus.
+disk idle = 
+disk idle info = 
+audio realtime thread = sid_hazard = Hazard Sid
+audio realtime thread info = sid_hazard_info = modélisation expérimentale de toutes les tensions entrantes dans le filtre/mélangeur sous forme de transistors individuels au lieu d'un seul transistor virtuel

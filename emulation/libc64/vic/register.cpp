@@ -1,9 +1,9 @@
 
-#include "vicII.h"
+#include "base.h"
 
 namespace LIBC64 {
 
-auto VicII::readReg( uint8_t addr ) -> uint8_t {
+auto VicIIBase::readReg( uint8_t addr ) -> uint8_t {
 	uint8_t value = 0;
 	addr &= 0x3f;
     
@@ -31,12 +31,14 @@ auto VicII::readReg( uint8_t addr ) -> uint8_t {
         case 0x12:
             value = vCounter & 0xff;
             break;
-        case 0x13:
-            value = lpx;
-            break;
-        case 0x14:
-            value = lpy;
-            break;
+        case 0x13: {
+            bool latchedInSecondHalfCycle = !!(irqLatchPending & (1 << Interrupt::LP));
+            value = latchedInSecondHalfCycle ? lpxBefore : lpx;
+        } break;
+        case 0x14: {
+            bool latchedInSecondHalfCycle = !!(irqLatchPending & (1 << Interrupt::LP));
+            value = latchedInSecondHalfCycle ? lpyBefore : lpy;
+        } break;
         case 0x15: {
             for (unsigned i = 0; i < 8; i++)
                 value |= sprite[i].enabled << i;
@@ -104,7 +106,7 @@ auto VicII::readReg( uint8_t addr ) -> uint8_t {
 	return value;
 }
 
-auto VicII::writeReg( uint8_t addr, uint8_t value ) -> void {
+auto VicIIBase::writeReg( uint8_t addr, uint8_t value ) -> void {
     addr &= 0x3f;
 	
     switch( addr ) {        
@@ -160,7 +162,9 @@ auto VicII::writeReg( uint8_t addr, uint8_t value ) -> void {
             controlReg2 = value;
             modeMcm = (value >> 4) & 1;
             cSel = (value >> 3) & 1;
+            xScroll = value & 7;
             updateBorderData();
+            setBorderDim();
         } break;
 
         case 0x17: {
@@ -247,4 +251,11 @@ auto VicII::writeReg( uint8_t addr, uint8_t value ) -> void {
         updateSpriteWithBusValue(value);
 }
 
+auto VicIIBase::updateSpriteWithBusValue(uint8_t value) -> void {
+    spriteOpenBus->dataS &= ~(0xff << lastSpriteShift);
+    spriteOpenBus->dataS |= value << lastSpriteShift;
+    spriteOpenBus = nullptr;
 }
+
+}
+

@@ -113,6 +113,8 @@ struct System {
     bool frameComplete = false;
     Emulator::Serializer serializer;    
     bool kernalBootComplete = false;
+    bool powerOn = false;
+    bool cycleRendererNextBoot = false;
     
     struct {
         unsigned config;
@@ -126,6 +128,12 @@ struct System {
         bool accuracy = false;
         Emulator::MemSerializer serializer;
     } runAhead;
+    
+    struct {
+        unsigned idleFrames = 0;
+        bool idle = false;
+        bool active = false;
+    } diskSilence;
     
     #include "testbench.h"
     
@@ -159,6 +167,7 @@ struct System {
     auto unserialize(uint8_t* data, unsigned size) -> bool;
     auto serializeAll(Emulator::Serializer& s) -> void;
     auto serialize(Emulator::Serializer& s) -> void;
+    auto serializeDiskIdle(Emulator::Serializer& s) -> void;
     auto serializeExpansion(Emulator::Serializer& s) -> void;
     static auto serialize6502( Emulator::Serializer& s, MOS65Context* cpuCtx ) -> void;        
     
@@ -173,6 +182,8 @@ struct System {
     auto setFastForward( unsigned config ) -> void;    
     auto setRunAhead(unsigned frames) -> void;
     auto setRunAheadAccuracy(bool state) -> void;
+    
+    auto setCycleRenderer(bool state) -> void;
 };
 
 extern System* system;

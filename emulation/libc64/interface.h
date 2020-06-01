@@ -11,8 +11,8 @@ struct Interface : Emulator::Interface {
     
     enum FeatureId {
         FeatureIdSid = 0, FeatureIdFilter = 1, FeatureIdDigiboost = 2, FeatureIdBias = 3,
-        FeatureIdSidAccuracy = 4, FeatureIdCiaRev = 5, FeatureIdCpuAneMagic = 6, FeatureIdGlueLogic = 7,
-        FeatureIdPowerThread = 8, FeatureIdLeftLineAnomaly = 9
+        FeatureIdCiaRev = 4, FeatureIdCpuAneMagic = 5, FeatureIdGlueLogic = 6,
+        FeatureIdLeftLineAnomaly = 7,
     };
     
     enum MediaGroupId {
@@ -129,7 +129,13 @@ struct Interface : Emulator::Interface {
     auto cropData() -> uint16_t*;
     auto cropPitch() -> unsigned;
 
-	
+    // performance amd accuracy
+    auto videoCycleAccuracy(bool state) -> void;
+    auto videoScanlineThread(bool state) -> void;
+    auto diskHighLoadThread(bool state) -> void;
+    auto diskIdle(bool state) -> void;
+    auto audioRealtimeThread(bool state) -> void;
+    
 	auto setChipset(unsigned chipsetId) -> void;
     auto getChipset() -> unsigned;
     
