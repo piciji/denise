@@ -168,7 +168,6 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
     powerOff();			
     
     activeEmulator = emulator;
-    activeEmulator->runAhead(3);
     activeVideoManager = VideoManager::getInstance( emulator );
 	uint8_t* data;
 	bool needTapeControl = false;   

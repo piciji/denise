@@ -347,3 +347,4 @@ auto InputManager::resetRunAhead() -> void {
     if (activeEmulator)
         activeEmulator->runAhead( 0 );
 }
+

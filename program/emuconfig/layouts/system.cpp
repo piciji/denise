@@ -444,7 +444,7 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
 	
 	regionLayout.pal.onActivate = [this]() {
         if (this->emulator == activeEmulator) {
-            if (!mes->question( trans->get("region_change") )) {
+            if (!mes->question( trans->get("setting change need reset") )) {
                 regionLayout.ntsc.setChecked();
                 return;
             }
@@ -461,7 +461,7 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
     
     regionLayout.ntsc.onActivate = [this]() {
         if (this->emulator == activeEmulator) {
-            if (!mes->question( trans->get("region_change") )) {
+            if (!mes->question( trans->get("setting change need reset") )) {
                 regionLayout.pal.setChecked();
                 return;
             }
@@ -485,11 +485,21 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
 
         bool state = accuracyLayout.block.videoCycleAccuracy.checked();
         
+        if (this->emulator == activeEmulator) {
+            if (!mes->question(trans->get("setting change need reset"))) {
+                accuracyLayout.block.videoCycleAccuracy.setChecked(!state);
+                return;
+            }
+        }                
+        
         settings->set<bool>(this->tabWindow->ident("video_cycle_accuracy"), state);
 
         program->fastForward(false);
 
         emulator->videoCycleAccuracy(state);
+        
+        if (this->emulator == activeEmulator)
+            program->power(activeEmulator);
     };
     
     accuracyLayout.block.videoCycleAccuracy.setChecked( settings->get<bool>(this->tabWindow->ident("video_cycle_accuracy"), false) );
@@ -712,7 +722,7 @@ auto SystemLayout::translate() -> void {
     SliderLayout::scale(sliderLayouts, "300.0 RPM");
     
     accuracyLayout.setText( trans->get("accuracy and performance") ); 
-    accuracyLayout.dangerLabel.setText( "[" + trans->get("cpu load") + "]" );  
+    accuracyLayout.dangerLabel.setText( trans->get("cpu load") );  
     accuracyLayout.dangerLabel.setTooltip( trans->get("cpu load info") );  
     accuracyLayout.block.videoCycleAccuracy.setText( trans->get("video cycle accuracy") );
     accuracyLayout.block.videoCycleAccuracy.setTooltip( trans->get("video cycle accuracy info") );

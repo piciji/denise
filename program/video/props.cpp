@@ -198,10 +198,14 @@ auto VideoManager::setRandomLineOffset( float intensity ) -> void {
 
 auto VideoManager::setBaGlitch( float intensity ) -> void {
     updateShader("outputEncoding", "BA", baGlitch, smoothIntensity(intensity) );
+    
+    applyMeta();
 }
 
 auto VideoManager::setAecGlitch( float intensity ) -> void {
     updateShader("outputEncoding", "AEC", aecGlitch, smoothIntensity(intensity));
+    
+    applyMeta();
 }
 
 auto VideoManager::setPhi0Glitch( float intensity ) -> void {
@@ -482,4 +486,11 @@ auto VideoManager::reloadSettings() -> void {
 	// update only, crt mode could be changed
     VideoManager::setThreaded( VideoManager::threaded ); 
 	VideoManager::setShaderInputPrecision( VideoManager::shaderInputPrecision );
+    
+    applyMeta();
+}
+
+auto VideoManager::applyMeta() -> void {
+    
+    emulator->videoAddMeta( (crtMode == CrtMode::Gpu) && (aecGlitch > 0.0 || baGlitch > 0.0) );
 }

@@ -103,7 +103,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             if (!activeEmulator)
                 break;
             
-            bool state = settings->get<bool>("runahead_accuracy", false);
+            bool state = settings->get<bool>("runahead_accuracy", true);
             state ^= 1;
             settings->set<bool>("runahead_accuracy", state, false);            
             activeEmulator->runAheadAccuracy( state );

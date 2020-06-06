@@ -15,6 +15,7 @@ VicIIBase::VicIIBase() {
 
     ntsc = false;
     rev65 = true;
+    addMeta = false;
 
     sprite0 = &sprite[0];
     sprite1 = &sprite[1];
@@ -52,6 +53,10 @@ auto VicIIBase::setNtsc(bool state) -> void {
 // revision 65xx / 85xx
 auto VicIIBase::setRevision65(bool state) -> void {
     rev65 = state;
+}
+
+auto VicIIBase::setMeta( bool state ) -> void {
+    addMeta = state;
 }
 
 auto VicIIBase::disableSequencer(bool state) -> void {

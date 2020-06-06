@@ -1,12 +1,9 @@
 
 #include "vicIIFast.h"
 
-namespace LIBC64 {
+namespace LIBC64  {
 
 auto VicIIFast::serialize(Emulator::Serializer& s) -> void {
-    
-    if (useThread) 
-        while ( ready.load() ) {}
     
     s.integer( crop.rSel ); 
     s.integer( crop.cSel );
@@ -121,13 +118,7 @@ auto VicIIFast::serialize(Emulator::Serializer& s) -> void {
     s.array( cBuffer );        
     
     xLookupPtrPhi1 = ntsc ? &xLookUpNtscPhi1[0] : &xLookUpPalPhi1[0];
-    xLookupPtrPhi2 = ntsc ? &xLookUpNtscPhi2[0] : &xLookUpPalPhi2[0];    
-    
-    if (s.mode() == Emulator::Serializer::Mode::Load) {
-        idle = useThread ? false : true;
-        if (useThread)
-            cv.notify_one();
-    } 
+    xLookupPtrPhi2 = ntsc ? &xLookUpNtscPhi2[0] : &xLookUpPalPhi2[0];        
 
 }
 

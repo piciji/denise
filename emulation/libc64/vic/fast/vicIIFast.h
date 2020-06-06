@@ -41,6 +41,10 @@ protected:
     std::atomic<bool> idle;
     std::condition_variable cv;
     bool useThread = false;
+    uint8_t* patternBadline;
+    uint8_t* patternLine;
+    uint8_t* patternBadlineNtsc;
+    uint8_t* patternLineNtsc;
     
     auto setLineInterrupt() -> void;
 	
@@ -60,6 +64,8 @@ protected:
     auto dmaSpritesOff() -> void;
     auto applySprites() -> void;
     auto checkLightPenNew() -> void;
+    auto initMetaPattern() -> void;
+    auto applyMeta() -> void;
        
 };
 

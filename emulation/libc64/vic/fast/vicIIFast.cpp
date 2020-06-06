@@ -9,6 +9,8 @@ VicIIFast* vicIIFast = nullptr;
 
 VicIIFast::VicIIFast() : VicIIBase() {
     
+    initMetaPattern();
+    
     std::thread worker( [this] {     
         
         std::chrono::milliseconds duration(5);
@@ -96,7 +98,7 @@ auto VicIIFast::clock() -> void {
 		cycle = 0; 
 
         if (vCounter == 0xf7)
-            allowBadlines = false;
+            allowBadlines = false;                    
 
         if (++vCounter == (ntsc ? 263 : 312)) {
             vCounter -= 1;
@@ -130,6 +132,7 @@ auto VicIIFast::clock() -> void {
             lineVCounter++;
         }
         setRdy( spriteBa[8][ cycle ] );
+        
     } else if (cycle == 10) {
         if (!allowBadlines && (vCounter == 0x30) && den)
             allowBadlines = true;
@@ -151,9 +154,16 @@ auto VicIIFast::clock() -> void {
     } else if (cycle == 53) {
         setRdy( false );
         cAccessArea = false;
-        dmaSprites();    
-        if (useThread)
-            while ( ready.load() ) {}
+        dmaSprites();
+        
+        if (useThread && visibleLine)
+            while ( ready.load() ) {}    
+        
+        if ( spriteSpriteCollided)
+            updateIrq( Interrupt::MMC );
+	
+        if ( spriteForegroundCollided)
+            updateIrq( Interrupt::MBC );
         
     } else if (!cAccessArea) {
         setRdy( spriteBa[8][ cycle ] );
@@ -165,8 +175,7 @@ auto VicIIFast::clock() -> void {
         checkLightPenNew();
 }
 
-
-auto VicIIFast::applyBorder() -> void {
+inline auto VicIIFast::applyBorder() -> void {
     
     uint8_t _col = colorReg[ 0x20 ];
     
@@ -212,7 +221,7 @@ auto VicIIFast::checkLightPenNew() -> void {
     if (lpPhi1)
         xCounter = xLookupPtrPhi1[cycle];
     else
-        xCounter = xLookupPtrPhi1[cycle];
+        xCounter = xLookupPtrPhi2[cycle];
     
 
     lpTrigger = false;
@@ -259,5 +268,86 @@ auto VicIIFast::getCurrentLinePtr() -> uint16_t* {
     return linePtr + (cycle << 3);
 }
 
+inline auto VicIIFast::applyMeta() -> void {
+
+    uint8_t* ptr = (uint8_t*) (linePtr + firstVisiblePixel);
+    ptr += 1;
+
+    uint8_t* src;
+
+    if (ntsc)
+        src = badLine ? patternBadlineNtsc : patternLineNtsc;
+    else
+        src = badLine ? patternBadline : patternLine;
+
+    for (unsigned i = 0; i < 420; i++) {
+        *ptr = *src++;
+        ptr += 2;
+    }  
 }
 
+auto VicIIFast::initMetaPattern() -> void {
+    patternBadline = new uint8_t[420];
+    patternLine = new uint8_t[420];
+    patternBadlineNtsc = new uint8_t[420];
+    patternLineNtsc = new uint8_t[420];
+    
+    std::memset(patternBadline, 0, 420);
+    std::memset(patternLine, 0, 420);
+    std::memset(patternBadlineNtsc, 0, 420);
+    std::memset(patternLineNtsc, 0, 420);
+        
+    for (unsigned i = 0; i < 420; i++) {
+
+        if (i < 24) {
+            patternBadline[i] = 1;
+
+            if (((i + 2) & 4) == 0) {
+                patternBadline[i] |= 2;                
+                patternLine[i] = 2;
+            }
+        }
+        
+        else if (i >= 24 && i < 342) {
+            patternBadline[i] = 3;
+            
+            if (((i + 2) & 4) == 0) {
+                patternLine[i] = 2;
+            }
+        }
+        
+        else if (i >= 342) {
+            if (((i + 2) & 4) == 0) {
+                patternLine[i] = 2;                
+                patternBadline[i] = 2;
+            }
+        }
+    }
+
+    for (unsigned i = 0; i < 420; i++) {
+
+        if (i >= 8 && i < 352)
+            patternBadlineNtsc[i] = 1;
+            
+        if ((i & 4) == 0) {
+            patternLineNtsc[i] = 2;
+        }
+                
+        if (i < 32) {
+            if ((i & 4) == 0) {
+                patternBadlineNtsc[i] |= 2;
+              
+            }
+        }
+        else if (i >= 32 && i < 352) {
+            patternBadlineNtsc[i] |= 2;
+        }
+        else if (i >= 352) {
+            if ((i & 4) == 0) {
+                patternBadlineNtsc[i] = 2;
+            }
+        }
+    }
+}
+
+}

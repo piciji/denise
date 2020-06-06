@@ -302,7 +302,6 @@ brightness = Luminosité
 color_spectrum = Spectre de Couleur
 go_to_website =  Visitez le Site Web
 border = Bordure
-region_change =  L'émulation doit être redémarré lors d'un changement de région.
 phase_error = Erreur de phase
 hanover_bars = Barres d'Hanovre
 scanlines = Scanlines 
@@ -480,3 +479,4 @@ disk idle =
 disk idle info = 
 audio realtime thread = sid_hazard = Hazard Sid
 audio realtime thread info = sid_hazard_info = modélisation expérimentale de toutes les tensions entrantes dans le filtre/mélangeur sous forme de transistors individuels au lieu d'un seul transistor virtuel
+setting change need reset = 

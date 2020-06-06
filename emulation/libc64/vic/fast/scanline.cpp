@@ -4,8 +4,8 @@
 
 namespace LIBC64 {  
 
-auto VicIIFast::scanline() -> void {
-
+auto VicIIFast::scanline() -> void {    
+    
     if (den && (vCounter == borderTop))
         vFlipFlop = false;    
     else if (vCounter == borderBottom)
@@ -22,9 +22,11 @@ auto VicIIFast::scanline() -> void {
     vicBank = system->vicBank << 14;
     linePos = firstVisiblePixel + (ntsc ? 56 : 46);
 
-    if (xScroll)
+    if (xScroll) {
+        uint8_t _col = colorReg[0x21];
         for (unsigned i = 0; i < xScroll; i++)
-            *( linePtr + linePos++ ) = 0;        
+            *( linePtr + linePos++ ) = _col;        
+    }
 
     switch(ecmBmmMcm) {
         case 0: mode0(); break;
@@ -53,12 +55,9 @@ auto VicIIFast::scanline() -> void {
         rc = (rc + 1) & 7;
         idleMode = false;
     }
-
-    if ( spriteSpriteCollided)
-		updateIrq( Interrupt::MMC );
-	
-	if ( spriteForegroundCollided)
-		updateIrq( Interrupt::MBC );
+    
+    if (addMeta)
+        applyMeta();    
 }
 
 inline auto VicIIFast::fetch(unsigned i) -> void {
@@ -171,7 +170,7 @@ inline auto VicIIFast::mode1() -> void {
             *ptr++ = (dataG & 0x4) ? _col : _background;
             *ptr++ = (dataG & 0x2) ? _col : _background;
             *ptr++ = (dataG & 0x1) ? _col : _background;
-        }     
+        }          
     }    
 }
 
@@ -394,15 +393,19 @@ auto VicIIFast::applySprites() -> void {
         if (!spr->active)
             continue;
         
-        unsigned xPos = 0;        
-        if (spr->x < 0x194 )
-            xPos = firstVisiblePixel + spr->x + 22;
+        unsigned xPos = 0; 
+        
+        if (!ntsc) {
+            if (spr->x < 0x194 )
+                xPos = firstVisiblePixel + spr->x + 22;
+        } else {
+            if (spr->x < 0x19c)
+                xPos = firstVisiblePixel + spr->x + 32;
+        }
                                             
-        //spr->dataShiftReg = spr->dataS;
         spr->expandXFlop = true;
         spr->mcFlop = true;
-        
-        
+                
         while(spr->dataShiftReg) {
             
             if (spr->expandXFlop) {

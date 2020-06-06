@@ -33,7 +33,7 @@ struct GunStick : LightControl {
         
         out &= ~(button1Pressed << 4); // fire pin
         
-        out &= ~( (displayPtr && (*displayPtr != 0) ) << 1); // check for non black color (light trigger: down pin)
+        out &= ~( (displayPtr && ((*displayPtr & 0xf) != 0) ) << 1); // check for non black color (light trigger: down pin)
         
         return out;
     }

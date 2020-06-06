@@ -1183,6 +1183,10 @@ auto Interface::videoScanlineThread(bool state) -> void {
     vicIIFast->setThreading( state );
 }
 
+auto Interface::videoAddMeta(bool state) -> void {
+    vicII->setMeta( state );
+}
+
 auto Interface::diskHighLoadThread(bool state) -> void {
     iecBus->setPowerThread( state );
 }

@@ -767,7 +767,7 @@ auto View::buildMenu() -> void {
         
         sM.pal->onActivate = [emulator, ntscItem, emuConfigView]() {
             if (emulator == activeEmulator) {
-                if (!view->message->question(trans->get("region_change"))) {
+                if (!view->message->question(trans->get("setting change need reset"))) {
                     ntscItem->setChecked();
                     return;
                 }
@@ -784,7 +784,7 @@ auto View::buildMenu() -> void {
 
         sM.ntsc->onActivate = [emulator, palItem, emuConfigView]() {
             if (emulator == activeEmulator) {
-                if (!view->message->question(trans->get("region_change"))) {
+                if (!view->message->question(trans->get("setting change need reset"))) {
                     palItem->setChecked();
                     return;
                 }

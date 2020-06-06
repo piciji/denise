@@ -97,6 +97,7 @@ struct VicIIBase {
     virtual auto readReg(uint8_t addr) -> uint8_t;
     auto setNtsc( bool state ) -> void;
 	auto setRevision65( bool state ) -> void;
+    auto setMeta( bool state ) -> void;
     auto isRevision65() -> bool;
     auto disableSequencer( bool state ) -> void;
     auto useSequencer() -> bool;
@@ -122,6 +123,7 @@ struct VicIIBase {
    
 protected:    
     bool rev65; //true: 65xx chips, false: 85xx chips
+    bool addMeta; // add aec and ba state to output 
     
     double luma[2][16];
     double chroma[16]; // as angle on color wheel

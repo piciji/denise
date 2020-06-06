@@ -302,7 +302,6 @@ brightness = 明るさ
 color_spectrum = 光彩分布
 go_to_website = ウェブサイトへ
 border = ボーダー
-region_change = リージョンの変更はエミュレーターの再起動後に反映します。よろしいですか?
 phase_error = フェーズのずれ
 hanover_bars = Hanoverバー (PALのみ)
 scanlines = スキャンライン
@@ -480,3 +479,4 @@ disk idle =
 disk idle info = 
 audio realtime thread = sid_hazard = SIDチップのハザード
 audio realtime thread info = sid_hazard_info = 電圧高下によるフィルタ/ミキサーの変動を個々のトランジスタレベルで再現。デフォルトは擬似的にまとめて扱う
+setting change need reset = 

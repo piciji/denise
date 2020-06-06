@@ -269,6 +269,7 @@ struct VideoManager {
     auto getSettings() -> std::tuple<VPARAMST>;   
     auto resetSettings() -> void;
     auto getModeIdent() -> std::string;
+    auto applyMeta() -> void;
 };
 
 extern std::vector<VideoManager*> videoManagers;

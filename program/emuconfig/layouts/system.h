@@ -7,7 +7,7 @@ struct AccuracyLayout : GUIKIT::FramedVerticalLayout {
         GUIKIT::CheckBox videoCycleAccuracy;
         GUIKIT::CheckBox videoScanlineThread;
         GUIKIT::CheckBox diskHighLoadThread;
-        GUIKIT::CheckBox diskIdle
+        GUIKIT::CheckBox diskIdle;
         GUIKIT::CheckBox audioRealtimeThread;
         
         Block();

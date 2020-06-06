@@ -24,7 +24,7 @@ auto VicIIFast::clockSilence() -> void {
         cycle = 0;
 
         if (vCounter == 0xf7)
-            allowBadlines = false;
+            allowBadlines = false;                   
 
         if (++vCounter == (ntsc ? 263 : 312)) {
             vCounter -= 1;
@@ -65,6 +65,13 @@ auto VicIIFast::clockSilence() -> void {
         setRdy(false);
         cAccessArea = false;
         dmaSprites();
+
+        if (spriteSpriteCollided)
+            updateIrq(Interrupt::MMC);
+
+        if (spriteForegroundCollided)
+            updateIrq(Interrupt::MBC);
+        
     } else if (!cAccessArea) {
         setRdy(spriteBa[8][ cycle ]);
     }
