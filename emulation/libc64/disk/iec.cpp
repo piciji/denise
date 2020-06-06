@@ -178,7 +178,7 @@ auto IecBus::syncDrives( int64_t _syncPos, bool ciaAccess ) -> void {
     if ( drivesConnected == 0 )
         return;
       
-    if (!ciaAccess && (cycleCounter < (cpuBurner ? 100 : 20000) ) )
+    if (!ciaAccess && (cycleCounter < (cpuBurner ? 100 : 3000) ) )
         return;
     
     if (threaded)
