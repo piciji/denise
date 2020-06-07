@@ -1033,7 +1033,7 @@ auto MediaWindow::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* fil
         
         media->guid = uintptr_t(file);
         emulator->insertMedium(media, data, size);
-        emulator->writeProtect(media, true);
+        emulator->writeProtect(media, false);
         filePool->assign(ident(media->name), file);
     } else {        
         if (mediaGroup->expansion->pcbs.size()) {

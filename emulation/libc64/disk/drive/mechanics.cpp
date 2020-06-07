@@ -508,7 +508,7 @@ auto Drive1541::changeHalfTrack( uint8_t step ) -> void {
 
 inline auto Drive1541::syncFound() -> uint8_t {
     
-    if (!readMode || attachDelay || detachDelay || attachDetachDelay )
+    if (!readMode || attachDelay )
         return 0x80;
     
     return readBuffer == 0x3ff ? 0 : 0x80;

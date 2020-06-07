@@ -212,7 +212,7 @@ Drive1541::Drive1541(uint8_t number) {
         
         uint8_t value = 0;
         
-        if ( !readMode || attachDelay || detachDelay || attachDetachDelay );
+        if ( !readMode || attachDelay );
         else
             value = readBuffer & 0xff;
         
@@ -408,7 +408,9 @@ auto Drive1541::attach( Emulator::Interface::Media* media, uint8_t* data, unsign
     
     if (detachDelay)
         attachDetachDelay = DISC_DELAY;
-    
+    else
+        attachDelay = DISC_DELAY * 3;
+        
     loaded = true;
 }
 
