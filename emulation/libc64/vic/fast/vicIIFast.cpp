@@ -141,7 +141,7 @@ auto VicIIFast::clock() -> void {
         
         setRdy( badLine );
         cAccessArea = true;
-    } else if (cycle == 15) {
+    } else if (cycle == 20) {
         dmaSpritesOff();
         
         if (visibleLine) {            
