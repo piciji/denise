@@ -76,6 +76,7 @@
 * add confirmation question when quiting Denise Alt+F4
 * mount OS folder as D64
 * load savestates per drag'n'drop or within File Explorer
+* support Assembly64 start parameter
 
 # bugs
 * japanese characters aren't displayed correctly in OpenGL onscreen text

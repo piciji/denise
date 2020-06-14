@@ -7,6 +7,10 @@
 
 # changelog
 
+## 1.0.9 (not yet released)
+* runAhead
+* scanline based renderer
+
 ## 1.0.8
 * added Retro/Nordic Replay support
 * added macOS DMG installer [thanks to Retrofan for background image]
