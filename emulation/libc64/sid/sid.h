@@ -64,7 +64,7 @@ struct Sid {
     auto clock() -> void;
 	auto setMoreAccuracy(bool state) -> void;
     auto registerCallbacks() -> void;
-    auto serialize(Emulator::Serializer& s) -> void;
+    auto serialize(Emulator::Serializer& s, bool light = false) -> void;
     auto updateIdleState() -> void;    
     auto disableAudioOut(bool state) -> void;
     

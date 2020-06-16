@@ -743,7 +743,7 @@ auto System::run() -> void {
     if (useRunAhead) {        
         runAhead.pos = runAhead.frames;
         vicII->disableSequencer( !runAhead.accuracy );
-        sid->disableAudioOut( runAhead.frames > 2 );
+        sid->disableAudioOut( runAhead.frames > 1 );
         dispatcha();
     }
         
@@ -763,7 +763,7 @@ auto System::run() -> void {
         }
 
         if (runAhead.pos) {
-            if (runAhead.pos == 3)
+            if (runAhead.pos == 2)
                 sid->disableAudioOut(false);          
 
             if (--runAhead.pos == 0) {
@@ -781,7 +781,6 @@ auto System::run() -> void {
     
     checkDebugCart();
 }
-
 
 auto System::runAheadEnableAudio() -> void {
     if (runAhead.pos == 1)

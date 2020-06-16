@@ -240,7 +240,7 @@ auto System::serializeLight() -> void {
     cia1->serialize(s);
     cia2->serialize(s);
     vicII->serialize(s);
-    sid->serialize(s);
+    sid->serialize(s, runAhead.frames > 1);
     tape->serializeLight(s);
     iecBus->serializeLight(s);
     input->serialize(s);
@@ -259,7 +259,7 @@ auto System::unserializeLight() -> void {
     cia1->serialize(s);
     cia2->serialize(s);
     vicII->serialize(s);
-    sid->serialize(s);
+    sid->serialize(s, runAhead.frames > 1);
     tape->serializeLight(s);
     iecBus->serializeLight(s);
     input->serialize(s);

@@ -3,7 +3,7 @@
 
 namespace LIBC64 {
 
-auto Sid::serialize(Emulator::Serializer& s) -> void {
+auto Sid::serialize(Emulator::Serializer& s, bool light) -> void {
     
     if (moreAccuracy) {
         // wait for worker thread
@@ -18,7 +18,8 @@ auto Sid::serialize(Emulator::Serializer& s) -> void {
     s.integer( registerWrite.pipelined );
     s.integer( registerWrite.addr );
     s.integer( registerWrite.value );
-    s.integer( sampleCounter );
+    if (!light)
+        s.integer( sampleCounter );
     s.integer( potX );
     s.integer( potY );
     s.integer( v1 );
@@ -107,11 +108,13 @@ auto Sid::serialize(Emulator::Serializer& s) -> void {
         s.integer( filter.calculated[i].kVgt );
         s.integer( filter.calculated[i].n_dac );
     }    
-
-    s.integer( externalFilter.Vlp );
-    s.integer( externalFilter.Vhp );
-    s.integer( externalFilter.w0lp_1_s7 );
-    s.integer( externalFilter.w0hp_1_s17 );
+  
+    if (!light) {
+        s.integer( externalFilter.Vlp );
+        s.integer( externalFilter.Vhp );
+        s.integer( externalFilter.w0lp_1_s7 );
+        s.integer( externalFilter.w0hp_1_s17 );
+    }
     
     if (s.mode() == Emulator::Serializer::Mode::Load) {
         setMoreAccuracy( moreAccuracy );
