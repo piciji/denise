@@ -20,6 +20,7 @@ struct VicIIFast : VicIIBase {
     auto clockSilence() -> void;    
 	   
     auto readReg( uint8_t addr ) -> uint8_t;
+    auto writeReg( uint8_t addr, uint8_t value ) -> void;
     auto getCurrentLinePtr() -> uint16_t*;
    
 protected:
@@ -45,6 +46,7 @@ protected:
     uint8_t* patternLine;
     uint8_t* patternBadlineNtsc;
     uint8_t* patternLineNtsc;
+    unsigned dmaDelay = 0;
     
     auto setLineInterrupt() -> void;
 	

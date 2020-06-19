@@ -69,6 +69,7 @@ auto VicIIFast::serialize(Emulator::Serializer& s) -> void {
     s.integer( ntsc );
     s.integer( modeEcmBmm );
     s.integer( modeMcm );    
+    s.integer( dmaDelay );
     
     for( unsigned i = 0; i < 8; i++ ) {
         Sprite& spr = sprite[i];

@@ -14,7 +14,7 @@ auto VicIIFast::scanline() -> void {
     vc = vcBase;   
     
     if (badLine) {
-        rc = 0;
+        //rc = 0;
         idleMode = false;
     }
     
@@ -101,6 +101,12 @@ inline auto VicIIFast::fetch(unsigned i) -> void {
         dataG = system->memoryVic.read((addr & 0x3fff) | vicBank);      
     else 
         dataG = 0;
+    
+    if (dmaDelay)
+        if (--dmaDelay == 0) {
+            badLine = true;
+            idleMode = false;
+        }
 }
 
 inline auto VicIIFast::mode0() -> void {

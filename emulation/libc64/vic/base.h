@@ -93,8 +93,8 @@ struct VicIIBase {
     virtual auto serialize(Emulator::Serializer& s) -> void {}
     virtual auto reuBaLow() -> bool { return baLow; }
 	
-    auto writeReg(uint8_t addr, uint8_t value) -> void;
     virtual auto readReg(uint8_t addr) -> uint8_t;
+    virtual auto writeReg(uint8_t addr, uint8_t value) -> void;
     auto setNtsc( bool state ) -> void;
 	auto setRevision65( bool state ) -> void;
     auto setMeta( bool state ) -> void;

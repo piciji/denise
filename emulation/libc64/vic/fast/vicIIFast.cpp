@@ -42,6 +42,7 @@ auto VicIIFast::power() -> void {
     vcBase = vc = 0;
     rc = 0;
     color = 0x80;
+    dmaDelay = 0;
     idle = useThread ? false : true;
     if (useThread)
         cv.notify_one();
@@ -138,6 +139,8 @@ auto VicIIFast::clock() -> void {
             allowBadlines = true;
     
         badLine = allowBadlines && (yScroll == (vCounter & 7));
+        if (badLine)
+            rc = 0;
         
         setRdy( badLine );
         cAccessArea = true;
@@ -157,8 +160,8 @@ auto VicIIFast::clock() -> void {
         dmaSprites();
         
         if (useThread && visibleLine)
-            while ( ready.load() ) {}    
-        
+            while ( ready.load() ) {}   
+            
         if ( spriteSpriteCollided)
             updateIrq( Interrupt::MMC );
 	
@@ -213,6 +216,54 @@ auto VicIIFast::readReg( uint8_t addr ) -> uint8_t {
     }
     
     return VicIIBase::readReg( addr );
+}
+
+auto VicIIFast::writeReg( uint8_t addr, uint8_t value ) -> void {
+    addr &= 0x3f;
+    
+    if (addr == 0x11) {
+        controlReg1 = value;
+        irqLine &= 0xff;
+        irqLine |= ((value >> 7) & 1) << 8;
+        modeEcmBmm = ((value >> 6) & 1) << 2;
+        modeEcmBmm |= ((value >> 5) & 1) << 1;          
+        den = (value >> 4) & 1;
+        rSel = (value >> 3) & 1;
+        borderTop = rSel ? 51 : 55;
+        borderBottom = rSel ? 251 : 247;
+        yScroll = value & 7;
+        updateBorderData();
+
+        // hack: dma delay
+        if ( allowBadlines && !dmaDelay && !badLine && (yScroll == (vCounter & 7))) {
+
+            if (cycle > 10 && cycle <= 13) {
+                setRdy( true );
+                badLine = true;                
+                
+                if (cycle != 13)
+                    rc = 0;
+                
+            } else if (cycle > 13 && cycle < 53) {
+                setRdy( true );
+                
+                
+               
+                if (cycle >= 20) {
+                    if (useThread)
+                        while ( ready.load() ) {} 
+                
+                    dmaDelay = cycle - 13;
+                    scanline();   
+                } else
+                    dmaDelay = cycle - 13;
+            }
+        }        
+        
+        return;
+    }
+    
+    VicIIBase::writeReg( addr, value );
 }
 
 
