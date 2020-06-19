@@ -70,6 +70,7 @@ struct IecBus {
     auto setPowerThread( bool state ) -> void;
     auto setFastForward( bool state ) -> void;
     auto updateIdleState() -> void;
+    auto resetDriveState() -> void;
 };
    
 extern IecBus* iecBus;

@@ -322,6 +322,7 @@ System::System(Interface* interface) {
                     if (++diskSilence.idleFrames > 60) {                      
                         diskSilence.idle = true; 
                         diskSilence.idleFrames = 0;
+                        iecBus->resetDriveState();
                     }
                 }                    
             }
@@ -448,7 +449,8 @@ System::System(Interface* interface) {
     cia2->readPort = [this]( CIA::Base::Port port, CIA::Base::Lines* lines ) {
         
         if ( port == CIA::Base::PORTA ) {
-            diskSilence.idle = false;            
+            diskSilence.idle = false;
+            diskSilence.idleFrames = 0;
             return (uint8_t) ( (lines->ioa & 0x3f) | iecBus->readCia() );
         }
         
@@ -461,9 +463,10 @@ System::System(Interface* interface) {
             // the c64 II or c64c has another glue logic for updating the vic bank
             glueLogic->setVBank( ( ~(lines->ioa & 3) ) & 3, !lines->praChange );
             
-            //this->interface->log("write", 1);
-            if (iecBus->writeCia( ~lines->ioa ))
-                diskSilence.idle = false;    
+            if (iecBus->writeCia( ~lines->ioa )) {
+                diskSilence.idle = false;
+                diskSilence.idleFrames = 0;
+            }
         }
             
     };
@@ -947,4 +950,3 @@ auto System::setCycleRenderer(bool state) -> void {
 }
 
 }
-

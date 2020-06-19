@@ -46,7 +46,6 @@
 # todo for all systems
 * screenshots/movie recording
 * screenshots for savestates
-* run frame ahead for reduced input lag
 * drive leds / sounds 
 * beam racing
 * rewind support
@@ -58,6 +57,7 @@
 * 7z support
 * Netplay
 * load savestates per drag'n'drop and from File Explorer
+* 100 Hz Black Frame insertion
 
 # todo improvements
 * fullscreen with custom refresh rate
@@ -77,6 +77,7 @@
 * mount OS folder as D64
 * load savestates per drag'n'drop or within File Explorer
 * support Assembly64 start parameter
+* insert follow up disks automatically by file name identifier
 
 # bugs
 * japanese characters aren't displayed correctly in OpenGL onscreen text
@@ -120,3 +121,4 @@
 * disk swapper (more usefull for amiga)
 * screenshots for VICE testbench
 * use a CI system for automated builds (AppVeyor)
+* runAhead for reduced input lag

@@ -344,6 +344,12 @@ auto IecBus::setFirmware(uint8_t* rom, unsigned romSize) -> void {
         drive->setFirmware( rom, romSize );
 }
 
+auto IecBus::resetDriveState() -> void {
+    
+    for( auto drive : drivesEnabled )
+        system->interface->updateDriveState( drive->getMedia(), Drive1541::TrackState::NoOperation, 0 );
+}
+
 auto IecBus::setCpuCyclesPerSecond( unsigned cycles ) -> void {
     cpuCylcesPerSecond = cycles;
 }
