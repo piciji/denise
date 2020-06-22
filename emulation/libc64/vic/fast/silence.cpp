@@ -29,7 +29,15 @@ auto VicIIFast::clockSilence() -> void {
         if (++vCounter == (ntsc ? 263 : 312)) {
             vCounter -= 1;
             initVCounter = true;
+        } else {
+            if (!allowBadlines && (vCounter == 0x30) && den)
+                allowBadlines = true;            
         }
+
+        badLine = allowBadlines && (yScroll == (vCounter & 7));
+
+        if (badLine)
+            idleMode = false;        
 
         if (vCounter == vStart) {
             visibleLine = true;
@@ -49,23 +57,22 @@ auto VicIIFast::clockSilence() -> void {
 
         setRdy(spriteBa[8][ cycle ]);
 
-    } else if (cycle == 10) {
-        if (!allowBadlines && (vCounter == 0x30) && den)
-            allowBadlines = true;
-
-        badLine = allowBadlines && (yScroll == (vCounter & 7));
+    } else if (cycle == 11) {
 
         setRdy(badLine);
         cAccessArea = true;
-    } else if (cycle == 15) {
+   
+    } else if (cycle == 20) {
 
         dmaSpritesOff();
 
-    } else if (cycle == 53) {
-        setRdy(false);
+    } else if (cycle == 54) {
         cAccessArea = false;
         dmaSprites();
+        setRdy( spriteBa[8][ cycle ] );
 
+        dmaDelay = 0;
+        
         if (spriteSpriteCollided)
             updateIrq(Interrupt::MMC);
 

@@ -638,7 +638,8 @@ auto System::power( bool softReset ) -> void {
 	if( !softReset ) {
         setCycleRenderer( cycleRendererNextBoot );
 		vicII->setNtsc( ntsc );
-		vicII->power();
+		vicIICycle->power();
+        vicIIFast->power();
 		cpu->power();        		
 	} else {
 		// vic hasn't a reset line ... means no change ?

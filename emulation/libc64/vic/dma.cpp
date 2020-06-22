@@ -311,7 +311,9 @@ auto VicIICycle::updateRc() -> void {
 }
 
 inline auto VicIICycle::updateBAState() -> void {
-	
+	static bool _baLow;
+    _baLow = baLow;
+    
 	if (badLine)
 		idleMode = false;	
     
@@ -321,7 +323,8 @@ inline auto VicIICycle::updateBAState() -> void {
     else
 		baLow = spriteBa[8][ cycle ]; // for "s" accesses    
 		
-	setRdy( baLow ); //update cpu rdy line
+    if (_baLow != baLow)
+        setRdy( baLow ); //update cpu rdy line
 	
 	if (baLow) {
 		if(aecDelay)

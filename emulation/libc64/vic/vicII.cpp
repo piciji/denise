@@ -56,4 +56,3 @@ inline auto VicIICycle::setLineBuffer() -> void {
 }
 
 }
-

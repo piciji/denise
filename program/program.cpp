@@ -155,7 +155,7 @@ auto Program::init() -> void {
 }
 
 auto Program::setAccuracy(Emulator::Interface* emulator) -> void {
-    emulator->videoCycleAccuracy( settings->get<bool>( ident(emulator, "video_cycle_accuracy"), false) );
+    emulator->videoCycleAccuracy( settings->get<bool>( ident(emulator, "video_cycle_accuracy"), true) );
     emulator->videoScanlineThread( settings->get<bool>( ident(emulator, "video_scanline_thread"), false) );
     emulator->diskHighLoadThread( settings->get<bool>( ident(emulator, "disk_highload_thread"), false) );
     emulator->diskIdle( settings->get<bool>( ident(emulator, "disk_idle"), false) );

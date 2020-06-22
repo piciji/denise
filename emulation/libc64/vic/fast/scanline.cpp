@@ -13,11 +13,6 @@ auto VicIIFast::scanline() -> void {
     
     vc = vcBase;   
     
-    if (badLine) {
-        //rc = 0;
-        idleMode = false;
-    }
-    
     ecmBmmMcm = modeEcmBmm | modeMcm;
     vicBank = system->vicBank << 14;
     linePos = firstVisiblePixel + (ntsc ? 56 : 46);
@@ -44,17 +39,7 @@ auto VicIIFast::scanline() -> void {
     if (!vFlipFlop)
         applyBorder();
     else
-        std::fill_n(linePtr + firstVisiblePixel, hWidth, colorReg[ 0x20 ]);    
-    
-    if (rc == 7) {
-        vcBase = vc;
-        idleMode = true;  
-    } 
-    
-    if (!idleMode || badLine) {   
-        rc = (rc + 1) & 7;
-        idleMode = false;
-    }
+        std::fill_n(linePtr + firstVisiblePixel, hWidth, colorReg[ 0x20 ]);       
     
     if (addMeta)
         applyMeta();    
@@ -104,8 +89,9 @@ inline auto VicIIFast::fetch(unsigned i) -> void {
     
     if (dmaDelay)
         if (--dmaDelay == 0) {
-            badLine = true;
-            idleMode = false;
+            badLine = allowBadlines && (yScroll == (vCounter & 7));  
+            if (badLine)
+                idleMode = false;
         }
 }
 
@@ -392,6 +378,7 @@ auto VicIIFast::applySprites() -> void {
     std::fill_n(drawSprites, VIC_MAX_LINE_LENGTH, nullptr);
     uint16_t* ptr;
     Sprite* sprBefore;
+    uint32_t dataShiftReg;
     
     for (unsigned sprPos = 0; sprPos < 8; sprPos++) {
         Sprite* spr = &sprite[sprPos];
@@ -411,23 +398,25 @@ auto VicIIFast::applySprites() -> void {
                                             
         spr->expandXFlop = true;
         spr->mcFlop = true;
-                
-        while(spr->dataShiftReg) {
+        
+        dataShiftReg = spr->dataShiftReg;                
+        
+        while(dataShiftReg) {
             
             if (spr->expandXFlop) {
                 if (spr->multiColor) {
                     // 2 bits per pixel (repeated)
                     if (spr->mcFlop)
-                        spr->shiftOut = (spr->dataShiftReg >> 22) & 3;
+                        spr->shiftOut = (dataShiftReg >> 22) & 3;
 
                     spr->mcFlop ^= 1; //repeat last shift out for second pixel
                 } else
-                    spr->shiftOut = ((spr->dataShiftReg >> 23) & 1) << 1; // 2: sprite color, 0: transparent
+                    spr->shiftOut = ((dataShiftReg >> 23) & 1) << 1; // 2: sprite color, 0: transparent
             }
 
             if (spr->expandXFlop)
                 // pixel is repeated, so "shift out" every second time
-                spr->dataShiftReg <<= 1;
+                dataShiftReg <<= 1;
 
             if (spr->expandX)
                 spr->expandXFlop ^= 1;

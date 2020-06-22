@@ -104,14 +104,22 @@ auto VicIIFast::clock() -> void {
         if (++vCounter == (ntsc ? 263 : 312)) {
             vCounter -= 1;
             initVCounter = true;
+        } else {
+            if (!allowBadlines && (vCounter == 0x30) && den)
+                allowBadlines = true;            
         }
+        
+        badLine = allowBadlines && (yScroll == (vCounter & 7));  
+        
+        if (badLine)
+            idleMode = false;        
 
         if (vCounter == vStart) {
             updateBorderData();
             visibleLine = true;
             if (lineCallback.finishVblank)
                 vblankCallback();
-
+            
         } else if (lineVCounter == vHeight) {
             visibleLine = false;
 
@@ -134,16 +142,15 @@ auto VicIIFast::clock() -> void {
         }
         setRdy( spriteBa[8][ cycle ] );
         
-    } else if (cycle == 10) {
-        if (!allowBadlines && (vCounter == 0x30) && den)
-            allowBadlines = true;
-    
-        badLine = allowBadlines && (yScroll == (vCounter & 7));
-        if (badLine)
-            rc = 0;
-        
+    } else if (cycle == 11) {
+                     
         setRdy( badLine );
         cAccessArea = true;
+    } else if (cycle == 13) {
+        
+        if (badLine)
+            rc = 0;
+            
     } else if (cycle == 20) {
         dmaSpritesOff();
         
@@ -152,25 +159,37 @@ auto VicIIFast::clock() -> void {
                 ready.store(1);
             else
                 scanline();
-        }                               
-        
-    } else if (cycle == 53) {
-        setRdy( false );
+        }
+                        
+    } else if (cycle == 54) {    
         cAccessArea = false;
         dmaSprites();
+        setRdy( spriteBa[8][ cycle ] );
         
         if (useThread && visibleLine)
             while ( ready.load() ) {}   
-            
+                            
+        dmaDelay = 0;
+        
         if ( spriteSpriteCollided)
             updateIrq( Interrupt::MMC );
 	
         if ( spriteForegroundCollided)
             updateIrq( Interrupt::MBC );
         
+    } else if (cycle == 57) {
+        if (rc == 7) {
+            vcBase = vc;
+            idleMode = true;
+        }
+
+        if (!idleMode || badLine) {
+            rc = (rc + 1) & 7; 
+            idleMode = false;
+        }
     } else if (!cAccessArea) {
         setRdy( spriteBa[8][ cycle ] );
-    }
+    }      	
     
     setLineInterrupt();
     
@@ -221,7 +240,7 @@ auto VicIIFast::readReg( uint8_t addr ) -> uint8_t {
 auto VicIIFast::writeReg( uint8_t addr, uint8_t value ) -> void {
     addr &= 0x3f;
     
-    if (addr == 0x11) {
+    if (addr == 0x11) {        
         controlReg1 = value;
         irqLine &= 0xff;
         irqLine |= ((value >> 7) & 1) << 8;
@@ -233,39 +252,60 @@ auto VicIIFast::writeReg( uint8_t addr, uint8_t value ) -> void {
         borderBottom = rSel ? 251 : 247;
         yScroll = value & 7;
         updateBorderData();
+        
+        bool _badLine;
+        
+        if (!enableSequencer) {
+            _badLine = allowBadlines && (yScroll == (vCounter & 7));
+            if (cAccessArea && (_badLine != badLine) )
+                setRdy(_badLine);
+            
+            badLine = _badLine;
+            
+            return;
+        }
 
-        // hack: dma delay
-        if ( allowBadlines && !dmaDelay && !badLine && (yScroll == (vCounter & 7))) {
+        if (!allowBadlines && (vCounter == 0x30) && den)
+            allowBadlines = true;   
+        
+        _badLine = allowBadlines && (yScroll == (vCounter & 7));  
+                
+        if (cAccessArea && (_badLine != badLine) )
+            setRdy(_badLine);        
+        
+        if ( badLine != _badLine ) {
+            
+            if (cycle <= 13) {
+                badLine = _badLine;
 
-            if (cycle > 10 && cycle <= 13) {
-                setRdy( true );
-                badLine = true;                
+                if (badLine)
+                    idleMode = false;
                 
-                if (cycle != 13)
-                    rc = 0;
+            } else if (cycle < 54 ) {
                 
-            } else if (cycle > 13 && cycle < 53) {
-                setRdy( true );
-                
-                
-               
                 if (cycle >= 20) {
                     if (useThread)
-                        while ( ready.load() ) {} 
-                
+                        while (ready.load()) {}
+
                     dmaDelay = cycle - 13;
-                    scanline();   
+                    scanline();
                 } else
                     dmaDelay = cycle - 13;
+                
+            } else {
+                
+                badLine = _badLine;
+
+                if (badLine)
+                    idleMode = false;
             }
-        }        
+        }
         
         return;
     }
     
     VicIIBase::writeReg( addr, value );
 }
-
 
 auto VicIIFast::checkLightPenNew() -> void {
 
@@ -402,3 +442,4 @@ auto VicIIFast::initMetaPattern() -> void {
 }
 
 }
+

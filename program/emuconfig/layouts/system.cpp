@@ -502,7 +502,7 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
             program->power(activeEmulator);
     };
     
-    accuracyLayout.block.videoCycleAccuracy.setChecked( settings->get<bool>(this->tabWindow->ident("video_cycle_accuracy"), false) );
+    accuracyLayout.block.videoCycleAccuracy.setChecked( settings->get<bool>(this->tabWindow->ident("video_cycle_accuracy"), true) );
     
     accuracyLayout.block.videoScanlineThread.onToggle = [this]() {
 
