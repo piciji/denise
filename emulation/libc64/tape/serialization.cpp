@@ -28,7 +28,6 @@ auto Tape::serialize(Emulator::Serializer& s) -> void {
     s.integer( directionForward );
     s.integer( lastDirectionForward );
     s.integer( version );
-    s.integer( adjust );
     s.integer( fetchPos );
     s.integer( fetchSize );
     s.integer( pos );

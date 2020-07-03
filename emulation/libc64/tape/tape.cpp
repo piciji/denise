@@ -24,10 +24,10 @@ Tape::Tape( Emulator::Events* events ) {
     motorOff = [this]() {
         if (!enabled)
             return;
-        motorIn = false;        
+        motorIn = false;
         updateCounter();
     };
-
+	
     worker = [this]() {
         if (!enabled || !motorIn || mode == Mode::Stop || mode == Mode::Record)
             return;
@@ -47,7 +47,7 @@ Tape::Tape( Emulator::Events* events ) {
             if (gapsRemaining == 0)
 				setMode( Mode::Stop ); //end of tape or completely rewinded
         }
-
+		
 		unsigned gaps;
 		
         if (gapsRemaining > TAPE_MAX_EVENT_DELAY) {
@@ -76,10 +76,10 @@ Tape::Tape( Emulator::Events* events ) {
         }
             		
 		this->events->remove( &worker );
-		
+			
         if (gaps)
             this->events->add( &worker, gaps * speedAdjustment());
-
+		
         updateCounter();
     };     
 	
@@ -126,8 +126,8 @@ auto Tape::setMotorIn( bool state ) -> void {
         
         if (motorIn && !events->has( &motorOff ) )
 			events->add( &motorOff, TAPE_MOTOR_DELAY );
-    }       
-}
+	}
+}       
 
 auto Tape::getMode( ) -> Mode {
     return mode;
@@ -165,7 +165,6 @@ auto Tape::setMode( unsigned mode ) -> void {
     
     switch(mode) {
         case Mode::Rewind:
-            adjust = 0;
         case Mode::Play:
         case Mode::Forward:			
 			senseOut( true );
@@ -183,7 +182,6 @@ auto Tape::setMode( unsigned mode ) -> void {
 			// a write changes the file pos, so we have to invalidate the read buffer
 			// because it's content is not aligned anymore
 			fetchPos = 0;
-			adjust = 0;
             break;      
 			
 		case Mode::Stop:
@@ -203,7 +201,6 @@ auto Tape::reset() -> void {
 	cyclesElapsed = 0;
 	cycles = 0;	
 	directionForward = lastDirectionForward = true;
-	adjust = 0;
 	fetchPos = 0;
 	fetchSize = 0;
 	motorIn = false;
@@ -231,7 +228,6 @@ auto Tape::load(Emulator::Interface::Media* media, uint8_t* data, unsigned size)
 
 	cyclesTotal = 0;
 	pos = 0x14;
-	adjust = 0;
 	directionForward = lastDirectionForward = true;
 	mode = nextMode = Mode::Stop;
 
@@ -243,9 +239,7 @@ auto Tape::load(Emulator::Interface::Media* media, uint8_t* data, unsigned size)
 			break;
 
 		cyclesTotal += gaps;
-	}		
-	
-	senseOut( false );	
+	}			
 	
 	reset();
 }
@@ -316,9 +310,9 @@ auto Tape::selectListing( unsigned pos ) -> void {
     action.blinkingCursor = false;
     action.delay = 0;
     action.callbackId = 3;
-    action.callback = [this]() {
+	action.callback = [this]() {
         this->setMode( Tape::Mode::Play );
-    };
+	};
     system->keyBuffer->add( action );
     
     action.callback = nullptr;

@@ -103,6 +103,9 @@ System::System(Interface* interface) {
     
     cpuCtx->updatePort = [this](uint8_t lines, uint8_t ddr) {
         
+		if (!powerOn)
+			return;
+		
         auto modeBefore = mode;
         
         mode &= ~7;
@@ -589,8 +592,7 @@ auto System::setFirmware( unsigned typeId, uint8_t* data, unsigned size ) -> voi
     }   
 }
 
-auto System::power( bool softReset ) -> void {   
-    powerOn = true;
+auto System::power( bool softReset ) -> void {       
 	if( !softReset )
 		initRam();
 	    
@@ -661,13 +663,13 @@ auto System::power( bool softReset ) -> void {
     
     if ( !expansionPort->isBootable() ) {
         KeyBuffer::Action action;
-                
+
         action.mode = KeyBuffer::Mode::WaitDelay;
         action.delay = (interface->getExpansion()->isFreezer() && expansionPort->hasRom())
             ? 1 : 2;        
         action.delay = 2;
         system->keyBuffer->add( action );        
-                
+	
         action.mode = KeyBuffer::Mode::WaitFor;
         action.buffer = {'R', 'E', 'A', 'D', 'Y', '.'};  
         
@@ -679,7 +681,9 @@ auto System::power( bool softReset ) -> void {
         action.callbackId = 1;
         action.callback = [this]() { kernalBootComplete = true; };
         system->keyBuffer->add( action );           
-    }        
+	}
+	
+	powerOn = true;
 }
 
 auto System::powerOff() -> void {

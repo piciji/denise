@@ -84,7 +84,6 @@ protected:
     bool directionForward;
 	bool lastDirectionForward;
     uint8_t version;
-    int adjust; // random value
     unsigned fetchPos; // position in fetched chunk
     unsigned fetchSize; // size of fetched chunk
     unsigned pos; // overall position in tap file

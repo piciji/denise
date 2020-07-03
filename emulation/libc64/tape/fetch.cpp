@@ -1,8 +1,6 @@
 
 #include "tape.h"
 
-#define TAPE_TRANSITION_RANDOMNESS 10
-
 namespace LIBC64 {
     
 auto Tape::nextGap() -> unsigned {
@@ -15,7 +13,7 @@ auto Tape::nextGap() -> unsigned {
 	if ( directionForward )
 		// read forward
 		return fetchGap(_longGap);
-
+		
 	// backward is tricky, we don't know anymore if the previous gaps were long or not
 	// what we know is, that our current position is aligned and not in between a long gap	
 	
@@ -140,42 +138,25 @@ auto Tape::longGap( ) -> unsigned {
     if ( gap == 0 )
         gap = TAPE_ZERO_GAP;
 
-    
+	
     return randomizeGap( gap );
 }
 
-auto Tape::randomizeGap( unsigned gap ) -> unsigned {
-
-    // unfortunately the random adjustment wouldn't only affect the cia flag trigger
-	// time but the total tape length too
-	// we will add the previous adjustment to the new gap in order to maintain total length
-	// means only the flag trigger shifts slightly by the randomness below
-    if (adjust > 0) {
-
-		if ( (gap - adjust) < 1) {
-			adjust -= gap - 1;
-			// the last adjustment isn't completly balanced
-			// we don't add anymore randomness till adjust is fully balanced
-			return 1;
-		}		
-	}
-	
-	gap -= adjust;
-    adjust = 0;    
-    
+inline auto Tape::randomizeGap( unsigned gap ) -> unsigned {
+  	
     if ( mode != Mode::Play )
         return gap;
     
-    // for realistic behaviour we need some randomness		
-	adjust = (rand() % ( (TAPE_TRANSITION_RANDOMNESS << 1) + 1 ) ) - TAPE_TRANSITION_RANDOMNESS;
-
+    // for realistic behaviour we need some randomness
+	// beware of Jars of Revenge.
+	int adjust = (rand() % 16 ) - 5;
+	
 	if ( (adjust >= 0) || (gap > -adjust) ) {
 		gap += adjust;
 
 	} else {
 		// gap would be zero or below	
 		gap = 1;
-		adjust = -1 * (gap - 1);
 	}
 
 	return gap;
