@@ -480,3 +480,4 @@ disk idle info = Disk emulation is only activated on demand. Some Loaders could 
 audio realtime thread = Audio Thread (*)
 audio realtime thread info = experimental modeling of all incomming voltages in Filter/Mixer as individual transistors instead of one virtual
 setting change need reset = Changing this setting requires a restart of the emulation. Continue?
+Datasette Motor Variation = Datasette Motor Variation

@@ -47,6 +47,7 @@ struct Tape {
     auto serialize(Emulator::Serializer& s) -> void;
     auto serializeLight(Emulator::Serializer& s) -> void;
     auto selectListing( unsigned pos ) -> void;
+	auto setWobble(bool state) -> void;
     auto getMedia() -> Emulator::Interface::Media* { return media; }
 	
 protected:	
@@ -87,6 +88,7 @@ protected:
     unsigned fetchPos; // position in fetched chunk
     unsigned fetchSize; // size of fetched chunk
     unsigned pos; // overall position in tap file
+	bool wobble = false;
     
     struct {
         CounterState cstate;

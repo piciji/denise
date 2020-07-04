@@ -480,3 +480,4 @@ disk idle info =
 audio realtime thread = sid_hazard = SIDチップのハザード
 audio realtime thread info = sid_hazard_info = 電圧高下によるフィルタ/ミキサーの変動を個々のトランジスタレベルで再現。デフォルトは擬似的にまとめて扱う
 setting change need reset = 
+Datasette Motor Variation = 

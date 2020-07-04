@@ -144,22 +144,18 @@ auto Tape::longGap( ) -> unsigned {
 
 inline auto Tape::randomizeGap( unsigned gap ) -> unsigned {
   	
-    if ( mode != Mode::Play )
+    if ( !wobble || (mode != Mode::Play) )
         return gap;
     
     // for realistic behaviour we need some randomness
 	// beware of Jars of Revenge.
 	int adjust = (rand() % 16 ) - 5;
 	
-	if ( (adjust >= 0) || (gap > -adjust) ) {
-		gap += adjust;
-
-	} else {
-		// gap would be zero or below	
-		gap = 1;
-	}
-
-	return gap;
+	if ( (adjust >= 0) || (gap > -adjust) )
+		return gap + adjust;
+	
+	// gap would be zero or below	
+	return 1;
 }
 
 auto Tape::readForward( uint8_t& byte, unsigned count ) -> bool {

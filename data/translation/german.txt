@@ -480,3 +480,4 @@ disk idle info = Disketten Emulation wird nur bei Bedarf zugeschalten. Einige Lo
 audio realtime thread = Audio Thread (*)
 audio realtime thread info = Experimentelle Modellierung aller eingehenden Spannungen in Filter/Mixer als eigenständige Transistoren, anstatt eines fiktiven.
 setting change need reset = Eine Änderung dieser Einstellung erfordert einen Neustart der Emulation. Fortfahren?
+Datasette Motor Variation = Datasette Motor Schwankung

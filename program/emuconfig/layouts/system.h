@@ -90,6 +90,7 @@ struct DriveLayout : GUIKIT::FramedVerticalLayout {
     
     SliderLayout speed;
     SliderLayout wobble;
+	GUIKIT::CheckBox tapeWobble;
 
     auto build( Emulator::Interface* emulator ) -> void;
 

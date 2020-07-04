@@ -179,7 +179,8 @@ auto DriveLayout::build( Emulator::Interface* emulator ) -> void {
     
     append( driveCountFrame, {~0u, 0u}, 5 );
     append( speed, {~0u, 0u}, 5);
-    append( wobble, {~0u, 0u});
+    append( wobble, {~0u, 0u}, 5);
+	append( tapeWobble, {~0u, 0u});
     
     speed.slider.setLength( 501 );
     wobble.slider.setLength( 51 );
@@ -324,7 +325,7 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
         
         if (block->mediaGroup->isDisk()) {
             
-            auto ident = block->mediaGroup->name;
+            ident = block->mediaGroup->name;
             
             driveLayout.speed.slider.onChange = [this, block, ident]() {                
                 
@@ -346,7 +347,7 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
                 driveLayout.wobble.value.setText(GUIKIT::String::formatFloatingPoint(wobble, 2) + " RPM");                
 
                 settings->set<double>(this->tabWindow->ident(ident + "_wobble"), wobble);
-            };
+            };			
             
             double wobble = settings->get<double>(this->tabWindow->ident(ident + "_wobble"), 0.5, {0.0, 5.0});
             double speed = settings->get<double>(this->tabWindow->ident(ident + "_speed"), 300.0, {275.0, 325.0});
@@ -356,7 +357,20 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
             
             driveLayout.wobble.slider.setPosition( wobble * 10.0 );
             driveLayout.speed.slider.setPosition( (speed - 275.0) * 10.0 );
-        }
+			
+        } else if (block->mediaGroup->isTape()) {
+			
+			ident = block->mediaGroup->name;
+			
+			driveLayout.tapeWobble.onToggle = [this, ident]() {
+                
+                auto checked = driveLayout.tapeWobble.checked();              
+
+                settings->set<bool>(this->tabWindow->ident(ident + "_wobble"), checked);
+            };
+									
+			driveLayout.tapeWobble.setChecked( settings->get<bool>(this->tabWindow->ident(ident + "_wobble"), false ) );
+		}
     }
                
     auto expansionId = settings->get<unsigned>( this->tabWindow->ident("expansion"), 0);
@@ -714,6 +728,7 @@ auto SystemLayout::translate() -> void {
         
     driveLayout.speed.name.setText( trans->get("Speed", {}, true) );
     driveLayout.wobble.name.setText( trans->get("Variation", {}, true) );
+	driveLayout.tapeWobble.setText( trans->get("Datasette Motor Variation") );
     
     sliderLayouts.clear();    
     sliderLayouts.push_back( &driveLayout.speed );

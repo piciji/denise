@@ -297,6 +297,10 @@ auto Tape::setEnabled( bool state ) -> void {
 	enabled = state;
 }
 
+auto Tape::setWobble(bool state) -> void {
+	wobble = state;
+}
+
 auto Tape::selectListing( unsigned pos ) -> void {
     // at the moment only position at 0 possible
 

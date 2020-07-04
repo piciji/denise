@@ -643,6 +643,8 @@ auto Interface::setDriveSpeed(MediaGroup* group, double rpm, double wobble) -> v
     
     if (group->isDisk())
         iecBus->setDriveSpeed(rpm, wobble);
+	else if (group->isTape())
+		tape->setWobble( wobble );
 }
 
 auto Interface::insertDisk(Media* media, uint8_t* data, unsigned size) -> void {
