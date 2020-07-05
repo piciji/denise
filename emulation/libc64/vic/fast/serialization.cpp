@@ -95,7 +95,10 @@ auto VicIIFast::serialize(Emulator::Serializer& s) -> void {
         s.integer( spr.mcFlop );
         s.integer( spr.expandYFlop );
         s.integer( spr.expandXFlop );
-        s.integer( spr.colorCode );            
+        s.integer( spr.colorCode );  
+		
+		s.integer( spr.xPos );
+        s.integer( spr.mask );  
     }
     
     s.integer( spriteForegroundCollided );

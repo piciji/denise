@@ -12,7 +12,9 @@ struct VicIICycle : VicIIBase {
     auto power() -> void;
     auto reuBaLow() -> bool;
     auto serialize(Emulator::Serializer& s) -> void;
-    
+	auto readReg( uint8_t addr ) -> uint8_t;
+    auto writeReg( uint8_t addr, uint8_t value ) -> void;
+
 protected: 
     
     struct {

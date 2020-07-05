@@ -68,7 +68,8 @@ protected:
     auto checkLightPenNew() -> void;
     auto initMetaPattern() -> void;
     auto applyMeta() -> void;
-       
+	auto calcSpriteX(Sprite* spr) -> void;
+	auto calcSpriteMask(Sprite* spr) -> void;
 };
 
 extern VicIIFast* vicIIFast;

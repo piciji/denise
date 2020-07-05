@@ -93,8 +93,8 @@ struct VicIIBase {
     virtual auto serialize(Emulator::Serializer& s) -> void {}
     virtual auto reuBaLow() -> bool { return baLow; }
 	
-    virtual auto readReg(uint8_t addr) -> uint8_t;
-    virtual auto writeReg(uint8_t addr, uint8_t value) -> void;
+    virtual auto readReg(uint8_t addr) -> uint8_t { return 0; }
+    virtual auto writeReg(uint8_t addr, uint8_t value) -> void {}
     auto setNtsc( bool state ) -> void;
 	auto setRevision65( bool state ) -> void;
     auto setMeta( bool state ) -> void;
@@ -240,6 +240,8 @@ protected:
 		bool expandYFlop;
         bool expandXFlop;
         uint8_t colorCode;
+		unsigned xPos; // for scanline renderer
+		unsigned mask;
     } sprite[8], *sprite0, *sprite1, *sprite2, *sprite3, *sprite4, *sprite5, *sprite6, *sprite7, *spriteOpenBus;
     
     uint8_t lastSpriteShift;	
@@ -276,10 +278,7 @@ protected:
     void buildXCounterLookupTable();    
 	auto updateSpriteWithBusValue(uint8_t value) -> void;
     auto updateSpriteBaState( uint8_t pos, bool dmaActive ) -> void;
-    template<bool permanent> auto insertVerticalLineAnomaly(unsigned start, unsigned end) -> void;
-    
-    virtual auto setBorderDim() -> void {}
-  
+    template<bool permanent> auto insertVerticalLineAnomaly(unsigned start, unsigned end) -> void;         
 };
  
 extern VicIIBase* vicII;

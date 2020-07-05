@@ -396,6 +396,9 @@ auto VicIIBase::power() -> void {
         sprite[i].expandYFlop = false;
         sprite[i].expandXFlop = false;
         sprite[i].colorCode = 0x27 + i;
+		
+		sprite[i].xPos = 0;
+		sprite[i].mask = ~0;
     }
     spriteOpenBus = nullptr;
     lastSpriteShift = 16;

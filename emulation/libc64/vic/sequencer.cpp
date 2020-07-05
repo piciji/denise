@@ -240,7 +240,7 @@ inline auto VicIICycle::graphicSequencer( uint8_t x ) -> void {
 	display.gBufferShift <<= 1;
 	display.mcFlop ^= 1;
 	display.color = 0x21;
-
+	
 	switch( modeEcmBmmSequencer | modeMcm ) {
 		case 0:
 			if (display.gBits & 2)
@@ -428,7 +428,9 @@ template<uint8_t sprPos> inline auto VicIICycle::spriteSequencer( Sprite* spr, S
         sprUse = spr;
         // remember all non transparent sprites for this pixel position
         collision |= 1 << sprPos;
-    }
+    } else {
+		spr->dataShiftReg &= 0xffffff;
+	}
 }
 
 template<bool phi1> inline auto VicIICycle::borderArea(  ) -> void {

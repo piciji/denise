@@ -13,6 +13,9 @@ auto VicIIFast::scanline() -> void {
     
     vc = vcBase;   
     
+	if (!hFlipFlop)
+		std::fill_n(linePtr + firstVisiblePixel, hWidth, colorReg[ 0x21 ]);	
+	
     ecmBmmMcm = modeEcmBmm | modeMcm;
     vicBank = system->vicBank << 14;
     linePos = firstVisiblePixel + (ntsc ? 56 : 46);
@@ -36,13 +39,16 @@ auto VicIIFast::scanline() -> void {
 
     applySprites();
 
-    if (!vFlipFlop)
-        applyBorder();
-    else
+    if (!vFlipFlop) {
+		if (hFlipFlop)
+			applyBorder();
+    } else
         std::fill_n(linePtr + firstVisiblePixel, hWidth, colorReg[ 0x20 ]);       
     
     if (addMeta)
-        applyMeta();    
+        applyMeta();  
+	
+	hFlipFlop = 1;
 }
 
 inline auto VicIIFast::fetch(unsigned i) -> void {
@@ -228,16 +234,16 @@ inline auto VicIIFast::mode4() -> void {
     for (unsigned i = 0; i < 40; i++) {
         
         fetch(i);        
-        _col1 = (dataC >> 6) & 3; 
+        _col1 = colorReg[ 0x21 + ((dataC >> 6) & 3)]; 
         
-        *ptr++ = (dataG & 0x80) ? color : colorReg[ 0x21 + _col1 ];
-        *ptr++ = (dataG & 0x40) ? color : colorReg[ 0x21 + _col1 ];
-        *ptr++ = (dataG & 0x20) ? color : colorReg[ 0x21 + _col1 ];
-        *ptr++ = (dataG & 0x10) ? color : colorReg[ 0x21 + _col1 ];
-        *ptr++ = (dataG & 0x8) ? color : colorReg[ 0x21 + _col1 ];
-        *ptr++ = (dataG & 0x4) ? color : colorReg[ 0x21 + _col1 ];
-        *ptr++ = (dataG & 0x2) ? color : colorReg[ 0x21 + _col1 ];
-        *ptr++ = (dataG & 0x1) ? color : colorReg[ 0x21 + _col1 ];
+        *ptr++ = (dataG & 0x80) ? color : _col1;
+        *ptr++ = (dataG & 0x40) ? color : _col1;
+        *ptr++ = (dataG & 0x20) ? color : _col1;
+        *ptr++ = (dataG & 0x10) ? color : _col1;
+        *ptr++ = (dataG & 0x8) ? color : _col1;
+        *ptr++ = (dataG & 0x4) ? color : _col1;
+        *ptr++ = (dataG & 0x2) ? color : _col1;
+        *ptr++ = (dataG & 0x1) ? color : _col1;
     }    
 }
 
@@ -386,20 +392,12 @@ auto VicIIFast::applySprites() -> void {
         if (!spr->active)
             continue;
         
-        unsigned xPos = 0; 
-        
-        if (!ntsc) {
-            if (spr->x < 0x194 )
-                xPos = firstVisiblePixel + spr->x + 22;
-        } else {
-            if (spr->x < 0x19c)
-                xPos = firstVisiblePixel + spr->x + 32;
-        }
+        unsigned xPos = spr->xPos; 
                                             
         spr->expandXFlop = true;
         spr->mcFlop = true;
         
-        dataShiftReg = spr->dataShiftReg;                
+        dataShiftReg = spr->dataShiftReg & spr->mask;                
         
         while(dataShiftReg) {
             
@@ -445,7 +443,8 @@ auto VicIIFast::applySprites() -> void {
                     spriteForegroundCollided |= 1 << spr->position;
                                     
                 drawSprites[xPos] = spr;                                
-            }
+            } else
+				dataShiftReg &= 0xffffff;
             
             xPos++;
         }        

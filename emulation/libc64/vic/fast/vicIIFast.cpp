@@ -2,6 +2,7 @@
 #include "serialization.cpp"
 #include "scanline.cpp"
 #include "silence.cpp"
+#include "register.cpp"
 
 namespace LIBC64 {  
 
@@ -205,7 +206,7 @@ inline auto VicIIFast::applyBorder() -> void {
     
     linePos = firstVisiblePixel + hWidth - borderRight;
     
-    std::fill_n(linePtr + linePos, borderRight, _col);    
+    std::fill_n(linePtr + linePos, borderRight, _col);    		
 }
 
 auto VicIIFast::setBorderDim() -> void {
@@ -220,91 +221,42 @@ auto VicIIFast::setBorderDim() -> void {
     }
 }
 
-auto VicIIFast::readReg( uint8_t addr ) -> uint8_t {
-    
-    addr &= 0x3f;
-    
-    if (addr == 0x1e) {
-        uint8_t value = spriteSpriteCollided;
-        spriteSpriteCollided = 0;
-        return value;
-    } else if (addr == 0x1f) {
-        uint8_t value = spriteForegroundCollided;
-        spriteForegroundCollided = 0;
-        return value;
-    }
-    
-    return VicIIBase::readReg( addr );
+inline auto VicIIFast::calcSpriteX(Sprite* spr) -> void {
+	
+	if (!ntsc) {
+		if (spr->x < 0x194 )
+			spr->xPos = firstVisiblePixel + spr->x + 22;
+		else
+			spr->xPos = spr->x - 0x194;
+	} else {
+		if (spr->x < 0x19c)
+			spr->xPos = firstVisiblePixel + spr->x + 32;
+		else
+			spr->xPos = spr->x - 0x19c;
+	}			
 }
 
-auto VicIIFast::writeReg( uint8_t addr, uint8_t value ) -> void {
-    addr &= 0x3f;
-    
-    if (addr == 0x11) {        
-        controlReg1 = value;
-        irqLine &= 0xff;
-        irqLine |= ((value >> 7) & 1) << 8;
-        modeEcmBmm = ((value >> 6) & 1) << 2;
-        modeEcmBmm |= ((value >> 5) & 1) << 1;          
-        den = (value >> 4) & 1;
-        rSel = (value >> 3) & 1;
-        borderTop = rSel ? 51 : 55;
-        borderBottom = rSel ? 251 : 247;
-        yScroll = value & 7;
-        updateBorderData();
-        
-        bool _badLine;
-        
-        if (!enableSequencer) {
-            _badLine = allowBadlines && (yScroll == (vCounter & 7));
-            if (cAccessArea && (_badLine != badLine) )
-                setRdy(_badLine);
-            
-            badLine = _badLine;
-            
-            return;
-        }
+inline auto VicIIFast::calcSpriteMask(Sprite* spr) -> void {
+	
+	if (spr->xPos >= VIC_MAX_LINE_LENGTH)
+		spr->mask = 0;
+	else {
+		spr->mask = 0xffffff;
 
-        if (!allowBadlines && (vCounter == 0x30) && den)
-            allowBadlines = true;   
-        
-        _badLine = allowBadlines && (yScroll == (vCounter & 7));  
-                
-        if (cAccessArea && (_badLine != badLine) )
-            setRdy(_badLine);        
-        
-        if ( badLine != _badLine ) {
-            
-            if (cycle <= 13) {
-                badLine = _badLine;
+		unsigned diff = VIC_MAX_LINE_LENGTH - spr->xPos;
 
-                if (badLine)
-                    idleMode = false;
-                
-            } else if (cycle < 54 ) {
-                
-                if (cycle >= 20) {
-                    if (useThread)
-                        while (ready.load()) {}
+		if (spr->expandX)
+			diff >>= 1;
+		
+		if (diff < 24 ) {
+			spr->mask = 0;
 
-                    dmaDelay = cycle - 13;
-                    scanline();
-                } else
-                    dmaDelay = cycle - 13;
-                
-            } else {
-                
-                badLine = _badLine;
-
-                if (badLine)
-                    idleMode = false;
-            }
-        }
-        
-        return;
-    }
-    
-    VicIIBase::writeReg( addr, value );
+			unsigned shift = 23;
+			while (diff--) {
+				spr->mask |= 1 << shift--;							
+			}
+		}
+	}
 }
 
 auto VicIIFast::checkLightPenNew() -> void {
