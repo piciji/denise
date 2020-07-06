@@ -6,6 +6,7 @@
 #include "sid/sid.h"
 #include "vic/base.h"
 #include "vic/fast/vicIIFast.h"
+#include "vic/vicII.h"
 #include "input/input.h"
 #include "disk/iec.h"
 #include "expansionPort/gameCart/gameCart.h"
@@ -983,7 +984,8 @@ auto Interface::setFeature(unsigned featureId, int value) -> void {
             system->glueLogic->setType( (GlueLogic::Type)(value & 1) );
             break;
         case FeatureIdLeftLineAnomaly:
-            vicII->setVerticalLineAnomaly( (unsigned)value );
+            vicIIFast->setVerticalLineAnomaly( (unsigned)value );
+            vicIICycle->setVerticalLineAnomaly( (unsigned)value );
             break;
     }    
 }
@@ -1053,7 +1055,8 @@ auto Interface::cropPitch() -> unsigned {
 auto Interface::setChipset(unsigned chipsetId) -> void {
 	if (chipsetId >= chipsets.size()) return;
 	
-	vicII->setRevision65( chipsetId == 0 );
+	vicIIFast->setRevision65( chipsetId == 0 );
+    vicIICycle->setRevision65( chipsetId == 0 );
 }
 
 auto Interface::getChipset() -> unsigned {
@@ -1080,13 +1083,17 @@ auto Interface::getChroma(uint8_t index) -> double {
 
 auto Interface::setLineCallback(bool state, unsigned scanline) -> void {
     
-	vicII->lineCallback.use = state;
-    vicII->lineCallback.line = scanline;	
+	vicIIFast->lineCallback.use = state;
+    vicIIFast->lineCallback.line = scanline;	
+    vicIICycle->lineCallback.use = state;
+    vicIICycle->lineCallback.line = scanline;	
+
 }
 
 auto Interface::setFinishVblankCallback(bool state) -> void {
     
-    vicII->lineCallback.finishVblank = state;
+    vicIIFast->lineCallback.finishVblank = state;
+    vicIICycle->lineCallback.finishVblank = state;
 }
 
 auto Interface::setMemory(MemoryType* memoryType, unsigned memoryId) -> void {
@@ -1186,7 +1193,7 @@ auto Interface::videoScanlineThread(bool state) -> void {
 }
 
 auto Interface::videoAddMeta(bool state) -> void {
-    vicII->setMeta( state );
+    vicIIFast->setMeta( state );
 }
 
 auto Interface::diskHighLoadThread(bool state) -> void {
