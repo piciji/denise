@@ -78,10 +78,12 @@
 * load savestates per drag'n'drop or within File Explorer
 * support Assembly64 start parameter
 * insert follow up disks automatically by file name identifier
+* SID Downsample
 
 # bugs
 * japanese characters aren't displayed correctly in OpenGL onscreen text
 * more Ram Init pattern problems (https://csdb.dk/release/?id=172238  https://csdb.dk/release/?id=172347)
+* bug in drive emulation (https://csdb.dk/release/?id=192577) jiffy works
 
 
 # completed emulation

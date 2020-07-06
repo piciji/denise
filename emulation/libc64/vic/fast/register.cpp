@@ -147,6 +147,7 @@ auto VicIIFast::writeReg( uint8_t addr, uint8_t value ) -> void {
         } break;
         
         case 0x11: {
+            bool _den = den;
 			controlReg1 = value;
 			irqLine &= 0xff;
 			irqLine |= ((value >> 7) & 1) << 8;
@@ -170,9 +171,15 @@ auto VicIIFast::writeReg( uint8_t addr, uint8_t value ) -> void {
 
 				return;
 			}
+            
+            if (!_den && den) {
+                
+                if (vCounter == borderTop ) 
+                    vFlipFlop = false; 
 
-			if (!allowBadlines && (vCounter == 0x30) && den)
-				allowBadlines = true;   
+                if (!allowBadlines && (vCounter == 0x30))
+                    allowBadlines = true;   
+            }            
 
 			_badLine = allowBadlines && (yScroll == (vCounter & 7));  
 
