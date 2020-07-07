@@ -28,10 +28,11 @@ namespace Fonts {
 }
 
 #include "layout.cpp"
+#include "swapper.cpp"
 
 MediaWindow::MediaWindow(Emulator::Interface* emulator) {
     this->emulator = emulator;
-    message = new Message(this);	
+    message = new Message(this);    
 }
 
 auto MediaWindow::getView( Emulator::Interface* emulator ) -> MediaWindow* {
@@ -43,19 +44,22 @@ auto MediaWindow::getView( Emulator::Interface* emulator ) -> MediaWindow* {
 	return nullptr;
 }
 
-auto MediaWindow::showDelayed() -> void {
+auto MediaWindow::showDelayed(bool diskSwapper) -> void {
 	inputDriver->mUnacquire();
 	mtimer.setInterval(100);
 	
-	mtimer.onFinished = [this]() {
+	mtimer.onFinished = [diskSwapper, this]() {
 		mtimer.setEnabled(false);
-		show();
+		show(diskSwapper);
 	};
 	mtimer.setEnabled();
 }
 
-auto MediaWindow::show() -> void {					
+auto MediaWindow::show(bool diskSwapper) -> void {		
+       
     setVisible();
+    if (diskSwapper) 
+        tabView.setSelection( tabs.size() - 3 );	
 	setFocused();
 }
 
@@ -147,6 +151,7 @@ auto MediaWindow::build() -> void {
 	memoryImage.loadPng((uint8_t*) Icons::memory, sizeof (Icons::memory));
     addImage.loadPng((uint8_t*) Icons::add, sizeof (Icons::add));
 	pathImage.loadPng((uint8_t*) Icons::folderOpen, sizeof (Icons::folderOpen));       
+    swapperImage.loadPng((uint8_t*) Icons::swapper, sizeof (Icons::swapper));
     
     for( auto& mediaGroup : emulator->mediaGroups ) {            
         
@@ -219,6 +224,11 @@ auto MediaWindow::build() -> void {
         };
     }
     
+    tabView.appendHeader("", swapperImage); 
+    swapperLayout = new SwapperLayout(this);
+    tabs.push_back("disk_swapper");
+    tabView.setLayout(tabs.size() - 1, *swapperLayout, {~0u, ~0u});
+    
     tabView.appendHeader("", addImage); 
     tabs.push_back("create");    
     prepareCreator();
@@ -228,7 +238,7 @@ auto MediaWindow::build() -> void {
     tabs.push_back("paths");
     preparePaths();        
     tabView.setLayout(tabs.size() - 1, pathsLayout, {~0u, 0u});
-    
+        
     tabView.setSelection(0);	
 	
     translate();
@@ -969,6 +979,8 @@ auto MediaWindow::translate() -> void {
 	
 	for(auto block : pathsLayout.blocks)	
 		block->update( block->label, { neededWidth, 0u }, 10 );	
+        
+    swapperLayout->translate();
 }
 
 auto MediaWindow::getMediaGroupTransIdent( Emulator::Interface::MediaGroup* mediaGroup ) -> std::string {

@@ -125,7 +125,7 @@ struct System {
     struct {
         unsigned frames = 0;
         unsigned pos = 0;
-        bool accuracy = true;
+        bool performance = false;
         Emulator::MemSerializer serializer;
     } runAhead;
     
@@ -181,7 +181,7 @@ struct System {
     auto dispatcha() -> void;
     auto setFastForward( unsigned config ) -> void;    
     auto setRunAhead(unsigned frames) -> void;
-    auto setRunAheadAccuracy(bool state) -> void;
+    auto setRunAheadPerformance(bool state) -> void;
     auto runAheadEnableAudio() -> void;
     
     auto setCycleRenderer(bool state) -> void;

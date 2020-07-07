@@ -8,9 +8,9 @@ SwapperControlLayout::SwapperControlLayout() {
 	writeProtect.setEnabled(false);
 }
 
-SwapperLayout::SwapperLayout( TabWindow* tabWindow ) {
-    this->tabWindow = tabWindow;
-    this->emulator = tabWindow->emulator;
+SwapperLayout::SwapperLayout( MediaWindow* mediaWindow ) {
+    this->mediaWindow = mediaWindow;
+    this->emulator = mediaWindow->emulator;
     
     setMargin(10);
 	listView.setHeaderVisible();
@@ -44,7 +44,7 @@ SwapperLayout::SwapperLayout( TabWindow* tabWindow ) {
         }
                 	
 		std::string filePath = GUIKIT::BrowserWindow()
-			.setWindow( *this->tabWindow )
+			.setWindow( *this->mediaWindow )
 			.setTitle( trans->get("select_disk_image") )
 			.setPath( preselectPath( ) )
 			.setFilters({ suffix,
@@ -58,18 +58,18 @@ SwapperLayout::SwapperLayout( TabWindow* tabWindow ) {
         savePath( file->getPath() );
 
 		if (!file->isSizeValid(MAX_MEDIUM_SIZE))
-            return program->errorMediumSize( file, mes );  
+            return program->errorMediumSize( file, this->mediaWindow->message );  
 		
 		auto& items = file->scanArchive();
 
 		archiveViewer->onCallback = [this, file](GUIKIT::File::Item* item) {
 			if (!item || (item->info.size == 0))
-				return mes->error(trans->get(file->isArchived() ? "archive_error" : "file_open_error", {{"%path%", file->getFile()}}));			
+				return this->mediaWindow->message->error(trans->get(file->isArchived() ? "archive_error" : "file_open_error", {{"%path%", file->getFile()}}));			
             
 			if(!listView.selected()) return;
 			auto pos = listView.selection();
 			
-			filePool->assign( this->tabWindow->ident("swapper_" + std::to_string(pos)), file);
+			filePool->assign( this->mediaWindow->ident("swapper_" + std::to_string(pos)), file);
 			
 			auto setting = getSetting( pos );
 			setting->setPath( file->getFile() );
@@ -89,7 +89,7 @@ SwapperLayout::SwapperLayout( TabWindow* tabWindow ) {
 	controls.ejectButton.onActivate = [this]() {
 		if(!listView.selected()) return;
 		auto pos = listView.selection();
-		filePool->assign( this->tabWindow->ident("swapper_" + std::to_string(pos)), nullptr);
+		filePool->assign( this->mediaWindow->ident("swapper_" + std::to_string(pos)), nullptr);
         filePool->unloadOrphaned();
 		
 		auto setting = getSetting( pos );
@@ -123,12 +123,12 @@ auto SwapperLayout::translate() -> void {
 }
 
 auto SwapperLayout::getSetting( unsigned pos ) -> FileSetting* {
-	return FileSetting::getInstance( tabWindow->ident("swapper_" + std::to_string( pos ) ) );
+	return FileSetting::getInstance( mediaWindow->ident("swapper_" + std::to_string( pos ) ) );
 }
 
 auto SwapperLayout::preselectPath( ) -> std::string {
 	
-	auto baseFolderIdent = tabWindow->ident( "disk_folder_swap" );
+	auto baseFolderIdent = mediaWindow->ident( "disk_folder_swap" );
 
 	auto path = settings->get<std::string>( baseFolderIdent, "" );	
 	
@@ -137,7 +137,7 @@ auto SwapperLayout::preselectPath( ) -> std::string {
 
 auto SwapperLayout::savePath( std::string path ) -> void {
 	
-	auto baseFolderIdent = tabWindow->ident( "disk_folder_swap" );
+	auto baseFolderIdent = mediaWindow->ident( "disk_folder_swap" );
 	
 	settings->set<std::string>(baseFolderIdent, path);
 }

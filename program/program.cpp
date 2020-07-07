@@ -147,6 +147,8 @@ auto Program::init() -> void {
         setExpansionSelection( emulator );
         
         setAccuracy( emulator );
+        
+        setRunAhead( emulator );
     }   
     	
 	logger->setSavePath( GUIKIT::System::getUserDataFolder(appFolder()) );
@@ -269,7 +271,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
 		setVideoFilter();	
 	
     activeEmulator->power();
-    InputManager::resetRunAhead();
+    resetRunAhead();
     isRunning = true;
 	isPause = false;
 	

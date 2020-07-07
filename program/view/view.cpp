@@ -735,13 +735,6 @@ auto View::buildMenu() -> void {
 				emuConfigView->show(EmuConfigView::TabWindow::Layout::Border);
 			};
 			sM.system->append( *sM.border );
-
-			sM.diskSwapper = new GUIKIT::MenuItem;
-			sM.diskSwapper->setIcon( swapperImage );
-			sM.diskSwapper->onActivate = [emuConfigView]() {
-				emuConfigView->show(EmuConfigView::TabWindow::Layout::Swapper);
-			};
-			sM.system->append( *sM.diskSwapper );
 		}
 		
 		sM.system->append(*GUIKIT::MenuSeparator::getInstance());						
@@ -995,7 +988,6 @@ auto View::translate() -> void {
 
         if(!GUIKIT::Application::isCocoa()) {
             sysMenu.firmware->setText(trans->get("Firmware"));
-            sysMenu.diskSwapper->setText(trans->get("disk_swapper"));
             sysMenu.saveState->setText(trans->get("states"));
             sysMenu.presentation->setText(trans->get("Presentation"));
             sysMenu.palette->setText(trans->get("Palette"));

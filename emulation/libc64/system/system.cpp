@@ -727,8 +727,8 @@ auto System::setRunAhead(unsigned frames) -> void {
     runAhead.frames = frames;
 }
 
-auto System::setRunAheadAccuracy(bool state) -> void {
-    runAhead.accuracy = state;
+auto System::setRunAheadPerformance(bool state) -> void {
+    runAhead.performance = state;
 }
 
 auto System::run() -> void {
@@ -750,7 +750,7 @@ auto System::run() -> void {
     
     if (useRunAhead) {        
         runAhead.pos = runAhead.frames;
-        vicII->disableSequencer( !runAhead.accuracy );
+        vicII->disableSequencer( runAhead.performance );
         sid->disableAudioOut( runAhead.frames > 1 );
         dispatcha();
     }

@@ -601,8 +601,8 @@ auto Interface::runAhead(unsigned frames) -> void {
     system->setRunAhead( frames );
 }
 
-auto Interface::runAheadAccuracy(bool state) -> void {
-    system->setRunAheadAccuracy( state );
+auto Interface::runAheadPerformance(bool state) -> void {
+    system->setRunAheadPerformance( state );
 }
 
 auto Interface::setRegion(Region region) -> void {

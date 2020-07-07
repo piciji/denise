@@ -83,7 +83,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             if (!activeEmulator)
                 break;   
             
-            unsigned pos = settings->get<unsigned>("runahead", 0);
+            unsigned pos = settings->get<unsigned>( program->ident(activeEmulator, "runahead"), 0, {0u, 10u});
             bool down = id == Hotkey::Id::RunAheadDown;
             
             if ( down && (pos == 0) )
@@ -92,8 +92,10 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
                 break;
 
             pos += down ? -1 : 1;
-            settings->set<unsigned>("runahead", pos, false);
+            settings->set<unsigned>( program->ident(activeEmulator, "runahead"), pos);
             activeEmulator->runAhead( pos );
+            
+            EmuConfigView::TabWindow::getView(activeEmulator)->miscLayout->setRunAhead( pos );
 
             status->addMessage( trans->get( "runahead input latency", {{"%count%", std::to_string(pos) }} ) );  
 
@@ -103,12 +105,14 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             if (!activeEmulator)
                 break;
             
-            bool state = settings->get<bool>("runahead_accuracy", true);
+            bool state = settings->get<bool>( program->ident(activeEmulator, "runahead_performance"), false);
             state ^= 1;
-            settings->set<bool>("runahead_accuracy", state, false);            
-            activeEmulator->runAheadAccuracy( state );
+            settings->set<bool>(program->ident(activeEmulator, "runahead_performance"), state);            
+            activeEmulator->runAheadPerformance( state );
             
-            status->addMessage( trans->get( state ? "runahead accuracy mode" : "runahead performance mode" ) );  
+            EmuConfigView::TabWindow::getView(activeEmulator)->miscLayout->setRunAheadPerformance( state );
+            
+            status->addMessage( trans->get( !state ? "runahead accuracy mode" : "runahead performance mode" ) );  
         } break;
         
 		case Hotkey::Id::SwapInputDevices: {
@@ -546,7 +550,7 @@ auto InputManager::openMenu( Emulator::Interface* emulator, Hotkey::Id id ) -> v
         case Hotkey::Id::Palette:
             configView->showDelayed( EmuConfigView::TabWindow::Layout::Palette ); break;
         case Hotkey::Id::DiskSwapper:
-            configView->showDelayed( EmuConfigView::TabWindow::Layout::Swapper ); break;
+            MediaView::MediaWindow::getView( emulator )->showDelayed( true ); break;
         case Hotkey::Id::Software:
             MediaView::MediaWindow::getView( emulator )->showDelayed(); break;
         case Hotkey::Id::System:

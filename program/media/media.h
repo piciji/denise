@@ -11,6 +11,31 @@ namespace MediaView {
 
 struct MediaWindow;
 
+struct SwapperControlLayout : GUIKIT::HorizontalLayout {
+	GUIKIT::CheckBox writeProtect;
+    GUIKIT::Widget spacer;    
+    GUIKIT::Button openButton;
+    GUIKIT::Button ejectButton;    
+    
+    SwapperControlLayout();
+};
+
+struct SwapperLayout : GUIKIT::VerticalLayout {
+
+    MediaWindow* mediaWindow;
+    Emulator::Interface* emulator;
+    
+    GUIKIT::ListView listView;
+    SwapperControlLayout controls;
+
+    auto translate() -> void;
+	auto getSetting( unsigned pos ) -> FileSetting*;
+    auto preselectPath( ) -> std::string;
+	auto savePath( std::string path ) -> void;
+    
+    SwapperLayout(MediaWindow* mediaWindow);
+};
+
 struct PathsLayout : GUIKIT::FramedVerticalLayout {
 
     struct Block : GUIKIT::HorizontalLayout {
@@ -148,6 +173,7 @@ struct MediaWindow : public GUIKIT::Window {
 	GUIKIT::Image memoryImage;
 	GUIKIT::Image addImage;    
     GUIKIT::Image pathImage;
+    GUIKIT::Image swapperImage;
     
     std::vector<MediaGroupLayout*> mediaGroupLayouts;
     std::vector<std::string> tabs;
@@ -168,6 +194,7 @@ struct MediaWindow : public GUIKIT::Window {
     std::vector<MediaGroupLayout*> cartLayouts;
     
     PathsLayout pathsLayout;
+    SwapperLayout* swapperLayout = nullptr;
     	
 	GUIKIT::Timer mtimer;
     GUIKIT::Timer ftimer;
@@ -178,8 +205,8 @@ struct MediaWindow : public GUIKIT::Window {
     } lastPreview;
 
     auto build() -> void;	
-    auto show() -> void;
-	auto showDelayed() -> void;
+    auto show(bool diskSwapper = false) -> void;
+	auto showDelayed(bool diskSwapper = false) -> void;
     auto ident( std::string name ) -> std::string;
 	static auto getView( Emulator::Interface* emulator ) -> MediaWindow*;
 	

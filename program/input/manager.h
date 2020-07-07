@@ -146,8 +146,7 @@ struct InputManager {
     static auto openMenu( Emulator::Interface* emulator, Hotkey::Id id ) -> void;
 	static auto updateAllMappingsInUse( bool emuOnly = false ) -> void;
     static auto jitPoll() -> bool;
-    static auto resetJit() -> void;
-    static auto resetRunAhead() -> void;
+    static auto resetJit() -> void;    
 	
     auto autoAssign( KeyboardLayout::Type type, bool keyboardOnly = true ) -> void;
 	auto addMapping(InputMapping* mapping) -> void;

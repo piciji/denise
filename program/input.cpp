@@ -110,3 +110,21 @@ auto Program::absoluteMouseToEmu( Emulator::Interface* emulator ) -> GUIKIT::Pos
     return absPos;  
 }
 
+auto Program::resetRunAhead() -> void {
+    
+    if ( settings->get<bool>( ident(activeEmulator, "runahead_disable"), true) ) {
+        
+        settings->set<unsigned>( ident(activeEmulator, "runahead"), 0);
+        
+        activeEmulator->runAhead( 0 );
+        
+        EmuConfigView::TabWindow::getView( activeEmulator )->miscLayout->setRunAhead( 0, false );
+    }   
+}
+
+auto Program::setRunAhead(Emulator::Interface* emulator) -> void {
+    
+    emulator->runAhead( settings->get<unsigned>( ident(emulator, "runahead"), 0, {0u, 10u}) );
+    
+    emulator->runAheadPerformance( settings->get<bool>( ident(emulator, "runahead_performance"), false) );
+}

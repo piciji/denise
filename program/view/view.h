@@ -21,7 +21,6 @@ struct View : public GUIKIT::Window {
         GUIKIT::MenuItem* firmware;
         GUIKIT::MenuItem* loadSoftware;
         GUIKIT::MenuItem* media;
-        GUIKIT::MenuItem* diskSwapper;
         GUIKIT::MenuItem* systemManagement;
         GUIKIT::MenuItem* saveState;
         GUIKIT::Menu* shaderMenu;

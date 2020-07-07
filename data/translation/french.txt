@@ -481,3 +481,8 @@ audio realtime thread = sid_hazard = Hazard Sid
 audio realtime thread info = sid_hazard_info = modélisation expérimentale de toutes les tensions entrantes dans le filtre/mélangeur sous forme de transistors individuels au lieu d'un seul transistor virtuel
 setting change need reset = 
 Datasette Motor Variation = 
+miscellaneous = 
+performance mode = 
+runAhead performance info = 
+frames = 
+disable runAhead on power = 

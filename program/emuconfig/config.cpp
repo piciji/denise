@@ -38,9 +38,9 @@ namespace Fonts {
 #include "layouts/video.cpp"
 #include "layouts/border.cpp"
 #include "layouts/states.cpp"
-#include "layouts/swapper.cpp"
 #include "layouts/firmware.cpp"
 #include "layouts/palette.cpp"
+#include "layouts/misc.cpp"
 
 TabWindow::TabWindow(Emulator::Interface* emulator) {
     this->emulator = emulator;
@@ -71,7 +71,6 @@ auto TabWindow::build() -> void {
     cropImage.loadPng((uint8_t*)Icons::crop, sizeof(Icons::crop));
     displayImage.loadPng((uint8_t*)Icons::display, sizeof(Icons::display));
     scriptImage.loadPng((uint8_t*)Icons::script, sizeof(Icons::script));
-    swapperImage.loadPng((uint8_t*)Icons::swapper, sizeof(Icons::swapper));
     paletteImage.loadPng((uint8_t*)Icons::palette, sizeof(Icons::palette));
 
     inputLayout = new InputLayout( this );
@@ -82,7 +81,7 @@ auto TabWindow::build() -> void {
         paletteLayout = new PaletteLayout( this );
     borderLayout = new BorderLayout( this );
     statesLayout = new StatesLayout( this );
-    swapperLayout = new SwapperLayout( this );
+    miscLayout = new MiscLayout( this );
 
     tab.appendHeader("", systemImage);
 	tab.appendHeader("", joystickImage); 
@@ -93,9 +92,9 @@ auto TabWindow::build() -> void {
 
     tab.appendHeader("", memoryImage);   
 	tab.appendHeader("", cropImage);
-    tab.appendHeader("", swapperImage);
-                                            
+    tab.appendHeader("", nullptr);
 
+                                            
     tab.setLayout(Layout::System, *systemLayout, {~0u, ~0u} );
 	tab.setLayout(Layout::Control, *inputLayout, {~0u, ~0u} );
 	tab.setLayout(Layout::States, *statesLayout, {~0u, ~0u} );    
@@ -104,8 +103,8 @@ auto TabWindow::build() -> void {
         tab.setLayout(Layout::Palette, *paletteLayout, {~0u, ~0u} );
 
     tab.setLayout(Layout::Firmware, *firmwareLayout, {~0u, ~0u} );
-	tab.setLayout(Layout::Border, *borderLayout, {~0u, ~0u} );
-    tab.setLayout(Layout::Swapper, *swapperLayout, {~0u, ~0u} );                        
+	tab.setLayout(Layout::Border, *borderLayout, {~0u, ~0u} );                    
+    tab.setLayout(Layout::Misc, *miscLayout, {~0u, ~0u} );     
 
     tab.setMargin(10);
     tab.setSelection(0);
@@ -148,9 +147,9 @@ auto TabWindow::translate() -> void {
     borderLayout->translate();
     videoLayout->translate();
     statesLayout->translate();
-    swapperLayout->translate();
     if (paletteLayout)
         paletteLayout->translate();
+    miscLayout->translate();
 
     tab.setHeader(Layout::Control, trans->get("control"));
     tab.setHeader(Layout::System, trans->get("system"));
@@ -158,7 +157,8 @@ auto TabWindow::translate() -> void {
     tab.setHeader(Layout::Border, trans->get("border"));
     tab.setHeader(Layout::Presentation, trans->get("presentation"));
     tab.setHeader(Layout::States, trans->get("states"));
-    tab.setHeader(Layout::Swapper, trans->get("disk_swapper"));
+    tab.setHeader(Layout::Misc, trans->get("miscellaneous"));
+
     if (emulator->ident == "C64")
         tab.setHeader(Layout::Palette, trans->get("palette"));
 }
@@ -200,4 +200,3 @@ auto TabWindow::getView( Emulator::Interface* emulator ) -> TabWindow* {
 }
 
 }
-
