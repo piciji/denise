@@ -27,6 +27,7 @@ struct Cmd {
     bool lockRegion = false;
     bool helpRequested = false;
     bool versionRequested = false;
+	bool prgAsD64 = false;
     std::string screenshotPath = "";
     
     auto set(int argc, char** argv) -> void;

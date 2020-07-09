@@ -298,6 +298,7 @@ struct Interface {
         virtual auto audioSample(int16_t, int16_t) -> void {}
         virtual auto readMedia(Media*, uint8_t*, unsigned, unsigned) -> unsigned { return 0; }
         virtual auto writeMedia(Media*, uint8_t*, unsigned, unsigned) -> unsigned { return 0; }
+		virtual auto getFileNameFromMedia(Media*) -> std::string { return ""; }
         virtual auto truncateMedia(Media* ) -> bool { return false; }
         virtual auto updateDriveState(Media*, unsigned, unsigned) -> void {}
         virtual auto log(std::string, bool) -> void {} //for debugging
@@ -339,6 +340,10 @@ struct Interface {
     auto writeMedia(Media* media, uint8_t* buffer, unsigned length, unsigned offset) -> unsigned {
         return bind->writeMedia(media, buffer, length, offset);
     }
+	
+	auto getFileNameFromMedia(Media* media) -> std::string {
+		return bind->getFileNameFromMedia(media);
+	}
     
     auto truncateMedia(Media* media) -> bool {
         return bind->truncateMedia( media );
@@ -386,7 +391,7 @@ struct Interface {
 	virtual auto createDiskImage(unsigned typeId, bool hd = false, std::string name = "", bool ffs = false) -> uint8_t* { return nullptr; }        
     virtual auto getDiskListing(Media* media) -> std::vector<Listing> { return {}; }
     virtual auto getDiskPreview(uint8_t* data, unsigned size, Media* media = nullptr) -> std::vector<Listing> { return {}; }
-    virtual auto selectDiskListing(Media* media, unsigned pos) -> void { }
+    virtual auto selectDiskListing(Media* media, unsigned pos) -> void { }	
     
     // hard disk handling
     virtual auto insertHardDisk(Media* media, unsigned size) -> void {} //uses read and write callbacks above because of big data

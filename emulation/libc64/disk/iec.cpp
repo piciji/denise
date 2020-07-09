@@ -385,7 +385,7 @@ auto IecBus::getDiskListing(Emulator::Interface::Media* media) -> std::vector<Em
 
 auto IecBus::selectListing( Emulator::Interface::Media* media, unsigned pos ) -> void {
     
-    drives[ media->id ]->structure1541.selectListing( media, pos );
+    drives[ media->id ]->structure1541.selectListing( pos );
 }
 
 auto IecBus::updateIdleState() -> void {

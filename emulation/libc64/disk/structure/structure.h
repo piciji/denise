@@ -29,6 +29,7 @@ struct Structure1541 {
     
     enum class Type { D64 = 0, G64 = 1, P64 = 2, Unknown = -1 } type; 
 	uint8_t number;
+	Emulator::Interface::Media* media = nullptr;
     
     std::function<unsigned (uint8_t*, unsigned, unsigned)> write = [](uint8_t* buffer, unsigned length, unsigned offset){ return 0; };    
     
@@ -68,17 +69,30 @@ struct Structure1541 {
     auto detach() -> void;
     auto createListing() -> void;
     auto getListing() -> std::vector<Emulator::Interface::Listing>&;
-    auto selectListing( Emulator::Interface::Media* media, unsigned pos ) -> void;
+    auto selectListing( unsigned pos ) -> void;
 	auto buildLoadCommand( std::vector<uint8_t> loadPath, bool forShow = false ) -> std::vector<uint8_t>;
     auto clearTrackData() -> void;
     auto getLogicalTrack(uint8_t _track, int offset) -> uint8_t;
     auto storeWrittenTracks() -> void;
     auto getStateImageSize() -> unsigned;
-    auto serialize(Emulator::Serializer& s, bool written) -> void;    
+    auto serialize(Emulator::Serializer& s, bool written) -> void; 
+	
+	static auto createD64FromPRG( std::string name, uint8_t* prgData, unsigned prgSize ) -> uint8_t*;
+	static auto getBamTrackEntry( uint8_t* bamPtr, uint8_t track ) -> uint8_t*;
+	static auto clrBam(uint8_t* bamTrackPtr, unsigned sector) -> void;
+	static auto setBam(uint8_t* bamTrackPtr, unsigned sector) -> void;
+	static auto issetBam(uint8_t* bamTrackPtr, unsigned sector) -> bool;
+	static auto freeSector(uint8_t* bamPtr, uint8_t track, uint8_t sector) -> bool;
+	static auto allocateSector(uint8_t* bamPtr, uint8_t track, uint8_t sector) -> bool;
+	static auto allocateFreeSector(uint8_t* bamPtr, uint8_t& track, uint8_t& sector) -> bool;
+	static auto allocateNextFreeSector(uint8_t* bamPtr, uint8_t& track, uint8_t& sector) -> bool;
+	static auto allocateDown(uint8_t* bamPtr, uint8_t& track, uint8_t& sector) -> bool;
+	static auto allocateUp(uint8_t* bamPtr, uint8_t& track, uint8_t& sector) -> bool;	
     
 private:    
     uint8_t* rawData;
     uint32_t rawSize;
+	uint8_t* created = nullptr;
     uint8_t tracks;
     uint8_t maxHalfTracks;
     unsigned maxTrackLength;

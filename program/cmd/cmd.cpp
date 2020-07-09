@@ -23,6 +23,7 @@ auto Cmd::set(int argc, char** argv) -> void {
     options.push_back( {"-ane-magic", "Force CPU to use this value for ANE and LAX opcode", "<value>"} );
     options.push_back( {"-no-driver", "Run without video, audio, input drivers", ""} );
     options.push_back( {"-no-gui", "Open without graphical user interface and force -no-driver", ""} );    
+	options.push_back( {"-prg-as-d64", "Create and Run a D64 from PRG", ""} );
     
     for (unsigned i = 0; i < argc; i++) {
 
@@ -45,6 +46,9 @@ auto Cmd::set(int argc, char** argv) -> void {
         
         else if ( (std::string)argv[i] == "--version" )
             versionRequested = true;
+		
+		else if ( (std::string)argv[i] == "-prg-as-d64" )
+            prgAsD64 = true;
     }  
 }
 
@@ -258,6 +262,9 @@ auto Cmd::collectAllowedSuffix() -> std::vector<std::string> {
     
     for( auto emulator : emulators ) {
         for( auto& mediaGroup : emulator->mediaGroups ) {
+			
+			if (prgAsD64 && mediaGroup.isDisk())
+				mediaGroup.suffix.push_back("prg");
             
             for (auto suffix : mediaGroup.suffix) {
                 

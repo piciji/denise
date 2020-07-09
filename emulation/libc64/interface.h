@@ -70,7 +70,7 @@ struct Interface : Emulator::Interface {
 	auto createDiskImage(unsigned typeId, bool hd = false, std::string name = "", bool ffs = false) -> uint8_t*;        
     auto getDiskListing(Media* media) -> std::vector<Emulator::Interface::Listing>;
     auto getDiskPreview(uint8_t* data, unsigned size, Media* media = nullptr) -> std::vector<Emulator::Interface::Listing>;
-    auto selectDiskListing(Media* media, unsigned pos) -> void;
+    auto selectDiskListing(Media* media, unsigned pos) -> void;	
     
 	//tape drive handling
 	auto insertTape(Media* media, uint8_t* data, unsigned size) -> void;

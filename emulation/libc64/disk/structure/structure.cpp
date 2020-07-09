@@ -1,9 +1,10 @@
 
 #include "structure.h"
 #include "../../system/system.h"
+#include "../../../tools/petcii.h"
 #include "d64.cpp"
 #include "g64.cpp"
-#include "../../../tools/petcii.h"
+#include "prg.cpp"
 #include "../../../tools/listing.h"
 #include "../../system/keyBuffer.h"
 
@@ -46,9 +47,15 @@ auto Structure1541::attach( uint8_t* data, unsigned size ) -> bool {
     return true;
 }
 
-auto Structure1541::detach() -> void {    
+auto Structure1541::detach() -> void {  
+	
+	if (created)
+		delete[] created;
+	
     rawData = nullptr;
+	created = nullptr;
     rawSize = 0;
+	media = nullptr;
     
     clearTrackData(); 
 }
@@ -122,8 +129,22 @@ auto Structure1541::analyze() -> bool {
         return true;
     
     if ( analyzeG64() )
-        return true;            
+        return true;   
+	
+	created = Structure1541::createD64FromPRG( system->interface->getFileNameFromMedia(media), rawData, rawSize );
     
+	if (created) {
+		
+		rawData = created;		
+		
+		rawSize = TYPICAL_SIZE;				
+		
+		media->guid = (uintptr_t)nullptr;
+		
+		if (analyzeD64())		
+			return true;
+	}
+	
     return false;
 }
 
@@ -327,7 +348,7 @@ auto Structure1541::buildLoadCommand( std::vector<uint8_t> loadPath, bool forSho
 	return loadPath;
 }
 
-auto Structure1541::selectListing( Emulator::Interface::Media* media, unsigned pos ) -> void {
+auto Structure1541::selectListing(  unsigned pos ) -> void {
 	
     KeyBuffer::Action action;
     
@@ -538,4 +559,3 @@ auto Structure1541::getTrackPtr( uint8_t halfTrack ) -> GcrTrack* {
 }
 
 }
-

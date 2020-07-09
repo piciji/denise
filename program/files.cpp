@@ -110,6 +110,15 @@ auto Program::truncateMedia(Emulator::Interface::Media* media) -> bool {
     return file->truncate();
 }
 
+auto Program::getFileNameFromMedia(Emulator::Interface::Media* media) -> std::string {
+	if (!media->guid)
+		return "";
+	
+	auto file = (GUIKIT::File*)media->guid;	
+	
+	return file->getFileName(true);
+}
+
 auto Program::setExpansionSelection( Emulator::Interface* emulator ) -> void {
     
     for( auto& mediaGroup : emulator->mediaGroups ) {

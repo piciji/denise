@@ -550,3 +550,4 @@ auto Program::getEmulator( std::string ident ) -> Emulator::Interface* {
     
     return nullptr;
 }
+

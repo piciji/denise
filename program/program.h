@@ -79,6 +79,7 @@ struct Program : Emulator::Interface::Bind {
 	auto log(std::string data, bool newLine = true) -> void override;
     auto questionToWrite(Emulator::Interface::Media* media) -> bool override;
     auto exit(int code) -> void override;
+	auto getFileNameFromMedia(Emulator::Interface::Media* media) -> std::string override;
 
     auto loadImageDataWhenOk( GUIKIT::File* file, unsigned fileId, Emulator::Interface::MediaGroup* group, uint8_t*& data ) -> bool;
     auto showOpenError( std::vector<std::string>& paths, bool warning = false ) -> void;

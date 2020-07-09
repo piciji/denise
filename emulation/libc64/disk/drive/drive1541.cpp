@@ -401,6 +401,7 @@ auto Drive1541::attach( Emulator::Interface::Media* media, uint8_t* data, unsign
     uf4Counter = ue7Counter = 0;
     bitCounter = 0;
     
+	structure1541.media = media;
     if ( !structure1541.attach( data, size ) )
         return;
     
