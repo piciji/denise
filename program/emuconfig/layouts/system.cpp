@@ -58,29 +58,48 @@ auto FeatureLayout::build( Emulator::Interface* emulator ) -> void {
 	    
     Line* line;
     unsigned i = 0;
-    unsigned lineCount = (features.size() / blocksPerLine);
-    lineCount += ((features.size() % blocksPerLine) != 0) ? 1 : 0;
-    
+	unsigned _count;
+	bool first = true;
+  
     for( auto& feature : features ) {
         
-        if ((i++ % blocksPerLine) == 0) {
-            line = new Line();            
-            lines.push_back( line );
-            append( *line, {~0u, 0u}, ( lines.size() < lineCount ) ? 10 : 0 );
-        }
-        
+		bool _last = &features.back() == &feature;
+		
+		_count = 1;
+		if (feature.type == Emulator::Interface::Feature::Type::Radio)
+			_count = feature.options.size();		
+		
+		i += _count;
+		
+		bool _wrap = false;
+		
+		if (first || i > blocksPerLine) {			
+			line = new Line();
+			lines.push_back(line);
+			append(*line,{~0u, 0u}, _last ? 0 : 10);
+			i = _count;
+		} else if (i == blocksPerLine)
+			_wrap = true;
+				       
         auto block = new Line::Block( &feature );
         line->blocks.push_back( block );
-        line->append(*block, {0u, 0u}, ((i % blocksPerLine) == 0) ? 0 : 15);
-
+        line->append(*block, {0u, 0u}, _wrap ? 0 : 15);
         
         block->checkBox.setText( feature.name );
         block->label.setText( feature.name );  
 		
 		unsigned j = 0;
-		for (auto option : block->options) {
-			option->setText( feature.options[j++] );
-		}                        
+		for (auto option : block->options)
+			option->setText( feature.options[j++] );		      
+
+		if (_wrap && !_last) {
+			line = new Line();
+			lines.push_back(line);
+			append(*line, {~0u, 0u}, 10);
+			i = 0;
+		}
+		
+		first = false;
     }
 }
 
