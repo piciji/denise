@@ -12,7 +12,6 @@
 #include "../tools/hid.h"
 #include "../tools/tools.h"
 #include "../tools/crc32.h"
-#include "../../program/tools/logger.h"
 
 namespace DRIVER {
 	
@@ -70,19 +69,14 @@ namespace DRIVER {
 		}
 
 		auto createJoypad(udev_device* device, const std::string& deviceNode) -> void {
-			logger->log( "joy s1", true );
 			Joypad jp;
 			jp.deviceNode = deviceNode;
 
 			struct stat st;
 			if (stat(deviceNode.c_str(), &st) < 0) return;
-
-			logger->log( "joy s2", true );
 			
 			jp.fd = open(deviceNode.c_str(), O_RDWR | O_NONBLOCK);
-			if (jp.fd < 0) return;
-			
-			logger->log( "joy s3", true );
+			if (jp.fd < 0) return;			
 
 			uint8_t evbit[(EV_MAX + 7) / 8] = {0};
 			uint8_t keybit[(KEY_MAX + 7) / 8] = {0};
@@ -95,9 +89,7 @@ namespace DRIVER {
 			#define testBit(buffer, bit) (buffer[bit >> 3] & 1 << (bit & 7))
 
 			if (!testBit(evbit, EV_KEY))
-				return (void)close(jp.fd);
-			
-			logger->log( "joy s4", true );
+				return (void)close(jp.fd);			
 			
 			udev_device* parent = udev_device_get_parent_with_subsystem_devtype(device, "input", nullptr);
 			
@@ -106,18 +98,14 @@ namespace DRIVER {
 			
 			auto joyname = udev_device_get_sysattr_value(parent, "name");
 			auto vendorId = udev_device_get_sysattr_value(parent, "id/vendor");
-			auto productId = udev_device_get_sysattr_value(parent, "id/product");
-			
-			logger->log( joyname, true );
+			auto productId = udev_device_get_sysattr_value(parent, "id/product");			
 			
 			udev_device* root = udev_device_get_parent_with_subsystem_devtype(parent, "usb", "usb_device");
 						
 			if (!root)
 				return (void)close(jp.fd);
 						
-			auto devname = udev_device_get_devpath(root);							
-						
-			logger->log( devname, true );
+			auto devname = udev_device_get_devpath(root);													
 			
 			if(!devname)
 				return (void)close(jp.fd);
@@ -125,8 +113,6 @@ namespace DRIVER {
 			std::string buf(devname);
 			buf.append(vendorId);
 			buf.append(productId);
-
-			logger->log( "joy s5", true );
 			
 			jp.hid = new Hid::Joypad;			
 			
@@ -182,10 +168,7 @@ namespace DRIVER {
 					jp.hid->buttons().append( std::to_string(buttons) );
                     buttons++;
 				}
-			}
-			
-			logger->log( "buttons", true );
-			logger->log( std::to_string(buttons), false );
+			}			
 			
 			joypads.push_back(jp);
 
