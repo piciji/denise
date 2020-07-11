@@ -27,7 +27,8 @@ struct Cmd {
     bool lockRegion = false;
     bool helpRequested = false;
     bool versionRequested = false;
-	bool prgAsD64 = false;
+	uint8_t autostartPrg = 1;
+	bool autostartPrgOverride = false;
     std::string screenshotPath = "";
     
     auto set(int argc, char** argv) -> void;
@@ -51,6 +52,8 @@ struct Cmd {
     auto setReuSize(std::string arg) -> void;
     
     auto setAneMagic(std::string arg) -> void;
+	
+	auto setAutoStartPrg(std::string arg) -> void;
     
     auto printHelp() -> void;
 };

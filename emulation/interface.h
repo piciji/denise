@@ -642,6 +642,17 @@ struct Interface {
         
         return nullptr;
     }
+	
+	auto getDiskMediaGroup() -> MediaGroup* {
+		
+		for (auto& group : mediaGroups) {
+			
+			if (group.isDisk())
+				return &group;
+		}
+		
+		return nullptr;
+	}
     
     auto getPCB( Expansion& expansion, unsigned pcbId ) -> PCBLayout* {
         

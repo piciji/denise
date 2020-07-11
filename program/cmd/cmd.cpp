@@ -23,7 +23,7 @@ auto Cmd::set(int argc, char** argv) -> void {
     options.push_back( {"-ane-magic", "Force CPU to use this value for ANE and LAX opcode", "<value>"} );
     options.push_back( {"-no-driver", "Run without video, audio, input drivers", ""} );
     options.push_back( {"-no-gui", "Open without graphical user interface and force -no-driver", ""} );    
-	options.push_back( {"-prg-as-d64", "Create and Run a D64 from PRG", ""} );
+	options.push_back( {"-autostart-prg", "Set autostart mode for PRG files (1: Inject, 2: Disk image)", "<value>"} );
     
     for (unsigned i = 0; i < argc; i++) {
 
@@ -45,10 +45,7 @@ auto Cmd::set(int argc, char** argv) -> void {
             versionRequested = true;
         
         else if ( (std::string)argv[i] == "--version" )
-            versionRequested = true;
-		
-		else if ( (std::string)argv[i] == "-prg-as-d64" )
-            prgAsD64 = true;
+            versionRequested = true;		
     }  
 }
 
@@ -85,8 +82,11 @@ auto Cmd::parse() -> void {
     bool reuSizeNext = false;
     bool aneMagicNext = false;
     bool screenshotPathNext = false;
+	bool autostartPrgNext = false;
+	bool d64InUse = false;
     typedef Emulator::Interface EmuInt;
 	auto emuC64 = program->getEmulator("C64");
+	auto diskGroup = emuC64->getDiskMediaGroup();
 
     for( auto& arg : arguments ) {
         if (limitCyclesNext) {
@@ -113,6 +113,11 @@ auto Cmd::parse() -> void {
             screenshotPath = arg; 
             continue;
         }
+		
+		if(autostartPrgNext) {
+			autostartPrgNext = false;			
+			setAutoStartPrg( arg );
+		}
         
         if (arg == "-vic-6569R3") { // pal 
             updateChipset(emuC64, 0);
@@ -163,7 +168,10 @@ auto Cmd::parse() -> void {
 			settings->set<bool>("dynamic_rate_control", false );			
             settings->set<bool>("fps", true );			
             settings->set("video_screen_text", 2);
-            settings->set<bool>( program->ident( emuC64, "video_cycle_accuracy"), true );            
+            settings->set<bool>( program->ident( emuC64, "video_cycle_accuracy"), true );  
+			
+			if (!autostartPrgOverride)
+				autostartPrg = 2;
         }            
         else if (arg == "-limitcycles") {
             limitCyclesNext = true;
@@ -185,22 +193,39 @@ auto Cmd::parse() -> void {
         }
         else if (arg == "-exitscreenshot") {
             screenshotPathNext = true;
-            
+		}
+        else if (arg == "-autostart-prg") {
+            autostartPrgNext = true;
+                        
         } else {
             std::string temp = arg;
             GUIKIT::String::toLowerCase( temp );
             
             for(auto& suffix : allowedSuffix) {
-                
+                								
                 if (GUIKIT::String::foundSubStr( temp, "." + suffix )) {
                     paths.push_back( arg );  
                     autoload = true;
+					
+					if (diskGroup) {
+						auto _vec = diskGroup->suffix;
+						if ( std::find(_vec.begin(), _vec.end(), suffix) != _vec.end() )
+							d64InUse = true;
+					}
+					
                     break;
                 }
             }                                  
         }
     }
-
+	
+	if (!d64InUse && (autostartPrg == 2)) {
+		
+		
+		if (diskGroup)
+			diskGroup->suffix.push_back("prg");
+	}
+		
     arguments = paths;
 }
 
@@ -261,10 +286,7 @@ auto Cmd::collectAllowedSuffix() -> std::vector<std::string> {
     std::vector<std::string> allowedSuffix;
     
     for( auto emulator : emulators ) {
-        for( auto& mediaGroup : emulator->mediaGroups ) {
-			
-			if (prgAsD64 && mediaGroup.isDisk())
-				mediaGroup.suffix.push_back("prg");
+        for( auto& mediaGroup : emulator->mediaGroups ) {		
             
             for (auto suffix : mediaGroup.suffix) {
                 
@@ -298,6 +320,20 @@ auto Cmd::setAneMagic(std::string arg) -> void {
     auto magic = GUIKIT::String::convertHexToInt( arg, 0xee ) & 0xff;
     
     updateFeature( program->getEmulator("C64"), LIBC64::Interface::FeatureIdCpuAneMagic, magic );
+}
+
+auto Cmd::setAutoStartPrg(std::string arg) -> void {    
+	
+	autostartPrg = 1; // inject 
+	autostartPrgOverride = false;
+	
+    if (!GUIKIT::String::isNumber( arg ))
+        return;
+             
+    try {
+        autostartPrg = std::stoi(arg);	
+		autostartPrgOverride = true;
+    } catch(...) { }
 }
 
 auto Cmd::setReuSize(std::string arg) -> void {
