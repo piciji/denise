@@ -1,23 +1,32 @@
 
-FeatureLayout::Line::Block::Block(Emulator::Interface::Feature* feature) {
-	this->feature = feature;
+ModelLayout::Line::Block::Block(Emulator::Interface::Model* model) {
+	this->model = model;
     
-	if (feature->isSwitch()) {
+	if (model->isSwitch()) {
 		append(checkBox, {0u, 0u} );
 		
-	} else if (feature->isRadio()) {		
+	} else if (model->isRadio()) {		
 		append(label, {0u, 0u}, 5 );
 		
-		for(auto& option : feature->options) {
+		for(auto& option : model->options) {
 			auto radio = new GUIKIT::RadioBox;
 			options.push_back( radio );
-			append( *radio, {0u, 0u}, &feature->options.back() == &option ? 0 : 5 );	
+			append( *radio, {0u, 0u}, &model->options.back() == &option ? 0 : 5 );	
 		}
 		GUIKIT::RadioBox::setGroup( options );
-	
+		
+	} else if (model->isCombo()) {		
+		append(label, {0u, 0u}, 5 );
+		
+		int i = 0;
+		for(auto& option : model->options)			
+			combo.append( option, i++ );		
+		
+		append( combo, {0u, 0u} );	
+
 	} else {
         GUIKIT::LineEdit tester;
-        tester.setText( feature->isHex() ? "0xFF" : std::to_string(feature->range[0]) );
+        tester.setText( model->isHex() ? "0xFF" : std::to_string(model->range[0]) );
 		append(label, {0u, 0u}, 5 );
 		append(lineEdit, {tester.minimumSize().width, 0u} );
 	}
@@ -25,11 +34,11 @@ FeatureLayout::Line::Block::Block(Emulator::Interface::Feature* feature) {
 	setAlignment(0.5);
 }
 
-FeatureLayout::Line::Line() {
+ModelLayout::Line::Line() {
     setAlignment(0.5);
 }
 
-FeatureLayout::FeatureLayout() {
+ModelLayout::ModelLayout() {
     setPadding(10);
     setFont(GUIKIT::Font::system("bold"));    
 }
@@ -52,22 +61,24 @@ AccuracyLayout::AccuracyLayout() {
     setFont(GUIKIT::Font::system("bold"));    
 }
 
-auto FeatureLayout::build( Emulator::Interface* emulator ) -> void {
+auto ModelLayout::build( Emulator::Interface* emulator ) -> void {
     unsigned blocksPerLine = 4;
-	auto& features = emulator->features;
+	auto& models = emulator->models;
 	    
     Line* line;
     unsigned i = 0;
 	unsigned _count;
 	bool first = true;
   
-    for( auto& feature : features ) {
+    for( auto& model : models ) {
         
-		bool _last = &features.back() == &feature;
+		bool _last = &models.back() == &model;
 		
 		_count = 1;
-		if (feature.type == Emulator::Interface::Feature::Type::Radio)
-			_count = feature.options.size();		
+		if (model.type == Emulator::Interface::Model::Type::Radio)
+			_count = model.options.size();		
+		else if (model.type == Emulator::Interface::Model::Type::Combo)
+			_count = 2;
 		
 		i += _count;
 		
@@ -76,31 +87,33 @@ auto FeatureLayout::build( Emulator::Interface* emulator ) -> void {
 		if (first || i > blocksPerLine) {			
 			line = new Line();
 			lines.push_back(line);
-			append(*line,{~0u, 0u}, _last ? 0 : 10);
+			append(*line,{~0u, 0u}, 5);
 			i = _count;
 		} else if (i == blocksPerLine)
 			_wrap = true;
 				       
-        auto block = new Line::Block( &feature );
+        auto block = new Line::Block( &model );
         line->blocks.push_back( block );
         line->append(*block, {0u, 0u}, _wrap ? 0 : 15);
         
-        block->checkBox.setText( feature.name );
-        block->label.setText( feature.name );  
+        block->checkBox.setText( model.name );
+        block->label.setText( model.name );  
 		
 		unsigned j = 0;
 		for (auto option : block->options)
-			option->setText( feature.options[j++] );		      
+			option->setText( model.options[j++] );		      
 
 		if (_wrap && !_last) {
 			line = new Line();
 			lines.push_back(line);
-			append(*line, {~0u, 0u}, 10);
+			append(*line, {~0u, 0u}, 5);
 			i = 0;
 		}
 		
 		first = false;
     }
+	
+	update( *line, 0 );
 }
 
 auto ExpansionLayout::build( Emulator::Interface* emulator ) -> void {
@@ -205,107 +218,31 @@ auto DriveLayout::build( Emulator::Interface* emulator ) -> void {
     wobble.slider.setLength( 51 );
 }
 
-CpuLayout::CpuLayout() {
-    setPadding(10);
-    setFont(GUIKIT::Font::system("bold"));	
-}
-
-auto CpuLayout::build( Emulator::Interface* emulator ) -> void {
-    auto& cpus = emulator->cpus;
-    if (!cpus.size())
-        return;
-    
-    for(auto& cpu : cpus) {
-        auto radio = new GUIKIT::RadioBox;
-        selector.radios.push_back( radio );
-        radio->setText( cpu.name );
-        selector.append(*radio, {0u, 0u}, &cpu != &cpus.back() ? 15 : 0);
-    }
-    GUIKIT::RadioBox::setGroup( selector.radios );	
-    
-    append(selector, {~0u, 0u});
-}
-
-ChipsetLayout::ChipsetLayout() {
-	setPadding(10);
-    setFont(GUIKIT::Font::system("bold"));
-    append(selector, {~0u, 0u});
-}
-
-RegionLayout::RegionLayout() {
-	setPadding(10);
-    setFont(GUIKIT::Font::system("bold"));
-    append(pal, {0u, 0u}, 10u);
-	append(ntsc, {0u, 0u});
-	
-	GUIKIT::RadioBox::setGroup(pal, ntsc);
-}
-
-auto ChipsetLayout::build( Emulator::Interface* emulator ) -> void {
-	
-	auto& chipsets = emulator->chipsets;
-	
-    for(auto& chipset : chipsets ) {
-        auto radio = new GUIKIT::RadioBox;
-        selector.radios.push_back( radio );
-        radio->setText( chipset.name );
-        selector.append(*radio, {0u, 0u}, &chipset != &chipsets.back() ? 10 : 0);
-    }
-    GUIKIT::RadioBox::setGroup( selector.radios );	
-}
-
 SystemLayout::SystemLayout(TabWindow* tabWindow) {
     this->tabWindow = tabWindow;
     this->emulator = tabWindow->emulator;
     
     memoryLayout.build( emulator );
-    cpuLayout.build( emulator );
     driveLayout.build( emulator );
-    featureLayout.build( emulator );
-    chipsetLayout.build( emulator );
+    modelLayout.build( emulator );
     expansionLayout.build( emulator );
 
     setMargin(10);
     
     leftLayout.append(expansionLayout, {~0u, 0u}, 10);
-    leftLayout.append(memoryLayout, {~0u, 0u}, 10);
+    leftLayout.append(memoryLayout, {~0u, 0u});
     
     upperLayout.append(leftLayout, {~0u, 0u}, 10);
-    rightLayout.append(driveLayout, {~0u, 0u}, 10);
-	
-    if (emulator->cpus.size())
-        bottomLayout.append(cpuLayout, {0u, 0u}, 10);
-		
-	bottomLayout.append(regionLayout, {0u, 0u}, 10);
-	bottomLayout.append(chipsetLayout, {0u, 0u});	
-	
-    rightLayout.append(bottomLayout, {~0u, 0u});
+    rightLayout.append(driveLayout, {~0u, 0u});	
 
     upperLayout.append(rightLayout, {~0u, 0u});
 
     append(upperLayout, {~0u, 0u}, 10);
     
-    if (featureLayout.lines.size() > 0)
-        append(featureLayout, {~0u, 0u}, 10);
+    if (modelLayout.lines.size() > 0)
+        append(modelLayout, {~0u, 0u}, 10);
         
     append(accuracyLayout, {~0u, 0u});
-
-    if (emulator->cpus.size()) {        
-        unsigned i = 0;
-        for ( auto radio : cpuLayout.selector.radios ) {
-            radio->onActivate = [this, i, radio]() {
-                settings->set<unsigned>( this->tabWindow->ident("cpu"), i );
-            };
-            i++;
-        }
-
-        cpuLayout.selector.radios[0]->setChecked();
-        for(auto& cpu : emulator->cpus) {
-            if (cpu.id == settings->get<unsigned>( tabWindow->ident("cpu"), 0)) {
-                cpuLayout.selector.radios[cpu.id]->setChecked();
-            }
-        }
-    }
 		
     for( auto block : memoryLayout.blocks ) {
         auto memoryType = block->memoryType;
@@ -404,47 +341,98 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
         }
     }   
     
-	for( auto line : featureLayout.lines ) {
+	for( auto line : modelLayout.lines ) {
         
         for( auto block : line->blocks ) {
 
-            auto feature = block->feature;
+            auto model = block->model;
             
-            if (feature->isSwitch() ) {	
+            if (model->isSwitch() ) {	
 
-                block->checkBox.onToggle = [this, block, feature]( ) {
+                block->checkBox.onToggle = [this, block, model]( ) {
 
-                    settings->set<bool>( this->tabWindow->ident( feature->name ), block->checkBox.checked( ) );
+                    settings->set<bool>( this->tabWindow->ident( model->name ), block->checkBox.checked( ) );
 
-                    emulator->setFeature( feature->id, block->checkBox.checked( ) );
+                    emulator->setModel( model->id, block->checkBox.checked( ) );
                 };
 
-			} else if (feature->isRadio() ) {	
+			} else if (model->isRadio() ) {	
 				unsigned val = 0;
 				for( auto option : block->options ) {
 					
-					option->onActivate = [this, block, feature, val]() {
+					option->onActivate = [this, block, model, val]() {
 
-						settings->set<unsigned>(this->tabWindow->ident(feature->name), val);
+						if (model->isVideoChip()) {
+							if (this->emulator == activeEmulator) {
+								if (!mes->question(trans->get("setting change need reset"))) {
+									unsigned oldValue = settings->get<int>( this->tabWindow->ident( model->name ), model->defaultValue, model->range );
+									
+									if (oldValue < block->options.size())
+										block->options[oldValue]->setChecked( );		
+									
+									return;
+								}
+							}  
+						}
 						
-						emulator->setFeature( feature->id, val );
+						settings->set<unsigned>(this->tabWindow->ident(model->name), val);
+						
+						emulator->setModel( model->id, val );
+						
+						if (model->isVideoChip()) {
+							this->tabWindow->videoLayout->updatePresets();
+        
+							if (activeEmulator)
+								program->power(activeEmulator);
+						}
 					};
 					val++;
 				}
-				
+
+			} else if (model->isCombo() ) {	
+									
+				block->combo.onChange = [this, block, model]() {
+
+					if (model->isVideoChip()) {
+						if (this->emulator == activeEmulator) {
+							if (!mes->question(trans->get("setting change need reset"))) {
+								unsigned oldValue = settings->get<int>( this->tabWindow->ident( model->name ), model->defaultValue, model->range );
+
+								if (oldValue < block->combo.rows())
+									block->combo.setSelection(oldValue);
+
+								return;
+							}
+						}  
+					}
+
+					int val = block->combo.userData();
+					
+					settings->set<unsigned>(this->tabWindow->ident(model->name), val);
+
+					emulator->setModel( model->id, val );
+
+					if (model->isVideoChip()) {
+						this->tabWindow->videoLayout->updatePresets();
+
+						if (activeEmulator)
+							program->power(activeEmulator);
+					}
+				};
+								
             } else {
 
-                block->lineEdit.onChange = [this, block, feature]() {
+                block->lineEdit.onChange = [this, block, model]() {
                                         
                     int val;
                     auto str = block->lineEdit.text();
 
-                    if ( feature->isHex() ) {                    
-                        val = GUIKIT::String::convertHexToInt( str, feature->defaultValue );
+                    if ( model->isHex() ) {                    
+                        val = GUIKIT::String::convertHexToInt( str, model->defaultValue );
                     } else
                         val = block->lineEdit.value();
 
-                    auto range = feature->range;
+                    auto range = model->range;
 
                     if (val < range[0])
                         val = range[0];
@@ -452,67 +440,16 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
                     if (val > range[1])
                         val = range[1];
 
-                    settings->set<int>( this->tabWindow->ident( feature->name ), val );
+                    settings->set<int>( this->tabWindow->ident( model->name ), val );
 
-                    emulator->setFeature( feature->id, val );
+                    emulator->setModel( model->id, val );
                 };			
             }
 
-            updateFeatureWidget( block );
+            updateModelWidget( block );
         }
         
 	}
-	
-	chipsetLayout.selector.radios[0]->setChecked();
-	for(auto& chipset : emulator->chipsets) {
-		auto radio = chipsetLayout.selector.radios[chipset.id];
-		auto id = chipset.id;
-		if (id == settings->get( tabWindow->ident("chipset"), 0))
-            radio->setChecked();
-		
-		radio->onActivate = [this, id, radio]( ) {
-			settings->set( this->tabWindow->ident( "chipset" ), id );
-		};
-	}
-	
-	regionLayout.pal.onActivate = [this]() {
-        if (this->emulator == activeEmulator) {
-            if (!mes->question( trans->get("setting change need reset") )) {
-                regionLayout.ntsc.setChecked();
-                return;
-            }
-        }
-        
-        settings->set<unsigned>(this->tabWindow->ident("video_region"), 0);
-		this->tabWindow->videoLayout->updatePresets();
-
-        view->getSysMenu( this->emulator )->pal->setChecked();
-        
-        if (activeEmulator)
-            program->power(activeEmulator);
-    };
-    
-    regionLayout.ntsc.onActivate = [this]() {
-        if (this->emulator == activeEmulator) {
-            if (!mes->question( trans->get("setting change need reset") )) {
-                regionLayout.pal.setChecked();
-                return;
-            }
-        }
-        
-        settings->set<unsigned>(this->tabWindow->ident("video_region"), 1);
-		this->tabWindow->videoLayout->updatePresets();
-
-        view->getSysMenu( this->emulator )->ntsc->setChecked();
-        
-        if (activeEmulator)
-            program->power(activeEmulator);
-    };
-	
-	if (settings->get<unsigned>( tabWindow->ident("video_region"), 0, {0u, 1u}) == 0 )
-        regionLayout.pal.setChecked();
-    else
-        regionLayout.ntsc.setChecked();
     
     accuracyLayout.block.videoCycleAccuracy.onToggle = [this]() {
 
@@ -618,10 +555,10 @@ auto SystemLayout::activateDrive( Emulator::Interface::MediaGroup* mediaGroup, u
     }
 }
 
-auto SystemLayout::toggleFeature(unsigned id) -> bool {
-	for(auto line : featureLayout.lines) {
+auto SystemLayout::toggleModel(unsigned id) -> bool {
+	for(auto line : modelLayout.lines) {
         for( auto block : line->blocks ) {            
-            if (block->feature->id == id) {
+            if (block->model->id == id) {
                 bool newState = block->checkBox.checked() ^ 1;
                 block->checkBox.setChecked( newState );
                 block->checkBox.onToggle();
@@ -632,25 +569,23 @@ auto SystemLayout::toggleFeature(unsigned id) -> bool {
 	return false;
 }
 
-auto SystemLayout::updateRuntimeFeatureWidgets( ) -> void {
-    for (auto line : featureLayout.lines) {
-        for (auto block : line->blocks) {
-                        
-            updateFeatureWidget( block );
-        }
+auto SystemLayout::updateModelWidgets( ) -> void {
+    for (auto line : modelLayout.lines) {
+        for (auto block : line->blocks)                        
+            updateModelWidget( block );        
     }
 }
 
-auto SystemLayout::updateFeatureWidget( FeatureLayout::Line::Block* block ) -> void {	
-	auto feature = block->feature;
+auto SystemLayout::updateModelWidget( ModelLayout::Line::Block* block ) -> void {	
+	auto model = block->model;
 	
-	if (feature->isSwitch() ) {
-		block->checkBox.setChecked( settings->get<bool>( tabWindow->ident( feature->name ), feature->defaultValue ) );
+	if (model->isSwitch() ) {
+		block->checkBox.setChecked( settings->get<bool>( tabWindow->ident( model->name ), model->defaultValue ) );
 		return;
 	}
 		
-	if (feature->isRadio() ) {
-		auto usedVal = settings->get<unsigned>( tabWindow->ident( feature->name ), feature->defaultValue );
+	if (model->isRadio() ) {
+		auto usedVal = settings->get<int>( tabWindow->ident( model->name ), model->defaultValue, model->range );
 		
 		unsigned val = 0;
 		for(auto option : block->options) {
@@ -663,21 +598,27 @@ auto SystemLayout::updateFeatureWidget( FeatureLayout::Line::Block* block ) -> v
 		return;
 	}
 	
-	auto _val = settings->get<int>( tabWindow->ident( feature->name ), feature->defaultValue, feature->range );
+	if (model->isCombo() ) {
+		auto usedVal = settings->get<int>( tabWindow->ident( model->name ), model->defaultValue, model->range );
+		block->combo.setSelection( usedVal );		
+		return;
+	}
+	
+	auto _val = settings->get<int>( tabWindow->ident( model->name ), model->defaultValue, model->range );
 
-	if ( feature->isHex() )                 
+	if ( model->isHex() )                 
 		block->lineEdit.setText( GUIKIT::String::convertIntToHex( _val ) );
 	else            
 		block->lineEdit.setValue( _val );	
 }
 
-auto SystemLayout::stepRangeFeature(unsigned id, int step) -> int {
-    for(auto line : featureLayout.lines) {
+auto SystemLayout::stepRangeModel(unsigned id, int step) -> int {
+    for(auto line : modelLayout.lines) {
         for( auto block : line->blocks ) {
-            auto feature = block->feature;
+            auto model = block->model;
             
-            if (feature->id == id) {
-                auto newValue = settings->get<int>( tabWindow->ident( feature->name ), feature->defaultValue, feature->range );
+            if (model->id == id) {
+                auto newValue = settings->get<int>( tabWindow->ident( model->name ), model->defaultValue, model->range );
                 newValue += step;						
                 block->lineEdit.setValue( newValue );            
                 block->lineEdit.onChange();
@@ -691,16 +632,10 @@ auto SystemLayout::stepRangeFeature(unsigned id, int step) -> int {
 auto SystemLayout::translate() -> void {
     memoryLayout.setText( trans->get("memory") );
     driveLayout.setText( trans->get("drives") );
-    cpuLayout.setText("Cpu");
-	regionLayout.setText( trans->get("region") );
     
-	chipsetLayout.setText( trans->get("Chipset") );
-    featureLayout.setText( trans->get("feature") );
+    modelLayout.setText( trans->get("model") );
     expansionLayout.setText( trans->get("expansion_port") );
 	
-	regionLayout.pal.setText( trans->get("PAL") );
-    regionLayout.ntsc.setText( trans->get("NTSC") );      
-
     for(auto block : driveLayout.driveCountFrame.driveCounter) {
 
         auto ident = block->mediaGroup->name + "_drives";
@@ -710,25 +645,34 @@ auto SystemLayout::translate() -> void {
             block->name.setTooltip(trans->get("cpu_warning_disk_info"));
     }        
 	
-    for( auto line : featureLayout.lines ) {
+    for( auto line : modelLayout.lines ) {
         for( auto block : line->blocks ) {                               
-            auto feature = block->feature;
+            auto model = block->model;
 
-            if (feature->isSwitch() )
-                block->checkBox.setTooltip( trans->get( featureIdent( feature->name ) + "_info" ) );
+            if (model->isSwitch() )
+                block->checkBox.setTooltip( trans->get( modelIdent( model->name ) + "_info" ) );
 			
-			else if (feature->isRadio() ) {
+			else if (model->isRadio() ) {
 				unsigned pos = 0;
 				for(auto option : block->options) {
-					option->setText( trans->get( feature->options[pos++] ) );
+					option->setText( trans->get( model->options[pos++] ) );
 				}
-				block->label.setTooltip( trans->get( featureIdent( feature->name ) + "_info" ) );
+				block->label.setTooltip( trans->get( modelIdent( model->name ) + "_info" ) );
+				
+			} else if (model->isCombo() ) {
+								
+				unsigned pos = 0;
+				for ( auto option : model->options ) {
+					block->combo.setText( pos++, trans->get( option ) );
+				}
+				
+				block->label.setTooltip( trans->get( modelIdent( model->name ) + "_info" ) );
 				
             } else
-                block->label.setTooltip( trans->get( featureIdent( feature->name ) + "_info" ) );
+                block->label.setTooltip( trans->get( modelIdent( model->name ) + "_info" ) );
             
-            block->checkBox.setText( trans->get( featureIdent( feature->name ) ) );
-            block->label.setText( trans->get( featureIdent( feature->name ), {}, feature->isRadio() ) );  
+            block->checkBox.setText( trans->get( modelIdent( model->name ) ) );
+            block->label.setText( trans->get( modelIdent( model->name ), {}, model->isRadio() || model->isCombo() ) );  
         }
 	}
     
@@ -770,14 +714,13 @@ auto SystemLayout::translate() -> void {
     accuracyLayout.block.audioRealtimeThread.setTooltip( trans->get("audio realtime thread info") );
 }
 
-auto SystemLayout::featureIdent( std::string ident ) -> std::string {
+auto SystemLayout::modelIdent( std::string ident ) -> std::string {
     
     return GUIKIT::String::toLowerCase( GUIKIT::String::replace(ident, " ", "_") );
 }
 
 auto SystemLayout::setEnabled(bool state) -> void {
     upperLayout.setEnabled( state );
-	regionLayout.setEnabled( true );
     
     if (state)
         updateExpansionMemory();

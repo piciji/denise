@@ -199,49 +199,38 @@ struct Interface {
     };
 
     std::vector<MediaGroup> mediaGroups;         
-    
-    struct Cpu {
-        unsigned id;
-        std::string name;
-    };
-
-    std::vector<Cpu> cpus;
-	
+    	
 	struct Firmware {
 		unsigned id;
 		std::string name;
 	};	
 	std::vector<Firmware> firmwares;  
 	
-	// custom features  
-	struct Feature {
+	// emulated model  
+	struct Model {
 		unsigned id;
 		std::string name;		
-		enum Type : unsigned { Switch, Range, Hex, Radio } type;
+		enum Type : unsigned { Switch, Range, Hex, Radio, Combo } type;
+		enum Chip : unsigned { Video, Audio, Cpu, Cia, Misc } chip;
 		int defaultValue;
 		std::vector<int> range;
 		std::vector<std::string> options;
 
 		auto isRadio() -> bool { return type == Type::Radio; }
+		auto isCombo() -> bool { return type == Type::Combo; }
 		auto isSwitch() -> bool { return type == Type::Switch; }
         auto isHex() -> bool { return type == Type::Hex; }
 		auto isRange() -> bool { return type == Type::Range; }
+		
+		auto isVideoChip() -> bool { return chip == Chip::Video; }
 	};
-	std::vector<Feature> features;
+	std::vector<Model> models;
 	
     struct Performance {
         unsigned id;
         std::string name;	
     };
-    
-	struct Chipset {
-		unsigned id;
-		std::string name;		
-	};
-	
-	// chipset
-	std::vector<Chipset> chipsets;	    
-	
+    	
 	// general purpose emulator output listing
 	struct Listing {
 		unsigned id;
@@ -250,6 +239,7 @@ struct Interface {
 	};	
     
     enum Region : uint8_t { Pal = 0, Ntsc = 1 };
+	enum SubRegion : uint8_t { Pal_B = 0, Ntsc_M = 1, Pal_N = 2, Pal_M = 3 };
     
     struct Stats {
         Region region;
@@ -260,7 +250,7 @@ struct Interface {
         auto isNtsc() -> bool { return region == Region::Ntsc; }
     };
     
-    std::vector<Stats> stats;
+    Stats stats;
     
     struct PaletteColor {
         std::string name;
@@ -438,12 +428,9 @@ struct Interface {
     virtual auto loadstate(uint8_t* data, unsigned size) -> bool { return false; }
     virtual auto savestate(unsigned& size) -> uint8_t* { return nullptr; }
     
-	// graphic chipset
-	virtual auto setChipset(unsigned chipsetId) -> void {}
-    virtual auto getChipset() -> unsigned { return 0; }
-    // get system specific feature parameter
-    virtual auto setFeature(unsigned featureId, int value) -> void {}
-    virtual auto getFeature(unsigned featureId) -> int { return 0; }
+    // model
+    virtual auto setModel(unsigned modelId, int value) -> void {}
+    virtual auto getModel(unsigned modelId) -> int { return 0; }
     
     //controls
     virtual auto connect(unsigned connectorId, unsigned deviceId) -> void {}
@@ -457,8 +444,6 @@ struct Interface {
     // of course, the coordinates are in native resoltion of the emulated system. you need to convert them.
     virtual auto getCursorPosition( Device* device, int16_t& x, int16_t& y ) -> bool { return false; }
     
-    virtual auto setCpu(unsigned cpuId) -> void {}
-    virtual auto getCpu() -> unsigned { return 0; }
     virtual auto setMemory(MemoryType* memoryType, unsigned memoryId) -> void {}    
     virtual auto setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> void {}
     virtual auto getCharRom() -> Firmware* { return nullptr; }
@@ -469,8 +454,9 @@ struct Interface {
     virtual auto run() -> void {} //emulate one frame
     virtual auto runAhead(unsigned frames) -> void {}
     virtual auto runAheadPerformance(bool state) -> void {}
-    virtual auto setRegion(Region region) -> void {} 
-    virtual auto getRegion() -> Region { return Region::Pal; }
+    virtual auto getRegionEncoding() -> Region { return Region::Pal; }
+	virtual auto getRegionGeometry() -> Region { return Region::Pal; }
+	virtual auto getSubRegion() -> SubRegion { return SubRegion::Pal_B; }
     
     //crop
 	virtual auto crop( CropType type, bool aspectCorrect, unsigned left = 0, unsigned right = 0, unsigned top = 0, unsigned bottom = 0 ) -> void {}
@@ -497,13 +483,7 @@ struct Interface {
     virtual auto fastForward(unsigned config) -> void {}
     
     auto getStatsForSelectedRegion() -> Stats& {  
-        auto region = getRegion();
-
-        for( auto& stat : stats )
-            if (stat.region == region)
-                return stat;        
-        
-        return stats[0];
+        return stats;
     }
     
 	//shortcuts

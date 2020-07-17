@@ -18,7 +18,7 @@ auto VicIIFast::scanline() -> void {
 	
     ecmBmmMcm = modeEcmBmm | modeMcm;
     vicBank = system->vicBank << 14;
-    linePos = firstVisiblePixel + (ntsc ? 56 : 46);
+    linePos = firstVisiblePixel + (ntscBorder ? 56 : 46);
 
     if (xScroll) {
         uint8_t _col = colorReg[0x21];

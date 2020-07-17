@@ -8,33 +8,20 @@ namespace LIBAMI {
 Interface::Interface() : Emulator::Interface( "Amiga" ) {    
 
     prepareFirmware();
-    prepareChipset();
-    prepareFeatures();
+    prepareModels();
     prepareMedia();
-    prepareCpus();
     prepareMemory();
     prepareDevices();
     preparePalettes();
-    prepareStats();
     prepareExpansions();
-}
-
-auto Interface::prepareStats() -> void {
-    
-    stats.push_back( { Region::Pal, 48000.0, 50.1245, true } );
-    stats.push_back( { Region::Ntsc, 48000.0, 59.826, true } );
 }
 
 auto Interface::prepareFirmware() -> void {
 	firmwares.push_back({0, "Kickrom"});
 }
 
-auto Interface::prepareChipset() -> void {
-    chipsets.push_back({0, "OCS"});
-}
-
-auto Interface::prepareFeatures() -> void {
-    features.push_back({FeatureIdLowPassFilter, "Low Pass Filter", Feature::Type::Switch, 1}); //0 - off, 1 - on, means software decides
+auto Interface::prepareModels() -> void {
+    models.push_back({ModelIdLowPassFilter, "Low Pass Filter", Model::Type::Switch, Model::Chip::Audio, 1}); //0 - off, 1 - on, means software decides
 }
 
 auto Interface::prepareMedia() -> void {
@@ -63,12 +50,6 @@ auto Interface::prepareMedia() -> void {
             media.memoryDump = false;
         }
     }
-}
-
-auto Interface::prepareCpus() -> void {
-    cpus.push_back({0, "68000"});
-    cpus.push_back({1, "68010"});
-    cpus.push_back({2, "68020"});
 }
 
 auto Interface::prepareMemory() -> void {
@@ -282,10 +263,6 @@ auto Interface::getConnectedDevice( Connector* connector ) -> Device* {
     return getUnplugDevice();
 }
 
-auto Interface::setCpu(unsigned cpuId) -> void {
-    if (cpuId >= cpus.size()) cpuId = 0;
-}
-
 auto Interface::setMemory(MemoryType* memoryType, unsigned memoryId) -> void {
     if (!memoryType)
         return;
@@ -322,15 +299,7 @@ auto Interface::run() -> void {
     videoRefresh(frame, 200, 200, 0);
 }
 
-auto Interface::setRegion(unsigned id) -> void {
-
-}
-
-auto Interface::setChipset(unsigned chipsetId) -> void {
-    if (chipsetId >= chipsets.size()) return;
-}
-
-auto Interface::setFeature(unsigned featureId, int value) -> void {
+auto Interface::setModel(unsigned modelId, int value) -> void {
     return;
 }
 

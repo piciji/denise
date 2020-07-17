@@ -46,7 +46,7 @@ struct KeyBuffer {
         action.position = 0;
         
         if (inSeconds)
-            action.delay = (system->ntsc ? 60 : 50) * action.delay;
+            action.delay = (unsigned)(system->interface->stats.fps * (double)action.delay);
         
         if (action.delay)
             action.delay++;

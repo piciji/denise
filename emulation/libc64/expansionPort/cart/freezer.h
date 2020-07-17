@@ -29,7 +29,7 @@ struct Freezer : Cart {
             return;
         // UI events are processed only one time between frames.
         // real freeze trigger could happen at any frame position.
-        cyclesTillFreeze = Emulator::Rand::rand( 1, system->ntsc ? C64_CYCLES_FRAME_NTSC : C64_CYCLES_FRAME_PAL );
+        cyclesTillFreeze = Emulator::Rand::rand( 1, vicII->cyclesPerFrame() );
         freezeArmed = false;
         writesInARow = 0;
     }

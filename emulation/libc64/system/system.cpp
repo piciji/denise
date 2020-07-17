@@ -3,7 +3,6 @@
 #include "../input/input.h"
 #include "../prg/prg.h"
 #include "../tape/tape.h"
-#include "../vic/vicII.h"
 #include "../vic/fast/vicIIFast.h"
 #include "../disk/iec.h"
 #include "../sid/sid.h"
@@ -612,7 +611,6 @@ auto System::power( bool softReset ) -> void {
 	remapVic();    
     remapCpu();    
     
-	// sid, cia: difference between reset and power on ?
 	sid->reset();
     cia1->reset();
     cia2->reset();
@@ -621,15 +619,15 @@ auto System::power( bool softReset ) -> void {
 	tape->reset();
     glueLogic->reset();	
     
-	if (ntsc) {
-		powerSupply->init( C64_FREQUENCY_NTSC, 60 );
-		tape->setCyclesPerSecond( C64_FREQUENCY_NTSC );
-        iecBus->setCpuCyclesPerSecond( C64_FREQUENCY_NTSC );
+	if (vicII->isNTSCGeometry()) {
+		powerSupply->init( vicII->frequency(), 60 );
+		tape->setCyclesPerSecond( vicII->frequency() );
+        iecBus->setCpuCyclesPerSecond( vicII->frequency() );
         
 	} else {
-		powerSupply->init( C64_FREQUENCY_PAL, 50 );
-		tape->setCyclesPerSecond( C64_FREQUENCY_PAL );
-        iecBus->setCpuCyclesPerSecond( C64_FREQUENCY_PAL );
+		powerSupply->init( vicII->frequency(), 50 );
+		tape->setCyclesPerSecond( vicII->frequency() );
+        iecBus->setCpuCyclesPerSecond( vicII->frequency() );
     }
     initDebugCart();
     
@@ -639,7 +637,7 @@ auto System::power( bool softReset ) -> void {
     
 	if( !softReset ) {
         setCycleRenderer( cycleRendererNextBoot );
-		vicII->setNtsc( ntsc );
+		
 		vicIICycle->power();
         vicIIFast->power();
 		cpu->power();        		
@@ -795,14 +793,6 @@ auto System::runAheadEnableAudio() -> void {
         sid->disableAudioOut(false);    
 }
 
-auto System::setNtsc(bool state) -> void {
-    ntsc = state;
-}
-
-auto System::isNtsc() -> bool {
-    return ntsc;
-}
-
 auto System::isUltimax() -> bool { 
 	return ((mode >> 3) & 3) == 2;
 }
@@ -952,6 +942,13 @@ auto System::setCycleRenderer(bool state) -> void {
         vicII = vicIICycle;
     else
         vicII = vicIIFast;                
+}
+
+auto System::updateStats() -> void {	
+	interface->stats.region = vicII->isNTSCGeometry() ? Interface::Region::Ntsc : Interface::Region::Pal;
+	interface->stats.sampleRate = (double)vicII->frequency() / (double)SID_SAMPLE_COUNTER;
+	interface->stats.fps = 1.0 / ( (double)vicII->cyclesPerFrame() / (double)vicII->frequency() );
+	interface->stats.stereoSound = false;	
 }
 
 }

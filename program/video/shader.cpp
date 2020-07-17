@@ -815,12 +815,37 @@ auto Shader::buildRandomLineOffset() -> std::string {
 }
 
 auto Shader::buildBandwidthReduction() -> std::string {	   
-	               
+	               	
+	auto subRegion = vManager->emulator->getSubRegion();
+	double videoBandWith;
+	double subCarrier;
+	
+	switch(subRegion) {
+		default:
+		case Emulator::Interface::SubRegion::Pal_B:
+			videoBandWith = 5000000.0;
+			subCarrier = 4433618.75;
+			break;
+		case Emulator::Interface::SubRegion::Pal_N:
+			videoBandWith = 4200000.0;
+			subCarrier = 3582056.25;
+			break;
+		case Emulator::Interface::SubRegion::Pal_M:
+			videoBandWith = 4200000.0;
+			subCarrier = 3575611.0;
+			break;
+		case Emulator::Interface::SubRegion::Ntsc_M:
+			videoBandWith = 4200000.0;
+			subCarrier = 3579545.0;
+			break;
+	}
+	
     // sample rate is 4 times the color sub carrier	   
     // The sampling rates for NTSC and PAL composite video signals are 14.3181818 Msamples/sec and 17.734475 Msamples/sec, respectively. 
-    SincFirFilter fir( vManager->pal ? 5000000.0 : 4200000.0, vManager->pal ? 17734475.0 : 14318180.0 ); 
+    //SincFirFilter fir( vManager->pal ? 5000000.0 : 4200000.0, vManager->pal ? 17734475.0 : 14318180.0 ); 
+	SincFirFilter fir( videoBandWith, subCarrier * 4.0 ); 
 	unsigned NLuma = vManager->firTaps;
-	auto firLuma = fir.calculateLopass( NLuma, vManager->pal ? 5000000.0 : 4200000.0 );
+	auto firLuma = fir.calculateLopass( NLuma, videoBandWith );
     
     // chrominance is modulated at subcarrier frequency
     // demodulated to baseband in order to use a lowpass filter and use bandwidth as cutoff frequency

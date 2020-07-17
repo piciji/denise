@@ -5,13 +5,9 @@
 #include "../interface.h"
 #include "../../processor/m65xx/model.h"
 #include "../../cia/m6526.h"
+#include "../vic/vicII.h"
 #include "memory.h"
 #include "../../tools/event.h"
-
-#define C64_FREQUENCY_PAL 985248
-#define C64_FREQUENCY_NTSC 1022727
-#define C64_CYCLES_FRAME_PAL (63 * 312)
-#define C64_CYCLES_FRAME_NTSC (65 * 263)
 
 namespace Emulator {
     struct Crop;
@@ -109,7 +105,6 @@ struct System {
     uint8_t nmiIncomming; // bit 0: keyboard, bit 1: cia2, bit 2: expansion port
     uint8_t rdyIncomming; // bit 0: vicII, bit 1: expansion port
     
-    bool ntsc = false;
     bool frameComplete = false;
     Emulator::Serializer serializer;    
     bool kernalBootComplete = false;
@@ -138,8 +133,6 @@ struct System {
     #include "testbench.h"
     
     auto setFirmware( unsigned typeId, uint8_t* data, unsigned size ) -> void;
-    auto setNtsc(bool state) -> void;
-    auto isNtsc() -> bool;
     
     auto remapCpu() -> void;
     auto remapVic() -> void;
@@ -149,15 +142,7 @@ struct System {
     auto power(bool softReset = false) -> void;
 	auto powerOff() -> void;
     auto run() -> void;
-    auto initRam() -> void;
-    
-    auto getCyclesPerSecond() -> unsigned {
-        return ntsc ? C64_FREQUENCY_NTSC : C64_FREQUENCY_PAL;
-    }
-    
-    auto getCyclesPerFrame() -> unsigned {
-        return ntsc ? C64_CYCLES_FRAME_NTSC : C64_CYCLES_FRAME_PAL;
-    }
+    auto initRam() -> void;   
     
     auto calcSerializationSize() -> void;
     auto serialize(unsigned& size) -> uint8_t*;
@@ -185,6 +170,7 @@ struct System {
     auto runAheadEnableAudio() -> void;
     
     auto setCycleRenderer(bool state) -> void;
+	auto updateStats() -> void;
 };
 
 extern System* system;

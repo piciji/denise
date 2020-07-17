@@ -26,7 +26,7 @@ auto VicIIFast::clockSilence() -> void {
         if (vCounter == 0xf7)
             allowBadlines = false;                   
 
-        if (++vCounter == (ntsc ? 263 : 312)) {
+        if (++vCounter == lines) {
             vCounter -= 1;
             initVCounter = true;
         } else {

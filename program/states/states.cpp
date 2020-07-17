@@ -44,18 +44,21 @@ auto States::load( std::string path, bool prependFolder ) -> void {
     }
         
     program->showOpenError( errorPaths, true );
-
+	
     emulator->loadstate( data, file.getSize() );
 
     updateWriteProtection( loadedMedia );
     
-    updateFeatures();
+	bool regionCouldChanged = false;
+	
+    updateModels(regionCouldChanged);
 
     updateConnectedDevices();
     
     updateTapeMenu();
     
-    updateRegion();
+	if (regionCouldChanged)
+		updateRegion();
     
     updateExpansionJumper();
     
@@ -459,49 +462,34 @@ auto States::updateConnectedDevices() -> void {
     view->setCursor( emulator );
 }
 
-auto States::updateFeatures() -> void {
+auto States::updateModels(bool& regionChange) -> void {
 
     auto cfgView = EmuConfigView::TabWindow::getView( emulator );
 
-    for(auto& feature : emulator->features) {
+    for(auto& model : emulator->models) {
 
-        int value = emulator->getFeature( feature.id );
+        int value = emulator->getModel( model.id );
+		
+		if (model.isVideoChip()) {
+			auto oldValue = settings->get<int>( program->ident(emulator, model.name ), model.defaultValue, model.range );
+			regionChange = value != oldValue;
+		}
 
-        if (feature.isSwitch() )
-            settings->set<bool>( program->ident(emulator, feature.name), (bool)value );
+        if (model.isSwitch() )
+            settings->set<bool>( program->ident(emulator, model.name), (bool)value );
         else
-            settings->set<int>( program->ident(emulator, feature.name), value );                        
+            settings->set<int>( program->ident(emulator, model.name), value );                        
     }
 
-    cfgView->systemLayout->updateRuntimeFeatureWidgets();
+    cfgView->systemLayout->updateModelWidgets();
 }
 
 auto States::updateRegion() -> void {
     
-    unsigned stateRegion = emulator->getRegion();
-    
-    unsigned systemRegion = settings->get<unsigned>( program->ident(emulator, "video_region"), 0, {0u, 1u});
-        
-    if (stateRegion == systemRegion)
-        return;
-    
-    settings->set<unsigned>(program->ident(emulator, "video_region"), stateRegion);
-    
     auto cfgView = EmuConfigView::TabWindow::getView( emulator );
     
-    if (stateRegion == 0) {
-		cfgView->systemLayout->regionLayout.pal.setChecked();
-        view->getSysMenu(emulator)->pal->setChecked();
-        
-    } else {
-		cfgView->systemLayout->regionLayout.ntsc.setChecked();
-        view->getSysMenu(emulator)->ntsc->setChecked();        
-    }
-    
     cfgView->videoLayout->updatePresets();
-    
-    VideoManager::getInstance( this->emulator )->reloadSettings();
-    
+        
     audioManager->power();
 }
 

@@ -86,7 +86,7 @@ protected:
 	template<bool phi1> auto borderArea(  ) -> void;
 	template<bool phi1> auto draw65( uint8_t x, uint8_t x1 ) -> void;
 	template<bool phi1> auto draw85( uint8_t x ) -> void;
-	template<bool phi1> auto draw() -> void;            
+	template<bool phi1> auto draw() -> void;        
     std::function<void ()> onHalfCycle = nullptr;   
 };
 

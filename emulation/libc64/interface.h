@@ -9,10 +9,10 @@ struct Interface : Emulator::Interface {
 
 	Interface();
     
-    enum FeatureId {
-        FeatureIdSid = 0, FeatureIdFilter = 1, FeatureIdDigiboost = 2, FeatureIdBias = 3,
-        FeatureIdCiaRev = 4, FeatureIdCpuAneMagic = 5, FeatureIdGlueLogic = 6,
-        FeatureIdLeftLineAnomaly = 7,
+    enum ModelId {
+        ModelIdSid = 0, ModelIdFilter = 1, ModelIdDigiboost = 2, ModelIdBias = 3,
+        ModelIdCiaRev = 4, ModelIdCpuAneMagic = 5, ModelIdGlueLogic = 6,
+        ModelIdLeftLineAnomaly = 7, ModelIdVicIIModel = 8
     };
     
     enum MediaGroupId {
@@ -53,8 +53,9 @@ struct Interface : Emulator::Interface {
 	auto run() -> void; //emulate one frame
     auto runAhead(unsigned frames) -> void;
     auto runAheadPerformance(bool state) -> void;
-	auto setRegion(Region region) -> void;
-    auto getRegion() -> Region;	
+    auto getRegionEncoding() -> Region;	
+	auto getRegionGeometry() -> Region;
+	auto getSubRegion() -> SubRegion;
 	
     auto convertPetsciiToScreencode(bool state) -> void;
 
@@ -116,9 +117,9 @@ struct Interface : Emulator::Interface {
 	auto setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> void;
     auto getCharRom() -> Firmware*;
 	
-	//features
-    auto setFeature(unsigned featureId, int value) -> void;
-    auto getFeature(unsigned featureId) -> int;
+	//models
+    auto setModel(unsigned modelId, int value) -> void;
+    auto getModel(unsigned modelId) -> int;
     
     //crop
 	auto crop( CropType type, bool aspectCorrect, unsigned left = 0, unsigned right = 0, unsigned top = 0, unsigned bottom = 0 ) -> void;
@@ -136,10 +137,7 @@ struct Interface : Emulator::Interface {
     auto diskHighLoadThread(bool state) -> void;
     auto diskIdle(bool state) -> void;
     auto audioRealtimeThread(bool state) -> void;
-    
-	auto setChipset(unsigned chipsetId) -> void;
-    auto getChipset() -> unsigned;
-    
+        
     auto activateDebugCart( unsigned limitCycles = 0 ) -> void;
     auto fastForward(unsigned config) -> void;
     
@@ -157,9 +155,7 @@ private:
 	auto prepareDevices() -> void;
 	auto prepareMedia() -> void;
 	auto prepareFirmware() -> void;
-	auto prepareChipset() -> void;
-    auto prepareFeatures() -> void;
-    auto prepareStats() -> void;
+    auto prepareModels() -> void;
     auto preparePalettes() -> void;
     auto prepareExpansions() -> void;
     auto prepareMemory() -> void;

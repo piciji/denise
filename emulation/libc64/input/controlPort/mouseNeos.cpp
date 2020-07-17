@@ -110,7 +110,7 @@ struct MouseNeos : AnalogControl {
         lastX = lastY = 0;
         neosState = NeosState::YL;
         neosStrobeBefore = 0xff;
-        neosTimeoutCycles = ( system->getCyclesPerSecond() / 10000 ) * 2;
+        neosTimeoutCycles = ( vicII->frequency() / 10000 ) * 2;
         system->events.remove( &neosTimer );
         AnalogControl::reset();
     }

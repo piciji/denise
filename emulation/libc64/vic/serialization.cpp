@@ -4,7 +4,7 @@
 namespace LIBC64 {
 
 auto VicIICycle::serialize(Emulator::Serializer& s) -> void {
-        
+	
     s.integer( crop.rSel ); 
     s.integer( crop.cSel );
     s.integer( crop.top );
@@ -15,7 +15,6 @@ auto VicIICycle::serialize(Emulator::Serializer& s) -> void {
     s.integer( crop.bottomOverscan );
     s.integer( crop.leftOverscan );
     s.integer( crop.rightOverscan );
-    s.integer( rev65 );
     s.integer( lastReadPhi1 );
     s.integer( lastSpriteShift ); 
     
@@ -32,7 +31,6 @@ auto VicIICycle::serialize(Emulator::Serializer& s) -> void {
     s.integer( vStart );
     s.integer( vHeight );
     s.integer( hWidth );
-    s.integer( lineCycles );
     s.integer( firstVisiblePixel );
     s.integer( baLow );
     s.integer( aecDelay ); 
@@ -73,8 +71,7 @@ auto VicIICycle::serialize(Emulator::Serializer& s) -> void {
     s.integer( idleMode );
 	s.integer( idleModeTemp );
     s.integer( initVCounter );
-    s.integer( refreshCounter );
-    s.integer( ntsc );
+    s.integer( refreshCounter );    
     s.integer( modeEcmBmm );
     s.integer( modeMcm );
     s.integer( modeEcmBmmDma );
@@ -154,18 +151,17 @@ auto VicIICycle::serialize(Emulator::Serializer& s) -> void {
     s.integer( leftLineAnomaly.mode );
 	s.integer( leftLineAnomaly.permanent );
 	s.integer( leftLineAnomaly.framePos );
-    s.integer( spriteOpenBusPos );
-    
-    xLookupPtrPhi1 = ntsc ? &xLookUpNtscPhi1[0] : &xLookUpPalPhi1[0];
-    xLookupPtrPhi2 = ntsc ? &xLookUpNtscPhi2[0] : &xLookUpPalPhi2[0];    
+    s.integer( spriteOpenBusPos );    	
     
     if (s.mode() == Emulator::Serializer::Mode::Load) {
+		setXLookUp();
+		
         switch(cycle) {
             case 15: onHalfCycle = [this]() { borderLeft<true>(); }; break;
             case 16: onHalfCycle = [this]() { borderLeft<false>(); }; break;
-            case 53: if(!ntsc) onHalfCycle = [this]() { spriteDmaCheck(); }; break;
+            case 53: if(!ntscBorder) onHalfCycle = [this]() { spriteDmaCheck(); }; break;
             case 54: onHalfCycle = [this]() { borderRight<true>(); spriteDmaCheck(); }; break;
-            case 55: onHalfCycle = [this]() { borderRight<false>(); if(ntsc) spriteDmaCheck(); }; break;
+            case 55: onHalfCycle = [this]() { borderRight<false>(); if(ntscBorder) spriteDmaCheck(); }; break;
             default: onHalfCycle = nullptr; break;
         }
         

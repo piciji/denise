@@ -295,21 +295,21 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
                 break;
 
             auto view = EmuConfigView::TabWindow::getView( activeEmulator );
-            bool state = view->systemLayout->toggleFeature( C64Interface::FeatureIdDigiboost );
+            bool state = view->systemLayout->toggleModel( C64Interface::ModelIdDigiboost );
             status->addMessage( trans->get( state ? "digiboost_on" : "digiboost_off" ) );
         } break;
         case Hotkey::Id::SwapSid: {
             if (!activeEmulator || !dynamic_cast<LIBC64::Interface*>(activeEmulator))
                 break;
             auto view = EmuConfigView::TabWindow::getView( activeEmulator );
-            bool state = view->systemLayout->toggleFeature( C64Interface::FeatureIdSid );
+            bool state = view->systemLayout->toggleModel( C64Interface::ModelIdSid );
             status->addMessage( trans->get( state ? "sid_6581_on" : "sid_8580_on" ) );
         } break;
         case Hotkey::Id::ToggleSidFilter: {
             if (!activeEmulator || !dynamic_cast<LIBC64::Interface*>(activeEmulator))
                 break;
             auto view = EmuConfigView::TabWindow::getView( activeEmulator );
-            bool state = view->systemLayout->toggleFeature( C64Interface::FeatureIdFilter );
+            bool state = view->systemLayout->toggleModel( C64Interface::ModelIdFilter );
             status->addMessage( trans->get( state ? "sid_filter_on" : "sid_filter_off" ) );
         } break;
         case Hotkey::AdjustBiasUp:
@@ -317,7 +317,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             if (!activeEmulator || !dynamic_cast<LIBC64::Interface*>(activeEmulator))
                 break;
             auto view = EmuConfigView::TabWindow::getView( activeEmulator );
-            int state = view->systemLayout->stepRangeFeature( C64Interface::FeatureIdBias, id == Hotkey::AdjustBiasUp ? 100: -100 );
+            int state = view->systemLayout->stepRangeModel( C64Interface::ModelIdBias, id == Hotkey::AdjustBiasUp ? 100: -100 );
             status->addMessage( trans->get( "sid_bias_change", {{"%state%", std::to_string(state) }} ) );                    
         } break;
         case Hotkey::DiskSwap0: case Hotkey::DiskSwap1: case Hotkey::DiskSwap2:

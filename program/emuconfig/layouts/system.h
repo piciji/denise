@@ -16,18 +16,19 @@ struct AccuracyLayout : GUIKIT::FramedVerticalLayout {
     AccuracyLayout();
 };
 
-struct FeatureLayout : GUIKIT::FramedVerticalLayout {
+struct ModelLayout : GUIKIT::FramedVerticalLayout {
     
     struct Line : GUIKIT::HorizontalLayout {
         
         struct Block : GUIKIT::HorizontalLayout {
-            Emulator::Interface::Feature* feature;
+            Emulator::Interface::Model* model;
             GUIKIT::CheckBox checkBox;
+			GUIKIT::ComboButton combo;
 			std::vector<GUIKIT::RadioBox*> options;
             GUIKIT::Label label;
             GUIKIT::LineEdit lineEdit;
 
-            Block(Emulator::Interface::Feature* feature);
+            Block(Emulator::Interface::Model* model);
         };
         std::vector<Block*> blocks;       
         
@@ -38,7 +39,7 @@ struct FeatureLayout : GUIKIT::FramedVerticalLayout {
         
     auto build( Emulator::Interface* emulator ) -> void;
     
-    FeatureLayout();
+    ModelLayout();
 };
 
 struct MemoryLayout : GUIKIT::FramedVerticalLayout {
@@ -97,35 +98,6 @@ struct DriveLayout : GUIKIT::FramedVerticalLayout {
     DriveLayout();
 };
 
-struct CpuLayout : GUIKIT::FramedVerticalLayout {
-	
-	struct Selector : GUIKIT::HorizontalLayout {
-		std::vector<GUIKIT::RadioBox*> radios;
-	} selector;
-
-    auto build( Emulator::Interface* emulator ) -> void;
-
-    CpuLayout();
-};
-
-struct ChipsetLayout : GUIKIT::FramedHorizontalLayout {
-    
-    struct Selector : GUIKIT::HorizontalLayout {
-		std::vector<GUIKIT::RadioBox*> radios;
-	} selector;
-    
-    auto build( Emulator::Interface* emulator ) -> void;
-
-    ChipsetLayout();
-};
-
-struct RegionLayout : GUIKIT::FramedHorizontalLayout {
-	GUIKIT::RadioBox pal;
-    GUIKIT::RadioBox ntsc;
-	
-    RegionLayout();
-};
-
 struct SystemLayout : GUIKIT::VerticalLayout {
     
     TabWindow* tabWindow;
@@ -134,24 +106,20 @@ struct SystemLayout : GUIKIT::VerticalLayout {
     GUIKIT::HorizontalLayout upperLayout;
     GUIKIT::VerticalLayout leftLayout;
     GUIKIT::VerticalLayout rightLayout;
-	GUIKIT::HorizontalLayout bottomLayout;
 
     MemoryLayout memoryLayout;
     DriveLayout driveLayout;
-    CpuLayout cpuLayout;
-	ChipsetLayout chipsetLayout;
-	RegionLayout regionLayout;
-    FeatureLayout featureLayout;
+    ModelLayout modelLayout;
     AccuracyLayout accuracyLayout;
     ExpansionLayout expansionLayout;
 
     auto translate() -> void;
 	auto setEnabled(bool state) -> void;
-	auto toggleFeature( unsigned id ) -> bool;
-    auto stepRangeFeature( unsigned id, int step ) -> int;
-	auto updateFeatureWidget( FeatureLayout::Line::Block* block ) -> void;
-    auto updateRuntimeFeatureWidgets( ) -> void;
-    auto featureIdent( std::string ident ) -> std::string;
+	auto toggleModel( unsigned id ) -> bool;
+    auto stepRangeModel( unsigned id, int step ) -> int;
+	auto updateModelWidget( ModelLayout::Line::Block* block ) -> void;
+    auto updateModelWidgets( ) -> void;
+    auto modelIdent( std::string ident ) -> std::string;
     auto activateDrive( Emulator::Interface::MediaGroup* mediaGroup, unsigned requestedCount ) -> void;
     auto updateExpansionMemory() -> void;
     auto getSizeString( unsigned sizeInKb ) -> std::string;

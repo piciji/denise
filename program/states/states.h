@@ -19,7 +19,7 @@ struct States {
     Emulator::Interface* emulator;
     std::vector<std::string> errorPaths;
     bool forcePowerNextLoad = false;
-    
+	    
     struct InsertImage {
         FileSetting* setting;        
         Emulator::Interface::Media* media;
@@ -44,7 +44,7 @@ struct States {
     
     auto updateTapeMenu() -> void;
     
-    auto updateFeatures() -> void;
+    auto updateModels(bool& regionChange) -> void;
     
     auto statusMessage( std::string langKey, std::string replacer ) -> void;
     

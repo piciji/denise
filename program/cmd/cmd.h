@@ -24,7 +24,6 @@ struct Cmd {
     bool noDriver = false;
     bool noGui = false;
     bool debug = false;
-    bool lockRegion = false;
     bool helpRequested = false;
     bool versionRequested = false;
 	uint8_t autostartPrg = 1;
@@ -37,11 +36,7 @@ struct Cmd {
     
     auto autoloadImages() -> void;
     
-    auto updateFeature( Emulator::Interface* emulator, unsigned ident, int value) -> void;
-    
-    auto updateChipset( Emulator::Interface* emulator, unsigned ident) -> void;
-    
-    auto updateRegion( Emulator::Interface* emulator, bool pal ) -> void;
+    auto updateModel( Emulator::Interface* emulator, unsigned ident, int value) -> void;
     
     auto prepareDrives( Emulator::Interface* emulator ) -> void;
     

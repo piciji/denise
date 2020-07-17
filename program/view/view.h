@@ -26,9 +26,6 @@ struct View : public GUIKIT::Window {
         GUIKIT::Menu* shaderMenu;
         GUIKIT::MenuItem* presentation;
         GUIKIT::MenuItem* palette;
-        GUIKIT::Menu* regionMenu;
-            GUIKIT::MenuRadioItem* pal;
-            GUIKIT::MenuRadioItem* ntsc;
         GUIKIT::MenuItem* border;
 		GUIKIT::MenuItem* exit;        
     };   

@@ -10,36 +10,39 @@ auto VicIICycle::clock() -> void {
 
     sequencer();  
 
+	//ntscXLock -> true: NTSC(PAL-N), false: PAL, OLD-NTSC
+	//ntscBorder -> true: NTSC(PAL-N), OLD-NTSC false: PAL
+	
     switch (cycle) {
-        case 0: if (ntsc)   { fetchSpriteS1<3>(); fetchSpriteS2(3); } 
-                else        { fetchSpriteP<3>(); fetchSpriteS0(3); }
+        case 0: if (ntscXLock)  { fetchSpriteS1<3>(); fetchSpriteS2(3); } 
+                else			{ fetchSpriteP<3>(); fetchSpriteS0(3); }
                 break;
-        case 1: if (ntsc)   { fetchSpriteP<4>(); fetchSpriteS0(4); }
-                else        { fetchSpriteS1<3>(); fetchSpriteS2(3); }
+        case 1: if (ntscXLock)  { fetchSpriteP<4>(); fetchSpriteS0(4); }
+                else			{ fetchSpriteS1<3>(); fetchSpriteS2(3); }
                 break;
-        case 2: if (ntsc)   { fetchSpriteS1<4>(); fetchSpriteS2(4); }
-                else        { fetchSpriteP<4>(); fetchSpriteS0(4); }
+        case 2: if (ntscXLock)  { fetchSpriteS1<4>(); fetchSpriteS2(4); }
+                else			{ fetchSpriteP<4>(); fetchSpriteS0(4); }
                 break;
-        case 3: if(ntsc)    { fetchSpriteP<5>(); fetchSpriteS0( 5 ); }
-                else        { fetchSpriteS1<4>(); fetchSpriteS2( 4 ); }
+        case 3: if(ntscXLock)   { fetchSpriteP<5>(); fetchSpriteS0( 5 ); }
+                else			{ fetchSpriteS1<4>(); fetchSpriteS2( 4 ); }
                 break;
-        case 4: if(ntsc)    { fetchSpriteS1<5>(); fetchSpriteS2(5); }
-                else        { fetchSpriteP<5>(); fetchSpriteS0(5); }
+        case 4: if(ntscXLock)   { fetchSpriteS1<5>(); fetchSpriteS2(5); }
+                else			{ fetchSpriteP<5>(); fetchSpriteS0(5); }
                 break;
-        case 5: if(ntsc)    { fetchSpriteP<6>(); fetchSpriteS0(6); }
-                else        { fetchSpriteS1<5>(); fetchSpriteS2(5); }
+        case 5: if(ntscXLock)   { fetchSpriteP<6>(); fetchSpriteS0(6); }
+                else			{ fetchSpriteS1<5>(); fetchSpriteS2(5); }
                 break;
-        case 6: if(ntsc)    { fetchSpriteS1<6>(); fetchSpriteS2(6); }
-                else        { fetchSpriteP<6>(); fetchSpriteS0(6); }
+        case 6: if(ntscXLock)   { fetchSpriteS1<6>(); fetchSpriteS2(6); }
+                else			{ fetchSpriteP<6>(); fetchSpriteS0(6); }
                 break;
-        case 7: if(ntsc)    { fetchSpriteP<7>(); fetchSpriteS0(7); }
-                else        { fetchSpriteS1<6>(); fetchSpriteS2(6); }
+        case 7: if(ntscXLock)   { fetchSpriteP<7>(); fetchSpriteS0(7); }
+                else			{ fetchSpriteS1<6>(); fetchSpriteS2(6); }
                 break;
-        case 8: if(ntsc)    { fetchSpriteS1<7>(); fetchSpriteS2(7); }
-                else        { fetchSpriteP<7>(); fetchSpriteS0(7); }
+        case 8: if(ntscXLock)   { fetchSpriteS1<7>(); fetchSpriteS2(7); }
+                else			{ fetchSpriteP<7>(); fetchSpriteS0(7); }
                 break;
-        case 9: if(ntsc)    { idleCycle(); }
-                else        { fetchSpriteS1<7>(); fetchSpriteS2( 7 ); }
+        case 9: if(ntscXLock)   { idleCycle(); }
+                else			{ fetchSpriteS1<7>(); fetchSpriteS2( 7 ); }
                 break;
         case 10: refresh();
             cAccessArea = true;
@@ -79,7 +82,7 @@ auto VicIICycle::clock() -> void {
             fetchG();
             fetchC();            
             cAccessArea = false;
-            if (!ntsc)
+            if (!ntscBorder)
                 onHalfCycle = [this]() { spriteDmaCheck(); };
             break;
         case 54:    
@@ -90,30 +93,30 @@ auto VicIICycle::clock() -> void {
         case 55:
             idleCycle();
             spriteFlip();
-            onHalfCycle = [this]() { borderRight<false>(); if(ntsc) spriteDmaCheck(); };
+            onHalfCycle = [this]() { borderRight<false>(); if(ntscBorder) spriteDmaCheck(); };
             break;
         case 56:
-            if (!ntsc)
+            if (!ntscBorder)
                 spriteDmaCycle1 = 0x80;
             idleCycle();
             break;
-        case 57:    if (ntsc)   { idleCycle(); updateRc(); spriteDmaCycle1 = 0x80; }
-                    else        { spriteDisplayCheck(); fetchSpriteP<0>(); updateRc(); fetchSpriteS0(0); }            
+        case 57:    if (ntscBorder) { if(!ntscXLock) {spriteDisplayCheck();} idleCycle(); updateRc(); spriteDmaCycle1 = 0x80; }
+                    else			{ spriteDisplayCheck(); fetchSpriteP<0>(); updateRc(); fetchSpriteS0(0); }            
                     break;
-        case 58:    if (ntsc)   { spriteDisplayCheck(); fetchSpriteP<0>(); fetchSpriteS0(0); }
-                    else        { fetchSpriteS1<0>(); fetchSpriteS2(0); }
+        case 58:    if (ntscBorder) { if(ntscXLock) {spriteDisplayCheck();} fetchSpriteP<0>(); fetchSpriteS0(0); }
+                    else			{ fetchSpriteS1<0>(); fetchSpriteS2(0); }
                     break;
-        case 59:    if (ntsc)   { fetchSpriteS1<0>(); fetchSpriteS2(0); }
-                    else        { fetchSpriteP<1>(); fetchSpriteS0(1); }
+        case 59:    if (ntscBorder) { fetchSpriteS1<0>(); fetchSpriteS2(0); }
+                    else			{ fetchSpriteP<1>(); fetchSpriteS0(1); }
                     break;
-        case 60:    if (ntsc)   { fetchSpriteP<1>(); fetchSpriteS0(1); }
-                    else        { fetchSpriteS1<1>(); fetchSpriteS2(1); }
+        case 60:    if (ntscBorder) { fetchSpriteP<1>(); fetchSpriteS0(1); }
+                    else			{ fetchSpriteS1<1>(); fetchSpriteS2(1); }
                     break;
-        case 61:    if (ntsc)   { fetchSpriteS1<1>(); fetchSpriteS2(1); }
-                    else        { fetchSpriteP<2>(); fetchSpriteS0(2); }
+        case 61:    if (ntscBorder) { fetchSpriteS1<1>(); fetchSpriteS2(1); }
+                    else			{ fetchSpriteP<2>(); fetchSpriteS0(2); }
                     break;
-        case 62:    if (ntsc)   { fetchSpriteP<2>(); fetchSpriteS0(2); }
-                    else        { fetchSpriteS1<2>(); fetchSpriteS2(2); }
+        case 62:    if (ntscBorder) { fetchSpriteP<2>(); fetchSpriteS0(2); }
+                    else			{ fetchSpriteS1<2>(); fetchSpriteS2(2); }
                     break;
         // ntsc only
         case 63:    fetchSpriteS1<2>(); fetchSpriteS2(2);
@@ -164,9 +167,9 @@ __attribute__((always_inline)) auto VicIICycle::advanceCycle() -> void {
 		if (vCounter == 0xf7)
 			allowBadlines = false;		
 		
-		if (++vCounter == (ntsc ? 263 : 312) ) {
+		if (++vCounter == lines ) {
 			// last line is not reseted this cycle but next
-			vCounter = ntsc ? 262 : 311;
+			vCounter -= 1;
 			initVCounter = true;	
 		} else {
 			// when vCounter increments to 0x30 we check for DEN
@@ -259,7 +262,6 @@ inline auto VicIICycle::spriteDmaCheck() -> void {
             spr->mcBase = 0;
             spr->expandYFlop = 1;
             
-            //if ( (spr == sprite0) && (cycle == (ntsc ? 55 : 54) ) )
             if (spr == sprite0)
                 sprite0DmaLateBA = true;
         }

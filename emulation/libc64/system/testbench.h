@@ -18,11 +18,8 @@ auto initDebugCart() -> void {
     
     if (!debugCart.enable)
         return;
-        
-    if (ntsc)
-        debugCart.frames = debugCart.cycles / C64_CYCLES_FRAME_NTSC;
-    else
-        debugCart.frames = debugCart.cycles / C64_CYCLES_FRAME_PAL; 
+        	
+	debugCart.frames = debugCart.cycles / vicII->cyclesPerFrame();
     
     if(!debugCart.frames)
         debugCart.frames = 1;

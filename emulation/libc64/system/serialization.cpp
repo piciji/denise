@@ -71,18 +71,10 @@ auto System::checkSerialization(uint8_t* data, unsigned size) -> bool {
 }
 
 auto System::unserialize(uint8_t* data, unsigned size) -> bool {
-    // in this context there are two kinds of gui elements:
-    // 1. switchable during runtime (some features)
-    // 2. not switchable during runtime (grayed out)
-    // for first kind the actual values will be used and the feature
-    // gui is updated from the values of the state file.
-    // for second kind the actual values will be used too but the relevant
-    // gui elements (grayed out) will be not updated according to the
-    // state file.
     
     // states depends on:
     // region, connected devices
-    // features
+    // models
     // chipset, cpu, memory
     // enabled drives               
     // image paths
@@ -113,11 +105,18 @@ auto System::unserialize(uint8_t* data, unsigned size) -> bool {
     
 auto System::serializeAll(Emulator::Serializer& s) -> void {
 
+	uint8_t _vicModel = vicII->getModel();
+	s.integer( _vicModel );
+	
     bool useCycleRenderer = vicII == vicIICycle;
     s.integer(useCycleRenderer);
 
-    if (s.mode() == Emulator::Serializer::Mode::Load)
+    if (s.mode() == Emulator::Serializer::Mode::Load) {
         setCycleRenderer( useCycleRenderer );    
+		
+		if (_vicModel != vicII->getModel())
+			system->interface->setModel( LIBC64::Interface::ModelIdVicIIModel, _vicModel );		
+	}
     
     serialize( s );
     cia1->serialize( s );
@@ -157,7 +156,6 @@ auto System::serialize(Emulator::Serializer& s) -> void {
     s.integer( irqIncomming );
     s.integer( nmiIncomming );    
     s.integer( rdyIncomming );   
-    s.integer( ntsc );
     s.integer( kernalBootComplete );    
     keyBuffer->serialize( s );    
     prgInUse->serialize( s );

@@ -50,8 +50,8 @@ struct Mouse1351 : AnalogControl {
     auto reset() -> void {
         cyclesElapsed = 0;
         quadratureEncoder.reset();
-        quadratureEncoder.setCyclesPerFrame( system->getCyclesPerFrame() );
-        quadratureEncoder.setCyclesPerSecond( system->getCyclesPerSecond() );
+        quadratureEncoder.setCyclesPerFrame( vicII->cyclesPerFrame() );
+        quadratureEncoder.setCyclesPerSecond( vicII->frequency() );
         AnalogControl::reset();
     }  
     

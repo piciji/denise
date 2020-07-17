@@ -4,7 +4,7 @@
 namespace LIBC64  {
 
 auto VicIIFast::serialize(Emulator::Serializer& s) -> void {
-    
+	
     s.integer( crop.rSel ); 
     s.integer( crop.cSel );
     s.integer( crop.top );
@@ -15,7 +15,6 @@ auto VicIIFast::serialize(Emulator::Serializer& s) -> void {
     s.integer( crop.bottomOverscan );
     s.integer( crop.leftOverscan );
     s.integer( crop.rightOverscan );
-    s.integer( rev65 );
     s.integer( lastReadPhi1 );
     
     s.array( colorReg );    
@@ -26,7 +25,6 @@ auto VicIIFast::serialize(Emulator::Serializer& s) -> void {
     s.integer( vStart );
     s.integer( vHeight );
     s.integer( hWidth );
-    s.integer( lineCycles );
     s.integer( firstVisiblePixel );
     s.array( spriteBa );
     s.integer( allowBadlines );
@@ -66,7 +64,6 @@ auto VicIIFast::serialize(Emulator::Serializer& s) -> void {
 	s.integer( idleModeTemp );
     s.integer( initVCounter );
     s.integer( refreshCounter );
-    s.integer( ntsc );
     s.integer( modeEcmBmm );
     s.integer( modeMcm );    
     s.integer( dmaDelay );
@@ -119,10 +116,9 @@ auto VicIIFast::serialize(Emulator::Serializer& s) -> void {
     s.integer( vc );
     s.integer( rc );
     
-    s.array( cBuffer );        
-    
-    xLookupPtrPhi1 = ntsc ? &xLookUpNtscPhi1[0] : &xLookUpPalPhi1[0];
-    xLookupPtrPhi2 = ntsc ? &xLookUpNtscPhi2[0] : &xLookUpPalPhi2[0];        
+    s.array( cBuffer ); 
+	
+	setXLookUp();
 
 }
 

@@ -738,60 +738,7 @@ auto View::buildMenu() -> void {
 		}
 		
 		sM.system->append(*GUIKIT::MenuSeparator::getInstance());						
-        
-        sM.regionMenu = new GUIKIT::Menu;
-        sM.regionMenu->setIcon( regionImage );
-        sM.system->append( *sM.regionMenu );
-        
-        sM.pal = new GUIKIT::MenuRadioItem;
-        sM.regionMenu->append( *sM.pal );
-        sM.ntsc = new GUIKIT::MenuRadioItem;
-        sM.regionMenu->append( *sM.ntsc );
-        
-        GUIKIT::MenuRadioItem::setGroup( *sM.pal, *sM.ntsc );
-        
-        if (settings->get<unsigned>( program->ident(emulator, "video_region"), 0u, {0u, 1u}) == 0 )
-            sM.pal->setChecked();
-        else
-            sM.ntsc->setChecked();
-
-        auto palItem = sM.pal;
-        auto ntscItem = sM.ntsc;
-        
-        sM.pal->onActivate = [emulator, ntscItem, emuConfigView]() {
-            if (emulator == activeEmulator) {
-                if (!view->message->question(trans->get("setting change need reset"))) {
-                    ntscItem->setChecked();
-                    return;
-                }
-            }
-            
-            settings->set<unsigned>(program->ident(emulator, "video_region"), 0u);
-            VideoManager::getInstance( emulator )->reloadSettings();
-            emuConfigView->systemLayout->regionLayout.pal.setChecked();
-            emuConfigView->videoLayout->updatePresets();
-
-            if (activeEmulator)
-                program->power(activeEmulator);
-        };
-
-        sM.ntsc->onActivate = [emulator, palItem, emuConfigView]() {
-            if (emulator == activeEmulator) {
-                if (!view->message->question(trans->get("setting change need reset"))) {
-                    palItem->setChecked();
-                    return;
-                }
-            }
-
-            settings->set<unsigned>(program->ident(emulator, "video_region"), 1u);
-            VideoManager::getInstance( emulator )->reloadSettings();
-            emuConfigView->systemLayout->regionLayout.ntsc.setChecked();
-            emuConfigView->videoLayout->updatePresets();
-
-            if (activeEmulator)
-                program->power(activeEmulator);
-        };
-        	
+                	
 		sM.shaderMenu = new GUIKIT::Menu;
         sM.shaderMenu->setIcon( colorImage );
         sM.system->append( *sM.shaderMenu );
@@ -994,9 +941,7 @@ auto View::translate() -> void {
             sysMenu.border->setText(trans->get("Border"));
         }
         sysMenu.shaderMenu->setText(trans->get("Shader"));
-        sysMenu.regionMenu->setText( trans->get("region") );
-        sysMenu.pal->setText( "PAL" );
-        sysMenu.ntsc->setText( "NTSC" );
+		
         if(!GUIKIT::Application::isCocoa())
             sysMenu.exit->setText(trans->get("Exit"));
     }    
@@ -1127,4 +1072,3 @@ auto View::questionToWrite(Emulator::Interface::Media* media) -> bool {
     
     return state;
 }
-

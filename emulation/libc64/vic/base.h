@@ -22,9 +22,6 @@
 #include <cstring>
 #include "../../tools/serializer.h"
 
-// pal (63 cycles): emulate 6569R3 and 8565, not the 6569R1
-// ntsc (65 cycles): emulate 6567R8 and 8562, not the 6567R56A (64 cycles)
-
 #define VIC_MAX_LINE_LENGTH 65 * 8
 #define VIC_MODE_MCM(_mode) (_mode & 1)
 #define VIC_MODE_BMM(_mode) (_mode & 2)
@@ -51,6 +48,8 @@ struct VicIIBase {
     
     enum Interrupt { Raster = 0, MBC = 1, MMC = 2, LP = 3, Update = 4 };		   
     
+	enum Model { MOS6569R3 = 0, MOS8565, MOS6567R8, MOS8562, MOS6569R1, MOS6567R56A, MOS6572, MOS6573 } model;
+	
 	// vic emulation code buffers visible data for whole non blanking area.
 	// following struct contains pixel widths to crop away complete border or
 	// typical overscan of a crt monitor
@@ -82,7 +81,9 @@ struct VicIIBase {
 		unsigned framePos = 1;
 		bool permanent = false;
 	} leftLineAnomaly;
-	
+
+	auto setModel(Model model) -> void;
+	auto getModel() -> Model { return model; }
 	auto updateBorderData() -> void;
 	auto setBorderData() -> void;
     
@@ -95,8 +96,6 @@ struct VicIIBase {
 	
     virtual auto readReg(uint8_t addr) -> uint8_t { return 0; }
     virtual auto writeReg(uint8_t addr, uint8_t value) -> void {}
-    auto setNtsc( bool state ) -> void;
-	auto setRevision65( bool state ) -> void;
     auto setMeta( bool state ) -> void;
     auto isRevision65() -> bool;
     auto disableSequencer( bool state ) -> void;
@@ -120,13 +119,28 @@ struct VicIIBase {
     auto getVerticalLineAnomaly() -> uint8_t;
     
     auto getVcounter() -> unsigned { return vCounter; }
+	
+	auto isNTSCGeometry() -> bool { return ntscGeometry; }
+	auto isNTSCEncoding() -> bool { return ntscEncoding; }
+	auto frequency() -> unsigned { return cyclesPerSec; }
+	auto cyclesPerFrame() -> unsigned { return lineCycles * lines; }
    
-protected:    
-    bool rev65; //true: 65xx chips, false: 85xx chips
+protected:        
     bool addMeta; // add aec and ba state to output 
     
     double luma[2][16];
     double chroma[16]; // as angle on color wheel
+	
+	bool rev65; //true: 65xx chips, false: 85xx chips
+	unsigned lineCycles;
+	unsigned lines;
+	bool oldIrqMode;
+	bool ntscGeometry; //true: 263, 262(OLD NTSC), false: 312
+	bool ntscEncoding;
+	bool ntscXLock; // true: NTSC, PAL-N, false: PAL, OLD-NTSC
+	bool ntscBorder; // true: NTSC, PAL-N, OLD-NTSC false: PAL
+	unsigned cyclesPerSec;
+	
     
 	uint8_t lastReadPhi1;
     uint8_t render[4];
@@ -143,7 +157,6 @@ protected:
     unsigned vStart;
 	unsigned vHeight;
     unsigned hWidth;
-    unsigned lineCycles;
     unsigned firstVisiblePixel;
 	
 	bool baLow; //connected to 6510 rdy and expansion port
@@ -195,8 +208,6 @@ protected:
     bool lpTrigger;
     
 	uint8_t refreshCounter;    
-    // ntsc: 6567R8 (65 cycles), pal: 6569 (63 cycles)
-    bool ntsc;
     
     // actual register values
     uint8_t modeEcmBmm;  // 2:ecm | 1:bmm | 0:0  "for easy oring with mcm"
@@ -266,6 +277,8 @@ protected:
     uint16_t xLookUpPalPhi2[63];
     uint16_t xLookUpNtscPhi1[65];
     uint16_t xLookUpNtscPhi2[65];
+	uint16_t xLookUpNtscOldPhi1[64];
+    uint16_t xLookUpNtscOldPhi2[64];
     uint16_t* xLookupPtrPhi1;
     uint16_t* xLookupPtrPhi2;
     bool enableSequencer = true;
@@ -279,6 +292,7 @@ protected:
 	auto updateSpriteWithBusValue(uint8_t value) -> void;
     auto updateSpriteBaState( uint8_t pos, bool dmaActive ) -> void;
     template<bool permanent> auto insertVerticalLineAnomaly(unsigned start, unsigned end) -> void;         
+	auto setXLookUp() -> void;
 };
  
 extern VicIIBase* vicII;

@@ -9,8 +9,8 @@ struct Interface : Emulator::Interface  {
 
 	~Interface() {}		
     
-    enum FeatureId {
-        FeatureIdLowPassFilter = 0,
+    enum ModelId {
+        ModelIdLowPassFilter = 0,
     };
     
     enum MediaGroupId {
@@ -26,12 +26,10 @@ struct Interface : Emulator::Interface  {
     auto connect(Connector* connector, Device* device) -> void;
     auto getConnectedDevice( Connector* connector ) -> Device*;
     
-	auto setCpu(unsigned cpuId) -> void;
 	auto setMemory(MemoryType* memoryType, unsigned memoryId) -> void;
 	auto setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> void;
 	auto power() -> void;
 	auto run() -> void; //emulate one frame
-	auto setRegion(unsigned id) -> void; //0 - pal, 1 - ntsc
 
 	//drive handling
 	auto setDrivesConnected(MediaGroup* group, unsigned count) -> void;
@@ -51,20 +49,16 @@ struct Interface : Emulator::Interface  {
 	auto savestate() -> uint8_t*;
     auto checkstate(uint8_t* data, unsigned size) -> bool;
 	auto loadstate(uint8_t* data, unsigned size) -> bool;
-
-	auto setChipset(unsigned chipsetId) -> void;
-	auto setFeature(unsigned featureId, int value) -> void;
+    
+	auto setModel(unsigned modelId, int value) -> void;
     
 private:
 	auto prepareDevices() -> void;
 	auto prepareMemory() -> void;
-	auto prepareCpus() -> void;
 	auto prepareMedia() -> void;
 	auto preparePalettes() -> void;
-	auto prepareChipset() -> void;
-	auto prepareFeatures() -> void;
+	auto prepareModels() -> void;
 	auto prepareFirmware() -> void;
-    auto prepareStats() -> void;
     auto prepareExpansions() -> void;
 };
 	

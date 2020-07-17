@@ -16,7 +16,7 @@ branches:
     - master
     - appveyor
     - /v\d*\.\d*\.\d*/
-    - run_ahead
+    - missing_VIC_models
   
 environment:
   matrix:

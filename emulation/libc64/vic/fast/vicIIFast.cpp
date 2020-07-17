@@ -102,7 +102,7 @@ auto VicIIFast::clock() -> void {
         if (vCounter == 0xf7)
             allowBadlines = false;                    
 
-        if (++vCounter == (ntsc ? 263 : 312)) {
+        if (++vCounter == lines) {
             vCounter -= 1;
             initVCounter = true;
         } else {
@@ -212,18 +212,18 @@ inline auto VicIIFast::applyBorder() -> void {
 auto VicIIFast::setBorderDim() -> void {
 
     if (cSel) {
-        borderLeft = ntsc ? 56 : 46;
-        borderRight = ntsc ? 44 : 40;
+        borderLeft = ntscBorder ? 56 : 46;
+        borderRight = ntscBorder ? 44 : 40;
 
     } else {
-        borderLeft = ntsc ? 63 : 53;
-        borderRight = ntsc ? 53 : 49;
+        borderLeft = ntscBorder ? 63 : 53;
+        borderRight = ntscBorder ? 53 : 49;
     }
 }
 
 inline auto VicIIFast::calcSpriteX(Sprite* spr) -> void {
 	
-	if (!ntsc) {
+	if (!ntscBorder) {
 		if (spr->x < 0x194 )
 			spr->xPos = firstVisiblePixel + spr->x + 22;
 		else
@@ -271,7 +271,7 @@ auto VicIIFast::checkLightPenNew() -> void {
     lpLatched = true;
 
     // last line doesn't latch lpx or lpy.
-    if (vCounter == (ntsc ? 262 : 311))
+    if (vCounter == (lines - 1))
         return;
 
     // 2 adjacent pixel [4,5] [6,7] give the same value for lpx, because of
@@ -318,7 +318,7 @@ inline auto VicIIFast::applyMeta() -> void {
 
     uint8_t* src;
 
-    if (ntsc)
+    if (ntscBorder)
         src = badLine ? patternBadlineNtsc : patternLineNtsc;
     else
         src = badLine ? patternBadline : patternLine;

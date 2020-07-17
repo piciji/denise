@@ -1,6 +1,4 @@
 
-#define regionLayout tabWindow->systemLayout->regionLayout
-
 VideoModeLayout::VideoModeLayout(bool withSpectrum) {
     
     if (withSpectrum) {
@@ -601,6 +599,8 @@ auto VideoLayout::updatePresets() -> void {
 
 auto VideoLayout::updateVisibillity() -> void {
 	
+	bool _pal = emulator->getRegionEncoding() == Emulator::Interface::Region::Pal;
+	
 	if (base.mode.spectrum.checked()) {
         base.phase.setEnabled(true);
         base.option.newLuma.setEnabled(true);
@@ -615,15 +615,15 @@ auto VideoLayout::updateVisibillity() -> void {
 	crt.setEnabled( crtChecked );	
     if (crtChecked) {
         crt.phaseError.slider.setEnabled( crt.phaseError.active.checked() );
-        crt.hanoverBars.setEnabled( regionLayout.pal.checked() );
-        crt.hanoverBars.slider.setEnabled( regionLayout.pal.checked() && crt.hanoverBars.active.checked() );	
+        crt.hanoverBars.setEnabled( _pal );
+        crt.hanoverBars.slider.setEnabled( _pal && crt.hanoverBars.active.checked() );	
         crt.scanlines.slider.setEnabled( crt.scanlines.active.checked() );
         crt.blur.slider.setEnabled(  crt.blur.active.checked() );
         hf.lumaRise.slider.setEnabled( hf.lumaRise.active.checked() );
         hf.lumaFall.slider.setEnabled( hf.lumaFall.active.checked() );
     }
     
-    base.option.crtRealGamma.setEnabled( crtChecked && base.mode.palette.checked() && regionLayout.pal.checked() );
+    base.option.crtRealGamma.setEnabled( crtChecked && base.mode.palette.checked() && _pal );
 	
     if (videoDriver->shaderFormat() != DRIVER::Video::ShaderType::GLSL) {
         if (videoDriver->shaderFormat() == DRIVER::Video::ShaderType::HLSL) {
@@ -761,7 +761,7 @@ auto VideoLayout::translate() -> void {
 
 auto VideoLayout::sliderIdent() -> std::string {
 	
-	std::string ident = regionLayout.pal.checked() ? "_pal" : "_ntsc";
+	std::string ident = (emulator->getRegionEncoding() == Emulator::Interface::Region::Pal) ? "_pal" : "_ntsc";
 	
     if (dynamic_cast<LIBC64::Interface*>(emulator) && base.mode.spectrum.checked())
         ident += "_spectrum";

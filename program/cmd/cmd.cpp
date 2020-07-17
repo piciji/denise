@@ -5,17 +5,23 @@
 auto Cmd::set(int argc, char** argv) -> void {
     
     options.push_back( {"-v, --version", "Output program version", ""} );    
-    options.push_back( {"-h, --help", "Output this help screen", ""} );    
+    options.push_back( {"-h, --help", "Output this help screen", ""} );  
+	
     options.push_back( {"-vic-6569R3", "Select VIC-II 6569R3 and PAL mode", ""} );
     options.push_back( {"-vic-8565", "Select VIC-II 8565 and PAL mode", ""} );
     options.push_back( {"-vic-6567R8", "Select VIC-II 6567R8 and NTSC mode", ""} );
-    options.push_back( {"-vic-8562", "Select VIC-II 6562 and NTSC mode", ""} );
-    options.push_back( {"-pal", "Select PAL Mode", ""} );
-    options.push_back( {"-ntsc", "Select NTSC Mode", ""} );
+    options.push_back( {"-vic-8562", "Select VIC-II 6562 and NTSC mode", ""} );	
+	options.push_back( {"-vic-6569R1", "Select VIC-II 6569R1 and PAL mode", ""} );
+	options.push_back( {"-vic-6567R56A", "Select VIC-II 6567R56A and NTSC mode", ""} );
+	options.push_back( {"-vic-6572", "Select VIC-II 6572 and PAL mode", ""} );
+	options.push_back( {"-vic-6573", "Select VIC-II 6573 and NTSC mode with PAL Encoding", ""} );
+		
     options.push_back( {"-sid-6581", "Select SID 6581", ""} );
     options.push_back( {"-sid-8580", "Select SID 8580", ""} );
+	
     options.push_back( {"-cia-6526a", "Select CIA 6526a", ""} );
     options.push_back( {"-cia-6526", "Select CIA 6526", ""} );
+	
     options.push_back( {"-reu", "Emulate REU Expansion", "<size in kb>"} );
     options.push_back( {"-debugcart", "Generate exit codes for VICE Testbench", ""} );    
     options.push_back( {"-limitcycles", "Specify number of cycles to run before quitting with an error (checks at complete frames)", "<cycles>"} );
@@ -120,44 +126,40 @@ auto Cmd::parse() -> void {
 		}
         
         if (arg == "-vic-6569R3") { // pal 
-            updateChipset(emuC64, 0);
-            updateRegion(emuC64, true);
-            lockRegion = true;
+			updateModel( emuC64, LIBC64::Interface::ModelIdVicIIModel, 0 );
         }
         else if (arg == "-vic-8565") { // pal 
-            updateChipset(emuC64, 1);
-            updateRegion(emuC64, true);
-            lockRegion = true;
+			updateModel( emuC64, LIBC64::Interface::ModelIdVicIIModel, 1 );
         }
         else if (arg == "-vic-6567R8") { // ntsc 
-            updateChipset(emuC64, 0);
-            updateRegion(emuC64, false);
-            lockRegion = true;
+			updateModel( emuC64, LIBC64::Interface::ModelIdVicIIModel, 2 );
         }
         else if (arg == "-vic-8562") { // ntsc 
-            updateChipset(emuC64, 1);
-            updateRegion(emuC64, false);
-            lockRegion = true;
+			updateModel( emuC64, LIBC64::Interface::ModelIdVicIIModel, 3 );
+        }				
+		else if (arg == "-vic-6569R1") { // pal 
+			updateModel( emuC64, LIBC64::Interface::ModelIdVicIIModel, 4 );
         }
-        else if (arg == "-pal") { // pal 
-            if (!lockRegion)
-                updateRegion(emuC64, true);
+		else if (arg == "-vic-6567R56A") { // ntsc 
+			updateModel( emuC64, LIBC64::Interface::ModelIdVicIIModel, 5 );
         }
-        else if (arg == "-ntsc") { // pal 
-            if (!lockRegion)
-                updateRegion(emuC64, false);
+		else if (arg == "-vic-6572") { // pal
+			updateModel( emuC64, LIBC64::Interface::ModelIdVicIIModel, 6 );
+        }
+		else if (arg == "-vic-6573") { // ntsc geometry, pal encoding 
+			updateModel( emuC64, LIBC64::Interface::ModelIdVicIIModel, 7 );
         }
         else if (arg == "-sid-6581") {
-            updateFeature( emuC64, LIBC64::Interface::FeatureIdSid, 1 );
+            updateModel( emuC64, LIBC64::Interface::ModelIdSid, 1 );
         }
         else if (arg == "-sid-8580") {
-            updateFeature( emuC64, LIBC64::Interface::FeatureIdSid, 0 );
+            updateModel( emuC64, LIBC64::Interface::ModelIdSid, 0 );
         }
         else if (arg == "-cia-6526a") {
-            updateFeature( emuC64, LIBC64::Interface::FeatureIdCiaRev, 1 );
+            updateModel( emuC64, LIBC64::Interface::ModelIdCiaRev, 1 );
         }
         else if (arg == "-cia-6526") {
-            updateFeature( emuC64, LIBC64::Interface::FeatureIdCiaRev, 0 );
+            updateModel( emuC64, LIBC64::Interface::ModelIdCiaRev, 0 );
         }
         else if (arg == "-debugcart") {
             dynamic_cast<LIBC64::Interface*>(emuC64)->activateDebugCart();   
@@ -247,27 +249,17 @@ auto Cmd::autoloadImages() -> void {
     }
 }
 
-auto Cmd::updateFeature( Emulator::Interface* emulator, unsigned ident, int value) -> void {
+auto Cmd::updateModel( Emulator::Interface* emulator, unsigned ident, int value) -> void {
 
-    for( auto& feature : emulator->features ) {
+    for( auto& model : emulator->models ) {
 
-        if(feature.id == ident) {
+        if(model.id == ident) {
 
-            settings->set<int>( program->ident( emulator, feature.name ), value );
+            settings->set<int>( program->ident( emulator, model.name ), value );
 
             return;
         }
     }
-}
-
-auto Cmd::updateChipset( Emulator::Interface* emulator, unsigned ident) -> void {            
-
-    settings->set( program->ident( emulator, "chipset" ), ident );   
-}
-
-auto Cmd::updateRegion( Emulator::Interface* emulator, bool pal ) -> void {
-    
-    settings->set<unsigned>( program->ident( emulator, "video_region"), pal ? 0 : 1);
 }
 
 auto Cmd::prepareDrives( Emulator::Interface* emulator ) -> void {
@@ -319,7 +311,7 @@ auto Cmd::setAneMagic(std::string arg) -> void {
     
     auto magic = GUIKIT::String::convertHexToInt( arg, 0xee ) & 0xff;
     
-    updateFeature( program->getEmulator("C64"), LIBC64::Interface::FeatureIdCpuAneMagic, magic );
+    updateModel( program->getEmulator("C64"), LIBC64::Interface::ModelIdCpuAneMagic, magic );
 }
 
 auto Cmd::setAutoStartPrg(std::string arg) -> void {    

@@ -342,11 +342,12 @@ auto VideoManager::resetSettings() -> void {
 }
 
 auto VideoManager::getModeIdent() -> std::string {
-    unsigned _region = settings->get<unsigned>(program->ident(emulator, "video_region"), 0u, {0u, 1u});
+    //unsigned _region = settings->get<unsigned>(program->ident(emulator, "video_region"), 0u, {0u, 1u});
+	bool _pal = emulator->getRegionEncoding() == Emulator::Interface::Region::Pal;
     bool _useSpectrum = settings->get<bool>(program->ident(emulator, "video_spectrum"), true);    
     unsigned _crtMode = settings->get<unsigned>(program->ident(emulator, "video_crt"), (unsigned)CrtMode::None, {0u, 2u});
     
-    std::string modeIdent = _region == 0 ? "_pal" : "_ntsc";
+    std::string modeIdent = _pal ? "_pal" : "_ntsc";
 
     if (dynamic_cast<LIBC64::Interface*> (emulator) && _useSpectrum)
         modeIdent += "_spectrum";
@@ -362,17 +363,20 @@ auto VideoManager::getModeIdent() -> std::string {
 auto VideoManager::getSettings() -> std::tuple<VPARAMST> {
     
     bool _useSpectrum = settings->get<bool>(program->ident(emulator, "video_spectrum"), true);    
-    unsigned _region = settings->get<unsigned>(program->ident(emulator, "video_region"), 0u,{0u, 1u});
+    //unsigned _region = settings->get<unsigned>(program->ident(emulator, "video_region"), 0u,{0u, 1u});
+	unsigned _region = emulator->getRegionEncoding();
+	bool _pal = _region == Emulator::Interface::Region::Pal;
+	
     unsigned _crtMode = settings->get<unsigned>(program->ident(emulator, "video_crt"), (unsigned)CrtMode::None, {0u, 2u});
 
     auto modeIdent = getModeIdent();
     
-    unsigned _saturation = settings->get<unsigned>(program->ident(emulator, "video_saturation" + modeIdent), ((_region == 0) && _crtMode) ? 110u : 100u,{0u, 200u});
+    unsigned _saturation = settings->get<unsigned>(program->ident(emulator, "video_saturation" + modeIdent), (_pal && _crtMode) ? 110u : 100u,{0u, 200u});
     unsigned _contrast = settings->get<unsigned>(program->ident(emulator, "video_contrast" + modeIdent), 100u,{0u, 200u});
     unsigned _gamma = settings->get<unsigned>(program->ident(emulator, "video_gamma" + modeIdent), 100u,{0u, 200u});
     unsigned _brightness = settings->get<unsigned>(program->ident(emulator, "video_brightness" + modeIdent), 100u,{30u, 280u});
     int _phase = settings->get<int>(program->ident(emulator, "video_phase" + modeIdent), 0,{-180, 180});
-    float _phaseError = settings->get<float>(program->ident(emulator, "video_phase_error" + modeIdent), _region == 0 ? 22.5 : 0,{-45.0, 45.0});
+    float _phaseError = settings->get<float>(program->ident(emulator, "video_phase_error" + modeIdent), _pal ? 22.5 : 0,{-45.0, 45.0});
     bool _usePhaseError = settings->get<bool>(program->ident(emulator, "video_phase_error_use" + modeIdent), true);
     bool _newLuma = settings->get<bool>(program->ident(emulator, "video_new_luma" + modeIdent), true);
     bool _crtRealGamma = settings->get<bool>(program->ident(emulator, "video_crt_real_gamma" + modeIdent), false);

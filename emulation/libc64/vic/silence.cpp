@@ -33,9 +33,9 @@ auto VicIICycle::clockSilence() -> void {
         if (vCounter == 0xf7)
             allowBadlines = false;
 
-        if (++vCounter == (ntsc ? 263 : 312)) {
+        if (++vCounter == lines) {
             // last line is not reseted this cycle but next
-            vCounter = ntsc ? 262 : 311;
+            vCounter -= 1;
             initVCounter = true;
         } else {
             if (!allowBadlines && (vCounter == 0x30) && den)
@@ -82,35 +82,35 @@ auto VicIICycle::clockSilence() -> void {
     
     
     switch (cycle) {
-        case 0: if (ntsc)   { dummySpriteDma<true>(sprite3); } 
-                else        { dummySpriteDma(sprite3); }
+        case 0: if (ntscXLock)  { dummySpriteDma<true>(sprite3); } 
+                else			{ dummySpriteDma(sprite3); }
                 break;
-        case 1: if (ntsc)   { dummySpriteDma(sprite4); }
-                else        { dummySpriteDma<true>(sprite3); }
+        case 1: if (ntscXLock)  { dummySpriteDma(sprite4); }
+                else			{ dummySpriteDma<true>(sprite3); }
                 break;
-        case 2: if (ntsc)   { dummySpriteDma<true>(sprite4); }
-                else        { dummySpriteDma(sprite4); }
+        case 2: if (ntscXLock)  { dummySpriteDma<true>(sprite4); }
+                else			{ dummySpriteDma(sprite4); }
                 break;
-        case 3: if(ntsc)    { dummySpriteDma(sprite5); }
-                else        { dummySpriteDma<true>(sprite4); }
+        case 3: if(ntscXLock)   { dummySpriteDma(sprite5); }
+                else			{ dummySpriteDma<true>(sprite4); }
                 break;
-        case 4: if(ntsc)    { dummySpriteDma<true>(sprite5); }
-                else        { dummySpriteDma(sprite5); }
+        case 4: if(ntscXLock)   { dummySpriteDma<true>(sprite5); }
+                else			{ dummySpriteDma(sprite5); }
                 break;
-        case 5: if(ntsc)    { dummySpriteDma(sprite6); }
-                else        { dummySpriteDma<true>(sprite5); }
+        case 5: if(ntscXLock)   { dummySpriteDma(sprite6); }
+                else			{ dummySpriteDma<true>(sprite5); }
                 break;
-        case 6: if(ntsc)    { dummySpriteDma<true>(sprite6); }
-                else        { dummySpriteDma(sprite6); }
+        case 6: if(ntscXLock)   { dummySpriteDma<true>(sprite6); }
+                else			{ dummySpriteDma(sprite6); }
                 break;
-        case 7: if(ntsc)    { dummySpriteDma(sprite7); }
-                else        { dummySpriteDma<true>(sprite6); }
+        case 7: if(ntscXLock)   { dummySpriteDma(sprite7); }
+                else			{ dummySpriteDma<true>(sprite6); }
                 break;
-        case 8: if(ntsc)    { dummySpriteDma<true>(sprite7); }
-                else        { dummySpriteDma(sprite7); }
+        case 8: if(ntscXLock)   { dummySpriteDma<true>(sprite7); }
+                else			{ dummySpriteDma(sprite7); }
                 break;
-        case 9: if(ntsc)    {  }
-                else        { dummySpriteDma<true>(sprite7); }
+        case 9: if(ntscXLock)   {  }
+                else			{ dummySpriteDma<true>(sprite7); }
                 break;
         case 10: 
             cAccessArea = true;
@@ -122,7 +122,7 @@ auto VicIICycle::clockSilence() -> void {
 
         case 53:            
             cAccessArea = false;
-            if (!ntsc)
+            if (!ntscBorder)
                 onHalfCycle = [this]() { spriteDmaCheck(); };
             break;
             
@@ -132,26 +132,26 @@ auto VicIICycle::clockSilence() -> void {
             
         case 55:
             spriteFlip();
-            onHalfCycle = [this]() { if(ntsc) spriteDmaCheck(); };
+            onHalfCycle = [this]() { if(ntscBorder) spriteDmaCheck(); };
             break;
 
-        case 57:    if (ntsc)   {  }
-                    else        { spriteDisplayCheck(); dummySpriteDma(sprite0); }            
+        case 57:    if (ntscBorder)	{ if(!ntscXLock) {spriteDisplayCheck();} }
+                    else			{ spriteDisplayCheck(); dummySpriteDma(sprite0); }            
                     break;
-        case 58:    if (ntsc)   { spriteDisplayCheck(); dummySpriteDma(sprite0); }
-                    else        { dummySpriteDma<true>(sprite0); }
+        case 58:    if (ntscBorder) { if(ntscXLock) spriteDisplayCheck(); dummySpriteDma(sprite0); }
+                    else			{ dummySpriteDma<true>(sprite0); }
                     break;
-        case 59:    if (ntsc)   { dummySpriteDma<true>(sprite0); }
-                    else        { dummySpriteDma(sprite1); }
+        case 59:    if (ntscBorder) { dummySpriteDma<true>(sprite0); }
+                    else			{ dummySpriteDma(sprite1); }
                     break;
-        case 60:    if (ntsc)   { dummySpriteDma(sprite1); }
-                    else        { dummySpriteDma<true>(sprite1); }
+        case 60:    if (ntscBorder) { dummySpriteDma(sprite1); }
+                    else			{ dummySpriteDma<true>(sprite1); }
                     break;
-        case 61:    if (ntsc)   { dummySpriteDma<true>(sprite1); }
-                    else        { dummySpriteDma(sprite2); }
+        case 61:    if (ntscBorder) { dummySpriteDma<true>(sprite1); }
+                    else			{ dummySpriteDma(sprite2); }
                     break;
-        case 62:    if (ntsc)   { dummySpriteDma(sprite2); }
-                    else        { dummySpriteDma<true>(sprite2); }
+        case 62:    if (ntscBorder) { dummySpriteDma(sprite2); }
+                    else			{ dummySpriteDma<true>(sprite2); }
                     break;
         // ntsc only
         case 63:    dummySpriteDma<true>(sprite2);

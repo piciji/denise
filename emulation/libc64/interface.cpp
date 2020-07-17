@@ -20,16 +20,14 @@
 
 namespace LIBC64 {
 
-const std::string Interface::Version = "1087";
+const std::string Interface::Version = "1088";
     
 Interface::Interface() : Emulator::Interface( "C64" ) {        
     
 	prepareMedia();
 	prepareFirmware();	
 	prepareDevices();
-	prepareChipset();
-    prepareFeatures(); 
-    prepareStats();
+    prepareModels(); 
     preparePalettes();    
     prepareMemory();
     prepareExpansions();
@@ -201,12 +199,6 @@ auto Interface::prepareExpansions() -> void {
 
 }
 
-auto Interface::prepareStats() -> void {
-    
-    stats.push_back( { Region::Pal, (double)C64_FREQUENCY_PAL / (double)SID_SAMPLE_COUNTER, 50.1245, false } );
-    stats.push_back( { Region::Ntsc, (double)C64_FREQUENCY_NTSC / (double)SID_SAMPLE_COUNTER, 59.826, false } );
-}
-
 auto Interface::preparePalettes() -> void {
     
     palettes.push_back({ 0, "Colodore PAL", false, {
@@ -320,34 +312,42 @@ auto Interface::preparePalettes() -> void {
         {"Orange", 0x905F25}, {"Brown", 0x574200}, {"Light Red", 0xBB776D}, {"Dark Gray", 0x545454},
         {"Medium Gray", 0x808080}, {"Light Green", 0xACEA88}, {"Light Blue", 0x7C70DA}, {"Light Gray", 0xABABAB}
     } });   
+	
+	palettes.push_back({ 16, "AW1", false, {
+        {"Black", 0}, {"White", 0xffffff}, {"Red", 0x9c493e}, {"Cyan", 0x81cbd5},
+        {"Purple", 0x9e51c4}, {"Green", 0x74bb46}, {"Blue", 0x4d3cbb}, {"Yellow", 0xd6e26e},
+        {"Orange", 0xa46d28}, {"Brown", 0x6f5700}, {"Light Red", 0xce857a}, {"Dark Gray", 0x636363},
+        {"Medium Gray", 0x929292}, {"Light Green", 0xaff188}, {"Light Blue", 0x8d80f1}, {"Light Gray", 0xb6b6b6}
+    } });
 
     for( auto& palette : palettes )
         for( auto& paletteColor : palette.paletteColors )
             paletteColor.updateChannels();
 }
 
-auto Interface::prepareFeatures() -> void {
-	// use old Sid 6581 instead of the newer 8580
-	features.push_back({FeatureIdSid, "Sid 6581/8580", Feature::Type::Switch, 0});	
+auto Interface::prepareModels() -> void {
+	// select VIC-II model
+	models.push_back({ModelIdVicIIModel, "VIC-II", Model::Type::Combo, Model::Chip::Video, 0, {0, 7},
+	{	"6569-R3 (PAL-B)", "8565 (PAL-B)", "6567-R8 (NTSC-M)", "8562 (NTSC-M)",
+		"6569-R1 (PAL-B)", "6567-R56A (NTSC-M)", "6572 (PAL-N)", "6573 (PAL-M)" }});   
+		
+	// use old Sid 6581 or newer 8580
+	models.push_back({ModelIdSid, "SID", Model::Type::Radio, Model::Chip::Audio, 0, {0, 1}, {"8580", "6581"} });	
 	// 0 - off, 1 - on, means software decides
-    features.push_back({FeatureIdFilter, "Sid Filter", Feature::Type::Switch, 1});
+    models.push_back({ModelIdFilter, "Sid Filter", Model::Type::Switch, Model::Chip::Audio, 1});
 	// amplifies Sid 8580 digi sounds
-	features.push_back({FeatureIdDigiboost, "Sid 8580 Digi Boost", Feature::Type::Switch, 0});
+	models.push_back({ModelIdDigiboost, "Sid 8580 Digi Boost", Model::Type::Switch, Model::Chip::Audio, 0});
 	// adjust center frequency for Sid 6581
-	features.push_back({FeatureIdBias, "Sid Filter Bias", Feature::Type::Range, 500, {-5000, 5000} });
-    // distinguish between old and new ( 6526a ) cia chips
-    features.push_back({FeatureIdCiaRev, "Cia 6526a/6526", Feature::Type::Switch, 1});
+	models.push_back({ModelIdBias, "Sid Filter Bias", Model::Type::Range, Model::Chip::Audio, 500, {-5000, 5000} });
+    // use old or new ( 6526a ) cia chips
+    models.push_back({ModelIdCiaRev, "CIA", Model::Type::Radio, Model::Chip::Cia, 1, {0, 1}, {"6526", "6526a"}});
     // ANE magic byte value depends on cpu manufacturer and unemulatable behaviour like heat
-    features.push_back({FeatureIdCpuAneMagic, "ANE Magic Byte", Feature::Type::Hex, 0xef, { 0, 0xff }});
+    models.push_back({ModelIdCpuAneMagic, "ANE Magic Byte", Model::Type::Hex, Model::Chip::Cpu, 0xef, { 0, 0xff }});
     // c64c use custom ic instead of discrete glue logic
-    features.push_back({FeatureIdGlueLogic, "Custom IC Glue Logic", Feature::Type::Switch, 0});
+    models.push_back({ModelIdGlueLogic, "Custom IC Glue Logic", Model::Type::Switch, Model::Chip::Misc, 0});
     // emulate the buggy vertical line in first two border pixels
-    features.push_back({FeatureIdLeftLineAnomaly, "Left Line Anomaly", Feature::Type::Radio, 0, {0, 2}, {"Off", "Solid White", "Register Color"}});         
-}
-
-auto Interface::prepareChipset() -> void {    
-    chipsets.push_back({0, "VIC-II 65xx"});
-	chipsets.push_back({1, "VIC-II 85xx"});
+    models.push_back({ModelIdLeftLineAnomaly, "Left Line Anomaly", Model::Type::Radio, Model::Chip::Misc, 0, {0, 2},
+		{"Off", "Solid White", "Register Color"}});               
 }
 
 auto Interface::prepareFirmware() -> void {
@@ -605,12 +605,32 @@ auto Interface::runAheadPerformance(bool state) -> void {
     system->setRunAheadPerformance( state );
 }
 
-auto Interface::setRegion(Region region) -> void {
-    system->setNtsc( region == Region::Ntsc );
+auto Interface::getRegionEncoding() -> Region {
+    return vicII->isNTSCEncoding() ? Region::Ntsc : Region::Pal;
 }
 
-auto Interface::getRegion() -> Region {
-    return system->isNtsc() ? Region::Ntsc : Region::Pal;
+auto Interface::getRegionGeometry() -> Region {
+    return vicII->isNTSCGeometry() ? Region::Ntsc : Region::Pal;
+}
+
+auto Interface::getSubRegion() -> SubRegion {
+	
+	switch(vicII->getModel()) {
+		default:
+			return SubRegion::Pal_B;
+			
+		case VicIIBase::Model::MOS6567R8:
+		case VicIIBase::Model::MOS8562:
+		case VicIIBase::Model::MOS6567R56A:
+			return SubRegion::Ntsc_M;
+			
+		case VicIIBase::Model::MOS6572:
+			return SubRegion::Pal_N;
+		case VicIIBase::Model::MOS6573:
+			return SubRegion::Pal_M;
+	}	
+	
+	return SubRegion::Pal_B;
 }
 
 auto Interface::setDrivesConnected(MediaGroup* group, unsigned count) -> void {
@@ -957,58 +977,65 @@ auto Interface::getCharRom() -> Firmware* {
     return &firmwares[2];
 }
 
-auto Interface::setFeature(unsigned featureId, int value) -> void {    
-    switch (featureId) {
-		case FeatureIdSid: {
-			Sid::Type type = value & 1 ? Sid::Type::MOS_6581 : Sid::Type::MOS_8580;
+auto Interface::setModel(unsigned modelId, int value) -> void {    
+    switch (modelId) {
+		case ModelIdSid: {
+			Sid::Type type = (value & 1) ? Sid::Type::MOS_6581 : Sid::Type::MOS_8580;
 			sid->setType( type );			
 		} break;
-        case FeatureIdFilter:
+        case ModelIdFilter:
             sid->filter.setEnable( value & 1 );
             break;
-		case FeatureIdDigiboost:
+		case ModelIdDigiboost:
             sid->setDigiBoost( value & 1 );
 			break;
-		case FeatureIdBias:
+		case ModelIdBias:
 			sid->filter.adjustFilterBias( value );
 			break;
-        case FeatureIdCiaRev:
+        case ModelIdCiaRev:
             system->cia1->setNewVersion( value & 1 );
             system->cia2->setNewVersion( value & 1 );
             break;
-        case FeatureIdCpuAneMagic:
+        case ModelIdCpuAneMagic:
             //this is annoying ... look in 6502 cpu code for more informations
             system->cpu->setMagicForAne( value & 0xff );
             break;
-        case FeatureIdGlueLogic:
+        case ModelIdGlueLogic:
             system->glueLogic->setType( (GlueLogic::Type)(value & 1) );
             break;
-        case FeatureIdLeftLineAnomaly:
+        case ModelIdLeftLineAnomaly:
             vicIIFast->setVerticalLineAnomaly( (unsigned)value );
             vicIICycle->setVerticalLineAnomaly( (unsigned)value );
             break;
+		case ModelIdVicIIModel:
+			vicIIFast->setModel( (VicIIBase::Model)value );
+			vicIICycle->setModel( (VicIIBase::Model)value );
+			system->updateStats();
+			break;
     }    
 }
 
-auto Interface::getFeature(unsigned featureId) -> int {
+auto Interface::getModel(unsigned modelId) -> int {
     
-    switch (featureId) {
-		case FeatureIdSid:			
+    switch (modelId) {
+		case ModelIdSid:			
             return sid->type == Sid::Type::MOS_6581 ? 1 : 0;
-        case FeatureIdFilter:
+        case ModelIdFilter:
             return sid->filter.enabled;
-		case FeatureIdDigiboost:
+		case ModelIdDigiboost:
             return sid->digiBoost;
-		case FeatureIdBias:
+		case ModelIdBias:
 			return sid->filter.bias;
-        case FeatureIdCiaRev:
+        case ModelIdCiaRev:
             return system->cia1->isNewVersion();
-        case FeatureIdCpuAneMagic:
+        case ModelIdCpuAneMagic:
             return system->cpu->getMagicForAne();
-        case FeatureIdGlueLogic:
+        case ModelIdGlueLogic:
             return (int)system->glueLogic->type;
-        case FeatureIdLeftLineAnomaly:
+        case ModelIdLeftLineAnomaly:
             return (int)vicII->getVerticalLineAnomaly();
+		case ModelIdVicIIModel:
+			return (int)vicII->getModel();
                 
     }    
     return 0;
@@ -1050,18 +1077,6 @@ auto Interface::cropData() -> uint16_t* {
 
 auto Interface::cropPitch() -> unsigned {
     return system->crop->latest.linePitch;
-}
-
-auto Interface::setChipset(unsigned chipsetId) -> void {
-	if (chipsetId >= chipsets.size()) return;
-	
-	vicIIFast->setRevision65( chipsetId == 0 );
-    vicIICycle->setRevision65( chipsetId == 0 );
-}
-
-auto Interface::getChipset() -> unsigned {
-    
-    return vicII->isRevision65() ? 0 : 1;
 }
 
 auto Interface::activateDebugCart( unsigned limitCycles ) -> void {

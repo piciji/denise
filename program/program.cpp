@@ -137,8 +137,8 @@ auto Program::init() -> void {
         for( auto& connector : emulator->connectors )            
             emulator->connect( &connector, getDevice( emulator, &connector ) );       
 
-		for (auto& feature : emulator->features)
-			emulator->setFeature( feature.id, settings->get<int>( ident(emulator, feature.name), feature.defaultValue, feature.range) );				
+		for (auto& model : emulator->models)
+			emulator->setModel( model.id, settings->get<int>( ident(emulator, model.name), model.defaultValue, model.range) );				
         
 		updateCrop( emulator );
         
@@ -184,9 +184,6 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
         unsigned memoryId = settings->get<unsigned>(ident(emulator, memoryType.name + "_mem"), memoryType.defaultMemoryId);
         emulator->setMemory(&memoryType, memoryId);
     }
-
-    emulator->setChipset(settings->get<unsigned>(ident(emulator, "chipset"), 0));
-    emulator->setCpu(settings->get(ident(emulator, "cpu"), 0));
         
     auto expansion = emulator->getExpansion();
     
@@ -262,8 +259,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
     showOpenError( brokenPaths );
     
     filePool->unloadOrphaned();
-    
-    emulator->setRegion( (Emulator::Interface::Region) settings->get<unsigned>( ident(emulator, "video_region"), 0u, {0u, 1u}) );
+	
     audioManager->power();
     renderPlaceholder(true);
     

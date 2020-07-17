@@ -28,6 +28,8 @@ auto VicIICycle::power() -> void {
     display.gBufferShift = 0;
     display.gBits = 0;
     
+	setXLookUp();
+	
     VicIIBase::power();
     
     onHalfCycle = nullptr;
