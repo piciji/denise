@@ -48,6 +48,8 @@ struct Cmd {
     
     auto setAneMagic(std::string arg) -> void;
 	
+	auto setLaxMagic(std::string arg) -> void;
+	
 	auto setAutoStartPrg(std::string arg) -> void;
     
     auto printHelp() -> void;

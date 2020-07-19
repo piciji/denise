@@ -17,6 +17,7 @@ auto VicIICycle::serialize(Emulator::Serializer& s) -> void {
     s.integer( crop.rightOverscan );
     s.integer( lastReadPhi1 );
     s.integer( lastSpriteShift ); 
+	s.integer( greyDotBugDisabled );
     
     s.array( render );
     s.array( renderPipe );

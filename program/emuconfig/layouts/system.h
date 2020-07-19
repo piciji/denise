@@ -119,7 +119,6 @@ struct SystemLayout : GUIKIT::VerticalLayout {
     auto stepRangeModel( unsigned id, int step ) -> int;
 	auto updateModelWidget( ModelLayout::Line::Block* block ) -> void;
     auto updateModelWidgets( ) -> void;
-    auto modelIdent( std::string ident ) -> std::string;
     auto activateDrive( Emulator::Interface::MediaGroup* mediaGroup, unsigned requestedCount ) -> void;
     auto updateExpansionMemory() -> void;
     auto getSizeString( unsigned sizeInKb ) -> std::string;

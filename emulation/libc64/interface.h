@@ -12,7 +12,8 @@ struct Interface : Emulator::Interface {
     enum ModelId {
         ModelIdSid = 0, ModelIdFilter = 1, ModelIdDigiboost = 2, ModelIdBias = 3,
         ModelIdCiaRev = 4, ModelIdCpuAneMagic = 5, ModelIdGlueLogic = 6,
-        ModelIdLeftLineAnomaly = 7, ModelIdVicIIModel = 8
+        ModelIdLeftLineAnomaly = 7, ModelIdVicIIModel = 8, ModelIdCpuLaxMagic = 9,
+		ModelIdDisableGreyDotBug = 10,
     };
     
     enum MediaGroupId {

@@ -57,5 +57,9 @@ inline auto VicIICycle::setLineBuffer() -> void {
     linePos = 0;
 }
 
+auto VicIICycle::disableGreyDotBug(bool state) -> void {
+	greyDotBugDisabled = state;
+}
+
 }
 

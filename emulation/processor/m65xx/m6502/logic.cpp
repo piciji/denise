@@ -301,7 +301,7 @@ auto M6502::_lax( uint8_t data ) -> uint8_t {
     
     //uint8_t magic = 0xee;
     
-    data = (A | ctx->magicAne) & data;
+    data = (A | ctx->magicLax) & data;
     
     Z = zero( data );
     N = negative( data );

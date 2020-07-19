@@ -211,7 +211,7 @@ struct Interface {
 		unsigned id;
 		std::string name;		
 		enum Type : unsigned { Switch, Range, Hex, Radio, Combo } type;
-		enum Chip : unsigned { Video, Audio, Cpu, Cia, Misc } chip;
+		enum Purpose : unsigned { Cpu, GraphicChip, SoundChip, Cia, AudioFilter, Misc } purpose;
 		int defaultValue;
 		std::vector<int> range;
 		std::vector<std::string> options;
@@ -222,7 +222,7 @@ struct Interface {
         auto isHex() -> bool { return type == Type::Hex; }
 		auto isRange() -> bool { return type == Type::Range; }
 		
-		auto isVideoChip() -> bool { return chip == Chip::Video; }
+		auto isGraphicChip() -> bool { return purpose == Purpose::GraphicChip; }
 	};
 	std::vector<Model> models;
 	

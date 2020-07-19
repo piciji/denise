@@ -20,7 +20,7 @@
 
 namespace LIBC64 {
 
-const std::string Interface::Version = "1088";
+const std::string Interface::Version = "10881";
     
 Interface::Interface() : Emulator::Interface( "C64" ) {        
     
@@ -327,27 +327,31 @@ auto Interface::preparePalettes() -> void {
 
 auto Interface::prepareModels() -> void {
 	// select VIC-II model
-	models.push_back({ModelIdVicIIModel, "VIC-II", Model::Type::Combo, Model::Chip::Video, 0, {0, 7},
+	models.push_back({ModelIdVicIIModel, "VIC-II", Model::Type::Combo, Model::Purpose::GraphicChip, 0, {0, 7},
 	{	"6569-R3 (PAL-B)", "8565 (PAL-B)", "6567-R8 (NTSC-M)", "8562 (NTSC-M)",
 		"6569-R1 (PAL-B)", "6567-R56A (NTSC-M)", "6572 (PAL-N)", "6573 (PAL-M)" }});   
 		
 	// use old Sid 6581 or newer 8580
-	models.push_back({ModelIdSid, "SID", Model::Type::Radio, Model::Chip::Audio, 0, {0, 1}, {"8580", "6581"} });	
+	models.push_back({ModelIdSid, "SID", Model::Type::Radio, Model::Purpose::SoundChip, 0, {0, 1}, {"8580", "6581"} });	
 	// 0 - off, 1 - on, means software decides
-    models.push_back({ModelIdFilter, "Sid Filter", Model::Type::Switch, Model::Chip::Audio, 1});
+    models.push_back({ModelIdFilter, "SID Filter", Model::Type::Switch, Model::Purpose::AudioFilter, 1});
 	// amplifies Sid 8580 digi sounds
-	models.push_back({ModelIdDigiboost, "Sid 8580 Digi Boost", Model::Type::Switch, Model::Chip::Audio, 0});
+	models.push_back({ModelIdDigiboost, "SID 8580 Digi Boost", Model::Type::Switch, Model::Purpose::AudioFilter, 0});
 	// adjust center frequency for Sid 6581
-	models.push_back({ModelIdBias, "Sid Filter Bias", Model::Type::Range, Model::Chip::Audio, 500, {-5000, 5000} });
+	models.push_back({ModelIdBias, "SID Filter Bias", Model::Type::Range, Model::Purpose::AudioFilter, 500, {-5000, 5000} });
     // use old or new ( 6526a ) cia chips
-    models.push_back({ModelIdCiaRev, "CIA", Model::Type::Radio, Model::Chip::Cia, 1, {0, 1}, {"6526", "6526a"}});
+    models.push_back({ModelIdCiaRev, "CIA", Model::Type::Radio, Model::Purpose::Cia, 1, {0, 1}, {"6526", "6526a"}});
     // ANE magic byte value depends on cpu manufacturer and unemulatable behaviour like heat
-    models.push_back({ModelIdCpuAneMagic, "ANE Magic Byte", Model::Type::Hex, Model::Chip::Cpu, 0xef, { 0, 0xff }});
+    models.push_back({ModelIdCpuAneMagic, "ANE Magic Byte", Model::Type::Hex, Model::Purpose::Misc, 0xef, { 0, 0xff }});
+	// LAX magic byte value depends on cpu manufacturer and unemulatable behaviour like heat
+    models.push_back({ModelIdCpuLaxMagic, "LAX Magic Byte", Model::Type::Hex, Model::Purpose::Misc, 0xee, { 0, 0xff }});
     // c64c use custom ic instead of discrete glue logic
-    models.push_back({ModelIdGlueLogic, "Custom IC Glue Logic", Model::Type::Switch, Model::Chip::Misc, 0});
+    models.push_back({ModelIdGlueLogic, "Custom IC Glue Logic", Model::Type::Switch, Model::Purpose::Misc, 0});
     // emulate the buggy vertical line in first two border pixels
-    models.push_back({ModelIdLeftLineAnomaly, "Left Line Anomaly", Model::Type::Radio, Model::Chip::Misc, 0, {0, 2},
+    models.push_back({ModelIdLeftLineAnomaly, "Left Line Anomaly", Model::Type::Radio, Model::Purpose::Misc, 0, {0, 2},
 		{"Off", "Solid White", "Register Color"}});               
+	// disable grey dot bug for 85xx VIC-II
+	models.push_back({ModelIdDisableGreyDotBug, "Disable Grey Dot Bug", Model::Type::Switch, Model::Purpose::Misc, 0});
 }
 
 auto Interface::prepareFirmware() -> void {
@@ -1000,6 +1004,10 @@ auto Interface::setModel(unsigned modelId, int value) -> void {
             //this is annoying ... look in 6502 cpu code for more informations
             system->cpu->setMagicForAne( value & 0xff );
             break;
+		case ModelIdCpuLaxMagic:
+            //this is annoying ... look in 6502 cpu code for more informations
+            system->cpu->setMagicForLax( value & 0xff );
+            break;
         case ModelIdGlueLogic:
             system->glueLogic->setType( (GlueLogic::Type)(value & 1) );
             break;
@@ -1011,6 +1019,9 @@ auto Interface::setModel(unsigned modelId, int value) -> void {
 			vicIIFast->setModel( (VicIIBase::Model)value );
 			vicIICycle->setModel( (VicIIBase::Model)value );
 			system->updateStats();
+			break;
+		case ModelIdDisableGreyDotBug:
+			vicIICycle->disableGreyDotBug( value & 1 );
 			break;
     }    
 }
@@ -1030,12 +1041,16 @@ auto Interface::getModel(unsigned modelId) -> int {
             return system->cia1->isNewVersion();
         case ModelIdCpuAneMagic:
             return system->cpu->getMagicForAne();
+		case ModelIdCpuLaxMagic:
+			return system->cpu->getMagicForLax();
         case ModelIdGlueLogic:
             return (int)system->glueLogic->type;
         case ModelIdLeftLineAnomaly:
             return (int)vicII->getVerticalLineAnomaly();
 		case ModelIdVicIIModel:
 			return (int)vicII->getModel();
+		case ModelIdDisableGreyDotBug:
+			return vicIICycle->hasGreyDotBugDisbled();
                 
     }    
     return 0;

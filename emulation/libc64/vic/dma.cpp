@@ -213,16 +213,7 @@ __attribute__((always_inline)) auto VicIICycle::advanceCycle() -> void {
     sprite0DmaLateBA = false;
 }
 
-inline auto VicIICycle::clearCollisions() -> void {
-
-	// is cleared one cycle after read, means collisions in second half
-	// and following first half cycle will be ignored
-	if (clearCollision == 0x1e)
-		spriteSpriteCollided = 0;
-	else if (clearCollision == 0x1f)
-		spriteForegroundCollided = 0;
-	
-	clearCollision = 0;
+inline auto VicIICycle::updateCollisions() -> void {
 
     spriteSpriteCollidedRead = spriteSpriteCollided;
     spriteForegroundCollidedRead = spriteForegroundCollided;
@@ -232,6 +223,15 @@ inline auto VicIICycle::clearCollisions() -> void {
 	
 	if (canSpriteForegroundCollisionIrq && spriteForegroundCollided)
 		updateIrq( Interrupt::MBC );
+}
+
+inline auto VicIICycle::clearCollisions() -> void {
+	if (clearCollision == 0x1e)
+		spriteSpriteCollided = 0;
+	else /* if (clearCollision == 0x1f) */
+		spriteForegroundCollided = 0;
+
+	clearCollision = 0;
 }
 
 // cycle: 16-2

@@ -26,7 +26,8 @@ auto Cmd::set(int argc, char** argv) -> void {
     options.push_back( {"-debugcart", "Generate exit codes for VICE Testbench", ""} );    
     options.push_back( {"-limitcycles", "Specify number of cycles to run before quitting with an error (checks at complete frames)", "<cycles>"} );
     options.push_back( {"-exitscreenshot", "Save screen to PNG file, when exiting App", "<filePath>"} );    
-    options.push_back( {"-ane-magic", "Force CPU to use this value for ANE and LAX opcode", "<value>"} );
+    options.push_back( {"-ane-magic", "Force CPU to use this value for ANE opcode", "<value>"} );
+	options.push_back( {"-lax-magic", "Force CPU to use this value for LAX opcode", "<value>"} );
     options.push_back( {"-no-driver", "Run without video, audio, input drivers", ""} );
     options.push_back( {"-no-gui", "Open without graphical user interface and force -no-driver", ""} );    
 	options.push_back( {"-autostart-prg", "Set autostart mode for PRG files (1: Inject, 2: Disk image)", "<value>"} );
@@ -87,6 +88,7 @@ auto Cmd::parse() -> void {
     bool limitCyclesNext = false;
     bool reuSizeNext = false;
     bool aneMagicNext = false;
+	bool laxMagicNext = false;
     bool screenshotPathNext = false;
 	bool autostartPrgNext = false;
 	bool d64InUse = false;
@@ -112,6 +114,12 @@ auto Cmd::parse() -> void {
             setAneMagic( arg );
             continue;
         }
+
+		if (laxMagicNext) {
+			laxMagicNext = false;
+			setLaxMagic(arg);
+			continue;
+		}
         
         if (screenshotPathNext) {
             screenshotPathNext = false;     	
@@ -171,6 +179,7 @@ auto Cmd::parse() -> void {
             settings->set<bool>("fps", true );			
             settings->set("video_screen_text", 2);
             settings->set<bool>( program->ident( emuC64, "video_cycle_accuracy"), true );  
+			updateModel( emuC64, LIBC64::Interface::ModelIdDisableGreyDotBug, 0 );
 			
 			if (!autostartPrgOverride)
 				autostartPrg = 2;
@@ -183,6 +192,9 @@ auto Cmd::parse() -> void {
         }
         else if (arg == "-ane-magic") {
             aneMagicNext = true;
+        }
+		else if (arg == "-lax-magic") {
+            laxMagicNext = true;
         }
         else if (arg == "-no-driver") {
             dynamic_cast<LIBC64::Interface*>(emuC64)->fastForward( (unsigned)EmuInt::FastForward::NoAudioOut | (unsigned)EmuInt::FastForward::NoVideoOut );
@@ -312,6 +324,13 @@ auto Cmd::setAneMagic(std::string arg) -> void {
     auto magic = GUIKIT::String::convertHexToInt( arg, 0xee ) & 0xff;
     
     updateModel( program->getEmulator("C64"), LIBC64::Interface::ModelIdCpuAneMagic, magic );
+}
+
+auto Cmd::setLaxMagic(std::string arg) -> void {
+    
+    auto magic = GUIKIT::String::convertHexToInt( arg, 0xee ) & 0xff;
+    
+    updateModel( program->getEmulator("C64"), LIBC64::Interface::ModelIdCpuLaxMagic, magic );
 }
 
 auto Cmd::setAutoStartPrg(std::string arg) -> void {    

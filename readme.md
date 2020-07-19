@@ -10,6 +10,7 @@
 ## 1.0.9 (not yet released)
 * runAhead
 * scanline based renderer
+* emulate more VIC-II models
 
 ## 1.0.8
 * added Retro/Nordic Replay support

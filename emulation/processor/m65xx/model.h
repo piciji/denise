@@ -50,6 +50,10 @@ struct M65Model {
 	virtual auto setMagicForAne( uint8_t magicAne ) -> void = 0;
     /** get magic value for ane */
 	virtual auto getMagicForAne( ) -> uint8_t = 0;
+	/** change magic value for lax */
+	virtual auto setMagicForLax( uint8_t magicLax ) -> void = 0;
+    /** get magic value for lax */
+	virtual auto getMagicForLax( ) -> uint8_t = 0;
 	/** last used value on bus */
 	virtual auto dataBus() -> uint8_t = 0;	
     /** last puted address on bus */

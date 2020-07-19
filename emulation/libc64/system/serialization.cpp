@@ -191,6 +191,7 @@ auto System::serialize6502( Emulator::Serializer& s, MOS65Context* cpuCtx ) -> v
     s.integer( cpuCtx->rdyLine );
     s.integer( cpuCtx->killed );
     s.integer( cpuCtx->magicAne );
+	s.integer( cpuCtx->magicLax );
     s.integer( cpuCtx->soLine );
     s.integer( cpuCtx->soDetect );
     s.integer( cpuCtx->soSampled );

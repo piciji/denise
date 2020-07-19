@@ -26,7 +26,7 @@ ModelLayout::Line::Block::Block(Emulator::Interface::Model* model) {
 
 	} else {
         GUIKIT::LineEdit tester;
-        tester.setText( model->isHex() ? "0xFF" : std::to_string(model->range[0]) );
+        tester.setText( model->isHex() ? "0xAA" : std::to_string(model->range[0]) );
 		append(label, {0u, 0u}, 5 );
 		append(lineEdit, {tester.minimumSize().width, 0u} );
 	}
@@ -362,7 +362,7 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
 					
 					option->onActivate = [this, block, model, val]() {
 
-						if (model->isVideoChip()) {
+						if (model->isGraphicChip()) {
 							if (this->emulator == activeEmulator) {
 								if (!mes->question(trans->get("setting change need reset"))) {
 									unsigned oldValue = settings->get<int>( this->tabWindow->ident( model->name ), model->defaultValue, model->range );
@@ -379,7 +379,7 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
 						
 						emulator->setModel( model->id, val );
 						
-						if (model->isVideoChip()) {
+						if (model->isGraphicChip()) {
 							this->tabWindow->videoLayout->updatePresets();
         
 							if (activeEmulator)
@@ -393,7 +393,7 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
 									
 				block->combo.onChange = [this, block, model]() {
 
-					if (model->isVideoChip()) {
+					if (model->isGraphicChip()) {
 						if (this->emulator == activeEmulator) {
 							if (!mes->question(trans->get("setting change need reset"))) {
 								unsigned oldValue = settings->get<int>( this->tabWindow->ident( model->name ), model->defaultValue, model->range );
@@ -412,7 +412,7 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
 
 					emulator->setModel( model->id, val );
 
-					if (model->isVideoChip()) {
+					if (model->isGraphicChip()) {
 						this->tabWindow->videoLayout->updatePresets();
 
 						if (activeEmulator)
@@ -650,14 +650,14 @@ auto SystemLayout::translate() -> void {
             auto model = block->model;
 
             if (model->isSwitch() )
-                block->checkBox.setTooltip( trans->get( modelIdent( model->name ) + "_info" ) );
+                block->checkBox.setTooltip( trans->get( model->name + " tooltip" ) );
 			
 			else if (model->isRadio() ) {
 				unsigned pos = 0;
 				for(auto option : block->options) {
 					option->setText( trans->get( model->options[pos++] ) );
 				}
-				block->label.setTooltip( trans->get( modelIdent( model->name ) + "_info" ) );
+				block->label.setTooltip( trans->get( model->name + " tooltip" ) );
 				
 			} else if (model->isCombo() ) {
 								
@@ -666,13 +666,13 @@ auto SystemLayout::translate() -> void {
 					block->combo.setText( pos++, trans->get( option ) );
 				}
 				
-				block->label.setTooltip( trans->get( modelIdent( model->name ) + "_info" ) );
+				block->label.setTooltip( trans->get( model->name + " tooltip" ) );
 				
             } else
-                block->label.setTooltip( trans->get( modelIdent( model->name ) + "_info" ) );
+                block->label.setTooltip( trans->get( model->name + " tooltip" ) );
             
-            block->checkBox.setText( trans->get( modelIdent( model->name ) ) );
-            block->label.setText( trans->get( modelIdent( model->name ), {}, model->isRadio() || model->isCombo() ) );  
+            block->checkBox.setText( trans->get( model->name ) );
+            block->label.setText( trans->get( model->name, {}, model->isRadio() || model->isCombo() ) );  
         }
 	}
     
@@ -712,11 +712,6 @@ auto SystemLayout::translate() -> void {
     accuracyLayout.block.diskIdle.setTooltip( trans->get("disk idle info") );
     accuracyLayout.block.audioRealtimeThread.setText( trans->get("audio realtime thread") );
     accuracyLayout.block.audioRealtimeThread.setTooltip( trans->get("audio realtime thread info") );
-}
-
-auto SystemLayout::modelIdent( std::string ident ) -> std::string {
-    
-    return GUIKIT::String::toLowerCase( GUIKIT::String::replace(ident, " ", "_") );
 }
 
 auto SystemLayout::setEnabled(bool state) -> void {

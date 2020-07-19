@@ -51,6 +51,8 @@ struct M6502 : M65Model {
     auto setRdy( bool state ) -> void;
 	auto setMagicForAne( uint8_t magicAne ) -> void;
     auto getMagicForAne() -> uint8_t;
+	auto setMagicForLax( uint8_t magicLax ) -> void;
+    auto getMagicForLax() -> uint8_t;
     
     auto setContext( M65Context* context ) -> void;
     auto dataBus() -> uint8_t;	

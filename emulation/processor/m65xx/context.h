@@ -88,6 +88,7 @@ struct M65Context {
     bool killed = false;
 	
 	uint8_t magicAne = 0xee;
+	uint8_t magicLax = 0xee;
     
     // SO Handling
     bool soLine = false;

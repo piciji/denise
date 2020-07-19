@@ -139,7 +139,7 @@ auto Structure1541::allocateNextFreeSector(uint8_t* bamPtr, uint8_t& track, uint
 	t = track;
 	
 	maxSectors = countSectors( t );
-	
+
 	if (s >= maxSectors) {
         s -= maxSectors;
         if (s != 0)
@@ -259,7 +259,7 @@ auto Structure1541::freeSector(uint8_t* bamPtr, uint8_t track, uint8_t sector) -
 
 auto Structure1541::issetBam(uint8_t* bamTrackPtr, unsigned sector) -> bool {
 	
-    return bamTrackPtr[1 + sector / 8] & (1 << (sector % 8)) != 0;
+    return (bamTrackPtr[1 + sector / 8] & (1 << (sector % 8))) != 0;
 }
 
 auto Structure1541::setBam(uint8_t* bamTrackPtr, unsigned sector) -> void {

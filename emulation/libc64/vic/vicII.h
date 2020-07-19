@@ -14,6 +14,8 @@ struct VicIICycle : VicIIBase {
     auto serialize(Emulator::Serializer& s) -> void;
 	auto readReg( uint8_t addr ) -> uint8_t;
     auto writeReg( uint8_t addr, uint8_t value ) -> void;
+	auto disableGreyDotBug(bool state) -> void;
+	auto hasGreyDotBugDisbled() -> bool { return greyDotBugDisabled; }
 
 protected: 
     
@@ -40,12 +42,15 @@ protected:
 		
 		auto isForeground() -> bool { return gBits & 2; }
     } display;
+	
+	bool greyDotBugDisabled = false;
     
     //dma
     auto setLineInterrupt() -> void;
     auto setLineBuffer() -> void;
 	auto advanceCycle() -> void;	
 	auto clearCollisions() -> void;	
+	auto updateCollisions() -> void;
 	auto spriteUpdateBase() -> void;
 	auto spriteDmaCheck() -> void;
 	auto spriteFlip() -> void;

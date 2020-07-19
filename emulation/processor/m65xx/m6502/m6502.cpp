@@ -109,6 +109,14 @@ namespace MOS65FAMILY {
     auto M6502::getMagicForAne() -> uint8_t {
         return ctx->magicAne;
     }
+	
+	auto M6502::setMagicForLax(uint8_t magicLax) -> void {
+        ctx->magicLax = magicLax;
+    }
+
+    auto M6502::getMagicForLax() -> uint8_t {
+        return ctx->magicLax;
+    }
 
     auto M6502::setIrq(bool state) -> void {
         // level sensitive

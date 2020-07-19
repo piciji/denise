@@ -470,7 +470,7 @@ auto States::updateModels(bool& regionChange) -> void {
 
         int value = emulator->getModel( model.id );
 		
-		if (model.isVideoChip()) {
+		if (model.isGraphicChip()) {
 			auto oldValue = settings->get<int>( program->ident(emulator, model.name ), model.defaultValue, model.range );
 			regionChange = value != oldValue;
 		}

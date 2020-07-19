@@ -21,7 +21,7 @@ auto Interface::prepareFirmware() -> void {
 }
 
 auto Interface::prepareModels() -> void {
-    models.push_back({ModelIdLowPassFilter, "Low Pass Filter", Model::Type::Switch, Model::Chip::Audio, 1}); //0 - off, 1 - on, means software decides
+    models.push_back({ModelIdLowPassFilter, "Low Pass Filter", Model::Type::Switch, Model::Purpose::AudioFilter, 1}); //0 - off, 1 - on, means software decides
 }
 
 auto Interface::prepareMedia() -> void {

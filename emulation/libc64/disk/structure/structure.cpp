@@ -559,3 +559,4 @@ auto Structure1541::getTrackPtr( uint8_t halfTrack ) -> GcrTrack* {
 }
 
 }
+

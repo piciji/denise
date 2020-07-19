@@ -30,14 +30,17 @@ inline auto VicIICycle::sequencer(  ) -> void {
     }
     
     borderControl();
-    clearCollisions();
+    updateCollisions();
     updateBAState();
     
     xCounter = xLookupPtrPhi2[cycle];
     VicIIBase::checkLightPen<false>();
 
-    if (lastColorReg != 0xff)
+    if (lastColorReg != 0xff) {
         colorUse[ lastColorReg ] = colorReg[ lastColorReg ];
+		if (greyDotBugDisabled)
+			lastColorReg = 0xff;
+	}
     
     sequencerPix0<false>();
 
@@ -50,6 +53,9 @@ inline auto VicIICycle::sequencer(  ) -> void {
     borderArea<false>();
 
     draw<false>();
+	
+	if (clearCollision)
+		clearCollisions();	
 }
 
 template<bool phi1> inline auto VicIICycle::sequencerPix0(  ) -> void {   
@@ -200,7 +206,7 @@ inline auto VicIICycle::pipeGraphic() -> void {
         
 		display.xScroll = xScroll;
 
-		if (!idleMode) 
+		if (!idleModeTemp) 
 			display.cBufferPipe1 = display.cBuffer[display.dmli];
 		else
 			display.cBufferPipe1 = 0;
