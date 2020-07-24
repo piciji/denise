@@ -48,7 +48,7 @@ auto Base::read( unsigned pos ) -> uint8_t {
 			
 		case 0xd: {      
 			acknowledgeCycle |= 1;			
-				
+			
             return icr;
 		}
         case 0xe:
@@ -112,26 +112,28 @@ auto Base::write( unsigned pos, uint8_t value ) -> void {
 			break;
         }
         case 4:		
-        case 6:            
+        case 6:   {         
             pT = pos == 4 ? &timer[T_A] : &timer[T_B];
                     
 			pT->latch = (pT->latch & 0xff00) | value;
 			
 			if (pT->forceloadCycle)
-				pT->counter = (pT->counter & 0xff00) | value;
+				pT->counter = pT->latch;				
 			
-            break;
+		} break;
             
         case 5:
-        case 7:
+        case 7: {
 			pT = pos == 5 ? &timer[T_A] : &timer[T_B];
             
 			pT->latch = (pT->latch & 0xff) | (value << 8);
             			
-			if ( !(pT->control & 1) || (pT->forceloadCycle) )
+			if ( pT->forceloadCycle ) 
                 pT->counter = pT->latch;
-
-            break;            
+			else if ( !(pT->control & 1))
+				events->add( &(pT->forceLoad), 2 );
+			
+		} break;            
 
         case 8:
         case 9:
@@ -143,10 +145,8 @@ auto Base::write( unsigned pos, uint8_t value ) -> void {
 			
 		case 0xc:
 			sdr = value;
-			
-			if ( timer[T_A].control & 0x40 ) { // sdr output
-                sdrValid = true;
-			}
+
+			events->add( &startSdr, 2, Emulator::Events::UpdateExisting );
 			
 			break;
             
@@ -163,8 +163,11 @@ auto Base::write( unsigned pos, uint8_t value ) -> void {
 			
 			break;
 			
-		case 0xe:  
-        case 0xf:
+		case 0xe:
+			if ((value ^ cra) & 0x40)
+				switchSerialDirection( (value & 0x40) == 0 );			
+			
+        case 0xf: {
             pT = pos == 0xe ? &timer[T_A] : &timer[T_B];			
             // to do: oneshot stops the timer, is this recognized for 'toggle' reset
             // or have to write 'stop' to control register first
@@ -180,33 +183,28 @@ auto Base::write( unsigned pos, uint8_t value ) -> void {
 				events->add( &(pT->disableOneshot), 2, Emulator::Events::WhenNotExistsOnly );
 			
 			// force load (one time)
-			if ( value & 0x10 )
+			if ( value & 0x10 ) {
 				// delayed one cycle
                 // when fired, it can not be disabled next cycle
 				events->add( &(pT->forceLoad), 2 );
-				
-            if (pos == 0xf && (value & 0x40) ) 
+			}
+            if (pos == 0xf && (value & 0x40) ) {
                 // timer B in cascaded mode, so stop phase-in if needed
                 events->add( &(pT->stop), 2, Emulator::Events::WhenNotExistsOnly );
             
-            else {
+            } else {
                 // start + phase in
                 if ( (value & 1) && !(value & 0x20) ) {
                     events->add( &(pT->start), 2, Emulator::Events::WhenNotExistsOnly );
 					
-					// experimental shift flag respawn
-					if (shiftCount && (pos == 0xe) && !pT->oneshot && !pT->run)
-						serialFlagRespawn();								
-					
                 } else {
-					
                     // stop the timer is delayed by one cycle
                     events->add( &(pT->stop), 2, Emulator::Events::WhenNotExistsOnly );                
 				}
-            }
-						
+            }						
+			
             pT->control = value;        									
-            break;
+		} break;
 	}
 }
 

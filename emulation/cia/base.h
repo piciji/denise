@@ -55,14 +55,13 @@ struct Base {
 	
 	/**
 	 * shift in bits
-	 * shifting too fast behavior is not emulated
 	 */
-    auto serialIn( bool bit ) -> void;   
+    auto serialIn( bool newCnt, bool bit ) -> void;   
 	/*
 	 * external device forces cia to generate an irq
 	 */
 	auto setFlag() -> void;
-	auto setCnt( bool state ) -> void;
+	auto positiveCntTransition( ) -> void;
     auto setNewVersion( bool newVersion ) -> void;
     auto isNewVersion() -> bool;
     virtual auto serialize(Emulator::Serializer& s) -> void;
@@ -133,7 +132,7 @@ protected:
 		Callback step;		
 		Callback disableOneshot;
 		Callback forceLoad;
-        Callback disableForceLoad;
+        Callback disableForceLoad;		
 		
 		uint16_t latch;
 		uint16_t counter;
@@ -150,28 +149,35 @@ protected:
     
     Callback updateIcrAndSetIrq;
     Callback updateIcrOnly;
+	Callback startSdr;
+	Callback flipCnt;
+	Callback finishSdr;	
+	Callback flipDummy;
+	
 	bool newVersion = true; // 6526a, 8520a instead of 6526, 8520
     uint8_t acknowledgeCycle; 
 	uint8_t maskWriteCycle;
 	uint8_t intDelay;	
-	uint8_t serialDelay;
 	uint8_t icrTemp;
-    bool flagRaised;	
+    bool flagRaised;
             
     uint8_t sdr;
-	bool sdrValid;
+	bool sdrFlag;
+	bool sdrLoaded;
+	bool sdrPending;
+	uint8_t cntHistory;
 	bool cnt;
-    uint8_t shift;
-    unsigned shiftCount;
+    uint8_t sdrShift;
+    unsigned sdrShiftCount;
+	bool sdrForceFinish;
 	
 	uint8_t icrmask;
     uint8_t icr;
-	bool ciaShiftRespawnBug;
 	        	
     auto timerAUnderflow() -> void;
 	auto timerBUnderflow() -> void;
 	auto serialOut() -> void;
-	auto serialFlagRespawn() -> void;
+	auto switchSerialDirection(bool input) -> void;
     auto handleInterrupt( uint8_t number ) -> void;
 	virtual auto processTod() -> void = 0;
 	template<uint8_t timerId> auto decrement() -> void;

@@ -56,12 +56,52 @@ crb( timer[T_B].control )
     
     updateIcrOnly = [this]() {
         icr = icrTemp;
-    };        
+    };   
+	
+	startSdr = [this]() {
+		
+		if (!sdrLoaded) {
+			sdrShift = sdr;
+			sdrLoaded = true;
+		} else
+			sdrPending = true;
+	};
+	
+	finishSdr = [this]() {
+		sdrFlag = true;
+	};
     
+	flipCnt = [this]() {
+		if (!sdrShiftCount)
+			return;		
+		
+		if (!cnt)
+			positiveCntTransition();
+		
+		cnt ^= 1;
+				
+		if (cnt)			
+			sdrShift <<= 1;
+		else
+			serialCall( (sdrShift & 0x80) != 0 );			
+
+		if (--sdrShiftCount == 1) {
+			this->events->add(&finishSdr, 2, Emulator::Events::UpdateExisting);
+
+			if (sdrPending) {
+				sdrPending = false;
+				sdrShift = sdr;
+				sdrLoaded = true;
+			} else
+				sdrLoaded = false;
+		}			
+	};
+	
+	flipDummy = [this]() {};
+	
 	newVersion = true;
     
-    events->registerCallback( { {&updateIcrAndSetIrq, 1}, {&updateIcrOnly, 1} } );
-
+    events->registerCallback( { {&updateIcrAndSetIrq, 1}, {&updateIcrOnly, 1}, {&startSdr, 1}, {&finishSdr, 1}, {&flipCnt, 1}, {&flipDummy, 1}  } );
 }
 
 auto Base::reset() -> void {
@@ -72,18 +112,20 @@ auto Base::reset() -> void {
     lines.praChange = lines.prbChange = 0;
 	
     icr = icrmask = 0;
-    sdr = shift = 0;
-    shiftCount = 0;	
+    sdr = sdrShift = 0;
+    sdrShiftCount = 0;	
 	
-	sdrValid = false;
+	sdrPending = false;
+	sdrLoaded = false;
     cnt = true;
-	ciaShiftRespawnBug = false;
+	cntHistory = 0;
+	sdrForceFinish = false;
     
 	acknowledgeCycle = 0;	
 	maskWriteCycle = 0;
 	flagRaised = false;
 	intDelay = 0;
-	serialDelay = 0;
+	sdrFlag = false;
     icrTemp = 0; 
 	
 	for( unsigned i = 0; i < 2; i++ ) {	
@@ -120,14 +162,16 @@ auto Base::clock() -> void {
 
     processTod();
 
-    if (serialDelay & 1)
+    if (sdrFlag) {
+		sdrFlag = false;
         handleInterrupt(8);
+	}
 
     newVersion ? interruptControl() : interruptControlOld();
 
-    serialDelay >>= 1;
     acknowledgeCycle <<= 1;
-    maskWriteCycle <<= 1;  
+    maskWriteCycle <<= 1;  			
+	cntHistory = (cntHistory << 1) | cnt;
 
     // hi cycle
     intDelay >>= 1;
@@ -222,7 +266,7 @@ template<uint8_t timerId> inline auto Base::decrement( ) -> void {
 	pTimer->counterRead = pTimer->counter;
     
 	// run: phase in or a single step in cascade mode
-	if (pTimer->counter && pTimer->run)
+	if (pTimer->run)
 		pTimer->counter--;
 }
 
@@ -233,7 +277,7 @@ template<uint8_t timerId> inline auto Base::updateState( ) -> void {
 	if ( pTimer->run && (pTimer->counter == 0) ) {
 		pTimer->underflowCycle = pTimer->forceloadCycle = true;
 		timerId == T_A ? timerAUnderflow() : timerBUnderflow();
-	}
+	}	
 	
 	if ( pTimer->forceloadCycle ) {
         // a possible force load placed by register write get priority, so run this sooner
@@ -258,8 +302,8 @@ template<uint8_t timerId> inline auto Base::updateState( ) -> void {
 }
 
 auto Base::timerAUnderflow() -> void {    	
-
-	if (cra & 0x40) //SP pin is defined as output
+	
+	if (cra & 0x40)
 		serialOut();
 	
 	timer[T_A].toggle ^= 1;
@@ -267,7 +311,7 @@ auto Base::timerAUnderflow() -> void {
 	if ( (crb & 0x61) == 0x41 )
 		events->add( &(timer[T_B].step), 1, Emulator::Events::UpdateExisting );
 	
-    else if ( cnt && ((crb & 0x61) == 0x61 ))
+    else if ( (cntHistory & 2) && ((crb & 0x61) == 0x61 ))
 		events->add( &(timer[T_B].step), 1, Emulator::Events::UpdateExisting );
 	
     handleInterrupt( 1 );
@@ -302,108 +346,94 @@ auto Base::isNewVersion() -> bool {
     return newVersion;
 }
 
-// following serial and cnt emulation is experimental
 auto Base::serialOut() -> void {
-	//timer A defines speed for this								
+	//timer A defines speed for this		
 	
-	if ( shiftCount ) {		
-		cnt ^= 1;
+	if ( sdrLoaded && !sdrShiftCount)
+		sdrShiftCount = 16;	
 		
-		if (!cnt) {			
-			bool bit = (shift >> 7) & 1;
-			shift <<= 1;
-			serialCall( bit );				
-
-		} else {
-
-			if (--shiftCount == 1) {
-				// serial interrupt happens a few cycles after Timer A underflows
-				serialDelay |= 16; // bit 3 -> 4 cycle delay
-			}
-			
-		}		
-	}    	
+	if (!sdrShiftCount)
+		return;
 	
-	if (sdrValid) {
-		// first underflow loads shift register.
-		// if shift is alredy in progress, it happens parallel and is valid next underflow
-		sdrValid = false;
-		shift = sdr;			
-		shiftCount = 8;
-		cnt = true;
-	}	
-}
-
-auto Base::serialFlagRespawn() -> void {
-	auto pT = &timer[T_A];
-	
-	// first line is not really understood
-	if (!ciaShiftRespawnBug && cnt && pT->counter == pT->latch);
-
-	else if (shiftCount == 1 && cnt && pT->counter == (pT->latch - 2));
-
-	else if (cnt && (pT->counter != (pT->latch - 1))
-		&& (newVersion ? (pT->counter != (pT->latch - 3)) : true)
-
-		) {
-		handleInterrupt(8);
-
-	} else if (!cnt && (
-		(pT->counter == (pT->latch - 4))
-		|| (pT->counter == (pT->latch - 3))
-		|| (pT->counter == (pT->latch - 2))
-		|| (pT->counter == (pT->latch - 1))
-		)) {
-		handleInterrupt(8);
-	};
-
-	shiftCount = 0;
-
-	ciaShiftRespawnBug = true;
+	if ( events->has(&flipDummy) || events->has(&flipCnt) )
+		events->add( &flipDummy, 2 ); // you need at least one cycle delay to detect a new transition
+	else
+		events->add( &flipCnt, 2 );
 }
 
 /**
  * external device shifts in data bit by bit
  */
-auto Base::serialIn( bool bit ) -> void {
-    // external device generates pulse 0 -> 1 on cnt pin to inform cia
-	// that sp pin has valid data
-	// for simplicity we do both steps in one operation
-    cnt = true;
+auto Base::serialIn( bool newCnt, bool bit ) -> void {
+	
+	if (newCnt == cnt)
+		return;
 	
     if (cra & 0x40) //SP pin is defined as output
-        return;
+        return;    
+	
+	cnt = newCnt;
+	
+	if (!cnt)
+		return;
+	
+	positiveCntTransition();
+	sdrShift <<= 1;
+	sdrShift |= bit;		        	
     
-    if ((cra & 0x21) == 0x21) //timer A is driven by cnt pin transition      
-		events->add( &(timer[T_A].step), 1, Emulator::Events::UpdateExisting );
-    
-    if ( ( crb & 0x61) == 0x21) //timer B is driven by cnt pin transition
-		events->add( &(timer[T_B].step), 1, Emulator::Events::UpdateExisting );
-        
-    shift <<= 1;
-    shift |= bit;
-    
-    if ( ++shiftCount == 8 ) {
-        shiftCount = 0;
+    if ( ++sdrShiftCount == 8 ) {
+        sdrShiftCount = 0;
         //transfer complete
-		sdr = shift;
-        serialDelay |= 16; 
+		sdr = sdrShift;
+        this->events->add(&finishSdr, 2, Emulator::Events::UpdateExisting);
     }
 }
 
 // set cnt external without serial bit shifting
-auto Base::setCnt( bool state ) -> void {
-    
-    if (state && !cnt) {
-        
-        if ((cra & 0x21) == 0x21) //timer A is driven by cnt pin transition      
-			events->add( &(timer[T_A].step), 1, Emulator::Events::UpdateExisting );
+auto Base::positiveCntTransition( ) -> void {
+           
+	if ((cra & 0x21) == 0x21) //timer A is driven by cnt pin transition      
+		events->add( &(timer[T_A].step), 2, Emulator::Events::UpdateExisting );
 
-        if ( ( crb & 0x61) == 0x21) //timer B is driven by cnt pin transition
-			events->add( &(timer[T_B].step), 1, Emulator::Events::UpdateExisting );
-    }
-    
-	cnt = state;
+	if ( ( crb & 0x61) == 0x21) //timer B is driven by cnt pin transition
+		events->add( &(timer[T_B].step), 2, Emulator::Events::UpdateExisting );
+}
+
+auto Base::switchSerialDirection(bool input) -> void {
+	
+	if (input) { 
+		if (!newVersion)
+			sdrForceFinish = (cntHistory & 0x7) != 0x7;
+		else
+			sdrForceFinish = (cntHistory & 0x6) != 0x6;
+
+		if (!sdrForceFinish) {
+			if (sdrShiftCount != 2 && (events->delay(&flipCnt) == 1)  )
+				sdrForceFinish = true;
+		}
+
+	} else {
+
+		if (!cnt && sdrShiftCount)
+			sdrShift <<= 1;
+
+		if (sdrForceFinish) {
+			events->add( &finishSdr, 2, Emulator::Events::UpdateExisting );                
+			sdrForceFinish = false;
+		}
+	}
+
+	if (!cnt)
+		positiveCntTransition();				
+
+	cnt = true;
+	cntHistory |= 1;
+
+	events->remove(&flipCnt);
+	events->remove(&flipDummy);
+	sdrShiftCount = 0;
+	sdrPending = false;
+	sdrLoaded = false;
 }
 
 auto Base::serialize(Emulator::Serializer& s) -> void {
@@ -436,15 +466,18 @@ auto Base::serialize(Emulator::Serializer& s) -> void {
     s.integer( acknowledgeCycle );
     s.integer( maskWriteCycle );
     s.integer( intDelay );
-    s.integer( serialDelay );
+    s.integer( sdrFlag );
     s.integer( icrTemp );
     s.integer( flagRaised );
     s.integer( sdr );
-    s.integer( sdrValid );
-	s.integer( ciaShiftRespawnBug );
+	s.integer( sdrFlag );
+    s.integer( sdrLoaded );
+	s.integer( sdrPending );
     s.integer( cnt );
-    s.integer( shift );
-    s.integer( shiftCount );
+	s.integer( cntHistory );
+    s.integer( sdrShift );
+    s.integer( sdrShiftCount );
+	s.integer( sdrForceFinish );
     s.integer( icrmask );
     s.integer( icr );
 }
