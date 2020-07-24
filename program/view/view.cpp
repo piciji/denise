@@ -1055,7 +1055,7 @@ auto View::questionToWrite(Emulator::Interface::Media* media) -> bool {
     
     auto file = (GUIKIT::File*)media->guid;
     
-    if (file->isArchived() || file->isReadOnly() || cmd->debug)
+    if (cmd->debug || !file || file->isArchived() || file->isReadOnly())
         // archive, removing of write protection is not supported
         // no dialog in debug mode
         return false;
