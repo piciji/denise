@@ -63,11 +63,13 @@ struct VideoManager {
     static bool shaderInputPrecision;
 	static bool integerScaling;
 	static bool aspectCorrect;
+    static bool fpsLimit;
 	
     static auto setThreaded(bool state) -> void;
     static auto setShaderInputPrecision(bool state) -> void;
     static auto setAspectCorrect(bool state) -> void;
     static auto setIntegerScaling(bool state) -> void;
+    static auto setFpsLimit(bool state) -> void;
     
     enum class MaskType : unsigned { Aperture = 0u, ShadowMask = 1u, SlotMask = 2u } maskType;
     enum class CrtMode : unsigned { None = 0u, Cpu = 1u, Gpu = 2u } crtMode;
@@ -164,6 +166,9 @@ struct VideoManager {
     ColorLumaChroma* lumaChromaTable = nullptr;
     ColorLumaChroma* evenTable = nullptr;
     ColorLumaChroma* oddTable = nullptr;
+    
+    int64_t lastCapTime;
+    int64_t minimumCapTime;    
     
     bool colorTableUpdated = false;
     inline auto needUpdate() -> bool { return !colorTableUpdated; }
@@ -270,6 +275,9 @@ struct VideoManager {
     auto resetSettings() -> void;
     auto getModeIdent() -> std::string;
     auto applyMeta() -> void;
+    
+    auto applyFpsLimit() -> void;
+    auto initFpsLimit() -> void;
 };
 
 extern std::vector<VideoManager*> videoManagers;

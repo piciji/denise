@@ -10,11 +10,13 @@
 #include "../view/view.h"
 #include "props.cpp"
 #include "../../driver/tools/shaderpass.h"
+#include "../tools/chronos.h"
 
 bool VideoManager::threaded = true;
 bool VideoManager::shaderInputPrecision = false;
 bool VideoManager::aspectCorrect = true;
 bool VideoManager::integerScaling = false;
+bool VideoManager::fpsLimit = false;
 
 std::vector<VideoManager*> videoManagers;
 
@@ -133,7 +135,7 @@ auto VideoManager::update() -> void {
     }   
     
     updateListingColors();
-            
+    
     colorTableUpdated = true;    
 }
 
@@ -625,9 +627,13 @@ auto VideoManager::renderFrame(const uint16_t* src, unsigned width, unsigned hei
 			return;
 		
 		renderCrt(width, height, src, srcPitch, gpuData, gpuPitch - width);
-	}		        
-
+	}		           
+    
 	videoDriver->unlock();
+    
+    if (fpsLimit)
+        applyFpsLimit();
+    
 	videoDriver->redraw();
 }
 
@@ -1140,7 +1146,40 @@ auto VideoManager::unlockDriver() -> void {
 auto VideoManager::powerOff() -> void {
     unlockDriver();         
 	reinitThread();
-    currentHeight = 0;
+    currentHeight = 0;        
+}
+
+auto VideoManager::initFpsLimit() -> void {
+
+    auto stat = emulator->getStatsForSelectedRegion();
+
+    double fps = stat.fps;
+
+    if ( settings->get<bool>("video_override_exact", true) ) {
+        if (stat.isPal())
+            fps = settings->get<double>("video_pal", 50.0,{25.0, 100.0});
+        else
+            fps = settings->get<double>("video_ntsc", 60.0,{30.0, 120.0});
+    }
+
+    minimumCapTime = (1000000.0 / fps) + 0.5;
+    
+    lastCapTime = Chronos::getTimestampInMicroseconds();
+}
+
+auto VideoManager::applyFpsLimit() -> void {
+                   
+    int64_t sleepMs  = ((lastCapTime + minimumCapTime) - (int64_t)Chronos::getTimestampInMicroseconds()) / 1000;    
+    
+    if (sleepMs > 0) {
+        lastCapTime += minimumCapTime;
+        
+        GUIKIT::System::sleep( sleepMs );
+        
+        return;
+    }    
+    
+    lastCapTime = Chronos::getTimestampInMicroseconds();
 }
 
 auto VideoManager::isC64() -> bool {    

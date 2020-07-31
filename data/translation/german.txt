@@ -493,3 +493,4 @@ LAX Magic Byte = LAX Magic Byte
 LAX Magic Byte tooltip = Wert ist teilweise abhängig vom Chip Hersteller und Temperatur. Üblich ist 0xee.
 Disable Grey Dot Bug = Grey Dot Bug deaktivieren
 Disable Grey Dot Bug tooltip = Grey Dot Bug der 85xx VIC-II Modelle wird nicht emuliert.
+Fps Limit = FPS Begrenzung

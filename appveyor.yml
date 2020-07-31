@@ -16,7 +16,7 @@ branches:
     - master
     - appveyor
     - /v\d*\.\d*\.\d*/
-    - missing_VIC_models
+    - fps_limit
   
 environment:
   matrix:

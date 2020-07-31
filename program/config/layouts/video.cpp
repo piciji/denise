@@ -226,6 +226,8 @@ VideoLayout::VideoLayout() {
     videoFrameAdjust.overrideExactFrequency.onToggle = [this]() {        
         settings->set<bool>("video_override_exact", videoFrameAdjust.overrideExactFrequency.checked()); 
         audioManager->setResampler();
+        if (activeVideoManager)
+            activeVideoManager->initFpsLimit();
         updateFrequencyLayout();
     };
     
@@ -235,11 +237,15 @@ VideoLayout::VideoLayout() {
     videoFrameAdjust.palFrequency.onChange = [this]() {
          settings->set<std::string>("video_pal", videoFrameAdjust.palFrequency.text() );
          audioManager->setResampler();
+         if (activeVideoManager)
+            activeVideoManager->initFpsLimit();
     };
     
     videoFrameAdjust.ntscFrequency.onChange = [this]() {
         settings->set<std::string>("video_ntsc", videoFrameAdjust.ntscFrequency.text() );
         audioManager->setResampler();
+        if (activeVideoManager)
+            activeVideoManager->initFpsLimit();
     };    
             
     videoFrameAdjust.palFrequency.setText( GUIKIT::String::formatFloatingPoint( settings->get<double>("video_pal", 50.0, {25.0, 100.0}) ) );

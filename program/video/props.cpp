@@ -10,6 +10,10 @@ auto VideoManager::setAspectCorrect(bool state) -> void {
 	aspectCorrect = state;
 }
 
+auto VideoManager::setFpsLimit(bool state) -> void {
+	fpsLimit = state;
+}
+
 auto VideoManager::setThreaded(bool state) -> void {	
     
     unlockDriver(); 

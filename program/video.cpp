@@ -16,6 +16,7 @@ auto Program::initVideo() -> void {
     
     setVideoSynchronize();
     setVideoHardSync();
+    setFpsLimit();
     //setVideoFilter();
 	    
     if ( !videoDriver->init( view->getViewportHandle() ) ) {
@@ -63,6 +64,10 @@ auto Program::finishVBlank() -> void {
     activeVideoManager->waitForRenderer();
 
     videoDriver->unlock();
+    
+    if (VideoManager::fpsLimit)
+        activeVideoManager->applyFpsLimit();
+    
     videoDriver->redraw();
 }
 
@@ -144,6 +149,10 @@ auto Program::hintExclusiveFullscreen() -> void {
 	videoDriver->hintExclusiveFullscreen( settings->get("exclusive_fullscreen", false) );
 }
 
+auto Program::setFpsLimit() -> void {
+	VideoManager::setFpsLimit( settings->get("fps_limit", false) );
+}
+
 auto Program::setVideoFilter() -> void {
 	if (activeEmulator)			
 		videoDriver->setFilter( (DRIVER::Video::Filter)settings->get<unsigned>(ident(activeEmulator, "video_filter"), 1u, {0u, 1u}) );
@@ -188,13 +197,18 @@ auto Program::fastForward( bool activate, bool aggressive ) -> void {
     
     unsigned forward = 0;
     auto vSync = settings->get<bool>("video_sync", false);
+    auto fpsLimit = settings->get("fps_limit", false);
     VideoManager::CrtMode crtMode = (VideoManager::CrtMode)settings->get<unsigned>(program->ident(activeEmulator, "video_crt"), (unsigned)VideoManager::CrtMode::None, {0u, 2u});
 
     if (activate) {                        
         if (vSync)
             view->videoSyncItem.toggle();
 
+        if (fpsLimit)
+            view->fpsLimitItem.toggle();
+        
         settings->set<bool>("video_sync_temp", vSync, false); // remember vsync
+        settings->set<bool>("fps_limit_temp", fpsLimit, false); // remember fps limit
 
         if (crtMode != VideoManager::CrtMode::None)
             EmuConfigView::TabWindow::getView(activeEmulator)->videoLayout->base.mode.crtNone.activate();
@@ -212,10 +226,14 @@ auto Program::fastForward( bool activate, bool aggressive ) -> void {
 
     } else {
         auto vSyncTemp = settings->get<bool>("video_sync_temp", false);
+        auto fpsLimitTemp = settings->get<bool>("fps_limit_temp", false);
         VideoManager::CrtMode crtModeTemp = (VideoManager::CrtMode)settings->get<unsigned>("video_crt_temp", (unsigned)VideoManager::CrtMode::None, {0u, 2u});
         
         if (vSyncTemp && !vSync)
             view->videoSyncItem.toggle();
+        
+        if (fpsLimitTemp && !fpsLimit)
+            view->fpsLimitItem.toggle();
 
         if (crtMode == VideoManager::CrtMode::None) {
             if (crtModeTemp == VideoManager::CrtMode::Cpu)
@@ -225,6 +243,7 @@ auto Program::fastForward( bool activate, bool aggressive ) -> void {
         }
         
         settings->set<bool>("video_sync_temp", false, false);
+        settings->set<bool>("fps_limit_temp", false, false);
         settings->set<unsigned>("video_crt_temp", (unsigned)VideoManager::CrtMode::None, false);
         settings->set<bool>("fast_forward_aggressive", false, false);
         settings->set<bool>("fast_forward", false, false);

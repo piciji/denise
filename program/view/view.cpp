@@ -807,6 +807,7 @@ auto View::buildMenu() -> void {
     };
     if ( settings->get<bool>("audio_sync", true) ) audioSyncItem.setChecked();
     optionsMenu.append(audioSyncItem);
+    
     videoSyncItem.onToggle = [&]() {
         settings->set<bool>("video_sync", videoSyncItem.checked() );
         program->fastForward( false );
@@ -814,6 +815,13 @@ auto View::buildMenu() -> void {
     };
     if ( settings->get<bool>("video_sync", false) ) videoSyncItem.setChecked();
     optionsMenu.append(videoSyncItem);
+    
+    fpsLimitItem.onToggle = [&]() {
+        settings->set<bool>("fps_limit", fpsLimitItem.checked() );        
+        program->setFpsLimit();
+    };
+    if ( settings->get<bool>("fps_limit", false) ) fpsLimitItem.setChecked();
+    optionsMenu.append(fpsLimitItem);
 
     dynamicRateControl.onToggle = [&]() {
         settings->set<bool>("dynamic_rate_control", dynamicRateControl.checked() );
@@ -959,6 +967,7 @@ auto View::translate() -> void {
 	
     audioSyncItem.setText( trans->get("sync_audio"));
     videoSyncItem.setText( trans->get("sync_video"));
+    fpsLimitItem.setText( trans->get("Fps Limit"));
     dynamicRateControl.setText( trans->get("dynamic_rate_control"));
 
     fullscreenItem.setText( trans->get("fullscreen"));

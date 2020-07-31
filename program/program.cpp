@@ -285,6 +285,8 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
     srand( time( NULL ) );
     
     settings->set("last_used_emu", activeEmulator->ident);
+    
+    activeVideoManager->initFpsLimit();
 }
 
 auto Program::reset( Emulator::Interface* emulator ) -> void {

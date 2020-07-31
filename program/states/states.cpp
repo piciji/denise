@@ -491,6 +491,9 @@ auto States::updateRegion() -> void {
     cfgView->videoLayout->updatePresets();
         
     audioManager->power();
+    
+    if (activeVideoManager)
+        activeVideoManager->initFpsLimit();
 }
 
 auto States::updateExpansionJumper() -> void {

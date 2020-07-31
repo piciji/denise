@@ -114,6 +114,7 @@ struct Program : Emulator::Interface::Bind {
     auto midScreenCallback() -> void;
     auto saveExitScreenshot() -> void;
     auto fastForward( bool activate, bool aggressive = false ) -> void;
+    auto setFpsLimit() -> void;
     
     //input
     auto initInput() -> void;
