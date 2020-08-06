@@ -10,12 +10,12 @@ struct Chronos {
     
     static auto getTimestampInMilliseconds() -> unsigned long {
         return std::chrono::duration_cast<std::chrono::milliseconds>
-            (std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+            (std::chrono::steady_clock::now().time_since_epoch()).count();
     }    
 
     static auto getTimestampInMicroseconds() -> unsigned long {
         return std::chrono::duration_cast<std::chrono::microseconds>
-            (std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+            (std::chrono::steady_clock::now().time_since_epoch()).count();
     } 
 
 };

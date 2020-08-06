@@ -1275,4 +1275,9 @@ auto System::printToCmd( std::string str ) -> void {
     pSystem::printToCmd( str );
 }
 
+auto Thread::setPriorityRealtime( std::thread& th ) -> void {
+    pThread::setThreadPriorityRealtime( th );
 }
+
+}
+

@@ -12,6 +12,7 @@
 #include <functional>
 #include <algorithm>
 #include <unordered_set>
+#include <thread>
 
 namespace GUIKIT {
 
@@ -1048,6 +1049,11 @@ struct System {
     static auto getOSLang() -> Language;
     static auto printToCmd( std::string str ) -> void;
     System() = delete;
+};
+
+struct Thread {
+    
+    static auto setPriorityRealtime( std::thread& th ) -> void;
 };
 
 struct File {

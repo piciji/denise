@@ -3,6 +3,7 @@
 #include "scanline.cpp"
 #include "silence.cpp"
 #include "register.cpp"
+#include "../../../tools/thread.h"
 
 namespace LIBC64 {  
 
@@ -28,13 +29,15 @@ VicIIFast::VicIIFast() : VicIIBase() {
                 if (idle.load()) {
                     if (cv.wait_for(lk, duration, [this]() { return ready.load(); }))
                         break;  
-                } else
-                    std::this_thread::yield();        
+                } //else
+                    //std::this_thread::yield();        
             }
             
             scanline();
         }
     } );
+    
+    Emulator::setThreadPriorityRealtime( worker );
     
     worker.detach();
 }
@@ -222,17 +225,17 @@ auto VicIIFast::setBorderDim() -> void {
 }
 
 inline auto VicIIFast::calcSpriteX(Sprite* spr) -> void {
-	
+	    
 	if (!ntscBorder) {
 		if (spr->x < 0x194 )
 			spr->xPos = firstVisiblePixel + spr->x + 22;
 		else
-			spr->xPos = spr->x - 0x194;
+			spr->xPos = spr->x - 0x194 + 8;
 	} else {
 		if (spr->x < 0x19c)
 			spr->xPos = firstVisiblePixel + spr->x + 32;
 		else
-			spr->xPos = spr->x - 0x19c;
+			spr->xPos = spr->x - 0x19c + 8;
 	}			
 }
 

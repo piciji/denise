@@ -415,3 +415,13 @@ auto getVersion() -> unsigned {
 	
 	return (versionInfo.dwMajorVersion << 8) | versionInfo.dwMinorVersion;
 }
+
+
+auto pThread::setThreadPriorityRealtime( std::thread& th ) -> void {
+    
+    std::thread::native_handle_type h = th.native_handle();
+    
+    SetPriorityClass((HANDLE) h, REALTIME_PRIORITY_CLASS);
+    
+    SetThreadPriority((HANDLE) h, THREAD_PRIORITY_TIME_CRITICAL);    
+}

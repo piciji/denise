@@ -2,6 +2,7 @@
 #include <gtk/gtk.h>
 #include <gdk/gdkx.h>
 #include <pwd.h>
+#include <pthread.h>
 
 namespace GUIKIT {
 
@@ -592,7 +593,10 @@ struct pSystem {
 	static auto addCssClass(GtkWidget* widget, std::string cssClass) -> void;
 	static auto removeCssClass(GtkWidget* widget, std::string cssClass) -> void;
 	static auto getColorCss( unsigned color, bool useComplementaryColor = false ) -> std::string;
+};
 
+struct pThread {
+    static auto setThreadPriorityRealtime(std::thread& th) -> void;
 };
 
 static auto getDropPaths(GtkSelectionData* data) -> std::vector<std::string>;

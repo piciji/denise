@@ -591,7 +591,12 @@ auto VideoManager::renderFrame(const uint16_t* src, unsigned width, unsigned hei
         
         reinitThread();
     }
-	
+
+//    int64_t res = (int64_t)Chronos::getTimestampInMicroseconds() - lastCapTime;
+//
+//    if (res > 5000)
+//        logger->log(std::to_string( res ));
+    
 	if ( !useCrtMode() ) {
 		if (!videoDriver->lock(gpuData, gpuPitch, width, height))
 			return; 
@@ -635,6 +640,8 @@ auto VideoManager::renderFrame(const uint16_t* src, unsigned width, unsigned hei
         applyFpsLimit();
     
 	videoDriver->redraw();
+    
+    //lastCapTime = Chronos::getTimestampInMicroseconds();    
 }
 
 inline auto VideoManager::renderToRgb(unsigned width, unsigned height, const uint16_t* src, unsigned srcPitch, unsigned* dest, unsigned destPitch) -> void {
@@ -739,6 +746,8 @@ auto VideoManager::createWorker() -> void {
 				renderCrtSelection( re );
             }
         });
+        
+        GUIKIT::Thread::setPriorityRealtime( worker );
 
         worker.detach();
     }

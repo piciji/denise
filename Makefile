@@ -26,6 +26,7 @@ endif
 objects += m6502 m6510 ciaBase cia6526 vicIIBase vicIICycle vicIIFast systemC64 sid tapeC64 inputC64 controlPortC64
 objects += cartC64 gameCartC64 actionReplayC64 reuC64 easyFlashC64 retroReplayC64
 objects += via iec prg64 drive1541 m6502custom structure1541
+objects += thread
 
 prgflags := -DAPP_NAME="\"$(name)\"" -DTRANSLATION_FOLDER="\"$(translationFolder)/\"" -DDATA_FOLDER="\"$(dataFolder)/\"" -DSHADER_FOLDER="\"$(shaderFolder)/\"" -DIMG_FOLDER="\"$(imgFolder)/\""
 flags :=
@@ -133,6 +134,7 @@ obj/iec.o:	emulation/libc64/disk/iec.cpp
 obj/drive1541.o:emulation/libc64/disk/drive/drive1541.cpp
 obj/m6502custom.o:emulation/libc64/disk/cpu/m6502custom.cpp
 obj/structure1541.o:emulation/libc64/disk/structure/structure.cpp
+obj/thread.o:emulation/tools/thread.cpp
 
 obj/program.o:		program/program.cpp
 	$(compiler) $(cppflags) $(prgflags) $(flags) $1 -c $< -o $@

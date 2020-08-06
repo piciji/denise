@@ -1,6 +1,7 @@
 
 #include "interface.h"
 #include <pwd.h>
+#include <pthread.h>
 
 namespace GUIKIT {
 
@@ -489,6 +490,10 @@ struct pSystem {
     static auto isOffscreen( Geometry geometry ) -> bool { return false; }
     static auto getOSLang() -> System::Language;
     static auto printToCmd( std::string str ) -> void;
+};
+
+struct pThread {
+    static auto setThreadPriorityRealtime(std::thread& th) -> void;
 };
     
 struct pHelper {

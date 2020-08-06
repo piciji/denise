@@ -1,5 +1,6 @@
 
 #include "iec.h"
+#include "../../tools/thread.h"
 
 namespace LIBC64 {
     
@@ -85,6 +86,8 @@ IecBus::IecBus() {
         }       
       
     } );    
+    
+    Emulator::setThreadPriorityRealtime( worker );
     
     worker.detach();
 }  

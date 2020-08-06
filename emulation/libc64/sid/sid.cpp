@@ -7,6 +7,7 @@
 #include "filter/main.cpp"
 #include "filter/external.cpp"
 #include "serialization.cpp"
+#include "../../tools/thread.h"
 
 namespace LIBC64 {
       
@@ -77,6 +78,8 @@ Sid::Sid( Type type, Emulator::Events* events ) : filter( this ) {
 			this->ready = false;
 		}
 	});	
+    
+    Emulator::setThreadPriorityRealtime( worker );
 	
 	worker.detach();
 }

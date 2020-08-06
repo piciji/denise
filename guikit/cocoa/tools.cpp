@@ -281,5 +281,15 @@ auto pHelper::getColor(unsigned color) -> NSColor* {
          alpha: 1.0];
 
 }
+
+auto pThread::setThreadPriorityRealtime( std::thread& th ) -> void {
+    
+    sched_param sch_params;
+    sch_params.sched_priority = 99;
+
+    if (pthread_setschedparam( th.native_handle(), SCHED_RR, &sch_params)) {
+
+    } 
+}
     
 }

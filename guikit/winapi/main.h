@@ -636,6 +636,10 @@ struct pSystem {
     static auto printToCmd( std::string str ) -> void;
 };
 
+struct pThread {
+    static auto setThreadPriorityRealtime(std::thread& th) -> void;
+};
+
 struct utf16_t {
     operator wchar_t*() { return buffer; }
     operator const wchar_t*() const { return buffer; }
