@@ -16,7 +16,7 @@ branches:
     - master
     - appveyor
     - /v\d*\.\d*\.\d*/
-    - fps_limit
+    - sid_changes
   
 environment:
   matrix:
