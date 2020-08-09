@@ -123,9 +123,15 @@ auto Sid::Filter::clock(int voice1, int voice2, int voice3) -> void {
         
 	} else { // 8580
 		// Nach dem gleichen Prinzip erfolgt die Berechnung für den 8580
-		Vlp = solveIntegrate8580( Vbp, Vlp_x, Vlp_vc, ca );		
-		Vbp = solveIntegrate8580( Vhp, Vbp_x, Vbp_vc, ca );
-		Vhp = ca.summer[offset + resonance[res][Vbp] + Vlp + Vi];
+	//	Vlp = solveIntegrate8580( Vbp, Vlp_x, Vlp_vc, ca );		
+	//	Vbp = solveIntegrate8580( Vhp, Vbp_x, Vbp_vc, ca );
+	//	Vhp = ca.summer[offset + resonance[res][Vbp] + Vlp + Vi];
+
+            int dVbp = w0 * (Vhp >> 4) >> 16;
+            int dVlp = w0 * (Vbp >> 4) >> 16;
+            Vbp -= dVbp;
+            Vlp -= dVlp;
+            Vhp = (Vbp * _1024_div_Q >> 10) - Vlp - Vi;
 	}
 }
 
@@ -637,7 +643,15 @@ auto Sid::Filter::output() -> short {
     // 15 bit 'signed' überführen. Die erste Hälfte des Wertebereiches
     // bilden die negativen Werte. 
     // 1 << 15 enspricht dem halben Wertebereich
-    return (short)(ca.gain[vol][ ca.mixer[offset + Vi] ] - (1 << 15) );
+    
+    if ( this->type == Type::MOS_6581 )
+        return (short)(ca.gain[vol][ ca.mixer[offset + Vi] ] - (1 << 15) );
+
+    int tmp = Vi * (int) vol >> 4;
+    if (tmp < -32768) tmp = -32768;
+    if (tmp > 32767) tmp = 32767;
+    return (short) tmp;
+    
 }
 
 // siehe 'output' mit dem Unterschied das keine vorberechneten Werte zum Einsatz kommen.

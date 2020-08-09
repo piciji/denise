@@ -114,7 +114,9 @@ auto Sid::setMoreAccuracy(bool state) -> void {
         applyFilterWrite();
     }
     
-	moreAccuracy = state;
+	//moreAccuracy = state;
+    moreAccuracy = false;
+    
 	updateIdleState();
     
 	ready = false;	

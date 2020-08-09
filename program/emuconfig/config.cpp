@@ -200,3 +200,4 @@ auto TabWindow::getView( Emulator::Interface* emulator ) -> TabWindow* {
 }
 
 }
+

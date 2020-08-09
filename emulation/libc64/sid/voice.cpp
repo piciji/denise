@@ -175,7 +175,7 @@ auto Sid::Voice::setControl( uint8_t value ) -> void {
         events->remove( &callAging );
 		setWaveformOutput();
     } else if (waveformPrev)
-		events->add( &callAging, 0x14000, Emulator::Events::Action::UpdateExisting );       
+		events->add( &callAging, type == Type::MOS_6581 ? 200000 : 5000000, Emulator::Events::Action::UpdateExisting );       
 }
 
 inline auto Sid::Voice::clock() -> void {    
@@ -270,6 +270,10 @@ inline auto Sid::Voice::doPreWriteback( uint8_t waveformPrev ) -> bool {
     // This need more investigation
     if (waveform == 8)
         return false;
+    
+    if (waveformPrev == 0xc)
+        return false;
+    
     // What's happening here?
     if (type == Type::MOS_6581 &&
             ((((waveformPrev & 0x3) == 0x1) && ((waveform & 0x3) == 0x2))

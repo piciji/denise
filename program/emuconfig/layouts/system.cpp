@@ -48,7 +48,7 @@ AccuracyLayout::Block::Block() {
     append(videoScanlineThread, {0u, 0u}, 10);
     append(diskHighLoadThread, {0u, 0u}, 10);
     append(diskIdle, {0u, 0u}, 10);
-    append(audioRealtimeThread, {0u, 0u});   
+  //  append(audioRealtimeThread, {0u, 0u});   
     
     setAlignment(0.5);
 }

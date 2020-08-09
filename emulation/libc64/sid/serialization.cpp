@@ -87,6 +87,7 @@ auto Sid::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer( filter.mode );
     s.integer( filter.vol );
     s.integer( filter._8_div_Q );
+    s.integer( filter._1024_div_Q );
     s.integer( filter.sum );
     s.integer( filter.mix );
     s.integer( filter.ve );
@@ -103,6 +104,7 @@ auto Sid::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer( filter.Vddt_Vw_2 );
     s.integer( filter.Vw_bias );
     s.integer( filter.VbpRes );
+    s.integer( filter.w0 );
     
     for ( unsigned i = 0; i < 2; i++ ) {
         s.integer( filter.calculated[i].kVgt );

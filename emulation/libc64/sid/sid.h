@@ -225,6 +225,7 @@ struct Sid {
 		
         // internal
         uint8_t _8_div_Q;
+        int _1024_div_Q;
         uint8_t sum;
         uint8_t mix;
 
@@ -240,6 +241,7 @@ struct Sid {
 		int Vlp_x, Vlp_vc;
         int Vddt_Vw_2, Vw_bias;
         int VbpRes;
+        int w0;
         
         int* veP;
         int* v3P;
