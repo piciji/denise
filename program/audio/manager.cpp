@@ -2,12 +2,16 @@
 #include "manager.h"
 #include "../tools/status.h"
 #include "../cmd/cmd.h"
+#include "dsp/bass.h"
+#include "dsp/reverb.h"
 
 AudioManager* audioManager = nullptr;
 
 AudioManager::AudioManager() {
     
-    rData.out = new double[4096];
+    floatConversion = 1.0 / 32768.0;
+    
+    rData.out = new float[4096];
     
     cosine.setData( &rData );
 }
@@ -47,7 +51,7 @@ auto AudioManager::setResampler() -> void {
     
     stat = activeEmulator->getStatsForSelectedRegion();
     
-    double inputFrequency = stat.sampleRate;
+    inputFrequency = stat.sampleRate;
     
     bool adjustToMonitorFrequency = settings->get<bool>("video_override_exact", true);        
                         
@@ -86,13 +90,14 @@ auto AudioManager::setBufferSize() -> void {
 }
 
 auto AudioManager::setVolume() -> void {
-    if (!dsp)
-        return;
     
     unsigned volume = settings->get<unsigned>("audio_volume", 100u,{0u, 100u});
     bool mute = settings->get<bool>("audio_mute", false);
+        
+    floatConversion = 0.0;
     
-    dsp->setVolume( mute ? 0.0 : ( volume * 0.01 ) );
+    if (!mute)
+        floatConversion =  ( (float)volume * 0.01 ) / 32768.0;   
 }
 
 auto AudioManager::setAudioDsp() -> void {
@@ -100,21 +105,48 @@ auto AudioManager::setAudioDsp() -> void {
     if (!activeEmulator)
         return;
     
-    stat = activeEmulator->getStatsForSelectedRegion();
-    
-    bool reverb = settings->get<bool>("audio_reverb", false );
-    
-    if (dsp)        
+    for(auto dsp : dsps)
         delete dsp;
     
-    if (reverb)
-        dsp = new DSP::Reverb;
-    else
-        dsp = new DSP::Base;
+    dsps.clear();
     
-    dsp->init( 2, stat.stereoSound ? 2 : 1 );    
+    stat = activeEmulator->getStatsForSelectedRegion();
+
+    bool useBass = settings->get<bool>("audio_bass", false );
     
-    setVolume();
+    if (useBass) {
+        
+        DSP::Bass* bass = new DSP::Bass;                        
+        
+        bass->setMono( !stat.stereoSound );
+        bass->init( 
+            (float)outputFrequency,
+            (float)settings->get<unsigned>("audio_bass_freq", 200, {20, 200} ),
+            (float)settings->get<unsigned>("audio_bass_gain", 10, {0, 40} ),
+            settings->get<float>("audio_bass_clipping", 0.4, {0.0, 1.0} )
+        );
+        
+        dsps.push_back( (DSP::Base*)bass );
+    }    
+    
+    bool useReverb = settings->get<bool>("audio_reverb", false );
+    
+    if (useReverb) {
+        
+        DSP::Reverb* reverb = new DSP::Reverb;
+        
+        reverb->setMono( !stat.stereoSound );
+        reverb->init( 
+            (float)outputFrequency,
+            settings->get<float>("audio_reverb_drytime", 0.43, {0.0, 1.0} ),
+            settings->get<float>("audio_reverb_wettime", 0.4, {0.0, 1.0} ),
+            settings->get<float>("audio_reverb_damping", 0.8, {0.0, 1.0} ),
+            settings->get<float>("audio_reverb_roomwidth", 0.56, {0.0, 1.0} ),
+            settings->get<float>("audio_reverb_roomsize", 0.56, {0.0, 1.0} )
+        );
+        
+        dsps.push_back( (DSP::Base*)reverb );
+    }  
 }
 
 auto AudioManager::setRateControl() -> void {
@@ -144,18 +176,43 @@ auto AudioManager::power() -> void {
     statistics.current = 0;
 }
 
+auto AudioManager::applyDsp() -> void {
+
+    DSP::Data dspInput;
+    DSP::Data dspOutput;
+    
+    dspOutput.samples = nullptr;
+    dspOutput.frames = 0;
+
+    dspInput.samples = rData.out;
+    dspInput.frames = rData.outputFrames;
+    
+    for( auto dsp : dsps ) {
+                
+        dsp->process( &dspOutput, &dspInput );
+
+        dspInput.samples = dspOutput.samples;
+        dspInput.frames = dspOutput.frames;
+    }
+
+    if (dspOutput.frames) {
+        rData.out = dspOutput.samples;
+        rData.outputFrames = dspOutput.frames;
+    }
+}
+
 auto AudioManager::process( int16_t sampleLeft, int16_t sampleRight ) -> void {
     
-    buffer[bufferPos++] = (sampleLeft / 32768.0) + 1e-25;
+    buffer[bufferPos++] = sampleLeft * floatConversion;
     
     if (stat.stereoSound)
-        buffer[bufferPos++] = (sampleRight / 32768.0) + 1e-25;    
+        buffer[bufferPos++] = sampleRight * floatConversion;    
 
     if (bufferPos < bufferSize)
         return;   
 
     bufferPos = 0;
-    
+                            
     rData.in = &buffer[0];
     rData.inputFrames = stat.stereoSound ? bufferSize >> 1 : bufferSize;
     
@@ -163,7 +220,7 @@ auto AudioManager::process( int16_t sampleLeft, int16_t sampleRight ) -> void {
         double deviation = audioDriver->getCenterBufferDeviation();
         
         if (statistics.enable)
-            calcStatistics( deviation );
+            calcStatistics( (float)deviation );
         
         if (dynamicRateControl)
             rData.ratio = ratio * (1.0 + rateDelta * deviation);
@@ -171,7 +228,8 @@ auto AudioManager::process( int16_t sampleLeft, int16_t sampleRight ) -> void {
     
     cosine.process();
 
-    dsp->process( rData.out, rData.outputFrames );
+    if (dsps.size())
+        applyDsp();
 
     if ( audioDriver->expectFloatingPoint() ) {
         
@@ -191,7 +249,7 @@ auto AudioManager::process( int16_t sampleLeft, int16_t sampleRight ) -> void {
     }
 }
 
-auto AudioManager::calcStatistics( double adjust ) -> void {
+auto AudioManager::calcStatistics( float adjust ) -> void {
     
     statistics.sum += adjust;
     statistics.minRaw = std::max( statistics.minRaw, adjust );

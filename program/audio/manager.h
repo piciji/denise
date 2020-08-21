@@ -3,8 +3,7 @@
 
 #include "resampler/data.h"
 #include "resampler/cosine.h"
-#include "dsp/reverb.h"
-#include "dsp/dsp.h"
+#include "dsp/base.h"
 #include "../program.h"
 #include "../../emulation/interface.h"
 
@@ -15,34 +14,36 @@ struct AudioManager {
     
     unsigned bufferPos = 0;
     unsigned bufferSize = 0;
-    double buffer[2048];    
+    float buffer[2048];        
+    float floatConversion;
+    std::vector<DSP::Base*> dsps;
     
     int16_t outBuffer[4096];
     float outBufferFloat[4096];
     Resampler::Cosine cosine;
     Resampler::Data rData;
     
-    double ratio;
+    double ratio;    
     bool dynamicRateControl;
     double rateDelta = 0.005;
     
     struct {
-        double sum = 0;
+        float sum = 0;
         unsigned count = 0;
-        double average = 0;
+        float average = 0;
         bool enable = false;
-        double current;
-        double min;
-        double max;
-        double minRaw;
-        double maxRaw;
+        float current;
+        float min;
+        float max;
+        float minRaw;
+        float maxRaw;
 
     } statistics;
         
     double outputFrequency;
+    double inputFrequency;
 
     Emulator::Interface::Stats stat;
-    DSP::Base* dsp = nullptr;
 
     template<unsigned bits>
     static auto sclamp(const signed x) -> signed {
@@ -64,8 +65,9 @@ struct AudioManager {
     auto setBufferSize() -> void;
     auto setResampler() -> void;
     auto setStatistics() -> void;
-    auto calcStatistics( double adjust ) -> void;
+    auto calcStatistics( float adjust ) -> void;
     auto power() -> void;
+    auto applyDsp() -> void;
 };
 
 extern AudioManager* audioManager;

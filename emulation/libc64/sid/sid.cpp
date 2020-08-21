@@ -1,6 +1,7 @@
 
 #include "sid.h"
 
+#include "../system/system.h"
 #include "register.cpp"
 #include "envelope.cpp"
 #include "voice.cpp"
@@ -30,7 +31,7 @@ Sid::Sid( Type type, Emulator::Events* events ) : filter( this ) {
 	voice[0].setSyncSource( &voice[2] );
 	voice[1].setSyncSource( &voice[0] );
 	voice[2].setSyncSource( &voice[1] );
-	
+    
 	for( unsigned i = 0; i < 3; i++ ) {       
         voice[i].envelope = &envelope[i];
         voice[i].events = events;
@@ -42,6 +43,7 @@ Sid::Sid( Type type, Emulator::Events* events ) : filter( this ) {
 	idle = true;
 	ready = false;
     powerOn = false;
+    sampleLimit = 2;
     
     getPotX = []() { return 0xff; };
     getPotY = []() { return 0xff; };
@@ -49,39 +51,39 @@ Sid::Sid( Type type, Emulator::Events* events ) : filter( this ) {
     
     registerCallbacks();
 	
-	std::thread worker( [this] {
-
-        std::chrono::milliseconds duration(5);
-            
-		while(true) {
-			
-			while ( !ready.load() ) {
-                
-                if (idle.load())
-                    std::this_thread::sleep_for( duration );                                            
-                    
-                // consumes thread fully in non idle mode.
-                // even a thread::yield would slow down this thread too much to be usefull.
-                // without a thread::yield there is no re scheduling possible, so be carefull.
-                // this mode would crash a single core cpu hard.
-			}
-			
-			filter.clockMulti(v1, v2, v3);
-
-			externalFilter.clock( filter.outputMulti() );	    
-
-            if (++sampleCounter == SID_SAMPLE_COUNTER ) {
-                audioRefresh( externalFilter.output( ) );
-                sampleCounter = 0;
-            }
-
-			this->ready = false;
-		}
-	});	
-    
-    Emulator::setThreadPriorityRealtime( worker );
-	
-	worker.detach();
+//	std::thread worker( [this] {
+//
+//        std::chrono::milliseconds duration(5);
+//            
+//		while(true) {
+//			
+//			while ( !ready.load() ) {
+//                
+//                if (idle.load())
+//                    std::this_thread::sleep_for( duration );                                            
+//                    
+//                // consumes thread fully in non idle mode.
+//                // even a thread::yield would slow down this thread too much to be usefull.
+//                // without a thread::yield there is no re scheduling possible, so be carefull.
+//                // this mode would crash a single core cpu hard.
+//			}
+//			
+//			filter.clockMulti(v1, v2, v3);
+//
+//			externalFilter.clock( filter.outputMulti() );	    
+//
+//            if (++sampleCounter == SID_SAMPLE_COUNTER ) {
+//                audioRefresh( externalFilter.output( ) );
+//                sampleCounter = 0;
+//            }
+//
+//			this->ready = false;
+//		}
+//	});	
+//    
+//    Emulator::setThreadPriorityRealtime( worker );
+//	
+//	worker.detach();
 }
 
 auto Sid::registerCallbacks() -> void {
@@ -129,6 +131,13 @@ auto Sid::setMoreAccuracy(bool state) -> void {
 auto Sid::updateIdleState() -> void {
     
     idle = !powerOn ? true : !moreAccuracy;
+}
+
+auto Sid::setSampleFetch( uint8_t val ) -> void {
+    
+    sampleCounter = 0;
+    
+    sampleLimit = val;
 }
 
 auto Sid::setType( Type type ) -> void {
@@ -189,18 +198,19 @@ auto Sid::powerOff() -> void {
 }
 
 auto Sid::clock() -> void {
+    unsigned i;
     
-    for (unsigned i = 0; i < 3; i++) {
+    for (i = 0; i < 3; i++) {
         //both happens in parallel
         envelope[i].clock();
         voice[i].clock();
     }
 
-    for (unsigned i = 0; i < 3; i++)
-        voice[i].synchronize();
+    for (i = 0; i < 3; i++)
+        voice[i].synchronize();    
 
-    for (unsigned i = 0; i < 3; i++)
-        voice[i].setWaveformOutput();
+    for (i = 0; i < 3; i++)
+        voice[i].setWaveformOutput();    
     
     if (audioOut) {    
         if (moreAccuracy) {            
@@ -219,10 +229,10 @@ auto Sid::clock() -> void {
         } else {
 
             filter.clock(voice[0].output(), voice[1].output(), voice[2].output());
-
-            externalFilter.clock( filter.output() );	    
-
-            if (++sampleCounter == SID_SAMPLE_COUNTER ) {
+            
+            externalFilter.clock( filter.output() );	
+            
+            if (++sampleCounter == sampleLimit ) {
                 audioRefresh( externalFilter.output( ) );
                 sampleCounter = 0;
             }

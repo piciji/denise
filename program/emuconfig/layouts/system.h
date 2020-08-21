@@ -16,32 +16,6 @@ struct AccuracyLayout : GUIKIT::FramedVerticalLayout {
     AccuracyLayout();
 };
 
-struct ModelLayout : GUIKIT::FramedVerticalLayout {
-    
-    struct Line : GUIKIT::HorizontalLayout {
-        
-        struct Block : GUIKIT::HorizontalLayout {
-            Emulator::Interface::Model* model;
-            GUIKIT::CheckBox checkBox;
-			GUIKIT::ComboButton combo;
-			std::vector<GUIKIT::RadioBox*> options;
-            GUIKIT::Label label;
-            GUIKIT::LineEdit lineEdit;
-
-            Block(Emulator::Interface::Model* model);
-        };
-        std::vector<Block*> blocks;       
-        
-        Line();
-    };
-    
-    std::vector<Line*> lines;
-        
-    auto build( Emulator::Interface* emulator ) -> void;
-    
-    ModelLayout();
-};
-
 struct MemoryLayout : GUIKIT::FramedVerticalLayout {
     struct Block : GUIKIT::HorizontalLayout {
         Emulator::Interface::MemoryType* memoryType;
@@ -114,11 +88,7 @@ struct SystemLayout : GUIKIT::VerticalLayout {
     ExpansionLayout expansionLayout;
 
     auto translate() -> void;
-	auto setEnabled(bool state) -> void;
-	auto toggleModel( unsigned id ) -> bool;
-    auto stepRangeModel( unsigned id, int step ) -> int;
-	auto updateModelWidget( ModelLayout::Line::Block* block ) -> void;
-    auto updateModelWidgets( ) -> void;
+	auto setEnabled(bool state) -> void;    
     auto activateDrive( Emulator::Interface::MediaGroup* mediaGroup, unsigned requestedCount ) -> void;
     auto updateExpansionMemory() -> void;
     auto getSizeString( unsigned sizeInKb ) -> std::string;

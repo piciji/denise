@@ -210,26 +210,25 @@ struct Interface {
 	struct Model {
 		unsigned id;
 		std::string name;		
-		enum Type : unsigned { Switch, Range, Hex, Radio, Combo } type;
-		enum Purpose : unsigned { Cpu, GraphicChip, SoundChip, Cia, AudioFilter, Misc } purpose;
+		enum Type : unsigned { Switch, Range, Hex, Radio, Combo, Slider } type;
+		enum Purpose : unsigned { Cpu, GraphicChip, SoundChip, Cia, AudioSettings, AudioResampler, Misc } purpose;
 		int defaultValue;
 		std::vector<int> range;
 		std::vector<std::string> options;
+        unsigned steps;
 
 		auto isRadio() -> bool { return type == Type::Radio; }
 		auto isCombo() -> bool { return type == Type::Combo; }
 		auto isSwitch() -> bool { return type == Type::Switch; }
         auto isHex() -> bool { return type == Type::Hex; }
 		auto isRange() -> bool { return type == Type::Range; }
+        auto isSlider() -> bool { return type == Type::Slider; }
 		
 		auto isGraphicChip() -> bool { return purpose == Purpose::GraphicChip; }
+        auto isSoundChip() -> bool { return purpose == Purpose::SoundChip; }
+        auto isAudioResampler() -> bool { return purpose == Purpose::AudioResampler; }
 	};
-	std::vector<Model> models;
-	
-    struct Performance {
-        unsigned id;
-        std::string name;	
-    };
+	std::vector<Model> models;	
     	
 	// general purpose emulator output listing
 	struct Listing {

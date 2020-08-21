@@ -15,8 +15,8 @@ target := $(shell g++ --version | grep i686)
 
 include data/Makefile
 
-objects := program view config emuconfig mediaview archiveviewer states firmware cmd
-objects += input audio video palette shader
+objects := program view config emuconfig emumodel mediaview archiveviewer states firmware cmd
+objects += input audio video palette shader bass reverb
 objects += guikit libami libC64
 objects += driver
 ifeq ($(platform),windows)
@@ -142,10 +142,13 @@ obj/input.o:		program/input/manager.cpp
 obj/view.o:		program/view/view.cpp
 obj/config.o:		program/config/config.cpp
 obj/emuconfig.o:	program/emuconfig/config.cpp
+obj/emumodel.o:		program/emuconfig/layouts/model.cpp
 obj/mediaview.o:	program/media/media.cpp
 obj/archiveviewer.o:	program/config/archiveViewer.cpp
 obj/states.o:		program/states/states.cpp
 obj/audio.o:		program/audio/manager.cpp
+obj/bass.o:		program/audio/dsp/bass.cpp
+obj/reverb.o:		program/audio/dsp/reverb.cpp
 obj/firmware.o:		program/firmware/manager.cpp
 obj/cmd.o:		program/cmd/cmd.cpp
 obj/palette.o:		program/video/palette.cpp

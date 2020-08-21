@@ -34,7 +34,6 @@
 #include "../../tools/clamp.h"
 #include "../../tools/serializer.h"
 
-#define SID_SAMPLE_COUNTER 18
 
 namespace LIBC64 {
 
@@ -42,7 +41,7 @@ typedef double doublePoint[2];
 
 struct Sid {
     
-    enum Type { MOS_6581 = 0, MOS_8580 = 1 } type;
+    enum Type { MOS_6581 = 0, MOS_8580 = 1 } type;    
     using Callback = std::function<void ()>;
     std::function<void ( int16_t )> audioRefresh;
     std::function<uint8_t ()> getPotX;
@@ -51,8 +50,9 @@ struct Sid {
     
     Sid( Type type, Emulator::Events* events );
            
-    auto setType( Type type ) -> void;
+    auto setType( Type type ) -> void;    
     auto setDigiBoost( bool state ) -> void;
+    auto setSampleFetch( uint8_t val ) -> void;
     auto updateDigiBoost( bool state ) -> void;
     auto readIO( uint8_t addr ) -> uint8_t;
     auto writeIO( uint8_t addr, uint8_t value ) -> void;
@@ -87,6 +87,7 @@ struct Sid {
 	std::atomic<bool> idle;
     
     uint8_t sampleCounter;
+    uint8_t sampleLimit;
     Emulator::Events* events;
     Callback callPotUpdate;
     uint8_t potX;
@@ -210,12 +211,16 @@ struct Sid {
 		
 		Filter(Sid* sid);
 		
+        bool old24 = false; // VICE 2.4 filter behaviour for 8580
+        bool use24 = false;        
+        
         // Sid control
         Type type;  // model
         Sid* sid;
         bool enabled; // disable filter
         uint8_t voiceMask; // disable voices
-        int bias;
+        int bias6581;
+        int bias8580;
         // Regsiter
 		uint16_t fc; // cutoff frequency
 		uint8_t res; // Resonanz
@@ -286,7 +291,9 @@ struct Sid {
 		
 		struct Calculated {
 			int voiceScaleS14;
+            int voiceScaleS14Old;
 			int voiceDC;
+            int voiceDCOld;
 			int kVddt;
 			double kVddtWithoutVmin;
 			double vmin;
@@ -311,7 +318,7 @@ struct Sid {
             int calcQ2[1 << 16];
             
             int nrXFilter;
-            int nrXMixer;
+            int nrXMixer;            
 			
 			Opamp opamp[1 << 16];
 		};
@@ -338,13 +345,16 @@ struct Sid {
 		auto writeModeVol( uint8_t data ) -> void;
 		auto updateSumMix() -> void;
 		auto setType( Type type ) -> void;
+        auto setOldFilter(bool state) -> void;
 		auto clock(int voice1, int voice2, int voice3) -> void;
+        auto clock24(int voice1, int voice2, int voice3) -> void;
 		auto clockMulti(int voice1, int voice2, int voice3) -> void;
 		auto output() -> short;
 		auto outputMulti() -> short;
         auto multiPrecalculate() -> void;
         auto setVoiceMask( uint8_t mask ) -> void;
-		auto adjustFilterBias(int value) -> void;
+		auto adjustFilterBias6581(int value) -> void;
+        auto adjustFilterBias8580(int value) -> void;
         auto updateQ() -> void;
         auto input(short sample) -> void;
         auto reset() -> void;

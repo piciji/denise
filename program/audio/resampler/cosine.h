@@ -29,12 +29,12 @@ namespace Resampler {
 struct Cosine {    
     
     struct FrameBuffer {
-        double l;
-        double r;
+        float l;
+        float r;
     };
     
-    static inline auto cc_int(double x, double b) -> double {
-        double val = x * b;
+    static inline auto cc_int(float x, float b) -> float {
+        float val = x * b;
 
         val = val * (1 - 0.25 * val * val * (3.0 - val * val));
 
@@ -43,7 +43,7 @@ struct Cosine {
 
     #define cc_kernel(x, b)    ((cc_int((x) + 0.5, (b)) - cc_int((x) - 0.5, (b))))
 
-    static inline auto add_to(const FrameBuffer* source, FrameBuffer* target, double ratio) -> void {
+    static inline auto add_to(const FrameBuffer* source, FrameBuffer* target, float ratio) -> void {
         target->l += source->l * ratio;
         target->r += source->r * ratio;
     }
@@ -57,7 +57,7 @@ struct Cosine {
         resampler(  );
     }
     
-    auto reset(double ratio, unsigned inChannels) -> void {       
+    auto reset(float ratio, unsigned inChannels) -> void {       
 
         for (int i = 0; i < 4; i++) {
             buffer[i].l = 0.0;
@@ -75,15 +75,15 @@ struct Cosine {
                 
                 resampler = [this]() {               
 
-                    double* inp = rData->in;
+                    float* inp = rData->in;
 
-                    double* inpMax = inp + rData->inputFrames;
+                    float* inpMax = inp + rData->inputFrames;
 
                     FrameBuffer* outp = (FrameBuffer*) rData->out;
 
-                    double ratio = 1.0 / rData->ratio;
+                    float ratio = 1.0 / rData->ratio;
 
-                    double b = rData->ratio; /* cutoff frequency. */
+                    float b = rData->ratio; /* cutoff frequency. */
 
                     while (inp != inpMax) {
 
@@ -122,9 +122,9 @@ struct Cosine {
 
                     FrameBuffer* outp = (FrameBuffer*) rData->out;
 
-                    double ratio = 1.0 / rData->ratio;
+                    float ratio = 1.0 / rData->ratio;
 
-                    double b = rData->ratio; /* cutoff frequency. */
+                    float b = rData->ratio; /* cutoff frequency. */
 
                     while (inp != inpMax) {
                         add_to(inp, buffer + 0, cc_kernel(distance, b));
@@ -160,14 +160,14 @@ struct Cosine {
                 
                 resampler = [this]() {
 
-                    double* inp = rData->in;
+                    float* inp = rData->in;
 
-                    double* inpMax = inp + rData->inputFrames;
+                    float* inpMax = inp + rData->inputFrames;
 
                     FrameBuffer* outp = (FrameBuffer*) rData->out;
 
-                    double b = fmin(rData->ratio, 1.00); /* cutoff frequency. */
-                    double ratio = 1.0 / rData->ratio;
+                    float b = fmin(rData->ratio, 1.00); /* cutoff frequency. */
+                    float ratio = 1.0 / rData->ratio;
 
                     while (inp != inpMax) {
                         buffer[0] = buffer[1];
@@ -181,7 +181,7 @@ struct Cosine {
                             outp->r = 0.0;
 
                             for (int i = 0; i < 4; i++) {                                
-                                double temp = cc_kernel(distance + 1.0 - i, b);
+                                float temp = cc_kernel(distance + 1.0 - i, b);
                                 outp->l += buffer[i].l * temp;
                             }
                             // resue calculation
@@ -208,8 +208,8 @@ struct Cosine {
 
                     FrameBuffer* outp = (FrameBuffer*) rData->out;
 
-                    double b = fminf(rData->ratio, 1.00); /* cutoff frequency. */
-                    double ratio = 1.0 / rData->ratio;
+                    float b = fminf(rData->ratio, 1.00); /* cutoff frequency. */
+                    float ratio = 1.0 / rData->ratio;
 
                     while (inp != inpMax) {
                         buffer[0] = buffer[1];
@@ -224,7 +224,7 @@ struct Cosine {
 
                             for (int i = 0; i < 4; i++) {
 
-                                double temp = cc_kernel(distance + 1.0 - i, b);
+                                float temp = cc_kernel(distance + 1.0 - i, b);
                                 outp->l += buffer[i].l * temp;
                                 outp->r += buffer[i].r * temp;
                             }
@@ -243,7 +243,7 @@ struct Cosine {
         }
     }
     
-    double distance;    
+    float distance;    
     FrameBuffer buffer[4];
     std::function<void ()> resampler;
     Data* rData = nullptr;

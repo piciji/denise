@@ -72,7 +72,7 @@ auto Sid::Envelope::control( bool gate ) -> void {
         events->add( &callDecay, 1, Emulator::Events::Action::BeforeOthers ); // accidently called in next cycle
         events->add( &callAttack, 2 + add, Emulator::Events::Action::BeforeOthers );
         
-    } else if (!lockEnvCounter) {
+    } else {
         
         if ( events->has( &callEnvelope ) )
             // allow pending counter update

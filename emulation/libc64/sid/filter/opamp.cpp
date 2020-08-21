@@ -324,7 +324,8 @@ auto Sid::Filter::solveOpamp(Opamp* opamp, int n, int vi, int& x, Calculated& ca
         // skaliert : m * 2^11 + Vorzeichen bit
         int df = (b_vo * (dvx + (1 << 11)) - a * (b_vx * dvx >> 7)) >> 15;
         // Der Quotient ist sklaiert: m^2 * 2^27  / m * 2^11 = m * 2^16.
-        x -= f / df; // Newton Raphson
+        if (df)
+            x -= f / df; // Newton Raphson
 
         if (x == xk) {
             // 'x' hat sich nicht mehr verändert. Somit ist kein weiterer Verbesserungsschritt möglich.
@@ -544,9 +545,9 @@ auto Sid::Filter::solveOpampMulti(Opamp* opamp, int n, int c, int& x, Calculated
 // im Register gesetzt wird.
 
 inline auto Sid::Filter::solveIntegrate8580(int vi, int& vx, int& vc, Calculated& ca) -> int {
-  
+
     unsigned int Vgst = ca.kVgt - vx;
-    unsigned int Vgdt = ca.kVgt - vi;
+    unsigned int Vgdt = (vi < ca.kVgt) ? ca.kVgt - vi : 0;  // triode/saturation mode
 
     // Wir lösen die Gleichung auf: vc = vc0 - n * dt/C ( (Vgt - vx)^2 - (Vgt - vi)^2 ) 
     // 'n_dac' ist der vorberechnete Faktor.
@@ -704,7 +705,7 @@ inline auto Sid::Filter::solveIntegrate6581(int vi, int& vx, int& vc, Calculated
 	// 'Vgs' bzw. 'Vgd' sind die Indexe zur entsprechenden Vorberechnung.
     // Die Ausmultiplizierung von dt/C * Is für jeweils 'if' und 'ir' ist ebenfalls
     // in der Vorberechnung enthalten.
-    int n_I_vcr = (vcr_n_Ids_term[Vgs] - vcr_n_Ids_term[Vgd]) << 15;
+    int n_I_vcr = int(unsigned(vcr_n_Ids_term[Vgs] - vcr_n_Ids_term[Vgd]) << 15);
 
     // Einsetzen der Ergebnisse aller Vorberchnungen um die Formel abzuschließen:
     // vc = vc0 - dt/C * Rs + dt/C * Rw

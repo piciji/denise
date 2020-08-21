@@ -295,29 +295,32 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
                 break;
 
             auto view = EmuConfigView::TabWindow::getView( activeEmulator );
-            bool state = view->systemLayout->toggleModel( C64Interface::ModelIdDigiboost );
+            bool state = view->audioLayout->settingsLayout.toggleCheckbox( C64Interface::ModelIdDigiboost );
             status->addMessage( trans->get( state ? "digiboost_on" : "digiboost_off" ) );
         } break;
         case Hotkey::Id::SwapSid: {
             if (!activeEmulator || !dynamic_cast<LIBC64::Interface*>(activeEmulator))
                 break;
-            auto view = EmuConfigView::TabWindow::getView( activeEmulator );
-            bool state = view->systemLayout->toggleModel( C64Interface::ModelIdSid );
-            status->addMessage( trans->get( state ? "sid_6581_on" : "sid_8580_on" ) );
+            auto view = EmuConfigView::TabWindow::getView( activeEmulator );            
+            unsigned val = view->systemLayout->modelLayout.nextOption( C64Interface::ModelIdSid );
+            view->audioLayout->settingsLayout.updateWidget( C64Interface::ModelIdSid );
+            status->addMessage( trans->get( val == 1 ? "sid_6581_on" : "sid_8580_on" ) );
         } break;
         case Hotkey::Id::ToggleSidFilter: {
             if (!activeEmulator || !dynamic_cast<LIBC64::Interface*>(activeEmulator))
                 break;
             auto view = EmuConfigView::TabWindow::getView( activeEmulator );
-            bool state = view->systemLayout->toggleModel( C64Interface::ModelIdFilter );
+            bool state = view->audioLayout->settingsLayout.toggleCheckbox( C64Interface::ModelIdFilter );
             status->addMessage( trans->get( state ? "sid_filter_on" : "sid_filter_off" ) );
         } break;
         case Hotkey::AdjustBiasUp:
         case Hotkey::AdjustBiasDown: {
             if (!activeEmulator || !dynamic_cast<LIBC64::Interface*>(activeEmulator))
                 break;
+            
+            int _sid = activeEmulator->getModel( C64Interface::ModelIdSid );
             auto view = EmuConfigView::TabWindow::getView( activeEmulator );
-            int state = view->systemLayout->stepRangeModel( C64Interface::ModelIdBias, id == Hotkey::AdjustBiasUp ? 100: -100 );
+            int state = view->audioLayout->settingsLayout.stepRange( _sid == 0 ? C64Interface::ModelIdBias8580 : C64Interface::ModelIdBias6581, id == Hotkey::AdjustBiasUp ? 100: -100 );
             status->addMessage( trans->get( "sid_bias_change", {{"%state%", std::to_string(state) }} ) );                    
         } break;
         case Hotkey::DiskSwap0: case Hotkey::DiskSwap1: case Hotkey::DiskSwap2:

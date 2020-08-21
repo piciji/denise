@@ -946,7 +946,7 @@ auto System::setCycleRenderer(bool state) -> void {
 
 auto System::updateStats() -> void {	
 	interface->stats.region = vicII->isNTSCGeometry() ? Interface::Region::Ntsc : Interface::Region::Pal;
-	interface->stats.sampleRate = (double)vicII->frequency() / (double)SID_SAMPLE_COUNTER;
+	interface->stats.sampleRate = (double)vicII->frequency() / (double)sid->sampleLimit;
 	interface->stats.fps = 1.0 / ( (double)vicII->cyclesPerFrame() / (double)vicII->frequency() );
 	interface->stats.stereoSound = false;	
 }

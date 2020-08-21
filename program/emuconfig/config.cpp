@@ -36,6 +36,7 @@ namespace Fonts {
 #include "layouts/input.cpp"
 #include "layouts/system.cpp"
 #include "layouts/video.cpp"
+#include "layouts/audio.cpp"
 #include "layouts/border.cpp"
 #include "layouts/states.cpp"
 #include "layouts/firmware.cpp"
@@ -77,8 +78,11 @@ auto TabWindow::build() -> void {
     systemLayout = new SystemLayout( this );
     firmwareLayout = new FirmwareLayout( this );
     videoLayout = new VideoLayout( this );
-    if (emulator->ident == "C64")
+    
+    if (emulator->ident == "C64") {
         paletteLayout = new PaletteLayout( this );
+        audioLayout = new AudioLayout( this );        
+    }
     borderLayout = new BorderLayout( this );
     statesLayout = new StatesLayout( this );
     miscLayout = new MiscLayout( this );
@@ -87,9 +91,10 @@ auto TabWindow::build() -> void {
 	tab.appendHeader("", joystickImage); 
 	tab.appendHeader("", scriptImage); 
 	tab.appendHeader("", displayImage);
-	if (emulator->ident == "C64")
+	if (emulator->ident == "C64") {
         tab.appendHeader("", paletteImage);
-
+        tab.appendHeader("", nullptr);
+    }
     tab.appendHeader("", memoryImage);   
 	tab.appendHeader("", cropImage);
     tab.appendHeader("", nullptr);
@@ -99,8 +104,10 @@ auto TabWindow::build() -> void {
 	tab.setLayout(Layout::Control, *inputLayout, {~0u, ~0u} );
 	tab.setLayout(Layout::States, *statesLayout, {~0u, ~0u} );    
 	tab.setLayout(Layout::Presentation, *videoLayout, {~0u, ~0u} );
-	if (emulator->ident == "C64")
+	if (emulator->ident == "C64") {
         tab.setLayout(Layout::Palette, *paletteLayout, {~0u, ~0u} );
+        tab.setLayout(Layout::Audio, *audioLayout, {~0u, ~0u} );
+    }
 
     tab.setLayout(Layout::Firmware, *firmwareLayout, {~0u, ~0u} );
 	tab.setLayout(Layout::Border, *borderLayout, {~0u, ~0u} );                    
@@ -147,8 +154,12 @@ auto TabWindow::translate() -> void {
     borderLayout->translate();
     videoLayout->translate();
     statesLayout->translate();
-    if (paletteLayout)
+    if (paletteLayout) 
         paletteLayout->translate();
+        
+    if (audioLayout)
+        audioLayout->translate();
+    
     miscLayout->translate();
 
     tab.setHeader(Layout::Control, trans->get("control"));
@@ -159,8 +170,10 @@ auto TabWindow::translate() -> void {
     tab.setHeader(Layout::States, trans->get("states"));
     tab.setHeader(Layout::Misc, trans->get("miscellaneous"));
 
-    if (emulator->ident == "C64")
+    if (emulator->ident == "C64") {
         tab.setHeader(Layout::Palette, trans->get("palette"));
+        tab.setHeader(Layout::Audio, trans->get("SID"));
+    }
 }
 
 auto TabWindow::showDelayed(Layout layout) -> void {

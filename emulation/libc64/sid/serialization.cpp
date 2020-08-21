@@ -9,7 +9,9 @@ auto Sid::serialize(Emulator::Serializer& s, bool light) -> void {
         // wait for worker thread
 		while ( ready.load() ) { }
     }
-        
+       
+    uint8_t sampleLimitBefore = sampleLimit;
+    
     s.integer( (uint8_t&) type );
     s.integer( digiBoost );
     s.integer( lastBusValue );
@@ -20,6 +22,7 @@ auto Sid::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer( registerWrite.value );
     if (!light)
         s.integer( sampleCounter );
+    s.integer(sampleLimit);
     s.integer( potX );
     s.integer( potY );
     s.integer( v1 );
@@ -80,7 +83,8 @@ auto Sid::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer( (uint8_t&)filter.type );
     s.integer( filter.enabled );
     s.integer( filter.voiceMask );
-    s.integer( filter.bias );
+    s.integer( filter.bias6581 );
+    s.integer( filter.bias8580 );
     s.integer( filter.fc );
     s.integer( filter.res );
     s.integer( filter.filt );
@@ -105,6 +109,8 @@ auto Sid::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer( filter.Vw_bias );
     s.integer( filter.VbpRes );
     s.integer( filter.w0 );
+    s.integer( filter.old24 );
+    s.integer( filter.use24 );
     
     for ( unsigned i = 0; i < 2; i++ ) {
         s.integer( filter.calculated[i].kVgt );
@@ -120,6 +126,9 @@ auto Sid::serialize(Emulator::Serializer& s, bool light) -> void {
     
     if (s.mode() == Emulator::Serializer::Mode::Load) {
         setMoreAccuracy( moreAccuracy );
+        
+        if (!light && (sampleLimitBefore != sampleLimit))
+            system->updateStats();
     }
         
 }

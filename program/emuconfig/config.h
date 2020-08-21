@@ -8,6 +8,7 @@ struct FirmwareManager;
 
 #include "../../guikit/api.h"
 #include "../program.h"
+#include "layouts/model.h"
 
 namespace EmuConfigView {
 
@@ -22,16 +23,18 @@ struct TabWindow;
 #include "layouts/firmware.h"
 #include "layouts/palette.h"
 #include "layouts/misc.h"
+#include "layouts/audio.h"
 
 struct TabWindow : public GUIKIT::Window {
     
-    enum Layout : unsigned { System, Control, States, Presentation, Palette, Firmware, Border, Misc };
+    enum Layout : unsigned { System, Control, States, Presentation, Palette, Audio, Firmware, Border, Misc };
     
     Emulator::Interface* emulator;
     
     Message* message;
     InputLayout* inputLayout = nullptr;
     SystemLayout* systemLayout = nullptr;
+    AudioLayout* audioLayout = nullptr;
     FirmwareLayout* firmwareLayout = nullptr;
     BorderLayout* borderLayout = nullptr;
     VideoLayout* videoLayout = nullptr;

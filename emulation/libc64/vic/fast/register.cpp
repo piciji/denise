@@ -185,7 +185,7 @@ auto VicIIFast::writeReg( uint8_t addr, uint8_t value ) -> void {
 
 			if (cAccessArea && (_badLine != badLine) )
 				setRdy(_badLine);        
-
+                        
 			if ( badLine != _badLine ) {
 
 				if (cycle <= 13) {
@@ -196,7 +196,7 @@ auto VicIIFast::writeReg( uint8_t addr, uint8_t value ) -> void {
 
 				} else if (cycle < 54 ) {
 
-					if (cycle >= 20) {
+					if (cycle >= 32) {
 						if (useThread)
 							while (ready.load()) {}
 

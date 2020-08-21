@@ -48,17 +48,12 @@ auto States::load( std::string path, bool prependFolder ) -> void {
     emulator->loadstate( data, file.getSize() );
 
     updateWriteProtection( loadedMedia );
-    
-	bool regionCouldChanged = false;
 	
-    updateModels(regionCouldChanged);
+    updateModels();
 
     updateConnectedDevices();
     
-    updateTapeMenu();
-    
-	if (regionCouldChanged)
-		updateRegion();
+    updateTapeMenu();    
     
     updateExpansionJumper();
     
@@ -462,8 +457,11 @@ auto States::updateConnectedDevices() -> void {
     view->setCursor( emulator );
 }
 
-auto States::updateModels(bool& regionChange) -> void {
+auto States::updateModels() -> void {
 
+    bool regionChange = false;
+    bool resamplerChange = false;
+    
     auto cfgView = EmuConfigView::TabWindow::getView( emulator );
 
     for(auto& model : emulator->models) {
@@ -472,8 +470,12 @@ auto States::updateModels(bool& regionChange) -> void {
 		
 		if (model.isGraphicChip()) {
 			auto oldValue = settings->get<int>( program->ident(emulator, model.name ), model.defaultValue, model.range );
-			regionChange = value != oldValue;
-		}
+			regionChange = value != oldValue;            
+            
+		} else if (model.isAudioResampler()) {
+            auto oldValue = settings->get<int>( program->ident(emulator, model.name ), model.defaultValue, model.range );            
+            resamplerChange = value != oldValue;                
+        }
 
         if (model.isSwitch() )
             settings->set<bool>( program->ident(emulator, model.name), (bool)value );
@@ -481,19 +483,22 @@ auto States::updateModels(bool& regionChange) -> void {
             settings->set<int>( program->ident(emulator, model.name), value );                        
     }
 
-    cfgView->systemLayout->updateModelWidgets();
-}
+    cfgView->systemLayout->modelLayout.updateWidgets();
+    if (cfgView->audioLayout)
+        cfgView->audioLayout->settingsLayout.updateWidgets();
+    
+    if (regionChange) {
+        auto cfgView = EmuConfigView::TabWindow::getView( emulator );
+    
+        cfgView->videoLayout->updatePresets();  
+    }
+    
+    if (regionChange || resamplerChange) {
+        audioManager->power();
 
-auto States::updateRegion() -> void {
-    
-    auto cfgView = EmuConfigView::TabWindow::getView( emulator );
-    
-    cfgView->videoLayout->updatePresets();
-        
-    audioManager->power();
-    
-    if (activeVideoManager)
-        activeVideoManager->initFpsLimit();
+        if (activeVideoManager)
+            activeVideoManager->initFpsLimit();
+    }
 }
 
 auto States::updateExpansionJumper() -> void {

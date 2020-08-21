@@ -44,7 +44,7 @@ struct States {
     
     auto updateTapeMenu() -> void;
     
-    auto updateModels(bool& regionChange) -> void;
+    auto updateModels() -> void;
     
     auto statusMessage( std::string langKey, std::string replacer ) -> void;
     
@@ -69,8 +69,6 @@ struct States {
     auto changeSlot( bool down ) -> void;    
     
     auto updateSaveable() -> void;
-    
-    auto updateRegion() -> void;
     
     auto updateExpansionJumper() -> void;
     

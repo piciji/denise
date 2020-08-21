@@ -4,8 +4,8 @@
 namespace Resampler {
     
 struct Data {
-    double* in;
-    double* out;
+    float* in;
+    float* out;
 
     // 1 or 2 incomming channels supported
     // in case of one channel, resampler result is simply copied in second channel

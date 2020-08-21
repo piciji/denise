@@ -153,9 +153,9 @@ auto VicIIFast::clock() -> void {
     } else if (cycle == 13) {
         
         if (badLine)
-            rc = 0;
-            
-    } else if (cycle == 20) {
+            rc = 0;            
+                        
+    } else if (cycle == 32) {
         dmaSpritesOff();
         
         if (visibleLine) {            

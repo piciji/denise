@@ -28,7 +28,7 @@ namespace LIBC64 {
     
 Sid::ExternalFilter::ExternalFilter() {
     // Zwischen Ausgang am Sid und Ausgang am C64 findet noch eine weitere Filterung statt.
-    // Dabei werden nur Frequenzen zwischen 16 Hz u. 16 kHz durchgelassen.
+    // Dabei werden nur Frequenzen zwischen 16 Hz u. 15.9 kHz durchgelassen.
     // Mittels 2 RC Gliedern findet zuerst die Tiefpass im Anschluß die Hochpass Filterung statt.
 	// Ein RC Glied besteht aus einem Widerstand und einem Kondensator.
 	// Ist der Kondensator parallel geschalten, sprechen wir von einem Tiefpass Filter.
@@ -81,7 +81,7 @@ inline auto Sid::ExternalFilter::clock( short Vi ) -> void {
     // vhp: Ausgangsspannung Filter 2 (skaliert: 27 bit)
     
     // delta Skalierung: 27 bit
-    int dVlp = w0lp_1_s7 * ((Vi << 11) - Vlp) >> 7;
+    int dVlp = w0lp_1_s7 * int((unsigned(Vi) << 11) - unsigned(Vlp)) >> 7;
     // vlp ist der Eingang für den 2. Filter
     int dVhp = w0hp_1_s17 * (Vlp - Vhp) >> 17;
     

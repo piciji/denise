@@ -41,9 +41,50 @@
 #include "opamp.cpp"
 
 namespace LIBC64 {
+
+// old 8580 behaviour
+auto Sid::Filter::clock24(int voice1, int voice2, int voice3) -> void {
+    
+    Calculated& ca = calculated[ this->type ];
+	v1 = (voice1 * ca.voiceScaleS14Old >> 18) + ca.voiceDCOld;
+	v2 = (voice2 * ca.voiceScaleS14Old >> 18) + ca.voiceDCOld;
+	v3 = (voice3 * ca.voiceScaleS14Old >> 18) + ca.voiceDCOld;
+    
+    int Vi = 0;
+	int offset = 0;
+    
+    switch ( sum & 0xf ) {
+		case 0x0: Vi = 0;					offset = 0;	break;
+		case 0x1: Vi = v1;					offset = 2 << 16; break;
+		case 0x2: Vi = v2;					offset = 2 << 16; break;
+		case 0x3: Vi = v2 + v1;				offset = 5 << 16; break;
+		case 0x4: Vi = v3;					offset = 2 << 16; break;
+		case 0x5: Vi = v3 + v1;				offset = 5 << 16; break;
+		case 0x6: Vi = v3 + v2;				offset = 5 << 16; break;
+		case 0x7: Vi = v3 + v2 + v1;		offset = 9 << 16; break;
+		case 0x8: Vi = ve;					offset = 2 << 16; break;
+		case 0x9: Vi = ve + v1;				offset = 5 << 16; break;
+		case 0xa: Vi = ve + v2;				offset = 5 << 16; break;
+		case 0xb: Vi = ve + v2 + v1;		offset = 9 << 16; break;
+		case 0xc: Vi = ve + v3;				offset = 5 << 16; break;
+		case 0xd: Vi = ve + v3 + v1;		offset = 9 << 16; break;
+		case 0xe: Vi = ve + v3 + v2;		offset = 9 << 16; break;
+		case 0xf: Vi = ve + v3 + v2 + v1;	offset = 14 << 16; break;
+	}
+
+    int dVbp = w0 * (Vhp >> 4) >> 16;
+    int dVlp = w0 * (Vbp >> 4) >> 16;
+    Vbp -= dVbp;
+    Vlp -= dVlp;
+    Vhp = (Vbp * _1024_div_Q >> 10) - Vlp - Vi;
+}
+
     
 auto Sid::Filter::clock(int voice1, int voice2, int voice3) -> void {
 	
+    if (use24)
+        return clock24(voice1, voice2, voice3);
+    
 	Calculated& ca = calculated[ this->type ];
 	// Skalierung: 20 bit * 14 bit = 34 / 18 = 16 bit
     // Skalierungs Faktor und Nullpunkt Spannung Berechnung
@@ -120,19 +161,13 @@ auto Sid::Filter::clock(int voice1, int voice2, int voice3) -> void {
 		// Alle Eingänge addiert ergeben die Position in diesem
 		// Feld.
 		Vhp = ca.summer[offset + ca.gain[_8_div_Q][Vbp] + Vlp + Vi];        
-        
-	} else { // 8580
+                
+	} else { // 8580        
 		// Nach dem gleichen Prinzip erfolgt die Berechnung für den 8580
-	//	Vlp = solveIntegrate8580( Vbp, Vlp_x, Vlp_vc, ca );		
-	//	Vbp = solveIntegrate8580( Vhp, Vbp_x, Vbp_vc, ca );
-	//	Vhp = ca.summer[offset + resonance[res][Vbp] + Vlp + Vi];
-
-            int dVbp = w0 * (Vhp >> 4) >> 16;
-            int dVlp = w0 * (Vbp >> 4) >> 16;
-            Vbp -= dVbp;
-            Vlp -= dVlp;
-            Vhp = (Vbp * _1024_div_Q >> 10) - Vlp - Vi;
-	}
+		Vlp = solveIntegrate8580( Vbp, Vlp_x, Vlp_vc, ca );		
+		Vbp = solveIntegrate8580( Vhp, Vbp_x, Vbp_vc, ca );
+		Vhp = ca.summer[offset + resonance[res][Vbp] + Vlp + Vi];        
+    }
 }
 
 // siehe 'clock' mit dem Unterschied das keine vorberechneten Werte zum Einsatz kommen.
@@ -644,9 +679,10 @@ auto Sid::Filter::output() -> short {
     // bilden die negativen Werte. 
     // 1 << 15 enspricht dem halben Wertebereich
     
-    if ( this->type == Type::MOS_6581 )
+    if (!use24)
         return (short)(ca.gain[vol][ ca.mixer[offset + Vi] ] - (1 << 15) );
-
+    
+    // old 8580 behaviour
     int tmp = Vi * (int) vol >> 4;
     if (tmp < -32768) tmp = -32768;
     if (tmp > 32767) tmp = 32767;

@@ -20,7 +20,7 @@
 
 namespace LIBC64 {
 
-const std::string Interface::Version = "10882";
+const std::string Interface::Version = "10883";
     
 Interface::Interface() : Emulator::Interface( "C64" ) {        
     
@@ -329,18 +329,27 @@ auto Interface::prepareModels() -> void {
 	// select VIC-II model
 	models.push_back({ModelIdVicIIModel, "VIC-II", Model::Type::Combo, Model::Purpose::GraphicChip, 0, {0, 7},
 	{	"6569-R3 (PAL-B)", "8565 (PAL-B)", "6567-R8 (NTSC-M)", "8562 (NTSC-M)",
-		"6569-R1 (PAL-B)", "6567-R56A (NTSC-M)", "6572 (PAL-N)", "6573 (PAL-M)" }});   
-		
+		"6569-R1 (PAL-B)", "6567-R56A (NTSC-M)", "6572 (PAL-N)", "6573 (PAL-M)" }});   		
 	// use old Sid 6581 or newer 8580
 	models.push_back({ModelIdSid, "SID", Model::Type::Radio, Model::Purpose::SoundChip, 0, {0, 1}, {"8580", "6581"} });	
-	// 0 - off, 1 - on, means software decides
-    models.push_back({ModelIdFilter, "SID Filter", Model::Type::Switch, Model::Purpose::AudioFilter, 1});
-	// amplifies Sid 8580 digi sounds
-	models.push_back({ModelIdDigiboost, "SID 8580 Digi Boost", Model::Type::Switch, Model::Purpose::AudioFilter, 0});
-	// adjust center frequency for Sid 6581
-	models.push_back({ModelIdBias, "SID Filter Bias", Model::Type::Range, Model::Purpose::AudioFilter, 500, {-5000, 5000} });
     // use old or new ( 6526a ) cia chips
     models.push_back({ModelIdCiaRev, "CIA", Model::Type::Radio, Model::Purpose::Cia, 1, {0, 1}, {"6526", "6526a"}});
+
+	// 0 - off, 1 - on, means software decides
+    models.push_back({ModelIdFilter, "SID Filter", Model::Type::Switch, Model::Purpose::AudioSettings, 1});
+	// amplifies Sid 8580 digi sounds
+	models.push_back({ModelIdDigiboost, "SID 8580 Digi Boost", Model::Type::Switch, Model::Purpose::AudioSettings, 0});
+    // use old 2.4 Filter for 8580
+    models.push_back({ModelIdSidFilterType, "SID Filter Type", Model::Type::Combo, Model::Purpose::AudioSettings, 0, {0, 1},
+	{ "Standard", "VICE 2.4" }});     
+
+	// adjust center frequency for Sid 6581
+	models.push_back({ModelIdBias6581, "SID 6581 Filter Bias", Model::Type::Slider, Model::Purpose::AudioSettings, 500, {-5000, 5000}, {}, 400 });
+    // adjust center frequency for Sid 8580
+	models.push_back({ModelIdBias8580, "SID 8580 Filter Bias", Model::Type::Slider, Model::Purpose::AudioSettings, 0, {-5000, 5000}, {}, 400 });
+    // use each 'x' sample. lower value means better quality but high cpu usage by resampler
+    models.push_back({ModelIdSidSampleFetch, "SID Sample Interval", Model::Type::Slider, Model::Purpose::AudioResampler, 4, {1, 16}, {}, 15});
+    
     // ANE magic byte value depends on cpu manufacturer and unemulatable behaviour like heat
     models.push_back({ModelIdCpuAneMagic, "ANE Magic Byte", Model::Type::Hex, Model::Purpose::Misc, 0xef, { 0, 0xff }});
 	// LAX magic byte value depends on cpu manufacturer and unemulatable behaviour like heat
@@ -987,15 +996,25 @@ auto Interface::setModel(unsigned modelId, int value) -> void {
 			Sid::Type type = (value & 1) ? Sid::Type::MOS_6581 : Sid::Type::MOS_8580;
 			sid->setType( type );			
 		} break;
+        case ModelIdSidFilterType: {
+            sid->filter.setOldFilter( value == 1 );
+        } break;            
         case ModelIdFilter:
             sid->filter.setEnable( value & 1 );
             break;
 		case ModelIdDigiboost:
             sid->setDigiBoost( value & 1 );
 			break;
-		case ModelIdBias:
-			sid->filter.adjustFilterBias( value );
+		case ModelIdBias6581:
+			sid->filter.adjustFilterBias6581( value );            
 			break;
+        case ModelIdBias8580:
+			sid->filter.adjustFilterBias8580( value );            
+			break;
+        case ModelIdSidSampleFetch:
+            sid->setSampleFetch( (uint8_t)value );
+            system->updateStats();
+            break;
         case ModelIdCiaRev:
             system->cia1->setNewVersion( value & 1 );
             system->cia2->setNewVersion( value & 1 );
@@ -1031,12 +1050,18 @@ auto Interface::getModel(unsigned modelId) -> int {
     switch (modelId) {
 		case ModelIdSid:			
             return sid->type == Sid::Type::MOS_6581 ? 1 : 0;
+        case ModelIdSidFilterType:
+            return sid->filter.old24 ? 1 : 0;
         case ModelIdFilter:
             return sid->filter.enabled;
 		case ModelIdDigiboost:
             return sid->digiBoost;
-		case ModelIdBias:
-			return sid->filter.bias;
+		case ModelIdBias6581:
+			return sid->filter.bias6581;
+        case ModelIdBias8580:
+			return sid->filter.bias8580;
+        case ModelIdSidSampleFetch:
+            return sid->sampleLimit;
         case ModelIdCiaRev:
             return system->cia1->isNewVersion();
         case ModelIdCpuAneMagic:
