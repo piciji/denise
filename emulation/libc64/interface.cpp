@@ -348,7 +348,7 @@ auto Interface::prepareModels() -> void {
     // adjust center frequency for Sid 8580
 	models.push_back({ModelIdBias8580, "SID 8580 Filter Bias", Model::Type::Slider, Model::Purpose::AudioSettings, 0, {-5000, 5000}, {}, 400 });
     // use each 'x' sample. lower value means better quality but high cpu usage by resampler
-    models.push_back({ModelIdSidSampleFetch, "SID Sample Interval", Model::Type::Slider, Model::Purpose::AudioResampler, 4, {1, 16}, {}, 15});
+    models.push_back({ModelIdSidSampleFetch, "SID Sample Interval", Model::Type::Slider, Model::Purpose::AudioResampler, 4, {1, 18}, {}, 17});
     
     // ANE magic byte value depends on cpu manufacturer and unemulatable behaviour like heat
     models.push_back({ModelIdCpuAneMagic, "ANE Magic Byte", Model::Type::Hex, Model::Purpose::Misc, 0xef, { 0, 0xff }});
