@@ -51,25 +51,24 @@ auto Sid::Filter::clock24(int voice1, int voice2, int voice3) -> void {
 	v3 = (voice3 * ca.voiceScaleS14Old >> 18) + ca.voiceDCOld;
     
     int Vi = 0;
-	int offset = 0;
     
     switch ( sum & 0xf ) {
-		case 0x0: Vi = 0;					offset = 0;	break;
-		case 0x1: Vi = v1;					offset = 2 << 16; break;
-		case 0x2: Vi = v2;					offset = 2 << 16; break;
-		case 0x3: Vi = v2 + v1;				offset = 5 << 16; break;
-		case 0x4: Vi = v3;					offset = 2 << 16; break;
-		case 0x5: Vi = v3 + v1;				offset = 5 << 16; break;
-		case 0x6: Vi = v3 + v2;				offset = 5 << 16; break;
-		case 0x7: Vi = v3 + v2 + v1;		offset = 9 << 16; break;
-		case 0x8: Vi = ve;					offset = 2 << 16; break;
-		case 0x9: Vi = ve + v1;				offset = 5 << 16; break;
-		case 0xa: Vi = ve + v2;				offset = 5 << 16; break;
-		case 0xb: Vi = ve + v2 + v1;		offset = 9 << 16; break;
-		case 0xc: Vi = ve + v3;				offset = 5 << 16; break;
-		case 0xd: Vi = ve + v3 + v1;		offset = 9 << 16; break;
-		case 0xe: Vi = ve + v3 + v2;		offset = 9 << 16; break;
-		case 0xf: Vi = ve + v3 + v2 + v1;	offset = 14 << 16; break;
+		case 0x0: Vi = 0;					break;
+		case 0x1: Vi = v1;					break;
+		case 0x2: Vi = v2;					break;
+		case 0x3: Vi = v2 + v1;				break;
+		case 0x4: Vi = v3;					break;
+		case 0x5: Vi = v3 + v1;				break;
+		case 0x6: Vi = v3 + v2;				break;
+		case 0x7: Vi = v3 + v2 + v1;		break;
+		case 0x8: Vi = ve;					break;
+		case 0x9: Vi = ve + v1;				break;
+		case 0xa: Vi = ve + v2;				break;
+		case 0xb: Vi = ve + v2 + v1;		break;
+		case 0xc: Vi = ve + v3;				break;
+		case 0xd: Vi = ve + v3 + v1;		break;
+		case 0xe: Vi = ve + v3 + v2;		break;
+		case 0xf: Vi = ve + v3 + v2 + v1;	break;
 	}
 
     int dVbp = w0 * (Vhp >> 4) >> 16;

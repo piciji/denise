@@ -51,6 +51,7 @@ struct TabWindow : public GUIKIT::Window {
     GUIKIT::Image displayImage;
     GUIKIT::Image scriptImage;    
     GUIKIT::Image paletteImage;
+    GUIKIT::Image volumeImage;
 	
 	GUIKIT::Timer mtimer;
 

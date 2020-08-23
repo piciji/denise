@@ -25,7 +25,6 @@
 #include "../sid.h"
 
 #include <vector>
-#include <cmath>
 
 namespace LIBC64 {
 
@@ -151,6 +150,7 @@ unsigned short Sid::Filter::vcr_n_Ids_term[1 << 16];
 Sid::Filter::Filter( Sid* sid ) {
     this->sid = sid;
 	static bool initialized = false;
+    digiBoost = false;
 
 	if ( !initialized )
 		build( ); // one time only, doesn't matter of instance count

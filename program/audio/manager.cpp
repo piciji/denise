@@ -53,6 +53,8 @@ auto AudioManager::setResampler() -> void {
     
     inputFrequency = stat.sampleRate;
     
+    double monitorRatio = 1.0;
+    
     bool adjustToMonitorFrequency = settings->get<bool>("video_override_exact", true);        
                         
     if (adjustToMonitorFrequency) {
@@ -63,12 +65,16 @@ auto AudioManager::setResampler() -> void {
         else
             monitorFrequency = settings->get<double>("video_ntsc", 60.0, {30.0, 120.0});
         
-        inputFrequency = (inputFrequency * monitorFrequency) / stat.fps;          
+        inputFrequency = (inputFrequency * monitorFrequency) / stat.fps;   
+        
+        monitorRatio = monitorFrequency / stat.fps;
     }        
     
     ratio = outputFrequency / inputFrequency;
     
-    cosine.reset( ratio, stat.stereoSound ? 2 : 1 );      
+    cosine.reset( ratio, stat.stereoSound ? 2 : 1 );   
+    
+    activeEmulator->setMonitorFpsRatio( monitorRatio );
 }
 
 auto AudioManager::setBufferSize() -> void {

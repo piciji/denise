@@ -157,14 +157,17 @@ auto Sid::writeIOFilter( uint8_t addr, uint8_t value ) -> void {
 	switch(addr) {
 		case 0x15:
 			filter.writeFcLow( value );
+            chamberlinFilter.setSVF();
 			break;
 		case 0x16:
 			filter.writeFcHi( value );
+            chamberlinFilter.setSVF();
 			break;
 		case 0x17:
 			filter.writeResFilt( value );
+            chamberlinFilter.setSVF();
 			break;
-		case 0x18:
+		case 0x18:            
 			filter.writeModeVol( value );
 			break;
 	}

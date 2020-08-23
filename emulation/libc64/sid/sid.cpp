@@ -7,20 +7,23 @@
 #include "voice.cpp"
 #include "filter/main.cpp"
 #include "filter/external.cpp"
+#include "filter/chamberlin.cpp"
 #include "serialization.cpp"
 #include "../../tools/thread.h"
+#include "../../tools/clamp.h"
 
 namespace LIBC64 {
       
 Sid* sid = nullptr;        
     
-Sid::Sid( Type type, Emulator::Events* events ) : filter( this ) {
+Sid::Sid( Type type, Emulator::Events* events ) : filter( this ), chamberlinFilter(filter) {
 
-	digiBoost = false;
     lastBusValue = 0;
     this->events = events;
 	
     setType( type );
+    
+    filterType = FilterType::Standard;
 	
 	Envelope::dac6581.generate();	
 	Envelope::dac8580.generate();
@@ -108,6 +111,13 @@ auto Sid::disableAudioOut(bool state) -> void {
     audioOut = !state;
 }
 
+auto Sid::setFilterType( FilterType filterType ) -> void {
+    
+    this->filterType = filterType;
+    
+    filter.setOldFilter( filterType == FilterType::VICE24 );
+}
+
 auto Sid::setMoreAccuracy(bool state) -> void {
 
     if (moreAccuracy && registerWrite.pipelined) {
@@ -154,22 +164,22 @@ auto Sid::setType( Type type ) -> void {
 
     // update digi boost
     // it will be applied for 8580 only    
-    updateDigiBoost( digiBoost && type == Type::MOS_8580 );
+    updateDigiBoost( filter.digiBoost && type == Type::MOS_8580 );
 }
 
 auto Sid::setDigiBoost( bool state ) -> void {
     
-    digiBoost = state;
+    filter.digiBoost = state;        
 
     if (type == Type::MOS_6581)
         return;
     
-    updateDigiBoost( state );
+    updateDigiBoost( state );        
 }
 
 auto Sid::updateDigiBoost( bool state ) -> void {
     filter.setVoiceMask( state ? 0xf : 0x7 );
-    filter.input( state ? -32768 : 0 );
+    filter.input( state ? -32768 : 0 );    
 }
 
 auto Sid::reset() -> void {
@@ -181,6 +191,7 @@ auto Sid::reset() -> void {
         voice[i].reset();
     }
     filter.reset();
+    chamberlinFilter.reset();
     externalFilter.reset();
     databusDecay = 0;
 	ready = false;	
@@ -213,30 +224,40 @@ auto Sid::clock() -> void {
         voice[i].setWaveformOutput();    
     
     if (audioOut) {    
-        if (moreAccuracy) {            
-            
-            // filter calculations are threaded
-            while ( ready.load() ) { }
+//        if (moreAccuracy) {            
+//            
+//            // filter calculations are threaded
+//            while ( ready.load() ) { }
+//
+//            applyFilterWrite();
+//
+//            v1 = voice[0].output();
+//            v2 = voice[1].output();
+//            v3 = voice[2].output();
+//
+//            ready = true;        
+//
+//        } else {
 
-            applyFilterWrite();
+            if (filterType == FilterType::Chamberlin) {
+                
+                double _sample = chamberlinFilter.clock( (double)voice[0].output() / 255.0,(double) voice[1].output() / 255.0, (double)voice[2].output() / 255.0 );
 
-            v1 = voice[0].output();
-            v2 = voice[1].output();
-            v3 = voice[2].output();
+                externalFilter.clock( Emulator::sclamp( 16, _sample ) );                               
+                
+            } else {
 
-            ready = true;        
+                filter.clock(voice[0].output(), voice[1].output(), voice[2].output());
 
-        } else {
+                externalFilter.clock( filter.output() );	
+            }
 
-            filter.clock(voice[0].output(), voice[1].output(), voice[2].output());
-            
-            externalFilter.clock( filter.output() );	
-            
-            if (++sampleCounter == sampleLimit ) {
-                audioRefresh( externalFilter.output( ) );
+            if (++sampleCounter == sampleLimit) {
+                audioRefresh(externalFilter.output());
                 sampleCounter = 0;
             }
-        }
+
+       // }
     }
 	  	
     // bus values decay after a certain amount of time.

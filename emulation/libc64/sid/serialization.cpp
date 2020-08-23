@@ -13,7 +13,8 @@ auto Sid::serialize(Emulator::Serializer& s, bool light) -> void {
     uint8_t sampleLimitBefore = sampleLimit;
     
     s.integer( (uint8_t&) type );
-    s.integer( digiBoost );
+    s.integer( (uint8_t&) filterType );
+    s.integer( filter.digiBoost );
     s.integer( lastBusValue );
     s.integer( databusDecay );
     s.integer( databusDecayTime );
@@ -111,6 +112,13 @@ auto Sid::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer( filter.w0 );
     s.integer( filter.old24 );
     s.integer( filter.use24 );
+    
+    s.floatingpoint( chamberlinFilter.svfQ );
+    s.floatingpoint( chamberlinFilter.svfF );
+    s.floatingpoint( chamberlinFilter.lp );
+    s.floatingpoint( chamberlinFilter.hp );
+    s.floatingpoint( chamberlinFilter.bp );
+    s.floatingpoint( chamberlinFilter.np );
     
     for ( unsigned i = 0; i < 2; i++ ) {
         s.integer( filter.calculated[i].kVgt );

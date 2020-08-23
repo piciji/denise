@@ -73,6 +73,7 @@ auto TabWindow::build() -> void {
     displayImage.loadPng((uint8_t*)Icons::display, sizeof(Icons::display));
     scriptImage.loadPng((uint8_t*)Icons::script, sizeof(Icons::script));
     paletteImage.loadPng((uint8_t*)Icons::palette, sizeof(Icons::palette));
+    volumeImage.loadPng((uint8_t*)Icons::volume, sizeof(Icons::volume));
 
     inputLayout = new InputLayout( this );
     systemLayout = new SystemLayout( this );
@@ -93,7 +94,7 @@ auto TabWindow::build() -> void {
 	tab.appendHeader("", displayImage);
 	if (emulator->ident == "C64") {
         tab.appendHeader("", paletteImage);
-        tab.appendHeader("", nullptr);
+        tab.appendHeader("", volumeImage);
     }
     tab.appendHeader("", memoryImage);   
 	tab.appendHeader("", cropImage);

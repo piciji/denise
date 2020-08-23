@@ -57,6 +57,7 @@ struct Interface : Emulator::Interface {
     auto getRegionEncoding() -> Region;	
 	auto getRegionGeometry() -> Region;
 	auto getSubRegion() -> SubRegion;
+    auto setMonitorFpsRatio(double ratio) -> void;
 	
     auto convertPetsciiToScreencode(bool state) -> void;
 

@@ -20,7 +20,7 @@
 
 namespace LIBC64 {
 
-const std::string Interface::Version = "10883";
+const std::string Interface::Version = "10884";
     
 Interface::Interface() : Emulator::Interface( "C64" ) {        
     
@@ -340,8 +340,8 @@ auto Interface::prepareModels() -> void {
 	// amplifies Sid 8580 digi sounds
 	models.push_back({ModelIdDigiboost, "SID 8580 Digi Boost", Model::Type::Switch, Model::Purpose::AudioSettings, 0});
     // use old 2.4 Filter for 8580
-    models.push_back({ModelIdSidFilterType, "SID Filter Type", Model::Type::Combo, Model::Purpose::AudioSettings, 0, {0, 1},
-	{ "Standard", "VICE 2.4" }});     
+    models.push_back({ModelIdSidFilterType, "SID Filter Type", Model::Type::Combo, Model::Purpose::AudioSettings, 0, {0, 2},
+	{ "Standard", "VICE 2.4", "Chamberlin" }});     
 
 	// adjust center frequency for Sid 6581
 	models.push_back({ModelIdBias6581, "SID 6581 Filter Bias", Model::Type::Slider, Model::Purpose::AudioSettings, 500, {-5000, 5000}, {}, 400 });
@@ -997,7 +997,7 @@ auto Interface::setModel(unsigned modelId, int value) -> void {
 			sid->setType( type );			
 		} break;
         case ModelIdSidFilterType: {
-            sid->filter.setOldFilter( value == 1 );
+            sid->setFilterType( (Sid::FilterType)value );
         } break;            
         case ModelIdFilter:
             sid->filter.setEnable( value & 1 );
@@ -1051,11 +1051,11 @@ auto Interface::getModel(unsigned modelId) -> int {
 		case ModelIdSid:			
             return sid->type == Sid::Type::MOS_6581 ? 1 : 0;
         case ModelIdSidFilterType:
-            return sid->filter.old24 ? 1 : 0;
+            return (int)sid->filterType;
         case ModelIdFilter:
             return sid->filter.enabled;
 		case ModelIdDigiboost:
-            return sid->digiBoost;
+            return sid->filter.digiBoost;
 		case ModelIdBias6581:
 			return sid->filter.bias6581;
         case ModelIdBias8580:
@@ -1265,4 +1265,9 @@ auto Interface::audioRealtimeThread(bool state) -> void {
     sid->setMoreAccuracy( state );
 }
 
+auto Interface::setMonitorFpsRatio(double ratio) -> void {
+    sid->chamberlinFilter.updateFrequency( vicII->frequency() * ratio );
 }
+
+}
+

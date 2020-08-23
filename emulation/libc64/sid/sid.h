@@ -27,6 +27,7 @@
 #include <atomic>
 #include <thread>
 #include <functional>
+#include <cmath>
 
 #include "../../tools/dac.h"
 #include "../../tools/splines.h"
@@ -42,17 +43,18 @@ typedef double doublePoint[2];
 struct Sid {
     
     enum Type { MOS_6581 = 0, MOS_8580 = 1 } type;    
+    enum FilterType { Standard = 0, VICE24 = 1, Chamberlin = 2 } filterType;
     using Callback = std::function<void ()>;
     std::function<void ( int16_t )> audioRefresh;
     std::function<uint8_t ()> getPotX;
-    std::function<uint8_t ()> getPotY;
-	bool digiBoost;
+    std::function<uint8_t ()> getPotY;	
     
     Sid( Type type, Emulator::Events* events );
            
     auto setType( Type type ) -> void;    
     auto setDigiBoost( bool state ) -> void;
     auto setSampleFetch( uint8_t val ) -> void;
+    auto setFilterType( FilterType filterType ) -> void;
     auto updateDigiBoost( bool state ) -> void;
     auto readIO( uint8_t addr ) -> uint8_t;
     auto writeIO( uint8_t addr, uint8_t value ) -> void;
@@ -212,7 +214,8 @@ struct Sid {
 		Filter(Sid* sid);
 		
         bool old24 = false; // VICE 2.4 filter behaviour for 8580
-        bool use24 = false;        
+        bool use24 = false;      
+        bool digiBoost = false;
         
         // Sid control
         Type type;  // model
@@ -359,6 +362,41 @@ struct Sid {
         auto input(short sample) -> void;
         auto reset() -> void;
 	} filter;
+    
+    struct ChamberlinFilter {
+        Filter& filter;
+        
+        static unsigned resolution;
+        static double* sinTable;        
+        
+        double svfQ = 0;
+        double svfF = 0;
+
+        double lp = 0.0;
+        double hp = 0.0;
+        double bp = 0.0;
+        double np = 0.0;
+        double sampleRate;
+                
+        auto setSVF() -> void;
+        
+        auto process(double sample) -> void;
+        
+        auto clock(double voice1, double voice2, double voice3) -> double;
+        
+        static auto init() -> void;
+        
+        auto getSin(double a) -> double;
+        
+        auto updateFrequency(double sampleRate) -> void;
+        
+        auto reset() -> void;
+        
+        ChamberlinFilter(Filter& filter);
+        
+        ~ChamberlinFilter();
+        
+    } chamberlinFilter;
     
     struct ExternalFilter {
         ExternalFilter();

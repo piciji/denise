@@ -485,6 +485,9 @@ struct Interface {
         return stats;
     }
     
+    // a ratio of 1.0 means monitor refresh rate is equal to emulated system original speed
+    virtual auto setMonitorFpsRatio(double ratio) -> void {}
+    
 	//shortcuts
 	auto insertMedium(Media* media, uint8_t* data, unsigned size) -> void {
 		switch(media->group->type) {

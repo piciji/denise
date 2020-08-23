@@ -699,6 +699,15 @@ auto View::buildMenu() -> void {
 		
 		if(!GUIKIT::Application::isCocoa()) {
 
+            if ( dynamic_cast<LIBC64::Interface*>(emulator)) {
+                sM.audio = new GUIKIT::MenuItem;
+                sM.audio->setIcon( volumeImage );
+                sM.audio->onActivate = [emuConfigView]() {
+                    emuConfigView->show(EmuConfigView::TabWindow::Layout::Audio);
+                };
+                sM.system->append( *sM.audio );
+            }
+            
 			sM.saveState = new GUIKIT::MenuItem;
 			sM.saveState->setIcon( scriptImage );
 			sM.saveState->onActivate = [emuConfigView]() {
@@ -942,6 +951,7 @@ auto View::translate() -> void {
         sysMenu.systemManagement->setText(trans->get("system_management"));
 
         if(!GUIKIT::Application::isCocoa()) {
+            sysMenu.audio->setText(trans->get("SID"));
             sysMenu.firmware->setText(trans->get("Firmware"));
             sysMenu.saveState->setText(trans->get("states"));
             sysMenu.presentation->setText(trans->get("Presentation"));
