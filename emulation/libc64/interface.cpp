@@ -20,7 +20,7 @@
 
 namespace LIBC64 {
 
-const std::string Interface::Version = "10884";
+const std::string Interface::Version = "10885";
     
 Interface::Interface() : Emulator::Interface( "C64" ) {        
     
@@ -348,7 +348,7 @@ auto Interface::prepareModels() -> void {
     // adjust center frequency for Sid 8580
 	models.push_back({ModelIdBias8580, "SID 8580 Filter Bias", Model::Type::Slider, Model::Purpose::AudioSettings, 0, {-5000, 5000}, {}, 400 });
     // use each 'x' sample. lower value means better quality but high cpu usage by resampler
-    models.push_back({ModelIdSidSampleFetch, "SID Sample Interval", Model::Type::Slider, Model::Purpose::AudioResampler, 4, {1, 18}, {}, 17});
+    models.push_back({ModelIdSidSampleFetch, "SID Sample Interval", Model::Type::Radio, Model::Purpose::AudioResampler, 3, {0, 3}, {"1", "2", "7", "18"}});
     
     // ANE magic byte value depends on cpu manufacturer and unemulatable behaviour like heat
     models.push_back({ModelIdCpuAneMagic, "ANE Magic Byte", Model::Type::Hex, Model::Purpose::Misc, 0xef, { 0, 0xff }});
@@ -1012,7 +1012,7 @@ auto Interface::setModel(unsigned modelId, int value) -> void {
 			sid->filter.adjustFilterBias8580( value );            
 			break;
         case ModelIdSidSampleFetch:
-            sid->setSampleFetch( (uint8_t)value );
+            sid->setResampleQuality( (uint8_t)value );
             system->updateStats();
             break;
         case ModelIdCiaRev:
@@ -1061,7 +1061,7 @@ auto Interface::getModel(unsigned modelId) -> int {
         case ModelIdBias8580:
 			return sid->filter.bias8580;
         case ModelIdSidSampleFetch:
-            return sid->sampleLimit;
+            return sid->getResampleQuality();
         case ModelIdCiaRev:
             return system->cia1->isNewVersion();
         case ModelIdCpuAneMagic:

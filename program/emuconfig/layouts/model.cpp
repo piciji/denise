@@ -158,6 +158,9 @@ auto ModelLayout::setEvents( ) -> void {
                             else
                                 cfgView->systemLayout->modelLayout.updateWidget(LIBC64::Interface::ModelIdSid);
                         }
+                        
+                        else if (model->isAudioResampler())
+                            audioManager->setResampler();                    
 					};
 					val++;
 				}
@@ -213,11 +216,7 @@ auto ModelLayout::setEvents( ) -> void {
                     
                     block->slider.value.setText( std::to_string(val) );
                     
-                    emulator->setModel( model->id, val );
-                    
-                    if (model->isAudioResampler()) {
-                        audioManager->setResampler();
-                    }
+                    emulator->setModel( model->id, val );                    
                 };
                 
             } else {

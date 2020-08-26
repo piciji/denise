@@ -501,6 +501,6 @@ Reduce Clipping = Reduce Clipping
 SID 8580 Filter Bias = SID 8580 Filter Bias
 SID 8580 Filter Bias tooltip = adjust center frequency of SID 8580 in a range from [-5000...5000] to simulate manufacturing errors
 SID Sample Interval = SID Sample Interval
-SID Sample Interval tooltip = The smaller the interval, the higher the quality and unfortunately also the performance consumption.
+SID Sample Interval tooltip = small intervals cause a high CPU load and very few C64 demos require this to avoid noise. (e.g. Wonderland XII - Disk 3)
 SID Filter Type = SID Filter Type
 SID Filter Type tooltip = select alternate SID Filter

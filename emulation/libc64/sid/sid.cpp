@@ -143,11 +143,32 @@ auto Sid::updateIdleState() -> void {
     idle = !powerOn ? true : !moreAccuracy;
 }
 
-auto Sid::setSampleFetch( uint8_t val ) -> void {
+auto Sid::setResampleQuality( uint8_t val ) -> void {
     
     sampleCounter = 0;
     
-    sampleLimit = val;
+    switch(val) {
+        case 0: sampleLimit = 1; break;
+        case 1: sampleLimit = 2; break;
+        case 2: sampleLimit = 7; break;
+        default:
+        case 3: 
+            sampleLimit = 18; break;
+    }        
+}
+
+auto Sid::getResampleQuality( ) -> uint8_t {
+    
+        switch(sampleLimit) {
+            case 1: return 0;
+            case 2: return 1;
+            case 7: return 2;
+            default:
+            case 18: 
+                return 3;
+    } 
+        
+    __builtin_unreachable(); 
 }
 
 auto Sid::setType( Type type ) -> void {

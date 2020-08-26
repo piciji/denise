@@ -53,7 +53,8 @@ struct Sid {
            
     auto setType( Type type ) -> void;    
     auto setDigiBoost( bool state ) -> void;
-    auto setSampleFetch( uint8_t val ) -> void;
+    auto setResampleQuality( uint8_t val ) -> void;
+    auto getResampleQuality( ) -> uint8_t;
     auto setFilterType( FilterType filterType ) -> void;
     auto updateDigiBoost( bool state ) -> void;
     auto readIO( uint8_t addr ) -> uint8_t;
