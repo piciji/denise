@@ -94,6 +94,7 @@ struct System {
 	
 	Emulator::Crop* crop;
     unsigned serializationSize; 
+    bool extraSids;
     
     uint8_t mode; //bit 4: exrom, bit 3: game, bit 2: charen, bit 1: hiram, bit 0: loram
     uint8_t vicBank;
@@ -103,7 +104,7 @@ struct System {
     
     uint8_t irqIncomming; // bit 0: vicII, bit 1: cia1, bit 2: expansion port
     uint8_t nmiIncomming; // bit 0: keyboard, bit 1: cia2, bit 2: expansion port
-    uint8_t rdyIncomming; // bit 0: vicII, bit 1: expansion port
+    uint8_t rdyIncomming; // bit 0: vicII, bit 1: expansion port    
     
     bool frameComplete = false;
     Emulator::Serializer serializer;    
@@ -143,6 +144,7 @@ struct System {
 	auto powerOff() -> void;
     auto run() -> void;
     auto initRam() -> void;   
+    auto useExtraSids(bool state) -> void;
     
     auto calcSerializationSize() -> void;
     auto serialize(unsigned& size) -> uint8_t*;
@@ -171,6 +173,7 @@ struct System {
     
     auto setCycleRenderer(bool state) -> void;
 	auto updateStats() -> void;
+    auto updateStatsStereo() -> void;
 };
 
 extern System* system;

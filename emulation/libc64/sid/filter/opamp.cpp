@@ -546,13 +546,13 @@ auto Sid::Filter::solveOpampMulti(Opamp* opamp, int n, int c, int& x, Calculated
 
 inline auto Sid::Filter::solveIntegrate8580(int vi, int& vx, int& vc, Calculated& ca) -> int {
 
-    unsigned int Vgst = ca.kVgt - vx;
-    unsigned int Vgdt = (vi < ca.kVgt) ? ca.kVgt - vi : 0;  // triode/saturation mode
+    unsigned int Vgst = kVgt - vx;
+    unsigned int Vgdt = (vi < kVgt) ? kVgt - vi : 0;  // triode/saturation mode
 
     // Wir lösen die Gleichung auf: vc = vc0 - n * dt/C ( (Vgt - vx)^2 - (Vgt - vi)^2 ) 
     // 'n_dac' ist der vorberechnete Faktor.
     // Skalierung: (1/m)*2^13*m*2^16*m*2^16*2^-15 = m*2^30 = 13 + 16 + 16 - 15 = 30 
-    int n_I_rfc = ca.n_dac * (int(Vgst*Vgst - Vgdt*Vgdt) >> 15);
+    int n_I_rfc = n_dac * (int(Vgst*Vgst - Vgdt*Vgdt) >> 15);
 
     // 'vc0' ist die Spannung zu Beginn, 'vc' die Spannung nach einer Mikro Sekunde.    
     // Die Funktion verwendet 'vc' als Referenz Parameter. Wir merken uns den
@@ -690,7 +690,7 @@ inline auto Sid::Filter::solveIntegrate6581(int vi, int& vx, int& vc, Calculated
     // IRs: dt/C * n * (Vgst^2 - Vgdt^2)
 	// 'n_snake' = dt/C * n  ist bereits vorberechnet.
     // Skalierung: 2^13 * ( 2^16 * 2^16 / 2^15 ) = 2^30
-    int n_I_snake = ca.n_snake * (int(Vgst * Vgst - Vgdt_2) >> 15);
+    int n_I_snake = n_snake * (int(Vgst * Vgst - Vgdt_2) >> 15);
     
     // 'if' und 'ir' sind vorberechnet. Da beide mathematisch identisch sind,
     // gibt es nur eine Vorberechnung. Über den index wird zwischen 'if' und 'ir'

@@ -2,6 +2,7 @@
 #include "sid.h"
 
 #include "../system/system.h"
+#include "multisid.cpp"
 #include "register.cpp"
 #include "envelope.cpp"
 #include "voice.cpp"
@@ -13,9 +14,28 @@
 #include "../../tools/clamp.h"
 
 namespace LIBC64 {
-      
-Sid* sid = nullptr;        
     
+Sid* sid = nullptr;      
+Sid* sids[7] = {nullptr};  
+uint8_t Sid::sampleCounter = 0;
+uint8_t Sid::sampleLimit = 2;
+bool Sid::audioOut = true;
+bool Sid::useExternalFilter = true;
+unsigned Sid::serializationSizeForSevenMoreSids = 0;
+
+std::function<void ( int16_t )> Sid::audioRefresh = [](int16_t sample) {};
+std::function<void ( int16_t, int16_t )> Sid::audioRefreshStereo = [](int16_t sampleL, int16_t sampleR) {};   
+
+auto Sid::useLeftChannel(bool state) -> void {
+    leftChannel = state;
+    updateSidUsage();
+}
+
+auto Sid::useRightChannel(bool state) -> void {
+    rightChannel = state;
+    updateSidUsage();
+}
+
 Sid::Sid( Type type, Emulator::Events* events ) : filter( this ), chamberlinFilter(filter) {
 
     lastBusValue = 0;
@@ -41,18 +61,19 @@ Sid::Sid( Type type, Emulator::Events* events ) : filter( this ), chamberlinFilt
         envelope[i].events = events;
     }
 	
+    ioMask = 0xD420;
+    ioPos = 1;
 	moreAccuracy = false;
     audioOut = true;
-	idle = true;
-	ready = false;
+	//idle = true;
+	//ready = false;
     powerOn = false;
-    sampleLimit = 2;
     
     getPotX = []() { return 0xff; };
     getPotY = []() { return 0xff; };
     callPotUpdate = []() { };
     
-    registerCallbacks();
+    registerCallbacks();    
 	
 //	std::thread worker( [this] {
 //
@@ -89,6 +110,15 @@ Sid::Sid( Type type, Emulator::Events* events ) : filter( this ), chamberlinFilt
 //	worker.detach();
 }
 
+auto Sid::calcSerializationSizeForSevenMoreSids() -> void {
+    
+    Emulator::Serializer s;
+    
+    sid->serialize( s, false );
+    
+    serializationSizeForSevenMoreSids = s.size() * 7;
+}
+
 auto Sid::registerCallbacks() -> void {
     
     events->registerCallback( { &callPotUpdate, 1 } );
@@ -102,11 +132,11 @@ auto Sid::registerCallbacks() -> void {
 }
 
 auto Sid::disableAudioOut(bool state) -> void {
-    if (moreAccuracy && registerWrite.pipelined) {
-        // wait for worker thread
-        while (ready.load()) {}
-        applyFilterWrite();
-    }
+//    if (moreAccuracy && registerWrite.pipelined) {
+//        // wait for worker thread
+//        while (ready.load()) {}
+//        applyFilterWrite();
+//    }
         
     audioOut = !state;
 }
@@ -116,31 +146,34 @@ auto Sid::setFilterType( FilterType filterType ) -> void {
     this->filterType = filterType;
     
     filter.setOldFilter( filterType == FilterType::VICE24 );
+    
+    for( unsigned i = 0; i < 3; i++ )
+        voice[i].setType( this->type, this->filterType == FilterType::Chamberlin );
 }
 
 auto Sid::setMoreAccuracy(bool state) -> void {
-
-    if (moreAccuracy && registerWrite.pipelined) {
-        // wait for worker thread
-        while (ready.load()) {}
-        applyFilterWrite();
-    }
     
-	//moreAccuracy = state;
-    moreAccuracy = false;
-    
-	updateIdleState();
-    
-	ready = false;	
-    applyFilterWrite();
-    
-    if (moreAccuracy)
-        filter.multiPrecalculate();
+//    if (moreAccuracy && registerWrite.pipelined) {
+//        // wait for worker thread
+//        while (ready.load()) {}
+//        applyFilterWrite();
+//    }
+//    
+//	moreAccuracy = state;
+//    moreAccuracy = false;
+//    
+//	updateIdleState();
+//    
+//	ready = false;	
+//    applyFilterWrite();
+//    
+//    if (moreAccuracy)
+//        filter.multiPrecalculate();
 }
 
 auto Sid::updateIdleState() -> void {
     
-    idle = !powerOn ? true : !moreAccuracy;
+ //   idle = !powerOn ? true : !moreAccuracy;
 }
 
 auto Sid::setResampleQuality( uint8_t val ) -> void {
@@ -176,7 +209,7 @@ auto Sid::setType( Type type ) -> void {
     this->type = type;
     
     for( unsigned i = 0; i < 3; i++ ) {
-        voice[i].setType( type );
+        voice[i].setType( type, this->filterType == FilterType::Chamberlin );
         envelope[i].setType( type );
     }	
     filter.setType( type );
@@ -215,7 +248,7 @@ auto Sid::reset() -> void {
     chamberlinFilter.reset();
     externalFilter.reset();
     databusDecay = 0;
-	ready = false;	
+	//ready = false;	
     
 	registerWrite.pipelined = false;
     sampleCounter = 0;
@@ -225,7 +258,7 @@ auto Sid::reset() -> void {
 }
 
 auto Sid::powerOff() -> void {
-	idle = true;
+//	idle = true;
     powerOn = false;
 }
 
@@ -260,6 +293,8 @@ auto Sid::clock() -> void {
 //
 //        } else {
 
+        if (useExternalFilter) {
+        
             if (filterType == FilterType::Chamberlin) {
                 
                 double _sample = chamberlinFilter.clock( (double)voice[0].output() / 255.0,(double) voice[1].output() / 255.0, (double)voice[2].output() / 255.0 );
@@ -273,10 +308,16 @@ auto Sid::clock() -> void {
                 externalFilter.clock( filter.output() );	
             }
 
-            if (++sampleCounter == sampleLimit) {
-                audioRefresh(externalFilter.output());
-                sampleCounter = 0;
-            }
+            if (!extraSids) {
+                if (++sampleCounter == sampleLimit) {
+                    audioRefresh( Emulator::sclamp( 16, externalFilter.output() ) );
+                    sampleCounter = 0;
+                }
+            } else
+                curSample = externalFilter.output();
+            
+        } else
+            withoutExternalFilter();
 
        // }
     }
@@ -290,4 +331,25 @@ auto Sid::clock() -> void {
     
 }
     
+inline auto Sid::withoutExternalFilter() -> void {
+
+    if (filterType == FilterType::Chamberlin) {
+
+        curSample = chamberlinFilter.clock((double) voice[0].output() / 255.0, (double) voice[1].output() / 255.0, (double) voice[2].output() / 255.0);
+        
+    } else {
+
+        filter.clock(voice[0].output(), voice[1].output(), voice[2].output());
+
+        curSample = filter.output();
+    }
+
+    if (!extraSids) {
+        if (++sampleCounter == sampleLimit) {
+            audioRefresh( Emulator::sclamp( 16, curSample ) );
+            sampleCounter = 0;
+        }
+    } 
+} 
+
 }

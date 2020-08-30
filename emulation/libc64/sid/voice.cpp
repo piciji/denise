@@ -129,13 +129,13 @@ auto Sid::Voice::setPwHi( uint8_t value ) -> void {
     pulseOutput = (accumulator >> 12) >= pw ? 0xfff : 0x000;
 }
 
-auto Sid::Voice::setType( Type type ) -> void {
+auto Sid::Voice::setType( Type type, bool useDigitalFilter ) -> void {
     
     this->type = type;
     
     wave = waveTable[type][waveform & 0x7];
     
-    waveZero = type == Type::MOS_6581 ? 0x380 : 0x9e0;
+    waveZero = type == Type::MOS_6581 ? 0x380 : ( useDigitalFilter ? 0x9e0 : 0x9e0 );
 	
 	dac = type == Type::MOS_6581 ? &dac6581 : &dac8580;
 }

@@ -45,7 +45,8 @@ struct Sid {
     enum Type { MOS_6581 = 0, MOS_8580 = 1 } type;    
     enum FilterType { Standard = 0, VICE24 = 1, Chamberlin = 2 } filterType;
     using Callback = std::function<void ()>;
-    std::function<void ( int16_t )> audioRefresh;
+    static std::function<void ( int16_t )> audioRefresh;
+    static std::function<void ( int16_t, int16_t )> audioRefreshStereo;
     std::function<uint8_t ()> getPotX;
     std::function<uint8_t ()> getPotY;	
     
@@ -53,9 +54,9 @@ struct Sid {
            
     auto setType( Type type ) -> void;    
     auto setDigiBoost( bool state ) -> void;
-    auto setResampleQuality( uint8_t val ) -> void;
-    auto getResampleQuality( ) -> uint8_t;
+    static auto setDigiBoostAll( bool state ) -> void;
     auto setFilterType( FilterType filterType ) -> void;
+    static auto setFilterTypeAll( FilterType filterType ) -> void;
     auto updateDigiBoost( bool state ) -> void;
     auto readIO( uint8_t addr ) -> uint8_t;
     auto writeIO( uint8_t addr, uint8_t value ) -> void;
@@ -69,7 +70,43 @@ struct Sid {
     auto registerCallbacks() -> void;
     auto serialize(Emulator::Serializer& s, bool light = false) -> void;
     auto updateIdleState() -> void;    
-    auto disableAudioOut(bool state) -> void;
+    auto setIoMask(uint8_t pos) -> void;
+    auto useLeftChannel(bool state) -> void;
+    auto useRightChannel(bool state) -> void;
+    auto withoutExternalFilter() -> void;
+    static auto disableAudioOut(bool state) -> void;
+    static auto setEnableFilterAll( bool state ) -> void;
+    static auto adjustFilterBias6581All(int value) -> void;
+    static auto adjustFilterBias8580All(int value) -> void;
+    static auto setTypeAll( Type type ) -> void;
+    static auto resetAll() -> void;
+    static auto updateChamberlinFrequencyAll(double sampleRate) -> void;
+    static auto isStereo() -> bool;
+    static auto calcSerializationSizeForSevenMoreSids() -> void;
+    static auto searializeActiveSids(Emulator::Serializer& s, bool light = false) -> void;
+    
+    static bool audioOut;
+    static bool extraSids;
+    static double leftSids;
+    static double rightSids;
+    static uint8_t sampleCounter;
+    static uint8_t sampleLimit;
+    static std::vector<Sid*> useSids;
+    static std::vector<std::string> adrOptions;
+    static bool useExternalFilter;
+    static unsigned serializationSizeForSevenMoreSids;
+    
+    double curSample;
+    bool leftChannel = true;
+    bool rightChannel = true;
+    uint16_t ioMask;    
+    uint8_t ioPos;
+    
+    static auto getSidByAdr(uint16_t addr, bool ioArea = false) -> Sid*;
+    static auto clockMultiChips() -> void;
+    static auto updateSidUsage() -> void;
+    static auto setResampleQuality( uint8_t val ) -> void;
+    static auto getResampleQuality( ) -> uint8_t;
     
     uint8_t lastBusValue;
     unsigned databusDecay;
@@ -83,14 +120,11 @@ struct Sid {
 	} registerWrite;	       
     
 	bool moreAccuracy = false;
-    bool powerOn;
-    bool audioOut = true;
+    bool powerOn;    
     
-	std::atomic<bool> ready;
-	std::atomic<bool> idle;
+	//std::atomic<bool> ready;
+	//std::atomic<bool> idle;
     
-    uint8_t sampleCounter;
-    uint8_t sampleLimit;
     Emulator::Events* events;
     Callback callPotUpdate;
     uint8_t potX;
@@ -144,7 +178,7 @@ struct Sid {
         auto setPwLo( uint8_t value ) -> void;
         auto setPwHi( uint8_t value ) -> void;
         auto setControl( uint8_t value ) -> void;
-        auto setType( Type type ) -> void;
+        auto setType( Type type, bool useDigitalFilter ) -> void;        
         auto clock() -> void;
 		
 		auto setNoiseOutput() -> void;
@@ -252,6 +286,10 @@ struct Sid {
         int VbpRes;
         int w0;
         
+        int kVgt; // 8580 only
+        int n_dac; // 8580 only
+        static int n_snake; // 6581 only   
+        
         int* veP;
         int* v3P;
         int* v2P;
@@ -303,10 +341,7 @@ struct Sid {
 			double vmin;
 			int ak;
 			int bk;
-            double tmp_n_param;
-            int kVgt; // 8580 only
-            int n_snake; // 6581 only
-            int n_dac; // 8580 only
+            double tmp_n_param;                                 
 			double vo_N16;
             double k;
             
@@ -410,10 +445,11 @@ struct Sid {
         
         auto clock( short Vi ) -> void;
         auto reset() -> void;
-        auto output() -> short;
+        auto output() -> int;
         
     } externalFilter;
 };
 
 extern Sid* sid;
+extern Sid* sids[7];
 }

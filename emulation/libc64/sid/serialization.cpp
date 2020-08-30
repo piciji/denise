@@ -3,14 +3,42 @@
 
 namespace LIBC64 {
 
+auto Sid::searializeActiveSids(Emulator::Serializer& s, bool light) -> void {
+    
+    sid->serialize(s, light);    
+    
+    if (system->extraSids && (s.mode() != Emulator::Serializer::Mode::Size) ) {
+        for (unsigned i = 0; i < 7; i++)
+            sids[i]->serialize(s, light);
+    }
+     
+    uint8_t sampleLimitBefore = sampleLimit;   
+    
+    if (!light)
+        s.integer( sampleCounter );
+    
+    s.integer( sampleLimit );
+    s.integer( useExternalFilter );
+    
+    if (!light && (s.mode() == Emulator::Serializer::Mode::Load) ) {
+        Sid::updateSidUsage();
+     
+        if (sampleLimitBefore != sampleLimit)
+            system->updateStats();
+    }
+}    
+    
 auto Sid::serialize(Emulator::Serializer& s, bool light) -> void {
     
-    if (moreAccuracy) {
-        // wait for worker thread
-		while ( ready.load() ) { }
-    }
-       
-    uint8_t sampleLimitBefore = sampleLimit;
+//    if (moreAccuracy) {
+//        // wait for worker thread
+//		while ( ready.load() ) { }
+//    }
+           
+    s.integer( leftChannel );
+    s.integer( rightChannel );
+    s.integer( ioMask );
+    s.integer( ioPos );
     
     s.integer( (uint8_t&) type );
     s.integer( (uint8_t&) filterType );
@@ -21,9 +49,6 @@ auto Sid::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer( registerWrite.pipelined );
     s.integer( registerWrite.addr );
     s.integer( registerWrite.value );
-    if (!light)
-        s.integer( sampleCounter );
-    s.integer(sampleLimit);
     s.integer( potX );
     s.integer( potY );
     s.integer( v1 );
@@ -54,7 +79,7 @@ auto Sid::serialize(Emulator::Serializer& s, bool light) -> void {
         s.integer( v.ringMsbMask );
 
         if (s.mode() == Emulator::Serializer::Mode::Load) {
-            v.setType( v.type ); // update pointer                
+            v.setType( v.type, filterType == FilterType::Chamberlin ); // update pointer                
         }
 
         Envelope& e = envelope[i];
@@ -120,10 +145,8 @@ auto Sid::serialize(Emulator::Serializer& s, bool light) -> void {
     s.floatingpoint( chamberlinFilter.bp );
     s.floatingpoint( chamberlinFilter.np );
     
-    for ( unsigned i = 0; i < 2; i++ ) {
-        s.integer( filter.calculated[i].kVgt );
-        s.integer( filter.calculated[i].n_dac );
-    }    
+    s.integer( filter.kVgt );
+    s.integer( filter.n_dac );
   
     if (!light) {
         s.integer( externalFilter.Vlp );
@@ -132,12 +155,9 @@ auto Sid::serialize(Emulator::Serializer& s, bool light) -> void {
         s.integer( externalFilter.w0hp_1_s17 );
     }
     
-    if (s.mode() == Emulator::Serializer::Mode::Load) {
-        setMoreAccuracy( moreAccuracy );
-        
-        if (!light && (sampleLimitBefore != sampleLimit))
-            system->updateStats();
-    }
+//    if (s.mode() == Emulator::Serializer::Mode::Load) {
+//        setMoreAccuracy( moreAccuracy );
+//    }
         
 }
 

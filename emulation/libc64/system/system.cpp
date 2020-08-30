@@ -37,7 +37,16 @@ System::System(Interface* interface) {
     createExpansions();
 	vicIICycle = new VicIICycle;   
     vicIIFast = new VicIIFast;
-	sid = new Sid( Sid::Type::MOS_6581, &events );
+    
+    for (unsigned i = 0; i < 7; i++) 
+        sids[i] = new Sid( Sid::Type::MOS_6581, &events );
+    
+    sid = new Sid( Sid::Type::MOS_6581, &events );
+    
+    Sid::calcSerializationSizeForSevenMoreSids();
+    
+    extraSids = false;
+    
     input = new Input;
     for (auto& media : interface->mediaGroups[Interface::MediaGroupIdProgram].media) {
         auto prg = new Prg;
@@ -208,25 +217,53 @@ System::System(Interface* interface) {
     };
 
     writeIo1Reg = [this](uint16_t addr, uint8_t value) {
+        
+        if (Sid::extraSids) {
+            Sid* _sid = Sid::getSidByAdr( addr + 0xde00, true );
+            if (_sid)
+                _sid->writeIO( addr, value );
+        }
+        
         expansionPort->writeIo1(addr, value);
     };
 
     readIo1Reg = [this](uint16_t addr) {
+        
+        if (Sid::extraSids) {
+            Sid* _sid = Sid::getSidByAdr( addr + 0xde00, true );
+            if (_sid)
+                return _sid->readIO( addr );
+        }
         
         return expansionPort->readIo1(addr);			
     };
     
     writeIo2Reg = [this](uint16_t addr, uint8_t value) {
 
+        if (Sid::extraSids) {
+            Sid* _sid = Sid::getSidByAdr( addr + 0xde00, true );
+            if (_sid)
+                _sid->writeIO( addr, value );
+        }
+        
         expansionPort->writeIo2(addr, value);
     };
 
     readIo2Reg = [this](uint16_t addr) {
 		
+        if (Sid::extraSids) {
+            Sid* _sid = Sid::getSidByAdr( addr + 0xdf00, true );
+            if (_sid)
+                return _sid->readIO( addr );
+        }
+        
         return expansionPort->readIo2(addr);		
     };
 
     writeSidReg = [this](uint16_t addr, uint8_t value) {
+        
+        if (Sid::extraSids)
+            return Sid::getSidByAdr( addr )->writeIO( addr, value );
         
         sid->writeIO( addr, value );
     };
@@ -236,12 +273,18 @@ System::System(Interface* interface) {
             debugCart.exitCode = value;
             debugCart.exit = true;
         }
-            
+        
+        if (Sid::extraSids)
+            return Sid::getSidByAdr( addr )->writeIO( addr, value );
+        
         sid->writeIO(addr, value);
     };
 
     readSidReg = [this](uint16_t addr) {
 
+        if (Sid::extraSids)
+            return Sid::getSidByAdr( addr )->readIO( addr );
+        
         return sid->readIO( addr );
     };
 
@@ -399,9 +442,14 @@ System::System(Interface* interface) {
         };
     }
     
-    sid->audioRefresh = [this](int16_t sample) {
+    Sid::audioRefresh = [this](int16_t sample) {
         if (!runAhead.pos)
             this->interface->audioSample( sample, sample );
+    };
+    
+    Sid::audioRefreshStereo = [this](int16_t sampleL, int16_t sampleR) {
+        if (!runAhead.pos)
+            this->interface->audioSample( sampleL, sampleR );
     };
     
     sid->getPotX = [this]() {
@@ -611,7 +659,8 @@ auto System::power( bool softReset ) -> void {
 	remapVic();    
     remapCpu();    
     
-	sid->reset();
+	Sid::resetAll();
+    
     cia1->reset();
     cia2->reset();
 	input->reset();
@@ -653,6 +702,8 @@ auto System::power( bool softReset ) -> void {
     
     kernalBootComplete = false;
     calcSerializationSize();
+    if (extraSids)
+        serializationSize += Sid::serializationSizeForSevenMoreSids;
     
 	fastForward.config = 0;
     fastForward.frameCounter = 0;
@@ -749,7 +800,7 @@ auto System::run() -> void {
     if (useRunAhead) {        
         runAhead.pos = runAhead.frames;
         vicII->disableSequencer( runAhead.performance );
-        sid->disableAudioOut( runAhead.frames > 1 );
+        Sid::disableAudioOut( runAhead.frames > 1 );
         dispatcha();
     }
         
@@ -770,7 +821,7 @@ auto System::run() -> void {
 
         if (runAhead.pos) {
             if (runAhead.pos == 2)
-                sid->disableAudioOut(false);          
+                Sid::disableAudioOut(false);          
 
             if (--runAhead.pos == 0) {
                 if (!vicII->useSequencer()) {
@@ -790,7 +841,7 @@ auto System::run() -> void {
 
 auto System::runAheadEnableAudio() -> void {
     if (runAhead.pos == 1)
-        sid->disableAudioOut(false);    
+        Sid::disableAudioOut(false);    
 }
 
 auto System::isUltimax() -> bool { 
@@ -850,10 +901,10 @@ auto System::remapCpu( ) -> void {
         memoryCpu.map( &readVicReg, &writeVicReg, 0xd0, 0xd3);
         
         if (!debugCart.enable)
-            memoryCpu.map( &readSidReg, &writeSidReg, 0xd4, 0xd7);
+            memoryCpu.map( &readSidReg, &writeSidReg, 0xd4, 0xd7, Memory::Mode::Direct);
         else {
-            memoryCpu.map( &readSidReg, &writeSidReg, 0xd4, 0xd6);
-            memoryCpu.map( &readSidReg, &writeDebugReg, 0xd7, 0xd7);
+            memoryCpu.map( &readSidReg, &writeSidReg, 0xd4, 0xd6, Memory::Mode::Direct);
+            memoryCpu.map( &readSidReg, &writeDebugReg, 0xd7, 0xd7, Memory::Mode::Direct);
         }
         memoryCpu.map( &readColorRam, &writeColorRam, 0xd8, 0xdb);
         memoryCpu.map( &readCia1Reg, &writeCia1Reg, 0xdc, 0xdc);
@@ -931,7 +982,7 @@ auto System::changeExpansionPortMemoryMode(bool exrom, bool game) -> void {
 
 auto System::setFastForward( unsigned config ) -> void {  
     fastForward.config = config;
-    sid->disableAudioOut(config & (unsigned) Emulator::Interface::FastForward::NoAudioOut);
+    Sid::disableAudioOut(config & (unsigned) Emulator::Interface::FastForward::NoAudioOut);
     vicII->disableSequencer(config & (unsigned) Emulator::Interface::FastForward::NoVideoSequencer);
     iecBus->setFastForward(config & (unsigned) Emulator::Interface::FastForward::NoVideoSequencer);
     dispatcha();
@@ -946,9 +997,26 @@ auto System::setCycleRenderer(bool state) -> void {
 
 auto System::updateStats() -> void {	
 	interface->stats.region = vicII->isNTSCGeometry() ? Interface::Region::Ntsc : Interface::Region::Pal;
-	interface->stats.sampleRate = (double)vicII->frequency() / (double)sid->sampleLimit;
+	interface->stats.sampleRate = (double)vicII->frequency() / (double)Sid::sampleLimit;
 	interface->stats.fps = 1.0 / ( (double)vicII->cyclesPerFrame() / (double)vicII->frequency() );
-	interface->stats.stereoSound = false;	
+	interface->stats.stereoSound = Sid::isStereo();
+}
+
+auto System::updateStatsStereo() -> void {	
+    interface->stats.stereoSound = Sid::isStereo();
+}
+
+auto System::useExtraSids(bool state) -> void {
+    extraSids = state;
+    Sid::updateSidUsage();
+    
+    if (!powerOn)
+        return;
+    
+    if (state)
+        serializationSize += Sid::serializationSizeForSevenMoreSids;
+    else
+        serializationSize -= Sid::serializationSizeForSevenMoreSids;
 }
 
 }

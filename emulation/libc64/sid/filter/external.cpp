@@ -89,16 +89,18 @@ inline auto Sid::ExternalFilter::clock( short Vi ) -> void {
     Vhp += dVhp;
 }
 
-inline auto Sid::ExternalFilter::output() -> short {
+inline auto Sid::ExternalFilter::output() -> int {
     
     // 2. Tiefpass Filter wirkt durch Subtraktion wie ein Hochpass Filter.
     // Skalierung: 27 - 11 = 16 bit
-    int Vo = (Vlp - Vhp) >> 11;
+    //int Vo = (Vlp - Vhp) >> 11;
     
     // Abschließend checken wir ob der Wertebereich überschritten wurde. Ist das der Fall
     // schneiden wir am größten bzw. kleinsten Wert ab.
     // Der Wertebereich umfasst 16 bit: 15 bit + Vorzeichenbit        
-    return Emulator::sclamp(16, Vo);
+    //return Emulator::sclamp(16, Vo);
+    
+    return (Vlp - Vhp) >> 11;
 }
     
 }

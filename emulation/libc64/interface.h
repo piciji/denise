@@ -14,6 +14,11 @@ struct Interface : Emulator::Interface {
         ModelIdCiaRev = 4, ModelIdCpuAneMagic = 5, ModelIdGlueLogic = 6,
         ModelIdLeftLineAnomaly = 7, ModelIdVicIIModel = 8, ModelIdCpuLaxMagic = 9,
 		ModelIdDisableGreyDotBug = 10, ModelIdSidFilterType = 11, ModelIdSidSampleFetch = 12, ModelIdBias8580 = 13,
+        ModelIdSidMulti = 14, ModelIdSidExternal = 15, 
+                     ModelIdSid1Left, ModelIdSid1Right, ModelIdSid1Adr, ModelIdSid2, ModelIdSid2Left, ModelIdSid2Right, ModelIdSid2Adr,
+        ModelIdSid3, ModelIdSid3Left, ModelIdSid3Right, ModelIdSid3Adr, ModelIdSid4, ModelIdSid4Left, ModelIdSid4Right, ModelIdSid4Adr,
+        ModelIdSid5, ModelIdSid5Left, ModelIdSid5Right, ModelIdSid5Adr, ModelIdSid6, ModelIdSid6Left, ModelIdSid6Right, ModelIdSid6Adr,
+        ModelIdSid7, ModelIdSid7Left, ModelIdSid7Right, ModelIdSid7Adr, ModelIdSid8, ModelIdSid8Left, ModelIdSid8Right, ModelIdSid8Adr,
     };
     
     enum MediaGroupId {

@@ -147,6 +147,8 @@ unsigned short Sid::Filter::resonance[16][1 << 16];
 unsigned short Sid::Filter::vcr_kVg[1 << 16];
 unsigned short Sid::Filter::vcr_n_Ids_term[1 << 16];
 
+int Sid::Filter::n_snake = 0;
+
 Sid::Filter::Filter( Sid* sid ) {
     this->sid = sid;
 	static bool initialized = false;
@@ -665,7 +667,7 @@ auto Sid::Filter::build( ) -> void {
 			}
 			// vorberechnete Konstante, siehe 'opamp.cpp' unter 'solveIntegrate6581
 			// n = w/l * ucox/2k * dt/C
-			ca.n_snake = (int)(pa.WL_snake * ca.tmp_n_param + 0.5);
+			n_snake = (int)(pa.WL_snake * ca.tmp_n_param + 0.5);
 			
         } else { // 8580
             // Der 11 bit DAC des 8580 besteht aus 11 parallelen Widerständen, welche per
@@ -698,7 +700,8 @@ auto Sid::Filter::build( ) -> void {
             // als 'Vddt'. Die angelegte Spannung beträgt 7.6 Volt.
             // Effektivspannung errechnen, normalisieren 'vmin', in 16 bit Ganzzahl skalieren
             double Vgt = pa.k * ((4.75 * 1.6) - pa.Vth);
-            ca.kVgt = (int)(N16 * (Vgt - vmin) + 0.5);
+            // init value: seted in constructor 
+            // kVgt = (int)(N16 * (Vgt - vmin) + 0.5);
         }      
 	}
 
@@ -764,7 +767,7 @@ auto Sid::Filter::updateFrequency() -> void {
 		// n = (ucox/2k * dt/C) * w/l
 		// geänderter Widerstand w/l wird mit unveränderbarer Konstante vorberechnet
 		// siehe 'opamp.cpp' unter 'solveIntegrate8580
-        ca.n_dac = (n_param * ca.f0_dac[ fc ]) >> 15;        
+        n_dac = (n_param * ca.f0_dac[ fc ]) >> 15;        
         
         w0 = 82355 * (fc + 1) >> 11;
     }
@@ -915,7 +918,7 @@ auto Sid::Filter::adjustFilterBias8580(int value) -> void {
 	double Vgt = parameter[1].k * (Vg - parameter[1].Vth);
 	double vmin = parameter[1].opampVoltage[0][0];
 
-	calculated[1].kVgt = (int)(calculated[1].vo_N16 * (Vgt - vmin) + 0.5);
+	kVgt = (int)(calculated[1].vo_N16 * (Vgt - vmin) + 0.5);
  
 }
 

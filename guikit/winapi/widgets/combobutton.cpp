@@ -78,7 +78,7 @@ auto pComboButton::create() -> void {
     
     hwnd = CreateWindow(
         L"COMBOBOX", L"",
-        WS_CHILD | WS_TABSTOP | CBS_DROPDOWNLIST | CBS_HASSTRINGS,
+        WS_CHILD | WS_TABSTOP | CBS_DROPDOWNLIST | CBS_HASSTRINGS | WS_VSCROLL,
         0, 0, 0, 0,
         comboButton.window()->p.hwnd, (HMENU)(unsigned long long)comboButton.id, GetModuleHandle(0), 0
     );

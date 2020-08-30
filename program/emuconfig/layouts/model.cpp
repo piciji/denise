@@ -38,7 +38,7 @@ ModelLayout::Line::Block::Block(Emulator::Interface::Model* model) {
 
     } else if (model->isSlider()) {
         append(label, {0u, 0u}, 5 );
-        append(slider, {300u, 0u});
+        append(slider, {400u, 0u});
         slider.updateValueWidth( std::to_string( model->range[0] < 0 ? model->range[0] : model->range[1] ) );        
         
         slider.slider.setLength( model->steps + 1 );
@@ -118,7 +118,10 @@ auto ModelLayout::setEvents( ) -> void {
 
                     settings->set<bool>( this->tabWindow->ident( model->name ), block->checkBox.checked( ) );
 
-                    emulator->setModel( model->id, block->checkBox.checked( ) );                    
+                    emulator->setModel( model->id, block->checkBox.checked( ) );
+                    
+                    if (model->isAudioResampler() && activeEmulator)
+                        audioManager->power();
                 };
 
 			} else if (model->isRadio() ) {	
@@ -428,23 +431,26 @@ auto ModelLayout::stepRange(unsigned id, int step) -> int {
 	return 0;
 }
 
-auto ModelLayout::translate() -> void {
+auto ModelLayout::translate( bool custom ) -> void {
     
     setText( trans->get("model") );
     
     for (auto line : lines) {
         for (auto block : line->blocks) {
             auto model = block->model;
+            
+            std::string tooltip;
+            std::string name = getIdent( model, custom, tooltip );
 
             if (model->isSwitch())
-                block->checkBox.setTooltip(trans->get(model->name + " tooltip"));
+                block->checkBox.setTooltip(trans->get(tooltip));
 
             else if (model->isRadio()) {
                 unsigned pos = 0;
                 for (auto option : block->options) {
                     option->setText(trans->get(model->options[pos++]));
                 }
-                block->label.setTooltip(trans->get(model->name + " tooltip"));
+                block->label.setTooltip(trans->get(tooltip));
 
             } else if (model->isCombo()) {
 
@@ -453,16 +459,78 @@ auto ModelLayout::translate() -> void {
                     block->combo.setText(pos++, trans->get(option));
                 }
 
-                block->label.setTooltip(trans->get(model->name + " tooltip"));
+                block->label.setTooltip(trans->get(tooltip));
 
             } else
-                block->label.setTooltip(trans->get(model->name + " tooltip"));
+                block->label.setTooltip(trans->get(tooltip));
 
-            block->checkBox.setText(trans->get(model->name));
-            block->label.setText(trans->get(model->name, {},
+            block->checkBox.setText(trans->get( name ));
+            block->label.setText(trans->get( name, {},
             model->isRadio() || model->isCombo() || model->isSlider() ));
         }
     }
+}
+
+auto ModelLayout::getIdent( Emulator::Interface::Model* model, bool custom, std::string& tooltip ) -> std::string {
+    
+    std::string name = model->name;
+        
+    switch(model->id) {
+        case LIBC64::Interface::ModelIdSid:
+            if (!custom)
+                name = "SID";
+        case LIBC64::Interface::ModelIdSid2:
+        case LIBC64::Interface::ModelIdSid3:
+        case LIBC64::Interface::ModelIdSid4:
+        case LIBC64::Interface::ModelIdSid5:
+        case LIBC64::Interface::ModelIdSid6:
+        case LIBC64::Interface::ModelIdSid7:
+        case LIBC64::Interface::ModelIdSid8:            
+            tooltip = "SID tooltip";
+            break;
+            
+        case LIBC64::Interface::ModelIdSid1Adr:
+        case LIBC64::Interface::ModelIdSid2Adr:
+        case LIBC64::Interface::ModelIdSid3Adr:
+        case LIBC64::Interface::ModelIdSid4Adr:
+        case LIBC64::Interface::ModelIdSid5Adr:
+        case LIBC64::Interface::ModelIdSid6Adr:
+        case LIBC64::Interface::ModelIdSid7Adr:
+        case LIBC64::Interface::ModelIdSid8Adr:
+            name = "Address";
+            tooltip = name + " tooltip";
+            break;
+            
+        case LIBC64::Interface::ModelIdSid1Left:
+        case LIBC64::Interface::ModelIdSid2Left:
+        case LIBC64::Interface::ModelIdSid3Left:
+        case LIBC64::Interface::ModelIdSid4Left:
+        case LIBC64::Interface::ModelIdSid5Left:
+        case LIBC64::Interface::ModelIdSid6Left:
+        case LIBC64::Interface::ModelIdSid7Left:
+        case LIBC64::Interface::ModelIdSid8Left:
+            name = "Left Channel";
+            tooltip = name + " tooltip";
+            break;
+            
+        case LIBC64::Interface::ModelIdSid1Right:
+        case LIBC64::Interface::ModelIdSid2Right:
+        case LIBC64::Interface::ModelIdSid3Right:
+        case LIBC64::Interface::ModelIdSid4Right:
+        case LIBC64::Interface::ModelIdSid5Right:
+        case LIBC64::Interface::ModelIdSid6Right:
+        case LIBC64::Interface::ModelIdSid7Right:
+        case LIBC64::Interface::ModelIdSid8Right:
+            name = "Right Channel";
+            tooltip = name + " tooltip";
+            break;
+            
+        default:
+            tooltip = name + " tooltip";
+            break;
+    }        
+    
+    return name;
 }
 
 }

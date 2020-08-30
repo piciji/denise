@@ -7,7 +7,7 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
     setMargin(10);
     
     settingsLayout.build( tabWindow, emulator, {Emulator::Interface::Model::Purpose::SoundChip, Emulator::Interface::Model::Purpose::AudioSettings, Emulator::Interface::Model::Purpose::AudioResampler },
-    {4, 1, 1, 1} );
+    {4, 1, 1, 2, 4, 4, 4, 4, 4, 4, 4, 4} );
     
     append(settingsLayout, {~0u, 0u}, 10);
     
@@ -17,7 +17,7 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
 
 auto AudioLayout::translate() -> void {
     
-    settingsLayout.translate();
+    settingsLayout.translate( true );
     
 
 }

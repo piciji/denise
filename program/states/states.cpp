@@ -472,7 +472,7 @@ auto States::updateModels() -> void {
 			auto oldValue = settings->get<int>( program->ident(emulator, model.name ), model.defaultValue, model.range );
 			regionChange = value != oldValue;            
             
-		} else if (model.isAudioResampler()) {
+		} else if (!resamplerChange && model.isAudioResampler()) {
             auto oldValue = settings->get<int>( program->ident(emulator, model.name ), model.defaultValue, model.range );            
             resamplerChange = value != oldValue;                
         }

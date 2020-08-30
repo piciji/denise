@@ -122,7 +122,8 @@ auto System::serializeAll(Emulator::Serializer& s) -> void {
     cia1->serialize( s );
     cia2->serialize( s );
     vicII->serialize( s );
-    sid->serialize( s );    
+    //sid->serialize( s );    
+    Sid::searializeActiveSids( s );
     tape->serialize( s ); 
     iecBus->serialize( s );
     input->serialize( s );
@@ -157,6 +158,7 @@ auto System::serialize(Emulator::Serializer& s) -> void {
     s.integer( nmiIncomming );    
     s.integer( rdyIncomming );   
     s.integer( kernalBootComplete );    
+    s.integer( extraSids );
     keyBuffer->serialize( s );    
     prgInUse->serialize( s );
     glueLogic->serialize( s );

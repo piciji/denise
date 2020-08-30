@@ -51,7 +51,9 @@ struct ModelLayout : GUIKIT::FramedVerticalLayout {
     
     auto nextOption(unsigned id) -> unsigned;
     
-    auto translate() -> void;
+    auto translate( bool addCounter = false ) -> void;
+    
+    auto getIdent( Emulator::Interface::Model* model, bool custom, std::string& tooltip ) -> std::string;
     
     ModelLayout();
 };

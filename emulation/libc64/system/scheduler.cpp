@@ -12,7 +12,7 @@ auto System::dispatcha() -> void {
             cia1->clock();
             vicII->clock();
             cia2->clock();
-            sid->clock();
+            Sid::extraSids ? Sid::clockMultiChips() : sid->clock();
             tape->clock();
             input->clock();
             expansionPort->clock();
@@ -27,7 +27,7 @@ auto System::dispatcha() -> void {
             cia1->clock();
             vicII->clock();
             cia2->clock();
-            sid->clock();
+            Sid::extraSids ? Sid::clockMultiChips() : sid->clock();
             tape->clock();
             input->clock();
         };  
@@ -40,7 +40,7 @@ auto System::dispatcha() -> void {
             cia1->clock();
             vicII->clockSilence();
             cia2->clock();
-            sid->clock();
+            Sid::extraSids ? Sid::clockMultiChips() : sid->clock();
             tape->clock();
             input->clock();
             expansionPort->clock();
@@ -55,7 +55,7 @@ auto System::dispatcha() -> void {
             cia1->clock();
             vicII->clockSilence();
             cia2->clock();
-            sid->clock();
+            Sid::extraSids ? Sid::clockMultiChips() : sid->clock();
             tape->clock();
             input->clock();
         };  
