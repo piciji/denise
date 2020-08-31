@@ -55,12 +55,13 @@ struct AudioManager {
     auto process( int16_t sampleLeft, int16_t sampleRight ) -> void;   
     
     auto setAudioDsp() -> void;
-    
+        
     auto setLatency() -> void;
     auto setFrequency() -> void;     
     auto setSynchronize() -> void;
     auto setVolume() -> void;
     auto setRateControl() -> void;
+    auto setPriority() -> void;
     
     auto setBufferSize() -> void;
     auto setResampler() -> void;

@@ -9,8 +9,12 @@
 
 ## 1.0.9 (not yet released)
 * runAhead
-* scanline based renderer
+* add scanline based renderer
 * emulate more VIC-II models
+* improve SID emulation
+    * multiple filter models
+    * stereo + 8x SID support
+
 
 ## 1.0.8
 * added Retro/Nordic Replay support

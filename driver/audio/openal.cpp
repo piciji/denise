@@ -22,6 +22,7 @@ struct OpenAL : public Audio {
     bool cleared;
 
     struct {
+        bool priority;
         bool synchronize;
         unsigned frequency;
         unsigned latency;
@@ -53,6 +54,11 @@ struct OpenAL : public Audio {
 			init();
 		}
 	}
+    
+    auto setHighPriority(bool state) -> void {
+        
+        settings.priority = state;
+    }
     
     auto getMinimumLatency() -> unsigned {
         
@@ -216,7 +222,8 @@ struct OpenAL : public Audio {
 					if (!settings.synchronize)
 						return;
 						
-					std::this_thread::sleep_for( std::chrono::milliseconds(1) );
+                    if (!settings.priority)
+                        std::this_thread::sleep_for( std::chrono::milliseconds(1) );
 				}
 			}
 			
@@ -273,6 +280,7 @@ struct OpenAL : public Audio {
 		settings.frequency = 48000;
 		settings.latency = 64u;
         settings.minimumLatency = 40u;
+        settings.priority = false;
 		settings.handle = 0;		
 	}
 	

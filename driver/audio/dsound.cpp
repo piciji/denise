@@ -27,6 +27,7 @@ struct DAudio : Audio {
     bool cleared;
     
     struct {
+        bool priority;
         bool synchronize;
         unsigned frequency;
         unsigned latency;
@@ -47,6 +48,11 @@ struct DAudio : Audio {
 		dxRelease(dsb);
 		dxRelease(ds);
 	}
+    
+    auto setHighPriority(bool state) -> void {
+        
+        settings.priority = state;
+    }
 	
     auto clear() -> void {
 		if (cleared) return;
@@ -96,7 +102,10 @@ struct DAudio : Audio {
                         uint8_t activeChunk = pos / chunkSize;
                         
                         if (activeChunk == readChunk) {
-                            std::this_thread::sleep_for( std::chrono::milliseconds(1) );
+                            
+                            if (!settings.priority)
+                                std::this_thread::sleep_for( std::chrono::milliseconds(1) );
+                            
                             continue;
                         }
                         
@@ -228,8 +237,9 @@ struct DAudio : Audio {
 		settings.synchronize = false;
 		settings.frequency = 48000;
 		settings.latency = 64;
-        settings.minimumLatency = 40u;
+        settings.minimumLatency = 25u;
 		settings.handle = nullptr;
+        settings.priority = false;
         cleared = false;
 	}
 	

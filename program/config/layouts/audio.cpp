@@ -82,8 +82,9 @@ AudioControlLayout::AudioControlLayout() {
     test.setText( "0.0005" );
     append(frequencyLabel, {0u, 0u}, 5);
     append(frequencyCombo, {0u, 0u}, 20);
+    append(priorityCheckbox, {0u, 0u}, 20);
     append(maxRateLabel, {0u, 0u}, 5);
-    append(maxRateEdit, {test.minimumSize().width, 0u});
+    append(maxRateEdit, {test.minimumSize().width, 0u});    
     
     setAlignment( 0.5 );
 }
@@ -162,7 +163,15 @@ volume("%", false, true) {
     };
     
     control.maxRateEdit.setText( GUIKIT::String::formatFloatingPoint( settings->get<double>("rate_control_delta", 0.005, {0.0, 0.010}) ) );
-        
+       
+    control.priorityCheckbox.onToggle = [this]() {
+        bool state = control.priorityCheckbox.checked();        
+        settings->set<bool>("audio_priority", state);
+        audioDriver->setHighPriority( state );
+    };
+    
+    control.priorityCheckbox.setChecked( settings->get<bool>("audio_priority", false) );
+    
     auto valVolume = settings->get<unsigned>("audio_volume", 100u, {0u, 100u});
     volume.value.setText(std::to_string( valVolume ) + " %" );
     volume.slider.setPosition( valVolume );
@@ -282,6 +291,8 @@ auto AudioLayout::translate() -> void {
 
     latency.name.setText( trans->get("latency", {}, true) );
     control.frequencyLabel.setText( trans->get("frequency", {}, true) );
+    control.priorityCheckbox.setText( trans->get("audio high priority") );
+    control.priorityCheckbox.setTooltip( trans->get("audio high priority tooltip") );
 
     volume.defaultButton.setText( trans->get("Max") );
     

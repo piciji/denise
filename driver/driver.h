@@ -62,6 +62,7 @@ struct Audio {
     virtual auto getCenterBufferDeviation() -> double { return 0.0; }
     virtual auto expectFloatingPoint() -> bool { return true; }
     virtual auto getMinimumLatency() -> unsigned { return 1; }
+    virtual auto setHighPriority(bool state) -> void {}
 
     virtual ~Audio() = default;
     static auto create(const std::string& driver) -> Audio*;

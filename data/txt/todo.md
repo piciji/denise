@@ -9,7 +9,6 @@
     * MMC64
     * MMC Replay    
     * SuperCPU
-    * Turbo Chameleon 64
     * Dongles
     * Expansion expander
     * clockport emulation (i.e. Retro Replay, MMC)
@@ -26,7 +25,6 @@
     * tape content listing in user interface, like the 1541
     * click entries and load them without fast-forward to counter position before
     * dongles
-* pseudo stereo SID
 * color banding
 * support to put clipboard in C64 memory
 
@@ -66,24 +64,20 @@
 * autofire with frequency and option to fire without button press (don't forget override logic)
 * load PRG files from disk as simple RAM insertion for reduced loading times [quickload]
 * UI switch to invert RAM init pattern
-* write (SID/PAULA) output to WAV 
+* write audio output to WAV 
 * set "integer scaling" multiplicator without sizing application window OR recalculate while resizing (never show black border)
 * PNG overlay for 16:9 fullscreen
 * allow input if there is no focus
-* SID 8580 sounds more powerfull in other emulators (maybe a bug or an additional audio effect?) (https://csdb.dk/release/?id=187116)
 * save/load additional settings files in App folder (mostly for per game key maps)
 * add Depixelizing technic (http://johanneskopf.de/publications/pixelart/index.html)
-* add confirmation question when quiting Denise Alt+F4
 * mount OS folder as D64
 * load savestates per drag'n'drop or within File Explorer
-* support Assembly64 start parameter
+* support c64 command line start of disk listings
 * insert follow up disks automatically by file name identifier
-* SID Downsample
 
 # bugs
 * japanese characters aren't displayed correctly in OpenGL onscreen text
 * more Ram Init pattern problems (https://csdb.dk/release/?id=172238  https://csdb.dk/release/?id=172347)
-* bug in drive emulation (https://csdb.dk/release/?id=192577) jiffy works
 
 
 # completed emulation
@@ -107,6 +101,7 @@
 * c64 REU
 * c64 EasyFlash + write support
 * c64 RetroReplay / Nordic Replay + write support
+* c64 stereo + 8x SID support
 
 # completed features for all emu cores
 * multi driver support

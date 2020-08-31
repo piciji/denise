@@ -27,6 +27,12 @@ auto AudioManager::setLatency() -> void {
     audioDriver->setLatency( latency );
 }
 
+auto AudioManager::setPriority() -> void {
+    
+    bool priority = settings->get<bool>("audio_priority", false);
+    audioDriver->setHighPriority( priority );
+}
+
 auto AudioManager::setFrequency() -> void {    
     
     unsigned frequency = settings->get<unsigned>("audio_frequency_v2", 48000u, {0u, 48000u});

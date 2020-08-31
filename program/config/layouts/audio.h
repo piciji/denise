@@ -2,8 +2,9 @@
 struct AudioControlLayout : GUIKIT::HorizontalLayout {
     GUIKIT::Label frequencyLabel;
     GUIKIT::ComboButton frequencyCombo;
+    GUIKIT::CheckBox priorityCheckbox;
     GUIKIT::Label maxRateLabel;
-    GUIKIT::LineEdit maxRateEdit;
+    GUIKIT::LineEdit maxRateEdit;    
     
     AudioControlLayout();
 };

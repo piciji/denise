@@ -514,3 +514,5 @@ Address =
 Address tooltip = 
 Multi SID = 
 Multi SID tooltip = 
+audio high priority = 
+audio high priority tooltip = 

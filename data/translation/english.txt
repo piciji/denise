@@ -514,3 +514,5 @@ Address = Adresse
 Address tooltip = Please take over from the details of the demos
 Multi SID = Multi SID
 Multi SID tooltip = two or more SID's are mixed according to the selected channels
+audio high priority = high priority
+audio high priority tooltip = recommended for low latency at the expense of CPU utilization
