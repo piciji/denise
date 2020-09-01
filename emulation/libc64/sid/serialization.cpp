@@ -7,8 +7,8 @@ auto Sid::searializeActiveSids(Emulator::Serializer& s, bool light) -> void {
     
     sid->serialize(s, light);    
     
-    if (system->extraSids && (s.mode() != Emulator::Serializer::Mode::Size) ) {
-        for (unsigned i = 0; i < 7; i++)
+    if (system->requestedSids && (s.mode() != Emulator::Serializer::Mode::Size) ) {
+        for (unsigned i = 0; i < system->requestedSids; i++)
             sids[i]->serialize(s, light);
     }
      

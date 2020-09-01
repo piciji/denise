@@ -88,6 +88,9 @@ auto ModelLayout::build( TabWindow* tabWindow, Emulator::Interface* emulator, st
                 line = new Line();
                 lines.push_back( line );
                 append(*line, {~0u, 0u}, 5);     
+                
+                if (custom && lines.size() == 4 )
+                    appendAllSelector();
             }
         }
         
@@ -119,9 +122,8 @@ auto ModelLayout::setEvents( ) -> void {
                     settings->set<bool>( this->tabWindow->ident( model->name ), block->checkBox.checked( ) );
 
                     emulator->setModel( model->id, block->checkBox.checked( ) );
-                    
-                    if (model->isAudioResampler() && activeEmulator)
-                        audioManager->power();
+                                        
+                    applyCustomStuff( model );
                 };
 
 			} else if (model->isRadio() ) {	
@@ -147,23 +149,7 @@ auto ModelLayout::setEvents( ) -> void {
 						
 						emulator->setModel( model->id, val );
 						
-						if (model->isGraphicChip()) {
-							this->tabWindow->videoLayout->updatePresets();
-        
-							if (activeEmulator)
-								program->power(activeEmulator);
-						}                        
-                        else if (model->isSoundChip() && dynamic_cast<LIBC64::Interface*> (this->emulator)) {
-                            auto cfgView = EmuConfigView::TabWindow::getView(this->emulator);
-
-                            if (this == &cfgView->systemLayout->modelLayout)
-                                cfgView->audioLayout->settingsLayout.updateWidget(LIBC64::Interface::ModelIdSid);
-                            else
-                                cfgView->systemLayout->modelLayout.updateWidget(LIBC64::Interface::ModelIdSid);
-                        }
-                        
-                        else if (model->isAudioResampler())
-                            audioManager->setResampler();                    
+                        applyCustomStuff( model );                                           
 					};
 					val++;
 				}
@@ -190,13 +176,8 @@ auto ModelLayout::setEvents( ) -> void {
 					settings->set<unsigned>(this->tabWindow->ident(model->name), val);
 
 					emulator->setModel( model->id, val );
-
-					if (model->isGraphicChip()) {
-						this->tabWindow->videoLayout->updatePresets();
-
-						if (activeEmulator)
-							program->power(activeEmulator);
-					}
+                    
+                    applyCustomStuff( model );
 				};
 					
             } else if (model->isSlider() ) {	
@@ -219,7 +200,9 @@ auto ModelLayout::setEvents( ) -> void {
                     
                     block->slider.value.setText( std::to_string(val) );
                     
-                    emulator->setModel( model->id, val );                    
+                    emulator->setModel( model->id, val );  
+                    
+                    applyCustomStuff( model );
                 };
                 
             } else {
@@ -245,6 +228,8 @@ auto ModelLayout::setEvents( ) -> void {
                     settings->set<int>( this->tabWindow->ident( model->name ), val );
 
                     emulator->setModel( model->id, val );
+                    
+                    applyCustomStuff( model );
                 };			
             }            
         }
@@ -258,6 +243,9 @@ auto ModelLayout::updateWidgets( ) -> void {
         for (auto block : line->blocks)                        
             updateWidget( block );        
     }
+    
+    if (custom)
+        hideExtraAudioChips();
 }
 
 auto ModelLayout::updateWidget( unsigned id ) -> void {
@@ -431,16 +419,18 @@ auto ModelLayout::stepRange(unsigned id, int step) -> int {
 	return 0;
 }
 
-auto ModelLayout::translate( bool custom ) -> void {
+auto ModelLayout::translate( ) -> void {
     
-    setText( trans->get("model") );
+    setText( trans->get("model") );    
+    
+    allSelector.label.setText( trans->get("all", {}, true) );
     
     for (auto line : lines) {
         for (auto block : line->blocks) {
             auto model = block->model;
             
             std::string tooltip;
-            std::string name = getIdent( model, custom, tooltip );
+            std::string name = getIdent( model, tooltip );
 
             if (model->isSwitch())
                 block->checkBox.setTooltip(trans->get(tooltip));
@@ -471,7 +461,173 @@ auto ModelLayout::translate( bool custom ) -> void {
     }
 }
 
-auto ModelLayout::getIdent( Emulator::Interface::Model* model, bool custom, std::string& tooltip ) -> std::string {
+auto ModelLayout::applyCustomStuff(Emulator::Interface::Model* model) -> void {
+    
+    if (dynamic_cast<LIBC64::Interface*> (this->emulator)) {
+        
+        switch(model->id) {
+            case LIBC64::Interface::ModelIdSidMulti:
+                hideExtraAudioChips();
+            case LIBC64::Interface::ModelIdSid1Left:
+            case LIBC64::Interface::ModelIdSid1Right:
+            case LIBC64::Interface::ModelIdSid2Left:
+            case LIBC64::Interface::ModelIdSid2Right:
+            case LIBC64::Interface::ModelIdSid3Left:
+            case LIBC64::Interface::ModelIdSid3Right:
+            case LIBC64::Interface::ModelIdSid4Left:
+            case LIBC64::Interface::ModelIdSid4Right:
+            case LIBC64::Interface::ModelIdSid5Left:
+            case LIBC64::Interface::ModelIdSid5Right:
+            case LIBC64::Interface::ModelIdSid6Left:
+            case LIBC64::Interface::ModelIdSid6Right:
+            case LIBC64::Interface::ModelIdSid7Left:
+            case LIBC64::Interface::ModelIdSid7Right:
+            case LIBC64::Interface::ModelIdSid8Left:
+            case LIBC64::Interface::ModelIdSid8Right:
+                if (activeEmulator)
+                    audioManager->power();
+                break;
+                
+            case LIBC64::Interface::ModelIdVicIIModel:
+                tabWindow->videoLayout->updatePresets();
+
+                if (activeEmulator)
+                    program->power(activeEmulator);
+                break;
+                
+            case LIBC64::Interface::ModelIdSid: {
+                auto cfgView = EmuConfigView::TabWindow::getView(this->emulator);
+
+                if (this == &cfgView->systemLayout->modelLayout)
+                    cfgView->audioLayout->settingsLayout.updateWidget(LIBC64::Interface::ModelIdSid);
+                else
+                    cfgView->systemLayout->modelLayout.updateWidget(LIBC64::Interface::ModelIdSid);
+                
+                } break;
+                
+            case LIBC64::Interface::ModelIdSidSampleFetch:
+                audioManager->setResampler(); 
+                break;
+        }
+    }
+}
+
+auto ModelLayout::hideExtraAudioChips() -> void {
+    
+    static int activeSidsNow = -1;
+    
+    int activeSids = emulator->getModel( LIBC64::Interface::ModelIdSidMulti );
+    
+    if (allSelector.first.checked())
+        allSelector.first.setChecked(false);
+    if (allSelector.second.checked())
+        allSelector.second.setChecked(false);
+    
+    
+    if (activeSidsNow == activeSids)
+        return;
+    
+    activeSidsNow = activeSids;
+    
+    for (unsigned i = 0; i < 8; i++) {
+        
+        if (i <= activeSids)
+            lines[i + 4]->setEnabled(true);
+        else
+            lines[i + 4]->setEnabled(false);        
+    }
+    
+    if (activeSids == 0) {
+        allSelector.setEnabled( false );
+        lines[4]->blocks[1]->setEnabled(false);
+        lines[4]->blocks[2]->setEnabled(false);
+        lines[4]->blocks[3]->setEnabled(false);
+    } else
+        allSelector.setEnabled( true );
+}
+
+auto ModelLayout::appendAllSelector() -> void {
+    
+    update( *lines[lines.size() - 1], 10 );
+    
+    allSelector.first.setText( "8580" );
+    allSelector.second.setText( "6581" );    
+    
+    GUIKIT::Label test;
+    test.setText("SID 8:");
+    
+    allSelector.append(allSelector.label, {test.minimumSize().width, 0u}, 5);
+    allSelector.append(allSelector.first, {0u, 0u}, 5);
+    allSelector.append(allSelector.second, {0u, 0u});
+    
+    append(allSelector, {0u, 0u}, 5);
+    
+    allSelector.first.onToggle = [this]() {
+        
+        if (!allSelector.first.checked())
+            return;
+        
+        Line::Block* block;
+        block = getBlock( LIBC64::Interface::ModelIdSid );
+        if (block) block->options[0]->activate();
+        block = getBlock(LIBC64::Interface::ModelIdSid2);
+        if (block) block->options[0]->activate();
+        block = getBlock(LIBC64::Interface::ModelIdSid3);
+        if (block) block->options[0]->activate();
+        block = getBlock(LIBC64::Interface::ModelIdSid4);
+        if (block) block->options[0]->activate();
+        block = getBlock(LIBC64::Interface::ModelIdSid5);
+        if (block) block->options[0]->activate();
+        block = getBlock(LIBC64::Interface::ModelIdSid6);
+        if (block) block->options[0]->activate();
+        block = getBlock(LIBC64::Interface::ModelIdSid7);
+        if (block) block->options[0]->activate();
+        block = getBlock(LIBC64::Interface::ModelIdSid8);
+        if (block) block->options[0]->activate();
+        
+        allSelector.second.setChecked( false );
+    };
+
+    allSelector.second.onToggle = [this]() {
+
+        if (!allSelector.second.checked())
+            return;
+        
+        Line::Block* block;
+        block = getBlock(LIBC64::Interface::ModelIdSid);
+        if (block) block->options[1]->activate();
+        block = getBlock(LIBC64::Interface::ModelIdSid2);
+        if (block) block->options[1]->activate();
+        block = getBlock(LIBC64::Interface::ModelIdSid3);
+        if (block) block->options[1]->activate();
+        block = getBlock(LIBC64::Interface::ModelIdSid4);
+        if (block) block->options[1]->activate();
+        block = getBlock(LIBC64::Interface::ModelIdSid5);
+        if (block) block->options[1]->activate();
+        block = getBlock(LIBC64::Interface::ModelIdSid6);
+        if (block) block->options[1]->activate();
+        block = getBlock(LIBC64::Interface::ModelIdSid7);
+        if (block) block->options[1]->activate();
+        block = getBlock(LIBC64::Interface::ModelIdSid8);
+        if (block) block->options[1]->activate();
+        
+        allSelector.first.setChecked( false );
+    };
+}
+
+auto ModelLayout::getBlock( unsigned modelId ) -> Line::Block* {
+    
+    for (auto line : lines) {
+        for(auto block : line->blocks ) {
+            
+            if (block->model->id == modelId)
+                return block;
+        }
+    }
+    return nullptr;
+}
+
+auto ModelLayout::getIdent( Emulator::Interface::Model* model, std::string& tooltip ) -> std::string {
     
     std::string name = model->name;
         

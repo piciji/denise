@@ -27,11 +27,19 @@ struct ModelLayout : GUIKIT::FramedVerticalLayout {
         Line();
     };
     
-    std::vector<Line*> lines;
+    struct AllSelector : GUIKIT::HorizontalLayout {
+        GUIKIT::Label label;
+        GUIKIT::CheckBox first;
+        GUIKIT::CheckBox second;
+    } allSelector;
     
+    std::vector<Line*> lines;
+       
     Emulator::Interface* emulator;
     
     TabWindow* tabWindow;
+    
+    bool custom = false;
     
     std::vector<Emulator::Interface::Model::Purpose> purposes;
         
@@ -51,9 +59,17 @@ struct ModelLayout : GUIKIT::FramedVerticalLayout {
     
     auto nextOption(unsigned id) -> unsigned;
     
-    auto translate( bool addCounter = false ) -> void;
+    auto translate( ) -> void;
     
-    auto getIdent( Emulator::Interface::Model* model, bool custom, std::string& tooltip ) -> std::string;
+    auto getIdent( Emulator::Interface::Model* model, std::string& tooltip ) -> std::string;
+    
+    auto appendAllSelector() -> void;
+    
+    auto hideExtraAudioChips() -> void;
+    
+    auto applyCustomStuff(Emulator::Interface::Model* model) -> void;
+    
+    auto getBlock( unsigned modelId ) -> Line::Block*;
     
     ModelLayout();
 };

@@ -45,7 +45,7 @@ System::System(Interface* interface) {
     
     Sid::calcSerializationSizeForSevenMoreSids();
     
-    extraSids = false;
+    requestedSids = 0;
     
     input = new Input;
     for (auto& media : interface->mediaGroups[Interface::MediaGroupIdProgram].media) {
@@ -702,7 +702,7 @@ auto System::power( bool softReset ) -> void {
     
     kernalBootComplete = false;
     calcSerializationSize();
-    if (extraSids)
+    if (requestedSids)
         serializationSize += Sid::serializationSizeForSevenMoreSids;
     
 	fastForward.config = 0;
@@ -1006,16 +1006,18 @@ auto System::updateStatsStereo() -> void {
     interface->stats.stereoSound = Sid::isStereo();
 }
 
-auto System::useExtraSids(bool state) -> void {
-    extraSids = state;
+auto System::useExtraSids(uint8_t requestedSids) -> void {
+    auto requestedSidsBefore = this->requestedSids;
+    
+    this->requestedSids = requestedSids;
     Sid::updateSidUsage();
     
     if (!powerOn)
         return;
     
-    if (state)
+    if (requestedSids && !requestedSidsBefore)
         serializationSize += Sid::serializationSizeForSevenMoreSids;
-    else
+    else if (!requestedSids && requestedSidsBefore)
         serializationSize -= Sid::serializationSizeForSevenMoreSids;
 }
 

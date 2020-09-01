@@ -73,7 +73,7 @@ auto Sid::updateSidUsage() -> void {
     leftSids = rightSids = 0;
     useSids.clear();
     
-    extraSids = system->extraSids;
+    extraSids = system->requestedSids > 0;
     
     if (!extraSids) {
         system->updateStatsStereo();
@@ -89,7 +89,7 @@ auto Sid::updateSidUsage() -> void {
     if (sid->rightChannel)
         rightSids++;
     
-    for (unsigned i = 0; i < 7; i++) {
+    for (unsigned i = 0; i < system->requestedSids; i++) {
         
         Sid* extraSid = sids[i];
            

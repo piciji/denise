@@ -158,7 +158,7 @@ auto System::serialize(Emulator::Serializer& s) -> void {
     s.integer( nmiIncomming );    
     s.integer( rdyIncomming );   
     s.integer( kernalBootComplete );    
-    s.integer( extraSids );
+    s.integer( requestedSids );
     keyBuffer->serialize( s );    
     prgInUse->serialize( s );
     glueLogic->serialize( s );

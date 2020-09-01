@@ -94,7 +94,7 @@ struct System {
 	
 	Emulator::Crop* crop;
     unsigned serializationSize; 
-    bool extraSids;
+    uint8_t requestedSids;
     
     uint8_t mode; //bit 4: exrom, bit 3: game, bit 2: charen, bit 1: hiram, bit 0: loram
     uint8_t vicBank;
@@ -144,7 +144,7 @@ struct System {
 	auto powerOff() -> void;
     auto run() -> void;
     auto initRam() -> void;   
-    auto useExtraSids(bool state) -> void;
+    auto useExtraSids(uint8_t requestedSids) -> void;
     
     auto calcSerializationSize() -> void;
     auto serialize(unsigned& size) -> uint8_t*;

@@ -14,6 +14,7 @@
 * improve SID emulation
     * multiple filter models
     * stereo + 8x SID support
+    * DSP: Bass Boost and Reverb
 
 
 ## 1.0.8

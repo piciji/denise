@@ -20,7 +20,7 @@
 
 namespace LIBC64 {
 
-const std::string Interface::Version = "10886";
+const std::string Interface::Version = "10887";
     
 Interface::Interface() : Emulator::Interface( "C64" ) {        
     
@@ -352,46 +352,46 @@ auto Interface::prepareModels() -> void {
     models.push_back({ModelIdSidSampleFetch, "SID Sample Interval", Model::Type::Radio, Model::Purpose::AudioResampler, 3, {0, 3}, {"1", "2", "7", "18"}});
     
     // extra Sids    
-    models.push_back({ModelIdSidMulti, "Multi SID", Model::Type::Switch, Model::Purpose::AudioResampler, 0});
+    models.push_back({ModelIdSidMulti, "Extra SIDs", Model::Type::Combo, Model::Purpose::AudioResampler, 0, {0, 7}, {"0", "1", "2", "3", "4", "5", "6", "7"}});
     
 	models.push_back({ModelIdSid, "SID 1", Model::Type::Radio, Model::Purpose::SoundChip, 0, {0, 1}, {"8580", "6581"} });	
     models.push_back({ModelIdSid1Left, "SID 1 Left Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 1});
-    models.push_back({ModelIdSid1Right, "SID 1 Right Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 1});
+    models.push_back({ModelIdSid1Right, "SID 1 Right Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 0});
     models.push_back({ModelIdSid1Adr, "SID 1 Address", Model::Type::Combo, Model::Purpose::AudioSettings, 0, {0, (int)(Sid::adrOptions.size() - 1)}, Sid::adrOptions});
 
     models.push_back({ModelIdSid2, "SID 2", Model::Type::Radio, Model::Purpose::AudioSettings, 0, {0, 1}, {"8580", "6581"} });	
     models.push_back({ModelIdSid2Left, "SID 2 Left Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 0});
-    models.push_back({ModelIdSid2Right, "SID 2 Right Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 0});    
+    models.push_back({ModelIdSid2Right, "SID 2 Right Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 1});    
     models.push_back({ModelIdSid2Adr, "SID 2 Address", Model::Type::Combo, Model::Purpose::AudioSettings, 1, {0, (int)(Sid::adrOptions.size() - 1)}, Sid::adrOptions});    
     
     models.push_back({ModelIdSid3, "SID 3", Model::Type::Radio, Model::Purpose::AudioSettings, 0, {0, 1}, {"8580", "6581"} });	
-    models.push_back({ModelIdSid3Left, "SID 3 Left Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 0});
+    models.push_back({ModelIdSid3Left, "SID 3 Left Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 1});
     models.push_back({ModelIdSid3Right, "SID 3 Right Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 0});    
     models.push_back({ModelIdSid3Adr, "SID 3 Address", Model::Type::Combo, Model::Purpose::AudioSettings, 1, {0, (int)(Sid::adrOptions.size() - 1)}, Sid::adrOptions});    
     
     models.push_back({ModelIdSid4, "SID 4", Model::Type::Radio, Model::Purpose::AudioSettings, 0, {0, 1}, {"8580", "6581"} });	
     models.push_back({ModelIdSid4Left, "SID 4 Left Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 0});
-    models.push_back({ModelIdSid4Right, "SID 4 Right Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 0});    
+    models.push_back({ModelIdSid4Right, "SID 4 Right Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 1});    
     models.push_back({ModelIdSid4Adr, "SID 4 Address", Model::Type::Combo, Model::Purpose::AudioSettings, 1, {0, (int)(Sid::adrOptions.size() - 1)}, Sid::adrOptions});    
     
     models.push_back({ModelIdSid5, "SID 5", Model::Type::Radio, Model::Purpose::AudioSettings, 0, {0, 1}, {"8580", "6581"} });	
-    models.push_back({ModelIdSid5Left, "SID 5 Left Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 0});
+    models.push_back({ModelIdSid5Left, "SID 5 Left Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 1});
     models.push_back({ModelIdSid5Right, "SID 5 Right Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 0});    
     models.push_back({ModelIdSid5Adr, "SID 5 Address", Model::Type::Combo, Model::Purpose::AudioSettings, 1, {0, (int)(Sid::adrOptions.size() - 1)}, Sid::adrOptions});    
     
     models.push_back({ModelIdSid6, "SID 6", Model::Type::Radio, Model::Purpose::AudioSettings, 0, {0, 1}, {"8580", "6581"} });	
     models.push_back({ModelIdSid6Left, "SID 6 Left Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 0});
-    models.push_back({ModelIdSid6Right, "SID 6 Right Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 0});    
+    models.push_back({ModelIdSid6Right, "SID 6 Right Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 1});    
     models.push_back({ModelIdSid6Adr, "SID 6 Address", Model::Type::Combo, Model::Purpose::AudioSettings, 1, {0, (int)(Sid::adrOptions.size() - 1)}, Sid::adrOptions});    
     
     models.push_back({ModelIdSid7, "SID 7", Model::Type::Radio, Model::Purpose::AudioSettings, 0, {0, 1}, {"8580", "6581"} });	
-    models.push_back({ModelIdSid7Left, "SID 7 Left Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 0});
+    models.push_back({ModelIdSid7Left, "SID 7 Left Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 1});
     models.push_back({ModelIdSid7Right, "SID 7 Right Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 0});    
     models.push_back({ModelIdSid7Adr, "SID 7 Address", Model::Type::Combo, Model::Purpose::AudioSettings, 1, {0, (int)(Sid::adrOptions.size() - 1)}, Sid::adrOptions});    
     
     models.push_back({ModelIdSid8, "SID 8", Model::Type::Radio, Model::Purpose::AudioSettings, 0, {0, 1}, {"8580", "6581"} });	
     models.push_back({ModelIdSid8Left, "SID 8 Left Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 0});
-    models.push_back({ModelIdSid8Right, "SID 8 Right Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 0});    
+    models.push_back({ModelIdSid8Right, "SID 8 Right Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 1});    
     models.push_back({ModelIdSid8Adr, "SID 8 Address", Model::Type::Combo, Model::Purpose::AudioSettings, 1, {0, (int)(Sid::adrOptions.size() - 1)}, Sid::adrOptions});    
     
     // ANE magic byte value depends on cpu manufacturer and unemulatable behaviour like heat
@@ -1089,7 +1089,7 @@ auto Interface::setModel(unsigned modelId, int value) -> void {
 			vicIICycle->disableGreyDotBug( value & 1 );
 			break;            
         case ModelIdSidMulti:
-            system->useExtraSids( value & 1 );
+            system->useExtraSids( value & 7 );
             break;
         case ModelIdSid1Adr: sid->setIoMask( value ); break;
         case ModelIdSid2Adr: sids[0]->setIoMask( value ); break;
@@ -1162,7 +1162,7 @@ auto Interface::getModel(unsigned modelId) -> int {
 		case ModelIdDisableGreyDotBug:
 			return vicIICycle->hasGreyDotBugDisbled();
         case ModelIdSidMulti:
-            return system->extraSids;
+            return (int)system->requestedSids;
             
         case ModelIdSid1Adr: return sid->ioPos;
         case ModelIdSid2Adr: return sids[0]->ioPos;
