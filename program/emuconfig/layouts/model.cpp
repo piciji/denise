@@ -244,8 +244,10 @@ auto ModelLayout::updateWidgets( ) -> void {
             updateWidget( block );        
     }
     
-    if (custom)
+    if (custom) {
         hideExtraAudioChips();
+        hideBias();
+    }
 }
 
 auto ModelLayout::updateWidget( unsigned id ) -> void {
@@ -466,6 +468,9 @@ auto ModelLayout::applyCustomStuff(Emulator::Interface::Model* model) -> void {
     if (dynamic_cast<LIBC64::Interface*> (this->emulator)) {
         
         switch(model->id) {
+            case LIBC64::Interface::ModelIdSidFilterType:
+                hideBias();
+                break;
             case LIBC64::Interface::ModelIdSidMulti:
                 hideExtraAudioChips();
             case LIBC64::Interface::ModelIdSid1Left:
@@ -510,6 +515,20 @@ auto ModelLayout::applyCustomStuff(Emulator::Interface::Model* model) -> void {
                 break;
         }
     }
+}
+
+auto ModelLayout::hideBias() -> void {
+    
+    int filter = emulator->getModel( LIBC64::Interface::ModelIdSidFilterType );
+
+    bool showBias6581 = filter == 0 || filter == 1;
+    bool showBias8580 = filter == 0;
+    
+    if (lines[1]->enabled() != showBias6581 )
+        lines[1]->setEnabled( showBias6581 );
+
+    if (lines[2]->enabled() != showBias8580 )
+        lines[2]->setEnabled( showBias8580 );
 }
 
 auto ModelLayout::hideExtraAudioChips() -> void {

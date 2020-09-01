@@ -69,6 +69,8 @@ struct ModelLayout : GUIKIT::FramedVerticalLayout {
     
     auto applyCustomStuff(Emulator::Interface::Model* model) -> void;
     
+    auto hideBias() -> void;
+    
     auto getBlock( unsigned modelId ) -> Line::Block*;
     
     ModelLayout();
