@@ -85,11 +85,18 @@ auto View::autoloadPostProcessing() -> void {
     
     if (!autoStart) {
 
-        if (!mediaView->visible())
-            mediaView->setVisible();
+        if (mediaGroup->isDrive()) {
+            if (mediaView->visible())
+                mediaView->setFocused();
             
-        mediaView->setFocused();
+        } else {
+            
+            if (!mediaView->visible())
+                mediaView->setVisible();
 
+            mediaView->setFocused();
+        }
+        
         mediaView->showMediaGroupLayout(mediaGroup);
 
     } else {

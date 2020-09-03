@@ -520,3 +520,4 @@ all = Alle
 mix left = mix left
 mix right = mix right
 Balance = Balance
+insert = Insert

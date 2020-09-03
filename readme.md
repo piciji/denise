@@ -15,6 +15,7 @@
     * multiple filter models
     * stereo + 8x SID support
     * DSP: Bass Boost and Reverb
+* thanks to user AW182 for the countles tests and reports
 
 
 ## 1.0.8

@@ -167,14 +167,20 @@ auto Program::updateSaveIdent(Emulator::Interface::Media* media, std::string fil
     }
 }
 
-auto Program::removeBootableExpansion() -> void {
+auto Program::removeBootableExpansion( bool gameOnly ) -> void {
     
-    if (!activeEmulator || !activeEmulator->isExpansionBootable())
+    if (!activeEmulator)
+        return;
+    
+    if (!gameOnly && !activeEmulator->isExpansionBootable())
         return;
     
     auto expansion = activeEmulator->getExpansion();
     
     if (!expansion)
+        return;
+    
+    if (gameOnly && !expansion->isGame() && !expansion->isFlash())
         return;
     
     for( auto& media : expansion->mediaGroup->media) {

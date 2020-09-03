@@ -639,6 +639,7 @@ auto View::buildMenu() -> void {
         sM.poweron->setIcon( powerImage );
         sM.poweron->onActivate = [emulator]() {
 		    program->power(emulator);
+            program->removeBootableExpansion( true );
 	    };	
         sM.system->append( *sM.poweron );
         sM.poweroff = new GUIKIT::MenuItem;

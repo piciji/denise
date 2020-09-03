@@ -312,6 +312,8 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
                 
                 fileDialogPtr = new GUIKIT::BrowserWindow;
                 
+                fileDialogPtr->setDefaultButtonText( trans->get("insert") );
+                
                 fileDialogPtr->setTemplateId( IDD_FILE_TEMPLATE );
                 
                 fileDialogPtr->resizeTemplate( true, -6 );
@@ -371,7 +373,8 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
                 
 				if (filePath.empty()) {
                     //message->warning("cancel software");
-                    resetPreview();
+                    if (GUIKIT::Application::loop)
+                        resetPreview();
 					return;
                 }
                 
@@ -1560,7 +1563,7 @@ auto MediaWindow::anyLoad( bool mIsAcquiredBefore ) -> void {
         
         return listings;
     } );
-    fileDialogPtr->addCustomButton( trans->get("open"), [this, mIsAcquiredBefore](std::string filePath, unsigned selection) {
+    fileDialogPtr->addCustomButton( trans->get("insert"), [this, mIsAcquiredBefore](std::string filePath, unsigned selection) {
 
         if (filePath.empty())
             return false;

@@ -91,7 +91,7 @@ struct Program : Emulator::Interface::Bind {
     auto updateSaveIdent(Emulator::Interface::Media* media, std::string file = "") -> void;
 	auto getLastUsedEmu() -> Emulator::Interface*;
 	auto getEmulator( std::string ident ) -> Emulator::Interface*;
-    auto removeBootableExpansion() -> void;
+    auto removeBootableExpansion(bool gameOnly = false) -> void;
     
     //audio
     auto initAudio() -> void;

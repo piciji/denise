@@ -64,7 +64,7 @@
 * autofire with frequency and option to fire without button press (don't forget override logic)
 * load PRG files from disk as simple RAM insertion for reduced loading times [quickload]
 * UI switch to invert RAM init pattern
-* write audio output to WAV 
+* write audio output to WAV and MP3
 * set "integer scaling" multiplicator without sizing application window OR recalculate while resizing (never show black border)
 * PNG overlay for 16:9 fullscreen
 * allow input if there is no focus
