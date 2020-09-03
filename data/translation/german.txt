@@ -517,3 +517,5 @@ Extra SIDs tooltip = Anzahl zusätzlicher SIDs einstellen
 audio high priority = hohe Priorität
 audio high priority tooltip = empfohlen für niedrige Latenzen auf Kosten der CPU Auslastung
 all = Alle
+mix left = Mix Links
+mix right = Mix Rechts

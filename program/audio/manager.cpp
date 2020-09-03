@@ -4,6 +4,7 @@
 #include "../cmd/cmd.h"
 #include "dsp/bass.h"
 #include "dsp/reverb.h"
+#include "dsp/panning.h"
 
 AudioManager* audioManager = nullptr;
 
@@ -159,6 +160,22 @@ auto AudioManager::setAudioDsp() -> void {
         
         dsps.push_back( (DSP::Base*)reverb );
     }  
+    
+    bool usePanning = settings->get<bool>("audio_panning", false );
+    
+    if (usePanning) {
+        
+        DSP::Panning* panning = new DSP::Panning;
+        
+        panning->init(
+            settings->get<float>("audio_panning_left0", 1.0, {0.0, 1.0} ),
+            settings->get<float>("audio_panning_left1", 0.0, {0.0, 1.0} ),
+            settings->get<float>("audio_panning_right0", 0.0, {0.0, 1.0} ),
+            settings->get<float>("audio_panning_right1", 1.0, {0.0, 1.0} )
+        );
+            
+        dsps.push_back( (DSP::Base*)panning );
+    }
 }
 
 auto AudioManager::setRateControl() -> void {

@@ -4,7 +4,8 @@ struct AudioControlLayout : GUIKIT::HorizontalLayout {
     GUIKIT::ComboButton frequencyCombo;
     GUIKIT::CheckBox priorityCheckbox;
     GUIKIT::Label maxRateLabel;
-    GUIKIT::LineEdit maxRateEdit;    
+    GUIKIT::LineEdit maxRateEdit; 
+    DriverLayout driverLayout;
     
     AudioControlLayout();
 };
@@ -53,6 +54,27 @@ struct ReverbControlLayout : GUIKIT::FramedVerticalLayout {
     ReverbControlLayout();
 };
 
+struct PanningControlLayout : GUIKIT::FramedVerticalLayout {
+    
+    struct TopLayout : GUIKIT::HorizontalLayout {
+        GUIKIT::CheckBox active;
+        GUIKIT::Label leftChannel;
+        SliderLayout leftMix;
+        SliderLayout rightMix;
+        
+        TopLayout();
+    } top;
+    
+    struct BottomLayout : GUIKIT::HorizontalLayout {
+        GUIKIT::Label rightChannel;
+        SliderLayout leftMix;
+        SliderLayout rightMix;
+        
+        BottomLayout();
+    } bottom;
+    
+    PanningControlLayout();
+};
 
 struct AudioLayout : GUIKIT::VerticalLayout {
 
@@ -63,12 +85,11 @@ struct AudioLayout : GUIKIT::VerticalLayout {
 	GUIKIT::FramedVerticalLayout frame;
     BassControlLayout bass;
     ReverbControlLayout reverb;
-    
-    DriverLayout driverLayout;
+    PanningControlLayout panning;        
 
     auto translate() -> void;
     auto updateLatencySlider() -> void;
-    auto buildReverbSetting(SliderLayout* sliderLayout, std::string ident, float defaultVal) -> void;
+    auto build100PercentSetting(SliderLayout* sliderLayout, std::string ident, float defaultVal) -> void;
 
     AudioLayout();
 };

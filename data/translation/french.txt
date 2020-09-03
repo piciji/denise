@@ -517,3 +517,5 @@ Extra SIDs tooltip =
 audio high priority = 
 audio high priority tooltip = 
 all = 
+mix left = 
+mix right = 

@@ -218,11 +218,8 @@ System::System(Interface* interface) {
 
     writeIo1Reg = [this](uint16_t addr, uint8_t value) {
         
-        if (Sid::extraSids) {
-            Sid* _sid = Sid::getSidByAdr( addr + 0xde00, true );
-            if (_sid)
-                _sid->writeIO( addr, value );
-        }
+        if (Sid::extraSids)
+            Sid::writeSidIO( addr + 0xde00, value );
         
         expansionPort->writeIo1(addr, value);
     };
@@ -240,11 +237,8 @@ System::System(Interface* interface) {
     
     writeIo2Reg = [this](uint16_t addr, uint8_t value) {
 
-        if (Sid::extraSids) {
-            Sid* _sid = Sid::getSidByAdr( addr + 0xde00, true );
-            if (_sid)
-                _sid->writeIO( addr, value );
-        }
+        if (Sid::extraSids)
+            Sid::writeSidIO( addr + 0xdf00, value );        
         
         expansionPort->writeIo2(addr, value);
     };
@@ -263,7 +257,7 @@ System::System(Interface* interface) {
     writeSidReg = [this](uint16_t addr, uint8_t value) {
         
         if (Sid::extraSids)
-            return Sid::getSidByAdr( addr )->writeIO( addr, value );
+            return Sid::writeSid( addr, value );
         
         sid->writeIO( addr, value );
     };

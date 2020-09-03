@@ -103,6 +103,8 @@ struct Sid {
     uint8_t ioPos;
     
     static auto getSidByAdr(uint16_t addr, bool ioArea = false) -> Sid*;
+    static auto writeSid(uint16_t addr, uint8_t value) -> void;
+    static auto writeSidIO(uint16_t addr, uint8_t value) -> void;
     static auto clockMultiChips() -> void;
     static auto updateSidUsage() -> void;
     static auto setResampleQuality( uint8_t val ) -> void;

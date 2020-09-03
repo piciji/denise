@@ -77,6 +77,50 @@ ReverbControlLayout::ReverbControlLayout() {
     setPadding( 10 );
 }
 
+PanningControlLayout::TopLayout::TopLayout() :
+leftMix( "" ),
+rightMix( "" ) {
+    append( active, {0u, 0u}, 10 );
+    append( leftChannel, {0u, 0u}, 10);
+    append( leftMix, {~0u, 0u}, 10);
+    append( rightMix, {~0u, 0u});
+    
+    leftMix.slider.setLength( 101 );
+    rightMix.slider.setLength( 101 );
+    
+    leftMix.updateValueWidth( "0.99" );
+    rightMix.updateValueWidth( "0.99" );
+    
+    leftChannel.setFont(GUIKIT::Font::system("bold"));
+    
+    setAlignment( 0.5 );
+}
+
+PanningControlLayout::BottomLayout::BottomLayout() :
+leftMix( "" ),
+rightMix( "" ) {
+    append( rightChannel, {0u, 0u}, 10);
+    append( leftMix, {~0u, 0u}, 10);
+    append( rightMix, {~0u, 0u});
+    
+    leftMix.slider.setLength( 101 );
+    rightMix.slider.setLength( 101 );
+    
+    leftMix.updateValueWidth( "0.99" );
+    rightMix.updateValueWidth( "0.99" );
+    
+    rightChannel.setFont(GUIKIT::Font::system("bold"));
+    
+    setAlignment( 0.5 );
+}
+
+PanningControlLayout::PanningControlLayout() {
+    append( top, {~0u, 0u}, 10 );
+    append( bottom, {~0u, 0u} );
+    
+    setPadding( 10 );
+}
+
 AudioControlLayout::AudioControlLayout() {
     GUIKIT::LineEdit test;
     test.setText( "0.0005" );
@@ -102,6 +146,7 @@ volume("%", false, true) {
 	append(frame, {~0u, 0u}, 10);
     append(bass, {~0u, 0u}, 10);
     append(reverb, {~0u, 0u}, 10);
+    append(panning, {~0u, 0u}, 10);
 
     volume.slider.setLength(101);
     latency.slider.setLength(120);
@@ -113,18 +158,18 @@ volume("%", false, true) {
     auto selectedDriver = program->getAudioDriver();
 	unsigned i = 0;
 	for(auto& driver : audioDriver->available()) {
-		driverLayout.combo.append( driver );
+		control.driverLayout.combo.append( driver );
 		if (driver == selectedDriver) {
-			driverLayout.combo.setSelection( i );
+			control.driverLayout.combo.setSelection( i );
 		}
 		i++;
 	}
     
-    if (driverLayout.combo.rows() > 0) append(driverLayout, {~0u, 0u});
-    if (driverLayout.combo.rows() == 1) driverLayout.setEnabled(false);
+    if (control.driverLayout.combo.rows() > 0) control.append(control.driverLayout, {~0u, 0u});
+    if (control.driverLayout.combo.rows() == 1) control.driverLayout.setEnabled(false);
 	
-	driverLayout.combo.onChange = [this]() {
-		settings->set<std::string>("audio_driver", driverLayout.combo.text() );
+	control.driverLayout.combo.onChange = [this]() {
+		settings->set<std::string>("audio_driver", control.driverLayout.combo.text() );
 		program->initAudio();
 	};
 	    	
@@ -248,14 +293,29 @@ volume("%", false, true) {
     
     reverb.top.active.setChecked( settings->get<bool>("audio_reverb", false ) );
     
-    buildReverbSetting( &reverb.top.dryTime, "audio_reverb_drytime", 0.43 );
-    buildReverbSetting( &reverb.top.wetTime, "audio_reverb_wettime", 0.4 );
-    buildReverbSetting( &reverb.bottom.damping, "audio_reverb_damping", 0.8 );
-    buildReverbSetting( &reverb.bottom.roomWidth, "audio_reverb_roomwidth", 0.56 );
-    buildReverbSetting( &reverb.bottom.roomSize, "audio_reverb_roomsize", 0.56 );
+    build100PercentSetting( &reverb.top.dryTime, "audio_reverb_drytime", 0.43 );
+    build100PercentSetting( &reverb.top.wetTime, "audio_reverb_wettime", 0.4 );
+    build100PercentSetting( &reverb.bottom.damping, "audio_reverb_damping", 0.8 );
+    build100PercentSetting( &reverb.bottom.roomWidth, "audio_reverb_roomwidth", 0.56 );
+    build100PercentSetting( &reverb.bottom.roomSize, "audio_reverb_roomsize", 0.56 );
+    
+    // panning
+    panning.top.active.onToggle = [this]() {
+        
+        settings->set<bool>("audio_panning", panning.top.active.checked() );
+        
+        audioManager->setAudioDsp();
+    };  
+    
+    panning.top.active.setChecked( settings->get<bool>("audio_panning", false ) );
+    
+    build100PercentSetting( &panning.top.leftMix, "audio_panning_left0", 1.0 );
+    build100PercentSetting( &panning.top.rightMix, "audio_panning_left1", 0.0 );
+    build100PercentSetting( &panning.bottom.leftMix, "audio_panning_right0", 0.0 );
+    build100PercentSetting( &panning.bottom.rightMix, "audio_panning_right1", 1.0 );
 }
 
-auto AudioLayout::buildReverbSetting(SliderLayout* sliderLayout, std::string ident, float defaultVal) -> void {
+auto AudioLayout::build100PercentSetting(SliderLayout* sliderLayout, std::string ident, float defaultVal) -> void {
 
     sliderLayout->slider.onChange = [this, sliderLayout, ident]() {
 
@@ -296,7 +356,7 @@ auto AudioLayout::translate() -> void {
 
     volume.defaultButton.setText( trans->get("Max") );
     
-    driverLayout.name.setText( trans->get("driver", {}, true) );
+    control.driverLayout.name.setText( trans->get("driver", {}, true) );
     
     control.maxRateLabel.setText( trans->get("drc_delta", {}, true) );
     control.maxRateLabel.setTooltip( trans->get("drc_delta_tooltip") );
@@ -316,4 +376,13 @@ auto AudioLayout::translate() -> void {
     reverb.bottom.damping.name.setText( trans->get("Damping", {}, true) );
     reverb.bottom.roomWidth.name.setText( trans->get("Room Width", {}, true) );
     reverb.bottom.roomSize.name.setText( trans->get("Room Size", {}, true) );
+    
+    panning.setText( trans->get("Panning") );
+    panning.top.active.setText( trans->get("enable") );    
+    panning.top.leftChannel.setText( trans->get("left Channel") );
+    panning.top.leftMix.name.setText( trans->get("mix left") );
+    panning.top.rightMix.name.setText( trans->get("mix right") );
+    panning.bottom.rightChannel.setText( trans->get("right Channel") );
+    panning.bottom.leftMix.name.setText( trans->get("mix left") );
+    panning.bottom.rightMix.name.setText( trans->get("mix right") );
 }
