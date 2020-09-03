@@ -377,7 +377,7 @@ auto AudioLayout::translate() -> void {
     reverb.bottom.roomWidth.name.setText( trans->get("Room Width", {}, true) );
     reverb.bottom.roomSize.name.setText( trans->get("Room Size", {}, true) );
     
-    panning.setText( trans->get("Panning") );
+    panning.setText( trans->get("Balance") );
     panning.top.active.setText( trans->get("enable") );    
     panning.top.leftChannel.setText( trans->get("left Channel") );
     panning.top.leftMix.name.setText( trans->get("mix left") );

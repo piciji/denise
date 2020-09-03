@@ -519,3 +519,4 @@ audio high priority tooltip = recommended for low latency at the expense of CPU 
 all = Alle
 mix left = mix left
 mix right = mix right
+Balance = Balance

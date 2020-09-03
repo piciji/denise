@@ -519,3 +519,4 @@ audio high priority tooltip =
 all = 
 mix left = 
 mix right = 
+Balance = 

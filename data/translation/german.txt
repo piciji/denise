@@ -519,3 +519,4 @@ audio high priority tooltip = empfohlen für niedrige Latenzen auf Kosten der CP
 all = Alle
 mix left = Mix Links
 mix right = Mix Rechts
+Balance = Balance
