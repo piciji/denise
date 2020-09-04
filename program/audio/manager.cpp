@@ -107,7 +107,7 @@ auto AudioManager::setVolume() -> void {
     unsigned volume = settings->get<unsigned>("audio_volume", 100u,{0u, 100u});
     bool mute = settings->get<bool>("audio_mute", false);
         
-    floatConversion = 0.0;
+    floatConversion = 0.0;    
     
     if (!mute)
         floatConversion =  ( (float)volume * 0.01 ) / 32768.0;   
@@ -196,6 +196,7 @@ auto AudioManager::power() -> void {
     audioManager->setResampler();
     audioManager->setBufferSize();
     audioManager->setAudioDsp();
+    audioManager->setVolume();
 
     statistics.average = 0;
     statistics.sum = 0;

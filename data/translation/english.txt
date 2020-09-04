@@ -521,3 +521,5 @@ mix left = mix left
 mix right = mix right
 Balance = Balance
 insert = Insert
+SID Filter Equalizer = Filter volume adjust
+SID Filter Equalizer tooltip = When switching the filters, the basic volume is adjusted.

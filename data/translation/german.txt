@@ -521,3 +521,5 @@ mix left = Mix Links
 mix right = Mix Rechts
 Balance = Balance
 insert = Einlegen
+SID Filter Equalizer = Filter Lautstärke angleichen
+SID Filter Equalizer tooltip = Beim Umschalten der Filter wird die Grundlautstärke angeglichen.

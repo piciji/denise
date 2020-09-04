@@ -74,6 +74,7 @@ struct Sid {
     auto useLeftChannel(bool state) -> void;
     auto useRightChannel(bool state) -> void;
     auto withoutExternalFilter() -> void;
+    auto volumeCorrection() -> void;
     static auto disableAudioOut(bool state) -> void;
     static auto setEnableFilterAll( bool state ) -> void;
     static auto adjustFilterBias6581All(int value) -> void;
@@ -84,6 +85,7 @@ struct Sid {
     static auto isStereo() -> bool;
     static auto calcSerializationSizeForSevenMoreSids() -> void;
     static auto searializeActiveSids(Emulator::Serializer& s, bool light = false) -> void;
+    static auto setFilterVolumeCorrection( bool state ) -> void;
     
     static bool audioOut;
     static bool extraSids;
@@ -95,12 +97,14 @@ struct Sid {
     static std::vector<std::string> adrOptions;
     static bool useExternalFilter;
     static unsigned serializationSizeForSevenMoreSids;
+    static bool useVolumeCorrection;
     
     double curSample;
     bool leftChannel = true;
     bool rightChannel = true;
     uint16_t ioMask;    
-    uint8_t ioPos;
+    uint8_t ioPos;    
+    float correction = 1.0;
     
     static auto getSidByAdr(uint16_t addr, bool ioArea = false) -> Sid*;
     static auto writeSid(uint16_t addr, uint8_t value) -> void;

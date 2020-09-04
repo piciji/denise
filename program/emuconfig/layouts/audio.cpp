@@ -9,7 +9,7 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
     settingsLayout.custom = true;
     
     settingsLayout.build( tabWindow, emulator, {Emulator::Interface::Model::Purpose::SoundChip, Emulator::Interface::Model::Purpose::AudioSettings, Emulator::Interface::Model::Purpose::AudioResampler },
-    {4, 1, 1, 2, 4, 4, 4, 4, 4, 4, 4, 4} );   
+    {4, 1, 1, 3, 4, 4, 4, 4, 4, 4, 4, 4} );   
         
     append(settingsLayout, {~0u, 0u});
     

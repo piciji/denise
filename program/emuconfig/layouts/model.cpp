@@ -90,7 +90,7 @@ auto ModelLayout::build( TabWindow* tabWindow, Emulator::Interface* emulator, st
                 append(*line, {~0u, 0u}, 5);     
                 
                 if (custom && lines.size() == 4 )
-                    appendAllSelector();
+                    appendControlLayout();
             }
         }
         
@@ -425,7 +425,9 @@ auto ModelLayout::translate( ) -> void {
     
     setText( trans->get("model") );    
     
-    allSelector.label.setText( trans->get("all", {}, true) );
+    controlLayout.label.setText( trans->get("all", {}, true) );
+    controlLayout.firstAll.setText( "8580" );
+    controlLayout.secondAll.setText( "6581" ); 
     
     for (auto line : lines) {
         for (auto block : line->blocks) {
@@ -537,10 +539,10 @@ auto ModelLayout::hideExtraAudioChips() -> void {
     
     int activeSids = emulator->getModel( LIBC64::Interface::ModelIdSidMulti );
     
-    if (allSelector.first.checked())
-        allSelector.first.setChecked(false);
-    if (allSelector.second.checked())
-        allSelector.second.setChecked(false);
+    if (controlLayout.firstAll.checked())
+        controlLayout.firstAll.setChecked(false);
+    if (controlLayout.secondAll.checked())
+        controlLayout.secondAll.setChecked(false);
     
     
     if (activeSidsNow == activeSids)
@@ -557,33 +559,30 @@ auto ModelLayout::hideExtraAudioChips() -> void {
     }
     
     if (activeSids == 0) {
-        allSelector.setEnabled( false );
+        controlLayout.setEnabled( false );
         lines[4]->blocks[1]->setEnabled(false);
         lines[4]->blocks[2]->setEnabled(false);
         lines[4]->blocks[3]->setEnabled(false);
     } else
-        allSelector.setEnabled( true );
+        controlLayout.setEnabled( true );
 }
 
-auto ModelLayout::appendAllSelector() -> void {
+auto ModelLayout::appendControlLayout() -> void {
     
-    update( *lines[lines.size() - 1], 10 );
-    
-    allSelector.first.setText( "8580" );
-    allSelector.second.setText( "6581" );    
+    update( *lines[lines.size() - 1], 10 );    
     
     GUIKIT::Label test;
     test.setText("SID 8:");
     
-    allSelector.append(allSelector.label, {test.minimumSize().width, 0u}, 5);
-    allSelector.append(allSelector.first, {0u, 0u}, 5);
-    allSelector.append(allSelector.second, {0u, 0u});
+    controlLayout.append(controlLayout.label, {test.minimumSize().width, 0u}, 5);
+    controlLayout.append(controlLayout.firstAll, {0u, 0u}, 5);
+    controlLayout.append(controlLayout.secondAll, {0u, 0u}, 20);
     
-    append(allSelector, {0u, 0u}, 5);
+    append(controlLayout, {0u, 0u}, 5);
     
-    allSelector.first.onToggle = [this]() {
+    controlLayout.firstAll.onToggle = [this]() {
         
-        if (!allSelector.first.checked())
+        if (!controlLayout.firstAll.checked())
             return;
         
         Line::Block* block;
@@ -604,12 +603,12 @@ auto ModelLayout::appendAllSelector() -> void {
         block = getBlock(LIBC64::Interface::ModelIdSid8);
         if (block) block->options[0]->activate();
         
-        allSelector.second.setChecked( false );
+        controlLayout.secondAll.setChecked( false );
     };
 
-    allSelector.second.onToggle = [this]() {
+    controlLayout.secondAll.onToggle = [this]() {
 
-        if (!allSelector.second.checked())
+        if (!controlLayout.secondAll.checked())
             return;
         
         Line::Block* block;
@@ -630,7 +629,7 @@ auto ModelLayout::appendAllSelector() -> void {
         block = getBlock(LIBC64::Interface::ModelIdSid8);
         if (block) block->options[1]->activate();
         
-        allSelector.first.setChecked( false );
+        controlLayout.firstAll.setChecked( false );
     };
 }
 

@@ -12,12 +12,7 @@ namespace DRIVER {
 #include "keyNames.cpp"
 #include "keyboard.cpp"
 #include "mouse.cpp"
-#include "joypad.cpp"
-    
-#ifdef DRV_SDLINPUT
-    SdlInput* sdl;
-#endif
-
+#include "joypad.cpp"    
     
 struct Iokit : Input {
     CocoaMouse mouse;

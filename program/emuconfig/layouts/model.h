@@ -27,11 +27,11 @@ struct ModelLayout : GUIKIT::FramedVerticalLayout {
         Line();
     };
     
-    struct AllSelector : GUIKIT::HorizontalLayout {
+    struct ControlLayout : GUIKIT::HorizontalLayout {
         GUIKIT::Label label;
-        GUIKIT::CheckBox first;
-        GUIKIT::CheckBox second;
-    } allSelector;
+        GUIKIT::CheckBox firstAll;
+        GUIKIT::CheckBox secondAll;
+    } controlLayout;
     
     std::vector<Line*> lines;
        
@@ -63,7 +63,7 @@ struct ModelLayout : GUIKIT::FramedVerticalLayout {
     
     auto getIdent( Emulator::Interface::Model* model, std::string& tooltip ) -> std::string;
     
-    auto appendAllSelector() -> void;
+    auto appendControlLayout() -> void;
     
     auto hideExtraAudioChips() -> void;
     

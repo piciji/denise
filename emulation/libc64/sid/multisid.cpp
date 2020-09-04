@@ -176,6 +176,15 @@ auto Sid::setFilterTypeAll( FilterType filterType ) -> void {
         sids[i]->setFilterType( filterType );
 }
 
+auto Sid::setFilterVolumeCorrection( bool state ) -> void {
+    useVolumeCorrection = state;
+    
+    sid->volumeCorrection();
+    
+    for (unsigned i = 0; i < 7; i++)
+        sids[i]->volumeCorrection();
+}
+
 auto Sid::setTypeAll( Type type ) -> void {
     sid->setType( type );
     

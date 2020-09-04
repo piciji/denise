@@ -22,6 +22,7 @@ uint8_t Sid::sampleLimit = 2;
 bool Sid::audioOut = true;
 bool Sid::useExternalFilter = true;
 unsigned Sid::serializationSizeForSevenMoreSids = 0;
+bool Sid::useVolumeCorrection = false;
 
 std::function<void ( int16_t )> Sid::audioRefresh = [](int16_t sample) {};
 std::function<void ( int16_t, int16_t )> Sid::audioRefreshStereo = [](int16_t sampleL, int16_t sampleR) {};   
@@ -149,6 +150,28 @@ auto Sid::setFilterType( FilterType filterType ) -> void {
     
     for( unsigned i = 0; i < 3; i++ )
         voice[i].setType( this->type, this->filterType == FilterType::Chamberlin );
+    
+    volumeCorrection();
+}
+
+inline auto Sid::volumeCorrection( ) -> void {
+    correction = 1.0;
+    
+    if (!useVolumeCorrection)
+        return;
+    
+    switch (filterType) {
+        case Sid::FilterType::Standard: {
+            
+            if (type == Type::MOS_8580)
+                correction = 2.0;
+            
+        } break;
+        case Sid::FilterType::Chamberlin: {
+            correction = 0.7;
+            
+        } break;
+    }
 }
 
 auto Sid::setMoreAccuracy(bool state) -> void {
@@ -219,6 +242,8 @@ auto Sid::setType( Type type ) -> void {
     // update digi boost
     // it will be applied for 8580 only    
     updateDigiBoost( filter.digiBoost && type == Type::MOS_8580 );
+    
+    volumeCorrection();
 }
 
 auto Sid::setDigiBoost( bool state ) -> void {
@@ -310,11 +335,11 @@ auto Sid::clock() -> void {
 
             if (!extraSids) {
                 if (++sampleCounter == sampleLimit) {
-                    audioRefresh( Emulator::sclamp( 16, externalFilter.output() ) );
+                    audioRefresh( Emulator::sclamp( 16, (float)externalFilter.output() * correction ) );
                     sampleCounter = 0;
                 }
             } else
-                curSample = externalFilter.output();
+                curSample = (double)externalFilter.output() * correction;
             
         } else
             withoutExternalFilter();
@@ -343,6 +368,8 @@ inline auto Sid::withoutExternalFilter() -> void {
 
         curSample = filter.output();
     }
+    
+    curSample *= correction;
 
     if (!extraSids) {
         if (++sampleCounter == sampleLimit) {

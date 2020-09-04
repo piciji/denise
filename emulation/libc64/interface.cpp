@@ -20,7 +20,7 @@
 
 namespace LIBC64 {
 
-const std::string Interface::Version = "10887";
+const std::string Interface::Version = "10888";
     
 Interface::Interface() : Emulator::Interface( "C64" ) {        
     
@@ -350,7 +350,8 @@ auto Interface::prepareModels() -> void {
 	models.push_back({ModelIdBias8580, "SID 8580 Filter Bias", Model::Type::Slider, Model::Purpose::AudioSettings, 0, {-5000, 5000}, {}, 400 });
     // use each 'x' sample. lower value means better quality but high cpu usage by resampler
     models.push_back({ModelIdSidSampleFetch, "SID Sample Interval", Model::Type::Radio, Model::Purpose::AudioResampler, 3, {0, 3}, {"1", "2", "7", "18"}});
-    
+    // equals volume of filter types
+    models.push_back({ModelIdSidFilterVolumeEqualizer, "SID Filter Equalizer", Model::Type::Switch, Model::Purpose::AudioSettings, 0});
     // extra Sids    
     models.push_back({ModelIdSidMulti, "Extra SIDs", Model::Type::Combo, Model::Purpose::AudioResampler, 0, {0, 7}, {"0", "1", "2", "3", "4", "5", "6", "7"}});
     
@@ -1041,7 +1042,10 @@ auto Interface::setModel(unsigned modelId, int value) -> void {
             break;
         case ModelIdSidFilterType:
             Sid::setFilterTypeAll( (Sid::FilterType)value );
-            break;            
+            break;   
+        case ModelIdSidFilterVolumeEqualizer:
+            Sid::setFilterVolumeCorrection( value & 1 );
+            break;
         case ModelIdFilter:
             Sid::setEnableFilterAll( value & 1 );
             break;
@@ -1135,6 +1139,8 @@ auto Interface::getModel(unsigned modelId) -> int {
             return sid->type == Sid::Type::MOS_6581 ? 1 : 0;
         case ModelIdSidFilterType:
             return (int)sid->filterType;
+        case ModelIdSidFilterVolumeEqualizer:
+            return Sid::useVolumeCorrection;
         case ModelIdFilter:
             return sid->filter.enabled;
 		case ModelIdDigiboost:

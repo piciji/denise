@@ -39,9 +39,6 @@ else ifeq ($(platform),macosx)
     drvflags = $(objcppflags)
     drvlink = -framework Cocoa
     drvlink += $(if $(findstring openal,$(drv)),-framework OpenAL)
-    ifneq ($(findstring iokit,$(drv)),)
-	drvlink += $(if $(findstring sdl,$(drv)), $(shell $(env)sdl2-config --libs))
-    endif
     
 else
     drvflags = $(cppflags) 

@@ -521,3 +521,5 @@ mix left =
 mix right = 
 Balance = 
 insert = 
+SID Filter Equalizer = 
+SID Filter Equalizer tooltip = 

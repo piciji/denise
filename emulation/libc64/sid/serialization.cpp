@@ -5,6 +5,8 @@ namespace LIBC64 {
 
 auto Sid::searializeActiveSids(Emulator::Serializer& s, bool light) -> void {
     
+    s.integer( useVolumeCorrection );
+    
     sid->serialize(s, light);    
     
     if (system->requestedSids && (s.mode() != Emulator::Serializer::Mode::Size) ) {
@@ -18,7 +20,7 @@ auto Sid::searializeActiveSids(Emulator::Serializer& s, bool light) -> void {
         s.integer( sampleCounter );
     
     s.integer( sampleLimit );
-    s.integer( useExternalFilter );
+    s.integer( useExternalFilter );    
     
     if (!light && (s.mode() == Emulator::Serializer::Mode::Load) ) {
         Sid::updateSidUsage();
@@ -153,6 +155,10 @@ auto Sid::serialize(Emulator::Serializer& s, bool light) -> void {
         s.integer( externalFilter.Vhp );
         s.integer( externalFilter.w0lp_1_s7 );
         s.integer( externalFilter.w0hp_1_s17 );
+        
+        if (s.mode() == Emulator::Serializer::Mode::Load) {
+            volumeCorrection();
+        }
     }
     
 //    if (s.mode() == Emulator::Serializer::Mode::Load) {
