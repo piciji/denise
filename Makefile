@@ -188,13 +188,7 @@ build: $(objects)
 	install -m 755 /usr/local/lib/libfreetype.6.dylib out/$(name).app/Contents/Frameworks/
 	install_name_tool -id @executable_path/../Frameworks/libfreetype.6.dylib out/$(name).app/Contents/Frameworks/libfreetype.6.dylib
 	install_name_tool -change `otool -D /usr/local/lib/libfreetype.6.dylib | cut -d':' -f2` @executable_path/../Frameworks/libfreetype.6.dylib out/$(name).app/Contents/MacOS/$(name)
-    endif
-	
-    ifneq ($(findstring sdlinput,$(drv)),)
-	install -m 755 /usr/local/lib/libSDL2-2.0.0.dylib out/$(name).app/Contents/Frameworks/
-	install_name_tool -id @executable_path/../Frameworks/libSDL2-2.0.0.dylib out/$(name).app/Contents/Frameworks/libSDL2-2.0.0.dylib	
-	install_name_tool -change `otool -D /usr/local/lib/libSDL2-2.0.0.dylib | cut -d':' -f2` @executable_path/../Frameworks/libSDL2-2.0.0.dylib out/$(name).app/Contents/MacOS/$(name)
-    endif
+    endif	
 	
     else
 	$(strip $(compiler) -o out/$(name) $(objects) $(link))

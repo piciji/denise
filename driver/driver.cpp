@@ -255,10 +255,6 @@ auto Input::available() -> std::vector<std::string> {
         "IoKit",
     #endif
 
-    #if defined(DRV_IOKIT) && defined(DRV_SDLINPUT)
-        "IoKit/Sdl",
-    #endif
-
     #if defined(DRV_XLIB) && defined(DRV_UDEV)
 		"Xlib/Udev",
 	#endif
@@ -292,10 +288,6 @@ auto Input::preferred() -> std::string {
 	
     #ifdef DRV_IOKIT
         return "IoKit";
-    #endif
-    
-    #if defined(DRV_IOKIT) && defined(DRV_SDLINPUT)
-        return "IoKit/Sdl";
     #endif
     
 	#if defined(DRV_XLIB) && defined(DRV_UDEV)
@@ -333,10 +325,6 @@ auto Input::create(const std::string& driver) -> Input* {
 	#ifdef DRV_IOKIT
         if(driver == "IoKit") return new Iokit();
 	#endif
-
-    #if defined(DRV_IOKIT) && defined(DRV_SDLINPUT)
-        if(driver == "IoKit/Sdl") return new Iokit("sdl");
-    #endif
             
 	#if defined(DRV_XLIB) && defined(DRV_UDEV)
 		if(driver == "Xlib/Udev") return new XInput("udev");

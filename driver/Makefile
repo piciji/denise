@@ -18,7 +18,7 @@ ifeq ($(platform),windows)
     drv += wgl direct3d dsound dinput5 dinput7 dinput8 xaudio27 xaudio28 xaudio29 openal wasapi rawinput
 
 else ifeq ($(platform),macosx)
-    drv += cgl openal coreaudio iokit sdlinput
+    drv += cgl openal coreaudio iokit
 
 else
     drv += glx openal pulseaudio xlib udev sdlinput
