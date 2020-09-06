@@ -100,6 +100,9 @@ auto VicIIFast::serialize(Emulator::Serializer& s) -> void {
     
     s.integer( spriteForegroundCollided );
     s.integer( spriteSpriteCollided );
+    
+    s.integer( canSpriteSpriteCollisionIrq );
+    s.integer( canSpriteForegroundCollisionIrq );
     s.integer( cAccessArea );
     s.integer( leftLineAnomaly.mode );
 	s.integer( leftLineAnomaly.permanent );

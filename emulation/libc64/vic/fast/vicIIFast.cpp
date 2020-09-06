@@ -51,7 +51,10 @@ auto VicIIFast::power() -> void {
     if (useThread)
         cv.notify_one();
     VicIIBase::power();
-    setBorderDim();        
+    setBorderDim();
+    
+    canSpriteSpriteCollisionIrq = true;
+    canSpriteForegroundCollisionIrq = true;
 }
 
 auto VicIIFast::powerOff() -> void {
@@ -175,11 +178,15 @@ auto VicIIFast::clock() -> void {
                             
         dmaDelay = 0;
         
-        if ( spriteSpriteCollided)
+        if ( canSpriteSpriteCollisionIrq && spriteSpriteCollided) {
+            canSpriteSpriteCollisionIrq = false;
             updateIrq( Interrupt::MMC );
-	
-        if ( spriteForegroundCollided)
+        }
+        
+        if ( canSpriteForegroundCollisionIrq && spriteForegroundCollided) {
+            canSpriteForegroundCollisionIrq = false;
             updateIrq( Interrupt::MBC );
+        }
         
     } else if (cycle == 57) {
         if (rc == 7) {

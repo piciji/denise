@@ -294,7 +294,8 @@ auto Structure1541::createListing( ) -> void {
             _track = buffer[0];
             _sector = buffer[1]; 
             
-            _track = getLogicalTrack(_track, trackOffset);
+            if (trackOffset)
+                _track = getLogicalTrack(_track, trackOffset);
                         
             if (_track > tracks)
                 break;

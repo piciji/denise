@@ -83,12 +83,14 @@ auto VicIIFast::readReg( uint8_t addr ) -> uint8_t {
         }        
         case 0x1e: {
 			value = spriteSpriteCollided;
-			spriteSpriteCollided = 0;		
+			spriteSpriteCollided = 0;	
+            canSpriteSpriteCollisionIrq = true;
 			break;
         }
         case 0x1f: {
 			value = spriteForegroundCollided;
-			spriteForegroundCollided = 0;			
+			spriteForegroundCollided = 0;
+            canSpriteForegroundCollisionIrq = true;
 			break;
         }        
         case 0x20:

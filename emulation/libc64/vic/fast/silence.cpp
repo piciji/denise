@@ -73,11 +73,15 @@ auto VicIIFast::clockSilence() -> void {
 
         dmaDelay = 0;
         
-        if (spriteSpriteCollided)
-            updateIrq(Interrupt::MMC);
-
-        if (spriteForegroundCollided)
-            updateIrq(Interrupt::MBC);
+        if ( canSpriteSpriteCollisionIrq && spriteSpriteCollided) {
+            canSpriteSpriteCollisionIrq = false;
+            updateIrq( Interrupt::MMC );
+        }
+        
+        if ( canSpriteForegroundCollisionIrq && spriteForegroundCollided) {
+            canSpriteForegroundCollisionIrq = false;
+            updateIrq( Interrupt::MBC );
+        }
         
     } else if (!cAccessArea) {
         setRdy(spriteBa[8][ cycle ]);
