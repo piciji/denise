@@ -418,6 +418,7 @@ struct CheckButton : Widget {
 
     auto setChecked(bool checked = true) -> void;
     auto checked() const -> bool { return state.checked; }
+    auto toggle() -> void;
 
     struct { bool checked = false; } state;
 

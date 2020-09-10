@@ -193,10 +193,10 @@ auto AudioManager::setStatistics() -> void {
 }
 
 auto AudioManager::power() -> void {
-    audioManager->setResampler();
-    audioManager->setBufferSize();
-    audioManager->setAudioDsp();
-    audioManager->setVolume();
+    setResampler();
+    setBufferSize();
+    setAudioDsp();
+    setVolume();
 
     statistics.average = 0;
     statistics.sum = 0;
@@ -264,7 +264,9 @@ auto AudioManager::process( int16_t sampleLeft, int16_t sampleRight ) -> void {
     if ( audioDriver->expectFloatingPoint() ) {
         
         for (unsigned i = 0; i < (rData.outputFrames << 1); i++ )
-            outBufferFloat[i] = *(rData.out + i);        
+            outBufferFloat[i] = *(rData.out + i);   
+        
+        record.write( (uint8_t*) outBufferFloat, rData.outputFrames );
         
         // 4 byte per channel, 8 byte per audio frame
         audioDriver->addSamples( (uint8_t*) outBufferFloat, rData.outputFrames << 3);
@@ -274,6 +276,8 @@ auto AudioManager::process( int16_t sampleLeft, int16_t sampleRight ) -> void {
         for (unsigned i = 0; i < (rData.outputFrames << 1); i++)
             outBuffer[i] = sclamp<16>( *(rData.out + i) * 32767.0 );        
 
+        record.write( (uint8_t*) outBuffer, rData.outputFrames );
+        
         // 2 byte per channel, 4 byte per audio frame
         audioDriver->addSamples( (uint8_t*) outBuffer, rData.outputFrames << 2);
     }

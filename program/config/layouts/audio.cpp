@@ -170,11 +170,15 @@ volume("%", false, true) {
 	
 	control.driverLayout.combo.onChange = [this]() {
 		settings->set<std::string>("audio_driver", control.driverLayout.combo.text() );
+        if (activeEmulator)
+            EmuConfigView::TabWindow::getView(activeEmulator)->miscLayout->stopRecord();        
 		program->initAudio();
 	};
 	    	
     control.frequencyCombo.onChange = [this]() {
         settings->set<unsigned>("audio_frequency_v2", control.frequencyCombo.userData());
+        if (activeEmulator)
+            EmuConfigView::TabWindow::getView(activeEmulator)->miscLayout->stopRecord();        
         audioManager->setFrequency();
         audioManager->setAudioDsp();
     };
@@ -185,6 +189,8 @@ volume("%", false, true) {
         
         settings->set<unsigned>("audio_latency", value + minimumLatency);
         updateLatencySlider();
+        if (activeEmulator)
+            EmuConfigView::TabWindow::getView(activeEmulator)->miscLayout->stopRecord();
         audioManager->setLatency();
     };
     

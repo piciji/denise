@@ -17,6 +17,8 @@ auto InputManager::setHotkeys() -> void {
     hotkeys.push_back( {Hotkey::Id::RunAheadDown, "runahead down"} );	
     hotkeys.push_back( {Hotkey::Id::RunAheadToggleMode, "runahead toggle mode"} );	
     
+    hotkeys.push_back( {Hotkey::Id::AudioRecord, "audio record"} );	
+    
     hotkeys.push_back( {Hotkey::Id::FloppyAccess, "select_disk_drive"} );
     hotkeys.push_back( {Hotkey::Id::DiskSwap0, "Disk_swapper_call0"} );
     hotkeys.push_back( {Hotkey::Id::DiskSwap1, "Disk_swapper_call1"} );
@@ -78,6 +80,12 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
     typedef LIBAMI::Interface AmigaInterface;
     
     switch ( id ) {
+        case Hotkey::Id::AudioRecord:
+            if (!activeEmulator)
+                break;
+            
+            EmuConfigView::TabWindow::getView(activeEmulator)->miscLayout->toggleRecord();
+            break;
         case Hotkey::Id::RunAheadDown:
         case Hotkey::Id::RunAheadUp: {
             if (!activeEmulator)

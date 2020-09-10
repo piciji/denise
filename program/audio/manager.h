@@ -6,6 +6,7 @@
 #include "dsp/base.h"
 #include "../program.h"
 #include "../../emulation/interface.h"
+#include "record/handler.h"
 
 struct AudioManager {
     
@@ -22,6 +23,7 @@ struct AudioManager {
     float outBufferFloat[4096];
     Resampler::Cosine cosine;
     Resampler::Data rData;
+    AudioRecord::Handler record;
     
     double ratio;    
     bool dynamicRateControl;

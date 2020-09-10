@@ -36,7 +36,6 @@ DirectSaveLayout::DirectSaveLayout() {
     append(load,{0u, 0u}, 20);
     append(save,{0u, 0u});
     setAlignment(0.5);
-	save.setEnabled(false);
 }
 
 StatesLayout::StatesLayout(TabWindow* tabWindow) {
@@ -87,6 +86,10 @@ StatesLayout::StatesLayout(TabWindow* tabWindow) {
 	};
 	
 	directSave.save.onActivate = [this]() {
+        
+        if (activeEmulator != emulator)
+            return mes->error( trans->get("no emulation active") );
+        
 		std::string filePath = GUIKIT::BrowserWindow()
             .setWindow(*this->tabWindow)
             .setTitle(trans->get("select_savestate"))
@@ -213,13 +216,16 @@ auto StatesLayout::translate() -> void {
 
 auto StatesLayout::updateSaveIdent( std::string fileName ) -> void {
     
-    if (!settings->get<bool>( this->tabWindow->ident("auto_save_ident"), true))
-        return;
-    
     std::size_t end = fileName.find_last_of(".");
     if (end != std::string::npos)
         fileName = fileName.erase(end);
     
+    // for wav record
+    settings->set<std::string>( this->tabWindow->ident("record_ident"), fileName, false);
+    
+    if (!settings->get<bool>( this->tabWindow->ident("auto_save_ident"), true))
+        return;
+        
     fastSave.top.edit.setText( fileName );
     fastSave.top.edit.onChange();
 }

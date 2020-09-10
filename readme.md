@@ -10,12 +10,13 @@
 ## 1.0.9 (not yet released)
 * runAhead
 * add scanline based renderer
-* emulate more VIC-II models
+* emulate missing VIC-II models
 * improve SID emulation
     * multiple filter models
     * stereo + 8x SID support
     * DSP: Bass Boost and Reverb
-* thanks to user AW182 for the countles tests and reports
+* write audio output to WAV file
+* thanks to user AW182 for the countless tests and reports
 
 
 ## 1.0.8

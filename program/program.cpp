@@ -332,7 +332,8 @@ auto Program::powerOff() -> void {
         activeVideoManager->powerOff();
 	videoDriver->clear();
 	videoDriver->hintExclusiveFullscreen( false );
-	audioDriver->clear();    
+	audioDriver->clear();  
+    audioManager->record.finish();
     activeEmulator = nullptr;
     activeVideoManager = nullptr;
     filePool->unloadOrphaned();
@@ -548,4 +549,3 @@ auto Program::getEmulator( std::string ident ) -> Emulator::Interface* {
     
     return nullptr;
 }
-

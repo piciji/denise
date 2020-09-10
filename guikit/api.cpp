@@ -547,6 +547,13 @@ auto CheckButton::setChecked(bool checked) -> void {
     p.setChecked(checked);
 }
 
+auto CheckButton::toggle() -> void {
+    if (_A::dummy) return;
+    state.checked ^= 1;
+    p.setChecked(state.checked);
+    if(onToggle) onToggle();
+}
+
 CheckButton::CheckButton() : Widget(*new pCheckButton(*this)), p((pCheckButton&)Widget::p) { if (!_A::dummy) p.init(); }
 
 auto CheckBox::setChecked(bool checked) -> void {

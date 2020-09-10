@@ -14,6 +14,7 @@ struct Status {
 	time_t prev_t, curr_t;
 	bool showFps;
 	bool critical;
+    bool record;
 	
 	struct DriveState {
         Emulator::Interface::Media* media;
@@ -28,7 +29,8 @@ struct Status {
 		message = "";
 		messageSecondsLeft = 0;
 		fps = fpsCollect = 0;
-		showFps = settings->get<bool>("fps", false);        
+		showFps = settings->get<bool>("fps", false);      
+        record = false;
         driveStates.clear();
 	}   
 	
@@ -143,6 +145,13 @@ struct Status {
                 out += " | ";   
 
 			out += "fps: " + std::to_string(fps);            		
+        }
+        
+        if (record) {
+            if (!out.empty())
+                out += " | ";
+
+            out += "REC"; 
         }
         
         auto& drcS = audioManager->statistics;

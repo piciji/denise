@@ -196,7 +196,7 @@ auto TabWindow::show(Layout layout) -> void {
 
 auto TabWindow::update() -> void {
 	systemLayout->setEnabled( emulator != activeEmulator || !program->isRunning );
-	statesLayout->directSave.save.setEnabled( emulator == activeEmulator && program->isRunning );	
+
 }
 
 auto TabWindow::ident( std::string name ) -> std::string {
