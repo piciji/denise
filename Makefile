@@ -151,7 +151,7 @@ obj/bass.o:		program/audio/dsp/bass.cpp
 obj/reverb.o:		program/audio/dsp/reverb.cpp
 obj/panning.o:		program/audio/dsp/panning.cpp
 obj/audiorecord.o:	program/audio/record/handler.cpp
-obj/wavwriter.o:	program/audio/record/wavwriter.cpp
+obj/wavwriter.o:	program/audio/record/wavWriter.cpp
 obj/firmware.o:		program/firmware/manager.cpp
 obj/cmd.o:		program/cmd/cmd.cpp
 obj/palette.o:		program/video/palette.cpp
