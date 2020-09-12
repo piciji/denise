@@ -194,11 +194,6 @@ auto TabWindow::show(Layout layout) -> void {
 	setFocused();
 }
 
-auto TabWindow::update() -> void {
-	systemLayout->setEnabled( emulator != activeEmulator || !program->isRunning );
-
-}
-
 auto TabWindow::ident( std::string name ) -> std::string {
 	std::string _ident = emulator->ident;
     return GUIKIT::String::toLowerCase( _ident )+ "_" + GUIKIT::String::replace(name, " ", "_");
@@ -214,3 +209,4 @@ auto TabWindow::getView( Emulator::Interface* emulator ) -> TabWindow* {
 }
 
 }
+

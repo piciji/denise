@@ -642,23 +642,7 @@ auto View::buildMenu() -> void {
             program->removeBootableExpansion( true );
 	    };	
         sM.system->append( *sM.poweron );
-        sM.poweroff = new GUIKIT::MenuItem;
-        sM.poweroff->setIcon( poweroffImage );
-        sM.poweroff->onActivate = [this]() {
-		    program->powerOff();
-            videoDriver->setFilter( DRIVER::Video::Filter::Linear );
-			this->updateViewport();
-            
-            if (cursorForPlacholderInUpperTriangle()) {
-                view->setPointerCursor();
-            } else {
-                view->setDefaultCursor();
-            }
-	    };	
-        sM.system->append( *sM.poweroff );
-        
-        sM.system->append(*GUIKIT::MenuSeparator::getInstance());
-        
+		        
         sM.reset = new GUIKIT::MenuItem;
         sM.reset->onActivate = [emulator]() {
 		    program->reset(emulator);
@@ -699,15 +683,6 @@ auto View::buildMenu() -> void {
         sM.system->append( *sM.systemManagement );
 		
 		if(!GUIKIT::Application::isCocoa()) {
-
-            if ( dynamic_cast<LIBC64::Interface*>(emulator)) {
-                sM.audio = new GUIKIT::MenuItem;
-                sM.audio->setIcon( volumeImage );
-                sM.audio->onActivate = [emuConfigView]() {
-                    emuConfigView->show(EmuConfigView::TabWindow::Layout::Audio);
-                };
-                sM.system->append( *sM.audio );
-            }
             
 			sM.saveState = new GUIKIT::MenuItem;
 			sM.saveState->setIcon( scriptImage );
@@ -730,7 +705,14 @@ auto View::buildMenu() -> void {
 					emuConfigView->show(EmuConfigView::TabWindow::Layout::Palette);
 				};
 				sM.system->append(*sM.palette);
-			}
+				
+                sM.audio = new GUIKIT::MenuItem;
+                sM.audio->setIcon( volumeImage );
+                sM.audio->onActivate = [emuConfigView]() {
+                    emuConfigView->show(EmuConfigView::TabWindow::Layout::Audio);
+                };
+                sM.system->append( *sM.audio );
+            }
 
 			sM.firmware = new GUIKIT::MenuItem;
 			sM.firmware->setIcon( firmwareImage );
@@ -751,18 +733,7 @@ auto View::buildMenu() -> void {
                 	
 		sM.shaderMenu = new GUIKIT::Menu;
         sM.shaderMenu->setIcon( colorImage );
-        sM.system->append( *sM.shaderMenu );
-		
-		if(!GUIKIT::Application::isCocoa()) {
-			sM.system->append(*GUIKIT::MenuSeparator::getInstance());
-
-			sM.exit = new GUIKIT::MenuItem;
-			sM.exit->setIcon( quitImage );
-			sM.exit->onActivate = [this]() {
-				onClose();
-			};	
-			sM.system->append( *sM.exit );
-		}
+        sM.system->append( *sM.shaderMenu );		
         
         sysMenus.push_back( sM );
         
@@ -880,6 +851,33 @@ auto View::buildMenu() -> void {
 		saveItem.setIcon(diskImage);
 		optionsMenu.append(saveItem);
 	}
+		
+	optionsMenu.append(*GUIKIT::MenuSeparator::getInstance());	
+
+	poweroff.setIcon( poweroffImage );
+	poweroff.onActivate = [this]() {
+		program->powerOff();
+		videoDriver->setFilter( DRIVER::Video::Filter::Linear );
+		this->updateViewport();
+
+		if (cursorForPlacholderInUpperTriangle()) {
+			view->setPointerCursor();
+		} else {
+			view->setDefaultCursor();
+		}
+	};	
+	optionsMenu.append( poweroff );   
+	
+	
+	if(!GUIKIT::Application::isCocoa()) {
+
+		exit.setIcon( quitImage );
+		exit.onActivate = [this]() {
+			onClose();
+		};	
+		optionsMenu.append( exit );
+	}
+	
 	// prepare Tape Control	
 	tapeControlMenu.setIcon( tapeImage );
 	
@@ -943,9 +941,8 @@ auto View::translate() -> void {
 	
     for(auto& sysMenu : sysMenus) {
         sysMenu.system->setText(sysMenu.emulator->ident);
-        sysMenu.poweron->setText(trans->get("power"));
-        sysMenu.reset->setText(trans->get("Soft Reset"));
-        sysMenu.poweroff->setText(trans->get("power_off"));
+        sysMenu.poweron->setText(trans->get("Hard Reset"));
+        sysMenu.reset->setText(trans->get("Soft Reset"));        
         sysMenu.freeze->setText(trans->get("Freeze"));
         sysMenu.loadSoftware->setText(trans->get("load software"));
         sysMenu.media->setText(trans->get("Software"));
@@ -959,10 +956,7 @@ auto View::translate() -> void {
             sysMenu.palette->setText(trans->get("Palette"));
             sysMenu.border->setText(trans->get("Border"));
         }
-        sysMenu.shaderMenu->setText(trans->get("Shader"));
-		
-        if(!GUIKIT::Application::isCocoa())
-            sysMenu.exit->setText(trans->get("Exit"));
+        sysMenu.shaderMenu->setText(trans->get("Shader"));            
     }    
     
     controlMenu.setText( trans->get("control") );
@@ -987,8 +981,12 @@ auto View::translate() -> void {
     fpsItem.setText( trans->get("show_fps"));
     audioBufferItem.setText( trans->get("show_audio_buffer"));
     
-    if(!GUIKIT::Application::isCocoa())
+    if(!GUIKIT::Application::isCocoa()) {
         saveItem.setText( trans->get("save_preferences"));
+		exit.setText(trans->get("Exit"));
+	}
+	
+	poweroff.setText(trans->get("power_off"));
 	
 	tapeControlMenu.setText( trans->get("Datasette") );
 	tapePlayItem.setText( trans->get("tape_play_key") );

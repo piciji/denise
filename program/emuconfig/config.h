@@ -59,7 +59,6 @@ struct TabWindow : public GUIKIT::Window {
     auto translate() -> void;
     auto show(Layout layout) -> void;
 	auto showDelayed(Layout layout) -> void;
-    auto update() -> void;
     auto ident( std::string name ) -> std::string;
 	static auto getView( Emulator::Interface* emulator ) -> TabWindow*;
 

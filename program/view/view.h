@@ -16,7 +16,6 @@ struct View : public GUIKIT::Window {
         GUIKIT::Menu* system;
         GUIKIT::MenuItem* poweron;
 		GUIKIT::MenuItem* reset;
-        GUIKIT::MenuItem* poweroff;
         GUIKIT::MenuItem* freeze;
         GUIKIT::MenuItem* firmware;
         GUIKIT::MenuItem* loadSoftware;
@@ -27,8 +26,7 @@ struct View : public GUIKIT::Window {
         GUIKIT::Menu* shaderMenu;
         GUIKIT::MenuItem* presentation;
         GUIKIT::MenuItem* palette;
-        GUIKIT::MenuItem* border;
-		GUIKIT::MenuItem* exit;        
+        GUIKIT::MenuItem* border;		       
     };   
 
     auto translate() -> void;
@@ -102,6 +100,9 @@ struct View : public GUIKIT::Window {
 
         GUIKIT::MenuItem settingsItem;		
         GUIKIT::MenuItem saveItem;	
+		
+		GUIKIT::MenuItem poweroff;
+		GUIKIT::MenuItem exit; 
 
 	GUIKIT::Menu tapeControlMenu;
 		GUIKIT::MenuItem tapePlayItem;

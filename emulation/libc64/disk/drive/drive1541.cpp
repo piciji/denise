@@ -473,7 +473,7 @@ inline auto Drive1541::useAccuracy() -> bool {
 }
 
 auto Drive1541::setSpeed(double rpm, double wobble) -> void {
-    
+	
     this->rpm = rpm * 100.0 + 0.5;
     this->wobble = wobble * 100.0 + 0.5;
 

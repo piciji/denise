@@ -505,6 +505,7 @@ struct RadioBox : Widget {
     auto setChecked() -> void;
     auto activate() -> void;
     auto checked() const -> bool { return state.checked; }
+	auto getGroup() -> std::vector<RadioBox*> { return state.group; }
 
     struct {
         bool checked = false;

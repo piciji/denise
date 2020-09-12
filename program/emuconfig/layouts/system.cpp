@@ -154,10 +154,18 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
         auto memoryType = block->memoryType;
         
         block->sliderLayout.slider.onChange = [this, block, memoryType]() {
-            unsigned id = block->sliderLayout.slider.position();
-            if (id >= memoryType->memory.size() ) return;
-            settings->set<unsigned>( this->tabWindow->ident(memoryType->name + "_mem"), id);
-            block->sliderLayout.value.setText( getSizeString( memoryType->memory[id].size ) );
+			unsigned pos = block->sliderLayout.slider.position();
+			if (pos >= memoryType->memory.size())
+				return;
+			
+			if (!handleChangeDuringEmulation(&block->sliderLayout.slider, this->tabWindow->ident(memoryType->name + "_mem"), memoryType->defaultMemoryId))
+				return;		            
+			
+            settings->set<unsigned>( this->tabWindow->ident(memoryType->name + "_mem"), pos);
+            block->sliderLayout.value.setText( getSizeString( memoryType->memory[pos].size ) );
+
+			if (activeEmulator)
+				program->power(activeEmulator);
         };
 
         unsigned id = settings->get<unsigned>(tabWindow->ident(memoryType->name + "_mem"), memoryType->defaultMemoryId);
@@ -172,11 +180,18 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
         auto ident = block->mediaGroup->name + "_count";
         
         block->combo.onChange = [this, ident, block]() {
+
+			if (!handleChangeDuringEmulation(&block->combo, this->tabWindow->ident(ident), block->mediaGroup->defaultUsage()))
+				return;		            			
+			
             settings->set<unsigned>( this->tabWindow->ident(ident), block->combo.selection());
 
             // check if media elements of group have to be rebuilt
             MediaView::MediaWindow::getView(this->emulator)->updateVisibility( block->mediaGroup, block->combo.selection() );
             settings->remove( this->tabWindow->ident("access_floppy") );
+			
+			if (activeEmulator)
+				program->power(activeEmulator);
         };
         
         unsigned counter = settings->get<unsigned>( tabWindow->ident(ident), block->mediaGroup->defaultUsage());
@@ -198,6 +213,10 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
                 driveLayout.speed.value.setText(GUIKIT::String::formatFloatingPoint(speed, 1) + " RPM");
                 
                 settings->set<double>(this->tabWindow->ident(ident + "_speed"), speed);
+				
+				double wobble = settings->get<double>(this->tabWindow->ident(ident + "_wobble"), 0.5, {0.0, 5.0});
+				
+				emulator->setDriveSpeed( block->mediaGroup, speed, wobble );
             };                       
             
             driveLayout.wobble.slider.onChange = [this, block, ident]() {
@@ -209,6 +228,10 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
                 driveLayout.wobble.value.setText(GUIKIT::String::formatFloatingPoint(wobble, 2) + " RPM");                
 
                 settings->set<double>(this->tabWindow->ident(ident + "_wobble"), wobble);
+				
+				double speed = settings->get<double>(this->tabWindow->ident(ident + "_speed"), 300.0, {275.0, 325.0});
+				
+				emulator->setDriveSpeed( block->mediaGroup, speed, wobble );
             };			
             
             double wobble = settings->get<double>(this->tabWindow->ident(ident + "_wobble"), 0.5, {0.0, 5.0});
@@ -224,11 +247,13 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
 			
 			ident = block->mediaGroup->name;
 			
-			driveLayout.tapeWobble.onToggle = [this, ident]() {
+			driveLayout.tapeWobble.onToggle = [this, block, ident]() {
                 
-                auto checked = driveLayout.tapeWobble.checked();              
+                auto wobble = driveLayout.tapeWobble.checked();              
 
-                settings->set<bool>(this->tabWindow->ident(ident + "_wobble"), checked);
+                settings->set<bool>(this->tabWindow->ident(ident + "_wobble"), wobble);
+				
+				emulator->setDriveSpeed( block->mediaGroup, 0, wobble );
             };
 									
 			driveLayout.tapeWobble.setChecked( settings->get<bool>(this->tabWindow->ident(ident + "_wobble"), false ) );
@@ -238,10 +263,18 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
     auto expansionId = settings->get<unsigned>( this->tabWindow->ident("expansion"), 0);
     for ( auto line : expansionLayout.lines ) {
         for( auto block : line->blocks ) {            
-            block->box.onActivate = [this, block]() {                
+            block->box.onActivate = [this, block]() {
+
+				if (!handleChangeDuringEmulation(&block->box, this->tabWindow->ident("expansion"), 0))
+					return;						
+				
                 settings->set<unsigned>( this->tabWindow->ident("expansion"), block->expansion->id);
                 updateExpansionMemory();
+
+				if (activeEmulator)
+					program->power(activeEmulator);
             };
+			
             if (block->expansion->id == expansionId)
                 block->box.setChecked();
         }
@@ -326,6 +359,39 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
     updateExpansionMemory();
 }
 
+auto SystemLayout::handleChangeDuringEmulation( GUIKIT::Widget* widget, std::string ident, unsigned defaultId ) -> bool {
+
+	if (this->emulator != activeEmulator)
+		return true;
+	
+	if (mes->question(trans->get("setting change need reset")))
+		return true;
+	
+	unsigned oldValue = settings->get<unsigned>( ident, defaultId );
+	
+	if (dynamic_cast<GUIKIT::ComboButton*>(widget)) {
+		GUIKIT::ComboButton* combo = dynamic_cast<GUIKIT::ComboButton*>(widget);
+
+		if (oldValue < combo->rows())
+			combo->setSelection(oldValue);
+	}
+	else if (dynamic_cast<GUIKIT::RadioBox*>(widget)) {
+		GUIKIT::RadioBox* radio = dynamic_cast<GUIKIT::RadioBox*>(widget);
+		auto group = radio->getGroup();
+
+		if ( oldValue < group.size() )
+			group[oldValue]->setChecked();			
+	}
+	else if (dynamic_cast<GUIKIT::Slider*>(widget)) {
+		GUIKIT::Slider* slider = dynamic_cast<GUIKIT::Slider*>(widget);
+		
+		if (oldValue < slider->length())
+			slider->setPosition( oldValue );
+	}
+					
+	return false;
+}
+
 auto SystemLayout::activateDrive( Emulator::Interface::MediaGroup* mediaGroup, unsigned requestedCount ) -> void {
 
     if (requestedCount > mediaGroup->media.size())
@@ -406,13 +472,6 @@ auto SystemLayout::translate() -> void {
     accuracyLayout.block.audioRealtimeThread.setTooltip( trans->get("audio realtime thread info") );
 }
 
-auto SystemLayout::setEnabled(bool state) -> void {
-    upperLayout.setEnabled( state );
-    
-    if (state)
-        updateExpansionMemory();
-}
-
 auto SystemLayout::getSizeString( unsigned sizeInKb ) -> std::string {
     
     if (sizeInKb < 1024)
@@ -461,18 +520,22 @@ auto SystemLayout::setExpansion( Emulator::Interface::Expansion* newExpansion ) 
             if (!newExpansion) {
                 if (block->expansion->isEmpty()) {
                     if (!block->box.checked()) {
-                        block->box.setChecked();
-                        block->box.onActivate(); 
-                    }
+						block->box.setChecked();
+						settings->set<unsigned>(this->tabWindow->ident("expansion"), block->expansion->id);
+						updateExpansionMemory();
+					}
+                    
                     return;
                 }
             }
             
             else if (block->expansion == newExpansion) {
                 if (!block->box.checked()) {
-                    block->box.setChecked();
-                    block->box.onActivate(); 
-                }
+					block->box.setChecked();
+					settings->set<unsigned>(this->tabWindow->ident("expansion"), block->expansion->id);
+					updateExpansionMemory();
+				}
+				
                 return;
             }                
         }

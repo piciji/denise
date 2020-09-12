@@ -146,6 +146,8 @@ auto Program::init() -> void {
         
         setExpansionSelection( emulator );
         
+		setDriveSpeedAndWobble( emulator );
+		
         setAccuracy( emulator );
         
         setRunAhead( emulator );
@@ -154,6 +156,21 @@ auto Program::init() -> void {
 	logger->setSavePath( GUIKIT::System::getUserDataFolder(appFolder()) );
         
     isRunning = isPause = false;
+}
+
+auto Program::setDriveSpeedAndWobble(Emulator::Interface* emulator) -> void {
+	
+	for(auto& mediaGroup : emulator->mediaGroups) {
+		if (mediaGroup.isDisk()) {
+			double wobble = settings->get<double>(ident(emulator, mediaGroup.name + "_wobble"), 0.5,{0.0, 5.0});
+			double speed = settings->get<double>(ident(emulator, mediaGroup.name + "_speed"), 300.0,{275.0, 325.0});
+			emulator->setDriveSpeed(&mediaGroup, speed, wobble);
+
+		} else if (mediaGroup.isTape()) {
+			bool tapeWobble = settings->get<bool>(ident(emulator, mediaGroup.name + "_wobble"), false);
+			emulator->setDriveSpeed(&mediaGroup, 0, tapeWobble);
+		}
+	}
 }
 
 auto Program::setAccuracy(Emulator::Interface* emulator) -> void {
@@ -178,7 +195,6 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
 
     emulator->setExpansion( settings->get<unsigned>(ident(emulator, "expansion"), 0) );
     
-    // we need to update memory, cpu, chipset every power cycle.
     // a loaded state before could change the values internally.
     for (auto& memoryType : emulator->memoryTypes) {
         unsigned memoryId = settings->get<unsigned>(ident(emulator, memoryType.name + "_mem"), memoryType.defaultMemoryId);
@@ -199,16 +215,6 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
             unsigned counter = settings->get( ident(emulator, mediaGroup.name + "_count"), mediaGroup.defaultUsage());        
             emulator->setDrivesConnected( &mediaGroup, counter );
             needTapeControl |= mediaGroup.isTape() && (counter > 0);
-            
-            if (mediaGroup.isDisk()) {
-                double wobble = settings->get<double>(ident(emulator, mediaGroup.name + "_wobble"), 0.5, {0.0, 5.0});
-                double speed = settings->get<double>(ident(emulator, mediaGroup.name + "_speed"), 300.0, {275.0, 325.0});                
-                emulator->setDriveSpeed( &mediaGroup, speed, wobble );
-				
-            } else if (mediaGroup.isTape()) {
-                bool tapeWobble = settings->get<bool>(ident(emulator, mediaGroup.name + "_wobble"), false);
-                emulator->setDriveSpeed( &mediaGroup, 0, tapeWobble );				
-			}
         }                
         
         for(auto& media : mediaGroup.media) {            
@@ -272,8 +278,6 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
 	isPause = false;
 	
 	archiveViewer->setVisible(false);
-	for( auto emuConfigView : emuConfigViews )
-		emuConfigView->update();	
 	view->update();	
     view->setCursor( activeEmulator );
     view->updateFreeze( activeEmulator );
@@ -322,8 +326,6 @@ auto Program::powerOff() -> void {
 		activeEmulator->unsetExpansion();
 	}
 	isRunning = false;
-	for( auto emuConfigView : emuConfigViews )
-		emuConfigView->update();
 	
 	view->showTapeMenu( false );    
 	

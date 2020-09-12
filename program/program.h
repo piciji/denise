@@ -129,6 +129,7 @@ struct Program : Emulator::Interface::Bind {
     auto setRunAhead(Emulator::Interface* emulator) -> void;
     
     auto setAccuracy(Emulator::Interface* emulator) -> void;
+	auto setDriveSpeedAndWobble(Emulator::Interface* emulator) -> void;
 
     Program();
 };

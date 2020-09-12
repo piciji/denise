@@ -47,8 +47,8 @@ auto Drive1541::serialize(Emulator::Serializer& s) -> void {
     s.vector( motorOff.chunkSize );
     s.integer( writeProtected );
     
-    s.integer( rpm );
-    s.integer( wobble );
+    //s.integer( rpm );
+    //s.integer( wobble );
     
     if (s.mode() == Emulator::Serializer::Mode::Load) {
         gcrTrack = structure1541.getTrackPtr( currentHalftrack );

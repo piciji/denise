@@ -88,11 +88,11 @@ struct SystemLayout : GUIKIT::VerticalLayout {
     ExpansionLayout expansionLayout;
 
     auto translate() -> void;
-	auto setEnabled(bool state) -> void;    
     auto activateDrive( Emulator::Interface::MediaGroup* mediaGroup, unsigned requestedCount ) -> void;
     auto updateExpansionMemory() -> void;
     auto getSizeString( unsigned sizeInKb ) -> std::string;
     auto setExpansion( Emulator::Interface::Expansion* newExpansion ) -> void;
+	auto handleChangeDuringEmulation( GUIKIT::Widget* widget, std::string ident, unsigned defaultId ) -> bool;
     
     SystemLayout( TabWindow* tabWindow );
 };

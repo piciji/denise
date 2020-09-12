@@ -1724,3 +1724,4 @@ auto MediaWindow::applyPreviewFont(unsigned fontSize) -> void {
 }
 
 }
+

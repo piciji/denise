@@ -175,7 +175,7 @@ auto MediaGroupLayout::updateVisibility( unsigned count, bool init ) -> void {
     for(auto block : blocks) {  
         
         if (count) {
-            blockContainer.append(*block,{~0u, 0u}, 4);      
+            blockContainer.append(*block,{~0u, 0u}, 2);      
             
             if (!listingInVisibleBlock)
                 listingInVisibleBlock = block == selectedBlock;     
@@ -253,7 +253,7 @@ auto MediaGroupLayout::build() -> void {
         blocks.push_back(block);
         
         if ( !showOnlyConnectedDevices() )
-            blockContainer.append(*block, {~0u, 0u}, 4);
+            blockContainer.append(*block, {~0u, 0u}, 2);
             
         return block;
     };  

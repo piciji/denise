@@ -531,3 +531,4 @@ Minutes =
 Seconds = 
 Record = 
 Stop = 
+Hard Reset = 
