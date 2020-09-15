@@ -130,8 +130,8 @@ namespace DSP {
             _yn2_r = _yn1_r;
             _yn1_r = _r;
 
-            out[0] = _l;
-            out[1] = _r;
+            out[0] = _l * reduceClipping;
+            out[1] = _r * reduceClipping;
         }
 
         l.xn1 = _xn1_l;

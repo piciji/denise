@@ -90,7 +90,7 @@ auto Sid::writeSidIO(uint16_t addr, uint8_t value) -> void {
 
 auto Sid::updateSidUsage() -> void {
     
-    leftSids = rightSids = 0;
+    leftSids = rightSids = 0.0;
     useSids.clear();
     
     extraSids = system->requestedSids > 0;
@@ -104,10 +104,10 @@ auto Sid::updateSidUsage() -> void {
         useSids.push_back(sid);
 
     if (sid->leftChannel)
-        leftSids++;
+        leftSids += 1.0;
 
     if (sid->rightChannel)
-        rightSids++;
+        rightSids += 1.0;
     
     for (unsigned i = 0; i < system->requestedSids; i++) {
         
@@ -117,10 +117,10 @@ auto Sid::updateSidUsage() -> void {
             useSids.push_back( extraSid );
             
         if (extraSid->leftChannel)
-            leftSids++;
+            leftSids += 1.0;
         
         if (extraSid->rightChannel)
-            rightSids++;
+            rightSids += 1.0;
     }
     
     extraSids = !useSids.empty();
