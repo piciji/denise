@@ -64,7 +64,6 @@
 * autofire with frequency and option to fire without button press (don't forget override logic)
 * load PRG files from disk as simple RAM insertion for reduced loading times [quickload]
 * UI switch to invert RAM init pattern
-* write audio output to WAV and MP3
 * set "integer scaling" multiplicator without sizing application window OR recalculate while resizing (never show black border)
 * PNG overlay for 16:9 fullscreen
 * allow input if there is no focus
@@ -84,7 +83,7 @@
 * cpu 68000 / 68010
 * cpu 6502 / 6510	
 * cia 6526 / 8520	
-* vicII 6569R3 / 8565 / 6567R8 / 8562
+* vicII 6569R3 / 8565 / 6567R8 / 8562 / 6569R1 / 6567R56A / 6572 / 6573
 * sid 6581 / 8580
 * c64 system / memory / ultimax
 * c64 8k/16k standard cartridges
@@ -119,3 +118,5 @@
 * screenshots for VICE testbench
 * use a CI system for automated builds (AppVeyor)
 * runAhead for reduced input lag
+* write audio output to WAV
+* DSP: Bass Boost and Reverb
