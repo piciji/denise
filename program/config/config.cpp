@@ -31,10 +31,10 @@ auto TabWindow::build() -> void {
 
     GUIKIT::Geometry defaultGeometry = {100, 100, 650, 420};
     
-    GUIKIT::Geometry geometry = {settings->get<int>("screen_settings_x", defaultGeometry.x)
-        ,settings->get<int>("screen_settings_y", defaultGeometry.y)
-        ,settings->get<unsigned>("screen_settings_width", defaultGeometry.width)
-        ,settings->get<unsigned>("screen_settings_height", defaultGeometry.height)
+    GUIKIT::Geometry geometry = {globalSettings->get<int>("screen_settings_x", defaultGeometry.x)
+        ,globalSettings->get<int>("screen_settings_y", defaultGeometry.y)
+        ,globalSettings->get<unsigned>("screen_settings_width", defaultGeometry.width)
+        ,globalSettings->get<unsigned>("screen_settings_height", defaultGeometry.height)
     };
     
     setGeometry( geometry );
@@ -79,15 +79,15 @@ auto TabWindow::build() -> void {
     onMove = [&]() {
         if (fullScreen()) return;
         GUIKIT::Geometry geometry = this->geometry();
-        settings->set<int>("screen_settings_x", geometry.x);
-        settings->set<int>("screen_settings_y", geometry.y);
+        globalSettings->set<int>("screen_settings_x", geometry.x);
+        globalSettings->set<int>("screen_settings_y", geometry.y);
     };
 
     onSize = [&]() {
         if (fullScreen()) return;
         GUIKIT::Geometry geometry = this->geometry();
-        settings->set<unsigned>("screen_settings_width", geometry.width);
-        settings->set<unsigned>("screen_settings_height", geometry.height);
+        globalSettings->set<unsigned>("screen_settings_width", geometry.width);
+        globalSettings->set<unsigned>("screen_settings_height", geometry.height);
     };
 
     translate();

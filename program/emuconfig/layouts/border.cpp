@@ -40,99 +40,99 @@ cropBottom("px")
     typedef Emulator::Interface::CropType CropType;
     
 	cropOff.onActivate = [this]() {
-		settings->set<unsigned>( this->tabWindow->ident("crop_type"), (unsigned)CropType::Off );
+		_settings->set<unsigned>( "crop_type", (unsigned)CropType::Off );
 		updateVisibillity();
 		program->updateCrop( emulator );
 	};
     
 	cropMonitor.onActivate = [this]( ) {
-		settings->set<unsigned>( this->tabWindow->ident( "crop_type" ), (unsigned)CropType::Monitor );
+		_settings->set<unsigned>( "crop_type", (unsigned)CropType::Monitor );
 		updateVisibillity();
 		program->updateCrop( emulator );
 	};
 
 	cropAuto.onActivate = [this]( ) {
-		settings->set<unsigned>( this->tabWindow->ident( "crop_type" ), (unsigned)CropType::Auto );
+		_settings->set<unsigned>( "crop_type", (unsigned)CropType::Auto );
 		updateVisibillity();
 		program->updateCrop( emulator );
 	};
 
 	cropSemiAuto.onActivate = [this]( ) {
-		settings->set<unsigned>( this->tabWindow->ident( "crop_type" ), (unsigned)CropType::SemiAuto );
+		_settings->set<unsigned>( "crop_type", (unsigned)CropType::SemiAuto );
 		updateVisibillity();
 		program->updateCrop( emulator );
 	};
 
 	cropFree.onActivate = [this]( ) {
-		settings->set<unsigned>( this->tabWindow->ident( "crop_type" ), (unsigned)CropType::Free );
+		_settings->set<unsigned>( "crop_type", (unsigned)CropType::Free );
 		updateVisibillity();
 		program->updateCrop( emulator );
 	};
 	
 	cropAspectCorrect.onToggle = [this]() {
-		settings->set<unsigned>( this->tabWindow->ident( "crop_aspect_correct" ), cropAspectCorrect.checked() );
+		_settings->set<unsigned>( "crop_aspect_correct", cropAspectCorrect.checked() );
 		program->updateCrop( emulator );
 	};
 	
 	cropLeft.slider.onChange = [this]() {
 		auto value = cropLeft.slider.position();
-		settings->set<unsigned>( this->tabWindow->ident("crop_left"), value);
+		_settings->set<unsigned>( "crop_left", value);
 		cropLeft.value.setText( std::to_string( value ) + " px" );
 		program->updateCrop( emulator );
 	};
 
 	cropRight.slider.onChange = [this]( ) {
 		auto value = cropRight.slider.position( );
-		settings->set<unsigned>( this->tabWindow->ident( "crop_right" ), value );
+		_settings->set<unsigned>( "crop_right", value );
 		cropRight.value.setText( std::to_string( value ) + " px" );
 		program->updateCrop( emulator );
 	};
 
 	cropTop.slider.onChange = [this]( ) {
 		auto value = cropTop.slider.position( );
-		settings->set<unsigned>( this->tabWindow->ident( "crop_top" ), value );
+		_settings->set<unsigned>( "crop_top", value );
 		cropTop.value.setText( std::to_string( value ) + " px" );
 		program->updateCrop( emulator );
 	};
 
 	cropBottom.slider.onChange = [this]( ) {
 		auto value = cropBottom.slider.position( );
-		settings->set<unsigned>( this->tabWindow->ident( "crop_bottom" ), value );
+		_settings->set<unsigned>( "crop_bottom", value );
 		cropBottom.value.setText( std::to_string( value ) + " px" );
 		program->updateCrop( emulator );
 	};
     	
-	auto valLeft = settings->get<unsigned>(tabWindow->ident("crop_left"), 0, {0u,100u});
+	auto valLeft = _settings->get<unsigned>( "crop_left", 0, {0u,100u});
     cropLeft.slider.setPosition(valLeft);
     cropLeft.value.setText( std::to_string( valLeft ) + " px" );
 	
-	auto valRight = settings->get<unsigned>(tabWindow->ident("crop_right"), 0, {0u,100u});
+	auto valRight = _settings->get<unsigned>( "crop_right", 0, {0u,100u});
     cropRight.slider.setPosition(valRight);
     cropRight.value.setText( std::to_string( valRight ) + " px" );
 	
-	auto valTop = settings->get<unsigned>(tabWindow->ident("crop_top"), 0, {0u,100u});
+	auto valTop = _settings->get<unsigned>( "crop_top", 0, {0u,100u});
     cropTop.slider.setPosition(valTop);
     cropTop.value.setText( std::to_string( valTop ) + " px" );
 	
-	auto valBottom = settings->get<unsigned>(tabWindow->ident("crop_bottom"), 0, {0u,100u});
+	auto valBottom = _settings->get<unsigned>( "crop_bottom", 0, {0u,100u});
     cropBottom.slider.setPosition(valBottom);
     cropBottom.value.setText( std::to_string( valBottom ) + " px" );
 
-	auto valCropType = settings->get<unsigned>(tabWindow->ident("crop_type"), (unsigned)CropType::Monitor, {0u,4u});
+	auto valCropType = _settings->get<unsigned>( "crop_type", (unsigned)CropType::Monitor, {0u,4u});
 	if (valCropType == 1) cropMonitor.setChecked();
 	else if (valCropType == 2) cropAuto.setChecked();
 	else if (valCropType == 3) cropSemiAuto.setChecked();
 	else if (valCropType == 4) cropFree.setChecked();
 	else cropOff.setChecked();
 	
-	auto valCropAC = settings->get<bool>(tabWindow->ident("crop_aspect_correct"), 0);
+	auto valCropAC = _settings->get<bool>("crop_aspect_correct", 0);
 	cropAspectCorrect.setChecked( valCropAC );
 	
 	updateVisibillity();
 }
 
 auto BorderLayout::updateVisibillity() -> void {
-	auto val = settings->get<unsigned>(tabWindow->ident("crop_type"), (unsigned)Emulator::Interface::CropType::Monitor, {0u,4u});
+	auto val = _settings->get<unsigned>( "crop_type", (unsigned)Emulator::Interface::CropType::Monitor, {0u,4u});
 	
 	cropLeft.setEnabled( val == 3 || val == 4 );
 	cropRight.setEnabled( val == 4 );

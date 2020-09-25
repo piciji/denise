@@ -8,6 +8,7 @@ std::vector<States*> states;
 States::States(Emulator::Interface* emulator) {
     saveSettings = new GUIKIT::Settings;
     this->emulator = emulator;
+    settings = program->getSettings(emulator);
 }
 
 auto States::load( std::string path, bool prependFolder ) -> void {
@@ -92,7 +93,7 @@ auto States::save( std::string path, bool prependFolder ) -> void {
             // remember emu which generates latest savestate.
             // while emulation is off and a state will be loaded from hotkeys
             // the emu which generated the last state will be used.
-            settings->set("fast_save_emu", emulator->ident);
+            globalSettings->set("fast_save_emu", emulator->ident);
         }                            
     }            
 
@@ -149,7 +150,7 @@ auto States::oneMediumOnly(Emulator::Interface::MediaGroup* group, Emulator::Int
             continue;
 
         media.guid = uintptr_t(nullptr);
-        filePool->assign(program->ident(emulator, media.name), nullptr);
+        filePool->assign( _ident(emulator, media.name), nullptr);
         updateImage(nullptr, &media);
     }
     
@@ -179,7 +180,7 @@ auto States::loadImagePaths( GUIKIT::Settings* loadSettings ) -> std::vector<Emu
                 if (!mediaSelected || media.memoryDump) {
                     emulator->ejectMedium( &media );
                     media.guid = uintptr_t(nullptr);
-                    filePool->assign(program->ident(emulator, media.name), nullptr);  
+                    filePool->assign( _ident(emulator, media.name), nullptr);  
                     updateImage( nullptr, &media );
                 }
                 continue;
@@ -222,7 +223,7 @@ auto States::loadImagePaths( GUIKIT::Settings* loadSettings ) -> std::vector<Emu
             if (!GUIKIT::Vector::find( loadedMedia, mediaInUse ))
                 loadedMedia.push_back( mediaInUse );
                        
-            filePool->assign(program->ident(emulator, mediaInUse->name), file);  
+            filePool->assign( _ident(emulator, mediaInUse->name), file);  
             updateImage( setting, mediaInUse );                          
         }
                         
@@ -323,7 +324,7 @@ auto States::getInstanceAuto() -> States* {
         return getInstance( activeEmulator );
     
     // while loading by hotkeys emulation could be powered off.
-    std::string ident = settings->get<std::string>("fast_save_emu", "");
+    std::string ident = globalSettings->get<std::string>("fast_save_emu", "");
     States* defaultState = nullptr;
     
     for (auto state : states) {
@@ -339,13 +340,13 @@ auto States::getInstanceAuto() -> States* {
 }
 
 auto States::changeSlot( bool down ) -> void {
-
-    unsigned pos = settings->get<unsigned>(program->ident(emulator, "save_slot"), 0);
+    
+    unsigned pos = settings->get<unsigned>("save_slot", 0);
     if (down && pos == 0)
         return;
     
     pos += down ? -1 : 1;
-    settings->set<unsigned>(program->ident(emulator, "save_slot"), pos);
+    settings->set<unsigned>("save_slot", pos);
     
     statusMessage( "slot_changed", std::to_string(pos) );
 }
@@ -357,7 +358,8 @@ auto States::statusMessage( std::string langKey, std::string replacer ) -> void 
 }
 
 auto States::statesFolder() -> std::string {
-    auto path = settings->get<std::string>( program->ident(emulator, "states_folder"), "");
+    
+    auto path = settings->get<std::string>( "states_folder", "");
 
     if (path.empty()) {
         std::string _emuIdent = emulator->ident;
@@ -373,10 +375,11 @@ auto States::statesFolder() -> std::string {
 }
 
 auto States::generateAutoPath() -> std::string {
-    auto ident = settings->get<std::string>( program->ident(emulator, "save_ident"), "savestate");
+    
+    auto ident = settings->get<std::string>( "save_ident", "savestate");
     if (ident == "")
         ident = "savestate";
-    auto pos = settings->get<unsigned>( program->ident(emulator, "save_slot"), 0);
+    auto pos = settings->get<unsigned>( "save_slot", 0);
 
     return statesFolder() + ident + "_" + std::to_string( pos ) + ".sav";
 }
@@ -436,7 +439,7 @@ auto States::updateConnectedDevices() -> void {
     std::vector<unsigned> deviceIds;
     
     for( auto& connector : emulator->connectors ) {
-        auto deviceId = settings->get<unsigned>( program->ident(emulator, connector.name), 0);
+        auto deviceId = settings->get<unsigned>( _underscore(connector.name), 0);
         deviceIds.push_back( deviceId );
     }
     
@@ -446,7 +449,7 @@ auto States::updateConnectedDevices() -> void {
         
         GUIKIT::Vector::eraseVectorElement( deviceIds, device->id );        
         
-        settings->set<unsigned>( program->ident(emulator, connector.name), device->id);
+        settings->set<unsigned>( _underscore(connector.name), device->id);
 
         view->checkInputDevice( emulator, &connector, device );
     }
@@ -469,18 +472,18 @@ auto States::updateModels() -> void {
         int value = emulator->getModel( model.id );
 		
 		if (model.isGraphicChip()) {
-			auto oldValue = settings->get<int>( program->ident(emulator, model.name ), model.defaultValue, model.range );
+			auto oldValue = settings->get<int>( _underscore( model.name ), model.defaultValue, model.range );
 			regionChange = value != oldValue;            
             
 		} else if (!resamplerChange && model.isAudioResampler()) {
-            auto oldValue = settings->get<int>( program->ident(emulator, model.name ), model.defaultValue, model.range );            
+            auto oldValue = settings->get<int>(_underscore( model.name ), model.defaultValue, model.range );            
             resamplerChange = value != oldValue;                
         }
 
         if (model.isSwitch() )
-            settings->set<bool>( program->ident(emulator, model.name), (bool)value );
+            settings->set<bool>( _underscore( model.name), (bool)value );
         else
-            settings->set<int>( program->ident(emulator, model.name), value );                        
+            settings->set<int>( _underscore( model.name), value );                        
     }
 
     cfgView->systemLayout->modelLayout.updateWidgets();

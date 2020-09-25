@@ -156,7 +156,7 @@ auto String::remove(std::string& str, const std::vector<std::string>& subStr) ->
 }
 
 auto String::replace(std::string& str, const std::string& search, const std::string& replace) -> std::string& {
-	if (search.empty() || replace.empty())
+	if (search.empty())
 		return str;
 	
     size_t pos = 0;

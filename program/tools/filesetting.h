@@ -8,8 +8,7 @@ struct FileSetting {
     FileSetting(GUIKIT::Settings* useSettings = nullptr) {
         
         if (!useSettings)
-            // use global settings
-            this->useSettings = settings;
+            this->useSettings = globalSettings;
         else
             this->useSettings = useSettings;
     }
@@ -17,11 +16,12 @@ struct FileSetting {
     GUIKIT::Settings* useSettings;
 	static std::vector<FileSetting*> instances;	
 	std::string ident;
+    Emulator::Interface* emulator = nullptr;
 	
 	std::string path = "";
 	std::string file = "";
 	unsigned id = 0;
-	bool writeProtect = true;
+	bool writeProtect = false;
 	
 	auto update() -> void {		
 		this->path = useSettings->get<std::string>(ident + "_path", "");
@@ -30,14 +30,14 @@ struct FileSetting {
 		this->writeProtect = useSettings->get<bool>(ident + "_wp", false);
 	}
 
-	static auto getInstance(std::string ident) -> FileSetting* {
+	static auto getInstance(Emulator::Interface* emulator, std::string ident) -> FileSetting* {
 		for (auto& instance : instances) {
-			if (ident == instance->ident) {
-				return instance;
-			}
+			if ( (emulator == instance->emulator) && (ident == instance->ident) )
+				return instance;			
 		}
-		auto instance = new FileSetting;
+		auto instance = new FileSetting( program->getSettings( emulator ) );
 		instance->ident = ident;
+        instance->emulator = emulator;
 		instance->update();
 		instances.push_back(instance);
 
@@ -45,22 +45,38 @@ struct FileSetting {
 	}
 	
 	auto setPath(std::string value) -> void {
-		useSettings->set<std::string>(ident + "_path", value);
+        if (value == "")
+            useSettings->remove( ident + "_path" );
+        else
+            useSettings->set<std::string>(ident + "_path", value);
+        
 		this->path = value;
 	}
 	
 	auto setFile(std::string value) -> void {
-		useSettings->set<std::string>(ident + "_file", value);
+        if (value == "")
+            useSettings->remove( ident + "_file" );
+        else
+            useSettings->set<std::string>(ident + "_file", value);
+        
 		this->file = value;
 	}
 
 	auto setId(unsigned value) -> void {
-		useSettings->set<unsigned>(ident + "_id", value);
+        if (value == 0)
+            useSettings->remove( ident + "_id" );
+        else
+            useSettings->set<unsigned>(ident + "_id", value);
+        
 		this->id = value;
 	}
 
 	auto setWriteProtect(bool value) -> void {
-		useSettings->set<bool>(ident + "_wp", value);
+        if (!value)
+            useSettings->remove( ident + "_wp" );
+        else
+            useSettings->set<bool>(ident + "_wp", value);
+        
 		this->writeProtect = value;
 	}        
 	    

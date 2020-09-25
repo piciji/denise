@@ -222,11 +222,11 @@ auto InputMapping::sortHidsByValue() -> void {
     }); 
 }
 
-auto InputMapping::generateAlternate() -> void {
+auto InputMapping::generateAlternate( GUIKIT::Settings* settingContainer ) -> void {
     
     this->alternate = new InputMapping;
     this->alternate->parent = this;
-    this->alternate->setting = settings->add( this->setting->getIdent() + "_alt" );
+    this->alternate->setting = settingContainer->add( this->setting->getIdent() + "_alt" );
     this->alternate->state = 0;
     this->alternate->type = this->type;
     this->alternate->anded = this->anded;

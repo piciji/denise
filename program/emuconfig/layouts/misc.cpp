@@ -75,7 +75,7 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) {
         
         runAheadLayout.control.value.setText( std::to_string(pos) );
         
-        settings->set<unsigned>( this->tabWindow->ident("runahead"), pos);
+        _settings->set<unsigned>( "runahead", pos);
     
         this->emulator->runAhead( pos );
     };
@@ -84,21 +84,21 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) {
         
         bool state = runAheadLayout.options.performanceMode.checked();
         
-        settings->set<bool>( this->tabWindow->ident("runahead_performance"), state);
+        _settings->set<bool>( "runahead_performance", state);
         
         this->emulator->runAheadPerformance( state );
     };
     
     runAheadLayout.options.disableOnPower.onToggle = [this]() {
         
-        settings->set<bool>( this->tabWindow->ident("runahead_disable"), runAheadLayout.options.disableOnPower.checked() );
+        _settings->set<bool>( "runahead_disable", runAheadLayout.options.disableOnPower.checked() );
     };
     
-    setRunAheadPerformance( settings->get<bool>( this->tabWindow->ident("runahead_performance"), false) );
+    setRunAheadPerformance( _settings->get<bool>( "runahead_performance", false) );
     
-    runAheadLayout.options.disableOnPower.setChecked( settings->get<bool>( this->tabWindow->ident("runahead_disable"), true) );
+    runAheadLayout.options.disableOnPower.setChecked( _settings->get<bool>( "runahead_disable", true) );
     
-    unsigned pos = settings->get<unsigned>( this->tabWindow->ident("runahead"), 0, {0u, 10u});
+    unsigned pos = _settings->get<unsigned>( "runahead", 0, {0u, 10u});
     
     setRunAhead( pos );
     
@@ -106,7 +106,7 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) {
         
         bool state = audioRecordLayout.duration.useTimeLimit.checked();
         
-        settings->set<bool>( this->tabWindow->ident("audio_record_timelimit"), state, false);
+        _settings->set<bool>( "audio_record_timelimit", state, false);
         
         audioRecordLayout.duration.setEnabled( state );
         
@@ -132,23 +132,23 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) {
         
         audioRecordLayout.location.path.setText( path );
         
-        settings->set<std::string>( this->tabWindow->ident("audio_record_path"), path );
+        _settings->set<std::string>( "audio_record_path", path );
     };
     
-    audioRecordLayout.location.path.setText( settings->get<std::string>( this->tabWindow->ident("audio_record_path"), "" ) );
+    audioRecordLayout.location.path.setText( _settings->get<std::string>( "audio_record_path", "" ) );
     
     audioRecordLayout.duration.minutesSlider.slider.onChange = [this]() {
         
         unsigned pos = audioRecordLayout.duration.minutesSlider.slider.position();
         
-        settings->set<unsigned>( this->tabWindow->ident("audio_record_minutes"), pos );
+        _settings->set<unsigned>( "audio_record_minutes", pos );
         
         audioRecordLayout.duration.minutesSlider.value.setText( std::to_string(pos) );
         
         audioManager->record.setTimeLimit();
     };
     
-    unsigned value = settings->get<unsigned>( this->tabWindow->ident("audio_record_minutes"), 0, {0, 120} );
+    unsigned value = _settings->get<unsigned>( "audio_record_minutes", 0, {0, 120} );
     
     audioRecordLayout.duration.minutesSlider.value.setText( std::to_string(value) );
     
@@ -158,14 +158,14 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) {
 
         unsigned pos = audioRecordLayout.duration.secondsSlider.slider.position();
         
-        settings->set<unsigned>( this->tabWindow->ident("audio_record_seconds"), pos );
+        _settings->set<unsigned>( "audio_record_seconds", pos );
         
         audioRecordLayout.duration.secondsSlider.value.setText( std::to_string(pos) );
         
         audioManager->record.setTimeLimit();
     };
     
-    value = settings->get<unsigned>( this->tabWindow->ident("audio_record_seconds"), 0, {0, 59} );
+    value = _settings->get<unsigned>( "audio_record_seconds", 0, {0, 59} );
     
     audioRecordLayout.duration.secondsSlider.value.setText( std::to_string(value) );
     

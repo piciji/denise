@@ -95,6 +95,7 @@ struct VideoManager {
 	ColorRgb lineBefore[ 512 ];
     
     Emulator::Interface* emulator;
+    GUIKIT::Settings* settings;
     Emulator::Interface::Palette* palette;
     Shader shader;
     

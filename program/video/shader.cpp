@@ -141,7 +141,7 @@ auto Shader::removeIncompleteShader() -> void {
 		shaderList += s;
     }
 	
-	settings->set<std::string>(program->ident(vManager->emulator, "shader"), shaderList);
+	vManager->settings->set<std::string>("shader", shaderList);
 }      
 
 auto Shader::loadInternal() -> void {
@@ -152,7 +152,7 @@ auto Shader::loadInternal() -> void {
     if(videoDriver->shaderFormat() != DRIVER::Video::ShaderType::GLSL)
         return;
     
-    auto filter = settings->get<unsigned>( program->ident(vManager->emulator, "video_filter"), 1u, {0u, 1u});
+    auto filter = vManager->settings->get<unsigned>( "video_filter", 1u, {0u, 1u});
     ShaderPass* pass;
 
 	if (vManager->crtMode == VideoManager::CrtMode::Gpu) {
@@ -365,7 +365,7 @@ auto Shader::loadExternal() -> bool {
 
     GUIKIT::Settings* shaderSetting = nullptr;
 
-    auto folder = settings->get<std::string>("shader_folder", "");
+    auto folder = globalSettings->get<std::string>("shader_folder", "");
     if (folder.empty())
         folder = program->shaderFolder();
     
@@ -489,7 +489,6 @@ auto Shader::loadShader(std::string path, std::string shaderFile, ShaderPass* pa
 }
 
 auto Shader::addActiveShader(std::string shader) -> void {
-    auto ident = program->ident(vManager->emulator, "shader");
 
     std::string shaderList = "";
     
@@ -498,7 +497,7 @@ auto Shader::addActiveShader(std::string shader) -> void {
     
     shaderList += shader;            
     
-    settings->set<std::string>(ident, shaderList);
+    vManager->settings->set<std::string>("shader", shaderList);
     
 	bool error = !loadExternal(); 
 	    
@@ -522,7 +521,7 @@ auto Shader::removeActiveShader(std::string shader) -> void {
         }
     }
     
-    settings->set<std::string>(program->ident(vManager->emulator, "shader"), shaderList);
+    vManager->settings->set<std::string>("shader", shaderList);
     
 	bool error = !loadExternal(); 
 	    
@@ -534,7 +533,7 @@ auto Shader::removeActiveShader(std::string shader) -> void {
 }
 
 auto Shader::getActiveShaders() -> std::vector<std::string> {
-    auto activeShaders = settings->get<std::string>(program->ident(vManager->emulator, "shader"), "");
+    auto activeShaders = vManager->settings->get<std::string>("shader", "");
     return GUIKIT::String::explode(activeShaders, "###");
 }
 

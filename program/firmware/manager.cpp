@@ -159,7 +159,7 @@ auto FirmwareManager::insert() -> std::vector<std::string> {
     
     missingFirmware.clear();
     
-    auto storeLevel = settings->get<unsigned>( program->ident(emulator, "use_firmware"), 0 ); 
+    auto storeLevel = program->getSettings(emulator)->get<unsigned>( "use_firmware", 0 ); 
     
     for (auto& firmware : emulator->firmwares ) {
         
@@ -175,19 +175,19 @@ auto FirmwareManager::loadImage( Emulator::Interface::Firmware* firmware, unsign
 		return true;
 	}
     
-    FileSetting* setting = getSetting( firmware, storeLevel );    
+    FileSetting* fSetting = getSetting( firmware, storeLevel );    
     
-    if (setting->path.empty())
+    if (fSetting->path.empty())
         return false;
     
-    GUIKIT::File file( setting->path );
+    GUIKIT::File file( fSetting->path );
     uint8_t* data = nullptr;
 
     if (file.isSizeValid(MAX_MEDIUM_SIZE) &&
-        file.isSizeValid(setting->id, MAX_FIRMWARE_SIZE) &&
-        ((data = file.archiveData(setting->id)) != nullptr)
+        file.isSizeValid(fSetting->id, MAX_FIRMWARE_SIZE) &&
+        ((data = file.archiveData(fSetting->id)) != nullptr)
     ) {    
-        unsigned size = file.archiveDataSize(setting->id);
+        unsigned size = file.archiveDataSize(fSetting->id);
         uint8_t* useData = new uint8_t[size];
         std::memcpy(useData, data, size);
         addImage(firmware, storeLevel, useData, size);
@@ -195,21 +195,21 @@ auto FirmwareManager::loadImage( Emulator::Interface::Firmware* firmware, unsign
         return true;
     }
     
-    if (!GUIKIT::Vector::find(missingFirmware, setting->path))
-        missingFirmware.push_back(setting->path);
+    if (!GUIKIT::Vector::find( missingFirmware, fSetting->path) )
+        missingFirmware.push_back( fSetting->path );
     
     return false;
 }
 
 auto FirmwareManager::getSetting( Emulator::Interface::Firmware* firmware, unsigned storeLevel ) -> FileSetting* {
-    FileSetting* setting = 
-        FileSetting::getInstance(program->ident(emulator, firmware->name + "_" + std::to_string( storeLevel )));
+    FileSetting* fSetting = 
+        FileSetting::getInstance( emulator, firmware->name + "_" + std::to_string( storeLevel ));
 
     if (storeLevel == 0) {
-        setting->id = 0;
-        setting->path = program->dataFolder() + firmware->name;
-        setting->setSaveable(false);
+        fSetting->id = 0;
+        fSetting->path = program->dataFolder() + firmware->name;
+        fSetting->setSaveable(false);
     }
     
-    return setting;
+    return fSetting;
 }

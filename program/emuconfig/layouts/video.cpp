@@ -301,36 +301,36 @@ base( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) )
     
     base.option.newLuma.onToggle = [this]() {
         bool state = base.option.newLuma.checked();
-        settings->set<bool>( this->tabWindow->ident( "video_new_luma" + this->sliderIdent()), state);
+        _settings->set<bool>( "video_new_luma" + this->sliderIdent(), state);
         vManager()->setNewLuma( state );
     };
     
     base.option.crtRealGamma.onToggle = [this]() {
         bool state = base.option.crtRealGamma.checked();
-        settings->set<bool>( this->tabWindow->ident( "video_crt_real_gamma" + this->sliderIdent()), state);
+        _settings->set<bool>( "video_crt_real_gamma" + this->sliderIdent(), state);
         vManager()->setCrtRealGamma( state );
     };
 	
 	base.option.linearInterpolation.onToggle = [this]() {
 		
-		settings->set<unsigned>(this->tabWindow->ident("video_filter"), base.option.linearInterpolation.checked() ? 1 : 0 );
+		_settings->set<unsigned>("video_filter", base.option.linearInterpolation.checked() ? 1 : 0 );
         program->setVideoFilter();
 	};
 	
-	base.option.linearInterpolation.setChecked( settings->get<unsigned>(tabWindow->ident("video_filter"), 1u, {0u, 1u}) );
+	base.option.linearInterpolation.setChecked( globalSettings->get<unsigned>("video_filter", 1u, {0u, 1u}) );
         
     mask.type.apertureMask.onActivate = [this]() {
-        settings->set<unsigned>( this->tabWindow->ident("video_mask_type" + this->sliderIdent()), (unsigned)VideoManager::MaskType::Aperture);
+        _settings->set<unsigned>( "video_mask_type" + this->sliderIdent(), (unsigned)VideoManager::MaskType::Aperture);
         vManager()->setMaskType( VideoManager::MaskType::Aperture );
     };
 
     mask.type.shadowMask.onActivate = [this]() {
-        settings->set<unsigned>( this->tabWindow->ident("video_mask_type" + this->sliderIdent()), (unsigned)VideoManager::MaskType::ShadowMask);
+        _settings->set<unsigned>( "video_mask_type" + this->sliderIdent(), (unsigned)VideoManager::MaskType::ShadowMask);
         vManager()->setMaskType( VideoManager::MaskType::ShadowMask );
     };   
     
     mask.type.slotMask.onActivate = [this]() {
-        settings->set<unsigned>( this->tabWindow->ident("video_mask_type" + this->sliderIdent()), (unsigned)VideoManager::MaskType::SlotMask);
+        _settings->set<unsigned>( "video_mask_type" + this->sliderIdent(), (unsigned)VideoManager::MaskType::SlotMask);
         vManager()->setMaskType( VideoManager::MaskType::SlotMask );
     }; 
     
@@ -340,59 +340,59 @@ base( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) )
     };
     
     base.mode.palette.onActivate = [this]() {
-        settings->set<bool>( this->tabWindow->ident("video_spectrum"), false);
+        _settings->set<bool>( "video_spectrum", false);
         updatePresets();
     };
     
     base.mode.spectrum.onActivate = [this]() {
-        settings->set<bool>( this->tabWindow->ident("video_spectrum"), true);
+        _settings->set<bool>("video_spectrum", true);
         updatePresets();
     };       
 
     base.mode.crtNone.onActivate = [this]() {
-        settings->set<unsigned>(this->tabWindow->ident("video_crt"), (unsigned)VideoManager::CrtMode::None);
+        _settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::None);
         updatePresets();
     };
     
     base.mode.crtCpu.onActivate = [this]() {
-        settings->set<unsigned>(this->tabWindow->ident("video_crt"), (unsigned)VideoManager::CrtMode::Cpu);
+        _settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::Cpu);
         program->fastForward( false );
 		updatePresets();
     };
     
     base.mode.crtGpu.onActivate = [this]() {
-        settings->set<unsigned>(this->tabWindow->ident("video_crt"), (unsigned)VideoManager::CrtMode::Gpu);
+        _settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::Gpu);
         program->fastForward( false );
 		updatePresets();
     };    
     
     gpuBase.option.distortionHires.onToggle = [this]() {
         bool state = gpuBase.option.distortionHires.checked();
-        settings->set<bool>(this->tabWindow->ident("video_distortion_hires" + this->sliderIdent()), state);
+        _settings->set<bool>("video_distortion_hires" + this->sliderIdent(), state);
 		vManager()->useDistortionHires( state );
     };
     
     gpuBase.option.hires.onToggle = [this]() {
         bool state = gpuBase.option.hires.checked();
-        settings->set<bool>(this->tabWindow->ident("video_hires" + this->sliderIdent()), state);
+        _settings->set<bool>("video_hires" + this->sliderIdent(), state);
 		vManager()->useHires( state );
     };    
 	
     gpuBase.firSharp.sharpLeft.onActivate = [this]() {
         
-        settings->set<int>(this->tabWindow->ident("video_fir_filter_sharp" + this->sliderIdent()), -1);
+        _settings->set<int>("video_fir_filter_sharp" + this->sliderIdent(), -1);
         VideoManager::getInstance(this->emulator)->setFirFilterSharp( -1 );
     };
 
     gpuBase.firSharp.sharpRight.onActivate = [this]() {
 
-        settings->set<int>(this->tabWindow->ident("video_fir_filter_sharp" + this->sliderIdent()), 1);
+        _settings->set<int>("video_fir_filter_sharp" + this->sliderIdent(), 1);
         VideoManager::getInstance(this->emulator)->setFirFilterSharp( 1 );
     };
 
     gpuBase.firSharp.natural.onActivate = [this]() {
 
-        settings->set<int>(this->tabWindow->ident("video_fir_filter_sharp" + this->sliderIdent()), 0);
+        _settings->set<int>("video_fir_filter_sharp" + this->sliderIdent(), 0);
         VideoManager::getInstance(this->emulator)->setFirFilterSharp( 0 );
     };    
     
@@ -418,7 +418,7 @@ base( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) )
         vicIIGlitch.cas.active.onToggle();
     };        
     
-    VideoManager::CrtMode crtMode = (VideoManager::CrtMode)settings->get<unsigned>(this->tabWindow->ident("video_crt"), (unsigned)VideoManager::CrtMode::None, {0u, 2u});
+    VideoManager::CrtMode crtMode = (VideoManager::CrtMode)_settings->get<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::None, {0u, 2u});
     
     if (crtMode == VideoManager::CrtMode::Gpu)
         base.mode.crtGpu.setChecked();
@@ -427,7 +427,7 @@ base( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) )
     else
         base.mode.crtNone.setChecked();    
     
-    if (dynamic_cast<LIBC64::Interface*>(emulator) && settings->get<bool>( tabWindow->ident("video_spectrum"), true) )
+    if (dynamic_cast<LIBC64::Interface*>(emulator) && _settings->get<bool>( "video_spectrum", true) )
         base.mode.spectrum.setChecked();
     else
         base.mode.palette.setChecked();
@@ -440,7 +440,7 @@ template<typename T> auto VideoLayout::setSliderAction( SliderLayout* layout, st
     if (layout->withActivator)
         layout->active.onToggle = [this, layout, baseIdent, callBack, callTransfer]() {
             bool checked = layout->active.checked();
-            settings->set<bool>(this->tabWindow->ident("video_" + baseIdent + "_use" + this->sliderIdent()), checked);
+            _settings->set<bool>("video_" + baseIdent + "_use" + this->sliderIdent(), checked);
             layout->slider.setEnabled(checked);
             if (layout == &mask.level) {                
                 mask.setEnabled( checked );
@@ -465,7 +465,7 @@ template<typename T> auto VideoLayout::setSliderAction( SliderLayout* layout, st
         auto unit = layout->unit;
         auto roundDigits = (layout == &mask.pitch || layout == &crtGlitch.randomLineOffset || layout == &bloom.weight) ? 2 : 1;
 		
-        settings->set<T>(this->tabWindow->ident("video_" + baseIdent + this->sliderIdent()), value);
+        _settings->set<T>("video_" + baseIdent + this->sliderIdent(), value);
 		
 		if (std::is_same<T, float>::value)
 			layout->value.setText( GUIKIT::String::formatFloatingPoint(value, roundDigits) + " " + unit);
@@ -629,7 +629,7 @@ auto VideoLayout::updateVisibillity() -> void {
         if (videoDriver->shaderFormat() == DRIVER::Video::ShaderType::HLSL) {
             if(crtGpuChecked) {
                 base.mode.crtCpu.setChecked();
-                settings->set<unsigned>(this->tabWindow->ident("video_crt"), (unsigned)VideoManager::CrtMode::Cpu);
+                _settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::Cpu);
             }
 			base.mode.crtGpu.setEnabled(false);
         }

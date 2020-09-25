@@ -24,6 +24,10 @@ auto Settings::add(const std::string& ident) -> Setting* {
     return setting;
 }
 
+auto Settings::add(Setting* setting) -> void {
+    list.push_back( setting );
+}
+
 auto Settings::remove(const std::string& ident) -> bool {
     Setting* setting = find( ident );
     if (!setting) return false;
@@ -32,7 +36,9 @@ auto Settings::remove(const std::string& ident) -> bool {
 
 auto Settings::setSaveable( const std::string& ident, bool state ) -> void {
     
-    Setting* setting = add( ident );
+    Setting* setting = find( ident );
+    if (!setting)
+        return;
     setting->saveable = state;
 }
 
@@ -88,7 +94,7 @@ auto Settings::set(type_info<std::string> t, const std::string& ident, std::stri
 auto Settings::get(type_info<bool> t, const std::string& ident, bool defaultValue) -> bool {
     Setting* setting = find( ident );
     if (!setting) return defaultValue;
-	return  setting->value != "0";
+	return setting->value != "0";
 }
 
 auto Settings::get(type_info<int> t, const std::string& ident, int defaultValue) -> int {

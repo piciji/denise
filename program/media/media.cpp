@@ -32,7 +32,8 @@ namespace Fonts {
 
 MediaWindow::MediaWindow(Emulator::Interface* emulator) {
     this->emulator = emulator;
-    message = new Message(this);    
+    message = new Message(this); 
+    this->settings = program->getSettings( emulator );
 }
 
 auto MediaWindow::getView( Emulator::Interface* emulator ) -> MediaWindow* {
@@ -63,11 +64,6 @@ auto MediaWindow::show(bool diskSwapper) -> void {
 	setFocused();
 }
 
-auto MediaWindow::ident( std::string name ) -> std::string {
-	std::string _ident = emulator->ident;
-    return GUIKIT::String::toLowerCase( _ident )+ "_" + GUIKIT::String::replace(name, " ", "_");
-}
-
 auto MediaWindow::build() -> void {
     winapi.disableBackgroundRedrawDuringResize();
     cocoa.keepMenuVisibilityOnDisplay();
@@ -82,8 +78,7 @@ auto MediaWindow::build() -> void {
 			fileDialogPtr->setForeground();        
 	};
 	
-    alternateFileDialog = settings->getOrInit("alternate_software_preview", false);
-    
+    alternateFileDialog = globalSettings->getOrInit("alternate_software_preview", false);    
     
 	if (emulator->ident == "C64" && !cmd->debug) {
         GUIKIT::CustomFont* font = new GUIKIT::CustomFont;
@@ -97,10 +92,10 @@ auto MediaWindow::build() -> void {
     
     GUIKIT::Geometry defaultGeometry = {100, 100, 900, 500};
     
-    GUIKIT::Geometry geometry = {settings->get<int>(ident("screen_media_x"), defaultGeometry.x)
-        ,settings->get<int>(ident("screen_media_y"), defaultGeometry.y)
-        ,settings->get<unsigned>(ident("screen_media_width"), defaultGeometry.width)
-        ,settings->get<unsigned>(ident("screen_media_height"), defaultGeometry.height)
+    GUIKIT::Geometry geometry = {settings->get<int>("screen_media_x", defaultGeometry.x)
+        ,settings->get<int>("screen_media_y", defaultGeometry.y)
+        ,settings->get<unsigned>("screen_media_width", defaultGeometry.width)
+        ,settings->get<unsigned>("screen_media_height", defaultGeometry.height)
     };
     
     setGeometry( geometry );
@@ -118,15 +113,15 @@ auto MediaWindow::build() -> void {
     onMove = [&]() {
         if (fullScreen()) return;
         GUIKIT::Geometry geometry = this->geometry();
-        settings->set<int>( ident("screen_media_x"), geometry.x);
-        settings->set<int>( ident("screen_media_y"), geometry.y);
+        settings->set<int>( "screen_media_x", geometry.x);
+        settings->set<int>( "screen_media_y", geometry.y);
     };
 
     onSize = [&]() {
         if (fullScreen()) return;
         GUIKIT::Geometry geometry = this->geometry();
-        settings->set<unsigned>( ident("screen_media_width"), geometry.width);
-        settings->set<unsigned>( ident("screen_media_height"), geometry.height);
+        settings->set<unsigned>( "screen_media_width", geometry.width);
+        settings->set<unsigned>( "screen_media_height", geometry.height);
     };
 	
     onDrop = [this]( std::vector<std::string> files ) {
@@ -179,7 +174,7 @@ auto MediaWindow::build() -> void {
         
         if (mediaGroupLayout->showOnlyConnectedDevices()) {
             
-            unsigned counter = settings->get( ident(mediaGroup.name + "_count"), 1);
+            unsigned counter = settings->get( _underscore(mediaGroup.name) + "_count", 1);
             
             mediaGroupLayout->updateVisibility( counter, true );
         }        
@@ -250,11 +245,11 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
         
 	for (auto block : layout->blocks) {
 
-		auto setting = FileSetting::getInstance(ident(block->media->name));
+		auto fSetting = FileSetting::getInstance(emulator, _underscore(block->media->name) );
 					
 		if (mediaGroup->isHardDisk()) {
 
-			block->selector.open.onActivate = [this, block, mediaGroup, setting]() {
+			block->selector.open.onActivate = [this, block, mediaGroup, fSetting]() {
 				
 				std::string filePath = GUIKIT::BrowserWindow()
                     .setTitle(trans->get("select_" + mediaGroup->name + "_image"))
@@ -282,22 +277,22 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
 						{"%path%", filePath}
 					}));
 				} else {
-					setting->setPath(filePath);
+					fSetting->setPath(filePath);
 					block->selector.edit.setText(filePath);
 				}
 				testFile.unload();
 			};
 
-			block->header.eject.onActivate = [setting, block]() {
-				setting->setPath("");
+			block->header.eject.onActivate = [fSetting, block]() {
+				fSetting->setPath("");
 				block->selector.edit.setText("");
 			};
 
-			block->selector.edit.setText(setting->path);
+			block->selector.edit.setText(fSetting->path);
 
 		} else {            
             
-			block->selector.open.onActivate = [this, block, mediaGroup, setting, layout]() {                
+			block->selector.open.onActivate = [this, block, mediaGroup, layout]() {                
                 
                 auto media = block->media;
                 
@@ -346,9 +341,9 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
 						return insertFile(block, filePath, true, selection);
 					});
 									                    
-                    applyPreviewFont( settings->get<unsigned>("dialog_software_preview_fontsize", 11, {6, 14}) );
-                    fileDialogPtr->setContentViewWidth( settings->get<unsigned>("dialog_software_preview_width", 450, {200, 600}) );
-                    fileDialogPtr->setContentViewHeight( settings->get<unsigned>("dialog_software_preview_height", 200, {100, 600}) );
+                    applyPreviewFont( globalSettings->get<unsigned>("dialog_software_preview_fontsize", 11, {6, 14}) );
+                    fileDialogPtr->setContentViewWidth( globalSettings->get<unsigned>("dialog_software_preview_width", 450, {200, 600}) );
+                    fileDialogPtr->setContentViewHeight( globalSettings->get<unsigned>("dialog_software_preview_height", 200, {100, 600}) );
                     
                     fileDialogPtr->setContentViewBackground(mediaGroupLayouts[0]->listings.backgroundColor());
                     fileDialogPtr->setContentViewForeground(mediaGroupLayouts[0]->listings.foregroundColor());
@@ -381,13 +376,13 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
                 insertFile(block, filePath);
 			};
 
-			block->header.eject.onActivate = [this, mediaGroup, block, setting, layout]() {
+			block->header.eject.onActivate = [this, mediaGroup, block, fSetting, layout]() {
                 
                 auto media = block->media;
                 
 				if ( !mediaGroup->isExpansion() ) {
 					emulator->ejectMedium(media);					
-					filePool->assign(ident(media->name), nullptr);
+					filePool->assign( _ident(emulator, media->name), nullptr);
                     States::getInstance( emulator )->updateImage( nullptr, media );
 				} else
                     States::getInstance(emulator)->forcePowerNextLoad = true;
@@ -408,24 +403,24 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
 				if (mediaGroup->isTape())
 					view->updateTapeIcons();
 				
-				filePool->assign(ident(media->name + "store"), nullptr);
+				filePool->assign( _ident(emulator, media->name + "store"), nullptr);
                 filePool->unloadOrphaned();
 
-				setting->init();
-				updateMediaBlock(block, setting);
+				fSetting->init();
+				updateMediaBlock(block, fSetting);
 			};
 
-			block->header.writeprotect.onToggle = [this, block, setting, mediaGroup]() {
+			block->header.writeprotect.onToggle = [this, block, fSetting, mediaGroup]() {
 				
 				bool state = block->header.writeprotect.checked();
                 
 				emulator->writeProtect(block->media, state);
                 // wp is shared between main image, save states and disk swapper.
                 // i.e. if save state changes it, it's valid for main image too (to keep it simple)
-				setting->setWriteProtect(state);
+				fSetting->setWriteProtect(state);
 			};
 			
-			updateMediaBlock(block, setting);
+			updateMediaBlock(block, fSetting);
             
             block->selector.edit.onFocus = [this, layout, block]() {
                 resetPreview(true);
@@ -434,7 +429,7 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
                 
                 if (layout->mediaGroup->selected && !block->media->memoryDump) {
                     layout->mediaGroup->selected = block->media;
-                    settings->set<unsigned>(ident(layout->mediaGroup->name + "_selected"), block->media->id);
+                    settings->set<unsigned>( _underscore(layout->mediaGroup->name) + "_selected", block->media->id);
                     block->header.inUse.setChecked();
                 }
                 
@@ -454,7 +449,7 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
                 
                 layout->selectedBlock = block;                                
                 
-                settings->set<unsigned>(ident(layout->mediaGroup->name + "_selected"), block->media->id);
+                settings->set<unsigned>( _underscore(layout->mediaGroup->name) + "_selected", block->media->id);
                 
                 if ( showC64Listing( layout ) )
                     layout->updateListing( block );                
@@ -470,7 +465,7 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
                         
                         block->media->pcbLayout = &pcb; 
                         
-                        settings->set<unsigned>(ident(block->media->name + "_pcb"), pcb.id);
+                        settings->set<unsigned>( _underscore(block->media->name) + "_pcb", pcb.id);
                         
                         break;
                     }
@@ -486,12 +481,14 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
                 auto jumperBox = block->selector.jumpers[jumperId];
 
                 std::string saveIdent = block->media->name + "_jumper_" + jumper.name;
-
+                
+                _underscore(saveIdent);
+                
                 jumperBox->onToggle = [this, jumperBox, saveIdent, block, jumperId]() {
 
                     bool state = jumperBox->checked();
 
-                    settings->set<bool>(this->ident(saveIdent), state);
+                    this->settings->set<bool>( saveIdent, state);
 
                     this->emulator->setExpansionJumper(block->media, jumperId, state);
                 };
@@ -499,12 +496,12 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
         }
 
 		if ( showC64Listing( layout ) ) { //preload last listing
-			GUIKIT::File* file = filePool->get( setting->path );
+			GUIKIT::File* file = filePool->get( fSetting->path );
 			uint8_t* data;
 
-            if (program->loadImageDataWhenOk(file, setting->id, mediaGroup, data)) {
-				filePool->assign(ident(block->media->name + "store"), file);
-                emulator->insertMedium(block->media, data, file->archiveDataSize( setting->id ));
+            if (program->loadImageDataWhenOk(file, fSetting->id, mediaGroup, data)) {
+				filePool->assign( _ident(emulator, block->media->name + "store"), file);
+                emulator->insertMedium(block->media, data, file->archiveDataSize( fSetting->id ));
                 block->listings = emulator->getListing( block->media );
                 
                 if (mediaGroup->selected ) {
@@ -541,9 +538,9 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
 
             emulator->selectListing( media, selection );
        
-            auto setting = FileSetting::getInstance(ident(media->name));
-            if (setting)
-                EmuConfigView::TabWindow::getView(emulator)->statesLayout->updateSaveIdent(setting->file);            
+            auto fSetting = FileSetting::getInstance(emulator, _underscore(media->name) );
+            if (fSetting)
+                EmuConfigView::TabWindow::getView(emulator)->statesLayout->updateSaveIdent(fSetting->file);            
             
             view->setFocused(300);
         };
@@ -797,7 +794,7 @@ auto MediaWindow::preparePaths() -> void {
     
     for (auto& mediaGroup : emulator->mediaGroups) {
         
-        auto settingFolderIdent = ident( mediaGroup.name + "_folder" );
+        auto settingFolderIdent = _underscore(mediaGroup.name) + "_folder";
         
         auto block = new PathsLayout::Block( &mediaGroup );
         
@@ -822,7 +819,7 @@ auto MediaWindow::preparePaths() -> void {
             }
         };
 
-        block->empty.onActivate = [block, settingFolderIdent]() {
+        block->empty.onActivate = [this, block, settingFolderIdent]() {
             settings->set<std::string>(settingFolderIdent, "");
             block->edit.setText("");
         };
@@ -831,12 +828,12 @@ auto MediaWindow::preparePaths() -> void {
     }
 }
 
-auto MediaWindow::updateMediaBlock(MediaGroupLayout::Block* block, FileSetting* setting) -> void {
+auto MediaWindow::updateMediaBlock(MediaGroupLayout::Block* block, FileSetting* fSetting) -> void {
 
-    block->selector.edit.setText( setting->path );
-    block->header.fileName.setText( setting->file );
+    block->selector.edit.setText( fSetting->path );
+    block->header.fileName.setText( fSetting->file );
     
-    updateWriteProtection( block->media, setting->writeProtect );
+    updateWriteProtection( block->media, fSetting->writeProtect );
 }
 
 auto MediaWindow::updateListing( Emulator::Interface::Media* media ) -> void {    
@@ -865,7 +862,7 @@ auto MediaWindow::updateListing( Emulator::Interface::Media* media ) -> void {
 
 auto MediaWindow::preselectPath( std::string& groupName ) -> std::string {
 	
-	auto baseFolderIdent = ident( groupName + "_folder" );
+	auto baseFolderIdent = _underscore(groupName) + "_folder";    
 
 	auto path = settings->get<std::string>( baseFolderIdent, "" );
 	
@@ -877,7 +874,7 @@ auto MediaWindow::preselectPath( std::string& groupName ) -> std::string {
 
 auto MediaWindow::savePath( std::string& groupName, std::string path ) -> void {
 	
-	auto baseFolderIdent = ident( groupName + "_folder" );
+	auto baseFolderIdent = _underscore(groupName) + "_folder";
 	
 	settings->set<std::string>(baseFolderIdent + "_auto", path);
 }
@@ -1034,7 +1031,7 @@ auto MediaWindow::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* fil
        
     auto media = block->media;
     auto mediaGroup = layout->mediaGroup;
-    auto setting = FileSetting::getInstance( ident(media->name) );
+    auto fSetting = FileSetting::getInstance( emulator, _underscore(media->name ) );
 
     unsigned size = file->archiveDataSize(item->id);
 
@@ -1049,7 +1046,7 @@ auto MediaWindow::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* fil
         media->guid = uintptr_t(file);
         emulator->insertMedium(media, data, size);
         emulator->writeProtect(media, false);
-        filePool->assign(ident(media->name), file);
+        filePool->assign( _ident(emulator, media->name), file);
     } else {        
         if (mediaGroup->expansion->pcbs.size()) {
             block->selector.combo.setSelection(0);
@@ -1072,23 +1069,23 @@ auto MediaWindow::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* fil
         block->header.inUse.onActivate();
     }
 
-    filePool->assign(ident(media->name + "store"), file);    
+    filePool->assign( _ident(emulator, media->name + "store"), file);    
     filePool->unloadOrphaned();
 
-    setting->setPath(file->getFile());
-    setting->setFile(item->info.name);
-    setting->setId(item->id);
-    setting->setWriteProtect(false);
+    fSetting->setPath(file->getFile());
+    fSetting->setFile(item->info.name);
+    fSetting->setId(item->id);
+    fSetting->setWriteProtect(false);
 
     if (!mediaGroup->isExpansion())
-        States::getInstance(emulator)->updateImage(setting, media);
+        States::getInstance(emulator)->updateImage(fSetting, media);
     else
         States::getInstance(emulator)->forcePowerNextLoad = true;
 
-    updateMediaBlock(block, setting);  
+    updateMediaBlock(block, fSetting);  
     
     if (mediaGroup->isDrive())
-        EmuConfigView::TabWindow::getView(emulator)->statesLayout->updateSaveIdent( setting->file );
+        EmuConfigView::TabWindow::getView(emulator)->statesLayout->updateSaveIdent( fSetting->file );
 }
 
 auto MediaWindow::eject( Emulator::Interface::MediaGroup* mediaGroup ) -> void {
@@ -1274,7 +1271,7 @@ auto MediaWindow::updateWriteProtection( Emulator::Interface::Media* media, bool
         
         if (block->media == media) {
                         
-            auto setting = FileSetting::getInstance( this->ident( media->name ) );
+            auto fSetting = FileSetting::getInstance( emulator, _underscore(media->name) );
             
             if (state != block->header.writeprotect.checked())            
                 block->header.writeprotect.setChecked( state );                            
@@ -1282,7 +1279,7 @@ auto MediaWindow::updateWriteProtection( Emulator::Interface::Media* media, bool
             if (enabled != block->header.writeprotect.enabled())               
                 block->header.writeprotect.setEnabled( enabled );                            
             
-            setting->setWriteProtect( state );
+            fSetting->setWriteProtect( state );
                                
             break;
         }
@@ -1310,7 +1307,7 @@ auto MediaWindow::updateJumper(Emulator::Interface::Media* media) -> void {
             if (state != jumperBox->checked()) {  
                 std::string saveIdent = block->media->name + "_jumper_" + jumper.name;
 
-                settings->set<bool>(this->ident(saveIdent), state);
+                settings->set<bool>( _underscore(saveIdent), state);
 
                 jumperBox->setChecked(state);
             }
@@ -1444,8 +1441,8 @@ auto MediaWindow::resetPreview( bool light ) -> void {
         for (auto block : layout->blocks) {
             
             if (block->header.fileName.overrideForegroundColor()) {
-                auto setting = FileSetting::getInstance( ident(block->media->name) );
-                block->header.fileName.setText( setting ? setting->file : "" );
+                auto fSetting = FileSetting::getInstance( emulator, _underscore(block->media->name) );
+                block->header.fileName.setText( fSetting ? fSetting->file : "" );
                 block->header.fileName.setFont( GUIKIT::Font::system() );
                 block->header.fileName.resetForegroundColor();                
             }            
@@ -1527,7 +1524,7 @@ auto MediaWindow::anyLoad( bool mIsAcquiredBefore ) -> void {
 			if (filePath.empty())
 				return false;
 
-			settings->set<std::string>(ident("anyload_path"), GUIKIT::File::getPath( filePath ) );
+			settings->set<std::string>("anyload_path", GUIKIT::File::getPath( filePath ) );
 
 			view->autoloadInit( {filePath}, false, View::AutoLoad::AutoStart, selection );
 			view->autoloadFiles();
@@ -1539,9 +1536,9 @@ auto MediaWindow::anyLoad( bool mIsAcquiredBefore ) -> void {
 			return true;
 		} );
 
-        applyPreviewFont( settings->get<unsigned>("dialog_software_preview_fontsize", 11, {6, 14}) );
-        fileDialogPtr->setContentViewWidth( settings->get<unsigned>("dialog_software_preview_width", 450, {200, 600}) );
-        fileDialogPtr->setContentViewHeight( settings->get<unsigned>("dialog_software_preview_height", 200, {100, 600}) );
+        applyPreviewFont( globalSettings->get<unsigned>("dialog_software_preview_fontsize", 11, {6, 14}) );
+        fileDialogPtr->setContentViewWidth( globalSettings->get<unsigned>("dialog_software_preview_width", 450, {200, 600}) );
+        fileDialogPtr->setContentViewHeight( globalSettings->get<unsigned>("dialog_software_preview_height", 200, {100, 600}) );
         
         fileDialogPtr->setContentViewBackground(mediaGroupLayouts[0]->listings.backgroundColor());
         fileDialogPtr->setContentViewForeground(mediaGroupLayouts[0]->listings.foregroundColor());
@@ -1550,7 +1547,7 @@ auto MediaWindow::anyLoad( bool mIsAcquiredBefore ) -> void {
 	
     fileDialogPtr->setTitle(trans->get("select image"));
 
-    fileDialogPtr->setPath( settings->get<std::string>( ident("anyload_path"), "") );
+    fileDialogPtr->setPath( settings->get<std::string>( "anyload_path", "") );
 
     fileDialogPtr->setFilters({trans->get("all_files")});
 
@@ -1559,7 +1556,7 @@ auto MediaWindow::anyLoad( bool mIsAcquiredBefore ) -> void {
         auto listings = this->previewFile(file);
         
         if (listings.size())
-            settings->set<std::string>(ident("anyload_path"), GUIKIT::File::getPath( file ) );
+            settings->set<std::string>("anyload_path", GUIKIT::File::getPath( file ) );
         
         return listings;
     } );
@@ -1568,7 +1565,7 @@ auto MediaWindow::anyLoad( bool mIsAcquiredBefore ) -> void {
         if (filePath.empty())
             return false;
 
-        settings->set<std::string>(ident("anyload_path"), GUIKIT::File::getPath( filePath ) );
+        settings->set<std::string>("anyload_path", GUIKIT::File::getPath( filePath ) );
         
         view->autoloadInit( {filePath}, false, View::AutoLoad::Open );
         view->autoloadFiles();
@@ -1581,7 +1578,7 @@ auto MediaWindow::anyLoad( bool mIsAcquiredBefore ) -> void {
     }, IDC_BUTTON );       
     
     fileDialogPtr->setCallbacks( [this, mIsAcquiredBefore](std::string filePath, unsigned selection) {
-        settings->set<std::string>(ident("anyload_path"), GUIKIT::File::getPath( filePath ) );
+        settings->set<std::string>("anyload_path", GUIKIT::File::getPath( filePath ) );
         
         view->autoloadInit( {filePath}, false, View::AutoLoad::AutoStart, selection );
         view->autoloadFiles();
@@ -1612,7 +1609,7 @@ auto MediaWindow::anyLoad( bool mIsAcquiredBefore ) -> void {
 	}        
     
     if ( !filePath.empty() ) {
-        settings->set<std::string>(ident("anyload_path"), GUIKIT::File::getPath( filePath ) );
+        settings->set<std::string>("anyload_path", GUIKIT::File::getPath( filePath ) );
 
         view->autoloadInit( {filePath}, false, View::AutoLoad::AutoStart, fileDialogPtr ? fileDialogPtr->getContentViewSelection() : 0 );
         view->autoloadFiles();
@@ -1651,7 +1648,7 @@ auto MediaWindow::convertListing( std::vector<Emulator::Interface::Listing>& emu
 
     std::vector<GUIKIT::BrowserWindow::Listing> list;
     
-    bool useTooltips = settings->get<bool>("software_preview_tooltips", true );
+    bool useTooltips = globalSettings->get<bool>("software_preview_tooltips", true );
     
     for (auto& listing : emuListings) {
 

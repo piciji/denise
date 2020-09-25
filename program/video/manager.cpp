@@ -40,6 +40,7 @@ auto VideoManager::updateWhenNotRunning() -> void {
 
 VideoManager::VideoManager(Emulator::Interface* emulator) : shader(this) {
     this->emulator = emulator;
+    this->settings = program->getSettings(emulator);
     this->palette = &emulator->palettes[0];        
     this->colorCount = this->palette->paletteColors.size();        
 
@@ -1164,11 +1165,11 @@ auto VideoManager::initFpsLimit() -> void {
 
     double fps = stat.fps;
 
-    if ( settings->get<bool>("video_override_exact", true) ) {
+    if ( globalSettings->get<bool>("video_override_exact", true) ) {
         if (stat.isPal())
-            fps = settings->get<double>("video_pal", 50.0,{25.0, 100.0});
+            fps = globalSettings->get<double>("video_pal", 50.0,{25.0, 100.0});
         else
-            fps = settings->get<double>("video_ntsc", 60.0,{30.0, 120.0});
+            fps = globalSettings->get<double>("video_ntsc", 60.0,{30.0, 120.0});
     }
 
     minimumCapTime = (1000000.0 / fps) + 0.5;

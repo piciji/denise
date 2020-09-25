@@ -27,7 +27,7 @@ auto Program::initAudio() -> void {
 }
 
 auto Program::getAudioDriver() -> std::string {
-	auto curDriver = settings->get<std::string>("audio_driver", "");
+	auto curDriver = globalSettings->get<std::string>("audio_driver", "");
 	auto drivers = DRIVER::Audio::available();
 	
 	for(auto& driver : drivers) {

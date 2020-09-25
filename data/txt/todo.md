@@ -28,7 +28,7 @@
 * color banding
 * support to put clipboard in C64 memory
 
-# to do Amiga A500, A1200
+# todo Amiga A500, A1200
 * 68000/68010 opcode tester
 * blitter
 * copper
@@ -59,7 +59,6 @@
 
 # todo improvements
 * fullscreen with custom refresh rate
-* separate setting file by emulation cores
 * auto start should reuse already opened instance (enable in UI)
 * autofire with frequency and option to fire without button press (don't forget override logic)
 * load PRG files from disk as simple RAM insertion for reduced loading times [quickload]

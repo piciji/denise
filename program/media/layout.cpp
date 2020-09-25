@@ -217,7 +217,7 @@ auto MediaGroupLayout::fillListing( std::vector<Emulator::Interface::Listing>& e
     for( auto listing : mediaWindow->convertListing( emuListings, false ) )
         listings.append({listing});									
 	
-    if (!settings->get<bool>("software_preview_tooltips", true ))
+    if (!globalSettings->get<bool>("software_preview_tooltips", true ))
         return;
         
 	unsigned i = 0;
@@ -233,7 +233,7 @@ auto MediaGroupLayout::fillListing( std::vector<GUIKIT::BrowserWindow::Listing>&
     for( auto listing : emuListings )        
         listings.append({listing.entry});  
 		
-    if (!settings->get<bool>("software_preview_tooltips", true ))
+    if (!globalSettings->get<bool>("software_preview_tooltips", true ))
         return;
         
 	unsigned i = 0;
@@ -277,7 +277,7 @@ auto MediaGroupLayout::build() -> void {
                 
                 std::string saveIdent = media.name + "_jumper_" + jumper.name;
                 
-                bool state = settings->get<bool>( mediaWindow->ident(saveIdent), false );
+                bool state = mediaWindow->settings->get<bool>( _underscore(saveIdent), false );
                 
                 jumperBox->setChecked( state );                                
             }
@@ -301,7 +301,7 @@ auto MediaGroupLayout::build() -> void {
 		listings.setHeaderVisible( false );
         listings.colorRowTooltips( true );
 
-        unsigned _fontSize = settings->get<unsigned>("software_preview_fontsize", 12, {6, 14});
+        unsigned _fontSize = globalSettings->get<unsigned>("software_preview_fontsize", 12, {6, 14});
         
         applyFont(_fontSize);
         

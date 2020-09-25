@@ -21,8 +21,8 @@ SwapperLayout::SwapperLayout( MediaWindow* mediaWindow ) {
 	
 	listView.onChange = [this]() {
 		auto pos = listView.selection();
-		auto setting = getSetting( pos );
-		controls.writeProtect.setChecked( setting->writeProtect );		
+		auto fSetting = getSetting( pos );
+		controls.writeProtect.setChecked( fSetting->writeProtect );		
 	};
 	
 	listView.onActivate = [this](){
@@ -69,17 +69,17 @@ SwapperLayout::SwapperLayout( MediaWindow* mediaWindow ) {
 			if(!listView.selected()) return;
 			auto pos = listView.selection();
 			
-			filePool->assign( this->mediaWindow->ident("swapper_" + std::to_string(pos)), file);
+			filePool->assign( _ident(emulator, "swapper_" + std::to_string(pos)), file);
 			
-			auto setting = getSetting( pos );
-			setting->setPath( file->getFile() );
-			setting->setFile( item->info.name );
-			setting->setId( item->id );
+			auto fSetting = getSetting( pos );
+			fSetting->setPath( file->getFile() );
+			fSetting->setFile( item->info.name );
+			fSetting->setId( item->id );
             listView.setText(pos, {std::to_string(pos), file->getFile(), item->info.name});
             
             bool forceWP = file->isArchived() || file->isReadOnly();
             
-			setting->setWriteProtect( forceWP );		
+			fSetting->setWriteProtect( forceWP );		
 			controls.writeProtect.setEnabled( !forceWP );
             controls.writeProtect.setChecked( forceWP );
 		};
@@ -89,11 +89,11 @@ SwapperLayout::SwapperLayout( MediaWindow* mediaWindow ) {
 	controls.ejectButton.onActivate = [this]() {
 		if(!listView.selected()) return;
 		auto pos = listView.selection();
-		filePool->assign( this->mediaWindow->ident("swapper_" + std::to_string(pos)), nullptr);
+		filePool->assign( _ident(emulator, "swapper_" + std::to_string(pos)), nullptr);
         filePool->unloadOrphaned();
 		
-		auto setting = getSetting( pos );
-		setting->init();
+		auto fSetting = getSetting( pos );
+		fSetting->init();
 		
 		listView.setText(pos, {std::to_string(pos), "", ""});
 		controls.writeProtect.setChecked();
@@ -103,15 +103,15 @@ SwapperLayout::SwapperLayout( MediaWindow* mediaWindow ) {
 	controls.writeProtect.onToggle = [&]() {
 		if(!listView.selected()) return;
 		auto pos = listView.selection();
-        auto setting = getSetting( pos );		
+        auto fSetting = getSetting( pos );		
 		bool state = controls.writeProtect.checked();
 
-        setting->setWriteProtect( state );        
+        fSetting->setWriteProtect( state );        
 	};
 	
 	for(unsigned i = 0; i < 15; i++) {
-		auto setting = getSetting( i );		
-		listView.append({std::to_string(i), setting->path, setting->file });
+		auto fSetting = getSetting( i );		
+		listView.append({std::to_string(i), fSetting->path, fSetting->file });
 	}
 }
 
@@ -123,21 +123,17 @@ auto SwapperLayout::translate() -> void {
 }
 
 auto SwapperLayout::getSetting( unsigned pos ) -> FileSetting* {
-	return FileSetting::getInstance( mediaWindow->ident("swapper_" + std::to_string( pos ) ) );
+	return FileSetting::getInstance( emulator, "swapper_" + std::to_string( pos ) );
 }
 
 auto SwapperLayout::preselectPath( ) -> std::string {
 	
-	auto baseFolderIdent = mediaWindow->ident( "disk_folder_swap" );
-
-	auto path = settings->get<std::string>( baseFolderIdent, "" );	
+	auto path = mediaWindow->settings->get<std::string>( "disk_folder_swap", "" );	
 	
 	return path;
 }
 
 auto SwapperLayout::savePath( std::string path ) -> void {
 	
-	auto baseFolderIdent = mediaWindow->ident( "disk_folder_swap" );
-	
-	settings->set<std::string>(baseFolderIdent, path);
+	mediaWindow->settings->set<std::string>("disk_folder_swap", path);
 }

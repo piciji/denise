@@ -22,7 +22,8 @@ DRIVER::Audio* audioDriver = new DRIVER::Audio;
 DRIVER::Video* videoDriver = new DRIVER::Video;
 std::vector<Emulator::Interface*> emulators;
 Emulator::Interface* activeEmulator = nullptr;
-GUIKIT::Settings* settings = nullptr;
+std::vector<GUIKIT::Settings*> settingsStorage;
+GUIKIT::Settings* globalSettings = nullptr;
 GUIKIT::Translation* trans = nullptr;
 FilePool* filePool = nullptr;
 Logger* logger = nullptr;
@@ -49,20 +50,20 @@ int main(int argc, char** argv) {
     return GUIKIT::Application::exitCode;
 }
 
-Program::Program() {	      
+Program::Program() {	    
     program = this;    
     GUIKIT::Application::loop = [this]() { loop(); };    
-    GUIKIT::Application::name = APP_NAME;        
+    GUIKIT::Application::name = APP_NAME;
+    globalSettings = new GUIKIT::Settings;
+    settingsStorage.push_back( globalSettings );
     view = new View;    
     configView = new ConfigView::TabWindow;
-    archiveViewer = new ArchiveViewer;
-    settings = new GUIKIT::Settings;
+    archiveViewer = new ArchiveViewer;    
     trans = new GUIKIT::Translation;
     logger = new Logger;
 	filePool = new FilePool(10);
 	status = new Status;
-    audioManager = new AudioManager;
-    
+    audioManager = new AudioManager;    
     
     addEmulators();
     init();	  
@@ -73,7 +74,7 @@ Program::Program() {
 	
 	for( auto mediaView : mediaViews )
         mediaView->build();
-	
+    
     for( auto emuConfigView : emuConfigViews )
         emuConfigView->build();
 
@@ -100,6 +101,12 @@ auto Program::addEmulators() -> void {
 	inputManagers.push_back( new InputManager( ) );
     
     for( auto emulator : emulators ) {
+        auto settings = new GUIKIT::Settings;
+
+        settings->setGuid(dynamic_cast<void*> (emulator));
+
+        settingsStorage.push_back( settings );
+        
         // inlcudes hotkeys + emulator keys
         inputManagers.push_back( new InputManager( emulator ) );
         
@@ -115,15 +122,15 @@ auto Program::addEmulators() -> void {
         
         if (dynamic_cast<LIBC64::Interface*>( emulator ))
             paletteManagers.push_back( new PaletteManager( emulator ) );
-    }    
+    }        
 }
 
 auto Program::init() -> void {
     
     if (!cmd->debug) {
-        settings->load(settingsFile());
+        loadSettings();
 
-        if (!loadTranslation(settings->get<std::string>("translation", getSystemLangFile()))) {
+        if (!loadTranslation(globalSettings->get<std::string>("translation", getSystemLangFile()))) {
             view->message->error("language plugin not found");
         }
     }
@@ -138,7 +145,7 @@ auto Program::init() -> void {
             emulator->connect( &connector, getDevice( emulator, &connector ) );       
 
 		for (auto& model : emulator->models)
-			emulator->setModel( model.id, settings->get<int>( ident(emulator, model.name), model.defaultValue, model.range) );				
+			emulator->setModel( model.id, getSettings(emulator)->get<int>( _underscore(model.name), model.defaultValue, model.range) );				
         
 		updateCrop( emulator );
         
@@ -160,25 +167,29 @@ auto Program::init() -> void {
 
 auto Program::setDriveSpeedAndWobble(Emulator::Interface* emulator) -> void {
 	
+    auto settings = getSettings( emulator );
+    
 	for(auto& mediaGroup : emulator->mediaGroups) {
 		if (mediaGroup.isDisk()) {
-			double wobble = settings->get<double>(ident(emulator, mediaGroup.name + "_wobble"), 0.5,{0.0, 5.0});
-			double speed = settings->get<double>(ident(emulator, mediaGroup.name + "_speed"), 300.0,{275.0, 325.0});
+			double wobble = settings->get<double>( _underscore(mediaGroup.name) + "_wobble", 0.5,{0.0, 5.0});
+			double speed = settings->get<double>(_underscore(mediaGroup.name) + "_speed", 300.0,{275.0, 325.0});
 			emulator->setDriveSpeed(&mediaGroup, speed, wobble);
 
 		} else if (mediaGroup.isTape()) {
-			bool tapeWobble = settings->get<bool>(ident(emulator, mediaGroup.name + "_wobble"), false);
+			bool tapeWobble = settings->get<bool>(_underscore(mediaGroup.name) + "_wobble", false);
 			emulator->setDriveSpeed(&mediaGroup, 0, tapeWobble);
 		}
 	}
 }
 
 auto Program::setAccuracy(Emulator::Interface* emulator) -> void {
-    emulator->videoCycleAccuracy( settings->get<bool>( ident(emulator, "video_cycle_accuracy"), true) );
-    emulator->videoScanlineThread( settings->get<bool>( ident(emulator, "video_scanline_thread"), false) );
-    emulator->diskHighLoadThread( settings->get<bool>( ident(emulator, "disk_highload_thread"), false) );
-    emulator->diskIdle( settings->get<bool>( ident(emulator, "disk_idle"), false) );
-    emulator->audioRealtimeThread( settings->get<bool>( ident(emulator, "audio_realtime_thread"), false) );
+    auto settings = getSettings( emulator );
+    
+    emulator->videoCycleAccuracy( settings->get<bool>( "video_cycle_accuracy", true) );
+    emulator->videoScanlineThread( settings->get<bool>( "video_scanline_thread", false) );
+    emulator->diskHighLoadThread( settings->get<bool>( "disk_highload_thread", false) );
+    emulator->diskIdle( settings->get<bool>( "disk_idle", false) );
+    emulator->audioRealtimeThread( settings->get<bool>( "audio_realtime_thread", false) );
 }
 
 auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {                  
@@ -187,17 +198,18 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
     powerOff();			
     
     activeEmulator = emulator;
+    auto settings = getSettings( emulator );
     activeVideoManager = VideoManager::getInstance( emulator );
 	uint8_t* data;
 	bool needTapeControl = false;   
     std::vector<std::string> brokenPaths;
     std::vector<std::string> missingFirmware;
 
-    emulator->setExpansion( settings->get<unsigned>(ident(emulator, "expansion"), 0) );
+    emulator->setExpansion( settings->get<unsigned>("expansion", 0) );
     
     // a loaded state before could change the values internally.
     for (auto& memoryType : emulator->memoryTypes) {
-        unsigned memoryId = settings->get<unsigned>(ident(emulator, memoryType.name + "_mem"), memoryType.defaultMemoryId);
+        unsigned memoryId = settings->get<unsigned>( _underscore(memoryType.name) + "_mem", memoryType.defaultMemoryId);
         emulator->setMemory(&memoryType, memoryId);
     }
         
@@ -212,7 +224,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
         auto selectedMedia = mediaGroup.selected;
         
         if(mediaGroup.isDrive()) {
-            unsigned counter = settings->get( ident(emulator, mediaGroup.name + "_count"), mediaGroup.defaultUsage());        
+            unsigned counter = settings->get( _underscore(mediaGroup.name) + "_count", mediaGroup.defaultUsage());        
             emulator->setDrivesConnected( &mediaGroup, counter );
             needTapeControl |= mediaGroup.isTape() && (counter > 0);
         }                
@@ -223,39 +235,39 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
                 // only one media element at a time can be used for this group
                 continue;
             
-            auto setting = FileSetting::getInstance( ident(emulator, media.name) );
+            auto fSetting = FileSetting::getInstance( emulator, _underscore( media.name ) );
 
             media.guid = uintptr_t(nullptr);
-            GUIKIT::File* file = filePool->get( setting->path );
+            GUIKIT::File* file = filePool->get( fSetting->path );
             if(!file)
                 continue;
 
-            if (!program->loadImageDataWhenOk( file, setting->id, &mediaGroup, data )) {	                
-                if ( regular && !GUIKIT::Vector::find( brokenPaths, setting->path ) )
-                    brokenPaths.push_back( setting->path );
+            if (!program->loadImageDataWhenOk( file, fSetting->id, &mediaGroup, data )) {	                
+                if ( regular && !GUIKIT::Vector::find( brokenPaths, fSetting->path ) )
+                    brokenPaths.push_back( fSetting->path );
                 
                 continue;
             }            
             media.guid = uintptr_t(file);
             
-            emulator->insertMedium(&media, data, file->archiveDataSize(setting->id));
-            emulator->writeProtect(&media, (file->isArchived() || file->isReadOnly()) ? true : setting->writeProtect);
-            MediaView::MediaWindow::getView( activeEmulator )->updateWriteProtection( &media, setting->writeProtect );
-            filePool->assign(ident(emulator, media.name + "store"), file);	           
+            emulator->insertMedium(&media, data, file->archiveDataSize(fSetting->id));
+            emulator->writeProtect(&media, (file->isArchived() || file->isReadOnly()) ? true : fSetting->writeProtect);
+            MediaView::MediaWindow::getView( activeEmulator )->updateWriteProtection( &media, fSetting->writeProtect );
+            filePool->assign( _ident(emulator, media.name + "store"), file);	           
 
-            States::getInstance( activeEmulator )->updateImage( setting, &media );
+            States::getInstance( activeEmulator )->updateImage( fSetting, &media );
 
-            filePool->assign(ident(emulator, media.name), file);
+            filePool->assign( _ident(emulator, media.name), file);
             
             if (mediaGroup.isExpansion()) {
                 for(auto& jumper : mediaGroup.expansion->jumpers) {
-                    bool state = settings->get<bool>( ident(emulator,  media.name + "_jumper_" + jumper.name), false );
+                    bool state = settings->get<bool>( _underscore(media.name + "_jumper_" + jumper.name), false );
                     emulator->setExpansionJumper( &media, jumper.id, state );
                 }                
             }   
             
             if (regular)
-                updateSaveIdent( &media, setting->file );
+                updateSaveIdent( &media, fSetting->file );
         }
     }
     
@@ -288,7 +300,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
     // srand spreads a new seed for better randomness
     srand( time( NULL ) );
     
-    settings->set("last_used_emu", activeEmulator->ident);
+    globalSettings->set("last_used_emu", activeEmulator->ident);
     
     activeVideoManager->initFpsLimit();
 }
@@ -314,11 +326,11 @@ auto Program::powerOff() -> void {
                 if (media.guid) {
                     auto file = (GUIKIT::File*)media.guid;
                     // medium was written by emulation, lets update the listing
-                    if (file->wasDataChanged() && filePool->has( ident(activeEmulator, media.name + "store"), file))                        
+                    if (file->wasDataChanged() && filePool->has( _ident(activeEmulator, media.name + "store"), file))                        
                         MediaView::MediaWindow::getView( activeEmulator )->updateListing( &media );
                 }                        
                 
-                filePool->assign( ident(activeEmulator, media.name), nullptr);
+                filePool->assign( _ident(activeEmulator, media.name), nullptr);
                 activeEmulator->ejectMedium( &media );
                 States::getInstance( activeEmulator )->updateImage( nullptr, &media );
             }				
@@ -380,7 +392,7 @@ auto Program::willPoll() -> bool {
 }
 
 auto Program::willRun() -> bool {
-	static auto pauseFocusLoss = settings->getOrInit("pause_focus_loss", false);
+	static auto pauseFocusLoss = globalSettings->getOrInit("pause_focus_loss", false);
 	
 	if (!isRunning || isPause) return false;
 	if (isFocused) return true;
@@ -394,7 +406,7 @@ auto Program::willRun() -> bool {
 auto Program::quit() -> void {
     powerOff();
 
-    if (!cmd->debug && settings->get<bool>("save_settings_on_exit", true) ) {
+    if (!cmd->debug && globalSettings->get<bool>("save_settings_on_exit", true) ) {
 		saveSettings();
     }
     
@@ -408,11 +420,14 @@ auto Program::quit() -> void {
     delete inputDriver;
     delete audioDriver;
     delete videoDriver;
-    delete trans;
-    delete settings;
+    delete trans;    
 	delete logger;
 	delete filePool;
     delete cmd;
+    
+    for(auto settings : settingsStorage)
+        delete settings;
+    
     // in case of exit request from emulation core
     status->update = false;
     GUIKIT::Application::loop = nullptr;
@@ -424,7 +439,7 @@ auto Program::loadTranslation(std::string file) -> bool {
 
     if (file != DEFAULT_TRANS_FILE) {
         if (trans->read( translationFolder() + DEFAULT_TRANS_FILE )) {
-            settings->set<std::string>("translation", DEFAULT_TRANS_FILE);
+            globalSettings->set<std::string>("translation", DEFAULT_TRANS_FILE);
             return true;
         }
     }
@@ -459,8 +474,9 @@ auto Program::fontFolder() -> std::string {
     return GUIKIT::System::getResourceFolder(appFolder()) + FONT_FOLDER;
 }
 
-auto Program::settingsFile() -> std::string {
-	return GUIKIT::System::getUserDataFolder(appFolder()) + SETTINGS_FILE;
+auto Program::settingsFile( std::string ident ) -> std::string {
+
+	return GUIKIT::System::getUserDataFolder(appFolder()) + ident + SETTINGS_FILE;
 } 
 
 auto Program::shaderFolder() -> std::string {
@@ -494,31 +510,6 @@ auto Program::appFolder() -> std::string {
 	return GUIKIT::String::toLowerCase( _appFolder );
 }
 
-auto Program::ident( Emulator::Interface* emulator, std::string name ) -> std::string {
-	std::string _ident = emulator->ident;
-    return GUIKIT::String::toLowerCase(_ident) + "_" + GUIKIT::String::replace(name, " ", "_");
-}
-
-auto Program::saveSettings() -> void {
-	
-	bool success = settings->save(settingsFile());
-	
-	if (!success)
-		view->message->warning(trans->get("cfg_not_save",{{"%path%", settingsFile()}}));
-
-}
-
-auto Program::rememberNotToSaveSettings() -> void {
-	GUIKIT::Settings tempSettings;
-	
-	if (!tempSettings.load( settingsFile() ))
-		return;
-	
-	tempSettings.set<bool>("save_settings_on_exit", false);
-	
-	tempSettings.save( settingsFile() );
-}
-
 auto Program::questionToWrite(Emulator::Interface::Media* media) -> bool {
     
     return view->questionToWrite(media);
@@ -526,7 +517,7 @@ auto Program::questionToWrite(Emulator::Interface::Media* media) -> bool {
 
 auto Program::getLastUsedEmu() -> Emulator::Interface* {
 	
-	auto ident = settings->get<std::string>("last_used_emu", "");
+	auto ident = globalSettings->get<std::string>("last_used_emu", "");
 	Emulator::Interface* defaultEmu = nullptr;
 
 	for (auto emulator : emulators) {

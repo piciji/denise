@@ -26,16 +26,16 @@ auto InputManager::init() -> void {
         
         manager->updateAnalogSensitivity();
         
-        std::string ident = manager->emulator->ident;
+        auto settings = program->getSettings( manager->emulator );
         
-        auto alreadyMapped = settings->get<bool>( ident + "_automapped", false);    
+        auto alreadyMapped = settings->get<bool>( "automapped", false);    
         
         if (alreadyMapped)
             continue;
         
         manager->autoAssign( assumeLayoutType(), false );	                    
         
-        settings->set<bool>( ident + "_automapped", true );
+        settings->set<bool>( "automapped", true );
     }           
         
     autoAssignHotkeys();
@@ -62,11 +62,13 @@ auto InputManager::setMappings() -> void {
     Emulator::Interface::Device::Input* alternateInput;
             
 	for (auto manager : inputManagers) {
-		if (manager->emulator) {			
+		if (manager->emulator) {		
+            auto settings = program->getSettings( manager->emulator );
+            
             for (auto& device : manager->emulator->devices) {  
                 for (auto& input : device.inputs) {
 
-                    std::string settingIdent = manager->emulator->ident + "_" + device.name + "_" + std::to_string(input.id);
+                    std::string settingIdent = device.name + "_" + std::to_string(input.id);
                     GUIKIT::String::toLowerCase(GUIKIT::String::delSpaces(settingIdent));
                     InputMapping* mapper = new InputMapping;
                     mapper->setting = settings->add( settingIdent );
@@ -88,7 +90,7 @@ auto InputManager::setMappings() -> void {
                     
                     manager->addMapping( mapper );
                     if (!mapper->isAnalog())
-                        mapper->generateAlternate();
+                        mapper->generateAlternate( settings );
                 }
             }
 			
@@ -96,7 +98,7 @@ auto InputManager::setMappings() -> void {
 			
 			for(auto& item : manager->customHotkeys) {
 				InputMapping* mapper = new InputMapping;
-				mapper->setting = settings->add( manager->emulator->ident + "_hotkey_" + std::to_string(item.id) );
+				mapper->setting = settings->add( "hotkey_" + std::to_string(item.id) );
 				mapper->state = 0;
 				mapper->type = InputMapping::Type::Switch;
 				mapper->anded = 1;
@@ -112,7 +114,7 @@ auto InputManager::setMappings() -> void {
 				} else
 					manager->addMapping( mapper );
 
-				mapper->generateAlternate();
+				mapper->generateAlternate( settings );
 			}
 		}
 	}
@@ -120,7 +122,7 @@ auto InputManager::setMappings() -> void {
 	for(auto& item : hotkeys) {
 		item.share = true; // always share global hotkeys
         InputMapping* mapper = new InputMapping;
-		mapper->setting = settings->add( "hotkey_" + std::to_string(item.id) );
+		mapper->setting = globalSettings->add( "hotkey_" + std::to_string(item.id) );
         mapper->state = 0;
         mapper->type = InputMapping::Type::Switch;
 		mapper->anded = 1;
@@ -133,7 +135,7 @@ auto InputManager::setMappings() -> void {
 		for (auto manager : inputManagers)
 			manager->addMapping( mapper ); //hotkeys are shared between all manager instances
         
-        mapper->generateAlternate();
+        mapper->generateAlternate( globalSettings );
     }
 }
 
@@ -525,9 +527,9 @@ auto InputManager::updateAnalogSensitivity(Emulator::Interface::Device* updateDe
     for (auto& device : emulator->devices) {
         
 		if (updateDevice && updateDevice != &device)
-			continue;
-		
-        auto sensePercent = settings->get<unsigned>(program->ident(emulator, "analog_sensitivity_" + device.name), 50u, { 0u, 100u});
+			continue;		        
+        
+        auto sensePercent = program->getSettings(emulator)->get<unsigned>( "analog_sensitivity_" + device.name, 50u, { 0u, 100u});
 
 		int sense = sensePercent;
 				

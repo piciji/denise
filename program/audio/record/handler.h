@@ -35,8 +35,6 @@ struct Handler {
     auto checkTime() -> void;
     
     auto finish() -> void;
-    
-    auto ident( std::string name ) -> std::string;
 };
 
 }

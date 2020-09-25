@@ -29,7 +29,7 @@ struct Status {
 		message = "";
 		messageSecondsLeft = 0;
 		fps = fpsCollect = 0;
-		showFps = settings->get<bool>("fps", false);      
+		showFps = globalSettings->get<bool>("fps", false);      
         record = false;
         driveStates.clear();
 	}   

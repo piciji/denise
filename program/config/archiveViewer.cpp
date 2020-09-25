@@ -11,10 +11,10 @@ auto ArchiveViewer::build() -> void {
     GUIKIT::Geometry defaultGeometry = {100, 100, 400, 350};
 
     GUIKIT::Geometry geometry = {
-        settings->get<int>("screen_archiveviewer_x", defaultGeometry.x)
-        ,settings->get<int>("screen_archiveviewer_y", defaultGeometry.y)
-        ,settings->get<unsigned>("screen_archiveviewer_width", defaultGeometry.width)
-        ,settings->get<unsigned>("screen_archiveviewer_height", defaultGeometry.height)
+        globalSettings->get<int>("screen_archiveviewer_x", defaultGeometry.x)
+        ,globalSettings->get<int>("screen_archiveviewer_y", defaultGeometry.y)
+        ,globalSettings->get<unsigned>("screen_archiveviewer_width", defaultGeometry.width)
+        ,globalSettings->get<unsigned>("screen_archiveviewer_height", defaultGeometry.height)
     };
 
     setGeometry(geometry);
@@ -52,15 +52,15 @@ auto ArchiveViewer::build() -> void {
     onMove = [&]() {
         if (fullScreen()) return;
         GUIKIT::Geometry geometry = this->geometry();
-        settings->set<int>("screen_archiveviewer_x", geometry.x);
-        settings->set<int>("screen_archiveviewer_y", geometry.y);
+        globalSettings->set<int>("screen_archiveviewer_x", geometry.x);
+        globalSettings->set<int>("screen_archiveviewer_y", geometry.y);
     };
 
     onSize = [&]() {
         if (fullScreen()) return;
         GUIKIT::Geometry geometry = this->geometry();
-        settings->set<unsigned>("screen_archiveviewer_width", geometry.width);
-        settings->set<unsigned>("screen_archiveviewer_height", geometry.height);
+        globalSettings->set<unsigned>("screen_archiveviewer_width", geometry.width);
+        globalSettings->set<unsigned>("screen_archiveviewer_height", geometry.height);
     };
 }
 

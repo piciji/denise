@@ -64,10 +64,10 @@ auto View::autoloadPostProcessing() -> void {
 
     auto mediaGroup = ddControl.mediaGroups[0];
     bool autoStart = true;
-    FileSetting* setting = nullptr;
+    FileSetting* fSetting = nullptr;
     
     if (ddControl.autoLoad == AutoLoad::DragnDrop) {
-        autoStart = settings->get<bool>("autostart_dragndrop", false);
+        autoStart = globalSettings->get<bool>("autostart_dragndrop", false);
         if (!autoStart) {
             if (mediaGroup->isExpansion() || mediaGroup->isProgram())
                 autoStart = true;
@@ -119,14 +119,14 @@ auto View::autoloadPostProcessing() -> void {
         
         if (mediaGroup->selected) {
             ddControl.emulator->selectListing(mediaGroup->selected, ddControl.selection);
-            setting = FileSetting::getInstance( program->ident( ddControl.emulator, mediaGroup->selected->name ) );
+            fSetting = FileSetting::getInstance( ddControl.emulator, _underscore(mediaGroup->selected->name) );
         } else {
             ddControl.emulator->selectListing(&mediaGroup->media[0], ddControl.selection);
-            setting = FileSetting::getInstance( program->ident( ddControl.emulator, mediaGroup->media[0].name ) );
+            fSetting = FileSetting::getInstance( ddControl.emulator, _underscore(mediaGroup->media[0].name) );
         }
         
-        if (setting)
-            emuConfigView->statesLayout->updateSaveIdent(setting->file);  
+        if (fSetting)
+            emuConfigView->statesLayout->updateSaveIdent(fSetting->file);  
         
         if (mediaGroup->isTape())
             updateTapeIcons(Emulator::Interface::TapeMode::Play);  

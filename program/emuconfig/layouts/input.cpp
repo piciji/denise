@@ -90,7 +90,7 @@ InputLayout::InputLayout(TabWindow* tabWindow) {
             
             InputManager::getManager( this->emulator )->updateMappingsInUse();
             
-            settings->set<unsigned>( this->tabWindow->ident(connectorPtr->name), device->id);
+            _settings->set<unsigned>( _underscore(connectorPtr->name), device->id);
             
             view->checkInputDevice( emulator, connectorPtr, device );
             
@@ -179,7 +179,7 @@ InputLayout::InputLayout(TabWindow* tabWindow) {
 		if (hotkeyMode())
 			return;
 		
-        settings->set<int>( emulator->ident + "_keyboard_layout", mapControl.keyLayout.userData() );
+        _settings->set<int>( "keyboard_layout", mapControl.keyLayout.userData() );
         
         update();        
     };
@@ -208,7 +208,7 @@ InputLayout::InputLayout(TabWindow* tabWindow) {
         
         mapControl.analogSensitivity.value.setText( std::to_string(position) + " " + mapControl.analogSensitivity.unit );    
     
-        settings->set<unsigned>(this->tabWindow->ident("analog_sensitivity_" + device.name), position);
+        _settings->set<unsigned>("analog_sensitivity_" + _underscore(device.name), position);
         
         InputManager::getManager( this->emulator )->updateAnalogSensitivity( &device );
     };    
@@ -277,7 +277,7 @@ auto InputLayout::loadInputList(unsigned deviceId) -> void {
     else 
         image = &keyboardImage;
     
-    auto layoutType = settings->get<int>( emulator->ident + "_keyboard_layout", InputManager::assumeLayoutType() );
+    auto layoutType = _settings->get<int>( "keyboard_layout", InputManager::assumeLayoutType() );
     
     for (auto& input : emulator->devices[deviceId].inputs) {
         
@@ -328,7 +328,7 @@ auto InputLayout::updateAnalogSensitivity() -> void {
     
     auto& device = emulator->devices[ deviceId() ];
     
-    auto position = settings->get<unsigned>(this->tabWindow->ident("analog_sensitivity_" + device.name), 50u, {0u, 100u});
+    auto position = _settings->get<unsigned>("analog_sensitivity_" + _underscore(device.name), 50u, {0u, 100u});
         
     mapControl.analogSensitivity.value.setText( std::to_string(position) + " " + mapControl.analogSensitivity.unit );
     
@@ -337,7 +337,7 @@ auto InputLayout::updateAnalogSensitivity() -> void {
 
 auto InputLayout::updateLayout() -> void {
     
-    auto layout = settings->get<int>( emulator->ident + "_keyboard_layout", InputManager::assumeLayoutType() );
+    auto layout = _settings->get<int>( "keyboard_layout", InputManager::assumeLayoutType() );
     
     for( unsigned row = 0; row < mapControl.keyLayout.rows(); row++ ) {
         

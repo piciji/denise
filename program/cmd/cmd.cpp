@@ -95,6 +95,7 @@ auto Cmd::parse() -> void {
     typedef Emulator::Interface EmuInt;
 	auto emuC64 = program->getEmulator("C64");
 	auto diskGroup = emuC64->getDiskMediaGroup();
+    GUIKIT::Settings* settingsC64 = program->getSettings( emuC64 );
 
     for( auto& arg : arguments ) {
         if (limitCyclesNext) {
@@ -123,7 +124,7 @@ auto Cmd::parse() -> void {
         
         if (screenshotPathNext) {
             screenshotPathNext = false;     	
-            settings->set<unsigned>( program->ident( emuC64, "crop_type"), (unsigned)EmuInt::CropType::Monitor );            
+            settingsC64->set<unsigned>( "crop_type", (unsigned)EmuInt::CropType::Monitor );            
             screenshotPath = arg; 
             continue;
         }
@@ -173,12 +174,12 @@ auto Cmd::parse() -> void {
             dynamic_cast<LIBC64::Interface*>(emuC64)->activateDebugCart();   
 			dynamic_cast<LIBC64::Interface*>(emuC64)->fastForward( (unsigned)EmuInt::FastForward::NoAudioOut );
             prepareDrives( emuC64 );
-			settings->set<bool>("audio_sync", false );
-			settings->set<bool>("video_sync", false );
-			settings->set<bool>("dynamic_rate_control", false );			
-            settings->set<bool>("fps", true );			
-            settings->set("video_screen_text", 2);
-            settings->set<bool>( program->ident( emuC64, "video_cycle_accuracy"), true );  
+			globalSettings->set<bool>("audio_sync", false );
+			globalSettings->set<bool>("video_sync", false );
+			globalSettings->set<bool>("dynamic_rate_control", false );			
+            globalSettings->set<bool>("fps", true );			
+            globalSettings->set("video_screen_text", 2);
+            settingsC64->set<bool>( "video_cycle_accuracy", true );  
 			updateModel( emuC64, LIBC64::Interface::ModelIdDisableGreyDotBug, 0 );
 			
 			if (!autostartPrgOverride)
@@ -256,7 +257,7 @@ auto Cmd::autoloadImages() -> void {
     
     view->autoloadFiles();
     
-    if (!debug && !noDriver && !noGui && settings->get<bool>("open_fullscreen", false)) {
+    if (!debug && !noDriver && !noGui && globalSettings->get<bool>("open_fullscreen", false)) {
         view->setFullScreen(true);
     }
 }
@@ -267,7 +268,9 @@ auto Cmd::updateModel( Emulator::Interface* emulator, unsigned ident, int value)
 
         if(model.id == ident) {
 
-            settings->set<int>( program->ident( emulator, model.name ), value );
+            auto settings = program->getSettings( emulator );
+            
+            settings->set<int>( _underscore( model.name ), value );
 
             return;
         }
@@ -276,13 +279,15 @@ auto Cmd::updateModel( Emulator::Interface* emulator, unsigned ident, int value)
 
 auto Cmd::prepareDrives( Emulator::Interface* emulator ) -> void {
     
+    auto settings = program->getSettings( emulator );
+    
     for(auto& mediaGroup : emulator->mediaGroups) {
         
         if (mediaGroup.isDisk())
-            settings->set<unsigned>( program->ident(emulator, mediaGroup.name + "_count"), 1);
+            settings->set<unsigned>( _underscore( mediaGroup.name + "_count"), 1);
 		
 		else if (mediaGroup.isTape())
-            settings->set<unsigned>( program->ident(emulator, mediaGroup.name + "_count"), 0);        
+            settings->set<unsigned>( _underscore( mediaGroup.name + "_count"), 0);        
     }
 }
 
@@ -359,16 +364,17 @@ auto Cmd::setReuSize(std::string arg) -> void {
         return;
     }
 
-    auto emulator = program->getEmulator("C64");    
+    auto emulator = program->getEmulator("C64");  
+    auto settings = program->getSettings( emulator );
     auto& expansion = emulator->expansions[ LIBC64::Interface::ExpansionIdReu ];
     auto memoryType = expansion.memoryType;
 
     for(auto& memory : memoryType->memory) {
         if (memory.size == reuSize) {
             
-            settings->set<unsigned>( program->ident(emulator, memoryType->name + "_mem"), memory.id);
+            settings->set<unsigned>( _underscore( memoryType->name ) + "_mem", memory.id);
             
-            settings->set<unsigned>( program->ident(emulator, "expansion"), expansion.id);
+            settings->set<unsigned>( "expansion", expansion.id);
         }
     }       
 }

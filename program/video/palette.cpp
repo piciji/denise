@@ -24,13 +24,13 @@ PaletteManager::PaletteManager(Emulator::Interface* emulator) {
 
 PaletteManager::~PaletteManager() {
     
-    if( !cmd->debug && settings->get<bool>( program->ident(emulator, "save_palettes_on_exit"), true ) )            
+    if( !cmd->debug && program->getSettings(emulator)->get<bool>( "save_palettes_on_exit", true ) )            
         save();
 }
 
 auto PaletteManager::getCurrentPalette() -> Emulator::Interface::Palette* {
     
-    auto usedPaletteId = settings->get<unsigned>( program->ident(emulator, "palette"), 0 );
+    auto usedPaletteId = program->getSettings(emulator)->get<unsigned>( "palette", 0 );
     Emulator::Interface::Palette* palette = find( usedPaletteId );
     
     if (!palette)

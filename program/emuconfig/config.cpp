@@ -32,6 +32,7 @@ namespace Fonts {
 }
 
 #define mes this->tabWindow->message
+#define _settings this->tabWindow->settings
 	
 #include "layouts/input.cpp"
 #include "layouts/system.cpp"
@@ -45,6 +46,7 @@ namespace Fonts {
 
 TabWindow::TabWindow(Emulator::Interface* emulator) {
     this->emulator = emulator;
+    this->settings = program->getSettings( emulator );
     message = new Message(this);
 }
 
@@ -55,10 +57,10 @@ auto TabWindow::build() -> void {
 	    
     GUIKIT::Geometry defaultGeometry = {100, 100, 850, 540};
     
-    GUIKIT::Geometry geometry = {settings->get<int>(ident("screen_settings_x"), defaultGeometry.x)
-        ,settings->get<int>(ident("screen_settings_y"), defaultGeometry.y)
-        ,settings->get<unsigned>(ident("screen_settings_width"), defaultGeometry.width)
-        ,settings->get<unsigned>(ident("screen_settings_height"), defaultGeometry.height)
+    GUIKIT::Geometry geometry = {settings->get<int>("screen_settings_x", defaultGeometry.x)
+        ,settings->get<int>("screen_settings_y", defaultGeometry.y)
+        ,settings->get<unsigned>("screen_settings_width", defaultGeometry.width)
+        ,settings->get<unsigned>("screen_settings_height", defaultGeometry.height)
     };
     
     setGeometry( geometry );
@@ -99,7 +101,6 @@ auto TabWindow::build() -> void {
     tab.appendHeader("", memoryImage);   
 	tab.appendHeader("", cropImage);
     tab.appendHeader("", nullptr);
-
                                             
     tab.setLayout(Layout::System, *systemLayout, {~0u, ~0u} );
 	tab.setLayout(Layout::Control, *inputLayout, {~0u, ~0u} );
@@ -127,15 +128,15 @@ auto TabWindow::build() -> void {
     onMove = [&]() {
         if (fullScreen()) return;
         GUIKIT::Geometry geometry = this->geometry();
-        settings->set<int>( ident("screen_settings_x"), geometry.x);
-        settings->set<int>( ident("screen_settings_y"), geometry.y);
+        settings->set<int>( "screen_settings_x", geometry.x);
+        settings->set<int>( "screen_settings_y", geometry.y);
     };
 
     onSize = [&]() {
         if (fullScreen()) return;
         GUIKIT::Geometry geometry = this->geometry();
-        settings->set<unsigned>( ident("screen_settings_width"), geometry.width);
-        settings->set<unsigned>( ident("screen_settings_height"), geometry.height);
+        settings->set<unsigned>( "screen_settings_width", geometry.width);
+        settings->set<unsigned>( "screen_settings_height", geometry.height);
     };
     
     onDrop = [&]( std::vector<std::string> files ) {
@@ -194,11 +195,6 @@ auto TabWindow::show(Layout layout) -> void {
 	setFocused();
 }
 
-auto TabWindow::ident( std::string name ) -> std::string {
-	std::string _ident = emulator->ident;
-    return GUIKIT::String::toLowerCase( _ident )+ "_" + GUIKIT::String::replace(name, " ", "_");
-}
-
 auto TabWindow::getView( Emulator::Interface* emulator ) -> TabWindow* {
 	
 	for (auto view : emuConfigViews) {
@@ -209,4 +205,3 @@ auto TabWindow::getView( Emulator::Interface* emulator ) -> TabWindow* {
 }
 
 }
-

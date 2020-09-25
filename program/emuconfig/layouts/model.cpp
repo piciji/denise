@@ -119,7 +119,7 @@ auto ModelLayout::setEvents( ) -> void {
 
                 block->checkBox.onToggle = [this, block, model]( ) {
 
-                    settings->set<bool>( this->tabWindow->ident( model->name ), block->checkBox.checked( ) );
+                    tabWindow->settings->set<bool>( _underscore(model->name), block->checkBox.checked( ) );
 
                     emulator->setModel( model->id, block->checkBox.checked( ) );
                                         
@@ -135,7 +135,7 @@ auto ModelLayout::setEvents( ) -> void {
 						if (model->isGraphicChip()) {
 							if (this->emulator == activeEmulator) {
 								if (!mes->question(trans->get("setting change need reset"))) {
-									unsigned oldValue = settings->get<int>( this->tabWindow->ident( model->name ), model->defaultValue, model->range );
+									unsigned oldValue = tabWindow->settings->get<int>( _underscore(model->name), model->defaultValue, model->range );
 									
 									if (oldValue < block->options.size())
 										block->options[oldValue]->setChecked( );		
@@ -145,7 +145,7 @@ auto ModelLayout::setEvents( ) -> void {
 							}  
 						}
 						
-						settings->set<unsigned>(this->tabWindow->ident(model->name), val);
+						tabWindow->settings->set<unsigned>(_underscore(model->name), val);
 						
 						emulator->setModel( model->id, val );
 						
@@ -161,7 +161,7 @@ auto ModelLayout::setEvents( ) -> void {
 					if (model->isGraphicChip()) {
 						if (this->emulator == activeEmulator) {
 							if (!mes->question(trans->get("setting change need reset"))) {
-								unsigned oldValue = settings->get<int>( this->tabWindow->ident( model->name ), model->defaultValue, model->range );
+								unsigned oldValue = tabWindow->settings->get<int>( _underscore(model->name), model->defaultValue, model->range );
 
 								if (oldValue < block->combo.rows())
 									block->combo.setSelection(oldValue);
@@ -173,7 +173,7 @@ auto ModelLayout::setEvents( ) -> void {
 
 					int val = block->combo.userData();
 					
-					settings->set<unsigned>(this->tabWindow->ident(model->name), val);
+					tabWindow->settings->set<unsigned>( _underscore(model->name), val);
 
 					emulator->setModel( model->id, val );
                     
@@ -196,7 +196,7 @@ auto ModelLayout::setEvents( ) -> void {
                     
                     int val = pos * stepSize + _min;
                     
-                    settings->set<int>( this->tabWindow->ident( model->name ), val );
+                    tabWindow->settings->set<int>( _underscore(model->name), val );
                     
                     block->slider.value.setText( std::to_string(val) );
                     
@@ -225,7 +225,7 @@ auto ModelLayout::setEvents( ) -> void {
                     if (val > range[1])
                         val = range[1];
 
-                    settings->set<int>( this->tabWindow->ident( model->name ), val );
+                    tabWindow->settings->set<int>( _underscore(model->name), val );
 
                     emulator->setModel( model->id, val );
                     
@@ -269,13 +269,13 @@ auto ModelLayout::updateWidget( Line::Block* block ) -> void {
         return;
 	
 	if (model->isSwitch() ) {
-		block->checkBox.setChecked( settings->get<bool>( tabWindow->ident( model->name ), model->defaultValue ) );
+		block->checkBox.setChecked( tabWindow->settings->get<bool>( _underscore(model->name), model->defaultValue ) );
 		return;
 	}
     
     if (model->isSlider() ) {	
         
-        auto val = settings->get<int>( tabWindow->ident( model->name ), model->defaultValue, model->range );
+        auto val = tabWindow->settings->get<int>( _underscore(model->name), model->defaultValue, model->range );
 
         int _min = model->range[0];
 
@@ -295,7 +295,7 @@ auto ModelLayout::updateWidget( Line::Block* block ) -> void {
     }
 		
 	if (model->isRadio() ) {
-		auto usedVal = settings->get<int>( tabWindow->ident( model->name ), model->defaultValue, model->range );
+		auto usedVal = tabWindow->settings->get<int>( _underscore(model->name), model->defaultValue, model->range );
 		
 		unsigned val = 0;
 		for(auto option : block->options) {
@@ -309,12 +309,12 @@ auto ModelLayout::updateWidget( Line::Block* block ) -> void {
 	}
 	
 	if (model->isCombo() ) {
-		auto usedVal = settings->get<int>( tabWindow->ident( model->name ), model->defaultValue, model->range );
+		auto usedVal = tabWindow->settings->get<int>( _underscore(model->name), model->defaultValue, model->range );
 		block->combo.setSelection( usedVal );		
 		return;
 	}
 	
-	auto _val = settings->get<int>( tabWindow->ident( model->name ), model->defaultValue, model->range );
+	auto _val = tabWindow->settings->get<int>( _underscore(model->name), model->defaultValue, model->range );
 
 	if ( model->isHex() )                 
 		block->lineEdit.setText( GUIKIT::String::convertIntToHex( _val ) );
@@ -385,7 +385,7 @@ auto ModelLayout::stepRange(unsigned id, int step) -> int {
             auto model = block->model;
             
             if (model->id == id) {
-                auto newValue = settings->get<int>( tabWindow->ident( model->name ), model->defaultValue, model->range );                                                
+                auto newValue = tabWindow->settings->get<int>( _underscore(model->name), model->defaultValue, model->range );                                                
                 newValue += step;
 
                 int _min = model->range[0];

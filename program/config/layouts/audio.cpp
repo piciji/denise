@@ -169,14 +169,14 @@ volume("%", false, true) {
     if (control.driverLayout.combo.rows() == 1) control.driverLayout.setEnabled(false);
 	
 	control.driverLayout.combo.onChange = [this]() {
-		settings->set<std::string>("audio_driver", control.driverLayout.combo.text() );
+		globalSettings->set<std::string>("audio_driver", control.driverLayout.combo.text() );
         if (activeEmulator)
             EmuConfigView::TabWindow::getView(activeEmulator)->miscLayout->stopRecord();        
 		program->initAudio();
 	};
 	    	
     control.frequencyCombo.onChange = [this]() {
-        settings->set<unsigned>("audio_frequency_v2", control.frequencyCombo.userData());
+        globalSettings->set<unsigned>("audio_frequency_v2", control.frequencyCombo.userData());
         if (activeEmulator)
             EmuConfigView::TabWindow::getView(activeEmulator)->miscLayout->stopRecord();        
         audioManager->setFrequency();
@@ -187,7 +187,7 @@ volume("%", false, true) {
         auto value = latency.slider.position();
         auto minimumLatency = audioDriver->getMinimumLatency();
         
-        settings->set<unsigned>("audio_latency", value + minimumLatency);
+        globalSettings->set<unsigned>("audio_latency", value + minimumLatency);
         updateLatencySlider();
         if (activeEmulator)
             EmuConfigView::TabWindow::getView(activeEmulator)->miscLayout->stopRecord();
@@ -196,38 +196,38 @@ volume("%", false, true) {
     
     volume.slider.onChange = [this]() {
         auto value = volume.slider.position();
-        settings->set<unsigned>("audio_volume", value);
+        globalSettings->set<unsigned>("audio_volume", value);
         volume.value.setText( std::to_string( value ) + " %" );
         audioManager->setVolume();
     };
     
     volume.defaultButton.onActivate = [this]() {
-        settings->set<unsigned>("audio_volume", 100);
+        globalSettings->set<unsigned>("audio_volume", 100);
         volume.value.setText( std::to_string( 100 ) + " %" );
         volume.slider.setPosition( 100 );
         audioManager->setVolume();
     };    
     
     control.maxRateEdit.onChange = [this]() {
-        settings->set<std::string>("rate_control_delta", control.maxRateEdit.text() );
+        globalSettings->set<std::string>("rate_control_delta", control.maxRateEdit.text() );
         audioManager->setRateControl();
     };
     
-    control.maxRateEdit.setText( GUIKIT::String::formatFloatingPoint( settings->get<double>("rate_control_delta", 0.005, {0.0, 0.010}) ) );
+    control.maxRateEdit.setText( GUIKIT::String::formatFloatingPoint( globalSettings->get<double>("rate_control_delta", 0.005, {0.0, 0.010}) ) );
        
     control.priorityCheckbox.onToggle = [this]() {
         bool state = control.priorityCheckbox.checked();        
-        settings->set<bool>("audio_priority", state);
+        globalSettings->set<bool>("audio_priority", state);
         audioDriver->setHighPriority( state );
     };
     
-    control.priorityCheckbox.setChecked( settings->get<bool>("audio_priority", false) );
+    control.priorityCheckbox.setChecked( globalSettings->get<bool>("audio_priority", false) );
     
-    auto valVolume = settings->get<unsigned>("audio_volume", 100u, {0u, 100u});
+    auto valVolume = globalSettings->get<unsigned>("audio_volume", 100u, {0u, 100u});
     volume.value.setText(std::to_string( valVolume ) + " %" );
     volume.slider.setPosition( valVolume );
         
-    auto valFre = settings->get<unsigned>("audio_frequency_v2", 48000);
+    auto valFre = globalSettings->get<unsigned>("audio_frequency_v2", 48000);
     for(unsigned i = 0; i < control.frequencyCombo.rows(); i++) {
         if(control.frequencyCombo.userData(i) == valFre) {
             control.frequencyCombo.setSelection(i);
@@ -237,7 +237,7 @@ volume("%", false, true) {
     
     bass.top.active.onToggle = [this]() {
         
-        settings->set<bool>("audio_bass", bass.top.active.checked() );
+        globalSettings->set<bool>("audio_bass", bass.top.active.checked() );
         
         audioManager->setAudioDsp();
     };
@@ -246,7 +246,7 @@ volume("%", false, true) {
         
         unsigned val = bass.top.frequency.slider.position() + 20;
         
-        settings->set<unsigned>("audio_bass_freq", val );
+        globalSettings->set<unsigned>("audio_bass_freq", val );
         
         bass.top.frequency.value.setText( std::to_string(val) + " Hz" );
         
@@ -257,7 +257,7 @@ volume("%", false, true) {
         
         unsigned val = bass.bottom.gain.slider.position();
         
-        settings->set<unsigned>("audio_bass_gain", val );
+        globalSettings->set<unsigned>("audio_bass_gain", val );
         
         bass.bottom.gain.value.setText( std::to_string(val) );
         
@@ -268,36 +268,36 @@ volume("%", false, true) {
         
         float val = (float)bass.bottom.reduceClipping.slider.position() / 10.0;
         
-        settings->set<float>("audio_bass_clipping", val);
+        globalSettings->set<float>("audio_bass_clipping", val);
         
         bass.bottom.reduceClipping.value.setText( GUIKIT::String::convertDoubleToString( val, 1) );
         
         audioManager->setAudioDsp();
     };
     
-    bass.top.active.setChecked( settings->get<bool>("audio_bass", false ) );
+    bass.top.active.setChecked( globalSettings->get<bool>("audio_bass", false ) );
     
-    auto bassFreq = settings->get<unsigned>("audio_bass_freq", 200, {20, 200} );
+    auto bassFreq = globalSettings->get<unsigned>("audio_bass_freq", 200, {20, 200} );
     bass.top.frequency.slider.setPosition( bassFreq - 20 );
     bass.top.frequency.value.setText( std::to_string(bassFreq) + " Hz" );
     
-    auto bassGain = settings->get<unsigned>("audio_bass_gain", 10, {0, 40} );
+    auto bassGain = globalSettings->get<unsigned>("audio_bass_gain", 10, {0, 40} );
     bass.bottom.gain.slider.setPosition( bassGain );
     bass.bottom.gain.value.setText( std::to_string(bassGain) );
     
-    auto bassReduceClipping = settings->get<float>("audio_bass_clipping", 0.4, {0.0, 1.0} );
+    auto bassReduceClipping = globalSettings->get<float>("audio_bass_clipping", 0.4, {0.0, 1.0} );
     bass.bottom.reduceClipping.slider.setPosition( (unsigned)(bassReduceClipping * 10.0) );
     bass.bottom.reduceClipping.value.setText( GUIKIT::String::convertDoubleToString( bassReduceClipping, 1) );
     
     // reverb
     reverb.top.active.onToggle = [this]() {
         
-        settings->set<bool>("audio_reverb", reverb.top.active.checked() );
+        globalSettings->set<bool>("audio_reverb", reverb.top.active.checked() );
         
         audioManager->setAudioDsp();
     };   
     
-    reverb.top.active.setChecked( settings->get<bool>("audio_reverb", false ) );
+    reverb.top.active.setChecked( globalSettings->get<bool>("audio_reverb", false ) );
     
     build100PercentSetting( &reverb.top.dryTime, "audio_reverb_drytime", 0.43 );
     build100PercentSetting( &reverb.top.wetTime, "audio_reverb_wettime", 0.4 );
@@ -308,12 +308,12 @@ volume("%", false, true) {
     // panning
     panning.top.active.onToggle = [this]() {
         
-        settings->set<bool>("audio_panning", panning.top.active.checked() );
+        globalSettings->set<bool>("audio_panning", panning.top.active.checked() );
         
         audioManager->setAudioDsp();
     };  
     
-    panning.top.active.setChecked( settings->get<bool>("audio_panning", false ) );
+    panning.top.active.setChecked( globalSettings->get<bool>("audio_panning", false ) );
     
     build100PercentSetting( &panning.top.leftMix, "audio_panning_left0", 1.0 );
     build100PercentSetting( &panning.top.rightMix, "audio_panning_left1", 0.0 );
@@ -327,25 +327,25 @@ auto AudioLayout::build100PercentSetting(SliderLayout* sliderLayout, std::string
 
         float val = (float)sliderLayout->slider.position() / 100.0;
 
-        settings->set<float>(ident, val);
+        globalSettings->set<float>(ident, val);
 
         sliderLayout->value.setText( GUIKIT::String::convertDoubleToString(val, 2) );
 
         audioManager->setAudioDsp();
     };
     
-    auto val = settings->get<float>(ident, defaultVal, {0.0, 1.0});
+    auto val = globalSettings->get<float>(ident, defaultVal, {0.0, 1.0});
     sliderLayout->slider.setPosition((unsigned) (val * 100.0));
     sliderLayout->value.setText(GUIKIT::String::convertDoubleToString(val, 2));
 }
 
 auto AudioLayout::updateLatencySlider() -> void {
     
-    auto valLatency = settings->get<unsigned>("audio_latency", 64u, {1u, 120u});
+    auto valLatency = globalSettings->get<unsigned>("audio_latency", 64u, {1u, 120u});
     auto minimumLatency = audioDriver->getMinimumLatency();
     auto maximumLatency = 120;
     valLatency = std::max( valLatency, minimumLatency );
-    settings->set<unsigned>("audio_latency", valLatency);
+    globalSettings->set<unsigned>("audio_latency", valLatency);
     
     latency.slider.setLength( maximumLatency - minimumLatency + 1 );    
     latency.value.setText(std::to_string( valLatency ) + " ms");

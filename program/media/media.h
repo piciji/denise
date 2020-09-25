@@ -158,6 +158,7 @@ struct HdCreatorLayout : GUIKIT::FramedVerticalLayout {
 struct MediaWindow : public GUIKIT::Window {
     
     Emulator::Interface* emulator;
+    GUIKIT::Settings* settings;
     bool useCustomFont = false;
 	Message* message;
     GUIKIT::Setting* alternateFileDialog = nullptr;
@@ -207,11 +208,10 @@ struct MediaWindow : public GUIKIT::Window {
     auto build() -> void;	
     auto show(bool diskSwapper = false) -> void;
 	auto showDelayed(bool diskSwapper = false) -> void;
-    auto ident( std::string name ) -> std::string;
 	static auto getView( Emulator::Interface* emulator ) -> MediaWindow*;
 	
 	auto translate() -> void;
-    auto updateMediaBlock(MediaGroupLayout::Block* block, FileSetting* setting) -> void;
+    auto updateMediaBlock(MediaGroupLayout::Block* block, FileSetting* fSetting) -> void;
     auto updateVisibility( Emulator::Interface::MediaGroup* mediaGroup, unsigned count ) -> void;
     auto bindSelectorAction( MediaGroupLayout* layout ) -> void;
     auto prepareCreator() -> void;

@@ -186,7 +186,7 @@ PaletteLayout::PaletteLayout(TabWindow* tabWindow) {
         
         auto& palette = getSelectedPalette();
         
-        settings->set<unsigned>( this->tabWindow->ident("palette"), palette.id );
+        _settings->set<unsigned>( "palette", palette.id );
         
         program->setPalette( this->emulator ); 				
         
@@ -226,7 +226,7 @@ PaletteLayout::PaletteLayout(TabWindow* tabWindow) {
         
         auto& palette = paletteManager->add( getSelectedPalette() );
         
-        settings->set<unsigned>( this->tabWindow->ident("palette"), palette.id );
+        _settings->set<unsigned>( "palette", palette.id );
         
         updateList();
         
@@ -249,7 +249,7 @@ PaletteLayout::PaletteLayout(TabWindow* tabWindow) {
         
         auto& _palette = emulator->palettes[0];
         
-        settings->set<unsigned>( this->tabWindow->ident("palette"), _palette.id );
+        _settings->set<unsigned>( "palette", _palette.id );
         
         updateList();
         
@@ -270,7 +270,7 @@ PaletteLayout::PaletteLayout(TabWindow* tabWindow) {
     
     saveLayout.onExit.onToggle = [this]() {
         
-        settings->set<bool>( this->tabWindow->ident("save_palettes_on_exit"), saveLayout.onExit.checked(), false );
+        _settings->set<bool>( "save_palettes_on_exit", saveLayout.onExit.checked(), false );
     };
 }
 
@@ -332,7 +332,7 @@ auto PaletteLayout::getSelectedPalette() -> Emulator::Interface::Palette& {
 
 auto PaletteLayout::updateList() -> void {
     
-    auto usedPaletteId = settings->get<unsigned>( tabWindow->ident("palette"), 0 );
+    auto usedPaletteId = _settings->get<unsigned>( "palette", 0 );
     
     listView.reset();
     

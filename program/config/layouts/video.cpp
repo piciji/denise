@@ -85,9 +85,9 @@ VideoLayout::VideoLayout() {
 	}
 	
 	driverLayout.combo.onChange = [this]() {
-		settings->set<std::string>("video_driver", driverLayout.combo.text() );
+		globalSettings->set<std::string>("video_driver", driverLayout.combo.text() );
         
-		settings->set("exclusive_fullscreen", false);
+		globalSettings->set("exclusive_fullscreen", false);
 		videoSettingsLayout.exclusiveFullscreen.setEnabled(false);
 		videoSettingsLayout.exclusiveFullscreen.setChecked(false);
         videoSettingsLayout.hardSync.setEnabled(false);
@@ -102,7 +102,7 @@ VideoLayout::VideoLayout() {
         }
 
         for (auto emulator : emulators) {
-            settings->set<std::string>(program->ident(emulator, "shader"), "");
+            program->getSettings(emulator)->set<std::string>( "shader", "");
             auto vManager = VideoManager::getInstance(emulator);
             vManager->shader.loadExternal();
 		}
@@ -125,14 +125,14 @@ VideoLayout::VideoLayout() {
 
         if (selectedDriver == "Direct3D") {
             videoSettingsLayout.exclusiveFullscreen.setEnabled();
-            videoSettingsLayout.exclusiveFullscreen.setChecked(settings->get("exclusive_fullscreen", false));
+            videoSettingsLayout.exclusiveFullscreen.setChecked(globalSettings->get("exclusive_fullscreen", false));
         }
     } else
         videoSettingsLayout.remove( videoSettingsLayout.exclusiveFullscreen );
     
     if( showHardSync ) {        
         videoSettingsLayout.hardSync.setEnabled(false);
-        videoSettingsLayout.hardSync.setChecked(settings->get("gl_hardsync", false));
+        videoSettingsLayout.hardSync.setChecked(globalSettings->get("gl_hardsync", false));
         
         if(GUIKIT::String::foundSubStr(selectedDriver, "GL")) {
             videoSettingsLayout.hardSync.setEnabled();            
@@ -141,12 +141,12 @@ VideoLayout::VideoLayout() {
         videoSettingsLayout.remove( videoSettingsLayout.hardSync );
 	
 	videoSettingsLayout.exclusiveFullscreen.onToggle = [this]() {
-		settings->set("exclusive_fullscreen", videoSettingsLayout.exclusiveFullscreen.checked());
+		globalSettings->set("exclusive_fullscreen", videoSettingsLayout.exclusiveFullscreen.checked());
 		program->hintExclusiveFullscreen();
 	};
     
     videoSettingsLayout.hardSync.onToggle = [this]() {
-		settings->set("gl_hardsync", videoSettingsLayout.hardSync.checked());
+		globalSettings->set("gl_hardsync", videoSettingsLayout.hardSync.checked());
 		videoDriver->hardSync( videoSettingsLayout.hardSync.checked() );
 	};
     
@@ -159,7 +159,7 @@ VideoLayout::VideoLayout() {
         .directory();
 
         if(!path.empty()) {
-            settings->set<std::string>( savekey, path);
+            globalSettings->set<std::string>( savekey, path);
             block->edit.setText( path );
 			return true;
         }
@@ -169,7 +169,7 @@ VideoLayout::VideoLayout() {
 	paths.shader.select.onActivate = [&, selectPath]() {
 		if (selectPath(&paths.shader, "select_shader_folder", "shader_folder")) {
             for (auto emulator : emulators) {
-                settings->set<std::string>( program->ident(emulator, "shader"), "");
+                program->getSettings(emulator)->set<std::string>( "shader", "");
                 auto vManager = VideoManager::getInstance(emulator);
                 vManager->shader.loadExternal();
 			}
@@ -182,11 +182,11 @@ VideoLayout::VideoLayout() {
 	};
 	
 	paths.shader.empty.onActivate = [&]() {
-        settings->set<std::string>("shader_folder", "");
+        globalSettings->set<std::string>("shader_folder", "");
         paths.shader.edit.setText( "" );
         
         for (auto emulator : emulators) {
-            settings->set<std::string>(program->ident(emulator, "shader"), "");
+            program->getSettings(emulator)->set<std::string>("shader", "");
             auto vManager = VideoManager::getInstance(emulator);
             vManager->shader.loadExternal();
 		}
@@ -197,7 +197,7 @@ VideoLayout::VideoLayout() {
 			activeVideoManager->shader.sendToDriver();	
     };
 
-	paths.shader.edit.setText( settings->get<std::string>("shader_folder", "") );
+	paths.shader.edit.setText( globalSettings->get<std::string>("shader_folder", "") );
     
 	hLayout.append(videoGeometry, {~0u, 0u}, 20);
     hLayout.append(screenTextLayout, {~0u, 0u}, 20);
@@ -205,79 +205,79 @@ VideoLayout::VideoLayout() {
     append(hLayout, {~0u, 0u});
         
     screenTextLayout.option1.onActivate = [this]() {
-        settings->set("video_screen_text", 0);
+        globalSettings->set("video_screen_text", 0);
         view->setStatusText("");
     };
     
     screenTextLayout.option2.onActivate = [this]() {
-        settings->set("video_screen_text", 1);
+        globalSettings->set("video_screen_text", 1);
         view->setStatusText("");
     };
     
     screenTextLayout.option3.onActivate = [this]() {
-        settings->set("video_screen_text", 2);
+        globalSettings->set("video_screen_text", 2);
         view->setStatusText("");
     };
     
-    if(settings->get("video_screen_text", 0) == 0) screenTextLayout.option1.setChecked();
-    if(settings->get("video_screen_text", 0) == 1) screenTextLayout.option2.setChecked();
-    if(settings->get("video_screen_text", 0) == 2) screenTextLayout.option3.setChecked();
+    if(globalSettings->get("video_screen_text", 0) == 0) screenTextLayout.option1.setChecked();
+    if(globalSettings->get("video_screen_text", 0) == 1) screenTextLayout.option2.setChecked();
+    if(globalSettings->get("video_screen_text", 0) == 2) screenTextLayout.option3.setChecked();
     
     videoFrameAdjust.overrideExactFrequency.onToggle = [this]() {        
-        settings->set<bool>("video_override_exact", videoFrameAdjust.overrideExactFrequency.checked()); 
+        globalSettings->set<bool>("video_override_exact", videoFrameAdjust.overrideExactFrequency.checked()); 
         audioManager->setResampler();
         if (activeVideoManager)
             activeVideoManager->initFpsLimit();
         updateFrequencyLayout();
     };
     
-    if ( settings->get<bool>("video_override_exact", true) )
+    if ( globalSettings->get<bool>("video_override_exact", true) )
         videoFrameAdjust.overrideExactFrequency.setChecked();
     
     videoFrameAdjust.palFrequency.onChange = [this]() {
-         settings->set<std::string>("video_pal", videoFrameAdjust.palFrequency.text() );
+         globalSettings->set<std::string>("video_pal", videoFrameAdjust.palFrequency.text() );
          audioManager->setResampler();
          if (activeVideoManager)
             activeVideoManager->initFpsLimit();
     };
     
     videoFrameAdjust.ntscFrequency.onChange = [this]() {
-        settings->set<std::string>("video_ntsc", videoFrameAdjust.ntscFrequency.text() );
+        globalSettings->set<std::string>("video_ntsc", videoFrameAdjust.ntscFrequency.text() );
         audioManager->setResampler();
         if (activeVideoManager)
             activeVideoManager->initFpsLimit();
     };    
             
-    videoFrameAdjust.palFrequency.setText( GUIKIT::String::formatFloatingPoint( settings->get<double>("video_pal", 50.0, {25.0, 100.0}) ) );
-    videoFrameAdjust.ntscFrequency.setText( GUIKIT::String::formatFloatingPoint( settings->get<double>("video_ntsc", 60.0, {30.0, 120.0}) ) );
+    videoFrameAdjust.palFrequency.setText( GUIKIT::String::formatFloatingPoint( globalSettings->get<double>("video_pal", 50.0, {25.0, 100.0}) ) );
+    videoFrameAdjust.ntscFrequency.setText( GUIKIT::String::formatFloatingPoint( globalSettings->get<double>("video_ntsc", 60.0, {30.0, 120.0}) ) );
 		
-    videoGeometry.aspectCorrect.setChecked( settings->get<bool>("aspect_correct", true) );
+    videoGeometry.aspectCorrect.setChecked( globalSettings->get<bool>("aspect_correct", true) );
     videoGeometry.aspectCorrect.onToggle = [&]() {
 		bool state = videoGeometry.aspectCorrect.checked();		
-        settings->set<bool>("aspect_correct", state);
+        globalSettings->set<bool>("aspect_correct", state);
 		VideoManager::setAspectCorrect( state );
         view->updateViewport();
     };
 	
-	videoGeometry.integerScaling.setChecked( settings->get<bool>("integer_scaling", false) );
+	videoGeometry.integerScaling.setChecked( globalSettings->get<bool>("integer_scaling", false) );
     videoGeometry.integerScaling.onToggle = [&]() {
 		bool state = videoGeometry.integerScaling.checked();		
-        settings->set<bool>("integer_scaling", state);
+        globalSettings->set<bool>("integer_scaling", state);
 		VideoManager::setIntegerScaling( state );
         view->updateViewport();
     };
 	
-	crtEmulation.threadMode.setChecked( settings->get<bool>("crt_threaded", true) );
+	crtEmulation.threadMode.setChecked( globalSettings->get<bool>("crt_threaded", true) );
 	crtEmulation.threadMode.onToggle = [this]() {
 		bool state = crtEmulation.threadMode.checked();		
-        settings->set<bool>("crt_threaded", state);
+        globalSettings->set<bool>("crt_threaded", state);
         VideoManager::setThreaded( state );
     };
     
-	crtEmulation.shaderInputPrecision.setChecked( settings->get<bool>("crt_shader_input_precision", false) );
+	crtEmulation.shaderInputPrecision.setChecked( globalSettings->get<bool>("crt_shader_input_precision", false) );
     crtEmulation.shaderInputPrecision.onToggle = [this]() {
 		bool state = crtEmulation.shaderInputPrecision.checked();		
-        settings->set<bool>("crt_shader_input_precision", state);
+        globalSettings->set<bool>("crt_shader_input_precision", state);
         VideoManager::setShaderInputPrecision( state );
     };
     

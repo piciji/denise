@@ -84,46 +84,46 @@ SettingsLayout::SettingsLayout() {
     append(previewLayout, {~0u, 0u}, 10);
     append(about, {~0u, 0u});    
 
-    switches.fullscreenStatusbar.setChecked( settings->get<bool>("statusbar_fullscreen", false) );
+    switches.fullscreenStatusbar.setChecked( globalSettings->get<bool>("statusbar_fullscreen", false) );
     switches.fullscreenStatusbar.onToggle = [&]() {
 		if (view->fullScreen()) {
 			view->setStatusVisible( switches.fullscreenStatusbar.checked() );
             view->updateViewport();
 		}
-        settings->set<bool>("statusbar_fullscreen", switches.fullscreenStatusbar.checked());
+        globalSettings->set<bool>("statusbar_fullscreen", switches.fullscreenStatusbar.checked());
     };
 	
-	switches.autostartDragnDrop.setChecked(settings->get<bool>("autostart_dragndrop", false));
+	switches.autostartDragnDrop.setChecked(globalSettings->get<bool>("autostart_dragndrop", false));
     switches.autostartDragnDrop.onToggle = [&]() {
-        settings->set<bool>("autostart_dragndrop", switches.autostartDragnDrop.checked());
+        globalSettings->set<bool>("autostart_dragndrop", switches.autostartDragnDrop.checked());
     };
     
-    switches.saveSettingsOnExit.setChecked(settings->get<bool>("save_settings_on_exit", true));
+    switches.saveSettingsOnExit.setChecked(globalSettings->get<bool>("save_settings_on_exit", true));
     switches.saveSettingsOnExit.onToggle = [&]() {
-        settings->set<bool>("save_settings_on_exit", switches.saveSettingsOnExit.checked());
+        globalSettings->set<bool>("save_settings_on_exit", switches.saveSettingsOnExit.checked());
 		
 		if (!switches.saveSettingsOnExit.checked())
 			program->rememberNotToSaveSettings();
     };
     
-	switches.pause.setChecked(settings->get<bool>("pause_focus_loss", false));
+	switches.pause.setChecked(globalSettings->get<bool>("pause_focus_loss", false));
     switches.pause.onToggle = [&]() {
-        settings->set<bool>("pause_focus_loss", switches.pause.checked());
+        globalSettings->set<bool>("pause_focus_loss", switches.pause.checked());
     };
     
-    switches.openFullscreen.setChecked(settings->get<bool>("open_fullscreen", false));
+    switches.openFullscreen.setChecked(globalSettings->get<bool>("open_fullscreen", false));
     switches.openFullscreen.onToggle = [&]() {
-        settings->set<bool>("open_fullscreen", switches.openFullscreen.checked());
+        globalSettings->set<bool>("open_fullscreen", switches.openFullscreen.checked());
     };
     
-    switches.alternateSoftwarePreview.setChecked(settings->get<bool>("alternate_software_preview", false));
+    switches.alternateSoftwarePreview.setChecked(globalSettings->get<bool>("alternate_software_preview", false));
     switches.alternateSoftwarePreview.onToggle = [&]() {
-        settings->set<bool>("alternate_software_preview", switches.alternateSoftwarePreview.checked());
+        globalSettings->set<bool>("alternate_software_preview", switches.alternateSoftwarePreview.checked());
     };
 
-    switches.questionMediaWrite.setChecked(settings->get<bool>("question_media_write", true));
+    switches.questionMediaWrite.setChecked(globalSettings->get<bool>("question_media_write", true));
     switches.questionMediaWrite.onToggle = [this]() {
-        settings->set<bool>("question_media_write", switches.questionMediaWrite.checked());
+        globalSettings->set<bool>("question_media_write", switches.questionMediaWrite.checked());
     };
 
     setLang();
@@ -139,23 +139,23 @@ SettingsLayout::SettingsLayout() {
     
     previewLayout.top.fontSizeCombo.onChange = [this]() {
         
-        settings->set<unsigned>("software_preview_fontsize", previewLayout.top.fontSizeCombo.userData());
+        globalSettings->set<unsigned>("software_preview_fontsize", previewLayout.top.fontSizeCombo.userData());
         
         for( auto mediaView : mediaViews )
             mediaView->updateListingFont( previewLayout.top.fontSizeCombo.userData() );
     };
     
-    previewLayout.top.fontSizeCombo.setSelection( settings->get<unsigned>("software_preview_fontsize", 12, {6, 14}) - 6 );
+    previewLayout.top.fontSizeCombo.setSelection( globalSettings->get<unsigned>("software_preview_fontsize", 12, {6, 14}) - 6 );
     
     
     previewLayout.top.dialogFontSizeCombo.onChange = [this]() {
         
-        settings->set<unsigned>("dialog_software_preview_fontsize", previewLayout.top.dialogFontSizeCombo.userData());
+        globalSettings->set<unsigned>("dialog_software_preview_fontsize", previewLayout.top.dialogFontSizeCombo.userData());
         
         previewTimer.setEnabled(true);
     };
     
-    previewLayout.top.dialogFontSizeCombo.setSelection( settings->get<unsigned>("dialog_software_preview_fontsize", 11, {6, 14}) - 6 );
+    previewLayout.top.dialogFontSizeCombo.setSelection( globalSettings->get<unsigned>("dialog_software_preview_fontsize", 11, {6, 14}) - 6 );
     
     previewLayout.bottom.dialogWidth.slider.onChange = [this]() {
         
@@ -163,12 +163,12 @@ SettingsLayout::SettingsLayout() {
         
         previewLayout.bottom.dialogWidth.value.setText( std::to_string( pos + 200 ) + " px" );                
         
-        settings->set<unsigned>("dialog_software_preview_width", pos + 200 );
+        globalSettings->set<unsigned>("dialog_software_preview_width", pos + 200 );
         
         previewTimer.setEnabled(true);
     };
     
-    previewLayout.bottom.dialogWidth.slider.setPosition( settings->get<unsigned>("dialog_software_preview_width", 450, {200, 600}) - 200 );
+    previewLayout.bottom.dialogWidth.slider.setPosition( globalSettings->get<unsigned>("dialog_software_preview_width", 450, {200, 600}) - 200 );
     
     previewLayout.bottom.dialogWidth.value.setText( std::to_string( previewLayout.bottom.dialogWidth.slider.position() + 200 ) + " px" );            
     
@@ -179,17 +179,17 @@ SettingsLayout::SettingsLayout() {
         
         previewLayout.bottom.dialogHeight.value.setText( std::to_string( pos + 100 ) + " px" );                
         
-        settings->set<unsigned>("dialog_software_preview_height", pos + 100 );        
+        globalSettings->set<unsigned>("dialog_software_preview_height", pos + 100 );        
     };
     
-    previewLayout.bottom.dialogHeight.slider.setPosition( settings->get<unsigned>("dialog_software_preview_height", 200, {100, 600}) - 100 );
+    previewLayout.bottom.dialogHeight.slider.setPosition( globalSettings->get<unsigned>("dialog_software_preview_height", 200, {100, 600}) - 100 );
     
     previewLayout.bottom.dialogHeight.value.setText( std::to_string( previewLayout.bottom.dialogHeight.slider.position() + 100 ) + " px" );
          
     previewLayout.top.tooltips.onToggle = [this]() {
         bool state = previewLayout.top.tooltips.checked();
         
-        settings->set<bool>("software_preview_tooltips", state );
+        globalSettings->set<bool>("software_preview_tooltips", state );
         
         for( auto mediaView : mediaViews )
             mediaView->updateListings();
@@ -199,7 +199,7 @@ SettingsLayout::SettingsLayout() {
         previewTimer.setEnabled(true);
     };
     
-    previewLayout.top.tooltips.setChecked( settings->get<bool>("software_preview_tooltips", true ) );
+    previewLayout.top.tooltips.setChecked( globalSettings->get<bool>("software_preview_tooltips", true ) );
     
     previewLayout.previewBox.setBackgroundColor( 0xaaaaaa );
     
@@ -210,7 +210,7 @@ SettingsLayout::SettingsLayout() {
         
         setPreviewContent();
         
-        unsigned newWidth = settings->get<unsigned>("dialog_software_preview_width", 450, {200, 600});
+        unsigned newWidth = globalSettings->get<unsigned>("dialog_software_preview_width", 450, {200, 600});
 
         if (previewLayout.has(previewLayout.previewBox))
             previewLayout.update( previewLayout.previewBox, {newWidth, 60u} );
@@ -242,7 +242,7 @@ auto SettingsLayout::setPreviewContent() -> void {
         }
     }
 
-    auto fontSize = settings->get<unsigned>("dialog_software_preview_fontsize", 11, {6, 14});
+    auto fontSize = globalSettings->get<unsigned>("dialog_software_preview_fontsize", 11, {6, 14});
     
     if (useCustomFont)
         previewLayout.previewBox.setFont("C64 Pro, " + std::to_string(fontSize), true);  
@@ -252,7 +252,7 @@ auto SettingsLayout::setPreviewContent() -> void {
     if (previewLayout.previewBox.rowCount())
         return;
     
-    bool useTooltips = settings->get<bool>("software_preview_tooltips", true );
+    bool useTooltips = globalSettings->get<bool>("software_preview_tooltips", true );
     
     std::vector<uint8_t> line = {0x30, 0x20, 0x20, 0x20, 0x20, 0x22, 0x20, 0x44, 0x45, 0x4e, 0x49, 0x53, 0x45, 0x20, 0x20, 0x44, 0x45, 0x4e, 0x49, 0x53, 0x45, 0x20, 0x22, 0x20, 0x50, 0x52, 0x47, 0x3c};
     std::vector<uint8_t> tooltipLine = { 0x4c, 0x4f, 0x41, 0x44, 0x20, 0x22, 0x44, 0x45, 0x4e, 0x49, 0x53, 0x45, 0x22, 0x2c, 0x38, 0x2c, 0x31 };
@@ -310,7 +310,7 @@ auto SettingsLayout::changeLang() -> void {
     if ( !trans->read( program->translationFolder() + file ) )
         trans->clear();
 
-    settings->set<std::string>("translation", file);
+    globalSettings->set<std::string>("translation", file);
 
 	archiveViewer->translate();
     view->translate();
@@ -337,7 +337,7 @@ auto SettingsLayout::changeLang() -> void {
 
 auto SettingsLayout::setLang() -> void {
     bool foundDefaultLang = false;
-    std::string selectedLang = settings->get<std::string>("translation", program->getSystemLangFile());
+    std::string selectedLang = globalSettings->get<std::string>("translation", program->getSystemLangFile());
 
     auto files = GUIKIT::File::getFolderList( program->translationFolder() );
 

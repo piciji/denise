@@ -1174,6 +1174,7 @@ struct Setting {
 	auto add(const std::string& ident) -> Setting*;
 	auto set(std::string data) -> void;
 	auto getIdent() -> std::string { return ident; }
+    auto setIdent(std::string ident ) -> void { this->ident = ident; }
 protected:
     std::string ident;
     Setting(const std::string& ident);
@@ -1183,6 +1184,7 @@ struct Settings {
     auto find(const std::string& ident) -> Setting*;
 	auto findMulti(const std::string& ident) -> std::vector<Setting*>;
     auto add(const std::string& ident) -> Setting*;
+    auto add(Setting* setting) -> void;
     auto remove(const std::string& ident) -> bool;	
 
     template<typename T> class type_info{};
@@ -1210,6 +1212,9 @@ struct Settings {
     auto save(const std::string& path) -> bool;
     auto getList() -> std::vector<Setting*>& { return list; }
     
+    auto setGuid(void* guid) -> void { this->guid = guid; }
+    auto getGuid() -> void* { return guid; }
+    
     ~Settings();
 
 private:
@@ -1228,6 +1233,7 @@ private:
     auto get(type_info<std::string> t, const std::string& ident, std::string defaultValue) -> std::string;
 
     std::vector<Setting*> list;
+    void* guid = nullptr;
 };
 
 struct Translation {

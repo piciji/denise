@@ -22,7 +22,7 @@
 #endif
 #define SETTINGS_FILE "settings.ini"
 #define DEFAULT_TRANS_FILE "english.txt"
-#define VERSION "1.0.8"
+#define VERSION "1.0.9"
 #define LICENSE "GPLv3"
 #define AUTHOR "PiCiJi"
 
@@ -38,6 +38,7 @@
 #include "../driver/driver.h"
 #include "video/manager.h"
 #include "tools/logger.h"
+#include "tools/shortcuts.h"
 
 struct FileSetting;
 struct Message;
@@ -60,10 +61,12 @@ struct Program : Emulator::Interface::Bind {
     auto shaderFolder() -> std::string;
 	auto statesFolder(Emulator::Interface* emulator) -> std::string;
 	auto appFolder() -> std::string;
-	auto ident( Emulator::Interface* emulator, std::string name ) -> std::string;
     auto getSystemLangFile() -> std::string;
     auto saveSettings() -> void;
-    auto settingsFile() -> std::string;
+    auto loadSettings() -> void;
+    auto settingsFile( std::string ident = "" ) -> std::string;
+    auto getSettings( Emulator::Interface* emulator = nullptr ) -> GUIKIT::Settings*;
+    auto convertSettings() -> void;
     auto rememberNotToSaveSettings() -> void;
 	auto loadPlaceholder() -> void;
 
@@ -138,9 +141,10 @@ extern Program* program;
 extern DRIVER::Input* inputDriver;
 extern DRIVER::Audio* audioDriver;
 extern DRIVER::Video* videoDriver;
-extern GUIKIT::Settings* settings;
 extern GUIKIT::Translation* trans;
 extern std::vector<Emulator::Interface*> emulators;
+extern std::vector<GUIKIT::Settings*> settingsStorage;
+extern GUIKIT::Settings* globalSettings;
 extern Emulator::Interface* activeEmulator;
 extern VideoManager* activeVideoManager;
 

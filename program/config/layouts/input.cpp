@@ -105,7 +105,7 @@ InputLayout::InputLayout() {
     };
 
 	driverLayout.combo.onChange = [this]() {
-		settings->set<std::string>("input_driver", driverLayout.combo.text());
+		globalSettings->set<std::string>("input_driver", driverLayout.combo.text());
         InputManager::rememberLastDeviceState();
 		program->initInput();
 	};    

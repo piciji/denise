@@ -121,11 +121,13 @@ auto Program::getFileNameFromMedia(Emulator::Interface::Media* media) -> std::st
 
 auto Program::setExpansionSelection( Emulator::Interface* emulator ) -> void {
     
+    auto settings = getSettings( emulator );
+    
     for( auto& mediaGroup : emulator->mediaGroups ) {
         
         if ( mediaGroup.selected ) {
             
-            auto mediaId = settings->get<unsigned>( ident(emulator, mediaGroup.name + "_selected"), mediaGroup.media[0].id );
+            auto mediaId = settings->get<unsigned>( _underscore( mediaGroup.name ) + "_selected", mediaGroup.media[0].id );
             
             auto media = emulator->getMedia( mediaGroup, mediaId );
             
@@ -141,7 +143,7 @@ auto Program::setExpansionSelection( Emulator::Interface* emulator ) -> void {
         
         for(auto& media : expansion.mediaGroup->media) {
 
-            auto pcbId = settings->get<unsigned>( ident(emulator, media.name + "_pcb"), expansion.pcbs[0].id );
+            auto pcbId = settings->get<unsigned>( _underscore( media.name ) + "_pcb", expansion.pcbs[0].id );
 
             auto pcbLayout = emulator->getPCB( expansion, pcbId );
 
@@ -184,7 +186,7 @@ auto Program::removeBootableExpansion( bool gameOnly ) -> void {
         return;
     
     for( auto& media : expansion->mediaGroup->media) {
-        filePool->assign( ident(activeEmulator, media.name), nullptr);
+        filePool->assign( _ident(activeEmulator, media.name), nullptr);
         activeEmulator->ejectMedium( &media );
         States::getInstance( activeEmulator )->updateImage( nullptr, &media );
     }
@@ -194,4 +196,134 @@ auto Program::removeBootableExpansion( bool gameOnly ) -> void {
     EmuConfigView::TabWindow::getView(activeEmulator)->systemLayout->setExpansion( nullptr );
     
     activeEmulator->power();
+}
+
+// settings
+auto Program::saveSettings() -> void {
+
+    bool errorShown = false;
+    
+    for (auto settings : settingsStorage) {
+
+        auto guid = settings->getGuid();
+
+        std::string ident = "";
+        
+        if (guid) {
+            Emulator::Interface* emulator = (Emulator::Interface*)guid;
+            
+            ident = emulator->ident + "_";
+        }
+        
+        if (!settings->save( settingsFile( ident ))) {
+            if (!errorShown)
+                view->message->warning(trans->get("cfg_not_save",{{"%path%", settingsFile( ident )}}));
+            errorShown = true;
+        }
+    }
+}
+
+auto Program::loadSettings() -> void {
+    
+    for(auto settings : settingsStorage) {
+        
+        auto guid = settings->getGuid();
+
+        std::string ident = "";
+
+        if (guid) {
+            Emulator::Interface* emulator = (Emulator::Interface*)guid;
+
+            ident = emulator->ident + "_";
+        }
+        
+        settings->load( settingsFile( ident ) );         
+    }
+    
+    convertSettings();
+}
+
+auto Program::convertSettings() -> void {
+        
+    if (globalSettings->get("convert_to_v2", false) )
+        return;
+    
+    auto settingsC64 = getSettings( getEmulator( "C64" ) );
+    
+    std::vector<GUIKIT::Setting*> list = globalSettings->getList();
+    
+    for( auto setting : list ) {
+        
+        std::string ident = setting->getIdent();
+        
+        std::string identIgnoreCase = ident;
+        
+        GUIKIT::String::toLowerCase( identIgnoreCase );
+        
+        if (GUIKIT::String::foundSubStr( identIgnoreCase, "amiga_" ))
+            globalSettings->remove( ident );
+            
+        else if (GUIKIT::String::foundSubStr( identIgnoreCase, "port1_" ))
+            globalSettings->remove( ident );
+
+        else if (GUIKIT::String::foundSubStr( identIgnoreCase, "port2_" ))
+            globalSettings->remove( ident );
+        
+        else if (GUIKIT::String::foundSubStr( identIgnoreCase, "system_" ))
+            globalSettings->remove( ident );
+        
+        else if (GUIKIT::String::foundSubStr( identIgnoreCase, "wp_enabled" ))
+            globalSettings->remove( ident );
+
+        else if (GUIKIT::String::foundSubStr( identIgnoreCase, "_file" ) && (setting->value == "") )
+            globalSettings->remove( ident );
+        
+        else if (GUIKIT::String::foundSubStr( identIgnoreCase, "_path" ) && (setting->value == "") )
+            globalSettings->remove( ident );
+        
+        else if (GUIKIT::String::foundSubStr( identIgnoreCase, "_id" ) && (setting->value == "0") )
+            globalSettings->remove( ident );
+
+        else if (GUIKIT::String::foundSubStr( identIgnoreCase, "_wp" ) )
+            globalSettings->remove( ident );
+        
+        else if (GUIKIT::String::foundSubStr( identIgnoreCase, "c64_" )) {
+            
+            globalSettings->remove( ident );
+            
+            GUIKIT::String::replace( ident, "c64_", "" );                        
+            
+            GUIKIT::String::replace( ident, "C64_", "" );     
+            
+            setting->setIdent( ident );
+            
+            settingsC64->add( setting );
+        }
+    }
+    
+    globalSettings->set("convert_to_v2", true);
+    
+    if (list.size())
+        saveSettings();
+}
+
+auto Program::rememberNotToSaveSettings() -> void {
+	GUIKIT::Settings tempSettings;
+	
+	if (!tempSettings.load( settingsFile() ))
+		return;
+	
+	tempSettings.set<bool>("save_settings_on_exit", false);
+	
+	tempSettings.save( settingsFile() );
+}
+
+auto Program::getSettings( Emulator::Interface* emulator ) -> GUIKIT::Settings* {
+    
+    for(auto settings : settingsStorage) {        
+        if ( (Emulator::Interface*)(settings->getGuid()) == emulator )
+            return settings;
+    }
+    // global setting
+    return settingsStorage[0];
 }

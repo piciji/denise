@@ -56,30 +56,30 @@ StatesLayout::StatesLayout(TabWindow* tabWindow) {
 	};
 	
 	fastSave.top.edit.onChange = [this]() {
-		settings->set<std::string>( this->tabWindow->ident("save_ident"), fastSave.top.edit.text());
-		settings->set<unsigned>( this->tabWindow->ident("save_slot"), 0);
+		_settings->set<std::string>( "save_ident", fastSave.top.edit.text());
+		_settings->set<unsigned>( "save_slot", 0);
 	};
     
     fastSave.autoSaveIdent.onToggle = [this]() {
         
-        settings->set<bool>( this->tabWindow->ident("auto_save_ident"), fastSave.autoSaveIdent.checked());
+        _settings->set<bool>( "auto_save_ident", fastSave.autoSaveIdent.checked());
     };
     
-    fastSave.autoSaveIdent.setChecked( settings->get<bool>( this->tabWindow->ident("auto_save_ident"), true) );
+    fastSave.autoSaveIdent.setChecked( _settings->get<bool>( "auto_save_ident", true) );
     
-    settings->set<bool>( this->tabWindow->ident("auto_save_ident"), fastSave.autoSaveIdent.checked());
+    _settings->set<bool>( "auto_save_ident", fastSave.autoSaveIdent.checked());
 	
 	directSave.load.onActivate = [this]() {
 		std::string filePath = GUIKIT::BrowserWindow()
             .setWindow(*this->tabWindow)
             .setTitle(trans->get("select_savestate"))
-            .setPath(settings->get<std::string>( this->tabWindow->ident( "save_direct_folder" ), "" ))
+            .setPath(_settings->get<std::string>( "save_direct_folder", "" ))
             .setFilters( { trans->get("state") + " (*.sav)", trans->get("all_files")} )
             .open();
 		
 		if (filePath.empty()) return;
             
-        settings->set<std::string>( this->tabWindow->ident( "save_direct_folder" ), GUIKIT::File::getPath( filePath ) ); 
+        _settings->set<std::string>( "save_direct_folder", GUIKIT::File::getPath( filePath ) ); 
 		
         States::getInstance(emulator)->load(filePath);
         view->setFocused(300);
@@ -93,7 +93,7 @@ StatesLayout::StatesLayout(TabWindow* tabWindow) {
 		std::string filePath = GUIKIT::BrowserWindow()
             .setWindow(*this->tabWindow)
             .setTitle(trans->get("select_savestate"))
-            .setPath(settings->get<std::string>(this->tabWindow->ident("states_folder"), ""))
+            .setPath(_settings->get<std::string>("states_folder", ""))
             .setFilters( { trans->get("state") + " (*.sav)", trans->get("all_files")} )
             .save();
 		
@@ -102,7 +102,7 @@ StatesLayout::StatesLayout(TabWindow* tabWindow) {
         if ( !GUIKIT::String::foundSubStr( filePath, "." ))
             filePath += ".sav";
         
-        settings->set<std::string>( this->tabWindow->ident( "save_direct_folder" ),  GUIKIT::File::getPath( filePath ) );            
+        _settings->set<std::string>( "save_direct_folder",  GUIKIT::File::getPath( filePath ) );            
             
         States::getInstance( emulator )->save( filePath );                
 	};
@@ -110,12 +110,12 @@ StatesLayout::StatesLayout(TabWindow* tabWindow) {
 	fastSave.listView.onActivate = [this]() {
 		auto selection = fastSave.listView.selection();
 		auto pos = fastSave.listView.text(selection, 0);
-		settings->set<unsigned>( this->tabWindow->ident("save_slot"), std::stoul(pos));   
+		_settings->set<unsigned>( "save_slot", std::stoul(pos));   
         
         unsigned statePos = 0;
         std::string baseName = splitFile( fastSave.listView.text(selection, 1), statePos );
         fastSave.top.edit.setText( baseName );
-        settings->set<std::string>( this->tabWindow->ident("save_ident"), baseName);
+        _settings->set<std::string>("save_ident", baseName);
         
         States::getInstance( emulator )->load( fastSave.listView.text(selection, 1), true );
         view->setFocused(300);
@@ -150,7 +150,7 @@ StatesLayout::StatesLayout(TabWindow* tabWindow) {
 		}
 	};
 	
-	fastSave.top.edit.setText( settings->get<std::string>( tabWindow->ident("save_ident"), "") );
+	fastSave.top.edit.setText( _settings->get<std::string>( "save_ident", "") );
 
     statePath.select.onActivate = [this]() {
         auto path = GUIKIT::BrowserWindow()
@@ -159,17 +159,17 @@ StatesLayout::StatesLayout(TabWindow* tabWindow) {
                 .directory();
 
         if (!path.empty()) {
-            settings->set<std::string>( this->tabWindow->ident("states_folder"), path);
+            _settings->set<std::string>( "states_folder", path);
             statePath.edit.setText(path);
         }
     };
 
     statePath.empty.onActivate = [this]() {
-        settings->set<std::string>(this->tabWindow->ident("states_folder"), "");
+        _settings->set<std::string>("states_folder", "");
         statePath.edit.setText("");
     };
 
-    statePath.edit.setText(settings->get<std::string>(tabWindow->ident("states_folder"), ""));
+    statePath.edit.setText(_settings->get<std::string>("states_folder", ""));
 }
 
 auto StatesLayout::splitFile( std::string file, unsigned& pos ) -> std::string {
@@ -221,9 +221,9 @@ auto StatesLayout::updateSaveIdent( std::string fileName ) -> void {
         fileName = fileName.erase(end);
     
     // for wav record
-    settings->set<std::string>( this->tabWindow->ident("record_ident"), fileName, false);
+    _settings->set<std::string>( "record_ident", fileName, false);
     
-    if (!settings->get<bool>( this->tabWindow->ident("auto_save_ident"), true))
+    if (!_settings->get<bool>( "auto_save_ident", true))
         return;
         
     fastSave.top.edit.setText( fileName );

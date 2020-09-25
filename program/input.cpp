@@ -26,7 +26,7 @@ auto Program::initInput() -> void {
 }
 
 auto Program::getInputDriver() -> std::string {
-	auto curDriver = settings->get<std::string>("input_driver", "");
+	auto curDriver = globalSettings->get<std::string>("input_driver", "");
 	auto drivers = DRIVER::Input::available();
 	
 	for(auto& driver : drivers) {
@@ -53,7 +53,7 @@ auto Program::inputPoll( uint16_t deviceId, uint16_t inputId) -> int16_t {
 
 auto Program::getDevice( Emulator::Interface* emulator, Emulator::Interface::Connector* connector ) -> Emulator::Interface::Device* {
     
-    unsigned deviceId = settings->get<unsigned>( ident(emulator, connector->name), 0);
+    unsigned deviceId = getSettings(emulator)->get<unsigned>( _underscore(connector->name), 0);
     
     return emulator->getDevice( deviceId );      
 }
@@ -112,9 +112,11 @@ auto Program::absoluteMouseToEmu( Emulator::Interface* emulator ) -> GUIKIT::Pos
 
 auto Program::resetRunAhead() -> void {
     
-    if ( settings->get<bool>( ident(activeEmulator, "runahead_disable"), true) ) {
+    auto settings = getSettings( activeEmulator );
+    
+    if ( settings->get<bool>( "runahead_disable", true) ) {
         
-        settings->set<unsigned>( ident(activeEmulator, "runahead"), 0);
+        settings->set<unsigned>( "runahead", 0);
         
         activeEmulator->runAhead( 0 );
         
@@ -124,7 +126,9 @@ auto Program::resetRunAhead() -> void {
 
 auto Program::setRunAhead(Emulator::Interface* emulator) -> void {
     
-    emulator->runAhead( settings->get<unsigned>( ident(emulator, "runahead"), 0, {0u, 10u}) );
+    auto settings = getSettings( activeEmulator );
     
-    emulator->runAheadPerformance( settings->get<bool>( ident(emulator, "runahead_performance"), false) );
+    emulator->runAhead( settings->get<unsigned>( "runahead", 0, {0u, 10u}) );
+    
+    emulator->runAheadPerformance( settings->get<bool>( "runahead_performance", false) );
 }

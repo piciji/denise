@@ -14,7 +14,8 @@
 struct States {        
     
     States(Emulator::Interface* emulator);
-        
+    
+    GUIKIT::Settings* settings;
     GUIKIT::Settings* saveSettings;
     Emulator::Interface* emulator;
     std::vector<std::string> errorPaths;

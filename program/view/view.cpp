@@ -24,10 +24,10 @@ auto View::build() -> void {
     
     GUIKIT::Geometry defaultGeometry = {100, 100, 600, 400};
     
-    GUIKIT::Geometry geometry = {settings->get<int>("screen_x", defaultGeometry.x)
-        ,settings->get<int>("screen_y", defaultGeometry.y)
-        ,settings->get<unsigned>("screen_width", defaultGeometry.width)
-        ,settings->get<unsigned>("screen_height", defaultGeometry.height)
+    GUIKIT::Geometry geometry = {globalSettings->get<int>("screen_x", defaultGeometry.x)
+        ,globalSettings->get<int>("screen_y", defaultGeometry.y)
+        ,globalSettings->get<unsigned>("screen_width", defaultGeometry.width)
+        ,globalSettings->get<unsigned>("screen_height", defaultGeometry.height)
     };
     
     setGeometry( geometry );
@@ -64,14 +64,14 @@ auto View::build() -> void {
     onMove = [this]() { 
         if (fullScreen()) return;
         GUIKIT::Geometry geometry = this->geometry();
-        settings->set<int>("screen_x", geometry.x);
-        settings->set<int>("screen_y", geometry.y);
+        globalSettings->set<int>("screen_x", geometry.x);
+        globalSettings->set<int>("screen_y", geometry.y);
 		audioDriver->clear();
     };
     
     onSize = [this]() {
         if (fullScreen()) {
-			bool showStatus = !view->exclusiveFullscreen() && settings->get("statusbar_fullscreen", false);
+			bool showStatus = !view->exclusiveFullscreen() && globalSettings->get("statusbar_fullscreen", false);
             setStatusVisible( showStatus );
             setMenuVisible(false);
         } else {
@@ -79,8 +79,8 @@ auto View::build() -> void {
             updateStatusBar();
             
             GUIKIT::Geometry geometry = this->geometry();
-            settings->set<int>("screen_width", geometry.width);
-            settings->set<int>("screen_height", geometry.height);
+            globalSettings->set<int>("screen_width", geometry.width);
+            globalSettings->set<int>("screen_height", geometry.height);
         }
         updateViewport();
 		audioDriver->clear();
@@ -119,7 +119,7 @@ auto View::build() -> void {
         
         view->autoloadFiles();
         
-        if (!cmd->debug && !cmd->noDriver && !cmd->noGui && settings->get<bool>("open_fullscreen", false)) {
+        if (!cmd->debug && !cmd->noDriver && !cmd->noGui && globalSettings->get<bool>("open_fullscreen", false)) {
             view->setFullScreen(true);
         }
     };
@@ -246,17 +246,17 @@ auto View::setFullScreen(bool fullScreen) -> void {
 }
 
 auto View::exclusiveFullscreen() -> bool {
-	static auto exclusiveFullscreen = settings->getOrInit("exclusive_fullscreen", false);	
+	static auto exclusiveFullscreen = globalSettings->getOrInit("exclusive_fullscreen", false);	
 	return *exclusiveFullscreen && fullScreen() && program->isRunning;
 }
 
 auto View::updateMenuBar( bool toggle ) -> void {
     
-    bool state = settings->get("menubar", true);
+    bool state = globalSettings->get("menubar", true);
     
     if(toggle) {
         state ^= 1;
-        settings->set("menubar", state);
+        globalSettings->set("menubar", state);
     }
 
     if (menuVisible() == state)
@@ -270,11 +270,11 @@ auto View::updateMenuBar( bool toggle ) -> void {
 
 auto View::updateStatusBar(bool toggle) -> void {
 
-    bool state = settings->get("statusbar", true);
+    bool state = globalSettings->get("statusbar", true);
 
     if (toggle) {
         state ^= 1;
-        settings->set("statusbar", state);
+        globalSettings->set("statusbar", state);
     }
 
     if (statusVisible() == state)
@@ -287,7 +287,7 @@ auto View::updateStatusBar(bool toggle) -> void {
 }
 
 auto View::setStatusText(const std::string& text, bool critical) -> void {
-    auto option = settings->get("video_screen_text", 0, {0u,2u});
+    auto option = globalSettings->get("video_screen_text", 0, {0u,2u});
     
     if (option == 0) {
         if(statusVisible()) GUIKIT::Window::setStatusText(text);
@@ -419,6 +419,8 @@ auto View::setConnectors() -> void {
         
         auto emulator = iM.emulator;
         
+        auto settings = program->getSettings( emulator );
+        
         for(auto& connector : emulator->connectors) {
 
             connectorMenu = new GUIKIT::Menu;
@@ -437,8 +439,8 @@ auto View::setConnectors() -> void {
                 auto item = new GUIKIT::MenuRadioItem;
                 item->setText( trans->get(device.name));
 
-                item->onActivate = [emulator, connector, device]() {
-                    settings->set<unsigned>(program->ident(emulator, connector.name), device.id);
+                item->onActivate = [emulator, connector, device, settings]() {
+                    settings->set<unsigned>( _underscore(connector.name), device.id);
                     emulator->connect(connector.id, device.id);
                     InputManager::getManager(emulator)->updateMappingsInUse();
                     EmuConfigView::TabWindow::getView(emulator)->inputLayout->updateConnectorButtons();
@@ -466,7 +468,7 @@ auto View::setConnectors() -> void {
         inputItem = new GUIKIT::MenuItem;
 		inputItem->setText(emulator->ident + " " + trans->get("swap_ports") );
         
-        inputItem->onActivate = [emulator]() {
+        inputItem->onActivate = [emulator, settings]() {
             
             auto connector1 = emulator->getConnector( 0 );
             auto connectedDevice1 = emulator->getConnectedDevice( connector1 );
@@ -477,8 +479,8 @@ auto View::setConnectors() -> void {
             emulator->connect( connector1, connectedDevice2 );
             emulator->connect( connector2, connectedDevice1 );
             
-            settings->set<unsigned>( program->ident(emulator, connector1->name), connectedDevice2->id);
-            settings->set<unsigned>( program->ident(emulator, connector2->name), connectedDevice1->id);
+            settings->set<unsigned>( _underscore(connector1->name), connectedDevice2->id);
+            settings->set<unsigned>( _underscore(connector2->name), connectedDevice1->id);
             
             EmuConfigView::TabWindow::getView(emulator)->inputLayout->updateConnectorButtons();
             
@@ -512,7 +514,7 @@ auto View::setConnectors() -> void {
 auto View::updateShader() -> void {
     
 	std::vector<GUIKIT::File::Info> shaderList;
-	auto folder = settings->get<std::string>("shader_folder", "");
+	auto folder = globalSettings->get<std::string>("shader_folder", "");
     
     if (folder.empty())
         folder = program->shaderFolder();
@@ -783,32 +785,32 @@ auto View::buildMenu() -> void {
 	}
     
     audioSyncItem.onToggle = [&]() {
-        settings->set<bool>("audio_sync", audioSyncItem.checked() );
+        globalSettings->set<bool>("audio_sync", audioSyncItem.checked() );
         audioManager->setSynchronize();
     };
-    if ( settings->get<bool>("audio_sync", true) ) audioSyncItem.setChecked();
+    if ( globalSettings->get<bool>("audio_sync", true) ) audioSyncItem.setChecked();
     optionsMenu.append(audioSyncItem);
     
     videoSyncItem.onToggle = [&]() {
-        settings->set<bool>("video_sync", videoSyncItem.checked() );
+        globalSettings->set<bool>("video_sync", videoSyncItem.checked() );
         program->fastForward( false );
         program->setVideoSynchronize();
     };
-    if ( settings->get<bool>("video_sync", false) ) videoSyncItem.setChecked();
+    if ( globalSettings->get<bool>("video_sync", false) ) videoSyncItem.setChecked();
     optionsMenu.append(videoSyncItem);
     
     fpsLimitItem.onToggle = [&]() {
-        settings->set<bool>("fps_limit", fpsLimitItem.checked() );        
+        globalSettings->set<bool>("fps_limit", fpsLimitItem.checked() );        
         program->setFpsLimit();
     };
-    if ( settings->get<bool>("fps_limit", false) ) fpsLimitItem.setChecked();
+    if ( globalSettings->get<bool>("fps_limit", false) ) fpsLimitItem.setChecked();
     optionsMenu.append(fpsLimitItem);
 
     dynamicRateControl.onToggle = [&]() {
-        settings->set<bool>("dynamic_rate_control", dynamicRateControl.checked() );
+        globalSettings->set<bool>("dynamic_rate_control", dynamicRateControl.checked() );
         audioManager->setRateControl();
     };
-    if ( settings->get<bool>("dynamic_rate_control", false) ) dynamicRateControl.setChecked();
+    if ( globalSettings->get<bool>("dynamic_rate_control", false) ) dynamicRateControl.setChecked();
     optionsMenu.append(dynamicRateControl);
         
     optionsMenu.append(*GUIKIT::MenuSeparator::getInstance());
@@ -823,23 +825,23 @@ auto View::buildMenu() -> void {
     optionsMenu.append(*GUIKIT::MenuSeparator::getInstance());
             
     muteItem.onToggle = [&]() {
-        settings->set<bool>("audio_mute", muteItem.checked() );
+        globalSettings->set<bool>("audio_mute", muteItem.checked() );
         audioManager->setVolume();
     };
-    if ( settings->get<bool>("audio_mute", false) ) muteItem.setChecked();
+    if ( globalSettings->get<bool>("audio_mute", false) ) muteItem.setChecked();
     optionsMenu.append(muteItem);
     fpsItem.onToggle = [&]() {
-        settings->set<bool>("fps", fpsItem.checked() );
+        globalSettings->set<bool>("fps", fpsItem.checked() );
 		status->showFps = fpsItem.checked();
     };
-    if ( settings->get<bool>("fps", false) ) fpsItem.setChecked();
+    if ( globalSettings->get<bool>("fps", false) ) fpsItem.setChecked();
     optionsMenu.append(fpsItem);
     
     audioBufferItem.onToggle = [&]() {
-        settings->set<bool>("show_audio_buffer", audioBufferItem.checked() );
+        globalSettings->set<bool>("show_audio_buffer", audioBufferItem.checked() );
 		audioManager->setStatistics();
     };
-    if ( settings->get<bool>("show_audio_buffer", false) ) audioBufferItem.setChecked();
+    if ( globalSettings->get<bool>("show_audio_buffer", false) ) audioBufferItem.setChecked();
     optionsMenu.append(audioBufferItem);
 
 	if(!GUIKIT::Application::isCocoa()) {
@@ -1083,7 +1085,7 @@ auto View::questionToWrite(Emulator::Interface::Media* media) -> bool {
     if (exclusiveFullscreen())
         setFullScreen( false );
     
-    bool state = !settings->get<bool>("question_media_write", true);
+    bool state = !globalSettings->get<bool>("question_media_write", true);
     
     if (!state)
         state = message->question( trans->get("question permanent write", {{"%media%", mediaIdent}}) );

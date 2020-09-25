@@ -53,7 +53,7 @@ struct InputMapping {
     auto applyMouseSensitivity( int16_t value ) -> int16_t;
     auto applyAxisSensitivity( int16_t value ) -> int16_t;
     auto sortHidsByValue() -> void;
-    auto generateAlternate() -> void;
+    auto generateAlternate(GUIKIT::Settings* settingContainer) -> void;
 };
 
 struct Hotkey {

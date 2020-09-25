@@ -79,6 +79,8 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
     typedef LIBC64::Interface C64Interface;
     typedef LIBAMI::Interface AmigaInterface;
     
+    auto settings = program->getSettings( activeEmulator );
+    
     switch ( id ) {
         case Hotkey::Id::AudioRecord:
             if (!activeEmulator)
@@ -91,7 +93,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             if (!activeEmulator)
                 break;   
             
-            unsigned pos = settings->get<unsigned>( program->ident(activeEmulator, "runahead"), 0, {0u, 10u});
+            unsigned pos = settings->get<unsigned>( "runahead", 0, {0u, 10u});
             bool down = id == Hotkey::Id::RunAheadDown;
             
             if ( down && (pos == 0) )
@@ -100,7 +102,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
                 break;
 
             pos += down ? -1 : 1;
-            settings->set<unsigned>( program->ident(activeEmulator, "runahead"), pos);
+            settings->set<unsigned>( "runahead", pos);
             activeEmulator->runAhead( pos );
             
             EmuConfigView::TabWindow::getView(activeEmulator)->miscLayout->setRunAhead( pos );
@@ -113,9 +115,9 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             if (!activeEmulator)
                 break;
             
-            bool state = settings->get<bool>( program->ident(activeEmulator, "runahead_performance"), false);
+            bool state = settings->get<bool>( "runahead_performance", false);
             state ^= 1;
-            settings->set<bool>(program->ident(activeEmulator, "runahead_performance"), state);            
+            settings->set<bool>( "runahead_performance", state);            
             activeEmulator->runAheadPerformance( state );
             
             EmuConfigView::TabWindow::getView(activeEmulator)->miscLayout->setRunAheadPerformance( state );
@@ -143,8 +145,8 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             if (!activeEmulator)
                 break;                        
             
-            bool ff = settings->get<bool>("fast_forward", false);
-            bool ffa = settings->get<bool>("fast_forward_aggressive", false);   
+            bool ff = globalSettings->get<bool>("fast_forward", false);
+            bool ffa = globalSettings->get<bool>("fast_forward_aggressive", false);   
             bool aggressive = id == Hotkey::Id::ToggleFastForwardAggressive;
 
             if ( (!aggressive && ffa) || (aggressive && ff) ) {
@@ -154,8 +156,8 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
                     val |= (unsigned)Emulator::Interface::FastForward::NoVideoSequencer;
 
                 activeEmulator->fastForward( val );
-                settings->set<bool>("fast_forward_aggressive", aggressive, false);
-                settings->set<bool>("fast_forward", !aggressive, false);
+                globalSettings->set<bool>("fast_forward_aggressive", aggressive, false);
+                globalSettings->set<bool>("fast_forward", !aggressive, false);
                 
             } else                
                 program->fastForward( !ff && !ffa, id == Hotkey::Id::ToggleFastForwardAggressive);
@@ -199,8 +201,8 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
 
             auto mediaGroup = defaultMedia->group;
 
-            auto mediaId = settings->get<unsigned>(program->ident(activeEmulator, "access_floppy"), 0u, {0u, (unsigned)mediaGroup->media.size() - 1u});
-            unsigned enabledCount = settings->get<unsigned>( program->ident(activeEmulator, mediaGroup->name + "_count"), mediaGroup->defaultUsage());
+            auto mediaId = settings->get<unsigned>("access_floppy", 0u, {0u, (unsigned)mediaGroup->media.size() - 1u});
+            unsigned enabledCount = settings->get<unsigned>( _underscore(mediaGroup->name) + "_count", mediaGroup->defaultUsage());
             if (enabledCount > mediaGroup->media.size())
                 enabledCount = mediaGroup->defaultUsage();
 
@@ -211,7 +213,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             if ( ( mediaId < mediaGroup->media.size() ) && ( mediaId < enabledCount ) )
                 media = activeEmulator->getDisk( mediaId );                    
 
-            settings->set<unsigned>(program->ident(activeEmulator, "access_floppy"), media->id, false);
+            settings->set<unsigned>( "access_floppy", media->id, false);
             status->addMessage( trans->get("access_floppy", {{"%drive%", media->name}}) );								                    
             break;
         }
@@ -339,7 +341,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             if (!activeEmulator)
                 break;
 
-            auto mediaId = settings->get<unsigned>(program->ident(activeEmulator, "access_floppy"), 0u, {0u, 3u});
+            auto mediaId = settings->get<unsigned>("access_floppy", 0u, {0u, 3u});
 
             auto media = activeEmulator->getDisk( mediaId );
             if (!media)
@@ -348,27 +350,27 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             uint8_t* data;						
 
             auto swapPos = id - Hotkey::DiskSwap0;
-            auto setting = FileSetting::getInstance( program->ident(activeEmulator, "swapper_" + std::to_string(swapPos)) );
-            GUIKIT::File* file = filePool->get( setting->path );
+            auto fSetting = FileSetting::getInstance( activeEmulator, "swapper_" + std::to_string(swapPos) );
+            GUIKIT::File* file = filePool->get( fSetting->path );
 
             if (!file || !file->isSizeValid(MAX_MEDIUM_SIZE) ||                
-                ((data = file->archiveData(setting->id)) == nullptr)
+                ((data = file->archiveData(fSetting->id)) == nullptr)
             ) {  
-                status->addMessage(trans->get("file_open_error", {{ "%path%", setting->file }}), 2, true);
+                status->addMessage(trans->get("file_open_error", {{ "%path%", fSetting->file }}), 2, true);
                 break;
             }
 
             activeEmulator->ejectDisk( media );
-            activeEmulator->insertDisk(media, data, file->archiveDataSize(setting->id));
-            activeEmulator->writeProtectDisk(media, (file->isArchived() || file->isReadOnly()) ? true : setting->writeProtect);
+            activeEmulator->insertDisk(media, data, file->archiveDataSize(fSetting->id));
+            activeEmulator->writeProtectDisk(media, (file->isArchived() || file->isReadOnly()) ? true : fSetting->writeProtect);
             media->guid = uintptr_t(file);
-            MediaView::MediaWindow::getView( activeEmulator )->updateWriteProtection( media, setting->writeProtect );
-            filePool->assign(program->ident(activeEmulator, media->name), file);
-            filePool->assign(program->ident(activeEmulator, "swapper_" + std::to_string(swapPos)), file);
+            MediaView::MediaWindow::getView( activeEmulator )->updateWriteProtection( media, fSetting->writeProtect );
+            filePool->assign( _ident(activeEmulator, media->name), file);
+            filePool->assign( _ident(activeEmulator, "swapper_" + std::to_string(swapPos)), file);
             filePool->unloadOrphaned();
-            EmuConfigView::TabWindow::getView(activeEmulator)->statesLayout->updateSaveIdent( setting->file );
-            States::getInstance( activeEmulator )->updateImage( setting, media );
-            status->addMessage( trans->get("insert_floppy", {{"%drive%", media->name},{"%file%", setting->file}}) );		
+            EmuConfigView::TabWindow::getView(activeEmulator)->statesLayout->updateSaveIdent( fSetting->file );
+            States::getInstance( activeEmulator )->updateImage( fSetting, media );
+            status->addMessage( trans->get("insert_floppy", {{"%drive%", media->name},{"%file%", fSetting->file}}) );		
             break;	
         }
     }

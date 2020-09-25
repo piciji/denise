@@ -41,7 +41,7 @@ struct FirmwareLayout : GUIKIT::VerticalLayout {
     GUIKIT::HorizontalLayout customSelectorLayout;  
 	std::vector<GUIKIT::RadioBox*> selectorBoxes;  
     
-    auto assign( std::string path, FirmwareContainer::Block* block, FileSetting* setting ) -> void;
+    auto assign( std::string path, FirmwareContainer::Block* block, FileSetting* fSetting ) -> void;
     auto translate() -> void;
     auto drop( std::string path ) -> void;
 	auto updateVisibility() -> void;

@@ -26,7 +26,7 @@ FirmwareLayout::FirmwareLayout(TabWindow* tabWindow) {
     this->emulator = tabWindow->emulator;    
     this->manager = FirmwareManager::getInstance(this->emulator);
     
-    auto firmwareInUse = settings->get<unsigned>( this->tabWindow->ident("use_firmware"), 0, {0, manager->maxSets} );
+    auto firmwareInUse = _settings->get<unsigned>( "use_firmware", 0, {0, manager->maxSets} );
     
     append(customSelectorLayout, {~0u, 0u}, 10);   
     append(switchLayout, {~0u, ~0u});
@@ -39,7 +39,7 @@ FirmwareLayout::FirmwareLayout(TabWindow* tabWindow) {
         
         radioBox->onActivate = [i, this]() {
             
-            settings->set<unsigned>( this->tabWindow->ident("use_firmware"), i );
+            _settings->set<unsigned>( "use_firmware", i );
 			updateVisibility();
             
             hotSwap(i);                
@@ -64,16 +64,16 @@ FirmwareLayout::FirmwareLayout(TabWindow* tabWindow) {
                 container->blocks.push_back(block);
                 container->append(*block,{~0u, 0u}, &emulator->firmwares.back() == &firmware ? 0 : 5);
 
-                auto setting = manager->getSetting( &firmware, i );
+                auto fSetting = manager->getSetting( &firmware, i );
                 block->top.fileLabelTitle.setText(trans->get(firmware.name,{}, true));
-                block->top.fileLabel.setText(setting->file);
-                block->bottom.edit.setText(setting->path);
+                block->top.fileLabel.setText(fSetting->file);
+                block->bottom.edit.setText(fSetting->path);
 
-                block->bottom.eject.onActivate = [this, block, container, setting]() {
+                block->bottom.eject.onActivate = [this, block, container, fSetting]() {
                     auto& firmware = emulator->firmwares[block->typeId];
                     block->bottom.edit.setText("");
                     block->top.fileLabel.setText("");
-                    setting->init();
+                    fSetting->init();
                     this->manager->addImage(&firmware, container->storeLevel, nullptr, 0);
                     selectedBlock = block;
                     hotSwap( block->parent->storeLevel );
@@ -83,7 +83,7 @@ FirmwareLayout::FirmwareLayout(TabWindow* tabWindow) {
                     selectedBlock = block;
                 };
 
-                block->bottom.open.onActivate = [this, block, setting]() {
+                block->bottom.open.onActivate = [this, block, fSetting]() {
                     auto& firmware = emulator->firmwares[block->typeId];
 
                     std::string filePath = GUIKIT::BrowserWindow()
@@ -92,14 +92,14 @@ FirmwareLayout::FirmwareLayout(TabWindow* tabWindow) {
                             {"%type%", firmware.name}
                         }))
                         .setFilters({trans->get("firmware_image") + " (*)"})
-                        .setPath(settings->get<std::string>(this->tabWindow->ident("firmware_path"), ""))
+                        .setPath(_settings->get<std::string>("firmware_path", ""))
                         .open();
 
-                    assign(filePath, block, setting);
+                    assign(filePath, block, fSetting);
                 };
 
-                block->bottom.edit.onDrop = [this, block, setting](std::vector<std::string> files) {
-                    assign( files[0], block, setting );
+                block->bottom.edit.onDrop = [this, block, fSetting](std::vector<std::string> files) {
+                    assign( files[0], block, fSetting );
                 };
             }
             
@@ -136,7 +136,7 @@ auto FirmwareLayout::hotSwap( unsigned storeLevel ) -> void {
 
 auto FirmwareLayout::updateVisibility() -> void {
 	
-	auto firmwareInUse = settings->get<unsigned>( this->tabWindow->ident("use_firmware"), 0, {0, manager->maxSets} );
+	auto firmwareInUse = _settings->get<unsigned>( "use_firmware", 0, {0, manager->maxSets} );
     
 	if (selectorBoxes.size() >= firmwareInUse) {
         switchLayout.setSelection( firmwareInUse );
@@ -144,7 +144,7 @@ auto FirmwareLayout::updateVisibility() -> void {
 	}
 }
 
-auto FirmwareLayout::assign(std::string path, FirmwareContainer::Block* block, FileSetting* setting ) -> void {
+auto FirmwareLayout::assign(std::string path, FirmwareContainer::Block* block, FileSetting* fSetting ) -> void {
     
     if (path.empty())
         return;	
@@ -155,14 +155,14 @@ auto FirmwareLayout::assign(std::string path, FirmwareContainer::Block* block, F
     
     file->setReadOnly();
     // remember path
-    settings->set<std::string>(this->tabWindow->ident("firmware_path"), file->getPath());
+    _settings->set<std::string>("firmware_path", file->getPath());
 
     if (!file->isSizeValid(MAX_MEDIUM_SIZE))
         return program->errorMediumSize( file, mes );  
     
     auto& items = file->scanArchive();
 
-    archiveViewer->onCallback = [this, file, block, setting](GUIKIT::File::Item* item) {
+    archiveViewer->onCallback = [this, file, block, fSetting](GUIKIT::File::Item* item) {
         auto& firmware = emulator->firmwares[block->typeId];
 
         if (!item || (item->info.size == 0))
@@ -174,9 +174,9 @@ auto FirmwareLayout::assign(std::string path, FirmwareContainer::Block* block, F
         block->top.fileLabel.setText(item->info.name);
         block->bottom.edit.setText(file->getFile());
         
-        setting->setPath(file->getFile());
-        setting->setFile(item->info.name);
-        setting->setId(item->id);
+        fSetting->setPath(file->getFile());
+        fSetting->setFile(item->info.name);
+        fSetting->setId(item->id);
 				
 		uint8_t* data = file->archiveData(item->id);
 		unsigned size = file->archiveDataSize( item->id );

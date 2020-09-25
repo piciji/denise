@@ -41,6 +41,7 @@ struct TabWindow : public GUIKIT::Window {
     PaletteLayout* paletteLayout = nullptr;
     StatesLayout* statesLayout = nullptr;
     MiscLayout* miscLayout = nullptr;
+    GUIKIT::Settings* settings = nullptr;
 
     GUIKIT::TabFrameLayout tab;
     
@@ -59,7 +60,6 @@ struct TabWindow : public GUIKIT::Window {
     auto translate() -> void;
     auto show(Layout layout) -> void;
 	auto showDelayed(Layout layout) -> void;
-    auto ident( std::string name ) -> std::string;
 	static auto getView( Emulator::Interface* emulator ) -> TabWindow*;
 
     TabWindow(Emulator::Interface* emulator);

@@ -14,7 +14,7 @@ AudioManager::AudioManager() {
     
     rData.out = new float[4096];
     
-    cosine.setData( &rData );
+    cosine.setData( &rData );    
 }
 
 AudioManager::~AudioManager() {
@@ -24,19 +24,19 @@ AudioManager::~AudioManager() {
 
 auto AudioManager::setLatency() -> void {
     
-    unsigned latency = settings->get<unsigned>("audio_latency", 64u, {1u, 120u});
+    unsigned latency = globalSettings->get<unsigned>("audio_latency", 64u, {1u, 120u});
     audioDriver->setLatency( latency );
 }
 
 auto AudioManager::setPriority() -> void {
     
-    bool priority = settings->get<bool>("audio_priority", false);
+    bool priority = globalSettings->get<bool>("audio_priority", false);
     audioDriver->setHighPriority( priority );
 }
 
 auto AudioManager::setFrequency() -> void {    
     
-    unsigned frequency = settings->get<unsigned>("audio_frequency_v2", 48000u, {0u, 48000u});
+    unsigned frequency = globalSettings->get<unsigned>("audio_frequency_v2", 48000u, {0u, 48000u});
     audioDriver->setFrequency( frequency );
     
     this->outputFrequency = (double)frequency;
@@ -46,7 +46,7 @@ auto AudioManager::setFrequency() -> void {
 
 auto AudioManager::setSynchronize() -> void {
     
-    auto synchronize = settings->get<bool>("audio_sync", true);
+    auto synchronize = globalSettings->get<bool>("audio_sync", true);
     audioDriver->synchronize(synchronize);
     
     setBufferSize();
@@ -62,15 +62,15 @@ auto AudioManager::setResampler() -> void {
     
     double monitorRatio = 1.0;
     
-    bool adjustToMonitorFrequency = settings->get<bool>("video_override_exact", true);        
+    bool adjustToMonitorFrequency = globalSettings->get<bool>("video_override_exact", true);        
                         
     if (adjustToMonitorFrequency) {
         double monitorFrequency;
         
         if (stat.isPal())
-            monitorFrequency = settings->get<double>("video_pal", 50.0, {25.0, 100.0});
+            monitorFrequency = globalSettings->get<double>("video_pal", 50.0, {25.0, 100.0});
         else
-            monitorFrequency = settings->get<double>("video_ntsc", 60.0, {30.0, 120.0});
+            monitorFrequency = globalSettings->get<double>("video_ntsc", 60.0, {30.0, 120.0});
         
         inputFrequency = (inputFrequency * monitorFrequency) / stat.fps;   
         
@@ -89,7 +89,7 @@ auto AudioManager::setBufferSize() -> void {
         return;
 
     stat = activeEmulator->getStatsForSelectedRegion();
-    auto synchronize = settings->get<bool>("audio_sync", true);
+    auto synchronize = globalSettings->get<bool>("audio_sync", true);
     
     bufferSize = 2048;
     
@@ -104,8 +104,8 @@ auto AudioManager::setBufferSize() -> void {
 
 auto AudioManager::setVolume() -> void {
     
-    unsigned volume = settings->get<unsigned>("audio_volume", 100u,{0u, 100u});
-    bool mute = settings->get<bool>("audio_mute", false);
+    unsigned volume = globalSettings->get<unsigned>("audio_volume", 100u,{0u, 100u});
+    bool mute = globalSettings->get<bool>("audio_mute", false);
         
     floatConversion = 0.0;    
     
@@ -125,7 +125,7 @@ auto AudioManager::setAudioDsp() -> void {
     
     stat = activeEmulator->getStatsForSelectedRegion();
 
-    bool useBass = settings->get<bool>("audio_bass", false );
+    bool useBass = globalSettings->get<bool>("audio_bass", false );
     
     if (useBass) {
         
@@ -134,15 +134,15 @@ auto AudioManager::setAudioDsp() -> void {
         bass->setMono( !stat.stereoSound );
         bass->init( 
             (float)outputFrequency,
-            (float)settings->get<unsigned>("audio_bass_freq", 200, {20, 200} ),
-            (float)settings->get<unsigned>("audio_bass_gain", 10, {0, 40} ),
-            settings->get<float>("audio_bass_clipping", 0.4, {0.0, 1.0} )
+            (float)globalSettings->get<unsigned>("audio_bass_freq", 200, {20, 200} ),
+            (float)globalSettings->get<unsigned>("audio_bass_gain", 10, {0, 40} ),
+            globalSettings->get<float>("audio_bass_clipping", 0.4, {0.0, 1.0} )
         );
         
         dsps.push_back( (DSP::Base*)bass );
     }    
     
-    bool useReverb = settings->get<bool>("audio_reverb", false );
+    bool useReverb = globalSettings->get<bool>("audio_reverb", false );
     
     if (useReverb) {
         
@@ -151,27 +151,27 @@ auto AudioManager::setAudioDsp() -> void {
         reverb->setMono( !stat.stereoSound );
         reverb->init( 
             (float)outputFrequency,
-            settings->get<float>("audio_reverb_drytime", 0.43, {0.0, 1.0} ),
-            settings->get<float>("audio_reverb_wettime", 0.4, {0.0, 1.0} ),
-            settings->get<float>("audio_reverb_damping", 0.8, {0.0, 1.0} ),
-            settings->get<float>("audio_reverb_roomwidth", 0.56, {0.0, 1.0} ),
-            settings->get<float>("audio_reverb_roomsize", 0.56, {0.0, 1.0} )
+            globalSettings->get<float>("audio_reverb_drytime", 0.43, {0.0, 1.0} ),
+            globalSettings->get<float>("audio_reverb_wettime", 0.4, {0.0, 1.0} ),
+            globalSettings->get<float>("audio_reverb_damping", 0.8, {0.0, 1.0} ),
+            globalSettings->get<float>("audio_reverb_roomwidth", 0.56, {0.0, 1.0} ),
+            globalSettings->get<float>("audio_reverb_roomsize", 0.56, {0.0, 1.0} )
         );
         
         dsps.push_back( (DSP::Base*)reverb );
     }  
     
-    bool usePanning = settings->get<bool>("audio_panning", false );
+    bool usePanning = globalSettings->get<bool>("audio_panning", false );
     
     if (usePanning) {
         
         DSP::Panning* panning = new DSP::Panning;
         
         panning->init(
-            settings->get<float>("audio_panning_left0", 1.0, {0.0, 1.0} ),
-            settings->get<float>("audio_panning_left1", 0.0, {0.0, 1.0} ),
-            settings->get<float>("audio_panning_right0", 0.0, {0.0, 1.0} ),
-            settings->get<float>("audio_panning_right1", 1.0, {0.0, 1.0} )
+            globalSettings->get<float>("audio_panning_left0", 1.0, {0.0, 1.0} ),
+            globalSettings->get<float>("audio_panning_left1", 0.0, {0.0, 1.0} ),
+            globalSettings->get<float>("audio_panning_right0", 0.0, {0.0, 1.0} ),
+            globalSettings->get<float>("audio_panning_right1", 1.0, {0.0, 1.0} )
         );
             
         dsps.push_back( (DSP::Base*)panning );
@@ -180,16 +180,16 @@ auto AudioManager::setAudioDsp() -> void {
 
 auto AudioManager::setRateControl() -> void {
     
-    dynamicRateControl = settings->get<bool>("dynamic_rate_control", false);
+    dynamicRateControl = globalSettings->get<bool>("dynamic_rate_control", false);
     
-    rateDelta = settings->get<float>("rate_control_delta", 0.005, {0.0, 0.010});        
+    rateDelta = globalSettings->get<float>("rate_control_delta", 0.005, {0.0, 0.010});        
     
     setBufferSize();
 }
 
 auto AudioManager::setStatistics() -> void {
     
-    statistics.enable = settings->get<bool>("show_audio_buffer", false);
+    statistics.enable = globalSettings->get<bool>("show_audio_buffer", false);
 }
 
 auto AudioManager::power() -> void {

@@ -16,15 +16,17 @@ auto Handler::record( Emulator::Interface* emulator, std::string& errorText ) ->
         errorText = trans->get("no emulation active");
         return false;     
     }
+    
+    GUIKIT::Settings* settings = program->getSettings( activeEmulator );
 
-    std::string path = settings->get<std::string>( ident("audio_record_path"), "");
+    std::string path = settings->get<std::string>( "audio_record_path", "");
     
     if (path.empty()) {
         errorText = trans->get("no save location");
         return false;
     }
     
-    std::string fileName = settings->get<std::string>( ident("record_ident"), "sample");
+    std::string fileName = settings->get<std::string>( "record_ident", "sample");
         
     sampleRate = settings->get<unsigned>("audio_frequency_v2", 48000);
 
@@ -64,12 +66,14 @@ auto Handler::setTimeLimit() -> void {
     
     if (!activeEmulator)
         return;
+    
+    GUIKIT::Settings* settings = program->getSettings( activeEmulator );
 
-    if ( settings->get<bool>( ident("audio_record_timelimit"), false) ) {
+    if ( settings->get<bool>( "audio_record_timelimit", false) ) {
 
-        unsigned min = settings->get<unsigned>( ident("audio_record_minutes"), 0, {0, 120});
+        unsigned min = settings->get<unsigned>( "audio_record_minutes", 0, {0, 120});
 
-        unsigned sec = settings->get<unsigned>( ident("audio_record_seconds"), 0, {0, 59});
+        unsigned sec = settings->get<unsigned>( "audio_record_seconds", 0, {0, 59});
 
         timeLimit = min * 60 + sec;
 
@@ -134,10 +138,5 @@ auto Handler::finish() -> void {
     if (activeEmulator)
         EmuConfigView::TabWindow::getView(activeEmulator)->miscLayout->stopRecord();
 }  
-
-auto Handler::ident( std::string name ) -> std::string {
-    
-    return program->ident( activeEmulator, name );
-}
     
 }
