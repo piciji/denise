@@ -86,6 +86,9 @@ auto pComboButton::create() -> void {
 }
 
 auto pComboButton::rebuild() -> void {
+    if (hwnd)
+        return;
+        
     create();
     setFont( widget.font() );
     for(auto& text : comboButton.state.rows)

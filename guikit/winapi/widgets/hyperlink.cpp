@@ -19,17 +19,22 @@ auto pHyperlink::create() -> void {
 
 auto pHyperlink::setText(std::string text) -> void {
     calculatedMinimumSize.updated = false;
+    destroy(hwnd);
     rebuild();
     setGeometry( widget.geometry() );
 }
 
 auto pHyperlink::rebuild() -> void {
+    if (hwnd)
+        return;
+    
     create();
     setFont( widget.font() );    
     pWidget::rebuild();
 }
 
 auto pHyperlink::setUri( std::string uri, std::string wrap ) -> void {
+    destroy(hwnd);
     rebuild();
     setGeometry( widget.geometry() );
 }

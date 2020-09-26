@@ -251,6 +251,9 @@ auto pListView::createTooltip(bool useBallon) -> void {
 }
 
 auto pListView::rebuild() -> void {
+    if (hwnd)
+        return;
+        
     create();
 
 	if (listView.overrideBackgroundColor())
@@ -266,6 +269,7 @@ auto pListView::rebuild() -> void {
 
 auto pListView::setFont(std::string font) -> void {
     if (hwnd && listView.specialFont()) {
+        destroy(hwnd);
         rebuild();
         setGeometry( widget.geometry() );
         return;

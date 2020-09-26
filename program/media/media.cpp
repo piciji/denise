@@ -480,9 +480,7 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
 
                 auto jumperBox = block->selector.jumpers[jumperId];
 
-                std::string saveIdent = block->media->name + "_jumper_" + jumper.name;
-                
-                _underscore(saveIdent);
+                std::string saveIdent = _underscore( block->media->name + "_jumper_" + jumper.name );
                 
                 jumperBox->onToggle = [this, jumperBox, saveIdent, block, jumperId]() {
 

@@ -20,6 +20,9 @@ auto pProgressBar::create() -> void {
 }
 
 auto pProgressBar::rebuild() -> void {
+    if (hwnd)
+        return;
+    
     create();
     setFont( widget.font() );
     setPosition(progressBar.position());

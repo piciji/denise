@@ -110,6 +110,9 @@ auto pTabFrame::create() -> void {
 }
 
 auto pTabFrame::rebuild() -> void {
+    if (hwnd)
+        return;
+    
     create();
     setFont( widget.font() );
     for(auto& text : tabFrame.state.header) append(text, nullptr);

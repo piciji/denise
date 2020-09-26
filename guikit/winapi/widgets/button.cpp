@@ -16,9 +16,12 @@ auto pButton::create() -> void {
 }
 
 auto pButton::rebuild() -> void {
+    if (hwnd)
+        return;
+    
     create();
     setFont( widget.font() );
-    setText(widget.text());
+    setText( widget.text() );
     pWidget::rebuild();
 }
 

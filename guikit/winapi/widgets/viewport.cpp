@@ -11,6 +11,9 @@ auto pViewport::create() -> void {
 }
 
 auto pViewport::rebuild() -> void {
+    if (hwnd)
+        return;
+    
     create();
     setDroppable(viewport.droppable());
     pWidget::rebuild();

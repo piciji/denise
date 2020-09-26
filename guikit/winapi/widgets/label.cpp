@@ -43,6 +43,9 @@ auto pLabel::create() -> void {
 }
 
 auto pLabel::rebuild() -> void {
+    if (hwnd)
+        return;
+    
     create();
     setFont( widget.font() );
     setText(widget.text());

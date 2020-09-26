@@ -29,6 +29,9 @@ auto pRadioBox::create() -> void {
 }
 
 auto pRadioBox::rebuild() -> void {
+    if (hwnd)
+        return;
+    
     create();
     setFont( widget.font() );
     if(radioBox.state.checked)

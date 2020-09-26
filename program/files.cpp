@@ -207,7 +207,7 @@ auto Program::saveSettings() -> void {
 
         auto guid = settings->getGuid();
 
-        std::string ident = "";
+        std::string ident = "global_";
         
         if (guid) {
             Emulator::Interface* emulator = (Emulator::Interface*)guid;
@@ -229,7 +229,7 @@ auto Program::loadSettings() -> void {
         
         auto guid = settings->getGuid();
 
-        std::string ident = "";
+        std::string ident = "global_";
 
         if (guid) {
             Emulator::Interface* emulator = (Emulator::Interface*)guid;
@@ -248,9 +248,16 @@ auto Program::convertSettings() -> void {
     if (globalSettings->get("convert_to_v2", false) )
         return;
     
+    GUIKIT::Settings oldSettings;
+    
+    if (!oldSettings.load( settingsFile() )) {
+        globalSettings->set("convert_to_v2", true);
+        return;
+    }
+    
     auto settingsC64 = getSettings( getEmulator( "C64" ) );
     
-    std::vector<GUIKIT::Setting*> list = globalSettings->getList();
+    std::vector<GUIKIT::Setting*> list = oldSettings.getList();
     
     for( auto setting : list ) {
         
@@ -261,35 +268,35 @@ auto Program::convertSettings() -> void {
         GUIKIT::String::toLowerCase( identIgnoreCase );
         
         if (GUIKIT::String::foundSubStr( identIgnoreCase, "amiga_" ))
-            globalSettings->remove( ident );
+            continue;
             
         else if (GUIKIT::String::foundSubStr( identIgnoreCase, "port1_" ))
-            globalSettings->remove( ident );
+            continue;
 
         else if (GUIKIT::String::foundSubStr( identIgnoreCase, "port2_" ))
-            globalSettings->remove( ident );
+            continue;
         
         else if (GUIKIT::String::foundSubStr( identIgnoreCase, "system_" ))
-            globalSettings->remove( ident );
+            continue;
         
         else if (GUIKIT::String::foundSubStr( identIgnoreCase, "wp_enabled" ))
-            globalSettings->remove( ident );
+            continue;
 
         else if (GUIKIT::String::foundSubStr( identIgnoreCase, "_file" ) && (setting->value == "") )
-            globalSettings->remove( ident );
+            continue;
         
         else if (GUIKIT::String::foundSubStr( identIgnoreCase, "_path" ) && (setting->value == "") )
-            globalSettings->remove( ident );
+            continue;
         
         else if (GUIKIT::String::foundSubStr( identIgnoreCase, "_id" ) && (setting->value == "0") )
-            globalSettings->remove( ident );
+            continue;
 
         else if (GUIKIT::String::foundSubStr( identIgnoreCase, "_wp" ) )
-            globalSettings->remove( ident );
+            continue;
         
         else if (GUIKIT::String::foundSubStr( identIgnoreCase, "c64_" )) {
             
-            globalSettings->remove( ident );
+            oldSettings.remove( ident );
             
             GUIKIT::String::replace( ident, "c64_", "" );                        
             
@@ -298,6 +305,12 @@ auto Program::convertSettings() -> void {
             setting->setIdent( ident );
             
             settingsC64->add( setting );
+        }        
+        else {
+            
+            oldSettings.remove( ident );
+            
+            globalSettings->add( setting );
         }
     }
     
@@ -310,12 +323,12 @@ auto Program::convertSettings() -> void {
 auto Program::rememberNotToSaveSettings() -> void {
 	GUIKIT::Settings tempSettings;
 	
-	if (!tempSettings.load( settingsFile() ))
+	if (!tempSettings.load( settingsFile("global_") ))
 		return;
 	
 	tempSettings.set<bool>("save_settings_on_exit", false);
 	
-	tempSettings.save( settingsFile() );
+	tempSettings.save( settingsFile("global_") );
 }
 
 auto Program::getSettings( Emulator::Interface* emulator ) -> GUIKIT::Settings* {

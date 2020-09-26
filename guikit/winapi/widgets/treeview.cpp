@@ -152,6 +152,9 @@ auto pTreeView::create() -> void {
 }
 
 auto pTreeView::rebuild() -> void {
+    if (hwnd)
+        return;
+    
     create();
 	
 	if (treeView.overrideBackgroundColor())
@@ -216,7 +219,10 @@ auto pTreeView::setImageList() -> void {
 
 auto pTreeView::setFont(std::string font) -> void {
     pWidget::setFont(font);
-    if (!hwnd) return;
+    if (!hwnd)
+        return;
+    
+    destroy(hwnd);
     rebuild();
     setGeometry( widget.geometry() );
 }

@@ -22,6 +22,9 @@ auto pCheckButton::create() -> void {
 }
 
 auto pCheckButton::rebuild() -> void {
+    if (hwnd)
+        return;
+        
     create();
     setFont( widget.font() );
     setChecked(checkButton.state.checked);

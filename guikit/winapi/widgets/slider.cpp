@@ -47,6 +47,9 @@ auto pSlider::create() -> void {
 }
 
 auto pSlider::rebuild() -> void {
+    if (hwnd)
+        return;
+    
     create();
     setFont( widget.font() );
     unsigned position = slider.state.position;

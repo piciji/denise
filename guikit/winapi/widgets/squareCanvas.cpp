@@ -11,6 +11,9 @@ auto pSquareCanvas::create() -> void {
 }
 
 auto pSquareCanvas::rebuild() -> void {
+    if (hwnd)
+        return;
+    
     create();
     InvalidateRect(hwnd, 0, false);
     pWidget::rebuild();

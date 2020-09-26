@@ -33,6 +33,9 @@ auto pCheckBox::create() -> void {
 }
 
 auto pCheckBox::rebuild() -> void {
+    if (hwnd)
+        return;
+    
     create();
     setFont( widget.font() );
     setChecked(checkBox.state.checked);

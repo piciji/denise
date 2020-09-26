@@ -60,6 +60,9 @@ auto pLineEdit::onFocus() -> void {
 }
 
 auto pLineEdit::rebuild() -> void {
+    if (hwnd)
+        return;
+    
     widget.state.text = text();
     create();
     setFont( widget.font() );
