@@ -46,8 +46,8 @@ auto Base::read( unsigned pos ) -> uint8_t {
 		case 0xc:				
             return sdr;
 			
-		case 0xd: {      
-			acknowledgeCycle |= 1;			
+		case 0xd: {      		
+			delay |= CIA_ACK0;
 			
             return icr;
 		}
@@ -146,7 +146,7 @@ auto Base::write( unsigned pos, uint8_t value ) -> void {
 		case 0xc:
 			sdr = value;
 
-			events->add( &startSdr, 2, Emulator::Events::UpdateExisting );
+			events->add( &startSdr, 2, Emulator::SystemTimer::Action::UpdateExisting );
 			
 			break;
             
@@ -156,9 +156,9 @@ auto Base::write( unsigned pos, uint8_t value ) -> void {
             else
                 icrmask &= ~value;
 			
-			maskWriteCycle |= 1;
+			delay |= CIA_MASK_WRITE0;
             
-			if ((acknowledgeCycle & 2) == 0)
+			if ((delay & CIA_ACK1) == 0)
 				handleInterrupt( 0 );
 			
 			break;
@@ -180,7 +180,7 @@ auto Base::write( unsigned pos, uint8_t value ) -> void {
 				events->remove( &(pT->disableOneshot) ); 
 			} else
 				// disabling one shot has one cycle delay
-				events->add( &(pT->disableOneshot), 2, Emulator::Events::WhenNotExistsOnly );
+				events->add( &(pT->disableOneshot), 2, Emulator::SystemTimer::Action::WhenNotExistsOnly );
 			
 			// force load (one time)
 			if ( value & 0x10 ) {
@@ -190,16 +190,16 @@ auto Base::write( unsigned pos, uint8_t value ) -> void {
 			}
             if (pos == 0xf && (value & 0x40) ) {
                 // timer B in cascaded mode, so stop phase-in if needed
-                events->add( &(pT->stop), 2, Emulator::Events::WhenNotExistsOnly );
+                events->add( &(pT->stop), 2, Emulator::SystemTimer::Action::WhenNotExistsOnly );
             
             } else {
                 // start + phase in
                 if ( (value & 1) && !(value & 0x20) ) {
-                    events->add( &(pT->start), 2, Emulator::Events::WhenNotExistsOnly );
+                    events->add( &(pT->start), 2, Emulator::SystemTimer::Action::WhenNotExistsOnly );
 					
                 } else {
                     // stop the timer is delayed by one cycle
-                    events->add( &(pT->stop), 2, Emulator::Events::WhenNotExistsOnly );                
+                    events->add( &(pT->stop), 2, Emulator::SystemTimer::Action::WhenNotExistsOnly );                
 				}
             }						
 			

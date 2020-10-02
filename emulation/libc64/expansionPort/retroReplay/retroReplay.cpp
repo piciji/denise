@@ -7,15 +7,13 @@ namespace LIBC64 {
 
 RetroReplay* retroReplay = nullptr;
     
-RetroReplay::RetroReplay(Emulator::Events* events) : Freezer( true, false ), flash(Emulator::Flash040::Type010) {   
+RetroReplay::RetroReplay() : Freezer( true, false ), flash(Emulator::Flash040::Type010) {   
     
     unbeatable = true;
     flashJumper = false;
     bankJumper = false;
     
     ram = new uint8_t[ 32 * 1024 ];
-    
-    this->events = events;
     
     this->media = nullptr;
     
@@ -27,7 +25,7 @@ RetroReplay::RetroReplay(Emulator::Events* events) : Freezer( true, false ), fla
         system->changeExpansionPortMemoryMode(exRom, game);
     };
     
-    events->registerCallback({&flashModeReset, 1});
+    sysTimer.registerCallback({&flashModeReset, 1});
     
     init();
     
@@ -43,7 +41,7 @@ auto RetroReplay::init( ) -> void {
     flashData = new uint8_t[ 128 * 1024 ];
     
     flash.setData( flashData );
-    flash.setEvents( events );
+    flash.setEvents( &sysTimer );
     
     flash.written = []() {
         system->serializationSize += 128 * 1024;
@@ -68,7 +66,7 @@ auto RetroReplay::clock() -> void {
             exRom = requestedExRom;
             game = requestedGame;
             system->changeExpansionPortMemoryMode(exRom, game);   
-            events->add( &flashModeReset, 1, Emulator::Events::UpdateExisting );
+            sysTimer.add( &flashModeReset, 1, Emulator::SystemTimer::Action::UpdateExisting );
         } 
     }
     

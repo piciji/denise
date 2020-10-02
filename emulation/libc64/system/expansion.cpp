@@ -57,11 +57,11 @@ auto System::setExpansion( Emulator::Interface::Expansion& expansion ) -> void {
     
 auto System::createExpansions() -> void {
     
-    reu = new Reu( &events );
+    reu = new Reu;
     gameCart = new GameCart;
     actionReplay = new ActionReplay;
-    easyFlash = new EasyFlash( &events );
-    retroReplay = new RetroReplay( &events );
+    easyFlash = new EasyFlash;
+    retroReplay = new RetroReplay;
     noExpansion = new ExpansionPort;    
     
     expansionPort = noExpansion;

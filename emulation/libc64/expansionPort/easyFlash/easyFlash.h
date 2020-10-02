@@ -8,10 +8,8 @@ namespace LIBC64 {
     
 struct EasyFlash : Cart {   
     
-    EasyFlash(Emulator::Events* events);
+    EasyFlash();
     ~EasyFlash();
-    
-    Emulator::Events* events;
     
     Emulator::Flash040 flashLo;
     Emulator::Flash040 flashHi;

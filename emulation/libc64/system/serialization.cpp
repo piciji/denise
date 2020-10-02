@@ -122,14 +122,13 @@ auto System::serializeAll(Emulator::Serializer& s) -> void {
     cia1->serialize( s );
     cia2->serialize( s );
     vicII->serialize( s );
-    //sid->serialize( s );    
     Sid::searializeActiveSids( s );
     tape->serialize( s ); 
     iecBus->serialize( s );
     input->serialize( s );
     serializeExpansion( s );
     
-    events.serialize( s );
+    sysTimer.serialize( s );
         
     if (s.mode() == Emulator::Serializer::Mode::Load) {        
         cpu->setContext( cpuCtx );
@@ -241,13 +240,13 @@ auto System::serializeLight() -> void {
     cia1->serialize(s);
     cia2->serialize(s);
     vicII->serialize(s);
-    sid->serialize(s, runAhead.frames > 1);
+	Sid::searializeActiveSids( s, runAhead.frames > 1 );
     tape->serializeLight(s);
     iecBus->serializeLight(s);
     input->serialize(s);
     serializeExpansion(s);
 
-    events.serialize(s);
+    sysTimer.serialize(s);
 }
 
 auto System::unserializeLight() -> void {   
@@ -260,13 +259,13 @@ auto System::unserializeLight() -> void {
     cia1->serialize(s);
     cia2->serialize(s);
     vicII->serialize(s);
-    sid->serialize(s, runAhead.frames > 1);
+    Sid::searializeActiveSids( s, runAhead.frames > 1 );
     tape->serializeLight(s);
     iecBus->serializeLight(s);
     input->serialize(s);
     serializeExpansion(s);
 
-    events.serialize(s);    
+    sysTimer.serialize(s);    
     cpu->setContext(cpuCtx);        
     
     remapVic();

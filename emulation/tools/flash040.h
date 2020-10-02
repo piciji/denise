@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "event.h"
+#include "systimer.h"
 
 namespace Emulator {
 
@@ -100,7 +100,7 @@ struct Flash040 {
     Callback clock;
     Callback written;
 	
-	Events* events;
+	SystemTimer* events;
 	uint8_t* data = nullptr;
 	uint8_t byteToProgram;
 	uint8_t eraseMask[16];
@@ -127,21 +127,21 @@ struct Flash040 {
 		this->data = data;
 	}
 	
-	auto setEvents( Events* events ) -> void {
+	auto setEvents( SystemTimer* events ) -> void {
 		
 		this->events = events;
 		
         clock = [this]() {
             
             if (state == State::ProgramError)
-                this->events->add( &clock, 252, Emulator::Events::UpdateExisting );
+                this->events->add( &clock, 252, Emulator::SystemTimer::UpdateExisting );
         };
         
 		erase = [this]() {
 
 			switch (state) {
 				case State::SectorEraseTimeout:
-					this->events->add( &erase, eraseSectorCycles, Emulator::Events::UpdateExisting );
+					this->events->add( &erase, eraseSectorCycles, Emulator::SystemTimer::UpdateExisting );
 					state = State::SectorErase;
 					break;
                     
@@ -164,7 +164,7 @@ struct Flash040 {
                     for ( uint8_t i = 0; i < this->sectorBytes; i++ ) {
                         if ( eraseMask[i] ) {
                             // there are more sectors to erase
-                            this->events->add( &erase, eraseSectorCycles, Emulator::Events::UpdateExisting );
+                            this->events->add( &erase, eraseSectorCycles, Emulator::SystemTimer::UpdateExisting );
                             return;
                         }
                     }
@@ -316,7 +316,7 @@ struct Flash040 {
 					state = baseState;
 				} else {
                     state = State::ProgramError;
-                    this->events->add( &clock, 254, Emulator::Events::UpdateExisting );					
+                    this->events->add( &clock, 254, Emulator::SystemTimer::UpdateExisting );					
 				}
 				break;
 				
@@ -340,12 +340,12 @@ struct Flash040 {
 				if (unlock1(addr) && (value == 0x10)) {
 					state = State::ChipErase;
 					byteToProgram = 0;
-					events->add( &erase, eraseChipCycles, Emulator::Events::UpdateExisting );
+					events->add( &erase, eraseChipCycles, Emulator::SystemTimer::UpdateExisting );
 				} else if (value == 0x30) {
 					addSectorForErase(addr);
 					byteToProgram = 0;
 					state = State::SectorEraseTimeout;
-                    events->add( &erase, eraseSectorTimeoutCycles, Emulator::Events::UpdateExisting );
+                    events->add( &erase, eraseSectorTimeoutCycles, Emulator::SystemTimer::UpdateExisting );
 				} else {
 					state = baseState;
 				}
@@ -371,7 +371,7 @@ struct Flash040 {
             case State::SectorEraseSuspend:
                 if (value == 0x30) {
                     state = State::SectorErase;
-                    events->add( &erase, eraseSectorCycles, Emulator::Events::UpdateExisting );
+                    events->add( &erase, eraseSectorCycles, Emulator::SystemTimer::UpdateExisting );
                 }
                 break;
 

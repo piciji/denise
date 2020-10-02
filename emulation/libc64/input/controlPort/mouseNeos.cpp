@@ -25,7 +25,7 @@ struct MouseNeos : AnalogControl {
         out &= ~((system->interface->inputPoll( device->id, 2 ) & 1) << 4);
         out &= ~0xf;
 
-        if ( (neosState != NeosState::XH) && !system->events.has( &neosTimer ) ) {
+        if ( (neosState != NeosState::XH) && !sysTimer.has( &neosTimer ) ) {
             // too much cycles elapsed between polling the half bytes ... reinit
             neosState = NeosState::XH;
             neosFetchMovement( );
@@ -82,7 +82,7 @@ struct MouseNeos : AnalogControl {
                 break;
         }
 
-        system->events.add( &neosTimer, neosTimeoutCycles, Emulator::Events::Action::UpdateExisting);
+        sysTimer.add( &neosTimer, neosTimeoutCycles, Emulator::SystemTimer::Action::UpdateExisting);
 
         neosStrobeBefore = value;
     }
@@ -111,7 +111,7 @@ struct MouseNeos : AnalogControl {
         neosState = NeosState::YL;
         neosStrobeBefore = 0xff;
         neosTimeoutCycles = ( vicII->frequency() / 10000 ) * 2;
-        system->events.remove( &neosTimer );
+        sysTimer.remove( &neosTimer );
         AnalogControl::reset();
     }
     

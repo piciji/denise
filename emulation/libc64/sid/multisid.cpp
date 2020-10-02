@@ -222,6 +222,10 @@ auto Sid::setDigiBoostAll( bool state ) -> void {
 }
 
 auto Sid::resetAll() -> void {
+    sysClock = 0;
+	potX = potY = 0xff;
+	sysTimer.add( &callAlarm, 300, Emulator::SystemTimer::Action::UpdateExisting );
+	
     sid->reset();
 
     for (unsigned i = 0; i < 7; i++)

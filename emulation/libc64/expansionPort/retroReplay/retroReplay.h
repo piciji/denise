@@ -8,7 +8,7 @@ namespace LIBC64 {
     
 struct RetroReplay : Freezer {
     
-    RetroReplay(Emulator::Events* events);
+    RetroReplay();
     
     ~RetroReplay();
     
@@ -16,7 +16,6 @@ struct RetroReplay : Freezer {
     bool binFormat;
     
     Emulator::Flash040 flash;
-    Emulator::Events* events;
     std::function<void ()> flashModeReset;
     uint8_t* flashData;
     uint8_t* ram = nullptr;

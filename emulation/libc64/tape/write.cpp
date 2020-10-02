@@ -26,6 +26,8 @@ auto Tape::writeIn(bool bit) -> void {
 	if (!loaded || data || !motorIn || mode != Mode::Record)
 		return;
 	
+	unsigned cyclesElapsed = sysTimer.fallBackCycles( writeClock );
+	
     if (cyclesElapsed <= 7)
         return;
     
@@ -59,7 +61,7 @@ auto Tape::writeIn(bool bit) -> void {
 	if (cycles > cyclesTotal)
 		cyclesTotal = cycles;
 	
-    cyclesElapsed = 0;
+    writeClock = sysTimer.clock;
 	
 	updateCounter();
 }

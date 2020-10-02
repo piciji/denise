@@ -7,7 +7,7 @@
 #include "../../cia/m6526.h"
 #include "../vic/vicII.h"
 #include "memory.h"
-#include "../../tools/event.h"
+#include "../../tools/systimer.h"
 
 namespace Emulator {
     struct Crop;
@@ -27,7 +27,9 @@ struct System {
     
     System(Interface* interface);
     ~System();
-	   
+	
+	using Callback = std::function<void ()>;
+	
     Memory::Read readUnmapped;
     Memory::Write writeUnmapped;
     Memory::Read readRam;
@@ -89,8 +91,9 @@ struct System {
 	Emulator::PowerSupply* powerSupply;
     Input* input;
     KeyBuffer* keyBuffer;
-    GlueLogic* glueLogic;
-    Emulator::Events events;
+    GlueLogic* glueLogic;    
+	
+	Callback countDownPowerSupply;
 	
 	Emulator::Crop* crop;
     unsigned serializationSize; 
@@ -177,5 +180,6 @@ struct System {
 };
 
 extern System* system;
+extern Emulator::SystemTimer sysTimer;
 
 }

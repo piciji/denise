@@ -1,11 +1,8 @@
 
-/**
- * the source/idea behind this serializer is borrowed from higan (byuu)
- */
-
 #pragma once
 
 #include <cstring>
+#include <cstdint>
 #include <vector>
 
 namespace Emulator {      

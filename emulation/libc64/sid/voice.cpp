@@ -59,28 +59,7 @@ Sid::Voice::Voice( ) {
     }
     
     accumulator = 0x555555;
-	waveTemp = 0x555;	
-	
-	callShift = [this]() {
-		bool bit0 = (((shiftRegister >> 22) & 1) | test) ^ ((shiftRegister >> 17) & 1);
-		shiftRegister = ((shiftRegister << 1) | bit0) & 0x7fffff;
-		
-		setNoiseOutput();
-	};
-	
-	callShiftReset = [this]() {
-		shiftRegister = 0x7fffff;
-		setNoiseOutput();
-	};
-	
-	callAging = [this]() {
-		waveformOutput = 0;
-	};    
-}
-
-auto Sid::Voice::registerCallbacks() -> void {
-    
-    events->registerCallback( { {&callShift, 1}, {&callShiftReset, 1}, {&callAging, 1} } );
+	waveTemp = 0x555;		    
 }
 
 auto Sid::Voice::generateWaveTable() -> void {        
@@ -143,7 +122,7 @@ auto Sid::Voice::setType( Type type, bool useDigitalFilter ) -> void {
 auto Sid::Voice::setControl( uint8_t value ) -> void {
     
     bool testPrev = test;
-    bool testAfter = !!(value & 0x8);
+    test = !!(value & 0x8);
     uint8_t waveformPrev = waveform;        
     
     waveform = (value >> 4) & 0x0f;
@@ -155,27 +134,26 @@ auto Sid::Voice::setControl( uint8_t value ) -> void {
     
     wave = waveTable[type][waveform & 0x7];
     
-    if ( !testPrev && testAfter ) {
+    if ( !testPrev && test ) {
         accumulator = 0;
-		events->remove( &callShift );
-		events->add( &callShiftReset, type == Type::MOS_6581 ? 0x8000 : 0x950000, Emulator::Events::Action::UpdateExisting );
+		shiftPipeline = 0;
+        shiftReset = type == Type::MOS_6581 ? 0x8000 : 0x950000;
         
-    } else if ( testPrev && !testAfter ) {        
-		events->remove( &callShiftReset );
+    } else if ( testPrev && !test ) {        
 
         if ( doPreWriteback(waveformPrev) )
             writeShiftRegister();
         
-        callShift();
+        bool bit0 = (~shiftRegister >> 17) & 0x1;
+        shiftRegister = ((shiftRegister << 1) | bit0) & 0x7fffff;
+
+        setNoiseOutput();
     }
     
-    test = testAfter;
-    
-    if ( waveform ) {
-        events->remove( &callAging );
+    if ( waveform )
 		setWaveformOutput();
-    } else if (waveformPrev)
-		events->add( &callAging, type == Type::MOS_6581 ? 200000 : 5000000, Emulator::Events::Action::UpdateExisting );       
+    else if (waveformPrev)
+        aging = type == Type::MOS_6581 ? 200000 : 5000000;
 }
 
 inline auto Sid::Voice::clock() -> void {    
@@ -188,22 +166,34 @@ inline auto Sid::Voice::clock() -> void {
 		msbRising = !!(risingBits & 0x800000);
 
 		if (risingBits & 0x080000) {// bit 19
-			events->add( &callShift, 2, Emulator::Events::Action::UpdateExisting );		
-		}
-	}			
+			shiftPipeline = 2;
+            
+		} else if (shiftPipeline && !--shiftPipeline) {
+            bool bit0 = ((shiftRegister >> 22) ^ (shiftRegister >> 17)) & 0x1;
+            shiftRegister = ((shiftRegister << 1) | bit0) & 0x7fffff;
+
+            setNoiseOutput();
+        }
+        
+	} else {
+        if (shiftReset && !--shiftReset) {
+            shiftRegister = 0x7fffff;
+            setNoiseOutput();
+        }
+        
+        pulseOutput = 0xfff;
+    }		
 }
 
 inline auto Sid::Voice::setWaveformOutput() -> void {
 	
 	if ( waveform ) {		
 		int ix = (accumulator ^ (~syncSource->accumulator & ringMsbMask)) >> 12;
-		
-		uint16_t _pulse = test ? 0xfff : ( noPulse | pulseOutput );
 
-		waveformOutput = wave[ix & 0xfff] & _pulse & noNoiseOrNoiseOutput;
+		waveformOutput = wave[ix & 0xfff] & ( noPulse | pulseOutput ) & noNoiseOrNoiseOutput;
 
 		if ((waveform & 3) && (type == Type::MOS_8580)) {
-			osc3 = waveTemp & _pulse & noNoiseOrNoiseOutput;
+			osc3 = waveTemp & ( noPulse | pulseOutput ) & noNoiseOrNoiseOutput;
 			waveTemp = wave[ix];
 		} else
 			osc3 = waveformOutput;
@@ -214,12 +204,16 @@ inline auto Sid::Voice::setWaveformOutput() -> void {
 			accumulator &= (waveformOutput << 12) | 0x7fffff;
 		}
 
-		if ((waveform > 0x8) && !test && events->delay( &callShift ) != 1) 
+		if ((waveform > 0x8) && !test && (shiftPipeline != 1) ) 
 			// Combined waveforms write to the shift register.
 			writeShiftRegister();
-	}		
+        
+	} else {        
+        if (aging && !--aging) 
+            waveformOutput = 0;
+    }		
 	
-	pulseOutput = (accumulator >> 12) >= pw ? 0xfff : 0x000;
+	pulseOutput = -((accumulator >> 12) >= pw) & 0xfff;
 }
 
 inline auto Sid::Voice::setSyncSource( Voice* source ) -> void {
@@ -299,6 +293,9 @@ auto Sid::Voice::reset() -> void {
     sync = 0;
     ringMsbMask = 0;
     shiftRegister = 0x7ffffe;
+    aging = 0;
+    shiftReset = 0;
+    shiftPipeline = 0;
     setNoiseOutput();
 }
 

@@ -8,7 +8,7 @@ namespace LIBC64 {
 struct Mouse1351 : AnalogControl {
     
     Emulator::QuadratureEncoder quadratureEncoder;
-    unsigned cyclesElapsed;
+    unsigned sysClock;
     
     Mouse1351( Interface::Device* device ) : AnalogControl( device ) {}
     
@@ -24,9 +24,11 @@ struct Mouse1351 : AnalogControl {
     
     auto updatePot() -> void {
 
+		unsigned cyclesElapsed = sysTimer.fallBackCycles( sysClock );
+		
         quadratureEncoder.poll( posX, posY, device->userData, cyclesElapsed);
         
-        cyclesElapsed = 0;
+        sysClock = sysTimer.clock;
     }
     
     auto getPotX() -> uint8_t { 
@@ -41,14 +43,10 @@ struct Mouse1351 : AnalogControl {
         updatePot();
         
         return (uint8_t) ( ( quadratureEncoder.Y & 0x7f ) + 0x40 );        
-    }
-    
-    auto clock() -> void {
-        cyclesElapsed++;
-    }  
+    }    
     
     auto reset() -> void {
-        cyclesElapsed = 0;
+        sysClock = sysTimer.clock;
         quadratureEncoder.reset();
         quadratureEncoder.setCyclesPerFrame( vicII->cyclesPerFrame() );
         quadratureEncoder.setCyclesPerSecond( vicII->frequency() );
@@ -57,7 +55,7 @@ struct Mouse1351 : AnalogControl {
     
     auto serialize(Emulator::Serializer& s) -> void {
         
-        s.integer( cyclesElapsed );
+        s.integer( sysClock );
         
         quadratureEncoder.serialize( s );
         

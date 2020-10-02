@@ -5,13 +5,32 @@
 
 #include <functional>
 
-#include "../tools/event.h"
+#include "../tools/systimer.h"
 #include "../tools/serializer.h"
+
+#define CIA_MASK_WRITE0 1
+#define CIA_MASK_WRITE1 2
+
+#define CIA_ACK0	4
+#define CIA_ACK1	8
+
+#define CIA_INT0	0x10
+#define CIA_INT1	0x20
+
+#define CIA_CNT0	0x40
+#define CIA_CNT1	0x80
+#define CIA_CNT2	0x100
+
+#define CIA_INT		(CIA_INT0 | CIA_INT1)
+#define CIA_CNT		(CIA_CNT0 | CIA_CNT1 | CIA_CNT2)
+#define CIA_CNT_NEW	(CIA_CNT1 | CIA_CNT2)
+
+#define CIA_MASK	~(0x200 | CIA_MASK_WRITE0 | CIA_ACK0 | CIA_INT0 | CIA_CNT0)
 
 namespace CIA {
     
 struct Base {
-	Base( uint8_t model, Emulator::Events* events = nullptr );          
+	Base( uint8_t model, Emulator::SystemTimer* events = nullptr );          
     
     enum Port : unsigned { PORTA, PORTB };
     enum { T_A = 0, T_B = 1 };
@@ -114,7 +133,7 @@ protected:
 	 */
 
 	using Callback = std::function<void ()>;
-	Emulator::Events* events;
+	Emulator::SystemTimer* events;
 	
 	struct Timer {
 		// bit 0: -> phase in, bit 1: -> single step in cascade mode
@@ -155,9 +174,6 @@ protected:
 	Callback flipDummy;
 	
 	bool newVersion = true; // 6526a, 8520a instead of 6526, 8520
-    uint8_t acknowledgeCycle; 
-	uint8_t maskWriteCycle;
-	uint8_t intDelay;	
 	uint8_t icrTemp;
     bool flagRaised;
             
@@ -165,14 +181,15 @@ protected:
 	bool sdrFlag;
 	bool sdrLoaded;
 	bool sdrPending;
-	uint8_t cntHistory;
-	bool cnt;
+	uint32_t cnt;
     uint8_t sdrShift;
     unsigned sdrShiftCount;
 	bool sdrForceFinish;
 	
 	uint8_t icrmask;
     uint8_t icr;
+	
+	uint32_t delay;
 	        	
     auto timerAUnderflow() -> void;
 	auto timerBUnderflow() -> void;

@@ -6,8 +6,7 @@ namespace LIBC64 {
     
 Reu* reu = nullptr;       
     
-Reu::Reu(Emulator::Events* events) : ExpansionPort() {
-    this->events = events;
+Reu::Reu() : ExpansionPort() {
     setId( Interface::ExpansionIdReu );
     prepareRam( 128 );   
 
@@ -47,7 +46,7 @@ Reu::Reu(Emulator::Events* events) : ExpansionPort() {
         dmaCall( false );
     };
 
-    events->registerCallback( { {&setIrq, 1}, {&unsetIrq, 1}, {&setDma, 1}, {&finish, 1} } );        
+    sysTimer.registerCallback( { {&setIrq, 1}, {&unsetIrq, 1}, {&setDma, 1}, {&finish, 1} } );        
 }    
 
 Reu::~Reu() {
@@ -180,7 +179,7 @@ auto Reu::clock() -> void {
         if (system->cpu->isWriteCycle()) {
             if (system->cpu->addressBus() == 0xff00) {
                 waitForStart = false;
-                events->add(&setDma, 1, Emulator::Events::UpdateExisting);
+                sysTimer.add(&setDma, 1, Emulator::SystemTimer::Action::UpdateExisting);
             }
         }
     }  
@@ -215,7 +214,7 @@ inline auto Reu::verify() -> void {
             }
         }
 
-        events->add(&finish, 1, Emulator::Events::UpdateExisting);
+        sysTimer.add(&finish, 1, Emulator::SystemTimer::Action::UpdateExisting);
         
         return;
     } 
@@ -297,7 +296,7 @@ inline auto Reu::decrementTransferLength() -> void {
     if (--transferLength == 0) {
         transferLength = 1;
         status |= 0x40;
-        events->add( &finish, 1, Emulator::Events::UpdateExisting );
+        sysTimer.add( &finish, 1, Emulator::SystemTimer::Action::UpdateExisting );
     }
 }
 
@@ -313,7 +312,7 @@ auto Reu::readIo2( uint16_t addr ) -> uint8_t {
         case 0:
             val = status;
             status &= ~0xe0;
-            events->add( &unsetIrq, 1, Emulator::Events::UpdateExisting );
+            sysTimer.add( &unsetIrq, 1, Emulator::SystemTimer::Action::UpdateExisting );
             break;
         case 1:
             return command;
@@ -356,7 +355,7 @@ auto Reu::writeIo2( uint16_t addr, uint8_t value ) -> void {
                 waitForStart = true;
                 
                 if (command & 0x10) {                    
-                    events->add( &setDma, 1, Emulator::Events::UpdateExisting );
+                    sysTimer.add( &setDma, 1, Emulator::SystemTimer::Action::UpdateExisting );
                     waitForStart = false;
                 }                    
             }
@@ -389,7 +388,7 @@ auto Reu::writeIo2( uint16_t addr, uint8_t value ) -> void {
             if (allowIrq()) {
                 // maybe intmask is activated after a finished transfer, but before reading status.
                 status |= 0x80;
-                events->add( &setIrq, 1, Emulator::Events::UpdateExisting );                
+                sysTimer.add( &setIrq, 1, Emulator::SystemTimer::Action::UpdateExisting );                
             }
             
             break;

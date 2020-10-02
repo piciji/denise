@@ -21,7 +21,6 @@ struct ControlPort {
     virtual auto getPotX() -> uint8_t { return 0xff; }
     virtual auto getPotY() -> uint8_t { return 0xff; }
     
-    virtual inline auto clock() -> void {}
     virtual auto reset() -> void {}
     virtual auto poll() -> void {}
     virtual auto draw(bool midScreen = false) -> void {}    

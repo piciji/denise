@@ -8,11 +8,9 @@ EasyFlash* easyFlash = nullptr;
 
 #include "eapi.h"
 
-EasyFlash::EasyFlash(Emulator::Events* events) : Cart(false, true),
+EasyFlash::EasyFlash() : Cart(false, true),
     flashLo(Emulator::Flash040::TypeB),
     flashHi(Emulator::Flash040::TypeB) {
-    
-    this->events = events;
     
     this->media = nullptr;
     
@@ -38,8 +36,8 @@ auto EasyFlash::init( ) -> void {
     flashLo.setData( dataLo );
     flashHi.setData( dataHi );
     
-    flashLo.setEvents( events );
-    flashHi.setEvents( events );   
+    flashLo.setEvents( &sysTimer );
+    flashHi.setEvents( &sysTimer );   
     
     flashLo.written = []() {
         system->serializationSize += 512 * 1024;

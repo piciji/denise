@@ -15,18 +15,14 @@ struct GlueLogic {
     
     uint8_t vbankBefore;
     
-    Emulator::Events* events;
-    
-    GlueLogic( Emulator::Events* events ) {
-        
-        this->events = events;
+    GlueLogic( ) {
         
         updateVbank = [this]() {
             
             system->vicBank = vbankBefore;
         };    
         
-        this->events->registerCallback( {&updateVbank, 1} );
+        sysTimer.registerCallback( {&updateVbank, 1} );
     }
     
     auto serialize(Emulator::Serializer& s) -> void {        
@@ -40,7 +36,7 @@ struct GlueLogic {
         
         this->type = type;
         // in case of on the fly switching during runtime
-        events->remove( &updateVbank );
+        sysTimer.remove( &updateVbank );
     }
     
     auto setVBank( uint8_t vbank, bool ddrChange ) -> void {
@@ -56,10 +52,10 @@ struct GlueLogic {
         // both vbank bits have changed and new vbank is 1 or 2
         if (((vbankBefore ^ vbank) == 3) &&  (vbank == 1 || vbank == 2) ) {        
             system->vicBank = 3; // force to 3 for the following cycle only
-            events->add( &updateVbank, 2, Emulator::Events::UpdateExisting );
+            sysTimer.add( &updateVbank, 2, Emulator::SystemTimer::Action::UpdateExisting );
             
         } else if (ddrChange && (vbank < vbankBefore) && ((vbankBefore ^ vbank) != 3)) {
-            events->add( &updateVbank, 2, Emulator::Events::UpdateExisting );
+            sysTimer.add( &updateVbank, 2, Emulator::SystemTimer::Action::UpdateExisting );
             
         } else
             system->vicBank = vbank;

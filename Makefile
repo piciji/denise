@@ -30,7 +30,7 @@ objects += thread
 
 prgflags := -DAPP_NAME="\"$(name)\"" -DTRANSLATION_FOLDER="\"$(translationFolder)/\"" -DDATA_FOLDER="\"$(dataFolder)/\"" -DSHADER_FOLDER="\"$(shaderFolder)/\"" -DIMG_FOLDER="\"$(imgFolder)/\""
 flags :=
-link :=
+link := 
 
 ifeq ($(platform),windows)
     link += -static
@@ -41,7 +41,15 @@ else
     link += -lpthread -no-pie
 endif
 
-ifeq ($(DEBUG), 0)
+ifeq ($(gprof), 1)    
+    flags += -O1 -g -pg -no-pie
+    link += -pg
+
+    ifeq ($(platform),windows)
+	link += -mwindows
+    endif
+
+else ifeq ($(DEBUG), 0)
     flags += -O3
     link += -s
 
@@ -54,11 +62,6 @@ else
     ifeq ($(platform),windows)
 	link += -mconsole
     endif
-endif
-
-ifeq ($(gprof), 1)
-    link += -pg
-    flags += -pg -no-pie
 endif
 
 ifeq ($(pgo),instrument)
@@ -124,6 +127,7 @@ obj/reuC64.o:	emulation/libc64/expansionPort/reu/reu.cpp
 obj/easyFlashC64.o: emulation/libc64/expansionPort/easyFlash/easyFlash.cpp
 obj/retroReplayC64.o: emulation/libc64/expansionPort/retroReplay/retroReplay.cpp
 obj/sid.o:	emulation/libc64/sid/sid.cpp
+	$(compiler) $(cppflags) $(flags) -ffast-math -fno-exceptions  $1 -c $< -o $@
 obj/tapeC64.o:	emulation/libc64/tape/tape.cpp
 obj/prg64.o:	emulation/libc64/prg/prg.cpp
 obj/inputC64.o:	emulation/libc64/input/input.cpp

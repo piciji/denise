@@ -47,8 +47,8 @@ auto VicIIFast::power() -> void {
     rc = 0;
     color = 0x80;
     dmaDelay = 0;
-    idle = useThread ? false : true;
-    if (useThread)
+    idle = (useThread && (this == vicII)) ? false : true;
+    if (idle)
         cv.notify_one();
     VicIIBase::power();
     setBorderDim();
@@ -63,6 +63,8 @@ auto VicIIFast::powerOff() -> void {
 
 auto VicIIFast::setThreading( bool state) -> void {
     useThread = state;
+	idle = true;
+	
     if (system->powerOn && (this == vicII) ) {
         idle = useThread ? false : true;
         if (useThread)

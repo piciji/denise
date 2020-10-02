@@ -30,7 +30,7 @@ struct IecBus {
     int64_t syncPos;
     int64_t syncPosRead;
     int64_t syncPosWrite;
-    int64_t cycleCounter;
+    int64_t sysClock;
     int64_t cpuCylcesPerSecond;
     std::atomic<bool> ready;
     std::atomic<bool> idle;
@@ -52,11 +52,10 @@ struct IecBus {
     auto updatePort() -> void;
     auto waitForDrives() -> void;
     auto syncDrives( int64_t _syncPos = 0, bool ciaAccess = false ) -> void;
-    inline auto resetTicks() -> void { cycleCounter &= 0x3ff; }
+    auto resetTicks() -> void;
     auto setDrivesEnabled( uint8_t count ) -> void;
     auto setDriveSpeed(double rpm, double wobble) -> void;
     auto setFirmware(uint8_t* rom, unsigned romSize) -> void;
-    inline auto countTicks() -> void { cycleCounter++; }
     auto randomizeRpm() -> void;
     auto setCpuCyclesPerSecond( unsigned cycles ) -> void;
     auto attach( Emulator::Interface::Media* media, uint8_t* data, unsigned size ) -> void;
@@ -71,6 +70,7 @@ struct IecBus {
     auto setFastForward( bool state ) -> void;
     auto updateIdleState() -> void;
     auto resetDriveState() -> void;
+	inline auto checkForIdleWrite(uint8_t byte) -> bool  { return (byte & 0x38) == lastByte; }
 };
    
 extern IecBus* iecBus;

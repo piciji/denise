@@ -13,10 +13,10 @@ namespace LIBC64 {
     
 Tape* tape = nullptr;
 
-Tape::Tape( Emulator::Events* events ) {
+Tape::Tape( ) {
     
     media = nullptr;
-    this->events = events;
+
 	fetchData = new uint8_t[ TAPE_FETCH_SIZE ];
 	writeData = new uint8_t[ TAPE_WRITE_SIZE ];
 	    
@@ -75,10 +75,10 @@ Tape::Tape( Emulator::Events* events ) {
                 cycles -= gaps;    
         }
             		
-		this->events->remove( &worker );
+		sysTimer.remove( &worker );
 			
         if (gaps)
-            this->events->add( &worker, gaps * speedAdjustment());
+            sysTimer.add( &worker, gaps * speedAdjustment());
 		
         updateCounter();
     };     
@@ -95,7 +95,7 @@ Tape::Tape( Emulator::Events* events ) {
     cylcesPerSecond = 0;
 	reset();
     
-    events->registerCallback( { {&motorOff, 1}, {&worker, 1}, {&delayMode, 1} } );
+    sysTimer.registerCallback( { {&motorOff, 1}, {&worker, 1}, {&delayMode, 1} } );
 }    
 
 Tape::~Tape() {
@@ -113,19 +113,19 @@ auto Tape::setMotorIn( bool state ) -> void {
 	
     if (state) {
         
-		events->remove( &motorOff );
+		sysTimer.remove( &motorOff );
 		
         if (!motorIn) {
             motorIn = true;
             
-            if (!events->has( &worker ))
-                events->add( &worker, TAPE_MOTOR_DELAY );
+            if (!sysTimer.has( &worker ))
+                sysTimer.add( &worker, TAPE_MOTOR_DELAY );
         }
         
     } else {
         
-        if (motorIn && !events->has( &motorOff ) )
-			events->add( &motorOff, TAPE_MOTOR_DELAY );
+        if (motorIn && !sysTimer.has( &motorOff ) )
+			sysTimer.add( &motorOff, TAPE_MOTOR_DELAY );
 	}
 }       
 
@@ -155,11 +155,11 @@ auto Tape::setMode( unsigned mode ) -> void {
 		// why does this matter? stop state changes tape sense, which software could poll
 		nextMode = (Mode)mode;	
 		setMode( Mode::Stop );
-		events->add( &delayMode, 40000 ); // roughly 2 frames
+		sysTimer.add( &delayMode, 40000 ); // roughly 2 frames
 		return;
 	}
 	
-	events->remove( &delayMode );
+	sysTimer.remove( &delayMode );
 	
     lastDirectionForward = directionForward;
     
@@ -170,15 +170,15 @@ auto Tape::setMode( unsigned mode ) -> void {
 			senseOut( true );
             directionForward = mode != Mode::Rewind;
             
-            if (motorIn && !events->has( &worker ))
-                events->add( &worker, TAPE_MOTOR_DELAY );
+            if (motorIn && !sysTimer.has( &worker ))
+                sysTimer.add( &worker, TAPE_MOTOR_DELAY );
                 
             break;
         
         case Mode::Record:
 			senseOut( true );
             directionForward = true;
-			cyclesElapsed = 0;	
+			writeClock = sysTimer.clock;	
 			// a write changes the file pos, so we have to invalidate the read buffer
 			// because it's content is not aligned anymore
 			fetchPos = 0;
@@ -198,7 +198,7 @@ auto Tape::reset() -> void {
     counter = 0;
 	counterOffset = 0;
 	writePos = 0;
-	cyclesElapsed = 0;
+	writeClock = sysTimer.clock;
 	cycles = 0;	
 	directionForward = lastDirectionForward = true;
 	fetchPos = 0;
@@ -284,12 +284,6 @@ auto Tape::readHeader() -> bool {
 		delete[] header;
 			
 	return true;
-}
-
-auto Tape::clock() -> void {    
-    
-	if ( (mode == Mode::Record) && enabled)
-		cyclesElapsed++;
 }
 
 auto Tape::setEnabled( bool state ) -> void {

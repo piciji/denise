@@ -31,10 +31,9 @@
 
 #include "../../tools/dac.h"
 #include "../../tools/splines.h"
-#include "../../tools/event.h"
 #include "../../tools/clamp.h"
 #include "../../tools/serializer.h"
-
+#include "../system/system.h"
 
 namespace LIBC64 {
 
@@ -47,10 +46,10 @@ struct Sid {
     using Callback = std::function<void ()>;
     static std::function<void ( int16_t )> audioRefresh;
     static std::function<void ( int16_t, int16_t )> audioRefreshStereo;
-    std::function<uint8_t ()> getPotX;
-    std::function<uint8_t ()> getPotY;	
+    static std::function<uint8_t ()> getPotX;
+    static std::function<uint8_t ()> getPotY;	
     
-    Sid( Type type, Emulator::Events* events );
+    Sid( Type type );
            
     auto setType( Type type ) -> void;    
     auto setDigiBoost( bool state ) -> void;
@@ -67,7 +66,6 @@ struct Sid {
 	auto powerOff() -> void;
     auto clock() -> void;
 	auto setMoreAccuracy(bool state) -> void;
-    auto registerCallbacks() -> void;
     auto serialize(Emulator::Serializer& s, bool light = false) -> void;
     auto updateIdleState() -> void;    
     auto setIoMask(uint8_t pos) -> void;
@@ -86,7 +84,10 @@ struct Sid {
     static auto calcSerializationSizeForSevenMoreSids() -> void;
     static auto searializeActiveSids(Emulator::Serializer& s, bool light = false) -> void;
     static auto setFilterVolumeCorrection( bool state ) -> void;
+    static auto updateClock() -> void;
+	static auto registerGlobalCallbacks() -> void;
     
+    static unsigned sysClock;
     static bool audioOut;
     static bool extraSids;
     static double leftSids;
@@ -131,10 +132,11 @@ struct Sid {
 	//std::atomic<bool> ready;
 	//std::atomic<bool> idle;
     
-    Emulator::Events* events;
-    Callback callPotUpdate;
-    uint8_t potX;
-    uint8_t potY;
+    static Callback callAlarm;    
+    static Callback callPotUpdate;
+	
+    static uint8_t potX;
+    static uint8_t potY;
 		
 	int v1;
 	int v2;
@@ -143,7 +145,6 @@ struct Sid {
     struct Voice {
         
         Voice( );        
-        Emulator::Events* events;
         Type type;
         Envelope* envelope;
         uint32_t accumulator;
@@ -168,16 +169,16 @@ struct Sid {
 		Voice* syncSource;
 		Voice* syncDest;
 		uint32_t ringMsbMask;
+        
+        uint32_t aging;
+        uint32_t shiftReset;
+        uint8_t shiftPipeline;
 		
         static auto generateWaveTable() -> void;
         static uint16_t waveTable[ 2 ][ 8 ][ 1 << 12 ];
 		static Emulator::DAC<uint16_t> dac6581;
         static Emulator::DAC<uint16_t> dac8580;
 		Emulator::DAC<uint16_t>* dac;
-		
-		Callback callShift;
-		Callback callShiftReset;
-		Callback callAging;
         
         auto setFrequencyLo( uint8_t freqLo ) -> void;
         auto setFrequencyHi( uint8_t freqHi ) -> void;
@@ -195,14 +196,11 @@ struct Sid {
 		inline auto synchronize() -> void;
         auto reset() -> void;		
         auto output() -> int;
-        auto registerCallbacks() -> void;
         
     } voice[ 3 ];
     
     struct Envelope {
-        
-		Envelope();
-		
+
         enum State { S_ATTACK = 0, S_DECAY = 1, S_RELEASE = 2 } state;
         
         static uint16_t ratePeriodLookup[16];
@@ -210,15 +208,11 @@ struct Sid {
         static Emulator::DAC<uint8_t> dac8580;
 		Emulator::DAC<uint8_t>* dac;
         Type type;
-        Emulator::Events* events;
-        Callback callAttack;
-        Callback callDecay;
-        Callback callRelease;
-		Callback callEnvelope;
-		Callback callExponentialCounter;
+        
+        auto callEnvelope() -> void;
+        auto callExponentialCounter() -> void;
         
         uint8_t counter;
-        uint8_t counterTemp;
 		uint8_t env3;
         bool lockEnvCounter;
         bool gateBefore;
@@ -233,7 +227,9 @@ struct Sid {
         uint8_t attack;
         uint8_t decay;
         uint8_t sustain;
-        uint8_t release;        
+        uint8_t release; 
+        
+        uint32_t delay;
 		
         auto control( bool gate ) -> void;
         auto setAttackDecay( uint8_t value ) -> void;
@@ -246,7 +242,6 @@ struct Sid {
         
         auto output() -> uint8_t;
         auto setType( Type type ) -> void;
-        auto registerCallbacks() -> void;
         
     } envelope[ 3 ];
 			

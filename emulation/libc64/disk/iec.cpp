@@ -181,7 +181,9 @@ auto IecBus::syncDrives( int64_t _syncPos, bool ciaAccess ) -> void {
     if ( drivesConnected == 0 )
         return;
       
-    if (!ciaAccess && (cycleCounter < (cpuBurner ? 100 : 3000) ) )
+    unsigned _delay = sysTimer.fallBackCycles( sysClock );
+    
+    if (!ciaAccess && (_delay < (cpuBurner ? 100 : 3000) ) )
         return;
     
     if (threaded)
@@ -197,14 +199,14 @@ auto IecBus::syncDrives( int64_t _syncPos, bool ciaAccess ) -> void {
     // x cpu cycles = x drive cycles
     // cpu clock * x drive cycles = drive clock * x cpu cycles                
     // drive->cycleCounter -= cycleCounterTemp * 1000000; // cpu cycles * drive clock 
-    int64_t _temp = cycleCounter * 1000000;
+    int64_t _temp = _delay * 1000000;
     
     for (auto drive : drivesEnabled) {
         drive->cycleCounter -= _temp;
         drive->synced = drive->cycleCounter >= syncPos;
     }
         
-    cycleCounter = 0; // reset for next run 
+    sysClock = sysTimer.clock; // reset for next run 
     
     // now let the drive thread catch up with the main thread   
     if ( ciaAccess || !threaded ) {
@@ -244,7 +246,7 @@ auto IecBus::power() -> void {
     syncPos = 0;
     syncPosRead = (int64_t)(-0.455 * (double)cpuCylcesPerSecond);
     syncPosWrite = (int64_t)(0.455 * (double)cpuCylcesPerSecond);
-    cycleCounter = ~0;
+    sysClock = sysTimer.clock;
             
     for( auto drive : drivesEnabled ) {                   
         drive->power();
@@ -315,7 +317,7 @@ auto IecBus::readVia() -> uint8_t {
 auto IecBus::readCia() -> uint8_t {
     // let drives catch up
     syncDrives( syncPosRead, true ); 
-    
+	
     return port;
 }
 
@@ -408,7 +410,7 @@ auto IecBus::serialize(Emulator::Serializer& s) -> void {
     s.integer( syncPos );
     s.integer( syncPosRead );
     s.integer( syncPosWrite );
-    s.integer( cycleCounter );
+    s.integer( sysClock );
     s.integer( cpuCylcesPerSecond );
     s.integer( drivesConnected );
     s.integer( lastByte );
@@ -426,7 +428,7 @@ auto IecBus::serializeLight(Emulator::Serializer& s) -> void {
     
     waitForDrives();
     
-    s.integer( cycleCounter );
+    s.integer( sysClock );
     s.integer( atnOut );
     s.integer( clockOut );
     s.integer( dataOut );
@@ -439,6 +441,10 @@ auto IecBus::serializeLight(Emulator::Serializer& s) -> void {
         // disable all drives for runahead
         drivesConnected = 0;
     }
+}
+
+auto IecBus::resetTicks() -> void {
+	sysClock = sysTimer.clock;
 }
 
 }

@@ -12,10 +12,10 @@ auto Sid::readIO( uint8_t addr ) -> uint8_t {
             // sid has two AD converters. AD conversion is not emulated directly,
             // because we simply don't have a voltage to convert from.
             // we fetch resulting digital value directly from input emulation.
-            if (!events->has( &callPotUpdate )) {
+            if (!sysTimer.has( &callPotUpdate )) {
                 potX = getPotX();
                 potY = getPotY();
-                events->add( &callPotUpdate, 512, Emulator::Events::Action::WhenNotExistsOnly );
+                sysTimer.add( &callPotUpdate, 512, Emulator::SystemTimer::Action::WhenNotExistsOnly );
             }
             lastBusValue = addr == 0x19 ? potX : potY;
             databusDecay = databusDecayTime;
@@ -148,7 +148,7 @@ auto Sid::writeIO( uint8_t addr, uint8_t value ) -> void {
 	if(!audioOut || !moreAccuracy)
 		writeIOFilter( addr, value );
     else
-        writeIOPipelined(addr, value);
+        writeIOPipelined(addr, value);        
 }
 
 auto Sid::writeIOFilter( uint8_t addr, uint8_t value ) -> void {

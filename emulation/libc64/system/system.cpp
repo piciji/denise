@@ -26,6 +26,7 @@ namespace Firmware {
 namespace LIBC64 {
     
 System* system = nullptr;
+Emulator::SystemTimer sysTimer;
   
 System::System(Interface* interface) {
     
@@ -39,11 +40,13 @@ System::System(Interface* interface) {
     vicIIFast = new VicIIFast;
     
     for (unsigned i = 0; i < 7; i++) 
-        sids[i] = new Sid( Sid::Type::MOS_6581, &events );
+        sids[i] = new Sid( Sid::Type::MOS_6581 );
     
-    sid = new Sid( Sid::Type::MOS_6581, &events );
+    sid = new Sid( Sid::Type::MOS_6581 );
     
     Sid::calcSerializationSizeForSevenMoreSids();
+	
+	Sid::registerGlobalCallbacks();
     
     requestedSids = 0;
     
@@ -56,14 +59,14 @@ System::System(Interface* interface) {
 	prgInUse = prgs[0];
     
     keyBuffer = new KeyBuffer;
-    glueLogic = new GlueLogic( &events );
+    glueLogic = new GlueLogic();
 	crop = new Emulator::Crop;
 	powerSupply = new Emulator::PowerSupply;
-	tape = new Tape( &events );
+	tape = new Tape;
     iecBus = new IecBus;
     
-    cia1 = new CIA::M6526( 1, &events );
-    cia2 = new CIA::M6526( 2, &events );
+    cia1 = new CIA::M6526( 1, &sysTimer );
+    cia2 = new CIA::M6526( 2, &sysTimer );
     cpu = MOS65FAMILY::create6510();	    
    
     cpuCtx = MOS65FAMILY::createContext();
@@ -218,18 +221,22 @@ System::System(Interface* interface) {
 
     writeIo1Reg = [this](uint16_t addr, uint8_t value) {
         
-        if (Sid::extraSids)
+        if (Sid::extraSids) {
+            Sid::updateClock();
             Sid::writeSidIO( addr + 0xde00, value );
+        }
         
         expansionPort->writeIo1(addr, value);
     };
 
     readIo1Reg = [this](uint16_t addr) {
         
-        if (Sid::extraSids) {
+        if (Sid::extraSids) {            
             Sid* _sid = Sid::getSidByAdr( addr + 0xde00, true );
-            if (_sid)
+            if (_sid) {
+                Sid::updateClock();
                 return _sid->readIO( addr );
+            }
         }
         
         return expansionPort->readIo1(addr);			
@@ -237,24 +244,29 @@ System::System(Interface* interface) {
     
     writeIo2Reg = [this](uint16_t addr, uint8_t value) {
 
-        if (Sid::extraSids)
+        if (Sid::extraSids) {
+            Sid::updateClock();
             Sid::writeSidIO( addr + 0xdf00, value );        
-        
+        }
         expansionPort->writeIo2(addr, value);
     };
 
-    readIo2Reg = [this](uint16_t addr) {
-		
+    readIo2Reg = [this](uint16_t addr) {		
+        
         if (Sid::extraSids) {
             Sid* _sid = Sid::getSidByAdr( addr + 0xdf00, true );
-            if (_sid)
+            if (_sid) {
+                Sid::updateClock();
                 return _sid->readIO( addr );
-        }
+            }
+        }                
         
         return expansionPort->readIo2(addr);		
     };
 
     writeSidReg = [this](uint16_t addr, uint8_t value) {
+        
+        Sid::updateClock();
         
         if (Sid::extraSids)
             return Sid::writeSid( addr, value );
@@ -268,6 +280,8 @@ System::System(Interface* interface) {
             debugCart.exit = true;
         }
         
+        Sid::updateClock();
+        
         if (Sid::extraSids)
             return Sid::getSidByAdr( addr )->writeIO( addr, value );
         
@@ -276,6 +290,8 @@ System::System(Interface* interface) {
 
     readSidReg = [this](uint16_t addr) {
 
+        Sid::updateClock();
+        
         if (Sid::extraSids)
             return Sid::getSidByAdr( addr )->readIO( addr );
         
@@ -358,7 +374,7 @@ System::System(Interface* interface) {
             
             if (diskSilence.active) {                
                 if (!diskSilence.idle) {
-                    if (++diskSilence.idleFrames > 60) {                      
+                    if (++diskSilence.idleFrames > 60) {    
                         diskSilence.idle = true; 
                         diskSilence.idleFrames = 0;
                         iecBus->resetDriveState();
@@ -446,12 +462,12 @@ System::System(Interface* interface) {
             this->interface->audioSample( sampleL, sampleR );
     };
     
-    sid->getPotX = [this]() {
+    Sid::getPotX = [this]() {
         
         return input->readPotX();
     };
     
-    sid->getPotY = [this]() {
+    Sid::getPotY = [this]() {
         
         return input->readPotY();
     };
@@ -492,9 +508,14 @@ System::System(Interface* interface) {
     
     cia2->readPort = [this]( CIA::Base::Port port, CIA::Base::Lines* lines ) {
         
-        if ( port == CIA::Base::PORTA ) {
-            diskSilence.idle = false;
-            diskSilence.idleFrames = 0;
+        if ( port == CIA::Base::PORTA ) {            
+			if (diskSilence.idle) {
+				diskSilence.idle = false;
+				iecBus->resetTicks();
+			}
+			
+			diskSilence.idleFrames = 0;
+			
             return (uint8_t) ( (lines->ioa & 0x3f) | iecBus->readCia() );
         }
         
@@ -506,10 +527,17 @@ System::System(Interface* interface) {
         if ( port == CIA::Base::PORTA ) {
             // the c64 II or c64c has another glue logic for updating the vic bank
             glueLogic->setVBank( ( ~(lines->ioa & 3) ) & 3, !lines->praChange );
-            
-            if (iecBus->writeCia( ~lines->ioa )) {
-                diskSilence.idle = false;
-                diskSilence.idleFrames = 0;
+			
+			if (diskSilence.idle ) {
+				if (iecBus->checkForIdleWrite( ~lines->ioa ))
+					return;			
+				
+				iecBus->resetTicks();
+			}
+			
+            if (iecBus->writeCia( ~lines->ioa )) {				
+				diskSilence.idle = false;
+				diskSilence.idleFrames = 0;
             }
         }
             
@@ -532,14 +560,6 @@ System::System(Interface* interface) {
 		left = vicII->crop.leftOverscan;
 		right = vicII->crop.rightOverscan;
 	};    
-
-	powerSupply->addCallback( [this]( ) {
-		cia1->tod( );
-	} );
-
-	powerSupply->addCallback( [this]( ) {
-		cia2->tod( );
-	} );
 	
 	tape->setReadTransition = [this]() {
 		
@@ -576,6 +596,15 @@ System::System(Interface* interface) {
 		else
             cpu->updateIoLines( 0x7, 0x10 );	
 	};
+	
+	countDownPowerSupply = [this]() {
+		cia1->tod( );
+		cia2->tod( );
+
+		sysTimer.add( &countDownPowerSupply, powerSupply->nextTickCount(), Emulator::SystemTimer::Action::UpdateExisting );
+	};
+
+	sysTimer.registerCallback( { &countDownPowerSupply, 1 } );
     
     // connect keyboard
     for( auto& device : interface->devices ) {
@@ -633,7 +662,9 @@ auto System::setFirmware( unsigned typeId, uint8_t* data, unsigned size ) -> voi
     }   
 }
 
-auto System::power( bool softReset ) -> void {       
+auto System::power( bool softReset ) -> void {   
+	sysTimer.clear();
+
 	if( !softReset )
 		initRam();
 	    
@@ -672,6 +703,8 @@ auto System::power( bool softReset ) -> void {
 		tape->setCyclesPerSecond( vicII->frequency() );
         iecBus->setCpuCyclesPerSecond( vicII->frequency() );
     }
+	
+	sysTimer.add( &countDownPowerSupply, powerSupply->nextTickCount(), Emulator::SystemTimer::Action::UpdateExisting );
     initDebugCart();
     
     iecBus->power();     
@@ -691,8 +724,7 @@ auto System::power( bool softReset ) -> void {
     // cpu doesn't leave halted state by reset request   
     cpu->setRdy( false );
 	
-    cpu->updateIoLines( 0x17, !tape->isEnabled() ? 0x20 : 0 );      
-    events.clear();   
+    cpu->updateIoLines( 0x17, !tape->isEnabled() ? 0x20 : 0 );              
     
     kernalBootComplete = false;
     calcSerializationSize();
@@ -803,9 +835,7 @@ auto System::run() -> void {
     while( !frameComplete ) {        
         cpu->process();     
         if (!diskSilence.idle)
-            iecBus->syncDrives(); 
-        else
-            iecBus->resetTicks();            
+            iecBus->syncDrives();            
     } 
 
     if (useRunAhead) {
@@ -1016,3 +1046,4 @@ auto System::useExtraSids(uint8_t requestedSids) -> void {
 }
 
 }
+

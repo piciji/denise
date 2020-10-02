@@ -1,6 +1,30 @@
 
 #include "sid.h"
 
+#define DELAY_ATTACK0    1
+#define DELAY_ATTACK1    2
+#define DELAY_ATTACK2    4
+#define DELAY_ATTACK3    8
+
+#define DELAY_RELEASE0   0x10
+#define DELAY_RELEASE1   0x20
+#define DELAY_RELEASE2   0x40
+#define DELAY_RELEASE3   0x80
+
+#define DELAY_EXPONENTIAL0   0x100
+#define DELAY_EXPONENTIAL1   0x200
+#define DELAY_EXPONENTIAL2   0x400
+
+#define DELAY_ENVELOPE0   0x800
+#define DELAY_ENVELOPE1   0x1000
+#define DELAY_ENVELOPE2   0x2000
+#define DELAY_ENVELOPE3   0x4000
+#define DELAY_ENVELOPE4   0x8000
+
+#define DELAY_ENVELOPE  (DELAY_ENVELOPE0 | DELAY_ENVELOPE1 | DELAY_ENVELOPE2 | DELAY_ENVELOPE3 | DELAY_ENVELOPE4)
+
+#define ENVELOPE_MASK ~(0x10000 | DELAY_ATTACK0 | DELAY_RELEASE0 | DELAY_EXPONENTIAL0 | DELAY_ENVELOPE0 )
+
 namespace LIBC64 {
     
 uint16_t Sid::Envelope::ratePeriodLookup[16] = {
@@ -60,29 +84,44 @@ auto Sid::Envelope::control( bool gate ) -> void {
     
     if (gate) {       
 
-        if ( events->delay(&callExponentialCounter) == 2 )
-            events->add( &callEnvelope, 2, Emulator::Events::Action::UpdateExisting );  
+        //if ( events->delay(&callExponentialCounter) == 2 )
+        if ( delay & DELAY_EXPONENTIAL0 )
+            //events->add( &callEnvelope, 2, Emulator::Events::Action::UpdateExisting );  
+            delay = (delay & ~DELAY_ENVELOPE) | DELAY_ENVELOPE2;
         
         else if (resetRateCounter)
-            events->add( &callEnvelope, exponentialPeriod == 1 ? 2 : 4, Emulator::Events::Action::UpdateExisting );      
+            //events->add( &callEnvelope, exponentialPeriod == 1 ? 2 : 4, Emulator::Events::Action::UpdateExisting );      
+            delay = (delay & ~DELAY_ENVELOPE) | ( (exponentialPeriod == 1) ? DELAY_ENVELOPE2 : DELAY_ENVELOPE0);
             
-         else if (events->delay(&callExponentialCounter) == 1)
+         //else if (events->delay(&callExponentialCounter) == 1)
+        else if ( delay & DELAY_EXPONENTIAL1 )
             add = 1;        
         
-        events->add( &callDecay, 1, Emulator::Events::Action::BeforeOthers ); // accidently called in next cycle
-        events->add( &callAttack, 2 + add, Emulator::Events::Action::BeforeOthers );
+        //events->add( &callDecay, 1, Emulator::Events::Action::BeforeOthers ); // accidently called in next cycle
+
+        state = S_DECAY;
+        ratePeriod = ratePeriodLookup[ decay ];
+            
+        //events->add( &callAttack, 2 + add, Emulator::Events::Action::BeforeOthers );
+        
+        delay |= add ? DELAY_ATTACK0 : DELAY_ATTACK1;
         
     } else {
         
-        if ( events->has( &callEnvelope ) )
+        //if ( events->has( &callEnvelope ) )
+        if (delay & DELAY_ENVELOPE)
             // allow pending counter update
             add = 1;
         
-        if (state == S_ATTACK)
-            events->add( &callRelease, 2 + add, Emulator::Events::Action::BeforeOthers ); 
+        if (state == S_ATTACK) {
+            //events->add( &callRelease, 2 + add, Emulator::Events::Action::BeforeOthers ); 
+            delay |= add ? DELAY_RELEASE0 : DELAY_RELEASE1;
+        }
         
-        else if (state == S_DECAY)
-            events->add( &callRelease, 1, Emulator::Events::Action::BeforeOthers );
+        else if (state == S_DECAY) {
+            state = S_RELEASE;
+            ratePeriod = ratePeriodLookup[ release ];
+        }
     }            
     
     gateBefore = gate;
@@ -92,7 +131,7 @@ auto Sid::Envelope::reset() -> void {
     
     attack = decay = sustain = release = 0;
     
-    counter = counterTemp = 0xaa;
+    counter = 0xaa;
     
     lockEnvCounter = false;
     
@@ -109,68 +148,64 @@ auto Sid::Envelope::reset() -> void {
     exponentialPeriod = 1;
     
     gateBefore = 0;	
-}
-
-Sid::Envelope::Envelope() {
-	
-	callAttack = [this]() {
-
-		state = S_ATTACK;
-		ratePeriod = ratePeriodLookup[ attack ];
-		lockEnvCounter = false;
-	};
-
-	callDecay = [this]() {
-
-		state = S_DECAY;
-		ratePeriod = ratePeriodLookup[ decay ];
-	};
-
-	callRelease = [this]() {
-
-		state = S_RELEASE;
-		ratePeriod = ratePeriodLookup[ release ];
-	};
-
-	callEnvelope = [this]() {
-
-        if (lockEnvCounter)
-            return;
-        
-		if (state == S_ATTACK) {
-
-			++counter &= 0xff;
-            
-			if (counter == 0xff) 
-                callDecay();            
-
-		} else // Decay or Release
-			--counter &= 0xff;
-        
-        updateExponentialPeriod();
-	};
-	
-	callExponentialCounter = [this]() {
-        
-		exponentialCounter = 0;
-        
-        if ( ( ( state == S_DECAY ) && (counter != sustainComparator()) ) // decrease volume untill seted sustain value
-            || ( state == S_RELEASE ) ) { // decrease volume untill silence
-            
-            events->add( &callEnvelope, 1 );
-        }
-	};	 
-}
-
-auto Sid::Envelope::registerCallbacks() -> void {
     
-    events->registerCallback( { {&callAttack, 2}, {&callDecay, 2}, {&callRelease, 2}, {&callEnvelope, 2}, {&callExponentialCounter, 2} } );
+    delay = 0;
+}
+
+auto Sid::Envelope::callEnvelope() -> void {
+    if (lockEnvCounter)
+        return;
+
+    if (state == S_ATTACK) {
+
+        ++counter &= 0xff;
+
+        if (counter == 0xff) {
+            state = S_DECAY;
+            ratePeriod = ratePeriodLookup[ decay ];
+        }
+
+    } else // Decay or Release
+        --counter &= 0xff;
+
+    updateExponentialPeriod();
+}
+
+auto Sid::Envelope::callExponentialCounter() -> void {
+    exponentialCounter = 0;
+
+    if (((state == S_DECAY) && (counter != sustainComparator())) // decrease volume untill seted sustain value
+            || (state == S_RELEASE)) { // decrease volume untill silence
+
+        //events->add( &callEnvelope, 1 );
+        delay = (delay & ~DELAY_ENVELOPE) | DELAY_ENVELOPE3;
+    }
 }
 
 inline auto Sid::Envelope::clock() -> void {
-    // we update from counterTemp instead of counter, because the global event queue is running before
-    // and could change the counter
-	env3 = counterTemp; 
+	
+    env3 = counter;
+    
+    if (delay) {
+        delay = (delay << 1) & ENVELOPE_MASK;
+        
+        if (delay & DELAY_RELEASE3) {
+            state = S_RELEASE;
+            ratePeriod = ratePeriodLookup[ release ];
+        }
+
+        if (delay & DELAY_ATTACK3) {
+            state = S_ATTACK;
+            ratePeriod = ratePeriodLookup[ attack ];
+            lockEnvCounter = false;
+        }
+        
+        if (delay & DELAY_EXPONENTIAL2)
+            callExponentialCounter();        
+        
+        if (delay & DELAY_ENVELOPE4)
+            callEnvelope();        
+    }
 	
 	if (resetRateCounter) {
 		resetRateCounter = false;
@@ -178,12 +213,14 @@ inline auto Sid::Envelope::clock() -> void {
 		
 		if ( state == S_ATTACK ) {
             exponentialCounter = 0;
-			events->add( &callEnvelope, 2 );  
+			//events->add( &callEnvelope, 2 );  
+            delay = (delay & ~DELAY_ENVELOPE) | DELAY_ENVELOPE2;
 			
 		} else if (!lockEnvCounter) {
 			
             if (++exponentialCounter == exponentialPeriod) //non linear volume decrease
-                events->add( &callExponentialCounter, exponentialPeriod != 1 ? 2 : 1 );
+                //events->add( &callExponentialCounter, exponentialPeriod != 1 ? 2 : 1 );
+                delay |= (exponentialPeriod != 1) ? DELAY_EXPONENTIAL0 : DELAY_EXPONENTIAL1;
 		}
 	}	
 	
@@ -194,11 +231,7 @@ inline auto Sid::Envelope::clock() -> void {
 	
 	++rateCounter &= 0x7fff; //15 bit counter	
 	if (!rateCounter) // wrap around
-		rateCounter = 1; 
-    
-    // env3 wil be updated in beginning of phase 1.
-    // so don't do it here or a possible read between the half cycles get the wrong value
-    counterTemp = counter;		
+		rateCounter = 1;     	
 }
 
 auto Sid::Envelope::updateExponentialPeriod() -> void {

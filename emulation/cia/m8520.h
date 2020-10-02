@@ -6,7 +6,7 @@
 namespace CIA {
     
 struct M8520 : Base {   
-	M8520( uint8_t model, Emulator::Events* events = nullptr ) : Base( model, events ) {}
+	M8520( uint8_t model, Emulator::SystemTimer* events = nullptr ) : Base( model, events ) {}
 	/**
 	 * impulse on tod line occured
 	 */

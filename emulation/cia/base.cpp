@@ -4,7 +4,7 @@
 
 namespace CIA {
       
-Base::Base( uint8_t model, Emulator::Events* events )
+Base::Base( uint8_t model, Emulator::SystemTimer* events )
 :
 cra( timer[T_A].control ),
 crb( timer[T_B].control )
@@ -78,7 +78,7 @@ crb( timer[T_B].control )
 		if (!cnt)
 			positiveCntTransition();
 		
-		cnt ^= 1;
+		cnt ^= CIA_CNT0;
 				
 		if (cnt)			
 			sdrShift <<= 1;
@@ -86,7 +86,7 @@ crb( timer[T_B].control )
 			serialCall( (sdrShift & 0x80) != 0 );			
 
 		if (--sdrShiftCount == 1) {
-			this->events->add(&finishSdr, 2, Emulator::Events::UpdateExisting);
+			this->events->add(&finishSdr, 2, Emulator::SystemTimer::Action::UpdateExisting);
 
 			if (sdrPending) {
 				sdrPending = false;
@@ -117,14 +117,11 @@ auto Base::reset() -> void {
 	
 	sdrPending = false;
 	sdrLoaded = false;
-    cnt = true;
-	cntHistory = 0;
+    cnt = CIA_CNT0;
 	sdrForceFinish = false;
     
-	acknowledgeCycle = 0;	
-	maskWriteCycle = 0;
 	flagRaised = false;
-	intDelay = 0;
+	delay = 0;
 	sdrFlag = false;
     icrTemp = 0; 
 	
@@ -168,13 +165,8 @@ auto Base::clock() -> void {
 	}
 
     newVersion ? interruptControl() : interruptControlOld();
-
-    acknowledgeCycle <<= 1;
-    maskWriteCycle <<= 1;  			
-	cntHistory = (cntHistory << 1) | cnt;
-
-    // hi cycle
-    intDelay >>= 1;
+	
+	delay = ((delay << 1) & CIA_MASK) | cnt;
 
     decrement<T_B>();
     decrement<T_A>();
@@ -186,43 +178,43 @@ auto Base::clock() -> void {
 
 inline auto Base::interruptControl() -> void {
     // for new cia models    
-    if (intDelay & 1) {
+    if (delay & CIA_INT1) {
         // interrupt is incomming and allowed by icr mask, a write in mask register
         // before can cause this situation too
         icrTemp |= 0x80;
         icr |= 0x80;
         
-        if (acknowledgeCycle & 1) { // we have both at same time, interrupt and acknowledge cycle
+        if (delay & CIA_ACK0) { // we have both at same time, interrupt and acknowledge cycle
             irqCall( false );
             // interrupt is scheduled for next cycle, so cpu can not recognize it this cycle.
             // icr is reseted next cycle too with zero or the interrupts incomming this cycle
-            events->add( &updateIcrAndSetIrq, 1, Emulator::Events::UpdateExisting );
+            events->add( &updateIcrAndSetIrq, 1, Emulator::SystemTimer::Action::UpdateExisting );
         } else
             // normal interrupt behaviour
             irqCall( true );
         
-    } else if (acknowledgeCycle & 1) {
+    } else if (delay & CIA_ACK0) {
         // interrupt is not incomming or is not allowed by icr mask and
         // this is an acknowledge cycle
         irqCall( false );
         // we schedule to update icr next cycle, so a possible second read in a row
         // gets the non reseted state of icr.
         // in next cycle icr will be reseted with zero or the interrupts incomming this cycle
-        events->add( &updateIcrOnly, 1, Emulator::Events::UpdateExisting );
+        events->add( &updateIcrOnly, 1, Emulator::SystemTimer::Action::UpdateExisting );
     }                 
 }
 
 inline auto Base::interruptControlOld() -> void {    
     // for old cia models, interrupt is incomming one cycle later
-    if (intDelay & 1) {
+    if (delay & CIA_INT1) {
         
-        if (acknowledgeCycle & 1) {
+        if (delay & CIA_ACK0) {
             // interrupt and acknowledge cycle at the same time.
             // msb is seted but there is no interrupt sended to cpu like new cia
             icr = 0x80;
             irqCall( false );   
             // icr is reseted next cycle with zero or the interrupts incomming this cycle
-			events->add( &updateIcrOnly, 1, Emulator::Events::UpdateExisting );    
+			events->add( &updateIcrOnly, 1, Emulator::SystemTimer::Action::UpdateExisting );    
            
         } else {
             // normal interrupt behaviour
@@ -230,14 +222,14 @@ inline auto Base::interruptControlOld() -> void {
             irqCall( true );
         }
         
-    } else if (acknowledgeCycle & 1) {
+    } else if (delay & CIA_ACK0) {
         // same behaviour like new cia, but all interrupt sources will be reseted
         // but not the msb of icr, matters when a second read in register 0d happens
         icr &= ~0x7f;
 		
         irqCall( false );
         
-		events->add( &updateIcrOnly, 1, Emulator::Events::UpdateExisting );    
+		events->add( &updateIcrOnly, 1, Emulator::SystemTimer::Action::UpdateExisting );    
     }
 }
 
@@ -252,13 +244,13 @@ auto Base::handleInterrupt( uint8_t number ) -> void {
 		// a scheduled interrupt is discarded.
 		// can not happen for new cias
 		if (number == 0) // write in icr mask register
-			 if(maskWriteCycle & 2) // second write in mask register in a row
-				intDelay = 0;
+			 if(delay & CIA_MASK_WRITE1) // second write in mask register in a row
+				delay &= ~CIA_INT;
 		
         return; 
 	}
 
-	intDelay |= newVersion ? 1 : 2;
+	delay |= newVersion ? CIA_INT1 : CIA_INT0;
 }
 
 template<uint8_t timerId> inline auto Base::decrement( ) -> void {
@@ -281,14 +273,14 @@ template<uint8_t timerId> inline auto Base::updateState( ) -> void {
 	
 	if ( pTimer->forceloadCycle ) {
         // a possible force load placed by register write get priority, so run this sooner
-        events->add( &(pTimer->disableForceLoad), 1, Emulator::Events::BeforeOthers ); 
+        events->add( &(pTimer->disableForceLoad), 1, Emulator::SystemTimer::Action::BeforeOthers ); 
         
 		pTimer->counter = pTimer->latch;
 		
         if ( pTimer->run == 1 )        
             // if a timer stop event finishes the same cycle like restart after
             // underflow, the stop event should run after restart to get priority
-            events->add( &(pTimer->start), 1, Emulator::Events::BeforeOthers );
+            events->add( &(pTimer->start), 1, Emulator::SystemTimer::Action::BeforeOthers );
         
         pTimer->run = 0;
 	}
@@ -309,10 +301,10 @@ auto Base::timerAUnderflow() -> void {
 	timer[T_A].toggle ^= 1;
 	
 	if ( (crb & 0x61) == 0x41 )
-		events->add( &(timer[T_B].step), 1, Emulator::Events::UpdateExisting );
+		events->add( &(timer[T_B].step), 1, Emulator::SystemTimer::Action::UpdateExisting );
 	
-    else if ( (cntHistory & 2) && ((crb & 0x61) == 0x61 ))
-		events->add( &(timer[T_B].step), 1, Emulator::Events::UpdateExisting );
+    else if ( (delay & CIA_CNT1) && ((crb & 0x61) == 0x61 ))
+		events->add( &(timer[T_B].step), 1, Emulator::SystemTimer::Action::UpdateExisting );
 	
     handleInterrupt( 1 );
 }	
@@ -328,7 +320,7 @@ auto Base::timerBUnderflow() -> void {
     // next cycle like expected but the second bit in icr is not seted
     // note: acknowledge cycle is not the cycle when the read happened but the
     // cycle after
-    if ( (acknowledgeCycle & 1) && !newVersion) {
+    if ( (delay & CIA_ACK0) && !newVersion) {
         icrTemp &= ~2;
 		icr &= ~2;        
     }
@@ -372,7 +364,7 @@ auto Base::serialIn( bool newCnt, bool bit ) -> void {
     if (cra & 0x40) //SP pin is defined as output
         return;    
 	
-	cnt = newCnt;
+	cnt = newCnt ? CIA_CNT0 : 0;
 	
 	if (!cnt)
 		return;
@@ -385,7 +377,7 @@ auto Base::serialIn( bool newCnt, bool bit ) -> void {
         sdrShiftCount = 0;
         //transfer complete
 		sdr = sdrShift;
-        this->events->add(&finishSdr, 2, Emulator::Events::UpdateExisting);
+        this->events->add(&finishSdr, 2, Emulator::SystemTimer::Action::UpdateExisting);
     }
 }
 
@@ -393,19 +385,19 @@ auto Base::serialIn( bool newCnt, bool bit ) -> void {
 auto Base::positiveCntTransition( ) -> void {
            
 	if ((cra & 0x21) == 0x21) //timer A is driven by cnt pin transition      
-		events->add( &(timer[T_A].step), 2, Emulator::Events::UpdateExisting );
+		events->add( &(timer[T_A].step), 2, Emulator::SystemTimer::Action::UpdateExisting );
 
 	if ( ( crb & 0x61) == 0x21) //timer B is driven by cnt pin transition
-		events->add( &(timer[T_B].step), 2, Emulator::Events::UpdateExisting );
+		events->add( &(timer[T_B].step), 2, Emulator::SystemTimer::Action::UpdateExisting );
 }
 
 auto Base::switchSerialDirection(bool input) -> void {
 	
 	if (input) { 
 		if (!newVersion)
-			sdrForceFinish = (cntHistory & 0x7) != 0x7;
+			sdrForceFinish = (delay & CIA_CNT) != CIA_CNT;
 		else
-			sdrForceFinish = (cntHistory & 0x6) != 0x6;
+			sdrForceFinish = (delay & CIA_CNT_NEW) != CIA_CNT_NEW;
 
 		if (!sdrForceFinish) {
 			if (sdrShiftCount != 2 && (events->delay(&flipCnt) == 1)  )
@@ -418,7 +410,7 @@ auto Base::switchSerialDirection(bool input) -> void {
 			sdrShift <<= 1;
 
 		if (sdrForceFinish) {
-			events->add( &finishSdr, 2, Emulator::Events::UpdateExisting );                
+			events->add( &finishSdr, 2, Emulator::SystemTimer::Action::UpdateExisting );                
 			sdrForceFinish = false;
 		}
 	}
@@ -426,8 +418,8 @@ auto Base::switchSerialDirection(bool input) -> void {
 	if (!cnt)
 		positiveCntTransition();				
 
-	cnt = true;
-	cntHistory |= 1;
+	cnt = CIA_CNT0;
+	delay |= CIA_CNT0;
 
 	events->remove(&flipCnt);
 	events->remove(&flipDummy);
@@ -462,10 +454,8 @@ auto Base::serialize(Emulator::Serializer& s) -> void {
         s.integer( t.toggle );        
     }
     
+	s.integer( delay );
     s.integer( newVersion );
-    s.integer( acknowledgeCycle );
-    s.integer( maskWriteCycle );
-    s.integer( intDelay );
     s.integer( sdrFlag );
     s.integer( icrTemp );
     s.integer( flagRaised );
@@ -474,7 +464,6 @@ auto Base::serialize(Emulator::Serializer& s) -> void {
     s.integer( sdrLoaded );
 	s.integer( sdrPending );
     s.integer( cnt );
-	s.integer( cntHistory );
     s.integer( sdrShift );
     s.integer( sdrShiftCount );
 	s.integer( sdrForceFinish );

@@ -36,7 +36,7 @@ struct Freezer : Cart {
 
     virtual auto clock() -> void {
 
-        if (freezeArmed && metCondition()) {
+        if (freezeArmed && conditionMet()) {
             exRom = true;
             game = false;
             system->changeExpansionPortMemoryMode(exRom, game);
@@ -59,7 +59,7 @@ struct Freezer : Cart {
         if (!freezeArmed)
             return;
         
-        if (metCondition()) {
+        if (conditionMet()) {
             exRom = true;
             game = false;
             system->changeExpansionPortMemoryMode(exRom, game);
@@ -80,7 +80,7 @@ struct Freezer : Cart {
         }
     }
     
-    auto metCondition() -> bool {
+    auto conditionMet() -> bool {
         // cart has already sent NMI.
         // now cart listen at address bus till NMI vector 0xfffa is placed on bus.
         // cart pulls exrom and PLA switches to ULTIMAX mode.

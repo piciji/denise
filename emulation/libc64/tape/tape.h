@@ -1,7 +1,6 @@
 
 #pragma once
 
-#include "../../tools/event.h"
 #include "../../tools/serializer.h"
 #include "../interface.h"
 
@@ -18,7 +17,7 @@ namespace LIBC64 {
     
 struct Tape {
     
-    Tape( Emulator::Events* events );
+    Tape( );
     ~Tape();
 
 	enum Mode : uint8_t { Stop = 0, Play = 1, Record = 2, Forward = 3, Rewind = 4, ResetCounter = 5 };
@@ -33,7 +32,6 @@ struct Tape {
 	auto setEnabled( bool state ) -> void;
 	auto isEnabled() -> bool { return enabled; }
 	auto writeIn(bool bit) -> void;
-	auto clock() -> void;
 	auto setMotorIn( bool state ) -> void;
 	auto load(Emulator::Interface::Media* media, uint8_t* data, unsigned size) -> void;
     auto unload() -> void;
@@ -51,8 +49,7 @@ struct Tape {
     auto getMedia() -> Emulator::Interface::Media* { return media; }
 	
 protected:	
-	Emulator::Interface::Media* media;
-    Emulator::Events* events;
+	Emulator::Interface::Media* media;    
     std::function<void ()> worker;
     std::function<void ()> motorOff;
 	std::function<void ()> delayMode;
@@ -71,7 +68,7 @@ protected:
 	bool writeProtect = false;
     uint8_t writeQuestionState = 0;
 	bool writeBit;
-    unsigned cyclesElapsed;
+    unsigned writeClock;
     uint64_t cycles;
     uint64_t cycles999;
 	unsigned cylcesPerSecond;

@@ -12,6 +12,7 @@
 #include "serialization.cpp"
 #include "../../tools/thread.h"
 #include "../../tools/clamp.h"
+#include "../../tools/systimer.h"
 
 namespace LIBC64 {
     
@@ -23,9 +24,43 @@ bool Sid::audioOut = true;
 bool Sid::useExternalFilter = true;
 unsigned Sid::serializationSizeForSevenMoreSids = 0;
 bool Sid::useVolumeCorrection = false;
+unsigned Sid::sysClock = 0;
+uint8_t Sid::potX = 0xff;
+uint8_t Sid::potY = 0xff;
+
+std::function<uint8_t ()> Sid::getPotX = []() { return 0xff; };
+std::function<uint8_t ()> Sid::getPotY = []() { return 0xff; };
+
+Sid::Callback Sid::callPotUpdate = []() { };
+
+Sid::Callback Sid::callAlarm = []() { Sid::updateClock(); };
 
 std::function<void ( int16_t )> Sid::audioRefresh = [](int16_t sample) {};
 std::function<void ( int16_t, int16_t )> Sid::audioRefreshStereo = [](int16_t sampleL, int16_t sampleR) {};   
+
+auto Sid::registerGlobalCallbacks() -> void {
+	
+	sysTimer.registerCallback( { { &callPotUpdate, 1 }, { &callAlarm, 1 } } );
+}
+
+auto Sid::updateClock() -> void {
+    unsigned _delay = sysTimer.fallBackCycles( sysClock );
+	
+	if (!_delay)
+		return;
+    
+    if (extraSids) {
+        for (unsigned i = 0; i < _delay; i++)
+            clockMultiChips();    
+    } else {
+        for (unsigned i = 0; i < _delay; i++)
+            sid->clock();        
+    }
+    
+    sysClock = sysTimer.clock;
+	
+	sysTimer.add( &callAlarm, 300, Emulator::SystemTimer::Action::UpdateExisting );
+}
 
 auto Sid::useLeftChannel(bool state) -> void {
     leftChannel = state;
@@ -37,10 +72,9 @@ auto Sid::useRightChannel(bool state) -> void {
     updateSidUsage();
 }
 
-Sid::Sid( Type type, Emulator::Events* events ) : filter( this ), chamberlinFilter(filter) {
+Sid::Sid( Type type ) : filter( this ), chamberlinFilter(filter) {
 
     lastBusValue = 0;
-    this->events = events;
 	
     setType( type );
     
@@ -56,11 +90,8 @@ Sid::Sid( Type type, Emulator::Events* events ) : filter( this ), chamberlinFilt
 	voice[1].setSyncSource( &voice[0] );
 	voice[2].setSyncSource( &voice[1] );
     
-	for( unsigned i = 0; i < 3; i++ ) {       
-        voice[i].envelope = &envelope[i];
-        voice[i].events = events;
-        envelope[i].events = events;
-    }
+	for( unsigned i = 0; i < 3; i++ )     
+        voice[i].envelope = &envelope[i];    
 	
     ioMask = 0xD420;
     ioPos = 1;
@@ -68,13 +99,7 @@ Sid::Sid( Type type, Emulator::Events* events ) : filter( this ), chamberlinFilt
     audioOut = true;
 	//idle = true;
 	//ready = false;
-    powerOn = false;
-    
-    getPotX = []() { return 0xff; };
-    getPotY = []() { return 0xff; };
-    callPotUpdate = []() { };
-    
-    registerCallbacks();    
+    powerOn = false;             
 	
 //	std::thread worker( [this] {
 //
@@ -118,18 +143,6 @@ auto Sid::calcSerializationSizeForSevenMoreSids() -> void {
     sid->serialize( s, false );
     
     serializationSizeForSevenMoreSids = s.size() * 7;
-}
-
-auto Sid::registerCallbacks() -> void {
-    
-    events->registerCallback( { &callPotUpdate, 1 } );
-    
-    for( unsigned i = 0; i < 3; i++ ) {   
-        
-        voice[i].registerCallbacks();
-        
-        envelope[i].registerCallbacks();
-    }
 }
 
 auto Sid::disableAudioOut(bool state) -> void {
@@ -276,8 +289,7 @@ auto Sid::reset() -> void {
 	//ready = false;	
     
 	registerWrite.pipelined = false;
-    sampleCounter = 0;
-    potX = potY = 0xff;
+    sampleCounter = 0;    
     powerOn = true;
     updateIdleState();
 }
@@ -287,7 +299,7 @@ auto Sid::powerOff() -> void {
     powerOn = false;
 }
 
-auto Sid::clock() -> void {
+inline auto Sid::clock() -> void {
     unsigned i;
     
     for (i = 0; i < 3; i++) {
@@ -301,7 +313,7 @@ auto Sid::clock() -> void {
 
     for (i = 0; i < 3; i++)
         voice[i].setWaveformOutput();    
-    
+
     if (audioOut) {    
 //        if (moreAccuracy) {            
 //            

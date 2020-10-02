@@ -116,7 +116,7 @@ struct LightControl : ControlPort {
             // the cia could read the light trigger on fire pin. of course the programmer doesn't know when this 
             // happens. so it would be quite useless and more useless if the trigger lasts only one cycle.
 
-            system->events.add( &triggerOff, 1 );            
+            sysTimer.add( &triggerOff, 1 );            
         };
         
         triggerOff = [this]() {
@@ -130,7 +130,7 @@ struct LightControl : ControlPort {
         uint8_t out = 0xff;
         
         // trigger pin is active
-        if ( system->events.has( &triggerOff ) )                        
+        if ( sysTimer.has( &triggerOff ) )                        
             out &= ~(1 << 4);
         
         return out;        
@@ -234,7 +234,7 @@ struct LightControl : ControlPort {
         unsigned cycles = vicII->getCyclesForNextLightTrigger( x, y, cyclePixel );
         
         if ( cycles )
-            system->events.add( &triggerOn, cycles );                
+            sysTimer.add( &triggerOn, cycles );                
     }
     
     auto setBoundaries( ) -> void {
@@ -251,8 +251,8 @@ struct LightControl : ControlPort {
              
     virtual auto reset() -> void {
         
-        system->events.remove( &triggerOn );
-        system->events.remove( &triggerOff );
+        sysTimer.remove( &triggerOn );
+        sysTimer.remove( &triggerOff );
         button1Pressed = button2Pressed = false;
         cyclePixel = 0;
         displayPtr = nullptr;

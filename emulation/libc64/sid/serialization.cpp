@@ -5,7 +5,10 @@ namespace LIBC64 {
 
 auto Sid::searializeActiveSids(Emulator::Serializer& s, bool light) -> void {
     
+	s.integer( sysClock );
     s.integer( useVolumeCorrection );
+	s.integer( potX );
+    s.integer( potY );
     
     sid->serialize(s, light);    
     
@@ -51,8 +54,6 @@ auto Sid::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer( registerWrite.pipelined );
     s.integer( registerWrite.addr );
     s.integer( registerWrite.value );
-    s.integer( potX );
-    s.integer( potY );
     s.integer( v1 );
     s.integer( v2 );
     s.integer( v3 );
@@ -79,6 +80,10 @@ auto Sid::serialize(Emulator::Serializer& s, bool light) -> void {
         s.integer( v.noPulse );
         s.integer( v.waveZero );
         s.integer( v.ringMsbMask );
+        
+        s.integer( v.aging );
+        s.integer( v.shiftReset );
+        s.integer( v.shiftPipeline );
 
         if (s.mode() == Emulator::Serializer::Mode::Load) {
             v.setType( v.type, filterType == FilterType::Chamberlin ); // update pointer                
@@ -89,7 +94,6 @@ auto Sid::serialize(Emulator::Serializer& s, bool light) -> void {
         s.integer( (uint8_t&)e.state );
         s.integer( (uint8_t&)e.type );
         s.integer( e.counter );
-        s.integer( e.counterTemp );
         s.integer( e.env3 );
         s.integer( e.lockEnvCounter );
         s.integer( e.gateBefore );

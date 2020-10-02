@@ -11,14 +11,9 @@ namespace Emulator {
 	
 struct PowerSupply {
 	
-	using Callback = std::function<void ()>;
-	
-	std::vector<Callback> callbacks;
-	
 	unsigned ticksPerSecond;
 	unsigned powerFrequency;
 	unsigned baseTicks;
-	unsigned ticks;
 	unsigned powerCounter;
 	unsigned actualTicks;
 	
@@ -30,25 +25,8 @@ struct PowerSupply {
 		this->baseTicks = ticksPerSecond / powerFrequency;		
 		
 		powerCounter = 0;
-		actualTicks = 0;
-		
-		ticks = nextTickCount();
-	}
-	
-	auto addCallback( Callback callback ) -> void {
-		
-		callbacks.push_back( callback );
-	}
-	
-	auto clock() -> void {
-		
-		if (--ticks == 0) {			
-			for (auto& callback : callbacks)
-				callback();
-			
-			ticks = nextTickCount();
-		}
-	}
+		actualTicks = 0;		
+	}	
 	
 	auto nextTickCount() -> unsigned {		
 		
@@ -87,7 +65,6 @@ struct PowerSupply {
         s.integer( ticksPerSecond );
         s.integer( powerFrequency );
         s.integer( baseTicks );
-        s.integer( ticks );
         s.integer( powerCounter );
         s.integer( actualTicks );
     }
