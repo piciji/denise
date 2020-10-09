@@ -343,7 +343,7 @@ auto Input::serialize(Emulator::Serializer& s) -> void {
     
     s.integer( potMask );
     
-    this->lines = &system->cia1->lines;
+    this->lines = &cia1->lines;
     
     keyboard.serialize( s );
     

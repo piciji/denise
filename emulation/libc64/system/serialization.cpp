@@ -128,12 +128,7 @@ auto System::serializeAll(Emulator::Serializer& s) -> void {
     input->serialize( s );
     serializeExpansion( s );
     
-    sysTimer.serialize( s );
-        
-    if (s.mode() == Emulator::Serializer::Mode::Load) {        
-        cpu->setContext( cpuCtx );
-        dispatcha();
-    }
+    sysTimer.serialize( s );        
 }    
     
 inline auto System::serializeDiskIdle(Emulator::Serializer& s) -> void {
@@ -162,8 +157,7 @@ auto System::serialize(Emulator::Serializer& s) -> void {
     prgInUse->serialize( s );
     glueLogic->serialize( s );
     powerSupply->serialize( s );    
-    
-    serialize6502( s, cpuCtx );   
+    cpu->serialize( s );
 }
 
 auto System::serialize6502( Emulator::Serializer& s, MOS65Context* cpuCtx ) -> void {
@@ -265,8 +259,7 @@ auto System::unserializeLight() -> void {
     input->serialize(s);
     serializeExpansion(s);
 
-    sysTimer.serialize(s);    
-    cpu->setContext(cpuCtx);        
+    sysTimer.serialize(s);         
     
     remapVic();
     remapCpu();  

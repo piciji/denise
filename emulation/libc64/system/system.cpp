@@ -16,7 +16,6 @@
 #include <cstring>
 
 #include "expansion.cpp"
-#include "scheduler.cpp"
 #include "serialization.cpp"
 
 namespace Firmware {
@@ -26,6 +25,9 @@ namespace Firmware {
 namespace LIBC64 {
     
 System* system = nullptr;
+ExpansionPort* expansionPort = nullptr;
+CIA::M6526* cia1 = nullptr;
+CIA::M6526* cia2 = nullptr;
 Emulator::SystemTimer sysTimer;
   
 System::System(Interface* interface) {
@@ -66,72 +68,8 @@ System::System(Interface* interface) {
     iecBus = new IecBus;
     
     cia1 = new CIA::M6526( 1, &sysTimer );
-    cia2 = new CIA::M6526( 2, &sysTimer );
-    cpu = MOS65FAMILY::create6510();	    
-   
-    cpuCtx = MOS65FAMILY::createContext();
-    
-    cpuCtx->read = [this]( uint16_t addr ) {
-        
-        return memoryCpu.read( addr );
-    };
-    
-    cpuCtx->write = [this]( uint16_t addr, uint8_t value ) {
-        
-        if (expansionPort->isDma())
-            // DMA halts CPU in next read cycle, but a write cycle happened before.
-            // DMA pulls AEC low too at the same time.
-            // we can not write here, because CPU is decoupled from BUS.
-            return;
-        
-		memoryCpu.write( addr, value );
-    };
-    
-    cpuCtx->writeSelect = [this](uint16_t addr) {
-        
-        if (expansionPort->isDma())
-            return;
-        
-        // CPU doesn't update data BUS.
-        // write uses last BUS value (always VIC data from first half cycle)
-        // CPU signals address 0 or 1 this way only, no need for further checks.
-        this->ram[ addr ] = vicII->lastReadPhase1();
-    };
-    
-    cpuCtx->readSelect = [this]() {
-        // CPU watches BUS in case of RDY.
-        
-        // vicII sends AEC to CPU, 3 cycles after it sends BA(RDY) to CPU.
-        // expansion port DMA pulls AEC low too.
-        if ( vicII->isAecLow() || expansionPort->isDma() )
-            // CPU is in tri-state and decoupled from BUS
-            return cpu->dataBus();
-
-        // CPU is BUS Master in second half cycle, so it reads last BUS value from first half cycle,
-        // which is always accessed by VIC.
-        return vicII->lastReadPhase1();
-    };
-    
-    cpuCtx->updatePort = [this](uint8_t lines, uint8_t ddr) {
-        
-		if (!powerOn)
-			return;
-		
-        auto modeBefore = mode;
-        
-        mode &= ~7;
-        
-        mode |= lines & 7;     
-        
-        if (modeBefore != mode)        
-            this->remapCpu( );
-		
-        tape->writeIn( ((~ddr | lines) & 8) != 0 );
-        tape->setMotorIn( ((lines & ddr) & 0x20) == 0 );
-    };        
-    
-    cpu->setContext( cpuCtx ); 
-    cpu->setSo(1);
+    cia2 = new CIA::M6526( 2, &sysTimer );  
+	cpu = new M6510;
     
     readRam = [this](uint16_t addr) {
 
@@ -394,7 +332,6 @@ System::System(Interface* interface) {
             else if (fastForward.renderNext) {
                 fastForward.renderNext = false;
                 vicII->disableSequencer( fastForward.config & (unsigned)Interface::FastForward::NoVideoSequencer );
-                dispatcha();
 
             } else if (fastForward.config & (unsigned)Interface::FastForward::ReduceVideoOutput) {
                 frame = nullptr;
@@ -402,7 +339,6 @@ System::System(Interface* interface) {
                 if ((++fastForward.frameCounter & 15) == 0) {                                
                     fastForward.frameCounter = 0;
                     vicII->disableSequencer( false );
-                    dispatcha();
                     fastForward.renderNext = true;
                 }
             }
@@ -415,7 +351,7 @@ System::System(Interface* interface) {
             if ( !expansionPort->isBootable() )
                 keyBuffer->process();
 
-            cpu->hintUnblockedExecution();
+            //cpu->hintUnblockedExecution();
         };
 
         vicII->midScreenCallback = [this]() {
@@ -722,7 +658,7 @@ auto System::power( bool softReset ) -> void {
 		cpu->reset();
 	}
     // cpu doesn't leave halted state by reset request   
-    cpu->setRdy( false );
+    //cpu->setRdy( false );
 	
     cpu->updateIoLines( 0x17, !tape->isEnabled() ? 0x20 : 0 );              
     
@@ -734,7 +670,6 @@ auto System::power( bool softReset ) -> void {
 	fastForward.config = 0;
     fastForward.frameCounter = 0;
     fastForward.renderNext = false;
-    dispatcha();
     
     if ( !expansionPort->isBootable() ) {
         KeyBuffer::Action action;
@@ -809,6 +744,9 @@ auto System::setRunAheadPerformance(bool state) -> void {
 auto System::run() -> void {
     frameComplete = false;
     runAhead.pos = 0;
+	
+	if (cpu->callResetRoutine)
+		cpu->resetRoutine();
     
     input->poll();
     // of course real system sends restore when key is pressed, but polling each cycle for this is useless
@@ -827,7 +765,6 @@ auto System::run() -> void {
         runAhead.pos = runAhead.frames;
         vicII->disableSequencer( runAhead.performance );
         Sid::disableAudioOut( runAhead.frames > 1 );
-        dispatcha();
     }
         
     labelRunAhead:    
@@ -850,7 +787,6 @@ auto System::run() -> void {
             if (--runAhead.pos == 0) {
                 if (!vicII->useSequencer()) {
                     vicII->disableSequencer(false);
-                    dispatcha();
                 }
             }
             frameComplete = false;
@@ -1009,7 +945,6 @@ auto System::setFastForward( unsigned config ) -> void {
     Sid::disableAudioOut(config & (unsigned) Emulator::Interface::FastForward::NoAudioOut);
     vicII->disableSequencer(config & (unsigned) Emulator::Interface::FastForward::NoVideoSequencer);
     iecBus->setFastForward(config & (unsigned) Emulator::Interface::FastForward::NoVideoSequencer);
-    dispatcha();
 }
 
 auto System::setCycleRenderer(bool state) -> void {
@@ -1045,5 +980,21 @@ auto System::useExtraSids(uint8_t requestedSids) -> void {
         serializationSize -= Sid::serializationSizeForSevenMoreSids;
 }
 
-}
+auto System::updatePort(uint8_t lines, uint8_t ddr) -> void {
+        
+		if (!powerOn)
+			return;
+		
+        auto modeBefore = mode;
+        
+        mode &= ~7;
+        
+        mode |= lines & 7;     
+        
+        if (modeBefore != mode)        
+            this->remapCpu( );
+		
+        tape->writeIn( ((~ddr | lines) & 8) != 0 );
+}     
 
+}

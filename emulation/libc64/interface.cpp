@@ -20,7 +20,7 @@
 
 namespace LIBC64 {
 
-const std::string Interface::Version = "10891";
+const std::string Interface::Version = "10892";
     
 Interface::Interface() : Emulator::Interface( "C64" ) {        
     
@@ -935,7 +935,7 @@ auto Interface::createExpansionImage(MediaGroup* group, unsigned& imageSize) -> 
 }
 
 auto Interface::isExpansionBootable() -> bool {
-    return system->expansionPort->isBootable();
+    return expansionPort->isBootable();
 }
 
 auto Interface::getMediaForCustomFileSuffix(std::string suffix) -> Media* {
@@ -1066,16 +1066,16 @@ auto Interface::setModel(unsigned modelId, int value) -> void {
             system->updateStats();
             break;
         case ModelIdCiaRev:
-            system->cia1->setNewVersion( value & 1 );
-            system->cia2->setNewVersion( value & 1 );
+            cia1->setNewVersion( value & 1 );
+            cia2->setNewVersion( value & 1 );
             break;
         case ModelIdCpuAneMagic:
             //this is annoying ... look in 6502 cpu code for more informations
-            system->cpu->setMagicForAne( value & 0xff );
+            cpu->setMagicForAne( value & 0xff );
             break;
 		case ModelIdCpuLaxMagic:
             //this is annoying ... look in 6502 cpu code for more informations
-            system->cpu->setMagicForLax( value & 0xff );
+            cpu->setMagicForLax( value & 0xff );
             break;
         case ModelIdGlueLogic:
             system->glueLogic->setType( (GlueLogic::Type)(value & 1) );
@@ -1154,11 +1154,11 @@ auto Interface::getModel(unsigned modelId) -> int {
         case ModelIdSidSampleFetch:
             return Sid::getResampleQuality();
         case ModelIdCiaRev:
-            return system->cia1->isNewVersion();
+            return cia1->isNewVersion();
         case ModelIdCpuAneMagic:
-            return system->cpu->getMagicForAne();
+            return cpu->getMagicForAne();
 		case ModelIdCpuLaxMagic:
-			return system->cpu->getMagicForLax();
+			return cpu->getMagicForLax();
         case ModelIdGlueLogic:
             return (int)system->glueLogic->type;
         case ModelIdLeftLineAnomaly:
@@ -1286,7 +1286,7 @@ auto Interface::setMemory(MemoryType* memoryType, unsigned memoryId) -> void {
         if (!expansion.memoryType)
             continue;
         
-        if (expansion.id != system->expansionPort->id)
+        if (expansion.id != expansionPort->id)
             continue;
         
         if (expansion.memoryType == memoryType) {
@@ -1294,7 +1294,7 @@ auto Interface::setMemory(MemoryType* memoryType, unsigned memoryId) -> void {
             auto memory = getMemoryById(*memoryType, memoryId);
             
             if (memory)
-                system->expansionPort->prepareRam( memory->size );            
+                expansionPort->prepareRam( memory->size );            
         }
         
         break;
@@ -1318,7 +1318,7 @@ auto Interface::unsetExpansion() -> void {
 
 auto Interface::getExpansion() -> Expansion* {
 
-    return getExpansionById( system->expansionPort->id );
+    return getExpansionById( expansionPort->id );
 }
 
 auto Interface::setExpansionJumper( Media* media, unsigned jumperId, bool state ) -> void {
@@ -1355,11 +1355,11 @@ auto Interface::getExpansionJumper( Media* media, unsigned jumperId ) -> bool {
 }
 
 auto Interface::hasFreezerButton() -> bool {
-    return system->expansionPort->hasFreezeButton();
+    return expansionPort->hasFreezeButton();
 }
 
 auto Interface::freeze() -> void {
-    system->expansionPort->freeze();
+    expansionPort->freeze();
 }
 
 auto Interface::analyzeExpansion(uint8_t* data, unsigned size) -> Expansion* {

@@ -16,7 +16,7 @@ ActionReplay::ActionReplay(bool game, bool exrom) : Freezer( game, exrom ) {
 }
 
 auto ActionReplay::assign( Cart* cart ) -> void {
-    bool inUse = this == system->expansionPort;
+    bool inUse = this == expansionPort;
 
     delete this;
 
@@ -25,7 +25,7 @@ auto ActionReplay::assign( Cart* cart ) -> void {
     system->setExpansionCallbacks( actionReplay );
 
     if (inUse)            
-        system->expansionPort = actionReplay;
+        expansionPort = actionReplay;
     
 }
 

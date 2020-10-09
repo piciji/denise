@@ -51,7 +51,12 @@ crb( timer[T_B].control )
     
     updateIcrAndSetIrq = [this]() {
         icr = icrTemp;
-        irqCall( true );
+		// have changed CPU to detect nmi/irq changes not at fixed point (within cycle) anymore. (for speed reasons)
+		// that is not a problem for IRQ but for NMI, because it's edge sensitive.
+		// so we have to make sure, the final state of the NMI line is transmitted within a cycle.
+		// otherwise an unwanted state change could happen, when calling the NMI line more times a cycle
+		if (!(delay & CIA_ACK0))
+			irqCall( true );
     };
     
     updateIcrOnly = [this]() {

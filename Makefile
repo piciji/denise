@@ -23,9 +23,9 @@ ifeq ($(platform),windows)
     objects += dinput5 dinput7 dinput8 xaudio27 xaudio28 xaudio29
 endif
 #objects += m68000
-objects += m6502 m6510 ciaBase cia6526 vicIIBase vicIICycle vicIIFast systemC64 sid tapeC64 inputC64 controlPortC64
+objects += m6502 ciaBase cia6526 vicIIBase vicIICycle vicIIFast systemC64 sid tapeC64 inputC64 controlPortC64
 objects += cartC64 gameCartC64 actionReplayC64 reuC64 easyFlashC64 retroReplayC64
-objects += via iec prg64 drive1541 m6502custom structure1541
+objects += via iec prg64 drive1541 m6502custom structure1541 m6510x
 objects += thread
 
 prgflags := -DAPP_NAME="\"$(name)\"" -DTRANSLATION_FOLDER="\"$(translationFolder)/\"" -DDATA_FOLDER="\"$(dataFolder)/\"" -DSHADER_FOLDER="\"$(shaderFolder)/\"" -DIMG_FOLDER="\"$(imgFolder)/\""
@@ -113,7 +113,7 @@ obj/libami.o:	emulation/libami/interface.cpp
 obj/libC64.o:	emulation/libc64/interface.cpp
 #obj/m68000.o:	libami/cpu/m680x0/m68000.cpp
 obj/m6502.o:	emulation/processor/m65xx/m6502/m6502.cpp
-obj/m6510.o:	emulation/processor/m65xx/m6510/m6510.cpp
+#obj/m6510.o:	emulation/processor/m65xx/m6510/m6510.cpp
 obj/ciaBase.o:	emulation/cia/base.cpp	
 obj/cia6526.o:	emulation/cia/m6526.cpp
 obj/vicIIBase.o:emulation/libc64/vic/base.cpp
@@ -161,6 +161,7 @@ obj/cmd.o:		program/cmd/cmd.cpp
 obj/palette.o:		program/video/palette.cpp
 obj/video.o:		program/video/manager.cpp
 obj/shader.o:		program/video/shader.cpp
+obj/m6510x.o:		emulation/libc64/m6510/m6510.cpp
 
 objects := $(patsubst %,obj/%.o,$(objects))
 loname := $(call strlower,$(name))

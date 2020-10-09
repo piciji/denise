@@ -54,10 +54,6 @@ auto VicIIBase::disableSequencer(bool state) -> void {
     enableSequencer = !state;
 }
 
-auto VicIIBase::useSequencer() -> bool {
-    return enableSequencer;
-}
-
 auto VicIIBase::isRevision65() -> bool {
     return rev65;
 }
@@ -554,4 +550,3 @@ template auto VicIIBase::checkLightPen<true>() -> void;
 template auto VicIIBase::checkLightPen<false>() -> void;
 
 }
-

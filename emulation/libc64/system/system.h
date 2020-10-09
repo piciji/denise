@@ -4,6 +4,7 @@
 #include <functional>
 #include "../interface.h"
 #include "../../processor/m65xx/model.h"
+#include "../m6510/m6510.h"
 #include "../../cia/m6526.h"
 #include "../vic/vicII.h"
 #include "memory.h"
@@ -79,12 +80,7 @@ struct System {
     uint8_t* basicRom = nullptr;
     unsigned basicRomSize = 0;
     
-    Interface* interface;
-    MOS65Model* cpu;
-    MOS65Context* cpuCtx;
-    CIA::M6526* cia1;
-    CIA::M6526* cia2;
-    ExpansionPort* expansionPort;
+    Interface* interface;  
     ExpansionPort* noExpansion;
     Prg* prgInUse = nullptr;
     
@@ -168,7 +164,6 @@ struct System {
     auto setExpansionCallbacks( ExpansionPort* expansionPtr ) -> void;
     auto analyzeExpansion(uint8_t* data, unsigned size) -> Emulator::Interface::Expansion*;
     
-    auto dispatcha() -> void;
     auto setFastForward( unsigned config ) -> void;    
     auto setRunAhead(unsigned frames) -> void;
     auto setRunAheadPerformance(bool state) -> void;
@@ -177,9 +172,14 @@ struct System {
     auto setCycleRenderer(bool state) -> void;
 	auto updateStats() -> void;
     auto updateStatsStereo() -> void;
+	
+	auto updatePort(uint8_t lines, uint8_t ddr) -> void;
 };
 
 extern System* system;
+extern ExpansionPort* expansionPort;
+extern CIA::M6526* cia1;
+extern CIA::M6526* cia2; 
 extern Emulator::SystemTimer sysTimer;
 
 }

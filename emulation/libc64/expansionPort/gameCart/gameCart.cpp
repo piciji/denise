@@ -18,14 +18,14 @@ GameCart::GameCart(bool game, bool exrom) : Cart( game, exrom ) {
 }
 
 auto GameCart::assign( Cart* cart ) -> void {
-    bool inUse = this == system->expansionPort;
+    bool inUse = this == expansionPort;
 
     delete this;
 
     gameCart = (GameCart*)cart;
 
     if (inUse)            
-        system->expansionPort = gameCart;
+        expansionPort = gameCart;
     
 }
 

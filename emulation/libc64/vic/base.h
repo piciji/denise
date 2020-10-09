@@ -99,7 +99,7 @@ struct VicIIBase {
     auto setMeta( bool state ) -> void;
     auto isRevision65() -> bool;
     auto disableSequencer( bool state ) -> void;
-    auto useSequencer() -> bool;
+    inline auto useSequencer() -> bool { return enableSequencer; }
 	auto triggerLightPen( bool state ) -> void;
     auto triggerLightPen( bool state, uint8_t subCycle ) -> void;
     auto getHeight() -> unsigned { return vHeight; }

@@ -60,7 +60,7 @@ auto RetroReplay::create( Interface::CartridgeId cartridgeId ) -> Cart* {
 auto RetroReplay::clock() -> void {
     
     if (flashJumper) {
-        uint16_t _addr = system->cpu->addressBus();
+        uint16_t _addr = cpu->addressBus();
         
         if (_addr >= 0x8000 && _addr <= 0x9fff) {
             exRom = requestedExRom;

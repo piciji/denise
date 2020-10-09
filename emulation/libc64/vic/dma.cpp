@@ -4,6 +4,9 @@
 namespace LIBC64 {    
 
 auto VicIICycle::clock() -> void {
+	if (!enableSequencer)
+		return clockSilence();
+	
     advanceCycle();
     updateBadLine();
     setLineInterrupt();

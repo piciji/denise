@@ -62,4 +62,3 @@ auto VicIICycle::disableGreyDotBug(bool state) -> void {
 }
 
 }
-

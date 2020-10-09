@@ -176,8 +176,8 @@ auto Reu::clock() -> void {
 
     if (waitForStart) {
         // listen CPU bus usage        
-        if (system->cpu->isWriteCycle()) {
-            if (system->cpu->addressBus() == 0xff00) {
+        if (cpu->isWriteCycle()) {
+            if (cpu->addressBus() == 0xff00) {
                 waitForStart = false;
                 sysTimer.add(&setDma, 1, Emulator::SystemTimer::Action::UpdateExisting);
             }

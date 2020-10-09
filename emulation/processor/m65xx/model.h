@@ -16,7 +16,7 @@
  * usage: compile m6502.cpp and m6510.cpp, include this header in your program.
  * NOTE: when you commenting out following define, you don't need to compile m6510.cpp
  */
-#define SUPPORT_M6510
+//#define SUPPORT_M6510
 
 /**
  * comment out following 'define' if:

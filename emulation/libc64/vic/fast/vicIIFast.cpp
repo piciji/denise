@@ -86,7 +86,9 @@ inline auto VicIIFast::setLineInterrupt() -> void {
 }
 
 auto VicIIFast::clock() -> void {
-
+	if (!enableSequencer)
+		return clockSilence();
+	
     if (irqLatchPending) {
         irqLatch |= irqLatchPending & 0x7f;
         updateIrq();

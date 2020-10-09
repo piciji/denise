@@ -85,8 +85,8 @@ struct Freezer : Cart {
         // now cart listen at address bus till NMI vector 0xfffa is placed on bus.
         // cart pulls exrom and PLA switches to ULTIMAX mode.
         // in ULTIMAX mode the NMI vector points to cart and so it can take over control.
-        uint16_t _addr = system->cpu->addressBus();
-        bool _write = system->cpu->isWriteCycle();
+        uint16_t _addr = cpu->addressBus();
+        bool _write = cpu->isWriteCycle();
         
         if (!unbeatable) {
             if (!_write && (_addr == 0xfffa))
