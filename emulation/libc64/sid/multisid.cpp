@@ -232,6 +232,4 @@ auto Sid::resetAll() -> void {
         sids[i]->reset();
 }
 
-
-
 }

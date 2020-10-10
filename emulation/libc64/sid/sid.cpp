@@ -8,7 +8,6 @@
 #include "voice.cpp"
 #include "filter/main.cpp"
 #include "filter/external.cpp"
-#include "filter/chamberlin.cpp"
 #include "serialization.cpp"
 #include "../../tools/thread.h"
 #include "../../tools/clamp.h"
@@ -44,6 +43,8 @@ auto Sid::registerGlobalCallbacks() -> void {
 }
 
 auto Sid::updateClock() -> void {
+    sysTimer.add( &callAlarm, 200, Emulator::SystemTimer::Action::UpdateExisting );
+    
     unsigned _delay = sysTimer.fallBackCycles( sysClock );
 	
 	if (!_delay)
@@ -57,9 +58,7 @@ auto Sid::updateClock() -> void {
             sid->clock();        
     }
     
-    sysClock = sysTimer.clock;
-	
-	sysTimer.add( &callAlarm, 300, Emulator::SystemTimer::Action::UpdateExisting );
+    sysClock = sysTimer.clock;		
 }
 
 auto Sid::useLeftChannel(bool state) -> void {

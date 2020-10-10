@@ -145,14 +145,14 @@ auto Sid::writeIO( uint8_t addr, uint8_t value ) -> void {
             return;		
     }
 	
-	if(!audioOut || !moreAccuracy)
+	//if(!audioOut || !moreAccuracy)
 		writeIOFilter( addr, value );
-    else
-        writeIOPipelined(addr, value);        
+    //else
+      //  writeIOPipelined(addr, value);        
 }
 
 auto Sid::writeIOFilter( uint8_t addr, uint8_t value ) -> void {
-	addr &= 0x1f;
+	//addr &= 0x1f;
 	
 	switch(addr) {
 		case 0x15:
