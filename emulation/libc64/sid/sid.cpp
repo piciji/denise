@@ -313,7 +313,7 @@ inline auto Sid::clock() -> void {
     for (i = 0; i < 3; i++)
         voice[i].setWaveformOutput();    
 
-    if (audioOut) {    
+    if (likely(audioOut)) {    
 //        if (moreAccuracy) {            
 //            
 //            // filter calculations are threaded

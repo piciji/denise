@@ -21,6 +21,7 @@
 #include <functional>
 #include <cstring>
 #include "../../tools/serializer.h"
+#include "../../tools/branchPrediction.h"
 
 #define VIC_MAX_LINE_LENGTH 65 * 8
 #define VIC_MODE_MCM(_mode) (_mode & 1)

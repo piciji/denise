@@ -139,7 +139,7 @@ auto VicIICycle::clock() -> void {
 
 __attribute__((always_inline)) auto VicIICycle::advanceCycle() -> void {    
 
-    if (irqLatchPending) {
+    if (unlikely(irqLatchPending)) {
         irqLatch |= irqLatchPending & 0x7f;
         updateIrq();
         irqLatchPending = 0;
@@ -149,7 +149,7 @@ __attribute__((always_inline)) auto VicIICycle::advanceCycle() -> void {
     if ( !allowBadlines && (vCounter == 0x30) && den )
 		allowBadlines = true;
 	
-	if(initVCounter) {
+	if(unlikely(initVCounter)) {
         vCounter = 0;
         initVCounter = false;
 		lpLatched = false;	
@@ -163,7 +163,7 @@ __attribute__((always_inline)) auto VicIICycle::advanceCycle() -> void {
 		allowBadlines = false;
     }   
     
-	if (++cycle == lineCycles) {	
+	if (unlikely(++cycle == lineCycles)) {	
 		cycle = 0;  
 		
 		// Note: line complete but vcounter is not incremented at this point
@@ -209,7 +209,7 @@ __attribute__((always_inline)) auto VicIICycle::advanceCycle() -> void {
             midScreenCallback();
         }
         
-	} else if (cycle == 1)
+	} else if (unlikely(cycle == 1))
 		setLineBuffer();  
 
     spriteOpenBus = nullptr;
@@ -328,7 +328,7 @@ inline auto VicIICycle::updateBAState() -> void {
     else
 		baLow = spriteBa[8][ cycle ]; // for "s" accesses    
 		
-    if (_baLow != baLow)
+    if (unlikely(_baLow != baLow))
         setRdy( baLow ); //update cpu rdy line
 	
 	if (baLow) {
@@ -357,7 +357,7 @@ inline auto VicIICycle::updateBadLine() -> void {
 
 inline auto VicIICycle::borderControl() -> void {
     
-    if (den && (vCounter == borderTop))        
+    if (likely(den) && (vCounter == borderTop))        
         vFlipFlop = vFlipFlopShadow = false;           
     
     else if (vCounter == borderBottom)

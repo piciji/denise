@@ -38,7 +38,7 @@ auto VicIICycle::power() -> void {
 inline auto VicIICycle::setLineInterrupt() -> void {
     
 	if (vCounter == irqLine) {
-		if (!lineIrqMatched) {
+		if (unlikely(!lineIrqMatched)) {
 			updateIrq( Interrupt::Raster );
 			lineIrqMatched = true;
 		}
@@ -62,3 +62,4 @@ auto VicIICycle::disableGreyDotBug(bool state) -> void {
 }
 
 }
+

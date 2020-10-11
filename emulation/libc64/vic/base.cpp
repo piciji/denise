@@ -550,3 +550,4 @@ template auto VicIIBase::checkLightPen<true>() -> void;
 template auto VicIIBase::checkLightPen<false>() -> void;
 
 }
+

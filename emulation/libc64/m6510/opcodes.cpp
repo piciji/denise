@@ -637,12 +637,12 @@ auto M6510::process() -> void {
 	SBC( TEMP ) }	
 	
 //// 
-	if (killed) {
+	if (unlikely(killed)) {
 		READ( 0xffff )
 		return;
 	}
 
-	if (interruptSampled)
+	if (unlikely(interruptSampled))
 		return interrupt();
 	
 	READ_PC_INC		

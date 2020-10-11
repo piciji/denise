@@ -327,7 +327,7 @@ auto Sid::Filter::solveOpamp(Opamp* opamp, int n, int vi, int& x, Calculated& ca
         if (df)
             x -= f / df; // Newton Raphson
 
-        if (x == xk) {
+        if (unlikely(x == xk)) {
             // 'x' hat sich nicht mehr verändert. Somit ist kein weiterer Verbesserungsschritt möglich.
             // Mittels Newton Raphson haben wir uns trotz zwei unbekannter Variablen an die Lösung
             // der Gleichung herangetastet. 
@@ -343,11 +343,11 @@ auto Sid::Filter::solveOpamp(Opamp* opamp, int n, int vi, int& x, Calculated& ca
             bk = xk;
         }
         // prüfen ob neues 'x' innerhalb des Suchbereiches liegt
-        if ((x <= ak) || (x >= bk)) {
+        if (unlikely(x <= ak) || unlikely(x >= bk)) {
             // Wir setzen 'x' mittig in den Suchbereich um in beide Richtungen weiter suchen zu können.
             x = (ak + bk) >> 1;
 
-            if (x == ak) {
+            if (unlikely(x == ak)) {
                 // Der Suchbereich ist erschöpft.
                 return vo;
             }

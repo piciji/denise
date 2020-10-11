@@ -231,11 +231,11 @@ STEAL:
         goto STEAL;
     }		
     
-	if (addr == 0x0000) {        
+	if (unlikely(addr == 0x0000)) {        
 		return ddr;   
     }
     
-	if (addr == 0x0001) {
+	if (unlikely(addr == 0x0001)) {
         
 		uint8_t data = ioLines;
 		
@@ -334,4 +334,3 @@ auto M6510::serialize(Emulator::Serializer& s) -> void {
 }
 
 }
-

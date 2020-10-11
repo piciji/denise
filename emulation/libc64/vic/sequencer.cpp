@@ -54,7 +54,7 @@ inline auto VicIICycle::sequencer(  ) -> void {
 
     draw<false>();
 	
-	if (clearCollision)
+	if (unlikely(clearCollision))
 		clearCollisions();	
 }
 

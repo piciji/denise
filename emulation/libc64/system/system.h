@@ -2,6 +2,7 @@
 #pragma once
 
 #include <functional>
+#include "../../tools/branchPrediction.h"
 #include "../interface.h"
 #include "../../processor/m65xx/model.h"
 #include "../m6510/m6510.h"

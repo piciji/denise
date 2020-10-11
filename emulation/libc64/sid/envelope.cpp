@@ -153,14 +153,14 @@ auto Sid::Envelope::reset() -> void {
 }
 
 auto Sid::Envelope::callEnvelope() -> void {
-    if (lockEnvCounter)
+    if (unlikely(lockEnvCounter))
         return;
 
     if (state == S_ATTACK) {
 
         ++counter &= 0xff;
 
-        if (counter == 0xff) {
+        if (unlikely(counter == 0xff)) {
             state = S_DECAY;
             ratePeriod = ratePeriodLookup[ decay ];
         }
@@ -186,7 +186,7 @@ inline auto Sid::Envelope::clock() -> void {
 	
     env3 = counter;
     
-    if (delay) {
+    if (unlikely(delay)) {
         delay = (delay << 1) & ENVELOPE_MASK;
         
         if (delay & DELAY_RELEASE3) {
@@ -207,7 +207,7 @@ inline auto Sid::Envelope::clock() -> void {
             callEnvelope();        
     }
 	
-	if (resetRateCounter) {
+	if (unlikely(resetRateCounter)) {
 		resetRateCounter = false;
 		rateCounter = 0;
 		
@@ -218,7 +218,7 @@ inline auto Sid::Envelope::clock() -> void {
 			
 		} else if (!lockEnvCounter) {
 			
-            if (++exponentialCounter == exponentialPeriod) //non linear volume decrease
+            if (unlikely(++exponentialCounter == exponentialPeriod)) //non linear volume decrease
                 //events->add( &callExponentialCounter, exponentialPeriod != 1 ? 2 : 1 );
                 delay |= (exponentialPeriod != 1) ? DELAY_EXPONENTIAL0 : DELAY_EXPONENTIAL1;
 		}
@@ -230,7 +230,7 @@ inline auto Sid::Envelope::clock() -> void {
 	}
 	
 	++rateCounter &= 0x7fff; //15 bit counter	
-	if (!rateCounter) // wrap around
+	if (unlikely(!rateCounter)) // wrap around
 		rateCounter = 1;     	
 }
 

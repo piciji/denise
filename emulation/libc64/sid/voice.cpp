@@ -158,36 +158,36 @@ auto Sid::Voice::setControl( uint8_t value ) -> void {
 
 inline auto Sid::Voice::clock() -> void {    
     
-	if (!test) {		
+	if(unlikely(test)) {
+        if (unlikely(shiftReset) && unlikely(!--shiftReset)) {
+            shiftRegister = 0x7fffff;
+            setNoiseOutput();
+        }
+        
+        pulseOutput = 0xfff;
+		
+    } else {		
 		uint32_t accumulatorNext = (accumulator + freq) & 0xffffff;
 		uint32_t risingBits = ~accumulator & accumulatorNext;
 		accumulator = accumulatorNext;
 
 		msbRising = !!(risingBits & 0x800000);
 
-		if (risingBits & 0x080000) {// bit 19
+		if (unlikely(risingBits & 0x080000)) {// bit 19
 			shiftPipeline = 2;
             
-		} else if (shiftPipeline && !--shiftPipeline) {
+		} else if (unlikely(shiftPipeline) && !--shiftPipeline) {
             bool bit0 = ((shiftRegister >> 22) ^ (shiftRegister >> 17)) & 0x1;
             shiftRegister = ((shiftRegister << 1) | bit0) & 0x7fffff;
 
             setNoiseOutput();
-        }
-        
-	} else {
-        if (shiftReset && !--shiftReset) {
-            shiftRegister = 0x7fffff;
-            setNoiseOutput();
-        }
-        
-        pulseOutput = 0xfff;
-    }		
+        }        
+	} 	
 }
 
 inline auto Sid::Voice::setWaveformOutput() -> void {
 	
-	if ( waveform ) {		
+	if (likely( waveform )) {		
 		int ix = (accumulator ^ (~syncSource->accumulator & ringMsbMask)) >> 12;
 
 		waveformOutput = wave[ix & 0xfff] & ( noPulse | pulseOutput ) & noNoiseOrNoiseOutput;
@@ -198,18 +198,18 @@ inline auto Sid::Voice::setWaveformOutput() -> void {
 		} else
 			osc3 = waveformOutput;
 
-		if ((waveform & 0x2) && (waveform & 0xd) && (type == Type::MOS_6581)) {
+		if ((waveform & 0x2) && unlikely(waveform & 0xd) && (type == Type::MOS_6581)) {
 			// In the 6581 the top bit of the accumulator may be driven low by combined waveforms
 			// when the sawtooth is selected
 			accumulator &= (waveformOutput << 12) | 0x7fffff;
 		}
 
-		if ((waveform > 0x8) && !test && (shiftPipeline != 1) ) 
+		if (unlikely(waveform > 0x8) && likely(!test) && likely(shiftPipeline != 1) ) 
 			// Combined waveforms write to the shift register.
 			writeShiftRegister();
         
 	} else {        
-        if (aging && !--aging) 
+        if (likely(aging) && unlikely(!--aging)) 
             waveformOutput = 0;
     }		
 	
@@ -222,7 +222,7 @@ inline auto Sid::Voice::setSyncSource( Voice* source ) -> void {
 }
 
 inline auto Sid::Voice::synchronize() -> void {
-	if ( msbRising && syncDest->sync && !(sync && syncSource->msbRising))
+	if ( unlikely(msbRising) && syncDest->sync && !(sync && syncSource->msbRising))
 		syncDest->accumulator = 0;
 }
 
