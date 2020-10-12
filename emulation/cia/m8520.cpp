@@ -7,27 +7,17 @@ auto M8520::tod() -> void {
 	if (!todActive)
 		return;
 	
-	todIn = true;
-}
-
-auto M8520::processTod() -> void {
-    if ( !todIn )
-		return;
-
-	todIn = false;
-	
     todc++;
     todc &= 0xffffff;
 
     if (todc == alarm)
-        handleInterrupt( 4 );
+        intIncomming |= 4;
 }
 
 auto M8520::reset() -> void {
 	
 	todLatched = false;
 	todActive = false;
-    todIn = false;
 	
 	todLatch = todc = 0;
 	alarm = 0;
@@ -100,7 +90,7 @@ auto M8520::write(unsigned pos, uint8_t value) -> void {
             
             if (changed)
                 if ( todc == alarm )
-                    handleInterrupt( 4 );
+                    intIncomming |= 4;
             
             return;
         }
@@ -123,7 +113,6 @@ auto M8520::serialize(Emulator::Serializer& s) -> void {
     
     s.integer( todLatched );
     s.integer( todActive );
-    s.integer( todIn );
     s.integer( todLatch );
     s.integer( alarm );
     s.integer( todc );

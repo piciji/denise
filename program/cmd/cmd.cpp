@@ -31,6 +31,7 @@ auto Cmd::set(int argc, char** argv) -> void {
     options.push_back( {"-no-driver", "Run without video, audio, input drivers", ""} );
     options.push_back( {"-no-gui", "Open without graphical user interface and force -no-driver", ""} );    
 	options.push_back( {"-autostart-prg", "Set autostart mode for PRG files (1: Inject, 2: Disk image)", "<value>"} );
+	options.push_back( {"-aggressive-fastforward", "aggressive Warp mode (emulates VIC sequencer every 15 frames only)", ""} );    
     
     for (unsigned i = 0; i < argc; i++) {
 
@@ -172,7 +173,6 @@ auto Cmd::parse() -> void {
         }
         else if (arg == "-debugcart") {
             dynamic_cast<LIBC64::Interface*>(emuC64)->activateDebugCart();   
-			dynamic_cast<LIBC64::Interface*>(emuC64)->fastForward( (unsigned)EmuInt::FastForward::NoAudioOut );
             prepareDrives( emuC64 );
 			globalSettings->set<bool>("audio_sync", false );
 			globalSettings->set<bool>("video_sync", false );
@@ -198,13 +198,14 @@ auto Cmd::parse() -> void {
             laxMagicNext = true;
         }
         else if (arg == "-no-driver") {
-            dynamic_cast<LIBC64::Interface*>(emuC64)->fastForward( (unsigned)EmuInt::FastForward::NoAudioOut | (unsigned)EmuInt::FastForward::NoVideoOut );
             noDriver = 1;
         }
         else if (arg == "-no-gui") {
             noGui = 1;
             noDriver = 1;
-            dynamic_cast<LIBC64::Interface*>(emuC64)->fastForward( (unsigned)EmuInt::FastForward::NoAudioOut | (unsigned)EmuInt::FastForward::NoVideoOut );			
+        }
+		else if (arg == "-aggressive-fastforward") {
+			aggressiveFastforward = 1;
         }
         else if (arg == "-exitscreenshot") {
             screenshotPathNext = true;
@@ -260,6 +261,16 @@ auto Cmd::autoloadImages() -> void {
     if (!debug && !noDriver && !noGui && globalSettings->get<bool>("open_fullscreen", false)) {
         view->setFullScreen(true);
     }
+	typedef Emulator::Interface EmuInt;
+	
+	if (activeEmulator) {
+		if (aggressiveFastforward)
+			activeEmulator->fastForward( (unsigned)EmuInt::FastForward::NoAudioOut | (unsigned)EmuInt::FastForward::ReduceVideoOutput | (unsigned)EmuInt::FastForward::NoVideoSequencer );
+		else if (noDriver || noGui)
+			activeEmulator->fastForward( (unsigned)EmuInt::FastForward::NoAudioOut | (unsigned)EmuInt::FastForward::NoVideoOut );	
+		else if (debug)
+			activeEmulator->fastForward( (unsigned)EmuInt::FastForward::NoAudioOut );
+	}	
 }
 
 auto Cmd::updateModel( Emulator::Interface* emulator, unsigned ident, int value) -> void {

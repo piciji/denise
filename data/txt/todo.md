@@ -59,7 +59,6 @@
 
 # todo improvements
 * fullscreen with custom refresh rate
-* auto start should reuse already opened instance (enable in UI)
 * autofire with frequency and option to fire without button press (don't forget override logic)
 * load PRG files from disk as simple RAM insertion for reduced loading times [quickload]
 * UI switch to invert RAM init pattern

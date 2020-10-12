@@ -24,16 +24,16 @@ auto Base::read( unsigned pos ) -> uint8_t {
 			return lines.ddrb;
             
         case 4:
-			return timer[T_A].counterRead & 0xff;
+			return readCounter<T_A>() & 0xff;
             
         case 5:
-			return timer[T_A].counterRead >> 8;
+			return readCounter<T_A>() >> 8;
             
         case 6:
-			return timer[T_B].counterRead & 0xff;
+			return readCounter<T_B>() & 0xff;
             
         case 7:
-			return timer[T_B].counterRead >> 8;
+			return readCounter<T_B>() >> 8;
             
 		case 8:
 		case 9:

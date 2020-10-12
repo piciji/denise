@@ -6,16 +6,7 @@ namespace CIA {
 auto M6526::tod() -> void {
 	// cia tod line impulse
 	if (!todActive)
-		return;
-	
-	todIn = true;
-}
-
-inline auto M6526::processTod() -> void {
-	if ( !todIn )
-		return;
-
-	todIn = false;
+		return;	
 	
 	++tickCounter &= 7;
 
@@ -76,7 +67,7 @@ inline auto M6526::processTod() -> void {
 	todc = ts | (sL << 8) | (sH << 12) | (mL << 16) | (mH << 20) | (hL << 24) | (hH << 28) | (pm << 24);
 
 	if ( todc == alarm )
-        handleInterrupt( 4 );
+		intIncomming |= 4;
 }
 
 auto M6526::reset() -> void {
@@ -86,7 +77,6 @@ auto M6526::reset() -> void {
 	
 	todLatch = todc = 1 << 24; // init with 1 hour
 	alarm = 0;
-	todIn = false;
 	tickCounter = 0;
 	
 	Base::reset();
@@ -169,7 +159,7 @@ auto M6526::write(unsigned pos, uint8_t value) -> void {
 
             if (changed)
                 if ( todc == alarm )
-                    handleInterrupt( 4 );
+					intIncomming |= 4;
 			
 			return;
 		}
@@ -185,7 +175,6 @@ auto M6526::serialize(Emulator::Serializer& s) -> void {
     
     s.integer( todLatched );
     s.integer( todActive );
-    s.integer( todIn );
     s.integer( todLatch );
     s.integer( alarm );
     s.integer( todc );

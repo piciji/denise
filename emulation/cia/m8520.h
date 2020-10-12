@@ -17,13 +17,10 @@ struct M8520 : Base {
 	auto reset() -> void;
     auto serialize(Emulator::Serializer& s) -> void;
         
-protected:    
-    
-	auto processTod() -> void;
+protected:        
 	
 	bool todLatched;
 	bool todActive;
-    bool todIn;
 	uint32_t todLatch;
 	uint32_t alarm;
 	uint32_t todc;

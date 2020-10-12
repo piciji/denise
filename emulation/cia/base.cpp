@@ -11,10 +11,6 @@ crb( timer[T_B].control )
 {	
 	this->model = model;
     this->events = events;
-    
-#ifndef CIA_GLOBAL_EVENTS     
-    this->events = new Emulator::Events;
-#endif
 	
     readPort = []( Port port, Lines* plines ) { 
         // basic mode, when lines not modified from external
@@ -31,9 +27,13 @@ crb( timer[T_B].control )
 
 		timer[i].step = [this,i]() { 
             
-            if ( timer[i].control & 1 )
+            if ( timer[i].control & 1 ) {
                 timer[i].run |= 2;
+				this->events->add( &(timer[i].stepOut), 1 );
+			}
         };
+		
+		timer[i].stepOut = [this,i]() { timer[i].run &= ~2; };
 
 		timer[i].stop = [this,i]() { timer[i].run &= ~1; };
 
@@ -42,10 +42,12 @@ crb( timer[T_B].control )
 		timer[i].forceLoad = [this,i]() { timer[i].forceloadCycle = 1; };
         
         timer[i].disableForceLoad = [this,i]() { timer[i].forceloadCycle = 0; };
+		
+		timer[i].disableUnderflow = [this,i]() { timer[i].underflowCycle = 0; };
         
         events->registerCallback(
-            { {&(timer[i].start), 1}, {&(timer[i].step), 1}, {&(timer[i].stop), 1}, {&(timer[i].disableOneshot), 1},
-                {&(timer[i].forceLoad), 2}, {&(timer[i].disableForceLoad), 1} }
+            { {&(timer[i].start), 1}, {&(timer[i].step), 1},{&(timer[i].stepOut), 1}, {&(timer[i].stop), 1}, {&(timer[i].disableOneshot), 1},
+                {&(timer[i].forceLoad), 2}, {&(timer[i].disableForceLoad), 1}, {&(timer[i].disableUnderflow), 1} }
         );
 	}
     
@@ -73,7 +75,7 @@ crb( timer[T_B].control )
 	};
 	
 	finishSdr = [this]() {
-		sdrFlag = true;
+		intIncomming |= 8;
 	};
     
 	flipCnt = [this]() {
@@ -125,60 +127,38 @@ auto Base::reset() -> void {
     cnt = CIA_CNT0;
 	sdrForceFinish = false;
     
-	flagRaised = false;
 	delay = 0;
-	sdrFlag = false;
     icrTemp = 0; 
+	intIncomming = 0;
 	
 	for( unsigned i = 0; i < 2; i++ ) {	
 		timer[i].run = 0;
 		timer[i].oneshot = 0;
 		timer[i].underflowCycle = 0;
 		timer[i].forceloadCycle = 0;
-		timer[i].latch = timer[i].counter = timer[i].counterRead = 0xffff;
+		timer[i].latch = timer[i].counter = 0xffff;
         timer[i].control = 0;
         timer[i].toggle = true;
-	}
-#ifndef CIA_GLOBAL_EVENTS    
-    events->clear();
-#endif    
+	}   
 }
 
 auto Base::clock() -> void {
-    // don't disable it at cycle end, because of a possible register write afterwards
-    timer[0].underflowCycle = timer[1].underflowCycle = false;
-        
-#ifndef CIA_GLOBAL_EVENTS      
-    events->process();
-#endif    
+           
     // collect all incomming interrupt sources of this cycle
     icrTemp = 0;
 
     updateState<T_B>();
     updateState<T_A>();
 
-    if (flagRaised) {
-        flagRaised = false;
-        handleInterrupt(0x10);
-    }
+	if (unlikely(intIncomming)) {
+		handleInterrupt( intIncomming );
+		intIncomming = 0;
+	}	
 
-    processTod();
-
-    if (sdrFlag) {
-		sdrFlag = false;
-        handleInterrupt(8);
-	}
-
-    newVersion ? interruptControl() : interruptControlOld();
+	if (delay & (CIA_INT1 | CIA_ACK0))
+		newVersion ? interruptControl() : interruptControlOld();
 	
 	delay = ((delay << 1) & CIA_MASK) | cnt;
-
-    decrement<T_B>();
-    decrement<T_A>();
-
-    // disable possible single step
-    timer[0].run &= ~2;
-    timer[1].run &= ~2;	 
 }
 
 inline auto Base::interruptControl() -> void {
@@ -198,7 +178,7 @@ inline auto Base::interruptControl() -> void {
             // normal interrupt behaviour
             irqCall( true );
         
-    } else if (delay & CIA_ACK0) {
+    } else /*if (delay & CIA_ACK0)*/ {
         // interrupt is not incomming or is not allowed by icr mask and
         // this is an acknowledge cycle
         irqCall( false );
@@ -227,7 +207,7 @@ inline auto Base::interruptControlOld() -> void {
             irqCall( true );
         }
         
-    } else if (delay & CIA_ACK0) {
+    } else /*if (delay & CIA_ACK0)*/ {
         // same behaviour like new cia, but all interrupt sources will be reseted
         // but not the msb of icr, matters when a second read in register 0d happens
         icr &= ~0x7f;
@@ -258,44 +238,46 @@ auto Base::handleInterrupt( uint8_t number ) -> void {
 	delay |= newVersion ? CIA_INT1 : CIA_INT0;
 }
 
-template<uint8_t timerId> inline auto Base::decrement( ) -> void {
-	Timer* pTimer = &timer[timerId];		
-	pTimer->counterRead = pTimer->counter;
-    
-	// run: phase in or a single step in cascade mode
-	if (pTimer->run)
-		pTimer->counter--;
-}
-
 template<uint8_t timerId> inline auto Base::updateState( ) -> void {
 	
-	Timer* pTimer = &timer[timerId];	
+	Timer& rTimer = timer[timerId];	
 	
-	if ( pTimer->run && (pTimer->counter == 0) ) {
-		pTimer->underflowCycle = pTimer->forceloadCycle = true;
+	if ( rTimer.run && unlikely(rTimer.counter == 0) ) {
+		rTimer.underflowCycle = rTimer.forceloadCycle = true;
 		timerId == T_A ? timerAUnderflow() : timerBUnderflow();
+		events->add( &(rTimer.disableUnderflow), 1);
 	}	
 	
-	if ( pTimer->forceloadCycle ) {
+	if (unlikely( rTimer.forceloadCycle )) {
         // a possible force load placed by register write get priority, so run this sooner
-        events->add( &(pTimer->disableForceLoad), 1, Emulator::SystemTimer::Action::BeforeOthers ); 
+        events->add( &(rTimer.disableForceLoad), 1, Emulator::SystemTimer::Action::BeforeOthers ); 
         
-		pTimer->counter = pTimer->latch;
+		rTimer.counter = rTimer.latch;
 		
-        if ( pTimer->run == 1 )        
+		if (rTimer.underflowCycle && rTimer.oneshot) {
+
+			rTimer.control &= ~1;
+
+			events->remove( &(rTimer.start) );
+			
+		} else if ( rTimer.run == 1 )        
             // if a timer stop event finishes the same cycle like restart after
             // underflow, the stop event should run after restart to get priority
-            events->add( &(pTimer->start), 1, Emulator::SystemTimer::Action::BeforeOthers );
-        
-        pTimer->run = 0;
-	}
-    
-	if (pTimer->underflowCycle && pTimer->oneshot) {
-        
-        pTimer->control &= ~1;
+            events->add( &(rTimer.start), 1, Emulator::SystemTimer::Action::BeforeOthers );
 		
-		events->remove( &(pTimer->start) );
-	}
+		rTimer.run = 0;
+		
+	} else if (rTimer.run)
+		rTimer.counter--;	
+}
+
+template<uint8_t timerId> inline auto Base::readCounter( ) -> uint16_t {
+	Timer& rTimer = timer[timerId];
+	
+	if (rTimer.run)
+		return (rTimer.counter + 1);
+	
+	return rTimer.counter;
 }
 
 auto Base::timerAUnderflow() -> void {    	
@@ -332,7 +314,7 @@ auto Base::timerBUnderflow() -> void {
 }
 
 auto Base::setFlag() -> void {
-	flagRaised = true;    
+	intIncomming |= 0x10;
 }
 
 auto Base::setNewVersion( bool state ) -> void {    
@@ -454,18 +436,14 @@ auto Base::serialize(Emulator::Serializer& s) -> void {
         s.integer( t.forceloadCycle );
         s.integer( t.latch );
         s.integer( t.counter );
-        s.integer( t.counterRead );
         s.integer( t.control );
         s.integer( t.toggle );        
     }
     
 	s.integer( delay );
     s.integer( newVersion );
-    s.integer( sdrFlag );
     s.integer( icrTemp );
-    s.integer( flagRaised );
     s.integer( sdr );
-	s.integer( sdrFlag );
     s.integer( sdrLoaded );
 	s.integer( sdrPending );
     s.integer( cnt );
@@ -474,6 +452,7 @@ auto Base::serialize(Emulator::Serializer& s) -> void {
 	s.integer( sdrForceFinish );
     s.integer( icrmask );
     s.integer( icr );
+	s.integer( intIncomming );
 }
 
 }

@@ -19,11 +19,8 @@ struct M6526 : Base {
     auto serialize(Emulator::Serializer& s) -> void;
         
 protected:        
-	auto processTod() -> void;
-
 	bool todLatched;
 	bool todActive;
-    bool todIn;
 	uint32_t todLatch;
 	uint32_t alarm;
 	uint32_t todc;

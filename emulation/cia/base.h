@@ -7,6 +7,7 @@
 
 #include "../tools/systimer.h"
 #include "../tools/serializer.h"
+#include "../tools/branchPrediction.h"
 
 #define CIA_MASK_WRITE0 1
 #define CIA_MASK_WRITE1 2
@@ -149,13 +150,14 @@ protected:
 		Callback start;		
 		Callback stop;
 		Callback step;		
+		Callback stepOut;		
 		Callback disableOneshot;
 		Callback forceLoad;
         Callback disableForceLoad;		
+		Callback disableUnderflow;
 		
 		uint16_t latch;
 		uint16_t counter;
-        uint16_t counterRead;
 		
         uint8_t control;
         
@@ -175,10 +177,8 @@ protected:
 	
 	bool newVersion = true; // 6526a, 8520a instead of 6526, 8520
 	uint8_t icrTemp;
-    bool flagRaised;
             
     uint8_t sdr;
-	bool sdrFlag;
 	bool sdrLoaded;
 	bool sdrPending;
 	uint32_t cnt;
@@ -190,18 +190,18 @@ protected:
     uint8_t icr;
 	
 	uint32_t delay;
+	uint8_t intIncomming;
 	        	
     auto timerAUnderflow() -> void;
 	auto timerBUnderflow() -> void;
 	auto serialOut() -> void;
 	auto switchSerialDirection(bool input) -> void;
     auto handleInterrupt( uint8_t number ) -> void;
-	virtual auto processTod() -> void = 0;
-	template<uint8_t timerId> auto decrement() -> void;
 	template<uint8_t timerId> auto updateState() -> void;
     auto adjustBit6And7( uint8_t& inOut ) -> void;
     auto interruptControl() -> void;
     auto interruptControlOld() -> void;    
+	template<uint8_t timerId> inline auto readCounter( ) -> uint16_t;
 };
 
 }

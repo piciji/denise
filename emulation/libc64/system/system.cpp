@@ -350,8 +350,6 @@ System::System(Interface* interface) {
 
             if ( !expansionPort->isBootable() )
                 keyBuffer->process();
-
-            //cpu->hintUnblockedExecution();
         };
 
         vicII->midScreenCallback = [this]() {
@@ -982,19 +980,19 @@ auto System::useExtraSids(uint8_t requestedSids) -> void {
 
 auto System::updatePort(uint8_t lines, uint8_t ddr) -> void {
         
-		if (!powerOn)
-			return;
-		
-        auto modeBefore = mode;
-        
-        mode &= ~7;
-        
-        mode |= lines & 7;     
-        
-        if (modeBefore != mode)        
-            this->remapCpu( );
-		
-        tape->writeIn( ((~ddr | lines) & 8) != 0 );
+	if (!powerOn)
+		return;
+
+	auto modeBefore = mode;
+
+	mode &= ~7;
+
+	mode |= lines & 7;     
+
+	if (modeBefore != mode)        
+		this->remapCpu( );
+
+	tape->writeIn( ((~ddr | lines) & 8) != 0 );
 }     
 
 }
