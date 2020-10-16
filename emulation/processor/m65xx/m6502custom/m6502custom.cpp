@@ -14,7 +14,7 @@
 #define V ctx->v
 #define N ctx->n
 
-#include "../../../processor/m65xx/m6502/externalOverflow.h"
+#include "../m6502/externalOverflow.h"
 #include "m6502opcodes.cpp"
 
 #define PAGE_CROSSED(x, y) ( ( (uint16_t)x >> 8 ) != ( (uint16_t)y >> 8) )

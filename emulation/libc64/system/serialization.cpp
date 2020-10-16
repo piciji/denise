@@ -160,68 +160,6 @@ auto System::serialize(Emulator::Serializer& s) -> void {
     cpu->serialize( s );
 }
 
-auto System::serialize6502( Emulator::Serializer& s, MOS65Context* cpuCtx ) -> void {
-
-    s.integer( cpuCtx->c );
-    s.integer( cpuCtx->z );
-    s.integer( cpuCtx->i );
-    s.integer( cpuCtx->d );
-    s.integer( cpuCtx->v );
-    s.integer( cpuCtx->n );
-    s.integer( cpuCtx->IR );
-    s.integer( cpuCtx->a );
-    s.integer( cpuCtx->x );
-    s.integer( cpuCtx->y );
-    s.integer( cpuCtx->s );
-    s.integer( cpuCtx->pc );
-    s.integer( cpuCtx->dataBus );
-    s.integer( cpuCtx->addrBus );
-    s.integer( cpuCtx->writeCycle );
-    s.integer( cpuCtx->irqLine );
-    s.integer( cpuCtx->nmiLine );
-    s.integer( cpuCtx->nmiDetect );
-    s.integer( cpuCtx->irqPending );
-    s.integer( cpuCtx->nmiPending );
-    s.integer( cpuCtx->interruptSampled );
-    s.integer( cpuCtx->rdyLine );
-    s.integer( cpuCtx->killed );
-    s.integer( cpuCtx->magicAne );
-	s.integer( cpuCtx->magicLax );
-    s.integer( cpuCtx->soLine );
-    s.integer( cpuCtx->soDetect );
-    s.integer( cpuCtx->soSampled );
-    s.integer( cpuCtx->resetCompleted );
-    s.integer( cpuCtx->ddr );
-    s.integer( cpuCtx->por );
-    s.integer( cpuCtx->ioLines );
-    s.integer( cpuCtx->pullup );
-    s.integer( cpuCtx->pulldown );
-    s.integer( cpuCtx->bit6.cycles );
-    s.integer( cpuCtx->bit6.charge );
-    s.integer( cpuCtx->bit7.cycles );
-    s.integer( cpuCtx->bit7.charge );
-
-    s.integer( cpuCtx->absolute );
-    s.integer( cpuCtx->absIndexed );
-    s.integer( cpuCtx->zeroPage );
-    s.integer( cpuCtx->data );
-    s.integer( cpuCtx->data2 );
-    s.integer( cpuCtx->dataW );
-    s.integer( cpuCtx->vector );
-    s.integer( cpuCtx->displacement );
-        
-    s.integer( cpuCtx->boundaryCrossing );
-    s.integer( cpuCtx->rdyLastCycle );
-    s.integer( cpuCtx->xaa );
-    s.integer( cpuCtx->cli );
-    s.integer( cpuCtx->sei );
-    s.integer( cpuCtx->storeFlags );
-    s.integer( cpuCtx->soBlock );
-    
-    s.integer( cpuCtx->useDummy );
-    s.integer( cpuCtx->resumeCycle );    
-}
-
 // for runahead
 auto System::serializeLight() -> void {   
       

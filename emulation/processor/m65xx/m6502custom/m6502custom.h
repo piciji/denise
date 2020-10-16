@@ -3,7 +3,7 @@
 
 #define EXTERNAL_INCLUDE_6502
 
-#include "../../../processor/m65xx/m6502/m6502.h"
+#include "..//m6502/m6502.h"
 #include "../../../tools/serializer.h"
 
 typedef MOS65FAMILY::M6502::Reg M6502Reg;

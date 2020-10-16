@@ -27,7 +27,7 @@ struct SystemTimer {
 	
 	enum Action { Normal = 0, BeforeOthers = 1, UpdateExisting = 2, WhenNotExistsOnly = 4 };
 	
-	unsigned clock = 0;
+	unsigned clock = ~0;
 	
 	std::vector<Event> events;
 

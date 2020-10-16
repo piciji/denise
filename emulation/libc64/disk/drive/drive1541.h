@@ -6,7 +6,8 @@
 #include "../iec.h"
 #include "../structure/structure.h"
 #include "../../system/system.h"
-#include "../cpu/m6502custom.h"
+//#include "../cpu/m6502custom.h"
+#include "../cpu/m6502.h"
 #include "../../../tools/rand.h"
 #include "../../../tools/serializer.h"
 #include <cstdlib>
@@ -54,8 +55,7 @@ struct Drive1541 {
     
     Via* via1;
     Via* via2;
-    M6502Custom* cpu;
-    MOS65Context* cpuCtx;
+    M6502* cpu;
     Structure1541 structure1541;
     int64_t cycleCounter;
     bool synced;
@@ -83,7 +83,6 @@ struct Drive1541 {
     uint8_t uf4Counter;
     Emulator::Rand randomizer;
     unsigned randCounter;
-    bool alternateRefTiming;
     
     uint8_t writeValue;
     unsigned readBuffer;
@@ -107,6 +106,9 @@ struct Drive1541 {
     
     auto calculateRefCyclesPerRevolution() -> void;
     
+    auto sync() -> void;
+    auto cpuWrite(uint16_t addr, uint8_t data) -> void;
+    auto cpuRead(uint16_t addr) -> uint8_t;
     auto remap( bool romOnly = false ) -> void;
     auto power( ) -> void;
     auto powerOff( ) -> void;

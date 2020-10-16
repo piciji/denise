@@ -4,7 +4,6 @@
 namespace LIBC64 {
           
 auto Via::read( unsigned pos ) -> uint8_t {
-    Timer* pT;
         
 	switch (pos & 0xf) {
         
@@ -33,7 +32,7 @@ auto Via::read( unsigned pos ) -> uint8_t {
                 // toggles one time only in one shot mode, but it toggles in oneshot mode.
                 // means the value is not forced to 1 when underflows in oneshot mode.
                 // NOTE: by activating pb7 override in acr after write in timer 1 counter high, oneshot toggles from 1 - 0                
-                if (timer[Timer::A].toggle)
+                if (timerAToggle)
                     out |= 0x80;
             }
             
@@ -51,7 +50,7 @@ auto Via::read( unsigned pos ) -> uint8_t {
                 ca2Out( ca2 = 0 );
                 
                 if (pcr & 2) // pulse output, low for one cycle only
-                    ca2StatePulse |= 2;
+                    delay |= VIA_CA2_PULSE0;
             }            
                  
             // fall through
@@ -70,29 +69,29 @@ auto Via::read( unsigned pos ) -> uint8_t {
             
         case 4: //T1CL
             resetIrq( 64 ); // clear timer 1 underflow
-			return timer[Timer::A].counter & 0xff;
+			return timerACounterRead & 0xff;
             
         case 5: //T1CH
-			return timer[Timer::A].counter >> 8;
+			return timerACounterRead >> 8;
             
         case 6: //T1LL
-			return timer[Timer::A].latch & 0xff;
+			return timerALatch & 0xff;
             
         case 7: //T1LH
-			return timer[Timer::A].latch >> 8;
+			return timerALatch >> 8;
             
 		case 8: //T2CL
             resetIrq( 32 ); // clear timer 2 underflow
-            return timer[Timer::B].counter & 0xff;
+            return timerBCounterRead & 0xff;
             
 		case 9: //T2CH
-            return timer[Timer::B].counter >> 8;
+            return timerBCounterRead >> 8;
             
 		case 0xa: //SR
             
             if (ifr & 4) {                
                 shift.count = 0;
-                shift.warmUp = true;                
+                delay |= VIA_SHIFT_WARMUP0;     
                 resetIrq(4);
             }            
             
@@ -116,15 +115,9 @@ auto Via::read( unsigned pos ) -> uint8_t {
     
     __builtin_unreachable();
 }
-    
-auto Via::writePipelined(unsigned pos, uint8_t value) -> void {
-	registerWrite.addr = pos & 0xf;
-	registerWrite.value = value;
-	registerWrite.pipelined = true;
-}
+   
 
 auto Via::write( unsigned pos, uint8_t value ) -> void {
-    Timer* pT;
     
     switch( pos & 0xf ) {
         
@@ -140,7 +133,7 @@ auto Via::write( unsigned pos, uint8_t value ) -> void {
                 ca2Out( ca2 = 0 );
                 
                 if (pcr & 2) // pulse output, low for one cycle only
-                    ca2StatePulse |= 2;
+                    delay |= VIA_CA2_PULSE0;
             }            
             
             // fall through
@@ -178,7 +171,7 @@ auto Via::write( unsigned pos, uint8_t value ) -> void {
                 cb2Out( cb2 = 0 );
                 
                 if (pcr & 0x20) // pulse output, low for one cycle only
-                    cb2StatePulse |= 2;
+                    delay |= VIA_CB2_PULSE0;
             }            
             
             // fall through
@@ -202,56 +195,48 @@ auto Via::write( unsigned pos, uint8_t value ) -> void {
             
         case 4: // Timer 1 count low
         case 6: // Timer 1 latch low
-            pT = &timer[Timer::A];
-
-            pT->latch = (pT->latch & 0xff00) | value;
+            timerALatch = (timerALatch & 0xff00) | value;
             
-            if (pT->forceloadCycle)
-				pT->counter = (pT->counter & 0xff00) | value;
+            //if (pT->forceloadCycle)
+            if (delay & VIA_FORCE_LOAD_TIMERA0)
+				timerACounter = (timerACounter & 0xff00) | value;
 
             break;
             
         case 5: // Timer 1 count high
-            pT = &timer[Timer::A];
             
-            pT->latch = (pT->latch & 0xff) | (value << 8);
+            timerALatch = (timerALatch & 0xff) | (value << 8);
             
-            pT->counter = pT->latch; 
-            pT->counterUpdated = true;
+            timerACounter = timerALatch; 
+            delay |= VIA_FORCE_LOAD_TIMERA0;
            
-            pT->toggle = 0;
-            pT->trigger = true;
+            timerAToggle = 0;
+            timerATrigger = true;
             
             resetIrq( 64 ); // clear timer 1 underflow
             break;
             
-        case 7: // Timer 1 latch high
-            pT = &timer[Timer::A];
+        case 7: // Timer 1 latch high            
+            timerALatch = (timerALatch & 0xff) | (value << 8);
             
-            pT->latch = (pT->latch & 0xff) | (value << 8);
-            
-            if (pT->forceloadCycle)
-				pT->counter = (pT->counter & 0xff) | (value << 8);
+            if (delay & VIA_FORCE_LOAD_TIMERA0)
+				timerACounter = (timerACounter & 0xff) | (value << 8);
             
             resetIrq( 64 ); // clear timer 1 underflow
             break;
             
         case 8: // Timer 2 latch low
-            pT = &timer[Timer::B];
-            
-            pT->latch = (pT->latch & 0xff00) | value;            
+            timerBLatch = (timerBLatch & 0xff00) | value;            
             
             break;
             
         case 9: // Timer 2 count high
-            pT = &timer[Timer::B];
+            timerBLatch = (timerBLatch & 0xff) | (value << 8);
             
-            pT->latch = (pT->latch & 0xff) | (value << 8);
+            timerBTrigger = true;           
             
-            pT->trigger = true;           
-            
-            pT->counter = pT->latch;
-            pT->counterUpdated = true;
+            timerBCounter = timerBLatch;
+            delay |= VIA_FORCE_LOAD_TIMERB0;
             
             resetIrq( 32 ); // clear timer 2 underflow
             
@@ -262,19 +247,17 @@ auto Via::write( unsigned pos, uint8_t value ) -> void {
 
             if (ifr & 4) {
                 shift.count = 0;
-                shift.warmUp = true;
+                delay |= VIA_SHIFT_WARMUP0;
                 resetIrq(4);
             }
             
             break;
             
         case 0xb: // acr            
-            pT = &timer[Timer::A];
-            
-            pT->toggle = 0;
+            timerAToggle = 0;
             
             if ( (value & 0x80) && ((acr & 0x80) == 0) )
-                pT->toggle = 1;
+                timerAToggle = 1;
             
             if ( !(acr & 1) && (value & 1) ) // todo: latch port A ?
                 lines.latchA = readPort( Port::A, &lines );
@@ -313,7 +296,7 @@ auto Via::write( unsigned pos, uint8_t value ) -> void {
             else
                 ier &= ~value;
             
-            updateIrq = 1;
+            delay |= VIA_UPDATE_IRQ0;
             break;
     }
 }

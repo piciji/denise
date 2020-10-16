@@ -15,21 +15,16 @@ auto Via::serialize(Emulator::Serializer& s) -> void {
     s.integer( lines.iobOld );
     s.integer( lines.latchA );
     s.integer( lines.latchB );
-    s.integer( registerWrite.pipelined );
-    s.integer( registerWrite.addr );
-    s.integer( registerWrite.value );
     
-    for( unsigned i = 0; i < 2; i++ ) {
-        Timer& t = timer[i];
-        
-        s.integer( t.forceloadCycle );
-        s.integer( t.counterUpdated );
-        s.integer( t.latch );
-        s.integer( t.counter );
-        s.integer( t.toggle );
-        s.integer( t.trigger );
-        s.integer( t.step );
-    }
+    s.integer( timerACounter );
+    s.integer( timerALatch );
+    s.integer( timerACounterRead );
+    s.integer( timerATrigger );
+    s.integer( timerAToggle );
+    s.integer( timerBCounter );
+    s.integer( timerBLatch );
+    s.integer( timerBCounterRead );
+    s.integer( timerBTrigger );    
     
     s.integer( ifr );
     s.integer( ier );
@@ -41,16 +36,13 @@ auto Via::serialize(Emulator::Serializer& s) -> void {
     s.integer( cb1 );
     s.integer( cb2 );
 
-    s.integer( shift.warmUp );
     s.integer( shift.toggle );
     s.integer( shift.irqTrigger );
     s.integer( shift.active );
     s.integer( shift.count );
 
-    s.integer( ca2StatePulse );
-    s.integer( cb2StatePulse );
-    s.integer( updateIrq );
     s.integer( isShiftT2Control );
+    s.integer( delay );
 }
     
 }

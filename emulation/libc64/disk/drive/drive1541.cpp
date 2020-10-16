@@ -5,6 +5,52 @@
 #include "../../../tools/gcr.h"
 
 namespace LIBC64 {
+   
+// one cpu cycle is 16 reference cycles.
+// we do only progress 6 instead of 8 in first half cycle because of a possible
+// external overflow is recognized by cpu within 400 ns.
+ 
+// in case of a VIA2 READ there is more time a change can be read back ~ 875 ns within cycle.
+// 6 ref cycles are progressed in first half cycle already, so we need 8 more to get 14 of 16 ref cycles.
+    
+// for each cycle:
+    
+// 6 ref cycles:    check for external overflow
+// + 8    
+// 14 ref cycles:   VIA2 read back Changes
+// + 2    
+// 16 ref cycles:   complete cycle
+// + 6
+// repeat this pattern    
+
+// the distance between "overflow" checking and maximum "Read back" time is 8 ref cycles, phase shifted by 2 ref cycles.
+    
+#define SYNC    \
+    if (useAccuracy())  \
+        rotateG64(8);   \
+    cpu->handleSo();   \
+    processDelays();    \
+    if (useAccuracy())  \
+        rotateG64(8);   \
+    else \
+        rotateD64();    \
+    via1->process();    \
+    via2->process();     \
+    cycleCounter += iecBus->cpuCylcesPerSecond;
+    
+auto Drive1541::sync() -> void {
+    SYNC 
+}
+
+auto Drive1541::cpuWrite(uint16_t addr, uint8_t data) -> void {
+    SYNC    
+    memory.write( addr, data );
+}
+
+auto Drive1541::cpuRead(uint16_t addr) -> uint8_t {
+    SYNC    
+    return memory.read( addr );
+}
     
 Drive1541::Drive1541(uint8_t number) {
      
@@ -20,54 +66,10 @@ Drive1541::Drive1541(uint8_t number) {
     via1 = new Via( 1 );
     via2 = new Via( 2 );
     
-    cpu = new M6502Custom;
+    cpu = new M6502(this);
     
-    calculateRefCyclesPerRevolution();
-    
-    cpuCtx = MOS65FAMILY::createContext();
-    
-    cpuCtx->read = [this]( uint16_t addr ) {
-        
-        return memory.read( addr );
-    };
-    
-    cpuCtx->write = [this]( uint16_t addr, uint8_t value ) {
-	
-		memory.write( addr, value );
-    };
-    
-    cpuCtx->sync = [this]() {                
-    
-        if ( useAccuracy() )
-            // one cpu cycle is 16 reference cycles.
-            // we do only 6 instead of 8 in first half cycle because of a possible
-            // external overflow is recognized by cpu within 400 ns.
-            // overflow recognition happens in this emulation between syncLo and syncHi
-            rotateG64( 6 );
-        
-        via1->processLo();
-        via2->processLo();  
-    };
-    
-    cpuCtx->syncHi = [this]() {                             
-        
-        processDelays();
-        
-        if ( useAccuracy() )            
-            // in case of a via 2 read, there are 14 ref cycles processed already
-            rotateG64( alternateRefTiming ? 2 : 10 );
-        else
-            rotateD64();
-        
-        alternateRefTiming = false;
-
-        via1->processHi(); 
-        via2->processHi(); 
-        cycleCounter += iecBus->cpuCylcesPerSecond;        
-    };    
-        
-    cpu->setContext( cpuCtx );    
-        
+    calculateRefCyclesPerRevolution();            
+          
     via1->irqCall = [this](bool state) {                
         if (state)
             irqIncomming |= 1;
@@ -88,7 +90,7 @@ Drive1541::Drive1541(uint8_t number) {
     
     writeVia1Reg = [this](uint16_t addr, uint8_t value) {
 
-        via1->writePipelined( addr, value );
+        via1->write( addr, value );
     };
 
     readVia1Reg = [this](uint16_t addr) {
@@ -98,20 +100,11 @@ Drive1541::Drive1541(uint8_t number) {
 
     writeVia2Reg = [this](uint16_t addr, uint8_t value) {
 		
-        via2->writePipelined( addr, value );
+        via2->write( addr, value );
     };
 
     readVia2Reg = [this](uint16_t addr) {
 
-        if (useAccuracy())
-            // in case of a via 2 read there is more time a change can be read back ~ 875 ns within cycle
-            // 6 ref cycles are progressed in first half cycle already, so we need 8 more to get 14 of 16 ref cycles.
-            // NOTE: above is surely valid for reading sync signal but i am not sure in case of the drive read value.
-            // at least when via is latching the read value by ca1 pin transition and reading the latch same cycle.
-            rotateG64(8);
-
-        alternateRefTiming = true;
-        
         return via2->read(addr);
     };
 
@@ -315,7 +308,6 @@ auto Drive1541::power( ) -> void {
     readMode = true;
     cpu->power();    
  
-    alternateRefTiming = 0;
     ue7Counter = uf4Counter = 0;
     filter = lastFilter = 0;
     randCounter = 0;
@@ -356,18 +348,16 @@ auto Drive1541::setViaTransition( bool state ) -> void {
     via1->ca1In( state ); 
     
     // we need to check how much the drive is ahead of the c64.
-    // if the drive is more than 2 cycles ahead we need to manually call the
+    // if the drive is more than two cycles ahead we need to manually call the
     // cpu irq detector because the drive cpu run a few cycles without knowing from interrupt.
     // NOTE: the drive cpu is interrupted before irq sample cycle.
     // so it can only pass opcode edge when not fully synced. means not the sample cycle is missable
     // but the recognition cycle.
     // if the drive cpu could be interrupted each cycle this step wouldn't be necessary. for performance
     // and code complexity reasons i have decided the drive cpu can only be interrupted before read/write
-    // access and before an irq sample cycle but not address generation or interrupt service routine. 
-    // so the following little hack is needed.
-    // yes a hack, because the drive cpu could run a few cycles without recognizing an incomming interrupt.
+    // access and before an irq sample cycle but not during address generation or interrupt service routine.
     if (cycleCounter >= (iecBus->cpuCylcesPerSecond << 1) )
-        cpu->detectIrq();
+        via1->handleInterrupt();
 }
 
 inline auto Drive1541::processDelays() -> void {

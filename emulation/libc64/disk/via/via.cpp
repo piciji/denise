@@ -3,7 +3,6 @@
 #include "register.cpp"
 #include "serialization.cpp"
 
-
 namespace LIBC64 {
 
 Via::Via( uint8_t model ) {	
@@ -37,34 +36,26 @@ auto Via::reset() -> void {
     sdr = 0;  // not reseted
     
     ifr = ier = 0;
-    updateIrq = 0;
     pcr = acr = 0;
-    ca2StatePulse = cb2StatePulse = 0;	
-	registerWrite.pipelined = false;
     isShiftT2Control = false;
         
     ca1 = cb1 = 0;
     ca2 = cb2 = 0;
 
-    shift.warmUp = false;
     shift.toggle = true;
     shift.irqTrigger = false;
     shift.active = false;
     shift.count = 0;
-        	
-	for( unsigned i = 0; i < 2; i++ ) {	
-		timer[i].forceloadCycle = 0;		
-        timer[i].counterUpdated = false;
         
-        if (i == 0)
-            timer[i].latch = timer[i].counter = (223 << 8) | 0xff;
-        else
-            timer[i].latch = timer[i].counter = 0xffff;
-        
-        timer[i].toggle = 0;
-        timer[i].step = 0;
-        timer[i].trigger = 0;
-	}
+    timerACounterRead = timerACounter = timerALatch = (223 << 8) | 0xff;    
+    timerBCounterRead = timerBCounter = timerBLatch = 0xffff;
+    
+    timerATrigger = false;
+    timerAToggle = false;
+    
+    timerBTrigger = false;     
+    
+    delay = 0;
 }
 
 // a transition of prb bit 6 advance timer B, when not in oneshot mode.
@@ -73,7 +64,7 @@ auto Via::reset() -> void {
 auto Via::pb6Pulse() -> void {
     
     if ( acr & 0x20 )
-        timer[Timer::B].step = true;   
+        delay |= VIA_STEP_TIMERB0;
 }
 // calls for transitions of ca1, ca2, cb1, cb2
 auto Via::ca1In( bool state ) -> void {
@@ -90,10 +81,6 @@ auto Via::ca1In( bool state ) -> void {
     if ((pcr & 0xe) == 8)
         ca2Out( ca2 = 1 );  // handshake output mode     
     
-    // pure assumption:
-    // input irqs comming in first half cycle are detected by cpu this cycle
-    // input irqs comming in second half cycle are detected by cpu next cycle
-    // i.e. drive 1541 g64 accuracy mode could input ca1 in any half cycle
     setIrq( 2 );
     
     // latch port A
@@ -156,125 +143,93 @@ auto Via::cb2In( bool state ) -> void { // unused for drive 1541
     setIrq( 8 );
 }
    
-auto Via::processLo() -> void {              
+auto Via::process() -> void {  
     
-    shifter();
+    delay = (delay << 1) & VIA_MASK;
     
-    ca2StatePulse >>= 1;
-    cb2StatePulse >>= 1;
+    if (shift.active)
+        shifter();
+    
+    updateTimerA();
+    updateTimerB();
+    
+    handleSystemClockShift();
+
+    if (delay) {
+        if (delay & VIA_CA2_PULSE1)
+            ca2Out(ca2 = 1);
+        else if (delay & VIA_CB2_PULSE1)
+            cb2Out(cb2 = 1); 
+
+        if (delay & VIA_UPDATE_IRQ1)
+            handleInterrupt();
         
-    updateState<Timer::A>( );
-	updateState<Timer::B>( );        
-    
-    handleSystemClockShift();    
-    
-    if (shift.warmUp) {
-        shift.warmUp = false;  
-        shift.toggle = true;
-        cb1Out( cb1 = 1 );
-    }       
-        
-    if (updateIrq) {
-        updateIrq = 0;
-        handleInterrupt();
-    }  
+        if (delay & VIA_SHIFT_WARMUP1) {
+            shift.toggle = true;
+            cb1Out(cb1 = 1);
+        }            
+    }
 }
 
-// Note: a possible register read runs here between the half cycles
+inline auto Via::updateTimerA( ) -> void {
+    timerACounterRead = timerACounter;
+    
+    if(delay & VIA_FORCE_LOAD_TIMERA1);
+    
+    else if (timerACounter == 0xffff) {
+        delay |= VIA_FORCE_LOAD_TIMERA0;
+        timerACounter = timerALatch;
 
-auto Via::processHi() -> void {   
-    
-    decrement<Timer::A>( );
-	decrement<Timer::B>( );      
-    
-    if ( registerWrite.pipelined ) {
-		registerWrite.pipelined = false;
-		write( registerWrite.addr, registerWrite.value );
-	}
-    
-    if (ca2StatePulse & 1)
-        ca2Out( ca2 = 1 ); 
-    
-    if (cb2StatePulse & 1)
-        cb2Out( cb2 = 1 );   
-    
-    timer[Timer::A].forceloadCycle = timer[Timer::B].forceloadCycle = 0;
-    timer[Timer::B].step = false;        
-}
-
-
-template<unsigned timerId> inline auto Via::updateState( ) -> void {
-	
-    Timer* pT = &timer[timerId];
-        
-    if (pT->counterUpdated) {
-        pT->counterUpdated = false;
-        // the cycle after updating the counter from latch doesn't check for overflows.
-        // otherwise a latch of 0xffff would overflow each cycle without counting down.
-        return;
-    }
-    
-    if ( (timerId == Timer::B) && isShiftT2Control ) { // shift for timer B only
-        // lasts: timer B latch + 2 cycles
-        // i.e. latch = 3 -> 2, 1, 0, 0xff, reload counter = 5 cycles
-        if ( (pT->counter & 0xff) == 0xff ) { // counter is low byte only                       
-
-            if (!shift.warmUp) {
-                if (!shift.toggle || (shift.count != 8)) {
-                    shift.toggle ^= 1;
-                    shiftTiming<true>( );
-                } 
-            }
-            pT->forceloadCycle = 2; // reload 8 bit low counter    
-        }       
-    }
-        
-	if (pT->counter == 0xffff) {        
-        
-        if ( timerId == Timer::A ) {
-            pT->forceloadCycle = 1;
-            
-            if (pT->trigger) {
-                pT->toggle ^= 1;
-                setIrq( 64 );
-            }                
+        if (timerATrigger) {
+            timerAToggle ^= 1;
+            setIrq(64);
             
             // disable trigger in one shot mode only, a write in timer 1 counter hi is needed
             // to reactivate the trigger
-            if ( !(acr & 0x40) )
-                pT->trigger = false; 
-            
-        } else {
-            
-            if (pT->trigger)   
-                setIrq( 32 );
-            
-            // disable trigger in one shot mode and pulse counting mode, a write in timer 2
-            // counter hi is needed to reactivate the trigger
-            pT->trigger = false; 
-        }            
-	}
+            if (!(acr & 0x40))
+                timerATrigger = false; 
+        }
+        
+        return;
+    }  
+    
+    timerACounter--;
 }
 
-template<unsigned timerId> inline auto Via::decrement( ) -> void {	
-    Timer* pT = &timer[timerId];	
-    
-    // counter is updated by latch this cycle, so no decrementing
-    if ( pT->forceloadCycle & 1 ) {
-        pT->counter = pT->latch;
-        pT->counterUpdated = true;
-        return;
-        
-    } else if ( pT->forceloadCycle & 2 ) { // T2 shift for timer B only
-        pT->counter = (pT->counter & 0xff00) | (pT->latch & 0xff);
-        pT->counterUpdated = true;               
-        return;
+inline auto Via::updateTimerB( ) -> void {
+    timerBCounterRead = timerBCounter;
+
+    if (timerBTrigger && (timerBCounter == 0xffff)) {
+        setIrq(32);
+        // disable trigger in one shot mode and pulse counting mode, a write in timer 2
+        // counter hi is needed to reactivate the trigger
+        timerBTrigger = false;
     }
-    // timer A decrements always
-    // timer B decrements in oneshot mode only, otherwise a pulse on pb6 is needed ( single step )   
-    if ( (timerId == Timer::A) || ( !(acr & 0x20) ) || pT->step )
-        pT->counter--;    
+
+    if(delay & VIA_FORCE_LOAD_TIMERB1);
+    
+    else if (isShiftT2Control) { // shift for timer B only
+        // lasts: timer B latch + 2 cycles
+        // i.e. latch = 3 -> 2, 1, 0, 0xff, reload counter = 5 cycles
+        if ((timerBCounter & 0xff) == 0xff) { // counter is low byte only                       
+
+            if (!(delay & VIA_SHIFT_WARMUP1) ) {
+                if (!shift.toggle || (shift.count != 8)) {
+                    shift.toggle ^= 1;
+                    shiftTiming<true>();
+                }
+            }
+            
+            delay |= VIA_FORCE_LOAD_TIMERB0;
+            timerBCounter = (timerBCounter & 0xff00) | (timerBLatch & 0xff);
+            return;
+        }
+    }
+    
+    if ( !(acr & 0x20) || (delay & VIA_STEP_TIMERB1) )
+        timerBCounter--;
 }
+
 
 inline auto Via::shiftT2FreeRunning() -> bool {
     
@@ -290,7 +245,7 @@ inline auto Via::shiftT2Control() -> bool {
     return false;
 }
 
-auto Via::shiftCb1Control() -> bool {
+inline auto Via::shiftCb1Control() -> bool {
     
     if ( (acr & 0xc) == 0xc ) // serial shift is under cb1 control
         return true;    
@@ -314,9 +269,6 @@ inline auto Via::shiftOut() -> bool {
 }
 
 auto Via::shifter( ) -> void {
-    
-    if (!shift.active)
-        return;
     
     shift.active = false;
         
@@ -356,7 +308,7 @@ auto Via::shifter( ) -> void {
     }    
 }
 
-inline auto Via::handleInterrupt( ) -> void {
+auto Via::handleInterrupt( ) -> void {
     // inform cpu this cycle
     irqCall( (ier & ifr) != 0 );      
 }
@@ -364,18 +316,18 @@ inline auto Via::handleInterrupt( ) -> void {
 inline auto Via::setIrq( uint8_t pos ) -> void {
     // inform cpu next cycle
     ifr |= pos;
-    updateIrq = 1;
+    delay |= VIA_UPDATE_IRQ0;
 }
 
 inline auto Via::resetIrq( uint8_t pos ) -> void {
     // inform cpu next cycle
     ifr &= ~pos;
-    updateIrq = 1;
+    delay |= VIA_UPDATE_IRQ0;
 }
 
 inline auto Via::handleSystemClockShift() -> void {
     // shift in/out by system clock
-    if (!shiftSystemClock() || shift.warmUp)
+    if (!shiftSystemClock() || (delay & VIA_SHIFT_WARMUP1))
         return;
              
     if ( !shift.toggle || (shift.count != 8) ) {        

@@ -1,16 +1,32 @@
 
-/**
- * this implementation should be in a more common area like cpu or cia.
- * while not emulating another devices which uses via chips i would leave it here
- * in context of c64 disk drive emulation.
- * todo: what happens when changing shift modes while shift is running ?
- */
-
 #pragma once
 
 #include <functional>
 
 #include "../../../tools/serializer.h"
+
+#define VIA_FORCE_LOAD_TIMERA0 1
+#define VIA_FORCE_LOAD_TIMERA1 2
+
+#define VIA_FORCE_LOAD_TIMERB0 4
+#define VIA_FORCE_LOAD_TIMERB1 8
+
+#define VIA_STEP_TIMERB0 0x10
+#define VIA_STEP_TIMERB1 0x20
+
+#define VIA_CA2_PULSE0 0x40
+#define VIA_CA2_PULSE1 0x80
+
+#define VIA_CB2_PULSE0 0x100
+#define VIA_CB2_PULSE1 0x200
+
+#define VIA_UPDATE_IRQ0 0x400
+#define VIA_UPDATE_IRQ1 0x800
+
+#define VIA_SHIFT_WARMUP0 0x1000
+#define VIA_SHIFT_WARMUP1 0x2000
+
+#define VIA_MASK ~(0x4000 | VIA_FORCE_LOAD_TIMERA0 | VIA_FORCE_LOAD_TIMERB0 | VIA_STEP_TIMERB0 | VIA_CA2_PULSE0 | VIA_CB2_PULSE0 | VIA_UPDATE_IRQ0 | VIA_SHIFT_WARMUP0)
 
 namespace LIBC64 {
     
@@ -52,36 +68,25 @@ struct Via {
     
     auto read(unsigned pos) -> uint8_t;
     auto write(unsigned pos, uint8_t value) -> void;
-	auto writePipelined(unsigned pos, uint8_t value) -> void;
     auto reset() -> void;
     
-    auto processHi() -> void;
-    auto processLo() -> void;
+    auto process() -> void;
     auto serialize(Emulator::Serializer& s) -> void;
+    auto handleInterrupt( ) -> void;
     
-    uint8_t model; // for debugging purposes, not part of master branch    
-protected:
+    uint8_t model;   
     
-    struct {
-		bool pipelined;
-		uint8_t addr;
-		uint8_t value;
-	} registerWrite;
+protected:          
+    uint16_t timerACounter;
+    uint16_t timerALatch;
+    uint16_t timerACounterRead;
+    bool timerATrigger;
+    bool timerAToggle;
     
-    struct Timer {
-        enum Type : unsigned { A = 0, B = 1 };
-        
-		uint8_t forceloadCycle;
-        bool counterUpdated;
-		
-		uint16_t latch;
-		uint16_t counter;
-        
-        bool toggle;
-        bool trigger;
-        
-        bool step;
-	} timer[2];
+    uint16_t timerBCounter;
+    uint16_t timerBLatch;
+    uint16_t timerBCounterRead;
+    bool timerBTrigger;
     
     uint8_t ifr;
     uint8_t ier;
@@ -93,26 +98,22 @@ protected:
     bool ca2;
     bool cb1;
     bool cb2;
+    
+    unsigned delay;
         
     struct {
-        bool warmUp;
         bool toggle;
         bool irqTrigger;
         bool active;
         uint8_t count;
     } shift;
-
-    uint8_t ca2StatePulse;
-    uint8_t cb2StatePulse;
     
-    bool updateIrq;
     bool isShiftT2Control;
-    
-    auto handleInterrupt( ) -> void;
+        
     inline auto setIrq( uint8_t pos ) -> void;
     inline auto resetIrq( uint8_t pos ) -> void;
-    template<unsigned timerId> auto decrement() -> void;
-	template<unsigned timerId> auto updateState() -> void;    
+    auto updateTimerA( ) -> void;
+    auto updateTimerB( ) -> void;
     auto shifter() -> void;
     auto shiftCb1Control() -> bool;
     auto shiftT2FreeRunning() -> bool;

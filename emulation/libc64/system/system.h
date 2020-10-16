@@ -156,7 +156,6 @@ struct System {
     auto serialize(Emulator::Serializer& s) -> void;
     auto serializeDiskIdle(Emulator::Serializer& s) -> void;
     auto serializeExpansion(Emulator::Serializer& s) -> void;
-    static auto serialize6502( Emulator::Serializer& s, MOS65Context* cpuCtx ) -> void;        
     
     auto setExpansion( Emulator::Interface::Expansion& expansion ) -> void;
     

@@ -627,16 +627,9 @@ auto System::power( bool softReset ) -> void {
 	tape->reset();
     glueLogic->reset();	
     
-	if (vicII->isNTSCGeometry()) {
-		powerSupply->init( vicII->frequency(), 60 );
-		tape->setCyclesPerSecond( vicII->frequency() );
-        iecBus->setCpuCyclesPerSecond( vicII->frequency() );
-        
-	} else {
-		powerSupply->init( vicII->frequency(), 50 );
-		tape->setCyclesPerSecond( vicII->frequency() );
-        iecBus->setCpuCyclesPerSecond( vicII->frequency() );
-    }
+    powerSupply->init( vicII->frequency(), vicII->isNTSCGeometry() ? 60 : 50 );        
+    tape->setCyclesPerSecond( vicII->frequency() );
+    iecBus->setCpuCyclesPerSecond( vicII->frequency() );
 	
 	sysTimer.add( &countDownPowerSupply, powerSupply->nextTickCount(), Emulator::SystemTimer::Action::UpdateExisting );
     initDebugCart();

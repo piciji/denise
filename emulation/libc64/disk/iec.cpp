@@ -9,47 +9,47 @@ IecBus* iecBus;
 // 1. main thread (c64) runs some cycles, drive thread waits
 // 2. main thread transfers amount of consumed cycles to drive thread
 // 3. drive thread runs for this amount of cycles
-// 4. main thread doesn't wait for drive thread and goes on (real parallel)
+// 4. main thread doesn't wait for drive thread and goes on
 // 5. depending on which thread finish his work first, threads waits for each other
 // 6. go to second step and repeat
-// NOTE: main thread runs a few cycles or stops before a iec read/write, then
-// synchronizes with drive thread and goes on. in case of iec access, main thread
+// NOTE: main thread runs a few cycles or stops before a IEC read/write, then
+// synchronizes with drive thread and goes on. in case of IEC access, main thread
 // and drive thread don't run in parallel. main thread waits for drive thread to keep up
 // before data is transfered in a cycle exact way.                 
 
-// we have to control the behaviour when c64 and drive(s) access iec bus at nearly same time.
-// if both reads or writes it doesn't matter which side access bus first.
-// if one side reads and the other writes we have to carefully control bus access.
+// we have to control the behaviour when c64 and drive(s) access IEC BUS at nearly same time.
+// if both reads or writes it doesn't matter which side access BUS first.
+// if one side reads and the other writes we have to carefully control BUS access.
 // when accessing exactly same time a read happens before a write.
 // to find out the time window for a write to be reflected by a read we need to know
 // some facts.
-// 1. how late in a cycle data can change to be readed back by cpu ?
 
+// 1. how late in a cycle data can change to be readed back by CPU ?
 // synertek hardware manual says for 1 MHz operation.
 // address is guaranted to be stable 300 ns after leading edge of phase 1.
 // a memory device has ~575 ns to make data available on the bus.
-// means a via bus read can detect data changes no later than 875 ns within a cycle.
-// a cia read operates not exactly at 1 Mhz. pal is 985248 (862 ns) and ntsc is 1022727 (895 ns).
+// means a VIA BUS read can detect data changes no later than 875 ns within a cycle.
+// a CIA read operates not exactly at 1 Mhz. pal is 985248 (862 ns) and ntsc is 1022727 (895 ns).
 // so a safe value could be 850 ns for all participants, don't know how far we 
 // should approach the value in order to reliably read back.
 
-// 2. how long it takes a write is visible for other iec bus connected devices ?
+// 2. how long it takes a write is visible for other IEC BUS connected devices ?
 // it takes ~0.3 cycle.
 
-// Note 1: when c64 gives back control for via to keep up, the actual cycle is not counted yet.
-// Note 2: via and cia cycles don't have same length, therefore the alignment is changed each cycle.
-// Note 3: drive cpu can not sync back between half cycles.
-//  doing so would result in a speed hit and additional complexity of cpu class.
-//  main cpu and drive cpu access iec bus in second half cycle, so there is no accuracy loss
+// Note 1: when c64 gives back control for VIA to keep up, the actual cycle is not counted yet.
+// Note 2: VIA and CIA cycles don't have same length, therefore the alignment is changing each cycle.
+// Note 3: emulated drive CPU can not sync back between half cycles.
+//  doing so would result in a speed hit and additional complexity of CPU class.
+//  main cpu and drive cpu access IEC BUS in second half cycle, so there is no accuracy loss
 //  by syncing in full cycles.
 
-// scenario 1: cia writes, via reads
-// a via read before (0.45 * drive cycle duration) shouldn't be affected by a cia write
-// 0.45 + 0.85 ( data change time ) = 1.3 cycles = 1 write cycle + 0.3 write delay
+// scenario 1: CIA writes, VIA reads
+// 1.3 cycles (1 write + 0.3 delay) - 0.85 (data change time) = 0.45
+// a VIA read before (0.45 * drive cycle duration) shouldn't be affected by a cia write
 
-// scenario 2: cia reads, via writes
-// a via write before (-0.45 * drive cycle duration) should affect a cia read
-// -0.45 + 1 write cycle + 0.3 write delay = 0.85 ( data change time )  
+// scenario 2: CIA reads, VIA writes
+// 0.85 ( data change time ) - 1.3 cycles (1 write + 0.3 delay) = -0.45
+// a VIA write before (-0.45 * drive cycle duration) should affect a CIA read
 
 IecBus::IecBus() {    
     // max 4 drives will be supported

@@ -27,7 +27,6 @@ auto Drive1541::serialize(Emulator::Serializer& s) -> void {
     s.integer( uf4Counter );
     s.integer( randomizer.xorShift32 );
     s.integer( randCounter );
-    s.integer( alternateRefTiming );
     s.integer( writeValue );
     s.integer( readBuffer );
     s.integer( writeBuffer );
@@ -47,9 +46,6 @@ auto Drive1541::serialize(Emulator::Serializer& s) -> void {
     s.vector( motorOff.chunkSize );
     s.integer( writeProtected );
     
-    //s.integer( rpm );
-    //s.integer( wobble );
-    
     if (s.mode() == Emulator::Serializer::Mode::Load) {
         gcrTrack = structure1541.getTrackPtr( currentHalftrack );
         updateState();
@@ -59,9 +55,7 @@ auto Drive1541::serialize(Emulator::Serializer& s) -> void {
     
     via1->serialize( s );
     via2->serialize( s );
-    cpu->serialize( s );
-    
-    System::serialize6502( s, cpuCtx ); 
+    cpu->serialize( s );    
 }
 
 }
