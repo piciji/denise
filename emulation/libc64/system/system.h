@@ -59,6 +59,8 @@ struct System {
     Memory::Read readBasicRom; 
     Memory::Read readRomL;
     Memory::Read readRomH;
+    Memory::Read readRomHLow;
+    Memory::Read readRomHHi;
     Memory::Write writeRomL;
     Memory::Write writeRomH;
     // need this separated from writeRomL and writeRomH because of not writing to C64 memory
@@ -75,11 +77,8 @@ struct System {
     uint8_t* ram = nullptr;
     uint8_t* colorRam = nullptr;
     uint8_t* charRom = nullptr;
-    unsigned charRomSize = 0;
     uint8_t* kernalRom = nullptr;
-    unsigned kernalRomSize = 0;
     uint8_t* basicRom = nullptr;
-    unsigned basicRomSize = 0;
     
     Interface* interface;  
     ExpansionPort* noExpansion;

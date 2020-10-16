@@ -55,7 +55,7 @@ struct IecBus {
     auto resetTicks() -> void;
     auto setDrivesEnabled( uint8_t count ) -> void;
     auto setDriveSpeed(double rpm, double wobble) -> void;
-    auto setFirmware(uint8_t* rom, unsigned romSize) -> void;
+    auto setFirmware(uint8_t* rom) -> void;
     auto randomizeRpm() -> void;
     auto setCpuCyclesPerSecond( unsigned cycles ) -> void;
     auto attach( Emulator::Interface::Media* media, uint8_t* data, unsigned size ) -> void;

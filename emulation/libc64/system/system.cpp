@@ -92,31 +92,41 @@ System::System(Interface* interface) {
         if ( !this->charRom ) 
             return (uint8_t)0xff;
         
-        return this->charRom[ addr ];
+        return this->charRom[ addr & 0xfff ];
     };
 
     readKernalRom = [this](uint16_t addr) {
         if (!this->kernalRom)
             return (uint8_t)0xff;
         
-        return (uint8_t) this->kernalRom[ addr ];
+        return (uint8_t) this->kernalRom[ addr & 0x1fff ];
     };
 
     readBasicRom = [this](uint16_t addr) {
         if (!this->basicRom) 
             return (uint8_t)0xff;
 
-        return (uint8_t) this->basicRom[ addr ];
+        return (uint8_t) this->basicRom[ addr & 0x1fff ];
     };
     
     readRomL = [this](uint16_t addr) {
 
-        return expansionPort->readRomL( addr );
+        return expansionPort->readRomL( addr & 0x1fff );
     };
 
     readRomH = [this](uint16_t addr) {
 
-        return expansionPort->readRomH( addr );
+        return expansionPort->readRomH( addr & 0x1fff );
+    };
+    
+    readRomHLow = [this](uint16_t addr) {
+
+        return expansionPort->readRomH( addr & 0xfff );
+    };
+    
+    readRomHHi = [this](uint16_t addr) {
+
+        return expansionPort->readRomH( 0x1000 | (addr & 0xfff) );
     };
     
     writeRomL = [this](uint16_t addr, uint8_t value) {
@@ -161,7 +171,7 @@ System::System(Interface* interface) {
         
         if (Sid::extraSids) {
             Sid::updateClock();
-            Sid::writeSidIO( addr + 0xde00, value );
+            Sid::writeSidIO( addr, value );
         }
         
         expansionPort->writeIo1(addr, value);
@@ -170,7 +180,7 @@ System::System(Interface* interface) {
     readIo1Reg = [this](uint16_t addr) {
         
         if (Sid::extraSids) {            
-            Sid* _sid = Sid::getSidByAdr( addr + 0xde00, true );
+            Sid* _sid = Sid::getSidByAdr( addr, true );
             if (_sid) {
                 Sid::updateClock();
                 return _sid->readIO( addr );
@@ -184,7 +194,7 @@ System::System(Interface* interface) {
 
         if (Sid::extraSids) {
             Sid::updateClock();
-            Sid::writeSidIO( addr + 0xdf00, value );        
+            Sid::writeSidIO( addr, value );        
         }
         expansionPort->writeIo2(addr, value);
     };
@@ -192,7 +202,7 @@ System::System(Interface* interface) {
     readIo2Reg = [this](uint16_t addr) {		
         
         if (Sid::extraSids) {
-            Sid* _sid = Sid::getSidByAdr( addr + 0xdf00, true );
+            Sid* _sid = Sid::getSidByAdr( addr, true );
             if (_sid) {
                 Sid::updateClock();
                 return _sid->readIO( addr );
@@ -565,33 +575,38 @@ auto System::setFirmware( unsigned typeId, uint8_t* data, unsigned size ) -> voi
         case 0:
 			if (!data) {
 				data = (uint8_t*)Firmware::kernalRom;
-				size = sizeof(Firmware::kernalRom);
-			}
-            kernalRomSize = size;
+			} else if (size < sizeof(Firmware::kernalRom)) {
+                Firmware::buildAlternateRom( Firmware::kernalRomAlt, data, sizeof(Firmware::kernalRom), size );
+                data = (uint8_t*) Firmware::kernalRomAlt;
+            }
             kernalRom = data;
             break;
         case 1:
 			if (!data) {
 				data = (uint8_t*)Firmware::basicRom;
-				size = sizeof(Firmware::basicRom);
-			}
-            basicRomSize = size;
+			} else if (size < sizeof(Firmware::basicRom)) {
+                Firmware::buildAlternateRom( Firmware::basicRomAlt, data, sizeof(Firmware::basicRom), size );
+                data = (uint8_t*) Firmware::basicRomAlt;
+            }
             basicRom = data;
             break;
         case 2:
 			if (!data) {
 				data = (uint8_t*)Firmware::charRom;
-				size = sizeof(Firmware::charRom);
-			}
-            charRomSize = size;
+			} else if (size < sizeof(Firmware::charRom)) {
+                Firmware::buildAlternateRom( Firmware::charRomAlt, data, sizeof(Firmware::charRom), size );
+                data = (uint8_t*) Firmware::charRomAlt;
+            }
             charRom = data;
             break;
         case 3:
 			if (!data) {
 				data = (uint8_t*)Firmware::drive1541Rom;
-				size = sizeof(Firmware::drive1541Rom);
-			}
-            iecBus->setFirmware( data, size );
+			} else if (size < sizeof(Firmware::drive1541Rom)) {
+                Firmware::buildAlternateRom( Firmware::drive1541RomAlt, data, sizeof(Firmware::drive1541Rom), size );
+                data = (uint8_t*) Firmware::drive1541RomAlt;
+            }
+            iecBus->setFirmware( data );
             break;
     }   
 }
@@ -807,55 +822,55 @@ auto System::remapCpu( ) -> void {
 	bool ultimax = isUltimax();
     
     // 00 - 0f -> always ram
-    memoryCpu.map( &readRam, &writeRam, 0x0, 0x0f, Memory::Mode::Direct );
+    memoryCpu.map( &readRam, &writeRam, 0x0, 0x0f );
 	
     // 10 - 7f
     if ( ultimax )
-        memoryCpu.map( &readUnmapped, &writeUnmapped, 0x10, 0x7f, Memory::Mode::Direct );
+        memoryCpu.map( &readUnmapped, &writeUnmapped, 0x10, 0x7f );
     else
-        memoryCpu.map( &readRam, &writeRam, 0x10, 0x7f, Memory::Mode::Direct );
+        memoryCpu.map( &readRam, &writeRam, 0x10, 0x7f );
     
     // 80 - 9f
     if ( ultimax ) {
         memoryCpu.map( &readRomL, 0x80, 0x9f);
-		memoryCpu.map( &writeUltimaxRomL, 0x80, 0x9f, Memory::Mode::Direct );
+		memoryCpu.map( &writeUltimaxRomL, 0x80, 0x9f );
     
     } else if ( (cartMode == 0 || cartMode == 1) && ramMode == 3 ) {
         memoryCpu.map( &readRomL, 0x80, 0x9f);
-		memoryCpu.map( &writeRomL, 0x80, 0x9f, Memory::Mode::Direct );
+		memoryCpu.map( &writeRomL, 0x80, 0x9f );
     } else
-		memoryCpu.map( &readRam, &writeRamAt80To9F, 0x80, 0x9f, Memory::Mode::Direct );
+		memoryCpu.map( &readRam, &writeRamAt80To9F, 0x80, 0x9f );
 	
     // a0 - bf
     if ( ultimax )
-        memoryCpu.map( &readUltimaxA0, &writeUltimaxA0, 0xa0, 0xbf, Memory::Mode::Direct );
+        memoryCpu.map( &readUltimaxA0, &writeUltimaxA0, 0xa0, 0xbf );
     
     else if ( (cartMode == 1 || cartMode == 3) && ramMode == 3 ) {
-		memoryCpu.map( &readBasicRom, 0xa0, 0xbf, Memory::Mode::Linear, 0, basicRomSize );
-        memoryCpu.map( &writeRam, 0xa0, 0xbf, Memory::Mode::Direct );
+		memoryCpu.map( &readBasicRom, 0xa0, 0xbf );
+        memoryCpu.map( &writeRam, 0xa0, 0xbf );
 		
     } else if (cartMode == 0 && (ramMode == 2 || ramMode == 3) ) {
         
 		memoryCpu.map( &readRomH, 0xa0, 0xbf );
-        memoryCpu.map( &writeRomH, 0xa0, 0xbf, Memory::Mode::Direct );
+        memoryCpu.map( &writeRomH, 0xa0, 0xbf );
     } else
-        memoryCpu.map( &readRam, &writeRam, 0xa0, 0xbf, Memory::Mode::Direct );
+        memoryCpu.map( &readRam, &writeRam, 0xa0, 0xbf );
     
     // c0 - cf
     if ( ultimax )
-        memoryCpu.map( &readUnmapped, &writeUnmapped, 0xc0, 0xcf, Memory::Mode::Direct );
+        memoryCpu.map( &readUnmapped, &writeUnmapped, 0xc0, 0xcf );
     else
-        memoryCpu.map( &readRam, &writeRam, 0xc0, 0xcf, Memory::Mode::Direct );
+        memoryCpu.map( &readRam, &writeRam, 0xc0, 0xcf );
 
     // d0 - df
     if ( ultimax || subMode == 5 || subMode == 6 || subMode == 7 ) {
         memoryCpu.map( &readVicReg, &writeVicReg, 0xd0, 0xd3);
         
         if (!debugCart.enable)
-            memoryCpu.map( &readSidReg, &writeSidReg, 0xd4, 0xd7, Memory::Mode::Direct);
+            memoryCpu.map( &readSidReg, &writeSidReg, 0xd4, 0xd7);
         else {
-            memoryCpu.map( &readSidReg, &writeSidReg, 0xd4, 0xd6, Memory::Mode::Direct);
-            memoryCpu.map( &readSidReg, &writeDebugReg, 0xd7, 0xd7, Memory::Mode::Direct);
+            memoryCpu.map( &readSidReg, &writeSidReg, 0xd4, 0xd6);
+            memoryCpu.map( &readSidReg, &writeDebugReg, 0xd7, 0xd7);
         }
         memoryCpu.map( &readColorRam, &writeColorRam, 0xd8, 0xdb);
         memoryCpu.map( &readCia1Reg, &writeCia1Reg, 0xdc, 0xdc);
@@ -865,50 +880,50 @@ auto System::remapCpu( ) -> void {
         
     } else if ( (subMode == 1 || subMode == 2 || subMode == 3) && (mode != 1)  ) {
         
-        memoryCpu.map( &readCharRom, 0xd0, 0xdf, Memory::Mode::Linear, 0, charRomSize );
-        memoryCpu.map( &writeRam, 0xd0, 0xdf, Memory::Mode::Direct );
+        memoryCpu.map( &readCharRom, 0xd0, 0xdf );
+        memoryCpu.map( &writeRam, 0xd0, 0xdf );
     } else
-        memoryCpu.map( &readRam, &writeRam, 0xd0, 0xdf, Memory::Mode::Direct );
+        memoryCpu.map( &readRam, &writeRam, 0xd0, 0xdf );
 
     // e0 - ff
     if ( ultimax ) {
         memoryCpu.map( &readRomH, 0xe0, 0xff);
-		memoryCpu.map( &writeUltimaxRomH, 0xe0, 0xff, Memory::Mode::Direct );
+		memoryCpu.map( &writeUltimaxRomH, 0xe0, 0xff );
 		
     } else if (ramMode == 2 || ramMode == 3) {
-        memoryCpu.map( &readKernalRom, 0xe0, 0xff, Memory::Mode::Linear, 0, kernalRomSize );
-		memoryCpu.map( &writeRam, 0xe0, 0xff, Memory::Mode::Direct );
+        memoryCpu.map( &readKernalRom, 0xe0, 0xff );
+		memoryCpu.map( &writeRam, 0xe0, 0xff );
 		
     } else
-        memoryCpu.map( &readRam, &writeRam, 0xe0, 0xff, Memory::Mode::Direct );
+        memoryCpu.map( &readRam, &writeRam, 0xe0, 0xff );
 }
     
 auto System::remapVic( ) -> void {
     bool ultimax = isUltimax();
 	
-	memoryVic.map( &writeUnmapped, 0x00, 0xff, Memory::Mode::Direct );
-	memoryVic.map( &readRam, 0x00, 0x0f, Memory::Mode::Direct );
+	memoryVic.map( &writeUnmapped, 0x00, 0xff );
+	memoryVic.map( &readRam, 0x00, 0x0f );
 	
 	memoryVic.unmapRead( 0x10, 0xff );
 	
 	if ( !ultimax ) {
-		memoryVic.map( &readRam, 0x10, 0xff, Memory::Mode::Direct );	
+		memoryVic.map( &readRam, 0x10, 0xff );	
 		//overmap charrom
-		memoryVic.map( &readCharRom, 0x10, 0x1f, Memory::Mode::Linear, 0, charRomSize );
-		memoryVic.map( &readCharRom, 0x90, 0x9f, Memory::Mode::Linear, 0, charRomSize );
+		memoryVic.map( &readCharRom, 0x10, 0x1f );
+		memoryVic.map( &readCharRom, 0x90, 0x9f );
 		
 	} else {
-		memoryVic.map( &readUnmapped, 0x10, 0xff, Memory::Mode::Direct );
+		memoryVic.map( &readUnmapped, 0x10, 0xff );
 		// overmap
-		memoryVic.map( &readRomH, 0x30, 0x3f, Memory::Mode::Linear, 16 ); //upper half
-		memoryVic.map( &readRomH, 0x70, 0x7f );
-		memoryVic.map( &readRam, 0x80, 0x9f, Memory::Mode::Direct );	
+		memoryVic.map( &readRomHHi, 0x30, 0x3f ); //upper half
+		memoryVic.map( &readRomHLow, 0x70, 0x7f );
+		memoryVic.map( &readRam, 0x80, 0x9f );	
         
-        memoryVic.map( &readUltimaxA0, 0xa0, 0xaf, Memory::Mode::Direct );
+        memoryVic.map( &readUltimaxA0, 0xa0, 0xaf );
         
-		memoryVic.map( &readRomH, 0xb0, 0xbf );
-		memoryVic.map( &readRam, 0xd0, 0xef, Memory::Mode::Direct );	
-		memoryVic.map( &readRomH, 0xf0, 0xff );
+		memoryVic.map( &readRomHLow, 0xb0, 0xbf );
+		memoryVic.map( &readRam, 0xd0, 0xef );	
+		memoryVic.map( &readRomHLow, 0xf0, 0xff );
 	}
 }
 

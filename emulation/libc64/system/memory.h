@@ -7,56 +7,34 @@ namespace LIBC64 {
 
 struct Memory {    
     
-    enum Mode { Direct, Linear };
-    
     using Read = std::function<auto (uint16_t) -> uint8_t>;
     using Write = std::function<auto (uint16_t, uint8_t) -> void>;
 
     Read* reads[256] = {0};
     Write* writes[256] = {0};
-    unsigned offsets[256] = {0};
-	unsigned offsetsW[256] = {0};    
 	
 	// use 'size' for mirroring memory
-    auto map( Read* read, Write* write, uint8_t pageLo, uint8_t pageHi, Mode mode = Mode::Linear, unsigned pageOffset = 0, unsigned size = 0 ) -> void {
-        map(read, pageLo, pageHi, mode, pageOffset, size );
-        map(write, pageLo, pageHi, mode, pageOffset, size );
+    auto map( Read* read, Write* write, uint8_t pageLo, uint8_t pageHi ) -> void {
+        map(read, pageLo, pageHi );
+        map(write, pageLo, pageHi );
     }
     
-    auto map( Read* read, uint8_t pageLo, uint8_t pageHi, Mode mode = Mode::Linear, unsigned pageOffset = 0, unsigned size = 0 ) -> void {
+    auto map( Read* read, uint8_t pageLo, uint8_t pageHi ) -> void {
         
         if (reads[ pageLo ] == read)
             return;
         
-		unsigned offset = mode == Mode::Direct ? pageLo : 0;
-        
-        for ( unsigned page = pageLo; page <= pageHi; page++ ) {
-            
-            reads[ page ] = read;
-            
-            if ( size )
-                offset %= size;
-            
-            offsets[ page ] = pageOffset + offset++;
-        }
+        for ( unsigned page = pageLo; page <= pageHi; page++ )            
+            reads[ page ] = read;        
     }
     
-    auto map( Write* write, uint8_t pageLo, uint8_t pageHi, Mode mode = Mode::Linear, unsigned pageOffset = 0, unsigned size = 0 ) -> void {
+    auto map( Write* write, uint8_t pageLo, uint8_t pageHi ) -> void {
         
         if ( writes[ pageLo ] == write )
             return;
         
-        unsigned offset = mode == Mode::Direct ? pageLo : 0;
-        
-        for ( unsigned page = pageLo; page <= pageHi; page++ ) {
-            
-            writes[ page ] = write;
-            
-            if ( size )
-                offset %= size;
-            
-            offsetsW[ page ] = pageOffset + offset++;
-        }
+        for ( unsigned page = pageLo; page <= pageHi; page++ )            
+            writes[ page ] = write;       
     }
 	
 	auto unmap( uint8_t pageLo, uint8_t pageHi ) -> void {
@@ -77,15 +55,13 @@ struct Memory {
 	}
     
     inline auto read( uint16_t addr ) -> uint8_t {
-        uint8_t page = addr >> 8;
         
-        return (*reads[ page ])( (offsets[ page ] << 8) | (addr & 0xff) );
+        return (*reads[ addr >> 8 ])( addr );
     }
 
     inline auto write( uint16_t addr, uint8_t data ) -> void {    
-        uint8_t page = addr >> 8;
         
-        (*writes[ page ])( (offsetsW[ page ] << 8) | (addr & 0xff), data );
+        (*writes[ addr >> 8 ])( addr, data );
     }
     
     auto isLocation( uint8_t page, Read* read ) -> bool {

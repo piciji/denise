@@ -343,10 +343,10 @@ auto IecBus::setDriveSpeed(double rpm, double wobble) -> void {
         drive->setSpeed( rpm, wobble );
 }
     
-auto IecBus::setFirmware(uint8_t* rom, unsigned romSize) -> void {
+auto IecBus::setFirmware(uint8_t* rom) -> void {
     
     for( auto drive : drives )
-        drive->setFirmware( rom, romSize );
+        drive->setFirmware( rom );
 }
 
 auto IecBus::resetDriveState() -> void {

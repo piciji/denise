@@ -60,8 +60,7 @@ Drive1541::Drive1541(uint8_t number) {
     media = nullptr;
     
     ram = new uint8_t[ 2 * 1024 ];
-    rom = nullptr;
-    romSize = 0;        
+    rom = nullptr;    
     
     via1 = new Via( 1 );
     via2 = new Via( 2 );
@@ -110,12 +109,12 @@ Drive1541::Drive1541(uint8_t number) {
 
     readRam = [this](uint16_t addr) {
 
-        return this->ram[ addr ];
+        return this->ram[ addr & 0x7ff ];
     };
     
     writeRam = [this](uint16_t addr, uint8_t value) {
 
-        this->ram[ addr ] = value;
+        this->ram[ addr & 0x7ff ] = value;
     };
 
     readRom = [this](uint16_t addr) {
@@ -123,7 +122,7 @@ Drive1541::Drive1541(uint8_t number) {
         if ( !this->rom )
             return (uint8_t)0xff;
         
-        return this->rom[addr];
+        return this->rom[addr & 0x3fff];
     };
     
     writeUnmapped = [this](uint16_t addr, uint8_t value) {
@@ -256,40 +255,34 @@ auto Drive1541::updateBus() -> void {
         dataOut = 0;
 }
 
-auto Drive1541::remap( bool romOnly ) -> void {
+auto Drive1541::remap( ) -> void {
     
     // some gaps remain unmapped
-    if(romOnly)
-        memory.map( &readUnmapped, &writeUnmapped, 0x80, 0xff, Memory::Mode::Direct);
-    else    
-        memory.map( &readUnmapped, &writeUnmapped, 0x00, 0xff, Memory::Mode::Direct);
+    memory.map( &readUnmapped, &writeUnmapped, 0x00, 0xff);
     
-    if (!romOnly) {
-        // overmap ram, rom, io
-        memory.map( &readRam, &writeRam, 0x00, 0x07);
-        memory.map( &readRam, &writeRam, 0x20, 0x27);
-        memory.map( &readRam, &writeRam, 0x40, 0x47);
-        memory.map( &readRam, &writeRam, 0x60, 0x67);
+    // overmap ram, rom, io
+    memory.map( &readRam, &writeRam, 0x00, 0x07);
+    memory.map( &readRam, &writeRam, 0x20, 0x27);
+    memory.map( &readRam, &writeRam, 0x40, 0x47);
+    memory.map( &readRam, &writeRam, 0x60, 0x67);
 
-        memory.map( &readVia1Reg, &writeVia1Reg, 0x18, 0x1b);
-        memory.map( &readVia1Reg, &writeVia1Reg, 0x38, 0x3b);
-        memory.map( &readVia1Reg, &writeVia1Reg, 0x58, 0x5b);
-        memory.map( &readVia1Reg, &writeVia1Reg, 0x78, 0x7b);
+    memory.map( &readVia1Reg, &writeVia1Reg, 0x18, 0x1b);
+    memory.map( &readVia1Reg, &writeVia1Reg, 0x38, 0x3b);
+    memory.map( &readVia1Reg, &writeVia1Reg, 0x58, 0x5b);
+    memory.map( &readVia1Reg, &writeVia1Reg, 0x78, 0x7b);
 
-        memory.map( &readVia2Reg, &writeVia2Reg, 0x1c, 0x1f);
-        memory.map( &readVia2Reg, &writeVia2Reg, 0x3c, 0x3f);
-        memory.map( &readVia2Reg, &writeVia2Reg, 0x5c, 0x5f);
-        memory.map( &readVia2Reg, &writeVia2Reg, 0x7c, 0x7f);
-    }
+    memory.map( &readVia2Reg, &writeVia2Reg, 0x1c, 0x1f);
+    memory.map( &readVia2Reg, &writeVia2Reg, 0x3c, 0x3f);
+    memory.map( &readVia2Reg, &writeVia2Reg, 0x5c, 0x5f);
+    memory.map( &readVia2Reg, &writeVia2Reg, 0x7c, 0x7f);
     
-    memory.map( &readRom, 0x80, 0xbf, Memory::Mode::Linear, 0, romSize);
-    memory.map( &readRom, 0xc0, 0xff, Memory::Mode::Linear, 0, romSize);
+    memory.map( &readRom, 0x80, 0xbf);
+    memory.map( &readRom, 0xc0, 0xff);
 }
 
 auto Drive1541::power( ) -> void {    
     
-    for( unsigned i = 0; i < (2 * 1024); i++ )       
-		ram[i] = 0;   
+    std::memset(ram, 0, 2 * 1024);
 
     via1->reset();
     via2->reset();  
@@ -333,15 +326,9 @@ auto Drive1541::powerOff( ) -> void {
     updateState( );
 }
 
-auto Drive1541::setFirmware(uint8_t* rom, unsigned romSize) -> void {
-    
-    bool needRemap = this->romSize != romSize;
+auto Drive1541::setFirmware(uint8_t* rom) -> void {
     
     this->rom = rom;
-    this->romSize = romSize;
-    
-    if(needRemap)
-        remap( true );
 }
 
 auto Drive1541::setViaTransition( bool state ) -> void {

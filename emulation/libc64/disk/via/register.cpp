@@ -3,9 +3,10 @@
 
 namespace LIBC64 {
           
-auto Via::read( unsigned pos ) -> uint8_t {
-        
-	switch (pos & 0xf) {
+auto Via::read( uint16_t pos ) -> uint8_t {
+    pos &= 0xf;
+    
+	switch (pos) {
         
 		case 0: { // orb    
             uint8_t out;
@@ -117,9 +118,10 @@ auto Via::read( unsigned pos ) -> uint8_t {
 }
    
 
-auto Via::write( unsigned pos, uint8_t value ) -> void {
+auto Via::write( uint16_t pos, uint8_t value ) -> void {
+    pos &= 0xf;
     
-    switch( pos & 0xf ) {
+    switch( pos ) {
         
         case 1: // ora
             resetIrq( 2 ); // disable CA1

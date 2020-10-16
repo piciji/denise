@@ -17,6 +17,7 @@
     * DSP: Bass Boost and Reverb
 * write audio output to WAV file
 * PRG can be loaded as D64
+* performance improvements
 * thanks to user AW182 for the countless tests and reports
 
 

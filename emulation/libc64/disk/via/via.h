@@ -66,8 +66,8 @@ struct Via {
     auto cb1In( bool state ) -> void;
     auto cb2In( bool state ) -> void;
     
-    auto read(unsigned pos) -> uint8_t;
-    auto write(unsigned pos, uint8_t value) -> void;
+    auto read(uint16_t pos) -> uint8_t;
+    auto write(uint16_t pos, uint8_t value) -> void;
     auto reset() -> void;
     
     auto process() -> void;

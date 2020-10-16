@@ -30,7 +30,7 @@ struct Drive1541 {
     
     uint8_t number;
     uint8_t* rom = nullptr;
-    unsigned romSize = 0;    
+   
     Emulator::Interface::Media* media;
 
     struct MotorOff {
@@ -109,14 +109,14 @@ struct Drive1541 {
     auto sync() -> void;
     auto cpuWrite(uint16_t addr, uint8_t data) -> void;
     auto cpuRead(uint16_t addr) -> uint8_t;
-    auto remap( bool romOnly = false ) -> void;
+    auto remap( ) -> void;
     auto power( ) -> void;
     auto powerOff( ) -> void;
     auto setViaTransition( bool state ) -> void;
     auto getMedia() -> Emulator::Interface::Media* { return media; }
     
     auto updateBus() -> void;
-    auto setFirmware(uint8_t* rom, unsigned romSize) -> void;
+    auto setFirmware(uint8_t* rom) -> void;
     auto rotateD64() -> void;
     auto rotateG64( unsigned refCycles ) -> void;
     auto randomizeRpm() -> void;
