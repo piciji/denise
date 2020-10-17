@@ -26,7 +26,7 @@ auto VicIIFast::serialize(Emulator::Serializer& s) -> void {
     s.integer( vHeight );
     s.integer( hWidth );
     s.integer( firstVisiblePixel );
-    s.array( spriteBa );
+    s.integer( spriteBaCode );
     s.integer( allowBadlines );
     s.integer( badLine );
     s.integer( irqLine );
@@ -119,10 +119,16 @@ auto VicIIFast::serialize(Emulator::Serializer& s) -> void {
     s.integer( vc );
     s.integer( rc );
     
-    s.array( cBuffer ); 
-	
-	setXLookUp();
+    s.array( cBuffer ); 		
 
+    if (s.mode() == Emulator::Serializer::Mode::Load) {
+        setXLookUp();
+        
+        if (!updatedBaTable)
+            updateSpriteBaState(ntscBorder, lineCycles);
+
+        spriteBaTabPtr = &spriteBaTab[spriteBaCode][0];
+    }
 }
 
 }

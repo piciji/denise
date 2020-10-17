@@ -55,7 +55,7 @@ auto VicIIFast::clockSilence() -> void {
             lineVCounter++;
         }
 
-        setRdy(spriteBa[8][ cycle ]);
+        setRdy( spriteBaTabPtr[cycle] );
 
     } else if (cycle == 11) {
 
@@ -69,7 +69,8 @@ auto VicIIFast::clockSilence() -> void {
     } else if (cycle == 54) {
         cAccessArea = false;
         dmaSprites();
-        setRdy( spriteBa[8][ cycle ] );
+
+        setRdy( spriteBaTabPtr[cycle] );
 
         dmaDelay = 0;
         
@@ -84,7 +85,8 @@ auto VicIIFast::clockSilence() -> void {
         }
         
     } else if (!cAccessArea) {
-        setRdy(spriteBa[8][ cycle ]);
+
+        setRdy( spriteBaTabPtr[cycle] );
     }
 
     setLineInterrupt();

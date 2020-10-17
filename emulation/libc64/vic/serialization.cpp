@@ -35,7 +35,7 @@ auto VicIICycle::serialize(Emulator::Serializer& s) -> void {
     s.integer( firstVisiblePixel );
     s.integer( baLow );
     s.integer( aecDelay ); 
-    s.array( spriteBa );
+    s.integer( spriteBaCode );
     s.integer( allowBadlines );
     s.integer( badLine );
     s.integer( irqLine );
@@ -167,6 +167,11 @@ auto VicIICycle::serialize(Emulator::Serializer& s) -> void {
         }
         
         spriteOpenBus = spriteOpenBusPos == 0xff ? nullptr : &sprite[spriteOpenBusPos];
+
+        if (!updatedBaTable)
+            updateSpriteBaState(ntscBorder, lineCycles);
+
+        spriteBaTabPtr = &spriteBaTab[spriteBaCode][0];
     }
 }
 

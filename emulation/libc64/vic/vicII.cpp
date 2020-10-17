@@ -26,9 +26,7 @@ auto VicIICycle::power() -> void {
     display.enable = false;
     display.dmli = 0;
     display.gBufferShift = 0;
-    display.gBits = 0;
-    
-	setXLookUp();
+    display.gBits = 0;    	
 	
     VicIIBase::power();
     

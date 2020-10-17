@@ -239,7 +239,8 @@ inline auto VicIICycle::clearCollisions() -> void {
 
 // cycle: 16-2
 auto VicIICycle::spriteUpdateBase() -> void {
-
+    uint8_t spriteBaCodeBefore = spriteBaCode;
+    
     for( uint8_t i = 0; i < 8; i++ ) {
 		Sprite* spr = &sprite[i];
         
@@ -248,20 +249,25 @@ auto VicIICycle::spriteUpdateBase() -> void {
 
             if (spr->mcBase == 63) {
                 spr->dma = false;
-                updateSpriteBaState(i, false);
+                spriteBaCode &= ~(1 << i);
             }
         }
     }
+    
+    if (spriteBaCodeBefore ^ spriteBaCode)
+        spriteBaTabPtr = &spriteBaTab[spriteBaCode][0];
 }
 // cycle: 55-1 + 56-1
 inline auto VicIICycle::spriteDmaCheck() -> void {
+    uint8_t spriteBaCodeBefore = spriteBaCode;
     
     for( uint8_t i = 0; i < 8; i++ ) {
         Sprite* spr = &sprite[i];
         
         if (spr->enabled && !spr->dma && ( (vCounter & 0xff) == spr->y ) ) {
             spr->dma = true;
-            updateSpriteBaState(i, true);
+            spriteBaCode |= 1 << i;
+            
             spr->mcBase = 0;
             spr->expandYFlop = 1;
             
@@ -269,6 +275,9 @@ inline auto VicIICycle::spriteDmaCheck() -> void {
                 sprite0DmaLateBA = true;
         }
     }
+    
+    if (spriteBaCodeBefore ^ spriteBaCode)
+        spriteBaTabPtr = &spriteBaTab[spriteBaCode][0];
 }
 // cycle: 56-2
 auto VicIICycle::spriteFlip() -> void {
@@ -326,7 +335,7 @@ inline auto VicIICycle::updateBAState() -> void {
         baLow = badLine; // for "c" accesses, no sprites pos
         
     else
-		baLow = spriteBa[8][ cycle ]; // for "s" accesses    
+        baLow = spriteBaTabPtr[cycle];
 		
     if (unlikely(_baLow != baLow))
         setRdy( baLow ); //update cpu rdy line

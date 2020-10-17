@@ -162,9 +162,14 @@ protected:
 	
 	bool baLow; //connected to 6510 rdy and expansion port
     uint8_t aecDelay;
-    bool spriteBa[9][65];
 	bool allowBadlines;
     bool badLine;
+    
+    static uint8_t spriteBaTab[256][65];
+    static bool updatedBaTable;
+    
+    uint8_t* spriteBaTabPtr = nullptr;
+    uint8_t spriteBaCode = 0;    
 	
     uint16_t irqLine;
 	bool lineIrqMatched;
@@ -274,12 +279,12 @@ protected:
     bool cAccessArea;
     bool sprite0DmaLateBA;
     bool disableEcmBmmTogether;
-    uint16_t xLookUpPalPhi1[63];
-    uint16_t xLookUpPalPhi2[63];
-    uint16_t xLookUpNtscPhi1[65];
-    uint16_t xLookUpNtscPhi2[65];
-	uint16_t xLookUpNtscOldPhi1[64];
-    uint16_t xLookUpNtscOldPhi2[64];
+    static uint16_t xLookUpPalPhi1[63];
+    static uint16_t xLookUpPalPhi2[63];
+    static uint16_t xLookUpNtscPhi1[65];
+    static uint16_t xLookUpNtscPhi2[65];
+	static uint16_t xLookUpNtscOldPhi1[64];
+    static uint16_t xLookUpNtscOldPhi2[64];
     uint16_t* xLookupPtrPhi1;
     uint16_t* xLookupPtrPhi2;
     bool enableSequencer = true;
@@ -289,11 +294,11 @@ protected:
 	
     auto insertVerticalLineAnomaly(unsigned start, unsigned end) -> void;
 	auto initVerticalLineAnomaly() -> void;
-    void buildXCounterLookupTable();    
+    static void buildXCounterLookupTable();    
 	auto updateSpriteWithBusValue(uint8_t value) -> void;
-    auto updateSpriteBaState( uint8_t pos, bool dmaActive ) -> void;
     template<bool permanent> auto insertVerticalLineAnomaly(unsigned start, unsigned end) -> void;         
 	auto setXLookUp() -> void;
+    static auto updateSpriteBaState( bool ntsc, unsigned lineWrap ) -> void;
 };
  
 extern VicIIBase* vicII;

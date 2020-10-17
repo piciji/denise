@@ -331,6 +331,7 @@ inline auto VicIIFast::mode7() -> void {
 auto VicIIFast::dmaSprites() -> void {
     uint16_t dataP;     
     vicBank = system->vicBank << 14;
+    uint8_t spriteBaCodeBefore = spriteBaCode;
     
     for (unsigned pos = 0; pos < 8; pos++) {
         Sprite* spr = &sprite[pos];
@@ -339,7 +340,8 @@ auto VicIIFast::dmaSprites() -> void {
             spr->dma = true;
             spr->mcBase = 0;
             spr->expandYFlop = true;
-            updateSpriteBaState(pos, true);
+           // updateSpriteBaState(pos, true);
+            spriteBaCode |= 1 << pos;
         }
         
         spr->mc = spr->mcBase;
@@ -360,9 +362,12 @@ auto VicIIFast::dmaSprites() -> void {
             spr->mc &= 63;
         }            
     }
+    if (spriteBaCodeBefore ^ spriteBaCode)
+        spriteBaTabPtr = &spriteBaTab[spriteBaCode][0];
 }
 
 auto VicIIFast::dmaSpritesOff() -> void {
+    uint8_t spriteBaCodeBefore = spriteBaCode;
     
     for (unsigned pos = 0; pos < 8; pos++) {
         Sprite* spr = &sprite[pos];
@@ -373,10 +378,14 @@ auto VicIIFast::dmaSpritesOff() -> void {
             spr->mcBase = spr->mc;
             if (spr->mcBase == 63) {
                 spr->dma = false;
-                updateSpriteBaState(pos, false);
+                //updateSpriteBaState(pos, false);
+                spriteBaCode &= ~(1 << pos);
             }
         }
     }
+    
+    if (spriteBaCodeBefore ^ spriteBaCode)
+        spriteBaTabPtr = &spriteBaTab[spriteBaCode][0];
 }
 
 auto VicIIFast::applySprites() -> void {

@@ -151,7 +151,8 @@ auto VicIIFast::clock() -> void {
             linePtr = frameBuffer + lineVCounter * VIC_MAX_LINE_LENGTH;
             lineVCounter++;
         }
-        setRdy( spriteBa[8][ cycle ] );
+
+        setRdy( spriteBaTabPtr[cycle] );
         
     } else if (cycle == 11) {
                      
@@ -175,7 +176,8 @@ auto VicIIFast::clock() -> void {
     } else if (cycle == 54) {    
         cAccessArea = false;
         dmaSprites();
-        setRdy( spriteBa[8][ cycle ] );
+
+        setRdy( spriteBaTabPtr[cycle] );
         
         if (useThread && visibleLine)
             while ( ready.load() ) {}   
@@ -203,7 +205,8 @@ auto VicIIFast::clock() -> void {
             idleMode = false;
         }
     } else if (!cAccessArea) {
-        setRdy( spriteBa[8][ cycle ] );
+
+        setRdy( spriteBaTabPtr[cycle] );
     }      	
     
     setLineInterrupt();

@@ -7,6 +7,16 @@
 namespace LIBC64 {  
     
 VicIIBase* vicII = nullptr;    
+
+uint8_t VicIIBase::spriteBaTab[256][65] = {0};
+bool VicIIBase::updatedBaTable = false;
+
+uint16_t VicIIBase::xLookUpPalPhi1[63];
+uint16_t VicIIBase::xLookUpPalPhi2[63];
+uint16_t VicIIBase::xLookUpNtscPhi1[65];
+uint16_t VicIIBase::xLookUpNtscPhi2[65];
+uint16_t VicIIBase::xLookUpNtscOldPhi1[64];
+uint16_t VicIIBase::xLookUpNtscOldPhi2[64];
     
 VicIIBase::VicIIBase() {
 
@@ -35,11 +45,17 @@ VicIIBase::VicIIBase() {
     sprite7->position = 7;
 
     initColorWheel();
-    buildXCounterLookupTable();
+    
+    static bool initXCounterTable = false;
+    
+    if (!initXCounterTable) {
+        buildXCounterLookupTable();
+        initXCounterTable = true;
+    }
 
     lineCallback.use = false;
     lineCallback.line = 0;
-    lineCallback.finishVblank = false;    
+    lineCallback.finishVblank = false;        
 }
 
 VicIIBase::~VicIIBase() {
@@ -271,40 +287,40 @@ auto VicIIBase::buildXCounterLookupTable() -> void {
             }
         }
     }
-
-    xLookupPtrPhi1 = &xLookUpPalPhi1[0];
-    xLookupPtrPhi2 = &xLookUpPalPhi2[0];
 }
 
-auto VicIIBase::updateSpriteBaState( uint8_t sprNr, bool dmaActive ) -> void {
-	// update BA line state for sprites
-	// 5 cycles: 3 to finish possible cpu writes, 2 to use the bus in second phase of cycle
-	// up to 3 cpu cycles are wasted because of the bad design
-	// e.g. dma for sprite 0 and 2 stop cpu read during non dma sprite 1 too 
-	// because of allowing a cpu read wouldn't give enough time to retake the bus for sprite 2
-	// The three take over cycles are hard coded in vic design
-	// e.g. dma for sprite 0 and 3 allow cpu one read access in between
-	unsigned start = (ntscBorder ? 55 : 54) + (sprNr << 1);
-	start %= lineCycles;
-	
-	for(auto i = 0; i < 5; i++) {
-		unsigned pos = (start + i) % lineCycles;
-		
-		spriteBa[sprNr][ pos ] = dmaActive;		
-		spriteBa[8][pos] = dmaActive;
-		if (dmaActive)
-			continue;
-		//if any other sprite needs this position keep baLow state
-		for( auto j = 0; j < 8; j++ ) {
-			if (spriteBa[j][pos]) {
-				spriteBa[8][pos] = true;
-				break;
-			}
-		}
-	}
+auto VicIIBase::updateSpriteBaState( bool ntsc, unsigned lineWrap ) -> void {
+    // update BA line state for sprites
+    // 5 cycles: 3 to finish possible cpu WRITES, 2 to use the bus in second phase of cycle
+    // up to 3 cpu cycles are wasted because of the bad design
+    // e.g. dma for sprite 0 and 2 stop cpu READ during non dma sprite 1 too 
+    // because of allowing a CPU READ wouldn't give enough time to retake the bus for sprite 2
+    // three take over cycles are hard coded in VIC design
+    // e.g. dma for sprite 0 and 3 allow cpu one read access in between
+    for (unsigned code = 0; code < 256; code++ ) {
+        std::memset( spriteBaTab[code], 0, 65 );
+        
+        for( unsigned sprNr = 0; sprNr < 8; sprNr++ ) {
+            if (!(code & (1 << sprNr)))
+                continue;
+                        
+            unsigned start = (ntsc ? 55 : 54) + (sprNr << 1);
+            start %= lineWrap;
+
+            for (auto i = 0; i < 5; i++) {
+                unsigned pos = (start + i) % lineWrap;
+
+                spriteBaTab[code][pos] = true;
+            }
+        }
+    }
+    
+    updatedBaTable = true;    
 }
 
 auto VicIIBase::power() -> void {
+    setXLookUp();
+    
     crop.leftOverscan = ntscGeometry ? (56 - 32) : (46 - 32);
     crop.rightOverscan = ntscGeometry ? (44 - 32) : (40 - 32);
     crop.topOverscan = ntscGeometry ? 5 : 7;
@@ -332,7 +348,6 @@ auto VicIIBase::power() -> void {
     firstVisiblePixel = ntscBorder ? 76 : 86;
     baLow = false;
     aecDelay = 0;
-    std::memset(spriteBa, 0, sizeof spriteBa);
     allowBadlines = false;
     badLine = false;
     irqLine = 0;
@@ -422,6 +437,12 @@ auto VicIIBase::power() -> void {
     cAccessArea = 0;
     disableEcmBmmTogether = false;
     
+    if (!updatedBaTable)
+        updateSpriteBaState( ntscBorder, lineCycles );
+    
+    spriteBaCode = 0;
+    spriteBaTabPtr = &spriteBaTab[spriteBaCode][0];
+    
     initVerticalLineAnomaly();
 }
 
@@ -444,6 +465,9 @@ auto VicIIBase::setXLookUp() -> void {
 
 auto VicIIBase::setModel(Model model) -> void {
 	
+    if (this->model != model)
+        updatedBaTable = false;
+    
 	this->model = model;
 	
 	switch(model) {
