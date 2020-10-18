@@ -16,7 +16,7 @@ target := $(shell g++ --version | grep i686)
 include data/Makefile
 
 objects := program view config emuconfig emumodel mediaview archiveviewer states firmware cmd
-objects += input audio video palette shader bass reverb panning audiorecord wavwriter
+objects += input audio video palette shader bass reverb panning audiorecord wavwriter cosine cosineSSE
 objects += guikit libami libC64
 objects += driver
 ifeq ($(platform),windows)
@@ -155,6 +155,8 @@ obj/audio.o:		program/audio/manager.cpp
 obj/bass.o:		program/audio/dsp/bass.cpp
 obj/reverb.o:		program/audio/dsp/reverb.cpp
 obj/panning.o:		program/audio/dsp/panning.cpp
+obj/cosine.o:		program/audio/resampler/cosine.cpp
+obj/cosineSSE.o:	program/audio/resampler/cosineSSE.cpp
 obj/audiorecord.o:	program/audio/record/handler.cpp
 obj/wavwriter.o:	program/audio/record/wavWriter.cpp
 obj/firmware.o:		program/firmware/manager.cpp
