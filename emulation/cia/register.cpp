@@ -112,28 +112,46 @@ auto Base::write( unsigned pos, uint8_t value ) -> void {
 			break;
         }
         case 4:		
-        case 6:   {         
-            pT = pos == 4 ? &timer[T_A] : &timer[T_B];
+            pT = &timer[T_A];
+            
+            pT->latch = (pT->latch & 0xff00) | value;
+            
+            if (delay & CIA_FL_TA2 )
+				pT->counter = pT->latch;
+            
+            break;
+        case 6:
+            pT = &timer[T_B];
                     
 			pT->latch = (pT->latch & 0xff00) | value;
 			
-			if (pT->forceloadCycle)
+            if (delay & CIA_FL_TB2)
 				pT->counter = pT->latch;				
-			
-		} break;
             
+            break;            
         case 5:
-        case 7: {
-			pT = pos == 5 ? &timer[T_A] : &timer[T_B];
+            pT = &timer[T_A];
+
+            pT->latch = (pT->latch & 0xff) | (value << 8);
+
+            if (delay & CIA_FL_TA2)
+                pT->counter = pT->latch;
+            else if (!(pT->control & 1))
+                delay |= CIA_FL_TA0;
+            
+            break;
+                
+        case 7:
+			pT = &timer[T_B];
             
 			pT->latch = (pT->latch & 0xff) | (value << 8);
             			
-			if ( pT->forceloadCycle ) 
+            if (delay & CIA_FL_TB2 )
                 pT->counter = pT->latch;
 			else if ( !(pT->control & 1))
-				events->add( &(pT->forceLoad), 2 );
-			
-		} break;            
+                delay |= CIA_FL_TB0;
+            
+            break;            
 
         case 8:
         case 9:
@@ -186,7 +204,7 @@ auto Base::write( unsigned pos, uint8_t value ) -> void {
 			if ( value & 0x10 ) {
 				// delayed one cycle
                 // when fired, it can not be disabled next cycle
-				events->add( &(pT->forceLoad), 2 );
+                delay |= (pos == 0xe) ? CIA_FL_TA0 : CIA_FL_TB0;
 			}
             if (pos == 0xf && (value & 0x40) ) {
                 // timer B in cascaded mode, so stop phase-in if needed
@@ -203,7 +221,7 @@ auto Base::write( unsigned pos, uint8_t value ) -> void {
 				}
             }						
 			
-            pT->control = value;        									
+            pT->control = value;            
 		} break;
 	}
 }
@@ -213,7 +231,7 @@ auto Base::adjustBit6And7( uint8_t& inOut ) -> void {
     
     if (pT->control & 2) {
         inOut &= ~0x80;
-		if ( ( (pT->control & 4) ? pT->toggle : (pT->underflowCycle) ) )
+        if ( ( (pT->control & 4) ? pT->toggle : (delay & CIA_UF_TB1) ) )
             inOut |= 0x80;
     }
 
@@ -221,7 +239,7 @@ auto Base::adjustBit6And7( uint8_t& inOut ) -> void {
     
     if (pT->control & 2) {
         inOut &= ~0x40;
-		if ( ( (pT->control & 4) ? pT->toggle : (pT->underflowCycle) ) )
+        if ( ( (pT->control & 4) ? pT->toggle : (delay & CIA_UF_TA1) ) )
             inOut |= 0x40;
     }
 }

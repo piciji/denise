@@ -1,8 +1,6 @@
 
 #pragma once
 
-#define CIA_GLOBAL_EVENTS
-
 #include <functional>
 
 #include "../tools/systimer.h"
@@ -22,11 +20,27 @@
 #define CIA_CNT1	0x80
 #define CIA_CNT2	0x100
 
+// force load last one cycle only, triggered by an underflow or forced by control register
+#define CIA_FL_TA0  0x200
+#define CIA_FL_TA1  0x400
+#define CIA_FL_TA2  0x800
+
+// underlow lasts one cycle, pb 6/7 may need to know
+#define CIA_UF_TA0  0x1000
+#define CIA_UF_TA1  0x2000
+
+#define CIA_FL_TB0  0x4000
+#define CIA_FL_TB1  0x8000
+#define CIA_FL_TB2  0x10000
+
+#define CIA_UF_TB0  0x20000
+#define CIA_UF_TB1  0x40000
+
 #define CIA_INT		(CIA_INT0 | CIA_INT1)
 #define CIA_CNT		(CIA_CNT0 | CIA_CNT1 | CIA_CNT2)
 #define CIA_CNT_NEW	(CIA_CNT1 | CIA_CNT2)
 
-#define CIA_MASK	~(0x200 | CIA_MASK_WRITE0 | CIA_ACK0 | CIA_INT0 | CIA_CNT0)
+#define CIA_MASK	~(0x80000 | CIA_MASK_WRITE0 | CIA_ACK0 | CIA_INT0 | CIA_CNT0 | CIA_FL_TA0 | CIA_UF_TA0 | CIA_FL_TB0 | CIA_UF_TB0 )
 
 namespace CIA {
     
@@ -142,19 +156,12 @@ protected:
 		// disabling oneshot has a one cycle delay, so we can not use the register
 		// value itself
 		bool oneshot;
-		// lasts one cycle only, pb 6/7 may need to know
-		bool underflowCycle;
-		// last one cycle only, triggered by an underflow or forced by control register
-		bool forceloadCycle;
-
+		
 		Callback start;		
 		Callback stop;
 		Callback step;		
 		Callback stepOut;		
 		Callback disableOneshot;
-		Callback forceLoad;
-        Callback disableForceLoad;		
-		Callback disableUnderflow;
 		
 		uint16_t latch;
 		uint16_t counter;
@@ -191,7 +198,7 @@ protected:
 	
 	uint32_t delay;
 	uint8_t intIncomming;
-	        	
+    
     auto timerAUnderflow() -> void;
 	auto timerBUnderflow() -> void;
 	auto serialOut() -> void;

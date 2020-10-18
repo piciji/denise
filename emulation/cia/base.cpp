@@ -38,22 +38,15 @@ crb( timer[T_B].control )
 		timer[i].stop = [this,i]() { timer[i].run &= ~1; };
 
 		timer[i].disableOneshot = [this,i]() { timer[i].oneshot = 0; };
-
-		timer[i].forceLoad = [this,i]() { timer[i].forceloadCycle = 1; };
-        
-        timer[i].disableForceLoad = [this,i]() { timer[i].forceloadCycle = 0; };
-		
-		timer[i].disableUnderflow = [this,i]() { timer[i].underflowCycle = 0; };
         
         events->registerCallback(
-            { {&(timer[i].start), 1}, {&(timer[i].step), 1},{&(timer[i].stepOut), 1}, {&(timer[i].stop), 1}, {&(timer[i].disableOneshot), 1},
-                {&(timer[i].forceLoad), 2}, {&(timer[i].disableForceLoad), 1}, {&(timer[i].disableUnderflow), 1} }
+            { {&(timer[i].start), 1}, {&(timer[i].step), 1},{&(timer[i].stepOut), 1}, {&(timer[i].stop), 1}, {&(timer[i].disableOneshot), 1} }
         );
 	}
     
     updateIcrAndSetIrq = [this]() {
         icr = icrTemp;
-		// have changed CPU to detect nmi/irq changes not at fixed point (within cycle) anymore. (for speed reasons)
+		// have changed CPU code to detect nmi/irq changes not at fixed point (within cycle) anymore. (for speed reasons)
 		// that is not a problem for IRQ but for NMI, because it's edge sensitive.
 		// so we have to make sure, the final state of the NMI line is transmitted within a cycle.
 		// otherwise an unwanted state change could happen, when calling the NMI line more times a cycle
@@ -134,8 +127,6 @@ auto Base::reset() -> void {
 	for( unsigned i = 0; i < 2; i++ ) {	
 		timer[i].run = 0;
 		timer[i].oneshot = 0;
-		timer[i].underflowCycle = 0;
-		timer[i].forceloadCycle = 0;
 		timer[i].latch = timer[i].counter = 0xffff;
         timer[i].control = 0;
         timer[i].toggle = true;
@@ -242,56 +233,51 @@ template<uint8_t timerId> inline auto Base::updateState( ) -> void {
 	
 	Timer& rTimer = timer[timerId];	
 	
-	if ( rTimer.run && unlikely(rTimer.counter == 0) ) {
-		rTimer.underflowCycle = rTimer.forceloadCycle = true;
+	if ( rTimer.run && (rTimer.counter == 0) ) {
+        
+        delay |= timerId == T_A ? (CIA_UF_TA0 | CIA_FL_TA1) : (CIA_UF_TB0 | CIA_FL_TB1);
+        
 		timerId == T_A ? timerAUnderflow() : timerBUnderflow();
-		events->add( &(rTimer.disableUnderflow), 1);
+        
+        if (rTimer.oneshot) {
+            
+            rTimer.control &= ~1;
+
+            events->remove(&(rTimer.start));
+            
+            rTimer.run = 0;
+        }
 	}	
 	
-	if (unlikely( rTimer.forceloadCycle )) {
-        // a possible force load placed by register write get priority, so run this sooner
-        events->add( &(rTimer.disableForceLoad), 1, Emulator::SystemTimer::Action::BeforeOthers ); 
+    if ( delay & ( timerId == T_A ? CIA_FL_TA1 : CIA_FL_TB1 ) ) {
         
 		rTimer.counter = rTimer.latch;
-		
-		if (rTimer.underflowCycle && rTimer.oneshot) {
-
-			rTimer.control &= ~1;
-
-			events->remove( &(rTimer.start) );
-			
-		} else if ( rTimer.run == 1 )        
-            // if a timer stop event finishes the same cycle like restart after
-            // underflow, the stop event should run after restart to get priority
-            events->add( &(rTimer.start), 1, Emulator::SystemTimer::Action::BeforeOthers );
-		
-		rTimer.run = 0;
-		
+				
 	} else if (rTimer.run)
+        // happens in second half cycle, a CIA read same cycle miss decrementing
 		rTimer.counter--;	
 }
 
 template<uint8_t timerId> inline auto Base::readCounter( ) -> uint16_t {
 	Timer& rTimer = timer[timerId];
 	
-	if (rTimer.run)
+    if (rTimer.run && !(delay & ( timerId == T_A ? CIA_FL_TA2 : CIA_FL_TB2 )) )
 		return (rTimer.counter + 1);
 	
 	return rTimer.counter;
 }
 
 auto Base::timerAUnderflow() -> void {    	
-	
 	if (cra & 0x40)
-		serialOut();
+		serialOut();    
 	
 	timer[T_A].toggle ^= 1;
 	
 	if ( (crb & 0x61) == 0x41 )
-		events->add( &(timer[T_B].step), 1, Emulator::SystemTimer::Action::UpdateExisting );
+		events->add( &(timer[T_B].step), 1, Emulator::SystemTimer::Action::UpdateExisting );    
 	
     else if ( (delay & CIA_CNT1) && ((crb & 0x61) == 0x61 ))
-		events->add( &(timer[T_B].step), 1, Emulator::SystemTimer::Action::UpdateExisting );
+		events->add( &(timer[T_B].step), 1, Emulator::SystemTimer::Action::UpdateExisting );    
 	
     handleInterrupt( 1 );
 }	
@@ -432,8 +418,6 @@ auto Base::serialize(Emulator::Serializer& s) -> void {
         
         s.integer( t.run );
         s.integer( t.oneshot );
-        s.integer( t.underflowCycle );
-        s.integer( t.forceloadCycle );
         s.integer( t.latch );
         s.integer( t.counter );
         s.integer( t.control );
@@ -456,3 +440,4 @@ auto Base::serialize(Emulator::Serializer& s) -> void {
 }
 
 }
+
