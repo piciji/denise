@@ -86,6 +86,7 @@ struct Sid {
     static auto setFilterVolumeCorrection( bool state ) -> void;
     static auto updateClock() -> void;
 	static auto registerGlobalCallbacks() -> void;
+    static auto clone( uint8_t start, uint8_t end ) -> void;
     
     static unsigned sysClock;
     static bool audioOut;

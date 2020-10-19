@@ -9,11 +9,14 @@
 
 ## 1.0.9 (not yet released)
 * runAhead
-* add scanline based renderer
+* add faster scanline renderer (optional)
+    * adequate for games with higher runAhead
+    * inadequate for some demos, which depend on cycle renderer
 * emulate missing VIC-II models
 * improve SID emulation
     * multiple filter models
-    * stereo + 8x SID support
+    * pseudo stereo
+    * 8x SID support
     * DSP: Bass Boost and Reverb
 * write audio output to WAV file
 * PRG can be loaded as D64

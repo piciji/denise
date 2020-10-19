@@ -8,7 +8,7 @@ bool Sid::extraSids = false;
 double Sid::leftSids = 0;
 double Sid::rightSids = 0;    
     
-std::vector<std::string> Sid::adrOptions = {"D4-D7", "D400", "D420", "D440", "D460", "D480", "D4A0", "D4C0", "D4E0", "D500", "D520", "D540", "D560", "D580",
+std::vector<std::string> Sid::adrOptions = {"Default", "D400", "D420", "D440", "D460", "D480", "D4A0", "D4C0", "D4E0", "D500", "D520", "D540", "D560", "D580",
     "D5A0", "D5C0", "D5E0", "D600", "D620", "D640", "D660", "D680", "D6A0", "D6C0", "D6E0", "D700", "D720", "D740", "D760", "D780",
     "D7A0", "D7C0", "D7E0", "DE00", "DE20", "DE40", "DE60", "DE80", "DEA0", "DEC0", "DEE0", "DF00", "DF20", "DF40", "DF60", "DF80", "DFA0", "DFC0", "DFE0"};
 

@@ -984,6 +984,8 @@ auto System::useExtraSids(uint8_t requestedSids) -> void {
         serializationSize += Sid::serializationSizeForSevenMoreSids;
     else if (!requestedSids && requestedSidsBefore)
         serializationSize -= Sid::serializationSizeForSevenMoreSids;
+    
+    Sid::clone( requestedSidsBefore, requestedSids );
 }
 
 auto System::updatePort(uint8_t lines, uint8_t ddr) -> void {

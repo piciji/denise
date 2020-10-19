@@ -6,6 +6,7 @@
 #include "register.cpp"
 #include "envelope.cpp"
 #include "voice.cpp"
+#include "clone.cpp"
 #include "filter/main.cpp"
 #include "filter/external.cpp"
 #include "serialization.cpp"
