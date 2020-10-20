@@ -2,6 +2,7 @@
 #pragma once
 
 #include <functional>
+#include <cstdint>
 
 namespace LIBC64 {
 
