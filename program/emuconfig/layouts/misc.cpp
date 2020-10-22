@@ -233,7 +233,7 @@ auto MiscLayout::translate() -> void {
     runAheadLayout.options.disableOnPower.setText( trans->get("disable runAhead on power") );
     
     audioRecordLayout.setText( trans->get("Audio Record") );
-    audioRecordLayout.location.label.setText( trans->get("WAV Folder") );
+    audioRecordLayout.location.label.setText( "WAV " + trans->get("Folder") );
     audioRecordLayout.location.select.setText( "..." );
     
     audioRecordLayout.duration.useTimeLimit.setText( trans->get("Recording time") );
