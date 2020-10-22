@@ -6,7 +6,6 @@
 #include "../iec.h"
 #include "../structure/structure.h"
 #include "../../system/system.h"
-//#include "../cpu/m6502custom.h"
 #include "../cpu/m6502.h"
 #include "../../../tools/rand.h"
 #include "../../../tools/serializer.h"
