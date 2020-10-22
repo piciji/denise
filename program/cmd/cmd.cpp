@@ -31,7 +31,8 @@ auto Cmd::set(int argc, char** argv) -> void {
     options.push_back( {"-no-driver", "Run without video, audio, input drivers", ""} );
     options.push_back( {"-no-gui", "Open without graphical user interface and force -no-driver", ""} );    
 	options.push_back( {"-autostart-prg", "Set autostart mode for PRG files (1: Inject, 2: Disk image)", "<value>"} );
-	options.push_back( {"-aggressive-fastforward", "aggressive Warp mode (emulates VIC sequencer every 15 frames only)", ""} );    
+	options.push_back( {"-aggressive-fastforward", "aggressive Warp mode (emulates VIC sequencer every 15 frames only)", ""} );
+	options.push_back( {"-fast-testbench", "analyze passed options and then decides on the use of aggressive fastforward and/or PRG memory injection", ""} );
     
     for (unsigned i = 0; i < argc; i++) {
 
@@ -93,6 +94,7 @@ auto Cmd::parse() -> void {
     bool screenshotPathNext = false;
 	bool autostartPrgNext = false;
 	bool d64InUse = false;
+	bool fastTestbench = false;
     typedef Emulator::Interface EmuInt;
 	auto emuC64 = program->getEmulator("C64");
 	auto diskGroup = emuC64->getDiskMediaGroup();
@@ -171,6 +173,9 @@ auto Cmd::parse() -> void {
         else if (arg == "-cia-6526") {
             updateModel( emuC64, LIBC64::Interface::ModelIdCiaRev, 0 );
         }
+		else if (arg == "-fast-testbench") {
+            fastTestbench = true;
+        }
         else if (arg == "-debugcart") {
             dynamic_cast<LIBC64::Interface*>(emuC64)->activateDebugCart();   
             prepareDrives( emuC64 );
@@ -235,9 +240,36 @@ auto Cmd::parse() -> void {
         }
     }
 	
-	if (!d64InUse && (autostartPrg == 2)) {
+	if (fastTestbench) {
+		aggressiveFastforward = true;
 		
-		
+		if (!screenshotPath.empty())
+			aggressiveFastforward = false;
+		else {
+			for(auto path : paths) {		
+				GUIKIT::String::toLowerCase( path );
+				
+				if (GUIKIT::String::foundSubStr( path, "vicii" )) {
+					aggressiveFastforward = false;								
+				}
+				
+				if (GUIKIT::String::foundSubStr( path, "fuxxor" )) {
+					fastTestbench = false;
+					aggressiveFastforward = false;
+				}
+				
+				if (GUIKIT::String::foundSubStr( path, "ram0001" )) {
+					aggressiveFastforward = false;
+				}				
+			}
+		}
+	}
+	
+	if (fastTestbench)
+		autostartPrg = 1;	
+	
+	else if (!d64InUse && (autostartPrg == 2)) {
+				
 		if (diskGroup)
 			diskGroup->suffix.push_back("prg");
 	}

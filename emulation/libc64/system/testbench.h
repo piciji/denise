@@ -20,9 +20,7 @@ auto initDebugCart() -> void {
         return;
         	
 	debugCart.frames = debugCart.cycles / vicII->cyclesPerFrame();
-    
-    if(!debugCart.frames)
-        debugCart.frames = 1;
+	debugCart.frames += 1;
     
     debugCart.frameCounter = 0;  
 }
