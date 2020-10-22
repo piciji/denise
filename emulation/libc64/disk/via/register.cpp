@@ -199,7 +199,6 @@ auto Via::write( uint16_t pos, uint8_t value ) -> void {
         case 6: // Timer 1 latch low
             timerALatch = (timerALatch & 0xff00) | value;
             
-            //if (pT->forceloadCycle)
             if (delay & VIA_FORCE_LOAD_TIMERA0)
 				timerACounter = (timerACounter & 0xff00) | value;
 

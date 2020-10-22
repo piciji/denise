@@ -118,7 +118,7 @@ struct Drive1541 {
     auto updateBus() -> void;
     auto setFirmware(uint8_t* rom) -> void;
     auto rotateD64() -> void;
-    auto rotateG64( unsigned refCycles ) -> void;
+    auto rotateG64( bool irqNextCycle ) -> void;
     auto randomizeRpm() -> void;
     auto writeBit( bool state ) -> void;
     auto readBit() -> bool;

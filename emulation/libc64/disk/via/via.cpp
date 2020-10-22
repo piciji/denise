@@ -67,7 +67,7 @@ auto Via::pb6Pulse() -> void {
         delay |= VIA_STEP_TIMERB0;
 }
 // calls for transitions of ca1, ca2, cb1, cb2
-auto Via::ca1In( bool state ) -> void {
+auto Via::ca1In( bool state, bool irqNextCycle ) -> void {
     
     if (ca1 == state) // edge transition check
         return;
@@ -81,13 +81,13 @@ auto Via::ca1In( bool state ) -> void {
     if ((pcr & 0xe) == 8)
         ca2Out( ca2 = 1 );  // handshake output mode     
     
-    setIrq( 2 );
+    setIrq( 2, irqNextCycle ? VIA_UPDATE_IRQ0 : VIA_UPDATE_IRQ1 );
     
     // latch port A
     lines.latchA = readPort( Port::A, &lines );	   
 }
 
-auto Via::ca2In( bool state ) -> void { // unused for drive 1541
+auto Via::ca2In( bool state, bool irqNextCycle ) -> void { // unused for drive 1541
 
     if (pcr & 8) // ca2 in output mode
         // don't update input
@@ -101,10 +101,10 @@ auto Via::ca2In( bool state ) -> void { // unused for drive 1541
     if ( (state ? 4 : 0) != (pcr & 4) ) // ca2 control, wrong direction of transition
         return;
     
-    setIrq( 1 );
+    setIrq( 1, irqNextCycle ? VIA_UPDATE_IRQ0 : VIA_UPDATE_IRQ1 );
 }
 
-auto Via::cb1In( bool state ) -> void { // unused for drive 1541
+auto Via::cb1In( bool state, bool irqNextCycle ) -> void { // unused for drive 1541
 
     if (cb1 == state) // edge transition check
         return;
@@ -121,13 +121,13 @@ auto Via::cb1In( bool state ) -> void { // unused for drive 1541
     if ((pcr & 0xe0) == 0x80)
         cb2Out( cb2 = 1 ); // handshake output mode 
     
-    setIrq( 16 );
+    setIrq( 16, irqNextCycle ? VIA_UPDATE_IRQ0 : VIA_UPDATE_IRQ1 );
     
     // latch port B
     lines.latchB = readPort( Port::B, &lines );		
 }
 
-auto Via::cb2In( bool state ) -> void { // unused for drive 1541
+auto Via::cb2In( bool state, bool irqNextCycle ) -> void { // unused for drive 1541
     
     if ( pcr & 0x80 ) // cb2 in output mode
         return;
@@ -140,7 +140,7 @@ auto Via::cb2In( bool state ) -> void { // unused for drive 1541
     if ( (state ? 0x40 : 0) != (pcr & 0x40) ) // cb2 control, wrong direction of transition
         return;
 
-    setIrq( 8 );
+    setIrq( 8, irqNextCycle ? VIA_UPDATE_IRQ0 : VIA_UPDATE_IRQ1 );
 }
    
 auto Via::process() -> void {  
@@ -161,7 +161,7 @@ auto Via::process() -> void {
         else if (delay & VIA_CB2_PULSE1)
             cb2Out(cb2 = 1); 
 
-        if (delay & VIA_UPDATE_IRQ1)
+        if (delay & VIA_UPDATE_IRQ2)
             handleInterrupt();
         
         if (delay & VIA_SHIFT_WARMUP1) {
@@ -313,16 +313,16 @@ auto Via::handleInterrupt( ) -> void {
     irqCall( (ier & ifr) != 0 );      
 }
 
-inline auto Via::setIrq( uint8_t pos ) -> void {
+inline auto Via::setIrq( uint8_t pos, unsigned irqDelay ) -> void {
     // inform cpu next cycle
     ifr |= pos;
-    delay |= VIA_UPDATE_IRQ0;
+    delay |= irqDelay;
 }
 
 inline auto Via::resetIrq( uint8_t pos ) -> void {
     // inform cpu next cycle
     ifr &= ~pos;
-    delay |= VIA_UPDATE_IRQ0;
+    delay |= VIA_UPDATE_IRQ1;
 }
 
 inline auto Via::handleSystemClockShift() -> void {

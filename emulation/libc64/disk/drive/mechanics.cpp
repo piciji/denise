@@ -111,7 +111,7 @@ auto Drive1541::rotateD64() -> void {
     }
 }    
     
-auto Drive1541::rotateG64( unsigned refCycles ) -> void {   
+auto Drive1541::rotateG64( bool irqNextCycle ) -> void {   
 
     if (!motorRun())
         return;
@@ -151,6 +151,7 @@ auto Drive1541::rotateG64( unsigned refCycles ) -> void {
     // ref cycles and compare this value with the total amount of ref cycles per revolution.
     // if exceeded we reach a new bit cell. 
     
+	uint8_t refCycles = 8;
     if (readMode) {
         
         while ( refCycles-- ) {            
@@ -214,7 +215,7 @@ auto Drive1541::rotateG64( unsigned refCycles ) -> void {
                                 // NOTE: cpu code handles recognition and execution time of v flag change.
                                 cpu->setSo( true );
                             }
-                            via2->ca1In( !byteReadyOverflow );
+                            via2->ca1In( !byteReadyOverflow, irqNextCycle );
                         } else {
                             // SO is a edge transition like nmi, don't know when real 1541 reset line.
                             // but it have to keep active at least one whole cpu cycle to be recognized safely.
@@ -223,7 +224,7 @@ auto Drive1541::rotateG64( unsigned refCycles ) -> void {
                             // is ready.
                             cpu->setSo( false );  
                             // same like Cpu SO flag the via input is edge transition
-                            via2->ca1In( true );
+                            via2->ca1In( true, irqNextCycle );
                         }
                     }
                 }
@@ -275,10 +276,10 @@ auto Drive1541::rotateG64( unsigned refCycles ) -> void {
                         if (byteReadyOverflow)
                             cpu->setSo(true);
 
-                        via2->ca1In(!byteReadyOverflow);
+                        via2->ca1In( !byteReadyOverflow, irqNextCycle);
                     } else {                       
                         cpu->setSo(false);                    
-                        via2->ca1In( true );
+                        via2->ca1In( true, irqNextCycle );
                     }
                 }
             }

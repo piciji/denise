@@ -24,14 +24,15 @@ namespace LIBC64 {
 // repeat this pattern    
 
 // the distance between "overflow" checking and maximum "Read back" time is 8 ref cycles, phase shifted by 2 ref cycles.
+// the relative	distance matters, so we can step in 8 ref cycle chunks
     
 #define SYNC    \
     if (useAccuracy())  \
-        rotateG64(8);   \
+        rotateG64( false );   \
     cpu->handleSo();   \
     processDelays();    \
     if (useAccuracy())  \
-        rotateG64(8);   \
+        rotateG64( true );   \
     else \
         rotateD64();    \
     via1->process();    \
@@ -332,19 +333,33 @@ auto Drive1541::setFirmware(uint8_t* rom) -> void {
 }
 
 auto Drive1541::setViaTransition( bool state ) -> void {
-    via1->ca1In( state ); 
-    
-    // we need to check how much the drive is ahead of the c64.
-    // if the drive is more than two cycles ahead we need to manually call the
-    // cpu irq detector because the drive cpu run a few cycles without knowing from interrupt.
-    // NOTE: the drive cpu is interrupted before irq sample cycle.
+	
+	// we need to check how much the drive is ahead of the c64.
+    // if the drive is more than two cycles ahead we need to manually register
+    // IRQ in CPU, because the drive cpu run a few cycles without knowing from interrupt.
+    // NOTE: the drive CPU is interrupted before IRQ sample cycle.
     // so it can only pass opcode edge when not fully synced. means not the sample cycle is missable
     // but the recognition cycle.
-    // if the drive cpu could be interrupted each cycle this step wouldn't be necessary. for performance
-    // and code complexity reasons i have decided the drive cpu can only be interrupted before read/write
-    // access and before an irq sample cycle but not during address generation or interrupt service routine.
-    if (cycleCounter >= (iecBus->cpuCylcesPerSecond << 1) )
-        via1->handleInterrupt();
+    // for performance and code complexity reasons i have decided the drive CPU can only be interrupted
+	// before read/write access and before an irq sample cycle,
+	// but not during address generation or interrupt service routine. (because there is no VIA access)
+	
+	// we check by half cycles, hence CPU IRQ line must be stable during second half cycle for recognition
+
+	int64_t half = iecBus->cpuCylcesPerSecond >> 1;
+	
+	if (cycleCounter >= (iecBus->cpuCylcesPerSecond + half)) {
+		// expects CPU has missed IRQ recognition
+		via1->ca1In( state, false);
+		via1->handleInterrupt();
+		
+	} else if (cycleCounter >= half )
+		// expects IRQ recognition this cycle
+		via1->ca1In( state, false);	
+	
+	else
+		// expects IRQ recognition next cycle
+		via1->ca1In( state, true);	
 }
 
 inline auto Drive1541::processDelays() -> void {

@@ -22,11 +22,12 @@
 
 #define VIA_UPDATE_IRQ0 0x400
 #define VIA_UPDATE_IRQ1 0x800
+#define VIA_UPDATE_IRQ2 0x1000
 
-#define VIA_SHIFT_WARMUP0 0x1000
-#define VIA_SHIFT_WARMUP1 0x2000
+#define VIA_SHIFT_WARMUP0 0x2000
+#define VIA_SHIFT_WARMUP1 0x4000
 
-#define VIA_MASK ~(0x4000 | VIA_FORCE_LOAD_TIMERA0 | VIA_FORCE_LOAD_TIMERB0 | VIA_STEP_TIMERB0 | VIA_CA2_PULSE0 | VIA_CB2_PULSE0 | VIA_UPDATE_IRQ0 | VIA_SHIFT_WARMUP0)
+#define VIA_MASK ~(0x8000 | VIA_FORCE_LOAD_TIMERA0 | VIA_FORCE_LOAD_TIMERB0 | VIA_STEP_TIMERB0 | VIA_CA2_PULSE0 | VIA_CB2_PULSE0 | VIA_UPDATE_IRQ0 | VIA_SHIFT_WARMUP0)
 
 namespace LIBC64 {
     
@@ -61,10 +62,10 @@ struct Via {
     
     auto pb6Pulse() -> void;
 
-    auto ca1In( bool state ) -> void;
-    auto ca2In( bool state ) -> void;
-    auto cb1In( bool state ) -> void;
-    auto cb2In( bool state ) -> void;
+    auto ca1In( bool state, bool irqNextCycle = true ) -> void;
+    auto ca2In( bool state, bool irqNextCycle = true ) -> void;
+    auto cb1In( bool state, bool irqNextCycle = true ) -> void;
+    auto cb2In( bool state, bool irqNextCycle = true ) -> void;
     
     auto read(uint16_t pos) -> uint8_t;
     auto write(uint16_t pos, uint8_t value) -> void;
@@ -110,7 +111,7 @@ protected:
     
     bool isShiftT2Control;
         
-    inline auto setIrq( uint8_t pos ) -> void;
+    inline auto setIrq( uint8_t pos, unsigned irqDelay = VIA_UPDATE_IRQ2 ) -> void;
     inline auto resetIrq( uint8_t pos ) -> void;
     auto updateTimerA( ) -> void;
     auto updateTimerB( ) -> void;
