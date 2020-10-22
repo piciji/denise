@@ -1,7 +1,17 @@
 #!/bin/bash
 
-sudo apt-get install libsdl2-2.0-0
-sudo apt-get install libgtk-3-0
+echo "Installing dependencies."
+if [ -x "$(command -v apk)" ];       then sudo apk add --no-cache sdl2 gtk+3.0
+elif [ -x "$(command -v apt-get)" ]; then sudo apt-get install libsdl2-2.0-0 libgtk-3-0
+elif [ -x "$(command -v dnf)" ];     then sudo dnf install SDL2 gtk3
+elif [ -x "$(command -v zypper)" ];  then sudo zypper install libSDL2 gtk3-devel
+elif [ -x "$(command -v yum)" ];     then sudo yum install SDL2 gtk3
+elif [ -x "$(command -v emerge)" ];  then sudo emerge libsdl2 gtk3
+else
+  echo "Your package manager is not supported. Please manually install the sdl2 and gtk3 packages for your system."
+  exit 1
+fi
+echo "Finished installing dependencies. Copying application files."
 
 prefix=~/.local
 mkdir -p $prefix/bin/
