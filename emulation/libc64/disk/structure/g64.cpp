@@ -43,8 +43,7 @@ auto Structure1541::getTrackOffsetG64( uint8_t halfTrack, int& error ) -> uint32
     
     std::memcpy(buf, rawData + offset, 4);    
         
-    //offset = copyBufferToDword( buf );   
-    offset = Emulator::copyBufferToInt<uint32_t>( buf );
+    offset = Emulator::copyBufferToInt<uint32_t>( &buf[0] );
     
     if ( rawSize < (offset + 2)) // offset not in bounds of raw file ... wtf
         error = -2;
@@ -81,8 +80,7 @@ auto Structure1541::prepareG64() -> void {
             
             std::memcpy( buf, rawData + offset, 2 );
             
-            //trackLength = copyBufferToWord( buf );
-            trackLength = Emulator::copyBufferToInt<uint16_t>( buf );
+            trackLength = Emulator::copyBufferToInt<uint16_t>( &buf[0] );
             
             // header area contains the value for maximal track length.
             // each track begins with a 2 byte value about track length.
@@ -133,10 +131,10 @@ auto Structure1541::writeG64(const GcrTrack* trackPtr, unsigned halfTrack) -> bo
     
     // now we write the changed track out to raw file, either overwrite the old one
     // or append it at end of file, see above
-    Emulator::copyIntToBuffer<uint16_t>( buf, (uint16_t)trackPtr->size );
+    Emulator::copyIntToBuffer<uint16_t>( &buf[0], (uint16_t)trackPtr->size );
 
     // first 2 bytes are track length
-    if ( write( buf, 2, offset ) != 2)
+    if ( write( &buf[0], 2, offset ) != 2)
         return false;
     // next is gcr encoded data of track
     if ( write( trackPtr->data, trackPtr->size, offset + 2 ) != trackPtr->size )
@@ -159,9 +157,9 @@ auto Structure1541::writeG64(const GcrTrack* trackPtr, unsigned halfTrack) -> bo
 
     if (appendTrack) {
         // for a new appended track we need to update the offset in header area
-        Emulator::copyIntToBuffer( buf, offset );
+        Emulator::copyIntToBuffer( &buf[0], offset );
         
-        if ( write( buf, 4, 12 + (halfTrack * 4) ) != 4 )
+        if ( write( &buf[0], 4, 12 + (halfTrack * 4) ) != 4 )
             return false;
         
         // the speedzone part of the g64 spec is not emulated at the moment.
@@ -175,9 +173,9 @@ auto Structure1541::writeG64(const GcrTrack* trackPtr, unsigned halfTrack) -> bo
         // we write the typical speedzone of a track to raw file.
         // NOTE: there is no known software using this feature
         
-        Emulator::copyIntToBuffer<uint32_t>( buf, speedzone( (halfTrack + 2) / 2) );
+        Emulator::copyIntToBuffer<uint32_t>( &buf[0], speedzone( (halfTrack + 2) / 2) );
         
-        if ( write( buf, 4, 12 + (MAX_TRACKS_1541 * 2 * 4) + (halfTrack * 4) ) != 4 )
+        if ( write( &buf[0], 4, 12 + (MAX_TRACKS_1541 * 2 * 4) + (halfTrack * 4) ) != 4 )
             return false;
     }
     
