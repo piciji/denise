@@ -17,6 +17,7 @@ auto InputManager::setHotkeys() -> void {
     hotkeys.push_back( {Hotkey::Id::RunAheadDown, "runahead down"} );	
     hotkeys.push_back( {Hotkey::Id::RunAheadToggleMode, "runahead toggle mode"} );	
     
+    hotkeys.push_back( {Hotkey::Id::ToggleRenderer, "Toggle renderer"} );	
     hotkeys.push_back( {Hotkey::Id::AudioRecord, "audio record"} );	
     
     hotkeys.push_back( {Hotkey::Id::FloppyAccess, "select_disk_drive"} );
@@ -111,6 +112,21 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
 
         } break;
             
+        case Hotkey::Id::ToggleRenderer: {
+            if (!activeEmulator)
+                break; 
+            
+            auto state = settings->get<bool>("video_cycle_accuracy", true);
+            
+            settings->set<bool>("video_cycle_accuracy", !state);
+            
+            EmuConfigView::TabWindow::getView(activeEmulator)->systemLayout->accuracyLayout.block.videoCycleAccuracy.setChecked( !state );
+            
+            activeEmulator->videoCycleAccuracy( !state );
+            program->power(activeEmulator);
+            
+        } break;
+        
         case Hotkey::Id::RunAheadToggleMode: {
             if (!activeEmulator)
                 break;

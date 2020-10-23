@@ -532,3 +532,4 @@ Record = 録音
 Stop = 停止
 Hard Reset = ハードリセット
 ANE Magic Byte tooltip = チップ製造メーカーによる値の違い。最も標準的な値は"0xef"です。
+Toggle renderer = 

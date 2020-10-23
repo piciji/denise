@@ -7,7 +7,7 @@
 
 # changelog
 
-## 1.0.9 (not yet released)
+## 1.0.9
 * runAhead
 * add faster scanline renderer (optional)
     * adequate for games with higher runAhead

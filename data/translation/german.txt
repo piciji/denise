@@ -532,3 +532,4 @@ Record = Aufnehmen
 Stop = Anhalten
 Hard Reset = Hard Reset
 ANE Magic Byte tooltip = Wert ist teilweise abhängig vom Chip Hersteller. Der Wert 0xef ist am kompatibelsten.
+Toggle renderer = Renderer umschalten

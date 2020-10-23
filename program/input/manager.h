@@ -67,7 +67,7 @@ struct Hotkey {
         DiskSwap12, DiskSwap13, DiskSwap14,
         ToggleFastForward, ToggleFastForwardAggressive, Presentation, Palette, Border, System, Firmware, Control,
 		SwapInputDevices, Power, SoftReset, AnyLoad,
-        RunAheadUp, RunAheadDown, RunAheadToggleMode, AudioRecord,
+        RunAheadUp, RunAheadDown, RunAheadToggleMode, AudioRecord, ToggleRenderer
     } id;
     std::string name;
 	bool share;
