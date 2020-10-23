@@ -1,7 +1,6 @@
 
 #pragma once
 
-#include "../../system/memory.h"
 #include "../via/via.h"
 #include "../iec.h"
 #include "../structure/structure.h"
@@ -40,18 +39,7 @@ struct Drive1541 {
         unsigned delay;
         unsigned pos;
     } motorOff;
-    
-    Memory memory;
-    Memory::Read readRam;
-    Memory::Write writeRam;
-    Memory::Read readVia1Reg;
-    Memory::Write writeVia1Reg;
-    Memory::Read readVia2Reg;
-    Memory::Write writeVia2Reg;
-    Memory::Read readRom;
-    Memory::Read readUnmapped;
-    Memory::Write writeUnmapped;
-    
+        
     Via* via1;
     Via* via2;
     M6502* cpu;
@@ -108,7 +96,6 @@ struct Drive1541 {
     auto sync() -> void;
     auto cpuWrite(uint16_t addr, uint8_t data) -> void;
     auto cpuRead(uint16_t addr) -> uint8_t;
-    auto remap( ) -> void;
     auto power( ) -> void;
     auto powerOff( ) -> void;
     auto setViaTransition( bool state ) -> void;

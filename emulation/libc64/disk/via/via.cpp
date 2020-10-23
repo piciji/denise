@@ -325,7 +325,7 @@ inline auto Via::resetIrq( uint8_t pos ) -> void {
     delay |= VIA_UPDATE_IRQ1;
 }
 
-inline auto Via::handleSystemClockShift() -> void {
+__attribute__((always_inline))  auto Via::handleSystemClockShift() -> void {
     // shift in/out by system clock
     if (!shiftSystemClock() || (delay & VIA_SHIFT_WARMUP1))
         return;

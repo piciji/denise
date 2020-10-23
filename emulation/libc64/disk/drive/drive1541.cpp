@@ -45,12 +45,34 @@ auto Drive1541::sync() -> void {
 
 auto Drive1541::cpuWrite(uint16_t addr, uint8_t data) -> void {
     SYNC    
-    memory.write( addr, data );
+
+    if ((addr & 0x9800) == 0)
+        ram[ addr & 0x7ff ] = data;
+
+    else if ((addr & 0x9c00) == 0x1800)
+        via1->write(addr, data);
+
+    else if ((addr & 0x9c00) == 0x1c00)
+        via2->write(addr, data);
 }
 
 auto Drive1541::cpuRead(uint16_t addr) -> uint8_t {
     SYNC    
-    return memory.read( addr );
+    
+    if (addr & 0x8000)
+        return !rom ? 0xff : rom[addr & 0x3fff];
+            
+    else if ((addr & 0x9800) == 0)
+        return ram[ addr & 0x7ff ];
+    
+    else if ((addr & 0x9c00) == 0x1800)
+        return via1->read( addr );
+    
+    else if ((addr & 0x9c00) == 0x1c00)
+        return via2->read( addr );
+
+    else
+        return addr >> 8;
 }
     
 Drive1541::Drive1541(uint8_t number) {
@@ -87,53 +109,8 @@ Drive1541::Drive1541(uint8_t number) {
 		
         cpu->setIrq( irqIncomming != 0 );
     };
-    
-    writeVia1Reg = [this](uint16_t addr, uint8_t value) {
 
-        via1->write( addr, value );
-    };
 
-    readVia1Reg = [this](uint16_t addr) {
-	
-        return via1->read( addr );
-    };
-
-    writeVia2Reg = [this](uint16_t addr, uint8_t value) {
-		
-        via2->write( addr, value );
-    };
-
-    readVia2Reg = [this](uint16_t addr) {
-
-        return via2->read(addr);
-    };
-
-    readRam = [this](uint16_t addr) {
-
-        return this->ram[ addr & 0x7ff ];
-    };
-    
-    writeRam = [this](uint16_t addr, uint8_t value) {
-
-        this->ram[ addr & 0x7ff ] = value;
-    };
-
-    readRom = [this](uint16_t addr) {
-
-        if ( !this->rom )
-            return (uint8_t)0xff;
-        
-        return this->rom[addr & 0x3fff];
-    };
-    
-    writeUnmapped = [this](uint16_t addr, uint8_t value) {
-        // do nothing
-    };
-    
-    readUnmapped = [this](uint16_t addr) {
-        return addr >> 8;
-    };
-    
     //PB 7, CB2: ATN IN
     //PB 6,5: Device address preset switches
     //PB 4:	ATN acknowledge OUT
@@ -235,8 +212,6 @@ Drive1541::Drive1541(uint8_t number) {
 		system->interface->updateDriveState( getMedia(), getTrackState(), (currentHalftrack + 2) / 2 );
 	};
     
-    remap();
-    
     for(unsigned i = 0; i < motorOff.CHUNKS; i++)
         motorOff.chunkSize.push_back( 0 );
 } 
@@ -254,31 +229,6 @@ auto Drive1541::updateBus() -> void {
 
     if ( iecBus->atnOut == atnOut )
         dataOut = 0;
-}
-
-auto Drive1541::remap( ) -> void {
-    
-    // some gaps remain unmapped
-    memory.map( &readUnmapped, &writeUnmapped, 0x00, 0xff);
-    
-    // overmap ram, rom, io
-    memory.map( &readRam, &writeRam, 0x00, 0x07);
-    memory.map( &readRam, &writeRam, 0x20, 0x27);
-    memory.map( &readRam, &writeRam, 0x40, 0x47);
-    memory.map( &readRam, &writeRam, 0x60, 0x67);
-
-    memory.map( &readVia1Reg, &writeVia1Reg, 0x18, 0x1b);
-    memory.map( &readVia1Reg, &writeVia1Reg, 0x38, 0x3b);
-    memory.map( &readVia1Reg, &writeVia1Reg, 0x58, 0x5b);
-    memory.map( &readVia1Reg, &writeVia1Reg, 0x78, 0x7b);
-
-    memory.map( &readVia2Reg, &writeVia2Reg, 0x1c, 0x1f);
-    memory.map( &readVia2Reg, &writeVia2Reg, 0x3c, 0x3f);
-    memory.map( &readVia2Reg, &writeVia2Reg, 0x5c, 0x5f);
-    memory.map( &readVia2Reg, &writeVia2Reg, 0x7c, 0x7f);
-    
-    memory.map( &readRom, 0x80, 0xbf);
-    memory.map( &readRom, 0xc0, 0xff);
 }
 
 auto Drive1541::power( ) -> void {    

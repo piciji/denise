@@ -52,8 +52,8 @@ auto M6502::process() -> void {
 	WRITE( addr, value )
 		
 #define PUSH_STATUS \
-	drive->sync(); /* late detection of external overflow, hence STATUS is sampled after SYNC */  \
-    drive->memory.write( 0x100 | regS--, STATUS ); 
+	drive->sync(); /* late detection of possible external overflow, hence STATUS is sampled after SYNC */  \
+    drive->ram[ 0x100 | regS-- ] = STATUS;
     
 #define INC_PC(value) pc += value;
 

@@ -113,16 +113,16 @@ protected:
         
     inline auto setIrq( uint8_t pos, unsigned irqDelay = VIA_UPDATE_IRQ2 ) -> void;
     inline auto resetIrq( uint8_t pos ) -> void;
-    auto updateTimerA( ) -> void;
-    auto updateTimerB( ) -> void;
+    inline auto updateTimerA( ) -> void;
+    inline auto updateTimerB( ) -> void;
     auto shifter() -> void;
     auto shiftCb1Control() -> bool;
     auto shiftT2FreeRunning() -> bool;
-    auto shiftSystemClock() -> bool;
+    inline auto shiftSystemClock() -> bool;
     auto shiftT2Control() -> bool;
     auto shiftDisabled() -> bool;
     auto shiftOut() -> bool;
-    inline auto handleSystemClockShift() -> void;
+    auto handleSystemClockShift() -> void;
     template<bool cb1Output> inline auto shiftTiming() -> void;
 };    
     
