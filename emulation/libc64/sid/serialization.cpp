@@ -106,6 +106,7 @@ auto Sid::serialize(Emulator::Serializer& s, bool light) -> void {
         s.integer( e.decay );
         s.integer( e.sustain );
         s.integer( e.release );
+        s.integer( e.delay );
         
         if (s.mode() == Emulator::Serializer::Mode::Load) {
             e.setType( e.type ); // update pointer                
