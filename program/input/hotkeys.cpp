@@ -21,21 +21,21 @@ auto InputManager::setHotkeys() -> void {
     hotkeys.push_back( {Hotkey::Id::AudioRecord, "audio record"} );	
     
     hotkeys.push_back( {Hotkey::Id::FloppyAccess, "select_disk_drive"} );
-    hotkeys.push_back( {Hotkey::Id::DiskSwap0, "Disk_swapper_call0"} );
-    hotkeys.push_back( {Hotkey::Id::DiskSwap1, "Disk_swapper_call1"} );
-    hotkeys.push_back( {Hotkey::Id::DiskSwap2, "Disk_swapper_call2"} );
-    hotkeys.push_back( {Hotkey::Id::DiskSwap3, "Disk_swapper_call3"} );
-    hotkeys.push_back( {Hotkey::Id::DiskSwap4, "Disk_swapper_call4"} );
-    hotkeys.push_back( {Hotkey::Id::DiskSwap5, "Disk_swapper_call5"} );
-    hotkeys.push_back( {Hotkey::Id::DiskSwap6, "Disk_swapper_call6"} );
-    hotkeys.push_back( {Hotkey::Id::DiskSwap7, "Disk_swapper_call7"} );
-    hotkeys.push_back( {Hotkey::Id::DiskSwap8, "Disk_swapper_call8"} );
-    hotkeys.push_back( {Hotkey::Id::DiskSwap9, "Disk_swapper_call9"} );
-    hotkeys.push_back( {Hotkey::Id::DiskSwap10, "Disk_swapper_call10"} );
-    hotkeys.push_back( {Hotkey::Id::DiskSwap11, "Disk_swapper_call11"} );
-    hotkeys.push_back( {Hotkey::Id::DiskSwap12, "Disk_swapper_call12"} );
-    hotkeys.push_back( {Hotkey::Id::DiskSwap13, "Disk_swapper_call13"} );
-    hotkeys.push_back( {Hotkey::Id::DiskSwap14, "Disk_swapper_call14"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwap0, "Disk_swapper_call1"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwap1, "Disk_swapper_call2"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwap2, "Disk_swapper_call3"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwap3, "Disk_swapper_call4"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwap4, "Disk_swapper_call5"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwap5, "Disk_swapper_call6"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwap6, "Disk_swapper_call7"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwap7, "Disk_swapper_call8"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwap8, "Disk_swapper_call9"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwap9, "Disk_swapper_call10"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwap10, "Disk_swapper_call11"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwap11, "Disk_swapper_call12"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwap12, "Disk_swapper_call13"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwap13, "Disk_swapper_call14"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwap14, "Disk_swapper_call15"} );
 }
 
 auto InputManager::setCustomHotkeys() -> void {
@@ -205,34 +205,6 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
                 inputDriver->mAcquire();
             }
             break;
-        case Hotkey::Id::FloppyAccess: {
-            if (!activeEmulator)
-                break;
-
-            auto defaultMedia = activeEmulator->getDisk( 0 );
-
-            // emulated system don't support floppy drives
-            if (!defaultMedia)
-                break;
-
-            auto mediaGroup = defaultMedia->group;
-
-            auto mediaId = settings->get<unsigned>("access_floppy", 0u, {0u, (unsigned)mediaGroup->media.size() - 1u});
-            unsigned enabledCount = settings->get<unsigned>( _underscore(mediaGroup->name) + "_count", mediaGroup->defaultUsage());
-            if (enabledCount > mediaGroup->media.size())
-                enabledCount = mediaGroup->defaultUsage();
-
-            mediaId++; // switch to next
-
-            auto media = defaultMedia;
-
-            if ( ( mediaId < mediaGroup->media.size() ) && ( mediaId < enabledCount ) )
-                media = activeEmulator->getDisk( mediaId );                    
-
-            settings->set<unsigned>( "access_floppy", media->id, false);
-            status->addMessage( trans->get("access_floppy", {{"%drive%", media->name}}) );								                    
-            break;
-        }
         case Hotkey::Id::DiskSwapper:
         case Hotkey::Id::Software:
         case Hotkey::Id::Presentation:
@@ -349,6 +321,36 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             int state = view->audioLayout->settingsLayout.stepRange( _sid == 0 ? C64Interface::ModelIdBias8580 : C64Interface::ModelIdBias6581, id == Hotkey::AdjustBiasUp ? 100: -100 );
             status->addMessage( trans->get( "sid_bias_change", {{"%state%", std::to_string(state) }} ) );                    
         } break;
+        
+        case Hotkey::Id::FloppyAccess: {
+            if (!activeEmulator)
+                break;
+
+            auto defaultMedia = activeEmulator->getDisk( 0 );
+
+            // emulated system don't support floppy drives
+            if (!defaultMedia)
+                break;
+
+            auto mediaGroup = defaultMedia->group;
+
+            auto mediaId = settings->get<unsigned>("access_floppy", 0u, {0u, (unsigned)mediaGroup->media.size() - 1u});
+            unsigned enabledCount = settings->get<unsigned>( _underscore(mediaGroup->name) + "_count", mediaGroup->defaultUsage());
+            if (enabledCount > mediaGroup->media.size())
+                enabledCount = mediaGroup->defaultUsage();
+
+            mediaId++; // switch to next
+
+            auto media = defaultMedia;
+
+            if ( ( mediaId < mediaGroup->media.size() ) && ( mediaId < enabledCount ) )
+                media = activeEmulator->getDisk( mediaId );                    
+
+            settings->set<unsigned>( "access_floppy", media->id, false);
+            status->addMessage( trans->get("access_floppy", {{"%drive%", media->name}}) );								                    
+            break;
+        }
+
         case Hotkey::DiskSwap0: case Hotkey::DiskSwap1: case Hotkey::DiskSwap2:
         case Hotkey::DiskSwap3: case Hotkey::DiskSwap4: case Hotkey::DiskSwap5:
         case Hotkey::DiskSwap6: case Hotkey::DiskSwap7: case Hotkey::DiskSwap8:
@@ -358,6 +360,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
                 break;
 
             auto mediaId = settings->get<unsigned>("access_floppy", 0u, {0u, 3u});
+            GUIKIT::File* file;
 
             auto media = activeEmulator->getDisk( mediaId );
             if (!media)
@@ -366,8 +369,33 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             uint8_t* data;						
 
             auto swapPos = id - Hotkey::DiskSwap0;
-            auto fSetting = FileSetting::getInstance( activeEmulator, "swapper_" + std::to_string(swapPos) );
-            GUIKIT::File* file = filePool->get( fSetting->path );
+            FileSetting* fSetting = FileSetting::getInstance( activeEmulator, "swapper_" + std::to_string(swapPos) );
+            
+            FileSetting fs;
+            if (fSetting->path.empty()) {                
+                fSetting = &fs;
+                // auto create 
+                auto srcSetting = FileSetting::getInstance(activeEmulator, _underscore(media->name) );
+                
+                if (srcSetting->path.empty())
+                    break;
+                
+                GUIKIT::File tempFile( srcSetting->path );
+                
+                auto filePath = tempFile.getPath();
+                auto fileName = tempFile.getFileName( true );
+                auto suffix = tempFile.getExtension();
+                
+                if (filePath.empty() || fileName.empty())
+                    break;
+                
+                fSetting->file = getAutoSwapFilename(fileName, swapPos + 1) + "." + suffix;                
+                fSetting->path = filePath + fSetting->file;                
+                fSetting->id = 0;
+                fSetting->writeProtect = false;
+            }
+            
+            file = filePool->get( fSetting->path );
 
             if (!file || !file->isSizeValid(MAX_MEDIUM_SIZE) ||                
                 ((data = file->archiveData(fSetting->id)) == nullptr)
@@ -391,6 +419,52 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
         }
     }
     
+}
+
+auto InputManager::getAutoSwapFilename( std::string fileName, unsigned diskPos ) -> std::string {
+
+    std::string temp = fileName;
+    unsigned digitMatch = 0;
+    char last;
+    
+    for (int i = (fileName.length() - 1); i >= 0; i--) {
+
+        std::string _check(1, temp.at(i));
+        if (!GUIKIT::String::isNumber(_check))
+            break;
+
+        last = fileName.back();
+        fileName.pop_back();
+        digitMatch++;
+    }
+    
+    if (digitMatch) {
+        if (digitMatch == 1 && last == '0')
+            return fileName + std::to_string( diskPos - 1 );
+        return fileName + std::to_string( diskPos );
+    }
+    
+    last = fileName.back();
+    fileName.pop_back();
+    
+    switch(diskPos) {
+        case 1: return fileName + "a";
+        case 2: return fileName + "b";
+        case 3: return fileName + "c";
+        case 4: return fileName + "d";
+        case 5: return fileName + "e";
+        case 6: return fileName + "f";
+        case 7: return fileName + "g";
+        case 8: return fileName + "h";
+        case 9: return fileName + "i";
+        case 10: return fileName + "j";
+        case 11: return fileName + "k";
+        case 12: return fileName + "l";
+        case 13: return fileName + "m";
+        case 14: return fileName + "n";
+        case 15: return fileName + "o";
+    }
+    return fileName;
 }
 
 auto InputManager::pollHotkeys() -> void {

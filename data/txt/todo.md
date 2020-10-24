@@ -70,7 +70,6 @@
 * mount OS folder as D64
 * load savestates per drag'n'drop or within File Explorer
 * support c64 command line start of disk listings
-* insert follow up disks automatically by file name identifier
 
 # bugs
 * japanese characters aren't displayed correctly in OpenGL onscreen text
@@ -112,7 +111,7 @@
 * multi keyboard layouts
 * free border cropping
 * Hotkeys
-* disk swapper (more usefull for amiga)
+* disk swapper
 * screenshots for VICE testbench
 * use a CI system for automated builds (AppVeyor)
 * runAhead for reduced input lag
