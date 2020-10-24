@@ -367,6 +367,12 @@ auto IecBus::randomizeRpm() -> void {
 
 auto IecBus::attach( Emulator::Interface::Media* media, uint8_t* data, unsigned size ) -> void {
     
+    if (system->diskSilence.idle) {
+        system->diskSilence.idle = false;
+        system->diskSilence.idleFrames = 0;
+        resetTicks();
+    }
+    
     drives[ media->id ]->attach( media, data, size );   
 }
 

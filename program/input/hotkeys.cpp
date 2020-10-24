@@ -389,10 +389,22 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
                 if (filePath.empty() || fileName.empty())
                     break;
                 
-                fSetting->file = getAutoSwapFilename(fileName, swapPos + 1) + "." + suffix;                
-                fSetting->path = filePath + fSetting->file;                
-                fSetting->id = 0;
-                fSetting->writeProtect = false;
+                auto results = getAutoSwapFilename(fileName, swapPos + 1);
+                
+                for(auto& result : results) {
+                                       
+                    GUIKIT::File testFile( filePath + result + "." + suffix );
+                    
+                    if (!testFile.exists())
+                        continue;
+
+                    fSetting->file = result + "." + suffix;
+                    fSetting->path = filePath + fSetting->file;
+                    fSetting->id = 0;
+                    fSetting->writeProtect = false;
+                    
+                    break;
+                }                
             }
             
             file = filePool->get( fSetting->path );
@@ -421,7 +433,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
     
 }
 
-auto InputManager::getAutoSwapFilename( std::string fileName, unsigned diskPos ) -> std::string {
+auto InputManager::getAutoSwapFilename( std::string fileName, unsigned diskPos ) -> std::vector<std::string> {
 
     std::string temp = fileName;
     unsigned digitMatch = 0;
@@ -440,31 +452,32 @@ auto InputManager::getAutoSwapFilename( std::string fileName, unsigned diskPos )
     
     if (digitMatch) {
         if (digitMatch == 1 && last == '0')
-            return fileName + std::to_string( diskPos - 1 );
-        return fileName + std::to_string( diskPos );
+            return { fileName + std::to_string( diskPos - 1 ) };
+        return { fileName + std::to_string( diskPos ) };
     }
     
     last = fileName.back();
     fileName.pop_back();
     
     switch(diskPos) {
-        case 1: return fileName + "a";
-        case 2: return fileName + "b";
-        case 3: return fileName + "c";
-        case 4: return fileName + "d";
-        case 5: return fileName + "e";
-        case 6: return fileName + "f";
-        case 7: return fileName + "g";
-        case 8: return fileName + "h";
-        case 9: return fileName + "i";
-        case 10: return fileName + "j";
-        case 11: return fileName + "k";
-        case 12: return fileName + "l";
-        case 13: return fileName + "m";
-        case 14: return fileName + "n";
-        case 15: return fileName + "o";
+        case 1: return { fileName + "a", fileName + "A" };
+        case 2: return { fileName + "b", fileName + "B" };
+        case 3: return { fileName + "c", fileName + "C" };
+        case 4: return { fileName + "d", fileName + "D" };
+        case 5: return { fileName + "e", fileName + "E" };
+        case 6: return { fileName + "f", fileName + "F" };
+        case 7: return { fileName + "g", fileName + "G" };
+        case 8: return { fileName + "h", fileName + "H" };
+        case 9: return { fileName + "i", fileName + "I" };
+        case 10: return { fileName + "j", fileName + "J" };
+        case 11: return { fileName + "k", fileName + "K" };
+        case 12: return { fileName + "l", fileName + "L" };
+        case 13: return { fileName + "m", fileName + "M" };
+        case 14: return { fileName + "n", fileName + "N" };
+        case 15: return { fileName + "o", fileName + "O" };
     }
-    return fileName;
+    
+    return {fileName};
 }
 
 auto InputManager::pollHotkeys() -> void {

@@ -322,7 +322,7 @@ System::System(Interface* interface) {
             
             if (diskSilence.active) {                
                 if (!diskSilence.idle) {
-                    if (++diskSilence.idleFrames > 60) {    
+                    if (++diskSilence.idleFrames > 120) {    
                         diskSilence.idle = true; 
                         diskSilence.idleFrames = 0;
                         iecBus->resetDriveState();

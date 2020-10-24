@@ -147,7 +147,7 @@ struct InputManager {
 	static auto updateAllMappingsInUse( bool emuOnly = false ) -> void;
     static auto jitPoll() -> bool;
     static auto resetJit() -> void;    
-    static auto getAutoSwapFilename( std::string fileName, unsigned diskPos ) -> std::string;
+    static auto getAutoSwapFilename( std::string fileName, unsigned diskPos ) -> std::vector<std::string>;
 	
     auto autoAssign( KeyboardLayout::Type type, bool keyboardOnly = true ) -> void;
 	auto addMapping(InputMapping* mapping) -> void;
