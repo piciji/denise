@@ -1,4 +1,4 @@
-#if defined(_WIN32) || defined(__linux__)
+#if defined(_WIN32) || defined(__linux__) || defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__) || defined(__OpenBSD__)
 	PFNGLCREATEPROGRAMPROC glCreateProgram = nullptr;
 	PFNGLDELETEPROGRAMPROC glDeleteProgram = nullptr;
 	PFNGLUSEPROGRAMPROC glUseProgram = nullptr;
@@ -58,7 +58,7 @@ static bool OpenGLBind() {
 		function = (prototype)glGetProcAddress(#function); \
 		if(function == nullptr) return false
 
-	#if defined(_WIN32) || defined(__linux__)
+	#if defined(_WIN32) || defined(__linux__) || defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__) || defined(__OpenBSD__)
 		bind(PFNGLCREATEPROGRAMPROC, glCreateProgram);
 		bind(PFNGLDELETEPROGRAMPROC, glDeleteProgram);
 		bind(PFNGLUSEPROGRAMPROC, glUseProgram);

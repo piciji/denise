@@ -342,4 +342,3 @@ auto Input::create(const std::string& driver) -> Input* {
 }
 
 }
-
