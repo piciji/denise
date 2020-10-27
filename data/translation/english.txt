@@ -532,4 +532,5 @@ Record = Record
 Stop = Stop
 Hard Reset = Hard Reset
 ANE Magic Byte tooltip = value depends partially on chip manufacturer. the value 0xef is most compatible.
+runAhead = runAhead
 Toggle renderer = Toggle renderer

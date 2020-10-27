@@ -532,4 +532,5 @@ Record = Enregistrer
 Stop = Arrêter
 Hard Reset = Redémarrage Matèriel
 ANE Magic Byte tooltip = La valeur dépend en partie du fabricant de la puce. La valeur 0xef est la plus compatible.
+runAhead = 
 Toggle renderer = 
