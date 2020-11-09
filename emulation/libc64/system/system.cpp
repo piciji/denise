@@ -894,6 +894,7 @@ auto System::updatePort(uint8_t lines, uint8_t ddr) -> void {
 		this->remapCpu( );
 
 	tape->writeIn( ((~ddr | lines) & 8) != 0 );
+    tape->setMotorIn( ((lines & ddr) & 0x20) == 0 );
 }     
 
 auto System::videoRefresh( uint8_t* frame, unsigned width, unsigned height, unsigned linePitch) -> void {
