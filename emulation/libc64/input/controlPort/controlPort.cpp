@@ -58,3 +58,4 @@ auto ControlPort::serialize(Emulator::Serializer& s) -> void {
 }
     
 }
+

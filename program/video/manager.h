@@ -59,6 +59,7 @@ struct VideoManager {
     VideoManager(Emulator::Interface* emulator);
     ~VideoManager();
         
+	static bool synchronized;
     static bool threaded;
     static bool shaderInputPrecision;
 	static bool integerScaling;
@@ -77,7 +78,7 @@ struct VideoManager {
     struct Render {        
         unsigned width;
         unsigned height;
-        const uint16_t* src;
+        const uint8_t* src;
         unsigned srcPitch;
         unsigned* dest;
         unsigned destPitch;
@@ -87,7 +88,7 @@ struct VideoManager {
         std::atomic<bool> ready;
         std::condition_variable cv;
     } render[2];  
-        
+	
     unsigned scalingCount = 0;
     
     uint32_t* tempDest = nullptr;
@@ -104,6 +105,9 @@ struct VideoManager {
     auto reinitThread( bool initMem = false ) -> void;
         
     uint16_t mask;
+	uint8_t metaShift;
+	bool use16BitSrc;
+	
     bool colorSpectrum;
     bool pal;  
     
@@ -176,6 +180,7 @@ struct VideoManager {
     auto useCrtMode() -> bool;
  
     auto isC64() -> bool;
+	auto isAmiga() -> bool;
     auto generateC64ColorSpectrum() -> void;
        
     auto uclamp8(double x) -> uint8_t;
@@ -183,13 +188,13 @@ struct VideoManager {
     auto convertRGBToYUV(ColorLumaChroma* dest, ColorRgb* src) -> void;
     auto setPalette(Emulator::Interface::Palette* palette) -> void;  
     
-    auto renderToLumaChroma(unsigned width, unsigned height, const uint16_t* src, unsigned srcPitch, float* dest, unsigned destPitch) -> void;
-    auto renderToRgb(unsigned width, unsigned height, const uint16_t* src, unsigned srcPitch, unsigned* dest, unsigned destPitch) -> void;
-    inline auto renderToRgbNoGamma(unsigned width, unsigned height, const uint16_t* src, unsigned srcPitch, unsigned* dest, unsigned destPitch) -> void;
-    auto renderFrame(const uint16_t* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
-    inline auto renderCrtSelection(Render* re) -> void;
-    auto renderCrt(unsigned width, unsigned height, const uint16_t* src, unsigned srcPitch, unsigned* dest, unsigned destPitch ) -> void;
-    auto renderCrtThreaded(unsigned width, unsigned height, const uint16_t* src, unsigned srcPitch, unsigned* dest, unsigned destPitch ) -> void;
+    template<typename T> auto renderToLumaChroma(unsigned width, unsigned height, const T* src, unsigned srcPitch, float* dest, unsigned destPitch) -> void;
+    template<typename T> auto renderToRgb(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch) -> void;
+    template<typename T> inline auto renderToRgbNoGamma(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch) -> void;
+    template<typename T> auto renderFrame(const T* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
+    template<typename T> inline auto renderCrtSelection(Render* re) -> void;
+    template<typename T> auto renderCrt(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch ) -> void;
+    template<typename T> auto renderCrtThreaded(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch ) -> void;
     auto convertYUVToRGB(ColorRgb* dest, ColorLumaChroma* src) -> void;
     auto convertYIQToRGB(ColorRgb* dest, ColorLumaChroma* src) -> void;
     auto update() -> void;
@@ -208,10 +213,10 @@ struct VideoManager {
     auto convertPaletteToLumaChroma() -> void;
     auto preCalcGamma() -> void;
     auto preCalcRfModulation() -> void;
-    auto createWorker() -> void;
+    template<bool _16bitSrc> auto createWorker() -> void;
     auto waitForRenderer() -> void;
-    template<bool withScanlines, bool rfModulation> auto renderPalCrt( Render* re ) -> void;
-    template<bool withScanlines, bool rfModulation> auto renderNtscCrt( Render* re ) -> void;
+    template<bool withScanlines, bool rfModulation, typename T> auto renderPalCrt( Render* re ) -> void;
+    template<bool withScanlines, bool rfModulation, typename T> auto renderNtscCrt( Render* re ) -> void;
     auto powerOff() -> void;    
     auto renderMidScreen( ) -> void;
     

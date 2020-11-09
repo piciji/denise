@@ -60,6 +60,13 @@ struct Status {
 				messageSecondsLeft--;
 			}
 			update = true;
+			
+			if (!VideoManager::synchronized)
+				// check input polling and message loop every 50 ms
+				program->loopFrames = (fps * 50 ) / 1000;
+			else
+				// check input polling every frame
+				program->loopFrames = 0;
 		}
 		prev_t = curr_t;
 	}

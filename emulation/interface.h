@@ -283,7 +283,8 @@ struct Interface {
     struct Bind {
         virtual auto jitPoll() -> bool { return false; }
         virtual auto inputPoll(uint16_t, uint16_t) -> int16_t { return 0; }
-        virtual auto videoRefresh(const uint16_t*, unsigned, unsigned, unsigned) -> void {}
+		virtual auto videoRefresh8(const uint8_t*, unsigned, unsigned, unsigned) -> void {}
+        virtual auto videoRefresh(const uint16_t*, unsigned, unsigned, unsigned) -> void {}		
         virtual auto audioSample(int16_t, int16_t) -> void {}
         virtual auto readMedia(Media*, uint8_t*, unsigned, unsigned) -> unsigned { return 0; }
         virtual auto writeMedia(Media*, uint8_t*, unsigned, unsigned) -> unsigned { return 0; }
@@ -312,6 +313,10 @@ struct Interface {
     //return color format is native
     auto videoRefresh(const uint16_t* frame, unsigned width, unsigned height, unsigned linePitch) -> void {
         bind->videoRefresh(frame, width, height, linePitch);
+    }
+	
+	auto videoRefresh8(const uint8_t* frame, unsigned width, unsigned height, unsigned linePitch) -> void {
+        bind->videoRefresh8(frame, width, height, linePitch);
     }
     
     auto finishVBlank() -> void {
@@ -464,7 +469,7 @@ struct Interface {
     virtual auto cropHeight() -> unsigned { return 0; }
     virtual auto cropTop() -> unsigned { return 0; }
     virtual auto cropLeft() -> unsigned { return 0; }
-    virtual auto cropData() -> uint16_t* { return nullptr; }
+    virtual auto cropData() -> uint8_t* { return nullptr; }
     virtual auto cropPitch() -> unsigned { return 0; }
     
     // performance amd accuracy
@@ -480,6 +485,7 @@ struct Interface {
     virtual auto setFinishVblankCallback(bool state) -> void {}
     
     virtual auto fastForward(unsigned config) -> void {}
+	virtual auto getForward() -> unsigned { return 0; }
     
     auto getStatsForSelectedRegion() -> Stats& {  
         return stats;

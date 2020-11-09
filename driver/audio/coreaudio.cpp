@@ -38,6 +38,8 @@ struct CoreAudio : public Audio {
         if(outputInstance)
             init();
 	}
+	
+	auto hasSynchronized() -> bool { return settings.synchronize; }
     
     auto setFrequency(unsigned value) -> void {
 		settings.frequency = value;

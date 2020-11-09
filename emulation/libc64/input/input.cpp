@@ -5,7 +5,7 @@
  */
 
 #include "input.h"
-#include "../vic/vicII.h"
+#include "../vicII/vicII.h"
 
 namespace LIBC64 {       
 
@@ -151,7 +151,7 @@ auto Input::readCiaPortB( CIA::Base::Lines* lines ) -> uint8_t {
         }
 	}
 	
-    // bits where port A is output low and port B output hi are considered active by special conditions
+    // bits while port A is output low and port B output hi are considered active by special conditions
     // if these conditions (directly above) are not met, they will pulled up again
 	val |= outHi;
     
@@ -379,4 +379,3 @@ auto Input::serialize(Emulator::Serializer& s) -> void {
 }
 
 }
-

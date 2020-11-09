@@ -181,6 +181,7 @@ auto Cmd::parse() -> void {
             prepareDrives( emuC64 );
 			globalSettings->set<bool>("audio_sync", false );
 			globalSettings->set<bool>("video_sync", false );
+			globalSettings->set<bool>("fps_limit", false);
 			globalSettings->set<bool>("dynamic_rate_control", false );			
             globalSettings->set<bool>("fps", true );			
             globalSettings->set("video_screen_text", 2);

@@ -5,6 +5,9 @@ namespace LIBC64 {
     
 struct GunStick : LightControl {
     
+	uint8_t* linePtr = nullptr;
+	unsigned vLatch = 0;
+	
     GunStick( Interface::Device* device ) : LightControl( device ) {        
         
         xOffset = 16;
@@ -17,8 +20,13 @@ struct GunStick : LightControl {
         triggerOn = [this]() {
 
             // we observe the pixel color of gun trigger position
-            displayPtr = vicII->getCurrentLinePtr();
+            linePtr = vicII->getCurrentLinePtr();
+			displayPtr = vicII->getCurrentFramePtr();
+			
+			linePtr += cyclePixel;
             displayPtr += cyclePixel;
+			
+			vLatch = vicII->getVcounter();
         };
     }
     
@@ -33,10 +41,21 @@ struct GunStick : LightControl {
         
         out &= ~(button1Pressed << 4); // fire pin
         
-        out &= ~( (displayPtr && ((*displayPtr & 0xf) != 0) ) << 1); // check for non black color (light trigger: down pin)
+        out &= ~( nonBlack() << 1); // check for non black color (light trigger: down pin)
         
         return out;
     }
+	
+	auto nonBlack() -> bool {
+		
+		if (!displayPtr)
+			return false;
+		
+		if (vLatch == vicII->getVcounter())
+			return (*linePtr & 0xf) != 0;
+		
+		return (*displayPtr & 0xf) != 0;
+	}
     
     auto draw(bool midScreen = false) -> void {
         

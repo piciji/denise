@@ -117,9 +117,9 @@ obj/m6502.o:	emulation/libc64/disk/cpu/m6502.cpp
 
 obj/ciaBase.o:	emulation/cia/base.cpp	
 obj/cia6526.o:	emulation/cia/m6526.cpp
-obj/vicIIBase.o:emulation/libc64/vic/base.cpp
-obj/vicIICycle.o:emulation/libc64/vic/vicII.cpp
-obj/vicIIFast.o:emulation/libc64/vic/fast/vicIIFast.cpp
+obj/vicIIBase.o:emulation/libc64/vicII/base.cpp
+obj/vicIICycle.o:emulation/libc64/vicII/vicII.cpp
+obj/vicIIFast.o:emulation/libc64/vicII/fast/vicIIFast.cpp
 obj/systemC64.o:emulation/libc64/system/system.cpp	
 obj/cartC64.o:	emulation/libc64/expansionPort/cart/cart.cpp
 obj/gameCartC64.o: emulation/libc64/expansionPort/gameCart/gameCart.cpp

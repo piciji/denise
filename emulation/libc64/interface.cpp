@@ -4,9 +4,8 @@
 #include "prg/prg.h"
 #include "tape/tape.h"
 #include "sid/sid.h"
-#include "vic/base.h"
-#include "vic/fast/vicIIFast.h"
-#include "vic/vicII.h"
+#include "vicII/fast/vicIIFast.h"
+#include "vicII/vicII.h"
 #include "input/input.h"
 #include "disk/iec.h"
 #include "expansionPort/gameCart/gameCart.h"
@@ -20,7 +19,7 @@
 
 namespace LIBC64 {
 
-const std::string Interface::Version = "109";
+const std::string Interface::Version = "1091";
     
 Interface::Interface() : Emulator::Interface( "C64" ) {        
     
@@ -1239,7 +1238,7 @@ auto Interface::cropLeft() -> unsigned {
     return system->crop->latest.left;
 }
 
-auto Interface::cropData() -> uint16_t* {
+auto Interface::cropData() -> uint8_t* {
     return system->crop->latest.frame;
 }
 
@@ -1254,6 +1253,10 @@ auto Interface::activateDebugCart( unsigned limitCycles ) -> void {
 auto Interface::fastForward(unsigned config) -> void {
     
     system->setFastForward( config );
+}
+
+auto Interface::getForward() -> unsigned {
+	return system->fastForward.config;
 }
 
 auto Interface::getLuma(uint8_t index, bool newRevision) -> double {

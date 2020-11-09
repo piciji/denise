@@ -6,6 +6,7 @@
 
 namespace Emulator {
 	
+template<typename T>
 struct Crop {
     typedef Interface::CropType CropType;
 	using BorderCallback = std::function<void( unsigned& top, unsigned& bottom, unsigned& left, unsigned& right )>;
@@ -25,7 +26,7 @@ struct Crop {
 	} settings;
     
     struct Latest {
-        uint16_t* frame;
+        T* frame;
         unsigned width;
         unsigned height;
         unsigned top;
@@ -69,7 +70,7 @@ struct Crop {
 		return true;
 	}
 	
-	auto apply(uint16_t*& frame, unsigned& width, unsigned& height, unsigned& linePitch) -> void {
+	auto apply(T*& frame, unsigned& width, unsigned& height, unsigned& linePitch) -> void {
 		
 		if ( !updateBorder() ) {
             memoryLatest( frame, width, height, linePitch );
@@ -96,7 +97,7 @@ struct Crop {
         memoryLatest( frame, width, height, linePitch );
 	}
     
-    auto memoryLatest( uint16_t*& frame, unsigned& width, unsigned& height, unsigned& linePitch ) -> void {
+    auto memoryLatest( T*& frame, unsigned& width, unsigned& height, unsigned& linePitch ) -> void {
         // remember result of last crop for post processing ( e.g. lightgun )
         latest.frame = frame;
         latest.width = width;

@@ -81,7 +81,15 @@ auto Program::videoRefresh(const uint16_t* frame, unsigned width, unsigned heigh
     status->countFrames();
 	
     if (frame)
-        activeVideoManager->renderFrame(frame, width, height, linePitch);
+        activeVideoManager->renderFrame<uint16_t>(frame, width, height, linePitch);
+}
+
+auto Program::videoRefresh8(const uint8_t* frame, unsigned width, unsigned height, unsigned linePitch) -> void {
+    
+    status->countFrames();
+	
+    if (frame)
+        activeVideoManager->renderFrame<uint8_t>(frame, width, height, linePitch);
 }
 
 auto Program::loadPlaceholder() -> void {
@@ -139,6 +147,7 @@ auto Program::renderPlaceholder(bool blackScreen) -> void {
 
 auto Program::setVideoSynchronize() -> void {
     videoDriver->synchronize( globalSettings->get<bool>("video_sync", false) );
+	updateOverallSynchronize();
 }
 
 auto Program::setVideoHardSync() -> void {
@@ -151,6 +160,7 @@ auto Program::hintExclusiveFullscreen() -> void {
 
 auto Program::setFpsLimit() -> void {
 	VideoManager::setFpsLimit( globalSettings->get("fps_limit", false) );
+	updateOverallSynchronize();
 }
 
 auto Program::setVideoFilter() -> void {
@@ -254,6 +264,26 @@ auto Program::fastForward( bool activate, bool aggressive ) -> void {
     }
 
     activeEmulator->fastForward( forward );
+	
+	updateOverallSynchronize();
+}
+
+auto Program::updateOverallSynchronize() -> void {
+	VideoManager::synchronized = false;
+	
+	bool fastForward = activeEmulator && activeEmulator->getForward();
+	
+	if (fastForward)
+		return;	
+	
+	bool vSync = videoDriver->hasSynchronized();
+	
+	bool aSync = audioDriver->hasSynchronized();
+	
+	bool fpsLimit = VideoManager::fpsLimit;	
+	
+	if ( vSync || fpsLimit || aSync )
+		VideoManager::synchronized = true;
 }
 
 auto Program::saveExitScreenshot() -> void {        

@@ -48,7 +48,7 @@ auto AudioManager::setSynchronize() -> void {
     
     auto synchronize = globalSettings->get<bool>("audio_sync", true);
     audioDriver->synchronize(synchronize);
-    
+    program->updateOverallSynchronize();
     setBufferSize();
 }
 

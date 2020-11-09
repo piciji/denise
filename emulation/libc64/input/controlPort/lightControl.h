@@ -2,7 +2,7 @@
 #pragma once
 
 #include "controlPort.h"
-#include "../../vic/vicII.h"
+#include "../../vicII/vicII.h"
 #include "../input.h"
 #include "../../../tools/crop.h"
 
@@ -28,12 +28,12 @@ struct LightControl : ControlPort {
     };
     
     uint8_t cyclePixel = 0;
-    uint16_t* displayPtr = nullptr;
+    uint8_t* displayPtr = nullptr;
     
     bool button1Pressed = false;
     bool button2Pressed = false;    
 
-    Emulator::Crop::Latest* cropLatest;
+    Emulator::Crop<uint8_t>::Latest* cropLatest = nullptr;
     
     // it's exactly what you think :-)
     // we need a cursor to track movement. (aiming with the gun)
@@ -148,6 +148,9 @@ struct LightControl : ControlPort {
             
             return;
         }
+		
+		if(!cropLatest->frame)
+			return;
         
         int stopLine = 0;
         if (midScreen) {

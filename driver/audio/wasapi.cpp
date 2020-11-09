@@ -84,6 +84,8 @@ struct Wasapi : public Audio {
 		settings.synchronize = state;
 	}
 	
+	auto hasSynchronized() -> bool { return settings.synchronize; }
+	
 	auto setLatency(unsigned value) -> void {
 		settings.latency = value;
 		if(audioDevice) 

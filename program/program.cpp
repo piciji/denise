@@ -361,8 +361,15 @@ auto Program::loop() -> void {
     if( willPoll() )
         InputManager::poll();
 	
-	if( willRun() )
-        activeEmulator->run();            
+	if( willRun() ){
+		unsigned frames = loopFrames;
+		
+		if (frames) {
+			while(frames--)
+				activeEmulator->run();
+		} else
+			activeEmulator->run();
+	}
 	else {
         if (GUIKIT::Application::exitCode)
             return view->onClose();
@@ -542,4 +549,3 @@ auto Program::getEmulator( std::string ident ) -> Emulator::Interface* {
     
     return nullptr;
 }
-

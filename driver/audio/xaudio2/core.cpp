@@ -80,6 +80,8 @@ struct XA_IDENT_CORE : XA_IDENT, public IXAudio2VoiceCallback {
         settings.synchronize = state;
     }
 	
+	auto hasSynchronized() -> bool { return settings.synchronize; }
+	
     auto setFrequency(unsigned value) -> void {
         settings.frequency = value;
         

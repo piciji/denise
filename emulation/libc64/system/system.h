@@ -4,15 +4,14 @@
 #include <functional>
 #include "../../tools/branchPrediction.h"
 #include "../interface.h"
-#include "../../processor/m65xx/model.h"
 #include "../m6510/m6510.h"
 #include "../../cia/m6526.h"
-#include "../vic/vicII.h"
+#include "../vicII/vicII.h"
 #include "memory.h"
 #include "../../tools/systimer.h"
+#include "../../tools/crop.h"
 
 namespace Emulator {
-    struct Crop;
     struct PowerSupply;
     struct Serialzer;
 }
@@ -91,12 +90,12 @@ struct System {
 	
 	Callback countDownPowerSupply;
 	
-	Emulator::Crop* crop;
+	Emulator::Crop<uint8_t>* crop;
     unsigned serializationSize; 
     uint8_t requestedSids;
     
     uint8_t mode; //bit 4: exrom, bit 3: game, bit 2: charen, bit 1: hiram, bit 0: loram
-    uint8_t vicBank;
+    uint16_t vicBank;
     // the c64 shares multiple sources for irq and nmi
     // achknowledging e.g. an irq from vic side doesn't mean the irq line on cpu changes immediately
     // if cia1 holds up an irq too, the cpu irq pin goes hi if both sources are hi
@@ -173,6 +172,12 @@ struct System {
     auto updateStatsStereo() -> void;
 	
 	auto updatePort(uint8_t lines, uint8_t ddr) -> void;
+	
+	auto videoRefresh( uint8_t* frame, unsigned width, unsigned height, unsigned linePitch) -> void;
+	auto setVicIrq( bool state ) -> void;
+	auto setVicRdy(bool state) -> void;
+	auto VicMidScreenCallback() -> void;
+	auto VicVblankCallback() -> void;
 };
 
 extern System* system;

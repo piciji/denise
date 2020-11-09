@@ -3,12 +3,12 @@
 #include "../input/input.h"
 #include "../prg/prg.h"
 #include "../tape/tape.h"
-#include "../vic/fast/vicIIFast.h"
+#include "../vicII/fast/vicIIFast.h"
+#include "../vicII/vicII.h"
 #include "../disk/iec.h"
 #include "../sid/sid.h"
 #include "keyBuffer.h"
 #include "gluelogic.h"
-#include "../../tools/crop.h"
 #include "../../tools/powersupply.h"
 #include "../../tools/serializer.h"
 #include "../../tools/rand.h"
@@ -40,6 +40,7 @@ System::System(Interface* interface) {
     createExpansions();
 	vicIICycle = new VicIICycle;   
     vicIIFast = new VicIIFast;
+	vicII = vicIICycle;
     
     for (unsigned i = 0; i < 7; i++) 
         sids[i] = new Sid( Sid::Type::MOS_6581 );
@@ -62,7 +63,7 @@ System::System(Interface* interface) {
     
     keyBuffer = new KeyBuffer;
     glueLogic = new GlueLogic();
-	crop = new Emulator::Crop;
+	crop = new Emulator::Crop<uint8_t>;
 	powerSupply = new Emulator::PowerSupply;
 	tape = new Tape;
     iecBus = new IecBus;
@@ -285,116 +286,6 @@ System::System(Interface* interface) {
 
         return (colorRam[ addr & 0x3ff ] & 0xf) | ( vicII->lastReadPhase1() & ~0xf );
     };
-
-    vicIICycle->readColor = readColorRam;
-    
-    vicIICycle->read = [this](uint16_t addr) {
-        
-        return memoryVic.read( (addr & 0x3fff) | (vicBank << 14) );        
-    };
-	
-	vicIICycle->readCpu = [this]() {
-        // we are in second half cycle and VIC pulled BA low but doesn't own BUS.
-        // it takes 3 further cycles till VIC can access BUS in second half cycle.
-        // so this function is called for 3 cycles in a row.
-        // first we need to find out who is BUS Master? CPU or expansion port ?
-        if ( !expansionPort->isDma() )
-            // at this point CPU is only halted by BA(RDY) when entering a read cycle.
-            // even when cpu is halted the address is selected on BUS and the VIC reads
-            // in second half cycle from this address but not the CPU.            
-            return memoryCpu.read( cpu->addressBus() );
-        
-        // expansion port is BUS Master... same explanation as above
-        return memoryCpu.read( expansionPort->addressBus() );            
-    };
-    
-    vicIICycle->isCharRomAccessed = [this](uint16_t addr) {
-        
-        addr = (addr & 0x3fff) | (vicBank << 14);
-        
-        return memoryVic.isLocation( addr >> 8, &readCharRom );        
-    };    
-    
-    for (unsigned i = 0; i < 2; i++) {       
-        setCycleRenderer( i == 0 );
-        
-        vicII->videoRefresh = [this]( uint16_t* frame, unsigned width, unsigned height, unsigned linePitch) {
-            
-            if (diskSilence.active) {                
-                if (!diskSilence.idle) {
-                    if (++diskSilence.idleFrames > 120) {    
-                        diskSilence.idle = true; 
-                        diskSilence.idleFrames = 0;
-                        iecBus->resetDriveState();
-                    }
-                }                    
-            }
-            
-            if (!runAhead.pos) {
-                crop->apply( frame, width, height, linePitch );
-                // for lightguns
-                input->drawCursor();
-            }
-
-            if (fastForward.config & (unsigned)Interface::FastForward::NoVideoOut)
-                frame = nullptr;
-
-            else if (fastForward.renderNext) {
-                fastForward.renderNext = false;
-                vicII->disableSequencer( fastForward.config & (unsigned)Interface::FastForward::NoVideoSequencer );
-
-            } else if (fastForward.config & (unsigned)Interface::FastForward::ReduceVideoOutput) {
-                frame = nullptr;
-
-                if ((++fastForward.frameCounter & 15) == 0) {                                
-                    fastForward.frameCounter = 0;
-                    vicII->disableSequencer( false );
-                    fastForward.renderNext = true;
-                }
-            }
-
-            if (!runAhead.pos)
-                this->interface->videoRefresh( frame, width, height, linePitch );                
-
-            frameComplete = true;		
-
-            if ( !expansionPort->isBootable() )
-                keyBuffer->process();
-        };
-
-        vicII->midScreenCallback = [this]() {
-
-            if (runAhead.pos)
-                return;
-
-            input->drawCursor(true);
-
-            this->interface->midScreenCallback();
-        };
-
-        vicII->vblankCallback = [this]() {
-            if (!runAhead.pos)
-                this->interface->finishVBlank();
-        };
-
-        vicII->setIrq = [this]( bool state ) {
-            if (state)
-                irqIncomming |= 1;
-            else
-                irqIncomming &= ~1;      
-
-            cpu->setIrq( irqIncomming != 0 );
-        };
-
-        vicII->setRdy = [this](bool state) {
-            if (state)
-                rdyIncomming |= 1;
-            else
-                rdyIncomming &= ~1;      
-
-            cpu->setRdy( rdyIncomming != 0 );        
-        };
-    }
     
     Sid::audioRefresh = [this](int16_t sample) {
         if (!runAhead.pos)
@@ -1004,5 +895,82 @@ auto System::updatePort(uint8_t lines, uint8_t ddr) -> void {
 
 	tape->writeIn( ((~ddr | lines) & 8) != 0 );
 }     
+
+auto System::videoRefresh( uint8_t* frame, unsigned width, unsigned height, unsigned linePitch) -> void {
+
+	if (diskSilence.active) {
+		if (!diskSilence.idle) {
+			if (++diskSilence.idleFrames > 120) {
+				diskSilence.idle = true;
+				diskSilence.idleFrames = 0;
+				iecBus->resetDriveState();
+			}
+		}
+	}
+
+	if (!runAhead.pos && frame) {
+		crop->apply( frame, width, height, linePitch );
+		// for lightguns
+		input->drawCursor();
+	}
+
+	if (fastForward.config & (unsigned)Interface::FastForward::NoVideoOut)
+		frame = nullptr;
+
+	else if (fastForward.renderNext) {
+		fastForward.renderNext = false;
+	    vicII->disableSequencer( fastForward.config & (unsigned)Interface::FastForward::NoVideoSequencer );
+
+	} else if (fastForward.config & (unsigned)Interface::FastForward::ReduceVideoOutput) {
+		frame = nullptr;
+
+		if ((++fastForward.frameCounter & 15) == 0) {
+			fastForward.frameCounter = 0;
+			vicII->disableSequencer( false );
+			fastForward.renderNext = true;
+		}
+	}
+
+	if (!runAhead.pos)
+		this->interface->videoRefresh8( frame, width, height, linePitch );
+
+	frameComplete = true;
+
+	if ( !expansionPort->isBootable() )
+		keyBuffer->process();
+}
+
+auto System::setVicIrq( bool state ) -> void {
+	if (state)
+		irqIncomming |= 1;
+	else
+		irqIncomming &= ~1;
+
+	cpu->setIrq( irqIncomming != 0 );
+}
+
+auto System::setVicRdy(bool state) -> void {
+	if (state)
+		rdyIncomming |= 1;
+	else
+		rdyIncomming &= ~1;
+
+	cpu->setRdy( rdyIncomming != 0 );
+}
+
+auto System::VicMidScreenCallback() -> void {
+
+	if (runAhead.pos)
+		return;
+
+	input->drawCursor(true);
+
+	interface->midScreenCallback();
+}
+
+auto System::VicVblankCallback() -> void {
+	if (!runAhead.pos)
+		interface->finishVBlank();
+}
 
 }

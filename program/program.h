@@ -47,6 +47,7 @@ struct Program : Emulator::Interface::Bind {
     bool isRunning;
 	bool isPause;
     bool isFocused;
+	unsigned loopFrames = 0;
 	GUIKIT::Image placeholder;
 
     auto quit() -> void;
@@ -106,6 +107,7 @@ struct Program : Emulator::Interface::Bind {
     auto initVideo() -> void;
 	auto getVideoDriver() -> std::string;
     auto videoRefresh(const uint16_t* frame, unsigned width, unsigned height, unsigned linePitch) -> void override;
+	auto videoRefresh8(const uint8_t* frame, unsigned width, unsigned height, unsigned linePitch) -> void override;
     auto renderPlaceholder(bool blackScreen = false) -> void;
     auto setVideoSynchronize() -> void;
     auto setVideoHardSync() -> void;
@@ -118,7 +120,8 @@ struct Program : Emulator::Interface::Bind {
     auto saveExitScreenshot() -> void;
     auto fastForward( bool activate, bool aggressive = false ) -> void;
     auto setFpsLimit() -> void;
-    
+    auto updateOverallSynchronize() -> void;
+	
     //input
     auto initInput() -> void;
 	auto getInputDriver() -> std::string;

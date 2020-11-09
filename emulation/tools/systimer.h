@@ -145,7 +145,7 @@ struct SystemTimer {
     } 
     
     auto clear() -> void {
-        clock = 0;
+        clock = ~0;
 		events.clear();
 	}
 

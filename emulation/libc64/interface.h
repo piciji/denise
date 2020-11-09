@@ -134,7 +134,7 @@ struct Interface : Emulator::Interface {
     auto cropHeight() -> unsigned;
     auto cropTop() -> unsigned;
     auto cropLeft() -> unsigned;
-    auto cropData() -> uint16_t*;
+    auto cropData() -> uint8_t*;
     auto cropPitch() -> unsigned;
 
     // performance amd accuracy
@@ -147,6 +147,7 @@ struct Interface : Emulator::Interface {
         
     auto activateDebugCart( unsigned limitCycles = 0 ) -> void;
     auto fastForward(unsigned config) -> void;
+	auto getForward() -> unsigned;
     
     auto getLuma(uint8_t index, bool newRevision) -> double;
     auto getChroma(uint8_t index) -> double; 

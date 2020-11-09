@@ -462,6 +462,8 @@ struct DVideo : Video {
         init();
 		setShader( settings.passes );
     }
+	
+	auto hasSynchronized() -> bool { return settings.synchronize; }
 
     auto setFilter(Filter filter) -> void {
 		if (filter == settings.filter)

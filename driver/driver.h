@@ -37,6 +37,7 @@ struct Video {
     virtual auto setShaderAttribute( std::string _program, std::string attribute, float* data, unsigned size) -> void {}
     virtual auto setShaderAttribute( std::string _program, std::string attribute, uint32_t* data, unsigned _width, unsigned _height) -> void {}
     virtual auto synchronize(bool state) -> void {}
+	virtual auto hasSynchronized() -> bool { return false; }
     virtual auto hardSync(bool state) -> void {}
 	virtual auto showMessage(std::string message, bool critical = false) -> void {}
     
@@ -63,6 +64,7 @@ struct Audio {
     virtual auto expectFloatingPoint() -> bool { return true; }
     virtual auto getMinimumLatency() -> unsigned { return 1; }
     virtual auto setHighPriority(bool state) -> void {}
+	virtual auto hasSynchronized() -> bool { return false; }
 
     virtual ~Audio() = default;
     static auto create(const std::string& driver) -> Audio*;
