@@ -295,7 +295,6 @@ auto InputLayout::loadInputList(unsigned deviceId) -> void {
     
     mapControl.keyLayout.setEnabled( device.isKeyboard() );    
     mapControl.automap.setEnabled( device.isKeyboard() && mapControl.keyLayout.selection() != 0 );
-    mapControl.analogSensitivity.setEnabled( !device.isKeyboard() );
     
     updateConnectorButtons();
     enableConnectorButtons();

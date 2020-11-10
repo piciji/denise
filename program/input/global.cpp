@@ -533,13 +533,13 @@ auto InputManager::updateAnalogSensitivity(Emulator::Interface::Device* updateDe
 
 		int sense = sensePercent;
 				
-		if (device.isJoypad()) {
+		if (device.isJoypad() || device.isKeyboard()) {
 			sense = (sensePercent * 32768) / 100;
 
 			sense = std::min(std::max(sense, tresholdLo), 32768 - tresholdHi);		
 		} else
 			sense = std::max( 5, sense );
-        
+         
         for (auto& input : device.inputs) {
             
             auto mapper = (InputMapping*)input.guid;                        
