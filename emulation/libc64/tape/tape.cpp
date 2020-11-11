@@ -73,9 +73,7 @@ Tape::Tape( ) {
                 
             } else
                 cycles -= gaps;    
-        }
-            		
-		sysTimer.remove( &worker );
+        }            		
 			
         if (gaps)
             sysTimer.add( &worker, gaps * speedAdjustment());
@@ -155,11 +153,13 @@ auto Tape::setMode( unsigned mode ) -> void {
 		// why does this matter? stop state changes tape sense, which software could poll
 		nextMode = (Mode)mode;	
 		setMode( Mode::Stop );
-		sysTimer.add( &delayMode, 40000 ); // roughly 2 frames
+        if (!sysTimer.has(&delayMode))
+            sysTimer.add( &delayMode, 40000 ); // roughly 2 frames
 		return;
 	}
 	
-	sysTimer.remove( &delayMode );
+    if (sysTimer.delay( &delayMode ))
+        sysTimer.remove( &delayMode );
 	
     lastDirectionForward = directionForward;
     

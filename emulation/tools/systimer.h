@@ -140,7 +140,7 @@ struct SystemTimer {
             events.begin(), events.end(),
                 
                 [callback](Event& e) { 
-                    return e.callback == callback ;
+                    return e.callback == callback;
                 }), events.end());
     } 
     
