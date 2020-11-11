@@ -310,3 +310,15 @@ auto String::convertDoubleToString(double value, unsigned precision) -> std::str
     out << std::fixed << value;
     return out.str();
 }
+
+auto String::findOccurencesOf( std::string str, std::string subStr ) -> unsigned {
+    unsigned occurrences = 0;
+    std::string::size_type start = 0;
+
+    while ((start = str.find(subStr, start)) != std::string::npos) {
+        occurrences++;
+        start += subStr.length();
+    }
+    
+    return occurrences;
+}

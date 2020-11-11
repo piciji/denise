@@ -226,6 +226,7 @@ auto Cmd::parse() -> void {
             for(auto& suffix : allowedSuffix) {
                 								
                 if (GUIKIT::String::foundSubStr( temp, "." + suffix )) {
+                    std::replace( arg.begin(), arg.end(), '\\', '/');
                     paths.push_back( arg );  
                     autoload = true;
 					

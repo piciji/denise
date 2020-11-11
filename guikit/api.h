@@ -1115,6 +1115,7 @@ struct File {
     }
     static auto suppportedCompressionFilter() -> std::string { return "zip, gz, tar, tgz, tar.gz (*.zip,*.gz,*.tar,*.tgz,*.tar.gz)"; }
     static auto getFolderList( std::string path, const std::string& subStr = "") -> std::vector<Info>;
+    static auto getFolderListAlt( std::string path, const std::string& subStr = "", unsigned limit = 0 ) -> std::vector<std::string>;
     static auto isDir( std::string path ) -> bool;
     static auto createDir( std::string path, std::string basePath = "" ) -> bool;
     static auto beautifyPath(std::string path) -> std::string;
@@ -1274,6 +1275,7 @@ struct String {
     static auto prependZero( std::string str, unsigned width ) -> std::string;
     static auto removeDuplicates( std::vector<std::string>& strs ) -> void;
     static auto convertDoubleToString(double value, unsigned precision = 18) -> std::string;
+    static auto findOccurencesOf( std::string str, std::string subStr ) -> unsigned;
 
     template<typename T> static auto addThousandSeparator(T digit) -> std::string {
         return addThousandSeparator( std::to_string( digit ) );

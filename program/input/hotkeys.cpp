@@ -1,5 +1,6 @@
 
 #include "manager.h"
+#include "../tools/DiskFinder.h"
 
 std::vector<InputMapping*> InputManager::hotkeyTriggers;
 
@@ -380,31 +381,16 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
                 if (srcSetting->path.empty())
                     break;
                 
-                GUIKIT::File tempFile( srcSetting->path );
+                DiskFinder diskFinder( srcSetting->path );
                 
-                auto filePath = tempFile.getPath();
-                auto fileName = tempFile.getFileName( true );
-                auto suffix = tempFile.getExtension();
-                
-                if (filePath.empty() || fileName.empty())
-                    break;
-                
-                auto results = getAutoSwapFilename(fileName, swapPos + 1);
-                
-                for(auto& result : results) {
-                                       
-                    GUIKIT::File testFile( filePath + result + "." + suffix );
-                    
-                    if (!testFile.exists())
-                        continue;
+                auto result = diskFinder.findNext( swapPos + 1 );
 
-                    fSetting->file = result + "." + suffix;
-                    fSetting->path = filePath + fSetting->file;
+                if (result.size()) {
+                    fSetting->file = result;
+                    fSetting->path = diskFinder.filePath + result;
                     fSetting->id = 0;
                     fSetting->writeProtect = false;
-                    
-                    break;
-                }                
+                }                                               
             }
             
             file = filePool->get( fSetting->path );
@@ -431,53 +417,6 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
         }
     }
     
-}
-
-auto InputManager::getAutoSwapFilename( std::string fileName, unsigned diskPos ) -> std::vector<std::string> {
-
-    std::string temp = fileName;
-    unsigned digitMatch = 0;
-    char last;
-    
-    for (int i = (fileName.length() - 1); i >= 0; i--) {
-
-        std::string _check(1, temp.at(i));
-        if (!GUIKIT::String::isNumber(_check))
-            break;
-
-        last = fileName.back();
-        fileName.pop_back();
-        digitMatch++;
-    }
-    
-    if (digitMatch) {
-        if (digitMatch == 1 && last == '0')
-            return { fileName + std::to_string( diskPos - 1 ) };
-        return { fileName + std::to_string( diskPos ) };
-    }
-    
-    last = fileName.back();
-    fileName.pop_back();
-    
-    switch(diskPos) {
-        case 1: return { fileName + "a", fileName + "A" };
-        case 2: return { fileName + "b", fileName + "B" };
-        case 3: return { fileName + "c", fileName + "C" };
-        case 4: return { fileName + "d", fileName + "D" };
-        case 5: return { fileName + "e", fileName + "E" };
-        case 6: return { fileName + "f", fileName + "F" };
-        case 7: return { fileName + "g", fileName + "G" };
-        case 8: return { fileName + "h", fileName + "H" };
-        case 9: return { fileName + "i", fileName + "I" };
-        case 10: return { fileName + "j", fileName + "J" };
-        case 11: return { fileName + "k", fileName + "K" };
-        case 12: return { fileName + "l", fileName + "L" };
-        case 13: return { fileName + "m", fileName + "M" };
-        case 14: return { fileName + "n", fileName + "N" };
-        case 15: return { fileName + "o", fileName + "O" };
-    }
-    
-    return {fileName};
 }
 
 auto InputManager::pollHotkeys() -> void {

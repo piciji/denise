@@ -366,6 +366,41 @@ auto File::getPath( std::string _fn ) -> std::string {
     return _fn.erase(end + 1);
 }
 
+auto File::getFolderListAlt( std::string path, const std::string& subStr, unsigned limit ) -> std::vector<std::string> {
+    std::vector<std::string> list;
+    std::string file;
+    
+#ifdef GUIKIT_WINAPI
+    _WDIR* dir = _wopendir ( utf16_t( path ) );
+#else
+    DIR* dir = opendir ( path.c_str() );
+#endif
+
+    if (dir == NULL) return {};
+
+#ifdef GUIKIT_WINAPI
+    struct _wdirent* ent;
+    while ((ent = _wreaddir (dir)) != NULL) {
+        file = utf8_t( ent->d_name );
+#else
+    struct dirent* ent;
+    while ((ent = readdir (dir)) != NULL) {
+        file = (std::string)ent->d_name;
+#endif
+        if (file == "." || file == "..") continue;
+		if (!subStr.empty()) {
+			if(!String::findString(file, subStr)) continue;
+		}
+
+        list.push_back( file );
+        
+        if (limit && (list.size() == limit))
+            break;
+    }
+    
+    return list;
+}
+
 auto File::getFolderList( std::string path, const std::string& subStr ) -> std::vector<File::Info> {
     std::vector<Info> list;
     Info info;

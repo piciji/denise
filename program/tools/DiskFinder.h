@@ -1,0 +1,192 @@
+
+#pragma once
+
+#include "../../guikit/api.h"
+
+struct DiskFinder {
+    
+    std::string suffix;
+    std::string fileName;
+    std::string filePath;
+    
+    DiskFinder( std::string path ) {
+        
+        GUIKIT::File tempFile( path );
+
+        filePath = tempFile.getPath();
+        fileName = tempFile.getFileName(true);
+        suffix = tempFile.getExtension();
+    }
+    
+    auto getPath( std::string baseName ) -> std::string {
+        
+        return filePath + baseName;
+    }
+    
+    auto testFile( std::string baseName ) -> bool {
+
+        if (!baseName.size())
+            return false;
+
+        GUIKIT::File test( getPath( baseName ) );
+
+        if (test.exists())
+            return true;
+        
+        return false;
+    }
+    
+    auto getPosIdentLetter( unsigned pos ) -> std::string {
+        
+        switch (pos) {
+            case 1: return "a";
+            case 2: return "b";
+            case 3: return "c";
+            case 4: return "d";
+            case 5: return "e";
+            case 6: return "f";
+            case 7: return "g";
+            case 8: return "h";
+            case 9: return "i";
+            case 10: return "j";
+            case 11: return "k";
+            case 12: return "l";
+            case 13: return "m";
+            case 14: return "n";
+            case 15: return "o";
+        } 
+        return "";
+    }
+    
+    auto findNext( unsigned diskPos ) -> std::string {
+        
+        std::string result = "";
+                
+        result = guessDiskDigit( diskPos );
+        
+        if ( testFile( result) )
+            return result;
+                
+        result = guessDiskLetter( diskPos, false );
+
+        if ( testFile( result) )
+            return result;
+
+        result = guessDiskLetter( diskPos, true );
+
+        if ( testFile( result) )
+            return result;
+
+        result = searchFolder( diskPos );
+
+        if ( testFile( result) )
+            return result;
+        
+        return "";
+    }
+    
+    auto searchFolder( unsigned diskPos ) -> std::string {
+        
+        std::string temp = fileName;
+        std::string posIdentDigit = std::to_string( diskPos );
+        std::string posIdentLetter = getPosIdentLetter( diskPos );
+        unsigned occurrences = 0;
+        unsigned curOccurrences = 0;
+        std::string useFile = "";
+        std::string cmpFile = fileName + "." + suffix;
+
+        while(1) {
+
+            if (!temp.size())
+                return "";
+            
+           // char last = temp.back();
+            temp.pop_back();
+            
+            auto list = GUIKIT::File::getFolderListAlt( filePath, temp, 20 );
+            
+            if (list.size() < 2)
+                continue;
+            
+            occurrences = 0;
+            for(auto& file : list) {
+                
+                if (cmpFile == file)
+                    continue;
+                
+                std::string tempFile = file;
+                
+                GUIKIT::String::toLowerCase( tempFile );
+                
+                curOccurrences = GUIKIT::String::findOccurencesOf( tempFile, posIdentDigit )
+                    + GUIKIT::String::findOccurencesOf( tempFile, posIdentLetter );
+                
+                if (curOccurrences > occurrences) {
+                    useFile = file;
+                    occurrences = curOccurrences;
+                }
+                 
+            }
+            
+            return useFile;
+        }
+        
+        return "";
+    }
+    
+    auto guessDiskLetter( unsigned diskPos, bool _small ) -> std::string {
+        
+        std::string temp = fileName;
+        temp.pop_back();
+
+        switch (diskPos) {
+            case 1: temp = _small ? temp + "a" : temp + "A"; break;
+            case 2: temp = _small ? temp + "b" : temp + "B"; break;
+            case 3: temp = _small ? temp + "c" : temp + "C"; break;
+            case 4: temp = _small ? temp + "d" : temp + "D"; break;
+            case 5: temp = _small ? temp + "e" : temp + "E"; break;
+            case 6: temp = _small ? temp + "f" : temp + "F"; break;
+            case 7: temp = _small ? temp + "g" : temp + "G"; break;
+            case 8: temp = _small ? temp + "h" : temp + "H"; break;
+            case 9: temp = _small ? temp + "i" : temp + "I"; break;
+            case 10: temp = _small ? temp + "j" : temp + "J"; break;
+            case 11: temp = _small ? temp + "k" : temp + "K"; break;
+            case 12: temp = _small ? temp + "l" : temp + "L"; break;
+            case 13: temp = _small ? temp + "m" : temp + "M"; break;
+            case 14: temp = _small ? temp + "n" : temp + "N"; break;
+            case 15: temp = _small ? temp + "o" : temp + "O"; break;
+            default:
+                return "";
+        }
+        
+        return temp + "." + suffix;
+    }
+    
+    auto guessDiskDigit( unsigned diskPos ) -> std::string {
+
+        std::string temp = fileName;
+        unsigned digitMatch = 0;
+        char last;
+
+        for (int i = (fileName.length() - 1); i >= 0; i--) {
+
+            std::string _check(1, fileName.at(i));
+
+            if (!GUIKIT::String::isNumber(_check))
+                break;
+
+            last = temp.back();
+            temp.pop_back();
+            digitMatch++;
+        }
+        
+        if (!digitMatch)
+            return "";
+
+        if ( (digitMatch == 1) && (last == '0') )
+            return temp + std::to_string( diskPos - 1 ) + "." + suffix;
+            
+        return temp + std::to_string( diskPos ) + "." + suffix;
+    }
+    
+};
