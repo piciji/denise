@@ -385,7 +385,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
                 
                 auto result = diskFinder.findNext( swapPos + 1 );
 
-                if (result.size()) {
+                if (result != "") {
                     fSetting->file = result;
                     fSetting->path = diskFinder.filePath + result;
                     fSetting->id = 0;

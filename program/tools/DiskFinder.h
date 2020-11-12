@@ -25,7 +25,7 @@ struct DiskFinder {
     
     auto testFile( std::string baseName ) -> bool {
 
-        if (!baseName.size())
+        if (baseName == "")
             return false;
 
         GUIKIT::File test( getPath( baseName ) );
@@ -91,44 +91,77 @@ struct DiskFinder {
         std::string posIdentDigit = std::to_string( diskPos );
         std::string posIdentLetter = getPosIdentLetter( diskPos );
         unsigned occurrences = 0;
+		unsigned occurrencesAlt = 0;
         unsigned curOccurrences = 0;
         std::string useFile = "";
-        std::string cmpFile = fileName + "." + suffix;
+		std::string useFileAlt = "";
+				
+		auto splittedSuffix = GUIKIT::String::split( suffix, '.' );
+		// use last suffix part only, in case og .1.D64
+		std::string tempSuffix = splittedSuffix[ splittedSuffix.size() - 1 ];				
 
         while(1) {
 
             if (!temp.size())
                 return "";
             
-           // char last = temp.back();
             temp.pop_back();
             
             auto list = GUIKIT::File::getFolderListAlt( filePath, temp, 20 );
             
             if (list.size() < 2)
-                continue;
+                continue;		 
             
             occurrences = 0;
+			occurrencesAlt = 0;			
+			
             for(auto& file : list) {
+				
+				if (!GUIKIT::String::foundSubStr( file, "." + tempSuffix ))
+					continue;
+				
+				auto splitted = GUIKIT::String::split( file, '.' );
+				
+				std::string tempFile = splitted[0];
                 
-                if (cmpFile == file)
-                    continue;
+                GUIKIT::String::toLowerCase( tempFile );																
                 
-                std::string tempFile = file;
-                
-                GUIKIT::String::toLowerCase( tempFile );
-                
-                curOccurrences = GUIKIT::String::findOccurencesOf( tempFile, posIdentDigit )
-                    + GUIKIT::String::findOccurencesOf( tempFile, posIdentLetter );
+                curOccurrences = GUIKIT::String::findOccurencesOf( tempFile, posIdentDigit );
                 
                 if (curOccurrences > occurrences) {
                     useFile = file;
                     occurrences = curOccurrences;
-                }
+					
+                } else if (curOccurrences == occurrences) {					
+					// "boot" or "crack" have a longer file name length
+					if (curOccurrences && (useFile.size() > file.size()) )
+						useFile = file;
+					else if (useFile.size() == file.size())
+						useFile = "";
+				}
+				
+				curOccurrences = GUIKIT::String::findOccurencesOf( tempFile, posIdentLetter );
                  
+				if (curOccurrences > occurrencesAlt) {
+                    useFileAlt = file;
+                    occurrencesAlt = curOccurrences;
+					
+                } else if (curOccurrences == occurrencesAlt) {
+					// "boot" or "crack" have a longer file name length
+					if (curOccurrences && (useFileAlt.size() > file.size()) )
+						useFileAlt = file;
+					else if (useFileAlt.size() == file.size())
+						useFileAlt = "";
+				}
             }
-            
-            return useFile;
+			
+			if (useFile != "")
+				return useFile;
+			
+			else if (useFileAlt != "")
+				return useFileAlt;
+			
+			break;
         }
         
         return "";
