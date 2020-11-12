@@ -123,6 +123,15 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
     this->tabWindow = tabWindow;
     this->emulator = tabWindow->emulator;
     
+    memorySliderReset.setInterval(500);
+    
+    memorySliderReset.onFinished = [this]() {
+        if (activeEmulator)
+            program->power(activeEmulator);
+        
+        memorySliderReset.setEnabled(false);
+    };
+    
     memoryLayout.build( emulator );
     driveLayout.build( emulator );
     modelLayout.build( tabWindow, emulator,
@@ -161,8 +170,8 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
             _settings->set<unsigned>( _underscore(memoryType->name) + "_mem", pos);
             block->sliderLayout.value.setText( getSizeString( memoryType->memory[pos].size ) );
 
-			if (activeEmulator)
-				program->power(activeEmulator);
+			if (activeEmulator)                
+                memorySliderReset.setEnabled();				            
         };
 
         unsigned id = _settings->get<unsigned>( _underscore(memoryType->name) + "_mem", memoryType->defaultMemoryId);

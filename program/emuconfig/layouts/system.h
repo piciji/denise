@@ -76,6 +76,7 @@ struct SystemLayout : GUIKIT::VerticalLayout {
     
     TabWindow* tabWindow;
     Emulator::Interface* emulator;
+    GUIKIT::Timer memorySliderReset;
     
     GUIKIT::HorizontalLayout upperLayout;
     GUIKIT::VerticalLayout leftLayout;
