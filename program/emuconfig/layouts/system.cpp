@@ -158,9 +158,6 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
 			if (pos >= memoryType->memory.size())
 				return;
 			
-			if (!handleChangeDuringEmulation(&block->sliderLayout.slider, memoryType->name + "_mem", memoryType->defaultMemoryId))
-				return;		            
-			
             _settings->set<unsigned>( _underscore(memoryType->name) + "_mem", pos);
             block->sliderLayout.value.setText( getSizeString( memoryType->memory[pos].size ) );
 
