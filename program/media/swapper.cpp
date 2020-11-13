@@ -75,7 +75,7 @@ SwapperLayout::SwapperLayout( MediaWindow* mediaWindow ) {
 			fSetting->setPath( file->getFile() );
 			fSetting->setFile( item->info.name );
 			fSetting->setId( item->id );
-            listView.setText(pos, {std::to_string(pos + 1), file->getFile(), item->info.name});
+            listView.setText(pos, {std::to_string(pos), file->getFile(), item->info.name});
             
             bool forceWP = file->isArchived() || file->isReadOnly();
             
@@ -95,7 +95,7 @@ SwapperLayout::SwapperLayout( MediaWindow* mediaWindow ) {
 		auto fSetting = getSetting( pos );
 		fSetting->init();
 		
-		listView.setText(pos, {std::to_string(pos+1), "", ""});
+		listView.setText(pos, {std::to_string(pos), "", ""});
 		controls.writeProtect.setChecked();
 		controls.writeProtect.setEnabled(false);		
 	};
@@ -111,7 +111,7 @@ SwapperLayout::SwapperLayout( MediaWindow* mediaWindow ) {
 	
 	for(unsigned i = 0; i < 15; i++) {
 		auto fSetting = getSetting( i );		
-		listView.append({std::to_string(i+1), fSetting->path, fSetting->file });
+		listView.append({std::to_string(i), fSetting->path, fSetting->file });
 	}
 }
 

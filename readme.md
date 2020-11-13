@@ -7,6 +7,15 @@
 
 # changelog
 
+## 1.0.9.1 (not yet released)
+* fix TAPE emulation (broken in 1.0.9)
+* huge performance improvement
+* load follow-up disks via hotkey
+    * map hotkeys for disk 1, 2, 3, ...
+    * map disk 0 for boot disks
+    * emulator guesses file name for requested disk and insert it
+    * override guessing of file names by assigning disks in "Disk Swapper"
+
 ## 1.0.9
 * runAhead
 * add faster scanline renderer (optional)

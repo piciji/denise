@@ -39,6 +39,7 @@ struct DiskFinder {
     auto getPosIdentLetter( unsigned pos ) -> std::string {
         
         switch (pos) {
+            case 0: return "boot";
             case 1: return "a";
             case 2: return "b";
             case 3: return "c";
@@ -54,7 +55,8 @@ struct DiskFinder {
             case 13: return "m";
             case 14: return "n";
             case 15: return "o";
-        } 
+        }         
+        
         return "";
     }
     
@@ -95,7 +97,8 @@ struct DiskFinder {
         unsigned curOccurrences = 0;
         std::string useFile = "";
 		std::string useFileAlt = "";
-				
+        std::string useFileBySize = "";
+        
 		auto splittedSuffix = GUIKIT::String::split( suffix, '.' );
 		// use last suffix part only, in case og .1.D64
 		std::string tempSuffix = splittedSuffix[ splittedSuffix.size() - 1 ];				
@@ -113,17 +116,30 @@ struct DiskFinder {
                 continue;		 
             
             occurrences = 0;
-			occurrencesAlt = 0;			
-			
+			occurrencesAlt = 0;
+            			
             for(auto& file : list) {
 				
 				if (!GUIKIT::String::foundSubStr( file, "." + tempSuffix ))
 					continue;
 				
 				auto splitted = GUIKIT::String::split( file, '.' );
-				
-				std::string tempFile = splitted[0];
+				GUIKIT::Vector::eraseVectorPos( splitted, splitted.size() - 1 );
                 
+                std::string tempFile = "";
+                
+                for(auto& split : splitted) {
+                    if (split.size() > 2)
+                        tempFile += split;
+                }
+                
+                if (tempFile == "")
+                    continue;
+                
+                if (file.size() > useFileBySize.size()) {
+                    useFileBySize = file;
+                }
+                                    
                 GUIKIT::String::toLowerCase( tempFile );																
                 
                 curOccurrences = GUIKIT::String::findOccurencesOf( tempFile, posIdentDigit );
@@ -140,19 +156,21 @@ struct DiskFinder {
 						useFile = "";
 				}
 				
-				curOccurrences = GUIKIT::String::findOccurencesOf( tempFile, posIdentLetter );
-                 
-				if (curOccurrences > occurrencesAlt) {
-                    useFileAlt = file;
-                    occurrencesAlt = curOccurrences;
-					
-                } else if (curOccurrences == occurrencesAlt) {
-					// "boot" or "crack" have a longer file name length
-					if (curOccurrences && (useFileAlt.size() > file.size()) )
-						useFileAlt = file;
-					else if (useFileAlt.size() == file.size())
-						useFileAlt = "";
-				}
+                if (posIdentLetter != "") {
+                    curOccurrences = GUIKIT::String::findOccurencesOf( tempFile, posIdentLetter );
+
+                    if (curOccurrences > occurrencesAlt) {
+                        useFileAlt = file;
+                        occurrencesAlt = curOccurrences;
+
+                    } else if (curOccurrences == occurrencesAlt) {
+                        // "boot" or "crack" have a longer file name length
+                        if (curOccurrences && (useFileAlt.size() > file.size()) )
+                            useFileAlt = file;
+                        else if (useFileAlt.size() == file.size())
+                            useFileAlt = "";
+                    }
+                }
             }
 			
 			if (useFile != "")
@@ -161,6 +179,9 @@ struct DiskFinder {
 			else if (useFileAlt != "")
 				return useFileAlt;
 			
+            else if (diskPos == 0)
+                return useFileBySize;
+            
 			break;
         }
         
@@ -216,8 +237,8 @@ struct DiskFinder {
         if (!digitMatch)
             return "";
 
-        if ( (digitMatch == 1) && (last == '0') )
-            return temp + std::to_string( diskPos - 1 ) + "." + suffix;
+        //if ( (digitMatch == 1) && (last == '0') )
+          //  return temp + std::to_string( diskPos - 1 ) + "." + suffix;
             
         return temp + std::to_string( diskPos ) + "." + suffix;
     }

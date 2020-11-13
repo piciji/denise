@@ -22,21 +22,21 @@ auto InputManager::setHotkeys() -> void {
     hotkeys.push_back( {Hotkey::Id::AudioRecord, "audio record"} );	
     
     hotkeys.push_back( {Hotkey::Id::FloppyAccess, "select_disk_drive"} );
-    hotkeys.push_back( {Hotkey::Id::DiskSwap0, "Disk_swapper_call1"} );
-    hotkeys.push_back( {Hotkey::Id::DiskSwap1, "Disk_swapper_call2"} );
-    hotkeys.push_back( {Hotkey::Id::DiskSwap2, "Disk_swapper_call3"} );
-    hotkeys.push_back( {Hotkey::Id::DiskSwap3, "Disk_swapper_call4"} );
-    hotkeys.push_back( {Hotkey::Id::DiskSwap4, "Disk_swapper_call5"} );
-    hotkeys.push_back( {Hotkey::Id::DiskSwap5, "Disk_swapper_call6"} );
-    hotkeys.push_back( {Hotkey::Id::DiskSwap6, "Disk_swapper_call7"} );
-    hotkeys.push_back( {Hotkey::Id::DiskSwap7, "Disk_swapper_call8"} );
-    hotkeys.push_back( {Hotkey::Id::DiskSwap8, "Disk_swapper_call9"} );
-    hotkeys.push_back( {Hotkey::Id::DiskSwap9, "Disk_swapper_call10"} );
-    hotkeys.push_back( {Hotkey::Id::DiskSwap10, "Disk_swapper_call11"} );
-    hotkeys.push_back( {Hotkey::Id::DiskSwap11, "Disk_swapper_call12"} );
-    hotkeys.push_back( {Hotkey::Id::DiskSwap12, "Disk_swapper_call13"} );
-    hotkeys.push_back( {Hotkey::Id::DiskSwap13, "Disk_swapper_call14"} );
-    hotkeys.push_back( {Hotkey::Id::DiskSwap14, "Disk_swapper_call15"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwap0, "Disk_swapper_call0"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwap1, "Disk_swapper_call1"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwap2, "Disk_swapper_call2"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwap3, "Disk_swapper_call3"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwap4, "Disk_swapper_call4"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwap5, "Disk_swapper_call5"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwap6, "Disk_swapper_call6"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwap7, "Disk_swapper_call7"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwap8, "Disk_swapper_call8"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwap9, "Disk_swapper_call9"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwap10, "Disk_swapper_call10"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwap11, "Disk_swapper_call11"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwap12, "Disk_swapper_call12"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwap13, "Disk_swapper_call13"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwap14, "Disk_swapper_call14"} );
 }
 
 auto InputManager::setCustomHotkeys() -> void {
@@ -383,7 +383,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
                 
                 DiskFinder diskFinder( srcSetting->path );
                 
-                auto result = diskFinder.findNext( swapPos + 1 );
+                auto result = diskFinder.findNext( swapPos );
 
                 if (result != "") {
                     fSetting->file = result;

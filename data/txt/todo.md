@@ -64,7 +64,6 @@
 * UI switch to invert RAM init pattern
 * set "integer scaling" multiplicator without sizing application window OR recalculate while resizing (never show black border)
 * PNG overlay for 16:9 fullscreen
-* allow input if there is no focus
 * save/load additional settings files in App folder (mostly for per game key maps)
 * add Depixelizing technic (http://johanneskopf.de/publications/pixelart/index.html)
 * mount OS folder as D64
