@@ -12,7 +12,7 @@
 * nice performance improvement
 * load follow-up disks via hotkey
     * map hotkeys for disk 1, 2, 3, ...
-    * map disk 0 for boot disks
+    * map disk 0 for reinserting boot disk
     * emulator guesses file name for requested disk and insert it
     * override guessing of file names by assigning disks in "Disk Swapper"
 
