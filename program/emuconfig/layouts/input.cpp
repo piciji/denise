@@ -217,6 +217,19 @@ InputLayout::InputLayout(TabWindow* tabWindow) {
 		stopCapture();
 		update();	
 	};
+
+    assigner.overwriteRadio.onActivate = [this]() {
+        _settings->set<unsigned>("input_assigner", 1);
+    };
+
+    assigner.appendRadio.onActivate = [this]() {
+        _settings->set<unsigned>("input_assigner", 0);
+    };
+
+    if (_settings->get<unsigned>("input_assigner", 1) == 1)
+        assigner.overwriteRadio.setChecked();
+    else
+        assigner.appendRadio.setChecked();
     
     updateLayout();
 }
@@ -536,7 +549,7 @@ auto InputLayout::mapSelected( bool alternate ) -> void {
 
     captureTimer.setEnabled();
     pollTimer.setEnabled();
-    bool overwriteMode = assigner.overwriteRadio.checked();
+    bool overwriteMode = _settings->get<unsigned>("input_assigner", 1) == 1;
 
     pollTimer.onFinished = [&, mapping, selection, overwriteMode]() {
         if (InputManager::capture(overwriteMode)) {

@@ -66,6 +66,19 @@ InputLayout::InputLayout() {
     
 		loadInputList();
     };
+    
+    assigner.overwriteRadio.onActivate = [this]() {
+        globalSettings->set<unsigned>("input_assigner", 1);
+    };
+    
+    assigner.appendRadio.onActivate = [this]() {
+        globalSettings->set<unsigned>("input_assigner", 0);
+    };
+
+    if (globalSettings->get<unsigned>("input_assigner", 1) == 1)
+        assigner.overwriteRadio.setChecked();
+    else
+        assigner.appendRadio.setChecked( );
 
     control.erase.onActivate = [this]() {   
         eraseSelected( );
@@ -234,8 +247,8 @@ auto InputLayout::mapSelected( bool alternate ) -> void {
     InputManager::capture(mapping);
 
     captureTimer.setEnabled();
-    pollTimer.setEnabled();
-    bool overwriteMode = assigner.overwriteRadio.checked();
+    pollTimer.setEnabled();    
+    bool overwriteMode = globalSettings->get<unsigned>("input_assigner", 1) == 1;
 
     pollTimer.onFinished = [&, mapping, selection, overwriteMode]() {
         if (InputManager::capture(overwriteMode)) {
