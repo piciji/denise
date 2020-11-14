@@ -306,7 +306,7 @@ auto InputManager::updateMappingsInUse() -> void {
     }
     
     sort();
-    priorizeConnectedDevicesOverKeyboard();
+    //priorizeConnectedDevicesOverKeyboard();
 }
 
 auto InputManager::sort() -> void {
