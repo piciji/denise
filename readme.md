@@ -7,9 +7,9 @@
 
 # changelog
 
-## 1.0.9.1 (not yet released)
+## 1.0.9.1
 * fix TAPE emulation (broken in 1.0.9)
-* huge performance improvement
+* nice performance improvement
 * load follow-up disks via hotkey
     * map hotkeys for disk 1, 2, 3, ...
     * map disk 0 for boot disks
