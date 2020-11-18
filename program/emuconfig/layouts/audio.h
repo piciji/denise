@@ -9,4 +9,6 @@ struct AudioLayout : GUIKIT::VerticalLayout {
     AudioLayout(TabWindow* tabWindow);
     
     auto translate() -> void;
+    
+    auto loadSettings() -> void;
 };

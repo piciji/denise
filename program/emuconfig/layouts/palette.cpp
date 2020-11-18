@@ -411,3 +411,26 @@ auto PaletteLayout::markSelectedColor( PaletteColorLayout* selectColorLayout ) -
 			colorLayout->color.setFont( GUIKIT::Font::system() );
 	}
 }
+
+auto PaletteLayout::loadSettings() -> void {
+
+    auto usedPaletteId = _settings->get<unsigned>( "palette", 0 );
+    
+    unsigned selected = 0;
+    unsigned i = 0;
+    
+    for ( auto& palette : emulator->palettes ) {
+        
+        if (palette.id == usedPaletteId)
+            selected = i;            
+        
+        i++;
+    }
+    
+    listView.setSelection( selected );
+    listView.setSelected();
+        
+    auto& palette = getSelectedPalette();
+
+    this->setPalette(palette); 
+}

@@ -77,5 +77,7 @@ struct PaletteLayout : GUIKIT::VerticalLayout {
     
     auto markSelectedColor( PaletteColorLayout* selectColorLayout ) -> void;
     
+    auto loadSettings() -> void;
+    
     PaletteLayout(TabWindow* tabWindow);
 };

@@ -56,5 +56,6 @@ struct StatesLayout : GUIKIT::VerticalLayout {
     auto translate() -> void;
     auto updateSaveIdent( std::string fileName ) -> void;
     auto splitFile( std::string file, unsigned& pos ) -> std::string;
+    auto loadSettings() -> void;
     StatesLayout(TabWindow* tabWindow);    
 };

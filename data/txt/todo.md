@@ -20,7 +20,6 @@
 * floppy
     * 1541 track change delay time
     * non standard floppy models: 1571, 1581
-    * p64 emulation
 * tape port   
     * tape content listing in user interface, like the 1541
     * click entries and load them without fast-forward to counter position before
@@ -65,7 +64,6 @@
 * set "integer scaling" multiplicator without sizing application window OR recalculate while resizing (never show black border)
 * PNG overlay for 16:9 fullscreen
 * save/load additional settings files in App folder (mostly for per game key maps)
-* add Depixelizing technic (http://johanneskopf.de/publications/pixelart/index.html)
 * mount OS folder as D64
 * load savestates per drag'n'drop or within File Explorer
 * support c64 command line start of disk listings

@@ -141,28 +141,50 @@ auto Program::init() -> void {
     
     for( auto emulator : emulators ) {
         
-        for( auto& connector : emulator->connectors )            
-            emulator->connect( &connector, getDevice( emulator, &connector ) );       
-
-		for (auto& model : emulator->models)
-			emulator->setModel( model.id, getSettings(emulator)->get<int>( _underscore(model.name), model.defaultValue, model.range) );				
+//        for( auto& connector : emulator->connectors )            
+//            emulator->connect( &connector, getDevice( emulator, &connector ) );       
+//
+//		for (auto& model : emulator->models)
+//			emulator->setModel( model.id, getSettings(emulator)->get<int>( _underscore(model.name), model.defaultValue, model.range) );				
+//        
+//		updateCrop( emulator );
+//        
+//        setPalette( emulator );
+//        
+//        setExpansionSelection( emulator );
+//        
+//		setDriveSpeedAndWobble( emulator );
+//		
+//        setAccuracy( emulator );
+//        
+//        setRunAhead( emulator );
         
-		updateCrop( emulator );
-        
-        setPalette( emulator );
-        
-        setExpansionSelection( emulator );
-        
-		setDriveSpeedAndWobble( emulator );
-		
-        setAccuracy( emulator );
-        
-        setRunAhead( emulator );
+        initEmulator( emulator );
     }   
     	
 	logger->setSavePath( GUIKIT::System::getUserDataFolder(appFolder()) );
         
     isRunning = isPause = false;
+}
+
+auto Program::initEmulator( Emulator::Interface* emulator ) -> void {
+    for (auto& connector : emulator->connectors)
+        emulator->connect(&connector, getDevice(emulator, &connector));
+    
+    for (auto& model : emulator->models)
+        emulator->setModel( model.id, getSettings(emulator)->get<int>( _underscore(model.name), model.defaultValue, model.range) );
+    
+    updateCrop( emulator );
+
+    setPalette( emulator );
+    
+    setExpansionSelection( emulator );
+    
+    setDriveSpeedAndWobble( emulator );
+    
+    setAccuracy( emulator );
+    
+    setRunAhead( emulator );
 }
 
 auto Program::setDriveSpeedAndWobble(Emulator::Interface* emulator) -> void {
@@ -549,3 +571,4 @@ auto Program::getEmulator( std::string ident ) -> Emulator::Interface* {
     
     return nullptr;
 }
+

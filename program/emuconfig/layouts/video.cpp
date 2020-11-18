@@ -418,21 +418,22 @@ base( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) )
         vicIIGlitch.cas.active.onToggle();
     };        
     
-    VideoManager::CrtMode crtMode = (VideoManager::CrtMode)_settings->get<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::None, {0u, 2u});
-    
-    if (crtMode == VideoManager::CrtMode::Gpu)
-        base.mode.crtGpu.setChecked();
-    else if (crtMode == VideoManager::CrtMode::Cpu)
-        base.mode.crtCpu.setChecked();
-    else
-        base.mode.crtNone.setChecked();    
-    
-    if (dynamic_cast<LIBC64::Interface*>(emulator) && _settings->get<bool>( "video_spectrum", true) )
-        base.mode.spectrum.setChecked();
-    else
-        base.mode.palette.setChecked();
-        
-    updatePresets();
+//    VideoManager::CrtMode crtMode = (VideoManager::CrtMode)_settings->get<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::None, {0u, 2u});
+//    
+//    if (crtMode == VideoManager::CrtMode::Gpu)
+//        base.mode.crtGpu.setChecked();
+//    else if (crtMode == VideoManager::CrtMode::Cpu)
+//        base.mode.crtCpu.setChecked();
+//    else
+//        base.mode.crtNone.setChecked();    
+//    
+//    if (dynamic_cast<LIBC64::Interface*>(emulator) && _settings->get<bool>( "video_spectrum", true) )
+//        base.mode.spectrum.setChecked();
+//    else
+//        base.mode.palette.setChecked();
+//        
+//    updatePresets();
+    loadSettings();
 }
 
 template<typename T> auto VideoLayout::setSliderAction( SliderLayout* layout, std::string baseIdent, std::function<void ( T value )> callBack, std::function<T ( unsigned position )> callTransfer ) -> void {
@@ -772,4 +773,22 @@ auto VideoLayout::sliderIdent() -> std::string {
 		ident += "_crtgpu";
     		
 	return ident;
+}
+
+auto VideoLayout::loadSettings() -> void {
+    VideoManager::CrtMode crtMode = (VideoManager::CrtMode)_settings->get<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::None, {0u, 2u});
+    
+    if (crtMode == VideoManager::CrtMode::Gpu)
+        base.mode.crtGpu.setChecked();
+    else if (crtMode == VideoManager::CrtMode::Cpu)
+        base.mode.crtCpu.setChecked();
+    else
+        base.mode.crtNone.setChecked();    
+    
+    if (dynamic_cast<LIBC64::Interface*>(emulator) && _settings->get<bool>( "video_spectrum", true) )
+        base.mode.spectrum.setChecked();
+    else
+        base.mode.palette.setChecked();
+        
+    updatePresets();
 }

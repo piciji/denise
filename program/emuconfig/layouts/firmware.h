@@ -46,6 +46,7 @@ struct FirmwareLayout : GUIKIT::VerticalLayout {
     auto drop( std::string path ) -> void;
 	auto updateVisibility() -> void;
     auto hotSwap( unsigned storeLevel ) -> void;
+    auto loadSettings() -> void;
     
     FirmwareLayout( TabWindow* tabWindow );
 };

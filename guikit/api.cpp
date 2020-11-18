@@ -601,6 +601,21 @@ auto ComboButton::setSelection(unsigned selection) -> void {
     p.setSelection(selection);
 }
 
+auto ComboButton::setSelectionByUserId(int userId) -> void {
+    if (_A::dummy) return;
+    unsigned selection = 0;
+    
+    for( auto& _id : state.userData) {        
+        if (_id == userId)
+            break;
+        
+        selection++;
+    }
+    
+    if(selection >= state.rows.size()) return;
+    p.setSelection(selection);
+}
+
 auto ComboButton::setText(unsigned selection, const std::string& text) -> void {
     if (_A::dummy) return;
     if(selection >= state.rows.size()) return;

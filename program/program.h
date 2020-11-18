@@ -70,6 +70,7 @@ struct Program : Emulator::Interface::Bind {
     auto convertSettings() -> void;
     auto rememberNotToSaveSettings() -> void;
 	auto loadPlaceholder() -> void;
+    auto initEmulator( Emulator::Interface* emulator ) -> void;
 
     auto init() -> void;
     auto addEmulators() -> void;

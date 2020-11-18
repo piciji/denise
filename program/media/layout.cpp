@@ -265,22 +265,25 @@ auto MediaGroupLayout::build() -> void {
         block->layout = this;
 
         auto& header = block->header;
-        auto& selector = block->selector;
+      //  auto& selector = block->selector;
         
         if (!media.memoryDump && mediaGroup->selected)
             radioGroup.push_back( &header.inUse );           
                 
         if (mediaGroup->expansion) {
-            for(auto& jumper : mediaGroup->expansion->jumpers) {
-                
-                auto jumperBox = selector.jumpers[jumper.id];
-                
-                std::string saveIdent = media.name + "_jumper_" + jumper.name;
-                
-                bool state = mediaWindow->settings->get<bool>( _underscore(saveIdent), false );
-                
-                jumperBox->setChecked( state );                                
-            }
+            
+            setJumperSettings( &media );
+            
+//            for(auto& jumper : mediaGroup->expansion->jumpers) {
+//                
+//                auto jumperBox = selector.jumpers[jumper.id];
+//                
+//                std::string saveIdent = media.name + "_jumper_" + jumper.name;
+//                
+//                bool state = mediaWindow->settings->get<bool>( _underscore(saveIdent), false );
+//                
+//                jumperBox->setChecked( state );                                
+//            }
         }
     }
     
@@ -313,10 +316,51 @@ auto MediaGroupLayout::build() -> void {
 	}
 }
 
+auto MediaGroupLayout::setJumperSettings(Emulator::Interface::Media* media) -> void {
+            
+    auto block = getBlock( media );
+    
+    auto& selector = block->selector;
+    
+    for (auto& jumper : mediaGroup->expansion->jumpers) {
+        
+        auto jumperBox = selector.jumpers[jumper.id];
+
+        std::string saveIdent = media->name + "_jumper_" + jumper.name;
+
+        bool state = mediaWindow->settings->get<bool>(_underscore(saveIdent), false);
+
+        jumperBox->setChecked(state);
+    }
+}
+
 auto MediaGroupLayout::applyFont(unsigned fontSize) -> void {
 
     if (mediaWindow->useCustomFont)
         listings.setFont("C64 Pro, " + std::to_string(fontSize), true);
     else
         listings.setFont(GUIKIT::Font::system(fontSize));     
+}
+
+auto MediaGroupLayout::loadSettings() -> void {
+    
+    if (mediaGroup->expansion) {
+
+        for (auto& media : mediaGroup->media) {
+            
+            auto block = getBlock( &media );
+            
+            for (auto& pcb : mediaGroup->expansion->pcbs) {
+                
+                if (media.pcbLayout && (media.pcbLayout == &pcb) ) {
+                    block->selector.combo.setSelectionByUserId( pcb.id );
+                }
+            }
+            
+            setJumperSettings( &media );
+                              
+            if (mediaGroup->selected && (mediaGroup->selected == &media))
+                 block->header.inUse.setChecked();       
+        }        
+    }
 }

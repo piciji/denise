@@ -206,18 +206,22 @@ auto Program::saveSettings() -> void {
     for (auto settings : settingsStorage) {
 
         auto guid = settings->getGuid();
-
-        std::string ident = "global_";
+        
+        std::string path = "";
         
         if (guid) {
             Emulator::Interface* emulator = (Emulator::Interface*)guid;
+                                   
+            path = settings->get<std::string>("custom_settings", "");
+            if (path == "")
+                path = settingsFile( emulator->ident + "_" );
             
-            ident = emulator->ident + "_";
-        }
+        } else
+            path = settingsFile( "global_" );
         
-        if (!settings->save( settingsFile( ident ))) {
+        if (!settings->save( path )) {
             if (!errorShown)
-                view->message->warning(trans->get("cfg_not_save",{{"%path%", settingsFile( ident )}}));
+                view->message->warning(trans->get("cfg_not_save",{{"%path%", path}}));
             errorShown = true;
         }
     }

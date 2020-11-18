@@ -32,6 +32,7 @@ struct SwapperLayout : GUIKIT::VerticalLayout {
 	auto getSetting( unsigned pos ) -> FileSetting*;
     auto preselectPath( ) -> std::string;
 	auto savePath( std::string path ) -> void;
+    auto loadSettings() -> void;
     
     SwapperLayout(MediaWindow* mediaWindow);
 };
@@ -48,7 +49,8 @@ struct PathsLayout : GUIKIT::FramedVerticalLayout {
 
         Block( Emulator::Interface::MediaGroup* mediaGroup );
     };
-    std::vector<Block*> blocks; 
+    std::vector<Block*> blocks;
+    auto getBlock(Emulator::Interface::MediaGroup* mediaGroup) -> Block*;
     
     PathsLayout();
 };
@@ -98,6 +100,8 @@ struct MediaGroupLayout : GUIKIT::FramedVerticalLayout {
     auto showOnlyConnectedDevices() -> bool;
     auto getBlock(Emulator::Interface::Media* media) -> Block*;
     auto applyFont(unsigned fontSize) -> void;
+    auto setJumperSettings(Emulator::Interface::Media* media) -> void;
+    auto loadSettings() -> void;
 
     MediaGroupLayout( Emulator::Interface::MediaGroup* mediaGroup, MediaWindow* mediaWindow );
 };
@@ -190,8 +194,8 @@ struct MediaWindow : public GUIKIT::Window {
     GUIKIT::HorizontalLayout cartWrapper;
     GUIKIT::FramedVerticalLayout cartSelectorFrame;
     GUIKIT::ListView cartList;
-    GUIKIT::Button insertCart;
-    GUIKIT::Button removeCart;
+    GUIKIT::Button bootCart;
+    GUIKIT::Button deactivateCart;
     std::vector<MediaGroupLayout*> cartLayouts;
     
     PathsLayout pathsLayout;
@@ -241,6 +245,7 @@ struct MediaWindow : public GUIKIT::Window {
     auto updateListingFont( unsigned fontSize ) -> void;
     auto updateListings( ) -> void;
     auto applyPreviewFont(unsigned fontSize) -> void;
+    auto loadSettings() -> void;
 
     MediaWindow(Emulator::Interface* emulator);
 };

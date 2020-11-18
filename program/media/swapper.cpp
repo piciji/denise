@@ -109,10 +109,21 @@ SwapperLayout::SwapperLayout( MediaWindow* mediaWindow ) {
         fSetting->setWriteProtect( state );        
 	};
 	
-	for(unsigned i = 0; i < 15; i++) {
-		auto fSetting = getSetting( i );		
-		listView.append({std::to_string(i), fSetting->path, fSetting->file });
-	}
+//	for(unsigned i = 0; i < 15; i++) {
+//		auto fSetting = getSetting( i );		
+//		listView.append({std::to_string(i), fSetting->path, fSetting->file });
+//	}
+    
+    loadSettings();
+}
+
+auto SwapperLayout::loadSettings() -> void {
+    listView.reset();
+    
+    for (unsigned i = 0; i < 15; i++) {
+        auto fSetting = getSetting(i);
+        listView.append({std::to_string(i), fSetting->path, fSetting->file});
+    }
 }
 
 auto SwapperLayout::translate() -> void {

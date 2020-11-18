@@ -26,7 +26,7 @@ FirmwareLayout::FirmwareLayout(TabWindow* tabWindow) {
     this->emulator = tabWindow->emulator;    
     this->manager = FirmwareManager::getInstance(this->emulator);
     
-    auto firmwareInUse = _settings->get<unsigned>( "use_firmware", 0, {0, manager->maxSets} );
+    //auto firmwareInUse = _settings->get<unsigned>( "use_firmware", 0, {0, manager->maxSets} );
     
     append(customSelectorLayout, {~0u, 0u}, 10);   
     append(switchLayout, {~0u, ~0u});
@@ -66,8 +66,8 @@ FirmwareLayout::FirmwareLayout(TabWindow* tabWindow) {
 
                 auto fSetting = manager->getSetting( &firmware, i );
                 block->top.fileLabelTitle.setText(trans->get(firmware.name,{}, true));
-                block->top.fileLabel.setText(fSetting->file);
-                block->bottom.edit.setText(fSetting->path);
+           //     block->top.fileLabel.setText(fSetting->file);
+            //    block->bottom.edit.setText(fSetting->path);
 
                 block->bottom.eject.onActivate = [this, block, container, fSetting]() {
                     auto& firmware = emulator->firmwares[block->typeId];
@@ -112,11 +112,12 @@ FirmwareLayout::FirmwareLayout(TabWindow* tabWindow) {
 		  
     GUIKIT::RadioBox::setGroup( selectorBoxes ); 
     
-    if (selectorBoxes.size() > firmwareInUse) {
-        selectorBoxes[firmwareInUse]->setChecked();
-	}
+//    if (selectorBoxes.size() > firmwareInUse) {
+//        selectorBoxes[firmwareInUse]->setChecked();
+//	}
 	
-	updateVisibility();
+	//updateVisibility();
+    loadSettings();
         
     setMargin( 10 );    
 }
@@ -244,4 +245,25 @@ auto FirmwareLayout::drop( std::string path ) -> void {
             }
         }
     }
+}
+
+auto FirmwareLayout::loadSettings() -> void {
+    
+    auto firmwareInUse = _settings->get<unsigned>( "use_firmware", 0, {0, manager->maxSets} );
+
+    for (unsigned i = 1; i <= manager->maxSets; i++) {
+        unsigned j = 0;
+        for (auto& firmware : emulator->firmwares) {
+            auto fSetting = manager->getSetting( &firmware, i );
+            fSetting->update();
+            auto block = ((FirmwareContainer*)containers[i])->blocks[j++];
+            block->top.fileLabel.setText( fSetting->file );
+            block->bottom.edit.setText( fSetting->path );
+        }
+    }
+    
+    if (selectorBoxes.size() > firmwareInUse)
+        selectorBoxes[firmwareInUse]->setChecked();    
+    
+    updateVisibility();
 }

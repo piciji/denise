@@ -102,33 +102,34 @@ cropBottom("px")
 		program->updateCrop( emulator );
 	};
     	
-	auto valLeft = _settings->get<unsigned>( "crop_left", 0, {0u,100u});
-    cropLeft.slider.setPosition(valLeft);
-    cropLeft.value.setText( std::to_string( valLeft ) + " px" );
+//	auto valLeft = _settings->get<unsigned>( "crop_left", 0, {0u,100u});
+//    cropLeft.slider.setPosition(valLeft);
+//    cropLeft.value.setText( std::to_string( valLeft ) + " px" );
+//	
+//	auto valRight = _settings->get<unsigned>( "crop_right", 0, {0u,100u});
+//    cropRight.slider.setPosition(valRight);
+//    cropRight.value.setText( std::to_string( valRight ) + " px" );
+//	
+//	auto valTop = _settings->get<unsigned>( "crop_top", 0, {0u,100u});
+//    cropTop.slider.setPosition(valTop);
+//    cropTop.value.setText( std::to_string( valTop ) + " px" );
+//	
+//	auto valBottom = _settings->get<unsigned>( "crop_bottom", 0, {0u,100u});
+//    cropBottom.slider.setPosition(valBottom);
+//    cropBottom.value.setText( std::to_string( valBottom ) + " px" );
+//
+//	auto valCropType = _settings->get<unsigned>( "crop_type", (unsigned)CropType::Monitor, {0u,4u});
+//	if (valCropType == 1) cropMonitor.setChecked();
+//	else if (valCropType == 2) cropAuto.setChecked();
+//	else if (valCropType == 3) cropSemiAuto.setChecked();
+//	else if (valCropType == 4) cropFree.setChecked();
+//	else cropOff.setChecked();
+//	
+//	auto valCropAC = _settings->get<bool>("crop_aspect_correct", 0);
+//	cropAspectCorrect.setChecked( valCropAC );
 	
-	auto valRight = _settings->get<unsigned>( "crop_right", 0, {0u,100u});
-    cropRight.slider.setPosition(valRight);
-    cropRight.value.setText( std::to_string( valRight ) + " px" );
-	
-	auto valTop = _settings->get<unsigned>( "crop_top", 0, {0u,100u});
-    cropTop.slider.setPosition(valTop);
-    cropTop.value.setText( std::to_string( valTop ) + " px" );
-	
-	auto valBottom = _settings->get<unsigned>( "crop_bottom", 0, {0u,100u});
-    cropBottom.slider.setPosition(valBottom);
-    cropBottom.value.setText( std::to_string( valBottom ) + " px" );
-
-	auto valCropType = _settings->get<unsigned>( "crop_type", (unsigned)CropType::Monitor, {0u,4u});
-	if (valCropType == 1) cropMonitor.setChecked();
-	else if (valCropType == 2) cropAuto.setChecked();
-	else if (valCropType == 3) cropSemiAuto.setChecked();
-	else if (valCropType == 4) cropFree.setChecked();
-	else cropOff.setChecked();
-	
-	auto valCropAC = _settings->get<bool>("crop_aspect_correct", 0);
-	cropAspectCorrect.setChecked( valCropAC );
-	
-	updateVisibillity();
+//	updateVisibillity();
+    loadSettings();
 }
 
 auto BorderLayout::updateVisibillity() -> void {
@@ -159,4 +160,36 @@ auto BorderLayout::translate() -> void {
 	cropLayout.setText( trans->get("crop border") );
     
     SliderLayout::scale({&cropLeft, &cropRight, &cropTop, &cropBottom}, "100 px");
+}
+
+auto BorderLayout::loadSettings() -> void {
+    typedef Emulator::Interface::CropType CropType;
+    
+    auto valLeft = _settings->get<unsigned>("crop_left", 0,{0u, 100u});
+    cropLeft.slider.setPosition(valLeft);
+    cropLeft.value.setText(std::to_string(valLeft) + " px");
+
+    auto valRight = _settings->get<unsigned>("crop_right", 0,{0u, 100u});
+    cropRight.slider.setPosition(valRight);
+    cropRight.value.setText(std::to_string(valRight) + " px");
+
+    auto valTop = _settings->get<unsigned>("crop_top", 0,{0u, 100u});
+    cropTop.slider.setPosition(valTop);
+    cropTop.value.setText(std::to_string(valTop) + " px");
+
+    auto valBottom = _settings->get<unsigned>("crop_bottom", 0,{0u, 100u});
+    cropBottom.slider.setPosition(valBottom);
+    cropBottom.value.setText(std::to_string(valBottom) + " px");
+
+    auto valCropType = _settings->get<unsigned>("crop_type", (unsigned) CropType::Monitor,{0u, 4u});
+    if (valCropType == 1) cropMonitor.setChecked();
+    else if (valCropType == 2) cropAuto.setChecked();
+    else if (valCropType == 3) cropSemiAuto.setChecked();
+    else if (valCropType == 4) cropFree.setChecked();
+    else cropOff.setChecked();
+
+    auto valCropAC = _settings->get<bool>("crop_aspect_correct", 0);
+    cropAspectCorrect.setChecked(valCropAC);
+    
+    updateVisibillity();
 }

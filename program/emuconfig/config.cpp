@@ -36,6 +36,7 @@ namespace Fonts {
 	
 #include "layouts/input.cpp"
 #include "layouts/system.cpp"
+#include "layouts/configurations.cpp"
 #include "layouts/video.cpp"
 #include "layouts/audio.cpp"
 #include "layouts/border.cpp"
@@ -70,6 +71,7 @@ auto TabWindow::build() -> void {
 
     joystickImage.loadPng((uint8_t*)Icons::joystick, sizeof(Icons::joystick));
     systemImage.loadPng((uint8_t*)Icons::system, sizeof(Icons::system));
+    configurationsImage.loadPng((uint8_t*)Icons::system, sizeof(Icons::system));
     memoryImage.loadPng((uint8_t*)Icons::memory, sizeof(Icons::memory));
     cropImage.loadPng((uint8_t*)Icons::crop, sizeof(Icons::crop));
     displayImage.loadPng((uint8_t*)Icons::display, sizeof(Icons::display));
@@ -79,6 +81,7 @@ auto TabWindow::build() -> void {
 
     inputLayout = new InputLayout( this );
     systemLayout = new SystemLayout( this );
+    configurationsLayout = new ConfigurationsLayout( this );
     firmwareLayout = new FirmwareLayout( this );
     videoLayout = new VideoLayout( this );
     
@@ -91,6 +94,7 @@ auto TabWindow::build() -> void {
     miscLayout = new MiscLayout( this );
 
     tab.appendHeader("", systemImage);
+    tab.appendHeader("", configurationsImage);
 	tab.appendHeader("", joystickImage); 
 	tab.appendHeader("", scriptImage); 
 	tab.appendHeader("", displayImage);
@@ -103,6 +107,7 @@ auto TabWindow::build() -> void {
     tab.appendHeader("", nullptr);
                                             
     tab.setLayout(Layout::System, *systemLayout, {~0u, ~0u} );
+    tab.setLayout(Layout::Configurations, *configurationsLayout, {~0u, ~0u} );
 	tab.setLayout(Layout::Control, *inputLayout, {~0u, ~0u} );
 	tab.setLayout(Layout::States, *statesLayout, {~0u, ~0u} );    
 	tab.setLayout(Layout::Presentation, *videoLayout, {~0u, ~0u} );
@@ -152,6 +157,7 @@ auto TabWindow::translate() -> void {
 
     inputLayout->translate();
     systemLayout->translate();
+    configurationsLayout->translate();
     firmwareLayout->translate();
     borderLayout->translate();
     videoLayout->translate();
@@ -166,6 +172,7 @@ auto TabWindow::translate() -> void {
 
     tab.setHeader(Layout::Control, trans->get("control"));
     tab.setHeader(Layout::System, trans->get("system"));
+    tab.setHeader(Layout::Configurations, trans->get("configurations"));
     tab.setHeader(Layout::Firmware, trans->get("firmware"));
     tab.setHeader(Layout::Border, trans->get("border"));
     tab.setHeader(Layout::Presentation, trans->get("presentation"));

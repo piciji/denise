@@ -65,9 +65,9 @@ StatesLayout::StatesLayout(TabWindow* tabWindow) {
         _settings->set<bool>( "auto_save_ident", fastSave.autoSaveIdent.checked());
     };
     
-    fastSave.autoSaveIdent.setChecked( _settings->get<bool>( "auto_save_ident", true) );
+    //fastSave.autoSaveIdent.setChecked( _settings->get<bool>( "auto_save_ident", true) );
     
-    _settings->set<bool>( "auto_save_ident", fastSave.autoSaveIdent.checked());
+    //_settings->set<bool>( "auto_save_ident", fastSave.autoSaveIdent.checked());
 	
 	directSave.load.onActivate = [this]() {
 		std::string filePath = GUIKIT::BrowserWindow()
@@ -150,7 +150,7 @@ StatesLayout::StatesLayout(TabWindow* tabWindow) {
 		}
 	};
 	
-	fastSave.top.edit.setText( _settings->get<std::string>( "save_ident", "") );
+	//fastSave.top.edit.setText( _settings->get<std::string>( "save_ident", "") );
 
     statePath.select.onActivate = [this]() {
         auto path = GUIKIT::BrowserWindow()
@@ -169,7 +169,9 @@ StatesLayout::StatesLayout(TabWindow* tabWindow) {
         statePath.edit.setText("");
     };
 
-    statePath.edit.setText(_settings->get<std::string>("states_folder", ""));
+    //statePath.edit.setText(_settings->get<std::string>("states_folder", ""));
+    
+    loadSettings();
 }
 
 auto StatesLayout::splitFile( std::string file, unsigned& pos ) -> std::string {
@@ -228,4 +230,11 @@ auto StatesLayout::updateSaveIdent( std::string fileName ) -> void {
         
     fastSave.top.edit.setText( fileName );
     fastSave.top.edit.onChange();
+}
+
+auto StatesLayout::loadSettings() -> void {
+    
+    fastSave.autoSaveIdent.setChecked( _settings->get<bool>( "auto_save_ident", true) );
+    fastSave.top.edit.setText( _settings->get<std::string>( "save_ident", "") );
+    statePath.edit.setText(_settings->get<std::string>("states_folder", ""));
 }

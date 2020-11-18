@@ -94,6 +94,7 @@ struct SystemLayout : GUIKIT::VerticalLayout {
     auto getSizeString( unsigned sizeInKb ) -> std::string;
     auto setExpansion( Emulator::Interface::Expansion* newExpansion ) -> void;
 	auto handleChangeDuringEmulation( GUIKIT::Widget* widget, std::string ident, unsigned defaultId ) -> bool;
+    auto loadSettings() -> void;
     
     SystemLayout( TabWindow* tabWindow );
 };

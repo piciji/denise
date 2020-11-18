@@ -94,13 +94,13 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) {
         _settings->set<bool>( "runahead_disable", runAheadLayout.options.disableOnPower.checked() );
     };
     
-    setRunAheadPerformance( _settings->get<bool>( "runahead_performance", false) );
+    //setRunAheadPerformance( _settings->get<bool>( "runahead_performance", false) );
     
-    runAheadLayout.options.disableOnPower.setChecked( _settings->get<bool>( "runahead_disable", true) );
+    //runAheadLayout.options.disableOnPower.setChecked( _settings->get<bool>( "runahead_disable", true) );
     
-    unsigned pos = _settings->get<unsigned>( "runahead", 0, {0u, 10u});
-    
-    setRunAhead( pos );
+//    unsigned pos = _settings->get<unsigned>( "runahead", 0, {0u, 10u});
+//    
+//    setRunAhead( pos );
     
     audioRecordLayout.duration.useTimeLimit.onToggle = [this]() {
         
@@ -135,7 +135,7 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) {
         _settings->set<std::string>( "audio_record_path", path );
     };
     
-    audioRecordLayout.location.path.setText( _settings->get<std::string>( "audio_record_path", "" ) );
+    //audioRecordLayout.location.path.setText( _settings->get<std::string>( "audio_record_path", "" ) );
     
     audioRecordLayout.duration.minutesSlider.slider.onChange = [this]() {
         
@@ -148,11 +148,11 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) {
         audioManager->record.setTimeLimit();
     };
     
-    unsigned value = _settings->get<unsigned>( "audio_record_minutes", 0, {0, 120} );
-    
-    audioRecordLayout.duration.minutesSlider.value.setText( std::to_string(value) );
-    
-    audioRecordLayout.duration.minutesSlider.slider.setPosition( value );                        
+//    unsigned value = _settings->get<unsigned>( "audio_record_minutes", 0, {0, 120} );
+//    
+//    audioRecordLayout.duration.minutesSlider.value.setText( std::to_string(value) );
+//    
+//    audioRecordLayout.duration.minutesSlider.slider.setPosition( value );                        
 
     audioRecordLayout.duration.secondsSlider.slider.onChange = [this]() {
 
@@ -165,13 +165,12 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) {
         audioManager->record.setTimeLimit();
     };
     
-    value = _settings->get<unsigned>( "audio_record_seconds", 0, {0, 59} );
-    
-    audioRecordLayout.duration.secondsSlider.value.setText( std::to_string(value) );
-    
-    audioRecordLayout.duration.secondsSlider.slider.setPosition( value );                        
-    
-    
+//    value = _settings->get<unsigned>( "audio_record_seconds", 0, {0, 59} );
+//    
+//    audioRecordLayout.duration.secondsSlider.value.setText( std::to_string(value) );
+//    
+//    audioRecordLayout.duration.secondsSlider.slider.setPosition( value );                        
+        
     audioRecordLayout.duration.record.onToggle = [this]() {
                 
         bool state = audioRecordLayout.duration.record.checked();                
@@ -190,6 +189,8 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) {
         
         audioRecordLayout.duration.record.setText( trans->get( state ? "Stop" : "Record" ) );        
     };
+    
+    loadSettings();
 }
 
 auto MiscLayout::toggleRecord() -> void {
@@ -240,4 +241,29 @@ auto MiscLayout::translate() -> void {
     audioRecordLayout.duration.minutesSlider.name.setText( trans->get("Minutes", {}, true) );
     audioRecordLayout.duration.secondsSlider.name.setText( trans->get("Seconds", {}, true) );
     audioRecordLayout.duration.record.setText( trans->get("Record") );
+}
+
+auto MiscLayout::loadSettings() -> void {
+    
+    setRunAheadPerformance( _settings->get<bool>( "runahead_performance", false) );
+    
+    runAheadLayout.options.disableOnPower.setChecked( _settings->get<bool>( "runahead_disable", true) );
+    
+    unsigned pos = _settings->get<unsigned>( "runahead", 0, {0u, 10u});
+    
+    setRunAhead( pos );
+    
+    audioRecordLayout.location.path.setText( _settings->get<std::string>( "audio_record_path", "" ) );
+    
+    unsigned value = _settings->get<unsigned>( "audio_record_minutes", 0, {0, 120} );
+    
+    audioRecordLayout.duration.minutesSlider.value.setText( std::to_string(value) );
+    
+    audioRecordLayout.duration.minutesSlider.slider.setPosition( value );
+    
+    value = _settings->get<unsigned>( "audio_record_seconds", 0, {0, 59} );
+    
+    audioRecordLayout.duration.secondsSlider.value.setText( std::to_string(value) );
+    
+    audioRecordLayout.duration.secondsSlider.slider.setPosition( value ); 
 }

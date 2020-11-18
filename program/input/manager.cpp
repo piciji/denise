@@ -151,8 +151,8 @@ auto InputManager::update() -> void {
 				
 				if ( value != 0) {
                     
-                    if (hid.disable)
-                        continue;                    
+//                    if (hid.disable)
+//                        continue;                    
                     
 					if (aSwitch && (mapping->adjustDigitalValue<true>( hid ) != 0) )
                         continue;					

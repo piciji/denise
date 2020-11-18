@@ -54,7 +54,7 @@ auto InputManager::fetch() -> void {
 	}
 	if(changed) {
 		hidDevices = curDevices;
-		bindHids();
+		bindHidsGlobal();
 		configView->inputLayout->loadInputList();	
 		for( auto emuConfigView : emuConfigViews )
 			emuConfigView->inputLayout->update();

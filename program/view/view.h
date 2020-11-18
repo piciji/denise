@@ -37,6 +37,7 @@ struct View : public GUIKIT::Window {
 	auto update() -> void;
     auto setConnectors() -> void;
     auto checkInputDevice( Emulator::Interface* emulator, Emulator::Interface::Connector* connector, Emulator::Interface::Device* device ) -> void;
+    auto updateDeviceSelection( Emulator::Interface* emulator ) -> void;
 	auto removeMenuTree( GUIKIT::Menu* menu = nullptr ) -> void;
 	auto showTapeMenu( bool show, Emulator::Interface::TapeMode mode = Emulator::Interface::TapeMode::Unpressed ) -> void;
     auto updateTapeIcons( Emulator::Interface::TapeMode mode = Emulator::Interface::TapeMode::Unpressed ) -> void;

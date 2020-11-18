@@ -390,6 +390,16 @@ auto View::checkInputDevice( Emulator::Interface* emulator, Emulator::Interface:
     }
 }
 
+auto View::updateDeviceSelection( Emulator::Interface* emulator ) -> void {
+    
+    for (auto& connector : emulator->connectors) {
+
+        auto selectedDevice = emulator->getConnectedDevice(&connector);
+
+        checkInputDevice(emulator, &connector, selectedDevice);
+    }
+}
+
 auto View::removeMenuTree( GUIKIT::Menu* menu ) -> void {		
 		
 	auto childs = menu->childs;

@@ -197,8 +197,8 @@ auto MediaWindow::build() -> void {
         cartList.setHeaderText( { "" } );
 		cartList.setHeaderVisible( false );        
         cartSelectorFrame.append( cartList, { GUIKIT::Font::scale(130), GUIKIT::Font::scale(200)}, 10 );
-        cartSelectorFrame.append( insertCart, {0u, 0u}, 10 );
-        cartSelectorFrame.append( removeCart, {0u, 0u} );
+        cartSelectorFrame.append( bootCart, {0u, 0u}, 10 );
+        cartSelectorFrame.append( deactivateCart, {0u, 0u} );
         cartSelectorFrame.setPadding(10);
         cartSelectorFrame.setFont( GUIKIT::Font::system("bold") );
         
@@ -562,7 +562,7 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
         };
     }
     
-    insertCart.onActivate = [this]() {
+    bootCart.onActivate = [this]() {
         
         unsigned selection = 0;
         
@@ -582,7 +582,7 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
         view->setFocused( 300 );                
     };
     
-    removeCart.onActivate = [this]() {        
+    deactivateCart.onActivate = [this]() {        
         
         EmuConfigView::TabWindow::getView(this->emulator)->systemLayout
             ->setExpansion( nullptr );
@@ -887,8 +887,8 @@ auto MediaWindow::translate() -> void {
     
     i = 0;
     cartSelectorFrame.setText( trans->get("cartridges") );   
-    insertCart.setText( trans->get("insert cartridge") );
-    removeCart.setText( trans->get("remove cartridge") );
+    bootCart.setText( trans->get("boot cartridge") );
+    deactivateCart.setText( trans->get("deactivate cartridge") );
 
     for( auto mediaGroupLayout : GUIKIT::Vector::concat(mediaGroupLayouts, cartLayouts) ) {
         
@@ -1716,6 +1716,66 @@ auto MediaWindow::applyPreviewFont(unsigned fontSize) -> void {
         fileDialogPtr->setContentViewFont("C64 Pro, " + std::to_string(fontSize), true);
     else
         fileDialogPtr->setContentViewFont(GUIKIT::Font::system(fontSize));     
+}
+
+auto MediaWindow::loadSettings() -> void {
+    
+    for(auto layout : GUIKIT::Vector::concat(mediaGroupLayouts, cartLayouts)) {
+        
+        layout->loadSettings();
+        
+        auto mediaGroup = layout->mediaGroup;
+        
+        auto pathBlock = pathsLayout.getBlock( mediaGroup );
+        
+        auto settingFolderIdent = _underscore(mediaGroup->name) + "_folder";
+        
+        pathBlock->edit.setText( settings->get<std::string>(settingFolderIdent, "") );
+                
+        if (mediaGroup->isDisk())
+            layout->updateVisibility(settings->get<unsigned>( _underscore(mediaGroup->name) + "_count", mediaGroup->defaultUsage() ), true );
+        
+        for (auto block : layout->blocks) {
+            
+            auto fSetting = FileSetting::getInstance(emulator, _underscore(block->media->name) );
+            fSetting->update();
+            
+            updateMediaBlock(block, fSetting);
+
+            if ( showC64Listing( layout ) ) {
+                if (mediaGroup->isDisk() || mediaGroup->isProgram()) {
+
+                    GUIKIT::File* file = filePool->get(fSetting->path);
+                    uint8_t* data;
+
+                    if (program->loadImageDataWhenOk(file, fSetting->id, mediaGroup, data)) {
+
+                        if (mediaGroup->isDisk()) {
+                            block->listings = emulator->getDiskPreview(data, file->archiveDataSize(0), block->media);
+                            if (block->media->id == 0)
+                                layout->updateListing( block );
+                        } else {
+                            block->listings = emulator->getProgramPreview(data, file->archiveDataSize(0));
+                            if (mediaGroup->selected == block->media)
+                                layout->updateListing( block );	
+                        }
+                    }                
+                }  
+            }
+        }   
+    }
+    
+    swapperLayout->loadSettings();
+}
+
+auto PathsLayout::getBlock(Emulator::Interface::MediaGroup* mediaGroup) -> PathsLayout::Block* {
+    
+    for(auto block : blocks) {
+        if (block->mediaGroup == mediaGroup)
+            return block;
+    }
+    
+    return nullptr;
 }
 
 }

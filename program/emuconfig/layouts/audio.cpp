@@ -14,12 +14,17 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
     append(settingsLayout, {~0u, 0u});
     
     settingsLayout.setEvents();
-    settingsLayout.updateWidgets();
+//    settingsLayout.updateWidgets();
+    
+    loadSettings();
 }
 
 auto AudioLayout::translate() -> void {
     
     settingsLayout.translate( );
     
+}
 
+auto AudioLayout::loadSettings() -> void {
+    settingsLayout.updateWidgets();  
 }

@@ -39,7 +39,7 @@ auto InputManager::init() -> void {
     }           
         
     autoAssignHotkeys();
-	bindHids();
+	bindHidsGlobal();
 }
 
 auto InputManager::assumeLayoutType() -> KeyboardLayout::Type {
@@ -359,63 +359,70 @@ auto InputManager::autoAssignHotkeys() -> void {
 
 // load settings data at application start, reload only when host devices changing
 // missing devices will be removed
-auto InputManager::bindHids( ) -> void {	
-	for (auto manager : inputManagers) {
-		for(auto mapping : manager->mappings) {
-            while(1) {
-                
-                mapping->hids.clear();
-                auto parts = GUIKIT::String::split(mapping->setting->value, '|');
-
-                if (parts.size() == 0)
-                    goto Done;
-                
-                mapping->anded = parts[0] != "0";
-                mapping->hasUnknownAssignment = false;
-                GUIKIT::Vector::eraseVectorPos(parts, 0);
-
-                for(;;) {
-                    if (mapping->hids.size() == InputManager::MaxMappings) break;
-                    if (parts.size() < 4) break;
-                    try {
-                        unsigned deviceId = std::stoul(parts[0]);
-                        unsigned groupId = std::stoul(parts[1]);
-                        unsigned inputId = std::stoul(parts[2]);
-                        unsigned qualifier = std::stoul(parts[3]);
-                        
-                        Hid::Device* hidDevice = getDeviceFromIdent( deviceId );
-                        
-                        if (hidDevice) {
-                        
-                            unsigned result = mapping->checkSanity(hidDevice, groupId, inputId);
-                            if (result == 0);
-                            else if (result == 3 && qualifier == 0);
-
-                            else mapping->hids.push_back({ hidDevice, &hidDevice->group(groupId),
-                                    &hidDevice->group(groupId).inputs[inputId], qualifier, 0 });							
-                        } else if (!driverChange)
-                            mapping->hasUnknownAssignment = true;
-                        
-                    } catch (...) { /* conversion to uint failed */  }
-
-                    GUIKIT::Vector::eraseVectorPos(parts, 0, 4);
-                }
-
-            Done:
-                if (driverChange)
-                    // remove unknown devices when driver is changing
-                    mapping->updateSetting(); //restructure setting in case of corruption or removed devices
-                
-                if (!mapping->alternate)
-                    break;
-                
-                mapping = mapping->alternate;
-            }
-        }
-
-        manager->updateMappingsInUse();
-	}
+auto InputManager::bindHidsGlobal( ) -> void {	
+    
+	for (auto manager : inputManagers)
+        manager->bindHids();        
+	
     clearLastDeviceState();
+}
+
+auto InputManager::bindHids( ) -> void {
+    
+    for (auto mapping : mappings) {
+        while (1) {
+
+            mapping->hids.clear();
+            auto parts = GUIKIT::String::split(mapping->setting->value, '|');
+
+            if (parts.size() == 0)
+                goto Done;
+
+            mapping->anded = parts[0] != "0";
+            mapping->hasUnknownAssignment = false;
+            GUIKIT::Vector::eraseVectorPos(parts, 0);
+
+            for (;;) {
+                if (mapping->hids.size() == InputManager::MaxMappings) break;
+                if (parts.size() < 4) break;
+                try {
+                    unsigned deviceId = std::stoul(parts[0]);
+                    unsigned groupId = std::stoul(parts[1]);
+                    unsigned inputId = std::stoul(parts[2]);
+                    unsigned qualifier = std::stoul(parts[3]);
+
+                    Hid::Device* hidDevice = getDeviceFromIdent(deviceId);
+
+                    if (hidDevice) {
+
+                        unsigned result = mapping->checkSanity(hidDevice, groupId, inputId);
+                        if (result == 0);
+                        else if (result == 3 && qualifier == 0);
+
+                        else mapping->hids.push_back({hidDevice, &hidDevice->group(groupId),
+                                &hidDevice->group(groupId).inputs[inputId], qualifier, 0});
+                    } else if (!driverChange)
+                        mapping->hasUnknownAssignment = true;
+
+                } catch (...) {
+                    /* conversion to uint failed */                }
+
+                GUIKIT::Vector::eraseVectorPos(parts, 0, 4);
+            }
+
+Done:
+            if (driverChange)
+                // remove unknown devices when driver is changing
+                mapping->updateSetting(); //restructure setting in case of corruption or removed devices
+
+            if (!mapping->alternate)
+                break;
+
+            mapping = mapping->alternate;
+        }
+    }
+    
+    updateMappingsInUse();
 }
 
 auto InputManager::clearLastDeviceState() -> void {
@@ -529,7 +536,7 @@ auto InputManager::updateAnalogSensitivity(Emulator::Interface::Device* updateDe
 		if (updateDevice && updateDevice != &device)
 			continue;		        
         
-        auto sensePercent = program->getSettings(emulator)->get<unsigned>( "analog_sensitivity_" + device.name, 50u, { 0u, 100u});
+        auto sensePercent = program->getSettings(emulator)->get<unsigned>( "analog_sensitivity_" + _underscore(device.name), 50u, { 0u, 100u});
 
 		int sense = sensePercent;
 				

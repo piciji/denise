@@ -226,12 +226,16 @@ InputLayout::InputLayout(TabWindow* tabWindow) {
         _settings->set<unsigned>("input_assigner", 0);
     };
 
+    updateAssigner();
+    
+    updateLayout();
+}
+
+auto InputLayout::updateAssigner() -> void {
     if (_settings->get<unsigned>("input_assigner", 1) == 1)
         assigner.overwriteRadio.setChecked();
     else
         assigner.appendRadio.setChecked();
-    
-    updateLayout();
 }
 
 auto InputLayout::stopCapture() -> void {
@@ -573,4 +577,13 @@ auto InputLayout::triggerHotkeyMode() -> void {
 	
 	selector.hotkeys.setChecked();
 	selector.hotkeys.onToggle();
+}
+
+auto InputLayout::loadSettings() -> void {
+    
+    updateAssigner();
+    
+    updateLayout();
+    
+    update();
 }

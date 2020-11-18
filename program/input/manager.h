@@ -129,7 +129,7 @@ struct InputManager {
 	static auto setMappings() -> void;    
 	static auto autoAssignHotkeys() -> void;
     static auto automap( KeyboardLayout::Type type, Emulator::Interface::Key key ) -> std::vector<std::vector<Hid::Key>>;
-	static auto bindHids() -> void;
+	static auto bindHidsGlobal() -> void;
 	static auto capture(InputMapping* _captureObject) -> void;
     static auto capture( bool overwriteExisting = false ) -> bool;
 	static auto fetch() -> void;
@@ -152,7 +152,7 @@ struct InputManager {
 	auto addMapping(InputMapping* mapping) -> void;
     auto addMappingInUse(InputMapping* mapping) -> void;
     auto update() -> void;
-    auto unmapDevice(unsigned deviceId) -> void;    
+    auto unmapDevice(unsigned deviceId) -> void;
     auto initMapping(InputMapping* mapping) -> void;
 	auto sort() -> void;				
     auto updateMappingsInUse() -> void;
@@ -161,7 +161,8 @@ struct InputManager {
     auto alternateSort() -> void;
     auto updateAnalogSensitivity(Emulator::Interface::Device* updateDevice = nullptr) -> void;
 	auto setCustomHotkeys() -> void;
-	auto unmapCustomHotkeys() -> void;        
+	auto unmapCustomHotkeys() -> void;   
+    auto bindHids() -> void;
     
     inline auto updateAndTrigger() -> void;
     inline auto addAndTrigger(InputMapping* newTrigger) -> void;

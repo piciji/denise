@@ -47,6 +47,7 @@ struct MiscLayout : GUIKIT::VerticalLayout {
     auto setRunAhead(unsigned pos, bool force = true) -> void;
     auto stopRecord() -> void;
     auto toggleRecord() -> void;
+    auto loadSettings() -> void;
     
     MiscLayout(TabWindow* tabWindow);
 };
