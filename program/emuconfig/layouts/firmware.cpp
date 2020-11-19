@@ -26,8 +26,6 @@ FirmwareLayout::FirmwareLayout(TabWindow* tabWindow) {
     this->emulator = tabWindow->emulator;    
     this->manager = FirmwareManager::getInstance(this->emulator);
     
-    //auto firmwareInUse = _settings->get<unsigned>( "use_firmware", 0, {0, manager->maxSets} );
-    
     append(customSelectorLayout, {~0u, 0u}, 10);   
     append(switchLayout, {~0u, ~0u});
     
@@ -66,8 +64,6 @@ FirmwareLayout::FirmwareLayout(TabWindow* tabWindow) {
 
                 auto fSetting = manager->getSetting( &firmware, i );
                 block->top.fileLabelTitle.setText(trans->get(firmware.name,{}, true));
-           //     block->top.fileLabel.setText(fSetting->file);
-            //    block->bottom.edit.setText(fSetting->path);
 
                 block->bottom.eject.onActivate = [this, block, container, fSetting]() {
                     auto& firmware = emulator->firmwares[block->typeId];
@@ -112,11 +108,6 @@ FirmwareLayout::FirmwareLayout(TabWindow* tabWindow) {
 		  
     GUIKIT::RadioBox::setGroup( selectorBoxes ); 
     
-//    if (selectorBoxes.size() > firmwareInUse) {
-//        selectorBoxes[firmwareInUse]->setChecked();
-//	}
-	
-	//updateVisibility();
     loadSettings();
         
     setMargin( 10 );    

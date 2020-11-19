@@ -88,7 +88,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             if (!activeEmulator)
                 break;
             
-            EmuConfigView::TabWindow::getView(activeEmulator)->miscLayout->toggleRecord();
+            EmuConfigView::TabWindow::getView(activeEmulator)->audioLayout->toggleRecord();
             break;
         case Hotkey::Id::RunAheadDown:
         case Hotkey::Id::RunAheadUp: {

@@ -14,7 +14,7 @@ SettingsLayout::Active::Active() {
     append(fileLabel,{~0u, 0u});
     append(standardButton,{0u, 0u});
 
-    activeLabel.setFont(GUIKIT::Font::system("bold"));
+    fileLabel.setFont(GUIKIT::Font::system("bold"));    
 
     setAlignment(0.5);
 }
@@ -115,7 +115,14 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
     
     append( moduleSwitch, {~0u, ~0u} );
     
+    settings.listView.onActivate = [this]() {
+        
+        settings.control.load.onActivate();
+    };
+    
     settings.active.standardButton.onActivate = [this]() {
+        
+        saveCurrentSettings();
         
         std::string path = program->settingsFile( this->emulator->ident + "_" );
         
@@ -136,6 +143,8 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         std::string fileName = _list.text(selection, 0);
 
         std::string path = getSettingsFolder() + fileName;
+        
+        saveCurrentSettings();
         
         if (this->load( path )) {
             _settings->set<std::string>("custom_settings", path, false);
@@ -166,10 +175,6 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         if (!_settings->save(path))
             mes->error(trans->get("file_creation_error",{
                 {"%path%", path}}));
-        else {
-            _settings->set<std::string>("custom_settings", path, false);
-            settings.active.fileLabel.setText( fileName );
-        }
     };
     
     settings.control.create.onActivate = [this]() {
@@ -188,11 +193,13 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
                 return;
         }
             
+        saveCurrentSettings();
+        
         if (_settings->save( path)) {
             mes->information( trans->get("file_creation_success", {{"%path%", path}}) );
             _settings->set("custom_settings", path, false);
             settings.active.fileLabel.setText( fileName );
-            updateList();
+            updateSettingsList();
             
         } else
             mes->error( trans->get("file_creation_error", {{"%path%", path}}) );
@@ -220,7 +227,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         if (!file.del())
             mes->error( trans->get("file deletion error", {{"%path%", path}}) );
         else
-            updateList();
+            updateSettingsList();
     };    
     
     settingsFolder.selectButton.onActivate = [this]() {
@@ -233,21 +240,31 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         if (path.empty())
             return;
         
+        if (_settings->get<std::string>("custom_settings", "") != "")
+            settings.active.standardButton.onActivate();
+        
         settingsFolder.pathEdit.setText( path );
         
-        _settings->set<std::string>( "settings_path", path );
+        globalSettings->set<std::string>( emulator->ident + "_settings_path", path );
         
-        updateList();
+        updateSettingsList();
     };
     
     settingsFolder.emptyButton.onActivate = [this]() {
         
+        if (_settings->get<std::string>("custom_settings", "") != "")
+            settings.active.standardButton.onActivate();
+                
         settingsFolder.pathEdit.setText( "" );                
         
-        _settings->set<std::string>( "settings_path", "" );
+        globalSettings->set<std::string>( emulator->ident + "_settings_path", "" );
         
-        updateList();
+        updateSettingsList();
     };
+    
+    settingsFolder.pathEdit.setText( globalSettings->get<std::string>( emulator->ident + "_settings_path", "" ) );
+    
+    settings.active.fileLabel.setText( trans->get("default") );
     
     // states
     
@@ -364,39 +381,31 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         _settings->set<std::string>("states_folder", "");
         stateFolder.pathEdit.setText("");
     };
-    
-    settingsFolder.pathEdit.setText( _settings->get<std::string>( "settings_path", "" ) );
-    
-    settings.active.fileLabel.setText( trans->get("default") );
-    
+        
     loadSettings();
     
-    updateList();
+    updateSettingsList();
 }
 
-auto ConfigurationsLayout::updateList() -> void {
-    auto& _list = settings.listView;
-    _list.reset();
+auto ConfigurationsLayout::updateSettingsList() -> void {    
+    settings.listView.reset();
     
     auto infos = GUIKIT::File::getFolderList( getSettingsFolder() );
     
     std::vector<SettingLine> lines;
 
-    for (auto& info : infos) {
-
-        lines.push_back({info.name, info.date});
-    }
+    for (auto& info : infos)
+        lines.push_back({info.name, info.date});   
 
     std::sort(lines.begin(), lines.end());
 
-    for (auto& line : lines) {
-        _list.append( {line.fileName, line.date} );
-    }
+    for (auto& line : lines)
+        settings.listView.append( {line.fileName, line.date} );    
 }            
             
 auto ConfigurationsLayout::getSettingsFolder( bool createFolder ) -> std::string {
     
-    auto path = _settings->get<std::string>( "settings_path", "");
+    auto path = globalSettings->get<std::string>( emulator->ident + "_settings_path", "");
 
     if (path.empty()) {
         std::string _emuIdent = emulator->ident;
@@ -463,6 +472,18 @@ auto ConfigurationsLayout::load( std::string path ) -> bool {
     MediaView::MediaWindow::getView(this->emulator)->loadSettings();
     
     return true;
+}
+
+auto ConfigurationsLayout::saveCurrentSettings() -> void {
+    
+    if (!globalSettings->get<bool>("save_settings_on_exit", true))
+        return;
+
+    std::string path = _settings->get<std::string>("custom_settings", "");
+    if (path == "")
+        path = program->settingsFile( emulator->ident + "_" );
+    
+    _settings->save( path );
 }
 
 auto ConfigurationsLayout::splitFile( std::string file, unsigned& pos ) -> std::string {
@@ -548,6 +569,6 @@ auto ConfigurationsLayout::translate() -> void {
     
     moduleFrame.setText( trans->get("selection") );
     
-    if (_settings->get<std::string>( "settings_path", "" ) == "")                    
+    if (_settings->get<std::string>( "custom_settings", "" ) == "")                    
         settings.active.fileLabel.setText( trans->get("default") );
 }

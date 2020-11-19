@@ -124,8 +124,10 @@ auto AudioManager::setAudioDsp() -> void {
     dsps.clear();
     
     stat = activeEmulator->getStatsForSelectedRegion();
+    
+    auto settings = program->getSettings( activeEmulator );
 
-    bool useBass = globalSettings->get<bool>("audio_bass", false );
+    bool useBass = settings->get<bool>("audio_bass", false );
     
     if (useBass) {
         
@@ -134,15 +136,15 @@ auto AudioManager::setAudioDsp() -> void {
         bass->setMono( !stat.stereoSound );
         bass->init( 
             (float)outputFrequency,
-            (float)globalSettings->get<unsigned>("audio_bass_freq", 200, {20, 200} ),
-            (float)globalSettings->get<unsigned>("audio_bass_gain", 10, {0, 40} ),
-            globalSettings->get<float>("audio_bass_clipping", 0.4, {0.0, 1.0} )
+            (float)settings->get<unsigned>("audio_bass_freq", 200, {20, 200} ),
+            (float)settings->get<unsigned>("audio_bass_gain", 10, {0, 40} ),
+            settings->get<float>("audio_bass_clipping", 0.4, {0.0, 1.0} )
         );
         
         dsps.push_back( (DSP::Base*)bass );
     }    
     
-    bool useReverb = globalSettings->get<bool>("audio_reverb", false );
+    bool useReverb = settings->get<bool>("audio_reverb", false );
     
     if (useReverb) {
         
@@ -151,27 +153,27 @@ auto AudioManager::setAudioDsp() -> void {
         reverb->setMono( !stat.stereoSound );
         reverb->init( 
             (float)outputFrequency,
-            globalSettings->get<float>("audio_reverb_drytime", 0.43, {0.0, 1.0} ),
-            globalSettings->get<float>("audio_reverb_wettime", 0.4, {0.0, 1.0} ),
-            globalSettings->get<float>("audio_reverb_damping", 0.8, {0.0, 1.0} ),
-            globalSettings->get<float>("audio_reverb_roomwidth", 0.56, {0.0, 1.0} ),
-            globalSettings->get<float>("audio_reverb_roomsize", 0.56, {0.0, 1.0} )
+            settings->get<float>("audio_reverb_drytime", 0.43, {0.0, 1.0} ),
+            settings->get<float>("audio_reverb_wettime", 0.4, {0.0, 1.0} ),
+            settings->get<float>("audio_reverb_damping", 0.8, {0.0, 1.0} ),
+            settings->get<float>("audio_reverb_roomwidth", 0.56, {0.0, 1.0} ),
+            settings->get<float>("audio_reverb_roomsize", 0.56, {0.0, 1.0} )
         );
         
         dsps.push_back( (DSP::Base*)reverb );
     }  
     
-    bool usePanning = globalSettings->get<bool>("audio_panning", false );
+    bool usePanning = settings->get<bool>("audio_panning", false );
     
     if (usePanning) {
         
         DSP::Panning* panning = new DSP::Panning;
         
         panning->init(
-            globalSettings->get<float>("audio_panning_left0", 1.0, {0.0, 1.0} ),
-            globalSettings->get<float>("audio_panning_left1", 0.0, {0.0, 1.0} ),
-            globalSettings->get<float>("audio_panning_right0", 0.0, {0.0, 1.0} ),
-            globalSettings->get<float>("audio_panning_right1", 1.0, {0.0, 1.0} )
+            settings->get<float>("audio_panning_left0", 1.0, {0.0, 1.0} ),
+            settings->get<float>("audio_panning_left1", 0.0, {0.0, 1.0} ),
+            settings->get<float>("audio_panning_right0", 0.0, {0.0, 1.0} ),
+            settings->get<float>("audio_panning_right1", 1.0, {0.0, 1.0} )
         );
             
         dsps.push_back( (DSP::Base*)panning );

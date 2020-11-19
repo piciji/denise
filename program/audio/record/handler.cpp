@@ -136,7 +136,7 @@ auto Handler::finish() -> void {
     wavWriter = nullptr;
     
     if (activeEmulator)
-        EmuConfigView::TabWindow::getView(activeEmulator)->miscLayout->stopRecord();
+        EmuConfigView::TabWindow::getView(activeEmulator)->audioLayout->stopRecord();
 }  
     
 }

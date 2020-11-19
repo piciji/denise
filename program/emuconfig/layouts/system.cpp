@@ -157,7 +157,6 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
     append(accuracyLayout, {~0u, 0u});
     
     modelLayout.setEvents();
-//    modelLayout.updateWidgets();
 		
     for( auto block : memoryLayout.blocks ) {
         auto memoryType = block->memoryType;
@@ -173,12 +172,6 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
 			if (activeEmulator)                
                 memorySliderReset.setEnabled();				            
         };
-
-//        unsigned id = _settings->get<unsigned>( _underscore(memoryType->name) + "_mem", memoryType->defaultMemoryId);
-//        if (id >= memoryType->memory.size())
-//            id = memoryType->defaultMemoryId;
-//        block->sliderLayout.slider.setPosition(id);
-//        block->sliderLayout.value.setText( getSizeString( memoryType->memory[id].size ) );        
     }
     
     for(auto block : driveLayout.driveCountFrame.driveCounter) {
@@ -199,13 +192,7 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
 			if (activeEmulator)
 				program->power(activeEmulator);
         };
-        
-//        unsigned counter = _settings->get<unsigned>( ident, block->mediaGroup->defaultUsage());
-//        if (counter >= block->combo.rows())
-//            counter = block->mediaGroup->defaultUsage();
-//        
-//        block->combo.setSelection( counter );
-        
+                
         if (block->mediaGroup->isDisk()) {
             
             ident = _underscore(block->mediaGroup->name);
@@ -239,16 +226,7 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
 				
 				emulator->setDriveSpeed( block->mediaGroup, speed, wobble );
             };			
-            
-//            double wobble = _settings->get<double>(ident + "_wobble", 0.5, {0.0, 5.0});
-//            double speed = _settings->get<double>(ident + "_speed", 300.0, {275.0, 325.0});
-//                        
-//            driveLayout.wobble.value.setText(GUIKIT::String::formatFloatingPoint(wobble, 2) + " RPM");
-//            driveLayout.speed.value.setText(GUIKIT::String::formatFloatingPoint(speed, 1) + " RPM");
-//            
-//            driveLayout.wobble.slider.setPosition( wobble * 10.0 );
-//            driveLayout.speed.slider.setPosition( (speed - 275.0) * 10.0 );
-			
+            			
         } else if (block->mediaGroup->isTape()) {
 			
 			ident = _underscore(block->mediaGroup->name);
@@ -260,13 +238,10 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
                 _settings->set<bool>(ident + "_wobble", wobble);
 				
 				emulator->setDriveSpeed( block->mediaGroup, 0, wobble );
-            };
-									
-//			driveLayout.tapeWobble.setChecked( _settings->get<bool>(ident + "_wobble", false ) );
+            };									
 		}
     }
                
-  //  auto expansionId = _settings->get<unsigned>( "expansion", 0);
     for ( auto line : expansionLayout.lines ) {
         for( auto block : line->blocks ) {            
             block->box.onActivate = [this, block]() {
@@ -280,9 +255,6 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
 				if (activeEmulator)
 					program->power(activeEmulator);
             };
-			
-    //        if (block->expansion->id == expansionId)
-      //          block->box.setChecked();
         }
     }       
     
@@ -307,8 +279,6 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
             program->power(activeEmulator);
     };
     
-//    accuracyLayout.block.videoCycleAccuracy.setChecked( _settings->get<bool>("video_cycle_accuracy", true) );
-    
     accuracyLayout.block.videoScanlineThread.onToggle = [this]() {
 
         bool state = accuracyLayout.block.videoScanlineThread.checked();
@@ -320,8 +290,6 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
         emulator->videoScanlineThread(state);
     };    
     
-//    accuracyLayout.block.videoScanlineThread.setChecked( _settings->get<bool>("video_scanline_thread", false) );
-    
     accuracyLayout.block.diskHighLoadThread.onToggle = [this]() {
 
         bool state = accuracyLayout.block.diskHighLoadThread.checked();
@@ -332,8 +300,6 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
 
         emulator->diskHighLoadThread(state);
     };  
-    
-//    accuracyLayout.block.diskHighLoadThread.setChecked( _settings->get<bool>("disk_highload_thread", false) );
 
     accuracyLayout.block.diskIdle.onToggle = [this]() {
 
@@ -346,8 +312,6 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
         emulator->diskIdle(state);
     };  
     
-//    accuracyLayout.block.diskIdle.setChecked( _settings->get<bool>("disk_idle", false) );
-    
     accuracyLayout.block.audioRealtimeThread.onToggle = [this]() {
 
         bool state = accuracyLayout.block.audioRealtimeThread.checked();
@@ -358,10 +322,6 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
 
         emulator->audioRealtimeThread(state);
     }; 
-    
-//    accuracyLayout.block.audioRealtimeThread.setChecked( _settings->get<bool>("audio_realtime_thread", false) );
-    
-//    updateExpansionMemory();
     
     loadSettings();
 }

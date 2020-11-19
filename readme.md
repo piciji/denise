@@ -7,6 +7,12 @@
 
 # changelog
 
+## 1.1.0 (not yet released)
+* save/load additional settings files for a lot of purposes, like
+    * define keyboard inputs for individual games one time
+    * prepare different C64 models
+    * prepare individual Multi SID configurations
+
 ## 1.0.9.1
 * fix TAPE emulation (broken in 1.0.9)
 * nice performance improvement

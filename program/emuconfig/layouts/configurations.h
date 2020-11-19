@@ -106,11 +106,12 @@ struct ConfigurationsLayout : GUIKIT::HorizontalLayout {
     
     auto translate() -> void;
     auto getSettingsFolder( bool createFolder = false ) -> std::string;
-    auto updateList() -> void;
+    auto updateSettingsList() -> void;
     auto updateSaveIdent( std::string fileName ) -> void;
     auto splitFile( std::string file, unsigned& pos ) -> std::string;
     auto load( std::string path ) -> bool;
     auto loadSettings() -> void;
+    auto saveCurrentSettings() -> void;
     
     ConfigurationsLayout(TabWindow* tabWindow); 
 };

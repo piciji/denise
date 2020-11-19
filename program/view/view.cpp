@@ -716,15 +716,15 @@ auto View::buildMenu() -> void {
 				sM.palette->onActivate = [emuConfigView]() {
 					emuConfigView->show(EmuConfigView::TabWindow::Layout::Palette);
 				};
-				sM.system->append(*sM.palette);
-				
-                sM.audio = new GUIKIT::MenuItem;
-                sM.audio->setIcon( volumeImage );
-                sM.audio->onActivate = [emuConfigView]() {
-                    emuConfigView->show(EmuConfigView::TabWindow::Layout::Audio);
-                };
-                sM.system->append( *sM.audio );
+				sM.system->append(*sM.palette);				
             }
+            
+            sM.audio = new GUIKIT::MenuItem;
+            sM.audio->setIcon( volumeImage );
+            sM.audio->onActivate = [emuConfigView]() {
+                emuConfigView->show(EmuConfigView::TabWindow::Layout::Audio);
+            };
+            sM.system->append( *sM.audio );
 
 			sM.firmware = new GUIKIT::MenuItem;
 			sM.firmware->setIcon( firmwareImage );
@@ -961,7 +961,7 @@ auto View::translate() -> void {
         sysMenu.systemManagement->setText(trans->get("system_management"));
 
         if(!GUIKIT::Application::isCocoa()) {
-            sysMenu.audio->setText(trans->get("SID"));
+            sysMenu.audio->setText(trans->get("Audio"));
             sysMenu.firmware->setText(trans->get("Firmware"));
             sysMenu.configurations->setText(trans->get("Configurations"));
             sysMenu.presentation->setText(trans->get("Presentation"));

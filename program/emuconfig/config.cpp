@@ -83,10 +83,10 @@ auto TabWindow::build() -> void {
     firmwareLayout = new FirmwareLayout( this );
     videoLayout = new VideoLayout( this );
     
-    if (emulator->ident == "C64") {
-        paletteLayout = new PaletteLayout( this );
-        audioLayout = new AudioLayout( this );        
+    if (dynamic_cast<LIBC64::Interface*>(emulator)) {
+        paletteLayout = new PaletteLayout( this );        
     }
+    audioLayout = new AudioLayout( this );
     borderLayout = new BorderLayout( this );
     miscLayout = new MiscLayout( this );
 
@@ -94,10 +94,10 @@ auto TabWindow::build() -> void {
     tab.appendHeader("", scriptImage);
 	tab.appendHeader("", joystickImage); 
 	tab.appendHeader("", displayImage);
-	if (emulator->ident == "C64") {
-        tab.appendHeader("", paletteImage);
-        tab.appendHeader("", volumeImage);
+	if (dynamic_cast<LIBC64::Interface*>(emulator)) {
+        tab.appendHeader("", paletteImage);        
     }
+    tab.appendHeader("", volumeImage);
     tab.appendHeader("", memoryImage);   
 	tab.appendHeader("", cropImage);
     tab.appendHeader("", nullptr);
@@ -106,11 +106,11 @@ auto TabWindow::build() -> void {
     tab.setLayout(Layout::Configurations, *configurationsLayout, {~0u, ~0u} );
 	tab.setLayout(Layout::Control, *inputLayout, {~0u, ~0u} );
 	tab.setLayout(Layout::Presentation, *videoLayout, {~0u, ~0u} );
-	if (emulator->ident == "C64") {
-        tab.setLayout(Layout::Palette, *paletteLayout, {~0u, ~0u} );
-        tab.setLayout(Layout::Audio, *audioLayout, {~0u, ~0u} );
+	if (dynamic_cast<LIBC64::Interface*>(emulator)) {
+        tab.setLayout(Layout::Palette, *paletteLayout, {~0u, ~0u} );        
     }
-
+    
+    tab.setLayout(Layout::Audio, *audioLayout, {~0u, ~0u} );
     tab.setLayout(Layout::Firmware, *firmwareLayout, {~0u, ~0u} );
 	tab.setLayout(Layout::Border, *borderLayout, {~0u, ~0u} );                    
     tab.setLayout(Layout::Misc, *miscLayout, {~0u, ~0u} );     
@@ -172,10 +172,11 @@ auto TabWindow::translate() -> void {
     tab.setHeader(Layout::Presentation, trans->get("presentation"));
     tab.setHeader(Layout::Misc, trans->get("miscellaneous"));
 
-    if (emulator->ident == "C64") {
-        tab.setHeader(Layout::Palette, trans->get("palette"));
-        tab.setHeader(Layout::Audio, trans->get("SID"));
+    if (dynamic_cast<LIBC64::Interface*>(emulator)) {
+        tab.setHeader(Layout::Palette, trans->get("palette"));        
     }
+    
+    tab.setHeader(Layout::Audio, trans->get("Audio"));
 }
 
 auto TabWindow::showDelayed(Layout layout) -> void {

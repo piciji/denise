@@ -539,3 +539,4 @@ active setting = aktive Einstellung
 boot cartridge = Modul starten
 deactivate cartridge = Modul deaktivieren
 selection = Auswahl
+Digital Signal Processing = Digital Signal Processing

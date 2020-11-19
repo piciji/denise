@@ -139,28 +139,8 @@ auto Program::init() -> void {
 	
     status->init();
     
-    for( auto emulator : emulators ) {
-        
-//        for( auto& connector : emulator->connectors )            
-//            emulator->connect( &connector, getDevice( emulator, &connector ) );       
-//
-//		for (auto& model : emulator->models)
-//			emulator->setModel( model.id, getSettings(emulator)->get<int>( _underscore(model.name), model.defaultValue, model.range) );				
-//        
-//		updateCrop( emulator );
-//        
-//        setPalette( emulator );
-//        
-//        setExpansionSelection( emulator );
-//        
-//		setDriveSpeedAndWobble( emulator );
-//		
-//        setAccuracy( emulator );
-//        
-//        setRunAhead( emulator );
-        
+    for( auto emulator : emulators )        
         initEmulator( emulator );
-    }   
     	
 	logger->setSavePath( GUIKIT::System::getUserDataFolder(appFolder()) );
         
