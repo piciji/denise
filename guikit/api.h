@@ -1187,7 +1187,8 @@ struct Settings {
 	auto findMulti(const std::string& ident) -> std::vector<Setting*>;
     auto add(const std::string& ident) -> Setting*;
     auto add(Setting* setting) -> void;
-    auto remove(const std::string& ident) -> bool;	
+    auto remove(const std::string& ident) -> bool;
+    auto clear() -> void;
 
     template<typename T> class type_info{};
 

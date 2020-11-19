@@ -58,6 +58,34 @@ auto InputManager::assumeLayoutType() -> KeyboardLayout::Type {
     return KeyboardLayout::Type::Uk;
 }
 
+auto InputManager::resetMappings() -> void {
+    std::string settingIdent;
+    InputMapping* mapper;    
+    auto settings = program->getSettings( emulator );
+    
+    for (auto& device : emulator->devices) {  
+        for (auto& input : device.inputs) {
+            
+            settingIdent = device.name + "_" + std::to_string(input.id);
+            GUIKIT::String::toLowerCase(GUIKIT::String::delSpaces(settingIdent));
+         
+            mapper = (InputMapping*)input.guid;
+            mapper->setting = settings->add( settingIdent );
+            
+            if (!mapper->isAnalog())
+                mapper->alternate->setting = settings->add( settingIdent + "_alt" );
+        }
+    }
+    
+    for(auto& item : customHotkeys) {        
+        mapper = (InputMapping*)item.guid;
+        settingIdent = "hotkey_" + std::to_string(item.id);
+        
+        mapper->setting = settings->add( settingIdent );
+        mapper->alternate->setting = settings->add(settingIdent + "_alt");
+    }
+}
+
 auto InputManager::setMappings() -> void {
     Emulator::Interface::Device::Input* alternateInput;
             

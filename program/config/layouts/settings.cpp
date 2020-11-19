@@ -400,8 +400,8 @@ auto SettingsLayout::translate() -> void {
     auto link = trans->get("go_to_website");
     
 	about.right.icons8.setText("Icons8: " + link);
-	about.right.icons8.setUri("http://www.icons8.com", link);
-	about.right.icons8.setTooltip("http://www.icons8.com");
+	about.right.icons8.setUri("https://icons8.com", link);
+	about.right.icons8.setTooltip("https://icons8.com");
     
     previewLayout.setText( trans->get("Software Preview") );
     previewLayout.top.fontSize.setText( trans->get("Font Size", {}, true) );

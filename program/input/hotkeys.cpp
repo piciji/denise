@@ -68,7 +68,7 @@ auto InputManager::setCustomHotkeys() -> void {
 	customHotkeys.push_back( {Hotkey::Id::Software, "Software", true} );	
     customHotkeys.push_back( {Hotkey::Id::System, "System", true} );
 	customHotkeys.push_back( {Hotkey::Id::Control, "Control", true} );
-	customHotkeys.push_back( {Hotkey::Id::States, "States", true} );
+	customHotkeys.push_back( {Hotkey::Id::Configurations, "Configurations", true} );
 	customHotkeys.push_back( {Hotkey::Id::Presentation, "Presentation", true} );
 	customHotkeys.push_back( {Hotkey::Id::Palette, "Palette", true} );
     customHotkeys.push_back( {Hotkey::Id::Firmware, "Firmware", true} );
@@ -214,7 +214,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
         case Hotkey::Id::Firmware:
         case Hotkey::Id::System:
         case Hotkey::Id::Control:
-		case Hotkey::Id::States:	
+		case Hotkey::Id::Configurations:	
             openMenu( emulator, id );
             break;
         case Hotkey::Id::Pause:
@@ -410,7 +410,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             filePool->assign( _ident(activeEmulator, media->name), file);
             filePool->assign( _ident(activeEmulator, "swapper_" + std::to_string(swapPos)), file);
             filePool->unloadOrphaned();
-            EmuConfigView::TabWindow::getView(activeEmulator)->statesLayout->updateSaveIdent( fSetting->file );
+            EmuConfigView::TabWindow::getView(activeEmulator)->configurationsLayout->updateSaveIdent( fSetting->file );
             States::getInstance( activeEmulator )->updateImage( fSetting, media );
             status->addMessage( trans->get("insert_floppy", {{"%drive%", media->name},{"%file%", fSetting->file}}) );		
             break;	
@@ -456,7 +456,7 @@ auto InputManager::pollHotkeys() -> void {
 			case Hotkey::Id::Firmware:
 			case Hotkey::Id::System:
 			case Hotkey::Id::Control:
-			case Hotkey::Id::States:
+			case Hotkey::Id::Configurations:
 				if (!useEmu) 
 					useEmu = program->getLastUsedEmu();				
 				
@@ -614,7 +614,7 @@ auto InputManager::openMenu( Emulator::Interface* emulator, Hotkey::Id id ) -> v
             configView->showDelayed( EmuConfigView::TabWindow::Layout::Firmware ); break;
         case Hotkey::Id::Control:
             configView->showDelayed( EmuConfigView::TabWindow::Layout::Control ); break;
-		case Hotkey::Id::States:
-            configView->showDelayed( EmuConfigView::TabWindow::Layout::States ); break;
+		case Hotkey::Id::Configurations:
+            configView->showDelayed( EmuConfigView::TabWindow::Layout::Configurations ); break;
     }
 }

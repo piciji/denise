@@ -22,29 +22,29 @@ struct StateDirectLayout : GUIKIT::FramedHorizontalLayout {
     StateDirectLayout();
 };
 
-struct ConfigurationsControlLayout : GUIKIT::HorizontalLayout {
+struct SettingsLayout : GUIKIT::FramedVerticalLayout {
     
-    GUIKIT::Button load;
-    GUIKIT::Button save;
-    GUIKIT::LineEdit edit;
-    GUIKIT::Button create;
-    GUIKIT::Button remove;
-    
-    ConfigurationsControlLayout();
-};
+    struct Control : GUIKIT::HorizontalLayout {    
+        GUIKIT::Button load;
+        GUIKIT::Button save;
+        GUIKIT::LineEdit edit;
+        GUIKIT::Button create;
+        GUIKIT::Button remove;
 
-struct ConfigurationsListLayout : GUIKIT::HorizontalLayout {
-    struct Top : GUIKIT::HorizontalLayout {
+        Control();
+    } control;
+    
+    struct Active : GUIKIT::HorizontalLayout {
         GUIKIT::Label activeLabel;
         GUIKIT::Label fileLabel;
         GUIKIT::Button standardButton;
         
-        Top();
-    } top;
+        Active();
+    } active;
     
     GUIKIT::ListView listView;
     
-    ConfigurationsListLayout();
+    SettingsLayout();
 };
 
 struct ConfigurationsFolderLayout : GUIKIT::HorizontalLayout {
@@ -67,8 +67,7 @@ struct ConfigurationsLayout : GUIKIT::HorizontalLayout {
     GUIKIT::SwitchLayout moduleSwitch;
     
     GUIKIT::VerticalLayout settingsFrame;
-    ConfigurationsControlLayout settingsControl;
-    ConfigurationsListLayout settingsList;
+    SettingsLayout settings;
     ConfigurationsFolderLayout settingsFolder;
     
     GUIKIT::VerticalLayout statesFrame;
@@ -76,6 +75,9 @@ struct ConfigurationsLayout : GUIKIT::HorizontalLayout {
     StateDirectLayout stateDirect;
     ConfigurationsFolderLayout stateFolder;
 
+    GUIKIT::Image settingsImage;
+    GUIKIT::Image scriptImage;
+    
     struct SettingLine {
         std::string fileName;
         std::string date;

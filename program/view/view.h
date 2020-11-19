@@ -22,7 +22,7 @@ struct View : public GUIKIT::Window {
         GUIKIT::MenuItem* media;
         GUIKIT::MenuItem* systemManagement;
         GUIKIT::MenuItem* audio;
-        GUIKIT::MenuItem* saveState;
+        GUIKIT::MenuItem* configurations;
         GUIKIT::Menu* shaderMenu;
         GUIKIT::MenuItem* presentation;
         GUIKIT::MenuItem* palette;

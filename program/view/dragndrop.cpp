@@ -126,7 +126,7 @@ auto View::autoloadPostProcessing() -> void {
         }
         
         if (fSetting)
-            emuConfigView->statesLayout->updateSaveIdent(fSetting->file);  
+            emuConfigView->configurationsLayout->updateSaveIdent(fSetting->file);  
         
         if (mediaGroup->isTape())
             updateTapeIcons(Emulator::Interface::TapeMode::Play);  

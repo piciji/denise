@@ -1,6 +1,5 @@
 
-ConfigurationsControlLayout::ConfigurationsControlLayout() {
-    
+SettingsLayout::Control::Control() {    
     append( load, {0u, 0u}, 10 );
     append( save, {0u, 0u}, 10 );
     append( remove, {0u, 0u}, 10 );
@@ -8,6 +7,27 @@ ConfigurationsControlLayout::ConfigurationsControlLayout() {
     append( create, {0u, 0u} );    
     
     setAlignment(0.5);
+}
+
+SettingsLayout::Active::Active() {
+    append(activeLabel,{0u, 0u}, 10);
+    append(fileLabel,{~0u, 0u});
+    append(standardButton,{0u, 0u});
+
+    activeLabel.setFont(GUIKIT::Font::system("bold"));
+
+    setAlignment(0.5);
+}
+
+SettingsLayout::SettingsLayout() {
+    setPadding(10);
+    setFont(GUIKIT::Font::system("bold"));
+    listView.setHeaderVisible();
+	listView.setHeaderText( { "", "" } );
+    
+    append(control, {~0u, 0u}, 5);
+    append(active, {~0u, 0u}, 5);
+    append(listView, {~0u, ~0u});
 }
 
 ConfigurationsFolderLayout::ConfigurationsFolderLayout() {
@@ -20,25 +40,6 @@ ConfigurationsFolderLayout::ConfigurationsFolderLayout() {
     
     label.setFont(GUIKIT::Font::system("bold"));
     setAlignment(0.5);
-}
-
-ConfigurationsListLayout::Top::Top() {
-    append(activeLabel,{0u, 0u}, 10);
-    append(fileLabel,{~0u, 0u});
-    append(standardButton,{0u, 0u});
-
-    activeLabel.setFont(GUIKIT::Font::system("bold"));
-
-    setAlignment(0.5);
-}
-
-ConfigurationsListLayout::ConfigurationsListLayout() {
-            
-    listView.setHeaderVisible();
-	listView.setHeaderText( { "", "" } );
-    
-    append(top, {~0u, 0u}, 5);    
-    append(listView, {~0u, ~0u});
 }
 
 StateFastLayout::Top::Top() {
@@ -80,6 +81,13 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
     moduleList.setHeaderVisible( false );     
     moduleList.append( {"settings"} );
     moduleList.append( {"states"} );
+    
+    settingsImage.loadPng((uint8_t*)Icons::settings, sizeof(Icons::settings));
+    scriptImage.loadPng((uint8_t*)Icons::script, sizeof(Icons::script));
+    
+    moduleList.setImage(0, 0, settingsImage);
+    moduleList.setImage(1, 0, scriptImage);
+    
     moduleList.setSelection(0);
     moduleFrame.append( moduleList, { GUIKIT::Font::scale(130), GUIKIT::Font::scale(100)} );
     moduleFrame.setPadding(10);
@@ -95,31 +103,30 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         
     append( moduleFrame, {0u, 0u}, 10 );
         
-    settingsFrame.append( settingsControl, {~0u, 0u}, 5 );
-    settingsFrame.append( settingsList, {~0u, 0u}, 5 );    
+    settingsFrame.append( settings, {~0u, ~0u}, 5 );
     settingsFrame.append( settingsFolder, {~0u, 0u} );
     
     statesFrame.append( stateFast, {~0u, ~0u}, 5 );
     statesFrame.append( stateDirect, {~0u, 0u}, 5 );    
     statesFrame.append( stateFolder, {~0u, 0u} );
     
-    moduleSwitch.setLayout( 0, settingsFrame, {~0u, 0u} );
+    moduleSwitch.setLayout( 0, settingsFrame, {~0u, ~0u} );
     moduleSwitch.setLayout( 1, statesFrame, {~0u, ~0u} );
     
     append( moduleSwitch, {~0u, ~0u} );
     
-    settingsList.top.standardButton.onActivate = [this]() {
+    settings.active.standardButton.onActivate = [this]() {
         
         std::string path = program->settingsFile( this->emulator->ident + "_" );
         
         if (this->load( path )) {
             _settings->set<std::string>("custom_settings", "", false);
-            settingsList.top.fileLabel.setText( trans->get("default") );
+            settings.active.fileLabel.setText( trans->get("default") );
         }
     };
     
-    settingsControl.load.onActivate = [this]() {
-        auto& _list = settingsList.listView;
+    settings.control.load.onActivate = [this]() {
+        auto& _list = settings.listView;
         
         if (!_list.selected())
             return;
@@ -132,12 +139,12 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         
         if (this->load( path )) {
             _settings->set<std::string>("custom_settings", path, false);
-            settingsList.top.fileLabel.setText( fileName );
+            settings.active.fileLabel.setText( fileName );
         }
     };
     
-    settingsControl.save.onActivate = [this]() {
-        auto& _list = settingsList.listView;
+    settings.control.save.onActivate = [this]() {
+        auto& _list = settings.listView;
         
         if (!_list.selected())
             return;
@@ -161,13 +168,13 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
                 {"%path%", path}}));
         else {
             _settings->set<std::string>("custom_settings", path, false);
-            settingsList.top.fileLabel.setText( fileName );
+            settings.active.fileLabel.setText( fileName );
         }
     };
     
-    settingsControl.create.onActivate = [this]() {
+    settings.control.create.onActivate = [this]() {
         
-        auto fileName = settingsControl.edit.text();  
+        auto fileName = settings.control.edit.text();  
         
         if (fileName == "")
             fileName = "alternate settings";
@@ -184,15 +191,15 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         if (_settings->save( path)) {
             mes->information( trans->get("file_creation_success", {{"%path%", path}}) );
             _settings->set("custom_settings", path, false);
-            settingsList.top.fileLabel.setText( fileName );
+            settings.active.fileLabel.setText( fileName );
             updateList();
             
         } else
             mes->error( trans->get("file_creation_error", {{"%path%", path}}) );
     };
     
-    settingsControl.remove.onActivate = [this]() {
-        auto& _list = settingsList.listView;
+    settings.control.remove.onActivate = [this]() {
+        auto& _list = settings.listView;
         
         if (!_list.selected())
             return;
@@ -360,13 +367,15 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
     
     settingsFolder.pathEdit.setText( _settings->get<std::string>( "settings_path", "" ) );
     
-    settingsList.top.fileLabel.setText( trans->get("default") );
+    settings.active.fileLabel.setText( trans->get("default") );
+    
+    loadSettings();
     
     updateList();
 }
 
 auto ConfigurationsLayout::updateList() -> void {
-    auto& _list = settingsList.listView;
+    auto& _list = settings.listView;
     _list.reset();
     
     auto infos = GUIKIT::File::getFolderList( getSettingsFolder() );
@@ -427,6 +436,7 @@ auto ConfigurationsLayout::load( std::string path ) -> bool {
     program->initEmulator(this->emulator);
 
     auto inputManager = InputManager::getManager(this->emulator);
+    inputManager->resetMappings();
     inputManager->updateAnalogSensitivity();
     inputManager->bindHids();
 
@@ -444,8 +454,6 @@ auto ConfigurationsLayout::load( std::string path ) -> bool {
 
     this->tabWindow->paletteLayout->loadSettings();
 
-    //this->tabWindow->statesLayout->loadSettings();
-
     this->tabWindow->systemLayout->loadSettings();
 
     this->tabWindow->videoLayout->loadSettings();
@@ -453,10 +461,6 @@ auto ConfigurationsLayout::load( std::string path ) -> bool {
     loadSettings();
 
     MediaView::MediaWindow::getView(this->emulator)->loadSettings();
-    
-    auto videoManager = VideoManager::getInstance( this->emulator );    
-    videoManager->colorTableUpdated = false;    
-    videoManager->shader.recreate = true;
     
     return true;
 }
@@ -509,18 +513,19 @@ auto ConfigurationsLayout::loadSettings() -> void {
 
 auto ConfigurationsLayout::translate() -> void {
             
-    settingsControl.load.setText( trans->get("load") );
-    settingsControl.save.setText( trans->get("save") );
-    settingsControl.create.setText( trans->get("create") );
-    settingsControl.remove.setText( trans->get("remove") );
+    settings.control.load.setText( trans->get("load") );
+    settings.control.save.setText( trans->get("save") );
+    settings.control.create.setText( trans->get("create") );
+    settings.control.remove.setText( trans->get("remove") );
     
     settingsFolder.label.setText( trans->get("folder", {}, true) );
     settingsFolder.emptyButton.setText( trans->get("remove") );
     settingsFolder.selectButton.setText( trans->get("select") );
     
-    settingsList.top.activeLabel.setText( trans->get("active configuration", {}, true) );
-    settingsList.top.standardButton.setText( trans->get("default") );
-    settingsList.listView.setHeaderText({trans->get("file"), trans->get("date")});
+    settings.setText( trans->get("settings") );
+    settings.active.activeLabel.setText( trans->get("active setting", {}, true) );
+    settings.active.standardButton.setText( trans->get("default") );
+    settings.listView.setHeaderText({trans->get("file"), trans->get("date")});
     
     stateFolder.label.setText( trans->get("folder", {}, true) );
     stateFolder.emptyButton.setText( trans->get("remove") );
@@ -538,8 +543,11 @@ auto ConfigurationsLayout::translate() -> void {
     stateFast.setText( trans->get("fast_save") );
     stateDirect.setText( trans->get("direct_save") );
     
-    moduleList.setText( 0, 0, trans->get( "configurations" ) ); 
+    moduleList.setText( 0, 0, trans->get( "settings" ) ); 
     moduleList.setText( 1, 0, trans->get( "states" ) );
     
     moduleFrame.setText( trans->get("selection") );
+    
+    if (_settings->get<std::string>( "settings_path", "" ) == "")                    
+        settings.active.fileLabel.setText( trans->get("default") );
 }

@@ -17,7 +17,6 @@ struct TabWindow;
 #include "../config/slider.h"
 #include "layouts/system.h"
 #include "layouts/configurations.h"
-#include "layouts/states.h"
 #include "layouts/border.h"
 #include "layouts/video.h"
 #include "layouts/input.h"
@@ -28,7 +27,7 @@ struct TabWindow;
 
 struct TabWindow : public GUIKIT::Window {
     
-    enum Layout : unsigned { System, Configurations, Control, States, Presentation, Palette, Audio, Firmware, Border, Misc };
+    enum Layout : unsigned { System, Configurations, Control, Presentation, Palette, Audio, Firmware, Border, Misc };
     
     Emulator::Interface* emulator;
     
@@ -41,7 +40,6 @@ struct TabWindow : public GUIKIT::Window {
     BorderLayout* borderLayout = nullptr;
     VideoLayout* videoLayout = nullptr;
     PaletteLayout* paletteLayout = nullptr;
-    StatesLayout* statesLayout = nullptr;
     MiscLayout* miscLayout = nullptr;
     GUIKIT::Settings* settings = nullptr;
 
@@ -49,11 +47,10 @@ struct TabWindow : public GUIKIT::Window {
     
     GUIKIT::Image joystickImage;
     GUIKIT::Image systemImage;
-    GUIKIT::Image configurationsImage;
+    GUIKIT::Image scriptImage;
     GUIKIT::Image memoryImage;
     GUIKIT::Image cropImage;
-    GUIKIT::Image displayImage;
-    GUIKIT::Image scriptImage;    
+    GUIKIT::Image displayImage;    
     GUIKIT::Image paletteImage;
     GUIKIT::Image volumeImage;
 	

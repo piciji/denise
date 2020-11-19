@@ -613,7 +613,9 @@ auto VideoLayout::updateVisibillity() -> void {
     bool crtChecked = base.mode.crtCpu.checked() || base.mode.crtGpu.checked();
     bool crtGpuChecked = base.mode.crtGpu.checked();        
     
-	crt.setEnabled( crtChecked );	
+	crt.setEnabled( crtChecked );
+    hf.setEnabled( crtChecked );
+    
     if (crtChecked) {
         crt.phaseError.slider.setEnabled( crt.phaseError.active.checked() );
         crt.hanoverBars.setEnabled( _pal );

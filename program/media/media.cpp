@@ -538,7 +538,7 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
        
             auto fSetting = FileSetting::getInstance(emulator, _underscore(media->name) );
             if (fSetting)
-                EmuConfigView::TabWindow::getView(emulator)->statesLayout->updateSaveIdent(fSetting->file);            
+                EmuConfigView::TabWindow::getView(emulator)->configurationsLayout->updateSaveIdent(fSetting->file);            
             
             view->setFocused(300);
         };
@@ -1083,7 +1083,7 @@ auto MediaWindow::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* fil
     updateMediaBlock(block, fSetting);  
     
     if (mediaGroup->isDrive())
-        EmuConfigView::TabWindow::getView(emulator)->statesLayout->updateSaveIdent( fSetting->file );
+        EmuConfigView::TabWindow::getView(emulator)->configurationsLayout->updateSaveIdent( fSetting->file );
 }
 
 auto MediaWindow::eject( Emulator::Interface::MediaGroup* mediaGroup ) -> void {
@@ -1490,7 +1490,7 @@ auto MediaWindow::insertFile( MediaGroupLayout::Block* block, std::string filePa
             else
                 emulator->selectListing(block->media, selection);
 
-            EmuConfigView::TabWindow::getView(emulator)->statesLayout->updateSaveIdent( file->getFileName() );
+            EmuConfigView::TabWindow::getView(emulator)->configurationsLayout->updateSaveIdent( file->getFileName() );
             
             if (mediaGroup->isTape())
                 view->updateTapeIcons(Emulator::Interface::TapeMode::Play);

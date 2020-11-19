@@ -696,12 +696,12 @@ auto View::buildMenu() -> void {
 		
 		if(!GUIKIT::Application::isCocoa()) {
             
-			sM.saveState = new GUIKIT::MenuItem;
-			sM.saveState->setIcon( scriptImage );
-			sM.saveState->onActivate = [emuConfigView]() {
-				emuConfigView->show(EmuConfigView::TabWindow::Layout::States);
+			sM.configurations = new GUIKIT::MenuItem;
+			sM.configurations->setIcon( scriptImage );
+			sM.configurations->onActivate = [emuConfigView]() {
+				emuConfigView->show(EmuConfigView::TabWindow::Layout::Configurations);
 			};
-			sM.system->append( *sM.saveState );
+			sM.system->append( *sM.configurations );
 
 			sM.presentation = new GUIKIT::MenuItem;
 			sM.presentation->setIcon( displayImage );
@@ -963,7 +963,7 @@ auto View::translate() -> void {
         if(!GUIKIT::Application::isCocoa()) {
             sysMenu.audio->setText(trans->get("SID"));
             sysMenu.firmware->setText(trans->get("Firmware"));
-            sysMenu.saveState->setText(trans->get("states"));
+            sysMenu.configurations->setText(trans->get("Configurations"));
             sysMenu.presentation->setText(trans->get("Presentation"));
             sysMenu.palette->setText(trans->get("Palette"));
             sysMenu.border->setText(trans->get("Border"));

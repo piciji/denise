@@ -34,6 +34,14 @@ auto Settings::remove(const std::string& ident) -> bool {
     return Vector::eraseVectorElement<Setting*>(list, setting);
 }
 
+auto Settings::clear() -> void {
+    
+    for(auto setting : list)
+        delete setting;    
+    
+    list.clear();
+}
+
 auto Settings::setSaveable( const std::string& ident, bool state ) -> void {
     
     Setting* setting = find( ident );
@@ -173,6 +181,8 @@ auto Settings::load(const std::string& path, unsigned maxFileSize, bool themed) 
 	Setting* setting = nullptr;
 	Setting* parent = nullptr;
 
+    clear();
+    
     while ( fgets(chunk, sizeof(chunk), fp) ) {
         line = chunk;
 

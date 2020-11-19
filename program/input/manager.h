@@ -57,7 +57,7 @@ struct InputMapping {
 };
 
 struct Hotkey {
-    enum Id : unsigned { Pause, Fullscreen, CaptureMouse, DiskSwapper, Software, States,
+    enum Id : unsigned { Pause, Fullscreen, CaptureMouse, DiskSwapper, Software, Configurations,
 		Savestate, Loadstate, IncSlot, DecSlot, ToggleMenu, ToggleStatus, 
 		ToggleSidFilter, SwapSid, DigiBoost, AdjustBiasUp, AdjustBiasDown,
 		PlayTape, RecordTape, StopTape, ForwardTape, RewindTape, ResetTapeCounter,
@@ -163,6 +163,7 @@ struct InputManager {
 	auto setCustomHotkeys() -> void;
 	auto unmapCustomHotkeys() -> void;   
     auto bindHids() -> void;
+    auto resetMappings() -> void;
     
     inline auto updateAndTrigger() -> void;
     inline auto addAndTrigger(InputMapping* newTrigger) -> void;
