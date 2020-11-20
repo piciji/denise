@@ -16,7 +16,7 @@ branches:
     - master
     - appveyor
     - /v\d*\.\d*\.\d*/
-    - optimizations
+    - alternate_settings
   
 environment:
   matrix:
