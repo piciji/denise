@@ -13,13 +13,14 @@ PathsLayout::Block::Block(Emulator::Interface::MediaGroup* mediaGroup) {
 
 PathsLayout::PathsLayout() {            
     setPadding(10);
+    setFont(GUIKIT::Font::system("bold"));
 }
 
 MediaGroupLayout::Block::Header::Header(Emulator::Interface::Media* media) {
     
     deviceName.setFont(GUIKIT::Font::system("bold"));
     inUse.setFont(GUIKIT::Font::system("bold"));
-    if (!media->memoryDump && media->group->selected)
+    if (!media->alternate && media->group->selected)
         append(inUse, {0u, 0u}, 5);
     else
         append(deviceName, {0u, 0u}, 10);
@@ -72,9 +73,9 @@ MediaGroupLayout::Block::Block(Emulator::Interface::Media* media) : media(media)
     append(selector, {~0u, 0u});
 }
 
-MediaGroupLayout::MediaGroupLayout( Emulator::Interface::MediaGroup* mediaGroup, MediaWindow* mediaWindow ) {
+MediaGroupLayout::MediaGroupLayout( Emulator::Interface::MediaGroup* mediaGroup, MediaLayout* mediaLayout ) {
     this->mediaGroup = mediaGroup;
-    this->mediaWindow = mediaWindow;
+    this->mediaLayout = mediaLayout;
     
     setPadding(10);
     setFont(GUIKIT::Font::system("bold"));
@@ -214,14 +215,14 @@ auto MediaGroupLayout::fillListing( std::vector<Emulator::Interface::Listing>& e
     
     listings.reset();
 		
-    for( auto listing : mediaWindow->convertListing( emuListings, false ) )
+    for( auto listing : mediaLayout->convertListing( emuListings, false ) )
         listings.append({listing});									
 	
     if (!globalSettings->get<bool>("software_preview_tooltips", true ))
         return;
         
 	unsigned i = 0;
-	for( auto listing : mediaWindow->convertListing( emuListings, true ) )
+	for( auto listing : mediaLayout->convertListing( emuListings, true ) )
         listings.setRowTooltip(i++, listing);
 
 }
@@ -265,41 +266,30 @@ auto MediaGroupLayout::build() -> void {
         block->layout = this;
 
         auto& header = block->header;
-      //  auto& selector = block->selector;
         
-        if (!media.memoryDump && mediaGroup->selected)
+        if (!media.alternate && mediaGroup->selected)
             radioGroup.push_back( &header.inUse );           
                 
-        if (mediaGroup->expansion) {
-            
-            setJumperSettings( &media );
-            
-//            for(auto& jumper : mediaGroup->expansion->jumpers) {
-//                
-//                auto jumperBox = selector.jumpers[jumper.id];
-//                
-//                std::string saveIdent = media.name + "_jumper_" + jumper.name;
-//                
-//                bool state = mediaWindow->settings->get<bool>( _underscore(saveIdent), false );
-//                
-//                jumperBox->setChecked( state );                                
-//            }
-        }
+        if (mediaGroup->expansion)            
+            setJumperSettings( &media );        
     }
     
     if (radioGroup.size()) {
         GUIKIT::RadioBox::setGroup( radioGroup );
         for (auto block : blocks) {
-            if (mediaGroup->selected == block->media)
+            if (mediaGroup->selected == block->media) {
                 block->header.inUse.setChecked();
+                selectedBlock = block;
+            }
         }
     }
     
-    selectedBlock = blocks[0];
+    if (!selectedBlock)
+        selectedBlock = blocks[0];
     
     append(blockContainer, {~0u, 0u}, 2);
 
-    if ( dynamic_cast<LIBC64::Interface*>(mediaWindow->emulator)) {
+    if ( dynamic_cast<LIBC64::Interface*>(mediaLayout->emulator)) {
 		listings.setHeaderText( { "" } );
 		listings.setHeaderVisible( false );
         listings.colorRowTooltips( true );
@@ -328,7 +318,7 @@ auto MediaGroupLayout::setJumperSettings(Emulator::Interface::Media* media) -> v
 
         std::string saveIdent = media->name + "_jumper_" + jumper.name;
 
-        bool state = mediaWindow->settings->get<bool>(_underscore(saveIdent), false);
+        bool state = mediaLayout->settings->get<bool>(_underscore(saveIdent), false);
 
         jumperBox->setChecked(state);
     }
@@ -336,31 +326,34 @@ auto MediaGroupLayout::setJumperSettings(Emulator::Interface::Media* media) -> v
 
 auto MediaGroupLayout::applyFont(unsigned fontSize) -> void {
 
-    if (mediaWindow->useCustomFont)
+    if (mediaLayout->useCustomFont)
         listings.setFont("C64 Pro, " + std::to_string(fontSize), true);
     else
         listings.setFont(GUIKIT::Font::system(fontSize));     
 }
 
 auto MediaGroupLayout::loadSettings() -> void {
-    
-    if (mediaGroup->expansion) {
+        
+    for (auto& media : mediaGroup->media) {
 
-        for (auto& media : mediaGroup->media) {
-            
-            auto block = getBlock( &media );
-            
+        auto block = getBlock( &media );
+
+        block->listings = {};
+
+        listings.reset();
+
+        if (mediaGroup->expansion) {
             for (auto& pcb : mediaGroup->expansion->pcbs) {
-                
-                if (media.pcbLayout && (media.pcbLayout == &pcb) ) {
-                    block->selector.combo.setSelectionByUserId( pcb.id );
-                }
+                if (media.pcbLayout && (media.pcbLayout == &pcb) )
+                    block->selector.combo.setSelectionByUserId( pcb.id );                
             }
-            
+
             setJumperSettings( &media );
-                              
-            if (mediaGroup->selected && (mediaGroup->selected == &media))
-                 block->header.inUse.setChecked();       
-        }        
+        }
+        
+        if (mediaGroup->selected && (mediaGroup->selected == &media)) {
+             block->header.inUse.setChecked();
+             selectedBlock = block;
+        }       
     }
 }

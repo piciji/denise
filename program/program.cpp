@@ -3,7 +3,6 @@
 #include "view/view.h"
 #include "config/config.h"
 #include "emuconfig/config.h"
-#include "media/media.h"
 #include "config/archiveViewer.h"
 #include "input/manager.h"
 #include "tools/filesetting.h"
@@ -70,10 +69,7 @@ Program::Program() {
 
     InputManager::build();
     view->build();
-    configView->build();
-	
-	for( auto mediaView : mediaViews )
-        mediaView->build();
+    configView->build();	
     
     for( auto emuConfigView : emuConfigViews )
         emuConfigView->build();
@@ -85,7 +81,7 @@ Program::Program() {
 	initAudio();
 	initVideo();
     
-    cmd->autoloadImages();		
+    cmd->autoloadImages();
 }
 
 auto Program::addEmulators() -> void {
@@ -111,8 +107,6 @@ auto Program::addEmulators() -> void {
         inputManagers.push_back( new InputManager( emulator ) );
         
         emuConfigViews.push_back( new EmuConfigView::TabWindow( emulator ) );
-		
-		mediaViews.push_back( new MediaView::MediaWindow( emulator ) );
         
         states.push_back( new States( emulator ) );
         
@@ -233,7 +227,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
         
         for(auto& media : mediaGroup.media) {            
             
-            if (selectedMedia && !media.memoryDump && (selectedMedia != &media) )
+            if (selectedMedia && !media.alternate && (selectedMedia != &media) )
                 // only one media element at a time can be used for this group
                 continue;
             
@@ -254,7 +248,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
             
             emulator->insertMedium(&media, data, file->archiveDataSize(fSetting->id));
             emulator->writeProtect(&media, (file->isArchived() || file->isReadOnly()) ? true : fSetting->writeProtect);
-            MediaView::MediaWindow::getView( activeEmulator )->updateWriteProtection( &media, fSetting->writeProtect );
+            EmuConfigView::TabWindow::getView( activeEmulator )->mediaLayout->updateWriteProtection( &media, fSetting->writeProtect );
             filePool->assign( _ident(emulator, media.name + "store"), file);	           
 
             States::getInstance( activeEmulator )->updateImage( fSetting, &media );
@@ -329,7 +323,7 @@ auto Program::powerOff() -> void {
                     auto file = (GUIKIT::File*)media.guid;
                     // medium was written by emulation, lets update the listing
                     if (file->wasDataChanged() && filePool->has( _ident(activeEmulator, media.name + "store"), file))                        
-                        MediaView::MediaWindow::getView( activeEmulator )->updateListing( &media );
+                        EmuConfigView::TabWindow::getView( activeEmulator )->mediaLayout->updateListing( &media );
                 }                        
                 
                 filePool->assign( _ident(activeEmulator, media.name), nullptr);
@@ -387,11 +381,7 @@ auto Program::willPoll() -> bool {
     isFocused = view->focused();
     
     if( isFocused || configView->focused() )
-        return true;
-    
-    for(auto mediaView : mediaViews)
-        if (mediaView->focused())
-            return true;
+        return true;    
 	
 	for(auto emuConfigView : emuConfigViews)
         if (emuConfigView->focused())

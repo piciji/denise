@@ -26,7 +26,7 @@ TabWindow::TabWindow() {
 }
 
 auto TabWindow::build() -> void {
-    winapi.disableBackgroundRedrawDuringResize();
+    //winapi.disableBackgroundRedrawDuringResize();
     cocoa.keepMenuVisibilityOnDisplay();
 
     GUIKIT::Geometry defaultGeometry = {100, 100, 650, 420};
@@ -125,4 +125,3 @@ auto TabWindow::show(Layout layout) -> void {
 }
 
 }
-

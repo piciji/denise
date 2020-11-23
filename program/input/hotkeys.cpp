@@ -406,7 +406,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             activeEmulator->insertDisk(media, data, file->archiveDataSize(fSetting->id));
             activeEmulator->writeProtectDisk(media, (file->isArchived() || file->isReadOnly()) ? true : fSetting->writeProtect);
             media->guid = uintptr_t(file);
-            MediaView::MediaWindow::getView( activeEmulator )->updateWriteProtection( media, fSetting->writeProtect );
+            EmuConfigView::TabWindow::getView( activeEmulator )->mediaLayout->updateWriteProtection( media, fSetting->writeProtect );
             filePool->assign( _ident(activeEmulator, media->name), file);
             filePool->assign( _ident(activeEmulator, "swapper_" + std::to_string(swapPos)), file);
             filePool->unloadOrphaned();
@@ -605,9 +605,13 @@ auto InputManager::openMenu( Emulator::Interface* emulator, Hotkey::Id id ) -> v
         case Hotkey::Id::Palette:
             configView->showDelayed( EmuConfigView::TabWindow::Layout::Palette ); break;
         case Hotkey::Id::DiskSwapper:
-            MediaView::MediaWindow::getView( emulator )->showDelayed( true ); break;
+            configView->mediaLayout->showDiskSwapper();
+            configView->showDelayed( EmuConfigView::TabWindow::Layout::Media );            
+            break;
         case Hotkey::Id::Software:
-            MediaView::MediaWindow::getView( emulator )->showDelayed(); break;
+            configView->mediaLayout->show();
+            configView->showDelayed( EmuConfigView::TabWindow::Layout::Media );            
+            break;
         case Hotkey::Id::System:
             configView->showDelayed(EmuConfigView::TabWindow::Layout::System); break;
         case Hotkey::Id::Firmware:

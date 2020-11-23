@@ -51,7 +51,7 @@ TabWindow::TabWindow(Emulator::Interface* emulator) {
 }
 
 auto TabWindow::build() -> void {
-    winapi.disableBackgroundRedrawDuringResize();
+    //winapi.disableBackgroundRedrawDuringResize();
     cocoa.keepMenuVisibilityOnDisplay();
     setDroppable();
 	    
@@ -70,6 +70,7 @@ auto TabWindow::build() -> void {
 
     joystickImage.loadPng((uint8_t*)Icons::joystick, sizeof(Icons::joystick));
     systemImage.loadPng((uint8_t*)Icons::system, sizeof(Icons::system));
+    driveImage.loadPng((uint8_t*)Icons::drive, sizeof(Icons::drive));
     scriptImage.loadPng((uint8_t*)Icons::script, sizeof(Icons::script));
     memoryImage.loadPng((uint8_t*)Icons::memory, sizeof(Icons::memory));
     cropImage.loadPng((uint8_t*)Icons::crop, sizeof(Icons::crop));
@@ -79,6 +80,7 @@ auto TabWindow::build() -> void {
 
     inputLayout = new InputLayout( this );
     systemLayout = new SystemLayout( this );
+    mediaLayout = new MediaView::MediaLayout( this );    
     configurationsLayout = new ConfigurationsLayout( this );
     firmwareLayout = new FirmwareLayout( this );
     videoLayout = new VideoLayout( this );
@@ -90,7 +92,10 @@ auto TabWindow::build() -> void {
     borderLayout = new BorderLayout( this );
     miscLayout = new MiscLayout( this );
 
+    mediaLayout->build();
+    
     tab.appendHeader("", systemImage);
+    tab.appendHeader("", driveImage);
     tab.appendHeader("", scriptImage);
 	tab.appendHeader("", joystickImage); 
 	tab.appendHeader("", displayImage);
@@ -103,6 +108,7 @@ auto TabWindow::build() -> void {
     tab.appendHeader("", nullptr);
                                             
     tab.setLayout(Layout::System, *systemLayout, {~0u, ~0u} );
+    tab.setLayout(Layout::Media, *mediaLayout, {~0u, ~0u} );
     tab.setLayout(Layout::Configurations, *configurationsLayout, {~0u, ~0u} );
 	tab.setLayout(Layout::Control, *inputLayout, {~0u, ~0u} );
 	tab.setLayout(Layout::Presentation, *videoLayout, {~0u, ~0u} );
@@ -142,6 +148,8 @@ auto TabWindow::build() -> void {
     onDrop = [&]( std::vector<std::string> files ) {
         if ( tab.selection() == Layout::Firmware )
             firmwareLayout->drop( files[0] );
+        else if ( tab.selection() == Layout::Media )
+            mediaLayout->drop( files[0] );
     };
 
     translate();
@@ -152,6 +160,7 @@ auto TabWindow::translate() -> void {
 
     inputLayout->translate();
     systemLayout->translate();
+    mediaLayout->translate();
     configurationsLayout->translate();
     firmwareLayout->translate();
     borderLayout->translate();
@@ -166,6 +175,7 @@ auto TabWindow::translate() -> void {
 
     tab.setHeader(Layout::Control, trans->get("control"));
     tab.setHeader(Layout::System, trans->get("system"));
+    tab.setHeader(Layout::Media, trans->get("software"));
     tab.setHeader(Layout::Configurations, trans->get("configurations"));
     tab.setHeader(Layout::Firmware, trans->get("firmware"));
     tab.setHeader(Layout::Border, trans->get("border"));
@@ -190,10 +200,16 @@ auto TabWindow::showDelayed(Layout layout) -> void {
 	mtimer.setEnabled();
 }
 
-auto TabWindow::show(Layout layout) -> void {					
-    tab.setSelection( (unsigned)layout );	
+auto TabWindow::show(Layout layout) -> void {
+    setLayout( layout );
     setVisible();
 	setFocused();
+}
+
+auto TabWindow::setLayout(Layout layout) -> void {
+    
+    if ( (unsigned)layout != tab.selection() )
+        tab.setSelection( (unsigned)layout );
 }
 
 auto TabWindow::getView( Emulator::Interface* emulator ) -> TabWindow* {

@@ -10,6 +10,10 @@ struct FirmwareManager;
 #include "../program.h"
 #include "layouts/model.h"
 
+namespace MediaView {
+    struct MediaLayout;
+}
+
 namespace EmuConfigView {
 
 struct TabWindow;
@@ -27,26 +31,28 @@ struct TabWindow;
 
 struct TabWindow : public GUIKIT::Window {
     
-    enum Layout : unsigned { System, Configurations, Control, Presentation, Palette, Audio, Firmware, Border, Misc };
+    enum Layout : unsigned { System, Media, Configurations, Control, Presentation, Palette, Audio, Firmware, Border, Misc };
     
     Emulator::Interface* emulator;
     
-    Message* message;
-    InputLayout* inputLayout = nullptr;
+    Message* message;    
     SystemLayout* systemLayout = nullptr;
+    MediaView::MediaLayout* mediaLayout = nullptr;
     ConfigurationsLayout* configurationsLayout = nullptr;
+    InputLayout* inputLayout = nullptr;
     AudioLayout* audioLayout = nullptr;
     FirmwareLayout* firmwareLayout = nullptr;
     BorderLayout* borderLayout = nullptr;
     VideoLayout* videoLayout = nullptr;
     PaletteLayout* paletteLayout = nullptr;
     MiscLayout* miscLayout = nullptr;
-    GUIKIT::Settings* settings = nullptr;
+    GUIKIT::Settings* settings = nullptr;    
 
     GUIKIT::TabFrameLayout tab;
     
     GUIKIT::Image joystickImage;
     GUIKIT::Image systemImage;
+    GUIKIT::Image driveImage;
     GUIKIT::Image scriptImage;
     GUIKIT::Image memoryImage;
     GUIKIT::Image cropImage;
@@ -60,6 +66,7 @@ struct TabWindow : public GUIKIT::Window {
     auto translate() -> void;
     auto show(Layout layout) -> void;
 	auto showDelayed(Layout layout) -> void;
+    auto setLayout(Layout layout) -> void;
 	static auto getView( Emulator::Interface* emulator ) -> TabWindow*;
 
     TabWindow(Emulator::Interface* emulator);

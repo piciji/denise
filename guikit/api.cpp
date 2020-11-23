@@ -807,6 +807,7 @@ ListView::ListView() : Widget(*new pListView(*this)), p((pListView&)Widget::p) {
 
 auto TreeViewItem::append(TreeViewItem& item) -> void {
     if (_A::dummy) return;
+    item.state.parentTreeViewItem = this;
     state.items.push_back(&item);
     p.append(item);
 }
@@ -814,6 +815,7 @@ auto TreeViewItem::append(TreeViewItem& item) -> void {
 auto TreeViewItem::remove(TreeViewItem& item) -> void {
     if (_A::dummy) return;
     if (Vector::eraseVectorElement<TreeViewItem*>(state.items, &item)) {
+        item.state.parentTreeViewItem = nullptr;
         p.remove(item);
     }
 }

@@ -15,8 +15,6 @@
 #include <cmath>
 #include <cstring>
 
-std::vector<MediaView::MediaWindow*> mediaViews;
-
 namespace MediaView {
 	
 namespace Icons {
@@ -30,45 +28,96 @@ namespace Fonts {
 #include "layout.cpp"
 #include "swapper.cpp"
 
-MediaWindow::MediaWindow(Emulator::Interface* emulator) {
-    this->emulator = emulator;
-    message = new Message(this); 
+MediaLayout::MediaLayout(EmuConfigView::TabWindow* tabWindow) {
+    this->tabWindow = tabWindow;
+    this->emulator = tabWindow->emulator;
+    this->message = tabWindow->message;     
     this->settings = program->getSettings( emulator );
 }
 
-auto MediaWindow::getView( Emulator::Interface* emulator ) -> MediaWindow* {
-	
-	for (auto view : mediaViews) {
-		if (view->emulator == emulator)
-			return view;
-	}
-	return nullptr;
-}
-
-auto MediaWindow::showDelayed(bool diskSwapper) -> void {
-	inputDriver->mUnacquire();
-	mtimer.setInterval(100);
-	
-	mtimer.onFinished = [diskSwapper, this]() {
-		mtimer.setEnabled(false);
-		show(diskSwapper);
-	};
-	mtimer.setEnabled();
-}
-
-auto MediaWindow::show(bool diskSwapper) -> void {		
+auto MediaLayout::show() -> void {		
        
-    setVisible();
-    if (diskSwapper) 
-        tabView.setSelection( tabs.size() - 3 );	
-	setFocused();
+    GUIKIT::TreeViewItem* diskItem = nullptr;
+    
+    if (expansionParent && expansionParent->selected())
+        return;    
+    
+    for(auto& nav : navElements) {
+                
+        if (nav.mediaGroupLayout) {
+            if (nav.tvi->selected())
+                return;
+
+            if (nav.mediaGroupLayout->mediaGroup->isDisk())
+                diskItem = nav.tvi;
+        }        
+    }
+
+    if (diskItem) {
+        diskItem->setSelected();
+        mediaTree.onChange();
+    }
 }
 
-auto MediaWindow::build() -> void {
-    winapi.disableBackgroundRedrawDuringResize();
-    cocoa.keepMenuVisibilityOnDisplay();
-    setDroppable();
+auto MediaLayout::showDiskSwapper() -> void {
     
+    for(auto& nav : navElements) {
+
+        if ( nav.altLayout && (nav.altLayout == swapperLayout) ) {
+            if (!nav.tvi->selected()) {
+                nav.tvi->setSelected();
+                mediaTree.onChange();
+            }
+
+            return;
+        }      
+    }
+}
+
+auto MediaLayout::updateSwitchLayout() -> void {
+    auto item = mediaTree.selected();
+
+    if (!item)
+        return;
+
+    unsigned navPos = (unsigned)item->userData();
+
+    if (expansionParent) {
+        if (navElements[navPos].mediaGroupLayout && navElements[navPos].mediaGroupLayout->mediaGroup->isExpansion()) {
+            if (&imgFolderOpen != this->expansionParent->state.image)
+                expansionParent->setImage(imgFolderOpen);
+        } else
+            if (&imgFolderClosed != this->expansionParent->state.image)
+                expansionParent->setImage(imgFolderClosed);
+    }
+    moduleSwitch.setSelection(navPos);
+}
+
+auto MediaLayout::updateExpansionBootButtonVisibility() -> void {
+    
+    auto item = mediaTree.selected();
+    bool _enabled = false;
+    
+    if (item) {
+        unsigned navPos = (unsigned)item->userData();
+        
+        if (navPos < navElements.size()) {
+            auto& navElement = navElements[navPos];
+
+            if (navElement.mediaGroupLayout && navElement.mediaGroupLayout->mediaGroup->isExpansion())
+                _enabled = true;          
+        }
+    }
+    
+    if (bootCart.enabled() != _enabled) {
+        bootCart.setEnabled( _enabled );
+        deactivateCart.setEnabled( _enabled );
+    }
+}
+
+auto MediaLayout::build() -> void {
+    
+    setMargin(10);
     ftimer.setInterval(150);
 	
 	ftimer.onFinished = [this]() {
@@ -86,58 +135,9 @@ auto MediaWindow::build() -> void {
         font->data = (uint8_t*)Fonts::c64Pro;
         font->size = sizeof(Fonts::c64Pro);	
         font->filePath = program->fontFolder() + "/C64_Pro-STYLE121.ttf";
-        useCustomFont = MediaWindow::addCustomFont( font );
+        useCustomFont = tabWindow->addCustomFont( font );
         ((LIBC64::Interface*) emulator)->convertPetsciiToScreencode( useCustomFont );
-    }
-    
-    GUIKIT::Geometry defaultGeometry = {100, 100, 900, 500};
-    
-    GUIKIT::Geometry geometry = {settings->get<int>("screen_media_x", defaultGeometry.x)
-        ,settings->get<int>("screen_media_y", defaultGeometry.y)
-        ,settings->get<unsigned>("screen_media_width", defaultGeometry.width)
-        ,settings->get<unsigned>("screen_media_height", defaultGeometry.height)
-    };
-    
-    setGeometry( geometry );
-    
-	if (isOffscreen())        
-        setGeometry( defaultGeometry ); 
-	
-	append(tabView);
-		
-	onClose = [this]() {
-        setVisible(false);
-        view->setFocused();
-    };
-
-    onMove = [&]() {
-        if (fullScreen()) return;
-        GUIKIT::Geometry geometry = this->geometry();
-        settings->set<int>( "screen_media_x", geometry.x);
-        settings->set<int>( "screen_media_y", geometry.y);
-    };
-
-    onSize = [&]() {
-        if (fullScreen()) return;
-        GUIKIT::Geometry geometry = this->geometry();
-        settings->set<unsigned>( "screen_media_width", geometry.width);
-        settings->set<unsigned>( "screen_media_height", geometry.height);
-    };
-	
-    onDrop = [this]( std::vector<std::string> files ) {
-        
-		this->drop( files[0] );
-    };
-    
-    tabView.onChange = [this]() {
-        if (fileDialogPtr && fileDialogPtr->visible()) {
-			//message->warning("dialog tab change");
-			resetPreview();
-        }
-    };
-    
-    tabView.setMargin(10);
-	tabView.setPadding(10);
+    }    			 
 
     diskImage.loadPng((uint8_t*) Icons::disk, sizeof (Icons::disk));
     hdImage.loadPng((uint8_t*) Icons::drive, sizeof (Icons::drive));
@@ -148,27 +148,61 @@ auto MediaWindow::build() -> void {
 	pathImage.loadPng((uint8_t*) Icons::folderOpen, sizeof (Icons::folderOpen));       
     swapperImage.loadPng((uint8_t*) Icons::swapper, sizeof (Icons::swapper));
     
-    for( auto& mediaGroup : emulator->mediaGroups ) {            
+    imgFolderOpen.loadPng((uint8_t*)Icons::folderOpen, sizeof(Icons::folderOpen) );
+    imgFolderClosed.loadPng((uint8_t*)Icons::folderClosed, sizeof(Icons::folderClosed) );
+    imgDocument.loadPng((uint8_t*)Icons::document, sizeof(Icons::document) );
         
+    GUIKIT::TreeViewItem* tvi;
+    
+    for( auto& mediaGroup : emulator->mediaGroups ) {            
+        tvi = new GUIKIT::TreeViewItem;
+                
         if ( mediaGroup.isHardDisk() ) {
-            tabView.appendHeader("", hdImage);
+            tvi->setText( "hd" );
+            tvi->setImage( hdImage );            
             
         } else if (mediaGroup.isDisk()) {
-            tabView.appendHeader("", diskImage);
+            tvi->setText( "disk" );
+            tvi->setImage( diskImage );            
+
             
         } else if (mediaGroup.isTape()) {
-            tabView.appendHeader("", tapeImage);
+            tvi->setText( "tape" );
+            tvi->setImage( tapeImage ); 
             
         } else if (mediaGroup.isExpansion()) {
-            cartList.append( {mediaGroup.name} );            
+            if (!expansionParent) {
+                expansionParent = new GUIKIT::TreeViewItem;
+                expansionParent->setExpanded();
+                expansionParent->setText( "expansion" );
+                expansionParent->setImage( imgFolderClosed );
+           //     expansionParent->setImageSelected( imgFolderOpen );
+                expansionParent->setUserData( (uintptr_t)(navElements.size()) );
+                mediaTree.append( *expansionParent );
+            }
+            
+            tvi->setText( "expansion" );
+            tvi->setImage( memoryImage );
+            
+            expansionParent->append( *tvi );
            
 		} else if (mediaGroup.isProgram()) {
-            tabView.appendHeader("", memoryImage);
+            tvi->setText( "memory" );
+            tvi->setImage( memoryImage );
             
-        } else 
+        } else {
+            delete tvi;
             continue;
+        }                                
         
-        MediaGroupLayout* mediaGroupLayout = new MediaGroupLayout( &mediaGroup, this );        
+        if (!mediaGroup.isExpansion())
+            mediaTree.append(*tvi);
+        
+        MediaGroupLayout* mediaGroupLayout = new MediaGroupLayout( &mediaGroup, this );                
+        
+        tvi->setUserData( (uintptr_t)(navElements.size()) );
+        
+        navElements.push_back( { tvi, mediaGroupLayout, nullptr } );
         
         mediaGroupLayout->build( );
         
@@ -178,68 +212,65 @@ auto MediaWindow::build() -> void {
             
             mediaGroupLayout->updateVisibility( counter, true );
         }        
-        
-        if (!mediaGroup.isExpansion()) {
-            mediaGroupLayouts.push_back( mediaGroupLayout );
-            
-            tabs.push_back( getMediaGroupTransIdent(&mediaGroup) );
                 
-            tabView.setLayout(tabs.size() - 1, *mediaGroupLayout, {~0u, ~0u});   
-		} else {
-            cartLayouts.push_back( mediaGroupLayout );
-            carts.setLayout( cartLayouts.size() - 1, *mediaGroupLayout, {~0u, 0u} );
-        }
+        moduleSwitch.setLayout( navElements.size() - 1, *mediaGroupLayout, {~0u, ~0u} );        
         
 		bindSelectorAction( mediaGroupLayout );
-    }             
-        
-    if (cartLayouts.size()) {
-        cartList.setHeaderText( { "" } );
-		cartList.setHeaderVisible( false );        
-        cartSelectorFrame.append( cartList, { GUIKIT::Font::scale(130), GUIKIT::Font::scale(200)}, 10 );
-        cartSelectorFrame.append( bootCart, {0u, 0u}, 10 );
-        cartSelectorFrame.append( deactivateCart, {0u, 0u} );
-        cartSelectorFrame.setPadding(10);
-        cartSelectorFrame.setFont( GUIKIT::Font::system("bold") );
-        
-        tabView.appendHeader("", expansionImage); 
-        tabs.push_back( "cartridges" );    
-        tabView.setLayout(tabs.size() - 1, cartWrapper, {~0u, 0u});       
-        cartWrapper.append( cartSelectorFrame, {0u, 0u}, 10 );
-        cartWrapper.append( carts, {~0u, ~0u} );
-                
-        cartList.setSelection(0);
-        
-        cartList.onChange = [this]() {
-            
-            if (!cartList.selected())
-                return;
-            
-            carts.setSelection( cartList.selection() );
-        };
     }
     
-    tabView.appendHeader("", swapperImage); 
-    swapperLayout = new SwapperLayout(this);
-    tabs.push_back("disk_swapper");
-    tabView.setLayout(tabs.size() - 1, *swapperLayout, {~0u, ~0u});
+    moduleFrame.append( mediaTree, { GUIKIT::Font::scale(160), GUIKIT::Font::scale(250)}, 10 );
+    moduleFrame.append( bootCart, {0u, 0u}, 10 );
+    moduleFrame.append( deactivateCart, {0u, 0u} );
+    moduleFrame.setPadding(10);
+    moduleFrame.setFont(GUIKIT::Font::system("bold"));
     
-    tabView.appendHeader("", addImage); 
-    tabs.push_back("create");    
-    prepareCreator();
-    tabView.setLayout(tabs.size() - 1, creatorLayout, {~0u, 0u});  
+    append( moduleFrame, {0u, 0u}, 10 );    
+    append( moduleSwitch, {~0u, ~0u} );
     
-    tabView.appendHeader("", pathImage); 
-    tabs.push_back("paths");
-    preparePaths();        
-    tabView.setLayout(tabs.size() - 1, pathsLayout, {~0u, 0u});
+    mediaTree.items()[0]->setSelected();
+    
+    mediaTree.onChange = [this]() {
+
+        if (fileDialogPtr && fileDialogPtr->visible()) {
+			//message->warning("dialog tab change");
+			resetPreview();
+        }
         
-    tabView.setSelection(0);	
+        updateSwitchLayout();
+        updateExpansionBootButtonVisibility();
+    };
+        
+    tvi = new GUIKIT::TreeViewItem;
+    tvi->setText( "disk_swapper" );
+    tvi->setImage( swapperImage );    
+    mediaTree.append(*tvi);    
+    swapperLayout = new SwapperLayout(this);
+    moduleSwitch.setLayout( navElements.size(), *swapperLayout, {~0u, ~0u} );    
+    tvi->setUserData( (uintptr_t)(navElements.size() ) );
+    navElements.push_back( { tvi, nullptr, (Layout*)swapperLayout } );
+    
+    tvi = new GUIKIT::TreeViewItem;
+    tvi->setText( "create" );
+    tvi->setImage( addImage );    
+    mediaTree.append(*tvi);    
+    prepareCreator();
+    moduleSwitch.setLayout( navElements.size(), creatorLayout, {~0u, ~0u} );    
+    tvi->setUserData( (uintptr_t)(navElements.size() ) );
+    navElements.push_back( { tvi, nullptr, (Layout*)&creatorLayout } );
+    
+    tvi = new GUIKIT::TreeViewItem;
+    tvi->setText( "paths" );
+    tvi->setImage( imgDocument );    
+    mediaTree.append(*tvi);    
+    preparePaths();
+    moduleSwitch.setLayout( navElements.size(), pathsLayout, {~0u, ~0u} );    
+    tvi->setUserData( (uintptr_t)(navElements.size() ) );
+    navElements.push_back( { tvi, nullptr, (Layout*)&pathsLayout } );
 	
     translate();
 }
 
-auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
+auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
 	
     auto mediaGroup = layout->mediaGroup;
         
@@ -344,10 +375,15 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
                     applyPreviewFont( globalSettings->get<unsigned>("dialog_software_preview_fontsize", 11, {6, 14}) );
                     fileDialogPtr->setContentViewWidth( globalSettings->get<unsigned>("dialog_software_preview_width", 450, {200, 600}) );
                     fileDialogPtr->setContentViewHeight( globalSettings->get<unsigned>("dialog_software_preview_height", 200, {100, 600}) );
-                    
-                    fileDialogPtr->setContentViewBackground(mediaGroupLayouts[0]->listings.backgroundColor());
-                    fileDialogPtr->setContentViewForeground(mediaGroupLayouts[0]->listings.foregroundColor());
-                    fileDialogPtr->setContentViewColorTooltips(true);
+
+                    for (auto& nav : navElements) {
+                        if (nav.mediaGroupLayout && nav.mediaGroupLayout->mediaGroup->isDisk()) {
+                            fileDialogPtr->setContentViewBackground(nav.mediaGroupLayout->listings.backgroundColor());
+                            fileDialogPtr->setContentViewForeground(nav.mediaGroupLayout->listings.foregroundColor());
+                            fileDialogPtr->setContentViewColorTooltips(true);
+                            break;
+                        }
+                    }
                 }
 				
                 fileDialogPtr->setCallbacks( [this, block](std::string filePath, unsigned selection) {
@@ -402,7 +438,7 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
 				
 				if (mediaGroup->isTape())
 					view->updateTapeIcons();
-				
+                
 				filePool->assign( _ident(emulator, media->name + "store"), nullptr);
                 filePool->unloadOrphaned();
 
@@ -427,7 +463,7 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
                 
                 layout->selectedBlock = block;
                 
-                if (layout->mediaGroup->selected && !block->media->memoryDump) {
+                if (layout->mediaGroup->selected && !block->media->alternate) {
                     layout->mediaGroup->selected = block->media;
                     settings->set<unsigned>( _underscore(layout->mediaGroup->name) + "_selected", block->media->id);
                     block->header.inUse.setChecked();
@@ -564,18 +600,22 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
     
     bootCart.onActivate = [this]() {
         
-        unsigned selection = 0;
+        auto selectedItem = mediaTree.selected();
         
-        if (cartList.selected())
-            selection = cartList.selection();        
+        if (!selectedItem)
+            return;
         
-        if ( selection >= cartLayouts.size() )
-            selection = 0;
+        auto navPos = (unsigned)selectedItem->userData();
         
-        auto layout = cartLayouts[selection];
+        if (navPos >= navElements.size())
+            return;
         
-        EmuConfigView::TabWindow::getView(this->emulator)->systemLayout
-            ->setExpansion( layout->mediaGroup->expansion );
+        auto& navElement = navElements[navPos];
+        
+        if (!navElement.mediaGroupLayout || !navElement.mediaGroupLayout->mediaGroup->isExpansion())
+            return;
+        
+        tabWindow->systemLayout->setExpansion( navElement.mediaGroupLayout->mediaGroup->expansion );
         
         program->power( emulator );
         
@@ -584,8 +624,7 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
     
     deactivateCart.onActivate = [this]() {        
         
-        EmuConfigView::TabWindow::getView(this->emulator)->systemLayout
-            ->setExpansion( nullptr );
+        tabWindow->systemLayout->setExpansion( nullptr );
         
         program->power( emulator );
         
@@ -593,7 +632,7 @@ auto MediaWindow::bindSelectorAction(MediaGroupLayout* layout) -> void {
     };
 }
 
-auto MediaWindow::createImage( Emulator::Interface::MediaGroup* mediaGroup ) -> void {
+auto MediaLayout::createImage( Emulator::Interface::MediaGroup* mediaGroup ) -> void {
 
     if (mediaGroup->isExpansion()) {
         if (mediaGroup->expansion->isFlash()) {
@@ -649,7 +688,7 @@ auto MediaWindow::createImage( Emulator::Interface::MediaGroup* mediaGroup ) -> 
         goto Done; //internal error
     
     filePath = GUIKIT::BrowserWindow()
-        .setWindow(*this)
+        .setWindow(*this->tabWindow)
         .setTitle(trans->get( "blank_" + title ))
         .setPath(preselectPath( mediaGroup->name ))
         .setFilters({GUIKIT::BrowserWindow::transformFilter( trans->get( title ), {suffix}), trans->get("all_files")})
@@ -726,7 +765,7 @@ auto MediaWindow::createImage( Emulator::Interface::MediaGroup* mediaGroup ) -> 
             delete[] data;                   
 }
 
-auto MediaWindow::prepareCreator() -> void {
+auto MediaLayout::prepareCreator() -> void {
 
     for (auto& mediaGroup : emulator->mediaGroups) {
 		Emulator::Interface::MediaGroup* group = &mediaGroup;
@@ -788,7 +827,7 @@ auto MediaWindow::prepareCreator() -> void {
     }
 }
 
-auto MediaWindow::preparePaths() -> void {
+auto MediaLayout::preparePaths() -> void {
     
     for (auto& mediaGroup : emulator->mediaGroups) {
         
@@ -808,7 +847,7 @@ auto MediaWindow::preparePaths() -> void {
             auto path = GUIKIT::BrowserWindow()
                 .setTitle(trans->get(title))
 				.setPath( settings->get<std::string>(settingFolderIdent, "") )
-                .setWindow(*this)
+                .setWindow(*this->tabWindow)
                 .directory();
 
             if (!path.empty()) {
@@ -826,7 +865,7 @@ auto MediaWindow::preparePaths() -> void {
     }
 }
 
-auto MediaWindow::updateMediaBlock(MediaGroupLayout::Block* block, FileSetting* fSetting) -> void {
+auto MediaLayout::updateMediaBlock(MediaGroupLayout::Block* block, FileSetting* fSetting) -> void {
 
     block->selector.edit.setText( fSetting->path );
     block->header.fileName.setText( fSetting->file );
@@ -834,7 +873,7 @@ auto MediaWindow::updateMediaBlock(MediaGroupLayout::Block* block, FileSetting* 
     updateWriteProtection( block->media, fSetting->writeProtect );
 }
 
-auto MediaWindow::updateListing( Emulator::Interface::Media* media ) -> void {    
+auto MediaLayout::updateListing( Emulator::Interface::Media* media ) -> void {    
     
     auto mediaGroupLayout = getMediaGroupLayout( media->group );
     
@@ -858,7 +897,7 @@ auto MediaWindow::updateListing( Emulator::Interface::Media* media ) -> void {
     }
 }
 
-auto MediaWindow::preselectPath( std::string& groupName ) -> std::string {
+auto MediaLayout::preselectPath( std::string& groupName ) -> std::string {
 	
 	auto baseFolderIdent = _underscore(groupName) + "_folder";    
 
@@ -870,38 +909,42 @@ auto MediaWindow::preselectPath( std::string& groupName ) -> std::string {
 	return path;
 }
 
-auto MediaWindow::savePath( std::string& groupName, std::string path ) -> void {
+auto MediaLayout::savePath( std::string& groupName, std::string path ) -> void {
 	
 	auto baseFolderIdent = _underscore(groupName) + "_folder";
 	
 	settings->set<std::string>(baseFolderIdent + "_auto", path);
 }
 
-auto MediaWindow::translate() -> void {
-    
-    unsigned i = 0;
-	
-	setTitle( trans->get("software") + " - " + emulator->ident );
-    for(auto& tab : tabs)
-        tabView.setHeader(i++, trans->get(tab));
-    
-    i = 0;
-    cartSelectorFrame.setText( trans->get("cartridges") );   
+auto MediaLayout::translate() -> void {
+
+    pathsLayout.setText( trans->get("paths") );
+    moduleFrame.setText( trans->get("selection") );   
     bootCart.setText( trans->get("boot cartridge") );
     deactivateCart.setText( trans->get("deactivate cartridge") );
-
-    for( auto mediaGroupLayout : GUIKIT::Vector::concat(mediaGroupLayouts, cartLayouts) ) {
+    if (expansionParent)
+        expansionParent->setText( trans->get("cartridges") );
+    
+    for(auto& nav : navElements) {
+        if (nav.mediaGroupLayout) {
+            nav.tvi->setText( trans->get( getMediaGroupTransIdent( nav.mediaGroupLayout->mediaGroup ) ) );
+            
+        } else if ( dynamic_cast<SwapperLayout*>(nav.altLayout))
+            nav.tvi->setText( trans->get( "disk_swapper" ) );
+        else if ( dynamic_cast<PathsLayout*>(nav.altLayout))
+            nav.tvi->setText( trans->get( "paths" ) );
+        else if ( nav.altLayout == &creatorLayout )
+            nav.tvi->setText( trans->get( "create" ) );
         
-        auto mediaGroup = mediaGroupLayout->mediaGroup;
+        if (!nav.mediaGroupLayout)
+            continue;
         
-        mediaGroupLayout->setText( trans->get( mediaGroup->name + "_insert") );
-        mediaGroupLayout->inject.setText( trans->get("program_inject") );
+        auto mediaGroup = nav.mediaGroupLayout->mediaGroup;
         
-        if (mediaGroup->isExpansion()) {
-            cartList.setText( i++, 0, trans->get( mediaGroup->name ) ); 
-        }
-
-        for ( auto block : mediaGroupLayout->blocks ) {
+        nav.mediaGroupLayout->setText( trans->get( mediaGroup->name + "_insert") );
+        nav.mediaGroupLayout->inject.setText( trans->get("program_inject") );
+        
+        for ( auto block : nav.mediaGroupLayout->blocks ) {
             block->header.writeprotect.setText(trans->get("write_protected"));
             block->header.eject.setText(trans->get("eject"));
             block->header.deviceName.setText( trans->get( block->media->name, {}, true ) );            
@@ -928,9 +971,9 @@ auto MediaWindow::translate() -> void {
                     jumperBox->setText( trans->get( jumper.name ) );
                 }        
             }
-        }        
+        }  
     }
-    
+        
     if (diskCreatorLayout) {        
         diskCreatorLayout->setText( trans->get("disc_creator") );
 
@@ -981,7 +1024,7 @@ auto MediaWindow::translate() -> void {
     swapperLayout->translate();
 }
 
-auto MediaWindow::getMediaGroupTransIdent( Emulator::Interface::MediaGroup* mediaGroup ) -> std::string {
+auto MediaLayout::getMediaGroupTransIdent( Emulator::Interface::MediaGroup* mediaGroup ) -> std::string {
     auto ident = mediaGroup->name;
     
     if (mediaGroup->isDrive() || mediaGroup->isProgram())
@@ -990,7 +1033,7 @@ auto MediaWindow::getMediaGroupTransIdent( Emulator::Interface::MediaGroup* medi
     return ident;
 }
 
-auto MediaWindow::showC64Listing( MediaGroupLayout* layout ) -> bool {
+auto MediaLayout::showC64Listing( MediaGroupLayout* layout ) -> bool {
     
     if ( !dynamic_cast<LIBC64::Interface*>(emulator) )
         return false;
@@ -1003,7 +1046,7 @@ auto MediaWindow::showC64Listing( MediaGroupLayout* layout ) -> bool {
     return false;
 }
 
-auto MediaWindow::insertImage(Emulator::Interface::Media* media, GUIKIT::File* file, GUIKIT::File::Item* item) -> void {
+auto MediaLayout::insertImage(Emulator::Interface::Media* media, GUIKIT::File* file, GUIKIT::File::Item* item) -> void {
     
     auto layout = getMediaGroupLayout( media->group );
     
@@ -1019,7 +1062,7 @@ auto MediaWindow::insertImage(Emulator::Interface::Media* media, GUIKIT::File* f
     }        
 }
 
-auto MediaWindow::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* file, GUIKIT::File::Item* item ) -> void {
+auto MediaLayout::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* file, GUIKIT::File::Item* item ) -> void {
    
     if (!block)
         return;
@@ -1062,7 +1105,7 @@ auto MediaWindow::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* fil
     if (mediaGroup->isTape())
         view->updateTapeIcons();
     
-    if (mediaGroup->selected && !media->memoryDump && !block->header.inUse.checked() ) {
+    if (mediaGroup->selected && !media->alternate && !block->header.inUse.checked() ) {
         block->header.inUse.setChecked();
         block->header.inUse.onActivate();
     }
@@ -1086,120 +1129,72 @@ auto MediaWindow::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* fil
         EmuConfigView::TabWindow::getView(emulator)->configurationsLayout->updateSaveIdent( fSetting->file );
 }
 
-auto MediaWindow::eject( Emulator::Interface::MediaGroup* mediaGroup ) -> void {
+auto MediaLayout::eject( Emulator::Interface::MediaGroup* mediaGroup, bool alternateOnly ) -> void {
     
     auto layout = getMediaGroupLayout( mediaGroup );
     
-    for( auto block : layout->blocks)
-        block->header.eject.onActivate();     
+    for( auto block : layout->blocks) {
+        
+        if (!alternateOnly || block->media->alternate)
+            block->header.eject.onActivate();
+    }
 }
 
-auto MediaWindow::getMediaGroupLayout( Emulator::Interface::MediaGroup* mediaGroup ) -> MediaGroupLayout* {
+auto MediaLayout::getMediaGroupLayout( Emulator::Interface::MediaGroup* mediaGroup ) -> MediaGroupLayout* {
     
-    for (auto layout : GUIKIT::Vector::concat(mediaGroupLayouts, cartLayouts) ) {
+    for (auto& nav : navElements) {
         
-        if (layout->mediaGroup == mediaGroup)
-            return layout;
+        if (nav.mediaGroupLayout && (nav.mediaGroupLayout->mediaGroup == mediaGroup))
+            return nav.mediaGroupLayout;
     }
     
     return nullptr;
 }
 
-auto MediaWindow::showMediaGroupLayout( Emulator::Interface::MediaGroup* mediaGroup ) -> void {
+auto MediaLayout::showMediaGroupLayout( Emulator::Interface::MediaGroup* mediaGroup ) -> void {
     
-    unsigned i = 0;
-    
-    for(auto layout : mediaGroupLayouts) {
-        
-        if (layout->mediaGroup == mediaGroup) {
-            
-            if (tabView.selection() != i) {
-                tabView.setSelection( i );
-            }
-            return;
+    for (auto& nav : navElements) {
+        if (nav.mediaGroupLayout && (nav.mediaGroupLayout->mediaGroup == mediaGroup)) {
+            nav.tvi->setSelected();
+            updateSwitchLayout();
+            updateExpansionBootButtonVisibility();
+            break;
         }
-        
-        i++;
-    }
-    
-    unsigned j = 0;
-    
-    for(auto layout : cartLayouts) {
-        
-        if (layout->mediaGroup == mediaGroup) {
-            tabView.setSelection( i );
-            cartList.setSelection( j );
-            cartList.onChange();
-            return;
-        }
-        
-        j++;
     }
 }
 
-auto MediaWindow::getActiveLayout() -> MediaGroupLayout* {
+auto MediaLayout::getActiveLayout() -> MediaGroupLayout* {
 
-    unsigned i = 0;
-
-    for (auto layout : mediaGroupLayouts) {
-        
-        if (tabView.selection() == i)
-            return layout;
-                
-        i++;
+    auto itemSelected = mediaTree.selected();
+    
+    if (itemSelected) {
+        unsigned navPos = (unsigned)itemSelected->userData();
+        if (navPos < navElements.size())
+            return navElements[navPos].mediaGroupLayout;            
     }
-    
-    i = 0;
-    
-    if (cartList.selected())
-        for(auto layout : cartLayouts) {
-
-            if(cartList.selection() == i)
-                return layout;
-
-            i++;
-        }
     
     return nullptr;
 }
 
-auto MediaWindow::colorListing( unsigned color, bool foreground ) -> void {	
-    for(auto layout : mediaGroupLayouts) {
-        if (foreground)
-            layout->listings.setForegroundColor( color );
-        else
-            layout->listings.setBackgroundColor( color );
-    }    	
-	
-    if (!foreground) {
-        auto layout = getActiveLayout();
-        if (layout) {
-            layout->listings.setVisible(false);
-            layout->listings.setVisible();
+auto MediaLayout::colorListing( unsigned color, bool foreground ) -> void {	
+    
+    for (auto& nav : navElements) {
+        if (nav.mediaGroupLayout && showC64Listing( nav.mediaGroupLayout ) ) {
+            if (foreground)
+                nav.mediaGroupLayout->listings.setForegroundColor( color );
+            else
+                nav.mediaGroupLayout->listings.setBackgroundColor( color );            
         }
-    }
-        
+    }	
 }
 
-auto MediaWindow::drop( std::string filePath, MediaGroupLayout::Block* block ) -> void {    
+auto MediaLayout::drop( std::string filePath, MediaGroupLayout::Block* block ) -> void {    
     
     MediaGroupLayout* layout = nullptr;
     Emulator::Interface::MediaGroup* mediaGroup;
     
-    if (!block) {
-        unsigned pos = tabView.selection();
-        
-        if (pos < mediaGroupLayouts.size()) {
-            layout = mediaGroupLayouts[ pos ];    
-            
-        } else if (pos == mediaGroupLayouts.size()) {
-            
-             pos = cartList.selection();
-             
-             if (pos < cartLayouts.size()) {
-                 layout = cartLayouts[ pos ];    
-             }
-        }
+    if (!block) {        
+        layout = getActiveLayout();
         
         if (!layout)
             return;
@@ -1237,7 +1232,7 @@ auto MediaWindow::drop( std::string filePath, MediaGroupLayout::Block* block ) -
     archiveViewer->setView(items);
 }
 
-auto MediaWindow::updateVisibility( Emulator::Interface::MediaGroup* mediaGroup, unsigned count) -> void {
+auto MediaLayout::updateVisibility( Emulator::Interface::MediaGroup* mediaGroup, unsigned count) -> void {
     
     auto layout = getMediaGroupLayout( mediaGroup );
     
@@ -1247,7 +1242,7 @@ auto MediaWindow::updateVisibility( Emulator::Interface::MediaGroup* mediaGroup,
     layout->updateVisibility( count );
 }
 
-auto MediaWindow::updateWriteProtection( Emulator::Interface::Media* media, bool state ) -> void {
+auto MediaLayout::updateWriteProtection( Emulator::Interface::Media* media, bool state ) -> void {
             
     bool enabled = false;
     
@@ -1284,7 +1279,7 @@ auto MediaWindow::updateWriteProtection( Emulator::Interface::Media* media, bool
     }
 }
 
-auto MediaWindow::updateJumper(Emulator::Interface::Media* media) -> void {
+auto MediaLayout::updateJumper(Emulator::Interface::Media* media) -> void {
     
     auto layout = getMediaGroupLayout(media->group);
     
@@ -1316,7 +1311,7 @@ auto MediaWindow::updateJumper(Emulator::Interface::Media* media) -> void {
     }    
 }
 
-auto MediaWindow::previewFile( std::string filePath, MediaGroupLayout::Block* block ) -> std::vector<GUIKIT::BrowserWindow::Listing> {
+auto MediaLayout::previewFile( std::string filePath, MediaGroupLayout::Block* block ) -> std::vector<GUIKIT::BrowserWindow::Listing> {
     
     MediaGroupLayout* layout = nullptr;
     
@@ -1386,12 +1381,15 @@ auto MediaWindow::previewFile( std::string filePath, MediaGroupLayout::Block* bl
         goto clearList;   
     
     layout = getMediaGroupLayout( group );
-    convertedListings = convertListing( listings );
-    
-    layout->fillListing( convertedListings );
+    convertedListings = convertListing( listings );        
     
     if (!block)
         block = layout->getBlock( group->selected ? group->selected : &group->media[0] );
+    
+    if (lastPreview.block && (lastPreview.block != block))
+        resetPreview();
+    
+    layout->fillListing( convertedListings );
     
     if (!lastPreview.block) {
         block->header.fileName.setText( trans->get("Preview") );
@@ -1404,17 +1402,21 @@ auto MediaWindow::previewFile( std::string filePath, MediaGroupLayout::Block* bl
     showMediaGroupLayout( group );
 	
     if (*alternateFileDialog) {
-        if ( !visible() ) {
-            setVisible();
+        tabWindow->setLayout( EmuConfigView::TabWindow::Layout::Media );
+        
+        if ( !tabWindow->visible() ) {
+            tabWindow->setVisible();
+            tabWindow->setFocused();
             ftimer.setEnabled();
-        } else if ( minimized() ) {
-            restore(); 
+        } else if ( tabWindow->minimized() ) {
+            tabWindow->restore();            
             ftimer.setEnabled();
-        } else if ( GUIKIT::Application::isWinApi() && !focused() && view->fullScreen() ) {
-            setForeground();
+        } else if ( GUIKIT::Application::isWinApi() && !tabWindow->focused() && view->fullScreen() ) {
+            tabWindow->setForeground();
             if (fileDialogPtr && fileDialogPtr->visible())
                 fileDialogPtr->setForeground();
-        }
+        } else
+            tabWindow->setFocused();
     }
     
     return convertedListings;
@@ -1426,31 +1428,34 @@ auto MediaWindow::previewFile( std::string filePath, MediaGroupLayout::Block* bl
     return {};
 }
 
-auto MediaWindow::resetPreview( bool light ) -> void {
+auto MediaLayout::resetPreview( bool light ) -> void {
     
-    for(auto layout : mediaGroupLayouts) {
+    for (auto& nav : navElements) {
+    
+        if (!nav.mediaGroupLayout)
+            continue;
         
-        if (!showC64Listing(layout))
+        if (!showC64Listing( nav.mediaGroupLayout ))
             continue;
         
         if (!light)
-            layout->updateListing( layout->selectedBlock ); 
+            nav.mediaGroupLayout->updateListing( nav.mediaGroupLayout->selectedBlock ); 
         
-        for (auto block : layout->blocks) {
+        for (auto block : nav.mediaGroupLayout->blocks) {
             
             if (block->header.fileName.overrideForegroundColor()) {
                 auto fSetting = FileSetting::getInstance( emulator, _underscore(block->media->name) );
                 block->header.fileName.setText( fSetting ? fSetting->file : "" );
                 block->header.fileName.setFont( GUIKIT::Font::system() );
                 block->header.fileName.resetForegroundColor();                
-            }            
+            }
         }
     }   
     
     lastPreview.block = nullptr;
 }
 
-auto MediaWindow::insertFile( MediaGroupLayout::Block* block, std::string filePath, bool autoLoad, unsigned selection ) -> bool {
+auto MediaLayout::insertFile( MediaGroupLayout::Block* block, std::string filePath, bool autoLoad, unsigned selection ) -> bool {
     
     GUIKIT::File* file = filePool->get(filePath);
     if (!file)
@@ -1505,7 +1510,7 @@ auto MediaWindow::insertFile( MediaGroupLayout::Block* block, std::string filePa
 
 #define HideMouseIfWasBefore if (mIsAcquiredBefore && !inputDriver->mIsAcquired() && view->fullScreen() && fileDialogPtr && fileDialogPtr->detached()) inputDriver->mAcquire();
 
-auto MediaWindow::anyLoad( bool mIsAcquiredBefore ) -> void {
+auto MediaLayout::anyLoad( bool mIsAcquiredBefore ) -> void {
     
     if (fileDialogPtr) {
         fileDialogPtr->close();
@@ -1538,9 +1543,15 @@ auto MediaWindow::anyLoad( bool mIsAcquiredBefore ) -> void {
         fileDialogPtr->setContentViewWidth( globalSettings->get<unsigned>("dialog_software_preview_width", 450, {200, 600}) );
         fileDialogPtr->setContentViewHeight( globalSettings->get<unsigned>("dialog_software_preview_height", 200, {100, 600}) );
         
-        fileDialogPtr->setContentViewBackground(mediaGroupLayouts[0]->listings.backgroundColor());
-        fileDialogPtr->setContentViewForeground(mediaGroupLayouts[0]->listings.foregroundColor());
-        fileDialogPtr->setContentViewColorTooltips(true);
+        for(auto& nav : navElements) {
+            if (nav.mediaGroupLayout && nav.mediaGroupLayout->mediaGroup->isDisk()) {
+                fileDialogPtr->setContentViewBackground( nav.mediaGroupLayout->listings.backgroundColor() );
+                fileDialogPtr->setContentViewForeground( nav.mediaGroupLayout->listings.foregroundColor() );
+                fileDialogPtr->setContentViewColorTooltips(true);
+                break;
+            }
+        }
+        
     }
 	
     fileDialogPtr->setTitle(trans->get("select image"));
@@ -1619,7 +1630,7 @@ auto MediaWindow::anyLoad( bool mIsAcquiredBefore ) -> void {
         inputDriver->mAcquire();
 }
 
-auto MediaWindow::convertListing( std::vector<Emulator::Interface::Listing>& emuListings, bool loadCommand ) -> std::vector<std::string> {
+auto MediaLayout::convertListing( std::vector<Emulator::Interface::Listing>& emuListings, bool loadCommand ) -> std::vector<std::string> {
 
     std::vector<std::string> list;
     
@@ -1642,7 +1653,7 @@ auto MediaWindow::convertListing( std::vector<Emulator::Interface::Listing>& emu
     return list;
 }
 
-auto MediaWindow::convertListing( std::vector<Emulator::Interface::Listing>& emuListings ) -> std::vector<GUIKIT::BrowserWindow::Listing> {
+auto MediaLayout::convertListing( std::vector<Emulator::Interface::Listing>& emuListings ) -> std::vector<GUIKIT::BrowserWindow::Listing> {
 
     std::vector<GUIKIT::BrowserWindow::Listing> list;
     
@@ -1686,31 +1697,29 @@ auto MediaWindow::convertListing( std::vector<Emulator::Interface::Listing>& emu
     return list;
 }
 
-auto MediaWindow::updateListingFont( unsigned fontSize ) -> void {
+auto MediaLayout::updateListingFont( unsigned fontSize ) -> void {
     
     if ( !dynamic_cast<LIBC64::Interface*>(emulator)) 
         return;
     
-    for(auto layout : mediaGroupLayouts) {
-        
-        layout->applyFont( fontSize );
+    for(auto& nav : navElements) {
+        if (nav.mediaGroupLayout)
+            nav.mediaGroupLayout->applyFont( fontSize );
     }
 }
 
-auto MediaWindow::updateListings( ) -> void {
+auto MediaLayout::updateListings( ) -> void {
     
     if ( !dynamic_cast<LIBC64::Interface*>(emulator)) 
         return;
     
-    for(auto layout : mediaGroupLayouts) {
-        
-        if ( showC64Listing( layout ) )
-            layout->updateListing( layout->selectedBlock );
+    for(auto& nav : navElements) {
+        if (nav.mediaGroupLayout && showC64Listing( nav.mediaGroupLayout ) )
+            nav.mediaGroupLayout->updateListing( nav.mediaGroupLayout->selectedBlock );
     }
 }
 
-
-auto MediaWindow::applyPreviewFont(unsigned fontSize) -> void {
+auto MediaLayout::applyPreviewFont(unsigned fontSize) -> void {
 
     if (useCustomFont)
         fileDialogPtr->setContentViewFont("C64 Pro, " + std::to_string(fontSize), true);
@@ -1718,9 +1727,14 @@ auto MediaWindow::applyPreviewFont(unsigned fontSize) -> void {
         fileDialogPtr->setContentViewFont(GUIKIT::Font::system(fontSize));     
 }
 
-auto MediaWindow::loadSettings() -> void {
+auto MediaLayout::loadSettings() -> void {
     
-    for(auto layout : GUIKIT::Vector::concat(mediaGroupLayouts, cartLayouts)) {
+    for(auto& nav : navElements) {
+        
+        if (!nav.mediaGroupLayout)
+            continue;
+        
+        auto layout = nav.mediaGroupLayout;
         
         layout->loadSettings();
         
@@ -1743,26 +1757,24 @@ auto MediaWindow::loadSettings() -> void {
             updateMediaBlock(block, fSetting);
 
             if ( showC64Listing( layout ) ) {
-                if (mediaGroup->isDisk() || mediaGroup->isProgram()) {
+                
+                GUIKIT::File* file = filePool->get(fSetting->path);
+                uint8_t* data;
+               
+                if (program->loadImageDataWhenOk(file, fSetting->id, mediaGroup, data)) {
+                    filePool->assign(_ident(emulator, block->media->name + "store"), file);
+                    emulator->insertMedium(block->media, data, file->archiveDataSize(fSetting->id));
+                    block->listings = emulator->getListing(block->media);
 
-                    GUIKIT::File* file = filePool->get(fSetting->path);
-                    uint8_t* data;
+                    if (mediaGroup->selected) {
+                        if (mediaGroup->selected == block->media)
+                            layout->updateListing(block);
 
-                    if (program->loadImageDataWhenOk(file, fSetting->id, mediaGroup, data)) {
-
-                        if (mediaGroup->isDisk()) {
-                            block->listings = emulator->getDiskPreview(data, file->archiveDataSize(0), block->media);
-                            if (block->media->id == 0)
-                                layout->updateListing( block );
-                        } else {
-                            block->listings = emulator->getProgramPreview(data, file->archiveDataSize(0));
-                            if (mediaGroup->selected == block->media)
-                                layout->updateListing( block );	
-                        }
-                    }                
-                }  
+                    } else if (block->media->id == 0)
+                        layout->updateListing(block);
+                }
             }
-        }   
+        }
     }
     
     swapperLayout->loadSettings();
@@ -1779,4 +1791,3 @@ auto PathsLayout::getBlock(Emulator::Interface::MediaGroup* mediaGroup) -> Paths
 }
 
 }
-

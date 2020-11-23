@@ -108,7 +108,7 @@ FirmwareLayout::FirmwareLayout(TabWindow* tabWindow) {
 		  
     GUIKIT::RadioBox::setGroup( selectorBoxes ); 
     
-    loadSettings();
+    loadSettings( true );
         
     setMargin( 10 );    
 }
@@ -238,7 +238,7 @@ auto FirmwareLayout::drop( std::string path ) -> void {
     }
 }
 
-auto FirmwareLayout::loadSettings() -> void {
+auto FirmwareLayout::loadSettings(bool init) -> void {
     
     auto firmwareInUse = _settings->get<unsigned>( "use_firmware", 0, {0, manager->maxSets} );
 
@@ -246,7 +246,8 @@ auto FirmwareLayout::loadSettings() -> void {
         unsigned j = 0;
         for (auto& firmware : emulator->firmwares) {
             auto fSetting = manager->getSetting( &firmware, i );
-            fSetting->update();
+            if (!init)
+                fSetting->update();
             auto block = ((FirmwareContainer*)containers[i])->blocks[j++];
             block->top.fileLabel.setText( fSetting->file );
             block->bottom.edit.setText( fSetting->path );

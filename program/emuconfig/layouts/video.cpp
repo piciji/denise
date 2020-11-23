@@ -416,23 +416,8 @@ base( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) )
         vicIIGlitch.phi0.active.onToggle();
         vicIIGlitch.ras.active.onToggle();
         vicIIGlitch.cas.active.onToggle();
-    };        
+    };
     
-//    VideoManager::CrtMode crtMode = (VideoManager::CrtMode)_settings->get<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::None, {0u, 2u});
-//    
-//    if (crtMode == VideoManager::CrtMode::Gpu)
-//        base.mode.crtGpu.setChecked();
-//    else if (crtMode == VideoManager::CrtMode::Cpu)
-//        base.mode.crtCpu.setChecked();
-//    else
-//        base.mode.crtNone.setChecked();    
-//    
-//    if (dynamic_cast<LIBC64::Interface*>(emulator) && _settings->get<bool>( "video_spectrum", true) )
-//        base.mode.spectrum.setChecked();
-//    else
-//        base.mode.palette.setChecked();
-//        
-//    updatePresets();
     loadSettings();
 }
 

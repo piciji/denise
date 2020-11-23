@@ -144,7 +144,7 @@ auto pTreeView::create() -> void {
     
     hwnd = CreateWindowEx(
         WS_EX_CLIENTEDGE, WC_TREEVIEW, L"",
-        WS_CHILD | WS_TABSTOP | WS_BORDER | TVS_HASLINES | TVS_SHOWSELALWAYS,
+        WS_CHILD | WS_TABSTOP | TVS_HASLINES | TVS_SHOWSELALWAYS,
         0, 0, 0, 0, treeView.window()->p.hwnd, (HMENU)(unsigned long long)treeView.id, GetModuleHandle(0), 0);
 
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)&treeView);

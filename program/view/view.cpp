@@ -3,7 +3,6 @@
 #include "../program.h"
 #include "../config/config.h"
 #include "../emuconfig/config.h"
-#include "../media/media.h"
 #include "../tools/status.h"
 #include "../input/manager.h"
 #include "../config/archiveViewer.h"
@@ -53,9 +52,6 @@ auto View::build() -> void {
         
 		for(auto emuConfigView : emuConfigViews)
 			emuConfigView->setVisible(false);
-        
-        for(auto mediaView : mediaViews)
-			mediaView->setVisible(false);
 			        
         program->quit();
         GUIKIT::Application::quit();
@@ -199,7 +195,7 @@ auto View::setAutoload( Emulator::Interface* emulator ) -> void {
 	
 	autoloadTimer.onFinished = [this, emulator, mIsAcquiredBefore]() {
 		autoloadTimer.setEnabled(false);		
-		MediaView::MediaWindow::getView( emulator )->anyLoad( mIsAcquiredBefore );
+		EmuConfigView::TabWindow::getView( emulator )->mediaLayout->anyLoad( mIsAcquiredBefore );
 	};
 	
 	autoloadTimer.setEnabled();
@@ -641,7 +637,6 @@ auto View::buildMenu() -> void {
 		
     for(auto emulator : emulators) {
         auto emuConfigView = EmuConfigView::TabWindow::getView( emulator );        
-		auto mediaView = MediaView::MediaWindow::getView( emulator ); 
         SystemMenu sM;
         
         sM.emulator = emulator;
@@ -680,8 +675,9 @@ auto View::buildMenu() -> void {
         
         sM.media = new GUIKIT::MenuItem;
         sM.media->setIcon( driveImage );
-        sM.media->onActivate = [mediaView]() {
-		    mediaView->show();
+        sM.media->onActivate = [emuConfigView]() {
+            emuConfigView->mediaLayout->show();
+		    emuConfigView->show(EmuConfigView::TabWindow::Layout::Media);
 	    };
         sM.system->append( *sM.media );
 		
@@ -1102,3 +1098,4 @@ auto View::questionToWrite(Emulator::Interface::Media* media) -> bool {
     
     return state;
 }
+

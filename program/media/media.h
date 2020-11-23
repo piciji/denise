@@ -6,10 +6,18 @@ struct FileSetting;
 
 #include "../../guikit/api.h"
 #include "../program.h"
+#include "../emuconfig/config.h"
 
 namespace MediaView {
 
-struct MediaWindow;
+struct MediaLayout;
+struct MediaGroupLayout;
+
+struct NavElement {
+    GUIKIT::TreeViewItem* tvi;
+    MediaGroupLayout* mediaGroupLayout;
+    GUIKIT::Layout* altLayout;
+};
 
 struct SwapperControlLayout : GUIKIT::HorizontalLayout {
 	GUIKIT::CheckBox writeProtect;
@@ -22,8 +30,9 @@ struct SwapperControlLayout : GUIKIT::HorizontalLayout {
 
 struct SwapperLayout : GUIKIT::VerticalLayout {
 
-    MediaWindow* mediaWindow;
+    MediaLayout* mediaLayout;
     Emulator::Interface* emulator;
+    unsigned switchId;
     
     GUIKIT::ListView listView;
     SwapperControlLayout controls;
@@ -34,7 +43,7 @@ struct SwapperLayout : GUIKIT::VerticalLayout {
 	auto savePath( std::string path ) -> void;
     auto loadSettings() -> void;
     
-    SwapperLayout(MediaWindow* mediaWindow);
+    SwapperLayout(MediaLayout* mediaLayout);
 };
 
 struct PathsLayout : GUIKIT::FramedVerticalLayout {
@@ -90,10 +99,10 @@ struct MediaGroupLayout : GUIKIT::FramedVerticalLayout {
 	GUIKIT::Button inject;
 	GUIKIT::ListView listings; // for c64 disk and prg container formats
     Block* selectedBlock = nullptr;
-    MediaWindow* mediaWindow;
+    MediaLayout* mediaLayout;
     
     auto build() -> void;
-    auto updateVisibility( unsigned count, bool init = false ) -> void;
+    auto updateVisibility( unsigned count, bool init = false ) -> void;    
     auto updateListing(MediaGroupLayout::Block* block) -> void;
     auto fillListing( std::vector<Emulator::Interface::Listing>& emuListings ) -> void;
     auto fillListing( std::vector<GUIKIT::BrowserWindow::Listing>& emuListings ) -> void;
@@ -103,7 +112,7 @@ struct MediaGroupLayout : GUIKIT::FramedVerticalLayout {
     auto setJumperSettings(Emulator::Interface::Media* media) -> void;
     auto loadSettings() -> void;
 
-    MediaGroupLayout( Emulator::Interface::MediaGroup* mediaGroup, MediaWindow* mediaWindow );
+    MediaGroupLayout( Emulator::Interface::MediaGroup* mediaGroup, MediaLayout* mediaLayout );
 };
 
 struct TapeCreatorLayout : GUIKIT::FramedHorizontalLayout {
@@ -159,17 +168,18 @@ struct HdCreatorLayout : GUIKIT::FramedVerticalLayout {
     HdCreatorLayout();
 };
 
-struct MediaWindow : public GUIKIT::Window {
+struct MediaLayout : GUIKIT::HorizontalLayout {
     
+    EmuConfigView::TabWindow* tabWindow;
     Emulator::Interface* emulator;
+    
     GUIKIT::Settings* settings;
     bool useCustomFont = false;
 	Message* message;
     GUIKIT::Setting* alternateFileDialog = nullptr;
+    GUIKIT::TreeViewItem* expansionParent = nullptr;
 	
-    GUIKIT::BrowserWindow* fileDialogPtr = nullptr;
-    
-	GUIKIT::TabFrameLayout tabView;	
+    GUIKIT::BrowserWindow* fileDialogPtr = nullptr;    
     
 	GUIKIT::Image diskImage;
     GUIKIT::Image hdImage;
@@ -179,9 +189,11 @@ struct MediaWindow : public GUIKIT::Window {
 	GUIKIT::Image addImage;    
     GUIKIT::Image pathImage;
     GUIKIT::Image swapperImage;
+    GUIKIT::Image imgFolderOpen;
+    GUIKIT::Image imgFolderClosed;
+    GUIKIT::Image imgDocument;
     
-    std::vector<MediaGroupLayout*> mediaGroupLayouts;
-    std::vector<std::string> tabs;
+    std::vector<NavElement> navElements;
     
 	GUIKIT::VerticalLayout creatorLayout;    
     TapeCreatorLayout* tapeCreatorLayout = nullptr;
@@ -189,19 +201,16 @@ struct MediaWindow : public GUIKIT::Window {
     DiskCreatorLayout* diskCreatorLayout = nullptr;
 	MemoryCreatorLayout* memoryCreatorLayout = nullptr;
     CartCreatorLayout* flashCreatorLayout = nullptr;
-        
-    GUIKIT::SwitchLayout carts;    
-    GUIKIT::HorizontalLayout cartWrapper;
-    GUIKIT::FramedVerticalLayout cartSelectorFrame;
-    GUIKIT::ListView cartList;
+                   
+    GUIKIT::FramedVerticalLayout moduleFrame;
+    GUIKIT::SwitchLayout moduleSwitch;
+    GUIKIT::TreeView mediaTree;
     GUIKIT::Button bootCart;
     GUIKIT::Button deactivateCart;
-    std::vector<MediaGroupLayout*> cartLayouts;
     
     PathsLayout pathsLayout;
     SwapperLayout* swapperLayout = nullptr;
     	
-	GUIKIT::Timer mtimer;
     GUIKIT::Timer ftimer;
     
     struct {
@@ -210,13 +219,14 @@ struct MediaWindow : public GUIKIT::Window {
     } lastPreview;
 
     auto build() -> void;	
-    auto show(bool diskSwapper = false) -> void;
-	auto showDelayed(bool diskSwapper = false) -> void;
-	static auto getView( Emulator::Interface* emulator ) -> MediaWindow*;
+    auto show() -> void;
+    auto showDiskSwapper() -> void;
+    auto updateSwitchLayout() -> void;
 	
 	auto translate() -> void;
     auto updateMediaBlock(MediaGroupLayout::Block* block, FileSetting* fSetting) -> void;
     auto updateVisibility( Emulator::Interface::MediaGroup* mediaGroup, unsigned count ) -> void;
+    auto updateExpansionBootButtonVisibility() -> void;
     auto bindSelectorAction( MediaGroupLayout* layout ) -> void;
     auto prepareCreator() -> void;
     auto preparePaths() -> void;	
@@ -229,7 +239,7 @@ struct MediaWindow : public GUIKIT::Window {
     auto getMediaGroupLayout( Emulator::Interface::MediaGroup* mediaGroup ) -> MediaGroupLayout*;   
     auto insertImage( MediaGroupLayout::Block* block, GUIKIT::File* file, GUIKIT::File::Item* item ) -> void;
     auto insertImage( Emulator::Interface::Media* media, GUIKIT::File* file, GUIKIT::File::Item* item ) -> void;
-    auto eject( Emulator::Interface::MediaGroup* mediaGroup ) -> void;
+    auto eject( Emulator::Interface::MediaGroup* mediaGroup, bool alternateOnly = false ) -> void;
     auto drop( std::string filePath, MediaGroupLayout::Block* block = nullptr ) -> void;   
     auto colorListing( unsigned color, bool foreground ) -> void;
     auto getMediaGroupTransIdent( Emulator::Interface::MediaGroup* mediaGroup ) -> std::string;
@@ -247,9 +257,8 @@ struct MediaWindow : public GUIKIT::Window {
     auto applyPreviewFont(unsigned fontSize) -> void;
     auto loadSettings() -> void;
 
-    MediaWindow(Emulator::Interface* emulator);
+    MediaLayout(EmuConfigView::TabWindow* tabWindow);
 };
 
 }
 
-extern std::vector<MediaView::MediaWindow*> mediaViews;

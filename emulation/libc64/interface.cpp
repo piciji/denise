@@ -93,11 +93,12 @@ auto Interface::prepareMedia() -> void {
 	}
     
     {   auto& group = mediaGroups[MediaGroupIdExpansionReu];
-		group.media.push_back({0, "REU 1", 0, &group});
-        group.media.push_back({1, "REU 2", 0, &group});
-        group.media.push_back({2, "REU 3", 0, &group});
-        group.media.push_back({3, "REU 4", 0, &group});
-        group.media.push_back({4, "REU Memory", 0, &group});
+        group.media.push_back({0, "REU Memory 1", 0, &group});
+        group.media.push_back({1, "REU Memory 2", 0, &group});
+        group.media.push_back({2, "REU Memory 3", 0, &group});
+        group.media.push_back({3, "REU Memory 4", 0, &group});
+        group.media.push_back({4, "REU Rom", 0, &group});
+
         group.selected = &group.media[0];  
 	}
     
@@ -134,11 +135,11 @@ auto Interface::prepareMedia() -> void {
         
         for(auto& media : group.media) {
             media.pcbLayout = nullptr;
-            media.memoryDump = false;
+            media.alternate = false;
         }
     }
        
-    mediaGroups[MediaGroupIdExpansionReu].media[4].memoryDump = true;
+    mediaGroups[MediaGroupIdExpansionReu].media[4].alternate = true;    
 }
 
 auto Interface::prepareExpansions() -> void {
@@ -858,7 +859,7 @@ auto Interface::insertExpansionImage(Media* media, uint8_t* data, unsigned size)
     if (group->expansion->id == ExpansionIdGame)
         gameCart->setRom(media, data, size);
     else if (group->expansion->id == ExpansionIdReu)
-        media->memoryDump ? reu->setRam(data, size) : reu->setRom(media, data, size);
+        !media->alternate ? reu->setRam(data, size) : reu->setRom(media, data, size);
     else if (group->expansion->id == ExpansionIdActionReplay)
         actionReplay->setRom(media, data, size);
     else if (group->expansion->id == ExpansionIdEasyFlash)
@@ -910,7 +911,7 @@ auto Interface::ejectExpansionImage(Media* media) -> void {
     if (group->expansion->id == ExpansionIdGame)
         gameCart->setRom(media, nullptr, 0);
     else if (group->expansion->id == ExpansionIdReu) {
-        media->memoryDump ? reu->unsetRam() : reu->setRom(media, nullptr, 0);
+        !media->alternate ? reu->unsetRam() : reu->setRom(media, nullptr, 0);
     } else if (group->expansion->id == ExpansionIdActionReplay)
         actionReplay->setRom(media, nullptr, 0);
     else if (group->expansion->id == ExpansionIdEasyFlash)
@@ -935,18 +936,6 @@ auto Interface::createExpansionImage(MediaGroup* group, unsigned& imageSize) -> 
 
 auto Interface::isExpansionBootable() -> bool {
     return expansionPort->isBootable();
-}
-
-auto Interface::getMediaForCustomFileSuffix(std::string suffix) -> Media* {
-    
-    if (suffix == "reu") {
-        for(auto& media : mediaGroups[MediaGroupIdExpansionReu].media) {
-            if (media.memoryDump)
-                return &media;
-        }
-    }
-        
-    return nullptr;
 }
 
 auto Interface::insertProgram(Media* media, uint8_t* data, unsigned size) -> void {
@@ -1365,9 +1354,9 @@ auto Interface::freeze() -> void {
     expansionPort->freeze();
 }
 
-auto Interface::analyzeExpansion(uint8_t* data, unsigned size) -> Expansion* {
+auto Interface::analyzeExpansion(uint8_t* data, unsigned size, std::string suffix) -> Expansion* {
     
-    return system->analyzeExpansion( data, size );
+    return system->analyzeExpansion( data, size, suffix );
 }
 
 auto Interface::videoCycleAccuracy(bool state) -> void {

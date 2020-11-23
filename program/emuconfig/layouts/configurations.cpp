@@ -75,7 +75,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
     this->tabWindow = tabWindow;
     this->emulator = tabWindow->emulator;
     
-    setMargin(10);    
+    setMargin(10);
     
     moduleList.setHeaderText( { "" } );
     moduleList.setHeaderVisible( false );     
@@ -449,27 +449,27 @@ auto ConfigurationsLayout::load( std::string path ) -> bool {
     inputManager->updateAnalogSensitivity();
     inputManager->bindHids();
 
-    view->updateDeviceSelection(this->emulator);
-
+    view->updateDeviceSelection(this->emulator);    
+    
     this->tabWindow->audioLayout->loadSettings();
 
     this->tabWindow->borderLayout->loadSettings();
 
-    this->tabWindow->firmwareLayout->loadSettings();
-
+    this->tabWindow->firmwareLayout->loadSettings();    
+    
     this->tabWindow->inputLayout->loadSettings();
 
     this->tabWindow->miscLayout->loadSettings();
 
-    this->tabWindow->paletteLayout->loadSettings();
+    this->tabWindow->paletteLayout->loadSettings();        
 
-    this->tabWindow->systemLayout->loadSettings();
+    this->tabWindow->systemLayout->loadSettings();        
 
     this->tabWindow->videoLayout->loadSettings();
     
+    this->tabWindow->mediaLayout->loadSettings();        
+    
     loadSettings();
-
-    MediaView::MediaWindow::getView(this->emulator)->loadSettings();
     
     return true;
 }

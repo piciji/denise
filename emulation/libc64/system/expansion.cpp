@@ -81,7 +81,10 @@ auto System::destroyExpansions() -> void {
     delete noExpansion;
 }
 
-auto System::analyzeExpansion(uint8_t* data, unsigned size) -> Emulator::Interface::Expansion* {
+auto System::analyzeExpansion(uint8_t* data, unsigned size, std::string suffix) -> Emulator::Interface::Expansion* {
+    
+    if (suffix == "reu")
+        return &interface->expansions[Interface::ExpansionIdReu];
     
     auto cart = new Cart;
     cart->rom = data;

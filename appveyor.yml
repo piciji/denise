@@ -14,9 +14,7 @@ image:
 branches:
   only:
     - master
-    - appveyor
     - /v\d*\.\d*\.\d*/
-    - alternate_settings
   
 environment:
   matrix:

@@ -1,7 +1,6 @@
 
 #include "states.h"
 #include "../firmware/manager.h"
-#include "../media/media.h"
 
 std::vector<States*> states;
 
@@ -146,7 +145,7 @@ auto States::oneMediumOnly(Emulator::Interface::MediaGroup* group, Emulator::Int
     
     for( auto& media : group->media ) {
         
-        if ((&media == mediaInUse) || media.memoryDump)
+        if ((&media == mediaInUse) || media.alternate)
             continue;
 
         media.guid = uintptr_t(nullptr);
@@ -177,7 +176,7 @@ auto States::loadImagePaths( GUIKIT::Settings* loadSettings ) -> std::vector<Emu
             setting->update();
 
             if (setting->path.empty()) {
-                if (!mediaSelected || media.memoryDump) {
+                if (!mediaSelected || media.alternate) {
                     emulator->ejectMedium( &media );
                     media.guid = uintptr_t(nullptr);
                     filePool->assign( _ident(emulator, media.name), nullptr);  
@@ -186,7 +185,7 @@ auto States::loadImagePaths( GUIKIT::Settings* loadSettings ) -> std::vector<Emu
                 continue;
             }
             
-            if (mediaSelected && !media.memoryDump)
+            if (mediaSelected && !media.alternate)
                 mediaInUse = mediaSelected;
             else
                 mediaInUse = &media;
@@ -417,7 +416,7 @@ auto States::updateSaveable() -> void {
                 continue;
             
             if (mediaGroup.isExpansion()) {
-                if (media.memoryDump || (expansionMediaGroup != &mediaGroup))
+                if (media.alternate || (expansionMediaGroup != &mediaGroup))
                     insert->setting->setSaveable( false );
                 else
                     insert->setting->setSaveable( !insert->setting->path.empty(), true );
@@ -511,7 +510,7 @@ auto States::updateExpansionJumper() -> void {
         if (!mediaGroup.isExpansion() || (mediaGroup.expansion->jumpers.size() == 0) )
             continue;        
                     
-        MediaView::MediaWindow::getView( emulator )->updateJumper( mediaGroup.selected );
+        EmuConfigView::TabWindow::getView( emulator )->mediaLayout->updateJumper( mediaGroup.selected );
     }        
 }
 
@@ -527,6 +526,6 @@ auto States::updateWriteProtection(std::vector<Emulator::Interface::Media*> load
             // override write protection of state, i.e. file permissions were changed between saving and loading a state
             emulator->writeProtect( media, true );
         
-        MediaView::MediaWindow::getView( activeEmulator )->updateWriteProtection( media, emulator->isWriteProtected(media) );
+        EmuConfigView::TabWindow::getView( activeEmulator )->mediaLayout->updateWriteProtection( media, emulator->isWriteProtected(media) );
     }       
 }

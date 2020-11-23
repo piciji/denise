@@ -47,7 +47,7 @@ auto Interface::prepareMedia() -> void {
         
         for(auto& media : group.media) {            
             media.pcbLayout = nullptr;
-            media.memoryDump = false;
+            media.alternate = false;
         }
     }
 }

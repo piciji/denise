@@ -95,8 +95,7 @@ struct Interface : Emulator::Interface {
     auto writeProtectExpansion(Media* media, bool state) -> void;
     auto isWriteProtectedExpansion(Media* media) -> bool;
     auto ejectExpansionImage(Media* media) -> void;
-    auto createExpansionImage(MediaGroup* group, unsigned& imageSize) -> uint8_t*;
-    auto getMediaForCustomFileSuffix(std::string suffix) -> Media*;
+    auto createExpansionImage(MediaGroup* group, unsigned& imageSize) -> uint8_t*;    
     auto isExpansionBootable() -> bool;
 	
 	//program
@@ -111,7 +110,7 @@ struct Interface : Emulator::Interface {
     auto setExpansion(unsigned expansionId) -> void;
     auto unsetExpansion() -> void;
     auto getExpansion() -> Expansion*;
-    auto analyzeExpansion(uint8_t* data, unsigned size) -> Expansion*;
+    auto analyzeExpansion(uint8_t* data, unsigned size, std::string suffix = "") -> Expansion*;
     auto setExpansionJumper( Media* media, unsigned jumperId, bool state ) -> void;
     auto getExpansionJumper( Media* media, unsigned jumperId ) -> bool;
     

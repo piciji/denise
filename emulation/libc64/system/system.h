@@ -160,7 +160,7 @@ struct System {
     auto createExpansions() -> void;
     auto destroyExpansions() -> void;
     auto setExpansionCallbacks( ExpansionPort* expansionPtr ) -> void;
-    auto analyzeExpansion(uint8_t* data, unsigned size) -> Emulator::Interface::Expansion*;
+    auto analyzeExpansion(uint8_t* data, unsigned size, std::string suffix = "") -> Emulator::Interface::Expansion*;
     
     auto setFastForward( unsigned config ) -> void;    
     auto setRunAhead(unsigned frames) -> void;

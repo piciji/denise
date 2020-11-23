@@ -186,7 +186,7 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
             _settings->set<unsigned>( ident, block->combo.selection());
 
             // check if media elements of group have to be rebuilt
-            MediaView::MediaWindow::getView(this->emulator)->updateVisibility( block->mediaGroup, block->combo.selection() );
+            this->tabWindow->mediaLayout->updateVisibility( block->mediaGroup, block->combo.selection() );
             _settings->remove( "access_floppy" );
 			
 			if (activeEmulator)
@@ -380,7 +380,7 @@ auto SystemLayout::activateDrive( Emulator::Interface::MediaGroup* mediaGroup, u
         _settings->set<unsigned>( ident, requestedCount);
         _settings->remove( "access_floppy" );
         
-        MediaView::MediaWindow::getView(this->emulator)->updateVisibility( mediaGroup, requestedCount );
+        tabWindow->mediaLayout->updateVisibility( mediaGroup, requestedCount );
     }
 }
 

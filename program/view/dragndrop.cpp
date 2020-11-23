@@ -81,23 +81,23 @@ auto View::autoloadPostProcessing() -> void {
 
     auto emuConfigView = EmuConfigView::TabWindow::getView(ddControl.emulator);
 	
-	auto mediaView = MediaView::MediaWindow::getView(ddControl.emulator);
+    auto emuView = EmuConfigView::TabWindow::getView( ddControl.emulator );	
     
     if (!autoStart) {
 
         if (mediaGroup->isDrive()) {
-            if (mediaView->visible())
-                mediaView->setFocused();
+            if (emuView->visible())
+                emuView->setFocused();
             
         } else {
             
-            if (!mediaView->visible())
-                mediaView->setVisible();
+            if (!emuView->visible())
+                emuView->setVisible();
 
-            mediaView->setFocused();
+            emuView->setFocused();
         }
         
-        mediaView->showMediaGroupLayout(mediaGroup);
+        emuView->mediaLayout->showMediaGroupLayout(mediaGroup);
 
     } else {
 
@@ -180,7 +180,7 @@ auto View::autoloadFiles() -> void {
             if (ddControl.emulator && ddControl.emulator != emulator)
                 continue;
 
-            auto mediaView = MediaView::MediaWindow::getView(emulator);
+            auto mediaView = EmuConfigView::TabWindow::getView( emulator )->mediaLayout;
 
             for (auto& mediaGroup : emulator->mediaGroups) {
 
@@ -195,17 +195,8 @@ auto View::autoloadFiles() -> void {
                         
                         Emulator::Interface::Media* media = nullptr;
                         
-                        if (media = emulator->getMediaForCustomFileSuffix(fileSuffix)) {
-                            // this is a special case for inserting memory dumps, C64 REU
-                            EmuConfigView::TabWindow::getView(emulator)->systemLayout->setExpansion( mediaGroup.expansion );
-                            ddControl.emulator = emulator;
-                            mediaView->insertImage(media, file, item );
-
-                            return autoloadFiles();
-                        }
-                        
                         if (mediaGroup.isExpansion()) {                                
-                            auto analyzedExpansion = emulator->analyzeExpansion( file->archiveData(item->id), item->info.size );
+                            auto analyzedExpansion = emulator->analyzeExpansion( file->archiveData(item->id), item->info.size, fileSuffix );
                             
                             if (analyzedExpansion != mediaGroup.expansion)
                                 continue;
@@ -218,14 +209,19 @@ auto View::autoloadFiles() -> void {
                             return autoloadFiles();
 
                         ddControl.emulator = emulator;
-                        
-                        ddControl.mediaGroups.push_back(&mediaGroup);                        
-                        
+                                                
                         if (!media)
                             media = &mediaGroup.media[ alreadyInUse ];                      
                             						
                         mediaView->insertImage(media, file, item );
 
+                        if ( mediaGroup.isExpansion() && mediaGroup.expansion->isRam() ) {
+                            // set expansion but don't boot it                            
+                            EmuConfigView::TabWindow::getView(emulator)->mediaLayout->eject( &mediaGroup, true );
+                            EmuConfigView::TabWindow::getView(emulator)->systemLayout->setExpansion( mediaGroup.expansion );                                                        
+                        } else
+                            ddControl.mediaGroups.push_back(&mediaGroup);
+                        
                         return autoloadFiles();
                     }
                 }

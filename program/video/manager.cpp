@@ -124,7 +124,6 @@ VideoManager::VideoManager(Emulator::Interface* emulator) : shader(this) {
 		createWorker<false>();    
 }
 
-
 auto VideoManager::update() -> void {
 	
     if (!colorSpectrum || !isC64() ) { // palette
@@ -158,11 +157,11 @@ auto VideoManager::update() -> void {
     colorTableUpdated = true;    
 }
 
-auto VideoManager::updateListingColors() -> void {
+auto VideoManager::updateListingColors() -> void {    
     if (emulator->ident != "C64")
         return;
     
-    auto mediaView = MediaView::MediaWindow::getView( emulator );
+    auto mediaView = EmuConfigView::TabWindow::getView( emulator )->mediaLayout;
     
     mediaView->colorListing( colorTable[14], true );
     mediaView->colorListing( colorTable[6], false );

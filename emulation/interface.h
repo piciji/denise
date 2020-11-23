@@ -151,8 +151,8 @@ struct Interface {
         unsigned id;
         std::string name;        
         unsigned typeFlags;
-        MemoryType* memoryType; // uses RAM
-        MediaGroup* mediaGroup; // uses ROM
+        MemoryType* memoryType; // RAM selection
+        MediaGroup* mediaGroup; // ROM, RAM dumps
         std::vector<PCBLayout> pcbs;
         std::vector<Jumper> jumpers;
         enum Type : unsigned { Empty = 0, Game = 1, Ram = 2, Eprom = 4, Flash = 8, TurboCart = 16, Freezer = 32 };
@@ -173,7 +173,7 @@ struct Interface {
         uintptr_t guid; //free to use
         MediaGroup* group;        
         PCBLayout* pcbLayout;
-        bool memoryDump;
+        bool alternate;     // todo: handle this better, REU ROM besides REU memory dumps
     };   
 
     struct MediaGroup {
@@ -182,7 +182,7 @@ struct Interface {
 		enum class Type : unsigned { Disk, HardDisk, Tape, Expansion, Program } type;
         std::vector<std::string> suffix;
         std::vector<std::string> creatable;
-        Media* selected; 
+        Media* selected;
         Expansion* expansion;
         std::vector<Media> media;
         
@@ -406,7 +406,6 @@ struct Interface {
     virtual auto writeProtectExpansion(Media* media, bool state) -> void {}
     virtual auto isWriteProtectedExpansion(Media* media) -> bool { return false; }
     virtual auto createExpansionImage(MediaGroup* group, unsigned& imageSize) -> uint8_t* { return nullptr; }
-    virtual auto getMediaForCustomFileSuffix(std::string suffix) -> Media* { return nullptr; }
     virtual auto isExpansionBootable() -> bool { return false; }
     
 	// program 
@@ -420,7 +419,7 @@ struct Interface {
     virtual auto setExpansion(unsigned expansionId) -> void {}
     virtual auto unsetExpansion() -> void {}    
     virtual auto getExpansion() -> Expansion* { return nullptr; }
-    virtual auto analyzeExpansion(uint8_t* data, unsigned size) -> Expansion* { return nullptr; }    
+    virtual auto analyzeExpansion(uint8_t* data, unsigned size, std::string suffix = "") -> Expansion* { return nullptr; }    
     virtual auto setExpansionJumper( Media* media, unsigned jumperId, bool state ) -> void {}
     virtual auto getExpansionJumper( Media* media, unsigned jumperId ) -> bool { return false; }
     // freezer carts

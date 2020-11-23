@@ -141,8 +141,8 @@ SettingsLayout::SettingsLayout() {
         
         globalSettings->set<unsigned>("software_preview_fontsize", previewLayout.top.fontSizeCombo.userData());
         
-        for( auto mediaView : mediaViews )
-            mediaView->updateListingFont( previewLayout.top.fontSizeCombo.userData() );
+        for( auto emuConfigView : emuConfigViews )
+            emuConfigView->mediaLayout->updateListingFont( previewLayout.top.fontSizeCombo.userData() );
     };
     
     previewLayout.top.fontSizeCombo.setSelection( globalSettings->get<unsigned>("software_preview_fontsize", 12, {6, 14}) - 6 );
@@ -191,8 +191,8 @@ SettingsLayout::SettingsLayout() {
         
         globalSettings->set<bool>("software_preview_tooltips", state );
         
-        for( auto mediaView : mediaViews )
-            mediaView->updateListings();
+        for( auto emuConfigView : emuConfigViews )
+            emuConfigView->mediaLayout->updateListings();
         
         previewLayout.previewBox.reset();
         
@@ -235,8 +235,8 @@ auto SettingsLayout::setPreviewContent() -> void {
     
     bool useCustomFont = false;
     
-    for (auto& mediaView : mediaViews) {
-        if (mediaView->useCustomFont) {
+    for (auto emuConfigView : emuConfigViews) {
+        if (emuConfigView->mediaLayout->useCustomFont) {
             useCustomFont = true;
             break;
         }
@@ -317,18 +317,12 @@ auto SettingsLayout::changeLang() -> void {
     
     configView->translate();
 	
-	for( auto mediaView : mediaViews )
-		mediaView->translate();	
-	
 	for( auto emuConfigView : emuConfigViews )
 		emuConfigView->translate();	
 	
 	configView->inputLayout->loadInputList();	
 	for( auto emuConfigView : emuConfigViews )
 		emuConfigView->inputLayout->loadDeviceList();
-	
-	for( auto mediaView : mediaViews )
-		mediaView->synchronizeLayout();	
 	
     configView->synchronizeLayout();	
 	for( auto emuConfigView : emuConfigViews )

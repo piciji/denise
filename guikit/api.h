@@ -588,9 +588,12 @@ struct TreeViewItem {
     auto selected() -> bool;
     auto itemCount() -> unsigned { return state.items.size(); }
     auto userData() -> uintptr_t { return state.userData; }
+    auto parentItem() -> TreeViewItem* { return state.parentTreeViewItem; }
+    auto parentView() -> TreeView* { return state.parentTreeView; }
 
     struct {
         TreeView* parentTreeView = nullptr;
+        TreeViewItem* parentTreeViewItem = nullptr;
         std::vector<TreeViewItem*> items;
         std::string text;
         bool expanded = false;
@@ -613,6 +616,7 @@ struct TreeView : Widget {
     auto reset() -> void;
     auto selected() -> TreeViewItem* { return state.selected; }
     auto itemCount() -> unsigned { return state.items.size(); }
+    auto items() -> std::vector<TreeViewItem*>& { return state.items; }
 
     struct {
         std::vector<TreeViewItem*> items;

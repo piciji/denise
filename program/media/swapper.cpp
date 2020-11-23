@@ -8,9 +8,9 @@ SwapperControlLayout::SwapperControlLayout() {
 	writeProtect.setEnabled(false);
 }
 
-SwapperLayout::SwapperLayout( MediaWindow* mediaWindow ) {
-    this->mediaWindow = mediaWindow;
-    this->emulator = mediaWindow->emulator;
+SwapperLayout::SwapperLayout( MediaLayout* mediaLayout ) {
+    this->mediaLayout = mediaLayout;
+    this->emulator = mediaLayout->emulator;
     
     setMargin(10);
 	listView.setHeaderVisible();
@@ -44,7 +44,7 @@ SwapperLayout::SwapperLayout( MediaWindow* mediaWindow ) {
         }
                 	
 		std::string filePath = GUIKIT::BrowserWindow()
-			.setWindow( *this->mediaWindow )
+			.setWindow( *(this->mediaLayout->tabWindow) )
 			.setTitle( trans->get("select_disk_image") )
 			.setPath( preselectPath( ) )
 			.setFilters({ suffix,
@@ -58,13 +58,13 @@ SwapperLayout::SwapperLayout( MediaWindow* mediaWindow ) {
         savePath( file->getPath() );
 
 		if (!file->isSizeValid(MAX_MEDIUM_SIZE))
-            return program->errorMediumSize( file, this->mediaWindow->message );  
+            return program->errorMediumSize( file, this->mediaLayout->message );  
 		
 		auto& items = file->scanArchive();
 
 		archiveViewer->onCallback = [this, file](GUIKIT::File::Item* item) {
 			if (!item || (item->info.size == 0))
-				return this->mediaWindow->message->error(trans->get(file->isArchived() ? "archive_error" : "file_open_error", {{"%path%", file->getFile()}}));			
+				return this->mediaLayout->message->error(trans->get(file->isArchived() ? "archive_error" : "file_open_error", {{"%path%", file->getFile()}}));			
             
 			if(!listView.selected()) return;
 			auto pos = listView.selection();
@@ -109,12 +109,10 @@ SwapperLayout::SwapperLayout( MediaWindow* mediaWindow ) {
         fSetting->setWriteProtect( state );        
 	};
 	
-//	for(unsigned i = 0; i < 15; i++) {
-//		auto fSetting = getSetting( i );		
-//		listView.append({std::to_string(i), fSetting->path, fSetting->file });
-//	}
-    
-    loadSettings();
+	for(unsigned i = 0; i < 15; i++) {
+		auto fSetting = getSetting( i );		
+		listView.append({std::to_string(i), fSetting->path, fSetting->file });
+	}        
 }
 
 auto SwapperLayout::loadSettings() -> void {
@@ -122,6 +120,7 @@ auto SwapperLayout::loadSettings() -> void {
     
     for (unsigned i = 0; i < 15; i++) {
         auto fSetting = getSetting(i);
+        fSetting->update();
         listView.append({std::to_string(i), fSetting->path, fSetting->file});
     }
 }
@@ -139,12 +138,12 @@ auto SwapperLayout::getSetting( unsigned pos ) -> FileSetting* {
 
 auto SwapperLayout::preselectPath( ) -> std::string {
 	
-	auto path = mediaWindow->settings->get<std::string>( "disk_folder_swap", "" );	
+	auto path = mediaLayout->settings->get<std::string>( "disk_folder_swap", "" );	
 	
 	return path;
 }
 
 auto SwapperLayout::savePath( std::string path ) -> void {
 	
-	mediaWindow->settings->set<std::string>("disk_folder_swap", path);
+	mediaLayout->settings->set<std::string>("disk_folder_swap", path);
 }
