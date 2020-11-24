@@ -222,12 +222,23 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
                     {"%path%", path}
                 })))
                 return;
-        }
-        
+        }        
+		
         if (!file.del())
             mes->error( trans->get("file deletion error", {{"%path%", path}}) );
-        else
+        else {
+			
+			if (path == _settings->get<std::string>("custom_settings", "")) {
+				_settings->set<std::string>("custom_settings", "", false);
+				
+				path = program->settingsFile(this->emulator->ident + "_");
+
+				if (this->load(path))					
+					settings.active.fileLabel.setText(trans->get("default"));				
+			}
+			
             updateSettingsList();
+		}
     };    
     
     settingsFolder.selectButton.onActivate = [this]() {

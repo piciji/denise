@@ -323,6 +323,7 @@ struct pTreeViewItem {
     GtkTreeIter iter;
     GdkPixbuf* gdkimage = nullptr;
     GdkPixbuf* gdkimageSelected = nullptr;
+	GdkPixbuf* gdkimageExpanded = nullptr;
 
     auto append(TreeViewItem& item) -> void;
     auto remove(TreeViewItem& item) -> void;
@@ -334,7 +335,9 @@ struct pTreeViewItem {
     auto setExpanded(bool expanded) -> void;
     auto setImage(Image& image) -> void;
     auto setImageSelected(Image& image) -> void;
+	auto setImageExpanded(Image& image) -> void;
     auto showImage(bool selected) -> void;
+	auto updateImageExpanded() -> void;
     auto find( char* _iter ) -> TreeViewItem*;
     auto parentTreeView() -> TreeView*;
     auto addItem(TreeViewItem* parent) -> void;
@@ -373,6 +376,8 @@ struct pTreeView : pWidget {
     auto setBackgroundColor(unsigned color) -> void;
 
     static auto onActivate(GtkTreeView* treeView, GtkTreePath* gtkPath, GtkTreeViewColumn* column, TreeView* self) -> void;
+	static auto onCollapse(GtkTreeView* treeView, GtkTreeIter* iter, GtkTreePath* gtkPath, gpointer userData) -> void;
+	static auto onExpand(GtkTreeView* treeView, GtkTreeIter* iter, GtkTreePath* gtkPath, gpointer userData) -> void;
     static auto onChange(GtkTreeSelection* selection, TreeView* self) -> void;
     
     pTreeView(TreeView& treeView) : pWidget(treeView), treeView(treeView) {}

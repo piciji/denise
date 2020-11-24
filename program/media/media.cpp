@@ -82,15 +82,16 @@ auto MediaLayout::updateSwitchLayout() -> void {
 
     unsigned navPos = (unsigned)item->userData();
 
-    if (expansionParent) {
-        if (navElements[navPos].mediaGroupLayout && navElements[navPos].mediaGroupLayout->mediaGroup->isExpansion()) {
-            if (&imgFolderOpen != this->expansionParent->state.image)
-                expansionParent->setImage(imgFolderOpen);
-        } else
-            if (&imgFolderClosed != this->expansionParent->state.image)
-                expansionParent->setImage(imgFolderClosed);
-    }
-    moduleSwitch.setSelection(navPos);
+//    if (expansionParent) {
+//        if (navElements[navPos].mediaGroupLayout && navElements[navPos].mediaGroupLayout->mediaGroup->isExpansion()) {
+//            if (&imgFolderOpen != this->expansionParent->state.image)
+//                expansionParent->setImage(imgFolderOpen);
+//        } else
+//            if (&imgFolderClosed != this->expansionParent->state.image)
+//                expansionParent->setImage(imgFolderClosed);
+//    }
+		
+    moduleSwitch.setSelection( navPos );
 }
 
 auto MediaLayout::updateExpansionBootButtonVisibility() -> void {
@@ -172,11 +173,11 @@ auto MediaLayout::build() -> void {
             
         } else if (mediaGroup.isExpansion()) {
             if (!expansionParent) {
-                expansionParent = new GUIKIT::TreeViewItem;
-                expansionParent->setExpanded();
+                expansionParent = new GUIKIT::TreeViewItem;                
                 expansionParent->setText( "expansion" );
                 expansionParent->setImage( imgFolderClosed );
-           //     expansionParent->setImageSelected( imgFolderOpen );
+                expansionParent->setImageExpanded( imgFolderOpen );
+				expansionParent->setExpanded();
                 expansionParent->setUserData( (uintptr_t)(navElements.size()) );
                 mediaTree.append( *expansionParent );
             }
@@ -218,7 +219,7 @@ auto MediaLayout::build() -> void {
 		bindSelectorAction( mediaGroupLayout );
     }
     
-    moduleFrame.append( mediaTree, { GUIKIT::Font::scale(160), GUIKIT::Font::scale(250)}, 10 );
+    moduleFrame.append( mediaTree, { GUIKIT::Font::scale(165), GUIKIT::Font::scale(270)}, 10 );
     moduleFrame.append( bootCart, {0u, 0u}, 10 );
     moduleFrame.append( deactivateCart, {0u, 0u} );
     moduleFrame.setPadding(10);
@@ -239,7 +240,23 @@ auto MediaLayout::build() -> void {
         updateSwitchLayout();
         updateExpansionBootButtonVisibility();
     };
-        
+	
+//	mediaTree.onActivate = [this]() {
+//
+//	};
+//	
+//	mediaTree.onExpand = [this](GUIKIT::TreeViewItem* item) {
+//
+//		if ((expansionParent == item) && (&imgFolderOpen != this->expansionParent->state.image))
+//			expansionParent->setImage(imgFolderOpen);
+//	};
+//      
+//	mediaTree.onCollapse = [this](GUIKIT::TreeViewItem* item) {
+//
+//		if ((expansionParent == item) && (&imgFolderClosed != this->expansionParent->state.image))
+//			expansionParent->setImage(imgFolderClosed);
+//	};
+	
     tvi = new GUIKIT::TreeViewItem;
     tvi->setText( "disk_swapper" );
     tvi->setImage( swapperImage );    

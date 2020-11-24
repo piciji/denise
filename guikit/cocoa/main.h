@@ -309,6 +309,7 @@ struct pTreeViewItem {
     auto setExpanded(bool expanded) -> void;
     auto setImage(Image& image) -> void;
     auto setImageSelected(Image& image) -> void;
+	auto setImageExpanded(Image& image) -> void {}
     auto parentTreeView() -> TreeView*;
     
     pTreeViewItem(TreeViewItem& treeViewItem) : treeViewItem(treeViewItem) {}

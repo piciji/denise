@@ -846,7 +846,7 @@ auto TreeViewItem::selected() -> bool {
 auto TreeViewItem::setExpanded(bool expanded) -> void {
     if (_A::dummy) return;
     state.expanded = expanded;
-    p.setExpanded(expanded);
+	p.setExpanded(expanded);
 }
 
 auto TreeViewItem::setUserData(uintptr_t userData) -> void {
@@ -863,6 +863,12 @@ auto TreeViewItem::setImageSelected(Image& image) -> void {
     if (_A::dummy) return;
     state.imageSelected = &image;
     p.setImageSelected(image);
+}
+
+auto TreeViewItem::setImageExpanded(Image& image) -> void {
+    if (_A::dummy) return;
+    state.imageExpanded = &image;
+    p.setImageExpanded(image);
 }
 
 TreeViewItem::TreeViewItem() : p(*new pTreeViewItem(*this)) { if (!_A::dummy) p.init(); }

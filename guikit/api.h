@@ -583,6 +583,7 @@ struct TreeViewItem {
     auto setUserData(uintptr_t userData) -> void;
     auto setImage(Image& image) -> void;
     auto setImageSelected(Image& image) -> void;
+	auto setImageExpanded(Image& image) -> void;
     auto text() -> std::string { return state.text; }
     auto expanded() -> bool { return state.expanded; }
     auto selected() -> bool;
@@ -600,6 +601,7 @@ struct TreeViewItem {
         uintptr_t userData;
         Image* image = nullptr;
         Image* imageSelected = nullptr;
+		Image* imageExpanded = nullptr;
     } state;
 
     pTreeViewItem& p;
@@ -610,6 +612,8 @@ struct TreeViewItem {
 struct TreeView : Widget {
     std::function<void ()> onActivate = nullptr;
     std::function<void ()> onChange = nullptr;
+	std::function<void (TreeViewItem*)> onCollapse = nullptr;
+	std::function<void (TreeViewItem*)> onExpand = nullptr;
 
     auto append(TreeViewItem& item) -> void;
     auto remove(TreeViewItem& item) -> void;

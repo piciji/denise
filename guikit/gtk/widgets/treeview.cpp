@@ -7,6 +7,8 @@ auto pTreeViewItem::append(TreeViewItem& item) -> void {
     if(!parentTreeView()) return;
     item.state.parentTreeView = parentTreeView();
     item.p.update(&treeViewItem);
+	
+	treeViewItem.p.setExpanded( treeViewItem.expanded() );
 }
 
 auto pTreeViewItem::remove(TreeViewItem& item) -> void {
@@ -51,6 +53,8 @@ auto pTreeViewItem::setExpanded(bool expanded) -> void {
         gtk_tree_view_expand_row (parentTreeView()->p.gtkTreeView, path, false);
     else
         gtk_tree_view_collapse_row (parentTreeView()->p.gtkTreeView, path);
+	
+	updateImageExpanded();
 }
 
 auto pTreeViewItem::addItem(TreeViewItem* parent) -> void {
@@ -59,6 +63,7 @@ auto pTreeViewItem::addItem(TreeViewItem* parent) -> void {
     
     gdkimage = parentTreeView()->p.getImage(treeViewItem.state.image);
     gdkimageSelected = parentTreeView()->p.getImage(treeViewItem.state.imageSelected);
+	gdkimageExpanded = parentTreeView()->p.getImage(treeViewItem.state.imageExpanded);
     gtk_tree_store_set(parentTreeView()->p.gtkTreeStore, &iter, 0, gdkimage, -1);
 }
 
@@ -85,9 +90,27 @@ auto pTreeViewItem::setImageSelected(Image& image) -> void {
     gdkimageSelected = parentTreeView()->p.getImage(&image);
 }
 
+auto pTreeViewItem::setImageExpanded(Image& image) -> void {
+    if (!parentTreeView() ) return;
+    
+    gdkimageExpanded = parentTreeView()->p.getImage(&image);
+}
+
 auto pTreeViewItem::showImage(bool selected) -> void {
     if (selected && gdkimage && gdkimageSelected) {
-        gtk_tree_store_set(parentTreeView()->p.gtkTreeStore, &iter, 0, gdkimageSelected, -1);  
+        gtk_tree_store_set(parentTreeView()->p.gtkTreeStore, &iter, 0, gdkimageSelected, -1);
+		
+    } else if (treeViewItem.expanded() && gdkimage && gdkimageExpanded) {
+		gtk_tree_store_set(parentTreeView()->p.gtkTreeStore, &iter, 0, gdkimageExpanded, -1);
+		
+	} else {
+        gtk_tree_store_set(parentTreeView()->p.gtkTreeStore, &iter, 0, gdkimage, -1);           
+    }    
+}
+
+auto pTreeViewItem::updateImageExpanded() -> void {
+    if (treeViewItem.expanded() && gdkimage && gdkimageExpanded) {
+        gtk_tree_store_set(parentTreeView()->p.gtkTreeStore, &iter, 0, gdkimageExpanded, -1);  
     } else {        
         gtk_tree_store_set(parentTreeView()->p.gtkTreeStore, &iter, 0, gdkimage, -1);           
     }    
@@ -158,6 +181,9 @@ auto pTreeView::create() -> void {
 
     g_signal_connect(G_OBJECT(subWidget), "row-activated", G_CALLBACK(pTreeView::onActivate), (gpointer)&treeView);
     g_signal_connect(G_OBJECT(gtkTreeSelection), "changed", G_CALLBACK(pTreeView::onChange), (gpointer)&treeView);
+	
+	g_signal_connect(G_OBJECT(subWidget), "row-collapsed", G_CALLBACK(pTreeView::onCollapse), (gpointer)&treeView);
+	g_signal_connect(G_OBJECT(subWidget), "row-expanded", G_CALLBACK(pTreeView::onExpand), (gpointer)&treeView);
 }
 
 auto pTreeView::destroy() -> void {
@@ -189,7 +215,7 @@ auto pTreeView::onActivate(GtkTreeView* treeView, GtkTreePath* gtkPath, GtkTreeV
 			if (selected) {
 				if (selected->itemCount() > 0) {
 					bool expanded = gtk_tree_view_row_expanded (treeView, gtkPath);
-					selected->p.setExpanded( !expanded );
+					selected->setExpanded( !expanded );
 				}
 			}
             if (self->onActivate) self->onActivate();
@@ -197,6 +223,52 @@ auto pTreeView::onActivate(GtkTreeView* treeView, GtkTreePath* gtkPath, GtkTreeV
         }
     }
     g_free(path);
+}
+
+auto pTreeView::onCollapse(GtkTreeView* treeView, GtkTreeIter* iter, GtkTreePath* gtkPath, gpointer userData) -> void {	
+	if ( !gtkPath || !userData)
+		return;
+	
+	TreeView* self = (TreeView*)userData;
+	char* path = gtk_tree_path_to_string(gtkPath);
+	
+	if (!path)
+		return;
+
+	for (auto item : self->state.items) {
+		auto treeViewItem = item->p.find(path);
+
+		if (treeViewItem) {
+			treeViewItem->state.expanded = false;
+			treeViewItem->p.updateImageExpanded();
+			if (self->onCollapse) self->onCollapse(treeViewItem);
+			break;
+		}
+	}
+	g_free(path);	
+}
+
+auto pTreeView::onExpand(GtkTreeView* treeView, GtkTreeIter* iter, GtkTreePath* gtkPath, gpointer userData) -> void {
+	if ( !gtkPath || !userData)
+		return;
+
+	TreeView* self = (TreeView*) userData;
+	char* path = gtk_tree_path_to_string(gtkPath);
+
+	if (!path)
+		return;
+	
+	for (auto item : self->state.items) {
+		auto treeViewItem = item->p.find(path);
+
+		if (treeViewItem) {
+			treeViewItem->state.expanded = true;
+			treeViewItem->p.updateImageExpanded();
+			if (self->onExpand) self->onExpand(treeViewItem);
+			break;
+		}
+	}
+	g_free(path);				
 }
 
 auto pTreeView::onChange(GtkTreeSelection* selection, TreeView* self) -> void {
