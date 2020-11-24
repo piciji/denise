@@ -81,15 +81,6 @@ auto MediaLayout::updateSwitchLayout() -> void {
         return;
 
     unsigned navPos = (unsigned)item->userData();
-
-//    if (expansionParent) {
-//        if (navElements[navPos].mediaGroupLayout && navElements[navPos].mediaGroupLayout->mediaGroup->isExpansion()) {
-//            if (&imgFolderOpen != this->expansionParent->state.image)
-//                expansionParent->setImage(imgFolderOpen);
-//        } else
-//            if (&imgFolderClosed != this->expansionParent->state.image)
-//                expansionParent->setImage(imgFolderClosed);
-//    }
 		
     moduleSwitch.setSelection( navPos );
 }
@@ -241,21 +232,19 @@ auto MediaLayout::build() -> void {
         updateExpansionBootButtonVisibility();
     };
 	
-//	mediaTree.onActivate = [this]() {
-//
-//	};
-//	
-//	mediaTree.onExpand = [this](GUIKIT::TreeViewItem* item) {
-//
-//		if ((expansionParent == item) && (&imgFolderOpen != this->expansionParent->state.image))
-//			expansionParent->setImage(imgFolderOpen);
-//	};
-//      
-//	mediaTree.onCollapse = [this](GUIKIT::TreeViewItem* item) {
-//
-//		if ((expansionParent == item) && (&imgFolderClosed != this->expansionParent->state.image))
-//			expansionParent->setImage(imgFolderClosed);
-//	};
+	mediaTree.onActivate = [this]() {
+        logger->log("act", 1);
+	};
+	
+	mediaTree.onExpand = [this](GUIKIT::TreeViewItem* item) {
+
+        logger->log("expanded", 1);
+	};
+      
+	mediaTree.onCollapse = [this](GUIKIT::TreeViewItem* item) {
+
+        logger->log("collapsed", 1);
+	};
 	
     tvi = new GUIKIT::TreeViewItem;
     tvi->setText( "disk_swapper" );

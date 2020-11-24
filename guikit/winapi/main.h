@@ -357,7 +357,7 @@ struct pTreeViewItem {
     auto setExpanded(bool expanded) -> void;
     auto setImage(Image& image) -> void;
     auto setImageSelected(Image& image) -> void;
-	auto setImageExpanded(Image& image) -> void {}
+	auto setImageExpanded(Image& image) -> void;
     auto setImage() -> void;
     auto find( HTREEITEM _hTreeItem ) -> TreeViewItem*;
     auto parentTreeView() -> TreeView*;
@@ -382,6 +382,7 @@ struct pTreeView : pWidget {
     auto setFont(std::string font) -> void;
     auto onActivate() -> void;
     auto onChange() -> void;
+    auto onExpanded(LPARAM lparam) -> void;
 	auto setBackgroundColor(unsigned color) -> void;
 	auto setForegroundColor(unsigned color) -> void;
 

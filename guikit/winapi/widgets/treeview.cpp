@@ -47,6 +47,7 @@ auto pTreeViewItem::setExpanded(bool expanded) -> void {
 auto pTreeViewItem::addItem(TreeViewItem* parent) -> void {
     int imagePos = parentTreeView()->p.addToImageList(treeViewItem.state.image);
     int imagePosSelected = parentTreeView()->p.addToImageList(treeViewItem.state.imageSelected);
+    int imagePosExpanded = parentTreeView()->p.addToImageList(treeViewItem.state.imageExpanded);
 
     utf16_t wtext( treeViewItem.text() );
     TVINSERTSTRUCT tvi;
@@ -57,8 +58,15 @@ auto pTreeViewItem::addItem(TreeViewItem* parent) -> void {
     if (imagePos > 0) {
         parentTreeView()->p.setImageList();
         tvi.item.mask = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE;
-        tvi.item.iImage = imagePos;
-        tvi.item.iSelectedImage = imagePosSelected > 0 ? imagePosSelected : imagePos;
+        
+        if (imagePosExpanded > 0 && treeViewItem.expanded()) {
+            tvi.item.iImage = imagePosExpanded;
+            tvi.item.iSelectedImage = imagePosExpanded;
+        } else {        
+            tvi.item.iImage = imagePos;
+            tvi.item.iSelectedImage = imagePosSelected > 0 ? imagePosSelected : imagePos;        
+        }
+
     } else {
         tvi.item.mask = TVIF_TEXT;
     }
@@ -86,16 +94,27 @@ auto pTreeViewItem::setImageSelected(Image& image) -> void {
     setImage();
 }
 
+auto pTreeViewItem::setImageExpanded(Image& image) -> void {
+    if (!parentTreeView() || !hTreeItem) return;
+    setImage();
+}
+
 auto pTreeViewItem::setImage() -> void {
     parentTreeView()->p.setImageList();
     int imagePos = parentTreeView()->p.addToImageList(treeViewItem.state.image);
     int imagePosSelected = parentTreeView()->p.addToImageList(treeViewItem.state.imageSelected);
+    int imagePosExpanded = parentTreeView()->p.addToImageList(treeViewItem.state.imageExpanded);
 
     TVITEMW item = {0};
     item.hItem = hTreeItem;
     item.mask = TVIF_IMAGE | TVIF_SELECTEDIMAGE;
-    item.iImage = imagePos;
-    item.iSelectedImage = imagePosSelected > 0 ? imagePosSelected : imagePos;
+    if (imagePosExpanded > 0 && treeViewItem.expanded()) {
+        item.iImage = imagePosExpanded;
+        item.iSelectedImage = imagePosExpanded;
+    } else {        
+        item.iImage = imagePos;
+        item.iSelectedImage = imagePosSelected > 0 ? imagePosSelected : imagePos;        
+    }
     SendMessage(parentTreeView()->p.hwnd, TVM_SETITEM, 0, (LPARAM)&item);
 }
 
@@ -227,8 +246,38 @@ auto pTreeView::setFont(std::string font) -> void {
     setGeometry( widget.geometry() );
 }
 
+auto pTreeView::onExpanded(LPARAM lparam) -> void {
+    NM_TREEVIEW* pnmtv = (NM_TREEVIEW*)lparam;
+            
+    TV_ITEM curItem = pnmtv->itemNew;
+    
+    TreeViewItem* expanded;
+    
+    HTREEITEM hTreeItem = curItem.hItem;
+
+    for(auto item : treeView.state.items) {
+
+        expanded = item->p.find( hTreeItem );
+        
+        if (expanded) {
+            expanded->state.expanded = pnmtv->action == TVE_EXPAND;
+            
+            if (expanded->state.imageExpanded)
+                expanded->p.setImage();
+            
+            if (expanded->state.expanded) {
+                if (treeView.onExpand) treeView.onExpand(expanded);
+            } else {
+                if (treeView.onCollapse) treeView.onCollapse(expanded);
+            }
+            break;
+        }        
+    }
+}
+
 auto pTreeView::onActivate() -> void {
     if(!treeView.state.selected) return;
+    
     if(treeView.onActivate) treeView.onActivate();
 }
 
