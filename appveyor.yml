@@ -7,7 +7,7 @@ skip_commits:
     - '**/*.md'
 
 image:
-  - macos
+  - macos-mojave
   - Visual Studio 2019
   - Ubuntu
   
@@ -39,11 +39,11 @@ matrix:
       Target: win32
     - image: Ubuntu
       Target: macos
-    - image: macos
+    - image: macos-mojave
       Target: win64
-    - image: macos
+    - image: macos-mojave
       Target: win32
-    - image: macos
+    - image: macos-mojave
       Target: linux      
 
 for:
@@ -145,18 +145,18 @@ for:
 -  
   matrix:
     only:
-      - image: macos          
+      - image: macos-mojave
       
   install:      
     - sh: test -e freetype-2.9.1.tar.gz && echo "File exists" || curl -L https://download.savannah.gnu.org/releases/freetype/freetype-2.9.1.tar.gz --output freetype-2.9.1.tar.gz
-    - tar -zvxf freetype-2.9.1.tar.gz
-    - sh: sudo easy_install pip && sudo pip install dmgbuild
+    - tar -zxf freetype-2.9.1.tar.gz
+    - sh: sudo pip install dmgbuild
     
   cache:
     - freetype-2.9.1.tar.gz
     
   before_build:
-    - sh: export MACOSX_DEPLOYMENT_TARGET=10.11
+    - sh: export MACOSX_DEPLOYMENT_TARGET=10.9
     
   build_script:
     - sh: cd freetype-2.9.1
