@@ -7,7 +7,7 @@ skip_commits:
     - '**/*.md'
 
 image:
-  - macos-mojave
+  - macos
   - Visual Studio 2019
   - Ubuntu
   
@@ -39,11 +39,11 @@ matrix:
       Target: win32
     - image: Ubuntu
       Target: macos
-    - image: macos-mojave
+    - image: macos
       Target: win64
-    - image: macos-mojave
+    - image: macos
       Target: win32
-    - image: macos-mojave
+    - image: macos
       Target: linux      
 
 for:
@@ -145,7 +145,7 @@ for:
 -  
   matrix:
     only:
-      - image: macos-mojave
+      - image: macos
       
   install:      
     - sh: test -e freetype-2.9.1.tar.gz && echo "File exists" || curl -L https://download.savannah.gnu.org/releases/freetype/freetype-2.9.1.tar.gz --output freetype-2.9.1.tar.gz

@@ -148,7 +148,7 @@ auto View::build() -> void {
 	placeholderTimer.onFinished = [this]() {
 		placeholderTimer.setEnabled(false);		
 		program->renderPlaceholder();
-		program->renderPlaceholder();
+		//program->renderPlaceholder();
 	};
 	
 	autoloadTimer.setInterval(40);
