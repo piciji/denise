@@ -298,7 +298,8 @@ struct pTreeViewItem {
     NSImage* usensimage = nil;
     NSImage* nsimage = nil;
     NSImage* nsimageSelected = nil;
-        
+    NSImage* nsimageExpanded = nil;
+
     auto append(TreeViewItem& item) -> void;
     auto remove(TreeViewItem& item) -> void;
     auto reset() -> void;
@@ -309,7 +310,7 @@ struct pTreeViewItem {
     auto setExpanded(bool expanded) -> void;
     auto setImage(Image& image) -> void;
     auto setImageSelected(Image& image) -> void;
-	auto setImageExpanded(Image& image) -> void {}
+    auto setImageExpanded(Image& image) -> void;
     auto parentTreeView() -> TreeView*;
     
     pTreeViewItem(TreeViewItem& treeViewItem) : treeViewItem(treeViewItem) {}

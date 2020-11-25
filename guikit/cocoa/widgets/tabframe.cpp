@@ -42,11 +42,8 @@
 
 -(void) drawLabel:(BOOL)shouldTruncateLabel inRect:(NSRect)tabRect {
     
-#ifndef NSAppKitVersionNumber10_14
-    bool _mojaveMin = false;
-#else
-    bool _mojaveMin = NSAppKitVersionNumber >= NSAppKitVersionNumber10_14;
-#endif
+    bool _mojaveMin = GUIKIT::hasMinimumVersion(10, 14);
+    
     signed selection = [cocoaTabFrame indexOfTabViewItem:self];
     if(selection >= 0) {
         if(p->cocoaImages.size() > selection) {

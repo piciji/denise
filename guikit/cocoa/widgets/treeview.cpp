@@ -28,6 +28,15 @@
     return [[self objectValue] objectForKey:@"text"];
 }
 
+- (void)drawWithExpansionFrame:(NSRect)cellFrame inView:(NSView *)view {
+    
+}
+
+- (NSRect)expansionFrameWithFrame:(NSRect)cellFrame inView:(NSView *)view {
+    // fix the extra tooltip
+    return NSZeroRect;
+}
+
 -(void) drawWithFrame:(NSRect)frame inView:(NSView*)view {
     NSString* text = [[self objectValue] objectForKey:@"text"];
     NSImage* image = [[self objectValue] objectForKey:@"image"];
@@ -175,6 +184,32 @@
     [cell setFont:[self font]];
 }
 
+- (BOOL)outlineView:(NSOutlineView *)outlineView shouldExpandItem:(id)item {
+    
+    GUIKIT::TreeViewItem* tvitem = ((TreeViewWrapper*)item)->treeViewItem;
+    
+    tvitem->state.expanded = true;
+    
+    tvitem->p.usensimage = tvitem->p.nsimageSelected != nil ? tvitem->p.nsimageSelected : ((tvitem->expanded() && tvitem->p.nsimageExpanded) ?tvitem->p.nsimageExpanded : tvitem->p.nsimage);
+
+    if (tvitem->parentView()->onExpand) tvitem->parentView()->onExpand(tvitem);
+    
+    return YES;
+}
+
+- (BOOL)outlineView:(NSOutlineView *)outlineView shouldCollapseItem:(id)item {
+    
+    GUIKIT::TreeViewItem* tvitem = ((TreeViewWrapper*)item)->treeViewItem;
+    
+    tvitem->state.expanded = false;
+    
+    tvitem->p.usensimage = tvitem->p.nsimageSelected != nil ? tvitem->p.nsimageSelected : ((tvitem->expanded() && tvitem->p.nsimageExpanded) ?tvitem->p.nsimageExpanded : tvitem->p.nsimage);
+    
+    if (tvitem->parentView()->onCollapse) tvitem->parentView()->onCollapse(tvitem);
+    
+    return YES;
+}
+
 -(void) outlineViewSelectionDidChange:(NSNotification*)notification {
     NSOutlineView* outlineView = [notification object];
     id item = [outlineView itemAtRow:[outlineView selectedRow]];
@@ -196,11 +231,12 @@
 - (void) setImage:(TreeViewWrapper *)item {
     if (treeView->state.selected) {
         treeView->state.selected->p.usensimage =
+        (treeView->state.selected->expanded() && treeView->state.selected->p.nsimageExpanded) ? treeView->state.selected->p.nsimageExpanded :
         treeView->state.selected->p.nsimage;
     }
     
     GUIKIT::TreeViewItem* tvitem = ((TreeViewWrapper*)item)->treeViewItem;
-    tvitem->p.usensimage = tvitem->p.nsimageSelected != nil ? tvitem->p.nsimageSelected : tvitem->p.nsimage;
+    tvitem->p.usensimage = tvitem->p.nsimageSelected != nil ? tvitem->p.nsimageSelected : ((tvitem->expanded() && tvitem->p.nsimageExpanded) ? tvitem->p.nsimageExpanded : tvitem->p.nsimage);
 }
 
 -(IBAction) activate:(id)sender {
@@ -208,7 +244,7 @@
     if (selected) {
         if(selected->itemCount() > 0) {
             BOOL expanded = [content isItemExpanded: selected->p.wrapper];
-            selected->p.setExpanded( !expanded );
+            selected->setExpanded( !expanded );
         }
     }
     if(treeView->onActivate) treeView->onActivate();
@@ -292,6 +328,12 @@ namespace GUIKIT {
         }
     }
     
+    auto pTreeViewItem::setImageExpanded(Image& image) -> void {
+        @autoreleasepool {
+            nsimageExpanded = NSMakeImage(image);
+        }
+    }
+    
     auto pTreeView::update() -> void {
         for(auto& item : treeView.state.items) {
             item->state.parentTreeView = &treeView;
@@ -355,6 +397,7 @@ namespace GUIKIT {
         @autoreleasepool {
             [nsimage release];
             [nsimageSelected release];
+            [nsimageExpanded release];
         }
     }
     

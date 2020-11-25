@@ -156,7 +156,7 @@ for:
     - freetype-2.9.1.tar.gz
     
   before_build:
-    - sh: export MACOSX_DEPLOYMENT_TARGET=10.11
+    - sh: export MACOSX_DEPLOYMENT_TARGET=10.9
     
   build_script:
     - sh: cd freetype-2.9.1

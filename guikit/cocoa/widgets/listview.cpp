@@ -131,8 +131,10 @@
         [self setBorderType:NSBezelBorder];
         [self setHasVerticalScroller:YES];
         [self setHasHorizontalScroller:YES];
-        [self setAutomaticallyAdjustsContentInsets:NO];
-        [self setContentInsets:NSEdgeInsetsMake(2, 2, 2, 2)];
+        if (GUIKIT::hasMinimumVersion(10, 10)) {
+            [self setAutomaticallyAdjustsContentInsets:NO];
+            [self setContentInsets:NSEdgeInsetsMake(2, 2, 2, 2)];
+        }
 
         [content setDataSource:self];
         [content setDelegate:self];
@@ -455,7 +457,7 @@ auto pListView::setForegroundColor(unsigned color) -> void {
 }
 
 auto pListView::setFont(std::string font) -> void {
-    if (!listView.specialFont())
+    if (!listView.specialFont() && GUIKIT::hasMinimumVersion(10, 10))
         [cocoaView setContentInsets:NSEdgeInsetsMake(0, 2, 0, 2)];
     
     updateTooltipUsage();

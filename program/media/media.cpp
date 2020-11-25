@@ -231,21 +231,7 @@ auto MediaLayout::build() -> void {
         updateSwitchLayout();
         updateExpansionBootButtonVisibility();
     };
-	
-	mediaTree.onActivate = [this]() {
-        logger->log("act", 1);
-	};
-	
-	mediaTree.onExpand = [this](GUIKIT::TreeViewItem* item) {
-
-        logger->log("expanded", 1);
-	};
-      
-	mediaTree.onCollapse = [this](GUIKIT::TreeViewItem* item) {
-
-        logger->log("collapsed", 1);
-	};
-	
+		
     tvi = new GUIKIT::TreeViewItem;
     tvi->setText( "disk_swapper" );
     tvi->setImage( swapperImage );    

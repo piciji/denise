@@ -257,11 +257,13 @@ auto pBrowserWindow::buildView() -> void {
     [accessoryView setFrame:NSMakeRect(0, 0, maxContentWidth, maxContentHeight)];
     
     [panel setAccessoryView: accessoryView];
-    
-    if (state.contentView.id || state.buttons.size())
-        [panel setAccessoryViewDisclosed:YES];
-    else
-        [panel setAccessoryViewDisclosed:NO];
+   
+    if (GUIKIT::hasMinimumVersion(10, 11)) {
+        if (state.contentView.id || state.buttons.size())
+            [panel setAccessoryViewDisclosed:YES];
+        else
+            [panel setAccessoryViewDisclosed:NO];
+    }
 }
     
 auto pBrowserWindow::directory() -> std::string {

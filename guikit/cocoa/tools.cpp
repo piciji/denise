@@ -32,6 +32,8 @@
 
 namespace GUIKIT {
 
+#include "versioning.cpp"
+    
 auto NSMakeImage(Image& image, unsigned width, unsigned height) -> NSImage* {
     if(image.empty()) return nil;
 

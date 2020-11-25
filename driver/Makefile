@@ -72,7 +72,7 @@ drvlink += $(if $(findstring wasapi,$(drv)),-lksuser -luuid -lavrt)
 # osx carbon UI is depracated for 64 bit. we need it for TIS services only. so it should be Catalina ready.
 drvlink += $(if $(findstring iokit,$(drv)),-framework IOKit -framework Carbon)
 drvlink += $(if $(findstring cgl,$(drv)),-framework OpenGL)
-drvlink += $(if $(findstring coreaudio,$(drv)),-framework CoreAudio -framework AudioToolbox)
+drvlink += $(if $(findstring coreaudio,$(drv)),-framework CoreAudio -framework AudioToolbox -framework AudioUnit)
 
 drvlink += $(if $(findstring glx,$(drv)),-lGL)
 drvlink += $(if $(findstring udev,$(drv)),-ludev)
