@@ -41,7 +41,6 @@ auto Program::initVideo() -> void {
 	
 	if (!cmd->debug) {
 		loadPlaceholder();
-        view->placeholderTimer.setEnabled(false);
         renderPlaceholder();
 	}
 }
