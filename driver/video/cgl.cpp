@@ -43,6 +43,8 @@ struct CGL : public Video, OpenGL {
             [context setView:view];
             [view lockFocus];
 
+            [[view openGLContext] makeCurrentContext];
+            
             OpenGL::init();
             
             auto version = (const char*)glGetString(GL_VERSION);
