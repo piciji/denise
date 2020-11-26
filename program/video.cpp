@@ -95,6 +95,9 @@ auto Program::videoRefresh8(const uint8_t* frame, unsigned width, unsigned heigh
 
 auto Program::loadPlaceholder() -> void {
 
+	if (!placeholder.empty())
+		return;
+	
 	GUIKIT::File file( imgFolder() + "startscreen.png" );
 	
 	if (!file.open())
