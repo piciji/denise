@@ -1,7 +1,6 @@
 
 /**
- * v 1.4
- * guikit is a based on higans phoenix library https://byuu.org/
+ * v 1.5
  */
 
 #ifndef GUIKIT_H

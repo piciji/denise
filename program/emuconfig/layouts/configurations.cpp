@@ -4,7 +4,10 @@ SettingsLayout::Control::Control() {
     append( save, {0u, 0u}, 10 );
     append( remove, {0u, 0u}, 10 );
     append( edit, {~0u, 0u}, 10 );
-    append( create, {0u, 0u} );    
+    append( create, {0u, 0u} );
+    
+    load.setEnabled(false);
+    save.setEnabled(false);
     
     setAlignment(0.5);
 }
@@ -114,6 +117,14 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
     moduleSwitch.setLayout( 1, statesFrame, {~0u, ~0u} );
     
     append( moduleSwitch, {~0u, ~0u} );
+    
+    settings.listView.onChange = [this]() {
+        
+        if (!settings.control.load.enabled()) {
+            settings.control.load.setEnabled();
+            settings.control.save.setEnabled();
+        }
+    };
     
     settings.listView.onActivate = [this]() {
         
