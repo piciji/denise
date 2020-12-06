@@ -38,6 +38,7 @@ struct StatusHandler {
     auto updateDRC( bool state ) -> void;
     auto updateAudioRecord( bool state ) -> void;
     auto updateTapeImage( GUIKIT::Image* image ) -> void;
+    auto countFrames() -> void;
 
     GUIKIT::StatusBar* statusBar = nullptr;
     uint16_t control;
@@ -57,6 +58,13 @@ struct StatusHandler {
             critical = false;
         }
     } message;
+    
+    // FPS Counter
+    unsigned fps;
+    unsigned fpsCollect;
+    time_t prev_t;
+    time_t curr_t;        
+
 };
 
 extern StatusHandler* statusHandler;

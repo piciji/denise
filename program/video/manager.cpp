@@ -13,8 +13,6 @@
 #include "../tools/chronos.h"
 #include "../view/status.h"
 
-#include "fpsCounter.cpp"
-
 bool VideoManager::synchronized = true;
 bool VideoManager::threaded = true;
 bool VideoManager::shaderInputPrecision = false;

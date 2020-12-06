@@ -151,7 +151,6 @@ extern std::vector<GUIKIT::Settings*> settingsStorage;
 extern GUIKIT::Settings* globalSettings;
 extern Emulator::Interface* activeEmulator;
 extern VideoManager* activeVideoManager;
-extern FPSCounter fpsCounter;
 
 #endif
 

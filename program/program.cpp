@@ -29,7 +29,6 @@ Logger* logger = nullptr;
 Cmd* cmd = nullptr;
 std::vector<FileSetting*> FileSetting::instances = {};
 VideoManager* activeVideoManager = nullptr;
-FPSCounter fpsCounter;
 
 #include "files.cpp"
 #include "video.cpp"
@@ -89,6 +88,7 @@ Program::Program() {
 //    GUIKIT::Image::getCharDataStringFromBinary("E:/icons/led-off.png", "E:/icons/led-off.png.data");
 //    GUIKIT::Image::getCharDataStringFromBinary("E:/icons/tape/play2HiPause.png", "E:/icons/tape/play2HiPause.png.data");
 
+    
 }
 
 auto Program::addEmulators() -> void {
@@ -380,7 +380,7 @@ auto Program::loop() -> void {
 		VideoManager::updateWhenNotRunning();
 	}
     
-    if (statusHandler && statusHandler->hasUpdates())
+    if (statusHandler->hasUpdates())
         statusHandler->update();
 }
 

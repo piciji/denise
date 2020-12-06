@@ -43,6 +43,27 @@ auto StatusHandler::clear() -> void {
     message.clear();
     clearUpdates();
     videoDriver->showMessage( "" );
+    fps = fpsCollect = 0;
+}
+
+auto StatusHandler::countFrames() -> void {
+    fpsCollect++;
+    time( &curr_t );
+
+    if (curr_t != prev_t) {
+        fps = fpsCollect;
+        fpsCollect = 0;
+        
+        setFpsCounterUpdate();
+
+        if (!VideoManager::synchronized)
+            // check input polling and message loop every 50 ms
+            program->loopFrames = (fps * 50 ) / 1000;
+        else
+            // check input polling every frame
+            program->loopFrames = 0;
+    }
+    prev_t = curr_t;
 }
 
 auto StatusHandler::updateFPS( bool state ) -> void {
@@ -80,7 +101,9 @@ auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
     
     this->statusBar = statusBar;
     showFPS = globalSettings->get<bool>("fps", false);
-
+    recordAudio = false;    
+    fps = fpsCollect = 0;
+    
     GUIKIT::StatusBar::Part part;
     
     part.id = 0;
@@ -265,13 +288,13 @@ auto StatusHandler::update() -> void {
             OSDText += " REC ";
         
         if (showFPS) {
-            std::string FPS = std::to_string(fpsCounter.fps);
+            std::string _FPS = std::to_string(fps);
 
             if (fpsCounterUpdate())
-                statusBar->updateText(14, FPS);
+                statusBar->updateText(14, _FPS);
 
             if (message.txt.empty())
-                OSDText += " " + FPS;            
+                OSDText += " " + _FPS;            
         }
     }    
         

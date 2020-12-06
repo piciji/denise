@@ -55,17 +55,6 @@ struct ColorRgb {
     int16_t bInt;
 };
 
-// FPS counter
-struct FPSCounter {
-    unsigned fps;
-    unsigned fpsCollect;
-    time_t prev_t;
-    time_t curr_t;
-    
-    auto countFrames() -> void;
-    auto init() -> void;
-};
-
 struct VideoManager {
     VideoManager(Emulator::Interface* emulator);
     ~VideoManager();
