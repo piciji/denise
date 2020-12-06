@@ -8,7 +8,6 @@
 #include "../view/view.h"
 #include "../emuconfig/config.h"
 #include "../tools/filepool.h"
-#include "../tools/status.h"
 #include "../input/manager.h"
 
 struct States {        

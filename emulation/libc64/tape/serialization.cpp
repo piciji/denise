@@ -31,13 +31,11 @@ auto Tape::serialize(Emulator::Serializer& s) -> void {
     s.integer( fetchPos );
     s.integer( fetchSize );
     s.integer( pos );
-    s.integer( (uint8_t&)currentCounter.cstate );
-    s.integer( currentCounter.counter );
     s.integer( writeProtect );
     s.integer( writeQuestionState );
 
     if (s.mode() == Emulator::Serializer::Mode::Load) {
-        updateState( currentCounter.cstate, currentCounter.counter );
+        updateDeviceState();
     }
 }
 

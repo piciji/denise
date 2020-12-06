@@ -80,7 +80,7 @@ struct Program : Emulator::Interface::Bind {
     auto readMedia(Emulator::Interface::Media* media, uint8_t* buffer, unsigned length, unsigned offset) -> unsigned override;
     auto writeMedia(Emulator::Interface::Media* media, uint8_t* buffer, unsigned length, unsigned offset) -> unsigned override;
     auto truncateMedia(Emulator::Interface::Media* media) -> bool override;
-    auto updateDriveState(Emulator::Interface::Media* media, unsigned mode, unsigned track) -> void override;
+    auto updateDeviceState( Emulator::Interface::Media* media, bool write, unsigned position, bool LED, bool motorOff ) -> void override;
 	auto log(std::string data, bool newLine = true) -> void override;
     auto questionToWrite(Emulator::Interface::Media* media) -> bool override;
     auto exit(int code) -> void override;
@@ -151,6 +151,7 @@ extern std::vector<GUIKIT::Settings*> settingsStorage;
 extern GUIKIT::Settings* globalSettings;
 extern Emulator::Interface* activeEmulator;
 extern VideoManager* activeVideoManager;
+extern FPSCounter fpsCounter;
 
 #endif
 

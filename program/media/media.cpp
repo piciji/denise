@@ -3,6 +3,7 @@
 #include "../cmd/cmd.h"
 #include "../view/view.h"
 #include "../view/message.h"
+#include "../view/status.h"
 #include "../tools/filepool.h"
 #include "../tools/filesetting.h"
 #include "../config/archiveViewer.h"
@@ -584,7 +585,7 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
             auto media = layout->selectedBlock->media;
                                     
             if ( emulator->selectListing( media, selection ) ) {
-                status->addMessage( trans->get( "program_injected" ) );
+                statusHandler->setMessage( trans->get( "program_injected" ) );
                 view->setFocused( 300 );                
             }
         };

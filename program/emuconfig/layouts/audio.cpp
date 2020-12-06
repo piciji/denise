@@ -358,7 +358,7 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
         } else
             audioManager->record.finish();
         
-        status->record = state;
+        statusHandler->updateAudioRecord( state );
         
         audioRecord.duration.record.setText( trans->get( state ? "Stop" : "Record" ) );        
     };

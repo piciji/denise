@@ -1,6 +1,8 @@
 
 #include "states.h"
 #include "../firmware/manager.h"
+#include "../view/status.h"
+#include "../audio/manager.h"
 
 std::vector<States*> states;
 
@@ -351,7 +353,7 @@ auto States::changeSlot( bool down ) -> void {
 }
 
 auto States::statusMessage( std::string langKey, std::string replacer ) -> void {
-    status->addMessage(trans->get(langKey,{
+    statusHandler->setMessage(trans->get(langKey,{
         {"%ident%", replacer}
     }), 4, GUIKIT::String::foundSubStr(langKey, "error") || GUIKIT::String::foundSubStr(langKey, "incompatible") );
 }

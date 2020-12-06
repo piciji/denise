@@ -155,6 +155,18 @@ auto Window::remove(Widget& widget) -> void {
     widget.Sizable::state.window = nullptr;
 }
 
+auto Window::append(StatusBar& statusBar) -> void {
+    state.statusBar = &statusBar;
+    statusBar.state.window = this;
+    p.append(statusBar);
+}
+
+auto Window::remove(StatusBar& statusBar) -> void {
+    state.statusBar = nullptr;
+    statusBar.state.window = nullptr;
+    p.remove(statusBar);
+}
+
 auto Window::append(Layout& layout) -> void {
     if (_A::dummy) return;
     if (state.layout) remove(layout);
@@ -229,21 +241,10 @@ auto Window::setFocused(unsigned delay) -> void {
 	focusTimer->setEnabled();    
 }
 
-auto Window::setStatusFont(const std::string& font) -> void {
-    if (_A::dummy) return;
-    p.setStatusFont(font);
-}
-
 auto Window::setTitle(const std::string& text) -> void {
     if (_A::dummy) return;
     state.title = text;
     p.setTitle(text);
-}
-
-auto Window::setStatusText(const std::string& text) -> void {
-    if (_A::dummy) return;
-    state.statusText = text;
-    p.setStatusText(text);
 }
 
 auto Window::setStatusVisible(bool visible) -> void {
@@ -389,6 +390,140 @@ auto Window::Winapi::disableBackgroundRedrawDuringResize(bool state) -> void {
     #ifdef GUIKIT_WINAPI
         window.p.bgUpdateState = state ? 1 : 0;
     #endif
+}
+
+//statusbar
+StatusBar::StatusBar() : p(*new pStatusBar(*this)), Base() {}
+
+StatusBar::~StatusBar() { delete &p; }
+
+auto StatusBar::setFont(std::string font) -> void {
+    if (_A::dummy) return;
+    
+    state.font = font;
+    p.setFont(font);    
+}
+
+auto StatusBar::setText(std::string text) -> void {
+    if (_A::dummy) return;
+    state.text = text;
+    p.setText(text);
+}
+
+auto StatusBar::appendPart( Part part ) -> void {
+    if (_A::dummy) return;
+        
+    state.parts.push_back( part );
+      
+    state.updatePending = true;
+}
+
+auto StatusBar::insertPart( Part part, unsigned pos ) -> void {
+    if (_A::dummy) return;
+    
+    if (pos >= state.parts.size()) {
+        state.parts.push_back( part );
+        pos = state.parts.size() - 1;
+    } else
+        GUIKIT::Vector::insert<Part>( state.parts, part, pos );
+    
+    state.updatePending = true;
+}
+
+auto StatusBar::removePart( unsigned id ) -> void {
+    if (_A::dummy) return;
+    
+    unsigned pos = 0;
+    for(auto& part : state.parts) {
+        if (part.id == id) {
+            GUIKIT::Vector::eraseVectorPos( state.parts, pos );
+            break;
+        }
+        pos++;
+    }
+    
+    state.updatePending = true;
+}
+
+auto StatusBar::updateText( unsigned id, std::string text, bool overrideForegroundColor, unsigned foregroundColor ) -> bool {
+    if (_A::dummy) return false;
+    
+    for(auto& part : state.parts) {
+        if (part.id == id) {
+            
+            if (!part.visible) {
+                part.overrideForegroundColor = overrideForegroundColor;
+                part.foregroundColor = foregroundColor;
+                part.text = text;
+                part.visible = true;
+                state.updatePending = true;
+                
+            } else if ( (part.text != text) || (part.overrideForegroundColor != overrideForegroundColor) || (overrideForegroundColor && (part.foregroundColor != foregroundColor) ) ) {
+                part.overrideForegroundColor = overrideForegroundColor;
+                part.foregroundColor = foregroundColor;
+                part.text = text;                
+                p.updatePart( part.position );
+            }                       
+            return true;
+        }
+    }
+    return false;
+}
+
+
+auto StatusBar::updateImage( unsigned id, Image* image ) -> bool {
+    if (_A::dummy) return false;
+    
+    for (auto& part : state.parts) {
+        if (part.id == id) {
+            if (!part.visible) {
+                part.image = image;
+                part.visible = true;
+                state.updatePending = true;
+                
+            } else if (part.image != image) {
+                part.image = image;
+                p.updatePart( part.position );
+            }
+            return true;
+        }
+    }
+    return false;
+}
+
+auto StatusBar::updateVisible( unsigned id, bool visible ) -> bool {
+    if (_A::dummy) return false;
+    
+    for(auto& part : state.parts) {
+        if (part.id == id) {
+            if (part.visible != visible) {
+                part.visible = visible;
+                state.updatePending = true;
+            }
+            return true;
+        }
+    }
+    return false;
+}
+
+auto StatusBar::hideContent() -> void {
+    for(auto& part : state.parts)
+        part.visible = false;
+    
+    state.updatePending = true;
+}
+
+auto StatusBar::clear() -> void {
+    state.parts.clear();
+    state.updatePending = true;
+}
+
+auto StatusBar::update(bool force) -> void {
+    
+    if (force || state.updatePending) {
+        p.update();
+        state.updatePending = false;
+    }
 }
 
 //widgets
@@ -1310,3 +1445,4 @@ auto Thread::setPriorityRealtime( std::thread& th ) -> void {
 }
 
 }
+

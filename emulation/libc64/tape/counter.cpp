@@ -194,32 +194,14 @@
 namespace LIBC64 {
 
 auto Tape::updateCounter() -> void {
-    
+
+    unsigned oldCounter = counter;
     counter = ( 1000 - counterOffset + calculateCounter() ) % 1000;
-	
-    CounterState cstate;
-    
-    if (!motorIn) 
-        cstate = CounterState::List;
-    
-    else {
-        switch(mode) {
-            default:
-            case Mode::Forward:
-            case Mode::Rewind:
-            case Mode::Stop:    cstate = CounterState::List; break;
-            case Mode::Play:    cstate = CounterState::Read; break;
-            case Mode::Record:  cstate = CounterState::Write; break;
-        }			
-    }
-    
-    if ( currentCounter.counter == counter && currentCounter.cstate == cstate )
+	    
+    if ( oldCounter == counter )
         return;
     
-    currentCounter.counter = counter;
-    currentCounter.cstate = cstate;
-    
-    updateState( cstate, counter );
+    updateDeviceState();
 }
 
 auto Tape::resetCounter() -> void {

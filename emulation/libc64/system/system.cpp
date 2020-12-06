@@ -400,12 +400,7 @@ System::System(Interface* interface) {
 		
 		cia1->setFlag();
 	};
-    
-	tape->updateState = [this](unsigned mode, unsigned counter) {
-		
-		this->interface->updateDriveState(tape->getMedia(), mode, counter);
-	};
-	
+    	
 	tape->read = [this](uint8_t* buffer, unsigned length, unsigned offset) {
 		
 		return this->interface->readMedia(tape->getMedia(), buffer, length, offset);
@@ -890,7 +885,7 @@ auto System::updatePort(uint8_t lines, uint8_t ddr) -> void {
 
 	mode |= lines & 7;     
 
-	if (modeBefore != mode)        
+	if (modeBefore != mode)
 		this->remapCpu( );
 
 	tape->writeIn( ((~ddr | lines) & 8) != 0 );

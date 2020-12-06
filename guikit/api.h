@@ -16,12 +16,14 @@
 namespace GUIKIT {
 
 struct Window;
+struct StatusBar;
 struct Menu;
 struct Widget;
 struct Layout;
 struct TreeView;
 struct Timer;
 struct pWindow;
+struct pStatusBar;
 struct pTimer;
 struct pMenuBase;
 struct pMenu;
@@ -65,6 +67,7 @@ struct Image {
     unsigned width;
     unsigned height;
     uint8_t* data = nullptr;
+    bool alphaBlendApplied = false;
     int resourceId = -1; // win xp only 
     enum Format : unsigned { RGBA, BGRA } format;
 
@@ -190,9 +193,11 @@ struct Window : Base {
     auto append(Menu& menu) -> void;
     auto append(Layout& layout) -> void;
     auto append(Widget& widget) -> void;
+    auto append(StatusBar& statusBar) -> void;
     auto remove(Menu& menu) -> void;
     auto remove(Layout& layout) -> void;
     auto remove(Widget& widget) -> void;
+    auto remove(StatusBar& statusBar) -> void;
     auto isApended(Menu& menu) -> bool;
     auto setBackgroundColor(uint8_t r, uint8_t g, uint8_t b) -> void {
         setBackgroundColor(r << 16 | g << 8 | b);
@@ -202,9 +207,7 @@ struct Window : Base {
     auto restore() -> void; // from minimized
     auto setFocused() -> void;
 	auto setFocused(unsigned delay) -> void;
-    auto setStatusFont(const std::string& font) -> void;
     auto setTitle(const std::string& title) -> void;
-    auto setStatusText(const std::string& text) -> void;
     auto setStatusVisible(bool visible = true) -> void;
     auto setMenuVisible(bool visible = true) -> void;
     auto setFullScreen(bool fullScreen = true) -> void;
@@ -226,7 +229,7 @@ struct Window : Base {
     auto droppable() const -> bool { return state.droppable; }
     auto minimized() -> bool;
     auto title() const -> std::string { return state.title; }
-    auto statusText() const -> std::string { return state.statusText; }
+    auto statusBar() -> StatusBar* { return state.statusBar; }
     auto widgetFont() const -> std::string { return state.widgetFont; }
     auto geometry() -> Geometry;
     auto changeCursor( Image& image, unsigned hotSpotX, unsigned hotSpotY ) -> void;
@@ -243,12 +246,12 @@ struct Window : Base {
         bool visible = false;
         bool droppable = false;
         std::string title;
-        std::string statusText;
         Geometry geometry = {100, 100, 400, 300};
         std::string widgetFont;
         std::vector<Menu*> menus;
         Layout* layout = nullptr;
         Image* cursorImage = nullptr;
+        StatusBar* statusBar = nullptr;
     } state;
 	
 	static std::vector<CustomFont*> customFonts;
@@ -257,6 +260,51 @@ struct Window : Base {
     pWindow& p;
     Window();
     ~Window();
+};
+
+struct StatusBar : Base {    
+    struct Part {
+        unsigned id;
+        unsigned width;
+        std::string text = "";
+        Image* image = nullptr;        
+        std::function<void ()> onClick = nullptr;
+        Menu* popupMenu = nullptr;
+        unsigned foregroundColor = 0;
+        bool overrideForegroundColor = false; 
+        bool visible = false;
+        unsigned position = 0;
+    };
+    
+    auto window() const -> Window* { return state.window; }
+    auto font() const -> std::string { return state.font; }
+    auto text() const -> std::string { return state.text; }
+    auto updatePending() const -> bool { return state.updatePending; }
+    auto appendPart( Part part ) -> void;
+    auto insertPart( Part part, unsigned pos ) -> void;    
+    auto removePart( unsigned id ) -> void;
+    
+    auto updateText( unsigned id, std::string text, bool overrideForegroundColor = false, unsigned foregroundColor = 0 ) -> bool;
+    auto updateImage( unsigned id, Image* image ) -> bool;
+    auto updateVisible( unsigned id, bool visible ) -> bool;    
+    
+    auto setFont(std::string font) -> void;
+    auto setText(std::string text) -> void; // simple single part usage
+    auto clear() -> void;
+    auto hideContent() -> void;
+    auto update(bool force = false) -> void;
+        
+    struct {
+        std::string font;
+        std::string text;
+        Window* window = nullptr;
+        std::vector<Part> parts;
+        bool updatePending = false;
+    } state;
+    
+    pStatusBar& p;
+    StatusBar();
+    ~StatusBar();
 };
 
 struct Sizable : Base {
@@ -1328,7 +1376,11 @@ struct Vector {
         copy(v2.begin(), v2.end(), back_inserter( concated ));
         return concated;
     }
-    
+    template <typename T> 
+    static auto insert(std::vector<T>& v, T value, unsigned pos) -> void {
+        auto itPos = v.begin() + ( (pos >= v.size()) ? v.size() : pos);
+        v.insert( itPos, value );
+    }
     Vector() = delete;
 };
 

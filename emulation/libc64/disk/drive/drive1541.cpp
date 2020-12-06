@@ -162,8 +162,12 @@ Drive1541::Drive1541(uint8_t number) {
                  if (!motorOn)
                     motorOffInit();
                 
-                updateState( );
+                updateDeviceState();
             }
+            
+            // LED status change
+            if ((lines->iob ^ lines->iobOld) & 8)
+                updateDeviceState();
             
         } else {
             // port A
@@ -197,7 +201,7 @@ Drive1541::Drive1541(uint8_t number) {
     via2->cb2Out = [this]( bool state ) {
             
         if ( readMode != state )
-            updateState( );
+            updateDeviceState();
         
         readMode = state;                
     };
@@ -207,10 +211,6 @@ Drive1541::Drive1541(uint8_t number) {
 		return system->interface->writeMedia( getMedia(), buffer, length, offset );
 	};
     
-    updateState = [this]() {		
-        
-		system->interface->updateDriveState( getMedia(), getTrackState(), (currentHalftrack + 2) / 2 );
-	};
     
     for(unsigned i = 0; i < motorOff.CHUNKS; i++)
         motorOff.chunkSize.push_back( 0 );
@@ -219,6 +219,17 @@ Drive1541::Drive1541(uint8_t number) {
 Drive1541::~Drive1541() {    
     
     delete[] ram;
+}
+
+auto Drive1541::updateDeviceState() -> void {
+        
+    system->interface->updateDeviceState( getMedia(), !readMode, currentHalftrack + 2, via2->lines.iob & 8, !motorOn );
+}
+
+// missing BUS communication
+auto Drive1541::updateIdleDeviceState() -> void {
+    
+    system->interface->updateDeviceState( getMedia(), !readMode, currentHalftrack + 2, false, true );
 }
 
 auto Drive1541::updateBus() -> void {
@@ -274,7 +285,6 @@ auto Drive1541::power( ) -> void {
 auto Drive1541::powerOff( ) -> void {  
     write();  
     motorOn = false;
-    updateState( );
 }
 
 auto Drive1541::setFirmware(uint8_t* rom) -> void {
@@ -397,17 +407,6 @@ auto Drive1541::write() -> void {
         return;
     
     structure1541.storeWrittenTracks();
-}
-
-inline auto Drive1541::getTrackState() -> TrackState {
-    
-    if (!motorOn)
-        return TrackState::NoOperation;
-    
-    if (currentHalftrack & 1)
-        return readMode ? TrackState::ReadHalf : TrackState::WriteHalf;
-    
-    return readMode ? TrackState::Read : TrackState::Write;
 }
 
 inline auto Drive1541::useAccuracy() -> bool {    

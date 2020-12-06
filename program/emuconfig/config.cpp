@@ -7,11 +7,12 @@
 #include "../view/message.h"
 #include "../tools/filepool.h"
 #include "../tools/filesetting.h"
-#include "../tools/status.h"
+#include "../view/status.h"
 #include "../firmware/manager.h"
 #include "../video/palette.h"
 #include "../cmd/cmd.h"
 #include "../media/media.h"
+#include "../audio/manager.h"
 
 #include <thread>
 #include <vector>

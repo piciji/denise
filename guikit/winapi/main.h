@@ -47,7 +47,6 @@ struct pApplication {
 struct pWindow {
     Window& window;
     HWND hwnd;
-    HWND hstatus;
     HMENU hmenu;
 	HMENU contextmenu;
     bool locked;
@@ -56,15 +55,16 @@ struct pWindow {
     COLORREF brushColor;
     unsigned bgUpdateState; //0 - immediate, 1 - not during resize, 2 - delayed, 3 - update onetime
 
-    HFONT hstatusfont;
     HCURSOR hCursor;
 
     auto append(Menu& menu) -> void;
     auto append(Widget& widget) -> void;
     auto append(Layout& layout) -> void;
+    auto append(StatusBar& statusBar) -> void;
     auto remove(Menu& menu) -> void;
     auto remove(Widget& widget) -> void;
     auto remove(Layout& layout) -> void {}
+    auto remove(StatusBar& statusBar) -> void;
     auto setGeometry(Geometry geometry) -> void;
     auto setStatusFont(std::string font) -> void;
     auto setBackgroundColor(unsigned color) -> void;
@@ -101,6 +101,33 @@ struct pWindow {
 
     pWindow(Window& window);
     ~pWindow();
+};
+
+struct pStatusBar {
+    StatusBar& statusBar;
+    
+    HFONT hfont = nullptr;
+    HWND hwnd = nullptr;
+    
+    std::vector<StatusBar::Part*> usedParts;
+    
+    auto create() -> void;
+    auto destroy() -> void;
+    
+    auto setFont(std::string font) -> void;
+    auto setText(std::string text) -> void;
+        
+    auto drawItem(WPARAM wparam, LPARAM lparam) -> void;
+    auto update() -> void;
+    auto updatePart( unsigned pos ) -> void;
+    auto updatePosition() -> void;
+    auto setStatusVisible(bool visible) -> void;
+    auto getHeight() -> unsigned;
+    
+    auto onClick(LPARAM lparam) -> void;
+    
+    pStatusBar(StatusBar& statusBar);
+    ~pStatusBar();
 };
 
 struct pWidget {

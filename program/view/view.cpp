@@ -3,11 +3,11 @@
 #include "../program.h"
 #include "../config/config.h"
 #include "../emuconfig/config.h"
-#include "../tools/status.h"
 #include "../input/manager.h"
 #include "../config/archiveViewer.h"
 #include "../audio/manager.h"
 #include "../cmd/cmd.h"
+#include "status.h"
 #include "dragndrop.cpp"
 
 View* view = nullptr;
@@ -36,7 +36,20 @@ auto View::build() -> void {
     
     append(viewport);
     
-    if (!cmd->noGui) {
+    loadImages();
+    
+    if (!cmd->noGui) {                
+        
+        statusBar.setFont( GUIKIT::Font::system() );
+        
+//        statusBar.appendPart({0, 0, "Text 1", nullptr, nullptr, nullptr, 0, false, true});
+//        statusBar.appendPart({1, 100, "Text 2", nullptr, [this](){ this->message->warning("text 2"); }, nullptr, 0, false, true });
+//        statusBar.appendPart({2, 150, "Text 3", &systemImage, nullptr, &tapeControlMenu, 0, false, true });
+//        statusBar.appendPart({3, 200, "Text 4", nullptr, nullptr, nullptr, 0, false, true});        
+//        statusBar.update();        
+                        
+        append( statusBar );
+        
         buildMenu();    
         updateShader();
         translate();
@@ -80,8 +93,6 @@ auto View::build() -> void {
         }
         updateViewport();
 		audioDriver->clear();
-        if (!program->isRunning)
-            GUIKIT::Window::setStatusText("");
     };
 	
 	onContext = [this]() {
@@ -169,8 +180,6 @@ auto View::build() -> void {
         
         if (program->isRunning)
             return;
-        
-        //GUIKIT::Window::setStatusText( std::to_string(pos.x) + " " + std::to_string(pos.y) );
                         
         if (cursorForPlacholderInUpperTriangle(pos)) {
             view->setPointerCursor();
@@ -184,7 +193,9 @@ auto View::build() -> void {
 			view->setDefaultCursor();
 	};
 	
-    setDragnDrop();        
+    setDragnDrop();
+    
+    statusHandler->init( &statusBar );
 }
 
 auto View::setAutoload( Emulator::Interface* emulator ) -> void {
@@ -280,28 +291,6 @@ auto View::updateStatusBar(bool toggle) -> void {
     
     if(toggle)
         updateViewport();
-}
-
-auto View::setStatusText(const std::string& text, bool critical) -> void {
-    auto option = globalSettings->get("video_screen_text", 0, {0u,2u});
-    
-    if (option == 0) {
-        if(statusVisible()) GUIKIT::Window::setStatusText(text);
-        videoDriver->showMessage( "" );
-    
-    } else if (option == 1) {
-        if(!statusVisible()) videoDriver->showMessage( text, critical );
-        else {
-            GUIKIT::Window::setStatusText(text);
-            videoDriver->showMessage( "" );
-        }
-        
-    } else {
-        if(statusVisible()) GUIKIT::Window::setStatusText(text);
-        videoDriver->showMessage( text, critical );          
-    }   
-        
-	program->renderPlaceholder();        
 }
 
 auto View::updateViewport() -> void {
@@ -567,7 +556,7 @@ auto View::updateShader() -> void {
     }
 }
 
-auto View::buildMenu() -> void {
+auto View::loadImages() -> void {
     #include "../../data/img/icons.data"
     #include "../../data/resource.h" // for win xp only 
     regionImage.loadPng((uint8_t*)globe, sizeof(globe));
@@ -614,6 +603,7 @@ auto View::buildMenu() -> void {
     playImage.setResourceId( ID_PLAY );
     playhiImage.loadPng((uint8_t*)playHi, sizeof(playHi));
     playhiImage.setResourceId( ID_PLAYHI );
+    playhiPauseImage.loadPng((uint8_t*)playHiPause, sizeof(playHiPause));
     stopImage.loadPng((uint8_t*)stop, sizeof(stop));
     stopImage.setResourceId( ID_STOP );
     stophiImage.loadPng((uint8_t*)stopHi, sizeof(stopHi));
@@ -634,6 +624,14 @@ auto View::buildMenu() -> void {
     counterImage.setResourceId( ID_COUNTER );
     diskImage.loadPng((uint8_t*) disk, sizeof (disk));
     diskImage.setResourceId( ID_DISK );
+       
+    ledOffImage.loadPng((uint8_t*) ledOff, sizeof (ledOff));
+    ledRedImage.loadPng((uint8_t*) ledRed, sizeof (ledRed));
+    ledGreenImage.loadPng((uint8_t*) ledGreen, sizeof (ledGreen));
+    
+}
+
+auto View::buildMenu() -> void {
 		
     for(auto emulator : emulators) {
         auto emuConfigView = EmuConfigView::TabWindow::getView( emulator );        
@@ -814,7 +812,7 @@ auto View::buildMenu() -> void {
 
     dynamicRateControl.onToggle = [&]() {
         globalSettings->set<bool>("dynamic_rate_control", dynamicRateControl.checked() );
-        audioManager->setRateControl();
+        audioManager->setRateControl();        
     };
     if ( globalSettings->get<bool>("dynamic_rate_control", false) ) dynamicRateControl.setChecked();
     optionsMenu.append(dynamicRateControl);
@@ -838,7 +836,7 @@ auto View::buildMenu() -> void {
     optionsMenu.append(muteItem);
     fpsItem.onToggle = [&]() {
         globalSettings->set<bool>("fps", fpsItem.checked() );
-		status->showFps = fpsItem.checked();
+        statusHandler->updateFPS( fpsItem.checked() );
     };
     if ( globalSettings->get<bool>("fps", false) ) fpsItem.setChecked();
     optionsMenu.append(fpsItem);
@@ -846,6 +844,7 @@ auto View::buildMenu() -> void {
     audioBufferItem.onToggle = [&]() {
         globalSettings->set<bool>("show_audio_buffer", audioBufferItem.checked() );
 		audioManager->setStatistics();
+        statusHandler->updateDRC( dynamicRateControl.checked() );
     };
     if ( globalSettings->get<bool>("show_audio_buffer", false) ) audioBufferItem.setChecked();
     optionsMenu.append(audioBufferItem);
@@ -942,6 +941,25 @@ auto View::updateTapeIcons( Emulator::Interface::TapeMode mode ) -> void {
     tapeForwardItem.setIcon( mode == TapeMode::Forward ? forwardhiImage : forwardImage );
     tapeRewindItem.setIcon( mode == TapeMode::Rewind ? rewindhiImage : rewindImage );
 	tapeResetCounterItem.setIcon( counterImage );
+    
+    updateTapeStatusIcons( mode );
+}
+
+auto View::updateTapeStatusIcons( Emulator::Interface::TapeMode mode ) -> void {
+    
+    GUIKIT::Image* image = &(view->stopImage); // Unpressed
+    
+    typedef Emulator::Interface::TapeMode TapeMode;
+    
+    switch( mode ) {
+        case TapeMode::Play:        image = &(view->playhiImage); break;
+        case TapeMode::Record:      image = &(view->recordhiImage); break;
+        case TapeMode::Forward:     image = &(view->forwardhiImage); break;
+        case TapeMode::Rewind:      image = &(view->rewindhiImage); break;
+        case TapeMode::Stop:        image = &(view->stophiImage); break;
+    }
+    
+    statusHandler->updateTapeImage( image );
 }
 
 auto View::translate() -> void {
@@ -1098,4 +1116,3 @@ auto View::questionToWrite(Emulator::Interface::Media* media) -> bool {
     
     return state;
 }
-

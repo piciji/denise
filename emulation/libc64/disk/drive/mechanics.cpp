@@ -504,7 +504,7 @@ auto Drive1541::changeHalfTrack( uint8_t step ) -> void {
      else
         headOffset = 0;
     
-    updateState( );    
+    updateDeviceState( );    
 }
 
 inline auto Drive1541::syncFound() -> uint8_t {

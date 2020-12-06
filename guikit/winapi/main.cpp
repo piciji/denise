@@ -6,6 +6,7 @@ namespace GUIKIT {
 #include "menu.cpp"
 #include "browserWindow.cpp"
 #include "messageWindow.cpp"
+#include "statusbar.cpp"
     
 #include "widgets/widget.cpp"   
 #include "widgets/button.cpp"   
@@ -175,6 +176,11 @@ auto CALLBACK pApplication::wndProc(WNDPROC windowProc, HWND hwnd, UINT msg, WPA
                 PNMLINK pNMLink = (PNMLINK) lparam;
                 LITEM item = pNMLink->item;
                 ShellExecute(NULL, L"open", item.szUrl, NULL, NULL, SW_SHOW);
+                break;
+            }
+            if(dynamic_cast<StatusBar*>(base) && ((LPNMHDR)lparam)->code == NM_CLICK) {
+                ((StatusBar*)base)->p.onClick(lparam);
+                break;
             }
             
             break;
@@ -187,7 +193,7 @@ auto CALLBACK pApplication::wndProc(WNDPROC windowProc, HWND hwnd, UINT msg, WPA
 			POINT pt;
 			GetCursorPos(&pt);						
 			int mid = TrackPopupMenuEx(window.p.contextmenu, TPM_RIGHTBUTTON | TPM_RETURNCMD, pt.x, pt.y, hwnd, NULL);
-			if (mid) SendMessage(hwnd, WM_COMMAND, mid, 0);			
+			if (mid) SendMessage(hwnd, WM_COMMAND, mid, 0);
 			break;
 		}
         case WM_HSCROLL:
@@ -216,20 +222,29 @@ auto CALLBACK pApplication::wndProc(WNDPROC windowProc, HWND hwnd, UINT msg, WPA
 			break;
 		}
 		case WM_DRAWITEM: {
+
+            unsigned id = LOWORD(wparam);
+            HWND control = GetDlgItem(hwnd, id);                        
 			LPDRAWITEMSTRUCT lDraw = (LPDRAWITEMSTRUCT) lparam;
+            base = (Base*) GetWindowLongPtr(control, GWLP_USERDATA);
+            
 			if ((lDraw != NULL) && (lDraw->CtlType == ODT_MENU)) {
 				if (pMenuBase::drawItem(lDraw))
 					return true;
 			}
 
             else if ((lDraw != NULL) && (lDraw->CtlType == ODT_LISTVIEW)) {
-                unsigned id = LOWORD(wparam);
-                HWND control = GetDlgItem(hwnd, id);
-                base = (Base*) GetWindowLongPtr(control, GWLP_USERDATA);
+                
                 if (dynamic_cast<ListView*> (base)) {
                     ((ListView*) base)->p.drawItem(lDraw);
                     return true;
                 }
+            } else {
+                if(dynamic_cast<StatusBar*>(base)) {
+                    ((StatusBar*)base)->p.drawItem(wparam, lparam);
+                    return true;
+                }
+                
             }
 			break;
 		}		
@@ -250,26 +265,19 @@ pWindow::pWindow(Window& window) : window(window) {
     locked = false;
     bgUpdateState = 0;
     brush = 0;
-    hstatusfont = 0;
     hCursor = LoadCursor(0, IDC_ARROW);
 
     Geometry geo = window.state.geometry;
 
     hwnd = CreateWindow(L"app_gui", L"", ResizableStyle, geo.x, geo.y, geo.width, geo.height, 0, 0, GetModuleHandle(0), 0);
     hmenu = CreateMenu();
-	contextmenu = CreatePopupMenu();
-    hstatus = CreateWindow(STATUSCLASSNAME, L"", WS_CHILD, 0, 0, 0, 0, hwnd, 0, GetModuleHandle(0), 0);
-
-    setStatusFont(Font::system());
-    SetWindowLongPtr(hstatus, GWL_STYLE, GetWindowLong(hstatus, GWL_STYLE) | WS_DISABLED);
+	contextmenu = CreatePopupMenu();        
 
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)&window);
     setDroppable(window.state.droppable);
 }
 
 pWindow::~pWindow() {
-    pFont::free(hstatusfont);
-    DestroyWindow(hstatus);
     DestroyMenu(hmenu);
 	DestroyMenu(contextmenu);
     DestroyWindow(hwnd);
@@ -352,6 +360,8 @@ auto pWindow::setFocused() -> void {
 
 auto pWindow::setVisible(bool visible) -> void {
     ShowWindow(hwnd, visible ? SW_SHOWNORMAL : SW_HIDE);
+    if (window.statusBar())
+        window.statusBar()->p.update();
 }
 
 auto pWindow::restore() -> void {
@@ -363,18 +373,8 @@ auto pWindow::setResizable(bool resizable) -> void {
     if( !window.fullScreen() ) setGeometry(window.state.geometry);
 }
 
-auto pWindow::setStatusFont(std::string font) -> void {
-    pFont::free(hstatusfont);
-    hstatusfont = pFont::create(font);
-    SendMessage(hstatus, WM_SETFONT, (WPARAM)hstatusfont, 0);
-}
-
 auto pWindow::setTitle(std::string text) -> void {
     SetWindowText(hwnd, utf16_t(text));
-}
-
-auto pWindow::setStatusText(std::string text) -> void {
-    SendMessage(hstatus, SB_SETTEXT, 0, (LPARAM)(wchar_t*)utf16_t(text));
 }
 
 auto pWindow::setMenuVisible(bool visible) -> void {
@@ -385,8 +385,11 @@ auto pWindow::setMenuVisible(bool visible) -> void {
 }
 
 auto pWindow::setStatusVisible(bool visible) -> void {
+    if (!window.statusBar())
+        return;
+    
     locked = true;
-    ShowWindow(hstatus, visible ? SW_SHOWNORMAL : SW_HIDE);
+    window.statusBar()->p.setStatusVisible( visible );
     setGeometry( !window.fullScreen() ? window.state.geometry : geometry() );
     locked = false;
 }
@@ -429,11 +432,9 @@ auto pWindow::frameMargin() -> Geometry {
     }
             
     unsigned statusHeight = 0;
-    if(window.statusVisible()) {
-        RECT src;
-        GetClientRect(hstatus, &src);
-        statusHeight = src.bottom - src.top;
-    }
+    if(window.statusBar() && window.statusVisible())
+        statusHeight = window.statusBar()->p.getHeight();
+    
     return {(signed)(abs(rc.left)), (signed)(abs(rc.top) + menuHeight), (unsigned)(rc.right - rc.left), (unsigned)((rc.bottom - rc.top) + statusHeight + menuHeight) };
 }
 
@@ -448,7 +449,8 @@ auto pWindow::setGeometry(Geometry geometry) -> void {
         SWP_NOZORDER | SWP_FRAMECHANGED
     );
 
-    SetWindowPos(hstatus, NULL, 0, 0, 0, 0, SWP_NOZORDER | SWP_FRAMECHANGED);
+    if (window.statusBar())
+        window.statusBar()->p.updatePosition();
 
     if(window.state.layout) {
         Geometry geom = this->geometry();
@@ -555,7 +557,8 @@ void pWindow::onMove() {
 auto pWindow::onSize() -> void {
     if(locked || window.fullScreen()) return;
 
-    SetWindowPos(hstatus, NULL, 0, 0, 0, 0, SWP_NOZORDER | SWP_FRAMECHANGED);
+    if (window.statusBar())
+        window.statusBar()->p.updatePosition();
 
     Geometry windowGeometry = geometry();
     window.state.geometry.width = windowGeometry.width;
@@ -584,6 +587,14 @@ auto pWindow::append(Widget& widget) -> void {
 
 auto pWindow::remove(Widget& widget) -> void {
     widget.p.destroy();
+}
+
+auto pWindow::append(StatusBar& statusBar) -> void {
+    statusBar.p.create();
+}
+
+auto pWindow::remove(StatusBar& statusBar) -> void {
+    statusBar.p.destroy();
 }
 
 auto pWindow::append(Layout& layout) -> void {

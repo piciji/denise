@@ -21,10 +21,6 @@ struct Drive1541 {
     
     const unsigned rotSpeedBps[4] = { 250000, 266667, 285714, 307692 };
     const unsigned DISC_DELAY = 600000;
-
-    enum TrackState : uint8_t { NoOperation = 0, Read = 1, Write = 2, ReadHalf = 4, WriteHalf = 5 };
-    
-    std::function<void ( )> updateState = [](){};
     
     uint8_t number;
     uint8_t* rom = nullptr;
@@ -123,9 +119,10 @@ struct Drive1541 {
     auto motorRun() -> bool;
     auto motorOffInit() -> void;
     
-    auto getTrackState() -> TrackState;
     auto useAccuracy() -> bool;
     auto serialize(Emulator::Serializer& s) -> void;
+    auto updateDeviceState() -> void;
+    auto updateIdleDeviceState() -> void;
 };
   
 }

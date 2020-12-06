@@ -1,10 +1,10 @@
 
 #include "manager.h"
-#include "../tools/status.h"
 #include "../cmd/cmd.h"
 #include "dsp/bass.h"
 #include "dsp/reverb.h"
 #include "dsp/panning.h"
+#include "../view/status.h"
 
 AudioManager* audioManager = nullptr;
 
@@ -300,6 +300,6 @@ auto AudioManager::calcStatistics( float adjust ) -> void {
         statistics.max = 50.0 - (statistics.maxRaw * 50.0);
         statistics.minRaw = -1;
         statistics.maxRaw = 1;
-        status->update = 1;
+        statusHandler->setDrcBufferUpdate();
     }
 }

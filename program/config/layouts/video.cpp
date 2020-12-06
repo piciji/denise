@@ -206,17 +206,17 @@ VideoLayout::VideoLayout() {
         
     screenTextLayout.option1.onActivate = [this]() {
         globalSettings->set("video_screen_text", 0);
-        view->setStatusText("");
+        statusHandler->transferToOSD("");
     };
     
     screenTextLayout.option2.onActivate = [this]() {
         globalSettings->set("video_screen_text", 1);
-        view->setStatusText("");
+        statusHandler->transferToOSD("");
     };
     
     screenTextLayout.option3.onActivate = [this]() {
         globalSettings->set("video_screen_text", 2);
-        view->setStatusText("");
+        statusHandler->transferToOSD("");
     };
     
     if(globalSettings->get("video_screen_text", 0) == 0) screenTextLayout.option1.setChecked();

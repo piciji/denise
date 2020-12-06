@@ -52,7 +52,8 @@ auto pMenuBase::setIcon(Image& icon) -> void {
                 // but highlight color looks wrong
                 // win xp inverts color of bitmap when selected ... looks ugly
                 iconTemp = icon;
-                iconTemp.alphaBlend( GetSysColor(COLOR_MENU) );
+                if (!iconTemp.alphaBlendApplied)
+                    iconTemp.alphaBlend( GetSysColor(COLOR_MENU) );
                 iconTemp.scaleNearest(15, 15);
                 hbitmap = CreateBitmap( iconTemp );
             }

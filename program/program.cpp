@@ -7,7 +7,7 @@
 #include "input/manager.h"
 #include "tools/filesetting.h"
 #include "tools/filepool.h"
-#include "tools/status.h"
+#include "view/status.h"
 #include "states/states.h"
 #include "audio/manager.h"
 #include "firmware/manager.h"
@@ -27,9 +27,9 @@ GUIKIT::Translation* trans = nullptr;
 FilePool* filePool = nullptr;
 Logger* logger = nullptr;
 Cmd* cmd = nullptr;
-Status* status = nullptr;
 std::vector<FileSetting*> FileSetting::instances = {};
 VideoManager* activeVideoManager = nullptr;
+FPSCounter fpsCounter;
 
 #include "files.cpp"
 #include "video.cpp"
@@ -61,8 +61,8 @@ Program::Program() {
     trans = new GUIKIT::Translation;
     logger = new Logger;
 	filePool = new FilePool(10);
-	status = new Status;
-    audioManager = new AudioManager;    
+	statusHandler = new StatusHandler;
+    audioManager = new AudioManager;
     
     addEmulators();
     init();	  
@@ -82,6 +82,13 @@ Program::Program() {
 	initVideo();
     
     cmd->autoloadImages();
+
+
+//    GUIKIT::Image::getCharDataStringFromBinary("E:/icons/led-red.png", "E:/icons/led-red.png.data");
+//    GUIKIT::Image::getCharDataStringFromBinary("E:/icons/led-green.png", "E:/icons/led-green.png.data");
+//    GUIKIT::Image::getCharDataStringFromBinary("E:/icons/led-off.png", "E:/icons/led-off.png.data");
+//    GUIKIT::Image::getCharDataStringFromBinary("E:/icons/tape/play2HiPause.png", "E:/icons/tape/play2HiPause.png.data");
+
 }
 
 auto Program::addEmulators() -> void {
@@ -129,9 +136,7 @@ auto Program::init() -> void {
         }
     }
     
-    cmd->parse();    
-	
-    status->init();
+    cmd->parse();
     
     for( auto emulator : emulators )        
         initEmulator( emulator );
@@ -298,7 +303,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
     
     globalSettings->set("last_used_emu", activeEmulator->ident);
     
-    activeVideoManager->initFpsLimit();
+    activeVideoManager->initFpsLimit();    
 }
 
 auto Program::reset( Emulator::Interface* emulator ) -> void {
@@ -337,7 +342,7 @@ auto Program::powerOff() -> void {
 	
 	view->showTapeMenu( false );    
 	
-	status->init(true);
+	statusHandler->clear();
     if (activeVideoManager)
         activeVideoManager->powerOff();
 	videoDriver->clear();
@@ -374,7 +379,9 @@ auto Program::loop() -> void {
 		GUIKIT::System::sleep( 20 );
 		VideoManager::updateWhenNotRunning();
 	}
-    status->show();
+    
+    if (statusHandler && statusHandler->hasUpdates())
+        statusHandler->update();
 }
 
 auto Program::willPoll() -> bool {
@@ -423,12 +430,12 @@ auto Program::quit() -> void {
 	delete logger;
 	delete filePool;
     delete cmd;
+    delete statusHandler;
     
     for(auto settings : settingsStorage)
         delete settings;
     
     // in case of exit request from emulation core
-    status->update = false;
     GUIKIT::Application::loop = nullptr;
 }
 
@@ -500,8 +507,8 @@ auto Program::exit(int code) -> void {
         view->onClose();
 }
 
-auto Program::updateDriveState(Emulator::Interface::Media* media, unsigned mode, unsigned track) -> void {
-	status->updateDriveState(media, mode, track);
+auto Program::updateDeviceState( Emulator::Interface::Media* media, bool write, unsigned position, bool LED, bool motorOff ) -> void {
+	statusHandler->updateDeviceState( media, write, position, LED, motorOff );
 }
 
 auto Program::appFolder() -> std::string {

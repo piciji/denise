@@ -162,7 +162,7 @@ auto InputMapping::informChange(Assign& hid) -> void {
 	int16_t oldValue = adjustDigitalValue<true>( hid );
 	
 	if (value != oldValue) {
-		status->addMessage( std::to_string(value) );
+		statusHandler->setMessage( std::to_string(value) );
 	}	
 }
 

@@ -6,7 +6,6 @@
 #include "counter.cpp"
 #include "write.cpp"
 #include "serialization.cpp"
-#include "../system/system.h"
 #include "../system/keyBuffer.h"
 
 namespace LIBC64 {
@@ -26,6 +25,7 @@ Tape::Tape( ) {
             return;
         motorIn = false;
         updateCounter();
+        updateDeviceState();
     };
 	
     worker = [this]() {
@@ -101,6 +101,9 @@ Tape::~Tape() {
 	delete[] writeData;
 }
 
+auto Tape::updateDeviceState() -> void {
+    system->interface->updateDeviceState( getMedia(), mode == Mode::Record, counter, false, !motorIn );
+}
 
 auto Tape::setMotorIn( bool state ) -> void {
 	
@@ -115,6 +118,7 @@ auto Tape::setMotorIn( bool state ) -> void {
 		
         if (!motorIn) {
             motorIn = true;
+            updateDeviceState();
             
             if (!sysTimer.has( &worker ))
                 sysTimer.add( &worker, TAPE_MOTOR_DELAY );
@@ -207,7 +211,6 @@ auto Tape::reset() -> void {
 	pos = 0x14;
 	mode = Mode::Stop;
 	nextMode = Mode::Stop;
-    currentCounter.cstate = CounterState::NoOperation;
 	writeBit = true;	
 	gapsRemaining = nextGap();
 }
@@ -254,8 +257,6 @@ auto Tape::unload() -> void {
 	motorIn = false;
     writeQuestionState = 0;
 	gapsRemaining = 0;
-	updateState( CounterState::NoOperation, 0 );
-    currentCounter.cstate = CounterState::NoOperation;
 }
 
 auto Tape::readHeader() -> bool {

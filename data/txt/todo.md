@@ -17,15 +17,19 @@
 * user port
     * SpeedDOS
     * 4 player adapter
-* floppy
+* disk
     * 1541 track change delay time
+    * support command line start of disk listings
+    * load PRG files from disk as simple RAM insertion for reduced loading times [quickload]
+    * mount OS folder as D64
     * non standard floppy models: 1571, 1581
-* tape port   
-    * tape content listing in user interface, like the 1541
+* tape   
+    * tape content listing in user interface, like disk
     * click entries and load them without fast-forward to counter position before
     * dongles
 * color banding
 * support to put clipboard in C64 memory
+* UI switch to invert RAM init pattern
 
 # todo Amiga A500, A1200
 * 68000/68010 opcode tester
@@ -41,9 +45,10 @@
 * lisa aga	
 
 # todo for all systems
+* load savestates per drag'n'drop or within File Explorer
 * screenshots/movie recording
 * screenshots for savestates
-* drive leds / sounds 
+* drive sounds 
 * beam racing
 * rewind support
 * debug monitor for developers
@@ -52,25 +57,16 @@
 * SPIR-V Shader support
 * RetroArch Shader support
 * 7z support
-* Netplay
-* load savestates per drag'n'drop and from File Explorer
 * 100 Hz Black Frame insertion
-
-# todo improvements
 * fullscreen with custom refresh rate
-* autofire with frequency and option to fire without button press (don't forget override logic)
-* load PRG files from disk as simple RAM insertion for reduced loading times [quickload]
-* UI switch to invert RAM init pattern
+* autofire with frequency and option to fire without button press
 * set "integer scaling" multiplicator without sizing application window OR recalculate while resizing (never show black border)
 * PNG overlay for 16:9 fullscreen
-* mount OS folder as D64
-* load savestates per drag'n'drop or within File Explorer
-* support c64 command line start of disk listings
+* Netplay
 
 # bugs
 * japanese characters aren't displayed correctly in OpenGL onscreen text
 * more Ram Init pattern problems (https://csdb.dk/release/?id=172238  https://csdb.dk/release/?id=172347)
-
 
 # completed emulation
 * cpu 68000 / 68010
@@ -97,7 +93,7 @@
 
 # completed features for all emu cores
 * multi driver support
-* platform independant OS UI support
+* platform independant native UI support
 * Dynamic Rate Control
 * external GLSL shader support
 * PAL/CRT emulation ( cpu driven or GLSL shader)

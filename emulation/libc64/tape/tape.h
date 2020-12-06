@@ -2,7 +2,7 @@
 #pragma once
 
 #include "../../tools/serializer.h"
-#include "../interface.h"
+#include "../system/system.h"
 
 #define TAPE_MOTOR_DELAY 32000
 #define TAPE_ZERO_GAP 20000
@@ -21,10 +21,8 @@ struct Tape {
     ~Tape();
 
 	enum Mode : uint8_t { Stop = 0, Play = 1, Record = 2, Forward = 3, Rewind = 4, ResetCounter = 5 };
-	enum CounterState : uint8_t { NoOperation = 0, Read = 1, Write = 2, List = 3 };
 	
 	std::function<void ()> setReadTransition = [](){};
-	std::function<void ( unsigned, unsigned )> updateState = [](unsigned mode, unsigned counter){};
     std::function<unsigned (uint8_t*, unsigned, unsigned)> read = [](uint8_t* buffer, unsigned length, unsigned offset){ return 0; };
 	std::function<unsigned (uint8_t*, unsigned, unsigned)> write = [](uint8_t* buffer, unsigned length, unsigned offset){ return 0; };
 	std::function<void (bool)> senseOut = [](bool state){};	
@@ -47,6 +45,7 @@ struct Tape {
     auto selectListing( unsigned pos ) -> void;
 	auto setWobble(bool state) -> void;
     auto getMedia() -> Emulator::Interface::Media* { return media; }
+    auto updateDeviceState() -> void;
 	
 protected:	
 	Emulator::Interface::Media* media;    
@@ -85,12 +84,7 @@ protected:
     unsigned fetchPos; // position in fetched chunk
     unsigned fetchSize; // size of fetched chunk
     unsigned pos; // overall position in tap file
-	bool wobble = false;
-    
-    struct {
-        CounterState cstate;
-        unsigned counter;        
-    } currentCounter;
+	bool wobble = false;    
     
     auto readHeader() -> bool;			
 	

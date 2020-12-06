@@ -6,7 +6,6 @@
 #include "../emuconfig/config.h"
 #include "../tools/filepool.h"
 #include "../tools/filesetting.h"
-#include "../tools/status.h"
 #include "../tools/chronos.h"
 #include <algorithm>
 #include <cstdlib>

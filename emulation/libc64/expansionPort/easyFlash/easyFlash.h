@@ -23,6 +23,7 @@ struct EasyFlash : Cart {
     Emulator::Interface::Media* media;
     static uint8_t eapi[768];
     bool flashJumper;
+    bool LED;
     
     auto writeIo1( uint16_t addr, uint8_t value ) -> void;
     
@@ -65,6 +66,8 @@ struct EasyFlash : Cart {
     auto setJumper( unsigned jumperId, bool state ) -> void;
     
     auto getJumper( unsigned jumperId ) -> bool;
+    
+    auto updateDeviceState() -> void;
 };
 
 extern EasyFlash* easyFlash;

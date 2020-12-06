@@ -1,6 +1,5 @@
 
-#ifndef VIEW_H
-#define VIEW_H
+#pragma once
 
 #include "../../guikit/api.h"
 #include "message.h"
@@ -9,8 +8,9 @@ struct View : public GUIKIT::Window {
     Message* message;
 	GUIKIT::Timer placeholderTimer;
 	GUIKIT::Timer autoloadTimer;
+    GUIKIT::StatusBar statusBar;
     enum class AutoLoad { DragnDrop = 0, Open = 1, AutoStart = 2 };
-    
+        
     struct SystemMenu {
         Emulator::Interface* emulator;
         GUIKIT::Menu* system;
@@ -41,6 +41,7 @@ struct View : public GUIKIT::Window {
 	auto removeMenuTree( GUIKIT::Menu* menu = nullptr ) -> void;
 	auto showTapeMenu( bool show, Emulator::Interface::TapeMode mode = Emulator::Interface::TapeMode::Unpressed ) -> void;
     auto updateTapeIcons( Emulator::Interface::TapeMode mode = Emulator::Interface::TapeMode::Unpressed ) -> void;
+    auto updateTapeStatusIcons( Emulator::Interface::TapeMode mode ) -> void;
     auto updateFreeze( Emulator::Interface* emulator ) -> void;
 	auto setAutoload(Emulator::Interface* emulator) -> void;
 
@@ -49,7 +50,6 @@ struct View : public GUIKIT::Window {
 	auto updateShader() -> void;
 	auto setFullScreen(bool fullScreen = true) -> void;
 	auto exclusiveFullscreen() -> bool;
-	auto setStatusText(const std::string& text, bool critical = false) -> void;
     auto updateMenuBar( bool toggle = false ) -> void;
     auto updateStatusBar(bool toggle = false ) -> void;
     auto loadCursor() -> void;
@@ -62,7 +62,8 @@ struct View : public GUIKIT::Window {
     auto countImagesFor(Emulator::Interface::MediaGroup* mediaGroup) -> unsigned;
     auto cursorForPlacholderInUpperTriangle(GUIKIT::Position& p) -> bool;
     auto cursorForPlacholderInUpperTriangle() -> bool;
-    
+    auto loadImages() -> void;
+           
     GUIKIT::Viewport viewport;    
     
     std::vector<SystemMenu> sysMenus;
@@ -137,6 +138,7 @@ struct View : public GUIKIT::Window {
     
     GUIKIT::Image playImage;
     GUIKIT::Image playhiImage;
+    GUIKIT::Image playhiPauseImage;
     GUIKIT::Image stopImage;
     GUIKIT::Image stophiImage;
     GUIKIT::Image recordImage;
@@ -149,6 +151,10 @@ struct View : public GUIKIT::Window {
     
     GUIKIT::Image pencilImage;
     GUIKIT::Image crosshairImage;
+    
+    GUIKIT::Image ledOffImage;
+    GUIKIT::Image ledRedImage;
+    GUIKIT::Image ledGreenImage;
             
     struct {
         Emulator::Interface* emulator;
@@ -165,5 +171,3 @@ struct View : public GUIKIT::Window {
 };
 
 extern View* view;
-
-#endif

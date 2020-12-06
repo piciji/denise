@@ -156,6 +156,8 @@ auto Image::alphaBlend(unsigned alphaColor) -> void {
             dp += 4;
         }
     }
+    
+    alphaBlendApplied = true;
 }
 
 auto Image::alphaMultiply() -> void {

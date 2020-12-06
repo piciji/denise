@@ -15,7 +15,7 @@ target := $(shell g++ --version | grep i686)
 
 include data/Makefile
 
-objects := program view config emuconfig emumodel mediaview archiveviewer states firmware cmd
+objects := program view config emuconfig emumodel mediaview archiveviewer states firmware cmd statusbar
 objects += input audio video palette shader bass reverb panning audiorecord wavwriter cosine cosineSSE
 objects += guikit libami libC64
 objects += driver
@@ -146,6 +146,7 @@ obj/program.o:		program/program.cpp
 	$(compiler) $(cppflags) $(prgflags) $(flags) $1 -c $< -o $@
 obj/input.o:		program/input/manager.cpp
 obj/view.o:		program/view/view.cpp
+obj/statusbar.o:	program/view/status.cpp
 obj/config.o:		program/config/config.cpp
 obj/emuconfig.o:	program/emuconfig/config.cpp
 obj/emumodel.o:		program/emuconfig/layouts/model.cpp
@@ -164,7 +165,7 @@ obj/firmware.o:		program/firmware/manager.cpp
 obj/cmd.o:		program/cmd/cmd.cpp
 obj/palette.o:		program/video/palette.cpp
 obj/video.o:		program/video/manager.cpp
-obj/shader.o:		program/video/shader.cpp
+obj/shader.o:		program/video/shader.cpp	
 
 objects := $(patsubst %,obj/%.o,$(objects))
 loname := $(call strlower,$(name))

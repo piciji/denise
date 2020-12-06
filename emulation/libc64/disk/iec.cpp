@@ -352,7 +352,7 @@ auto IecBus::setFirmware(uint8_t* rom) -> void {
 auto IecBus::resetDriveState() -> void {
     
     for( auto drive : drivesEnabled )
-        system->interface->updateDriveState( drive->getMedia(), Drive1541::TrackState::NoOperation, 0 );
+        drive->updateIdleDeviceState();
 }
 
 auto IecBus::setCpuCyclesPerSecond( unsigned cycles ) -> void {

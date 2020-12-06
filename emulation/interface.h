@@ -290,7 +290,7 @@ struct Interface {
         virtual auto writeMedia(Media*, uint8_t*, unsigned, unsigned) -> unsigned { return 0; }
 		virtual auto getFileNameFromMedia(Media*) -> std::string { return ""; }
         virtual auto truncateMedia(Media* ) -> bool { return false; }
-        virtual auto updateDriveState(Media*, unsigned, unsigned) -> void {}
+        virtual auto updateDeviceState(Media*, bool, unsigned, bool, bool ) -> void {}
         virtual auto log(std::string, bool) -> void {} //for debugging
         virtual auto exit( int code ) -> void {}
         virtual auto finishVBlank() -> void {}
@@ -342,9 +342,9 @@ struct Interface {
     auto truncateMedia(Media* media) -> bool {
         return bind->truncateMedia( media );
     }
-
-    auto updateDriveState(Media* media, unsigned mode, unsigned track) -> void {
-        bind->updateDriveState(media, mode, track); //mode: 0 - no operation, 1 - read, 2 - write, 3 - list
+    
+    auto updateDeviceState(Media* media, bool write, unsigned position, bool LED, bool motorOff ) -> void {
+        bind->updateDeviceState(media, write, position, LED, motorOff);
     }
     
     auto questionToWrite(Media* media) -> bool {

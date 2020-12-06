@@ -48,7 +48,7 @@ auto Drive1541::serialize(Emulator::Serializer& s) -> void {
     
     if (s.mode() == Emulator::Serializer::Mode::Load) {
         gcrTrack = structure1541.getTrackPtr( currentHalftrack );
-        updateState();
+        updateDeviceState();
     }
        
     structure1541.serialize( s, written );

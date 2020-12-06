@@ -11,6 +11,9 @@
 #include "props.cpp"
 #include "../../driver/tools/shaderpass.h"
 #include "../tools/chronos.h"
+#include "../view/status.h"
+
+#include "fpsCounter.cpp"
 
 bool VideoManager::synchronized = true;
 bool VideoManager::threaded = true;

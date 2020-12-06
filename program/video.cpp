@@ -79,7 +79,7 @@ auto Program::midScreenCallback() -> void {
 
 auto Program::videoRefresh(const uint16_t* frame, unsigned width, unsigned height, unsigned linePitch) -> void {
     
-    status->countFrames();
+    fpsCounter.countFrames();
 	
     if (frame)
         activeVideoManager->renderFrame<uint16_t>(frame, width, height, linePitch);
@@ -87,7 +87,7 @@ auto Program::videoRefresh(const uint16_t* frame, unsigned width, unsigned heigh
 
 auto Program::videoRefresh8(const uint8_t* frame, unsigned width, unsigned height, unsigned linePitch) -> void {
     
-    status->countFrames();
+    fpsCounter.countFrames();
 	
     if (frame)
         activeVideoManager->renderFrame<uint8_t>(frame, width, height, linePitch);

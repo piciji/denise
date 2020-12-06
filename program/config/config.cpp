@@ -2,6 +2,7 @@
 #include "config.h"
 #include "archiveViewer.h"
 #include "../view/view.h"
+#include "../view/status.h"
 #include "../emuconfig/config.h"
 #include "../program.h"
 #include "../view/message.h"

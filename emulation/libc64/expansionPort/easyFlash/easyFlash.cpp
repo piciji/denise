@@ -203,9 +203,15 @@ auto EasyFlash::reset() -> void {
     bank = 0;
     game = flashJumper;
     exRom = true;
+    LED = false;
     
     flashLo.reset();
     flashHi.reset();
+}
+
+auto EasyFlash::updateDeviceState() -> void {
+    
+    system->interface->updateDeviceState( media, false, 0, LED, true );
 }
 
 auto EasyFlash::isBootable( ) -> bool {
@@ -218,9 +224,13 @@ auto EasyFlash::writeIo1( uint16_t addr, uint8_t value ) -> void {
         bank = value & 0x3f;
         
     } else {
-        // too short for textual representation.
-        // needs LED icons in status bar
-        // system->interface->updateDriveState(media, (value & 0x80) ? 6 : 0, 0);
+        // LED
+        bool LEDNew = value & 0x80;
+        
+        if (LED != LEDNew) {
+            LED = LEDNew;
+            updateDeviceState();
+        }
         
         bool mode = value & 4;
         
@@ -294,16 +304,23 @@ auto EasyFlash::serialize(Emulator::Serializer& s) -> void {
     
     s.integer( writeProtect );
     
+    s.integer( LED );
+    
     s.array( ram );
     
     flashLo.serialize(s);
     flashHi.serialize(s);
-    
-    if (flashLo.dirty)
-        s.array(dataLo, 512 * 1024);    
 
-    if (flashHi.dirty)
-        s.array(dataHi, 512 * 1024);    
+    if (!s.lightUsage()) {
+        if (flashLo.dirty)
+            s.array(dataLo, 512 * 1024);
+
+        if (flashHi.dirty)
+            s.array(dataHi, 512 * 1024);
+
+        if (s.mode() == Emulator::Serializer::Mode::Load)
+            updateDeviceState();
+    }
     
     ExpansionPort::serialize(s);        
 }

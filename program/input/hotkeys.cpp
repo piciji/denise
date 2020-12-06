@@ -1,6 +1,7 @@
 
 #include "manager.h"
 #include "../tools/DiskFinder.h"
+#include "../view/status.h"
 
 std::vector<InputMapping*> InputManager::hotkeyTriggers;
 
@@ -109,7 +110,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             
             EmuConfigView::TabWindow::getView(activeEmulator)->miscLayout->setRunAhead( pos );
 
-            status->addMessage( trans->get( "runahead input latency", {{"%count%", std::to_string(pos) }} ) );  
+            statusHandler->setMessage( trans->get( "runahead input latency", {{"%count%", std::to_string(pos) }} ) );  
 
         } break;
             
@@ -139,7 +140,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             
             EmuConfigView::TabWindow::getView(activeEmulator)->miscLayout->setRunAheadPerformance( state );
             
-            status->addMessage( trans->get( !state ? "runahead accuracy mode" : "runahead performance mode" ) );  
+            statusHandler->setMessage( trans->get( !state ? "runahead accuracy mode" : "runahead performance mode" ) );  
         } break;
         
 		case Hotkey::Id::SwapInputDevices: {
@@ -254,7 +255,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             unsigned driveCount = activeEmulator->getDrivesConnected( media->group );            
 
             if (driveCount == 0) {
-                status->addMessage( trans->get("tape_disconnect"), 3, true );
+                statusHandler->setMessage( trans->get("tape_disconnect"), 3, true );
                 return;
             }                        
 
@@ -262,18 +263,18 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
 
             if (id == Hotkey::PlayTape) {
                 activeEmulator->controlTape( media, TapeMode::Play );
-                status->addMessage( trans->get("tape_play_state") );
+                statusHandler->setMessage( trans->get("tape_play_state") );
                 view->updateTapeIcons( TapeMode::Play );
             } else if (id == Hotkey::StopTape) {
                 activeEmulator->controlTape( media, TapeMode::Stop );
-                status->addMessage( trans->get("tape_stop_state") );
+                statusHandler->setMessage( trans->get("tape_stop_state") );
                 view->updateTapeIcons( TapeMode::Stop );
             } else if (id == Hotkey::RecordTape) {              
                 activeEmulator->controlTape( media, TapeMode::Record );
-                status->addMessage( trans->get("tape_record_state") );						
+                statusHandler->setMessage( trans->get("tape_record_state") );						
                 view->updateTapeIcons( TapeMode::Record );
                 if (activeEmulator->isWriteProtected( media ))
-                    status->addMessage( trans->get("tape_record_wp_state"), 3, true );						
+                    statusHandler->setMessage( trans->get("tape_record_wp_state"), 3, true );						
 
             } else if (id == Hotkey::ForwardTape) {
                 activeEmulator->controlTape( media, TapeMode::Forward );
@@ -285,7 +286,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
                 view->updateTapeIcons( TapeMode::Rewind );
             } else if (id == Hotkey::ResetTapeCounter) {
                 activeEmulator->controlTape( media, TapeMode::ResetCounter );
-                status->addMessage( trans->get("tape_counter_reset") );
+                statusHandler->setMessage( trans->get("tape_counter_reset") );
             } 															
             break;
         }
@@ -295,7 +296,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
 
             auto view = EmuConfigView::TabWindow::getView( activeEmulator );
             bool state = view->audioLayout->settingsLayout.toggleCheckbox( C64Interface::ModelIdDigiboost );
-            status->addMessage( trans->get( state ? "digiboost_on" : "digiboost_off" ) );
+            statusHandler->setMessage( trans->get( state ? "digiboost_on" : "digiboost_off" ) );
         } break;
         case Hotkey::Id::SwapSid: {
             if (!activeEmulator || !dynamic_cast<LIBC64::Interface*>(activeEmulator))
@@ -303,14 +304,14 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             auto view = EmuConfigView::TabWindow::getView( activeEmulator );            
             unsigned val = view->systemLayout->modelLayout.nextOption( C64Interface::ModelIdSid );
             view->audioLayout->settingsLayout.updateWidget( C64Interface::ModelIdSid );
-            status->addMessage( trans->get( val == 1 ? "sid_6581_on" : "sid_8580_on" ) );
+            statusHandler->setMessage( trans->get( val == 1 ? "sid_6581_on" : "sid_8580_on" ) );
         } break;
         case Hotkey::Id::ToggleSidFilter: {
             if (!activeEmulator || !dynamic_cast<LIBC64::Interface*>(activeEmulator))
                 break;
             auto view = EmuConfigView::TabWindow::getView( activeEmulator );
             bool state = view->audioLayout->settingsLayout.toggleCheckbox( C64Interface::ModelIdFilter );
-            status->addMessage( trans->get( state ? "sid_filter_on" : "sid_filter_off" ) );
+            statusHandler->setMessage( trans->get( state ? "sid_filter_on" : "sid_filter_off" ) );
         } break;
         case Hotkey::AdjustBiasUp:
         case Hotkey::AdjustBiasDown: {
@@ -320,7 +321,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             int _sid = activeEmulator->getModel( C64Interface::ModelIdSid );
             auto view = EmuConfigView::TabWindow::getView( activeEmulator );
             int state = view->audioLayout->settingsLayout.stepRange( _sid == 0 ? C64Interface::ModelIdBias8580 : C64Interface::ModelIdBias6581, id == Hotkey::AdjustBiasUp ? 100: -100 );
-            status->addMessage( trans->get( "sid_bias_change", {{"%state%", std::to_string(state) }} ) );                    
+            statusHandler->setMessage( trans->get( "sid_bias_change", {{"%state%", std::to_string(state) }} ) );                    
         } break;
         
         case Hotkey::Id::FloppyAccess: {
@@ -348,7 +349,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
                 media = activeEmulator->getDisk( mediaId );                    
 
             settings->set<unsigned>( "access_floppy", media->id, false);
-            status->addMessage( trans->get("access_floppy", {{"%drive%", media->name}}) );								                    
+            statusHandler->setMessage( trans->get("access_floppy", {{"%drive%", media->name}}) );								                    
             break;
         }
 
@@ -398,7 +399,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             if (!file || !file->isSizeValid(MAX_MEDIUM_SIZE) ||                
                 ((data = file->archiveData(fSetting->id)) == nullptr)
             ) {  
-                status->addMessage(trans->get("file_open_error", {{ "%path%", fSetting->file }}), 2, true);
+                statusHandler->setMessage(trans->get("file_open_error", {{ "%path%", fSetting->file }}), 2, true);
                 break;
             }
 
@@ -412,7 +413,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             filePool->unloadOrphaned();
             EmuConfigView::TabWindow::getView(activeEmulator)->configurationsLayout->updateSaveIdent( fSetting->file );
             States::getInstance( activeEmulator )->updateImage( fSetting, media );
-            status->addMessage( trans->get("insert_floppy", {{"%drive%", media->name},{"%file%", fSetting->file}}) );		
+            statusHandler->setMessage( trans->get("insert_floppy", {{"%drive%", media->name},{"%file%", fSetting->file}}) );		
             break;	
         }
     }
