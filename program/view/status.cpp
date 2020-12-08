@@ -91,9 +91,22 @@ auto StatusHandler::updateAudioRecord( bool state ) -> void {
 }
 
 auto StatusHandler::updateTapeImage( GUIKIT::Image* image ) -> void {
+        
+    if (!statusBar)
+        return;
     
-    if (statusBar)
-        statusBar->updateImage( 10, image );
+    if (image == &(view->playhiImage)) {
+        for(auto& deviceState : deviceStates) {
+            if (deviceState.media->group->isTape()) {
+                if (deviceState.motorOff)
+                    image = &(view->playhiPauseImage);
+                
+                break;
+            }
+        }
+    }
+    
+    statusBar->updateImage( 10, image );        
 }
 
 auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
@@ -173,7 +186,7 @@ auto StatusHandler::transferToOSD( std::string text ) -> void {
     } else
         videoDriver->showMessage( text, message.critical );
 
-    program->renderPlaceholder();   
+    view->renderPlaceholder();   
 }
 
 auto StatusHandler::update() -> void {
@@ -238,19 +251,8 @@ auto StatusHandler::update() -> void {
                     typedef Emulator::Interface::TapeMode TapeMode;
 
                     if (mode == TapeMode::Play)
-                        updateTapeImage( deviceState.motorOff ? &(view->playhiPauseImage) : &(view->playhiImage) );                    
+                        statusBar->updateImage( 10, deviceState.motorOff ? &(view->playhiPauseImage) : &(view->playhiImage) );
                     
-//                    GUIKIT::Image* image = &(view->stophiImage);
-//
-//                    switch(mode) {
-//                        case TapeMode::Play:    image = deviceState.motorOff ? &(view->playhiImage) : &(view->playhiImage); break;
-//                        case TapeMode::Record:  image = &(view->recordhiImage); break;
-//                        case TapeMode::Forward: image = &(view->forwardhiImage); break;
-//                        case TapeMode::Rewind:  image = &(view->rewindhiImage); break;                    
-//                    }
-//
-//                    statusBar->updateImage(10, image);
-
                 } else if (group->isExpansion()) {
 
                     GUIKIT::Image* image = &(view->ledOffImage);

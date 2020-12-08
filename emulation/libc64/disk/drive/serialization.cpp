@@ -45,17 +45,18 @@ auto Drive1541::serialize(Emulator::Serializer& s) -> void {
     s.integer( motorOff.pos );
     s.vector( motorOff.chunkSize );
     s.integer( writeProtected );
-    
-    if (s.mode() == Emulator::Serializer::Mode::Load) {
-        gcrTrack = structure1541.getTrackPtr( currentHalftrack );
-        updateDeviceState();
-    }
-       
-    structure1541.serialize( s, written );
-    
+
     via1->serialize( s );
     via2->serialize( s );
     cpu->serialize( s );    
+    
+    if (s.mode() == Emulator::Serializer::Mode::Load) {
+        gcrTrack = structure1541.getTrackPtr( currentHalftrack );
+        // unserialize VIA before to get state of LED
+        updateDeviceState();
+    }
+       
+    structure1541.serialize( s, written );    
 }
 
 }

@@ -54,6 +54,8 @@ struct Cmd {
 	auto setAutoStartPrg(std::string arg) -> void;
     
     auto printHelp() -> void;
+    
+    auto saveExitScreenshot() -> void;
 };
 
 extern Cmd* cmd;

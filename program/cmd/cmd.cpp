@@ -423,3 +423,66 @@ auto Cmd::setReuSize(std::string arg) -> void {
         }
     }       
 }
+
+auto Cmd::saveExitScreenshot() -> void {        
+       
+    if (!activeEmulator)
+        return;
+    
+    auto pitch = activeEmulator->cropPitch();
+    auto data = activeEmulator->cropData();
+    auto width = activeEmulator->cropWidth();
+    auto height = activeEmulator->cropHeight();    
+    
+    if (!data)
+        return;
+   
+    std::string palIdent = "Pepto PAL";
+    uint32_t* colorTable = nullptr;
+    
+    for(auto& palette : activeEmulator->palettes) {
+        
+        if (palette.name == palIdent) {
+            colorTable = new uint32_t[ palette.paletteColors.size() ];
+            unsigned i = 0;
+            
+            for(auto& col : palette.paletteColors)
+                colorTable[i++] = col.rgb;
+            
+            break;
+        }
+    }
+    
+    if (!colorTable)
+        return;
+    
+    uint8_t* screen = new uint8_t[width * height * 3];
+    uint8_t* ptr = screen;
+    uint32_t color;
+    
+	for(unsigned h = 0; h < height; h++) {
+		for(unsigned w = 0; w < width; w++) {
+            
+            color = colorTable[*data++ & 0xf];
+            
+            *ptr++ = (color >> 16) & 0xff;
+            *ptr++ = (color >> 8) & 0xff;
+            *ptr++ = (color >> 0) & 0xff;
+        }			
+
+		data += pitch;		
+	}
+    
+    unsigned pngSize = 0;
+    GUIKIT::Image png;
+    uint8_t* pngData = png.generatePng( screen, width, height, pngSize );
+    
+    GUIKIT::File file;
+    file.setFile( screenshotPath );
+    file.open(GUIKIT::File::Mode::Write);
+    file.write( pngData, pngSize );
+    
+    delete[] screen;
+    delete[] pngData;
+    delete[] colorTable;
+}

@@ -47,8 +47,7 @@ struct Program : Emulator::Interface::Bind {
     bool isRunning;
 	bool isPause;
     bool isFocused;
-	unsigned loopFrames = 0;
-	GUIKIT::Image placeholder;
+	unsigned loopFrames = 0;	
 
     auto quit() -> void;
     auto loop() -> void;
@@ -68,8 +67,7 @@ struct Program : Emulator::Interface::Bind {
     auto settingsFile( std::string ident = "" ) -> std::string;
     auto getSettings( Emulator::Interface* emulator = nullptr ) -> GUIKIT::Settings*;
     auto convertSettings() -> void;
-    auto rememberNotToSaveSettings() -> void;
-	auto loadPlaceholder() -> void;
+    auto rememberNotToSaveSettings() -> void;	
     auto initEmulator( Emulator::Interface* emulator ) -> void;
 
     auto init() -> void;
@@ -108,8 +106,7 @@ struct Program : Emulator::Interface::Bind {
     auto initVideo() -> void;
 	auto getVideoDriver() -> std::string;
     auto videoRefresh(const uint16_t* frame, unsigned width, unsigned height, unsigned linePitch) -> void override;
-	auto videoRefresh8(const uint8_t* frame, unsigned width, unsigned height, unsigned linePitch) -> void override;
-    auto renderPlaceholder(bool blackScreen = false) -> void;
+	auto videoRefresh8(const uint8_t* frame, unsigned width, unsigned height, unsigned linePitch) -> void override;    
     auto setVideoSynchronize() -> void;
     auto setVideoHardSync() -> void;
 	auto hintExclusiveFullscreen() -> void;
@@ -117,8 +114,7 @@ struct Program : Emulator::Interface::Bind {
 	auto updateCrop( Emulator::Interface* emulator ) -> void;
     auto setPalette( Emulator::Interface* emulator ) -> void;
     auto finishVBlank() -> void;
-    auto midScreenCallback() -> void;
-    auto saveExitScreenshot() -> void;
+    auto midScreenCallback() -> void;    
     auto fastForward( bool activate, bool aggressive = false ) -> void;
     auto setFpsLimit() -> void;
     auto updateOverallSynchronize() -> void;

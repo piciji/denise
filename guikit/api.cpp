@@ -470,7 +470,6 @@ auto StatusBar::updateText( unsigned id, std::string text, bool overrideForegrou
     return false;
 }
 
-
 auto StatusBar::updateImage( unsigned id, Image* image ) -> bool {
     if (_A::dummy) return false;
     

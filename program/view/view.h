@@ -9,6 +9,7 @@ struct View : public GUIKIT::Window {
 	GUIKIT::Timer placeholderTimer;
 	GUIKIT::Timer autoloadTimer;
     GUIKIT::StatusBar statusBar;
+    GUIKIT::Image placeholder;
     enum class AutoLoad { DragnDrop = 0, Open = 1, AutoStart = 2 };
         
     struct SystemMenu {
@@ -63,6 +64,9 @@ struct View : public GUIKIT::Window {
     auto cursorForPlacholderInUpperTriangle(GUIKIT::Position& p) -> bool;
     auto cursorForPlacholderInUpperTriangle() -> bool;
     auto loadImages() -> void;
+    
+    auto loadPlaceholder() -> void;
+    auto renderPlaceholder(bool blackScreen = false, uint8_t redraw = 1) -> void;
            
     GUIKIT::Viewport viewport;    
     

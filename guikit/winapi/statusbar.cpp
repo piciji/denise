@@ -164,6 +164,9 @@ auto pStatusBar::drawItem(WPARAM wparam, LPARAM lparam) -> void {
         
         DrawIconEx( hDC,  rect.left, yPos - 1, hIcon, image->width, image->height, 0, NULL, DI_NORMAL);
         
+        if(hIcon)
+            DestroyIcon(hIcon);
+        
 //        if (!image->alphaBlendApplied)
 //            image->alphaBlend( GetSysColor(COLOR_MENU) );
 //        
@@ -173,7 +176,7 @@ auto pStatusBar::drawItem(WPARAM wparam, LPARAM lparam) -> void {
 //        SelectObject(hdcMem, hbitmap);
 //        
 //        StretchBlt( hDC, rect.left, yPos - 1, image->width, image->height, hdcMem, 0, 0, image->width, image->height, SRCCOPY );
-                   
+//                   
 //        DeleteObject(hbitmap);
 //        DeleteDC( hdcMem );
     }

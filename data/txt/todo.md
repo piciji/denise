@@ -30,6 +30,7 @@
 * color banding
 * support to put clipboard in C64 memory
 * UI switch to invert RAM init pattern
+    * Ram Init pattern problems (https://csdb.dk/release/?id=172238  https://csdb.dk/release/?id=172347)
 
 # todo Amiga A500, A1200
 * 68000/68010 opcode tester
@@ -64,9 +65,6 @@
 * PNG overlay for 16:9 fullscreen
 * Netplay
 
-# bugs
-* japanese characters aren't displayed correctly in OpenGL onscreen text
-* more Ram Init pattern problems (https://csdb.dk/release/?id=172238  https://csdb.dk/release/?id=172347)
 
 # completed emulation
 * cpu 68000 / 68010

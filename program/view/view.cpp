@@ -9,6 +9,7 @@
 #include "../cmd/cmd.h"
 #include "status.h"
 #include "dragndrop.cpp"
+#include "placeholder.cpp"
 
 View* view = nullptr;
 
@@ -41,12 +42,6 @@ auto View::build() -> void {
     if (!cmd->noGui) {                
         
         statusBar.setFont( GUIKIT::Font::system() );
-        
-//        statusBar.appendPart({0, 0, "Text 1", nullptr, nullptr, nullptr, 0, false, true});
-//        statusBar.appendPart({1, 100, "Text 2", nullptr, [this](){ this->message->warning("text 2"); }, nullptr, 0, false, true });
-//        statusBar.appendPart({2, 150, "Text 3", &systemImage, nullptr, &tapeControlMenu, 0, false, true });
-//        statusBar.appendPart({3, 200, "Text 4", nullptr, nullptr, nullptr, 0, false, true});        
-//        statusBar.update();        
                         
         append( statusBar );
         
@@ -158,8 +153,7 @@ auto View::build() -> void {
 	placeholderTimer.setInterval(40);
 	placeholderTimer.onFinished = [this]() {
 		placeholderTimer.setEnabled(false);		
-		program->renderPlaceholder();
-		program->renderPlaceholder();
+		renderPlaceholder(false, 2);
 	};
 	
 	autoloadTimer.setInterval(40);
@@ -215,20 +209,6 @@ auto View::setAutoload( Emulator::Interface* emulator ) -> void {
 auto View::cursorForPlacholderInUpperTriangle() -> bool {
     
     return cursorForPlacholderInUpperTriangle( viewport.getMousePosition() );
-}
-
-auto View::cursorForPlacholderInUpperTriangle(GUIKIT::Position& p) -> bool {
-    
-    signed _w = viewport.geometry().width;
-    signed _h = viewport.geometry().height;
-
-    GUIKIT::Position a(0,0);
-    GUIKIT::Position b(_w * 1.55, 0);
-    GUIKIT::Position c(0 , _h * 0.75);
-
-    return (((a.y - b.y) * (p.x - a.x) + (b.x - a.x) * (p.y - a.y)) < 0 ||
-    ((b.y - c.y) * (p.x - b.x) + (c.x - b.x) * (p.y - b.y)) < 0 ||
-    ((c.y - a.y) * (p.x - c.x) + (a.x - c.x) * (p.y - c.y)) < 0) ? false : true;        
 }
 
 auto View::show() -> void {
@@ -947,19 +927,21 @@ auto View::updateTapeIcons( Emulator::Interface::TapeMode mode ) -> void {
 
 auto View::updateTapeStatusIcons( Emulator::Interface::TapeMode mode ) -> void {
     
-    GUIKIT::Image* image = &(view->stopImage); // Unpressed
+    GUIKIT::Image* image = &stopImage; // Unpressed
     
     typedef Emulator::Interface::TapeMode TapeMode;
     
     switch( mode ) {
-        case TapeMode::Play:        image = &(view->playhiImage); break;
-        case TapeMode::Record:      image = &(view->recordhiImage); break;
-        case TapeMode::Forward:     image = &(view->forwardhiImage); break;
-        case TapeMode::Rewind:      image = &(view->rewindhiImage); break;
-        case TapeMode::Stop:        image = &(view->stophiImage); break;
+        case TapeMode::Play:        image = &playhiImage; break;
+        case TapeMode::Record:      image = &recordhiImage; break;
+        case TapeMode::Forward:     image = &forwardhiImage; break;
+        case TapeMode::Rewind:      image = &rewindhiImage; break;
+    //    case TapeMode::Stop:        image = &stophiImage; break;
     }
     
     statusHandler->updateTapeImage( image );
+        
+    statusBar.update();
 }
 
 auto View::translate() -> void {

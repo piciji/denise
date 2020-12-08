@@ -280,7 +280,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
     filePool->unloadOrphaned();
 	
     audioManager->power();
-    renderPlaceholder(true);
+    view->renderPlaceholder(true);
     
     if (emuSwap)
 		setVideoFilter();	
@@ -501,7 +501,7 @@ auto Program::exit(int code) -> void {
     GUIKIT::Application::exitCode = code;
 
     if (!cmd->screenshotPath.empty())
-        saveExitScreenshot();
+        cmd->saveExitScreenshot();
     
     if (isRunning)
         view->onClose();
