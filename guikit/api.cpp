@@ -556,7 +556,8 @@ auto StatusBar::clear() -> void {
 }
 
 auto StatusBar::update(bool force) -> void {
-    
+    if (_A::dummy) return;
+	
     if (force || state.updatePending) {
         p.update();
         state.updatePending = false;
