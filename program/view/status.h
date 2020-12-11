@@ -38,6 +38,7 @@ struct StatusHandler {
     auto updateDRC( bool state ) -> void;
     auto updateAudioRecord( bool state ) -> void;
     auto updateTapeImage( GUIKIT::Image* image ) -> void;
+	auto hideTape() -> void;
     auto countFrames() -> void;
 
     GUIKIT::StatusBar* statusBar = nullptr;

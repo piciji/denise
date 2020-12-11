@@ -61,6 +61,14 @@ auto CreateImage(Image& image, unsigned size) -> GtkImage* {
     return gtkImage;
 }
 
+auto setImage(GtkImage* gtkImage, Image& image, unsigned size) -> void {
+    GdkPixbuf* pixbuf = CreatePixbuf(image, size);
+	if (!pixbuf)
+		return;
+    gtk_image_set_from_pixbuf(gtkImage, pixbuf);
+    if(G_IS_OBJECT(pixbuf)) g_object_unref(pixbuf);
+}
+
 //cursor
 auto CreateCursor( GtkWidget* widget, GdkPixbuf* pixbuf, unsigned hotSpotX, unsigned hotSpotY ) -> GdkCursor* {
     

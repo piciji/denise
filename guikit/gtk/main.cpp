@@ -6,7 +6,8 @@ namespace GUIKIT {
 #include "tools.cpp"
 #include "menu.cpp"
 #include "browserWindow.cpp"
-#include "messageWindow.cpp"    
+#include "messageWindow.cpp"
+#include "statusbar.cpp"
     
 #include "widgets/widget.cpp"   
 #include "widgets/button.cpp"   
@@ -184,19 +185,11 @@ pWindow::pWindow(Window& window) : window(window) {
     gtk_widget_show(mainDisplay);
 
     statusContainer = gtk_event_box_new();
-    status = gtk_statusbar_new();
 	
-    gtk_container_add(GTK_CONTAINER(statusContainer), status);
     gtk_box_pack_start(GTK_BOX(verticalLayout), statusContainer, false, false, 0);
     gtk_widget_show(statusContainer);
-
-	gtk_widget_set_margin_top(GTK_WIDGET(status), 0);
-	gtk_widget_set_margin_bottom(GTK_WIDGET(status), 0);
-	gtk_widget_set_margin_start(GTK_WIDGET(status), 0);
-	gtk_widget_set_margin_end(GTK_WIDGET(status), 0);
 		
     setResizable(window.resizable());
-    setStatusFont(Font::system());
 
     g_signal_connect(G_OBJECT(widget), "delete-event", G_CALLBACK(Window_close), (gpointer)&window);
 	g_signal_connect(G_OBJECT(widget), "draw", G_CALLBACK(Window_draw), (gpointer)&window);
@@ -256,19 +249,8 @@ auto pWindow::setResizable(bool resizable) -> void {
     gtk_window_set_resizable(GTK_WINDOW(widget), resizable);
 }
 
-auto pWindow::setStatusFont(std::string font) -> void {
-    PangoFontDescription* pStatusfont = pFont::setFont(status, font);
-    statusHeight = pFont::size(pStatusfont, " ").height + 8;
-    pFont::free(pStatusfont);
-}
-
 auto pWindow::setTitle(std::string text) -> void {
     gtk_window_set_title(GTK_WINDOW(widget), text.c_str());
-}
-
-auto pWindow::setStatusText(std::string text) -> void {
-    gtk_statusbar_pop(GTK_STATUSBAR(status), 1);
-    gtk_statusbar_push(GTK_STATUSBAR(status), 1, text.c_str());
 }
 
 auto pWindow::setBackgroundColor(unsigned color) -> void {
@@ -297,6 +279,14 @@ auto pWindow::append(Widget& widget) -> void {
 
 auto pWindow::remove(Widget& widget) -> void {
     widget.p.init();
+}
+
+auto pWindow::append(StatusBar& statusBar) -> void {
+	statusBar.p.create();
+}
+
+auto pWindow::remove(StatusBar& statusBar) -> void {
+	statusBar.p.destroy();
 }
 
 auto pWindow::append(Layout& layout) -> void {
@@ -435,12 +425,20 @@ auto pWindow::calcMenuHeight() -> void {
     }
 }
 
-auto pWindow::setStatusVisible(bool visible) -> void {
-    gtk_widget_set_visible(status, visible);
+auto pWindow::setStatusVisible(bool visible) -> void {    
+    if (!window.statusBar())
+        return;
+        
+    window.statusBar()->p.setVisible( visible );
+	
     if (!gtk_widget_get_visible(widget)) return;
 
     if (window.fullScreen()) gtk_window_fullscreen(GTK_WINDOW(widget));
 		
+	// Why? 
+	// switching language between asian and european changes menu height
+	calcMenuHeight();
+	
     resize( geometry() );		
 }
 
@@ -463,7 +461,11 @@ auto pWindow::sizeWindow(GtkAllocation* allocation) -> void {
 }
 
 auto pWindow::resize(Geometry geo) -> void {
-    gtk_window_resize(GTK_WINDOW(widget), geo.width, geo.height + (gtk_widget_get_visible(status) ? statusHeight : 0) + menuHeight );
+	statusHeight = 0;
+	if (window.statusBar())
+		statusHeight = window.statusBar()->p.getHeight();
+		
+	gtk_window_resize(GTK_WINDOW(widget), geo.width, geo.height + statusHeight + menuHeight );	
 }
 
 auto pWindow::setGeometry(Geometry geometry) -> void {

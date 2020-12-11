@@ -326,7 +326,7 @@ auto SettingsLayout::changeLang() -> void {
 	
     configView->synchronizeLayout();	
 	for( auto emuConfigView : emuConfigViews )
-		emuConfigView->synchronizeLayout();
+		emuConfigView->synchronizeLayout();	
 }
 
 auto SettingsLayout::setLang() -> void {

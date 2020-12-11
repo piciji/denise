@@ -15,6 +15,7 @@
 #ifdef DRV_FREETYPE
     #include <ft2build.h>
     #include FT_FREETYPE_H
+	#include "../../tools/font.h"
 #endif
 
 #include "bind.h"

@@ -156,6 +156,7 @@ auto Window::remove(Widget& widget) -> void {
 }
 
 auto Window::append(StatusBar& statusBar) -> void {
+	if (_A::dummy) return;
     state.statusBar = &statusBar;
     statusBar.state.window = this;
     p.append(statusBar);
@@ -410,24 +411,45 @@ auto StatusBar::setText(std::string text) -> void {
     p.setText(text);
 }
 
-auto StatusBar::appendPart( Part part ) -> void {
-    if (_A::dummy) return;
-        
-    state.parts.push_back( part );
-      
-    state.updatePending = true;
+auto StatusBar::append(unsigned id, std::string text, unsigned width, int overrideForegroundColor, std::function<void ()> onClick, Menu* popupMenu, int pos) -> void {
+	if (_A::dummy) return;
+
+	Part part;
+	part.id = id;
+	part.width = width;
+	part.text = text;
+	part.image = nullptr;
+	part.popupMenu = popupMenu;
+	part.onClick = onClick;
+	part.overrideForegroundColor = overrideForegroundColor;
+	part.visible = false;
+	
+	if ( (pos == -1) || (pos >= state.parts.size()) )
+		state.parts.push_back(part);
+	else
+		GUIKIT::Vector::insert<Part>(state.parts, part, pos);
+
+	state.updatePending = true;
 }
 
-auto StatusBar::insertPart( Part part, unsigned pos ) -> void {
-    if (_A::dummy) return;
-    
-    if (pos >= state.parts.size()) {
-        state.parts.push_back( part );
-        pos = state.parts.size() - 1;
-    } else
-        GUIKIT::Vector::insert<Part>( state.parts, part, pos );
-    
-    state.updatePending = true;
+auto StatusBar::append(unsigned id, Image* image, std::function<void ()> onClick, Menu* popupMenu, int pos) -> void {
+	if (_A::dummy) return;
+	
+	Part part;
+	part.id = id;
+	part.width = image->width;
+	part.text = "";
+	part.image = image;
+	part.popupMenu = popupMenu;
+	part.onClick = onClick;
+	part.visible = false;
+	
+	if ( (pos == -1) || (pos >= state.parts.size()) )
+		state.parts.push_back(part);
+	else
+		GUIKIT::Vector::insert<Part>(state.parts, part, pos);
+
+	state.updatePending = true;
 }
 
 auto StatusBar::removePart( unsigned id ) -> void {
@@ -445,7 +467,7 @@ auto StatusBar::removePart( unsigned id ) -> void {
     state.updatePending = true;
 }
 
-auto StatusBar::updateText( unsigned id, std::string text, bool overrideForegroundColor, unsigned foregroundColor ) -> bool {
+auto StatusBar::updateText( unsigned id, std::string text, int overrideForegroundColor ) -> bool {
     if (_A::dummy) return false;
     
     for(auto& part : state.parts) {
@@ -453,16 +475,14 @@ auto StatusBar::updateText( unsigned id, std::string text, bool overrideForegrou
             
             if (!part.visible) {
                 part.overrideForegroundColor = overrideForegroundColor;
-                part.foregroundColor = foregroundColor;
                 part.text = text;
                 part.visible = true;
                 state.updatePending = true;
                 
-            } else if ( (part.text != text) || (part.overrideForegroundColor != overrideForegroundColor) || (overrideForegroundColor && (part.foregroundColor != foregroundColor) ) ) {
+            } else if ( (part.text != text) || (part.overrideForegroundColor != overrideForegroundColor) ) {
                 part.overrideForegroundColor = overrideForegroundColor;
-                part.foregroundColor = foregroundColor;
                 part.text = text;                
-                p.updatePart( part.position );
+                p.updatePart( part );
             }                       
             return true;
         }
@@ -482,7 +502,7 @@ auto StatusBar::updateImage( unsigned id, Image* image ) -> bool {
                 
             } else if (part.image != image) {
                 part.image = image;
-                p.updatePart( part.position );
+                p.updatePart( part );
             }
             return true;
         }
@@ -504,6 +524,24 @@ auto StatusBar::updateVisible( unsigned id, bool visible ) -> bool {
     }
     return false;
 }
+
+auto StatusBar::updateTooltip( unsigned id, std::string tooltip ) -> bool {
+    if (_A::dummy) return false;
+    
+    for(auto& part : state.parts) {
+        if (part.id == id) {
+            if (part.tooltip != tooltip) {
+				part.tooltip = tooltip;
+				
+				if (part.visible)
+					p.updatePart( part );
+            }
+            return true;
+        }
+    }
+    return false;
+}
+
 
 auto StatusBar::hideContent() -> void {
     for(auto& part : state.parts)

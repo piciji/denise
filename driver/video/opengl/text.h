@@ -103,24 +103,6 @@ struct OpenGLText {
         initialized = false;
     }
     
-    auto getFontPath() -> std::string {
-        
-    #ifdef _WIN32
-        #include <cstdlib>
-        std::string winDir = "C:/Windows"; // fallback: most likely
-        
-        const char* env = std::getenv("WINDIR");        
-        if (env)
-            winDir = env;
-                
-        return winDir + "/Fonts/ARIALUNI.TTF";
-    #elif __APPLE__
-        return "/Library/Fonts/LucidaGrande.ttf";
-    #else
-        return "/usr/share/fonts/truetype/arial.ttf";
-    #endif
-    }
-    
     auto init() -> bool {
         term();
         #include "../../tools/fonts.c"
@@ -128,7 +110,7 @@ struct OpenGLText {
         if (FT_Init_FreeType( &ft ))
             return false;
         
-        if (FT_New_Face(ft, getFontPath().c_str(), 0, &face)) {
+        if (FT_New_Face(ft, getFontFile().c_str(), 0, &face)) {
             data = new FT_Byte[ sizeof (sourceCodePro) ];
             std::memcpy(data, &sourceCodePro, sizeof (sourceCodePro));
             

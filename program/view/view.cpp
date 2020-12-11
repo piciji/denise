@@ -39,11 +39,13 @@ auto View::build() -> void {
     
     loadImages();
     
+	statusHandler->init(&statusBar);
+
+	statusBar.setFont(GUIKIT::Font::system());
+
+	append(statusBar);
+		
     if (!cmd->noGui) {                
-        
-        statusBar.setFont( GUIKIT::Font::system() );
-                        
-        append( statusBar );
         
         buildMenu();    
         updateShader();
@@ -187,9 +189,7 @@ auto View::build() -> void {
 			view->setDefaultCursor();
 	};
 	
-    setDragnDrop();
-    
-    statusHandler->init( &statusBar );
+    setDragnDrop();        
 }
 
 auto View::setAutoload( Emulator::Interface* emulator ) -> void {
@@ -896,15 +896,15 @@ auto View::buildMenu() -> void {
 	tapeResetCounterItem.onActivate = []() {
 		InputManager::activateHotkey(Hotkey::Id::ResetTapeCounter);
 	};
-	tapeControlMenu.append( tapeResetCounterItem );
-    
-    updateTapeIcons();
+	tapeControlMenu.append( tapeResetCounterItem );    
 }
 
 auto View::showTapeMenu( bool show, Emulator::Interface::TapeMode mode ) -> void {
         
     if (show)
         updateTapeIcons(mode);
+	else
+		statusHandler->hideTape();
 
     if (show == isApended(tapeControlMenu))
         return;
@@ -1017,6 +1017,8 @@ auto View::translate() -> void {
     
     //cocoa.setHiddenForAppMenuItem(GUIKIT::Window::Cocoa::AppMenuItem::Custom1, true);
 
+	statusBar.updateTooltip(11, trans->get("cartridges") );
+	statusBar.updateTooltip(14, trans->get("FPS") );	
 }
 
 auto View::getViewportHandle() -> uintptr_t {

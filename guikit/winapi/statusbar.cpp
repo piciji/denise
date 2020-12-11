@@ -75,9 +75,9 @@ auto pStatusBar::getHeight() -> unsigned {
     return src.bottom - src.top;
 }
 
-auto pStatusBar::updatePart( unsigned pos ) -> void {
+auto pStatusBar::updatePart( StatusBar::Part& part ) -> void {
     if (hwnd)
-        SendMessage(hwnd, SB_SETTEXT, pos | SBT_OWNERDRAW, 0);
+        SendMessage(hwnd, SB_SETTEXT, part.position | SBT_OWNERDRAW, 0);
 }
 
 auto pStatusBar::update() -> void {
@@ -90,7 +90,7 @@ auto pStatusBar::update() -> void {
     if (!statusBar.window() || !hwnd)
         return;        
         
-    auto& parts = statusBar.state.parts;    
+    auto& parts = statusBar.state.parts;
     
     GetWindowRect(hwnd, &rect);
     pos = rect.right - rect.left;

@@ -109,66 +109,35 @@ auto StatusHandler::updateTapeImage( GUIKIT::Image* image ) -> void {
     statusBar->updateImage( 10, image );        
 }
 
+auto StatusHandler::hideTape() -> void {
+	statusBar->updateVisible(9, false);
+	statusBar->updateVisible(10, false);
+	statusBar->update();
+}
+
 auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
     statusBar->clear();
     
     this->statusBar = statusBar;
     showFPS = globalSettings->get<bool>("fps", false);
     recordAudio = false;    
-    fps = fpsCollect = 0;
+    fps = fpsCollect = 0;    		
     
-    GUIKIT::StatusBar::Part part;
-    
-    part.id = 0;
-    part.width = 0;
-    part.text = "";
-    part.image = nullptr;
-    part.onClick = nullptr;
-    part.popupMenu = nullptr;
-    part.foregroundColor = 0;
-    part.overrideForegroundColor = false;
-    part.visible = false;        
-    
-    statusBar->appendPart( part );    // status text
-    
+    statusBar->append( 0, "" );    // status text
+	statusBar->updateVisible(0, true);
+	    
     // up to 4 disk drives
     for( unsigned i = 0; i < 4; i++ ) {
-        part.id = i * 2 + 1;
-        part.width = (i > 1) ? 42 : 38;
-        part.image = nullptr;
-        statusBar->appendPart( part );    // disk drive track
-        part.id = i * 2 + 2;
-        part.width = 22;
-        part.image = &(view->ledOffImage);
-        statusBar->appendPart( part );    // disk   LED
+        statusBar->append( i * 2 + 1, "", (i > 1) ? 42 : 38 );    // disk drive track
+        statusBar->append( i * 2 + 2, &(view->ledOffImage) );    // disk LED
     }
     
-    part.id = 9;
-    part.width = 26;
-    part.image = nullptr;
-    statusBar->appendPart( part );    // tape counter
-    part.id = 10;
-    part.width = 22;
-    part.image = &(view->stopImage);
-    part.popupMenu = &(view->tapeControlMenu);
-    statusBar->appendPart( part );    // tape button icon
-    part.id = 11;
-    part.width = 22;
-    part.image = &(view->ledOffImage);
-    part.popupMenu = nullptr;
-    statusBar->appendPart( part );    // expansion LED
-    part.id = 12;
-    part.width = 220;
-    part.image = nullptr;
-    statusBar->appendPart( part );    // DRC Status
-    part.id = 13;
-    part.width = 22;
-    part.image = &(view->recordhiImage);
-    statusBar->appendPart( part );    // REC Status
-    part.id = 14;
-    part.width = 40;
-    part.image = nullptr;
-    statusBar->appendPart( part );    // FPS
+    statusBar->append( 9, "", 26 );    // tape counter
+    statusBar->append( 10, &(view->stopImage), nullptr, &(view->tapeControlMenu) );    // tape button icon
+    statusBar->append( 11, &(view->ledOffImage) );    // expansion LED
+    statusBar->append( 12, "", 220 );    // DRC Status
+    statusBar->append( 13, &(view->recordhiImage) );    // REC Status
+    statusBar->append( 14, "", 40 );    // FPS	
 }
 
 auto StatusHandler::transferToOSD( std::string text ) -> void {
@@ -205,7 +174,7 @@ auto StatusHandler::update() -> void {
     std::string OSDText = message.txt;
     
     if (messageUpdate())        
-        statusBar->updateText(0, message.txt, message.critical, 0xe92828 );        
+        statusBar->updateText(0, message.txt, message.critical ? 0xe92828 : -1 );        
 
     if (activeEmulator) {
         if (deviceUpdate()) {

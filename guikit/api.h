@@ -267,11 +267,11 @@ struct StatusBar : Base {
         unsigned id;
         unsigned width;
         std::string text = "";
+		std::string tooltip = "";
         Image* image = nullptr;        
         std::function<void ()> onClick = nullptr;
         Menu* popupMenu = nullptr;
-        unsigned foregroundColor = 0;
-        bool overrideForegroundColor = false; 
+        int overrideForegroundColor = -1;
         bool visible = false;
         unsigned position = 0;
     };
@@ -280,13 +280,14 @@ struct StatusBar : Base {
     auto font() const -> std::string { return state.font; }
     auto text() const -> std::string { return state.text; }
     auto updatePending() const -> bool { return state.updatePending; }
-    auto appendPart( Part part ) -> void;
-    auto insertPart( Part part, unsigned pos ) -> void;    
+	auto append(unsigned id, std::string text, unsigned width = 0, int overrideForegroundColor = -1, std::function<void ()> onClick = nullptr, Menu* popupMenu = nullptr, int pos = -1) -> void;
+	auto append(unsigned id, Image* image, std::function<void ()> onClick = nullptr, Menu* popupMenu = nullptr, int pos = -1) -> void;	  
     auto removePart( unsigned id ) -> void;
     
-    auto updateText( unsigned id, std::string text, bool overrideForegroundColor = false, unsigned foregroundColor = 0 ) -> bool;
+    auto updateText( unsigned id, std::string text, int overrideForegroundColor = -1 ) -> bool;
     auto updateImage( unsigned id, Image* image ) -> bool;
-    auto updateVisible( unsigned id, bool visible ) -> bool;    
+    auto updateVisible( unsigned id, bool visible ) -> bool;
+	auto updateTooltip( unsigned id, std::string tooltip ) -> bool;
     
     auto setFont(std::string font) -> void;
     auto setText(std::string text) -> void; // simple single part usage

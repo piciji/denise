@@ -119,7 +119,7 @@ struct pStatusBar {
         
     auto drawItem(WPARAM wparam, LPARAM lparam) -> void;
     auto update() -> void;
-    auto updatePart( unsigned pos ) -> void;
+    auto updatePart( StatusBar::Part& part ) -> void;
     auto updatePosition() -> void;
     auto setStatusVisible(bool visible) -> void;
     auto getHeight() -> unsigned;

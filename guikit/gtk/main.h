@@ -21,7 +21,6 @@ struct pWindow {
 	GtkWidget* contextMenu;
     GtkWidget* mainDisplay;
     GtkWidget* statusContainer;
-    GtkWidget* status;
     GtkAllocation lastAllocation;
     bool overrideBackgroundColor = false;
     unsigned backgroundColor;
@@ -37,16 +36,16 @@ struct pWindow {
     auto append(Menu& menu) -> void;
     auto append(Widget& widget) -> void;
     auto append(Layout& layout) -> void;
+	auto append(StatusBar& statusBar) -> void;
     auto remove(Menu& menu) -> void;
     auto remove(Widget& widget) -> void;
     auto remove(Layout& layout) -> void {}
+	auto remove(StatusBar& statusBar) -> void;
     auto setGeometry(Geometry geometry) -> void;
-    auto setStatusFont(std::string font) -> void;
     auto setBackgroundColor(unsigned color) -> void;
     auto setFocused() -> void;
     auto setVisible(bool visible) -> void;
     auto setResizable(bool resizable) -> void;
-    auto setStatusText(std::string text) -> void;
     auto setTitle(std::string text) -> void;
     auto setMenuVisible(bool visible) -> void;
     auto setStatusVisible(bool visible) -> void;
@@ -73,6 +72,32 @@ struct pWindow {
     static auto addCustomFont( CustomFont* customFont ) -> bool;
 
     pWindow(Window& window);
+};
+
+struct pStatusBar {
+    StatusBar& statusBar;
+    GtkWidget* gridWidget = nullptr;
+	PangoFontDescription* pfont = nullptr;
+    std::vector<Widget*> usedWidgets;
+	unsigned statusHeight = 0;
+    
+    auto create() -> void;
+    auto destroy() -> void;
+    
+    auto setFont(std::string font) -> void;
+    auto setText(std::string text) -> void;
+        
+    auto update() -> void;
+    auto updatePart( StatusBar::Part& part ) -> void;
+    auto setVisible(bool visible) -> void;
+    auto getHeight() -> unsigned;    
+	
+	static auto onClick(GtkWidget* widget, GdkEventButton* event, StatusBar::Part* part) -> void;
+	static auto onEnter(GtkWidget* widget, GdkEventButton* event, StatusBar::Part* part) -> void;
+	static auto onLeave(GtkWidget* widget, GdkEventButton* event, StatusBar::Part* part) -> void;
+    
+    pStatusBar(StatusBar& statusBar);
+    ~pStatusBar();
 };
 
 struct pWidget {
@@ -608,6 +633,7 @@ static auto getDropPaths(GtkSelectionData* data) -> std::vector<std::string>;
 static auto CreateColor(uint8_t r, uint8_t g, uint8_t b) -> GdkColor;
 static auto CreatePixbuf(Image& image, unsigned size = 0) -> GdkPixbuf*;
 static auto CreateImage(Image& image, unsigned size = 0) -> GtkImage*;
+static auto setImage(GtkImage* gtkImage, Image& image, unsigned size = 0) -> void;
 static auto CreateCursor( GtkWidget* widget, GdkPixbuf* pixbuf, unsigned hotSpotX, unsigned hotSpotY ) -> GdkCursor*;
 static auto SetCursor( GtkWidget* widget, GdkCursor* cursor ) -> void;
 }
