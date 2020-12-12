@@ -98,13 +98,18 @@ auto pStatusBar::update() -> void {
     std::vector<int> _widths;
     
     for( i = parts.size() - 1; i >= 0; i-- ) {
-        if (!parts[i].visible)
+        auto& part = parts[i];
+        
+        if (!part.visible)
             continue;
             
         _widths.push_back( pos );
         
         // first part width doesn't matter. always use remaining space
-        pos -= parts[i].width;
+        if (part.image)
+            pos -= part.image->width + 6;
+        else
+            pos -= part.width;
     }
 
     if (_widths.size() == 0) {
@@ -151,9 +156,7 @@ auto pStatusBar::drawItem(WPARAM wparam, LPARAM lparam) -> void {
         
     auto& part = *usedParts[itemID];
     
-    bool useImage = part.image && !part.image->empty();
-    
-    if (useImage) {
+    if (part.image) {
         unsigned yPos = rect.bottom - rect.top;
         
         Image* image = part.image;
@@ -179,15 +182,11 @@ auto pStatusBar::drawItem(WPARAM wparam, LPARAM lparam) -> void {
 //                   
 //        DeleteObject(hbitmap);
 //        DeleteDC( hdcMem );
-    }
-    
-    if (!part.text.empty()) {
         
-        if (useImage)
-            rect.left += part.image->width + 5;
+    } else {
 
-        if (part.overrideForegroundColor) {
-            unsigned color = part.foregroundColor;
+        if (part.overrideForegroundColor != -1) {
+            unsigned color = part.overrideForegroundColor;
             SetTextColor(hDC, RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff));
         }
         
