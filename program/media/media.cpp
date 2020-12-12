@@ -156,7 +156,7 @@ auto MediaLayout::build() -> void {
         } else if (mediaGroup.isDisk()) {
             tvi->setText( "disk" );
             tvi->setImage( diskImage );            
-
+			tvi->setSelected();
             
         } else if (mediaGroup.isTape()) {
             tvi->setText( "tape" );
@@ -217,9 +217,7 @@ auto MediaLayout::build() -> void {
     moduleFrame.setFont(GUIKIT::Font::system("bold"));
     
     append( moduleFrame, {0u, 0u}, 10 );    
-    append( moduleSwitch, {~0u, ~0u} );
-    
-    mediaTree.items()[0]->setSelected();
+    append( moduleSwitch, {~0u, ~0u} );        
     
     mediaTree.onChange = [this]() {
 
