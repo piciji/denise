@@ -130,6 +130,8 @@ struct GLX : public Video, OpenGL {
         else if(glXSwapInterval) glXSwapInterval(settings.synchronize ? 1 : 0);
     }
     
+    auto hasSynchronized() -> bool { return settings.synchronize; }
+    
     auto hardSync(bool state) -> void {
         settings.hardSync = state;
     }

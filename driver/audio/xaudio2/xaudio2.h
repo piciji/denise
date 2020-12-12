@@ -112,6 +112,16 @@ struct XAudio2 : Audio {
         }        
     }
     
+    auto hasSynchronized() -> bool {
+        switch( version ) {          
+            case 27: return xAudio27->hasSynchronized();
+            case 28: return xAudio28->hasSynchronized();
+            case 29: return xAudio29->hasSynchronized();
+        } 
+        
+        return hasSynchronized();
+    }
+    
     auto addSamples(const uint8_t* buffer, unsigned size) -> void { 
         switch( version ) {          
             case 27: xAudio27->addSamples(buffer, size); break;

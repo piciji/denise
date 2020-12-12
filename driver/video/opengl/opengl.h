@@ -106,8 +106,7 @@ struct OpenGL : OpenGLProgram {
 	auto init() -> bool;
 	auto term() -> void;
     auto hardSync(unsigned frames = 0) -> void;
-    auto getCustomTexture( std::string _program, std::string attribute ) -> CustomTexture*;
-	auto hasSynchronized() -> bool { return settings.synchronize; }
+    auto getCustomTexture( std::string _program, std::string attribute ) -> CustomTexture*;	
     
 #ifdef DRV_FREETYPE    
     OpenGLText screenText;

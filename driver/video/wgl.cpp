@@ -25,6 +25,8 @@ struct WGL : Video, OpenGL {
 			wglSwapInterval(settings.synchronize);
 	}
     
+    auto hasSynchronized() -> bool { return settings.synchronize; }
+    
     auto shaderFormat() -> ShaderType { return ShaderType::GLSL; }
     
     auto hardSync(bool state) -> void {
