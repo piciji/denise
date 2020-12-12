@@ -51,10 +51,10 @@ IecBus* iecBus;
 // 0.85 ( data change time ) - 1.3 cycles (1 write + 0.3 delay) = -0.45
 // a VIA write before (-0.45 * drive cycle duration) should affect a CIA read
 
-IecBus::IecBus() {    
+IecBus::IecBus(Emulator::Interface::MediaGroup* mediaGroup) {    
     // max 4 drives will be supported
     for( unsigned i = 0; i < 4; i++ ) {    
-        Drive1541* drive = new Drive1541( i );
+        Drive1541* drive = new Drive1541( i, &mediaGroup->media[i] );
         
         drives.push_back( drive );
     }     

@@ -16,7 +16,7 @@ struct Drive1541;
     
 struct IecBus {
     
-    IecBus();
+    IecBus(Emulator::Interface::MediaGroup* mediaGroup);
     ~IecBus();        
     
     std::vector<Drive1541*> drives;    

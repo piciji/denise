@@ -75,12 +75,14 @@ auto Drive1541::cpuRead(uint16_t addr) -> uint8_t {
         return addr >> 8;
 }
     
-Drive1541::Drive1541(uint8_t number) {
+Drive1541::Drive1541(uint8_t number, Emulator::Interface::Media* mediaConnected ) {
      
     this->number = number; 
+	this->mediaConnected = mediaConnected;
+	
 	structure1541.number = number;
     
-    media = nullptr;
+    media = nullptr;	
     
     ram = new uint8_t[ 2 * 1024 ];
     rom = nullptr;    
@@ -223,13 +225,13 @@ Drive1541::~Drive1541() {
 
 auto Drive1541::updateDeviceState() -> void {
         
-    system->interface->updateDeviceState( getMedia(), !readMode, currentHalftrack + 2, via2->lines.iob & 8, !motorOn );
+    system->interface->updateDeviceState( getMediaConnected(), !readMode, currentHalftrack + 2, via2->lines.iob & 8, !motorOn );
 }
 
 // missing BUS communication
 auto Drive1541::updateIdleDeviceState() -> void {
     
-    system->interface->updateDeviceState( getMedia(), !readMode, currentHalftrack + 2, false, true );
+    system->interface->updateDeviceState( getMediaConnected(), !readMode, currentHalftrack + 2, false, true );
 }
 
 auto Drive1541::updateBus() -> void {

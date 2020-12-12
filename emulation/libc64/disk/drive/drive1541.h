@@ -16,7 +16,7 @@ struct IecBus;
     
 struct Drive1541 {   
         
-    Drive1541( uint8_t number );
+    Drive1541( uint8_t number, Emulator::Interface::Media* mediaConnected );
     ~Drive1541();
     
     const unsigned rotSpeedBps[4] = { 250000, 266667, 285714, 307692 };
@@ -26,6 +26,7 @@ struct Drive1541 {
     uint8_t* rom = nullptr;
    
     Emulator::Interface::Media* media;
+	Emulator::Interface::Media* mediaConnected; // update status LED if there was no disk inserted
 
     struct MotorOff {
         bool slowDown = false;
@@ -96,6 +97,7 @@ struct Drive1541 {
     auto powerOff( ) -> void;
     auto setViaTransition( bool state ) -> void;
     auto getMedia() -> Emulator::Interface::Media* { return media; }
+	auto getMediaConnected() -> Emulator::Interface::Media* { return mediaConnected; }
     
     auto updateBus() -> void;
     auto setFirmware(uint8_t* rom) -> void;

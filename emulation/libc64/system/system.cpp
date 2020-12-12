@@ -65,8 +65,8 @@ System::System(Interface* interface) {
     glueLogic = new GlueLogic();
 	crop = new Emulator::Crop<uint8_t>;
 	powerSupply = new Emulator::PowerSupply;
-	tape = new Tape;
-    iecBus = new IecBus;
+	tape = new Tape( &interface->mediaGroups[Interface::MediaGroupIdTape].media[0] );
+    iecBus = new IecBus( &interface->mediaGroups[Interface::MediaGroupIdDisk] );
     
     cia1 = new CIA::M6526( 1, &sysTimer );
     cia2 = new CIA::M6526( 2, &sysTimer );  

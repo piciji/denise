@@ -12,9 +12,10 @@ namespace LIBC64 {
     
 Tape* tape = nullptr;
 
-Tape::Tape( ) {
+Tape::Tape( Emulator::Interface::Media* mediaConnected ) {
     
     media = nullptr;
+	this->mediaConnected = mediaConnected;
 
 	fetchData = new uint8_t[ TAPE_FETCH_SIZE ];
 	writeData = new uint8_t[ TAPE_WRITE_SIZE ];
@@ -102,7 +103,7 @@ Tape::~Tape() {
 }
 
 auto Tape::updateDeviceState() -> void {
-    system->interface->updateDeviceState( getMedia(), mode == Mode::Record, counter, false, !motorIn );
+    system->interface->updateDeviceState( getMediaConnected(), mode == Mode::Record, counter, false, !motorIn );
 }
 
 auto Tape::setMotorIn( bool state ) -> void {

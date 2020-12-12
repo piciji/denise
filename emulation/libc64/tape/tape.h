@@ -17,7 +17,7 @@ namespace LIBC64 {
     
 struct Tape {
     
-    Tape( );
+    Tape( Emulator::Interface::Media* mediaConnected );
     ~Tape();
 
 	enum Mode : uint8_t { Stop = 0, Play = 1, Record = 2, Forward = 3, Rewind = 4, ResetCounter = 5 };
@@ -45,10 +45,12 @@ struct Tape {
     auto selectListing( unsigned pos ) -> void;
 	auto setWobble(bool state) -> void;
     auto getMedia() -> Emulator::Interface::Media* { return media; }
+	auto getMediaConnected() -> Emulator::Interface::Media* { return mediaConnected; }
     auto updateDeviceState() -> void;
 	
 protected:	
-	Emulator::Interface::Media* media;    
+	Emulator::Interface::Media* media; 
+	Emulator::Interface::Media* mediaConnected; // update status LED if there was no tape inserted
     std::function<void ()> worker;
     std::function<void ()> motorOff;
 	std::function<void ()> delayMode;
