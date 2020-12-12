@@ -366,8 +366,12 @@ auto Program::loop() -> void {
 		unsigned frames = loopFrames;
 		
 		if (frames) {
-			while(frames--)
-				activeEmulator->run();
+			while(frames--) {
+				if (activeEmulator)
+					activeEmulator->run();
+				else
+					break;
+			}
 		} else
 			activeEmulator->run();
 	}

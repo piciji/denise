@@ -15,7 +15,8 @@ auto setDebugCart( bool enable, unsigned cycles = 0 ) -> void {
 }
 
 auto initDebugCart() -> void {
-    
+    debugCart.exit = false;
+	
     if (!debugCart.enable)
         return;
         	
@@ -39,7 +40,7 @@ inline auto checkDebugCart() -> void {
         return;
     
     if (++debugCart.frameCounter == debugCart.frames) {
-        
+        debugCart.exit = true;
         interface->exit( 1 );
     }
 }
