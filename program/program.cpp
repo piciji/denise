@@ -81,14 +81,6 @@ Program::Program() {
 	initVideo();
     
     cmd->autoloadImages();
-
-
-//    GUIKIT::Image::getCharDataStringFromBinary("E:/icons/led-red.png", "E:/icons/led-red.png.data");
-//    GUIKIT::Image::getCharDataStringFromBinary("E:/icons/led-green.png", "E:/icons/led-green.png.data");
-//    GUIKIT::Image::getCharDataStringFromBinary("E:/icons/led-off.png", "E:/icons/led-off.png.data");
-//    GUIKIT::Image::getCharDataStringFromBinary("E:/icons/tape/play2HiPause.png", "E:/icons/tape/play2HiPause.png.data");
-	
-	
 }
 
 auto Program::addEmulators() -> void {

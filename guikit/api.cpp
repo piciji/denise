@@ -542,7 +542,6 @@ auto StatusBar::updateTooltip( unsigned id, std::string tooltip ) -> bool {
     return false;
 }
 
-
 auto StatusBar::hideContent() -> void {
     for(auto& part : state.parts)
         part.visible = false;

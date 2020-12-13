@@ -3,11 +3,15 @@ pStatusBar::pStatusBar(StatusBar& statusBar) : statusBar(statusBar) {
     
     hwnd = nullptr;    
     hfont = nullptr;
+    hCursor = LoadCursor(0, IDC_HAND); 
+    hoverPart = nullptr;
 }
 
 pStatusBar::~pStatusBar() {
     destroy();
     pFont::free(hfont);
+    if (hCursor)
+        DestroyCursor( hCursor );
 }
 
 auto pStatusBar::create() -> void {    
@@ -15,6 +19,15 @@ auto pStatusBar::create() -> void {
     hwnd = CreateWindow(STATUSCLASSNAME, L"", WS_CHILD, 0, 0, 0, 0, statusBar.window()->p.hwnd, (HMENU)(unsigned long long)statusBar.id, GetModuleHandle(0), 0);
     
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)&statusBar);
+    
+    wndprocOrig = (WNDPROC)SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)subclassWndProc);  
+    
+    hwndTip = CreateWindowEx(0, TOOLTIPS_CLASS, NULL,
+        WS_POPUP | TTS_ALWAYSTIP | TTS_USEVISUALSTYLE,
+        CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+        hwnd, NULL, GetModuleHandle(0), 0);    
+    
+    hoverPart = nullptr;
     
     unsigned partCount = statusBar.state.parts.size();
     
@@ -27,12 +40,64 @@ auto pStatusBar::create() -> void {
         update();
 }
 
+auto CALLBACK pStatusBar::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT {
+    StatusBar* statusBar = (StatusBar*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
+    if(statusBar == nullptr) return DefWindowProc(hwnd, msg, wparam, lparam);
+
+    switch(msg) {   
+        case WM_MOUSEMOVE: {
+//            TRACKMOUSEEVENT tracker = {sizeof (TRACKMOUSEEVENT), TME_LEAVE, hwnd};
+//            TrackMouseEvent(&tracker);
+            
+            auto& p = statusBar->p;
+            
+            StatusBar::Part* part = p.getHoverPart( (int)(short) LOWORD(lparam) );
+
+            if (part && (part->popupMenu || part->onClick))
+                SetCursor(statusBar->p.hCursor);
+            
+            if (part == p.hoverPart)
+                break;
+            
+            p.hoverPart = part;
+            
+            TOOLINFO toolInfo = {0};
+            toolInfo.cbSize = sizeof (toolInfo);
+            toolInfo.hwnd = GetParent(hwnd);
+
+            while (SendMessage(p.hwndTip, TTM_ENUMTOOLS, 0, (LPARAM)&toolInfo))
+                SendMessage(p.hwndTip, TTM_DELTOOL, 0, (LPARAM)&toolInfo);
+                
+            if (part && !part->tooltip.empty()) {
+                utf16_t wtooltip(part->tooltip);
+                
+                toolInfo.uFlags = TTF_IDISHWND | TTF_SUBCLASS;
+                toolInfo.uId = (UINT_PTR) hwnd;
+                toolInfo.lpszText = wtooltip;
+
+                SendMessage(p.hwndTip, TTM_ADDTOOL, 0, (LPARAM)&toolInfo);
+            }
+            
+        } break;
+            
+//        case WM_MOUSELEAVE:
+//            statusBar->p.hoverPart = nullptr;
+//            break;
+            
+    }
+    return CallWindowProc(statusBar->p.wndprocOrig, hwnd, msg, wparam, lparam);
+}
+
 auto pStatusBar::destroy() -> void {
     
     if (hwnd)
         DestroyWindow(hwnd);
     
+    if (hwndTip)
+        DestroyWindow(hwndTip);
+    
     hwnd = 0;
+    hwndTip = 0;
 }
 
 auto pStatusBar::setFont(std::string font) -> void {
@@ -203,33 +268,45 @@ auto pStatusBar::drawItem(WPARAM wparam, LPARAM lparam) -> void {
 
 auto pStatusBar::onClick(LPARAM lparam) -> void {
     LPNMMOUSE lpnm = (LPNMMOUSE) lparam;
+    
+    StatusBar::Part* part = getHoverPart( lpnm->pt.x );
+        
+    if (!part)
+        return;
+    
+    if (part->popupMenu) {
+        POINT pt;
+        GetCursorPos(&pt);
+        int mid = TrackPopupMenuEx(part->popupMenu->p.hmenu, TPM_RIGHTBUTTON | TPM_RETURNCMD, pt.x, pt.y, statusBar.window()->p.hwnd, NULL);
+        if (mid) SendMessage(statusBar.window()->p.hwnd, WM_COMMAND, mid, 0);
+    }
+
+    if (part->onClick)
+        part->onClick();                   
+}
+
+auto pStatusBar::getHoverPart(int xPos) -> StatusBar::Part* {
+    StatusBar::Part* part;
 
     RECT rect;
     GetWindowRect(hwnd, &rect);
-    
-    int x = lpnm->pt.x;
-    int pos = rect.right - rect.left;
-        
-    unsigned partCount = usedParts.size();
-        
-    for( int i = partCount - 1; i >= 0; i-- ) {
-        auto& part = *usedParts[i];
-        
-        pos -= part.width;
 
-        if (x > pos) {
-            if (part.popupMenu) {
-                POINT pt;
-                GetCursorPos(&pt);
-                int mid = TrackPopupMenuEx(part.popupMenu->p.hmenu, TPM_RIGHTBUTTON | TPM_RETURNCMD, pt.x, pt.y, statusBar.window()->p.hwnd, NULL);
-                if (mid) SendMessage(statusBar.window()->p.hwnd, WM_COMMAND, mid, 0);
-            }
-            
-            if (part.onClick)
-                part.onClick();
-            
-            break;
-        }
-    }       
+    int pos = rect.right - rect.left;
+
+    unsigned partCount = usedParts.size();
+
+    for (int i = partCount - 1; i >= 0; i--) {
+        part = usedParts[i];
+
+        if (part->image)
+            pos -= part->image->width + 6;
+        else
+            pos -= part->width;
+
+        if (xPos > pos)
+            return part;        
+    }
+    
+    return nullptr;
 }
 

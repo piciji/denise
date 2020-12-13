@@ -108,6 +108,10 @@ struct pStatusBar {
     
     HFONT hfont = nullptr;
     HWND hwnd = nullptr;
+    WNDPROC wndprocOrig;
+    HCURSOR hCursor;
+    HWND hwndTip;
+    StatusBar::Part* hoverPart;
     
     std::vector<StatusBar::Part*> usedParts;
     
@@ -125,6 +129,8 @@ struct pStatusBar {
     auto getHeight() -> unsigned;
     
     auto onClick(LPARAM lparam) -> void;
+    auto getHoverPart(int xPos) -> StatusBar::Part*;
+    static auto CALLBACK subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
     
     pStatusBar(StatusBar& statusBar);
     ~pStatusBar();
