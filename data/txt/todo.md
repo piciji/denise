@@ -17,23 +17,21 @@
 * user port
     * SpeedDOS
     * 4 player adapter
-* disk
-    * 1541 track change delay time
+* disk    
     * support command line start of disk listings
     * load PRG files from disk as simple RAM insertion for reduced loading times [quickload]
     * mount OS folder as D64
     * non standard floppy models: 1571, 1581
 * tape   
-    * tape content listing in user interface, like disk
+    * content listing in user interface, like disks
     * click entries and load them without fast-forward to counter position before
-    * dongles
+    * Dongles
 * color banding
 * support to put clipboard in C64 memory
-* UI switch to invert RAM init pattern
-    * Ram Init pattern problems (https://csdb.dk/release/?id=172238  https://csdb.dk/release/?id=172347)
+* UI for custom RAM init patterns
+    
 
 # todo Amiga A500, A1200
-* 68000/68010 opcode tester
 * blitter
 * copper
 * denise ocs
@@ -45,7 +43,7 @@
 * 68020
 * lisa aga	
 
-# todo for all systems
+# todo for all emulated systems
 * load savestates per drag'n'drop or within File Explorer
 * screenshots/movie recording
 * screenshots for savestates
@@ -64,7 +62,6 @@
 * set "integer scaling" multiplicator without sizing application window OR recalculate while resizing (never show black border)
 * PNG overlay for 16:9 fullscreen
 * Netplay
-
 
 # completed emulation
 * cpu 68000 / 68010

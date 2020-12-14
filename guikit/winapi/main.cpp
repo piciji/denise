@@ -263,7 +263,7 @@ auto CALLBACK pApplication::wndProc(WNDPROC windowProc, HWND hwnd, UINT msg, WPA
 //window
 pWindow::pWindow(Window& window) : window(window) {
     locked = false;
-    bgUpdateState = 0;
+    bgUpdateState = pApplication::version <= Windows7 ? 1 : 0;
     brush = 0;
     hCursor = LoadCursor(0, IDC_ARROW);
 

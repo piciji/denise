@@ -223,6 +223,7 @@ struct OpenGLText {
                 downHeight = std::max(downHeight, glyph->bitmap.rows - glyph->bitmap_top);
         }
         
+        upHeight += 1;
         totalHeight = upHeight + downHeight;
                 
         if (textBuffer) {

@@ -52,11 +52,10 @@ TabWindow::TabWindow(Emulator::Interface* emulator) {
 }
 
 auto TabWindow::build() -> void {
-    //winapi.disableBackgroundRedrawDuringResize();
     cocoa.keepMenuVisibilityOnDisplay();
     setDroppable();
 	    
-    GUIKIT::Geometry defaultGeometry = {100, 100, 850, 540};
+    GUIKIT::Geometry defaultGeometry = {100, 100, 850, 560};
     
     GUIKIT::Geometry geometry = {settings->get<int>("screen_settings_x", defaultGeometry.x)
         ,settings->get<int>("screen_settings_y", defaultGeometry.y)

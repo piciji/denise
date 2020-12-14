@@ -22,10 +22,10 @@ auto pStatusBar::create() -> void {
     
     wndprocOrig = (WNDPROC)SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)subclassWndProc);  
     
-    hwndTip = CreateWindowEx(0, TOOLTIPS_CLASS, NULL,
-        WS_POPUP | TTS_ALWAYSTIP | TTS_USEVISUALSTYLE,
-        CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-        hwnd, NULL, GetModuleHandle(0), 0);    
+	hwndTip = CreateWindowEx(0, TOOLTIPS_CLASS, NULL,
+		WS_POPUP | TTS_ALWAYSTIP | TTS_USEVISUALSTYLE,
+		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+		hwnd, NULL, GetModuleHandle(0), 0);  
     
     hoverPart = nullptr;
     
@@ -45,10 +45,7 @@ auto CALLBACK pStatusBar::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LP
     if(statusBar == nullptr) return DefWindowProc(hwnd, msg, wparam, lparam);
 
     switch(msg) {   
-        case WM_MOUSEMOVE: {
-//            TRACKMOUSEEVENT tracker = {sizeof (TRACKMOUSEEVENT), TME_LEAVE, hwnd};
-//            TrackMouseEvent(&tracker);
-            
+        case WM_MOUSEMOVE: {            
             auto& p = statusBar->p;
             
             StatusBar::Part* part = p.getHoverPart( (int)(short) LOWORD(lparam) );
@@ -56,36 +53,37 @@ auto CALLBACK pStatusBar::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LP
             if (part && (part->popupMenu || part->onClick))
                 SetCursor(statusBar->p.hCursor);
             
-            if (part == p.hoverPart)
-                break;
-            
-            p.hoverPart = part;
-            
-            TOOLINFO toolInfo = {0};
-            toolInfo.cbSize = sizeof (toolInfo);
-            toolInfo.hwnd = GetParent(hwnd);
+			if (part != p.hoverPart) {
+				p.hoverPart = part;
 
-            while (SendMessage(p.hwndTip, TTM_ENUMTOOLS, 0, (LPARAM)&toolInfo))
-                SendMessage(p.hwndTip, TTM_DELTOOL, 0, (LPARAM)&toolInfo);
-                
-            if (part && !part->tooltip.empty()) {
-                utf16_t wtooltip(part->tooltip);
-                
-                toolInfo.uFlags = TTF_IDISHWND | TTF_SUBCLASS;
-                toolInfo.uId = (UINT_PTR) hwnd;
-                toolInfo.lpszText = wtooltip;
+				p.setTooltip( part );				
+			}
 
-                SendMessage(p.hwndTip, TTM_ADDTOOL, 0, (LPARAM)&toolInfo);
-            }
-            
-        } break;
-            
-//        case WM_MOUSELEAVE:
-//            statusBar->p.hoverPart = nullptr;
-//            break;
+        } return 0;
             
     }
     return CallWindowProc(statusBar->p.wndprocOrig, hwnd, msg, wparam, lparam);
+}
+
+auto pStatusBar::setTooltip(StatusBar::Part* part) -> void {
+
+	TOOLINFO toolInfo;
+	memset(&toolInfo, 0, sizeof(TOOLINFO));
+	toolInfo.cbSize = sizeof (toolInfo);
+	toolInfo.hwnd = GetParent(hwnd);
+	toolInfo.uId = (UINT_PTR) hwnd;
+
+	while (SendMessage(hwndTip, TTM_ENUMTOOLS, 0, (LPARAM)&toolInfo))
+		SendMessage(hwndTip, TTM_DELTOOL, 0, (LPARAM)&toolInfo);
+
+	if (part && !part->tooltip.empty()) {
+		utf16_t wtooltip(part->tooltip);
+
+		toolInfo.uFlags = TTF_IDISHWND | TTF_SUBCLASS;                
+		toolInfo.lpszText = wtooltip;
+
+		SendMessage(hwndTip, TTM_ADDTOOL, 0, (LPARAM)&toolInfo);
+	}
 }
 
 auto pStatusBar::destroy() -> void {
@@ -250,6 +248,8 @@ auto pStatusBar::drawItem(WPARAM wparam, LPARAM lparam) -> void {
         
     } else {
 
+		SetBkMode(hDC, TRANSPARENT);
+		
         if (part.overrideForegroundColor != -1) {
             unsigned color = part.overrideForegroundColor;
             SetTextColor(hDC, RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff));

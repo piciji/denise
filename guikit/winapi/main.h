@@ -127,6 +127,7 @@ struct pStatusBar {
     auto updatePosition() -> void;
     auto setStatusVisible(bool visible) -> void;
     auto getHeight() -> unsigned;
+    auto setTooltip(StatusBar::Part* part) -> void;
     
     auto onClick(LPARAM lparam) -> void;
     auto getHoverPart(int xPos) -> StatusBar::Part*;
