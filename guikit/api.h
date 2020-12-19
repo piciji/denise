@@ -1,6 +1,6 @@
 
 /**
- * v 1.5
+ * v 1.6
  */
 
 #ifndef GUIKIT_H
