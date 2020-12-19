@@ -53,9 +53,7 @@ auto pStatusBar::create() -> void {
         cocoaView = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, 0, 0)];
         [cocoaView setHidden:YES];
         
-        NSColor* bg = pHelper::getColor( 0xffffff );
-        
-        [cocoaView setBackgroundColor: bg];
+        [cocoaView setBackgroundColor: [NSColor textBackgroundColor]];
 
         [[statusBar.window()->p.cocoaWindow contentView] addSubview:cocoaView positioned:NSWindowBelow relativeTo:nil];
     }

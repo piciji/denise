@@ -39,6 +39,8 @@ struct CGL : public Video, OpenGL {
             [view setOpenGLContext:context];
             [view setFrame:NSMakeRect(0, 0, size.width, size.height)];
             [view setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
+            if ([view respondsToSelector:@selector(setWantsBestResolutionOpenGLSurface:)])
+                [view setWantsBestResolutionOpenGLSurface:NO];
             [handle addSubview:view];
             [context setView:view];
             [view lockFocus];
