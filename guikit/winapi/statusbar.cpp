@@ -138,6 +138,17 @@ auto pStatusBar::getHeight() -> unsigned {
     return src.bottom - src.top;
 }
 
+auto pStatusBar::getWidth(std::string text) -> unsigned {
+    
+    if (text == "")
+        return 0;
+    
+    if (!hfont)
+        setFont( statusBar.font().empty() ? Font::system() : statusBar.font() );
+    
+    return pFont::size( hfont, text ).width + 8;
+}
+
 auto pStatusBar::updatePart( StatusBar::Part& part ) -> void {
     if (hwnd)
         SendMessage(hwnd, SB_SETTEXT, part.position | SBT_OWNERDRAW, 0);
