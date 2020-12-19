@@ -70,7 +70,7 @@ auto pRadioBox::init() -> void {
 		// we do some dirty trick, so don't tell it anyone, because I am ashamed
 		// we put each radio in a box, which gets the same geometry like the radio itself
 		// from a cocoa point of view each radio group consists of one element
-		// we control which elements belongs to the same group, not cocoa
+		// we control which elements belong to the same group, not cocoa
         cocoaView = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, 0, 0)];
 
         inner = [[CocoaRadioBox alloc] initWith:radioBox];

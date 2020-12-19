@@ -29,7 +29,7 @@ static auto getFontFile() -> std::string {
 
 	return winDir + "/Fonts/ARIALUNI.TTF";
 #elif __APPLE__
-	return "/Library/Fonts/LucidaGrande.ttf";
+	return "/Library/Fonts/Arial Unicode.ttf";
 #else	
 
 	std::string fontFile = "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc"; // Linux Mint

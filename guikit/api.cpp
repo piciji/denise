@@ -411,17 +411,17 @@ auto StatusBar::setText(std::string text) -> void {
     p.setText(text);
 }
 
-auto StatusBar::append(unsigned id, std::string text, unsigned width, int overrideForegroundColor, std::function<void ()> onClick, Menu* popupMenu, int pos) -> void {
+auto StatusBar::append(unsigned id, std::string text, std::function<void ()> onClick, Menu* popupMenu, int pos) -> void {
 	if (_A::dummy) return;
 
 	Part part;
 	part.id = id;
-	part.width = width;
+    part.width = p.getWidth( text );
 	part.text = text;
 	part.image = nullptr;
 	part.popupMenu = popupMenu;
 	part.onClick = onClick;
-	part.overrideForegroundColor = overrideForegroundColor;
+	part.overrideForegroundColor = -1;
 	part.visible = false;
 	
 	if ( (pos == -1) || (pos >= state.parts.size()) )
@@ -431,7 +431,8 @@ auto StatusBar::append(unsigned id, std::string text, unsigned width, int overri
 
 	state.updatePending = true;
 }
-
+    
+    
 auto StatusBar::append(unsigned id, Image* image, std::function<void ()> onClick, Menu* popupMenu, int pos) -> void {
 	if (_A::dummy) return;
 	
@@ -451,7 +452,7 @@ auto StatusBar::append(unsigned id, Image* image, std::function<void ()> onClick
 
 	state.updatePending = true;
 }
-
+    
 auto StatusBar::removePart( unsigned id ) -> void {
     if (_A::dummy) return;
     
@@ -489,7 +490,7 @@ auto StatusBar::updateText( unsigned id, std::string text, int overrideForegroun
     }
     return false;
 }
-
+    
 auto StatusBar::updateImage( unsigned id, Image* image ) -> bool {
     if (_A::dummy) return false;
     
@@ -509,7 +510,7 @@ auto StatusBar::updateImage( unsigned id, Image* image ) -> bool {
     }
     return false;
 }
-
+    
 auto StatusBar::updateVisible( unsigned id, bool visible ) -> bool {
     if (_A::dummy) return false;
     
@@ -524,7 +525,7 @@ auto StatusBar::updateVisible( unsigned id, bool visible ) -> bool {
     }
     return false;
 }
-
+    
 auto StatusBar::updateTooltip( unsigned id, std::string tooltip ) -> bool {
     if (_A::dummy) return false;
     
@@ -641,7 +642,7 @@ auto Widget::resetForegroundColor() -> void {
     state.foregroundColor = 0;
     p.setForegroundColor(0);
 }
-
+    
 Widget::Widget() : p(*new pWidget(*this)), Sizable() { }
 Widget::Widget(pWidget& p) : p(p), Sizable() { }
 Widget::~Widget() { delete &p; }
@@ -1482,4 +1483,3 @@ auto Thread::setPriorityRealtime( std::thread& th ) -> void {
 }
 
 }
-

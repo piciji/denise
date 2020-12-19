@@ -122,24 +122,29 @@ auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
     showFPS = globalSettings->get<bool>("fps", false);
     recordAudio = false;    
     fps = fpsCollect = 0;    		
-    
+
     statusBar->append( 0, "" );    // status text
 	statusBar->updateVisible(0, true);
 	    
     // up to 4 disk drives
-    for( unsigned i = 0; i < 4; i++ ) {
-        statusBar->append( i * 2 + 1, "", (i > 1) ? 42 : 38 );    // disk drive track
-        statusBar->append( i * 2 + 2, &(view->ledOffImage) );    // disk LED
-    }
+    statusBar->append( 1, "8 00.0" ); // disk drive track
+    statusBar->append( 2, &(view->ledOffImage) );    // disk LED
+    statusBar->append( 3, "9 00.0" ); // disk drive track
+    statusBar->append( 4, &(view->ledOffImage) );    // disk LED
+    statusBar->append( 5, "10 00.0" ); // disk drive track
+    statusBar->append( 6, &(view->ledOffImage) );    // disk LED
+    statusBar->append( 7, "11 00.0" ); // disk drive track
+    statusBar->append( 8, &(view->ledOffImage) );    // disk LED
     
-    statusBar->append( 9, "", 26 );    // tape counter
+    statusBar->append( 9, "000" );    // tape counter
     statusBar->append( 10, &(view->stopImage), nullptr, &(view->tapeControlMenu) );    // tape button icon
     statusBar->append( 11, &(view->ledOffImage) );    // expansion LED
-    statusBar->append( 12, "", 220 );    // DRC Status
+    statusBar->append( 12, "DRC DRC DRC DRC DRC DRC DRC DRC D" );    // DRC Status
     statusBar->append( 13, &(view->recordhiImage) );    // REC Status
-    statusBar->append( 14, "", 35 );    // FPS	
+    statusBar->append( 14, "0000", nullptr );    // FPS
 }
 
+            
 auto StatusHandler::transferToOSD( std::string text ) -> void {
     auto option = globalSettings->get("video_screen_text", 0, {0u, 2u});
 

@@ -280,7 +280,7 @@ struct StatusBar : Base {
     auto font() const -> std::string { return state.font; }
     auto text() const -> std::string { return state.text; }
     auto updatePending() const -> bool { return state.updatePending; }
-	auto append(unsigned id, std::string text, unsigned width = 0, int overrideForegroundColor = -1, std::function<void ()> onClick = nullptr, Menu* popupMenu = nullptr, int pos = -1) -> void;
+	auto append(unsigned id, std::string text, std::function<void ()> onClick = nullptr, Menu* popupMenu = nullptr, int pos = -1) -> void;
 	auto append(unsigned id, Image* image, std::function<void ()> onClick = nullptr, Menu* popupMenu = nullptr, int pos = -1) -> void;	  
     auto removePart( unsigned id ) -> void;
     

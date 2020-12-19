@@ -12,6 +12,22 @@
     }
     return self;
 }
+- (void)mouseDown:(NSEvent*)event {
+    if (label->p.part && label->p.part->popupMenu)
+        [NSMenu popUpContextMenu: [label->p.part->popupMenu->p.cocoaBase cocoaMenu] withEvent:event forView:NULL];
+    
+    if (label->p.part && label->p.part->onClick)
+        label->p.part->onClick();
+}
+
+-(void) resetCursorRects {
+    if (label->p.part && (label->p.part->onClick || label->p.part->popupMenu) ) {
+        [self discardCursorRects];
+        
+        [self addCursorRect: [self bounds] cursor: [NSCursor pointingHandCursor]];
+    }
+}
+
 @end
 
 namespace GUIKIT {

@@ -5,6 +5,7 @@
 #include "menu.cpp"
 #include "browserWindow.cpp"
 #include "messageWindow.cpp"
+#include "statusbar.cpp"
 #include "tooltip.m"
 
 #include "widgets/widget.cpp"   
@@ -71,10 +72,6 @@
     using GUIKIT::pApplication;
     pApplication::setAppTimer();
     
-   /*[pApplication::appTimer invalidate];
-    
-    pApplication::appTimer = [NSTimer scheduledTimerWithTimeInterval:0.0 target:pApplication::cocoaDelegate selector:@selector(run:) userInfo:nil repeats:YES];
-    */
     [[NSRunLoop currentRunLoop] addTimer:pApplication::appTimer forMode:NSDefaultRunLoopMode];
 }
 
@@ -142,16 +139,6 @@
         item = [[[NSMenuItem alloc] initWithTitle:[NSString stringWithFormat:@"Quit %@", applicationName] action:@selector(menuQuit) keyEquivalent:@"q"] autorelease];
         [item setTarget:self];
         [appMenu addItem:item];
-
-        statusBar = [[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 0, 0)];
-        [statusBar setAlignment:NSLeftTextAlignment];
-        [statusBar setBordered:NO];
-        [statusBar setBezeled:NO];
-        //[statusBar setBezelStyle:NSTextFieldSquareBezel];
-        [statusBar setEditable:NO];
-        [statusBar setHidden:YES];
-
-        [[self contentView] addSubview:statusBar positioned:NSWindowBelow relativeTo:nil];
     }
     
     if(GUIKIT::Application::loop) {
@@ -277,10 +264,6 @@
     if(Application::Cocoa::onQuit) Application::Cocoa::onQuit();
 }
 
--(NSTextField*) statusBar {
-    return statusBar;
-}
-
 -(void) resetCursorRects {
     // delegate command to included views (viewport widget)
     // couldn't find out how to set custom cursor for NSWindow
@@ -300,7 +283,6 @@ auto pApplication::run() -> void {
         setAppTimer();
         oberserveMenu( [NSApp mainMenu] );
     }
-    
 
     @autoreleasepool {
         [NSApp run];
@@ -430,28 +412,20 @@ auto pWindow::setResizable(bool resizable) -> void {
     }
 }
 
-auto pWindow::setStatusFont(std::string font) -> void {
-    @autoreleasepool {
-        [[cocoaWindow statusBar] setFont:pFont::cocoaFont(font)];
-    }
-    statusBarReposition();
-}
-
-auto pWindow::setTitle(std::string text) -> void {
+    auto pWindow::setTitle(std::string text) -> void {
     @autoreleasepool {
         [cocoaWindow setTitle:[NSString stringWithUTF8String:text.c_str()]];
     }
 }
 
-auto pWindow::setStatusText(std::string text) -> void {
-    @autoreleasepool {
-        [[cocoaWindow statusBar] setStringValue:[NSString stringWithUTF8String:text.c_str()]];
-    }
-}
-
 auto pWindow::setStatusVisible(bool visible) -> void {
+    
     @autoreleasepool {
-        [[cocoaWindow statusBar] setHidden:!visible];
+        if (!window.statusBar())
+            return;
+
+        window.statusBar()->p.setVisible( visible );
+
         setGeometry( !window.fullScreen() ? window.state.geometry : geometry());
     }
 }
@@ -483,11 +457,15 @@ auto pWindow::setGeometry(Geometry geometry) -> void {
     locked = true;
 
     @autoreleasepool {
+        unsigned statusHeight = 0;
+        if (window.statusBar())
+            statusHeight = window.statusBar()->p.getHeight();
+        
         [cocoaWindow
              setFrame:[cocoaWindow
                     frameRectForContentRect:NSMakeRect(
-                        geometry.x, pSystem::getDesktopSize().height - statusBarHeight() - geometry.height - geometry.y,
-                        geometry.width, geometry.height + statusBarHeight() )
+                        geometry.x, pSystem::getDesktopSize().height - statusHeight - geometry.height - geometry.y,
+                        geometry.width, geometry.height + statusHeight )
                        ]
         display:YES];
 
@@ -497,16 +475,21 @@ auto pWindow::setGeometry(Geometry geometry) -> void {
             window.state.layout->setGeometry(layoutGeometry);
         }
 
-        statusBarReposition();
+        if (window.statusBar())
+            window.statusBar()->p.reposition();
     }
     locked = false;
 }
 
 auto pWindow::geometry() -> Geometry {
     @autoreleasepool {
+        unsigned statusHeight = 0;
+        if (window.statusBar())
+            statusHeight = window.statusBar()->p.getHeight();
+
         NSRect area = [cocoaWindow contentRectForFrameRect:[cocoaWindow frame]];
 
-        unsigned height = area.size.height - statusBarHeight();
+        unsigned height = area.size.height - statusHeight;
         int y = pSystem::getDesktopSize().height - area.origin.y - area.size.height;
 
         return {(int)area.origin.x, y, (unsigned)area.size.width, height};
@@ -529,20 +512,6 @@ auto pWindow::setFullScreen(bool fullScreen) -> void {
             [cocoaWindow toggleFullScreen:nil];
             locked = false;
         }
-    }
-}
-
-auto pWindow::statusBarHeight() -> unsigned {
-    if(!window.statusVisible()) return 0;
-    NSFont* font = [[cocoaWindow statusBar] font];
-    return pFont::size(font, " ").height + 2;
-}
-
-auto pWindow::statusBarReposition() -> void {
-    @autoreleasepool {
-        NSRect area = [cocoaWindow contentRectForFrameRect:[cocoaWindow frame]];
-        [[cocoaWindow statusBar] setFrame:NSMakeRect(0, 0, area.size.width, statusBarHeight())];
-        [[cocoaWindow contentView] setNeedsDisplay:YES];
     }
 }
 
@@ -569,7 +538,8 @@ auto pWindow::sizeEvent() -> void {
         window.state.layout->setGeometry(layoutGeometry);
     }
 
-    statusBarReposition();
+    if (window.statusBar())
+        window.statusBar()->p.reposition();
 
     if(!locked && window.onSize) window.onSize();
 }
@@ -613,7 +583,8 @@ auto pWindow::append(Layout& layout) -> void {
     geometry.x = geometry.y = 0;
     layout.setGeometry(geometry);
 
-    statusBarReposition();
+    if (window.statusBar())
+        window.statusBar()->p.reposition();
 }
 
 auto pWindow::remove(Layout& layout) -> void {
@@ -621,6 +592,15 @@ auto pWindow::remove(Layout& layout) -> void {
         [[cocoaWindow contentView] setNeedsDisplay:YES];
     }
 }
+
+auto pWindow::append(StatusBar& statusBar) -> void {
+    statusBar.p.create();
+}
+
+auto pWindow::remove(StatusBar& statusBar) -> void {
+    statusBar.p.destroy();
+}
+
 
 auto pWindow::addCustomFont(CustomFont* customFont) -> bool {
     return pFont::add( customFont );

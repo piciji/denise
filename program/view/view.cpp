@@ -38,12 +38,12 @@ auto View::build() -> void {
     append(viewport);
     
     loadImages();
-    
+
+    statusBar.setFont(GUIKIT::Font::system());
+        
 	statusHandler->init(&statusBar);
 
-	statusBar.setFont(GUIKIT::Font::system());
-
-	append(statusBar);
+    append(statusBar);
 		
     if (!cmd->noGui) {                
         

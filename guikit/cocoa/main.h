@@ -27,16 +27,16 @@ struct pWindow {
     auto append(Menu& menu) -> void;
     auto append(Widget& widget) -> void;
     auto append(Layout& layout) -> void;
+    auto append(StatusBar& statusBar) -> void;
     auto remove(Menu& menu) -> void;
     auto remove(Widget& widget) -> void;
     auto remove(Layout& layout) -> void;
+    auto remove(StatusBar& statusBar) -> void;
     auto setGeometry(Geometry geometry) -> void;
-    auto setStatusFont(std::string font) -> void;
     auto setBackgroundColor(unsigned color) -> void;
     auto setFocused() -> void;
     auto setVisible(bool visible) -> void;
     auto setResizable(bool resizable) -> void;
-    auto setStatusText(std::string text) -> void;
     auto setTitle(std::string text) -> void;
     auto setStatusVisible(bool visible) -> void;
     auto setMenuVisible(bool visible) -> void;
@@ -45,8 +45,6 @@ struct pWindow {
     auto setDroppable(bool droppable) -> void;
     auto geometry() -> Geometry;
     auto focused() -> bool;
-    auto statusBarHeight() -> unsigned;
-    auto statusBarReposition() -> void;
     auto moveEvent() -> void;
     auto sizeEvent() -> void;
     auto fullScreenToggleDelayed() -> bool { return fullScreenToggleDelay; }
@@ -67,6 +65,28 @@ struct pWindow {
     
     pWindow(Window& window);
     ~pWindow();
+};
+
+struct pStatusBar {
+    StatusBar& statusBar;
+    NSView* cocoaView;
+    std::vector<NSView*> usedWidgets;
+    
+    auto create() -> void;
+    auto destroy() -> void;
+    
+    auto setFont(std::string font) -> void;
+    auto setText(std::string text) -> void;
+    
+    auto update() -> void;
+    auto updatePart( StatusBar::Part& part ) -> void;
+    auto setVisible(bool visible) -> void;
+    auto getHeight() -> unsigned;
+    auto reposition() -> void;
+    auto getWidth(std::string text) -> unsigned;
+    
+    pStatusBar(StatusBar& statusBar);
+    ~pStatusBar();
 };
 
 struct pWidget {
@@ -116,6 +136,7 @@ struct pLineEdit : pWidget {
 
 struct pLabel : pWidget {
     Label& label;
+    StatusBar::Part* part = nullptr;
 
     auto minimumSize() -> Size;
     auto init() -> void;

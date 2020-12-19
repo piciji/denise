@@ -1,6 +1,12 @@
 
 #import <Cocoa/Cocoa.h>
 
+@interface StatusImageView : NSImageView {
+@public
+    GUIKIT::StatusBar::Part* part;
+}
+@end
+
 @interface CocoaDelegate : NSObject <NSApplicationDelegate> {}
 @end
 
@@ -9,7 +15,6 @@
     GUIKIT::Window* window;
     NSMenu* menuBar;
     NSMenu* menuBarContext;
-    NSTextField* statusBar;
 }
 @end
 
