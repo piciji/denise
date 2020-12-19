@@ -13,7 +13,7 @@
     * prepare different C64 models
     * prepare individual Multi SID configurations
 * UI: rework sub-menu handling within configuration window
-* UI: rework status bar (Drive LED's)
+* UI: rework status bar (Drive LED's, Tape control)
 
 ## 1.0.9.1
 * fix TAPE emulation (broken in 1.0.9)
