@@ -79,7 +79,7 @@ auto pStatusBar::update() -> void {
 	
 	gtk_grid_remove_row( GTK_GRID(gridWidget), 1 );
 	
-	gtk_widget_set_vexpand( gridWidget, true );
+	gtk_widget_set_vexpand( gridWidget, false );
 	
 	for( auto widget : usedWidgets )
 		delete widget;	
