@@ -224,6 +224,7 @@ struct OpenGLText {
         }
         
         upHeight += 1;
+        downHeight += 1;
         totalHeight = upHeight + downHeight;
                 
         if (textBuffer) {
