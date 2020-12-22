@@ -2,7 +2,7 @@
 auto pSquareCanvas::create() -> void {
     destroy(hwnd);
     destroy(hwndTip);
-    hwnd = CreateWindow(L"STATIC", L"",
+    hwnd = CreateWindow(WC_STATIC, L"",
         WS_CHILD,
         0, 0, 0, 0, squareCanvas.window()->p.hwnd, (HMENU)(unsigned long long)squareCanvas.id, GetModuleHandle(0), 0);
     

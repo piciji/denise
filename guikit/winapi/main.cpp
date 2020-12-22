@@ -9,8 +9,10 @@ namespace GUIKIT {
 #include "statusbar.cpp"
     
 #include "widgets/widget.cpp"   
-#include "widgets/button.cpp"   
+#include "widgets/button.cpp"
+#include "widgets/stepbutton.cpp"
 #include "widgets/lineedit.cpp"
+#include "widgets/multilineedit.cpp"
 #include "widgets/label.cpp"
 #include "widgets/hyperlink.cpp"
 #include "widgets/squareCanvas.cpp"   
@@ -151,6 +153,9 @@ auto CALLBACK pApplication::wndProc(WNDPROC windowProc, HWND hwnd, UINT msg, WPA
             if(dynamic_cast<MenuRadioItem*>(base)) { ((MenuRadioItem*)base)->p.onActivate(); return false; }
             if(dynamic_cast<LineEdit*>(base) && HIWORD(wparam) == EN_SETFOCUS) { ((LineEdit*)base)->p.onFocus(); return false; }
             if(dynamic_cast<LineEdit*>(base) && HIWORD(wparam) == EN_CHANGE) { ((LineEdit*)base)->p.onChange(); return false; }
+            if(dynamic_cast<MultilineEdit*>(base) && HIWORD(wparam) == EN_SETFOCUS) { ((MultilineEdit*)base)->p.onFocus(); return false; }
+            if(dynamic_cast<MultilineEdit*>(base) && HIWORD(wparam) == EN_CHANGE) { ((MultilineEdit*)base)->p.onChange(); return false; }
+
             if(dynamic_cast<Button*>(base)) { ((Button*)base)->p.onActivate(); return false; }
             if(dynamic_cast<CheckButton*>(base)) { ((CheckButton*)base)->p.onToggle(); return false; }
             if(dynamic_cast<CheckBox*>(base)) { ((CheckBox*)base)->p.onToggle(); return false; }
@@ -171,6 +176,7 @@ auto CALLBACK pApplication::wndProc(WNDPROC windowProc, HWND hwnd, UINT msg, WPA
             if(dynamic_cast<TreeView*>(base) && ((LPNMHDR)lparam)->code == TVN_ITEMEXPANDED) { ((TreeView*)base)->p.onExpanded(lparam); break; }
             if(dynamic_cast<TreeView*>(base) && ((LPNMHDR)lparam)->code == NM_DBLCLK) { ((TreeView*)base)->p.onActivate(); break; }
             if(dynamic_cast<TreeView*>(base) && ((LPNMHDR)lparam)->code == NM_RETURN) { ((TreeView*)base)->p.onActivate(); break; }
+            if(dynamic_cast<StepButton*>(base) && ((LPNMHDR)lparam)->code == UDN_DELTAPOS) { ((StepButton*)base)->p.onStep(); break; }
             if(dynamic_cast<TabFrameLayout::TabFrame*>(base) && ((LPNMHDR)lparam)->code == TCN_SELCHANGE) { ((TabFrameLayout::TabFrame*)base)->p.onChange(); break; }            
             if(dynamic_cast<Hyperlink*>(base) && ((LPNMHDR)lparam)->code == NM_CLICK) {
                 PNMLINK pNMLink = (PNMLINK) lparam;

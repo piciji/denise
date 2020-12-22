@@ -29,7 +29,7 @@ auto pFrame::setText(std::string text) -> void {
 
 auto pFrame::create() -> void {
     destroy(hwnd);
-    hwnd = CreateWindow(L"BUTTON", L"",
+    hwnd = CreateWindow(WC_BUTTON, L"",
         WS_CHILD | BS_GROUPBOX,
         0, 0, 0, 0, widget.window()->p.hwnd, (HMENU)(unsigned long long)widget.id, GetModuleHandle(0), 0);
 

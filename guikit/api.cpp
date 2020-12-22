@@ -685,6 +685,26 @@ auto LineEdit::setMaxLength( unsigned maxLength ) -> void {
 
 LineEdit::LineEdit() : Widget(*new pLineEdit(*this)), p((pLineEdit&)Widget::p) { if (!_A::dummy) p.init(); }
 
+auto MultilineEdit::setEditable(bool editable) -> void {
+    if (_A::dummy) return;
+    state.editable = editable;
+    p.setEditable(editable);
+}
+
+auto MultilineEdit::text() -> std::string { 
+    if (_A::dummy) return "";
+    return p.text();
+}
+
+
+auto MultilineEdit::setMaxLength( unsigned maxLength ) -> void {
+    if (_A::dummy) return;
+    state.maxLength = maxLength;
+    p.setMaxLength( maxLength );
+}
+
+MultilineEdit::MultilineEdit() : Widget(*new pMultilineEdit(*this)), p((pMultilineEdit&)Widget::p) { if (!_A::dummy) p.init(); }
+
 auto Label::setAlign( Align align ) -> void {
     if (_A::dummy) return;
     state.align = align;
@@ -713,6 +733,22 @@ auto SquareCanvas::setBorderColor(unsigned borderSize, unsigned borderColor) -> 
 SquareCanvas::SquareCanvas() : Widget(*new pSquareCanvas(*this)), p((pSquareCanvas&)Widget::p) { if (!_A::dummy) p.init(); }
 
 Button::Button() : Widget(*new pButton(*this)), p((pButton&)Widget::p) { if (!_A::dummy) p.init(); }
+
+auto StepButton::setRange(int16_t minValue, int16_t maxValue) -> void {
+    
+    state.minValue = minValue;
+    state.maxValue = maxValue;
+    
+    p.updateRange();
+}
+
+auto StepButton::setValue(int16_t value) -> void {
+    Widget::state.text = std::to_string( value );
+    state.value = value;    
+    p.setValue( value );
+}
+
+StepButton::StepButton() : Widget(*new pStepButton(*this)), p((pStepButton&)Widget::p) { if (!_A::dummy) p.init(); }
 
 auto CheckButton::setChecked(bool checked) -> void {
     if (_A::dummy) return;
@@ -1483,3 +1519,4 @@ auto Thread::setPriorityRealtime( std::thread& th ) -> void {
 }
 
 }
+

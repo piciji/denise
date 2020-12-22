@@ -33,10 +33,12 @@ struct pMenuRadioItem;
 struct pMenuSeparator;
 struct pWidget;
 struct pLineEdit;
+struct pMultilineEdit;
 struct pLabel;
 struct pHyperlink;
 struct pSquareCanvas;
 struct pButton;
+struct pStepButton;
 struct pCheckButton;
 struct pCheckBox;
 struct pComboButton;
@@ -409,6 +411,25 @@ struct LineEdit : Widget {
     LineEdit();
 };
 
+struct MultilineEdit : Widget {
+    std::function<void ()> onChange = nullptr;
+    std::function<void ()> onFocus = nullptr;
+
+    auto editable() const -> bool { return state.editable; }
+    auto maxLength() const -> unsigned { return state.maxLength; }
+    auto text() -> std::string;
+    auto setEditable(bool editable = true) -> void;
+    auto setMaxLength( unsigned maxLength ) -> void;
+    
+    struct {
+        bool editable = true;
+        unsigned maxLength = 0; // no limit
+    } state;
+
+    pMultilineEdit& p;
+    MultilineEdit();
+};
+
 struct Label : Widget {
     enum class Align { Left, Right } ;
     
@@ -459,6 +480,24 @@ struct Button : Widget {
     std::function<void ()> onActivate = nullptr;
     pButton& p;
     Button();
+};
+
+struct StepButton : Widget {
+    std::function<void ()> onStepUp = nullptr;
+    std::function<void ()> onStepDown = nullptr;
+    
+    auto setRange(int16_t minValue, int16_t maxValue) -> void;
+    auto setValue(int16_t value) -> void;
+    auto getValue() -> int16_t { return state.value; }
+    
+    struct {
+        int16_t minValue = 0;
+        int16_t maxValue = 0x7fff;
+        int16_t value = 0;
+    } state;
+    
+    pStepButton& p;
+    StepButton();
 };
 
 struct CheckButton : Widget {

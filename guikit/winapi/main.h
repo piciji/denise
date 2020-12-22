@@ -198,6 +198,22 @@ struct pLineEdit : pWidget {
     static auto CALLBACK subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
 };
 
+struct pMultilineEdit : pWidget {
+    MultilineEdit& multilineEdit;
+
+    auto minimumSize() -> Size;
+    auto setEditable(bool editable) -> void;
+    auto setText(std::string text) -> void;
+    auto text() -> std::string;
+    auto setMaxLength( unsigned maxLength ) -> void;
+
+    pMultilineEdit(MultilineEdit& multilineEdit) : pWidget(multilineEdit), multilineEdit(multilineEdit) {}
+    auto rebuild() -> void;
+    auto onChange() -> void;
+    auto onFocus() -> void;
+    auto create() -> void;
+};
+
 struct pLabel : pWidget {
     Label& label;
 
@@ -247,6 +263,25 @@ struct pButton : pWidget {
 
     pButton(Button& button) : pWidget(button), button(button) {}
 };
+
+struct pStepButton : pWidget {
+    StepButton& stepButton;
+    HWND buddyHwnd;
+    
+    auto updateRange() -> void;
+    auto setValue( int16_t value ) -> void;
+
+    auto minimumSize() -> Size;
+    auto onStep() -> void;
+    auto rebuild() -> void;
+    auto create() -> void;
+    
+    auto setGeometry(Geometry geometry) -> void;
+    auto setFont(std::string font) -> void;
+
+    pStepButton(StepButton& stepButton) : pWidget(stepButton), stepButton(stepButton) {}
+};
+
 
 struct pCheckButton : pWidget {
     CheckButton& checkButton;

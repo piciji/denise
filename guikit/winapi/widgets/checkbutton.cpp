@@ -14,7 +14,7 @@ auto pCheckButton::create() -> void {
     destroy(hwnd);
     destroy(hwndTip);
     
-    hwnd = CreateWindow(L"BUTTON", L"",
+    hwnd = CreateWindow(WC_BUTTON, L"",
         WS_CHILD | WS_TABSTOP | BS_CHECKBOX | BS_PUSHLIKE,
         0, 0, 0, 0, checkButton.window()->p.hwnd, (HMENU)(unsigned long long)checkButton.id, GetModuleHandle(0), 0);
     

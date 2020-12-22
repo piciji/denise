@@ -8,7 +8,7 @@ auto pButton::minimumSize() -> Size {
 auto pButton::create() -> void {
     destroy(hwnd);
     destroy(hwndTip);
-    hwnd = CreateWindow(L"BUTTON", L"",
+    hwnd = CreateWindow(WC_BUTTON, L"",
         WS_CHILD | WS_TABSTOP,
         0, 0, 0, 0, button.window()->p.hwnd, (HMENU)(unsigned long long)button.id, GetModuleHandle(0), 0);
     

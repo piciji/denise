@@ -25,7 +25,7 @@ auto pCheckBox::create() -> void {
     destroy(hwndTip);
     
     hwnd = CreateWindow(
-        L"BUTTON", L"",
+        WC_BUTTON, L"",
         WS_CHILD | WS_TABSTOP | BS_CHECKBOX,
         0, 0, 0, 0, checkBox.window()->p.hwnd, (HMENU)(unsigned long long)checkBox.id, GetModuleHandle(0), 0
     );

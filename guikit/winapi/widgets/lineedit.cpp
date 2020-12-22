@@ -4,7 +4,7 @@ auto pLineEdit::create() -> void {
     destroy(hwndTip);
     
     hwnd = CreateWindowEx(
-        WS_EX_CLIENTEDGE, L"EDIT", L"",
+        WS_EX_CLIENTEDGE, WC_EDIT, L"",
         WS_CHILD | WS_TABSTOP | ES_AUTOHSCROLL | ES_AUTOVSCROLL,
         0, 0, 0, 0, lineEdit.window()->p.hwnd, (HMENU)(unsigned long long)lineEdit.id, GetModuleHandle(0), 0 );
 
