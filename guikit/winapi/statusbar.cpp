@@ -59,7 +59,7 @@ auto CALLBACK pStatusBar::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LP
 				p.setTooltip( part );				
 			}
 
-        } return 0;
+        } break;
             
     }
     return CallWindowProc(statusBar->p.wndprocOrig, hwnd, msg, wparam, lparam);

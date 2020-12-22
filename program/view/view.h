@@ -66,7 +66,7 @@ struct View : public GUIKIT::Window {
     auto loadImages() -> void;
     
     auto loadPlaceholder() -> void;
-    auto renderPlaceholder(bool blackScreen = false, uint8_t redraw = 1) -> void;
+    auto renderPlaceholder(bool blackScreen = false) -> void;
            
     GUIKIT::Viewport viewport;    
     

@@ -90,7 +90,7 @@ auto pWidget::setGeometry(Geometry geometry) -> void {
     if (!hwnd)
         return;
         
-    SetWindowPos(hwnd, NULL, geometry.x, geometry.y, geometry.width, geometry.height, SWP_NOZORDER);
+    SetWindowPos(hwnd, NULL, geometry.x, geometry.y, geometry.width, geometry.height, SWP_NOZORDER | SWP_NOCOPYBITS);
     if(widget.onSize)
         widget.onSize();        
 }

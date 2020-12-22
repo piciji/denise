@@ -21,6 +21,7 @@ auto View::build() -> void {
     setTitle( APP_NAME " " VERSION );
     setBackgroundColor(0);
     cocoa.setDisableIconsInTopMenu(true);
+    winapi.disableBackgroundRedrawDuringResize( false );
     
     GUIKIT::Geometry defaultGeometry = {100, 100, 600, 400};
     
@@ -155,7 +156,8 @@ auto View::build() -> void {
 	placeholderTimer.setInterval(40);
 	placeholderTimer.onFinished = [this]() {
 		placeholderTimer.setEnabled(false);		
-		renderPlaceholder(false, 2);
+		renderPlaceholder(false);
+        renderPlaceholder(false);
 	};
 	
 	autoloadTimer.setInterval(40);
