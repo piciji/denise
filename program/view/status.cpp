@@ -2,12 +2,13 @@
 #include "status.h"
 #include "view.h"
 #include "../audio/manager.h"
+#include "../cmd/cmd.h"
 
 StatusHandler* statusHandler = nullptr;
 
 auto StatusHandler::updateDeviceState( Emulator::Interface::Media* media, bool write, unsigned position, bool LED, bool motorOff ) -> void {
 
-    if (!media)
+    if (!media || cmd->noGui)
         return;
 
     setDeviceUpdate();
@@ -54,7 +55,8 @@ auto StatusHandler::countFrames() -> void {
         fps = fpsCollect;
         fpsCollect = 0;
         
-        setFpsCounterUpdate();
+		if (!cmd->noGui)
+			setFpsCounterUpdate();
 
         if (!VideoManager::synchronized)
             // check input polling and message loop every 50 ms
@@ -121,7 +123,8 @@ auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
     this->statusBar = statusBar;
     showFPS = globalSettings->get<bool>("fps", false);
     recordAudio = false;    
-    fps = fpsCollect = 0;    		
+    fps = fpsCollect = 0; 
+	control = 0;
 
     statusBar->append( 0, "" );    // status text
 	statusBar->updateVisible(0, true);
@@ -146,12 +149,12 @@ auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
 
             
 auto StatusHandler::transferToOSD( std::string text ) -> void {
-    auto option = globalSettings->get("video_screen_text", 0, {0u, 2u});
+	static auto option = globalSettings->getOrInit("video_screen_text", 0, {0u, 2u});
 
-    if (option == 0) {
+    if (*option == 0) {
         videoDriver->showMessage("");
 
-    } else if (option == 1) {
+    } else if (*option == 1) {
         if (!view->statusVisible())
             videoDriver->showMessage( text, message.critical );
         else
@@ -164,7 +167,7 @@ auto StatusHandler::transferToOSD( std::string text ) -> void {
 }
 
 auto StatusHandler::update() -> void {
-    
+
     uint16_t clearMask = ~0;
     
     if (fpsCounterUpdate()) {
@@ -278,5 +281,6 @@ auto StatusHandler::update() -> void {
     
     clearUpdates( clearMask );
     
-    transferToOSD( OSDText );
+	if (!cmd->noDriver)
+		transferToOSD( OSDText );
 }
