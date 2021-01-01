@@ -150,8 +150,7 @@ for:
   install:      
     - sh: test -e freetype-2.9.1.tar.gz && echo "File exists" || curl -L https://download.savannah.gnu.org/releases/freetype/freetype-2.9.1.tar.gz --output freetype-2.9.1.tar.gz
     - tar -zxf freetype-2.9.1.tar.gz
-    - sh: unlink /usr/local/bin/python
-    - sh: ln -s /usr/local/bin/python3.9.1 /usr/local/bin/python
+    - sh: sudo ln -s /usr/local/bin/python3 /usr/local/bin/python
     - sh: sudo pip install dmgbuild
     
   cache:
