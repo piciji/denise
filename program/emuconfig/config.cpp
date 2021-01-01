@@ -79,7 +79,6 @@ auto TabWindow::build() -> void {
     volumeImage.loadPng((uint8_t*)Icons::volume, sizeof(Icons::volume));
     
     tab.setMargin(10);
-    tab.setSelection(0);
     append(tab);        
     
     inputLayout = new InputLayout( this );
