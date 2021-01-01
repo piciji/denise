@@ -27,7 +27,7 @@ namespace GUIKIT {
 #include "widgets/treeview.cpp"
    
 auto pApplication::run() -> void {
-    if (Application::loop) {
+    if (Application::loop) {        
         while(!Application::isQuit) {
             Application::loop();
             processEvents();
@@ -126,13 +126,13 @@ auto CALLBACK pApplication::wndProc(WNDPROC windowProc, HWND hwnd, UINT msg, WPA
                 return windowProc(hwnd, WM_CTLCOLOREDIT, wparam, lparam);
             }
             
-            TabFrameLayout* tabFrameLayout = TabFrameLayout::getParentTabFrame( (Sizable*)base );
-            if (tabFrameLayout) {
+			TabFrameLayout* parentTabFrameLayout = ((Widget*)base)->p.parentTabFrameLayout;
+            
+            if (parentTabFrameLayout) {
                 if (!IsAppThemed()) break;
 
                 SetBkMode((HDC)(wparam), TRANSPARENT);
-                pTabFrame::updateTabBackgroundForControl( tabFrameLayout->frameWidget->p.hwnd, ((Widget*)base)->p.hwnd);
-                return (INT_PTR)pTabFrame::bkgndBrush;
+                return (INT_PTR)pTabFrame::getTabBackgroundForControl( parentTabFrameLayout->frameWidget->p.hwnd, ((Widget*)base)->p.hwnd);
 
             } else if(window.p.brush) {
                 SetBkColor((HDC)wparam, window.p.brushColor);
@@ -263,13 +263,12 @@ auto CALLBACK pApplication::wndProc(WNDPROC windowProc, HWND hwnd, UINT msg, WPA
 //window
 pWindow::pWindow(Window& window) : window(window) {
     locked = false;
-    bgUpdateState = pApplication::version <= Windows7 ? 1 : 0;
     brush = 0;
     hCursor = LoadCursor(0, IDC_ARROW);
 
     Geometry geo = window.state.geometry;
 
-    hwnd = CreateWindow(L"app_gui", L"", ResizableStyle, geo.x, geo.y, geo.width, geo.height, 0, 0, GetModuleHandle(0), 0);
+    hwnd = CreateWindow( L"app_gui", L"", ResizableStyle | (IsAppThemed( ) ? WS_CLIPCHILDREN : 0), geo.x, geo.y, geo.width, geo.height, 0, 0, GetModuleHandle(0), 0);
     hmenu = CreateMenu();
 	contextmenu = CreatePopupMenu();        
 
@@ -303,22 +302,17 @@ auto CALLBACK pWindow::wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam
 		case WM_ENTERMENULOOP:
 			if(window.winapi.onMenu) window.winapi.onMenu();
 			break;
-        case WM_ENTERSIZEMOVE:
-            if(window.p.bgUpdateState > 0) window.p.bgUpdateState = 2;
+        case WM_ENTERSIZEMOVE:            
             break;
         case WM_EXITSIZEMOVE:
-            if(window.p.bgUpdateState > 0) {
-                window.p.bgUpdateState = 3;
-                InvalidateRect( hwnd, NULL, true );
-            } break;
+            break;
         case WM_PAINT:
-            if(window.p.brush != 0 && window.p.bgUpdateState == 3 ) {
-                window.p.bgUpdateState = 1;
-                return true;
-            } break;
-        case WM_ERASEBKGND: 
-			if(window.p.onEraseBackground()) return true;
-			break;
+            break;
+            
+        case WM_ERASEBKGND: {     
+			if(window.p.onEraseBackground()) return true;     
+            break;            
+        } 
         case WM_ACTIVATE:            
 			if ((LOWORD(wparam) == WA_ACTIVE) && (LOWORD(wparam) != WA_CLICKACTIVE)) {
 				if (window.onUnminimize)
@@ -528,7 +522,6 @@ auto pWindow::onDrop(WPARAM wparam) -> void {
 }
 
 auto pWindow::onEraseBackground() -> bool {
-    if(bgUpdateState == 2) return true;
     if(brush == 0) return false;
     RECT rc;
     GetClientRect(hwnd, &rc);

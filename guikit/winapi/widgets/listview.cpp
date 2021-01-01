@@ -32,6 +32,16 @@ auto pListView::append(const std::vector<std::string>& list) -> void {
     autoSizeColumns();
 }
 
+auto pListView::lockRedraw() -> void {
+    if (hwnd)
+        SendMessage( hwnd, WM_SETREDRAW, 0, 0);
+}
+
+auto pListView::unlockRedraw() -> void {
+    if (hwnd)
+        SendMessage( hwnd, WM_SETREDRAW, 1, 0);
+}
+
 auto pListView::remove(unsigned selection) -> void {
     if (hwnd) ListView_DeleteItem(hwnd, selection);
     autoSizeColumns();
@@ -112,7 +122,9 @@ auto CALLBACK pListView::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPA
     Window* window = (Window*)listView->Sizable::state.window;
     if(window == nullptr) return DefWindowProc(hwnd, msg, wparam, lparam);
 
-    switch(msg) {    
+    switch(msg) {
+        case WM_ERASEBKGND:
+            return 0;
         case WM_GETDLGCODE:
             if (wparam != VK_TAB)
                 return DLGC_WANTALLKEYS;
@@ -216,9 +228,9 @@ auto pListView::create() -> void {
         WS_EX_CLIENTEDGE, WC_LISTVIEW, L"",
         WS_CHILD | WS_TABSTOP | LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_NOSORTHEADER | LVS_NOCOLUMNHEADER | WS_HSCROLL | 
             ( listView.specialFont() ? LVS_OWNERDRAWFIXED : 0),
-        0, 0, 0, 0, listView.window()->p.hwnd, (HMENU)(unsigned long long)listView.id, GetModuleHandle(0), 0);        
+        0, 0, 0, 0, getParentHandle(), (HMENU)(unsigned long long)listView.id, GetModuleHandle(0), 0);        
 
-    ListView_SetExtendedListViewStyle(hwnd, LVS_EX_FULLROWSELECT | LVS_EX_SUBITEMIMAGES);
+    ListView_SetExtendedListViewStyle(hwnd, LVS_EX_FULLROWSELECT | LVS_EX_SUBITEMIMAGES | LVS_EX_DOUBLEBUFFER);
 
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)&listView);
     wndprocOrig = (WNDPROC)SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)subclassWndProc);  
@@ -251,7 +263,7 @@ auto pListView::createTooltip(bool useBallon) -> void {
 }
 
 auto pListView::rebuild() -> void {
-    if (hwnd)
+    if(!needRebuild())
         return;
         
     create();

@@ -1,5 +1,5 @@
 
-struct FirmwareContainer : GUIKIT::FramedVerticalLayout {   
+struct FirmwareContainer : GUIKIT::VerticalLayout {   
     
     struct Block : GUIKIT::VerticalLayout {
         unsigned typeId;   
@@ -18,10 +18,10 @@ struct FirmwareContainer : GUIKIT::FramedVerticalLayout {
             GUIKIT::Button open;
             GUIKIT::Button eject;
 
-            Bottom();
+            Bottom( bool readOnly = false );
         } bottom;
 
-        Block();
+        Block( bool readOnly = false );
     };
     
     unsigned storeLevel;
@@ -38,6 +38,7 @@ struct FirmwareLayout : GUIKIT::VerticalLayout {
     std::vector<GUIKIT::Layout*> containers;
     GUIKIT::SwitchLayout switchLayout;
     FirmwareContainer::Block* selectedBlock = nullptr;        
+    GUIKIT::FramedVerticalLayout boxLayout;
     GUIKIT::HorizontalLayout customSelectorLayout;  
 	std::vector<GUIKIT::RadioBox*> selectorBoxes;  
     

@@ -59,7 +59,7 @@ auto CALLBACK pStatusBar::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LP
 				p.setTooltip( part );				
 			}
 
-        } break;
+        } return 0;
             
     }
     return CallWindowProc(statusBar->p.wndprocOrig, hwnd, msg, wparam, lparam);
@@ -211,10 +211,8 @@ auto pStatusBar::update() -> void {
             
             SendMessage(hwnd, SB_SETTEXT, i++ | SBT_OWNERDRAW, 0);
 
-            if (part.popupMenu) {
-
+            if (part.popupMenu && !part.popupMenu->state.parentWindow)
                 part.popupMenu->p.update(*statusBar.window());            
-            }
         }
     }    
     

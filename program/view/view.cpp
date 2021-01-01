@@ -21,7 +21,6 @@ auto View::build() -> void {
     setTitle( APP_NAME " " VERSION );
     setBackgroundColor(0);
     cocoa.setDisableIconsInTopMenu(true);
-    winapi.disableBackgroundRedrawDuringResize( false );
     
     GUIKIT::Geometry defaultGeometry = {100, 100, 600, 400};
     
@@ -895,10 +894,12 @@ auto View::buildMenu() -> void {
 	};
 	tapeControlMenu.append( tapeRecordItem );
 	
+    tapeControlMenu.append(*GUIKIT::MenuSeparator::getInstance());	
+    
 	tapeResetCounterItem.onActivate = []() {
 		InputManager::activateHotkey(Hotkey::Id::ResetTapeCounter);
 	};
-	tapeControlMenu.append( tapeResetCounterItem );    
+	tapeControlMenu.append( tapeResetCounterItem );  
 }
 
 auto View::showTapeMenu( bool show, Emulator::Interface::TapeMode mode ) -> void {

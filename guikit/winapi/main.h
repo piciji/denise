@@ -53,7 +53,6 @@ struct pWindow {
 
     HBRUSH brush;
     COLORREF brushColor;
-    unsigned bgUpdateState; //0 - immediate, 1 - not during resize, 2 - delayed, 3 - update onetime
 
     HCURSOR hCursor;
 
@@ -146,6 +145,7 @@ struct pWidget {
     HFONT hfont = nullptr;
     WNDPROC wndprocOrig;
     bool locked = false;
+    TabFrameLayout* parentTabFrameLayout = nullptr;
     
     struct {
         bool updated = false;
@@ -154,6 +154,11 @@ struct pWidget {
 
     auto focused() -> bool;
     auto setFocused() -> void;
+	auto getBackgroundBrush() -> HBRUSH;
+	auto getParentHandle() -> HWND;
+	auto getParentTabWidget() -> Widget*;
+	auto needRebuild() -> bool;
+	
     virtual auto minimumSize() -> Size { return {0,0}; }
     virtual auto borderSize() -> unsigned { return 2; }
     virtual auto setEnabled(bool enabled) -> void;
@@ -174,7 +179,7 @@ struct pWidget {
 	static auto getScaledContainerSize( Size size ) -> Size;
 	static auto getScaledDim( unsigned value ) -> unsigned;
     virtual auto init() -> void {}
-
+    
     pWidget(Widget& widget);
     virtual ~pWidget();
 };
@@ -223,7 +228,9 @@ struct pHyperlink : pWidget {
     auto rebuild() -> void;
     auto create() -> void;
     auto generate() -> std::string;
-    auto setUri( std::string uri, std::string wrap ) -> void;        
+    auto setUri( std::string uri, std::string wrap ) -> void;    
+
+    static auto CALLBACK subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;    
 };
 
 struct pSquareCanvas : pWidget {
@@ -244,6 +251,8 @@ struct pButton : pWidget {
     auto onActivate() -> void;
     auto rebuild() -> void;
     auto create() -> void;
+    
+    static auto CALLBACK subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
 
     pButton(Button& button) : pWidget(button), button(button) {}
 };
@@ -256,6 +265,8 @@ struct pCheckButton : pWidget {
     auto onToggle() -> void;
     auto rebuild() -> void;
     auto create() -> void;
+    
+    static auto CALLBACK subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
 
     pCheckButton(CheckButton& checkButton) : pWidget(checkButton), checkButton(checkButton) {}
 };
@@ -268,6 +279,8 @@ struct pCheckBox : pWidget {
     auto onToggle() -> void;
     auto rebuild() -> void;
     auto create() -> void;
+    
+    static auto CALLBACK subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
 
     pCheckBox(CheckBox& checkBox) : pWidget(checkBox), checkBox(checkBox) {}
 };
@@ -285,6 +298,8 @@ struct pComboButton : pWidget {
     auto rebuild() -> void;
     auto create() -> void;
     auto onChange() -> void;
+    
+    static auto CALLBACK subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
 
     pComboButton(ComboButton& comboButton) : pWidget(comboButton), comboButton(comboButton) {}
 };
@@ -301,6 +316,8 @@ struct pSlider : pWidget {
     auto create() -> void;
     auto onChange() -> void;
 
+    static auto CALLBACK subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
+    
     pSlider(Slider& slider) : pWidget(slider), slider(slider) {}
 };
 
@@ -314,6 +331,8 @@ struct pRadioBox : pWidget {
     auto rebuild() -> void;
     auto create() -> void;
     auto onActivate() -> void;
+    
+    static auto CALLBACK subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
 
     pRadioBox(RadioBox& radioBox) : pWidget(radioBox), radioBox(radioBox) {}
 };
@@ -325,6 +344,8 @@ struct pProgressBar : pWidget {
     auto rebuild() -> void;
     auto create() -> void;
     auto setPosition(unsigned position) -> void;
+    
+    static auto CALLBACK subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
 
     pProgressBar(ProgressBar& progressBar) : pWidget(progressBar), progressBar(progressBar) {}
 };
@@ -363,6 +384,8 @@ struct pListView : pWidget {
     auto relayMesssageToToolTip(HWND hwnd, UINT umsg, WPARAM wparam, LPARAM lparam) -> void;
     auto updateRowToolTip(HWND hwnd, int curItem, RECT rect) -> void;
     auto colorRowTooltips( bool colorTip ) -> void {}
+    auto lockRedraw() -> void;
+    auto unlockRedraw() -> void;
 
     static auto CALLBACK subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;    
     auto onCustomDraw(LPARAM lparam) -> LRESULT;
@@ -440,12 +463,26 @@ struct pViewport : public pWidget {
 //Layout Widgets are not directly accessable in frontend
 struct pFrame : pWidget {
     Widget& widget;
+    HWND leftBorder;
+    HWND rightBorder;
+    HWND bottomBorder;
+	HPEN pen = nullptr;
+	bool roundedConrner = false;
 
     auto minimumSize() -> Size;
     auto setGeometry(Geometry geometry) -> void;
-    auto setText(std::string text) -> void;
     auto rebuild() -> void;
     auto create() -> void;
+    auto setVisible(bool visible) -> void;
+	auto getBorderColor() -> COLORREF;
+	
+	auto setText(std::string text) -> void;
+	auto setFont(std::string font) -> void;
+    
+    static auto CALLBACK subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
+    static auto CALLBACK subclassWndProcL(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
+    static auto CALLBACK subclassWndProcR(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
+    static auto CALLBACK subclassWndProcB(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
 
     pFrame(Widget& widget) : pWidget(widget), widget(widget) { }
 };
@@ -468,7 +505,7 @@ struct pTabFrame : pWidget {
     auto buildImageList() -> void;
     auto setFont(std::string font) -> void;
     static auto CALLBACK subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
-    static auto updateTabBackgroundForControl(HWND tab, HWND control) -> void;
+    static auto getTabBackgroundForControl(HWND tab, HWND control) -> HBRUSH;
 
     pTabFrame(TabFrameLayout::TabFrame& tabFrame) : pWidget(tabFrame), tabFrame(tabFrame) {}
 };

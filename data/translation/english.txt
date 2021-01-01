@@ -540,3 +540,4 @@ boot cartridge = Boot Cartridge
 deactivate cartridge = Deactivate Cartridge
 selection = Selection
 Digital Signal Processing = Digital Signal Processing
+files = Files

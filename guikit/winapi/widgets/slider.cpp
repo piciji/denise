@@ -41,13 +41,27 @@ auto pSlider::create() -> void {
     hwnd = CreateWindow(
         TRACKBAR_CLASS, L"", WS_CHILD | WS_TABSTOP | TBS_NOTICKS | TBS_BOTH |
         (slider.orientation == Slider::Orientation::VERTICAL ? TBS_VERT : TBS_HORZ),
-        0, 0, 0, 0, slider.window()->p.hwnd, (HMENU)(unsigned long long)slider.id, GetModuleHandle(0), 0);
+        0, 0, 0, 0, getParentHandle(), (HMENU)(unsigned long long)slider.id, GetModuleHandle(0), 0);
 
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)&slider);
+    
+    wndprocOrig = (WNDPROC)SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)subclassWndProc);  
+}
+
+auto CALLBACK pSlider::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT {
+    Slider* slider = (Slider*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
+    if(slider == nullptr) return DefWindowProc(hwnd, msg, wparam, lparam);
+
+    switch(msg) {   
+        case WM_ERASEBKGND:
+            return 0;
+    }
+    
+    return CallWindowProc(slider->p.wndprocOrig, hwnd, msg, wparam, lparam);
 }
 
 auto pSlider::rebuild() -> void {
-    if (hwnd)
+    if(!needRebuild())
         return;
     
     create();

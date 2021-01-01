@@ -2,16 +2,17 @@
 auto pSquareCanvas::create() -> void {
     destroy(hwnd);
     destroy(hwndTip);
+    
     hwnd = CreateWindow(L"STATIC", L"",
         WS_CHILD,
-        0, 0, 0, 0, squareCanvas.window()->p.hwnd, (HMENU)(unsigned long long)squareCanvas.id, GetModuleHandle(0), 0);
+        0, 0, 0, 0, getParentHandle(), (HMENU)(unsigned long long)squareCanvas.id, GetModuleHandle(0), 0);
     
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)&squareCanvas);
     wndprocOrig = (WNDPROC)SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)subclassWndProc);
 }
 
 auto pSquareCanvas::rebuild() -> void {
-    if (hwnd)
+    if(!needRebuild())
         return;
     
     create();
@@ -42,6 +43,7 @@ auto CALLBACK pSquareCanvas::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam,
     switch(msg) {
         case WM_GETDLGCODE: return DLGC_STATIC | DLGC_WANTCHARS;
         case WM_ERASEBKGND: 
+            return 0;
         case WM_PAINT:
         {
             unsigned width = squareCanvas->Widget::state.geometry.width;
@@ -113,7 +115,7 @@ auto CALLBACK pSquareCanvas::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam,
 
             EndPaint(hwnd, &ps);
             
-            return msg == WM_ERASEBKGND;
+            return 0;
         }
         case WM_LBUTTONDOWN:
             squareCanvas->onMousePress(Mouse::Button::Left); break;

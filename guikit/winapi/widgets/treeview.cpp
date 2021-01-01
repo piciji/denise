@@ -151,6 +151,8 @@ auto CALLBACK pTreeView::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPA
     if(window == nullptr) return DefWindowProc(hwnd, msg, wparam, lparam);
 
     switch(msg) {
+        case WM_ERASEBKGND: 
+            return 0;
         case WM_GETDLGCODE:
             if (wparam == VK_RETURN) return DLGC_WANTALLKEYS;
     }
@@ -164,14 +166,16 @@ auto pTreeView::create() -> void {
     hwnd = CreateWindowEx(
         WS_EX_CLIENTEDGE, WC_TREEVIEW, L"",
         WS_CHILD | WS_TABSTOP | TVS_HASLINES | TVS_SHOWSELALWAYS,
-        0, 0, 0, 0, treeView.window()->p.hwnd, (HMENU)(unsigned long long)treeView.id, GetModuleHandle(0), 0);
+        0, 0, 0, 0, getParentHandle(), (HMENU)(unsigned long long)treeView.id, GetModuleHandle(0), 0);
 
+    TreeView_SetExtendedStyle(hwnd, TVS_EX_DOUBLEBUFFER, TVS_EX_DOUBLEBUFFER);
+    
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)&treeView);
     wndprocOrig = (WNDPROC)SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)subclassWndProc);
 }
 
 auto pTreeView::rebuild() -> void {
-    if (hwnd)
+    if(!needRebuild())
         return;
     
     create();

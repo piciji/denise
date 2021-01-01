@@ -425,3 +425,21 @@ auto pThread::setThreadPriorityRealtime( std::thread& th ) -> void {
     
     SetThreadPriority((HANDLE) h, THREAD_PRIORITY_TIME_CRITICAL);    
 }
+
+inline auto getDim( RECT& rect ) -> Size {
+
+    Size size;
+    size.width = rect.right - rect.left;
+    size.height = rect.bottom - rect.top;
+    
+    return size;
+}
+
+inline auto getHeight( RECT& rect ) -> int {
+    return rect.bottom - rect.top;
+}
+
+inline auto getWidth( RECT& rect ) -> int {
+    return rect.right - rect.left;
+}
+

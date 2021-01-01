@@ -95,22 +95,32 @@ auto pTabFrame::onChange() -> void {
 auto CALLBACK pTabFrame::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT {
     TabFrameLayout::TabFrame* tabFrame = (TabFrameLayout::TabFrame*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
     if(tabFrame == nullptr) return DefWindowProc(hwnd, msg, wparam, lparam);
+    
+    switch(msg) {   
+        case WM_ERASEBKGND:
+			if (IsAppThemed())
+				return 0;
+			break;
+    }
 
-    return pApplication::wndProc(tabFrame->p.wndprocOrig, hwnd, msg, wparam, lparam);
+   return pApplication::wndProc(tabFrame->p.wndprocOrig, hwnd, msg, wparam, lparam);
+    
+   // return CallWindowProc(tabFrame->p.wndprocOrig, hwnd, msg, wparam, lparam);
 }
 
 auto pTabFrame::create() -> void {
     destroy();
+    
     hwnd = CreateWindow(WC_TABCONTROL, L"",
-        WS_CHILD | WS_TABSTOP,
-        0, 0, 0, 0, tabFrame.window()->p.hwnd, (HMENU)(unsigned long long)tabFrame.id, GetModuleHandle(0), 0);
+        WS_CHILD | WS_TABSTOP | (IsAppThemed( ) ? WS_CLIPCHILDREN : 0),
+        0, 0, 0, 0, getParentHandle(), (HMENU)(unsigned long long)tabFrame.id, GetModuleHandle(0), 0);
 
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)&tabFrame);
     wndprocOrig = (WNDPROC)SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)subclassWndProc);
 }
 
 auto pTabFrame::rebuild() -> void {
-    if (hwnd)
+    if(!needRebuild())
         return;
     
     create();
@@ -121,7 +131,10 @@ auto pTabFrame::rebuild() -> void {
     pWidget::rebuild();
 }
 
-auto pTabFrame::updateTabBackgroundForControl(HWND tab, HWND control) -> void {
+auto pTabFrame::getTabBackgroundForControl(HWND tab, HWND control) -> HBRUSH {
+    if (bkgndBrush)
+        return bkgndBrush;
+    
     HDC controlDC = GetDC(control);
     HDC copyControlDC = CreateCompatibleDC(controlDC);
     RECT r;
@@ -141,4 +154,6 @@ auto pTabFrame::updateTabBackgroundForControl(HWND tab, HWND control) -> void {
     DeleteObject(copyControlDC);
     DeleteObject(tmpControlBitmap);
     ReleaseDC(control, controlDC);
+    
+    return bkgndBrush;
 }

@@ -23,13 +23,26 @@ auto pRadioBox::create() -> void {
     hwnd = CreateWindow(
         L"BUTTON", L"",
         WS_CHILD | WS_TABSTOP | BS_RADIOBUTTON,
-        0, 0, 0, 0, radioBox.window()->p.hwnd, (HMENU)(unsigned long long)radioBox.id, GetModuleHandle(0), 0);
+        0, 0, 0, 0, getParentHandle(), (HMENU)(unsigned long long)radioBox.id, GetModuleHandle(0), 0);
 
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)&radioBox);
+    wndprocOrig = (WNDPROC)SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)subclassWndProc);    
+}
+
+auto CALLBACK pRadioBox::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT {
+    RadioBox* radioBox = (RadioBox*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
+    if(radioBox == nullptr) return DefWindowProc(hwnd, msg, wparam, lparam);
+
+    switch(msg) {   
+        case WM_ERASEBKGND:
+            return 0;
+    }
+    
+    return CallWindowProc(radioBox->p.wndprocOrig, hwnd, msg, wparam, lparam);
 }
 
 auto pRadioBox::rebuild() -> void {
-    if (hwnd)
+    if(!needRebuild())
         return;
     
     create();

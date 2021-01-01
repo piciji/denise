@@ -385,13 +385,6 @@ auto Window::Cocoa::setDisableIconsInTopMenu(bool state) -> void {
     window.p.disableIconsInTopMenu = state;
 #endif
 }
-    
-auto Window::Winapi::disableBackgroundRedrawDuringResize(bool state) -> void {
-    if (_A::dummy) return;
-    #ifdef GUIKIT_WINAPI
-        window.p.bgUpdateState = state ? 1 : 0;
-    #endif
-}
 
 //statusbar
 StatusBar::StatusBar() : p(*new pStatusBar(*this)), Base() {}
@@ -856,6 +849,30 @@ auto ProgressBar::setPosition(unsigned position) -> void {
 
 ProgressBar::ProgressBar() : Widget(*new pProgressBar(*this)), p((pProgressBar&)Widget::p) { if (!_A::dummy) p.init(); }
 
+auto ListView::lockRedraw() -> void {
+    if (_A::dummy) return;
+    p.lockRedraw();
+}
+
+auto ListView::unlockRedraw() -> void {
+    if (_A::dummy) return;
+    p.unlockRedraw();
+}
+
+auto ListView::append(const std::vector<std::vector<std::string>>& rows, bool clearBefore) -> void {
+    if (_A::dummy) return;    
+    
+    p.lockRedraw();
+    
+    if (clearBefore)
+        reset();
+    
+    for (auto& row : rows )
+        append( row );
+    
+    p.unlockRedraw();
+}
+
 auto ListView::append(const std::vector<std::string>& row) -> void {
     if (_A::dummy) return;
     state.rows.push_back(row);
@@ -930,9 +947,9 @@ auto ListView::setText(unsigned selection, unsigned position, const std::string&
 auto ListView::setImage(unsigned selection, unsigned position, Image& image) -> void {
     if (_A::dummy) return;
     if(selection >= state.images.size()) return;
-    std::vector<Image*>& row = state.images.at(selection);
+    std::vector<Image*>& row = state.images[selection];
     if(position >= row.size()) return;
-    row.at(position) = &image;
+    row[position] = &image;
     p.setImage(selection, position, image);
 }
 

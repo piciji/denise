@@ -308,6 +308,8 @@ struct pListView : pWidget {
     auto createCustomTooltip() -> void;
     auto updateTooltipUsage() -> void;
     auto colorRowTooltips( bool colorTip ) -> void;
+    auto lockRedraw() -> void {}
+    auto unlockRedraw() -> void {}
 
     pListView(ListView& listView) : pWidget(listView), listView(listView) { }
     ~pListView();

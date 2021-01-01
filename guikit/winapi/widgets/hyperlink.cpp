@@ -12,9 +12,22 @@ auto pHyperlink::create() -> void {
         utf16_t( generate() ),
         WS_CHILD | WS_TABSTOP, 
         0, 0, 0, 0, 
-        hyperlink.window()->p.hwnd, (HMENU)(unsigned long long)hyperlink.id, GetModuleHandle(0), 0);
+        getParentHandle(), (HMENU)(unsigned long long)hyperlink.id, GetModuleHandle(0), 0);
     
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)&hyperlink);
+    wndprocOrig = (WNDPROC)SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)subclassWndProc);    
+}
+
+auto CALLBACK pHyperlink::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT {
+    Hyperlink* hyperlink = (Hyperlink*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
+    if(hyperlink == nullptr) return DefWindowProc(hwnd, msg, wparam, lparam);
+
+    switch(msg) {   
+        case WM_ERASEBKGND:
+            return 0;
+    }
+    
+    return CallWindowProc(hyperlink->p.wndprocOrig, hwnd, msg, wparam, lparam);
 }
 
 auto pHyperlink::setText(std::string text) -> void {
@@ -25,7 +38,7 @@ auto pHyperlink::setText(std::string text) -> void {
 }
 
 auto pHyperlink::rebuild() -> void {
-    if (hwnd)
+    if(!needRebuild())
         return;
     
     create();

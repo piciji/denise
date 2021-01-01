@@ -334,6 +334,8 @@ struct pListView : pWidget {
 	auto setRowTooltip(unsigned selection, std::string tooltip) -> void {}
 	auto createCustomTooltip() -> void;
 	auto colorRowTooltips( bool colorTip ) -> void {}
+    auto lockRedraw() -> void {}
+    auto unlockRedraw() -> void {}
 
     auto destroy() -> void;
     static auto onActivate(GtkTreeView* treeView, GtkTreePath* path, GtkTreeViewColumn* column, ListView* self) -> void;

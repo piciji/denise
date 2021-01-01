@@ -37,7 +37,7 @@ void ExtendedGui::build() {
     setGeometry({50,50, 800, 300});
     setWidgetFont(GUIKIT::Font::system(10));
     lv.setFont(GUIKIT::Font::system(12));
-    //setBackgroundColor(24, 255, 255);
+    setBackgroundColor(24, 255, 255);
    // tleft.setFont(GUIKIT::Font::system(10));
 
     
@@ -143,10 +143,8 @@ void TabGui::build() {
     auto img2 = new GUIKIT::Image( 15, 15, (uint8_t*)filter );
     auto img3 = new GUIKIT::Image( 15, 15, (uint8_t*)filter );
 
-    winapi.disableBackgroundRedrawDuringResize();
-
     setTitle("TabGui");
-//setBackgroundColor(24, 255, 255);
+setBackgroundColor(24, 255, 255);
     setGeometry({100, 100, 600, 300});
 //setWidgetFont(GUIKIT::Font::system(10, "Bold"));
     //vo.append(ho, {~0u, 0}, 10);
@@ -260,6 +258,7 @@ void TabGui::setimg() {
 }
 
 void SubGui::build() {
+	setBackgroundColor( 140 << 16 | 255 << 8 | 240);
     setTitle("SubGui");
     //setBackgroundColor(24 << 16 | 255 << 8 | 255);
     //setWidgetFont(GUIKIT::Font::system(18));
@@ -490,7 +489,7 @@ void MainGui::build() {
 
     GUIKIT::Menu* m = new GUIKIT::Menu();
     delete m;
-    setStatusText( GUIKIT::Font::system() );
+//    setStatusText( GUIKIT::Font::system() );
 
     onClose = [this]() {
         GUIKIT::Application::quit();
@@ -501,9 +500,9 @@ void MainGui::build() {
         bool fullscreen = fullScreen();
         //setStatusVisible(fullscreen);
         setMenuVisible(!fullscreen);
-        setStatusFont( GUIKIT::Font::system(14, "bold") );
+//        setStatusFont( GUIKIT::Font::system(14, "bold") );
         geo = geometry();
-        setStatusText( (fullscreen ? "fullscreen "  : "non ") + std::to_string( geo.width ) + " : " +  std::to_string( geo.height ));
+//        setStatusText( (fullscreen ? "fullscreen "  : "non ") + std::to_string( geo.width ) + " : " +  std::to_string( geo.height ));
         if (!fullscreen) {
             int e=2;
         }
@@ -859,18 +858,18 @@ vp.setTooltip("das ist ein viewport");
         }
     };
     vp.onMouseMove = [this](GUIKIT::Position pos) {
-          setStatusText(std::to_string(pos.x) + " " + std::to_string(pos.y));
+//          setStatusText(std::to_string(pos.x) + " " + std::to_string(pos.y));
     };
 
     vp.onMouseLeave = [this]() {
-          setStatusText("leave");
+        //  setStatusText("leave");
     };
 
     vp.onMousePress = [this](GUIKIT::Mouse::Button bu) {
-          setStatusText("press " + std::to_string(unsigned(bu)) );
+        //  setStatusText("press " + std::to_string(unsigned(bu)) );
     };
     vp.onMouseRelease = [this](GUIKIT::Mouse::Button bu) {
-      setStatusText("release " + std::to_string(unsigned(bu)) );
+   //   setStatusText("release " + std::to_string(unsigned(bu)) );
     };
 
 lv1.setImage(3,0,img4);

@@ -1,6 +1,6 @@
 
 /**
- * v 1.6.1
+ * v 1.6.5
  */
 
 #ifndef GUIKIT_H
@@ -186,7 +186,6 @@ struct Window : Base {
     struct Winapi {
 		std::function<void ()> onMenu = nullptr;
         Window& window;
-        auto disableBackgroundRedrawDuringResize(bool state = true) -> void;
         Winapi(Window& window) : window(window) {}
     } winapi;
 
@@ -586,8 +585,11 @@ struct ListView : Widget {
     auto columnCount() const -> unsigned { return state.header.size(); }
     auto selection() const -> unsigned { return state.selection; }
     auto selected() const -> bool { return state.selected; }
+    auto lockRedraw() -> void;
+    auto unlockRedraw() -> void;
 
     auto append(const std::vector<std::string>& row) -> void;
+    auto append(const std::vector<std::vector<std::string>>& rows, bool clearBefore = true) -> void;
     auto remove(unsigned selection) -> void;
     auto reset() -> void;
     auto setSelection(unsigned selection) -> void;
@@ -729,6 +731,8 @@ struct Layout : Sizable {
     auto getFrameInnerGeometry(Geometry geometry) -> Geometry;
     static auto getParentTabOrSwitchLayout(Sizable* sizable) -> Layout*;
     static auto getTopMostTabOrSwitchLayout(Layout* layout) -> Layout*;
+    
+    auto getAllChildWidgets() -> std::vector<Widget*>;
 
     std::vector<Children> children;
 
@@ -780,6 +784,8 @@ struct TabFrameLayout : Layout {
     friend class pTabFrame;
     friend class pApplication;
     friend class pLabel;
+    friend class pFrame;
+	friend class pWidget;
     friend class Layout;
 
     std::function<void ()> onChange = nullptr;

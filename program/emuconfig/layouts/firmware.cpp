@@ -6,17 +6,25 @@ FirmwareContainer::Block::Top::Top() {
     fileLabelTitle.setFont(GUIKIT::Font::system("bold"));
 }
 
-FirmwareContainer::Block::Bottom::Bottom() {
+FirmwareContainer::Block::Bottom::Bottom( bool readOnly ) {
     edit.setEditable(false);
-    edit.setDroppable(true);
+    
+    if (readOnly) {
+        edit.setDroppable(false);
+        open.setEnabled(false);
+        eject.setEnabled(false);
+    } else {
+        edit.setDroppable(true);
+    }
+    
     append(edit, {~0u,0u}, 5);
     append(open, {0u,0u}, 5);
     append(eject, {0u,0u});
-		
+        
     setAlignment(0.5);
 }
 
-FirmwareContainer::Block::Block() {        
+FirmwareContainer::Block::Block( bool readOnly ) : bottom( readOnly ) {        
     append(top, {~0u,0u}, 2);
     append(bottom, {~0u,0u});
 }
@@ -26,8 +34,12 @@ FirmwareLayout::FirmwareLayout(TabWindow* tabWindow) {
     this->emulator = tabWindow->emulator;    
     this->manager = FirmwareManager::getInstance(this->emulator);
     
-    append(customSelectorLayout, {~0u, 0u}, 10);   
-    append(switchLayout, {~0u, ~0u});
+    append(customSelectorLayout, {~0u, 0u}, 10);
+    append(boxLayout, {~0u, ~0u});
+    boxLayout.setPadding( 10 );
+    boxLayout.setFont(GUIKIT::Font::system("bold"));  
+    boxLayout.setText( trans->get("default") );
+    boxLayout.append(switchLayout, {~0u, ~0u});
     
     for (unsigned i = 0; i <= manager->maxSets; i++) {
         
@@ -47,13 +59,24 @@ FirmwareLayout::FirmwareLayout(TabWindow* tabWindow) {
         GUIKIT::Layout* myContainer;     
         
         if (i == 0) {
-            myContainer = new GUIKIT::VerticalLayout;
+            auto container = new FirmwareContainer();
+            container->storeLevel = 0;
+            for (auto& firmware : emulator->firmwares) {
+                auto block = new FirmwareContainer::Block( true );                
+                
+                block->typeId = firmware.id;
+                block->parent = container;
+                container->blocks.push_back(block);
+                container->append(*block,{~0u, 0u}, &emulator->firmwares.back() == &firmware ? 0 : 5);
+
+                block->top.fileLabelTitle.setText(trans->get(firmware.name,{}, true));
+            }
+            
+            myContainer = container;
             
         } else {
             auto container = new FirmwareContainer();
-            container->storeLevel = i;
-            container->setPadding(10);     
-            container->setFont(GUIKIT::Font::system("bold"));   
+            container->storeLevel = i;           
             
             for (auto& firmware : emulator->firmwares) {
                 auto block = new FirmwareContainer::Block;
@@ -131,6 +154,7 @@ auto FirmwareLayout::updateVisibility() -> void {
 	auto firmwareInUse = _settings->get<unsigned>( "use_firmware", 0, {0, manager->maxSets} );
     
 	if (selectorBoxes.size() >= firmwareInUse) {
+        
         switchLayout.setSelection( firmwareInUse );
         selectedBlock = firmwareInUse == 0 ? nullptr : ((FirmwareContainer*)containers[firmwareInUse])->blocks[0];
 	}
@@ -191,14 +215,8 @@ auto FirmwareLayout::assign(std::string path, FirmwareContainer::Block* block, F
 auto FirmwareLayout::translate() -> void {
     
     unsigned i = 0;
-	
-    
+	    
     for (auto container : containers ) {                
-        
-        if (i == 0) {
-            selectorBoxes[i++]->setText( trans->get("default") );
-            continue;
-        }
         
         auto fContainer = (FirmwareContainer*)container;
         
@@ -207,14 +225,19 @@ auto FirmwareLayout::translate() -> void {
             block->bottom.eject.setText( trans->get("eject") );
         }   
         	
+        if (i == 0) {
+            selectorBoxes[i++]->setText( trans->get("default") );            
+            continue;
+        }
+        
         std::string label = "Config " + std::to_string(i);
-
-        fContainer->setText( trans->get( label ) );
 
         selectorBoxes[i]->setText( trans->get( label ) );
 		
 		i++;
     }    	
+    
+    boxLayout.setText( trans->get("files") );
 }
 
 auto FirmwareLayout::drop( std::string path ) -> void {
@@ -242,15 +265,22 @@ auto FirmwareLayout::loadSettings(bool init) -> void {
     
     auto firmwareInUse = _settings->get<unsigned>( "use_firmware", 0, {0, manager->maxSets} );
 
-    for (unsigned i = 1; i <= manager->maxSets; i++) {
+    for (unsigned i = 0; i <= manager->maxSets; i++) {
         unsigned j = 0;
         for (auto& firmware : emulator->firmwares) {
-            auto fSetting = manager->getSetting( &firmware, i );
-            if (!init)
-                fSetting->update();
             auto block = ((FirmwareContainer*)containers[i])->blocks[j++];
-            block->top.fileLabel.setText( fSetting->file );
-            block->bottom.edit.setText( fSetting->path );
+            
+            if (i == 0) {
+                block->top.fileLabel.setText( firmware.name );
+                block->bottom.edit.setText( program->dataFolder() + firmware.name );
+            } else {            
+                auto fSetting = manager->getSetting( &firmware, i );
+                if (!init)
+                    fSetting->update();
+
+                block->top.fileLabel.setText( fSetting->file );
+                block->bottom.edit.setText( fSetting->path );
+            }
         }
     }
     
