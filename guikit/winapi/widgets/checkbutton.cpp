@@ -16,13 +16,26 @@ auto pCheckButton::create() -> void {
     
     hwnd = CreateWindow(WC_BUTTON, L"",
         WS_CHILD | WS_TABSTOP | BS_CHECKBOX | BS_PUSHLIKE,
-        0, 0, 0, 0, checkButton.window()->p.hwnd, (HMENU)(unsigned long long)checkButton.id, GetModuleHandle(0), 0);
+        0, 0, 0, 0, getParentHandle(), (HMENU)(unsigned long long)checkButton.id, GetModuleHandle(0), 0);
     
-    SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)&checkButton);    
+    SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)&checkButton);  
+    wndprocOrig = (WNDPROC)SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)subclassWndProc);    
+}
+
+auto CALLBACK pCheckButton::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT {
+    CheckButton* checkButton = (CheckButton*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
+    if(checkButton == nullptr) return DefWindowProc(hwnd, msg, wparam, lparam);
+
+    switch(msg) {   
+        case WM_ERASEBKGND:
+            return 0;
+    }
+    
+    return CallWindowProc(checkButton->p.wndprocOrig, hwnd, msg, wparam, lparam);
 }
 
 auto pCheckButton::rebuild() -> void {
-    if (hwnd)
+    if(!needRebuild())
         return;
         
     create();

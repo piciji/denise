@@ -34,14 +34,20 @@ else
     delete = rm -f $1
 endif
 
-compiler := g++
-
-ifeq ($(platform),macosx)
-    compiler := clang++
+#compiler assignment
+ifeq ($(compiler),)
+    compiler := g++
+    ifeq ($(platform),macosx)
+	compiler := clang++
+    endif
 endif
 
-cppflags := -x c++ -std=c++11
-objcppflags := -x objective-c++ -std=c++11
+ifeq ($(platform),macosx)
+    cppflags := -x c++ -std=c++14
+    objcppflags := -x objective-c++ -std=c++14
+else	
+    cppflags := -x c++ -std=c++17
+endif
 
 objects := main guikit
 
@@ -79,6 +85,7 @@ compile = \
 include ../Makefile
 link += $(uilink)
 
+
 #rule:
 #	@echo $(OS)
 
@@ -93,7 +100,7 @@ endif
 %.o: $<; $(call compile)
 
 obj/guikit.o: ../api.cpp
-	$(call compile,$(uiflags))
+	$(compiler) $(uiflags) $(flags) -c $< -o $@
 
 obj/main.o:	main.cpp
 

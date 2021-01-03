@@ -296,6 +296,10 @@ auto InputLayout::loadInputList(unsigned deviceId) -> void {
     
     auto layoutType = _settings->get<int>( "keyboard_layout", InputManager::assumeLayoutType() );
     
+    inputList.lockRedraw();
+    
+    unsigned counter = device.isKeyboard() ? (emulator->devices[deviceId].inputs.size() >> 1) : 0;
+    
     for (auto& input : emulator->devices[deviceId].inputs) {
         
         std::string useName = input.name;
@@ -308,7 +312,15 @@ auto InputLayout::loadInputList(unsigned deviceId) -> void {
         }
                     
         appendListEntry( useName, (InputMapping*)input.guid, image );
+        
+        if (counter) {
+            if (--counter == 0) {
+                inputList.unlockRedraw();
+            }                
+        }
     }
+    
+    inputList.unlockRedraw();
     
     mapControl.keyLayout.setEnabled( device.isKeyboard() );    
     mapControl.automap.setEnabled( device.isKeyboard() && mapControl.keyLayout.selection() != 0 );
@@ -327,10 +339,14 @@ auto InputLayout::loadHotkeyList() -> void {
 	control.linkerAlt.setEnabled(false);
     control.mapperAlt.setEnabled(false);
 	
+    inputList.lockRedraw();
+    
 	for (auto& input : InputManager::getManager( emulator )->customHotkeys ) {
 		
 		appendListEntry( input.name, (InputMapping*)input.guid, nullptr );
 	}
+    
+    inputList.unlockRedraw();
 	
 	mapControl.keyLayout.setEnabled( false );    
     mapControl.automap.setEnabled( false );

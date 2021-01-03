@@ -386,7 +386,10 @@ auto FramedVerticalLayout::setText(const std::string& text) -> void { frameWidge
 
 //tab frame layout
 auto TabFrameLayout::getParentTabFrame(Sizable* sizable) -> TabFrameLayout* {
-    if (dynamic_cast<TabFrame*>(sizable)) return nullptr;
+    //if (dynamic_cast<TabFrame*>(sizable)) return nullptr;
+
+	if ( dynamic_cast<Widget*>(sizable) && ((Widget*)sizable)->isContainer( ) )
+		sizable = sizable->parent();
 
     while(sizable) {
         if(sizable->parent() && dynamic_cast<TabFrameLayout*>(sizable->parent())) {
@@ -465,7 +468,7 @@ auto TabFrameLayout::setLayout(unsigned selection, Layout& layout, Size size) ->
     }
     if(!found) children.push_back({&layout, size, {0,0}, 0, selection});
     updateLayout();
-    if(window()) window()->synchronizeLayout();
+    //if(window()) window()->synchronizeLayout();
 }
 
 auto TabFrameLayout::remove(unsigned selection) -> void {
@@ -525,10 +528,18 @@ auto TabFrameLayout::setVisible(bool visible) -> void {
     Sizable::state.visible = visible;
     getTabFrame()->setVisible(visible);
 
+    std::vector<Children*> temp;
+    
     for(auto& child : children) {
         bool v = visible && (getTabFrame()->state.selection == child.selection);
-        child.sizable->setVisible(v);
+        if (!v)
+            child.sizable->setVisible(false);
+        else
+            temp.push_back( &child );
     }
+    
+    for(auto child : temp)
+        child->sizable->setVisible(true);
 }
 
 auto TabFrameLayout::appendHeader(std::string text, Image* image) -> void {
@@ -577,7 +588,7 @@ auto SwitchLayout::setLayout(unsigned selection, Layout& layout, Size size) -> v
     }
     if(!found) children.push_back({&layout, size, {0,0}, 0, selection});
     updateLayout();
-    if(window()) window()->synchronizeLayout();
+   // if(window()) window()->synchronizeLayout();
 }
 
 auto SwitchLayout::remove(unsigned selection) -> void {
@@ -592,7 +603,7 @@ auto SwitchLayout::remove(unsigned selection) -> void {
 
 auto SwitchLayout::setSelection(unsigned selection) -> void {
     state.selection = selection;    
-    Layout* top = Layout::getTopMostTabOrSwitchLayout(this);
+    Layout* top = Layout::getTopMostTabOrSwitchLayout(this);        
     top->setVisible();
 }
 
@@ -600,11 +611,19 @@ auto SwitchLayout::selection() const -> unsigned { return state.selection; }
 
 auto SwitchLayout::setVisible(bool visible) -> void {
     Sizable::state.visible = visible;
-
+    
+    std::vector<Children*> temp;
+    
     for(auto& child : children) {
         bool v = visible && (state.selection == child.selection);
-        child.sizable->setVisible(v);
+        if (!v)
+            child.sizable->setVisible(false);
+        else
+            temp.push_back( &child );
     }
+    
+    for(auto child : temp)
+        child->sizable->setVisible(true);
 }
 
 auto SwitchLayout::setGeometry(Geometry containerGeometry) -> void {
@@ -664,4 +683,53 @@ auto Layout::getTopMostTabOrSwitchLayout(Layout* layout) -> Layout* {
         layout = topLayout;   
     
     return layout;
+}
+
+auto Layout::getAllChildWidgets() -> std::vector<Widget*> {
+    
+    std::vector<Widget*> widgets;
+    
+    for( auto& child : children ) {
+        
+        if (dynamic_cast<Widget*>(child.sizable)) {
+            
+            widgets.push_back( (Widget*)(child.sizable) );
+            
+        } else if (dynamic_cast<Layout*>(child.sizable)) {
+            
+            auto in = ((Layout*)(child.sizable))->getAllChildWidgets();
+            
+            widgets = Vector::concat( widgets, in );
+        }
+    }
+    
+    return widgets;
+}
+
+auto HorizontalLayout::alignChildrenVertically( std::vector<HorizontalLayout*> layouts ) -> void {
+    
+    std::vector<unsigned> neededWidths;
+    
+    for (auto layout : layouts) {
+        
+        unsigned i = 0;
+        for (auto& child : layout->children) {
+            if (i >= neededWidths.size())
+                neededWidths.push_back(0);
+            
+            neededWidths[i] = std::max(neededWidths[i], child.sizable->minimumSize().width);
+            
+            i++;
+        }                
+    }
+
+    for (auto layout : layouts) {
+
+        unsigned i = 0;
+        
+        for (auto& child : layout->children) {
+            child.size.width = neededWidths[i];
+            i++;
+        }
+    }
 }

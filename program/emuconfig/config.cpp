@@ -77,7 +77,10 @@ auto TabWindow::build() -> void {
     displayImage.loadPng((uint8_t*)Icons::display, sizeof(Icons::display));    
     paletteImage.loadPng((uint8_t*)Icons::palette, sizeof(Icons::palette));
     volumeImage.loadPng((uint8_t*)Icons::volume, sizeof(Icons::volume));
-
+    
+    tab.setMargin(10);
+    append(tab);        
+    
     inputLayout = new InputLayout( this );
     systemLayout = new SystemLayout( this );
     mediaLayout = new MediaView::MediaLayout( this );    
@@ -120,12 +123,7 @@ auto TabWindow::build() -> void {
     tab.setLayout(Layout::Firmware, *firmwareLayout, {~0u, ~0u} );
 	tab.setLayout(Layout::Border, *borderLayout, {~0u, ~0u} );                    
     tab.setLayout(Layout::Misc, *miscLayout, {~0u, ~0u} );     
-
-    tab.setMargin(10);
-    tab.setSelection(0);
-    
-    append(tab);
-
+        
     onClose = [this]() {
         setVisible(false);
         view->setFocused();

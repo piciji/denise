@@ -56,6 +56,40 @@ struct ConfigurationsFolderLayout : GUIKIT::HorizontalLayout {
     ConfigurationsFolderLayout();
 };
 
+struct MemoryPatternLayout : GUIKIT::FramedVerticalLayout {
+    
+    struct FirstLine : GUIKIT::HorizontalLayout {
+        
+        GUIKIT::Label valueLabel;
+        GUIKIT::StepButton valueStepper;
+        GUIKIT::Label invertValueEveryLabel;
+        GUIKIT::ComboButton invertValueEveryCombo;        
+        
+        FirstLine();
+    } firstLine;
+    
+    struct SecondLine : GUIKIT::HorizontalLayout {
+        
+        GUIKIT::Label lengthRandomLabel;
+        GUIKIT::ComboButton lengthRandomCombo;
+        GUIKIT::Label repeatRandomEveryLabel;
+        GUIKIT::ComboButton repeatRandomEveryCombo;
+        
+        SecondLine();
+    } secondLine;
+    
+    struct ThirdLine : GUIKIT::HorizontalLayout {
+        GUIKIT::Label randomChanceLabel;
+        GUIKIT::StepButton randomChanceStepper;
+        
+        ThirdLine();
+    } thirdLine;
+    
+    GUIKIT::MultilineEdit preview;
+    
+    MemoryPatternLayout();
+};
+
 struct ConfigurationsLayout : GUIKIT::HorizontalLayout {
     
     TabWindow* tabWindow;
@@ -74,9 +108,12 @@ struct ConfigurationsLayout : GUIKIT::HorizontalLayout {
     StateFastLayout stateFast;
     StateDirectLayout stateDirect;
     ConfigurationsFolderLayout stateFolder;
+    
+    MemoryPatternLayout* memoryPattern = nullptr;
 
     GUIKIT::Image settingsImage;
     GUIKIT::Image scriptImage;
+    GUIKIT::Image memImage;
     
     struct SettingLine {
         std::string fileName;
@@ -112,6 +149,7 @@ struct ConfigurationsLayout : GUIKIT::HorizontalLayout {
     auto load( std::string path ) -> bool;
     auto loadSettings() -> void;
     auto saveCurrentSettings() -> void;
+    auto updateMemoryPreview() -> void;
     
     ConfigurationsLayout(TabWindow* tabWindow); 
 };

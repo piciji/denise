@@ -156,6 +156,9 @@ auto Program::initEmulator( Emulator::Interface* emulator ) -> void {
     setAccuracy( emulator );
     
     setRunAhead( emulator );
+    
+    if (dynamic_cast<LIBC64::Interface*>( emulator ))
+        setMemoryPattern( emulator );
 }
 
 auto Program::setDriveSpeedAndWobble(Emulator::Interface* emulator) -> void {
@@ -183,6 +186,18 @@ auto Program::setAccuracy(Emulator::Interface* emulator) -> void {
     emulator->diskHighLoadThread( settings->get<bool>( "disk_highload_thread", false) );
     emulator->diskIdle( settings->get<bool>( "disk_idle", false) );
     emulator->audioRealtimeThread( settings->get<bool>( "audio_realtime_thread", false) );
+}
+
+auto Program::setMemoryPattern(Emulator::Interface* emulator) -> void {
+    auto settings = getSettings( emulator );
+    
+    uint8_t value = settings->get<unsigned>("memory_value", 255);
+    unsigned invertEvery = settings->get<unsigned>("memory_invert_every", 64);
+    unsigned randomPatternLength = settings->get<unsigned>("memory_random_pattern", 1);
+    unsigned repeatRandomPattern = settings->get<unsigned>("memory_random_repeat", 256);
+    unsigned randomChance = settings->get<unsigned>("random_chance", 0);
+
+    emulator->setMemoryInitParams( value, invertEvery, randomPatternLength, repeatRandomPattern, randomChance );
 }
 
 auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {                  

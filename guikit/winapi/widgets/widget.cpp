@@ -79,18 +79,64 @@ auto pWidget::rebuild() -> void {
     widget.setEnabled(widget.enabled());
     widget.setVisible(widget.visible());
     
-    if(!dynamic_cast<pFrame*>(this)) {
-        if(hwnd)
-            SetWindowPos(hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
-    }
-    setTooltip(widget.tooltip());
+    if(hwnd)
+        SetWindowPos(hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+    
+    setTooltip(widget.tooltip());    
 }
+
+auto pWidget::getParentHandle() -> HWND {
+
+	if (!parentTabFrameLayout || !IsAppThemed( ))
+		return widget.window() ? widget.window()->p.hwnd : nullptr;
+	
+	return parentTabFrameLayout->frameWidget->p.hwnd;
+}
+
+auto pWidget::getParentTabWidget() -> Widget* {
+
+	if (!parentTabFrameLayout || !IsAppThemed( ))
+		return nullptr;
+	
+	return parentTabFrameLayout->frameWidget;
+}
+
+auto pWidget::needRebuild() -> bool {
+    
+    auto parent = TabFrameLayout::getParentTabFrame((Sizable*)&widget);
+
+    if (parent != parentTabFrameLayout) {
+
+        parentTabFrameLayout = parent;
+
+        if (hwnd) {
+            SetParent(hwnd, getParentHandle());
+            return false;
+        }
+        
+        return true;
+        
+    } else if (hwnd)
+        return false;
+
+    return true;
+}
+
 
 auto pWidget::setGeometry(Geometry geometry) -> void {
     if (!hwnd)
         return;
-        
-    SetWindowPos(hwnd, NULL, geometry.x, geometry.y, geometry.width, geometry.height, SWP_NOZORDER);
+
+    Widget* parent = getParentTabWidget();
+
+    if (parent) {
+        auto geo = parent->geometry();
+
+        geometry.x -= geo.x;
+        geometry.y -= geo.y;
+    }
+    
+    SetWindowPos(hwnd, NULL, geometry.x, geometry.y, geometry.width, geometry.height, SWP_NOZORDER | SWP_NOCOPYBITS);
     if(widget.onSize)
         widget.onSize();        
 }
@@ -141,4 +187,34 @@ auto pWidget::getScaledDim( unsigned value ) -> unsigned {
 	static float dpiY = pFont::dpi().y;
 	
 	return (unsigned)((float)(value) * dpiY / 96.0);
+}
+
+auto pWidget::getBackgroundBrush() -> HBRUSH {
+
+	static HBRUSH baseBrush = CreateSolidBrush( GetSysColor( COLOR_3DFACE ) );
+	
+	HBRUSH brush = baseBrush;
+	
+	if ( parentTabFrameLayout ) {
+		if ( IsAppThemed( ) )
+			brush = pTabFrame::getTabBackgroundForControl( parentTabFrameLayout->frameWidget->p.hwnd, hwnd );
+		
+	} else if (widget.window()->p.brush)
+		brush = widget.window()->p.brush;
+	
+	return brush;
+}
+
+auto pWidget::getColor(WPARAM wparam) -> HBRUSH {
+    
+    static HBRUSH brush =  GetSysColorBrush(COLOR_WINDOW);
+    
+    if (!widget.overrideForegroundColor())
+        return nullptr;
+    
+    SetBkColor((HDC) wparam, GetSysColor(COLOR_WINDOW));
+
+    unsigned color = widget.foregroundColor();
+    SetTextColor((HDC) wparam, RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff));    
+    return brush;
 }

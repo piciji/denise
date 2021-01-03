@@ -67,7 +67,7 @@ badge_icon = icon_from_app(application)
 icon_locations = {
     appname:        (108, 231),
     'Applications': (404, 231)
-    }
+}
 
 # .. Window configuration ......................................................
 
@@ -163,7 +163,7 @@ list_column_widths = {
     'label': 100,
     'version': 75,
     'comments': 300,
-    }
+}
 list_column_sort_directions = {
     'name': 'ascending',
     'date-modified': 'descending',
@@ -175,5 +175,4 @@ list_column_sort_directions = {
     'label': 'ascending',
     'version': 'ascending',
     'comments': 'ascending',
-    }
-
+}

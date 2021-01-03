@@ -37,13 +37,16 @@ pTimer::~pTimer() {
     Vector::eraseVectorElement<pTimer*>(timers, this);
 }
 //font
-auto pFont::system(unsigned size, std::string style) -> std::string {
+auto pFont::system(unsigned size, std::string style, bool monospaced) -> std::string {
     static float dpiX = dpi().x;
     NONCLIENTMETRICS metrics;
     metrics.cbSize = sizeof(NONCLIENTMETRICS);
     ::SystemParametersInfo(SPI_GETNONCLIENTMETRICS, sizeof(NONCLIENTMETRICS), &metrics, 0);
 
     std::string family = utf8_t(metrics.lfMessageFont.lfFaceName);
+    
+    if (monospaced)
+        family = "Lucida Console";
 
     if (size == 0) {
 		size = float(std::abs(metrics.lfMessageFont.lfHeight)) * 72.0 / dpiX;
@@ -425,3 +428,21 @@ auto pThread::setThreadPriorityRealtime( std::thread& th ) -> void {
     
     SetThreadPriority((HANDLE) h, THREAD_PRIORITY_TIME_CRITICAL);    
 }
+
+inline auto getDim( RECT& rect ) -> Size {
+
+    Size size;
+    size.width = rect.right - rect.left;
+    size.height = rect.bottom - rect.top;
+    
+    return size;
+}
+
+inline auto getHeight( RECT& rect ) -> int {
+    return rect.bottom - rect.top;
+}
+
+inline auto getWidth( RECT& rect ) -> int {
+    return rect.right - rect.left;
+}
+

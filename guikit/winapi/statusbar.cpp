@@ -211,10 +211,8 @@ auto pStatusBar::update() -> void {
             
             SendMessage(hwnd, SB_SETTEXT, i++ | SBT_OWNERDRAW, 0);
 
-            if (part.popupMenu) {
-
+            if (part.popupMenu && !part.popupMenu->state.parentWindow)
                 part.popupMenu->p.update(*statusBar.window());            
-            }
         }
     }    
     

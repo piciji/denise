@@ -212,11 +212,13 @@ auto MediaGroupLayout::updateListing( MediaGroupLayout::Block* block ) -> void {
 }
 
 auto MediaGroupLayout::fillListing( std::vector<Emulator::Interface::Listing>& emuListings ) -> void {
+
+    std::vector<std::vector<std::string>> rows;
     
-    listings.reset();
-		
     for( auto listing : mediaLayout->convertListing( emuListings, false ) )
-        listings.append({listing});									
+        rows.push_back({listing});
+        
+    listings.append(rows);
 	
     if (!globalSettings->get<bool>("software_preview_tooltips", true ))
         return;
@@ -228,11 +230,13 @@ auto MediaGroupLayout::fillListing( std::vector<Emulator::Interface::Listing>& e
 }
 
 auto MediaGroupLayout::fillListing( std::vector<GUIKIT::BrowserWindow::Listing>& emuListings ) -> void {
-    
-    listings.reset();
 
-    for( auto listing : emuListings )        
-        listings.append({listing.entry});  
+    std::vector<std::vector<std::string>> rows;
+    
+    for( auto listing : emuListings ) 
+        rows.push_back({listing.entry});
+        
+    listings.append(rows);
 		
     if (!globalSettings->get<bool>("software_preview_tooltips", true ))
         return;

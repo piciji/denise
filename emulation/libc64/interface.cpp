@@ -1293,6 +1293,19 @@ auto Interface::setMemory(MemoryType* memoryType, unsigned memoryId) -> void {
     }
 }
 
+auto Interface::setMemoryInitParams(uint8_t value, unsigned invertEvery, unsigned randomPatternLength, unsigned repeatRandomPattern, unsigned randomChance) -> void {
+    system->memoryInit.value = value;
+    system->memoryInit.invertEvery = invertEvery;
+    system->memoryInit.randomPatternLength = randomPatternLength;
+    system->memoryInit.repeatRandomPattern = repeatRandomPattern;
+    system->memoryInit.randomChance = randomChance; 
+}
+
+auto Interface::getMemoryInitPattern( uint8_t* pattern ) -> void {
+    
+    system->initRam( pattern );
+}
+
 auto Interface::setExpansion(unsigned expansionId) -> void {
     
     auto expansion = getExpansionById( expansionId );

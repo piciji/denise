@@ -155,7 +155,8 @@ auto View::build() -> void {
 	placeholderTimer.setInterval(40);
 	placeholderTimer.onFinished = [this]() {
 		placeholderTimer.setEnabled(false);		
-		renderPlaceholder(false, 2);
+		renderPlaceholder(false);
+        renderPlaceholder(false);
 	};
 	
 	autoloadTimer.setInterval(40);
@@ -893,10 +894,12 @@ auto View::buildMenu() -> void {
 	};
 	tapeControlMenu.append( tapeRecordItem );
 	
+    tapeControlMenu.append(*GUIKIT::MenuSeparator::getInstance());	
+    
 	tapeResetCounterItem.onActivate = []() {
 		InputManager::activateHotkey(Hotkey::Id::ResetTapeCounter);
 	};
-	tapeControlMenu.append( tapeResetCounterItem );    
+	tapeControlMenu.append( tapeResetCounterItem );  
 }
 
 auto View::showTapeMenu( bool show, Emulator::Interface::TapeMode mode ) -> void {

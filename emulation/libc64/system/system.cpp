@@ -501,7 +501,7 @@ auto System::power( bool softReset ) -> void {
 	sysTimer.clear();
 
 	if( !softReset )
-		initRam();
+		initRam( ram );
 	    
     expansionPort->reset();
     
@@ -596,33 +596,38 @@ auto System::powerOff() -> void {
     vicII->powerOff();
 }
 
-auto System::initRam() -> void {
-    
-    bool oldHalfPage = 1;
-    Emulator::Rand rand;
+auto System::initRam(uint8_t*& mem) -> void {
+    uint8_t j, k, value;
 
-    for( unsigned i = 0; i <= 0xffff; i++ ) {
-        bool pattern = (i >> 6) & 1;
-        bool halfPage = (i >> 7) & 1;
-        uint8_t val = pattern ? 0xff : 0x0;
+    for (unsigned i = 0; i <= 0xffff; i++) {
+
+        j = 0;
         
-        if (oldHalfPage && !halfPage) { 
-            // first byte of page
-            ram[i] = rand.xorShift() & 0xff;
-            
-            if (ram[i] == val)
-                ram[i] = 0xf0;
+        if (memoryInit.invertEvery)
+            j = ((i / memoryInit.invertEvery) & 1) ? 0xff : 0x00;        
 
-        } else {
-            
-            ram[i] = val; 
+        value = memoryInit.value ^ j;
+
+        j = k = 0;
+        
+        if (memoryInit.randomPatternLength && memoryInit.repeatRandomPattern)
+            k = ((i % memoryInit.repeatRandomPattern) < memoryInit.randomPatternLength) ? Emulator::Rand::rand(0, 0xff) : 0;        
+        
+        if (memoryInit.randomChance) {
+            j |= Emulator::Rand::rand(0, 1000) < memoryInit.randomChance ? 0x80 : 0;
+            j |= Emulator::Rand::rand(0, 1000) < memoryInit.randomChance ? 0x40 : 0;
+            j |= Emulator::Rand::rand(0, 1000) < memoryInit.randomChance ? 0x20 : 0;
+            j |= Emulator::Rand::rand(0, 1000) < memoryInit.randomChance ? 0x10 : 0;
+            j |= Emulator::Rand::rand(0, 1000) < memoryInit.randomChance ? 0x08 : 0;
+            j |= Emulator::Rand::rand(0, 1000) < memoryInit.randomChance ? 0x04 : 0;
+            j |= Emulator::Rand::rand(0, 1000) < memoryInit.randomChance ? 0x02 : 0;
+            j |= Emulator::Rand::rand(0, 1000) < memoryInit.randomChance ? 0x01 : 0;
         }
-        
-        oldHalfPage = halfPage;       
+
+        value ^= k ^ j;
+
+        mem[i] = value;
     }
-    // typical demo works only for a few possible values at 0x3fff.
-    // could imagine that some real machines can not run this demo.
-    ram[0x3fff] = 0; 
 }
 
 auto System::setRunAhead(unsigned frames) -> void {

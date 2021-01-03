@@ -448,6 +448,9 @@ struct Interface {
     virtual auto getCursorPosition( Device* device, int16_t& x, int16_t& y ) -> bool { return false; }
     
     virtual auto setMemory(MemoryType* memoryType, unsigned memoryId) -> void {}    
+    virtual auto setMemoryInitParams(uint8_t value, unsigned invertEvery, unsigned randomPatternLength, unsigned repeatRandomPattern, unsigned randomChance) -> void {}
+    virtual auto getMemoryInitPattern( uint8_t* pattern ) -> void {}
+    virtual auto getMemorySize() -> unsigned { return 0; }
     virtual auto setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> void {}
     virtual auto getCharRom() -> Firmware* { return nullptr; }
     

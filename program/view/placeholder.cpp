@@ -18,7 +18,7 @@ auto View::loadPlaceholder() -> void {
 		return;			
 }
 
-auto View::renderPlaceholder(bool blackScreen, uint8_t redraw) -> void {
+auto View::renderPlaceholder(bool blackScreen) -> void {
 		
 	if (cmd->debug || program->isRunning)
 		return;
@@ -52,8 +52,7 @@ auto View::renderPlaceholder(bool blackScreen, uint8_t redraw) -> void {
 	}
 	
 	videoDriver->unlock();
-    while(redraw--)
-        videoDriver->redraw(true);
+    videoDriver->redraw(true);
 }
 
 auto View::cursorForPlacholderInUpperTriangle(GUIKIT::Position& p) -> bool {

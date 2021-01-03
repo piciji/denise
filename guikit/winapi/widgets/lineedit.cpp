@@ -6,7 +6,7 @@ auto pLineEdit::create() -> void {
     hwnd = CreateWindowEx(
         WS_EX_CLIENTEDGE, WC_EDIT, L"",
         WS_CHILD | WS_TABSTOP | ES_AUTOHSCROLL | ES_AUTOVSCROLL,
-        0, 0, 0, 0, lineEdit.window()->p.hwnd, (HMENU)(unsigned long long)lineEdit.id, GetModuleHandle(0), 0 );
+        0, 0, 0, 0, getParentHandle(), (HMENU)(unsigned long long)lineEdit.id, GetModuleHandle(0), 0 );
 
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)&lineEdit);
     wndprocOrig = (WNDPROC)SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)subclassWndProc);    
@@ -59,8 +59,13 @@ auto pLineEdit::onFocus() -> void {
         lineEdit.onFocus();
 }
 
-auto pLineEdit::rebuild() -> void {
+auto pLineEdit::setForegroundColor(unsigned color) -> void {
     if (hwnd)
+        InvalidateRect(hwnd, 0, false);
+}
+
+auto pLineEdit::rebuild() -> void {
+    if(!needRebuild())
         return;
     
     widget.state.text = text();
@@ -79,13 +84,18 @@ auto CALLBACK pLineEdit::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPA
     Window* window = (Window*)lineEdit->Sizable::state.window;
     if(window == nullptr) return DefWindowProc(hwnd, msg, wparam, lparam);
 
-    if(msg == WM_DROPFILES) {
-        std::vector<std::string> paths = getDropPaths(wparam);
+    switch(msg) {
+        case WM_ERASEBKGND: 
+            return 0;
+        case WM_DROPFILES: {
+            std::vector<std::string> paths = getDropPaths(wparam);
         
-        if(!paths.empty() && lineEdit->onDrop)
-            lineEdit->onDrop(paths);        
+            if(!paths.empty() && lineEdit->onDrop)
+                lineEdit->onDrop(paths);        
+            
+            return false;
+        }
         
-        return false;
     }
 
     return CallWindowProc(lineEdit->p.wndprocOrig, hwnd, msg, wparam, lparam);

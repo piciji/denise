@@ -155,7 +155,10 @@ struct Interface : Emulator::Interface {
     auto setFinishVblankCallback(bool state) -> void;
     
     auto setMemory(MemoryType* memoryType, unsigned memoryId) -> void;
-	
+    auto setMemoryInitParams(uint8_t value, unsigned invertEvery, unsigned randomPatternLength, unsigned repeatRandomPattern, unsigned randomChance) -> void;
+	auto getMemoryInitPattern( uint8_t* pattern ) -> void;
+    auto getMemorySize() -> unsigned { return 64 * 1024; }
+    
     auto hasFreezerButton() -> bool;
     auto freeze() -> void;
 private:

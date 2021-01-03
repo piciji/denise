@@ -411,7 +411,8 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
             } else if ( ((OFNOTIFY*)lParam)->hdr.code == CDN_SELCHANGE ) {
                 
                 if (listBox) {
-                    SendMessage(listBox, LB_RESETCONTENT, 0, 0);
+                    SendMessage( listBox, WM_SETREDRAW, 0, 0);
+                    SendMessage( listBox, LB_RESETCONTENT, 0, 0);
                     context->toolTips.clear();
                 }
             
@@ -426,16 +427,18 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
                             auto rows = state->onSelectionChange( context->selectedPath );            
 
                             if (listBox) {
-                                unsigned maximumWidth = 0;                                                            
+                                unsigned maximumWidth = 0; 
+                                                                
                                 for( auto& row : rows ) {                                
                                     SendMessage( listBox, LB_ADDSTRING, 0, (LPARAM)(wchar_t*)utf16_t(row.entry) );
 
                                     maximumWidth = std::max(maximumWidth, pFont::size(context->listFont, row.entry).width);
                                     
                                     context->toolTips.push_back( row.tooltip );
-                                }
-
+                                }                                
                                 SendMessage( listBox, LB_SETHORIZONTALEXTENT, maximumWidth + 8, 0);
+                                SendMessage( listBox, WM_SETREDRAW, 1, 0);
+                               // InvalidateRect(listBox, NULL, TRUE);
                             }
                         }
                     }                                        
@@ -498,7 +501,7 @@ auto CALLBACK pBrowserWindow::subclassListbox(HWND hwnd, UINT msg, WPARAM wparam
     pBrowserWindow* instance = (pBrowserWindow*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
     WNDPROC lpOldWndProc = (WNDPROC)GetProp( hwnd, L"OLDWNDPROC" );
 
-    switch (msg) {
+    switch (msg) {       
         case WM_LBUTTONDOWN:
         case WM_LBUTTONUP:
         case WM_MBUTTONDOWN: 

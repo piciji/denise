@@ -80,13 +80,26 @@ auto pComboButton::create() -> void {
         WC_COMBOBOX, L"",
         WS_CHILD | WS_TABSTOP | CBS_DROPDOWNLIST | CBS_HASSTRINGS | WS_VSCROLL,
         0, 0, 0, 0,
-        comboButton.window()->p.hwnd, (HMENU)(unsigned long long)comboButton.id, GetModuleHandle(0), 0
+        getParentHandle(), (HMENU)(unsigned long long)comboButton.id, GetModuleHandle(0), 0
     );
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)&comboButton);
+    wndprocOrig = (WNDPROC)SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)subclassWndProc);    
+}
+
+auto CALLBACK pComboButton::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT {
+    ComboButton* comboButton = (ComboButton*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
+    if(comboButton == nullptr) return DefWindowProc(hwnd, msg, wparam, lparam);
+
+    switch(msg) {   
+        case WM_ERASEBKGND:
+            return 0;
+    }
+    
+    return CallWindowProc(comboButton->p.wndprocOrig, hwnd, msg, wparam, lparam);
 }
 
 auto pComboButton::rebuild() -> void {
-    if (hwnd)
+    if(!needRebuild())
         return;
         
     create();

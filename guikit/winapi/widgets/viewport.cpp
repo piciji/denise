@@ -1,17 +1,19 @@
 
 auto pViewport::create() -> void {
     destroy(hwnd);
-    destroy(hwndTip);
+    destroy(hwndTip);    
+    
+    SetWindowLong(viewport.window()->p.hwnd, GWL_STYLE, (GetWindowLong(viewport.window()->p.hwnd, GWL_STYLE) & ~WS_CLIPCHILDREN));
     
     hwnd = CreateWindow(L"app_viewport", L"",
         WS_CHILD | WS_DISABLED,
-        0, 0, 0, 0, viewport.window()->p.hwnd, (HMENU)(unsigned long long)viewport.id, GetModuleHandle(0), 0);
+        0, 0, 0, 0, getParentHandle(), (HMENU)(unsigned long long)viewport.id, GetModuleHandle(0), 0);
 
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)&viewport);
 }
 
 auto pViewport::rebuild() -> void {
-    if (hwnd)
+    if(!needRebuild())
         return;
     
     create();
@@ -34,42 +36,60 @@ auto CALLBACK pViewport::wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
     if(!dynamic_cast<Viewport*>(base)) return DefWindowProc(hwnd, msg, wparam, lparam);
     Viewport& viewport = (Viewport&)*base;
 
-    if(msg == WM_DROPFILES) {
-        std::vector<std::string> paths = getDropPaths(wparam);
-        if(!paths.empty() && viewport.onDrop) {
-            viewport.onDrop(paths);
+    switch(msg) {
+        case WM_ERASEBKGND: 
+            return 0;
+        case WM_DROPFILES: {
+            std::vector<std::string> paths = getDropPaths(wparam);
+            if(!paths.empty() && viewport.onDrop) {
+                viewport.onDrop(paths);
+            }
+            return false;  
         }
-        return false;
-    }
-    if(msg == WM_GETDLGCODE) return DLGC_STATIC | DLGC_WANTCHARS;
+        case WM_GETDLGCODE:
+            return DLGC_STATIC | DLGC_WANTCHARS;
+            
+        case WM_MOUSEMOVE: {
+            TRACKMOUSEEVENT tracker = {sizeof (TRACKMOUSEEVENT), TME_LEAVE, hwnd};
+            TrackMouseEvent(&tracker);
+            viewport.state.mousePos = {(signed)LOWORD(lparam), (signed)HIWORD(lparam)};
 
-    if(msg == WM_MOUSEMOVE) {
-        TRACKMOUSEEVENT tracker = {sizeof(TRACKMOUSEEVENT), TME_LEAVE, hwnd};
-        TrackMouseEvent(&tracker);
-        viewport.state.mousePos = {(signed)LOWORD(lparam), (signed)HIWORD(lparam)};
+            if (viewport.onMouseMove)
+                viewport.onMouseMove(viewport.state.mousePos);
+        } break;
         
-        if(viewport.onMouseMove) viewport.onMouseMove( viewport.state.mousePos );
+        case WM_MOUSELEAVE:
+            if(viewport.onMouseLeave) viewport.onMouseLeave();
+            break;
+            
+        case WM_LBUTTONDOWN:
+            if (viewport.onMousePress) 
+                viewport.onMousePress(Mouse::Button::Left);
+            break;
+                
+        case WM_MBUTTONDOWN:
+            if (viewport.onMousePress) 
+                viewport.onMousePress(Mouse::Button::Middle);            
+            break;
+        case WM_RBUTTONDOWN:
+            if (viewport.onMousePress) 
+                viewport.onMousePress(Mouse::Button::Right);
+            break;
+            
+        case WM_LBUTTONUP:
+            if(viewport.onMouseRelease)
+                viewport.onMouseRelease(Mouse::Button::Left);
+            break;
+        case WM_MBUTTONUP:
+            if(viewport.onMouseRelease)
+                viewport.onMouseRelease(Mouse::Button::Middle);
+            break;
+        case WM_RBUTTONUP:
+            if(viewport.onMouseRelease)
+                viewport.onMouseRelease(Mouse::Button::Right);
+            break;
     }
 
-    if(msg == WM_MOUSELEAVE) {
-        if(viewport.onMouseLeave) viewport.onMouseLeave();
-    }
-
-    if(msg == WM_LBUTTONDOWN || msg == WM_MBUTTONDOWN || msg == WM_RBUTTONDOWN) {
-        if(viewport.onMousePress) switch(msg) {
-        case WM_LBUTTONDOWN: viewport.onMousePress(Mouse::Button::Left); break;
-        case WM_MBUTTONDOWN: viewport.onMousePress(Mouse::Button::Middle); break;
-        case WM_RBUTTONDOWN: viewport.onMousePress(Mouse::Button::Right); break;
-        }
-    }
-
-    if(msg == WM_LBUTTONUP || msg == WM_MBUTTONUP || msg == WM_RBUTTONUP) {
-        if(viewport.onMouseRelease) switch(msg) {
-        case WM_LBUTTONUP: viewport.onMouseRelease(Mouse::Button::Left); break;
-        case WM_MBUTTONUP: viewport.onMouseRelease(Mouse::Button::Middle); break;
-        case WM_RBUTTONUP: viewport.onMouseRelease(Mouse::Button::Right); break;
-        }
-    }
     return DefWindowProc(hwnd, msg, wparam, lparam);
 }
 

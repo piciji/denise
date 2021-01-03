@@ -129,6 +129,15 @@ struct System {
         bool active = false;
     } diskSilence;
     
+    struct {
+        uint8_t value = 255;
+        unsigned invertEvery = 64;
+        unsigned randomPatternLength = 1;
+        unsigned repeatRandomPattern = 256;
+        unsigned randomChance = 0;
+        
+    } memoryInit;
+    
     #include "testbench.h"
     
     auto setFirmware( unsigned typeId, uint8_t* data, unsigned size ) -> void;
@@ -141,7 +150,7 @@ struct System {
     auto power(bool softReset = false) -> void;
 	auto powerOff() -> void;
     auto run() -> void;
-    auto initRam() -> void;   
+    auto initRam(uint8_t*& mem) -> void;   
     auto useExtraSids(uint8_t requestedSids) -> void;
     
     auto calcSerializationSize() -> void;

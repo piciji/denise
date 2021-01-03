@@ -47,6 +47,8 @@ auto TabWindow::build() -> void {
     keyboardImage.loadPng((uint8_t*)Icons::keyboard, sizeof(Icons::keyboard));
     toolsImage.loadPng((uint8_t*)Icons::tools, sizeof(Icons::tools));
 
+    append(tab);
+    
     settingsLayout = new SettingsLayout;
     audioLayout = new AudioLayout;
     videoLayout = new VideoLayout;
@@ -63,9 +65,7 @@ auto TabWindow::build() -> void {
     tab.setLayout(Layout::Settings, *settingsLayout, {~0u, ~0u} );                               
 
     tab.setMargin(10);
-    tab.setSelection(0);
-        
-    append(tab);
+    tab.setSelection(0);        
     
     tab.onChange = [this]() {
         settingsLayout->removePreview();

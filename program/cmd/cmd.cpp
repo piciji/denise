@@ -184,7 +184,7 @@ auto Cmd::parse() -> void {
 			globalSettings->set<bool>("fps_limit", false);
 			globalSettings->set<bool>("dynamic_rate_control", false );			
             globalSettings->set<bool>("fps", true );			
-            globalSettings->set("video_screen_text", 2);
+            globalSettings->set("video_screen_text", 0);
             settingsC64->set<bool>( "video_cycle_accuracy", true );  
 			updateModel( emuC64, LIBC64::Interface::ModelIdDisableGreyDotBug, 0 );
 			
@@ -241,6 +241,9 @@ auto Cmd::parse() -> void {
             }                                  
         }
     }
+	
+	if (noGui)
+		globalSettings->set<bool>("fps", false );
 	
 	if (fastTestbench) {
 		aggressiveFastforward = true;

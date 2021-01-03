@@ -1,4 +1,75 @@
 
+MemoryPatternLayout::FirstLine::FirstLine() {
+    append( valueLabel, {0u, 0u}, 10 );
+    append( valueStepper, {0u, 0u}, 10 );
+    append( invertValueEveryLabel, {0u, 0u}, 10 );
+    append( invertValueEveryCombo, {0u, 0u} );
+    
+    valueStepper.setRange(0, 0xff);
+    
+    invertValueEveryCombo.append( "0 bytes", 0 );
+    invertValueEveryCombo.append( "1 byte", 1 );       
+    
+    unsigned i = 2;
+    while(i < (64 * 1024)) {
+        
+        invertValueEveryCombo.append( std::to_string(i) + " bytes", i );
+        
+        i <<= 1;
+    }
+    
+    setAlignment(0.5);
+}
+
+MemoryPatternLayout::SecondLine::SecondLine() {
+    
+    append( lengthRandomLabel, {0u, 0u}, 10 );
+    append( lengthRandomCombo, {0u, 0u}, 10 );
+    append( repeatRandomEveryLabel, {0u, 0u}, 10 );
+    append( repeatRandomEveryCombo, {0u, 0u} );
+
+    lengthRandomCombo.append("0 bytes", 0);
+    lengthRandomCombo.append("1 byte", 1);
+    repeatRandomEveryCombo.append("0 bytes", 0);
+    repeatRandomEveryCombo.append("1 byte", 1);
+    
+    unsigned i = 2;
+    while (i < (64 * 1024)) {
+
+        lengthRandomCombo.append(std::to_string(i) + " bytes", i);
+        repeatRandomEveryCombo.append(std::to_string(i) + " bytes", i);
+
+        i <<= 1;
+    }
+    
+    setAlignment(0.5);
+}
+
+MemoryPatternLayout::ThirdLine::ThirdLine() {
+    
+    append( randomChanceLabel, {0u, 0u}, 10 );
+    append( randomChanceStepper, {0u, 0u} );
+    
+    randomChanceStepper.setRange(0, 1000);
+    
+    setAlignment(0.5);
+}
+
+MemoryPatternLayout::MemoryPatternLayout() {
+    
+    setPadding(10);
+    setFont(GUIKIT::Font::system("bold"));
+    
+    append( firstLine, {0u, 0u}, 10 );
+    append( secondLine, {0u, 0u}, 10 );
+    append( thirdLine, {0u, 0u}, 10 );
+    append( preview, {GUIKIT::Font::scale(400), GUIKIT::Font::scale(270)} );
+    
+    preview.setFont( GUIKIT::Font::system("", true) );
+    preview.setForegroundColor( 0x3c3c3c );
+    preview.setEditable(false);
+}
+
 SettingsLayout::Control::Control() {    
     append( load, {0u, 0u}, 10 );
     append( save, {0u, 0u}, 10 );
@@ -84,12 +155,15 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
     moduleList.setHeaderVisible( false );     
     moduleList.append( {"settings"} );
     moduleList.append( {"states"} );
+    moduleList.append( {"memory"} );
     
     settingsImage.loadPng((uint8_t*)Icons::settings, sizeof(Icons::settings));
     scriptImage.loadPng((uint8_t*)Icons::script, sizeof(Icons::script));
+    memImage.loadPng((uint8_t*)Icons::memory, sizeof(Icons::memory));
     
     moduleList.setImage(0, 0, settingsImage);
     moduleList.setImage(1, 0, scriptImage);
+    moduleList.setImage(2, 0, memImage);
     
     moduleList.setSelection(0);
     moduleFrame.append( moduleList, { GUIKIT::Font::scale(130), GUIKIT::Font::scale(100)} );
@@ -113,11 +187,84 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
     statesFrame.append( stateDirect, {~0u, 0u}, 5 );    
     statesFrame.append( stateFolder, {~0u, 0u} );
     
+    if(dynamic_cast<LIBC64::Interface*>(emulator))
+        memoryPattern = new MemoryPatternLayout;
+    
     moduleSwitch.setLayout( 0, settingsFrame, {~0u, ~0u} );
     moduleSwitch.setLayout( 1, statesFrame, {~0u, ~0u} );
+    if(memoryPattern)
+        moduleSwitch.setLayout( 2, *memoryPattern, {~0u, ~0u} );
     
     append( moduleSwitch, {~0u, ~0u} );
     
+    if(memoryPattern) {
+        memoryPattern->firstLine.valueStepper.onStepUp = [this]() {
+
+            //mes->warning( "up" + std::to_string(memoryPattern->firstLine.valueStepper.getValue()) );
+            
+            _settings->set<unsigned>("memory_value", (unsigned)(memoryPattern->firstLine.valueStepper.getValue()));
+            
+            this->updateMemoryPreview();
+        };
+
+        memoryPattern->firstLine.valueStepper.onStepDown = [this]() {
+
+            //mes->warning( "down" + std::to_string(memoryPattern->firstLine.valueStepper.getValue()));
+            _settings->set<unsigned>("memory_value", (unsigned)(memoryPattern->firstLine.valueStepper.getValue()) );
+            
+            this->updateMemoryPreview();
+        };
+
+        memoryPattern->firstLine.valueStepper.onChange = [this]() {
+        //    mes->warning( "change" + std::to_string(memoryPattern->firstLine.valueStepper.getValue()) );
+
+            _settings->set<unsigned>("memory_value", (unsigned)(memoryPattern->firstLine.valueStepper.getValue()));
+
+            this->updateMemoryPreview();
+        };
+        
+        memoryPattern->firstLine.invertValueEveryCombo.onChange = [this]() {
+
+            _settings->set<unsigned>("memory_invert_every", (unsigned)(memoryPattern->firstLine.invertValueEveryCombo.userData()));
+
+            this->updateMemoryPreview();
+        };
+        
+        memoryPattern->secondLine.lengthRandomCombo.onChange = [this]() {
+
+            _settings->set<unsigned>("memory_random_pattern", (unsigned)(memoryPattern->secondLine.lengthRandomCombo.userData()));
+
+            this->updateMemoryPreview();
+        };
+
+        memoryPattern->secondLine.repeatRandomEveryCombo.onChange = [this]() {
+
+            _settings->set<unsigned>("memory_random_repeat", (unsigned) (memoryPattern->secondLine.repeatRandomEveryCombo.userData()));
+
+            this->updateMemoryPreview();
+        };
+
+        memoryPattern->thirdLine.randomChanceStepper.onChange = [this]() {
+
+            _settings->set<unsigned>("random_chance", (unsigned) (memoryPattern->thirdLine.randomChanceStepper.getValue()));
+
+            this->updateMemoryPreview();
+        };          
+
+        memoryPattern->thirdLine.randomChanceStepper.onStepUp = [this]() {
+
+            _settings->set<unsigned>("random_chance", (unsigned) (memoryPattern->thirdLine.randomChanceStepper.getValue()));
+
+            this->updateMemoryPreview();
+        };  
+        
+        memoryPattern->thirdLine.randomChanceStepper.onStepDown = [this]() {
+
+            _settings->set<unsigned>("random_chance", (unsigned) (memoryPattern->thirdLine.randomChanceStepper.getValue()));
+
+            this->updateMemoryPreview();
+        };
+    }
     settings.listView.onChange = [this]() {
         
         if (!settings.control.load.enabled()) {
@@ -552,6 +699,77 @@ auto ConfigurationsLayout::loadSettings() -> void {
     stateFast.autoSaveIdent.setChecked( _settings->get<bool>( "auto_save_ident", true) );
     stateFast.top.edit.setText( _settings->get<std::string>( "save_ident", "") );
     stateFolder.pathEdit.setText(_settings->get<std::string>("states_folder", ""));
+    
+    if(memoryPattern) {
+        uint8_t value = _settings->get<unsigned>("memory_value", 255);
+        unsigned invertEvery = _settings->get<unsigned>("memory_invert_every", 64);
+        unsigned randomPatternLength = _settings->get<unsigned>("memory_random_pattern", 1);
+        unsigned repeatRandomPattern = _settings->get<unsigned>("memory_random_repeat", 256);
+        unsigned randomChance = _settings->get<unsigned>("random_chance", 0);
+        
+        memoryPattern->firstLine.valueStepper.setValue( value );
+        memoryPattern->firstLine.invertValueEveryCombo.setSelectionByUserId( invertEvery );
+        
+        memoryPattern->secondLine.lengthRandomCombo.setSelectionByUserId( randomPatternLength );
+        memoryPattern->secondLine.repeatRandomEveryCombo.setSelectionByUserId( repeatRandomPattern );
+        
+        memoryPattern->thirdLine.randomChanceStepper.setValue( randomChance );
+        
+        updateMemoryPreview();
+    }
+}
+
+auto ConfigurationsLayout::updateMemoryPreview() -> void {
+    
+    uint8_t value = _settings->get<unsigned>("memory_value", 255);
+    unsigned invertEvery = _settings->get<unsigned>("memory_invert_every", 64);
+    unsigned randomPatternLength = _settings->get<unsigned>("memory_random_pattern", 1);
+    unsigned repeatRandomPattern = _settings->get<unsigned>("memory_random_repeat", 256);
+    unsigned randomChance = _settings->get<unsigned>("random_chance", 0);
+    
+    unsigned size = emulator->getMemorySize();
+    
+    uint8_t* pattern = new uint8_t[ size ];
+    
+    emulator->setMemoryInitParams( value, invertEvery, randomPatternLength, repeatRandomPattern, randomChance );
+    
+    emulator->getMemoryInitPattern( pattern );
+    
+    char hex[6];
+    
+    std::string out = "";
+    
+    unsigned addr = 0;
+    
+    uint8_t i;
+    
+    while(true) {
+        
+        sprintf( hex, "%04x", addr );
+        
+        out += (std::string)hex;
+        out += ": ";
+
+        for (i = 0; i < 16; i++, addr++) {
+
+            sprintf(hex, "%02x", pattern[addr]);
+
+            out += (std::string)hex;
+            out += " ";
+        }
+        
+        out += "\r\n";
+        
+        if (addr == size)
+            break;
+        
+        if ((addr & 0xff) == 0)
+            out += "\r\n";
+    }
+    
+    delete[] pattern;
+    
+    memoryPattern->preview.setText( out );
 }
 
 auto ConfigurationsLayout::translate() -> void {
@@ -588,9 +806,24 @@ auto ConfigurationsLayout::translate() -> void {
     
     moduleList.setText( 0, 0, trans->get( "settings" ) ); 
     moduleList.setText( 1, 0, trans->get( "states" ) );
+    moduleList.setText( 2, 0, trans->get( "memory" ) );
     
     moduleFrame.setText( trans->get("selection") );
     
     if (_settings->get<std::string>( "custom_settings", "" ) == "")                    
         settings.active.fileLabel.setText( trans->get("default") );
+    
+    if(memoryPattern) {
+        memoryPattern->setText( trans->get("memory reset initialisation") );
+
+        memoryPattern->firstLine.valueLabel.setText( trans->get( "value memory cell", {}, true ) );
+        memoryPattern->firstLine.invertValueEveryLabel.setText( trans->get( "invert value every", {}, true ) );
+
+        memoryPattern->secondLine.lengthRandomLabel.setText( trans->get( "length random pattern", {}, true ) );
+        memoryPattern->secondLine.repeatRandomEveryLabel.setText( trans->get( "repeat random every", {}, true ) );
+
+        memoryPattern->thirdLine.randomChanceLabel.setText( trans->get( "random chance", {}, true ) );
+
+        GUIKIT::HorizontalLayout::alignChildrenVertically( {&memoryPattern->firstLine, &memoryPattern->secondLine, &memoryPattern->thirdLine} );
+    }
 }

@@ -385,13 +385,6 @@ auto Window::Cocoa::setDisableIconsInTopMenu(bool state) -> void {
     window.p.disableIconsInTopMenu = state;
 #endif
 }
-    
-auto Window::Winapi::disableBackgroundRedrawDuringResize(bool state) -> void {
-    if (_A::dummy) return;
-    #ifdef GUIKIT_WINAPI
-        window.p.bgUpdateState = state ? 1 : 0;
-    #endif
-}
 
 //statusbar
 StatusBar::StatusBar() : p(*new pStatusBar(*this)), Base() {}
@@ -821,8 +814,7 @@ auto ComboButton::setSelectionByUserId(int userId) -> void {
         selection++;
     }
     
-    if(selection >= state.rows.size()) return;
-    p.setSelection(selection);
+    setSelection( selection );
 }
 
 auto ComboButton::setText(unsigned selection, const std::string& text) -> void {
@@ -891,6 +883,30 @@ auto ProgressBar::setPosition(unsigned position) -> void {
 }
 
 ProgressBar::ProgressBar() : Widget(*new pProgressBar(*this)), p((pProgressBar&)Widget::p) { if (!_A::dummy) p.init(); }
+
+auto ListView::lockRedraw() -> void {
+    if (_A::dummy) return;
+    p.lockRedraw();
+}
+
+auto ListView::unlockRedraw() -> void {
+    if (_A::dummy) return;
+    p.unlockRedraw();
+}
+
+auto ListView::append(const std::vector<std::vector<std::string>>& rows, bool clearBefore) -> void {
+    if (_A::dummy) return;    
+    
+    p.lockRedraw();
+    
+    if (clearBefore)
+        reset();
+    
+    for (auto& row : rows )
+        append( row );
+    
+    p.unlockRedraw();
+}
 
 auto ListView::append(const std::vector<std::string>& row) -> void {
     if (_A::dummy) return;
@@ -966,9 +982,9 @@ auto ListView::setText(unsigned selection, unsigned position, const std::string&
 auto ListView::setImage(unsigned selection, unsigned position, Image& image) -> void {
     if (_A::dummy) return;
     if(selection >= state.images.size()) return;
-    std::vector<Image*>& row = state.images.at(selection);
+    std::vector<Image*>& row = state.images[selection];
     if(position >= row.size()) return;
-    row.at(position) = &image;
+    row[position] = &image;
     p.setImage(selection, position, image);
 }
 
@@ -1458,12 +1474,12 @@ auto MessageWindow::translateCancel(const std::string& str) -> void {
     trans.cancel = str;
 }
 //font
-auto Font::system(unsigned size, const std::string& style) -> std::string {
-    return pFont::system(size, style);
+auto Font::system(unsigned size, const std::string& style, bool monospaced) -> std::string {
+    return pFont::system(size, style, monospaced);
 }
 
-auto Font::system(const std::string& style) -> std::string {
-    return pFont::system(0, style);
+auto Font::system(const std::string& style, bool monospaced) -> std::string {
+    return pFont::system(0, style, monospaced);
 }
 
 auto Font::size(const std::string& font, const std::string& text) -> Size {
@@ -1519,4 +1535,3 @@ auto Thread::setPriorityRealtime( std::thread& th ) -> void {
 }
 
 }
-

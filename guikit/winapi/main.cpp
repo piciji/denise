@@ -29,7 +29,7 @@ namespace GUIKIT {
 #include "widgets/treeview.cpp"
    
 auto pApplication::run() -> void {
-    if (Application::loop) {
+    if (Application::loop) {        
         while(!Application::isQuit) {
             Application::loop();
             processEvents();
@@ -119,22 +119,39 @@ auto CALLBACK pApplication::wndProc(WNDPROC windowProc, HWND hwnd, UINT msg, WPA
     Window& window = dynamic_cast<Window*>(base) ? (Window&)*base : *((Widget*)base)->window();
 
     switch(msg) {  
+        case WM_CTLCOLOREDIT: {            
+            Base* base = (Base*)GetWindowLongPtr((HWND)lparam, GWLP_USERDATA);
+            if(base == nullptr) break;
+            
+            HBRUSH brush = ((Widget*)base)->p.getColor( wparam );
+            
+            if (!brush)
+                break;
+            
+            return (LRESULT)brush;
+        }
         case WM_CTLCOLORBTN:
         case WM_CTLCOLORSTATIC: {
             Base* base = (Base*)GetWindowLongPtr((HWND)lparam, GWLP_USERDATA);
             if(base == nullptr) break;
 
-            if (dynamic_cast<LineEdit*>(base)) {
-                return windowProc(hwnd, WM_CTLCOLOREDIT, wparam, lparam);
+            if (dynamic_cast<LineEdit*>(base) || dynamic_cast<MultilineEdit*>(base) || dynamic_cast<StepButton*>(base)) {
+                
+                HBRUSH brush = ((Widget*) base)->p.getColor(wparam);
+
+                if (!brush)
+                    return windowProc(hwnd, WM_CTLCOLOREDIT, wparam, lparam);
+
+                return (LRESULT) brush;
             }
             
-            TabFrameLayout* tabFrameLayout = TabFrameLayout::getParentTabFrame( (Sizable*)base );
-            if (tabFrameLayout) {
+			TabFrameLayout* parentTabFrameLayout = ((Widget*)base)->p.parentTabFrameLayout;
+            
+            if (parentTabFrameLayout) {
                 if (!IsAppThemed()) break;
 
                 SetBkMode((HDC)(wparam), TRANSPARENT);
-                pTabFrame::updateTabBackgroundForControl( tabFrameLayout->frameWidget->p.hwnd, ((Widget*)base)->p.hwnd);
-                return (INT_PTR)pTabFrame::bkgndBrush;
+                return (INT_PTR)pTabFrame::getTabBackgroundForControl( parentTabFrameLayout->frameWidget->p.hwnd, ((Widget*)base)->p.hwnd);
 
             } else if(window.p.brush) {
                 SetBkColor((HDC)wparam, window.p.brushColor);
@@ -153,6 +170,7 @@ auto CALLBACK pApplication::wndProc(WNDPROC windowProc, HWND hwnd, UINT msg, WPA
             if(dynamic_cast<MenuRadioItem*>(base)) { ((MenuRadioItem*)base)->p.onActivate(); return false; }
             if(dynamic_cast<LineEdit*>(base) && HIWORD(wparam) == EN_SETFOCUS) { ((LineEdit*)base)->p.onFocus(); return false; }
             if(dynamic_cast<LineEdit*>(base) && HIWORD(wparam) == EN_CHANGE) { ((LineEdit*)base)->p.onChange(); return false; }
+            if(dynamic_cast<StepButton*>(base) && HIWORD(wparam) == EN_CHANGE) { ((StepButton*)base)->p.onChange(); return false; }
             if(dynamic_cast<MultilineEdit*>(base) && HIWORD(wparam) == EN_SETFOCUS) { ((MultilineEdit*)base)->p.onFocus(); return false; }
             if(dynamic_cast<MultilineEdit*>(base) && HIWORD(wparam) == EN_CHANGE) { ((MultilineEdit*)base)->p.onChange(); return false; }
 
@@ -176,7 +194,7 @@ auto CALLBACK pApplication::wndProc(WNDPROC windowProc, HWND hwnd, UINT msg, WPA
             if(dynamic_cast<TreeView*>(base) && ((LPNMHDR)lparam)->code == TVN_ITEMEXPANDED) { ((TreeView*)base)->p.onExpanded(lparam); break; }
             if(dynamic_cast<TreeView*>(base) && ((LPNMHDR)lparam)->code == NM_DBLCLK) { ((TreeView*)base)->p.onActivate(); break; }
             if(dynamic_cast<TreeView*>(base) && ((LPNMHDR)lparam)->code == NM_RETURN) { ((TreeView*)base)->p.onActivate(); break; }
-            if(dynamic_cast<StepButton*>(base) && ((LPNMHDR)lparam)->code == UDN_DELTAPOS) { ((StepButton*)base)->p.onStep(); break; }
+            if(dynamic_cast<StepButton*>(base) && ((LPNMHDR)lparam)->code == UDN_DELTAPOS) { ((StepButton*)base)->p.onStep(lparam); break; }
             if(dynamic_cast<TabFrameLayout::TabFrame*>(base) && ((LPNMHDR)lparam)->code == TCN_SELCHANGE) { ((TabFrameLayout::TabFrame*)base)->p.onChange(); break; }            
             if(dynamic_cast<Hyperlink*>(base) && ((LPNMHDR)lparam)->code == NM_CLICK) {
                 PNMLINK pNMLink = (PNMLINK) lparam;
@@ -269,13 +287,12 @@ auto CALLBACK pApplication::wndProc(WNDPROC windowProc, HWND hwnd, UINT msg, WPA
 //window
 pWindow::pWindow(Window& window) : window(window) {
     locked = false;
-    bgUpdateState = pApplication::version <= Windows7 ? 1 : 0;
     brush = 0;
     hCursor = LoadCursor(0, IDC_ARROW);
 
     Geometry geo = window.state.geometry;
 
-    hwnd = CreateWindow(L"app_gui", L"", ResizableStyle, geo.x, geo.y, geo.width, geo.height, 0, 0, GetModuleHandle(0), 0);
+    hwnd = CreateWindow( L"app_gui", L"", ResizableStyle | (IsAppThemed( ) ? WS_CLIPCHILDREN : 0), geo.x, geo.y, geo.width, geo.height, 0, 0, GetModuleHandle(0), 0);
     hmenu = CreateMenu();
 	contextmenu = CreatePopupMenu();        
 
@@ -309,22 +326,17 @@ auto CALLBACK pWindow::wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam
 		case WM_ENTERMENULOOP:
 			if(window.winapi.onMenu) window.winapi.onMenu();
 			break;
-        case WM_ENTERSIZEMOVE:
-            if(window.p.bgUpdateState > 0) window.p.bgUpdateState = 2;
+        case WM_ENTERSIZEMOVE:            
             break;
         case WM_EXITSIZEMOVE:
-            if(window.p.bgUpdateState > 0) {
-                window.p.bgUpdateState = 3;
-                InvalidateRect( hwnd, NULL, true );
-            } break;
+            break;
         case WM_PAINT:
-            if(window.p.brush != 0 && window.p.bgUpdateState == 3 ) {
-                window.p.bgUpdateState = 1;
-                return true;
-            } break;
-        case WM_ERASEBKGND: 
-			if(window.p.onEraseBackground()) return true;
-			break;
+            break;
+            
+        case WM_ERASEBKGND: {     
+			if(window.p.onEraseBackground()) return true;     
+            break;            
+        } 
         case WM_ACTIVATE:            
 			if ((LOWORD(wparam) == WA_ACTIVE) && (LOWORD(wparam) != WA_CLICKACTIVE)) {
 				if (window.onUnminimize)
@@ -534,7 +546,6 @@ auto pWindow::onDrop(WPARAM wparam) -> void {
 }
 
 auto pWindow::onEraseBackground() -> bool {
-    if(bgUpdateState == 2) return true;
     if(brush == 0) return false;
     RECT rc;
     GetClientRect(hwnd, &rc);

@@ -36,14 +36,14 @@ auto pLabel::create() -> void {
     destroy(hwndTip);
     
     hwnd = CreateWindow(WC_STATIC, L"", WS_CHILD | SS_NOTIFY,
-        0, 0, 0, 0, label.window()->p.hwnd, (HMENU)(unsigned long long)label.id, GetModuleHandle(0), 0);
+        0, 0, 0, 0, getParentHandle(), (HMENU)(unsigned long long)label.id, GetModuleHandle(0), 0);
 
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)&label);
     wndprocOrig = (WNDPROC)SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)subclassWndProc);
 }
 
 auto pLabel::rebuild() -> void {
-    if (hwnd)
+    if(!needRebuild())
         return;
     
     create();
@@ -68,48 +68,59 @@ auto CALLBACK pLabel::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM
         return DefWindowProc(hwnd, msg, wparam, lparam);
 
     switch(msg) {
-        case WM_GETDLGCODE: return DLGC_STATIC | DLGC_WANTCHARS;
-        case WM_ERASEBKGND: return TRUE;
+        case WM_GETDLGCODE:
+            return DLGC_STATIC | DLGC_WANTCHARS;
+        case WM_ERASEBKGND:
+            return 0;
         case WM_PAINT: {
-            PAINTSTRUCT ps;
-            BeginPaint(hwnd, &ps);
             RECT rc;
             GetClientRect(hwnd, &rc);
-            SetBkMode(ps.hdc, TRANSPARENT);
-            TabFrameLayout* tabFrameLayout = TabFrameLayout::getParentTabFrame( (Widget*)label );
-            if (tabFrameLayout) {
-                if (IsAppThemed()) {
-                    pTabFrame::updateTabBackgroundForControl( tabFrameLayout->frameWidget->p.hwnd, ((Widget*)label)->p.hwnd);
-                    FillRect(ps.hdc, &rc, pTabFrame::bkgndBrush);
-                } else {
-                    HBRUSH hbrush = CreateSolidBrush(GetSysColor(COLOR_3DFACE));
-                    FillRect(ps.hdc, &rc, hbrush);
-                    DeleteObject(hbrush);
-                }
-            }
-            SelectObject(ps.hdc, ((Widget*)label)->p.hfont);
+
+            unsigned width = getWidth(rc);
+            unsigned height = getHeight(rc);
+            
+            PAINTSTRUCT ps;
+            HDC hdc = BeginPaint(hwnd, &ps);
+            HDC memHdc = CreateCompatibleDC(hdc);
+            HBITMAP memBitmap = CreateCompatibleBitmap(hdc, width, height);
+            SelectObject(memHdc, memBitmap);
+            
+            SetBkMode(memHdc, TRANSPARENT);
+			
+			HBRUSH brush = label->p.getBackgroundBrush();
+			if (brush)
+				FillRect(memHdc, &rc, brush);
+            
+            SelectObject(memHdc, ((Widget*)label)->p.hfont);
             unsigned length = GetWindowTextLength(hwnd);
             wchar_t text[length + 1];
             GetWindowText(hwnd, text, length + 1);
             text[length] = 0;
-            DrawText(ps.hdc, text, -1, &rc, DT_CALCRECT | DT_END_ELLIPSIS);
-            unsigned height = rc.bottom;
+            DrawText(memHdc, text, -1, &rc, DT_CALCRECT | DT_END_ELLIPSIS);
+            unsigned _height = rc.bottom;
             GetClientRect(hwnd, &rc);
-            rc.top = (rc.bottom - height) / 2; //center vertically
-            rc.bottom = rc.top + height;
+            rc.top = (rc.bottom - _height) / 2; //center vertically
+            rc.bottom = rc.top + _height;
             if (!label->enabled())
-                SetTextColor(ps.hdc, GetSysColor(COLOR_GRAYTEXT) );
+                SetTextColor(memHdc, GetSysColor(COLOR_GRAYTEXT) );
 			else if (label->overrideForegroundColor()) {
 				unsigned color = label->foregroundColor();
-				SetTextColor(ps.hdc, RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff) );
+				SetTextColor(memHdc, RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff) );
 			}
 				
             UINT format = label->state.align == Label::Align::Left ? DT_LEFT : DT_RIGHT;
             
-            DrawText(ps.hdc, text, -1, &rc, format | DT_END_ELLIPSIS);
+            DrawText(memHdc, text, -1, &rc, format | DT_END_ELLIPSIS);
+            
+            BitBlt(hdc, 0, 0, width, height, memHdc, 0, 0, SRCCOPY);
+            
+            DeleteObject(memBitmap);
+            DeleteDC    (memHdc);
+            DeleteDC    (hdc);
             EndPaint(hwnd, &ps);
-            return false;
+            return 0;
         }
     }
-    return DefWindowProc(hwnd, msg, wparam, lparam);
+    //return DefWindowProc(hwnd, msg, wparam, lparam);
+    return CallWindowProc(label->p.wndprocOrig, hwnd, msg, wparam, lparam);
 }

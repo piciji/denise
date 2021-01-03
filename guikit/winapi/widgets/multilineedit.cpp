@@ -5,20 +5,22 @@ auto pMultilineEdit::create() -> void {
     
     hwnd = CreateWindowEx(
         WS_EX_CLIENTEDGE, WC_EDIT, L"",
-        WS_CHILD | WS_TABSTOP | ES_AUTOVSCROLL | WS_VSCROLL | ES_MULTILINE,
-        0, 0, 0, 0, multilineEdit.window()->p.hwnd, (HMENU)(unsigned long long)multilineEdit.id, GetModuleHandle(0), 0 );
+        WS_CHILD | WS_TABSTOP | WS_VSCROLL | ES_AUTOVSCROLL | ES_MULTILINE | ES_WANTRETURN,
+        0, 0, 0, 0, getParentHandle(), (HMENU)(unsigned long long)multilineEdit.id, GetModuleHandle(0), 0 );
 
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)&multilineEdit);
-}
-
-auto pMultilineEdit::minimumSize() -> Size {
-    Size size = getMinimumSize();
-    return {size.width + 16, size.height + 6};
+    
+    //wndprocOrig = (WNDPROC)SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)subclassWndProc);    
 }
 
 auto pMultilineEdit::setEditable(bool editable) -> void {
     if(hwnd)
         SendMessage(hwnd, EM_SETREADONLY, !editable, 0);
+}
+
+auto pMultilineEdit::setForegroundColor(unsigned color) -> void {
+    if (hwnd)
+        InvalidateRect(hwnd, 0, false);
 }
 
 auto pMultilineEdit::setText(std::string text) -> void {
@@ -54,14 +56,30 @@ auto pMultilineEdit::onFocus() -> void {
 }
 
 auto pMultilineEdit::rebuild() -> void {
-    if (hwnd)
+    if(!needRebuild())
         return;
     
     widget.state.text = text();
     create();
     setFont( widget.font() );
+    
     setEditable(multilineEdit.editable());
     setText(widget.text());
     setMaxLength( multilineEdit.maxLength() );
     pWidget::rebuild();
+}
+
+auto CALLBACK pMultilineEdit::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT {
+    MultilineEdit* multilineEdit = (MultilineEdit*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
+    if(multilineEdit == nullptr) return DefWindowProc(hwnd, msg, wparam, lparam);
+    Window* window = (Window*)multilineEdit->Sizable::state.window;
+    if(window == nullptr) return DefWindowProc(hwnd, msg, wparam, lparam);
+
+    switch(msg) {
+        case WM_ERASEBKGND: 
+            return 0;   
+            
+    }
+
+    return CallWindowProc(multilineEdit->p.wndprocOrig, hwnd, msg, wparam, lparam);
 }
