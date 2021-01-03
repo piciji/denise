@@ -14,6 +14,7 @@
     * prepare individual Multi SID configurations
 * UI: rework sub-menu handling within configuration window
 * UI: rework status bar (Drive LED's, Tape control)
+* add UI for custom RAM init patterns
 
 ## 1.0.9.1
 * fix TAPE emulation (broken in 1.0.9)

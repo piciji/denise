@@ -28,8 +28,7 @@
     * Dongles
 * color banding
 * support to put clipboard in C64 memory
-* UI for custom RAM init patterns
-    
+   
 
 # todo Amiga A500, A1200
 * blitter
