@@ -59,15 +59,20 @@ MemoryPatternLayout::MemoryPatternLayout() {
     
     setPadding(10);
     setFont(GUIKIT::Font::system("bold"));
+	GUIKIT::Label test;
+	test.setFont( GUIKIT::Font::system("", true) );
+	test.setText( "0000: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 " );
+	auto size = test.minimumSize();
     
     append( firstLine, {0u, 0u}, 10 );
     append( secondLine, {0u, 0u}, 10 );
     append( thirdLine, {0u, 0u}, 10 );
-    append( preview, {GUIKIT::Font::scale(400), GUIKIT::Font::scale(270)} );
+    append( preview, {GUIKIT::Font::scale(size.width + 5), GUIKIT::Font::scale(size.height * 18)} );
     
     preview.setFont( GUIKIT::Font::system("", true) );
     preview.setForegroundColor( 0x3c3c3c );
     preview.setEditable(false);
+	
 }
 
 SettingsLayout::Control::Control() {    
@@ -198,25 +203,18 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
     append( moduleSwitch, {~0u, ~0u} );
     
     if(memoryPattern) {
-        memoryPattern->firstLine.valueStepper.onStepUp = [this]() {
-
-            //mes->warning( "up" + std::to_string(memoryPattern->firstLine.valueStepper.getValue()) );
-            
-            _settings->set<unsigned>("memory_value", (unsigned)(memoryPattern->firstLine.valueStepper.getValue()));
-            
-            this->updateMemoryPreview();
-        };
-
-        memoryPattern->firstLine.valueStepper.onStepDown = [this]() {
-
-            //mes->warning( "down" + std::to_string(memoryPattern->firstLine.valueStepper.getValue()));
-            _settings->set<unsigned>("memory_value", (unsigned)(memoryPattern->firstLine.valueStepper.getValue()) );
-            
-            this->updateMemoryPreview();
-        };
+		
+		memoryPattern->preview.onChange = [this]() {
+			mes->warning( "on change" );
+		};
+		
+		memoryPattern->preview.onFocus = [this]() {
+			
+		};
 
         memoryPattern->firstLine.valueStepper.onChange = [this]() {
-        //    mes->warning( "change" + std::to_string(memoryPattern->firstLine.valueStepper.getValue()) );
+			
+			logger->log("change", 1);
 
             _settings->set<unsigned>("memory_value", (unsigned)(memoryPattern->firstLine.valueStepper.getValue()));
 
@@ -250,20 +248,6 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
 
             this->updateMemoryPreview();
         };          
-
-        memoryPattern->thirdLine.randomChanceStepper.onStepUp = [this]() {
-
-            _settings->set<unsigned>("random_chance", (unsigned) (memoryPattern->thirdLine.randomChanceStepper.getValue()));
-
-            this->updateMemoryPreview();
-        };  
-        
-        memoryPattern->thirdLine.randomChanceStepper.onStepDown = [this]() {
-
-            _settings->set<unsigned>("random_chance", (unsigned) (memoryPattern->thirdLine.randomChanceStepper.getValue()));
-
-            this->updateMemoryPreview();
-        };
     }
     settings.listView.onChange = [this]() {
         

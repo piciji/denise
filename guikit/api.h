@@ -415,14 +415,11 @@ struct MultilineEdit : Widget {
     std::function<void ()> onFocus = nullptr;
 
     auto editable() const -> bool { return state.editable; }
-    auto maxLength() const -> unsigned { return state.maxLength; }
     auto text() -> std::string;
     auto setEditable(bool editable = true) -> void;
-    auto setMaxLength( unsigned maxLength ) -> void;
     
     struct {
         bool editable = true;
-        unsigned maxLength = 0; // no limit
     } state;
 
     pMultilineEdit& p;
@@ -482,8 +479,6 @@ struct Button : Widget {
 };
 
 struct StepButton : Widget {
-    std::function<void ()> onStepUp = nullptr;
-    std::function<void ()> onStepDown = nullptr;
     std::function<void ()> onChange = nullptr;
     
     auto setRange(int16_t minValue, int16_t maxValue) -> void;

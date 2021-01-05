@@ -155,6 +155,25 @@ struct pLineEdit : pWidget {
     pLineEdit(LineEdit& lineEdit) : pWidget(lineEdit), lineEdit(lineEdit) { }
 };
 
+struct pMultilineEdit : pWidget {
+    MultilineEdit& multilineEdit;
+	GtkWidget* subWidget = nullptr;
+	GtkTextBuffer* buffer = nullptr;
+
+    auto setEditable(bool editable) -> void;
+    auto setText(std::string text) -> void;
+    auto text() -> std::string;
+	auto setForegroundColor(unsigned color) -> void;
+	auto destroy() -> void;
+    
+    auto init() -> void;
+    static auto onChange(MultilineEdit* self) -> void;
+    static auto onFocus(MultilineEdit* self) -> bool;
+    auto create() -> void;
+	
+	pMultilineEdit(MultilineEdit& multilineEdit) : pWidget(multilineEdit), multilineEdit(multilineEdit) {}
+};
+
 struct pLabel : pWidget {
     Label& label;
 
@@ -211,6 +230,21 @@ struct pButton : pWidget {
 
     pButton(Button& button) : pWidget(button), button(button) { }
 };
+
+struct pStepButton : pWidget {
+    StepButton& stepButton;
+    
+    auto updateRange() -> void;
+    auto setValue( int16_t value ) -> void;
+
+    auto minimumSize() -> Size;
+    auto init() -> void;
+    auto create() -> void;
+    static auto onChange(GtkAdjustment* adjustment, StepButton* self) -> void;
+
+    pStepButton(StepButton& stepButton) : pWidget(stepButton), stepButton(stepButton) {}
+};
+
 
 struct pCheckButton : pWidget {
     CheckButton& checkButton;
@@ -602,7 +636,7 @@ struct pMessageWindow {
 struct pFont {
     static auto setFont(GtkWidget* widget, std::string font) -> PangoFontDescription*;
     static auto setFont(GtkWidget* widget, gpointer font) -> void;
-    static auto system(unsigned size, std::string style) -> std::string;
+    static auto system(unsigned size, std::string style, bool monospaced = false) -> std::string;
     static auto create(std::string desc) -> PangoFontDescription*;
     static auto add( CustomFont* customFont ) -> bool;
     static auto free(PangoFontDescription* font) -> void;

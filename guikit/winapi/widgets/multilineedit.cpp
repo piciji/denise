@@ -40,11 +40,6 @@ auto pMultilineEdit::text() -> std::string {
     return utf8_t(text);
 }
 
-auto pMultilineEdit::setMaxLength( unsigned maxLength ) -> void {
-    if(hwnd)
-        SendMessage(hwnd, EM_SETLIMITTEXT, maxLength, 0);
-}
-
 auto pMultilineEdit::onChange() -> void {
     if(!locked && multilineEdit.onChange)
         multilineEdit.onChange();
@@ -65,7 +60,6 @@ auto pMultilineEdit::rebuild() -> void {
     
     setEditable(multilineEdit.editable());
     setText(widget.text());
-    setMaxLength( multilineEdit.maxLength() );
     pWidget::rebuild();
 }
 

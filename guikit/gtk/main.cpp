@@ -11,7 +11,9 @@ namespace GUIKIT {
     
 #include "widgets/widget.cpp"   
 #include "widgets/button.cpp"   
+#include "widgets/stepbutton.cpp"
 #include "widgets/lineedit.cpp"
+#include "widgets/multilineedit.cpp"
 #include "widgets/label.cpp"
 #include "widgets/hyperlink.cpp"
 #include "widgets/checkbutton.cpp"

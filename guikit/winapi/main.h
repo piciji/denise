@@ -211,7 +211,6 @@ struct pMultilineEdit : pWidget {
     auto setEditable(bool editable) -> void;
     auto setText(std::string text) -> void;
     auto text() -> std::string;
-    auto setMaxLength( unsigned maxLength ) -> void;
     auto setForegroundColor(unsigned color) -> void;
 
     pMultilineEdit(MultilineEdit& multilineEdit) : pWidget(multilineEdit), multilineEdit(multilineEdit) {}

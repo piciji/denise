@@ -222,7 +222,7 @@ auto pSystem::getColorCss( unsigned color, bool useComplementaryColor ) -> std::
 }
 
 //font
-auto pFont::system(unsigned size, std::string style) -> std::string {
+auto pFont::system(unsigned size, std::string style, bool monospaced) -> std::string {
     std::string family = "";
     gchar* fontName = 0;
     g_object_get(gtk_settings_get_default(), "gtk-font-name", &fontName, NULL);
@@ -236,9 +236,16 @@ auto pFont::system(unsigned size, std::string style) -> std::string {
         }
     }
 
-    if (family.empty()) family = "Sans";
-    if (size == 0) size = 9;
-    if(style == "") style = "Normal";
+	if (monospaced)
+		family = "monospace";
+	else if (family.empty())
+		family = "Sans";
+	
+    if(size == 0)
+		size = 9;
+	
+    if(style == "")
+		style = "Normal";
 
     return family + ", " + std::to_string(size) + ", " + style;
 }

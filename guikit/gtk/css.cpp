@@ -99,4 +99,13 @@
 			background-image: none;
 		}
 		
+		.scrollBox {
+			border-width: 1px;
+			border-style: solid;
+			padding-left: 2px;
+			padding-right: 2px;
+			padding-top: 0px;
+			padding-bottom: 0px;
+		}
+		
 	)";

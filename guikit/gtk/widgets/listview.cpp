@@ -170,7 +170,7 @@ auto pListView::setFont(std::string font) -> void {
 		pSystem::addCssClass(subWidget, "removeRowSpacing");
 
 		pSystem::applyCss(subWidget, ".removeRowSpacing { padding: 0px; -GtkTreeView-expander-size: 0; -GtkTreeView-vertical-separator: 0; -GtkTreeView-horizontal-separator: 0; }");
-	}
+	}	
 }
 
 auto pListView::onActivate(GtkTreeView* treeView, GtkTreePath* path, GtkTreeViewColumn* column, ListView* self) -> void {
@@ -288,6 +288,11 @@ auto pListView::setImage(unsigned selection, unsigned position, Image& image) ->
 			gtk_list_store_set(store, &iter, position * 2, pixbuf, -1);
 			g_object_unref( G_OBJECT( pixbuf ) );
 		}
+		
+		for(auto& cell : column) {
+			gtk_tree_view_column_set_spacing( cell.column, 4 );
+		}
+		
     } else {
         gtk_list_store_set(store, &iter, position * 2, nullptr, -1);
     }

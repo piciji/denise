@@ -4,14 +4,12 @@ auto pButton::minimumSize() -> Size {
 	
 	auto context = gtk_widget_get_style_context (gtkWidget);
     auto state = gtk_widget_get_state_flags (gtkWidget);
-	GtkBorder padding;
 	GtkBorder border;
 	
 	gtk_style_context_get_border (context, state, &border);
 		
     return {size.width + 4 + border.left + border.right + 10,
-		size.height + border.top + border.bottom + 10};
-	
+		size.height + border.top + border.bottom + 10};		
 	
 }
 

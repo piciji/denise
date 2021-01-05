@@ -689,13 +689,6 @@ auto MultilineEdit::text() -> std::string {
     return p.text();
 }
 
-
-auto MultilineEdit::setMaxLength( unsigned maxLength ) -> void {
-    if (_A::dummy) return;
-    state.maxLength = maxLength;
-    p.setMaxLength( maxLength );
-}
-
 MultilineEdit::MultilineEdit() : Widget(*new pMultilineEdit(*this)), p((pMultilineEdit&)Widget::p) { if (!_A::dummy) p.init(); }
 
 auto Label::setAlign( Align align ) -> void {
