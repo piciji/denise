@@ -70,7 +70,7 @@ MemoryPatternLayout::MemoryPatternLayout(TabWindow* tabWindow) {
     append( preview, {size.width + tabWindow->getScrollbarWidth(), size.height * 17} );
     
     preview.setFont( GUIKIT::Font::system("", true) );
-    preview.setForegroundColor( 0x3c3c3c );
+    preview.setForegroundColor( 0x5a5e63 );
     preview.setEditable(false);
 }
 

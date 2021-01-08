@@ -58,7 +58,7 @@ struct pWindow {
     auto restore() -> void;
     auto minimized() -> bool;
     auto setForeground() -> void;
-    auto getScrollbarWidth() -> unsigned { return 5; }
+    auto getScrollbarWidth() -> unsigned { return 12; }
     
     bool disableIconsInTopMenu = false;
 
