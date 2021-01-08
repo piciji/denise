@@ -144,9 +144,8 @@ auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
     statusBar->append( 11, &(view->ledOffImage) );    // expansion LED
     statusBar->append( 12, "DRC DRC DRC DRC DRC DRC DRC DRC D" );    // DRC Status
     statusBar->append( 13, &(view->recordhiImage) );    // REC Status
-    statusBar->append( 14, "0000", nullptr );    // FPS
+    statusBar->append( 14, "00001", nullptr );    // FPS
 }
-
             
 auto StatusHandler::transferToOSD( std::string text ) -> void {
 	static auto option = globalSettings->getOrInit("video_screen_text", 0, {0u, 2u});

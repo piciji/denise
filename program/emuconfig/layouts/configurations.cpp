@@ -67,12 +67,11 @@ MemoryPatternLayout::MemoryPatternLayout(TabWindow* tabWindow) {
     append( firstLine, {0u, 0u}, 10 );
     append( secondLine, {0u, 0u}, 10 );
     append( thirdLine, {0u, 0u}, 10 );
-    append( preview, {GUIKIT::Font::scale(size.width + tabWindow->getScrollbarWidth() ), GUIKIT::Font::scale(size.height * 17)} );
+    append( preview, {size.width + tabWindow->getScrollbarWidth(), size.height * 17} );
     
     preview.setFont( GUIKIT::Font::system("", true) );
     preview.setForegroundColor( 0x3c3c3c );
     preview.setEditable(false);
-	
 }
 
 SettingsLayout::Control::Control() {    
