@@ -9,8 +9,10 @@
 #include "tooltip.m"
 
 #include "widgets/widget.cpp"   
-#include "widgets/button.cpp"   
+#include "widgets/button.cpp"
+#include "widgets/stepbutton.cpp"
 #include "widgets/lineedit.cpp"
+#include "widgets/multilineedit.cpp"
 #include "widgets/label.cpp"
 #include "widgets/checkbutton.cpp"
 #include "widgets/checkbox.cpp"
@@ -139,6 +141,8 @@
         item = [[[NSMenuItem alloc] initWithTitle:[NSString stringWithFormat:@"Quit %@", applicationName] action:@selector(menuQuit) keyEquivalent:@"q"] autorelease];
         [item setTarget:self];
         [appMenu addItem:item];
+        
+        [self setAutorecalculatesKeyViewLoop: YES];
     }
     
     if(GUIKIT::Application::loop) {

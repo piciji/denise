@@ -134,6 +134,21 @@ struct pLineEdit : pWidget {
     pLineEdit(LineEdit& lineEdit) : pWidget(lineEdit), lineEdit(lineEdit) { }
 };
 
+struct pMultilineEdit : pWidget {
+    MultilineEdit& multilineEdit;
+    
+    auto setEditable(bool editable) -> void;
+    auto setText(std::string text) -> void;
+    auto text() -> std::string;
+    auto setForegroundColor(unsigned color) -> void;
+    auto setGeometry(Geometry geometry) -> void;
+    auto setFont(std::string font) -> void;
+    
+    auto init() -> void;
+    
+    pMultilineEdit(MultilineEdit& multilineEdit) : pWidget(multilineEdit), multilineEdit(multilineEdit) { }
+};
+
 struct pLabel : pWidget {
     Label& label;
     StatusBar::Part* part = nullptr;
@@ -190,6 +205,26 @@ struct pButton : pWidget {
     pButton(Button& button) : pWidget(button), button(button) { }
 };
 
+struct pStepButton : pWidget {
+    StepButton& stepButton;
+    NSView* editView;
+    NSView* stepView;
+    IntegerFormatter* formatter;
+
+    auto updateRange() -> void;
+    auto setValue( int16_t value ) -> void;
+    auto setGeometry(Geometry geometry) -> void;
+    auto setFont(std::string font) -> void;
+    
+    auto minimumSize() -> Size;
+    auto init() -> void;
+    
+    pStepButton(StepButton& stepButton) : pWidget(stepButton), stepButton(stepButton) {}
+    
+    ~pStepButton();
+};
+
+    
 struct pCheckButton : pWidget {
     CheckButton& checkButton;
 
@@ -497,7 +532,7 @@ struct pMessageWindow {
 };
 
 struct pFont {
-    static auto system(unsigned size, std::string style) -> std::string;
+    static auto system(unsigned size, std::string style, bool monospaced = false) -> std::string;
     static auto size(std::string font, std::string text) -> Size;
     static auto cocoaFont(std::string desc) -> NSFont*;
     static auto size(NSFont* font, std::string text) -> Size;

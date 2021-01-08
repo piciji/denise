@@ -27,14 +27,14 @@ auto pRadioBox::minimumSize() -> Size {
     Size size = pFont::size([inner font], widget.text());
     
     calculatedMinimumSize.updated = true;   
-    calculatedMinimumSize.minimumSize = {size.width + 22, size.height + 1};
+    calculatedMinimumSize.minimumSize = {size.width + 22, size.height + 0};
     
     return calculatedMinimumSize.minimumSize;
 }
     
 auto pRadioBox::setGeometry(Geometry geometry) -> void {
     pWidget::setGeometry({
-        geometry.x - 1, geometry.y + 1,
+        geometry.x - 1, geometry.y + 0,
         geometry.width + 2, geometry.height
     });
     

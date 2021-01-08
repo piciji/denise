@@ -71,9 +71,34 @@
 }
 @end
 
+@interface CocoaTextView : NSTextView <NSTextViewDelegate> {
+@public
+    GUIKIT::MultilineEdit* multilineEdit;
+}
+@end
+
+@interface CocoaMultilineEdit : NSScrollView {
+@public
+    GUIKIT::MultilineEdit* multilineEdit;
+    CocoaTextView* content;
+}
+@end
+
 @interface CocoaButton : NSButton {
 @public
     GUIKIT::Button* button;
+}
+@end
+
+@interface CocoaStepEdit : NSTextField <NSTextFieldDelegate> {
+@public
+    GUIKIT::StepButton* stepButton;
+}
+@end
+
+@interface CocoaStepButton : NSStepper {
+@public
+    GUIKIT::StepButton* stepButton;
 }
 @end
 
@@ -200,6 +225,12 @@
 @interface CocoaFileDialog : NSObject<NSOpenSavePanelDelegate> {
 @public
     GUIKIT::BrowserWindow* browserWindow;
+}
+@end
+
+@interface IntegerFormatter : NSNumberFormatter {
+@public
+    bool allowNegative;
 }
 @end
 

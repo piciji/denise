@@ -26,7 +26,10 @@ auto pWidget::setFocused() -> void {
 auto pWidget::setFont(std::string font) -> void {
     @autoreleasepool {
         if([cocoaView respondsToSelector:@selector(setFont:)]) {
-            [cocoaView setFont:pFont::cocoaFont(font)];
+            NSFont* nsfont = pFont::cocoaFont(font);
+
+            if (nsfont != nil)
+                [cocoaView setFont:nsfont];
         }
     }
     calculatedMinimumSize.updated = false;

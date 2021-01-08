@@ -30,6 +30,42 @@
 }
 @end
 
+@implementation IntegerFormatter : NSNumberFormatter
+
+-(id) initWith:(bool)allowNegative {
+    if(self = [super init]) {
+        allowNegative = allowNegative;
+    }
+    return self;
+}
+
+- (BOOL)isPartialStringValid:(NSString *)partialString
+newEditingString:(NSString *__autoreleasing *)newString
+errorDescription:(NSString *__autoreleasing *)error {
+    for (int i = 0; i < [partialString length]; i++) {
+        unichar c = [partialString characterAtIndex:i];
+        if (!allowNegative) {
+            if (!(c >= '0' && c <= '9')) return NO;
+        } else {
+            if (!(c >= '0' && c <= '9') && !(i == 0 && c == '-')) return NO;
+        }
+    }
+    return YES;
+}
+
+- (NSString *)stringForObjectValue:(id)obj {
+    return obj;
+}
+
+- (BOOL)getObjectValue:(__autoreleasing id *)obj
+forString:(NSString *)string
+errorDescription:(NSString *__autoreleasing *)error {
+    *obj = string;
+    return YES;
+}
+
+@end
+
 namespace GUIKIT {
 
 #include "versioning.cpp"
@@ -188,12 +224,17 @@ auto pSystem::getOSLang() -> System::Language {
 }
     
 //font
-auto pFont::system(unsigned size, std::string style) -> std::string {
+auto pFont::system(unsigned size, std::string style, bool monospaced) -> std::string {
     if(style == "") style = "Normal";
     @autoreleasepool {
         NSFont* font = [NSFont systemFontOfSize: [NSFont systemFontSize]];
         std::string family([[font familyName] UTF8String]);
 
+        if (monospaced)
+            family = "Andale Mono";
+        
+    //    NSLog(@"%@", [[[NSFontManager sharedFontManager] availableFontFamilies] description]);
+            
         if(size == 0) {
             CGFloat defaultFontSize = [NSFont systemFontSize];
             size = defaultFontSize / 1.5;
@@ -209,8 +250,8 @@ auto pFont::cocoaFont(std::string desc) -> NSFont* {
     CGFloat size = 8.0;
     NSFontTraitMask traits = 0;
 
-    if(tokens.at(0) != "") family = [NSString stringWithUTF8String:tokens.at(0).c_str()];
-    if(tokens.size() >= 2  && String::isNumber(tokens.at(1))) size = std::stoi(tokens.at(1));
+    if(tokens.at(0) != "") family = [NSString stringWithUTF8String:tokens[0].c_str()];
+    if(tokens.size() >= 2  && String::isNumber(tokens.at(1))) size = std::stoi(tokens[1]);
     if(tokens.size() >= 3) {
         for(unsigned i = 2; i < tokens.size(); i++) {
             std::string style = String::toLowerCase( tokens.at( i ) );
@@ -224,6 +265,7 @@ auto pFont::cocoaFont(std::string desc) -> NSFont* {
         }
     }
     size *= 1.5;  //scale to point sizes
+    
     return [[NSFontManager sharedFontManager] fontWithFamily:family traits:traits weight:5 size:size];
 }
 
@@ -231,8 +273,9 @@ auto pFont::size(NSFont* font, std::string text) -> Size {
     @autoreleasepool {
         NSString* cocoaText = [NSString stringWithUTF8String:text.c_str()];
         NSDictionary* fontAttributes = [NSDictionary dictionaryWithObjectsAndKeys:font, NSFontAttributeName, nil];
+        
         NSSize size = [cocoaText sizeWithAttributes:fontAttributes];
-        return {(unsigned)size.width, (unsigned)size.height};
+        return {(unsigned)ceil(size.width), (unsigned)ceil(size.height)};
     }
 }
 

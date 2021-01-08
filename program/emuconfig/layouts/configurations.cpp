@@ -67,7 +67,7 @@ MemoryPatternLayout::MemoryPatternLayout() {
     append( firstLine, {0u, 0u}, 10 );
     append( secondLine, {0u, 0u}, 10 );
     append( thirdLine, {0u, 0u}, 10 );
-    append( preview, {GUIKIT::Font::scale(size.width + 5), GUIKIT::Font::scale(size.height * 18)} );
+    append( preview, {GUIKIT::Font::scale(size.width + 5), GUIKIT::Font::scale(size.height * 16)} );
     
     preview.setFont( GUIKIT::Font::system("", true) );
     preview.setForegroundColor( 0x3c3c3c );
@@ -205,17 +205,15 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
     if(memoryPattern) {
 		
 		memoryPattern->preview.onChange = [this]() {
-			mes->warning( "on change" );
+         //   mes->warning( "on change" );
 		};
 		
 		memoryPattern->preview.onFocus = [this]() {
-			
+		//	mes->warning( "on focus" );
 		};
 
         memoryPattern->firstLine.valueStepper.onChange = [this]() {
 			
-			logger->log("change", 1);
-
             _settings->set<unsigned>("memory_value", (unsigned)(memoryPattern->firstLine.valueStepper.getValue()));
 
             this->updateMemoryPreview();

@@ -34,6 +34,10 @@ namespace GUIKIT {
     
 auto pLabel::minimumSize() -> Size {
     Size size = getMinimumSize();
+    
+    if ([[cocoaView font] isFixedPitch])
+        return {size.width + 1, size.height};
+
     return {size.width + 1, size.height + 4};
 }
 
@@ -45,7 +49,7 @@ auto pLabel::setAlign( Label::Align align ) -> void {
 }
     
 auto pLabel::setGeometry(Geometry geometry) -> void {
-    unsigned height = pFont::size([cocoaView font], " ").height;
+    unsigned height = getMinimumSize().height;
     unsigned widgetHeight = geometry.height + 4;
     auto offset = geometry;
     
