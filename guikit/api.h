@@ -236,6 +236,7 @@ struct Window : Base {
     auto changeCursor( Image& image, unsigned hotSpotX, unsigned hotSpotY ) -> void;
     auto setDefaultCursor( ) -> void;
     auto setPointerCursor( ) -> void;
+    auto getScrollbarWidth() -> unsigned;
 	
 	static auto addCustomFont( CustomFont* customFont ) -> bool;
 

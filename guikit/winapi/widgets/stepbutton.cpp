@@ -127,21 +127,11 @@ auto pStepButton::onStep(LPARAM lparam) -> void {
     else if (newValue > stepButton.state.maxValue)
         newValue = stepButton.state.minValue;
 
+    stepButton.state.value = newValue;
     stepButton.Widget::state.text = std::to_string( newValue );
 
-    if ( newValue > stepButton.state.value) {
-
-        stepButton.state.value = newValue;
-
-        if(stepButton.onStepUp)
-            stepButton.onStepUp();
-
-    } else if ( newValue < stepButton.state.value) {
-        stepButton.state.value = newValue;
-
-        if(stepButton.onStepDown)
-            stepButton.onStepDown();
-    }                   
+    if (stepButton.onChange)
+        stepButton.onChange();                 
 }
 
 auto pStepButton::onChange() -> void {

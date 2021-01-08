@@ -55,7 +55,7 @@ MemoryPatternLayout::ThirdLine::ThirdLine() {
     setAlignment(0.5);
 }
 
-MemoryPatternLayout::MemoryPatternLayout() {
+MemoryPatternLayout::MemoryPatternLayout(TabWindow* tabWindow) {
     
     setPadding(10);
     setFont(GUIKIT::Font::system("bold"));
@@ -67,7 +67,7 @@ MemoryPatternLayout::MemoryPatternLayout() {
     append( firstLine, {0u, 0u}, 10 );
     append( secondLine, {0u, 0u}, 10 );
     append( thirdLine, {0u, 0u}, 10 );
-    append( preview, {GUIKIT::Font::scale(size.width + 5), GUIKIT::Font::scale(size.height * 16)} );
+    append( preview, {GUIKIT::Font::scale(size.width + tabWindow->getScrollbarWidth() ), GUIKIT::Font::scale(size.height * 17)} );
     
     preview.setFont( GUIKIT::Font::system("", true) );
     preview.setForegroundColor( 0x3c3c3c );
@@ -193,7 +193,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
     statesFrame.append( stateFolder, {~0u, 0u} );
     
     if(dynamic_cast<LIBC64::Interface*>(emulator))
-        memoryPattern = new MemoryPatternLayout;
+        memoryPattern = new MemoryPatternLayout(tabWindow);
     
     moduleSwitch.setLayout( 0, settingsFrame, {~0u, ~0u} );
     moduleSwitch.setLayout( 1, statesFrame, {~0u, ~0u} );

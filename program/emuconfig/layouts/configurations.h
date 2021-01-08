@@ -87,7 +87,7 @@ struct MemoryPatternLayout : GUIKIT::FramedVerticalLayout {
     
     GUIKIT::MultilineEdit preview;
     
-    MemoryPatternLayout();
+    MemoryPatternLayout(TabWindow* tabWindow);
 };
 
 struct ConfigurationsLayout : GUIKIT::HorizontalLayout {

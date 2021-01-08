@@ -85,6 +85,7 @@ struct pWindow {
     auto isOffscreen() -> bool;
     auto handle() -> uintptr_t;
     auto setForeground() -> void;
+    auto getScrollbarWidth() -> unsigned { return 20; }
 
     auto onEraseBackground() -> bool;
     auto onClose() -> void;

@@ -386,6 +386,10 @@ auto Window::Cocoa::setDisableIconsInTopMenu(bool state) -> void {
 #endif
 }
 
+auto Window::getScrollbarWidth() -> unsigned {
+    return p.getScrollbarWidth();
+}
+
 //statusbar
 StatusBar::StatusBar() : p(*new pStatusBar(*this)), Base() {}
 
