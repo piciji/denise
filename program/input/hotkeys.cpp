@@ -195,7 +195,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
 			break;
 			
         case Hotkey::AnyLoad:           
-            view->setAutoload( emulator );
+            view->setAnyload( emulator );
             break;
             
         case Hotkey::Id::CaptureMouse:

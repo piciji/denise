@@ -36,6 +36,9 @@ System::System(Interface* interface) {
 	
 	ram = new uint8_t[ 64 * 1024 ];
     colorRam = new uint8_t[ 1 * 1024 ];
+	kernalRom = (uint8_t*)Firmware::kernalRom;
+	basicRom = (uint8_t*)Firmware::basicRom;
+	charRom = (uint8_t*)Firmware::charRom;
             
     createExpansions();
 	vicIICycle = new VicIICycle;   
@@ -67,6 +70,7 @@ System::System(Interface* interface) {
 	powerSupply = new Emulator::PowerSupply;
 	tape = new Tape( &interface->mediaGroups[Interface::MediaGroupIdTape].media[0] );
     iecBus = new IecBus( &interface->mediaGroups[Interface::MediaGroupIdDisk] );
+	iecBus->setFirmware( (uint8_t*)Firmware::drive1541Rom );
     
     cia1 = new CIA::M6526( 1, &sysTimer );
     cia2 = new CIA::M6526( 2, &sysTimer );  
@@ -90,22 +94,16 @@ System::System(Interface* interface) {
     };
 
     readCharRom = [this](uint16_t addr) {
-        if ( !this->charRom ) 
-            return (uint8_t)0xff;
         
         return this->charRom[ addr & 0xfff ];
     };
 
     readKernalRom = [this](uint16_t addr) {
-        if (!this->kernalRom)
-            return (uint8_t)0xff;
         
         return (uint8_t) this->kernalRom[ addr & 0x1fff ];
     };
 
     readBasicRom = [this](uint16_t addr) {
-        if (!this->basicRom) 
-            return (uint8_t)0xff;
 
         return (uint8_t) this->basicRom[ addr & 0x1fff ];
     };

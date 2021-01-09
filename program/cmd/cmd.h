@@ -8,15 +8,7 @@ struct Cmd {
     
     Cmd(int argc, char** argv) {        
         set(argc, argv);
-    }
-    
-    struct Options {
-        std::string ident;
-        std::string description;
-        std::string param;
-    };
-    
-    std::vector<Options> options;
+    }          
     
     std::vector<std::string> arguments;
 
@@ -28,7 +20,6 @@ struct Cmd {
     bool helpRequested = false;
     bool versionRequested = false;
 	uint8_t autostartPrg = 1;
-	bool autostartPrgOverride = false;
     std::string screenshotPath = "";
     
     auto set(int argc, char** argv) -> void;
@@ -43,7 +34,7 @@ struct Cmd {
     
     auto collectAllowedSuffix() -> std::vector<std::string>;
     
-    auto setCycles(std::string arg) -> void;
+    auto getCycles(std::string arg) -> unsigned;
     
     auto setReuSize(std::string arg) -> void;
     

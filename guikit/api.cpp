@@ -48,7 +48,6 @@ Base::Base() {
 //application
 bool Application::isQuit = false;
 int Application::exitCode = 0;
-bool Application::dummy = false;
 std::string Application::name = "";
 std::function<void ()> Application::loop = nullptr;
 std::function<void ()> Application::Cocoa::onAbout;
@@ -120,14 +119,12 @@ Window::~Window() {
 }
 
 auto Window::append(Menu& menu) -> void {
-    if (_A::dummy) return;
     state.menus.push_back(&menu);
     menu.state.parentWindow = this;
     p.append(menu);
 }
 
 auto Window::remove(Menu& menu) -> void {
-    if (_A::dummy) return;
     if (Vector::eraseVectorElement<Menu*>(state.menus, &menu)) {
         p.remove(menu);
         menu.state.parentWindow = nullptr;
@@ -144,19 +141,16 @@ auto Window::isApended(Menu& menu) -> bool {
 }
 
 auto Window::append(Widget& widget) -> void {
-    if (_A::dummy) return;
     widget.Sizable::state.window = this;
     p.append(widget);
 }
 
 auto Window::remove(Widget& widget) -> void {
-    if (_A::dummy) return;
     p.remove(widget);
     widget.Sizable::state.window = nullptr;
 }
 
 auto Window::append(StatusBar& statusBar) -> void {
-	if (_A::dummy) return;
     state.statusBar = &statusBar;
     statusBar.state.window = this;
     p.append(statusBar);
@@ -169,7 +163,6 @@ auto Window::remove(StatusBar& statusBar) -> void {
 }
 
 auto Window::append(Layout& layout) -> void {
-    if (_A::dummy) return;
     if (state.layout) remove(layout);
     state.layout = &layout;
     layout.Sizable::state.parent = nullptr;
@@ -179,7 +172,6 @@ auto Window::append(Layout& layout) -> void {
 }
 
 auto Window::remove(Layout& layout) -> void {
-    if (_A::dummy) return;
     state.layout = nullptr;
     p.remove(layout);
     layout.reset();
@@ -187,7 +179,6 @@ auto Window::remove(Layout& layout) -> void {
 }
 
 auto Window::addCustomFont( CustomFont* customFont ) -> bool {	
-    if (_A::dummy) return false;
 	customFonts.push_back( customFont );	
 	return pWindow::addCustomFont( customFont );
 }
@@ -197,25 +188,21 @@ auto Window::setWidgetFont(const std::string& font) -> void {
 }
 
 auto Window::setDroppable(bool droppable) -> void {
-    if (_A::dummy) return;
     state.droppable = droppable;
     p.setDroppable(droppable);
 }
 
 auto Window::setBackgroundColor(unsigned color) -> void {
-    if (_A::dummy) return;
     p.setBackgroundColor(color);
 }
 
 auto Window::setVisible(bool visible) -> void {
-    if (_A::dummy) return;
     state.visible = visible;
     synchronizeLayout();
     p.setVisible(visible);
 }
 
 auto Window::restore() -> void {
-    if (_A::dummy) return;
     p.restore();
 }
 
@@ -224,12 +211,10 @@ auto Window::setForeground() -> void {
 }
 
 auto Window::setFocused() -> void {
-    if (_A::dummy) return;
     p.setFocused();
 }
 
 auto Window::setFocused(unsigned delay) -> void {
-    if (_A::dummy) return;
     if (!focusTimer)
         focusTimer = new Timer;
     
@@ -243,19 +228,16 @@ auto Window::setFocused(unsigned delay) -> void {
 }
 
 auto Window::setTitle(const std::string& text) -> void {
-    if (_A::dummy) return;
     state.title = text;
     p.setTitle(text);
 }
 
 auto Window::setStatusVisible(bool visible) -> void {
-    if (_A::dummy) return;
     state.statusVisible = visible;
     p.setStatusVisible(visible);
 }
 
 auto Window::setMenuVisible(bool visible) -> void {
-    if (_A::dummy) return;
     if (Application::isCocoa() && !visible && fullScreen())
         // macOS hides the menu in fullscreen.
         // moving mouse to upper screen border make it visible
@@ -266,7 +248,6 @@ auto Window::setMenuVisible(bool visible) -> void {
 }
     
 auto Window::setFullScreen(bool fullScreen) -> void {
-    if (_A::dummy) return;
     if (p.fullScreenToggleDelayed()) {
         return;
     }
@@ -275,13 +256,11 @@ auto Window::setFullScreen(bool fullScreen) -> void {
 }
 
 auto Window::setResizable(bool resizable) -> void {
-    if (_A::dummy) return;
     state.resizable = resizable;
     p.setResizable(resizable);
 }
 
 auto Window::setGeometry(Geometry geometry) -> void {
-    if (_A::dummy) return;
     geometry.width = std::min(geometry.width, pSystem::getDesktopSize().width);
     geometry.height = std::min(geometry.height, pSystem::getDesktopSize().height);
     state.geometry = geometry;
@@ -289,32 +268,26 @@ auto Window::setGeometry(Geometry geometry) -> void {
 }
 
 auto Window::isOffscreen() -> bool { 
-    if (_A::dummy) return false;
     return p.isOffscreen();
 }
 
 auto Window::synchronizeLayout() -> void {
-    if (_A::dummy) return;
     if(visible() && !Application::isQuit) p.setGeometry(geometry());
 }
 
 auto Window::focused() -> bool {
-    if (_A::dummy) return true;
     return p.focused();
 }
 
 auto Window::minimized() -> bool {
-    if (_A::dummy) return false;
     return p.minimized();
 }
 
 auto Window::geometry() -> Geometry {
-    if (_A::dummy) return {0,0,0,0};
     return p.geometry();
 }
 
 auto Window::changeCursor( Image& image, unsigned hotSpotX, unsigned hotSpotY ) -> void {
-    if (_A::dummy) return;
     if (state.cursorImage == &image)
         return;
     
@@ -326,7 +299,6 @@ auto Window::changeCursor( Image& image, unsigned hotSpotX, unsigned hotSpotY ) 
 }
 
 auto Window::setDefaultCursor( ) -> void {
-    if (_A::dummy) return;
    // if (!state.cursorImage)
      //   return;
     
@@ -340,9 +312,7 @@ auto Window::setDefaultCursor( ) -> void {
     p.setDefaultCursor();
 }
 
-auto Window::setPointerCursor( ) -> void {
-    if (_A::dummy) return;
-    
+auto Window::setPointerCursor( ) -> void {    
     if (cursor == Cursor::Pointer)
         return;
     
@@ -354,33 +324,28 @@ auto Window::setPointerCursor( ) -> void {
 }
     
 auto Window::handle() -> uintptr_t {
-    if (_A::dummy) return 0;
     return p.handle();
 }
 
 auto Window::Cocoa::setTitleForAppMenuItem(AppMenuItem appMenuItem, std::string title) -> void {
-    if (_A::dummy) return;
 #if GUIKIT_COCOA
     window.p.setTitleForAppMenuItem(appMenuItem, title);
 #endif
 }
 
 auto Window::Cocoa::setHiddenForAppMenuItem(AppMenuItem appMenuItem, bool state) -> void {
-    if (_A::dummy) return;
 #if GUIKIT_COCOA
     window.p.setHiddenForAppMenuItem(appMenuItem, state);
 #endif
 }
     
 auto Window::Cocoa::keepMenuVisibilityOnDisplay(bool state) -> void {
-    if (_A::dummy) return;
 #if GUIKIT_COCOA
     window.p.keepMenuVisibilityOnDisplay( state );
 #endif
 }
 
 auto Window::Cocoa::setDisableIconsInTopMenu(bool state) -> void {
-    if (_A::dummy) return;
 #if GUIKIT_COCOA
     window.p.disableIconsInTopMenu = state;
 #endif
@@ -395,22 +360,17 @@ StatusBar::StatusBar() : p(*new pStatusBar(*this)), Base() {}
 
 StatusBar::~StatusBar() { delete &p; }
 
-auto StatusBar::setFont(std::string font) -> void {
-    if (_A::dummy) return;
-    
+auto StatusBar::setFont(std::string font) -> void {    
     state.font = font;
     p.setFont(font);    
 }
 
 auto StatusBar::setText(std::string text) -> void {
-    if (_A::dummy) return;
     state.text = text;
     p.setText(text);
 }
 
 auto StatusBar::append(unsigned id, std::string text, std::function<void ()> onClick, Menu* popupMenu, int pos) -> void {
-	if (_A::dummy) return;
-
 	Part part;
 	part.id = id;
     part.width = p.getWidth( text );
@@ -430,9 +390,7 @@ auto StatusBar::append(unsigned id, std::string text, std::function<void ()> onC
 }
     
     
-auto StatusBar::append(unsigned id, Image* image, std::function<void ()> onClick, Menu* popupMenu, int pos) -> void {
-	if (_A::dummy) return;
-	
+auto StatusBar::append(unsigned id, Image* image, std::function<void ()> onClick, Menu* popupMenu, int pos) -> void {	
 	Part part;
 	part.id = id;
 	part.width = image->width;
@@ -450,9 +408,7 @@ auto StatusBar::append(unsigned id, Image* image, std::function<void ()> onClick
 	state.updatePending = true;
 }
     
-auto StatusBar::removePart( unsigned id ) -> void {
-    if (_A::dummy) return;
-    
+auto StatusBar::removePart( unsigned id ) -> void {    
     unsigned pos = 0;
     for(auto& part : state.parts) {
         if (part.id == id) {
@@ -465,9 +421,7 @@ auto StatusBar::removePart( unsigned id ) -> void {
     state.updatePending = true;
 }
 
-auto StatusBar::updateText( unsigned id, std::string text, int overrideForegroundColor ) -> bool {
-    if (_A::dummy) return false;
-    
+auto StatusBar::updateText( unsigned id, std::string text, int overrideForegroundColor ) -> bool {    
     for(auto& part : state.parts) {
         if (part.id == id) {
             
@@ -488,9 +442,7 @@ auto StatusBar::updateText( unsigned id, std::string text, int overrideForegroun
     return false;
 }
     
-auto StatusBar::updateImage( unsigned id, Image* image ) -> bool {
-    if (_A::dummy) return false;
-    
+auto StatusBar::updateImage( unsigned id, Image* image ) -> bool {    
     for (auto& part : state.parts) {
         if (part.id == id) {
             if (!part.visible) {
@@ -508,9 +460,7 @@ auto StatusBar::updateImage( unsigned id, Image* image ) -> bool {
     return false;
 }
     
-auto StatusBar::updateVisible( unsigned id, bool visible ) -> bool {
-    if (_A::dummy) return false;
-    
+auto StatusBar::updateVisible( unsigned id, bool visible ) -> bool {    
     for(auto& part : state.parts) {
         if (part.id == id) {
             if (part.visible != visible) {
@@ -523,9 +473,7 @@ auto StatusBar::updateVisible( unsigned id, bool visible ) -> bool {
     return false;
 }
     
-auto StatusBar::updateTooltip( unsigned id, std::string tooltip ) -> bool {
-    if (_A::dummy) return false;
-    
+auto StatusBar::updateTooltip( unsigned id, std::string tooltip ) -> bool {    
     for(auto& part : state.parts) {
         if (part.id == id) {
             if (part.tooltip != tooltip) {
@@ -552,9 +500,7 @@ auto StatusBar::clear() -> void {
     state.updatePending = true;
 }
 
-auto StatusBar::update(bool force) -> void {
-    if (_A::dummy) return;
-	
+auto StatusBar::update(bool force) -> void {	
     if (force || state.updatePending) {
         p.update();
         state.updatePending = false;
@@ -563,23 +509,19 @@ auto StatusBar::update(bool force) -> void {
 
 //widgets
 auto Widget::focused() -> bool {
-    if (_A::dummy) return false;
     return p.focused();
 }
 
 auto Widget::setEnabled(bool enabled) -> void {
-    if (_A::dummy) return;
     Sizable::state.enabled = enabled;
     p.setEnabled(enabled);
 }
 
 auto Widget::setFocused() -> void {
-    if (_A::dummy) return;
     return p.setFocused();
 }
 
 auto Widget::setFont(const std::string& font, bool specialFont) -> void {
-    if (_A::dummy) return;
     state.font = font;
     state.specialFont = specialFont;
     p.setFont(font);
@@ -591,50 +533,42 @@ auto Widget::font() -> std::string {
 }
 
 auto Widget::setGeometry(Geometry geometry) -> void {
-    if (_A::dummy) return;
     state.geometry = geometry;
     p.setGeometry(geometry);
 }
 
 auto Widget::setVisible(bool visible) -> void {
-    if (_A::dummy) return;
     Sizable::state.visible = visible;
     p.setVisible(visible);
 }
 
 auto Widget::minimumSize() -> Size {
-    if (_A::dummy) return {0,0};
     return p.minimumSize();
 }
 
 auto Widget::setText(const std::string& text) -> void {
-    if (_A::dummy) return;
     state.text = text;
     p.setText(text);
 }
 
 auto Widget::setTooltip(const std::string& tooltip) -> void {
-    if (_A::dummy) return;
     state.tooltip = tooltip;
     p.setTooltip(tooltip);
 }
 
 auto Widget::setBackgroundColor(unsigned color) -> void {
-    if (_A::dummy) return;
     state.overrideBackgroundColor = true;
     state.backgroundColor = color;
     p.setBackgroundColor(color);
 }
 
 auto Widget::setForegroundColor(unsigned color) -> void {
-    if (_A::dummy) return;
     state.overrideForegroundColor = true;
     state.foregroundColor = color;
     p.setForegroundColor(color);
 }
 
 auto Widget::resetForegroundColor() -> void {
-    if (_A::dummy) return;
     state.overrideForegroundColor = false;
     state.foregroundColor = 0;
     p.setForegroundColor(0);
@@ -645,24 +579,20 @@ Widget::Widget(pWidget& p) : p(p), Sizable() { }
 Widget::~Widget() { delete &p; }
 
 auto LineEdit::setEditable(bool editable) -> void {
-    if (_A::dummy) return;
     state.editable = editable;
     p.setEditable(editable);
 }
 
 auto LineEdit::setDroppable(bool droppable) -> void {
-    if (_A::dummy) return;
     state.droppable = droppable;
     p.setDroppable(droppable);
 }
 
 auto LineEdit::text() -> std::string { 
-    if (_A::dummy) return "";
     return p.text();
 }
 
 auto LineEdit::value() -> int {
-    if (_A::dummy) return 0;
 	try {
         return std::stoi( p.text() );
     } catch( ... ) {
@@ -675,57 +605,50 @@ auto LineEdit::setValue(int value) -> void {
 }
 
 auto LineEdit::setMaxLength( unsigned maxLength ) -> void {
-    if (_A::dummy) return;
     state.maxLength = maxLength;
     p.setMaxLength( maxLength );
 }
 
-LineEdit::LineEdit() : Widget(*new pLineEdit(*this)), p((pLineEdit&)Widget::p) { if (!_A::dummy) p.init(); }
+LineEdit::LineEdit() : Widget(*new pLineEdit(*this)), p((pLineEdit&)Widget::p) { p.init(); }
 
 auto MultilineEdit::setEditable(bool editable) -> void {
-    if (_A::dummy) return;
     state.editable = editable;
     p.setEditable(editable);
 }
 
 auto MultilineEdit::text() -> std::string { 
-    if (_A::dummy) return "";
     return p.text();
 }
 
-MultilineEdit::MultilineEdit() : Widget(*new pMultilineEdit(*this)), p((pMultilineEdit&)Widget::p) { if (!_A::dummy) p.init(); }
+MultilineEdit::MultilineEdit() : Widget(*new pMultilineEdit(*this)), p((pMultilineEdit&)Widget::p) { p.init(); }
 
 auto Label::setAlign( Align align ) -> void {
-    if (_A::dummy) return;
     state.align = align;
     p.setAlign( align );
 }
 
-Label::Label() : Widget(*new pLabel(*this)), p((pLabel&)Widget::p) { if (!_A::dummy) p.init(); }
+Label::Label() : Widget(*new pLabel(*this)), p((pLabel&)Widget::p) { p.init(); }
 
 auto Hyperlink::setUri( std::string uri, std::string wrap ) -> void {
-    if (_A::dummy) return;
 	state.uri = uri;
 	state.wrap = wrap;
 	
 	p.setUri( uri, wrap );
 }
 
-Hyperlink::Hyperlink() : Widget(*new pHyperlink(*this)), p((pHyperlink&)Widget::p) { if (!_A::dummy) p.init(); }
+Hyperlink::Hyperlink() : Widget(*new pHyperlink(*this)), p((pHyperlink&)Widget::p) { p.init(); }
 
 auto SquareCanvas::setBorderColor(unsigned borderSize, unsigned borderColor) -> void {
-    if (_A::dummy) return;
     state.borderSize = borderSize;
     state.borderColor = borderColor;
     p.setBorderColor( borderSize, borderColor );
 }
 
-SquareCanvas::SquareCanvas() : Widget(*new pSquareCanvas(*this)), p((pSquareCanvas&)Widget::p) { if (!_A::dummy) p.init(); }
+SquareCanvas::SquareCanvas() : Widget(*new pSquareCanvas(*this)), p((pSquareCanvas&)Widget::p) { p.init(); }
 
-Button::Button() : Widget(*new pButton(*this)), p((pButton&)Widget::p) { if (!_A::dummy) p.init(); }
+Button::Button() : Widget(*new pButton(*this)), p((pButton&)Widget::p) { p.init(); }
 
-auto StepButton::setRange(int16_t minValue, int16_t maxValue) -> void {
-    
+auto StepButton::setRange(int16_t minValue, int16_t maxValue) -> void {    
     state.minValue = minValue;
     state.maxValue = maxValue;
     
@@ -738,47 +661,41 @@ auto StepButton::setValue(int16_t value) -> void {
     p.setValue( value );
 }
 
-StepButton::StepButton() : Widget(*new pStepButton(*this)), p((pStepButton&)Widget::p) { if (!_A::dummy) p.init(); }
+StepButton::StepButton() : Widget(*new pStepButton(*this)), p((pStepButton&)Widget::p) { p.init(); }
 
 auto CheckButton::setChecked(bool checked) -> void {
-    if (_A::dummy) return;
     state.checked = checked;
     p.setChecked(checked);
 }
 
 auto CheckButton::toggle() -> void {
-    if (_A::dummy) return;
     state.checked ^= 1;
     p.setChecked(state.checked);
     if(onToggle) onToggle();
 }
 
-CheckButton::CheckButton() : Widget(*new pCheckButton(*this)), p((pCheckButton&)Widget::p) { if (!_A::dummy) p.init(); }
+CheckButton::CheckButton() : Widget(*new pCheckButton(*this)), p((pCheckButton&)Widget::p) { p.init(); }
 
 auto CheckBox::setChecked(bool checked) -> void {
-    if (_A::dummy) return;
     state.checked = checked;
     p.setChecked(checked);
 }
 
 auto CheckBox::toggle() -> void {
-    if (_A::dummy) return;
     state.checked ^= 1;
     p.setChecked(state.checked);
     if(onToggle) onToggle();
 }
 
-CheckBox::CheckBox() : Widget(*new pCheckBox(*this)), p((pCheckBox&)Widget::p) { if (!_A::dummy) p.init(); }
+CheckBox::CheckBox() : Widget(*new pCheckBox(*this)), p((pCheckBox&)Widget::p) { p.init(); }
 
 auto ComboButton::append(const std::string& text, int userData) -> void {
-    if (_A::dummy) return;
     state.rows.push_back(text);
     state.userData.push_back(userData);
     p.append(text);
 }
 
 auto ComboButton::remove(unsigned selection) -> void {
-    if (_A::dummy) return;
     if(selection >= state.rows.size()) return;
     state.rows.erase(state.rows.begin() + selection);
     state.userData.erase(state.userData.begin() + selection);
@@ -786,7 +703,6 @@ auto ComboButton::remove(unsigned selection) -> void {
 }
 
 auto ComboButton::reset() -> void {
-    if (_A::dummy) return;
     state.selection = 0;
     state.rows.clear();
     state.userData.clear();
@@ -794,14 +710,12 @@ auto ComboButton::reset() -> void {
 }
 
 auto ComboButton::setSelection(unsigned selection) -> void {
-    if (_A::dummy) return;
     if(selection >= state.rows.size()) return;
     state.selection = selection;
     p.setSelection(selection);
 }
 
 auto ComboButton::setSelectionByUserId(int userId) -> void {
-    if (_A::dummy) return;
     unsigned selection = 0;
     
     for( auto& _id : state.userData) {        
@@ -815,7 +729,6 @@ auto ComboButton::setSelectionByUserId(int userId) -> void {
 }
 
 auto ComboButton::setText(unsigned selection, const std::string& text) -> void {
-    if (_A::dummy) return;
     if(selection >= state.rows.size()) return;
     state.rows.at(selection) = text;
     p.setText(selection, text);
@@ -836,64 +749,54 @@ auto ComboButton::userData(unsigned selection) const -> int {
     return state.userData[selection];
 }
 
-ComboButton::ComboButton() : Widget(*new pComboButton(*this)), p((pComboButton&)Widget::p) { if (!_A::dummy) p.init(); }
+ComboButton::ComboButton() : Widget(*new pComboButton(*this)), p((pComboButton&)Widget::p) { p.init(); }
 
 auto Slider::setLength(unsigned length) -> void {
-    if (_A::dummy) return;
     state.length = length;
     p.setLength(length);
 }
 
 auto Slider::setPosition(unsigned position) -> void {
-    if (_A::dummy) return;
     state.position = position;
     p.setPosition(position);
 }
 
-Slider::Slider(Orientation orientation) : orientation(orientation), Widget(*new pSlider(*this)), p((pSlider&)Widget::p) { if (!_A::dummy) p.init(); }
+Slider::Slider(Orientation orientation) : orientation(orientation), Widget(*new pSlider(*this)), p((pSlider&)Widget::p) { p.init(); }
 
 auto RadioBox::setGroup(std::vector<RadioBox*> group) -> void {
-    if (_A::dummy) return;
     for(auto& item : group) item->p.setGroup( item->state.group = group );
     if (group.size()) group.at(0)->setChecked();
 }
 
 auto RadioBox::setChecked() -> void {
-    if (_A::dummy) return;
     for(auto& item : state.group) item->state.checked = false;
     state.checked = true;
     p.setChecked();
 }
 
 auto RadioBox::activate() -> void {
-    if (_A::dummy) return;
     setChecked();
     if(onActivate) onActivate();
 }
 
-RadioBox::RadioBox() : Widget(*new pRadioBox(*this)), p((pRadioBox&)Widget::p) { if (!_A::dummy) p.init(); }
+RadioBox::RadioBox() : Widget(*new pRadioBox(*this)), p((pRadioBox&)Widget::p) { p.init(); }
 
 auto ProgressBar::setPosition(unsigned position) -> void {
-    if (_A::dummy) return;
     state.position = position;
     p.setPosition(position);
 }
 
-ProgressBar::ProgressBar() : Widget(*new pProgressBar(*this)), p((pProgressBar&)Widget::p) { if (!_A::dummy) p.init(); }
+ProgressBar::ProgressBar() : Widget(*new pProgressBar(*this)), p((pProgressBar&)Widget::p) { p.init(); }
 
 auto ListView::lockRedraw() -> void {
-    if (_A::dummy) return;
     p.lockRedraw();
 }
 
 auto ListView::unlockRedraw() -> void {
-    if (_A::dummy) return;
     p.unlockRedraw();
 }
 
-auto ListView::append(const std::vector<std::vector<std::string>>& rows, bool clearBefore) -> void {
-    if (_A::dummy) return;    
-    
+auto ListView::append(const std::vector<std::vector<std::string>>& rows, bool clearBefore) -> void {    
     p.lockRedraw();
     
     if (clearBefore)
@@ -906,7 +809,6 @@ auto ListView::append(const std::vector<std::vector<std::string>>& rows, bool cl
 }
 
 auto ListView::append(const std::vector<std::string>& row) -> void {
-    if (_A::dummy) return;
     state.rows.push_back(row);
     std::vector<Image*> images;
     for (unsigned i = 0; i < row.size(); i++) images.push_back(nullptr);
@@ -916,7 +818,6 @@ auto ListView::append(const std::vector<std::string>& row) -> void {
 }
 
 auto ListView::remove(unsigned selection) -> void {
-    if (_A::dummy) return;
     if(selection >= state.rows.size()) return;
     state.rows.erase(state.rows.begin() + selection);
     state.images.erase(state.images.begin() + selection);
@@ -925,7 +826,6 @@ auto ListView::remove(unsigned selection) -> void {
 }
 
 auto ListView::reset() -> void {
-    if (_A::dummy) return;
     state.selected = false;
     state.selection = 0;
     state.rows.clear();
@@ -935,7 +835,6 @@ auto ListView::reset() -> void {
 }
 
 auto ListView::setSelection(unsigned selection) -> void {
-    if (_A::dummy) return;
     if(selection >= state.rows.size()) return;
     state.selected = true;
     state.selection = selection;
@@ -943,19 +842,16 @@ auto ListView::setSelection(unsigned selection) -> void {
 }
 
 auto ListView::setSelected(bool selected) -> void {
-    if (_A::dummy) return;
     state.selected = selected;
     p.setSelected(selected);
 }
 
 auto ListView::setHeaderVisible(bool visible) -> void {
-    if (_A::dummy) return;
     state.headerVisible = visible;
     p.setHeaderVisible(visible);
 }
 
 auto ListView::setHeaderText(const std::vector<std::string>& text) -> void {
-    if (_A::dummy) return;
     state.header = text;
     p.setHeaderText(text);
 }
@@ -968,7 +864,6 @@ auto ListView::setText(unsigned selection, const std::vector<std::string>& text)
 }
 
 auto ListView::setText(unsigned selection, unsigned position, const std::string& text) -> void {
-    if (_A::dummy) return;
     if(selection >= state.rows.size()) return;
     std::vector<std::string>& row = state.rows.at(selection);
     if(position >= row.size()) return;
@@ -977,7 +872,6 @@ auto ListView::setText(unsigned selection, unsigned position, const std::string&
 }
 
 auto ListView::setImage(unsigned selection, unsigned position, Image& image) -> void {
-    if (_A::dummy) return;
     if(selection >= state.images.size()) return;
     std::vector<Image*>& row = state.images[selection];
     if(position >= row.size()) return;
@@ -1008,14 +902,12 @@ auto ListView::text(unsigned selection, unsigned position) -> std::string {
 }
 
 auto ListView::setRowTooltip(unsigned selection, std::string tooltip ) -> void {
-	if (_A::dummy) return;
     if(selection >= state.rowTooltips.size()) return;
 	state.rowTooltips[selection] = tooltip;
 	p.setRowTooltip(selection, tooltip);
 }
 
 auto ListView::getRowTooltip(unsigned selection) -> std::string {
-	if (_A::dummy) return "";
     if(selection >= state.rowTooltips.size()) return "";
 	return state.rowTooltips[selection];
 }
@@ -1025,17 +917,15 @@ auto ListView::colorRowTooltips(bool colorTip) -> void {
     p.colorRowTooltips( colorTip );
 }
 
-ListView::ListView() : Widget(*new pListView(*this)), p((pListView&)Widget::p) { if (!_A::dummy) p.init(); }
+ListView::ListView() : Widget(*new pListView(*this)), p((pListView&)Widget::p) { p.init(); }
 
 auto TreeViewItem::append(TreeViewItem& item) -> void {
-    if (_A::dummy) return;
     item.state.parentTreeViewItem = this;
     state.items.push_back(&item);
     p.append(item);
 }
 
 auto TreeViewItem::remove(TreeViewItem& item) -> void {
-    if (_A::dummy) return;
     if (Vector::eraseVectorElement<TreeViewItem*>(state.items, &item)) {
         item.state.parentTreeViewItem = nullptr;
         p.remove(item);
@@ -1043,19 +933,16 @@ auto TreeViewItem::remove(TreeViewItem& item) -> void {
 }
 
 auto TreeViewItem::reset() -> void {
-    if (_A::dummy) return;
     p.reset();
     state.items.clear();
 }
 
 auto TreeViewItem::setText(const std::string& text) -> void {
-    if (_A::dummy) return;
     state.text = text;
     p.setText(text);
 }
 
 auto TreeViewItem::setSelected() -> void {
-    if (_A::dummy) return;
     if (state.parentTreeView) state.parentTreeView->state.selected = this;
     p.setSelected();
 }
@@ -1066,7 +953,6 @@ auto TreeViewItem::selected() -> bool {
 }
 
 auto TreeViewItem::setExpanded(bool expanded) -> void {
-    if (_A::dummy) return;
     state.expanded = expanded;
 	p.setExpanded(expanded);
 }
@@ -1076,55 +962,47 @@ auto TreeViewItem::setUserData(uintptr_t userData) -> void {
 }
 
 auto TreeViewItem::setImage(Image& image) -> void {
-    if (_A::dummy) return;
     state.image = &image;
     p.setImage(image);
 }
 
 auto TreeViewItem::setImageSelected(Image& image) -> void {
-    if (_A::dummy) return;
     state.imageSelected = &image;
     p.setImageSelected(image);
 }
 
 auto TreeViewItem::setImageExpanded(Image& image) -> void {
-    if (_A::dummy) return;
     state.imageExpanded = &image;
     p.setImageExpanded(image);
 }
 
-TreeViewItem::TreeViewItem() : p(*new pTreeViewItem(*this)) { if (!_A::dummy) p.init(); }
+TreeViewItem::TreeViewItem() : p(*new pTreeViewItem(*this)) { p.init(); }
 TreeViewItem::~TreeViewItem() { delete &p; }
 
 auto TreeView::append(TreeViewItem& item) -> void {
-    if (_A::dummy) return;
     state.items.push_back(&item);
     p.append(item);
 }
 
 auto TreeView::remove(TreeViewItem& item) -> void {
-    if (_A::dummy) return;
     if (Vector::eraseVectorElement<TreeViewItem*>(state.items, &item)) {
         p.remove(item);
     }
 }
 
 auto TreeView::reset() -> void {
-    if (_A::dummy) return;
     state.selected = nullptr;
     p.reset();
     state.items.clear();
 }
 
-TreeView::TreeView() : Widget(*new pTreeView(*this)), p((pTreeView&)Widget::p) { if (!_A::dummy) p.init(); }
+TreeView::TreeView() : Widget(*new pTreeView(*this)), p((pTreeView&)Widget::p) { p.init(); }
 
 auto Viewport::handle() -> uintptr_t {
-    if (_A::dummy) return 0;
     return p.handle();
 }
 
 auto Viewport::setDroppable(bool droppable) -> void {
-    if (_A::dummy) return;
     state.droppable = droppable;
     p.setDroppable(droppable);
 }
@@ -1134,7 +1012,7 @@ auto Viewport::getMousePosition() -> Position& {
     return state.mousePos;
 }
 
-Viewport::Viewport() : Widget(*new pViewport(*this)), p((pViewport&)Widget::p) { if (!_A::dummy) p.init(); }
+Viewport::Viewport() : Widget(*new pViewport(*this)), p((pViewport&)Widget::p) { p.init(); }
 
 //menu
 MenuBase::MenuBase(pMenuBase& p) : p(p), Base() {}
@@ -1144,25 +1022,21 @@ MenuBase::~MenuBase() {
 }
 
 auto MenuBase::setEnabled(bool enabled) -> void {
-    if (_A::dummy) return;
     state.enabled = enabled;
     p.setEnabled(enabled);
 }
 
 auto MenuBase::setVisible(bool visible) -> void {
-    if (_A::dummy) return;
     state.visible = visible;
     p.setVisible(visible);
 }
 
 auto MenuBase::setText(const std::string& text) -> void {
-    if (_A::dummy) return;
     state.text = text;
     p.setText(text);
 }
 
 auto MenuBase::setIcon(Image& icon) -> void {
-    if (_A::dummy) return;
     if (state.icon == &icon)
         return;
     
@@ -1170,7 +1044,7 @@ auto MenuBase::setIcon(Image& icon) -> void {
     p.setIcon(icon);
 }
 
-Menu::Menu() : MenuBase(*new pMenu(*this)), p((pMenu&)MenuBase::p) { if (!_A::dummy) p.init(); }
+Menu::Menu() : MenuBase(*new pMenu(*this)), p((pMenu&)MenuBase::p) { p.init(); }
 Menu::~Menu() {
     if(!state.parentMenu && state.parentWindow) {
         state.parentWindow->remove(*this);
@@ -1178,14 +1052,12 @@ Menu::~Menu() {
 }
     
 auto Menu::append(MenuBase& item) -> void {
-    if (_A::dummy) return;
     childs.push_back( &item );
     item.state.parentMenu = this;
     p.append( item );
 }
 
 auto Menu::remove(MenuBase& item) -> void {
-    if (_A::dummy) return;
     if (Vector::eraseVectorElement<MenuBase*>(childs, &item)) {
         item.state.parentMenu = nullptr;
         p.remove(item);
@@ -1199,9 +1071,9 @@ auto Menu::reset() -> void {
     }
 }
 
-MenuItem::MenuItem() : MenuBase(*new pMenuItem(*this)), p((pMenuItem&)MenuBase::p) { if (!_A::dummy) p.init(); }
+MenuItem::MenuItem() : MenuBase(*new pMenuItem(*this)), p((pMenuItem&)MenuBase::p) { p.init(); }
 
-MenuSeparator::MenuSeparator() : MenuBase(*new pMenuSeparator(*this)), p((pMenuSeparator&)MenuBase::p) { if (!_A::dummy) p.init(); }
+MenuSeparator::MenuSeparator() : MenuBase(*new pMenuSeparator(*this)), p((pMenuSeparator&)MenuBase::p) { p.init(); }
 
 std::vector<MenuSeparator*> MenuSeparator::instances;
 
@@ -1215,34 +1087,30 @@ auto MenuSeparator::cleanInstances() -> void {
     for(auto& instance : instances) delete instance;
 }
 
-MenuCheckItem::MenuCheckItem() : MenuBase(*new pMenuCheckItem(*this)), p((pMenuCheckItem&)MenuBase::p) { if (!_A::dummy) p.init(); }
+MenuCheckItem::MenuCheckItem() : MenuBase(*new pMenuCheckItem(*this)), p((pMenuCheckItem&)MenuBase::p) { p.init(); }
 
 auto MenuCheckItem::setChecked(bool checked) -> void {
-    if (_A::dummy) return;
     state.checked = checked;
     p.setChecked(checked);
 }
 
 auto MenuCheckItem::toggle() -> void {
-    if (_A::dummy) return;
     state.checked ^= 1;
     p.setChecked(state.checked);
     if(onToggle) onToggle();
 }
 
-MenuRadioItem::MenuRadioItem() : MenuBase(*new pMenuRadioItem(*this)), p((pMenuRadioItem&)MenuBase::p) { if (!_A::dummy) p.init(); }
+MenuRadioItem::MenuRadioItem() : MenuBase(*new pMenuRadioItem(*this)), p((pMenuRadioItem&)MenuBase::p) { p.init(); }
 
 MenuRadioItem::~MenuRadioItem() { group.clear(); }
 
 auto MenuRadioItem::setChecked() -> void {
-    if (_A::dummy) return;
     for(auto& item : group) item->state.checked = false;
     state.checked = true;
     p.setChecked();
 }
 
 auto MenuRadioItem::setGroup(std::vector<MenuRadioItem*> group) -> void {
-    if (_A::dummy) return;
     for(auto& item : group) item->p.setGroup( item->group = group );
     if (group.size()) group.at(0)->setChecked();
 }
@@ -1532,3 +1400,4 @@ auto Thread::setPriorityRealtime( std::thread& th ) -> void {
 }
 
 }
+

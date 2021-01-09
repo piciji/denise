@@ -1,6 +1,6 @@
 
 /**
- * v 1.6.5
+ * v 1.6.6
  */
 
 #ifndef GUIKIT_H
@@ -148,7 +148,6 @@ struct Application {
     static auto isWinApi() -> bool;
     static bool isQuit;
     static int exitCode;
-    static bool dummy;
     static std::string name;
 
     struct Cocoa {

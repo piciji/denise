@@ -7,10 +7,9 @@
 struct View : public GUIKIT::Window {
     Message* message;
 	GUIKIT::Timer placeholderTimer;
-	GUIKIT::Timer autoloadTimer;
+	GUIKIT::Timer anyloadTimer;
     GUIKIT::StatusBar statusBar;
-    GUIKIT::Image placeholder;
-    enum class AutoLoad { DragnDrop = 0, Open = 1, AutoStart = 2 };
+    GUIKIT::Image placeholder;    
         
     struct SystemMenu {
         Emulator::Interface* emulator;
@@ -44,7 +43,7 @@ struct View : public GUIKIT::Window {
     auto updateTapeIcons( Emulator::Interface::TapeMode mode = Emulator::Interface::TapeMode::Unpressed ) -> void;
     auto updateTapeStatusIcons( Emulator::Interface::TapeMode mode ) -> void;
     auto updateFreeze( Emulator::Interface* emulator ) -> void;
-	auto setAutoload(Emulator::Interface* emulator) -> void;
+	auto setAnyload(Emulator::Interface* emulator) -> void;
 
     auto buildMenu() -> void;
     auto updateViewport() -> void;
@@ -56,11 +55,7 @@ struct View : public GUIKIT::Window {
     auto loadCursor() -> void;
     auto setCursor( Emulator::Interface* emulator ) -> void;
     auto setDragnDrop() -> void;
-    auto autoloadInit( std::vector<std::string> files, bool silentError, AutoLoad autoLoad, unsigned selection = 0 ) -> void;
-    auto autoloadFiles() -> void;
-    auto autoloadPostProcessing() -> void;
     auto getSysMenu( Emulator::Interface* emulator ) -> SystemMenu*;
-    auto countImagesFor(Emulator::Interface::MediaGroup* mediaGroup) -> unsigned;
     auto cursorForPlacholderInUpperTriangle(GUIKIT::Position& p) -> bool;
     auto cursorForPlacholderInUpperTriangle() -> bool;
     auto loadImages() -> void;
@@ -159,16 +154,7 @@ struct View : public GUIKIT::Window {
     GUIKIT::Image ledOffImage;
     GUIKIT::Image ledRedImage;
     GUIKIT::Image ledGreenImage;
-            
-    struct {
-        Emulator::Interface* emulator;
-        std::vector<Emulator::Interface::MediaGroup*> mediaGroups;
-        bool silentError = false;
-        AutoLoad autoLoad = AutoLoad::AutoStart;
-        std::vector<std::string> files; 
-        unsigned selection = 0;
-    } ddControl;
-	
+            	
     auto questionToWrite(Emulator::Interface::Media* media) -> bool;
     
     View();

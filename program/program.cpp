@@ -13,6 +13,7 @@
 #include "firmware/manager.h"
 #include "video/palette.h"
 #include "cmd/cmd.h"
+#include "media/autoloader.h"
 #include <random>
 
 Program* program = nullptr;
@@ -50,32 +51,42 @@ int main(int argc, char** argv) {
 
 Program::Program() {	    
     program = this;    
-    GUIKIT::Application::loop = [this]() { loop(); };    
+	if (cmd->noGui)
+		GUIKIT::Application::loop = [this]() { loopNoGui(); };    
+	else
+		GUIKIT::Application::loop = [this]() { loop(); };    
+		
     GUIKIT::Application::name = APP_NAME;
     globalSettings = new GUIKIT::Settings;
+	autoloader = new Autoloader;
     settingsStorage.push_back( globalSettings );
-    view = new View;    
-    configView = new ConfigView::TabWindow;
-    archiveViewer = new ArchiveViewer;    
-    trans = new GUIKIT::Translation;
-    logger = new Logger;
-	filePool = new FilePool(10);
-	statusHandler = new StatusHandler;
-    audioManager = new AudioManager;
+	if(!cmd->noGui) {
+		view = new View;    
+		configView = new ConfigView::TabWindow;
+		archiveViewer = new ArchiveViewer;    
+		trans = new GUIKIT::Translation;		
+		statusHandler = new StatusHandler;
+		audioManager = new AudioManager;
+	}    
+    
+	logger = new Logger;
+	filePool = new FilePool(10);	    
     
     addEmulators();
     init();	  
 
-    InputManager::build();
-    view->build();
-    configView->build();	
-    
-    for( auto emuConfigView : emuConfigViews )
-        emuConfigView->build();
+	if(!cmd->noGui) {
+		InputManager::build();
+		view->build();
+		configView->build();	
 
-    archiveViewer->build();
-    view->show();    
-    
+		for( auto emuConfigView : emuConfigViews )
+			emuConfigView->build();
+
+		archiveViewer->build();
+		view->show();    
+    }
+	
 	initInput();
 	initAudio();
 	initVideo();
@@ -93,7 +104,8 @@ auto Program::addEmulators() -> void {
     emulators.push_back( emulatorAmi );
 
     // this manager includes only hotkeys (when emulation is inactive)
-	inputManagers.push_back( new InputManager( ) );
+	if (!cmd->noGui)
+		inputManagers.push_back( new InputManager( ) );
     
     for( auto emulator : emulators ) {
         auto settings = new GUIKIT::Settings;
@@ -101,6 +113,9 @@ auto Program::addEmulators() -> void {
         settings->setGuid(dynamic_cast<void*> (emulator));
 
         settingsStorage.push_back( settings );
+		
+		if (cmd->noGui)
+			continue;
         
         // inlcudes hotkeys + emulator keys
         inputManagers.push_back( new InputManager( emulator ) );
@@ -260,10 +275,13 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
             
             emulator->insertMedium(&media, data, file->archiveDataSize(fSetting->id));
             emulator->writeProtect(&media, (file->isArchived() || file->isReadOnly()) ? true : fSetting->writeProtect);
-            EmuConfigView::TabWindow::getView( activeEmulator )->mediaLayout->updateWriteProtection( &media, fSetting->writeProtect );
+			if (!cmd->noGui)
+				EmuConfigView::TabWindow::getView( activeEmulator )->mediaLayout->updateWriteProtection( &media, fSetting->writeProtect );
+			
             filePool->assign( _ident(emulator, media.name + "store"), file);	           
 
-            States::getInstance( activeEmulator )->updateImage( fSetting, &media );
+			if (!cmd->noGui)
+				States::getInstance( activeEmulator )->updateImage( fSetting, &media );
 
             filePool->assign( _ident(emulator, media.name), file);
             
@@ -279,38 +297,41 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
         }
     }
     
-    missingFirmware = FirmwareManager::getInstance( activeEmulator )->insert();
-    GUIKIT::Vector::combine( brokenPaths, missingFirmware );
-    
-    showOpenError( brokenPaths );
-    
-    filePool->unloadOrphaned();
-	
-    audioManager->power();
-    view->renderPlaceholder(true);
-    
-    if (emuSwap)
-		setVideoFilter();	
-	
-    activeEmulator->power();
-    resetRunAhead();
-    isRunning = true;
-	isPause = false;
-	
-	archiveViewer->setVisible(false);
-	view->update();	
-    view->setCursor( activeEmulator );
-    view->updateFreeze( activeEmulator );
+	if (!cmd->noGui) {
+		missingFirmware = FirmwareManager::getInstance( activeEmulator )->insert();
+		GUIKIT::Vector::combine( brokenPaths, missingFirmware );
 
-	if (needTapeControl)
-		view->showTapeMenu( true );
-    // a few emulation units generate random values
-    // srand spreads a new seed for better randomness
-    srand( time( NULL ) );
-    
-    globalSettings->set("last_used_emu", activeEmulator->ident);
-    
-    activeVideoManager->initFpsLimit();    
+		showOpenError( brokenPaths );
+
+		filePool->unloadOrphaned();
+
+		audioManager->power();
+		view->renderPlaceholder(true);
+
+		if (emuSwap)
+			setVideoFilter();	
+
+		resetRunAhead();
+
+		archiveViewer->setVisible(false);
+		view->update();	
+		view->setCursor( activeEmulator );
+		view->updateFreeze( activeEmulator );
+
+		if (needTapeControl)
+			view->showTapeMenu( true );
+		// a few emulation units generate random values
+		// srand spreads a new seed for better randomness
+		srand( time( NULL ) );
+
+		globalSettings->set("last_used_emu", activeEmulator->ident);
+
+		activeVideoManager->initFpsLimit();    
+	}
+	
+	activeEmulator->power();
+	isRunning = true;
+	isPause = false;
 }
 
 auto Program::reset( Emulator::Interface* emulator ) -> void {
@@ -334,35 +355,44 @@ auto Program::powerOff() -> void {
                 if (media.guid) {
                     auto file = (GUIKIT::File*)media.guid;
                     // medium was written by emulation, lets update the listing
-                    if (file->wasDataChanged() && filePool->has( _ident(activeEmulator, media.name + "store"), file))                        
+                    if (!cmd->noGui && file->wasDataChanged() && filePool->has( _ident(activeEmulator, media.name + "store"), file))                        
                         EmuConfigView::TabWindow::getView( activeEmulator )->mediaLayout->updateListing( &media );
                 }                        
                 
                 filePool->assign( _ident(activeEmulator, media.name), nullptr);
                 activeEmulator->ejectMedium( &media );
-                States::getInstance( activeEmulator )->updateImage( nullptr, &media );
+				
+				if (!cmd->noGui)
+					States::getInstance( activeEmulator )->updateImage( nullptr, &media );
             }				
         }
 		activeEmulator->unsetExpansion();
 	}
 	isRunning = false;
 	
-	view->showTapeMenu( false );    
-	
-	statusHandler->clear();
-    if (activeVideoManager)
-        activeVideoManager->powerOff();
-	videoDriver->clear();
-	videoDriver->hintExclusiveFullscreen( false );
-	audioDriver->clear();  
-    audioManager->record.finish();
-    activeEmulator = nullptr;
-    activeVideoManager = nullptr;
-    filePool->unloadOrphaned();
-    view->updateFreeze(nullptr);
-    updateSaveIdent( nullptr );
-    InputManager::urgentUpdate = true;
-    InputManager::resetJit();
+	if (!cmd->noGui) {
+		view->showTapeMenu( false );    	
+		statusHandler->clear();
+		if (activeVideoManager)
+			activeVideoManager->powerOff();
+		videoDriver->clear();
+		videoDriver->hintExclusiveFullscreen( false );
+		audioDriver->clear();  
+		audioManager->record.finish();
+		activeEmulator = nullptr;
+		activeVideoManager = nullptr;
+		filePool->unloadOrphaned();
+		view->updateFreeze(nullptr);
+		updateSaveIdent( nullptr );
+		InputManager::urgentUpdate = true;
+		InputManager::resetJit();
+	}
+}
+
+auto Program::loopNoGui() -> void {
+
+	while (isRunning)
+		activeEmulator->run();
 }
 
 auto Program::loop() -> void {
@@ -437,11 +467,14 @@ auto Program::quit() -> void {
     delete inputDriver;
     delete audioDriver;
     delete videoDriver;
-    delete trans;    
+	if (trans)
+		delete trans;    
 	delete logger;
 	delete filePool;
     delete cmd;
-    delete statusHandler;
+	delete autoloader;
+	if (statusHandler)
+		statusHandler->clearUpdates();
     
     for(auto settings : settingsStorage)
         delete settings;
@@ -514,7 +547,11 @@ auto Program::exit(int code) -> void {
     if (!cmd->screenshotPath.empty())
         cmd->saveExitScreenshot();
     
-    if (isRunning)
+	if (cmd->noGui) {
+		program->quit();
+        GUIKIT::Application::quit();
+			
+	} else if (isRunning)
         view->onClose();
 }
 

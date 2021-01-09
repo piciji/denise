@@ -377,8 +377,6 @@ auto SystemLayout::activateDrive( Emulator::Interface::MediaGroup* mediaGroup, u
             break;
         
         block->combo.setSelection( requestedCount );
-        _settings->set<unsigned>( ident, requestedCount);
-        _settings->remove( "access_floppy" );
         
         tabWindow->mediaLayout->updateVisibility( mediaGroup, requestedCount );
     }
@@ -488,7 +486,6 @@ auto SystemLayout::setExpansion( Emulator::Interface::Expansion* newExpansion ) 
                 if (block->expansion->isEmpty()) {
                     if (!block->box.checked()) {
 						block->box.setChecked();
-						_settings->set<unsigned>("expansion", block->expansion->id);
 						updateExpansionMemory();
 					}
                     
@@ -499,7 +496,6 @@ auto SystemLayout::setExpansion( Emulator::Interface::Expansion* newExpansion ) 
             else if (block->expansion == newExpansion) {
                 if (!block->box.checked()) {
 					block->box.setChecked();
-					_settings->set<unsigned>("expansion", block->expansion->id);
 					updateExpansionMemory();
 				}
 				

@@ -1,6 +1,5 @@
 
-#ifndef FILEPOOL_H
-#define FILEPOOL_H
+#pragma once
 
 struct FilePool {
 	
@@ -103,6 +102,3 @@ struct FilePool {
 };
 
 extern FilePool* filePool;
-
-#endif 
-

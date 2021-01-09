@@ -609,8 +609,10 @@ auto Interface::prepareDevices() -> void {
     for (auto& device : devices) {
         device.userData = 0;
         
-        for (auto& input : device.inputs)
+        for (auto& input : device.inputs) {
             input.type = input.name.find( "Axis" ) != std::string::npos ? 1 : 0;    
+			input.guid = 0;
+		}
     }
 }
 

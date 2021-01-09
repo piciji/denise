@@ -188,12 +188,18 @@ auto Program::removeBootableExpansion( bool gameOnly ) -> void {
     for( auto& media : expansion->mediaGroup->media) {
         filePool->assign( _ident(activeEmulator, media.name), nullptr);
         activeEmulator->ejectMedium( &media );
-        States::getInstance( activeEmulator )->updateImage( nullptr, &media );
+		auto state = States::getInstance( activeEmulator );
+		if (state)
+			state->updateImage( nullptr, &media );
     }
     
     activeEmulator->unsetExpansion();
     
-    EmuConfigView::TabWindow::getView(activeEmulator)->systemLayout->setExpansion( nullptr );
+	program->getSettings( activeEmulator )->set<unsigned>("expansion", 0);
+	
+	auto emuView = EmuConfigView::TabWindow::getView(activeEmulator);
+	if (emuView)
+		emuView->systemLayout->setExpansion( nullptr );
     
     activeEmulator->power();
 }

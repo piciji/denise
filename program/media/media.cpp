@@ -8,6 +8,7 @@
 #include "../tools/filesetting.h"
 #include "../config/archiveViewer.h"
 #include "../states/states.h"
+#include "autoloader.h"
 #include "../../data/resource.h"
 
 #include <thread>
@@ -606,6 +607,8 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
         if (!navElement.mediaGroupLayout || !navElement.mediaGroupLayout->mediaGroup->isExpansion())
             return;
         
+		this->settings->set<unsigned>("expansion", navElement.mediaGroupLayout->mediaGroup->expansion->id);
+		
         tabWindow->systemLayout->setExpansion( navElement.mediaGroupLayout->mediaGroup->expansion );
         
         program->power( emulator );
@@ -615,6 +618,8 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
     
     deactivateCart.onActivate = [this]() {        
         
+		this->settings->set<unsigned>("expansion", 0);
+		
         tabWindow->systemLayout->setExpansion( nullptr );
         
         program->power( emulator );
@@ -1470,12 +1475,16 @@ auto MediaLayout::insertFile( MediaGroupLayout::Block* block, std::string filePa
             auto mediaGroup = block->media->group;
             auto emuConfigView = EmuConfigView::TabWindow::getView(this->emulator);
             
-            if (mediaGroup->isDrive())				
-				emuConfigView->systemLayout->activateDrive(mediaGroup, 1 );			
+            if (mediaGroup->isDrive()) {				
+				emuConfigView->systemLayout->activateDrive(mediaGroup, 1 );
+				autoloader->activateDrive( emulator, mediaGroup, 1 );
+			}
                         
-            if (mediaGroup->isExpansion())
+            if (mediaGroup->isExpansion()) {
+				this->settings->set<unsigned>("expansion", mediaGroup->expansion->id);
                 emuConfigView->systemLayout->setExpansion( mediaGroup->expansion );
-            
+            }
+			
             program->power( emulator );
             
             if (!mediaGroup->isExpansion())
@@ -1520,8 +1529,8 @@ auto MediaLayout::anyLoad( bool mIsAcquiredBefore ) -> void {
 
 			settings->set<std::string>("anyload_path", GUIKIT::File::getPath( filePath ) );
 
-			view->autoloadInit( {filePath}, false, View::AutoLoad::AutoStart, selection );
-			view->autoloadFiles();
+			autoloader->init( {filePath}, false, Autoloader::Mode::AutoStart, selection );
+			autoloader->loadFiles();
 
 			resetPreview();
 
@@ -1567,8 +1576,8 @@ auto MediaLayout::anyLoad( bool mIsAcquiredBefore ) -> void {
 
         settings->set<std::string>("anyload_path", GUIKIT::File::getPath( filePath ) );
         
-        view->autoloadInit( {filePath}, false, View::AutoLoad::Open );
-        view->autoloadFiles();
+        autoloader->init( {filePath}, false, Autoloader::Mode::Open );
+        autoloader->loadFiles();
         
         resetPreview();
         
@@ -1580,8 +1589,8 @@ auto MediaLayout::anyLoad( bool mIsAcquiredBefore ) -> void {
     fileDialogPtr->setCallbacks( [this, mIsAcquiredBefore](std::string filePath, unsigned selection) {
         settings->set<std::string>("anyload_path", GUIKIT::File::getPath( filePath ) );
         
-        view->autoloadInit( {filePath}, false, View::AutoLoad::AutoStart, selection );
-        view->autoloadFiles();
+        autoloader->init( {filePath}, false, Autoloader::Mode::AutoStart, selection );
+        autoloader->loadFiles();
         
         resetPreview();
         
@@ -1611,8 +1620,8 @@ auto MediaLayout::anyLoad( bool mIsAcquiredBefore ) -> void {
     if ( !filePath.empty() ) {
         settings->set<std::string>("anyload_path", GUIKIT::File::getPath( filePath ) );
 
-        view->autoloadInit( {filePath}, false, View::AutoLoad::AutoStart, fileDialogPtr ? fileDialogPtr->getContentViewSelection() : 0 );
-        view->autoloadFiles();
+        autoloader->init( {filePath}, false, Autoloader::Mode::AutoStart, fileDialogPtr ? fileDialogPtr->getContentViewSelection() : 0 );
+        autoloader->loadFiles();
     } //else
         //message->warning("cancel multi");
     

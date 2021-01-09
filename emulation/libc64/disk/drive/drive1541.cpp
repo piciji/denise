@@ -60,7 +60,7 @@ auto Drive1541::cpuRead(uint16_t addr) -> uint8_t {
     SYNC    
     
     if (addr & 0x8000)
-        return !rom ? 0xff : rom[addr & 0x3fff];
+        return rom[addr & 0x3fff];
             
     else if ((addr & 0x9800) == 0)
         return ram[ addr & 0x7ff ];

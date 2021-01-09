@@ -1,61 +1,40 @@
 
 #include "cmd.h"
-#include "../view/view.h"    
+#include "../view/view.h"
+#include "../media/autoloader.h"
 
-auto Cmd::set(int argc, char** argv) -> void {
-    
-    options.push_back( {"-v, --version", "Output program version", ""} );    
-    options.push_back( {"-h, --help", "Output this help screen", ""} );  
+auto Cmd::set(int argc, char** argv) -> void {        	
 	
-    options.push_back( {"-vic-6569R3", "Select VIC-II 6569R3 and PAL mode", ""} );
-    options.push_back( {"-vic-8565", "Select VIC-II 8565 and PAL mode", ""} );
-    options.push_back( {"-vic-6567R8", "Select VIC-II 6567R8 and NTSC mode", ""} );
-    options.push_back( {"-vic-8562", "Select VIC-II 6562 and NTSC mode", ""} );	
-	options.push_back( {"-vic-6569R1", "Select VIC-II 6569R1 and PAL mode", ""} );
-	options.push_back( {"-vic-6567R56A", "Select VIC-II 6567R56A and NTSC mode", ""} );
-	options.push_back( {"-vic-6572", "Select VIC-II 6572 and PAL mode", ""} );
-	options.push_back( {"-vic-6573", "Select VIC-II 6573 and NTSC mode with PAL Encoding", ""} );
-		
-    options.push_back( {"-sid-6581", "Select SID 6581", ""} );
-    options.push_back( {"-sid-8580", "Select SID 8580", ""} );
+	std::string arg;
 	
-    options.push_back( {"-cia-6526a", "Select CIA 6526a", ""} );
-    options.push_back( {"-cia-6526", "Select CIA 6526", ""} );
-	
-    options.push_back( {"-reu", "Emulate REU Expansion", "<size in kb>"} );
-    options.push_back( {"-debugcart", "Generate exit codes for VICE Testbench", ""} );    
-    options.push_back( {"-limitcycles", "Specify number of cycles to run before quitting with an error (checks at complete frames)", "<cycles>"} );
-    options.push_back( {"-exitscreenshot", "Save screen to PNG file, when exiting App", "<filePath>"} );    
-    options.push_back( {"-ane-magic", "Force CPU to use this value for ANE opcode", "<value>"} );
-	options.push_back( {"-lax-magic", "Force CPU to use this value for LAX opcode", "<value>"} );
-    options.push_back( {"-no-driver", "Run without video, audio, input drivers", ""} );
-    options.push_back( {"-no-gui", "Open without graphical user interface and force -no-driver", ""} );    
-	options.push_back( {"-autostart-prg", "Set autostart mode for PRG files (1: Inject, 2: Disk image)", "<value>"} );
-	options.push_back( {"-aggressive-fastforward", "aggressive Warp mode (emulates VIC sequencer every 15 frames only)", ""} );
-	options.push_back( {"-fast-testbench", "analyze passed options and then decides on the use of aggressive fastforward and/or PRG memory injection", ""} );
-    
     for (unsigned i = 0; i < argc; i++) {
-
-        arguments.push_back( argv[i] );
         
-        if ( (std::string)argv[i] == "-no-gui" )
-            GUIKIT::Application::dummy = true;
-        
-        else if ( (std::string)argv[i] == "-debugcart" )
+		arg = (std::string)argv[i];
+		
+		if ( arg == "-no-driver" ) {
+			noDriver = true;
+			
+        } else if ( arg == "-no-gui" ) {
+			noGui = true;
+			noDriver = true;
+			
+        } else if ( arg == "-debugcart" )
             debug = true;            
         
-        else if ( (std::string)argv[i] == "-h" )
+        else if ( arg == "-h" )
             helpRequested = true;
         
-        else if ( (std::string)argv[i] == "--help" )
+        else if ( arg == "--help" )
             helpRequested = true;
         
-        else if ( (std::string)argv[i] == "-v" )
+        else if ( arg == "-v" )
             versionRequested = true;
         
-        else if ( (std::string)argv[i] == "--version" )
-            versionRequested = true;		
-    }  
+        else if ( arg == "--version" )
+            versionRequested = true;	
+		else
+			arguments.push_back( arg );
+    }
 }
 
 auto Cmd::printHelp() -> void {
@@ -71,7 +50,44 @@ auto Cmd::printHelp() -> void {
     
     GUIKIT::System::printToCmd( "Usage: Denise [option]... [image path]... \n\n" );
     GUIKIT::System::printToCmd( "Available command-line options:\n" );
-    
+
+	struct Options {
+        std::string ident;
+        std::string description;
+        std::string param;
+    };  
+	
+	std::vector<Options> options;
+	options.push_back({"-v, --version", "Output program version", ""});
+	options.push_back({"-h, --help", "Output this help screen", ""});
+
+	options.push_back({"-vic-6569R3", "Select VIC-II 6569R3 and PAL mode", ""});
+	options.push_back({"-vic-8565", "Select VIC-II 8565 and PAL mode", ""});
+	options.push_back({"-vic-6567R8", "Select VIC-II 6567R8 and NTSC mode", ""});
+	options.push_back({"-vic-8562", "Select VIC-II 6562 and NTSC mode", ""});
+	options.push_back({"-vic-6569R1", "Select VIC-II 6569R1 and PAL mode", ""});
+	options.push_back({"-vic-6567R56A", "Select VIC-II 6567R56A and NTSC mode", ""});
+	options.push_back({"-vic-6572", "Select VIC-II 6572 and PAL mode", ""});
+	options.push_back({"-vic-6573", "Select VIC-II 6573 and NTSC mode with PAL Encoding", ""});
+
+	options.push_back({"-sid-6581", "Select SID 6581", ""});
+	options.push_back({"-sid-8580", "Select SID 8580", ""});
+
+	options.push_back({"-cia-6526a", "Select CIA 6526a", ""});
+	options.push_back({"-cia-6526", "Select CIA 6526", ""});
+
+	options.push_back({"-reu", "Emulate REU Expansion", "<size in kb>"});
+	options.push_back({"-debugcart", "Generate exit codes for VICE Testbench", ""});
+	options.push_back({"-limitcycles", "Specify number of cycles to run before quitting with an error (checks at complete frames)", "<cycles>"});
+	options.push_back({"-exitscreenshot", "Save screen to PNG file, when exiting App", "<filePath>"});
+	options.push_back({"-ane-magic", "Force CPU to use this value for ANE opcode", "<value>"});
+	options.push_back({"-lax-magic", "Force CPU to use this value for LAX opcode", "<value>"});
+	options.push_back({"-no-driver", "Run without video, audio, input drivers", ""});
+	options.push_back({"-no-gui", "Open without graphical user interface and force -no-driver", ""});
+	options.push_back({"-autostart-prg", "Set autostart mode for PRG files (1: Inject, 2: Disk image)", "<value>"});
+	options.push_back({"-aggressive-fastforward", "aggressive Warp mode (emulates VIC sequencer every 15 frames only)", ""});
+	options.push_back({"-fast-testbench", "analyze passed options and then decides on the use of aggressive fastforward and/or PRG memory injection", ""});
+	
     for(auto& option : options) {                
         
         if (!option.param.empty())
@@ -98,12 +114,16 @@ auto Cmd::parse() -> void {
     typedef Emulator::Interface EmuInt;
 	auto emuC64 = program->getEmulator("C64");
 	auto diskGroup = emuC64->getDiskMediaGroup();
+	unsigned cycles = 0;
     GUIKIT::Settings* settingsC64 = program->getSettings( emuC64 );
+	bool hasFuxxorTest = false;
+	bool hasViciiTest = false;
+	bool hasRam0001Test = false;
 
     for( auto& arg : arguments ) {
         if (limitCyclesNext) {
             limitCyclesNext = false;
-            setCycles( arg );
+            cycles = getCycles( arg );
             continue;          
         }          
         
@@ -176,21 +196,6 @@ auto Cmd::parse() -> void {
 		else if (arg == "-fast-testbench") {
             fastTestbench = true;
         }
-        else if (arg == "-debugcart") {
-            dynamic_cast<LIBC64::Interface*>(emuC64)->activateDebugCart();   
-            prepareDrives( emuC64 );
-			globalSettings->set<bool>("audio_sync", false );
-			globalSettings->set<bool>("video_sync", false );
-			globalSettings->set<bool>("fps_limit", false);
-			globalSettings->set<bool>("dynamic_rate_control", false );			
-            globalSettings->set<bool>("fps", true );			
-            globalSettings->set("video_screen_text", 0);
-            settingsC64->set<bool>( "video_cycle_accuracy", true );  
-			updateModel( emuC64, LIBC64::Interface::ModelIdDisableGreyDotBug, 0 );
-			
-			if (!autostartPrgOverride)
-				autostartPrg = 2;
-        }            
         else if (arg == "-limitcycles") {
             limitCyclesNext = true;
         }
@@ -202,13 +207,6 @@ auto Cmd::parse() -> void {
         }
 		else if (arg == "-lax-magic") {
             laxMagicNext = true;
-        }
-        else if (arg == "-no-driver") {
-            noDriver = 1;
-        }
-        else if (arg == "-no-gui") {
-            noGui = 1;
-            noDriver = 1;
         }
 		else if (arg == "-aggressive-fastforward") {
 			aggressiveFastforward = 1;
@@ -227,6 +225,14 @@ auto Cmd::parse() -> void {
                 								
                 if (GUIKIT::String::foundSubStr( temp, "." + suffix )) {
                     std::replace( arg.begin(), arg.end(), '\\', '/');
+					
+					if (!hasViciiTest && GUIKIT::String::foundSubStr( temp, "vicii" ))
+						hasViciiTest = true;
+					else if (!hasFuxxorTest && GUIKIT::String::foundSubStr( temp, "fuxxor" ))
+						hasFuxxorTest = true;
+					else if (!hasRam0001Test && GUIKIT::String::foundSubStr( temp, "ram0001" ))
+						hasRam0001Test = true;
+					
                     paths.push_back( arg );  
                     autoload = true;
 					
@@ -241,6 +247,20 @@ auto Cmd::parse() -> void {
             }                                  
         }
     }
+
+	if (debug) {
+		dynamic_cast<LIBC64::Interface*> (emuC64)->activateDebugCart( cycles );
+		prepareDrives(emuC64);
+		globalSettings->set<bool>("audio_sync", false);
+		globalSettings->set<bool>("video_sync", false);
+		globalSettings->set<bool>("fps_limit", false);
+		globalSettings->set<bool>("dynamic_rate_control", false);
+		globalSettings->set<bool>("fps", true);
+		globalSettings->set("video_screen_text", 0);
+		settingsC64->set<bool>("video_cycle_accuracy", true);				
+		
+		updateModel(emuC64, LIBC64::Interface::ModelIdDisableGreyDotBug, 0);
+	}	
 	
 	if (noGui)
 		globalSettings->set<bool>("fps", false );
@@ -250,25 +270,23 @@ auto Cmd::parse() -> void {
 		
 		if (!screenshotPath.empty())
 			aggressiveFastforward = false;
+		
 		else {
-			for(auto path : paths) {		
-				GUIKIT::String::toLowerCase( path );
-				
-				if (GUIKIT::String::foundSubStr( path, "vicii" )) {
-					aggressiveFastforward = false;								
-				}
-				
-				if (GUIKIT::String::foundSubStr( path, "fuxxor" )) {
-					fastTestbench = false;
-					aggressiveFastforward = false;
-				}
-				
-				if (GUIKIT::String::foundSubStr( path, "ram0001" )) {
-					aggressiveFastforward = false;
-				}				
+			if (hasViciiTest)
+				aggressiveFastforward = false;
+			
+			if (hasFuxxorTest) {
+				fastTestbench = false;
+				aggressiveFastforward = false;
 			}
+				
+			if (hasRam0001Test)
+				aggressiveFastforward = false;
 		}
 	}
+	
+	if (hasFuxxorTest)
+		settingsC64->set<unsigned>("memory_value", 0);
 	
 	if (fastTestbench)
 		autostartPrg = 1;	
@@ -276,7 +294,7 @@ auto Cmd::parse() -> void {
 	else if (!d64InUse && (autostartPrg == 2)) {
 				
 		if (diskGroup)
-			diskGroup->suffix.push_back("prg");
+			diskGroup->suffix.push_back("prg"); // load prg as d64
 	}
 		
     arguments = paths;
@@ -291,9 +309,9 @@ auto Cmd::autoloadImages() -> void {
         return;
     }
     
-    view->autoloadInit( arguments, true, View::AutoLoad::AutoStart );
+    autoloader->init( arguments, true, Autoloader::Mode::AutoStart );
     
-    view->autoloadFiles();
+    autoloader->loadFiles();
     
     if (!debug && !noDriver && !noGui && globalSettings->get<bool>("open_fullscreen", false)) {
         view->setFullScreen(true);
@@ -357,19 +375,16 @@ auto Cmd::collectAllowedSuffix() -> std::vector<std::string> {
     return allowedSuffix;
 }
 
-auto Cmd::setCycles(std::string arg) -> void {
+auto Cmd::getCycles(std::string arg) -> unsigned {
     
     if (!GUIKIT::String::isNumber( arg ))
-        return;
+        return 0;
      
-    unsigned cycles = 0;
     try {
-        cycles = std::stoi(arg);
-    } catch (...) {
-        return;
-    }
+        return std::stoi(arg);
+    } catch (...) {}
 
-    dynamic_cast<LIBC64::Interface*>( program->getEmulator("C64") )->activateDebugCart(cycles);  
+	return 0;
 }
 
 auto Cmd::setAneMagic(std::string arg) -> void {
@@ -387,16 +402,12 @@ auto Cmd::setLaxMagic(std::string arg) -> void {
 }
 
 auto Cmd::setAutoStartPrg(std::string arg) -> void {    
-	
-	autostartPrg = 1; // inject 
-	autostartPrgOverride = false;
-	
+		
     if (!GUIKIT::String::isNumber( arg ))
         return;
              
     try {
         autostartPrg = std::stoi(arg);	
-		autostartPrgOverride = true;
     } catch(...) { }
 }
 

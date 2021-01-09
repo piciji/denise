@@ -8,7 +8,7 @@
 #include "../audio/manager.h"
 #include "../cmd/cmd.h"
 #include "status.h"
-#include "dragndrop.cpp"
+#include "../media/autoloader.h"
 #include "placeholder.cpp"
 
 View* view = nullptr;
@@ -119,9 +119,9 @@ auto View::build() -> void {
 
     GUIKIT::Application::Cocoa::onOpenFile = [this] (std::string fileName) {
         
-        view->autoloadInit( {fileName}, false, AutoLoad::AutoStart );
+        autoloader->init( {fileName}, false, Autoloader::Mode::AutoStart );
         
-        view->autoloadFiles();
+        autoloader->loadFiles();
         
         if (!cmd->debug && !cmd->noDriver && !cmd->noGui && globalSettings->get<bool>("open_fullscreen", false)) {
             view->setFullScreen(true);
@@ -159,7 +159,7 @@ auto View::build() -> void {
         renderPlaceholder(false);
 	};
 	
-	autoloadTimer.setInterval(40);
+	anyloadTimer.setInterval(40);
 	
 	viewport.onMousePress = [this](GUIKIT::Mouse::Button button) {
 		
@@ -193,18 +193,39 @@ auto View::build() -> void {
     setDragnDrop();        
 }
 
-auto View::setAutoload( Emulator::Interface* emulator ) -> void {
+auto View::setAnyload( Emulator::Interface* emulator ) -> void {
 
 	bool mIsAcquiredBefore = inputDriver->mIsAcquired();
 	if (mIsAcquiredBefore)
 		inputDriver->mUnacquire();
 	
-	autoloadTimer.onFinished = [this, emulator, mIsAcquiredBefore]() {
-		autoloadTimer.setEnabled(false);		
+	anyloadTimer.onFinished = [this, emulator, mIsAcquiredBefore]() {
+		anyloadTimer.setEnabled(false);		
 		EmuConfigView::TabWindow::getView( emulator )->mediaLayout->anyLoad( mIsAcquiredBefore );
 	};
 	
-	autoloadTimer.setEnabled();
+	anyloadTimer.setEnabled();
+}
+
+auto View::setDragnDrop() -> void {
+    
+    viewport.setDroppable();
+    
+    setDroppable();
+    
+    // aspect correct viewport doesn't fill up the complete window.
+    // thats why, we have to set drop event on whole window too.
+    // but viewport is on top of window, so we simply set drop event on both.
+    onDrop = [this]( std::vector<std::string> files ) {
+        viewport.onDrop( files );
+    };
+    
+    viewport.onDrop = [this]( std::vector<std::string> files ) {
+
+        autoloader->init( files, false, Autoloader::Mode::DragnDrop );
+        
+        autoloader->loadFiles();            
+    };        
 }
 
 auto View::cursorForPlacholderInUpperTriangle() -> bool {
@@ -648,7 +669,7 @@ auto View::buildMenu() -> void {
 		sM.loadSoftware = new GUIKIT::MenuItem;
         sM.loadSoftware->setIcon( driveImage );
         sM.loadSoftware->onActivate = [this, emulator]() {			
-            setAutoload( emulator );
+            setAnyload( emulator );
 	    };
         sM.system->append( *sM.loadSoftware );
         

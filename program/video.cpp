@@ -78,6 +78,9 @@ auto Program::midScreenCallback() -> void {
 }
 
 auto Program::videoRefresh(const uint16_t* frame, unsigned width, unsigned height, unsigned linePitch) -> void {
+
+	if (cmd->noGui)
+		return;
     
     statusHandler->countFrames();
 	
@@ -87,6 +90,9 @@ auto Program::videoRefresh(const uint16_t* frame, unsigned width, unsigned heigh
 
 auto Program::videoRefresh8(const uint8_t* frame, unsigned width, unsigned height, unsigned linePitch) -> void {
     
+	if (cmd->noGui)
+		return;
+	
     statusHandler->countFrames();
 	
     if (frame)
