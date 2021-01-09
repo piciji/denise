@@ -154,7 +154,8 @@ auto pStatusBar::update() -> void {
 		}
 				
 		gtk_grid_attach_next_to (GTK_GRID(gridWidget), gtkWidget, nullptr, GtkPositionType::GTK_POS_RIGHT, 1, 1);
-		gtk_widget_set_tooltip_text(gtkWidget, part.tooltip.c_str());
+		if (!part.tooltip.empty())
+			gtk_widget_set_tooltip_text(gtkWidget, part.tooltip.c_str());
 		gtk_widget_set_vexpand( gtkWidget, true );
 		gtk_widget_show_all( gtkWidget );
 	}
@@ -185,8 +186,9 @@ auto pStatusBar::updatePart( StatusBar::Part& part ) -> void {
 		else
 			label->resetForegroundColor();
 	}
-		
-	gtk_widget_set_tooltip_text(widget->p.gtkWidget, part.tooltip.c_str());
+	
+	if (!part.tooltip.empty())
+		gtk_widget_set_tooltip_text(widget->p.gtkWidget, part.tooltip.c_str());
 }
 
 auto pStatusBar::onClick(GtkWidget* widget, GdkEventButton* event, StatusBar::Part* part) -> void {

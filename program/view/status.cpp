@@ -72,7 +72,7 @@ auto StatusHandler::updateFPS( bool state ) -> void {
     
     showFPS = state;
     if (!showFPS) {
-        statusBar->updateVisible(14, false);
+        statusBar->updateVisible(15, false);
         statusBar->update();
     }
 }
@@ -80,7 +80,7 @@ auto StatusHandler::updateFPS( bool state ) -> void {
 auto StatusHandler::updateDRC( bool state ) -> void {
     
     if (!state) {
-        statusBar->updateVisible(12, false);
+        statusBar->updateVisible(13, false);
         statusBar->update();
     }
 }
@@ -88,7 +88,7 @@ auto StatusHandler::updateDRC( bool state ) -> void {
 auto StatusHandler::updateAudioRecord( bool state ) -> void {
     
     recordAudio = state;
-    statusBar->updateVisible(13, recordAudio);
+    statusBar->updateVisible(14, recordAudio);
     statusBar->update();
 }
 
@@ -141,10 +141,11 @@ auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
     
     statusBar->append( 9, "000" );    // tape counter
     statusBar->append( 10, &(view->stopImage), nullptr, &(view->tapeControlMenu) );    // tape button icon
-    statusBar->append( 11, &(view->ledOffImage) );    // expansion LED
-    statusBar->append( 12, "DRC DRC DRC DRC DRC DRC DRC DRC D" );    // DRC Status
-    statusBar->append( 13, &(view->recordhiImage) );    // REC Status
-    statusBar->append( 14, "00001", nullptr );    // FPS
+	statusBar->append( 11, "CRT" );    // expansion label
+    statusBar->append( 12, &(view->ledOffImage) );    // expansion LED
+    statusBar->append( 13, "DRC DRC DRC DRC DRC DRC DRC DRC D" );    // DRC Status
+    statusBar->append( 14, &(view->recordhiImage) );    // REC Status
+    statusBar->append( 15, "00001", nullptr );    // FPS
 }
             
 auto StatusHandler::transferToOSD( std::string text ) -> void {
@@ -242,7 +243,8 @@ auto StatusHandler::update() -> void {
                     if ((deviceState.LED >> deviceState.inputsPerFrame) & 1)
                         image = &(view->ledGreenImage); 
 
-                    statusBar->updateImage(11, image);
+					statusBar->updateVisible(11, true);
+                    statusBar->updateImage(12, image);
                 }                
             }
         }                        
@@ -256,7 +258,7 @@ auto StatusHandler::update() -> void {
             out += " Ø " + GUIKIT::String::formatFloatingPoint(drcS.average, 2) + "%";
 
             if (drcBufferUpdate())
-                statusBar->updateText(12, out);
+                statusBar->updateText(13, out);
 
             if (message.txt.empty())
                 OSDText += out;
@@ -269,7 +271,7 @@ auto StatusHandler::update() -> void {
             std::string _FPS = std::to_string(fps);
 
             if (fpsCounterUpdate())
-                statusBar->updateText(14, _FPS);
+                statusBar->updateText(15, _FPS);
 
             if (message.txt.empty())
                 OSDText += " " + _FPS;            

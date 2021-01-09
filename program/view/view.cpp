@@ -1041,8 +1041,8 @@ auto View::translate() -> void {
     
     //cocoa.setHiddenForAppMenuItem(GUIKIT::Window::Cocoa::AppMenuItem::Custom1, true);
 
-	statusBar.updateTooltip(11, trans->get("cartridges") );
-	statusBar.updateTooltip(14, trans->get("FPS") );	
+	statusBar.updateTooltip(12, trans->get("cartridges") );
+	statusBar.updateTooltip(15, trans->get("FPS") );	
 }
 
 auto View::getViewportHandle() -> uintptr_t {
