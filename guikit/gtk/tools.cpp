@@ -2,6 +2,14 @@
 #include <fontconfig/fontconfig.h>
 #include <clocale>
 
+#ifndef INSTALL_FOLDER
+	#if defined(__NetBSD__)
+		#define INSTALL_FOLDER "/usr/pkg"
+	#else
+		#define INSTALL_FOLDER "/usr"
+	#endif
+#endif
+
 //timer
 static auto Timer_trigger(pTimer* self) -> guint {
     if(self->timer.onFinished) self->timer.onFinished();
@@ -112,23 +120,67 @@ auto pSystem::getUserDataFolder() -> std::string {
 }
 
 auto pSystem::getResourceFolder(std::string appIdent) -> std::string {
-	std::string out = "";
-    struct passwd* userinfo = getpwuid(getuid());
-    out = userinfo->pw_dir;
-    out = File::beautifyPath(out);
-	if (out.length() == 0) out = "./";
-    out += ".local/" + appIdent;
-    return out;
+
+	static std::string resPath = "";
+
+	if (resPath == "") {
+		resPath = std::string(INSTALL_FOLDER) + "/share/" + appIdent;
+
+		if (File::isDir(resPath))
+			return resPath;
+			
+		resPath = "/usr/share/" + appIdent;
+		
+		if (File::isDir(resPath))
+			return resPath;
+		
+		resPath = "/usr/pkg/share/" + appIdent;	// NET BSD
+		
+		if (File::isDir(resPath))
+			return resPath;
+		
+		struct passwd* userinfo = getpwuid(getuid());
+		resPath = userinfo->pw_dir;
+		resPath = File::beautifyPath(resPath);
+		if (resPath.length() == 0)
+			resPath = "./";
+		
+		resPath += ".local/share/" + appIdent;
+	}
+
+	return resPath;
 }
 
 auto pSystem::getIconFolder() -> std::string {
-	std::string out = "";
-    struct passwd* userinfo = getpwuid(getuid());
-    out = userinfo->pw_dir;
-    out = File::beautifyPath(out);
-	if (out.length() == 0) out = "./";
-    out += ".local/share/icons/";
-    return out;
+
+	static std::string iconPath = "";
+
+	if (iconPath == "") {
+		iconPath = std::string(INSTALL_FOLDER) + "/share/icons/";
+
+		if (File::isDir(iconPath))
+			return iconPath;
+
+		iconPath = "/usr/share/icons/";
+
+		if (File::isDir(iconPath))
+			return iconPath;
+
+		iconPath = "/usr/pkg/share/icons/"; // NET BSD
+
+		if (File::isDir(iconPath))
+			return iconPath;
+
+		struct passwd* userinfo = getpwuid(getuid());
+		iconPath = userinfo->pw_dir;
+		iconPath = File::beautifyPath(iconPath);
+		if (iconPath.length() == 0)
+			iconPath = "./";
+
+		iconPath += ".local/share/icons/";
+	}
+
+	return iconPath;
 }
 
 auto pSystem::getWorkingDirectory() -> std::string {

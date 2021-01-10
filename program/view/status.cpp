@@ -8,9 +8,6 @@ StatusHandler* statusHandler = nullptr;
 
 auto StatusHandler::updateDeviceState( Emulator::Interface::Media* media, bool write, unsigned position, bool LED, bool motorOff ) -> void {
 
-    if (!media || cmd->noGui)
-        return;
-
     setDeviceUpdate();
     
     for (auto& deviceState : deviceStates) {

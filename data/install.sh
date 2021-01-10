@@ -13,22 +13,36 @@ else
 fi
 echo "Finished installing dependencies. Copying application files."
 
-prefix=~/.local
-mkdir -p $prefix/bin/
+prefix=/usr
+
+# temporary: to uninstall previous versions of Denise, will be removed in future releases
+prefixOld=~/.local
+
+if [ -f $prefixOld/bin/Denise ]; then rm $prefixOld/bin/Denise; fi
+if [ -f $prefixOld/share/icons/denise.png ]; then rm $prefixOld/share/icons/denise.png; fi
+if [ -f $prefixOld/share/applications/denise.desktop ]; then rm $prefixOld/share/applications/denise.desktop; fi
+if [ -d $prefixOld/denise ]; then rm -rf $prefixOld/denise; fi
+
+if [ -d $prefix/local ]; then mkdir -p $prefix/local/bin/; else mkdir -p $prefix/bin/; fi
 mkdir -p $prefix/share/icons/
 mkdir -p $prefix/share/applications/
-mkdir -p $prefix/denise/translation/
-mkdir -p $prefix/denise/data/
-mkdir -p $prefix/denise/fonts/
-mkdir -p $prefix/denise/img/
-mkdir -p $prefix/denise/shader/
+mkdir -p $prefix/share/denise/translation/
+mkdir -p $prefix/share/denise/data/
+mkdir -p $prefix/share/denise/fonts/
+mkdir -p $prefix/share/denise/img/
+mkdir -p $prefix/share/denise/shader/
 
-install -D -m 755 Denise $prefix/bin/Denise
+if [ -d $prefix/local ]; then
+	install -D -m 755 Denise $prefix/local/bin/Denise;
+else
+	install -D -m 755 Denise $prefix/bin/Denise;
+fi
+
 install -D -m 644 denise.png $prefix/share/icons/denise.png
 install -D -m 644 denise.desktop $prefix/share/applications/denise.desktop
-install -D -m 644 translation/* $prefix/denise/translation
-install -D -m 644 data/* $prefix/denise/data
-install -D -m 644 fonts/*.ttf $prefix/denise/fonts
-install -D -m 644 img/* $prefix/denise/img
-cp -r shader/* $prefix/denise/shader/
+install -D -m 644 translation/* $prefix/share/denise/translation
+install -D -m 644 data/* $prefix/share/denise/data
+install -D -m 644 fonts/*.ttf $prefix/share/denise/fonts
+install -D -m 644 img/* $prefix/share/denise/img
+cp -r shader/* $prefix/share/denise/shader/
 echo "Installation complete"

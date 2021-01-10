@@ -10,7 +10,13 @@ dataFolder := data
 fontFolder := fonts
 shaderFolder := shader
 imgFolder := img
-prefix := $(HOME)/.local
+
+prefix ?= /usr
+#prefix ?= $(HOME)/.local
+
+# temporary: to uninstall previous versions of Denise, will be removed in future releases
+prefixOld := $(HOME)/.local
+
 target := $(shell g++ --version | grep i686)
 
 include data/Makefile
@@ -38,7 +44,7 @@ else ifeq ($(platform),macosx)
     flags += -w -stdlib=libc++
     link += -lc++ -lobjc
 else
-    link += -lpthread -no-pie
+    link += -lpthread -no-pie      
 endif
 
 ifeq ($(gprof), 1)    
@@ -227,32 +233,43 @@ install:
     else ifeq ($(platform),macosx)
 	dmgbuild -s data/dmgSettings.py "Denise" out/Denise.dmg
     else
-	mkdir -p $(prefix)/bin/
+	# remove possible old installation
+	if [ -f $(prefixOld)/bin/$(name) ]; then rm $(prefixOld)/bin/$(name); fi
+	if [ -f $(prefixOld)/share/icons/$(loname).png ]; then rm $(prefixOld)/share/icons/$(loname).png; fi
+	if [ -f $(prefixOld)/share/applications/$(loname).desktop ]; then rm $(prefixOld)/share/applications/$(loname).desktop; fi
+	if [ -d $(prefixOld)/$(loname) ]; then rm -rf $(prefixOld)/$(loname); fi
+	
+	if [ -d $(prefix)/local ]; then	mkdir -p $(prefix)/local/bin/; else mkdir -p $(prefix)/bin/; fi
 	mkdir -p $(prefix)/share/icons/
 	mkdir -p $(prefix)/share/applications/
-	mkdir -p $(prefix)/$(loname)/$(translationFolder)/
-	mkdir -p $(prefix)/$(loname)/$(dataFolder)/
-	mkdir -p $(prefix)/$(loname)/$(fontFolder)/
-	mkdir -p $(prefix)/$(loname)/$(imgFolder)/
-	mkdir -p $(prefix)/$(loname)/$(shaderFolder)/
+	mkdir -p $(prefix)/share/$(loname)/$(translationFolder)/
+	mkdir -p $(prefix)/share/$(loname)/$(dataFolder)/
+	mkdir -p $(prefix)/share/$(loname)/$(fontFolder)/
+	mkdir -p $(prefix)/share/$(loname)/$(imgFolder)/
+	mkdir -p $(prefix)/share/$(loname)/$(shaderFolder)/
 
-	install -D -m 755 out/$(name) $(prefix)/bin/$(name)
+	if [ -d $(prefix)/local ]; then	\
+	    install -D -m 755 out/$(name) $(prefix)/local/bin/$(name);	\
+	else	\
+	    install -D -m 755 out/$(name) $(prefix)/bin/$(name);	\
+	fi
 	install -D -m 644 data/img/$(loname).png $(prefix)/share/icons/$(loname).png
 	install -D -m 644 data/$(loname).desktop $(prefix)/share/applications/$(loname).desktop
-	install -D -m 644 data/$(translationFolder)/* $(prefix)/$(loname)/$(translationFolder)
-	install -D -m 644 data/$(dataFolder)/* $(prefix)/$(loname)/$(dataFolder)
-	install -D -m 644 data/$(fontFolder)/*.ttf $(prefix)/$(loname)/$(fontFolder)
-	install -D -m 644 data/$(imgFolder)/bundle/* $(prefix)/$(loname)/$(imgFolder)
-	cp -r data/$(shaderFolder)/* $(prefix)/$(loname)/$(shaderFolder)/
+	install -D -m 644 data/$(translationFolder)/* $(prefix)/share/$(loname)/$(translationFolder)
+	install -D -m 644 data/$(dataFolder)/* $(prefix)/share/$(loname)/$(dataFolder)
+	install -D -m 644 data/$(fontFolder)/*.ttf $(prefix)/share/$(loname)/$(fontFolder)
+	install -D -m 644 data/$(imgFolder)/bundle/* $(prefix)/share/$(loname)/$(imgFolder)
+	cp -r data/$(shaderFolder)/* $(prefix)/share/$(loname)/$(shaderFolder)/
     endif
 
 uninstall:
     ifeq ($(platform),windows)
     else ifeq ($(platform),macosx)
     else	
-	if [ -f $(prefix)/bin/$(name) ]; then rm $(prefix)/bin/$(name); fi
+	if [ -f $(prefix)/local/bin/$(name) ];	then rm $(prefix)/local/bin/$(name);	\
+	elif [ -f $(prefix)/bin/$(name) ];	then rm $(prefix)/bin/$(name); fi
+	
 	if [ -f $(prefix)/share/icons/$(loname).png ]; then rm $(prefix)/share/icons/$(loname).png; fi
 	if [ -f $(prefix)/share/applications/$(loname).desktop ]; then rm $(prefix)/share/applications/$(loname).desktop; fi
-	if [ -d $(prefix)/$(loname) ]; then rm -rf $(prefix)/$(loname); fi
+	if [ -d $(prefix)/share/$(loname) ]; then rm -rf $(prefix)/share/$(loname); fi
     endif
-

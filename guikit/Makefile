@@ -12,8 +12,8 @@ else ifeq ($(platform),macosx)
     uilink = -framework Cocoa
 
 else
-    #uiflags = $(cppflags) `pkg-config --cflags gtk+-3.0` -DGUIKIT_GTK -DGDK_DISABLE_DEPRECATED -DGTK_DISABLE_DEPRECATED -DGSEAL_ENABLE
-    uiflags = $(cppflags) `pkg-config --cflags gtk+-3.0` -DGUIKIT_GTK
+    #uiflags = $(cppflags) `pkg-config --cflags gtk+-3.0` -DGUIKIT_GTK -DINSTALL_FOLDER="\"$(prefix)\"" -DGDK_DISABLE_DEPRECATED -DGTK_DISABLE_DEPRECATED -DGSEAL_ENABLE
+    uiflags = $(cppflags) `pkg-config --cflags gtk+-3.0` -DGUIKIT_GTK -DINSTALL_FOLDER="\"$(prefix)\""
     uilink = `pkg-config --libs gtk+-3.0` -lfontconfig
 
 endif

@@ -556,6 +556,9 @@ auto Program::exit(int code) -> void {
 }
 
 auto Program::updateDeviceState( Emulator::Interface::Media* media, bool write, unsigned position, bool LED, bool motorOff ) -> void {
+	if (!media || cmd->noGui)
+		return;
+
 	statusHandler->updateDeviceState( media, write, position, LED, motorOff );
 }
 
