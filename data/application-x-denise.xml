@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+  <mime-type type="application/x-denise-d64">
+    <comment>C64 Disk Image</comment>
+    <glob pattern="*.d64"/>
+  </mime-type>
+  <mime-type type="application/x-denise-g64">
+    <comment>C64 Disk Image</comment>
+    <glob pattern="*.g64"/>
+  </mime-type>
+  <mime-type type="application/x-denise-tape">
+    <comment>C64 Tape Image</comment>
+    <glob pattern="*.tap"/>
+  </mime-type>
+  <mime-type type="application/x-denise-crt">
+    <comment>C64 Expansion Image</comment>
+    <glob pattern="*.crt"/>
+  </mime-type>
+  <mime-type type="application/x-denise-prg">
+    <comment>C64 Program Image</comment>
+    <glob pattern="*.prg"/>
+  </mime-type>
+</mime-info>

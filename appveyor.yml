@@ -122,6 +122,7 @@ for:
     - sh: sudo mkdir -p out/img
     - sh: sudo cp data/img/denise.png out/
     - sh: sudo cp data/denise.desktop out/
+    - sh: sudo cp data/application-x-denise.xml out/
     - sh: sudo cp data/translation/* out/translation/
     - sh: sudo cp data/data/* out/data/
     - sh: sudo cp data/fonts/*.ttf out/fonts/

@@ -26,6 +26,7 @@ if [ -d $prefixOld/denise ]; then rm -rf $prefixOld/denise; fi
 if [ -d $prefix/local ]; then mkdir -p $prefix/local/bin/; else mkdir -p $prefix/bin/; fi
 mkdir -p $prefix/share/icons/
 mkdir -p $prefix/share/applications/
+mkdir -p $prefix/share/mime/packages/
 mkdir -p $prefix/share/denise/translation/
 mkdir -p $prefix/share/denise/data/
 mkdir -p $prefix/share/denise/fonts/
@@ -40,6 +41,7 @@ fi
 
 install -D -m 644 denise.png $prefix/share/icons/denise.png
 install -D -m 644 denise.desktop $prefix/share/applications/denise.desktop
+install -D -m 644 application-x-denise.xml $prefix/share/mime/packages/application-x-denise.xml
 install -D -m 644 translation/* $prefix/share/denise/translation
 install -D -m 644 data/* $prefix/share/denise/data
 install -D -m 644 fonts/*.ttf $prefix/share/denise/fonts
