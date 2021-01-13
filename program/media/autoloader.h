@@ -14,6 +14,7 @@ struct Autoloader {
 		Mode mode = Mode::AutoStart;
 		std::vector<std::string> files;
 		unsigned selection = 0;
+        GUIKIT::File* saveFile = nullptr;
 	} ddControl;
 	
 	auto init( std::vector<std::string> files, bool silentError, Mode mode, unsigned selection = 0) -> void;
@@ -23,6 +24,7 @@ struct Autoloader {
 	auto countImagesFor(Emulator::Interface::MediaGroup* mediaGroup) -> unsigned;
 	auto insertImage( Emulator::Interface* emulator, Emulator::Interface::Media* media, GUIKIT::File* file, GUIKIT::File::Item* item) -> void;
 	auto activateDrive( Emulator::Interface* emulator, Emulator::Interface::MediaGroup* mediaGroup, unsigned requestedCount ) -> void;
+    auto checkForSavestate( GUIKIT::File* file, GUIKIT::File::Item* item ) -> bool;
 };
 
 extern Autoloader* autoloader;

@@ -371,6 +371,8 @@ auto Cmd::collectAllowedSuffix() -> std::vector<std::string> {
             }
         }
     }
+    
+    allowedSuffix.push_back( "sav" );
         
     return allowedSuffix;
 }

@@ -20,4 +20,9 @@
     <comment>C64 Program Image</comment>
     <glob pattern="*.prg"/>
   </mime-type>
+  <mime-type type="application/x-denise-sav">
+    <comment>Denise Save Image</comment>
+    <glob pattern="*.sav"/>
+    <glob pattern="*.sav.images"/>
+  </mime-type>
 </mime-info>

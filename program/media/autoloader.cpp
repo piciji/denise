@@ -8,6 +8,7 @@
 #include "../tools/filesetting.h"
 #include "../config/archiveViewer.h"
 #include "../cmd/cmd.h"
+#include "../states/states.h"
 
 Autoloader* autoloader = nullptr;
 
@@ -18,6 +19,7 @@ auto Autoloader::init( std::vector<std::string> files, bool silentError, Mode mo
     ddControl.mode = mode;
     ddControl.selection = selection;
     ddControl.files.clear();
+    ddControl.saveFile = nullptr;
     
     unsigned i = 0;
     for( auto& file : files ) {        
@@ -32,6 +34,20 @@ auto Autoloader::postProcessing() -> void {
 
     if (ddControl.silentError)
         filePool->unloadOrphaned();
+    
+    auto emuView = EmuConfigView::TabWindow::getView( ddControl.emulator );
+    
+    if (ddControl.saveFile) {
+
+        if (emuView)
+            emuView->configurationsLayout->updateSaveIdent( ddControl.saveFile->getFileName( false ) );
+        
+        filePool->assign("savestate", nullptr);
+        
+        States::getInstance( ddControl.emulator )->load( ddControl.saveFile->getFile() );
+        
+        return;
+    }
     
     if (ddControl.mediaGroups.size() == 0) {
         if (ddControl.silentError)
@@ -65,9 +81,7 @@ auto Autoloader::postProcessing() -> void {
     } else if (ddControl.mode == Mode::Open)
         autoStart = false;
     else if (ddControl.mode == Mode::AutoStart)
-        autoStart = true;    
-	
-    auto emuView = EmuConfigView::TabWindow::getView( ddControl.emulator );	
+        autoStart = true;    	    
     
     if (!autoStart) {
 
@@ -128,7 +142,6 @@ auto Autoloader::postProcessing() -> void {
 		}
     }
     
-    ddControl.mediaGroups.clear();
 }
 
 auto Autoloader::loadFiles() -> void {
@@ -171,6 +184,11 @@ auto Autoloader::loadFile( GUIKIT::File* file, GUIKIT::File::Item* item ) -> voi
 	if (!item || (item->info.size == 0))
 		goto errorOpen;
 
+    if (!cmd->noGui) {
+        if ( checkForSavestate( file, item ) )
+            return loadFiles();
+    }
+    
 	end = item->info.name.find_last_of(".");
 
 	if (end == std::string::npos)
@@ -310,4 +328,63 @@ auto Autoloader::activateDrive( Emulator::Interface* emulator, Emulator::Interfa
 	
 	settings->set<unsigned>( ident, requestedCount);
 	settings->remove( "access_floppy" );
+}
+
+auto Autoloader::checkForSavestate( GUIKIT::File* file, GUIKIT::File::Item* item ) -> bool {
+    
+    std::string path = file->getFile();
+    auto parts = GUIKIT::String::split( path, '.' );
+    bool found = false;
+    
+    if (parts.size() == 1)
+        return false;
+    
+    if (parts.back() == "images") {
+        
+        parts.pop_back();
+        
+        if (parts.back() == "sav") {
+            
+            path = path.substr(0, path.size() - 7);
+            
+            found = true;
+        }
+        
+    } else if (parts.back() == "sav")        
+        found = true;    
+    
+    if (!found)
+        return false;
+        
+    uint8_t* data = file->archiveData(item->id);
+    unsigned size = item->info.size;
+    
+    if (file->getPath() != path) {
+        file = filePool->get( path );
+        
+        if (!file->open()) {
+            program->errorOpen(file, nullptr, view->message);
+            goto End;
+        }
+            
+        data = file->read();
+        size = file->getSize();
+    }        
+    
+    for (auto emulator : emulators) {
+        
+        if (emulator->checkstate( data, size )) {
+     
+            filePool->assign("savestate", file);
+            ddControl.saveFile = file;
+            ddControl.emulator = emulator;
+            goto End;
+        }
+    }
+    
+    view->message->error( trans->get("state_incompatible", {{"%ident%", file->getFile()}}) );
+    
+End:
+    filePool->unloadOrphaned();
+    return true;
 }
