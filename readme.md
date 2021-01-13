@@ -15,6 +15,7 @@
 * UI: rework sub-menu handling within configuration window
 * UI: rework status bar (Drive LED's, Tape control)
 * add UI for custom RAM init patterns
+* load savestates per drag'n'drop or within File Explorer
 
 ## 1.0.9.1
 * fix TAPE emulation (broken in 1.0.9)

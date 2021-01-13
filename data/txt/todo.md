@@ -43,7 +43,6 @@
 * lisa aga	
 
 # todo for all emulated systems
-* load savestates per drag'n'drop or within File Explorer
 * screenshots/movie recording
 * screenshots for savestates
 * drive sounds 
