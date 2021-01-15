@@ -102,30 +102,28 @@ auto States::save( std::string path, bool prependFolder ) -> void {
 }    
 
 auto States::loadFirmwarePaths( GUIKIT::Settings* loadSettings ) -> void {
-    
+
+    auto firmwareManager = FirmwareManager::getInstance( emulator );
     auto setting = new FileSetting( loadSettings );
+
+    firmwareManager->missingFirmware.clear();
     
     for( auto& firmware : emulator->firmwares ) {
         
         setting->ident = firmware.name;
         setting->update();
 
-        if (setting->path.empty()) {
-            // should never happen. don't change firmware setup
-            continue;
-        }
-
         InsertFirmware* inserted = findFirmware( &firmware );
 
         if (inserted) {
             if ((inserted->setting->path == setting->path)
-                && (inserted->setting->id == setting->id))
+                && (inserted->setting->id == setting->id)) {
                 // ok, already inserted
                 continue;
+            }
         }
-        
+
         // savestate was generated with different firmware
-        auto firmwareManager = FirmwareManager::getInstance( emulator );
         // use a store level not used for preconfigured firmware sets
         unsigned storeLevel = firmwareManager->maxSets + 10;
         
@@ -133,14 +131,19 @@ auto States::loadFirmwarePaths( GUIKIT::Settings* loadSettings ) -> void {
         storeSetting->id = setting->id;
         storeSetting->path = setting->path;
         storeSetting->setSaveable( false );
-                
+
         if (firmwareManager->loadImage( &firmware, storeLevel ))
             firmwareManager->useImage( &firmware, storeLevel );
         else {
-            if (!GUIKIT::Vector::find(errorPaths, setting->path))
-                errorPaths.push_back(setting->path);
+            // load default firmware if
+            // 1. no custom firmware was submitted in savestate
+            // 2. path of custom firmware is not working anymore
+            firmwareManager->insertFirmware(&firmware, 0);
         }
     }
+
+    if (!firmwareManager->missingFirmware.empty())
+        GUIKIT::Vector::combine( errorPaths, firmwareManager->missingFirmware );
 }
 
 auto States::oneMediumOnly(Emulator::Interface::MediaGroup* group, Emulator::Interface::Media* mediaInUse) -> void {
@@ -291,18 +294,20 @@ auto States::updateFirmware( FileSetting* setting, Emulator::Interface::Firmware
     
     if ( insert ) {
         copySetting( insert->setting, setting );
+        insert->setting->setSaveable( setting != nullptr );
         return;
     }    
 
     auto fileSetting = new FileSetting( saveSettings );
     
     fileSetting->ident = firmware->name;
-    copySetting( fileSetting, setting );    
+    copySetting( fileSetting, setting );
+    fileSetting->setSaveable( setting != nullptr );
     
     insertedFirmware.push_back( {fileSetting, firmware} );
 }
 
-auto States::copySetting( FileSetting* target, FileSetting* src ) -> void {     
+auto States::copySetting( FileSetting* target, FileSetting* src ) -> void {
 
     target->setPath( src ? src->path : "" );
 

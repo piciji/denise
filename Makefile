@@ -17,8 +17,6 @@ prefix ?= /usr
 # temporary: to uninstall previous versions of Denise, will be removed in future releases
 prefixOld := $(HOME)/.local
 
-target := $(shell g++ --version | grep i686)
-
 include data/Makefile
 
 objects := program view config emuconfig emumodel mediaview archiveviewer states firmware cmd statusbar
@@ -224,7 +222,7 @@ install:
 	$(call copy,data/shader,out/$(shaderFolder), /S)
 	$(call copy,readme.md,out)
 
-    ifneq ($(findstring i686,$(target)),)
+    ifneq ($(findstring i686, $(shell g++ --version) ),)
 	$(call copy,"data/libs/shared/win32/*.dll",out)
     else
 	$(call copy,"data/libs/shared/win64/*.dll",out)
