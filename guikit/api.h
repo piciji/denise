@@ -1149,6 +1149,8 @@ struct System {
     static auto isOffscreen( Geometry geometry ) -> bool;
     static auto getOSLang() -> Language;
     static auto printToCmd( std::string str ) -> void;
+    static auto getClipboardText() -> std::string;
+    static auto setClipboardText( std::string text ) -> void;
     System() = delete;
 };
 

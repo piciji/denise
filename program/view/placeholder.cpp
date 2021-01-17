@@ -55,7 +55,7 @@ auto View::renderPlaceholder(bool blackScreen) -> void {
     videoDriver->redraw(true);
 }
 
-auto View::cursorForPlacholderInUpperTriangle(GUIKIT::Position& p) -> bool {
+auto View::cursorForPlaceholderInUpperTriangle(GUIKIT::Position& p) -> bool {
     
     signed _w = viewport.geometry().width;
     signed _h = viewport.geometry().height;
@@ -67,4 +67,9 @@ auto View::cursorForPlacholderInUpperTriangle(GUIKIT::Position& p) -> bool {
     return (((a.y - b.y) * (p.x - a.x) + (b.x - a.x) * (p.y - a.y)) < 0 ||
     ((b.y - c.y) * (p.x - b.x) + (c.x - b.x) * (p.y - b.y)) < 0 ||
     ((c.y - a.y) * (p.x - c.x) + (a.x - c.x) * (p.y - c.y)) < 0) ? false : true;        
+}
+
+auto View::cursorForPlaceholderInUpperTriangle() -> bool {
+
+    return cursorForPlaceholderInUpperTriangle( viewport.getMousePosition() );
 }

@@ -488,6 +488,10 @@ struct Interface {
     
     virtual auto fastForward(unsigned config) -> void {}
 	virtual auto getForward() -> unsigned { return 0; }
+
+	// copy/paste
+	virtual auto pasteText( std::string buffer ) -> void {}
+	virtual auto copyText() -> std::string { return ""; }
     
     auto getStatsForSelectedRegion() -> Stats& {  
         return stats;

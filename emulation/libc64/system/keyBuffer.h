@@ -6,6 +6,7 @@
 #include "system.h"
 #include "../prg/prg.h"
 #include "../tape/tape.h"
+#include "../../tools/petcii.h"
 
 namespace LIBC64 {
    
@@ -257,7 +258,17 @@ struct KeyBuffer {
 
         return Found::Yes;
     }
-           
+
+    auto paste( std::string str ) -> void {
+
+        KeyBuffer::Action action;
+        action.mode = KeyBuffer::Mode::Input;
+
+        Emulator::PetciiConversion petciiConversion;
+        petciiConversion.encodeWithLineEnding( str, action.buffer );
+
+        add( action );
+    }
 };       
     
 }

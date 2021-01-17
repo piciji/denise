@@ -28,8 +28,8 @@ ifeq ($(platform),windows)
 endif
 #objects += m68000
 objects += m6510 ciaBase cia6526 vicIIBase vicIICycle vicIIFast systemC64 sid chamberlin tapeC64 inputC64 controlPortC64
-objects += cartC64 gameCartC64 actionReplayC64 reuC64 easyFlashC64 retroReplayC64
-objects += m6502 via iec prg64 drive1541 structure1541 
+objects += cartC64 gameCartC64 actionReplayC64 reuC64 easyFlashC64 retroReplayC64 clipboardC64
+objects += m6502 via iec prg64 drive1541 structure1541
 objects += thread
 
 prgflags := -DAPP_NAME="\"$(name)\"" -DTRANSLATION_FOLDER="\"$(translationFolder)/\"" -DDATA_FOLDER="\"$(dataFolder)/\"" -DSHADER_FOLDER="\"$(shaderFolder)/\"" -DIMG_FOLDER="\"$(imgFolder)/\""
@@ -131,6 +131,7 @@ obj/actionReplayC64.o: emulation/libc64/expansionPort/actionReplay/actionReplay.
 obj/reuC64.o:	emulation/libc64/expansionPort/reu/reu.cpp
 obj/easyFlashC64.o: emulation/libc64/expansionPort/easyFlash/easyFlash.cpp
 obj/retroReplayC64.o: emulation/libc64/expansionPort/retroReplay/retroReplay.cpp
+obj/clipboardC64.o: emulation/libc64/system/clipboard.cpp
 obj/sid.o: emulation/libc64/sid/sid.cpp
 obj/chamberlin.o: emulation/libc64/sid/filter/chamberlin.cpp
 	$(compiler) $(cppflags) $(flags) -ffast-math -fno-exceptions  $1 -c $< -o $@

@@ -1395,9 +1395,16 @@ auto System::printToCmd( std::string str ) -> void {
     pSystem::printToCmd( str );
 }
 
+auto System::getClipboardText() -> std::string {
+    return pSystem::getClipboardText();
+}
+
+auto System::setClipboardText( std::string text ) -> void {
+    pSystem::setClipboardText( text );
+}
+
 auto Thread::setPriorityRealtime( std::thread& th ) -> void {
     pThread::setThreadPriorityRealtime( th );
 }
 
 }
-

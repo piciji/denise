@@ -117,7 +117,7 @@ auto View::build() -> void {
 		audioDriver->clear();
 	};
 
-    GUIKIT::Application::Cocoa::onOpenFile = [this] (std::string fileName) {
+    GUIKIT::Application::Cocoa::onOpenFile = [] (std::string fileName) {
         
         autoloader->init( {fileName}, false, Autoloader::Mode::AutoStart );
         
@@ -140,15 +140,15 @@ auto View::build() -> void {
         ,trans->get("about", {{"%app%", APP_NAME}}));
     };
     
-    GUIKIT::Application::Cocoa::onPreferences = [this] {
+    GUIKIT::Application::Cocoa::onPreferences = [] {
         configView->show(ConfigView::TabWindow::Layout::Settings);
     };
     	
-	GUIKIT::Application::Cocoa::onCustom1 = [this]() {
+	GUIKIT::Application::Cocoa::onCustom1 = []() {
 		program->saveSettings();
 	};
 	
-    GUIKIT::Application::Cocoa::onDock = [this] {
+    GUIKIT::Application::Cocoa::onDock = [] {
         view->setFocused();
     };
         
@@ -166,7 +166,7 @@ auto View::build() -> void {
 		if (program->isRunning || (button != GUIKIT::Mouse::Button::Left))
 			return;	
 		
-		if (cursorForPlacholderInUpperTriangle()) {
+		if (cursorForPlaceholderInUpperTriangle()) {
 			program->power( program->getEmulator("C64") );
 		} else {
 			
@@ -178,14 +178,14 @@ auto View::build() -> void {
         if (program->isRunning)
             return;
                         
-        if (cursorForPlacholderInUpperTriangle(pos)) {
+        if (cursorForPlaceholderInUpperTriangle(pos)) {
             view->setPointerCursor();
 		} else {
             view->setDefaultCursor();
 		}
     };
 	
-	viewport.onMouseLeave = [this]() {
+	viewport.onMouseLeave = []() {
 		if (!program->isRunning)
 			view->setDefaultCursor();
 	};
@@ -220,17 +220,12 @@ auto View::setDragnDrop() -> void {
         viewport.onDrop( files );
     };
     
-    viewport.onDrop = [this]( std::vector<std::string> files ) {
+    viewport.onDrop = []( std::vector<std::string> files ) {
 
         autoloader->init( files, false, Autoloader::Mode::DragnDrop );
         
         autoloader->loadFiles();            
     };        
-}
-
-auto View::cursorForPlacholderInUpperTriangle() -> bool {
-    
-    return cursorForPlacholderInUpperTriangle( viewport.getMousePosition() );
 }
 
 auto View::show() -> void {
@@ -755,6 +750,33 @@ auto View::buildMenu() -> void {
         inputMenus.push_back(iM);
     }
 
+    editMenu.append( copyItem );
+
+    pasteItem.onActivate = []() {
+        auto text = GUIKIT::System::getClipboardText();
+
+        if (text == "")
+            return;
+
+        if (activeEmulator)
+            activeEmulator->pasteText( text );
+    };
+
+    copyItem.onActivate = []() {
+        if (!activeEmulator)
+            return;
+
+        std::string text = activeEmulator->copyText( );
+
+        logger->log(text, 1);
+
+        GUIKIT::System::setClipboardText( text );
+    };
+
+    editMenu.append( pasteItem );
+
+    append( editMenu );
+
     controlMenu.setIcon(joystickImage);
     append(controlMenu);
 
@@ -762,24 +784,24 @@ auto View::buildMenu() -> void {
     append(optionsMenu);
 
 	if(!GUIKIT::Application::isCocoa()) {
-		videoItem.setIcon( displayImage );
-		videoItem.onActivate = []() {
+        globalVideoItem.setIcon( displayImage );
+        globalVideoItem.onActivate = []() {
 			configView->show(ConfigView::TabWindow::Layout::Video);
 		};
 
-		optionsMenu.append(videoItem);		    
+		optionsMenu.append(globalVideoItem);
 
-		audioItem.onActivate = []() {
+        globalAudioItem.onActivate = []() {
 			configView->show(ConfigView::TabWindow::Layout::Audio);
-		};	
-		audioItem.setIcon( volumeImage );
-		optionsMenu.append(audioItem);
+		};
+        globalAudioItem.setIcon( volumeImage );
+		optionsMenu.append(globalAudioItem);
 
-		inputItem.onActivate = []() {
+        globalInputItem.onActivate = []() {
 			configView->show(ConfigView::TabWindow::Layout::Input);
-		};	
-		inputItem.setIcon( keyboardImage );
-		optionsMenu.append(inputItem);
+		};
+        globalInputItem.setIcon( keyboardImage );
+		optionsMenu.append(globalInputItem);
 		
 		settingsItem.onActivate = []() {
 			configView->show(ConfigView::TabWindow::Layout::Settings);
@@ -854,7 +876,7 @@ auto View::buildMenu() -> void {
 	if(!GUIKIT::Application::isCocoa()) {
 		optionsMenu.append(*GUIKIT::MenuSeparator::getInstance());
 
-		saveItem.onActivate = [this]() {
+		saveItem.onActivate = []() {
 			program->saveSettings();
 		};
 		saveItem.setIcon(diskImage);
@@ -869,7 +891,7 @@ auto View::buildMenu() -> void {
 		videoDriver->setFilter( DRIVER::Video::Filter::Linear );
 		this->updateViewport();
 
-		if (cursorForPlacholderInUpperTriangle()) {
+		if (cursorForPlaceholderInUpperTriangle()) {
 			view->setPointerCursor();
 		} else {
 			view->setDefaultCursor();
@@ -960,6 +982,7 @@ auto View::updateTapeStatusIcons( Emulator::Interface::TapeMode mode ) -> void {
         case TapeMode::Record:      image = &recordhiImage; break;
         case TapeMode::Forward:     image = &forwardhiImage; break;
         case TapeMode::Rewind:      image = &rewindhiImage; break;
+        default: break;
     //    case TapeMode::Stop:        image = &stophiImage; break;
     }
     
@@ -990,15 +1013,19 @@ auto View::translate() -> void {
         }
         sysMenu.shaderMenu->setText(trans->get("Shader"));            
     }    
-    
+
+    editMenu.setText( trans->get("Edit") );
+    pasteItem.setText( trans->get("Paste") );
+    copyItem.setText( trans->get("Copy") );
+
     controlMenu.setText( trans->get("control") );
     
     optionsMenu.setText( trans->get("options"));
 
 	if(!GUIKIT::Application::isCocoa()) {
-		videoItem.setText( trans->get("video") );
-		audioItem.setText( trans->get("audio") );
-		inputItem.setText( trans->get("input") + " / " + trans->get("hotkeys") );
+        globalVideoItem.setText( trans->get("video") );
+        globalAudioItem.setText( trans->get("audio") );
+        globalInputItem.setText( trans->get("input") + " / " + trans->get("hotkeys") );
 		settingsItem.setText( trans->get("settings"));
 	}
 	
@@ -1083,7 +1110,7 @@ auto View::setCursor( Emulator::Interface* emulator ) -> void {
     setDefaultCursor();
 }
 
-auto View::getSysMenu( Emulator::Interface* emulator ) -> View::SystemMenu* {
+auto View::getSysMenu( Emulator::Interface* emulator ) -> SystemMenu* {
     
     for (auto& sM : sysMenus) {
         if (sM.emulator == emulator)

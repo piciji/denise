@@ -1404,4 +1404,14 @@ auto Interface::setMonitorFpsRatio(double ratio) -> void {
     Sid::updateChamberlinFrequencyAll( vicII->frequency() * ratio );
 }
 
+auto Interface::pasteText( std::string buffer ) -> void {
+
+    system->pasteText( buffer );
+}
+
+auto Interface::copyText() -> std::string {
+
+    return system->copyText( );
+}
+
 }

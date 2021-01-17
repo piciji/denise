@@ -115,8 +115,8 @@ struct Program : Emulator::Interface::Bind {
     auto setVideoFilter() -> void;   
 	auto updateCrop( Emulator::Interface* emulator ) -> void;
     auto setPalette( Emulator::Interface* emulator ) -> void;
-    auto finishVBlank() -> void;
-    auto midScreenCallback() -> void;    
+    auto finishVBlank() -> void override;
+    auto midScreenCallback() -> void override;
     auto fastForward( bool activate, bool aggressive = false ) -> void;
     auto setFpsLimit() -> void;
     auto updateOverallSynchronize() -> void;
@@ -129,7 +129,7 @@ struct Program : Emulator::Interface::Bind {
     auto isAnalogDeviceConnected( ) -> bool;
     auto couldDeviceBlockSecondMouseButton( ) -> bool;
     auto absoluteMouseToEmu( Emulator::Interface* emulator ) -> GUIKIT::Position;
-    auto jitPoll() -> bool;
+    auto jitPoll() -> bool override;
     auto resetRunAhead() -> void;
     auto setRunAhead(Emulator::Interface* emulator) -> void;
     

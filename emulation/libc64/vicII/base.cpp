@@ -49,6 +49,10 @@ auto VicIIBase::disableSequencer(bool state) -> void {
     enableSequencer = !state;
 }
 
+auto VicIIBase::getReg18() -> uint8_t {
+    return (vm << 4) | ((cb & 7) << 1) | 1;
+}
+
 auto VicIIBase::updateIrq(Interrupt interrupt) -> void {
 
     if (interrupt != Interrupt::Update) {
@@ -101,8 +105,6 @@ auto VicIIBase::setBorderData() -> void {
         crop.bottom = ntscBorder ? 29 : 55;
     }
 }
-
-
 
 auto VicIIBase::triggerLightPen(bool state) -> void {
     // trigger by writing to cia        

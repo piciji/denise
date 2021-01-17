@@ -102,7 +102,9 @@ struct VicIIBase {
 	auto isNTSCGeometry() -> bool { return ntscGeometry; }
 	auto isNTSCEncoding() -> bool { return ntscEncoding; }
 	auto frequency() -> unsigned { return cyclesPerSec; }
-	auto cyclesPerFrame() -> unsigned { return lineCycles * lines; }	
+	auto cyclesPerFrame() -> unsigned { return lineCycles * lines; }
+
+	auto getReg18() -> uint8_t;
 	
 protected:     
 		

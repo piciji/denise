@@ -187,6 +187,9 @@ struct System {
 	auto setVicRdy(bool state) -> void;
 	auto VicMidScreenCallback() -> void;
 	auto VicVblankCallback() -> void;
+
+	auto pasteText( std::string buffer ) -> void;
+    auto copyText( ) -> std::string;
 };
 
 extern System* system;

@@ -2,7 +2,7 @@
 # todo's are not ordered by priority. changes frequently
 ## to do C64
 * expansion port    
-    * simple non game mapper: Simons Basic, Magic Formel, WarpSpeed, ...
+    * simple non game mapper: Gmod2, Simons Basic, Magic Desk, WarpSpeed, ...
     * EasyFlash 3
     * Final Cartridge 3
     * GeoRAM
@@ -18,6 +18,8 @@
     * SpeedDOS
     * 4 player adapter
 * disk    
+    * p64 support
+    * drive sounds
     * support command line start of disk listings
     * load PRG files from disk as simple RAM insertion for reduced loading times [quickload]
     * mount OS folder as D64
@@ -27,8 +29,6 @@
     * click entries and load them without fast-forward to counter position before
     * Dongles
 * color banding
-* support to put clipboard in C64 memory
-   
 
 # todo Amiga A500, A1200
 * blitter
@@ -45,7 +45,6 @@
 # todo for all emulated systems
 * screenshots/movie recording
 * screenshots for savestates
-* drive sounds 
 * beam racing
 * rewind support
 * debug monitor for developers
@@ -102,3 +101,4 @@
 * runAhead for reduced input lag
 * write audio output to WAV
 * DSP: Bass Boost and Reverb
+* multiple configurations

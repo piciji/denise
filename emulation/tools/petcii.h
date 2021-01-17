@@ -1,5 +1,6 @@
 
 #pragma once
+#include <vector>
 
 namespace Emulator {
 
@@ -7,7 +8,28 @@ struct PetciiConversion {
     
     const uint8_t PETSCII_UNMAPPED = 0x3f;
     const uint8_t ASCII_UNMAPPED = '.';
-    
+
+    auto encodeWithLineEnding( std::string ascii, std::vector<uint8_t>& in ) -> void {
+
+        bool checkTwoCharLineEnding = false;
+
+        for ( auto& c : ascii ) {
+            if (c == '\r') {
+                checkTwoCharLineEnding = true;
+                continue;
+            }
+
+            if (checkTwoCharLineEnding) {
+                if (c != '\n')
+                    in.push_back( 0x0d );
+
+                checkTwoCharLineEnding = false;
+            }
+
+            in.push_back( encode(c) );
+        }
+    }
+
     auto encode( std::string ascii ) -> std::string {
         
         std::string petcii = "";
@@ -93,6 +115,18 @@ struct PetciiConversion {
 		}
 		return petcii;
 	}
+
+    auto encodeScreencode(uint8_t code) -> uint8_t {
+        code &= 0x7f;
+
+        if (code <= 0x1f)
+            return (uint8_t)(code + 0x40);
+
+        if (code >= 0x40 && code <= 0x5f)
+            return (uint8_t)(code + 0x20);
+
+        return code;
+    }
     
     auto petcii_fix_dupes( uint8_t c ) -> uint8_t {
         

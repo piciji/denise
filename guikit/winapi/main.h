@@ -755,6 +755,8 @@ struct pSystem {
     static auto isOffscreen( Geometry geometry ) -> bool;
     static auto getOSLang() -> System::Language;
     static auto printToCmd( std::string str ) -> void;
+    static auto getClipboardText() -> std::string;
+    static auto setClipboardText( std::string text ) -> void;
 };
 
 struct pThread {

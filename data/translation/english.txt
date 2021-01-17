@@ -547,3 +547,6 @@ length random pattern = length of random pattern
 repeat random every = repeat random pattern every
 random chance = random chance
 memory reset initialisation = memory reset initialisation
+Edit = Edit
+Copy = Copy
+Paste = Paste

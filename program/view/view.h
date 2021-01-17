@@ -27,7 +27,7 @@ struct View : public GUIKIT::Window {
         GUIKIT::MenuItem* presentation;
         GUIKIT::MenuItem* palette;
         GUIKIT::MenuItem* border;		       
-    };   
+    };
 
     auto translate() -> void;
     auto show() -> void ;
@@ -56,8 +56,8 @@ struct View : public GUIKIT::Window {
     auto setCursor( Emulator::Interface* emulator ) -> void;
     auto setDragnDrop() -> void;
     auto getSysMenu( Emulator::Interface* emulator ) -> SystemMenu*;
-    auto cursorForPlacholderInUpperTriangle(GUIKIT::Position& p) -> bool;
-    auto cursorForPlacholderInUpperTriangle() -> bool;
+    auto cursorForPlaceholderInUpperTriangle(GUIKIT::Position& p) -> bool;
+    auto cursorForPlaceholderInUpperTriangle() -> bool;
     auto loadImages() -> void;
     
     auto loadPlaceholder() -> void;
@@ -81,12 +81,16 @@ struct View : public GUIKIT::Window {
 
     std::vector<InputMenu> inputMenus;
 
+    GUIKIT::Menu editMenu;
+        GUIKIT::MenuItem copyItem;
+        GUIKIT::MenuItem pasteItem;
+
     GUIKIT::Menu controlMenu;
     GUIKIT::Menu optionsMenu;
 			
-		GUIKIT::MenuItem audioItem;			
-        GUIKIT::MenuItem videoItem;
-        GUIKIT::MenuItem inputItem;
+		GUIKIT::MenuItem globalAudioItem;
+        GUIKIT::MenuItem globalVideoItem;
+        GUIKIT::MenuItem globalInputItem;
 
         GUIKIT::MenuCheckItem videoSyncItem;
         GUIKIT::MenuCheckItem audioSyncItem;        

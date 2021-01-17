@@ -161,6 +161,9 @@ struct Interface : Emulator::Interface {
     
     auto hasFreezerButton() -> bool;
     auto freeze() -> void;
+
+    auto pasteText(std::string buffer ) -> void;
+    auto copyText() -> std::string;
 private:
 	auto prepareDevices() -> void;
 	auto prepareMedia() -> void;

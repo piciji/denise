@@ -13,6 +13,7 @@
 #include "../../tools/serializer.h"
 #include "../../tools/rand.h"
 #include "../expansionPort/actionReplay/actionReplayMK2.h"
+#include "clipboard.h"
 #include <cstring>
 
 #include "expansion.cpp"
@@ -970,6 +971,16 @@ auto System::VicMidScreenCallback() -> void {
 auto System::VicVblankCallback() -> void {
 	if (!runAhead.pos)
 		interface->finishVBlank();
+}
+
+auto System::pasteText( std::string buffer ) -> void {
+    keyBuffer->paste( buffer );
+}
+
+auto System::copyText( ) -> std::string {
+
+    Clipboard clipboard;
+    return clipboard.getText();
 }
 
 }
