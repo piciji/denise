@@ -36,6 +36,9 @@ struct pApplication {
     static auto initialize() -> void;
     static auto CALLBACK wndProc(WNDPROC windowProc, HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
     static auto currentWorkingDirectory() -> std::string;
+	static auto requestClipboardText() -> void;
+    static auto setClipboardText( std::string text ) -> void;
+	
     static std::string cwd; //current working directory
 	static unsigned version;
     
@@ -755,8 +758,6 @@ struct pSystem {
     static auto isOffscreen( Geometry geometry ) -> bool;
     static auto getOSLang() -> System::Language;
     static auto printToCmd( std::string str ) -> void;
-    static auto getClipboardText() -> std::string;
-    static auto setClipboardText( std::string text ) -> void;
 };
 
 struct pThread {

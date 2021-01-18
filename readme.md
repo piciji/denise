@@ -9,14 +9,15 @@
 
 ## 1.1.0 (not yet released)
 * save/load additional settings files for a lot of purposes, like
-    * define keyboard inputs for individual games one time
+    * define keyboard inputs for individual games one time only
     * prepare different C64 models
     * prepare individual Multi SID configurations
-* UI: rework sub-menu handling within configuration window
-* UI: rework status bar (Drive LED's, Tape control)
+* rework sub-menu handling within configuration window
+* rework status bar (Drive LED's, Tape control)
 * add UI for custom RAM init patterns
 * load savestates per drag'n'drop or within File Explorer
-* support to paste clipboard in Basic screen
+* support to paste clipboard or copy screen to clipboard
+* fix OpenGL 1/4 screen BUG for newer macOS versions
 
 ## 1.0.9.1
 * fix TAPE emulation (broken in 1.0.9)

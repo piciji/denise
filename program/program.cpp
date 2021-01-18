@@ -140,7 +140,7 @@ auto Program::init() -> void {
 
         if (!loadTranslation(globalSettings->get<std::string>("translation", getSystemLangFile()))) {
             view->message->error("language plugin not found");
-        }
+        }		
     }
     
     cmd->parse();

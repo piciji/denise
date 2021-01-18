@@ -11,6 +11,9 @@ struct pApplication {
     static auto processEvents() -> void;
     static auto quit() -> void;
     static auto initialize() -> void;
+	static auto requestClipboardText() -> void;
+    static auto setClipboardText( std::string text ) -> void;
+	static auto pasteClipboardCallback(GtkClipboard* clipboard, const gchar* text, gpointer data) -> void;
 };
 
 struct pWindow {

@@ -151,6 +151,11 @@ auto View::build() -> void {
     GUIKIT::Application::Cocoa::onDock = [] {
         view->setFocused();
     };
+	
+	GUIKIT::Application::onClipboardRequest = [](std::string text) {
+		if (activeEmulator && !text.empty())
+			activeEmulator->pasteText(text);
+	};
         
 	placeholderTimer.setInterval(40);
 	placeholderTimer.onFinished = [this]() {
@@ -753,13 +758,7 @@ auto View::buildMenu() -> void {
     editMenu.append( copyItem );
 
     pasteItem.onActivate = []() {
-        auto text = GUIKIT::System::getClipboardText();
-
-        if (text == "")
-            return;
-
-        if (activeEmulator)
-            activeEmulator->pasteText( text );
+        GUIKIT::Application::requestClipboardText();
     };
 
     copyItem.onActivate = []() {
@@ -770,7 +769,7 @@ auto View::buildMenu() -> void {
 
         logger->log(text, 1);
 
-        GUIKIT::System::setClipboardText( text );
+        GUIKIT::Application::setClipboardText( text );
     };
 
     editMenu.append( pasteItem );

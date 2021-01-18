@@ -50,6 +50,7 @@ bool Application::isQuit = false;
 int Application::exitCode = 0;
 std::string Application::name = "";
 std::function<void ()> Application::loop = nullptr;
+std::function<void (std::string text)> Application::onClipboardRequest = nullptr;
 std::function<void ()> Application::Cocoa::onAbout;
 std::function<void ()> Application::Cocoa::onPreferences;
 std::function<void ()> Application::Cocoa::onCustom1;
@@ -104,6 +105,14 @@ auto Application::initialize() -> void {
         initialized = true;
         pApplication::initialize();
     }
+}
+
+auto Application::requestClipboardText() -> void {
+    pApplication::requestClipboardText();
+}
+
+auto Application::setClipboardText( std::string text ) -> void {
+    pApplication::setClipboardText( text );
 }
 
 //window
@@ -1395,16 +1404,9 @@ auto System::printToCmd( std::string str ) -> void {
     pSystem::printToCmd( str );
 }
 
-auto System::getClipboardText() -> std::string {
-    return pSystem::getClipboardText();
-}
-
-auto System::setClipboardText( std::string text ) -> void {
-    pSystem::setClipboardText( text );
-}
-
 auto Thread::setPriorityRealtime( std::thread& th ) -> void {
     pThread::setThreadPriorityRealtime( th );
 }
 
 }
+

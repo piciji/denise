@@ -7,6 +7,7 @@ namespace GUIKIT {
 #include "browserWindow.cpp"
 #include "messageWindow.cpp"
 #include "statusbar.cpp"
+#include "clipboard.cpp"
     
 #include "widgets/widget.cpp"   
 #include "widgets/button.cpp"

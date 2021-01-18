@@ -1,6 +1,6 @@
 
 /**
- * v 1.6.6
+ * v 1.6.7
  */
 
 #ifndef GUIKIT_H
@@ -138,6 +138,7 @@ struct CustomFont {
 
 struct Application {    
     static std::function<void ()> loop;
+	static std::function<void (std::string text)> onClipboardRequest;
 
     static auto initialize() -> void;
     static auto run() -> void;
@@ -146,6 +147,9 @@ struct Application {
     static auto isCocoa() -> bool;
     static auto isGtk() -> bool;
     static auto isWinApi() -> bool;
+	static auto requestClipboardText() -> void;
+    static auto setClipboardText( std::string text ) -> void;
+
     static bool isQuit;
     static int exitCode;
     static std::string name;
@@ -1149,8 +1153,6 @@ struct System {
     static auto isOffscreen( Geometry geometry ) -> bool;
     static auto getOSLang() -> Language;
     static auto printToCmd( std::string str ) -> void;
-    static auto getClipboardText() -> std::string;
-    static auto setClipboardText( std::string text ) -> void;
     System() = delete;
 };
 

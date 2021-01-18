@@ -50,6 +50,29 @@ auto pApplication::initialize() -> void {
     gtk_init(nullptr, nullptr);
 }  
 
+auto pApplication::pasteClipboardCallback(GtkClipboard* clipboard, const gchar* text, gpointer data) -> void {
+	
+	if (text && Application::onClipboardRequest)
+		Application::onClipboardRequest( (char*)text );
+}
+
+auto pApplication::requestClipboardText() -> void {
+	
+	gtk_clipboard_request_text(gtk_clipboard_get(GDK_NONE), pasteClipboardCallback, nullptr);
+}
+
+auto pApplication::setClipboardText( std::string text ) -> void {
+	
+	GdkDisplay* display = gdk_display_get_default();
+	
+	GtkClipboard* clipboard = gtk_clipboard_get_for_display(display, GDK_SELECTION_CLIPBOARD);
+	
+	gtk_clipboard_set_text(clipboard, text.c_str(), -1);
+	
+	if (gdk_display_supports_clipboard_persistence(display))
+		gtk_clipboard_store(clipboard);
+}
+
 //window
 
 static auto Window_draw_main(GtkWidget* widget, cairo_t* context, Window* window) -> gboolean {
