@@ -430,19 +430,22 @@ auto StatusBar::removePart( unsigned id ) -> void {
     state.updatePending = true;
 }
 
-auto StatusBar::updateText( unsigned id, std::string text, int overrideForegroundColor ) -> bool {    
+auto StatusBar::updateText( unsigned id, std::string text, bool alignRight, int overrideForegroundColor ) -> bool {
     for(auto& part : state.parts) {
         if (part.id == id) {
             
             if (!part.visible) {
                 part.overrideForegroundColor = overrideForegroundColor;
                 part.text = text;
+                part.alignRight = alignRight;
                 part.visible = true;
                 state.updatePending = true;
                 
-            } else if ( (part.text != text) || (part.overrideForegroundColor != overrideForegroundColor) ) {
+            } else if ( (part.text != text) || (part.overrideForegroundColor != overrideForegroundColor)
+                || (part.alignRight != alignRight) ) {
                 part.overrideForegroundColor = overrideForegroundColor;
-                part.text = text;                
+                part.text = text;
+                part.alignRight = alignRight;
                 p.updatePart( part );
             }                       
             return true;
@@ -1409,4 +1412,3 @@ auto Thread::setPriorityRealtime( std::thread& th ) -> void {
 }
 
 }
-

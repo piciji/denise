@@ -277,6 +277,7 @@ struct StatusBar : Base {
         std::function<void ()> onClick = nullptr;
         Menu* popupMenu = nullptr;
         int overrideForegroundColor = -1;
+        bool alignRight = false;
         bool visible = false;
         unsigned position = 0;
     };
@@ -289,7 +290,7 @@ struct StatusBar : Base {
 	auto append(unsigned id, Image* image, std::function<void ()> onClick = nullptr, Menu* popupMenu = nullptr, int pos = -1) -> void;	  
     auto removePart( unsigned id ) -> void;
     
-    auto updateText( unsigned id, std::string text, int overrideForegroundColor = -1 ) -> bool;
+    auto updateText( unsigned id, std::string text, bool alignRight = false, int overrideForegroundColor = -1 ) -> bool;
     auto updateImage( unsigned id, Image* image ) -> bool;
     auto updateVisible( unsigned id, bool visible ) -> bool;
 	auto updateTooltip( unsigned id, std::string tooltip ) -> bool;

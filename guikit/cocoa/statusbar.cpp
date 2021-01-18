@@ -190,6 +190,7 @@ auto pStatusBar::update() -> void {
     delete label;
     
     unsigned width = area.size.width;
+    width -= 8;
     
     for (int i = parts.size() - 1; i >= 0; i-- ) {
         
@@ -236,9 +237,8 @@ auto pStatusBar::update() -> void {
             
             if (part.overrideForegroundColor != -1)
                 label->setForegroundColor( part.overrideForegroundColor );
-                
-            if (!part.width)
-                label->setAlign( Label::Align::Right );
+
+            label->setAlign( part.alignRight ? Label::Align::Right : Label::Align::Left );
                 
             if (xPos == 0)
                 width += part.width;
@@ -281,7 +281,12 @@ auto pStatusBar::updatePart( StatusBar::Part& part ) -> void {
             [view setImage: image];
 
         } else {
-            
+
+            if (part.alignRight)
+                [view setAlignment:NSRightTextAlignment];
+            else
+                [view setAlignment:NSLeftTextAlignment];
+
             [view setStringValue:[NSString stringWithUTF8String:part.text.c_str()]];
             
             NSColor* textColor = [NSColor textColor];

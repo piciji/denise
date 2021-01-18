@@ -127,6 +127,8 @@ auto pStatusBar::update() -> void {
 			
 		} else {
 			Label* label = new Label;
+
+            label->setAlign( part.alignRight ? Label::Align::Right : Label::Align::Left );
 			label->setText( part.text );
 			
 			if (part.overrideForegroundColor != -1)
@@ -178,7 +180,11 @@ auto pStatusBar::updatePart( StatusBar::Part& part ) -> void {
 	} else {
 		
 		Label* label = (Label*)widget;
-		
+		Label::Align align = part.alignRight ? Label::Align::Right : Label::Align::Left;
+
+		if (label->align() != align)
+            label->setAlign( align );
+
 		label->setText( part.text );
 
 		if (part.overrideForegroundColor != -1)

@@ -142,7 +142,7 @@ auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
     statusBar->append( 12, &(view->ledOffImage) );    // expansion LED
     statusBar->append( 13, "DRC DRC DRC DRC DRC DRC DRC DRC D" );    // DRC Status
     statusBar->append( 14, &(view->recordhiImage) );    // REC Status
-    statusBar->append( 15, "1000", nullptr );    // FPS
+    statusBar->append( 15, "1000" );    // FPS
 }
             
 auto StatusHandler::transferToOSD( std::string text ) -> void {
@@ -179,7 +179,7 @@ auto StatusHandler::update() -> void {
     std::string OSDText = message.txt;
     
     if (messageUpdate())        
-        statusBar->updateText(0, message.txt, message.critical ? 0xe92828 : -1 );        
+        statusBar->updateText(0, message.txt, true, message.critical ? 0xe92828 : -1 );
 
     if (activeEmulator) {
         if (deviceUpdate()) {
@@ -255,7 +255,7 @@ auto StatusHandler::update() -> void {
             out += " Ø " + GUIKIT::String::formatFloatingPoint(drcS.average, 2) + "%";
 
             if (drcBufferUpdate())
-                statusBar->updateText(13, out);
+                statusBar->updateText(13, out, true);
 
             if (message.txt.empty())
                 OSDText += out;
@@ -268,7 +268,7 @@ auto StatusHandler::update() -> void {
             std::string _FPS = std::to_string(fps);
 
             if (fpsCounterUpdate())
-                statusBar->updateText(15, _FPS);
+                statusBar->updateText(15, _FPS, true);
 
             if (message.txt.empty())
                 OSDText += " " + _FPS;            

@@ -58,10 +58,10 @@ auto CALLBACK pStatusBar::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LP
 
 				p.setTooltip( part );
 
-                return 0;
+               // return 0;
 			}
 
-        } break;
+        } return 0;
             
     }
     return CallWindowProc(statusBar->p.wndprocOrig, hwnd, msg, wparam, lparam);
@@ -173,7 +173,7 @@ auto pStatusBar::update() -> void {
 
     std::vector<int> _widths;
     _widths.push_back( pos );
-    pos -= 5;
+    pos -= 8;
     
     for( i = parts.size() - 1; i >= 0; i-- ) {
         auto& part = parts[i];
@@ -185,7 +185,7 @@ auto pStatusBar::update() -> void {
         
         // first part width doesn't matter. always use remaining space
         if (part.image)
-            pos -= part.image->width + 6;
+            pos -= part.image->width + 7;
         else
             pos -= part.width;
     }
@@ -269,13 +269,13 @@ auto pStatusBar::drawItem(WPARAM wparam, LPARAM lparam) -> void {
         }
         
         rect.top += 1;
-        
-        if ( !part.width ) {
-            rect.left -= 5;
-            rect.right -= 5;
-            DrawText(hDC, utf16_t(part.text.c_str()), -1, &rect, DT_RIGHT | DT_END_ELLIPSIS );
-        } else
-            DrawText(hDC, utf16_t(part.text.c_str()), -1, &rect, DT_END_ELLIPSIS);
+
+        if (part.alignRight)
+            rect.right -= 4;
+        else if ( !part.width )
+            rect.left += 4;
+
+        DrawText(hDC, utf16_t(part.text.c_str()), -1, &rect, (part.alignRight ? DT_RIGHT : 0)  );
     }
 }
 
@@ -305,7 +305,7 @@ auto pStatusBar::getHoverPart(int xPos) -> StatusBar::Part* {
     GetWindowRect(hwnd, &rect);
 
     int pos = rect.right - rect.left;
-    pos -= 5;
+    pos -= 8;
 
     unsigned partCount = usedParts.size();
 
@@ -313,7 +313,7 @@ auto pStatusBar::getHoverPart(int xPos) -> StatusBar::Part* {
         part = usedParts[i];
 
         if (part->image)
-            pos -= part->image->width + 6;
+            pos -= part->image->width + 7;
         else
             pos -= part->width;
 
