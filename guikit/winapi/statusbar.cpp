@@ -170,8 +170,10 @@ auto pStatusBar::update() -> void {
     
     GetWindowRect(hwnd, &rect);
     pos = rect.right - rect.left;
-    
+
     std::vector<int> _widths;
+    _widths.push_back( pos );
+    pos -= 5;
     
     for( i = parts.size() - 1; i >= 0; i-- ) {
         auto& part = parts[i];
@@ -188,7 +190,7 @@ auto pStatusBar::update() -> void {
             pos -= part.width;
     }
 
-    if (_widths.size() == 0) {
+    if (_widths.size() == 1) {
         SendMessage(hwnd, SB_SETPARTS, 0, 0);
         return;
     }
@@ -303,6 +305,7 @@ auto pStatusBar::getHoverPart(int xPos) -> StatusBar::Part* {
     GetWindowRect(hwnd, &rect);
 
     int pos = rect.right - rect.left;
+    pos -= 5;
 
     unsigned partCount = usedParts.size();
 

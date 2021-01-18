@@ -142,7 +142,7 @@ auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
     statusBar->append( 12, &(view->ledOffImage) );    // expansion LED
     statusBar->append( 13, "DRC DRC DRC DRC DRC DRC DRC DRC D" );    // DRC Status
     statusBar->append( 14, &(view->recordhiImage) );    // REC Status
-    statusBar->append( 15, "00001", nullptr );    // FPS
+    statusBar->append( 15, "1000", nullptr );    // FPS
 }
             
 auto StatusHandler::transferToOSD( std::string text ) -> void {
