@@ -74,7 +74,7 @@ struct pWindow {
 struct pStatusBar {
     StatusBar& statusBar;
     NSView* cocoaView;
-    std::vector<NSView*> usedWidgets;
+    std::vector<Widget*> usedWidgets;
     
     auto create() -> void;
     auto destroy() -> void;

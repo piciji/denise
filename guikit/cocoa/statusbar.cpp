@@ -103,7 +103,7 @@ auto pStatusBar::setText(std::string text) -> void {
         if (!cocoaView)
             return;
         
-        [usedWidgets[0] setStringValue:[NSString stringWithUTF8String:text.c_str()]];
+        [usedWidgets[0]->p.cocoaView setStringValue:[NSString stringWithUTF8String:text.c_str()]];
     }
 }
 
@@ -161,8 +161,8 @@ auto pStatusBar::update() -> void {
         [view removeFromSuperview];
     }
     
-    for( auto view : usedWidgets )
-        [view release];
+    for( auto widget : usedWidgets )
+        delete widget;
 
     usedWidgets.clear();
     
@@ -179,7 +179,7 @@ auto pStatusBar::update() -> void {
     unsigned textHeight = label->minimumSize().height;
     
     if (parts.size() == 0) { // simple status view
-        usedWidgets.push_back( label->p.cocoaView );
+        usedWidgets.push_back( label );
 
         [label->p.cocoaView setFrame:NSMakeRect(5, -2, area.size.width, textHeight)];
 
@@ -216,10 +216,13 @@ auto pStatusBar::update() -> void {
         part.position = usedWidgets.size();
         
         if (part.image) {
+            Widget* widget = new Widget();
             
             NSImage* image = NSMakeImage( *part.image );
             
-            view = [[StatusImageView alloc] initWith:&part];
+            widget->p.cocoaView = [[StatusImageView alloc] initWith:&part];
+            
+            view = widget->p.cocoaView;
             
             unsigned yPos = (textHeight - part.image->height) / 2;
             
@@ -228,6 +231,8 @@ auto pStatusBar::update() -> void {
             [view setImage: image];
             
             xPos += part.image->width + 3;
+            
+            usedWidgets.push_back( widget );
             
         } else {
             Label* label = new Label;
@@ -250,9 +255,9 @@ auto pStatusBar::update() -> void {
             [view setFrame:NSMakeRect(xPos, -2, width, textHeight)];
             
             xPos += width;
+            
+            usedWidgets.push_back( label );
         }
-        
-        usedWidgets.push_back( view );
         
         [view setToolTip:[NSString stringWithUTF8String:part.tooltip.c_str()]];
         
@@ -270,34 +275,32 @@ auto pStatusBar::updatePart( StatusBar::Part& part ) -> void {
         return;
 
     @autoreleasepool {
-        NSView* view = usedWidgets[ part.position ];
+        Widget* widget = usedWidgets[ part.position ];
         
         if ( part.image ) {
             
-            [[view image] release];
+            [[widget->p.cocoaView image] release];
             
             NSImage* image = NSMakeImage( *part.image );
             
-            [view setImage: image];
+            [widget->p.cocoaView setImage: image];
 
         } else {
+            Label* label = (Label*)widget;
+            Label::Align align = part.alignRight ? Label::Align::Right : Label::Align::Left;
 
-            if (part.alignRight)
-                [view setAlignment:NSRightTextAlignment];
-            else
-                [view setAlignment:NSLeftTextAlignment];
+            if (label->align() != align)
+                label->setAlign( align );
 
-            [view setStringValue:[NSString stringWithUTF8String:part.text.c_str()]];
-            
-            NSColor* textColor = [NSColor textColor];
-            
+            label->setText( part.text );
+
             if (part.overrideForegroundColor != -1)
-                textColor = pHelper::getColor( part.overrideForegroundColor );
-
-            [view setTextColor: textColor];
+                label->setForegroundColor( part.overrideForegroundColor );
+            else
+                label->resetForegroundColor();
         }
         
-        [view setToolTip:[NSString stringWithUTF8String:part.tooltip.c_str()]];
+        [widget->p.cocoaView setToolTip:[NSString stringWithUTF8String:part.tooltip.c_str()]];
     }
     
 }
