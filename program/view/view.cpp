@@ -772,8 +772,6 @@ auto View::buildMenu() -> void {
 
         std::string text = activeEmulator->copyText( );
 
-        logger->log(text, 1);
-
         GUIKIT::Application::setClipboardText( text );
     };
 
