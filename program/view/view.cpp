@@ -626,6 +626,7 @@ auto View::loadImages() -> void {
     counterImage.setResourceId( ID_COUNTER );
     diskImage.loadPng((uint8_t*) disk, sizeof (disk));
     diskImage.setResourceId( ID_DISK );
+	editImage.loadPng((uint8_t*)edit, sizeof(edit));
        
     ledOffImage.loadPng((uint8_t*) ledOff, sizeof (ledOff));
     ledRedImage.loadPng((uint8_t*) ledRed, sizeof (ledRed));
@@ -755,6 +756,10 @@ auto View::buildMenu() -> void {
         inputMenus.push_back(iM);
     }
 
+
+    controlMenu.setIcon(joystickImage);
+    append(controlMenu);
+	
     editMenu.append( copyItem );
 
     pasteItem.onActivate = []() {
@@ -774,10 +779,8 @@ auto View::buildMenu() -> void {
 
     editMenu.append( pasteItem );
 
+	editMenu.setIcon(editImage);
     append( editMenu );
-
-    controlMenu.setIcon(joystickImage);
-    append(controlMenu);
 
     optionsMenu.setIcon(toolsImage);
     append(optionsMenu);

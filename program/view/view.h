@@ -138,6 +138,7 @@ struct View : public GUIKIT::Window {
     GUIKIT::Image cropImage;
 	GUIKIT::Image tapeImage;
     GUIKIT::Image diskImage;
+	GUIKIT::Image editImage;
     
     GUIKIT::Image playImage;
     GUIKIT::Image playhiImage;
