@@ -14,6 +14,9 @@ struct pApplication {
     static auto initialize() -> void;
     static auto setAppTimer() -> void;
     static auto oberserveMenu(NSMenu* menu) -> void;
+    static auto requestClipboardText() -> void;
+    static auto setClipboardText( std::string text ) -> void;
+
 };
 
 struct pWindow {

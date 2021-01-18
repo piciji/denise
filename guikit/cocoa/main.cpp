@@ -338,6 +338,34 @@ auto pApplication::initialize() -> void {
     }
 }
 
+auto pApplication::requestClipboardText() -> void {
+    std::string text;
+    
+    @autoreleasepool {
+        NSPasteboard* pasteBoard = [NSPasteboard generalPasteboard];
+
+        NSString* str = [pasteBoard stringForType:NSPasteboardTypeString];
+        
+        if (!str)
+            return;
+        
+        text = [str UTF8String];
+    }
+    if (Application::onClipboardRequest)
+        Application::onClipboardRequest( text );
+}
+
+auto pApplication::setClipboardText( std::string text ) -> void {
+    @autoreleasepool {
+        NSPasteboard* pasteBoard = [NSPasteboard generalPasteboard];
+        [pasteBoard declareTypes:[NSArray arrayWithObject:NSPasteboardTypeString] owner:nil];
+
+        [pasteBoard clearContents];
+        
+        [pasteBoard setString:[NSString stringWithUTF8String:text.c_str()] forType:NSPasteboardTypeString];
+    }
+}
+
 //window
 pWindow::pWindow(Window& window) : window(window) {
     @autoreleasepool {
