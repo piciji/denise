@@ -5,6 +5,7 @@ pStatusBar::pStatusBar(StatusBar& statusBar) : statusBar(statusBar) {
     hfont = nullptr;
     hCursor = LoadCursor(0, IDC_HAND); 
     hoverPart = nullptr;
+    hwndTip = nullptr;
 }
 
 pStatusBar::~pStatusBar() {
@@ -22,10 +23,10 @@ auto pStatusBar::create() -> void {
     
     wndprocOrig = (WNDPROC)SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)subclassWndProc);  
     
-	hwndTip = CreateWindowEx(0, TOOLTIPS_CLASS, NULL,
-		WS_POPUP | TTS_ALWAYSTIP | TTS_USEVISUALSTYLE,
-		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-		hwnd, NULL, GetModuleHandle(0), 0);  
+//	hwndTip = CreateWindowEx(0, TOOLTIPS_CLASS, NULL,
+//		WS_POPUP | TTS_ALWAYSTIP | TTS_USEVISUALSTYLE,
+//		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+//		hwnd, NULL, GetModuleHandle(0), 0);
     
     hoverPart = nullptr;
     
@@ -53,15 +54,15 @@ auto CALLBACK pStatusBar::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LP
             if (part && (part->popupMenu || part->onClick))
                 SetCursor(statusBar->p.hCursor);
             
-			if (part != p.hoverPart) {
-				p.hoverPart = part;
+			//if (part != p.hoverPart) {
+			//	p.hoverPart = part;
 
-				p.setTooltip( part );
+			//	p.setTooltip( part );
 
                // return 0;
-			}
+			//}
 
-        } return 0;
+        } break;
             
     }
     return CallWindowProc(statusBar->p.wndprocOrig, hwnd, msg, wparam, lparam);
@@ -238,7 +239,7 @@ auto pStatusBar::drawItem(WPARAM wparam, LPARAM lparam) -> void {
         Image* image = part.image;
         
         HICON hIcon = CreateHIcon( *image );
-        
+
         yPos = rect.top + (unsigned)((yPos - image->height) / 2);
         
         DrawIconEx( hDC,  rect.left, yPos - 1, hIcon, image->width, image->height, 0, NULL, DI_NORMAL);
