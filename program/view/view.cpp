@@ -618,10 +618,12 @@ auto View::loadImages() -> void {
     forwardImage.setResourceId( ID_FORWARD );
     forwardhiImage.loadPng((uint8_t*)forwardHi, sizeof(forwardHi));
     forwardhiImage.setResourceId( ID_FORWARDHI );
+    forwardhiAltImage.loadPng((uint8_t*)forwardHiAlt, sizeof(forwardHiAlt));
     rewindImage.loadPng((uint8_t*)rewind, sizeof(rewind));
     rewindImage.setResourceId( ID_REWIND );
     rewindhiImage.loadPng((uint8_t*)rewindHi, sizeof(rewindHi));
     rewindhiImage.setResourceId( ID_REWINDHI );
+    rewindhiAltImage.loadPng((uint8_t*)rewindHiAlt, sizeof(rewindHiAlt));
 	counterImage.loadPng((uint8_t*)counter, sizeof(counter));
     counterImage.setResourceId( ID_COUNTER );
     diskImage.loadPng((uint8_t*) disk, sizeof (disk));
@@ -980,8 +982,8 @@ auto View::updateTapeStatusIcons( Emulator::Interface::TapeMode mode ) -> void {
     switch( mode ) {
         case TapeMode::Play:        image = &playhiImage; break;
         case TapeMode::Record:      image = &recordhiImage; break;
-        case TapeMode::Forward:     image = &forwardhiImage; break;
-        case TapeMode::Rewind:      image = &rewindhiImage; break;
+        case TapeMode::Forward:     image = &forwardhiAltImage; break;
+        case TapeMode::Rewind:      image = &rewindhiAltImage; break;
         default: break;
     //    case TapeMode::Stop:        image = &stophiImage; break;
     }

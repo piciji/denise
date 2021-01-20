@@ -18,15 +18,17 @@ pStatusBar::~pStatusBar() {
 auto pStatusBar::create() -> void {    
     
     hwnd = CreateWindow(STATUSCLASSNAME, L"", WS_CHILD, 0, 0, 0, 0, statusBar.window()->p.hwnd, (HMENU)(unsigned long long)statusBar.id, GetModuleHandle(0), 0);
+	
+	SendMessage( hwnd, SB_SETBKCOLOR, 0, GetSysColor(COLOR_MENU));
     
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)&statusBar);
     
     wndprocOrig = (WNDPROC)SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)subclassWndProc);  
     
-//	hwndTip = CreateWindowEx(0, TOOLTIPS_CLASS, NULL,
-//		WS_POPUP | TTS_ALWAYSTIP | TTS_USEVISUALSTYLE,
-//		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-//		hwnd, NULL, GetModuleHandle(0), 0);
+	hwndTip = CreateWindowEx(0, TOOLTIPS_CLASS, NULL,
+		WS_POPUP | TTS_ALWAYSTIP | TTS_USEVISUALSTYLE,
+		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+		hwnd, NULL, GetModuleHandle(0), 0);
     
     hoverPart = nullptr;
     
@@ -54,13 +56,13 @@ auto CALLBACK pStatusBar::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LP
             if (part && (part->popupMenu || part->onClick))
                 SetCursor(statusBar->p.hCursor);
             
-			//if (part != p.hoverPart) {
-			//	p.hoverPart = part;
+			if (part != p.hoverPart) {
+				p.hoverPart = part;
 
-			//	p.setTooltip( part );
+				p.setTooltip( part );
 
-               // return 0;
-			//}
+                return 0;
+			}
 
         } break;
             
@@ -153,8 +155,15 @@ auto pStatusBar::getWidth(std::string text) -> unsigned {
 }
 
 auto pStatusBar::updatePart( StatusBar::Part& part ) -> void {
-    if (hwnd)
-        SendMessage(hwnd, SB_SETTEXT, part.position | SBT_OWNERDRAW, 0);
+    if (hwnd) {		
+		if (part.image) {
+			// alpha blend transparent part, because of winapi draws some 3D effect
+			HICON hIcon = CreateHIconWithAlphaBlend( *part.image, GetSysColor(COLOR_MENU) );
+			SendMessage(hwnd, SB_SETICON, part.position, (LPARAM) hIcon);
+			DestroyIcon(hIcon);
+		} else
+			SendMessage(hwnd, SB_SETTEXT, part.position | SBT_OWNERDRAW, 0);
+	}
 }
 
 auto pStatusBar::update() -> void {
@@ -234,6 +243,8 @@ auto pStatusBar::drawItem(WPARAM wparam, LPARAM lparam) -> void {
     auto& part = *usedParts[itemID];
     
     if (part.image) {
+		// don't use it anymore, because of BUG's. sometimes icons disappear while excessive updating.
+		// use SB_SETICON instead
         unsigned yPos = rect.bottom - rect.top;
         
         Image* image = part.image;
@@ -246,7 +257,7 @@ auto pStatusBar::drawItem(WPARAM wparam, LPARAM lparam) -> void {
         
         if(hIcon)
             DestroyIcon(hIcon);
-        
+// same with bitmaps
 //        if (!image->alphaBlendApplied)
 //            image->alphaBlend( GetSysColor(COLOR_MENU) );
 //        
@@ -271,6 +282,7 @@ auto pStatusBar::drawItem(WPARAM wparam, LPARAM lparam) -> void {
         
         rect.top += 1;
 
+		rect.left += 1;
         if (part.alignRight)
             rect.right -= 4;
         else if ( !part.width )

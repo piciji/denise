@@ -217,6 +217,18 @@ auto CreateBitmapWithPremultipliedAlpha(Image& image) -> HBITMAP {
     return ok ? hbitmap : NULL;
 }
 
+auto CreateHIconWithAlphaBlend(Image& image, unsigned color) -> HICON {
+    if (image.format == Image::Format::RGBA)
+        image.switchBetweenBGRandRGB();
+
+    if (!image.alphaBlendApplied)
+        image.alphaBlend( color );
+
+    HICON hicon = CreateIcon(0, image.width, image.height, 1, 32, 0, image.data);
+
+    return hicon;
+}
+
 auto CreateHIcon(Image& image) -> HICON {
 	if (image.format == Image::Format::RGBA)
 		image.switchBetweenBGRandRGB();
