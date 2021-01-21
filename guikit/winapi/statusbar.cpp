@@ -121,8 +121,8 @@ auto pStatusBar::setText(std::string text) -> void {
 
 auto pStatusBar::updatePosition() -> void {
     
-    if (hwnd)
-        SetWindowPos(hwnd, NULL, 0, 0, 0, 0, SWP_NOZORDER | SWP_FRAMECHANGED);
+    //if (hwnd)
+      //  SetWindowPos(hwnd, NULL, 0, 0, 0, 0, SWP_NOZORDER | SWP_FRAMECHANGED);
     
     update();
 }
@@ -174,7 +174,9 @@ auto pStatusBar::update() -> void {
     usedParts.clear();
     
     if (!statusBar.window() || !hwnd)
-        return;        
+        return;
+
+    SetWindowPos(hwnd, NULL, 0, 0, 0, 0, SWP_NOZORDER | SWP_FRAMECHANGED);
         
     auto& parts = statusBar.state.parts;
     
