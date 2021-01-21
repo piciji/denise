@@ -87,6 +87,7 @@ Tape::Tape( Emulator::Interface::Media* mediaConnected ) {
             return;
         
 		setMode( nextMode );
+		updateDeviceState();
 	};        
 
 	enabled = false;

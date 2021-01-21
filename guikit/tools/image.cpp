@@ -24,6 +24,7 @@ Image& Image::operator=(const Image& source) {
 
     format = source.format;
     resourceId = source.resourceId;
+    alphaBlendApplied = source.alphaBlendApplied;
     create(source.width, source.height, source.data);
     return *this;
 }
@@ -37,6 +38,7 @@ Image& Image::operator=(Image&& source) {
     height = source.height;
     data = source.data;
     resourceId = source.resourceId;
+    alphaBlendApplied = source.alphaBlendApplied;
     source.data = nullptr;
     return *this;
 }

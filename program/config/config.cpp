@@ -8,14 +8,11 @@
 #include "../view/message.h"
 #include "../input/manager.h"
 #include "../audio/manager.h"
+#include "../../data/icons.h"
 
 ConfigView::TabWindow* configView = nullptr;
 
 namespace ConfigView {
-	
-namespace Icons {
-    #include "../../data/img/icons.data"
-}
 
 #include "layouts/settings.cpp"
 #include "layouts/input.cpp"

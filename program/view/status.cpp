@@ -94,13 +94,17 @@ auto StatusHandler::updateTapeImage( GUIKIT::Image* image ) -> void {
     if (!statusBar)
         return;
     
-    if (image == &(view->playhiImage)) {
+    if (image == &(view->playStatusImage)) {
+
         for(auto& deviceState : deviceStates) {
             if (deviceState.media->group->isTape()) {
-                if (deviceState.motorOff)
-                    image = &(view->playhiPauseImage);
+                // check if tape is paused
+                setDeviceUpdate();
+                deviceState.update = true;
+                //if (deviceState.motorOff)
+                //   image = &(view->playPauseStatusImage);
                 
-                break;
+                return;
             }
         }
     }
@@ -137,11 +141,11 @@ auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
     statusBar->append( 8, &(view->ledOffImage) );    // disk LED
     
     statusBar->append( 9, "000" );    // tape counter
-    statusBar->append( 10, &(view->stopImage), nullptr, &(view->tapeControlMenu) );    // tape button icon
+    statusBar->append( 10, &(view->stopStatusImage), nullptr, &(view->tapeControlMenu) );    // tape button icon
 	statusBar->append( 11, "CRT" );    // expansion label
     statusBar->append( 12, &(view->ledOffImage) );    // expansion LED
     statusBar->append( 13, "DRC DRC DRC DRC DRC DRC DRC DRC D" );    // DRC Status
-    statusBar->append( 14, &(view->recordhiImage) );    // REC Status
+    statusBar->append( 14, &(view->recordStatusImage) );    // REC Status
     statusBar->append( 15, "1000" );    // FPS
 }
             
@@ -225,7 +229,7 @@ auto StatusHandler::update() -> void {
                     typedef Emulator::Interface::TapeMode TapeMode;
 
                     if (mode == TapeMode::Play)
-                        statusBar->updateImage( 10, deviceState.motorOff ? &(view->playhiPauseImage) : &(view->playhiImage) );
+                        statusBar->updateImage( 10, deviceState.motorOff ? &(view->playPauseStatusImage) : &(view->playStatusImage) );
                     
                 } else if (group->isExpansion()) {
 

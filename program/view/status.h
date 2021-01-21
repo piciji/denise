@@ -15,10 +15,10 @@ struct DeviceState {
 
 struct StatusHandler {
     
-    auto messageUpdate() -> bool { return control & 1; }
-    auto deviceUpdate() -> bool { return control & 2; }         
-    auto drcBufferUpdate() -> bool { return control & 8; }
-    auto fpsCounterUpdate() -> bool { return control & 0x10; }   
+    auto messageUpdate() const -> bool { return control & 1; }
+    auto deviceUpdate() const -> bool { return control & 2; }
+    auto drcBufferUpdate() const -> bool { return control & 8; }
+    auto fpsCounterUpdate() const -> bool { return control & 0x10; }
     
     auto setMessageUpdate() -> void { control |= 1; }
     auto setDeviceUpdate() -> void { control |= 2; }

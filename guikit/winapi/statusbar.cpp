@@ -23,7 +23,7 @@ auto pStatusBar::create() -> void {
     
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)&statusBar);
     
-    wndprocOrig = (WNDPROC)SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)subclassWndProc);  
+    wndprocOrig = (WNDPROC)SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)subclassWndProc);
     
 	hwndTip = CreateWindowEx(0, TOOLTIPS_CLASS, NULL,
 		WS_POPUP | TTS_ALWAYSTIP | TTS_USEVISUALSTYLE,
@@ -183,7 +183,7 @@ auto pStatusBar::update() -> void {
 
     std::vector<int> _widths;
     _widths.push_back( pos );
-    pos -= 8;
+    pos -= 11;
     
     for( i = parts.size() - 1; i >= 0; i-- ) {
         auto& part = parts[i];
@@ -228,7 +228,9 @@ auto pStatusBar::update() -> void {
             if (part.popupMenu && !part.popupMenu->state.parentWindow)
                 part.popupMenu->p.update(*statusBar.window());            
         }
-    }    
+    }
+    // clear right margin area
+    SendMessage(hwnd, SB_SETTEXT, i, (LPARAM)"" );
     
     delete[] widths;
 }
@@ -239,12 +241,10 @@ auto pStatusBar::drawItem(WPARAM wparam, LPARAM lparam) -> void {
     
     HDC hDC = ((DRAWITEMSTRUCT*)lparam)->hDC;
     UINT itemID = ((DRAWITEMSTRUCT*)lparam)->itemID;
-        
     auto& part = *usedParts[itemID];
     
     if (part.image) {
-		// don't use it anymore, because of BUG's. sometimes icons disappear while excessive updating.
-		// use SB_SETICON instead
+		// use SB_SETICON for updates, but following for initialisation
         unsigned yPos = rect.bottom - rect.top;
         
         Image* image = part.image;
@@ -272,7 +272,6 @@ auto pStatusBar::drawItem(WPARAM wparam, LPARAM lparam) -> void {
 //        DeleteDC( hdcMem );
         
     } else {
-
 		SetBkMode(hDC, TRANSPARENT);
 		
         if (part.overrideForegroundColor != -1) {
@@ -318,7 +317,7 @@ auto pStatusBar::getHoverPart(int xPos) -> StatusBar::Part* {
     GetWindowRect(hwnd, &rect);
 
     int pos = rect.right - rect.left;
-    pos -= 8;
+    pos -= 11;
 
     unsigned partCount = usedParts.size();
 
@@ -336,4 +335,3 @@ auto pStatusBar::getHoverPart(int xPos) -> StatusBar::Part* {
     
     return nullptr;
 }
-

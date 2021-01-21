@@ -2,6 +2,7 @@
 #include "archiveViewer.h"
 #include "../program.h"
 #include "../tools/filepool.h"
+#include "../../data/icons.h"
 
 ArchiveViewer* archiveViewer = nullptr;
 
@@ -22,10 +23,9 @@ auto ArchiveViewer::build() -> void {
     if (isOffscreen())
         setGeometry(defaultGeometry);  
 
-    #include "../../data/img/icons.data"
-    imgFolderOpen.loadPng((uint8_t*)folderOpen, sizeof(folderOpen) );
-    imgFolderClosed.loadPng((uint8_t*)folderClosed, sizeof(folderClosed) );
-    imgDocument.loadPng((uint8_t*)document, sizeof(document) );
+    imgFolderOpen.loadPng((uint8_t*)Icons::folderOpen, sizeof(Icons::folderOpen) );
+    imgFolderClosed.loadPng((uint8_t*)Icons::folderClosed, sizeof(Icons::folderClosed) );
+    imgDocument.loadPng((uint8_t*)Icons::document, sizeof(Icons::document) );
 
     layout.append(tv, {~0u, ~0u});
     layout.setMargin(10);

@@ -10,6 +10,7 @@
 #include "status.h"
 #include "../media/autoloader.h"
 #include "placeholder.cpp"
+#include "../../data/icons.h"
 
 View* view = nullptr;
 
@@ -39,7 +40,7 @@ auto View::build() -> void {
     
     loadImages();
 
-    statusBar.setFont(GUIKIT::Font::system());
+    statusBar.setFont( GUIKIT::Font::system() );
         
 	statusHandler->init(&statusBar);
 
@@ -559,81 +560,84 @@ auto View::updateShader() -> void {
 }
 
 auto View::loadImages() -> void {
-    #include "../../data/img/icons.data"
     #include "../../data/resource.h" // for win xp only 
-    regionImage.loadPng((uint8_t*)globe, sizeof(globe));
+    regionImage.loadPng((uint8_t*)Icons::globe, sizeof(Icons::globe));
     regionImage.setResourceId( ID_GLOBE );
-    powerImage.loadPng((uint8_t*)power, sizeof(power)); 
+    powerImage.loadPng((uint8_t*)Icons::power, sizeof(Icons::power));
     powerImage.setResourceId( ID_POWER );
-    freezeImage.loadPng((uint8_t*)freeze, sizeof(freeze)); 
+    freezeImage.loadPng((uint8_t*)Icons::freeze, sizeof(Icons::freeze));
     freezeImage.setResourceId( ID_FREEZE );
-	poweroffImage.loadPng((uint8_t*)shutdown, sizeof(shutdown));
+	poweroffImage.loadPng((uint8_t*)Icons::shutdown, sizeof(Icons::shutdown));
     poweroffImage.setResourceId( ID_SHUTDOWN );
-    firmwareImage.loadPng((uint8_t*)memory, sizeof(memory));
+    firmwareImage.loadPng((uint8_t*)Icons::memory, sizeof(Icons::memory));
     firmwareImage.setResourceId( ID_MEMORY );
-    driveImage.loadPng((uint8_t*)drive, sizeof(drive));
+    driveImage.loadPng((uint8_t*)Icons::drive, sizeof(Icons::drive));
     driveImage.setResourceId( ID_DRIVE );
-    swapperImage.loadPng((uint8_t*)swapper, sizeof(swapper));
+    swapperImage.loadPng((uint8_t*)Icons::swapper, sizeof(Icons::swapper));
     swapperImage.setResourceId( ID_SWAPPER );
-    scriptImage.loadPng((uint8_t*)script, sizeof(script));
+    scriptImage.loadPng((uint8_t*)Icons::script, sizeof(Icons::script));
     scriptImage.setResourceId( ID_SCRIPT );
-    systemImage.loadPng((uint8_t*)system, sizeof(system));
+    systemImage.loadPng((uint8_t*)Icons::system, sizeof(Icons::system));
     systemImage.setResourceId( ID_SYSTEM );
-    joystickImage.loadPng((uint8_t*)joystick, sizeof(joystick));
+    joystickImage.loadPng((uint8_t*)Icons::joystick, sizeof(Icons::joystick));
     joystickImage.setResourceId( ID_JOYSTICK );
-    volumeImage.loadPng((uint8_t*)volume, sizeof(volume));
+    volumeImage.loadPng((uint8_t*)Icons::volume, sizeof(Icons::volume));
     volumeImage.setResourceId( ID_VOLUME );
-    plugImage.loadPng((uint8_t*)plug, sizeof(plug));
+    plugImage.loadPng((uint8_t*)Icons::plug, sizeof(Icons::plug));
     plugImage.setResourceId( ID_PLUG );
-    displayImage.loadPng((uint8_t*)display, sizeof(display));
+    displayImage.loadPng((uint8_t*)Icons::display, sizeof(Icons::display));
     displayImage.setResourceId( ID_DISPLAY );
-    toolsImage.loadPng((uint8_t*)tools, sizeof(tools));
+    toolsImage.loadPng((uint8_t*)Icons::tools, sizeof(Icons::tools));
     toolsImage.setResourceId( ID_TOOLS );
-	quitImage.loadPng((uint8_t*)quit, sizeof(quit));
+	quitImage.loadPng((uint8_t*)Icons::quit, sizeof(Icons::quit));
     quitImage.setResourceId( ID_QUIT );
-	keyboardImage.loadPng((uint8_t*)keyboard, sizeof(keyboard));
+	keyboardImage.loadPng((uint8_t*)Icons::keyboard, sizeof(Icons::keyboard));
     keyboardImage.setResourceId( ID_KEYBOARD );
-	colorImage.loadPng((uint8_t*)color, sizeof(color));
+	colorImage.loadPng((uint8_t*)Icons::color, sizeof(Icons::color));
     colorImage.setResourceId( ID_COLOR );
-	tapeImage.loadPng((uint8_t*)tape, sizeof(tape));
+	tapeImage.loadPng((uint8_t*)Icons::tape, sizeof(Icons::tape));
     tapeImage.setResourceId( ID_TAPE );
-    paletteImage.loadPng((uint8_t*)palette, sizeof(palette));
+    paletteImage.loadPng((uint8_t*)Icons::palette, sizeof(Icons::palette));
     paletteImage.setResourceId( ID_PALETTE );
-    cropImage.loadPng((uint8_t*)crop, sizeof(crop));
+    cropImage.loadPng((uint8_t*)Icons::crop, sizeof(Icons::crop));
     cropImage.setResourceId( ID_CROP );
-    playImage.loadPng((uint8_t*)play, sizeof(play));
+    playImage.loadPng((uint8_t*)Icons::play, sizeof(Icons::play));
     playImage.setResourceId( ID_PLAY );
-    playhiImage.loadPng((uint8_t*)playHi, sizeof(playHi));
+    playhiImage.loadPng((uint8_t*)Icons::playHi, sizeof(Icons::playHi));
     playhiImage.setResourceId( ID_PLAYHI );
-    playhiPauseImage.loadPng((uint8_t*)playHiPause, sizeof(playHiPause));
-    stopImage.loadPng((uint8_t*)stop, sizeof(stop));
+    stopImage.loadPng((uint8_t*)Icons::stop, sizeof(Icons::stop));
     stopImage.setResourceId( ID_STOP );
-    stophiImage.loadPng((uint8_t*)stopHi, sizeof(stopHi));
+    stophiImage.loadPng((uint8_t*)Icons::stopHi, sizeof(Icons::stopHi));
     stophiImage.setResourceId( ID_STOPHI );
-    recordImage.loadPng((uint8_t*)record, sizeof(record));
+    recordImage.loadPng((uint8_t*)Icons::record, sizeof(Icons::record));
     recordImage.setResourceId( ID_RECORD );
-    recordhiImage.loadPng((uint8_t*)recordHi, sizeof(recordHi));
+    recordhiImage.loadPng((uint8_t*)Icons::recordHi, sizeof(Icons::recordHi));
     recordhiImage.setResourceId( ID_RECORDHI );
-    forwardImage.loadPng((uint8_t*)forward, sizeof(forward));
+    forwardImage.loadPng((uint8_t*)Icons::forward, sizeof(Icons::forward));
     forwardImage.setResourceId( ID_FORWARD );
-    forwardhiImage.loadPng((uint8_t*)forwardHi, sizeof(forwardHi));
+    forwardhiImage.loadPng((uint8_t*)Icons::forwardHi, sizeof(Icons::forwardHi));
     forwardhiImage.setResourceId( ID_FORWARDHI );
-    forwardhiAltImage.loadPng((uint8_t*)forwardHiAlt, sizeof(forwardHiAlt));
-    rewindImage.loadPng((uint8_t*)rewind, sizeof(rewind));
+    rewindImage.loadPng((uint8_t*)Icons::rewind, sizeof(Icons::rewind));
     rewindImage.setResourceId( ID_REWIND );
-    rewindhiImage.loadPng((uint8_t*)rewindHi, sizeof(rewindHi));
+    rewindhiImage.loadPng((uint8_t*)Icons::rewindHi, sizeof(Icons::rewindHi));
     rewindhiImage.setResourceId( ID_REWINDHI );
-    rewindhiAltImage.loadPng((uint8_t*)rewindHiAlt, sizeof(rewindHiAlt));
-	counterImage.loadPng((uint8_t*)counter, sizeof(counter));
+	counterImage.loadPng((uint8_t*)Icons::counter, sizeof(Icons::counter));
     counterImage.setResourceId( ID_COUNTER );
-    diskImage.loadPng((uint8_t*) disk, sizeof (disk));
+    diskImage.loadPng((uint8_t*) Icons::disk, sizeof (Icons::disk));
     diskImage.setResourceId( ID_DISK );
-	editImage.loadPng((uint8_t*)edit, sizeof(edit));
-       
-    ledOffImage.loadPng((uint8_t*) ledOff, sizeof (ledOff));
-    ledRedImage.loadPng((uint8_t*) ledRed, sizeof (ledRed));
-    ledGreenImage.loadPng((uint8_t*) ledGreen, sizeof (ledGreen));
-    
+	editImage.loadPng((uint8_t*)Icons::edit, sizeof(Icons::edit));
+
+    playPauseStatusImage.loadPng((uint8_t*)Icons::playPauseStatus, sizeof(Icons::playPauseStatus));
+    forwardStatusImage.loadPng((uint8_t*)Icons::forwardStatus, sizeof(Icons::forwardStatus));
+
+    playStatusImage = playhiImage;
+    stopStatusImage = stopImage;
+    recordStatusImage = recordhiImage;
+    rewindStatusImage = rewindhiImage;
+
+    ledOffImage.loadPng((uint8_t*) Icons::ledOff, sizeof (Icons::ledOff));
+    ledRedImage.loadPng((uint8_t*) Icons::ledRed, sizeof (Icons::ledRed));
+    ledGreenImage.loadPng((uint8_t*) Icons::ledGreen, sizeof (Icons::ledGreen));
 }
 
 auto View::buildMenu() -> void {
@@ -975,15 +979,15 @@ auto View::updateTapeIcons( Emulator::Interface::TapeMode mode ) -> void {
 
 auto View::updateTapeStatusIcons( Emulator::Interface::TapeMode mode ) -> void {
     
-    GUIKIT::Image* image = &stopImage; // Unpressed
+    GUIKIT::Image* image = &stopStatusImage; // Unpressed
     
     typedef Emulator::Interface::TapeMode TapeMode;
     
     switch( mode ) {
-        case TapeMode::Play:        image = &playhiImage; break;
-        case TapeMode::Record:      image = &recordhiImage; break;
-        case TapeMode::Forward:     image = &forwardhiAltImage; break;
-        case TapeMode::Rewind:      image = &rewindhiAltImage; break;
+        case TapeMode::Play:        image = &playStatusImage; break;
+        case TapeMode::Record:      image = &recordStatusImage; break;
+        case TapeMode::Forward:     image = &forwardStatusImage; break;
+        case TapeMode::Rewind:      image = &rewindStatusImage; break;
         default: break;
     //    case TapeMode::Stop:        image = &stophiImage; break;
     }

@@ -1,0 +1,113 @@
+
+#pragma once
+
+#include <cstdint>
+
+namespace Icons {
+
+extern uint8_t globe[905];
+
+extern uint8_t filter[626];
+
+extern uint8_t power[831];
+
+extern uint8_t display[677];
+
+extern uint8_t tools[963];
+
+extern uint8_t drive[626];
+
+extern uint8_t joystick[664];
+
+extern uint8_t plug[738];
+
+extern uint8_t disk[757];
+
+extern uint8_t script[719];
+
+extern uint8_t swapper[941];
+
+extern uint8_t system[961];
+
+extern uint8_t quit[832];
+
+extern uint8_t volume[638];
+
+extern uint8_t add[621];
+
+extern uint8_t memory[381];
+
+extern uint8_t tape[362];
+
+extern uint8_t shutdown[789];
+
+extern uint8_t keyboard[461];
+
+extern uint8_t mouse[384];
+
+extern uint8_t controller[462];
+
+extern uint8_t virtualKey[402];
+
+extern uint8_t color[653];
+
+extern uint8_t palette[680];
+
+extern uint8_t crop[518];
+
+extern uint8_t freeze[545];
+
+extern uint8_t folderOpen[446];
+
+extern uint8_t folderClosed[507];
+
+extern uint8_t document[748];
+
+extern uint8_t counter[214];
+
+extern uint8_t play[295];
+
+extern uint8_t playHi[294];
+
+extern uint8_t playHiPause[302];
+
+extern uint8_t record[339];
+
+extern uint8_t recordHi[336];
+
+extern uint8_t stop[164];
+
+extern uint8_t stopHi[163];
+
+extern uint8_t forward[369];
+
+extern uint8_t forwardHi[368];
+
+extern uint8_t rewind[373];
+
+extern uint8_t rewindHi[366];
+
+extern uint8_t lightgun[512];
+
+extern uint8_t lightpen[434];
+
+extern uint8_t settings[720];
+
+extern uint8_t sine[517];
+
+extern uint8_t recordAudio[486];
+
+extern uint8_t processor[640];
+
+extern uint8_t ledOff[239];
+
+extern uint8_t ledRed[225];
+
+extern uint8_t ledGreen[247];
+
+extern uint8_t edit[526];
+
+extern uint8_t forwardStatus[455];
+extern uint8_t playPauseStatus[302];
+
+}

@@ -13,8 +13,8 @@
 #include "../cmd/cmd.h"
 #include "../media/media.h"
 #include "../audio/manager.h"
+#include "../../data/icons.h"
 
-#include <thread>
 #include <vector>
 #include <algorithm>
 #include <cmath>
@@ -23,10 +23,6 @@
 std::vector<EmuConfigView::TabWindow*> emuConfigViews;
 
 namespace EmuConfigView {
-
-namespace Icons {
-    #include "../../data/img/icons.data"
-}
 
 namespace Fonts {
 	#include "../../data/fonts/fonts.data"

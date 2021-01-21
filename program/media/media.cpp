@@ -10,6 +10,7 @@
 #include "../states/states.h"
 #include "autoloader.h"
 #include "../../data/resource.h"
+#include "../../data/icons.h"
 
 #include <thread>
 #include <vector>
@@ -18,10 +19,6 @@
 #include <cstring>
 
 namespace MediaView {
-	
-namespace Icons {
-    #include "../../data/img/icons.data"
-}
 
 namespace Fonts {
 	#include "../../data/fonts/fonts.data"

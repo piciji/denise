@@ -3,8 +3,8 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include <time.h>
-#include <math.h>
+#include <ctime>
+#include <cmath>
 #include <sstream>
 
 #include "api.h"
@@ -48,17 +48,16 @@ Base::Base() {
 //application
 bool Application::isQuit = false;
 int Application::exitCode = 0;
-std::string Application::name = "";
+std::string Application::name;
 std::function<void ()> Application::loop = nullptr;
 std::function<void (std::string text)> Application::onClipboardRequest = nullptr;
+
 std::function<void ()> Application::Cocoa::onAbout;
 std::function<void ()> Application::Cocoa::onPreferences;
 std::function<void ()> Application::Cocoa::onCustom1;
 std::function<void ()> Application::Cocoa::onQuit;
 std::function<void ()> Application::Cocoa::onDock;
 std::function<void (std::string fileName)> Application::Cocoa::onOpenFile;
-
-typedef Application _A;
 
 auto Application::isCocoa() -> bool {
 #ifdef GUIKIT_COCOA
@@ -1412,3 +1411,4 @@ auto Thread::setPriorityRealtime( std::thread& th ) -> void {
 }
 
 }
+

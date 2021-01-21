@@ -142,18 +142,22 @@ struct View : public GUIKIT::Window {
     
     GUIKIT::Image playImage;
     GUIKIT::Image playhiImage;
-    GUIKIT::Image playhiPauseImage;
     GUIKIT::Image stopImage;
     GUIKIT::Image stophiImage;
     GUIKIT::Image recordImage;
     GUIKIT::Image recordhiImage;
     GUIKIT::Image forwardImage;
     GUIKIT::Image forwardhiImage;
-    GUIKIT::Image forwardhiAltImage;
     GUIKIT::Image rewindImage;
     GUIKIT::Image rewindhiImage;
-    GUIKIT::Image rewindhiAltImage;
 	GUIKIT::Image counterImage;
+
+    GUIKIT::Image playStatusImage;
+    GUIKIT::Image playPauseStatusImage;
+    GUIKIT::Image recordStatusImage;
+    GUIKIT::Image stopStatusImage;
+    GUIKIT::Image forwardStatusImage;
+    GUIKIT::Image rewindStatusImage;
     
     GUIKIT::Image pencilImage;
     GUIKIT::Image crosshairImage;

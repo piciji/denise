@@ -30,7 +30,7 @@ endif
 objects += m6510 ciaBase cia6526 vicIIBase vicIICycle vicIIFast systemC64 sid chamberlin tapeC64 inputC64 controlPortC64
 objects += cartC64 gameCartC64 actionReplayC64 reuC64 easyFlashC64 retroReplayC64 clipboardC64
 objects += m6502 via iec prg64 drive1541 structure1541
-objects += thread
+objects += thread icons
 
 prgflags := -DAPP_NAME="\"$(name)\"" -DTRANSLATION_FOLDER="\"$(translationFolder)/\"" -DDATA_FOLDER="\"$(dataFolder)/\"" -DSHADER_FOLDER="\"$(shaderFolder)/\"" -DIMG_FOLDER="\"$(imgFolder)/\""
 flags :=
@@ -146,6 +146,7 @@ obj/drive1541.o:emulation/libc64/disk/drive/drive1541.cpp
 obj/structure1541.o:emulation/libc64/disk/structure/structure.cpp
 	$(compiler) $(cppflags) $(flags) -Wno-stringop-overflow $1 -c $< -o $@
 obj/thread.o:emulation/tools/thread.cpp
+obj/icons.o:data/icons.cpp
 
 obj/program.o:		program/program.cpp
 	$(compiler) $(cppflags) $(prgflags) $(flags) $1 -c $< -o $@
