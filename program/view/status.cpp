@@ -224,11 +224,9 @@ auto StatusHandler::update() -> void {
 
                     statusBar->updateText(9, name);
 
-                    auto mode = activeEmulator->getTapeControl( media );
-
-                    typedef Emulator::Interface::TapeMode TapeMode;
-
-                    if (mode == TapeMode::Play)
+                    // we don't use the tape mode of emulation core, because it doesn't match the "tape button press" state
+                    // in all cases, e.g. when tape is forwarded until end, mode changes to "stop" but play button keeps in pressed state.
+                    if ( view->tapePlayItem.icon() == &view->playhiImage )
                         statusBar->updateImage( 10, deviceState.motorOff ? &(view->playPauseStatusImage) : &(view->playStatusImage) );
                     
                 } else if (group->isExpansion()) {

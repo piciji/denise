@@ -920,6 +920,7 @@ struct MenuBase : Base {
     auto enabled() const -> bool { return state.enabled; }
     auto visible() const -> bool { return state.visible; }
     auto text() const -> std::string { return state.text; }
+    auto icon() const -> Image* { return state.icon; }
     auto setEnabled(bool enabled = true) -> void;
     auto setVisible(bool visible = true) -> void;
     auto setText(const std::string& text) -> void;
