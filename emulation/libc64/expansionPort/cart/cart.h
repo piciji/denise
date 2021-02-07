@@ -33,23 +33,28 @@ struct Cart : ExpansionPort {
     
     uint8_t* data = nullptr;
     unsigned size = 0;    
-    
+    bool binFormat;
+	
+	Emulator::Interface::Media* media;
     
     auto readHeader() -> bool;
     auto readChips() -> bool;
     virtual auto assumeChips() -> void;
     auto assumeChips( std::vector<unsigned> sizes ) -> void;
     virtual auto reset() -> void;
-    virtual auto setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void;    
+    virtual auto setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void;
     
     virtual auto readRomL(uint16_t addr) -> uint8_t;
     virtual auto readRomH(uint16_t addr) -> uint8_t;   
     virtual auto serialize(Emulator::Serializer& s) -> void;
-    virtual auto serializeStep2(Emulator::Serializer& s) -> void;
+    virtual auto serializeStep2(Emulator::Serializer& s) -> void;	
         
     auto rebuild(Interface::CartridgeId cartridgeId, uint8_t* _rom, unsigned _romSize) -> Cart*;
     virtual auto create( Interface::CartridgeId cartridgeId ) -> Cart* { return nullptr; }
     virtual auto assign(Cart* cart) -> void {}
+	virtual auto write() -> void {}
+	virtual auto prepare() -> void {}
+	virtual auto protectFromDeletion() -> bool { return false; }
     
     auto getChip( unsigned index ) -> Chip* {
         return chips.size() > index ? &chips[index] : nullptr;
@@ -57,8 +62,8 @@ struct Cart : ExpansionPort {
     
     auto hasRom() -> bool { return rom ? true : false; }
     
-    auto buildHeader(uint8_t* header, uint16_t _type, bool _game, bool _exrom, std::string _name ) -> void;
-    auto buildChipHeader(uint8_t* header, Chip& chip) -> void;
+    static auto buildHeader(uint8_t* header, uint16_t _type, bool _game, bool _exrom, std::string _name ) -> void;
+    static auto buildChipHeader(uint8_t* header, Chip& chip) -> void;
     auto checkForEmptyFlashBank(uint8_t* ptr) -> bool;
 };    
    

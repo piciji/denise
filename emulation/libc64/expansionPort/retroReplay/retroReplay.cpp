@@ -424,3 +424,4 @@ auto RetroReplay::getJumper( unsigned jumperId ) -> bool {
 
 
 }
+

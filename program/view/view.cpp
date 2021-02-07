@@ -628,12 +628,13 @@ auto View::loadImages() -> void {
 	editImage.loadPng((uint8_t*)Icons::edit, sizeof(Icons::edit));
 
     playPauseStatusImage.loadPng((uint8_t*)Icons::playPauseStatus, sizeof(Icons::playPauseStatus));
-    forwardStatusImage.loadPng((uint8_t*)Icons::forwardStatus, sizeof(Icons::forwardStatus));
+    //forwardStatusImage.loadPng((uint8_t*)Icons::forwardStatus, sizeof(Icons::forwardStatus));
 
     playStatusImage = playhiImage;
     stopStatusImage = stopImage;
     recordStatusImage = recordhiImage;
     rewindStatusImage = rewindhiImage;
+    forwardStatusImage = forwardhiImage;
 
     ledOffImage.loadPng((uint8_t*) Icons::ledOff, sizeof (Icons::ledOff));
     ledRedImage.loadPng((uint8_t*) Icons::ledRed, sizeof (Icons::ledRed));
@@ -1145,15 +1146,13 @@ auto View::questionToWrite(Emulator::Interface::Media* media) -> bool {
         // no dialog in debug mode
         return false;
     
-    std::string mediaIdent = media->group->isExpansion() ? media->group->name : media->name;
-    
     if (exclusiveFullscreen())
         setFullScreen( false );
     
     bool state = !globalSettings->get<bool>("question_media_write", true);
     
     if (!state)
-        state = message->question( trans->get("question permanent write", {{"%media%", mediaIdent}}) );
+        state = message->question( trans->get("question permanent write", {{"%media%", media->name}}) );
     
     return state;
 }

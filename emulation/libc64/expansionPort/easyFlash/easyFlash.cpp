@@ -59,11 +59,9 @@ auto EasyFlash::setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned
     
     this->media = media;
     this->rom = rom;
-    this->romSize = romSize;    
-    this->binFormat = false;
+    this->romSize = romSize;
     
-    if (!readHeader())
-        binFormat = true;
+    readHeader();
     
     this->cartridgeId = Interface::CartridgeIdEasyFlash;
         
@@ -115,7 +113,12 @@ auto EasyFlash::assumeChips( ) -> void {
 
 auto EasyFlash::write() -> void {
     
-    if (!media || !media->guid || (!flashLo.dirty && !flashHi.dirty) || writeProtect )
+	bool _dirty = flashLo.dirty || flashHi.dirty;
+	
+	flashLo.dirty = false;
+    flashHi.dirty = false;
+
+    if (!media || !media->guid || !_dirty || writeProtect )
         return;
         
     if (!system->interface->questionToWrite(media))
@@ -181,10 +184,7 @@ auto EasyFlash::write() -> void {
             system->interface->writeMedia(media, dataHi + b * 0x2000, 0x2000, offset);
             offset += 0x2000;
         }
-    }
-    
-    flashLo.dirty = false;
-    flashHi.dirty = false;
+    }    
 }
 
 auto EasyFlash::assign( Cart* cart ) -> void {
@@ -325,7 +325,7 @@ auto EasyFlash::serialize(Emulator::Serializer& s) -> void {
     ExpansionPort::serialize(s);        
 }
 
-auto EasyFlash::createFlash(unsigned& imageSize) -> uint8_t* {
+auto EasyFlash::createImage(unsigned& imageSize) -> uint8_t* {
     imageSize = 64 + 16 + 16 + 16 * 1024;
     
     uint8_t* buffer = new uint8_t[ imageSize ];

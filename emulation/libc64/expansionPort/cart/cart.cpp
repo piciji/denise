@@ -19,6 +19,7 @@ Cart::Cart(bool game, bool exrom) : ExpansionPort() {
     
     data = nullptr;
     size = 0;
+    binFormat = false;
 }
 
 auto Cart::setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void {
@@ -26,9 +27,15 @@ auto Cart::setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romS
     if ( (this->rom == nullptr) && (rom == nullptr) )
         return;
     
+	if (this->rom && (rom == nullptr))
+        write(); // unset
+	
     auto _cartridgeId = media->pcbLayout ? media->pcbLayout->id : 0;
     
     auto newCart = rebuild( (Interface::CartridgeId)_cartridgeId, rom, romSize );
+	
+	newCart->media = media;
+	newCart->prepare();
   
     assign( newCart );
 }
@@ -48,7 +55,9 @@ auto Cart::rebuild( Interface::CartridgeId cartridgeId, uint8_t* _rom, unsigned 
         if (cart->cartridgeId != cartridgeId) {
             cartridgeId = cart->cartridgeId;
             // if user doesn't request a specific cart and analyzing header detects a specific cart
-            delete cart;                        
+			
+			if (!cart->protectFromDeletion())
+				delete cart;                        
             // lets recreate by detected type
             return rebuild( cartridgeId, _rom, _romSize );            
         }        
@@ -67,6 +76,7 @@ auto Cart::readHeader( ) -> bool {
     
     data = rom;
     size = romSize;
+    binFormat = true;
     
     if (!rom)
         return false;
@@ -97,6 +107,7 @@ auto Cart::readHeader( ) -> bool {
     version = Emulator::copyBufferToIntBigEndian<uint16_t>(&header[0x14]);        
     exRom = header[0x18] & 1;
     game = header[0x19] & 1;
+    binFormat = false;
     return true;
 }
 
@@ -246,16 +257,14 @@ auto Cart::serialize(Emulator::Serializer& s) -> void {
         
         if ( (_cartridgeId == Interface::CartridgeIdDefault) && 
                 (cartridgeId == Interface::CartridgeIdDefault8k || cartridgeId == Interface::CartridgeIdDefault16k || cartridgeId == Interface::CartridgeIdUltimax ));
-        // standard cartridge was saved from a CRT and reloaded from a BIN.
+        // state file of a standard cartridge was created from a CRT and reloaded from a BIN.
         // don't recreate because standard CRT cart id is same for 8k, 16k and ultimax.
-        // serialization frame is identical for all cartridges, so no problem
+        // serialization frame is identical for these cartridges, so no problem
         else if (cartridgeId != _cartridgeId) { // oh kacke
-            // cartridge id of state mismatches with loaded one.
-            // it seems the cart which was loaded while creating this save state
-            // isn't present anymore.
-            // we need to reload the expected cartridge and not the loaded one in order
-            // to unserialize the right data.
-            // probably the loaded state is unusable but we don't want to crash the emulation
+            // cartridge id of state file mismatches with loaded one.
+            // it seems the cart which was loaded while creating this save state isn't present anymore.
+            // we need to recreate the expected cartridge in order to unserialize the right data.
+            // probably the loaded state file is unusable but we don't want to crash the emulation
             // on top of that when data is unserialized in wrong order.
             
             auto cart = create( (Interface::CartridgeId)_cartridgeId );
@@ -270,7 +279,8 @@ auto Cart::serialize(Emulator::Serializer& s) -> void {
             cart->cartridgeId = (Interface::CartridgeId)_cartridgeId;
             if (!cart->readChips())
                 cart->assumeChips();            
-            
+            			
+			cart->prepare();
             assign( cart );            
             cart->serializeStep2( s );
             

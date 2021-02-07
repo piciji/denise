@@ -20,7 +20,7 @@ MediaGroupLayout::Block::Header::Header(Emulator::Interface::Media* media) {
     
     deviceName.setFont(GUIKIT::Font::system("bold"));
     inUse.setFont(GUIKIT::Font::system("bold"));
-    if (!media->alternate && media->group->selected)
+    if (!media->secondary && media->group->selected)
         append(inUse, {0u, 0u}, 5);
     else
         append(deviceName, {0u, 0u}, 10);
@@ -37,7 +37,7 @@ MediaGroupLayout::Block::Selector::Selector(Emulator::Interface::Media* media) {
     append(edit, {~0u, 0u}, 10);
     auto group = media->group;
     
-    if (group->expansion && (group->expansion->pcbs.size() > 0) ) {
+    if (group->expansion && !media->secondary && (group->expansion->pcbs.size() > 0) ) {
         for (auto& pcb : group->expansion->pcbs) {
             combo.append( pcb.name, pcb.id );
 
@@ -122,10 +122,18 @@ MemoryCreatorLayout::MemoryCreatorLayout() {
     setAlignment(0.5);
 }
 
-CartCreatorLayout::CartCreatorLayout() {
+FlashCreatorLayout::FlashCreatorLayout() {
     append(format, {0u, 0u}, 10);
 	append(button, {0u, 0u});
 	setFont(GUIKIT::Font::system("bold"));
+    setPadding(10);
+    setAlignment(0.5);
+}
+
+EpromCreatorLayout::EpromCreatorLayout() {
+    append(format, {0u, 0u}, 10);
+    append(button, {0u, 0u});
+    setFont(GUIKIT::Font::system("bold"));
     setPadding(10);
     setAlignment(0.5);
 }
@@ -271,7 +279,7 @@ auto MediaGroupLayout::build() -> void {
 
         auto& header = block->header;
         
-        if (!media.alternate && mediaGroup->selected)
+        if (!media.secondary && mediaGroup->selected)
             radioGroup.push_back( &header.inUse );           
                 
         if (mediaGroup->expansion)            

@@ -499,6 +499,19 @@ auto StatusBar::updateTooltip( unsigned id, std::string tooltip ) -> bool {
     return false;
 }
 
+auto StatusBar::updateSeparator( unsigned id, bool append ) -> bool {
+    for(auto& part : state.parts) {
+        if (part.id == id) {
+            if (part.appendSeparator != append) {
+                part.appendSeparator = append;
+                state.updatePending = true;
+            }
+            return true;
+        }
+    }
+    return false;
+}
+
 auto StatusBar::hideContent() -> void {
     for(auto& part : state.parts)
         part.visible = false;

@@ -254,7 +254,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
         
         for(auto& media : mediaGroup.media) {            
             
-            if (selectedMedia && !media.alternate && (selectedMedia != &media) )
+            if (selectedMedia && !media.secondary && (selectedMedia != &media) )
                 // only one media element at a time can be used for this group
                 continue;
             

@@ -83,6 +83,7 @@ struct pStatusBar {
     GtkWidget* gridWidget = nullptr;
 	PangoFontDescription* pfont = nullptr;
     std::vector<Widget*> usedWidgets;
+    std::vector<GtkWidget*> separators;
 	unsigned statusHeight = 0;
     
     auto create() -> void;

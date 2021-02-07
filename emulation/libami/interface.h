@@ -45,7 +45,6 @@ struct Interface : Emulator::Interface  {
 	auto createHardDisk(std::function<void (uint8_t* buffer, unsigned length, unsigned offset)> onCreate, unsigned size, std::string name = "") -> void;
 
 	//savestates
-	auto savestateSize(void) -> unsigned; //get size needed for a new save state
 	auto savestate() -> uint8_t*;
     auto checkstate(uint8_t* data, unsigned size) -> bool;
 	auto loadstate(uint8_t* data, unsigned size) -> bool;

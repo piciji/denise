@@ -105,6 +105,8 @@ struct ExpansionPort {
         s.integer( dma );
         s.integer( bus.addr );
     }
+	
+	virtual auto hasSecondaryRom() -> bool { return false; }
     
     auto setId(Interface::ExpansionId id) -> void { this->id = id; }           
 };   

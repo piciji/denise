@@ -10,10 +10,7 @@ struct RetroReplay : Freezer {
     
     RetroReplay();
     
-    ~RetroReplay();
-    
-    Emulator::Interface::Media* media;
-    bool binFormat;
+    ~RetroReplay();    
     
     Emulator::Flash040 flash;
     std::function<void ()> flashModeReset;
@@ -72,7 +69,9 @@ struct RetroReplay : Freezer {
     auto write() -> void;
     auto isBootable( ) -> bool; 
     auto serialize(Emulator::Serializer& s) -> void;
-    auto createFlash(unsigned& imageSize) -> uint8_t*;
+    auto createImage(unsigned& imageSize) -> uint8_t*;
+	
+	auto protectFromDeletion() -> bool { return true; }
 };    
     
 extern RetroReplay* retroReplay;   

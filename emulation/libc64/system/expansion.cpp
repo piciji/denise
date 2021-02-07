@@ -5,6 +5,7 @@
 #include "../expansionPort/actionReplay/actionReplay.h"
 #include "../expansionPort/easyFlash/easyFlash.h"
 #include "../expansionPort/retroReplay/retroReplay.h"
+#include "../expansionPort/gmod/gmod2.h"
 
 namespace LIBC64 {
  
@@ -62,7 +63,8 @@ auto System::createExpansions() -> void {
     actionReplay = new ActionReplay;
     easyFlash = new EasyFlash;
     retroReplay = new RetroReplay;
-    noExpansion = new ExpansionPort;    
+	gmod2 = new Gmod2;
+    noExpansion = new ExpansionPort;
     
     expansionPort = noExpansion;
     
@@ -78,7 +80,8 @@ auto System::destroyExpansions() -> void {
     delete actionReplay;
     delete easyFlash;
     delete retroReplay;
-    delete noExpansion;
+	delete gmod2;
+    delete noExpansion;	
 }
 
 auto System::analyzeExpansion(uint8_t* data, unsigned size, std::string suffix) -> Emulator::Interface::Expansion* {

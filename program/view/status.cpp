@@ -147,6 +147,17 @@ auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
     statusBar->append( 13, "DRC DRC DRC DRC DRC DRC DRC DRC D" );    // DRC Status
     statusBar->append( 14, &(view->recordStatusImage) );    // REC Status
     statusBar->append( 15, "1000" );    // FPS
+
+    statusBar->updateSeparator( 0, true );
+    statusBar->updateSeparator( 2, true );
+    statusBar->updateSeparator( 4, true );
+    statusBar->updateSeparator( 6, true );
+    statusBar->updateSeparator( 8, true );
+    statusBar->updateSeparator( 10, true );
+    statusBar->updateSeparator( 12, true );
+    statusBar->updateSeparator( 13, true );
+    statusBar->updateSeparator( 14, true );
+    statusBar->updateSeparator( 15, true );
 }
             
 auto StatusHandler::transferToOSD( std::string text ) -> void {

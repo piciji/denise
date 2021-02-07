@@ -77,6 +77,8 @@ struct Reu : ExpansionPort {
     inline auto verify() -> void;
     
     auto hasRom() -> bool { return rom ? true : false; }
+	
+	auto hasSecondaryRom() -> bool { return true; }
 
 };    
     

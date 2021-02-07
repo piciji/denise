@@ -44,7 +44,6 @@ struct Flash040 {
                 break;
                 
             case Type010:
-                this->sectorSize = 16384;
                 this->deviceId = 0x20;
                 this->size = 131072;
                 this->sectorSize = 16384;

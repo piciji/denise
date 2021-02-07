@@ -39,7 +39,8 @@ struct Interface : Emulator::Interface {
         CartridgeIdSuperGames = 8, CartridgeIdSystem3 = 15, CartridgeIdZaxxon = 18,
         CartridgeIdActionReplayMK2 = 50, CartridgeIdActionReplayMK3 = 35,
         CartridgeIdActionReplayMK4 = 30, CartridgeIdActionReplayV41AndHigher = 1, 
-        CartridgeIdEasyFlash = 32, CartridgeIdRetroReplay = 36, CartridgeIdNordicReplay = 261
+        CartridgeIdEasyFlash = 32, CartridgeIdRetroReplay = 36, CartridgeIdNordicReplay = 261,
+        CartridgeIdGmod2 = 60,
     };
     
     static const std::string Version;
@@ -95,8 +96,9 @@ struct Interface : Emulator::Interface {
     auto writeProtectExpansion(Media* media, bool state) -> void;
     auto isWriteProtectedExpansion(Media* media) -> bool;
     auto ejectExpansionImage(Media* media) -> void;
-    auto createExpansionImage(MediaGroup* group, unsigned& imageSize) -> uint8_t*;    
+    auto createExpansionImage(MediaGroup* group, unsigned& imageSize, bool secondaryRom = false) -> uint8_t*;    
     auto isExpansionBootable() -> bool;
+	auto hasExpansionSecondaryRom() -> bool;
 	
 	//program
 	auto insertProgram(Media* media, uint8_t* data, unsigned size) -> void;

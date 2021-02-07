@@ -42,7 +42,7 @@ else ifeq ($(platform),macosx)
     
 else
     drvflags = $(cppflags) 
-    drvflags += `pkg-config --cflags gtk+-3.0`
+    drvflags += $(shell pkg-config --cflags gtk+-3.0)
     drvlink = -lX11 -lXext -ldl -lXfixes
     drvlink += $(if $(findstring openal,$(drv)),-lopenal)
     ifneq ($(findstring xlib,$(drv)),)
@@ -55,8 +55,8 @@ ifneq ($(findstring freetype,$(drv)),)
 	ifeq ($(platform),windows)
 	    drvlink += -lfreetype
 	else
-            drvflags += `$(env)pkg-config --cflags freetype2`
-	    drvlink += `$(env)pkg-config --static --libs freetype2`
+		drvflags += $(shell $(env)pkg-config --cflags freetype2)
+	    drvlink += $(shell $(env)pkg-config --static --libs freetype2)
 	endif
     endif
 endif

@@ -30,7 +30,7 @@ auto pStatusBar::create() -> void {
 	gtk_widget_set_margin_top( gridWidget, 3);
 	gtk_widget_set_margin_bottom( gridWidget, 3);
 	gtk_widget_set_margin_start( gridWidget, 4);
-	gtk_widget_set_margin_end( gridWidget, 4);
+	gtk_widget_set_margin_end( gridWidget, 8);
 	
 	gtk_container_add(GTK_CONTAINER( statusBar.window()->p.statusContainer), gridWidget);
 			
@@ -82,9 +82,13 @@ auto pStatusBar::update() -> void {
 	gtk_widget_set_vexpand( gridWidget, false );
 	
 	for( auto widget : usedWidgets )
-		delete widget;	
+		delete widget;
+
+    for( auto separator : separators )
+        gtk_widget_destroy( separator );
 	
 	usedWidgets.clear();
+    separators.clear();
 	
 	unsigned partCount = statusBar.state.parts.size();
 	
@@ -160,6 +164,13 @@ auto pStatusBar::update() -> void {
 			gtk_widget_set_tooltip_text(gtkWidget, part.tooltip.c_str());
 		gtk_widget_set_vexpand( gtkWidget, true );
 		gtk_widget_show_all( gtkWidget );
+
+		if (part.appendSeparator && (&part != &parts.back()) ) {
+		    GtkWidget* separator = gtk_separator_new( GTK_ORIENTATION_VERTICAL );
+            gtk_grid_attach_next_to (GTK_GRID(gridWidget), separator, nullptr, GtkPositionType::GTK_POS_RIGHT, 1, 1);
+            gtk_widget_show_all( separator );
+            separators.push_back( separator );
+		}
 	}
 }
 

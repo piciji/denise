@@ -150,7 +150,7 @@ auto States::oneMediumOnly(Emulator::Interface::MediaGroup* group, Emulator::Int
     
     for( auto& media : group->media ) {
         
-        if ((&media == mediaInUse) || media.alternate)
+        if ((&media == mediaInUse) || media.secondary)
             continue;
 
         media.guid = uintptr_t(nullptr);
@@ -181,7 +181,7 @@ auto States::loadImagePaths( GUIKIT::Settings* loadSettings ) -> std::vector<Emu
             setting->update();
 
             if (setting->path.empty()) {
-                if (!mediaSelected || media.alternate) {
+                if (!mediaSelected || media.secondary) {
                     emulator->ejectMedium( &media );
                     media.guid = uintptr_t(nullptr);
                     filePool->assign( _ident(emulator, media.name), nullptr);  
@@ -190,7 +190,7 @@ auto States::loadImagePaths( GUIKIT::Settings* loadSettings ) -> std::vector<Emu
                 continue;
             }
             
-            if (mediaSelected && !media.alternate)
+            if (mediaSelected && !media.secondary)
                 mediaInUse = mediaSelected;
             else
                 mediaInUse = &media;
@@ -202,6 +202,9 @@ auto States::loadImagePaths( GUIKIT::Settings* loadSettings ) -> std::vector<Emu
             if (inserted) {
                 if ((inserted->setting->path == setting->path)
                     && (inserted->setting->id == setting->id)) {  
+					logger->log(  "inserted: ", 1 );
+					logger->log(  mediaInUse->name, 0 );
+					
                     if (!GUIKIT::Vector::find( loadedMedia, mediaInUse ))
                         loadedMedia.push_back( mediaInUse );
                     continue;
@@ -217,11 +220,14 @@ auto States::loadImagePaths( GUIKIT::Settings* loadSettings ) -> std::vector<Emu
                 if ( !GUIKIT::Vector::find( errorPaths, setting->path ) )
                     errorPaths.push_back(setting->path);
                 continue;
-            }            
-            
-            mediaInUse->guid = uintptr_t(file);
-                          
+            }                                    
+                      
+		//	if (mediaInUse->secondary)
+				logger->log( setting->path, 1 );
+			
             emulator->ejectMedium( mediaInUse );
+			
+			mediaInUse->guid = uintptr_t(file);
             emulator->insertMedium( mediaInUse, data, file->archiveDataSize( setting->id ));
                        
             if (!GUIKIT::Vector::find( loadedMedia, mediaInUse ))
@@ -232,7 +238,7 @@ auto States::loadImagePaths( GUIKIT::Settings* loadSettings ) -> std::vector<Emu
         }
                         
         if (mediaSelected)
-            oneMediumOnly( &mediaGroup, mediaInUse);            
+            oneMediumOnly( &mediaGroup, mediaInUse ? mediaSelected : nullptr );            
     }
 
     filePool->unloadOrphaned();
@@ -423,10 +429,10 @@ auto States::updateSaveable() -> void {
                 continue;
             
             if (mediaGroup.isExpansion()) {
-                if (media.alternate || (expansionMediaGroup != &mediaGroup))
-                    insert->setting->setSaveable( false );
-                else
-                    insert->setting->setSaveable( !insert->setting->path.empty(), true );
+				if ( (expansionMediaGroup == &mediaGroup) && (!media.secondary || emulator->hasExpansionSecondaryRom()) )
+					insert->setting->setSaveable( !insert->setting->path.empty(), true );
+				else
+					insert->setting->setSaveable( false );
                 
             } else if (mediaGroup.isProgram()) {
                 insert->setting->setSaveable( false );

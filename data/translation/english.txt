@@ -550,3 +550,6 @@ memory reset initialisation = memory reset initialisation
 Edit = Edit
 Copy = Copy
 Paste = Paste
+flash_creator = Create Eprom image
+gmod2_image = Gmod2 image
+blank_gmod2_image = select a new Gmod2 image ...

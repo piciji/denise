@@ -155,6 +155,7 @@ struct Interface {
         MediaGroup* mediaGroup; // ROM, RAM dumps
         std::vector<PCBLayout> pcbs;
         std::vector<Jumper> jumpers;
+		std::string creationIdent; // todo: allow more than one type for each expansion group
         enum Type : unsigned { Empty = 0, Game = 1, Ram = 2, Eprom = 4, Flash = 8, TurboCart = 16, Freezer = 32 };
         
         auto isEmpty() const -> bool { return typeFlags == (unsigned)Type::Empty; }
@@ -173,7 +174,7 @@ struct Interface {
         uintptr_t guid; //free to use
         MediaGroup* group;        
         PCBLayout* pcbLayout;
-        bool alternate;     // todo: handle this better, REU ROM besides REU memory dumps
+        bool secondary; // secondary memory on cartridges, like Eeprom besides Flash on Gmod2 or REU ROM besides RAM dump
     };   
 
     struct MediaGroup {
@@ -405,8 +406,9 @@ struct Interface {
     virtual auto ejectExpansionImage(Media* media) -> void {}
     virtual auto writeProtectExpansion(Media* media, bool state) -> void {}
     virtual auto isWriteProtectedExpansion(Media* media) -> bool { return false; }
-    virtual auto createExpansionImage(MediaGroup* group, unsigned& imageSize) -> uint8_t* { return nullptr; }
+    virtual auto createExpansionImage(MediaGroup* group, unsigned& imageSize, bool secondaryRom = false) -> uint8_t* { return nullptr; }
     virtual auto isExpansionBootable() -> bool { return false; }
+	virtual auto hasExpansionSecondaryRom() -> bool { return false; }
     
 	// program 
 	virtual auto insertProgram(Media* media, uint8_t* data, unsigned size) -> void {}

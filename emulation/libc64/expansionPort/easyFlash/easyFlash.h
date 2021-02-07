@@ -17,10 +17,8 @@ struct EasyFlash : Cart {
     uint8_t* dataLo;
     uint8_t* dataHi;
     uint8_t bank;
-    bool binFormat;
     bool writeProtect;
-    uint8_t ram[256];
-    Emulator::Interface::Media* media;
+    uint8_t ram[256];  
     static uint8_t eapi[768];
     bool flashJumper;
     bool LED;
@@ -53,7 +51,7 @@ struct EasyFlash : Cart {
     
     auto write() -> void;   
     
-    auto createFlash(unsigned& imageSize) -> uint8_t*;
+    auto createImage(unsigned& imageSize) -> uint8_t*;
     
     auto setWriteProtect(bool state) -> void;
     
@@ -68,6 +66,8 @@ struct EasyFlash : Cart {
     auto getJumper( unsigned jumperId ) -> bool;
     
     auto updateDeviceState() -> void;
+	
+	auto protectFromDeletion() -> bool { return true; }
 };
 
 extern EasyFlash* easyFlash;

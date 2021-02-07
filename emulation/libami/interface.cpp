@@ -47,7 +47,7 @@ auto Interface::prepareMedia() -> void {
         
         for(auto& media : group.media) {            
             media.pcbLayout = nullptr;
-            media.alternate = false;
+            media.secondary = false;
         }
     }
 }
@@ -368,9 +368,6 @@ auto Interface::createHardDisk(std::function<void (uint8_t* buffer, unsigned len
     delete[] data;
 }
 
-auto Interface::savestateSize(void) -> unsigned {
-    return 0;
-}
 auto Interface::savestate() -> uint8_t* {
     return nullptr;
 }

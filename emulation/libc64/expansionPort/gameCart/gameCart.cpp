@@ -7,6 +7,7 @@
 #include "system3.h"
 #include "supergames.h"
 #include "cart16k.h"
+#include "../gmod/gmod2.h"
 
 namespace LIBC64 {
 
@@ -20,7 +21,8 @@ GameCart::GameCart(bool game, bool exrom) : Cart( game, exrom ) {
 auto GameCart::assign( Cart* cart ) -> void {
     bool inUse = this == expansionPort;
 
-    delete this;
+	if (!protectFromDeletion())
+		delete this;
 
     gameCart = (GameCart*)cart;
 
@@ -59,7 +61,12 @@ auto GameCart::create( Interface::CartridgeId cartridgeId ) -> Cart* {
             
         case Interface::CartridgeIdUltimax:
             cart = new GameCart(false, true);
-            break;  
+            break;
+
+        case Interface::CartridgeIdGmod2:
+			// we don't recreate the card because of additional complexity
+            cart = gmod2;
+            break;
             
         default:
             // forgot a rom
@@ -69,6 +76,15 @@ auto GameCart::create( Interface::CartridgeId cartridgeId ) -> Cart* {
     }
     
     return cart;
+}
+
+auto GameCart::createImage(unsigned& imageSize) -> uint8_t* {
+	//todo: redesign if there are more expansions in this group with writable memory
+	return Gmod2::createImage( imageSize );
+}
+
+auto GameCart::createSecondaryImage(unsigned& imageSize) -> uint8_t* {
+	return Gmod2::createSecondaryImage( imageSize );
 }
     
 }

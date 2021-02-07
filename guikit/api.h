@@ -280,6 +280,7 @@ struct StatusBar : Base {
         bool alignRight = false;
         bool visible = false;
         unsigned position = 0;
+        bool appendSeparator = false;
     };
     
     auto window() const -> Window* { return state.window; }
@@ -294,6 +295,7 @@ struct StatusBar : Base {
     auto updateImage( unsigned id, Image* image ) -> bool;
     auto updateVisible( unsigned id, bool visible ) -> bool;
 	auto updateTooltip( unsigned id, std::string tooltip ) -> bool;
+	auto updateSeparator( unsigned id, bool append ) -> bool;
     
     auto setFont(std::string font) -> void;
     auto setText(std::string text) -> void; // simple single part usage

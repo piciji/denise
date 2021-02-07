@@ -15,10 +15,8 @@ auto RetroReplay::setRom(Emulator::Interface::Media* media, uint8_t* rom, unsign
     this->media = media;
     this->rom = rom;
     this->romSize = romSize;
-    this->binFormat = false;
 
-    if (!readHeader())
-        binFormat = true;           
+    readHeader();
     
     // it seems there is no separate cartridge id defined for Nordic Replay, so don't rely on header here
     cartridgeId = media->pcbLayout ? (Interface::CartridgeId)media->pcbLayout->id : Interface::CartridgeIdRetroReplay;
@@ -41,8 +39,11 @@ auto RetroReplay::setRom(Emulator::Interface::Media* media, uint8_t* rom, unsign
 }
 
 auto RetroReplay::write() -> void {
-    
-    if (!media || !media->guid || !flash.dirty || writeProtect)
+	
+	bool _dirty = flash.dirty;
+    flash.dirty = false;
+	
+    if (!media || !media->guid || !_dirty || writeProtect)
         return;
         
     if (!system->interface->questionToWrite(media))
@@ -93,12 +94,10 @@ auto RetroReplay::write() -> void {
             system->interface->writeMedia(media, flashData + _b * 0x2000, 0x2000, offset);
             offset += 0x2000;   
         }                                
-    }
-    
-    flash.dirty = false;
+    }        
 }
 
-auto RetroReplay::createFlash(unsigned& imageSize) -> uint8_t* {
+auto RetroReplay::createImage(unsigned& imageSize) -> uint8_t* {
     imageSize = 64 + 16 + 8 * 1024;
     
     uint8_t* buffer = new uint8_t[ imageSize ];

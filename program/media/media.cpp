@@ -452,7 +452,7 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
                 
                 layout->selectedBlock = block;
                 
-                if (layout->mediaGroup->selected && !block->media->alternate) {
+                if (layout->mediaGroup->selected && !block->media->secondary) {
                     layout->mediaGroup->selected = block->media;
                     settings->set<unsigned>( _underscore(layout->mediaGroup->name) + "_selected", block->media->id);
                     block->header.inUse.setChecked();
@@ -625,17 +625,25 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
     };
 }
 
-auto MediaLayout::createImage( Emulator::Interface::MediaGroup* mediaGroup ) -> void {
+auto MediaLayout::createImage( Emulator::Interface::MediaGroup* mediaGroup, bool secondaryRom ) -> void {
 
+	std::string ident = mediaGroup->name;
+	std::string suffix = mediaGroup->creatable[0];
+	
     if (mediaGroup->isExpansion()) {
-        if (mediaGroup->expansion->isFlash()) {
+        if (!secondaryRom) {
             unsigned groupId = flashCreatorLayout->format.userData();
             mediaGroup = &emulator->mediaGroups[groupId];
+			
+        } else {
+            unsigned groupId = epromCreatorLayout->format.userData();
+            mediaGroup = &emulator->mediaGroups[groupId];
+			suffix = mediaGroup->creatable[1];
         }
+		ident = mediaGroup->expansion->creationIdent;
     }
     
-    std::string title = mediaGroup->name + "_image";
-    std::string suffix = mediaGroup->creatable[0];
+    std::string title = ident + "_image";    
     GUIKIT::File file;
     GUIKIT::File* filePtr;
     std::string filePath;
@@ -674,7 +682,7 @@ auto MediaLayout::createImage( Emulator::Interface::MediaGroup* mediaGroup ) -> 
         data = emulator->getLoadedProgram( size );
         
     } else if (mediaGroup->isExpansion()) {
-        data = emulator->createExpansionImage( mediaGroup, size );
+        data = emulator->createExpansionImage( mediaGroup, size, secondaryRom );
     }
     
     if (!size)
@@ -683,7 +691,7 @@ auto MediaLayout::createImage( Emulator::Interface::MediaGroup* mediaGroup ) -> 
     filePath = GUIKIT::BrowserWindow()
         .setWindow(*this->tabWindow)
         .setTitle(trans->get( "blank_" + title ))
-        .setPath(preselectPath( mediaGroup->name ))
+        .setPath(preselectPath( ident ))
         .setFilters({GUIKIT::BrowserWindow::transformFilter( trans->get( title ), {suffix}), trans->get("all_files")})
         .save();
 
@@ -711,7 +719,7 @@ auto MediaLayout::createImage( Emulator::Interface::MediaGroup* mediaGroup ) -> 
         goto Done;
     }
 
-    savePath( mediaGroup->name, file.getPath() );
+    savePath( ident, file.getPath() );
 
     if (data) {
         if (!file.write( data, size )) {
@@ -803,19 +811,33 @@ auto MediaLayout::prepareCreator() -> void {
 			
 			creatorLayout.append(*memoryCreatorLayout, {~0u, 0u}, 5);
             
-		} else if (mediaGroup.isExpansion() && mediaGroup.expansion->isFlash() ) {
+		} else if (mediaGroup.isExpansion() && (mediaGroup.expansion->isFlash() || mediaGroup.expansion->isEprom()) ) {
+
+            if (mediaGroup.expansion->isFlash()) {
+                if (!flashCreatorLayout) {
+                    flashCreatorLayout = new FlashCreatorLayout;
+
+                    flashCreatorLayout->button.onActivate = [this, group]() {
+                        createImage(group);
+                    };
+
+                    creatorLayout.append(*flashCreatorLayout, {~0u, 0u}, 5);
+                }
+				flashCreatorLayout->format.append( mediaGroup.expansion->creationIdent, mediaGroup.id );  
+            }                        
 			
-            if (!flashCreatorLayout) {            
-                flashCreatorLayout = new CartCreatorLayout;
+			if (mediaGroup.expansion->isEprom()) {
+                if (!epromCreatorLayout) {
+                    epromCreatorLayout = new EpromCreatorLayout;
 
-                flashCreatorLayout->button.onActivate = [this, group]() {
-                    createImage( group );
-                };
+                    epromCreatorLayout->button.onActivate = [this, group]() {
+                        createImage(group, true);
+                    };
 
-                creatorLayout.append(*flashCreatorLayout, {~0u, 0u}, 5);
-            }
-            
-            flashCreatorLayout->format.append( mediaGroup.name, mediaGroup.id );  
+                    creatorLayout.append(*epromCreatorLayout, {~0u, 0u}, 5);
+                }
+				epromCreatorLayout->format.append( mediaGroup.expansion->creationIdent, mediaGroup.id );  
+            }                        
 		}
     }
 }
@@ -999,6 +1021,11 @@ auto MediaLayout::translate() -> void {
 		flashCreatorLayout->setText( trans->get("flash_creator") );		
         flashCreatorLayout->button.setText(trans->get("create"));         
     }
+
+    if (epromCreatorLayout) {
+		epromCreatorLayout->setText( trans->get("eprom_creator") );		
+        epromCreatorLayout->button.setText(trans->get("create"));         
+    }
     
 	unsigned neededWidth = 90;
 	
@@ -1074,7 +1101,7 @@ auto MediaLayout::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* fil
     auto data = mediaGroup->isTape() && !file->isArchived() ? nullptr
         : file->archiveData(item->id);
 
-    if (!mediaGroup->isExpansion()) {
+    if (!mediaGroup->isExpansion() || media->secondary) {
         emulator->ejectMedium(media);
         
         media->guid = uintptr_t(file);
@@ -1098,7 +1125,7 @@ auto MediaLayout::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* fil
     if (mediaGroup->isTape())
         view->updateTapeIcons();
     
-    if (mediaGroup->selected && !media->alternate && !block->header.inUse.checked() ) {
+    if (mediaGroup->selected && !media->secondary && !block->header.inUse.checked() ) {
         block->header.inUse.setChecked();
         block->header.inUse.onActivate();
     }
@@ -1122,13 +1149,13 @@ auto MediaLayout::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* fil
         EmuConfigView::TabWindow::getView(emulator)->configurationsLayout->updateSaveIdent( fSetting->file );
 }
 
-auto MediaLayout::eject( Emulator::Interface::MediaGroup* mediaGroup, bool alternateOnly ) -> void {
+auto MediaLayout::eject( Emulator::Interface::MediaGroup* mediaGroup, bool secondaryOnly ) -> void {
     
     auto layout = getMediaGroupLayout( mediaGroup );
     
     for( auto block : layout->blocks) {
         
-        if (!alternateOnly || block->media->alternate)
+        if (!secondaryOnly || block->media->secondary)
             block->header.eject.onActivate();
     }
 }

@@ -210,13 +210,9 @@ auto Autoloader::loadFile( GUIKIT::File* file, GUIKIT::File::Item* item ) -> voi
 			if (mediaGroup.isHardDisk())
 				continue;
 
-			auto mediaSuffixList = mediaGroup.suffix;
-
-			for (auto& mediaSuffix : mediaSuffixList) {
+			for (auto& mediaSuffix : mediaGroup.suffix) {
 
 				if (mediaSuffix == fileSuffix) {
-
-					Emulator::Interface::Media* media = nullptr;
 
 					if (mediaGroup.isExpansion()) {
 						auto analyzedExpansion = emulator->analyzeExpansion(file->archiveData(item->id), item->info.size, fileSuffix);
@@ -226,7 +222,7 @@ auto Autoloader::loadFile( GUIKIT::File* file, GUIKIT::File::Item* item ) -> voi
 					}
 
 					unsigned alreadyInUse = countImagesFor(&mediaGroup);
-					media = mediaGroup.selected;
+                    Emulator::Interface::Media* media = mediaGroup.selected;
 
 					if ((media && alreadyInUse) || (alreadyInUse >= mediaGroup.media.size()))
 						return loadFiles();
@@ -304,7 +300,7 @@ auto Autoloader::insertImage(Emulator::Interface* emulator, Emulator::Interface:
 	
 	emulator->getListing(media);  
 	
-	if (mediaGroup->selected && !media->alternate )
+	if (mediaGroup->selected && !media->secondary )
 		settings->set<unsigned>( _underscore(mediaGroup->name) + "_selected", media->id);
 
 	filePool->assign(_ident(emulator, media->name + "store"), file);
