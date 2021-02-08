@@ -117,7 +117,6 @@ auto pBrowserWindow::fileVista(bool save) -> std::string {
             continue;
         
         std::string part1 = tokens[0];
-        String::delSpaces(part1);
         
         std::string part2 = tokens[1];
         part2.pop_back();        
