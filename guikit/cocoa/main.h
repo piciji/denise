@@ -75,6 +75,8 @@ struct pStatusBar {
     StatusBar& statusBar;
     NSView* cocoaView;
     std::vector<Widget*> usedWidgets;
+    std::vector<NSBox*> separators;
+
     
     auto create() -> void;
     auto destroy() -> void;

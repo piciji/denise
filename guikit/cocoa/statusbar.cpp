@@ -160,6 +160,11 @@ auto pStatusBar::update() -> void {
         
         [view removeFromSuperview];
     }
+
+    for( auto separator : separators )
+        [separator release];
+    
+    separators.clear();
     
     for( auto widget : usedWidgets )
         delete widget;
@@ -203,6 +208,11 @@ auto pStatusBar::update() -> void {
             width -= part.image->width + 3;
         else
             width -= part.width;
+            
+        if (part.appendSeparator && (&part != &parts.back()) ) {
+            width -= 1;
+        }
+            
     }
     
     unsigned xPos = 0;
@@ -262,6 +272,17 @@ auto pStatusBar::update() -> void {
         [view setToolTip:[NSString stringWithUTF8String:part.tooltip.c_str()]];
         
         [cocoaView addSubview: view ];
+        
+        if (part.appendSeparator && (&part != &parts.back()) ) {
+            NSBox* verticalSeparator = [[NSBox alloc] initWithFrame:NSMakeRect(xPos, 2, 1.0, textHeight - 5)];
+            [verticalSeparator setBoxType:NSBoxSeparator];
+            
+            [cocoaView addSubview: verticalSeparator ];
+            
+            separators.push_back( verticalSeparator );
+            
+            xPos += 1;
+        }
     }
 }
 }
