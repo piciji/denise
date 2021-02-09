@@ -40,7 +40,7 @@ struct Interface : Emulator::Interface {
         CartridgeIdActionReplayMK2 = 50, CartridgeIdActionReplayMK3 = 35,
         CartridgeIdActionReplayMK4 = 30, CartridgeIdActionReplayV41AndHigher = 1, 
         CartridgeIdEasyFlash = 32, CartridgeIdRetroReplay = 36, CartridgeIdNordicReplay = 261,
-        CartridgeIdGmod2 = 60,
+        CartridgeIdGmod2 = 60, CartridgeIdMagicDesk = 19,
     };
     
     static const std::string Version;

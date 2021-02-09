@@ -165,6 +165,7 @@ auto Interface::prepareExpansions() -> void {
         expansion.pcbs.push_back( {CartridgeIdSystem3, "System 3"} );
         expansion.pcbs.push_back( {CartridgeIdZaxxon, "Zaxxon"} );
         expansion.pcbs.push_back( {CartridgeIdGmod2, "Gmod2"} );
+        expansion.pcbs.push_back( {CartridgeIdMagicDesk, "Magic Desk"} );
 		expansion.creationIdent = "Gmod2";
         
         mediaGroups[MediaGroupIdExpansionGame].expansion = &expansion;

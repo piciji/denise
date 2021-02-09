@@ -7,6 +7,7 @@
 #include "system3.h"
 #include "supergames.h"
 #include "cart16k.h"
+#include "magicDesk.h"
 #include "../gmod/gmod2.h"
 
 namespace LIBC64 {
@@ -66,6 +67,10 @@ auto GameCart::create( Interface::CartridgeId cartridgeId ) -> Cart* {
         case Interface::CartridgeIdGmod2:
 			// we don't recreate the card because of additional complexity
             cart = gmod2;
+            break;
+
+        case Interface::CartridgeIdMagicDesk:
+            cart = new MagicDesk;
             break;
             
         default:
