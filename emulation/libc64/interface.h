@@ -24,11 +24,11 @@ struct Interface : Emulator::Interface {
     enum MediaGroupId {
         MediaGroupIdDisk = 0, MediaGroupIdTape = 1,
         MediaGroupIdProgram = 2, MediaGroupIdExpansionGame = 3, MediaGroupIdExpansionReu = 4,
-        MediaGroupIdExpansionActionReplay = 5, MediaGroupIdExpansionEasyFlash = 6, MediaGroupIdExpansionRetroReplay = 7,
+        MediaGroupIdExpansionFreezer = 5, MediaGroupIdExpansionEasyFlash = 6, MediaGroupIdExpansionRetroReplay = 7,
     };
     
     enum ExpansionId {
-        ExpansionIdNone = 0, ExpansionIdGame = 1, ExpansionIdReu = 2, ExpansionIdActionReplay = 3,
+        ExpansionIdNone = 0, ExpansionIdGame = 1, ExpansionIdReu = 2, ExpansionIdFreezer = 3,
         ExpansionIdEasyFlash = 4, ExpansionIdRetroReplay = 5,
     };
     
@@ -40,7 +40,9 @@ struct Interface : Emulator::Interface {
         CartridgeIdActionReplayMK2 = 50, CartridgeIdActionReplayMK3 = 35,
         CartridgeIdActionReplayMK4 = 30, CartridgeIdActionReplayV41AndHigher = 1, 
         CartridgeIdEasyFlash = 32, CartridgeIdRetroReplay = 36, CartridgeIdNordicReplay = 261,
-        CartridgeIdGmod2 = 60, CartridgeIdMagicDesk = 19,
+        CartridgeIdGmod2 = 60, CartridgeIdMagicDesk = 19, CartridgeIdFinalCartridge = 13,
+        CartridgeIdFinalCartridge3 = 3, CartridgeIdFinalCartridgePlus = 29, CartridgeIdSimonsBasic = 4,
+        CartridgeIdWarpSpeed = 16,
     };
     
     static const std::string Version;

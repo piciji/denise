@@ -2,13 +2,13 @@
 #pragma once
 
 #include "../../interface.h"
-#include "../cart/freezer.h"
+#include "../cart/freezeButton.h"
 
 namespace LIBC64 {
     
-struct ActionReplay : Freezer {
-    
-    ActionReplay(bool game = true, bool exrom = true);
+struct Freezer : FreezeButton {
+
+    Freezer(bool game = true, bool exrom = true);
     
     auto create( Interface::CartridgeId cartridgeId ) -> Cart*;
     
@@ -16,6 +16,6 @@ struct ActionReplay : Freezer {
             
 };    
     
-extern ActionReplay* actionReplay;   
+extern Freezer* freezer;
 
 }

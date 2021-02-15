@@ -19,6 +19,9 @@
 * support to paste clipboard or copy screen to clipboard
 * fix OpenGL 1/4 screen BUG for newer macOS versions
 * Gmod2 Cartridge mapper (i.e. Sams Journey)
+* Magic Desk Cartridge Mapper (i.e. Bomberland)
+* Final Cartridge I, II, Plus, III, III+
+* Simons Basic, Warp Speed
 
 ## 1.0.9.1
 * fix TAPE emulation (broken in 1.0.9)

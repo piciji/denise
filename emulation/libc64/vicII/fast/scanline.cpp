@@ -1,6 +1,7 @@
 
 #include "vicIIFast.h"
 #include "../../system/system.h"
+#include "../../expansionPort/expansionPort.h"
 
 namespace LIBC64 {  
 
@@ -56,7 +57,7 @@ inline auto VicIIFast::fetch(unsigned i) -> void {
     
     if (badLine) {
         color = 0x80 | (system->colorRam[ vc & 0x3ff ] & 0xf);
-        dataC = system->memoryVic.read((((vm << 10) | vc) & 0x3fff) | vicBank);     
+        dataC = readPhi<false>((((vm << 10) | vc) & 0x3fff) | vicBank);
         cBuffer[i] = (color<< 8) | dataC;
     } else {
         uint16_t value = cBuffer[i];
@@ -89,7 +90,7 @@ inline auto VicIIFast::fetch(unsigned i) -> void {
     }
 
     if (!vFlipFlop)
-        dataG = system->memoryVic.read((addr & 0x3fff) | vicBank);      
+        dataG = readPhi<true>((addr & 0x3fff) | vicBank);
     else 
         dataG = 0;
     
@@ -348,14 +349,14 @@ auto VicIIFast::dmaSprites() -> void {
             if (spr->expandY)
                 spr->expandYFlop ^= 1;
             
-            dataP = system->memoryVic.read( (((vm << 10) | 0x3f8 | pos) & 0x3fff) | vicBank ) << 6;
-            spr->dataS = system->memoryVic.read( ((dataP | spr->mc) & 0x3fff) | vicBank ) << 16;        
+            dataP = readPhi<true>( (((vm << 10) | 0x3f8 | pos) & 0x3fff) | vicBank ) << 6;
+            spr->dataS = readPhi<false>( ((dataP | spr->mc) & 0x3fff) | vicBank ) << 16;
             spr->mc++;
             spr->mc &= 63;
-            spr->dataS |= system->memoryVic.read( ((dataP | spr->mc) & 0x3fff) | vicBank ) << 8;        
+            spr->dataS |= readPhi<true>( ((dataP | spr->mc) & 0x3fff) | vicBank ) << 8;
             spr->mc++;
             spr->mc &= 63;
-            spr->dataS |= system->memoryVic.read( ((dataP | spr->mc) & 0x3fff) | vicBank );        
+            spr->dataS |= readPhi<false>( ((dataP | spr->mc) & 0x3fff) | vicBank );
             spr->mc++;
             spr->mc &= 63;
         }            
@@ -451,6 +452,24 @@ auto VicIIFast::applySprites() -> void {
             xPos++;
         }        
     }
+}
+
+template<bool phi1> inline auto VicIIFast::readPhi(uint16_t addr) -> uint8_t {
+
+    if ((phi1 && !ultimaxPhi1) || (!phi1 && !ultimaxPhi2)) {
+        if ((addr & 0x7000) == 0x1000)
+            return system->charRom[ addr & 0xfff ];
+
+        return *(system->ram + addr);
+    }
+
+    if ((addr & 0x3000) == 0x3000)
+        return expansionPort->readRomH( 0x1000 | (addr & 0xfff) );
+
+    // todo: a cartridge could modify address bus and prevent VIC in Ultimax mode from reading C64 memory,
+    // instead provide data for it on expansion port.
+    // will be implemented when needed, i.e. Turbo Chameleon doing this ? other expansions ?
+    return *(system->ram + addr);
 }
 
 }

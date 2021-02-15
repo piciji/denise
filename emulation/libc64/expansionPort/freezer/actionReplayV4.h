@@ -3,9 +3,9 @@
 
 namespace LIBC64 {      
     
-struct ActionReplayV4 : ActionReplay {
+struct ActionReplayV4 : Freezer {
 
-    ActionReplayV4() : ActionReplay(true, false) {
+    ActionReplayV4() : Freezer(true, false) {
         
         ram = new uint8_t[ 8 * 1024 ];
     }
@@ -109,8 +109,8 @@ struct ActionReplayV4 : ActionReplay {
     }
         
     auto serializeStep2(Emulator::Serializer& s) -> void {
-    
-        Freezer::serializeStep2( s );
+
+        FreezeButton::serializeStep2( s );
 
         s.integer( enable );        
         s.integer( useRam );        

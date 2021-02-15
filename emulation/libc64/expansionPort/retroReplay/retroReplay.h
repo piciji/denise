@@ -2,11 +2,11 @@
 
 #include "../../interface.h"
 #include "../../../tools/flash040.h"
-#include "../cart/freezer.h"
+#include "../cart/freezeButton.h"
 
 namespace LIBC64 {
     
-struct RetroReplay : Freezer {
+struct RetroReplay : FreezeButton {
     
     RetroReplay();
     

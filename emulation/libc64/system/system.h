@@ -58,8 +58,6 @@ struct System {
     Memory::Read readBasicRom; 
     Memory::Read readRomL;
     Memory::Read readRomH;
-    Memory::Read readRomHLow;
-    Memory::Read readRomHHi;
     Memory::Write writeRomL;
     Memory::Write writeRomH;
     // need this separated from writeRomL and writeRomH because of not writing to C64 memory
@@ -71,7 +69,6 @@ struct System {
     Memory::Write writeUltimaxA0;    
     
     Memory memoryCpu;
-    Memory memoryVic;
     
     uint8_t* ram = nullptr;
     uint8_t* colorRam = nullptr;
@@ -143,9 +140,8 @@ struct System {
     auto setFirmware( unsigned typeId, uint8_t* data, unsigned size ) -> void;
     
     auto remapCpu() -> void;
-    auto remapVic() -> void;
 	auto isUltimax() -> bool;
-	auto changeExpansionPortMemoryMode(bool exrom, bool game) -> void;
+	auto changeExpansionPortMemoryMode(bool exrom, bool game, bool noUltimaxIfVicHasTheBus = false) -> void;
     
     auto power(bool softReset = false) -> void;
 	auto powerOff() -> void;

@@ -96,8 +96,7 @@ auto System::unserialize(uint8_t* data, unsigned size) -> bool {
         return false;          
     
     serializeAll(s);
-    
-    remapVic();
+
     remapCpu();  
     
     return true;
@@ -198,8 +197,7 @@ auto System::unserializeLight() -> void {
     serializeExpansion(s);
 
     sysTimer.serialize(s);         
-    
-    remapVic();
+
     remapCpu();  
 }
 

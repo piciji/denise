@@ -113,8 +113,8 @@ protected:
 	inline auto fetchSpriteS0(uint8_t pos) -> void;	
 	inline auto fetchSpriteS2(uint8_t pos) -> void;	
 	auto isCharRomAccessed(uint16_t addr) -> bool;
-	inline auto read(uint16_t addr) -> uint8_t;
 	inline auto readCpu() -> uint8_t;
+    template<bool phi1> inline auto readPhi(uint16_t addr) -> uint8_t;
     
     //sequencer
 	auto sequencer( uint32_t flags ) -> void;

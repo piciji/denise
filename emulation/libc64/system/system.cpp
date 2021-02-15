@@ -12,7 +12,7 @@
 #include "../../tools/powersupply.h"
 #include "../../tools/serializer.h"
 #include "../../tools/rand.h"
-#include "../expansionPort/actionReplay/actionReplayMK2.h"
+#include "../expansionPort/freezer/actionReplayMK2.h"
 #include "clipboard.h"
 #include <cstring>
 
@@ -119,16 +119,6 @@ System::System(Interface* interface) {
         return expansionPort->readRomH( addr & 0x1fff );
     };
     
-    readRomHLow = [this](uint16_t addr) {
-
-        return expansionPort->readRomH( addr & 0xfff );
-    };
-    
-    readRomHHi = [this](uint16_t addr) {
-
-        return expansionPort->readRomH( 0x1000 | (addr & 0xfff) );
-    };
-    
     writeRomL = [this](uint16_t addr, uint8_t value) {
 
         expansionPort->writeRomL( addr, value );
@@ -150,8 +140,7 @@ System::System(Interface* interface) {
     };
     
     readUltimaxA0 = [this](uint16_t addr) {
-
-        return expansionPort->readUltimaxA0( addr );
+        return expansionPort->readUltimaxA0( addr & 0x1fff );
     };
     
     writeUltimaxA0 = [this](uint16_t addr, uint8_t value) {
@@ -507,6 +496,7 @@ auto System::power( bool softReset ) -> void {
     mode = (expansionPort->isExrom() << 1) | expansionPort->isGame();
     
     vicBank = 0;
+
     mode <<= 3;
     mode |= 7; // charen = hiram = loram = 1 
     irqIncomming = 0;
@@ -514,9 +504,7 @@ auto System::power( bool softReset ) -> void {
     rdyIncomming = 0;
     
 	memoryCpu.unmap(0x0, 0xff);
-	memoryVic.unmap(0x0, 0xff);
-	remapVic();    
-    remapCpu();    
+    remapCpu();
     
 	Sid::resetAll();
     
@@ -550,6 +538,7 @@ auto System::power( bool softReset ) -> void {
 	}
     // cpu doesn't leave halted state by reset request   
     //cpu->setRdy( false );
+    vicII->setUltimax( isUltimax() );
 	
     cpu->updateIoLines( 0x17, !tape->isEnabled() ? 0x20 : 0 );              
     
@@ -788,52 +777,20 @@ auto System::remapCpu( ) -> void {
     } else
         memoryCpu.map( &readRam, &writeRam, 0xe0, 0xff );
 }
-    
-auto System::remapVic( ) -> void {
-    bool ultimax = isUltimax();
-	
-	memoryVic.map( &writeUnmapped, 0x00, 0xff );
-	memoryVic.map( &readRam, 0x00, 0x0f );
-	
-	memoryVic.unmapRead( 0x10, 0xff );
-	
-	if ( !ultimax ) {
-		memoryVic.map( &readRam, 0x10, 0xff );	
-		//overmap charrom
-		memoryVic.map( &readCharRom, 0x10, 0x1f );
-		memoryVic.map( &readCharRom, 0x90, 0x9f );
-		
-	} else {
-		memoryVic.map( &readUnmapped, 0x10, 0xff );
-		// overmap
-		memoryVic.map( &readRomHHi, 0x30, 0x3f ); //upper half
-		memoryVic.map( &readRomHLow, 0x70, 0x7f );
-		memoryVic.map( &readRam, 0x80, 0x9f );	
-        
-        memoryVic.map( &readUltimaxA0, 0xa0, 0xaf );
-        
-		memoryVic.map( &readRomHLow, 0xb0, 0xbf );
-		memoryVic.map( &readRam, 0xd0, 0xef );	
-		memoryVic.map( &readRomHLow, 0xf0, 0xff );
-	}
-}
 
-auto System::changeExpansionPortMemoryMode(bool exrom, bool game) -> void {
+auto System::changeExpansionPortMemoryMode(bool exrom, bool game, bool noUltimaxIfVicHasTheBus) -> void {
 	
 	uint8_t cartMode = (mode >> 3) & 3;
 	uint8_t cartModeNew = (exrom << 1) | game;
-	
+
+    vicII->setUltimax( noUltimaxIfVicHasTheBus ? false : (exrom && !game) );
+
 	if (cartMode == cartModeNew)
 		return;
 	
-	bool ultimaxBefore = isUltimax();
-	
 	mode &= 7;
-	mode |= cartModeNew << 3;	
-	
-	if (ultimaxBefore != isUltimax())
-		remapVic();
-	
+	mode |= cartModeNew << 3;
+
 	remapCpu();
 }
 

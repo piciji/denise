@@ -118,7 +118,10 @@ auto VicIIFast::serialize(Emulator::Serializer& s) -> void {
     s.integer( spriteSpriteCollided );
     
     s.integer( canSpriteSpriteCollisionIrq );
-    s.integer( canSpriteForegroundCollisionIrq );        	
+    s.integer( canSpriteForegroundCollisionIrq );
+
+    s.integer( ultimaxPhi1 );
+    s.integer( ultimaxPhi2 );
 }
 
 }

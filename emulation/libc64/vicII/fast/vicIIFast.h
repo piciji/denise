@@ -72,6 +72,7 @@ protected:
     auto dmaSprites() -> void;
     auto dmaSpritesOff() -> void;
     auto applySprites() -> void;
+    template<bool phi1> inline auto readPhi(uint16_t addr) -> uint8_t;
     
     auto initMetaPattern() -> void;
     auto applyMeta() -> void;

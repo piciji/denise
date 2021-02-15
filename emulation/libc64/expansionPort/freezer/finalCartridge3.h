@@ -1,0 +1,72 @@
+
+#pragma once
+
+namespace LIBC64 {
+
+    struct FinalCartridge3 : Freezer {
+
+        bool enable;
+
+        FinalCartridge3() : Freezer(true, true) {
+
+        }
+
+        auto isBootable( ) -> bool { return true; }
+
+        auto writeIo2( uint16_t addr, uint8_t value ) -> void {
+
+            if ( enable && ((addr & 0xff) == 0xff) ) {
+
+                uint8_t bank = value & 15;
+                bank %= chips.size();
+
+                cRomL = cRomH = getChip( bank );
+
+                exRom = (value >> 4) & 1;
+                game = (value >> 5) & 1;
+
+                nmiCall( (value & 0x40) == 0 );
+
+                enable = (value & 0x80) == 0;
+
+                system->changeExpansionPortMemoryMode( exRom, game );
+            }
+        }
+
+        auto readIo1( uint16_t addr ) -> uint8_t {
+
+            return *(cRomL->ptr + (0x1e00 | (addr & 0xff)) );
+        }
+
+        auto readIo2( uint16_t addr ) -> uint8_t {
+
+            return *(cRomL->ptr + (0x1f00 | (addr & 0xff)) );
+        }
+
+        auto didFreeze() -> void {
+            enable = true;
+            vicII->setUltimaxPhi1( false );
+        }
+
+        auto assumeChips( ) -> void {
+
+            Cart::assumeChips( {16384} );
+        }
+
+        auto serializeStep2(Emulator::Serializer& s) -> void {
+
+            FreezeButton::serializeStep2( s );
+
+            s.integer( enable );
+        }
+
+        auto reset() -> void {
+            enable = true;
+            game = false;
+            exRom = false;
+            cRomL = getChip(0);
+            cRomH = getChip(0);
+        }
+    };
+
+}

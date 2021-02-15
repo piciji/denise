@@ -3,9 +3,9 @@
 
 namespace LIBC64 {      
     
-struct ActionReplayMK4 : ActionReplay {
+struct ActionReplayMK4 : Freezer {
 
-    ActionReplayMK4() : ActionReplay(true, false) {
+    ActionReplayMK4() : Freezer(true, false) {
         
     }    
     
@@ -52,8 +52,8 @@ struct ActionReplayMK4 : ActionReplay {
     }
         
     auto serializeStep2(Emulator::Serializer& s) -> void {
-    
-        Freezer::serializeStep2( s );
+
+        FreezeButton::serializeStep2( s );
 
         s.integer( enable );
     }

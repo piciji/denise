@@ -18,11 +18,11 @@
 #include <cmath>
 #include <cstring>
 
-namespace MediaView {
-
 namespace Fonts {
-	#include "../../data/fonts/fonts.data"
+    #include "../../data/fonts/fonts.data"
 }
+
+namespace MediaView {
 
 #include "layout.cpp"
 #include "swapper.cpp"

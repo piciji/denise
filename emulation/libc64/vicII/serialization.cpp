@@ -149,7 +149,9 @@ auto VicIICycle::serialize(Emulator::Serializer& s) -> void {
     s.integer( updatePrioExpand );
     s.integer( sprite0DmaLateBA );
     s.integer( disableEcmBmmTogether );
- 	    
+
+    s.integer( ultimaxPhi1 );
+    s.integer( ultimaxPhi2 );
 }
 
 }

@@ -105,9 +105,13 @@ struct VicIIBase {
 	auto cyclesPerFrame() -> unsigned { return lineCycles * lines; }
 
 	auto getReg18() -> uint8_t;
-	
+	auto setUltimaxPhi1(bool state ) -> void { ultimaxPhi1 = state; };
+    auto setUltimaxPhi2(bool state ) -> void { ultimaxPhi2 = state; };
+    auto setUltimax(bool state ) -> void { ultimaxPhi1 = ultimaxPhi2 = state; };
+
 protected:     
-		
+    bool ultimaxPhi1;
+    bool ultimaxPhi2;
 	auto generateCycleTable(CycleMode _m) -> void;
 
 	uint32_t cycleTab[65];
@@ -236,7 +240,7 @@ protected:
 	auto insertVerticalLineAnomaly(unsigned start, unsigned end) -> void;
 	auto initVerticalLineAnomaly() -> void;
 	template<bool permanent> auto insertVerticalLineAnomaly(unsigned start, unsigned end) -> void;
-	
+
 };
 
 extern VicIIBase* vicII;

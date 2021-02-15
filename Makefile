@@ -28,7 +28,7 @@ ifeq ($(platform),windows)
 endif
 #objects += m68000
 objects += m6510 ciaBase cia6526 vicIIBase vicIICycle vicIIFast systemC64 sid chamberlin tapeC64 inputC64 controlPortC64
-objects += cartC64 gameCartC64 actionReplayC64 reuC64 easyFlashC64 retroReplayC64 gmod2C64 clipboardC64
+objects += cartC64 gameCartC64 freezerC64 reuC64 easyFlashC64 retroReplayC64 gmod2C64 clipboardC64
 objects += m6502 via iec prg64 drive1541 structure1541
 objects += thread m93c86 icons
 
@@ -127,7 +127,7 @@ obj/vicIIFast.o:emulation/libc64/vicII/fast/vicIIFast.cpp
 obj/systemC64.o:emulation/libc64/system/system.cpp	
 obj/cartC64.o:	emulation/libc64/expansionPort/cart/cart.cpp
 obj/gameCartC64.o: emulation/libc64/expansionPort/gameCart/gameCart.cpp
-obj/actionReplayC64.o: emulation/libc64/expansionPort/actionReplay/actionReplay.cpp
+obj/freezerC64.o: emulation/libc64/expansionPort/freezer/freezer.cpp
 obj/reuC64.o:	emulation/libc64/expansionPort/reu/reu.cpp
 obj/easyFlashC64.o: emulation/libc64/expansionPort/easyFlash/easyFlash.cpp
 obj/retroReplayC64.o: emulation/libc64/expansionPort/retroReplay/retroReplay.cpp

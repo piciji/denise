@@ -2,6 +2,8 @@
 #include "vicII.h"
 #include "../expansionPort/expansionPort.h"
 
+#define _fullAdr( __addr ) (((__addr) & 0x3fff) | system->vicBank)
+
 namespace LIBC64 {
 	
 inline auto VicIICycle::fetchPhi1( uint32_t flags ) -> uint8_t {
@@ -20,10 +22,10 @@ inline auto VicIICycle::fetchPhi1( uint32_t flags ) -> uint8_t {
         value = fetchSpriteS1( sprPos );   
 	}	
     else if ( isRefresh(flags) )
-        value = read( 0x3f00 | refreshCounter--);   
+        value = readPhi<true>( _fullAdr(0x3f00 | refreshCounter--) );
 
 	else // idle cycle			
-		value = read( 0x3fff );
+		value = readPhi<true>( _fullAdr(0x3fff) );
 
 	if (baLow && isFetchC(flags))
 		fetchC();
@@ -46,7 +48,7 @@ inline auto VicIICycle::fetchSprPhi2( uint32_t flags ) -> void {
 
 inline auto VicIICycle::fetchSpriteP( uint8_t pos ) -> uint8_t {
     
-    sprite[pos].dataP = read( (vm << 10) | 0x3f8 | pos );	
+    sprite[pos].dataP = readPhi<true>( _fullAdr((vm << 10) | 0x3f8 | pos) );
 	
 	return sprite[pos].dataP;
 }
@@ -59,13 +61,13 @@ auto VicIICycle::fetchSpriteS1(uint8_t pos) -> uint8_t {
     uint8_t sprdata;
 
     if (sprHasDma(pos)) {
-        sprdata = read( (sprite[pos].dataP << 6) | sprite[pos].mc );
+        sprdata = readPhi<true>( _fullAdr((sprite[pos].dataP << 6) | sprite[pos].mc) );
 
         sprite[pos].mc++;
         sprite[pos].mc &= 0x3f;
 		
     } else {
-        sprdata = read(0x3fff);
+        sprdata = readPhi<true>( _fullAdr(0x3fff) );
     }
 
     sprite[pos].dataS &= 0xff00ff;
@@ -79,7 +81,7 @@ inline auto VicIICycle::fetchSpriteS0(uint8_t pos) -> void {
 
     if ( sprHasDma(pos) ) {
         if (!aecDelay) {
-            value = read( (sprite[pos].dataP << 6) | sprite[pos].mc);
+            value = readPhi<false>( _fullAdr((sprite[pos].dataP << 6) | sprite[pos].mc) );
 		}
 
         sprite[pos].mc++;
@@ -95,7 +97,7 @@ inline auto VicIICycle::fetchSpriteS2(uint8_t pos) -> void {
 	
     if ( sprHasDma(pos) ) {
         if (!aecDelay) {
-			value = read( (sprite[pos].dataP << 6) | sprite[pos].mc);			
+			value = readPhi<false>( _fullAdr((sprite[pos].dataP << 6) | sprite[pos].mc) );
 		}
 		
         sprite[pos].mc++;
@@ -114,7 +116,7 @@ auto VicIICycle::fetchC() -> void {
 	
 	if ( !aecDelay ) {
 		_color = system->colorRam[ vc ] & 0xf;
-		_dataC = read( (vm << 10) | vc );
+		_dataC = readPhi<false>( _fullAdr((vm << 10) | vc) );
 		
 	} else {
 		_color = readCpu() & 0xf;
@@ -152,9 +154,9 @@ auto VicIICycle::fetchIdleG() -> uint8_t {
 		data = modeEcmBmmDma; //is delayed one cycle for 85xx chips
 
 	if (VIC_MODE_ECM(data) )
-		data = read(0x39ff);
+		data = readPhi<true>( _fullAdr(0x39ff) );
 	else
-		data = read(0x3fff);
+		data = readPhi<true>( _fullAdr(0x3fff) );
 	
 	gBuffer = data;
 	
@@ -189,7 +191,7 @@ auto VicIICycle::fetchG() -> uint8_t {
 	vc++;
 	vc &= 0x3ff;	
            
-    data = read( addr );
+    data = readPhi<true>( _fullAdr(addr) );
 	
 	gBuffer = data;
 
@@ -201,14 +203,12 @@ auto VicIICycle::fetchG() -> uint8_t {
     return data;
 }
 
-inline auto VicIICycle::read(uint16_t addr) -> uint8_t {
-	return system->memoryVic.read( (addr & 0x3fff) | system->vicBank );
-}
-
 inline auto VicIICycle::isCharRomAccessed(uint16_t addr) -> bool {
 	addr = (addr & 0x3fff) | system->vicBank;
 
-	return system->memoryVic.isLocation( addr >> 8, &(system->readCharRom) );  
+    return !ultimaxPhi1 && ((addr & 0x7000) == 0x1000);
+
+	//return system->memoryVic.isLocation( addr >> 8, &(system->readCharRom) );
 }
 
 inline auto VicIICycle::readCpu() -> uint8_t {
@@ -224,6 +224,24 @@ inline auto VicIICycle::readCpu() -> uint8_t {
 
 	// expansion port is BUS Master... same explanation as above
 	return system->memoryCpu.read( expansionPort->addressBus() );            
+}
+
+template<bool phi1> inline auto VicIICycle::readPhi(uint16_t addr) -> uint8_t {
+
+    if ((phi1 && !ultimaxPhi1) || (!phi1 && !ultimaxPhi2)) {
+        if ((addr & 0x7000) == 0x1000)
+            return system->charRom[ addr & 0xfff ];
+
+        return *(system->ram + addr);
+    }
+
+    if ((addr & 0x3000) == 0x3000)
+        return expansionPort->readRomH( 0x1000 | (addr & 0xfff) );
+
+    // todo: a cartridge could modify address bus and prevent VIC in Ultimax mode from reading C64 memory,
+    // instead provide data for it on expansion port.
+    // will be implemented when needed, i.e. Turbo Chameleon doing this ? other expansions ?
+    return *(system->ram + addr);
 }
 
 }

@@ -1,13 +1,10 @@
 
 # todo's are not ordered by priority. changes frequently
 ## to do C64
-* expansion port    
-    * simple non game mapper: Gmod2, Simons Basic, Magic Desk, WarpSpeed, ...
+* expansion port
     * EasyFlash 3
-    * Final Cartridge 3
     * GeoRAM
-    * MMC64
-    * MMC Replay    
+    * MMC64, MMC Replay    
     * SuperCPU
     * Dongles
     * Expansion expander
@@ -82,6 +79,8 @@
 * c64 EasyFlash + write support
 * c64 RetroReplay / Nordic Replay + write support
 * c64 stereo + 8x SID support
+* c64 Gmod2, magic desk, Simons Basic, Warp Speed
+* c64 Final Cartridge I, II, Plus, III, III+
 
 # completed features for all emu cores
 * multi driver support

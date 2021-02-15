@@ -9,6 +9,8 @@
 #include "cart16k.h"
 #include "magicDesk.h"
 #include "../gmod/gmod2.h"
+#include "simonsBasic.h"
+#include "warpSpeed.h"
 
 namespace LIBC64 {
 
@@ -72,6 +74,14 @@ auto GameCart::create( Interface::CartridgeId cartridgeId ) -> Cart* {
         case Interface::CartridgeIdMagicDesk:
             cart = new MagicDesk;
             break;
+
+        case Interface::CartridgeIdSimonsBasic:
+            cart = new SimonsBasic;
+            break;
+
+        case Interface::CartridgeIdWarpSpeed:
+            cart = new WarpSpeed;
+            break;
             
         default:
             // forgot a rom
@@ -93,4 +103,3 @@ auto GameCart::createSecondaryImage(unsigned& imageSize) -> uint8_t* {
 }
     
 }
-

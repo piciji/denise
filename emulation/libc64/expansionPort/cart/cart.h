@@ -38,9 +38,9 @@ struct Cart : ExpansionPort {
 	Emulator::Interface::Media* media;
     
     auto readHeader() -> bool;
-    auto readChips() -> bool;
+    virtual auto readChips() -> bool;
     virtual auto assumeChips() -> void;
-    auto assumeChips( std::vector<unsigned> sizes ) -> void;
+    virtual auto assumeChips( std::vector<unsigned> sizes ) -> void;
     virtual auto reset() -> void;
     virtual auto setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void;
     

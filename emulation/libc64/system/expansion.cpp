@@ -2,7 +2,7 @@
 #include "system.h"
 #include "../expansionPort/gameCart/gameCart.h"
 #include "../expansionPort/reu/reu.h"
-#include "../expansionPort/actionReplay/actionReplay.h"
+#include "../expansionPort/freezer/freezer.h"
 #include "../expansionPort/easyFlash/easyFlash.h"
 #include "../expansionPort/retroReplay/retroReplay.h"
 #include "../expansionPort/gmod/gmod2.h"
@@ -41,8 +41,8 @@ auto System::setExpansion( Emulator::Interface::Expansion& expansion ) -> void {
             expansionPort = reu;
             break;
             
-        case Interface::ExpansionIdActionReplay:
-            expansionPort = actionReplay;
+        case Interface::ExpansionIdFreezer:
+            expansionPort = freezer;
             break;
             
         case Interface::ExpansionIdEasyFlash:
@@ -60,7 +60,7 @@ auto System::createExpansions() -> void {
     
     reu = new Reu;
     gameCart = new GameCart;
-    actionReplay = new ActionReplay;
+    freezer = new Freezer;
     easyFlash = new EasyFlash;
     retroReplay = new RetroReplay;
 	gmod2 = new Gmod2;
@@ -69,7 +69,7 @@ auto System::createExpansions() -> void {
     expansionPort = noExpansion;
     
     setExpansionCallbacks( reu );
-    setExpansionCallbacks( actionReplay );
+    setExpansionCallbacks( freezer );
     setExpansionCallbacks( retroReplay );
 }
 
@@ -77,7 +77,7 @@ auto System::destroyExpansions() -> void {
     
     delete reu;
     delete gameCart;
-    delete actionReplay;
+    delete freezer;
     delete easyFlash;
     delete retroReplay;
 	delete gmod2;
@@ -102,7 +102,10 @@ auto System::analyzeExpansion(uint8_t* data, unsigned size, std::string suffix) 
         case Interface::CartridgeIdActionReplayMK3:
         case Interface::CartridgeIdActionReplayMK4:
         case Interface::CartridgeIdActionReplayV41AndHigher:
-            useExpansion = &interface->expansions[Interface::ExpansionIdActionReplay];
+        case Interface::CartridgeIdFinalCartridge:
+        case Interface::CartridgeIdFinalCartridgePlus:
+        case Interface::CartridgeIdFinalCartridge3:
+            useExpansion = &interface->expansions[Interface::ExpansionIdFreezer];
             break; 
         case Interface::CartridgeIdEasyFlash:
             useExpansion = &interface->expansions[Interface::ExpansionIdEasyFlash];

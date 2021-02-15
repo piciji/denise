@@ -1,13 +1,13 @@
 
 #pragma once
 
-#include "actionReplay.h"
+#include "freezer.h"
 
 namespace LIBC64 {      
     
-struct ActionReplayMK2 : ActionReplay {
+struct ActionReplayMK2 : Freezer {
 
-    ActionReplayMK2() : ActionReplay(true, false) {
+    ActionReplayMK2() : Freezer(true, false) {
         
     }
     
@@ -77,8 +77,8 @@ struct ActionReplayMK2 : ActionReplay {
     }
         
     auto serializeStep2(Emulator::Serializer& s) -> void {
-    
-        Freezer::serializeStep2( s );
+
+        FreezeButton::serializeStep2( s );
 
         s.integer(disableCounter);   
         s.integer(enableCounter);   

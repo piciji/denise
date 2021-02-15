@@ -10,7 +10,7 @@
 #include "disk/iec.h"
 #include "expansionPort/gameCart/gameCart.h"
 #include "expansionPort/reu/reu.h"
-#include "expansionPort/actionReplay/actionReplay.h"
+#include "expansionPort/freezer/freezer.h"
 #include "expansionPort/easyFlash/easyFlash.h"
 #include "expansionPort/retroReplay/retroReplay.h"
 #include "expansionPort/gmod/gmod2.h"
@@ -20,7 +20,7 @@
 
 namespace LIBC64 {
 
-const std::string Interface::Version = "1092";
+const std::string Interface::Version = "1093";
     
 Interface::Interface() : Emulator::Interface( "C64" ) {        
     
@@ -56,7 +56,7 @@ auto Interface::prepareMedia() -> void {
 	mediaGroups.push_back({MediaGroupIdProgram, "Program", MediaGroup::Type::Program, {"prg", "p00", "t64"}, {"prg"} });
     mediaGroups.push_back({MediaGroupIdExpansionGame, "Game Cartridge", MediaGroup::Type::Expansion, {"bin", "crt"}, {"crt", "bin"} });
     mediaGroups.push_back({MediaGroupIdExpansionReu, "REU", MediaGroup::Type::Expansion, {"bin", "crt", "prg", "reu"}, {""} });
-    mediaGroups.push_back({MediaGroupIdExpansionActionReplay, "Action Replay", MediaGroup::Type::Expansion, {"bin", "crt"}, {} });
+    mediaGroups.push_back({MediaGroupIdExpansionFreezer, "Freezer", MediaGroup::Type::Expansion, {"bin", "crt"}, {} });
     mediaGroups.push_back({MediaGroupIdExpansionEasyFlash, "EasyFlash", MediaGroup::Type::Expansion, {"bin", "crt"}, {"crt"} });
     mediaGroups.push_back({MediaGroupIdExpansionRetroReplay, "Retro Replay", MediaGroup::Type::Expansion, {"bin", "crt"}, {"crt"} });
 
@@ -104,11 +104,13 @@ auto Interface::prepareMedia() -> void {
         group.selected = &group.media[0];  
 	}
     
-    {   auto& group = mediaGroups[MediaGroupIdExpansionActionReplay];
-		group.media.push_back({0, "Action Replay 1", 0, &group});
-        group.media.push_back({1, "Action Replay 2", 0, &group});
-        group.media.push_back({2, "Action Replay 3", 0, &group});
-        group.media.push_back({3, "Action Replay 4", 0, &group});
+    {   auto& group = mediaGroups[MediaGroupIdExpansionFreezer];
+		group.media.push_back({0, "Freezer 1", 0, &group});
+        group.media.push_back({1, "Freezer 2", 0, &group});
+        group.media.push_back({2, "Freezer 3", 0, &group});
+        group.media.push_back({3, "Freezer 4", 0, &group});
+        group.media.push_back({4, "Freezer 5", 0, &group});
+        group.media.push_back({5, "Freezer 6", 0, &group});
         group.selected = &group.media[0];  
 	}
 
@@ -149,7 +151,7 @@ auto Interface::prepareExpansions() -> void {
     expansions.push_back( { ExpansionIdNone, "Empty", Expansion::Type::Empty, nullptr, nullptr } );
     expansions.push_back( { ExpansionIdGame, "Game Cartridge", Expansion::Type::Game | Expansion::Type::Flash | Expansion::Type::Eprom, nullptr, &mediaGroups[MediaGroupIdExpansionGame] } );
     expansions.push_back( { ExpansionIdReu, "REU", Expansion::Type::Ram, &memoryTypes[0], &mediaGroups[MediaGroupIdExpansionReu] } );    
-    expansions.push_back( { ExpansionIdActionReplay, "Action Replay", Expansion::Type::Freezer, nullptr, &mediaGroups[MediaGroupIdExpansionActionReplay] } );     
+    expansions.push_back( { ExpansionIdFreezer, "Freezer", Expansion::Type::Freezer, nullptr, &mediaGroups[MediaGroupIdExpansionFreezer] } );
     expansions.push_back( { ExpansionIdEasyFlash, "EasyFlash", Expansion::Type::Flash, nullptr, &mediaGroups[MediaGroupIdExpansionEasyFlash] } );     
     expansions.push_back( { ExpansionIdRetroReplay, "Retro Replay", Expansion::Type::Freezer | Expansion::Type::Flash, nullptr, &mediaGroups[MediaGroupIdExpansionRetroReplay] } );     
     
@@ -166,6 +168,8 @@ auto Interface::prepareExpansions() -> void {
         expansion.pcbs.push_back( {CartridgeIdZaxxon, "Zaxxon"} );
         expansion.pcbs.push_back( {CartridgeIdGmod2, "Gmod2"} );
         expansion.pcbs.push_back( {CartridgeIdMagicDesk, "Magic Desk"} );
+        expansion.pcbs.push_back( {CartridgeIdSimonsBasic, "Simons Basic"} );
+        expansion.pcbs.push_back( {CartridgeIdWarpSpeed, "WarpSpeed"} );
 		expansion.creationIdent = "Gmod2";
         
         mediaGroups[MediaGroupIdExpansionGame].expansion = &expansion;
@@ -176,14 +180,17 @@ auto Interface::prepareExpansions() -> void {
         mediaGroups[MediaGroupIdExpansionReu].expansion = &expansion;
     }
     
-    {   auto& expansion = expansions[ExpansionIdActionReplay];        
+    {   auto& expansion = expansions[ExpansionIdFreezer];
         expansion.pcbs.push_back( {CartridgeIdDefault, "Default"} );
         expansion.pcbs.push_back( {CartridgeIdActionReplayMK2, "Action Replay MK2"} );
         expansion.pcbs.push_back( {CartridgeIdActionReplayMK3, "Action Replay MK3"} );
         expansion.pcbs.push_back( {CartridgeIdActionReplayMK4, "Action Replay MK4"} );
         expansion.pcbs.push_back( {CartridgeIdActionReplayV41AndHigher, "Action Replay V4"} );
+        expansion.pcbs.push_back( {CartridgeIdFinalCartridge, "Final Cartridge"} );
+        expansion.pcbs.push_back( {CartridgeIdFinalCartridgePlus, "Final Cartridge Plus"} );
+        expansion.pcbs.push_back( {CartridgeIdFinalCartridge3, "Final Cartridge 3"} );
         
-        mediaGroups[MediaGroupIdExpansionActionReplay].expansion = &expansion;
+        mediaGroups[MediaGroupIdExpansionFreezer].expansion = &expansion;
     }
     
     {   auto& expansion = expansions[ExpansionIdEasyFlash];
@@ -870,8 +877,8 @@ auto Interface::insertExpansionImage(Media* media, uint8_t* data, unsigned size)
         !media->secondary ? gameCart->setRom(media, data, size) : gmod2->setSecondaryRom(media, data, size);
     else if (group->expansion->id == ExpansionIdReu)
         !media->secondary ? reu->setRam(data, size) : reu->setRom(media, data, size);
-    else if (group->expansion->id == ExpansionIdActionReplay)
-        actionReplay->setRom(media, data, size);
+    else if (group->expansion->id == ExpansionIdFreezer)
+        freezer->setRom(media, data, size);
     else if (group->expansion->id == ExpansionIdEasyFlash)
         easyFlash->setRom(media, data, size);
     else if (group->expansion->id == ExpansionIdRetroReplay)
@@ -933,8 +940,8 @@ auto Interface::ejectExpansionImage(Media* media) -> void {
         !media->secondary ? gameCart->setRom(media, nullptr, 0) : gmod2->setSecondaryRom(media, nullptr, 0);
     else if (group->expansion->id == ExpansionIdReu) {
         !media->secondary ? reu->unsetRam() : reu->setRom(media, nullptr, 0);
-    } else if (group->expansion->id == ExpansionIdActionReplay)
-        actionReplay->setRom(media, nullptr, 0);
+    } else if (group->expansion->id == ExpansionIdFreezer)
+        freezer->setRom(media, nullptr, 0);
     else if (group->expansion->id == ExpansionIdEasyFlash)
         easyFlash->setRom(media, nullptr, 0);
     else if (group->expansion->id == ExpansionIdRetroReplay)

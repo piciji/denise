@@ -11,6 +11,9 @@ namespace LIBC64 {
 
         auto writeIo1( uint16_t addr, uint8_t value ) -> void {
 
+            if (addr != 0xde00)
+                return;
+
             exRom = (value >> 7) & 1;
 
             value &= 0x7f;

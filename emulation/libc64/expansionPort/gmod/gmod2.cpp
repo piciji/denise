@@ -171,9 +171,10 @@ auto Gmod2::clock() -> void {
         uint16_t _addr = cpu->addressBus();
         bool _write = cpu->isWriteCycle();
 
-        if ( _write && (_addr >= 0x8000) ) // ultimax
+        if ( _write && (_addr >= 0x8000) ) {// ultimax
             system->changeExpansionPortMemoryMode(true, false);
-        else
+            vicII->setUltimaxPhi1( false );
+        } else
             system->changeExpansionPortMemoryMode( exRom, true);
     }
 }

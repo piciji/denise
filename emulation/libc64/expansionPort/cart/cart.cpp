@@ -218,8 +218,8 @@ auto Cart::readRomL(uint16_t addr) -> uint8_t {
 	
     if (!cRomL)
         return ExpansionPort::readRomL( addr );
-    
-    addr %= cRomL->size;		
+
+    addr %= cRomL->size;
     
     return *(cRomL->ptr + addr);
 }

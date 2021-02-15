@@ -7,7 +7,7 @@ namespace LIBC64 {
 
 RetroReplay* retroReplay = nullptr;
     
-RetroReplay::RetroReplay() : Freezer( true, false ), flash(Emulator::Flash040::Type010) {   
+RetroReplay::RetroReplay() : FreezeButton( true, false ), flash(Emulator::Flash040::Type010) {
     
     unbeatable = true;
     flashJumper = false;
@@ -70,7 +70,7 @@ auto RetroReplay::clock() -> void {
         } 
     }
     
-    Freezer::clock();
+    FreezeButton::clock();
 }
 
 auto RetroReplay::writeIo1( uint16_t addr, uint8_t value ) -> void {
@@ -122,7 +122,8 @@ auto RetroReplay::writeIo1( uint16_t addr, uint8_t value ) -> void {
                 game = true;                
             }
             
-            system->changeExpansionPortMemoryMode(exRom, game);            
+            system->changeExpansionPortMemoryMode(exRom, game);
+            vicII->setUltimaxPhi1( false );
         } break;
             
         case 1:
@@ -395,7 +396,7 @@ auto RetroReplay::serialize(Emulator::Serializer& s) -> void {
     s.integer( requestedExRom );
     s.integer( writeProtect );
     
-    Freezer::serializeStep2( s );
+    FreezeButton::serializeStep2( s );
     
     cRomL = cRomH = nullptr;
 }

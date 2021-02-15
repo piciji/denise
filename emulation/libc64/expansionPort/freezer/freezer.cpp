@@ -1,35 +1,38 @@
 
-#include "actionReplay.h"
+#include "freezer.h"
 #include "../../system/system.h"
 #include "actionReplayMK2.h"
 #include "actionReplayMK3.h"
 #include "actionReplayMK4.h"
 #include "actionReplayV4.h"
+#include "finalCartridge.h"
+#include "finalCartridge3.h"
+#include "finalCartridgePlus.h"
 
 namespace LIBC64 {
 
-ActionReplay* actionReplay = nullptr;
-    
-ActionReplay::ActionReplay(bool game, bool exrom) : Freezer( game, exrom ) {
+Freezer* freezer = nullptr;
 
-    setId( Interface::ExpansionIdActionReplay );
+Freezer::Freezer(bool game, bool exrom) : FreezeButton( game, exrom ) {
+
+    setId( Interface::ExpansionIdFreezer );
 }
 
-auto ActionReplay::assign( Cart* cart ) -> void {
+auto Freezer::assign( Cart* cart ) -> void {
     bool inUse = this == expansionPort;
 
     delete this;
 
-    actionReplay = (ActionReplay*)cart;
+    freezer = (Freezer*)cart;
     
-    system->setExpansionCallbacks( actionReplay );
+    system->setExpansionCallbacks( freezer );
 
     if (inUse)            
-        expansionPort = actionReplay;
+        expansionPort = freezer;
     
 }
 
-auto ActionReplay::create( Interface::CartridgeId cartridgeId ) -> Cart* {
+auto Freezer::create( Interface::CartridgeId cartridgeId ) -> Cart* {
     Cart* cart = nullptr;
     
     switch(cartridgeId) {
@@ -49,11 +52,23 @@ auto ActionReplay::create( Interface::CartridgeId cartridgeId ) -> Cart* {
         case Interface::CartridgeIdActionReplayV41AndHigher:
         case Interface::CartridgeIdDefault:
             cart = new ActionReplayV4;
-            break; 
-            
+            break;
+
+        case Interface::CartridgeIdFinalCartridge:
+            cart = new FinalCartridge;
+            break;
+
+        case Interface::CartridgeIdFinalCartridge3:
+            cart = new FinalCartridge3;
+            break;
+
+        case Interface::CartridgeIdFinalCartridgePlus:
+            cart = new FinalCartridgePlus;
+            break;
+
         default:
             // forgot a rom
-            cart = new ActionReplay;
+            cart = new Freezer;
             break;
     }
     
