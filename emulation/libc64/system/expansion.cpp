@@ -105,6 +105,7 @@ auto System::analyzeExpansion(uint8_t* data, unsigned size, std::string suffix) 
         case Interface::CartridgeIdFinalCartridge:
         case Interface::CartridgeIdFinalCartridgePlus:
         case Interface::CartridgeIdFinalCartridge3:
+        case Interface::CartridgeIdAtomicPower:
             useExpansion = &interface->expansions[Interface::ExpansionIdFreezer];
             break; 
         case Interface::CartridgeIdEasyFlash:

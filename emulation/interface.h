@@ -155,7 +155,7 @@ struct Interface {
         MediaGroup* mediaGroup; // ROM, RAM dumps
         std::vector<PCBLayout> pcbs;
         std::vector<Jumper> jumpers;
-		std::string creationIdent; // todo: allow more than one type for each expansion group
+		std::vector<std::string> creationIdents; 
         enum Type : unsigned { Empty = 0, Game = 1, Ram = 2, Eprom = 4, Flash = 8, TurboCart = 16, Freezer = 32 };
         
         auto isEmpty() const -> bool { return typeFlags == (unsigned)Type::Empty; }
@@ -406,7 +406,7 @@ struct Interface {
     virtual auto ejectExpansionImage(Media* media) -> void {}
     virtual auto writeProtectExpansion(Media* media, bool state) -> void {}
     virtual auto isWriteProtectedExpansion(Media* media) -> bool { return false; }
-    virtual auto createExpansionImage(MediaGroup* group, unsigned& imageSize, bool secondaryRom = false) -> uint8_t* { return nullptr; }
+    virtual auto createExpansionImage(MediaGroup* group, unsigned& imageSize, uint8_t id = 0) -> uint8_t* { return nullptr; }
     virtual auto isExpansionBootable() -> bool { return false; }
 	virtual auto hasExpansionSecondaryRom() -> bool { return false; }
     

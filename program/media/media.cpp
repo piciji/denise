@@ -625,22 +625,22 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
     };
 }
 
-auto MediaLayout::createImage( Emulator::Interface::MediaGroup* mediaGroup, bool secondaryRom ) -> void {
+auto MediaLayout::createImage( Emulator::Interface::MediaGroup* mediaGroup ) -> void {
 
 	std::string ident = mediaGroup->name;
 	std::string suffix = mediaGroup->creatable[0];
+    unsigned id = 0;
 	
     if (mediaGroup->isExpansion()) {
-        if (!secondaryRom) {
-            unsigned groupId = flashCreatorLayout->format.userData();
-            mediaGroup = &emulator->mediaGroups[groupId];
-			
-        } else {
-            unsigned groupId = epromCreatorLayout->format.userData();
-            mediaGroup = &emulator->mediaGroups[groupId];
-			suffix = mediaGroup->creatable[1];
-        }
-		ident = mediaGroup->expansion->creationIdent;
+        id = flashCreatorLayout->format.userData();
+        
+        mediaGroup = &emulator->mediaGroups[ id & 0xff ];
+        id >>= 8;
+        
+        if (id < mediaGroup->creatable.size())
+            suffix = mediaGroup->creatable[id];
+
+		ident = mediaGroup->expansion->creationIdents[id];
     }
     
     std::string title = ident + "_image";    
@@ -682,7 +682,7 @@ auto MediaLayout::createImage( Emulator::Interface::MediaGroup* mediaGroup, bool
         data = emulator->getLoadedProgram( size );
         
     } else if (mediaGroup->isExpansion()) {
-        data = emulator->createExpansionImage( mediaGroup, size, secondaryRom );
+        data = emulator->createExpansionImage( mediaGroup, size, id );
     }
     
     if (!size)
@@ -813,31 +813,20 @@ auto MediaLayout::prepareCreator() -> void {
             
 		} else if (mediaGroup.isExpansion() && (mediaGroup.expansion->isFlash() || mediaGroup.expansion->isEprom()) ) {
 
-            if (mediaGroup.expansion->isFlash()) {
-                if (!flashCreatorLayout) {
-                    flashCreatorLayout = new FlashCreatorLayout;
+            
+            if (!flashCreatorLayout) {
+                flashCreatorLayout = new FlashCreatorLayout;
 
-                    flashCreatorLayout->button.onActivate = [this, group]() {
-                        createImage(group);
-                    };
+                flashCreatorLayout->button.onActivate = [this, group]() {
+                    createImage(group);
+                };
 
-                    creatorLayout.append(*flashCreatorLayout, {~0u, 0u}, 5);
-                }
-				flashCreatorLayout->format.append( mediaGroup.expansion->creationIdent, mediaGroup.id );  
-            }                        
-			
-			if (mediaGroup.expansion->isEprom()) {
-                if (!epromCreatorLayout) {
-                    epromCreatorLayout = new EpromCreatorLayout;
+                creatorLayout.append(*flashCreatorLayout, {~0u, 0u}, 5);
+            }
 
-                    epromCreatorLayout->button.onActivate = [this, group]() {
-                        createImage(group, true);
-                    };
-
-                    creatorLayout.append(*epromCreatorLayout, {~0u, 0u}, 5);
-                }
-				epromCreatorLayout->format.append( mediaGroup.expansion->creationIdent, mediaGroup.id );  
-            }                        
+            unsigned i = 0;
+            for( auto& creationIdent : mediaGroup.expansion->creationIdents )                                
+                flashCreatorLayout->format.append( creationIdent, (i++ << 8) | mediaGroup.id );
 		}
     }
 }
@@ -1020,11 +1009,6 @@ auto MediaLayout::translate() -> void {
     if (flashCreatorLayout) {
 		flashCreatorLayout->setText( trans->get("flash_creator") );		
         flashCreatorLayout->button.setText(trans->get("create"));         
-    }
-
-    if (epromCreatorLayout) {
-		epromCreatorLayout->setText( trans->get("eprom_creator") );		
-        epromCreatorLayout->button.setText(trans->get("create"));         
     }
     
 	unsigned neededWidth = 90;

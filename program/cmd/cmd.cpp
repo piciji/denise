@@ -109,7 +109,6 @@ auto Cmd::parse() -> void {
 	bool laxMagicNext = false;
     bool screenshotPathNext = false;
 	bool autostartPrgNext = false;
-	bool d64InUse = false;
 	bool fastTestbench = false;
     typedef Emulator::Interface EmuInt;
 	auto emuC64 = program->getEmulator("C64");
@@ -235,13 +234,6 @@ auto Cmd::parse() -> void {
 					
                     paths.push_back( arg );  
                     autoload = true;
-					
-					if (diskGroup) {
-						auto _vec = diskGroup->suffix;
-						if ( std::find(_vec.begin(), _vec.end(), suffix) != _vec.end() )
-							d64InUse = true;
-					}
-					
                     break;
                 }
             }                                  
@@ -289,13 +281,13 @@ auto Cmd::parse() -> void {
 		settingsC64->set<unsigned>("memory_value", 0);
 	
 	if (fastTestbench)
-		autostartPrg = 1;	
-	
-	else if (!d64InUse && (autostartPrg == 2)) {
-				
-		if (diskGroup)
-			diskGroup->suffix.push_back("prg"); // load prg as d64
-	}
+		autostartPrg = 1;
+
+    else if (autostartPrg == 2) { // load prg as d64
+        // allow it only, if there is a single PRG file loaded
+        if ( diskGroup && (paths.size() == 1) && GUIKIT::String::foundSubStr( GUIKIT::String::toLowerCase( paths[0] ), ".prg" ))
+            diskGroup->suffix.push_back("prg");
+    }
 		
     arguments = paths;
 }

@@ -58,10 +58,10 @@ auto Autoloader::postProcessing() -> void {
         
     std::sort(ddControl.mediaGroups.begin(), ddControl.mediaGroups.end(), [ ](const Emulator::Interface::MediaGroup* lhs, const Emulator::Interface::MediaGroup* rhs) {
 
-        if (lhs->isExpansion()) return true;
-        if (rhs->isExpansion()) return false;
         if (lhs->isProgram()) return true;
         if (rhs->isProgram()) return false;
+        if (lhs->isExpansion()) return true;
+        if (rhs->isExpansion()) return false;
         if (lhs->isDisk()) return true;
         return false;
     });	
@@ -101,26 +101,38 @@ auto Autoloader::postProcessing() -> void {
 
     } else {
 
-		for (auto& mediaGroup : ddControl.emulator->mediaGroups) {
-			
-			if (mediaGroup.isDrive()) {
-				
+        bool useExpansion = false;
+
+		for (auto& _mediaGroup : ddControl.emulator->mediaGroups) {
+
+            unsigned count = countImagesFor(&_mediaGroup);
+
+            if (!count)
+                continue;
+
+			if (_mediaGroup.isDrive()) {
+
 				if (emuView)
-					emuView->systemLayout->activateDrive(&mediaGroup, countImagesFor(&mediaGroup) );
+					emuView->systemLayout->activateDrive( &_mediaGroup, count );
 				
-				activateDrive( ddControl.emulator, &mediaGroup, countImagesFor(&mediaGroup) );
+				activateDrive( ddControl.emulator, &_mediaGroup, count );
+			}
+			else if (_mediaGroup.isExpansion()) {
+                useExpansion = true;
+                program->getSettings( ddControl.emulator )->set<unsigned>("expansion", _mediaGroup.expansion->id);
+
+                if (emuView) {
+                    if (_mediaGroup.expansion->isRam())
+                        emuView->mediaLayout->eject(&_mediaGroup, true);
+
+                    emuView->systemLayout->setExpansion(_mediaGroup.expansion);
+                }
 			}
 		}
         
-        if (mediaGroup->isExpansion()) {
-			program->getSettings( ddControl.emulator )->set<unsigned>("expansion", mediaGroup->expansion->id);
-			if (emuView)
-				emuView->systemLayout->setExpansion( mediaGroup->expansion );
-		}
-
         program->power( ddControl.emulator, emuView );
 
-        if (!mediaGroup->isExpansion())
+        if (!useExpansion)
             program->removeBootableExpansion();        
         
         if (mediaGroup->selected) {
@@ -237,16 +249,7 @@ auto Autoloader::loadFile( GUIKIT::File* file, GUIKIT::File::Item* item ) -> voi
 					else
 						insertImage( emulator, media, file, item );
 
-					if (mediaGroup.isExpansion() && mediaGroup.expansion->isRam()) {
-						// set expansion but don't boot it
-						program->getSettings( emulator )->set<unsigned>("expansion", mediaGroup.expansion->id);
-						
-						if (emuView) {
-							emuView->mediaLayout->eject(&mediaGroup, true);
-							emuView->systemLayout->setExpansion(mediaGroup.expansion);
-						}
-					} else
-						ddControl.mediaGroups.push_back(&mediaGroup);
+                    ddControl.mediaGroups.push_back(&mediaGroup);
 
 					return loadFiles();
 				}
@@ -264,8 +267,8 @@ errorOpen:
 auto Autoloader::countImagesFor(Emulator::Interface::MediaGroup* mediaGroup) -> unsigned {
     
 	unsigned counter = 0;
-	for( auto _dG : ddControl.mediaGroups) {
-		if (_dG == mediaGroup)
+	for( auto _mG : ddControl.mediaGroups) {
+		if (_mG == mediaGroup)
 			counter++;
 	}   
     

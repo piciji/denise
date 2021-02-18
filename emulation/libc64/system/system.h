@@ -36,6 +36,7 @@ struct System {
     Memory::Read readRam;
     Memory::Write writeRam;
     Memory::Write writeRamAt80To9F;
+    Memory::Write writeRamAtA0ToBF;
     Memory::Read readVicReg;
     Memory::Write writeVicReg;
     Memory::Read readSidReg;

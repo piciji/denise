@@ -22,6 +22,7 @@
 * Magic Desk Cartridge Mapper (i.e. Bomberland)
 * Final Cartridge I, II, Plus, III, III+
 * Simons Basic, Warp Speed
+* Atomic Power, Mach5, Pagefox, Ross, Westermann
 
 ## 1.0.9.1
 * fix TAPE emulation (broken in 1.0.9)
@@ -214,7 +215,7 @@
 
 ---
 
-# Usage Hints
+# Usage Hints (not updated for a long time, will be replaced soon)
 
 ### savestates are configured here: system/state manager
 you can save/load direct within a file dialog or save/load/change slot by hotkeys.
@@ -320,45 +321,3 @@ zip, gz, tar, tar.gz archives are supported.
 for archives with more than one file a treeview widget will open.
 selected files in archives will be memorized when restarting the emulator.  
 a compressed emulator image can not be inserted as writable.
-
----
-
-## c64 creating turbo tapes
-
-### method 1 (slow way)
-* create empty tape_1 for non 'turbo taped' games
-* create another empty tape_2 for turbo taped games
-* power on c64	
-* inject game prg, it's a simulated basic load
-* insert tape_1
-* save "game"
-    * Note: basic can not handle huge 202 block games. (prints: out of memory)
-    * restart and load the game for nostalgic reasons only.
-* restart
-* inject turbo tape prg
-* insert tape_2
-* save "turbo tape"
-* run
-* insert tape_1
-* load "game", i like it to waste my lifetime this way
-* reinsert tape_2 and fast forward to end of tape
-* now we save the game in turbo format: <-S "game"
-* restart and test it: load, run, <-L (compare by yourself how fast it loads), run
-
-### method 2 (fast way)
-by the first way you can not save too big games because of the basic memory limit
-and you have to save and load the game in non turbo tape mode before.
-
-* create empty tape for turbo taped games
-* power on c64	
-* inject turbo tape prg
-* use mr.z turbo 250 for huge games
-    * NOTE: some games doesn't work, like Masters of the universe (the movie, he-man 2)
-      because of turbo tape resides in memory too.
-    * use 61-K turbo tape. it solves the problem of he-man and works with huge games too.
-* insert empty tape
-* save "turbo tape"
-* run
-* inject game prg, it's a simulated basic load
-* now we save the game in turbo format: <-S "game"
-* restart and test it: load, run, <-L, run

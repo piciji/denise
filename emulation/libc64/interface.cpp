@@ -54,7 +54,7 @@ auto Interface::prepareMedia() -> void {
 	mediaGroups.push_back({MediaGroupIdDisk, "Disk", MediaGroup::Type::Disk, {"d64", "g64"}, {"d64", "g64"} });
 	mediaGroups.push_back({MediaGroupIdTape, "Tape", MediaGroup::Type::Tape, {"tap"}, {"tap"} });	
 	mediaGroups.push_back({MediaGroupIdProgram, "Program", MediaGroup::Type::Program, {"prg", "p00", "t64"}, {"prg"} });
-    mediaGroups.push_back({MediaGroupIdExpansionGame, "Game Cartridge", MediaGroup::Type::Expansion, {"bin", "crt"}, {"crt", "bin"} });
+    mediaGroups.push_back({MediaGroupIdExpansionGame, "Cartridge", MediaGroup::Type::Expansion, {"bin", "crt"}, {"crt", "bin"} });
     mediaGroups.push_back({MediaGroupIdExpansionReu, "REU", MediaGroup::Type::Expansion, {"bin", "crt", "prg", "reu"}, {""} });
     mediaGroups.push_back({MediaGroupIdExpansionFreezer, "Freezer", MediaGroup::Type::Expansion, {"bin", "crt"}, {} });
     mediaGroups.push_back({MediaGroupIdExpansionEasyFlash, "EasyFlash", MediaGroup::Type::Expansion, {"bin", "crt"}, {"crt"} });
@@ -84,12 +84,12 @@ auto Interface::prepareMedia() -> void {
 	}
     
     {   auto& group = mediaGroups[MediaGroupIdExpansionGame];
-		group.media.push_back({0, "Module 1", 0, &group});
-        group.media.push_back({1, "Module 2", 0, &group});
-        group.media.push_back({2, "Module 3", 0, &group});
-        group.media.push_back({3, "Module 4", 0, &group});
-        group.media.push_back({4, "Module 5", 0, &group});
-        group.media.push_back({5, "Module 6", 0, &group});
+		group.media.push_back({0, "Cartridge 1", 0, &group});
+        group.media.push_back({1, "Cartridge 2", 0, &group});
+        group.media.push_back({2, "Cartridge 3", 0, &group});
+        group.media.push_back({3, "Cartridge 4", 0, &group});
+        group.media.push_back({4, "Cartridge 5", 0, &group});
+        group.media.push_back({5, "Cartridge 6", 0, &group});
         group.media.push_back({6, "Eeprom", 0, &group});
         group.selected = &group.media[0];  
 	}
@@ -149,7 +149,7 @@ auto Interface::prepareMedia() -> void {
 
 auto Interface::prepareExpansions() -> void {
     expansions.push_back( { ExpansionIdNone, "Empty", Expansion::Type::Empty, nullptr, nullptr } );
-    expansions.push_back( { ExpansionIdGame, "Game Cartridge", Expansion::Type::Game | Expansion::Type::Flash | Expansion::Type::Eprom, nullptr, &mediaGroups[MediaGroupIdExpansionGame] } );
+    expansions.push_back( { ExpansionIdGame, "Cartridge", Expansion::Type::Game | Expansion::Type::Flash | Expansion::Type::Eprom, nullptr, &mediaGroups[MediaGroupIdExpansionGame] } );
     expansions.push_back( { ExpansionIdReu, "REU", Expansion::Type::Ram, &memoryTypes[0], &mediaGroups[MediaGroupIdExpansionReu] } );    
     expansions.push_back( { ExpansionIdFreezer, "Freezer", Expansion::Type::Freezer, nullptr, &mediaGroups[MediaGroupIdExpansionFreezer] } );
     expansions.push_back( { ExpansionIdEasyFlash, "EasyFlash", Expansion::Type::Flash, nullptr, &mediaGroups[MediaGroupIdExpansionEasyFlash] } );     
@@ -170,7 +170,12 @@ auto Interface::prepareExpansions() -> void {
         expansion.pcbs.push_back( {CartridgeIdMagicDesk, "Magic Desk"} );
         expansion.pcbs.push_back( {CartridgeIdSimonsBasic, "Simons Basic"} );
         expansion.pcbs.push_back( {CartridgeIdWarpSpeed, "WarpSpeed"} );
-		expansion.creationIdent = "Gmod2";
+        expansion.pcbs.push_back( {CartridgeIdMach5, "Mach 5"} );
+        expansion.pcbs.push_back( {CartridgeIdRoss, "Ross"} );
+        expansion.pcbs.push_back( {CartridgeIdWestermann, "Westermann"} );
+        expansion.pcbs.push_back( {CartridgeIdPagefox, "Pagefox"} );
+		expansion.creationIdents.push_back( "Gmod2 Flash" );
+        expansion.creationIdents.push_back( "Gmod2 Eeprom" );
         
         mediaGroups[MediaGroupIdExpansionGame].expansion = &expansion;
     }
@@ -189,6 +194,7 @@ auto Interface::prepareExpansions() -> void {
         expansion.pcbs.push_back( {CartridgeIdFinalCartridge, "Final Cartridge"} );
         expansion.pcbs.push_back( {CartridgeIdFinalCartridgePlus, "Final Cartridge Plus"} );
         expansion.pcbs.push_back( {CartridgeIdFinalCartridge3, "Final Cartridge 3"} );
+        expansion.pcbs.push_back( {CartridgeIdAtomicPower, "Atomic Power"} );
         
         mediaGroups[MediaGroupIdExpansionFreezer].expansion = &expansion;
     }
@@ -196,15 +202,17 @@ auto Interface::prepareExpansions() -> void {
     {   auto& expansion = expansions[ExpansionIdEasyFlash];
     
         expansion.jumpers.push_back( {0, "flash"} );
-		expansion.creationIdent = "EasyFlash";
+		expansion.creationIdents.push_back( "EasyFlash" );
     
         mediaGroups[MediaGroupIdExpansionEasyFlash].expansion = &expansion;
     }
     
-    {   auto& expansion = expansions[ExpansionIdRetroReplay];        
+    {   auto& expansion = expansions[ExpansionIdRetroReplay];
+        expansion.pcbs.push_back( {CartridgeIdDefault, "Default"} );
         expansion.pcbs.push_back( {CartridgeIdRetroReplay, "Retro Replay"} );
         expansion.pcbs.push_back( {CartridgeIdNordicReplay, "Nordic Replay"} );
-		expansion.creationIdent = "Retro Replay";
+		expansion.creationIdents.push_back( "Retro Replay" );
+        expansion.creationIdents.push_back( "Nordic Replay" );
         
         expansion.jumpers.push_back( {0, "bank"} );
         expansion.jumpers.push_back( {1, "flash"} );
@@ -948,7 +956,7 @@ auto Interface::ejectExpansionImage(Media* media) -> void {
         retroReplay->setRom(media, nullptr, 0);
 }
 
-auto Interface::createExpansionImage(MediaGroup* group, unsigned& imageSize, bool secondaryRom) -> uint8_t* {
+auto Interface::createExpansionImage(MediaGroup* group, unsigned& imageSize, uint8_t id) -> uint8_t* {
     
     if (!group->isExpansion())
         return nullptr;
@@ -957,10 +965,10 @@ auto Interface::createExpansionImage(MediaGroup* group, unsigned& imageSize, boo
         return easyFlash->createImage(imageSize);
     
     if (group->expansion->id == ExpansionIdRetroReplay)
-        return retroReplay->createImage(imageSize);
+        return retroReplay->createImage(imageSize, id);
 	
 	if (group->expansion->id == ExpansionIdGame)
-		return !secondaryRom ? gameCart->createImage(imageSize) : gameCart->createSecondaryImage(imageSize);
+		return gameCart->createImage(imageSize, id);
     
     return nullptr;
 }

@@ -42,7 +42,8 @@ struct Interface : Emulator::Interface {
         CartridgeIdEasyFlash = 32, CartridgeIdRetroReplay = 36, CartridgeIdNordicReplay = 261,
         CartridgeIdGmod2 = 60, CartridgeIdMagicDesk = 19, CartridgeIdFinalCartridge = 13,
         CartridgeIdFinalCartridge3 = 3, CartridgeIdFinalCartridgePlus = 29, CartridgeIdSimonsBasic = 4,
-        CartridgeIdWarpSpeed = 16,
+        CartridgeIdWarpSpeed = 16, CartridgeIdAtomicPower = 9, CartridgeIdMach5 = 51, CartridgeIdRoss = 23,
+        CartridgeIdWestermann = 11, CartridgeIdPagefox = 53,
     };
     
     static const std::string Version;
@@ -98,7 +99,7 @@ struct Interface : Emulator::Interface {
     auto writeProtectExpansion(Media* media, bool state) -> void;
     auto isWriteProtectedExpansion(Media* media) -> bool;
     auto ejectExpansionImage(Media* media) -> void;
-    auto createExpansionImage(MediaGroup* group, unsigned& imageSize, bool secondaryRom = false) -> uint8_t*;    
+    auto createExpansionImage(MediaGroup* group, unsigned& imageSize, uint8_t id = 0) -> uint8_t*;    
     auto isExpansionBootable() -> bool;
 	auto hasExpansionSecondaryRom() -> bool;
 	

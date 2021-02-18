@@ -18,6 +18,7 @@
 
 #include "expansion.cpp"
 #include "serialization.cpp"
+#include "map.cpp"
 
 namespace Firmware {
 	#include "firmware.cpp"
@@ -91,6 +92,13 @@ System::System(Interface* interface) {
         // some Cartridges listen here and writes value in their own RAM
         expansionPort->listenToWritesAt80To9F(addr, value);
         
+        this->ram[ addr ] = value;
+    };
+
+    writeRamAtA0ToBF = [this](uint16_t addr, uint8_t value) {
+        // some Cartridges listen here and writes value in their own RAM
+        expansionPort->listenToWritesAtA0ToBF(addr, value);
+
         this->ram[ addr ] = value;
     };
 
@@ -541,8 +549,7 @@ auto System::power( bool softReset ) -> void {
     vicII->setUltimax( isUltimax() );
 	
     cpu->updateIoLines( 0x17, !tape->isEnabled() ? 0x20 : 0 );              
-    
-    kernalBootComplete = false;
+
     calcSerializationSize();
     if (requestedSids)
         serializationSize += Sid::serializationSizeForSevenMoreSids;
@@ -550,29 +557,31 @@ auto System::power( bool softReset ) -> void {
 	fastForward.config = 0;
     fastForward.frameCounter = 0;
     fastForward.renderNext = false;
-    
+
+    kernalBootComplete = false;
+    KeyBuffer::Action action;
+    action.mode = KeyBuffer::Mode::WaitDelay;
+    action.delay = 2;
+
     if ( !expansionPort->isBootable() ) {
-        KeyBuffer::Action action;
+        system->keyBuffer->add( action );
 
-        action.mode = KeyBuffer::Mode::WaitDelay;
-        action.delay = (interface->getExpansion()->isFreezer() && expansionPort->hasRom())
-            ? 1 : 2;        
-        action.delay = 2;
-        system->keyBuffer->add( action );        
-	
         action.mode = KeyBuffer::Mode::WaitFor;
-        action.buffer = {'R', 'E', 'A', 'D', 'Y', '.'};  
-        
-        if (dynamic_cast<ActionReplayMK2*>(expansionPort))
-            action.buffer = {'L', 'O', 'A', 'D', 'E', 'R'};  
+        action.buffer = {'R', 'E', 'A', 'D', 'Y', '.'};
 
-        action.delay = 0;           
+        if (dynamic_cast<ActionReplayMK2*>(expansionPort))
+            action.buffer = {'L', 'O', 'A', 'D', 'E', 'R'};
+
+        action.delay = 0;
         action.blinkingCursor = true;
         action.callbackId = 1;
         action.callback = [this]() { kernalBootComplete = true; };
-        system->keyBuffer->add( action );           
-	} else
-		kernalBootComplete = true;
+        system->keyBuffer->add( action );
+
+	} else {
+        action.callback = [this]() { kernalBootComplete = true; };
+        system->keyBuffer->add( action );
+    }
 	
 	powerOn = true;
 }
@@ -694,90 +703,6 @@ auto System::isUltimax() -> bool {
 	return ((mode >> 3) & 3) == 2;
 }
 
-auto System::remapCpu( ) -> void {
-    
-    uint8_t subMode = mode & 7;
-    uint8_t ramMode = mode & 3;
-    uint8_t cartMode = (mode >> 3) & 3;
-	bool ultimax = isUltimax();
-    
-    // 00 - 0f -> always ram
-    memoryCpu.map( &readRam, &writeRam, 0x0, 0x0f );
-	
-    // 10 - 7f
-    if ( ultimax )
-        memoryCpu.map( &readUnmapped, &writeUnmapped, 0x10, 0x7f );
-    else
-        memoryCpu.map( &readRam, &writeRam, 0x10, 0x7f );
-    
-    // 80 - 9f
-    if ( ultimax ) {
-        memoryCpu.map( &readRomL, 0x80, 0x9f);
-		memoryCpu.map( &writeUltimaxRomL, 0x80, 0x9f );
-    
-    } else if ( (cartMode == 0 || cartMode == 1) && ramMode == 3 ) {
-        memoryCpu.map( &readRomL, 0x80, 0x9f);
-		memoryCpu.map( &writeRomL, 0x80, 0x9f );
-    } else
-		memoryCpu.map( &readRam, &writeRamAt80To9F, 0x80, 0x9f );
-	
-    // a0 - bf
-    if ( ultimax )
-        memoryCpu.map( &readUltimaxA0, &writeUltimaxA0, 0xa0, 0xbf );
-    
-    else if ( (cartMode == 1 || cartMode == 3) && ramMode == 3 ) {
-		memoryCpu.map( &readBasicRom, 0xa0, 0xbf );
-        memoryCpu.map( &writeRam, 0xa0, 0xbf );
-		
-    } else if (cartMode == 0 && (ramMode == 2 || ramMode == 3) ) {
-        
-		memoryCpu.map( &readRomH, 0xa0, 0xbf );
-        memoryCpu.map( &writeRomH, 0xa0, 0xbf );
-    } else
-        memoryCpu.map( &readRam, &writeRam, 0xa0, 0xbf );
-    
-    // c0 - cf
-    if ( ultimax )
-        memoryCpu.map( &readUnmapped, &writeUnmapped, 0xc0, 0xcf );
-    else
-        memoryCpu.map( &readRam, &writeRam, 0xc0, 0xcf );
-
-    // d0 - df
-    if ( ultimax || subMode == 5 || subMode == 6 || subMode == 7 ) {
-        memoryCpu.map( &readVicReg, &writeVicReg, 0xd0, 0xd3);
-        
-        if (!debugCart.enable)
-            memoryCpu.map( &readSidReg, &writeSidReg, 0xd4, 0xd7);
-        else {
-            memoryCpu.map( &readSidReg, &writeSidReg, 0xd4, 0xd6);
-            memoryCpu.map( &readSidReg, &writeDebugReg, 0xd7, 0xd7);
-        }
-        memoryCpu.map( &readColorRam, &writeColorRam, 0xd8, 0xdb);
-        memoryCpu.map( &readCia1Reg, &writeCia1Reg, 0xdc, 0xdc);
-        memoryCpu.map( &readCia2Reg, &writeCia2Reg, 0xdd, 0xdd);
-        memoryCpu.map( &readIo1Reg, &writeIo1Reg, 0xde, 0xde);
-        memoryCpu.map( &readIo2Reg, &writeIo2Reg, 0xdf, 0xdf);
-        
-    } else if ( (subMode == 1 || subMode == 2 || subMode == 3) && (mode != 1)  ) {
-        
-        memoryCpu.map( &readCharRom, 0xd0, 0xdf );
-        memoryCpu.map( &writeRam, 0xd0, 0xdf );
-    } else
-        memoryCpu.map( &readRam, &writeRam, 0xd0, 0xdf );
-
-    // e0 - ff
-    if ( ultimax ) {
-        memoryCpu.map( &readRomH, 0xe0, 0xff);
-		memoryCpu.map( &writeUltimaxRomH, 0xe0, 0xff );
-		
-    } else if (ramMode == 2 || ramMode == 3) {
-        memoryCpu.map( &readKernalRom, 0xe0, 0xff );
-		memoryCpu.map( &writeRam, 0xe0, 0xff );
-		
-    } else
-        memoryCpu.map( &readRam, &writeRam, 0xe0, 0xff );
-}
-
 auto System::changeExpansionPortMemoryMode(bool exrom, bool game, bool noUltimaxIfVicHasTheBus) -> void {
 	
 	uint8_t cartMode = (mode >> 3) & 3;
@@ -894,7 +819,7 @@ auto System::videoRefresh( uint8_t* frame, unsigned width, unsigned height, unsi
 
 	frameComplete = true;
 
-	if ( !expansionPort->isBootable() )
+	if ( keyBuffer->hasJobs )
 		keyBuffer->process();
 }
 

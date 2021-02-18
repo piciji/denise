@@ -20,6 +20,7 @@ Cart::Cart(bool game, bool exrom) : ExpansionPort() {
     data = nullptr;
     size = 0;
     binFormat = false;
+    version = 0;
 }
 
 auto Cart::setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void {
@@ -104,7 +105,7 @@ auto Cart::readHeader( ) -> bool {
     
     cartridgeId = (Interface::CartridgeId)Emulator::copyBufferToIntBigEndian<uint16_t>(&header[0x16]);
     
-    version = Emulator::copyBufferToIntBigEndian<uint16_t>(&header[0x14]);        
+    version = Emulator::copyBufferToIntBigEndian<uint16_t>(&header[0x14]);
     exRom = header[0x18] & 1;
     game = header[0x19] & 1;
     binFormat = false;
@@ -308,7 +309,7 @@ auto Cart::serializeStep2(Emulator::Serializer& s) -> void {
     ExpansionPort::serialize(s);
 }
 
-auto Cart::buildHeader(uint8_t* header, uint16_t _type, bool _game, bool _exrom, std::string _name ) -> void {
+auto Cart::buildHeader(uint8_t* header, uint16_t _type, bool _game, bool _exrom, std::string _name, uint16_t _version ) -> void {
     
     std::memset( header, 0, 64 );
     
@@ -316,7 +317,7 @@ auto Cart::buildHeader(uint8_t* header, uint16_t _type, bool _game, bool _exrom,
     
     Emulator::copyIntToBufferBigEndian<uint32_t>( header + 0x10, 0x40 );
     
-    Emulator::copyIntToBufferBigEndian<uint16_t>( header + 0x14, 0x100 );
+    Emulator::copyIntToBufferBigEndian<uint16_t>( header + 0x14, _version );
     
     Emulator::copyIntToBufferBigEndian<uint16_t>( header + 0x16, _type );
     

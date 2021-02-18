@@ -83,6 +83,8 @@ struct ExpansionPort {
     // some RAM based cartridges accept writes between 0x8000 and 0x9fff to their own ram even if PLA
     // maps C64 RAM in this area
     virtual auto listenToWritesAt80To9F(uint16_t addr, uint8_t data ) -> void { }
+
+    virtual auto listenToWritesAtA0ToBF(uint16_t addr, uint8_t data ) -> void { }
     
     virtual auto setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void {}
     

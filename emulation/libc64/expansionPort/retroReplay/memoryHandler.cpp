@@ -19,7 +19,13 @@ auto RetroReplay::setRom(Emulator::Interface::Media* media, uint8_t* rom, unsign
     readHeader();
     
     // it seems there is no separate cartridge id defined for Nordic Replay, so don't rely on header here
-    cartridgeId = media->pcbLayout ? (Interface::CartridgeId)media->pcbLayout->id : Interface::CartridgeIdRetroReplay;
+    // edit: identify nordic replay by minor version
+    if (media->pcbLayout && (media->pcbLayout->id != 0) )
+        cartridgeId = (Interface::CartridgeId)media->pcbLayout->id;
+    else if (version == 0x101) // revision 1
+        cartridgeId = Interface::CartridgeIdNordicReplay;
+    else
+        cartridgeId = Interface::CartridgeIdRetroReplay;
     
     if (!readChips())
         assumeChips();  
@@ -97,14 +103,14 @@ auto RetroReplay::write() -> void {
     }        
 }
 
-auto RetroReplay::createImage(unsigned& imageSize) -> uint8_t* {
+auto RetroReplay::createImage(unsigned& imageSize, uint8_t id) -> uint8_t* {
     imageSize = 64 + 16 + 8 * 1024;
     
     uint8_t* buffer = new uint8_t[ imageSize ];
     std::memset(buffer, 0xff, imageSize);
     
     uint8_t header[64];
-    buildHeader(&header[0], 0x24, true, false, "RetroReplay Cartridge" );
+    buildHeader(&header[0], 0x24, true, false, (id > 0) ? "NordicReplay Cartridge" : "RetroReplay Cartridge", 0x100 + id );
     
     std::memcpy(buffer, &header, 64);
     

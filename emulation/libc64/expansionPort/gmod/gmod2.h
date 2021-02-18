@@ -43,8 +43,7 @@ struct Gmod2 : GameCart {
     auto write() -> void;
     auto writeEeprom() -> void;
 
-    static auto createImage(unsigned& imageSize) -> uint8_t*;
-    static auto createSecondaryImage(unsigned& imageSize) -> uint8_t*;
+    static auto createImage(unsigned& imageSize, uint8_t id) -> uint8_t*;
 
     auto serializeStep2(Emulator::Serializer& s) -> void;
 

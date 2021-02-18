@@ -201,9 +201,7 @@ auto States::loadImagePaths( GUIKIT::Settings* loadSettings ) -> std::vector<Emu
             
             if (inserted) {
                 if ((inserted->setting->path == setting->path)
-                    && (inserted->setting->id == setting->id)) {  
-					logger->log(  "inserted: ", 1 );
-					logger->log(  mediaInUse->name, 0 );
+                    && (inserted->setting->id == setting->id)) {
 					
                     if (!GUIKIT::Vector::find( loadedMedia, mediaInUse ))
                         loadedMedia.push_back( mediaInUse );
@@ -221,10 +219,7 @@ auto States::loadImagePaths( GUIKIT::Settings* loadSettings ) -> std::vector<Emu
                     errorPaths.push_back(setting->path);
                 continue;
             }                                    
-                      
-		//	if (mediaInUse->secondary)
-				logger->log( setting->path, 1 );
-			
+
             emulator->ejectMedium( mediaInUse );
 			
 			mediaInUse->guid = uintptr_t(file);

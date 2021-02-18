@@ -223,10 +223,21 @@ auto Gmod2::reset() -> void {
     eeprom.reset();
 }
 
-auto Gmod2::createImage(unsigned& imageSize) -> uint8_t* {
+auto Gmod2::createImage(unsigned& imageSize, uint8_t id) -> uint8_t* {
+    uint8_t* buffer;
+    
+    if (id == 1) {
+        // eeprom
+        imageSize = 2 * 1024;
+        buffer = new uint8_t[ imageSize ];
+        std::memset(buffer, 0xff, imageSize);
+        return buffer;
+    }
+    
+    // flash
     imageSize = 64 + 16 + 8 * 1024;
 
-    uint8_t* buffer = new uint8_t[ imageSize ];
+    buffer = new uint8_t[ imageSize ];
     std::memset(buffer, 0xff, imageSize);
 
     uint8_t header[64];
@@ -244,14 +255,6 @@ auto Gmod2::createImage(unsigned& imageSize) -> uint8_t* {
     buildChipHeader( &cheader[0], chip );
 
     std::memcpy(buffer + 64, &cheader, 16);
-
-    return buffer;
-}
-
-auto Gmod2::createSecondaryImage(unsigned& imageSize) -> uint8_t* {
-    imageSize = 2 * 1024;
-    uint8_t* buffer = new uint8_t[ imageSize ];
-    std::memset(buffer, 0xff, imageSize);
 
     return buffer;
 }

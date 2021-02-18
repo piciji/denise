@@ -11,6 +11,10 @@
 #include "../gmod/gmod2.h"
 #include "simonsBasic.h"
 #include "warpSpeed.h"
+#include "mach5.h"
+#include "ross.h"
+#include "westermann.h"
+#include "pagefox.h"
 
 namespace LIBC64 {
 
@@ -82,6 +86,22 @@ auto GameCart::create( Interface::CartridgeId cartridgeId ) -> Cart* {
         case Interface::CartridgeIdWarpSpeed:
             cart = new WarpSpeed;
             break;
+
+        case Interface::CartridgeIdMach5:
+            cart = new Mach5;
+            break;
+
+        case Interface::CartridgeIdRoss:
+            cart = new Ross;
+            break;
+
+        case Interface::CartridgeIdWestermann:
+            cart = new Westermann;
+            break;
+
+        case Interface::CartridgeIdPagefox:
+            cart = new Pagefox;
+            break;
             
         default:
             // forgot a rom
@@ -93,13 +113,14 @@ auto GameCart::create( Interface::CartridgeId cartridgeId ) -> Cart* {
     return cart;
 }
 
-auto GameCart::createImage(unsigned& imageSize) -> uint8_t* {
-	//todo: redesign if there are more expansions in this group with writable memory
-	return Gmod2::createImage( imageSize );
+auto GameCart::createImage(unsigned& imageSize, uint8_t id) -> uint8_t* {
+	
+    if (id < 2)
+        return Gmod2::createImage( imageSize, id );
+    
+    return nullptr;
 }
 
-auto GameCart::createSecondaryImage(unsigned& imageSize) -> uint8_t* {
-	return Gmod2::createSecondaryImage( imageSize );
-}
     
 }
+

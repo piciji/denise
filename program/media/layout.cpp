@@ -130,14 +130,6 @@ FlashCreatorLayout::FlashCreatorLayout() {
     setAlignment(0.5);
 }
 
-EpromCreatorLayout::EpromCreatorLayout() {
-    append(format, {0u, 0u}, 10);
-    append(button, {0u, 0u});
-    setFont(GUIKIT::Font::system("bold"));
-    setPadding(10);
-    setAlignment(0.5);
-}
-
 HdCreatorLayout::Creator::Creator() {
     append(diskSizeName, {0u, 0u}, 10);
     append(diskSize, {40, 0u}, 10);

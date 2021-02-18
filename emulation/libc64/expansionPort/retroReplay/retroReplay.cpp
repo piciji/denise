@@ -271,11 +271,11 @@ auto RetroReplay::readRomH( uint16_t addr ) -> uint8_t {
 // a0 - bf [16k]
 auto RetroReplay::writeRomH( uint16_t addr, uint8_t data ) -> void {    
 
-    if (!nordicPower || frozen)
+    if (nordicPower && !frozen) {
+        ram[ getRamAddr(addr & 0x1fff) ] = data;
         return;
-    
-    ram[ getRamAddr(addr & 0x1fff) ] = data;
-    
+    }
+
     ExpansionPort::writeRomH( addr, data );
 }
 
@@ -425,4 +425,3 @@ auto RetroReplay::getJumper( unsigned jumperId ) -> bool {
 
 
 }
-

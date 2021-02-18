@@ -185,6 +185,7 @@ auto System::unserializeLight() -> void {
     auto& s = runAhead.serializer;
     
     s.setMode( Emulator::Serializer::Mode::Load );
+    uint8_t _mode = mode;
     
     serialize(s);
     cia1->serialize(s);
@@ -198,7 +199,8 @@ auto System::unserializeLight() -> void {
 
     sysTimer.serialize(s);         
 
-    remapCpu();  
+    if (mode != _mode)
+        remapCpu();
 }
 
 }

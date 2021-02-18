@@ -146,13 +146,6 @@ struct FlashCreatorLayout : GUIKIT::FramedHorizontalLayout {
 	FlashCreatorLayout();
 };
 
-struct EpromCreatorLayout : GUIKIT::FramedHorizontalLayout {
-    GUIKIT::ComboButton format;
-    GUIKIT::Button button;
-
-    EpromCreatorLayout();
-};
-
 struct HdCreatorLayout : GUIKIT::FramedVerticalLayout {
 
     struct Creator : GUIKIT::HorizontalLayout {
@@ -208,7 +201,6 @@ struct MediaLayout : GUIKIT::HorizontalLayout {
     DiskCreatorLayout* diskCreatorLayout = nullptr;
 	MemoryCreatorLayout* memoryCreatorLayout = nullptr;
     FlashCreatorLayout* flashCreatorLayout = nullptr;
-    EpromCreatorLayout* epromCreatorLayout = nullptr;
                    
     GUIKIT::FramedVerticalLayout moduleFrame;
     GUIKIT::SwitchLayout moduleSwitch;
@@ -242,7 +234,7 @@ struct MediaLayout : GUIKIT::HorizontalLayout {
 	auto preselectPath( std::string& groupName ) -> std::string;
 	auto savePath( std::string& groupName, std::string path ) -> void;
     auto showC64Listing( MediaGroupLayout* layout ) -> bool;
-    auto createImage( Emulator::Interface::MediaGroup* mediaGroup, bool secondaryRom = false ) -> void;
+    auto createImage( Emulator::Interface::MediaGroup* mediaGroup ) -> void;
     auto showMediaGroupLayout( Emulator::Interface::MediaGroup* mediaGroup ) -> void;
     auto getMediaGroupLayout( Emulator::Interface::MediaGroup* mediaGroup ) -> MediaGroupLayout*;   
     auto insertImage( MediaGroupLayout::Block* block, GUIKIT::File* file, GUIKIT::File::Item* item ) -> void;

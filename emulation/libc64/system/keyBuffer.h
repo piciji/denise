@@ -41,6 +41,7 @@ struct KeyBuffer {
     };
     
     std::vector<Action> queue;
+    bool hasJobs = false;
     
     auto add( Action action, bool inSeconds = true ) -> void {
         
@@ -59,17 +60,20 @@ struct KeyBuffer {
         serializeAction( s, action );
         
         system->serializationSize += s.size();
+
+        hasJobs = true;
     }
     
     auto reset() -> void {
       
         queue.clear();
 
+        hasJobs = false;
 	}   
     
     auto isPrgInjectionInQueue() -> bool {
         
-        if (!queue.size())
+        if (!hasJobs)
             return false;
         
         for(auto& action : queue) {
@@ -86,7 +90,7 @@ struct KeyBuffer {
         s.integer( vSize );
         
         if ( s.mode() == Emulator::Serializer::Mode::Load ) {
-            queue.clear();
+            reset();
             
             for(unsigned i = 0; i < vSize; i++) {
                 Action action;
@@ -104,6 +108,8 @@ struct KeyBuffer {
                     action.callback = []() { tape->setMode( Tape::Mode::Play ); };
                 
                 queue.push_back( action );
+
+                hasJobs = true;
             }
             
         } else {
@@ -127,8 +133,10 @@ struct KeyBuffer {
     
     auto process() -> void {
         
-        if (queue.size() == 0)
+        if (queue.size() == 0) {
+            hasJobs = false;
             return;
+        }
         
         Found result;
         
@@ -163,7 +171,7 @@ struct KeyBuffer {
                 
                 if ( ++action.position == action.delay ) {
                     // autostarted programs would check forever
-                    queue.clear();
+                    reset();
                     return;
                 }
                 
@@ -183,7 +191,7 @@ struct KeyBuffer {
                     }
                     
                     // don't do any further actions                    
-                    queue.clear();
+                    reset();
                     return;
                     
                 } else if ( result == Found::NotYet ) {
