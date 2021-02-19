@@ -2,6 +2,10 @@
 
 namespace LIBC64 {    
 
+// software can detect silencer only by checking collisions or by checking 'lastReadPhi1'.
+// it's safe for games to use it in warp mode. only a few demos / tests fail.
+// for example: ef_test.crt which relies on last bus value of first half cycle
+	
 auto VicIICycle::clockSilence() -> void {
 
 	if (isSprFirstCycle(flags)) {

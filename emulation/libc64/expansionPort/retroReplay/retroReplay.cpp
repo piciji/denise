@@ -225,7 +225,7 @@ auto RetroReplay::writeRomL( uint16_t addr, uint8_t data ) -> void {
         
     } else {
         
-        if ( (cartridgeId == Interface::CartridgeIdNordicReplay) && ramMode )
+        if ( (cartridgeId == Interface::CartridgeIdNordicReplay) && !nordicPower && ramMode )
             ram[ getRamAddr<true>(addr & 0x1fff) ] = data;
     }
     
@@ -235,7 +235,7 @@ auto RetroReplay::writeRomL( uint16_t addr, uint8_t data ) -> void {
 // 80 - 9f accepts writes while there is no cartridge mapped in this area
 auto RetroReplay::listenToWritesAt80To9F(uint16_t addr, uint8_t data ) -> void {
     // C64 ram will be written in an external process, doesn't matter if 'writeRomL' allows it or not.
-    // because in this mode (C64 config) cartridge can listen only but not prevent the C64 RAM write   
+    // because in this mode (C64 config) cartridge can listen only but not prevent the C64 RAM write ?
     writeRomL( addr, data );
 }
 

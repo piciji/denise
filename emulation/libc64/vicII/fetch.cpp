@@ -207,8 +207,6 @@ inline auto VicIICycle::isCharRomAccessed(uint16_t addr) -> bool {
 	addr = (addr & 0x3fff) | system->vicBank;
 
     return !ultimaxPhi1 && ((addr & 0x7000) == 0x1000);
-
-	//return system->memoryVic.isLocation( addr >> 8, &(system->readCharRom) );
 }
 
 inline auto VicIICycle::readCpu() -> uint8_t {
