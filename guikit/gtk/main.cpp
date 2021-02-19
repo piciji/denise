@@ -35,7 +35,8 @@ auto pApplication::run() -> void {
             Application::loop();
 			processEvents();
         }
-    } else gtk_main();
+    } else if (!Application::isQuit)
+		gtk_main();
 }
 
 auto pApplication::processEvents() -> void {
@@ -43,7 +44,8 @@ auto pApplication::processEvents() -> void {
 }
 
 auto pApplication::quit() -> void {
-    if(gtk_main_level()) gtk_main_quit();
+    if(gtk_main_level())
+		gtk_main_quit();
 }
 
 auto pApplication::initialize() -> void {

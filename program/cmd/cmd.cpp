@@ -227,6 +227,8 @@ auto Cmd::parse() -> void {
 					
 					if (!hasViciiTest && GUIKIT::String::foundSubStr( temp, "vicii" ))
 						hasViciiTest = true;
+					else if (!hasViciiTest && GUIKIT::String::foundSubStr( temp, "ef_test" )) // relies on VIC last bus value
+						hasViciiTest = true;
 					else if (!hasFuxxorTest && GUIKIT::String::foundSubStr( temp, "fuxxor" ))
 						hasFuxxorTest = true;
 					else if (!hasRam0001Test && GUIKIT::String::foundSubStr( temp, "ram0001" ))
@@ -285,8 +287,15 @@ auto Cmd::parse() -> void {
 
     else if (autostartPrg == 2) { // load prg as d64
         // allow it only, if there is a single PRG file loaded
-        if ( diskGroup && (paths.size() == 1) && GUIKIT::String::foundSubStr( GUIKIT::String::toLowerCase( paths[0] ), ".prg" ))
-            diskGroup->suffix.push_back("prg");
+		
+		if ( diskGroup && (paths.size() == 1)) {
+			auto _path = paths[0];
+		
+			GUIKIT::String::toLowerCase( _path );
+			
+			if (GUIKIT::String::foundSubStr( _path, ".prg" ))
+				diskGroup->suffix.push_back("prg");
+		}
     }
 		
     arguments = paths;

@@ -13,7 +13,6 @@ struct Logger {
 		if ( newLine ) {						
 			if ( bufferSize && (bufferSize == lines.size()) ) {
 				write();
-				lines.clear();				
 			}				
 		}
 
@@ -47,6 +46,7 @@ struct Logger {
 			out = lines[ i ] + "\n";
 			fputs( out.c_str(), fp );
 		}		
+		lines.clear();
 	}
 
 	auto setSavePath(std::string path) -> void {

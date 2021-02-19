@@ -139,7 +139,8 @@ auto Program::init() -> void {
         loadSettings();
 
         if (!loadTranslation(globalSettings->get<std::string>("translation", getSystemLangFile()))) {
-            view->message->error("language plugin not found");
+			if (view)
+				view->message->error("language plugin not found");
         }		
     }
     
@@ -569,6 +570,9 @@ auto Program::appFolder() -> std::string {
 
 auto Program::questionToWrite(Emulator::Interface::Media* media) -> bool {
     
+	if (!view)
+		return false;
+	
     return view->questionToWrite(media);
 }
 
