@@ -25,11 +25,12 @@ struct Interface : Emulator::Interface {
         MediaGroupIdDisk = 0, MediaGroupIdTape = 1,
         MediaGroupIdProgram = 2, MediaGroupIdExpansionGame = 3, MediaGroupIdExpansionReu = 4,
         MediaGroupIdExpansionFreezer = 5, MediaGroupIdExpansionEasyFlash = 6, MediaGroupIdExpansionRetroReplay = 7,
+		MediaGroupIdExpansionGeoRam = 8,
     };
     
     enum ExpansionId {
         ExpansionIdNone = 0, ExpansionIdGame = 1, ExpansionIdReu = 2, ExpansionIdFreezer = 3,
-        ExpansionIdEasyFlash = 4, ExpansionIdRetroReplay = 5,
+        ExpansionIdEasyFlash = 4, ExpansionIdRetroReplay = 5, ExpansionIdGeoRam = 6, ExpansionIdReuRetroReplay = 7,
     };
     
     enum CartridgeId {

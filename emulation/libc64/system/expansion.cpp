@@ -6,6 +6,7 @@
 #include "../expansionPort/easyFlash/easyFlash.h"
 #include "../expansionPort/retroReplay/retroReplay.h"
 #include "../expansionPort/gmod/gmod2.h"
+#include "../expansionPort/geoRam/geoRam.h"
 
 namespace LIBC64 {
  
@@ -39,6 +40,7 @@ auto System::setExpansion( Emulator::Interface::Expansion& expansion ) -> void {
             
         case Interface::ExpansionIdReu:
             expansionPort = reu;
+			reu->setExpander( nullptr );
             break;
             
         case Interface::ExpansionIdFreezer:
@@ -52,6 +54,15 @@ auto System::setExpansion( Emulator::Interface::Expansion& expansion ) -> void {
         case Interface::ExpansionIdRetroReplay:
             expansionPort = retroReplay;
             break;
+			
+		case Interface::ExpansionIdReuRetroReplay:
+			expansionPort = reu;
+			reu->setExpander( retroReplay );
+			break;
+			
+		case Interface::ExpansionIdGeoRam:
+            expansionPort = geoRam;
+            break;
     }
     
 }  
@@ -64,6 +75,7 @@ auto System::createExpansions() -> void {
     easyFlash = new EasyFlash;
     retroReplay = new RetroReplay;
 	gmod2 = new Gmod2;
+	geoRam = new GeoRam;
     noExpansion = new ExpansionPort;
     
     expansionPort = noExpansion;
@@ -81,6 +93,7 @@ auto System::destroyExpansions() -> void {
     delete easyFlash;
     delete retroReplay;
 	delete gmod2;
+	delete geoRam;
     delete noExpansion;	
 }
 

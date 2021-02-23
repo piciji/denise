@@ -14,6 +14,7 @@
 #include "expansionPort/easyFlash/easyFlash.h"
 #include "expansionPort/retroReplay/retroReplay.h"
 #include "expansionPort/gmod/gmod2.h"
+#include "expansionPort/geoRam/geoRam.h"
 #include "disk/structure/structure.h"
 #include "system/gluelogic.h"
 #include "../tools/crop.h"
@@ -48,6 +49,18 @@ auto Interface::prepareMemory() -> void {
         memory.push_back( {6, 8192} );
         memory.push_back( {7, 16384} );
     }
+
+	memoryTypes.push_back({1, "GeoRam", 0});
+
+	{	auto& memory = memoryTypes[1].memory;
+		memory.push_back({0, 64});
+		memory.push_back({1, 128});
+		memory.push_back({2, 256});
+		memory.push_back({3, 512});
+		memory.push_back({4, 1024});
+		memory.push_back({5, 2048});
+		memory.push_back({6, 4096});
+	}
 }
 
 auto Interface::prepareMedia() -> void {
@@ -59,6 +72,7 @@ auto Interface::prepareMedia() -> void {
     mediaGroups.push_back({MediaGroupIdExpansionFreezer, "Freezer", MediaGroup::Type::Expansion, {"bin", "crt"}, {} });
     mediaGroups.push_back({MediaGroupIdExpansionEasyFlash, "EasyFlash", MediaGroup::Type::Expansion, {"bin", "crt"}, {"crt"} });
     mediaGroups.push_back({MediaGroupIdExpansionRetroReplay, "Retro Replay", MediaGroup::Type::Expansion, {"bin", "crt"}, {"crt"} });
+	mediaGroups.push_back({MediaGroupIdExpansionGeoRam, "GeoRam", MediaGroup::Type::Expansion, {"bin"}, {"bin"} });
 
 	{   auto& group = mediaGroups[MediaGroupIdDisk];
     
@@ -133,6 +147,15 @@ auto Interface::prepareMedia() -> void {
         group.media.push_back({5, "Retro Replay 6", 0, &group});
         group.selected = &group.media[0];  
 	}
+
+	{	auto& group = mediaGroups[MediaGroupIdExpansionGeoRam];
+		group.media.push_back({0, "GeoRam Memory 1", 0, &group});
+		group.media.push_back({1, "GeoRam Memory 2", 0, &group});
+		group.media.push_back({2, "GeoRam Memory 3", 0, &group});
+		group.media.push_back({3, "GeoRam Memory 4", 0, &group});
+
+		group.selected = &group.media[0];
+	}
     
     for(auto& group : mediaGroups) {
         group.expansion = nullptr;
@@ -148,13 +171,14 @@ auto Interface::prepareMedia() -> void {
 }
 
 auto Interface::prepareExpansions() -> void {
-    expansions.push_back( { ExpansionIdNone, "Empty", Expansion::Type::Empty, nullptr, nullptr } );
-    expansions.push_back( { ExpansionIdGame, "Cartridge", Expansion::Type::Game | Expansion::Type::Flash | Expansion::Type::Eprom, nullptr, &mediaGroups[MediaGroupIdExpansionGame] } );
-    expansions.push_back( { ExpansionIdReu, "REU", Expansion::Type::Ram, &memoryTypes[0], &mediaGroups[MediaGroupIdExpansionReu] } );    
-    expansions.push_back( { ExpansionIdFreezer, "Freezer", Expansion::Type::Freezer, nullptr, &mediaGroups[MediaGroupIdExpansionFreezer] } );
-    expansions.push_back( { ExpansionIdEasyFlash, "EasyFlash", Expansion::Type::Flash, nullptr, &mediaGroups[MediaGroupIdExpansionEasyFlash] } );     
-    expansions.push_back( { ExpansionIdRetroReplay, "Retro Replay", Expansion::Type::Freezer | Expansion::Type::Flash, nullptr, &mediaGroups[MediaGroupIdExpansionRetroReplay] } );     
-    
+    expansions.push_back( { ExpansionIdNone, "Empty", Expansion::Type::Empty, nullptr, nullptr, nullptr } );
+    expansions.push_back( { ExpansionIdGame, "Cartridge", Expansion::Type::Standard | Expansion::Type::Flash | Expansion::Type::Eprom, nullptr, &mediaGroups[MediaGroupIdExpansionGame], nullptr } );
+    expansions.push_back( { ExpansionIdReu, "REU", Expansion::Type::Ram, &memoryTypes[0], &mediaGroups[MediaGroupIdExpansionReu], nullptr } );    
+    expansions.push_back( { ExpansionIdFreezer, "Freezer", Expansion::Type::Freezer, nullptr, &mediaGroups[MediaGroupIdExpansionFreezer], nullptr } );
+    expansions.push_back( { ExpansionIdEasyFlash, "EasyFlash", Expansion::Type::Flash, nullptr, &mediaGroups[MediaGroupIdExpansionEasyFlash], nullptr } );     
+    expansions.push_back( { ExpansionIdRetroReplay, "Retro Replay", Expansion::Type::Freezer | Expansion::Type::Flash, nullptr, &mediaGroups[MediaGroupIdExpansionRetroReplay], nullptr } );
+	expansions.push_back( { ExpansionIdGeoRam, "GeoRam", Expansion::Type::Ram | Expansion::Type::Battery, &memoryTypes[1], &mediaGroups[MediaGroupIdExpansionGeoRam], nullptr } );
+	expansions.push_back( { ExpansionIdReuRetroReplay, "REU + Retro Replay", Expansion::Type::Ram | Expansion::Type::Freezer | Expansion::Type::Flash, &memoryTypes[0], &mediaGroups[MediaGroupIdExpansionReu], &mediaGroups[MediaGroupIdExpansionRetroReplay] } );
     
     {   auto& expansion = expansions[ExpansionIdGame];        
         expansion.pcbs.push_back( {CartridgeIdDefault, "Default"} );
@@ -218,6 +242,13 @@ auto Interface::prepareExpansions() -> void {
         expansion.jumpers.push_back( {1, "flash"} );
     
         mediaGroups[MediaGroupIdExpansionRetroReplay].expansion = &expansion;
+    }
+
+	{   auto& expansion = expansions[ExpansionIdGeoRam];        
+    
+		expansion.creationIdents.push_back( "GeoRam" );
+		
+        mediaGroups[MediaGroupIdExpansionGeoRam].expansion = &expansion;
     }
 
 }
@@ -891,6 +922,8 @@ auto Interface::insertExpansionImage(Media* media, uint8_t* data, unsigned size)
         easyFlash->setRom(media, data, size);
     else if (group->expansion->id == ExpansionIdRetroReplay)
         retroReplay->setRom(media, data, size);
+	else if (group->expansion->id == ExpansionIdGeoRam)
+        geoRam->setRam(media, data, size);
 }
 
 auto Interface::writeProtectExpansion(Media* media, bool state) -> void {
@@ -911,7 +944,10 @@ auto Interface::writeProtectExpansion(Media* media, bool state) -> void {
             gameCart->setWriteProtect( state );
         else if (gmod2->mediaSecondary == media)
             gmod2->setSecondaryWriteProtect( state );
-    }
+    } else if (group->expansion->id == ExpansionIdGeoRam) {
+		if (geoRam->media == media)
+			geoRam->setWriteProtect( state );
+	}
 }
 
 auto Interface::isWriteProtectedExpansion(Media* media) -> bool {
@@ -932,7 +968,10 @@ auto Interface::isWriteProtectedExpansion(Media* media) -> bool {
             return gameCart->isWriteProtected();
         else if (gmod2->mediaSecondary == media)
             return gmod2->isSecondaryWriteProtected();
-    }
+    } else if (group->expansion->id == ExpansionIdGeoRam) {
+		if (geoRam->media == media)
+			return geoRam->isWriteProtected();
+	}
 
     return false;
 }
@@ -945,6 +984,7 @@ auto Interface::ejectExpansionImage(Media* media) -> void {
         return;
     
     if (group->expansion->id == ExpansionIdGame)
+		// todo: write secondary rom for different cartridges, can't use gameCart because it's already removed by unseting primary ROM
         !media->secondary ? gameCart->setRom(media, nullptr, 0) : gmod2->setSecondaryRom(media, nullptr, 0);
     else if (group->expansion->id == ExpansionIdReu) {
         !media->secondary ? reu->unsetRam() : reu->setRom(media, nullptr, 0);
@@ -954,6 +994,8 @@ auto Interface::ejectExpansionImage(Media* media) -> void {
         easyFlash->setRom(media, nullptr, 0);
     else if (group->expansion->id == ExpansionIdRetroReplay)
         retroReplay->setRom(media, nullptr, 0);
+	else if (group->expansion->id == ExpansionIdGeoRam)
+		geoRam->setRam( media, nullptr, 0 );
 }
 
 auto Interface::createExpansionImage(MediaGroup* group, unsigned& imageSize, uint8_t id) -> uint8_t* {
@@ -969,6 +1011,9 @@ auto Interface::createExpansionImage(MediaGroup* group, unsigned& imageSize, uin
 	
 	if (group->expansion->id == ExpansionIdGame)
 		return gameCart->createImage(imageSize, id);
+	
+	if (group->expansion->id == ExpansionIdGeoRam)
+		return geoRam->createImage( imageSize, id );
     
     return nullptr;
 }

@@ -1,14 +1,15 @@
 
 #include "../../system/system.h"
 #include "reu.h"
+#include "../retroReplay/retroReplay.h"
 
 namespace LIBC64 {  
     
-Reu* reu = nullptr;       
+Reu* reu = nullptr;
     
 Reu::Reu() : ExpansionPort() {
     setId( Interface::ExpansionIdReu );
-    prepareRam( 128 );   
+    prepareRam( 128 );
 
     setIrq = [this]() {
         
@@ -54,6 +55,30 @@ Reu::~Reu() {
         delete[] data;
 }
 
+auto Reu::isExrom( ) -> bool {
+	if (expander)
+		return expander->isExrom();
+	
+	return exRom;
+}
+
+auto Reu::isGame( ) -> bool {
+	if (expander)
+		return expander->isGame();
+		
+	return game;
+}
+
+auto Reu::setExpander( ExpansionPort* expander ) -> void {
+	
+	this->expander = expander;
+	
+	if (expander == retroReplay)
+		setId( Interface::ExpansionIdReuRetroReplay );
+	else 
+		setId( Interface::ExpansionIdReu );
+}
+
 auto Reu::setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void {
     
     if (rom && (romSize & 2) ) {
@@ -70,6 +95,9 @@ auto Reu::setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSi
 
 auto Reu::isBootable( ) -> bool {
     
+	if (expander)
+		return expander->isBootable();
+	
     return !exRom;
 }
 
@@ -90,7 +118,8 @@ auto Reu::prepareRam(unsigned size) -> void {
     
     // when lower 19 bits of REU address reach this value, address wraps around to zero
     wrapAround = sizeInKb == 128 ? 0x20000 : 0x80000;
-    dramWrapAround = 0xffffff;
+	dramWrapAround = size - 1;
+	
     if (sizeInKb == 128)
         dramWrapAround = 0x1ffff;
     else if (sizeInKb == 256 || sizeInKb == 512)
@@ -119,8 +148,32 @@ auto Reu::injectRam( ) -> void {
 
 auto Reu::reset() -> void {
     
+	if (expander)
+		expander->reset();
+	
     status &= ~0xe0;    
-    std::memset(data, 0, size);
+	
+	uint8_t value = 0;
+	uint8_t inverter = 0;
+	
+	for(unsigned i = 0; i < size; i++) {
+				
+		if (++inverter == 2) {
+			inverter = 0;
+			
+			value ^= 0xff;
+		}		
+		
+		if (i != 0x20000) {	
+			if ( (i & 0xff) == 0) {
+				inverter = 1;
+				value ^= 0xff;
+			}
+		}
+		
+		data[i] = value;
+	}	
+	
     injectRam( );
     
     command = 0x10; // FF00 trigger disabled    
@@ -136,6 +189,9 @@ auto Reu::reset() -> void {
     steal = false;
     swapRead = false;
     dma = false;
+	
+	busValue = 0xff;
+	busFloating = 0xff;
 }
 
 inline auto Reu::readReu() -> uint8_t {
@@ -144,8 +200,8 @@ inline auto Reu::readReu() -> uint8_t {
     
     if (reuAddr < size)        
         return data[reuAddr];    
-    
-    return 0xff;
+	
+    return busFloating;
 }
 
 inline auto Reu::writeReu(uint8_t value) -> void {
@@ -174,6 +230,9 @@ inline auto Reu::incrementAddresses() -> void {
 
 auto Reu::clock() -> void {
 
+	if (expander)
+		expander->clock();
+	
     if (waitForStart) {
         // listen CPU bus usage        
         if (cpu->isWriteCycle()) {
@@ -202,14 +261,14 @@ inline auto Reu::verify() -> void {
     if (vicBaLow & 1)
         return;
 
-    value = readReu();
-    value2 = system->memoryCpu.read( bus.addr = hostAddr);
+    busValue = readReu();
+    busValue2 = system->memoryCpu.read( bus.addr = hostAddr);
 
     if (steal) {
         steal = false;
 
         if (transferLength == 1) {
-            if (value == value2) {
+            if (busValue == busValue2) {
                 status |= 0x40; // end of block
             }
         }
@@ -221,7 +280,7 @@ inline auto Reu::verify() -> void {
     
     incrementAddresses();
 
-    if (value != value2) {
+    if (busValue != busValue2) {
         status |= 0x20; // verify error
 
         if (transferLength > 1)
@@ -236,59 +295,66 @@ inline auto Reu::swap() -> void {
     if (!swapRead) {
         if (vicBaLow & 1)
             return;
-        value = readReu();
-        value2 = system->memoryCpu.read( bus.addr = hostAddr);
+        busValue = readReu();
+        busValue2 = system->memoryCpu.read( bus.addr = hostAddr);
         
     } else {
 
         if ((vicBaLow & 3) == 3) {
-            steal = true;
             return;
         }
-
-        if (steal) {
-            steal = false;
-            if (transferLength == 1)
-                return;
-        }
+		
+		if ((vicBaLow & 3) == 1)
+			if (transferLength == 1)
+				return;
         
-        writeReu(value2);
-        system->memoryCpu.write( bus.addr = hostAddr, value);
+        writeReu( busValue2 );
+        system->memoryCpu.write( bus.addr = hostAddr, busValue);
         incrementAddresses();      
         decrementTransferLength(); 
     }
         
-    swapRead ^= 1;  
+    swapRead ^= 1;
 }
 
-inline auto Reu::fetch() -> void {
-    
+inline auto Reu::fetch() -> void { 
+	
     if ((vicBaLow & 3) == 3) { // first BA cycle is usable for REU
-        steal = true;
         return;
     }
+	
+	if ((vicBaLow & 3) == 1)
+		if (transferLength == 1)
+			return;
     
-    if (steal) {
-        steal = false;
-        if (transferLength == 1) // when BA happened in last cylce, there is an extra cycle.
-            return;
-    }
+	busFloating = busValue = readReu();
     
-    value = readReu();
-    
-    system->memoryCpu.write( bus.addr = hostAddr, value );
-    incrementAddresses();      
-    decrementTransferLength();
+    system->memoryCpu.write( bus.addr = hostAddr, busValue );
+    incrementAddresses();     
+	if (transferLength == 1) {
+		busFloating = readReu(); // dummy read
+		//system->interface->log( "fin fetch", 1 );
+		//system->interface->log( vicII->getVcounter(), 0 );
+		//system->interface->log( vicII->getCycle(), 0 );
+	}
+
+	
+    decrementTransferLength();	
 }
 
 inline auto Reu::stash() -> void {
     if (vicBaLow & 1) // VIC needs this cycle
-        return;        
+        return;    	
     
-    value = system->memoryCpu.read( bus.addr = hostAddr );    
+    busFloating = busValue = system->memoryCpu.read( bus.addr = hostAddr );    
     
-    writeReu( value );
-    incrementAddresses();      
+    writeReu( busValue );
+    incrementAddresses();   
+	if (transferLength == 1) {
+		//system->interface->log( "fin stash", 1 );
+		//system->interface->log( vicII->getVcounter(), 0 );
+		//system->interface->log( vicII->getCycle(), 0 );
+	}	
     decrementTransferLength();
 }
 
@@ -298,6 +364,23 @@ inline auto Reu::decrementTransferLength() -> void {
         status |= 0x40;
         sysTimer.add( &finish, 1, Emulator::SystemTimer::Action::UpdateExisting );
     }
+}
+
+auto Reu::readIo1( uint16_t addr ) -> uint8_t {
+	
+	if (expander)
+		return expander->readIo1( addr );
+	
+	// REU don't use it
+	return ExpansionPort::readIo1( addr );
+}
+
+auto Reu::writeIo1( uint16_t addr, uint8_t value ) -> void {
+	
+	if (expander)
+		expander->writeIo1( addr, value );
+	
+	// REU don't use it
 }
 
 auto Reu::readIo2( uint16_t addr ) -> uint8_t {
@@ -315,32 +398,38 @@ auto Reu::readIo2( uint16_t addr ) -> uint8_t {
             sysTimer.add( &unsetIrq, 1, Emulator::SystemTimer::Action::UpdateExisting );
             break;
         case 1:
-            return command;
+            val = command; break;
         case 2:
-            return hostAddr & 0xff;
+            val = hostAddr & 0xff; break;
         case 3:
-            return (hostAddr >> 8) & 0xff;
+            val = (hostAddr >> 8) & 0xff; break;
         case 4:
-            return reuAddr & 0xff;
+            val = reuAddr & 0xff; break;
         case 5:
-            return (reuAddr >> 8) & 0xff;
+            val = (reuAddr >> 8) & 0xff; break;
         case 6:
-            return (reuAddr >> 16) | 0xf8;
+            val = (reuAddr >> 16) | 0xf8; break;
         case 7:
-            return transferLength & 0xff;
+            val = transferLength & 0xff; break;
         case 8:
-            return (transferLength >> 8) & 0xff;
+            val = (transferLength >> 8) & 0xff; break;
         case 9:
-            return intMask | 0x1f;
+            val = intMask | 0x1f; break;
         case 0xa:
-            return control | 0x3f;                        
+            val = control | 0x3f; break;                 
     }
     
+	if (expander)
+		return val | expander->readIo2( addr );
+		
     return val;
 }
 
 auto Reu::writeIo2( uint16_t addr, uint8_t value ) -> void {
     
+	if (expander)
+		expander->writeIo2( addr, value );
+	
     if (dma)
         return;
     
@@ -357,6 +446,10 @@ auto Reu::writeIo2( uint16_t addr, uint8_t value ) -> void {
                 if (command & 0x10) {                    
                     sysTimer.add( &setDma, 1, Emulator::SystemTimer::Action::UpdateExisting );
                     waitForStart = false;
+					
+					//system->interface->log( "start ", 1 );
+					//system->interface->log( vicII->getVcounter(), 0 );
+					//system->interface->log( vicII->getCycle(), 0 );
                 }                    
             }
             break;
@@ -414,12 +507,63 @@ auto Reu::allowIrq() -> bool {
 
 auto Reu::readRomL(uint16_t addr) -> uint8_t {
 	
+	if (expander)
+		return expander->readRomL(addr);
+	
     if (!rom)
         return ExpansionPort::readRomL( addr );
     
     addr %= romSize;		
     
     return *(rom + addr);
+}
+
+// not used by REU itself, but possible expander
+auto Reu::writeRomL( uint16_t addr, uint8_t data ) -> void {
+	if (expander)
+		expander->writeRomL(addr, data);
+	else
+		ExpansionPort::writeRomL( addr, data );
+}
+
+auto Reu::listenToWritesAt80To9F(uint16_t addr, uint8_t data ) -> void {
+	if (expander)
+		expander->listenToWritesAt80To9F(addr, data);
+}
+
+auto Reu::writeUltimaxRomL( uint16_t addr, uint8_t data ) -> void {
+	if (expander)
+		expander->writeUltimaxRomL(addr, data);
+	else
+		ExpansionPort::writeUltimaxRomL( addr, data );
+}
+
+auto Reu::readRomH( uint16_t addr ) -> uint8_t {
+	if (expander)
+		return expander->readRomH(addr);
+	
+	return ExpansionPort::readRomH( addr );
+}
+
+auto Reu::readUltimaxA0( uint16_t addr ) -> uint8_t {
+	if (expander)
+		return expander->readUltimaxA0(addr);
+	
+	return ExpansionPort::readUltimaxA0( addr );
+}
+
+auto Reu::writeRomH( uint16_t addr, uint8_t data ) -> void {
+	if (expander)
+		expander->writeRomH(addr, data);
+	else
+		ExpansionPort::writeRomH( addr, data );
+}
+
+auto Reu::writeUltimaxA0( uint16_t addr, uint8_t data ) -> void {
+	if (expander)
+		expander->writeUltimaxA0(addr, data);
+	else
+		ExpansionPort::writeUltimaxA0( addr, data );
 }
 
 auto Reu::serialize(Emulator::Serializer& s) -> void {
@@ -452,11 +596,15 @@ auto Reu::serialize(Emulator::Serializer& s) -> void {
     s.integer( waitForStart );
     s.integer( vicBaLow );
     s.integer( steal );
-    s.integer( value );
-    s.integer( value2 );
+    s.integer( busValue );
+    s.integer( busValue2 );
+	s.integer( busFloating );
     s.integer( swapRead );     
     
     ExpansionPort::serialize( s );
+	
+	if (expander)
+		expander->serialize( s );
 }
 
 }

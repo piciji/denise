@@ -408,7 +408,10 @@ auto States::updateTapeMenu() -> void {
 
 auto States::updateSaveable() -> void {
     
-    auto expansionMediaGroup = emulator->getExpansion()->mediaGroup;    
+	auto emuExpansion = emulator->getExpansion();
+		
+    auto expansionMediaGroup = emuExpansion->mediaGroup;
+	auto expansionMediaGroupExpanded = emuExpansion->mediaGroupExpanded;
     
     for( auto& mediaGroup : emulator->mediaGroups ) {
 
@@ -424,7 +427,7 @@ auto States::updateSaveable() -> void {
                 continue;
             
             if (mediaGroup.isExpansion()) {
-				if ( (expansionMediaGroup == &mediaGroup) && (!media.secondary || emulator->hasExpansionSecondaryRom()) )
+				if ( ((expansionMediaGroup == &mediaGroup) || (expansionMediaGroupExpanded == &mediaGroup)) && (!media.secondary || emulator->hasExpansionSecondaryRom()) )
 					insert->setting->setSaveable( !insert->setting->path.empty(), true );
 				else
 					insert->setting->setSaveable( false );

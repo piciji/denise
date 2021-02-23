@@ -23,6 +23,8 @@
 * Final Cartridge I, II, Plus, III, III+
 * Simons Basic, Warp Speed
 * Atomic Power, Mach5, Pagefox, Ross, Westermann
+* use REU + Retro Replay together
+* GeoRAM
 
 ## 1.0.9.1
 * fix TAPE emulation (broken in 1.0.9)

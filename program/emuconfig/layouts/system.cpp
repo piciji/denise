@@ -459,22 +459,35 @@ auto SystemLayout::updateExpansionMemory() -> void {
             }                
         }
     }
+		
+	std::vector<MemoryLayout::Block*> inUse;
     
-    for( auto& expansion : emulator->expansions ) {
-        
-        if (!expansion.memoryType)
-            continue;
-        
-        for (auto block : memoryLayout.blocks) {
-            
-            if (block->memoryType == expansion.memoryType) {
-                
-                block->setEnabled( &expansion == expansionSelected );
-                
-                break;
-            }
-        }
-    }    
+	for( auto& expansion : emulator->expansions ) {
+
+		if (!expansion.memoryType)
+			continue;
+
+		for (auto block : memoryLayout.blocks) {
+
+			if (block->memoryType == expansion.memoryType) {
+				
+				if (&expansion == expansionSelected) {
+					
+					block->setEnabled( true );
+					
+					inUse.push_back( block );
+					
+				} else {
+					
+					if (!GUIKIT::Vector::find( inUse, block ))
+						block->setEnabled( false );
+				}								
+				
+				break;
+			}
+		}
+	}
+ 
 }
 
 auto SystemLayout::setExpansion( Emulator::Interface::Expansion* newExpansion ) -> void {

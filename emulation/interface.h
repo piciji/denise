@@ -153,15 +153,17 @@ struct Interface {
         unsigned typeFlags;
         MemoryType* memoryType; // RAM selection
         MediaGroup* mediaGroup; // ROM, RAM dumps
+		MediaGroup* mediaGroupExpanded; // expanded expansion
         std::vector<PCBLayout> pcbs;
         std::vector<Jumper> jumpers;
 		std::vector<std::string> creationIdents; 
-        enum Type : unsigned { Empty = 0, Game = 1, Ram = 2, Eprom = 4, Flash = 8, TurboCart = 16, Freezer = 32 };
+        enum Type : unsigned { Empty = 0, Standard = 1, Ram = 2, Eprom = 4, Flash = 8, TurboCart = 16, Freezer = 32, Battery = 64 };
         
         auto isEmpty() const -> bool { return typeFlags == (unsigned)Type::Empty; }
-        auto isGame() const -> bool { return typeFlags & Type::Game; }
+        auto isStandard() const -> bool { return typeFlags & Type::Standard; }
         auto isRam() const -> bool { return typeFlags & Type::Ram; }
         auto isEprom() const -> bool { return typeFlags & Type::Eprom; }
+		auto isBattery() const -> bool { return typeFlags & Type::Battery; }
         auto isFlash() const -> bool { return typeFlags & Type::Flash; }
         auto isTurboCart() const -> bool { return typeFlags & Type::TurboCart; }               
         auto isFreezer() const -> bool { return typeFlags & Type::Freezer; }      
@@ -194,7 +196,7 @@ struct Interface {
 		auto isProgram() const -> bool { return type == Type::Program; }
         auto isDrive() const -> bool { return isDisk() || isTape() || isHardDisk(); };
         auto isWritable() const -> bool { return isDrive() || (
-                   isExpansion() && (expansion->isFlash() || expansion->isEprom())); }
+                   isExpansion() && (expansion->isFlash() || expansion->isEprom() || expansion->isBattery())); }
         // default count of connected drives
         auto defaultUsage() -> unsigned { return type == Type::Disk ? 1 : 0; }       
     };

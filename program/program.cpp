@@ -241,7 +241,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
     
     for(auto& mediaGroup : emulator->mediaGroups) {
 
-        if (mediaGroup.isExpansion() && (&mediaGroup != expansion->mediaGroup))            
+        if (mediaGroup.isExpansion() && (&mediaGroup != expansion->mediaGroup) && (&mediaGroup != expansion->mediaGroupExpanded) )
             // allow only expansion media groups for the currently used expansion
             continue;    
         

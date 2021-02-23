@@ -103,6 +103,7 @@ struct VicIIBase {
 	auto isNTSCEncoding() -> bool { return ntscEncoding; }
 	auto frequency() -> unsigned { return cyclesPerSec; }
 	auto cyclesPerFrame() -> unsigned { return lineCycles * lines; }
+	auto getCycle() -> uint8_t { return cycle; }
 
 	auto getReg18() -> uint8_t;
 	auto setUltimaxPhi1(bool state ) -> void { ultimaxPhi1 = state; };

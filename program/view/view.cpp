@@ -491,7 +491,7 @@ auto View::setConnectors() -> void {
         if ( !dynamic_cast<LIBC64::Interface*>(emulator))
             inputItem->setEnabled(false);
         
-		if(!GUIKIT::Application::isCocoa()) {
+		//if(!GUIKIT::Application::isCocoa()) {
 			inputItem = new GUIKIT::MenuItem;
 			inputItem->setText(emulator->ident + " " + trans->get("config") );
 
@@ -504,7 +504,7 @@ auto View::setConnectors() -> void {
             if ( !dynamic_cast<LIBC64::Interface*>(emulator))
                 inputItem->setEnabled(false);
 
-		}
+		//}
         controlMenu.append( *new GUIKIT::MenuSeparator );
     }
 }
@@ -654,9 +654,17 @@ auto View::buildMenu() -> void {
         sM.poweron->setIcon( powerImage );
         sM.poweron->onActivate = [emulator]() {
 		    program->power(emulator);
-            program->removeBootableExpansion( true );
 	    };	
         sM.system->append( *sM.poweron );
+		
+		sM.poweronAndRemoveExpansions = new GUIKIT::MenuItem;
+        sM.poweronAndRemoveExpansions->setIcon( powerImage );
+        sM.poweronAndRemoveExpansions->onActivate = [emulator]() {
+		    program->power(emulator);
+            program->removeExpansion( false );
+	    };	
+        sM.system->append( *sM.poweronAndRemoveExpansions );
+
 		        
         sM.reset = new GUIKIT::MenuItem;
         sM.reset->onActivate = [emulator]() {
@@ -698,7 +706,7 @@ auto View::buildMenu() -> void {
 	    };
         sM.system->append( *sM.systemManagement );
 		
-		if(!GUIKIT::Application::isCocoa()) {
+	//	if(!GUIKIT::Application::isCocoa()) {
             
 			sM.configurations = new GUIKIT::MenuItem;
 			sM.configurations->setIcon( scriptImage );
@@ -743,7 +751,7 @@ auto View::buildMenu() -> void {
 				emuConfigView->show(EmuConfigView::TabWindow::Layout::Border);
 			};
 			sM.system->append( *sM.border );
-		}
+	//	}
 		
 		sM.system->append(*GUIKIT::MenuSeparator::getInstance());						
                 	
@@ -880,7 +888,7 @@ auto View::buildMenu() -> void {
     if ( globalSettings->get<bool>("show_audio_buffer", false) ) audioBufferItem.setChecked();
     optionsMenu.append(audioBufferItem);
 
-	if(!GUIKIT::Application::isCocoa()) {
+	//if(!GUIKIT::Application::isCocoa()) {
 		optionsMenu.append(*GUIKIT::MenuSeparator::getInstance());
 
 		saveItem.onActivate = []() {
@@ -888,7 +896,7 @@ auto View::buildMenu() -> void {
 		};
 		saveItem.setIcon(diskImage);
 		optionsMenu.append(saveItem);
-	}
+	//}
 		
 	optionsMenu.append(*GUIKIT::MenuSeparator::getInstance());	
 
@@ -1004,20 +1012,21 @@ auto View::translate() -> void {
     for(auto& sysMenu : sysMenus) {
         sysMenu.system->setText(sysMenu.emulator->ident);
         sysMenu.poweron->setText(trans->get("Hard Reset"));
+		sysMenu.poweronAndRemoveExpansions->setText(trans->get("Hard Reset + Unplug Cart"));
         sysMenu.reset->setText(trans->get("Soft Reset"));        
         sysMenu.freeze->setText(trans->get("Freeze"));
         sysMenu.loadSoftware->setText(trans->get("load software"));
         sysMenu.media->setText(trans->get("Software"));
         sysMenu.systemManagement->setText(trans->get("system_management"));
 
-        if(!GUIKIT::Application::isCocoa()) {
+    //    if(!GUIKIT::Application::isCocoa()) {
             sysMenu.audio->setText(trans->get("Audio"));
             sysMenu.firmware->setText(trans->get("Firmware"));
             sysMenu.configurations->setText(trans->get("Configurations"));
             sysMenu.presentation->setText(trans->get("Presentation"));
             sysMenu.palette->setText(trans->get("Palette"));
             sysMenu.border->setText(trans->get("Border"));
-        }
+    //    }
         sysMenu.shaderMenu->setText(trans->get("Shader"));            
     }    
 
@@ -1029,12 +1038,12 @@ auto View::translate() -> void {
     
     optionsMenu.setText( trans->get("options"));
 
-	if(!GUIKIT::Application::isCocoa()) {
+//	if(!GUIKIT::Application::isCocoa()) {
         globalVideoItem.setText( trans->get("video") );
         globalAudioItem.setText( trans->get("audio") );
         globalInputItem.setText( trans->get("input") + " / " + trans->get("hotkeys") );
 		settingsItem.setText( trans->get("settings"));
-	}
+//	}
 	
     audioSyncItem.setText( trans->get("sync_audio"));
     videoSyncItem.setText( trans->get("sync_video"));
@@ -1047,10 +1056,10 @@ auto View::translate() -> void {
     fpsItem.setText( trans->get("show_fps"));
     audioBufferItem.setText( trans->get("show_audio_buffer"));
     
-    if(!GUIKIT::Application::isCocoa()) {
+  //  if(!GUIKIT::Application::isCocoa()) {
         saveItem.setText( trans->get("save_preferences"));
 		exit.setText(trans->get("Exit"));
-	}
+//	}
 	
 	poweroff.setText(trans->get("power_off"));
 	

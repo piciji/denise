@@ -26,6 +26,8 @@ struct ExpansionPort {
     bool exRom = true;
     bool game = true;
     bool dma = false;   
+	
+	ExpansionPort* expander = nullptr;
     
     Interface::ExpansionId id = Interface::ExpansionIdNone; // base type of expansion
     

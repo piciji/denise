@@ -153,7 +153,7 @@ auto Sid::Voice::setControl( uint8_t value ) -> void {
     if ( waveform )
 		setWaveformOutput();
     else if (waveformPrev)
-        aging = type == Type::MOS_6581 ? 200000 : 5000000;
+        aging = type == Type::MOS_6581 ? 182000 : 4400000;
 }
 
 inline auto Sid::Voice::clock() -> void {    
@@ -209,8 +209,12 @@ inline auto Sid::Voice::setWaveformOutput() -> void {
 			writeShiftRegister();
         
 	} else {        
-        if (likely(aging) && unlikely(!--aging)) 
-            waveformOutput = 0;
+        if (likely(aging) && unlikely(!--aging)) {
+			waveformOutput &= waveformOutput >> 1;
+			osc3 = waveformOutput;
+			if (waveformOutput != 0)
+				aging = type == Type::MOS_6581 ? 1500 : 50000;
+		}           
     }		
 	
 	pulseOutput = -((accumulator >> 12) >= pw) & 0xfff;

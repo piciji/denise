@@ -77,6 +77,7 @@ auto Cmd::printHelp() -> void {
 	options.push_back({"-cia-6526", "Select CIA 6526", ""});
 
 	options.push_back({"-reu", "Emulate REU Expansion", "<size in kb>"});
+	options.push_back({"-georam", "Emulate GeoRam Expansion", "<size in kb>"});
 	options.push_back({"-debugcart", "Generate exit codes for VICE Testbench", ""});
 	options.push_back({"-limitcycles", "Specify number of cycles to run before quitting with an error (checks at complete frames)", "<cycles>"});
 	options.push_back({"-exitscreenshot", "Save screen to PNG file, when exiting App", "<filePath>"});
@@ -105,6 +106,7 @@ auto Cmd::parse() -> void {
     std::vector<std::string> paths;
     bool limitCyclesNext = false;
     bool reuSizeNext = false;
+	bool georamSizeNext = false;
     bool aneMagicNext = false;
 	bool laxMagicNext = false;
     bool screenshotPathNext = false;
@@ -129,6 +131,12 @@ auto Cmd::parse() -> void {
         if (reuSizeNext) {
             reuSizeNext = false;                        
             setReuSize( arg );
+            continue;
+        }
+		
+		if (georamSizeNext) {
+            georamSizeNext = false;                        
+            setGeoRamSize( arg );
             continue;
         }
         
@@ -201,6 +209,9 @@ auto Cmd::parse() -> void {
         else if (arg == "-reu") {
             reuSizeNext = true;
         }
+		else if (arg == "-georam") {
+            georamSizeNext = true;
+        }
         else if (arg == "-ane-magic") {
             aneMagicNext = true;
         }
@@ -228,6 +239,8 @@ auto Cmd::parse() -> void {
 					if (!hasViciiTest && GUIKIT::String::foundSubStr( temp, "vicii" ))
 						hasViciiTest = true;
 					else if (!hasViciiTest && GUIKIT::String::foundSubStr( temp, "ef_test" )) // relies on VIC last bus value
+						hasViciiTest = true;
+					else if (!hasViciiTest && GUIKIT::String::foundSubStr( temp, "bonzai" ))
 						hasViciiTest = true;
 					else if (!hasFuxxorTest && GUIKIT::String::foundSubStr( temp, "fuxxor" ))
 						hasFuxxorTest = true;
@@ -433,6 +446,33 @@ auto Cmd::setReuSize(std::string arg) -> void {
 
     for(auto& memory : memoryType->memory) {
         if (memory.size == reuSize) {
+            
+            settings->set<unsigned>( _underscore( memoryType->name ) + "_mem", memory.id);
+            
+            settings->set<unsigned>( "expansion", expansion.id);
+        }
+    }       
+}
+
+auto Cmd::setGeoRamSize(std::string arg) -> void {
+    
+    if (!GUIKIT::String::isNumber( arg ))
+        return;
+        
+    unsigned geoRamSize = 0;    
+    try {
+        geoRamSize = std::stoi(arg);
+    } catch(...) {
+        return;
+    }
+
+    auto emulator = program->getEmulator("C64");  
+    auto settings = program->getSettings( emulator );
+    auto& expansion = emulator->expansions[ LIBC64::Interface::ExpansionIdGeoRam ];
+    auto memoryType = expansion.memoryType;
+
+    for(auto& memory : memoryType->memory) {
+        if (memory.size == geoRamSize) {
             
             settings->set<unsigned>( _underscore( memoryType->name ) + "_mem", memory.id);
             

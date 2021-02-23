@@ -15,6 +15,7 @@ struct View : public GUIKIT::Window {
         Emulator::Interface* emulator;
         GUIKIT::Menu* system;
         GUIKIT::MenuItem* poweron;
+		GUIKIT::MenuItem* poweronAndRemoveExpansions;
 		GUIKIT::MenuItem* reset;
         GUIKIT::MenuItem* freeze;
         GUIKIT::MenuItem* firmware;

@@ -169,12 +169,12 @@ auto Program::updateSaveIdent(Emulator::Interface::Media* media, std::string fil
     }
 }
 
-auto Program::removeBootableExpansion( bool gameOnly ) -> void {
+auto Program::removeExpansion( bool bootableOnly ) -> void {
     
     if (!activeEmulator)
         return;
     
-    if (!gameOnly && !activeEmulator->isExpansionBootable())
+    if (bootableOnly && !activeEmulator->isExpansionBootable())
         return;
     
     auto expansion = activeEmulator->getExpansion();
@@ -182,10 +182,11 @@ auto Program::removeBootableExpansion( bool gameOnly ) -> void {
     if (!expansion)
         return;
     
-    if (gameOnly && !expansion->isGame() && !expansion->isFlash())
-        return;
-    
-    for( auto& media : expansion->mediaGroup->media) {
+	auto medias = expansion->mediaGroup->media;
+	if (expansion->mediaGroupExpanded)
+		medias = GUIKIT::Vector::concat( medias, expansion->mediaGroupExpanded->media );
+	
+    for( auto& media : medias) {
         filePool->assign( _ident(activeEmulator, media.name), nullptr);
         activeEmulator->ejectMedium( &media );
 		auto state = States::getInstance( activeEmulator );

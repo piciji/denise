@@ -209,7 +209,7 @@ auto MediaLayout::build() -> void {
 		bindSelectorAction( mediaGroupLayout );
     }
     
-    moduleFrame.append( mediaTree, { GUIKIT::Font::scale(165), GUIKIT::Font::scale(270)}, 10 );
+    moduleFrame.append( mediaTree, { GUIKIT::Font::scale(165), GUIKIT::Font::scale(300)}, 10 );
     moduleFrame.append( bootCart, {0u, 0u}, 10 );
     moduleFrame.append( deactivateCart, {0u, 0u} );
     moduleFrame.setPadding(10);
@@ -557,7 +557,7 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
             
             program->power( emulator );
             
-            program->removeBootableExpansion();
+            program->removeExpansion();
 
             emulator->selectListing( media, selection );
        
@@ -811,7 +811,7 @@ auto MediaLayout::prepareCreator() -> void {
 			
 			creatorLayout.append(*memoryCreatorLayout, {~0u, 0u}, 5);
             
-		} else if (mediaGroup.isExpansion() && (mediaGroup.expansion->isFlash() || mediaGroup.expansion->isEprom()) ) {
+		} else if (mediaGroup.isExpansion() && (mediaGroup.expansion->isFlash() || mediaGroup.expansion->isEprom() || mediaGroup.expansion->isBattery()) ) {
 
             
             if (!flashCreatorLayout) {
@@ -1496,7 +1496,7 @@ auto MediaLayout::insertFile( MediaGroupLayout::Block* block, std::string filePa
             program->power( emulator );
             
             if (!mediaGroup->isExpansion())
-                program->removeBootableExpansion();           
+                program->removeExpansion();           
 
             if (mediaGroup->selected)
                 emulator->selectListing(mediaGroup->selected, selection);

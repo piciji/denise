@@ -37,6 +37,8 @@ struct Cmd {
     auto getCycles(std::string arg) -> unsigned;
     
     auto setReuSize(std::string arg) -> void;
+	
+	auto setGeoRamSize(std::string arg) -> void;
     
     auto setAneMagic(std::string arg) -> void;
 	

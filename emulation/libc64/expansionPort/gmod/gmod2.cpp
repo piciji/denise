@@ -34,6 +34,8 @@ auto Gmod2::init() -> void {
     eeprom.written = []() {
         system->serializationSize += 2 * 1024;
     };
+	
+	reset();
 }
 
 auto Gmod2::prepare() -> void {
@@ -120,6 +122,9 @@ auto Gmod2::setSecondaryRom(Emulator::Interface::Media* media, uint8_t* rom, uns
     this->romSecondary = rom;
     mediaSecondary = media;
     
+	if (!this->rom) // check for primary rom
+		return;
+	
 	std::memset( eepromData, 0xff, 2 * 1024 );
 
 	if (rom)
@@ -152,7 +157,6 @@ auto Gmod2::writeIo1( uint16_t addr, uint8_t value ) -> void {
     eeprom.chipSelect( value & 0x40 );
     eeprom.write( value & 0x10 );
     eeprom.clock( value & 0x20 );
-
     value >>= 6;
 
     exRom = value & 1;

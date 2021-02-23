@@ -119,13 +119,31 @@ auto Autoloader::postProcessing() -> void {
 			}
 			else if (_mediaGroup.isExpansion()) {
                 useExpansion = true;
-                program->getSettings( ddControl.emulator )->set<unsigned>("expansion", _mediaGroup.expansion->id);
+				
+				Emulator::Interface::Expansion* useExpansion = _mediaGroup.expansion;
+				
+				auto curExpansion = ddControl.emulator->getExpansionById( program->getSettings( ddControl.emulator )->get<unsigned>("expansion", 0) );
+				
+				if (curExpansion) {
+					for (auto& exp : ddControl.emulator->expansions) {
+						if (((exp.mediaGroup == &_mediaGroup) && (exp.mediaGroupExpanded == curExpansion->mediaGroup))
+							|| ((exp.mediaGroupExpanded == &_mediaGroup) && (exp.mediaGroup == curExpansion->mediaGroup))) {
+							useExpansion = &exp; // set expander
+							break;
+						}							
+					}
+				}
+				
+				program->getSettings( ddControl.emulator )->set<unsigned>("expansion", useExpansion->id);
 
                 if (emuView) {
-                    if (_mediaGroup.expansion->isRam())
-                        emuView->mediaLayout->eject(&_mediaGroup, true);
+                    if (useExpansion->isRam()) {
+                        emuView->mediaLayout->eject( useExpansion->mediaGroup, true);
+						if (useExpansion->mediaGroupExpanded)
+							emuView->mediaLayout->eject( useExpansion->mediaGroupExpanded, true);
+					}
 
-                    emuView->systemLayout->setExpansion(_mediaGroup.expansion);
+                    emuView->systemLayout->setExpansion( useExpansion );
                 }
 			}
 		}
@@ -133,7 +151,7 @@ auto Autoloader::postProcessing() -> void {
         program->power( ddControl.emulator, emuView );
 
         if (!useExpansion)
-            program->removeBootableExpansion();        
+            program->removeExpansion();        
         
         if (mediaGroup->selected) {
             ddControl.emulator->selectListing(mediaGroup->selected, ddControl.selection);

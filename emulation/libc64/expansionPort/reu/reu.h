@@ -8,7 +8,7 @@ namespace LIBC64 {
 struct Reu : ExpansionPort {   
     
     Reu();
-    ~Reu();
+    ~Reu();	
     
     using Callback = std::function<void ()>;
     
@@ -47,18 +47,23 @@ struct Reu : ExpansionPort {
     bool waitForStart;
     uint8_t vicBaLow;
     bool steal;
-    uint8_t value;
-    uint8_t value2;    
+    uint8_t busValue;
+    uint8_t busValue2;    
+	uint8_t busFloating;
     bool swapRead;   
-    
+
+    auto writeIo1( uint16_t addr, uint8_t value ) -> void;    
+    auto readIo1( uint16_t addr ) -> uint8_t;    
     auto writeIo2( uint16_t addr, uint8_t value ) -> void;    
-    auto readIo2( uint16_t addr ) -> uint8_t;
-    auto readRomL(uint16_t addr) -> uint8_t;
+    auto readIo2( uint16_t addr ) -> uint8_t;    
     auto setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void;
     auto prepareRam(unsigned size) -> void;
     auto setRam( uint8_t* dump, unsigned dumpSize ) -> void;
     auto unsetRam() -> void;
     auto injectRam() -> void;
+	
+	auto isExrom( ) -> bool;
+	auto isGame( ) -> bool;
 
     auto clock() -> void;    
     auto reset() -> void;   
@@ -75,10 +80,22 @@ struct Reu : ExpansionPort {
     inline auto fetch() -> void;
     inline auto swap() -> void;
     inline auto verify() -> void;
+	
+	auto readRomL(uint16_t addr) -> uint8_t;
+	auto writeRomL( uint16_t addr, uint8_t data ) -> void;
+    auto listenToWritesAt80To9F(uint16_t addr, uint8_t data ) -> void;
+    auto writeUltimaxRomL( uint16_t addr, uint8_t data ) -> void;    
+    auto readRomH( uint16_t addr ) -> uint8_t;
+    auto readUltimaxA0( uint16_t addr ) -> uint8_t;        
+    auto writeRomH( uint16_t addr, uint8_t data ) -> void;
+    auto writeUltimaxA0( uint16_t addr, uint8_t data ) -> void;
+
     
     auto hasRom() -> bool { return rom ? true : false; }
 	
 	auto hasSecondaryRom() -> bool { return true; }
+	
+	auto setExpander( ExpansionPort* expander ) -> void;
 
 };    
     
