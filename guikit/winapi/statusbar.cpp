@@ -175,9 +175,7 @@ auto pStatusBar::update() -> void {
     usedParts.clear();
     
     if (!statusBar.window() || !hwnd)
-        return;
-
-    SetWindowPos(hwnd, NULL, 0, 0, 0, 0, SWP_NOZORDER | SWP_FRAMECHANGED);
+        return;    
         
     auto& parts = statusBar.state.parts;
     
@@ -236,6 +234,8 @@ auto pStatusBar::update() -> void {
     SendMessage(hwnd, SB_SETTEXT, i, (LPARAM)"" );
     
     delete[] widths;
+    
+    SetWindowPos(hwnd, NULL, 0, 0, 0, 0, SWP_NOZORDER | SWP_FRAMECHANGED);
 }
 
 auto pStatusBar::drawItem(WPARAM wparam, LPARAM lparam) -> void {
