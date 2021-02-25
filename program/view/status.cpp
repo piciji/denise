@@ -94,7 +94,7 @@ auto StatusHandler::updateTapeImage( GUIKIT::Image* image ) -> void {
     if (!statusBar)
         return;
     
-    if (image == &(view->playStatusImage)) {
+    if (image != &(view->stopStatusImage)) {
 
         for(auto& deviceState : deviceStates) {
             if (deviceState.media->group->isTape()) {
@@ -131,14 +131,14 @@ auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
 	statusBar->updateVisible(0, true);
 	    
     // up to 4 disk drives
-    statusBar->append( 1, "8 00.0" ); // disk drive track
-    statusBar->append( 2, &(view->ledOffImage) );    // disk LED
-    statusBar->append( 3, "9 00.0" ); // disk drive track
-    statusBar->append( 4, &(view->ledOffImage) );    // disk LED
-    statusBar->append( 5, "10 00.0" ); // disk drive track
-    statusBar->append( 6, &(view->ledOffImage) );    // disk LED
-    statusBar->append( 7, "11 00.0" ); // disk drive track
-    statusBar->append( 8, &(view->ledOffImage) );    // disk LED
+    statusBar->append( 1, "8 00.0", nullptr, &(view->diskControlMenus[0].menu) ); // disk drive track
+    statusBar->append( 2, &(view->ledOffImage), nullptr, &(view->diskControlMenus[0].menu) );    // disk LED
+    statusBar->append( 3, "9 00.0", nullptr, &(view->diskControlMenus[1].menu) ); // disk drive track
+    statusBar->append( 4, &(view->ledOffImage), nullptr, &(view->diskControlMenus[1].menu) );    // disk LED
+    statusBar->append( 5, "10 00.0", nullptr, &(view->diskControlMenus[2].menu) ); // disk drive track
+    statusBar->append( 6, &(view->ledOffImage), nullptr, &(view->diskControlMenus[2].menu) );    // disk LED
+    statusBar->append( 7, "11 00.0", nullptr, &(view->diskControlMenus[3].menu) ); // disk drive track
+    statusBar->append( 8, &(view->ledOffImage), nullptr, &(view->diskControlMenus[3].menu) );    // disk LED
     
     statusBar->append( 9, "000" );    // tape counter
     statusBar->append( 10, &(view->stopStatusImage), nullptr, &(view->tapeControlMenu) );    // tape button icon
@@ -239,6 +239,15 @@ auto StatusHandler::update() -> void {
                     // in all cases, e.g. when tape is forwarded until end, mode changes to "stop" but play button keeps in pressed state.
                     if ( view->tapePlayItem.icon() == &view->playhiImage )
                         statusBar->updateImage( 10, deviceState.motorOff ? &(view->playPauseStatusImage) : &(view->playStatusImage) );
+                    
+                    else if ( view->tapeForwardItem.icon() == &view->forwardhiImage )
+                        statusBar->updateImage( 10, deviceState.motorOff ? &(view->forwardPauseStatusImage) : &(view->forwardStatusImage) );
+
+                    else if ( view->tapeRewindItem.icon() == &view->rewindhiImage )
+                        statusBar->updateImage( 10, deviceState.motorOff ? &(view->rewindPauseStatusImage) : &(view->rewindStatusImage) );
+                    
+                    else if ( view->tapeRecordItem.icon() == &view->recordhiImage )
+                        statusBar->updateImage( 10, deviceState.motorOff ? &(view->recordPauseStatusImage) : &(view->recordStatusImage) );
                     
                 } else if (group->isExpansion()) {
 

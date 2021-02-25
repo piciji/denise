@@ -19,7 +19,7 @@ auto pStatusBar::create() -> void {
     
     hwnd = CreateWindow(STATUSCLASSNAME, L"", WS_CHILD, 0, 0, 0, 0, statusBar.window()->p.hwnd, (HMENU)(unsigned long long)statusBar.id, GetModuleHandle(0), 0);
 	
-	SendMessage( hwnd, SB_SETBKCOLOR, 0, GetSysColor(COLOR_MENU));
+	// SendMessage( hwnd, SB_SETBKCOLOR, 0, GetSysColor(COLOR_MENU));
     
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)&statusBar);
     
@@ -47,8 +47,8 @@ auto CALLBACK pStatusBar::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LP
     StatusBar* statusBar = (StatusBar*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
     if(statusBar == nullptr) return DefWindowProc(hwnd, msg, wparam, lparam);
 
-    switch(msg) {   
-        case WM_MOUSEMOVE: {            
+    switch(msg) {
+        case WM_MOUSEMOVE: {
             auto& p = statusBar->p;
             
             StatusBar::Part* part = p.getHoverPart( (int)(short) LOWORD(lparam) );
@@ -61,13 +61,14 @@ auto CALLBACK pStatusBar::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LP
 
 				p.setTooltip( part );
 
-                return 0;
+  //              return 0;
 			}
 
         } break;
             
     }
-    return CallWindowProc(statusBar->p.wndprocOrig, hwnd, msg, wparam, lparam);
+    //return CallWindowProc(statusBar->p.wndprocOrig, hwnd, msg, wparam, lparam);
+    return pApplication::wndProc(statusBar->p.wndprocOrig, hwnd, msg, wparam, lparam);
 }
 
 auto pStatusBar::setTooltip(StatusBar::Part* part) -> void {
@@ -155,13 +156,13 @@ auto pStatusBar::getWidth(std::string text) -> unsigned {
 }
 
 auto pStatusBar::updatePart( StatusBar::Part& part ) -> void {
-    if (hwnd) {		
-		if (part.image) {
-			// alpha blend transparent part, because of winapi draws some 3D effect
-			HICON hIcon = CreateHIconWithAlphaBlend( *part.image, GetSysColor(COLOR_MENU) );
-			SendMessage(hwnd, SB_SETICON, part.position, (LPARAM) hIcon);
-			DestroyIcon(hIcon);
-		} else
+    if (hwnd) {
+//		if (part.image) {
+//			// alpha blend transparent part, because of winapi draws some 3D effect
+//			HICON hIcon = CreateHIconWithAlphaBlend( *part.image, GetSysColor(COLOR_MENU) );
+//			SendMessage(hwnd, SB_SETICON, part.position, (LPARAM) hIcon);
+//			DestroyIcon(hIcon);
+//		} else
 			SendMessage(hwnd, SB_SETTEXT, part.position | SBT_OWNERDRAW, 0);
 	}
 }
@@ -289,7 +290,7 @@ auto pStatusBar::drawItem(WPARAM wparam, LPARAM lparam) -> void {
         else if ( !part.width )
             rect.left += 4;
 
-        DrawText(hDC, utf16_t(part.text.c_str()), -1, &rect, (part.alignRight ? DT_RIGHT : 0)  );
+        DrawText(hDC, utf16_t(part.text.c_str()), -1, &rect, DT_SINGLELINE | DT_NOCLIP | (part.alignRight ? DT_RIGHT : 0)  );
     }
 }
 

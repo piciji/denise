@@ -111,12 +111,36 @@ struct View : public GUIKIT::Window {
 		GUIKIT::MenuItem exit; 
 
 	GUIKIT::Menu tapeControlMenu;
-		GUIKIT::MenuItem tapePlayItem;
+        GUIKIT::MenuItem insertTapeItem;
+        GUIKIT::MenuItem ejectTapeItem;
+        GUIKIT::MenuItem tapePlayItem;
 		GUIKIT::MenuItem tapeStopItem;
 		GUIKIT::MenuItem tapeForwardItem;
 		GUIKIT::MenuItem tapeRewindItem;
 		GUIKIT::MenuItem tapeRecordItem;
 		GUIKIT::MenuItem tapeResetCounterItem;
+                
+        struct {
+            GUIKIT::Menu menu;
+            GUIKIT::MenuItem insert;
+            GUIKIT::MenuItem eject;
+        } diskControlMenus[4];
+        
+    GUIKIT::Menu diskControlMenu1;
+        GUIKIT::MenuItem insertDiskImage1;
+        GUIKIT::MenuItem ejectDiskImage1;
+
+    GUIKIT::Menu diskControlMenu2;
+        GUIKIT::MenuItem insertDiskImage2;
+        GUIKIT::MenuItem ejectDiskImage2;
+
+    GUIKIT::Menu diskControlMenu3;
+        GUIKIT::MenuItem insertDiskImage3;
+        GUIKIT::MenuItem ejectDiskImage3;
+
+    GUIKIT::Menu diskControlMenu4;
+        GUIKIT::MenuItem insertDiskImage4;
+        GUIKIT::MenuItem ejectDiskImage4;
 		
     GUIKIT::Image regionImage;
     GUIKIT::Image powerImage;
@@ -158,7 +182,11 @@ struct View : public GUIKIT::Window {
     GUIKIT::Image recordStatusImage;
     GUIKIT::Image stopStatusImage;
     GUIKIT::Image forwardStatusImage;
+    GUIKIT::Image forwardPauseStatusImage;
     GUIKIT::Image rewindStatusImage;
+    GUIKIT::Image rewindPauseStatusImage;
+    GUIKIT::Image recordPauseStatusImage;
+    GUIKIT::Image ejectImage;
     
     GUIKIT::Image pencilImage;
     GUIKIT::Image crosshairImage;

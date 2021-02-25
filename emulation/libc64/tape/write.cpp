@@ -32,15 +32,16 @@ auto Tape::writeIn(bool bit) -> void {
         return;
     
     if (writeProtect)
+        // mechanical protection, record button isn't pressable
         return;    
     
     if (writeQuestionState == 1)
-        return;
+        goto End;
        
     if (!writeQuestionState) {
         if (!system->interface->questionToWrite(media)) {
             writeQuestionState = 1; // don't ask again
-            return;
+            goto End;
         }
         writeQuestionState = 2; 
     }
@@ -56,7 +57,8 @@ auto Tape::writeIn(bool bit) -> void {
 		addByteToWriteBuffer( (cyclesElapsed >> 8) & 0xff );
 		addByteToWriteBuffer( (cyclesElapsed >> 16) & 0xff );
     }
-    
+
+End:    
 	cycles += cyclesElapsed;
 	if (cycles > cyclesTotal)
 		cyclesTotal = cycles;

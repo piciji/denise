@@ -1144,6 +1144,32 @@ auto MediaLayout::eject( Emulator::Interface::MediaGroup* mediaGroup, bool secon
     }
 }
 
+auto MediaLayout::open( Emulator::Interface::Media* media ) -> void {
+    
+    auto layout = getMediaGroupLayout( media->group );
+    
+    for( auto block : layout->blocks) {
+        
+        if (block->media == media) {
+            block->selector.open.onActivate();
+            break;
+        }
+    }
+}
+
+auto MediaLayout::eject( Emulator::Interface::Media* media ) -> void {
+    
+    auto layout = getMediaGroupLayout( media->group );
+    
+    for( auto block : layout->blocks) {
+        
+        if (block->media == media) {
+            block->header.eject.onActivate();
+            break;
+        }
+    }
+}
+
 auto MediaLayout::getMediaGroupLayout( Emulator::Interface::MediaGroup* mediaGroup ) -> MediaGroupLayout* {
     
     for (auto& nav : navElements) {
@@ -1419,8 +1445,7 @@ auto MediaLayout::previewFile( std::string filePath, MediaGroupLayout::Block* bl
             tabWindow->setForeground();
             if (fileDialogPtr && fileDialogPtr->visible())
                 fileDialogPtr->setForeground();
-        } else
-            tabWindow->setFocused();
+        }
     }
     
     return convertedListings;

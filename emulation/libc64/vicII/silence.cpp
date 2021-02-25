@@ -50,6 +50,8 @@ auto VicIICycle::clockSilence() -> void {
 
     if (++cycle == lineCycles) {
         cycle = 0;
+        if (linePos)
+            linePos = 0; // this matters when switching between silence and normal mode outside of vblank, could be happen while long REU transfer
 
         // Note: line complete but vcounter is not incremented at this point
         if (vCounter == 0xf7)

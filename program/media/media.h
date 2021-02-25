@@ -240,6 +240,8 @@ struct MediaLayout : GUIKIT::HorizontalLayout {
     auto insertImage( MediaGroupLayout::Block* block, GUIKIT::File* file, GUIKIT::File::Item* item ) -> void;
     auto insertImage( Emulator::Interface::Media* media, GUIKIT::File* file, GUIKIT::File::Item* item ) -> void;
     auto eject( Emulator::Interface::MediaGroup* mediaGroup, bool secondaryOnly = false ) -> void;
+    auto open( Emulator::Interface::Media* media ) -> void;
+    auto eject( Emulator::Interface::Media* media ) -> void;
     auto drop( std::string filePath, MediaGroupLayout::Block* block = nullptr ) -> void;   
     auto colorListing( unsigned color, bool foreground ) -> void;
     auto getMediaGroupTransIdent( Emulator::Interface::MediaGroup* mediaGroup ) -> std::string;

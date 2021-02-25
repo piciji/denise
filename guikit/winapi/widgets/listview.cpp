@@ -154,7 +154,8 @@ auto CALLBACK pListView::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPA
         } break;
         
     }
-    return CallWindowProc(listView->p.wndprocOrig, hwnd, msg, wparam, lparam);
+    //return CallWindowProc(listView->p.wndprocOrig, hwnd, msg, wparam, lparam);
+    return pApplication::wndProc(listView->p.wndprocOrig, hwnd, msg, wparam, lparam);
 }
 
 auto pListView::relayMesssageToToolTip(HWND hwnd, UINT umsg, WPARAM wparam, LPARAM lparam) -> void {

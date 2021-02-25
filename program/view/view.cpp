@@ -626,8 +626,12 @@ auto View::loadImages() -> void {
     diskImage.loadPng((uint8_t*) Icons::disk, sizeof (Icons::disk));
     diskImage.setResourceId( ID_DISK );
 	editImage.loadPng((uint8_t*)Icons::edit, sizeof(Icons::edit));
+    ejectImage.loadPng((uint8_t*)Icons::eject, sizeof(Icons::eject));
 
     playPauseStatusImage.loadPng((uint8_t*)Icons::playPauseStatus, sizeof(Icons::playPauseStatus));
+    forwardPauseStatusImage.loadPng((uint8_t*)Icons::forwardPauseStatus, sizeof(Icons::forwardPauseStatus));
+    rewindPauseStatusImage.loadPng((uint8_t*)Icons::rewindPauseStatus, sizeof(Icons::rewindPauseStatus));
+    recordPauseStatusImage.loadPng((uint8_t*)Icons::recordPauseStatus, sizeof(Icons::recordPauseStatus));
     //forwardStatusImage.loadPng((uint8_t*)Icons::forwardStatus, sizeof(Icons::forwardStatus));
 
     playStatusImage = playhiImage;
@@ -926,7 +930,35 @@ auto View::buildMenu() -> void {
 	
 	// prepare Tape Control	
 	tapeControlMenu.setIcon( tapeImage );
-	
+
+    insertTapeItem.setIcon( tapeImage );
+    
+    insertTapeItem.onActivate = []() {
+        auto emulator = activeEmulator;
+
+         if (!activeEmulator)
+             emulator = program->getLastUsedEmu();
+           
+        EmuConfigView::TabWindow::getView( emulator )->mediaLayout->open( emulator->getTape(0) );
+    };    
+    
+    tapeControlMenu.append( insertTapeItem );
+    
+    ejectTapeItem.setIcon( ejectImage );
+    
+    ejectTapeItem.onActivate = []() {
+        auto emulator = activeEmulator;
+
+         if (!activeEmulator)
+             emulator = program->getLastUsedEmu();
+           
+        EmuConfigView::TabWindow::getView( emulator )->mediaLayout->eject( emulator->getTape(0) );
+    };    
+    
+    tapeControlMenu.append( ejectTapeItem );
+    
+    tapeControlMenu.append( *GUIKIT::MenuSeparator::getInstance() );
+
 	tapePlayItem.onActivate = []() {
 		InputManager::activateHotkey(Hotkey::Id::PlayTape);
 	};
@@ -958,6 +990,37 @@ auto View::buildMenu() -> void {
 		InputManager::activateHotkey(Hotkey::Id::ResetTapeCounter);
 	};
 	tapeControlMenu.append( tapeResetCounterItem );  
+    
+    // prepare Disk Control
+    unsigned i = 0;
+    for (auto& diskControlMenu : diskControlMenus) {
+        
+        diskControlMenu.insert.setIcon( diskImage );
+        
+        diskControlMenu.insert.onActivate = [i]() {
+            auto emulator = activeEmulator;
+
+            if (!activeEmulator)
+                emulator = program->getLastUsedEmu();	
+
+            EmuConfigView::TabWindow::getView( emulator )->mediaLayout->open( emulator->getDisk(i) );
+        };    
+        diskControlMenu.menu.append( diskControlMenu.insert );
+
+        diskControlMenu.eject.setIcon( ejectImage );
+        
+        diskControlMenu.eject.onActivate = [i]() {
+            auto emulator = activeEmulator;
+
+            if (!activeEmulator)
+                emulator = program->getLastUsedEmu();	
+
+            EmuConfigView::TabWindow::getView( emulator )->mediaLayout->eject( emulator->getDisk(i) );
+        };
+        diskControlMenu.menu.append( diskControlMenu.eject );
+        
+        i++;
+    }   
 }
 
 auto View::showTapeMenu( bool show, Emulator::Interface::TapeMode mode ) -> void {
@@ -1064,6 +1127,14 @@ auto View::translate() -> void {
 	poweroff.setText(trans->get("power_off"));
 	
 	tapeControlMenu.setText( trans->get("Datasette") );
+    insertTapeItem.setText( trans->get("insert") );
+    ejectTapeItem.setText( trans->get("eject") );
+    
+    for (auto& diskControlMenu : diskControlMenus) {
+        diskControlMenu.insert.setText( trans->get("insert") );
+        diskControlMenu.eject.setText( trans->get("eject") );
+    }
+    
 	tapePlayItem.setText( trans->get("tape_play_key") );
 	tapeStopItem.setText( trans->get("tape_stop_key") );
 	tapeRecordItem.setText( trans->get("tape_record_key") );

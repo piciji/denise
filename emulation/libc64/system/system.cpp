@@ -721,10 +721,8 @@ auto System::changeExpansionPortMemoryMode(bool exrom, bool game, bool noUltimax
 
 auto System::setFastForward( unsigned config ) -> void {  
     fastForward.config = config;
-	fastForward.renderNext = true;
     Sid::disableAudioOut(config & (unsigned) Emulator::Interface::FastForward::NoAudioOut);
-	// don't enable it here because a long REU transfer can delay end of emulator frame, outside of vsync.
-	// vicII->disableSequencer(config & (unsigned) Emulator::Interface::FastForward::NoVideoSequencer);
+    vicII->disableSequencer(config & (unsigned) Emulator::Interface::FastForward::NoVideoSequencer);
     iecBus->setFastForward(config & (unsigned) Emulator::Interface::FastForward::NoVideoSequencer);
 }
 

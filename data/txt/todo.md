@@ -3,7 +3,6 @@
 ## todo C64
 * expansion port
     * EasyFlash 3
-	* calling BBS's
     * MMC64, MMC Replay    
     * SuperCPU
     * Dongles
@@ -17,6 +16,7 @@
     * mount OS folder as D64
     * non standard floppy models: 1571, 1581
 * user port
+    * calling BBS's
     * SpeedDOS
     * 4 player adapter
 * tape   

@@ -69,7 +69,7 @@ extern uint8_t play[295];
 
 extern uint8_t playHi[294];
 
-extern uint8_t playHiPause[302];
+//extern uint8_t playHiPause[302];
 
 extern uint8_t record[339];
 
@@ -107,7 +107,12 @@ extern uint8_t ledGreen[247];
 
 extern uint8_t edit[526];
 
-extern uint8_t forwardStatus[455];
+//extern uint8_t forwardStatus[455];
 extern uint8_t playPauseStatus[302];
+extern uint8_t forwardPauseStatus[405];
+extern uint8_t rewindPauseStatus[413];
+extern uint8_t recordPauseStatus[356];
+
+extern uint8_t eject[275];
 
 }
