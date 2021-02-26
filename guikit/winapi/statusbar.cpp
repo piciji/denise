@@ -256,7 +256,7 @@ auto pStatusBar::drawItem(WPARAM wparam, LPARAM lparam) -> void {
 
         yPos = rect.top + (unsigned)((yPos - image->height) / 2);
         
-        DrawIconEx( hDC,  rect.left, yPos - 1, hIcon, image->width, image->height, 0, NULL, DI_NORMAL);
+        DrawIconEx( hDC,  rect.left, yPos - ((pApplication::version > Windows7) ? 1 : 0), hIcon, image->width, image->height, 0, NULL, DI_NORMAL);
         
         if(hIcon)
             DestroyIcon(hIcon);
