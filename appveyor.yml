@@ -79,7 +79,7 @@ for:
     - cmd: del out\.gitkeep
   
   build_script:
-    - cmd: mingw32-make --jobs=3 && mingw32-make install
+    - cmd: mingw32-make && mingw32-make install
    
   after_build:
     - ps: |
@@ -111,7 +111,7 @@ for:
     - sh: sudo apt-get --yes --force-yes install libudev-dev
     
   build_script:
-    - sh: make --jobs=3
+    - sh: make
   
   after_build:
     - sh: sudo rm out/.gitkeep
@@ -167,7 +167,7 @@ for:
     - sh: cd freetype-2.9.1
     - sh: ./configure --enable-static --without-zlib --without-bzip2 --without-png && make && make install
     - sh: cd ..  
-    - sh: make --jobs=3 && make install
+    - sh: make && make install
     
   after_build:
     - sh: |

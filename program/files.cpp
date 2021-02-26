@@ -179,7 +179,7 @@ auto Program::removeExpansion( bool bootableOnly ) -> void {
     
     auto expansion = activeEmulator->getExpansion();
     
-    if (!expansion)
+    if (!expansion || expansion->isEmpty())
         return;
     
 	auto medias = expansion->mediaGroup->media;

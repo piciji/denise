@@ -491,20 +491,18 @@ auto View::setConnectors() -> void {
         if ( !dynamic_cast<LIBC64::Interface*>(emulator))
             inputItem->setEnabled(false);
         
-		//if(!GUIKIT::Application::isCocoa()) {
-			inputItem = new GUIKIT::MenuItem;
-			inputItem->setText(emulator->ident + " " + trans->get("config") );
+        inputItem = new GUIKIT::MenuItem;
+        inputItem->setText(emulator->ident + " " + trans->get("config") );
 
-			inputItem->onActivate = [emulator]() {
-				auto emuConfigView = EmuConfigView::TabWindow::getView( emulator );
-				emuConfigView->show(EmuConfigView::TabWindow::Layout::Control);
-			};
-			inputItem->setIcon(toolsImage);
-			controlMenu.append(*inputItem);
-            if ( !dynamic_cast<LIBC64::Interface*>(emulator))
-                inputItem->setEnabled(false);
+        inputItem->onActivate = [emulator]() {
+            auto emuConfigView = EmuConfigView::TabWindow::getView( emulator );
+            emuConfigView->show(EmuConfigView::TabWindow::Layout::Control);
+        };
+        inputItem->setIcon(toolsImage);
+        controlMenu.append(*inputItem);
+        if ( !dynamic_cast<LIBC64::Interface*>(emulator))
+            inputItem->setEnabled(false);
 
-		//}
         controlMenu.append( *new GUIKIT::MenuSeparator );
     }
 }
@@ -709,53 +707,50 @@ auto View::buildMenu() -> void {
 		    emuConfigView->show(EmuConfigView::TabWindow::Layout::System);
 	    };
         sM.system->append( *sM.systemManagement );
-		
-	//	if(!GUIKIT::Application::isCocoa()) {
             
-			sM.configurations = new GUIKIT::MenuItem;
-			sM.configurations->setIcon( scriptImage );
-			sM.configurations->onActivate = [emuConfigView]() {
-				emuConfigView->show(EmuConfigView::TabWindow::Layout::Configurations);
-			};
-			sM.system->append( *sM.configurations );
+        sM.configurations = new GUIKIT::MenuItem;
+        sM.configurations->setIcon( scriptImage );
+        sM.configurations->onActivate = [emuConfigView]() {
+            emuConfigView->show(EmuConfigView::TabWindow::Layout::Configurations);
+        };
+        sM.system->append( *sM.configurations );
 
-			sM.presentation = new GUIKIT::MenuItem;
-			sM.presentation->setIcon( displayImage );
-			sM.presentation->onActivate = [emuConfigView]() {
-				emuConfigView->show(EmuConfigView::TabWindow::Layout::Presentation);
-			};
-			sM.system->append( *sM.presentation );
+        sM.presentation = new GUIKIT::MenuItem;
+        sM.presentation->setIcon( displayImage );
+        sM.presentation->onActivate = [emuConfigView]() {
+            emuConfigView->show(EmuConfigView::TabWindow::Layout::Presentation);
+        };
+        sM.system->append( *sM.presentation );
 
-			if ( dynamic_cast<LIBC64::Interface*>(emulator)) {
-				sM.palette = new GUIKIT::MenuItem;
-				sM.palette->setIcon(paletteImage);
-				sM.palette->onActivate = [emuConfigView]() {
-					emuConfigView->show(EmuConfigView::TabWindow::Layout::Palette);
-				};
-				sM.system->append(*sM.palette);				
-            }
-            
-            sM.audio = new GUIKIT::MenuItem;
-            sM.audio->setIcon( volumeImage );
-            sM.audio->onActivate = [emuConfigView]() {
-                emuConfigView->show(EmuConfigView::TabWindow::Layout::Audio);
+        if ( dynamic_cast<LIBC64::Interface*>(emulator)) {
+            sM.palette = new GUIKIT::MenuItem;
+            sM.palette->setIcon(paletteImage);
+            sM.palette->onActivate = [emuConfigView]() {
+                emuConfigView->show(EmuConfigView::TabWindow::Layout::Palette);
             };
-            sM.system->append( *sM.audio );
+            sM.system->append(*sM.palette);				
+        }
 
-			sM.firmware = new GUIKIT::MenuItem;
-			sM.firmware->setIcon( firmwareImage );
-			sM.firmware->onActivate = [emuConfigView]() {
-				emuConfigView->show(EmuConfigView::TabWindow::Layout::Firmware);
-			};
-			sM.system->append( *sM.firmware );
+        sM.audio = new GUIKIT::MenuItem;
+        sM.audio->setIcon( volumeImage );
+        sM.audio->onActivate = [emuConfigView]() {
+            emuConfigView->show(EmuConfigView::TabWindow::Layout::Audio);
+        };
+        sM.system->append( *sM.audio );
 
-			sM.border = new GUIKIT::MenuItem;
-			sM.border->setIcon( cropImage );
-			sM.border->onActivate = [emuConfigView]() {
-				emuConfigView->show(EmuConfigView::TabWindow::Layout::Border);
-			};
-			sM.system->append( *sM.border );
-	//	}
+        sM.firmware = new GUIKIT::MenuItem;
+        sM.firmware->setIcon( firmwareImage );
+        sM.firmware->onActivate = [emuConfigView]() {
+            emuConfigView->show(EmuConfigView::TabWindow::Layout::Firmware);
+        };
+        sM.system->append( *sM.firmware );
+
+        sM.border = new GUIKIT::MenuItem;
+        sM.border->setIcon( cropImage );
+        sM.border->onActivate = [emuConfigView]() {
+            emuConfigView->show(EmuConfigView::TabWindow::Layout::Border);
+        };
+        sM.system->append( *sM.border );
 		
 		sM.system->append(*GUIKIT::MenuSeparator::getInstance());						
                 	
@@ -802,34 +797,32 @@ auto View::buildMenu() -> void {
     optionsMenu.setIcon(toolsImage);
     append(optionsMenu);
 
-	if(!GUIKIT::Application::isCocoa()) {
-        globalVideoItem.setIcon( displayImage );
-        globalVideoItem.onActivate = []() {
-			configView->show(ConfigView::TabWindow::Layout::Video);
-		};
+    globalVideoItem.setIcon( displayImage );
+    globalVideoItem.onActivate = []() {
+        configView->show(ConfigView::TabWindow::Layout::Video);
+    };
 
-		optionsMenu.append(globalVideoItem);
+    optionsMenu.append(globalVideoItem);
 
-        globalAudioItem.onActivate = []() {
-			configView->show(ConfigView::TabWindow::Layout::Audio);
-		};
-        globalAudioItem.setIcon( volumeImage );
-		optionsMenu.append(globalAudioItem);
+    globalAudioItem.onActivate = []() {
+        configView->show(ConfigView::TabWindow::Layout::Audio);
+    };
+    globalAudioItem.setIcon( volumeImage );
+    optionsMenu.append(globalAudioItem);
 
-        globalInputItem.onActivate = []() {
-			configView->show(ConfigView::TabWindow::Layout::Input);
-		};
-        globalInputItem.setIcon( keyboardImage );
-		optionsMenu.append(globalInputItem);
-		
-		settingsItem.onActivate = []() {
-			configView->show(ConfigView::TabWindow::Layout::Settings);
-		};
-		settingsItem.setIcon(toolsImage);
-		optionsMenu.append(settingsItem);
-		
-		optionsMenu.append(*GUIKIT::MenuSeparator::getInstance());
-	}
+    globalInputItem.onActivate = []() {
+        configView->show(ConfigView::TabWindow::Layout::Input);
+    };
+    globalInputItem.setIcon( keyboardImage );
+    optionsMenu.append(globalInputItem);
+
+    settingsItem.onActivate = []() {
+        configView->show(ConfigView::TabWindow::Layout::Settings);
+    };
+    settingsItem.setIcon(toolsImage);
+    optionsMenu.append(settingsItem);
+
+    optionsMenu.append(*GUIKIT::MenuSeparator::getInstance());
     
     audioSyncItem.onToggle = [&]() {
         globalSettings->set<bool>("audio_sync", audioSyncItem.checked() );
@@ -892,15 +885,13 @@ auto View::buildMenu() -> void {
     if ( globalSettings->get<bool>("show_audio_buffer", false) ) audioBufferItem.setChecked();
     optionsMenu.append(audioBufferItem);
 
-	//if(!GUIKIT::Application::isCocoa()) {
-		optionsMenu.append(*GUIKIT::MenuSeparator::getInstance());
+    optionsMenu.append(*GUIKIT::MenuSeparator::getInstance());
 
-		saveItem.onActivate = []() {
-			program->saveSettings();
-		};
-		saveItem.setIcon(diskImage);
-		optionsMenu.append(saveItem);
-	//}
+    saveItem.onActivate = []() {
+        program->saveSettings();
+    };
+    saveItem.setIcon(diskImage);
+    optionsMenu.append(saveItem);
 		
 	optionsMenu.append(*GUIKIT::MenuSeparator::getInstance());	
 
@@ -1082,14 +1073,13 @@ auto View::translate() -> void {
         sysMenu.media->setText(trans->get("Software"));
         sysMenu.systemManagement->setText(trans->get("system_management"));
 
-    //    if(!GUIKIT::Application::isCocoa()) {
-            sysMenu.audio->setText(trans->get("Audio"));
-            sysMenu.firmware->setText(trans->get("Firmware"));
-            sysMenu.configurations->setText(trans->get("Configurations"));
-            sysMenu.presentation->setText(trans->get("Presentation"));
-            sysMenu.palette->setText(trans->get("Palette"));
-            sysMenu.border->setText(trans->get("Border"));
-    //    }
+        sysMenu.audio->setText(trans->get("Audio"));
+        sysMenu.firmware->setText(trans->get("Firmware"));
+        sysMenu.configurations->setText(trans->get("Configurations"));
+        sysMenu.presentation->setText(trans->get("Presentation"));
+        sysMenu.palette->setText(trans->get("Palette"));
+        sysMenu.border->setText(trans->get("Border"));
+
         sysMenu.shaderMenu->setText(trans->get("Shader"));            
     }    
 
@@ -1101,12 +1091,10 @@ auto View::translate() -> void {
     
     optionsMenu.setText( trans->get("options"));
 
-//	if(!GUIKIT::Application::isCocoa()) {
-        globalVideoItem.setText( trans->get("video") );
-        globalAudioItem.setText( trans->get("audio") );
-        globalInputItem.setText( trans->get("input") + " / " + trans->get("hotkeys") );
-		settingsItem.setText( trans->get("settings"));
-//	}
+    globalVideoItem.setText( trans->get("video") );
+    globalAudioItem.setText( trans->get("audio") );
+    globalInputItem.setText( trans->get("input") + " / " + trans->get("hotkeys") );
+    settingsItem.setText( trans->get("settings"));
 	
     audioSyncItem.setText( trans->get("sync_audio"));
     videoSyncItem.setText( trans->get("sync_video"));
@@ -1119,10 +1107,8 @@ auto View::translate() -> void {
     fpsItem.setText( trans->get("show_fps"));
     audioBufferItem.setText( trans->get("show_audio_buffer"));
     
-  //  if(!GUIKIT::Application::isCocoa()) {
-        saveItem.setText( trans->get("save_preferences"));
-		exit.setText(trans->get("Exit"));
-//	}
+    saveItem.setText( trans->get("save_preferences"));
+    exit.setText(trans->get("Exit"));
 	
 	poweroff.setText(trans->get("power_off"));
 	
