@@ -86,7 +86,7 @@ auto GeoRam::injectRam( ) -> void {
     std::memcpy(data, dump, std::min(dumpSize, size) );
 }
 
-auto GeoRam::reset() -> void {
+auto GeoRam::reset(bool softReset) -> void {
 
 	std::memset(data, 0, size);
 	

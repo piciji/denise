@@ -37,7 +37,7 @@ struct Gmod2 : GameCart {
     auto readRomL( uint16_t addr ) -> uint8_t;
     auto writeUltimaxRomH( uint16_t addr, uint8_t data ) -> void;
 
-    auto reset() -> void;
+    auto reset(bool softReset = false) -> void;
     auto prepare() -> void;
     auto setSecondaryRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void;
     auto write() -> void;

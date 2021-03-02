@@ -15,7 +15,7 @@ struct Cart : ExpansionPort {
     struct Chip {
         enum Type { Rom = 0, Ram = 1, FlashRom = 2 } type;
         unsigned id;
-        uint8_t bank;
+        uint16_t bank;
         uint16_t size;
         uint16_t addr;
         uint32_t offset;
@@ -41,7 +41,7 @@ struct Cart : ExpansionPort {
     virtual auto readChips() -> bool;
     virtual auto assumeChips() -> void;
     virtual auto assumeChips( std::vector<unsigned> sizes ) -> void;
-    virtual auto reset() -> void;
+    virtual auto reset(bool softReset = false) -> void;
     virtual auto setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void;
     
     virtual auto readRomL(uint16_t addr) -> uint8_t;

@@ -499,7 +499,7 @@ auto System::power( bool softReset ) -> void {
 	if( !softReset )
 		initRam( ram );
 	    
-    expansionPort->reset();
+    expansionPort->reset( softReset );
     
     mode = (expansionPort->isExrom() << 1) | expansionPort->isGame();
     

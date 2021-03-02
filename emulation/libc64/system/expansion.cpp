@@ -4,6 +4,7 @@
 #include "../expansionPort/reu/reu.h"
 #include "../expansionPort/freezer/freezer.h"
 #include "../expansionPort/easyFlash/easyFlash.h"
+#include "../expansionPort/easyFlash/easyFlash3.h"
 #include "../expansionPort/retroReplay/retroReplay.h"
 #include "../expansionPort/gmod/gmod2.h"
 #include "../expansionPort/geoRam/geoRam.h"
@@ -50,7 +51,11 @@ auto System::setExpansion( Emulator::Interface::Expansion& expansion ) -> void {
         case Interface::ExpansionIdEasyFlash:
             expansionPort = easyFlash;
             break;
-            
+
+        case Interface::ExpansionIdEasyFlash3:
+            expansionPort = easyFlash3;
+            break;
+
         case Interface::ExpansionIdRetroReplay:
             expansionPort = retroReplay;
             break;
@@ -73,6 +78,7 @@ auto System::createExpansions() -> void {
     gameCart = new GameCart;
     freezer = new Freezer;
     easyFlash = new EasyFlash;
+    easyFlash3 = new EasyFlash3;
     retroReplay = new RetroReplay;
 	gmod2 = new Gmod2;
 	geoRam = new GeoRam;
@@ -91,6 +97,7 @@ auto System::destroyExpansions() -> void {
     delete gameCart;
     delete freezer;
     delete easyFlash;
+    delete easyFlash3;
     delete retroReplay;
 	delete gmod2;
 	delete geoRam;

@@ -38,7 +38,7 @@ struct EasyFlash : Cart {
     auto setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void;
     auto assumeChips( ) -> void;
     
-    auto reset() -> void;
+    auto reset(bool softReset = false) -> void;
     
     auto readRomL( uint16_t addr ) -> uint8_t;
     auto readRomH( uint16_t addr ) -> uint8_t;

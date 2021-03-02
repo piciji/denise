@@ -42,7 +42,7 @@ struct Funplay : GameCart {
         }
     }
     
-    auto reset() -> void {
+    auto reset(bool softReset = false) -> void {
         
         cRomL = getChip(0);
         

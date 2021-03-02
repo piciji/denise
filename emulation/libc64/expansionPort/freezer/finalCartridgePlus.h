@@ -160,7 +160,7 @@ struct FinalCartridgePlus : Freezer {
         s.integer( enable );
     }
 
-    auto reset() -> void {
+    auto reset(bool softReset = false) -> void {
         enableRomL = true;
         enableRomH = true;
         enable = true;

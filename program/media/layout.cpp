@@ -37,18 +37,18 @@ MediaGroupLayout::Block::Selector::Selector(Emulator::Interface::Media* media) {
     append(edit, {~0u, 0u}, 10);
     auto group = media->group;
     
-    if (group->expansion && !media->secondary && (group->expansion->pcbs.size() > 0) ) {
+    if (media->pcbLayout && group->expansion && !media->secondary && (group->expansion->pcbs.size() > 0) ) {
         for (auto& pcb : group->expansion->pcbs) {
             combo.append( pcb.name, pcb.id );
 
-            if (media->pcbLayout && (media->pcbLayout == &pcb) )
+            if (media->pcbLayout == &pcb)
                 combo.setSelection( combo.rows() - 1 );
         }
         
         append(combo, {0u, 0u}, 10);      
     }
                   
-    if (group->expansion && (group->expansion->jumpers.size() > 0) ) { 
+    if (group->expansion && !media->needAll && (group->expansion->jumpers.size() > 0) ) {
         append(jumperLabel, {0u, 0u}, 5 );
         
         for(auto& jumper : group->expansion->jumpers) {

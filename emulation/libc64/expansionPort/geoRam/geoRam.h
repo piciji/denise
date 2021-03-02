@@ -33,7 +33,7 @@ struct GeoRam : ExpansionPort {
 	auto setRam(  Emulator::Interface::Media* media, uint8_t* dump, unsigned dumpSize ) -> void;
 	auto unsetRam() -> void;
 	auto injectRam( ) -> void;
-	auto reset() -> void;
+	auto reset(bool softReset = false) -> void;
 	
 	auto write() -> void;
 

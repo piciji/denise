@@ -219,7 +219,7 @@ auto Gmod2::serializeStep2(Emulator::Serializer& s) -> void {
     ExpansionPort::serialize(s);
 }
 
-auto Gmod2::reset() -> void {
+auto Gmod2::reset(bool softReset) -> void {
 
     bank = 0;
     writeEnable = false;

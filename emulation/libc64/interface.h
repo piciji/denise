@@ -25,12 +25,13 @@ struct Interface : Emulator::Interface {
         MediaGroupIdDisk = 0, MediaGroupIdTape = 1,
         MediaGroupIdProgram = 2, MediaGroupIdExpansionGame = 3, MediaGroupIdExpansionReu = 4,
         MediaGroupIdExpansionFreezer = 5, MediaGroupIdExpansionEasyFlash = 6, MediaGroupIdExpansionRetroReplay = 7,
-		MediaGroupIdExpansionGeoRam = 8,
+		MediaGroupIdExpansionGeoRam = 8, MediaGroupIdExpansionEasyFlash3 = 9,
     };
     
     enum ExpansionId {
         ExpansionIdNone = 0, ExpansionIdGame = 1, ExpansionIdReu = 2, ExpansionIdFreezer = 3,
         ExpansionIdEasyFlash = 4, ExpansionIdRetroReplay = 5, ExpansionIdGeoRam = 6, ExpansionIdReuRetroReplay = 7,
+        ExpansionIdEasyFlash3 = 8,
     };
     
     enum CartridgeId {
@@ -165,8 +166,11 @@ struct Interface : Emulator::Interface {
 	auto getMemoryInitPattern( uint8_t* pattern ) -> void;
     auto getMemorySize() -> unsigned { return 64 * 1024; }
     
-    auto hasFreezerButton() -> bool;
-    auto freeze() -> void;
+    auto hasFreezeButton() -> bool;
+    auto freezeButton() -> void;
+
+    auto hasCustomCartridgeButton() -> bool;
+    auto customCartridgeButton() -> void;
 
     auto pasteText(std::string buffer ) -> void;
     auto copyText() -> std::string;

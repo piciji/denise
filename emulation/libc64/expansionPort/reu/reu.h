@@ -66,7 +66,7 @@ struct Reu : ExpansionPort {
 	auto isGame( ) -> bool;
 
     auto clock() -> void;    
-    auto reset() -> void;   
+    auto reset(bool softReset = false) -> void;
     auto serialize(Emulator::Serializer& s) -> void;
     
     auto incrementAddresses() -> void;

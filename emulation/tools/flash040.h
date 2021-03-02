@@ -78,6 +78,7 @@ struct Flash040 {
                 break;
         }
 
+        this->sectorShift = 0;
         uint32_t mask = sectorSize - 1;
 
         while( true ) {

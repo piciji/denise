@@ -6,7 +6,7 @@ namespace LIBC64 {
     
 EasyFlash* easyFlash = nullptr;  
 
-#include "eapi.h"
+#include "eapi-am29f040.h"
 
 EasyFlash::EasyFlash() : Cart(false, true),
     flashLo(Emulator::Flash040::TypeB),
@@ -196,7 +196,7 @@ auto EasyFlash::create( Interface::CartridgeId cartridgeId ) -> Cart* {
     return easyFlash;
 }
 
-auto EasyFlash::reset() -> void {
+auto EasyFlash::reset(bool softReset) -> void {
     
     std::memset(ram, 0xff, 256);
    

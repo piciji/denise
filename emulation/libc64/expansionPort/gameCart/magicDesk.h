@@ -29,7 +29,7 @@ namespace LIBC64 {
             system->changeExpansionPortMemoryMode( exRom, game = true );
         }
 
-        auto reset() -> void {
+        auto reset(bool softReset = false) -> void {
 
             cRomL = getChip(0);
             cRomH = nullptr;

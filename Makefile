@@ -28,9 +28,9 @@ ifeq ($(platform),windows)
 endif
 #objects += m68000
 objects += m6510 ciaBase cia6526 vicIIBase vicIICycle vicIIFast systemC64 sid chamberlin tapeC64 inputC64 controlPortC64
-objects += cartC64 gameCartC64 freezerC64 reuC64 easyFlashC64 retroReplayC64 gmod2C64 clipboardC64 geoRamC64
+objects += cartC64 gameCartC64 freezerC64 reuC64 easyFlashC64 easyFlash3C64 retroReplayC64 gmod2C64 clipboardC64 geoRamC64
 objects += m6502 via iec prg64 drive1541 structure1541
-objects += thread m93c86 icons
+objects += thread m93c86 mx29lv640eb icons
 
 prgflags := -DAPP_NAME="\"$(name)\"" -DTRANSLATION_FOLDER="\"$(translationFolder)/\"" -DDATA_FOLDER="\"$(dataFolder)/\"" -DSHADER_FOLDER="\"$(shaderFolder)/\"" -DIMG_FOLDER="\"$(imgFolder)/\""
 flags :=
@@ -131,6 +131,7 @@ obj/freezerC64.o: emulation/libc64/expansionPort/freezer/freezer.cpp
 obj/reuC64.o:	emulation/libc64/expansionPort/reu/reu.cpp
 obj/geoRamC64.o:emulation/libc64/expansionPort/geoRam/geoRam.cpp
 obj/easyFlashC64.o: emulation/libc64/expansionPort/easyFlash/easyFlash.cpp
+obj/easyFlash3C64.o: emulation/libc64/expansionPort/easyFlash/easyFlash3.cpp
 obj/retroReplayC64.o: emulation/libc64/expansionPort/retroReplay/retroReplay.cpp
 obj/gmod2C64.o: emulation/libc64/expansionPort/gmod/gmod2.cpp
 obj/clipboardC64.o: emulation/libc64/system/clipboard.cpp
@@ -149,7 +150,8 @@ obj/structure1541.o:emulation/libc64/disk/structure/structure.cpp
 	$(compiler) $(cppflags) $(flags) -Wno-stringop-overflow $1 -c $< -o $@
 obj/thread.o:emulation/tools/thread.cpp
 obj/m93c86.o:emulation/tools/m93c86.cpp
-obj/icons.o:data/icons.cpp
+obj/mx29lv640eb.o:emulation/tools/mx29lv640eb.cpp
+obj/icons.o:data/icons/icons.cpp
 
 obj/program.o:		program/program.cpp
 	$(compiler) $(cppflags) $(prgflags) $(flags) $1 -c $< -o $@

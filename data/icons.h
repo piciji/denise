@@ -115,4 +115,6 @@ extern uint8_t recordPauseStatus[356];
 
 extern uint8_t eject[275];
 
+extern uint8_t menu[223];
+
 }

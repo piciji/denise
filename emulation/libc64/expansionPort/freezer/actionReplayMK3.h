@@ -45,7 +45,7 @@ struct ActionReplayMK3 : Freezer {
         cRomH = cRomL = getChip(0);
     }
     
-    auto reset() -> void {             
+    auto reset(bool softReset = false) -> void {
         enable = true;
         cRomH = cRomL = getChip(1);        
     }

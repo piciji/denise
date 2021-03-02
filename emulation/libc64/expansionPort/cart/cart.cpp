@@ -242,7 +242,7 @@ auto Cart::readRomH(uint16_t addr) -> uint8_t {
     return *(cRomH->ptr + addr);
 }
 
-auto Cart::reset() -> void {  
+auto Cart::reset(bool softReset) -> void {
     
     cRomL = getChip(0);
     

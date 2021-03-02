@@ -134,7 +134,7 @@ namespace LIBC64 {
             enable = true;
         }
 
-        auto reset() -> void {
+        auto reset(bool softReset = false) -> void {
             cRomH = cRomL = getChip(0);
             enable = true;
             useRam = false;

@@ -29,7 +29,7 @@ namespace LIBC64 {
             Cart::assumeChips( {16384} );
         }
 
-        auto reset() -> void {
+        auto reset(bool softReset = false) -> void {
 
             cRomL = getChip(0);
 

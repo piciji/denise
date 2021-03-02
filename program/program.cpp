@@ -317,7 +317,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
 		archiveViewer->setVisible(false);
 		view->update();	
 		view->setCursor( activeEmulator );
-		view->updateFreeze( activeEmulator );
+		view->updateCartButtons( activeEmulator );
 
 		if (needTapeControl)
 			view->showTapeMenu( true );
@@ -383,7 +383,7 @@ auto Program::powerOff() -> void {
 		activeEmulator = nullptr;
 		activeVideoManager = nullptr;
 		filePool->unloadOrphaned();
-		view->updateFreeze(nullptr);
+		view->updateCartButtons(nullptr);
 		updateSaveIdent( nullptr );
 		InputManager::urgentUpdate = true;
 		InputManager::resetJit();

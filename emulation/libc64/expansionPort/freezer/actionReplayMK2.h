@@ -70,7 +70,7 @@ struct ActionReplayMK2 : Freezer {
         enableCounter = 0;        
     }
     
-    auto reset() -> void {
+    auto reset(bool softReset = false) -> void {
         cRomH = cRomL = getChip(1);
         disableCounter = 0;
         enableCounter = 0;

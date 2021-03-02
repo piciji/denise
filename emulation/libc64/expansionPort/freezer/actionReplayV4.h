@@ -123,7 +123,7 @@ struct ActionReplayV4 : Freezer {
         enable = true;
     }
     
-    auto reset() -> void {
+    auto reset(bool softReset = false) -> void {
         cRomH = cRomL = getChip(0);
         enable = true;
         useRam = false;

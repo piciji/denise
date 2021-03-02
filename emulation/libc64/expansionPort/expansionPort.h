@@ -40,6 +40,10 @@ struct ExpansionPort {
     virtual auto hasFreezeButton() -> bool { return false; }
     
     virtual auto freeze() -> void {}
+
+    virtual auto hasCustomButton() -> bool { return false; }
+
+    virtual auto customButton() -> void {}
     
     virtual auto isDma() -> bool { return dma; }
     
@@ -92,7 +96,7 @@ struct ExpansionPort {
     
     virtual auto prepareRam(unsigned size) -> void {}
     
-    virtual auto reset() -> void {
+    virtual auto reset( bool softReset = false ) -> void {
         game = true;
         exRom = true;
         dma = false;

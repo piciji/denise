@@ -335,7 +335,7 @@ auto RetroReplay::blockFreeze() -> bool {
     return flashJumper;
 }
 
-auto RetroReplay::reset() -> void {
+auto RetroReplay::reset(bool softReset) -> void {
     
     enabled = true;
     frozen = false;

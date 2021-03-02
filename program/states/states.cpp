@@ -58,6 +58,8 @@ auto States::load( std::string path, bool prependFolder ) -> void {
     updateTapeMenu();    
     
     updateExpansionJumper();
+
+    view->updateCartButtons( emulator );
     
     InputManager::resetJit();
     

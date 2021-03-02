@@ -60,7 +60,7 @@ namespace LIBC64 {
             s.integer( enable );
         }
 
-        auto reset() -> void {
+        auto reset(bool softReset = false) -> void {
             enable = true;
             game = false;
             exRom = false;

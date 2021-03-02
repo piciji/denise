@@ -63,7 +63,7 @@ struct RetroReplay : FreezeButton {
     
     auto didFreeze() -> void;
     auto blockFreeze() -> bool;
-    auto reset() -> void;
+    auto reset(bool softReset = false) -> void;
     auto setWriteProtect(bool state) -> void;
     auto isWriteProtected() -> bool;
     auto write() -> void;

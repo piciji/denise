@@ -426,9 +426,11 @@ struct Interface {
     virtual auto analyzeExpansion(uint8_t* data, unsigned size, std::string suffix = "") -> Expansion* { return nullptr; }    
     virtual auto setExpansionJumper( Media* media, unsigned jumperId, bool state ) -> void {}
     virtual auto getExpansionJumper( Media* media, unsigned jumperId ) -> bool { return false; }
-    // freezer carts
-    virtual auto hasFreezerButton() -> bool { return false; }
-    virtual auto freeze() -> void {}
+    // cart buttons
+    virtual auto hasFreezeButton() -> bool { return false; }
+    virtual auto freezeButton() -> void {}
+    virtual auto hasCustomCartridgeButton() -> bool { return false; }
+    virtual auto customCartridgeButton() -> void {}
 
     // savestates
     virtual auto checkstate(uint8_t* data, unsigned size) -> bool { return false; }    

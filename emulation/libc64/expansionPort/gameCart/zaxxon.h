@@ -19,7 +19,7 @@ struct Zaxxon : GameCart {
         return GameCart::readRomL( addr );
     }
 
-    auto reset() -> void {
+    auto reset(bool softReset = false) -> void {
         
         cRomL = getChip(0);
         cRomH = getChip(1);

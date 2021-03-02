@@ -32,7 +32,7 @@ struct System3 : GameCart {
     }
 
 
-    auto reset() -> void {        
+    auto reset(bool softReset = false) -> void {
         cRomL = getChip(0);
         cRomH = nullptr;
     }

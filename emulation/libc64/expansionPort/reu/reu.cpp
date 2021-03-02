@@ -146,10 +146,10 @@ auto Reu::injectRam( ) -> void {
     std::memcpy(data, dump, std::min(dumpSize, size) );
 }
 
-auto Reu::reset() -> void {
+auto Reu::reset(bool softReset) -> void {
     
 	if (expander)
-		expander->reset();
+		expander->reset(softReset);
 	
     status &= ~0xe0;    
 	

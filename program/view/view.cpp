@@ -565,6 +565,7 @@ auto View::loadImages() -> void {
     powerImage.setResourceId( ID_POWER );
     freezeImage.loadPng((uint8_t*)Icons::freeze, sizeof(Icons::freeze));
     freezeImage.setResourceId( ID_FREEZE );
+    menuImage.loadPng((uint8_t*)Icons::menu, sizeof(Icons::menu));
 	poweroffImage.loadPng((uint8_t*)Icons::shutdown, sizeof(Icons::shutdown));
     poweroffImage.setResourceId( ID_SHUTDOWN );
     firmwareImage.loadPng((uint8_t*)Icons::memory, sizeof(Icons::memory));
@@ -677,11 +678,21 @@ auto View::buildMenu() -> void {
         sM.freeze = new GUIKIT::MenuItem;
         sM.freeze->setIcon( freezeImage );
         sM.freeze->onActivate = [emulator]() {
-		    emulator->freeze();
+		    emulator->freezeButton();
 	    };	
         sM.freeze->setEnabled(false);
         sM.system->append( *sM.freeze );
-        
+
+        if ( dynamic_cast<LIBC64::Interface*>(emulator)) {
+            sM.menu = new GUIKIT::MenuItem;
+            sM.menu->setIcon( menuImage );
+            sM.menu->onActivate = [emulator]() {
+                emulator->customCartridgeButton();
+            };
+            sM.menu->setEnabled(false);
+            sM.system->append(*sM.menu);
+        }
+
         sM.system->append(*GUIKIT::MenuSeparator::getInstance());
 		
 		sM.loadSoftware = new GUIKIT::MenuItem;
@@ -1069,6 +1080,7 @@ auto View::translate() -> void {
 		sysMenu.poweronAndRemoveExpansions->setText(trans->get("Hard Reset + Unplug Cart"));
         sysMenu.reset->setText(trans->get("Soft Reset"));        
         sysMenu.freeze->setText(trans->get("Freeze"));
+        sysMenu.menu->setText(trans->get("Menu"));
         sysMenu.loadSoftware->setText(trans->get("load software"));
         sysMenu.media->setText(trans->get("Software"));
         sysMenu.systemManagement->setText(trans->get("system_management"));
@@ -1193,13 +1205,18 @@ auto View::getSysMenu( Emulator::Interface* emulator ) -> SystemMenu* {
     return nullptr;
 }
 
-auto View::updateFreeze( Emulator::Interface* emulator ) -> void {
+auto View::updateCartButtons( Emulator::Interface* emulator ) -> void {
 
     for (auto& sM : sysMenus) {
-        if ((sM.emulator == emulator) && emulator->hasFreezerButton())
-            sM.freeze->setEnabled( true );
-        else
-            sM.freeze->setEnabled( false );
+        bool state = (sM.emulator == emulator) && emulator->hasFreezeButton();
+
+        if (sM.freeze->enabled() != state)
+            sM.freeze->setEnabled( state );
+
+        state = (sM.emulator == emulator) && emulator->hasCustomCartridgeButton();
+
+        if (sM.menu->enabled() != state)
+            sM.menu->setEnabled( state );
     }
 }
 

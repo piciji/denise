@@ -80,7 +80,7 @@ namespace LIBC64 {
                 ram[ 0x2000 + (addr & 0x1fff) + (bank << 14) ] = data;
         }
 
-        auto reset() -> void {
+        auto reset(bool softReset = false) -> void {
             cRomH = cRomL = getChip(0);
             bank = 0;
             useRam = false;

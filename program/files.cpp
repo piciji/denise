@@ -126,7 +126,7 @@ auto Program::setExpansionSelection( Emulator::Interface* emulator ) -> void {
     for( auto& mediaGroup : emulator->mediaGroups ) {
         
         if ( mediaGroup.selected ) {
-            
+
             auto mediaId = settings->get<unsigned>( _underscore( mediaGroup.name ) + "_selected", mediaGroup.media[0].id );
             
             auto media = emulator->getMedia( mediaGroup, mediaId );
@@ -142,6 +142,9 @@ auto Program::setExpansionSelection( Emulator::Interface* emulator ) -> void {
             continue;
         
         for(auto& media : expansion.mediaGroup->media) {
+
+            if (!media.pcbLayout || media.secondary)
+                continue;
 
             auto pcbId = settings->get<unsigned>( _underscore( media.name ) + "_pcb", expansion.pcbs[0].id );
 
