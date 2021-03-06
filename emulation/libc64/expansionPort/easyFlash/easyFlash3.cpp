@@ -8,7 +8,6 @@ EasyFlash3* easyFlash3 = nullptr;
 
 #include "eapi-mx29640b.h"
 
-
 EasyFlash3::EasyFlash3() : Cart(false, true) {
     
     this->media = nullptr;    
@@ -23,11 +22,25 @@ EasyFlash3::EasyFlash3() : Cart(false, true) {
 
     flash.setEvents(&sysTimer);
 
-    flash.written = []() {
-        system->serializationSize += 8 * 1024 * 1024;
+    flash.written = [this]() {
+
+        if (activeSlot->dirty)
+            return;
+
+        activeSlot->dirty = true;
+
+        system->serializationSize += 1 * 1024 * 1024;
     };
     
-    setId( Interface::ExpansionIdEasyFlash );
+    setId( Interface::ExpansionIdEasyFlash3 );
+
+    vicDisableUltimax = [this]() {
+        game = true;
+        exRom = true;
+        system->changeExpansionPortMemoryMode(exRom, game);
+    };
+
+    sysTimer.registerCallback({&vicDisableUltimax, 1});
 }
 
 EasyFlash3::~EasyFlash3() {
@@ -37,44 +50,17 @@ EasyFlash3::~EasyFlash3() {
     delete[] ram;
 }
 
-auto EasyFlash3::useEF1Slots() -> bool {
-
-    return media->pcbLayout && (media->pcbLayout->id == Interface::CartridgeIdEasyFlash);
-}
-
-auto EasyFlash3::unsetRom(Emulator::Interface::Media* media) -> void {
-
-    Slot* slot = &slots[media->id & 7];
-    bool slot0 = media->id == 0;
-
-    if ( slot->rom == nullptr )
-        return;
-
-    if(slot0 || useEF1Slots() )
-        write( slot );
-
-    if (slot0)
-        this->media = media;
-
-    slot->media = media;
-    slot->rom = nullptr;
-    slot->romSize = 0;
-}
-
 auto EasyFlash3::setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void {
 
     bool slot0 = media->id == 0;
+    
 
     Slot* slot = &slots[media->id & 7];
 
-    if ( (activeSlot->rom == nullptr) && (rom == nullptr) )
-        return;
-
-    if (slot0)
+    if (slot0) {
         this->media = media;
-    else if (!useEF1Slots())
-        // don't use EF Slots 1 - 7
-        return;
+        loadSplitted = media->pcbLayout->id == 0;
+    }
 
     slot->media = media;
     slot->rom = rom;
@@ -92,10 +78,16 @@ auto EasyFlash3::setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigne
 
     slot->chips = chips;
 
-    if (slot0)
+    unsigned slotOffset = media->id * 1024 * 1024;
+
+    if (loadSplitted)
+        std::memset(dataFlash + slotOffset, 0xff, 1024 * 1024 );
+    else if (slot0)
         std::memset(dataFlash, 0xff, 8 * 1024 * 1024 );
 
-    unsigned slotOffset = media->id * 1024 * 1024;
+    if (!loadSplitted && !slot0)
+        return;
+
     unsigned offset = 0;
     unsigned bank;
 
@@ -103,20 +95,20 @@ auto EasyFlash3::setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigne
 
         bank = chip.bank;
 
-        if (!slot0) {
+        if (!slot0 || loadSplitted) {
             // EF1 slots
             if (bank >= 64)
-                break;
+                continue;
         } else {
             if (bank >= 512)
-                break;
+                continue;
 
             slotOffset = (bank >> 6) * 1024 * 1024;
 
             bank &= 63;
         }
 
-        offset = slotOffset + (((((bank >> 3) & 7) << 1) | (bank & 7)) << 13);
+        offset = slotOffset + (((((bank >> 3) & 7) << 4) | (bank & 7)) << 13);
 
         if (!chip.ptrHi) {                        
                         
@@ -150,22 +142,43 @@ auto EasyFlash3::assumeChips( ) -> void {
     }
 }
 
-auto EasyFlash3::write( Slot* slot ) -> void {
+auto EasyFlash3::unsetRom(Emulator::Interface::Media* media) -> void {
 
-    bool writeEf1Slots = useEF1Slots();
-
-	bool _dirty = flash.dirty;
-
-    flash.dirty = false;
-
-    if (!slot->media || !slot->media->guid || !_dirty || slot->writeProtect )
+    Slot* slot = &slots[media->id & 7];
+    
+    if (!slot->rom)
         return;
-        
-    if (!system->interface->questionToWrite(slot->media))
-        return;    
     
-    system->interface->truncateMedia( slot->media );
-    
+    bool _dirty = slot->dirty;
+    slot->dirty = false;
+
+    bool slot0 = media->id == 0;
+    bool saveSplitted = slots[0].media->pcbLayout->id == 0;
+
+    if (loadSplitted != saveSplitted)
+        _dirty = true;
+    else if (!saveSplitted) {
+        for(unsigned i = 1; i < 8; i++)
+            _dirty |= slots[i].dirty;
+    }
+
+    if (saveSplitted || slot0) {
+        if (slot->rom && slot->media && slot->media->guid && _dirty && !slot->writeProtect ) {
+            if (system->interface->questionToWrite(slot->media))
+                write( slot, saveSplitted );
+        }
+    }
+
+    if (slot0)
+        this->media = media;
+
+    slot->media = media;
+    slot->rom = nullptr;
+    slot->romSize = 0;
+}
+
+auto EasyFlash3::write( Slot* slot, bool splitted ) -> void {
+
     unsigned offset = 0;
     
     if (!slot->binFormat) {
@@ -186,45 +199,61 @@ auto EasyFlash3::write( Slot* slot ) -> void {
     uint8_t cheader[16];
 
     bool crt8k = chip->size == 0x2000;
-    
-    for (unsigned b = 0; b < 64; b++ ) {
+    unsigned slotOffset = slot->media->id * 1024 * 1024;
+
+    unsigned maxBank = splitted ? 64 : (64 * 8);
+
+    for (unsigned b = 0; b < maxBank; b++) {
+
+        unsigned slotBank = b;
+
+        if (!splitted) {
+            slotOffset = (b >> 6) * 1024 * 1024;
+            slotBank = b & 63;
+        }
+
+        unsigned bankLo = (((slotBank >> 3) & 7) << 4) | (slotBank & 7);
+        unsigned bankHi = bankLo | (1 << 3);
+        bankLo <<= 13;
+        bankHi <<= 13;
 
         if (slot->binFormat) {
-            system->interface->writeMedia(slot->media, slot->dataLo + b * 0x2000, 0x2000, offset);
+            system->interface->writeMedia(slot->media, dataFlash + slotOffset + bankLo, 0x2000, offset);
             offset += 0x2000;
 
-            system->interface->writeMedia(slot->media, slot->dataHi + b * 0x2000, 0x2000, offset);
+            system->interface->writeMedia(slot->media, dataFlash + slotOffset + bankHi, 0x2000, offset);
             offset += 0x2000;
 
             continue;
         }
-        // crt format 
+        // crt format
         chip->bank = b;
-        
-        bool writeBankLo = !checkForEmptyFlashBank(slot->dataLo + b * 0x2000);
-        bool writeBankHi = !checkForEmptyFlashBank(slot->dataHi + b * 0x2000);
-                
-        if ( writeBankLo || (!crt8k && writeBankHi) ) {            
+
+        bool writeBankLo = !checkForEmptyFlashBank(dataFlash + slotOffset + bankLo);
+        bool writeBankHi = !checkForEmptyFlashBank(dataFlash + slotOffset + bankHi);
+
+        if (writeBankLo || (!crt8k && writeBankHi)) {
             chip->addr = 0x8000;
-            buildChipHeader( &cheader[0], *chip );
+            buildChipHeader(&cheader[0], *chip);
             system->interface->writeMedia(slot->media, &cheader[0], 16, offset);
             offset += 16;
-            system->interface->writeMedia(slot->media, slot->dataLo + b * 0x2000, 0x2000, offset);
-            offset += 0x2000;   
-        }                                
-        
+            system->interface->writeMedia(slot->media, dataFlash + slotOffset + bankLo, 0x2000, offset);
+            offset += 0x2000;
+        }
+
         if (crt8k && writeBankHi) {
             chip->addr = 0xa000;
             buildChipHeader(&cheader[0], *chip);
             system->interface->writeMedia(slot->media, &cheader[0], 16, offset);
             offset += 16;
-        }                
+        }
 
-        if (writeBankHi || (!crt8k && writeBankLo) ) {
-            system->interface->writeMedia(slot->media, slot->dataHi + b * 0x2000, 0x2000, offset);
+        if (writeBankHi || (!crt8k && writeBankLo)) {
+            system->interface->writeMedia(slot->media, dataFlash + slotOffset + bankHi, 0x2000, offset);
             offset += 0x2000;
         }
-    }    
+    }
+
 }
 
 auto EasyFlash3::assign( Cart* cart ) -> void {
@@ -239,24 +268,26 @@ auto EasyFlash3::create( Interface::CartridgeId cartridgeId ) -> Cart* {
 auto EasyFlash3::reset(bool softReset) -> void {
 
     bank = 0;
-    ef3Boot = true;
+    if (!softReset)
+        ef3Boot = true;
+    else
+        mode = Mode::EF3;
+
     game = !ef3Boot;
     exRom = true;
     LED = false;
     enableMenu = true;
 
-    if (!softReset)
+    if (!softReset) {
         activeSlot = &slots[0];
-
-    std::memset(ram, 0, 32 * 1024);
-
+        std::memset(ram, 0, 32 * 1024);
+    }
 
     disableUlimaxForVICInFirstHalfCycle = false;
 
-    for(auto& slot : slots) {
-        slot.flashLo.reset();
-        slot.flashHi.reset();
-    }
+    flash.reset();
+
+    buildFlashBaseAdr();
 }
 
 auto EasyFlash3::customButton() -> void { // menu button
@@ -268,6 +299,17 @@ auto EasyFlash3::customButton() -> void { // menu button
     ef3Boot = true;
 
     enableMenu = true;
+
+    mode = Mode::EF3;
+
+    system->power(true);
+}
+
+auto EasyFlash3::freeze() -> void { // special button in EF3
+
+    ef3Boot = false;
+
+    system->power(true);
 }
 
 auto EasyFlash3::updateDeviceState() -> void {
@@ -281,58 +323,59 @@ auto EasyFlash3::isBootable( ) -> bool {
 
 auto EasyFlash3::readIo1( uint16_t addr ) -> uint8_t {
 
-    addr &= 0xf;
-
-    if ((mode != Mode::EF1) && (addr == 1) )
-        return activeSlot->media->id;
+    if (mode == Mode::EF3) {
+        addr &= 0xf;
+        if (addr == 1)
+            return activeSlot->media->id;
+    }
 
     return ExpansionPort::readIo1(addr);
 }
 
 auto EasyFlash3::writeIo1( uint16_t addr, uint8_t value ) -> void {
 
-    if (mode == Mode::EF1) {
-        if ((addr & 2) == 0)
+    if (mode == Mode::EF3) {
+
+        addr &= 0xf;
+
+        if (addr == 0) {
             bank = value & 0x3f;
-        else
+            buildFlashBaseAdr();
+        } else if (addr == 1) {
+            activeSlot = &slots[value & 7];
+            buildFlashBaseAdr();
+        } else if (addr == 2)
             control( value );
+        else if (enableMenu && (addr == 0xf) ) { // cart mode
+            enableMenu = false;
 
-        // in EF1 you can not reach the modes, like AR, SS or Kernal
-        return;
-    }
-    // ef3 modes
-    addr &= 0xf;
+            switch( value & 0xf ) {
+                case 0:
+                    mode = Mode::EF3;
+                    system->power(true);
+                    break;
+                case 1:
+                    mode = Mode::EF3;
+                    break;
+                case 2:
+                    system->power(true);
+                    break;
+                case 3:
+                    break;
+                case 4:
+                    system->power(true);
+                    break;
+                case 5:
+                    system->power(true);
+                    break;
+                case 6:
+                    system->power(true);
+                    break;
+                case 7:
+                    system->power(true);
+                    break;
 
-    if (addr == 0)
-        bank = value & 0x3f;
-    else if (addr == 1)
-        activeSlot = &slots[value & 7];
-    else if (addr == 2)
-        control( value );
-    else if (enableMenu && (addr == 0xf) ) { // cart mode
-        enableMenu = false;
-
-        switch( value & 0xf ) {
-            case 0:
-                mode = Mode::EF3;   // this is not to switch back from EF1 but AR, SS or Kernal
-                reset();
-                break;
-            case 1:
-                mode = Mode::EF3;
-                break;
-            case 2:
-                break;
-            case 3:
-                break;
-            case 4:
-                break;
-            case 5:
-                break;
-            case 6:
-                break;
-            case 7:
-                break;
-
+            }
         }
     }
 }
@@ -345,7 +388,7 @@ auto EasyFlash3::control( uint8_t value ) -> void {
         updateDeviceState();
     }
 
-    disableUlimaxForVICInFirstHalfCycle = (mode != Mode::EF1) && !!(value & 8);
+    disableUlimaxForVICInFirstHalfCycle = !!(value & 8);
 
     value = ~value;
 
@@ -356,56 +399,87 @@ auto EasyFlash3::control( uint8_t value ) -> void {
         game = !ef3Boot;
 
     system->changeExpansionPortMemoryMode( exRom, game );
+
+    if (disableUlimaxForVICInFirstHalfCycle)
+        vicII->setUltimaxPhi1( false );
 }
 
 auto EasyFlash3::writeIo2( uint16_t addr, uint8_t value ) -> void {
 
-    addr &= 0x1fff;
+    if (mode == Mode::EF3) {
 
-    ram[ addr ] = value;
+        addr &= 0x1fff;
+
+        ram[addr] = value;
+    }
 }
 
 auto EasyFlash3::readIo2( uint16_t addr ) -> uint8_t {
 
-    addr &= 0x1fff;
+    if (mode == Mode::EF3) {
+        addr &= 0x1fff;
 
-    return ram[ addr ];
+        return ram[addr];
+    }
+
+    return ExpansionPort::readIo2(addr);
+}
+
+auto EasyFlash3::buildFlashBaseAdr() -> void {
+
+    flashBaseAdr = (activeSlot->media->id << 20) | (((((bank >> 3) & 7) << 4) | (bank & 7)) << 13);
 }
 
 auto EasyFlash3::readRomL( uint16_t addr ) -> uint8_t {
-    
-    return activeSlot->flashLo.read( bank * 0x2000 + (addr & 0x1fff) );
+
+    if (mode == Mode::EF3) {
+        return flash.read( flashBaseAdr | (addr & 0x1fff) );
+    }
+
+    return ExpansionPort::readRomL( addr );
 }
 
 auto EasyFlash3::writeRomL( uint16_t addr, uint8_t data ) -> void {
 
-    activeSlot->flashLo.write( bank * 0x2000 + (addr & 0x1fff), data );
+    if (mode == Mode::EF3) {
+        flash.write( flashBaseAdr | (addr & 0x1fff), data );
+    }
     
     ExpansionPort::writeRomL( addr, data );
 }
 
 auto EasyFlash3::readRomH( uint16_t addr ) -> uint8_t {
-    
-    return activeSlot->flashHi.read( bank * 0x2000 + (addr & 0x1fff) );
+
+    if (mode == Mode::EF3) {
+        return flash.read( flashBaseAdr | (1 << 16) | (addr & 0x1fff) );
+    }
+
+    return ExpansionPort::readRomL( addr );
 }
 
 auto EasyFlash3::writeRomH( uint16_t addr, uint8_t data ) -> void {
 
-    activeSlot->flashHi.write( bank * 0x2000 + (addr & 0x1fff), data );
+    if (mode == Mode::EF3) {
+        flash.write( flashBaseAdr | (1 << 16) | (addr & 0x1fff), data );
+    }
     
     ExpansionPort::writeRomH( addr, data );
 }
 
 auto EasyFlash3::writeUltimaxRomL( uint16_t addr, uint8_t data ) -> void {
 
-    activeSlot->flashLo.write( bank * 0x2000 + (addr & 0x1fff), data );
+    if (mode == Mode::EF3) {
+        flash.write( flashBaseAdr | (addr & 0x1fff), data );
+    }
 
     ExpansionPort::writeUltimaxRomL( addr, data );
 }
 
 auto EasyFlash3::writeUltimaxRomH( uint16_t addr, uint8_t data ) -> void {
 
-    activeSlot->flashHi.write( bank * 0x2000 + (addr & 0x1fff), data );
+    if (mode == Mode::EF3) {
+        flash.write( flashBaseAdr | (1 << 16) | (addr & 0x1fff), data );
+    }
 
     ExpansionPort::writeUltimaxRomH( addr, data );
 }
@@ -418,35 +492,32 @@ auto EasyFlash3::serialize(Emulator::Serializer& s) -> void {
 
     s.integer( LED );
 
-    if ( mode == Mode::EF1) {
-        serializeSlot(activeSlot, s);
+    s.integer( ef3Boot );
 
-    } else {
-        for(auto& slot : slots)
-            serializeSlot( &slot, s );
+    s.integer( enableMenu );
 
-        s.array( ram, 32 * 1024 );
+    s.integer( flashBaseAdr );
+
+    s.integer( loadSplitted );
+
+    s.array( ram, 32 * 1024 );
+
+    flash.serialize(s);
+
+    for(auto& slot : slots) {
+
+        s.integer( slot.writeProtect );
+
+        s.integer( slot.dirty );
+
+        if (slot.dirty && !s.lightUsage())
+            s.array(dataFlash + slot.media->id * 1024 * 1024, 1024 * 1024);
     }
 
     if (!s.lightUsage() && s.mode() == (Emulator::Serializer::Mode::Load) )
         updateDeviceState();
 
     ExpansionPort::serialize(s);        
-}
-
-auto EasyFlash3::serializeSlot(Slot* slot, Emulator::Serializer& s) -> void {
-    s.integer( slot->writeProtect );
-
-    slot->flashLo.serialize(s);
-    slot->flashHi.serialize(s);
-
-    if (!s.lightUsage()) {
-        if (slot->flashLo.dirty)
-            s.array(slot->dataLo, 512 * 1024);
-
-        if (slot->flashHi.dirty)
-            s.array(slot->dataHi, 512 * 1024);
-    }
 }
 
 auto EasyFlash3::createImage(unsigned& imageSize) -> uint8_t* {
@@ -491,5 +562,15 @@ auto EasyFlash3::isWriteProtected( Emulator::Interface::Media* media ) -> bool {
     return slot->writeProtect;
 }
 
+auto EasyFlash3::clock() -> void {
+
+//    if (disableUlimaxForVICInFirstHalfCycle) {
+//        exRom = requestedExRom;
+//        game = requestedGame;
+//        system->changeExpansionPortMemoryMode(exRom, game);
+//        sysTimer.add(&vicDisableUltimax, 1, Emulator::SystemTimer::Action::UpdateExisting);
+//    }
+}
 
 }
+

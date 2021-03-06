@@ -48,7 +48,7 @@ MediaGroupLayout::Block::Selector::Selector(Emulator::Interface::Media* media) {
         append(combo, {0u, 0u}, 10);      
     }
                   
-    if (group->expansion && !media->needAll && (group->expansion->jumpers.size() > 0) ) {
+    if (group->expansion && (group->expansion->jumpers.size() > 0) ) {
         append(jumperLabel, {0u, 0u}, 5 );
         
         for(auto& jumper : group->expansion->jumpers) {

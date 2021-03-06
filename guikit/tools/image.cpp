@@ -272,9 +272,14 @@ auto Image::getCharDataStringFromBinary(std::string inFile, std::string outFile)
 
         auto fp = fileOut.getHandle();
         std::string out = "";
+        char hex[8];
 
         for(int i = 0; i < fileIn.getSize(); i++) {
+
+            //sprintf( hex, "%2x", data[i] );
+            //out += "0x" + (std::string)hex;
             out += std::to_string( data[i] );
+
             if ( (i+1) != fileIn.getSize()) {
                 out += ", ";
             }

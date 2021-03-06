@@ -143,8 +143,9 @@ auto Program::setExpansionSelection( Emulator::Interface* emulator ) -> void {
         
         for(auto& media : expansion.mediaGroup->media) {
 
-            if (!media.pcbLayout || media.secondary)
+            if (!media.pcbLayout || media.secondary) {
                 continue;
+            }
 
             auto pcbId = settings->get<unsigned>( _underscore( media.name ) + "_pcb", expansion.pcbs[0].id );
 

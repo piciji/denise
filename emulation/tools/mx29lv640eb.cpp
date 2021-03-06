@@ -65,9 +65,7 @@ namespace Emulator {
 
                         std::memset(&data[offset], 0xff, sectorSize);
 
-                        if (!dirty)
-                            written();
-                        dirty = true;
+                        written();
 
                         lookForOtherSectorsToErase = true;
                     }
@@ -78,9 +76,7 @@ namespace Emulator {
 
                 case State::ChipErase:
                     std::memset(data, 0xff, size);
-                    if (!dirty)
-                        written();
-                    dirty = true;
+                    written();
                     state = baseState;
                     break;
 
@@ -98,7 +94,6 @@ namespace Emulator {
         baseState = State::Read;
         byteToProgram = 0;
         clearEraseMask();
-        dirty = false;
     }
 
     auto MX29LV640EB::unlock1(uint32_t addr) -> bool {
@@ -116,9 +111,7 @@ namespace Emulator {
 
         byteToProgram = value;
         data[addr] = newData;
-        if (!dirty)
-            written();
-        dirty = true;
+        written();
 
         return newData == value;
     }
@@ -323,7 +316,6 @@ namespace Emulator {
     }
 
     auto MX29LV640EB::serialize(Emulator::Serializer &s) -> void {
-        s.integer(dirty);
         s.integer(byteToProgram);
         s.integer((uint8_t&) state);
         s.integer((uint8_t&) baseState);

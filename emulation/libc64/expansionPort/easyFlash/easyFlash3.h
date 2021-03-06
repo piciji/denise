@@ -12,19 +12,20 @@ struct EasyFlash3 : Cart {
     ~EasyFlash3();
         
     struct Slot {
-        Slot();
-
         uint8_t* rom = nullptr;
         unsigned romSize = 0;
         Emulator::Interface::Media* media;
-        bool writeProtect;
+        bool writeProtect = false;
         bool binFormat = false;
         std::vector<Chip> chips;
+        bool dirty = false;
     } slots[8];
 
+    std::function<void ()> vicDisableUltimax;
     Emulator::MX29LV640EB flash;
     uint8_t* dataFlash;
-
+    bool loadSplitted;
+    uint32_t flashBaseAdr;
 
     enum class Mode { EF3, Kernal, AR, SS } mode;
     bool disableUlimaxForVICInFirstHalfCycle = false;
@@ -65,7 +66,7 @@ struct EasyFlash3 : Cart {
     auto writeUltimaxRomL( uint16_t addr, uint8_t data ) -> void;
     auto writeUltimaxRomH( uint16_t addr, uint8_t data ) -> void;
     
-    auto write( Slot* slot ) -> void;
+    auto write( Slot* slot, bool splitted ) -> void;
     
     auto createImage(unsigned& imageSize) -> uint8_t*;
     
@@ -74,8 +75,6 @@ struct EasyFlash3 : Cart {
     auto isWriteProtected(Emulator::Interface::Media* media) -> bool;
 
     auto serialize(Emulator::Serializer& s) -> void;
-
-    auto serializeSlot(Slot* slot, Emulator::Serializer& s) -> void;
     
     auto isBootable( ) -> bool;
     
@@ -83,11 +82,15 @@ struct EasyFlash3 : Cart {
 	
 	auto protectFromDeletion() -> bool { return true; }
 
-    auto hasCustomButton() -> bool { return ef3Mode; } // menu button of EF3
+    auto hasCustomButton() -> bool { return true; } // menu button of EF3
 
     auto customButton() -> void;
 
-	auto useEF1Slots() -> bool;
+    auto buildFlashBaseAdr() -> void;
+
+    auto freeze() -> void;
+
+    auto clock() -> void;
 };
 
 extern EasyFlash3* easyFlash3;
