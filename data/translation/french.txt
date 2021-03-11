@@ -563,3 +563,6 @@ georam_image =
 select_georam_image = 
 GeoRam memory = 
 blank_georam_image = 
+easyflash³_insert = Insertion EasyFlash
+easyflash³_image = Image EasyFlash
+select_easyflash³_image = Choisir une image EasyFlash...

@@ -93,7 +93,7 @@ auto EasyFlash::setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned
         }            
     }
     
-    if (std::memcmp(&dataHi[0x1800], "eapi", 4) == 0) {
+    if (std::memcmp(&dataHi[0x1800], "eapi", 4) == 0) {        
         std::memcpy(dataHi + 0x1800, eapi, 768);
     }
 }

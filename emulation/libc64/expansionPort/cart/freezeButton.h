@@ -25,7 +25,7 @@ struct FreezeButton : Cart {
     virtual auto blockFreeze() -> bool { return false; }
     virtual auto arm() -> bool { return false; }
     
-    auto freeze() -> void {
+    virtual auto freeze() -> void {
         if (blockFreeze())
             return;
         // UI events are processed only one time between frames.

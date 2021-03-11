@@ -35,7 +35,9 @@ struct ExpansionPort {
     std::function<void (bool state)> nmiCall;
        
     std::function<bool ()> vicBA; // check if Vic needs bus
-    std::function<void (bool state)> dmaCall; // change rdy and aec same time
+    std::function<void (bool state)> dmaCall; // change rdy and aec same time   
+
+    virtual auto resetButton() -> bool { return false; }
     
     virtual auto hasFreezeButton() -> bool { return false; }
     
@@ -116,7 +118,9 @@ struct ExpansionPort {
 	
 	virtual auto hasSecondaryRom() -> bool { return false; }
     
-    auto setId(Interface::ExpansionId id) -> void { this->id = id; }           
+    virtual auto memoryMapUpdated() -> void {} // for speed hacks ( expansion can not "directly" see, when CPU port is written)
+    
+    auto setId(Interface::ExpansionId id) -> void { this->id = id; }         
 };   
 
 }

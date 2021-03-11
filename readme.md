@@ -25,6 +25,7 @@
 * Atomic Power, Mach5, Pagefox, Ross, Westermann
 * use REU + Retro Replay together
 * GeoRAM
+* EasyFlash 3
 
 ## 1.0.9.1
 * fix TAPE emulation (broken in 1.0.9)

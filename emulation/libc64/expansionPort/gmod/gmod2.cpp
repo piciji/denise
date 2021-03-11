@@ -115,9 +115,6 @@ auto Gmod2::write() -> void {
 // eeprom
 auto Gmod2::setSecondaryRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void {
 
- //   if ( (this->romSecondary == nullptr) && (rom == nullptr) )
-   //     return;
-
     if (this->romSecondary && (rom == nullptr))
         // unset
         writeEeprom();

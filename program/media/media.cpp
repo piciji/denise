@@ -1093,7 +1093,7 @@ auto MediaLayout::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* fil
         emulator->writeProtect(media, false);
         filePool->assign( _ident(emulator, media->name), file);
     } else {        
-        if (mediaGroup->expansion->pcbs.size()) {
+        if (media->pcbLayout && mediaGroup->expansion->pcbs.size()) {
             block->selector.combo.setSelection(0);
             block->selector.combo.onChange();        
         }

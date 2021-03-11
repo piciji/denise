@@ -142,14 +142,14 @@ auto Interface::prepareMedia() -> void {
 	}
 
     {   auto& group = mediaGroups[MediaGroupIdExpansionEasyFlash3];
-        group.media.push_back({0, "EasyFlash³ 1", 0, &group});
-        group.media.push_back({1, "EasyFlash³ 2", 0, &group});
-        group.media.push_back({2, "EasyFlash³ 3", 0, &group});
-        group.media.push_back({3, "EasyFlash³ 4", 0, &group});
-        group.media.push_back({4, "EasyFlash³ 5", 0, &group});
-        group.media.push_back({5, "EasyFlash³ 6", 0, &group});
-        group.media.push_back({6, "EasyFlash³ 7", 0, &group});
-        group.media.push_back({7, "EasyFlash³ 8", 0, &group});
+        group.media.push_back({0, "EF3 Slot 0", 0, &group});
+        group.media.push_back({1, "EF3 Slot 1", 0, &group});
+        group.media.push_back({2, "EF3 Slot 2", 0, &group});
+        group.media.push_back({3, "EF3 Slot 3", 0, &group});
+        group.media.push_back({4, "EF3 Slot 4", 0, &group});
+        group.media.push_back({5, "EF3 Slot 5", 0, &group});
+        group.media.push_back({6, "EF3 Slot 6", 0, &group});
+        group.media.push_back({7, "EF3 Slot 7", 0, &group});
         group.selected = nullptr;
     }
     
@@ -188,7 +188,7 @@ auto Interface::prepareExpansions() -> void {
     expansions.push_back( { ExpansionIdNone, "Empty", Expansion::Type::Empty, nullptr, nullptr, nullptr } );
     expansions.push_back( { ExpansionIdGame, "Cartridge", Expansion::Type::Standard | Expansion::Type::Flash | Expansion::Type::Eprom, nullptr, &mediaGroups[MediaGroupIdExpansionGame], nullptr } );
     expansions.push_back( { ExpansionIdEasyFlash, "EasyFlash", Expansion::Type::Flash, nullptr, &mediaGroups[MediaGroupIdExpansionEasyFlash], nullptr } );
-    expansions.push_back( { ExpansionIdEasyFlash3, "EasyFlash³", Expansion::Type::Flash, nullptr, &mediaGroups[MediaGroupIdExpansionEasyFlash3], nullptr } );
+    expansions.push_back( { ExpansionIdEasyFlash3, "EasyFlash³", Expansion::Type::Flash | Expansion::Type::Freezer, nullptr, &mediaGroups[MediaGroupIdExpansionEasyFlash3], nullptr } );
     expansions.push_back( { ExpansionIdFreezer, "Freezer", Expansion::Type::Freezer, nullptr, &mediaGroups[MediaGroupIdExpansionFreezer], nullptr } );
     expansions.push_back( { ExpansionIdRetroReplay, "Retro Replay", Expansion::Type::Freezer | Expansion::Type::Flash, nullptr, &mediaGroups[MediaGroupIdExpansionRetroReplay], nullptr } );
     expansions.push_back( { ExpansionIdGeoRam, "GeoRam", Expansion::Type::Ram | Expansion::Type::Battery, &memoryTypes[1], &mediaGroups[MediaGroupIdExpansionGeoRam], nullptr } );
@@ -217,9 +217,6 @@ auto Interface::prepareExpansions() -> void {
         expansion.creationIdents.push_back( "Gmod2 Eeprom" );
         
         mediaGroups[MediaGroupIdExpansionGame].expansion = &expansion;
-
-        for(auto& media : mediaGroups[MediaGroupIdExpansionGame].media)
-            media.pcbLayout = &expansion.pcbs[0];
     }
                 
     {   auto& expansion = expansions[ExpansionIdReu];        
@@ -737,7 +734,9 @@ auto Interface::power() -> void {
 }
 
 auto Interface::reset() -> void {
-	system->power( true );
+    
+    if ( !expansionPort->resetButton() )    
+        system->power( true );
 }
 
 auto Interface::powerOff() -> void {
@@ -1053,7 +1052,7 @@ auto Interface::createExpansionImage(MediaGroup* group, unsigned& imageSize, uin
         return nullptr;
     
     if (group->expansion->id == ExpansionIdEasyFlash)
-        return easyFlash3->createImage(imageSize);
+        return easyFlash->createImage(imageSize);
     
     if (group->expansion->id == ExpansionIdRetroReplay)
         return retroReplay->createImage(imageSize, id);

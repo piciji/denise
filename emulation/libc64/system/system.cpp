@@ -550,14 +550,16 @@ auto System::power( bool softReset ) -> void {
 	
     cpu->updateIoLines( 0x17, !tape->isEnabled() ? 0x20 : 0 );              
 
-    calcSerializationSize();
-    if (requestedSids)
-        serializationSize += Sid::serializationSizeForSevenMoreSids;
+    if( !softReset ) {
+        calcSerializationSize();
+        if (requestedSids)
+            serializationSize += Sid::serializationSizeForSevenMoreSids;
+        
+        fastForward.config = 0;
+        fastForward.frameCounter = 0;
+        fastForward.renderNext = false;
+    }
     
-	fastForward.config = 0;
-    fastForward.frameCounter = 0;
-    fastForward.renderNext = false;
-
     kernalBootComplete = false;
     KeyBuffer::Action action;
     action.mode = KeyBuffer::Mode::WaitDelay;
@@ -867,3 +869,4 @@ auto System::copyText( ) -> std::string {
 }
 
 }
+

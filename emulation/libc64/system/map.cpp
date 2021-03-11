@@ -19,7 +19,7 @@ namespace LIBC64 {
 auto System::remapCpu( ) -> void {
 
     if (expansionPort == noExpansion) {
-
+        
         memoryCpu.map( &readRam, &writeRam, 0x0, 0x9f );
 
         memoryCpu.map( ((mode & 3) == 3) ? &readBasicRom : &readRam, &writeRam, 0xa0, 0xbf );
@@ -37,8 +37,8 @@ auto System::remapCpu( ) -> void {
         memoryCpu.map( (mode & 2) ? &readKernalRom : &readRam, &writeRam, 0xe0, 0xff );
 
         return;
-    }
-
+    } 
+    
     // full mapping for 8k, 16k, ultimax, no cart
     uint8_t subMode = mode & 7;
     uint8_t ramMode = mode & 3;
@@ -107,6 +107,8 @@ auto System::remapCpu( ) -> void {
 
     } else
         memoryCpu.map( &readRam, &writeRam, 0xe0, 0xff );
+    
+    expansionPort->memoryMapUpdated();
 }
 
 }

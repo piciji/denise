@@ -22,7 +22,7 @@ auto RetroReplay::setRom(Emulator::Interface::Media* media, uint8_t* rom, unsign
     // edit: identify nordic replay by minor version
     if (media->pcbLayout && (media->pcbLayout->id != 0) )
         cartridgeId = (Interface::CartridgeId)media->pcbLayout->id;
-    else if (version == 0x101) // revision 1
+    else if (version == 0x101 || (cartridgeId == Interface::CartridgeIdAtomicPower) ) // revision 1
         cartridgeId = Interface::CartridgeIdNordicReplay;
     else
         cartridgeId = Interface::CartridgeIdRetroReplay;

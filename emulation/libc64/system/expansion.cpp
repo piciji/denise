@@ -19,6 +19,9 @@ auto System::serializeExpansion(Emulator::Serializer& s) -> void {
        
     if ( s.mode() == Emulator::Serializer::Mode::Load ) {
         
+        if (expansionPortId != expansionPort->id)
+            memoryCpu.unmap(0x0, 0xff);
+        
         auto expansion = interface->getExpansionById( expansionPortId );
 
         setExpansion( expansion ? *expansion : interface->expansions[0] );
@@ -88,7 +91,8 @@ auto System::createExpansions() -> void {
     
     setExpansionCallbacks( reu );
     setExpansionCallbacks( freezer );
-    setExpansionCallbacks( retroReplay );
+    setExpansionCallbacks( retroReplay );    
+    setExpansionCallbacks( easyFlash3 );
 }
 
 auto System::destroyExpansions() -> void {

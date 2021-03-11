@@ -1,12 +1,12 @@
 
 #pragma once
 
-#include "../cart/cart.h"
+#include "../cart/freezeButton.h"
 #include "../../../tools/mx29lv640eb.h"
 
 namespace LIBC64 {
     
-struct EasyFlash3 : Cart {   
+struct EasyFlash3 : FreezeButton {   
     
     EasyFlash3();
     ~EasyFlash3();
@@ -14,28 +14,37 @@ struct EasyFlash3 : Cart {
     struct Slot {
         uint8_t* rom = nullptr;
         unsigned romSize = 0;
-        Emulator::Interface::Media* media;
+        Emulator::Interface::Media* media = nullptr;
         bool writeProtect = false;
         bool binFormat = false;
         std::vector<Chip> chips;
         bool dirty = false;
     } slots[8];
 
-    std::function<void ()> vicDisableUltimax;
     Emulator::MX29LV640EB flash;
     uint8_t* dataFlash;
     bool loadSplitted;
     uint32_t flashBaseAdr;
 
-    enum class Mode { EF3, Kernal, AR, SS } mode;
-    bool disableUlimaxForVICInFirstHalfCycle = false;
-    Slot* activeSlot;
+    enum class Mode : uint8_t { Disable, EF3, Kernal, AR, SS5 } mode;
+    uint8_t activeSlot;
     uint8_t bank;
     uint8_t* ram = nullptr;
     static uint8_t eapi[768];
     bool ef3Boot;   // ef3 only (not a jumper)
     bool enableMenu;
-    bool LED;
+    bool LED = false;
+    bool cartKill;
+    
+    // AR/NR
+    bool useRam;
+    bool writeOnce;
+    bool reuMapping;
+    bool npMode;
+    
+    bool romHLine = false;
+    bool portUpdated = false;
+    bool kernalHack = true; // only here switchable
 
     auto readIo1( uint16_t addr ) -> uint8_t;
 
@@ -44,8 +53,6 @@ struct EasyFlash3 : Cart {
     auto writeIo2( uint16_t addr, uint8_t value ) -> void;
     
     auto readIo2( uint16_t addr ) -> uint8_t;
-
-    auto control( uint8_t value ) -> void;
     
     auto create( Interface::CartridgeId cartridgeId ) -> Cart*;
     
@@ -57,6 +64,8 @@ struct EasyFlash3 : Cart {
     
     auto reset(bool softReset = false) -> void;
     
+    auto resetButton() -> bool;
+    
     auto readRomL( uint16_t addr ) -> uint8_t;
     auto readRomH( uint16_t addr ) -> uint8_t;
     
@@ -66,9 +75,10 @@ struct EasyFlash3 : Cart {
     auto writeUltimaxRomL( uint16_t addr, uint8_t data ) -> void;
     auto writeUltimaxRomH( uint16_t addr, uint8_t data ) -> void;
     
-    auto write( Slot* slot, bool splitted ) -> void;
+    auto listenToWritesAt80To9F(uint16_t addr, uint8_t data ) -> void;
+    auto listenToWritesAtA0ToBF(uint16_t addr, uint8_t data ) -> void;
     
-    auto createImage(unsigned& imageSize) -> uint8_t*;
+    auto write( Slot* slot, bool splitted ) -> void;    
     
     auto setWriteProtect(Emulator::Interface::Media* media, bool state) -> void;
     
@@ -89,8 +99,13 @@ struct EasyFlash3 : Cart {
     auto buildFlashBaseAdr() -> void;
 
     auto freeze() -> void;
+    
+    auto didFreeze() -> void;
 
     auto clock() -> void;
+    
+    auto memoryMapUpdated() -> void;
+    
 };
 
 extern EasyFlash3* easyFlash3;

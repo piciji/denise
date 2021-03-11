@@ -175,7 +175,7 @@ auto System::serializeLight() -> void {
     tape->serializeLight(s);
     iecBus->serializeLight(s);
     input->serialize(s);
-    serializeExpansion(s);
+    expansionPort->serialize( s );
 
     sysTimer.serialize(s);
 }
@@ -195,7 +195,7 @@ auto System::unserializeLight() -> void {
     tape->serializeLight(s);
     iecBus->serializeLight(s);
     input->serialize(s);
-    serializeExpansion(s);
+    expansionPort->serialize( s );
 
     sysTimer.serialize(s);         
 

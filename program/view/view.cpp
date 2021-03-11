@@ -691,7 +691,8 @@ auto View::buildMenu() -> void {
             };
             sM.menu->setEnabled(false);
             sM.system->append(*sM.menu);
-        }
+        } else
+            sM.menu = nullptr;
 
         sM.system->append(*GUIKIT::MenuSeparator::getInstance());
 		
@@ -1080,7 +1081,8 @@ auto View::translate() -> void {
 		sysMenu.poweronAndRemoveExpansions->setText(trans->get("Hard Reset + Unplug Cart"));
         sysMenu.reset->setText(trans->get("Soft Reset"));        
         sysMenu.freeze->setText(trans->get("Freeze"));
-        sysMenu.menu->setText(trans->get("Menu"));
+        if (sysMenu.menu)
+            sysMenu.menu->setText(trans->get("Menu"));
         sysMenu.loadSoftware->setText(trans->get("load software"));
         sysMenu.media->setText(trans->get("Software"));
         sysMenu.systemManagement->setText(trans->get("system_management"));
@@ -1206,15 +1208,19 @@ auto View::getSysMenu( Emulator::Interface* emulator ) -> SystemMenu* {
 }
 
 auto View::updateCartButtons( Emulator::Interface* emulator ) -> void {
-
+    bool state;
+    
     for (auto& sM : sysMenus) {
-        bool state = (sM.emulator == emulator) && emulator->hasFreezeButton();
+         state = (sM.emulator == emulator) && emulator->hasFreezeButton();
 
         if (sM.freeze->enabled() != state)
             sM.freeze->setEnabled( state );
 
+        if (!sM.menu)
+            continue;
+         
         state = (sM.emulator == emulator) && emulator->hasCustomCartridgeButton();
-
+        
         if (sM.menu->enabled() != state)
             sM.menu->setEnabled( state );
     }
