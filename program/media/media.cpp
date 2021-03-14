@@ -492,6 +492,27 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
                         
                         settings->set<unsigned>( _underscore(block->media->name) + "_pcb", pcb.id);
                         
+                        if (activeEmulator) {
+                            
+                            if (block->media->group->name == "EasyFlash³") {
+                            
+                                if (!layout->hint) {
+                                    layout->hint = new GUIKIT::MultilineEdit;                                                                
+
+                                    layout->hint->setForegroundColor( 0xff4500 );
+
+                                    layout->append( *(layout->hint), {~0u, 100u}, 0 );
+
+                                    layout->synchronizeLayout();
+                                }
+
+                                if (block->media->pcbLayout->name == "Slot 0")
+                                    layout->hint->setText( trans->get("ef3 switch to single slot") );
+                                else
+                                    layout->hint->setText( trans->get("ef3 switch to multi slot") );
+                            }
+                        }                                                                                                
+                        
                         break;
                     }
                 }                                

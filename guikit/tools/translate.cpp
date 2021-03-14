@@ -80,7 +80,7 @@ auto Translation::read( std::string path, unsigned maxFileSize ) -> bool {
     if( file.getSize() == 0) return true;
 
     auto fp = file.getHandle();
-    char chunk[256];
+    char chunk[1024];
 
     while ( fgets(chunk, sizeof(chunk), fp) ) {
         line = chunk;

@@ -396,9 +396,7 @@ auto RetroReplay::serialize(Emulator::Serializer& s) -> void {
     s.integer( requestedExRom );
     s.integer( writeProtect );
     
-    FreezeButton::serializeStep2( s );
-    
-    cRomL = cRomH = nullptr;
+    FreezeButton::serializeCustom( s );
 }
 
 auto RetroReplay::setJumper( unsigned jumperId, bool state ) -> void {

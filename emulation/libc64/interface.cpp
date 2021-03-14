@@ -22,7 +22,7 @@
 
 namespace LIBC64 {
 
-const std::string Interface::Version = "1093";
+const std::string Interface::Version = "1094";
     
 Interface::Interface() : Emulator::Interface( "C64" ) {        
     
@@ -248,8 +248,8 @@ auto Interface::prepareExpansions() -> void {
 
     {   auto& expansion = expansions[ExpansionIdEasyFlash3];
 
-        expansion.pcbs.push_back( {0, "Split Mode"} );
-        expansion.pcbs.push_back( {1, "64 MBit Mode"} );
+        expansion.pcbs.push_back( {0, "Slots 0 - 7"} );
+        expansion.pcbs.push_back( {1, "Slot 0"} );
 
         mediaGroups[MediaGroupIdExpansionEasyFlash3].expansion = &expansion;
     }

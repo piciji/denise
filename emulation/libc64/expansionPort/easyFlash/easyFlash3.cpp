@@ -801,7 +801,7 @@ auto EasyFlash3::serialize(Emulator::Serializer& s) -> void {
     if (!s.lightUsage() && s.mode() == (Emulator::Serializer::Mode::Load) )
         updateDeviceState();
 
-    ExpansionPort::serialize(s);        
+    FreezeButton::serializeCustom(s);        
 }
 
 auto EasyFlash3::setWriteProtect( Emulator::Interface::Media* media, bool state ) -> void {

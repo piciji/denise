@@ -566,3 +566,7 @@ blank_georam_image =
 easyflash³_insert = Insertion EasyFlash
 easyflash³_image = Image EasyFlash
 select_easyflash³_image = Choisir une image EasyFlash...
+Slots 0 - 7 = 
+Slot 0 = 
+ef3 switch to single slot = 
+ef3 switch to multi slot = 

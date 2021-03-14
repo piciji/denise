@@ -566,3 +566,7 @@ blank_georam_image =
 easyflash³_insert = EasyFlashイメージをセット
 easyflash³_image = EasyFlashのイメージ
 select_easyflash³_image = EasyFlashイメージの選択 ...
+Slots 0 - 7 = 
+Slot 0 = 
+ef3 switch to single slot = 
+ef3 switch to multi slot = 

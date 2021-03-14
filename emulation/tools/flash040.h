@@ -89,6 +89,7 @@ struct Flash040 {
             this->sectorShift++;
         }
         
+        dirty = false;
         reset();
     }
 	
@@ -194,7 +195,7 @@ struct Flash040 {
         baseState = State::Read;
         byteToProgram = 0;
         clearEraseMask();
-        dirty = false;
+        //dirty = false;
     }
     
 	auto unlock1(uint32_t addr) -> bool {

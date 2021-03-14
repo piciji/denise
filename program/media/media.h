@@ -96,6 +96,7 @@ struct MediaGroupLayout : GUIKIT::FramedVerticalLayout {
     std::vector<Block*> blocks;
     Emulator::Interface::MediaGroup* mediaGroup;
     GUIKIT::VerticalLayout blockContainer;
+    GUIKIT::MultilineEdit* hint = nullptr;
 	GUIKIT::Button inject;
 	GUIKIT::ListView listings; // for c64 disk and prg container formats
     Block* selectedBlock = nullptr;

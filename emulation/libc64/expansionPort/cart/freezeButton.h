@@ -92,6 +92,16 @@ struct FreezeButton : Cart {
         s.integer( unbeatable );
         s.integer( writesInARow );
     }
+
+    auto serializeCustom(Emulator::Serializer& s) -> void {
+
+        s.integer( cyclesTillFreeze );
+        s.integer( freezeArmed );
+        s.integer( writesInARow );
+        
+        ExpansionPort::serialize(s);
+    }
+    
     
 };    
     
