@@ -77,7 +77,8 @@ auto Cart::readHeader( ) -> bool {
     
     data = rom;
     size = romSize;
-    binFormat = true;
+    binFormat = true;    
+    std::memset(&cartName[0], 0, sizeof cartName);
     
     if (!rom)
         return false;
@@ -104,6 +105,8 @@ auto Cart::readHeader( ) -> bool {
     size -= headerLength;        
     
     cartridgeId = (Interface::CartridgeId)Emulator::copyBufferToIntBigEndian<uint16_t>(&header[0x16]);
+    
+    std::memcpy(&cartName[0], &header[0x20], sizeof cartName);
     
     version = Emulator::copyBufferToIntBigEndian<uint16_t>(&header[0x14]);
     exRom = header[0x18] & 1;

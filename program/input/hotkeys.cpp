@@ -64,6 +64,7 @@ auto InputManager::setCustomHotkeys() -> void {
 		customHotkeys.push_back( {Hotkey::Id::ForwardTape, "tape_forward_key", false} );
 		customHotkeys.push_back( {Hotkey::Id::RewindTape, "tape_rewind_key", false} );
 		customHotkeys.push_back( {Hotkey::Id::ResetTapeCounter, "tape_counter_reset_key", false} );
+        customHotkeys.push_back( {Hotkey::Id::EF3Menu, "ef3 menu button", false} );
 	}	
     
 	customHotkeys.push_back( {Hotkey::Id::Software, "Software", true} );	
@@ -353,6 +354,11 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             break;
         }
 
+        case Hotkey::EF3Menu:
+            if (activeEmulator)
+                activeEmulator->customCartridgeButton();
+            break;
+        
         case Hotkey::DiskSwap0: case Hotkey::DiskSwap1: case Hotkey::DiskSwap2:
         case Hotkey::DiskSwap3: case Hotkey::DiskSwap4: case Hotkey::DiskSwap5:
         case Hotkey::DiskSwap6: case Hotkey::DiskSwap7: case Hotkey::DiskSwap8:

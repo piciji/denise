@@ -11,6 +11,7 @@ struct Cart : ExpansionPort {
     Cart(bool game = true, bool exrom = false);
         
     uint16_t version;
+    uint8_t cartName[32];
     
     struct Chip {
         enum Type { Rom = 0, Ram = 1, FlashRom = 2 } type;

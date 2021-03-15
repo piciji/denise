@@ -106,6 +106,8 @@ struct EasyFlash3 : FreezeButton {
     
     auto memoryMapUpdated() -> void;
     
+    auto updateSlotDisplayName(Slot* slot) -> void;
+    auto updateSlotHeaderName(Slot* slot, uint8_t* header) -> void;
 };
 
 extern EasyFlash3* easyFlash3;

@@ -1,6 +1,7 @@
 
 #include "../../system/system.h"
 #include "easyFlash3.h"
+#include "../../../tools/petcii.h"
 
 namespace LIBC64 {  
     
@@ -117,6 +118,9 @@ auto EasyFlash3::setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigne
         }            
     }
     
+    if (loadSplitted && !slot0)
+        updateSlotDisplayName( slot );
+    
     // overwriting eapi of EF1 CRT's. for EF3 this shouldn't be needed anymore
     if (loadSplitted) {
         if (std::memcmp(&dataFlash[slotOffset | 0x1800 | (1 << 16)], "eapi", 4) == 0)
@@ -187,7 +191,14 @@ auto EasyFlash3::write( Slot* slot, bool splitted ) -> void {
     
     if (!slot->binFormat) {
         uint8_t header[64];
-        buildHeader(&header[0], 0x20, false, true, "EasyFlash Cartridge" );
+        
+        if (slot->media->id == 0)
+            buildHeader(&header[0], 0x20, false, true, "EasyFlash Cartridge" );
+        else {
+            buildHeader(&header[0], 0x20, false, true, "" );
+            updateSlotHeaderName( slot, header + 0x20 );
+        }
+        
         system->interface->writeMedia(slot->media, &header[0], 0x40, 0);
         offset += 0x40;
     }    
@@ -888,6 +899,60 @@ auto EasyFlash3::clock() -> void {
         }
     } else if (mode == Mode::SS5 || mode == Mode::AR)
         FreezeButton::clock();
+}
+
+auto EasyFlash3::updateSlotDisplayName(Slot* slot) -> void {
+    
+    Emulator::PetciiConversion petcii;
+    
+    unsigned bank = (1 << 5) << 13; // bank 16 Lo is DIR bank
+    bank += 16 + (slot->media->id * 16);
+       
+    if (!slot->binFormat) {
+        
+        if (std::memcmp(cartName, "EasyFlash", 8)) {
+            
+            if (std::memcmp(cartName, "VICE", 4)) {
+                
+                for(uint8_t& c : cartName) {
+                    c = petcii.encode( c );
+                    if (c == petcii.PETSCII_UNMAPPED)
+                        c = 0;
+                }
+                
+                // ok use cart name as EF3 menu slot display name
+                std::memcpy(dataFlash + bank, &cartName[0], 16);
+                return;
+            }
+        }
+    }
+    
+    // use filename
+    std::string fileName = system->interface->getFileNameFromMedia( slot->media );
+        
+    uint8_t out[16];
+    std::memset(&out[0], 0x20, sizeof out);
+    
+    for (unsigned i = 0; i < std::min(16u, (unsigned)fileName.size()); i++)
+        out[i] = petcii.encode( fileName[i] );
+    
+    std::memcpy(dataFlash + bank, &out[0], sizeof out);
+}
+
+auto EasyFlash3::updateSlotHeaderName(Slot* slot, uint8_t* header) -> void {
+    
+    Emulator::PetciiConversion petcii;
+    
+    if (slot->binFormat)
+        return;
+
+    unsigned bank = (1 << 5) << 13; // bank 16 Lo is DIR bank
+    bank += 16 + (slot->media->id * 16);
+
+    std::memcpy( &header[0], dataFlash + bank, 16 );
+
+    for (uint8_t i = 0; i < 16; i++)
+        header[i] = petcii.decode( header[i] );
 }
 
 }

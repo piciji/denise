@@ -570,3 +570,4 @@ Slots 0 - 7 =
 Slot 0 = 
 ef3 switch to single slot = 
 ef3 switch to multi slot = 
+ef3 menu button = 

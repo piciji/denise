@@ -77,6 +77,7 @@ auto StatusHandler::updateFPS( bool state ) -> void {
 auto StatusHandler::updateDRC( bool state ) -> void {
     
     if (!state) {
+        clearUpdates( 8 );
         statusBar->updateVisible(13, false);
         statusBar->update();
     }

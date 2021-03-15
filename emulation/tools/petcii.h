@@ -75,6 +75,9 @@ struct PetciiConversion {
         
         if (petcii == 0x0a)
             return '\r';
+
+        if (petcii == 0)
+            return 0x20;
         
         if (petcii <= 0x1f)
             return ASCII_UNMAPPED;

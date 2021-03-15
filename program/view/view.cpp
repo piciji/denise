@@ -892,7 +892,7 @@ auto View::buildMenu() -> void {
     audioBufferItem.onToggle = [&]() {
         globalSettings->set<bool>("show_audio_buffer", audioBufferItem.checked() );
 		audioManager->setStatistics();
-        statusHandler->updateDRC( dynamicRateControl.checked() );
+        statusHandler->updateDRC( audioBufferItem.checked() );
     };
     if ( globalSettings->get<bool>("show_audio_buffer", false) ) audioBufferItem.setChecked();
     optionsMenu.append(audioBufferItem);

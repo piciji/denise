@@ -340,6 +340,9 @@ auto CALLBACK pWindow::wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam
         } 
         case WM_ACTIVATE:            
 			if ((LOWORD(wparam) == WA_ACTIVE) && (LOWORD(wparam) != WA_CLICKACTIVE)) {
+                if (window.statusBar())
+                    window.statusBar()->p.updatePosition();
+
 				if (window.onUnminimize)
                     window.onUnminimize();
                                     
