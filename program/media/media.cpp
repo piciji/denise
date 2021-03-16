@@ -500,8 +500,10 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
                                     layout->hint = new GUIKIT::MultilineEdit;                                                                
 
                                     layout->hint->setForegroundColor( 0xff4500 );
+									
+									layout->hint->setEditable( false );
 
-                                    layout->append( *(layout->hint), {~0u, 100u}, 0 );
+                                    layout->append( *(layout->hint), {~0u, ~0u}, 0 );
 
                                     layout->synchronizeLayout();
                                 }

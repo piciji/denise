@@ -78,8 +78,14 @@ auto View::build() -> void {
     
     onSize = [this]() {
         if (fullScreen()) {
-			bool showStatus = !view->exclusiveFullscreen() && globalSettings->get("statusbar_fullscreen", false);
-            setStatusVisible( showStatus );
+			//bool showStatus = !view->exclusiveFullscreen() && globalSettings->get("statusbar_fullscreen", false);			
+            //setStatusVisible( showStatus );
+			
+			if (view->exclusiveFullscreen())
+				setStatusVisible( false );
+			else
+				updateStatusBar();
+			
             setMenuVisible(false);
         } else {
             updateMenuBar();
@@ -280,17 +286,17 @@ auto View::updateMenuBar( bool toggle ) -> void {
 
 auto View::updateStatusBar(bool toggle) -> void {
 
-    if (toggle && fullScreen()) {
-        setStatusVisible( !statusVisible() );
-        updateViewport();
-        return;
-    }
+//    if (toggle && fullScreen()) {
+//        setStatusVisible( !statusVisible() );
+//        updateViewport();
+//        return;
+//    }
     
-    bool state = globalSettings->get("statusbar", true);
+    bool state = globalSettings->get( !fullScreen() ? "statusbar" : "statusbar_fullscreen", !fullScreen());		
 
     if (toggle) {
         state ^= 1;
-        globalSettings->set("statusbar", state);
+        globalSettings->set( !fullScreen() ? "statusbar" : "statusbar_fullscreen", state);
     }
 
     if (statusVisible() == state)

@@ -42,8 +42,16 @@ auto pMultilineEdit::onFocus(MultilineEdit* self) -> bool {
 auto pMultilineEdit::create() -> void {
     destroy();
 	gtkWidget = gtk_scrolled_window_new(0, 0);
+	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(gtkWidget), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+	gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(gtkWidget), GTK_SHADOW_ETCHED_IN);
 	
     subWidget = gtk_text_view_new();
+	gtk_text_view_set_left_margin( GTK_TEXT_VIEW(subWidget), 3);
+	gtk_text_view_set_right_margin( GTK_TEXT_VIEW(subWidget), 3);
+	gtk_text_view_set_top_margin( GTK_TEXT_VIEW(subWidget), 3);
+	gtk_text_view_set_bottom_margin( GTK_TEXT_VIEW(subWidget), 3);
+	gtk_text_view_set_wrap_mode( GTK_TEXT_VIEW(subWidget), GTK_WRAP_WORD );
+	
 	buffer = gtk_text_view_get_buffer( GTK_TEXT_VIEW(subWidget) );
 	
 	gtk_container_add(GTK_CONTAINER(gtkWidget), subWidget);

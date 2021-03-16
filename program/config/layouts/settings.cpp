@@ -25,7 +25,7 @@ LangLayout::LangLayout() {
 
 SwitchesLayout::SwitchesLayout() {
     setPadding(10);
-    append(fullscreenStatusbar, {~0u, 0u}, 3);
+    //append(fullscreenStatusbar, {~0u, 0u}, 3);
 	append(pause, {~0u, 0u}, 3);
     append(autostartDragnDrop, {~0u, 0u}, 3);
     append(saveSettingsOnExit, {~0u, 0u}, 3);
@@ -84,14 +84,14 @@ SettingsLayout::SettingsLayout() {
     append(previewLayout, {~0u, 0u}, 10);
     append(about, {~0u, 0u});    
 
-    switches.fullscreenStatusbar.setChecked( globalSettings->get<bool>("statusbar_fullscreen", false) );
-    switches.fullscreenStatusbar.onToggle = [&]() {
-		if (view->fullScreen()) {
-			view->setStatusVisible( switches.fullscreenStatusbar.checked() );
-            view->updateViewport();
-		}
-        globalSettings->set<bool>("statusbar_fullscreen", switches.fullscreenStatusbar.checked());
-    };
+//    switches.fullscreenStatusbar.setChecked( globalSettings->get<bool>("statusbar_fullscreen", false) );
+//    switches.fullscreenStatusbar.onToggle = [&]() {
+//		if (view->fullScreen()) {
+//			view->setStatusVisible( switches.fullscreenStatusbar.checked() );
+//            view->updateViewport();
+//		}
+//        globalSettings->set<bool>("statusbar_fullscreen", switches.fullscreenStatusbar.checked());
+//    };
 	
 	switches.autostartDragnDrop.setChecked(globalSettings->get<bool>("autostart_dragndrop", false));
     switches.autostartDragnDrop.onToggle = [&]() {
@@ -378,7 +378,7 @@ auto SettingsLayout::translate() -> void {
     
     switches.setText( trans->get("settings") );
 
-    switches.fullscreenStatusbar.setText( trans->get("statusbar_fullscreen") );
+    //switches.fullscreenStatusbar.setText( trans->get("statusbar_fullscreen") );
 	switches.pause.setText(trans->get("pause_focus_loss"));
     switches.autostartDragnDrop.setText(trans->get("autostart_dragndrop"));
     switches.saveSettingsOnExit.setText(trans->get("save_changes_on_exit"));
