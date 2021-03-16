@@ -14,18 +14,23 @@
     * prepare individual Multi SID configurations
 * rework sub-menu handling within configuration window
 * rework status bar (Drive LED's, Tape control)
+    * status bar is switchable via Hotkey in fullscreen
+    * Note: there are two sets of hotkeys
+        * C64 hotkeys: Control / C64 configuration
+        * global hotkeys: Options / Hotkeys (global hotkeys are valid for all future emu cores)
+    
 * add UI for custom RAM init patterns
-* load savestates per drag'n'drop or within File Explorer
+* load savestates per drag'n'drop or from File Explorer
 * support to paste clipboard or copy screen to clipboard
 * fix OpenGL 1/4 screen BUG for newer macOS versions
 * Gmod2 Cartridge mapper (i.e. Sams Journey)
-* Magic Desk Cartridge Mapper (i.e. Bomberland)
+* Magic Desk Cartridge Mapper
 * Final Cartridge I, II, Plus, III, III+
 * Simons Basic, Warp Speed
 * Atomic Power, Mach5, Pagefox, Ross, Westermann
-* use REU + Retro Replay together
+* expansion port expander for REU + Retro Replay together
 * GeoRAM
-* EasyFlash 3
+* EasyFlash³
 
 ## 1.0.9.1
 * fix TAPE emulation (broken in 1.0.9)

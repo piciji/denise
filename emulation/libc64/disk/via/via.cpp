@@ -153,7 +153,11 @@ auto Via::process() -> void {
     updateTimerA();
     updateTimerB();
     
-    handleSystemClockShift();
+    // shift in/out by system clock
+    if (shiftSystemClock() && ((delay & VIA_SHIFT_WARMUP1) == 0) && (!shift.toggle || (shift.count != 8)) ) {
+        shift.toggle ^= 1;    
+        shiftTiming<true>( );                
+    }    
 
     if (delay) {
         if (delay & VIA_CA2_PULSE1)
@@ -323,17 +327,6 @@ inline auto Via::resetIrq( uint8_t pos ) -> void {
     // inform cpu next cycle
     ifr &= ~pos;
     delay |= VIA_UPDATE_IRQ1;
-}
-
-__attribute__((always_inline))  auto Via::handleSystemClockShift() -> void {
-    // shift in/out by system clock
-    if (!shiftSystemClock() || (delay & VIA_SHIFT_WARMUP1))
-        return;
-             
-    if ( !shift.toggle || (shift.count != 8) ) {        
-        shift.toggle ^= 1;    
-        shiftTiming<true>( );        
-    }        
 }
 
 template<bool cb1Output> inline auto Via::shiftTiming() -> void {

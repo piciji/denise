@@ -5,7 +5,8 @@
     * SuperCPU
     * Magic Voice
     * Dongles
-    * clockport emulation (i.e. Retro Replay, MMC)	
+    * clockport emulation (i.e. Retro Replay, MMC)
+    * CMD Ramlink + HD
     * all the others
 * disk    
     * P64 support
@@ -26,19 +27,15 @@
 * PAL color banding (alternating red/green bars)
 * SID file player
 
-# todo Amiga A500
-* blitter
-* copper
-* denise OCS
-* disk
-* paula
+# todo Amiga
+* A500
 * slow/fast memory expansion
-* ipf disk image format
+* IPF disk image format
+* Action Replay MK I-III
+* 68020 Turbo Card
+* Hard Disk
+* A1200
 
-# todo Amiga A1200
-* hard disk
-* 68020
-* lisa AGA
 
 # todo for all emulated systems
 * fullscreen with custom refresh rate

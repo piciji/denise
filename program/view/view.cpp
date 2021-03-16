@@ -280,6 +280,12 @@ auto View::updateMenuBar( bool toggle ) -> void {
 
 auto View::updateStatusBar(bool toggle) -> void {
 
+    if (toggle && fullScreen()) {
+        setStatusVisible( !statusVisible() );
+        updateViewport();
+        return;
+    }
+    
     bool state = globalSettings->get("statusbar", true);
 
     if (toggle) {

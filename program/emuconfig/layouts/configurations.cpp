@@ -261,6 +261,9 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
     
     settings.active.standardButton.onActivate = [this]() {
         
+        if ("" == _settings->get<std::string>("custom_settings", ""))
+            return;
+        
         saveCurrentSettings();
         
         std::string path = program->settingsFile( this->emulator->ident + "_" );
@@ -282,6 +285,9 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         std::string fileName = _list.text(selection, 0);
 
         std::string path = getSettingsFolder() + fileName;
+        
+        if (path == _settings->get<std::string>("custom_settings", ""))
+            return;
         
         saveCurrentSettings();
         

@@ -237,7 +237,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             if(!view->fullScreen()) view->updateMenuBar( true );
             break;
         case Hotkey::ToggleStatus:
-            if(!view->fullScreen()) view->updateStatusBar( true );
+            if(!view->exclusiveFullscreen()) view->updateStatusBar( true );
             break;
 
         case Hotkey::ResetTapeCounter:

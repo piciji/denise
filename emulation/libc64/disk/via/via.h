@@ -122,7 +122,6 @@ protected:
     auto shiftT2Control() -> bool;
     auto shiftDisabled() -> bool;
     auto shiftOut() -> bool;
-    auto handleSystemClockShift() -> void;
     template<bool cb1Output> inline auto shiftTiming() -> void;
 };    
     
