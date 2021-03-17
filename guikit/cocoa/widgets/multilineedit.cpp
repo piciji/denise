@@ -24,7 +24,7 @@
     //[content setMaxSize:NSMakeSize:(FLT_MAX, FLT_MAX)];
     
     [[content textContainer] setContainerSize:NSMakeSize(FLT_MAX, FLT_MAX)];
-    [[content textContainer] setWidthTracksTextView:NO];
+    [[content textContainer] setWidthTracksTextView:YES];
     
     [content setHorizontallyResizable:YES];
     [content setVerticallyResizable:YES];
@@ -92,6 +92,7 @@ auto pMultilineEdit::text() -> std::string {
 auto pMultilineEdit::setText(std::string text) -> void {
     @autoreleasepool{
         [[cocoaView content] setString: [NSString stringWithUTF8String: text.c_str()]];
+        [cocoaView configure];
     }
     calculatedMinimumSize.updated = false;
 }
