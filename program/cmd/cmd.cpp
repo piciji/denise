@@ -120,6 +120,7 @@ auto Cmd::parse() -> void {
 	bool hasFuxxorTest = false;
 	bool hasViciiTest = false;
 	bool hasRam0001Test = false;
+	bool hasDefaultTest = false;
 
     for( auto& arg : arguments ) {
         if (limitCyclesNext) {
@@ -235,7 +236,7 @@ auto Cmd::parse() -> void {
                 								
                 if (GUIKIT::String::foundSubStr( temp, "." + suffix )) {
                     std::replace( arg.begin(), arg.end(), '\\', '/');
-					
+										
 					if (!hasViciiTest && GUIKIT::String::foundSubStr( temp, "vicii" ))
 						hasViciiTest = true;
 					else if (!hasViciiTest && GUIKIT::String::foundSubStr( temp, "ef_test" )) // relies on VIC last bus value
@@ -246,6 +247,16 @@ auto Cmd::parse() -> void {
 						hasFuxxorTest = true;
 					else if (!hasRam0001Test && GUIKIT::String::foundSubStr( temp, "ram0001" ))
 						hasRam0001Test = true;
+									
+					// todo: dirty hack to prevent injection of test.prg instead of loading "test",8,1
+					else if (GUIKIT::String::foundSubStr( temp, "defaults" ) && GUIKIT::String::foundSubStr( temp, "test." )) {
+						if (!hasDefaultTest)
+							hasDefaultTest = true;
+						else {							
+							paths[0] = GUIKIT::String::replace( paths[0], ".prg", ".d64");
+							continue;
+						}						
+					}
 					
                     paths.push_back( arg );  
                     autoload = true;
@@ -289,6 +300,9 @@ auto Cmd::parse() -> void {
 				
 			if (hasRam0001Test)
 				aggressiveFastforward = false;
+			
+			if (hasDefaultTest)
+				fastTestbench = false;
 		}
 	}
 	
@@ -323,7 +337,7 @@ auto Cmd::autoloadImages() -> void {
         return;
     }
     
-    autoloader->init( arguments, true, Autoloader::Mode::AutoStart );
+    autoloader->init( arguments, true, Autoloader::Mode::AutoStart, 1 );
     
     autoloader->loadFiles();
     

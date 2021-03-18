@@ -101,7 +101,7 @@ auto Autoloader::postProcessing() -> void {
 
     } else {
 
-        bool useExpansion = false;
+        Emulator::Interface::Expansion* useExpansion = nullptr;
 
 		for (auto& _mediaGroup : ddControl.emulator->mediaGroups) {
 
@@ -118,9 +118,8 @@ auto Autoloader::postProcessing() -> void {
 				activateDrive( ddControl.emulator, &_mediaGroup, count );
 			}
 			else if (_mediaGroup.isExpansion()) {
-                useExpansion = true;
 				
-				Emulator::Interface::Expansion* useExpansion = _mediaGroup.expansion;
+				useExpansion = _mediaGroup.expansion;
 				
 				auto curExpansion = ddControl.emulator->getExpansionById( program->getSettings( ddControl.emulator )->get<unsigned>("expansion", 0) );
 				

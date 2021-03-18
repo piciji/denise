@@ -10,9 +10,15 @@ std::vector<Prg*> prgs;
     
 auto Prg::select( unsigned pos ) -> bool {
 
-    if (listings.size() <= pos)
-        return false;
-
+	auto _size = listings.size();
+	
+    if (_size <= pos) {
+		if (_size == 1 && pos == 1) // fallback for PRG, which has no header
+			pos = 0;
+		else
+			return false;
+	}
+	
     auto id = listings[ pos ].id;
 
     useChunk = &chunks[ id ];
