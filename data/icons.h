@@ -69,8 +69,6 @@ extern uint8_t play[295];
 
 extern uint8_t playHi[294];
 
-//extern uint8_t playHiPause[302];
-
 extern uint8_t record[339];
 
 extern uint8_t recordHi[336];

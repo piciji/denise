@@ -190,7 +190,7 @@ InputLayout::InputLayout(TabWindow* tabWindow) {
         auto mapping = getMappingOfSelected(inputIdent);
         
         control.erase.setEnabled( inputList.selected() );
-		control.linker.setEnabled( inputList.selected() );
+		control.linker.setEnabled( !mapping->isAnalog() && inputList.selected() );
         control.mapper.setEnabled( inputList.selected() );
         control.eraseAlt.setEnabled(!mapping->isAnalog() && inputList.selected());
         control.linkerAlt.setEnabled(!mapping->isAnalog() && inputList.selected());

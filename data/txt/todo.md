@@ -31,7 +31,7 @@
 * A500
 * slow/fast memory expansion
 * IPF disk image format
-* Action Replay MK I-III
+* Action Replay
 * 68020 Turbo Card
 * Hard Disk
 * A1200
