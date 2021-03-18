@@ -68,7 +68,7 @@ struct pWindow {
 	auto minimized() -> bool;
 	auto restore() -> void;
 	auto setForeground() -> void;
-    auto getScrollbarWidth() -> unsigned { return 10; }
+    auto getScrollbarWidth() -> unsigned { return 15; }
 	
 	auto moveWindow(GdkEvent* event) -> void;
 	auto sizeWindow(GtkAllocation* allocation) -> void;
