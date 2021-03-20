@@ -20,6 +20,8 @@ EasyFlash3::EasyFlash3() : FreezeButton(false, true) {
     activeSlot = 0;
     
     unbeatable = true;
+	
+	loadSplitted = true;
 
     flash.setData( dataFlash );
 
@@ -290,6 +292,9 @@ auto EasyFlash3::reset(bool softReset) -> void {
         std::memset(ram, 0, 32 * 1024);
         flash.reset();
         LED = false;
+		
+		if (!slots[0].rom)
+			std::memset(dataFlash, 0xff, 8 * 1024 * 1024 );
         
     } else if (LED) {
         LED = false;

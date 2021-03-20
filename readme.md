@@ -22,6 +22,7 @@
 * fix OpenGL 1/4 screen BUG for newer macOS versions
 * Gmod2 cartridge mapper (i.e. Sams Journey)
 * Magic Desk cartridge mapper
+	* support Flash and Eeprom writes
 * Final Cartridge I, II, Plus, III, III+
 * Simons Basic, Warp Speed
 * Atomic Power, Mach5, Pagefox, Ross, Westermann
