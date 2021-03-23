@@ -323,6 +323,9 @@ auto pBrowserWindow::createTooltip(HWND hwnd) -> void {
 
 auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) -> UINT_PTR {
     
+    if (Application::isQuit)
+        return false;
+    
     TCHAR wFilePath[256];
     OPENFILENAME* ofn = nullptr;
     pBrowserWindow* context = nullptr;
@@ -339,16 +342,49 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
     context = (pBrowserWindow*) ofn->lCustData;
     if (context)
         state = &context->browserWindow.state;       
-          
+    
+    if (!state)
+        return false;
+    
     HWND listBox = GetDlgItem(hDlg, state->contentView.id);
+    
+    static HFONT okFont = nullptr;    
     
     switch (uMsg) {
         case WM_INITDIALOG: {
+            
+            if (okFont) {
+                pFont::free( okFont );
+                okFont = nullptr;
+            }
+            
             context->inited = false;
             context->dialogHwnd = GetParent(hDlg);
             
-            if (!state->textOk.empty())
+            if (!state->textOk.empty()) {
+                
+                HWND hwndOk = GetDlgItem(context->dialogHwnd, IDOK);
+
+                okFont = pFont::create( Font::system() );
+
+                auto size = pFont::size(okFont, state->textOk);
+
+                RECT rect;
+
+                GetWindowRect(hwndOk, &rect);
+
+                if ((rect.right - rect.left) < size.width) {
+                    pFont::free( okFont );
+
+                    okFont = pFont::create( Font::system(7) );
+
+                    SendMessage(hwndOk, WM_SETFONT, (WPARAM)okFont, 0);
+
+                    MoveWindow(hwndOk, 445, 325, 120, 24, TRUE); 
+                }                    
+                
                 SetDlgItemText( context->dialogHwnd, IDOK, (LPCWSTR)utf16_t(state->textOk) );
+            }
             
             if (!state->textCancel.empty())
                 SetDlgItemText( context->dialogHwnd, IDCANCEL, (LPCWSTR)utf16_t(state->textCancel) );
@@ -371,7 +407,7 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
             
             for(auto& button : state->buttons) {
                 SetDlgItemText(hDlg, button.id, (LPCWSTR)utf16_t(button.text) );
-            }                            
+            }
                                   
             SetWindowLongPtr(listBox, GWLP_USERDATA, (LONG_PTR)context);
             WNDPROC wndprocOrig = (WNDPROC)SetWindowLongPtr(listBox, GWLP_WNDPROC, (LONG_PTR)subclassListbox);
@@ -652,6 +688,11 @@ auto pBrowserWindow::resize( HWND fileDialogView, bool init ) -> void {
             MapWindowPoints(NULL, fileDialogView, (POINT*)&rect, 2);
 
             int width = std::abs(rect.right - rect.left);
+            
+            auto size = pFont::size(Font::system(), button.text);
+            width = size.width + 10;
+            width = std::max( 70, width );
+            
             int height = std::abs(rect.bottom - rect.top);
             int relativeX = std::abs(rect.left - rCustomView.right);
             int relativeY = std::abs(rect.top - (listBox ? rListBox.bottom : rCustomView.top) );

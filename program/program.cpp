@@ -480,6 +480,8 @@ auto Program::quit() -> void {
     for(auto settings : settingsStorage)
         delete settings;
     
+    globalSettings = nullptr;
+    
     // in case of exit request from emulation core
     GUIKIT::Application::loop = nullptr;
 }

@@ -389,7 +389,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
     settingsFolder.selectButton.onActivate = [this]() {
 
         auto path = GUIKIT::BrowserWindow()
-                .setTitle(trans->get("settings path"))
+                .setTitle(trans->get("select settings folder"))
                 .setWindow(*this->tabWindow)
                 .directory();
 

@@ -15,7 +15,7 @@
 * rework sub-menu handling within configuration window
 * rework status bar (Drive LED's, Tape control)
     * status bar is switchable via Hotkey in windows/fullscreen (Options / Hotkeys)
-    * show LED for EeasyFlash and EF³
+    * show LED for EasyFlash and EF³
 * add UI for custom RAM init patterns
 * load savestates per drag'n'drop or from File Explorer
 * support to paste clipboard or copy screen to clipboard

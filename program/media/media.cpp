@@ -1007,7 +1007,7 @@ auto MediaLayout::translate() -> void {
         diskCreatorLayout->formatName.setText(trans->get("format",{}, true));
         diskCreatorLayout->fastFileSystem.setText(trans->get("ffs"));
         diskCreatorLayout->highDensity.setText(trans->get("high_density"));
-        diskCreatorLayout->diskLabelName.setText(trans->get("Name",{}, true));
+        diskCreatorLayout->diskLabelName.setText(trans->get("disk label",{}, true));
         diskCreatorLayout->button.setText(trans->get("create"));
     }
     
@@ -1015,7 +1015,7 @@ auto MediaLayout::translate() -> void {
         hdCreatorLayout->setText( trans->get("hd_creator") );
         
         hdCreatorLayout->creator.diskSizeName.setText( trans->get("size_in_mb", {}, true) );
-        hdCreatorLayout->creator.diskLabelName.setText( trans->get("Name", {}, true) );
+        hdCreatorLayout->creator.diskLabelName.setText( trans->get("disk label", {}, true) );
         hdCreatorLayout->creator.button.setText( trans->get("create") );        
     }
             
@@ -1847,3 +1847,4 @@ auto PathsLayout::getBlock(Emulator::Interface::MediaGroup* mediaGroup) -> Paths
 }
 
 }
+
