@@ -416,7 +416,7 @@ auto AudioLayout::translate() -> void {
     panning.bottom.rightMix.name.setText(trans->get("mix right"));
 
     audioRecord.setText(trans->get("Audio Record"));
-    audioRecord.location.label.setText("WAV " + trans->get("Folder"));
+    audioRecord.location.label.setText( trans->get("wav folder") );
     audioRecord.location.select.setText("...");
 
     audioRecord.duration.useTimeLimit.setText(trans->get("Recording time"));

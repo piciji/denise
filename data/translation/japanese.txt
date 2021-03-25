@@ -581,3 +581,5 @@ Wet Time =
 Damping = 
 Room Width = 
 Room Size = 
+EF3 Slot = 
+wav folder = 
