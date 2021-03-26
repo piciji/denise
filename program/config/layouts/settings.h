@@ -63,6 +63,7 @@ struct SettingsLayout : GUIKIT::VerticalLayout {
     PreviewLayout previewLayout;
     std::vector<GUIKIT::Image*> images;
     GUIKIT::Timer previewTimer;
+    std::vector<std::string> langIdents;
 
     auto setLang() -> void;
     auto changeLang() -> void;

@@ -583,3 +583,4 @@ Room Width =
 Room Size = 
 EF3 Slot = 
 wav folder = 
+japanese = 

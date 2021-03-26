@@ -290,12 +290,18 @@ auto SettingsLayout::setPreviewContent() -> void {
 }
 
 auto SettingsLayout::changeLang() -> void {
-    if (!lang.listView.selected()) return;
+    if (!lang.listView.selected())
+        return;
 
     unsigned selection = lang.listView.selection();
-    std::string file = lang.listView.text(selection, 0);
+    
+    if (selection >= langIdents.size())
+        return;
+    
+    std::string file = langIdents[selection];
 
-    if (file.empty()) return;
+    if (file.empty())
+        return;
 
     if ( !trans->read( program->translationFolder() + file ) )
         trans->clear();
@@ -326,12 +332,15 @@ auto SettingsLayout::setLang() -> void {
     auto files = GUIKIT::File::getFolderList( program->translationFolder() );
 
     for (auto& file : files) {
-        if (GUIKIT::String::foundSubStr(file.name, ".png")) continue;
+        if (GUIKIT::String::foundSubStr(file.name, ".png"))
+            continue;
 
+        langIdents.push_back( file.name );        
         lang.listView.append( { file.name } );
         addLangImage(lang.listView.rowCount() - 1, file.name );
 
-        if (DEFAULT_TRANS_FILE == file.name) foundDefaultLang = true;
+        if (DEFAULT_TRANS_FILE == file.name)
+            foundDefaultLang = true;
 
         if (selectedLang == file.name) {
             lang.listView.setSelection( lang.listView.rowCount() - 1 );
@@ -340,6 +349,10 @@ auto SettingsLayout::setLang() -> void {
 
     if (!foundDefaultLang) {
         lang.listView.append( {"english - system"} );
+        langIdents.push_back( "english - system" );
+        
+        if (!lang.listView.selected())
+            lang.listView.setSelection( lang.listView.rowCount() - 1 );
     }
 }
 
@@ -366,6 +379,13 @@ auto SettingsLayout::addLangImage(unsigned selection, std::string file) -> void 
 auto SettingsLayout::translate() -> void {
     lang.setText( trans->get("language") );
     
+    for(unsigned i = 0; i < lang.listView.rowCount(); i++) {
+
+        std::string _displayString = langIdents[i];
+        GUIKIT::String::replace(_displayString, ".txt", "");
+        lang.listView.setText( i, 0, trans->get( _displayString ) );
+    }
+
     switches.setText( trans->get("settings") );
 
 	switches.pause.setText(trans->get("pause_focus_loss"));
