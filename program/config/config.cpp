@@ -91,7 +91,7 @@ auto TabWindow::build() -> void {
 }
 
 auto TabWindow::translate() -> void {
-    setTitle( APP_NAME " " + trans->get("settings") );
+    setTitle( trans->get("app settings", {{"%app%", APP_NAME}} ) );
 
 	inputLayout->translate();
     settingsLayout->translate();

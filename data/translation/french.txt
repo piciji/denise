@@ -584,3 +584,5 @@ Room Size = Taille de la Pièce
 EF3 Slot = EF3 Emplacement
 wav folder = Dossier WAV
 japanese = Japonais
+alternate settings = 
+app settings = Paramètres de %app%

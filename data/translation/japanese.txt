@@ -584,3 +584,5 @@ Room Size =
 EF3 Slot = 
 wav folder = 
 japanese = 
+alternate settings = 
+app settings = 

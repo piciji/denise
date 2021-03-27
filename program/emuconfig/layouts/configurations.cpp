@@ -327,7 +327,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         auto fileName = settings.control.edit.text();  
         
         if (fileName == "")
-            fileName = "alternate settings";
+            fileName = trans->get("alternate settings");
         
         std::string path = getSettingsFolder( true ) + fileName;
         
