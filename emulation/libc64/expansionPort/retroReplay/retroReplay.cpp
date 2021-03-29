@@ -9,7 +9,7 @@ RetroReplay* retroReplay = nullptr;
     
 RetroReplay::RetroReplay() : FreezeButton( true, false ), flash(Emulator::Flash040::Type010) {
     
-    unbeatable = true;
+    unbeatable = 0xff;
     flashJumper = false;
     bankJumper = false;
     

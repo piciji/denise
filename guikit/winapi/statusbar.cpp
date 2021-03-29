@@ -48,6 +48,9 @@ auto CALLBACK pStatusBar::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LP
     if(statusBar == nullptr) return DefWindowProc(hwnd, msg, wparam, lparam);
 
     switch(msg) {
+        case WM_CONTEXTMENU:
+            return 0;
+            
         case WM_MOUSEMOVE: {
             auto& p = statusBar->p;
             

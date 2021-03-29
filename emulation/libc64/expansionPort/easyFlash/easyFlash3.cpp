@@ -19,7 +19,7 @@ EasyFlash3::EasyFlash3() : FreezeButton(false, true) {
 
     activeSlot = 0;
     
-    unbeatable = true;
+    unbeatable = 0xff;
 	
 	loadSplitted = true;
 
@@ -309,7 +309,10 @@ auto EasyFlash3::reset(bool softReset) -> void {
         game = !ef3Boot;
     else if (mode == Mode::SS5)
         game = false;
-    else if (mode == Mode::AR) {
+    else if (mode == Mode::FC3) {
+        game = false;
+        exRom = false;
+    } else if (mode == Mode::AR) {
         game = true;
         exRom = false;
     }
@@ -337,8 +340,12 @@ auto EasyFlash3::resetButton() -> bool {
     } else if (mode == Mode::Kernal) { 
         system->power(true);
         
-    }  else if (mode == Mode::SS5 || mode == Mode::AR) { 
-        bank &= 0x38; // keep hi bank
+    } else if (mode == Mode::SS5 || mode == Mode::AR || mode == Mode::FC3) {
+        if (mode != Mode::FC3)
+            bank &= 0x38; // keep hi bank
+        else
+            bank = 5 << 3;        
+            
         system->power(true);
     }    
     
@@ -366,18 +373,27 @@ auto EasyFlash3::freeze() -> void { // special button in EF3
         ef3Boot = false;    
         system->power(true);
         
-    } else if (mode == Mode::SS5 || mode == Mode::AR) {
+    } else if (mode == Mode::SS5 || mode == Mode::AR || mode == Mode::FC3) {
         FreezeButton::freeze();
     }
 }
 
 auto EasyFlash3::didFreeze() -> void {
     
-    if (mode == Mode::SS5 || mode == Mode::AR) {
-        bank &= 0x38;
-        buildFlashBaseAdr();
+    if (mode == Mode::SS5 || mode == Mode::AR || mode == Mode::FC3) {
+        
+        if (mode != Mode::FC3) {
+            bank &= 0x38;
+            buildFlashBaseAdr();
+        }
+                
         cartKill = false;
         useRam = false;
+        
+        if (!LED) {
+            LED = true;
+            updateDeviceState();
+        }
     }
 }
 
@@ -403,11 +419,15 @@ auto EasyFlash3::readIo1( uint16_t addr ) -> uint8_t {
             }
 
             if (addr == 8)
-                return 0x49;    // CPLD version, Firmware
+                return 0x51;    // CPLD version, Firmware
             if (addr == 9)      // USB Transfer not emulated
                 return 0;       // Bit 7 -> RXR, Bit 6 -> TXR            
         }            
     } else if ( (mode == Mode::SS5) && !cartKill) {
+        
+        return flash.read( flashBaseAdr | (addr & 0x1fff) ); // 0xde00 & 0x1fff => 0x1e00
+        
+    } else if (mode == Mode::FC3) {
         
         return flash.read( flashBaseAdr | (addr & 0x1fff) ); // 0xde00 & 0x1fff => 0x1e00
         
@@ -472,6 +492,7 @@ auto EasyFlash3::writeIo1( uint16_t addr, uint8_t value ) -> void {
                 if (enableMenu) {
                     enableMenu = false;
                     mode = Mode::Disable;
+                    unbeatable = 0xff;
 
                     switch (value & 0xf) {
                         case 0:
@@ -486,7 +507,9 @@ auto EasyFlash3::writeIo1( uint16_t addr, uint8_t value ) -> void {
                             system->power(true);
                             break;
                         case 3:
-                            // reserved for not implemented Final Cartridge
+                            mode = Mode::FC3;
+                            unbeatable &= ~2; // unbeatable without IRQ
+                            system->power(true);
                             break;
                         case 4:
                             mode = Mode::AR;
@@ -584,7 +607,9 @@ auto EasyFlash3::writeIo1( uint16_t addr, uint8_t value ) -> void {
                 break;
         }
         
-    } else
+    } else if (mode == Mode::FC3);
+        
+    else
         LEDNew = false;
     
     if (LED != LEDNew) {
@@ -595,6 +620,8 @@ auto EasyFlash3::writeIo1( uint16_t addr, uint8_t value ) -> void {
 
 auto EasyFlash3::writeIo2( uint16_t addr, uint8_t value ) -> void {
 
+    bool LEDNew = LED;
+    
     if (mode == Mode::EF3 || mode == Mode::Kernal) {        
         // ram bank 0
         ram[addr & 0x1fff] = value;
@@ -605,7 +632,30 @@ auto EasyFlash3::writeIo2( uint16_t addr, uint8_t value ) -> void {
             if (useRam)
                 ram[addr & 0x1fff] = value; // 0xdf00 & 0x1fff => 0x1f00
         }
+    } else if ( (mode == Mode::FC3) && !cartKill && ((addr & 0xff) == 0xff) ) {
+        bank &= 0x20;
+        bank |= value & 7;
+        
+        if (value & 8)
+            bank |= 2 << 3;
+        else
+            bank |= 1 << 3;
+        
+        exRom = (value >> 4) & 1;
+        game = (value >> 5) & 1;
+        nmiCall( (value & 0x40) == 0 );
+        cartKill = (value & 0x80) != 0;
+
+        LEDNew = !cartKill;
+
+        buildFlashBaseAdr();
+        system->changeExpansionPortMemoryMode(exRom, game);        
     }
+
+    if (LED != LEDNew) {
+        LED = LEDNew;
+        updateDeviceState();
+    }   
 }
 
 auto EasyFlash3::readIo2( uint16_t addr ) -> uint8_t {
@@ -613,7 +663,11 @@ auto EasyFlash3::readIo2( uint16_t addr ) -> uint8_t {
     if (mode == Mode::EF3 || mode == Mode::Kernal) {
         // ram bank 0
         return ram[addr & 0x1fff];
+       
+    } else if (mode == Mode::FC3) {
         
+        return flash.read( flashBaseAdr | (addr & 0x1fff) ); // 0xdf00 & 0x1fff => 0x1f00
+       
     } else if ( (mode == Mode::AR) && !cartKill) {
 
         if (!reuMapping) {
@@ -651,6 +705,10 @@ auto EasyFlash3::readRomL( uint16_t addr ) -> uint8_t {
             return ram[ ((bank & 3) << 13) | (addr & 0x1fff) ];
             
         return flash.read( flashBaseAdr | (1 << 16) | (addr & 0x1fff) );
+        
+    } else if (mode == Mode::FC3) {
+            
+        return flash.read( flashBaseAdr | (addr & 0x1fff) );
     }
 
     return ExpansionPort::readRomL( addr );
@@ -697,6 +755,10 @@ auto EasyFlash3::readRomH( uint16_t addr ) -> uint8_t {
         if (npMode)
             return ram[ addr & 0x1fff ];
         
+        return flash.read( flashBaseAdr | (1 << 16) | (addr & 0x1fff) );
+        
+    } else if (mode == Mode::FC3) {
+            
         return flash.read( flashBaseAdr | (1 << 16) | (addr & 0x1fff) );
     }
 
@@ -902,7 +964,7 @@ auto EasyFlash3::clock() -> void {
 
             portUpdated = true;
         }
-    } else if (mode == Mode::SS5 || mode == Mode::AR)
+    } else if (mode == Mode::SS5 || mode == Mode::AR || mode == Mode::FC3)
         FreezeButton::clock();
 }
 

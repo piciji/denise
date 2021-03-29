@@ -14,7 +14,7 @@ struct FreezeButton : Cart {
     unsigned cyclesTillFreeze = 0;
     bool freezeArmed = false;
     
-    bool unbeatable = false;
+    uint8_t unbeatable = 0;
     unsigned writesInARow = 0;
     
     auto hasFreezeButton() -> bool { return true; }            
@@ -48,7 +48,7 @@ struct FreezeButton : Cart {
 
         if (cyclesTillFreeze && (--cyclesTillFreeze == 0)) {
             nmiCall(true);
-            if (unbeatable)
+            if (unbeatable & 2)
                 irqCall(true);
 
             freezeArmed = true;
@@ -63,7 +63,7 @@ struct FreezeButton : Cart {
         uint16_t _addr = cpu->addressBus();
         bool _write = cpu->isWriteCycle();
         
-        if (!unbeatable) {
+        if ((unbeatable & 1) == 0) {
             if (!_write && (_addr == 0xfffa))
                 return true;               
             

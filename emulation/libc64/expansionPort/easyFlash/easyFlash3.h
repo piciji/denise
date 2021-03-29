@@ -26,7 +26,7 @@ struct EasyFlash3 : FreezeButton {
     bool loadSplitted;
     uint32_t flashBaseAdr;
 
-    enum class Mode : uint8_t { Disable, EF3, Kernal, AR, SS5 } mode;
+    enum class Mode : uint8_t { Disable, EF3, Kernal, AR, SS5, FC3 } mode;
     uint8_t activeSlot;
     uint8_t bank;
     uint8_t* ram = nullptr;
