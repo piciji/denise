@@ -7,6 +7,9 @@
 
 # changelog
 
+## 1.1.1 (not yet released)
+* add Final Cartridge 3 support to EF³
+
 ## 1.1.0
 * save/load additional settings files for a lot of purposes, like
     * define keyboard inputs for individual games one time only

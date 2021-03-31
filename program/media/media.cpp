@@ -19,7 +19,11 @@
 #include <cstring>
 
 namespace Fonts {
+#ifdef __JETBRAINS_IDE__
+    uint8_t c64ProMono[28164] = {};
+#else
     #include "../../data/fonts/fonts.data"
+#endif
 }
 
 namespace MediaView {

@@ -337,7 +337,7 @@ auto Cmd::autoloadImages() -> void {
         return;
     }
     
-    autoloader->init( arguments, true, Autoloader::Mode::AutoStart, 1 );
+    autoloader->init( arguments, true, Autoloader::Mode::AutoStart, debug ? 1 : 0 );
     
     autoloader->loadFiles();
     

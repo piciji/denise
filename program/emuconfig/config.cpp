@@ -24,10 +24,6 @@ std::vector<EmuConfigView::TabWindow*> emuConfigViews;
 
 namespace EmuConfigView {
 
-namespace Fonts {
-	#include "../../data/fonts/fonts.data"
-}
-
 #define mes this->tabWindow->message
 #define _settings this->tabWindow->settings
 	
