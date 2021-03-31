@@ -30,14 +30,14 @@ endif
 objects += m6510 ciaBase cia6526 vicIIBase vicIICycle vicIIFast systemC64 sid chamberlin tapeC64 inputC64 controlPortC64
 objects += cartC64 gameCartC64 freezerC64 reuC64 easyFlashC64 easyFlash3C64 retroReplayC64 gmod2C64 clipboardC64 geoRamC64
 objects += m6502 via iec prg64 drive1541 structure1541
-objects += thread m93c86 mx29lv640eb icons
+objects += thread m93c86 mx29lv640eb icons socket
 
 prgflags := -DAPP_NAME="\"$(name)\"" -DTRANSLATION_FOLDER="\"$(translationFolder)/\"" -DDATA_FOLDER="\"$(dataFolder)/\"" -DSHADER_FOLDER="\"$(shaderFolder)/\"" -DIMG_FOLDER="\"$(imgFolder)/\""
 flags :=
 link := 
 
 ifeq ($(platform),windows)
-    link += -static
+    link += -static -lws2_32
 else ifeq ($(platform),macosx)
     flags += -w -stdlib=libc++
     link += -lc++ -lobjc
@@ -152,6 +152,7 @@ obj/thread.o:emulation/tools/thread.cpp
 obj/m93c86.o:emulation/tools/m93c86.cpp
 obj/mx29lv640eb.o:emulation/tools/mx29lv640eb.cpp
 obj/icons.o:data/icons/icons.cpp
+obj/socket.o:emulation/tools/socket.cpp
 
 obj/program.o:		program/program.cpp
 	$(compiler) $(cppflags) $(prgflags) $(flags) $1 -c $< -o $@
