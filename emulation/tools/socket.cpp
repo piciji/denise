@@ -1,6 +1,6 @@
 
 #include <winsock2.h>
-#include <http.h>
+#include <ws2tcpip.h>
 #include <cstring>
 #include "socket.h"
 
@@ -14,45 +14,47 @@ namespace Emulator {
         close();
     }
 
-    auto Socket::establishUnixDomain(std::string address) -> bool {
+    auto Socket::establish(std::string address, std::string port) -> int {
+        char optval;
+        bool UnixDomain = port == "UD";
+        int res;
+
+        if (UnixDomain)
+            port = "";
 
         struct addrinfo hints;
-        struct addrinfo* result = nullptr;
+        struct addrinfo* addrInfo = nullptr;
         std::memset( &hints, 0, sizeof(hints) );
 
-        hints.ai_family = PF_UNIX;
-        hints.ai_socktype = SOCK_STREAM;
-        hints.ai_protocol = 0;
-
-        if (getaddrinfo( address.c_str(), nullptr, &hints, &result ) != 0)
-            return false;
-
-        bool ret = _connect( result );
-
-        freeaddrinfo( result );
-
-        return ret;
-    }
-
-    auto Socket::establish(std::string address, std::string port) -> bool {
-
-        struct addrinfo hints;
-        struct addrinfo* result = nullptr;
-        std::memset( &hints, 0, sizeof(hints) );
-
-        hints.ai_family = PF_UNSPEC; // find out if V4 or V6 automatically
+        hints.ai_family = UnixDomain ? PF_UNIX : PF_UNSPEC; // find out if V4 or V6 automatically
         // hints.ai_flags = AI_NUMERICHOST;
         hints.ai_socktype = SOCK_STREAM;
-        hints.ai_protocol = IPPROTO_TCP;
+        hints.ai_protocol = UnixDomain ? 0 : IPPROTO_TCP;
 
-        if (getaddrinfo( address.c_str(), !port.empty() ? port.c_str() : nullptr, &hints, &result ) != 0)
-            return false;
+        init();
 
-        bool ret = _connect( result );
+        if ((res = getaddrinfo( address.c_str(), !port.empty() ? port.c_str() : nullptr, &hints, &addrInfo )) != 0)
+            return res;
 
-        freeaddrinfo( result );
+        handle = (int)socket( addrInfo->ai_family, addrInfo->ai_socktype, addrInfo->ai_protocol);
 
-        return ret;
+        if (handle == -1)
+            return freeaddrinfo( addrInfo ), -1;
+
+        setsockopt(handle, addrInfo->ai_protocol, TCP_NODELAY, &optval, sizeof(optval));
+
+        if ( connect( handle, addrInfo->ai_addr, (int)addrInfo->ai_addrlen ) != 0 ) {
+
+            closesocket( handle );
+
+            handle = -1;
+
+            return freeaddrinfo( addrInfo ), -2;
+        }
+
+        freeaddrinfo( addrInfo );
+
+        return 1;
     }
 
     auto Socket::sendData( const char* data, unsigned size ) -> bool {
@@ -75,39 +77,27 @@ namespace Emulator {
         return true;
     }
 
-    auto Socket::poll() -> bool {
-        struct fd_set fds;
-        struct timeval timeout;
-        timeout.tv_sec = 0; // no blocking
-        timeout.tv_usec = 0;
+    auto Socket::poll() -> int {
+        if (!connected())
+            return false;
+
+        TIMEVAL timeout = { 0, 0 }; // non blocking
+        fd_set fds;
+        //timeout.tv_sec = 0; // no blocking
+        //timeout.tv_usec = 0;
 
         FD_ZERO(&fds);
-
         FD_SET(handle, &fds);
 
-        return select( 0, &fds, nullptr, nullptr, &timeout ) > 0;
-    }
+        //return select( 0, &fds, nullptr, nullptr, &timeout ) > 0;
 
-    auto Socket::_connect( addrinfo* result ) -> bool {
-        char optval;
+        int res = select( 0, &fds, nullptr, nullptr, &timeout );
 
-        init();
-
-        handle = (int)socket( result->ai_family, result->ai_socktype, result->ai_protocol);
-
-        if (handle == -1)
-            return false;
-
-        setsockopt(handle, result->ai_protocol, TCP_NODELAY, &optval, sizeof(optval));
-
-        if ( connect( handle, result->ai_addr, (int)result->ai_addrlen ) != 0 ) {
-
-            closesocket( handle );
-
-            return false;
+        if (res == SOCKET_ERROR) {
+            //res = WSAGetLastError();
         }
 
-        return true;
+        return res;
     }
 
     auto Socket::close() -> void {

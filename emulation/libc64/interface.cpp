@@ -16,6 +16,7 @@
 #include "expansionPort/retroReplay/retroReplay.h"
 #include "expansionPort/gmod/gmod2.h"
 #include "expansionPort/geoRam/geoRam.h"
+#include "expansionPort/acia/acia.h"
 #include "disk/structure/structure.h"
 #include "system/gluelogic.h"
 #include "../tools/crop.h"
@@ -75,6 +76,7 @@ auto Interface::prepareMedia() -> void {
     mediaGroups.push_back({MediaGroupIdExpansionRetroReplay, "Retro Replay", MediaGroup::Type::Expansion, {"bin", "crt"}, {"crt"} });
     mediaGroups.push_back({MediaGroupIdExpansionGeoRam, "GeoRam", MediaGroup::Type::Expansion, {"bin"}, {"bin"} });
     mediaGroups.push_back({MediaGroupIdExpansionReu, "REU", MediaGroup::Type::Expansion, {"bin", "crt", "prg", "reu"}, {""} });
+    mediaGroups.push_back({MediaGroupIdExpansionRS232, "RS-232", MediaGroup::Type::Expansion });
         	
 
 	{   auto& group = mediaGroups[MediaGroupIdDisk];
@@ -170,6 +172,14 @@ auto Interface::prepareMedia() -> void {
 		group.media.push_back({3, "GeoRam Memory 4", 0, &group});
 		group.selected = &group.media[0];
 	}
+
+    {	auto& group = mediaGroups[MediaGroupIdExpansionRS232];
+        group.media.push_back({0, "RS-232 1", 0, &group});
+        group.media.push_back({1, "RS-232 2", 0, &group});
+        group.media.push_back({2, "RS-232 3", 0, &group});
+        group.media.push_back({3, "RS-232 4", 0, &group});
+        group.selected = &group.media[0];
+    }
     
     for(auto& group : mediaGroups) {
         group.expansion = nullptr;
@@ -194,6 +204,7 @@ auto Interface::prepareExpansions() -> void {
     expansions.push_back( { ExpansionIdGeoRam, "GeoRam", Expansion::Type::Ram | Expansion::Type::Battery, &memoryTypes[1], &mediaGroups[MediaGroupIdExpansionGeoRam], nullptr } );
     expansions.push_back( { ExpansionIdReu, "REU", Expansion::Type::Ram, &memoryTypes[0], &mediaGroups[MediaGroupIdExpansionReu], nullptr } );
 	expansions.push_back( { ExpansionIdReuRetroReplay, "REU + Retro Replay", Expansion::Type::Ram | Expansion::Type::Freezer | Expansion::Type::Flash, &memoryTypes[0], &mediaGroups[MediaGroupIdExpansionReu], &mediaGroups[MediaGroupIdExpansionRetroReplay] } );
+	expansions.push_back( { ExpansionIdRS232, "RS-232", Expansion::Type::RS232, nullptr, &mediaGroups[MediaGroupIdExpansionRS232], nullptr } );
     
     {   auto& expansion = expansions[ExpansionIdGame];        
         expansion.pcbs.push_back( {CartridgeIdDefault, "Default"} );
@@ -240,7 +251,7 @@ auto Interface::prepareExpansions() -> void {
     
     {   auto& expansion = expansions[ExpansionIdEasyFlash];
 
-        expansion.jumpers.push_back( {0, "Flash"} );
+        expansion.jumpers.push_back( {0, "Flash", false} );
 		expansion.creationIdents.push_back( "EasyFlash" );
     
         mediaGroups[MediaGroupIdExpansionEasyFlash].expansion = &expansion;
@@ -261,8 +272,8 @@ auto Interface::prepareExpansions() -> void {
 		expansion.creationIdents.push_back( "Retro Replay" );
         expansion.creationIdents.push_back( "Nordic Replay" );
         
-        expansion.jumpers.push_back( {0, "bank"} );
-        expansion.jumpers.push_back( {1, "flash"} );
+        expansion.jumpers.push_back( {0, "bank", false} );
+        expansion.jumpers.push_back( {1, "flash", false} );
     
         mediaGroups[MediaGroupIdExpansionRetroReplay].expansion = &expansion;
     }
@@ -272,6 +283,19 @@ auto Interface::prepareExpansions() -> void {
 		expansion.creationIdents.push_back( "GeoRam" );
 		
         mediaGroups[MediaGroupIdExpansionGeoRam].expansion = &expansion;
+    }
+
+    {   auto& expansion = expansions[ExpansionIdRS232];
+        expansion.pcbs.push_back( {CartridgeIdDefault, "Default"} );
+        expansion.pcbs.push_back( {CartridgeIdSwiftlink, "Swiftlink"} );
+        expansion.pcbs.push_back( {CartridgeIdTurbo232, "Turbo232"} );
+
+        expansion.jumpers.push_back( {0, "IRQ", false} );
+        expansion.jumpers.push_back( {1, "NMI", true} );
+        expansion.jumpers.push_back( {2, "$DE00", true} );
+        expansion.jumpers.push_back( {3, "IP232", true} );
+
+        mediaGroups[MediaGroupIdExpansionRS232].expansion = &expansion;
     }
 
     for(auto& group : mediaGroups) {
@@ -1044,6 +1068,8 @@ auto Interface::ejectExpansionImage(Media* media) -> void {
         retroReplay->setRom(media, nullptr, 0);
 	else if (group->expansion->id == ExpansionIdGeoRam)
 		geoRam->setRam( media, nullptr, 0 );
+    else if (group->expansion->id == ExpansionIdRS232)
+        acia->socket.close();
 }
 
 auto Interface::createExpansionImage(MediaGroup* group, unsigned& imageSize, uint8_t id) -> uint8_t* {
@@ -1477,6 +1503,10 @@ auto Interface::setExpansionJumper( Media* media, unsigned jumperId, bool state 
     } else if (group->expansion->id == ExpansionIdRetroReplay) {        
         if (retroReplay->media == media)
             retroReplay->setJumper( jumperId, state );
+
+    } else if (group->expansion->id == ExpansionIdRS232) {
+        if (acia->media == media)
+            acia->setJumper( jumperId, state );
     }
 }
 
@@ -1556,5 +1586,11 @@ auto Interface::copyText() -> std::string {
 
     return system->copyText( );
 }
+
+auto Interface::prepareSocket( Media* media, std::string address, std::string port ) -> void {
+
+    acia->prepareSocket( media, address, port );
+}
+
 
 }

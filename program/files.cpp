@@ -209,6 +209,22 @@ auto Program::removeExpansion( bool bootableOnly ) -> void {
     activeEmulator->power();
 }
 
+auto Program::prepareSocket(Emulator::Interface::Media* media, Emulator::Interface* emulator, std::string address) -> void {
+
+    std::string port = "";
+
+    auto parts = GUIKIT::String::split( address, ':' );
+
+    if (parts.size() > 1) {
+
+        port = parts[ parts.size() - 1 ];
+
+        address = parts[0];
+    }
+
+    emulator->prepareSocket( media, address, port );
+}
+
 // settings
 auto Program::saveSettings() -> void {
 

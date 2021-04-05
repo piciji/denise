@@ -270,6 +270,11 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
 	for (auto block : layout->blocks) {
 
 		auto fSetting = FileSetting::getInstance(emulator, _underscore(block->media->name) );
+
+        bool IPMode = mediaGroup->isExpansion() && mediaGroup->expansion->isRS232();
+
+        if (IPMode && fSetting->path.empty())
+            fSetting->setPath("127.0.0.1:25232");
 					
 		if (mediaGroup->isHardDisk()) {
 
@@ -898,10 +903,14 @@ auto MediaLayout::preparePaths() -> void {
 
 auto MediaLayout::updateMediaBlock(MediaGroupLayout::Block* block, FileSetting* fSetting) -> void {
 
+    bool IPMode = block->media->group->isExpansion() && block->media->group->expansion->isRS232();
+
     block->selector.edit.setText( fSetting->path );
-    block->header.fileName.setText( fSetting->file );
-    
-    updateWriteProtection( block->media, fSetting->writeProtect );
+
+    if (!IPMode) {
+        block->header.fileName.setText(fSetting->file);
+        updateWriteProtection(block->media, fSetting->writeProtect);
+    }
 }
 
 auto MediaLayout::updateListing( Emulator::Interface::Media* media ) -> void {    

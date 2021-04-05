@@ -5,7 +5,7 @@
 
 namespace Emulator {
 
-    class Socket {
+    struct Socket {
 
         ~Socket();
 
@@ -15,18 +15,14 @@ namespace Emulator {
 
         static auto clean() -> void;
 
-        auto establish(std::string address, std::string port = "") -> bool;
-
-        auto establishUnixDomain(std::string address) -> bool;
+        auto establish(std::string address, std::string port = "") -> int;
 
         auto sendData( const char* data, unsigned size ) -> bool;
         auto receiveData( char* data, unsigned size ) -> bool;
-        auto poll() -> bool;
+        auto poll() -> int;
 
         auto close() -> void;
         auto connected() -> bool { return handle != -1; }
-
-        auto _connect( addrinfo* result ) -> bool;
     };
 
 }

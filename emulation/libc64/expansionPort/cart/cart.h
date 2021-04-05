@@ -28,7 +28,7 @@ struct Cart : ExpansionPort {
     Chip* cRomL;
     Chip* cRomH;
     
-    Interface::CartridgeId cartridgeId;        
+    Interface::CartridgeId cartridgeId;
     uint8_t* rom = nullptr; 
     unsigned romSize = 0;
     

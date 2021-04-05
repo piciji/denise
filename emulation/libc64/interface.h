@@ -25,13 +25,13 @@ struct Interface : Emulator::Interface {
         MediaGroupIdDisk = 0, MediaGroupIdTape = 1, MediaGroupIdProgram = 2,
         MediaGroupIdExpansionGame = 3, MediaGroupIdExpansionEasyFlash = 4, MediaGroupIdExpansionEasyFlash3 = 5,
         MediaGroupIdExpansionFreezer = 6, MediaGroupIdExpansionRetroReplay = 7,        
-        MediaGroupIdExpansionGeoRam = 8,MediaGroupIdExpansionReu = 9,
+        MediaGroupIdExpansionGeoRam = 8, MediaGroupIdExpansionReu = 9, MediaGroupIdExpansionRS232 = 10,
     };
     
     enum ExpansionId {
         ExpansionIdNone = 0, ExpansionIdGame = 1, ExpansionIdEasyFlash = 2, ExpansionIdEasyFlash3 = 3,
         ExpansionIdFreezer = 4, ExpansionIdRetroReplay = 5, ExpansionIdGeoRam = 6, ExpansionIdReu = 7,
-        ExpansionIdReuRetroReplay = 8,
+        ExpansionIdReuRetroReplay = 8, ExpansionIdRS232 = 9,
     };
     
     enum CartridgeId {
@@ -46,6 +46,7 @@ struct Interface : Emulator::Interface {
         CartridgeIdFinalCartridge3 = 3, CartridgeIdFinalCartridgePlus = 29, CartridgeIdSimonsBasic = 4,
         CartridgeIdWarpSpeed = 16, CartridgeIdAtomicPower = 9, CartridgeIdMach5 = 51, CartridgeIdRoss = 23,
         CartridgeIdWestermann = 11, CartridgeIdPagefox = 53,
+        CartridgeIdSwiftlink = 270, CartridgeIdTurbo232 = 271,
     };
     
     static const std::string Version;
@@ -142,6 +143,9 @@ struct Interface : Emulator::Interface {
     auto cropLeft() -> unsigned;
     auto cropData() -> uint8_t*;
     auto cropPitch() -> unsigned;
+
+    // sockets
+    auto prepareSocket( Media* media, std::string address, std::string port ) -> void;
 
     // performance amd accuracy
     auto videoCycleAccuracy(bool state) -> void;

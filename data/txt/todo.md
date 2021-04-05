@@ -16,7 +16,7 @@
     * mount OS folder as D64
     * non standard floppy models: 1571, 1581
 * user port
-    * calling BBS's
+    * RS232
     * SpeedDOS
     * 4 player adapter
     * all the others

@@ -63,14 +63,14 @@ struct Interface {
 		enum Type : unsigned { None, Joypad, Mouse, Paddles, LightGun, LightPen, Keyboard } type;
         unsigned userData; // free to use, easy way to transfer data for a specific device from external
                 
-        auto isMouse() -> bool { return type == Type::Mouse; }
-        auto isPaddles() -> bool { return type == Type::Paddles; }        
-        auto isJoypad() -> bool { return type == Type::Joypad; }
-        auto isLightGun() -> bool { return type == Type::LightGun; }
-        auto isLightPen() -> bool { return type == Type::LightPen; }
-        auto isLightDevice() -> bool { return isLightGun() || isLightPen(); }
-        auto isKeyboard() -> bool { return type == Type::Keyboard; }        
-        auto isUnplugged() -> bool { return type == Type::None; }
+        auto isMouse() const -> bool { return type == Type::Mouse; }
+        auto isPaddles() const -> bool { return type == Type::Paddles; }
+        auto isJoypad() const -> bool { return type == Type::Joypad; }
+        auto isLightGun() const -> bool { return type == Type::LightGun; }
+        auto isLightPen() const -> bool { return type == Type::LightPen; }
+        auto isLightDevice() const -> bool { return isLightGun() || isLightPen(); }
+        auto isKeyboard() const -> bool { return type == Type::Keyboard; }
+        auto isUnplugged() const -> bool { return type == Type::None; }
 
         struct Layout {
             enum Type { Uk, Us, Fr, De } type;
@@ -145,6 +145,7 @@ struct Interface {
     struct Jumper {
         unsigned id;
         std::string name;
+        bool defaultState;
     };
     
     struct Expansion {
@@ -157,7 +158,7 @@ struct Interface {
         std::vector<PCBLayout> pcbs;
         std::vector<Jumper> jumpers;
 		std::vector<std::string> creationIdents; 
-        enum Type : unsigned { Empty = 0, Standard = 1, Ram = 2, Eprom = 4, Flash = 8, TurboCart = 16, Freezer = 32, Battery = 64 };
+        enum Type : unsigned { Empty = 0, Standard = 1, Ram = 2, Eprom = 4, Flash = 8, TurboCart = 16, Freezer = 32, Battery = 64, RS232 = 128 };
         
         auto isEmpty() const -> bool { return typeFlags == (unsigned)Type::Empty; }
         auto isStandard() const -> bool { return typeFlags & Type::Standard; }
@@ -165,10 +166,11 @@ struct Interface {
         auto isEprom() const -> bool { return typeFlags & Type::Eprom; }
 		auto isBattery() const -> bool { return typeFlags & Type::Battery; }
         auto isFlash() const -> bool { return typeFlags & Type::Flash; }
-        auto isTurboCart() const -> bool { return typeFlags & Type::TurboCart; }               
-        auto isFreezer() const -> bool { return typeFlags & Type::Freezer; }      
+        auto isTurboCart() const -> bool { return typeFlags & Type::TurboCart; }
+        auto isFreezer() const -> bool { return typeFlags & Type::Freezer; }
+        auto isRS232() const -> bool { return typeFlags & Type::RS232; }
     };
-    std::vector<Expansion> expansions;       
+    std::vector<Expansion> expansions;
     
     struct Media {
         unsigned id;
@@ -220,16 +222,16 @@ struct Interface {
 		std::vector<std::string> options;
         unsigned steps;
 
-		auto isRadio() -> bool { return type == Type::Radio; }
-		auto isCombo() -> bool { return type == Type::Combo; }
-		auto isSwitch() -> bool { return type == Type::Switch; }
-        auto isHex() -> bool { return type == Type::Hex; }
-		auto isRange() -> bool { return type == Type::Range; }
-        auto isSlider() -> bool { return type == Type::Slider; }
+		auto isRadio() const -> bool { return type == Type::Radio; }
+		auto isCombo() const -> bool { return type == Type::Combo; }
+		auto isSwitch() const -> bool { return type == Type::Switch; }
+        auto isHex() const -> bool { return type == Type::Hex; }
+		auto isRange() const -> bool { return type == Type::Range; }
+        auto isSlider() const -> bool { return type == Type::Slider; }
 		
-		auto isGraphicChip() -> bool { return purpose == Purpose::GraphicChip; }
-        auto isSoundChip() -> bool { return purpose == Purpose::SoundChip; }
-        auto isAudioResampler() -> bool { return purpose == Purpose::AudioResampler; }
+		auto isGraphicChip() const -> bool { return purpose == Purpose::GraphicChip; }
+        auto isSoundChip() const -> bool { return purpose == Purpose::SoundChip; }
+        auto isAudioResampler() const -> bool { return purpose == Purpose::AudioResampler; }
 	};
 	std::vector<Model> models;	
     	
@@ -403,7 +405,7 @@ struct Interface {
     virtual auto getTapeControl(Media* media) -> TapeMode { return TapeMode::Unpressed; }
 	virtual auto createTapeImage(unsigned& imageSize) -> uint8_t* { return nullptr; }
     virtual auto selectTapeListing(Media* media, unsigned pos) -> void { }
-    // expansion image handling
+    // expansion handling
     virtual auto insertExpansionImage(Media* media, uint8_t* data, unsigned size) -> void {}
     virtual auto ejectExpansionImage(Media* media) -> void {}
     virtual auto writeProtectExpansion(Media* media, bool state) -> void {}
@@ -502,6 +504,9 @@ struct Interface {
     auto getStatsForSelectedRegion() -> Stats& {  
         return stats;
     }
+
+    // sockets
+    virtual auto prepareSocket( Media* media, std::string address, std::string port ) -> void {}
     
     // a ratio of 1.0 means monitor refresh rate is equal to emulated system original speed
     virtual auto setMonitorFpsRatio(double ratio) -> void {}

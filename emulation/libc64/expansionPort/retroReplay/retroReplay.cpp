@@ -371,7 +371,7 @@ auto RetroReplay::isBootable( ) -> bool {
 
 auto RetroReplay::serialize(Emulator::Serializer& s) -> void {
     
-    s.integer( (uint16_t&)cartridgeId );    
+    s.integer( (uint16_t&)cartridgeId );
     
     s.integer( bank );
     

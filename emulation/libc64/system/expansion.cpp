@@ -8,6 +8,7 @@
 #include "../expansionPort/retroReplay/retroReplay.h"
 #include "../expansionPort/gmod/gmod2.h"
 #include "../expansionPort/geoRam/geoRam.h"
+#include "../expansionPort/acia/acia.h"
 
 namespace LIBC64 {
  
@@ -71,6 +72,10 @@ auto System::setExpansion( Emulator::Interface::Expansion& expansion ) -> void {
 		case Interface::ExpansionIdGeoRam:
             expansionPort = geoRam;
             break;
+
+        case Interface::ExpansionIdRS232:
+            expansionPort = acia;
+            break;
     }
     
 }  
@@ -85,6 +90,7 @@ auto System::createExpansions() -> void {
     retroReplay = new RetroReplay;
 	gmod2 = new Gmod2;
 	geoRam = new GeoRam;
+	acia = new Acia;
     noExpansion = new ExpansionPort;
     
     expansionPort = noExpansion;
@@ -93,6 +99,7 @@ auto System::createExpansions() -> void {
     setExpansionCallbacks( freezer );
     setExpansionCallbacks( retroReplay );    
     setExpansionCallbacks( easyFlash3 );
+    setExpansionCallbacks( acia );
 }
 
 auto System::destroyExpansions() -> void {
@@ -105,6 +112,7 @@ auto System::destroyExpansions() -> void {
     delete retroReplay;
 	delete gmod2;
 	delete geoRam;
+	delete acia;
     delete noExpansion;	
 }
 

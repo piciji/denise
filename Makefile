@@ -27,7 +27,7 @@ ifeq ($(platform),windows)
     objects += dinput5 dinput7 dinput8 xaudio27 xaudio28 xaudio29
 endif
 #objects += m68000
-objects += m6510 ciaBase cia6526 vicIIBase vicIICycle vicIIFast systemC64 sid chamberlin tapeC64 inputC64 controlPortC64
+objects += m6510 ciaBase cia6526 vicIIBase vicIICycle vicIIFast systemC64 sid chamberlin tapeC64 inputC64 controlPortC64 acia
 objects += cartC64 gameCartC64 freezerC64 reuC64 easyFlashC64 easyFlash3C64 retroReplayC64 gmod2C64 clipboardC64 geoRamC64
 objects += m6502 via iec prg64 drive1541 structure1541
 objects += thread m93c86 mx29lv640eb icons socket
@@ -142,6 +142,7 @@ obj/tapeC64.o:	emulation/libc64/tape/tape.cpp
 obj/prg64.o:	emulation/libc64/prg/prg.cpp
 obj/inputC64.o:	emulation/libc64/input/input.cpp
 obj/controlPortC64.o: emulation/libc64/input/controlPort/controlPort.cpp
+obj/acia.o: emulation/libc64/expansionPort/acia/acia.cpp
 
 obj/via.o:	emulation/libc64/disk/via/via.cpp	
 obj/iec.o:	emulation/libc64/disk/iec.cpp

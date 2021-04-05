@@ -174,6 +174,8 @@ auto States::loadImagePaths( GUIKIT::Settings* loadSettings ) -> std::vector<Emu
         if (mediaGroup.isProgram())
             continue;
 
+        bool IPMode = mediaGroup.isExpansion() && mediaGroup.expansion->isRS232();
+
         auto mediaSelected = mediaGroup.selected;
         Emulator::Interface::Media* mediaInUse = nullptr;
         
@@ -198,9 +200,7 @@ auto States::loadImagePaths( GUIKIT::Settings* loadSettings ) -> std::vector<Emu
                 mediaInUse = &media;
             
             InsertImage* inserted = findImage( mediaInUse );
-            
-            GUIKIT::File* file = filePool->get( setting->path );
-            
+
             if (inserted) {
                 if ((inserted->setting->path == setting->path)
                     && (inserted->setting->id == setting->id)) {
@@ -209,8 +209,16 @@ auto States::loadImagePaths( GUIKIT::Settings* loadSettings ) -> std::vector<Emu
                         loadedMedia.push_back( mediaInUse );
                     continue;
                 }
-            }                        
-            
+            }
+
+            if (IPMode) {
+                program->prepareSocket( &media, emulator, setting->path );
+                updateImage( setting, mediaInUse );
+                continue;
+            }
+
+            GUIKIT::File* file = filePool->get( setting->path );
+
             if (!file)
                 continue;                           
 
@@ -230,8 +238,8 @@ auto States::loadImagePaths( GUIKIT::Settings* loadSettings ) -> std::vector<Emu
             if (!GUIKIT::Vector::find( loadedMedia, mediaInUse ))
                 loadedMedia.push_back( mediaInUse );
                        
-            filePool->assign( _ident(emulator, mediaInUse->name), file);  
-            updateImage( setting, mediaInUse );                          
+            filePool->assign( _ident(emulator, mediaInUse->name), file);
+            updateImage( setting, mediaInUse );
         }
                         
         if (mediaSelected)
@@ -520,7 +528,7 @@ auto States::updateExpansionJumper() -> void {
         
     for( auto& mediaGroup : emulator->mediaGroups ) {
         
-        if (!mediaGroup.isExpansion() || (mediaGroup.expansion->jumpers.size() == 0) )
+        if (!mediaGroup.isExpansion() || !mediaGroup.selected || (mediaGroup.expansion->jumpers.size() == 0) )
             continue;        
                     
         EmuConfigView::TabWindow::getView( emulator )->mediaLayout->updateJumper( mediaGroup.selected );

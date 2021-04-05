@@ -17,26 +17,32 @@ PathsLayout::PathsLayout() {
 }
 
 MediaGroupLayout::Block::Header::Header(Emulator::Interface::Media* media) {
-    
+    auto group = media->group;
+    bool IPMode = group->isExpansion() && group->expansion->isRS232();
+
     deviceName.setFont(GUIKIT::Font::system("bold"));
     inUse.setFont(GUIKIT::Font::system("bold"));
-    if (!media->secondary && media->group->selected)
+    if (!media->secondary && group->selected)
         append(inUse, {0u, 0u}, 5);
     else
         append(deviceName, {0u, 0u}, 10);
         
-    if (media->group->isWritable())
+    if (group->isWritable())
         append(writeprotect, {0u, 0u}, 10);
-    append(eject, {0u, 0u}, 10);
-    append(fileName, {~0u, 0u});
+
+    if (!IPMode) {
+        append(eject, {0u, 0u}, 10);
+        append(fileName, {~0u, 0u});
+    }
     setAlignment(0.5);
 }
 
-MediaGroupLayout::Block::Selector::Selector(Emulator::Interface::Media* media) {    
-       
-    append(edit, {~0u, 0u}, 10);
+MediaGroupLayout::Block::Selector::Selector(Emulator::Interface::Media* media) {
     auto group = media->group;
-    
+    bool IPMode = group->isExpansion() && group->expansion->isRS232();
+
+    append(edit, {~0u, 0u}, 10);
+
     if (media->pcbLayout && group->expansion && !media->secondary && (group->expansion->pcbs.size() > 0) ) {
         for (auto& pcb : group->expansion->pcbs) {
             combo.append( pcb.name, pcb.id );
@@ -60,11 +66,12 @@ MediaGroupLayout::Block::Selector::Selector(Emulator::Interface::Media* media) {
             jumpers.push_back( jumpChecker );
         }        
     }
-        
-    append(open, {0u, 0u});
+
+    if (!IPMode)
+        append(open, {0u, 0u});
     
     setAlignment(0.5);
-    edit.setEditable(false);
+    edit.setEditable( IPMode );
     edit.setDroppable();
 }
 
@@ -323,7 +330,7 @@ auto MediaGroupLayout::setJumperSettings(Emulator::Interface::Media* media) -> v
 
         std::string saveIdent = media->name + "_jumper_" + jumper.name;
 
-        bool state = mediaLayout->settings->get<bool>(_underscore(saveIdent), false);
+        bool state = mediaLayout->settings->get<bool>(_underscore(saveIdent), jumper.defaultState);
 
         jumperBox->setChecked(state);
     }

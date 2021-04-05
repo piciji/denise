@@ -243,8 +243,10 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
 
         if (mediaGroup.isExpansion() && (&mediaGroup != expansion->mediaGroup) && (&mediaGroup != expansion->mediaGroupExpanded) )
             // allow only expansion media groups for the currently used expansion
-            continue;    
-        
+            continue;
+
+        bool IPMode = mediaGroup.isExpansion() && mediaGroup.expansion->isRS232();
+
         auto selectedMedia = mediaGroup.selected;
         
         if(mediaGroup.isDrive()) {
@@ -262,38 +264,45 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
             auto fSetting = FileSetting::getInstance( emulator, _underscore( media.name ) );
 
             media.guid = uintptr_t(nullptr);
-            GUIKIT::File* file = filePool->get( fSetting->path );
-            if(!file)
-                continue;
 
-            if (!program->loadImageDataWhenOk( file, fSetting->id, &mediaGroup, data )) {	                
-                if ( regular && !GUIKIT::Vector::find( brokenPaths, fSetting->path ) )
-                    brokenPaths.push_back( fSetting->path );
-                
-                continue;
-            }            
-            media.guid = uintptr_t(file);
-            
-            emulator->insertMedium(&media, data, file->archiveDataSize(fSetting->id));
-            emulator->writeProtect(&media, (file->isArchived() || file->isReadOnly()) ? true : fSetting->writeProtect);
-			if (!cmd->noGui)
-				EmuConfigView::TabWindow::getView( activeEmulator )->mediaLayout->updateWriteProtection( &media, fSetting->writeProtect );
-			
-            filePool->assign( _ident(emulator, media.name + "store"), file);	           
+            if (!IPMode) {
+                GUIKIT::File *file = filePool->get(fSetting->path);
+                if (!file)
+                    continue;
 
-			if (!cmd->noGui)
-				States::getInstance( activeEmulator )->updateImage( fSetting, &media );
+                if (!program->loadImageDataWhenOk(file, fSetting->id, &mediaGroup, data)) {
+                    if (regular && !GUIKIT::Vector::find(brokenPaths, fSetting->path))
+                        brokenPaths.push_back(fSetting->path);
 
-            filePool->assign( _ident(emulator, media.name), file);
-            
+                    continue;
+                }
+                media.guid = uintptr_t(file);
+
+                emulator->insertMedium(&media, data, file->archiveDataSize(fSetting->id));
+                emulator->writeProtect(&media, (file->isArchived() || file->isReadOnly()) ? true : fSetting->writeProtect);
+
+                if (!cmd->noGui)
+                    EmuConfigView::TabWindow::getView( activeEmulator )->mediaLayout->updateWriteProtection( &media, fSetting->writeProtect );
+
+                filePool->assign( _ident(emulator, media.name + "store"), file);
+
+                filePool->assign( _ident(emulator, media.name), file);
+
+            } else { // IP socket mode
+                program->prepareSocket( &media, emulator, fSetting->path );
+            }
+
+            if (!cmd->noGui)
+                States::getInstance( activeEmulator )->updateImage( fSetting, &media );
+
             if (mediaGroup.isExpansion()) {
                 for(auto& jumper : mediaGroup.expansion->jumpers) {
-                    bool state = settings->get<bool>( _underscore(media.name + "_jumper_" + jumper.name), false );
+                    bool state = settings->get<bool>( _underscore(media.name + "_jumper_" + jumper.name), jumper.defaultState );
                     emulator->setExpansionJumper( &media, jumper.id, state );
-                }                
-            }   
+                }
+            }
             
-            if (regular)
+            if (regular && !IPMode)
                 updateSaveIdent( &media, fSetting->file );
         }
     }
