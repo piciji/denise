@@ -243,43 +243,48 @@ auto AudioManager::process( int16_t sampleLeft, int16_t sampleRight ) -> void {
     if (bufferPos < bufferSize)
         return;   
 
-    bufferPos = 0;
-                            
+    flush();
+}
+
+auto AudioManager::flush( ) -> void {
+
     rData.in = &buffer[0];
-    rData.inputFrames = stat.stereoSound ? bufferSize >> 1 : bufferSize;
-    
+    rData.inputFrames = stat.stereoSound ? bufferPos >> 1 : bufferPos;
+
+    bufferPos = 0;
+
     if (dynamicRateControl || statistics.enable) {
         double deviation = audioDriver->getCenterBufferDeviation();
-        
+
         if (statistics.enable)
             calcStatistics( (float)deviation );
-        
+
         if (dynamicRateControl)
             rData.ratio = ratio * (1.0 + rateDelta * deviation);
-    }   
-    
+    }
+
     cosine.process();
 
     if (dsps.size())
         applyDsp();
 
     if ( audioDriver->expectFloatingPoint() ) {
-        
+
         for (unsigned i = 0; i < (rData.outputFrames << 1); i++ )
-            outBufferFloat[i] = *(rData.out + i);   
-        
+            outBufferFloat[i] = *(rData.out + i);
+
         record.write( (uint8_t*) outBufferFloat, rData.outputFrames );
-        
+
         // 4 byte per channel, 8 byte per audio frame
         audioDriver->addSamples( (uint8_t*) outBufferFloat, rData.outputFrames << 3);
-        
+
     } else {
-        
+
         for (unsigned i = 0; i < (rData.outputFrames << 1); i++)
-            outBuffer[i] = sclamp<16>( *(rData.out + i) * 32767.0 );        
+            outBuffer[i] = sclamp<16>( *(rData.out + i) * 32767.0 );
 
         record.write( (uint8_t*) outBuffer, rData.outputFrames );
-        
+
         // 2 byte per channel, 4 byte per audio frame
         audioDriver->addSamples( (uint8_t*) outBuffer, rData.outputFrames << 2);
     }

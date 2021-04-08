@@ -103,6 +103,7 @@ struct Program : Emulator::Interface::Bind {
     auto initAudio() -> void;
 	auto getAudioDriver() -> std::string;
     auto audioSample(int16_t sampleLeft, int16_t sampleRight) -> void override;
+    auto audioFlush() -> void override;
     
     //video
     auto setVideoManagerGlobals() -> void;

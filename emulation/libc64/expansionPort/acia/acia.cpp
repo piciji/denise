@@ -32,63 +32,73 @@ Acia::Acia() : ExpansionPort() {
     receiver = [this] () {
 
         uint8_t receiveByte;
+        if (!transmitterContinous() && socket.connected()) {
 
-        if (socket.connected()) {
-       //     system->interface->log("try receive", 1);
             if (receiveData( &receiveByte ) ) {
-system->interface->log("received", 1);
-                if (!(status & Status::ReceiveDataFull))
+                system->interface->log("receive ok", 1);
+
+                if (!(status & Status::ReceiveDataFull)) {
                     rxData = receiveByte;
-                else
+                    status |= Status::ReceiveDataFull;
+                    handleReceiverInterrupt();
+                } else
                     status |= Status::OverrunError;
-
-                status |= Status::ReceiveDataFull;
-
-                if (!(command & 2)) {
-                    setInt(true);
-                    status |= Status::Interrupt;
-                }
             }
         }
 
         if (command & 1)
-            sysTimer.add( &receiver, bitCycles );
+            sysTimer.add( &receiver, bitCyclesReceive );
     };
 
     transmitter = [this]() {
 
-        if (socket.connected()) {
-            system->interface->log("try send", 1);
-            sendData();
+        if (transmitterContinous()) // continous
+            redoTx = 2;
+
+        if ( redoTx == 2 && socket.connected()) {
+            system->interface->log("transmit", 1);
+
+            if (!sendData()) {
+                system->interface->log("error", 0);
+                system->interface->log(socket.getLastError(), 0);
+            } else
+                system->interface->log("ok", 0);
 
             status |= Status::TransmitterEmpty;
 
-            if ((command & 0xc) == 4) {
+            if (transmitterIntEnabled()) {
                 setInt(true);
                 status |= Status::Interrupt;
             }
         }
 
-        if (redoTx) {
+        if (redoTx)
+            redoTx--;
+
+        if (redoTx)
             sysTimer.add( &transmitter, bitCycles );
-            redoTx = false;
-        }
     };
 
     sysTimer.registerCallback( {{&receiver, 1}, {&transmitter, 1}} );
 }
 
-auto Acia::reset() -> void {
-    socket.close();
-    status = Status::TransmitterEmpty;
+auto Acia::reset(bool softReset) -> void {
+    system->interface->log("reset",1);
+    socket.disconnect();
+    status = Status::TransmitterEmpty | Status::DataCarrierDetect | Status::DataSetReady;
     control = 0;
     command = 0;
     enhancedControl = 0;
-    dcd = false;
+    bitCycles = 0;
+    bitCyclesReceive = 0;
+    dsr = true;
+    dcd = true;
     dtr = false;
-    redoTx = false;
-    rxData = false;
-    txData = false;
+    redoTx = 0;
+    rxData = 0;
+    txData = 0;
+    dsrLock = dcdLock = false;
+    updateBaudGenerator();
 }
 
 auto Acia::updateBaudGenerator() -> void {
@@ -147,14 +157,16 @@ auto Acia::updateBaudGenerator() -> void {
 
     system->interface->log(useBPS , 0);
 
-    bitCycles = (unsigned)((double)vicII->frequency() / useBPS * (double(bits) + (useHalfBit ? 0.5 : 0.0) ) );
+    bitCycles = (unsigned)((double)vicII->frequency() / useBPS * (double(bits) + (useHalfBit ? 0.5 : 0.0) ) + 0.5 );
 
-    bitCycles = (unsigned)((float)bitCycles * 5.0 / 4.0);
+    bitCyclesReceive = (unsigned)((float)bitCycles * 5.0 / 4.0);
+
+    //bitCyclesReceive = bitCycles;
 
     system->interface->log(bitCycles , 0);
 
     if (command & 1)
-        sysTimer.add( &receiver, bitCycles, Emulator::SystemTimer::UpdateExisting );
+        sysTimer.add( &receiver, bitCyclesReceive, Emulator::SystemTimer::UpdateExisting );
 }
 
 auto Acia::setInt( bool state ) -> void {
@@ -162,8 +174,12 @@ auto Acia::setInt( bool state ) -> void {
     if (useIrq)
         irqCall(state);
 
-    if (useNmi)
+    if (useNmi) {
+        if (state)
+            system->interface->log("nmi",1);
+
         nmiCall(state);
+    }
 }
 
 auto Acia::writeIo2( uint16_t addr, uint8_t value ) -> void {
@@ -194,6 +210,18 @@ auto Acia::readIo1( uint16_t addr ) -> uint8_t {
     return ExpansionPort::readIo1(addr);
 }
 
+inline auto Acia::transmitterEnabled() -> bool {
+    return (command & 0xc) != 0;
+}
+
+inline auto Acia::transmitterContinous() -> bool {
+    return (command & 0xc) == 0xc;
+}
+
+inline auto Acia::transmitterIntEnabled() -> bool {
+    return (command & 0xc) == 0x4;
+}
+
 auto Acia::writeIo( uint16_t addr, uint8_t value ) -> void {
 
     addr &= (cartridgeId == Interface::CartridgeIdTurbo232) ? 7 : 3;
@@ -204,11 +232,9 @@ auto Acia::writeIo( uint16_t addr, uint8_t value ) -> void {
             system->interface->log("write tx",1);
 
             if (command & 1) {
-
-                if (sysTimer.has(&transmitter))
-                    redoTx = true;
-                else
-                    sysTimer.add( &transmitter, bitCycles, Emulator::SystemTimer::Action::UpdateExisting );
+                redoTx = 2;
+                if (transmitterEnabled() && !sysTimer.has(&transmitter))
+                    sysTimer.add( &transmitter, 1, Emulator::SystemTimer::Action::UpdateExisting );
 
                 status &= ~Status::TransmitterEmpty;
             }
@@ -216,27 +242,21 @@ auto Acia::writeIo( uint16_t addr, uint8_t value ) -> void {
 
         case 1: // write status resets chip
             system->interface->log("write status",1);
-            if (socket.connected())
-                close();
+            updateDTR( false );
+            socket.disconnect();
+            dsrLock = dcdLock = false;
             status &= ~Status::OverrunError;
             command &= 0xe0;
-            redoTx = false;
+            redoTx = 0;
             sysTimer.remove(&transmitter);
             setInt(false);
             break;
         case 2: {
             system->interface->log("write command", 1);
-            bool dtrToggle = (command ^ value) & 1;
             command = value;
 
-            if (socket.connected()) {
-                if ((command & 1) != dtr) {
-
-                    handShake();
-
-                    dtr = command & 1;
-                }
-            }
+            if ( !transmitterEnabled() )
+                sysTimer.remove(&transmitter);
 
             if (command & 1) {
                 if (!socket.connected()) {
@@ -248,23 +268,30 @@ auto Acia::writeIo( uint16_t addr, uint8_t value ) -> void {
 
                     system->interface->log(res, 0);
 
-                    if (socket.connected())
-                        system->interface->log("drin", 1);
+                    if (socket.connected()) {
+                        system->interface->log("connection established", 1);
+
+                        updateDSR( false );
+                    }
 
                     updateBaudGenerator();
-
-            //        if (dtrToggle)
-              //          handShake();
                 }
 
-            } else {
-        //        if (dtrToggle)
-          //          handShake();
+                updateDTR( true );
 
-                if (socket.connected())
-                    close();
+            } else {
+
+                updateDTR(false );
+
+                if (socket.connected()) {
+
+                    socket.disconnect();
+
+                    system->interface->log("raus", 1);
+                }
+
                 sysTimer.remove(&transmitter);
-                redoTx = false;
+                redoTx = 0;
             }
         } break;
         case 3:
@@ -280,6 +307,8 @@ auto Acia::writeIo( uint16_t addr, uint8_t value ) -> void {
             }
             break;
     }
+
+    system->interface->log(value,0, 1);
 }
 
 auto Acia::readIo( uint16_t addr ) -> uint8_t {
@@ -288,21 +317,31 @@ auto Acia::readIo( uint16_t addr ) -> uint8_t {
 
     switch(addr) {
         case 0:
-            system->interface->log("read rx");
+            system->interface->log("read rx", 1);
             status &= ~(Status::OverrunError | Status::ParityError | Status::FramingError | Status::ReceiveDataFull);
+            system->interface->log(rxData,0, 1);
             return rxData;
 
         case 1: {
-            system->interface->log("read status");
-            status &= ~(Status::DataCarrierDetect | Status::DataSetReady);
+            system->interface->log("read status", 1);
 
-            if (!socket.connected())
-                status |= Status::DataCarrierDetect | Status::DataSetReady;
-            else {
-                status |= (dcd ? Status::DataCarrierDetect : 0) | Status::DataSetReady;
-            }
+            system->interface->log(status,0, 1);
 
             uint8_t out = status;
+
+            status &= ~(Status::DataCarrierDetect | Status::DataSetReady);
+
+            if (dsr)
+                status |= Status::DataSetReady;
+
+            if (dcd)
+                status |= Status::DataCarrierDetect;
+
+            //todo multiple state changes of dsr or dcd cause second interrupt here
+
+            setInt( false );
+
+            dsrLock = dcdLock = false;
 
             status &= ~Status::Interrupt;
 
@@ -310,9 +349,11 @@ auto Acia::readIo( uint16_t addr ) -> uint8_t {
         }
         case 2:
             system->interface->log("read command");
+            system->interface->log(command,0, 1);
             return command;
         case 3:
             system->interface->log("read control");
+            system->interface->log(control,0, 1);
             return control;
         case 7: // enhanced control (turbo232)
             return enhancedControl | (((control & 0xf) == 0) ? 4 : 0);
@@ -331,41 +372,15 @@ auto Acia::prepareSocket( Emulator::Interface::Media* media, std::string address
     this->port = port;
 }
 
-auto Acia::setJumper( unsigned jumperId, bool state ) -> void {
-
-    system->interface->log("jumper",1);
-    system->interface->log(jumperId,0);
-    system->interface->log(state,0);
-
-    switch(jumperId) {
-        case 0: // use irq
-            useIrq = state;
-            break;
-        case 1: // use nmi
-            useNmi = state;
-            break;
-        case 2: // use $DE00
-            useDE00 = state;
-            break;
-        case 3: // use $DE00
-            ip232 = state;
-            break;
-    }
-}
-
 auto Acia::receiveData(uint8_t* data) -> bool {
+    bool ok = false;
+
+    // keep up with real time
+    system->interface->audioFlush();
 
     while(1) {
 
-        system->interface->log("poll", 1);
-        auto res = socket.poll();
-
-        system->interface->log(res, 0);
-
-return false;
-
-        if ( socket.poll() || !socket.receiveData( (char*)data, 1 ))
-            return false;
+        ok = receiveFromSocket( data );
 
         if (!ip232)
             break;
@@ -373,65 +388,132 @@ return false;
         if (*data != 0xff)
             break;
 
-        if (!socket.poll() || !socket.receiveData( (char*)data, 1 ))
+        if (!receiveFromSocket( data ))
             return false;
 
         switch( *data ) {
-            case 0: dcd = false; break;
-            case 1: dcd = true; break;
+            case 0: updateDCD( false ); break;
+            case 1: updateDCD( true ); break;
             default:
                 return true;
         }
     }
 
+    return ok;
+}
+
+auto Acia::receiveFromSocket( uint8_t* data ) -> bool {
+    bool error = false;
+
+    if ( !socket.poll(error) ) {
+        if (error) {
+            system->interface->log("poll error", 1);
+
+            updateDSR( true );
+            updateDCD( true );
+
+            socket.disconnect();
+
+        } else // else: nothing to poll
+            system->interface->log("no new byte to receive", 1);
+
+
+        return false;
+    }
+    system->interface->log("success", 1);
+    if ( !socket.receiveData( (char*)data, 1 ) ) {
+        system->interface->log("receive error", 1);
+
+        updateDSR( true );
+        updateDCD( true );
+
+        socket.disconnect();
+
+        return false;
+    }
+
     return true;
 }
 
-auto Acia::sendData() -> void {
+auto Acia::updateDSR( bool newDSR ) -> void {
+
+    if (!dsrLock && (dsr != newDSR)) {
+
+        system->interface->log(newDSR ? "DSR 1" : "DSR 0" );
+
+        if (newDSR)
+            status |= Status::DataSetReady; // not ready;
+        else
+            status &= ~Status::DataSetReady; //ready;
+
+        handleReceiverInterrupt();
+
+        dsrLock = true; // reading status register clears the lock
+    }
+
+    // reflect the PIN state
+    dsr = newDSR;
+}
+
+auto Acia::updateDCD( bool newDCD ) -> void {
+
+    if (!dcdLock && (dcd != newDCD)) {
+
+        system->interface->log(newDCD ? "DCD 1" : "DCD 0" );
+
+        if (newDCD)
+            status |= Status::DataCarrierDetect; // not detected;
+        else
+            status &= ~Status::DataCarrierDetect; // detected;
+
+        handleReceiverInterrupt();
+
+        dcdLock = true; // reading status register clears the lock
+    }
+
+    // reflect the PIN state
+    dcd = newDCD;
+}
+
+auto Acia::handleReceiverInterrupt() -> void {
+
+    if (!(command & 2)) {
+        setInt(true);
+        status |= Status::Interrupt;
+    }
+}
+
+auto Acia::updateDTR( bool newDTR ) -> void {
+
+    if (ip232) {
+
+        if (dtr != newDTR) {
+            uint8_t byte = 0xff;
+
+            if (socket.sendData(&byte, 1))
+                system->interface->log("DTR", 1);
+
+            byte = newDTR ? 1 : 0;
+
+            if (socket.sendData(&byte, 1))
+                system->interface->log(newDTR ? "1" : "0", 0);
+        }
+    }
+    // reflect the PIN state
+    dtr = newDTR;
+}
+
+auto Acia::sendData() -> bool {
+
+    system->interface->audioFlush();
 
     if (ip232) {
         if (txData == 0xff)
-            if (!socket.sendData( (char*)&txData, 1 ))
-                return;
+            if (!socket.sendData( &txData, 1 ))
+                return false;
     }
 
-    if (socket.sendData( (char*)&txData, 1 ))
-        system->interface->log("sended", 1);
-}
-
-auto Acia::close() -> void {
-
-    if (ip232) {
-        uint8_t byte = 0xff;
-        socket.sendData( (char*)&byte, 1 );
-        byte = 0;
-        socket.sendData( (char*)&byte, 1 );
-    }
-
-    socket.close();
-}
-
-auto Acia::handShake() -> void {
-    system->interface->log("handshake", 1);
-    bool DTR = command & 1;
-    uint8_t byte = 0xff;
-
-    if ((command & 0xc) == 0) {
-        sysTimer.remove(&receiver);
-    } else {
-        updateBaudGenerator();
-    }
-
-
-    if (ip232) {
-
-        if (socket.sendData( (char*)&byte, 1 ))
-            system->interface->log("success", 1);
-
-        byte = DTR ? 1 : 0;
-        if (socket.sendData( (char*)&byte, 1 ))
-            system->interface->log("success", 0);
-    }
+    return socket.sendData( &txData, 1 );
 }
 
 auto Acia::serialize(Emulator::Serializer& s) -> void {
@@ -450,15 +532,56 @@ auto Acia::serialize(Emulator::Serializer& s) -> void {
     s.integer( useIrq );
     s.integer( useDE00 );
     s.integer( dcd );
+    s.integer( dsr );
+    s.integer( dtr );
+    s.integer( dsrLock );
+    s.integer( dcdLock );
 
     if ( !s.lightUsage() && (s.mode() == Emulator::Serializer::Mode::Load ) ) {
-        socket.close();
+        socket.disconnect();
 
         if (command & 1)
             socket.establish( address, port );
     }
 
     ExpansionPort::serialize( s );
+}
+
+auto Acia::setJumper( unsigned jumperId, bool state ) -> void {
+
+    system->interface->log("jumper",1);
+    system->interface->log(jumperId,0);
+    system->interface->log(state ? 1 : 0,0);
+
+    switch(jumperId) {
+        case 0:
+            useIrq = state;
+            break;
+        case 1:
+            useNmi = state;
+            break;
+        case 2:
+            useDE00 = state;
+            break;
+        case 3:
+            ip232 = state;
+            break;
+    }
+}
+
+auto Acia::getJumper( unsigned jumperId ) -> bool {
+    switch (jumperId) {
+        case 0:
+            return useIrq;
+        case 1:
+            return useNmi;
+        case 2:
+            return useDE00;
+        case 3:
+            return ip232;
+    }
+
+    return false;
 }
 
 }

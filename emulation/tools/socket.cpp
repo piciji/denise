@@ -1,6 +1,15 @@
 
-#include <winsock2.h>
-#include <ws2tcpip.h>
+#if defined(_WIN32)
+    #include <winsock2.h>
+    #include <ws2tcpip.h>
+#else
+    #define closesocket close
+    #include <sys/socket.h>
+    #include <netdb.h>
+    #include <netinet/tcp.h>
+    #include <unistd.h>
+#endif
+
 #include <cstring>
 #include "socket.h"
 
@@ -8,19 +17,28 @@
 #define MSG_NOSIGNAL 0
 #endif
 
+#ifndef SOCKET_ERROR
+#define SOCKET_ERROR -1
+#endif
+
 namespace Emulator {
 
     Socket::~Socket() {
-        close();
+        disconnect();
     }
 
-    auto Socket::establish(std::string address, std::string port) -> int {
+    auto Socket::establish(std::string address, std::string port) -> bool {
         char optval;
-        bool UnixDomain = port == "UD";
-        int res;
 
-        if (UnixDomain)
+        if (address.empty())
+            return false;
+
+        bool UnixDomain = address[0] == '|';
+
+        if (UnixDomain) {
             port = "";
+            address.erase(0, 1);
+        }
 
         struct addrinfo hints;
         struct addrinfo* addrInfo = nullptr;
@@ -33,80 +51,84 @@ namespace Emulator {
 
         init();
 
-        if ((res = getaddrinfo( address.c_str(), !port.empty() ? port.c_str() : nullptr, &hints, &addrInfo )) != 0)
-            return res;
+        if (getaddrinfo( address.c_str(), !port.empty() ? port.c_str() : nullptr, &hints, &addrInfo ) != 0)
+            return false;
 
         handle = (int)socket( addrInfo->ai_family, addrInfo->ai_socktype, addrInfo->ai_protocol);
 
         if (handle == -1)
-            return freeaddrinfo( addrInfo ), -1;
+            return freeaddrinfo(addrInfo), false;
 
         setsockopt(handle, addrInfo->ai_protocol, TCP_NODELAY, &optval, sizeof(optval));
 
         if ( connect( handle, addrInfo->ai_addr, (int)addrInfo->ai_addrlen ) != 0 ) {
 
-            closesocket( handle );
+            disconnect();
 
-            handle = -1;
+            freeaddrinfo( addrInfo );
 
-            return freeaddrinfo( addrInfo ), -2;
+            return false;
         }
 
         freeaddrinfo( addrInfo );
 
-        return 1;
+        return true;
     }
 
-    auto Socket::sendData( const char* data, unsigned size ) -> bool {
+    auto Socket::sendData( const void* data, unsigned size ) -> bool {
         if (!connected())
             return false;
 
-        if (send( handle, data, size, MSG_NOSIGNAL ) == SOCKET_ERROR)
-            return false;
+        int error = send( handle, data, size, MSG_NOSIGNAL );
 
-        return true;
+        return error != SOCKET_ERROR;
     }
 
     auto Socket::receiveData( char* data, unsigned size ) -> bool {
         if (!connected())
             return false;
 
-        if (recv( handle, data, size, MSG_NOSIGNAL ) == SOCKET_ERROR)
-            return false;
+        int error = recv( handle, data, size, MSG_NOSIGNAL );
 
-        return true;
+        return error != SOCKET_ERROR;
     }
 
-    auto Socket::poll() -> int {
+    auto Socket::poll(bool& error) -> bool {
         if (!connected())
             return false;
 
-        TIMEVAL timeout = { 0, 0 }; // non blocking
+        timeval timeout = { 0, 0 }; // non blocking
         fd_set fds;
-        //timeout.tv_sec = 0; // no blocking
-        //timeout.tv_usec = 0;
 
         FD_ZERO(&fds);
         FD_SET(handle, &fds);
 
-        //return select( 0, &fds, nullptr, nullptr, &timeout ) > 0;
+        // first parameter is ignored on windows
+        int res = select( handle + 1, &fds, nullptr, nullptr, &timeout );
 
-        int res = select( 0, &fds, nullptr, nullptr, &timeout );
-
-        if (res == SOCKET_ERROR) {
-            //res = WSAGetLastError();
-        }
-
-        return res;
+        error = res < 0;
+        // res == 0 means no data
+        return res > 0;
     }
 
-    auto Socket::close() -> void {
+    auto Socket::disconnect() -> void {
 
         if (handle != -1) {
+
             closesocket( handle );
 
             handle = -1;
         }
+    }
+
+    auto Socket::getLastError() -> int {
+
+#if defined(_WIN32)
+        return WSAGetLastError();
+#else
+        return errno;
+#endif
+
     }
 
     auto Socket::init() -> void {

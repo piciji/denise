@@ -54,7 +54,8 @@ struct AudioManager {
         return (x > m) ? m : (x < -b) ? -b : x;
     }     
 
-    auto process( int16_t sampleLeft, int16_t sampleRight ) -> void;   
+    auto process( int16_t sampleLeft, int16_t sampleRight ) -> void;
+    auto flush() -> void;
     
     auto setAudioDsp() -> void;
         

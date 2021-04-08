@@ -12,16 +12,16 @@ namespace Emulator {
         int handle = -1;
 
         static auto init() -> void;
-
         static auto clean() -> void;
 
-        auto establish(std::string address, std::string port = "") -> int;
+        auto establish(std::string address, std::string port = "") -> bool;
 
-        auto sendData( const char* data, unsigned size ) -> bool;
+        auto sendData( const void* data, unsigned size ) -> bool;
         auto receiveData( char* data, unsigned size ) -> bool;
-        auto poll() -> int;
+        auto poll(bool& error) -> bool;
+        auto getLastError() -> int;
 
-        auto close() -> void;
+        auto disconnect() -> void;
         auto connected() -> bool { return handle != -1; }
     };
 

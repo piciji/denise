@@ -39,5 +39,9 @@ auto Program::getAudioDriver() -> std::string {
 auto Program::audioSample(int16_t sampleLeft, int16_t sampleRight) -> void {
     
     audioManager->process( sampleLeft, sampleRight );
-    
+}
+
+auto Program::audioFlush() -> void {
+
+    audioManager->flush();
 }

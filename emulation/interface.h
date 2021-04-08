@@ -291,6 +291,7 @@ struct Interface {
 		virtual auto videoRefresh8(const uint8_t*, unsigned, unsigned, unsigned) -> void {}
         virtual auto videoRefresh(const uint16_t*, unsigned, unsigned, unsigned) -> void {}		
         virtual auto audioSample(int16_t, int16_t) -> void {}
+        virtual auto audioFlush() -> void {}
         virtual auto readMedia(Media*, uint8_t*, unsigned, unsigned) -> unsigned { return 0; }
         virtual auto writeMedia(Media*, uint8_t*, unsigned, unsigned) -> unsigned { return 0; }
 		virtual auto getFileNameFromMedia(Media*) -> std::string { return ""; }
@@ -315,6 +316,11 @@ struct Interface {
     auto audioSample(int16_t sampleLeft, int16_t sampleRight) -> void {
         bind->audioSample(sampleLeft, sampleRight);
     }
+
+    auto audioFlush() -> void {
+        bind->audioFlush();
+    }
+
     //return color format is native
     auto videoRefresh(const uint16_t* frame, unsigned width, unsigned height, unsigned linePitch) -> void {
         bind->videoRefresh(frame, width, height, linePitch);

@@ -1069,7 +1069,7 @@ auto Interface::ejectExpansionImage(Media* media) -> void {
 	else if (group->expansion->id == ExpansionIdGeoRam)
 		geoRam->setRam( media, nullptr, 0 );
     else if (group->expansion->id == ExpansionIdRS232)
-        acia->socket.close();
+        acia->socket.disconnect();
 }
 
 auto Interface::createExpansionImage(MediaGroup* group, unsigned& imageSize, uint8_t id) -> uint8_t* {
@@ -1522,7 +1522,10 @@ auto Interface::getExpansionJumper( Media* media, unsigned jumperId ) -> bool {
 
     else if (group->expansion->id == ExpansionIdRetroReplay)
         return retroReplay->getJumper(jumperId);
-    
+
+    else if (group->expansion->id == ExpansionIdRS232)
+        return acia->getJumper(jumperId);
+
     return false;
 }
 
