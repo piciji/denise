@@ -470,6 +470,16 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
                 if ( showC64Listing( layout ) )
                     layout->updateListing( block );                
             };
+
+            block->selector.edit.onChange = [block, fSetting]() {
+
+                auto group = block->media->group;
+
+                if (group->isExpansion() && group->expansion->isRS232()) {
+
+                    fSetting->setPath( block->selector.edit.text() );
+                }
+            };
             
             block->selector.edit.onDrop = [this, layout, block]( std::vector<std::string> files ) {
                 

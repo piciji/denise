@@ -33,21 +33,13 @@ namespace Emulator {
         if (address.empty())
             return false;
 
-        bool UnixDomain = address[0] == '|';
-
-        if (UnixDomain) {
-            port = "";
-            address.erase(0, 1);
-        }
-
         struct addrinfo hints;
         struct addrinfo* addrInfo = nullptr;
         std::memset( &hints, 0, sizeof(hints) );
 
-        hints.ai_family = UnixDomain ? PF_UNIX : PF_UNSPEC; // find out if V4 or V6 automatically
-        // hints.ai_flags = AI_NUMERICHOST;
+        hints.ai_family = PF_UNSPEC; // find out if V4 or V6 automatically
         hints.ai_socktype = SOCK_STREAM;
-        hints.ai_protocol = UnixDomain ? 0 : IPPROTO_TCP;
+        hints.ai_protocol = IPPROTO_TCP;
 
         init();
 

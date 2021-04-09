@@ -159,9 +159,11 @@ auto Acia::updateBaudGenerator() -> void {
 
     bitCycles = (unsigned)((double)vicII->frequency() / useBPS * (double(bits) + (useHalfBit ? 0.5 : 0.0) ) + 0.5 );
 
-    bitCyclesReceive = (unsigned)((float)bitCycles * 5.0 / 4.0);
-
-    //bitCyclesReceive = bitCycles;
+    if (cartridgeId == Interface::CartridgeIdTurbo232)
+        // in VICE source a 25% "safety margin" is suggested to handle 57600 bps (i.e. NovaTerm 9.6c can do this)
+        bitCyclesReceive = (unsigned)((float)bitCycles * 5.0 / 4.0);
+    else
+        bitCyclesReceive = bitCycles;
 
     system->interface->log(bitCycles , 0);
 
@@ -259,20 +261,18 @@ auto Acia::writeIo( uint16_t addr, uint8_t value ) -> void {
                 sysTimer.remove(&transmitter);
 
             if (command & 1) {
-                if (!socket.connected()) {
 
+                if (!socket.connected()) {
                     system->interface->log(address.c_str(), 1);
                     system->interface->log(port.c_str(), 0);
 
-                    int res = socket.establish(address, port);
+                    if (socket.establish(address, port)) {
 
-                    system->interface->log(res, 0);
-
-                    if (socket.connected()) {
                         system->interface->log("connection established", 1);
 
                         updateDSR( false );
-                    }
+                    } else
+                        system->interface->log( socket.getLastError() , 1);
 
                     updateBaudGenerator();
                 }
@@ -302,7 +302,7 @@ auto Acia::writeIo( uint16_t addr, uint8_t value ) -> void {
         case 7: // enhanced control (turbo232)
             system->interface->log("write enhanced control",1);
             if ((control & 0xf) == 0) {
-                enhancedControl = value;
+                enhancedControl = value & 3;
                 updateBaudGenerator();
             }
             break;
