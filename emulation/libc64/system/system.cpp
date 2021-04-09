@@ -641,6 +641,7 @@ auto System::setRunAheadPerformance(bool state) -> void {
 auto System::run() -> void {
     frameComplete = false;
     runAhead.pos = 0;
+    acia->connectionLock = false;
 	
 	if (cpu->callResetRoutine)
 		cpu->resetRoutine();

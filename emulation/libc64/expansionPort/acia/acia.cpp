@@ -84,6 +84,10 @@ Acia::Acia() : ExpansionPort() {
 
 auto Acia::reset(bool softReset) -> void {
     system->interface->log("reset",1);
+
+    if (socket.connected())
+        updateDTR( false );
+
     socket.disconnect();
     status = Status::TransmitterEmpty | Status::DataCarrierDetect | Status::DataSetReady;
     control = 0;
@@ -98,6 +102,7 @@ auto Acia::reset(bool softReset) -> void {
     rxData = 0;
     txData = 0;
     dsrLock = dcdLock = false;
+    connectionLock = false;
     updateBaudGenerator();
 }
 
@@ -266,13 +271,16 @@ auto Acia::writeIo( uint16_t addr, uint8_t value ) -> void {
                     system->interface->log(address.c_str(), 1);
                     system->interface->log(port.c_str(), 0);
 
-                    if (socket.establish(address, port)) {
+                    if (!connectionLock && socket.establish(address, port)) {
 
-                        system->interface->log("connection established", 1);
+                        system->interface->log("connection established", 0);
 
                         updateDSR( false );
-                    } else
-                        system->interface->log( socket.getLastError() , 1);
+                    } else {
+                        connectionLock = true; // clear after UI is refreshed
+                        system->interface->log("connection error", 0);
+                        system->interface->log(socket.getLastError(), 0);
+                    }
 
                     updateBaudGenerator();
                 }
@@ -287,7 +295,7 @@ auto Acia::writeIo( uint16_t addr, uint8_t value ) -> void {
 
                     socket.disconnect();
 
-                    system->interface->log("raus", 1);
+                    system->interface->log("disconnect", 1);
                 }
 
                 sysTimer.remove(&transmitter);
@@ -376,7 +384,8 @@ auto Acia::receiveData(uint8_t* data) -> bool {
     bool ok = false;
 
     // keep up with real time
-    system->interface->audioFlush();
+    if (!system->runAheadInProgress())
+        system->interface->audioFlush();
 
     while(1) {
 
@@ -490,12 +499,12 @@ auto Acia::updateDTR( bool newDTR ) -> void {
         if (dtr != newDTR) {
             uint8_t byte = 0xff;
 
-            if (socket.sendData(&byte, 1))
+            if ( socket.sendData( (const char*)&byte, 1) )
                 system->interface->log("DTR", 1);
 
             byte = newDTR ? 1 : 0;
 
-            if (socket.sendData(&byte, 1))
+            if (socket.sendData( (const char*)&byte, 1))
                 system->interface->log(newDTR ? "1" : "0", 0);
         }
     }
@@ -505,15 +514,16 @@ auto Acia::updateDTR( bool newDTR ) -> void {
 
 auto Acia::sendData() -> bool {
 
-    system->interface->audioFlush();
+    if (!system->runAheadInProgress())
+        system->interface->audioFlush();
 
     if (ip232) {
         if (txData == 0xff)
-            if (!socket.sendData( &txData, 1 ))
+            if (!socket.sendData( (const char*)&txData, 1 ))
                 return false;
     }
 
-    return socket.sendData( &txData, 1 );
+    return socket.sendData( (const char*)&txData, 1 );
 }
 
 auto Acia::serialize(Emulator::Serializer& s) -> void {
@@ -528,6 +538,7 @@ auto Acia::serialize(Emulator::Serializer& s) -> void {
     s.integer( txData );
     s.integer( redoTx );
     s.integer( bitCycles );
+    s.integer( bitCyclesReceive );
     s.integer( useNmi );
     s.integer( useIrq );
     s.integer( useDE00 );
@@ -540,8 +551,14 @@ auto Acia::serialize(Emulator::Serializer& s) -> void {
     if ( !s.lightUsage() && (s.mode() == Emulator::Serializer::Mode::Load ) ) {
         socket.disconnect();
 
-        if (command & 1)
-            socket.establish( address, port );
+        if (command & 1) {
+
+            dtr = false;
+            if (socket.establish(address, port)) {
+                updateDTR( true );
+            } else
+                connectionLock = true;
+        }
     }
 
     ExpansionPort::serialize( s );

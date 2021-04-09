@@ -43,5 +43,6 @@ auto Program::audioSample(int16_t sampleLeft, int16_t sampleRight) -> void {
 
 auto Program::audioFlush() -> void {
 
-    audioManager->flush();
+    if (audioManager->bufferPos)
+        audioManager->flush();
 }

@@ -28,7 +28,7 @@ namespace Emulator {
     }
 
     auto Socket::establish(std::string address, std::string port) -> bool {
-        char optval;
+        int optval = 1;
 
         if (address.empty())
             return false;
@@ -51,7 +51,7 @@ namespace Emulator {
         if (handle == -1)
             return freeaddrinfo(addrInfo), false;
 
-        setsockopt(handle, addrInfo->ai_protocol, TCP_NODELAY, &optval, sizeof(optval));
+        setsockopt(handle, addrInfo->ai_protocol, TCP_NODELAY, (const char*)&optval, sizeof(optval));
 
         if ( connect( handle, addrInfo->ai_addr, (int)addrInfo->ai_addrlen ) != 0 ) {
 
@@ -67,7 +67,7 @@ namespace Emulator {
         return true;
     }
 
-    auto Socket::sendData( const void* data, unsigned size ) -> bool {
+    auto Socket::sendData( const char* data, unsigned size ) -> bool {
         if (!connected())
             return false;
 
@@ -86,6 +86,8 @@ namespace Emulator {
     }
 
     auto Socket::poll(bool& error) -> bool {
+
+        error = true;
         if (!connected())
             return false;
 

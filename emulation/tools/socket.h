@@ -19,7 +19,7 @@ namespace Emulator {
         auto connected() -> bool { return handle != -1; }
         auto getLastError() -> int;
 
-        auto sendData( const void* data, unsigned size ) -> bool;
+        auto sendData( const char* data, unsigned size ) -> bool;
         auto poll(bool& error) -> bool;
         auto receiveData( char* data, unsigned size ) -> bool;
     };

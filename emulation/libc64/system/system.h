@@ -187,6 +187,7 @@ struct System {
 
 	auto pasteText( std::string buffer ) -> void;
     auto copyText( ) -> std::string;
+    auto runAheadInProgress() -> bool { return runAhead.frames != 0; }
 };
 
 extern System* system;

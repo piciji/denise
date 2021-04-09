@@ -26,6 +26,7 @@ struct Acia : ExpansionPort {
     Emulator::Interface::Media* media;
 
     Emulator::Socket socket;
+    uint8_t connectionLock;
 
     uint8_t status;
     uint8_t control;
