@@ -9,6 +9,10 @@
 
 ## 1.1.1 (not yet released)
 * add Final Cartridge 3 support to EF³
+* add DataBlast, SwiftLink, Turbo232 emulation
+    * BBS support (use tcpser for virtual modem)
+    * no emulation of user port connected RS232 devices at the moment
+    * only virtual IP based connections, no connections to physical COM ports 
 
 ## 1.1.0
 * save/load additional settings files for a lot of purposes, like

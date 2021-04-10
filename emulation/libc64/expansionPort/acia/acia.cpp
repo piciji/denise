@@ -35,7 +35,6 @@ Acia::Acia() : ExpansionPort() {
         if (!transmitterContinous() && socket.connected()) {
 
             if (receiveData( &receiveByte ) ) {
-                system->interface->log("receive ok", 1);
 
                 if (!(status & Status::ReceiveDataFull)) {
                     rxData = receiveByte;
@@ -56,13 +55,8 @@ Acia::Acia() : ExpansionPort() {
             redoTx = 2;
 
         if ( redoTx == 2 && socket.connected()) {
-            system->interface->log("transmit", 1);
 
-            if (!sendData()) {
-                system->interface->log("error", 0);
-                system->interface->log(socket.getLastError(), 0);
-            } else
-                system->interface->log("ok", 0);
+            if (!sendData()) {}
 
             status |= Status::TransmitterEmpty;
 
@@ -83,7 +77,6 @@ Acia::Acia() : ExpansionPort() {
 }
 
 auto Acia::reset(bool softReset) -> void {
-    system->interface->log("reset",1);
 
     if (socket.connected())
         updateDTR( false );
@@ -144,9 +137,6 @@ auto Acia::updateBaudGenerator() -> void {
             break;
     }
 
-    system->interface->log("Baud" , 1);
-    system->interface->log(bits , 0);
-
     double useBPS = bpsLookup[ control & 0xf ];
 
     if (cartridgeId == Interface::CartridgeIdSwiftlink)
@@ -160,8 +150,6 @@ auto Acia::updateBaudGenerator() -> void {
             useBPS *= 2.0;
     }
 
-    system->interface->log(useBPS , 0);
-
     bitCycles = (unsigned)((double)vicII->frequency() / useBPS * (double(bits) + (useHalfBit ? 0.5 : 0.0) ) + 0.5 );
 
     if (cartridgeId == Interface::CartridgeIdTurbo232)
@@ -169,8 +157,6 @@ auto Acia::updateBaudGenerator() -> void {
         bitCyclesReceive = (unsigned)((float)bitCycles * 5.0 / 4.0);
     else
         bitCyclesReceive = bitCycles;
-
-    system->interface->log(bitCycles , 0);
 
     if (command & 1)
         sysTimer.add( &receiver, bitCyclesReceive, Emulator::SystemTimer::UpdateExisting );
@@ -181,12 +167,8 @@ auto Acia::setInt( bool state ) -> void {
     if (useIrq)
         irqCall(state);
 
-    if (useNmi) {
-        if (state)
-            system->interface->log("nmi",1);
-
+    if (useNmi)
         nmiCall(state);
-    }
 }
 
 auto Acia::writeIo2( uint16_t addr, uint8_t value ) -> void {
@@ -236,7 +218,6 @@ auto Acia::writeIo( uint16_t addr, uint8_t value ) -> void {
     switch(addr) {
         case 0:
             txData = value;
-            system->interface->log("write tx",1);
 
             if (command & 1) {
                 redoTx = 2;
@@ -248,7 +229,6 @@ auto Acia::writeIo( uint16_t addr, uint8_t value ) -> void {
             break;
 
         case 1: // write status resets chip
-            system->interface->log("write status",1);
             updateDTR( false );
             socket.disconnect();
             dsrLock = dcdLock = false;
@@ -259,7 +239,6 @@ auto Acia::writeIo( uint16_t addr, uint8_t value ) -> void {
             setInt(false);
             break;
         case 2: {
-            system->interface->log("write command", 1);
             command = value;
 
             if ( !transmitterEnabled() )
@@ -268,19 +247,11 @@ auto Acia::writeIo( uint16_t addr, uint8_t value ) -> void {
             if (command & 1) {
 
                 if (!socket.connected()) {
-                    system->interface->log(address.c_str(), 1);
-                    system->interface->log(port.c_str(), 0);
 
-                    if (!connectionLock && socket.establish(address, port)) {
-
-                        system->interface->log("connection established", 0);
-
+                    if (!connectionLock && socket.establish(address, port))
                         updateDSR( false );
-                    } else {
+                    else
                         connectionLock = true; // clear after UI is refreshed
-                        system->interface->log("connection error", 0);
-                        system->interface->log(socket.getLastError(), 0);
-                    }
 
                     updateBaudGenerator();
                 }
@@ -291,32 +262,24 @@ auto Acia::writeIo( uint16_t addr, uint8_t value ) -> void {
 
                 updateDTR(false );
 
-                if (socket.connected()) {
-
+                if (socket.connected())
                     socket.disconnect();
-
-                    system->interface->log("disconnect", 1);
-                }
 
                 sysTimer.remove(&transmitter);
                 redoTx = 0;
             }
         } break;
         case 3:
-            system->interface->log("write control",1);
             control = value;
             updateBaudGenerator();
             break;
         case 7: // enhanced control (turbo232)
-            system->interface->log("write enhanced control",1);
             if ((control & 0xf) == 0) {
                 enhancedControl = value & 3;
                 updateBaudGenerator();
             }
             break;
     }
-
-    system->interface->log(value,0, 1);
 }
 
 auto Acia::readIo( uint16_t addr ) -> uint8_t {
@@ -325,15 +288,10 @@ auto Acia::readIo( uint16_t addr ) -> uint8_t {
 
     switch(addr) {
         case 0:
-            system->interface->log("read rx", 1);
             status &= ~(Status::OverrunError | Status::ParityError | Status::FramingError | Status::ReceiveDataFull);
-            system->interface->log(rxData,0, 1);
             return rxData;
 
         case 1: {
-            system->interface->log("read status", 1);
-
-            system->interface->log(status,0, 1);
 
             uint8_t out = status;
 
@@ -356,12 +314,8 @@ auto Acia::readIo( uint16_t addr ) -> uint8_t {
             return out;
         }
         case 2:
-            system->interface->log("read command");
-            system->interface->log(command,0, 1);
             return command;
         case 3:
-            system->interface->log("read control");
-            system->interface->log(control,0, 1);
             return control;
         case 7: // enhanced control (turbo232)
             return enhancedControl | (((control & 0xf) == 0) ? 4 : 0);
@@ -415,23 +369,18 @@ auto Acia::receiveFromSocket( uint8_t* data ) -> bool {
     bool error = false;
 
     if ( !socket.poll(error) ) {
-        if (error) {
-            system->interface->log("poll error", 1);
 
+        if (error) {
             updateDSR( true );
             updateDCD( true );
 
             socket.disconnect();
-
-        } else // else: nothing to poll
-            system->interface->log("no new byte to receive", 1);
-
+        }
 
         return false;
     }
-    system->interface->log("success", 1);
+
     if ( !socket.receiveData( (char*)data, 1 ) ) {
-        system->interface->log("receive error", 1);
 
         updateDSR( true );
         updateDCD( true );
@@ -447,8 +396,6 @@ auto Acia::receiveFromSocket( uint8_t* data ) -> bool {
 auto Acia::updateDSR( bool newDSR ) -> void {
 
     if (!dsrLock && (dsr != newDSR)) {
-
-        system->interface->log(newDSR ? "DSR 1" : "DSR 0" );
 
         if (newDSR)
             status |= Status::DataSetReady; // not ready;
@@ -467,8 +414,6 @@ auto Acia::updateDSR( bool newDSR ) -> void {
 auto Acia::updateDCD( bool newDCD ) -> void {
 
     if (!dcdLock && (dcd != newDCD)) {
-
-        system->interface->log(newDCD ? "DCD 1" : "DCD 0" );
 
         if (newDCD)
             status |= Status::DataCarrierDetect; // not detected;
@@ -499,13 +444,10 @@ auto Acia::updateDTR( bool newDTR ) -> void {
         if (dtr != newDTR) {
             uint8_t byte = 0xff;
 
-            if ( socket.sendData( (const char*)&byte, 1) )
-                system->interface->log("DTR", 1);
-
+            if ( socket.sendData( (const char*)&byte, 1) ) {}
             byte = newDTR ? 1 : 0;
 
-            if (socket.sendData( (const char*)&byte, 1))
-                system->interface->log(newDTR ? "1" : "0", 0);
+            if (socket.sendData( (const char*)&byte, 1)) {}
         }
     }
     // reflect the PIN state
@@ -565,10 +507,6 @@ auto Acia::serialize(Emulator::Serializer& s) -> void {
 }
 
 auto Acia::setJumper( unsigned jumperId, bool state ) -> void {
-
-    system->interface->log("jumper",1);
-    system->interface->log(jumperId,0);
-    system->interface->log(state ? 1 : 0,0);
 
     switch(jumperId) {
         case 0:
