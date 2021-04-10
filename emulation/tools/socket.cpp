@@ -8,6 +8,7 @@
     #include <netdb.h>
     #include <netinet/tcp.h>
     #include <unistd.h>
+    #include <cerrno>
 #endif
 
 #include <cstring>
