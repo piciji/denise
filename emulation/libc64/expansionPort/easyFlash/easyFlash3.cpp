@@ -977,7 +977,7 @@ auto EasyFlash3::updateSlotDisplayName(Slot* slot) -> void {
        
     if (!slot->binFormat) {
         
-        if (std::memcmp(cartName, "EasyFlash", 8)) {
+        if (std::memcmp(cartName, "EasyFlash", 8) && std::memcmp(cartName, "EASYFLASH", 8) ) {
             
             if (std::memcmp(cartName, "VICE", 4)) {
                 

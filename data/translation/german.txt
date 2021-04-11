@@ -586,3 +586,4 @@ wav folder = WAV Verzeichnis
 japanese = Japanisch
 alternate settings = alternative einstellung
 app settings = %app% Einstellungen
+RS-232_insert = RS-232 Karte einstecken
