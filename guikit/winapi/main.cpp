@@ -8,6 +8,7 @@ namespace GUIKIT {
 #include "messageWindow.cpp"
 #include "statusbar.cpp"
 #include "clipboard.cpp"
+#include "display.cpp"
     
 #include "widgets/widget.cpp"   
 #include "widgets/button.cpp"

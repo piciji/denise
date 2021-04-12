@@ -53,11 +53,21 @@ struct VideoSettingsLayout : GUIKIT::FramedHorizontalLayout {
     VideoSettingsLayout();
 };
 
+struct VideoResolutionLayout : GUIKIT::FramedHorizontalLayout {
+
+    GUIKIT::CheckBox active;
+    GUIKIT::ComboButton display;
+    GUIKIT::ComboButton displaySettings;
+
+    VideoResolutionLayout();
+};
+
 struct VideoLayout : GUIKIT::VerticalLayout {
     InScreenTextLayout screenTextLayout;
     VideoFrameAdjustLayout videoFrameAdjust;
     CrtEmulationLayout crtEmulation;
 	VideoGeometryLayout videoGeometry;
+    VideoResolutionLayout videoResolution;
 
     VideoSettingsLayout videoSettingsLayout;
     PathsLayout paths;

@@ -60,6 +60,16 @@ VideoSettingsLayout::VideoSettingsLayout() {
     setFont(GUIKIT::Font::system("bold"));
 }
 
+VideoResolutionLayout::VideoResolutionLayout() {
+
+    append(active, {0u, 0u}, 10 );
+    append(display, {0u, 0u}, 10 );
+    append(displaySettings, {0u, 0u} );
+    setAlignment(0.5);
+    setPadding( 10 );
+    setFont(GUIKIT::Font::system("bold"));
+}
+
 VideoLayout::VideoLayout() {
     setMargin(10);
 	
@@ -111,11 +121,35 @@ VideoLayout::VideoLayout() {
 		view->updateShader();        
         program->initVideo();    		
 	};
-    
+
+    append(videoResolution, {~0u, 0u}, 10);
     append(paths, {~0u, 0u}, 10);
     append(videoFrameAdjust, {~0u, 0u}, 10);
     append(driverLayout, {~0u, 0u}, 5);
     append(videoSettingsLayout, {~0u, 0u}, 5);
+
+    auto displays = GUIKIT::Display::getDisplays();
+
+    for( auto& display : displays ) {
+
+        videoResolution.display.append( display.name, display.id );
+    }
+
+    videoResolution.display.onChange = [this]() {
+
+        auto displayId = videoResolution.display.userData();
+
+        videoResolution.displaySettings.reset();
+
+        auto resolutions = GUIKIT::Display::getResolutions( displayId );
+
+        for( auto& resolution : resolutions ) {
+
+            videoResolution.displaySettings.append( resolution.name, resolution.id );
+        }
+
+        videoResolution.synchronizeLayout();
+    };
     
 	if (driverLayout.combo.rows() > 0) append(driverLayout, {~0u, 0u}, 5);
     if (driverLayout.combo.rows() == 1) driverLayout.setEnabled(false);

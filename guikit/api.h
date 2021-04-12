@@ -1160,6 +1160,21 @@ struct System {
     System() = delete;
 };
 
+struct Display {
+
+    struct Property {
+        unsigned id;
+        std::string name;
+    };
+
+    static auto getDisplays() -> std::vector<Property>;
+    static auto getResolutions( unsigned displayId ) -> std::vector<Property>;
+
+    static auto setResolution( unsigned displayId, unsigned resolutionId ) -> bool;
+
+    Display() = delete;
+};
+
 struct Thread {
     
     static auto setPriorityRealtime( std::thread& th ) -> void;

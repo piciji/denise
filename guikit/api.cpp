@@ -1423,5 +1423,16 @@ auto Thread::setPriorityRealtime( std::thread& th ) -> void {
     pThread::setThreadPriorityRealtime( th );
 }
 
+auto Display::getDisplays() -> std::vector<Property> {
+    return pDisplay::getDisplays();
+};
+
+auto Display::getResolutions( unsigned displayId ) -> std::vector<Property> {
+    return pDisplay::getResolutions( displayId );
+};
+
+auto Display::setResolution( unsigned displayId, unsigned resolutionId ) -> bool {
+    return pDisplay::setResolution( displayId, resolutionId );
 }
 
+}

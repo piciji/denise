@@ -760,6 +760,15 @@ struct pSystem {
     static auto printToCmd( std::string str ) -> void;
 };
 
+struct pDisplay {
+    static std::vector<DISPLAY_DEVICE> devices;
+    static std::vector<DEVMODE> deviceSettings;
+
+    static auto getDisplays() -> std::vector<Display::Property>;
+    static auto getResolutions( unsigned displayId ) -> std::vector<Display::Property>;
+    static auto setResolution( unsigned displayId, unsigned resolutionId ) -> bool;
+};
+
 struct pThread {
     static auto setThreadPriorityRealtime(std::thread& th) -> void;
 };
