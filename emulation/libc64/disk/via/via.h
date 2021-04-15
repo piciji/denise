@@ -85,7 +85,7 @@ protected:
     bool timerAToggle;
     
     uint16_t timerBCounter;
-    uint16_t timerBLatch;
+    uint8_t timerBLatch;
     uint16_t timerBCounterRead;
     bool timerBTrigger;
     

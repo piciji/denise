@@ -227,16 +227,14 @@ auto Via::write( uint16_t pos, uint8_t value ) -> void {
             break;
             
         case 8: // Timer 2 latch low
-            timerBLatch = (timerBLatch & 0xff00) | value;            
+            timerBLatch = value;
             
             break;
             
         case 9: // Timer 2 count high
-            timerBLatch = (timerBLatch & 0xff) | (value << 8);
-            
             timerBTrigger = true;           
             
-            timerBCounter = timerBLatch;
+            timerBCounter = timerBLatch | (value << 8);
             delay |= VIA_FORCE_LOAD_TIMERB0;
             
             resetIrq( 32 ); // clear timer 2 underflow
@@ -284,7 +282,6 @@ auto Via::write( uint16_t pos, uint8_t value ) -> void {
                 cb2Out( cb2 = 1 );
             
             pcr = value;
-            // does a pcr change more than a manual output to ca2/cb2 ?
             break;
             
         case 0xd: // ifr

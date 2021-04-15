@@ -185,14 +185,8 @@ Drive1541::Drive1541(uint8_t number, Emulator::Interface::Media* mediaConnected 
             return ( (syncFound() | writeprotectSense() | 0x6f) & ~lines->ddrb)
                 | (lines->prb & lines->ddrb); // output mode
         }
-        
-        uint8_t value = 0;
-        
-        if ( !readMode || attachDelay );
-        else
-            value = readBuffer & 0xff;
-        
-        return (value & ~lines->ddra) | ( lines->pra & lines->ddra );
+        // port A
+        return (writeBuffer /* shared */ & ~lines->ddra) | ( lines->pra & lines->ddra );
     };
     
     via2->ca2Out = [this]( bool state ) {

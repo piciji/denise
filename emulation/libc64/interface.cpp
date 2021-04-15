@@ -23,7 +23,7 @@
 
 namespace LIBC64 {
 
-const std::string Interface::Version = "1094";
+const std::string Interface::Version = "1095";
     
 Interface::Interface() : Emulator::Interface( "C64" ) {        
     

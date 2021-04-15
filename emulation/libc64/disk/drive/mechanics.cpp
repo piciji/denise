@@ -197,7 +197,7 @@ auto Drive1541::rotateG64( bool irqNextCycle ) -> void {
                     
                     readBuffer = ((readBuffer << 1) & 0x3fe ) | ( uf4Counter == 2 ? 1 : 0 );
                     
-                    writeBuffer <<= 1;
+                    //writeBuffer <<= 1;
                     
                     if ( readBuffer == 0x3ff )
                         bitCounter = 0;
