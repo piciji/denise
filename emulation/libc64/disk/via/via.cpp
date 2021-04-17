@@ -48,7 +48,8 @@ auto Via::reset() -> void {
     shift.count = 0;
         
     timerACounterRead = timerACounter = timerALatch = (223 << 8) | 0xff;    
-    timerBCounterRead = timerBCounter = timerBLatch = 0xffff;
+    timerBCounterRead = timerBCounter = 0xffff;
+    timerBLatch = 0xff;
     
     timerATrigger = false;
     timerAToggle = false;
@@ -79,12 +80,13 @@ auto Via::ca1In( bool state, bool irqNextCycle ) -> void {
     
     // when ca2 is in output mode
     if ((pcr & 0xe) == 8)
-        ca2Out( ca2 = 1 );  // handshake output mode     
-    
-    setIrq( 2, irqNextCycle ? VIA_UPDATE_IRQ0 : VIA_UPDATE_IRQ1 );
+        ca2Out( ca2 = 1 );  // handshake output mode
     
     // latch port A
-    lines.latchA = readPort( Port::A, &lines );	   
+    if ( !(ifr & 2) )
+        lines.latchA = readPort( Port::A, &lines );
+
+    setIrq( 2, irqNextCycle ? VIA_UPDATE_IRQ0 : VIA_UPDATE_IRQ1 );
 }
 
 auto Via::ca2In( bool state, bool irqNextCycle ) -> void { // unused for drive 1541
@@ -119,12 +121,13 @@ auto Via::cb1In( bool state, bool irqNextCycle ) -> void { // unused for drive 1
     
     // when cb2 is in output mode
     if ((pcr & 0xe0) == 0x80)
-        cb2Out( cb2 = 1 ); // handshake output mode 
-    
-    setIrq( 16, irqNextCycle ? VIA_UPDATE_IRQ0 : VIA_UPDATE_IRQ1 );
+        cb2Out( cb2 = 1 ); // handshake output mode
     
     // latch port B
-    lines.latchB = readPort( Port::B, &lines );		
+    if ( !(ifr & 16) )
+        lines.latchB = readPort( Port::B, &lines );
+
+    setIrq( 16, irqNextCycle ? VIA_UPDATE_IRQ0 : VIA_UPDATE_IRQ1 );
 }
 
 auto Via::cb2In( bool state, bool irqNextCycle ) -> void { // unused for drive 1541
@@ -225,7 +228,7 @@ inline auto Via::updateTimerB( ) -> void {
             }
             
             delay |= VIA_FORCE_LOAD_TIMERB0;
-            timerBCounter = (timerBCounter & 0xff00) | (timerBLatch & 0xff);
+            timerBCounter = (timerBCounter & 0xff00) | timerBLatch;
             return;
         }
     }
@@ -318,7 +321,6 @@ auto Via::handleInterrupt( ) -> void {
 }
 
 inline auto Via::setIrq( uint8_t pos, unsigned irqDelay ) -> void {
-    // inform cpu next cycle
     ifr |= pos;
     delay |= irqDelay;
 }

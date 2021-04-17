@@ -70,7 +70,7 @@ struct Drive1541 {
     
     uint8_t writeValue;
     unsigned readBuffer;
-    unsigned writeBuffer;
+    uint8_t writeBuffer;
     
     unsigned attachDelay = 0;
     unsigned detachDelay = 0;
