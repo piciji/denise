@@ -120,7 +120,11 @@ auto Settings::get(type_info<unsigned> t, const std::string& ident, unsigned def
     if (!setting) return defaultValue;
     try {
         return abs( std::stoi( setting->value ) );
-    } catch( ... ) {}
+    } catch( ... ) { }
+
+    try {
+        return std::stoul( setting->value );
+    } catch( ... ) { }
 
     return defaultValue;
 }

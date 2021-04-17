@@ -761,12 +761,33 @@ struct pSystem {
 };
 
 struct pDisplay {
-    static std::vector<DISPLAY_DEVICE> devices;
-    static std::vector<DEVMODE> deviceSettings;
 
+    struct Device {
+        DISPLAY_DEVICE displayDevice;
+        DEVMODE originalSetting;
+        unsigned id;
+        std::string ident;
+    };
+
+    struct Setting {
+        Device* parentDevice;
+        DEVMODE devMode;
+        unsigned id;
+        std::string ident;
+    };
+
+    static std::vector<Device> devices;
+    static std::vector<Setting> settings;
+    static Device* activeDevice;
+
+    static auto fetchDisplays() -> void;
     static auto getDisplays() -> std::vector<Display::Property>;
-    static auto getResolutions( unsigned displayId ) -> std::vector<Display::Property>;
-    static auto setResolution( unsigned displayId, unsigned resolutionId ) -> bool;
+
+    static auto fetchSettings( Device* device ) -> void;
+    static auto getSettings( unsigned displayId ) -> std::vector<Display::Property>;
+
+    static auto setSetting( unsigned displayId, unsigned settingId ) -> bool;
+    static auto resetSetting() -> void;
 };
 
 struct pThread {

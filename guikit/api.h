@@ -223,6 +223,7 @@ struct Window : Base {
     auto synchronizeLayout() -> void;
     auto handle() -> uintptr_t;
     auto setForeground() -> void;
+    auto setFullscreenSetting( bool inUse, unsigned displayId = 0, unsigned settingId = 0 ) -> void;
 
     auto focused() -> bool;
     auto visible() const -> bool { return state.visible; }
@@ -258,6 +259,12 @@ struct Window : Base {
         Image* cursorImage = nullptr;
         StatusBar* statusBar = nullptr;
     } state;
+
+    struct {
+        bool inUse = false;
+        unsigned displayId;
+        unsigned settingId;
+    } fullscreenSetting;
 	
 	static std::vector<CustomFont*> customFonts;
     Timer* focusTimer = nullptr;
@@ -1168,9 +1175,7 @@ struct Display {
     };
 
     static auto getDisplays() -> std::vector<Property>;
-    static auto getResolutions( unsigned displayId ) -> std::vector<Property>;
-
-    static auto setResolution( unsigned displayId, unsigned resolutionId ) -> bool;
+    static auto getSettings( unsigned displayId ) -> std::vector<Property>;
 
     Display() = delete;
 };

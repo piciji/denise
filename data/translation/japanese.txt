@@ -587,3 +587,4 @@ japanese =
 alternate settings = 
 app settings =
 RS-232_insert =
+preselect fullscreen resolution =

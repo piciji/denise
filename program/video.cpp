@@ -18,6 +18,7 @@ auto Program::initVideo() -> void {
     setVideoHardSync();
     setFpsLimit();
     //setVideoFilter();
+    updateFullscreenSetting();
 	    
     if ( !videoDriver->init( view->getViewportHandle() ) ) {
         delete videoDriver;
@@ -238,4 +239,19 @@ auto Program::updateOverallSynchronize() -> void {
 	
 	if ( vSync || fpsLimit || aSync )
 		VideoManager::synchronized = true;
+}
+
+auto Program::updateFullscreenSetting() -> void {
+
+    if (!view)
+        return;
+
+    bool _active = globalSettings->get<bool>("fullscreen_setting_active", false);
+    unsigned _display = globalSettings->get<unsigned>("fullscreen_display", 0 );
+    unsigned _setting = globalSettings->get<unsigned>("fullscreen_setting", 0 );
+
+    if (!_active || (_setting == 0) )
+        view->setFullscreenSetting( false );
+    else
+        view->setFullscreenSetting( true, _display, _setting );
 }

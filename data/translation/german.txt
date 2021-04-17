@@ -587,3 +587,4 @@ japanese = Japanisch
 alternate settings = alternative einstellung
 app settings = %app% Einstellungen
 RS-232_insert = RS-232 Karte einstecken
+preselect fullscreen resolution = Vollbild Auflösung vorauswählen

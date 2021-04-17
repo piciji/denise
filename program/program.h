@@ -122,6 +122,7 @@ struct Program : Emulator::Interface::Bind {
     auto fastForward( bool activate, bool aggressive = false ) -> void;
     auto setFpsLimit() -> void;
     auto updateOverallSynchronize() -> void;
+    auto updateFullscreenSetting() -> void;
 	
     //input
     auto initInput() -> void;

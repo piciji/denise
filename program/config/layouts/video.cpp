@@ -128,28 +128,59 @@ VideoLayout::VideoLayout() {
     append(driverLayout, {~0u, 0u}, 5);
     append(videoSettingsLayout, {~0u, 0u}, 5);
 
-    auto displays = GUIKIT::Display::getDisplays();
-
-    for( auto& display : displays ) {
-
-        videoResolution.display.append( display.name, display.id );
-    }
-
     videoResolution.display.onChange = [this]() {
 
         auto displayId = videoResolution.display.userData();
 
         videoResolution.displaySettings.reset();
 
-        auto resolutions = GUIKIT::Display::getResolutions( displayId );
-
-        for( auto& resolution : resolutions ) {
-
+        for( auto& resolution : GUIKIT::Display::getSettings( displayId ) )
             videoResolution.displaySettings.append( resolution.name, resolution.id );
-        }
+
+        globalSettings->set<unsigned>("fullscreen_display", (unsigned)videoResolution.display.userData() );
+
+        globalSettings->set<unsigned>("fullscreen_setting", 0 );
+
+        program->updateFullscreenSetting();
 
         videoResolution.synchronizeLayout();
     };
+
+    videoResolution.displaySettings.onChange = [this]() {
+
+        globalSettings->set<unsigned>("fullscreen_setting", videoResolution.displaySettings.userData() );
+
+        program->updateFullscreenSetting();
+    };
+
+    videoResolution.active.onToggle = [this]() {
+
+        bool active = videoResolution.active.checked();
+
+        globalSettings->set<bool>("fullscreen_setting_active", active);
+
+        program->updateFullscreenSetting();
+
+        videoResolution.display.setEnabled( active );
+        videoResolution.displaySettings.setEnabled( active );
+    };
+
+    videoResolution.active.setChecked( globalSettings->get<bool>("fullscreen_setting_active", false) );
+
+    for( auto& display : GUIKIT::Display::getDisplays() )
+        videoResolution.display.append(display.name, display.id);
+
+    auto displayId = globalSettings->get<unsigned>("fullscreen_display", 0 );
+
+    videoResolution.display.setSelectionByUserId( displayId );
+
+    for( auto& resolution : GUIKIT::Display::getSettings( displayId ) )
+        videoResolution.displaySettings.append( resolution.name, resolution.id );
+
+    videoResolution.displaySettings.setSelectionByUserId( globalSettings->get<unsigned>("fullscreen_setting", 0 ) );
+
+    videoResolution.display.setEnabled( videoResolution.active.checked() );
+    videoResolution.displaySettings.setEnabled( videoResolution.active.checked() );
     
 	if (driverLayout.combo.rows() > 0) append(driverLayout, {~0u, 0u}, 5);
     if (driverLayout.combo.rows() == 1) driverLayout.setEnabled(false);
@@ -362,4 +393,7 @@ auto VideoLayout::translate() -> void {
     videoFrameAdjust.ntsc.setText("NTSC:");
     videoFrameAdjust.overrideExactFrequency.setText( trans->get("override_exact_frequency") );
     videoFrameAdjust.overrideExactFrequency.setTooltip( trans->get("override_exact_frequency_tooltip") );
+
+    videoResolution.setText( trans->get("preselect fullscreen resolution") );
+    videoResolution.active.setText( trans->get("enable") );
 }

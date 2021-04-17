@@ -263,6 +263,13 @@ auto Window::setFullScreen(bool fullScreen) -> void {
     p.setFullScreen(fullScreen);
 }
 
+auto Window::setFullscreenSetting( bool inUse, unsigned displayId, unsigned settingId ) -> void {
+
+    fullscreenSetting.inUse = inUse;
+    fullscreenSetting.displayId = displayId;
+    fullscreenSetting.settingId = settingId;
+}
+
 auto Window::setResizable(bool resizable) -> void {
     state.resizable = resizable;
     p.setResizable(resizable);
@@ -1427,12 +1434,8 @@ auto Display::getDisplays() -> std::vector<Property> {
     return pDisplay::getDisplays();
 };
 
-auto Display::getResolutions( unsigned displayId ) -> std::vector<Property> {
-    return pDisplay::getResolutions( displayId );
+auto Display::getSettings( unsigned displayId ) -> std::vector<Property> {
+    return pDisplay::getSettings( displayId );
 };
-
-auto Display::setResolution( unsigned displayId, unsigned resolutionId ) -> bool {
-    return pDisplay::setResolution( displayId, resolutionId );
-}
 
 }
