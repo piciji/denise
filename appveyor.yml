@@ -17,6 +17,7 @@ branches:
   only:
     - master
     - /v\d*\.\d*\.\d*/
+    - fullscreen_custom_frequency
   
 environment:
   matrix:
