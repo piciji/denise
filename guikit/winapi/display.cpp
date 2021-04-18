@@ -14,6 +14,9 @@ auto pDisplay::fetchDisplays() -> void {
 
     while( EnumDisplayDevices(NULL, i++, &device, 0 ) ) {
 
+        if (device.StateFlags & DISPLAY_DEVICE_MIRRORING_DRIVER)
+            continue;
+
         std::string devStr = utf8_t(device.DeviceString);
 
         std::string devName = utf8_t(device.DeviceName);
@@ -59,10 +62,13 @@ auto pDisplay::fetchSettings( Device* device ) -> void {
 
     settings.push_back({ device, devSetting, 0, "-" });
 
-    while( EnumDisplaySettings( device->displayDevice.DeviceName, i++, &devSetting ) ) {
+    while( EnumDisplaySettingsEx( device->displayDevice.DeviceName, i++, &devSetting, 0 ) ) {
 
         if (devSetting.dmDisplayFlags & DM_INTERLACED)
             continue;
+		
+		if (devSetting.dmBitsPerPel != 32)
+			continue;
 
         std::string width = std::to_string( devSetting.dmPelsWidth );
         std::string height = std::to_string( devSetting.dmPelsHeight );
@@ -70,8 +76,8 @@ auto pDisplay::fetchSettings( Device* device ) -> void {
 
         std::string name = width + "  x  " + height;
 
-        name += "@" + frequency + "Hz";
-
+        name += "@" + frequency + "Hz";		
+		
         crc32.init();
 
         crc32.calc( (uint8_t*)name.c_str(), name.size() );
