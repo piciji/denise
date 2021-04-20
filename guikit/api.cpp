@@ -1430,12 +1430,13 @@ auto Thread::setPriorityRealtime( std::thread& th ) -> void {
     pThread::setThreadPriorityRealtime( th );
 }
 
-auto Display::getDisplays() -> std::vector<Property> {
-    return pDisplay::getDisplays();
+auto Monitor::getDisplays() -> std::vector<Property> {
+    return pMonitor::getDisplays();
 };
 
-auto Display::getSettings( unsigned displayId ) -> std::vector<Property> {
-    return pDisplay::getSettings( displayId );
+auto Monitor::getSettings( unsigned displayId ) -> std::vector<Property> {
+    return pMonitor::getSettings( displayId );
 };
 
 }
+

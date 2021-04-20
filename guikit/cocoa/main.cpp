@@ -7,6 +7,7 @@
 #include "messageWindow.cpp"
 #include "statusbar.cpp"
 #include "tooltip.m"
+#include "display.cpp"
 
 #include "widgets/widget.cpp"   
 #include "widgets/button.cpp"

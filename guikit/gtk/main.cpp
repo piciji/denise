@@ -1,5 +1,6 @@
 
 #include "main.h"
+#include "../tools/crc32.h"
 
 namespace GUIKIT {
 
@@ -8,6 +9,7 @@ namespace GUIKIT {
 #include "browserWindow.cpp"
 #include "messageWindow.cpp"
 #include "statusbar.cpp"
+#include "display.cpp"
     
 #include "widgets/widget.cpp"   
 #include "widgets/button.cpp"   
@@ -46,6 +48,8 @@ auto pApplication::processEvents() -> void {
 auto pApplication::quit() -> void {
     if(gtk_main_level())
 		gtk_main_quit();
+
+    pMonitor::disconnect();
 }
 
 auto pApplication::initialize() -> void {
@@ -254,6 +258,13 @@ pWindow::pWindow(Window& window) : window(window) {
 		}
 		
 		if( this->window.onSize) this->window.onSize();
+    };
+
+    timerFullscreen.setInterval( 1000 );
+    timerFullscreen.onFinished = [this]() {
+        timerFullscreen.setEnabled(false);
+        locked = false;
+        setGeometry(this->window.state.geometry);
     };
 }
 
@@ -552,9 +563,21 @@ auto pWindow::setFullScreen(bool fullScreen) -> void {
     timer.setEnabled();
 
     if(!fullScreen) {
-        gtk_window_unfullscreen(GTK_WINDOW(widget));
-        setGeometry(window.state.geometry);
+
+        if (pMonitor::resetSetting()) {
+            timer.setEnabled(false);
+            locked = true;
+            timerFullscreen.setEnabled();
+            gtk_window_unfullscreen(GTK_WINDOW(widget));
+
+        } else {
+            gtk_window_unfullscreen(GTK_WINDOW(widget));
+            setGeometry(window.state.geometry);
+        }
     } else {
+        if (window.fullscreenSetting.inUse)
+            pMonitor::setSetting( window.fullscreenSetting.displayId, window.fullscreenSetting.settingId );
+
         gtk_window_fullscreen(GTK_WINDOW(widget));
     }
 }

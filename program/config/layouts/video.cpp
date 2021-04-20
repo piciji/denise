@@ -134,7 +134,7 @@ VideoLayout::VideoLayout() {
 
         videoResolution.displaySettings.reset();
 
-        for( auto& resolution : GUIKIT::Display::getSettings( displayId ) )
+        for( auto& resolution : GUIKIT::Monitor::getSettings( displayId ) )
             videoResolution.displaySettings.append( resolution.name, resolution.id );
 
         globalSettings->set<unsigned>("fullscreen_display", (unsigned)videoResolution.display.userData() );
@@ -167,14 +167,14 @@ VideoLayout::VideoLayout() {
 
     videoResolution.active.setChecked( globalSettings->get<bool>("fullscreen_setting_active", false) );
 
-    for( auto& display : GUIKIT::Display::getDisplays() )
+    for( auto& display : GUIKIT::Monitor::getDisplays() )
         videoResolution.display.append(display.name, display.id);
 
     auto displayId = globalSettings->get<unsigned>("fullscreen_display", 0 );
 
     videoResolution.display.setSelectionByUserId( displayId );
 
-    for( auto& resolution : GUIKIT::Display::getSettings( displayId ) )
+    for( auto& resolution : GUIKIT::Monitor::getSettings( displayId ) )
         videoResolution.displaySettings.append( resolution.name, resolution.id );
 
     videoResolution.displaySettings.setSelectionByUserId( globalSettings->get<unsigned>("fullscreen_setting", 0 ) );

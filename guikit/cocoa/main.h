@@ -558,6 +558,36 @@ struct pSystem {
     static auto printToCmd( std::string str ) -> void;
 };
 
+struct pMonitor {
+
+    struct Device {
+        unsigned id;
+        std::string ident;
+        CGDirectDisplayID displayId;
+        int originalMode;
+    };
+
+    struct Setting {
+        unsigned id;
+        std::string ident;
+        int mode;
+        Device* parentDevice;1
+    };
+
+    static std::vector<Device> devices;
+    static std::vector<Setting> settings;
+    static Device* activeDevice;
+
+    static auto fetchDisplays() -> void;
+    static auto getDisplays() -> std::vector<Monitor::Property>;
+
+    static auto fetchSettings( Device* device ) -> void;
+    static auto getSettings( unsigned displayId ) -> std::vector<Monitor::Property>;
+
+    static auto setSetting( unsigned displayId, unsigned settingId ) -> bool;
+    static auto resetSetting() -> bool;
+};
+
 struct pThread {
     static auto setThreadPriorityRealtime(std::thread& th) -> void;
 };

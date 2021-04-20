@@ -3,6 +3,8 @@
 #include <gdk/gdkx.h>
 #include <pwd.h>
 #include <pthread.h>
+#include <X11/Xlib.h>
+#include <X11/extensions/Xrandr.h>
 
 namespace GUIKIT {
 
@@ -33,6 +35,7 @@ struct pWindow {
     bool locked = false;
     Timer timer;
 	Timer timerResize;
+	Timer timerFullscreen;
     GdkCursor* cursor = nullptr;
 	bool isMinimized = false;
 
@@ -665,6 +668,41 @@ struct pSystem {
 	static auto addCssClass(GtkWidget* widget, std::string cssClass) -> void;
 	static auto removeCssClass(GtkWidget* widget, std::string cssClass) -> void;
 	static auto getColorCss( unsigned color, bool useComplementaryColor = false ) -> std::string;
+};
+
+struct pMonitor {
+
+    struct Device {
+        unsigned id;
+        std::string ident;
+        unsigned pos;
+        XRROutputInfo* outInfo;
+        RRMode originalMode;
+    };
+
+    struct Setting {
+        unsigned id;
+        std::string ident;
+        Device* parentDevice;
+        RRMode rrMode;
+    };
+
+    static Display* display;
+    static XRRScreenResources* screens;
+    static std::vector<Device> devices;
+    static std::vector<Setting> settings;
+    static Device* activeDevice;
+
+    static auto connect() -> bool;
+    static auto disconnect() -> void;
+    static auto fetchDisplays() -> void;
+    static auto getDisplays() -> std::vector<Monitor::Property>;
+
+    static auto fetchSettings( Device* device ) -> void;
+    static auto getSettings( unsigned displayId ) -> std::vector<Monitor::Property>;
+
+    static auto setSetting( unsigned displayId, unsigned settingId ) -> bool;
+    static auto resetSetting() -> bool;
 };
 
 struct pThread {

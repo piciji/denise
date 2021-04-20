@@ -38,7 +38,6 @@
 
 
 # todo for all emulated systems
-* fullscreen with custom refresh rate
 * 100 Hz black frame insertion
 * support for directx 11, vulkan, metal graphics driver
 * SPIR-V, RetroArch Shader support

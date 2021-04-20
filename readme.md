@@ -12,7 +12,9 @@
 * add DataBlast, SwiftLink, Turbo232 emulation
     * BBS support (use tcpser for virtual modem)
     * no emulation of userport connected RS232 devices at the moment
-    * only virtual IP based connections, no connections to physical COM ports 
+    * only virtual IP based connections, no connections to physical COM ports
+* fix VIA Latch Bug  (thanks to enigma)
+* prepare fullscreen with custom resolution and refresh rate
 
 ## 1.1.0
 * save/load additional settings files for a lot of purposes, like

@@ -523,13 +523,13 @@ auto pWindow::setFullScreen(bool fullScreen) -> void {
     if (!window.resizable()) return;
     locked = true;
     if(!fullScreen) {
-        pDisplay::resetSetting();
+        pMonitor::resetSetting();
         SetWindowLongPtr(hwnd, GWL_STYLE, WS_VISIBLE | (window.resizable() ? ResizableStyle : FixedStyle));
         setGeometry(window.state.geometry);
 		SetWindowPos(hwnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
     } else {
         if (window.fullscreenSetting.inUse)
-            pDisplay::setSetting( window.fullscreenSetting.displayId, window.fullscreenSetting.settingId );
+            pMonitor::setSetting( window.fullscreenSetting.displayId, window.fullscreenSetting.settingId );
 
         HMONITOR monitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
         MONITORINFOEX info;

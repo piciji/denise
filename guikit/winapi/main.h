@@ -760,7 +760,7 @@ struct pSystem {
     static auto printToCmd( std::string str ) -> void;
 };
 
-struct pDisplay {
+struct pMonitor {
 
     struct Device {
         DISPLAY_DEVICE displayDevice;
@@ -781,10 +781,10 @@ struct pDisplay {
     static Device* activeDevice;
 
     static auto fetchDisplays() -> void;
-    static auto getDisplays() -> std::vector<Display::Property>;
+    static auto getDisplays() -> std::vector<Monitor::Property>;
 
     static auto fetchSettings( Device* device ) -> void;
-    static auto getSettings( unsigned displayId ) -> std::vector<Display::Property>;
+    static auto getSettings( unsigned displayId ) -> std::vector<Monitor::Property>;
 
     static auto setSetting( unsigned displayId, unsigned settingId ) -> bool;
     static auto resetSetting() -> void;

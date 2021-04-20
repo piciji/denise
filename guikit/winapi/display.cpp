@@ -1,9 +1,9 @@
 
-std::vector<pDisplay::Device> pDisplay::devices;
-std::vector<pDisplay::Setting> pDisplay::settings;
-pDisplay::Device* pDisplay::activeDevice = nullptr;
+std::vector<pMonitor::Device> pMonitor::devices;
+std::vector<pMonitor::Setting> pMonitor::settings;
+pMonitor::Device* pMonitor::activeDevice = nullptr;
 
-auto pDisplay::fetchDisplays() -> void {
+auto pMonitor::fetchDisplays() -> void {
     unsigned i = 0;
     CRC32 crc32;
     devices.clear();
@@ -37,12 +37,12 @@ auto pDisplay::fetchDisplays() -> void {
     }
 }
 
-auto pDisplay::getDisplays() -> std::vector<Display::Property> {
+auto pMonitor::getDisplays() -> std::vector<Monitor::Property> {
 
     if (!devices.size())
         fetchDisplays();
 
-    std::vector<Display::Property> results;
+    std::vector<Monitor::Property> results;
 
     for(auto& device : devices)
         results.push_back({device.id, device.ident});
@@ -50,7 +50,7 @@ auto pDisplay::getDisplays() -> std::vector<Display::Property> {
     return results;
 }
 
-auto pDisplay::fetchSettings( Device* device ) -> void {
+auto pMonitor::fetchSettings( Device* device ) -> void {
 
     unsigned i = 0;
     DEVMODE devSetting;
@@ -86,7 +86,7 @@ auto pDisplay::fetchSettings( Device* device ) -> void {
     }
 }
 
-auto pDisplay::getSettings( unsigned displayId ) -> std::vector<Display::Property> {
+auto pMonitor::getSettings( unsigned displayId ) -> std::vector<Monitor::Property> {
 
     if (!devices.size()) {
         fetchDisplays();
@@ -106,7 +106,7 @@ auto pDisplay::getSettings( unsigned displayId ) -> std::vector<Display::Propert
     if (!settings.size() || (settings[0].parentDevice != device) )
         fetchSettings( device );
 
-    std::vector<Display::Property> results;
+    std::vector<Monitor::Property> results;
 
     for(auto& setting : settings)
         results.push_back({setting.id, setting.ident});
@@ -114,7 +114,7 @@ auto pDisplay::getSettings( unsigned displayId ) -> std::vector<Display::Propert
     return results;
 }
 
-auto pDisplay::setSetting( unsigned displayId, unsigned settingId ) -> bool {
+auto pMonitor::setSetting( unsigned displayId, unsigned settingId ) -> bool {
 
     if (!devices.size())
         fetchDisplays();
@@ -155,7 +155,7 @@ auto pDisplay::setSetting( unsigned displayId, unsigned settingId ) -> bool {
     return result == DISP_CHANGE_SUCCESSFUL;
 }
 
-auto pDisplay::resetSetting() -> void {
+auto pMonitor::resetSetting() -> void {
 
     if (!activeDevice)
         return;

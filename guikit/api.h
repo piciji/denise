@@ -1167,7 +1167,7 @@ struct System {
     System() = delete;
 };
 
-struct Display {
+struct Monitor {
 
     struct Property {
         unsigned id;
@@ -1177,7 +1177,7 @@ struct Display {
     static auto getDisplays() -> std::vector<Property>;
     static auto getSettings( unsigned displayId ) -> std::vector<Property>;
 
-    Display() = delete;
+    Monitor() = delete;
 };
 
 struct Thread {
