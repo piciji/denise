@@ -170,7 +170,7 @@ auto pMonitor::getSettings( unsigned displayId ) -> std::vector<Monitor::Propert
 auto pMonitor::setSetting( unsigned displayId, unsigned settingId ) -> bool {
 
     if (!connect())
-        return false; char* screenUUID, int width, int height, int hz, int depth, bool scaled, int modeNum) {
+        return false;
 
     if (!devices.size())
         fetchDisplays();
