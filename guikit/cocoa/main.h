@@ -2,6 +2,7 @@
 #include "interface.h"
 #include <pwd.h>
 #include <pthread.h>
+#include "../tools/crc32.h"
 
 namespace GUIKIT {
 
@@ -564,14 +565,14 @@ struct pMonitor {
         unsigned id;
         std::string ident;
         CGDirectDisplayID displayId;
-        int originalMode;
+        CGDisplayModeRef originalMode;
     };
 
     struct Setting {
         unsigned id;
         std::string ident;
-        int mode;
-        Device* parentDevice;1
+        CGDisplayModeRef mode;
+        Device* parentDevice;
     };
 
     static std::vector<Device> devices;

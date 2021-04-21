@@ -49,6 +49,7 @@ auto pApplication::quit() -> void {
     if(gtk_main_level())
 		gtk_main_quit();
 
+    pMonitor::resetSetting();
     pMonitor::disconnect();
 }
 

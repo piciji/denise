@@ -534,6 +534,9 @@ auto pWindow::setFullScreen(bool fullScreen) -> void {
     fullScreenToggleDelay = true;
     @autoreleasepool {
         if(fullScreen) {
+            if (window.fullscreenSetting.inUse)
+                pMonitor::setSetting( window.fullscreenSetting.displayId, window.fullscreenSetting.settingId );
+            
             [NSApp setPresentationOptions:NSApplicationPresentationFullScreen];
             [cocoaWindow setCollectionBehavior:NSWindowCollectionBehaviorFullScreenPrimary];
             [cocoaWindow toggleFullScreen:nil];
@@ -544,6 +547,7 @@ auto pWindow::setFullScreen(bool fullScreen) -> void {
             locked = true;
             [cocoaWindow toggleFullScreen:nil];
             locked = false;
+            pMonitor::resetSetting( );
         }
     }
 }

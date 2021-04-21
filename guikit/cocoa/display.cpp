@@ -1,4 +1,10 @@
 
+#include <IOKit/graphics/IOGraphicsLib.h>
+
+#define UUID_SIZE 37
+
+namespace GUIKIT {
+    
 std::vector<pMonitor::Device> pMonitor::devices;
 std::vector<pMonitor::Setting> pMonitor::settings;
 pMonitor::Device* pMonitor::activeDevice = nullptr;
@@ -17,37 +23,27 @@ auto pMonitor::fetchDisplays() -> void {
     for (int i = 0; i < count; i++) {
         CGDirectDisplayID screen = screens[i];
 
-        int modeId;
-        CGSGetCurrentDisplayMode(screen, &modeId);
-        modes_D4 mode;
-        CGSGetDisplayModeDescriptionOfLength(curScreen, modeId, &mode, 0xD4);
+        CGDisplayModeRef mode = CGDisplayCopyDisplayMode(screen);
 
         char screenUUID[UUID_SIZE];
         CFStringGetCString(CFUUIDCreateString(kCFAllocatorDefault, CGDisplayCreateUUIDFromDisplayID(screen)), screenUUID, sizeof(screenUUID), kCFStringEncodingUTF8);
 
         std::string name( screenUUID );
-
-        io_service_t serv = [self IOServicePortFromCGDisplayID: displayID];
-        if (serv != 0) {
-            CFDictionaryRef info = IODisplayCreateInfoDictionary(serv, kIODisplayOnlyPreferredName);
-            IOObjectRelease(serv);
-
-            CFStringRef _displayName;
-            CFDictionaryRef names = CFDictionaryGetValue(info, CFSTR(kDisplayProductName));
-
-            if ( names && CFDictionaryGetValueIfPresent(names, CFSTR("en_US"), (const void**) &_displayName) ) {
-                NSString* displayname = [NSString stringWithString: (__bridge NSString *) _displayName];
-
-                name = [foo displayname];
-            }
-
-            CFRelease(info);
+        
+        NSDictionary* deviceInfo = (__bridge NSDictionary *)IODisplayCreateInfoDictionary(CGDisplayIOServicePort(screen), kIODisplayOnlyPreferredName);
+        
+        NSDictionary* localizedNames = [deviceInfo objectForKey:[NSString stringWithUTF8String:kDisplayProductName]];
+        
+        if([localizedNames count] > 0) {
+            auto _title = [localizedNames objectForKey:[[localizedNames allKeys] objectAtIndex:0]];
+            
+            name = [_title UTF8String];
         }
-
+        
         crc32.init();
-        crc32.calc( &screenUUID[0], UUID_SIZE );
+        crc32.calc( (uint8_t*)&screenUUID[0], UUID_SIZE );
 
-        device.push_back({crc32.value(), name, screen, modeId});
+        devices.push_back({crc32.value(), name, screen, mode});
     }
 }
 
@@ -66,54 +62,55 @@ auto pMonitor::getDisplays() -> std::vector<Monitor::Property> {
 
 auto pMonitor::fetchSettings( Device* device ) -> void {
 
+    for(auto& setting : settings)
+        CGDisplayModeRelease( setting.mode );
+    
     settings.clear();
     CRC32 crc32;
 
-    settings.push_back({ 0, "-", device });
+    settings.push_back({ 0, "-", 0, device });
+    
+    CFArrayRef modes = CGDisplayCopyAllDisplayModes( device->displayId, NULL );
 
-    CGDirectDisplayID screen = device->screen;
-
-    int count;
-    modes_D4* modes;
-    CopyAllDisplayModes(screen, &modes, &count);
-
-    for (int i = 0; i < count; i++) {
-        modes_D4 mode = modes[i];
-
-        std::string width = std::to_string(mode.derived.width);
-        std::string height = std::to_string(mode.derived.height);
+    for (CFIndex i = 0; i < CFArrayGetCount(modes); i++) {
+        
+        CGDisplayModeRef mode = (CGDisplayModeRef)CFArrayGetValueAtIndex(modes, i);
+        
+        size_t _width = CGDisplayModeGetWidth(mode);
+        size_t _height = CGDisplayModeGetHeight(mode);
+        uint32_t _flags = CGDisplayModeGetIOFlags(mode);
+        
+       // if (_flags & kDisplayModeInterlacedFlag)
+         //   continue;
+        
+        std::string width = std::to_string(_width);
+        std::string height = std::to_string(_height);
         std::string freq = "";
-        std::string depth = "";
-        std::string scaling = "";
+        std::string flags = "";
 
-        if (mode.derived.freq)
-            freq = std::to_string(mode.derived.freq);
-
-        if (mode.derived.depth != 4)
-            depth = std::to_string( mode.derived.depth ) + " bpp";
-
-
-        if (mode.derived.density == 2.0) {
-            scaling = "scaled";
-        }
-
+        double _freq = CGDisplayModeGetRefreshRate(mode);
+        if (_freq)
+            freq = String::convertDoubleToString(_freq, 2) + " Hz";
+            
+        if (_flags)
+            flags = std::to_string(_flags);
+            
         std::string name = width + "x" + height;
 
-        if (depth != "")
-            name += " " + depth;
-
-        if (scaling != "")
-            name += " " + scaling;
-
-        if (freq)
-            name += " @" + freq + "Hz";
+        if (freq != "")
+            name += " @" + freq;
+            
+        if (_flags & kDisplayModeInterlacedFlag)
+            name += " i";
+            
+        if (flags != "")
+            name += " f:" + flags;
 
         crc32.init();
         crc32.calc( (uint8_t*)name.c_str(), name.size() );
 
-        settings.push_back( {crc32.value(), name, i, device} );
+        settings.push_back( {crc32.value(), name, mode, device} );
     }
-
 
 }
 
@@ -176,8 +173,10 @@ auto pMonitor::setSetting( unsigned displayId, unsigned settingId ) -> bool {
 
     CGDisplayConfigRef configRef;
     CGBeginDisplayConfiguration(&configRef);
-
-    CGSConfigureDisplayMode(configRef, activeDevice->displayId, setting->mode);
+    
+    CGConfigureDisplayWithDisplayMode(configRef, activeDevice->displayId, setting->mode, NULL);
+    
+    CGCompleteDisplayConfiguration(configRef, kCGConfigureForAppOnly);
     return true;
 }
 
@@ -188,10 +187,14 @@ auto pMonitor::resetSetting() -> bool {
 
     CGDisplayConfigRef configRef;
     CGBeginDisplayConfiguration(&configRef);
+    
+    CGConfigureDisplayWithDisplayMode(configRef, activeDevice->displayId, activeDevice->originalMode, NULL);
 
-    CGSConfigureDisplayMode(configRef, activeDevice->displayId, activeDevice->originalMode);
-
+    CGCompleteDisplayConfiguration(configRef, kCGConfigurePermanently);
+    
     activeDevice = nullptr;
 
     return true;
+}
+
 }
