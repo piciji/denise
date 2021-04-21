@@ -66,7 +66,7 @@ auto pMonitor::fetchSettings( Device* device ) -> void {
         CGDisplayModeRelease( setting.mode );
     
     settings.clear();
-    CRC32 crc32;
+    //CRC32 crc32;
 
     settings.push_back({ 0, "-", 0, device });
     
@@ -75,13 +75,14 @@ auto pMonitor::fetchSettings( Device* device ) -> void {
     for (CFIndex i = 0; i < CFArrayGetCount(modes); i++) {
         
         CGDisplayModeRef mode = (CGDisplayModeRef)CFArrayGetValueAtIndex(modes, i);
+        int32_t modeId = CGDisplayModeGetIODisplayModeID(mode);
         
         size_t _width = CGDisplayModeGetWidth(mode);
         size_t _height = CGDisplayModeGetHeight(mode);
         uint32_t _flags = CGDisplayModeGetIOFlags(mode);
         
-       // if (_flags & kDisplayModeInterlacedFlag)
-         //   continue;
+        if (_flags & kDisplayModeInterlacedFlag)
+            continue;
         
         std::string width = std::to_string(_width);
         std::string height = std::to_string(_height);
@@ -92,24 +93,21 @@ auto pMonitor::fetchSettings( Device* device ) -> void {
         if (_freq)
             freq = String::convertDoubleToString(_freq, 2) + " Hz";
             
-        if (_flags)
-            flags = std::to_string(_flags);
+       // if (_flags)
+         //   flags = std::to_string(_flags);
             
         std::string name = width + "x" + height;
 
         if (freq != "")
             name += " @" + freq;
             
-        if (_flags & kDisplayModeInterlacedFlag)
-            name += " i";
-            
-        if (flags != "")
-            name += " f:" + flags;
+        //if (flags != "")
+          //  name += " f:" + flags;
 
-        crc32.init();
-        crc32.calc( (uint8_t*)name.c_str(), name.size() );
+        //crc32.init();
+        //crc32.calc( (uint8_t*)name.c_str(), name.size() );
 
-        settings.push_back( {crc32.value(), name, mode, device} );
+        settings.push_back( {(uint32_t)modeId, name, mode, device} );
     }
 
 }
