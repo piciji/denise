@@ -1,7 +1,52 @@
 
 #include <IOKit/graphics/IOGraphicsLib.h>
+#include <ApplicationServices/ApplicationServices.h>
+
 
 #define UUID_SIZE 37
+
+#ifdef UNDOCUMENTED_RETINA_SUPPORT
+
+typedef union {
+    uint8_t rawData[0xDC];
+    struct {
+        uint32_t mode;
+        uint32_t flags;        // 0x4
+        uint32_t width;        // 0x8
+        uint32_t height;    // 0xC
+        uint32_t depth;        // 0x10
+        uint32_t dc2[42];
+        uint16_t dc3;
+        uint16_t freq;        // 0xBC
+        uint32_t dc4[4];
+        float density;        // 0xD0
+    } derived;
+} modes_D4;
+
+extern "C"
+{
+    void CGSGetCurrentDisplayMode(CGDirectDisplayID display, int* modeNum);
+    void CGSConfigureDisplayMode(CGDisplayConfigRef config, CGDirectDisplayID display, int modeNum);
+    void CGSGetNumberOfDisplayModes(CGDirectDisplayID display, int* nModes);
+    void CGSGetDisplayModeDescriptionOfLength(CGDirectDisplayID display, int idx, modes_D4* mode, int length);
+};
+
+void CopyAllDisplayModes(CGDirectDisplayID display, modes_D4** modes, int* cnt) {
+    int nModes;
+    CGSGetNumberOfDisplayModes(display, &nModes);
+    
+    if(nModes)
+        *cnt = nModes;
+    
+    if(!modes)
+        return;
+    
+    *modes = new modes_D4[nModes];
+    
+    for(int i=0; i < nModes; i++)
+        CGSGetDisplayModeDescriptionOfLength(display, i, &(*modes)[i], 0xD4);
+}
+#endif
 
 namespace GUIKIT {
     
@@ -22,7 +67,7 @@ auto pMonitor::fetchDisplays() -> void {
 
     for (int i = 0; i < count; i++) {
         CGDirectDisplayID screen = screens[i];
-
+        
         CGDisplayModeRef mode = CGDisplayCopyDisplayMode(screen);
 
         char screenUUID[UUID_SIZE];
@@ -42,6 +87,13 @@ auto pMonitor::fetchDisplays() -> void {
         
         crc32.init();
         crc32.calc( (uint8_t*)&screenUUID[0], UUID_SIZE );
+        
+        for(auto& device : devices) {
+            if (device.ident == name) {
+                name += "_" + std::to_string(i);
+                break;
+            }
+        }
 
         devices.push_back({crc32.value(), name, screen, mode});
     }
@@ -62,54 +114,124 @@ auto pMonitor::getDisplays() -> std::vector<Monitor::Property> {
 
 auto pMonitor::fetchSettings( Device* device ) -> void {
 
+#ifndef UNDOCUMENTED_RETINA_SUPPORT
     for(auto& setting : settings)
-        CGDisplayModeRelease( setting.mode );
-    
+        if (setting.mode != 0)
+            CGDisplayModeRelease( setting.mode );
+#endif
+        
     settings.clear();
-    //CRC32 crc32;
+    CRC32 crc32;
 
     settings.push_back({ 0, "-", 0, device });
-    
-    CFArrayRef modes = CGDisplayCopyAllDisplayModes( device->displayId, NULL );
 
-    for (CFIndex i = 0; i < CFArrayGetCount(modes); i++) {
+#ifndef UNDOCUMENTED_RETINA_SUPPORT
+  //  CFStringRef keys[1] = { kCGDisplayShowDuplicateLowResolutionModes };
+  //  CFBooleanRef values[1] = { kCFBooleanTrue };
         
+  //  CFDictionaryRef options = CFDictionaryCreate(kCFAllocatorDefault, (const void**) keys, (const void**) values, 1, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks );
+
+    CFArrayRef modes = CGDisplayCopyAllDisplayModes( device->displayId, NULL );
+    
+    for (CFIndex i = 0; i < CFArrayGetCount(modes); i++) {
         CGDisplayModeRef mode = (CGDisplayModeRef)CFArrayGetValueAtIndex(modes, i);
         int32_t modeId = CGDisplayModeGetIODisplayModeID(mode);
         
         size_t _width = CGDisplayModeGetWidth(mode);
         size_t _height = CGDisplayModeGetHeight(mode);
-        uint32_t _flags = CGDisplayModeGetIOFlags(mode);
+        size_t _pixelwidth = CGDisplayModeGetPixelWidth(mode);
+        size_t _pixelheight = CGDisplayModeGetPixelHeight(mode);
+        uint32_t _depth = 4;
         
-        if (_flags & kDisplayModeInterlacedFlag)
-            continue;
+        //CFStringRef format = CGDisplayModeCopyPixelEncoding(mode);
+        //if (CFStringCompare(format, CFSTR(IO16BitDirectPixels), 0) == 0)
+        //    continue;
         
-        std::string width = std::to_string(_width);
-        std::string height = std::to_string(_height);
-        std::string freq = "";
-        std::string flags = "";
+        bool scaled = (_width != _pixelwidth) || (_height != _pixelheight);
 
+        uint32_t _flags = CGDisplayModeGetIOFlags(mode);
+            
+        if (_flags & kDisplayModeInterlacedFlag) {
+            CGDisplayModeRelease(mode);
+            continue;
+        }
+        
+        std::string freq = "";
         double _freq = CGDisplayModeGetRefreshRate(mode);
         if (_freq)
             freq = String::convertDoubleToString(_freq, 2) + " Hz";
             
-       // if (_flags)
-         //   flags = std::to_string(_flags);
-            
-        std::string name = width + "x" + height;
+#else
+    int modeCount;
+    modes_D4* modes;
+    CopyAllDisplayModes(device->displayId, &modes, &modeCount);
+        
+    for (int i = 0; i < modeCount; i++) {
+        modes_D4 mode = modes[i];
+        
+        if (mode.derived.flags & kDisplayModeInterlacedFlag)
+            continue;
+        
+        uint32_t _width = mode.derived.width;
+        uint32_t _height = mode.derived.height;
+        uint16_t _freq = mode.derived.freq;
+        uint32_t _depth = mode.derived.depth;
+        bool scaled = mode.derived.density == 2.0;
 
+        std::string freq = "";
+        if (_freq)
+            freq = std::to_string(_freq) + " Hz";
+#endif
+            
+        if (_width == 1 && _height == 1) {
+#ifndef UNDOCUMENTED_RETINA_SUPPORT
+            CGDisplayModeRelease(mode);
+#endif
+            continue;
+        }
+            
+        std::string width = std::to_string(_width);
+        std::string height = std::to_string(_height);
+        
+        std::string name = width + "x" + height;
+            
+        if(_depth != 4)
+            name += " " + std::to_string(_depth) + "bpp ";
+            
+        if (scaled)
+            name += " scaled";
+            
         if (freq != "")
             name += " @" + freq;
             
-        //if (flags != "")
-          //  name += " f:" + flags;
+        crc32.init();
+        crc32.calc( (uint8_t*)name.c_str(), name.size() );
 
-        //crc32.init();
-        //crc32.calc( (uint8_t*)name.c_str(), name.size() );
+        bool found = false;
+        for(auto& setting : settings) {
+            if (setting.ident == name) {
+                found = true;
+                break;
+            }
+        }
+        
+        if (found) {
+#ifndef UNDOCUMENTED_RETINA_SUPPORT
+            CGDisplayModeRelease(mode);
+#endif
+            continue;
+        }
 
-        settings.push_back( {(uint32_t)modeId, name, mode, device} );
+#ifdef UNDOCUMENTED_RETINA_SUPPORT
+    settings.push_back( {crc32.value(), name, i, device} );
+#else
+    settings.push_back( {(uint32_t)modeId, name, mode, device} );
+#endif
+        
     }
-
+    #ifdef UNDOCUMENTED_RETINA_SUPPORT
+        delete[] modes;
+    #endif
 }
 
 auto pMonitor::getSettings( unsigned displayId ) -> std::vector<Monitor::Property> {
@@ -172,7 +294,11 @@ auto pMonitor::setSetting( unsigned displayId, unsigned settingId ) -> bool {
     CGDisplayConfigRef configRef;
     CGBeginDisplayConfiguration(&configRef);
     
+#ifdef UNDOCUMENTED_RETINA_SUPPORT
+    CGSConfigureDisplayMode(configRef, activeDevice->displayId, setting->mode);
+#else
     CGConfigureDisplayWithDisplayMode(configRef, activeDevice->displayId, setting->mode, NULL);
+#endif
     
     CGCompleteDisplayConfiguration(configRef, kCGConfigureForAppOnly);
     return true;

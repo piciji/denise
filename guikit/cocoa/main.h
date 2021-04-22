@@ -559,6 +559,8 @@ struct pSystem {
     static auto printToCmd( std::string str ) -> void;
 };
 
+//#define UNDOCUMENTED_RETINA_SUPPORT
+    
 struct pMonitor {
 
     struct Device {
@@ -571,7 +573,11 @@ struct pMonitor {
     struct Setting {
         unsigned id;
         std::string ident;
+#ifdef UNDOCUMENTED_RETINA_SUPPORT
+        int mode;
+#else
         CGDisplayModeRef mode;
+#endif
         Device* parentDevice;
     };
 
