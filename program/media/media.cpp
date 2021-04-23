@@ -876,7 +876,10 @@ auto MediaLayout::prepareCreator() -> void {
 auto MediaLayout::preparePaths() -> void {
     
     for (auto& mediaGroup : emulator->mediaGroups) {
-        
+
+        if (mediaGroup.isExpansion() && mediaGroup.expansion->isRS232())
+            continue;
+
         auto settingFolderIdent = _underscore(mediaGroup.name) + "_folder";
         
         auto block = new PathsLayout::Block( &mediaGroup );

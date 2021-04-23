@@ -8,7 +8,8 @@
     * clockport emulation (i.e. Retro Replay, MMC)
     * CMD Ramlink + HD
     * all the others
-* disk    
+* disk
+    * Quickload (inject initial file in memory)
     * P64 support
     * drive sounds
     * support command line start of disk listings instead of Load "*"
@@ -43,6 +44,7 @@
 * SPIR-V, RetroArch Shader support
 * Debug monitor for developers
 * autofire with frequency and option to fire without button press
+* support each setting as command line option
 * beam racing
 * rewind support
 * screenshots/movie recording
