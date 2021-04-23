@@ -13,6 +13,21 @@ RunAheadLayout::RunAheadLayout() : control("") {
     setFont(GUIKIT::Font::system("bold"));   
 }
 
+WarpLayout::WarpLayout() {
+
+    setPadding(10);
+
+    append(off, {0u, 0u}, 10 );
+    append(normal, {0u, 0u}, 10 );
+    append(aggressive, {0u, 0u} );
+
+    GUIKIT::RadioBox::setGroup( off, normal, aggressive );
+
+    setAlignment( 0.5 );
+
+    setFont(GUIKIT::Font::system("bold"));
+}
+
 RunAheadLayout::Options::Options() {
     
     append(performanceMode, {0u, 0u}, 20 );
@@ -28,8 +43,25 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) {
     
     setMargin(10);
     
-    append( runAheadLayout, {~0u, 0u}, 10 );    
-    
+    append( runAheadLayout, {~0u, 0u}, 10 );
+
+    append( warpLayout, {~0u, 0u} );
+
+    warpLayout.off.onActivate = [this]() {
+
+        _settings->set<unsigned>( "auto_warp", 0);
+    };
+
+    warpLayout.normal.onActivate = [this]() {
+
+        _settings->set<unsigned>( "auto_warp", 1);
+    };
+
+    warpLayout.aggressive.onActivate = [this]() {
+
+        _settings->set<unsigned>( "auto_warp", 2);
+    };
+
     runAheadLayout.control.slider.onChange = [this]() {
         
         unsigned pos = runAheadLayout.control.slider.position();
@@ -86,11 +118,25 @@ auto MiscLayout::translate() -> void {
     
     runAheadLayout.control.name.setText( trans->get("frames") );
     
-    runAheadLayout.options.disableOnPower.setText( trans->get("disable runAhead on power") );    
+    runAheadLayout.options.disableOnPower.setText( trans->get("disable runAhead on power") );
+
+    warpLayout.setText( trans->get("auto warp during load") );
+    warpLayout.aggressive.setText( trans->get("aggressive") );
+    warpLayout.normal.setText( trans->get("normal") );
+    warpLayout.off.setText( trans->get("off") );
 }
 
 auto MiscLayout::loadSettings() -> void {
-    
+
+    unsigned autoWarp = _settings->get<unsigned>( "auto_warp", 0);
+
+    if (autoWarp == 0)
+        warpLayout.off.setChecked();
+    else if (autoWarp == 1)
+        warpLayout.normal.setChecked();
+    else if (autoWarp == 2)
+        warpLayout.aggressive.setChecked();
+
     setRunAheadPerformance( _settings->get<bool>( "runahead_performance", false) );
     
     runAheadLayout.options.disableOnPower.setChecked( _settings->get<bool>( "runahead_disable", true) );

@@ -15,6 +15,7 @@
     * only virtual IP based connections, no connections to physical COM ports
 * fix VIA Latch Bug  (thanks to enigma)
 * prepare fullscreen with custom resolution and refresh rate
+* option to auto fast forward (warp), while drive is running
 
 ## 1.1.0
 * save/load additional settings files for a lot of purposes, like

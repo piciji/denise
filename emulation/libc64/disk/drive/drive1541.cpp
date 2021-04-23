@@ -165,6 +165,16 @@ Drive1541::Drive1541(uint8_t number, Emulator::Interface::Media* mediaConnected 
                     motorOffInit();
                 
                 updateDeviceState();
+
+                bool _loadingState = false;
+                for( auto drive : iecBus->drivesEnabled ) {
+                    if (drive->motorOn) {
+                        _loadingState = true;
+                        break;
+                    }
+                }
+
+                system->interface->informDriveLoading(_loadingState);
             }
             
             // LED status change

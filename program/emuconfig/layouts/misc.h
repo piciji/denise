@@ -12,11 +12,21 @@ struct RunAheadLayout : GUIKIT::FramedVerticalLayout {
     RunAheadLayout();
 };
 
+struct WarpLayout : GUIKIT::FramedHorizontalLayout {
+
+    GUIKIT::RadioBox off;
+    GUIKIT::RadioBox normal;
+    GUIKIT::RadioBox aggressive;
+
+    WarpLayout();
+};
+
 struct MiscLayout : GUIKIT::VerticalLayout {
     
     TabWindow* tabWindow;
     Emulator::Interface* emulator;
-    RunAheadLayout runAheadLayout;    
+    RunAheadLayout runAheadLayout;
+    WarpLayout warpLayout;
     
     auto translate() -> void;
     auto setRunAheadPerformance(bool state) -> void;

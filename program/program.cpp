@@ -587,6 +587,19 @@ auto Program::questionToWrite(Emulator::Interface::Media* media) -> bool {
     return view->questionToWrite(media);
 }
 
+auto Program::informDriveLoading(bool state) -> void {
+
+    if (!activeEmulator)
+        return;
+
+    auto autoWarp = getSettings(activeEmulator)->get<unsigned>("auto_warp", 0);
+
+    if (autoWarp == 0)
+        return;
+
+    fastForward( state, autoWarp == 2 );
+}
+
 auto Program::getLastUsedEmu() -> Emulator::Interface* {
 	
 	auto ident = globalSettings->get<std::string>("last_used_emu", "");

@@ -789,6 +789,7 @@ auto System::videoRefresh( uint8_t* frame, unsigned width, unsigned height, unsi
 			if (++diskSilence.idleFrames > 120) {
 				diskSilence.idle = true;
 				diskSilence.idleFrames = 0;
+				interface->informDriveLoading(false);
 				iecBus->resetDriveState();
 			}
 		}

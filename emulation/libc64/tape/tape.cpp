@@ -27,6 +27,7 @@ Tape::Tape( Emulator::Interface::Media* mediaConnected ) {
         motorIn = false;
         updateCounter();
         updateDeviceState();
+        system->interface->informDriveLoading(false);
     };
 	
     worker = [this]() {
@@ -121,6 +122,7 @@ auto Tape::setMotorIn( bool state ) -> void {
         if (!motorIn) {
             motorIn = true;
             updateDeviceState();
+            system->interface->informDriveLoading(true);
             
             if (!sysTimer.has( &worker ))
                 sysTimer.add( &worker, TAPE_MOTOR_DELAY );
@@ -176,8 +178,10 @@ auto Tape::setMode( unsigned mode ) -> void {
 			senseOut( true );
             directionForward = mode != Mode::Rewind;
             
-            if (motorIn && !sysTimer.has( &worker ))
-                sysTimer.add( &worker, TAPE_MOTOR_DELAY );
+            if (motorIn && !sysTimer.has( &worker )) {
+                sysTimer.add(&worker, TAPE_MOTOR_DELAY);
+                system->interface->informDriveLoading(true);
+            }
                 
             break;
         
@@ -192,6 +196,7 @@ auto Tape::setMode( unsigned mode ) -> void {
 			
 		case Mode::Stop:
 			senseOut( false );
+			system->interface->informDriveLoading(false);
 			break;
     }
         
