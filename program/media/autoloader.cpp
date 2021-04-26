@@ -168,6 +168,10 @@ auto Autoloader::postProcessing() -> void {
 				view->updateTapeIcons(Emulator::Interface::TapeMode::Play);  
 
 			view->setFocused(300);
+
+			if (!cmd->debug && mediaGroup->isTape()) {
+                program->initAutoWarp();
+			}
 		}
     }
     

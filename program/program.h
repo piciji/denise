@@ -47,7 +47,13 @@ struct Program : Emulator::Interface::Bind {
     bool isRunning;
 	bool isPause;
     bool isFocused;
-	unsigned loopFrames = 0;	
+	unsigned loopFrames = 0;
+
+	struct {
+	    bool enable = false;
+        bool active = false;
+	    bool aggressive = false;
+	} autoWarp;
 
     auto quit() -> void;
     auto loop() -> void;
@@ -99,6 +105,7 @@ struct Program : Emulator::Interface::Bind {
 	auto getEmulator( std::string ident ) -> Emulator::Interface*;
     auto removeExpansion( bool bootableOnly = true ) -> void;
     auto prepareSocket(Emulator::Interface::Media* media, Emulator::Interface* emulator, std::string address) -> void;
+    auto initAutoWarp() -> void;
     
     //audio
     auto initAudio() -> void;

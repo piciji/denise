@@ -945,7 +945,7 @@ auto Interface::ejectTape(Media* media) -> void {
 
 auto Interface::controlTape(Media* media, TapeMode mode) -> void {
 	
-    tape->setMode( (Tape::Mode)mode );
+    tape->setMode( (Tape::Mode)mode, true );
 }
 
 auto Interface::getTapeControl(Media* media) -> TapeMode {

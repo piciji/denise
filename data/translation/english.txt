@@ -588,6 +588,6 @@ alternate settings = alternate settings
 app settings = %app% Settings
 RS-232_insert = insert RS-232 cartridge
 preselect fullscreen resolution = Preselect fullscreen resolution
-auto warp during load = automatic Warp during loading
+warp on autostart = warp on autostart
 normal = normal
 aggressive = aggressive

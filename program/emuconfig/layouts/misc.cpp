@@ -19,7 +19,8 @@ WarpLayout::WarpLayout() {
 
     append(off, {0u, 0u}, 10 );
     append(normal, {0u, 0u}, 10 );
-    append(aggressive, {0u, 0u} );
+    append(aggressive, {0u, 0u}, 10 );
+ //   append(oneTime, {0u, 0u} );
 
     GUIKIT::RadioBox::setGroup( off, normal, aggressive );
 
@@ -60,6 +61,11 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) {
     warpLayout.aggressive.onActivate = [this]() {
 
         _settings->set<unsigned>( "auto_warp", 2);
+    };
+
+    warpLayout.oneTime.onToggle = [this]() {
+
+        _settings->set<bool>( "auto_warp_onetime", warpLayout.oneTime.checked());
     };
 
     runAheadLayout.control.slider.onChange = [this]() {
@@ -120,10 +126,12 @@ auto MiscLayout::translate() -> void {
     
     runAheadLayout.options.disableOnPower.setText( trans->get("disable runAhead on power") );
 
-    warpLayout.setText( trans->get("auto warp during load") );
+    warpLayout.setText( trans->get("warp on autostart") );
     warpLayout.aggressive.setText( trans->get("aggressive") );
     warpLayout.normal.setText( trans->get("normal") );
     warpLayout.off.setText( trans->get("off") );
+
+    warpLayout.oneTime.setText( trans->get("onetime") );
 }
 
 auto MiscLayout::loadSettings() -> void {
@@ -136,6 +144,8 @@ auto MiscLayout::loadSettings() -> void {
         warpLayout.normal.setChecked();
     else if (autoWarp == 2)
         warpLayout.aggressive.setChecked();
+
+    warpLayout.oneTime.setChecked( _settings->get<bool>( "auto_warp_onetime", true) );
 
     setRunAheadPerformance( _settings->get<bool>( "runahead_performance", false) );
     

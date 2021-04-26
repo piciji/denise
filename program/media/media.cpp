@@ -1583,6 +1583,9 @@ auto MediaLayout::insertFile( MediaGroupLayout::Block* block, std::string filePa
                 view->updateTapeIcons(Emulator::Interface::TapeMode::Play);
 
             view->setFocused(300);
+
+            if (mediaGroup->isTape())
+                program->initAutoWarp();
         }
     };
     archiveViewer->setView(items);
@@ -1670,7 +1673,7 @@ auto MediaLayout::anyLoad( bool mIsAcquiredBefore ) -> void {
     
     fileDialogPtr->setCallbacks( [this, mIsAcquiredBefore](std::string filePath, unsigned selection) {
         settings->set<std::string>("anyload_path", GUIKIT::File::getPath( filePath ) );
-        
+
         autoloader->init( {filePath}, false, Autoloader::Mode::AutoStart, selection );
         autoloader->loadFiles();
         

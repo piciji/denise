@@ -37,7 +37,7 @@ struct Tape {
 	auto setWriteProtect(bool state) -> void;
     auto isWriteProtected() -> bool;
 	auto setCyclesPerSecond( unsigned value ) -> void;	
-	auto setMode( unsigned mode ) -> void;
+	auto setMode( unsigned mode, bool buttonPress = false ) -> void;
     auto getMode( ) -> Mode;
 	auto createTap( unsigned& imageSize ) -> uint8_t*;
     auto serialize(Emulator::Serializer& s) -> void;

@@ -162,7 +162,10 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
         case Hotkey::Id::ToggleFastForward:
         case Hotkey::Id::ToggleFastForwardAggressive: {
             if (!activeEmulator)
-                break;                        
+                break;
+
+            // overide auto warp
+            program->autoWarp.enable = false;
             
             bool ff = globalSettings->get<bool>("fast_forward", false);
             bool ffa = globalSettings->get<bool>("fast_forward_aggressive", false);   
@@ -248,6 +251,8 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
         case Hotkey::RewindTape: {
             if (!activeEmulator || !dynamic_cast<LIBC64::Interface*>(activeEmulator) )
                 break;
+
+            program->informDriveLoading(false);
 
             auto media = activeEmulator->getTape( 0 );
             if (!media)

@@ -336,7 +336,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
 
 		globalSettings->set("last_used_emu", activeEmulator->ident);
 
-		activeVideoManager->initFpsLimit();    
+		activeVideoManager->initFpsLimit();
 	}
 	
 	activeEmulator->power();
@@ -397,6 +397,7 @@ auto Program::powerOff() -> void {
 		InputManager::urgentUpdate = true;
 		InputManager::resetJit();
 	}
+    autoWarp.enable = false;
 }
 
 auto Program::loopNoGui() -> void {
@@ -589,15 +590,29 @@ auto Program::questionToWrite(Emulator::Interface::Media* media) -> bool {
 
 auto Program::informDriveLoading(bool state) -> void {
 
+    if (!activeEmulator || !autoWarp.enable)
+        return;
+
+    if (autoWarp.active == state)
+        return;
+
+    autoWarp.active = state;
+
+    fastForward( autoWarp.active, autoWarp.aggressive );
+}
+
+auto Program::initAutoWarp() -> void {
     if (!activeEmulator)
         return;
 
-    auto autoWarp = getSettings(activeEmulator)->get<unsigned>("auto_warp", 0);
+    unsigned _autoWarp = program->getSettings( activeEmulator )->get<unsigned>("auto_warp", 0);
 
-    if (autoWarp == 0)
-        return;
+    autoWarp.enable = _autoWarp != 0;
+    autoWarp.aggressive = _autoWarp == 2;
+    autoWarp.active = true;
 
-    fastForward( state, autoWarp == 2 );
+    if (autoWarp.enable)
+        fastForward( autoWarp.active, autoWarp.aggressive );
 }
 
 auto Program::getLastUsedEmu() -> Emulator::Interface* {

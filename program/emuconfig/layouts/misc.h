@@ -17,6 +17,7 @@ struct WarpLayout : GUIKIT::FramedHorizontalLayout {
     GUIKIT::RadioBox off;
     GUIKIT::RadioBox normal;
     GUIKIT::RadioBox aggressive;
+    GUIKIT::CheckBox oneTime;
 
     WarpLayout();
 };

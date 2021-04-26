@@ -27,7 +27,8 @@ Tape::Tape( Emulator::Interface::Media* mediaConnected ) {
         motorIn = false;
         updateCounter();
         updateDeviceState();
-        system->interface->informDriveLoading(false);
+        if (counter >= 10)
+            system->interface->informDriveLoading(false);
     };
 	
     worker = [this]() {
@@ -139,7 +140,7 @@ auto Tape::getMode( ) -> Mode {
     return mode;
 }
 
-auto Tape::setMode( unsigned mode ) -> void {
+auto Tape::setMode( unsigned mode, bool buttonPress ) -> void {
 	
 	if (!enabled)
 		return;
@@ -174,13 +175,12 @@ auto Tape::setMode( unsigned mode ) -> void {
     switch(mode) {
         case Mode::Rewind:
         case Mode::Play:
-        case Mode::Forward:			
+        case Mode::Forward:
 			senseOut( true );
             directionForward = mode != Mode::Rewind;
             
             if (motorIn && !sysTimer.has( &worker )) {
                 sysTimer.add(&worker, TAPE_MOTOR_DELAY);
-                system->interface->informDriveLoading(true);
             }
                 
             break;
@@ -196,7 +196,6 @@ auto Tape::setMode( unsigned mode ) -> void {
 			
 		case Mode::Stop:
 			senseOut( false );
-			system->interface->informDriveLoading(false);
 			break;
     }
         
@@ -317,20 +316,24 @@ auto Tape::selectListing( unsigned pos ) -> void {
     action.delay = 0;
     action.callbackId = 3;
 	action.callback = [this]() {
-        this->setMode( Tape::Mode::Play );
+        this->setMode( Tape::Mode::Play, true );
 	};
     system->keyBuffer->add( action );
     
-    action.callback = nullptr;
+
     action.callbackId = 0;
     
     action.mode = KeyBuffer::Mode::WaitFor;
     action.buffer = {'R', 'E', 'A', 'D', 'Y', '.'};
     action.delay = 800;
     action.alternateBuffer.clear();
-    action.blinkingCursor = true;    
+    action.blinkingCursor = true;
+    action.callback = [this]() {
+        system->interface->informDriveLoading(false);
+    };
     system->keyBuffer->add(action);
-    
+
+    action.callback = nullptr;
     action.mode = KeyBuffer::Mode::Input;
     action.buffer = {'R', 'U', 'N', '\r'};    
     system->keyBuffer->add(action);    

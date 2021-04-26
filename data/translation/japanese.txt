@@ -588,6 +588,6 @@ alternate settings =
 app settings =
 RS-232_insert =
 preselect fullscreen resolution =
-auto warp during load =
+warp on autostart =
 normal =
 aggressive =
