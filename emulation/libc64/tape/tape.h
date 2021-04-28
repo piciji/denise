@@ -62,6 +62,7 @@ protected:
 	uint8_t* writeData;
 	
 	bool enabled;
+	bool autoStarted;
 	
 	Mode mode;
 	Mode nextMode;

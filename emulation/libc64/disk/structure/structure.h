@@ -30,6 +30,7 @@ struct Structure1541 {
     enum class Type { D64 = 0, G64 = 1, P64 = 2, Unknown = -1 } type; 
 	uint8_t number;
 	Emulator::Interface::Media* media = nullptr;
+	bool autoStarted = false;
     
     std::function<unsigned (uint8_t*, unsigned, unsigned)> write = [](uint8_t* buffer, unsigned length, unsigned offset){ return 0; };    
     

@@ -378,11 +378,23 @@ auto Structure1541::selectListing(  unsigned pos ) -> void {
     action.delay = 180;    
     action.alternateBuffer.clear();
     action.blinkingCursor = true;
+    action.waitCallback = [this]() {
+        if (system->checkForAutoStarter()) {
+            system->keyBuffer->reset();
+            system->interface->autoStartFinish(true);
+        }
+    };
     system->keyBuffer->add( action );
-    
+
+    action.waitCallback = nullptr;
+    action.callback = [this]() {
+        system->interface->autoStartFinish(false);
+    };
     action.mode = KeyBuffer::Mode::Input;
-    action.buffer = {'R', 'U', 'N', '\r'};    
+    action.buffer = {'R', 'U', 'N', '\r'};
     system->keyBuffer->add( action );
+
+    autoStarted = true;
 }
 
 auto Structure1541::create( Type newType, std::string diskName ) -> uint8_t* {

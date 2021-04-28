@@ -1584,8 +1584,8 @@ auto MediaLayout::insertFile( MediaGroupLayout::Block* block, std::string filePa
 
             view->setFocused(300);
 
-            if (mediaGroup->isTape())
-                program->initAutoWarp();
+            if (mediaGroup->isTape() || mediaGroup->isDisk())
+                program->initAutoWarp(mediaGroup);
         }
     };
     archiveViewer->setView(items);

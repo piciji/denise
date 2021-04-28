@@ -591,3 +591,5 @@ preselect fullscreen resolution =
 warp on autostart =
 normal =
 aggressive =
+disk warp motor controlled =
+tape warp motor controlled =

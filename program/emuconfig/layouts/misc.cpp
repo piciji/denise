@@ -19,8 +19,9 @@ WarpLayout::WarpLayout() {
 
     append(off, {0u, 0u}, 10 );
     append(normal, {0u, 0u}, 10 );
-    append(aggressive, {0u, 0u}, 10 );
- //   append(oneTime, {0u, 0u} );
+    append(aggressive, {0u, 0u}, 25 );
+    append(diskMotorControlled, {0u, 0u}, 10 );
+    append(tapeMotorControlled, {0u, 0u} );
 
     GUIKIT::RadioBox::setGroup( off, normal, aggressive );
 
@@ -63,9 +64,14 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) {
         _settings->set<unsigned>( "auto_warp", 2);
     };
 
-    warpLayout.oneTime.onToggle = [this]() {
+    warpLayout.diskMotorControlled.onToggle = [this]() {
 
-        _settings->set<bool>( "auto_warp_onetime", warpLayout.oneTime.checked());
+        _settings->set<bool>( "auto_warp_disk_motor", warpLayout.diskMotorControlled.checked());
+    };
+
+    warpLayout.tapeMotorControlled.onToggle = [this]() {
+
+        _settings->set<bool>( "auto_warp_tape_motor", warpLayout.tapeMotorControlled.checked());
     };
 
     runAheadLayout.control.slider.onChange = [this]() {
@@ -131,7 +137,8 @@ auto MiscLayout::translate() -> void {
     warpLayout.normal.setText( trans->get("normal") );
     warpLayout.off.setText( trans->get("off") );
 
-    warpLayout.oneTime.setText( trans->get("onetime") );
+    warpLayout.diskMotorControlled.setText( trans->get("disk warp motor controlled") );
+    warpLayout.tapeMotorControlled.setText( trans->get("tape warp motor controlled") );
 }
 
 auto MiscLayout::loadSettings() -> void {
@@ -145,7 +152,9 @@ auto MiscLayout::loadSettings() -> void {
     else if (autoWarp == 2)
         warpLayout.aggressive.setChecked();
 
-    warpLayout.oneTime.setChecked( _settings->get<bool>( "auto_warp_onetime", true) );
+    warpLayout.diskMotorControlled.setChecked( _settings->get<bool>( "auto_warp_disk_motor", false) );
+
+    warpLayout.tapeMotorControlled.setChecked( _settings->get<bool>( "auto_warp_tape_motor", true) );
 
     setRunAheadPerformance( _settings->get<bool>( "runahead_performance", false) );
     

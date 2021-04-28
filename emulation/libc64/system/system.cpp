@@ -539,7 +539,9 @@ auto System::power( bool softReset ) -> void {
 		
 		vicIICycle->power();
         vicIIFast->power();
-		cpu->power();        		
+		cpu->power();
+        observer.enterRom = false;
+        observer.memoryAccesses = 0;
 	} else {
 		// vic hasn't a reset line ... means no change ?
 		cpu->reset();
@@ -563,10 +565,10 @@ auto System::power( bool softReset ) -> void {
     kernalBootComplete = false;
     KeyBuffer::Action action;
     action.mode = KeyBuffer::Mode::WaitDelay;
-    action.delay = 2;
+    action.delay = (unsigned)(interface->stats.fps * 2.2);
 
     if ( !expansionPort->isBootable() ) {
-        system->keyBuffer->add( action );
+        system->keyBuffer->add( action, false );
 
         action.mode = KeyBuffer::Mode::WaitFor;
         action.buffer = {'R', 'E', 'A', 'D', 'Y', '.'};
@@ -580,9 +582,10 @@ auto System::power( bool softReset ) -> void {
         action.callback = [this]() { kernalBootComplete = true; };
         system->keyBuffer->add( action );
 
+
 	} else {
         action.callback = [this]() { kernalBootComplete = true; };
-        system->keyBuffer->add( action );
+        system->keyBuffer->add( action, false );
     }
 	
 	powerOn = true;
@@ -789,7 +792,6 @@ auto System::videoRefresh( uint8_t* frame, unsigned width, unsigned height, unsi
 			if (++diskSilence.idleFrames > 120) {
 				diskSilence.idle = true;
 				diskSilence.idleFrames = 0;
-				interface->informDriveLoading(false);
 				iecBus->resetDriveState();
 			}
 		}
@@ -870,5 +872,24 @@ auto System::copyText( ) -> std::string {
     return clipboard.getText();
 }
 
+auto System::checkForAutoStarter() -> bool {
+
+    if (!observer.enterRom) {
+
+        if (memoryCpu.isLocation( cpu->pc >> 8, &readKernalRom ))
+            observer.enterRom = true;
+
+        observer.memoryAccesses = 0;
+    } else {
+
+        if (memoryCpu.isLocation( cpu->pc >> 8, &readRam ))
+            observer.memoryAccesses++;
+
+        if (observer.memoryAccesses > 2)
+            return true;
+    }
+
+    return false;
 }
 
+}

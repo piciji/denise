@@ -35,7 +35,8 @@ struct KeyBuffer {
         std::vector<uint8_t> alternateBuffer;   
         unsigned delay = 0;
         bool blinkingCursor = false;
-        std::function<void ( )> callback = nullptr;        
+        std::function<void ( )> callback = nullptr;
+        std::function<void ( )> waitCallback = nullptr;
         
         unsigned position = 0;
     };
@@ -148,7 +149,7 @@ struct KeyBuffer {
                 
                 if (!action.delay)
                     break;
-                
+
                 if (++action.position != action.delay )
                     return;
                                                         
@@ -175,27 +176,25 @@ struct KeyBuffer {
                     return;
                 }
                 
-                if ((action.position & 7) != 0)
-                    // don't check each frame
-                    return;
-                
                 result = checkFor( action.buffer, action.blinkingCursor );                
                 
                 if ( result == Found::No ) {
                     
                     if (action.alternateBuffer.size() != 0) {
                         
-                        if ( checkFor( action.alternateBuffer, false ) == Found::Yes ) {
+                        if ( checkFor( action.alternateBuffer, false ) == Found::Yes )
                             return;
-                        }
                     }
                     
-                    // don't do any further actions                    
+                    // don't do any further actions
+                    system->interface->autoStartFinish(true);
                     reset();
                     return;
                     
                 } else if ( result == Found::NotYet ) {
-                    // wait some more time               
+                    // wait some more time
+                    if (action.waitCallback)
+                        action.waitCallback();
                     return;
                 }
                 // result == Yes

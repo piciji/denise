@@ -407,17 +407,17 @@ auto M6510::process() -> void {
 	PULL						\
 	SET_STATUS( dataBus )		\
 	PULL						\
-	pc = dataBus;				\
+	zeroPage = dataBus;				\
 	PULL_LAST					\
-	pc |= dataBus << 8;
+	pc = (dataBus << 8) | zeroPage;
 
 #define RTS	\
 	READ_PC_INC					\
 	READ( 0x100 | regS )		\
 	PULL						\
-	pc = dataBus;				\
+	zeroPage = dataBus;			\
 	PULL						\
-	pc |= dataBus << 8;			\
+	pc = (dataBus << 8) | zeroPage;			\
 	READ_PC_INC_LAST
 	
 #define CLC				\
@@ -475,9 +475,9 @@ auto M6510::process() -> void {
 	READ_PC_INC			\
 	absolute |= dataBus << 8;	\
 	READ( absolute )	\
-	pc = dataBus;	\
+	zeroPage = dataBus;	\
 	READ_LAST( (absolute & 0xff00) | ((absolute + 1) & 0xff ) )	\
-	pc |= dataBus << 8;
+	pc = (dataBus << 8) | zeroPage;
 	
 #define KILL				\
 	READ_PC_INC				\

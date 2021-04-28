@@ -36,6 +36,7 @@ auto Tape::serialize(Emulator::Serializer& s) -> void {
 
     if (s.mode() == Emulator::Serializer::Mode::Load) {
         updateDeviceState();
+        autoStarted = false;
     }
 }
 

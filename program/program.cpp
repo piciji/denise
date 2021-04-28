@@ -588,9 +588,21 @@ auto Program::questionToWrite(Emulator::Interface::Media* media) -> bool {
     return view->questionToWrite(media);
 }
 
+auto Program::autoStartFinish(bool soft) -> void {
+    if (!activeEmulator || !autoWarp.enable || !autoWarp.active)
+        return;
+
+    if (soft && autoWarp.motorControlled)
+        return;
+
+    autoWarp.active = false;
+
+    fastForward( false );
+}
+
 auto Program::informDriveLoading(bool state) -> void {
 
-    if (!activeEmulator || !autoWarp.enable)
+    if (!activeEmulator || !autoWarp.enable || !autoWarp.motorControlled)
         return;
 
     if (autoWarp.active == state)
@@ -601,7 +613,7 @@ auto Program::informDriveLoading(bool state) -> void {
     fastForward( autoWarp.active, autoWarp.aggressive );
 }
 
-auto Program::initAutoWarp() -> void {
+auto Program::initAutoWarp(Emulator::Interface::MediaGroup* mediaGroup) -> void {
     if (!activeEmulator)
         return;
 
@@ -611,8 +623,14 @@ auto Program::initAutoWarp() -> void {
     autoWarp.aggressive = _autoWarp == 2;
     autoWarp.active = true;
 
-    if (autoWarp.enable)
-        fastForward( autoWarp.active, autoWarp.aggressive );
+    if (autoWarp.enable) {
+        if (mediaGroup->isDisk())
+            autoWarp.motorControlled = program->getSettings( activeEmulator )->get<bool>("auto_warp_disk_motor", false);
+        else
+            autoWarp.motorControlled = program->getSettings( activeEmulator )->get<bool>("auto_warp_tape_motor", true);
+
+        fastForward(autoWarp.active, autoWarp.aggressive);
+    }
 }
 
 auto Program::getLastUsedEmu() -> Emulator::Interface* {

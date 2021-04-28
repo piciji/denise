@@ -54,6 +54,7 @@ auto Drive1541::serialize(Emulator::Serializer& s) -> void {
         gcrTrack = structure1541.getTrackPtr( currentHalftrack );
         // unserialize VIA before to get state of LED
         updateDeviceState();
+        structure1541.autoStarted = false;
     }
        
     structure1541.serialize( s, written );    

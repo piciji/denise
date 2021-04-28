@@ -169,8 +169,8 @@ auto Autoloader::postProcessing() -> void {
 
 			view->setFocused(300);
 
-			if (!cmd->debug && mediaGroup->isTape()) {
-                program->initAutoWarp();
+			if (!cmd->debug && (mediaGroup->isTape() || mediaGroup->isDisk()) ) {
+                program->initAutoWarp(mediaGroup);
 			}
 		}
     }

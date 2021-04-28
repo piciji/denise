@@ -64,6 +64,8 @@ auto States::load( std::string path, bool prependFolder ) -> void {
     InputManager::resetJit();
     
     forcePowerNextLoad = false;
+
+    program->autoWarp.enable = false;
 }
 
 auto States::save( std::string path, bool prependFolder ) -> void {

@@ -52,6 +52,7 @@ struct Program : Emulator::Interface::Bind {
 	struct {
 	    bool enable = false;
         bool active = false;
+        bool motorControlled = false;
 	    bool aggressive = false;
 	} autoWarp;
 
@@ -92,6 +93,7 @@ struct Program : Emulator::Interface::Bind {
     auto exit(int code) -> void override;
 	auto getFileNameFromMedia(Emulator::Interface::Media* media) -> std::string override;
     auto informDriveLoading(bool state) -> void override;
+    auto autoStartFinish(bool soft) -> void;
 
     auto loadImageDataWhenOk( GUIKIT::File* file, unsigned fileId, Emulator::Interface::MediaGroup* group, uint8_t*& data ) -> bool;
     auto showOpenError( std::vector<std::string>& paths, bool warning = false ) -> void;
@@ -105,7 +107,7 @@ struct Program : Emulator::Interface::Bind {
 	auto getEmulator( std::string ident ) -> Emulator::Interface*;
     auto removeExpansion( bool bootableOnly = true ) -> void;
     auto prepareSocket(Emulator::Interface::Media* media, Emulator::Interface* emulator, std::string address) -> void;
-    auto initAutoWarp() -> void;
+    auto initAutoWarp(Emulator::Interface::MediaGroup* mediaGroup) -> void;
     
     //audio
     auto initAudio() -> void;

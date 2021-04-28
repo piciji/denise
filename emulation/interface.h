@@ -303,6 +303,7 @@ struct Interface {
         virtual auto midScreenCallback( ) -> void {}
         virtual auto questionToWrite(Media* media) -> bool { return false; }
         virtual auto informDriveLoading(bool state) -> void {}
+        virtual auto autoStartFinish(bool soft) -> void {}
     };
     Bind* bind = nullptr;
 
@@ -373,6 +374,10 @@ struct Interface {
 
     auto informDriveLoading(bool state) -> void {
         bind->informDriveLoading( state );
+    }
+
+    auto autoStartFinish(bool soft) -> void {
+        bind->autoStartFinish(soft);
     }
 
     template<typename T> auto log(T data, bool newLine = true, bool asHex = false) -> void {			

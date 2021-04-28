@@ -64,9 +64,9 @@ auto M6510::resetRoutine() -> void {
 	READ( 0x100 | regS-- )
 		
 	READ( 0xfffc )
-	pc = dataBus;
+	uint8_t result = dataBus;
 	READ( 0xfffd )
-	pc |= dataBus << 8;
+	pc = (dataBus << 8) | result;
 	SET_FLAG_I( 1 )
 	
 	callResetRoutine = false;
@@ -103,13 +103,13 @@ template<bool software> inline auto M6510::interrupt() -> void {
 	
 	READ( vector )
 	
-	pc = dataBus;
+	uint8_t result = dataBus;
 	
 	SET_FLAG_I( 1 )
 
 	READ( vector + 1 )
 		
-	pc |= dataBus << 8;
+	pc = (dataBus << 8) | result;
 	
 	/**	 
 	 * no interrupt polling at the end of this service routine (software break too)
@@ -334,3 +334,4 @@ auto M6510::serialize(Emulator::Serializer& s) -> void {
 }
 
 }
+

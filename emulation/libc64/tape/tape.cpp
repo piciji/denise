@@ -27,8 +27,8 @@ Tape::Tape( Emulator::Interface::Media* mediaConnected ) {
         motorIn = false;
         updateCounter();
         updateDeviceState();
-        if (counter >= 10)
-            system->interface->informDriveLoading(false);
+        if (autoStarted && (counter >= 10))
+            system->interface->informDriveLoading( false );
     };
 	
     worker = [this]() {
@@ -94,6 +94,7 @@ Tape::Tape( Emulator::Interface::Media* mediaConnected ) {
 
 	enabled = false;
     loaded = false;
+    autoStarted = false;
     cylcesPerSecond = 0;
 	reset();
     
@@ -123,7 +124,8 @@ auto Tape::setMotorIn( bool state ) -> void {
         if (!motorIn) {
             motorIn = true;
             updateDeviceState();
-            system->interface->informDriveLoading(true);
+            if (autoStarted)
+                system->interface->informDriveLoading( true );
             
             if (!sysTimer.has( &worker ))
                 sysTimer.add( &worker, TAPE_MOTOR_DELAY );
@@ -219,6 +221,7 @@ auto Tape::reset() -> void {
 	nextMode = Mode::Stop;
 	writeBit = true;	
 	gapsRemaining = nextGap();
+    autoStarted = false;
 }
 
 auto Tape::load(Emulator::Interface::Media* media, uint8_t* data, unsigned size) -> void {		
@@ -261,6 +264,7 @@ auto Tape::unload() -> void {
 	this->data = 0;
 	loaded = false;
 	motorIn = false;
+	autoStarted = false;
     writeQuestionState = 0;
 	gapsRemaining = 0;
 }
@@ -319,24 +323,32 @@ auto Tape::selectListing( unsigned pos ) -> void {
         this->setMode( Tape::Mode::Play, true );
 	};
     system->keyBuffer->add( action );
-    
 
     action.callbackId = 0;
-    
+
     action.mode = KeyBuffer::Mode::WaitFor;
     action.buffer = {'R', 'E', 'A', 'D', 'Y', '.'};
     action.delay = 800;
     action.alternateBuffer.clear();
     action.blinkingCursor = true;
-    action.callback = [this]() {
-        system->interface->informDriveLoading(false);
+    action.callback = nullptr;
+    action.waitCallback = [this]() {
+        if (system->checkForAutoStarter()) {
+            system->keyBuffer->reset();
+            system->interface->autoStartFinish(true);
+        }
     };
     system->keyBuffer->add(action);
 
-    action.callback = nullptr;
+    action.callback = [this]() {
+        system->interface->autoStartFinish(false);
+    };
+    action.waitCallback = nullptr;
     action.mode = KeyBuffer::Mode::Input;
     action.buffer = {'R', 'U', 'N', '\r'};    
-    system->keyBuffer->add(action);    
+    system->keyBuffer->add(action);
+
+    autoStarted = true;
 }
 
 }
