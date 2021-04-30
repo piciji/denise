@@ -65,7 +65,7 @@ auto States::load( std::string path, bool prependFolder ) -> void {
     
     forcePowerNextLoad = false;
 
-    program->autoWarp.enable = false;
+    program->warp.enableAutoWarp = false;
 }
 
 auto States::save( std::string path, bool prependFolder ) -> void {

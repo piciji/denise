@@ -152,6 +152,8 @@ auto System::serialize(Emulator::Serializer& s) -> void {
     s.integer( rdyIncomming );   
     s.integer( kernalBootComplete );    
     s.integer( requestedSids );
+    s.integer( observer.memoryAccesses );
+    s.integer( observer.enterRom );
     keyBuffer->serialize( s );    
     prgInUse->serialize( s );
     glueLogic->serialize( s );

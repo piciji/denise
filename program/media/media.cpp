@@ -608,6 +608,9 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
                 EmuConfigView::TabWindow::getView(emulator)->configurationsLayout->updateSaveIdent(fSetting->file);            
             
             view->setFocused(300);
+
+            if (layout->mediaGroup->isTape() || layout->mediaGroup->isDisk())
+                program->initAutoWarp(layout->mediaGroup);
         };
 
         layout->inject.onActivate = [this, layout]() {

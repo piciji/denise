@@ -20,8 +20,8 @@ WarpLayout::WarpLayout() {
     append(off, {0u, 0u}, 10 );
     append(normal, {0u, 0u}, 10 );
     append(aggressive, {0u, 0u}, 25 );
-    append(diskMotorControlled, {0u, 0u}, 10 );
-    append(tapeMotorControlled, {0u, 0u} );
+    append(diskFirstFile, {0u, 0u}, 10 );
+    append(tapeFirstFile, {0u, 0u} );
 
     GUIKIT::RadioBox::setGroup( off, normal, aggressive );
 
@@ -64,14 +64,14 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) {
         _settings->set<unsigned>( "auto_warp", 2);
     };
 
-    warpLayout.diskMotorControlled.onToggle = [this]() {
+    warpLayout.diskFirstFile.onToggle = [this]() {
 
-        _settings->set<bool>( "auto_warp_disk_motor", warpLayout.diskMotorControlled.checked());
+        _settings->set<bool>( "auto_warp_disk_first_file", warpLayout.diskFirstFile.checked());
     };
 
-    warpLayout.tapeMotorControlled.onToggle = [this]() {
+    warpLayout.tapeFirstFile.onToggle = [this]() {
 
-        _settings->set<bool>( "auto_warp_tape_motor", warpLayout.tapeMotorControlled.checked());
+        _settings->set<bool>( "auto_warp_tape_first_file", warpLayout.tapeFirstFile.checked());
     };
 
     runAheadLayout.control.slider.onChange = [this]() {
@@ -137,8 +137,8 @@ auto MiscLayout::translate() -> void {
     warpLayout.normal.setText( trans->get("normal") );
     warpLayout.off.setText( trans->get("off") );
 
-    warpLayout.diskMotorControlled.setText( trans->get("disk warp motor controlled") );
-    warpLayout.tapeMotorControlled.setText( trans->get("tape warp motor controlled") );
+    warpLayout.diskFirstFile.setText( trans->get("disk warp first file") );
+    warpLayout.tapeFirstFile.setText( trans->get("tape warp first file") );
 }
 
 auto MiscLayout::loadSettings() -> void {
@@ -152,9 +152,9 @@ auto MiscLayout::loadSettings() -> void {
     else if (autoWarp == 2)
         warpLayout.aggressive.setChecked();
 
-    warpLayout.diskMotorControlled.setChecked( _settings->get<bool>( "auto_warp_disk_motor", false) );
+    warpLayout.diskFirstFile.setChecked( _settings->get<bool>( "auto_warp_disk_first_file", true) );
 
-    warpLayout.tapeMotorControlled.setChecked( _settings->get<bool>( "auto_warp_tape_motor", true) );
+    warpLayout.tapeFirstFile.setChecked( _settings->get<bool>( "auto_warp_tape_first_file", false) );
 
     setRunAheadPerformance( _settings->get<bool>( "runahead_performance", false) );
     

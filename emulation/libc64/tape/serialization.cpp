@@ -33,10 +33,10 @@ auto Tape::serialize(Emulator::Serializer& s) -> void {
     s.integer( pos );
     s.integer( writeProtect );
     s.integer( writeQuestionState );
+    s.integer( autoStarted );
 
     if (s.mode() == Emulator::Serializer::Mode::Load) {
         updateDeviceState();
-        autoStarted = false;
     }
 }
 

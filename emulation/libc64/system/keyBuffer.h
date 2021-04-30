@@ -107,6 +107,18 @@ struct KeyBuffer {
                     
                 else if (action.callbackId == 3)
                     action.callback = []() { tape->setMode( Tape::Mode::Play ); };
+
+                else if (action.callbackId == 4)
+                    action.waitCallback = []() {
+                        if (system->checkForAutoStarter()) {
+                            system->keyBuffer->reset();
+                            system->interface->autoStartFinish(true);
+                        } };
+
+                else if (action.callbackId == 5)
+                    action.callback = [this]() {
+                        system->interface->autoStartFinish(false);
+                    };
                 
                 queue.push_back( action );
 

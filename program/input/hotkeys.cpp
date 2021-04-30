@@ -20,8 +20,10 @@ auto InputManager::setHotkeys() -> void {
     hotkeys.push_back( {Hotkey::Id::RunAheadToggleMode, "runahead toggle mode"} );	
     
     hotkeys.push_back( {Hotkey::Id::ToggleRenderer, "Toggle renderer"} );	
-    hotkeys.push_back( {Hotkey::Id::AudioRecord, "audio record"} );	
-    
+    hotkeys.push_back( {Hotkey::Id::AudioRecord, "audio record"} );
+
+    hotkeys.push_back( {Hotkey::Id::Freeze, "freeze button"} );
+
     hotkeys.push_back( {Hotkey::Id::FloppyAccess, "select_disk_drive"} );
     hotkeys.push_back( {Hotkey::Id::DiskSwap0, "Disk_swapper_call0"} );
     hotkeys.push_back( {Hotkey::Id::DiskSwap1, "Disk_swapper_call1"} );
@@ -164,12 +166,13 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             if (!activeEmulator)
                 break;
 
-            // overide auto warp
-            program->autoWarp.enable = false;
-            
-            bool ff = globalSettings->get<bool>("fast_forward", false);
-            bool ffa = globalSettings->get<bool>("fast_forward_aggressive", false);   
+            bool ff = program->warp.active && !program->warp.aggressive;
+            bool ffa = program->warp.active && program->warp.aggressive;
             bool aggressive = id == Hotkey::Id::ToggleFastForwardAggressive;
+
+            if ( (!ff && !ffa) || (ff && !aggressive) || (ffa && aggressive) )
+                if (program->warp.motorControlled)
+                    program->warp.enableAutoWarp = false;
 
             if ( (!aggressive && ffa) || (aggressive && ff) ) {
                 // switch modes (already active)
@@ -178,9 +181,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
                     val |= (unsigned)Emulator::Interface::FastForward::NoVideoSequencer;
 
                 activeEmulator->fastForward( val );
-                globalSettings->set<bool>("fast_forward_aggressive", aggressive, false);
-                globalSettings->set<bool>("fast_forward", !aggressive, false);
-                
+                program->warp.aggressive = aggressive;
             } else                
                 program->fastForward( !ff && !ffa, id == Hotkey::Id::ToggleFastForwardAggressive);
                   
@@ -358,6 +359,11 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             statusHandler->setMessage( trans->get("access_floppy", {{"%drive%", media->name}}) );								                    
             break;
         }
+
+        case Hotkey::Freeze:
+            if (activeEmulator)
+                activeEmulator->freezeButton();
+            break;
 
         case Hotkey::EF3Menu:
             if (activeEmulator)

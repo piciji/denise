@@ -17,8 +17,8 @@ struct WarpLayout : GUIKIT::FramedHorizontalLayout {
     GUIKIT::RadioBox off;
     GUIKIT::RadioBox normal;
     GUIKIT::RadioBox aggressive;
-    GUIKIT::CheckBox diskMotorControlled;
-    GUIKIT::CheckBox tapeMotorControlled;
+    GUIKIT::CheckBox diskFirstFile;
+    GUIKIT::CheckBox tapeFirstFile;
 
     WarpLayout();
 };

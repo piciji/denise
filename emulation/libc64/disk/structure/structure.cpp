@@ -372,7 +372,8 @@ auto Structure1541::selectListing(  unsigned pos ) -> void {
     action.alternateBuffer = {'S', 'E', 'A', 'R', 'C', 'H', 'I', 'N', 'G'};  
     action.blinkingCursor = false;
     system->keyBuffer->add( action );
-    
+
+    action.callbackId = 4;
     action.mode = KeyBuffer::Mode::WaitFor;
     action.buffer = {'R', 'E', 'A', 'D', 'Y', '.'};  
     action.delay = 180;    
@@ -386,6 +387,7 @@ auto Structure1541::selectListing(  unsigned pos ) -> void {
     };
     system->keyBuffer->add( action );
 
+    action.callbackId = 5;
     action.waitCallback = nullptr;
     action.callback = [this]() {
         system->interface->autoStartFinish(false);
@@ -508,7 +510,9 @@ auto Structure1541::storeWrittenTracks() -> void {
 
 auto Structure1541::serialize(Emulator::Serializer& s, bool written) -> void {
     // serialize structure only, if at least one bit was written
-    
+
+    s.integer( autoStarted );
+
     s.integer( rawSize );
     
     s.integer( tracks );

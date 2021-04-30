@@ -397,7 +397,7 @@ auto Program::powerOff() -> void {
 		InputManager::urgentUpdate = true;
 		InputManager::resetJit();
 	}
-    autoWarp.enable = false;
+    warp.enableAutoWarp = false;
 }
 
 auto Program::loopNoGui() -> void {
@@ -589,28 +589,24 @@ auto Program::questionToWrite(Emulator::Interface::Media* media) -> bool {
 }
 
 auto Program::autoStartFinish(bool soft) -> void {
-    if (!activeEmulator || !autoWarp.enable || !autoWarp.active)
+    if (!activeEmulator || !warp.enableAutoWarp || !warp.active)
         return;
 
-    if (soft && autoWarp.motorControlled)
+    if (soft && warp.motorControlled)
         return;
-
-    autoWarp.active = false;
 
     fastForward( false );
 }
 
 auto Program::informDriveLoading(bool state) -> void {
 
-    if (!activeEmulator || !autoWarp.enable || !autoWarp.motorControlled)
+    if (!activeEmulator || !warp.enableAutoWarp || !warp.motorControlled)
         return;
 
-    if (autoWarp.active == state)
+    if (warp.active == state)
         return;
 
-    autoWarp.active = state;
-
-    fastForward( autoWarp.active, autoWarp.aggressive );
+    fastForward( state, warp.aggressive );
 }
 
 auto Program::initAutoWarp(Emulator::Interface::MediaGroup* mediaGroup) -> void {
@@ -619,17 +615,15 @@ auto Program::initAutoWarp(Emulator::Interface::MediaGroup* mediaGroup) -> void 
 
     unsigned _autoWarp = program->getSettings( activeEmulator )->get<unsigned>("auto_warp", 0);
 
-    autoWarp.enable = _autoWarp != 0;
-    autoWarp.aggressive = _autoWarp == 2;
-    autoWarp.active = true;
+    warp.enableAutoWarp = _autoWarp != 0;
 
-    if (autoWarp.enable) {
+    if (warp.enableAutoWarp) {
         if (mediaGroup->isDisk())
-            autoWarp.motorControlled = program->getSettings( activeEmulator )->get<bool>("auto_warp_disk_motor", false);
+            warp.motorControlled = !program->getSettings( activeEmulator )->get<bool>("auto_warp_disk_first_file", true);
         else
-            autoWarp.motorControlled = program->getSettings( activeEmulator )->get<bool>("auto_warp_tape_motor", true);
+            warp.motorControlled = !program->getSettings( activeEmulator )->get<bool>("auto_warp_tape_first_file", false);
 
-        fastForward(autoWarp.active, autoWarp.aggressive);
+        fastForward(true, _autoWarp == 2);
     }
 }
 

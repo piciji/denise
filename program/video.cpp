@@ -188,11 +188,6 @@ auto Program::fastForward( bool activate, bool aggressive ) -> void {
         if (aggressive)
             forward |= (unsigned)Emulator::Interface::FastForward::NoVideoSequencer;
 
-        if (aggressive)
-            globalSettings->set<bool>("fast_forward_aggressive", activate, false);
-        else
-            globalSettings->set<bool>("fast_forward", activate, false);
-
     } else {
         auto vSyncTemp = globalSettings->get<bool>("video_sync_temp", false);
         auto fpsLimitTemp = globalSettings->get<bool>("fps_limit_temp", false);
@@ -214,9 +209,11 @@ auto Program::fastForward( bool activate, bool aggressive ) -> void {
         globalSettings->set<bool>("video_sync_temp", false, false);
         globalSettings->set<bool>("fps_limit_temp", false, false);
         globalSettings->set<unsigned>("video_crt_temp", (unsigned)VideoManager::CrtMode::None, false);
-        globalSettings->set<bool>("fast_forward_aggressive", false, false);
-        globalSettings->set<bool>("fast_forward", false, false);
     }
+
+    if (activate)
+        warp.aggressive = aggressive;
+    warp.active = activate;
 
     activeEmulator->fastForward( forward );
 	

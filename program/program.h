@@ -50,11 +50,12 @@ struct Program : Emulator::Interface::Bind {
 	unsigned loopFrames = 0;
 
 	struct {
-	    bool enable = false;
         bool active = false;
+        bool aggressive = false;
+        // auto Warp
+        bool enableAutoWarp = false;
         bool motorControlled = false;
-	    bool aggressive = false;
-	} autoWarp;
+	} warp;
 
     auto quit() -> void;
     auto loop() -> void;

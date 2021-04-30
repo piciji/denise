@@ -584,6 +584,7 @@ auto System::power( bool softReset ) -> void {
 
 
 	} else {
+        action.callbackId = 1;
         action.callback = [this]() { kernalBootComplete = true; };
         system->keyBuffer->add( action, false );
     }

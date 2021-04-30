@@ -324,8 +324,7 @@ auto Tape::selectListing( unsigned pos ) -> void {
 	};
     system->keyBuffer->add( action );
 
-    action.callbackId = 0;
-
+    action.callbackId = 4;
     action.mode = KeyBuffer::Mode::WaitFor;
     action.buffer = {'R', 'E', 'A', 'D', 'Y', '.'};
     action.delay = 800;
@@ -340,6 +339,7 @@ auto Tape::selectListing( unsigned pos ) -> void {
     };
     system->keyBuffer->add(action);
 
+    action.callbackId = 5;
     action.callback = [this]() {
         system->interface->autoStartFinish(false);
     };
