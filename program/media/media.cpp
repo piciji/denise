@@ -1831,8 +1831,9 @@ auto MediaLayout::loadSettings() -> void {
         auto pathBlock = pathsLayout.getBlock( mediaGroup );
         
         auto settingFolderIdent = _underscore(mediaGroup->name) + "_folder";
-        
-        pathBlock->edit.setText( settings->get<std::string>(settingFolderIdent, "") );
+
+        if (pathBlock)
+            pathBlock->edit.setText( settings->get<std::string>(settingFolderIdent, "") );
                 
         if (mediaGroup->isDisk())
             layout->updateVisibility(settings->get<unsigned>( _underscore(mediaGroup->name) + "_count", mediaGroup->defaultUsage() ), true );
