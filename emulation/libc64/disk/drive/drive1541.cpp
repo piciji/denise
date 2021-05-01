@@ -175,7 +175,7 @@ Drive1541::Drive1541(uint8_t number, Emulator::Interface::Media* mediaConnected 
                 }
 
                 if (structure1541.autoStarted)
-                    system->interface->informDriveLoading(_loadingState);
+                    system->motorChange( _loadingState );
             }
             
             // LED status change
@@ -239,7 +239,7 @@ auto Drive1541::updateIdleDeviceState() -> void {
     system->interface->updateDeviceState( getMediaConnected(), !readMode, currentHalftrack + 2, false, true );
 
     if (structure1541.autoStarted)
-        system->interface->informDriveLoading(false);
+        system->motorChange( false );
 }
 
 auto Drive1541::updateBus() -> void {

@@ -41,6 +41,8 @@ VicIIFast::VicIIFast() : VicIIBase() {
     Emulator::setThreadPriorityRealtime( worker );
     
     worker.detach();
+
+    std::fill_n(drawSprites, VIC_MAX_LINE_LENGTH << 1, nullptr);
 }
 
 auto VicIIFast::power() -> void {

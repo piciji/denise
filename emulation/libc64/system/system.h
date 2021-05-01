@@ -139,6 +139,8 @@ struct System {
     struct {
         bool enterRom = false;
         uint8_t memoryAccesses = 0;
+        bool motorChange = false;
+        bool motor;
     } observer;
     
     #include "testbench.h"
@@ -195,6 +197,8 @@ struct System {
     auto runAheadInProgress() -> bool { return runAhead.frames != 0; }
 
     auto checkForAutoStarter() -> bool;
+    auto motorChange(bool state) -> void;
+    auto informAboutMotorChange() -> void;
 };
 
 extern System* system;

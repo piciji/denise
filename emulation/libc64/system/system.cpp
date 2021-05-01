@@ -790,7 +790,7 @@ auto System::videoRefresh( uint8_t* frame, unsigned width, unsigned height, unsi
 
 	if (diskSilence.active) {
 		if (!diskSilence.idle) {
-			if (++diskSilence.idleFrames > 120) {
+			if (++diskSilence.idleFrames > 200) {
 				diskSilence.idle = true;
 				diskSilence.idleFrames = 0;
 				iecBus->resetDriveState();
@@ -828,6 +828,9 @@ auto System::videoRefresh( uint8_t* frame, unsigned width, unsigned height, unsi
 
 	if ( keyBuffer->hasJobs )
 		keyBuffer->process();
+
+	if (observer.motorChange)
+	    informAboutMotorChange();
 }
 
 auto System::setVicIrq( bool state ) -> void {
@@ -891,6 +894,16 @@ auto System::checkForAutoStarter() -> bool {
     }
 
     return false;
+}
+
+auto System::motorChange(bool state) -> void {
+    observer.motorChange = true;
+    observer.motor = state;
+}
+
+auto System::informAboutMotorChange() -> void {
+    observer.motorChange = false;
+    interface->informDriveLoading( observer.motor );
 }
 
 }

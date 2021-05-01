@@ -28,7 +28,7 @@ Tape::Tape( Emulator::Interface::Media* mediaConnected ) {
         updateCounter();
         updateDeviceState();
         if (autoStarted && (counter >= 10))
-            system->interface->informDriveLoading( false );
+            system->motorChange( false );
     };
 	
     worker = [this]() {
@@ -125,7 +125,7 @@ auto Tape::setMotorIn( bool state ) -> void {
             motorIn = true;
             updateDeviceState();
             if (autoStarted)
-                system->interface->informDriveLoading( true );
+                system->motorChange( true );
             
             if (!sysTimer.has( &worker ))
                 sysTimer.add( &worker, TAPE_MOTOR_DELAY );
