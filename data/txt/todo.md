@@ -9,11 +9,10 @@
     * CMD Ramlink + HD
     * all the others
 * disk
-    * Quickload (inject initial file in memory)
+    * Virtual Device Traps
     * P64 support
     * drive sounds
     * support command line start of disk listings instead of Load "*"
-    * load PRG files from disk as simple RAM insertion for reduced loading times
     * mount OS folder as D64
     * non standard floppy models: 1571, 1581
 * user port
@@ -45,7 +44,7 @@
 * Debug monitor for developers
 * autofire with frequency and option to fire without button press
 * support each setting as command line option
-* beam racing
+* Beam Racing
 * rewind support
 * screenshots/movie recording
 * screenshots for savestates

@@ -15,7 +15,9 @@
     * only virtual IP based connections, no connections to physical COM ports
 * fix VIA Latch Bug  (thanks to enigma)
 * prepare fullscreen with custom resolution and refresh rate
-* option to auto fast forward (warp), while drive is running
+* auto fast forward (warp) on startup
+    * stop when first file was loaded
+    * or fast forward while drive (tape, floppy) is running
 
 ## 1.1.0
 * save/load additional settings files for a lot of purposes, like

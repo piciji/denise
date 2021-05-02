@@ -226,7 +226,7 @@ auto Program::prepareSocket(Emulator::Interface::Media* media, Emulator::Interfa
 }
 
 // settings
-auto Program::saveSettings() -> void {
+auto Program::saveSettings(bool onExit) -> void {
 
     bool errorShown = false;
     
@@ -242,6 +242,8 @@ auto Program::saveSettings() -> void {
             path = settings->get<std::string>("custom_settings", "");
             if (path == "")
                 path = settingsFile( emulator->ident + "_" );
+            else if (onExit)
+                continue;
             
         } else
             path = settingsFile( "global_" );

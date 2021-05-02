@@ -71,7 +71,7 @@ struct Program : Emulator::Interface::Bind {
 	auto statesFolder(Emulator::Interface* emulator) -> std::string;
 	auto appFolder() -> std::string;
     auto getSystemLangFile() -> std::string;
-    auto saveSettings() -> void;
+    auto saveSettings(bool onExit = false) -> void;
     auto loadSettings() -> void;
     auto settingsFile( std::string ident = "" ) -> std::string;
     auto getSettings( Emulator::Interface* emulator = nullptr ) -> GUIKIT::Settings*;

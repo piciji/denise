@@ -465,7 +465,7 @@ auto Program::quit() -> void {
     powerOff();
 
     if (!cmd->debug && globalSettings->get<bool>("save_settings_on_exit", true) ) {
-		saveSettings();
+		saveSettings( true );
     }
     
 	for(auto inputManager : inputManagers)

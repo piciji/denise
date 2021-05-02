@@ -264,7 +264,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         if ("" == _settings->get<std::string>("custom_settings", ""))
             return;
         
-        saveCurrentSettings();
+        //saveCurrentSettings();
         
         std::string path = program->settingsFile( this->emulator->ident + "_" );
         
@@ -286,10 +286,10 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
 
         std::string path = getSettingsFolder() + fileName;
         
-        if (path == _settings->get<std::string>("custom_settings", ""))
-            return;
+        //if (path == _settings->get<std::string>("custom_settings", ""))
+          //  return;
         
-        saveCurrentSettings();
+        //saveCurrentSettings();
         
         if (this->load( path )) {
             _settings->set<std::string>("custom_settings", path, false);
@@ -338,7 +338,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
                 return;
         }
             
-        saveCurrentSettings();
+        //saveCurrentSettings();
         
         if (_settings->save( path)) {
             mes->information( trans->get("file_creation_success", {{"%path%", path}}) );
