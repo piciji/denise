@@ -236,13 +236,20 @@ auto Acia::writeIo( uint16_t addr, uint8_t value ) -> void {
             command &= 0xe0;
             redoTx = 0;
             sysTimer.remove(&transmitter);
+            sysTimer.remove(&receiver);
             setInt(false);
             break;
         case 2: {
             command = value;
 
-            if ( !transmitterEnabled() )
+            // RTS Pin control
+            if ( !transmitterEnabled() ) {
                 sysTimer.remove(&transmitter);
+                sysTimer.remove(&receiver);
+            } else {
+                if (!sysTimer.has(&receiver))
+                    updateBaudGenerator();
+            }
 
             if (command & 1) {
 
@@ -253,7 +260,8 @@ auto Acia::writeIo( uint16_t addr, uint8_t value ) -> void {
                     else
                         connectionLock = true; // clear after UI is refreshed
 
-                    updateBaudGenerator();
+                    if (!sysTimer.has(&receiver))
+                        updateBaudGenerator();
                 }
 
                 updateDTR( true );
