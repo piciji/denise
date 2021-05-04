@@ -697,6 +697,9 @@ auto System::run() -> void {
 
         unserializeLight();  
     }
+
+    if (observer.motorChange)
+        informAboutMotorChange();
     
     checkDebugCart();
 }
@@ -828,9 +831,6 @@ auto System::videoRefresh( uint8_t* frame, unsigned width, unsigned height, unsi
 
 	if ( keyBuffer->hasJobs )
 		keyBuffer->process();
-
-	if (observer.motorChange)
-	    informAboutMotorChange();
 }
 
 auto System::setVicIrq( bool state ) -> void {
