@@ -33,7 +33,7 @@ struct Tape {
 	auto setMotorIn( bool state ) -> void;
 	auto load(Emulator::Interface::Media* media, uint8_t* data, unsigned size) -> void;
     auto unload() -> void;
-	auto reset() -> void;
+	auto reset(bool fromLoad = false) -> void;
 	auto setWriteProtect(bool state) -> void;
     auto isWriteProtected() -> bool;
 	auto setCyclesPerSecond( unsigned value ) -> void;	

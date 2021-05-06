@@ -27,7 +27,7 @@ Tape::Tape( Emulator::Interface::Media* mediaConnected ) {
         motorIn = false;
         updateCounter();
         updateDeviceState();
-        if (autoStarted && (counter >= 10))
+        if (autoStarted && (counter >= 15))
             system->motorChange( false );
     };
 	
@@ -47,8 +47,10 @@ Tape::Tape( Emulator::Interface::Media* mediaConnected ) {
             // gap cycles till next flux transition
             gapsRemaining = nextGap();
 
-            if (gapsRemaining == 0)
-				setMode( Mode::Stop ); //end of tape or completely rewinded
+            if (gapsRemaining == 0) {
+                setMode(Mode::Stop); //end of tape or completely rewinded
+                system->motorChange( false );
+            }
         }
 		
 		unsigned gaps;
@@ -205,7 +207,7 @@ auto Tape::setMode( unsigned mode, bool buttonPress ) -> void {
 	updateCounter();
 }
 
-auto Tape::reset() -> void {
+auto Tape::reset(bool fromLoad) -> void {
     writeQuestionState = 0;
     counter = 0;
 	counterOffset = 0;
@@ -221,7 +223,9 @@ auto Tape::reset() -> void {
 	nextMode = Mode::Stop;
 	writeBit = true;	
 	gapsRemaining = nextGap();
-    autoStarted = false;
+
+	if (!fromLoad)
+        autoStarted = false;
 }
 
 auto Tape::load(Emulator::Interface::Media* media, uint8_t* data, unsigned size) -> void {		
@@ -253,7 +257,7 @@ auto Tape::load(Emulator::Interface::Media* media, uint8_t* data, unsigned size)
 		cyclesTotal += gaps;
 	}			
 	
-	reset();
+	reset(true);
 }
 
 auto Tape::unload() -> void {
@@ -264,7 +268,6 @@ auto Tape::unload() -> void {
 	this->data = 0;
 	loaded = false;
 	motorIn = false;
-	autoStarted = false;
     writeQuestionState = 0;
 	gapsRemaining = 0;
 }

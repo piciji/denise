@@ -434,7 +434,7 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
                         layout->listings.reset();
                 }                
 				
-				if (mediaGroup->isTape())
+				if (activeEmulator && mediaGroup->isTape())
 					view->updateTapeIcons();
                 
 				filePool->assign( _ident(emulator, media->name + "store"), nullptr);
@@ -1158,7 +1158,7 @@ auto MediaLayout::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* fil
         layout->updateListing(block);
     }
 
-    if (mediaGroup->isTape())
+    if (activeEmulator && mediaGroup->isTape())
         view->updateTapeIcons();
     
     if (mediaGroup->selected && !media->secondary && !block->header.inUse.checked() ) {
