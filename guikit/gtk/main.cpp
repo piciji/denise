@@ -54,6 +54,7 @@ auto pApplication::quit() -> void {
 }
 
 auto pApplication::initialize() -> void {
+    gdk_set_allowed_backends("x11");
     gtk_init(nullptr, nullptr);
 }  
 
