@@ -89,7 +89,7 @@ auto pBrowserWindow::file(bool save) -> std::string {
         
         if (save) {
             panel = [NSSavePanel savePanel];
-            if(!state.title.empty()) [panel setTitle:[NSString stringWithUTF8String:state.title.c_str()]];
+            if(!state.title.empty()) [panel setMessage:[NSString stringWithUTF8String:state.title.c_str()]];
             [panel setDirectoryURL:url];
 
         } else {
@@ -142,12 +142,13 @@ auto pBrowserWindow::file(bool save) -> std::string {
             return "";
         }
         
-        NSArray* paths = nil;
-        if([panel runModal] == NSOKButton)
-            paths = [panel filenames];
-
-        if( (paths != nil) && ([paths count] > 0)) {
-            const char* name = [[paths objectAtIndex:0] UTF8String];
+        NSString* path = nil;
+        if([panel runModal] == NSFileHandlingPanelOKButton) {
+            path = [panel filename];
+        }
+        
+        if(path != nil) {
+            const char* name = [path UTF8String];
             if(name) result = name;
         }
     }
@@ -316,12 +317,12 @@ auto pBrowserWindow::detached() -> bool {
     
 auto pBrowserWindow::visible() -> bool {
     
-    if (!panel)
+    if (panel == nil)
         return false;
     
-    @autoreleasepool {
+   // @autoreleasepool {
         return [panel isVisible] == YES;
-    }
+   // }
 }
     
 pBrowserWindow::pBrowserWindow(BrowserWindow& browserWindow)
