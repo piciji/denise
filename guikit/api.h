@@ -1199,7 +1199,7 @@ struct File {
         Item* parent = nullptr;
         std::vector<Item*> childs;
     };
-    enum class Mode { Read, Write, Update };
+    enum class Mode { Read, Write, Update, Append };
     enum class Type { Default, Zip, TarGz, Gzip, Tar };
 
     //overall file access, compressed archives are not considered
@@ -1208,6 +1208,7 @@ struct File {
 	auto read(uint8_t* buffer, unsigned length, unsigned offset = 0) -> unsigned;
     auto write() -> bool;
     auto write(const uint8_t* buffer, unsigned length, unsigned offset = 0) -> unsigned;
+    auto append(const uint8_t* buffer, unsigned length) -> unsigned;
     auto truncate() -> bool;
     auto getSize() const -> uint64_t { return fileInfo.size; }
     auto exists() const -> bool { return fileInfo.exists; }

@@ -10,6 +10,7 @@
 #include "../../../interface.h"
 #include "../../../tools/buffer.h"
 #include "../../../tools/serializer.h"
+#include "../../../tools/fpaq0.h"
 
 namespace LIBC64 {
 
@@ -55,6 +56,20 @@ struct Structure1541 {
         unsigned bits = 0;
         bool written = false;
     };
+
+    struct Pulse {
+    	uint32_t position;
+    	uint32_t strength;
+    	int next;
+    	int previous;
+    };
+
+    struct P64Track {
+    	int first;
+    	int last;
+    	int current;
+    	std::vector<Pulse> pulses;
+    };
     
     std::vector<Emulator::Interface::Listing> listings;
     std::vector<std::vector<uint8_t>> loader;
@@ -97,14 +112,17 @@ private:
     uint8_t tracks;
     uint8_t maxHalfTracks;
     unsigned maxTrackLength;
+    uint8_t sides;
     
     GcrTrack gcrTrack[ MAX_TRACKS_1541 * 2 ];
+    P64Track p64Tracks[2][ MAX_TRACKS_1541 * 2 + 1 ]; // up to 42.5
         
     uint8_t* errorMap;
     uint32_t errorMapSize;
         
     auto analyzeD64() -> bool;
     auto analyzeG64() -> bool;
+    auto analyzeP64() -> bool;
     
     static auto createD64( std::string diskName ) -> uint8_t*;
     static auto createG64( std::string diskName ) -> uint8_t*;
@@ -121,6 +139,7 @@ private:
         
     auto prepareG64() -> void;
     auto prepareD64() -> void;
+    auto prepareP64() -> void;
     auto getTrackOffsetG64( uint8_t halfTrack, int& error ) -> uint32_t;
         
     auto writeD64(const GcrTrack* trackPtr, unsigned track) -> bool;
@@ -133,7 +152,10 @@ private:
     static auto encodeSector(const uint8_t* src, uint8_t* target, uint8_t track, uint8_t sector, uint8_t id1, uint8_t id2, int errorCode) -> void;    
     auto decodeSector( const GcrTrack* trackPtr, uint8_t* dest, uint8_t sector ) -> int;
     auto findSync( const GcrTrack* trackPtr, unsigned& offset, unsigned size ) -> bool;
-    auto decode( const GcrTrack* trackPtr, unsigned offset, uint8_t* buffer, unsigned blockCount ) -> void;    
+    auto decode( const GcrTrack* trackPtr, unsigned offset, uint8_t* buffer, unsigned blockCount ) -> void;
+
+	inline auto decodeP64( Emulator::Fpaq0& fpaq0, std::vector<Emulator::PredictorEightBitWithPrefix>& predictors ) -> unsigned;
+	inline auto addPulse( P64Track* trackPtr, uint32_t position, uint32_t strength ) -> void;
 };
 
 }

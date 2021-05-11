@@ -4,6 +4,7 @@
 #include "../../../tools/petcii.h"
 #include "d64.cpp"
 #include "g64.cpp"
+#include "p64.cpp"
 #include "prg.cpp"
 #include "../../../tools/listing.h"
 #include "../../system/keyBuffer.h"
@@ -121,6 +122,7 @@ auto Structure1541::countSectors( uint8_t track, uint8_t sector ) -> int {
 auto Structure1541::analyze() -> bool {        
     
     type = Type::Unknown;
+    sides = 1;
     
     if (!rawData || !rawSize)
         return false;
@@ -129,9 +131,12 @@ auto Structure1541::analyze() -> bool {
         return true;
     
     if ( analyzeG64() )
-        return true;   
-	
-	created = Structure1541::createD64FromPRG( system->interface->getFileNameFromMedia(media), rawData, rawSize );
+        return true;
+
+    if ( analyzeP64() )
+        return true;
+
+    created = Structure1541::createD64FromPRG( system->interface->getFileNameFromMedia(media), rawData, rawSize );
     
 	if (created) {
 		
@@ -156,6 +161,9 @@ auto Structure1541::prepare() -> void {
             break;
         case Type::G64:
             prepareG64();
+            break;
+        case Type::P64:
+            prepareP64();
             break;
     }            
 }

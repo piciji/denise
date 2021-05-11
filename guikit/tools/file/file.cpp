@@ -109,10 +109,12 @@ auto File::open(Mode mode, bool createFolderIfNotExists) -> bool {
         case Mode::Read:    fp = _wfopen( utf16_t(filePath), L"rb"); break;
         case Mode::Write:   fp = _wfopen( utf16_t(filePath), L"wb"); break;
         case Mode::Update:  fp = _wfopen( utf16_t(filePath), L"rb+"); break;
+        case Mode::Append:  fp = _wfopen( utf16_t(filePath), L"ab"); break;
     #else
         case Mode::Read:    fp = fopen( filePath.c_str(), "rb"); break;
         case Mode::Write:   fp = fopen( filePath.c_str(), "wb"); break;
         case Mode::Update:  fp = fopen( filePath.c_str(), "rb+"); break;
+        case Mode::Append:  fp = fopen( filePath.c_str(), "ab"); break;
     #endif
     }
 
@@ -175,6 +177,16 @@ auto File::write(const uint8_t* buffer, unsigned length, unsigned offset) -> uns
     if (fseek(fp, offset, SEEK_SET))
 		return 0;
     
+    auto bytesWritten = fwrite(buffer, 1, length, fp);
+    fflush( fp );
+    dataChanged = true;
+    return bytesWritten;
+}
+
+auto File::append(const uint8_t* buffer, unsigned length) -> unsigned {
+    if (!fp || mode == Mode::Read)
+        return 0;
+
     auto bytesWritten = fwrite(buffer, 1, length, fp);
     fflush( fp );
     dataChanged = true;
