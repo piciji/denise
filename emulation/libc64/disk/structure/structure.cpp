@@ -193,7 +193,7 @@ auto Structure1541::getLogicalTrack(uint8_t _track, int offset) -> uint8_t {
 }
 
 auto Structure1541::createListing( ) -> void {
-    
+    return;
     if (!rawData || (type == Type::Unknown))
         return;
     
@@ -584,4 +584,3 @@ auto Structure1541::getTrackPtr( uint8_t halfTrack ) -> GcrTrack* {
 }
 
 }
-

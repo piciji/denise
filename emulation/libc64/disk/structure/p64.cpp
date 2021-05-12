@@ -23,6 +23,9 @@ namespace LIBC64 {
         uint32_t checkSum = Emulator::copyBufferToInt<uint32_t>( ptr );
         ptr += 4;
 
+        if ((size + 24) > rawSize)
+            return false;
+
         Emulator::CRC32 crc32( ptr, size, ~0 );
 
         if (crc32.value() != checkSum)
@@ -35,21 +38,22 @@ namespace LIBC64 {
 
     auto Structure1541::prepareP64() -> void {
 
-        std::vector<Emulator::PredictorEightBitWithPrefix> predictorPositions;
-        std::vector<Emulator::PredictorEightBitWithPrefix> predictorStrengths;
+        std::vector<Emulator::PredictorEightBitWithPrefix*> predictorPositions;
+        std::vector<Emulator::PredictorEightBitWithPrefix*> predictorStrengths;
         Emulator::PredictorOneBit predictorPositionEnable;
         Emulator::PredictorOneBit predictorStrengthEnable;
         Emulator::Fpaq0 fpaq0;
 
-        uint8_t*& ptr = rawData;
+        uint8_t* ptr = rawData;
+        uint8_t** _ptr = &ptr;
         unsigned offset = 0;
         uint32_t size = 0;
         uint32_t* pSize = &size;
         uint32_t checkSum;
 
-        fpaq0.readIn = [ptr, pSize](uint8_t*& buffer) {
+        fpaq0.readIn = [_ptr, pSize](uint8_t*& buffer) {
 
-            buffer = ptr;
+            buffer = *_ptr;
 
             return *pSize;
         };
@@ -62,17 +66,14 @@ namespace LIBC64 {
 
         sides = 1 + !!(flags & 2);
 
-        ptr += 4;
-        //uint32_t size = Emulator::copyBufferToInt<uint32_t>( ptr );
-        ptr += 4;
-        //uint32_t checkSum = Emulator::copyBufferToInt<uint32_t>( ptr );
-        ptr += 4;
+        // already checked
+        ptr += 12;
 
         offset = 24;
 
         for(unsigned i = 0; i < 4; i++) {
-            predictorPositions.push_back({});
-            predictorStrengths.push_back({});
+            predictorPositions.push_back( new Emulator::PredictorEightBitWithPrefix );
+            predictorStrengths.push_back( new Emulator::PredictorEightBitWithPrefix );
         }
 
         while(1) {
@@ -110,14 +111,14 @@ namespace LIBC64 {
 
                     P64Track* trackPtr = &p64Tracks[side][halfTrack];
                     trackPtr->pulses.clear();
+                    trackPtr->first = -1;
+                    trackPtr->last = -1;
+                    trackPtr->current = -1;
 
                     uint32_t pulses = Emulator::copyBufferToInt<uint32_t>( ptr );
                     ptr += 4;
                     size = Emulator::copyBufferToInt<uint32_t>( ptr );
                     ptr += 4;
-
-                    fpaq0.init();
-                    fpaq0.warmUp();
 
                     unsigned deltaPosition = 0;
                     unsigned strength = 0;
@@ -132,12 +133,16 @@ namespace LIBC64 {
 
                     unsigned count = 0;
 
-                    predictorPositionEnable.init();
-                    predictorStrengthEnable.init();
+                    predictorPositionEnable.init(0);
+                    predictorStrengthEnable.init(0);
+
                     for(unsigned i = 0; i < 4; i++) {
-                        predictorPositions[i].init();
-                        predictorStrengths[i].init();
+                        predictorPositions[i]->init();
+                        predictorStrengths[i]->init();
                     }
+
+                    fpaq0.init();
+                    fpaq0.warmUp();
 
                     while( count < pulses ) {
 
@@ -147,9 +152,8 @@ namespace LIBC64 {
 
                             if (!deltaPosition)
                                 break;
-
-                            position += deltaPosition;
                         }
+                        position += deltaPosition;
 
                         if ( fpaq0.decode( &predictorStrengthEnable ) )
                             strength += decodeP64( fpaq0, predictorStrengths );
@@ -165,6 +169,23 @@ namespace LIBC64 {
 
                 ptr += size;
 
+            }
+        }
+
+        for(unsigned i = 0; i < 4; i++) {
+            delete predictorPositions[i];
+            delete predictorStrengths[i];
+        }
+
+        for (unsigned i = 0; i < (MAX_TRACKS_1541 * 2 + 1); i++ ) {
+            system->interface->log("track", 1);
+            system->interface->log( i, 0);
+
+            P64Track* p64Track = &p64Tracks[0][i];
+
+            for(auto& pulse : p64Track->pulses) {
+                system->interface->log(pulse.position, 1, 0);
+                system->interface->log(pulse.strength, 0, 0);
             }
         }
     }
@@ -220,7 +241,7 @@ namespace LIBC64 {
         trackPtr->current = index;
     }
 
-    inline auto Structure1541::decodeP64( Emulator::Fpaq0& fpaq0, std::vector<Emulator::PredictorEightBitWithPrefix>& predictors ) -> unsigned {
+    inline auto Structure1541::decodeP64( Emulator::Fpaq0& fpaq0, std::vector<Emulator::PredictorEightBitWithPrefix*>& predictors ) -> unsigned {
 
         uint32_t result = 0;
 
@@ -229,11 +250,11 @@ namespace LIBC64 {
             uint8_t byte = 0;
 
             for (int bit = 7; bit >= 0; bit--)
-                byte = (byte << 1) | fpaq0.decode( &predictors[i] );
+                byte = (byte << 1) | fpaq0.decode(predictors[i]);
 
-            predictors[i].prefix = byte;
+            predictors[i]->prefix = byte;
 
-            result = (result << 8) | byte;
+            result |= byte << (i << 3);
         }
 
         return result;

@@ -4,6 +4,7 @@
 namespace Emulator {
 
     PredictorEightBitWithPrefix::PredictorEightBitWithPrefix() {
+        // custom predictor for P64
         modelSize = 65536;
 
         model = new uint16_t[modelSize];
@@ -30,33 +31,33 @@ namespace Emulator {
 
         ctxLimit = 0;
 
-        init();
+        init(0 );
     }
 
     Predictor::~Predictor() {
         delete[] model;
     }
 
-    auto Predictor::init() -> void {
+    auto Predictor::init(unsigned _ctx) -> void {
 
         std::fill_n(model, modelSize, 2048);
 
         prefix = 0;
 
-        ctx = 1;
+        ctx = _ctx;
     }
 
-    auto Predictor::p() -> uint32_t const {
+    auto Predictor::p() -> uint16_t const {
 
         return *(model + (ctx | (prefix << 8)));
     }
 
     auto Predictor::update(bool bit) -> void {
 
-        uint16_t *ptr = model + (ctx | (prefix << 8));
+        uint16_t* ptr = model + (ctx | (prefix << 8));
 
         if (bit)
-            *ptr += (uint16_t)((0xfffUL - *ptr) >> 4);
+            *ptr += (0xfff - *ptr) >> 4;
         else
             *ptr -= *ptr >> 4;
 
@@ -91,7 +92,7 @@ namespace Emulator {
 
     auto Fpaq0::encode(Predictor* predictor, bool bit) -> void {
 
-        uint32_t xmid = x1 + ((x2 - x1) >> 12) * predictor->p();
+        uint32_t xmid = x1 + ((x2 - x1) >> 12) * (uint32_t)predictor->p();
 
         if (bit)
             x2 = xmid;
@@ -111,7 +112,7 @@ namespace Emulator {
 
     auto Fpaq0::decode(Predictor* predictor) -> bool {
 
-        uint32_t xmid = x1 + ((x2 - x1) >> 12) * predictor->p();
+        uint32_t xmid = x1 + ((x2 - x1) >> 12) * (uint32_t)predictor->p();
 
         bool bit = false;
 

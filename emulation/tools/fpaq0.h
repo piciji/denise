@@ -18,9 +18,9 @@ namespace Emulator {
         unsigned ctx;
         unsigned ctxLimit;
 
-        auto init() -> void;
+        auto init(unsigned _ctx = 1) -> void;
 
-        auto p() -> uint32_t const;
+        auto p() -> uint16_t const;
 
         auto update(bool bit) -> void;
     };

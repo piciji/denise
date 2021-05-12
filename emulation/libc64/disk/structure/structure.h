@@ -154,7 +154,7 @@ private:
     auto findSync( const GcrTrack* trackPtr, unsigned& offset, unsigned size ) -> bool;
     auto decode( const GcrTrack* trackPtr, unsigned offset, uint8_t* buffer, unsigned blockCount ) -> void;
 
-	inline auto decodeP64( Emulator::Fpaq0& fpaq0, std::vector<Emulator::PredictorEightBitWithPrefix>& predictors ) -> unsigned;
+	inline auto decodeP64( Emulator::Fpaq0& fpaq0, std::vector<Emulator::PredictorEightBitWithPrefix*>& predictors ) -> unsigned;
 	inline auto addPulse( P64Track* trackPtr, uint32_t position, uint32_t strength ) -> void;
 };
 
