@@ -669,3 +669,4 @@ inline auto Drive1541::syncFound() -> uint8_t {
 }
 
 }
+

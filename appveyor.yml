@@ -17,6 +17,7 @@ branches:
   only:
     - master
     - /v\d*\.\d*\.\d*/
+    - p64
   
 environment:
   matrix:
