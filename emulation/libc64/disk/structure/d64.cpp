@@ -63,7 +63,7 @@ auto Structure1541::prepareD64() -> void {
         // ... d64 doesn't support halftracks 1.5, 2.5 ...
         unsigned halfTrack = track * 2 - 2;                
         unsigned trackSize = countBytes( track );
-        GcrTrack* trackPtr = &gcrTrack[ halfTrack ];
+        GcrTrack* trackPtr = &gcrTracks[ halfTrack ];
 
         // there wasn't loaded any image before
         if ( !trackPtr->data )
@@ -111,7 +111,7 @@ auto Structure1541::prepareD64() -> void {
             }
         }            
         // half tracks are not supported by D64
-        trackPtr = &gcrTrack[ ++halfTrack ];
+        trackPtr = &gcrTracks[ ++halfTrack ];
         
         if ( trackPtr->data )
             delete[] trackPtr->data;
@@ -293,7 +293,7 @@ auto Structure1541::decodeSector( const GcrTrack* trackPtr, uint8_t* dest, uint8
 
     // decode sector gcr -> 65 * 4 byte
     decode( trackPtr, offset, buffer, 65 );
-    
+
     // first of last 3 byte of sector data contains the checksum
     uint8_t checksum = buffer[257];
 

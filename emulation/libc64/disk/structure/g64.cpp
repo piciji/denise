@@ -59,7 +59,7 @@ auto Structure1541::prepareG64() -> void {
     int error;
     
     for ( unsigned halfTrack = 0; halfTrack < (MAX_TRACKS * 2); halfTrack++) {
-        GcrTrack* ptr = &gcrTrack[ halfTrack ];
+        GcrTrack* ptr = &gcrTracks[ halfTrack ];
         
         if ( ptr->data )
             delete[] ptr->data;

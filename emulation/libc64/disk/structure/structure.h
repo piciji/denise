@@ -60,15 +60,6 @@ struct Structure1541 {
     struct Pulse {
     	uint32_t position;
     	uint32_t strength;
-    	int next;
-    	int previous;
-    };
-
-    struct P64Track {
-    	int first;
-    	int last;
-    	int current;
-    	std::vector<Pulse> pulses;
     };
     
     std::vector<Emulator::Interface::Listing> listings;
@@ -80,6 +71,7 @@ struct Structure1541 {
     static auto imageSize( Type newType ) -> unsigned;
     
     auto getTrackPtr( uint8_t halfTrack ) -> GcrTrack*;
+    auto getPulsePtr( uint8_t halfTrack ) -> std::vector<Pulse>*;
     auto writeTrack( const GcrTrack* trackPtr, uint8_t halfTrack ) -> void;
     auto attach( uint8_t* data, unsigned size ) -> bool;
     auto detach() -> void;
@@ -114,8 +106,8 @@ private:
     unsigned maxTrackLength;
     uint8_t sides;
     
-    GcrTrack gcrTrack[ MAX_TRACKS_1541 * 2 ];
-    P64Track p64Tracks[2][ MAX_TRACKS_1541 * 2 + 1 ]; // up to 42.5
+    GcrTrack gcrTracks[ MAX_TRACKS_1541 * 2 ];
+    std::vector<Pulse> p64Tracks[2][ MAX_TRACKS_1541 * 2]; // up to 42.5
         
     uint8_t* errorMap;
     uint32_t errorMapSize;
@@ -155,7 +147,9 @@ private:
     auto decode( const GcrTrack* trackPtr, unsigned offset, uint8_t* buffer, unsigned blockCount ) -> void;
 
 	inline auto decodeP64( Emulator::Fpaq0& fpaq0, std::vector<Emulator::PredictorEightBitWithPrefix*>& predictors ) -> unsigned;
-	inline auto addPulse( P64Track* trackPtr, uint32_t position, uint32_t strength ) -> void;
+	inline auto addPulse( std::vector<Pulse>& trackPtr, uint32_t position, uint32_t strength ) -> void;
+    auto encodeGCR(std::vector<Pulse>& pulses, GcrTrack* gcrTrack, uint8_t halfTrack) -> void;
+    auto prepareTracksNotInUse(bool* inUse) -> void;
 };
 
 }

@@ -1,4 +1,5 @@
 
+#include <thread>
 #include "structure.h"
 #include "../../system/system.h"
 #include "../../../tools/petcii.h"
@@ -24,10 +25,10 @@ Structure1541::Structure1541() {
     errorMapSize = 0;
     
     for( unsigned i = 0; i < (MAX_TRACKS * 2); i++ ) {
-        gcrTrack[i].data = nullptr;
-        gcrTrack[i].size = 0;
-        gcrTrack[i].bits = 0;
-        gcrTrack[i].written = false;
+        gcrTracks[i].data = nullptr;
+        gcrTracks[i].size = 0;
+        gcrTracks[i].bits = 0;
+        gcrTracks[i].written = false;
     }
 }   
 
@@ -63,7 +64,7 @@ auto Structure1541::detach() -> void {
 
 auto Structure1541::clearTrackData() -> void {
     for (unsigned i = 0; i < (MAX_TRACKS * 2); i++) {
-        auto trackPtr = &gcrTrack[i];
+        auto trackPtr = &gcrTracks[i];
         
         if (trackPtr->data)
             delete[] trackPtr->data;
@@ -193,7 +194,7 @@ auto Structure1541::getLogicalTrack(uint8_t _track, int offset) -> uint8_t {
 }
 
 auto Structure1541::createListing( ) -> void {
-    return;
+
     if (!rawData || (type == Type::Unknown))
         return;
     
@@ -212,7 +213,7 @@ auto Structure1541::createListing( ) -> void {
     uint8_t tries = tracks + 1;
     
     while (--tries) {        
-        decodeSector( &gcrTrack[(_track - 1) * 2], buffer, _sector );
+        decodeSector( &gcrTracks[(_track - 1) * 2], buffer, _sector );
         uint8_t _trackLogical = buffer[0];
         
         if (_trackLogical == 18)
@@ -231,7 +232,7 @@ auto Structure1541::createListing( ) -> void {
     if (!tries) {
         trackOffset = 0;
         _track = 18;
-        decodeSector( &gcrTrack[(_track - 1) * 2], buffer, _sector );
+        decodeSector( &gcrTracks[(_track - 1) * 2], buffer, _sector );
     }
     
     unsigned freeBlocks = 0;
@@ -268,7 +269,7 @@ auto Structure1541::createListing( ) -> void {
     listings.push_back( { id++, listing.buildHeadline( buffer + 0x90, buffer + 0xa5, buffer + 0xa2 ), listing.decodeToScreencode( buildLoadCommand({'*'}, true) ) } );
 	loader.push_back( {'*'} );  
     
-    decodeSector( &gcrTrack[(_track - 1) * 2], buffer, ++_sector );
+    decodeSector( &gcrTracks[(_track - 1) * 2], buffer, ++_sector );
     
     uint8_t* ptr = &buffer[0];
     
@@ -311,7 +312,7 @@ auto Structure1541::createListing( ) -> void {
             if (_track == 0)
                 break;
 
-            if ( decodeSector(&gcrTrack[(_track - 1) * 2], buffer, _sector) != ERR_OK)
+            if ( decodeSector(&gcrTracks[(_track - 1) * 2], buffer, _sector) != ERR_OK)
                 break;
             
             ptr = &buffer[0];
@@ -580,7 +581,12 @@ auto Structure1541::getStateImageSize() -> unsigned {
 
 auto Structure1541::getTrackPtr( uint8_t halfTrack ) -> GcrTrack* {
     
-    return &gcrTrack[ halfTrack ];
+    return &gcrTracks[ halfTrack ];
+}
+
+auto Structure1541::getPulsePtr( uint8_t halfTrack ) -> std::vector<Pulse>* {
+
+    return &p64Tracks[0][ halfTrack ];
 }
 
 }

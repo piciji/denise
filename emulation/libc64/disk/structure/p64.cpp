@@ -2,7 +2,7 @@
 #include "structure.h"
 #include "../../../tools/crc32.h"
 
-#define SamplesPerRotation 3200000
+#define CyclesPerRevolution300Rpm 3200000
 
 namespace LIBC64 {
 
@@ -38,25 +38,13 @@ namespace LIBC64 {
 
     auto Structure1541::prepareP64() -> void {
 
-        std::vector<Emulator::PredictorEightBitWithPrefix*> predictorPositions;
-        std::vector<Emulator::PredictorEightBitWithPrefix*> predictorStrengths;
-        Emulator::PredictorOneBit predictorPositionEnable;
-        Emulator::PredictorOneBit predictorStrengthEnable;
-        Emulator::Fpaq0 fpaq0;
+        bool inUse[2][MAX_TRACKS_1541 * 2] = { {0}, {0} };
+        bool* usePtr = &inUse[0][0];
 
         uint8_t* ptr = rawData;
-        uint8_t** _ptr = &ptr;
+
         unsigned offset = 0;
         uint32_t size = 0;
-        uint32_t* pSize = &size;
-        uint32_t checkSum;
-
-        fpaq0.readIn = [_ptr, pSize](uint8_t*& buffer) {
-
-            buffer = *_ptr;
-
-            return *pSize;
-        };
 
         ptr += 8; // header ident, already checked
         ptr += 4; // version: only 0 is known, don't check for it
@@ -71,174 +59,196 @@ namespace LIBC64 {
 
         offset = 24;
 
-        for(unsigned i = 0; i < 4; i++) {
-            predictorPositions.push_back( new Emulator::PredictorEightBitWithPrefix );
-            predictorStrengths.push_back( new Emulator::PredictorEightBitWithPrefix );
-        }
+        const auto coreCount = std::thread::hardware_concurrency();
+        std::vector<uint8_t*> jobs[coreCount];
 
+        unsigned core = 0;
         while(1) {
             offset += 12;
             if (offset >= rawSize)
                 break;
 
-            // signature
+            jobs[core++].push_back( ptr );
             ptr += 4;
             size = Emulator::copyBufferToInt<uint32_t>( ptr );
             ptr += 4;
-            checkSum = Emulator::copyBufferToInt<uint32_t>( ptr );
             ptr += 4;
+
+            core %= coreCount;
 
             offset += size;
             if (offset >= rawSize)
                 break;
 
-            if (size == 0) {
-                if (checkSum == 0 && (std::memcmp( ptr - 12, "DONE", 4) == 0) )
-                    break;
-            } else {
-                Emulator::CRC32 crc32( ptr, size, ~0 );
+            ptr += size;
+        }
 
-                if (crc32.value() != checkSum)
-                    break;
+        std::vector<std::thread> threadPool;
 
-                if (std::memcmp( ptr - 12, "HTP", 3) == 0) {
-                    uint8_t halfTrack = *(ptr - 9);
-                    uint8_t side = !!(halfTrack & 128);
-                    halfTrack &= 127;
+        for(core = 0; core < coreCount; core++) {
+            std::vector<uint8_t*>* workLoad = &jobs[core];
 
-                    if (halfTrack > 85)
-                        continue;
+            threadPool.push_back(std::thread([this, workLoad, usePtr] {
 
-                    P64Track* trackPtr = &p64Tracks[side][halfTrack];
-                    trackPtr->pulses.clear();
-                    trackPtr->first = -1;
-                    trackPtr->last = -1;
-                    trackPtr->current = -1;
+                std::vector<Emulator::PredictorEightBitWithPrefix*> predictorPositions;
+                std::vector<Emulator::PredictorEightBitWithPrefix*> predictorStrengths;
+                Emulator::PredictorOneBit predictorPositionEnable;
+                Emulator::PredictorOneBit predictorStrengthEnable;
+                Emulator::Fpaq0 fpaq0;
+                unsigned size, checkSum;
+                uint8_t* _ptr;
+                uint8_t** __ptr = &_ptr;
+                uint32_t* pSize = &size;
 
-                    uint32_t pulses = Emulator::copyBufferToInt<uint32_t>( ptr );
-                    ptr += 4;
-                    size = Emulator::copyBufferToInt<uint32_t>( ptr );
-                    ptr += 4;
+                fpaq0.readIn = [__ptr, pSize](uint8_t*& buffer) {
 
-                    unsigned deltaPosition = 0;
-                    unsigned strength = 0;
-                    unsigned position = 0;
+                    buffer = *__ptr;
 
-                    if (!size) {
-                        if (!pulses)
-                            continue;
-                        else
-                            break;
-                    }
+                    return *pSize;
+                };
 
-                    unsigned count = 0;
-
-                    predictorPositionEnable.init(0);
-                    predictorStrengthEnable.init(0);
-
-                    for(unsigned i = 0; i < 4; i++) {
-                        predictorPositions[i]->init();
-                        predictorStrengths[i]->init();
-                    }
-
-                    fpaq0.init();
-                    fpaq0.warmUp();
-
-                    while( count < pulses ) {
-
-                        if ( fpaq0.decode( &predictorPositionEnable ) ) {
-
-                            deltaPosition = decodeP64( fpaq0, predictorPositions );
-
-                            if (!deltaPosition)
-                                break;
-                        }
-                        position += deltaPosition;
-
-                        if ( fpaq0.decode( &predictorStrengthEnable ) )
-                            strength += decodeP64( fpaq0, predictorStrengths );
-
-                        addPulse( trackPtr, position, strength );
-
-                        count++;
-                    }
-
-                    if (count != pulses)
-                        break;
+                for(unsigned i = 0; i < 4; i++) {
+                    predictorPositions.push_back( new Emulator::PredictorEightBitWithPrefix );
+                    predictorStrengths.push_back( new Emulator::PredictorEightBitWithPrefix );
                 }
 
-                ptr += size;
+                for(auto ptr : *workLoad) {
 
-            }
+                    _ptr = ptr;
+
+                    // signature
+                    _ptr += 4;
+                    size = Emulator::copyBufferToInt<uint32_t>(_ptr);
+                    _ptr += 4;
+                    checkSum = Emulator::copyBufferToInt<uint32_t>(_ptr);
+                    _ptr += 4;
+
+                    if (size == 0) {
+                        if (checkSum == 0 && (std::memcmp(_ptr - 12, "DONE", 4) == 0))
+                            break;
+                    } else {
+                        Emulator::CRC32 crc32(_ptr, size, ~0);
+
+                        if (crc32.value() != checkSum)
+                            break;
+
+                        if (std::memcmp(_ptr - 12, "HTP", 3) == 0) {
+                            uint8_t halfTrack = *(_ptr - 9);
+                            uint8_t side = !!(halfTrack & 128);
+                            halfTrack &= 127;
+
+                            if ((halfTrack < 2) || (halfTrack > 85))
+                                continue;
+
+                            halfTrack -= 2;
+
+                            std::vector<Pulse> &trackPtr = p64Tracks[side][halfTrack];
+                            trackPtr.clear();
+
+                            uint32_t pulses = Emulator::copyBufferToInt<uint32_t>(_ptr);
+                            _ptr += 4;
+                            size = Emulator::copyBufferToInt<uint32_t>(_ptr);
+                            _ptr += 4;
+
+                            unsigned deltaPosition = 0;
+                            unsigned strength = 0;
+                            unsigned position = 0;
+
+                            if (!size) {
+                                if (!pulses)
+                                    continue;
+                                else
+                                    break;
+                            }
+
+                            unsigned count = 0;
+
+                            predictorPositionEnable.init(0);
+                            predictorStrengthEnable.init(0);
+
+                            for (unsigned i = 0; i < 4; i++) {
+                                predictorPositions[i]->init();
+                                predictorStrengths[i]->init();
+                            }
+
+                            fpaq0.init();
+                            fpaq0.warmUp();
+
+                            while (count < pulses) {
+
+                                if (fpaq0.decode(&predictorPositionEnable)) {
+
+                                    deltaPosition = decodeP64(fpaq0, predictorPositions);
+
+                                    if (!deltaPosition)
+                                        break;
+                                }
+                                position += deltaPosition;
+
+                                if (fpaq0.decode(&predictorStrengthEnable))
+                                    strength += decodeP64(fpaq0, predictorStrengths);
+
+                                addPulse(trackPtr, position, strength);
+
+                                count++;
+                            }
+
+                            if (count != pulses)
+                                break;
+
+                            encodeGCR(trackPtr, &gcrTracks[halfTrack], halfTrack);
+
+                            usePtr[ (side == 1 ? (MAX_TRACKS_1541 * 2) : 0) + halfTrack ] = pulses > 0;
+                        }
+                    }
+                }
+
+                for(unsigned i = 0; i < 4; i++) {
+                    delete predictorPositions[i];
+                    delete predictorStrengths[i];
+                }
+            }));
         }
 
-        for(unsigned i = 0; i < 4; i++) {
-            delete predictorPositions[i];
-            delete predictorStrengths[i];
-        }
+        for(auto& _t : threadPool)
+            _t.join();
 
-        for (unsigned i = 0; i < (MAX_TRACKS_1541 * 2 + 1); i++ ) {
-            system->interface->log("track", 1);
-            system->interface->log( i, 0);
+        prepareTracksNotInUse( usePtr );
 
-            P64Track* p64Track = &p64Tracks[0][i];
-
-            for(auto& pulse : p64Track->pulses) {
-                system->interface->log(pulse.position, 1, 0);
-                system->interface->log(pulse.strength, 0, 0);
-            }
-        }
+//        for (unsigned i = 0; i < (MAX_TRACKS_1541 * 2 + 1); i++ ) {
+//            system->interface->log("track", 1);
+//            system->interface->log( i, 0);
+//
+//            std::vector<Pulse>& p64Track = p64Tracks[0][i];
+//
+//            for(auto& pulse : p64Track) {
+//                system->interface->log(pulse.position, 1, 0);
+//                system->interface->log(pulse.strength, 0, 0);
+//            }
+//        }
     }
 
-    inline auto Structure1541::addPulse( P64Track* trackPtr, uint32_t position, uint32_t strength ) -> void {
+    inline auto Structure1541::addPulse( std::vector<Pulse>& trackPtr, uint32_t position, uint32_t strength ) -> void {
 
-        int current, index;
-        while(position >= SamplesPerRotation)
-            position -= SamplesPerRotation;
+        while(position >= CyclesPerRevolution300Rpm)
+            position -= CyclesPerRevolution300Rpm;
 
-        current = trackPtr->current;
-        if((trackPtr->last >= 0) && (trackPtr->pulses[trackPtr->last].position < position))
-            current = -1;
+        if (!trackPtr.size() || trackPtr.back().position < position)
+            trackPtr.push_back({position, strength});
         else {
-            if((current < 0) || ((current != trackPtr->first) && ((trackPtr->pulses[current].previous >= 0) && (trackPtr->pulses[trackPtr->pulses[current].previous].position >= position))))
-                current = trackPtr->first;
+            unsigned index = 0;
+            for(auto& pulse : trackPtr) {
+                if (pulse.position == position)
+                    break;
 
-            while((current >= 0) && (trackPtr->pulses[current].position < position))
-                current = trackPtr->pulses[current].next;
-        }
+                else if (pulse.position > position) {
+                    trackPtr.insert( trackPtr.begin() + index, {position, strength} );
+                    break;
+                }
 
-        if(current < 0) {
-            index = trackPtr->pulses.size();
-            trackPtr->pulses.push_back( {0, 0, -1, -1} );
-
-            if(trackPtr->last < 0)
-                trackPtr->first = index;
-            else {
-                trackPtr->pulses[trackPtr->last].next = index;
-                trackPtr->pulses[index].previous = trackPtr->last;
-            }
-            trackPtr->last = index;
-
-        } else {
-            if(trackPtr->pulses[current].position == position)
-                index = current;
-            else {
-                index = trackPtr->pulses.size();
-                trackPtr->pulses.push_back( {0, 0, -1, -1} );
-
-                trackPtr->pulses[index].previous = trackPtr->pulses[current].previous;
-                trackPtr->pulses[index].next = current;
-                trackPtr->pulses[current].previous = index;
-                if(trackPtr->pulses[index].previous < 0)
-                    trackPtr->first = index;
-                else
-                    trackPtr->pulses[trackPtr->pulses[index].previous].next = index;
+                index++;
             }
         }
-
-        trackPtr->pulses[index].position = position;
-        trackPtr->pulses[index].strength = strength;
-        trackPtr->current = index;
     }
 
     inline auto Structure1541::decodeP64( Emulator::Fpaq0& fpaq0, std::vector<Emulator::PredictorEightBitWithPrefix*>& predictors ) -> unsigned {
@@ -258,5 +268,110 @@ namespace LIBC64 {
         }
 
         return result;
+    }
+
+    auto Structure1541::prepareTracksNotInUse(bool* inUse) -> void {
+
+        for (int side = 0; side < sides; side++) {
+
+            for (int halfTrack = 0; halfTrack < (MAX_TRACKS_1541 * 2); halfTrack++) {
+
+                if ( !*inUse) {
+                    GcrTrack *gcrPtr = &gcrTracks[halfTrack];
+
+                    if (gcrPtr->data)
+                        delete[] gcrPtr->data;
+
+                    gcrPtr->size = countBytes((halfTrack + 2) / 2); // standard length
+                    gcrPtr->bits = gcrPtr->size << 3;
+                    gcrPtr->data = new uint8_t[gcrPtr->size];
+                    std::memset(gcrPtr->data, 0x55, gcrPtr->size);
+
+                    std::vector<Pulse> &pulsePtr = p64Tracks[0][halfTrack];
+                    pulsePtr.clear();
+
+                    // set 0x55 pattern
+                    unsigned fluxDelta = CyclesPerRevolution300Rpm / (gcrPtr->bits / 2);
+
+                    unsigned pos = fluxDelta / 2;
+                    for (unsigned i = 0; i < (gcrPtr->bits / 2); i++) {
+                        pulsePtr.push_back({pos, 0xffffffff});
+
+                        pos += fluxDelta;
+                        if (pos >= CyclesPerRevolution300Rpm)
+                            break;
+                    }
+                }
+                inUse++;
+            }
+        }
+    }
+
+    inline auto Structure1541::encodeGCR(std::vector<Pulse>& pulses, GcrTrack* gcrTrack, uint8_t halfTrack) -> void {
+        uint8_t track = (halfTrack >> 1) + 1;
+        unsigned trackSize = countBytes( track );
+        uint8_t _speedzone = speedzone( track );
+
+        uint32_t lastPosition = 0;
+        uint32_t delta;
+        bool flipFlop = false;
+        bool lastFlipFlop = false;
+        unsigned delay;
+        uint8_t ue7Counter;
+        uint8_t uf4Counter;
+        unsigned bits = 0;
+
+        if ( !gcrTrack->data )
+            gcrTrack->data = new uint8_t[ trackSize ];
+
+        else if ( trackSize != gcrTrack->size ) {
+            delete[] gcrTrack->data;
+            gcrTrack->data = new uint8_t[ trackSize ];
+        }
+
+        gcrTrack->size = trackSize;
+        gcrTrack->bits = trackSize * 8;
+        uint8_t* ptr = gcrTrack->data;
+        std::memset( ptr, 0, trackSize );
+
+        for(auto& pulse : pulses) {
+
+            if (pulse.strength < 0x80000000)
+                continue;
+
+            delta = pulse.position - lastPosition;
+
+            lastPosition = pulse.position;
+
+            flipFlop ^= 1;
+
+            delay = 0;
+
+            do {
+                // 2.5 us filters out too short pulses
+                if((delay == 40) && (lastFlipFlop != flipFlop)) {
+                    lastFlipFlop = flipFlop;
+                    ue7Counter = _speedzone;
+                    uf4Counter = 0;
+                }
+
+                if(ue7Counter == 16) {
+                    ue7Counter = _speedzone;
+                    uf4Counter = (uf4Counter + 1) & 0xf;
+
+                    if((uf4Counter & 3) == 2) {
+                        if (uf4Counter == 2)
+                            ptr[bits >> 3] |= 1 << (~bits & 7);
+
+                        bits++;
+
+                        if (bits == gcrTrack->bits)
+                            return;
+                    }
+                }
+
+                ue7Counter++;
+            } while(++delay < delta);
+        }
     }
 }

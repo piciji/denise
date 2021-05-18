@@ -1,6 +1,12 @@
 
 #pragma once
 
+// 1541 drive runs with 16 MHz, called reference cycles.
+// clock is divided by 16 for cpu, means 1.000.000 cpu cycles per second.
+// drive speed is 300 rounds per minute, means 300 / 60 = 5 rounds per second.
+// one revolution has 16.000.000 / 5 reference cycles
+#define CyclesPerRevolution300Rpm 3200000
+
 #include "../via/via.h"
 #include "../iec.h"
 #include "../structure/structure.h"
@@ -49,6 +55,7 @@ struct Drive1541 {
     uint32_t accum;   
         
     Structure1541::GcrTrack* gcrTrack = new Structure1541::GcrTrack;
+    std::vector<Structure1541::Pulse>* pulseTrack = nullptr;
     
     uint8_t currentHalftrack;
     int stepDirection = 0;
@@ -57,16 +64,22 @@ struct Drive1541 {
     bool byteReadyOverflow = true; // random initialization ?
     bool readMode = true; // random initialization ?
     unsigned headOffset = 0; // one and only initialization
-    unsigned bitCounter;
-    
-    uint64_t refCyclesPerRevolution300rpm;
+    uint8_t ue3Counter;
+
     uint32_t refCyclesPerRevolution;
+
     bool filter;
     bool lastFilter;
     uint8_t ue7Counter;
     uint8_t uf4Counter;
     Emulator::Rand randomizer;
     unsigned randCounter;
+    unsigned pulseIndex;
+    unsigned pulseDelta;
+
+    bool comperatorFlipFlop; // detect flux reversal
+    bool uf6aFlipFlop;
+    unsigned pulseDuration;
     
     uint8_t writeValue;
     unsigned readBuffer;
@@ -87,9 +100,7 @@ struct Drive1541 {
     
     unsigned rpm = 30000;
     unsigned wobble = 50;
-    
-    auto calculateRefCyclesPerRevolution() -> void;
-    
+
     auto sync() -> void;
     auto cpuWrite(uint16_t addr, uint8_t data) -> void;
     auto cpuRead(uint16_t addr) -> uint8_t;
@@ -103,6 +114,7 @@ struct Drive1541 {
     auto setFirmware(uint8_t* rom) -> void;
     auto rotateD64() -> void;
     auto rotateG64( bool irqNextCycle ) -> void;
+    auto rotateP64( bool irqNextCycle ) -> void;
     auto randomizeRpm() -> void;
     auto writeBit( bool state ) -> void;
     auto readBit() -> bool;
@@ -120,8 +132,7 @@ struct Drive1541 {
     auto updateStepper( uint8_t step ) -> bool;
     auto motorRun() -> bool;
     auto motorOffInit() -> void;
-    
-    auto useAccuracy() -> bool;
+
     auto serialize(Emulator::Serializer& s) -> void;
     auto updateDeviceState() -> void;
     auto updateIdleDeviceState() -> void;

@@ -1443,7 +1443,7 @@ auto MediaLayout::previewFile( std::string filePath, MediaGroupLayout::Block* bl
             continue;
         
         if (mediaGroup.isDisk()) {
-            if (extension == "d64" || extension == "g64") {
+            if ( GUIKIT::Vector::find( mediaGroup.suffix, extension ) ) {
                 listings = emulator->getDiskPreview(data, file.archiveDataSize(0), block ? block->media : nullptr);
                 group = &mediaGroup;
                 break;
@@ -1451,7 +1451,7 @@ auto MediaLayout::previewFile( std::string filePath, MediaGroupLayout::Block* bl
         }
         
         if (mediaGroup.isProgram()) {
-            if (extension == "t64" || extension == "prg" || extension == "p00") {
+            if ( GUIKIT::Vector::find( mediaGroup.suffix, extension ) ) {
                 listings = emulator->getProgramPreview(data, file.archiveDataSize(0));        
                 group = &mediaGroup;
                 break;

@@ -18,8 +18,7 @@ auto Drive1541::serialize(Emulator::Serializer& s) -> void {
     s.integer( readMode );
     s.integer( headOffset );
     s.integer( stepDirection );
-    s.integer( bitCounter );
-    s.integer( refCyclesPerRevolution300rpm );
+    s.integer( ue3Counter );
     s.integer( refCyclesPerRevolution );
     s.integer( filter );
     s.integer( lastFilter );

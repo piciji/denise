@@ -4,6 +4,8 @@
 #include "serialization.cpp"
 #include "../../../tools/gcr.h"
 
+// for 300 rpm = 5 rotation / sec = 16.000.000 / 5
+
 namespace LIBC64 {
    
 // one cpu cycle is 16 reference cycles.
@@ -26,17 +28,24 @@ namespace LIBC64 {
 // the distance between "overflow" checking and maximum "Read back" time is 8 ref cycles, phase shifted by 2 ref cycles.
 // the relative	distance matters, so we can step in 8 ref cycle chunks
     
-#define SYNC    \
-    if (useAccuracy())  \
-        rotateG64( false );   \
-    cpu->handleSo();   \
-    processDelays();    \
-    if (useAccuracy())  \
-        rotateG64( true );   \
-    else \
-        rotateD64();    \
-    via1->process();    \
-    via2->process();     \
+#define SYNC \
+    if (structure1541.type == Structure1541::Type::D64) {                   \
+        cpu->handleSo();                                                    \
+        processDelays();                                                    \
+        rotateD64();                                                        \
+    } else if (structure1541.type == Structure1541::Type::G64) {            \
+        rotateG64( false );                                                 \
+        cpu->handleSo();                                                    \
+        processDelays();                                                    \
+        rotateG64( true );                                                  \
+    } else {                                                                \
+        rotateP64( false );                                                 \
+        cpu->handleSo();                                                    \
+        processDelays();                                                    \
+        rotateP64( true );                                                  \
+    }                                                                       \
+    via1->process();                                                        \
+    via2->process();                                                        \
     cycleCounter += iecBus->cpuCylcesPerSecond;
     
 auto Drive1541::sync() -> void {
@@ -91,9 +100,7 @@ Drive1541::Drive1541(uint8_t number, Emulator::Interface::Media* mediaConnected 
     via2 = new Via( 2 );
     
     cpu = new M6502(this);
-    
-    calculateRefCyclesPerRevolution();            
-          
+
     via1->irqCall = [this](bool state) {                
         if (state)
             irqIncomming |= 1;
@@ -282,13 +289,19 @@ auto Drive1541::power( ) -> void {
     motorOff.slowDown = false;
     readBuffer = writeBuffer = 0;
     writeValue = 0x55;
-    bitCounter = 0;
+    ue3Counter = 0;
     accum = 0;
     headOffset = 0;
     randomizeRpm();
     currentHalftrack = 17 * 2;
     stepDirection = 0;
     structure1541.autoStarted = false;
+    pulseTrack = nullptr;
+    pulseIndex = 0;
+    pulseDelta = 1;
+    comperatorFlipFlop = false;
+    uf6aFlipFlop = false;
+    pulseDuration = 0;
     
     changeHalfTrack(0);
 }
@@ -352,7 +365,9 @@ auto Drive1541::detach() -> void {
     structure1541.detach();
     motorOff.slowDown = false;
     
-    loaded = false;        
+    loaded = false;
+    pulseIndex = 0;
+    pulseDelta = 1; // to reload quickly
 }
 
 auto Drive1541::attach( Emulator::Interface::Media* media, uint8_t* data, unsigned size ) -> void {
@@ -362,7 +377,7 @@ auto Drive1541::attach( Emulator::Interface::Media* media, uint8_t* data, unsign
     randCounter = 0;
     filter = lastFilter = 0;
     uf4Counter = ue7Counter = 0;
-    bitCounter = 0;
+    ue3Counter = 0;
     
 	structure1541.media = media;
     if ( !structure1541.attach( data, size ) )
@@ -420,15 +435,11 @@ auto Drive1541::write() -> void {
     structure1541.storeWrittenTracks();
 }
 
-inline auto Drive1541::useAccuracy() -> bool {    
-    return structure1541.type == Structure1541::Type::G64;
-}
-
 auto Drive1541::setSpeed(double rpm, double wobble) -> void {
-	
+
     this->rpm = rpm * 100.0 + 0.5;
     this->wobble = wobble * 100.0 + 0.5;
-
 }
 
 }
+
