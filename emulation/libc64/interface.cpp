@@ -874,14 +874,9 @@ auto Interface::ejectDisk(Media* media) -> void {
     iecBus->detach( media );
 }
 
-auto Interface::createDiskImage(unsigned typeId, bool hd, std::string name, bool ffs) -> uint8_t* {
+auto Interface::createDiskImage(unsigned typeId, bool hd, std::string name, bool ffs) -> Data {
 	
     return Structure1541::create( (Structure1541::Type) typeId, name );
-}
-
-auto Interface::getDiskImageSize(unsigned typeId, bool hd) -> unsigned {
-	
-	return Structure1541::imageSize( (Structure1541::Type) typeId );
 }
 
 auto Interface::getDiskListing(Media* media) -> std::vector<Emulator::Interface::Listing> {

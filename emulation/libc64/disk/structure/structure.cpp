@@ -73,6 +73,9 @@ auto Structure1541::clearTrackData() -> void {
         trackPtr->size = 0;
         trackPtr->bits = 0;
         trackPtr->written = false;
+
+        auto pulseTrack = &p64Tracks[0][ i ];
+        pulseTrack->clear();
     }
     
     if (errorMap)
@@ -167,18 +170,6 @@ auto Structure1541::prepare() -> void {
             prepareP64();
             break;
     }            
-}
-
-auto Structure1541::imageSize( Type newType ) -> unsigned {
-    
-    switch( newType ) {
-        case Type::D64:
-            return imageSizeD64();
-        case Type::G64:
-            return imageSizeG64();
-    }
-    
-    return 0;
 }
 
 auto Structure1541::getLogicalTrack(uint8_t _track, int offset) -> uint8_t {
@@ -408,16 +399,18 @@ auto Structure1541::selectListing(  unsigned pos ) -> void {
     autoStarted = true;
 }
 
-auto Structure1541::create( Type newType, std::string diskName ) -> uint8_t* {
+auto Structure1541::create( Type newType, std::string diskName ) -> Emulator::Interface::Data {
     
     switch( newType ) {
         case Type::D64:
-            return createD64( diskName );    
+            return {createD64( diskName ), imageSizeD64() };
         case Type::G64:
-            return createG64( diskName );
+            return { createG64( diskName ), imageSizeG64() };
+        case Type::P64:
+            return createP64( diskName );
     } 
     
-    return nullptr;
+    return {nullptr, 0};
 }
 
 auto Structure1541::createBAM( std::string diskName, uint8_t tracksInImage, uint8_t* buffer ) -> void {
@@ -487,35 +480,35 @@ auto Structure1541::cutId( std::string& diskName ) -> std::string {
     return id;
 }
 
-auto Structure1541::writeTrack( const GcrTrack* trackPtr, uint8_t halfTrack ) -> void {
-    
-    if (halfTrack >= (MAX_TRACKS * 2) )
-        return;        
-    
-    switch( type ) {
-        case Type::D64:
-            writeD64( trackPtr, (halfTrack + 2) / 2 );
-            break;
-        case Type::G64:
-            writeG64( trackPtr, halfTrack );
-            break;
-    }
-}
-
 auto Structure1541::storeWrittenTracks() -> void {
-    
+
+    if (type == Type::P64)
+        writeP64( );
+
+
     for ( unsigned halfTrack = 0; halfTrack < (MAX_TRACKS * 2); halfTrack++ ) {
         
         GcrTrack* gcrTrack = getTrackPtr( halfTrack );
         
         if (!gcrTrack->written || !gcrTrack->size)
             continue;
-        
-        writeTrack( gcrTrack, halfTrack );
+
+        switch( type ) {
+            case Type::D64:
+                writeD64( gcrTrack, (halfTrack + 2) / 2 );
+                break;
+            case Type::G64:
+                writeG64( gcrTrack, halfTrack );
+                break;
+            case Type::P64:
+                // can't overwrite single tracks, need to write whole disk
+                break;
+        }
         
         gcrTrack->written = false;
     }
 }
+
 
 auto Structure1541::serialize(Emulator::Serializer& s, bool written) -> void {
     // serialize structure only, if at least one bit was written

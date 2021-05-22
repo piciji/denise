@@ -1,4 +1,37 @@
 
+// altered version of P64 from BeRo
+// it's rewritten and simplified
+// Matt Mahoney's fpaq0 algorithm is separate to be used in other tasks.
+// Tracks are decoded parallel to each other
+
+/*
+*************************************************************
+** P64 reference implementation by Benjamin 'BeRo' Rosseaux *
+*************************************************************
+**
+** Copyright (c) 2011-2012, Benjamin Rosseaux
+**
+** This software is provided 'as-is', without any express or implied
+** warranty. In no event will the authors be held liable for any damages
+** arising from the use of this software.
+**
+** Permission is granted to anyone to use this software for any purpose,
+** including commercial applications, and to alter it and redistribute it
+** freely, subject to the following restrictions:
+**
+**    1. The origin of this software must not be misrepresented; you must not
+**    claim that you wrote the original software. If you use this software
+**    in a product, an acknowledgment in the product documentation would be
+**    appreciated but is not required.
+**
+**    2. Altered source versions must be plainly marked as such, and must not be
+**    misrepresented as being the original software.
+**
+**    3. This notice may not be removed or altered from any source
+**   distribution.
+**
+*/
+
 #include "structure.h"
 #include "../../../tools/crc32.h"
 
@@ -34,6 +67,194 @@ namespace LIBC64 {
         type = Type::P64;
 
         return true;
+    }
+
+    auto Structure1541::writeP64ToMem(unsigned& memSize) -> uint8_t* {
+
+#define BOUND_CHECK(length) \
+    if ( (*pOffset + length) > *pMaxSize) { \
+        do {                 \
+            *pMaxSize <<= 1;   \
+        } while( (*pOffset + length) > *pMaxSize );                 \
+        uint8_t* newBuf = new uint8_t[*pMaxSize];                \
+        std::memset(newBuf, 0, *pMaxSize);                \
+        std::memcpy( newBuf, *__buf, *pOffset );                   \
+        delete[] *__buf;   \
+        *__buf = newBuf;                        \
+    }
+
+        uint32_t offset = 0;
+        uint32_t* pOffset = &offset;
+        uint32_t maxSize = 400 * 1024;
+        uint32_t* pMaxSize = &maxSize;
+
+        uint8_t* buf = new uint8_t[maxSize];
+        uint8_t** __buf = &buf;
+
+        std::memset( buf, 0, maxSize );
+
+        buf[0] = 'P';
+        buf[1] = '6';
+        buf[2] = '4';
+        buf[3] = '-';
+        buf[4] = '1';
+        buf[5] = '5';
+        buf[6] = '4';
+        buf[7] = '1';
+        offset += 8;
+        // version = 0
+        offset += 4;
+
+        buf[offset] = sides == 2 ? 2 : 0;
+        offset += 4;
+
+        // size, checksum
+        offset += 8;
+
+        std::vector<Emulator::PredictorEightBitWithPrefix*> predictorPositions;
+        std::vector<Emulator::PredictorEightBitWithPrefix*> predictorStrengths;
+        Emulator::PredictorOneBit predictorPositionEnable;
+        Emulator::PredictorOneBit predictorStrengthEnable;
+        Emulator::Fpaq0 fpaq0;
+
+        for(unsigned i = 0; i < 4; i++) {
+            predictorPositions.push_back( new Emulator::PredictorEightBitWithPrefix );
+            predictorStrengths.push_back( new Emulator::PredictorEightBitWithPrefix );
+        }
+
+        fpaq0.writeOut = [this, pOffset, pMaxSize, __buf](uint8_t* buffer, unsigned length) {
+
+            BOUND_CHECK(length)
+            std::memcpy(*__buf + *pOffset, buffer, length);
+            *pOffset += length;
+        };
+
+        for ( unsigned halfTrack = 0; halfTrack < (MAX_TRACKS * 2); halfTrack++ ) {
+            GcrTrack* gcrTrack = getTrackPtr( halfTrack );
+            std::vector<Pulse>* pulseTrack = getPulsePtr( halfTrack );
+
+            BOUND_CHECK(20)
+
+            // beginning from here we need to access 'buf' from double pointer, because 'BOUND_CHECK' could recreate the memory area
+            *(*__buf + offset + 0) = 'H';
+            *(*__buf + offset + 1) = 'T';
+            *(*__buf + offset + 2) = 'P';
+            //if (sides == 2)
+              //  *__buf[offset + 3] = 0x80;
+            // 1571 support is following soon
+            *(*__buf + offset + 3) |= (halfTrack + 2);
+            offset += 12;
+
+            unsigned chunkOffset = offset;
+
+            Emulator::copyIntToBuffer<uint32_t>(*__buf + offset, gcrTrack->written ? (*pulseTrack).size() : 0);
+            offset += 8;
+
+            predictorPositionEnable.init(0);
+            predictorStrengthEnable.init(0);
+
+            for (unsigned i = 0; i < 4; i++) {
+                predictorPositions[i]->init();
+                predictorStrengths[i]->init();
+            }
+
+            fpaq0.init();
+
+            unsigned lastPosition = 0;
+            unsigned lastDelta = 0;
+            unsigned lastStrength = 0;
+
+            if (gcrTrack->written) {
+                for (auto &pulse : *pulseTrack) {
+
+                    unsigned delta = pulse.position - lastPosition;
+
+                    if (delta != lastDelta) {
+
+                        lastDelta = delta;
+
+                        fpaq0.encode(&predictorPositionEnable, true);
+
+                        encodeP64(fpaq0, predictorPositions, delta);
+
+                    } else
+                        fpaq0.encode(&predictorPositionEnable, false);
+
+                    lastPosition = pulse.position;
+
+                    if (lastStrength != pulse.strength) {
+
+                        fpaq0.encode(&predictorStrengthEnable, true);
+
+                        encodeP64(fpaq0, predictorStrengths, pulse.strength - lastStrength);
+                    } else
+                        fpaq0.encode(&predictorStrengthEnable, false);
+
+                    lastStrength = pulse.strength;
+                }
+            }
+
+            fpaq0.encode(&predictorPositionEnable, true);
+            encodeP64(fpaq0, predictorPositions, 0);
+            fpaq0.flush();
+
+            unsigned chunkSize = offset - chunkOffset;
+
+            // encoded data size
+            Emulator::copyIntToBuffer<uint32_t>(*__buf + chunkOffset + 4, chunkSize - 8);
+
+            // chunk size
+            Emulator::copyIntToBuffer<uint32_t>(*__buf + chunkOffset - 8, chunkSize);
+
+            Emulator::CRC32 crc32( *__buf + chunkOffset, chunkSize, ~0);
+            Emulator::copyIntToBuffer<uint32_t>(*__buf + chunkOffset - 4, crc32.value());
+        }
+
+        BOUND_CHECK(12)
+
+        *(*__buf + offset + 0) = 'D';
+        *(*__buf + offset + 1) = 'O';
+        *(*__buf + offset + 2) = 'N';
+        *(*__buf + offset + 3) = 'E';
+        offset += 4;
+
+        Emulator::copyIntToBuffer<uint32_t>(*__buf + offset, 0);
+        offset += 4;
+        Emulator::copyIntToBuffer<uint32_t>(*__buf + offset, 0);
+        offset += 4;
+
+        Emulator::CRC32 crc32( *__buf + 24, offset - 24, ~0);
+        Emulator::copyIntToBuffer<uint32_t>(*__buf + 16, offset - 24);
+        Emulator::copyIntToBuffer<uint32_t>(*__buf + 20, crc32.value());
+
+        for(unsigned i = 0; i < 4; i++) {
+            delete predictorPositions[i];
+            delete predictorStrengths[i];
+        }
+
+        memSize = offset;
+
+        return *__buf;
+    }
+
+    auto Structure1541::writeP64() -> bool {
+
+        unsigned memSize = 0;
+
+        uint8_t* temp = writeP64ToMem(memSize);
+
+        if (!temp || !memSize)
+            return false;
+
+        system->interface->truncateMedia( media );
+
+        bool result = false;
+        if (write(temp, memSize, 0) == memSize)
+            result = true;
+
+        delete[] temp;
+
+        return result;
     }
 
     auto Structure1541::prepareP64() -> void {
@@ -270,6 +491,19 @@ namespace LIBC64 {
         return result;
     }
 
+    inline auto Structure1541::encodeP64( Emulator::Fpaq0& fpaq0, std::vector<Emulator::PredictorEightBitWithPrefix*>& predictors, unsigned value ) -> void {
+
+        for(int i = 0; i < 4; i++) {
+
+            uint8_t byte = (value >> (i << 3)) & 0xff;
+
+            for (int bit = 7; bit >= 0; bit--)
+                fpaq0.encode(predictors[i], (byte >> bit) & 1 );
+
+            predictors[i]->prefix = byte;
+        }
+    }
+
     auto Structure1541::prepareTracksNotInUse(bool* inUse) -> void {
 
         for (int side = 0; side < sides; side++) {
@@ -285,28 +519,43 @@ namespace LIBC64 {
                     gcrPtr->size = countBytes((halfTrack + 2) / 2); // standard length
                     gcrPtr->bits = gcrPtr->size << 3;
                     gcrPtr->data = new uint8_t[gcrPtr->size];
+                    gcrPtr->written = false;
                     std::memset(gcrPtr->data, 0x55, gcrPtr->size);
 
-                    std::vector<Pulse> &pulsePtr = p64Tracks[0][halfTrack];
+                    std::vector<Pulse>& pulsePtr = p64Tracks[0][halfTrack];
                     pulsePtr.clear();
 
-                    // set 0x55 pattern
-                    unsigned fluxDelta = CyclesPerRevolution300Rpm / (gcrPtr->bits / 2);
-
-                    unsigned pos = fluxDelta / 2;
-                    for (unsigned i = 0; i < (gcrPtr->bits / 2); i++) {
-                        pulsePtr.push_back({pos, 0xffffffff});
-
-                        pos += fluxDelta;
-                        if (pos >= CyclesPerRevolution300Rpm)
-                            break;
-                    }
+                    createPulsesFromGCR( pulsePtr, gcrPtr );
                 }
                 inUse++;
             }
         }
     }
 
+    auto Structure1541::createPulsesFromGCR(std::vector<Pulse>& pulses, GcrTrack* gcrTrack) -> void {
+        uint32_t positionHi, positionLo, incrementHi, incrementLo, bit;
+
+        incrementHi = CyclesPerRevolution300Rpm / gcrTrack->bits;
+        incrementLo = CyclesPerRevolution300Rpm % gcrTrack->bits;
+        positionHi = (CyclesPerRevolution300Rpm >> 1) / gcrTrack->bits;
+        positionLo = (CyclesPerRevolution300Rpm >> 1) % gcrTrack->bits;
+
+        for(bit = 0; bit < gcrTrack->bits; bit++) {
+
+            if( (gcrTrack->data[bit >> 3]) & (1 << (~bit & 7)) )
+                addPulse(pulses, positionHi, 0xffffffff);
+
+            positionHi += incrementHi;
+            positionLo += incrementLo;
+
+            while(positionLo >= gcrTrack->bits) {
+                positionLo -= gcrTrack->bits;
+                positionHi++;
+            }
+        }
+    }
+
+    // this is needed to generate content list (TOC) outside emulation
     inline auto Structure1541::encodeGCR(std::vector<Pulse>& pulses, GcrTrack* gcrTrack, uint8_t halfTrack) -> void {
         uint8_t track = (halfTrack >> 1) + 1;
         unsigned trackSize = countBytes( track );
@@ -331,6 +580,13 @@ namespace LIBC64 {
 
         gcrTrack->size = trackSize;
         gcrTrack->bits = trackSize * 8;
+
+        // not same meaning like for D64, G64
+        // a single write during emulation means to write the whole disk instead of only modified tracks.
+        // all tracks included in P64 will be marked as written from beginning.
+        // all tracks not included in P64 will not, but could be marked as 'written' during emulation.
+        // this way we don't append half tracks, which were never written.
+        gcrTrack->written = true;
         uint8_t* ptr = gcrTrack->data;
         std::memset( ptr, 0, trackSize );
 
@@ -373,5 +629,43 @@ namespace LIBC64 {
                 ue7Counter++;
             } while(++delay < delta);
         }
+    }
+
+    auto Structure1541::createP64( std::string diskName ) -> Emulator::Interface::Data {
+
+        auto temp = createG64( diskName );
+
+        Structure1541 structure1541;
+
+        structure1541.rawData = temp;
+
+        structure1541.rawSize = imageSizeG64();
+
+        if (!structure1541.analyzeG64())
+            return {nullptr, 0};
+
+        structure1541.prepareG64();
+
+        for( unsigned track = 0; track < TYPICAL_TRACKS; track++ ) {
+
+            unsigned halfTrack = track << 1;
+
+            GcrTrack* gcrPtr = &structure1541.gcrTracks[halfTrack];
+
+            gcrPtr->written = gcrPtr->bits > 0;
+
+            std::vector<Pulse>& pulsePtr = structure1541.p64Tracks[0][halfTrack];
+
+            if (gcrPtr->written)
+                structure1541.createPulsesFromGCR(pulsePtr, gcrPtr);
+        }
+
+        delete[] temp;
+
+        unsigned memSize = 0;
+
+        temp = structure1541.writeP64ToMem(memSize);
+
+        return {temp, memSize};
     }
 }

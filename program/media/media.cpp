@@ -713,13 +713,14 @@ auto MediaLayout::createImage( Emulator::Interface::MediaGroup* mediaGroup ) -> 
         unsigned typeId = diskCreatorLayout->format.userData();
         bool hd = diskCreatorLayout->highDensity.checked();
         
-        data = emulator->createDiskImage( typeId, hd,
+        Emulator::Interface::Data _data = emulator->createDiskImage( typeId, hd,
             diskCreatorLayout->diskLabel.text(),
             diskCreatorLayout->fastFileSystem.checked()
         );
-        
-        size = emulator->getDiskImageSize(typeId, hd);
-        
+
+        data = _data.ptr;
+        size = _data.size;
+
     } else if (mediaGroup->isTape()) {
         data = emulator->createTapeImage( size );
         

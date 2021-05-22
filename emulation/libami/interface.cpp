@@ -337,14 +337,9 @@ auto Interface::ejectHardDisk(Media* media) -> void {
         return;
 }
 
-auto Interface::createDiskImage(unsigned typeId, bool hd, std::string name, bool ffs) -> uint8_t* {        
+auto Interface::createDiskImage(unsigned typeId, bool hd, std::string name, bool ffs) -> Data {
 
-    return nullptr;
-}
-
-auto Interface::getDiskImageSize(unsigned typeId, bool hd) -> unsigned {
-
-    return 0;
+    return {nullptr, 0};
 }
 
 auto Interface::createHardDisk(std::function<void (uint8_t* buffer, unsigned length, unsigned offset)> onCreate, unsigned size, std::string name) -> void {

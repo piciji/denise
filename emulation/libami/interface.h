@@ -40,8 +40,7 @@ struct Interface : Emulator::Interface  {
 	auto ejectHardDisk(Media* media) -> void;
 
 	//create blank images
-	auto getDiskImageSize(unsigned typeId, bool hd) -> unsigned; //get size needed for a new disk image
-	auto createDiskImage(unsigned typeId, bool hd = false, std::string name = "", bool ffs = false) -> uint8_t*;        
+	auto createDiskImage(unsigned typeId, bool hd = false, std::string name = "", bool ffs = false) -> Data;
 	auto createHardDisk(std::function<void (uint8_t* buffer, unsigned length, unsigned offset)> onCreate, unsigned size, std::string name = "") -> void;
 
 	//savestates

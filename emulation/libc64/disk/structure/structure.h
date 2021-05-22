@@ -67,12 +67,10 @@ struct Structure1541 {
    
     auto prepare() -> void;
     auto analyze() -> bool;   
-    static auto create( Type newType, std::string diskName ) -> uint8_t*;
-    static auto imageSize( Type newType ) -> unsigned;
+    static auto create( Type newType, std::string diskName ) -> Emulator::Interface::Data;
     
     auto getTrackPtr( uint8_t halfTrack ) -> GcrTrack*;
     auto getPulsePtr( uint8_t halfTrack ) -> std::vector<Pulse>*;
-    auto writeTrack( const GcrTrack* trackPtr, uint8_t halfTrack ) -> void;
     auto attach( uint8_t* data, unsigned size ) -> bool;
     auto detach() -> void;
     auto createListing() -> void;
@@ -118,6 +116,7 @@ private:
     
     static auto createD64( std::string diskName ) -> uint8_t*;
     static auto createG64( std::string diskName ) -> uint8_t*;
+    static auto createP64( std::string diskName ) -> Emulator::Interface::Data;
     static auto cutId( std::string& diskName ) -> std::string;
     
     static auto imageSizeG64() -> unsigned;
@@ -136,6 +135,8 @@ private:
         
     auto writeD64(const GcrTrack* trackPtr, unsigned track) -> bool;
     auto writeG64(const GcrTrack* trackPtr, unsigned halfTrack) -> bool;
+    auto writeP64ToMem(unsigned& memSize) -> uint8_t*;
+    auto writeP64() -> bool;
     
     static auto writeSector( uint8_t* target, uint8_t* buffer, uint8_t track, uint8_t sector ) -> void;
     static auto readSector( uint8_t* src, uint8_t* buffer, uint8_t track, uint8_t sector ) -> bool;
@@ -147,9 +148,11 @@ private:
     auto decode( const GcrTrack* trackPtr, unsigned offset, uint8_t* buffer, unsigned blockCount ) -> void;
 
 	inline auto decodeP64( Emulator::Fpaq0& fpaq0, std::vector<Emulator::PredictorEightBitWithPrefix*>& predictors ) -> unsigned;
+    inline auto encodeP64( Emulator::Fpaq0& fpaq0, std::vector<Emulator::PredictorEightBitWithPrefix*>& predictors, unsigned value ) -> void;
 	inline auto addPulse( std::vector<Pulse>& trackPtr, uint32_t position, uint32_t strength ) -> void;
     auto encodeGCR(std::vector<Pulse>& pulses, GcrTrack* gcrTrack, uint8_t halfTrack) -> void;
     auto prepareTracksNotInUse(bool* inUse) -> void;
+    auto createPulsesFromGCR(std::vector<Pulse>& pulses, GcrTrack* gcrTrack) -> void;
 };
 
 }

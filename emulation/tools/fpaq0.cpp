@@ -1,4 +1,8 @@
 
+// fpaq0 - Stationary order 0 file compressor.
+// (C) 2004, Matt Mahoney under GPL, http://www.gnu.org/licenses/gpl.txt
+
+#include <algorithm>
 #include "fpaq0.h"
 
 namespace Emulator {

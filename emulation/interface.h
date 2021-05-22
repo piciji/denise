@@ -284,6 +284,11 @@ struct Interface {
     
     std::vector<Palette> palettes;
 
+    struct Data {
+        uint8_t* ptr;
+        unsigned size;
+    };
+
     //callbacks
     struct Bind {
         virtual auto jitPoll() -> bool { return false; }
@@ -401,9 +406,8 @@ struct Interface {
     virtual auto insertDisk(Media* media, uint8_t* data, unsigned size) -> void {}
     virtual auto writeProtectDisk(Media* media, bool state) -> void {}
     virtual auto isWriteProtectedDisk(Media* media) -> bool { return false; }
-    virtual auto ejectDisk(Media* media) -> void { } 
-	virtual auto getDiskImageSize(unsigned typeId, bool hd) -> unsigned { return 0; } //get size needed for a new disk image
-	virtual auto createDiskImage(unsigned typeId, bool hd = false, std::string name = "", bool ffs = false) -> uint8_t* { return nullptr; }        
+    virtual auto ejectDisk(Media* media) -> void { }
+	virtual auto createDiskImage(unsigned typeId, bool hd = false, std::string name = "", bool ffs = false) -> Data { return {nullptr, 0}; }
     virtual auto getDiskListing(Media* media) -> std::vector<Listing> { return {}; }
     virtual auto getDiskPreview(uint8_t* data, unsigned size, Media* media = nullptr) -> std::vector<Listing> { return {}; }
     virtual auto selectDiskListing(Media* media, unsigned pos) -> void { }	

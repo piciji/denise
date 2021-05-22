@@ -1,6 +1,8 @@
 
 #include "drive1541.h"
 #include "mechanics.cpp"
+#include "mechanicsP64.cpp"
+#include "mechanicsG64.cpp"
 #include "serialization.cpp"
 #include "../../../tools/gcr.h"
 
@@ -358,6 +360,7 @@ inline auto Drive1541::processDelays() -> void {
 
 auto Drive1541::detach() -> void {
     write();
+    //structure1541.storeWrittenTracks();
     
     if (loaded)
         detachDelay = DISC_DELAY;
@@ -389,6 +392,8 @@ auto Drive1541::attach( Emulator::Interface::Media* media, uint8_t* data, unsign
         attachDetachDelay = DISC_DELAY;
     else
         attachDelay = DISC_DELAY * 3;
+
+    pulseTrack = structure1541.getPulsePtr( currentHalftrack );
         
     loaded = true;
 }
@@ -442,4 +447,3 @@ auto Drive1541::setSpeed(double rpm, double wobble) -> void {
 }
 
 }
-
