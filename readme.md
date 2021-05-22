@@ -7,17 +7,17 @@
 
 # changelog
 
-## 1.1.1 (not yet released)
+## 1.1.1
 * add Final Cartridge 3 support to EF³
 * add DataBlast, SwiftLink, Turbo232 emulation
     * BBS support (use tcpser for virtual modem)
-    * no emulation of userport connected RS232 devices at the moment
     * only virtual IP based connections, no connections to physical COM ports
 * fix VIA Latch Bug  (thanks to enigma)
 * prepare fullscreen with custom resolution and refresh rate
 * auto fast forward (warp) on startup
     * stop when first file was loaded
     * or fast forward while drive (tape, floppy) is running
+* Bugfix: creating new disks/tapes on macOS Catalina and above was not possible
 
 ## 1.1.0
 * save/load additional settings files for a lot of purposes, like

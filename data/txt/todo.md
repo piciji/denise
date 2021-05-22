@@ -27,7 +27,7 @@
 * PAL color banding (alternating red/green bars)
 * SID file player
 
-# todo Amiga
+## todo Amiga
 * A500
 * slow/fast memory expansion
 * IPF disk image format
@@ -37,7 +37,7 @@
 * A1200
 
 
-# todo for all emulated systems
+## todo for all emulated systems
 * 100 Hz black frame insertion
 * support for directx 11, vulkan, metal graphics driver
 * SPIR-V, RetroArch Shader support
