@@ -3,16 +3,14 @@
 
 namespace LIBC64 {
 
-    auto Drive1541::rotateP64(bool irqNextCycle) -> void {
+    auto Drive1541::rotateP64(  ) -> void {
         unsigned todo;
         bool motorAdvance = motorRun() && loaded;
 
-        uint8_t refCycles = 8;
+        uint8_t refCycles = 16;
 
         if (readMode) {
-
-            while (refCycles) {
-
+            do {
                 if (motorAdvance) {
                     todo = pulseDelta;
 
@@ -30,17 +28,24 @@ namespace LIBC64 {
                 if (randCounter && (randCounter < todo))
                     todo = randCounter;
 
+                ue7Counter += todo;
+
                 pulseDuration += todo;
                 if ((pulseDuration == 40) && (uf6aFlipFlop != comperatorFlipFlop)) {
                     uf6aFlipFlop = comperatorFlipFlop;
                     ue7Counter = speedZone & 3;
                     uf4Counter = 0;
+
+                    if (ue3Counter == 8)
+                        byteFetched((16 - refCycles + todo) > 8);
+
                     // after an amount of time without a flux reversal
                     // the rule that a one is shifted in after 3 zeros in a row
                     // is violated by some randomness. means the counter registers
                     // will be reset after some time but that doesn't mean it can
                     // be more than 3 zeros in row shifted in but fewer.
-                    randCounter = randomizer.rand(0, 31) + 289; // 18 - 20 micro
+                    //randCounter = randomizer.rand(0, 31) + 189; // 12 - 14 micro
+                    randCounter = ( (randomizer.xorShift() >> 16 ) % 31) + 194;
                 } else {
 
                     randCounter -= todo;
@@ -49,11 +54,14 @@ namespace LIBC64 {
                         ue7Counter = speedZone & 3;
                         uf4Counter = 0;
 
-                        randCounter = randomizer.rand(0, 367) + 33;  // 2 - 25 micro
+                        if (ue3Counter == 8)
+                            byteFetched((16 - refCycles + todo) > 8);
+
+                       // randCounter = randomizer.rand(0, 367) + 33;  // 2 - 25 micro
+                        randCounter = ( (randomizer.xorShift() >> 16 ) % 367) + 33;
                     }
                 }
 
-                ue7Counter += todo;
                 if (ue7Counter == 16) {
 
                     ue7Counter = speedZone & 3;
@@ -74,48 +82,34 @@ namespace LIBC64 {
 
                         if (readBuffer == 0x3ff)
                             ue3Counter = 0;
-                        else {
+                        else
                             ue3Counter++;
-                        }
-                        // SO is a edge transition like nmi, don't know when real 1541 reset line.
-                        // but it have to keep active at least one whole cpu cycle to be recognized safely.
-                        // it's not that important how many time passes exactly because a new trigger can only
-                        // happen when off state switches to on. of course it should be happen before next byte
-                        // is ready.
-                        cpu->setSo(false);
+
                         // same like SO flag, the VIA input is edge transition
-                        via2->ca1In(true, irqNextCycle);
+                        via2->ca1In(true, false);
                     }
-                    // uf4: 0,1,4,5,8,9,12,13
-                } else if (((uf4Counter & 2) == 0) && (ue3Counter == 8)) {
-
-                    ue3Counter = 0;
-                    writeBuffer = readBuffer & 0xff;
-
-                    if (byteReadyOverflow) {
-                        // cpu low cycle should progress only 6 reference cycles instead of 8.
-                        // because SO is detected by cpu till ~400 ns cycle time, otherwise it needs
-                        // another cpu cycle to be recognized.
-                        // NOTE: cpu code handles recognition and execution time (one cycle later) of v flag change.
-                        cpu->setSo(true);
-                    }
-
-                    via2->ca1In(!byteReadyOverflow, irqNextCycle);
+                        // uf4: 0,1,4,5,8,9,12,13
+                    else if (((uf4Counter & 2) == 0) && (ue3Counter == 8))
+                        // check if we count more than 6 drive cycles within this CPU cycle.
+                        // comparison with 8 should be correct, see comments in drive1541.cpp
+                        byteFetched((16 - refCycles + todo) > 8);
                 }
 
                 if (motorAdvance) {
                     pulseDelta -= todo;
 
                     if (!pulseDelta) {
-                        Structure1541::Pulse& pulse = (*pulseTrack)[pulseIndex];
+                        Structure1541::Pulse& pulse = gcrTrack->pulses[pulseIndex];
 
-                        if (++pulseIndex == (*pulseTrack).size()) {
-                            pulseIndex = 0;
+                        pulseIndex = pulse.next;
 
-                            pulseDelta = (*pulseTrack)[pulseIndex].position + (CyclesPerRevolution300Rpm - pulse.position);
+                        if (pulseIndex >= 0)
+                            pulseDelta = gcrTrack->pulses[pulseIndex].position - pulse.position;
+                        else {
+                            pulseIndex = gcrTrack->firstPulse;
 
-                        } else {
-                            pulseDelta = (*pulseTrack)[pulseIndex].position - pulse.position;
+                            pulseDelta = gcrTrack->pulses[pulseIndex].position
+                                         + (CyclesPerRevolution300Rpm - pulse.position);
                         }
 
                         if ((pulse.strength == 0xffffffff) || (randomizer.rand() < pulse.strength)) {
@@ -125,11 +119,12 @@ namespace LIBC64 {
                     }
                 }
                 refCycles -= todo;
-            }
+            } while (refCycles);
+        // write mode
         } else {
             bool flux;
 
-            while (refCycles) {
+            do {
                 flux = false;
 
                 if (motorAdvance) {
@@ -148,12 +143,6 @@ namespace LIBC64 {
 
                     ue7Counter = speedZone & 3;
 
-                    // uf4 is a 4 bit counter.
-                    // every 16 ref cycles uf4 is incremented, at least for speedzone 0.
-                    // when uf4 == 2 a one is shifted in.
-                    // when uf4 == (6 or 10 or 14) a zero is shifted in.
-                    // if there is no further flux reversal a one will be shiftd in each 3 zeros.
-                    // because of magnetic mediums can not read too much zeros in row reliable.
                     uf4Counter = (uf4Counter + 1) & 0xf;
 
                     if ((uf4Counter & 3) == 2) {
@@ -166,88 +155,83 @@ namespace LIBC64 {
 
                         ue3Counter++;
 
-                        // SO is a edge transition like nmi, don't know when real 1541 reset line.
-                        // but it have to keep active at least one whole cpu cycle to be recognized safely.
-                        // it's not that important how many time passes exactly because a new trigger can only
-                        // happen when off state switches to on. of course it should be happen before next byte
-                        // is ready.
-                        cpu->setSo(false);
                         // same like SO flag, the VIA input is edge transition
-                        via2->ca1In(true, irqNextCycle);
+                        via2->ca1In(true, false);
                     }
-                    // uf4: 0,1,4,5,8,9,12,13
-                } else if (((uf4Counter & 2) == 0) && (ue3Counter == 8)) {
+                        // uf4: 0,1,4,5,8,9,12,13
+                    else if (((uf4Counter & 2) == 0) && (ue3Counter == 8)) {
 
-                    ue3Counter = 0;
-                    writeBuffer = writeValue;
+                        ue3Counter = 0;
+                        writeBuffer = writeValue;
+                        bool overflowNotThisCycle = (16 - refCycles + todo) > 8;
 
-                    if (byteReadyOverflow) {
-                        // cpu low cycle should progress only 6 reference cycles instead of 8.
-                        // because SO is detected by cpu till ~400 ns cycle time, otherwise it needs
-                        // another cpu cycle to be recognized.
-                        // NOTE: cpu code handles recognition and execution time (one cycle later) of v flag change.
-                        cpu->setSo(true);
+                        if (byteReadyOverflow)
+                            cpu->triggerSO(overflowNotThisCycle ? 2 : 1);
+
+                        via2->ca1In(!byteReadyOverflow, overflowNotThisCycle);
                     }
-
-                    via2->ca1In(!byteReadyOverflow, irqNextCycle);
                 }
 
                 if (motorAdvance) {
                     pulseDelta -= todo;
 
-                    if (!writeProtected) {
-                        if (!written) {
-                            written = true;
+                    if (pulseDelta) {
+
+                        if (flux) {
+                            if (!writeProtected) {
+                                Structure1541::Pulse& pulse = gcrTrack->pulses[pulseIndex];
+                                unsigned position;
+
+                                if (pulseDelta >= pulse.position)
+                                    position = CyclesPerRevolution300Rpm - (pulseDelta - pulse.position);
+                                else
+                                    position = pulse.position - pulseDelta;
+
+                                structure1541.addPulse(gcrTrack, position, 0xffffffff);
+
+                                if (!written)
+                                    written = true;
+
+                                gcrTrack->written |= 1;
+                            }
                         }
-                        gcrTrack->written = true;
+                        // else
+                        // no new flux at this position ... there is already no flux here ... nothing to do
+                    } else {
 
-                        if (pulseDelta) {
+                        Structure1541::Pulse& pulse = gcrTrack->pulses[pulseIndex];
 
+                        if (!writeProtected) {
                             if (flux) {
-                                if (pulseDelta >= (*pulseTrack)[pulseIndex].position) {
-                                    (*pulseTrack).push_back(
-                                            {CyclesPerRevolution300Rpm -
-                                             (pulseDelta - (*pulseTrack)[pulseIndex].position),
-                                             0xffffffff});
-
-                                    pulseIndex = 0;
-                                } else {
-
-                                    (*pulseTrack).insert((*pulseTrack).begin() + pulseIndex,
-                                    {(*pulseTrack)[pulseIndex].position - pulseDelta, 0xffffffff});
-
-                                    pulseIndex++;
-                                }
-                            }
-                            // else
-                            // no new flux at this position ... there is already no flux here ... nothing to do
-                        } else {
-
-                            unsigned position = (*pulseTrack)[pulseIndex].position;
-
-                            if (flux) {
-                                if ((*pulseTrack)[pulseIndex].strength != 0xffffffff)
+                                if (pulse.strength != 0xffffffff)
                                     // 1541 always write strong pulses
-                                    (*pulseTrack)[pulseIndex].strength = 0xffffffff;
+                                    pulse.strength = 0xffffffff;
 
-                                pulseIndex++;
                             } else
-                                (*pulseTrack).erase((*pulseTrack).begin() + pulseIndex);
+                                structure1541.freePulse(gcrTrack, pulseIndex);
 
-                            if (pulseIndex == (*pulseTrack).size()) {
-                                pulseIndex = 0;
+                            if (!written)
+                                written = true;
 
-                                pulseDelta = (*pulseTrack)[pulseIndex].position + (CyclesPerRevolution300Rpm - position);
+                            gcrTrack->written |= 1;
+                        }
 
-                            } else {
-                                pulseDelta = (*pulseTrack)[pulseIndex].position - position;
-                            }
+                        pulseIndex = pulse.next;
+
+                        if (pulseIndex >= 0)
+                            pulseDelta = gcrTrack->pulses[pulseIndex].position - pulse.position;
+                        else {
+                            pulseIndex = gcrTrack->firstPulse;
+
+                            pulseDelta = gcrTrack->pulses[pulseIndex].position
+                                         + (CyclesPerRevolution300Rpm - pulse.position);
                         }
                     }
+
                 }
 
                 refCycles -= todo;
-            }
+            } while (refCycles);
         }
     }
 

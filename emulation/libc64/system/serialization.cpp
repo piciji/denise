@@ -24,6 +24,8 @@ auto System::serialize(unsigned& size) -> uint8_t* {
     
     if (keyBuffer->isPrgInjectionInQueue())
         return nullptr;
+
+    iecBus->updateSerializationSize();
     
     Emulator::Serializer s( serializationSize );
     

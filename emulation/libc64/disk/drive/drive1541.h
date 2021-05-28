@@ -55,7 +55,6 @@ struct Drive1541 {
     uint32_t accum;   
         
     Structure1541::GcrTrack* gcrTrack = new Structure1541::GcrTrack;
-    std::vector<Structure1541::Pulse>* pulseTrack = nullptr;
     
     uint8_t currentHalftrack;
     int stepDirection = 0;
@@ -68,13 +67,11 @@ struct Drive1541 {
 
     uint32_t refCyclesPerRevolution;
 
-    bool filter;
-    bool lastFilter;
     uint8_t ue7Counter;
     uint8_t uf4Counter;
     Emulator::Rand randomizer;
     unsigned randCounter;
-    unsigned pulseIndex;
+    int pulseIndex;
     unsigned pulseDelta;
 
     bool comperatorFlipFlop; // detect flux reversal
@@ -84,6 +81,7 @@ struct Drive1541 {
     uint8_t writeValue;
     unsigned readBuffer;
     uint8_t writeBuffer;
+    uint8_t latchedByte;
     
     unsigned attachDelay = 0;
     unsigned detachDelay = 0;
@@ -113,8 +111,8 @@ struct Drive1541 {
     auto updateBus() -> void;
     auto setFirmware(uint8_t* rom) -> void;
     auto rotateD64() -> void;
-    auto rotateG64( bool irqNextCycle ) -> void;
-    auto rotateP64( bool irqNextCycle ) -> void;
+    auto rotateG64() -> void;
+    auto rotateP64(  ) -> void;
     auto randomizeRpm() -> void;
     auto writeBit( bool state ) -> void;
     auto readBit() -> bool;
@@ -136,6 +134,8 @@ struct Drive1541 {
     auto serialize(Emulator::Serializer& s) -> void;
     auto updateDeviceState() -> void;
     auto updateIdleDeviceState() -> void;
+
+    auto byteFetched( bool overflowNotThisCycle ) -> void;
 };
   
 }

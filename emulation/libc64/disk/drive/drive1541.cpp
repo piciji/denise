@@ -10,15 +10,15 @@
 
 namespace LIBC64 {
    
-// one cpu cycle is 16 reference cycles.
+// one cpu cycle is 16 reference(drive) cycles.
 // we do only progress 6 instead of 8 in first half cycle because of a possible
 // external overflow is recognized by cpu within 400 ns.
  
-// in case of a VIA2 READ there is more time a change can be read back ~ 875 ns within cycle.
+// in case of a VIA READ there is more time a change can be read back ~ 875 ns within cycle.
 // 6 ref cycles are progressed in first half cycle already, so we need 8 more to get 14 of 16 ref cycles.
     
 // for each cycle:
-    
+
 // 6 ref cycles:    check for external overflow
 // + 8    
 // 14 ref cycles:   VIA2 read back Changes
@@ -28,24 +28,18 @@ namespace LIBC64 {
 // repeat this pattern    
 
 // the distance between "overflow" checking and maximum "Read back" time is 8 ref cycles, phase shifted by 2 ref cycles.
-// the relative	distance matters, so we can step in 8 ref cycle chunks
+// the relative	distance matters, so we can step in 8 ref cycle chunks which is handled in rotateP64 and rotateG64
     
 #define SYNC \
+    cpu->handleSo();                                                    \
     if (structure1541.type == Structure1541::Type::D64) {                   \
-        cpu->handleSo();                                                    \
-        processDelays();                                                    \
         rotateD64();                                                        \
     } else if (structure1541.type == Structure1541::Type::G64) {            \
-        rotateG64( false );                                                 \
-        cpu->handleSo();                                                    \
-        processDelays();                                                    \
-        rotateG64( true );                                                  \
+        rotateG64(  );                                                  \
     } else {                                                                \
-        rotateP64( false );                                                 \
-        cpu->handleSo();                                                    \
-        processDelays();                                                    \
-        rotateP64( true );                                                  \
+        rotateP64(  );                                                  \
     }                                                                       \
+    processDelays();                                                    \
     via1->process();                                                        \
     via2->process();                                                        \
     cycleCounter += iecBus->cpuCylcesPerSecond;
@@ -55,7 +49,7 @@ auto Drive1541::sync() -> void {
 }
 
 auto Drive1541::cpuWrite(uint16_t addr, uint8_t data) -> void {
-    SYNC    
+    SYNC
 
     if ((addr & 0x9800) == 0)
         ram[ addr & 0x7ff ] = data;
@@ -206,7 +200,7 @@ Drive1541::Drive1541(uint8_t number, Emulator::Interface::Media* mediaConnected 
                 | (lines->prb & lines->ddrb); // output mode
         }
         // port A
-        return (writeBuffer /* shared */ & ~lines->ddra) | ( lines->pra & lines->ddra );
+        return (latchedByte & ~lines->ddra) | ( lines->pra & lines->ddra );
     };
     
     via2->ca2Out = [this]( bool state ) {
@@ -283,7 +277,6 @@ auto Drive1541::power( ) -> void {
     cpu->power();    
  
     ue7Counter = uf4Counter = 0;
-    filter = lastFilter = 0;
     randCounter = 0;
     randomizer.initXorShift( 0x1234abcd );
     
@@ -291,6 +284,7 @@ auto Drive1541::power( ) -> void {
     motorOff.slowDown = false;
     readBuffer = writeBuffer = 0;
     writeValue = 0x55;
+    latchedByte = 0x55;
     ue3Counter = 0;
     accum = 0;
     headOffset = 0;
@@ -298,8 +292,8 @@ auto Drive1541::power( ) -> void {
     currentHalftrack = 17 * 2;
     stepDirection = 0;
     structure1541.autoStarted = false;
-    pulseTrack = nullptr;
-    pulseIndex = 0;
+    structure1541.serializationSize = 0;
+    pulseIndex = -1;
     pulseDelta = 1;
     comperatorFlipFlop = false;
     uf6aFlipFlop = false;
@@ -360,7 +354,6 @@ inline auto Drive1541::processDelays() -> void {
 
 auto Drive1541::detach() -> void {
     write();
-    //structure1541.storeWrittenTracks();
     
     if (loaded)
         detachDelay = DISC_DELAY;
@@ -369,7 +362,7 @@ auto Drive1541::detach() -> void {
     motorOff.slowDown = false;
     
     loaded = false;
-    pulseIndex = 0;
+    pulseIndex = -1;
     pulseDelta = 1; // to reload quickly
 }
 
@@ -378,7 +371,7 @@ auto Drive1541::attach( Emulator::Interface::Media* media, uint8_t* data, unsign
     detach();
     accum = 0;
     randCounter = 0;
-    filter = lastFilter = 0;
+    uf6aFlipFlop = comperatorFlipFlop = false;
     uf4Counter = ue7Counter = 0;
     ue3Counter = 0;
     
@@ -393,8 +386,8 @@ auto Drive1541::attach( Emulator::Interface::Media* media, uint8_t* data, unsign
     else
         attachDelay = DISC_DELAY * 3;
 
-    pulseTrack = structure1541.getPulsePtr( currentHalftrack );
-        
+    pulseIndex = gcrTrack->firstPulse;
+
     loaded = true;
 }
 
@@ -426,10 +419,11 @@ auto Drive1541::write() -> void {
         return;
     
     written = false;
-    
-    auto _imageSize = structure1541.getStateImageSize();
-    if (system->serializationSize > _imageSize)
-        system->serializationSize -= _imageSize;
+
+    if (structure1541.serializationSize) {
+        system->serializationSize -= structure1541.serializationSize;
+        structure1541.serializationSize = 0;
+    }
     
     if (!loaded)
         return;

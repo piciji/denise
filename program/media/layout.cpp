@@ -227,7 +227,7 @@ auto MediaGroupLayout::fillListing( std::vector<Emulator::Interface::Listing>& e
         
     listings.append(rows);
 	
-    // first check is usefull when App is quited and globalSettings object deleted at this point
+    // first check is usefull, when App is quited and globalSettings object deleted at this point
     if (!globalSettings || !globalSettings->get<bool>("software_preview_tooltips", true ))
         return;
         

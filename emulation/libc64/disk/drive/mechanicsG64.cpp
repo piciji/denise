@@ -3,10 +3,9 @@
 
 namespace LIBC64 {
 
-    auto Drive1541::rotateG64( bool irqNextCycle ) -> void {
-
-        if (!motorRun())
-            return;
+    auto Drive1541::rotateG64( ) -> void {
+        unsigned todo;
+        bool motorAdvance = motorRun() && loaded;
 
         // the g64 format contains user and structure data, simply all bits of a track
         // but hasn't information about bit cell length. not quite true but read on.
@@ -18,7 +17,7 @@ namespace LIBC64 {
         // it's possible to master a disk with variable bit cell length.
         // therefore a speedzone area in gcr specs exists, where
         // each byte can be assigned by a different speedzone.
-        // I have read there is no g64 image out there using this feature.
+        // there is no g64 image out there using this feature.
         // a copy protection which relies on exact bit cell duration works only when
         // the track size matches the original track length. so a carefully prepared g64
         // image is needed.
@@ -44,38 +43,68 @@ namespace LIBC64 {
         // ref cycles and compare this value with the total amount of ref cycles per revolution.
         // if exceeded we reach a new bit cell.
 
-        uint8_t refCycles = 8;
+        uint8_t refCycles = 16;
+        unsigned delta;
+
         if (readMode) {
+            do {
+                if (motorAdvance) {
+                    todo = 1;
+                    delta = refCyclesPerRevolution - accum;
 
-            while ( refCycles-- ) {
+                    if ((gcrTrack->bits << 1) <= delta) {
+                        todo = delta / gcrTrack->bits;
 
-                if ( filter != lastFilter ) {
-                    lastFilter = filter;
+                        if (refCycles < todo)
+                            todo = refCycles;
+
+                        if ((16 - ue7Counter) < todo)
+                            todo = 16 - ue7Counter;
+
+                        if (randCounter && (randCounter < todo))
+                            todo = randCounter;
+                    }
+                } else {
+                    todo = refCycles;
+
+                    if ((16 - ue7Counter) < todo)
+                        todo = 16 - ue7Counter;
+
+                    if (randCounter && (randCounter < todo))
+                        todo = randCounter;
+                }
+
+                ue7Counter += todo;
+
+                if ( uf6aFlipFlop != comperatorFlipFlop ) {
+                    uf6aFlipFlop = comperatorFlipFlop;
                     ue7Counter = speedZone & 3;
                     uf4Counter = 0;
+
+                    if (ue3Counter == 8)
+                        byteFetched((16 - refCycles + todo) > 8);
                     // after an amount of time without a flux reversal
                     // the rule that a one is shifted in after 3 zeros in a row
                     // is violated by some randomness. means the counter registers
                     // will be reset after some time but that doesn't mean it can
                     // be more than 3 zeros in row shifted in but fewer.
-                    randCounter = ( (randomizer.xorShift() >> 16 ) % 31) + 289;
+                    randCounter = ( (randomizer.xorShift() >> 16 ) % 31) + 233; // 14.5 - 67.5
                 } else {
 
-                    if (randCounter)
-                        randCounter--;
+                    randCounter -= todo;
 
                     if (!randCounter) {
                         ue7Counter = speedZone & 3;
                         uf4Counter = 0;
 
+                        if (ue3Counter == 8)
+                            byteFetched((16 - refCycles + todo) > 8);
+
                         randCounter = ( (randomizer.xorShift() >> 16 ) % 367) + 33;
                     }
                 }
 
-                ue7Counter++;
-
                 if (ue7Counter == 16) {
-
                     ue7Counter = speedZone & 3;
 
                     // uf4 is a 4 bit counter.
@@ -88,64 +117,74 @@ namespace LIBC64 {
 
                     if ((uf4Counter & 3) == 2) {
 
-                        readBuffer = ((readBuffer << 1) & 0x3fe ) | ( uf4Counter == 2 ? 1 : 0 );
+                        readBuffer = ((readBuffer << 1) & 0x3fe) | (uf4Counter == 2 ? 1 : 0);
 
-                        //writeBuffer <<= 1;
+                        writeBuffer <<= 1;
 
-                        if ( readBuffer == 0x3ff )
+                        if (readBuffer == 0x3ff)
                             ue3Counter = 0;
+                        else
+                            ue3Counter++;
 
-                        else {
-
-                            if (++ue3Counter == 8) {
-                                ue3Counter = 0;
-                                writeBuffer = readBuffer & 0xff;
-
-                                if (byteReadyOverflow) {
-                                    // cpu low cycle should progress only 6 reference cycles instead of 8.
-                                    // because SO is detected by cpu at ~400 ns cycle time, otherwise it needs
-                                    // another cpu cycle to be recognized.
-                                    // NOTE: cpu code handles recognition and execution time of v flag change.
-                                    cpu->setSo( true );
-                                }
-                                via2->ca1In( !byteReadyOverflow, irqNextCycle );
-                            } else {
-                                // SO is a edge transition like nmi, don't know when real 1541 reset line.
-                                // but it have to keep active at least one whole cpu cycle to be recognized safely.
-                                // it's not that important how many time passes exactly because a new trigger can only
-                                // happen when off state switches to on. of course it should be happen before next byte
-                                // is ready.
-                                cpu->setSo( false );
-                                // same like Cpu SO flag the via input is edge transition
-                                via2->ca1In( true, irqNextCycle );
-                            }
-                        }
+                        // same like SO, the VIA input is edge transition
+                        via2->ca1In(true, false);
+                    }
+                        // uf4: 0,1,4,5,8,9,12,13
+                    else if (((uf4Counter & 2) == 0) && (ue3Counter == 8)) {
+                        // check if we count more than 6 drive cycles within this CPU cycle.
+                        // comparison with 8 should be correct, see comments in drive1541.cpp
+                        byteFetched((16 - refCycles + todo) > 8);
                     }
                 }
 
-                accum += gcrTrack->bits;
+                if (motorAdvance) {
+                    accum += gcrTrack->bits * todo;
 
-                if ( accum >= refCyclesPerRevolution ) {
-                    accum -= refCyclesPerRevolution;
+                    if (accum >= refCyclesPerRevolution) {
+                        accum -= refCyclesPerRevolution;
 
-                    if ( readBit() )
-                        // too short ( < 2.5 microseconds ) flux reversals will be removed by a filter
-                        // not emulated, because variable bit cell length isn't emulated either but necessary for this
-                        // NOTE: gcr images are almost clean already
-                        filter ^= 1;
+                        if (readBit())
+                            // too short ( < 2.5 microseconds ) flux reversals will be removed by a filter
+                            // not emulated, because variable bit cell length isn't emulated either but necessary for this
+                            // NOTE: gcr images are almost clean already
+                            comperatorFlipFlop ^= 1;
+                    }
                 }
-            }
+
+                refCycles -= todo;
+            } while ( refCycles );
 
         } else { // write
-            while (refCycles--) {
+            do {
+                if (motorAdvance) {
+                    todo = 1;
+                    delta = refCyclesPerRevolution - accum;
 
-                accum += gcrTrack->bits;
+                    if ((gcrTrack->bits << 1) <= delta) {
+                        todo = delta / gcrTrack->bits;
 
-                if (accum >= refCyclesPerRevolution)
-                    accum -= refCyclesPerRevolution;
+                        if (refCycles < todo)
+                            todo = refCycles;
+
+                        if ((16 - ue7Counter) < todo)
+                            todo = 16 - ue7Counter;
+                    }
+
+                    accum += gcrTrack->bits * todo;
+
+                    if (accum >= refCyclesPerRevolution)
+                        accum -= refCyclesPerRevolution;
+
+                } else {
+                    todo = refCycles;
+
+                    if ((16 - ue7Counter) < todo)
+                        todo = 16 - ue7Counter;
+                }
 
                 // ue7 and uf4 works same like reading
-                if (++ue7Counter == 16) {
+                ue7Counter += todo;
+                if (ue7Counter == 16) {
 
                     ue7Counter = speedZone & 3;
 
@@ -153,7 +192,7 @@ namespace LIBC64 {
 
                     if ((uf4Counter & 3) == 2) {
 
-                        readBuffer = ((readBuffer << 1) & 0x3fe) | (uf4Counter == 2);
+                        readBuffer = ((readBuffer << 1) & 0x3fe) | (uf4Counter == 2 ? 1 : 0);
 
                         writeBit( (writeBuffer & 0x80) != 0 );
 
@@ -161,22 +200,27 @@ namespace LIBC64 {
 
                         accum = gcrTrack->bits << 1;
 
-                        if (++ue3Counter == 8) {
-                            ue3Counter = 0;
+                        ue3Counter++;
 
-                            writeBuffer = writeValue; // fetch next byte to buffer
+                        // same like SO flag, the VIA input is edge transition
+                        via2->ca1In(true, false);
+                    }
+                        // uf4: 0,1,4,5,8,9,12,13
+                    else if (((uf4Counter & 2) == 0) && (ue3Counter == 8)) {
 
-                            if (byteReadyOverflow)
-                                cpu->setSo(true);
+                        ue3Counter = 0;
+                        writeBuffer = writeValue;
+                        bool overflowNotThisCycle = (16 - refCycles + todo) > 8;
 
-                            via2->ca1In( !byteReadyOverflow, irqNextCycle);
-                        } else {
-                            cpu->setSo(false);
-                            via2->ca1In( true, irqNextCycle );
-                        }
+                        if (byteReadyOverflow)
+                            cpu->triggerSO(overflowNotThisCycle ? 2 : 1);
+
+                        via2->ca1In(!byteReadyOverflow, overflowNotThisCycle);
                     }
                 }
-            }
+
+                refCycles -= todo;
+            } while ( refCycles );
         }
     }
 }

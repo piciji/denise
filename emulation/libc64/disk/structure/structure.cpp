@@ -27,8 +27,8 @@ Structure1541::Structure1541() {
     for( unsigned i = 0; i < (MAX_TRACKS * 2); i++ ) {
         gcrTracks[i].data = nullptr;
         gcrTracks[i].size = 0;
-        gcrTracks[i].bits = 0;
-        gcrTracks[i].written = false;
+        gcrTracks[i].bits = 1;
+        gcrTracks[i].written = 0;
     }
 }   
 
@@ -71,11 +71,15 @@ auto Structure1541::clearTrackData() -> void {
 
         trackPtr->data = nullptr;
         trackPtr->size = 0;
-        trackPtr->bits = 0;
-        trackPtr->written = false;
+        trackPtr->bits = 1;
+        trackPtr->written = 0;
 
-        auto pulseTrack = &p64Tracks[0][ i ];
-        pulseTrack->clear();
+        trackPtr->firstPulse = -1;
+        trackPtr->currentPulse = -1;
+        trackPtr->lastPulse = -1;
+        trackPtr->pulses.clear();
+        // free memory
+        trackPtr->pulses.shrink_to_fit();
     }
     
     if (errorMap)
@@ -485,12 +489,11 @@ auto Structure1541::storeWrittenTracks() -> void {
     if (type == Type::P64)
         writeP64( );
 
-
     for ( unsigned halfTrack = 0; halfTrack < (MAX_TRACKS * 2); halfTrack++ ) {
         
         GcrTrack* gcrTrack = getTrackPtr( halfTrack );
         
-        if (!gcrTrack->written || !gcrTrack->size)
+        if (!(gcrTrack->written & 1) || !gcrTrack->size)
             continue;
 
         switch( type ) {
@@ -501,19 +504,22 @@ auto Structure1541::storeWrittenTracks() -> void {
                 writeG64( gcrTrack, halfTrack );
                 break;
             case Type::P64:
-                // can't overwrite single tracks, need to write whole disk
+                // can't overwrite single tracks, need to write whole disk.
+                // convert to gcr to update listing outside of emulation
+                encodeGCR( gcrTrack, halfTrack );
                 break;
         }
         
-        gcrTrack->written = false;
+        gcrTrack->written = 0;
     }
 }
-
 
 auto Structure1541::serialize(Emulator::Serializer& s, bool written) -> void {
     // serialize structure only, if at least one bit was written
 
     s.integer( autoStarted );
+
+    s.integer( serializationSize );
 
     s.integer( rawSize );
     
@@ -532,30 +538,81 @@ auto Structure1541::serialize(Emulator::Serializer& s, bool written) -> void {
 
         GcrTrack* gcrTrack = getTrackPtr(halfTrack);
 
+        s.integer( gcrTrack->written );
+
+        if (!(gcrTrack->written & 1))
+            continue;
+
         unsigned _trackSize = gcrTrack->size;
         
-        s.integer( gcrTrack->written );     
-        
-        s.integer( gcrTrack->size );        
-            
-        if (s.mode() == Emulator::Serializer::Mode::Load) {
-            gcrTrack->bits = gcrTrack->size << 3;           
-            
-            if (_trackSize != gcrTrack->size) {
-                
-                if (gcrTrack->data)
-                    delete[] gcrTrack->data;
+        s.integer( gcrTrack->size );
 
-                gcrTrack->data = nullptr;
-                    
-                if (gcrTrack->size) 
-                    gcrTrack->data = new uint8_t[ gcrTrack->size ];   
-            }                                                                      
+        if (type == Type::P64) {
+
+            s.integer( gcrTrack->firstPulse );
+            s.integer( gcrTrack->lastPulse );
+            s.integer( gcrTrack->currentPulse );
+
+            unsigned pulseSize = gcrTrack->pulses.size();
+            s.integer( pulseSize );
+
+            if (s.mode() == Emulator::Serializer::Mode::Save) {
+                for (unsigned i = 0; i < pulseSize; i++) {
+
+                    Pulse& pulse = gcrTrack->pulses[i];
+
+                    s.integer( pulse.position );
+                    s.integer( pulse.strength );
+                    s.integer( pulse.next );
+                    s.integer( pulse.previous );
+                }
+            } else if (s.mode() == Emulator::Serializer::Mode::Load) {
+
+                gcrTrack->pulses.clear();
+                gcrTrack->pulses.reserve( pulseSize );
+                Pulse pulse;
+
+                for (unsigned i = 0; i < pulseSize; i++) {
+                    s.integer( pulse.position );
+                    s.integer( pulse.strength );
+                    s.integer( pulse.next );
+                    s.integer( pulse.previous );
+
+                    gcrTrack->pulses.push_back( pulse );
+                }
+            }
+        } else {
+
+            if (s.mode() == Emulator::Serializer::Mode::Load) {
+                gcrTrack->bits = gcrTrack->size << 3;
+                if (!gcrTrack->bits)
+                    gcrTrack->bits = 1;
+
+                if (_trackSize != gcrTrack->size) {
+
+                    if (gcrTrack->data)
+                        delete[] gcrTrack->data;
+
+                    gcrTrack->data = nullptr;
+
+                    if (gcrTrack->size)
+                        gcrTrack->data = new uint8_t[ gcrTrack->size ];
+                }
+            }
+
+            if (gcrTrack->size)
+                s.array( gcrTrack->data, gcrTrack->size );
         }
-        
-        if (gcrTrack->size)
-            s.array( gcrTrack->data, gcrTrack->size );
+
     }
+}
+
+auto Structure1541::updateSerializationSize() -> void {
+    if (serializationSize)
+        system->serializationSize -= serializationSize;
+
+    serializationSize = getStateImageSize();
+    system->serializationSize += serializationSize;
 }
 
 auto Structure1541::getStateImageSize() -> unsigned {
@@ -564,9 +621,17 @@ auto Structure1541::getStateImageSize() -> unsigned {
     
     for (unsigned halfTrack = 0; halfTrack < (MAX_TRACKS * 2); halfTrack++) {
 
+        neededSize += 1;
+
         GcrTrack* gcrTrack = getTrackPtr( halfTrack );
 
-        neededSize += 1 + 4 + gcrTrack->size;
+        if (!(gcrTrack->written & 1))
+            continue;
+
+        if (type == Type::P64) {
+            neededSize += 4 + 16 + gcrTrack->pulses.size() * 16;
+        } else
+            neededSize += 4 + gcrTrack->size;
     }
     
     return neededSize;
@@ -577,9 +642,5 @@ auto Structure1541::getTrackPtr( uint8_t halfTrack ) -> GcrTrack* {
     return &gcrTracks[ halfTrack ];
 }
 
-auto Structure1541::getPulsePtr( uint8_t halfTrack ) -> std::vector<Pulse>* {
-
-    return &p64Tracks[0][ halfTrack ];
-}
 
 }

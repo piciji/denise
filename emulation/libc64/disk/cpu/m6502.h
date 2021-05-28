@@ -77,13 +77,9 @@ struct M6502 {
     uint8_t _value;
 
     uint8_t soBlock;
-    
-    bool soLine = false;
 
-    bool soDetect = false;
+    uint8_t soSample = 0;
 
-    bool soSampled = false;    
-		
 	auto process() -> void;
     
     inline auto isReadNext() -> bool { return readNext; }
@@ -105,8 +101,8 @@ struct M6502 {
 	auto setMagicForLax(uint8_t magicLax) -> void;
 
     auto getMagicForLax() -> uint8_t { return magicLax; }
-    
-    auto setSo(bool state) -> void;
+
+    auto triggerSO(uint8_t delay = 1) -> void;
     
     auto handleSo() -> void;
 	

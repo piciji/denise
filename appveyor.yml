@@ -134,12 +134,12 @@ for:
     - sh: |
         if [ "${APPVEYOR_REPO_TAG}" == "false" ]
         then
-          export gzTarget=denise_linux_build_$(echo ${APPVEYOR_REPO_COMMIT} | cut -c 1-7).tar.gz
-          export gzSrc=denise_linux_build_$(echo ${APPVEYOR_REPO_COMMIT} | cut -c 1-7)          
+          export gzTarget=denise_ubuntu2004_build_$(echo ${APPVEYOR_REPO_COMMIT} | cut -c 1-7).tar.gz
+          export gzSrc=denise_ubuntu2004_build_$(echo ${APPVEYOR_REPO_COMMIT} | cut -c 1-7)
           
         else        
-          export gzTarget=denise_linux_${APPVEYOR_REPO_TAG_NAME}.tar.gz
-          export gzSrc=denise_linux_${APPVEYOR_REPO_TAG_NAME}                    
+          export gzTarget=denise_ubuntu2004_${APPVEYOR_REPO_TAG_NAME}.tar.gz
+          export gzSrc=denise_ubuntu2004_${APPVEYOR_REPO_TAG_NAME}
         fi
         
         sudo mv out "${gzSrc}" && sudo tar -zcf "${gzTarget}" "${gzSrc}"    

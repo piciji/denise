@@ -1,7 +1,6 @@
 
 // altered version of P64 from BeRo
-// it's rewritten and simplified
-// Matt Mahoney's fpaq0 algorithm is separate to be used in other tasks.
+// separated Matt Mahoney's fpaq0 algorithm to be used for other tasks.
 // Tracks are decoded parallel to each other
 
 /*
@@ -131,7 +130,6 @@ namespace LIBC64 {
 
         for ( unsigned halfTrack = 0; halfTrack < (MAX_TRACKS * 2); halfTrack++ ) {
             GcrTrack* gcrTrack = getTrackPtr( halfTrack );
-            std::vector<Pulse>* pulseTrack = getPulsePtr( halfTrack );
 
             BOUND_CHECK(20)
 
@@ -146,8 +144,6 @@ namespace LIBC64 {
             offset += 12;
 
             unsigned chunkOffset = offset;
-
-            Emulator::copyIntToBuffer<uint32_t>(*__buf + offset, gcrTrack->written ? (*pulseTrack).size() : 0);
             offset += 8;
 
             predictorPositionEnable.init(0);
@@ -164,8 +160,13 @@ namespace LIBC64 {
             unsigned lastDelta = 0;
             unsigned lastStrength = 0;
 
+            unsigned countPulses = 0;
+
             if (gcrTrack->written) {
-                for (auto &pulse : *pulseTrack) {
+                int32_t index = gcrTrack->firstPulse;
+
+                while (index >= 0) {
+                    Structure1541::Pulse& pulse = gcrTrack->pulses[index];
 
                     unsigned delta = pulse.position - lastPosition;
 
@@ -191,12 +192,19 @@ namespace LIBC64 {
                         fpaq0.encode(&predictorStrengthEnable, false);
 
                     lastStrength = pulse.strength;
+
+                    index = pulse.next;
+
+                    countPulses++;
                 }
             }
 
             fpaq0.encode(&predictorPositionEnable, true);
             encodeP64(fpaq0, predictorPositions, 0);
             fpaq0.flush();
+
+
+            Emulator::copyIntToBuffer<uint32_t>(*__buf + chunkOffset, countPulses);
 
             unsigned chunkSize = offset - chunkOffset;
 
@@ -358,13 +366,13 @@ namespace LIBC64 {
                             uint8_t side = !!(halfTrack & 128);
                             halfTrack &= 127;
 
-                            if ((halfTrack < 2) || (halfTrack > 85))
+                            if (side || (halfTrack < 2) || (halfTrack > 85))
                                 continue;
 
                             halfTrack -= 2;
 
-                            std::vector<Pulse> &trackPtr = p64Tracks[side][halfTrack];
-                            trackPtr.clear();
+                            GcrTrack* gcrPtr = &gcrTracks[halfTrack];
+                            gcrPtr->pulses.clear();
 
                             uint32_t pulses = Emulator::copyBufferToInt<uint32_t>(_ptr);
                             _ptr += 4;
@@ -409,7 +417,7 @@ namespace LIBC64 {
                                 if (fpaq0.decode(&predictorStrengthEnable))
                                     strength += decodeP64(fpaq0, predictorStrengths);
 
-                                addPulse(trackPtr, position, strength);
+                                addPulse(gcrPtr, position, strength);
 
                                 count++;
                             }
@@ -417,7 +425,7 @@ namespace LIBC64 {
                             if (count != pulses)
                                 break;
 
-                            encodeGCR(trackPtr, &gcrTracks[halfTrack], halfTrack);
+                            encodeGCR(gcrPtr, halfTrack);
 
                             usePtr[ (side == 1 ? (MAX_TRACKS_1541 * 2) : 0) + halfTrack ] = pulses > 0;
                         }
@@ -449,27 +457,96 @@ namespace LIBC64 {
 //        }
     }
 
-    inline auto Structure1541::addPulse( std::vector<Pulse>& trackPtr, uint32_t position, uint32_t strength ) -> void {
+    inline auto Structure1541::allocatePulse( std::vector<Pulse>& pulses ) -> unsigned {
+
+        unsigned capacity = pulses.capacity();
+        unsigned size = pulses.size();
+
+        if (size == capacity) {
+
+            if (capacity == 0)
+                capacity = 128;
+
+            capacity <<= 1;
+
+            // to prevent reallocation for each single pulse
+            pulses.reserve(capacity);
+        }
+
+        return size;
+    }
+
+    auto Structure1541::freePulse( GcrTrack* gcrTrack, int32_t index ) -> void {
+        Structure1541::Pulse& pulse = gcrTrack->pulses[index];
+
+        if (gcrTrack->currentPulse == index)
+            gcrTrack->currentPulse = pulse.next;
+
+        if (pulse.previous < 0)
+            gcrTrack->firstPulse = pulse.next;
+        else
+            gcrTrack->pulses[pulse.previous].next = pulse.next;
+
+        if (pulse.next < 0)
+            gcrTrack->lastPulse = pulse.previous;
+        else
+            gcrTrack->pulses[pulse.next].previous = pulse.previous;
+    }
+
+    auto Structure1541::addPulse( GcrTrack* gcrTrack, uint32_t position, uint32_t strength ) -> void {
+        // use double linked list for faster write emulation
+        // have tried a simple sorted vector but inserting new elements during write emulation completly kill performance
+
+        int32_t currentPulse = gcrTrack->currentPulse;
+        int32_t index;
 
         while(position >= CyclesPerRevolution300Rpm)
             position -= CyclesPerRevolution300Rpm;
 
-        if (!trackPtr.size() || trackPtr.back().position < position)
-            trackPtr.push_back({position, strength});
-        else {
-            unsigned index = 0;
-            for(auto& pulse : trackPtr) {
-                if (pulse.position == position)
-                    break;
+        if((gcrTrack->lastPulse >= 0) && (gcrTrack->pulses[gcrTrack->lastPulse].position < position)) {
+            currentPulse = -1;
 
-                else if (pulse.position > position) {
-                    trackPtr.insert( trackPtr.begin() + index, {position, strength} );
-                    break;
-                }
+        } else {
 
-                index++;
+            if ((currentPulse < 0) ||
+                ((currentPulse != gcrTrack->firstPulse) && (gcrTrack->pulses[currentPulse].position >= position)))
+                currentPulse = gcrTrack->firstPulse;
+
+            while ((currentPulse >= 0) && (gcrTrack->pulses[currentPulse].position < position))
+                currentPulse = gcrTrack->pulses[currentPulse].next;
+        }
+
+        if (currentPulse < 0) {
+
+            index = allocatePulse( gcrTrack->pulses );
+            gcrTrack->pulses.push_back({position, strength, gcrTrack->lastPulse, -1});
+
+            if (gcrTrack->lastPulse < 0)
+                gcrTrack->firstPulse = index;
+            else
+                gcrTrack->pulses[gcrTrack->lastPulse].next = index;
+
+            gcrTrack->lastPulse = index;
+
+        } else {
+            if (gcrTrack->pulses[currentPulse].position == position) {
+                gcrTrack->pulses[currentPulse].strength = strength;
+                index = currentPulse;
+            } else {
+                index = allocatePulse(gcrTrack->pulses);
+
+                gcrTrack->pulses.push_back({position, strength, gcrTrack->pulses[currentPulse].previous, currentPulse});
+
+                gcrTrack->pulses[currentPulse].previous = index;
+
+                if (gcrTrack->pulses[index].previous < 0)
+                    gcrTrack->firstPulse = index;
+                else
+                    gcrTrack->pulses[gcrTrack->pulses[index].previous].next = index;
             }
         }
+
+        gcrTrack->currentPulse = index;
     }
 
     inline auto Structure1541::decodeP64( Emulator::Fpaq0& fpaq0, std::vector<Emulator::PredictorEightBitWithPrefix*>& predictors ) -> unsigned {
@@ -506,12 +583,12 @@ namespace LIBC64 {
 
     auto Structure1541::prepareTracksNotInUse(bool* inUse) -> void {
 
-        for (int side = 0; side < sides; side++) {
+       // for (int side = 0; side < sides; side++) {
 
             for (int halfTrack = 0; halfTrack < (MAX_TRACKS_1541 * 2); halfTrack++) {
 
                 if ( !*inUse) {
-                    GcrTrack *gcrPtr = &gcrTracks[halfTrack];
+                    GcrTrack* gcrPtr = &gcrTracks[halfTrack];
 
                     if (gcrPtr->data)
                         delete[] gcrPtr->data;
@@ -519,20 +596,19 @@ namespace LIBC64 {
                     gcrPtr->size = countBytes((halfTrack + 2) / 2); // standard length
                     gcrPtr->bits = gcrPtr->size << 3;
                     gcrPtr->data = new uint8_t[gcrPtr->size];
-                    gcrPtr->written = false;
+                    gcrPtr->written = 0;
                     std::memset(gcrPtr->data, 0x55, gcrPtr->size);
 
-                    std::vector<Pulse>& pulsePtr = p64Tracks[0][halfTrack];
-                    pulsePtr.clear();
+                    gcrPtr->pulses.clear();
 
-                    createPulsesFromGCR( pulsePtr, gcrPtr );
+                    createPulsesFromGCR( gcrPtr );
                 }
                 inUse++;
             }
-        }
+        //}
     }
 
-    auto Structure1541::createPulsesFromGCR(std::vector<Pulse>& pulses, GcrTrack* gcrTrack) -> void {
+    auto Structure1541::createPulsesFromGCR( GcrTrack* gcrTrack ) -> void {
         uint32_t positionHi, positionLo, incrementHi, incrementLo, bit;
 
         incrementHi = CyclesPerRevolution300Rpm / gcrTrack->bits;
@@ -543,7 +619,7 @@ namespace LIBC64 {
         for(bit = 0; bit < gcrTrack->bits; bit++) {
 
             if( (gcrTrack->data[bit >> 3]) & (1 << (~bit & 7)) )
-                addPulse(pulses, positionHi, 0xffffffff);
+                addPulse(gcrTrack, positionHi, 0xffffffff);
 
             positionHi += incrementHi;
             positionLo += incrementLo;
@@ -556,7 +632,7 @@ namespace LIBC64 {
     }
 
     // this is needed to generate content list (TOC) outside emulation
-    inline auto Structure1541::encodeGCR(std::vector<Pulse>& pulses, GcrTrack* gcrTrack, uint8_t halfTrack) -> void {
+    inline auto Structure1541::encodeGCR(GcrTrack* gcrTrack, uint8_t halfTrack) -> void {
         uint8_t track = (halfTrack >> 1) + 1;
         unsigned trackSize = countBytes( track );
         uint8_t _speedzone = speedzone( track );
@@ -581,16 +657,17 @@ namespace LIBC64 {
         gcrTrack->size = trackSize;
         gcrTrack->bits = trackSize * 8;
 
-        // not same meaning like for D64, G64
-        // a single write during emulation means to write the whole disk instead of only modified tracks.
-        // all tracks included in P64 will be marked as written from beginning.
-        // all tracks not included in P64 will not, but could be marked as 'written' during emulation.
-        // this way we don't append half tracks, which were never written.
-        gcrTrack->written = true;
+        // these tracks exist from beginning and need to write back if any BIT on disk was written.
+        // in P64 we can not write back updated tracks only
+        gcrTrack->written = 0x80;
         uint8_t* ptr = gcrTrack->data;
         std::memset( ptr, 0, trackSize );
 
-        for(auto& pulse : pulses) {
+        int32_t index = gcrTrack->firstPulse;
+
+        while (index >= 0) {
+            Structure1541::Pulse& pulse = gcrTrack->pulses[index];
+            index = pulse.next;
 
             if (pulse.strength < 0x80000000)
                 continue;
@@ -654,10 +731,8 @@ namespace LIBC64 {
 
             gcrPtr->written = gcrPtr->bits > 0;
 
-            std::vector<Pulse>& pulsePtr = structure1541.p64Tracks[0][halfTrack];
-
             if (gcrPtr->written)
-                structure1541.createPulsesFromGCR(pulsePtr, gcrPtr);
+                structure1541.createPulsesFromGCR( gcrPtr );
         }
 
         delete[] temp;

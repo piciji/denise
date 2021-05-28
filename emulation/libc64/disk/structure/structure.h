@@ -32,6 +32,7 @@ struct Structure1541 {
 	uint8_t number;
 	Emulator::Interface::Media* media = nullptr;
 	bool autoStarted = false;
+    unsigned serializationSize = 0;
     
     std::function<unsigned (uint8_t*, unsigned, unsigned)> write = [](uint8_t* buffer, unsigned length, unsigned offset){ return 0; };    
     
@@ -50,18 +51,25 @@ struct Structure1541 {
         ERR_DRIVE_NOT_READY = 0xf
     };
     
-    struct GcrTrack {
-        uint8_t* data = nullptr;
-        unsigned size = 0; 
-        unsigned bits = 0;
-        bool written = false;
+    struct Pulse {
+        uint32_t position;
+        uint32_t strength;
+        int32_t previous;
+        int32_t next;
     };
 
-    struct Pulse {
-    	uint32_t position;
-    	uint32_t strength;
+    struct GcrTrack {
+        uint8_t* data = nullptr;
+        unsigned size = 0;
+        unsigned bits = 1;
+        uint8_t written = 0;
+
+        int32_t firstPulse = -1;
+        int32_t lastPulse = -1;
+        int32_t currentPulse = -1;
+        std::vector<Pulse> pulses;
     };
-    
+
     std::vector<Emulator::Interface::Listing> listings;
     std::vector<std::vector<uint8_t>> loader;
    
@@ -70,7 +78,6 @@ struct Structure1541 {
     static auto create( Type newType, std::string diskName ) -> Emulator::Interface::Data;
     
     auto getTrackPtr( uint8_t halfTrack ) -> GcrTrack*;
-    auto getPulsePtr( uint8_t halfTrack ) -> std::vector<Pulse>*;
     auto attach( uint8_t* data, unsigned size ) -> bool;
     auto detach() -> void;
     auto createListing() -> void;
@@ -93,7 +100,12 @@ struct Structure1541 {
 	static auto allocateFreeSector(uint8_t* bamPtr, uint8_t& track, uint8_t& sector) -> bool;
 	static auto allocateNextFreeSector(uint8_t* bamPtr, uint8_t& track, uint8_t& sector) -> bool;
 	static auto allocateDown(uint8_t* bamPtr, uint8_t& track, uint8_t& sector) -> bool;
-	static auto allocateUp(uint8_t* bamPtr, uint8_t& track, uint8_t& sector) -> bool;	
+	static auto allocateUp(uint8_t* bamPtr, uint8_t& track, uint8_t& sector) -> bool;
+
+    auto addPulse( GcrTrack* gcrTrack, uint32_t position, uint32_t strength ) -> void;
+    auto freePulse( GcrTrack* gcrTrack, int32_t index ) -> void;
+
+    auto updateSerializationSize() -> void;
     
 private:    
     uint8_t* rawData;
@@ -105,7 +117,6 @@ private:
     uint8_t sides;
     
     GcrTrack gcrTracks[ MAX_TRACKS_1541 * 2 ];
-    std::vector<Pulse> p64Tracks[2][ MAX_TRACKS_1541 * 2]; // up to 42.5
         
     uint8_t* errorMap;
     uint32_t errorMapSize;
@@ -149,10 +160,10 @@ private:
 
 	inline auto decodeP64( Emulator::Fpaq0& fpaq0, std::vector<Emulator::PredictorEightBitWithPrefix*>& predictors ) -> unsigned;
     inline auto encodeP64( Emulator::Fpaq0& fpaq0, std::vector<Emulator::PredictorEightBitWithPrefix*>& predictors, unsigned value ) -> void;
-	inline auto addPulse( std::vector<Pulse>& trackPtr, uint32_t position, uint32_t strength ) -> void;
-    auto encodeGCR(std::vector<Pulse>& pulses, GcrTrack* gcrTrack, uint8_t halfTrack) -> void;
+    auto encodeGCR(GcrTrack* gcrTrack, uint8_t halfTrack) -> void;
     auto prepareTracksNotInUse(bool* inUse) -> void;
-    auto createPulsesFromGCR(std::vector<Pulse>& pulses, GcrTrack* gcrTrack) -> void;
+    auto createPulsesFromGCR(GcrTrack* gcrTrack) -> void;
+    auto allocatePulse( std::vector<Pulse>& pulses ) -> unsigned;
 };
 
 }

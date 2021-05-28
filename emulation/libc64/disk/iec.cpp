@@ -365,6 +365,14 @@ auto IecBus::randomizeRpm() -> void {
         drive->randomizeRpm();
 }
 
+auto IecBus::updateSerializationSize() -> void {
+
+    for (auto drive : drivesEnabled) {
+        if (drive->written)
+            drive->structure1541.updateSerializationSize();
+    }
+}
+
 auto IecBus::attach( Emulator::Interface::Media* media, uint8_t* data, unsigned size ) -> void {
     
     if (system->diskSilence.idle) {

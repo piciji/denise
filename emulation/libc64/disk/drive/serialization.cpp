@@ -20,8 +20,8 @@ auto Drive1541::serialize(Emulator::Serializer& s) -> void {
     s.integer( stepDirection );
     s.integer( ue3Counter );
     s.integer( refCyclesPerRevolution );
-    s.integer( filter );
-    s.integer( lastFilter );
+    s.integer( uf6aFlipFlop );
+    s.integer( comperatorFlipFlop );
     s.integer( ue7Counter );
     s.integer( uf4Counter );
     s.integer( randomizer.xorShift32 );
@@ -44,6 +44,10 @@ auto Drive1541::serialize(Emulator::Serializer& s) -> void {
     s.integer( motorOff.pos );
     s.vector( motorOff.chunkSize );
     s.integer( writeProtected );
+    s.integer( pulseIndex );
+    s.integer( pulseDelta );
+    s.integer( pulseDuration );
+    s.integer( latchedByte );
 
     via1->serialize( s );
     via2->serialize( s );

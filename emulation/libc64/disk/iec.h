@@ -71,6 +71,8 @@ struct IecBus {
     auto updateIdleState() -> void;
     auto resetDriveState() -> void;
 	inline auto checkForIdleWrite(uint8_t byte) -> bool  { return (byte & 0x38) == lastByte; }
+
+    auto updateSerializationSize() -> void;
 };
    
 extern IecBus* iecBus;

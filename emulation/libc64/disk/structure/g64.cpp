@@ -66,7 +66,7 @@ auto Structure1541::prepareG64() -> void {
             
         ptr->data = nullptr;
         ptr->size = 0;
-        ptr->bits = 0;
+        ptr->bits = 1;
         
         if (halfTrack >= maxHalfTracks)
             continue;
@@ -106,6 +106,9 @@ auto Structure1541::prepareG64() -> void {
             ptr->data = new uint8_t[ ptr->size ];
             std::memset( ptr->data, 0x55, ptr->size );
         }
+
+        if (ptr->bits == 0)
+            ptr->bits = 1;
     }
 }
     
@@ -157,7 +160,7 @@ auto Structure1541::writeG64(const GcrTrack* trackPtr, unsigned halfTrack) -> bo
 
     if (appendTrack) {
         // for a new appended track we need to update the offset in header area
-        Emulator::copyIntToBuffer( &buf[0], offset );
+        Emulator::copyIntToBuffer<uint32_t>( &buf[0], offset );
         
         if ( write( &buf[0], 4, 12 + (halfTrack * 4) ) != 4 )
             return false;

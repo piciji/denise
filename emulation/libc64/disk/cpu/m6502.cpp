@@ -23,7 +23,7 @@ auto M6502::reset() -> void {
 	
 	irqPending = interruptSampled = false;
 	
-    soLine = soDetect = soSampled = false;
+    soSample = 0;
     
 	killed = false;
 	
@@ -103,15 +103,15 @@ auto M6502::setMagicForLax(uint8_t magicLax) -> void {
 	this->magicLax = magicLax;
 }
 
-auto M6502::setSo(bool state) -> void {
-    // edge sensitive ( triggers only: 0 -> 1)
-    soLine = state;
+auto M6502::triggerSO(uint8_t delay) -> void {
+    // edge sensitive
+    this->soSample = delay;
 }
 
 auto M6502::handleSo() -> void {
-    // a sampled external SO is executed in first half cycle. when cpu accesses v flag
+    // a sampled external SO is executed in following first half cycle. when cpu accesses v flag
     // internally in second half cycle, the external change in first half cycle is wasted.
-    // instructions like adc, sbc don't calculate in last opcode cycle. there is 
+    // instructions like adc, sbc don't calculate in last opcode cycle. there is
     // simply no time because the data fetch for calculation happens in last half cycle.
     // the calculation is done in first cycle of next instruction during the opcode fetch.
     // for simplicity in emulation the calculation is done in context of last instruction cycle.
@@ -119,20 +119,22 @@ auto M6502::handleSo() -> void {
     // execute in wrong order. thats why we use the following "Block" variable,
     // seted in the end of overflow accessing instructions.
 
-    if (soBlock)
-        // overflow is not delayed but not executed
+    if (soBlock) {
+        // external overflow is not delayed but prevented
         soBlock--;
 
-    else if (soSampled) {
-        // executes in first half, one cycle after detection
-        SET_FLAG_V( 1 )  
+        if (soSample) // only a delayed sample could survive this block, because the delay happens outside of CPU (here emulated inside)
+            soSample--;
+
+    } else if (soSample) {
+        soSample--;
+
+        if (!soSample) {
+            SET_FLAG_V(1)
+        }
     }
-
-    // is detected in any first half cycle at ~400 ns    
-    soSampled = !soDetect && soLine;
-
-    soDetect = soLine;
 }
+
 
 auto M6502::serialize(Emulator::Serializer& s) -> void {
 	
@@ -155,9 +157,7 @@ auto M6502::serialize(Emulator::Serializer& s) -> void {
     s.integer( readNext );
     
     s.integer( soBlock );
-    s.integer( soLine );
-    s.integer( soDetect );
-    s.integer( soSampled );
+    s.integer( soSample );
     
     s.integer( zeroPage );
     s.integer( absolute );

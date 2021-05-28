@@ -59,28 +59,18 @@ auto Drive1541::rotateD64() -> void {
         readBuffer &= 0x3ff; // 10 bit buffer
 
         if ((readBuffer & 0xf) == 0)
-            // when there are more than three zeros in a row, a one will be injected by
-            // drive mechanic
+            // when there are more than three zeros in a row, a one will be injected by drive mechanic
             readBuffer |= 1;
 
         // if last 10 bits in a row are non zero then there is a sync.
         // in this case data is not moving.
         if (~readBuffer & 0x3ff) {
             // no sync 
-            if (++ue3Counter == 8) {
-                ue3Counter = 0;
-
-                writeBuffer = readBuffer & 0xff; // because of shared bus
-
-                if (byteReadyOverflow)
-                    cpu->setSo( 1 );
-
-                via2->ca1In( !byteReadyOverflow );
-
-            } else {
-                cpu->setSo( 0 );
+            if (++ue3Counter == 8)
+                byteFetched( false );
+            else
                 via2->ca1In( true );
-            }
+
         } else
             ue3Counter = 0; //reset when sync mark detected
         
@@ -99,17 +89,30 @@ auto Drive1541::rotateD64() -> void {
 
             writeBuffer = writeValue; // fetch next byte to buffer
 
-            if ( byteReadyOverflow ) 
-                cpu->setSo( 1 );
+            if ( byteReadyOverflow )
+                cpu->triggerSO();
 
             via2->ca1In( !byteReadyOverflow );
         } else {
-            cpu->setSo( 0 );                    
+
             via2->ca1In( true );
         }
     }
-}    
+}
 
+auto Drive1541::byteFetched( bool overflowNotThisCycle ) -> void {
+    // later than 0.75 of first half cycle miss CPU detection of external overflow or interrupt in this cycle
+
+    ue3Counter = 0;
+    latchedByte = writeBuffer = readBuffer & 0xff;
+
+    if (byteReadyOverflow)
+        // edge transition
+        cpu->triggerSO(overflowNotThisCycle ? 2 : 1);
+
+    // edge transition, but direction matters so we emulate the PIN state and not only the transiton like external overflow
+    via2->ca1In(!byteReadyOverflow, overflowNotThisCycle);
+}
 
 inline auto Drive1541::readBit() -> bool {
     uint8_t* trackPtr = gcrTrack->data;
@@ -153,12 +156,10 @@ inline auto Drive1541::writeBit( bool state ) -> void {
     else
         trackPtr[byte] &= ~(1 << bit);    
     
-    if (!written) {
-        system->serializationSize += structure1541.getStateImageSize();
+    if (!written)
         written = true;
-    }
     
-    gcrTrack->written = true; // track data has changed, host have to write back
+    gcrTrack->written = 1; // track data has changed, host have to write back
 }
 
 auto Drive1541::motorRun() -> bool {
@@ -304,8 +305,9 @@ auto Drive1541::changeHalfTrack( uint8_t step ) -> void {
     if (structure1541.type == Structure1541::Type::P64) {
 
         unsigned position = 0;
-        if (pulseTrack && pulseTrack->size() && (pulseIndex < pulseTrack->size())) {
-            Structure1541::Pulse& pulse = (*pulseTrack)[pulseIndex];
+
+        if (pulseIndex >= 0) {
+            Structure1541::Pulse& pulse = gcrTrack->pulses[pulseIndex];
 
             if (pulse.position > pulseDelta)
                 position = pulse.position - pulseDelta;
@@ -313,28 +315,20 @@ auto Drive1541::changeHalfTrack( uint8_t step ) -> void {
                 position = CyclesPerRevolution300Rpm - (pulseDelta - pulse.position);
         }
 
-        pulseTrack = structure1541.getPulsePtr( currentHalftrack );
-        pulseIndex = 0;
+        gcrTrack = structure1541.getTrackPtr( currentHalftrack );
+        pulseIndex = gcrTrack->firstPulse;
         pulseDelta = 1;
 
-        for(auto& pulse : *pulseTrack) {
+        while ((pulseIndex >= 0) && (gcrTrack->pulses[pulseIndex].position <= position))
+            pulseIndex = gcrTrack->pulses[pulseIndex].next;
 
-            if (pulse.position > position) {
-                pulseDelta = pulse.position - position;
-                break;
-            }
-
-            pulseIndex++;
+        if (pulseIndex >= 0)
+            pulseDelta = gcrTrack->pulses[pulseIndex].position - position;
+        else {
+            pulseIndex = gcrTrack->firstPulse;
+            if (pulseIndex >= 0)
+                pulseDelta = (CyclesPerRevolution300Rpm - position) + gcrTrack->pulses[pulseIndex].position;
         }
-
-        // absolute position of old track is later than last flux position of new track
-        if ((*pulseTrack).size() && (pulseIndex == (*pulseTrack).size()) ) {
-            pulseIndex = 0;
-            pulseDelta = (CyclesPerRevolution300Rpm - position) + (*pulseTrack)[pulseIndex].position;
-        }
-
-        // get the appropriate gcr track, hence to mark this track written if it should happen
-        gcrTrack = structure1541.getTrackPtr( currentHalftrack );
 
     } else {    // D64, G64
         unsigned oldTrackSize = gcrTrack->size;
