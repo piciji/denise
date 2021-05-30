@@ -9,21 +9,22 @@
     * CMD Ramlink + HD
     * all the others
 * disk
+    * ram extension
     * Virtual Device Traps
-    * P64 support
     * drive sounds
     * support command line start of disk listings instead of Load "*"
     * mount OS folder as D64
     * non standard floppy models: 1571, 1581
 * user port
     * RS232
-    * SpeedDOS
+    * SpeedDOS / DolphinDOS
     * 4 player adapter
     * all the others
 * tape   
     * content listing in user interface, like disks
     * click entries and load them without fast-forward to counter position before
     * Dongles
+* 16/24k Kernal support
 * PAL color banding (alternating red/green bars)
 * SID file player
 

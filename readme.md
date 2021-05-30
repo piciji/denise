@@ -7,6 +7,9 @@
 
 # changelog
 
+## 1.1.2 (not yet released)
+* P64 support
+
 ## 1.1.1
 * add Final Cartridge 3 support to EF³
 * add DataBlast, SwiftLink, Turbo232 emulation
