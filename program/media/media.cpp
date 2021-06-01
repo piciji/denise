@@ -1170,10 +1170,10 @@ auto MediaLayout::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* fil
     filePool->assign( _ident(emulator, media->name + "store"), file);    
     filePool->unloadOrphaned();
 
-    fSetting->setPath(file->getFile());
-    fSetting->setFile(item->info.name);
-    fSetting->setId(item->id);
-    fSetting->setWriteProtect(false);
+    fSetting->setPath(file->getFile(), !cmd->autoload);
+    fSetting->setFile(item->info.name, !cmd->autoload);
+    fSetting->setId(item->id, !cmd->autoload);
+    fSetting->setWriteProtect(false, !cmd->autoload);
 
     if (!mediaGroup->isExpansion())
         States::getInstance(emulator)->updateImage(fSetting, media);

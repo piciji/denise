@@ -353,7 +353,9 @@ auto Cmd::autoloadImages() -> void {
 			activeEmulator->fastForward( (unsigned)EmuInt::FastForward::NoAudioOut | (unsigned)EmuInt::FastForward::NoVideoOut );	
 		else if (debug)
 			activeEmulator->fastForward( (unsigned)EmuInt::FastForward::NoAudioOut );
-	}	
+	}
+	// prevent to memory file paths in settings
+    autoload = false;
 }
 
 auto Cmd::updateModel( Emulator::Interface* emulator, unsigned ident, int value) -> void {

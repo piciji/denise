@@ -440,7 +440,7 @@ auto States::updateSaveable() -> void {
             
             if (mediaGroup.isExpansion()) {
 				if ( ((expansionMediaGroup == &mediaGroup) || (expansionMediaGroupExpanded == &mediaGroup)) && (!media.secondary || emulator->hasExpansionSecondaryRom()) )
-					insert->setting->setSaveable( !insert->setting->path.empty(), true );
+					insert->setting->setSaveable( !insert->setting->path.empty() );
 				else
 					insert->setting->setSaveable( false );
                 
@@ -448,7 +448,7 @@ auto States::updateSaveable() -> void {
                 insert->setting->setSaveable( false );
                 
             } else                
-                insert->setting->setSaveable( maxCount > 0, true );
+                insert->setting->setSaveable( maxCount > 0 );
             
             if (maxCount)
                 maxCount--;

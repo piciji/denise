@@ -44,46 +44,47 @@ struct FileSetting {
 		return instance;
 	}
 	
-	auto setPath(std::string value) -> void {
+	auto setPath(std::string value, bool _saveable = true) -> void {
         if (value == "")
             useSettings->remove( ident + "_path" );
         else
-            useSettings->set<std::string>(ident + "_path", value);
+            useSettings->set<std::string>(ident + "_path", value, _saveable);
         
 		this->path = value;
 	}
 	
-	auto setFile(std::string value) -> void {
+	auto setFile(std::string value, bool _saveable = true) -> void {
         if (value == "")
             useSettings->remove( ident + "_file" );
         else
-            useSettings->set<std::string>(ident + "_file", value);
+            useSettings->set<std::string>(ident + "_file", value, _saveable);
         
 		this->file = value;
 	}
 
-	auto setId(unsigned value) -> void {
+	auto setId(unsigned value, bool _saveable = true) -> void {
         if (value == 0)
             useSettings->remove( ident + "_id" );
         else
-            useSettings->set<unsigned>(ident + "_id", value);
+            useSettings->set<unsigned>(ident + "_id", value, _saveable);
         
 		this->id = value;
 	}
 
-	auto setWriteProtect(bool value) -> void {
+	auto setWriteProtect(bool value, bool _saveable = true) -> void {
         if (!value)
             useSettings->remove( ident + "_wp" );
         else
-            useSettings->set<bool>(ident + "_wp", value);
+            useSettings->set<bool>(ident + "_wp", value, _saveable);
         
 		this->writeProtect = value;
 	}        
 	    
-    auto setSaveable(bool state, bool neverSaveWriteProtection = false) -> void {
+    auto setSaveable(bool state) -> void {
         useSettings->setSaveable( ident + "_path", state );
+        useSettings->setSaveable( ident + "_file", state );
         useSettings->setSaveable( ident + "_id", state );
-        useSettings->setSaveable( ident + "_wp", neverSaveWriteProtection ? false : state );
+        useSettings->setSaveable( ident + "_wp", state );
     }
 	
 	auto init() -> void {
