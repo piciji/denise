@@ -261,8 +261,8 @@ auto Structure1541::createListing( ) -> void {
         }
     }
     
-    listings.push_back( { id++, listing.buildHeadline( buffer + 0x90, buffer + 0xa5, buffer + 0xa2 ), listing.decodeToScreencode( buildLoadCommand({'*'}, true) ) } );
-	loader.push_back( {'*'} );  
+    listings.push_back( { id++, listing.buildHeadline( buffer + 0x90, buffer + 0xa5, buffer + 0xa2 ), listing.decodeToScreencode( buildLoadCommand({':', '*'}, true) ) } );
+	loader.push_back( {':', '*'} );
     
     decodeSector( &gcrTracks[(_track - 1) * 2], buffer, ++_sector );
     
@@ -314,8 +314,8 @@ auto Structure1541::createListing( ) -> void {
         }        
     }
     
-    listings.push_back( { id++, listing.buildFreeLine( freeBlocks ), listing.decodeToScreencode( buildLoadCommand({'*'}, true) ) } );
-	loader.push_back( {'*'} );
+    listings.push_back( { id++, listing.buildFreeLine( freeBlocks ), listing.decodeToScreencode( buildLoadCommand({':', '*'}, true) ) } );
+	loader.push_back( {':', '*'} );
 }
 
 auto Structure1541::getListing( ) -> std::vector<Emulator::Interface::Listing>& {
@@ -361,7 +361,7 @@ auto Structure1541::selectListing(  unsigned pos ) -> void {
 	if (pos < listings.size())
 		action.buffer = buildLoadCommand( loader[pos] );    
 	else
-		action.buffer = buildLoadCommand({'*'});
+		action.buffer = buildLoadCommand({':', '*'});
 			
     system->keyBuffer->add( action );
     
