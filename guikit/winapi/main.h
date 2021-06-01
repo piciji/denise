@@ -681,9 +681,10 @@ struct pBrowserWindow {
     unsigned contentSelection = 0;
     HWND dialogHwnd = nullptr;
     HWND hwndTip = nullptr;
+    HWND hDlg = nullptr;
     int lastItem = -1;
     std::vector<std::string> toolTips;
-    
+
     struct Button {
         HWND hwnd;    
         int width;
@@ -713,6 +714,7 @@ struct pBrowserWindow {
     auto createTooltip(HWND hwnd) -> void;
     auto setToolTip(HWND hwnd, int curItem, RECT rect) -> void;
     auto relayMesssageToToolTip(HWND hwnd, UINT umsg, WPARAM wparam, LPARAM lparam) -> void;
+    auto setListings( std::vector<BrowserWindow::Listing>& listings ) -> void;
     
     auto getIFileParent() -> HWND;
     

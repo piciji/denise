@@ -4,6 +4,8 @@
 struct Message;
 struct FileSetting;
 
+#include <thread>
+#include <mutex>
 #include "../../guikit/api.h"
 #include "../program.h"
 #include "../emuconfig/config.h"
@@ -218,6 +220,16 @@ struct MediaLayout : GUIKIT::HorizontalLayout {
         MediaGroupLayout::Block* block = nullptr;
         std::string filePath;
     } lastPreview;
+
+    std::mutex previewMutex;
+    GUIKIT::Timer previewTimer;
+
+    struct {
+        MediaGroupLayout::Block* block = nullptr;
+        std::string filePath;
+        std::atomic<uint8_t> status; // bit 0:thread alive, 1:new file, 2:reset, 3:preview, 4:anyload
+        std::vector<GUIKIT::BrowserWindow::Listing> listings;
+    } queuePreview;
 
     auto build() -> void;	
     auto show() -> void;

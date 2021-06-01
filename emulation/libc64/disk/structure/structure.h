@@ -160,6 +160,7 @@ private:
 
 	inline auto decodeP64( Emulator::Fpaq0& fpaq0, std::vector<Emulator::PredictorEightBitWithPrefix*>& predictors ) -> unsigned;
     inline auto encodeP64( Emulator::Fpaq0& fpaq0, std::vector<Emulator::PredictorEightBitWithPrefix*>& predictors, unsigned value ) -> void;
+    auto decodeJob( std::vector<uint8_t*>* workLoad, bool* usePtr ) -> void;
     auto encodeGCR(GcrTrack* gcrTrack, uint8_t halfTrack) -> void;
     auto prepareTracksNotInUse(bool* inUse) -> void;
     auto createPulsesFromGCR(GcrTrack* gcrTrack) -> void;

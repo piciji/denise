@@ -216,8 +216,7 @@ auto Program::setMemoryPattern(Emulator::Interface* emulator) -> void {
     emulator->setMemoryInitParams( value, invertEvery, randomPatternLength, repeatRandomPattern, randomChance );
 }
 
-auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {                  
-    
+auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
     bool emuSwap = activeEmulator != emulator;
     powerOff();			
     

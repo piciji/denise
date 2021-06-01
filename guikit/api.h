@@ -1047,6 +1047,7 @@ struct BrowserWindow {
     auto addCustomButton( std::string text, std::function<bool (std::string filePath, unsigned selection)> onClick, unsigned id = 0 ) -> BrowserWindow&;
     auto setDefaultButtonText(std::string textOk, std::string textCancel = "") -> BrowserWindow&;
 	auto setNonModal() -> BrowserWindow&;
+	auto setListings( std::vector<BrowserWindow::Listing>& listings ) -> void;
 
     auto setTemplateId(int id) -> BrowserWindow&;
     auto addContentView(unsigned id, std::function<bool (std::string filePath, unsigned selection)> onDblClick) -> BrowserWindow&;

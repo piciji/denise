@@ -523,6 +523,7 @@ struct pBrowserWindow {
     auto contentViewSelection() -> unsigned;
     auto detached() -> bool;
     auto visible() -> bool;
+    auto setListings( std::vector<BrowserWindow::Listing>& listings ) -> void;
 
     auto buildView() -> void;
     pBrowserWindow(BrowserWindow& browserWindow);

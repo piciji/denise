@@ -624,6 +624,7 @@ struct pBrowserWindow {
 	
 	auto createPreview() -> GtkWidget*;
 	auto contentViewSelection() -> unsigned;
+    auto setListings( std::vector<BrowserWindow::Listing>& listings ) -> void;
 	
 	static auto responseHandler(GtkDialog* dialog, gint responseId, gpointer data) -> void;
 	static auto selectionHandler(GtkFileChooser* chooser, gpointer data) -> void;

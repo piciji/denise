@@ -325,7 +325,7 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
     
     if (Application::isQuit)
         return false;
-    
+
     TCHAR wFilePath[256];
     OPENFILENAME* ofn = nullptr;
     pBrowserWindow* context = nullptr;
@@ -345,7 +345,8 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
     
     if (!state)
         return false;
-    
+
+    context->hDlg = hDlg;
     HWND listBox = GetDlgItem(hDlg, state->contentView.id);
     
     static HFONT okFont = nullptr;    
@@ -529,6 +530,33 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
     }
     
     return FALSE;
+}
+
+auto pBrowserWindow::setListings( std::vector<BrowserWindow::Listing>& listings ) -> void {
+
+    if (!browserWindow.state.contentView.id || !hDlg)
+        return;
+
+    HWND listBox = GetDlgItem(hDlg, browserWindow.state.contentView.id);
+
+    if (!listBox)
+        return;
+
+    SendMessage( listBox, WM_SETREDRAW, 0, 0);
+    SendMessage( listBox, LB_RESETCONTENT, 0, 0);
+    toolTips.clear();
+
+    unsigned maximumWidth = 0;
+
+    for( auto& row : listings ) {
+        SendMessage( listBox, LB_ADDSTRING, 0, (LPARAM)(wchar_t*)utf16_t(row.entry) );
+
+        maximumWidth = std::max(maximumWidth, pFont::size(listFont, row.entry).width);
+
+        toolTips.push_back( row.tooltip );
+    }
+    SendMessage( listBox, LB_SETHORIZONTALEXTENT, maximumWidth + 8, 0);
+    SendMessage( listBox, WM_SETREDRAW, 1, 0);
 }
 
 auto CALLBACK pBrowserWindow::subclassListbox(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT {

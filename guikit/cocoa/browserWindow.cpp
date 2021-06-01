@@ -158,6 +158,18 @@ auto pBrowserWindow::file(bool save) -> std::string {
     return result;
 }
 
+auto pBrowserWindow::setListings( std::vector<BrowserWindow::Listing>& listings ) -> void {
+    if (listView) {
+        for(auto& listing : listings) {
+            listView->append({listing.entry});
+        }
+        unsigned i = 0;
+        for(auto& listing : listings) {
+            listView->setRowTooltip(i++, listing.tooltip);
+        }
+    }
+}
+
 auto pBrowserWindow::buildView() -> void {
     auto& state = browserWindow.state;
 

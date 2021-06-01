@@ -1285,6 +1285,10 @@ auto BrowserWindow::setOnChangeCallback( std::function<std::vector<BrowserWindow
     return *this;
 }
 
+auto BrowserWindow::setListings( std::vector<BrowserWindow::Listing>& listings ) -> void {
+    p.setListings( listings );
+}
+
 auto BrowserWindow::addCustomButton( std::string text, std::function<bool (std::string filePath, unsigned selection)> onClick, unsigned id ) -> BrowserWindow& {
     state.buttons.push_back({text, onClick, id});            
     return *this;

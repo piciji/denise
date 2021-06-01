@@ -265,6 +265,127 @@ namespace LIBC64 {
         return result;
     }
 
+    auto Structure1541::decodeJob( std::vector<uint8_t*>* workLoad, bool* usePtr ) -> void {
+
+        std::vector<Emulator::PredictorEightBitWithPrefix*> predictorPositions;
+        std::vector<Emulator::PredictorEightBitWithPrefix*> predictorStrengths;
+        Emulator::PredictorOneBit predictorPositionEnable;
+        Emulator::PredictorOneBit predictorStrengthEnable;
+        Emulator::Fpaq0 fpaq0;
+        unsigned size, checkSum;
+        uint8_t* _ptr;
+        uint8_t** __ptr = &_ptr;
+        uint32_t* pSize = &size;
+
+        fpaq0.readIn = [__ptr, pSize](uint8_t*& buffer) {
+
+            buffer = *__ptr;
+
+            return *pSize;
+        };
+
+        for(unsigned i = 0; i < 4; i++) {
+            predictorPositions.push_back( new Emulator::PredictorEightBitWithPrefix );
+            predictorStrengths.push_back( new Emulator::PredictorEightBitWithPrefix );
+        }
+
+        for(auto ptr : *workLoad) {
+
+            _ptr = ptr;
+
+            // signature
+            _ptr += 4;
+            size = Emulator::copyBufferToInt<uint32_t>(_ptr);
+            _ptr += 4;
+            checkSum = Emulator::copyBufferToInt<uint32_t>(_ptr);
+            _ptr += 4;
+
+            if (size == 0) {
+                if (checkSum == 0 && (std::memcmp(_ptr - 12, "DONE", 4) == 0))
+                    break;
+            } else {
+                Emulator::CRC32 crc32(_ptr, size, ~0);
+
+                if (crc32.value() != checkSum)
+                    break;
+
+                if (std::memcmp(_ptr - 12, "HTP", 3) == 0) {
+                    uint8_t halfTrack = *(_ptr - 9);
+                    uint8_t side = !!(halfTrack & 128);
+                    halfTrack &= 127;
+
+                    if (side || (halfTrack < 2) || (halfTrack > 85))
+                        continue;
+
+                    halfTrack -= 2;
+
+                    GcrTrack* gcrPtr = &gcrTracks[halfTrack];
+                    gcrPtr->pulses.clear();
+
+                    uint32_t pulses = Emulator::copyBufferToInt<uint32_t>(_ptr);
+                    _ptr += 4;
+                    size = Emulator::copyBufferToInt<uint32_t>(_ptr);
+                    _ptr += 4;
+
+                    unsigned deltaPosition = 0;
+                    unsigned strength = 0;
+                    unsigned position = 0;
+
+                    if (!size) {
+                        if (!pulses)
+                            continue;
+                        else
+                            break;
+                    }
+
+                    unsigned count = 0;
+
+                    predictorPositionEnable.init(0);
+                    predictorStrengthEnable.init(0);
+
+                    for (unsigned i = 0; i < 4; i++) {
+                        predictorPositions[i]->init();
+                        predictorStrengths[i]->init();
+                    }
+
+                    fpaq0.init();
+                    fpaq0.warmUp();
+
+                    while (count < pulses) {
+
+                        if (fpaq0.decode(&predictorPositionEnable)) {
+
+                            deltaPosition = decodeP64(fpaq0, predictorPositions);
+
+                            if (!deltaPosition)
+                                break;
+                        }
+                        position += deltaPosition;
+
+                        if (fpaq0.decode(&predictorStrengthEnable))
+                            strength += decodeP64(fpaq0, predictorStrengths);
+
+                        addPulse(gcrPtr, position, strength);
+
+                        count++;
+                    }
+
+                    if (count != pulses)
+                        break;
+
+                    encodeGCR(gcrPtr, halfTrack);
+
+                    usePtr[ (side == 1 ? (MAX_TRACKS_1541 * 2) : 0) + halfTrack ] = pulses > 0;
+                }
+            }
+        }
+
+        for(unsigned i = 0; i < 4; i++) {
+            delete predictorPositions[i];
+            delete predictorStrengths[i];
+        }
+    }
+
     auto Structure1541::prepareP64() -> void {
 
         bool inUse[2][MAX_TRACKS_1541 * 2] = { {0}, {0} };
@@ -288,9 +409,10 @@ namespace LIBC64 {
 
         offset = 24;
 
-        const auto coreCount = std::thread::hardware_concurrency();
-        std::vector<uint8_t*> jobs[coreCount];
+        auto coreCount = std::thread::hardware_concurrency();
+        coreCount = (coreCount < 4) ? 1 : coreCount >> 1;
 
+        std::vector<uint8_t*> jobs[coreCount];
         unsigned core = 0;
         while(1) {
             offset += 12;
@@ -303,7 +425,8 @@ namespace LIBC64 {
             ptr += 4;
             ptr += 4;
 
-            core %= coreCount;
+            if (core == coreCount)
+                core = 0;
 
             offset += size;
             if (offset >= rawSize)
@@ -312,135 +435,22 @@ namespace LIBC64 {
             ptr += size;
         }
 
-        std::vector<std::thread> threadPool;
+        if (coreCount == 1) {
+            this->decodeJob( &jobs[0], usePtr );
+        } else {
+            std::vector<std::thread> threadPool;
+            for (core = 0; core < coreCount; core++) {
+                std::vector<uint8_t*> *workLoad = &jobs[core];
 
-        for(core = 0; core < coreCount; core++) {
-            std::vector<uint8_t*>* workLoad = &jobs[core];
+                threadPool.push_back(std::thread([this, workLoad, usePtr] {
 
-            threadPool.push_back(std::thread([this, workLoad, usePtr] {
+                    this->decodeJob(workLoad, usePtr);
+                }));
+            }
 
-                std::vector<Emulator::PredictorEightBitWithPrefix*> predictorPositions;
-                std::vector<Emulator::PredictorEightBitWithPrefix*> predictorStrengths;
-                Emulator::PredictorOneBit predictorPositionEnable;
-                Emulator::PredictorOneBit predictorStrengthEnable;
-                Emulator::Fpaq0 fpaq0;
-                unsigned size, checkSum;
-                uint8_t* _ptr;
-                uint8_t** __ptr = &_ptr;
-                uint32_t* pSize = &size;
-
-                fpaq0.readIn = [__ptr, pSize](uint8_t*& buffer) {
-
-                    buffer = *__ptr;
-
-                    return *pSize;
-                };
-
-                for(unsigned i = 0; i < 4; i++) {
-                    predictorPositions.push_back( new Emulator::PredictorEightBitWithPrefix );
-                    predictorStrengths.push_back( new Emulator::PredictorEightBitWithPrefix );
-                }
-
-                for(auto ptr : *workLoad) {
-
-                    _ptr = ptr;
-
-                    // signature
-                    _ptr += 4;
-                    size = Emulator::copyBufferToInt<uint32_t>(_ptr);
-                    _ptr += 4;
-                    checkSum = Emulator::copyBufferToInt<uint32_t>(_ptr);
-                    _ptr += 4;
-
-                    if (size == 0) {
-                        if (checkSum == 0 && (std::memcmp(_ptr - 12, "DONE", 4) == 0))
-                            break;
-                    } else {
-                        Emulator::CRC32 crc32(_ptr, size, ~0);
-
-                        if (crc32.value() != checkSum)
-                            break;
-
-                        if (std::memcmp(_ptr - 12, "HTP", 3) == 0) {
-                            uint8_t halfTrack = *(_ptr - 9);
-                            uint8_t side = !!(halfTrack & 128);
-                            halfTrack &= 127;
-
-                            if (side || (halfTrack < 2) || (halfTrack > 85))
-                                continue;
-
-                            halfTrack -= 2;
-
-                            GcrTrack* gcrPtr = &gcrTracks[halfTrack];
-                            gcrPtr->pulses.clear();
-
-                            uint32_t pulses = Emulator::copyBufferToInt<uint32_t>(_ptr);
-                            _ptr += 4;
-                            size = Emulator::copyBufferToInt<uint32_t>(_ptr);
-                            _ptr += 4;
-
-                            unsigned deltaPosition = 0;
-                            unsigned strength = 0;
-                            unsigned position = 0;
-
-                            if (!size) {
-                                if (!pulses)
-                                    continue;
-                                else
-                                    break;
-                            }
-
-                            unsigned count = 0;
-
-                            predictorPositionEnable.init(0);
-                            predictorStrengthEnable.init(0);
-
-                            for (unsigned i = 0; i < 4; i++) {
-                                predictorPositions[i]->init();
-                                predictorStrengths[i]->init();
-                            }
-
-                            fpaq0.init();
-                            fpaq0.warmUp();
-
-                            while (count < pulses) {
-
-                                if (fpaq0.decode(&predictorPositionEnable)) {
-
-                                    deltaPosition = decodeP64(fpaq0, predictorPositions);
-
-                                    if (!deltaPosition)
-                                        break;
-                                }
-                                position += deltaPosition;
-
-                                if (fpaq0.decode(&predictorStrengthEnable))
-                                    strength += decodeP64(fpaq0, predictorStrengths);
-
-                                addPulse(gcrPtr, position, strength);
-
-                                count++;
-                            }
-
-                            if (count != pulses)
-                                break;
-
-                            encodeGCR(gcrPtr, halfTrack);
-
-                            usePtr[ (side == 1 ? (MAX_TRACKS_1541 * 2) : 0) + halfTrack ] = pulses > 0;
-                        }
-                    }
-                }
-
-                for(unsigned i = 0; i < 4; i++) {
-                    delete predictorPositions[i];
-                    delete predictorStrengths[i];
-                }
-            }));
+            for (auto &_t : threadPool)
+                _t.join();
         }
-
-        for(auto& _t : threadPool)
-            _t.join();
 
         prepareTracksNotInUse( usePtr );
 
