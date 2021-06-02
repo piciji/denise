@@ -260,21 +260,33 @@ auto Structure1541::createListing( ) -> void {
             freeBlocks += *bamPtr;
         }
     }
-    
-    listings.push_back( { id++, listing.buildHeadline( buffer + 0x90, buffer + 0xa5, buffer + 0xa2 ), listing.decodeToScreencode( buildLoadCommand({':', '*'}, true) ) } );
-	loader.push_back( {':', '*'} );
-    
-    decodeSector( &gcrTracks[(_track - 1) * 2], buffer, ++_sector );
-    
-    uint8_t* ptr = &buffer[0];
-    
+
+    uint8_t buffer2[256];
+    decodeSector( &gcrTracks[(_track - 1) * 2], buffer2, ++_sector );
+    uint8_t* ptr = &buffer2[0];
+
+    bool addedHeadline = false;
+    std::vector<uint8_t> _headlineCmd = {':', '*'};
+
     unsigned entry = 0;
     
     while(1) {
         
         unsigned listingSize = *(ptr + 0x1f) * 256 + *(ptr + 0x1e);        
         
-        if ( *(ptr + 0x2) != 0 ) {     
+        if ( *(ptr + 0x2) != 0 ) {
+
+            if (!addedHeadline) {
+                addedHeadline = true;
+                uint8_t type = *(ptr + 0x2);
+
+                if ((type & 7) != 2) // when first file is not a PRG
+                    _headlineCmd = {'*'};
+
+                listings.push_back( { id++, listing.buildHeadline( buffer + 0x90, buffer + 0xa5, buffer + 0xa2 ), listing.decodeToScreencode( buildLoadCommand(_headlineCmd, true) ) } );
+                loader.push_back( _headlineCmd );
+            }
+
             std::vector<uint8_t> entry = listing.buildListing( ptr + 0x5, listingSize, *(ptr + 0x2) );
             
             std::vector<uint8_t> loadCommand;
@@ -295,8 +307,8 @@ auto Structure1541::createListing( ) -> void {
             if (entry > 250)                
                 break;
             
-            _track = buffer[0];
-            _sector = buffer[1]; 
+            _track = buffer2[0];
+            _sector = buffer2[1];
             
             if (trackOffset)
                 _track = getLogicalTrack(_track, trackOffset);
@@ -307,15 +319,15 @@ auto Structure1541::createListing( ) -> void {
             if (_track == 0)
                 break;
 
-            if ( decodeSector(&gcrTracks[(_track - 1) * 2], buffer, _sector) != ERR_OK)
+            if ( decodeSector(&gcrTracks[(_track - 1) * 2], buffer2, _sector) != ERR_OK)
                 break;
             
-            ptr = &buffer[0];
+            ptr = &buffer2[0];
         }        
     }
     
-    listings.push_back( { id++, listing.buildFreeLine( freeBlocks ), listing.decodeToScreencode( buildLoadCommand({':', '*'}, true) ) } );
-	loader.push_back( {':', '*'} );
+    listings.push_back( { id++, listing.buildFreeLine( freeBlocks ), listing.decodeToScreencode( buildLoadCommand( _headlineCmd, true) ) } );
+	loader.push_back( _headlineCmd );
 }
 
 auto Structure1541::getListing( ) -> std::vector<Emulator::Interface::Listing>& {
@@ -361,7 +373,7 @@ auto Structure1541::selectListing(  unsigned pos ) -> void {
 	if (pos < listings.size())
 		action.buffer = buildLoadCommand( loader[pos] );    
 	else
-		action.buffer = buildLoadCommand({':', '*'});
+		action.buffer = buildLoadCommand({'*'});
 			
     system->keyBuffer->add( action );
     
