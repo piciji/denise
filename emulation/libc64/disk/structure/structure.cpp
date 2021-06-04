@@ -9,6 +9,7 @@
 #include "prg.cpp"
 #include "../../../tools/listing.h"
 #include "../../system/keyBuffer.h"
+#include "../iec.h"
 
 namespace LIBC64 {
     
@@ -37,12 +38,18 @@ Structure1541::~Structure1541() {
     clearTrackData();   
 }
 
-auto Structure1541::attach( uint8_t* data, unsigned size ) -> bool {
+auto Structure1541::attach( uint8_t* data, unsigned size, bool loadGracefully ) -> bool {
     rawData = data;
     rawSize = size;
     
     if ( !analyze() )
         return false;
+
+    if (loadGracefully && (type == Type::P64) ) {
+        encodingGraceful.status = 1;
+        iecBus->diskInsertInProgress = true;
+        return false;
+    }
     
     prepare();
     
@@ -59,7 +66,8 @@ auto Structure1541::detach() -> void {
     rawSize = 0;
 	media = nullptr;
     
-    clearTrackData(); 
+    clearTrackData();
+    encodingGraceful.reset();
 }
 
 auto Structure1541::clearTrackData() -> void {
@@ -656,3 +664,4 @@ auto Structure1541::getTrackPtr( uint8_t halfTrack ) -> GcrTrack* {
 
 
 }
+

@@ -77,7 +77,7 @@ struct Interface : Emulator::Interface {
     auto getDrivesConnected(MediaGroup* group) -> unsigned;
     auto setDriveSpeed(MediaGroup* group, double rpm, double wobble) -> void;
 	//disk drive handling	
-	auto insertDisk(Media* media, uint8_t* data, unsigned size) -> void;
+	auto insertDisk(Media* media, uint8_t* data, unsigned size, bool loadGracefully = false) -> void;
 	auto writeProtectDisk(Media* media, bool state) -> void;
     auto isWriteProtectedDisk(Media* media) -> bool;
 	auto ejectDisk(Media* media) -> void;

@@ -200,8 +200,8 @@ auto Drive1541::motorRun() -> bool {
 
 auto Drive1541::motorOffInit() -> void {
 
-    motorOff.delay = 29000 + (rand() % 1000);
-    unsigned slowDownCycles = 100000;
+    motorOff.delay = 14000 + (rand() % 1000);
+    unsigned slowDownCycles = 50000;
 
     unsigned chunkSize = slowDownCycles / motorOff.CHUNKS;
     unsigned rest = slowDownCycles % motorOff.CHUNKS;

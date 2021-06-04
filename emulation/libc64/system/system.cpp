@@ -661,7 +661,8 @@ auto System::run() -> void {
     cpu->setNmi(nmiIncomming != 0);
     iecBus->randomizeRpm();
 
-    bool useRunAhead = !fastForward.config && runAhead.frames && !keyBuffer->isPrgInjectionInQueue();
+    bool useRunAhead = !fastForward.config && runAhead.frames
+            && !keyBuffer->isPrgInjectionInQueue() && !iecBus->diskInsertInProgress;
     
     if (useRunAhead) {        
         runAhead.pos = runAhead.frames;
@@ -824,8 +825,12 @@ auto System::videoRefresh( uint8_t* frame, unsigned width, unsigned height, unsi
 		}
 	}
 
-	if (!runAhead.pos)
-		this->interface->videoRefresh8( frame, width, height, linePitch );
+	if (!runAhead.pos) {
+        this->interface->videoRefresh8(frame, width, height, linePitch);
+
+        if (iecBus->diskInsertInProgress)
+            iecBus->insertDiskGracefully();
+    }
 
 	frameComplete = true;
 

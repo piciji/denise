@@ -1622,6 +1622,8 @@ auto MediaLayout::resetPreview( bool light ) -> void {
     }   
     
     lastPreview.block = nullptr;
+    queuePreview.status = 0;
+    previewTimer.setEnabled(false);
 }
 
 auto MediaLayout::insertFile( MediaGroupLayout::Block* block, std::string filePath, bool autoLoad, unsigned selection ) -> bool {

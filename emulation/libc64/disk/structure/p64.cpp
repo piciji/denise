@@ -386,6 +386,70 @@ namespace LIBC64 {
         }
     }
 
+    auto Structure1541::prepareP64Graceful() -> void {
+
+        if (encodingGraceful.status == 0)
+            return;
+
+        if (encodingGraceful.status == 2) {
+            prepareTracksNotInUse( &encodingGraceful.inUse[0] );
+            encodingGraceful.status = 0;
+            return;
+        }
+
+        bool* usePtr = &encodingGraceful.inUse[0];
+        std::vector<uint8_t*> vec;
+        uint32_t flags;
+
+        uint8_t* ptr = rawData;
+        unsigned offset = 0;
+        uint32_t size = 0;
+
+        if (!encodingGraceful.ptr) {
+            std::memset(usePtr, 0, MAX_TRACKS_1541 * 2 * 2);
+            ptr += 8; // header ident, already checked
+            ptr += 4; // version: only 0 is known, don't check for it
+
+            flags = Emulator::copyBufferToInt<uint32_t>(ptr);
+            // flag bit 0 is write protection, we ignore it and let the user decide
+
+            sides = 1 + !!(flags & 2);
+
+            // already checked
+            ptr += 12;
+
+            offset = 24;
+        } else {
+            ptr = encodingGraceful.ptr;
+            offset = encodingGraceful.offset;
+        }
+
+        offset += 12;
+        if (offset >= rawSize) {
+            encodingGraceful.status = 2;
+            return;
+        }
+
+        vec.push_back( ptr );
+        this->decodeJob( &vec, usePtr );
+
+        ptr += 4;
+        size = Emulator::copyBufferToInt<uint32_t>( ptr );
+        ptr += 4;
+        ptr += 4;
+
+        offset += size;
+        if (offset >= rawSize) {
+            encodingGraceful.status = 2;
+            return;
+        }
+
+        ptr += size;
+
+        encodingGraceful.ptr = ptr;
+        encodingGraceful.offset = offset;
+    }
+
     auto Structure1541::prepareP64() -> void {
 
         bool inUse[2][MAX_TRACKS_1541 * 2] = { {0}, {0} };

@@ -312,7 +312,7 @@ auto Interface::setDrivesConnected(MediaGroup* group, unsigned count) -> void {
         count = group->defaultUsage();
 }
 
-auto Interface::insertDisk(Media* media, uint8_t* data, unsigned size) -> void {
+auto Interface::insertDisk(Media* media, uint8_t* data, unsigned size, bool loadGracefully) -> void {
     if (!media || !media->group->isDisk())
         return;
 }

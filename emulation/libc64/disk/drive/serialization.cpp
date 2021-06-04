@@ -51,12 +51,20 @@ auto Drive1541::serialize(Emulator::Serializer& s) -> void {
 
     via1->serialize( s );
     via2->serialize( s );
-    cpu->serialize( s );    
+    cpu->serialize( s );
+
+    s.integer( structure1541.encodingGraceful.status );
     
     if (s.mode() == Emulator::Serializer::Mode::Load) {
         gcrTrack = structure1541.getTrackPtr( currentHalftrack );
         // unserialize VIA before to get state of LED
         updateDeviceState();
+
+        if (structure1541.encodingGraceful.status)
+            // state was generated during attaching P64 (gracefully)
+            postAttach();
+
+        structure1541.encodingGraceful.reset();
     }
        
     structure1541.serialize( s, written );    

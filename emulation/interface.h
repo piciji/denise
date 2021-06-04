@@ -403,7 +403,7 @@ struct Interface {
     virtual auto getDrivesConnected(MediaGroup* group) -> unsigned { return 0; }
     virtual auto setDriveSpeed(MediaGroup* group, double rpm, double wobble) -> void {}
     // disk handling
-    virtual auto insertDisk(Media* media, uint8_t* data, unsigned size) -> void {}
+    virtual auto insertDisk(Media* media, uint8_t* data, unsigned size, bool loadGracefully = false) -> void {}
     virtual auto writeProtectDisk(Media* media, bool state) -> void {}
     virtual auto isWriteProtectedDisk(Media* media) -> bool { return false; }
     virtual auto ejectDisk(Media* media) -> void { }
@@ -532,9 +532,9 @@ struct Interface {
     virtual auto setMonitorFpsRatio(double ratio) -> void {}
     
 	//shortcuts
-	auto insertMedium(Media* media, uint8_t* data, unsigned size) -> void {
+	auto insertMedium(Media* media, uint8_t* data, unsigned size, bool loadGracefully = false) -> void {
 		switch(media->group->type) {
-			case MediaGroup::Type::Disk: insertDisk(media, data, size); break;
+			case MediaGroup::Type::Disk: insertDisk(media, data, size, loadGracefully); break;
 			case MediaGroup::Type::Tape: insertTape(media, data, size); break;
 			case MediaGroup::Type::Expansion: insertExpansionImage(media, data, size); break;
 			case MediaGroup::Type::Program: insertProgram(media, data, size); break;

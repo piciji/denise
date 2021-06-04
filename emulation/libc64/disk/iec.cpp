@@ -373,7 +373,23 @@ auto IecBus::updateSerializationSize() -> void {
     }
 }
 
-auto IecBus::attach( Emulator::Interface::Media* media, uint8_t* data, unsigned size ) -> void {
+auto IecBus::insertDiskGracefully() -> void {
+
+    diskInsertInProgress = false;
+    for (auto drive : drivesEnabled) {
+        if (drive->structure1541.encodingGraceful.status) {
+            drive->structure1541.prepareP64Graceful();
+
+            if (drive->structure1541.encodingGraceful.status) {
+                diskInsertInProgress = true;
+            } else {
+                drive->postAttach();
+            }
+        }
+    }
+}
+
+auto IecBus::attach( Emulator::Interface::Media* media, uint8_t* data, unsigned size, bool loadGracefully ) -> void {
     
     if (system->diskSilence.idle) {
         system->diskSilence.idle = false;        
@@ -381,7 +397,7 @@ auto IecBus::attach( Emulator::Interface::Media* media, uint8_t* data, unsigned 
     }
     system->diskSilence.idleFrames = 0;
     
-    drives[ media->id ]->attach( media, data, size );   
+    drives[ media->id ]->attach( media, data, size, loadGracefully );
 }
 
 auto IecBus::detach( Emulator::Interface::Media* media ) -> void {

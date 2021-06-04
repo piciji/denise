@@ -34,7 +34,6 @@ struct SwapperLayout : GUIKIT::VerticalLayout {
 
     MediaLayout* mediaLayout;
     Emulator::Interface* emulator;
-    unsigned switchId;
     
     GUIKIT::ListView listView;
     SwapperControlLayout controls;

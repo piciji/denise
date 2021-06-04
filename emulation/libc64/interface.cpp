@@ -842,12 +842,12 @@ auto Interface::setDriveSpeed(MediaGroup* group, double rpm, double wobble) -> v
 		tape->setWobble( wobble );
 }
 
-auto Interface::insertDisk(Media* media, uint8_t* data, unsigned size) -> void {
+auto Interface::insertDisk(Media* media, uint8_t* data, unsigned size, bool loadGracefully) -> void {
     
     if (!media || !media->group->isDisk())
         return;
     
-    iecBus->attach( media, data, size );    
+    iecBus->attach( media, data, size, loadGracefully );
 }
 
 auto Interface::writeProtectDisk(Media* media, bool state) -> void {
@@ -892,7 +892,7 @@ auto Interface::getDiskPreview(uint8_t* data, unsigned size, Media* media) -> st
     Structure1541 structure;
 	structure.number = media ? media->id : 0;
     
-    if (!structure.attach( data, size ))
+    if (!structure.attach( data, size, false ))
         return {};
         
     return structure.getListing();

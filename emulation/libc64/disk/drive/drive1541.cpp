@@ -366,7 +366,7 @@ auto Drive1541::detach() -> void {
     pulseDelta = 1; // to reload quickly
 }
 
-auto Drive1541::attach( Emulator::Interface::Media* media, uint8_t* data, unsigned size ) -> void {
+auto Drive1541::attach( Emulator::Interface::Media* media, uint8_t* data, unsigned size, bool loadGracefully ) -> void {
     this->media = media;
     detach();
     accum = 0;
@@ -376,16 +376,21 @@ auto Drive1541::attach( Emulator::Interface::Media* media, uint8_t* data, unsign
     ue3Counter = 0;
     
 	structure1541.media = media;
-    if ( !structure1541.attach( data, size ) )
-        return;
-    
+
     attachDelay = DISC_DELAY;
-    
+
     if (detachDelay)
         attachDetachDelay = DISC_DELAY;
     else
         attachDelay = DISC_DELAY * 3;
 
+    if ( !structure1541.attach( data, size, loadGracefully ) )
+        return;
+
+    postAttach();
+}
+
+auto Drive1541::postAttach() -> void {
     pulseIndex = gcrTrack->firstPulse;
 
     loaded = true;
@@ -441,3 +446,4 @@ auto Drive1541::setSpeed(double rpm, double wobble) -> void {
 }
 
 }
+

@@ -70,6 +70,19 @@ struct Structure1541 {
         std::vector<Pulse> pulses;
     };
 
+    struct {
+        uint8_t* ptr = nullptr;
+        unsigned offset = 0;
+        bool inUse[MAX_TRACKS_1541 * 2 * 2] = { 0 };
+        uint8_t status = 0;
+
+        auto reset() -> void {
+            ptr = nullptr;
+            offset = 0;
+            status = 0;
+        }
+    } encodingGraceful;
+
     std::vector<Emulator::Interface::Listing> listings;
     std::vector<std::vector<uint8_t>> loader;
    
@@ -78,7 +91,7 @@ struct Structure1541 {
     static auto create( Type newType, std::string diskName ) -> Emulator::Interface::Data;
     
     auto getTrackPtr( uint8_t halfTrack ) -> GcrTrack*;
-    auto attach( uint8_t* data, unsigned size ) -> bool;
+    auto attach( uint8_t* data, unsigned size, bool loadGracefully = false ) -> bool;
     auto detach() -> void;
     auto createListing() -> void;
     auto getListing() -> std::vector<Emulator::Interface::Listing>&;
@@ -106,6 +119,7 @@ struct Structure1541 {
     auto freePulse( GcrTrack* gcrTrack, int32_t index ) -> void;
 
     auto updateSerializationSize() -> void;
+    auto prepareP64Graceful() -> void;
     
 private:    
     uint8_t* rawData;

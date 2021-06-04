@@ -420,8 +420,8 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
                 break;
             }
 
-            activeEmulator->ejectDisk( media );
-            activeEmulator->insertDisk(media, data, file->archiveDataSize(fSetting->id));
+            //activeEmulator->ejectDisk( media );
+            activeEmulator->insertDisk(media, data, file->archiveDataSize(fSetting->id), true);
             activeEmulator->writeProtectDisk(media, (file->isArchived() || file->isReadOnly()) ? true : fSetting->writeProtect);
             media->guid = uintptr_t(file);
             EmuConfigView::TabWindow::getView( activeEmulator )->mediaLayout->updateWriteProtection( media, fSetting->writeProtect );

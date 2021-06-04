@@ -33,7 +33,7 @@ struct Interface : Emulator::Interface  {
 
 	//drive handling
 	auto setDrivesConnected(MediaGroup* group, unsigned count) -> void;
-	auto insertDisk(Media* media, uint8_t* data, unsigned size) -> void;
+	auto insertDisk(Media* media, uint8_t* data, unsigned size, bool loadGracefully = false) -> void;
 	auto writeProtectDisk(Media* media, bool state) -> void;
 	auto ejectDisk(Media* media) -> void;
 	auto insertHardDisk(Media* media, unsigned size) -> void; //uses read and write callbacks

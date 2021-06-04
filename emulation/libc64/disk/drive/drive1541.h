@@ -117,7 +117,8 @@ struct Drive1541 {
     auto writeBit( bool state ) -> void;
     auto readBit() -> bool;
     auto changeHalfTrack( uint8_t step ) -> void;
-    auto attach( Emulator::Interface::Media* media, uint8_t* data, unsigned size ) -> void;
+    auto attach( Emulator::Interface::Media* media, uint8_t* data, unsigned size, bool loadGracefully = false ) -> void;
+    auto postAttach() -> void;
     auto detach() -> void;
     auto setWriteProtect(bool state) -> void;
     auto setSpeed( double rpm, double wobble ) -> void;

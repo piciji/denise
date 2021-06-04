@@ -48,15 +48,27 @@ namespace LIBC64 {
 
         if (readMode) {
             do {
-                if (motorAdvance) {
-                    todo = 1;
-                    delta = refCyclesPerRevolution - accum;
+                todo = 1;
 
-                    if ((gcrTrack->bits << 1) <= delta) {
-                        todo = delta / gcrTrack->bits;
+                if ( uf6aFlipFlop == comperatorFlipFlop ) {
 
-                        if (refCycles < todo)
-                            todo = refCycles;
+                    if (motorAdvance) {
+                        delta = refCyclesPerRevolution - accum;
+
+                        if ((gcrTrack->bits << 1) <= delta) {
+                            todo = delta / gcrTrack->bits;
+
+                            if (refCycles < todo)
+                                todo = refCycles;
+
+                            if ((16 - ue7Counter) < todo)
+                                todo = 16 - ue7Counter;
+
+                            if (randCounter && (randCounter < todo))
+                                todo = randCounter;
+                        }
+                    } else {
+                        todo = refCycles;
 
                         if ((16 - ue7Counter) < todo)
                             todo = 16 - ue7Counter;
@@ -64,19 +76,21 @@ namespace LIBC64 {
                         if (randCounter && (randCounter < todo))
                             todo = randCounter;
                     }
+
+                    ue7Counter += todo;
+                    randCounter -= todo;
+
+                    if (!randCounter) {
+                        ue7Counter = speedZone & 3;
+                        uf4Counter = 0;
+
+                        if (ue3Counter == 8)
+                            byteFetched((16 - refCycles + todo) > 8);
+
+                        randCounter = ( (randomizer.xorShift() >> 16 ) % 367) + 33;
+                    }
+
                 } else {
-                    todo = refCycles;
-
-                    if ((16 - ue7Counter) < todo)
-                        todo = 16 - ue7Counter;
-
-                    if (randCounter && (randCounter < todo))
-                        todo = randCounter;
-                }
-
-                ue7Counter += todo;
-
-                if ( uf6aFlipFlop != comperatorFlipFlop ) {
                     uf6aFlipFlop = comperatorFlipFlop;
                     ue7Counter = speedZone & 3;
                     uf4Counter = 0;
@@ -89,19 +103,6 @@ namespace LIBC64 {
                     // will be reset after some time but that doesn't mean it can
                     // be more than 3 zeros in row shifted in but fewer.
                     randCounter = ( (randomizer.xorShift() >> 16 ) % 31) + 233; // 14.5 - 67.5
-                } else {
-
-                    randCounter -= todo;
-
-                    if (!randCounter) {
-                        ue7Counter = speedZone & 3;
-                        uf4Counter = 0;
-
-                        if (ue3Counter == 8)
-                            byteFetched((16 - refCycles + todo) > 8);
-
-                        randCounter = ( (randomizer.xorShift() >> 16 ) % 367) + 33;
-                    }
                 }
 
                 if (ue7Counter == 16) {
