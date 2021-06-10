@@ -3,6 +3,7 @@
 // (C) 2004, Matt Mahoney under GPL, http://www.gnu.org/licenses/gpl.txt
 
 #include <algorithm>
+#include <cstdint>
 #include "fpaq0.h"
 
 namespace Emulator {
