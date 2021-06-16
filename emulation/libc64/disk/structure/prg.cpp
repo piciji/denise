@@ -6,7 +6,7 @@ namespace LIBC64 {
 auto Structure1541::createD64FromPRG( std::string name, uint8_t* prgData, unsigned prgSize ) -> uint8_t* {
 	
 	uint8_t buffer[256];
-	uint8_t* data = createD64("empty");
+	uint8_t* data = createDxx("empty", 1);
 	uint8_t track = 18;
 	uint8_t sector = 0;
 	uint8_t startTrack;

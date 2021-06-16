@@ -87,13 +87,18 @@ Drive1541::Drive1541(uint8_t number, Emulator::Interface::Media* mediaConnected 
 	
 	structure1541.number = number;
     
-    media = nullptr;	
+    media = nullptr;
+
+    frequency = 1000000;
+    refCyclesInCpuCycle = 16;
     
     ram = new uint8_t[ 2 * 1024 ];
     rom = nullptr;    
     
     via1 = new Via( 1 );
     via2 = new Via( 2 );
+
+    cia = new CIA::M6526(1);
     
     cpu = new M6502(this);
 
@@ -134,7 +139,18 @@ Drive1541::Drive1541(uint8_t number, Emulator::Interface::Media* mediaConnected 
                                             
                 iecBus->updatePort();
             }
-        }                
+        } else {
+            if (type == Type::D1570 || type == Type::D1571) {
+                dataDirection = !!(lines->ioa & 2);
+                updateCycleSpeed( lines->ioa & 0x20 );
+            }
+
+            if (type == Type::D1571) {
+                side = !!(lines->ioa & 4);
+                if (!structure1541.hasSecondSide())
+                    side = 0;
+            }
+        }
     };   
     
     via1->readPort = [this]( Via::Port port, Via::Lines* lines ) {
@@ -143,7 +159,13 @@ Drive1541::Drive1541(uint8_t number, Emulator::Interface::Media* mediaConnected 
             // invert the three input bits, add device number  
             return (uint8_t)( ((0x1a | iecBus->readVia()) ^ 0x85) | (this->number << 5) ); 
         }
-        
+
+        // port A
+        if (type == Type::D1570 || type == Type::D1571) {
+
+            return (uint8_t) ( ( ( (byteReady ? 0 : 0x80) | ((currentHalftrack == 0) ? 0 : 1) | 0x7e ) & ~lines->ddra) | ( lines->pra & lines->ddra ) );
+        }
+
         return lines->ioa;
     };
     
@@ -155,7 +177,7 @@ Drive1541::Drive1541(uint8_t number, Emulator::Interface::Media* mediaConnected 
 
                 uint8_t step = ((lines->iob & 3) - (currentHalftrack & 3)) & 3;
 
-                if (step != 0)                
+                if (step != 0)
                     changeHalfTrack( step );                
             }                            
             
@@ -189,10 +211,14 @@ Drive1541::Drive1541(uint8_t number, Emulator::Interface::Media* mediaConnected 
             // port A
             writeValue = lines->ioa;
         }
+
+        byteReady = false;
     };  
         
     via2->readPort = [this]( Via::Port port, Via::Lines* lines ) {
-                
+
+        byteReady = false;
+
         if (port == Via::Port::B) {            
             
             // only bit 7 and 4 are input bits, all others reads 1 in input mode
@@ -274,6 +300,7 @@ auto Drive1541::power( ) -> void {
     speedZone = 0;
     byteReadyOverflow = false;
     readMode = true;
+    byteReady = true;
     cpu->power();    
  
     ue7Counter = uf4Counter = 0;
@@ -298,8 +325,29 @@ auto Drive1541::power( ) -> void {
     comperatorFlipFlop = false;
     uf6aFlipFlop = false;
     pulseDuration = 0;
-    
+    side = 0;
+    dataDirection = 0;
+    updateCycleSpeed(false);
     changeHalfTrack(0);
+}
+
+auto Drive1541::updateCycleSpeed(bool mhz2x) -> void {
+
+    if (mhz2x) {
+        rotSpeedBps[0] = 125000;
+        rotSpeedBps[1] = 133333;
+        rotSpeedBps[2] = 142857;
+        rotSpeedBps[3] = 153846;
+        refCyclesInCpuCycle = 8;
+        frequency = 2000000;
+    } else {
+        rotSpeedBps[0] = 250000;
+        rotSpeedBps[1] = 266667;
+        rotSpeedBps[2] = 285714;
+        rotSpeedBps[3] = 307692;
+        refCyclesInCpuCycle = 16;
+        frequency = 1000000;
+    }
 }
 
 auto Drive1541::powerOff( ) -> void {  
@@ -364,6 +412,9 @@ auto Drive1541::detach() -> void {
     loaded = false;
     pulseIndex = -1;
     pulseDelta = 1; // to reload quickly
+
+    if (type == Type::D1570 || type == Type::D1571)
+        via1->cb1In( true );
 }
 
 auto Drive1541::attach( Emulator::Interface::Media* media, uint8_t* data, unsigned size, bool loadGracefully ) -> void {
@@ -394,6 +445,9 @@ auto Drive1541::postAttach() -> void {
     pulseIndex = gcrTrack->firstPulse;
 
     loaded = true;
+
+    if (type == Type::D1570 || type == Type::D1571)
+        via1->cb1In( !writeProtected );
 }
 
 auto Drive1541::setWriteProtect(bool state) -> void {
@@ -443,6 +497,12 @@ auto Drive1541::setSpeed(double rpm, double wobble) -> void {
 
     this->rpm = rpm * 100.0 + 0.5;
     this->wobble = wobble * 100.0 + 0.5;
+}
+
+auto Drive1541::setDrive( Type type ) -> void {
+    this->type = type;
+
+    updateCycleSpeed(false);
 }
 
 }

@@ -66,7 +66,7 @@ auto Interface::prepareMemory() -> void {
 }
 
 auto Interface::prepareMedia() -> void {
-	mediaGroups.push_back({MediaGroupIdDisk, "Disk", MediaGroup::Type::Disk, {"d64", "g64", "p64"}, {"d64", "g64", "p64"} });
+	mediaGroups.push_back({MediaGroupIdDisk, "Disk", MediaGroup::Type::Disk, {"d64", "g64", "p64", "d71", "g71", "p71"}, {"d64", "g64", "p64", "d71", "g71", "p71"} });
 	mediaGroups.push_back({MediaGroupIdTape, "Tape", MediaGroup::Type::Tape, {"tap"}, {"tap"} });	
 	mediaGroups.push_back({MediaGroupIdProgram, "Program", MediaGroup::Type::Program, {"prg", "p00", "t64"}, {"prg"} });
     mediaGroups.push_back({MediaGroupIdExpansionGame, "Cartridge", MediaGroup::Type::Expansion, {"bin", "crt"}, {"crt", "bin"} });

@@ -75,6 +75,8 @@ struct IecBus {
 
     auto updateSerializationSize() -> void;
     auto insertDiskGracefully() -> void;
+
+    auto setDriveType(Drive1541::Type type) -> void;
 };
    
 extern IecBus* iecBus;

@@ -28,7 +28,7 @@ struct Structure1541 {
     static const unsigned BYTES_IN_SPEEDZONE[4];
     static const uint8_t GAPS_IN_SPEEDZONE[4];
     
-    enum class Type { D64 = 0, G64 = 1, P64 = 2, Unknown = -1 } type; 
+    enum class Type { D64, G64, P64, D71, G71, P71, Unknown = -1 } type;
 	uint8_t number;
 	Emulator::Interface::Media* media = nullptr;
 	bool autoStarted = false;
@@ -85,12 +85,16 @@ struct Structure1541 {
 
     std::vector<Emulator::Interface::Listing> listings;
     std::vector<std::vector<uint8_t>> loader;
-   
+
+    auto hasSecondSide() -> bool {
+        return sides == 2;
+    }
+
     auto prepare() -> void;
     auto analyze() -> bool;   
     static auto create( Type newType, std::string diskName ) -> Emulator::Interface::Data;
     
-    auto getTrackPtr( uint8_t halfTrack ) -> GcrTrack*;
+    auto getTrackPtr( uint8_t side, uint8_t halfTrack ) -> GcrTrack*;
     auto attach( uint8_t* data, unsigned size, bool loadGracefully = false ) -> bool;
     auto detach() -> void;
     auto createListing() -> void;
@@ -130,22 +134,27 @@ private:
     unsigned maxTrackLength;
     uint8_t sides;
     
-    GcrTrack gcrTracks[ MAX_TRACKS_1541 * 2 ];
+    GcrTrack gcrTracks[2][ MAX_TRACKS_1541 * 2 ];
         
     uint8_t* errorMap;
     uint32_t errorMapSize;
-        
+
     auto analyzeD64() -> bool;
+    auto analyzeD71() -> bool;
     auto analyzeG64() -> bool;
+    auto analyzeG71() -> bool;
     auto analyzeP64() -> bool;
+    auto analyzeP71() -> bool;
     
-    static auto createD64( std::string diskName ) -> uint8_t*;
-    static auto createG64( std::string diskName ) -> uint8_t*;
-    static auto createP64( std::string diskName ) -> Emulator::Interface::Data;
+    static auto createDxx( std::string diskName, uint8_t sides = 1 ) -> uint8_t*;
+    static auto createGxx( std::string diskName, uint8_t sides = 1 ) -> uint8_t*;
+    static auto createPxx( std::string diskName, uint8_t sides = 1 ) -> Emulator::Interface::Data;
     static auto cutId( std::string& diskName ) -> std::string;
     
     static auto imageSizeG64() -> unsigned;
+    static auto imageSizeG71() -> unsigned;
     static auto imageSizeD64() -> unsigned;
+    static auto imageSizeD71() -> unsigned;
     
     static auto speedzone( uint8_t track ) -> uint8_t;
     static auto countSectors( uint8_t track ) -> uint8_t;
@@ -153,18 +162,18 @@ private:
     static auto countBytes( uint8_t track ) -> unsigned;
     static auto gapSize( uint8_t track ) -> unsigned;
         
-    auto prepareG64() -> void;
-    auto prepareD64() -> void;
+    auto prepareGxx() -> void;
+    auto prepareDxx() -> void;
     auto prepareP64() -> void;
     auto getTrackOffsetG64( uint8_t halfTrack, int& error ) -> uint32_t;
+    auto handleAppendedTracksInDxx() -> bool;
         
-    auto writeD64(const GcrTrack* trackPtr, unsigned track) -> bool;
-    auto writeG64(const GcrTrack* trackPtr, unsigned halfTrack) -> bool;
+    auto writeDxx(const GcrTrack* trackPtr, uint8_t side, unsigned track, bool& errorMapChanged) -> bool;
+    auto writeGxx(const GcrTrack* trackPtr, uint8_t side, unsigned halfTrack) -> bool;
     auto writeP64ToMem(unsigned& memSize) -> uint8_t*;
-    auto writeP64() -> bool;
+    auto writePxx() -> bool;
     
-    static auto writeSector( uint8_t* target, uint8_t* buffer, uint8_t track, uint8_t sector ) -> void;
-    static auto readSector( uint8_t* src, uint8_t* buffer, uint8_t track, uint8_t sector ) -> bool;
+    static auto writeSector( uint8_t* target, uint8_t* buffer, uint8_t track, uint8_t sector, unsigned offset = 0) -> void;
     static auto createBAM( std::string diskName, uint8_t tracksInImage, uint8_t* buffer ) -> void;
 
     static auto encodeSector(const uint8_t* src, uint8_t* target, uint8_t track, uint8_t sector, uint8_t id1, uint8_t id2, int errorCode) -> void;    

@@ -199,10 +199,9 @@ auto IecBus::syncDrives( int64_t _syncPos, bool ciaAccess ) -> void {
     // x cpu cycles = x drive cycles
     // cpu clock * x drive cycles = drive clock * x cpu cycles                
     // drive->cycleCounter -= cycleCounterTemp * 1000000; // cpu cycles * drive clock 
-    int64_t _temp = _delay * 1000000;
-    
+
     for (auto drive : drivesEnabled) {
-        drive->cycleCounter -= _temp;
+        drive->cycleCounter -= _delay * drive->frequency;
         drive->synced = drive->cycleCounter >= syncPos;
     }
         
@@ -338,6 +337,11 @@ auto IecBus::setDrivesEnabled( uint8_t count ) -> void {
     threaded = drivesEnabled.size() > 0; 
 }
 
+auto IecBus::setDriveType(Drive1541::Type type) -> void {
+    for( auto drive : drives )
+        drive->setDrive( type );
+}
+
 auto IecBus::setDriveSpeed(double rpm, double wobble) -> void {
     for( auto drive : drives )
         drive->setSpeed( rpm, wobble );
@@ -457,7 +461,7 @@ auto IecBus::serialize(Emulator::Serializer& s) -> void {
 auto IecBus::serializeLight(Emulator::Serializer& s) -> void {
     
     waitForDrives();
-    
+
     s.integer( sysClock );
     s.integer( atnOut );
     s.integer( clockOut );

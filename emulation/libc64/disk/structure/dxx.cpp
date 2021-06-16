@@ -2,7 +2,49 @@
 #include "structure.h"
 
 namespace LIBC64 {
-    
+
+auto Structure1541::analyzeD71() -> bool {
+
+    uint32_t compareSize = TYPICAL_SIZE << 1;
+    uint32_t sectors = compareSize / 256;
+    tracks = TYPICAL_TRACKS; // typical 349696 bytes in 70 tracks
+
+    if (errorMap)
+        delete[] errorMap;
+
+    errorMapSize = 0;
+    errorMap = nullptr;
+
+    while (1) {
+        if (rawSize == compareSize)
+            break;
+
+        // check if one error byte for each block was appended ?
+        if (rawSize == (compareSize + sectors)) {
+            errorMapSize = sectors;
+            break;
+        }
+        // now we check for non standard track count
+        if (++tracks > MAX_TRACKS) // up to 42 tracks are possible
+            return false;
+
+        sectors += 17 << 1; // tracks > 31 contain 17 sectors
+        compareSize = sectors * 256;
+    }
+
+    type = Type::D71;
+    sides = 2;
+
+    maxHalfTracks = MAX_TRACKS * 2;
+
+    if (errorMapSize) {
+        errorMap = new uint8_t[errorMapSize];
+        std::memcpy(errorMap, rawData + compareSize, errorMapSize);
+    }
+
+    return true;
+}
+
 auto Structure1541::analyzeD64() -> bool {
     
     uint32_t compareSize = TYPICAL_SIZE;
@@ -33,6 +75,7 @@ auto Structure1541::analyzeD64() -> bool {
     }
     
     type = Type::D64;
+    sides = 1;
     
     maxHalfTracks = MAX_TRACKS * 2;
     
@@ -44,80 +87,93 @@ auto Structure1541::analyzeD64() -> bool {
     return true;
 }
     
-auto Structure1541::prepareD64() -> void {
+auto Structure1541::prepareDxx() -> void {
     
     uint8_t errorCode;
     uint8_t buffer[256];
-    // first we fetch the bam sector to extract the id, needed for all sector headers
-    int sectors = countSectors( 18, 0 );
-    std::memcpy( buffer, rawData + (sectors << 8), 256 );
-    
-    uint8_t id1 = buffer[0xa2];
-    uint8_t id2 = buffer[0xa3];
-    
-    for( uint8_t track = 1; track <= (maxHalfTracks / 2); track++ ) {
-        // tracks count from 1 upwards and are stored in memory as half tracks        
-        // track 1 -> means half track 0
-        // track 1.5 -> means half track 1
-        // track 2 -> means half track 2
-        // ... d64 doesn't support halftracks 1.5, 2.5 ...
-        unsigned halfTrack = track * 2 - 2;                
-        unsigned trackSize = countBytes( track );
-        GcrTrack* trackPtr = &gcrTracks[ halfTrack ];
+    unsigned sectorOffset = 0;
+    int sectors;
 
-        // there wasn't loaded any image before
-        if ( !trackPtr->data )
-            trackPtr->data = new uint8_t[ trackSize ];
+    for( uint8_t side = 0; side < sides; side++ ) {
 
-        else if ( trackSize != trackPtr->size ) {
-            delete[] trackPtr->data;
-            trackPtr->data = new uint8_t[ trackSize ];
-        }
-        
-        trackPtr->size = trackSize;
-        trackPtr->bits = trackSize * 8;
-        uint8_t* ptr = trackPtr->data;
-        
-        std::memset( ptr, 0x55, trackSize ); // clear track
-        
-        if ( track <= tracks ) {
-            
-            uint8_t gaps = gapSize( track );
-            
-            unsigned sectorsInTrack = countSectors( track );
-            
-            for (unsigned sector = 0; sector < sectorsInTrack; sector++) {
-                
-                // count all sectors so far
-                sectors = countSectors( track, sector );
-                
-                if (sectors < 0)
-                    break;
-                
-                errorCode = errorMap ? errorMap[ sectors ] : ERR_OK;
-                
-                std::memcpy( buffer, rawData + (sectors << 8), 256 );
-                
-                encodeSector(buffer, ptr, track, sector, id1, id2, errorCode);
-                
-                // gcr formated sector size: 64 * 5 = 320 byte data
-                // + 5 (descriptor byte / checksum )
-                // + 5 first sync
-                // + 10 header
-                // + 9 gap
-                // + 5 second sync
-                // + speedzone dependant gap                
-                ptr += 340 + 9 + gaps + 5;
+        // first we fetch the bam sector to extract the id, needed for all sector headers
+        sectors = countSectors( 18, 0 );
+        sectors += sectorOffset;
+        std::memcpy( buffer, rawData + (sectors << 8), 256 );
+
+        uint8_t id1 = buffer[0xa2];
+        uint8_t id2 = buffer[0xa3];
+
+        for (uint8_t track = 1; track <= (maxHalfTracks / 2); track++) {
+            // tracks count from 1 upwards and are stored in memory as half tracks
+            // track 1 -> means half track 0
+            // track 1.5 -> means half track 1
+            // track 2 -> means half track 2
+            // ... d64 doesn't support halftracks 1.5, 2.5 ...
+            unsigned halfTrack = track * 2 - 2;
+            unsigned trackSize = countBytes(track);
+            GcrTrack* trackPtr = &gcrTracks[side][halfTrack];
+
+            // there wasn't loaded any image before
+            if (!trackPtr->data)
+                trackPtr->data = new uint8_t[trackSize];
+
+            else if (trackSize != trackPtr->size) {
+                delete[] trackPtr->data;
+                trackPtr->data = new uint8_t[trackSize];
             }
-        }            
-        // half tracks are not supported by D64
-        trackPtr = &gcrTracks[ ++halfTrack ];
-        
-        if ( trackPtr->data )
-            delete[] trackPtr->data;
-        trackPtr->data = nullptr;
-        trackPtr->size = 0;
-        trackPtr->bits = 0;
+
+            trackPtr->size = trackSize;
+            trackPtr->bits = trackSize * 8;
+            uint8_t* ptr = trackPtr->data;
+
+            std::memset(ptr, 0x55, trackSize); // clear track
+
+            if (track <= tracks) {
+
+                uint8_t gaps = gapSize(track);
+
+                unsigned sectorsInTrack = countSectors(track);
+
+                for (unsigned sector = 0; sector < sectorsInTrack; sector++) {
+
+                    // count all sectors so far
+                    sectors = countSectors(track, sector);
+
+                    if (sectors < 0)
+                        break;
+
+                    sectors += sectorOffset;
+
+                    errorCode = errorMap ? errorMap[sectors] : ERR_OK;
+
+                    std::memcpy(buffer, rawData + (sectors << 8), 256);
+
+                    encodeSector(buffer, ptr, track, sector, id1, id2, errorCode);
+
+                    // gcr formated sector size: 64 * 5 = 320 byte data
+                    // + 5 (descriptor byte / checksum )
+                    // + 5 first sync
+                    // + 10 header
+                    // + 9 gap
+                    // + 5 second sync
+                    // + speedzone dependant gap
+                    ptr += 340 + 9 + gaps + 5;
+                }
+            }
+            // half tracks are not supported by D64
+            trackPtr = &gcrTracks[side][++halfTrack];
+
+            if (trackPtr->data)
+                delete[] trackPtr->data;
+            trackPtr->data = nullptr;
+            trackPtr->size = 0;
+            trackPtr->bits = 0;
+        }
+
+        if (side == 0) {
+            sectorOffset = sectors + 1;
+        }
     }
 }
 
@@ -137,7 +193,7 @@ auto Structure1541::encodeSector(const uint8_t* src, uint8_t* target, uint8_t tr
     target += 5;
 
     uint8_t chksum = (errorCode == ERR_HEADER_CHECKSUM) ? 0xff : 0x00; // checksum error in header block
-    chksum ^= sector ^ track ^ id1 ^ id2 ^  idm; // header checksum
+    chksum ^= sector ^ track ^ id1 ^ id2 ^ idm; // header checksum
     // header begins with 0x08 if there is no error
     buf[0] = (errorCode == ERR_HEADER) ? 0xff : 0x08;   // header block not found
     buf[1] = chksum;
@@ -181,33 +237,75 @@ auto Structure1541::encodeSector(const uint8_t* src, uint8_t* target, uint8_t tr
     gcr.encode(buf, target);
 }
 
-auto Structure1541::writeD64(const GcrTrack* trackPtr, unsigned track) -> bool {
+auto Structure1541::handleAppendedTracksInDxx() -> bool {
+    bool appended = false;
+
+    for (uint8_t side = 0; side < sides; side++) {
+        for (unsigned track = 1; track <= MAX_TRACKS; track++) {
+            GcrTrack* gcrTrack = getTrackPtr(side, track * 2 - 2);
+
+            if ((track > TYPICAL_TRACKS) && (gcrTrack->written & 1)) {
+                if (track > tracks) {
+                    appended = true;
+                    tracks = track;
+                }
+            }
+        }
+    }
+
+    if (!appended)
+        return false;
+
+    if (errorMap) {
+        unsigned trackSectors = countSectors( tracks );
+        int sectors = countSectors( tracks, 0 );
+
+        unsigned newMapSize = sectors + trackSectors;
+        if (sides == 2)
+            newMapSize <<= 1;
+
+        uint8_t* errorMapTemp = new uint8_t[newMapSize];
+        std::memset( errorMapTemp, ERR_OK, newMapSize );
+
+        if (sides == 2) {
+            memcpy(errorMapTemp, errorMap, errorMapSize >> 1);
+            memcpy(errorMapTemp + (newMapSize >> 1), errorMap + (errorMapSize >> 1), errorMapSize >> 1);
+
+        } else {
+            memcpy(errorMapTemp, errorMap, errorMapSize);
+        }
+
+        delete[] errorMap;
+        errorMap = errorMapTemp;
+        errorMapSize = newMapSize;
+    }
+
+    for (uint8_t side = 0; side < sides; side++) {
+        for (unsigned track = 1; track <= MAX_TRACKS; track++) {
+            GcrTrack* gcrTrack = getTrackPtr(side, track * 2 - 2);
+
+            if (track <= tracks)
+                gcrTrack->written = 1;
+        }
+    }
+
+    return true;
+}
+
+auto Structure1541::writeDxx(const GcrTrack* trackPtr, uint8_t side, unsigned track, bool& errorMapChanged) -> bool {
     // ok we need to decode the gcr track back in user data and write it out
     unsigned trackSectors = countSectors( track );
-    bool errorMapChanged = false;
     
     // summed sector count till this track
     int sectors = countSectors( track, 0 );
     
     if (sectors < 0)
         return false; // higher than max track
-    
-    if (track > tracks) {
-        // ok there was written a track the original image doesn't has
-        // we have to rearrange the error map, if exists
-        if (errorMap) {            
-            // error map provides a byte for each sector
-            unsigned newMapSize = sectors + trackSectors;
-            uint8_t* errorMapTemp = new uint8_t[newMapSize];
-            std::memset( errorMapTemp, ERR_OK, newMapSize );
-            // copy the existing error map over the new one
-            memcpy( errorMapTemp, errorMap, errorMapSize );
-            delete[] errorMap;
-            errorMap = errorMapTemp;
-            errorMapSize = newMapSize;
-            errorMapChanged = true;
-        }
-        tracks = track; // update track count of this image
+
+    unsigned sectorOffset = 0;
+    if (side == 1) {
+        sectorOffset = countSectors( tracks, 0 );
+        sectorOffset += countSectors( tracks );
     }
     
     // create a target buffer for all sectors of this track
@@ -226,6 +324,9 @@ auto Structure1541::writeD64(const GcrTrack* trackPtr, unsigned track) -> bool {
                 
                 if (allSectors >= 0) {
                     allSectors += countSectors( tracks );
+                    if (sides == 2)
+                        allSectors <<= 1;
+
                     errorMap = new uint8_t[allSectors];
                     std::memset( errorMap, ERR_OK, allSectors );
                     errorMapSize = allSectors;
@@ -235,8 +336,8 @@ auto Structure1541::writeD64(const GcrTrack* trackPtr, unsigned track) -> bool {
         }
         
         if (errorMap) {
-            if ( errorMap[sectors + sector] != err) {
-                errorMap[sectors + sector] = err;
+            if ( errorMap[sectorOffset + sectors + sector] != err) {
+                errorMap[sectorOffset + sectors + sector] = err;
                 errorMapChanged = true;                
             }
         }
@@ -245,18 +346,11 @@ auto Structure1541::writeD64(const GcrTrack* trackPtr, unsigned track) -> bool {
     unsigned writeSize = trackSectors * 256;
     // "sectors" counts the sectors to the beginning of this track.
     // it's the starting offset for writting this track
-    unsigned writtenSize = write( buffer, writeSize, sectors * 256 );
+    unsigned writtenSize = write( buffer, writeSize, (sectorOffset + sectors) * 256 );
     delete[] buffer;
     
     if (writtenSize != writeSize)        
         return false;
-    
-    if (errorMapChanged) {       
-        // error map size is the count of all sectors of this disk. so we use
-        // it as an offset for appending the error map data
-        if ( write( errorMap, errorMapSize, errorMapSize * 256 ) != errorMapSize )
-            return false;
-    }
     
     return true;
 }
@@ -399,42 +493,40 @@ auto Structure1541::imageSizeD64() -> unsigned {
     return TYPICAL_SIZE;
 }
 
-auto Structure1541::createD64( std::string diskName ) -> uint8_t* {
+auto Structure1541::imageSizeD71() -> unsigned {
+
+    return TYPICAL_SIZE << 1;
+}
+
+auto Structure1541::createDxx( std::string diskName, uint8_t sides ) -> uint8_t* {
     
     uint8_t buffer[256];    
     std::memset(buffer, 0, 256);
     buffer[1] = 255;
     
-    uint8_t* temp = new uint8_t[ imageSizeD64() ];
-    std::memset( temp, 0, imageSizeD64() );
+    uint8_t* temp = new uint8_t[ (sides == 2) ? imageSizeD71() : imageSizeD64() ];
+    std::memset( temp, 0, (sides == 2) ? imageSizeD71() : imageSizeD64() );
 
     writeSector( temp, buffer, 18, 1 ); // write directory sector
+    if (sides == 2)
+        writeSector( temp, buffer, 18, 1, imageSizeD64() );
+
     createBAM( diskName, TYPICAL_TRACKS, buffer ); // resuse buffer for bam sector
     writeSector( temp, buffer, 18, 0 ); // write bam sector
-    
+    if (sides == 2)
+        writeSector( temp, buffer, 18, 0, imageSizeD64() );
+
     return temp;    
 }
 
-auto Structure1541::writeSector( uint8_t* target, uint8_t* buffer, uint8_t track, uint8_t sector ) -> void {
+auto Structure1541::writeSector( uint8_t* target, uint8_t* buffer, uint8_t track, uint8_t sector, unsigned offset) -> void {
         
     int sectors = countSectors( track, sector );
     
     if (sectors < 0)
         return;
     
-    std::memcpy( target + (sectors << 8), buffer, 256 );
-}
-
-auto Structure1541::readSector( uint8_t* src, uint8_t* buffer, uint8_t track, uint8_t sector ) -> bool {
-        
-    int sectors = countSectors( track, sector );
-    
-    if (sectors < 0)
-        return false;
-    
-    std::memcpy( buffer, src + (sectors << 8), 256 );
-    
-    return true;
+    std::memcpy( target + offset + (sectors << 8), buffer, 256 );
 }
 
 }

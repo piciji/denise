@@ -92,6 +92,8 @@ auto Drive1541::rotateD64() -> void {
             if ( byteReadyOverflow )
                 cpu->triggerSO();
 
+            byteReady = byteReadyOverflow;
+
             via2->ca1In( !byteReadyOverflow );
         } else {
 
@@ -109,6 +111,8 @@ auto Drive1541::byteFetched( bool overflowNotThisCycle ) -> void {
     if (byteReadyOverflow)
         // edge transition
         cpu->triggerSO(overflowNotThisCycle ? 2 : 1);
+
+    byteReady = byteReadyOverflow;
 
     // edge transition, but direction matters so we emulate the PIN state and not only the transiton like external overflow
     via2->ca1In(!byteReadyOverflow, overflowNotThisCycle);
@@ -315,7 +319,7 @@ auto Drive1541::changeHalfTrack( uint8_t step ) -> void {
                 position = CyclesPerRevolution300Rpm - (pulseDelta - pulse.position);
         }
 
-        gcrTrack = structure1541.getTrackPtr( currentHalftrack );
+        gcrTrack = structure1541.getTrackPtr( side, currentHalftrack );
         pulseIndex = gcrTrack->firstPulse;
         pulseDelta = 1;
 
@@ -334,7 +338,7 @@ auto Drive1541::changeHalfTrack( uint8_t step ) -> void {
         unsigned oldTrackSize = gcrTrack->size;
 
         // pointer to next track
-        gcrTrack = structure1541.getTrackPtr( currentHalftrack );
+        gcrTrack = structure1541.getTrackPtr( side, currentHalftrack );
 
         if ( oldTrackSize != 0 )
             // we want to keep alignment between old and new track.

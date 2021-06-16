@@ -64,6 +64,38 @@ namespace LIBC64 {
             return false;
 
         type = Type::P64;
+        sides = 1;
+
+        return true;
+    }
+
+    auto Structure1541::analyzeP71() -> bool {
+
+        uint8_t* ptr = rawData;
+
+        if (rawSize < 32)
+            return false; // too small
+
+        if (std::memcmp(rawData, "P71-1571", 8)) // missing this ident ?
+            return false;
+
+        ptr += 16;
+
+        uint32_t size = Emulator::copyBufferToInt<uint32_t>( ptr );
+        ptr += 4;
+        uint32_t checkSum = Emulator::copyBufferToInt<uint32_t>( ptr );
+        ptr += 4;
+
+        if ((size + 24) > rawSize)
+            return false;
+
+        Emulator::CRC32 crc32( ptr, size, ~0 );
+
+        if (crc32.value() != checkSum)
+            return false;
+
+        type = Type::P71;
+        sides = 2;
 
         return true;
     }
@@ -128,94 +160,96 @@ namespace LIBC64 {
             *pOffset += length;
         };
 
-        for ( unsigned halfTrack = 0; halfTrack < (MAX_TRACKS * 2); halfTrack++ ) {
-            GcrTrack* gcrTrack = getTrackPtr( halfTrack );
+        for (int side = 0; side < sides; side++) {
+            for (unsigned halfTrack = 0; halfTrack < (MAX_TRACKS * 2); halfTrack++) {
+                GcrTrack* gcrTrack = getTrackPtr(side, halfTrack);
 
-            BOUND_CHECK(20)
+                BOUND_CHECK(20)
 
-            // beginning from here we need to access 'buf' from double pointer, because 'BOUND_CHECK' could recreate the memory area
-            *(*__buf + offset + 0) = 'H';
-            *(*__buf + offset + 1) = 'T';
-            *(*__buf + offset + 2) = 'P';
-            //if (sides == 2)
-              //  *__buf[offset + 3] = 0x80;
-            // 1571 support is following soon
-            *(*__buf + offset + 3) |= (halfTrack + 2);
-            offset += 12;
+                // beginning from here we need to access 'buf' from double pointer, because 'BOUND_CHECK' could recreate the memory area
+                *(*__buf + offset + 0) = 'H';
+                *(*__buf + offset + 1) = 'T';
+                *(*__buf + offset + 2) = 'P';
+                if (side == 1)
+                  *__buf[offset + 3] = 0x80;
 
-            unsigned chunkOffset = offset;
-            offset += 8;
+                *(*__buf + offset + 3) |= (halfTrack + 2);
+                offset += 12;
 
-            predictorPositionEnable.init(0);
-            predictorStrengthEnable.init(0);
+                unsigned chunkOffset = offset;
+                offset += 8;
 
-            for (unsigned i = 0; i < 4; i++) {
-                predictorPositions[i]->init();
-                predictorStrengths[i]->init();
-            }
+                predictorPositionEnable.init(0);
+                predictorStrengthEnable.init(0);
 
-            fpaq0.init();
-
-            unsigned lastPosition = 0;
-            unsigned lastDelta = 0;
-            unsigned lastStrength = 0;
-
-            unsigned countPulses = 0;
-
-            if (gcrTrack->written) {
-                int32_t index = gcrTrack->firstPulse;
-
-                while (index >= 0) {
-                    Structure1541::Pulse& pulse = gcrTrack->pulses[index];
-
-                    unsigned delta = pulse.position - lastPosition;
-
-                    if (delta != lastDelta) {
-
-                        lastDelta = delta;
-
-                        fpaq0.encode(&predictorPositionEnable, true);
-
-                        encodeP64(fpaq0, predictorPositions, delta);
-
-                    } else
-                        fpaq0.encode(&predictorPositionEnable, false);
-
-                    lastPosition = pulse.position;
-
-                    if (lastStrength != pulse.strength) {
-
-                        fpaq0.encode(&predictorStrengthEnable, true);
-
-                        encodeP64(fpaq0, predictorStrengths, pulse.strength - lastStrength);
-                    } else
-                        fpaq0.encode(&predictorStrengthEnable, false);
-
-                    lastStrength = pulse.strength;
-
-                    index = pulse.next;
-
-                    countPulses++;
+                for (unsigned i = 0; i < 4; i++) {
+                    predictorPositions[i]->init();
+                    predictorStrengths[i]->init();
                 }
+
+                fpaq0.init();
+
+                unsigned lastPosition = 0;
+                unsigned lastDelta = 0;
+                unsigned lastStrength = 0;
+
+                unsigned countPulses = 0;
+
+                if (gcrTrack->written) {
+                    int32_t index = gcrTrack->firstPulse;
+
+                    while (index >= 0) {
+                        Structure1541::Pulse& pulse = gcrTrack->pulses[index];
+
+                        unsigned delta = pulse.position - lastPosition;
+
+                        if (delta != lastDelta) {
+
+                            lastDelta = delta;
+
+                            fpaq0.encode(&predictorPositionEnable, true);
+
+                            encodeP64(fpaq0, predictorPositions, delta);
+
+                        } else
+                            fpaq0.encode(&predictorPositionEnable, false);
+
+                        lastPosition = pulse.position;
+
+                        if (lastStrength != pulse.strength) {
+
+                            fpaq0.encode(&predictorStrengthEnable, true);
+
+                            encodeP64(fpaq0, predictorStrengths, pulse.strength - lastStrength);
+                        } else
+                            fpaq0.encode(&predictorStrengthEnable, false);
+
+                        lastStrength = pulse.strength;
+
+                        index = pulse.next;
+
+                        countPulses++;
+                    }
+                }
+
+                fpaq0.encode(&predictorPositionEnable, true);
+                encodeP64(fpaq0, predictorPositions, 0);
+                fpaq0.flush();
+
+
+                Emulator::copyIntToBuffer<uint32_t>(*__buf + chunkOffset, countPulses);
+
+                unsigned chunkSize = offset - chunkOffset;
+
+                // encoded data size
+                Emulator::copyIntToBuffer<uint32_t>(*__buf + chunkOffset + 4, chunkSize - 8);
+
+                // chunk size
+                Emulator::copyIntToBuffer<uint32_t>(*__buf + chunkOffset - 8, chunkSize);
+
+                Emulator::CRC32 crc32(*__buf + chunkOffset, chunkSize, ~0);
+                Emulator::copyIntToBuffer<uint32_t>(*__buf + chunkOffset - 4, crc32.value());
             }
-
-            fpaq0.encode(&predictorPositionEnable, true);
-            encodeP64(fpaq0, predictorPositions, 0);
-            fpaq0.flush();
-
-
-            Emulator::copyIntToBuffer<uint32_t>(*__buf + chunkOffset, countPulses);
-
-            unsigned chunkSize = offset - chunkOffset;
-
-            // encoded data size
-            Emulator::copyIntToBuffer<uint32_t>(*__buf + chunkOffset + 4, chunkSize - 8);
-
-            // chunk size
-            Emulator::copyIntToBuffer<uint32_t>(*__buf + chunkOffset - 8, chunkSize);
-
-            Emulator::CRC32 crc32( *__buf + chunkOffset, chunkSize, ~0);
-            Emulator::copyIntToBuffer<uint32_t>(*__buf + chunkOffset - 4, crc32.value());
         }
 
         BOUND_CHECK(12)
@@ -245,7 +279,7 @@ namespace LIBC64 {
         return *__buf;
     }
 
-    auto Structure1541::writeP64() -> bool {
+    auto Structure1541::writePxx() -> bool {
 
         unsigned memSize = 0;
 
@@ -319,7 +353,7 @@ namespace LIBC64 {
 
                     halfTrack -= 2;
 
-                    GcrTrack* gcrPtr = &gcrTracks[halfTrack];
+                    GcrTrack* gcrPtr = &gcrTracks[side][halfTrack];
                     gcrPtr->pulses.clear();
 
                     uint32_t pulses = Emulator::copyBufferToInt<uint32_t>(_ptr);
@@ -657,12 +691,11 @@ namespace LIBC64 {
 
     auto Structure1541::prepareTracksNotInUse(bool* inUse) -> void {
 
-       // for (int side = 0; side < sides; side++) {
-
+        for (int side = 0; side < sides; side++) {
             for (int halfTrack = 0; halfTrack < (MAX_TRACKS_1541 * 2); halfTrack++) {
 
                 if ( !*inUse) {
-                    GcrTrack* gcrPtr = &gcrTracks[halfTrack];
+                    GcrTrack* gcrPtr = &gcrTracks[side][halfTrack];
 
                     if (gcrPtr->data)
                         delete[] gcrPtr->data;
@@ -679,7 +712,7 @@ namespace LIBC64 {
                 }
                 inUse++;
             }
-        //}
+        }
     }
 
     auto Structure1541::createPulsesFromGCR( GcrTrack* gcrTrack ) -> void {
@@ -782,31 +815,33 @@ namespace LIBC64 {
         }
     }
 
-    auto Structure1541::createP64( std::string diskName ) -> Emulator::Interface::Data {
+    auto Structure1541::createPxx( std::string diskName, uint8_t sides ) -> Emulator::Interface::Data {
 
-        auto temp = createG64( diskName );
+        auto temp = createGxx( diskName, sides );
 
         Structure1541 structure1541;
 
         structure1541.rawData = temp;
 
-        structure1541.rawSize = imageSizeG64();
+        structure1541.rawSize = (sides == 2) ? imageSizeG71() : imageSizeG64();
 
-        if (!structure1541.analyzeG64())
+        if (!structure1541.analyzeG64() || !structure1541.analyzeG71())
             return {nullptr, 0};
 
-        structure1541.prepareG64();
+        structure1541.prepareGxx();
 
-        for( unsigned track = 0; track < TYPICAL_TRACKS; track++ ) {
+        for (int side = 0; side < sides; side++) {
+            for (unsigned track = 0; track < TYPICAL_TRACKS; track++) {
 
-            unsigned halfTrack = track << 1;
+                unsigned halfTrack = track << 1;
 
-            GcrTrack* gcrPtr = &structure1541.gcrTracks[halfTrack];
+                GcrTrack* gcrPtr = &structure1541.gcrTracks[side][halfTrack];
 
-            gcrPtr->written = gcrPtr->bits > 0;
+                gcrPtr->written = gcrPtr->bits > 0;
 
-            if (gcrPtr->written)
-                structure1541.createPulsesFromGCR( gcrPtr );
+                if (gcrPtr->written)
+                    structure1541.createPulsesFromGCR(gcrPtr);
+            }
         }
 
         delete[] temp;

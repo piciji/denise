@@ -5,7 +5,8 @@
 namespace LIBC64 {   
     
 auto Drive1541::serialize(Emulator::Serializer& s) -> void {
-    
+
+    s.integer( (uint8_t&)type );
     s.integer( cycleCounter );
     s.integer( synced );
     s.integer( irqIncomming );
@@ -48,6 +49,10 @@ auto Drive1541::serialize(Emulator::Serializer& s) -> void {
     s.integer( pulseDelta );
     s.integer( pulseDuration );
     s.integer( latchedByte );
+    s.integer( byteReady );
+    s.integer( dataDirection );
+    s.integer( frequency );
+    s.integer( side );
 
     via1->serialize( s );
     via2->serialize( s );
@@ -56,7 +61,7 @@ auto Drive1541::serialize(Emulator::Serializer& s) -> void {
     s.integer( structure1541.encodingGraceful.status );
     
     if (s.mode() == Emulator::Serializer::Mode::Load) {
-        gcrTrack = structure1541.getTrackPtr( currentHalftrack );
+        gcrTrack = structure1541.getTrackPtr( side, currentHalftrack );
         // unserialize VIA before to get state of LED
         updateDeviceState();
 

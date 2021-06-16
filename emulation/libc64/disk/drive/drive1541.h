@@ -14,6 +14,7 @@
 #include "../cpu/m6502.h"
 #include "../../../tools/rand.h"
 #include "../../../tools/serializer.h"
+#include "../../../cia/m6526.h"
 #include <cstdlib>
 
 namespace LIBC64 {
@@ -24,8 +25,9 @@ struct Drive1541 {
         
     Drive1541( uint8_t number, Emulator::Interface::Media* mediaConnected );
     ~Drive1541();
-    
-    const unsigned rotSpeedBps[4] = { 250000, 266667, 285714, 307692 };
+
+    enum class Type { D1541, D1541II, D1570, D1571 } type;
+    unsigned rotSpeedBps[4] = { 250000, 266667, 285714, 307692 };
     const unsigned DISC_DELAY = 600000;
     
     uint8_t number;
@@ -45,6 +47,7 @@ struct Drive1541 {
         
     Via* via1;
     Via* via2;
+    CIA::M6526* cia;
     M6502* cpu;
     Structure1541 structure1541;
     int64_t cycleCounter;
@@ -52,12 +55,18 @@ struct Drive1541 {
     uint8_t irqIncomming;
     uint8_t* ram = nullptr;
     uint32_t driveCycles;
-    uint32_t accum;   
+    uint32_t accum;
+    unsigned frequency;
+    uint8_t refCyclesInCpuCycle;
         
     Structure1541::GcrTrack* gcrTrack = new Structure1541::GcrTrack;
     
     uint8_t currentHalftrack;
     int stepDirection = 0;
+
+    bool byteReady = false;
+    uint8_t side = 0;
+    bool dataDirection = 0;
     
     unsigned speedZone = 0;
     bool byteReadyOverflow = true; // random initialization ?
@@ -107,6 +116,7 @@ struct Drive1541 {
     auto setViaTransition( bool state ) -> void;
     auto getMedia() -> Emulator::Interface::Media* { return media; }
 	auto getMediaConnected() -> Emulator::Interface::Media* { return mediaConnected; }
+	auto setDrive( Type type ) -> void;
     
     auto updateBus() -> void;
     auto setFirmware(uint8_t* rom) -> void;
@@ -137,6 +147,8 @@ struct Drive1541 {
     auto updateIdleDeviceState() -> void;
 
     auto byteFetched( bool overflowNotThisCycle ) -> void;
+
+    auto updateCycleSpeed(bool mhz2x) -> void;
 };
   
 }

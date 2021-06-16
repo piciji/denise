@@ -7,7 +7,10 @@ namespace LIBC64 {
         unsigned todo;
         bool motorAdvance = motorRun() && loaded;
 
-        uint8_t refCycles = 16;
+#define OVERFLOW_NOT_THIS_CYCLE \
+        ((refCyclesInCpuCycle - refCycles + todo) > (refCyclesInCpuCycle >> 1))
+
+        uint8_t refCycles = refCyclesInCpuCycle;
 
         if (readMode) {
             do {
@@ -37,7 +40,7 @@ namespace LIBC64 {
                     uf4Counter = 0;
 
                     if (ue3Counter == 8)
-                        byteFetched((16 - refCycles + todo) > 8);
+                        byteFetched( OVERFLOW_NOT_THIS_CYCLE );
 
                     // after an amount of time without a flux reversal
                     // the rule that a one is shifted in after 3 zeros in a row
@@ -55,7 +58,7 @@ namespace LIBC64 {
                         uf4Counter = 0;
 
                         if (ue3Counter == 8)
-                            byteFetched((16 - refCycles + todo) > 8);
+                            byteFetched( OVERFLOW_NOT_THIS_CYCLE );
 
                        // randCounter = randomizer.rand(0, 367) + 33;  // 2 - 25 micro
                         randCounter = ( (randomizer.xorShift() >> 16 ) % 367) + 33;
@@ -92,7 +95,7 @@ namespace LIBC64 {
                     else if (((uf4Counter & 2) == 0) && (ue3Counter == 8))
                         // check if we count more than 6 drive cycles within this CPU cycle.
                         // comparison with 8 should be correct, see comments in drive1541.cpp
-                        byteFetched((16 - refCycles + todo) > 8);
+                        byteFetched( OVERFLOW_NOT_THIS_CYCLE );
                 }
 
                 if (motorAdvance) {
@@ -163,10 +166,12 @@ namespace LIBC64 {
 
                         ue3Counter = 0;
                         writeBuffer = writeValue;
-                        bool overflowNotThisCycle = (16 - refCycles + todo) > 8;
+                        bool overflowNotThisCycle = OVERFLOW_NOT_THIS_CYCLE;
 
                         if (byteReadyOverflow)
                             cpu->triggerSO(overflowNotThisCycle ? 2 : 1);
+
+                        byteReady = byteReadyOverflow;
 
                         via2->ca1In(!byteReadyOverflow, overflowNotThisCycle);
                     }
@@ -233,6 +238,8 @@ namespace LIBC64 {
                 refCycles -= todo;
             } while (refCycles);
         }
+
+#undef OVERFLOW_NOT_THIS_CYCLE
     }
 
 }
