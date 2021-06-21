@@ -19,7 +19,7 @@ crb( timer[T_B].control )
     
     writePort = []( Port, Lines* ) {};    
 	irqCall = [](bool state) {};
-    serialCall = [](bool bit) {};
+    serialOut = [](bool bit) {};
 	
 	for( unsigned i = 0; i < 2; i++ ) {			       
 		
@@ -83,7 +83,7 @@ crb( timer[T_B].control )
 		if (cnt)			
 			sdrShift <<= 1;
 		else
-			serialCall( (sdrShift & 0x80) != 0 );			
+			serialOut( (sdrShift & 0x80) != 0 );
 
 		if (--sdrShiftCount == 1) {
 			this->events->add(&finishSdr, 2, Emulator::SystemTimer::Action::UpdateExisting);
@@ -269,7 +269,7 @@ template<uint8_t timerId> inline auto Base::readCounter( ) -> uint16_t {
 
 auto Base::timerAUnderflow() -> void {    	
 	if (cra & 0x40)
-		serialOut();    
+        shiftOut();
 	
 	timer[T_A].toggle ^= 1;
 	
@@ -311,7 +311,7 @@ auto Base::isNewVersion() -> bool {
     return newVersion;
 }
 
-auto Base::serialOut() -> void {
+auto Base::shiftOut() -> void {
 	//timer A defines speed for this		
 	
 	if ( sdrLoaded && !sdrShiftCount)
@@ -329,18 +329,13 @@ auto Base::serialOut() -> void {
 /**
  * external device shifts in data bit by bit
  */
-auto Base::serialIn( bool newCnt, bool bit ) -> void {
-	
-	if (newCnt == cnt)
-		return;
+auto Base::serialIn( bool bit ) -> void {
 	
     if (cra & 0x40) //SP pin is defined as output
         return;    
-	
-	cnt = newCnt ? CIA_CNT0 : 0;
-	
-	if (!cnt)
-		return;
+
+    cnt = CIA_CNT0;
+    delay |= CIA_CNT0;
 	
 	positiveCntTransition();
 	sdrShift <<= 1;
@@ -348,10 +343,19 @@ auto Base::serialIn( bool newCnt, bool bit ) -> void {
     
     if ( ++sdrShiftCount == 8 ) {
         sdrShiftCount = 0;
-        //transfer complete
 		sdr = sdrShift;
         this->events->add(&finishSdr, 2, Emulator::SystemTimer::Action::UpdateExisting);
     }
+}
+
+auto Base::serialIn( uint8_t byte ) -> void {
+
+    if (cra & 0x40) //SP pin is defined as output
+        return;
+
+    sdrShiftCount = 0;
+    sdr = byte;
+    intIncomming |= 8;
 }
 
 // set cnt external without serial bit shifting

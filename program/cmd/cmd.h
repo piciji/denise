@@ -30,7 +30,7 @@ struct Cmd {
     
     auto updateModel( Emulator::Interface* emulator, unsigned ident, int value) -> void;
     
-    auto prepareDrives( Emulator::Interface* emulator ) -> void;
+    //auto prepareDrives( Emulator::Interface* emulator ) -> void;
     
     auto collectAllowedSuffix() -> std::vector<std::string>;
     

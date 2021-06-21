@@ -202,9 +202,11 @@ auto MediaLayout::build() -> void {
         mediaGroupLayout->build( );
         
         if (mediaGroupLayout->showOnlyConnectedDevices()) {
-            
-            unsigned counter = settings->get( _underscore(mediaGroup.name) + "_count", 1);
-            
+
+            auto modelId = emulator->getModelIdOfEnabledDrives(&mediaGroup);
+
+            unsigned counter = emulator->getModelValue( modelId );
+
             mediaGroupLayout->updateVisibility( counter, true );
         }        
                 
@@ -1651,8 +1653,8 @@ auto MediaLayout::insertFile( MediaGroupLayout::Block* block, std::string filePa
             auto emuConfigView = EmuConfigView::TabWindow::getView(this->emulator);
             
             if (mediaGroup->isDrive()) {				
-				emuConfigView->systemLayout->activateDrive(mediaGroup, 1 );
 				autoloader->activateDrive( emulator, mediaGroup, 1 );
+				emuConfigView->systemLayout->activateDrive(mediaGroup, 1 );
 			}
                         
             if (mediaGroup->isExpansion()) {
@@ -1926,7 +1928,7 @@ auto MediaLayout::loadSettings() -> void {
             pathBlock->edit.setText( settings->get<std::string>(settingFolderIdent, "") );
                 
         if (mediaGroup->isDisk())
-            layout->updateVisibility(settings->get<unsigned>( _underscore(mediaGroup->name) + "_count", mediaGroup->defaultUsage() ), true );
+            layout->updateVisibility(emulator->getModelValue( emulator->getModelIdOfEnabledDrives(mediaGroup) ), true );
         
         for (auto block : layout->blocks) {
             

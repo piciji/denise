@@ -112,10 +112,10 @@ auto Autoloader::postProcessing() -> void {
 
 			if (_mediaGroup.isDrive()) {
 
+				activateDrive( ddControl.emulator, &_mediaGroup, count );
+
 				if (emuView)
 					emuView->systemLayout->activateDrive( &_mediaGroup, count );
-				
-				activateDrive( ddControl.emulator, &_mediaGroup, count );
 			}
 			else if (_mediaGroup.isExpansion()) {
 				
@@ -338,15 +338,25 @@ auto Autoloader::insertImage(Emulator::Interface* emulator, Emulator::Interface:
 
 auto Autoloader::activateDrive( Emulator::Interface* emulator, Emulator::Interface::MediaGroup* mediaGroup, unsigned requestedCount ) -> void {
 	
-	auto ident = _underscore(mediaGroup->name) + "_count";
-	auto settings = program->getSettings( emulator );
+    if (requestedCount > mediaGroup->media.size())
+        requestedCount = mediaGroup->media.size();
 
-	unsigned counter = settings->get<unsigned>(ident, mediaGroup->defaultUsage());
+    auto modelId = emulator->getModelIdOfEnabledDrives( mediaGroup );
+
+    unsigned counter = emulator->getModelValue( modelId );
 
 	if (counter >= requestedCount)
 		return;
-	
-	settings->set<unsigned>( ident, requestedCount);
+
+    auto settings = program->getSettings( emulator );
+
+    auto model = emulator->getModel( modelId );
+
+    if (model)
+        settings->set<unsigned>(_underscore(model->name), requestedCount);
+
+    emulator->setModelValue( modelId, requestedCount );
+
 	settings->remove( "access_floppy" );
 }
 

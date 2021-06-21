@@ -27,9 +27,9 @@ ifeq ($(platform),windows)
     objects += dinput5 dinput7 dinput8 xaudio27 xaudio28 xaudio29
 endif
 #objects += m68000
-objects += m6510 ciaBase cia6526 vicIIBase vicIICycle vicIIFast systemC64 sid chamberlin tapeC64 inputC64 controlPortC64 acia
+objects += m6510 ciaBase cia6526 cia8520 vicIIBase vicIICycle vicIIFast systemC64 sid chamberlin tapeC64 inputC64 controlPortC64 acia
 objects += cartC64 gameCartC64 freezerC64 reuC64 easyFlashC64 easyFlash3C64 retroReplayC64 gmod2C64 clipboardC64 geoRamC64
-objects += m6502 via iec prg64 drive1541 structure1541
+objects += m6502 via iec prg64 drive1541 structure1541 firmwareC64
 objects += thread m93c86 mx29lv640eb icons socket fpaq0
 
 prgflags := -DAPP_NAME="\"$(name)\"" -DTRANSLATION_FOLDER="\"$(translationFolder)/\"" -DDATA_FOLDER="\"$(dataFolder)/\"" -DSHADER_FOLDER="\"$(shaderFolder)/\"" -DIMG_FOLDER="\"$(imgFolder)/\""
@@ -121,10 +121,12 @@ obj/m6502.o:	emulation/libc64/disk/cpu/m6502.cpp
 
 obj/ciaBase.o:	emulation/cia/base.cpp	
 obj/cia6526.o:	emulation/cia/m6526.cpp
+obj/cia8520.o:	emulation/cia/m8520.cpp
 obj/vicIIBase.o:emulation/libc64/vicII/base.cpp
 obj/vicIICycle.o:emulation/libc64/vicII/vicII.cpp
 obj/vicIIFast.o:emulation/libc64/vicII/fast/vicIIFast.cpp
-obj/systemC64.o:emulation/libc64/system/system.cpp	
+obj/systemC64.o:emulation/libc64/system/system.cpp
+obj/firmwareC64.o:emulation/libc64/system/firmware.cpp
 obj/cartC64.o:	emulation/libc64/expansionPort/cart/cart.cpp
 obj/gameCartC64.o: emulation/libc64/expansionPort/gameCart/gameCart.cpp
 obj/freezerC64.o: emulation/libc64/expansionPort/freezer/freezer.cpp

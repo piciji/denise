@@ -32,7 +32,6 @@ struct Interface : Emulator::Interface  {
 	auto run() -> void; //emulate one frame
 
 	//drive handling
-	auto setDrivesConnected(MediaGroup* group, unsigned count) -> void;
 	auto insertDisk(Media* media, uint8_t* data, unsigned size, bool loadGracefully = false) -> void;
 	auto writeProtectDisk(Media* media, bool state) -> void;
 	auto ejectDisk(Media* media) -> void;
@@ -48,7 +47,7 @@ struct Interface : Emulator::Interface  {
     auto checkstate(uint8_t* data, unsigned size) -> bool;
 	auto loadstate(uint8_t* data, unsigned size) -> bool;
     
-	auto setModel(unsigned modelId, int value) -> void;
+	auto setModelValue(unsigned modelId, int value) -> void;
     
 private:
 	auto prepareDevices() -> void;

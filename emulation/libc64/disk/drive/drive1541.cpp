@@ -1,9 +1,11 @@
 
 #include "drive1541.h"
+#include "../iec.h"
 #include "mechanics.cpp"
 #include "mechanicsP64.cpp"
 #include "mechanicsG64.cpp"
 #include "serialization.cpp"
+#include "../../system/firmware.h"
 #include "../../../tools/gcr.h"
 
 // for 300 rpm = 5 rotation / sec = 16.000.000 / 5
@@ -32,16 +34,18 @@ namespace LIBC64 {
     
 #define SYNC \
     cpu->handleSo();                                                    \
-    if (structure1541.type == Structure1541::Type::D64) {                   \
+    if (operation & USERDATA_LEVEL) {                   \
         rotateD64();                                                        \
-    } else if (structure1541.type == Structure1541::Type::G64) {            \
-        rotateG64(  );                                                  \
+    } else if (operation & ENCODEDDATA_LEVEL) {            \
+        rotateG64();                                                  \
     } else {                                                                \
-        rotateP64(  );                                                  \
+        rotateP64();                                                  \
     }                                                                       \
     processDelays();                                                    \
     via1->process();                                                        \
     via2->process();                                                        \
+    if (operation & DRIVE_MODE_157x)                                        \
+        cia->clock();         \
     cycleCounter += iecBus->cpuCylcesPerSecond;
     
 auto Drive1541::sync() -> void {
@@ -51,41 +55,90 @@ auto Drive1541::sync() -> void {
 auto Drive1541::cpuWrite(uint16_t addr, uint8_t data) -> void {
     SYNC
 
-    if ((addr & 0x9800) == 0)
-        ram[ addr & 0x7ff ] = data;
+    if (operation & DRIVE_MODE_154x) {
+        if ((addr & 0x9800) == 0)
+            ram[addr & 0x7ff] = data;
 
-    else if ((addr & 0x9c00) == 0x1800)
-        via1->write(addr, data);
+        else if ((addr & 0x9c00) == 0x1800)
+            via1->write(addr, data);
 
-    else if ((addr & 0x9c00) == 0x1c00)
-        via2->write(addr, data);
+        else if ((addr & 0x9c00) == 0x1c00)
+            via2->write(addr, data);
+
+    } else {
+        if ((addr & 0xf000) == 0)
+            ram[addr & 0x7ff] = data;
+
+        else if ((addr & 0xfc00) == 0x1800)
+            via1->write(addr, data);
+
+        else if ((addr & 0xfc00) == 0x1c00)
+            via2->write(addr, data);
+
+        else if ((addr & 0xc000) == 0x4000) {
+            system->interface->log("cia write", 1);
+            system->interface->log(addr & 15, 0);
+
+            cia->write(addr, data);
+        }
+        else if ((addr & 0xe000) == 0x2000)
+            system->interface->log("wd1770 write", 1);
+    }
 }
 
 auto Drive1541::cpuRead(uint16_t addr) -> uint8_t {
-    SYNC    
-    
-    if (addr & 0x8000)
-        return rom[addr & 0x3fff];
-            
-    else if ((addr & 0x9800) == 0)
-        return ram[ addr & 0x7ff ];
-    
-    else if ((addr & 0x9c00) == 0x1800)
-        return via1->read( addr );
-    
-    else if ((addr & 0x9c00) == 0x1c00)
-        return via2->read( addr );
+    SYNC
 
+    if (operation & DRIVE_MODE_154x) {
+        if (addr & 0x8000)
+            return rom[addr & 0x3fff];
+
+        else if ((addr & 0x9800) == 0)
+            return ram[addr & 0x7ff];
+
+        else if ((addr & 0x9c00) == 0x1800)
+            return via1->read(addr);
+
+        else if ((addr & 0x9c00) == 0x1c00)
+            return via2->read(addr);
+
+        else
+            return addr >> 8;
+    }
+
+    if (addr & 0x8000)
+        return rom[addr & 0x7fff];
+
+    else if ((addr & 0xf000) == 0)
+        return ram[addr & 0x7ff];
+
+    else if ((addr & 0xfc00) == 0x1800)
+        return via1->read(addr);
+
+    else if ((addr & 0xfc00) == 0x1c00)
+        return via2->read(addr);
+
+    else if ((addr & 0xc000) == 0x4000) {
+       // system->interface->log("cia read", 1);
+       // system->interface->log(addr & 15, 0);
+        return cia->read(addr);
+    }
+    else if ((addr & 0xe000) == 0x2000) {
+        system->interface->log("wd1770 read", 1);
+        return 0;
+    }
     else
         return addr >> 8;
 }
-    
+
 Drive1541::Drive1541(uint8_t number, Emulator::Interface::Media* mediaConnected ) {
      
     this->number = number; 
 	this->mediaConnected = mediaConnected;
 	
 	structure1541.number = number;
+	type = Type::D1541II;
+	operation = 0;
     
     media = nullptr;
 
@@ -93,21 +146,39 @@ Drive1541::Drive1541(uint8_t number, Emulator::Interface::Media* mediaConnected 
     refCyclesInCpuCycle = 16;
     
     ram = new uint8_t[ 2 * 1024 ];
-    rom = nullptr;    
+
+    rom1541II = (uint8_t*)Firmware::drive1541IIRom;
+    rom1541 = (uint8_t*)Firmware::drive1541Rom;
+    rom1541C = (uint8_t*)Firmware::drive1541CRom;
+    rom1571 = (uint8_t*)Firmware::drive1571Rom;
+    rom1570 = (uint8_t*)Firmware::drive1570Rom;
+    rom = rom1541II;
     
     via1 = new Via( 1 );
     via2 = new Via( 2 );
-
-    cia = new CIA::M6526(1);
-    
+    cia = new Cia8520( 1 );
     cpu = new M6502(this);
+
+    cia->serialOut = [this](bool bit) {
+        if (dataDirection && system->burstModification)
+            cia1->serialIn( bit );
+    };
+
+    cia->irqCall = [this](bool state) {
+        if (state)
+            irqIncomming |= 4;
+        else
+            irqIncomming &= ~4;
+
+        cpu->setIrq( irqIncomming != 0 );
+    };
 
     via1->irqCall = [this](bool state) {                
         if (state)
             irqIncomming |= 1;
         else
-            irqIncomming &= ~1;        
-        
+            irqIncomming &= ~1;
+
         cpu->setIrq( irqIncomming != 0 );
     };
     
@@ -146,9 +217,19 @@ Drive1541::Drive1541(uint8_t number, Emulator::Interface::Media* mediaConnected 
             }
 
             if (type == Type::D1571) {
+                uint8_t _side = side;
                 side = !!(lines->ioa & 4);
+                system->interface->log("side",1);
+
+                system->interface->log(side,0);
                 if (!structure1541.hasSecondSide())
                     side = 0;
+
+                system->interface->log(side,0);
+                system->interface->log(lines->ioa,0);
+
+                if (side != _side)
+                    changeHalfTrack( 0 );
             }
         }
     };   
@@ -162,8 +243,10 @@ Drive1541::Drive1541(uint8_t number, Emulator::Interface::Media* mediaConnected 
 
         // port A
         if (type == Type::D1570 || type == Type::D1571) {
-
             return (uint8_t) ( ( ( (byteReady ? 0 : 0x80) | ((currentHalftrack == 0) ? 0 : 1) | 0x7e ) & ~lines->ddra) | ( lines->pra & lines->ddra ) );
+
+        } else if (type == Type::D1541C) {
+            return (uint8_t) ( ( ( ((currentHalftrack == 0) ? 0 : 1) | 0xfe ) & ~lines->ddra) | ( lines->pra & lines->ddra ) );
         }
 
         return lines->ioa;
@@ -284,9 +367,11 @@ auto Drive1541::updateBus() -> void {
 auto Drive1541::power( ) -> void {    
     
     std::memset(ram, 0, 2 * 1024);
+    setFirmwareByType();
 
     via1->reset();
-    via2->reset();  
+    via2->reset();
+   // cia->reset();
 
     via1->cb1In(1);
     via1->ca2In(1);
@@ -326,13 +411,13 @@ auto Drive1541::power( ) -> void {
     uf6aFlipFlop = false;
     pulseDuration = 0;
     side = 0;
-    dataDirection = 0;
+    dataDirection = true;
     updateCycleSpeed(false);
     changeHalfTrack(0);
 }
 
 auto Drive1541::updateCycleSpeed(bool mhz2x) -> void {
-
+   // mhz2x = false;
     if (mhz2x) {
         rotSpeedBps[0] = 125000;
         rotSpeedBps[1] = 133333;
@@ -340,6 +425,7 @@ auto Drive1541::updateCycleSpeed(bool mhz2x) -> void {
         rotSpeedBps[3] = 153846;
         refCyclesInCpuCycle = 8;
         frequency = 2000000;
+        system->interface->log("2 mhz", 1);
     } else {
         rotSpeedBps[0] = 250000;
         rotSpeedBps[1] = 266667;
@@ -347,6 +433,7 @@ auto Drive1541::updateCycleSpeed(bool mhz2x) -> void {
         rotSpeedBps[3] = 307692;
         refCyclesInCpuCycle = 16;
         frequency = 1000000;
+        system->interface->log("1 mhz", 1);
     }
 }
 
@@ -355,9 +442,35 @@ auto Drive1541::powerOff( ) -> void {
     motorOn = false;
 }
 
-auto Drive1541::setFirmware(uint8_t* rom) -> void {
-    
-    this->rom = rom;
+auto Drive1541::setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> void {
+
+    switch (typeId) {
+        case Interface::FirmwareIdVC1541II:
+            if (!data || (size != 16384))
+                data = (uint8_t*)Firmware::drive1541IIRom;
+            rom1541II = data;
+            break;
+        case Interface::FirmwareIdVC1541:
+            if (!data || (size != 16384))
+                data = (uint8_t*)Firmware::drive1541Rom;
+            rom1541 = data;
+            break;
+        case Interface::FirmwareIdVC1541C:
+            if (!data || (size != 16384))
+                data = (uint8_t*)Firmware::drive1541CRom;
+            rom1541C = data;
+            break;
+        case Interface::FirmwareIdVC1571:
+            if (!data || (size != 32768))
+                data = (uint8_t*)Firmware::drive1571Rom;
+            rom1571 = data;
+            break;
+        case Interface::FirmwareIdVC1570:
+            if (!data || (size != 32768))
+                data = (uint8_t*)Firmware::drive1570Rom;
+            rom1570 = data;
+            break;
+    }
 }
 
 auto Drive1541::setViaTransition( bool state ) -> void {
@@ -448,6 +561,18 @@ auto Drive1541::postAttach() -> void {
 
     if (type == Type::D1570 || type == Type::D1571)
         via1->cb1In( !writeProtected );
+
+    operation &= ~(USERDATA_LEVEL | ENCODEDDATA_LEVEL | FLUXDATA_LEVEL);
+
+    if (structure1541.type == Structure1541::Type::D64 || structure1541.type == Structure1541::Type::D71)
+        operation |= USERDATA_LEVEL;
+    else if (structure1541.type == Structure1541::Type::G64 || structure1541.type == Structure1541::Type::G71)
+        operation |= ENCODEDDATA_LEVEL;
+    else if (structure1541.type == Structure1541::Type::P64 || structure1541.type == Structure1541::Type::P71)
+        operation |= FLUXDATA_LEVEL;
+
+    system->interface->log("op",1);
+    system->interface->log(operation,0);
 }
 
 auto Drive1541::setWriteProtect(bool state) -> void {
@@ -493,16 +618,48 @@ auto Drive1541::write() -> void {
     structure1541.storeWrittenTracks();
 }
 
-auto Drive1541::setSpeed(double rpm, double wobble) -> void {
+auto Drive1541::setSpeed(unsigned rpmScaled) -> void {
 
-    this->rpm = rpm * 100.0 + 0.5;
-    this->wobble = wobble * 100.0 + 0.5;
+    system->interface->log(rpmScaled, 1);
+
+    this->rpm = rpmScaled;
 }
 
-auto Drive1541::setDrive( Type type ) -> void {
+auto Drive1541::setWobble(unsigned wobbleScaled) -> void {
+
+    system->interface->log(wobbleScaled, 1);
+
+    this->wobble = wobbleScaled;
+}
+
+auto Drive1541::setType( Type type ) -> void {
     this->type = type;
 
     updateCycleSpeed(false);
+
+    operation &= ~(DRIVE_MODE_154x | DRIVE_MODE_157x);
+
+    if (type == Type::D1541II || type == Type::D1541 || type == Type::D1541C)
+        operation |= DRIVE_MODE_154x;
+
+    else if (type == Type::D1571 || type == Type::D1570)
+        operation |= DRIVE_MODE_157x;
+
+    setFirmwareByType();
+
+    system->interface->log("type",1);
+    system->interface->log((unsigned)type,0);
+}
+
+auto Drive1541::setFirmwareByType( ) -> void {
+    switch (type) {
+        default:
+        case Type::D1541II: rom = rom1541II; system->interface->log("1541II", 1); break;
+        case Type::D1541:   rom = rom1541; system->interface->log("1541", 1); break;
+        case Type::D1541C:  rom = rom1541C; system->interface->log("1541C", 1); break;
+        case Type::D1571:   rom = rom1571; system->interface->log("1571", 1); break;
+        case Type::D1570:   rom = rom1570; system->interface->log("1570", 1); break;
+    }
 }
 
 }

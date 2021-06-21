@@ -116,7 +116,7 @@ auto System::serializeAll(Emulator::Serializer& s) -> void {
         setCycleRenderer( useCycleRenderer );    
 		
 		if (_vicModel != vicII->getModel())
-			system->interface->setModel( LIBC64::Interface::ModelIdVicIIModel, _vicModel );		
+			system->interface->setModelValue( LIBC64::Interface::ModelIdVicIIModel, _vicModel );
 	}
     
     serialize( s );
@@ -154,6 +154,7 @@ auto System::serialize(Emulator::Serializer& s) -> void {
     s.integer( rdyIncomming );   
     s.integer( kernalBootComplete );    
     s.integer( requestedSids );
+    s.integer( burstModification );
     s.integer( observer.memoryAccesses );
     s.integer( observer.enterRom );
     s.integer( observer.motorChange );

@@ -14,84 +14,81 @@
 #include "../../tools/rand.h"
 #include "../expansionPort/freezer/actionReplayMK2.h"
 #include "clipboard.h"
+#include "firmware.h"
 #include <cstring>
 
 #include "expansion.cpp"
 #include "serialization.cpp"
 #include "map.cpp"
 
-namespace Firmware {
-	#include "firmware.cpp"
-}
-
 namespace LIBC64 {
-    
+
 System* system = nullptr;
 ExpansionPort* expansionPort = nullptr;
 CIA::M6526* cia1 = nullptr;
 CIA::M6526* cia2 = nullptr;
 Emulator::SystemTimer sysTimer;
-  
+
 System::System(Interface* interface) {
-    
+
     this->interface = interface;
-	
-	ram = new uint8_t[ 64 * 1024 ];
+
+    ram = new uint8_t[ 64 * 1024 ];
     colorRam = new uint8_t[ 1 * 1024 ];
-	kernalRom = (uint8_t*)Firmware::kernalRom;
-	basicRom = (uint8_t*)Firmware::basicRom;
-	charRom = (uint8_t*)Firmware::charRom;
-            
+    kernalRom = (uint8_t*)Firmware::kernalRom;
+    basicRom = (uint8_t*)Firmware::basicRom;
+    charRom = (uint8_t*)Firmware::charRom;
+
     createExpansions();
-	vicIICycle = new VicIICycle;   
+    vicIICycle = new VicIICycle;
     vicIIFast = new VicIIFast;
-	vicII = vicIICycle;
-    
-    for (unsigned i = 0; i < 7; i++) 
+    vicII = vicIICycle;
+
+    for (unsigned i = 0; i < 7; i++)
         sids[i] = new Sid( Sid::Type::MOS_6581 );
-    
+
     sid = new Sid( Sid::Type::MOS_6581 );
-    
+
     Sid::calcSerializationSizeForSevenMoreSids();
-	
-	Sid::registerGlobalCallbacks();
-    
+
+    Sid::registerGlobalCallbacks();
+
     requestedSids = 0;
-    
+    burstModification = false;
+
     input = new Input;
     for (auto& media : interface->mediaGroups[Interface::MediaGroupIdProgram].media) {
         auto prg = new Prg;
         prg->media = &media;
         prgs.push_back( prg );
-    }    
-	prgInUse = prgs[0];
-    
+    }
+    prgInUse = prgs[0];
+
     keyBuffer = new KeyBuffer;
     glueLogic = new GlueLogic();
-	crop = new Emulator::Crop<uint8_t>;
-	powerSupply = new Emulator::PowerSupply;
-	tape = new Tape( &interface->mediaGroups[Interface::MediaGroupIdTape].media[0] );
+    crop = new Emulator::Crop<uint8_t>;
+    powerSupply = new Emulator::PowerSupply;
+    tape = new Tape( &interface->mediaGroups[Interface::MediaGroupIdTape].media[0] );
     iecBus = new IecBus( &interface->mediaGroups[Interface::MediaGroupIdDisk] );
-	iecBus->setFirmware( (uint8_t*)Firmware::drive1541Rom );
-    
+
     cia1 = new CIA::M6526( 1, &sysTimer );
-    cia2 = new CIA::M6526( 2, &sysTimer );  
-	cpu = new M6510;
-    
+    cia2 = new CIA::M6526( 2, &sysTimer );
+    cpu = new M6510;
+
     readRam = [this](uint16_t addr) {
 
         return this->ram[ addr ];
     };
-    
+
     writeRam = [this](uint16_t addr, uint8_t value) {
-    
+
         this->ram[ addr ] = value;
     };
-    
+
     writeRamAt80To9F = [this](uint16_t addr, uint8_t value) {
         // some Cartridges listen here and writes value in their own RAM
         expansionPort->listenToWritesAt80To9F(addr, value);
-        
+
         this->ram[ addr ] = value;
     };
 
@@ -103,12 +100,12 @@ System::System(Interface* interface) {
     };
 
     readCharRom = [this](uint16_t addr) {
-        
+
         return this->charRom[ addr & 0xfff ];
     };
 
     readKernalRom = [this](uint16_t addr) {
-        
+
         return (uint8_t) this->kernalRom[ addr & 0x1fff ];
     };
 
@@ -116,7 +113,7 @@ System::System(Interface* interface) {
 
         return (uint8_t) this->basicRom[ addr & 0x1fff ];
     };
-    
+
     readRomL = [this](uint16_t addr) {
 
         return expansionPort->readRomL( addr & 0x1fff );
@@ -126,7 +123,7 @@ System::System(Interface* interface) {
 
         return expansionPort->readRomH( addr & 0x1fff );
     };
-    
+
     writeRomL = [this](uint16_t addr, uint8_t value) {
 
         expansionPort->writeRomL( addr, value );
@@ -136,7 +133,7 @@ System::System(Interface* interface) {
 
         expansionPort->writeRomH( addr, value );
     };
-    
+
     writeUltimaxRomL = [this](uint16_t addr, uint8_t value) {
 
         expansionPort->writeUltimaxRomL( addr, value );
@@ -146,76 +143,76 @@ System::System(Interface* interface) {
 
         expansionPort->writeUltimaxRomH( addr, value );
     };
-    
+
     readUltimaxA0 = [this](uint16_t addr) {
         return expansionPort->readUltimaxA0( addr & 0x1fff );
     };
-    
+
     writeUltimaxA0 = [this](uint16_t addr, uint8_t value) {
 
         expansionPort->writeUltimaxA0( addr, value );
     };
-    
+
     writeUnmapped = [this](uint16_t addr, uint8_t value) {
         // do nothing
     };
-    
+
     readUnmapped = [this](uint16_t addr) {
         return vicII->lastReadPhase1();
     };
 
     writeIo1Reg = [this](uint16_t addr, uint8_t value) {
-        
+
         if (Sid::extraSids) {
             Sid::updateClock();
             Sid::writeSidIO( addr, value );
         }
-        
+
         expansionPort->writeIo1(addr, value);
     };
 
     readIo1Reg = [this](uint16_t addr) {
-        
-        if (Sid::extraSids) {            
+
+        if (Sid::extraSids) {
             Sid* _sid = Sid::getSidByAdr( addr, true );
             if (_sid) {
                 Sid::updateClock();
                 return _sid->readIO( addr );
             }
         }
-        
-        return expansionPort->readIo1(addr);			
+
+        return expansionPort->readIo1(addr);
     };
-    
+
     writeIo2Reg = [this](uint16_t addr, uint8_t value) {
 
         if (Sid::extraSids) {
             Sid::updateClock();
-            Sid::writeSidIO( addr, value );        
+            Sid::writeSidIO( addr, value );
         }
         expansionPort->writeIo2(addr, value);
     };
 
-    readIo2Reg = [this](uint16_t addr) {		
-        
+    readIo2Reg = [this](uint16_t addr) {
+
         if (Sid::extraSids) {
             Sid* _sid = Sid::getSidByAdr( addr, true );
             if (_sid) {
                 Sid::updateClock();
                 return _sid->readIO( addr );
             }
-        }                
-        
-        return expansionPort->readIo2(addr);		
+        }
+
+        return expansionPort->readIo2(addr);
     };
 
     writeSidReg = [this](uint16_t addr, uint8_t value) {
-        
+
         Sid::updateClock();
-        
+
         if (Sid::extraSids)
             return Sid::writeSid( addr, value );
-        
+
         sid->writeIO( addr, value );
     };
 
@@ -224,27 +221,27 @@ System::System(Interface* interface) {
             debugCart.exitCode = value;
             debugCart.exit = true;
         }
-        
+
         Sid::updateClock();
-        
+
         if (Sid::extraSids)
             return Sid::getSidByAdr( addr )->writeIO( addr, value );
-        
+
         sid->writeIO(addr, value);
     };
 
     readSidReg = [this](uint16_t addr) {
 
         Sid::updateClock();
-        
+
         if (Sid::extraSids)
             return Sid::getSidByAdr( addr )->readIO( addr );
-        
+
         return sid->readIO( addr );
     };
 
     writeVicReg = [this](uint16_t addr, uint8_t value) {
-        
+
         vicII->writeReg( addr & 0xff, value );
     };
 
@@ -252,19 +249,19 @@ System::System(Interface* interface) {
 
         return vicII->readReg( addr & 0xff );
     };
-    
+
     writeCia1Reg = [this](uint16_t addr, uint8_t value) {
 
         cia1->write( addr, value );
     };
 
     readCia1Reg = [this](uint16_t addr) {
-	
+
         return cia1->read( addr );
     };
 
     writeCia2Reg = [this](uint16_t addr, uint8_t value) {
-		
+
         cia2->write( addr, value );
     };
 
@@ -282,167 +279,172 @@ System::System(Interface* interface) {
 
         return (colorRam[ addr & 0x3ff ] & 0xf) | ( vicII->lastReadPhase1() & ~0xf );
     };
-    
+
     Sid::audioRefresh = [this](int16_t sample) {
         if (!runAhead.pos)
             this->interface->audioSample( sample, sample );
     };
-    
+
     Sid::audioRefreshStereo = [this](int16_t sampleL, int16_t sampleR) {
         if (!runAhead.pos)
             this->interface->audioSample( sampleL, sampleR );
     };
-    
+
     Sid::getPotX = [this]() {
-        
+
         return input->readPotX();
     };
-    
+
     Sid::getPotY = [this]() {
-        
+
         return input->readPotY();
     };
-    
-    cia1->irqCall = [this](bool state) {                
+
+    cia1->irqCall = [this](bool state) {
         if (state)
             irqIncomming |= 2;
         else
-            irqIncomming &= ~2;        
-        
+            irqIncomming &= ~2;
+
         cpu->setIrq( irqIncomming != 0 );
     };
-    
+
+    cia1->serialOut = [this](bool bit) {
+        if (burstModification)
+            iecBus->serialShift( bit );
+    };
+
     cia2->irqCall = [this](bool state) {
-		if (state)
-			nmiIncomming |= 2;
-		else
-			nmiIncomming &= ~2; 
-		
+        if (state)
+            nmiIncomming |= 2;
+        else
+            nmiIncomming &= ~2;
+
         cpu->setNmi( nmiIncomming != 0 );
     };
-    
+
     cia1->readPort = [this]( CIA::Base::Port port, CIA::Base::Lines* lines ) {
-        
+
         if ( port == CIA::Base::PORTA )
             return input->readCiaPortA( lines );
-        
+
         return input->readCiaPortB( lines );
     };
-    
+
     cia1->writePort = [this]( CIA::Base::Port port, CIA::Base::Lines* lines ) {
-        
+
         if ( port == CIA::Base::PORTA )
             input->writeCiaPortA( lines );
-        
+
         input->writeCiaPortB( lines );
     };
-    
+
     cia2->readPort = [this]( CIA::Base::Port port, CIA::Base::Lines* lines ) {
-        
-        if ( port == CIA::Base::PORTA ) {            
-			if (diskSilence.idle) {
-				diskSilence.idle = false;
-				iecBus->resetTicks();
-			}
-			
-			diskSilence.idleFrames = 0;
-			
+
+        if ( port == CIA::Base::PORTA ) {
+            if (diskSilence.idle) {
+                diskSilence.idle = false;
+                iecBus->resetTicks();
+            }
+
+            diskSilence.idleFrames = 0;
+
             return (uint8_t) ( (lines->ioa & 0x3f) | iecBus->readCia() );
         }
-        
+
         return lines->iob;
     };
-    
+
     cia2->writePort = [this]( CIA::Base::Port port, CIA::Base::Lines* lines ) {
-        
+
         if ( port == CIA::Base::PORTA ) {
             // the c64 II or c64c has another glue logic for updating the vic bank
             glueLogic->setVBank( ( ~(lines->ioa & 3) ) & 3, !lines->praChange );
-			
-			if (diskSilence.idle ) {
-				if (iecBus->checkForIdleWrite( ~lines->ioa ))
-					return;			
-				
-				iecBus->resetTicks();
-			}
-			
-            if (iecBus->writeCia( ~lines->ioa )) {				
-				diskSilence.idle = false;
-				diskSilence.idleFrames = 0;
+
+            if (diskSilence.idle ) {
+                if (iecBus->checkForIdleWrite( ~lines->ioa ))
+                    return;
+
+                iecBus->resetTicks();
+            }
+
+            if (iecBus->writeCia( ~lines->ioa )) {
+                diskSilence.idle = false;
+                diskSilence.idleFrames = 0;
             }
         }
-            
+
     };
-    	
-	crop->removeBorderCallback = [this](unsigned& top, unsigned& bottom, unsigned& left, unsigned& right) {
-				
-		vicII->setBorderData();
-		
-		top = vicII->crop.top;
-		bottom = vicII->crop.bottom;
-		left = vicII->crop.left;
-		right = vicII->crop.right;		
-	};
-	
-	crop->monitorBorderCallback = [this](unsigned& top, unsigned& bottom, unsigned& left, unsigned& right) {
-		
-		top = vicII->crop.topOverscan;
-		bottom = vicII->crop.bottomOverscan;
-		left = vicII->crop.leftOverscan;
-		right = vicII->crop.rightOverscan;
-	};    
-	
-	tape->setReadTransition = [this]() {
-		
-		cia1->setFlag();
-	};
-    	
-	tape->read = [this](uint8_t* buffer, unsigned length, unsigned offset) {
-		
-		return this->interface->readMedia(tape->getMedia(), buffer, length, offset);
-	};
-	
-	tape->write = [this](uint8_t* buffer, unsigned length, unsigned offset) {
-		
-		return this->interface->writeMedia(tape->getMedia(), buffer, length, offset);
-	};
 
-	tape->senseOut = [this](bool state) {
-		// following refers to cpu input mode for lines 1 - 6
-		// last 3 lines are always forced up
-		// sense line is forced up when datasette stopped
-		// and forced down when datasette is running
-		// all other lines are not forced up or down in input mode?
-		// means switching from output to input mode doesn't change line
-		// Note: when Dattasette not connected: motor line is forced down
-		
-		if (!state)
+    crop->removeBorderCallback = [this](unsigned& top, unsigned& bottom, unsigned& left, unsigned& right) {
+
+        vicII->setBorderData();
+
+        top = vicII->crop.top;
+        bottom = vicII->crop.bottom;
+        left = vicII->crop.left;
+        right = vicII->crop.right;
+    };
+
+    crop->monitorBorderCallback = [this](unsigned& top, unsigned& bottom, unsigned& left, unsigned& right) {
+
+        top = vicII->crop.topOverscan;
+        bottom = vicII->crop.bottomOverscan;
+        left = vicII->crop.leftOverscan;
+        right = vicII->crop.rightOverscan;
+    };
+
+    tape->setReadTransition = [this]() {
+
+        cia1->setFlag();
+    };
+
+    tape->read = [this](uint8_t* buffer, unsigned length, unsigned offset) {
+
+        return this->interface->readMedia(tape->getMedia(), buffer, length, offset);
+    };
+
+    tape->write = [this](uint8_t* buffer, unsigned length, unsigned offset) {
+
+        return this->interface->writeMedia(tape->getMedia(), buffer, length, offset);
+    };
+
+    tape->senseOut = [this](bool state) {
+        // following refers to cpu input mode for lines 1 - 6
+        // last 3 lines are always forced up
+        // sense line is forced up when datasette stopped
+        // and forced down when datasette is running
+        // all other lines are not forced up or down in input mode?
+        // means switching from output to input mode doesn't change line
+        // Note: when Dattasette not connected: motor line is forced down
+
+        if (!state)
             cpu->updateIoLines( 0x17 );
-			
-		else
-            cpu->updateIoLines( 0x7, 0x10 );	
-	};
-	
-	countDownPowerSupply = [this]() {
-		cia1->tod( );
-		cia2->tod( );
 
-		sysTimer.add( &countDownPowerSupply, powerSupply->nextTickCount(), Emulator::SystemTimer::Action::UpdateExisting );
-	};
+        else
+            cpu->updateIoLines( 0x7, 0x10 );
+    };
 
-	sysTimer.registerCallback( { &countDownPowerSupply, 1 } );
-    
+    countDownPowerSupply = [this]() {
+        cia1->tod( );
+        cia2->tod( );
+
+        sysTimer.add( &countDownPowerSupply, powerSupply->nextTickCount(), Emulator::SystemTimer::Action::UpdateExisting );
+    };
+
+    sysTimer.registerCallback( { &countDownPowerSupply, 1 } );
+
     // connect keyboard
     for( auto& device : interface->devices ) {
         if (device.isKeyboard()) {
-            input->keyboard.setDevice( &device );        
+            input->keyboard.setDevice( &device );
             break;
         }
-    }    
-}    
+    }
+}
 
 System::~System() {
-    
+
     delete[] ram;
     delete[] colorRam;
     delete iecBus;
@@ -452,116 +454,98 @@ System::~System() {
 }
 
 auto System::setFirmware( unsigned typeId, uint8_t* data, unsigned size ) -> void {
-	
-    switch (typeId) {        
-        case 0:
-			if (!data) {
-				data = (uint8_t*)Firmware::kernalRom;
-			} else if (size < sizeof(Firmware::kernalRom)) {
-                Firmware::buildAlternateRom( Firmware::kernalRomAlt, data, sizeof(Firmware::kernalRom), size );
-                data = (uint8_t*) Firmware::kernalRomAlt;
-            }
+
+    switch (typeId) {
+        case Interface::FirmwareIdKernal:
+            if (!data || (size != 8192))
+                data = (uint8_t*)Firmware::kernalRom;
             kernalRom = data;
             break;
-        case 1:
-			if (!data) {
-				data = (uint8_t*)Firmware::basicRom;
-			} else if (size < sizeof(Firmware::basicRom)) {
-                Firmware::buildAlternateRom( Firmware::basicRomAlt, data, sizeof(Firmware::basicRom), size );
-                data = (uint8_t*) Firmware::basicRomAlt;
-            }
+        case Interface::FirmwareIdBasic:
+            if (!data || (size != 8192))
+                data = (uint8_t*)Firmware::basicRom;
             basicRom = data;
             break;
-        case 2:
-			if (!data) {
-				data = (uint8_t*)Firmware::charRom;
-			} else if (size < sizeof(Firmware::charRom)) {
-                Firmware::buildAlternateRom( Firmware::charRomAlt, data, sizeof(Firmware::charRom), size );
-                data = (uint8_t*) Firmware::charRomAlt;
-            }
+        case Interface::FirmwareIdChar:
+            if (!data || (size != 4096))
+                data = (uint8_t*)Firmware::charRom;
             charRom = data;
             break;
-        case 3:
-			if (!data) {
-				data = (uint8_t*)Firmware::drive1541Rom;
-			} else if (size < sizeof(Firmware::drive1541Rom)) {
-                Firmware::buildAlternateRom( Firmware::drive1541RomAlt, data, sizeof(Firmware::drive1541Rom), size );
-                data = (uint8_t*) Firmware::drive1541RomAlt;
-            }
-            iecBus->setFirmware( data );
+        default:
+            iecBus->setFirmware( typeId, data, size );
             break;
-    }   
+    }
 }
 
-auto System::power( bool softReset ) -> void {   
-	sysTimer.clear();
+auto System::power( bool softReset ) -> void {
+    sysTimer.clear();
 
-	if( !softReset )
-		initRam( ram );
-	    
+    if( !softReset )
+        initRam( ram );
+
     expansionPort->reset( softReset );
-    
+
     mode = (expansionPort->isExrom() << 1) | expansionPort->isGame();
-    
+
     vicBank = 0;
 
     mode <<= 3;
     mode |= 7; // charen = hiram = loram = 1 
     irqIncomming = 0;
-	nmiIncomming = 0;
+    nmiIncomming = 0;
     rdyIncomming = 0;
-    
-	memoryCpu.unmap(0x0, 0xff);
+
+    memoryCpu.unmap(0x0, 0xff);
     remapCpu();
-    
-	Sid::resetAll();
-    
+
+    Sid::resetAll();
+
     cia1->reset();
     cia2->reset();
-	input->reset();
+    input->reset();
 
-	tape->reset();
-    glueLogic->reset();	
-    
-    powerSupply->init( vicII->frequency(), vicII->isNTSCGeometry() ? 60 : 50 );        
+    tape->reset();
+    glueLogic->reset();
+
+    powerSupply->init( vicII->frequency(), vicII->isNTSCGeometry() ? 60 : 50 );
     tape->setCyclesPerSecond( vicII->frequency() );
     iecBus->setCpuCyclesPerSecond( vicII->frequency() );
-	
-	sysTimer.add( &countDownPowerSupply, powerSupply->nextTickCount(), Emulator::SystemTimer::Action::UpdateExisting );
+
+    sysTimer.add( &countDownPowerSupply, powerSupply->nextTickCount(), Emulator::SystemTimer::Action::UpdateExisting );
     initDebugCart();
-    
-    iecBus->power();     
+
+    iecBus->power();
     diskSilence.idle = false;
     diskSilence.idleFrames = 0;
-    
-	if( !softReset ) {
+
+    if( !softReset ) {
         setCycleRenderer( cycleRendererNextBoot );
-		
-		vicIICycle->power();
+
+        vicIICycle->power();
         vicIIFast->power();
-		cpu->power();
+        cpu->power();
         observer.enterRom = false;
         observer.memoryAccesses = 0;
-	} else {
-		// vic hasn't a reset line ... means no change ?
-		cpu->reset();
-	}
+    } else {
+        // vic hasn't a reset line ... means no change ?
+        cpu->reset();
+    }
     // cpu doesn't leave halted state by reset request   
     //cpu->setRdy( false );
     vicII->setUltimax( isUltimax() );
-	
-    cpu->updateIoLines( 0x17, !tape->isEnabled() ? 0x20 : 0 );              
+
+    cpu->updateIoLines( 0x17, !tape->isEnabled() ? 0x20 : 0 );
 
     if( !softReset ) {
         calcSerializationSize();
         if (requestedSids)
             serializationSize += Sid::serializationSizeForSevenMoreSids;
-        
+
         fastForward.config = 0;
         fastForward.frameCounter = 0;
         fastForward.renderNext = false;
     }
-    
+
     kernalBootComplete = false;
     KeyBuffer::Action action;
     action.mode = KeyBuffer::Mode::WaitDelay;
@@ -583,20 +567,20 @@ auto System::power( bool softReset ) -> void {
         system->keyBuffer->add( action );
 
 
-	} else {
+    } else {
         action.callbackId = 1;
         action.callback = [this]() { kernalBootComplete = true; };
         system->keyBuffer->add( action, false );
     }
-	
-	powerOn = true;
+
+    powerOn = true;
 }
 
 auto System::powerOff() -> void {
     powerOn = false;
     keyBuffer->reset();
-	sid->powerOff();
-    iecBus->powerOff();    
+    sid->powerOff();
+    iecBus->powerOff();
     vicII->powerOff();
 }
 
@@ -606,17 +590,17 @@ auto System::initRam(uint8_t*& mem) -> void {
     for (unsigned i = 0; i <= 0xffff; i++) {
 
         j = 0;
-        
+
         if (memoryInit.invertEvery)
-            j = ((i / memoryInit.invertEvery) & 1) ? 0xff : 0x00;        
+            j = ((i / memoryInit.invertEvery) & 1) ? 0xff : 0x00;
 
         value = memoryInit.value ^ j;
 
         j = k = 0;
-        
+
         if (memoryInit.randomPatternLength && memoryInit.repeatRandomPattern)
-            k = ((i % memoryInit.repeatRandomPattern) < memoryInit.randomPatternLength) ? Emulator::Rand::rand(0, 0xff) : 0;        
-        
+            k = ((i % memoryInit.repeatRandomPattern) < memoryInit.randomPatternLength) ? Emulator::Rand::rand(0, 0xff) : 0;
+
         if (memoryInit.randomChance) {
             j |= Emulator::Rand::rand(0, 1000) < memoryInit.randomChance ? 0x80 : 0;
             j |= Emulator::Rand::rand(0, 1000) < memoryInit.randomChance ? 0x40 : 0;
@@ -646,10 +630,10 @@ auto System::run() -> void {
     frameComplete = false;
     runAhead.pos = 0;
     acia->connectionLock = false;
-	
-	if (cpu->callResetRoutine)
-		cpu->resetRoutine();
-    
+
+    if (cpu->callResetRoutine)
+        cpu->resetRoutine();
+
     input->poll();
     // of course real system sends restore when key is pressed, but polling each cycle for this is useless
     // because host updates pressed keys once per frame only
@@ -662,21 +646,21 @@ auto System::run() -> void {
     iecBus->randomizeRpm();
 
     bool useRunAhead = !fastForward.config && runAhead.frames
-            && !keyBuffer->isPrgInjectionInQueue() && !iecBus->diskInsertInProgress;
-    
-    if (useRunAhead) {        
+                       && !keyBuffer->isPrgInjectionInQueue() && !iecBus->diskInsertInProgress;
+
+    if (useRunAhead) {
         runAhead.pos = runAhead.frames;
         vicII->disableSequencer( runAhead.performance );
         Sid::disableAudioOut( runAhead.frames > 1 );
     }
-        
-    labelRunAhead:    
-            
-    while( !frameComplete ) {        
-        cpu->process();     
+
+    labelRunAhead:
+
+    while( !frameComplete ) {
+        cpu->process();
         if (!diskSilence.idle)
-            iecBus->syncDrives();            
-    } 
+            iecBus->syncDrives();
+    }
 
     if (useRunAhead) {
         if (runAhead.frames == runAhead.pos) {
@@ -685,7 +669,7 @@ auto System::run() -> void {
 
         if (runAhead.pos) {
             if (runAhead.pos == 2)
-                Sid::disableAudioOut(false);          
+                Sid::disableAudioOut(false);
 
             if (--runAhead.pos == 0) {
                 if (!vicII->useSequencer()) {
@@ -696,41 +680,41 @@ auto System::run() -> void {
             goto labelRunAhead;
         }
 
-        unserializeLight();  
+        unserializeLight();
     }
 
     if (observer.motorChange)
         informAboutMotorChange();
-    
+
     checkDebugCart();
 }
 
 auto System::runAheadEnableAudio() -> void {
     if (runAhead.pos == 1)
-        Sid::disableAudioOut(false);    
+        Sid::disableAudioOut(false);
 }
 
-auto System::isUltimax() -> bool { 
-	return ((mode >> 3) & 3) == 2;
+auto System::isUltimax() -> bool {
+    return ((mode >> 3) & 3) == 2;
 }
 
 auto System::changeExpansionPortMemoryMode(bool exrom, bool game, bool noUltimaxIfVicHasTheBus) -> void {
-	
-	uint8_t cartMode = (mode >> 3) & 3;
-	uint8_t cartModeNew = (exrom << 1) | game;
+
+    uint8_t cartMode = (mode >> 3) & 3;
+    uint8_t cartModeNew = (exrom << 1) | game;
 
     vicII->setUltimax( noUltimaxIfVicHasTheBus ? false : (exrom && !game) );
 
-	if (cartMode == cartModeNew)
-		return;
-	
-	mode &= 7;
-	mode |= cartModeNew << 3;
+    if (cartMode == cartModeNew)
+        return;
 
-	remapCpu();
+    mode &= 7;
+    mode |= cartModeNew << 3;
+
+    remapCpu();
 }
 
-auto System::setFastForward( unsigned config ) -> void {  
+auto System::setFastForward( unsigned config ) -> void {
     fastForward.config = config;
     Sid::disableAudioOut(config & (unsigned) Emulator::Interface::FastForward::NoAudioOut);
     vicII->disableSequencer(config & (unsigned) Emulator::Interface::FastForward::NoVideoSequencer);
@@ -741,134 +725,134 @@ auto System::setCycleRenderer(bool state) -> void {
     if (state)
         vicII = vicIICycle;
     else
-        vicII = vicIIFast;                
+        vicII = vicIIFast;
 }
 
-auto System::updateStats() -> void {	
-	interface->stats.region = vicII->isNTSCGeometry() ? Interface::Region::Ntsc : Interface::Region::Pal;
-	interface->stats.sampleRate = (double)vicII->frequency() / (double)Sid::sampleLimit;
-	interface->stats.fps = 1.0 / ( (double)vicII->cyclesPerFrame() / (double)vicII->frequency() );
-	interface->stats.stereoSound = Sid::isStereo();
+auto System::updateStats() -> void {
+    interface->stats.region = vicII->isNTSCGeometry() ? Interface::Region::Ntsc : Interface::Region::Pal;
+    interface->stats.sampleRate = (double)vicII->frequency() / (double)Sid::sampleLimit;
+    interface->stats.fps = 1.0 / ( (double)vicII->cyclesPerFrame() / (double)vicII->frequency() );
+    interface->stats.stereoSound = Sid::isStereo();
 }
 
-auto System::updateStatsStereo() -> void {	
+auto System::updateStatsStereo() -> void {
     interface->stats.stereoSound = Sid::isStereo();
 }
 
 auto System::useExtraSids(uint8_t requestedSids) -> void {
     auto requestedSidsBefore = this->requestedSids;
-    
+
     this->requestedSids = requestedSids;
     Sid::updateSidUsage();
-    
+
     if (!powerOn)
         return;
-    
+
     if (requestedSids && !requestedSidsBefore)
         serializationSize += Sid::serializationSizeForSevenMoreSids;
     else if (!requestedSids && requestedSidsBefore)
         serializationSize -= Sid::serializationSizeForSevenMoreSids;
-    
+
     Sid::clone( requestedSidsBefore, requestedSids );
 }
 
 auto System::updatePort(uint8_t lines, uint8_t ddr) -> void {
-        
-	if (!powerOn)
-		return;
 
-	auto modeBefore = mode;
+    if (!powerOn)
+        return;
 
-	mode &= ~7;
+    auto modeBefore = mode;
 
-	mode |= lines & 7;     
+    mode &= ~7;
 
-	if (modeBefore != mode)
-		this->remapCpu( );
+    mode |= lines & 7;
 
-	tape->writeIn( ((~ddr | lines) & 8) != 0 );
+    if (modeBefore != mode)
+        this->remapCpu( );
+
+    tape->writeIn( ((~ddr | lines) & 8) != 0 );
     tape->setMotorIn( ((lines & ddr) & 0x20) == 0 );
-}     
+}
 
 auto System::videoRefresh( uint8_t* frame, unsigned width, unsigned height, unsigned linePitch) -> void {
 
-	if (diskSilence.active) {
-		if (!diskSilence.idle) {
-			if (++diskSilence.idleFrames > 200) {
-				diskSilence.idle = true;
-				diskSilence.idleFrames = 0;
-				iecBus->resetDriveState();
-			}
-		}
-	}
+    if (diskSilence.active) {
+        if (!diskSilence.idle) {
+            if (++diskSilence.idleFrames > 200) {
+                diskSilence.idle = true;
+                diskSilence.idleFrames = 0;
+                iecBus->resetDriveState();
+            }
+        }
+    }
 
-	if (!runAhead.pos && frame) {
-		crop->apply( frame, width, height, linePitch );
-		// for lightguns
-		input->drawCursor();
-	}
+    if (!runAhead.pos && frame) {
+        crop->apply( frame, width, height, linePitch );
+        // for lightguns
+        input->drawCursor();
+    }
 
-	if (fastForward.config & (unsigned)Interface::FastForward::NoVideoOut)
-		frame = nullptr;
+    if (fastForward.config & (unsigned)Interface::FastForward::NoVideoOut)
+        frame = nullptr;
 
-	else if (fastForward.renderNext) {
-		fastForward.renderNext = false;
-	    vicII->disableSequencer( fastForward.config & (unsigned)Interface::FastForward::NoVideoSequencer );
+    else if (fastForward.renderNext) {
+        fastForward.renderNext = false;
+        vicII->disableSequencer( fastForward.config & (unsigned)Interface::FastForward::NoVideoSequencer );
 
-	} else if (fastForward.config & (unsigned)Interface::FastForward::ReduceVideoOutput) {
-		frame = nullptr;
+    } else if (fastForward.config & (unsigned)Interface::FastForward::ReduceVideoOutput) {
+        frame = nullptr;
 
-		if ((++fastForward.frameCounter & 15) == 0) {
-			fastForward.frameCounter = 0;
-			vicII->disableSequencer( false );
-			fastForward.renderNext = true;
-		}
-	}
+        if ((++fastForward.frameCounter & 15) == 0) {
+            fastForward.frameCounter = 0;
+            vicII->disableSequencer( false );
+            fastForward.renderNext = true;
+        }
+    }
 
-	if (!runAhead.pos) {
+    if (!runAhead.pos) {
         this->interface->videoRefresh8(frame, width, height, linePitch);
 
         if (iecBus->diskInsertInProgress)
             iecBus->insertDiskGracefully();
     }
 
-	frameComplete = true;
+    frameComplete = true;
 
-	if ( keyBuffer->hasJobs )
-		keyBuffer->process();
+    if ( keyBuffer->hasJobs )
+        keyBuffer->process();
 }
 
 auto System::setVicIrq( bool state ) -> void {
-	if (state)
-		irqIncomming |= 1;
-	else
-		irqIncomming &= ~1;
+    if (state)
+        irqIncomming |= 1;
+    else
+        irqIncomming &= ~1;
 
-	cpu->setIrq( irqIncomming != 0 );
+    cpu->setIrq( irqIncomming != 0 );
 }
 
 auto System::setVicRdy(bool state) -> void {
-	if (state)
-		rdyIncomming |= 1;
-	else
-		rdyIncomming &= ~1;
+    if (state)
+        rdyIncomming |= 1;
+    else
+        rdyIncomming &= ~1;
 
-	cpu->setRdy( rdyIncomming != 0 );
+    cpu->setRdy( rdyIncomming != 0 );
 }
 
 auto System::VicMidScreenCallback() -> void {
 
-	if (runAhead.pos)
-		return;
+    if (runAhead.pos)
+        return;
 
-	input->drawCursor(true);
+    input->drawCursor(true);
 
-	interface->midScreenCallback();
+    interface->midScreenCallback();
 }
 
 auto System::VicVblankCallback() -> void {
-	if (!runAhead.pos)
-		interface->finishVBlank();
+    if (!runAhead.pos)
+        interface->finishVBlank();
 }
 
 auto System::pasteText( std::string buffer ) -> void {

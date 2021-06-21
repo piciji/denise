@@ -8,30 +8,41 @@
 #define CyclesPerRevolution300Rpm 3200000
 
 #include "../via/via.h"
-#include "../iec.h"
+
 #include "../structure/structure.h"
 #include "../../system/system.h"
 #include "../cpu/m6502.h"
 #include "../../../tools/rand.h"
 #include "../../../tools/serializer.h"
-#include "../../../cia/m6526.h"
+#include "../cia/cia8520.h"
 #include <cstdlib>
 
+#define USERDATA_LEVEL 1u
+#define ENCODEDDATA_LEVEL 2u
+#define FLUXDATA_LEVEL 4u
+
+#define DRIVE_MODE_154x 8u
+#define DRIVE_MODE_157x 16u
+
 namespace LIBC64 {
-   
-struct IecBus;
-    
-struct Drive1541 {   
+
+struct Drive1541 {
         
     Drive1541( uint8_t number, Emulator::Interface::Media* mediaConnected );
     ~Drive1541();
 
-    enum class Type { D1541, D1541II, D1570, D1571 } type;
+    enum class Type { D1541, D1541II, D1541C, D1570, D1571 } type;
+
     unsigned rotSpeedBps[4] = { 250000, 266667, 285714, 307692 };
     const unsigned DISC_DELAY = 600000;
     
     uint8_t number;
     uint8_t* rom = nullptr;
+    uint8_t* rom1541II = nullptr;
+    uint8_t* rom1541 = nullptr;
+    uint8_t* rom1541C = nullptr;
+    uint8_t* rom1571 = nullptr;
+    uint8_t* rom1570 = nullptr;
    
     Emulator::Interface::Media* media;
 	Emulator::Interface::Media* mediaConnected; // update status LED if there was no disk inserted
@@ -47,7 +58,7 @@ struct Drive1541 {
         
     Via* via1;
     Via* via2;
-    CIA::M6526* cia;
+    Cia8520* cia;
     M6502* cpu;
     Structure1541 structure1541;
     int64_t cycleCounter;
@@ -58,6 +69,7 @@ struct Drive1541 {
     uint32_t accum;
     unsigned frequency;
     uint8_t refCyclesInCpuCycle;
+    uint8_t operation;
         
     Structure1541::GcrTrack* gcrTrack = new Structure1541::GcrTrack;
     
@@ -116,10 +128,10 @@ struct Drive1541 {
     auto setViaTransition( bool state ) -> void;
     auto getMedia() -> Emulator::Interface::Media* { return media; }
 	auto getMediaConnected() -> Emulator::Interface::Media* { return mediaConnected; }
-	auto setDrive( Type type ) -> void;
+	auto setType( Type type ) -> void;
     
     auto updateBus() -> void;
-    auto setFirmware(uint8_t* rom) -> void;
+    auto setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> void;
     auto rotateD64() -> void;
     auto rotateG64() -> void;
     auto rotateP64(  ) -> void;
@@ -131,7 +143,8 @@ struct Drive1541 {
     auto postAttach() -> void;
     auto detach() -> void;
     auto setWriteProtect(bool state) -> void;
-    auto setSpeed( double rpm, double wobble ) -> void;
+    auto setSpeed( unsigned rpmScaled ) -> void;
+    auto setWobble( unsigned wobbleScaled ) -> void;
     
     auto processDelays() -> void;
     auto syncFound() -> uint8_t;
@@ -149,6 +162,7 @@ struct Drive1541 {
     auto byteFetched( bool overflowNotThisCycle ) -> void;
 
     auto updateCycleSpeed(bool mhz2x) -> void;
+    auto setFirmwareByType( ) -> void;
 };
   
 }

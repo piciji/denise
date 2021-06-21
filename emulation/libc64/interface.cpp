@@ -23,7 +23,7 @@
 
 namespace LIBC64 {
 
-const std::string Interface::Version = "1098";
+const std::string Interface::Version = "1099";
     
 Interface::Interface() : Emulator::Interface( "C64" ) {        
     
@@ -457,9 +457,9 @@ auto Interface::prepareModels() -> void {
 	{ "Standard", "VICE 2.4", "Chamberlin" }});     
 
 	// adjust center frequency for Sid 6581
-	models.push_back({ModelIdBias6581, "SID 6581 Filter Bias", Model::Type::Slider, Model::Purpose::AudioSettings, 500, {-5000, 5000}, {}, 400 });
+	models.push_back({ModelIdBias6581, "SID 6581 Filter Bias", Model::Type::Slider, Model::Purpose::AudioSettings, 500, {-5000, 5000}, {}, 400, 1.0 });
     // adjust center frequency for Sid 8580
-	models.push_back({ModelIdBias8580, "SID 8580 Filter Bias", Model::Type::Slider, Model::Purpose::AudioSettings, -3000, {-5000, 5000}, {}, 400 });
+	models.push_back({ModelIdBias8580, "SID 8580 Filter Bias", Model::Type::Slider, Model::Purpose::AudioSettings, -3000, {-5000, 5000}, {}, 400, 1.0 });
     // use each 'x' sample. lower value means better quality but high cpu usage by resampler
     models.push_back({ModelIdSidSampleFetch, "SID Sample Interval", Model::Type::Radio, Model::Purpose::AudioResampler, 3, {0, 3}, {"1", "2", "7", "18"}});
     // equals volume of filter types
@@ -514,17 +514,38 @@ auto Interface::prepareModels() -> void {
     // c64c use custom ic instead of discrete glue logic
     models.push_back({ModelIdGlueLogic, "Custom IC Glue Logic", Model::Type::Switch, Model::Purpose::Misc, 0});
     // emulate the buggy vertical line in first two border pixels
-    models.push_back({ModelIdLeftLineAnomaly, "Left Line Anomaly", Model::Type::Radio, Model::Purpose::Misc, 0, {0, 2},
+    models.push_back({ModelIdLeftLineAnomaly, "Left Line Anomaly", Model::Type::Combo, Model::Purpose::Misc, 0, {0, 2},
 		{"Off", "Solid White", "Register Color"}});               
 	// disable grey dot bug for 85xx VIC-II
 	models.push_back({ModelIdDisableGreyDotBug, "Disable Grey Dot Bug", Model::Type::Switch, Model::Purpose::Misc, 0});
+
+    models.push_back({ModelIdCiaBurstMode, "CIA Burst Modification", Model::Type::Switch, Model::Purpose::Cia, 0});
+
+    models.push_back({ModelIdDiskDrivesConnected, "Disk Drives", Model::Type::Combo, Model::Purpose::Drive, 1, {0, 4},
+                      { "0", "1", "2", "3", "4" }});
+
+    models.push_back({ModelIdDiskDriveModel, "Disk Drive", Model::Type::Combo, Model::Purpose::Drive, 0, {0, 4},
+                      { "1541", "1541-II", "1541-C", "1570", "1571" }});
+
+    models.push_back({ModelIdDiskDriveSpeed, "Disk Speed", Model::Type::Slider, Model::Purpose::Drive, 30000, {27500, 32500}, {}, 500, 100.0 });
+
+    models.push_back({ModelIdDiskDriveWobble, "Disk Wobble", Model::Type::Slider, Model::Purpose::Drive, 50, {0, 500}, {}, 50, 100.0 });
+
+    models.push_back({ModelIdTapeDrivesConnected, "Tape Drives", Model::Type::Combo, Model::Purpose::Drive, 0, {0, 1},
+                      { "0", "1" }});
+
+    models.push_back({ModelIdTapeDriveWobble, "Tape Wobble", Model::Type::Switch, Model::Purpose::Drive, 0});
 }
 
 auto Interface::prepareFirmware() -> void {
-	firmwares.push_back({0, "Kernal"});
-	firmwares.push_back({1, "Basic"});
-	firmwares.push_back({2, "Char"});
-    firmwares.push_back({3, "VC1541-II"});
+	firmwares.push_back({FirmwareIdKernal, "Kernal"});
+	firmwares.push_back({FirmwareIdBasic, "Basic"});
+	firmwares.push_back({FirmwareIdChar, "Char"});
+    firmwares.push_back({FirmwareIdVC1541II, "VC1541-II"});
+    firmwares.push_back({FirmwareIdVC1541, "VC1541"});
+    firmwares.push_back({FirmwareIdVC1541C, "VC1541-C"});
+    firmwares.push_back({FirmwareIdVC1571, "VC1571"});
+    firmwares.push_back({FirmwareIdVC1570, "VC1570"});
 }
 
 auto Interface::prepareDevices() -> void {
@@ -805,41 +826,6 @@ auto Interface::getSubRegion() -> SubRegion {
 	}	
 	
 	return SubRegion::Pal_B;
-}
-
-auto Interface::setDrivesConnected(MediaGroup* group, unsigned count) -> void {
-    if (!group)
-        return;
-    
-	if (count > group->media.size())
-        count = group->defaultUsage();
-	
-	if (group->isTape())
-		tape->setEnabled( count != 0 );
-    
-    else if (group->isDisk())
-        iecBus->setDrivesEnabled( count );
-}
-
-auto Interface::getDrivesConnected(MediaGroup* group) -> unsigned { 
-    if (!group)
-        return 1;
-    
-    if (group->isDisk())
-        return iecBus->drivesConnected;
-    
-    if (group->isTape())
-        return tape->isEnabled() ? 1 : 0;
-
-    return 1;
-}
-
-auto Interface::setDriveSpeed(MediaGroup* group, double rpm, double wobble) -> void {
-    
-    if (group->isDisk())
-        iecBus->setDriveSpeed(rpm, wobble);
-	else if (group->isTape())
-		tape->setWobble( wobble );
 }
 
 auto Interface::insertDisk(Media* media, uint8_t* data, unsigned size, bool loadGracefully) -> void {
@@ -1181,7 +1167,7 @@ auto Interface::getCharRom() -> Firmware* {
     return &firmwares[2];
 }
 
-auto Interface::setModel(unsigned modelId, int value) -> void {    
+auto Interface::setModelValue(unsigned modelId, int value) -> void {
     switch (modelId) {
 		case ModelIdSid:
 			sid->setType( (value & 1) ? Sid::Type::MOS_6581 : Sid::Type::MOS_8580 );			
@@ -1214,6 +1200,9 @@ auto Interface::setModel(unsigned modelId, int value) -> void {
         case ModelIdCiaRev:
             cia1->setNewVersion( value & 1 );
             cia2->setNewVersion( value & 1 );
+            break;
+        case ModelIdCiaBurstMode:
+            system->burstModification = value & 1;
             break;
         case ModelIdCpuAneMagic:
             //this is annoying ... look in 6502 cpu code for more informations
@@ -1275,10 +1264,28 @@ auto Interface::setModel(unsigned modelId, int value) -> void {
         case ModelIdSid6: sids[4]->setType( (value & 1) ? Sid::Type::MOS_6581 : Sid::Type::MOS_8580 ); break;
         case ModelIdSid7: sids[5]->setType( (value & 1) ? Sid::Type::MOS_6581 : Sid::Type::MOS_8580 ); break;
         case ModelIdSid8: sids[6]->setType( (value & 1) ? Sid::Type::MOS_6581 : Sid::Type::MOS_8580 ); break;
+
+        case ModelIdDiskDriveModel:
+            iecBus->setDriveType( Drive1541::Type(value) );
+            break;
+        case ModelIdDiskDrivesConnected:
+            iecBus->setDrivesEnabled( value );
+            break;
+        case ModelIdTapeDrivesConnected:
+            tape->setEnabled( value & 1 );
+            break;
+        case ModelIdTapeDriveWobble:
+            tape->setWobble( value & 1 );
+        case ModelIdDiskDriveWobble:
+            iecBus->setDriveWobble( value );
+            break;
+        case ModelIdDiskDriveSpeed:
+            iecBus->setDriveSpeed( value );
+            break;
     }    
 }
 
-auto Interface::getModel(unsigned modelId) -> int {
+auto Interface::getModelValue(unsigned modelId) -> int {
     
     switch (modelId) {
 		case ModelIdSid:			
@@ -1301,6 +1308,8 @@ auto Interface::getModel(unsigned modelId) -> int {
             return Sid::getResampleQuality();
         case ModelIdCiaRev:
             return cia1->isNewVersion();
+        case ModelIdCiaBurstMode:
+            return system->burstModification;
         case ModelIdCpuAneMagic:
             return cpu->getMagicForAne();
 		case ModelIdCpuLaxMagic:
@@ -1350,7 +1359,13 @@ auto Interface::getModel(unsigned modelId) -> int {
         case ModelIdSid6: return sids[4]->type == Sid::Type::MOS_6581 ? 1 : 0;
         case ModelIdSid7: return sids[5]->type == Sid::Type::MOS_6581 ? 1 : 0;
         case ModelIdSid8: return sids[6]->type == Sid::Type::MOS_6581 ? 1 : 0;
-                
+
+        case ModelIdDiskDriveModel:         return (int)iecBus->drives[0]->type;
+        case ModelIdDiskDrivesConnected:    return iecBus->drivesConnected;
+        case ModelIdTapeDrivesConnected:    return tape->isEnabled() ? 1 : 0;
+        case ModelIdTapeDriveWobble:        return tape->hasWobble() ? 1 : 0;
+        case ModelIdDiskDriveWobble:        return iecBus->drives[0]->wobble;
+        case ModelIdDiskDriveSpeed:         return iecBus->drives[0]->rpm;
     }    
     return 0;
 }
@@ -1590,5 +1605,14 @@ auto Interface::prepareSocket( Media* media, std::string address, std::string po
     acia->prepareSocket( media, address, port );
 }
 
+auto Interface::getModelIdOfEnabledDrives(MediaGroup* group) -> unsigned {
+    if (group->isDisk())
+        return ModelIdDiskDrivesConnected;
+
+    if (group->isTape())
+        return ModelIdTapeDrivesConnected;
+
+    return ~0;
+}
 
 }

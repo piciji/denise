@@ -268,7 +268,7 @@ auto Cmd::parse() -> void {
 
 	if (debug) {
 		dynamic_cast<LIBC64::Interface*> (emuC64)->activateDebugCart( cycles );
-		prepareDrives(emuC64);
+		//prepareDrives(emuC64);
 		globalSettings->set<bool>("audio_sync", false);
 		globalSettings->set<bool>("video_sync", false);
 		globalSettings->set<bool>("fps_limit", false);
@@ -373,19 +373,19 @@ auto Cmd::updateModel( Emulator::Interface* emulator, unsigned ident, int value)
     }
 }
 
-auto Cmd::prepareDrives( Emulator::Interface* emulator ) -> void {
-    
-    auto settings = program->getSettings( emulator );
-    
-    for(auto& mediaGroup : emulator->mediaGroups) {
-        
-        if (mediaGroup.isDisk())
-            settings->set<unsigned>( _underscore( mediaGroup.name + "_count"), 1);
-		
-		else if (mediaGroup.isTape())
-            settings->set<unsigned>( _underscore( mediaGroup.name + "_count"), 0);        
-    }
-}
+//auto Cmd::prepareDrives( Emulator::Interface* emulator ) -> void {
+//
+//    auto settings = program->getSettings( emulator );
+//
+//    for(auto& mediaGroup : emulator->mediaGroups) {
+//
+//        if (mediaGroup.isDisk())
+//            settings->set<unsigned>( _underscore( mediaGroup.name + "_count"), 1);
+//
+//		else if (mediaGroup.isTape())
+//            settings->set<unsigned>( _underscore( mediaGroup.name + "_count"), 0);
+//    }
+//}
 
 auto Cmd::collectAllowedSuffix() -> std::vector<std::string> {
     std::vector<std::string> allowedSuffix;

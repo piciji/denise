@@ -219,6 +219,15 @@ auto IecBus::syncDrives( int64_t _syncPos, bool ciaAccess ) -> void {
     }
 }
 
+auto IecBus::serialShift(bool bit) -> void {
+    syncDrives(syncPosWrite, true);
+
+    for (auto drive : drivesEnabled) {
+        if ((drive->operation & DRIVE_MODE_157x) && !drive->dataDirection)
+            drive->cia->serialIn( bit );
+    }
+}
+
 auto IecBus::powerOff() -> void {
     
     idle = true;
@@ -339,18 +348,23 @@ auto IecBus::setDrivesEnabled( uint8_t count ) -> void {
 
 auto IecBus::setDriveType(Drive1541::Type type) -> void {
     for( auto drive : drives )
-        drive->setDrive( type );
+        drive->setType( type );
 }
 
-auto IecBus::setDriveSpeed(double rpm, double wobble) -> void {
+auto IecBus::setDriveSpeed(unsigned rpmScaled) -> void {
     for( auto drive : drives )
-        drive->setSpeed( rpm, wobble );
+        drive->setSpeed( rpmScaled );
+}
+
+auto IecBus::setDriveWobble(unsigned wobbleScaled) -> void {
+    for( auto drive : drives )
+        drive->setWobble( wobbleScaled );
 }
     
-auto IecBus::setFirmware(uint8_t* rom) -> void {
+auto IecBus::setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> void {
     
     for( auto drive : drives )
-        drive->setFirmware( rom );
+        drive->setFirmware( typeId, data, size );
 }
 
 auto IecBus::resetDriveState() -> void {

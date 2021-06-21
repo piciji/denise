@@ -199,8 +199,6 @@ struct Interface {
         auto isDrive() const -> bool { return isDisk() || isTape() || isHardDisk(); };
         auto isWritable() const -> bool { return isDrive() || (
                    isExpansion() && (expansion->isFlash() || expansion->isEprom() || expansion->isBattery())); }
-        // default count of connected drives
-        auto defaultUsage() -> unsigned { return type == Type::Disk ? 1 : 0; }       
     };
 
     std::vector<MediaGroup> mediaGroups;         
@@ -216,11 +214,12 @@ struct Interface {
 		unsigned id;
 		std::string name;		
 		enum Type : unsigned { Switch, Range, Hex, Radio, Combo, Slider } type;
-		enum Purpose : unsigned { Cpu, GraphicChip, SoundChip, Cia, AudioSettings, AudioResampler, Misc } purpose;
+		enum Purpose : unsigned { Cpu, GraphicChip, SoundChip, Cia, AudioSettings, AudioResampler, Misc, Drive } purpose;
 		int defaultValue;
 		std::vector<int> range;
 		std::vector<std::string> options;
         unsigned steps;
+        float scaler;
 
 		auto isRadio() const -> bool { return type == Type::Radio; }
 		auto isCombo() const -> bool { return type == Type::Combo; }
@@ -232,6 +231,7 @@ struct Interface {
 		auto isGraphicChip() const -> bool { return purpose == Purpose::GraphicChip; }
         auto isSoundChip() const -> bool { return purpose == Purpose::SoundChip; }
         auto isAudioResampler() const -> bool { return purpose == Purpose::AudioResampler; }
+        auto isDrive() const -> bool { return purpose == Purpose::Drive; }
 	};
 	std::vector<Model> models;	
     	
@@ -396,12 +396,8 @@ struct Interface {
             out += (std::string)hex;
         }
         bind->log(out, newLine);
-    }   
+    }
 
-    // set amount of tape, disk, hard drives or module slots connected to the system
-    virtual auto setDrivesConnected(MediaGroup* group, unsigned count) -> void {}
-    virtual auto getDrivesConnected(MediaGroup* group) -> unsigned { return 0; }
-    virtual auto setDriveSpeed(MediaGroup* group, double rpm, double wobble) -> void {}
     // disk handling
     virtual auto insertDisk(Media* media, uint8_t* data, unsigned size, bool loadGracefully = false) -> void {}
     virtual auto writeProtectDisk(Media* media, bool state) -> void {}
@@ -460,8 +456,9 @@ struct Interface {
     virtual auto savestate(unsigned& size) -> uint8_t* { return nullptr; }
     
     // model
-    virtual auto setModel(unsigned modelId, int value) -> void {}
-    virtual auto getModel(unsigned modelId) -> int { return 0; }
+    virtual auto setModelValue(unsigned modelId, int value) -> void {}
+    virtual auto getModelValue(unsigned modelId) -> int { return 0; }
+    virtual auto getModelIdOfEnabledDrives(MediaGroup* group) -> unsigned { return ~0; }
     
     //controls
     virtual auto connect(unsigned connectorId, unsigned deviceId) -> void {}
@@ -678,6 +675,17 @@ struct Interface {
 		
 		return nullptr;
 	}
+
+    auto getTapeMediaGroup() -> MediaGroup* {
+
+        for (auto& group : mediaGroups) {
+
+            if (group.isTape())
+                return &group;
+        }
+
+        return nullptr;
+    }
     
     auto getPCB( Expansion& expansion, unsigned pcbId ) -> PCBLayout* {
         
@@ -687,6 +695,14 @@ struct Interface {
                 return &pcb;
         }
         
+        return nullptr;
+    }
+
+    auto getModel( unsigned modelId ) -> Model* {
+        for(auto& model : models) {
+            if (model.id == modelId)
+                return &model;
+        }
         return nullptr;
     }
 };

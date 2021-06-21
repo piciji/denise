@@ -272,7 +272,7 @@ auto Drive1541::updateStepper( uint8_t step ) -> bool {
         }
             
         stepDirection = -1;
-        
+
     } else if (step == 3) {
         
         if (currentHalftrack > 0) {

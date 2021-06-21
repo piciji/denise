@@ -159,39 +159,20 @@ auto Program::initEmulator( Emulator::Interface* emulator ) -> void {
         emulator->connect(&connector, getDevice(emulator, &connector));
     
     for (auto& model : emulator->models)
-        emulator->setModel( model.id, getSettings(emulator)->get<int>( _underscore(model.name), model.defaultValue, model.range) );
+        emulator->setModelValue( model.id, getSettings(emulator)->get<int>( _underscore(model.name), model.defaultValue, model.range) );
     
     updateCrop( emulator );
 
     setPalette( emulator );
     
     setExpansionSelection( emulator );
-    
-    setDriveSpeedAndWobble( emulator );
-    
+
     setAccuracy( emulator );
     
     setRunAhead( emulator );
     
     if (dynamic_cast<LIBC64::Interface*>( emulator ))
         setMemoryPattern( emulator );
-}
-
-auto Program::setDriveSpeedAndWobble(Emulator::Interface* emulator) -> void {
-	
-    auto settings = getSettings( emulator );
-    
-	for(auto& mediaGroup : emulator->mediaGroups) {
-		if (mediaGroup.isDisk()) {
-			double wobble = settings->get<double>( _underscore(mediaGroup.name) + "_wobble", 0.5,{0.0, 5.0});
-			double speed = settings->get<double>(_underscore(mediaGroup.name) + "_speed", 300.0,{275.0, 325.0});
-			emulator->setDriveSpeed(&mediaGroup, speed, wobble);
-
-		} else if (mediaGroup.isTape()) {
-			bool tapeWobble = settings->get<bool>(_underscore(mediaGroup.name) + "_wobble", false);
-			emulator->setDriveSpeed(&mediaGroup, 0, tapeWobble);
-		}
-	}
 }
 
 auto Program::setAccuracy(Emulator::Interface* emulator) -> void {
@@ -224,9 +205,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
     auto settings = getSettings( emulator );
     activeVideoManager = VideoManager::getInstance( emulator );
 	uint8_t* data;
-	bool needTapeControl = false;   
     std::vector<std::string> brokenPaths;
-    std::vector<std::string> missingFirmware;
 
     emulator->setExpansion( settings->get<unsigned>("expansion", 0) );
     
@@ -247,13 +226,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
         bool IPMode = mediaGroup.isExpansion() && mediaGroup.expansion->isRS232();
 
         auto selectedMedia = mediaGroup.selected;
-        
-        if(mediaGroup.isDrive()) {
-            unsigned counter = settings->get( _underscore(mediaGroup.name) + "_count", mediaGroup.defaultUsage());        
-            emulator->setDrivesConnected( &mediaGroup, counter );
-            needTapeControl |= mediaGroup.isTape() && (counter > 0);
-        }                
-        
+
         for(auto& media : mediaGroup.media) {            
             
             if (selectedMedia && !media.secondary && (selectedMedia != &media) )
@@ -307,8 +280,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
     }
     
 	if (!cmd->noGui) {
-		missingFirmware = FirmwareManager::getInstance( activeEmulator )->insert();
-		GUIKIT::Vector::combine( brokenPaths, missingFirmware );
+		FirmwareManager::getInstance( activeEmulator )->insert();
 
 		showOpenError( brokenPaths );
 
@@ -327,7 +299,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
 		view->setCursor( activeEmulator );
 		view->updateCartButtons( activeEmulator );
 
-		if (needTapeControl)
+		if (emulator->getModelValue( emulator->getModelIdOfEnabledDrives( emulator->getTapeMediaGroup() ) ) )
 			view->showTapeMenu( true );
 		// a few emulation units generate random values
 		// srand spreads a new seed for better randomness

@@ -53,14 +53,23 @@ auto Drive1541::serialize(Emulator::Serializer& s) -> void {
     s.integer( dataDirection );
     s.integer( frequency );
     s.integer( side );
+    s.integer( operation );
 
     via1->serialize( s );
     via2->serialize( s );
     cpu->serialize( s );
 
     s.integer( structure1541.encodingGraceful.status );
+
+    if ((type == Type::D1570) || (type == Type::D1571)) {
+        cia->serialize(s);
+    }
     
     if (s.mode() == Emulator::Serializer::Mode::Load) {
+
+        updateCycleSpeed( ((type == Type::D1570) || (type == Type::D1571)) && (via1->lines.ioa & 0x20) );
+
+        setFirmwareByType();
         gcrTrack = structure1541.getTrackPtr( side, currentHalftrack );
         // unserialize VIA before to get state of LED
         updateDeviceState();

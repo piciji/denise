@@ -259,7 +259,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             if (!media)
                 break;
 
-            unsigned driveCount = activeEmulator->getDrivesConnected( media->group );            
+            unsigned driveCount = activeEmulator->getModelValue( activeEmulator->getModelIdOfEnabledDrives( media->group ) );
 
             if (driveCount == 0) {
                 statusHandler->setMessage( trans->get("tape_disconnect"), 3, true );
@@ -325,7 +325,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             if (!activeEmulator || !dynamic_cast<LIBC64::Interface*>(activeEmulator))
                 break;
             
-            int _sid = activeEmulator->getModel( C64Interface::ModelIdSid );
+            int _sid = activeEmulator->getModelValue( C64Interface::ModelIdSid );
             auto view = EmuConfigView::TabWindow::getView( activeEmulator );
             int state = view->audioLayout->settingsLayout.stepRange( _sid == 0 ? C64Interface::ModelIdBias8580 : C64Interface::ModelIdBias6581, id == Hotkey::AdjustBiasUp ? 100: -100 );
             statusHandler->setMessage( trans->get( "sid_bias_change", {{"%state%", std::to_string(state) }} ) );                    
@@ -344,9 +344,9 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             auto mediaGroup = defaultMedia->group;
 
             auto mediaId = settings->get<unsigned>("access_floppy", 0u, {0u, (unsigned)mediaGroup->media.size() - 1u});
-            unsigned enabledCount = settings->get<unsigned>( _underscore(mediaGroup->name) + "_count", mediaGroup->defaultUsage());
+            unsigned enabledCount = activeEmulator->getModelValue( activeEmulator->getModelIdOfEnabledDrives(mediaGroup) );
             if (enabledCount > mediaGroup->media.size())
-                enabledCount = mediaGroup->defaultUsage();
+                enabledCount = mediaGroup->media.size();
 
             mediaId++; // switch to next
 

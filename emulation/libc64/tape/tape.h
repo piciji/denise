@@ -44,6 +44,7 @@ struct Tape {
     auto serializeLight(Emulator::Serializer& s) -> void;
     auto selectListing( unsigned pos ) -> void;
 	auto setWobble(bool state) -> void;
+	auto hasWobble() -> bool { return wobble; }
     auto getMedia() -> Emulator::Interface::Media* { return media; }
 	auto getMediaConnected() -> Emulator::Interface::Media* { return mediaConnected; }
     auto updateDeviceState() -> void;

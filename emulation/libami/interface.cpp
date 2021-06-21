@@ -299,17 +299,8 @@ auto Interface::run() -> void {
     videoRefresh(frame, 200, 200, 0);
 }
 
-auto Interface::setModel(unsigned modelId, int value) -> void {
+auto Interface::setModelValue(unsigned modelId, int value) -> void {
     return;
-}
-
-auto Interface::setDrivesConnected(MediaGroup* group, unsigned count) -> void {
-    
-    if (!group)
-        return;
-    
-    if (count > group->media.size())
-        count = group->defaultUsage();
 }
 
 auto Interface::insertDisk(Media* media, uint8_t* data, unsigned size, bool loadGracefully) -> void {

@@ -50,28 +50,6 @@ struct ExpansionLayout : GUIKIT::FramedVerticalLayout {
     ExpansionLayout();  
 };
 
-struct DriveLayout : GUIKIT::FramedVerticalLayout {
-
-    struct DriveCountFrame : GUIKIT::HorizontalLayout {
-        struct DriveCount : GUIKIT::HorizontalLayout {
-            Emulator::Interface::MediaGroup* mediaGroup;
-            GUIKIT::Label name;
-            GUIKIT::ComboButton combo;
-            DriveCount();
-        };
-        std::vector<DriveCount*> driveCounter;
-        
-    } driveCountFrame;
-    
-    SliderLayout speed;
-    SliderLayout wobble;
-	GUIKIT::CheckBox tapeWobble;
-
-    auto build( Emulator::Interface* emulator ) -> void;
-
-    DriveLayout();
-};
-
 struct SystemLayout : GUIKIT::VerticalLayout {
     
     TabWindow* tabWindow;
@@ -83,8 +61,8 @@ struct SystemLayout : GUIKIT::VerticalLayout {
     GUIKIT::VerticalLayout rightLayout;
 
     MemoryLayout memoryLayout;
-    DriveLayout driveLayout;
     ModelLayout modelLayout;
+    ModelLayout driveModelLayout;
     AccuracyLayout accuracyLayout;
     ExpansionLayout expansionLayout;
 
@@ -93,7 +71,6 @@ struct SystemLayout : GUIKIT::VerticalLayout {
     auto updateExpansionMemory() -> void;
     auto getSizeString( unsigned sizeInKb ) -> std::string;
     auto setExpansion( Emulator::Interface::Expansion* newExpansion ) -> void;
-	auto handleChangeDuringEmulation( GUIKIT::Widget* widget, std::string ident, unsigned defaultId ) -> bool;
     auto loadSettings() -> void;
     
     SystemLayout( TabWindow* tabWindow );

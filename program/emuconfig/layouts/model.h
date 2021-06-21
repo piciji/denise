@@ -15,7 +15,7 @@ struct ModelLayout : GUIKIT::FramedVerticalLayout {
             Emulator::Interface::Model* model;
             GUIKIT::CheckBox checkBox;
 			GUIKIT::ComboButton combo;
-            SliderLayout slider;
+            SliderLayout sliderLayout;
 			std::vector<GUIKIT::RadioBox*> options;
             GUIKIT::Label label;
             GUIKIT::LineEdit lineEdit;
@@ -59,7 +59,7 @@ struct ModelLayout : GUIKIT::FramedVerticalLayout {
     
     auto nextOption(unsigned id) -> unsigned;
     
-    auto translate( ) -> void;
+    auto translate( std::string theme = "model" ) -> void;
     
     auto getIdent( Emulator::Interface::Model* model, std::string& tooltip ) -> std::string;
     
@@ -67,11 +67,13 @@ struct ModelLayout : GUIKIT::FramedVerticalLayout {
     
     auto hideExtraAudioChips() -> void;
     
-    auto applyCustomStuff(Emulator::Interface::Model* model) -> void;
+    auto applyCustomStuff( Line::Block* block, Emulator::Interface::Model* model) -> void;
     
     auto hideBias() -> void;
     
     auto getBlock( unsigned modelId ) -> Line::Block*;
+
+    auto alignSlider( std::string maxText ) -> void;
     
     ModelLayout();
 };

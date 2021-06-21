@@ -409,7 +409,7 @@ auto States::updateTapeMenu() -> void {
     if (!media)
         return;
 
-    unsigned count = emulator->getDrivesConnected( media->group );
+    unsigned count = emulator->getModelValue( emulator->getModelIdOfEnabledDrives(media->group) );
     
     Emulator::Interface::TapeMode mode = Emulator::Interface::TapeMode::Unpressed;
     if (count)
@@ -429,8 +429,8 @@ auto States::updateSaveable() -> void {
 
         unsigned maxCount = 1;
         if (mediaGroup.isDrive())
-            maxCount = emulator->getDrivesConnected( &mediaGroup );
-        
+            maxCount = emulator->getModelValue( emulator->getModelIdOfEnabledDrives( &mediaGroup  ) );
+
         for( auto& media : mediaGroup.media ) {
             
             auto insert = findImage( &media );
@@ -491,7 +491,7 @@ auto States::updateModels() -> void {
 
     for(auto& model : emulator->models) {
 
-        int value = emulator->getModel( model.id );
+        int value = emulator->getModelValue( model.id );
 		
 		if (model.isGraphicChip()) {
 			auto oldValue = settings->get<int>( _underscore( model.name ), model.defaultValue, model.range );
@@ -509,6 +509,7 @@ auto States::updateModels() -> void {
     }
 
     cfgView->systemLayout->modelLayout.updateWidgets();
+    cfgView->systemLayout->driveModelLayout.updateWidgets();
     if (cfgView->audioLayout)
         cfgView->audioLayout->settingsLayout.updateWidgets();
     

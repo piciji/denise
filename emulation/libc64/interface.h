@@ -10,15 +10,17 @@ struct Interface : Emulator::Interface {
 	Interface();
     
     enum ModelId {
-        ModelIdSid = 0, ModelIdFilter = 1, ModelIdDigiboost = 2, ModelIdBias6581 = 3,
-        ModelIdCiaRev = 4, ModelIdCpuAneMagic = 5, ModelIdGlueLogic = 6,
-        ModelIdLeftLineAnomaly = 7, ModelIdVicIIModel = 8, ModelIdCpuLaxMagic = 9,
-		ModelIdDisableGreyDotBug = 10, ModelIdSidFilterType = 11, ModelIdSidSampleFetch = 12, ModelIdBias8580 = 13,
-        ModelIdSidMulti = 14, ModelIdSidExternal = 15, ModelIdSidFilterVolumeEqualizer = 16,
+        ModelIdSid, ModelIdFilter, ModelIdDigiboost, ModelIdBias6581,
+        ModelIdCiaRev, ModelIdCpuAneMagic, ModelIdGlueLogic,
+        ModelIdLeftLineAnomaly, ModelIdVicIIModel, ModelIdCpuLaxMagic,
+		ModelIdDisableGreyDotBug, ModelIdSidFilterType, ModelIdSidSampleFetch, ModelIdBias8580,
+        ModelIdSidMulti, ModelIdSidExternal, ModelIdSidFilterVolumeEqualizer,
                      ModelIdSid1Left, ModelIdSid1Right, ModelIdSid1Adr, ModelIdSid2, ModelIdSid2Left, ModelIdSid2Right, ModelIdSid2Adr,
         ModelIdSid3, ModelIdSid3Left, ModelIdSid3Right, ModelIdSid3Adr, ModelIdSid4, ModelIdSid4Left, ModelIdSid4Right, ModelIdSid4Adr,
         ModelIdSid5, ModelIdSid5Left, ModelIdSid5Right, ModelIdSid5Adr, ModelIdSid6, ModelIdSid6Left, ModelIdSid6Right, ModelIdSid6Adr,
         ModelIdSid7, ModelIdSid7Left, ModelIdSid7Right, ModelIdSid7Adr, ModelIdSid8, ModelIdSid8Left, ModelIdSid8Right, ModelIdSid8Adr,
+        ModelIdCiaBurstMode, ModelIdDiskDriveModel, ModelIdDiskDrivesConnected, ModelIdTapeDrivesConnected,
+        ModelIdDiskDriveSpeed, ModelIdDiskDriveWobble, ModelIdTapeDriveWobble,
     };
     
     enum MediaGroupId {
@@ -48,6 +50,11 @@ struct Interface : Emulator::Interface {
         CartridgeIdWestermann = 11, CartridgeIdPagefox = 53,
         CartridgeIdSwiftlink = 270, CartridgeIdTurbo232 = 271,
     };
+
+    enum FirmwareId {
+        FirmwareIdKernal, FirmwareIdBasic, FirmwareIdChar,
+        FirmwareIdVC1541II, FirmwareIdVC1541, FirmwareIdVC1541C, FirmwareIdVC1571, FirmwareIdVC1570,
+    };
     
     static const std::string Version;
     
@@ -73,10 +80,7 @@ struct Interface : Emulator::Interface {
 	
     auto convertPetsciiToScreencode(bool state) -> void;
 
-    auto setDrivesConnected(MediaGroup* group, unsigned count) -> void;
-    auto getDrivesConnected(MediaGroup* group) -> unsigned;
-    auto setDriveSpeed(MediaGroup* group, double rpm, double wobble) -> void;
-	//disk drive handling	
+	//disk drive handling
 	auto insertDisk(Media* media, uint8_t* data, unsigned size, bool loadGracefully = false) -> void;
 	auto writeProtectDisk(Media* media, bool state) -> void;
     auto isWriteProtectedDisk(Media* media) -> bool;
@@ -131,8 +135,9 @@ struct Interface : Emulator::Interface {
     auto getCharRom() -> Firmware*;
 	
 	//models
-    auto setModel(unsigned modelId, int value) -> void;
-    auto getModel(unsigned modelId) -> int;
+    auto setModelValue(unsigned modelId, int value) -> void;
+    auto getModelValue(unsigned modelId) -> int;
+    auto getModelIdOfEnabledDrives(MediaGroup* group) -> unsigned;
     
     //crop
 	auto crop( CropType type, bool aspectCorrect, unsigned left = 0, unsigned right = 0, unsigned top = 0, unsigned bottom = 0 ) -> void;

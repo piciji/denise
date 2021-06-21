@@ -4,6 +4,7 @@
 #include "../../view/message.h"
 #include "../../audio/manager.h"
 #include "../../../emulation/libc64/interface.h"
+#include "../../media/media.h"
 #include "model.h"
 
 namespace EmuConfigView {   
@@ -37,11 +38,9 @@ ModelLayout::Line::Block::Block(Emulator::Interface::Model* model) {
 		append( combo, {0u, 0u} );	
 
     } else if (model->isSlider()) {
-        append(label, {0u, 0u}, 5 );
-        append(slider, {400u, 0u});
-        slider.updateValueWidth( std::to_string( model->range[0] < 0 ? model->range[0] : model->range[1] ) );        
-        
-        slider.slider.setLength( model->steps + 1 );
+        append(sliderLayout, {~0u, 0u});
+        sliderLayout.updateValueWidth( std::to_string( model->range[0] < 0 ? model->range[0] : model->range[1] ) );
+        sliderLayout.slider.setLength( model->steps + 1 );
         
 	} else {
         GUIKIT::LineEdit tester;
@@ -96,7 +95,10 @@ auto ModelLayout::build( TabWindow* tabWindow, Emulator::Interface* emulator, st
         
         auto block = new Line::Block(&model);
         line->blocks.push_back(block);
-        line->append(*block,{0u, 0u}, 15);
+        if (model.isSlider())
+            line->append(*block,{~0u, 0u}, 15);
+        else
+            line->append(*block,{0u, 0u}, 15);
         
         blockPos++;
     }    
@@ -121,9 +123,9 @@ auto ModelLayout::setEvents( ) -> void {
 
                     tabWindow->settings->set<bool>( _underscore(model->name), block->checkBox.checked( ) );
 
-                    emulator->setModel( model->id, block->checkBox.checked( ) );
+                    emulator->setModelValue( model->id, block->checkBox.checked( ) );
                                         
-                    applyCustomStuff( model );
+                    applyCustomStuff( block, model );
                 };
 
 			} else if (model->isRadio() ) {	
@@ -131,25 +133,12 @@ auto ModelLayout::setEvents( ) -> void {
 				for( auto option : block->options ) {
 					
 					option->onActivate = [this, block, model, val]() {
-
-						if (model->isGraphicChip()) {
-							if (this->emulator == activeEmulator) {
-								if (!mes->question(trans->get("setting change need reset"))) {
-									unsigned oldValue = tabWindow->settings->get<int>( _underscore(model->name), model->defaultValue, model->range );
-									
-									if (oldValue < block->options.size())
-										block->options[oldValue]->setChecked( );		
-									
-									return;
-								}
-							}  
-						}
 						
 						tabWindow->settings->set<unsigned>(_underscore(model->name), val);
 						
-						emulator->setModel( model->id, val );
+						emulator->setModelValue( model->id, val );
 						
-                        applyCustomStuff( model );                                           
+                        applyCustomStuff( block, model );
 					};
 					val++;
 				}
@@ -158,33 +147,20 @@ auto ModelLayout::setEvents( ) -> void {
 									
 				block->combo.onChange = [this, block, model]() {
 
-					if (model->isGraphicChip()) {
-						if (this->emulator == activeEmulator) {
-							if (!mes->question(trans->get("setting change need reset"))) {
-								unsigned oldValue = tabWindow->settings->get<int>( _underscore(model->name), model->defaultValue, model->range );
-
-								if (oldValue < block->combo.rows())
-									block->combo.setSelection(oldValue);
-
-								return;
-							}
-						}  
-					}
-
 					int val = block->combo.userData();
 					
 					tabWindow->settings->set<unsigned>( _underscore(model->name), val);
 
-					emulator->setModel( model->id, val );
+					emulator->setModelValue( model->id, val );
                     
-                    applyCustomStuff( model );
+                    applyCustomStuff( block, model );
 				};
 					
             } else if (model->isSlider() ) {	
                 
-                block->slider.slider.onChange = [this, block, model]() {
+                block->sliderLayout.slider.onChange = [this, block, model]() {
                     
-                    unsigned pos = block->slider.slider.position();
+                    unsigned pos = block->sliderLayout.slider.position();
                     
                     int _min = model->range[0];
                     
@@ -195,14 +171,23 @@ auto ModelLayout::setEvents( ) -> void {
                     int stepSize = range / model->steps;
                     
                     int val = pos * stepSize + _min;
-                    
+
                     tabWindow->settings->set<int>( _underscore(model->name), val );
+
+                    std::string displayText = std::to_string(val);
+                    if (model->scaler != 1.0) {
+                        displayText = GUIKIT::String::formatFloatingPoint( (float)val / model->scaler, 2);
+                    }
+
+                    std::string unit = "";
+                    if (model->isDrive())
+                        unit = " RPM";
+
+                    block->sliderLayout.value.setText( displayText + unit );
                     
-                    block->slider.value.setText( std::to_string(val) );
+                    emulator->setModelValue( model->id, val );
                     
-                    emulator->setModel( model->id, val );  
-                    
-                    applyCustomStuff( model );
+                    applyCustomStuff( block, model );
                 };
                 
             } else {
@@ -227,14 +212,28 @@ auto ModelLayout::setEvents( ) -> void {
 
                     tabWindow->settings->set<int>( _underscore(model->name), val );
 
-                    emulator->setModel( model->id, val );
+                    emulator->setModelValue( model->id, val );
                     
-                    applyCustomStuff( model );
+                    applyCustomStuff( block, model );
                 };			
             }            
         }
         
 	}
+}
+
+auto ModelLayout::alignSlider( std::string maxText ) -> void {
+    std::vector<SliderLayout*> sliderLayouts;
+
+    for (auto line : lines) {
+        for (auto block : line->blocks) {
+            if (block->model->isSlider()) {
+                sliderLayouts.push_back( (SliderLayout*)&block->sliderLayout );
+            }
+        }
+    }
+
+    SliderLayout::scale(sliderLayouts, maxText);
 }
 
 auto ModelLayout::updateWidgets( ) -> void {
@@ -287,9 +286,17 @@ auto ModelLayout::updateWidget( Line::Block* block ) -> void {
 
         unsigned pos = (val - _min) / stepSize;
         
-        block->slider.slider.setPosition( pos );
-        
-        block->slider.value.setText( std::to_string(val) );
+        block->sliderLayout.slider.setPosition( pos );
+
+        std::string displayText = std::to_string(val);
+        if (model->scaler != 1.0)
+            displayText = GUIKIT::String::formatFloatingPoint( (float) val / model->scaler, 2);
+
+        std::string unit = "";
+        if (model->isDrive())
+            unit = " RPM";
+
+        block->sliderLayout.value.setText( displayText + unit );
         
         return;
     }
@@ -409,9 +416,9 @@ auto ModelLayout::stepRange(unsigned id, int step) -> int {
 
                     unsigned pos = (newValue + _max) / stepSize;
 
-                    block->slider.slider.setPosition(pos);
+                    block->sliderLayout.slider.setPosition(pos);
                     
-                    block->slider.slider.onChange();
+                    block->sliderLayout.slider.onChange();
                     
                     return newValue;
                 }
@@ -421,10 +428,11 @@ auto ModelLayout::stepRange(unsigned id, int step) -> int {
 	return 0;
 }
 
-auto ModelLayout::translate( ) -> void {
+auto ModelLayout::translate( std::string theme ) -> void {
     
-    setText( trans->get("model") );    
-    
+    setText( trans->get( theme ) );
+
+    // todo handle this custom stuff better
     controlLayout.label.setText( trans->get("all", {}, true) );
     controlLayout.firstAll.setText( "8580" );
     controlLayout.secondAll.setText( "6581" ); 
@@ -455,17 +463,21 @@ auto ModelLayout::translate( ) -> void {
 
                 block->label.setTooltip(trans->get(tooltip));
 
+            } else if (model->isSlider()) {
+                block->sliderLayout.name.setTooltip(trans->get(tooltip));
             } else
                 block->label.setTooltip(trans->get(tooltip));
 
             block->checkBox.setText(trans->get( name ));
-            block->label.setText(trans->get( name, {},
-            model->isRadio() || model->isCombo() || model->isSlider() ));
+            if (model->isSlider())
+                block->sliderLayout.name.setText(trans->get( name, {}, true ));
+            else
+                block->label.setText(trans->get( name, {}, model->isRadio() || model->isCombo() ));
         }
     }
 }
 
-auto ModelLayout::applyCustomStuff(Emulator::Interface::Model* model) -> void {
+auto ModelLayout::applyCustomStuff( Line::Block* block, Emulator::Interface::Model* model ) -> void {
     
     if (dynamic_cast<LIBC64::Interface*> (this->emulator)) {
         
@@ -515,13 +527,28 @@ auto ModelLayout::applyCustomStuff(Emulator::Interface::Model* model) -> void {
             case LIBC64::Interface::ModelIdSidSampleFetch:
                 audioManager->setResampler(); 
                 break;
+
+            case LIBC64::Interface::ModelIdDiskDrivesConnected:
+                tabWindow->mediaLayout->updateVisibility( emulator->getDiskMediaGroup(), block->combo.selection() );
+                tabWindow->settings->remove( "access_floppy" );
+
+                if (activeEmulator)
+                    program->power(activeEmulator);
+
+                break;
+
+            case LIBC64::Interface::ModelIdTapeDrivesConnected:
+                if (activeEmulator)
+                    program->power(activeEmulator);
+
+                break;
         }
     }
 }
 
 auto ModelLayout::hideBias() -> void {
     
-    int filter = emulator->getModel( LIBC64::Interface::ModelIdSidFilterType );
+    int filter = emulator->getModelValue( LIBC64::Interface::ModelIdSidFilterType );
 
     bool showBias6581 = filter == 0 || filter == 1;
     bool showBias8580 = filter == 0;
@@ -537,7 +564,7 @@ auto ModelLayout::hideExtraAudioChips() -> void {
     
     static int activeSidsNow = -1;
     
-    int activeSids = emulator->getModel( LIBC64::Interface::ModelIdSidMulti );
+    int activeSids = emulator->getModelValue( LIBC64::Interface::ModelIdSidMulti );
     
     if (controlLayout.firstAll.checked())
         controlLayout.firstAll.setChecked(false);
@@ -698,7 +725,7 @@ auto ModelLayout::getIdent( Emulator::Interface::Model* model, std::string& tool
             name = "Right Channel";
             tooltip = name + " tooltip";
             break;
-            
+
         default:
             tooltip = name + " tooltip";
             break;

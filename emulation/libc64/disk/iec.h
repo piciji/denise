@@ -12,7 +12,7 @@
 
 namespace LIBC64 {
 
-struct Drive1541;  
+struct Drive1541;
     
 struct IecBus {
     
@@ -45,6 +45,7 @@ struct IecBus {
     auto writeCia( uint8_t byte ) -> bool;
     auto readCia() -> uint8_t;
     auto readVia() -> uint8_t;
+    auto serialShift(bool bit) -> void;
     
     auto power() -> void;
     auto powerOff() -> void;
@@ -55,8 +56,9 @@ struct IecBus {
     auto syncDrives( int64_t _syncPos = 0, bool ciaAccess = false ) -> void;
     auto resetTicks() -> void;
     auto setDrivesEnabled( uint8_t count ) -> void;
-    auto setDriveSpeed(double rpm, double wobble) -> void;
-    auto setFirmware(uint8_t* rom) -> void;
+    auto setDriveSpeed(unsigned rpmScaled) -> void;
+    auto setDriveWobble(unsigned wobbleScaled) -> void;
+    auto setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> void;
     auto randomizeRpm() -> void;
     auto setCpuCyclesPerSecond( unsigned cycles ) -> void;
     auto attach( Emulator::Interface::Media* media, uint8_t* data, unsigned size, bool loadGracefully = false ) -> void;

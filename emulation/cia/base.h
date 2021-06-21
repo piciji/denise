@@ -45,7 +45,7 @@
 namespace CIA {
     
 struct Base {
-	Base( uint8_t model, Emulator::SystemTimer* events = nullptr );          
+	Base( uint8_t model, Emulator::SystemTimer* events );
     
     enum Port : unsigned { PORTA, PORTB };
     enum { T_A = 0, T_B = 1 };
@@ -66,7 +66,7 @@ struct Base {
 	/**
 	 * send shifted out bit to external device 
 	 */    
-    std::function<void (bool bit)> serialCall;
+    std::function<void (bool bit)> serialOut;
     /**
 	 * inform external devices if irq line switches to low state
 	 */
@@ -87,10 +87,9 @@ struct Base {
 	 */	
     auto clock() -> void;
 	
-	/**
-	 * shift in bits
-	 */
-    auto serialIn( bool newCnt, bool bit ) -> void;   
+    auto serialIn( bool bit ) -> void;
+    auto serialIn( uint8_t byte ) -> void;
+
 	/*
 	 * external device forces cia to generate an irq
 	 */
@@ -201,7 +200,7 @@ protected:
     
     auto timerAUnderflow() -> void;
 	auto timerBUnderflow() -> void;
-	auto serialOut() -> void;
+	auto shiftOut() -> void;
 	auto switchSerialDirection(bool input) -> void;
     auto handleInterrupt( uint8_t number ) -> void;
 	template<uint8_t timerId> auto updateState() -> void;

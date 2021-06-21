@@ -80,6 +80,7 @@ struct System {
     Interface* interface;  
     ExpansionPort* noExpansion;
     Prg* prgInUse = nullptr;
+    bool burstModification;
     
 	Emulator::PowerSupply* powerSupply;
     Input* input;
