@@ -14,7 +14,7 @@
     * drive sounds
     * support command line start of disk listings instead of Load "*"
     * mount OS folder as D64
-    * non standard floppy models: 1571, 1581
+    * 1581
 * user port
     * RS232
     * SpeedDOS / DolphinDOS
