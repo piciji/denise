@@ -105,7 +105,7 @@ namespace LIBC64 {
                     // is violated by some randomness. means the counter registers
                     // will be reset after some time but that doesn't mean it can
                     // be more than 3 zeros in row shifted in but fewer.
-                    randCounter = ( (randomizer.xorShift() >> 16 ) % 31) + 233; // 14.5 - 67.5
+                    randCounter = ( (randomizer.xorShift() >> 16 ) % 31) + 233; // 14.5 - 16.5
                 }
 
                 if (ue7Counter == 16) {
@@ -215,10 +215,10 @@ namespace LIBC64 {
                         ue3Counter = 0;
                         writeBuffer = writeValue;
                         bool overflowNotThisCycle = OVERFLOW_NOT_THIS_CYCLE;
-                        if (byteReadyOverflow)
+                        if (byteReadyOverflow) {
                             cpu->triggerSO(overflowNotThisCycle ? 2 : 1);
-
-                        byteReady = byteReadyOverflow;
+                            byteReady = true;
+                        }
 
                         via2->ca1In(!byteReadyOverflow, overflowNotThisCycle);
                     }

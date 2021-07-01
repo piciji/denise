@@ -129,13 +129,14 @@ private:
     uint8_t* rawData;
     uint32_t rawSize;
 	uint8_t* created = nullptr;
-    uint8_t tracks;
-    uint8_t maxHalfTracks;
-    unsigned maxTrackLength;
     uint8_t sides;
-    
     GcrTrack gcrTracks[2][ MAX_TRACKS_1541 * 2 ];
-        
+
+    // G64 / G71
+    unsigned maxTrackLength;
+
+    // D64 / D71
+    uint8_t tracksInDxx;
     uint8_t* errorMap;
     uint32_t errorMapSize;
 
@@ -164,8 +165,8 @@ private:
         
     auto prepareGxx() -> void;
     auto prepareDxx() -> void;
-    auto prepareP64() -> void;
-    auto getTrackOffsetG64( uint8_t halfTrack, int& error ) -> uint32_t;
+    auto preparePxx() -> void;
+    auto getTrackOffsetGxx( uint8_t halfTrack, int& error ) -> uint32_t;
     auto handleAppendedTracksInDxx() -> bool;
         
     auto writeDxx(const GcrTrack* trackPtr, uint8_t side, unsigned track, bool& errorMapChanged) -> bool;
@@ -174,7 +175,7 @@ private:
     auto writePxx() -> bool;
     
     static auto writeSector( uint8_t* target, uint8_t* buffer, uint8_t track, uint8_t sector, unsigned offset = 0) -> void;
-    static auto createBAM( std::string diskName, uint8_t tracksInImage, uint8_t* buffer ) -> void;
+    static auto createBAM( std::string diskName, uint8_t* buffer, uint8_t* bufferSecondSide = nullptr ) -> void;
 
     static auto encodeSector(const uint8_t* src, uint8_t* target, uint8_t track, uint8_t sector, uint8_t id1, uint8_t id2, int errorCode) -> void;    
     auto decodeSector( const GcrTrack* trackPtr, uint8_t* dest, uint8_t sector ) -> int;
@@ -183,7 +184,7 @@ private:
 
 	inline auto decodeP64( Emulator::Fpaq0& fpaq0, std::vector<Emulator::PredictorEightBitWithPrefix*>& predictors ) -> unsigned;
     inline auto encodeP64( Emulator::Fpaq0& fpaq0, std::vector<Emulator::PredictorEightBitWithPrefix*>& predictors, unsigned value ) -> void;
-    auto decodeJob( std::vector<uint8_t*>* workLoad, bool* usePtr ) -> void;
+    auto decodeJob( std::vector<uint8_t*>* workLoad, bool* usePtr ) -> bool;
     auto encodeGCR(GcrTrack* gcrTrack, uint8_t halfTrack) -> void;
     auto prepareTracksNotInUse(bool* inUse) -> void;
     auto createPulsesFromGCR(GcrTrack* gcrTrack) -> void;

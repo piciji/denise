@@ -1,6 +1,17 @@
 
 pBrowserWindow::pBrowserWindow(BrowserWindow& browserWindow) : browserWindow(browserWindow) {}
 
+auto pBrowserWindow::closeHandler(GtkDialog* dialog, GdkEvent* event, gpointer data) -> void {
+    pBrowserWindow* instance = (pBrowserWindow*)data;
+
+    auto& state = instance->browserWindow.state;
+
+    if (state.onCancelClick)
+        state.onCancelClick();
+
+    instance->close();
+}
+
 auto pBrowserWindow::responseHandler(GtkDialog* dialog, gint responseId, gpointer data) -> void {
   
 	pBrowserWindow* instance = (pBrowserWindow*)data;
@@ -111,8 +122,10 @@ auto pBrowserWindow::file(bool save) -> std::string {
 	for(auto& button : state.buttons)		
 		gtk_dialog_add_button( (GtkDialog*)dialog, button.text.c_str(), button.id );	
 	
-	gtk_dialog_add_button( (GtkDialog*)dialog, _ok, GTK_RESPONSE_ACCEPT );	
-	
+	gtk_dialog_add_button( (GtkDialog*)dialog, _ok, GTK_RESPONSE_ACCEPT );
+
+    g_signal_connect(G_OBJECT(dialog), "delete-event", G_CALLBACK(pBrowserWindow::closeHandler), (gpointer)this);
+
 	if (state.buttons.size())
 		g_signal_connect(dialog, "response", G_CALLBACK(pBrowserWindow::responseHandler), (gpointer)this);
 	

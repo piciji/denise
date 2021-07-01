@@ -27,9 +27,6 @@ struct IecBus {
     bool dataOut;
     uint8_t lastByte;
     uint8_t port;
-    int64_t syncPos;
-    int64_t syncPosRead;
-    int64_t syncPosWrite;
     int64_t sysClock;
     int64_t cpuCylcesPerSecond;
     std::atomic<bool> ready;
@@ -53,7 +50,8 @@ struct IecBus {
     
     auto updatePort() -> void;
     auto waitForDrives() -> void;
-    auto syncDrives( int64_t _syncPos = 0, bool ciaAccess = false ) -> void;
+    auto syncDrives( int direction = 0, bool ciaAccess = false ) -> void;
+    auto syncDrivesEachCycle( ) -> void;
     auto resetTicks() -> void;
     auto setDrivesEnabled( uint8_t count ) -> void;
     auto setDriveSpeed(unsigned rpmScaled) -> void;

@@ -168,10 +168,10 @@ namespace LIBC64 {
                         writeBuffer = writeValue;
                         bool overflowNotThisCycle = OVERFLOW_NOT_THIS_CYCLE;
 
-                        if (byteReadyOverflow)
+                        if (byteReadyOverflow) {
                             cpu->triggerSO(overflowNotThisCycle ? 2 : 1);
-
-                        byteReady = byteReadyOverflow;
+                            byteReady = true;
+                        }
 
                         via2->ca1In(!byteReadyOverflow, overflowNotThisCycle);
                     }

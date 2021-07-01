@@ -46,10 +46,12 @@ IecBus* iecBus;
 // scenario 1: CIA writes, VIA reads
 // 1.3 cycles (1 write + 0.3 delay) - 0.85 (data change time) = 0.45
 // a VIA read before (0.45 * drive cycle duration) shouldn't be affected by a cia write
+// 2 Mhz: 1.3 cycles (1 write + 0.3 delay) - 0.425 (data change time) = 0.875
 
 // scenario 2: CIA reads, VIA writes
 // 0.85 ( data change time ) - 1.3 cycles (1 write + 0.3 delay) = -0.45
 // a VIA write before (-0.45 * drive cycle duration) should affect a CIA read
+// 2Mhz: 0.425 ( data change time ) - 1.3 cycles (1 write + 0.3 delay) = -0.875
 
 IecBus::IecBus(Emulator::Interface::MediaGroup* mediaGroup) {    
     // max 4 drives will be supported
@@ -153,7 +155,7 @@ auto IecBus::run() -> void {
             break;
         
         useDrive->cpu->process();
-        useDrive->synced = useDrive->cycleCounter >= syncPos;                
+        useDrive->synced = useDrive->cycleCounter >= useDrive->syncPos;
     }     
 }
 
@@ -176,7 +178,18 @@ inline auto IecBus::waitForDrives() -> void {
     }
 }
 
-auto IecBus::syncDrives( int64_t _syncPos, bool ciaAccess ) -> void {
+auto IecBus::syncDrivesEachCycle( ) -> void {
+
+    for (auto drive : drivesEnabled) {
+        drive->cycleCounter -= drive->frequency;
+        drive->synced = drive->cycleCounter >= 0;
+    }
+    sysClock = sysTimer.clock;
+
+    run();
+}
+
+auto IecBus::syncDrives( int direction, bool ciaAccess ) -> void {
     // no disk drives connected
     if ( drivesConnected == 0 )
         return;
@@ -188,9 +201,7 @@ auto IecBus::syncDrives( int64_t _syncPos, bool ciaAccess ) -> void {
     
     if (threaded)
         waitForDrives();
-    
-    syncPos = _syncPos;
-    
+
     // drive cpu runs at 1 Mhz, pal c64 is slightly slower, ntsc c64 slighter faster.
     // to sync c64 and drive clock we use a simple proportional scaling term
     // when:
@@ -201,8 +212,9 @@ auto IecBus::syncDrives( int64_t _syncPos, bool ciaAccess ) -> void {
     // drive->cycleCounter -= cycleCounterTemp * 1000000; // cpu cycles * drive clock 
 
     for (auto drive : drivesEnabled) {
+        drive->setSyncPos( direction );
         drive->cycleCounter -= _delay * drive->frequency;
-        drive->synced = drive->cycleCounter >= syncPos;
+        drive->synced = drive->cycleCounter >= drive->syncPos;
     }
         
     sysClock = sysTimer.clock; // reset for next run 
@@ -220,10 +232,10 @@ auto IecBus::syncDrives( int64_t _syncPos, bool ciaAccess ) -> void {
 }
 
 auto IecBus::serialShift(bool bit) -> void {
-    syncDrives(syncPosWrite, true);
+    syncDrives(1, true);
 
     for (auto drive : drivesEnabled) {
-        if ((drive->operation & DRIVE_MODE_157x) && !drive->dataDirection)
+        if (!drive->dataDirection)
             drive->cia->serialIn( bit );
     }
 }
@@ -251,19 +263,19 @@ auto IecBus::power() -> void {
     cpuBurner = cpuBurnerRequested;
     updateIdleState();
 
-    syncPos = 0;
-    syncPosRead = (int64_t)(-0.455 * (double)cpuCylcesPerSecond);
-    syncPosWrite = (int64_t)(0.455 * (double)cpuCylcesPerSecond);
     sysClock = sysTimer.clock;
             
     for( auto drive : drivesEnabled ) {                   
         drive->power();
     }
 }
-    
-auto IecBus::writeCia( uint8_t byte ) -> bool {
+
+auto IecBus::
+
+
+writeCia( uint8_t byte ) -> bool {
     // let drives catch up
-    syncDrives( syncPosWrite, true );      
+    syncDrives( 1, true );
     
     bool atnBefore = atnOut;
     // for better readability we put out signals on separate variables
@@ -324,7 +336,7 @@ auto IecBus::readVia() -> uint8_t {
 
 auto IecBus::readCia() -> uint8_t {
     // let drives catch up
-    syncDrives( syncPosRead, true ); 
+    syncDrives( -1, true );
 	
     return port;
 }
@@ -343,10 +355,14 @@ auto IecBus::setDrivesEnabled( uint8_t count ) -> void {
         drivesEnabled.push_back( drive );
     }
     
-    threaded = drivesEnabled.size() > 0; 
+    threaded = drivesEnabled.size() > 0;
 }
 
 auto IecBus::setDriveType(Drive1541::Type type) -> void {
+
+    system->burstMode.possible = (type == Drive1541::Type::D1570) || (type == Drive1541::Type::D1571);
+    system->burstUpdate();
+
     for( auto drive : drives )
         drive->setType( type );
 }
@@ -408,12 +424,8 @@ auto IecBus::insertDiskGracefully() -> void {
 }
 
 auto IecBus::attach( Emulator::Interface::Media* media, uint8_t* data, unsigned size, bool loadGracefully ) -> void {
-    
-    if (system->diskSilence.idle) {
-        system->diskSilence.idle = false;        
-        resetTicks();
-    }
-    system->diskSilence.idleFrames = 0;
+
+    system->diskIdleOff();
     
     drives[ media->id ]->attach( media, data, size, loadGracefully );
 }
@@ -455,9 +467,6 @@ auto IecBus::serialize(Emulator::Serializer& s) -> void {
     s.integer( clockOut );
     s.integer( dataOut );
     s.integer( port );
-    s.integer( syncPos );
-    s.integer( syncPosRead );
-    s.integer( syncPosWrite );
     s.integer( sysClock );
     s.integer( cpuCylcesPerSecond );
     s.integer( drivesConnected );

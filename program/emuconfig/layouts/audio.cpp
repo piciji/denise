@@ -198,8 +198,6 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
 
     if (dynamic_cast<LIBC64::Interface*> (emulator)) {
 
-        settingsLayout.custom = true;
-
         settingsLayout.build(tabWindow, emulator,{Emulator::Interface::Model::Purpose::SoundChip, Emulator::Interface::Model::Purpose::AudioSettings, Emulator::Interface::Model::Purpose::AudioResampler},
         {4, 1, 1, 3, 4, 4, 4, 4, 4, 4, 4, 4});
 

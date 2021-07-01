@@ -16,9 +16,9 @@ auto Structure1541::analyzeG64() -> bool {
     
     if (std::memcmp(rawData, "GCR-1541", 8)) // missing this ident ?
         return false;
-    
-    tracks = rawData[9] / 2;
-    maxHalfTracks = rawData[9];
+
+    unsigned maxHalfTracks = rawData[9];
+
     maxTrackLength = rawData[10] | (rawData[11] << 8);    
     
     if (maxHalfTracks > (MAX_TRACKS * 2) ) // more tracks than a 1541 drive can handle
@@ -44,17 +44,12 @@ auto Structure1541::analyzeG71() -> bool {
     if (std::memcmp(rawData, "GCR-1571", 8)) // missing this ident ?
         return false;
 
-    tracks = rawData[9] / 2;
-    maxHalfTracks = rawData[9];
+    unsigned maxHalfTracks = rawData[9];
+
     maxTrackLength = rawData[10] | (rawData[11] << 8);
 
-    if (maxHalfTracks > (MAX_TRACKS * 2) ) {
-        tracks >>= 1;
-        maxHalfTracks >>= 1;
-
-    } else if (maxHalfTracks > (MAX_TRACKS * 2 * 2) ) {
+    if (maxHalfTracks > (MAX_TRACKS * 2 * 2) ) // more tracks than a 1541 drive can handle
         return false;
-    }
 
     sides = 2;
     type = Type::G71;
@@ -62,7 +57,7 @@ auto Structure1541::analyzeG71() -> bool {
     return true;
 }
 
-auto Structure1541::getTrackOffsetG64( uint8_t halfTrack, int& error ) -> uint32_t {
+auto Structure1541::getTrackOffsetGxx( uint8_t halfTrack, int& error ) -> uint32_t {
     uint8_t buf[4];
     error = 0;
     
@@ -89,11 +84,13 @@ auto Structure1541::prepareGxx() -> void {
     uint8_t buf[2];
     unsigned offset;
     unsigned trackLength;
+    unsigned maxHalfTracks = rawData[9];
     int error;
 
     for (uint8_t side = 0; side < sides; side++) {
         for (unsigned halfTrack = 0; halfTrack < (MAX_TRACKS * 2); halfTrack++) {
             GcrTrack* ptr = &gcrTracks[side][halfTrack];
+            unsigned totalHalfTrack = side * MAX_TRACKS * 2 + halfTrack;
 
             if (ptr->data)
                 delete[] ptr->data;
@@ -102,10 +99,10 @@ auto Structure1541::prepareGxx() -> void {
             ptr->size = 0;
             ptr->bits = 1;
 
-            if (halfTrack >= maxHalfTracks)
+            if (totalHalfTrack >= maxHalfTracks)
                 continue;
 
-            offset = getTrackOffsetG64(halfTrack + ((side == 1) ? maxHalfTracks : 0), error);
+            offset = getTrackOffsetGxx(totalHalfTrack, error);
 
             if (error < 0)
                 continue;
@@ -151,9 +148,10 @@ auto Structure1541::writeGxx(const GcrTrack* trackPtr, uint8_t side, unsigned ha
     int error;
     uint8_t buf[4];
     bool appendTrack = false;
-    unsigned trackOffset = (side == 1) ? maxHalfTracks : 0;
+
+    unsigned trackOffset = side * MAX_TRACKS * 2;
     
-    long int offset = getTrackOffsetG64( halfTrack + trackOffset, error );
+    long int offset = getTrackOffsetGxx( halfTrack + trackOffset, error );
     
     if (error < 0)
         return false;
@@ -249,8 +247,10 @@ auto Structure1541::createGxx( std::string diskName, uint8_t sides ) -> uint8_t*
     std::memset( bufferDir, 0, 256 );
     bufferDir[1] = 255;
 
-    uint8_t bufferBam[256];  
-    createBAM( diskName, MAX_TRACKS, bufferBam );
+    uint8_t bufferBam[256];
+    uint8_t bufferBamExtended[256];
+
+    createBAM( diskName, bufferBam, (sides == 2) ? bufferBamExtended : nullptr );
     
     // max bytes per track
     unsigned maxBytes = 7928;
@@ -317,12 +317,14 @@ auto Structure1541::createGxx( std::string diskName, uint8_t sides ) -> uint8_t*
 
                 uint8_t* useBuffer = buffer;
 
-                if (track == 18 && sector == 1) // directory sector
+                if (side == 0 && track == 18 && sector == 1) // directory sector
                     useBuffer = bufferDir;
-                else if (track == 18 && sector == 0) // bam sector
+                else if (side == 0 && track == 18 && sector == 0) // bam sector
                     useBuffer = bufferBam;
+                else if (side == 1 && track == 18 && sector == 0) // bam sector
+                    useBuffer = bufferBamExtended;
 
-                encodeSector(useBuffer, sectorPtr, track, sector, 0xa0, 0xa0, ERR_OK);
+                encodeSector(useBuffer, sectorPtr, track + (side * TYPICAL_TRACKS), sector, 0xa0, 0xa0, ERR_OK);
 
                 sectorPtr += 340 + 9 + gaps + 5;
             }

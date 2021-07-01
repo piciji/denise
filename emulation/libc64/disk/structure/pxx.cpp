@@ -48,8 +48,12 @@ namespace LIBC64 {
         if (std::memcmp(rawData, "P64-1541", 8)) // missing this ident ?
             return false;
 
-        ptr += 16;
+        ptr += 12;
+        uint32_t flags = Emulator::copyBufferToInt<uint32_t>( ptr );
+        // flag bit 0 is write protection, we ignore it and let the user decide
+        sides = 1 + !!(flags & 2);
 
+        ptr += 4;
         uint32_t size = Emulator::copyBufferToInt<uint32_t>( ptr );
         ptr += 4;
         uint32_t checkSum = Emulator::copyBufferToInt<uint32_t>( ptr );
@@ -64,7 +68,6 @@ namespace LIBC64 {
             return false;
 
         type = Type::P64;
-        sides = 1;
 
         return true;
     }
@@ -79,8 +82,12 @@ namespace LIBC64 {
         if (std::memcmp(rawData, "P71-1571", 8)) // missing this ident ?
             return false;
 
-        ptr += 16;
+        ptr += 12;
+        uint32_t flags = Emulator::copyBufferToInt<uint32_t>( ptr );
+        // flag bit 0 is write protection, we ignore it and let the user decide
+        sides = 1 + !!(flags & 2);
 
+        ptr += 4;
         uint32_t size = Emulator::copyBufferToInt<uint32_t>( ptr );
         ptr += 4;
         uint32_t checkSum = Emulator::copyBufferToInt<uint32_t>( ptr );
@@ -95,7 +102,6 @@ namespace LIBC64 {
             return false;
 
         type = Type::P71;
-        sides = 2;
 
         return true;
     }
@@ -124,14 +130,8 @@ namespace LIBC64 {
 
         std::memset( buf, 0, maxSize );
 
-        buf[0] = 'P';
-        buf[1] = '6';
-        buf[2] = '4';
-        buf[3] = '-';
-        buf[4] = '1';
-        buf[5] = '5';
-        buf[6] = '4';
-        buf[7] = '1';
+        // dont change P64-1541 in P71-1571 in case of two sides, keep existing ident
+        std::memcpy( buf, rawData, 8 );
         offset += 8;
         // version = 0
         offset += 4;
@@ -141,7 +141,6 @@ namespace LIBC64 {
 
         // size, checksum
         offset += 8;
-
         std::vector<Emulator::PredictorEightBitWithPrefix*> predictorPositions;
         std::vector<Emulator::PredictorEightBitWithPrefix*> predictorStrengths;
         Emulator::PredictorOneBit predictorPositionEnable;
@@ -171,7 +170,7 @@ namespace LIBC64 {
                 *(*__buf + offset + 1) = 'T';
                 *(*__buf + offset + 2) = 'P';
                 if (side == 1)
-                  *__buf[offset + 3] = 0x80;
+                    *(*__buf + offset + 3) = 0x80;
 
                 *(*__buf + offset + 3) |= (halfTrack + 2);
                 offset += 12;
@@ -299,7 +298,7 @@ namespace LIBC64 {
         return result;
     }
 
-    auto Structure1541::decodeJob( std::vector<uint8_t*>* workLoad, bool* usePtr ) -> void {
+    auto Structure1541::decodeJob( std::vector<uint8_t*>* workLoad, bool* usePtr ) -> bool {
 
         std::vector<Emulator::PredictorEightBitWithPrefix*> predictorPositions;
         std::vector<Emulator::PredictorEightBitWithPrefix*> predictorStrengths;
@@ -310,6 +309,7 @@ namespace LIBC64 {
         uint8_t* _ptr;
         uint8_t** __ptr = &_ptr;
         uint32_t* pSize = &size;
+        bool res = false;
 
         fpaq0.readIn = [__ptr, pSize](uint8_t*& buffer) {
 
@@ -348,7 +348,7 @@ namespace LIBC64 {
                     uint8_t side = !!(halfTrack & 128);
                     halfTrack &= 127;
 
-                    if (side || (halfTrack < 2) || (halfTrack > 85))
+                    if ( (halfTrack < 2) || (halfTrack > 85))
                         continue;
 
                     halfTrack -= 2;
@@ -410,6 +410,8 @@ namespace LIBC64 {
                     encodeGCR(gcrPtr, halfTrack);
 
                     usePtr[ (side == 1 ? (MAX_TRACKS_1541 * 2) : 0) + halfTrack ] = pulses > 0;
+
+                    res = true;
                 }
             }
         }
@@ -418,6 +420,8 @@ namespace LIBC64 {
             delete predictorPositions[i];
             delete predictorStrengths[i];
         }
+
+        return res;
     }
 
     auto Structure1541::prepareP64Graceful() -> void {
@@ -433,7 +437,6 @@ namespace LIBC64 {
 
         bool* usePtr = &encodingGraceful.inUse[0];
         std::vector<uint8_t*> vec;
-        uint32_t flags;
 
         uint8_t* ptr = rawData;
         unsigned offset = 0;
@@ -443,11 +446,6 @@ namespace LIBC64 {
             std::memset(usePtr, 0, MAX_TRACKS_1541 * 2 * 2);
             ptr += 8; // header ident, already checked
             ptr += 4; // version: only 0 is known, don't check for it
-
-            flags = Emulator::copyBufferToInt<uint32_t>(ptr);
-            // flag bit 0 is write protection, we ignore it and let the user decide
-
-            sides = 1 + !!(flags & 2);
 
             // already checked
             ptr += 12;
@@ -465,7 +463,7 @@ namespace LIBC64 {
         }
 
         vec.push_back( ptr );
-        this->decodeJob( &vec, usePtr );
+        bool res = this->decodeJob( &vec, usePtr );
 
         ptr += 4;
         size = Emulator::copyBufferToInt<uint32_t>( ptr );
@@ -482,9 +480,12 @@ namespace LIBC64 {
 
         encodingGraceful.ptr = ptr;
         encodingGraceful.offset = offset;
+
+        if (!res)
+            prepareP64Graceful();
     }
 
-    auto Structure1541::prepareP64() -> void {
+    auto Structure1541::preparePxx() -> void {
 
         bool inUse[2][MAX_TRACKS_1541 * 2] = { {0}, {0} };
         bool* usePtr = &inUse[0][0];
@@ -496,11 +497,6 @@ namespace LIBC64 {
 
         ptr += 8; // header ident, already checked
         ptr += 4; // version: only 0 is known, don't check for it
-
-        uint32_t flags = Emulator::copyBufferToInt<uint32_t>( ptr );
-        // flag bit 0 is write protection, we ignore it and let the user decide
-
-        sides = 1 + !!(flags & 2);
 
         // already checked
         ptr += 12;
@@ -825,7 +821,7 @@ namespace LIBC64 {
 
         structure1541.rawSize = (sides == 2) ? imageSizeG71() : imageSizeG64();
 
-        if (!structure1541.analyzeG64() || !structure1541.analyzeG71())
+        if (!structure1541.analyzeG64() && !structure1541.analyzeG71())
             return {nullptr, 0};
 
         structure1541.prepareGxx();
@@ -844,12 +840,17 @@ namespace LIBC64 {
             }
         }
 
-        delete[] temp;
+        if (sides == 2)
+            std::memcpy( structure1541.rawData, "P71-1571", 8 );
+        else
+            std::memcpy( structure1541.rawData, "P64-1541", 8 );
 
         unsigned memSize = 0;
 
-        temp = structure1541.writeP64ToMem(memSize);
+        uint8_t* temp2 = structure1541.writeP64ToMem(memSize);
 
-        return {temp, memSize};
+        delete[] temp;
+
+        return {temp2, memSize};
     }
 }

@@ -80,7 +80,6 @@ struct System {
     Interface* interface;  
     ExpansionPort* noExpansion;
     Prg* prgInUse = nullptr;
-    bool burstModification;
     
 	Emulator::PowerSupply* powerSupply;
     Input* input;
@@ -127,6 +126,12 @@ struct System {
         bool idle = false;
         bool active = false;
     } diskSilence;
+
+    struct {
+        bool requested = false;
+        bool possible = false;
+        bool use = false;
+    } burstMode;
     
     struct {
         uint8_t value = 255;
@@ -200,6 +205,9 @@ struct System {
     auto checkForAutoStarter() -> bool;
     auto motorChange(bool state) -> void;
     auto informAboutMotorChange() -> void;
+
+    auto burstUpdate() -> void;
+    auto diskIdleOff() -> void;
 };
 
 extern System* system;

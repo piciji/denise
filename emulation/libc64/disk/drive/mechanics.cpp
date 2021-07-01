@@ -30,7 +30,6 @@ auto Drive1541::rotateD64() -> void {
                 
         if ( !loaded || !trackPtr ) 
             // no image loaded or track not present
-
             byte = 0;
         else
             // headOffset is the bit position within a track.            
@@ -89,10 +88,10 @@ auto Drive1541::rotateD64() -> void {
 
             writeBuffer = writeValue; // fetch next byte to buffer
 
-            if ( byteReadyOverflow )
+            if ( byteReadyOverflow ) {
                 cpu->triggerSO();
-
-            byteReady = byteReadyOverflow;
+                byteReady = true;
+            }
 
             via2->ca1In( !byteReadyOverflow );
         } else {
@@ -103,18 +102,16 @@ auto Drive1541::rotateD64() -> void {
 }
 
 auto Drive1541::byteFetched( bool overflowNotThisCycle ) -> void {
-    // later than 0.75 of first half cycle miss CPU detection of external overflow or interrupt in this cycle
 
     ue3Counter = 0;
     latchedByte = writeBuffer = readBuffer & 0xff;
 
-    if (byteReadyOverflow)
+    if (byteReadyOverflow) {
         // edge transition
         cpu->triggerSO(overflowNotThisCycle ? 2 : 1);
+        byteReady = true;
+    }
 
-    byteReady = byteReadyOverflow;
-
-    // edge transition, but direction matters so we emulate the PIN state and not only the transiton like external overflow
     via2->ca1In(!byteReadyOverflow, overflowNotThisCycle);
 }
 
@@ -207,6 +204,11 @@ auto Drive1541::motorOffInit() -> void {
     motorOff.delay = 14000 + (rand() % 1000);
     unsigned slowDownCycles = 50000;
 
+    if (use2Mhz()) {
+        motorOff.delay <<= 1;
+        slowDownCycles <<= 1;
+    }
+
     unsigned chunkSize = slowDownCycles / motorOff.CHUNKS;
     unsigned rest = slowDownCycles % motorOff.CHUNKS;
 
@@ -238,7 +240,7 @@ auto Drive1541::randomizeRpm() -> void {
     // then
     // 30000 = drive cycles per second
     // drive cycles per second = 30000 * 1000000 / adjusted
-    driveCycles = (30000ULL * 1000000ULL) / adjusted;    
+    driveCycles = (30000ULL * frequency) / adjusted;
     // so we get the amount of cycles per second for adjusted motor speed.
     // now we could calculate the amount of bits passed for any amount of cpu drive cycles
     // by following proportion:
@@ -250,17 +252,6 @@ auto Drive1541::randomizeRpm() -> void {
     // for g64 rotation, we apply the randomness for drive speed on reference cycles
     refCyclesPerRevolution = (30000ULL * CyclesPerRevolution300Rpm) / adjusted;
 }
-
-// 1 - 0 = 1
-// 2 - 1 = 1
-// 3 - 2 = 1
-// 0 - 3 = 1
-// 1 - 0 = 1
-// 2 - 1 = 1
-// 1 - 2 = (-1) 3
-// 0 - 1 = (-1) 3
-// 3 - 0 = 3
-// 2 - 3 = (-1) 3
 
 auto Drive1541::updateStepper( uint8_t step ) -> bool {
     
@@ -285,18 +276,18 @@ auto Drive1541::updateStepper( uint8_t step ) -> bool {
         
     } else if (step == 2) {
         // Primitive 7 Sins uses this method
-        if (stepDirection == 1) {            
+        if (stepDirection == 1) {
             if (currentHalftrack & 1) {
                 if (updateStepper(1))
                     return updateStepper(1);
             }
-            
+
         } else if (stepDirection == -1) {
             if ((currentHalftrack & 1) == 0) {
                 if (updateStepper(3))
                     return updateStepper(3);
             }
-        } 
+        }
     }
     
     return false;

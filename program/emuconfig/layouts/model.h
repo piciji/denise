@@ -38,9 +38,7 @@ struct ModelLayout : GUIKIT::FramedVerticalLayout {
     Emulator::Interface* emulator;
     
     TabWindow* tabWindow;
-    
-    bool custom = false;
-    
+
     std::vector<Emulator::Interface::Model::Purpose> purposes;
         
     auto build( TabWindow* tabWindow, Emulator::Interface* emulator, std::vector<Emulator::Interface::Model::Purpose> purposes, std::vector<unsigned> dim ) -> void;
@@ -63,7 +61,7 @@ struct ModelLayout : GUIKIT::FramedVerticalLayout {
     
     auto getIdent( Emulator::Interface::Model* model, std::string& tooltip ) -> std::string;
     
-    auto appendControlLayout() -> void;
+    auto appendAudioSelectorLayout() -> void;
     
     auto hideExtraAudioChips() -> void;
     

@@ -521,20 +521,20 @@ auto Interface::prepareModels() -> void {
 
     models.push_back({ModelIdCiaBurstMode, "CIA Burst Modification", Model::Type::Switch, Model::Purpose::Cia, 0});
 
-    models.push_back({ModelIdDiskDrivesConnected, "Disk Drives", Model::Type::Combo, Model::Purpose::Drive, 1, {0, 4},
+    models.push_back({ModelIdDiskDrivesConnected, "Disk Drives", Model::Type::Combo, Model::Purpose::DriveSettings, 1, {0, 4},
                       { "0", "1", "2", "3", "4" }});
 
-    models.push_back({ModelIdDiskDriveModel, "Disk Drive", Model::Type::Combo, Model::Purpose::Drive, 0, {0, 4},
+    models.push_back({ModelIdDiskDriveModel, "Disk Drive", Model::Type::Combo, Model::Purpose::DriveSettings, 0, {0, 4},
                       { "1541", "1541-II", "1541-C", "1570", "1571" }});
 
-    models.push_back({ModelIdDiskDriveSpeed, "Disk Speed", Model::Type::Slider, Model::Purpose::Drive, 30000, {27500, 32500}, {}, 500, 100.0 });
+    models.push_back({ModelIdDiskDriveSpeed, "Disk Speed", Model::Type::Slider, Model::Purpose::DriveSettings, 30000, {27500, 32500}, {}, 500, 100.0 });
 
-    models.push_back({ModelIdDiskDriveWobble, "Disk Wobble", Model::Type::Slider, Model::Purpose::Drive, 50, {0, 500}, {}, 50, 100.0 });
+    models.push_back({ModelIdDiskDriveWobble, "Disk Wobble", Model::Type::Slider, Model::Purpose::DriveSettings, 50, {0, 500}, {}, 50, 100.0 });
 
-    models.push_back({ModelIdTapeDrivesConnected, "Tape Drives", Model::Type::Combo, Model::Purpose::Drive, 0, {0, 1},
+    models.push_back({ModelIdTapeDrivesConnected, "Tape Drives", Model::Type::Combo, Model::Purpose::DriveSettings, 0, {0, 1},
                       { "0", "1" }});
 
-    models.push_back({ModelIdTapeDriveWobble, "Tape Wobble", Model::Type::Switch, Model::Purpose::Drive, 0});
+    models.push_back({ModelIdTapeDriveWobble, "Tape Wobble", Model::Type::Switch, Model::Purpose::DriveSettings, 0});
 }
 
 auto Interface::prepareFirmware() -> void {
@@ -1202,7 +1202,8 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
             cia2->setNewVersion( value & 1 );
             break;
         case ModelIdCiaBurstMode:
-            system->burstModification = value & 1;
+            system->burstMode.requested = value & 1;
+            system->burstUpdate();
             break;
         case ModelIdCpuAneMagic:
             //this is annoying ... look in 6502 cpu code for more informations
@@ -1276,6 +1277,7 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
             break;
         case ModelIdTapeDriveWobble:
             tape->setWobble( value & 1 );
+            break;
         case ModelIdDiskDriveWobble:
             iecBus->setDriveWobble( value );
             break;
@@ -1309,7 +1311,7 @@ auto Interface::getModelValue(unsigned modelId) -> int {
         case ModelIdCiaRev:
             return cia1->isNewVersion();
         case ModelIdCiaBurstMode:
-            return system->burstModification;
+            return system->burstMode.requested;
         case ModelIdCpuAneMagic:
             return cpu->getMagicForAne();
 		case ModelIdCpuLaxMagic:
@@ -1364,8 +1366,8 @@ auto Interface::getModelValue(unsigned modelId) -> int {
         case ModelIdDiskDrivesConnected:    return iecBus->drivesConnected;
         case ModelIdTapeDrivesConnected:    return tape->isEnabled() ? 1 : 0;
         case ModelIdTapeDriveWobble:        return tape->hasWobble() ? 1 : 0;
-        case ModelIdDiskDriveWobble:        return iecBus->drives[0]->wobble;
-        case ModelIdDiskDriveSpeed:         return iecBus->drives[0]->rpm;
+        case ModelIdDiskDriveWobble:        return (int)iecBus->drives[0]->wobble;
+        case ModelIdDiskDriveSpeed:         return (int)iecBus->drives[0]->rpm;
     }    
     return 0;
 }
@@ -1578,8 +1580,7 @@ auto Interface::diskHighLoadThread(bool state) -> void {
 
 auto Interface::diskIdle(bool state) -> void {
     system->diskSilence.active = state;
-    system->diskSilence.idle = false;
-    system->diskSilence.idleFrames = 0;
+    system->diskIdleOff();
 }
 
 auto Interface::audioRealtimeThread(bool state) -> void {

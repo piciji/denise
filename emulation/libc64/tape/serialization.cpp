@@ -34,6 +34,7 @@ auto Tape::serialize(Emulator::Serializer& s) -> void {
     s.integer( writeProtect );
     s.integer( writeQuestionState );
     s.integer( autoStarted );
+    s.integer( wobble );
 
     if (s.mode() == Emulator::Serializer::Mode::Load) {
         updateDeviceState();

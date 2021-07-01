@@ -54,7 +54,6 @@ System::System(Interface* interface) {
     Sid::registerGlobalCallbacks();
 
     requestedSids = 0;
-    burstModification = false;
 
     input = new Input;
     for (auto& media : interface->mediaGroups[Interface::MediaGroupIdProgram].media) {
@@ -310,8 +309,11 @@ System::System(Interface* interface) {
     };
 
     cia1->serialOut = [this](bool bit) {
-        if (burstModification)
-            iecBus->serialShift( bit );
+        diskIdleOff();
+
+        if (burstMode.use) {
+            iecBus->serialShift(bit);
+        }
     };
 
     cia2->irqCall = [this](bool state) {
@@ -342,12 +344,7 @@ System::System(Interface* interface) {
     cia2->readPort = [this]( CIA::Base::Port port, CIA::Base::Lines* lines ) {
 
         if ( port == CIA::Base::PORTA ) {
-            if (diskSilence.idle) {
-                diskSilence.idle = false;
-                iecBus->resetTicks();
-            }
-
-            diskSilence.idleFrames = 0;
+            diskIdleOff();
 
             return (uint8_t) ( (lines->ioa & 0x3f) | iecBus->readCia() );
         }
@@ -371,6 +368,7 @@ System::System(Interface* interface) {
             if (iecBus->writeCia( ~lines->ioa )) {
                 diskSilence.idle = false;
                 diskSilence.idleFrames = 0;
+                burstUpdate();
             }
         }
 
@@ -517,6 +515,7 @@ auto System::power( bool softReset ) -> void {
     iecBus->power();
     diskSilence.idle = false;
     diskSilence.idleFrames = 0;
+    burstUpdate();
 
     if( !softReset ) {
         setCycleRenderer( cycleRendererNextBoot );
@@ -658,7 +657,7 @@ auto System::run() -> void {
 
     while( !frameComplete ) {
         cpu->process();
-        if (!diskSilence.idle)
+        if (!diskSilence.idle && !burstMode.use)
             iecBus->syncDrives();
     }
 
@@ -781,6 +780,7 @@ auto System::videoRefresh( uint8_t* frame, unsigned width, unsigned height, unsi
             if (++diskSilence.idleFrames > 200) {
                 diskSilence.idle = true;
                 diskSilence.idleFrames = 0;
+                burstUpdate();
                 iecBus->resetDriveState();
             }
         }
@@ -893,6 +893,19 @@ auto System::motorChange(bool state) -> void {
 auto System::informAboutMotorChange() -> void {
     observer.motorChange = false;
     interface->informDriveLoading( observer.motor );
+}
+
+auto System::burstUpdate() -> void {
+    burstMode.use = burstMode.requested && burstMode.possible && !diskSilence.idle;
+}
+
+auto System::diskIdleOff() -> void {
+    if (diskSilence.idle) {
+        diskSilence.idle = false;
+        iecBus->resetTicks();
+        burstUpdate();
+    }
+    diskSilence.idleFrames = 0;
 }
 
 }

@@ -26,8 +26,9 @@ auto M8520::reset() -> void {
 }
 
 auto M8520::read(unsigned pos) -> uint8_t {
-	
-	switch (pos & 0xf) {
+    pos &= 0xf;
+
+	switch (pos) {
 		
         case 8:
             if (todLatched) {
@@ -60,8 +61,9 @@ auto M8520::read(unsigned pos) -> uint8_t {
 }
 
 auto M8520::write(unsigned pos, uint8_t value) -> void {
-	
-	switch (pos & 0xf) {
+    pos &= 0xf;
+
+	switch (pos) {
 		        
         case 8:
         case 9:

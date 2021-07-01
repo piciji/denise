@@ -7,7 +7,7 @@ auto Structure1541::analyzeD71() -> bool {
 
     uint32_t compareSize = TYPICAL_SIZE << 1;
     uint32_t sectors = compareSize / 256;
-    tracks = TYPICAL_TRACKS; // typical 349696 bytes in 70 tracks
+    tracksInDxx = TYPICAL_TRACKS; // typical 349696 bytes in 70 tracks
 
     if (errorMap)
         delete[] errorMap;
@@ -25,7 +25,7 @@ auto Structure1541::analyzeD71() -> bool {
             break;
         }
         // now we check for non standard track count
-        if (++tracks > MAX_TRACKS) // up to 42 tracks are possible
+        if (++tracksInDxx > MAX_TRACKS) // up to 42 tracks are possible
             return false;
 
         sectors += 17 << 1; // tracks > 31 contain 17 sectors
@@ -34,8 +34,6 @@ auto Structure1541::analyzeD71() -> bool {
 
     type = Type::D71;
     sides = 2;
-
-    maxHalfTracks = MAX_TRACKS * 2;
 
     if (errorMapSize) {
         errorMap = new uint8_t[errorMapSize];
@@ -49,8 +47,8 @@ auto Structure1541::analyzeD64() -> bool {
     
     uint32_t compareSize = TYPICAL_SIZE;
     uint32_t sectors = compareSize / 256;
-    tracks = TYPICAL_TRACKS; // typical 174848 bytes in 35 tracks 
-        
+    tracksInDxx = TYPICAL_TRACKS; // typical 174848 bytes in 35 tracks
+
     if (errorMap)
         delete[] errorMap;
         
@@ -67,7 +65,7 @@ auto Structure1541::analyzeD64() -> bool {
             break;
         }
         // now we check for non standard track count
-        if (++tracks > MAX_TRACKS) // up to 42 tracks are possible
+        if (++tracksInDxx > MAX_TRACKS) // up to 42 tracks are possible
             return false;
 
         sectors += 17; // tracks > 31 contain 17 sectors
@@ -76,9 +74,7 @@ auto Structure1541::analyzeD64() -> bool {
     
     type = Type::D64;
     sides = 1;
-    
-    maxHalfTracks = MAX_TRACKS * 2;
-    
+
     if (errorMapSize) {
         errorMap = new uint8_t[ errorMapSize ];
         std::memcpy( errorMap, rawData + compareSize, errorMapSize );
@@ -92,19 +88,18 @@ auto Structure1541::prepareDxx() -> void {
     uint8_t errorCode;
     uint8_t buffer[256];
     unsigned sectorOffset = 0;
-    int sectors;
+    unsigned trackOffset = 0;
+
+    // first we fetch the bam sector to extract the id, needed for all sector headers
+    int sectors = countSectors( 18, 0 );
+    std::memcpy( buffer, rawData + (sectors << 8), 256 );
+
+    uint8_t id1 = buffer[0xa2];
+    uint8_t id2 = buffer[0xa3];
 
     for( uint8_t side = 0; side < sides; side++ ) {
 
-        // first we fetch the bam sector to extract the id, needed for all sector headers
-        sectors = countSectors( 18, 0 );
-        sectors += sectorOffset;
-        std::memcpy( buffer, rawData + (sectors << 8), 256 );
-
-        uint8_t id1 = buffer[0xa2];
-        uint8_t id2 = buffer[0xa3];
-
-        for (uint8_t track = 1; track <= (maxHalfTracks / 2); track++) {
+        for (uint8_t track = 1; track <= MAX_TRACKS; track++) {
             // tracks count from 1 upwards and are stored in memory as half tracks
             // track 1 -> means half track 0
             // track 1.5 -> means half track 1
@@ -129,7 +124,7 @@ auto Structure1541::prepareDxx() -> void {
 
             std::memset(ptr, 0x55, trackSize); // clear track
 
-            if (track <= tracks) {
+            if (track <= tracksInDxx) {
 
                 uint8_t gaps = gapSize(track);
 
@@ -149,7 +144,7 @@ auto Structure1541::prepareDxx() -> void {
 
                     std::memcpy(buffer, rawData + (sectors << 8), 256);
 
-                    encodeSector(buffer, ptr, track, sector, id1, id2, errorCode);
+                    encodeSector(buffer, ptr, track + trackOffset, sector, id1, id2, errorCode);
 
                     // gcr formated sector size: 64 * 5 = 320 byte data
                     // + 5 (descriptor byte / checksum )
@@ -171,9 +166,8 @@ auto Structure1541::prepareDxx() -> void {
             trackPtr->bits = 0;
         }
 
-        if (side == 0) {
-            sectorOffset = sectors + 1;
-        }
+        sectorOffset = sectors + 1;
+        trackOffset = tracksInDxx;
     }
 }
 
@@ -245,9 +239,9 @@ auto Structure1541::handleAppendedTracksInDxx() -> bool {
             GcrTrack* gcrTrack = getTrackPtr(side, track * 2 - 2);
 
             if ((track > TYPICAL_TRACKS) && (gcrTrack->written & 1)) {
-                if (track > tracks) {
+                if (track > tracksInDxx) {
                     appended = true;
-                    tracks = track;
+                    tracksInDxx = track;
                 }
             }
         }
@@ -257,8 +251,8 @@ auto Structure1541::handleAppendedTracksInDxx() -> bool {
         return false;
 
     if (errorMap) {
-        unsigned trackSectors = countSectors( tracks );
-        int sectors = countSectors( tracks, 0 );
+        unsigned trackSectors = countSectors( tracksInDxx );
+        int sectors = countSectors( tracksInDxx, 0 );
 
         unsigned newMapSize = sectors + trackSectors;
         if (sides == 2)
@@ -284,7 +278,7 @@ auto Structure1541::handleAppendedTracksInDxx() -> bool {
         for (unsigned track = 1; track <= MAX_TRACKS; track++) {
             GcrTrack* gcrTrack = getTrackPtr(side, track * 2 - 2);
 
-            if (track <= tracks)
+            if (track <= tracksInDxx)
                 gcrTrack->written = 1;
         }
     }
@@ -304,8 +298,8 @@ auto Structure1541::writeDxx(const GcrTrack* trackPtr, uint8_t side, unsigned tr
 
     unsigned sectorOffset = 0;
     if (side == 1) {
-        sectorOffset = countSectors( tracks, 0 );
-        sectorOffset += countSectors( tracks );
+        sectorOffset = countSectors( tracksInDxx, 0 );
+        sectorOffset += countSectors( tracksInDxx );
     }
     
     // create a target buffer for all sectors of this track
@@ -320,10 +314,10 @@ auto Structure1541::writeDxx(const GcrTrack* trackPtr, uint8_t side, unsigned tr
             // the error have to be written to error map
             if (!errorMap) {
                 // there wasn't an error map before, now we need one
-                int allSectors = countSectors( tracks, 0 );
+                int allSectors = countSectors( tracksInDxx, 0 );
                 
                 if (allSectors >= 0) {
-                    allSectors += countSectors( tracks );
+                    allSectors += countSectors( tracksInDxx );
                     if (sides == 2)
                         allSectors <<= 1;
 
@@ -508,13 +502,13 @@ auto Structure1541::createDxx( std::string diskName, uint8_t sides ) -> uint8_t*
     std::memset( temp, 0, (sides == 2) ? imageSizeD71() : imageSizeD64() );
 
     writeSector( temp, buffer, 18, 1 ); // write directory sector
-    if (sides == 2)
-        writeSector( temp, buffer, 18, 1, imageSizeD64() );
 
-    createBAM( diskName, TYPICAL_TRACKS, buffer ); // resuse buffer for bam sector
+    uint8_t bufferBamExtended[256];
+
+    createBAM( diskName, buffer, (sides == 2) ? bufferBamExtended : nullptr ); // resuse buffer for bam sector
     writeSector( temp, buffer, 18, 0 ); // write bam sector
     if (sides == 2)
-        writeSector( temp, buffer, 18, 0, imageSizeD64() );
+        writeSector( temp, bufferBamExtended, 18, 0, imageSizeD64() );
 
     return temp;    
 }

@@ -31,8 +31,7 @@ auto Drive1541::serialize(Emulator::Serializer& s) -> void {
     s.integer( readBuffer );
     s.integer( writeBuffer );
     s.integer( attachDelay );
-    s.integer( detachDelay );
-    s.integer( attachDetachDelay );
+    s.integer( wasAttachDetached );
     s.integer( motorOn );
     s.integer( written );
     s.integer( loaded );
@@ -54,6 +53,9 @@ auto Drive1541::serialize(Emulator::Serializer& s) -> void {
     s.integer( frequency );
     s.integer( side );
     s.integer( operation );
+    s.integer( syncPos );
+    s.integer( wobble );
+    s.integer( rpm );
 
     via1->serialize( s );
     via2->serialize( s );
@@ -67,7 +69,7 @@ auto Drive1541::serialize(Emulator::Serializer& s) -> void {
     
     if (s.mode() == Emulator::Serializer::Mode::Load) {
 
-        updateCycleSpeed( ((type == Type::D1570) || (type == Type::D1571)) && (via1->lines.ioa & 0x20) );
+        updateCycleSpeed( use2Mhz() );
 
         setFirmwareByType();
         gcrTrack = structure1541.getTrackPtr( side, currentHalftrack );

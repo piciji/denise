@@ -11,7 +11,8 @@
 // for 300 rpm = 5 rotation / sec = 16.000.000 / 5
 
 namespace LIBC64 {
-   
+
+// valid for 1 MHz operation
 // one cpu cycle is 16 reference(drive) cycles.
 // we do only progress 6 instead of 8 in first half cycle because of a possible
 // external overflow is recognized by cpu within 400 ns.
@@ -41,12 +42,13 @@ namespace LIBC64 {
     } else {                                                                \
         rotateP64();                                                  \
     }                                                                       \
-    processDelays();                                                    \
     via1->process();                                                        \
     via2->process();                                                        \
     if (operation & DRIVE_MODE_157x)                                        \
         cia->clock();         \
-    cycleCounter += iecBus->cpuCylcesPerSecond;
+    cycleCounter += iecBus->cpuCylcesPerSecond;             \
+    if (attachDelay)              \
+        attachDelay--;
     
 auto Drive1541::sync() -> void {
     SYNC 
@@ -72,17 +74,14 @@ auto Drive1541::cpuWrite(uint16_t addr, uint8_t data) -> void {
         else if ((addr & 0xfc00) == 0x1800)
             via1->write(addr, data);
 
-        else if ((addr & 0xfc00) == 0x1c00)
+        else if ((addr & 0xfc00) == 0x1c00) {
+            byteReady = false;
             via2->write(addr, data);
-
-        else if ((addr & 0xc000) == 0x4000) {
-            system->interface->log("cia write", 1);
-            system->interface->log(addr & 15, 0);
-
+        } else if ((addr & 0xc000) == 0x4000) {
             cia->write(addr, data);
         }
-        else if ((addr & 0xe000) == 0x2000)
-            system->interface->log("wd1770 write", 1);
+        else if ((addr & 0xe000) == 0x2000);
+            // todo
     }
 }
 
@@ -115,16 +114,16 @@ auto Drive1541::cpuRead(uint16_t addr) -> uint8_t {
     else if ((addr & 0xfc00) == 0x1800)
         return via1->read(addr);
 
-    else if ((addr & 0xfc00) == 0x1c00)
+    else if ((addr & 0xfc00) == 0x1c00) {
+        // TED line of U6 clears the Byte line in 2 Mhz mode.
+        // Line is connected to Chip select of VIA 2. any access of VIA2 clears the line.
+        byteReady = false;
         return via2->read(addr);
 
-    else if ((addr & 0xc000) == 0x4000) {
-       // system->interface->log("cia read", 1);
-       // system->interface->log(addr & 15, 0);
+    } else if ((addr & 0xc000) == 0x4000) {
         return cia->read(addr);
     }
     else if ((addr & 0xe000) == 0x2000) {
-        system->interface->log("wd1770 read", 1);
         return 0;
     }
     else
@@ -141,6 +140,7 @@ Drive1541::Drive1541(uint8_t number, Emulator::Interface::Media* mediaConnected 
 	operation = 0;
     
     media = nullptr;
+    wasAttachDetached = false;
 
     frequency = 1000000;
     refCyclesInCpuCycle = 16;
@@ -156,12 +156,18 @@ Drive1541::Drive1541(uint8_t number, Emulator::Interface::Media* mediaConnected 
     
     via1 = new Via( 1 );
     via2 = new Via( 2 );
-    cia = new Cia8520( 1 );
+    cia = new Cia8520( 3 );
     cpu = new M6502(this);
 
     cia->serialOut = [this](bool bit) {
-        if (dataDirection && system->burstModification)
-            cia1->serialIn( bit );
+
+        if (dataDirection) {
+            system->diskIdleOff();
+
+            if (system->burstMode.use) {
+                cia1->serialIn(bit);
+            }
+        }
     };
 
     cia->irqCall = [this](bool state) {
@@ -191,7 +197,6 @@ Drive1541::Drive1541(uint8_t number, Emulator::Interface::Media* mediaConnected 
         cpu->setIrq( irqIncomming != 0 );
     };
 
-
     //PB 7, CB2: ATN IN
     //PB 6,5: Device address preset switches
     //PB 4:	ATN acknowledge OUT
@@ -211,22 +216,21 @@ Drive1541::Drive1541(uint8_t number, Emulator::Interface::Media* mediaConnected 
                 iecBus->updatePort();
             }
         } else {
+
             if (type == Type::D1570 || type == Type::D1571) {
                 dataDirection = !!(lines->ioa & 2);
-                updateCycleSpeed( lines->ioa & 0x20 );
+
+                if ((lines->ioa ^ lines->ioaOld) & 0x20) {
+                    updateCycleSpeed(lines->ioa & 0x20, false);
+                }
             }
 
             if (type == Type::D1571) {
                 uint8_t _side = side;
                 side = !!(lines->ioa & 4);
-                system->interface->log("side",1);
 
-                system->interface->log(side,0);
                 if (!structure1541.hasSecondSide())
                     side = 0;
-
-                system->interface->log(side,0);
-                system->interface->log(lines->ioa,0);
 
                 if (side != _side)
                     changeHalfTrack( 0 );
@@ -236,7 +240,7 @@ Drive1541::Drive1541(uint8_t number, Emulator::Interface::Media* mediaConnected 
     
     via1->readPort = [this]( Via::Port port, Via::Lines* lines ) {
         
-        if (port == Via::Port::B) {            
+        if (port == Via::Port::B) {
             // invert the three input bits, add device number  
             return (uint8_t)( ((0x1a | iecBus->readVia()) ^ 0x85) | (this->number << 5) ); 
         }
@@ -294,20 +298,17 @@ Drive1541::Drive1541(uint8_t number, Emulator::Interface::Media* mediaConnected 
             // port A
             writeValue = lines->ioa;
         }
-
-        byteReady = false;
-    };  
+    };
         
     via2->readPort = [this]( Via::Port port, Via::Lines* lines ) {
 
-        byteReady = false;
+        if (port == Via::Port::B) {
 
-        if (port == Via::Port::B) {            
-            
             // only bit 7 and 4 are input bits, all others reads 1 in input mode
             return ( (syncFound() | writeprotectSense() | 0x6f) & ~lines->ddrb)
                 | (lines->prb & lines->ddrb); // output mode
         }
+
         // port A
         return (latchedByte & ~lines->ddra) | ( lines->pra & lines->ddra );
     };
@@ -316,9 +317,9 @@ Drive1541::Drive1541(uint8_t number, Emulator::Interface::Media* mediaConnected 
         
         byteReadyOverflow = state;
     };
-    
+
     via2->cb2Out = [this]( bool state ) {
-            
+
         if ( readMode != state )
             updateDeviceState();
         
@@ -329,7 +330,6 @@ Drive1541::Drive1541(uint8_t number, Emulator::Interface::Media* mediaConnected 
 		
 		return system->interface->writeMedia( getMedia(), buffer, length, offset );
 	};
-    
     
     for(unsigned i = 0; i < motorOff.CHUNKS; i++)
         motorOff.chunkSize.push_back( 0 );
@@ -342,13 +342,13 @@ Drive1541::~Drive1541() {
 
 auto Drive1541::updateDeviceState() -> void {
         
-    system->interface->updateDeviceState( getMediaConnected(), !readMode, currentHalftrack + 2, via2->lines.iob & 8, !motorOn );
+    system->interface->updateDeviceState( getMediaConnected(), !readMode, (side * MAX_TRACKS_1541 * 2) + currentHalftrack + 2, via2->lines.iob & 8, !motorOn );
 }
 
 // missing BUS communication
 auto Drive1541::updateIdleDeviceState() -> void {
     
-    system->interface->updateDeviceState( getMediaConnected(), !readMode, currentHalftrack + 2, false, true );
+    system->interface->updateDeviceState( getMediaConnected(), !readMode, (side * MAX_TRACKS_1541 * 2) + currentHalftrack + 2, false, true );
 
     if (structure1541.autoStarted)
         system->motorChange( false );
@@ -371,7 +371,7 @@ auto Drive1541::power( ) -> void {
 
     via1->reset();
     via2->reset();
-   // cia->reset();
+    cia->reset();
 
     via1->cb1In(1);
     via1->ca2In(1);
@@ -400,7 +400,6 @@ auto Drive1541::power( ) -> void {
     ue3Counter = 0;
     accum = 0;
     headOffset = 0;
-    randomizeRpm();
     currentHalftrack = 17 * 2;
     stepDirection = 0;
     structure1541.autoStarted = false;
@@ -412,29 +411,49 @@ auto Drive1541::power( ) -> void {
     pulseDuration = 0;
     side = 0;
     dataDirection = true;
+    syncPos = 0;
     updateCycleSpeed(false);
     changeHalfTrack(0);
+    randomizeRpm();
 }
 
-auto Drive1541::updateCycleSpeed(bool mhz2x) -> void {
-   // mhz2x = false;
+auto Drive1541::updateCycleSpeed(bool mhz2x, bool init) -> void {
+
     if (mhz2x) {
-        rotSpeedBps[0] = 125000;
-        rotSpeedBps[1] = 133333;
-        rotSpeedBps[2] = 142857;
-        rotSpeedBps[3] = 153846;
+        //system->interface->log("2 mhz", 1);
         refCyclesInCpuCycle = 8;
         frequency = 2000000;
-        system->interface->log("2 mhz", 1);
+        if (!init) {
+            cycleCounter *= 2;
+            attachDelay <<= 1;
+            driveCycles = frequency;
+        }
+        syncPosRead = (int64_t)(-0.875 * (double)iecBus->cpuCylcesPerSecond);
+        syncPosWrite = (int64_t)(0.875 * (double)iecBus->cpuCylcesPerSecond);
+
     } else {
-        rotSpeedBps[0] = 250000;
-        rotSpeedBps[1] = 266667;
-        rotSpeedBps[2] = 285714;
-        rotSpeedBps[3] = 307692;
+        //system->interface->log("1 mhz", 1);
         refCyclesInCpuCycle = 16;
         frequency = 1000000;
-        system->interface->log("1 mhz", 1);
+        if (!init) {
+            cycleCounter /= 2;
+            attachDelay >>= 1;
+            driveCycles = frequency;
+        }
+        syncPosRead = (int64_t)(-0.455 * (double)iecBus->cpuCylcesPerSecond);
+        syncPosWrite = (int64_t)(0.455 * (double)iecBus->cpuCylcesPerSecond);
     }
+
+    setSyncPos( syncPos );
+}
+
+auto Drive1541::setSyncPos(int direction) -> void {
+    if (direction < 0)
+        syncPos = syncPosRead;
+    else if (direction > 0)
+        syncPos = syncPosWrite;
+    else
+        syncPos = 0;
 }
 
 auto Drive1541::powerOff( ) -> void {  
@@ -488,36 +507,29 @@ auto Drive1541::setViaTransition( bool state ) -> void {
 	// we check by half cycles, hence CPU IRQ line must be stable during second half cycle for recognition
 
 	int64_t half = iecBus->cpuCylcesPerSecond >> 1;
-	
+
 	if (cycleCounter >= (iecBus->cpuCylcesPerSecond + half)) {
 		// expects CPU has missed IRQ recognition
 		via1->ca1In( state, false);
 		via1->handleInterrupt();
-		
+
 	} else if (cycleCounter >= half )
 		// expects IRQ recognition this cycle
-		via1->ca1In( state, false);	
-	
+		via1->ca1In( state, false);
+
 	else
 		// expects IRQ recognition next cycle
 		via1->ca1In( state, true);	
-}
-
-inline auto Drive1541::processDelays() -> void {
-
-    if (detachDelay)
-        detachDelay--;
-    else if (attachDetachDelay)
-        attachDetachDelay--;
-    else if (attachDelay)
-        attachDelay--;
 }
 
 auto Drive1541::detach() -> void {
     write();
     
     if (loaded)
-        detachDelay = DISC_DELAY;
+        attachDelay = DISC_DELAY;
+
+    if (iecBus->powerOn && use2Mhz() )
+        attachDelay <<= 1;
     
     structure1541.detach();
     motorOff.slowDown = false;
@@ -527,7 +539,7 @@ auto Drive1541::detach() -> void {
     pulseDelta = 1; // to reload quickly
 
     if (type == Type::D1570 || type == Type::D1571)
-        via1->cb1In( true );
+        via1->ca2In( true );
 }
 
 auto Drive1541::attach( Emulator::Interface::Media* media, uint8_t* data, unsigned size, bool loadGracefully ) -> void {
@@ -541,12 +553,11 @@ auto Drive1541::attach( Emulator::Interface::Media* media, uint8_t* data, unsign
     
 	structure1541.media = media;
 
-    attachDelay = DISC_DELAY;
+    wasAttachDetached = attachDelay != 0;
+    attachDelay = DISC_DELAY * 3;
 
-    if (detachDelay)
-        attachDetachDelay = DISC_DELAY;
-    else
-        attachDelay = DISC_DELAY * 3;
+    if (iecBus->powerOn && use2Mhz() )
+        attachDelay <<= 1;
 
     if ( !structure1541.attach( data, size, loadGracefully ) )
         return;
@@ -560,7 +571,7 @@ auto Drive1541::postAttach() -> void {
     loaded = true;
 
     if (type == Type::D1570 || type == Type::D1571)
-        via1->cb1In( !writeProtected );
+        via1->ca2In( !writeProtected );
 
     operation &= ~(USERDATA_LEVEL | ENCODEDDATA_LEVEL | FLUXDATA_LEVEL);
 
@@ -570,26 +581,22 @@ auto Drive1541::postAttach() -> void {
         operation |= ENCODEDDATA_LEVEL;
     else if (structure1541.type == Structure1541::Type::P64 || structure1541.type == Structure1541::Type::P71)
         operation |= FLUXDATA_LEVEL;
-
-    system->interface->log("op",1);
-    system->interface->log(operation,0);
 }
 
 auto Drive1541::setWriteProtect(bool state) -> void {
     
-    writeProtected = state;        
+    writeProtected = state;
 }
 
 auto Drive1541::writeprotectSense() -> uint8_t {
 
-    if (detachDelay)
+    if (attachDelay) {
+        if (wasAttachDetached) {
+            if ( (attachDelay > DISC_DELAY) && (attachDelay < (DISC_DELAY << 1)))
+                return 0x10;
+        }
         return 0;
-    
-    if (attachDetachDelay)
-        return 0x10;
-    
-    if (attachDelay)
-        return 0;
+    }
     
     if (!loaded)
         return 0x10;
@@ -620,14 +627,10 @@ auto Drive1541::write() -> void {
 
 auto Drive1541::setSpeed(unsigned rpmScaled) -> void {
 
-    system->interface->log(rpmScaled, 1);
-
     this->rpm = rpmScaled;
 }
 
 auto Drive1541::setWobble(unsigned wobbleScaled) -> void {
-
-    system->interface->log(wobbleScaled, 1);
 
     this->wobble = wobbleScaled;
 }
@@ -646,19 +649,16 @@ auto Drive1541::setType( Type type ) -> void {
         operation |= DRIVE_MODE_157x;
 
     setFirmwareByType();
-
-    system->interface->log("type",1);
-    system->interface->log((unsigned)type,0);
 }
 
 auto Drive1541::setFirmwareByType( ) -> void {
     switch (type) {
         default:
-        case Type::D1541II: rom = rom1541II; system->interface->log("1541II", 1); break;
-        case Type::D1541:   rom = rom1541; system->interface->log("1541", 1); break;
-        case Type::D1541C:  rom = rom1541C; system->interface->log("1541C", 1); break;
-        case Type::D1571:   rom = rom1571; system->interface->log("1571", 1); break;
-        case Type::D1570:   rom = rom1570; system->interface->log("1570", 1); break;
+        case Type::D1541II: rom = rom1541II;break;
+        case Type::D1541:   rom = rom1541; break;
+        case Type::D1541C:  rom = rom1541C; break;
+        case Type::D1571:   rom = rom1571; break;
+        case Type::D1570:   rom = rom1570; break;
     }
 }
 

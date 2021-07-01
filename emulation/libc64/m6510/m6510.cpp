@@ -2,6 +2,7 @@
 #include "m6510.h"
 #include "../system/system.h"
 #include "../expansionPort/expansionPort.h"
+#include "../disk/iec.h"
 
 #define FALL_OFF_CYCLES 350000
 
@@ -188,7 +189,9 @@ auto M6510::busWatch() -> uint8_t {
 	cia1->clock();	\
 	vicII->clock();	\
 	cia2->clock();	\
-	expansionPort->clock();
+	expansionPort->clock(); \
+    if (system->burstMode.use) \
+	    iecBus->syncDrivesEachCycle();
 
 template<bool setI> auto M6510::busAccessUpdateFlagI( uint16_t addr ) -> void { 
 		

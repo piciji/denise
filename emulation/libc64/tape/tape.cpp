@@ -301,7 +301,6 @@ auto Tape::readHeader() -> bool {
 }
 
 auto Tape::setEnabled( bool state ) -> void {
-	
 	enabled = state;
 }
 

@@ -1,4 +1,6 @@
 
+// todo handle custom stuff better
+
 #include "../../program.h"
 #include "../config.h"
 #include "../../view/message.h"
@@ -73,6 +75,8 @@ auto ModelLayout::build( TabWindow* tabWindow, Emulator::Interface* emulator, st
     unsigned linePos = 0;
 	unsigned blockCount = 0;
     unsigned blockPos = 0;
+
+    bool useMultiAudioChipSelector = dynamic_cast<LIBC64::Interface*>(this->emulator) && GUIKIT::Vector::find(purposes, Emulator::Interface::Model::AudioSettings);
   
     for( auto& model : models ) {
         
@@ -88,8 +92,8 @@ auto ModelLayout::build( TabWindow* tabWindow, Emulator::Interface* emulator, st
                 lines.push_back( line );
                 append(*line, {~0u, 0u}, 5);     
                 
-                if (custom && lines.size() == 4 )
-                    appendControlLayout();
+                if ( useMultiAudioChipSelector && (lines.size() == 4) )
+                    appendAudioSelectorLayout();
             }
         }
         
@@ -180,7 +184,7 @@ auto ModelLayout::setEvents( ) -> void {
                     }
 
                     std::string unit = "";
-                    if (model->isDrive())
+                    if (model->isDriveSettings())
                         unit = " RPM";
 
                     block->sliderLayout.value.setText( displayText + unit );
@@ -237,13 +241,20 @@ auto ModelLayout::alignSlider( std::string maxText ) -> void {
 }
 
 auto ModelLayout::updateWidgets( ) -> void {
-    
+
     for (auto line : lines) {
-        for (auto block : line->blocks)                        
-            updateWidget( block );        
+        for (auto block : line->blocks) {
+            updateWidget(block);
+
+            if (tabWindow->mediaLayout && block->model->isDriveSettings() &&
+            (emulator->getModelIdOfEnabledDrives(emulator->getDiskMediaGroup()) == block->model->id) ) {
+                tabWindow->mediaLayout->updateVisibility( emulator->getDiskMediaGroup(), block->combo.selection() );
+                tabWindow->settings->remove( "access_floppy" );
+            }
+        }
     }
     
-    if (custom) {
+    if (dynamic_cast<LIBC64::Interface*>(this->emulator) && GUIKIT::Vector::find( purposes, Emulator::Interface::Model::AudioSettings )) {
         hideExtraAudioChips();
         hideBias();
     }
@@ -293,7 +304,7 @@ auto ModelLayout::updateWidget( Line::Block* block ) -> void {
             displayText = GUIKIT::String::formatFloatingPoint( (float) val / model->scaler, 2);
 
         std::string unit = "";
-        if (model->isDrive())
+        if (model->isDriveSettings())
             unit = " RPM";
 
         block->sliderLayout.value.setText( displayText + unit );
@@ -432,7 +443,6 @@ auto ModelLayout::translate( std::string theme ) -> void {
     
     setText( trans->get( theme ) );
 
-    // todo handle this custom stuff better
     controlLayout.label.setText( trans->get("all", {}, true) );
     controlLayout.firstAll.setText( "8580" );
     controlLayout.secondAll.setText( "6581" ); 
@@ -594,7 +604,7 @@ auto ModelLayout::hideExtraAudioChips() -> void {
         controlLayout.setEnabled( true );
 }
 
-auto ModelLayout::appendControlLayout() -> void {
+auto ModelLayout::appendAudioSelectorLayout() -> void {
     
     update( *lines[lines.size() - 1], 10 );    
     
@@ -678,7 +688,7 @@ auto ModelLayout::getIdent( Emulator::Interface::Model* model, std::string& tool
         
     switch(model->id) {
         case LIBC64::Interface::ModelIdSid:
-            if (!custom)
+            if (!GUIKIT::Vector::find(purposes, Emulator::Interface::Model::AudioSettings))
                 name = "SID";
         case LIBC64::Interface::ModelIdSid2:
         case LIBC64::Interface::ModelIdSid3:

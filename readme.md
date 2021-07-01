@@ -9,6 +9,9 @@
 
 ## 1.1.2 (not yet released)
 * P64 support
+* 1570/1571 support
+    * Burst Modification
+    * support of D71 / G71 / P71 formats
 
 ## 1.1.1
 * add Final Cartridge 3 support to EF³

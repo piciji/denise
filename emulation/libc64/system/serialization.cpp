@@ -136,8 +136,9 @@ inline auto System::serializeDiskIdle(Emulator::Serializer& s) -> void {
     s.integer( diskSilence.idle );
     s.integer( diskSilence.idleFrames );
 
-    if (!diskSilence.active && (s.mode() == Emulator::Serializer::Mode::Load))
-        diskSilence.idle = false;    
+    if (!diskSilence.active && (s.mode() == Emulator::Serializer::Mode::Load)) {
+        diskIdleOff();
+    }
 }
 
 auto System::serialize(Emulator::Serializer& s) -> void {
@@ -154,7 +155,9 @@ auto System::serialize(Emulator::Serializer& s) -> void {
     s.integer( rdyIncomming );   
     s.integer( kernalBootComplete );    
     s.integer( requestedSids );
-    s.integer( burstModification );
+    s.integer( burstMode.use );
+    s.integer( burstMode.requested );
+    s.integer( burstMode.possible );
     s.integer( observer.memoryAccesses );
     s.integer( observer.enterRom );
     s.integer( observer.motorChange );

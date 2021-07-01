@@ -68,6 +68,9 @@ struct Drive1541 {
     uint32_t driveCycles;
     uint32_t accum;
     unsigned frequency;
+    int64_t syncPosRead;
+    int64_t syncPosWrite;
+    int64_t syncPos;
     uint8_t refCyclesInCpuCycle;
     uint8_t operation;
         
@@ -105,8 +108,7 @@ struct Drive1541 {
     uint8_t latchedByte;
     
     unsigned attachDelay = 0;
-    unsigned detachDelay = 0;
-    unsigned attachDetachDelay = 0;
+    bool wasAttachDetached;
     
     bool motorOn = false;
     bool written = false;
@@ -121,6 +123,7 @@ struct Drive1541 {
     unsigned wobble = 50;
 
     auto sync() -> void;
+    auto setSyncPos(int direction) -> void;
     auto cpuWrite(uint16_t addr, uint8_t data) -> void;
     auto cpuRead(uint16_t addr) -> uint8_t;
     auto power( ) -> void;
@@ -145,12 +148,10 @@ struct Drive1541 {
     auto setWriteProtect(bool state) -> void;
     auto setSpeed( unsigned rpmScaled ) -> void;
     auto setWobble( unsigned wobbleScaled ) -> void;
-    
-    auto processDelays() -> void;
+
     auto syncFound() -> uint8_t;
     auto writeprotectSense() -> uint8_t;
     auto write() -> void;
-    auto informUserToRemoveWriteProtection() -> void;
     auto updateStepper( uint8_t step ) -> bool;
     auto motorRun() -> bool;
     auto motorOffInit() -> void;
@@ -161,8 +162,9 @@ struct Drive1541 {
 
     auto byteFetched( bool overflowNotThisCycle ) -> void;
 
-    auto updateCycleSpeed(bool mhz2x) -> void;
+    auto updateCycleSpeed(bool mhz2x, bool init = true) -> void;
     auto setFirmwareByType( ) -> void;
+    auto use2Mhz() -> bool { return frequency == 2000000; }
 };
   
 }

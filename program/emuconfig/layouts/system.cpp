@@ -99,7 +99,7 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
     {Emulator::Interface::Model::Purpose::Cpu, Emulator::Interface::Model::Purpose::GraphicChip, Emulator::Interface::Model::Purpose::SoundChip,
     Emulator::Interface::Model::Purpose::Cia, Emulator::Interface::Model::Purpose::Misc}, { 3, 3, 3 } );
 
-    driveModelLayout.build( tabWindow, emulator, {Emulator::Interface::Model::Purpose::Drive}, { 2, 1, 1, 2 } );
+    driveModelLayout.build( tabWindow, emulator, {Emulator::Interface::Model::Purpose::DriveSettings}, { 2, 1, 1, 2 } );
 
     expansionLayout.build( emulator );
 

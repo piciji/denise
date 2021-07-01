@@ -192,7 +192,8 @@ auto TabWindow::showDelayed(Layout layout) -> void {
 
 auto TabWindow::show(Layout layout) -> void {
     setLayout( layout );
-    setVisible();
+    if (!visible())
+        setVisible();
 	setFocused();
 }
 

@@ -194,7 +194,8 @@ auto Structure1541::prepare() -> void {
             prepareGxx();
             break;
         case Type::P64:
-            prepareP64();
+        case Type::P71:
+            preparePxx();
             break;
     }            
 }
@@ -203,20 +204,26 @@ auto Structure1541::getLogicalTrack(uint8_t _track, int offset) -> uint8_t {
     
     int logicalTrack = _track + offset;
 
-    if (logicalTrack > tracks)
+    unsigned tracks = TYPICAL_TRACKS * sides;
+
+    while (logicalTrack > tracks)
         logicalTrack -= tracks;
-    else if (logicalTrack < 1)
-        logicalTrack += tracks;   
-    
+
+    while (logicalTrack < 1)
+        logicalTrack += tracks;
+
     return (uint8_t)logicalTrack;        
 }
 
+// support for following DIR chain to second side (don't know if C64 DOS using this)
+#define GTP(_T) \
+    (sides == 1) ? &gcrTracks[0][(_T - 1) * 2] \
+    : &gcrTracks[ (_T > TYPICAL_TRACKS) ? 1 : 0][ (((_T > TYPICAL_TRACKS) ? (_T - TYPICAL_TRACKS) : _T) - 1) * 2]
+
+// C64 DOS (support 35 tracks per side)
 auto Structure1541::createListing( ) -> void {
 
     if (!rawData || (type == Type::Unknown))
-        return;
-    
-    if (tracks < 18)
         return;
     
     Emulator::C64Listing listing;
@@ -228,16 +235,16 @@ auto Structure1541::createListing( ) -> void {
     uint8_t _track = 18;
     uint8_t _sector = 0;
     int trackOffset = 0;
-    uint8_t tries = tracks + 1;
-    
+    uint8_t tries = TYPICAL_TRACKS * sides + 1;
+
     while (--tries) {        
-        decodeSector( &gcrTracks[0][(_track - 1) * 2], buffer, _sector );
+        decodeSector( GTP( _track ), buffer, _sector );
         uint8_t _trackLogical = buffer[0];
         
         if (_trackLogical == 18)
             break;
         
-        if ((_trackLogical == 0) || (_trackLogical > tracks)) {   
+        if ((_trackLogical == 0) || (_trackLogical > (TYPICAL_TRACKS * sides))) {
             _track = getLogicalTrack(_track, 1);
 
         } else {
@@ -250,42 +257,29 @@ auto Structure1541::createListing( ) -> void {
     if (!tries) {
         trackOffset = 0;
         _track = 18;
-        decodeSector( &gcrTracks[0][(_track - 1) * 2], buffer, _sector );
+        decodeSector( GTP( _track ), buffer, _sector );
     }
     
     unsigned freeBlocks = 0;
-    
-    for (uint8_t track = 1; track <= 35; track++) {
+
+    // c64 DOS count free sectors for 35 tracks only
+    for (uint8_t track = 1; track <= TYPICAL_TRACKS; track++) {
         
-        uint8_t* bamPtr = track <= TYPICAL_TRACKS
-            ? &buffer[4 + 4 * (track - 1)] 
-            : &buffer[192 + 4 * (track - TYPICAL_TRACKS - 1)]; // speed dos
+        uint8_t* bamPtr = &buffer[4 + 4 * (track - 1)];
         
         if (track != 18) {
-            /**
-             * detailed map about used sectors, should be identical with count in first byte
-             */            
-//            unsigned sectorMap =  bamPtr[1] << 16;
-//            sectorMap |=  bamPtr[2] << 8;
-//            auto sectors = countSectors( track );
-//            sectors -= 16;
-//            
-//            uint8_t mask = 0;
-//            for(unsigned i = 0; i < sectors; i++)               
-//                mask |= 1 << i;           
-//            
-//            sectorMap |= bamPtr[3] & mask;
-//            
-//            for(unsigned i = 0; i < 24; i++)
-//                if (sectorMap & (1 << i) )
-//                    freeBlocks++;
-            
             freeBlocks += *bamPtr;
         }
     }
 
+    if (sides == 2) {
+        for (uint8_t track = 1; track <= TYPICAL_TRACKS; track++) {
+            freeBlocks += buffer[0xdd + (track - 1)];
+        }
+    }
+
     uint8_t buffer2[256];
-    decodeSector( &gcrTracks[0][(_track - 1) * 2], buffer2, ++_sector );
+    decodeSector( GTP( _track ), buffer2, ++_sector );
     uint8_t* ptr = &buffer2[0];
 
     bool addedHeadline = false;
@@ -336,17 +330,22 @@ auto Structure1541::createListing( ) -> void {
             if (trackOffset)
                 _track = getLogicalTrack(_track, trackOffset);
                         
-            if (_track > tracks)
+            if (_track > (TYPICAL_TRACKS * sides))
                 break;
             
             if (_track == 0)
                 break;
 
-            if ( decodeSector(&gcrTracks[0][(_track - 1) * 2], buffer2, _sector) != ERR_OK)
+            if ( decodeSector(GTP( _track ), buffer2, _sector) != ERR_OK)
                 break;
             
             ptr = &buffer2[0];
         }        
+    }
+
+    if (!addedHeadline) {
+        listings.push_back( { 0, listing.buildHeadline( buffer + 0x90, buffer + 0xa5, buffer + 0xa2 ) } );
+        loader.push_back( {'*'} );
     }
     
     listings.push_back( { id++, listing.buildFreeLine( freeBlocks ), listing.decodeToScreencode( buildLoadCommand( _headlineCmd, true) ) } );
@@ -458,8 +457,8 @@ auto Structure1541::create( Type newType, std::string diskName ) -> Emulator::In
     return {nullptr, 0};
 }
 
-auto Structure1541::createBAM( std::string diskName, uint8_t tracksInImage, uint8_t* buffer ) -> void {
-    
+auto Structure1541::createBAM( std::string diskName, uint8_t* buffer, uint8_t* bufferSecondSide ) -> void {
+
     Emulator::PetciiConversion petciiConversion;
 
     diskName = petciiConversion.encode( diskName );
@@ -467,10 +466,14 @@ auto Structure1541::createBAM( std::string diskName, uint8_t tracksInImage, uint
     auto id = cutId( diskName );
     
     std::memset(buffer, 0, 256);
+    if (bufferSecondSide)
+        std::memset(bufferSecondSide, 0, 256);
     
     buffer[0] = 18;
     buffer[1] = 1;
     buffer[2] = 65;
+    if (bufferSecondSide)
+        buffer[3] = 0x80;
     
     std::memset( buffer + 144, 0xa0, 27 );
     std::memcpy( buffer + 144, diskName.c_str(), diskName.size() );
@@ -479,26 +482,45 @@ auto Structure1541::createBAM( std::string diskName, uint8_t tracksInImage, uint
     buffer[165] = 50;
     buffer[166] = 65;
     
-    // to calculate the free blocks bam sector contains a usage bit for all sectors    
-    for (uint8_t track = 1; track <= tracksInImage; track++) {
-        
-        uint8_t sectors = countSectors( track );                
-        
-        uint8_t* bamPtr = track <= TYPICAL_TRACKS
-            ? &buffer[4 + 4 * (track - 1)] 
-            : &buffer[192 + 4 * (track - TYPICAL_TRACKS - 1)];
-        
-        for (uint8_t sector = 0; sector < sectors; sector++) {                        
-            
+    // to calculate the free blocks bam sector contains a usage bit for all sectors
+    for (uint8_t track = 1; track <= TYPICAL_TRACKS; track++) {
+
+        uint8_t sectors = countSectors( track );
+
+        uint8_t* bamPtr = &buffer[4 + 4 * (track - 1)];
+
+        for (uint8_t sector = 0; sector < sectors; sector++) {
+
             // sectors in use keep zero
             if (track == 18 && ( sector == 0 || sector == 1 ))
                 continue;
-            
+
             // mark unused sectors
             bamPtr[1 + sector / 8] |= (1 << (sector & 7));
 
             *bamPtr += 1; // first byte count all unused sectors in a track
-        }        
+        }
+    }
+
+    if (bufferSecondSide) {
+        for (uint8_t track = 1; track <= TYPICAL_TRACKS; track++) {
+
+            uint8_t sectors = countSectors( track );
+
+            uint8_t* bamPtr = &bufferSecondSide[3 * (track - 1)];
+
+            for (uint8_t sector = 0; sector < sectors; sector++) {
+
+                // sectors in use keep zero
+                if (track == 18 )
+                    continue;
+
+                // mark unused sectors
+                bamPtr[sector / 8] |= (1 << (sector & 7));
+
+                buffer[0xdd + (track - 1)]++;
+            }
+        }
     }
 }
 
@@ -579,10 +601,8 @@ auto Structure1541::serialize(Emulator::Serializer& s, bool written) -> void {
 
     s.integer( rawSize );
     
-    s.integer( tracks );
-    
-    s.integer( maxHalfTracks );
-    
+    s.integer( tracksInDxx );
+
     s.integer( maxTrackLength );
 
     s.integer( sides );
@@ -705,4 +725,3 @@ auto Structure1541::getTrackPtr( uint8_t side, uint8_t halfTrack ) -> GcrTrack* 
 
 
 }
-
