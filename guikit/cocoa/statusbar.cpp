@@ -51,7 +51,7 @@ auto pStatusBar::create() -> void {
     
     @autoreleasepool {
         cocoaView = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, 0, 0)];
-        [cocoaView setHidden:YES];
+    //    [cocoaView setHidden:YES];
         
         [cocoaView setBackgroundColor: [NSColor textBackgroundColor]];
 
