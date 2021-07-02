@@ -27,7 +27,7 @@ endif
 objects += m6510 ciaBase cia6526 cia8520 vicIIBase vicIICycle vicIIFast systemC64 sid chamberlin tapeC64 inputC64 controlPortC64 acia
 objects += cartC64 gameCartC64 freezerC64 reuC64 easyFlashC64 easyFlash3C64 retroReplayC64 gmod2C64 clipboardC64 geoRamC64
 objects += m6502 via iec prg64 drive1541 structure1541 firmwareC64
-objects += thread m93c86 mx29lv640eb icons socket fpaq0
+objects += thread m93c86 mx29lv640eb icons fonts socket fpaq0
 
 prgflags := -DAPP_NAME="\"$(name)\"" -DTRANSLATION_FOLDER="\"$(translationFolder)/\"" -DDATA_FOLDER="\"$(dataFolder)/\"" -DSHADER_FOLDER="\"$(shaderFolder)/\"" -DIMG_FOLDER="\"$(imgFolder)/\""
 flags :=
@@ -152,6 +152,7 @@ obj/thread.o:emulation/tools/thread.cpp
 obj/m93c86.o:emulation/tools/m93c86.cpp
 obj/mx29lv640eb.o:emulation/tools/mx29lv640eb.cpp
 obj/icons.o:data/icons/icons.cpp
+obj/fonts.o:data/fonts/fonts.cpp
 obj/socket.o:emulation/tools/socket.cpp
 obj/fpaq0.o:emulation/tools/fpaq0.cpp
 
