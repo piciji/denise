@@ -14,9 +14,6 @@ imgFolder := img
 prefix ?= /usr
 #prefix ?= $(HOME)/.local
 
-# temporary: to uninstall previous versions of Denise, will be removed in future releases
-prefixOld := $(HOME)/.local
-
 include data/Makefile
 
 objects := program view config emuconfig emumodel mediaview archiveviewer states firmware cmd statusbar
@@ -243,12 +240,7 @@ install:
     else ifeq ($(platform),macosx)
 	dmgbuild -s data/dmgSettings.py "Denise" out/Denise.dmg
     else
-	# remove possible old installation
-	if [ -f $(prefixOld)/bin/$(name) ]; then rm $(prefixOld)/bin/$(name); fi
-	if [ -f $(prefixOld)/share/icons/$(loname).png ]; then rm $(prefixOld)/share/icons/$(loname).png; fi
-	if [ -f $(prefixOld)/share/applications/$(loname).desktop ]; then rm $(prefixOld)/share/applications/$(loname).desktop; fi
-	if [ -d $(prefixOld)/$(loname) ]; then rm -rf $(prefixOld)/$(loname); fi
-	
+
 	if [ -d $(prefix)/local ]; then	mkdir -p $(prefix)/local/bin/; else mkdir -p $(prefix)/bin/; fi
 	mkdir -p $(prefix)/share/icons/
 	mkdir -p $(prefix)/share/applications/

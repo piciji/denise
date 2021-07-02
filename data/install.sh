@@ -15,14 +15,6 @@ echo "Finished installing dependencies. Copying application files."
 
 prefix=/usr
 
-# temporary: to uninstall previous versions of Denise, will be removed in future releases
-prefixOld=~/.local
-
-if [ -f $prefixOld/bin/Denise ]; then rm $prefixOld/bin/Denise; fi
-if [ -f $prefixOld/share/icons/denise.png ]; then rm $prefixOld/share/icons/denise.png; fi
-if [ -f $prefixOld/share/applications/denise.desktop ]; then rm $prefixOld/share/applications/denise.desktop; fi
-if [ -d $prefixOld/denise ]; then rm -rf $prefixOld/denise; fi
-
 if [ -d $prefix/local ]; then mkdir -p $prefix/local/bin/; else mkdir -p $prefix/bin/; fi
 mkdir -p $prefix/share/icons/
 mkdir -p $prefix/share/applications/
