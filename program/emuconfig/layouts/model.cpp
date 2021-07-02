@@ -552,6 +552,18 @@ auto ModelLayout::applyCustomStuff( Line::Block* block, Emulator::Interface::Mod
                     program->power(activeEmulator);
 
                 break;
+
+            case LIBC64::Interface::ModelIdCycleAccurateVideo:
+                program->fastForward(false);
+
+                if (this->emulator == activeEmulator)
+                    program->power(activeEmulator);
+                break;
+
+            case LIBC64::Interface::ModelIdDiskThread:
+            case LIBC64::Interface::ModelIdDiskOnDemand:
+                program->fastForward(false);
+                break;
         }
     }
 }

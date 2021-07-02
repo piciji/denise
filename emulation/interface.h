@@ -214,7 +214,7 @@ struct Interface {
 		unsigned id;
 		std::string name;		
 		enum Type : unsigned { Switch, Range, Hex, Radio, Combo, Slider } type;
-		enum Purpose : unsigned { Cpu, GraphicChip, SoundChip, Cia, AudioSettings, AudioResampler, Misc, DriveSettings } purpose;
+		enum Purpose : unsigned { Cpu, GraphicChip, SoundChip, Cia, AudioSettings, AudioResampler, Misc, DriveSettings, Performance } purpose;
 		int defaultValue;
 		std::vector<int> range;
 		std::vector<std::string> options;
@@ -232,6 +232,7 @@ struct Interface {
         auto isSoundChip() const -> bool { return purpose == Purpose::SoundChip; }
         auto isAudioResampler() const -> bool { return purpose == Purpose::AudioResampler; }
         auto isDriveSettings() const -> bool { return purpose == Purpose::DriveSettings; }
+        auto isPerformance() const -> bool { return purpose == Purpose::Performance; }
 	};
 	std::vector<Model> models;	
     	
@@ -459,6 +460,7 @@ struct Interface {
     virtual auto setModelValue(unsigned modelId, int value) -> void {}
     virtual auto getModelValue(unsigned modelId) -> int { return 0; }
     virtual auto getModelIdOfEnabledDrives(MediaGroup* group) -> unsigned { return ~0; }
+    virtual auto getModelIdOfCycleRenderer() -> unsigned { return ~0; }
     
     //controls
     virtual auto connect(unsigned connectorId, unsigned deviceId) -> void {}
@@ -499,12 +501,7 @@ struct Interface {
     virtual auto cropData() -> uint8_t* { return nullptr; }
     virtual auto cropPitch() -> unsigned { return 0; }
     
-    // performance amd accuracy
-    virtual auto videoCycleAccuracy(bool state) -> void {}
     virtual auto videoAddMeta(bool state) -> void {}
-    virtual auto diskHighLoadThread(bool state) -> void {}
-    virtual auto diskIdle(bool state) -> void {}
-    virtual auto audioRealtimeThread(bool state) -> void {}
     
     //sets alternative per line callbacks
     virtual auto setLineCallback(bool state, unsigned scanline = 0) -> void {}

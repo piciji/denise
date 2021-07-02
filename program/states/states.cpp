@@ -491,6 +491,9 @@ auto States::updateModels() -> void {
 
     for(auto& model : emulator->models) {
 
+        if (model.isPerformance())
+            continue;
+
         int value = emulator->getModelValue( model.id );
 		
 		if (model.isGraphicChip()) {

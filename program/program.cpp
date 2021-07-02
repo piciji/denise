@@ -167,21 +167,10 @@ auto Program::initEmulator( Emulator::Interface* emulator ) -> void {
     
     setExpansionSelection( emulator );
 
-    setAccuracy( emulator );
-    
     setRunAhead( emulator );
     
     if (dynamic_cast<LIBC64::Interface*>( emulator ))
         setMemoryPattern( emulator );
-}
-
-auto Program::setAccuracy(Emulator::Interface* emulator) -> void {
-    auto settings = getSettings( emulator );
-    
-    emulator->videoCycleAccuracy( settings->get<bool>( "video_cycle_accuracy", true) );
-    emulator->diskHighLoadThread( settings->get<bool>( "disk_highload_thread", false) );
-    emulator->diskIdle( settings->get<bool>( "disk_idle", false) );
-    emulator->audioRealtimeThread( settings->get<bool>( "audio_realtime_thread", false) );
 }
 
 auto Program::setMemoryPattern(Emulator::Interface* emulator) -> void {

@@ -111,11 +111,7 @@ auto Autoloader::postProcessing() -> void {
                 continue;
 
 			if (_mediaGroup.isDrive()) {
-
 				activateDrive( ddControl.emulator, &_mediaGroup, count );
-
-				if (emuView)
-					emuView->systemLayout->activateDrive( &_mediaGroup, count );
 			}
 			else if (_mediaGroup.isExpansion()) {
 				
@@ -358,6 +354,13 @@ auto Autoloader::activateDrive( Emulator::Interface* emulator, Emulator::Interfa
     emulator->setModelValue( modelId, requestedCount );
 
 	settings->remove( "access_floppy" );
+
+    auto emuView = EmuConfigView::TabWindow::getView( emulator );
+
+    if (emuView) {
+        emuView->systemLayout->driveModelLayout.updateWidget( modelId );
+        emuView->mediaLayout->updateVisibility( mediaGroup, requestedCount );
+    }
 }
 
 auto Autoloader::checkForSavestate( GUIKIT::File* file, GUIKIT::File::Item* item ) -> bool {

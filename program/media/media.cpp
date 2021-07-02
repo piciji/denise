@@ -1654,7 +1654,6 @@ auto MediaLayout::insertFile( MediaGroupLayout::Block* block, std::string filePa
             
             if (mediaGroup->isDrive()) {				
 				autoloader->activateDrive( emulator, mediaGroup, 1 );
-				emuConfigView->systemLayout->activateDrive(mediaGroup, 1 );
 			}
                         
             if (mediaGroup->isExpansion()) {

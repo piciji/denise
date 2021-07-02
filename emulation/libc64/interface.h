@@ -21,6 +21,7 @@ struct Interface : Emulator::Interface {
         ModelIdSid7, ModelIdSid7Left, ModelIdSid7Right, ModelIdSid7Adr, ModelIdSid8, ModelIdSid8Left, ModelIdSid8Right, ModelIdSid8Adr,
         ModelIdCiaBurstMode, ModelIdDiskDriveModel, ModelIdDiskDrivesConnected, ModelIdTapeDrivesConnected,
         ModelIdDiskDriveSpeed, ModelIdDiskDriveWobble, ModelIdTapeDriveWobble,
+        ModelIdCycleAccurateVideo, ModelIdDiskThread, ModelIdDiskOnDemand,
     };
     
     enum MediaGroupId {
@@ -138,6 +139,7 @@ struct Interface : Emulator::Interface {
     auto setModelValue(unsigned modelId, int value) -> void;
     auto getModelValue(unsigned modelId) -> int;
     auto getModelIdOfEnabledDrives(MediaGroup* group) -> unsigned;
+    auto getModelIdOfCycleRenderer() -> unsigned;
     
     //crop
 	auto crop( CropType type, bool aspectCorrect, unsigned left = 0, unsigned right = 0, unsigned top = 0, unsigned bottom = 0 ) -> void;
@@ -151,12 +153,7 @@ struct Interface : Emulator::Interface {
     // sockets
     auto prepareSocket( Media* media, std::string address, std::string port ) -> void;
 
-    // performance amd accuracy
-    auto videoCycleAccuracy(bool state) -> void;
     auto videoAddMeta(bool state) -> void;
-    auto diskHighLoadThread(bool state) -> void;
-    auto diskIdle(bool state) -> void;
-    auto audioRealtimeThread(bool state) -> void;
         
     auto activateDebugCart( unsigned limitCycles = 0 ) -> void;
     auto fastForward(unsigned config) -> void;

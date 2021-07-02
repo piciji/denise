@@ -120,16 +120,9 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
         case Hotkey::Id::ToggleRenderer: {
             if (!activeEmulator)
                 break; 
-            
-            auto state = settings->get<bool>("video_cycle_accuracy", true);
-            
-            settings->set<bool>("video_cycle_accuracy", !state);
-            
-            EmuConfigView::TabWindow::getView(activeEmulator)->systemLayout->accuracyLayout.block.videoCycleAccuracy.setChecked( !state );
-            
-            activeEmulator->videoCycleAccuracy( !state );
+
+            EmuConfigView::TabWindow::getView(activeEmulator)->systemLayout->performanceModelLayout.toggleCheckbox( activeEmulator->getModelIdOfCycleRenderer() );
             program->power(activeEmulator);
-            
         } break;
         
         case Hotkey::Id::RunAheadToggleMode: {

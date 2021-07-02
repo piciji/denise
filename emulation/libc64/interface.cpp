@@ -535,6 +535,10 @@ auto Interface::prepareModels() -> void {
                       { "0", "1" }});
 
     models.push_back({ModelIdTapeDriveWobble, "Tape Wobble", Model::Type::Switch, Model::Purpose::DriveSettings, 0});
+
+    models.push_back({ModelIdCycleAccurateVideo, "Cycle Accurate Video", Model::Type::Switch, Model::Purpose::Performance, 1 });
+    models.push_back({ModelIdDiskThread, "Disk Thread", Model::Type::Switch, Model::Purpose::Performance, 0 });
+    models.push_back({ModelIdDiskOnDemand, "Disk On Demand", Model::Type::Switch, Model::Purpose::Performance, 1 });
 }
 
 auto Interface::prepareFirmware() -> void {
@@ -1284,6 +1288,16 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
         case ModelIdDiskDriveSpeed:
             iecBus->setDriveSpeed( value );
             break;
+        case ModelIdCycleAccurateVideo:
+            system->cycleRendererNextBoot = value & 1;
+            break;
+        case ModelIdDiskThread:
+            iecBus->setPowerThread( value & 1 );
+            break;
+        case ModelIdDiskOnDemand:
+            system->diskSilence.active = value & 1;
+            system->diskIdleOff();
+            break;
     }    
 }
 
@@ -1368,7 +1382,11 @@ auto Interface::getModelValue(unsigned modelId) -> int {
         case ModelIdTapeDriveWobble:        return tape->hasWobble() ? 1 : 0;
         case ModelIdDiskDriveWobble:        return (int)iecBus->drives[0]->wobble;
         case ModelIdDiskDriveSpeed:         return (int)iecBus->drives[0]->rpm;
-    }    
+
+        case ModelIdCycleAccurateVideo:     return system->cycleRendererNextBoot;
+        case ModelIdDiskThread:             return iecBus->cpuBurnerRequested;
+        case ModelIdDiskOnDemand:           return system->diskSilence.active;
+    }
     return 0;
 }
 
@@ -1562,25 +1580,8 @@ auto Interface::analyzeExpansion(uint8_t* data, unsigned size, std::string suffi
     return system->analyzeExpansion( data, size, suffix );
 }
 
-auto Interface::videoCycleAccuracy(bool state) -> void {
-    system->cycleRendererNextBoot = state;
-}
-
 auto Interface::videoAddMeta(bool state) -> void {
     vicIIFast->setMeta( state );
-}
-
-auto Interface::diskHighLoadThread(bool state) -> void {
-    iecBus->setPowerThread( state );
-}
-
-auto Interface::diskIdle(bool state) -> void {
-    system->diskSilence.active = state;
-    system->diskIdleOff();
-}
-
-auto Interface::audioRealtimeThread(bool state) -> void {
-    sid->setMoreAccuracy( state );
 }
 
 auto Interface::setMonitorFpsRatio(double ratio) -> void {
@@ -1610,6 +1611,10 @@ auto Interface::getModelIdOfEnabledDrives(MediaGroup* group) -> unsigned {
         return ModelIdTapeDrivesConnected;
 
     return ~0;
+}
+
+auto Interface::getModelIdOfCycleRenderer() -> unsigned {
+    return ModelIdCycleAccurateVideo;
 }
 
 }

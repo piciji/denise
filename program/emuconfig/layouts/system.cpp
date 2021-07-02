@@ -1,21 +1,4 @@
 
-AccuracyLayout::Block::Block() {    
-    append(videoCycleAccuracy, {0u, 0u}, 10);
-    append(diskHighLoadThread, {0u, 0u}, 10);
-    append(diskIdle, {0u, 0u}, 10);
-  //  append(audioRealtimeThread, {0u, 0u});   
-    
-    setAlignment(0.5);
-}
-
-AccuracyLayout::AccuracyLayout() {
-    setPadding(10);
-    append( dangerLabel, {0u, 0u}, 5 );
-    append( block, {0u, 0u} );
-    dangerLabel.setForegroundColor(0xff4500);
-    setFont(GUIKIT::Font::system("bold"));    
-}
-
 auto ExpansionLayout::build( Emulator::Interface* emulator ) -> void {
     unsigned blocksPerLine = 4;
     auto& expansions = emulator->expansions;
@@ -99,6 +82,7 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
     Emulator::Interface::Model::Purpose::Cia, Emulator::Interface::Model::Purpose::Misc}, { 3, 3, 3 } );
 
     driveModelLayout.build( tabWindow, emulator, {Emulator::Interface::Model::Purpose::DriveSettings}, { 2, 1, 1, 2 } );
+    performanceModelLayout.build( tabWindow, emulator, {Emulator::Interface::Model::Purpose::Performance}, { 3 } );
 
     expansionLayout.build( emulator );
 
@@ -108,7 +92,7 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
     leftLayout.append(memoryLayout, {~0u, 0u});
     
     upperLayout.append(leftLayout, {~0u, 0u}, 10);
-    rightLayout.append(driveModelLayout, {~0u, 0u});
+    rightLayout.append(driveModelLayout, {~0u, 0u}, 10);
 
     upperLayout.append(rightLayout, {~0u, 0u});
 
@@ -116,11 +100,12 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
     
     if (modelLayout.lines.size() > 0)
         append(modelLayout, {~0u, 0u}, 10);
-        
-    append(accuracyLayout, {~0u, 0u});
-    
+
+    append(performanceModelLayout, {~0u, 0u});
+
     modelLayout.setEvents();
     driveModelLayout.setEvents();
+    performanceModelLayout.setEvents();
 		
     for( auto block : memoryLayout.blocks ) {
         auto memoryType = block->memoryType;
@@ -150,71 +135,8 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
             };
         }
     }       
-    
-    accuracyLayout.block.videoCycleAccuracy.onToggle = [this]() {
 
-        bool state = accuracyLayout.block.videoCycleAccuracy.checked();
-        
-        _settings->set<bool>("video_cycle_accuracy", state);
-
-        program->fastForward(false);
-
-        emulator->videoCycleAccuracy(state);
-        
-        if (this->emulator == activeEmulator)
-            program->power(activeEmulator);
-    };
-    
-    accuracyLayout.block.diskHighLoadThread.onToggle = [this]() {
-
-        bool state = accuracyLayout.block.diskHighLoadThread.checked();
-        
-        _settings->set<bool>("disk_highload_thread", state);
-
-        program->fastForward(false);
-
-        emulator->diskHighLoadThread(state);
-    };  
-
-    accuracyLayout.block.diskIdle.onToggle = [this]() {
-
-        bool state = accuracyLayout.block.diskIdle.checked();
-        
-        _settings->set<bool>("disk_idle", state);
-
-        program->fastForward(false);
-
-        emulator->diskIdle(state);
-    };  
-    
-    accuracyLayout.block.audioRealtimeThread.onToggle = [this]() {
-
-        bool state = accuracyLayout.block.audioRealtimeThread.checked();
-        
-        _settings->set<bool>("audio_realtime_thread", state);
-
-        program->fastForward(false);
-
-        emulator->audioRealtimeThread(state);
-    }; 
-    
     loadSettings();
-}
-
-auto SystemLayout::activateDrive( Emulator::Interface::MediaGroup* mediaGroup, unsigned requestedCount ) -> void {
-
-    if (requestedCount > mediaGroup->media.size())
-        requestedCount = mediaGroup->media.size();
-
-    auto modelId = emulator->getModelIdOfEnabledDrives( mediaGroup );
-
-    unsigned counter = emulator->getModelValue( modelId );
-
-    if (counter >= requestedCount)
-        return;
-
-    driveModelLayout.updateWidget( modelId );
-    tabWindow->mediaLayout->updateVisibility( mediaGroup, requestedCount );
 }
 
 auto SystemLayout::translate() -> void {
@@ -222,6 +144,7 @@ auto SystemLayout::translate() -> void {
     
     modelLayout.translate();
     driveModelLayout.translate( "drives" );
+    performanceModelLayout.translate( "accuracy and performance" );
     
     expansionLayout.setText( trans->get("expansion_port") );
     
@@ -239,18 +162,6 @@ auto SystemLayout::translate() -> void {
     SliderLayout::scale(sliderLayouts, "1024 mb");
 
     driveModelLayout.alignSlider( "300.00 RPM" );
-    
-    accuracyLayout.setText( trans->get("accuracy and performance") ); 
-    accuracyLayout.dangerLabel.setText( trans->get("cpu load") );  
-    accuracyLayout.dangerLabel.setTooltip( trans->get("cpu load info") );  
-    accuracyLayout.block.videoCycleAccuracy.setText( trans->get("video cycle accuracy") );
-    accuracyLayout.block.videoCycleAccuracy.setTooltip( trans->get("video cycle accuracy info") );
-    accuracyLayout.block.diskHighLoadThread.setText( trans->get("disk highload thread") );
-    accuracyLayout.block.diskHighLoadThread.setTooltip( trans->get("disk highload thread info") );
-    accuracyLayout.block.diskIdle.setText( trans->get("disk idle") );
-    accuracyLayout.block.diskIdle.setTooltip( trans->get("disk idle info") );
-    accuracyLayout.block.audioRealtimeThread.setText( trans->get("audio realtime thread") );
-    accuracyLayout.block.audioRealtimeThread.setTooltip( trans->get("audio realtime thread info") );
 }
 
 auto SystemLayout::getSizeString( unsigned sizeInKb ) -> std::string {
@@ -354,18 +265,12 @@ auto SystemLayout::loadSettings() -> void {
                 block->box.setChecked();
         }
     }
-    
-    accuracyLayout.block.videoCycleAccuracy.setChecked( _settings->get<bool>("video_cycle_accuracy", true) );
-    
-    accuracyLayout.block.diskHighLoadThread.setChecked( _settings->get<bool>("disk_highload_thread", false) );
-    
-    accuracyLayout.block.diskIdle.setChecked( _settings->get<bool>("disk_idle", false) );
-    
-    accuracyLayout.block.audioRealtimeThread.setChecked( _settings->get<bool>("audio_realtime_thread", false) );
-    
+
     updateExpansionMemory();
     
     modelLayout.updateWidgets();
 
     driveModelLayout.updateWidgets();
+
+    performanceModelLayout.updateWidgets();
 }

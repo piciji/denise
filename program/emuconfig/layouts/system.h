@@ -1,20 +1,4 @@
 
-struct AccuracyLayout : GUIKIT::FramedVerticalLayout {
-    
-    GUIKIT::Label dangerLabel;
-    
-    struct Block : GUIKIT::HorizontalLayout {
-        GUIKIT::CheckBox videoCycleAccuracy;
-        GUIKIT::CheckBox diskHighLoadThread;
-        GUIKIT::CheckBox diskIdle;
-        GUIKIT::CheckBox audioRealtimeThread;
-        
-        Block();
-    } block;
-    
-    AccuracyLayout();
-};
-
 struct MemoryLayout : GUIKIT::FramedVerticalLayout {
     struct Block : GUIKIT::HorizontalLayout {
         Emulator::Interface::MemoryType* memoryType;
@@ -62,11 +46,10 @@ struct SystemLayout : GUIKIT::VerticalLayout {
     MemoryLayout memoryLayout;
     ModelLayout modelLayout;
     ModelLayout driveModelLayout;
-    AccuracyLayout accuracyLayout;
+    ModelLayout performanceModelLayout;
     ExpansionLayout expansionLayout;
 
     auto translate() -> void;
-    auto activateDrive( Emulator::Interface::MediaGroup* mediaGroup, unsigned requestedCount ) -> void;
     auto updateExpansionMemory() -> void;
     auto getSizeString( unsigned sizeInKb ) -> std::string;
     auto setExpansion( Emulator::Interface::Expansion* newExpansion ) -> void;
