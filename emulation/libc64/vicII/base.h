@@ -74,7 +74,6 @@ struct VicIIBase {
     virtual auto power() -> void;
 	virtual auto triggerLightPen( bool state ) -> void;
     virtual auto triggerLightPen( bool state, uint8_t subCycle ) -> void;
-    virtual auto powerOff() -> void {}
 	virtual auto getCurrentLinePtr() -> uint8_t* = 0;
 	virtual auto getCurrentFramePtr() -> uint8_t* = 0;
 	virtual auto lastReadPhase1() -> uint8_t { return 0; }

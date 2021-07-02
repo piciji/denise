@@ -1,7 +1,6 @@
 
 AccuracyLayout::Block::Block() {    
     append(videoCycleAccuracy, {0u, 0u}, 10);
-    append(videoScanlineThread, {0u, 0u}, 10);
     append(diskHighLoadThread, {0u, 0u}, 10);
     append(diskIdle, {0u, 0u}, 10);
   //  append(audioRealtimeThread, {0u, 0u});   
@@ -166,17 +165,6 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
             program->power(activeEmulator);
     };
     
-    accuracyLayout.block.videoScanlineThread.onToggle = [this]() {
-
-        bool state = accuracyLayout.block.videoScanlineThread.checked();
-        
-        _settings->set<bool>("video_scanline_thread", state);
-
-        program->fastForward(false);
-
-        emulator->videoScanlineThread(state);
-    };    
-    
     accuracyLayout.block.diskHighLoadThread.onToggle = [this]() {
 
         bool state = accuracyLayout.block.diskHighLoadThread.checked();
@@ -257,8 +245,6 @@ auto SystemLayout::translate() -> void {
     accuracyLayout.dangerLabel.setTooltip( trans->get("cpu load info") );  
     accuracyLayout.block.videoCycleAccuracy.setText( trans->get("video cycle accuracy") );
     accuracyLayout.block.videoCycleAccuracy.setTooltip( trans->get("video cycle accuracy info") );
-    accuracyLayout.block.videoScanlineThread.setText( trans->get("video scanline thread") );
-    accuracyLayout.block.videoScanlineThread.setTooltip( trans->get("video scanline thread info") );
     accuracyLayout.block.diskHighLoadThread.setText( trans->get("disk highload thread") );
     accuracyLayout.block.diskHighLoadThread.setTooltip( trans->get("disk highload thread info") );
     accuracyLayout.block.diskIdle.setText( trans->get("disk idle") );
@@ -370,8 +356,6 @@ auto SystemLayout::loadSettings() -> void {
     }
     
     accuracyLayout.block.videoCycleAccuracy.setChecked( _settings->get<bool>("video_cycle_accuracy", true) );
-    
-    accuracyLayout.block.videoScanlineThread.setChecked( _settings->get<bool>("video_scanline_thread", false) );
     
     accuracyLayout.block.diskHighLoadThread.setChecked( _settings->get<bool>("disk_highload_thread", false) );
     

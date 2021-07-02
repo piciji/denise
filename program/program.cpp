@@ -179,7 +179,6 @@ auto Program::setAccuracy(Emulator::Interface* emulator) -> void {
     auto settings = getSettings( emulator );
     
     emulator->videoCycleAccuracy( settings->get<bool>( "video_cycle_accuracy", true) );
-    emulator->videoScanlineThread( settings->get<bool>( "video_scanline_thread", false) );
     emulator->diskHighLoadThread( settings->get<bool>( "disk_highload_thread", false) );
     emulator->diskIdle( settings->get<bool>( "disk_idle", false) );
     emulator->audioRealtimeThread( settings->get<bool>( "audio_realtime_thread", false) );

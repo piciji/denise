@@ -580,7 +580,6 @@ auto System::powerOff() -> void {
     keyBuffer->reset();
     sid->powerOff();
     iecBus->powerOff();
-    vicII->powerOff();
 }
 
 auto System::initRam(uint8_t*& mem) -> void {

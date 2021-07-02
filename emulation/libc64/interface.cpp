@@ -524,7 +524,7 @@ auto Interface::prepareModels() -> void {
     models.push_back({ModelIdDiskDrivesConnected, "Disk Drives", Model::Type::Combo, Model::Purpose::DriveSettings, 1, {0, 4},
                       { "0", "1", "2", "3", "4" }});
 
-    models.push_back({ModelIdDiskDriveModel, "Disk Drive", Model::Type::Combo, Model::Purpose::DriveSettings, 0, {0, 4},
+    models.push_back({ModelIdDiskDriveModel, "Disk Drive", Model::Type::Combo, Model::Purpose::DriveSettings, 1, {0, 4},
                       { "1541", "1541-II", "1541-C", "1570", "1571" }});
 
     models.push_back({ModelIdDiskDriveSpeed, "Disk Speed", Model::Type::Slider, Model::Purpose::DriveSettings, 30000, {27500, 32500}, {}, 500, 100.0 });
@@ -1564,10 +1564,6 @@ auto Interface::analyzeExpansion(uint8_t* data, unsigned size, std::string suffi
 
 auto Interface::videoCycleAccuracy(bool state) -> void {
     system->cycleRendererNextBoot = state;
-}
-
-auto Interface::videoScanlineThread(bool state) -> void {
-    vicIIFast->setThreading( state );
 }
 
 auto Interface::videoAddMeta(bool state) -> void {

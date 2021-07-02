@@ -501,7 +501,6 @@ struct Interface {
     
     // performance amd accuracy
     virtual auto videoCycleAccuracy(bool state) -> void {}
-    virtual auto videoScanlineThread(bool state) -> void {}
     virtual auto videoAddMeta(bool state) -> void {}
     virtual auto diskHighLoadThread(bool state) -> void {}
     virtual auto diskIdle(bool state) -> void {}

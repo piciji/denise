@@ -14,33 +14,6 @@ VicIIFast::VicIIFast() : VicIIBase() {
     
     initMetaPattern();
 	addMeta = false;
-    
-    std::thread worker( [this] {     
-        
-        std::chrono::milliseconds duration(5);
-        std::mutex cvM;
-        std::unique_lock<std::mutex> lk(cvM);
-            
-        idle = true;
-        
-        while(1) {
-            ready = false;
-            
-            while (!ready.load()) {
-                
-                if (idle.load()) {
-                    if (cv.wait_for(lk, duration, [this]() { return ready.load(); }))
-                        break;  
-                }        
-            }
-            
-            scanline();
-        }
-    } );
-    
-    Emulator::setThreadPriorityRealtime( worker );
-    
-    worker.detach();
 
     std::fill_n(drawSprites, VIC_MAX_LINE_LENGTH << 1, nullptr);
 }
@@ -52,33 +25,14 @@ auto VicIIFast::power() -> void {
     dmaDelay = 0;
 	dataC = 0;
 	dataG = 0;
-	
-    idle = (useThread && (this == vicII)) ? false : true;
-    if (!idle)
-        cv.notify_one();
-	
+
 	linePtr = frameBuffer;
     VicIIBase::power();
     setBorderDim();
 }
 
-auto VicIIFast::powerOff() -> void {
-    idle = true;
-}
-
 auto VicIIFast::setMeta( bool state ) -> void {
     addMeta = state;
-}
-
-auto VicIIFast::setThreading( bool state) -> void {
-    useThread = state;
-	idle = true;
-	
-    if (system->powerOn && (this == vicII) ) {
-        idle = useThread ? false : true;
-        if (!idle)
-            cv.notify_one();
-    }
 }
 
 inline auto VicIIFast::setLineInterrupt() -> void {
@@ -182,20 +136,14 @@ auto VicIIFast::clock() -> void {
 		} else if (isScanlineRender( flags )) {
 			dmaSpritesOff();
 
-			if (visibleLine) {            
-				if (useThread)
-					ready.store(1);
-				else
-					scanline();
-			}
+			if (visibleLine)
+                scanline();
+
 		} else if (isScanlineRenderFin( flags )) {
 
 			dmaSprites();
 
 			setRdy( spriteDma & getSpriteBA( flags ) );
-
-			if (useThread && visibleLine)
-				while ( ready.load() ) {}   
 
 			dmaDelay = 0;
 

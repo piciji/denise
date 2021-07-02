@@ -153,7 +153,6 @@ struct Interface : Emulator::Interface {
 
     // performance amd accuracy
     auto videoCycleAccuracy(bool state) -> void;
-    auto videoScanlineThread(bool state) -> void;
     auto videoAddMeta(bool state) -> void;
     auto diskHighLoadThread(bool state) -> void;
     auto diskIdle(bool state) -> void;

@@ -108,10 +108,7 @@ auto VicIIFast::readReg( uint8_t addr ) -> uint8_t {
 
 auto VicIIFast::writeReg( uint8_t addr, uint8_t value ) -> void {
     addr &= 0x3f;
-	
-	if (useThread && visibleLine)
-		while ( ready.load() ) {} 
-	
+
     switch( addr ) {        
         case 0x00: case 0x02: case 0x04: case 0x06:
         case 0x08: case 0x0a: case 0x0c: case 0x0e: {
@@ -197,9 +194,6 @@ auto VicIIFast::writeReg( uint8_t addr, uint8_t value ) -> void {
 				} else if (cycle < 54 ) {
 
 					if (cycle >= 32) {
-						if (useThread)
-							while (ready.load()) {}
-
 						dmaDelay = cycle - 13;
 						scanline();
 					} else

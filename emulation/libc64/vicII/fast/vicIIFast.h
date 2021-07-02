@@ -1,9 +1,6 @@
 
 #pragma once
 
-#include <atomic>
-#include <thread>
-#include <condition_variable>
 #include "../base.h"
 
 namespace LIBC64 {  
@@ -13,9 +10,6 @@ struct VicIIFast : VicIIBase {
     VicIIFast();
     auto clock() -> void;
     auto power() -> void;
-    auto powerOff() -> void;
-    auto setThreading( bool state) -> void;
-    auto isThreading() -> bool { return useThread; }
     auto serialize(Emulator::Serializer& s) -> void;
     auto clockSilence() -> void;    
 	   
@@ -45,10 +39,6 @@ protected:
 
     uint16_t vicBank;
     Sprite* drawSprites[VIC_MAX_LINE_LENGTH << 1];
-    std::atomic<bool> ready;
-    std::atomic<bool> idle;
-    std::condition_variable cv;
-    bool useThread = false;
     uint8_t* patternBadline;
     uint8_t* patternLine;
     uint8_t* patternBadlineNtsc;
