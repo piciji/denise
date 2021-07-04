@@ -214,7 +214,7 @@ struct Interface {
 		unsigned id;
 		std::string name;		
 		enum Type : unsigned { Switch, Range, Hex, Radio, Combo, Slider } type;
-		enum Purpose : unsigned { Cpu, GraphicChip, SoundChip, Cia, AudioSettings, AudioResampler, Misc, DriveSettings, Performance } purpose;
+		enum Purpose : unsigned { Cpu, GraphicChip, SoundChip, Cia, AudioSettings, AudioResampler, Misc, DriveSettings, Performance, Hidden } purpose;
 		int defaultValue;
 		std::vector<int> range;
 		std::vector<std::string> options;
@@ -233,6 +233,7 @@ struct Interface {
         auto isAudioResampler() const -> bool { return purpose == Purpose::AudioResampler; }
         auto isDriveSettings() const -> bool { return purpose == Purpose::DriveSettings; }
         auto isPerformance() const -> bool { return purpose == Purpose::Performance; }
+        auto isHidden() const -> bool { return purpose == Purpose::Hidden; }
 	};
 	std::vector<Model> models;	
     	

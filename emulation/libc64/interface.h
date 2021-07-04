@@ -21,7 +21,7 @@ struct Interface : Emulator::Interface {
         ModelIdSid7, ModelIdSid7Left, ModelIdSid7Right, ModelIdSid7Adr, ModelIdSid8, ModelIdSid8Left, ModelIdSid8Right, ModelIdSid8Adr,
         ModelIdCiaBurstMode, ModelIdDiskDriveModel, ModelIdDiskDrivesConnected, ModelIdTapeDrivesConnected,
         ModelIdDiskDriveSpeed, ModelIdDiskDriveWobble, ModelIdTapeDriveWobble,
-        ModelIdCycleAccurateVideo, ModelIdDiskThread, ModelIdDiskOnDemand,
+        ModelIdCycleAccurateVideo, ModelIdDiskThread, ModelIdDiskOnDemand, ModelIdD64Accuracy,
     };
     
     enum MediaGroupId {

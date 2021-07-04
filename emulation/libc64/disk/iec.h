@@ -77,6 +77,7 @@ struct IecBus {
     auto insertDiskGracefully() -> void;
 
     auto setDriveType(Drive1541::Type type) -> void;
+    auto emulateDxxMoreAccurate(bool state) -> void;
 };
    
 extern IecBus* iecBus;

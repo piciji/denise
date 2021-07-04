@@ -383,6 +383,12 @@ auto IecBus::setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> void 
         drive->setFirmware( typeId, data, size );
 }
 
+auto IecBus::emulateDxxMoreAccurate(bool state) -> void {
+
+    for( auto drive : drives )
+        drive->emulateDxxMoreAccurate = state;
+}
+
 auto IecBus::resetDriveState() -> void {
     
     for( auto drive : drivesEnabled )

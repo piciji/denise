@@ -29,9 +29,7 @@ struct Cmd {
     auto autoloadImages() -> void;
     
     auto updateModel( Emulator::Interface* emulator, unsigned ident, int value) -> void;
-    
-    //auto prepareDrives( Emulator::Interface* emulator ) -> void;
-    
+
     auto collectAllowedSuffix() -> std::vector<std::string>;
     
     auto getCycles(std::string arg) -> unsigned;

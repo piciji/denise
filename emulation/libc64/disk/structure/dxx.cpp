@@ -162,8 +162,8 @@ auto Structure1541::prepareDxx() -> void {
             if (trackPtr->data)
                 delete[] trackPtr->data;
             trackPtr->data = nullptr;
-            trackPtr->size = 0;
-            trackPtr->bits = 0;
+            trackPtr->size = trackSize;
+            trackPtr->bits = trackSize * 8;
         }
 
         sectorOffset = sectors + 1;

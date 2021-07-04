@@ -491,7 +491,7 @@ auto States::updateModels() -> void {
 
     for(auto& model : emulator->models) {
 
-        if (model.isPerformance())
+        if (model.isPerformance() || model.isHidden())
             continue;
 
         int value = emulator->getModelValue( model.id );

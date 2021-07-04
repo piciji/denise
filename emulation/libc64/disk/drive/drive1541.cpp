@@ -138,7 +138,8 @@ Drive1541::Drive1541(uint8_t number, Emulator::Interface::Media* mediaConnected 
 	structure1541.number = number;
 	type = Type::D1541II;
 	operation = 0;
-    
+
+	emulateDxxMoreAccurate = false;
     media = nullptr;
     wasAttachDetached = false;
 
@@ -320,10 +321,10 @@ Drive1541::Drive1541(uint8_t number, Emulator::Interface::Media* mediaConnected 
 
     via2->cb2Out = [this]( bool state ) {
 
-        if ( readMode != state )
+        if ( readMode != state ) {
+            readMode = state;
             updateDeviceState();
-        
-        readMode = state;                
+        }
     };
     
     structure1541.write = [this](uint8_t* buffer, unsigned length, unsigned offset) {
@@ -575,9 +576,12 @@ auto Drive1541::postAttach() -> void {
 
     operation &= ~(USERDATA_LEVEL | ENCODEDDATA_LEVEL | FLUXDATA_LEVEL);
 
-    if (structure1541.type == Structure1541::Type::D64 || structure1541.type == Structure1541::Type::D71)
-        operation |= USERDATA_LEVEL;
-    else if (structure1541.type == Structure1541::Type::G64 || structure1541.type == Structure1541::Type::G71)
+    if (structure1541.type == Structure1541::Type::D64 || structure1541.type == Structure1541::Type::D71) {
+        if (emulateDxxMoreAccurate)
+            operation |= ENCODEDDATA_LEVEL;
+        else
+            operation |= USERDATA_LEVEL;
+    } else if (structure1541.type == Structure1541::Type::G64 || structure1541.type == Structure1541::Type::G71)
         operation |= ENCODEDDATA_LEVEL;
     else if (structure1541.type == Structure1541::Type::P64 || structure1541.type == Structure1541::Type::P71)
         operation |= FLUXDATA_LEVEL;
@@ -663,4 +667,3 @@ auto Drive1541::setFirmwareByType( ) -> void {
 }
 
 }
-

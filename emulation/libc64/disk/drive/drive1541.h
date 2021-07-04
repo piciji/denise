@@ -75,7 +75,8 @@ struct Drive1541 {
     uint8_t operation;
         
     Structure1541::GcrTrack* gcrTrack = new Structure1541::GcrTrack;
-    
+
+    bool emulateDxxMoreAccurate = false;
     uint8_t currentHalftrack;
     int stepDirection = 0;
 

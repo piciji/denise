@@ -612,6 +612,8 @@ auto Structure1541::serialize(Emulator::Serializer& s, bool written) -> void {
     if (!written || (s.mode() == Emulator::Serializer::Mode::Size))
         return;
 
+    bool fluxMode = (type == Type::P64) || (type == Type::P71);
+
     for (uint8_t side = 0; side < sides; side++) {
         for (unsigned halfTrack = 0; halfTrack < (MAX_TRACKS * 2); halfTrack++) {
 
@@ -626,7 +628,7 @@ auto Structure1541::serialize(Emulator::Serializer& s, bool written) -> void {
 
             s.integer(gcrTrack->size);
 
-            if (type == Type::P64) {
+            if (fluxMode) {
 
                 s.integer(gcrTrack->firstPulse);
                 s.integer(gcrTrack->lastPulse);
@@ -697,6 +699,7 @@ auto Structure1541::updateSerializationSize() -> void {
 auto Structure1541::getStateImageSize() -> unsigned {
     
     unsigned neededSize = 0;
+    bool fluxMode = (type == Type::P64) || (type == Type::P71);
 
     for (uint8_t side = 0; side < sides; side++) {
         for (unsigned halfTrack = 0; halfTrack < (MAX_TRACKS * 2); halfTrack++) {
@@ -708,7 +711,7 @@ auto Structure1541::getStateImageSize() -> unsigned {
             if (!(gcrTrack->written & 1))
                 continue;
 
-            if (type == Type::P64) {
+            if (fluxMode) {
                 neededSize += 4 + 16 + gcrTrack->pulses.size() * 16;
             } else
                 neededSize += 4 + gcrTrack->size;
@@ -725,3 +728,4 @@ auto Structure1541::getTrackPtr( uint8_t side, uint8_t halfTrack ) -> GcrTrack* 
 
 
 }
+

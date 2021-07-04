@@ -539,6 +539,8 @@ auto Interface::prepareModels() -> void {
     models.push_back({ModelIdCycleAccurateVideo, "Cycle Accurate Video", Model::Type::Switch, Model::Purpose::Performance, 1 });
     models.push_back({ModelIdDiskThread, "Disk Thread", Model::Type::Switch, Model::Purpose::Performance, 0 });
     models.push_back({ModelIdDiskOnDemand, "Disk On Demand", Model::Type::Switch, Model::Purpose::Performance, 1 });
+
+    models.push_back({ModelIdD64Accuracy, "Emulate D64 More Accurate", Model::Type::Switch, Model::Purpose::Hidden, 0});
 }
 
 auto Interface::prepareFirmware() -> void {
@@ -1298,6 +1300,9 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
             system->diskSilence.active = value & 1;
             system->diskIdleOff();
             break;
+        case ModelIdD64Accuracy:
+            iecBus->emulateDxxMoreAccurate( value & 1 );
+            break;
     }    
 }
 
@@ -1386,6 +1391,7 @@ auto Interface::getModelValue(unsigned modelId) -> int {
         case ModelIdCycleAccurateVideo:     return system->cycleRendererNextBoot;
         case ModelIdDiskThread:             return iecBus->cpuBurnerRequested;
         case ModelIdDiskOnDemand:           return system->diskSilence.active;
+        case ModelIdD64Accuracy:            return (int)iecBus->drives[0]->emulateDxxMoreAccurate;
     }
     return 0;
 }

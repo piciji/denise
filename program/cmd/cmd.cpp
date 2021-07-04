@@ -121,6 +121,7 @@ auto Cmd::parse() -> void {
 	bool hasViciiTest = false;
 	bool hasRam0001Test = false;
 	bool hasDefaultTest = false;
+	bool emulateD64WithMoreAccuracy = false; // use G64 emulation
 
     for( auto& arg : arguments ) {
         if (limitCyclesNext) {
@@ -247,6 +248,8 @@ auto Cmd::parse() -> void {
 						hasFuxxorTest = true;
 					else if (!hasRam0001Test && GUIKIT::String::foundSubStr( temp, "ram0001" ))
 						hasRam0001Test = true;
+                    else if (!emulateD64WithMoreAccuracy && GUIKIT::String::foundSubStr( temp, "rpm3." ))
+                        emulateD64WithMoreAccuracy = true;
 									
 					// todo: dirty hack to prevent injection of test.prg instead of loading "test",8,1
 					else if (GUIKIT::String::foundSubStr( temp, "defaults" ) && GUIKIT::String::foundSubStr( temp, "test." )) {
@@ -268,7 +271,6 @@ auto Cmd::parse() -> void {
 
 	if (debug) {
 		dynamic_cast<LIBC64::Interface*> (emuC64)->activateDebugCart( cycles );
-		//prepareDrives(emuC64);
 		globalSettings->set<bool>("audio_sync", false);
 		globalSettings->set<bool>("video_sync", false);
 		globalSettings->set<bool>("fps_limit", false);
@@ -308,6 +310,9 @@ auto Cmd::parse() -> void {
 	
 	if (hasFuxxorTest)
 		settingsC64->set<unsigned>("memory_value", 0);
+
+    if(emulateD64WithMoreAccuracy)
+        settingsC64->set<unsigned>("Emulate_D64_More_Accurate", 1);
 	
 	if (fastTestbench)
 		autostartPrg = 1;
@@ -372,20 +377,6 @@ auto Cmd::updateModel( Emulator::Interface* emulator, unsigned ident, int value)
         }
     }
 }
-
-//auto Cmd::prepareDrives( Emulator::Interface* emulator ) -> void {
-//
-//    auto settings = program->getSettings( emulator );
-//
-//    for(auto& mediaGroup : emulator->mediaGroups) {
-//
-//        if (mediaGroup.isDisk())
-//            settings->set<unsigned>( _underscore( mediaGroup.name + "_count"), 1);
-//
-//		else if (mediaGroup.isTape())
-//            settings->set<unsigned>( _underscore( mediaGroup.name + "_count"), 0);
-//    }
-//}
 
 auto Cmd::collectAllowedSuffix() -> std::vector<std::string> {
     std::vector<std::string> allowedSuffix;

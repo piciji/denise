@@ -297,7 +297,7 @@ auto Drive1541::changeHalfTrack( uint8_t step ) -> void {
                     
     updateStepper( step );
 
-    if (structure1541.type == Structure1541::Type::P64) {
+    if (operation & FLUXDATA_LEVEL) {
 
         unsigned position = 0;
 
