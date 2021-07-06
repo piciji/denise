@@ -27,9 +27,9 @@ struct Rand {
 
     static auto rand( unsigned min, unsigned max ) -> unsigned {
         
-      //  return min + ::rand() / (RAND_MAX / (max - min + 1) + 1);
+        return min + ::rand() / (RAND_MAX / (max - min + 1) + 1);
 
-        return ((max - min) * (::rand() / RAND_MAX)) + min;
+        //return ((max - min) * (::rand() / RAND_MAX)) + min;
     }
 
     static auto rand( ) -> unsigned {

@@ -6,6 +6,10 @@
  * a lot of important changes happen between the half cycles, so doing it the VICE way you can use more local variables
  * and generate faster code this way.
  * I have decided against it for readability, so for me it's easier to imagine the overall process.
+ *
+ * todo videomode-z
+ * videomode-z test: disabling (not enabling) MCM (both: LUT and gbits ) happens a pixel later
+ * BUT other videomode tests fail. todo: find the right condition
  */
 
 #include "vicII.h"
