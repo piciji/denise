@@ -30,14 +30,12 @@ struct TabWindow : public GUIKIT::Window {
 	GUIKIT::Image displayImage;
     GUIKIT::Image volumeImage;    
     GUIKIT::Image keyboardImage;
-    GUIKIT::Image toolsImage;    
-	
-	GUIKIT::Timer mtimer;
+    GUIKIT::Image toolsImage;
 
     auto build() -> void;	
     auto translate() -> void;
     auto show(Layout layout) -> void;
-	auto showDelayed(Layout layout) -> void;
+    static auto open(Layout layout) -> void;
 
     TabWindow();
 };

@@ -64,7 +64,7 @@ struct InputLayout : GUIKIT::VerticalLayout {
 	auto getMappingOfSelected(std::string& inputIdent) -> InputMapping*;
 	auto update() -> void;
     auto stopCapture() -> void;
-    auto updateLayout() -> void;
+    auto updateKeyLayout() -> void;
     auto updateConnectorButtons() -> void;
     auto enableConnectorButtons() -> void;
     auto eraseSelected( bool alternate = false ) -> void;

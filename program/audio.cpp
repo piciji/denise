@@ -22,8 +22,10 @@ auto Program::initAudio() -> void {
     if ( !audioDriver->init( view->handle() ) ) {
         delete audioDriver;
         audioDriver = new DRIVER::Audio;
-    }    
-    configView->audioLayout->updateLatencySlider();
+    }
+
+    if (configView)
+        configView->audioLayout->updateLatencySlider();
 }
 
 auto Program::getAudioDriver() -> std::string {

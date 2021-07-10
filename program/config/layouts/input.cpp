@@ -124,6 +124,7 @@ InputLayout::InputLayout() {
 	};    
     
     stopCapture();
+    loadInputList();
 }
 
 auto InputLayout::loadInputList() -> void {

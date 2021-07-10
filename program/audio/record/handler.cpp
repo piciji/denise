@@ -5,6 +5,7 @@
 #include "../../program.h"
 #include "../../tools/logger.h"
 #include "../../emuconfig/config.h"
+#include "../../view/status.h"
 
 namespace AudioRecord {
     
@@ -56,6 +57,8 @@ auto Handler::record( Emulator::Interface* emulator, std::string& errorText ) ->
     startTime = Chronos::getTimestampInMilliseconds();
     
     setTimeLimit();
+
+    statusHandler->updateAudioRecord( true );
     
     return true;
 }
@@ -81,9 +84,15 @@ auto Handler::setTimeLimit() -> void {
     }
 }	
 
-inline auto Handler::run() -> bool {
+auto Handler::run(Emulator::Interface* emulator) -> bool {
 
-    return wavWriter != nullptr;
+    if (wavWriter == nullptr)
+        return false;
+
+    if (!emulator)
+        return true;
+
+    return activeEmulator == emulator;
 }
 
 auto Handler::write( uint8_t* buf, unsigned frames ) -> void {
@@ -135,8 +144,13 @@ auto Handler::finish() -> void {
 
     wavWriter = nullptr;
     
-    if (activeEmulator)
-        EmuConfigView::TabWindow::getView(activeEmulator)->audioLayout->stopRecord();
-}  
+    if (activeEmulator) {
+        auto emuView = EmuConfigView::TabWindow::getView(activeEmulator);
+        if (emuView)
+            emuView->audioLayout->stopRecord();
+    }
+
+    statusHandler->updateAudioRecord( false );
+}
     
 }

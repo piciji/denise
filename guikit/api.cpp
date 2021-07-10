@@ -187,8 +187,16 @@ auto Window::remove(Layout& layout) -> void {
 }
 
 auto Window::addCustomFont( CustomFont* customFont ) -> bool {	
-	customFonts.push_back( customFont );	
-	return pWindow::addCustomFont( customFont );
+
+	bool ok = pWindow::addCustomFont( customFont );
+	if (ok)
+        customFonts.push_back( customFont );
+
+	return ok;
+}
+
+auto Window::countCustomFonts() -> unsigned {
+    return customFonts.size();
 }
 
 auto Window::setWidgetFont(const std::string& font) -> void {

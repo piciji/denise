@@ -2,6 +2,7 @@
 #include "manager.h"
 #include "../tools/DiskFinder.h"
 #include "../view/status.h"
+#include "../audio/manager.h"
 
 std::vector<InputMapping*> InputManager::hotkeyTriggers;
 
@@ -88,12 +89,25 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
     auto settings = program->getSettings( activeEmulator );
     
     switch ( id ) {
-        case Hotkey::Id::AudioRecord:
+        case Hotkey::Id::AudioRecord: {
             if (!activeEmulator)
                 break;
-            
-            EmuConfigView::TabWindow::getView(activeEmulator)->audioLayout->toggleRecord();
-            break;
+
+            auto emuView = EmuConfigView::TabWindow::getView(activeEmulator);
+            if (emuView) {
+                emuView->audioLayout->toggleRecord();
+            } else {
+                if (audioManager->record.run()) {
+                    audioManager->record.finish();
+                } else {
+                    std::string errorText;
+                    if (!audioManager->record.record(activeEmulator, errorText)) {
+                        statusHandler->setMessage(errorText, 3, true);
+                    }
+                }
+            }
+
+        } break;
         case Hotkey::Id::RunAheadDown:
         case Hotkey::Id::RunAheadUp: {
             if (!activeEmulator)
@@ -110,8 +124,10 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             pos += down ? -1 : 1;
             settings->set<unsigned>( "runahead", pos);
             activeEmulator->runAhead( pos );
-            
-            EmuConfigView::TabWindow::getView(activeEmulator)->miscLayout->setRunAhead( pos );
+
+            auto emuView = EmuConfigView::TabWindow::getView(activeEmulator);
+            if (emuView)
+                emuView->miscLayout->setRunAhead( pos );
 
             statusHandler->setMessage( trans->get( "runahead input latency", {{"%count%", std::to_string(pos) }} ) );  
 
@@ -119,10 +135,21 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             
         case Hotkey::Id::ToggleRenderer: {
             if (!activeEmulator)
-                break; 
+                break;
 
-            EmuConfigView::TabWindow::getView(activeEmulator)->systemLayout->performanceModelLayout.toggleCheckbox( activeEmulator->getModelIdOfCycleRenderer() );
-            program->power(activeEmulator);
+            auto emuView = EmuConfigView::TabWindow::getView(activeEmulator);
+            if (emuView)
+                emuView->systemLayout->performanceModelLayout.toggleCheckbox( activeEmulator->getModelIdOfCycleRenderer() );
+            else {
+                auto model = activeEmulator->getModel( activeEmulator->getModelIdOfCycleRenderer() );
+                if (model) {
+                    bool val = activeEmulator->getModelValue( model->id );
+                    settings->set<bool>( _underscore(model->name), !val );
+                    activeEmulator->setModelValue( model->id, !val );
+                    program->fastForward(false);
+                    program->power(activeEmulator);
+                }
+            }
         } break;
         
         case Hotkey::Id::RunAheadToggleMode: {
@@ -133,8 +160,10 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             state ^= 1;
             settings->set<bool>( "runahead_performance", state);            
             activeEmulator->runAheadPerformance( state );
-            
-            EmuConfigView::TabWindow::getView(activeEmulator)->miscLayout->setRunAheadPerformance( state );
+
+            auto emuView = EmuConfigView::TabWindow::getView(activeEmulator);
+            if (emuView)
+                emuView->miscLayout->setRunAheadPerformance( state );
             
             statusHandler->setMessage( trans->get( !state ? "runahead accuracy mode" : "runahead performance mode" ) );  
         } break;
@@ -148,11 +177,16 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             
             emulator->connect( connector1, connectedDevice2 );
             emulator->connect( connector2, connectedDevice1 );
-			
-			view->checkInputDevice( emulator, connector1, connectedDevice2 );
+
+            settings->set<unsigned>( _underscore(connector1->name), connectedDevice2->id);
+            settings->set<unsigned>( _underscore(connector2->name), connectedDevice1->id);
+
+            view->checkInputDevice( emulator, connector1, connectedDevice2 );
 			view->checkInputDevice( emulator, connector2, connectedDevice1 );
-			
-			EmuConfigView::TabWindow::getView(emulator)->inputLayout->updateConnectorButtons();
+
+            auto emuView = EmuConfigView::TabWindow::getView(activeEmulator);
+            if (emuView)
+                emuView->inputLayout->updateConnectorButtons();
 		} break;
         case Hotkey::Id::ToggleFastForward:
         case Hotkey::Id::ToggleFastForwardAggressive: {
@@ -294,23 +328,63 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             if (!activeEmulator || !dynamic_cast<LIBC64::Interface*>(activeEmulator))
                 break;
 
-            auto view = EmuConfigView::TabWindow::getView( activeEmulator );
-            bool state = view->audioLayout->settingsLayout.toggleCheckbox( C64Interface::ModelIdDigiboost );
+            auto emuView = EmuConfigView::TabWindow::getView( activeEmulator );
+            bool state = false;
+
+            if (emuView)
+                state = emuView->audioLayout->settingsLayout.toggleCheckbox( C64Interface::ModelIdDigiboost );
+            else {
+                auto model = activeEmulator->getModel( C64Interface::ModelIdDigiboost );
+                if (model) {
+                    state = activeEmulator->getModelValue( model->id );
+                    state ^= 1;
+                    settings->set<bool>( _underscore(model->name), state );
+                    activeEmulator->setModelValue( model->id, state );
+                }
+            }
+
             statusHandler->setMessage( trans->get( state ? "digiboost_on" : "digiboost_off" ) );
         } break;
         case Hotkey::Id::SwapSid: {
             if (!activeEmulator || !dynamic_cast<LIBC64::Interface*>(activeEmulator))
                 break;
-            auto view = EmuConfigView::TabWindow::getView( activeEmulator );            
-            unsigned val = view->systemLayout->modelLayout.nextOption( C64Interface::ModelIdSid );
-            view->audioLayout->settingsLayout.updateWidget( C64Interface::ModelIdSid );
+            auto emuView = EmuConfigView::TabWindow::getView( activeEmulator );
+            unsigned val;
+
+            if (emuView) {
+                val = emuView->systemLayout->modelLayout.nextOption( C64Interface::ModelIdSid );
+                emuView->audioLayout->settingsLayout.updateWidget( C64Interface::ModelIdSid );
+            } else {
+                auto model = activeEmulator->getModel( C64Interface::ModelIdSid );
+                if (model) {
+                    val = activeEmulator->getModelValue( model->id );
+                    val++;
+                    if (val == model->options.size())
+                        val = 0;
+                    settings->set<int>( _underscore(model->name), val );
+                    activeEmulator->setModelValue( model->id, val );
+                }
+            }
+
             statusHandler->setMessage( trans->get( val == 1 ? "sid_6581_on" : "sid_8580_on" ) );
         } break;
         case Hotkey::Id::ToggleSidFilter: {
             if (!activeEmulator || !dynamic_cast<LIBC64::Interface*>(activeEmulator))
                 break;
-            auto view = EmuConfigView::TabWindow::getView( activeEmulator );
-            bool state = view->audioLayout->settingsLayout.toggleCheckbox( C64Interface::ModelIdFilter );
+            auto emuView = EmuConfigView::TabWindow::getView( activeEmulator );
+            bool state = false;
+
+            if (emuView)
+                state = emuView->audioLayout->settingsLayout.toggleCheckbox( C64Interface::ModelIdFilter );
+            else {
+                auto model = activeEmulator->getModel( C64Interface::ModelIdFilter );
+                if (model) {
+                    state = activeEmulator->getModelValue( model->id );
+                    state ^= 1;
+                    settings->set<bool>( _underscore(model->name), state );
+                    activeEmulator->setModelValue( model->id, state );
+                }
+            }
             statusHandler->setMessage( trans->get( state ? "sid_filter_on" : "sid_filter_off" ) );
         } break;
         case Hotkey::AdjustBiasUp:
@@ -319,8 +393,23 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
                 break;
             
             int _sid = activeEmulator->getModelValue( C64Interface::ModelIdSid );
-            auto view = EmuConfigView::TabWindow::getView( activeEmulator );
-            int state = view->audioLayout->settingsLayout.stepRange( _sid == 0 ? C64Interface::ModelIdBias8580 : C64Interface::ModelIdBias6581, id == Hotkey::AdjustBiasUp ? 100: -100 );
+            auto emuView = EmuConfigView::TabWindow::getView( activeEmulator );
+            int state;
+
+            if (emuView)
+                state = emuView->audioLayout->settingsLayout.stepRange( _sid == 0 ? C64Interface::ModelIdBias8580 : C64Interface::ModelIdBias6581,
+                        id == Hotkey::AdjustBiasUp ? 100: -100 );
+            else {
+                auto model = activeEmulator->getModel( _sid == 0 ? C64Interface::ModelIdBias8580 : C64Interface::ModelIdBias6581);
+
+                if (model) {
+                    state = activeEmulator->getModelValue( model->id );
+                    state += id == Hotkey::AdjustBiasUp ? 100: -100;
+                    state = std::max( model->range[0], std::min( state, model->range[1] ) );
+                    settings->set<int>( _underscore(model->name), state );
+                    activeEmulator->setModelValue( model->id, state );
+                }
+            }
             statusHandler->setMessage( trans->get( "sid_bias_change", {{"%state%", std::to_string(state) }} ) );                    
         } break;
         
@@ -330,7 +419,6 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
 
             auto defaultMedia = activeEmulator->getDisk( 0 );
 
-            // emulated system don't support floppy drives
             if (!defaultMedia)
                 break;
 
@@ -417,17 +505,20 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             activeEmulator->insertDisk(media, data, file->archiveDataSize(fSetting->id), true);
             activeEmulator->writeProtectDisk(media, (file->isArchived() || file->isReadOnly()) ? true : fSetting->writeProtect);
             media->guid = uintptr_t(file);
-            EmuConfigView::TabWindow::getView( activeEmulator )->mediaLayout->updateWriteProtection( media, fSetting->writeProtect );
+            auto emuView = EmuConfigView::TabWindow::getView( activeEmulator );
+            if (emuView)
+                emuView->mediaLayout->updateWriteProtection( media, fSetting->writeProtect );
+
             filePool->assign( _ident(activeEmulator, media->name), file);
             filePool->assign( _ident(activeEmulator, "swapper_" + std::to_string(swapPos)), file);
             filePool->unloadOrphaned();
-            EmuConfigView::TabWindow::getView(activeEmulator)->configurationsLayout->updateSaveIdent( fSetting->file );
+            program->updateSaveIdent( activeEmulator, fSetting->file );
+
             States::getInstance( activeEmulator )->updateImage( fSetting, media );
             statusHandler->setMessage( trans->get("insert_floppy", {{"%drive%", media->name},{"%file%", fSetting->file}}) );		
             break;	
         }
     }
-    
 }
 
 auto InputManager::pollHotkeys() -> void {
@@ -601,35 +692,34 @@ auto InputManager::unmapCustomHotkeys() -> void {
 	InputManager::updateAllMappingsInUse(true);
 }
 
-auto InputManager::openMenu( Emulator::Interface* emulator, Hotkey::Id id ) -> void {	
-    
+auto InputManager::openMenu( Emulator::Interface* emulator, Hotkey::Id id ) -> void {
     if (!emulator)
         return;
     
-    auto configView = EmuConfigView::TabWindow::getView( emulator );
+    auto emuView = EmuConfigView::TabWindow::getView( emulator, true );
     
     switch(id) {
         case Hotkey::Id::Presentation:
-            configView->showDelayed( EmuConfigView::TabWindow::Layout::Presentation ); break;
+            emuView->showDelayed( EmuConfigView::TabWindow::Layout::Presentation ); break;
         case Hotkey::Id::Border:
-            configView->showDelayed( EmuConfigView::TabWindow::Layout::Border ); break;
+            emuView->showDelayed( EmuConfigView::TabWindow::Layout::Border ); break;
         case Hotkey::Id::Palette:
-            configView->showDelayed( EmuConfigView::TabWindow::Layout::Palette ); break;
+            emuView->showDelayed( EmuConfigView::TabWindow::Layout::Palette ); break;
         case Hotkey::Id::DiskSwapper:
-            configView->mediaLayout->showDiskSwapper();
-            configView->showDelayed( EmuConfigView::TabWindow::Layout::Media );            
+            emuView->mediaLayout->showDiskSwapper();
+            emuView->showDelayed( EmuConfigView::TabWindow::Layout::Media );
             break;
         case Hotkey::Id::Software:
-            configView->mediaLayout->show();
-            configView->showDelayed( EmuConfigView::TabWindow::Layout::Media );            
+            emuView->mediaLayout->show();
+            emuView->showDelayed( EmuConfigView::TabWindow::Layout::Media );
             break;
         case Hotkey::Id::System:
-            configView->showDelayed(EmuConfigView::TabWindow::Layout::System); break;
+            emuView->showDelayed(EmuConfigView::TabWindow::Layout::System); break;
         case Hotkey::Id::Firmware:
-            configView->showDelayed( EmuConfigView::TabWindow::Layout::Firmware ); break;
+            emuView->showDelayed( EmuConfigView::TabWindow::Layout::Firmware ); break;
         case Hotkey::Id::Control:
-            configView->showDelayed( EmuConfigView::TabWindow::Layout::Control ); break;
+            emuView->showDelayed( EmuConfigView::TabWindow::Layout::Control ); break;
 		case Hotkey::Id::Configurations:
-            configView->showDelayed( EmuConfigView::TabWindow::Layout::Configurations ); break;
+            emuView->showDelayed( EmuConfigView::TabWindow::Layout::Configurations ); break;
     }
 }

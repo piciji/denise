@@ -1,5 +1,6 @@
 
 #include "program.h"
+#include "../data/fonts.h"
 
 auto Program::showOpenError( std::vector<std::string>& paths, bool warning ) -> void {
     if ( paths.empty() )
@@ -165,12 +166,33 @@ auto Program::updateSaveIdent(Emulator::Interface::Media* media, std::string fil
         return;
     }        
     
-    if ( media->group->isExpansion() || (!_media && !media->group->isProgram())
+    if ( (media->group->isExpansion() && !media->secondary) || (!_media && !media->group->isProgram())
     || (media->group->isDisk() && !_media->group->isDisk() && !_media->group->isExpansion())
     || (media->group->isTape() && !_media->group->isDisk() && !_media->group->isExpansion())) {
-        EmuConfigView::TabWindow::getView( activeEmulator )->configurationsLayout->updateSaveIdent( file );
+        updateSaveIdent( activeEmulator, file );
         _media = media;
     }
+}
+
+auto Program::updateSaveIdent( Emulator::Interface* emulator, std::string fileName ) -> void {
+    auto settings = getSettings( emulator );
+    std::size_t end = fileName.find_last_of(".");
+    if (end != std::string::npos)
+        fileName = fileName.erase(end);
+
+    // for wav record
+    settings->set<std::string>( "record_ident", fileName, false);
+
+    if (!settings->get<bool>( "auto_save_ident", true))
+        return;
+
+    settings->set<std::string>( "save_ident", fileName);
+    settings->set<unsigned>( "save_slot", 0);
+
+    auto emuView = EmuConfigView::TabWindow::getView( emulator );
+
+    if (emuView)
+        emuView->configurationsLayout->updateSaveIdent( fileName );
 }
 
 auto Program::removeExpansion( bool bootableOnly ) -> void {
@@ -204,7 +226,7 @@ auto Program::removeExpansion( bool bootableOnly ) -> void {
 	
 	auto emuView = EmuConfigView::TabWindow::getView(activeEmulator);
 	if (emuView)
-		emuView->systemLayout->setExpansion( nullptr );
+        emuView->systemLayout->setExpansion( nullptr );
     
     activeEmulator->power();
 }
@@ -372,4 +394,14 @@ auto Program::getSettings( Emulator::Interface* emulator ) -> GUIKIT::Settings* 
     }
     // global setting
     return settingsStorage[0];
+}
+
+auto Program::addCustomFont() -> void {
+    GUIKIT::CustomFont* font = new GUIKIT::CustomFont;
+    font->name = "C64 Pro";
+    font->data = (uint8_t*)Fonts::c64Pro;
+    font->size = sizeof(Fonts::c64Pro);
+    font->filePath = fontFolder() + "/C64_Pro-STYLE121.ttf";
+    bool useCustomFont = GUIKIT::Window::addCustomFont( font );
+    ((LIBC64::Interface*) getEmulator("C64"))->convertPetsciiToScreencode( useCustomFont );
 }

@@ -86,7 +86,6 @@ auto TabWindow::build() -> void {
     audioLayout = new AudioLayout( this );
     borderLayout = new BorderLayout( this );
     miscLayout = new MiscLayout( this );
-
     mediaLayout->build();
     
     tab.appendHeader("", systemImage);
@@ -101,21 +100,21 @@ auto TabWindow::build() -> void {
     tab.appendHeader("", memoryImage);   
 	tab.appendHeader("", cropImage);
     tab.appendHeader("", nullptr);
-                                            
-    tab.setLayout(Layout::System, *systemLayout, {~0u, ~0u} );
-    tab.setLayout(Layout::Media, *mediaLayout, {~0u, ~0u} );
-    tab.setLayout(Layout::Configurations, *configurationsLayout, {~0u, ~0u} );
-	tab.setLayout(Layout::Control, *inputLayout, {~0u, ~0u} );
-	tab.setLayout(Layout::Presentation, *videoLayout, {~0u, ~0u} );
+
+    tab.setLayout(Layout::System, *systemLayout, {~0u, ~0u}, false );
+    tab.setLayout(Layout::Media, *mediaLayout, {~0u, ~0u}, false );
+    tab.setLayout(Layout::Configurations, *configurationsLayout, {~0u, ~0u}, false );
+	tab.setLayout(Layout::Control, *inputLayout, {~0u, ~0u}, false );
+	tab.setLayout(Layout::Presentation, *videoLayout, {~0u, ~0u}, false );
 	if (dynamic_cast<LIBC64::Interface*>(emulator)) {
-        tab.setLayout(Layout::Palette, *paletteLayout, {~0u, ~0u} );        
+        tab.setLayout(Layout::Palette, *paletteLayout, {~0u, ~0u}, false );
     }
     
-    tab.setLayout(Layout::Audio, *audioLayout, {~0u, ~0u} );
-    tab.setLayout(Layout::Firmware, *firmwareLayout, {~0u, ~0u} );
-	tab.setLayout(Layout::Border, *borderLayout, {~0u, ~0u} );                    
-    tab.setLayout(Layout::Misc, *miscLayout, {~0u, ~0u} );     
-        
+    tab.setLayout(Layout::Audio, *audioLayout, {~0u, ~0u}, false );
+    tab.setLayout(Layout::Firmware, *firmwareLayout, {~0u, ~0u}, false );
+	tab.setLayout(Layout::Border, *borderLayout, {~0u, ~0u}, false );
+    tab.setLayout(Layout::Misc, *miscLayout, {~0u, ~0u} );
+
     onClose = [this]() {
         setVisible(false);
         view->setFocused();
@@ -181,7 +180,7 @@ auto TabWindow::translate() -> void {
 
 auto TabWindow::showDelayed(Layout layout) -> void {
 	inputDriver->mUnacquire();
-	mtimer.setInterval(100);
+	mtimer.setInterval(30);
 	
 	mtimer.onFinished = [this, layout]() {
 		mtimer.setEnabled(false);
@@ -194,6 +193,7 @@ auto TabWindow::show(Layout layout) -> void {
     setLayout( layout );
     if (!visible() || minimized())
         setVisible();
+
 	setFocused();
 }
 
@@ -203,13 +203,25 @@ auto TabWindow::setLayout(Layout layout) -> void {
         tab.setSelection( (unsigned)layout );
 }
 
-auto TabWindow::getView( Emulator::Interface* emulator ) -> TabWindow* {
-	
+auto TabWindow::getView( Emulator::Interface* emulator, bool createIfNotExist ) -> TabWindow* {
+
+    if (!emulator)
+        return nullptr;
+
 	for (auto view : emuConfigViews) {
 		if (view->emulator == emulator)
 			return view;
 	}
-	return nullptr;
+
+	if (!createIfNotExist)
+	    return nullptr;
+
+	auto emuView = new EmuConfigView::TabWindow( emulator );
+    emuConfigViews.push_back( emuView );
+
+    emuView->build();
+
+	return emuView;
 }
 
 }

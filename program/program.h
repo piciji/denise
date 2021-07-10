@@ -95,6 +95,7 @@ struct Program : Emulator::Interface::Bind {
 	auto getFileNameFromMedia(Emulator::Interface::Media* media) -> std::string override;
     auto informDriveLoading(bool state) -> void override;
     auto autoStartFinish(bool soft) -> void;
+	auto addCustomFont() -> void;
 
     auto loadImageDataWhenOk( GUIKIT::File* file, unsigned fileId, Emulator::Interface::MediaGroup* group, uint8_t*& data ) -> bool;
     auto showOpenError( std::vector<std::string>& paths, bool warning = false ) -> void;
@@ -109,6 +110,7 @@ struct Program : Emulator::Interface::Bind {
     auto removeExpansion( bool bootableOnly = true ) -> void;
     auto prepareSocket(Emulator::Interface::Media* media, Emulator::Interface* emulator, std::string address) -> void;
     auto initAutoWarp(Emulator::Interface::MediaGroup* mediaGroup) -> void;
+    auto updateSaveIdent(Emulator::Interface* emulator, std::string fileName) -> void;
     
     //audio
     auto initAudio() -> void;

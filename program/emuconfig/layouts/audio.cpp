@@ -355,10 +355,8 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
             }                        
         } else
             audioManager->record.finish();
-        
-        statusHandler->updateAudioRecord( state );
-        
-        audioRecord.duration.record.setText( trans->get( state ? "Stop" : "Record" ) );        
+
+        audioRecord.duration.record.setText( trans->get( state ? "Stop" : "Record" ) );
     };
     
     loadSettings();
@@ -420,7 +418,7 @@ auto AudioLayout::translate() -> void {
     audioRecord.duration.useTimeLimit.setText(trans->get("Recording time"));
     audioRecord.duration.minutesSlider.name.setText(trans->get("Minutes",{}, true));
     audioRecord.duration.secondsSlider.name.setText(trans->get("Seconds",{}, true));
-    audioRecord.duration.record.setText(trans->get("Record"));
+    audioRecord.duration.record.setText( trans->get( audioManager->record.run(emulator) ? "Stop" : "Record") );
 
     if (dynamic_cast<LIBC64::Interface*> (emulator)) {
         moduleList.setText(0, 0, trans->get("SID"));
@@ -474,7 +472,9 @@ auto AudioLayout::loadSettings() -> void {
     audioRecord.duration.minutesSlider.slider.setPosition( value );
     
     value = _settings->get<unsigned>( "audio_record_seconds", 0, {0, 59} );
-    
+
+    audioRecord.duration.record.setChecked( audioManager->record.run(emulator) );
+
     audioRecord.duration.secondsSlider.value.setText( std::to_string(value) );
     
     audioRecord.duration.secondsSlider.slider.setPosition( value ); 

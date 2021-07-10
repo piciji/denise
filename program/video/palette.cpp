@@ -113,7 +113,7 @@ auto PaletteManager::save() -> bool {
 }
 
 auto PaletteManager::load() -> void {
-    
+
     palSettings->load( path() );
     
     auto& list = palSettings->getList();

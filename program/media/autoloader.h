@@ -22,7 +22,6 @@ struct Autoloader {
 	auto loadFiles() -> void;
 	auto loadFile( GUIKIT::File* file, GUIKIT::File::Item* item ) -> void;
 	auto countImagesFor(Emulator::Interface::MediaGroup* mediaGroup) -> unsigned;
-	auto insertImage( Emulator::Interface* emulator, Emulator::Interface::Media* media, GUIKIT::File* file, GUIKIT::File::Item* item) -> void;
 	auto activateDrive( Emulator::Interface* emulator, Emulator::Interface::MediaGroup* mediaGroup, unsigned requestedCount ) -> void;
     auto checkForSavestate( GUIKIT::File* file, GUIKIT::File::Item* item ) -> bool;
 };

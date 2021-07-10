@@ -28,7 +28,7 @@ struct Handler {
     
     auto setTimeLimit() -> void;
     
-    auto run() -> bool;
+    auto run(Emulator::Interface* emulator = nullptr) -> bool;
     
     auto write( uint8_t* buf, unsigned frames ) -> void;
     

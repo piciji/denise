@@ -28,10 +28,10 @@ const std::string Interface::Version = "1099";
 Interface::Interface() : Emulator::Interface( "C64" ) {        
     
 	prepareMedia();
-	prepareFirmware();	
+	prepareFirmware();
 	prepareDevices();
-    prepareModels(); 
-    preparePalettes();    
+    prepareModels();
+    preparePalettes();
     prepareMemory();
     prepareExpansions();
     
@@ -326,42 +326,42 @@ auto Interface::preparePalettes() -> void {
         {"Orange", 0xb6591c}, {"Brown", 0x683808}, {"Light Red", 0xea746c}, {"Dark Gray", 0x4d4d4d},
         {"Medium Gray", 0x848484}, {"Light Green", 0xa6fa9e}, {"Light Blue", 0x707ce6}, {"Light Gray", 0xb6b6b5}
     } });
-    
+
     palettes.push_back({ 2, "Pepto PAL", false, {
         {"Black", 0}, {"White", 0xffffff}, {"Red", 0x68372b}, {"Cyan", 0x70a4b2},
         {"Purple", 0x6f3d86}, {"Green", 0x588d43}, {"Blue", 0x352879}, {"Yellow", 0xb8c76f},
         {"Orange", 0x6f4f25}, {"Brown", 0x433900}, {"Light Red", 0x9a6759}, {"Dark Gray", 0x444444},
         {"Medium Gray", 0x6c6c6c}, {"Light Green", 0x9ad284}, {"Light Blue", 0x6c5eb5}, {"Light Gray", 0x959595}
     } });
-    
+
     palettes.push_back({ 3, "Pepto PAL old VIC's", false, {
         {"Black", 0}, {"White", 0xffffff}, {"Red", 0x58291d}, {"Cyan", 0x91c6d5},
         {"Purple", 0x915ca8}, {"Green", 0x588d43}, {"Blue", 0x352879}, {"Yellow", 0xb8c76f},
         {"Orange", 0x916f43}, {"Brown", 0x433900}, {"Light Red", 0x9a6759}, {"Dark Gray", 0x353535},
         {"Medium Gray", 0x747474}, {"Light Green", 0x9ad284}, {"Light Blue", 0x7466be}, {"Light Gray", 0xb8b8b8}
     } });
-    
+
     palettes.push_back({ 4, "Pepto NTSC", false, {
         {"Black", 0}, {"White", 0xffffff}, {"Red", 0x67372B}, {"Cyan", 0x70A3B1},
         {"Purple", 0x6F3D86}, {"Green", 0x588C42}, {"Blue", 0x342879}, {"Yellow", 0xB7C66E},
         {"Orange", 0x6F4E25}, {"Brown", 0x423800}, {"Light Red", 0x996659}, {"Dark Gray", 0x434343},
         {"Medium Gray", 0x6B6B6B}, {"Light Green", 0x9AD183}, {"Light Blue", 0x6B5EB5}, {"Light Gray", 0x959595}
     } });
-    
+
     palettes.push_back({ 5, "Pepto NTSC Sony", false, {
         {"Black", 0}, {"White", 0xffffff}, {"Red", 0x7C352B}, {"Cyan", 0x5AA6B1},
         {"Purple", 0x694185}, {"Green", 0x5D8643}, {"Blue", 0x212E78}, {"Yellow", 0xCFBE6F},
         {"Orange", 0x894A26}, {"Brown", 0x5B3300}, {"Light Red", 0xAF6459}, {"Dark Gray", 0x434343},
         {"Medium Gray", 0x6B6B6B}, {"Light Green", 0xA0CB84}, {"Light Blue", 0x5665B3}, {"Light Gray", 0x959595}
     } });
-    
+
     palettes.push_back({ 6, "Go Dot", false, {
         {"Black", 0}, {"White", 0xffffff}, {"Red", 0x880000}, {"Cyan", 0xAAFFEE},
         {"Purple", 0xCC44CC}, {"Green", 0x00CC55}, {"Blue", 0x0000AA}, {"Yellow", 0xEEEE77},
         {"Orange", 0xDD8855}, {"Brown", 0x664400}, {"Light Red", 0xFE7777}, {"Dark Gray", 0x333333},
         {"Medium Gray", 0x777777}, {"Light Green", 0xAAFF66}, {"Light Blue", 0x0088FF}, {"Light Gray", 0xBBBBBB}
     } });
-    
+
     palettes.push_back({ 7, "Christopher Jam", false, {
         {"Black", 0}, {"White", 0xffffff}, {"Red", 0x7d202c}, {"Cyan", 0x4fb3a5},
         {"Purple", 0x84258c}, {"Green", 0x339840}, {"Blue", 0x2a1b9d}, {"Yellow", 0xbfd04a},
@@ -375,56 +375,56 @@ auto Interface::preparePalettes() -> void {
         {"Orange", 0xFF8000}, {"Brown", 0x804000}, {"Light Red", 0xFF8080}, {"Dark Gray", 0x404040},
         {"Medium Gray", 0x808080}, {"Light Green", 0x80FF80}, {"Light Blue", 0x8080FF}, {"Light Gray", 0xC0C0C0}
     } });
-          
+
     palettes.push_back({ 9, "C64 HQ", false, {
         {"Black", 0x0A0A0A}, {"White", 0xFFF8FF}, {"Red", 0x851F02}, {"Cyan", 0x65CDA8},
         {"Purple", 0xA73B9F}, {"Green", 0x4DAB19}, {"Blue", 0x1A0C92}, {"Yellow", 0xEBE353},
         {"Orange", 0xA94B02}, {"Brown", 0x441E00}, {"Light Red", 0xD28074}, {"Dark Gray", 0x464646},
         {"Medium Gray", 0x8B8B8B}, {"Light Green", 0x8EF68E}, {"Light Blue", 0x4D91D1}, {"Light Gray", 0xBABABA}
     } });
-    
+
     palettes.push_back({ 10, "C64s", false, {
         {"Black", 0x000000}, {"White", 0xFCFCFC}, {"Red", 0xA80000}, {"Cyan", 0x54FCFC},
         {"Purple", 0xA800A8}, {"Green", 0x00A800}, {"Blue", 0x0000A8}, {"Yellow", 0xFCFC00},
         {"Orange", 0xA85400}, {"Brown", 0x802C00}, {"Light Red", 0xFC5454}, {"Dark Gray", 0x545454},
         {"Medium Gray", 0x808080}, {"Light Green", 0x54FC54}, {"Light Blue", 0x5454FC}, {"Light Gray", 0xA8A8A8}
     } });
-    
+
     palettes.push_back({ 11, "Ccs64", false, {
         {"Black", 0x101010}, {"White", 0xFFFFFF}, {"Red", 0xE04040}, {"Cyan", 0x60FFFF},
         {"Purple", 0xE060E0}, {"Green", 0x40E040}, {"Blue", 0x4040E0}, {"Yellow", 0xFFFF40},
         {"Orange", 0xE0A040}, {"Brown", 0x9C7448}, {"Light Red", 0xFFA0A0}, {"Dark Gray", 0x545454},
         {"Medium Gray", 0x888888}, {"Light Green", 0xA0FFA0}, {"Light Blue", 0xA0A0FF}, {"Light Gray", 0xC0C0C0}
     } });
-    
+
     palettes.push_back({ 12, "Frodo", false, {
         {"Black", 0x000000}, {"White", 0xFFFFFF}, {"Red", 0xCC0000}, {"Cyan", 0x00FFCC},
         {"Purple", 0xFF00FF}, {"Green", 0x00CC00}, {"Blue", 0x0000CC}, {"Yellow", 0xFFFF00},
         {"Orange", 0xFF8800}, {"Brown", 0x884400}, {"Light Red", 0xFF8888}, {"Dark Gray", 0x444444},
         {"Medium Gray", 0x888888}, {"Light Green", 0x88FF88}, {"Light Blue", 0x8888FF}, {"Light Gray", 0xCCCCCC}
     } });
-    
+
     palettes.push_back({ 13, "PC64", false, {
         {"Black", 0x212121}, {"White", 0xFFFFFF}, {"Red", 0xB52121}, {"Cyan", 0x73FFFF},
         {"Purple", 0xB521B5}, {"Green", 0x21B521}, {"Blue", 0x2121B5}, {"Yellow", 0xFFFF21},
         {"Orange", 0xB57321}, {"Brown", 0x944221}, {"Light Red", 0xFF7373}, {"Dark Gray", 0x737373},
         {"Medium Gray", 0x949494}, {"Light Green", 0x73FF73}, {"Light Blue", 0x7373FF}, {"Light Gray", 0xB5B5B5}
     } });
-    
+
     palettes.push_back({ 14, "Deekay", false, {
         {"Black", 0x000000}, {"White", 0xFFFFFF}, {"Red", 0x882000}, {"Cyan", 0x68D0A8},
         {"Purple", 0xA838A0}, {"Green", 0x50B818}, {"Blue", 0x181090}, {"Yellow", 0xF0E858},
         {"Orange", 0xA04800}, {"Brown", 0x472B1B}, {"Light Red", 0xC87870}, {"Dark Gray", 0x484848},
         {"Medium Gray", 0x808080}, {"Light Green", 0x98FF98}, {"Light Blue", 0x5090D0}, {"Light Gray", 0xB8B8B8}
     } });
-    
+
     palettes.push_back({ 15, "Ptoing", false, {
         {"Black", 0x000000}, {"White", 0xFFFFFF}, {"Red", 0x8C3E34}, {"Cyan", 0x7ABFC7},
         {"Purple", 0x8D47B3}, {"Green", 0x68A941}, {"Blue", 0x3E31A2}, {"Yellow", 0xD0DC71},
         {"Orange", 0x905F25}, {"Brown", 0x574200}, {"Light Red", 0xBB776D}, {"Dark Gray", 0x545454},
         {"Medium Gray", 0x808080}, {"Light Green", 0xACEA88}, {"Light Blue", 0x7C70DA}, {"Light Gray", 0xABABAB}
-    } });   
-	
+    } });
+
 	palettes.push_back({ 16, "AW1", false, {
         {"Black", 0}, {"White", 0xffffff}, {"Red", 0x9c493e}, {"Cyan", 0x81cbd5},
         {"Purple", 0x9e51c4}, {"Green", 0x74bb46}, {"Blue", 0x4d3cbb}, {"Yellow", 0xd6e26e},

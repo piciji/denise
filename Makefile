@@ -18,7 +18,7 @@ include data/Makefile
 
 objects := program view config emuconfig emumodel mediaview archiveviewer states firmware cmd statusbar
 objects += input audio video palette shader bass reverb panning audiorecord wavwriter cosine cosineSSE
-objects += guikit libami libC64 autoloader
+objects += guikit libami libC64 autoloader fileloader
 objects += driver
 ifeq ($(platform),windows)
     objects += dinput5 dinput7 dinput8 xaudio27 xaudio28 xaudio29
@@ -166,6 +166,7 @@ obj/emuconfig.o:	program/emuconfig/config.cpp
 obj/emumodel.o:		program/emuconfig/layouts/model.cpp
 obj/mediaview.o:	program/media/media.cpp
 obj/autoloader.o:	program/media/autoloader.cpp
+obj/fileloader.o:	program/media/fileloader.cpp
 obj/archiveviewer.o:	program/config/archiveViewer.cpp
 obj/states.o:		program/states/states.cpp
 obj/audio.o:		program/audio/manager.cpp

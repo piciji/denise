@@ -243,6 +243,7 @@ struct Window : Base {
     auto getScrollbarWidth() -> unsigned;
 	
 	static auto addCustomFont( CustomFont* customFont ) -> bool;
+	static auto countCustomFonts() -> unsigned;
 
     struct {
         bool resizable = true;
@@ -842,7 +843,7 @@ struct TabFrameLayout : Layout {
     auto append(Sizable& sizable, Size size, unsigned spacing = 0) -> void = delete;
     auto setAlignment(double alignment) -> void = delete;
 
-    auto setLayout(unsigned selection, Layout& layout, Size size = {~0u, ~0u}) -> void;
+    auto setLayout(unsigned selection, Layout& layout, Size size = {~0u, ~0u}, bool autoUpdate = true) -> void;
     auto appendHeader(std::string text, Image& image) -> void { appendHeader(text, &image); }
     auto appendHeader(std::string text, Image* image = nullptr) -> void;
     auto setHeader(unsigned selection, std::string text) -> void;

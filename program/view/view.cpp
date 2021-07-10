@@ -9,6 +9,7 @@
 #include "../cmd/cmd.h"
 #include "status.h"
 #include "../media/autoloader.h"
+#include "../media/fileloader.h"
 #include "placeholder.cpp"
 #include "../../data/icons.h"
 
@@ -59,10 +60,11 @@ auto View::build() -> void {
     
     onClose = []() {
         archiveViewer->setVisible(false);
-        configView->setVisible(false);
+        if (configView)
+            configView->setVisible(false);
         
-		for(auto emuConfigView : emuConfigViews)
-			emuConfigView->setVisible(false);
+		for(auto emuView : emuConfigViews)
+            emuView->setVisible(false);
 			        
         program->quit();
         GUIKIT::Application::quit();
@@ -145,7 +147,7 @@ auto View::build() -> void {
     };
     
     GUIKIT::Application::Cocoa::onPreferences = [] {
-        configView->show(ConfigView::TabWindow::Layout::Settings);
+        ConfigView::TabWindow::open(ConfigView::TabWindow::Layout::Settings);
     };
     	
 	GUIKIT::Application::Cocoa::onCustom1 = []() {
@@ -210,7 +212,7 @@ auto View::setAnyload( Emulator::Interface* emulator ) -> void {
 	
 	anyloadTimer.onFinished = [this, emulator, mIsAcquiredBefore]() {
 		anyloadTimer.setEnabled(false);		
-		EmuConfigView::TabWindow::getView( emulator )->mediaLayout->anyLoad( mIsAcquiredBefore );
+		fileloader->anyLoad( emulator, mIsAcquiredBefore );
 	};
 	
 	anyloadTimer.setEnabled();
@@ -444,7 +446,9 @@ auto View::setConnectors() -> void {
                     settings->set<unsigned>( _underscore(connector.name), device.id);
                     emulator->connect(connector.id, device.id);
                     InputManager::getManager(emulator)->updateMappingsInUse();
-                    EmuConfigView::TabWindow::getView(emulator)->inputLayout->updateConnectorButtons();
+                    auto emuView = EmuConfigView::TabWindow::getView(emulator);
+                    if (emuView)
+                        emuView->inputLayout->updateConnectorButtons();
                     view->setCursor(emulator);
                 };
 
@@ -482,8 +486,10 @@ auto View::setConnectors() -> void {
             
             settings->set<unsigned>( _underscore(connector1->name), connectedDevice2->id);
             settings->set<unsigned>( _underscore(connector2->name), connectedDevice1->id);
-            
-            EmuConfigView::TabWindow::getView(emulator)->inputLayout->updateConnectorButtons();
+
+            auto emuView = EmuConfigView::TabWindow::getView(emulator);
+            if (emuView)
+                emuView->inputLayout->updateConnectorButtons();
             
             view->checkInputDevice(emulator, connector1, connectedDevice2);
             view->checkInputDevice(emulator, connector2, connectedDevice1);            
@@ -498,8 +504,8 @@ auto View::setConnectors() -> void {
         inputItem->setText(emulator->ident + " " + trans->get("config") );
 
         inputItem->onActivate = [emulator]() {
-            auto emuConfigView = EmuConfigView::TabWindow::getView( emulator );
-            emuConfigView->show(EmuConfigView::TabWindow::Layout::Control);
+            auto emuView = EmuConfigView::TabWindow::getView( emulator, true );
+            emuView->show(EmuConfigView::TabWindow::Layout::Control);
         };
         inputItem->setIcon(toolsImage);
         controlMenu.append(*inputItem);
@@ -618,7 +624,6 @@ auto View::loadImages() -> void {
 auto View::buildMenu() -> void {
 		
     for(auto emulator : emulators) {
-        auto emuConfigView = EmuConfigView::TabWindow::getView( emulator );        
         SystemMenu sM;
         
         sM.emulator = emulator;
@@ -676,9 +681,10 @@ auto View::buildMenu() -> void {
         
         sM.media = new GUIKIT::MenuItem;
         sM.media->setIcon( driveImage );
-        sM.media->onActivate = [emuConfigView]() {
-            emuConfigView->mediaLayout->show();
-		    emuConfigView->show(EmuConfigView::TabWindow::Layout::Media);
+        sM.media->onActivate = [emulator]() {
+            auto emuView = EmuConfigView::TabWindow::getView( emulator, true );
+            emuView->mediaLayout->show();
+            emuView->show(EmuConfigView::TabWindow::Layout::Media);
 	    };
         sM.system->append( *sM.media );
 		
@@ -686,52 +692,59 @@ auto View::buildMenu() -> void {
         
 		sM.systemManagement = new GUIKIT::MenuItem;
         sM.systemManagement->setIcon( systemImage );
-        sM.systemManagement->onActivate = [emuConfigView]() {
-		    emuConfigView->show(EmuConfigView::TabWindow::Layout::System);
+        sM.systemManagement->onActivate = [emulator]() {
+            auto emuView = EmuConfigView::TabWindow::getView( emulator, true );
+            emuView->show(EmuConfigView::TabWindow::Layout::System);
 	    };
         sM.system->append( *sM.systemManagement );
             
         sM.configurations = new GUIKIT::MenuItem;
         sM.configurations->setIcon( scriptImage );
-        sM.configurations->onActivate = [emuConfigView]() {
-            emuConfigView->show(EmuConfigView::TabWindow::Layout::Configurations);
+        sM.configurations->onActivate = [emulator]() {
+            auto emuView = EmuConfigView::TabWindow::getView( emulator, true );
+            emuView->show(EmuConfigView::TabWindow::Layout::Configurations);
         };
         sM.system->append( *sM.configurations );
 
         sM.presentation = new GUIKIT::MenuItem;
         sM.presentation->setIcon( displayImage );
-        sM.presentation->onActivate = [emuConfigView]() {
-            emuConfigView->show(EmuConfigView::TabWindow::Layout::Presentation);
+        sM.presentation->onActivate = [emulator]() {
+            auto emuView = EmuConfigView::TabWindow::getView( emulator, true );
+            emuView->show(EmuConfigView::TabWindow::Layout::Presentation);
         };
         sM.system->append( *sM.presentation );
 
         if ( dynamic_cast<LIBC64::Interface*>(emulator)) {
             sM.palette = new GUIKIT::MenuItem;
             sM.palette->setIcon(paletteImage);
-            sM.palette->onActivate = [emuConfigView]() {
-                emuConfigView->show(EmuConfigView::TabWindow::Layout::Palette);
+            sM.palette->onActivate = [emulator]() {
+                auto emuView = EmuConfigView::TabWindow::getView( emulator, true );
+                emuView->show(EmuConfigView::TabWindow::Layout::Palette);
             };
             sM.system->append(*sM.palette);				
         }
 
         sM.audio = new GUIKIT::MenuItem;
         sM.audio->setIcon( volumeImage );
-        sM.audio->onActivate = [emuConfigView]() {
-            emuConfigView->show(EmuConfigView::TabWindow::Layout::Audio);
+        sM.audio->onActivate = [emulator]() {
+            auto emuView = EmuConfigView::TabWindow::getView( emulator, true );
+            emuView->show(EmuConfigView::TabWindow::Layout::Audio);
         };
         sM.system->append( *sM.audio );
 
         sM.firmware = new GUIKIT::MenuItem;
         sM.firmware->setIcon( firmwareImage );
-        sM.firmware->onActivate = [emuConfigView]() {
-            emuConfigView->show(EmuConfigView::TabWindow::Layout::Firmware);
+        sM.firmware->onActivate = [emulator]() {
+            auto emuView = EmuConfigView::TabWindow::getView( emulator, true );
+            emuView->show(EmuConfigView::TabWindow::Layout::Firmware);
         };
         sM.system->append( *sM.firmware );
 
         sM.border = new GUIKIT::MenuItem;
         sM.border->setIcon( cropImage );
-        sM.border->onActivate = [emuConfigView]() {
-            emuConfigView->show(EmuConfigView::TabWindow::Layout::Border);
+        sM.border->onActivate = [emulator]() {
+            auto emuView = EmuConfigView::TabWindow::getView( emulator, true );
+            emuView->show(EmuConfigView::TabWindow::Layout::Border);
         };
         sM.system->append( *sM.border );
 		
@@ -752,7 +765,6 @@ auto View::buildMenu() -> void {
         iM.emulator = emulator;
         inputMenus.push_back(iM);
     }
-
 
     controlMenu.setIcon(joystickImage);
     append(controlMenu);
@@ -782,25 +794,25 @@ auto View::buildMenu() -> void {
 
     globalVideoItem.setIcon( displayImage );
     globalVideoItem.onActivate = []() {
-        configView->show(ConfigView::TabWindow::Layout::Video);
+        ConfigView::TabWindow::open(ConfigView::TabWindow::Layout::Video);
     };
 
     optionsMenu.append(globalVideoItem);
 
     globalAudioItem.onActivate = []() {
-        configView->show(ConfigView::TabWindow::Layout::Audio);
+        ConfigView::TabWindow::open(ConfigView::TabWindow::Layout::Audio);
     };
     globalAudioItem.setIcon( volumeImage );
     optionsMenu.append(globalAudioItem);
 
     globalInputItem.onActivate = []() {
-        configView->show(ConfigView::TabWindow::Layout::Input);
+        ConfigView::TabWindow::open(ConfigView::TabWindow::Layout::Input);
     };
     globalInputItem.setIcon( keyboardImage );
     optionsMenu.append(globalInputItem);
 
     settingsItem.onActivate = []() {
-        configView->show(ConfigView::TabWindow::Layout::Settings);
+        ConfigView::TabWindow::open(ConfigView::TabWindow::Layout::Settings);
     };
     settingsItem.setIcon(toolsImage);
     optionsMenu.append(settingsItem);
@@ -912,9 +924,9 @@ auto View::buildMenu() -> void {
 
          if (!activeEmulator)
              emulator = program->getLastUsedEmu();
-           
-        EmuConfigView::TabWindow::getView( emulator )->mediaLayout->open( emulator->getTape(0) );
-    };    
+
+        fileloader->load( emulator, emulator->getTape(0) );
+    };
     
     tapeControlMenu.append( insertTapeItem );
     
@@ -925,8 +937,8 @@ auto View::buildMenu() -> void {
 
          if (!activeEmulator)
              emulator = program->getLastUsedEmu();
-           
-        EmuConfigView::TabWindow::getView( emulator )->mediaLayout->eject( emulator->getTape(0) );
+
+        fileloader->eject( emulator, emulator->getTape(0) );
     };    
     
     tapeControlMenu.append( ejectTapeItem );
@@ -975,9 +987,9 @@ auto View::buildMenu() -> void {
             auto emulator = activeEmulator;
 
             if (!activeEmulator)
-                emulator = program->getLastUsedEmu();	
+                emulator = program->getLastUsedEmu();
 
-            EmuConfigView::TabWindow::getView( emulator )->mediaLayout->open( emulator->getDisk(i) );
+            fileloader->load( emulator, emulator->getDisk(i) );
         };    
         diskControlMenu.menu.append( diskControlMenu.insert );
 
@@ -987,9 +999,9 @@ auto View::buildMenu() -> void {
             auto emulator = activeEmulator;
 
             if (!activeEmulator)
-                emulator = program->getLastUsedEmu();	
+                emulator = program->getLastUsedEmu();
 
-            EmuConfigView::TabWindow::getView( emulator )->mediaLayout->eject( emulator->getDisk(i) );
+            fileloader->eject( emulator, emulator->getDisk(i) );
         };
         diskControlMenu.menu.append( diskControlMenu.eject );
         
@@ -1201,9 +1213,8 @@ auto View::questionToWrite(Emulator::Interface::Media* media) -> bool {
     
     auto file = (GUIKIT::File*)media->guid;
     
-    if (cmd->debug || !file || file->isArchived() || file->isReadOnly())
+    if (cmd->debug || cmd->noGui || !file || file->isArchived() || file->isReadOnly())
         // archive, removing of write protection is not supported
-        // no dialog in debug mode
         return false;
     
     if (exclusiveFullscreen())

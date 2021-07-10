@@ -457,7 +457,7 @@ TabFrameLayout::TabFrameLayout() {
     };
 }
 
-auto TabFrameLayout::setLayout(unsigned selection, Layout& layout, Size size) -> void {
+auto TabFrameLayout::setLayout(unsigned selection, Layout& layout, Size size, bool autoUpdate) -> void {
     bool found = false;
     for(auto& child : children) {
         if(selection == child.selection) {
@@ -466,8 +466,11 @@ auto TabFrameLayout::setLayout(unsigned selection, Layout& layout, Size size) ->
             break;
         }
     }
-    if(!found) children.push_back({&layout, size, {0,0}, 0, selection});
-    updateLayout();
+    if(!found)
+        children.push_back({&layout, size, {0,0}, 0, selection});
+
+    if (autoUpdate)
+        updateLayout();
     //if(window()) window()->synchronizeLayout();
 }
 

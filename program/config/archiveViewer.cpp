@@ -62,9 +62,15 @@ auto ArchiveViewer::build() -> void {
         globalSettings->set<unsigned>("screen_archiveviewer_width", geometry.width);
         globalSettings->set<unsigned>("screen_archiveviewer_height", geometry.height);
     };
+
+    builded = true;
 }
 
 auto ArchiveViewer::setView(std::vector<GUIKIT::File::Item>& items) -> void {
+    if (!builded) {
+        build();
+    }
+
     unsigned fileCount = 0;
     GUIKIT::File::Item* firstFile = nullptr;
     tv.reset();

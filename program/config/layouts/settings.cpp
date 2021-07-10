@@ -131,8 +131,8 @@ SettingsLayout::SettingsLayout() {
         
         globalSettings->set<unsigned>("software_preview_fontsize", previewLayout.top.fontSizeCombo.userData());
         
-        for( auto emuConfigView : emuConfigViews )
-            emuConfigView->mediaLayout->updateListingFont( previewLayout.top.fontSizeCombo.userData() );
+        for( auto emuView : emuConfigViews )
+            emuView->mediaLayout->updateListingFont( previewLayout.top.fontSizeCombo.userData() );
     };
     
     previewLayout.top.fontSizeCombo.setSelection( globalSettings->get<unsigned>("software_preview_fontsize", 12, {6, 14}) - 6 );
@@ -181,8 +181,8 @@ SettingsLayout::SettingsLayout() {
         
         globalSettings->set<bool>("software_preview_tooltips", state );
         
-        for( auto emuConfigView : emuConfigViews )
-            emuConfigView->mediaLayout->updateListings();
+        for( auto emuView : emuConfigViews )
+            emuView->mediaLayout->updateListings();
         
         previewLayout.previewBox.reset();
         
@@ -223,14 +223,7 @@ auto SettingsLayout::removePreview() -> void {
 
 auto SettingsLayout::setPreviewContent() -> void {
     
-    bool useCustomFont = false;
-    
-    for (auto emuConfigView : emuConfigViews) {
-        if (emuConfigView->mediaLayout->useCustomFont) {
-            useCustomFont = true;
-            break;
-        }
-    }
+    bool useCustomFont = GUIKIT::Window::countCustomFonts() > 0;
 
     auto fontSize = globalSettings->get<unsigned>("dialog_software_preview_fontsize", 11, {6, 14});
     
@@ -308,21 +301,22 @@ auto SettingsLayout::changeLang() -> void {
 
     globalSettings->set<std::string>("translation", file);
 
-	archiveViewer->translate();
+    if (archiveViewer)
+	    archiveViewer->translate();
+
     view->translate();
-    
-    configView->translate();
+
+    if (configView) {
+        configView->translate();
+        configView->inputLayout->loadInputList();
+        configView->synchronizeLayout();
+    }
 	
-	for( auto emuConfigView : emuConfigViews )
-		emuConfigView->translate();	
-	
-	configView->inputLayout->loadInputList();	
-	for( auto emuConfigView : emuConfigViews )
-		emuConfigView->inputLayout->loadDeviceList();
-	
-    configView->synchronizeLayout();	
-	for( auto emuConfigView : emuConfigViews )
-		emuConfigView->synchronizeLayout();	
+	for( auto emuView : emuConfigViews ) {
+        emuView->translate();
+        emuView->inputLayout->loadDeviceList();
+        emuView->synchronizeLayout();
+	}
 }
 
 auto SettingsLayout::setLang() -> void {

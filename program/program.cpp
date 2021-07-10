@@ -14,6 +14,7 @@
 #include "video/palette.h"
 #include "cmd/cmd.h"
 #include "media/autoloader.h"
+#include "media/fileloader.h"
 #include <random>
 
 Program* program = nullptr;
@@ -49,7 +50,7 @@ int main(int argc, char** argv) {
     return GUIKIT::Application::exitCode;
 }
 
-Program::Program() {	    
+Program::Program() {
     program = this;    
 	if (cmd->noGui)
 		GUIKIT::Application::loop = [this]() { loopNoGui(); };    
@@ -59,10 +60,10 @@ Program::Program() {
     GUIKIT::Application::name = APP_NAME;
     globalSettings = new GUIKIT::Settings;
 	autoloader = new Autoloader;
+	fileloader = new Fileloader;
     settingsStorage.push_back( globalSettings );
 	if(!cmd->noGui) {
-		view = new View;    
-		configView = new ConfigView::TabWindow;
+		view = new View;
 		archiveViewer = new ArchiveViewer;    
 		trans = new GUIKIT::Translation;		
 		statusHandler = new StatusHandler;
@@ -70,27 +71,21 @@ Program::Program() {
 	}    
     
 	logger = new Logger;
-	filePool = new FilePool(10);	    
-    
+	filePool = new FilePool(10);
+
     addEmulators();
-    init();	  
+    init();
 
 	if(!cmd->noGui) {
 		InputManager::build();
 		view->build();
-		configView->build();	
-
-		for( auto emuConfigView : emuConfigViews )
-			emuConfigView->build();
-
-		archiveViewer->build();
-		view->show();    
+		view->show();
     }
-	
+
 	initInput();
 	initAudio();
 	initVideo();
-    
+
     cmd->autoloadImages();
 }
 
@@ -119,9 +114,7 @@ auto Program::addEmulators() -> void {
         
         // inlcudes hotkeys + emulator keys
         inputManagers.push_back( new InputManager( emulator ) );
-        
-        emuConfigViews.push_back( new EmuConfigView::TabWindow( emulator ) );
-        
+
         states.push_back( new States( emulator ) );
         
         firmwareManagers.push_back( new FirmwareManager( emulator ) );    
@@ -150,6 +143,9 @@ auto Program::init() -> void {
         initEmulator( emulator );
     	
 	logger->setSavePath( GUIKIT::System::getUserDataFolder(appFolder()) );
+
+	if (!cmd->debug)
+        addCustomFont();
         
     isRunning = isPause = false;
 }
@@ -241,8 +237,9 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
                 emulator->insertMedium(&media, data, file->archiveDataSize(fSetting->id));
                 emulator->writeProtect(&media, (file->isArchived() || file->isReadOnly()) ? true : fSetting->writeProtect);
 
-                if (!cmd->noGui)
-                    EmuConfigView::TabWindow::getView( activeEmulator )->mediaLayout->updateWriteProtection( &media, fSetting->writeProtect );
+                auto emuView = EmuConfigView::TabWindow::getView( activeEmulator );
+                if (emuView)
+                    emuView->mediaLayout->updateWriteProtection( &media, fSetting->writeProtect );
 
                 filePool->assign( _ident(emulator, media.name + "store"), file);
 
@@ -324,8 +321,11 @@ auto Program::powerOff() -> void {
                 if (media.guid) {
                     auto file = (GUIKIT::File*)media.guid;
                     // medium was written by emulation, lets update the listing
-                    if (!cmd->noGui && file->wasDataChanged() && filePool->has( _ident(activeEmulator, media.name + "store"), file))                        
-                        EmuConfigView::TabWindow::getView( activeEmulator )->mediaLayout->updateListing( &media );
+                    if (!cmd->noGui && file->wasDataChanged() && filePool->has( _ident(activeEmulator, media.name + "store"), file)) {
+                        auto emuView = EmuConfigView::TabWindow::getView( activeEmulator );
+                        if (emuView)
+                            emuView->mediaLayout->updateListing( &media );
+                    }
                 }                        
                 
                 filePool->assign( _ident(activeEmulator, media.name), nullptr);
@@ -398,11 +398,11 @@ auto Program::loop() -> void {
 auto Program::willPoll() -> bool {
     isFocused = view->focused();
     
-    if( isFocused || configView->focused() )
+    if( isFocused || (configView && configView->focused()) )
         return true;    
 	
-	for(auto emuConfigView : emuConfigViews)
-        if (emuConfigView->focused())
+	for(auto emuView : emuConfigViews)
+        if (emuView->focused())
             return true;
     
     return false;
@@ -613,3 +613,4 @@ auto Program::getEmulator( std::string ident ) -> Emulator::Interface* {
     
     return nullptr;
 }
+

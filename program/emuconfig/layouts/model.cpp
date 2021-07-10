@@ -422,7 +422,7 @@ auto ModelLayout::stepRange(unsigned id, int step) -> int {
                     return newValue;
                     
                 } else if (model->isSlider()) {
-
+                    // todo apply model scaler
                     int stepSize = range / model->steps;
 
                     unsigned pos = (newValue + _max) / stepSize;
@@ -525,12 +525,12 @@ auto ModelLayout::applyCustomStuff( Line::Block* block, Emulator::Interface::Mod
                 break;
                 
             case LIBC64::Interface::ModelIdSid: {
-                auto cfgView = EmuConfigView::TabWindow::getView(this->emulator);
+                auto emuView = EmuConfigView::TabWindow::getView(this->emulator);
 
-                if (this == &cfgView->systemLayout->modelLayout)
-                    cfgView->audioLayout->settingsLayout.updateWidget(LIBC64::Interface::ModelIdSid);
+                if (this == &emuView->systemLayout->modelLayout)
+                    emuView->audioLayout->settingsLayout.updateWidget(LIBC64::Interface::ModelIdSid);
                 else
-                    cfgView->systemLayout->modelLayout.updateWidget(LIBC64::Interface::ModelIdSid);
+                    emuView->systemLayout->modelLayout.updateWidget(LIBC64::Interface::ModelIdSid);
                 
                 } break;
                 

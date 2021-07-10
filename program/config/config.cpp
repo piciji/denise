@@ -104,21 +104,18 @@ auto TabWindow::translate() -> void {
 	tab.setHeader(Layout::Settings, trans->get( "generic" ));
 }
 
-auto TabWindow::showDelayed(Layout layout) -> void {
-	inputDriver->mUnacquire();
-	mtimer.setInterval(100);
-	
-	mtimer.onFinished = [this, layout]() {
-		mtimer.setEnabled(false);
-		show(layout);
-	};
-	mtimer.setEnabled();
-}
-
 auto TabWindow::show(Layout layout) -> void {	
     tab.setSelection( (unsigned)layout );	
     setVisible();
 	setFocused();
+}
+
+auto TabWindow::open(Layout layout) -> void {
+    if (!configView) {
+        configView = new ConfigView::TabWindow;
+        configView->build();
+    }
+    configView->show( layout );
 }
 
 }

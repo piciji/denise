@@ -159,13 +159,21 @@ auto VideoManager::update() -> void {
 }
 
 auto VideoManager::updateListingColors() -> void {    
-    if (emulator->ident != "C64")
+    if (!isC64())
         return;
-    
-    auto mediaView = EmuConfigView::TabWindow::getView( emulator )->mediaLayout;
-    
-    mediaView->colorListing( colorTable[14], true );
-    mediaView->colorListing( colorTable[6], false );
+
+    auto emuView = EmuConfigView::TabWindow::getView( emulator );
+
+    if (emuView)
+        emuView->mediaLayout->colorListing( colorTable[14], colorTable[6] );
+}
+
+auto VideoManager::getC64Foreground() -> unsigned {
+    return colorTable[14];
+}
+
+auto VideoManager::getC64Background() -> unsigned {
+    return colorTable[6];
 }
 
 auto VideoManager::generateC64ColorSpectrum() -> void {

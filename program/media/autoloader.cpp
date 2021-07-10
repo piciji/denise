@@ -1,5 +1,6 @@
 
 #include "autoloader.h"
+#include "fileloader.h"
 #include "../tools/filepool.h"
 #include "../emuconfig/config.h"
 #include "../media/media.h"
@@ -39,9 +40,8 @@ auto Autoloader::postProcessing() -> void {
     
     if (ddControl.saveFile) {
 
-        if (emuView)
-            emuView->configurationsLayout->updateSaveIdent( ddControl.saveFile->getFileName( false ) );
-        
+        program->updateSaveIdent( ddControl.emulator, ddControl.saveFile->getFileName( false ) );
+
         filePool->assign("savestate", nullptr);
         
         States::getInstance( ddControl.emulator )->load( ddControl.saveFile->getFile() );
@@ -86,18 +86,24 @@ auto Autoloader::postProcessing() -> void {
     if (!autoStart) {
 
         if (mediaGroup->isDrive()) {
-            if (emuView->visible())
+            if ( emuView && emuView->visible())
                 emuView->setFocused();
             
         } else {
-            
+            // not autostarted expansion needs settings window
+            if (!emuView)
+                emuView = EmuConfigView::TabWindow::getView( ddControl.emulator, true );
+
+            emuView->setLayout( EmuConfigView::TabWindow::Layout::Media );
+
             if (!emuView->visible())
                 emuView->setVisible();
 
             emuView->setFocused();
         }
-        
-        emuView->mediaLayout->showMediaGroupLayout(mediaGroup);
+
+        if (emuView)
+            emuView->mediaLayout->showMediaGroupLayout(mediaGroup);
 
     } else {
 
@@ -131,19 +137,20 @@ auto Autoloader::postProcessing() -> void {
 				
 				program->getSettings( ddControl.emulator )->set<unsigned>("expansion", useExpansion->id);
 
-                if (emuView) {
-                    if (useExpansion->isRam()) {
-                        emuView->mediaLayout->eject( useExpansion->mediaGroup, true);
-						if (useExpansion->mediaGroupExpanded)
-							emuView->mediaLayout->eject( useExpansion->mediaGroupExpanded, true);
-					}
+                if (useExpansion->isRam()) {
+                    fileloader->eject( ddControl.emulator, useExpansion->mediaGroup, true );
 
-                    emuView->systemLayout->setExpansion( useExpansion );
+                    if (useExpansion->mediaGroupExpanded) {
+                        fileloader->eject( ddControl.emulator, useExpansion->mediaGroupExpanded, true );
+                    }
                 }
+
+                if (emuView)
+                    emuView->systemLayout->setExpansion( useExpansion );
 			}
 		}
         
-        program->power( ddControl.emulator, emuView );
+        program->power( ddControl.emulator,emuView != nullptr );
 
         if (!useExpansion)
             program->removeExpansion();        
@@ -156,8 +163,8 @@ auto Autoloader::postProcessing() -> void {
             fSetting = FileSetting::getInstance( ddControl.emulator, _underscore(mediaGroup->media[0].name) );
         }
         
-        if (emuView && fSetting)
-            emuView->configurationsLayout->updateSaveIdent(fSetting->file);  
+        if (fSetting)
+            program->updateSaveIdent( ddControl.emulator, fSetting->file);
         
 		if (view) {
 			if (mediaGroup->isTape())
@@ -170,7 +177,6 @@ auto Autoloader::postProcessing() -> void {
 			}
 		}
     }
-    
 }
 
 auto Autoloader::loadFiles() -> void {
@@ -262,9 +268,9 @@ auto Autoloader::loadFile( GUIKIT::File* file, GUIKIT::File::Item* item ) -> voi
 						media = &mediaGroup.media[ alreadyInUse ];
 
 					if (emuView)
-						emuView->mediaLayout->insertImage(media, file, item);
+                        emuView->mediaLayout->insertImage(media, file, item);
 					else
-						insertImage( emulator, media, file, item );
+						fileloader->insertImage( emulator, media, file, item );
 
                     ddControl.mediaGroups.push_back(&mediaGroup);
 
@@ -290,46 +296,6 @@ auto Autoloader::countImagesFor(Emulator::Interface::MediaGroup* mediaGroup) -> 
 	}   
     
 	return counter;
-}
-
-auto Autoloader::insertImage(Emulator::Interface* emulator, Emulator::Interface::Media* media, GUIKIT::File* file, GUIKIT::File::Item* item) -> void {
-	
-	auto mediaGroup = media->group;
-	
-	auto settings = program->getSettings( emulator );
-	
-	auto fSetting = FileSetting::getInstance( emulator, _underscore(media->name ) );
-	
-	unsigned size = file->archiveDataSize(item->id);
-
-	auto data = mediaGroup->isTape() && !file->isArchived() ? nullptr
-		: file->archiveData(item->id);
-
-	if (!mediaGroup->isExpansion()) {
-		emulator->ejectMedium(media);
-
-		media->guid = uintptr_t(file);
-		emulator->insertMedium(media, data, size);
-		emulator->writeProtect(media, false);
-		filePool->assign(_ident(emulator, media->name), file);
-	} else {
-		
-		if (mediaGroup->expansion->pcbs.size())		
-			settings->set<unsigned>( _underscore(media->name) + "_pcb", 0);
-	}
-	
-	emulator->getListing(media);  
-	
-	if (mediaGroup->selected && !media->secondary )
-		settings->set<unsigned>( _underscore(mediaGroup->name) + "_selected", media->id);
-
-	filePool->assign(_ident(emulator, media->name + "store"), file);
-	filePool->unloadOrphaned();
-
-	fSetting->setPath(file->getFile());
-	fSetting->setFile(item->info.name);
-	fSetting->setId(item->id);
-	fSetting->setWriteProtect(false);
 }
 
 auto Autoloader::activateDrive( Emulator::Interface* emulator, Emulator::Interface::MediaGroup* mediaGroup, unsigned requestedCount ) -> void {

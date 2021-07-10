@@ -478,7 +478,12 @@ auto States::updateConnectedDevices() -> void {
     
     if (deviceIds.size() > 0)
         InputManager::getManager( emulator )->updateMappingsInUse();
-    EmuConfigView::TabWindow::getView(emulator)->inputLayout->updateConnectorButtons();
+
+    auto emuView = EmuConfigView::TabWindow::getView( emulator );
+
+    if (emuView)
+        emuView->inputLayout->updateConnectorButtons();
+
     view->setCursor( emulator );
 }
 
@@ -486,8 +491,6 @@ auto States::updateModels() -> void {
 
     bool regionChange = false;
     bool resamplerChange = false;
-    
-    auto cfgView = EmuConfigView::TabWindow::getView( emulator );
 
     for(auto& model : emulator->models) {
 
@@ -511,15 +514,20 @@ auto States::updateModels() -> void {
             settings->set<int>( _underscore( model.name), value );                        
     }
 
-    cfgView->systemLayout->modelLayout.updateWidgets();
-    cfgView->systemLayout->driveModelLayout.updateWidgets();
-    if (cfgView->audioLayout)
-        cfgView->audioLayout->settingsLayout.updateWidgets();
-    
+    auto emuView = EmuConfigView::TabWindow::getView( emulator );
+
+    if (emuView) {
+        emuView->systemLayout->modelLayout.updateWidgets();
+        emuView->systemLayout->driveModelLayout.updateWidgets();
+        if (emuView->audioLayout)
+            emuView->audioLayout->settingsLayout.updateWidgets();
+    }
+
     if (regionChange) {
-        auto cfgView = EmuConfigView::TabWindow::getView( emulator );
-    
-        cfgView->videoLayout->updatePresets();  
+        if (emuView)
+            emuView->videoLayout->updatePresets();
+        else if (videoDriver)
+            VideoManager::getInstance( emulator )->reloadSettings();
     }
     
     if (regionChange || resamplerChange) {
@@ -531,18 +539,30 @@ auto States::updateModels() -> void {
 }
 
 auto States::updateExpansionJumper() -> void {
-        
+
+    auto emuView = EmuConfigView::TabWindow::getView( emulator );
+    auto expansion = emulator->getExpansion();
+
     for( auto& mediaGroup : emulator->mediaGroups ) {
         
-        if (!mediaGroup.isExpansion() || !mediaGroup.selected || (mediaGroup.expansion->jumpers.size() == 0) )
-            continue;        
-                    
-        EmuConfigView::TabWindow::getView( emulator )->mediaLayout->updateJumper( mediaGroup.selected );
+        if (!mediaGroup.isExpansion() || (&mediaGroup != expansion->mediaGroup) || !mediaGroup.selected || (mediaGroup.expansion->jumpers.size() == 0) )
+            continue;
+
+        for (auto& jumper : mediaGroup.expansion->jumpers) {
+            bool state = emulator->getExpansionJumper( mediaGroup.selected, jumper.id );
+            std::string saveIdent = mediaGroup.selected->name + "_jumper_" + jumper.name;
+            settings->set<bool>( _underscore(saveIdent), state);
+        }
+
+        if (emuView)
+            emuView->mediaLayout->updateJumper( mediaGroup.selected );
     }        
 }
 
 auto States::updateWriteProtection(std::vector<Emulator::Interface::Media*> loadedMedia) -> void {
-    
+
+    auto emuView = EmuConfigView::TabWindow::getView( emulator );
+
     for (auto media : loadedMedia) {
         
         auto file = (GUIKIT::File*)media->guid;
@@ -552,7 +572,12 @@ auto States::updateWriteProtection(std::vector<Emulator::Interface::Media*> load
         if (forceWp)
             // override write protection of state, i.e. file permissions were changed between saving and loading a state
             emulator->writeProtect( media, true );
-        
-        EmuConfigView::TabWindow::getView( activeEmulator )->mediaLayout->updateWriteProtection( media, emulator->isWriteProtected(media) );
+
+        bool state = emulator->isWriteProtected(media);
+        auto fSetting = FileSetting::getInstance( emulator, _underscore(media->name) );
+        fSetting->setWriteProtect( state );
+
+        if (emuView)
+            emuView->mediaLayout->updateWriteProtection( media, state );
     }       
 }

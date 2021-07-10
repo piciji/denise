@@ -424,10 +424,9 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
     
     // states
     
-    stateFast.top.hotkeys.onActivate = [this]() {		
-		auto emuConfigView = EmuConfigView::TabWindow::getView( this->emulator );
-		emuConfigView->show(EmuConfigView::TabWindow::Layout::Control);
-		emuConfigView->inputLayout->triggerHotkeyMode();
+    stateFast.top.hotkeys.onActivate = [this]() {
+		this->tabWindow->show(EmuConfigView::TabWindow::Layout::Control);
+        this->tabWindow->inputLayout->triggerHotkeyMode();
 	};
 	
 	stateFast.top.edit.onChange = [this]() {
@@ -666,19 +665,8 @@ auto ConfigurationsLayout::splitFile( std::string file, unsigned& pos ) -> std::
 }
 
 auto ConfigurationsLayout::updateSaveIdent( std::string fileName ) -> void {
-    
-    std::size_t end = fileName.find_last_of(".");
-    if (end != std::string::npos)
-        fileName = fileName.erase(end);
-    
-    // for wav record
-    _settings->set<std::string>( "record_ident", fileName, false);
-    
-    if (!_settings->get<bool>( "auto_save_ident", true))
-        return;
         
     stateFast.top.edit.setText( fileName );
-    stateFast.top.edit.onChange();
 }
 
 auto ConfigurationsLayout::loadSettings() -> void {

@@ -31,8 +31,8 @@ auto Program::initVideo() -> void {
         activeVideoManager->reinitThread(true);    
         
     // opengl crt shader only at the moment
-    for( auto emuConfigView : emuConfigViews )
-        emuConfigView->videoLayout->updateVisibillity();
+    for( auto emuView : emuConfigViews )
+        emuView->videoLayout->updateVisibillity();
         
     for( auto emulator : emulators )        
         VideoManager::getInstance( emulator )->reloadSettings();
@@ -168,6 +168,7 @@ auto Program::fastForward( bool activate, bool aggressive ) -> void {
     auto vSync = globalSettings->get<bool>("video_sync", false);
     auto fpsLimit = globalSettings->get("fps_limit", false);
     VideoManager::CrtMode crtMode = (VideoManager::CrtMode)settings->get<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::None, {0u, 2u});
+    auto emuView = EmuConfigView::TabWindow::getView(activeEmulator);
 
     if (activate) {                        
         if (vSync)
@@ -179,8 +180,15 @@ auto Program::fastForward( bool activate, bool aggressive ) -> void {
         globalSettings->set<bool>("video_sync_temp", vSync, false); // remember vsync
         globalSettings->set<bool>("fps_limit_temp", fpsLimit, false); // remember fps limit
 
-        if (crtMode != VideoManager::CrtMode::None)
-            EmuConfigView::TabWindow::getView(activeEmulator)->videoLayout->base.mode.crtNone.activate();
+        if (crtMode != VideoManager::CrtMode::None) {
+            if (emuView)
+                emuView->videoLayout->base.mode.crtNone.activate();
+            else {
+                settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::None);
+                if (videoDriver)
+                    VideoManager::getInstance( activeEmulator )->reloadSettings();
+            }
+        }
 
         globalSettings->set<unsigned>("video_crt_temp", (unsigned)crtMode, false); // remember crt mode
 
@@ -200,10 +208,23 @@ auto Program::fastForward( bool activate, bool aggressive ) -> void {
             view->fpsLimitItem.toggle();
 
         if (crtMode == VideoManager::CrtMode::None) {
-            if (crtModeTemp == VideoManager::CrtMode::Cpu)
-                EmuConfigView::TabWindow::getView(activeEmulator)->videoLayout->base.mode.crtCpu.activate();
-            else if (crtModeTemp == VideoManager::CrtMode::Gpu)
-                EmuConfigView::TabWindow::getView(activeEmulator)->videoLayout->base.mode.crtGpu.activate();
+            if (crtModeTemp == VideoManager::CrtMode::Cpu) {
+                if (emuView)
+                    emuView->videoLayout->base.mode.crtCpu.activate();
+                else {
+                    settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::Cpu);
+                    if (videoDriver)
+                        VideoManager::getInstance( activeEmulator )->reloadSettings();
+                }
+            } else if (crtModeTemp == VideoManager::CrtMode::Gpu) {
+                if (emuView)
+                    emuView->videoLayout->base.mode.crtGpu.activate();
+                else {
+                    settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::Gpu);
+                    if (videoDriver)
+                        VideoManager::getInstance( activeEmulator )->reloadSettings();
+                }
+            }
         }
         
         globalSettings->set<bool>("video_sync_temp", false, false);

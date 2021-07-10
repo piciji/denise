@@ -19,10 +19,12 @@ auto Program::initInput() -> void {
         inputDriver = new DRIVER::Input;
     }
 	InputManager::init();
-	
-	configView->inputLayout->loadInputList();	
-	for( auto emuConfigView : emuConfigViews )
-		emuConfigView->inputLayout->loadDeviceList();
+
+    if (configView)
+	    configView->inputLayout->loadInputList();
+
+	for( auto emuView : emuConfigViews )
+        emuView->inputLayout->loadDeviceList();
 }
 
 auto Program::getInputDriver() -> std::string {
@@ -119,8 +121,11 @@ auto Program::resetRunAhead() -> void {
         settings->set<unsigned>( "runahead", 0);
         
         activeEmulator->runAhead( 0 );
-        
-        EmuConfigView::TabWindow::getView( activeEmulator )->miscLayout->setRunAhead( 0, false );
+
+        auto emuView = EmuConfigView::TabWindow::getView( activeEmulator );
+
+        if (emuView)
+            emuView->miscLayout->setRunAhead( 0, false );
     }   
 }
 

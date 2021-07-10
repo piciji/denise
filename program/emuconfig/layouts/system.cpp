@@ -214,7 +214,6 @@ auto SystemLayout::updateExpansionMemory() -> void {
 			}
 		}
 	}
- 
 }
 
 auto SystemLayout::setExpansion( Emulator::Interface::Expansion* newExpansion ) -> void {

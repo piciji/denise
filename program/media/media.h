@@ -176,13 +176,9 @@ struct MediaLayout : GUIKIT::HorizontalLayout {
     Emulator::Interface* emulator;
     
     GUIKIT::Settings* settings;
-    bool useCustomFont = false;
 	Message* message;
-    GUIKIT::Setting* alternateFileDialog = nullptr;
     GUIKIT::TreeViewItem* expansionParent = nullptr;
-	
-    GUIKIT::BrowserWindow* fileDialogPtr = nullptr;    
-    
+
 	GUIKIT::Image diskImage;
     GUIKIT::Image hdImage;
     GUIKIT::Image tapeImage;
@@ -212,23 +208,6 @@ struct MediaLayout : GUIKIT::HorizontalLayout {
     
     PathsLayout pathsLayout;
     SwapperLayout* swapperLayout = nullptr;
-    	
-    GUIKIT::Timer ftimer;
-    
-    struct {
-        MediaGroupLayout::Block* block = nullptr;
-        std::string filePath;
-    } lastPreview;
-
-    std::mutex previewMutex;
-    GUIKIT::Timer previewTimer;
-
-    struct {
-        MediaGroupLayout::Block* block = nullptr;
-        std::string filePath;
-        std::atomic<uint8_t> status; // bit 0:thread alive, 1:new file, 2:reset, 3:preview, 4:anyload
-        std::vector<GUIKIT::BrowserWindow::Listing> listings;
-    } queuePreview;
 
     auto build() -> void;	
     auto show() -> void;
@@ -243,7 +222,6 @@ struct MediaLayout : GUIKIT::HorizontalLayout {
     auto prepareCreator() -> void;
     auto preparePaths() -> void;	
     auto updateListing( Emulator::Interface::Media* media ) -> void;
-	auto preselectPath( std::string& groupName ) -> std::string;
 	auto savePath( std::string& groupName, std::string path ) -> void;
     auto showC64Listing( MediaGroupLayout* layout ) -> bool;
     auto createImage( Emulator::Interface::MediaGroup* mediaGroup ) -> void;
@@ -251,24 +229,19 @@ struct MediaLayout : GUIKIT::HorizontalLayout {
     auto getMediaGroupLayout( Emulator::Interface::MediaGroup* mediaGroup ) -> MediaGroupLayout*;   
     auto insertImage( MediaGroupLayout::Block* block, GUIKIT::File* file, GUIKIT::File::Item* item ) -> void;
     auto insertImage( Emulator::Interface::Media* media, GUIKIT::File* file, GUIKIT::File::Item* item ) -> void;
-    auto eject( Emulator::Interface::MediaGroup* mediaGroup, bool secondaryOnly = false ) -> void;
-    auto open( Emulator::Interface::Media* media ) -> void;
-    auto eject( Emulator::Interface::Media* media ) -> void;
-    auto drop( std::string filePath, MediaGroupLayout::Block* block = nullptr ) -> void;   
-    auto colorListing( unsigned color, bool foreground ) -> void;
+    auto ejectImage( Emulator::Interface::Media* media ) -> void;
+    auto ejectImage( MediaGroupLayout::Block* block ) -> void;
+    auto drop( std::string filePath, MediaGroupLayout::Block* block = nullptr ) -> void;
+    auto colorListing( unsigned foregroundColor, unsigned backgroundColor ) -> void;
+    auto fillListing(Emulator::Interface::Media* media, std::vector<GUIKIT::BrowserWindow::Listing>& listings, bool markPreview) -> void;
     auto getMediaGroupTransIdent( Emulator::Interface::MediaGroup* mediaGroup ) -> std::string;
     auto updateJumper(Emulator::Interface::Media* media) -> void;
     auto updateWriteProtection( Emulator::Interface::Media* media, bool state ) -> void;
-    auto previewFile( std::string file, MediaGroupLayout::Block* block = nullptr ) -> std::vector<GUIKIT::BrowserWindow::Listing>;
     auto getActiveLayout() -> MediaGroupLayout*;
     auto resetPreview(bool light = false) -> void;
-    auto insertFile( MediaGroupLayout::Block* block, std::string filePath, bool autoLoad = false, unsigned selection = 0) -> bool;
-    auto anyLoad( bool mIsAcquiredBefore ) -> void;
     auto convertListing( std::vector<Emulator::Interface::Listing>& emuListings, bool loadCommand ) -> std::vector<std::string>;
-	auto convertListing( std::vector<Emulator::Interface::Listing>& emuListings ) -> std::vector<GUIKIT::BrowserWindow::Listing>;
     auto updateListingFont( unsigned fontSize ) -> void;
     auto updateListings( ) -> void;
-    auto applyPreviewFont(unsigned fontSize) -> void;
     auto loadSettings() -> void;
 
     MediaLayout(EmuConfigView::TabWindow* tabWindow);

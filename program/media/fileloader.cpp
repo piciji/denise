@@ -1,0 +1,684 @@
+
+#include "fileloader.h"
+#include "autoloader.h"
+#include "../emuconfig/config.h"
+#include "../../data/resource.h"
+#include "../view/view.h"
+#include "media.h"
+#include "../tools/filepool.h"
+#include "../config/archiveViewer.h"
+#include "../states/states.h"
+#include "../cmd/cmd.h"
+
+#define HideMouseIfWasBefore \
+    if (mIsAcquiredBefore && !inputDriver->mIsAcquired() && view->fullScreen() && fileDialogPtr && fileDialogPtr->detached()) \
+        inputDriver->mAcquire();
+
+Fileloader* fileloader = nullptr;
+
+Fileloader::Fileloader() {
+    foregroundTimer.setInterval(150);
+
+    foregroundTimer.onFinished = [this]() {
+        foregroundTimer.setEnabled(false);
+
+        if (fileDialogPtr && fileDialogPtr->visible())
+            fileDialogPtr->setForeground();
+    };
+}
+
+auto Fileloader::load(Emulator::Interface* emulator, Emulator::Interface::Media* media) -> void {
+    static GUIKIT::Setting* alternateFileDialog = globalSettings->getOrInit("alternate_software_preview", false);
+    auto group = media->group;
+    auto suffix = group->suffix;
+    auto settings = program->getSettings( emulator );
+
+    GUIKIT::Vector::combine(suffix, GUIKIT::File::suppportedCompressionExtensions());
+
+    if (fileDialogPtr) {
+        fileDialogPtr->close();
+        delete fileDialogPtr;
+        resetPreview( emulator );
+    }
+
+    fileDialogPtr = new GUIKIT::BrowserWindow;
+
+    fileDialogPtr->setDefaultButtonText( trans->get("insert") );
+
+    fileDialogPtr->setTemplateId( IDD_FILE_TEMPLATE );
+
+    fileDialogPtr->resizeTemplate( true, -6 );
+
+    fileDialogPtr->setTitle(trans->get("select_" + group->name + "_image"));
+
+    fileDialogPtr->setPath( preselectPath( settings, group->name ) );
+
+    fileDialogPtr->setFilters({ GUIKIT::BrowserWindow::transformFilter(trans->get(group->name + "_image"), suffix ),
+                                trans->get("all_files")});
+
+    fileDialogPtr->setOnChangeCallback( [this, emulator, media](std::string file) {
+
+        return this->previewFile(file, emulator, media);
+    } );
+
+    fileDialogPtr->addCustomButton( trans->get("auto start"), [this, emulator, media](std::string filePath, unsigned selection) {
+
+        if (filePath.empty())
+            return false;
+
+        return this->insertFile(emulator, media, filePath, true, selection);
+    }, IDC_BUTTON );
+
+    if (!*alternateFileDialog && dynamic_cast<LIBC64::Interface*>(emulator)) {
+        fileDialogPtr->addContentView(IDC_LIST, [this, media, emulator](std::string filePath, unsigned selection) {
+            if (filePath.empty())
+                return false;
+
+            return insertFile(emulator, media, filePath, true, selection);
+        });
+
+        applyPreviewFont( globalSettings->get<unsigned>("dialog_software_preview_fontsize", 11, {6, 14}) );
+        fileDialogPtr->setContentViewWidth( globalSettings->get<unsigned>("dialog_software_preview_width", 450, {200, 600}) );
+        fileDialogPtr->setContentViewHeight( globalSettings->get<unsigned>("dialog_software_preview_height", 200, {100, 600}) );
+
+        auto videoManager = VideoManager::getInstance( emulator );
+        fileDialogPtr->setContentViewBackground( videoManager->getC64Background() );
+        fileDialogPtr->setContentViewForeground( videoManager->getC64Foreground() );
+        fileDialogPtr->setContentViewColorTooltips(true);
+    }
+
+    fileDialogPtr->setCallbacks( [this, emulator, media](std::string filePath, unsigned selection) {
+
+        insertFile(emulator, media, filePath);
+
+    }, [this, emulator]() {
+            this->resetPreview(emulator);
+    } );
+
+    fileDialogPtr->setWindow( *view ).setNonModal();
+
+    std::string filePath = fileDialogPtr->open();
+
+    if (fileDialogPtr && fileDialogPtr->detached()) {
+        return;
+    }
+
+    if (filePath.empty()) {
+        if (GUIKIT::Application::loop)
+            this->resetPreview(emulator);
+
+        return;
+    }
+
+    insertFile(emulator, media, filePath);
+}
+
+auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore ) -> void {
+
+    static GUIKIT::Setting* alternateFileDialog = globalSettings->getOrInit("alternate_software_preview", false);
+
+    auto settings = program->getSettings( emulator );
+
+    if (fileDialogPtr) {
+        fileDialogPtr->close();
+        resetPreview( emulator );
+        delete fileDialogPtr;
+    }
+
+    fileDialogPtr = new GUIKIT::BrowserWindow;
+
+    fileDialogPtr->setTemplateId( IDD_FILE_TEMPLATE );
+
+    if (!*alternateFileDialog && dynamic_cast<LIBC64::Interface*>(emulator)) {
+        fileDialogPtr->addContentView( IDC_LIST, [this, settings, emulator, mIsAcquiredBefore](std::string filePath, unsigned selection) {
+            if (filePath.empty())
+                return false;
+
+            settings->set<std::string>("anyload_path", GUIKIT::File::getPath( filePath ) );
+
+            autoloader->init( {filePath}, false, Autoloader::Mode::AutoStart, selection );
+            autoloader->loadFiles();
+
+            this->resetPreview(emulator);
+
+            HideMouseIfWasBefore
+
+            return true;
+        } );
+
+        applyPreviewFont( globalSettings->get<unsigned>("dialog_software_preview_fontsize", 11, {6, 14}) );
+        fileDialogPtr->setContentViewWidth( globalSettings->get<unsigned>("dialog_software_preview_width", 450, {200, 600}) );
+        fileDialogPtr->setContentViewHeight( globalSettings->get<unsigned>("dialog_software_preview_height", 200, {100, 600}) );
+
+        auto videoManager = VideoManager::getInstance( emulator );
+        fileDialogPtr->setContentViewBackground( videoManager->getC64Background() );
+        fileDialogPtr->setContentViewForeground( videoManager->getC64Foreground() );
+        fileDialogPtr->setContentViewColorTooltips(true);
+    }
+
+    fileDialogPtr->setTitle(trans->get("select image"));
+
+    fileDialogPtr->setPath( settings->get<std::string>( "anyload_path", "") );
+
+    fileDialogPtr->setFilters({trans->get("all_files")});
+
+    fileDialogPtr->setOnChangeCallback( [this, emulator](std::string file) {
+
+        return this->previewFile(file, emulator);
+    } );
+
+    fileDialogPtr->addCustomButton( trans->get("insert"), [this, emulator, settings, mIsAcquiredBefore](std::string filePath, unsigned selection) {
+
+        if (filePath.empty())
+            return false;
+
+        settings->set<std::string>("anyload_path", GUIKIT::File::getPath( filePath ) );
+
+        autoloader->init( {filePath}, false, Autoloader::Mode::Open );
+        autoloader->loadFiles();
+
+        resetPreview(emulator);
+
+        HideMouseIfWasBefore
+
+        return true;
+    }, IDC_BUTTON );
+
+    fileDialogPtr->setCallbacks( [this, emulator, settings, mIsAcquiredBefore](std::string filePath, unsigned selection) {
+        settings->set<std::string>("anyload_path", GUIKIT::File::getPath( filePath ) );
+
+        autoloader->init( {filePath}, false, Autoloader::Mode::AutoStart, selection );
+        autoloader->loadFiles();
+
+        resetPreview(emulator);
+
+        HideMouseIfWasBefore
+
+    }, [this, emulator, mIsAcquiredBefore]() {
+        this->resetPreview(emulator);
+
+        HideMouseIfWasBefore
+    } );
+
+    fileDialogPtr->resizeTemplate( true, -6 );
+
+    fileDialogPtr->setDefaultButtonText( trans->get("auto start") );
+
+    fileDialogPtr->setWindow( *view ).setNonModal();
+
+    std::string filePath = fileDialogPtr->open();
+
+    if (fileDialogPtr && fileDialogPtr->detached()) {
+        // cocoa/gtk doesn't block for modeless dialog
+        // it handles OK state in callback
+        return;
+    }
+
+    if ( !filePath.empty() ) {
+        settings->set<std::string>("anyload_path", GUIKIT::File::getPath( filePath ) );
+
+        autoloader->init( {filePath}, false, Autoloader::Mode::AutoStart, fileDialogPtr ? fileDialogPtr->getContentViewSelection() : 0 );
+        autoloader->loadFiles();
+    }
+
+    resetPreview(emulator);
+
+    if (mIsAcquiredBefore && view->fullScreen())
+        inputDriver->mAcquire();
+}
+
+auto Fileloader::applyPreviewFont(unsigned fontSize) -> void {
+
+    if (GUIKIT::Window::countCustomFonts())
+        fileDialogPtr->setContentViewFont("C64 Pro, " + std::to_string(fontSize), true);
+    else
+        fileDialogPtr->setContentViewFont(GUIKIT::Font::system(fontSize));
+}
+
+auto Fileloader::previewFile( std::string filePath, Emulator::Interface* emulator, Emulator::Interface::Media* media ) -> std::vector<GUIKIT::BrowserWindow::Listing> {
+
+    static GUIKIT::Setting* alternateFileDialog = globalSettings->getOrInit("alternate_software_preview", false);
+    Emulator::Interface::MediaGroup* mediaGroup = nullptr;
+
+    if (media) {
+        mediaGroup = media->group;
+
+        if ( !showC64Listing(emulator, mediaGroup) ) {
+            queuePreview.lastMedia = nullptr;
+            return {};
+        }
+    }
+
+    std::unique_lock<std::mutex> lck(previewMutex);
+    uint8_t _status = queuePreview.status;
+    queuePreview.emulator = emulator;
+    queuePreview.filePath = filePath;
+    queuePreview.media = media;
+    queuePreview.status = 3;
+    queuePreview.listings = {};
+    lck.unlock();
+
+    if (!previewTimer.onFinished) {
+        previewTimer.onFinished = [this]() {
+            std::unique_lock<std::mutex> lck(previewMutex);
+            Emulator::Interface* emulator = queuePreview.emulator;
+            uint8_t _status = queuePreview.status;
+            std::string filePath = queuePreview.filePath;
+            Emulator::Interface::Media* media = queuePreview.media;
+            std::vector<GUIKIT::BrowserWindow::Listing> listings = queuePreview.listings;
+            lck.unlock();
+
+            auto emuView = EmuConfigView::TabWindow::getView( emulator, *alternateFileDialog );
+            auto settings = program->getSettings( emulator );
+
+            if ( (_status & 0xc) == 0) {
+                return; // keep waiting
+            }
+
+            if (_status & 4) {
+                if (queuePreview.lastMedia)
+                    resetPreview(emulator);
+
+            } else {
+
+                if (queuePreview.lastMedia && (queuePreview.lastMedia != media))
+                    resetPreview(emulator);
+
+                Emulator::Interface::MediaGroup* group = media->group;
+
+                if(emuView)
+                    emuView->mediaLayout->fillListing(media, listings, !queuePreview.lastMedia);
+
+                queuePreview.lastMedia = media;
+
+                if (emuView)
+                    emuView->mediaLayout->showMediaGroupLayout(group);
+
+                if (fileDialogPtr)
+                    fileDialogPtr->setListings(listings);
+
+                if ((queuePreview.status & 16) && listings.size())
+                    settings->set<std::string>("anyload_path", GUIKIT::File::getPath( queuePreview.filePath ) );
+
+                if (*alternateFileDialog && emuView) {
+                    emuView->setLayout( EmuConfigView::TabWindow::Layout::Media );
+
+                    if ( !emuView->visible() ) {
+                        emuView->setVisible();
+                        emuView->setFocused();
+                        foregroundTimer.setEnabled();
+                    } else if ( emuView->minimized() ) {
+                        emuView->restore();
+                        foregroundTimer.setEnabled();
+                    } else if ( GUIKIT::Application::isWinApi() && !emuView->focused() && view->fullScreen() ) {
+                        emuView->setForeground();
+                        if (fileDialogPtr && fileDialogPtr->visible())
+                            fileDialogPtr->setForeground();
+                    }
+                }
+            }
+
+            queuePreview.status = 0;
+            previewTimer.setEnabled(false);
+        };
+    }
+    if (!previewTimer.enabled()) {
+        previewTimer.setInterval( 20 );
+        previewTimer.setEnabled();
+    }
+
+    if (_status & 1)
+        return {};
+
+    std::thread worker( [this] {
+
+        while(1) {
+            queuePreview.status &= ~2;
+            GUIKIT::File file;
+            uint8_t* data;
+            std::string fileName;
+            std::string filePath;
+            Emulator::Interface* emulator;
+            Emulator::Interface::Media* media;
+            std::string extension = "";
+            std::size_t end;
+            Emulator::Interface::MediaGroup* group = nullptr;
+            std::vector<Emulator::Interface::Listing> listings;
+
+            std::unique_lock<std::mutex> lck(previewMutex);
+            emulator = queuePreview.emulator;
+            filePath = queuePreview.filePath;
+            media = queuePreview.media;
+            lck.unlock();
+
+            file.setFile( filePath );
+            file.setReadOnly();
+            auto items = file.scanArchive();
+
+            if (items.size() != 1) {
+                if (queuePreview.status & 2)
+                    continue;
+
+                queuePreview.status &= ~1;
+                queuePreview.status |= 4;
+                break;
+            }
+
+            data = file.archiveData( 0 );
+
+            if (!data) {
+                if (queuePreview.status & 2)
+                    continue;
+
+                queuePreview.status &= ~1;
+                queuePreview.status |= 4;
+                break;
+            }
+
+            fileName = items[0].info.name;
+            end = fileName.find_last_of(".");
+
+            if (end != std::string::npos)
+                extension = fileName.substr(end + 1);
+
+            GUIKIT::String::toLowerCase( extension );
+
+            for(auto& mediaGroup : emulator->mediaGroups) {
+
+                if (media && (media->group != &mediaGroup) )
+                    continue;
+
+                if (mediaGroup.isDisk()) {
+                    if ( GUIKIT::Vector::find( mediaGroup.suffix, extension ) ) {
+                        listings = emulator->getDiskPreview(data, file.archiveDataSize(0), media);
+                        group = &mediaGroup;
+                        break;
+                    }
+                }
+
+                if (mediaGroup.isProgram()) {
+                    if ( GUIKIT::Vector::find( mediaGroup.suffix, extension ) ) {
+                        listings = emulator->getProgramPreview(data, file.archiveDataSize(0));
+                        group = &mediaGroup;
+                        break;
+                    }
+                }
+            }
+
+            if (!group) {
+                if (queuePreview.status & 2)
+                    continue;
+
+                queuePreview.status &= ~1;
+                queuePreview.status |= 4;
+                break;
+            }
+
+            auto convertedListings = convertListing( listings );
+
+            lck.lock();
+            queuePreview.listings = convertedListings;
+            if (!media) {
+                queuePreview.media = group->selected ? group->selected : &group->media[0];
+                queuePreview.status |= 16;
+            }
+            lck.unlock();
+
+            if (!(queuePreview.status & 2)) {
+                queuePreview.status &= ~1;
+                queuePreview.status |= 8;
+                break;
+            }
+        }
+    });
+    worker.detach();
+    return {};
+}
+
+auto Fileloader::eject(Emulator::Interface* emulator, Emulator::Interface::MediaGroup* mediaGroup, bool secondaryOnly) -> void {
+
+    for( auto& media : mediaGroup->media ) {
+        if (!secondaryOnly || media.secondary)
+            eject( emulator, &media);
+    }
+}
+
+auto Fileloader::eject(Emulator::Interface* emulator, Emulator::Interface::Media* media) -> void {
+
+    if ( !media->group->isExpansion() ) {
+        emulator->ejectMedium(media);
+        filePool->assign( _ident(emulator, media->name), nullptr);
+        States::getInstance( emulator )->updateImage( nullptr, media );
+    } else
+        States::getInstance(emulator)->forcePowerNextLoad = true;
+
+    // an expansion can't be removed while emulation is running.
+    // but we have to cut the file link or EasyFlash could
+    // write back data, even when user has removed file from UI.
+    media->guid = (uintptr_t)nullptr;
+
+    if (view && activeEmulator && media->group->isTape())
+        view->updateTapeIcons();
+
+    filePool->assign( _ident(emulator, media->name + "store"), nullptr);
+    filePool->unloadOrphaned();
+
+    auto fSetting = FileSetting::getInstance(emulator, _underscore(media->name) );
+    fSetting->init();
+
+    auto emuView = EmuConfigView::TabWindow::getView( emulator );
+
+    if (emuView) {
+        emuView->mediaLayout->ejectImage( media );
+    }
+}
+
+auto Fileloader::insertFile( Emulator::Interface* emulator, Emulator::Interface::Media* media, std::string filePath, bool autoLoad, unsigned selection ) -> bool {
+
+    auto settings = program->getSettings( emulator );
+    auto emuView = EmuConfigView::TabWindow::getView( emulator );
+
+    GUIKIT::File* file = filePool->get(filePath);
+    if (!file)
+        return false;
+
+    settings->set<std::string>( _underscore(media->group->name) + "_folder_auto", file->getPath());
+
+    if (!file->isSizeValid(MAX_MEDIUM_SIZE))
+        return program->errorMediumSize( file, emuView ? emuView->message : view->message ), true;
+
+    auto& items = file->scanArchive();
+
+    archiveViewer->onCallback = [this, file, media, emulator, settings, autoLoad, selection](GUIKIT::File::Item* item) {
+
+        auto emuView = EmuConfigView::TabWindow::getView( emulator );
+
+        if (!item || (item->info.size == 0) )
+            return program->errorOpen( file, item, emuView ? emuView->message : view->message );
+
+        if (emuView)
+            emuView->mediaLayout->insertImage(media, file, item);
+        else
+            insertImage( emulator, media, file, item );
+
+        if (autoLoad) {
+            auto mediaGroup = media->group;
+
+            if (mediaGroup->isDrive()) {
+                autoloader->activateDrive( emulator, mediaGroup, 1 );
+            }
+
+            if (mediaGroup->isExpansion()) {
+                settings->set<unsigned>("expansion", mediaGroup->expansion->id);
+                if (emuView)
+                    emuView->systemLayout->setExpansion( mediaGroup->expansion );
+            }
+
+            program->power( emulator );
+
+            if (!mediaGroup->isExpansion())
+                program->removeExpansion();
+
+            if (mediaGroup->selected)
+                emulator->selectListing(mediaGroup->selected, selection);
+            else
+                emulator->selectListing(media, selection);
+
+            if (emuView)
+                program->updateSaveIdent( emulator, file->getFileName() );
+
+            if (mediaGroup->isTape())
+                view->updateTapeIcons(Emulator::Interface::TapeMode::Play);
+
+            view->setFocused(300);
+
+            if (mediaGroup->isTape() || mediaGroup->isDisk())
+                program->initAutoWarp(mediaGroup);
+        }
+    };
+    archiveViewer->setView(items);
+
+    return true;
+}
+
+auto Fileloader::insertImage(Emulator::Interface* emulator, Emulator::Interface::Media* media, GUIKIT::File* file, GUIKIT::File::Item* item) -> void {
+
+    auto mediaGroup = media->group;
+
+    auto settings = program->getSettings( emulator );
+
+    auto fSetting = FileSetting::getInstance( emulator, _underscore(media->name ) );
+
+    unsigned size = file->archiveDataSize(item->id);
+
+    auto data = mediaGroup->isTape() && !file->isArchived() ? nullptr : file->archiveData(item->id);
+
+    if (!mediaGroup->isExpansion() || media->secondary) {
+        emulator->ejectMedium(media);
+
+        media->guid = uintptr_t(file);
+        emulator->insertMedium(media, data, size);
+        emulator->writeProtect(media, false);
+        filePool->assign(_ident(emulator, media->name), file);
+    } else {
+
+        if (mediaGroup->expansion->pcbs.size())
+            settings->set<unsigned>( _underscore(media->name) + "_pcb", 0);
+    }
+
+    emulator->getListing(media);
+
+    if (view && activeEmulator && mediaGroup->isTape())
+        view->updateTapeIcons();
+
+    if (mediaGroup->selected && !media->secondary )
+        settings->set<unsigned>( _underscore(mediaGroup->name) + "_selected", media->id);
+
+    filePool->assign(_ident(emulator, media->name + "store"), file);
+    filePool->unloadOrphaned();
+
+    fSetting->setPath(file->getFile());
+    fSetting->setFile(item->info.name);
+    fSetting->setId(item->id);
+    fSetting->setWriteProtect(false);
+
+    if (!cmd->noGui) {
+        if (!mediaGroup->isExpansion())
+            States::getInstance(emulator)->updateImage(fSetting, media);
+        else
+            States::getInstance(emulator)->forcePowerNextLoad = true;
+
+        if (mediaGroup->isDrive())
+            program->updateSaveIdent( emulator, fSetting->file );
+    }
+}
+
+auto Fileloader::convertListing( std::vector<Emulator::Interface::Listing>& emuListings ) -> std::vector<GUIKIT::BrowserWindow::Listing> {
+
+    std::vector<GUIKIT::BrowserWindow::Listing> list;
+    bool useCustomFont = GUIKIT::Window::countCustomFonts();
+
+    bool useTooltips = globalSettings->get<bool>("software_preview_tooltips", true );
+
+    for (auto& listing : emuListings) {
+
+        GUIKIT::BrowserWindow::Listing browserListing;
+
+        std::vector<uint8_t> utf8;
+
+        for (auto& code : listing.line ) {
+
+            unsigned useCode = code;
+            if (useCustomFont)
+                useCode |= 0xee << 8;
+
+            GUIKIT::Utf8::encode(useCode, utf8);
+        }
+
+        browserListing.entry = std::string((const char*) utf8.data(), utf8.size());
+
+        if (useTooltips) {
+            utf8.clear();
+
+            for (auto& code : listing.loadCommand ) {
+
+                unsigned useCode = code;
+                if (useCustomFont)
+                    useCode |= 0xee << 8;
+
+                GUIKIT::Utf8::encode(useCode, utf8);
+            }
+
+            browserListing.tooltip = std::string((const char*) utf8.data(), utf8.size());
+        }
+
+        list.push_back( browserListing );
+    }
+
+    return list;
+}
+
+auto Fileloader::showC64Listing( Emulator::Interface* emulator, Emulator::Interface::MediaGroup* mediaGroup ) -> bool {
+
+    if ( !dynamic_cast<LIBC64::Interface*>(emulator) )
+        return false;
+
+    if ( mediaGroup->isDisk() || mediaGroup->isProgram())
+        return true;
+
+    return false;
+}
+
+auto Fileloader::resetPreview(Emulator::Interface* emulator, bool light) -> void {
+    auto emuView = EmuConfigView::TabWindow::getView( emulator );
+
+    if (emuView)
+        emuView->mediaLayout->resetPreview(light);
+
+    queuePreview.lastMedia = nullptr;
+    queuePreview.status = 0;
+    previewTimer.setEnabled(false);
+}
+
+auto Fileloader::insertCurrentPreview(Emulator::Interface::MediaGroup* mediaGroup) -> void {
+    if (fileDialogPtr && fileDialogPtr->visible()) {
+        fileDialogPtr->close();
+        delete fileDialogPtr;
+        fileDialogPtr = nullptr;
+
+        if (queuePreview.lastMedia && queuePreview.lastMedia->group == mediaGroup)
+            insertFile(queuePreview.emulator, queuePreview.lastMedia, queuePreview.filePath);
+    }
+}
+
+auto Fileloader::preselectPath( GUIKIT::Settings* settings, std::string& groupName ) -> std::string {
+
+    auto baseFolderIdent = _underscore(groupName) + "_folder";
+
+    auto path = settings->get<std::string>( baseFolderIdent, "" );
+
+    if ( path == "" )
+        path = settings->get<std::string>( baseFolderIdent + "_auto", "" );
+
+    return path;
+}

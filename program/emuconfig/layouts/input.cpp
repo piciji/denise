@@ -227,8 +227,10 @@ InputLayout::InputLayout(TabWindow* tabWindow) {
     };
 
     updateAssigner();
-    
-    updateLayout();
+
+    updateKeyLayout();
+
+    loadDeviceList();
 }
 
 auto InputLayout::updateAssigner() -> void {
@@ -367,7 +369,7 @@ auto InputLayout::updateAnalogSensitivity() -> void {
     mapControl.analogSensitivity.slider.setPosition( position );
 }
 
-auto InputLayout::updateLayout() -> void {
+auto InputLayout::updateKeyLayout() -> void {
     
     auto layout = _settings->get<int>( "keyboard_layout", InputManager::assumeLayoutType() );
     
@@ -425,9 +427,9 @@ auto InputLayout::translate() -> void {
     assigner.assignLabel.setText( trans->get("assignment", {}, true) );
     
     unsigned i = 0;
-    mapControl.keyLayout.setText( i++, trans->get("generic"));    
+    mapControl.keyLayout.setText( i++, trans->get("generic"));
     for ( auto& keyboardLayout : InputManager::keyboardLayouts ) {
-        mapControl.keyLayout.setText( i++, trans->get( keyboardLayout.language ) + " ( " + keyboardLayout.code + " )" );   
+        mapControl.keyLayout.setText( i++, trans->get( keyboardLayout.language ) + " ( " + keyboardLayout.code + " )" );
     }
     
     for(auto& connectorButton : selector.connectorButtons) 
@@ -598,8 +600,8 @@ auto InputLayout::triggerHotkeyMode() -> void {
 auto InputLayout::loadSettings() -> void {
     
     updateAssigner();
-    
-    updateLayout();
+
+    updateKeyLayout();
     
     update();
 }

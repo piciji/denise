@@ -338,7 +338,7 @@ auto MediaGroupLayout::setJumperSettings(Emulator::Interface::Media* media) -> v
 
 auto MediaGroupLayout::applyFont(unsigned fontSize) -> void {
 
-    if (mediaLayout->useCustomFont)
+    if (GUIKIT::Window::countCustomFonts())
         listings.setFont("C64 Pro, " + std::to_string(fontSize), true);
     else
         listings.setFont(GUIKIT::Font::system(fontSize));     

@@ -182,6 +182,8 @@ struct VideoManager {
     auto isC64() -> bool;
 	auto isAmiga() -> bool;
     auto generateC64ColorSpectrum() -> void;
+    auto getC64Foreground() -> unsigned;
+    auto getC64Background() -> unsigned;
        
     auto uclamp8(double x) -> uint8_t;
     auto convertRGBToYIQ(ColorLumaChroma* dest, ColorRgb* src) -> void;
