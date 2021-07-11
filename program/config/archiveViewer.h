@@ -14,6 +14,8 @@ struct ArchiveViewer : public GUIKIT::Window {
     GUIKIT::Image imgDocument;
     bool builded = false;
 
+    GUIKIT::Timer mtimer;
+
     auto build() -> void;
     auto setView(std::vector<GUIKIT::File::Item>& items) -> void;
 	auto translate() -> void;

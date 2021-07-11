@@ -68,14 +68,12 @@ struct Program : Emulator::Interface::Bind {
     auto fontFolder() -> std::string;
 	auto imgFolder() -> std::string;
     auto shaderFolder() -> std::string;
-	auto statesFolder(Emulator::Interface* emulator) -> std::string;
 	auto appFolder() -> std::string;
     auto getSystemLangFile() -> std::string;
     auto saveSettings(bool onExit = false) -> void;
     auto loadSettings() -> void;
     auto settingsFile( std::string ident = "" ) -> std::string;
     auto getSettings( Emulator::Interface* emulator = nullptr ) -> GUIKIT::Settings*;
-    auto convertSettings() -> void;
     auto rememberNotToSaveSettings() -> void;	
     auto initEmulator( Emulator::Interface* emulator ) -> void;
     auto setMemoryPattern( Emulator::Interface* emulator ) -> void;

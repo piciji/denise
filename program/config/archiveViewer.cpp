@@ -118,8 +118,15 @@ auto ArchiveViewer::setView(std::vector<GUIKIT::File::Item>& items) -> void {
         
         return;
     }
-    setVisible();
-	setFocused();
+
+    mtimer.setInterval(30);
+
+    mtimer.onFinished = [this]() {
+        mtimer.setEnabled(false);
+        setVisible();
+        setFocused();
+    };
+    mtimer.setEnabled();
 }
 
 auto ArchiveViewer::translate() -> void {
