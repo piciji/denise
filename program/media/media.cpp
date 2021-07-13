@@ -104,7 +104,7 @@ auto MediaLayout::updateExpansionBootButtonVisibility() -> void {
 }
 
 auto MediaLayout::build() -> void {
-    
+
     setMargin(10);
 
     diskImage.loadPng((uint8_t*) Icons::disk, sizeof (Icons::disk));
@@ -119,7 +119,7 @@ auto MediaLayout::build() -> void {
     imgFolderOpen.loadPng((uint8_t*)Icons::folderOpen, sizeof(Icons::folderOpen) );
     imgFolderClosed.loadPng((uint8_t*)Icons::folderClosed, sizeof(Icons::folderClosed) );
     imgDocument.loadPng((uint8_t*)Icons::document, sizeof(Icons::document) );
-        
+
     GUIKIT::TreeViewItem* tvi;
     
     for( auto& mediaGroup : emulator->mediaGroups ) {            
@@ -183,19 +183,19 @@ auto MediaLayout::build() -> void {
             mediaGroupLayout->updateVisibility( counter, true );
         }        
                 
-        moduleSwitch.setLayout( navElements.size() - 1, *mediaGroupLayout, {~0u, ~0u} );        
+        moduleSwitch.setLayout( navElements.size() - 1, *mediaGroupLayout, {~0u, ~0u} );
         
 		bindSelectorAction( mediaGroupLayout );
     }
-    
+
     moduleFrame.append( mediaTree, { GUIKIT::Font::scale(165), GUIKIT::Font::scale(300)}, 10 );
     moduleFrame.append( bootCart, {0u, 0u}, 10 );
     moduleFrame.append( deactivateCart, {0u, 0u} );
     moduleFrame.setPadding(10);
     moduleFrame.setFont(GUIKIT::Font::system("bold"));
-    
-    append( moduleFrame, {0u, 0u}, 10 );    
-    append( moduleSwitch, {~0u, ~0u} );        
+
+    append( moduleFrame, {0u, 0u}, 10 );
+    append( moduleSwitch, {~0u, ~0u} );
     
     mediaTree.onChange = [this]() {
 
@@ -212,7 +212,7 @@ auto MediaLayout::build() -> void {
     tvi->setImage( swapperImage );    
     mediaTree.append(*tvi);    
     swapperLayout = new SwapperLayout(this);
-    moduleSwitch.setLayout( navElements.size(), *swapperLayout, {~0u, ~0u} );    
+    moduleSwitch.setLayout( navElements.size(), *swapperLayout, {~0u, ~0u} );
     tvi->setUserData( (uintptr_t)(navElements.size() ) );
     navElements.push_back( { tvi, nullptr, (Layout*)swapperLayout } );
     
@@ -221,7 +221,7 @@ auto MediaLayout::build() -> void {
     tvi->setImage( addImage );    
     mediaTree.append(*tvi);    
     prepareCreator();
-    moduleSwitch.setLayout( navElements.size(), creatorLayout, {~0u, ~0u} );    
+    moduleSwitch.setLayout( navElements.size(), creatorLayout, {~0u, ~0u} );
     tvi->setUserData( (uintptr_t)(navElements.size() ) );
     navElements.push_back( { tvi, nullptr, (Layout*)&creatorLayout } );
     
@@ -238,8 +238,6 @@ auto MediaLayout::build() -> void {
         auto videoManager = VideoManager::getInstance(emulator);
         colorListing(videoManager->getC64Foreground(), videoManager->getC64Background());
     }
-
-    translate();
 }
 
 auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {

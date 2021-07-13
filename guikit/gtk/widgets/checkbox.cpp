@@ -18,7 +18,8 @@ auto pCheckBox::setChecked(bool checked) -> void {
 
 auto pCheckBox::setText(std::string text) -> void {
     gtk_button_set_label(GTK_BUTTON(gtkWidget), text.c_str());
-    setFont( widget.font() );
+    //setFont( widget.font() );
+    calculatedMinimumSize.updated = false;
 }
 
 auto pCheckBox::onToggle(GtkToggleButton* toggleButton, CheckBox* self) -> void {

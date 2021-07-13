@@ -477,6 +477,7 @@ auto pWindow::setGeometry(Geometry geometry) -> void {
         window.statusBar()->p.updatePosition();
 
     if(window.state.layout) {
+        window.state.layout->resetSynchronisation();
         Geometry geom = this->geometry();
         geom.x = geom.y = 0;
         window.state.layout->setGeometry(geom);
@@ -592,6 +593,7 @@ auto pWindow::onSize() -> void {
     window.state.geometry.height = windowGeometry.height;
 
     if(window.state.layout) {
+        window.state.layout->resetSynchronisation();
         Geometry geom = geometry();
         geom.x = geom.y = 0;
         window.state.layout->setGeometry(geom);

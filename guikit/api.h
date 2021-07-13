@@ -761,6 +761,7 @@ struct Layout : Sizable {
         Position position;
         unsigned spacing;
         unsigned selection;
+        bool synchronized;
     };
     
     auto append(Sizable& sizable, Size size, unsigned spacing = 0) -> void;
@@ -768,6 +769,7 @@ struct Layout : Sizable {
 
     auto updateLayout() -> void;
     auto synchronizeLayout() -> void;
+    auto resetSynchronisation() -> void;
     auto has(Sizable& sizable) -> Children*;
     auto update(Sizable& sizable, Size size, unsigned spacing = 0) -> void;
     auto update(Sizable& sizable, unsigned spacing) -> void;
@@ -791,6 +793,7 @@ struct Layout : Sizable {
         double alignment = 0.0;
         unsigned margin = 0;
         unsigned padding = 0;
+        bool synchronized = false;
     } state;
     
     ~Layout();
@@ -814,7 +817,7 @@ protected:
 
 struct SwitchLayout : Layout {
     
-    auto setLayout(unsigned selection, Layout& layout, Size size) -> void;
+    auto setLayout(unsigned selection, Layout& layout, Size size, bool autoUpdate = true) -> void;
     auto remove(unsigned selection) -> void;
     auto append(Sizable& sizable, Size size, unsigned spacing = 0) -> void = delete;
     auto setAlignment(double alignment) -> void = delete;

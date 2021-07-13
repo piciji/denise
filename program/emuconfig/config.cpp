@@ -156,10 +156,10 @@ auto TabWindow::translate() -> void {
     videoLayout->translate();
     if (paletteLayout) 
         paletteLayout->translate();
-        
+
     if (audioLayout)
         audioLayout->translate();
-    
+
     miscLayout->translate();
 
     tab.setHeader(Layout::Control, trans->get("control"));
@@ -191,9 +191,7 @@ auto TabWindow::showDelayed(Layout layout) -> void {
 
 auto TabWindow::show(Layout layout) -> void {
     setLayout( layout );
-    if (!visible() || minimized())
-        setVisible();
-
+    setVisible();
 	setFocused();
 }
 

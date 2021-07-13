@@ -297,10 +297,10 @@ auto OpenGL::hardSync( unsigned frames ) -> void {
 auto OpenGL::init() -> bool {
 	if(!OpenGLBind()) return false;
 
-#ifdef DRV_FREETYPE    
+#ifdef DRV_FREETYPE
     if (!screenText.init()) {
         screenText.term();
-        
+
     } else {
 #ifdef DRV_WGL
         screenText.setFontSize(12);
@@ -321,7 +321,7 @@ auto OpenGL::init() -> bool {
     glDisable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     
-	shader({});       
+	shader({});
     
 	return initialized = true;
 }

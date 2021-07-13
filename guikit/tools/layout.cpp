@@ -1,5 +1,19 @@
 
+auto Layout::resetSynchronisation() -> void {
+
+    for(auto& child : children) {
+        child.synchronized = false;
+
+        if(dynamic_cast<Layout*>(child.sizable)) {
+            ((Layout*)child.sizable)->resetSynchronisation();
+        }
+    }
+
+    state.synchronized = false;
+}
+
 auto Layout::synchronizeLayout() -> void {
+    resetSynchronisation();
     setGeometry( state.geometry );
 }
 
@@ -36,11 +50,10 @@ auto Layout::append(Sizable& sizable, Size size, unsigned spacing) -> void {
     if (has(sizable))
         return;
     
-    children.push_back({&sizable, size, {0,0}, spacing, 0});
+    children.push_back({&sizable, size, {0,0}, spacing, 0, false});
     sizable.setVisible( visible() );
     
     updateLayout();
-    //if(window()) window()->synchronizeLayout();
 }
 
 auto Layout::append(Sizable& sizable) -> void {
@@ -78,7 +91,6 @@ auto Layout::remove(Sizable& sizable) -> bool {
             }
             children.erase(children.begin() + pos);
             cut(sizable);
-            //if(window()) window()->synchronizeLayout();
             return true;
         }
         pos++;
@@ -172,7 +184,7 @@ auto Layout::addFrameSize(Size min) -> Size {
 
 auto FixedLayout::append(Widget& widget, Geometry geometry) -> void {
     for(auto& child : children) if(child.sizable == &widget) return;
-    children.push_back({&widget, geometry.size(), geometry.position(), 0, 0});
+    children.push_back({&widget, geometry.size(), geometry.position(), 0, 0, false});
     updateLayout();
     if(window()) window()->synchronizeLayout();
 }
@@ -453,6 +465,9 @@ TabFrameLayout::TabFrameLayout() {
     getTabFrame()->onChange = [this]() {
         TabFrameLayout* topTab = getTopMostParentTabFrame(this);
         topTab->setVisible();
+        if (Sizable::state.visible && state.synchronized) {
+            setGeometry( state.geometry );
+        }
         if(onChange) onChange();
     };
 }
@@ -467,11 +482,10 @@ auto TabFrameLayout::setLayout(unsigned selection, Layout& layout, Size size, bo
         }
     }
     if(!found)
-        children.push_back({&layout, size, {0,0}, 0, selection});
+        children.push_back({&layout, size, {0,0}, 0, selection, false});
 
     if (autoUpdate)
         updateLayout();
-    //if(window()) window()->synchronizeLayout();
 }
 
 auto TabFrameLayout::remove(unsigned selection) -> void {
@@ -510,21 +524,34 @@ auto TabFrameLayout::setGeometry(Geometry containerGeometry) -> void {
     Geometry geometry = containerGeometry;
 
     addDisplacement(geometry, state.margin);
-    frameWidget->setGeometry(geometry);
+    if (!state.synchronized)
+        frameWidget->setGeometry(geometry);
+
     geometry = getFrameInnerGeometry(geometry);
     addDisplacement(geometry, state.padding);
 
     auto children = this->children;
     for(auto& child : children) {
-        if(child.size.width  == Size::Minimum) child.size.width  = child.sizable->minimumSize().width;
-        if(child.size.height == Size::Minimum) child.size.height = child.sizable->minimumSize().height;
 
-        child.size.width = std::min(child.size.width, geometry.width);
-        child.size.height = std::min(child.size.height, geometry.height);
+        if (!child.sizable->visible()) {
+            continue;
+        }
 
-        Geometry childGeometry = {geometry.x, geometry.y, child.size.width, child.size.height};
-        child.sizable->setGeometry(childGeometry);
+        if (!child.synchronized) {
+            if (child.size.width == Size::Minimum) child.size.width = child.sizable->minimumSize().width;
+            if (child.size.height == Size::Minimum) child.size.height = child.sizable->minimumSize().height;
+
+            child.size.width = std::min(child.size.width, geometry.width);
+            child.size.height = std::min(child.size.height, geometry.height);
+
+            Geometry childGeometry = {geometry.x, geometry.y, child.size.width, child.size.height};
+            child.sizable->setGeometry(childGeometry);
+            child.synchronized = true;
+        }
+        break;
     }
+
+    state.synchronized = true;
 }
 
 auto TabFrameLayout::setVisible(bool visible) -> void {
@@ -566,6 +593,10 @@ auto TabFrameLayout::setSelection(unsigned selection) -> void {
     getTabFrame()->p.setSelection(selection);
     TabFrameLayout* topTab = getTopMostParentTabFrame(this);
     topTab->setVisible();
+
+    if (Sizable::state.visible && state.synchronized) {
+        setGeometry( state.geometry );
+    }
 }
 
 auto TabFrameLayout::selection() const -> unsigned { return getTabFrame()->selection(); }
@@ -580,7 +611,7 @@ auto TabFrameLayout::setImage(unsigned selection, Image& image) -> void {
 
 // switch layout
 
-auto SwitchLayout::setLayout(unsigned selection, Layout& layout, Size size) -> void {
+auto SwitchLayout::setLayout(unsigned selection, Layout& layout, Size size, bool autoUpdate) -> void {
     bool found = false;
     for(auto& child : children) {
         if(selection == child.selection) {
@@ -589,9 +620,10 @@ auto SwitchLayout::setLayout(unsigned selection, Layout& layout, Size size) -> v
             break;
         }
     }
-    if(!found) children.push_back({&layout, size, {0,0}, 0, selection});
-    updateLayout();
-   // if(window()) window()->synchronizeLayout();
+    if(!found) children.push_back({&layout, size, {0,0}, 0, selection, false});
+
+    if (autoUpdate)
+        updateLayout();
 }
 
 auto SwitchLayout::remove(unsigned selection) -> void {
@@ -608,6 +640,9 @@ auto SwitchLayout::setSelection(unsigned selection) -> void {
     state.selection = selection;    
     Layout* top = Layout::getTopMostTabOrSwitchLayout(this);        
     top->setVisible();
+    if (Sizable::state.visible && Layout::state.synchronized) {
+        setGeometry( Layout::state.geometry );
+    }
 }
 
 auto SwitchLayout::selection() const -> unsigned { return state.selection; }
@@ -637,15 +672,25 @@ auto SwitchLayout::setGeometry(Geometry containerGeometry) -> void {
 
     auto children = this->children;
     for(auto& child : children) {
-        if(child.size.width  == Size::Minimum) child.size.width  = child.sizable->minimumSize().width;
-        if(child.size.height == Size::Minimum) child.size.height = child.sizable->minimumSize().height;
 
-        child.size.width = std::min(child.size.width, geometry.width);
-        child.size.height = std::min(child.size.height, geometry.height);
+        if (!child.sizable->visible()) {
+            continue;
+        }
 
-        Geometry childGeometry = {geometry.x, geometry.y, child.size.width, child.size.height};
-        child.sizable->setGeometry(childGeometry);
+        if (!child.synchronized) {
+            if (child.size.width == Size::Minimum) child.size.width = child.sizable->minimumSize().width;
+            if (child.size.height == Size::Minimum) child.size.height = child.sizable->minimumSize().height;
+
+            child.size.width = std::min(child.size.width, geometry.width);
+            child.size.height = std::min(child.size.height, geometry.height);
+
+            Geometry childGeometry = {geometry.x, geometry.y, child.size.width, child.size.height};
+            child.sizable->setGeometry(childGeometry);
+            child.synchronized = true;
+        }
     }
+
+    Layout::state.synchronized = true;
 }
 
 auto SwitchLayout::minimumSize() -> Size {

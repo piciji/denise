@@ -503,6 +503,7 @@ auto pWindow::setGeometry(Geometry geometry) -> void {
         display:YES];
 
         if(window.state.layout) {
+            window.state.layout->resetSynchronisation();
             Geometry layoutGeometry = this->geometry();
             layoutGeometry.x = layoutGeometry.y = 0;
             window.state.layout->setGeometry(layoutGeometry);
@@ -570,6 +571,7 @@ auto pWindow::sizeEvent() -> void {
     }
 
     if(window.state.layout) {
+        window.state.layout->resetSynchronisation();
         Geometry layoutGeometry = this->geometry();
         layoutGeometry.x = layoutGeometry.y = 0;
         window.state.layout->setGeometry(layoutGeometry);

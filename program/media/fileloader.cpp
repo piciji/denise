@@ -32,6 +32,11 @@ auto Fileloader::load(Emulator::Interface* emulator, Emulator::Interface::Media*
     auto group = media->group;
     auto suffix = group->suffix;
     auto settings = program->getSettings( emulator );
+    auto emuView = EmuConfigView::TabWindow::getView( emulator );
+
+    if (*alternateFileDialog && emuView && emuView->visible()) {
+        emuView->setFocused();
+    }
 
     GUIKIT::Vector::combine(suffix, GUIKIT::File::suppportedCompressionExtensions());
 
@@ -116,6 +121,11 @@ auto Fileloader::load(Emulator::Interface* emulator, Emulator::Interface::Media*
 auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore ) -> void {
 
     static GUIKIT::Setting* alternateFileDialog = globalSettings->getOrInit("alternate_software_preview", false);
+    auto emuView = EmuConfigView::TabWindow::getView( emulator );
+
+    if (*alternateFileDialog && emuView && emuView->visible()) {
+        emuView->setFocused();
+    }
 
     auto settings = program->getSettings( emulator );
 
@@ -268,7 +278,6 @@ auto Fileloader::previewFile( std::string filePath, Emulator::Interface* emulato
             std::vector<GUIKIT::BrowserWindow::Listing> listings = queuePreview.listings;
             lck.unlock();
 
-            auto emuView = EmuConfigView::TabWindow::getView( emulator, *alternateFileDialog );
             auto settings = program->getSettings( emulator );
 
             if ( (_status & 0xc) == 0) {
@@ -286,6 +295,7 @@ auto Fileloader::previewFile( std::string filePath, Emulator::Interface* emulato
 
                 Emulator::Interface::MediaGroup* group = media->group;
 
+                auto emuView = EmuConfigView::TabWindow::getView( emulator, *alternateFileDialog );
                 if(emuView)
                     emuView->mediaLayout->fillListing(media, listings, !queuePreview.lastMedia);
 

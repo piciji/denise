@@ -254,6 +254,7 @@ pWindow::pWindow(Window& window) : window(window) {
         timerResize.setEnabled(false);
 		
 		if(this->window.state.layout) {
+            this->window.state.layout->resetSynchronisation();
 			Geometry layoutGeometry = this->window.geometry();
 			layoutGeometry.x = layoutGeometry.y = 0;
 			this->window.state.layout->setGeometry(layoutGeometry);
@@ -523,6 +524,7 @@ auto pWindow::setGeometry(Geometry geometry) -> void {
     resize(geometry);
 
     if(window.state.layout) {
+        window.state.layout->resetSynchronisation();
         Geometry layoutGeometry = this->geometry();
         layoutGeometry.x = layoutGeometry.y = 0;
         window.state.layout->setGeometry(layoutGeometry);

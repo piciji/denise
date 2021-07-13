@@ -19,7 +19,8 @@ auto pRadioBox::setChecked() -> void {
 
 auto pRadioBox::setText(std::string text) -> void {
     gtk_button_set_label(GTK_BUTTON(gtkWidget), text.c_str());
-    setFont( widget.font() );
+    //setFont( widget.font() );
+    calculatedMinimumSize.updated = false;
 }
 
 auto pRadioBox::setGroup(const std::vector<RadioBox*>& group) -> void {
