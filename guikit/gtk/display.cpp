@@ -77,6 +77,10 @@ auto pMonitor::fetchDisplays() -> void {
 
             std::string devName = outInfo->name;
 
+            logger->log( devName, 1 );
+            logger->log( std::to_string(crc32.value()), 0);
+            logger->log( std::to_string(i), 0);
+
             XRRCrtcInfo* crtcInfo = XRRGetCrtcInfo(display, screens, outInfo->crtc);
 
             devices.push_back({crc32.value(), devName, i, outInfo, crtcInfo->mode});
@@ -102,6 +106,9 @@ auto pMonitor::fetchSettings( Device* device ) -> void {
     if (!connect())
         return;
 
+    logger->log( "Settings", 1);
+    logger->log( std::to_string(device->id), 0 );
+
     CRC32 crc32;
 
     settings.clear();
@@ -121,9 +128,13 @@ auto pMonitor::fetchSettings( Device* device ) -> void {
 
         name += "@" + String::convertDoubleToString( refresh, 2 ) + "Hz";
 
+        logger->log( name, 1 );
+
         crc32.init();
 
         crc32.calc( (uint8_t*)name.c_str(), name.size() );
+
+        logger->log( std::to_string(crc32.value()), 0);
 
         bool found = false;
         for(auto& setting : settings) {
@@ -172,6 +183,8 @@ auto pMonitor::setSetting( unsigned displayId, unsigned settingId ) -> bool {
     if (!connect())
         return false;
 
+    logger->log("connect", 1);
+
     if (!devices.size())
         fetchDisplays();
 
@@ -179,6 +192,8 @@ auto pMonitor::setSetting( unsigned displayId, unsigned settingId ) -> bool {
     for(auto& _device : devices) {
         if (_device.id == displayId) {
             activeDevice = &_device;
+            logger->log("active device", 1);
+            logger->log(std::to_string(displayId), 0);
             break;
         }
     }
@@ -193,6 +208,9 @@ auto pMonitor::setSetting( unsigned displayId, unsigned settingId ) -> bool {
     for(auto& _setting : settings) {
         if (_setting.id == settingId) {
             setting = &_setting;
+            logger->log("active setting", 1);
+            logger->log(std::to_string(settingId), 0);
+
             break;
         }
     }
@@ -202,9 +220,18 @@ auto pMonitor::setSetting( unsigned displayId, unsigned settingId ) -> bool {
 
     XRRCrtcInfo* crtcInfo = XRRGetCrtcInfo(display, screens, activeDevice->outInfo->crtc);
 
+    logger->log("apply", 1);
+
     Status status = XRRSetCrtcConfig(display, screens, activeDevice->outInfo->crtc,
         CurrentTime, crtcInfo->x, crtcInfo->y, setting->rrMode, crtcInfo->rotation,
         &screens->outputs[activeDevice->pos], 1);
+
+    logger->log( std::to_string(crtcInfo->x), 1);
+    logger->log( std::to_string(crtcInfo->y), 1);
+    logger->log( std::to_string(crtcInfo->rotation), 1);
+    logger->log( std::to_string(activeDevice->pos), 1);
+
+    logger->log( std::to_string(status), 1);
 
     return status == RRSetConfigSuccess;
 }

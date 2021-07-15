@@ -1,6 +1,7 @@
 
 #include "main.h"
 #include "../tools/crc32.h"
+#include "../../program/tools/logger.h"
 
 namespace GUIKIT {
 
