@@ -155,9 +155,14 @@ auto System::serialize(Emulator::Serializer& s) -> void {
     s.integer( rdyIncomming );   
     s.integer( kernalBootComplete );    
     s.integer( requestedSids );
-    s.integer( burstMode.use );
-    s.integer( burstMode.requested );
-    s.integer( burstMode.possible );
+    s.integer( userPort.burstUse );
+    s.integer( userPort.parallelUse );
+    s.integer( userPort.burstPossible );
+    s.integer( userPort.parallelPossible );
+    s.integer( userPort.burstRequested );
+    s.integer( userPort.parallelRequested );
+    s.integer( userPort.cycleSyncing );
+
     s.integer( observer.memoryAccesses );
     s.integer( observer.enterRom );
     s.integer( observer.motorChange );

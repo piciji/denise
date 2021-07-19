@@ -56,7 +56,9 @@ struct Base {
         uint8_t ddra;
         uint8_t ddrb;
         uint8_t ioa;
-        uint8_t iob;  
+        uint8_t ioaOld;
+        uint8_t iob;
+        uint8_t iobOld;
         bool praChange; // otherwise ddra change
         bool prbChange;
     } lines;

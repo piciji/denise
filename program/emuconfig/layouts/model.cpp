@@ -520,7 +520,7 @@ auto ModelLayout::applyCustomStuff( Line::Block* block, Emulator::Interface::Mod
             case LIBC64::Interface::ModelIdVicIIModel:
                 tabWindow->videoLayout->updatePresets();
 
-                if (activeEmulator)
+                if (this->emulator == activeEmulator)
                     program->power(activeEmulator);
                 break;
                 
@@ -541,16 +541,21 @@ auto ModelLayout::applyCustomStuff( Line::Block* block, Emulator::Interface::Mod
             case LIBC64::Interface::ModelIdDiskDrivesConnected:
                 tabWindow->mediaLayout->updateVisibility( emulator->getDiskMediaGroup(), block->combo.selection() );
                 tabWindow->settings->remove( "access_floppy" );
-
-                if (activeEmulator)
+                // fall through
+            case LIBC64::Interface::ModelIdTapeDrivesConnected:
+            case LIBC64::Interface::ModelIdDriveRam20To3F:
+            case LIBC64::Interface::ModelIdDriveRam40To5F:
+            case LIBC64::Interface::ModelIdDriveRam60To7F:
+            case LIBC64::Interface::ModelIdDriveRam80To9F:
+            case LIBC64::Interface::ModelIdDriveRamA0ToBF:
+            case LIBC64::Interface::ModelIdDiskDriveModel:
+                if (this->emulator == activeEmulator)
                     program->power(activeEmulator);
 
                 break;
 
-            case LIBC64::Interface::ModelIdTapeDrivesConnected:
-                if (activeEmulator)
-                    program->power(activeEmulator);
-
+            case  LIBC64::Interface::ModelIdDriveSpeeder:
+                hintDriveSettings();
                 break;
 
             case LIBC64::Interface::ModelIdCycleAccurateVideo:
@@ -566,6 +571,57 @@ auto ModelLayout::applyCustomStuff( Line::Block* block, Emulator::Interface::Mod
                 break;
         }
     }
+}
+
+auto ModelLayout::hintDriveSettings() -> void {
+    bool activeBefore = activeEmulator != nullptr;
+    if (activeBefore)
+        program->powerOff();
+
+    auto blockSpeeder = getBlock( LIBC64::Interface::ModelIdDriveSpeeder );
+    auto blockParallel = getBlock( LIBC64::Interface::ModelIdDriveParallelCable );
+    auto blockDriveModel = getBlock( LIBC64::Interface::ModelIdDiskDriveModel );
+    auto blockRam20 = getBlock( LIBC64::Interface::ModelIdDriveRam20To3F );
+    auto blockRam40 = getBlock( LIBC64::Interface::ModelIdDriveRam40To5F );
+    auto blockRam60 = getBlock( LIBC64::Interface::ModelIdDriveRam60To7F );
+    auto blockRam80 = getBlock( LIBC64::Interface::ModelIdDriveRam80To9F );
+    auto blockRamA0 = getBlock( LIBC64::Interface::ModelIdDriveRamA0ToBF );
+
+    if (blockParallel->checkBox.checked())
+        blockParallel->checkBox.toggle();
+    if (blockRam20->checkBox.checked())
+        blockRam20->checkBox.toggle();
+    if (blockRam40->checkBox.checked())
+        blockRam40->checkBox.toggle();
+    if (blockRam60->checkBox.checked())
+        blockRam60->checkBox.toggle();
+    if (blockRam80->checkBox.checked())
+        blockRam80->checkBox.toggle();
+    if (blockRamA0->checkBox.checked())
+        blockRamA0->checkBox.toggle();
+
+    auto selection = blockSpeeder->combo.selection();
+
+    if (selection == 0) {
+
+    } else if (selection == 1) {
+        blockParallel->checkBox.toggle();
+        blockDriveModel->combo.setSelection(1);
+        blockDriveModel->combo.onChange();
+    } else if (selection == 2) {
+        blockParallel->checkBox.toggle();
+        blockRam80->checkBox.toggle();
+        blockDriveModel->combo.setSelection(1);
+        blockDriveModel->combo.onChange();
+    } else if (selection == 3) {
+        blockParallel->checkBox.toggle();
+        blockRam40->checkBox.toggle();
+        blockDriveModel->combo.setSelection(4);
+        blockDriveModel->combo.onChange();
+    }
+
+    if (activeBefore)
+        program->power(emulator);
 }
 
 auto ModelLayout::hideBias() -> void {

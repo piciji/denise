@@ -23,7 +23,7 @@
 
 namespace LIBC64 {
 
-const std::string Interface::Version = "1099";
+const std::string Interface::Version = "1100";
     
 Interface::Interface() : Emulator::Interface( "C64" ) {        
     
@@ -519,8 +519,6 @@ auto Interface::prepareModels() -> void {
 	// disable grey dot bug for 85xx VIC-II
 	models.push_back({ModelIdDisableGreyDotBug, "Disable Grey Dot Bug", Model::Type::Switch, Model::Purpose::Misc, 0});
 
-    models.push_back({ModelIdCiaBurstMode, "CIA Burst Modification", Model::Type::Switch, Model::Purpose::Cia, 0});
-
     models.push_back({ModelIdDiskDrivesConnected, "Disk Drives", Model::Type::Combo, Model::Purpose::DriveSettings, 1, {0, 4},
                       { "0", "1", "2", "3", "4" }});
 
@@ -530,6 +528,18 @@ auto Interface::prepareModels() -> void {
     models.push_back({ModelIdDiskDriveSpeed, "Disk Speed", Model::Type::Slider, Model::Purpose::DriveSettings, 30000, {27500, 32500}, {}, 500, 100.0 });
 
     models.push_back({ModelIdDiskDriveWobble, "Disk Wobble", Model::Type::Slider, Model::Purpose::DriveSettings, 50, {0, 500}, {}, 50, 100.0 });
+
+    models.push_back({ModelIdDriveRam20To3F, "RAM $2000-$3FFF", Model::Type::Switch, Model::Purpose::DriveSettings, 0});
+    models.push_back({ModelIdDriveRam40To5F, "RAM $4000-$5FFF", Model::Type::Switch, Model::Purpose::DriveSettings, 0});
+    models.push_back({ModelIdDriveRam60To7F, "RAM $6000-$7FFF", Model::Type::Switch, Model::Purpose::DriveSettings, 0});
+    models.push_back({ModelIdDriveRam80To9F, "RAM $8000-$9FFF", Model::Type::Switch, Model::Purpose::DriveSettings, 0});
+    models.push_back({ModelIdDriveRamA0ToBF, "RAM $A000-$BFFF", Model::Type::Switch, Model::Purpose::DriveSettings, 0});
+
+    models.push_back({ModelIdDriveParallelCable, "Parallel Cable", Model::Type::Switch, Model::Purpose::DriveSettings, 0});
+    models.push_back({ModelIdCiaBurstMode, "CIA Burst Modification", Model::Type::Switch, Model::Purpose::DriveSettings, 0});
+
+    models.push_back({ModelIdDriveSpeeder, "Drive Speeder", Model::Type::Combo, Model::Purpose::DriveSettings, 0, {0, 3},
+                      { "None", "SpeedDOS 154x", "DolphinDOS v2 154x", "ProfDOS 157x" }});
 
     models.push_back({ModelIdTapeDrivesConnected, "Tape Drives", Model::Type::Combo, Model::Purpose::DriveSettings, 0, {0, 1},
                       { "0", "1" }});
@@ -552,6 +562,7 @@ auto Interface::prepareFirmware() -> void {
     firmwares.push_back({FirmwareIdVC1541C, "VC1541-C"});
     firmwares.push_back({FirmwareIdVC1571, "VC1571"});
     firmwares.push_back({FirmwareIdVC1570, "VC1570"});
+    firmwares.push_back({FirmwareIdExpanded, "Expanded ROM"});
 }
 
 auto Interface::prepareDevices() -> void {
@@ -1207,10 +1218,6 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
             cia1->setNewVersion( value & 1 );
             cia2->setNewVersion( value & 1 );
             break;
-        case ModelIdCiaBurstMode:
-            system->burstMode.requested = value & 1;
-            system->burstUpdate();
-            break;
         case ModelIdCpuAneMagic:
             //this is annoying ... look in 6502 cpu code for more informations
             cpu->setMagicForAne( value & 0xff );
@@ -1277,6 +1284,7 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
             break;
         case ModelIdDiskDrivesConnected:
             iecBus->setDrivesEnabled( value );
+            system->burstOrParallelUpdate();
             break;
         case ModelIdTapeDrivesConnected:
             tape->setEnabled( value & 1 );
@@ -1290,6 +1298,33 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
         case ModelIdDiskDriveSpeed:
             iecBus->setDriveSpeed( value );
             break;
+        case ModelIdCiaBurstMode:
+            system->userPort.burstRequested = value & 1;
+            system->burstOrParallelUpdate();
+            break;
+        case ModelIdDriveParallelCable:
+            system->userPort.parallelRequested = value & 1;
+            system->burstOrParallelUpdate();
+            break;
+        case ModelIdDriveSpeeder:
+            iecBus->setSpeeder( value );
+            break;
+        case ModelIdDriveRam20To3F:
+            iecBus->setExpandedMemory( Drive1541::ExpandedMemMode::M20, value & 1 );
+            break;
+        case ModelIdDriveRam40To5F:
+            iecBus->setExpandedMemory( Drive1541::ExpandedMemMode::M40, value & 1 );
+            break;
+        case ModelIdDriveRam60To7F:
+            iecBus->setExpandedMemory( Drive1541::ExpandedMemMode::M60, value & 1 );
+            break;
+        case ModelIdDriveRam80To9F:
+            iecBus->setExpandedMemory( Drive1541::ExpandedMemMode::M80, value & 1 );
+            break;
+        case ModelIdDriveRamA0ToBF:
+            iecBus->setExpandedMemory( Drive1541::ExpandedMemMode::MA0, value & 1 );
+            break;
+
         case ModelIdCycleAccurateVideo:
             system->cycleRendererNextBoot = value & 1;
             break;
@@ -1329,8 +1364,6 @@ auto Interface::getModelValue(unsigned modelId) -> int {
             return Sid::getResampleQuality();
         case ModelIdCiaRev:
             return cia1->isNewVersion();
-        case ModelIdCiaBurstMode:
-            return system->burstMode.requested;
         case ModelIdCpuAneMagic:
             return cpu->getMagicForAne();
 		case ModelIdCpuLaxMagic:
@@ -1388,10 +1421,20 @@ auto Interface::getModelValue(unsigned modelId) -> int {
         case ModelIdDiskDriveWobble:        return (int)iecBus->drives[0]->wobble;
         case ModelIdDiskDriveSpeed:         return (int)iecBus->drives[0]->rpm;
 
+        case ModelIdCiaBurstMode:           return system->userPort.burstRequested;
+        case ModelIdDriveParallelCable:     return system->userPort.parallelRequested;
+        case ModelIdDriveSpeeder:           return (int)iecBus->drives[0]->speeder;
+
         case ModelIdCycleAccurateVideo:     return system->cycleRendererNextBoot;
         case ModelIdDiskThread:             return iecBus->cpuBurnerRequested;
         case ModelIdDiskOnDemand:           return system->diskSilence.active;
         case ModelIdD64Accuracy:            return (int)iecBus->drives[0]->emulateDxxMoreAccurate;
+
+        case ModelIdDriveRam20To3F:         return (int)iecBus->getExpandedMemory(Drive1541::ExpandedMemMode::M20);
+        case ModelIdDriveRam40To5F:         return (int)iecBus->getExpandedMemory(Drive1541::ExpandedMemMode::M40);
+        case ModelIdDriveRam60To7F:         return (int)iecBus->getExpandedMemory(Drive1541::ExpandedMemMode::M60);
+        case ModelIdDriveRam80To9F:         return (int)iecBus->getExpandedMemory(Drive1541::ExpandedMemMode::M80);
+        case ModelIdDriveRamA0ToBF:         return (int)iecBus->getExpandedMemory(Drive1541::ExpandedMemMode::MA0);
     }
     return 0;
 }

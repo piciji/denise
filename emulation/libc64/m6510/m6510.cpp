@@ -190,7 +190,7 @@ auto M6510::busWatch() -> uint8_t {
 	vicII->clock();	\
 	cia2->clock();	\
 	expansionPort->clock(); \
-    if (system->burstMode.use) \
+    if (system->userPort.cycleSyncing) \
 	    iecBus->syncDrivesEachCycle();
 
 template<bool setI> auto M6510::busAccessUpdateFlagI( uint16_t addr ) -> void { 

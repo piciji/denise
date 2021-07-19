@@ -128,10 +128,14 @@ struct System {
     } diskSilence;
 
     struct {
-        bool requested = false;
-        bool possible = false;
-        bool use = false;
-    } burstMode;
+        bool burstRequested = false;
+        bool parallelRequested = false;
+        bool burstPossible = false;
+        bool parallelPossible = false;
+        bool burstUse = false;
+        bool parallelUse = false;
+        bool cycleSyncing = false;
+    } userPort;
     
     struct {
         uint8_t value = 255;
@@ -206,7 +210,7 @@ struct System {
     auto motorChange(bool state) -> void;
     auto informAboutMotorChange() -> void;
 
-    auto burstUpdate() -> void;
+    auto burstOrParallelUpdate() -> void;
     auto diskIdleOff() -> void;
 };
 

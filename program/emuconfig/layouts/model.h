@@ -72,6 +72,8 @@ struct ModelLayout : GUIKIT::FramedVerticalLayout {
     auto getBlock( unsigned modelId ) -> Line::Block*;
 
     auto alignSlider( std::string maxText ) -> void;
+
+    auto hintDriveSettings() -> void;
     
     ModelLayout();
 };

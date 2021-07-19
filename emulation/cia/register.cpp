@@ -78,13 +78,13 @@ auto Base::write( unsigned pos, uint8_t value ) -> void {
             // without external influence, lines show "pra" in output mode 
             // and will be pulled up in input mode, so there is no need to "and" pra with ddra
             uint8_t ioa = lines.pra | ~lines.ddra;
-            
-            if (ioa != lines.ioa) {
-                // show the basic state of the lines
-                lines.ioa = ioa;
-                
-                writePort( PORTA, &lines );                                
-            }
+
+            // show the basic state of the lines
+            lines.ioa = ioa;
+
+            writePort( PORTA, &lines );
+
+            lines.ioaOld = ioa;
             
 			break;
 		}	
@@ -101,14 +101,13 @@ auto Base::write( unsigned pos, uint8_t value ) -> void {
             uint8_t iob = lines.prb | ~lines.ddrb;
             
             adjustBit6And7( iob );
-            
-            if (iob != lines.iob) {
                 
-                lines.iob = iob;
-                
-                writePort( PORTB, &lines );                                
-            }
-            			
+            lines.iob = iob;
+
+            writePort( PORTB, &lines );
+
+            lines.iobOld = iob;
+
 			break;
         }
         case 4:		

@@ -240,6 +240,33 @@ auto IecBus::serialShift(bool bit) -> void {
     }
 }
 
+auto IecBus::readParallel() -> uint8_t {
+    syncDrives(0, true);
+
+    uint8_t out = cia2->lines.iob;
+    for (auto drive : drivesEnabled) {
+        if (drive->operation & DRIVE_MODE_157x) {
+            drive->cia->setFlag();
+            out &= drive->cia->lines.iob;
+        } else {
+            drive->via1->cb1In(false);
+            out &= drive->via1->lines.ioa;
+        }
+    }
+    return out;
+}
+
+auto IecBus::writeParallel() -> void {
+    syncDrives(0, true);
+
+    for (auto drive : drivesEnabled) {
+        if (drive->operation & DRIVE_MODE_157x)
+            drive->cia->setFlag();
+        else
+            drive->via1->cb1In(false);
+    }
+}
+
 auto IecBus::powerOff() -> void {
     
     idle = true;
@@ -270,10 +297,7 @@ auto IecBus::power() -> void {
     }
 }
 
-auto IecBus::
-
-
-writeCia( uint8_t byte ) -> bool {
+auto IecBus::writeCia( uint8_t byte ) -> bool {
     // let drives catch up
     syncDrives( 1, true );
     
@@ -360,8 +384,9 @@ auto IecBus::setDrivesEnabled( uint8_t count ) -> void {
 
 auto IecBus::setDriveType(Drive1541::Type type) -> void {
 
-    system->burstMode.possible = (type == Drive1541::Type::D1570) || (type == Drive1541::Type::D1571);
-    system->burstUpdate();
+    system->userPort.burstPossible = (type == Drive1541::Type::D1570) || (type == Drive1541::Type::D1571);
+    system->userPort.parallelPossible = true;
+    system->burstOrParallelUpdate();
 
     for( auto drive : drives )
         drive->setType( type );
@@ -508,6 +533,20 @@ auto IecBus::serializeLight(Emulator::Serializer& s) -> void {
 
 auto IecBus::resetTicks() -> void {
 	sysClock = sysTimer.clock;
+}
+
+auto IecBus::setExpandedMemory( Drive1541::ExpandedMemMode expandedMemMode, bool state ) -> void {
+    for( auto drive : drives )
+        drive->setExpandedMemory( expandedMemMode, state );
+}
+
+auto IecBus::getExpandedMemory( Drive1541::ExpandedMemMode expandedMemMode ) -> bool {
+    return (drives[0]->expandMemory & (uint8_t)expandedMemMode) ? true : false;
+}
+
+auto IecBus::setSpeeder(uint8_t speeder) -> void {
+    for( auto drive : drives )
+        drive->setSpeeder( speeder );
 }
 
 }

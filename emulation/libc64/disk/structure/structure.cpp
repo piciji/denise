@@ -398,19 +398,20 @@ auto Structure1541::selectListing(  unsigned pos ) -> void {
 		action.buffer = buildLoadCommand({'*'});
 			
     system->keyBuffer->add( action );
-    
-    action.mode = KeyBuffer::Mode::WaitFor;
-    action.buffer = {'S', 'E', 'A', 'R', 'C', 'H', 'I', 'N', 'G'};  
-    action.blinkingCursor = false;
-    action.delay = 0;
-    system->keyBuffer->add( action );
-    
-    action.mode = KeyBuffer::Mode::WaitFor;
-    action.buffer = {'L', 'O', 'A', 'D', 'I', 'N', 'G'};  
-    action.alternateBuffer = {'S', 'E', 'A', 'R', 'C', 'H', 'I', 'N', 'G'};  
-    action.blinkingCursor = false;
-    system->keyBuffer->add( action );
 
+    if (!system->userPort.burstRequested) {
+        action.mode = KeyBuffer::Mode::WaitFor;
+        action.buffer = {'S', 'E', 'A', 'R', 'C', 'H', 'I', 'N', 'G'};
+        action.blinkingCursor = false;
+        action.delay = 0;
+        system->keyBuffer->add(action);
+
+        action.mode = KeyBuffer::Mode::WaitFor;
+        action.buffer = {'L', 'O', 'A', 'D', 'I', 'N', 'G'};
+        action.alternateBuffer = {'S', 'E', 'A', 'R', 'C', 'H', 'I', 'N', 'G'};
+        action.blinkingCursor = false;
+        system->keyBuffer->add(action);
+    }
     action.callbackId = 4;
     action.mode = KeyBuffer::Mode::WaitFor;
     action.buffer = {'R', 'E', 'A', 'D', 'Y', '.'};  

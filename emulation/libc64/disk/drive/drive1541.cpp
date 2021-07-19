@@ -57,77 +57,95 @@ auto Drive1541::sync() -> void {
 auto Drive1541::cpuWrite(uint16_t addr, uint8_t data) -> void {
     SYNC
 
-    if (operation & DRIVE_MODE_154x) {
-        if ((addr & 0x9800) == 0)
-            ram[addr & 0x7ff] = data;
-
-        else if ((addr & 0x9c00) == 0x1800)
-            via1->write(addr, data);
-
-        else if ((addr & 0x9c00) == 0x1c00)
-            via2->write(addr, data);
-
-    } else {
-        if ((addr & 0xf000) == 0)
-            ram[addr & 0x7ff] = data;
-
-        else if ((addr & 0xfc00) == 0x1800)
-            via1->write(addr, data);
-
-        else if ((addr & 0xfc00) == 0x1c00) {
-            byteReady = false;
-            via2->write(addr, data);
-        } else if ((addr & 0xc000) == 0x4000) {
-            cia->write(addr, data);
-        }
-        else if ((addr & 0xe000) == 0x2000);
-            // todo
-    }
+    memory.write( addr, data );
 }
 
 auto Drive1541::cpuRead(uint16_t addr) -> uint8_t {
     SYNC
 
-    if (operation & DRIVE_MODE_154x) {
-        if (addr & 0x8000)
-            return rom[addr & 0x3fff];
+    return memory.read( addr );
+}
 
-        else if ((addr & 0x9800) == 0)
-            return ram[addr & 0x7ff];
+auto Drive1541::remap( ) -> void {
 
-        else if ((addr & 0x9c00) == 0x1800)
-            return via1->read(addr);
+    memory.map( &readUnmapped, &writeUnmapped, 0x00, 0xff);
 
-        else if ((addr & 0x9c00) == 0x1c00)
-            return via2->read(addr);
+    switch (type) {
+        case Type::D1541:
+        case Type::D1541C:
+        case Type::D1541II:
+            memory.map( &readRam, &writeRam, 0x00, 0x07);
+            memory.map( &readVia1Reg, &writeVia1Reg, 0x18, 0x1b);
+            memory.map( &readVia2Reg, &writeVia2Reg, 0x1c, 0x1f);
 
-        else
-            return addr >> 8;
+            if (expandMemory & (uint8_t)ExpandedMemMode::M20) {
+                memory.map( &readRam20, &writeRam20, 0x20, 0x3f);
+            } else {
+                memory.map( &readRam, &writeRam, 0x20, 0x27);
+                memory.map( &readVia1Reg, &writeVia1Reg, 0x38, 0x3b);
+                memory.map( &readVia2Reg, &writeVia2Reg, 0x3c, 0x3f);
+            }
+
+            if (expandMemory & (uint8_t)ExpandedMemMode::M40) {
+                memory.map( &readRam40, &writeRam40, 0x40, 0x5f);
+            } else {
+                memory.map( &readRam, &writeRam, 0x40, 0x47);
+                memory.map( &readVia1Reg, &writeVia1Reg, 0x58, 0x5b);
+                memory.map( &readVia2Reg, &writeVia2Reg, 0x5c, 0x5f);
+            }
+
+            if (expandMemory & (uint8_t)ExpandedMemMode::M60) {
+                memory.map( &readRam60, &writeRam60, 0x60, 0x7f);
+            } else {
+                memory.map( &readRam, &writeRam, 0x60, 0x67);
+                memory.map( &readVia1Reg, &writeVia1Reg, 0x78, 0x7b);
+                memory.map( &readVia2Reg, &writeVia2Reg, 0x7c, 0x7f);
+            }
+
+            if (expandMemory & (uint8_t)ExpandedMemMode::M80) {
+                memory.map( &readRam80, &writeRam80, 0x80, 0x9f);
+            } else {
+                memory.map( &readRom, 0x80, 0x9f);
+            }
+
+            if (expandMemory & (uint8_t)ExpandedMemMode::MA0) {
+                memory.map( &readRamA0, &writeRamA0, 0xa0, 0xbf);
+            } else {
+                memory.map( &readRom, 0xa0, 0xbf);
+            }
+
+            memory.map( &readRom, 0xc0, 0xff);
+
+            break;
+
+        case Type::D1571:
+        case Type::D1570:
+            memory.map( &readRam, &writeRam, 0x00, 0x07);
+            memory.map( &readRam, &writeRam, 0x08, 0x0f);
+            memory.map( &readVia1Reg, &writeVia1Reg, 0x18, 0x1b);
+            memory.map( &readVia2Reg, &writeVia2Reg, 0x1c, 0x1f);
+            memory.map( &readWd1770Reg, &writeWd1770Reg, 0x20, 0x2f);
+
+            if (expandMemory & (uint8_t)ExpandedMemMode::M40) {
+                memory.map( &readCiaReg, &writeCiaReg, 0x40, 0x47);
+                memory.map( &readRam40, &writeRam40, 0x48, 0x5f);
+            } else {
+                memory.map( &readCiaReg, &writeCiaReg, 0x40, 0x5f);
+            }
+
+            if (speeder == 3) { // ProfDOS CIA <> CIA
+                memory.map(&readRomExpandedProfDos, 0x60, 0x7f);
+
+            } else if (expandMemory & (uint8_t)ExpandedMemMode::M60) {
+                memory.map( &readRam60, &writeRam60, 0x60, 0x7f);
+            } else {
+                memory.map( &readCiaReg, &writeCiaReg, 0x60, 0x7f);
+            }
+
+            memory.map( &readRom, 0x80, 0xff);
+            break;
     }
-
-    if (addr & 0x8000)
-        return rom[addr & 0x7fff];
-
-    else if ((addr & 0xf000) == 0)
-        return ram[addr & 0x7ff];
-
-    else if ((addr & 0xfc00) == 0x1800)
-        return via1->read(addr);
-
-    else if ((addr & 0xfc00) == 0x1c00) {
-        // TED line of U6 clears the Byte line in 2 Mhz mode.
-        // Line is connected to Chip select of VIA 2. any access of VIA2 clears the line.
-        byteReady = false;
-        return via2->read(addr);
-
-    } else if ((addr & 0xc000) == 0x4000) {
-        return cia->read(addr);
-    }
-    else if ((addr & 0xe000) == 0x2000) {
-        return 0;
-    }
-    else
-        return addr >> 8;
+    needRemap = false;
 }
 
 Drive1541::Drive1541(uint8_t number, Emulator::Interface::Media* mediaConnected ) {
@@ -138,6 +156,9 @@ Drive1541::Drive1541(uint8_t number, Emulator::Interface::Media* mediaConnected 
 	structure1541.number = number;
 	type = Type::D1541II;
 	operation = 0;
+    expandMemory = 0;
+    speeder = 0;
+    needRemap = true;
 
 	emulateDxxMoreAccurate = false;
     media = nullptr;
@@ -147,6 +168,11 @@ Drive1541::Drive1541(uint8_t number, Emulator::Interface::Media* mediaConnected 
     refCyclesInCpuCycle = 16;
     
     ram = new uint8_t[ 2 * 1024 ];
+    ram20To3F = new uint8_t[ 8 * 1024 ];
+    ram40To5F = new uint8_t[ 8 * 1024 ];
+    ram60To7F = new uint8_t[ 8 * 1024 ];
+    ram80To9F = new uint8_t[ 8 * 1024 ];
+    ramA0ToBF = new uint8_t[ 8 * 1024 ];
 
     rom1541II = (uint8_t*)Firmware::drive1541IIRom;
     rom1541 = (uint8_t*)Firmware::drive1541Rom;
@@ -160,15 +186,159 @@ Drive1541::Drive1541(uint8_t number, Emulator::Interface::Media* mediaConnected 
     cia = new Cia8520( 3 );
     cpu = new M6502(this);
 
+    readRam = [this](uint16_t addr) {
+        return this->ram[ addr & 0x7ff ];
+    };
+
+    writeRam = [this](uint16_t addr, uint8_t value) {
+        this->ram[ addr & 0x7ff ] = value;
+    };
+
+    readRam20 = [this](uint16_t addr) {
+        return this->ram20To3F[ addr & 0x1fff ];
+    };
+
+    writeRam20 = [this](uint16_t addr, uint8_t value) {
+        this->ram20To3F[ addr & 0x1fff ] = value;
+    };
+
+    readRam40 = [this](uint16_t addr) {
+        return this->ram40To5F[ addr & 0x1fff ];
+    };
+
+    writeRam40 = [this](uint16_t addr, uint8_t value) {
+        this->ram40To5F[ addr & 0x1fff ] = value;
+    };
+
+    readRam60 = [this](uint16_t addr) {
+        return this->ram60To7F[ addr & 0x1fff ];
+    };
+
+    writeRam60 = [this](uint16_t addr, uint8_t value) {
+        this->ram60To7F[ addr & 0x1fff ] = value;
+    };
+
+    readRam80 = [this](uint16_t addr) {
+        return this->ram80To9F[ addr & 0x1fff ];
+    };
+
+    writeRam80 = [this](uint16_t addr, uint8_t value) {
+        this->ram80To9F[ addr & 0x1fff ] = value;
+    };
+
+    readRamA0 = [this](uint16_t addr) {
+        return this->ramA0ToBF[ addr & 0x1fff ];
+    };
+
+    writeRamA0 = [this](uint16_t addr, uint8_t value) {
+        this->ramA0ToBF[ addr & 0x1fff ] = value;
+    };
+
+    readRom = [this](uint16_t addr) {
+        return this->rom[addr & romMask];
+    };
+
+    readRomExpandedProfDos = [this](uint16_t addr) {
+        if (this->romExpanded) {
+            if (addr >= 0x7000) {
+                if (!(addr & 0x0800)) {
+                    addr = (uint16_t)((addr & 0xff0f) | (nibble << 4));
+                } else {
+                    addr = (uint16_t)((addr & 0xff00) | (nibble << 4) | ((addr >> 4) & 15));
+                }
+
+                nibble = addr & 15;
+            }
+
+            return this->romExpanded[ (addr & 0x1fff)];
+        }
+
+        return (uint8_t)0xff;
+    };
+
+    writeVia1Reg = [this](uint16_t addr, uint8_t value) {
+        via1->write( addr, value );
+    };
+
+    readVia1Reg = [this](uint16_t addr) {
+        return via1->read( addr );
+    };
+
+    writeVia2Reg = [this](uint16_t addr, uint8_t value) {
+        // TED line of U6 clears the Byte line in 2 Mhz mode.
+        // Line is connected to Chip select of VIA 2. any access of VIA2 clears the line.
+        byteReady = false;
+        via2->write( addr, value );
+    };
+
+    readVia2Reg = [this](uint16_t addr) {
+        byteReady = false;
+        return via2->read(addr);
+    };
+
+    writeCiaReg = [this](uint16_t addr, uint8_t value) {
+        cia->write( addr, value );
+    };
+
+    readCiaReg = [this](uint16_t addr) {
+        return cia->read(addr);
+    };
+
+    writeWd1770Reg = [this](uint16_t addr, uint8_t value) {
+
+    };
+
+    readWd1770Reg = [this](uint16_t addr) {
+        return 0;
+    };
+
+    writeUnmapped = [this](uint16_t addr, uint8_t value) {
+        // do nothing
+    };
+
+    readUnmapped = [this](uint16_t addr) {
+        return addr >> 8;
+    };
+
     cia->serialOut = [this](bool bit) {
 
         if (dataDirection) {
             system->diskIdleOff();
 
-            if (system->burstMode.use) {
+            if (system->userPort.burstUse) {
                 cia1->serialIn(bit);
             }
         }
+    };
+
+    cia->writePort = [this]( CIA::Base::Port port, CIA::Base::Lines* lines ) {
+
+        if ( port == CIA::Base::PORTB ) {
+
+            system->diskIdleOff();
+            if (lines->prbChange && system->userPort.parallelUse) {
+                // drive CIA PC goes low for one cycle (strobe) and is connected to C64 CIA2 FLAG input
+                cia2->setFlag();
+            }
+        }
+    };
+
+    cia->readPort = [this]( CIA::Base::Port port, CIA::Base::Lines* lines ) {
+
+        if ( port == CIA::Base::PORTB ) {
+            system->diskIdleOff();
+            if (system->userPort.parallelUse) {
+                // drive CIA PC goes low for one cycle (strobe) and is connected to C64 CIA2 FLAG input
+                cia2->setFlag();
+                uint8_t out = cia2->lines.iob;
+                for (auto drive : iecBus->drivesEnabled) {
+                    out &= drive->cia->lines.iob;
+                }
+                return out;
+            }
+            return lines->iob;
+        }
+        return lines->ioa;
     };
 
     cia->irqCall = [this](bool state) {
@@ -236,6 +406,8 @@ Drive1541::Drive1541(uint8_t number, Emulator::Interface::Media* mediaConnected 
                 if (side != _side)
                     changeHalfTrack( 0 );
             }
+
+            // nothing todo here for 1541 parallel cable mode, because CA2 is triggered in VIA core
         }
     };   
     
@@ -248,7 +420,17 @@ Drive1541::Drive1541(uint8_t number, Emulator::Interface::Media* mediaConnected 
 
         // port A
         if (type == Type::D1570 || type == Type::D1571) {
-            return (uint8_t) ( ( ( (byteReady ? 0 : 0x80) | ((currentHalftrack == 0) ? 0 : 1) | 0x7e ) & ~lines->ddra) | ( lines->pra & lines->ddra ) );
+            return (uint8_t) ((((byteReady ? 0 : 0x80) | ((currentHalftrack == 0) ? 0 : 1) | 0x7e) & ~lines->ddra) |
+                              (lines->pra & lines->ddra));
+        }
+        system->diskIdleOff();
+
+        if (system->userPort.parallelUse) {
+            uint8_t out = cia2->lines.iob;
+            for (auto drive : iecBus->drivesEnabled) {
+                out &= drive->via1->lines.ioa;
+            }
+            return out;
 
         } else if (type == Type::D1541C) {
             return (uint8_t) ( ( ( ((currentHalftrack == 0) ? 0 : 1) | 0xfe ) & ~lines->ddra) | ( lines->pra & lines->ddra ) );
@@ -314,16 +496,21 @@ Drive1541::Drive1541(uint8_t number, Emulator::Interface::Media* mediaConnected 
         return (latchedByte & ~lines->ddra) | ( lines->pra & lines->ddra );
     };
     
-    via2->ca2Out = [this]( bool state ) {
-        
-        byteReadyOverflow = state;
+    via2->ca2Out = [this]( bool direction ) {
+        byteReadyOverflow = direction;
     };
 
     via2->cb2Out = [this]( bool state ) {
+        readMode = state;
+        updateDeviceState();
+    };
 
-        if ( readMode != state ) {
-            readMode = state;
-            updateDeviceState();
+    via1->ca2Out = [this]( bool direction ) {
+        system->diskIdleOff();
+        if (system->userPort.parallelUse ) {
+            if (!direction) {
+                cia2->setFlag();
+            }
         }
     };
     
@@ -339,6 +526,11 @@ Drive1541::Drive1541(uint8_t number, Emulator::Interface::Media* mediaConnected 
 Drive1541::~Drive1541() {    
     
     delete[] ram;
+    delete[] ram20To3F;
+    delete[] ram40To5F;
+    delete[] ram60To7F;
+    delete[] ram80To9F;
+    delete[] ramA0ToBF;
 }
 
 auto Drive1541::updateDeviceState() -> void {
@@ -366,19 +558,28 @@ auto Drive1541::updateBus() -> void {
 }
 
 auto Drive1541::power( ) -> void {    
-    
+
     std::memset(ram, 0, 2 * 1024);
+    if (expandMemory & (uint8_t)ExpandedMemMode::M20)
+        std::memset(ram20To3F, 0, 8 * 1024);
+    if (expandMemory & (uint8_t)ExpandedMemMode::M40)
+        std::memset(ram40To5F, 0, 8 * 1024);
+    if (expandMemory & (uint8_t)ExpandedMemMode::M60)
+        std::memset(ram60To7F, 0, 8 * 1024);
+    if (expandMemory & (uint8_t)ExpandedMemMode::M80)
+        std::memset(ram80To9F, 0, 8 * 1024);
+    if (expandMemory & (uint8_t)ExpandedMemMode::MA0)
+        std::memset(ramA0ToBF, 0, 8 * 1024);
+
     setFirmwareByType();
+
+    if (needRemap) {
+        remap();
+    }
 
     via1->reset();
     via2->reset();
     cia->reset();
-
-    via1->cb1In(1);
-    via1->ca2In(1);
-    via1->cb2In(1);
-    via2->cb1In(1);
-    via2->cb2In(1); // read
 
     irqIncomming = 0;
     clockOut = dataOut = atnOut = 1;  
@@ -413,6 +614,7 @@ auto Drive1541::power( ) -> void {
     side = 0;
     dataDirection = true;
     syncPos = 0;
+    nibble = 0;
     updateCycleSpeed(false);
     changeHalfTrack(0);
     randomizeRpm();
@@ -464,36 +666,60 @@ auto Drive1541::powerOff( ) -> void {
 
 auto Drive1541::setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> void {
 
+    if ( (size == 0) || ((size & (size - 1)) != 0) )
+        data = nullptr;
+
     switch (typeId) {
+        default:
         case Interface::FirmwareIdVC1541II:
-            if (!data || (size != 16384))
-                data = (uint8_t*)Firmware::drive1541IIRom;
+            if (!data) {
+                data = (uint8_t*) Firmware::drive1541IIRom;
+                size = 16384;
+            }
+
             rom1541II = data;
+            rom1541IISize = size;
             break;
         case Interface::FirmwareIdVC1541:
-            if (!data || (size != 16384))
-                data = (uint8_t*)Firmware::drive1541Rom;
+            if (!data) {
+                data = (uint8_t*) Firmware::drive1541Rom;
+                size = 16384;
+            }
             rom1541 = data;
+            rom1541Size = size;
             break;
         case Interface::FirmwareIdVC1541C:
-            if (!data || (size != 16384))
-                data = (uint8_t*)Firmware::drive1541CRom;
+            if (!data) {
+                data = (uint8_t*) Firmware::drive1541CRom;
+                size = 16384;
+            }
             rom1541C = data;
+            rom1541CSize = size;
             break;
         case Interface::FirmwareIdVC1571:
-            if (!data || (size != 32768))
-                data = (uint8_t*)Firmware::drive1571Rom;
+            if (!data) {
+                data = (uint8_t*) Firmware::drive1571Rom;
+                size = 32768;
+            }
             rom1571 = data;
+            rom1571Size = size;
             break;
         case Interface::FirmwareIdVC1570:
-            if (!data || (size != 32768))
-                data = (uint8_t*)Firmware::drive1570Rom;
+            if (!data) {
+                data = (uint8_t*) Firmware::drive1570Rom;
+                size = 32768;
+            }
             rom1570 = data;
+            rom1570Size = size;
+            break;
+        case Interface::FirmwareIdExpanded:
+            romExpanded = data;
+            romExpandedSize = size;
             break;
     }
 }
 
-auto Drive1541::setViaTransition( bool state ) -> void {
+auto Drive1541::setViaTransition( bool direction ) -> void {
 	
 	// we need to check how much the drive is ahead of the c64.
     // if the drive is more than two cycles ahead we need to manually register
@@ -511,16 +737,16 @@ auto Drive1541::setViaTransition( bool state ) -> void {
 
 	if (cycleCounter >= (iecBus->cpuCylcesPerSecond + half)) {
 		// expects CPU has missed IRQ recognition
-		via1->ca1In( state, false);
+		via1->ca1In( direction, false);
 		via1->handleInterrupt();
 
 	} else if (cycleCounter >= half )
 		// expects IRQ recognition this cycle
-		via1->ca1In( state, false);
+		via1->ca1In( direction, false);
 
 	else
 		// expects IRQ recognition next cycle
-		via1->ca1In( state, true);	
+		via1->ca1In( direction, true);
 }
 
 auto Drive1541::detach() -> void {
@@ -538,9 +764,6 @@ auto Drive1541::detach() -> void {
     loaded = false;
     pulseIndex = -1;
     pulseDelta = 1; // to reload quickly
-
-    if (type == Type::D1570 || type == Type::D1571)
-        via1->ca2In( true );
 }
 
 auto Drive1541::attach( Emulator::Interface::Media* media, uint8_t* data, unsigned size, bool loadGracefully ) -> void {
@@ -571,8 +794,8 @@ auto Drive1541::postAttach() -> void {
 
     loaded = true;
 
-    if (type == Type::D1570 || type == Type::D1571)
-        via1->ca2In( !writeProtected );
+    if (writeProtected && (type == Type::D1570 || type == Type::D1571))
+        via1->ca2In( false );
 
     operation &= ~(USERDATA_LEVEL | ENCODEDDATA_LEVEL | FLUXDATA_LEVEL);
 
@@ -653,17 +876,52 @@ auto Drive1541::setType( Type type ) -> void {
         operation |= DRIVE_MODE_157x;
 
     setFirmwareByType();
+
+    needRemap = true;
 }
 
 auto Drive1541::setFirmwareByType( ) -> void {
     switch (type) {
         default:
-        case Type::D1541II: rom = rom1541II;break;
-        case Type::D1541:   rom = rom1541; break;
-        case Type::D1541C:  rom = rom1541C; break;
-        case Type::D1571:   rom = rom1571; break;
-        case Type::D1570:   rom = rom1570; break;
+        case Type::D1541II:
+            rom = rom1541II;
+            romMask = rom1541IISize - 1;
+            break;
+        case Type::D1541:
+            rom = rom1541;
+            romMask = rom1541Size - 1;
+            break;
+        case Type::D1541C:
+            rom = rom1541C;
+            romMask = rom1541CSize - 1;
+            break;
+        case Type::D1571:
+            rom = rom1571;
+            romMask = rom1571Size - 1;
+            break;
+        case Type::D1570:
+            rom = rom1570;
+            romMask = rom1570Size - 1;
+            break;
     }
+}
+
+auto Drive1541::setExpandedMemory( ExpandedMemMode& expandedMemMode, bool state ) -> void {
+
+    if (state) {
+        expandMemory |= (uint8_t)expandedMemMode;
+    } else {
+        expandMemory &= ~((uint8_t)expandedMemMode);
+    }
+
+    needRemap = true;
+}
+
+auto Drive1541::setSpeeder(uint8_t speeder) -> void {
+
+    this->speeder = speeder;
+
+    needRemap = true;
 }
 
 }

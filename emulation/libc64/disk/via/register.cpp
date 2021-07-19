@@ -48,7 +48,8 @@ auto Via::read( uint16_t pos ) -> uint8_t {
             
             // handshake or pulse output mode, but not manual
             if ((pcr & 0x0c) == 0x08) {
-                ca2Out( ca2 = 0 );
+                if (ca2)
+                    ca2Out( ca2 = 0 );
                 
                 if (pcr & 2) // pulse output, low for one cycle only
                     delay |= VIA_CA2_PULSE0;
@@ -132,11 +133,12 @@ auto Via::write( uint16_t pos, uint8_t value ) -> void {
             // handshake or pulse output mode, but not manual
             // ca2 state in manual output mode doesn't change by a read or write
             if ((pcr & 0x0c) == 0x08) {
-                ca2Out( ca2 = 0 );
+                if (ca2)
+                    ca2Out( ca2 = 0 );
                 
                 if (pcr & 2) // pulse output, low for one cycle only
                     delay |= VIA_CA2_PULSE0;
-            }            
+            }
             
             // fall through
             
@@ -170,7 +172,8 @@ auto Via::write( uint16_t pos, uint8_t value ) -> void {
             // handshake or pulse output mode, but not manual
             // cb2 state in manual output mode doesn't change by a read or write
             if ((pcr & 0xc0) == 0x80) {
-                cb2Out( cb2 = 0 );
+                if (cb2)
+                    cb2Out( cb2 = 0 );
                 
                 if (pcr & 0x20) // pulse output, low for one cycle only
                     delay |= VIA_CB2_PULSE0;
@@ -262,7 +265,7 @@ auto Via::write( uint16_t pos, uint8_t value ) -> void {
                 lines.latchA = readPort( Port::A, &lines );
 
             if ( !(acr & 2) && (value & 2)) // todo: latch port B ?
-                lines.latchB = readPort(Port::B, &lines);	
+                lines.latchB = readPort(Port::B, &lines);
             
             acr = value;                      
             
@@ -271,16 +274,21 @@ auto Via::write( uint16_t pos, uint8_t value ) -> void {
             break;
             
         case 0xc: // pcr
-            if ( (value & 0xe) == 0xc )
-                ca2Out( ca2 = 0 );
-            else if ( (value & 0xe) == 0xe )
-                ca2Out( ca2 = 1 );
+            if ( (value & 0xe) == 0xc ) {
+                if (ca2)
+                    ca2Out(ca2 = 0);
+            } else if ( (value & 0xe) == 0xe ) {
+                if (!ca2)
+                    ca2Out(ca2 = 1);
+            }
 
-            if ( (value & 0xe0) == 0xc0 )
-                cb2Out( cb2 = 0 );
-            else if ( (value & 0xe0) == 0xe0 )
-                cb2Out( cb2 = 1 );
-            
+            if ( (value & 0xe0) == 0xc0 ) {
+                if (cb2)
+                    cb2Out(cb2 = 0);
+            } else if ( (value & 0xe0) == 0xe0 ) {
+                if (!cb2)
+                    cb2Out(cb2 = 1);
+            }
             pcr = value;
             break;
             

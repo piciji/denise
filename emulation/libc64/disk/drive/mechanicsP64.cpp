@@ -87,9 +87,6 @@ namespace LIBC64 {
                             ue3Counter = 0;
                         else
                             ue3Counter++;
-
-                        // same like SO flag, the VIA input is edge transition
-                        via2->ca1In(true, false);
                     }
                         // uf4: 0,1,4,5,8,9,12,13
                     else if (((uf4Counter & 2) == 0) && (ue3Counter == 8))
@@ -157,9 +154,6 @@ namespace LIBC64 {
                         writeBuffer <<= 1;
 
                         ue3Counter++;
-
-                        // same like SO flag, the VIA input is edge transition
-                        via2->ca1In(true, false);
                     }
                         // uf4: 0,1,4,5,8,9,12,13
                     else if (((uf4Counter & 2) == 0) && (ue3Counter == 8)) {
@@ -171,9 +165,8 @@ namespace LIBC64 {
                         if (byteReadyOverflow) {
                             cpu->triggerSO(overflowNotThisCycle ? 2 : 1);
                             byteReady = true;
+                            via2->ca1In(false, overflowNotThisCycle);
                         }
-
-                        via2->ca1In(!byteReadyOverflow, overflowNotThisCycle);
                     }
                 }
 

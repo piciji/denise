@@ -13,8 +13,7 @@ struct Memory {
 
     Read* reads[256] = {0};
     Write* writes[256] = {0};
-	
-	// use 'size' for mirroring memory
+
     auto map( Read* read, Write* write, uint8_t pageLo, uint8_t pageHi ) -> void {
         map(read, pageLo, pageHi );
         map(write, pageLo, pageHi );

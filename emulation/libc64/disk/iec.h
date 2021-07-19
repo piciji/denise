@@ -43,6 +43,8 @@ struct IecBus {
     auto readCia() -> uint8_t;
     auto readVia() -> uint8_t;
     auto serialShift(bool bit) -> void;
+    auto readParallel() -> uint8_t;
+    auto writeParallel() -> void;
     
     auto power() -> void;
     auto powerOff() -> void;
@@ -71,6 +73,8 @@ struct IecBus {
     auto setFastForward( bool state ) -> void;
     auto updateIdleState() -> void;
     auto resetDriveState() -> void;
+    auto setExpandedMemory( Drive1541::ExpandedMemMode expandedMemMode, bool state ) -> void;
+    auto getExpandedMemory( Drive1541::ExpandedMemMode expandedMemMode ) -> bool;
 	inline auto checkForIdleWrite(uint8_t byte) -> bool  { return (byte & 0x38) == lastByte; }
 
     auto updateSerializationSize() -> void;
@@ -78,6 +82,7 @@ struct IecBus {
 
     auto setDriveType(Drive1541::Type type) -> void;
     auto emulateDxxMoreAccurate(bool state) -> void;
+    auto setSpeeder(uint8_t speeder) -> void;
 };
    
 extern IecBus* iecBus;

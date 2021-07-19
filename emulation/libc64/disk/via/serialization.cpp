@@ -31,9 +31,7 @@ auto Via::serialize(Emulator::Serializer& s) -> void {
     s.integer( pcr );
     s.integer( acr );
     s.integer( sdr );
-    s.integer( ca1 );
     s.integer( ca2 );
-    s.integer( cb1 );
     s.integer( cb2 );
 
     s.integer( shift.toggle );

@@ -53,19 +53,21 @@ struct Via {
     std::function<uint8_t ( Port port, Lines* lines )> readPort;
     std::function<void ( Port port, Lines* lines )> writePort;
 
+    // outgoing transitions
     // ca1 is input only
-    std::function<void (bool state)> ca2Out;
-    std::function<void (bool state)> cb1Out;
-    std::function<void (bool state)> cb2Out;
+    std::function<void (bool direction)> ca2Out;
+    std::function<void (bool direction)> cb1Out;
+    std::function<void (bool direction)> cb2Out;
 
     std::function<void (bool state)> irqCall;    
     
     auto pb6Pulse() -> void;
 
-    auto ca1In( bool state, bool irqNextCycle = true ) -> void;
-    auto ca2In( bool state, bool irqNextCycle = true ) -> void;
-    auto cb1In( bool state, bool irqNextCycle = true ) -> void;
-    auto cb2In( bool state, bool irqNextCycle = true ) -> void;
+    // incomming transitions
+    auto ca1In( bool direction, bool irqNextCycle = true ) -> void;
+    auto ca2In( bool direction, bool irqNextCycle = true ) -> void;
+    auto cb1In( bool direction, bool pulse = true, bool irqNextCycle = true ) -> void;
+    auto cb2In( bool direction, bool irqNextCycle = true ) -> void;
     
     auto read(uint16_t pos) -> uint8_t;
     auto write(uint16_t pos, uint8_t value) -> void;
@@ -77,7 +79,7 @@ struct Via {
     
     uint8_t model;   
     
-protected:          
+//protected:
     uint16_t timerACounter;
     uint16_t timerALatch;
     uint16_t timerACounterRead;
@@ -94,16 +96,14 @@ protected:
     uint8_t pcr;
     uint8_t acr;
     uint8_t sdr;
-    
-    bool ca1;
+
     bool ca2;
-    bool cb1;
     bool cb2;
     
     unsigned delay;
         
     struct {
-        bool toggle;
+        bool toggle;    // cb1
         bool irqTrigger;
         bool active;
         uint8_t count;
@@ -122,7 +122,7 @@ protected:
     auto shiftT2Control() -> bool;
     auto shiftDisabled() -> bool;
     auto shiftOut() -> bool;
-    template<bool cb1Output> inline auto shiftTiming() -> void;
+    inline auto shiftTiming(bool cb1) -> void;
 };    
     
 }

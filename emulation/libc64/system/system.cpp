@@ -311,7 +311,7 @@ System::System(Interface* interface) {
     cia1->serialOut = [this](bool bit) {
         diskIdleOff();
 
-        if (burstMode.use) {
+        if (userPort.burstUse) {
             iecBus->serialShift(bit);
         }
     };
@@ -335,10 +335,13 @@ System::System(Interface* interface) {
 
     cia1->writePort = [this]( CIA::Base::Port port, CIA::Base::Lines* lines ) {
 
-        if ( port == CIA::Base::PORTA )
-            input->writeCiaPortA( lines );
-
-        input->writeCiaPortB( lines );
+        if ( port == CIA::Base::PORTA ) {
+            if (lines->ioa != lines->ioaOld)
+                input->writeCiaPortA(lines);
+        } else {
+            if (lines->iob != lines->iobOld)
+                input->writeCiaPortB( lines );
+        }
     };
 
     cia2->readPort = [this]( CIA::Base::Port port, CIA::Base::Lines* lines ) {
@@ -347,6 +350,10 @@ System::System(Interface* interface) {
             diskIdleOff();
 
             return (uint8_t) ( (lines->ioa & 0x3f) | iecBus->readCia() );
+
+        } else if (userPort.parallelUse) {
+            diskIdleOff();
+            return iecBus->readParallel();
         }
 
         return lines->iob;
@@ -355,6 +362,8 @@ System::System(Interface* interface) {
     cia2->writePort = [this]( CIA::Base::Port port, CIA::Base::Lines* lines ) {
 
         if ( port == CIA::Base::PORTA ) {
+            if (lines->ioaOld == lines->ioa)
+                return;
             // the c64 II or c64c has another glue logic for updating the vic bank
             glueLogic->setVBank( ( ~(lines->ioa & 3) ) & 3, !lines->praChange );
 
@@ -368,10 +377,13 @@ System::System(Interface* interface) {
             if (iecBus->writeCia( ~lines->ioa )) {
                 diskSilence.idle = false;
                 diskSilence.idleFrames = 0;
-                burstUpdate();
+                burstOrParallelUpdate();
             }
+        } else if (userPort.parallelUse && lines->prbChange) {
+            diskIdleOff();
+            // Port B with parallel cable
+            iecBus->writeParallel();
         }
-
     };
 
     crop->removeBorderCallback = [this](unsigned& top, unsigned& bottom, unsigned& left, unsigned& right) {
@@ -515,7 +527,7 @@ auto System::power( bool softReset ) -> void {
     iecBus->power();
     diskSilence.idle = false;
     diskSilence.idleFrames = 0;
-    burstUpdate();
+    burstOrParallelUpdate();
 
     if( !softReset ) {
         setCycleRenderer( cycleRendererNextBoot );
@@ -656,7 +668,7 @@ auto System::run() -> void {
 
     while( !frameComplete ) {
         cpu->process();
-        if (!diskSilence.idle && !burstMode.use)
+        if (!diskSilence.idle && !userPort.cycleSyncing)
             iecBus->syncDrives();
     }
 
@@ -779,7 +791,7 @@ auto System::videoRefresh( uint8_t* frame, unsigned width, unsigned height, unsi
             if (++diskSilence.idleFrames > 200) {
                 diskSilence.idle = true;
                 diskSilence.idleFrames = 0;
-                burstUpdate();
+                burstOrParallelUpdate();
                 iecBus->resetDriveState();
             }
         }
@@ -894,15 +906,18 @@ auto System::informAboutMotorChange() -> void {
     interface->informDriveLoading( observer.motor );
 }
 
-auto System::burstUpdate() -> void {
-    burstMode.use = burstMode.requested && burstMode.possible && !diskSilence.idle;
+auto System::burstOrParallelUpdate() -> void {
+    userPort.burstUse = userPort.burstRequested && userPort.burstPossible && !diskSilence.idle && iecBus->drivesConnected;
+    userPort.parallelUse = userPort.parallelRequested && userPort.parallelPossible && !diskSilence.idle && iecBus->drivesConnected;
+
+    userPort.cycleSyncing = userPort.burstUse || userPort.parallelUse;
 }
 
 auto System::diskIdleOff() -> void {
     if (diskSilence.idle) {
         diskSilence.idle = false;
         iecBus->resetTicks();
-        burstUpdate();
+        burstOrParallelUpdate();
     }
     diskSilence.idleFrames = 0;
 }

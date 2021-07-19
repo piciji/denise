@@ -109,6 +109,7 @@ auto Base::reset() -> void {
     lines.pra = lines.prb = 0;    
     lines.ddra = lines.ddrb = 0;
 	lines.ioa = lines.iob = 0xff;
+	lines.ioaOld = lines.iobOld = 0xff;
     lines.praChange = lines.prbChange = 0;
 	
     icr = icrmask = 0;
@@ -413,7 +414,9 @@ auto Base::serialize(Emulator::Serializer& s) -> void {
     s.integer( lines.ddrb );
     s.integer( lines.ioa );
     s.integer( lines.iob );
-    s.integer( lines.praChange );
+	s.integer( lines.ioaOld );
+	s.integer( lines.iobOld );
+	s.integer( lines.praChange );
     s.integer( lines.prbChange );
     
     for(unsigned i = 0; i < 2; i++) {

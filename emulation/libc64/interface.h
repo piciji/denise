@@ -19,8 +19,9 @@ struct Interface : Emulator::Interface {
         ModelIdSid3, ModelIdSid3Left, ModelIdSid3Right, ModelIdSid3Adr, ModelIdSid4, ModelIdSid4Left, ModelIdSid4Right, ModelIdSid4Adr,
         ModelIdSid5, ModelIdSid5Left, ModelIdSid5Right, ModelIdSid5Adr, ModelIdSid6, ModelIdSid6Left, ModelIdSid6Right, ModelIdSid6Adr,
         ModelIdSid7, ModelIdSid7Left, ModelIdSid7Right, ModelIdSid7Adr, ModelIdSid8, ModelIdSid8Left, ModelIdSid8Right, ModelIdSid8Adr,
-        ModelIdCiaBurstMode, ModelIdDiskDriveModel, ModelIdDiskDrivesConnected, ModelIdTapeDrivesConnected,
-        ModelIdDiskDriveSpeed, ModelIdDiskDriveWobble, ModelIdTapeDriveWobble,
+        ModelIdCiaBurstMode, ModelIdDriveParallelCable, ModelIdDiskDriveModel, ModelIdDiskDrivesConnected, ModelIdTapeDrivesConnected,
+        ModelIdDiskDriveSpeed, ModelIdDiskDriveWobble, ModelIdTapeDriveWobble, ModelIdDriveSpeeder,
+        ModelIdDriveRam20To3F, ModelIdDriveRam40To5F, ModelIdDriveRam60To7F, ModelIdDriveRam80To9F, ModelIdDriveRamA0ToBF,
         ModelIdCycleAccurateVideo, ModelIdDiskThread, ModelIdDiskOnDemand, ModelIdD64Accuracy,
     };
     
@@ -55,6 +56,7 @@ struct Interface : Emulator::Interface {
     enum FirmwareId {
         FirmwareIdKernal, FirmwareIdBasic, FirmwareIdChar,
         FirmwareIdVC1541II, FirmwareIdVC1541, FirmwareIdVC1541C, FirmwareIdVC1571, FirmwareIdVC1570,
+        FirmwareIdExpanded,
     };
     
     static const std::string Version;

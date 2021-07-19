@@ -11,6 +11,7 @@
 
 #include "../structure/structure.h"
 #include "../../system/system.h"
+#include "../../system/memory.h"
 #include "../cpu/m6502.h"
 #include "../../../tools/rand.h"
 #include "../../../tools/serializer.h"
@@ -33,17 +34,61 @@ struct Drive1541 {
 
     enum class Type { D1541, D1541II, D1541C, D1570, D1571 } type;
 
+    enum class ExpandedMemMode  { M20 = 1, M40 = 2, M60 = 4, M80 = 8, MA0 = 16 };
+
     unsigned rotSpeedBps[4] = { 250000, 266667, 285714, 307692 };
     const unsigned DISC_DELAY = 600000;
     
     uint8_t number;
     uint8_t* rom = nullptr;
+    uint16_t romMask;
+
     uint8_t* rom1541II = nullptr;
+    uint16_t rom1541IISize = 0;
     uint8_t* rom1541 = nullptr;
+    uint16_t rom1541Size = 0;
     uint8_t* rom1541C = nullptr;
+    uint16_t rom1541CSize = 0;
     uint8_t* rom1571 = nullptr;
+    uint16_t rom1571Size = 0;
     uint8_t* rom1570 = nullptr;
-   
+    uint16_t rom1570Size = 0;
+    uint8_t* romExpanded = nullptr;
+    uint16_t romExpandedSize = 0;
+
+    uint8_t* ram20To3F = nullptr;
+    uint8_t* ram40To5F = nullptr;
+    uint8_t* ram60To7F = nullptr;
+    uint8_t* ram80To9F = nullptr;
+    uint8_t* ramA0ToBF = nullptr;
+
+    Memory memory;
+    Memory::Read readRam;
+    Memory::Write writeRam;
+    Memory::Read readVia1Reg;
+    Memory::Write writeVia1Reg;
+    Memory::Read readVia2Reg;
+    Memory::Write writeVia2Reg;
+    Memory::Read readCiaReg;
+    Memory::Write writeCiaReg;
+    Memory::Read readWd1770Reg;
+    Memory::Write writeWd1770Reg;
+    Memory::Read readRom;
+    Memory::Read readUnmapped;
+    Memory::Write writeUnmapped;
+    Memory::Read readRomExpandedProfDos;
+
+    Memory::Read readRam20;
+    Memory::Write writeRam20;
+    Memory::Read readRam40;
+    Memory::Write writeRam40;
+    Memory::Read readRam60;
+    Memory::Write writeRam60;
+    Memory::Read readRam80;
+    Memory::Write writeRam80;
+    Memory::Read readRamA0;
+    Memory::Write writeRamA0;
+
     Emulator::Interface::Media* media;
 	Emulator::Interface::Media* mediaConnected; // update status LED if there was no disk inserted
 
@@ -73,6 +118,10 @@ struct Drive1541 {
     int64_t syncPos;
     uint8_t refCyclesInCpuCycle;
     uint8_t operation;
+    uint8_t expandMemory;
+    bool needRemap;
+    uint8_t speeder = 0;
+    uint8_t nibble = 0;
         
     Structure1541::GcrTrack* gcrTrack = new Structure1541::GcrTrack;
 
@@ -129,10 +178,11 @@ struct Drive1541 {
     auto cpuRead(uint16_t addr) -> uint8_t;
     auto power( ) -> void;
     auto powerOff( ) -> void;
-    auto setViaTransition( bool state ) -> void;
+    auto setViaTransition( bool direction ) -> void;
     auto getMedia() -> Emulator::Interface::Media* { return media; }
 	auto getMediaConnected() -> Emulator::Interface::Media* { return mediaConnected; }
 	auto setType( Type type ) -> void;
+    auto remap( ) -> void;
     
     auto updateBus() -> void;
     auto setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> void;
@@ -166,6 +216,8 @@ struct Drive1541 {
     auto updateCycleSpeed(bool mhz2x, bool init = true) -> void;
     auto setFirmwareByType( ) -> void;
     auto use2Mhz() -> bool { return frequency == 2000000; }
+    auto setExpandedMemory( ExpandedMemMode& expandedMemMode, bool state  ) -> void;
+    auto setSpeeder(uint8_t speeder) -> void;
 };
   
 }

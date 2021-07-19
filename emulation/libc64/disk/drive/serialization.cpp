@@ -6,11 +6,28 @@ namespace LIBC64 {
     
 auto Drive1541::serialize(Emulator::Serializer& s) -> void {
 
+    auto _type = type;
+    auto _expandMemory = expandMemory;
+    auto _speeder = speeder;
+
     s.integer( (uint8_t&)type );
+    s.integer( expandMemory );
     s.integer( cycleCounter );
     s.integer( synced );
     s.integer( irqIncomming );
     s.array( ram, 2 * 1024 );
+
+    if (expandMemory & (uint8_t)ExpandedMemMode::M20)
+        s.array( ram20To3F, 8 * 1024 );
+    if (expandMemory & (uint8_t)ExpandedMemMode::M40)
+        s.array( ram40To5F, 8 * 1024);
+    if (expandMemory & (uint8_t)ExpandedMemMode::M60)
+        s.array( ram60To7F, 8 * 1024);
+    if (expandMemory & (uint8_t)ExpandedMemMode::M80)
+        s.array( ram80To9F, 8 * 1024);
+    if (expandMemory & (uint8_t)ExpandedMemMode::MA0)
+        s.array( ramA0ToBF, 8 * 1024);
+
     s.integer( driveCycles );
     s.integer( accum );
     s.integer( currentHalftrack );
@@ -56,6 +73,8 @@ auto Drive1541::serialize(Emulator::Serializer& s) -> void {
     s.integer( syncPos );
     s.integer( wobble );
     s.integer( rpm );
+    s.integer( nibble );
+    s.integer( speeder );
 
     via1->serialize( s );
     via2->serialize( s );
@@ -81,6 +100,10 @@ auto Drive1541::serialize(Emulator::Serializer& s) -> void {
             postAttach();
 
         structure1541.encodingGraceful.reset();
+
+        if (type != _type || expandMemory != _expandMemory || speeder != _speeder) {
+            remap();
+        }
     }
        
     structure1541.serialize( s, written );    
