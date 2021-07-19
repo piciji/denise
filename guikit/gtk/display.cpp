@@ -185,10 +185,14 @@ auto pMonitor::setSetting( unsigned displayId, unsigned settingId ) -> bool {
 
     logger->log("connect", 1);
 
-    if (!devices.size())
+    if (!devices.size()) {
         fetchDisplays();
 
-    activeDevice = nullptr;
+        if (!devices.size())
+            return false;
+    }
+
+    activeDevice = &devices[0];
     for(auto& _device : devices) {
         if (_device.id == displayId) {
             activeDevice = &_device;
@@ -197,9 +201,6 @@ auto pMonitor::setSetting( unsigned displayId, unsigned settingId ) -> bool {
             break;
         }
     }
-
-    if (!activeDevice)
-        return false;
 
     if (!settings.size() || (settings[0].parentDevice != activeDevice) )
         fetchSettings( activeDevice );
