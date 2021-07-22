@@ -1,14 +1,9 @@
 
-
 #include "drive1541.h"
 
 namespace LIBC64 {   
     
 auto Drive1541::serialize(Emulator::Serializer& s) -> void {
-
-    auto _type = type;
-    auto _expandMemory = expandMemory;
-    auto _speeder = speeder;
 
     s.integer( (uint8_t&)type );
     s.integer( expandMemory );
@@ -75,6 +70,8 @@ auto Drive1541::serialize(Emulator::Serializer& s) -> void {
     s.integer( rpm );
     s.integer( nibble );
     s.integer( speeder );
+    s.integer( profDosAutoSpeed );
+    s.integer( extendedMemoryMap );
 
     via1->serialize( s );
     via2->serialize( s );
@@ -100,10 +97,6 @@ auto Drive1541::serialize(Emulator::Serializer& s) -> void {
             postAttach();
 
         structure1541.encodingGraceful.reset();
-
-        if (type != _type || expandMemory != _expandMemory || speeder != _speeder) {
-            remap();
-        }
     }
        
     structure1541.serialize( s, written );    

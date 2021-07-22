@@ -11,7 +11,6 @@
 
 #include "../structure/structure.h"
 #include "../../system/system.h"
-#include "../../system/memory.h"
 #include "../cpu/m6502.h"
 #include "../../../tools/rand.h"
 #include "../../../tools/serializer.h"
@@ -54,40 +53,13 @@ struct Drive1541 {
     uint8_t* rom1570 = nullptr;
     uint16_t rom1570Size = 0;
     uint8_t* romExpanded = nullptr;
-    uint16_t romExpandedSize = 0;
+    uint16_t romExpandedMask = 0;
 
     uint8_t* ram20To3F = nullptr;
     uint8_t* ram40To5F = nullptr;
     uint8_t* ram60To7F = nullptr;
     uint8_t* ram80To9F = nullptr;
     uint8_t* ramA0ToBF = nullptr;
-
-    Memory memory;
-    Memory::Read readRam;
-    Memory::Write writeRam;
-    Memory::Read readVia1Reg;
-    Memory::Write writeVia1Reg;
-    Memory::Read readVia2Reg;
-    Memory::Write writeVia2Reg;
-    Memory::Read readCiaReg;
-    Memory::Write writeCiaReg;
-    Memory::Read readWd1770Reg;
-    Memory::Write writeWd1770Reg;
-    Memory::Read readRom;
-    Memory::Read readUnmapped;
-    Memory::Write writeUnmapped;
-    Memory::Read readRomExpandedProfDos;
-
-    Memory::Read readRam20;
-    Memory::Write writeRam20;
-    Memory::Read readRam40;
-    Memory::Write writeRam40;
-    Memory::Read readRam60;
-    Memory::Write writeRam60;
-    Memory::Read readRam80;
-    Memory::Write writeRam80;
-    Memory::Read readRamA0;
-    Memory::Write writeRamA0;
 
     Emulator::Interface::Media* media;
 	Emulator::Interface::Media* mediaConnected; // update status LED if there was no disk inserted
@@ -119,9 +91,10 @@ struct Drive1541 {
     uint8_t refCyclesInCpuCycle;
     uint8_t operation;
     uint8_t expandMemory;
-    bool needRemap;
     uint8_t speeder = 0;
     uint8_t nibble = 0;
+    uint8_t profDosAutoSpeed; // Bit 0: 0 = 1 MHz, 1 = 2 Mhz, Bit 1: 0 = force speed, 1 = auto speed
+    bool extendedMemoryMap;
         
     Structure1541::GcrTrack* gcrTrack = new Structure1541::GcrTrack;
 
@@ -182,7 +155,6 @@ struct Drive1541 {
     auto getMedia() -> Emulator::Interface::Media* { return media; }
 	auto getMediaConnected() -> Emulator::Interface::Media* { return mediaConnected; }
 	auto setType( Type type ) -> void;
-    auto remap( ) -> void;
     
     auto updateBus() -> void;
     auto setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> void;
@@ -218,6 +190,12 @@ struct Drive1541 {
     auto use2Mhz() -> bool { return frequency == 2000000; }
     auto setExpandedMemory( ExpandedMemMode& expandedMemMode, bool state  ) -> void;
     auto setSpeeder(uint8_t speeder) -> void;
+
+    auto readProfDosEncoder(uint16_t addr) -> uint8_t;
+    auto readProfDosEncoderV1(uint16_t addr) -> uint8_t;
+
+    auto profDosClockControl(uint16_t addr) -> void;
+    auto profDosAutoClockControl(uint16_t addr) -> void;
 };
   
 }

@@ -270,17 +270,17 @@ auto FirmwareLayout::loadSettings(bool init) -> void {
         for (auto& firmware : emulator->firmwares) {
             auto block = ((FirmwareContainer*)containers[i])->blocks[j++];
             
-            if (i == 0) {
-                block->top.fileLabel.setText( firmware.name );
-                block->bottom.edit.setText( program->dataFolder() + firmware.name );
-            } else {            
+       //     if (i == 0) {
+         //       block->top.fileLabel.setText( firmware.name );
+           //     block->bottom.edit.setText( program->dataFolder() + firmware.name );
+            //} else {
                 auto fSetting = manager->getSetting( &firmware, i );
                 if (!init)
                     fSetting->update();
 
                 block->top.fileLabel.setText( fSetting->file );
                 block->bottom.edit.setText( fSetting->path );
-            }
+            //}
         }
     }
     

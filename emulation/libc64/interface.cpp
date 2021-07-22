@@ -538,8 +538,8 @@ auto Interface::prepareModels() -> void {
     models.push_back({ModelIdDriveParallelCable, "Parallel Cable", Model::Type::Switch, Model::Purpose::DriveSettings, 0});
     models.push_back({ModelIdCiaBurstMode, "CIA Burst Modification", Model::Type::Switch, Model::Purpose::DriveSettings, 0});
 
-    models.push_back({ModelIdDriveSpeeder, "Drive Speeder", Model::Type::Combo, Model::Purpose::DriveSettings, 0, {0, 3},
-                      { "None", "SpeedDOS 154x", "DolphinDOS v2 154x", "ProfDOS 157x" }});
+    models.push_back({ModelIdDriveFastLoader, "Fast Loader", Model::Type::Combo, Model::Purpose::DriveSettings, 0, {0, 5},
+        { "Manual", "SpeedDOS 1541", "DolphinDOS v2 1541", "ProfDOS v1 1541", "ProfDOS R4 1541", "ProfDOS R5-R6 157x" }});
 
     models.push_back({ModelIdTapeDrivesConnected, "Tape Drives", Model::Type::Combo, Model::Purpose::DriveSettings, 0, {0, 1},
                       { "0", "1" }});
@@ -1306,7 +1306,7 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
             system->userPort.parallelRequested = value & 1;
             system->burstOrParallelUpdate();
             break;
-        case ModelIdDriveSpeeder:
+        case ModelIdDriveFastLoader:
             iecBus->setSpeeder( value );
             break;
         case ModelIdDriveRam20To3F:
@@ -1423,7 +1423,7 @@ auto Interface::getModelValue(unsigned modelId) -> int {
 
         case ModelIdCiaBurstMode:           return system->userPort.burstRequested;
         case ModelIdDriveParallelCable:     return system->userPort.parallelRequested;
-        case ModelIdDriveSpeeder:           return (int)iecBus->drives[0]->speeder;
+        case ModelIdDriveFastLoader:        return (int)iecBus->drives[0]->speeder;
 
         case ModelIdCycleAccurateVideo:     return system->cycleRendererNextBoot;
         case ModelIdDiskThread:             return iecBus->cpuBurnerRequested;

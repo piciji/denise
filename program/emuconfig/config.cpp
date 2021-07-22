@@ -223,3 +223,4 @@ auto TabWindow::getView( Emulator::Interface* emulator, bool createIfNotExist ) 
 }
 
 }
+

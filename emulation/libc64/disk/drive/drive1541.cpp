@@ -4,6 +4,7 @@
 #include "mechanics.cpp"
 #include "mechanicsP64.cpp"
 #include "mechanicsG64.cpp"
+#include "profdos.cpp"
 #include "serialization.cpp"
 #include "../../system/firmware.h"
 #include "../../../tools/gcr.h"
@@ -57,95 +58,207 @@ auto Drive1541::sync() -> void {
 auto Drive1541::cpuWrite(uint16_t addr, uint8_t data) -> void {
     SYNC
 
-    memory.write( addr, data );
+    if (operation & DRIVE_MODE_154x) {
+        if (extendedMemoryMap) {
+            if (speeder == 2) {
+                if ((addr & 0xe000) == 0x8000) {
+                    this->ram80To9F[addr & 0x1fff] = data;
+                    return;
+                }
+            } else if (speeder == 3) {     // profdos v1
+                if ((addr & 0xf100) == 0xf100) {
+                    profDosClockControl(addr);
+                    return;
+                }
+                if (profDosAutoSpeed)
+                    profDosAutoClockControl(addr);
+
+                if ((addr & 0xe000) == 0xA000) {
+                    this->ramA0ToBF[addr & 0x1fff] = data;
+                    return;
+                }
+            } else if (speeder == 4) {  // profdos R4
+                if ((addr & 0x6800) == 0x6800) {
+                    profDosClockControl(addr);
+                    return;
+                }
+                if (profDosAutoSpeed)
+                    profDosAutoClockControl(addr);
+
+                if ((addr & 0xe000) == 0x4000) {
+                    this->ram40To5F[addr & 0x1fff] = data;
+                    return;
+                }
+            } else { // free ram mapping
+                if ((expandMemory & (uint8_t) ExpandedMemMode::M20) && ((addr & 0xe000) == 0x2000)) {
+                    this->ram20To3F[addr & 0x1fff] = data;
+                    return;
+                } else if ((expandMemory & (uint8_t) ExpandedMemMode::M40) && ((addr & 0xe000) == 0x4000)) {
+                    this->ram40To5F[addr & 0x1fff] = data;
+                    return;
+                } else if ((expandMemory & (uint8_t) ExpandedMemMode::M60) && ((addr & 0xe000) == 0x6000)) {
+                    this->ram60To7F[addr & 0x1fff] = data;
+                    return;
+                } else if ((expandMemory & (uint8_t) ExpandedMemMode::M80) && ((addr & 0xe000) == 0x8000)) {
+                    this->ram80To9F[addr & 0x1fff] = data;
+                    return;
+                } else if ((expandMemory & (uint8_t) ExpandedMemMode::MA0) && ((addr & 0xe000) == 0xA000)) {
+                    this->ramA0ToBF[addr & 0x1fff] = data;
+                    return;
+                }
+            }
+        }
+
+        if ((addr & 0x9800) == 0)
+            ram[addr & 0x7ff] = data;
+
+        else if ((addr & 0x9c00) == 0x1800)
+            via1->write(addr, data);
+
+        else if ((addr & 0x9c00) == 0x1c00)
+            via2->write(addr, data);
+
+    } else {
+        // 157x
+        if (extendedMemoryMap) {
+            if (speeder == 5) { // profdos R5, R6
+                if (((addr & 0xf000) == 0x5000) || ((addr & 0xf800) == 0x4800) ) { // $4800 - $5ffff
+                    this->ram40To5F[addr & 0x1fff] = data;
+                    return;
+                }
+            } else {
+                if ((expandMemory & (uint8_t) ExpandedMemMode::M40) && (((addr & 0xf000) == 0x5000) || ((addr & 0xf800) == 0x4800) )) { // $4800 - $5ffff
+                    this->ram40To5F[addr & 0x1fff] = data;
+                    return;
+                } else if ((expandMemory & (uint8_t) ExpandedMemMode::M60) && ((addr & 0xe000) == 0x6000)) {
+                    this->ram60To7F[addr & 0x1fff] = data;
+                    return;
+                }
+            }
+        }
+
+        if ((addr & 0xf000) == 0)
+            ram[addr & 0x7ff] = data;
+
+        else if ((addr & 0xfc00) == 0x1800)
+            via1->write(addr, data);
+
+        else if ((addr & 0xfc00) == 0x1c00) {
+            byteReady = false;
+            via2->write(addr, data);
+        } else if ((addr & 0xc000) == 0x4000) {
+            cia->write(addr, data);
+        }
+        else if ((addr & 0xe000) == 0x2000);
+        // todo
+    }
 }
 
 auto Drive1541::cpuRead(uint16_t addr) -> uint8_t {
     SYNC
+    if (operation & DRIVE_MODE_154x) {
 
-    return memory.read( addr );
-}
+        if (extendedMemoryMap) {
+            if (speeder == 2) {
+                if ((addr & 0xe000) == 0x8000)
+                    return this->ram80To9F[addr & 0x1fff];
 
-auto Drive1541::remap( ) -> void {
+            } else if (speeder == 3) {
+                if (profDosAutoSpeed)
+                    profDosAutoClockControl(addr);
 
-    memory.map( &readUnmapped, &writeUnmapped, 0x00, 0xff);
+                if((addr & 0xe000) == 0x8000) {
+                    return readProfDosEncoderV1(addr);
+                }
+                else if ((addr & 0xe000) == 0xA000) {
+                    return this->ramA0ToBF[addr & 0x1fff];
+                }
+                else if((addr & 0xe000) == 0xe000) {
+                    return this->romExpanded[ addr & romExpandedMask];
+                }
 
-    switch (type) {
-        case Type::D1541:
-        case Type::D1541C:
-        case Type::D1541II:
-            memory.map( &readRam, &writeRam, 0x00, 0x07);
-            memory.map( &readVia1Reg, &writeVia1Reg, 0x18, 0x1b);
-            memory.map( &readVia2Reg, &writeVia2Reg, 0x1c, 0x1f);
+            } else if (speeder == 4) {
+                if (profDosAutoSpeed)
+                    profDosAutoClockControl(addr);
 
-            if (expandMemory & (uint8_t)ExpandedMemMode::M20) {
-                memory.map( &readRam20, &writeRam20, 0x20, 0x3f);
+                if((addr & 0xe000) == 0x6000) {
+                    return readProfDosEncoder(addr);
+                }
+                else if ((addr & 0xe000) == 0x4000) {
+                    return this->ram40To5F[addr & 0x1fff];
+                }
+                else if((addr & 0xe000) == 0xe000) {
+                    return this->romExpanded[ 0x2000 | (addr & romExpandedMask) ];
+                }
             } else {
-                memory.map( &readRam, &writeRam, 0x20, 0x27);
-                memory.map( &readVia1Reg, &writeVia1Reg, 0x38, 0x3b);
-                memory.map( &readVia2Reg, &writeVia2Reg, 0x3c, 0x3f);
+                if ((expandMemory & (uint8_t) ExpandedMemMode::M20) && ((addr & 0xe000) == 0x2000))
+                    return this->ram20To3F[addr & 0x1fff];
+                else if ((expandMemory & (uint8_t) ExpandedMemMode::M40) && ((addr & 0xe000) == 0x4000))
+                    return this->ram40To5F[addr & 0x1fff];
+                else if ((expandMemory & (uint8_t) ExpandedMemMode::M60) && ((addr & 0xe000) == 0x6000))
+                    return this->ram60To7F[addr & 0x1fff];
+                else if ((expandMemory & (uint8_t) ExpandedMemMode::M80) && ((addr & 0xe000) == 0x8000))
+                    return this->ram80To9F[addr & 0x1fff];
+                else if ((expandMemory & (uint8_t) ExpandedMemMode::MA0) && ((addr & 0xe000) == 0xA000))
+                    return this->ramA0ToBF[addr & 0x1fff];
             }
+        }
 
-            if (expandMemory & (uint8_t)ExpandedMemMode::M40) {
-                memory.map( &readRam40, &writeRam40, 0x40, 0x5f);
-            } else {
-                memory.map( &readRam, &writeRam, 0x40, 0x47);
-                memory.map( &readVia1Reg, &writeVia1Reg, 0x58, 0x5b);
-                memory.map( &readVia2Reg, &writeVia2Reg, 0x5c, 0x5f);
-            }
+        if (addr & 0x8000)
+           return rom[addr & romMask];
 
-            if (expandMemory & (uint8_t)ExpandedMemMode::M60) {
-                memory.map( &readRam60, &writeRam60, 0x60, 0x7f);
-            } else {
-                memory.map( &readRam, &writeRam, 0x60, 0x67);
-                memory.map( &readVia1Reg, &writeVia1Reg, 0x78, 0x7b);
-                memory.map( &readVia2Reg, &writeVia2Reg, 0x7c, 0x7f);
-            }
+        else if ((addr & 0x9800) == 0)
+            return ram[addr & 0x7ff];
 
-            if (expandMemory & (uint8_t)ExpandedMemMode::M80) {
-                memory.map( &readRam80, &writeRam80, 0x80, 0x9f);
-            } else {
-                memory.map( &readRom, 0x80, 0x9f);
-            }
+        else if ((addr & 0x9c00) == 0x1800)
+            return via1->read(addr);
 
-            if (expandMemory & (uint8_t)ExpandedMemMode::MA0) {
-                memory.map( &readRamA0, &writeRamA0, 0xa0, 0xbf);
-            } else {
-                memory.map( &readRom, 0xa0, 0xbf);
-            }
+        else if ((addr & 0x9c00) == 0x1c00)
+            return via2->read(addr);
 
-            memory.map( &readRom, 0xc0, 0xff);
-
-            break;
-
-        case Type::D1571:
-        case Type::D1570:
-            memory.map( &readRam, &writeRam, 0x00, 0x07);
-            memory.map( &readRam, &writeRam, 0x08, 0x0f);
-            memory.map( &readVia1Reg, &writeVia1Reg, 0x18, 0x1b);
-            memory.map( &readVia2Reg, &writeVia2Reg, 0x1c, 0x1f);
-            memory.map( &readWd1770Reg, &writeWd1770Reg, 0x20, 0x2f);
-
-            if (expandMemory & (uint8_t)ExpandedMemMode::M40) {
-                memory.map( &readCiaReg, &writeCiaReg, 0x40, 0x47);
-                memory.map( &readRam40, &writeRam40, 0x48, 0x5f);
-            } else {
-                memory.map( &readCiaReg, &writeCiaReg, 0x40, 0x5f);
-            }
-
-            if (speeder == 3) { // ProfDOS CIA <> CIA
-                memory.map(&readRomExpandedProfDos, 0x60, 0x7f);
-
-            } else if (expandMemory & (uint8_t)ExpandedMemMode::M60) {
-                memory.map( &readRam60, &writeRam60, 0x60, 0x7f);
-            } else {
-                memory.map( &readCiaReg, &writeCiaReg, 0x60, 0x7f);
-            }
-
-            memory.map( &readRom, 0x80, 0xff);
-            break;
+        return addr >> 8;
     }
-    needRemap = false;
+
+    // 157x
+    if (extendedMemoryMap) {
+        if (speeder == 5) { // profdos R5, R6
+            if ((addr & 0xe000) == 0x6000)
+                return readProfDosEncoder( addr );
+            else if (((addr & 0xf000) == 0x5000) || ((addr & 0xf800) == 0x4800) ) { // $4800 - $5ffff
+                return this->ram40To5F[addr & 0x1fff];
+            }
+        } else {
+            if ((expandMemory & (uint8_t) ExpandedMemMode::M40) && (((addr & 0xf000) == 0x5000) || ((addr & 0xf800) == 0x4800) )) { // $4800 - $5ffff
+                return this->ram40To5F[addr & 0x1fff];
+            } else if ((expandMemory & (uint8_t) ExpandedMemMode::M60) && ((addr & 0xe000) == 0x6000)) {
+                return this->ram60To7F[addr & 0x1fff];
+            }
+        }
+    }
+
+    if (addr & 0x8000)
+        return rom[addr & romMask];
+
+    else if ((addr & 0xf000) == 0)
+        return ram[addr & 0x7ff];
+
+    else if ((addr & 0xfc00) == 0x1800)
+        return via1->read(addr);
+
+    else if ((addr & 0xfc00) == 0x1c00) {
+        // TED line of U6 clears the Byte line in 2 Mhz mode.
+        // Line is connected to Chip select of VIA 2. any access of VIA2 clears the line.
+        byteReady = false;
+        return via2->read(addr);
+
+    } else if ((addr & 0xc000) == 0x4000) {
+        return cia->read(addr);
+    }
+    else if ((addr & 0xe000) == 0x2000) {
+        return 0;
+    }
+
+    return addr >> 8;
 }
 
 Drive1541::Drive1541(uint8_t number, Emulator::Interface::Media* mediaConnected ) {
@@ -158,7 +271,8 @@ Drive1541::Drive1541(uint8_t number, Emulator::Interface::Media* mediaConnected 
 	operation = 0;
     expandMemory = 0;
     speeder = 0;
-    needRemap = true;
+    profDosAutoSpeed = 0;
+    extendedMemoryMap = false;
 
 	emulateDxxMoreAccurate = false;
     media = nullptr;
@@ -185,120 +299,6 @@ Drive1541::Drive1541(uint8_t number, Emulator::Interface::Media* mediaConnected 
     via2 = new Via( 2 );
     cia = new Cia8520( 3 );
     cpu = new M6502(this);
-
-    readRam = [this](uint16_t addr) {
-        return this->ram[ addr & 0x7ff ];
-    };
-
-    writeRam = [this](uint16_t addr, uint8_t value) {
-        this->ram[ addr & 0x7ff ] = value;
-    };
-
-    readRam20 = [this](uint16_t addr) {
-        return this->ram20To3F[ addr & 0x1fff ];
-    };
-
-    writeRam20 = [this](uint16_t addr, uint8_t value) {
-        this->ram20To3F[ addr & 0x1fff ] = value;
-    };
-
-    readRam40 = [this](uint16_t addr) {
-        return this->ram40To5F[ addr & 0x1fff ];
-    };
-
-    writeRam40 = [this](uint16_t addr, uint8_t value) {
-        this->ram40To5F[ addr & 0x1fff ] = value;
-    };
-
-    readRam60 = [this](uint16_t addr) {
-        return this->ram60To7F[ addr & 0x1fff ];
-    };
-
-    writeRam60 = [this](uint16_t addr, uint8_t value) {
-        this->ram60To7F[ addr & 0x1fff ] = value;
-    };
-
-    readRam80 = [this](uint16_t addr) {
-        return this->ram80To9F[ addr & 0x1fff ];
-    };
-
-    writeRam80 = [this](uint16_t addr, uint8_t value) {
-        this->ram80To9F[ addr & 0x1fff ] = value;
-    };
-
-    readRamA0 = [this](uint16_t addr) {
-        return this->ramA0ToBF[ addr & 0x1fff ];
-    };
-
-    writeRamA0 = [this](uint16_t addr, uint8_t value) {
-        this->ramA0ToBF[ addr & 0x1fff ] = value;
-    };
-
-    readRom = [this](uint16_t addr) {
-        return this->rom[addr & romMask];
-    };
-
-    readRomExpandedProfDos = [this](uint16_t addr) {
-        if (this->romExpanded) {
-            if (addr >= 0x7000) {
-                if (!(addr & 0x0800)) {
-                    addr = (uint16_t)((addr & 0xff0f) | (nibble << 4));
-                } else {
-                    addr = (uint16_t)((addr & 0xff00) | (nibble << 4) | ((addr >> 4) & 15));
-                }
-
-                nibble = addr & 15;
-            }
-
-            return this->romExpanded[ (addr & 0x1fff)];
-        }
-
-        return (uint8_t)0xff;
-    };
-
-    writeVia1Reg = [this](uint16_t addr, uint8_t value) {
-        via1->write( addr, value );
-    };
-
-    readVia1Reg = [this](uint16_t addr) {
-        return via1->read( addr );
-    };
-
-    writeVia2Reg = [this](uint16_t addr, uint8_t value) {
-        // TED line of U6 clears the Byte line in 2 Mhz mode.
-        // Line is connected to Chip select of VIA 2. any access of VIA2 clears the line.
-        byteReady = false;
-        via2->write( addr, value );
-    };
-
-    readVia2Reg = [this](uint16_t addr) {
-        byteReady = false;
-        return via2->read(addr);
-    };
-
-    writeCiaReg = [this](uint16_t addr, uint8_t value) {
-        cia->write( addr, value );
-    };
-
-    readCiaReg = [this](uint16_t addr) {
-        return cia->read(addr);
-    };
-
-    writeWd1770Reg = [this](uint16_t addr, uint8_t value) {
-
-    };
-
-    readWd1770Reg = [this](uint16_t addr) {
-        return 0;
-    };
-
-    writeUnmapped = [this](uint16_t addr, uint8_t value) {
-        // do nothing
-    };
-
-    readUnmapped = [this](uint16_t addr) {
-        return addr >> 8;
-    };
 
     cia->serialOut = [this](bool bit) {
 
@@ -573,14 +573,11 @@ auto Drive1541::power( ) -> void {
 
     setFirmwareByType();
 
-    if (needRemap) {
-        remap();
-    }
-
     via1->reset();
     via2->reset();
     cia->reset();
 
+    profDosAutoSpeed = 0;
     irqIncomming = 0;
     clockOut = dataOut = atnOut = 1;  
     cycleCounter = 0;
@@ -621,9 +618,8 @@ auto Drive1541::power( ) -> void {
 }
 
 auto Drive1541::updateCycleSpeed(bool mhz2x, bool init) -> void {
-
     if (mhz2x) {
-        //system->interface->log("2 mhz", 1);
+        system->interface->log("2 mhz", 1);
         refCyclesInCpuCycle = 8;
         frequency = 2000000;
         if (!init) {
@@ -635,7 +631,7 @@ auto Drive1541::updateCycleSpeed(bool mhz2x, bool init) -> void {
         syncPosWrite = (int64_t)(0.875 * (double)iecBus->cpuCylcesPerSecond);
 
     } else {
-        //system->interface->log("1 mhz", 1);
+        system->interface->log("1 mhz", 1);
         refCyclesInCpuCycle = 16;
         frequency = 1000000;
         if (!init) {
@@ -714,7 +710,9 @@ auto Drive1541::setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> vo
             break;
         case Interface::FirmwareIdExpanded:
             romExpanded = data;
-            romExpandedSize = size;
+            romExpandedMask = size ? (size - 1) : 0;
+            if (romExpandedMask > 0x1fff)
+                romExpandedMask = 0x1fff;
             break;
     }
 }
@@ -876,8 +874,6 @@ auto Drive1541::setType( Type type ) -> void {
         operation |= DRIVE_MODE_157x;
 
     setFirmwareByType();
-
-    needRemap = true;
 }
 
 auto Drive1541::setFirmwareByType( ) -> void {
@@ -904,6 +900,13 @@ auto Drive1541::setFirmwareByType( ) -> void {
             romMask = rom1570Size - 1;
             break;
     }
+
+    if (!romExpanded) {
+        romExpanded = rom;
+        romExpandedMask = romMask;
+        if (romExpandedMask > 0x1fff)
+            romExpandedMask = 0x1fff;
+    }
 }
 
 auto Drive1541::setExpandedMemory( ExpandedMemMode& expandedMemMode, bool state ) -> void {
@@ -914,14 +917,14 @@ auto Drive1541::setExpandedMemory( ExpandedMemMode& expandedMemMode, bool state 
         expandMemory &= ~((uint8_t)expandedMemMode);
     }
 
-    needRemap = true;
+    extendedMemoryMap = expandMemory || (speeder > 1);
 }
 
 auto Drive1541::setSpeeder(uint8_t speeder) -> void {
 
     this->speeder = speeder;
 
-    needRemap = true;
+    extendedMemoryMap = expandMemory || (speeder > 1);
 }
 
 }

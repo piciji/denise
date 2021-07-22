@@ -207,7 +207,11 @@ auto FirmwareManager::getSetting( Emulator::Interface::Firmware* firmware, unsig
 
     if (storeLevel == 0) {
         fSetting->id = 0;
-        fSetting->path = program->dataFolder() + firmware->name;
+        if ( dynamic_cast<LIBAMI::Interface*>(emulator) || (firmware->name == "Expanded ROM"))
+            fSetting->path = "";
+        else
+            fSetting->path = program->dataFolder() + firmware->name;
+
         fSetting->setSaveable(false);
     }
     

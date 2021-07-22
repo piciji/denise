@@ -554,7 +554,7 @@ auto ModelLayout::applyCustomStuff( Line::Block* block, Emulator::Interface::Mod
 
                 break;
 
-            case  LIBC64::Interface::ModelIdDriveSpeeder:
+            case  LIBC64::Interface::ModelIdDriveFastLoader:
                 hintDriveSettings();
                 break;
 
@@ -578,7 +578,7 @@ auto ModelLayout::hintDriveSettings() -> void {
     if (activeBefore)
         program->powerOff();
 
-    auto blockSpeeder = getBlock( LIBC64::Interface::ModelIdDriveSpeeder );
+    auto blockFastloader = getBlock( LIBC64::Interface::ModelIdDriveFastLoader );
     auto blockParallel = getBlock( LIBC64::Interface::ModelIdDriveParallelCable );
     auto blockDriveModel = getBlock( LIBC64::Interface::ModelIdDiskDriveModel );
     auto blockRam20 = getBlock( LIBC64::Interface::ModelIdDriveRam20To3F );
@@ -600,20 +600,30 @@ auto ModelLayout::hintDriveSettings() -> void {
     if (blockRamA0->checkBox.checked())
         blockRamA0->checkBox.toggle();
 
-    auto selection = blockSpeeder->combo.selection();
+    auto selection = blockFastloader->combo.selection();
 
     if (selection == 0) {
 
-    } else if (selection == 1) {
+    } else if (selection == 1) { // SpeedDOS
         blockParallel->checkBox.toggle();
         blockDriveModel->combo.setSelection(1);
         blockDriveModel->combo.onChange();
-    } else if (selection == 2) {
+    } else if (selection == 2) { // DolphinDOS v2
         blockParallel->checkBox.toggle();
         blockRam80->checkBox.toggle();
         blockDriveModel->combo.setSelection(1);
         blockDriveModel->combo.onChange();
-    } else if (selection == 3) {
+    } else if (selection == 3) { // ProfDOS v1 1541
+        blockParallel->checkBox.toggle();
+        blockRamA0->checkBox.toggle();
+        blockDriveModel->combo.setSelection(0);
+        blockDriveModel->combo.onChange();
+    } else if (selection == 4) { // ProfDOS R1-R4 1541
+        blockParallel->checkBox.toggle();
+        blockRam40->checkBox.toggle();
+        blockDriveModel->combo.setSelection(0);
+        blockDriveModel->combo.onChange();
+    } else if (selection == 5) { // ProfDOS R5-R6 157x
         blockParallel->checkBox.toggle();
         blockRam40->checkBox.toggle();
         blockDriveModel->combo.setSelection(4);
@@ -802,6 +812,15 @@ auto ModelLayout::getIdent( Emulator::Interface::Model* model, std::string& tool
         case LIBC64::Interface::ModelIdSid8Right:
             name = "Right Channel";
             tooltip = name + " tooltip";
+            break;
+
+        case LIBC64::Interface::ModelIdDriveRam20To3F:
+        case LIBC64::Interface::ModelIdDriveRam40To5F:
+        case LIBC64::Interface::ModelIdDriveRam60To7F:
+        case LIBC64::Interface::ModelIdDriveRam80To9F:
+        case LIBC64::Interface::ModelIdDriveRamA0ToBF:
+        case LIBC64::Interface::ModelIdDriveFastLoader:
+            tooltip = "";
             break;
 
         default:

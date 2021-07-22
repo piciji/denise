@@ -9,7 +9,6 @@
     * CMD Ramlink + HD
     * all the others
 * disk
-    * ram extension
     * Virtual Device Traps
     * drive sounds
     * support command line start of disk listings instead of Load "*"
@@ -17,7 +16,6 @@
     * 1581
 * user port
     * RS232
-    * SpeedDOS / DolphinDOS
     * 4 player adapter
     * all the others
 * tape   

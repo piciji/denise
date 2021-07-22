@@ -560,7 +560,10 @@ auto System::power( bool softReset ) -> void {
     kernalBootComplete = false;
     KeyBuffer::Action action;
     action.mode = KeyBuffer::Mode::WaitDelay;
-    action.delay = (unsigned)(interface->stats.fps * 2.2);
+    if (iecBus->drives[0]->speeder)
+        action.delay = (unsigned)(interface->stats.fps * 0.5);
+    else
+        action.delay = (unsigned)(interface->stats.fps * 2.2);
 
     if ( !expansionPort->isBootable() ) {
         system->keyBuffer->add( action, false );

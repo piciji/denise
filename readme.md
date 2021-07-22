@@ -12,6 +12,12 @@
 * 1570/1571 support
     * Burst Modification
     * support of D71 / G71 / P71 formats
+* Floppy RAM expansions
+* Floppy Fastloader
+    * SpeedDOS
+    * DolphinDOS v2
+    * ProfDOS v1, R4, R5, R6
+* bugfix: switch to custom resolutiuon in fullscreen
 
 ## 1.1.1
 * add Final Cartridge 3 support to EF³

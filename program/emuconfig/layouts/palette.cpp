@@ -28,8 +28,7 @@ PaletteSaveLayout::PaletteSaveLayout() {
     append( title, {0u, 0u}, 10 );
     append( allChanges, {0u, 0u}, 30 );
     append( onExit, {0u, 0u} );
-    
-    onExit.setChecked( true );
+
     setAlignment( 0.5 );
 }
 
@@ -270,8 +269,10 @@ PaletteLayout::PaletteLayout(TabWindow* tabWindow) {
     
     saveLayout.onExit.onToggle = [this]() {
         
-        _settings->set<bool>( "save_palettes_on_exit", saveLayout.onExit.checked(), false );
+        _settings->set<bool>( "save_palettes_on_exit", saveLayout.onExit.checked() );
     };
+
+    saveLayout.onExit.setChecked( _settings->get<bool>( "save_palettes_on_exit", true ) );
 }
 
 auto PaletteLayout::updateDetailLayout() -> void {
@@ -432,5 +433,7 @@ auto PaletteLayout::loadSettings() -> void {
         
     auto& palette = getSelectedPalette();
 
-    this->setPalette(palette); 
+    this->setPalette(palette);
+
+    saveLayout.onExit.setChecked( _settings->get<bool>( "save_palettes_on_exit", true ) );
 }
