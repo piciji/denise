@@ -255,8 +255,10 @@ auto ModelLayout::updateWidgets( ) -> void {
     }
     
     if (dynamic_cast<LIBC64::Interface*>(this->emulator) && GUIKIT::Vector::find( purposes, Emulator::Interface::Model::AudioSettings )) {
-        hideExtraAudioChips();
-        hideBias();
+        updateExtraAudioChipsVisibillity();
+        updateBiasVisibillity();
+    } else if (dynamic_cast<LIBC64::Interface*>(this->emulator) && GUIKIT::Vector::find( purposes, Emulator::Interface::Model::DriveSettings )) {
+        updateBurstVisibillity();
     }
 }
 
@@ -493,10 +495,10 @@ auto ModelLayout::applyCustomStuff( Line::Block* block, Emulator::Interface::Mod
         
         switch(model->id) {
             case LIBC64::Interface::ModelIdSidFilterType:
-                hideBias();
+                updateBiasVisibillity();
                 break;
             case LIBC64::Interface::ModelIdSidMulti:
-                hideExtraAudioChips();
+                updateExtraAudioChipsVisibillity();
             case LIBC64::Interface::ModelIdSid1Left:
             case LIBC64::Interface::ModelIdSid1Right:
             case LIBC64::Interface::ModelIdSid2Left:
@@ -548,10 +550,15 @@ auto ModelLayout::applyCustomStuff( Line::Block* block, Emulator::Interface::Mod
             case LIBC64::Interface::ModelIdDriveRam60To7F:
             case LIBC64::Interface::ModelIdDriveRam80To9F:
             case LIBC64::Interface::ModelIdDriveRamA0ToBF:
-            case LIBC64::Interface::ModelIdDiskDriveModel:
                 if (this->emulator == activeEmulator)
                     program->power(activeEmulator);
 
+                break;
+
+            case LIBC64::Interface::ModelIdDiskDriveModel:
+                updateBurstVisibillity();
+                if (this->emulator == activeEmulator)
+                    program->power(activeEmulator);
                 break;
 
             case  LIBC64::Interface::ModelIdDriveFastLoader:
@@ -573,6 +580,14 @@ auto ModelLayout::applyCustomStuff( Line::Block* block, Emulator::Interface::Mod
     }
 }
 
+auto ModelLayout::updateBurstVisibillity() -> void {
+    auto blockBurstMode = getBlock( LIBC64::Interface::ModelIdCiaBurstMode );
+    auto blockDriveModel = getBlock( LIBC64::Interface::ModelIdDiskDriveModel );
+    auto selection = blockDriveModel->combo.selection();
+
+    blockBurstMode->checkBox.setEnabled( selection == 3 || selection == 4 );
+}
+
 auto ModelLayout::hintDriveSettings() -> void {
     bool activeBefore = activeEmulator != nullptr;
     if (activeBefore)
@@ -580,14 +595,18 @@ auto ModelLayout::hintDriveSettings() -> void {
 
     auto blockFastloader = getBlock( LIBC64::Interface::ModelIdDriveFastLoader );
     auto blockParallel = getBlock( LIBC64::Interface::ModelIdDriveParallelCable );
+    auto blockBurst = getBlock( LIBC64::Interface::ModelIdCiaBurstMode );
     auto blockDriveModel = getBlock( LIBC64::Interface::ModelIdDiskDriveModel );
     auto blockRam20 = getBlock( LIBC64::Interface::ModelIdDriveRam20To3F );
     auto blockRam40 = getBlock( LIBC64::Interface::ModelIdDriveRam40To5F );
     auto blockRam60 = getBlock( LIBC64::Interface::ModelIdDriveRam60To7F );
     auto blockRam80 = getBlock( LIBC64::Interface::ModelIdDriveRam80To9F );
     auto blockRamA0 = getBlock( LIBC64::Interface::ModelIdDriveRamA0ToBF );
+    auto selection = blockFastloader->combo.selection();
 
-    if (blockParallel->checkBox.checked())
+    if (blockBurst->checkBox.checked())
+        blockBurst->checkBox.toggle();
+    if (!blockParallel->checkBox.checked())
         blockParallel->checkBox.toggle();
     if (blockRam20->checkBox.checked())
         blockRam20->checkBox.toggle();
@@ -600,41 +619,50 @@ auto ModelLayout::hintDriveSettings() -> void {
     if (blockRamA0->checkBox.checked())
         blockRamA0->checkBox.toggle();
 
-    auto selection = blockFastloader->combo.selection();
-
     if (selection == 0) {
-
+        blockParallel->checkBox.toggle();
     } else if (selection == 1) { // SpeedDOS
-        blockParallel->checkBox.toggle();
         blockDriveModel->combo.setSelection(1);
-        blockDriveModel->combo.onChange();
     } else if (selection == 2) { // DolphinDOS v2
-        blockParallel->checkBox.toggle();
         blockRam80->checkBox.toggle();
         blockDriveModel->combo.setSelection(1);
-        blockDriveModel->combo.onChange();
-    } else if (selection == 3) { // ProfDOS v1 1541
-        blockParallel->checkBox.toggle();
+    } else if (selection == 3) { // DolphinDOS v2 Ultimate
+        blockRam40->checkBox.toggle();
+        blockRam60->checkBox.toggle();
+        blockDriveModel->combo.setSelection(1);
+    } else if (selection == 4) { // DolphinDOS v3 1541
+        blockRam60->checkBox.toggle();
+        blockDriveModel->combo.setSelection(1);
+    } else if (selection == 5) { // DolphinDOS v3 157x
+        blockRam60->checkBox.toggle();
+        blockDriveModel->combo.setSelection(4);
+    } else if (selection == 6) { // ProfDOS v1 1541
         blockRamA0->checkBox.toggle();
         blockDriveModel->combo.setSelection(0);
-        blockDriveModel->combo.onChange();
-    } else if (selection == 4) { // ProfDOS R1-R4 1541
-        blockParallel->checkBox.toggle();
+    } else if (selection == 7) { // ProfDOS R4 1541
         blockRam40->checkBox.toggle();
         blockDriveModel->combo.setSelection(0);
-        blockDriveModel->combo.onChange();
-    } else if (selection == 5) { // ProfDOS R5-R6 157x
-        blockParallel->checkBox.toggle();
+    } else if (selection == 8) { // ProfDOS R5 1570
+        blockRam40->checkBox.toggle();
+        blockDriveModel->combo.setSelection(3);
+    } else if (selection == 9) { // ProfDOS R6 1571
         blockRam40->checkBox.toggle();
         blockDriveModel->combo.setSelection(4);
-        blockDriveModel->combo.onChange();
+    } else if (selection == 10) { // PrologicDOS Classic 1541
+        blockRam80->checkBox.toggle();
+        blockDriveModel->combo.setSelection(0);
+    } else if (selection == 11) { // PrologicDOS 1541
+        blockRam80->checkBox.toggle();
+        blockDriveModel->combo.setSelection(0);
     }
+
+    blockDriveModel->combo.onChange();
 
     if (activeBefore)
         program->power(emulator);
 }
 
-auto ModelLayout::hideBias() -> void {
+auto ModelLayout::updateBiasVisibillity() -> void {
     
     int filter = emulator->getModelValue( LIBC64::Interface::ModelIdSidFilterType );
 
@@ -648,7 +676,7 @@ auto ModelLayout::hideBias() -> void {
         lines[2]->setEnabled( showBias8580 );
 }
 
-auto ModelLayout::hideExtraAudioChips() -> void {
+auto ModelLayout::updateExtraAudioChipsVisibillity() -> void {
     
     static int activeSidsNow = -1;
     

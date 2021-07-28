@@ -63,17 +63,19 @@ struct ModelLayout : GUIKIT::FramedVerticalLayout {
     
     auto appendAudioSelectorLayout() -> void;
     
-    auto hideExtraAudioChips() -> void;
-    
     auto applyCustomStuff( Line::Block* block, Emulator::Interface::Model* model) -> void;
-    
-    auto hideBias() -> void;
     
     auto getBlock( unsigned modelId ) -> Line::Block*;
 
     auto alignSlider( std::string maxText ) -> void;
 
     auto hintDriveSettings() -> void;
+
+    auto updateExtraAudioChipsVisibillity() -> void;
+
+    auto updateBiasVisibillity() -> void;
+
+    auto updateBurstVisibillity() -> void;
     
     ModelLayout();
 };

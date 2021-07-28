@@ -25,8 +25,8 @@ ifeq ($(platform),windows)
 endif
 #objects += m68000
 objects += m6510 ciaBase cia6526 cia8520 vicIIBase vicIICycle vicIIFast systemC64 sid chamberlin tapeC64 inputC64 controlPortC64 acia
-objects += cartC64 gameCartC64 freezerC64 reuC64 easyFlashC64 easyFlash3C64 retroReplayC64 gmod2C64 clipboardC64 geoRamC64
-objects += m6502 via iec prg64 drive1541 structure1541 firmwareC64
+objects += cartC64 gameCartC64 freezerC64 reuC64 easyFlashC64 easyFlash3C64 retroReplayC64 gmod2C64 clipboardC64 geoRamC64 fastloaderC64
+objects += m6502 via iec prg64 drive1541 structure1541 firmwareC64 pia
 objects += thread m93c86 mx29lv640eb icons fonts socket fpaq0
 
 prgflags := -DAPP_NAME="\"$(name)\"" -DTRANSLATION_FOLDER="\"$(translationFolder)/\"" -DDATA_FOLDER="\"$(dataFolder)/\"" -DSHADER_FOLDER="\"$(shaderFolder)/\"" -DIMG_FOLDER="\"$(imgFolder)/\""
@@ -133,6 +133,7 @@ obj/easyFlashC64.o: emulation/libc64/expansionPort/easyFlash/easyFlash.cpp
 obj/easyFlash3C64.o: emulation/libc64/expansionPort/easyFlash/easyFlash3.cpp
 obj/retroReplayC64.o: emulation/libc64/expansionPort/retroReplay/retroReplay.cpp
 obj/gmod2C64.o: emulation/libc64/expansionPort/gmod/gmod2.cpp
+obj/fastloaderC64.o: emulation/libc64/expansionPort/fastloader/fastloader.cpp
 obj/clipboardC64.o: emulation/libc64/system/clipboard.cpp
 obj/sid.o: emulation/libc64/sid/sid.cpp
 obj/chamberlin.o: emulation/libc64/sid/filter/chamberlin.cpp
@@ -143,7 +144,8 @@ obj/inputC64.o:	emulation/libc64/input/input.cpp
 obj/controlPortC64.o: emulation/libc64/input/controlPort/controlPort.cpp
 obj/acia.o: emulation/libc64/expansionPort/acia/acia.cpp
 
-obj/via.o:	emulation/libc64/disk/via/via.cpp	
+obj/via.o:	emulation/libc64/disk/via/via.cpp
+obj/pia.o:	emulation/tools/pia.cpp
 obj/iec.o:	emulation/libc64/disk/iec.cpp
 obj/drive1541.o:emulation/libc64/disk/drive/drive1541.cpp
 obj/structure1541.o:emulation/libc64/disk/structure/structure.cpp

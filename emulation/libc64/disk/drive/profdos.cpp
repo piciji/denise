@@ -14,7 +14,7 @@ auto Drive1541::readProfDosEncoder(uint16_t addr)->uint8_t {
         nibble = addr & 15;
     }
 
-    return this->romExpanded[addr & romExpandedMask];
+    return this->romExpanded[ (addr & 0x1fff) & romExpandedMask];
 }
 
 auto Drive1541::readProfDosEncoderV1(uint16_t addr)->uint8_t {
@@ -28,7 +28,7 @@ auto Drive1541::readProfDosEncoderV1(uint16_t addr)->uint8_t {
         nibble = addr & 15;
     }
 
-    return this->romExpanded[ 0x2000 + (addr & romExpandedMask) ];
+    return this->romExpanded[ (0x2000 | (addr & 0x1fff)) & romExpandedMask ];
 }
 
 auto Drive1541::profDosClockControl(uint16_t addr)->void {

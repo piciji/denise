@@ -9,6 +9,7 @@
 #include "../expansionPort/gmod/gmod2.h"
 #include "../expansionPort/geoRam/geoRam.h"
 #include "../expansionPort/acia/acia.h"
+#include "../expansionPort/fastloader/fastloader.h"
 
 namespace LIBC64 {
  
@@ -76,6 +77,10 @@ auto System::setExpansion( Emulator::Interface::Expansion& expansion ) -> void {
         case Interface::ExpansionIdRS232:
             expansionPort = acia;
             break;
+
+        case Interface::ExpansionIdFastloader:
+            expansionPort = fastloader;
+            break;
     }
     
 }  
@@ -91,6 +96,7 @@ auto System::createExpansions() -> void {
 	gmod2 = new Gmod2;
 	geoRam = new GeoRam;
 	acia = new Acia;
+	fastloader = new Fastloader;
     noExpansion = new ExpansionPort;
     
     expansionPort = noExpansion;

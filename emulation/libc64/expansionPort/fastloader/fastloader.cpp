@@ -1,0 +1,196 @@
+
+#include "fastloader.h"
+#include "../../system/system.h"
+#include "../../disk/iec.h"
+
+namespace LIBC64 {
+
+Fastloader* fastloader = nullptr;
+
+Fastloader::Fastloader() : via(3), ExpansionPort() {
+    setId( Interface::ExpansionIdFastloader );
+
+    pia.ca2Out = [this](bool direction) {
+        if (system->secondDriveCable.parallelUse && !direction && (type == PROLOGIC_DOS)) {
+            system->diskIdleOff();
+            // Port B with parallel cable
+            iecBus->writeParallelHandshake();
+        }
+    };
+
+    pia.cb2Out = [this](bool direction) {
+        // no use case at the moment
+        if (system->secondDriveCable.parallelUse && !direction && (type != PROLOGIC_DOS)) {
+            system->diskIdleOff();
+            // Port B with parallel cable
+            iecBus->writeParallelHandshake();
+        }
+    };
+
+    pia.readPort = [this]( Emulator::Pia::Port port ) {
+
+        if (port == Emulator::Pia::Port::A) { // PROLOGIC
+            if (!system->secondDriveCable.parallelUse || (type != PROLOGIC_DOS) )
+                return this->pia.ioa;
+
+            system->diskIdleOff();
+
+            return (uint8_t)(this->pia.ioa & iecBus->readParallel());
+        }
+
+        // Port B (no use case at the moment)
+        if (!system->secondDriveCable.parallelExpansion || (type == PROLOGIC_DOS))
+            return this->pia.iob;
+
+        system->diskIdleOff();
+
+        return (uint8_t)(this->pia.iob & iecBus->readParallel());
+    };
+
+    pia.writePort = [this]( Emulator::Pia::Port port, uint8_t data ) {
+        // nothing todo here, because CA(B)2 is triggered and port value is latched within PIA context
+    };
+
+    via.ca2Out = [this]( bool direction ) {
+        // no use case at the moment
+        if (system->secondDriveCable.parallelUse && !direction && (type != PROF_DOS)) {
+            system->diskIdleOff();
+            // Port B with parallel cable
+            iecBus->writeParallelHandshake();
+        }
+    };
+
+    via.cb2Out = [this]( bool direction ) {
+
+        if (system->secondDriveCable.parallelUse && !direction && (type == PROF_DOS)) {
+            system->diskIdleOff();
+            // Port B with parallel cable
+            iecBus->writeParallelHandshake();
+        }
+    };
+
+    via.readPort = [this]( Via::Port port, Via::Lines* lines ) {
+        if (port == Via::Port::A) { // no use case at the moment
+            if (!system->secondDriveCable.parallelUse || (type == PROF_DOS) )
+                return lines->ioa;
+
+            system->diskIdleOff();
+
+            return (uint8_t)(lines->ioa & iecBus->readParallel());
+        }
+        // Port B
+        if (!system->secondDriveCable.parallelExpansion || (type != PROF_DOS))
+            return lines->iob;
+
+        system->diskIdleOff();
+
+        return (uint8_t)(lines->iob & iecBus->readParallel());
+    };
+
+    via.writePort = [this]( Via::Port port, Via::Lines* lines ) {
+        // nothing todo here, because CA(B)2 is triggered and port value is latched within VIA context
+    };
+}
+
+auto Fastloader::clock() -> void {
+    if (type == PROF_DOS) {
+        via.process();
+    }
+}
+
+auto Fastloader::setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void {
+
+    this->media = (rom && romSize) ? media : nullptr;
+    if (rom && (romSize & 2) ) {
+        // simple check if prg header is attached
+        romSize -= 2;
+        rom += 2;
+    }
+
+    this->rom = rom;
+    this->romSize = romSize;
+}
+
+auto Fastloader::writeIo1( uint16_t addr, uint8_t value ) -> void {
+    addr &= 0xff;
+
+    if (type == PROLOGIC_DOS) {
+        if (addr == 0x5c || addr == 0x5d) {
+            pia.write(addr & 3, value);
+        }
+    }
+}
+
+auto Fastloader::readIo1( uint16_t addr ) -> uint8_t {
+    addr &= 0xff;
+
+    if (type == PROLOGIC_DOS) {
+        if (addr == 0x5c || addr == 0x5d) {
+            return pia.read(addr & 3);
+        }
+    }
+
+    return ExpansionPort::readIo1(addr);
+}
+
+auto Fastloader::writeIo2( uint16_t addr, uint8_t value ) -> void {
+
+    if (type == PROF_DOS) {
+        via.write( addr & 0xff, value );
+    }
+}
+
+auto Fastloader::readIo2( uint16_t addr ) -> uint8_t {
+
+    if (type == PROF_DOS) {
+        return via.read( addr & 0xff );
+    }
+
+    return ExpansionPort::readIo1(addr);
+}
+
+auto Fastloader::hasHiramCableConnected() -> bool {
+    return kernalJumper && rom;
+}
+
+auto Fastloader::readRomH( uint16_t addr ) -> uint8_t {
+
+    return rom[ addr & 0x1fff ];
+}
+
+auto Fastloader::setJumper( bool state ) -> void {
+    kernalJumper = state;
+}
+
+auto Fastloader::getJumper( ) -> bool {
+    return kernalJumper;
+}
+
+auto Fastloader::serialize(Emulator::Serializer& s) -> void {
+    s.integer(kernalJumper);
+    s.integer( (uint8_t&)type );
+    if (type == PROLOGIC_DOS)
+        pia.serialize(s);
+    else if (type == PROF_DOS)
+        via.serialize(s);
+
+    ExpansionPort::serialize( s );
+}
+
+auto Fastloader::reset(bool softReset) -> void {
+    pia.reset();
+    via.reset();
+
+    uint8_t _type = 0;
+    auto& group = system->interface->mediaGroups[Interface::MediaGroupIdExpansionFastloader];
+
+    for(auto& _media : group.media) {
+        if (&_media == group.selected)
+            break;
+        _type++;
+    }
+
+    type = (Type)_type;
+}
+
+}

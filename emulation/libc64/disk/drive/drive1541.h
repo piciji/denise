@@ -15,6 +15,7 @@
 #include "../../../tools/rand.h"
 #include "../../../tools/serializer.h"
 #include "../cia/cia8520.h"
+#include "../../../tools/pia.h"
 #include <cstdlib>
 
 #define USERDATA_LEVEL 1u
@@ -23,6 +24,8 @@
 
 #define DRIVE_MODE_154x 8u
 #define DRIVE_MODE_157x 16u
+
+#define DRIVE_HAS_PIA 32u
 
 namespace LIBC64 {
 
@@ -76,6 +79,7 @@ struct Drive1541 {
     Via* via1;
     Via* via2;
     Cia8520* cia;
+    Emulator::Pia* pia;
     M6502* cpu;
     Structure1541 structure1541;
     int64_t cycleCounter;
@@ -93,7 +97,9 @@ struct Drive1541 {
     uint8_t expandMemory;
     uint8_t speeder = 0;
     uint8_t nibble = 0;
-    uint8_t profDosAutoSpeed; // Bit 0: 0 = 1 MHz, 1 = 2 Mhz, Bit 1: 0 = force speed, 1 = auto speed
+    bool profDosAutoSpeed;
+    bool prologic40TrackMode;
+    uint8_t prologic2Mhz;
     bool extendedMemoryMap;
         
     Structure1541::GcrTrack* gcrTrack = new Structure1541::GcrTrack;
@@ -196,6 +202,8 @@ struct Drive1541 {
 
     auto profDosClockControl(uint16_t addr) -> void;
     auto profDosAutoClockControl(uint16_t addr) -> void;
+    auto prologicControlClassic(uint8_t addr, uint8_t data) -> void;
+    auto prologicControl(uint16_t addr) -> void;
 };
   
 }

@@ -134,8 +134,10 @@ struct System {
         bool parallelPossible = false;
         bool burstUse = false;
         bool parallelUse = false;
+        bool parallelUserport = false;
+        bool parallelExpansion = false;
         bool cycleSyncing = false;
-    } userPort;
+    } secondDriveCable;
     
     struct {
         uint8_t value = 255;
@@ -143,7 +145,6 @@ struct System {
         unsigned randomPatternLength = 1;
         unsigned repeatRandomPattern = 256;
         unsigned randomChance = 0;
-        
     } memoryInit;
 
     struct {
@@ -211,7 +212,12 @@ struct System {
     auto informAboutMotorChange() -> void;
 
     auto burstOrParallelUpdate() -> void;
+    auto driveCycleSyncingUpdate() -> void;
     auto diskIdleOff() -> void;
+
+    auto readParallelWithHandshake() -> uint8_t;
+    auto readParallel() -> uint8_t;
+    auto writeParallelHandshake() -> void;
 };
 
 extern System* system;

@@ -158,7 +158,7 @@ struct Interface {
         std::vector<PCBLayout> pcbs;
         std::vector<Jumper> jumpers;
 		std::vector<std::string> creationIdents; 
-        enum Type : unsigned { Empty = 0, Standard = 1, Ram = 2, Eprom = 4, Flash = 8, TurboCart = 16, Freezer = 32, Battery = 64, RS232 = 128 };
+        enum Type : unsigned { Empty = 0, Standard = 1, Ram = 2, Eprom = 4, Flash = 8, TurboCart = 16, Freezer = 32, Battery = 64, RS232 = 128, Fastloader = 256 };
         
         auto isEmpty() const -> bool { return typeFlags == (unsigned)Type::Empty; }
         auto isStandard() const -> bool { return typeFlags & Type::Standard; }
@@ -169,6 +169,7 @@ struct Interface {
         auto isTurboCart() const -> bool { return typeFlags & Type::TurboCart; }
         auto isFreezer() const -> bool { return typeFlags & Type::Freezer; }
         auto isRS232() const -> bool { return typeFlags & Type::RS232; }
+        auto isFastloader() const -> bool { return typeFlags & Type::Fastloader; }
     };
     std::vector<Expansion> expansions;
     

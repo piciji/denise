@@ -155,13 +155,15 @@ auto System::serialize(Emulator::Serializer& s) -> void {
     s.integer( rdyIncomming );   
     s.integer( kernalBootComplete );    
     s.integer( requestedSids );
-    s.integer( userPort.burstUse );
-    s.integer( userPort.parallelUse );
-    s.integer( userPort.burstPossible );
-    s.integer( userPort.parallelPossible );
-    s.integer( userPort.burstRequested );
-    s.integer( userPort.parallelRequested );
-    s.integer( userPort.cycleSyncing );
+    s.integer( secondDriveCable.burstUse );
+    s.integer( secondDriveCable.parallelUse );
+    s.integer( secondDriveCable.burstPossible );
+    s.integer( secondDriveCable.parallelPossible );
+    s.integer( secondDriveCable.burstRequested );
+    s.integer( secondDriveCable.parallelRequested );
+    s.integer( secondDriveCable.parallelUserport );
+    s.integer( secondDriveCable.parallelExpansion );
+    s.integer( secondDriveCable.cycleSyncing );
 
     s.integer( observer.memoryAccesses );
     s.integer( observer.enterRom );

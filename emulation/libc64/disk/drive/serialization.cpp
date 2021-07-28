@@ -71,6 +71,8 @@ auto Drive1541::serialize(Emulator::Serializer& s) -> void {
     s.integer( nibble );
     s.integer( speeder );
     s.integer( profDosAutoSpeed );
+    s.integer( prologic40TrackMode );
+    s.integer( prologic2Mhz );
     s.integer( extendedMemoryMap );
 
     via1->serialize( s );
@@ -79,9 +81,10 @@ auto Drive1541::serialize(Emulator::Serializer& s) -> void {
 
     s.integer( structure1541.encodingGraceful.status );
 
-    if ((type == Type::D1570) || (type == Type::D1571)) {
+    if (operation & DRIVE_MODE_157x)
         cia->serialize(s);
-    }
+    if (operation & DRIVE_HAS_PIA)
+        pia->serialize(s);
     
     if (s.mode() == Emulator::Serializer::Mode::Load) {
 

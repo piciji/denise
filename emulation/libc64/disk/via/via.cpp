@@ -79,7 +79,7 @@ auto Via::ca1In( bool direction, bool irqNextCycle ) -> void {
             ca2Out(ca2 = 1);  // handshake output mode
     }
     // latch port A
-    if ( !(ifr & 2) )
+    if ( !(ifr & 2) && (acr & 1) )
         lines.latchA = readPort( Port::A, &lines );
 
     setIrq( 2, irqNextCycle ? VIA_UPDATE_IRQ0 : VIA_UPDATE_IRQ1 );
@@ -111,7 +111,7 @@ auto Via::cb1In( bool direction, bool pulse, bool irqNextCycle ) -> void {
             cb2Out(cb2 = 1); // handshake output mode
     }
     // latch port B
-    if ( !(ifr & 16) )
+    if ( !(ifr & 16) && (acr & 2) )
         lines.latchB = readPort( Port::B, &lines );
 
     setIrq( 16, irqNextCycle ? VIA_UPDATE_IRQ0 : VIA_UPDATE_IRQ1 );

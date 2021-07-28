@@ -105,6 +105,9 @@ System::System(Interface* interface) {
 
     readKernalRom = [this](uint16_t addr) {
 
+        if (expansionPort->hasHiramCableConnected())
+            return expansionPort->readRomH(addr);
+
         return (uint8_t) this->kernalRom[ addr & 0x1fff ];
     };
 
@@ -309,9 +312,9 @@ System::System(Interface* interface) {
     };
 
     cia1->serialOut = [this](bool bit) {
-        diskIdleOff();
 
-        if (userPort.burstUse) {
+        if (secondDriveCable.burstUse) {
+            diskIdleOff();
             iecBus->serialShift(bit);
         }
     };
@@ -351,9 +354,9 @@ System::System(Interface* interface) {
 
             return (uint8_t) ( (lines->ioa & 0x3f) | iecBus->readCia() );
 
-        } else if (userPort.parallelUse) {
+        } else if (secondDriveCable.parallelUserport) {
             diskIdleOff();
-            return iecBus->readParallel();
+            return (uint8_t)(cia2->lines.iob & iecBus->readParallelWithHandshake());
         }
 
         return lines->iob;
@@ -377,12 +380,12 @@ System::System(Interface* interface) {
             if (iecBus->writeCia( ~lines->ioa )) {
                 diskSilence.idle = false;
                 diskSilence.idleFrames = 0;
-                burstOrParallelUpdate();
+                driveCycleSyncingUpdate();
             }
-        } else if (userPort.parallelUse && lines->prbChange) {
+        } else if (secondDriveCable.parallelUserport && lines->prbChange) {
             diskIdleOff();
             // Port B with parallel cable
-            iecBus->writeParallel();
+            iecBus->writeParallelHandshake();
         }
     };
 
@@ -561,7 +564,8 @@ auto System::power( bool softReset ) -> void {
     KeyBuffer::Action action;
     action.mode = KeyBuffer::Mode::WaitDelay;
     if (iecBus->drives[0]->speeder)
-        action.delay = (unsigned)(interface->stats.fps * 0.5);
+        action.delay = (unsigned)(interface->stats.fps * ((iecBus->drives[0]->speeder == 10 || iecBus->drives[0]->speeder == 11)
+            ? 0.9 : 0.5) );
     else
         action.delay = (unsigned)(interface->stats.fps * 2.2);
 
@@ -671,7 +675,7 @@ auto System::run() -> void {
 
     while( !frameComplete ) {
         cpu->process();
-        if (!diskSilence.idle && !userPort.cycleSyncing)
+        if (!diskSilence.idle && !secondDriveCable.cycleSyncing)
             iecBus->syncDrives();
     }
 
@@ -794,7 +798,7 @@ auto System::videoRefresh( uint8_t* frame, unsigned width, unsigned height, unsi
             if (++diskSilence.idleFrames > 200) {
                 diskSilence.idle = true;
                 diskSilence.idleFrames = 0;
-                burstOrParallelUpdate();
+                driveCycleSyncingUpdate();
                 iecBus->resetDriveState();
             }
         }
@@ -910,19 +914,72 @@ auto System::informAboutMotorChange() -> void {
 }
 
 auto System::burstOrParallelUpdate() -> void {
-    userPort.burstUse = userPort.burstRequested && userPort.burstPossible && !diskSilence.idle && iecBus->drivesConnected;
-    userPort.parallelUse = userPort.parallelRequested && userPort.parallelPossible && !diskSilence.idle && iecBus->drivesConnected;
+    secondDriveCable.burstUse = secondDriveCable.burstRequested && secondDriveCable.burstPossible && iecBus->drivesConnected;
+    secondDriveCable.parallelUse = secondDriveCable.parallelRequested && secondDriveCable.parallelPossible && iecBus->drivesConnected;
+    secondDriveCable.parallelExpansion = secondDriveCable.parallelUse && (expansionPort == fastloader);
+    secondDriveCable.parallelUserport = secondDriveCable.parallelUse && (expansionPort != fastloader);
 
-    userPort.cycleSyncing = userPort.burstUse || userPort.parallelUse;
+    driveCycleSyncingUpdate();
+}
+
+auto System::driveCycleSyncingUpdate() -> void {
+
+    secondDriveCable.cycleSyncing = (secondDriveCable.burstUse || secondDriveCable.parallelExpansion || secondDriveCable.parallelUserport) && !diskSilence.idle;
 }
 
 auto System::diskIdleOff() -> void {
     if (diskSilence.idle) {
         diskSilence.idle = false;
         iecBus->resetTicks();
-        burstOrParallelUpdate();
+        driveCycleSyncingUpdate();
     }
     diskSilence.idleFrames = 0;
 }
 
+auto System::readParallelWithHandshake() -> uint8_t {
+    uint8_t out = 0xff;
+
+    if (secondDriveCable.parallelUserport ) {
+        cia2->setFlag();
+        out = cia2->lines.iob;
+    } else if (secondDriveCable.parallelExpansion ) {
+        if (fastloader->type == Fastloader::PROLOGIC_DOS) {
+            fastloader->pia.ca1In(false);
+            out = fastloader->pia.ioa;
+        } else { // PROF DOS
+            fastloader->via.cb1In(false);
+            out = fastloader->via.lines.iob;
+        }
+    }
+    return out;
 }
+
+auto System::readParallel() -> uint8_t {
+    uint8_t out = 0xff;
+
+    if (secondDriveCable.parallelUserport ) {
+        out = cia2->lines.iob;
+    } else if (secondDriveCable.parallelExpansion ) {
+        if (fastloader->type == Fastloader::PROLOGIC_DOS) {
+            out = fastloader->pia.ioa;
+        } else { // PROF DOS
+            out = fastloader->via.lines.iob;
+        }
+    }
+    return out;
+}
+
+auto System::writeParallelHandshake() -> void {
+
+    if (secondDriveCable.parallelUserport ) {
+        cia2->setFlag();
+    } else if (secondDriveCable.parallelExpansion ) {
+        if (fastloader->type == Fastloader::PROLOGIC_DOS)
+            fastloader->pia.ca1In(false);
+        else // PROF DOS
+            fastloader->via.cb1In(false);
+    }
+}
+
+}
+

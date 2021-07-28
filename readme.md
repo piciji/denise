@@ -15,8 +15,11 @@
 * Floppy RAM expansions
 * Floppy Fastloader
     * SpeedDOS
-    * DolphinDOS v2
-    * ProfDOS v1, R4, R5, R6
+    * DolphinDOS v2, v3, Ultimate Hack
+    * ProfDOS v1, R3, R4, R5, R6
+    * PrologicDos Classic
+    * support Userport Kernals for all emulation fast loader
+    * support Expansionsport Kernals for ProfDOS and PrologicDOS
 * bugfix: switch to custom resolutiuon in fullscreen
 
 ## 1.1.1

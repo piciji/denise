@@ -44,7 +44,8 @@ struct IecBus {
     auto readVia() -> uint8_t;
     auto serialShift(bool bit) -> void;
     auto readParallel() -> uint8_t;
-    auto writeParallel() -> void;
+    auto readParallelWithHandshake() -> uint8_t;
+    auto writeParallelHandshake() -> void;
     
     auto power() -> void;
     auto powerOff() -> void;

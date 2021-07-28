@@ -914,7 +914,7 @@ auto EasyFlash3::clock() -> void {
         
         if ( !_write && ((_addr & 0xe000) == 0xe000) ) { // read goes to KERNAL area
             
-            if (portUpdated) {  // CPU port was updated before, so re check HIRAM state
+            if (portUpdated) {  // CPU port was updated before, so check HIRAM state
                 
                 // the HIRAM state distinguish between KERNAL and memory access
                 // expansion port can't see state of HIRAM directly, so switch in 16k mode
@@ -947,7 +947,7 @@ auto EasyFlash3::clock() -> void {
             // [right way]           
             // system->changeExpansionPortMemoryMode( exRom = true, game = !romHLine, true );
             
-            // some explantions to last parameter 'true' in function call one line before
+            // some explantions to last parameter in function call a line before
             // it's important to disable Ultimax at the end of PHI2 already, so VIC is not in Ultimax anymore in first half cycle
             // from a CPU point of view switching 'exRom' and 'Game' in special situations like accessing custom addresses is emulated hack free in Denise.
             // within these 'clock' functions (running between the half cycles) each expansion can update the PLA before CPU is accessing but after CPU has puted address on BUS.

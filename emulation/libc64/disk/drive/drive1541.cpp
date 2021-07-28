@@ -5,8 +5,10 @@
 #include "mechanicsP64.cpp"
 #include "mechanicsG64.cpp"
 #include "profdos.cpp"
+#include "prologic.cpp"
 #include "serialization.cpp"
 #include "../../system/firmware.h"
+#include "../../expansionPort/fastloader/fastloader.h"
 #include "../../../tools/gcr.h"
 
 // for 300 rpm = 5 rotation / sec = 16.000.000 / 5
@@ -60,12 +62,12 @@ auto Drive1541::cpuWrite(uint16_t addr, uint8_t data) -> void {
 
     if (operation & DRIVE_MODE_154x) {
         if (extendedMemoryMap) {
-            if (speeder == 2) {
-                if ((addr & 0xe000) == 0x8000) {
-                    this->ram80To9F[addr & 0x1fff] = data;
+            if (speeder == 4) { // dolphin v3
+                if ((addr & 0xf000) == 0x5000) {
+                    pia->write( addr & 3, data );
                     return;
                 }
-            } else if (speeder == 3) {     // profdos v1
+            } else if (speeder == 6) {  // profdos v1
                 if ((addr & 0xf100) == 0xf100) {
                     profDosClockControl(addr);
                     return;
@@ -73,11 +75,7 @@ auto Drive1541::cpuWrite(uint16_t addr, uint8_t data) -> void {
                 if (profDosAutoSpeed)
                     profDosAutoClockControl(addr);
 
-                if ((addr & 0xe000) == 0xA000) {
-                    this->ramA0ToBF[addr & 0x1fff] = data;
-                    return;
-                }
-            } else if (speeder == 4) {  // profdos R4
+            } else if (speeder == 7) {  // profdos R4
                 if ((addr & 0x6800) == 0x6800) {
                     profDosClockControl(addr);
                     return;
@@ -85,27 +83,39 @@ auto Drive1541::cpuWrite(uint16_t addr, uint8_t data) -> void {
                 if (profDosAutoSpeed)
                     profDosAutoClockControl(addr);
 
-                if ((addr & 0xe000) == 0x4000) {
-                    this->ram40To5F[addr & 0x1fff] = data;
+            } else if (speeder == 10) {  // prologic classic
+
+                if ((addr & 0xfff0) == 0xb800) {
+                    addr = (addr >> 2) & 3;
+
+                    if (addr & 2)
+                        pia->write( addr, data );
+                    else
+                        prologicControlClassic( addr, data );
+
                     return;
                 }
-            } else { // free ram mapping
-                if ((expandMemory & (uint8_t) ExpandedMemMode::M20) && ((addr & 0xe000) == 0x2000)) {
-                    this->ram20To3F[addr & 0x1fff] = data;
-                    return;
-                } else if ((expandMemory & (uint8_t) ExpandedMemMode::M40) && ((addr & 0xe000) == 0x4000)) {
-                    this->ram40To5F[addr & 0x1fff] = data;
-                    return;
-                } else if ((expandMemory & (uint8_t) ExpandedMemMode::M60) && ((addr & 0xe000) == 0x6000)) {
-                    this->ram60To7F[addr & 0x1fff] = data;
-                    return;
-                } else if ((expandMemory & (uint8_t) ExpandedMemMode::M80) && ((addr & 0xe000) == 0x8000)) {
-                    this->ram80To9F[addr & 0x1fff] = data;
-                    return;
-                } else if ((expandMemory & (uint8_t) ExpandedMemMode::MA0) && ((addr & 0xe000) == 0xA000)) {
-                    this->ramA0ToBF[addr & 0x1fff] = data;
-                    return;
+            } else if (speeder == 11) {  // prologic
+                if ((addr & 0xe000) == 0xa000) {
+                    prologicControl( addr );
                 }
+            }
+
+            if ((expandMemory & (uint8_t) ExpandedMemMode::M80) && ((addr & 0xe000) == 0x8000)) {
+                this->ram80To9F[addr & 0x1fff] = data;
+                return;
+            } else if ((expandMemory & (uint8_t) ExpandedMemMode::M40) && ((addr & 0xe000) == 0x4000)) {
+                this->ram40To5F[addr & 0x1fff] = data;
+                return;
+            } else if ((expandMemory & (uint8_t) ExpandedMemMode::M60) && ((addr & 0xe000) == 0x6000)) {
+                this->ram60To7F[addr & 0x1fff] = data;
+                return;
+            } else if ((expandMemory & (uint8_t) ExpandedMemMode::MA0) && ((addr & 0xe000) == 0xA000)) {
+                this->ramA0ToBF[addr & 0x1fff] = data;
+                return;
+            } else if ((expandMemory & (uint8_t) ExpandedMemMode::M20) && ((addr & 0xe000) == 0x2000)) {
+                this->ram20To3F[addr & 0x1fff] = data;
+                return;
             }
         }
 
@@ -121,19 +131,19 @@ auto Drive1541::cpuWrite(uint16_t addr, uint8_t data) -> void {
     } else {
         // 157x
         if (extendedMemoryMap) {
-            if (speeder == 5) { // profdos R5, R6
-                if (((addr & 0xf000) == 0x5000) || ((addr & 0xf800) == 0x4800) ) { // $4800 - $5ffff
-                    this->ram40To5F[addr & 0x1fff] = data;
+            if (speeder == 5) { // dolphin v3
+                if ((addr & 0xf000) == 0x5000) {
+                    pia->write( addr & 3, data );
                     return;
                 }
-            } else {
-                if ((expandMemory & (uint8_t) ExpandedMemMode::M40) && (((addr & 0xf000) == 0x5000) || ((addr & 0xf800) == 0x4800) )) { // $4800 - $5ffff
-                    this->ram40To5F[addr & 0x1fff] = data;
-                    return;
-                } else if ((expandMemory & (uint8_t) ExpandedMemMode::M60) && ((addr & 0xe000) == 0x6000)) {
-                    this->ram60To7F[addr & 0x1fff] = data;
-                    return;
-                }
+            }
+
+            if ((expandMemory & (uint8_t) ExpandedMemMode::M40) && (((addr & 0xf000) == 0x5000) || ((addr & 0xf800) == 0x4800) )) { // $4800 - $5ffff
+                this->ram40To5F[addr & 0x1fff] = data;
+                return;
+            } else if ((expandMemory & (uint8_t) ExpandedMemMode::M60) && ((addr & 0xe000) == 0x6000)) {
+                this->ram60To7F[addr & 0x1fff] = data;
+                return;
             }
         }
 
@@ -146,62 +156,99 @@ auto Drive1541::cpuWrite(uint16_t addr, uint8_t data) -> void {
         else if ((addr & 0xfc00) == 0x1c00) {
             byteReady = false;
             via2->write(addr, data);
+
         } else if ((addr & 0xc000) == 0x4000) {
             cia->write(addr, data);
+
+        } else if ((addr & 0xe000) == 0x2000) {
+            // todo MFM Controller
         }
-        else if ((addr & 0xe000) == 0x2000);
-        // todo
     }
 }
 
 auto Drive1541::cpuRead(uint16_t addr) -> uint8_t {
     SYNC
     if (operation & DRIVE_MODE_154x) {
-
         if (extendedMemoryMap) {
-            if (speeder == 2) {
-                if ((addr & 0xe000) == 0x8000)
-                    return this->ram80To9F[addr & 0x1fff];
-
-            } else if (speeder == 3) {
+            if (speeder == 4) {
+                if ((addr & 0xf000) == 0x5000) {
+                    return pia->read( addr & 3 );
+                }
+            } else if (speeder == 6) {
                 if (profDosAutoSpeed)
                     profDosAutoClockControl(addr);
 
                 if((addr & 0xe000) == 0x8000) {
                     return readProfDosEncoderV1(addr);
                 }
-                else if ((addr & 0xe000) == 0xA000) {
-                    return this->ramA0ToBF[addr & 0x1fff];
-                }
                 else if((addr & 0xe000) == 0xe000) {
-                    return this->romExpanded[ addr & romExpandedMask];
+                    return this->romExpanded[ (addr & 0x1fff) & romExpandedMask];
                 }
 
-            } else if (speeder == 4) {
+            } else if (speeder == 7) {
                 if (profDosAutoSpeed)
                     profDosAutoClockControl(addr);
 
                 if((addr & 0xe000) == 0x6000) {
                     return readProfDosEncoder(addr);
                 }
-                else if ((addr & 0xe000) == 0x4000) {
-                    return this->ram40To5F[addr & 0x1fff];
-                }
                 else if((addr & 0xe000) == 0xe000) {
-                    return this->romExpanded[ 0x2000 | (addr & romExpandedMask) ];
+                    return this->romExpanded[ (0x2000 | (addr & 0x1fff)) & romExpandedMask ];
                 }
-            } else {
-                if ((expandMemory & (uint8_t) ExpandedMemMode::M20) && ((addr & 0xe000) == 0x2000))
-                    return this->ram20To3F[addr & 0x1fff];
-                else if ((expandMemory & (uint8_t) ExpandedMemMode::M40) && ((addr & 0xe000) == 0x4000))
-                    return this->ram40To5F[addr & 0x1fff];
-                else if ((expandMemory & (uint8_t) ExpandedMemMode::M60) && ((addr & 0xe000) == 0x6000))
-                    return this->ram60To7F[addr & 0x1fff];
-                else if ((expandMemory & (uint8_t) ExpandedMemMode::M80) && ((addr & 0xe000) == 0x8000))
-                    return this->ram80To9F[addr & 0x1fff];
-                else if ((expandMemory & (uint8_t) ExpandedMemMode::MA0) && ((addr & 0xe000) == 0xA000))
-                    return this->ramA0ToBF[addr & 0x1fff];
+            } else if (speeder == 10) {
+                if ((addr & 0xfff0) == 0xb800) {
+                    addr = (addr >> 2) & 3;
+
+                    if (addr & 2)
+                        return pia->read( addr );
+                    else if ((addr & 1) == 0) {
+                        return prologic2Mhz;
+                    }
+                }
+
+                if (((addr & 0xf000) == 0xa000) || ((addr & 0xf800) == 0xb000)) { // a0 - b7
+                    return this->romExpanded[ (addr & 0x1fff) & romExpandedMask ];
+                }
+                else if (((addr & 0xf000) == 0xe000) || ((addr & 0xf800) == 0xf000)) { // e0 - f7
+                    return this->romExpanded[ (0x2000 | (addr & 0x1fff)) & romExpandedMask];
+                }
+                else if ((addr & 0xf800) == 0xf800) {
+                    if (prologic40TrackMode)
+                        return this->romExpanded[ (0x1800 + (addr & 0x7ff)) & romExpandedMask];
+
+                    return this->romExpanded[ (0x3800 + (addr & 0x7ff)) & romExpandedMask];
+                }
+            } else if (speeder == 11) {
+                uint8_t out;
+                if (((addr & 0xf000) == 0xa000) || ((addr & 0xf800) == 0xb000)) { // a0 - b7
+                    out = this->romExpanded[ (addr & 0x1fff) & romExpandedMask ];
+                    return (out & ~0xa0) | ((out & 0x20) << 2) | ((out & 0x80) >> 2);
+                }
+                else if (((addr & 0xf000) == 0xe000) || ((addr & 0xf800) == 0xf000)) { // e0 - f7
+                    out = this->romExpanded[ (0x2000 | (addr & 0x1fff)) & romExpandedMask];
+                    return (out & ~0xa0) | ((out & 0x20) << 2) | ((out & 0x80) >> 2);
+                }
+                else if ((addr & 0xf800) == 0xf800) {
+                    if (prologic40TrackMode) {
+                        out = this->romExpanded[(0x1800 + (addr & 0x7ff)) & romExpandedMask];
+                        return (out & ~0xa0) | ((out & 0x20) << 2) | ((out & 0x80) >> 2);
+                    }
+
+                    out = this->romExpanded[ (0x3800 + (addr & 0x7ff)) & romExpandedMask];
+                    return (out & ~0xa0) | ((out & 0x20) << 2) | ((out & 0x80) >> 2);
+                }
             }
+
+            if ((expandMemory & (uint8_t) ExpandedMemMode::M80) && ((addr & 0xe000) == 0x8000))
+                return this->ram80To9F[addr & 0x1fff];
+            else if ((expandMemory & (uint8_t) ExpandedMemMode::M40) && ((addr & 0xe000) == 0x4000))
+                return this->ram40To5F[addr & 0x1fff];
+            else if ((expandMemory & (uint8_t) ExpandedMemMode::M60) && ((addr & 0xe000) == 0x6000))
+                return this->ram60To7F[addr & 0x1fff];
+            else if ((expandMemory & (uint8_t) ExpandedMemMode::MA0) && ((addr & 0xe000) == 0xA000))
+                return this->ramA0ToBF[addr & 0x1fff];
+            else if ((expandMemory & (uint8_t) ExpandedMemMode::M20) && ((addr & 0xe000) == 0x2000))
+                return this->ram20To3F[addr & 0x1fff];
         }
 
         if (addr & 0x8000)
@@ -221,18 +268,20 @@ auto Drive1541::cpuRead(uint16_t addr) -> uint8_t {
 
     // 157x
     if (extendedMemoryMap) {
-        if (speeder == 5) { // profdos R5, R6
+        if (speeder == 5) {
+            if ((addr & 0xf000) == 0x5000) {
+                return pia->read( addr & 3 );
+            }
+        }
+        else if (speeder == 8 || speeder == 9) { // profdos R5, R6
             if ((addr & 0xe000) == 0x6000)
                 return readProfDosEncoder( addr );
-            else if (((addr & 0xf000) == 0x5000) || ((addr & 0xf800) == 0x4800) ) { // $4800 - $5ffff
-                return this->ram40To5F[addr & 0x1fff];
-            }
-        } else {
-            if ((expandMemory & (uint8_t) ExpandedMemMode::M40) && (((addr & 0xf000) == 0x5000) || ((addr & 0xf800) == 0x4800) )) { // $4800 - $5ffff
-                return this->ram40To5F[addr & 0x1fff];
-            } else if ((expandMemory & (uint8_t) ExpandedMemMode::M60) && ((addr & 0xe000) == 0x6000)) {
-                return this->ram60To7F[addr & 0x1fff];
-            }
+        }
+
+        if ((expandMemory & (uint8_t) ExpandedMemMode::M40) && (((addr & 0xf000) == 0x5000) || ((addr & 0xf800) == 0x4800) )) { // $4800 - $5ffff
+            return this->ram40To5F[addr & 0x1fff];
+        } else if ((expandMemory & (uint8_t) ExpandedMemMode::M60) && ((addr & 0xe000) == 0x6000)) {
+            return this->ram60To7F[addr & 0x1fff];
         }
     }
 
@@ -299,13 +348,60 @@ Drive1541::Drive1541(uint8_t number, Emulator::Interface::Media* mediaConnected 
     via2 = new Via( 2 );
     cia = new Cia8520( 3 );
     cpu = new M6502(this);
+    pia = new Emulator::Pia;
+
+    pia->ca2Out = [this](bool direction) {
+        if (direction)
+            return;
+
+        if (speeder == 4 || speeder == 5) {
+            system->writeParallelHandshake();
+        }
+    };
+
+    pia->cb2Out = [this](bool direction) {
+        if (direction)
+            return;
+
+        if (speeder == 10) {
+            system->writeParallelHandshake();
+        }
+    };
+
+    pia->readPort = [this]( Emulator::Pia::Port port ) {
+
+        if (port == Emulator::Pia::Port::A) {
+            if (speeder == 4 || speeder == 5) {
+                if (!system->secondDriveCable.parallelUse)
+                    return this->pia->ioa;
+            } else
+                return this->pia->ioa;
+        } else {
+            if (speeder == 10) {
+                if (!system->secondDriveCable.parallelUse)
+                    return this->pia->iob;
+            } else
+                return this->pia->iob;
+        }
+
+        uint8_t out = system->readParallel();
+
+        for (auto drive : iecBus->drivesEnabled) {
+            if (port == Emulator::Pia::Port::A)
+                out &= drive->pia->ioa;
+            else
+                out &= drive->pia->iob;
+        }
+        return out;
+    };
+
+    pia->writePort = [this]( Emulator::Pia::Port port, uint8_t data ) {
+        // nothing todo here, because CA(B)2 is triggered and port value is latched on pins
+    };
 
     cia->serialOut = [this](bool bit) {
-
         if (dataDirection) {
-            system->diskIdleOff();
-
-            if (system->userPort.burstUse) {
+            if (system->secondDriveCable.burstUse) {
                 cia1->serialIn(bit);
             }
         }
@@ -313,30 +409,25 @@ Drive1541::Drive1541(uint8_t number, Emulator::Interface::Media* mediaConnected 
 
     cia->writePort = [this]( CIA::Base::Port port, CIA::Base::Lines* lines ) {
 
-        if ( port == CIA::Base::PORTB ) {
-
-            system->diskIdleOff();
-            if (lines->prbChange && system->userPort.parallelUse) {
-                // drive CIA PC goes low for one cycle (strobe) and is connected to C64 CIA2 FLAG input
-                cia2->setFlag();
-            }
+        if ( lines->prbChange && (port == CIA::Base::PORTB )) {
+            if ((operation & DRIVE_HAS_PIA) == 0)
+                system->writeParallelHandshake();
         }
     };
 
     cia->readPort = [this]( CIA::Base::Port port, CIA::Base::Lines* lines ) {
 
         if ( port == CIA::Base::PORTB ) {
-            system->diskIdleOff();
-            if (system->userPort.parallelUse) {
-                // drive CIA PC goes low for one cycle (strobe) and is connected to C64 CIA2 FLAG input
-                cia2->setFlag();
-                uint8_t out = cia2->lines.iob;
-                for (auto drive : iecBus->drivesEnabled) {
-                    out &= drive->cia->lines.iob;
-                }
-                return out;
+            if (!system->secondDriveCable.parallelUse || (operation & DRIVE_HAS_PIA) )
+                return lines->iob;
+
+            uint8_t out = system->readParallelWithHandshake();
+
+            for (auto drive : iecBus->drivesEnabled) {
+                out &= drive->cia->lines.iob;
             }
-            return lines->iob;
+
+            return out;
         }
         return lines->ioa;
     };
@@ -419,17 +510,18 @@ Drive1541::Drive1541(uint8_t number, Emulator::Interface::Media* mediaConnected 
         }
 
         // port A
-        if (type == Type::D1570 || type == Type::D1571) {
+        if (operation & DRIVE_MODE_157x) {
             return (uint8_t) ((((byteReady ? 0 : 0x80) | ((currentHalftrack == 0) ? 0 : 1) | 0x7e) & ~lines->ddra) |
-                              (lines->pra & lines->ddra));
+                (lines->pra & lines->ddra));
         }
-        system->diskIdleOff();
 
-        if (system->userPort.parallelUse) {
-            uint8_t out = cia2->lines.iob;
+        if (system->secondDriveCable.parallelUse && ((operation & DRIVE_HAS_PIA) == 0) ) {
+            uint8_t out = system->readParallel();
+
             for (auto drive : iecBus->drivesEnabled) {
                 out &= drive->via1->lines.ioa;
             }
+
             return out;
 
         } else if (type == Type::D1541C) {
@@ -506,12 +598,10 @@ Drive1541::Drive1541(uint8_t number, Emulator::Interface::Media* mediaConnected 
     };
 
     via1->ca2Out = [this]( bool direction ) {
-        system->diskIdleOff();
-        if (system->userPort.parallelUse ) {
-            if (!direction) {
-                cia2->setFlag();
-            }
-        }
+        if (direction || (operation & DRIVE_HAS_PIA) || (operation & DRIVE_MODE_157x))
+            return;
+
+        system->writeParallelHandshake();
     };
     
     structure1541.write = [this](uint8_t* buffer, unsigned length, unsigned offset) {
@@ -576,8 +666,11 @@ auto Drive1541::power( ) -> void {
     via1->reset();
     via2->reset();
     cia->reset();
+    pia->reset();
 
-    profDosAutoSpeed = 0;
+    profDosAutoSpeed = false;
+    prologic40TrackMode = false;
+    prologic2Mhz = 0;
     irqIncomming = 0;
     clockOut = dataOut = atnOut = 1;  
     cycleCounter = 0;
@@ -619,7 +712,7 @@ auto Drive1541::power( ) -> void {
 
 auto Drive1541::updateCycleSpeed(bool mhz2x, bool init) -> void {
     if (mhz2x) {
-        system->interface->log("2 mhz", 1);
+        //system->interface->log("2 mhz", 1);
         refCyclesInCpuCycle = 8;
         frequency = 2000000;
         if (!init) {
@@ -631,7 +724,7 @@ auto Drive1541::updateCycleSpeed(bool mhz2x, bool init) -> void {
         syncPosWrite = (int64_t)(0.875 * (double)iecBus->cpuCylcesPerSecond);
 
     } else {
-        system->interface->log("1 mhz", 1);
+        //system->interface->log("1 mhz", 1);
         refCyclesInCpuCycle = 16;
         frequency = 1000000;
         if (!init) {
@@ -711,8 +804,6 @@ auto Drive1541::setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> vo
         case Interface::FirmwareIdExpanded:
             romExpanded = data;
             romExpandedMask = size ? (size - 1) : 0;
-            if (romExpandedMask > 0x1fff)
-                romExpandedMask = 0x1fff;
             break;
     }
 }
@@ -904,8 +995,6 @@ auto Drive1541::setFirmwareByType( ) -> void {
     if (!romExpanded) {
         romExpanded = rom;
         romExpandedMask = romMask;
-        if (romExpandedMask > 0x1fff)
-            romExpandedMask = 0x1fff;
     }
 }
 
@@ -925,6 +1014,11 @@ auto Drive1541::setSpeeder(uint8_t speeder) -> void {
     this->speeder = speeder;
 
     extendedMemoryMap = expandMemory || (speeder > 1);
+
+    operation &= ~DRIVE_HAS_PIA;
+
+    if (speeder == 4 || speeder == 5 || speeder == 10)
+        operation |= DRIVE_HAS_PIA;
 }
 
 }

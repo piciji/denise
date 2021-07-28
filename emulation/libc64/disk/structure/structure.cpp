@@ -399,7 +399,7 @@ auto Structure1541::selectListing(  unsigned pos ) -> void {
 			
     system->keyBuffer->add( action );
 
-    if (!system->userPort.burstRequested) {
+    if (!system->secondDriveCable.burstRequested) {
         action.mode = KeyBuffer::Mode::WaitFor;
         action.buffer = {'S', 'E', 'A', 'R', 'C', 'H', 'I', 'N', 'G'};
         action.blinkingCursor = false;

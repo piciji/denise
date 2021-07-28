@@ -17,13 +17,14 @@
 #include "expansionPort/gmod/gmod2.h"
 #include "expansionPort/geoRam/geoRam.h"
 #include "expansionPort/acia/acia.h"
+#include "expansionPort/fastloader/fastloader.h"
 #include "disk/structure/structure.h"
 #include "system/gluelogic.h"
 #include "../tools/crop.h"
 
 namespace LIBC64 {
 
-const std::string Interface::Version = "1100";
+const std::string Interface::Version = "1101";
     
 Interface::Interface() : Emulator::Interface( "C64" ) {        
     
@@ -77,6 +78,7 @@ auto Interface::prepareMedia() -> void {
     mediaGroups.push_back({MediaGroupIdExpansionGeoRam, "GeoRam", MediaGroup::Type::Expansion, {"bin"}, {"bin"} });
     mediaGroups.push_back({MediaGroupIdExpansionReu, "REU", MediaGroup::Type::Expansion, {"bin", "crt", "prg", "reu"}, {""} });
     mediaGroups.push_back({MediaGroupIdExpansionRS232, "RS-232", MediaGroup::Type::Expansion });
+    mediaGroups.push_back({MediaGroupIdExpansionFastloader, "Fast Loader", MediaGroup::Type::Expansion });
         	
 
 	{   auto& group = mediaGroups[MediaGroupIdDisk];
@@ -180,6 +182,12 @@ auto Interface::prepareMedia() -> void {
         group.media.push_back({3, "RS-232 4", 0, &group});
         group.selected = &group.media[0];
     }
+
+    {	auto& group = mediaGroups[MediaGroupIdExpansionFastloader];
+        group.media.push_back({0, "ProfDOS", 0, &group});
+        group.media.push_back({1, "PrologicDOS", 0, &group});
+        group.selected = &group.media[0];
+    }
     
     for(auto& group : mediaGroups) {
         group.expansion = nullptr;
@@ -205,6 +213,7 @@ auto Interface::prepareExpansions() -> void {
     expansions.push_back( { ExpansionIdReu, "REU", Expansion::Type::Ram, &memoryTypes[0], &mediaGroups[MediaGroupIdExpansionReu], nullptr } );
 	expansions.push_back( { ExpansionIdReuRetroReplay, "REU + Retro Replay", Expansion::Type::Ram | Expansion::Type::Freezer | Expansion::Type::Flash, &memoryTypes[0], &mediaGroups[MediaGroupIdExpansionReu], &mediaGroups[MediaGroupIdExpansionRetroReplay] } );
 	expansions.push_back( { ExpansionIdRS232, "RS-232", Expansion::Type::RS232, nullptr, &mediaGroups[MediaGroupIdExpansionRS232], nullptr } );
+    expansions.push_back( { ExpansionIdFastloader, "Fast Loader", Expansion::Type::Fastloader, nullptr, &mediaGroups[MediaGroupIdExpansionFastloader], nullptr } );
     
     {   auto& expansion = expansions[ExpansionIdGame];        
         expansion.pcbs.push_back( {CartridgeIdDefault, "Default"} );
@@ -296,6 +305,11 @@ auto Interface::prepareExpansions() -> void {
         expansion.jumpers.push_back( {3, "IP232", true} );
 
         mediaGroups[MediaGroupIdExpansionRS232].expansion = &expansion;
+    }
+
+    {   auto& expansion = expansions[ExpansionIdFastloader];
+        expansion.jumpers.push_back( {0, "Kernal Replacement", false} );
+        mediaGroups[MediaGroupIdExpansionFastloader].expansion = &expansion;
     }
 
     for(auto& group : mediaGroups) {
@@ -538,8 +552,9 @@ auto Interface::prepareModels() -> void {
     models.push_back({ModelIdDriveParallelCable, "Parallel Cable", Model::Type::Switch, Model::Purpose::DriveSettings, 0});
     models.push_back({ModelIdCiaBurstMode, "CIA Burst Modification", Model::Type::Switch, Model::Purpose::DriveSettings, 0});
 
-    models.push_back({ModelIdDriveFastLoader, "Fast Loader", Model::Type::Combo, Model::Purpose::DriveSettings, 0, {0, 5},
-        { "Manual", "SpeedDOS 1541", "DolphinDOS v2 1541", "ProfDOS v1 1541", "ProfDOS R4 1541", "ProfDOS R5-R6 157x" }});
+    models.push_back({ModelIdDriveFastLoader, "Fast Loader", Model::Type::Combo, Model::Purpose::DriveSettings, 0, {0, 11},
+        { "Manual", "SpeedDOS 1541", "DolphinDOS v2 1541", "DolphinDOS v2 Ultimate", "DolphinDOS v3 1541", "DolphinDOS v3 157x",
+          "ProfDOS v1 1541", "ProfDOS R1-R4 1541", "ProfDOS R5 1570", "ProfDOS R6 1571", "PrologicDOS Classic 1541", "PrologicDOS 1541"}});
 
     models.push_back({ModelIdTapeDrivesConnected, "Tape Drives", Model::Type::Combo, Model::Purpose::DriveSettings, 0, {0, 1},
                       { "0", "1" }});
@@ -984,6 +999,8 @@ auto Interface::insertExpansionImage(Media* media, uint8_t* data, unsigned size)
         retroReplay->setRom(media, data, size);
 	else if (group->expansion->id == ExpansionIdGeoRam)
         geoRam->setRam(media, data, size);
+    else if (group->expansion->id == ExpansionIdFastloader)
+        fastloader->setRom(media, data, size);
 }
 
 auto Interface::writeProtectExpansion(Media* media, bool state) -> void {
@@ -1068,6 +1085,8 @@ auto Interface::ejectExpansionImage(Media* media) -> void {
 		geoRam->setRam( media, nullptr, 0 );
     else if (group->expansion->id == ExpansionIdRS232)
         acia->socket.disconnect();
+    else if (group->expansion->id == ExpansionIdFastloader)
+        fastloader->setRom(media, nullptr, 0);
 }
 
 auto Interface::createExpansionImage(MediaGroup* group, unsigned& imageSize, uint8_t id) -> uint8_t* {
@@ -1299,11 +1318,11 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
             iecBus->setDriveSpeed( value );
             break;
         case ModelIdCiaBurstMode:
-            system->userPort.burstRequested = value & 1;
+            system->secondDriveCable.burstRequested = value & 1;
             system->burstOrParallelUpdate();
             break;
         case ModelIdDriveParallelCable:
-            system->userPort.parallelRequested = value & 1;
+            system->secondDriveCable.parallelRequested = value & 1;
             system->burstOrParallelUpdate();
             break;
         case ModelIdDriveFastLoader:
@@ -1421,8 +1440,8 @@ auto Interface::getModelValue(unsigned modelId) -> int {
         case ModelIdDiskDriveWobble:        return (int)iecBus->drives[0]->wobble;
         case ModelIdDiskDriveSpeed:         return (int)iecBus->drives[0]->rpm;
 
-        case ModelIdCiaBurstMode:           return system->userPort.burstRequested;
-        case ModelIdDriveParallelCable:     return system->userPort.parallelRequested;
+        case ModelIdCiaBurstMode:           return system->secondDriveCable.burstRequested;
+        case ModelIdDriveParallelCable:     return system->secondDriveCable.parallelRequested;
         case ModelIdDriveFastLoader:        return (int)iecBus->drives[0]->speeder;
 
         case ModelIdCycleAccurateVideo:     return system->cycleRendererNextBoot;
@@ -1586,6 +1605,9 @@ auto Interface::setExpansionJumper( Media* media, unsigned jumperId, bool state 
     } else if (group->expansion->id == ExpansionIdRS232) {
         if (acia->media == media)
             acia->setJumper( jumperId, state );
+
+    } else if (group->expansion->id == ExpansionIdFastloader) {
+        fastloader->setJumper( state );
     }
 }
 
@@ -1604,6 +1626,9 @@ auto Interface::getExpansionJumper( Media* media, unsigned jumperId ) -> bool {
 
     else if (group->expansion->id == ExpansionIdRS232)
         return acia->getJumper(jumperId);
+
+    else if (group->expansion->id == ExpansionIdFastloader)
+        return fastloader->getJumper();
 
     return false;
 }

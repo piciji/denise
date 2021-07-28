@@ -182,7 +182,7 @@ auto IecBus::syncDrivesEachCycle( ) -> void {
 
     for (auto drive : drivesEnabled) {
         drive->cycleCounter -= drive->frequency;
-        drive->synced = drive->cycleCounter >= 0;
+        drive->synced = drive->cycleCounter >= drive->syncPosRead;
     }
     sysClock = sysTimer.clock;
 
@@ -240,30 +240,70 @@ auto IecBus::serialShift(bool bit) -> void {
     }
 }
 
-auto IecBus::readParallel() -> uint8_t {
+auto IecBus::readParallelWithHandshake() -> uint8_t {
     syncDrives(0, true);
 
-    uint8_t out = cia2->lines.iob;
+    uint8_t out = 0xff;
     for (auto drive : drivesEnabled) {
-        if (drive->operation & DRIVE_MODE_157x) {
-            drive->cia->setFlag();
-            out &= drive->cia->lines.iob;
+        if (drive->operation & DRIVE_HAS_PIA) {
+            if (drive->speeder == 10) {
+                drive->pia->cb1In(false);
+                out &= drive->pia->iob;
+            } else {
+                drive->pia->ca1In(false);
+                out &= drive->pia->ioa;
+            }
         } else {
-            drive->via1->cb1In(false);
-            out &= drive->via1->lines.ioa;
+            if (drive->operation & DRIVE_MODE_157x) {
+                drive->cia->setFlag();
+                out &= drive->cia->lines.iob;
+            } else {
+                drive->via1->cb1In(false);
+                out &= drive->via1->lines.ioa;
+            }
         }
     }
     return out;
 }
 
-auto IecBus::writeParallel() -> void {
+auto IecBus::readParallel() -> uint8_t {
+    syncDrives(0, true);
+
+    uint8_t out = 0xff;
+    for (auto drive : drivesEnabled) {
+        if (drive->operation & DRIVE_HAS_PIA) {
+            if (drive->speeder == 10) {
+                out &= drive->pia->iob;
+            } else {
+                out &= drive->pia->ioa;
+            }
+        } else {
+            if (drive->operation & DRIVE_MODE_157x) {
+                out &= drive->cia->lines.iob;
+            } else {
+                out &= drive->via1->lines.ioa;
+            }
+        }
+    }
+    return out;
+}
+
+auto IecBus::writeParallelHandshake() -> void {
     syncDrives(0, true);
 
     for (auto drive : drivesEnabled) {
-        if (drive->operation & DRIVE_MODE_157x)
-            drive->cia->setFlag();
-        else
-            drive->via1->cb1In(false);
+        if (drive->operation & DRIVE_HAS_PIA) {
+            if (drive->speeder == 10) {
+                drive->pia->cb1In(false);
+            } else {
+                drive->pia->ca1In(false);
+            }
+        } else {
+            if (drive->operation & DRIVE_MODE_157x)
+                drive->cia->setFlag();
+            else
+                drive->via1->cb1In(false);
+        }
     }
 }
 
@@ -384,8 +424,8 @@ auto IecBus::setDrivesEnabled( uint8_t count ) -> void {
 
 auto IecBus::setDriveType(Drive1541::Type type) -> void {
 
-    system->userPort.burstPossible = (type == Drive1541::Type::D1570) || (type == Drive1541::Type::D1571);
-    system->userPort.parallelPossible = true;
+    system->secondDriveCable.burstPossible = (type == Drive1541::Type::D1570) || (type == Drive1541::Type::D1571);
+    system->secondDriveCable.parallelPossible = true;
     system->burstOrParallelUpdate();
 
     for( auto drive : drives )
