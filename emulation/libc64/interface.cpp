@@ -24,7 +24,7 @@
 
 namespace LIBC64 {
 
-const std::string Interface::Version = "1101";
+const std::string Interface::Version = "1102";
     
 Interface::Interface() : Emulator::Interface( "C64" ) {        
     
@@ -186,6 +186,7 @@ auto Interface::prepareMedia() -> void {
     {	auto& group = mediaGroups[MediaGroupIdExpansionFastloader];
         group.media.push_back({0, "ProfDOS", 0, &group});
         group.media.push_back({1, "PrologicDOS", 0, &group});
+        group.media.push_back({2, "TurboTrans", 0, &group});
         group.selected = &group.media[0];
     }
     
@@ -552,9 +553,9 @@ auto Interface::prepareModels() -> void {
     models.push_back({ModelIdDriveParallelCable, "Parallel Cable", Model::Type::Switch, Model::Purpose::DriveSettings, 0});
     models.push_back({ModelIdCiaBurstMode, "CIA Burst Modification", Model::Type::Switch, Model::Purpose::DriveSettings, 0});
 
-    models.push_back({ModelIdDriveFastLoader, "Fast Loader", Model::Type::Combo, Model::Purpose::DriveSettings, 0, {0, 11},
+    models.push_back({ModelIdDriveFastLoader, "Fast Loader", Model::Type::Combo, Model::Purpose::DriveSettings, 0, {0, 12},
         { "Manual", "SpeedDOS 1541", "DolphinDOS v2 1541", "DolphinDOS v2 Ultimate", "DolphinDOS v3 1541", "DolphinDOS v3 157x",
-          "ProfDOS v1 1541", "ProfDOS R1-R4 1541", "ProfDOS R5 1570", "ProfDOS R6 1571", "PrologicDOS Classic 1541", "PrologicDOS 1541"}});
+          "ProfDOS v1 1541", "ProfDOS R3/R4 1541", "ProfDOS R5 1570", "ProfDOS R6 1571", "PrologicDOS Classic 1541", "PrologicDOS 1541", "Turbo Trans"}});
 
     models.push_back({ModelIdTapeDrivesConnected, "Tape Drives", Model::Type::Combo, Model::Purpose::DriveSettings, 0, {0, 1},
                       { "0", "1" }});

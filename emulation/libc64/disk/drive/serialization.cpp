@@ -10,6 +10,7 @@ auto Drive1541::serialize(Emulator::Serializer& s) -> void {
     s.integer( cycleCounter );
     s.integer( synced );
     s.integer( irqIncomming );
+    s.integer( speeder );
     s.array( ram, 2 * 1024 );
 
     if (expandMemory & (uint8_t)ExpandedMemMode::M20)
@@ -22,6 +23,8 @@ auto Drive1541::serialize(Emulator::Serializer& s) -> void {
         s.array( ram80To9F, 8 * 1024);
     if (expandMemory & (uint8_t)ExpandedMemMode::MA0)
         s.array( ramA0ToBF, 8 * 1024);
+    if (speeder == 12)
+        s.array( turboTrans, 512 * 1024);
 
     s.integer( driveCycles );
     s.integer( accum );
@@ -69,11 +72,12 @@ auto Drive1541::serialize(Emulator::Serializer& s) -> void {
     s.integer( wobble );
     s.integer( rpm );
     s.integer( nibble );
-    s.integer( speeder );
     s.integer( profDosAutoSpeed );
     s.integer( prologic40TrackMode );
     s.integer( prologic2Mhz );
     s.integer( extendedMemoryMap );
+    s.integer( turboTransVisible );
+    s.integer( turboTransPage );
 
     via1->serialize( s );
     via2->serialize( s );

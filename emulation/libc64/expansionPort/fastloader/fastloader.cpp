@@ -11,7 +11,7 @@ Fastloader::Fastloader() : via(3), ExpansionPort() {
     setId( Interface::ExpansionIdFastloader );
 
     pia.ca2Out = [this](bool direction) {
-        if (system->secondDriveCable.parallelUse && !direction && (type == PROLOGIC_DOS)) {
+        if (system->secondDriveCable.parallelUse && !direction && (mode & FASTLOADER_OUTPINA)) {
             system->diskIdleOff();
             // Port B with parallel cable
             iecBus->writeParallelHandshake();
@@ -20,7 +20,7 @@ Fastloader::Fastloader() : via(3), ExpansionPort() {
 
     pia.cb2Out = [this](bool direction) {
         // no use case at the moment
-        if (system->secondDriveCable.parallelUse && !direction && (type != PROLOGIC_DOS)) {
+        if (system->secondDriveCable.parallelUse && !direction && (mode & FASTLOADER_OUTPINB)) {
             system->diskIdleOff();
             // Port B with parallel cable
             iecBus->writeParallelHandshake();
@@ -30,7 +30,7 @@ Fastloader::Fastloader() : via(3), ExpansionPort() {
     pia.readPort = [this]( Emulator::Pia::Port port ) {
 
         if (port == Emulator::Pia::Port::A) { // PROLOGIC
-            if (!system->secondDriveCable.parallelUse || (type != PROLOGIC_DOS) )
+            if (!system->secondDriveCable.parallelUse || (mode & FASTLOADER_PORTB) )
                 return this->pia.ioa;
 
             system->diskIdleOff();
@@ -39,7 +39,7 @@ Fastloader::Fastloader() : via(3), ExpansionPort() {
         }
 
         // Port B (no use case at the moment)
-        if (!system->secondDriveCable.parallelExpansion || (type == PROLOGIC_DOS))
+        if (!system->secondDriveCable.parallelExpansion || (mode & FASTLOADER_PORTA))
             return this->pia.iob;
 
         system->diskIdleOff();
@@ -53,7 +53,7 @@ Fastloader::Fastloader() : via(3), ExpansionPort() {
 
     via.ca2Out = [this]( bool direction ) {
         // no use case at the moment
-        if (system->secondDriveCable.parallelUse && !direction && (type != PROF_DOS)) {
+        if (system->secondDriveCable.parallelUse && !direction && (mode & FASTLOADER_OUTPINA)) {
             system->diskIdleOff();
             // Port B with parallel cable
             iecBus->writeParallelHandshake();
@@ -61,8 +61,7 @@ Fastloader::Fastloader() : via(3), ExpansionPort() {
     };
 
     via.cb2Out = [this]( bool direction ) {
-
-        if (system->secondDriveCable.parallelUse && !direction && (type == PROF_DOS)) {
+        if (system->secondDriveCable.parallelUse && !direction && (mode & FASTLOADER_OUTPINB)) {
             system->diskIdleOff();
             // Port B with parallel cable
             iecBus->writeParallelHandshake();
@@ -71,15 +70,16 @@ Fastloader::Fastloader() : via(3), ExpansionPort() {
 
     via.readPort = [this]( Via::Port port, Via::Lines* lines ) {
         if (port == Via::Port::A) { // no use case at the moment
-            if (!system->secondDriveCable.parallelUse || (type == PROF_DOS) )
+            if (!system->secondDriveCable.parallelUse || (mode & FASTLOADER_PORTB) )
                 return lines->ioa;
 
             system->diskIdleOff();
 
             return (uint8_t)(lines->ioa & iecBus->readParallel());
         }
+
         // Port B
-        if (!system->secondDriveCable.parallelExpansion || (type != PROF_DOS))
+        if (!system->secondDriveCable.parallelExpansion || (mode & FASTLOADER_PORTA))
             return lines->iob;
 
         system->diskIdleOff();
@@ -93,7 +93,7 @@ Fastloader::Fastloader() : via(3), ExpansionPort() {
 }
 
 auto Fastloader::clock() -> void {
-    if (type == PROF_DOS) {
+    if (mode & FASTLOADER_VIA) {
         via.process();
     }
 }
@@ -113,8 +113,7 @@ auto Fastloader::setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigne
 
 auto Fastloader::writeIo1( uint16_t addr, uint8_t value ) -> void {
     addr &= 0xff;
-
-    if (type == PROLOGIC_DOS) {
+    if ( (mode & FASTLOADER_PIA_IO1) == FASTLOADER_PIA_IO1) {
         if (addr == 0x5c || addr == 0x5d) {
             pia.write(addr & 3, value);
         }
@@ -123,8 +122,7 @@ auto Fastloader::writeIo1( uint16_t addr, uint8_t value ) -> void {
 
 auto Fastloader::readIo1( uint16_t addr ) -> uint8_t {
     addr &= 0xff;
-
-    if (type == PROLOGIC_DOS) {
+    if ( (mode & FASTLOADER_PIA_IO1) == FASTLOADER_PIA_IO1) {
         if (addr == 0x5c || addr == 0x5d) {
             return pia.read(addr & 3);
         }
@@ -134,15 +132,13 @@ auto Fastloader::readIo1( uint16_t addr ) -> uint8_t {
 }
 
 auto Fastloader::writeIo2( uint16_t addr, uint8_t value ) -> void {
-
-    if (type == PROF_DOS) {
+    if ( (mode & FASTLOADER_VIA_IO2) == FASTLOADER_VIA_IO2) {
         via.write( addr & 0xff, value );
     }
 }
 
 auto Fastloader::readIo2( uint16_t addr ) -> uint8_t {
-
-    if (type == PROF_DOS) {
+    if ( (mode & FASTLOADER_VIA_IO2) == FASTLOADER_VIA_IO2) {
         return via.read( addr & 0xff );
     }
 
@@ -169,9 +165,10 @@ auto Fastloader::getJumper( ) -> bool {
 auto Fastloader::serialize(Emulator::Serializer& s) -> void {
     s.integer(kernalJumper);
     s.integer( (uint8_t&)type );
-    if (type == PROLOGIC_DOS)
+    s.integer( mode );
+    if (mode & FASTLOADER_PIA)
         pia.serialize(s);
-    else if (type == PROF_DOS)
+    else if (mode & FASTLOADER_VIA)
         via.serialize(s);
 
     ExpansionPort::serialize( s );
@@ -191,6 +188,19 @@ auto Fastloader::reset(bool softReset) -> void {
     }
 
     type = (Type)_type;
+    mode = FASTLOADER_VIA | FASTLOADER_PORTB | FASTLOADER_OUTPINB | FASTLOADER_IO2;
+
+    if (type == PROLOGIC_DOS)
+        mode = FASTLOADER_PIA | FASTLOADER_PORTA | FASTLOADER_OUTPINA | FASTLOADER_IO1;
+
+    else if (type == TURBO_TRANS)
+        mode = FASTLOADER_VIA | FASTLOADER_PORTA | FASTLOADER_OUTPINA | FASTLOADER_IO2;
+}
+
+auto Fastloader::customButton() -> void {
+
+    if (type == TURBO_TRANS)
+        iecBus->drives[0]->cpu->setNmi();
 }
 
 }

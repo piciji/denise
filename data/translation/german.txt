@@ -604,3 +604,4 @@ Fast Loader_insert = Schnelllader Karte einstecken
 Fast Loader_image = Schnellladerabbild
 select_Fast Loader_image = Schnellladerabbild auswählen ...
 Kernal Replacement = Kernal Ersatz
+cartridge button = Modul Taster

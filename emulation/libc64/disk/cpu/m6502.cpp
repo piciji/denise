@@ -22,6 +22,8 @@ auto M6502::power() -> void {
 auto M6502::reset() -> void {
 	
 	irqPending = interruptSampled = false;
+
+    nmiPending = false;
 	
     soSample = 0;
     
@@ -68,6 +70,11 @@ template<bool software> inline auto M6502::interrupt() -> void {
 
 	uint16_t vector = 0xfffe;
 
+    if (nmiPending) {
+        nmiPending = false;
+        vector = 0xfffa; // a late nmi can hijack irq
+    }
+
 	SET_FLAG_B( software )
 	
     PUSH_STATUS
@@ -93,6 +100,11 @@ template<bool software> inline auto M6502::interrupt() -> void {
 auto M6502::setIrq(bool state) -> void {
 	// level sensitive
 	irqPending = state;
+}
+
+auto M6502::setNmi() -> void {
+    // edge sensitive ( triggers only: 0 -> 1)
+    nmiPending = true;
 }
 
 auto M6502::setMagicForAne(uint8_t magicAne) -> void {
@@ -140,6 +152,7 @@ auto M6502::serialize(Emulator::Serializer& s) -> void {
 	
 	s.integer( irqPending );
 	s.integer( interruptSampled );
+    s.integer( nmiPending );
 	s.integer( killed );
 	s.integer( pc );
     s.integer( IR );

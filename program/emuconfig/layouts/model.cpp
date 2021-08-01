@@ -654,6 +654,9 @@ auto ModelLayout::hintDriveSettings() -> void {
     } else if (selection == 11) { // PrologicDOS 1541
         blockRam80->checkBox.toggle();
         blockDriveModel->combo.setSelection(0);
+    } else if (selection == 12) { // Turbo Trans
+        blockRamA0->checkBox.toggle();
+        blockDriveModel->combo.setSelection(0);
     }
 
     blockDriveModel->combo.onChange();

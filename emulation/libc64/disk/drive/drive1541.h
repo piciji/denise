@@ -63,6 +63,7 @@ struct Drive1541 {
     uint8_t* ram60To7F = nullptr;
     uint8_t* ram80To9F = nullptr;
     uint8_t* ramA0ToBF = nullptr;
+    uint8_t* turboTrans = nullptr;
 
     Emulator::Interface::Media* media;
 	Emulator::Interface::Media* mediaConnected; // update status LED if there was no disk inserted
@@ -101,6 +102,8 @@ struct Drive1541 {
     bool prologic40TrackMode;
     uint8_t prologic2Mhz;
     bool extendedMemoryMap;
+    uint8_t turboTransVisible; // 0: rom, 1: ram
+    uint8_t turboTransPage;
         
     Structure1541::GcrTrack* gcrTrack = new Structure1541::GcrTrack;
 
@@ -199,6 +202,8 @@ struct Drive1541 {
 
     auto readProfDosEncoder(uint16_t addr) -> uint8_t;
     auto readProfDosEncoderV1(uint16_t addr) -> uint8_t;
+
+    auto turboTransWriteControl(uint16_t addr, uint8_t data) -> bool;
 
     auto profDosClockControl(uint16_t addr) -> void;
     auto profDosAutoClockControl(uint16_t addr) -> void;

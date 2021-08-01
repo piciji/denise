@@ -6,6 +6,7 @@
 #include "mechanicsG64.cpp"
 #include "profdos.cpp"
 #include "prologic.cpp"
+#include "turbotrans.cpp"
 #include "serialization.cpp"
 #include "../../system/firmware.h"
 #include "../../expansionPort/fastloader/fastloader.h"
@@ -99,6 +100,9 @@ auto Drive1541::cpuWrite(uint16_t addr, uint8_t data) -> void {
                 if ((addr & 0xe000) == 0xa000) {
                     prologicControl( addr );
                 }
+            } else if (speeder == 12) { // turbo trans
+                if (turboTransWriteControl(addr, data))
+                    return;
             }
 
             if ((expandMemory & (uint8_t) ExpandedMemMode::M80) && ((addr & 0xe000) == 0x8000)) {
@@ -237,6 +241,33 @@ auto Drive1541::cpuRead(uint16_t addr) -> uint8_t {
                     out = this->romExpanded[ (0x3800 + (addr & 0x7ff)) & romExpandedMask];
                     return (out & ~0xa0) | ((out & 0x20) << 2) | ((out & 0x80) >> 2);
                 }
+            } else if (speeder == 12) { // turbo trans
+
+                if (turboTransVisible & 2) {
+                    if ((addr & 0xf800) == 0x6800) {
+                        return turboTrans[(turboTransPage << 10) | (addr & 0x3ff)];
+                    } else if ((addr & 0xf800) == 0x7000) {
+                        return turboTrans[ 0x40000 | ((turboTransPage << 10) | (addr & 0x3ff))];
+                    }
+                }
+
+                if (turboTransVisible & 1) {
+                    if ((addr & 0xe000) == 0xc000) {
+                        return this->romExpanded[ (addr & 0x1fff) & romExpandedMask];
+                    } else if ((addr & 0xe000) == 0x8000) {
+                        return this->romExpanded[ (0x4000 | (addr & 0x1fff)) & romExpandedMask];
+                    } else if ((addr & 0xe000) == 0xe000) {
+                        return this->romExpanded[ (0x6000 | (addr & 0x1fff)) & romExpandedMask];
+                    } else if ((addr & 0xe000) == 0xa000) {
+                        if (expandMemory & (uint8_t) ExpandedMemMode::MA0)
+                            return this->ramA0ToBF[addr & 0x1fff];
+
+                        return this->romExpanded[ (0x2000 | (addr & 0x1fff)) & romExpandedMask];
+                    }
+                } else if ((addr & 0xe000) == 0xa000) {
+                    // disable RAM by software, avoid expand mem usage
+                    return rom[addr & romMask];
+                }
             }
 
             if ((expandMemory & (uint8_t) ExpandedMemMode::M80) && ((addr & 0xe000) == 0x8000))
@@ -336,6 +367,7 @@ Drive1541::Drive1541(uint8_t number, Emulator::Interface::Media* mediaConnected 
     ram60To7F = new uint8_t[ 8 * 1024 ];
     ram80To9F = new uint8_t[ 8 * 1024 ];
     ramA0ToBF = new uint8_t[ 8 * 1024 ];
+    turboTrans = new uint8_t[ 512 * 1024 ];
 
     rom1541II = (uint8_t*)Firmware::drive1541IIRom;
     rom1541 = (uint8_t*)Firmware::drive1541Rom;
@@ -603,7 +635,7 @@ Drive1541::Drive1541(uint8_t number, Emulator::Interface::Media* mediaConnected 
 
         system->writeParallelHandshake();
     };
-    
+
     structure1541.write = [this](uint8_t* buffer, unsigned length, unsigned offset) {
 		
 		return system->interface->writeMedia( getMedia(), buffer, length, offset );
@@ -621,6 +653,7 @@ Drive1541::~Drive1541() {
     delete[] ram60To7F;
     delete[] ram80To9F;
     delete[] ramA0ToBF;
+    delete[] turboTrans;
 }
 
 auto Drive1541::updateDeviceState() -> void {
@@ -661,6 +694,9 @@ auto Drive1541::power( ) -> void {
     if (expandMemory & (uint8_t)ExpandedMemMode::MA0)
         std::memset(ramA0ToBF, 0, 8 * 1024);
 
+    if (speeder == 12)
+        std::memset(turboTrans, 0, 512 * 1024);
+
     setFirmwareByType();
 
     via1->reset();
@@ -670,6 +706,8 @@ auto Drive1541::power( ) -> void {
 
     profDosAutoSpeed = false;
     prologic40TrackMode = false;
+    turboTransVisible = 1;
+    turboTransPage = 0;
     prologic2Mhz = 0;
     irqIncomming = 0;
     clockOut = dataOut = atnOut = 1;  

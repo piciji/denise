@@ -35,7 +35,7 @@ auto M6502::process() -> void {
 #define STATUS	(regP | GET_FLAG_N | FLAG_UNUSED | GET_FLAG_Z)	
 	
 #define SAMPLE_INTERRUPT	\
-	interruptSampled |= irqPending & !GET_FLAG_I;
+	interruptSampled |= nmiPending | (irqPending & !GET_FLAG_I);
 
 #define READ( addr ) 	\
     dataBus = drive->cpuRead( addr );

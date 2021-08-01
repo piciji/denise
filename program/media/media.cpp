@@ -429,10 +429,13 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
 			uint8_t* data;
 
             if (program->loadImageDataWhenOk(file, fSetting->id, mediaGroup, data)) {
-				filePool->assign( _ident(emulator, block->media->name + "store"), file);
-                emulator->insertMedium(block->media, data, file->archiveDataSize( fSetting->id ));
-                block->listings = emulator->getListing( block->media );
-                
+
+                if (mediaGroup->isDisk()) {
+                    block->listings = emulator->getDiskPreview(data, file->archiveDataSize(0), block->media);
+                } else if (mediaGroup->isProgram()) {
+                    block->listings = emulator->getProgramPreview(data, file->archiveDataSize(0));
+                }
+
                 if (mediaGroup->selected ) {
                     if (mediaGroup->selected == block->media)
                         layout->updateListing( block );			

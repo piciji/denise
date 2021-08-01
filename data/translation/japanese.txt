@@ -604,3 +604,4 @@ Fast Loader_insert =
 Fast Loader_image =
 select_Fast Loader_image =
 Kernal Replacement =
+cartridge button =

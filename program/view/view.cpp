@@ -1065,7 +1065,7 @@ auto View::translate() -> void {
         sysMenu.reset->setText(trans->get("Soft Reset"));        
         sysMenu.freeze->setText(trans->get("Freeze"));
         if (sysMenu.menu)
-            sysMenu.menu->setText(trans->get("Menu"));
+            sysMenu.menu->setText(trans->get("cartridge button"));
         sysMenu.loadSoftware->setText(trans->get("load software"));
         sysMenu.media->setText(trans->get("Software"));
         sysMenu.systemManagement->setText(trans->get("system_management"));

@@ -5,12 +5,29 @@
 #include "../../../tools/pia.h"
 #include "../../disk/via/via.h"
 
+#define FASTLOADER_VIA 1
+#define FASTLOADER_PIA 2
+#define FASTLOADER_IO1 4
+#define FASTLOADER_IO2 8
+#define FASTLOADER_OUTPINA 0x10
+#define FASTLOADER_OUTPINB 0x20
+#define FASTLOADER_PORTA 0x40
+#define FASTLOADER_PORTB 0x80
+
+#define FASTLOADER_PIA_PORT_A (FASTLOADER_PIA | FASTLOADER_OUTPINA | FASTLOADER_PORTA)
+#define FASTLOADER_VIA_PORT_B (FASTLOADER_VIA | FASTLOADER_OUTPINB | FASTLOADER_PORTB)
+#define FASTLOADER_VIA_PORT_A (FASTLOADER_VIA | FASTLOADER_OUTPINA | FASTLOADER_PORTA)
+
+#define FASTLOADER_PIA_IO1 (FASTLOADER_PIA | FASTLOADER_IO1)
+#define FASTLOADER_VIA_IO2 (FASTLOADER_VIA | FASTLOADER_IO2)
+
 namespace LIBC64 {
 
 struct Fastloader : ExpansionPort {
     Fastloader();
 
-    enum Type { PROF_DOS = 0, PROLOGIC_DOS = 1 } type;
+    enum Type { PROF_DOS = 0, PROLOGIC_DOS = 1, TURBO_TRANS = 2 } type;
+    uint8_t mode;
     Emulator::Pia pia;
     Via via;
     Emulator::Interface::Media* media = nullptr;
@@ -32,6 +49,9 @@ struct Fastloader : ExpansionPort {
     auto getJumper( ) -> bool;
 
     auto hasHiramCableConnected() -> bool;
+
+    auto hasCustomButton() -> bool { return true; } // NMI of Turbo Trans to swap ram disks
+    auto customButton() -> void;
 
 };
 

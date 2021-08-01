@@ -604,3 +604,4 @@ Fast Loader_insert = insert Fast Loader cartridge
 Fast Loader_image = Fast Loader image
 select_Fast Loader_image = select Fast Loader image ...
 Kernal Replacement = Kernal Replacement
+cartridge button = Cartridge Button

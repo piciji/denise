@@ -43,6 +43,7 @@ struct M6502 {
     Drive1541* drive;
 	bool irqPending;	
 	bool interruptSampled;
+    bool nmiPending;
 	
 	bool killed;
 	
@@ -92,7 +93,9 @@ struct M6502 {
 	
 	auto resetRoutine() -> void;
 	
-	auto setIrq(bool state) -> void;	
+	auto setIrq(bool state) -> void;
+
+    auto setNmi() -> void;
 	
 	auto setMagicForAne(uint8_t magicAne) -> void;
 

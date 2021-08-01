@@ -943,12 +943,15 @@ auto System::readParallelWithHandshake() -> uint8_t {
         cia2->setFlag();
         out = cia2->lines.iob;
     } else if (secondDriveCable.parallelExpansion ) {
-        if (fastloader->type == Fastloader::PROLOGIC_DOS) {
+        if ( (fastloader->mode & FASTLOADER_PIA_PORT_A) == FASTLOADER_PIA_PORT_A ) { // PROLOGIC
             fastloader->pia.ca1In(false);
             out = fastloader->pia.ioa;
-        } else { // PROF DOS
+        } else if ( (fastloader->mode & FASTLOADER_VIA_PORT_B) == FASTLOADER_VIA_PORT_B ) { // PROF DOS, TURBO TRANS
             fastloader->via.cb1In(false);
             out = fastloader->via.lines.iob;
+        } else if ( (fastloader->mode & FASTLOADER_VIA_PORT_A) == FASTLOADER_VIA_PORT_A ) {
+            fastloader->via.cb2In(false);
+            out = fastloader->via.lines.ioa;
         }
     }
     return out;
@@ -960,10 +963,12 @@ auto System::readParallel() -> uint8_t {
     if (secondDriveCable.parallelUserport ) {
         out = cia2->lines.iob;
     } else if (secondDriveCable.parallelExpansion ) {
-        if (fastloader->type == Fastloader::PROLOGIC_DOS) {
+        if ( (fastloader->mode & FASTLOADER_PIA_PORT_A) == FASTLOADER_PIA_PORT_A ) {
             out = fastloader->pia.ioa;
-        } else { // PROF DOS
+        } else if ( (fastloader->mode & FASTLOADER_VIA_PORT_B) == FASTLOADER_VIA_PORT_B ) {
             out = fastloader->via.lines.iob;
+        } else if ( (fastloader->mode & FASTLOADER_VIA_PORT_A) == FASTLOADER_VIA_PORT_A ) {
+            out = fastloader->via.lines.ioa;
         }
     }
     return out;
@@ -974,12 +979,14 @@ auto System::writeParallelHandshake() -> void {
     if (secondDriveCable.parallelUserport ) {
         cia2->setFlag();
     } else if (secondDriveCable.parallelExpansion ) {
-        if (fastloader->type == Fastloader::PROLOGIC_DOS)
+        if ( (fastloader->mode & FASTLOADER_PIA_PORT_A) == FASTLOADER_PIA_PORT_A ) {
             fastloader->pia.ca1In(false);
-        else // PROF DOS
+        } else if ( (fastloader->mode & FASTLOADER_VIA_PORT_B) == FASTLOADER_VIA_PORT_B ) {
             fastloader->via.cb1In(false);
+        } else if ( (fastloader->mode & FASTLOADER_VIA_PORT_A) == FASTLOADER_VIA_PORT_A ) {
+            fastloader->via.ca1In(false);
+        }
     }
 }
 
 }
-
