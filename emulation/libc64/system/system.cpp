@@ -946,10 +946,10 @@ auto System::readParallelWithHandshake() -> uint8_t {
         if ( (fastloader->mode & FASTLOADER_PIA_PORT_A) == FASTLOADER_PIA_PORT_A ) { // PROLOGIC
             fastloader->pia.ca1In(false);
             out = fastloader->pia.ioa;
-        } else if ( (fastloader->mode & FASTLOADER_VIA_PORT_B) == FASTLOADER_VIA_PORT_B ) { // PROF DOS, TURBO TRANS
+        } else if ( (fastloader->mode & FASTLOADER_VIA_PORT_B) == FASTLOADER_VIA_PORT_B ) { // PROF DOS
             fastloader->via.cb1In(false);
             out = fastloader->via.lines.iob;
-        } else if ( (fastloader->mode & FASTLOADER_VIA_PORT_A) == FASTLOADER_VIA_PORT_A ) {
+        } else if ( (fastloader->mode & FASTLOADER_VIA_PORT_A) == FASTLOADER_VIA_PORT_A ) { // TURBO TRANS
             fastloader->via.cb2In(false);
             out = fastloader->via.lines.ioa;
         }

@@ -88,10 +88,10 @@ MediaGroupLayout::MediaGroupLayout( Emulator::Interface::MediaGroup* mediaGroup,
     setFont(GUIKIT::Font::system("bold"));
 }
 
-DiskCreatorLayout::DiskCreatorLayout( Emulator::Interface* emulator, std::vector<std::string> creatables ) {
+DiskCreatorLayout::DiskCreatorLayout( Emulator::Interface* emulator, Emulator::Interface::MediaGroup* mediaGroup ) {
 
     unsigned formatId = 0;
-    for ( auto creatable : creatables )        
+    for ( auto& creatable : mediaGroup->creatable )
         format.append( creatable, formatId++ );    
         
     append(formatName, {0u, 0u}, 10);        
@@ -109,13 +109,28 @@ DiskCreatorLayout::DiskCreatorLayout( Emulator::Interface* emulator, std::vector
     append(diskLabelName, {0u, 0u}, 5);
     append(diskLabel, {~0u, 0u}, 10);
 
+    append(insertLabel, {0u, 0u}, 5);
+    for( auto& media : mediaGroup->media ) {
+        insertDevice.append( media.name, media.id );
+    }
+    insertDevice.append( "-", -1 );
+
+    append(insertDevice, {0u, 0u}, 10);
+
     append(button, {0u, 0u});
     setFont(GUIKIT::Font::system("bold"));
     setPadding(10);
     setAlignment(0.5);       
 }
 
-TapeCreatorLayout::TapeCreatorLayout() {
+TapeCreatorLayout::TapeCreatorLayout(Emulator::Interface::MediaGroup* mediaGroup) {
+
+    append(insertLabel, {0u, 0u}, 5);
+    for( auto& media : mediaGroup->media ) {
+        insertDevice.append( media.name, media.id );
+    }
+    insertDevice.append( "-", -1 );
+    append(insertDevice, {0u, 0u}, 10);
     append(button, {0u, 0u});
     setFont(GUIKIT::Font::system("bold"));
     setPadding(10);

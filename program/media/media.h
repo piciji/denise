@@ -118,9 +118,11 @@ struct MediaGroupLayout : GUIKIT::FramedVerticalLayout {
 };
 
 struct TapeCreatorLayout : GUIKIT::FramedHorizontalLayout {
+    GUIKIT::Label insertLabel;
+    GUIKIT::ComboButton insertDevice;
     GUIKIT::Button button;
 
-    TapeCreatorLayout();
+    TapeCreatorLayout(Emulator::Interface::MediaGroup* mediaGroup);
 };
 
 struct DiskCreatorLayout : GUIKIT::FramedHorizontalLayout {
@@ -130,9 +132,11 @@ struct DiskCreatorLayout : GUIKIT::FramedHorizontalLayout {
     GUIKIT::CheckBox highDensity;
     GUIKIT::Label diskLabelName;
     GUIKIT::LineEdit diskLabel;
+    GUIKIT::Label insertLabel;
+    GUIKIT::ComboButton insertDevice;
     GUIKIT::Button button;
 
-    DiskCreatorLayout(Emulator::Interface* emulator, std::vector<std::string> formats);
+    DiskCreatorLayout(Emulator::Interface* emulator, Emulator::Interface::MediaGroup* mediaGroup);
 };
 
 struct MemoryCreatorLayout : GUIKIT::FramedHorizontalLayout {

@@ -587,10 +587,10 @@ auto Fileloader::insertImage(Emulator::Interface* emulator, Emulator::Interface:
     filePool->assign(_ident(emulator, media->name + "store"), file);
     filePool->unloadOrphaned();
 
-    fSetting->setPath(file->getFile());
-    fSetting->setFile(item->info.name);
-    fSetting->setId(item->id);
-    fSetting->setWriteProtect(false);
+    fSetting->setPath(file->getFile(), !cmd->autoload);
+    fSetting->setFile(item->info.name, !cmd->autoload);
+    fSetting->setId(item->id, !cmd->autoload);
+    fSetting->setWriteProtect(false, !cmd->autoload);
 
     if (!cmd->noGui) {
         if (!mediaGroup->isExpansion())

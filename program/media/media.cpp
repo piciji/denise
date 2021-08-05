@@ -430,11 +430,11 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
 
             if (program->loadImageDataWhenOk(file, fSetting->id, mediaGroup, data)) {
 
-                if (mediaGroup->isDisk()) {
-                    block->listings = emulator->getDiskPreview(data, file->archiveDataSize(0), block->media);
-                } else if (mediaGroup->isProgram()) {
-                    block->listings = emulator->getProgramPreview(data, file->archiveDataSize(0));
-                }
+                filePool->assign( _ident(emulator, block->media->name + "store"), file);
+                if (activeEmulator != emulator)
+                    emulator->insertMedium(block->media, data, file->archiveDataSize( fSetting->id ));
+
+                block->listings = emulator->getListing( block->media );
 
                 if (mediaGroup->selected ) {
                     if (mediaGroup->selected == block->media)
@@ -553,6 +553,7 @@ auto MediaLayout::createImage( Emulator::Interface::MediaGroup* mediaGroup ) -> 
     std::string filePath;
     uint8_t* data = nullptr;
     unsigned size = 0;
+    int insertId = -1;
 
     if (mediaGroup->isHardDisk()) {
 
@@ -571,6 +572,7 @@ auto MediaLayout::createImage( Emulator::Interface::MediaGroup* mediaGroup ) -> 
         
         unsigned typeId = diskCreatorLayout->format.userData();
         bool hd = diskCreatorLayout->highDensity.checked();
+        insertId = diskCreatorLayout->insertDevice.userData();
         
         Emulator::Interface::Data _data = emulator->createDiskImage( typeId, hd,
             diskCreatorLayout->diskLabel.text(),
@@ -581,6 +583,7 @@ auto MediaLayout::createImage( Emulator::Interface::MediaGroup* mediaGroup ) -> 
         size = _data.size;
 
     } else if (mediaGroup->isTape()) {
+        insertId = tapeCreatorLayout->insertDevice.userData();
         data = emulator->createTapeImage( size );
         
     } else if (mediaGroup->isProgram()) {
@@ -606,15 +609,17 @@ auto MediaLayout::createImage( Emulator::Interface::MediaGroup* mediaGroup ) -> 
     if ( !GUIKIT::String::foundSubStr( filePath, "." ))
         filePath += "." + suffix;
 
-    filePtr = filePool->get( filePath, false );    
+    filePtr = filePool->get( filePath, insertId >= 0 );
     if (filePtr)
         filePtr->forceDataChange();
         
     file.setFile( filePath );
-    
-    if ( file.exists() && !message->question(trans->get("file_exist_error", {
-        {"%path%", filePath } })))
-        goto Done;                
+
+    if (!GUIKIT::Application::isWinApi()) {
+        if (file.exists() && !message->question(trans->get("file_exist_error", {
+                {"%path%", filePath}})))
+            goto Done;
+    }
 
     if ( !file.open(GUIKIT::File::Mode::Write) ) {
         message->error(trans->get("file_creation_error",{
@@ -665,6 +670,14 @@ auto MediaLayout::createImage( Emulator::Interface::MediaGroup* mediaGroup ) -> 
         });
         t1.detach();
     }
+
+    if (insertId >= 0) {
+        auto media = emulator->getMedia( *mediaGroup, insertId );
+        if (media) {
+            auto items = filePtr->scanArchive();
+            insertImage(media, filePtr, &items[0]);
+        }
+    }
             
     Done:
         if (data)
@@ -688,7 +701,7 @@ auto MediaLayout::prepareCreator() -> void {
 
         } else if (mediaGroup.isDisk()) {
 
-            diskCreatorLayout = new DiskCreatorLayout(emulator, mediaGroup.creatable );
+            diskCreatorLayout = new DiskCreatorLayout(emulator, &mediaGroup );
 
             diskCreatorLayout->button.onActivate = [this, group]() {
                 createImage( group );                
@@ -698,7 +711,7 @@ auto MediaLayout::prepareCreator() -> void {
 
         } else if (mediaGroup.isTape()) {
 
-            tapeCreatorLayout = new TapeCreatorLayout;
+            tapeCreatorLayout = new TapeCreatorLayout( &mediaGroup);
 
             tapeCreatorLayout->button.onActivate = [this, group]() {
                 createImage( group );                
@@ -885,6 +898,7 @@ auto MediaLayout::translate() -> void {
         diskCreatorLayout->fastFileSystem.setText(trans->get("ffs"));
         diskCreatorLayout->highDensity.setText(trans->get("high_density"));
         diskCreatorLayout->diskLabelName.setText(trans->get("disk label",{}, true));
+        diskCreatorLayout->insertLabel.setText(trans->get("insert",{}, true));
         diskCreatorLayout->button.setText(trans->get("create"));
     }
     
@@ -893,12 +907,13 @@ auto MediaLayout::translate() -> void {
         
         hdCreatorLayout->creator.diskSizeName.setText( trans->get("size_in_mb", {}, true) );
         hdCreatorLayout->creator.diskLabelName.setText( trans->get("disk label", {}, true) );
-        hdCreatorLayout->creator.button.setText( trans->get("create") );        
+        hdCreatorLayout->creator.button.setText( trans->get("create") );
     }
             
     if (tapeCreatorLayout) {
-        tapeCreatorLayout->setText( trans->get("tape_creator") );                
-        tapeCreatorLayout->button.setText(trans->get("create"));        
+        tapeCreatorLayout->setText( trans->get("tape_creator") );
+        tapeCreatorLayout->insertLabel.setText(trans->get("insert",{}, true));
+        tapeCreatorLayout->button.setText(trans->get("create"));
     }
 	
 	if (memoryCreatorLayout) {
@@ -907,7 +922,7 @@ auto MediaLayout::translate() -> void {
 	}
     
     if (flashCreatorLayout) {
-		flashCreatorLayout->setText( trans->get("flash_creator") );		
+		flashCreatorLayout->setText( trans->get("flash_creator") );
         flashCreatorLayout->button.setText(trans->get("create"));         
     }
     
