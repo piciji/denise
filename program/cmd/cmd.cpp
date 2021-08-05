@@ -234,8 +234,37 @@ auto Cmd::parse() -> void {
             GUIKIT::String::toLowerCase( temp );
             
             for(auto& suffix : allowedSuffix) {
-                								
-                if (GUIKIT::String::foundSubStr( temp, "." + suffix )) {
+
+                if (diskListing.empty() && GUIKIT::String::foundSubStr( temp, "." + suffix + ":" )) {
+                    std::replace( arg.begin(), arg.end(), '\\', '/');
+                    // load specific listing from disk
+                    auto splits = GUIKIT::String::split(arg, ':');
+
+                    arg = "";
+                    bool nextPart = false;
+                    for(auto& split : splits) {
+                        std::string temp = split;
+                        GUIKIT::String::toLowerCase( temp );
+
+                        if (!nextPart) {
+                            if (!arg.empty())
+                                arg += ":";
+                            arg += split;
+                        } else {
+                            if (!diskListing.empty())
+                                diskListing += ":";
+
+                            diskListing += split;
+                        }
+
+                        if (GUIKIT::String::foundSubStr( temp, "." + suffix ))
+                            nextPart = true;
+                    }
+                    paths.push_back( arg );
+                    autoload = true;
+                    break;
+
+                } else if (GUIKIT::String::foundSubStr( temp, "." + suffix )) {
                     std::replace( arg.begin(), arg.end(), '\\', '/');
 										
 					if (!hasViciiTest && GUIKIT::String::foundSubStr( temp, "vicii" ))
@@ -251,7 +280,7 @@ auto Cmd::parse() -> void {
                     else if (!emulateD64WithMoreAccuracy && GUIKIT::String::foundSubStr( temp, "rpm3." ))
                         emulateD64WithMoreAccuracy = true;
 									
-					// todo: dirty hack to prevent injection of test.prg instead of loading "test",8,1
+					// todo: dirty hack for Testbench to prevent injection of test.prg instead of loading "test",8,1
 					else if (GUIKIT::String::foundSubStr( temp, "defaults" ) && GUIKIT::String::foundSubStr( temp, "test." )) {
 						if (!hasDefaultTest)
 							hasDefaultTest = true;
@@ -341,9 +370,13 @@ auto Cmd::autoloadImages() -> void {
         
         return;
     }
-    
-    autoloader->init( arguments, true, Autoloader::Mode::AutoStart, debug ? 1 : 0 );
-    
+
+    if (debug) {
+        autoloader->init( arguments, true, Autoloader::Mode::AutoStart, 1 );
+    } else {
+        autoloader->init( arguments, true, Autoloader::Mode::AutoStart, 0, diskListing );
+    }
+
     autoloader->loadFiles();
     
     if (!debug && !noDriver && !noGui && globalSettings->get<bool>("open_fullscreen", false)) {
@@ -359,7 +392,7 @@ auto Cmd::autoloadImages() -> void {
 		else if (debug)
 			activeEmulator->fastForward( (unsigned)EmuInt::FastForward::NoAudioOut );
 	}
-	// prevent to memory file paths in settings
+
     autoload = false;
 }
 

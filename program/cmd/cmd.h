@@ -21,6 +21,7 @@ struct Cmd {
     bool versionRequested = false;
 	uint8_t autostartPrg = 1;
     std::string screenshotPath = "";
+    std::string diskListing = "";
     
     auto set(int argc, char** argv) -> void;
     

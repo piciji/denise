@@ -10,17 +10,22 @@
 ## 1.1.2 (not yet released)
 * P64 support
 * 1570/1571 support
-    * Burst Modification
     * support of D71 / G71 / P71 formats
+    * Burst Modification
 * Floppy RAM expansions
 * Floppy Fastloader
     * SpeedDOS
     * DolphinDOS v2, v3, Ultimate Hack
     * ProfDOS v1, R3, R4, R5, R6
     * PrologicDos Original and Classic
-    * support Userport Kernals for all fast loader
+    * Turbo Trans ( includes Turbo Access ) 
+    * support Userport Kernals for all fast6 loader, expect Turbo Trans
     * support Expansionsport Kernals for ProfDOS, PrologicDOS, Turbo Trans
 * bugfix: switch to custom resolutiuon in fullscreen
+* auto insert newly created disks or tapes
+* increase App initial loading time (benefit for Frontends)
+* support command line start of disk entries, instead of Load "*"
+    * Frontends like Assembly64 support this
 
 ## 1.1.1
 * add Final Cartridge 3 support to EF³

@@ -387,16 +387,36 @@ auto Structure1541::buildLoadCommand( std::vector<uint8_t> loadPath, bool forSho
 	return loadPath;
 }
 
+auto Structure1541::selectListing( std::string fileName ) -> void {
+
+    Emulator::PetciiConversion petciiConversion;
+
+    std::vector<uint8_t> petcii;
+
+    petciiConversion.encode( fileName, petcii );
+
+    petcii = buildLoadCommand(petcii);
+
+    prepareKeyBufferActions( petcii );
+}
+
 auto Structure1541::selectListing(  unsigned pos ) -> void {
+
+    std::vector<uint8_t> path;
+    if (pos < listings.size())
+        path = buildLoadCommand( loader[pos] );
+    else
+        path = buildLoadCommand({'*'});
+
+    prepareKeyBufferActions( path );
+}
+
+auto Structure1541::prepareKeyBufferActions( std::vector<uint8_t>& path ) -> void {
 	
     KeyBuffer::Action action;
     
     action.mode = KeyBuffer::Mode::Input;
-	if (pos < listings.size())
-		action.buffer = buildLoadCommand( loader[pos] );    
-	else
-		action.buffer = buildLoadCommand({'*'});
-			
+    action.buffer = path;
     system->keyBuffer->add( action );
 
     if (!system->secondDriveCable.burstRequested) {

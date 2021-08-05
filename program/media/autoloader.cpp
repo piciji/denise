@@ -13,12 +13,13 @@
 
 Autoloader* autoloader = nullptr;
 
-auto Autoloader::init( std::vector<std::string> files, bool silentError, Mode mode, unsigned selection ) -> void {    
+auto Autoloader::init( std::vector<std::string> files, bool silentError, Mode mode, unsigned selection, std::string fileName ) -> void {
     ddControl.emulator = nullptr;
     ddControl.mediaGroups.clear();
     ddControl.silentError = silentError;
     ddControl.mode = mode;
     ddControl.selection = selection;
+    ddControl.fileName = fileName;
     ddControl.files.clear();
     ddControl.saveFile = nullptr;
     
@@ -156,10 +157,10 @@ auto Autoloader::postProcessing() -> void {
             program->removeExpansion();        
         
         if (mediaGroup->selected) {
-            ddControl.emulator->selectListing(mediaGroup->selected, ddControl.selection);
+            ddControl.emulator->selectListing(mediaGroup->selected, ddControl.selection, ddControl.fileName);
             fSetting = FileSetting::getInstance( ddControl.emulator, _underscore(mediaGroup->selected->name) );
         } else {
-            ddControl.emulator->selectListing(&mediaGroup->media[0], ddControl.selection);
+            ddControl.emulator->selectListing(&mediaGroup->media[0], ddControl.selection, ddControl.fileName);
             fSetting = FileSetting::getInstance( ddControl.emulator, _underscore(mediaGroup->media[0].name) );
         }
         

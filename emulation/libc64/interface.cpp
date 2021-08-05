@@ -24,7 +24,7 @@
 
 namespace LIBC64 {
 
-const std::string Interface::Version = "1102";
+const std::string Interface::Version = "1103";
     
 Interface::Interface() : Emulator::Interface( "C64" ) {        
     
@@ -923,6 +923,14 @@ auto Interface::selectDiskListing(Media* media, unsigned pos) -> void {
         return;
     
     iecBus->selectListing( media, pos );
+}
+
+auto Interface::selectDiskListing(Media* media, std::string fileName) -> void {
+
+    if (!media || !media->group->isDisk())
+        return;
+
+    iecBus->selectListing( media, fileName );
 }
 
 auto Interface::insertTape(Media* media, uint8_t* data, unsigned size) -> void {

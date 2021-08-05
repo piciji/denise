@@ -11,7 +11,6 @@
 * disk
     * Virtual Device Traps
     * drive sounds
-    * support command line start of disk listings instead of Load "*"
     * mount OS folder as D64
     * 1581
 * user port

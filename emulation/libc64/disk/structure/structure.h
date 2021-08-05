@@ -100,6 +100,8 @@ struct Structure1541 {
     auto createListing() -> void;
     auto getListing() -> std::vector<Emulator::Interface::Listing>&;
     auto selectListing( unsigned pos ) -> void;
+    auto selectListing( std::string fileName ) -> void;
+    auto prepareKeyBufferActions( std::vector<uint8_t>& path ) -> void;
 	auto buildLoadCommand( std::vector<uint8_t> loadPath, bool forShow = false ) -> std::vector<uint8_t>;
     auto clearTrackData() -> void;
     auto getLogicalTrack(uint8_t _track, int offset) -> uint8_t;

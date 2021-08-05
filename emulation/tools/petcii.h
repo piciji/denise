@@ -30,6 +30,12 @@ struct PetciiConversion {
         }
     }
 
+    auto encode( std::string ascii, std::vector<uint8_t>& petcii ) -> void {
+
+        for ( auto& c : ascii )
+            petcii.push_back( encode( c ) );
+    }
+
     auto encode( std::string ascii ) -> std::string {
         
         std::string petcii = "";

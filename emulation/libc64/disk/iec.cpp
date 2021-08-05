@@ -524,6 +524,11 @@ auto IecBus::selectListing( Emulator::Interface::Media* media, unsigned pos ) ->
     drives[ media->id ]->structure1541.selectListing( pos );
 }
 
+auto IecBus::selectListing( Emulator::Interface::Media* media,  std::string fileName ) -> void {
+
+    drives[ media->id ]->structure1541.selectListing( fileName );
+}
+
 auto IecBus::updateIdleState() -> void {
     
     idle = (powerOn && drivesConnected > 0) ? !cpuBurner : true;
