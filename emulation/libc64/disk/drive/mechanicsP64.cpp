@@ -61,7 +61,8 @@ namespace LIBC64 {
                             byteFetched( OVERFLOW_NOT_THIS_CYCLE );
 
                        // randCounter = randomizer.rand(0, 367) + 33;  // 2 - 25 micro
-                        randCounter = ( (randomizer.xorShift() >> 16 ) % 367) + 33;
+                       // randCounter = ( (randomizer.xorShift() >> 16 ) % 367) + 33;
+                        randCounter = ( (randomizer.xorShift() >> 16 ) % 202) + 198;
                     }
                 }
 
@@ -87,6 +88,9 @@ namespace LIBC64 {
                             ue3Counter = 0;
                         else
                             ue3Counter++;
+
+                        if (!ca1Line)
+                            via2->ca1In( ca1Line = true );
                     }
                         // uf4: 0,1,4,5,8,9,12,13
                     else if (((uf4Counter & 2) == 0) && (ue3Counter == 8))
@@ -154,6 +158,9 @@ namespace LIBC64 {
                         writeBuffer <<= 1;
 
                         ue3Counter++;
+
+                        if (!ca1Line)
+                            via2->ca1In( ca1Line = true );
                     }
                         // uf4: 0,1,4,5,8,9,12,13
                     else if (((uf4Counter & 2) == 0) && (ue3Counter == 8)) {
@@ -165,7 +172,7 @@ namespace LIBC64 {
                         if (byteReadyOverflow) {
                             cpu->triggerSO(overflowNotThisCycle ? 2 : 1);
                             byteReady = true;
-                            via2->ca1In(false, overflowNotThisCycle);
+                            via2->ca1In(ca1Line = false, overflowNotThisCycle);
                         }
                     }
                 }

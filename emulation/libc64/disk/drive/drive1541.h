@@ -112,6 +112,7 @@ struct Drive1541 {
     int stepDirection = 0;
 
     bool byteReady = false;
+    bool ca1Line = false;
     uint8_t side = 0;
     bool dataDirection = 0;
     

@@ -64,6 +64,7 @@ auto Drive1541::serialize(Emulator::Serializer& s) -> void {
     s.integer( pulseDuration );
     s.integer( latchedByte );
     s.integer( byteReady );
+    s.integer( ca1Line );
     s.integer( dataDirection );
     s.integer( frequency );
     s.integer( side );

@@ -67,9 +67,14 @@ auto Drive1541::rotateD64() -> void {
             // no sync 
             if (++ue3Counter == 8)
                 byteFetched( false );
+            else if (!ca1Line)
+                via2->ca1In( ca1Line = true );
 
-        } else
+        } else {
             ue3Counter = 0; //reset when sync mark detected
+            if (!ca1Line)
+                via2->ca1In( ca1Line = true );
+        }
         
     } else {
         // because of shared bus
@@ -89,9 +94,10 @@ auto Drive1541::rotateD64() -> void {
             if ( byteReadyOverflow ) {
                 cpu->triggerSO();
                 byteReady = true;
-                via2->ca1In( false );
+                via2->ca1In( ca1Line = false );
             }
-        }
+        } else if (!ca1Line)
+            via2->ca1In( ca1Line = true );
     }
 }
 
@@ -104,7 +110,7 @@ auto Drive1541::byteFetched( bool overflowNotThisCycle ) -> void {
         // edge transition
         cpu->triggerSO(overflowNotThisCycle ? 2 : 1);
         byteReady = true;
-        via2->ca1In(false, overflowNotThisCycle);
+        via2->ca1In(ca1Line = false, overflowNotThisCycle);
     }
 }
 

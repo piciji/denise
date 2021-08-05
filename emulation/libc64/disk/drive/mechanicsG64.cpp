@@ -90,7 +90,9 @@ namespace LIBC64 {
                         if (ue3Counter == 8)
                             byteFetched( OVERFLOW_NOT_THIS_CYCLE );
 
-                        randCounter = ( (randomizer.xorShift() >> 16 ) % 367) + 33;
+                        // freespin relies on that following random flux reversals don't prevent UE3 counter increments.
+                        // so a random flux reversal mustn't happen too soon. freespin use this to find out if disk was removed
+                        randCounter = ( (randomizer.xorShift() >> 16 ) % 202) + 198;
                     }
 
                 } else {
@@ -105,6 +107,7 @@ namespace LIBC64 {
                     // is violated by some randomness. means the counter registers
                     // will be reset after some time but that doesn't mean it can
                     // be more than 3 zeros in row shifted in but fewer.
+                    // Rubicon timex protection relies on FIRST random flux reversal
                     randCounter = ( (randomizer.xorShift() >> 16 ) % 31) + 233; // 14.5 - 16.5
                 }
 
@@ -129,6 +132,9 @@ namespace LIBC64 {
                             ue3Counter = 0;
                         else
                             ue3Counter++;
+
+                        if (!ca1Line)
+                            via2->ca1In( ca1Line = true );
                     }
                         // uf4: 0,1,4,5,8,9,12,13
                     else if (((uf4Counter & 2) == 0) && (ue3Counter == 8)) {
@@ -202,6 +208,9 @@ namespace LIBC64 {
                         accum = gcrTrack->bits << 1;
 
                         ue3Counter++;
+
+                        if (!ca1Line)
+                            via2->ca1In( ca1Line = true );
                     }
                         // uf4: 0,1,4,5,8,9,12,13
                     else if (((uf4Counter & 2) == 0) && (ue3Counter == 8)) {
@@ -212,7 +221,7 @@ namespace LIBC64 {
                         if (byteReadyOverflow) {
                             cpu->triggerSO(overflowNotThisCycle ? 2 : 1);
                             byteReady = true;
-                            via2->ca1In(false, overflowNotThisCycle);
+                            via2->ca1In(ca1Line = false, overflowNotThisCycle);
                         }
                     }
                 }

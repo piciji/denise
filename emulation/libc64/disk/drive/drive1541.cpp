@@ -622,6 +622,8 @@ Drive1541::Drive1541(uint8_t number, Emulator::Interface::Media* mediaConnected 
     
     via2->ca2Out = [this]( bool direction ) {
         byteReadyOverflow = direction;
+        if (!ca1Line && !byteReadyOverflow)
+            via2->ca1In( ca1Line = true );
     };
 
     via2->cb2Out = [this]( bool state ) {
@@ -716,6 +718,7 @@ auto Drive1541::power( ) -> void {
     byteReadyOverflow = false;
     readMode = true;
     byteReady = true;
+    ca1Line = true;
     cpu->power();    
  
     ue7Counter = uf4Counter = 0;
@@ -887,6 +890,7 @@ auto Drive1541::detach() -> void {
     
     structure1541.detach();
     motorOff.slowDown = false;
+    wasAttachDetached = false;
     
     loaded = false;
     pulseIndex = -1;
@@ -946,7 +950,11 @@ auto Drive1541::writeprotectSense() -> uint8_t {
 
     if (attachDelay) {
         if (wasAttachDetached) {
-            if ( (attachDelay > DISC_DELAY) && (attachDelay < (DISC_DELAY << 1)))
+            unsigned compareDelay = DISC_DELAY;
+            if (use2Mhz())
+                compareDelay <<= 1;
+
+            if ( (attachDelay > compareDelay) && (attachDelay < (compareDelay << 1)))
                 return 0x10;
         }
         return 0;
