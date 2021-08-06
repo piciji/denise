@@ -458,10 +458,12 @@ auto Fileloader::eject(Emulator::Interface* emulator, Emulator::Interface::Media
     if ( !media->group->isExpansion() ) {
         emulator->ejectMedium(media);
         filePool->assign( _ident(emulator, media->name), nullptr);
-        States::getInstance( emulator )->updateImage( nullptr, media );
-    } else
-        States::getInstance(emulator)->forcePowerNextLoad = true;
-
+        if (!cmd->noGui)
+            States::getInstance( emulator )->updateImage( nullptr, media );
+    } else {
+        if (!cmd->noGui)
+            States::getInstance(emulator)->forcePowerNextLoad = true;
+    }
     // an expansion can't be removed while emulation is running.
     // but we have to cut the file link or EasyFlash could
     // write back data, even when user has removed file from UI.
