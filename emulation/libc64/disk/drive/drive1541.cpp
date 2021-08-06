@@ -374,7 +374,14 @@ Drive1541::Drive1541(uint8_t number, Emulator::Interface::Media* mediaConnected 
     rom1541C = (uint8_t*)Firmware::drive1541CRom;
     rom1571 = (uint8_t*)Firmware::drive1571Rom;
     rom1570 = (uint8_t*)Firmware::drive1570Rom;
+    rom1541IISize = sizeof( Firmware::drive1541IIRom );
+    rom1541Size = sizeof( Firmware::drive1541Rom );
+    rom1541CSize = sizeof( Firmware::drive1541CRom );
+    rom1571Size = sizeof( Firmware::drive1571Rom );
+    rom1570Size = sizeof( Firmware::drive1570Rom );
+
     rom = rom1541II;
+    romMask = rom1541IISize - 1;
     
     via1 = new Via( 1 );
     via2 = new Via( 2 );
@@ -682,7 +689,7 @@ auto Drive1541::updateBus() -> void {
         dataOut = 0;
 }
 
-auto Drive1541::power( ) -> void {    
+auto Drive1541::power( ) -> void {
 
     std::memset(ram, 0, 2 * 1024);
     if (expandMemory & (uint8_t)ExpandedMemMode::M20)
@@ -804,7 +811,7 @@ auto Drive1541::setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> vo
         case Interface::FirmwareIdVC1541II:
             if (!data) {
                 data = (uint8_t*) Firmware::drive1541IIRom;
-                size = 16384;
+                size = sizeof( Firmware::drive1541IIRom );
             }
 
             rom1541II = data;
@@ -813,7 +820,7 @@ auto Drive1541::setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> vo
         case Interface::FirmwareIdVC1541:
             if (!data) {
                 data = (uint8_t*) Firmware::drive1541Rom;
-                size = 16384;
+                size = sizeof( Firmware::drive1541Rom );
             }
             rom1541 = data;
             rom1541Size = size;
@@ -821,7 +828,7 @@ auto Drive1541::setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> vo
         case Interface::FirmwareIdVC1541C:
             if (!data) {
                 data = (uint8_t*) Firmware::drive1541CRom;
-                size = 16384;
+                size = sizeof( Firmware::drive1541CRom );
             }
             rom1541C = data;
             rom1541CSize = size;
@@ -829,7 +836,7 @@ auto Drive1541::setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> vo
         case Interface::FirmwareIdVC1571:
             if (!data) {
                 data = (uint8_t*) Firmware::drive1571Rom;
-                size = 32768;
+                size = sizeof( Firmware::drive1571Rom );
             }
             rom1571 = data;
             rom1571Size = size;
@@ -837,7 +844,7 @@ auto Drive1541::setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> vo
         case Interface::FirmwareIdVC1570:
             if (!data) {
                 data = (uint8_t*) Firmware::drive1570Rom;
-                size = 32768;
+                size = sizeof( Firmware::drive1570Rom );
             }
             rom1570 = data;
             rom1570Size = size;

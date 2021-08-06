@@ -615,7 +615,7 @@ auto MediaLayout::createImage( Emulator::Interface::MediaGroup* mediaGroup ) -> 
         
     file.setFile( filePath );
 
-    if (!GUIKIT::Application::isWinApi()) {
+    if (GUIKIT::Application::isGtk()) {
         if (file.exists() && !message->question(trans->get("file_exist_error", {
                 {"%path%", filePath}})))
             goto Done;
