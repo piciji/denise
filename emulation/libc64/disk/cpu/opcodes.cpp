@@ -642,6 +642,9 @@ SWITCH_END
 	READ( 0xffff )			\
 	killed = true;
 	
+#define TRAPPED_KILL   \
+    KILL
+    
 #define BRANCH( cond )	\
 SWITCH01 \
 	READ_PC_INC_LAST	\

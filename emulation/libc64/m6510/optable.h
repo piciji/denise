@@ -922,6 +922,8 @@ case 0xff:
     break;			
 
 case 0x02:
+    TRAPPED_KILL
+    break;
 case 0x12:
 case 0x22:
 case 0x32:

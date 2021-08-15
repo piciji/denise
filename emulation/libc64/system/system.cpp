@@ -20,6 +20,7 @@
 #include "expansion.cpp"
 #include "serialization.cpp"
 #include "map.cpp"
+#include "../traps/traps.h"
 
 namespace LIBC64 {
 
@@ -73,6 +74,8 @@ System::System(Interface* interface) {
     cia1 = new CIA::M6526( 1, &sysTimer );
     cia2 = new CIA::M6526( 2, &sysTimer );
     cpu = new M6510;
+    
+    traps = new Traps;
 
     readRam = [this](uint16_t addr) {
 
@@ -454,6 +457,12 @@ System::System(Interface* interface) {
             break;
         }
     }
+    
+    traps.add({"SerialListen", 0xED24, 0xEDAB, { 0x20, 0x97, 0xEE }, []() { traps->attention(); } });
+    traps.add({"SerialSaListen", 0xED37, 0xEDAB, { 0x20, 0x8E, 0xEE }, []() { traps->attention(); } });
+    traps.add({"SerialSendByte", 0xED41, 0xEDAB, { 0x20, 0x97, 0xEE }, []() { traps->send(); } });
+    traps.add({"SerialReceiveByte", 0xEE14, 0xEDAB, { 0xA9, 0x00, 0x85 }, []() { traps->receive(); } });
+    traps.add({"SerialReady", 0xEEA9, 0xEDAB, { 0xAD, 0x00, 0xDD }, []() { traps->ready(); } });
 }
 
 System::~System() {

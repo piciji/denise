@@ -486,6 +486,11 @@ auto M6510::process() -> void {
 	READ( 0xfffe )			\
 	READ( 0xffff )			\
 	killed = true;
+    
+#define TRAPPED_KILL    \
+    if (!traps->handler()) {   \
+        KILL    \
+    }
 	
 #define BRANCH( cond )	\
 	READ_PC_INC_LAST	\
