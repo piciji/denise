@@ -523,4 +523,24 @@ auto Structure1541::writeSector( uint8_t* target, uint8_t* buffer, uint8_t track
     std::memcpy( target + offset + (sectors << 8), buffer, 256 );
 }
 
+auto Structure1541::readSector( uint8_t* src, uint8_t* buffer, uint8_t track, uint8_t sector ) -> bool {
+
+    int sectors = countSectors( track, sector );
+
+    if (sectors < 0)
+        return false;
+
+    std::memcpy( buffer, src + (sectors << 8), 256 );
+
+    return true;
+}
+
+auto Structure1541::D64readSector( uint8_t* buffer, uint8_t track, uint8_t sector ) -> bool {
+
+    if (!rawData)
+        return false;
+
+    return readSector( rawData, buffer, track, sector );
+}
+
 }

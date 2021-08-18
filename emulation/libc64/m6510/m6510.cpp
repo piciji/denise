@@ -3,6 +3,7 @@
 #include "../system/system.h"
 #include "../expansionPort/expansionPort.h"
 #include "../disk/iec.h"
+#include "../traps/traps.h"
 
 #define FALL_OFF_CYCLES 350000
 

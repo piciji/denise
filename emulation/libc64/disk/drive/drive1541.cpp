@@ -341,7 +341,7 @@ auto Drive1541::cpuRead(uint16_t addr) -> uint8_t {
     return addr >> 8;
 }
 
-Drive1541::Drive1541(uint8_t number, Emulator::Interface::Media* mediaConnected ) {
+Drive1541::Drive1541(uint8_t number, Emulator::Interface::Media* mediaConnected ) : structure1541(this) {
      
     this->number = number; 
 	this->mediaConnected = mediaConnected;

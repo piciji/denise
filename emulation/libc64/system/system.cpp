@@ -458,11 +458,11 @@ System::System(Interface* interface) {
         }
     }
     
-    traps.add({"SerialListen", 0xED24, 0xEDAB, { 0x20, 0x97, 0xEE }, []() { traps->attention(); } });
-    traps.add({"SerialSaListen", 0xED37, 0xEDAB, { 0x20, 0x8E, 0xEE }, []() { traps->attention(); } });
-    traps.add({"SerialSendByte", 0xED41, 0xEDAB, { 0x20, 0x97, 0xEE }, []() { traps->send(); } });
-    traps.add({"SerialReceiveByte", 0xEE14, 0xEDAB, { 0xA9, 0x00, 0x85 }, []() { traps->receive(); } });
-    traps.add({"SerialReady", 0xEEA9, 0xEDAB, { 0xAD, 0x00, 0xDD }, []() { traps->ready(); } });
+    traps->add({"SerialListen", 0xED24, 0xEDAB, { 0x20, 0x97, 0xEE }, []() { traps->attention(); } });
+    traps->add({"SerialSaListen", 0xED37, 0xEDAB, { 0x20, 0x8E, 0xEE }, []() { traps->attention(); } });
+    traps->add({"SerialSendByte", 0xED41, 0xEDAB, { 0x20, 0x97, 0xEE }, []() { traps->send(); } });
+    traps->add({"SerialReceiveByte", 0xEE14, 0xEDAB, { 0xA9, 0x00, 0x85 }, []() { traps->receive(); } });
+    traps->add({"SerialReady", 0xEEA9, 0xEDAB, { 0xAD, 0x00, 0xDD }, []() { traps->ready(); } });
 }
 
 System::~System() {
@@ -599,6 +599,9 @@ auto System::power( bool softReset ) -> void {
         action.callback = [this]() { kernalBootComplete = true; };
         system->keyBuffer->add( action, false );
     }
+
+    traps->install();
+    traps->reset();
 
     powerOn = true;
 }

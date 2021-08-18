@@ -11,7 +11,6 @@
 * disk
     * Virtual Device Traps
     * drive sounds
-    * mount OS folder as D64
     * 1581
 * user port
     * RS232

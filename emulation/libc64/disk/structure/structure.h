@@ -15,10 +15,13 @@
 namespace LIBC64 {
 
 #define MAX_TRACKS_1541 42
-    
+
+struct VirtualDrive;
+struct Drive1541;
+
 struct Structure1541 {
     
-    Structure1541();
+    Structure1541(Drive1541* drive = nullptr);
     ~Structure1541();
 
     static const unsigned MAX_TRACKS;    // 42, that's the maximum some drives can access
@@ -85,6 +88,8 @@ struct Structure1541 {
 
     std::vector<Emulator::Interface::Listing> listings;
     std::vector<std::vector<uint8_t>> loader;
+    VirtualDrive* virtualDrive = nullptr;
+    Drive1541* drive = nullptr;
 
     auto hasSecondSide() -> bool {
         return sides == 2;
@@ -121,11 +126,19 @@ struct Structure1541 {
 	static auto allocateDown(uint8_t* bamPtr, uint8_t& track, uint8_t& sector) -> bool;
 	static auto allocateUp(uint8_t* bamPtr, uint8_t& track, uint8_t& sector) -> bool;
 
+    static auto speedzone( uint8_t track ) -> uint8_t;
+    static auto countSectors( uint8_t track ) -> uint8_t;
+    static auto countSectors( uint8_t track, uint8_t sector ) -> int;
+    static auto countBytes( uint8_t track ) -> unsigned;
+    static auto gapSize( uint8_t track ) -> unsigned;
+
     auto addPulse( GcrTrack* gcrTrack, uint32_t position, uint32_t strength ) -> void;
     auto freePulse( GcrTrack* gcrTrack, int32_t index ) -> void;
 
     auto updateSerializationSize() -> void;
     auto prepareP64Graceful() -> void;
+
+    auto D64readSector( uint8_t* buffer, uint8_t track, uint8_t sector ) -> bool;
     
 private:    
     uint8_t* rawData;
@@ -158,12 +171,6 @@ private:
     static auto imageSizeG71() -> unsigned;
     static auto imageSizeD64() -> unsigned;
     static auto imageSizeD71() -> unsigned;
-    
-    static auto speedzone( uint8_t track ) -> uint8_t;
-    static auto countSectors( uint8_t track ) -> uint8_t;
-    static auto countSectors( uint8_t track, uint8_t sector ) -> int;
-    static auto countBytes( uint8_t track ) -> unsigned;
-    static auto gapSize( uint8_t track ) -> unsigned;
         
     auto prepareGxx() -> void;
     auto prepareDxx() -> void;
@@ -177,6 +184,7 @@ private:
     auto writePxx() -> bool;
     
     static auto writeSector( uint8_t* target, uint8_t* buffer, uint8_t track, uint8_t sector, unsigned offset = 0) -> void;
+    static auto readSector( uint8_t* src, uint8_t* buffer, uint8_t track, uint8_t sector ) -> bool;
     static auto createBAM( std::string diskName, uint8_t* buffer, uint8_t* bufferSecondSide = nullptr ) -> void;
 
     static auto encodeSector(const uint8_t* src, uint8_t* target, uint8_t track, uint8_t sector, uint8_t id1, uint8_t id2, int errorCode) -> void;    

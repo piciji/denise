@@ -2,6 +2,7 @@
 #include <thread>
 #include "structure.h"
 #include "../../system/system.h"
+#include "../../traps/traps.h"
 #include "../../../tools/petcii.h"
 #include "dxx.cpp"
 #include "gxx.cpp"
@@ -10,6 +11,8 @@
 #include "../../../tools/listing.h"
 #include "../../system/keyBuffer.h"
 #include "../iec.h"
+#include "../virtual/virtualDrive.h"
+#include "../drive/drive1541.h"
 
 namespace LIBC64 {
     
@@ -20,7 +23,7 @@ const uint8_t Structure1541::SECTORS_IN_SPEEDZONE[4] = { 17, 18, 19, 21 };
 const unsigned Structure1541::BYTES_IN_SPEEDZONE[4] = { 6250, 6666, 7142, 7692 };
 const uint8_t Structure1541::GAPS_IN_SPEEDZONE[4] = { 9, 12, 17, 8 };
     
-Structure1541::Structure1541() {
+Structure1541::Structure1541(Drive1541* drive) : drive(drive) {
     
     errorMap = nullptr;
     errorMapSize = 0;
@@ -33,6 +36,8 @@ Structure1541::Structure1541() {
             gcrTracks[side][i].written = 0;
         }
     }
+
+    virtualDrive = new VirtualDrive(this);
 }   
 
 Structure1541::~Structure1541() {
