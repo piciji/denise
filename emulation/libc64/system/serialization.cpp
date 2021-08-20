@@ -1,5 +1,6 @@
 
 #include "system.h"
+#include "../traps/traps.h"
 
 namespace LIBC64 {
 
@@ -22,7 +23,7 @@ auto System::calcSerializationSize() -> void {
 
 auto System::serialize(unsigned& size) -> uint8_t* {   
     
-    if (keyBuffer->isPrgInjectionInQueue())
+    if (keyBuffer->isPrgInjectionInQueue() || traps->installed)
         return nullptr;
 
     iecBus->updateSerializationSize();

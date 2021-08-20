@@ -138,7 +138,7 @@ struct Structure1541 {
     auto updateSerializationSize() -> void;
     auto prepareP64Graceful() -> void;
 
-    auto D64readSector( uint8_t* buffer, uint8_t track, uint8_t sector ) -> bool;
+    auto readSector( uint8_t* buffer, uint8_t track, uint8_t sector ) -> bool;
     
 private:    
     uint8_t* rawData;
@@ -184,7 +184,7 @@ private:
     auto writePxx() -> bool;
     
     static auto writeSector( uint8_t* target, uint8_t* buffer, uint8_t track, uint8_t sector, unsigned offset = 0) -> void;
-    static auto readSector( uint8_t* src, uint8_t* buffer, uint8_t track, uint8_t sector ) -> bool;
+    static auto readSector( uint8_t* src, uint8_t* buffer, uint8_t track, uint8_t sector, unsigned offset = 0 ) -> bool;
     static auto createBAM( std::string diskName, uint8_t* buffer, uint8_t* bufferSecondSide = nullptr ) -> void;
 
     static auto encodeSector(const uint8_t* src, uint8_t* target, uint8_t track, uint8_t sector, uint8_t id1, uint8_t id2, int errorCode) -> void;    

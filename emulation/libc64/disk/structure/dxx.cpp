@@ -89,6 +89,7 @@ auto Structure1541::prepareDxx() -> void {
     uint8_t buffer[256];
     unsigned sectorOffset = 0;
     unsigned trackOffset = 0;
+    bool doubleSideFlag = false;
 
     // first we fetch the bam sector to extract the id, needed for all sector headers
     int sectors = countSectors( 18, 0 );
@@ -96,6 +97,7 @@ auto Structure1541::prepareDxx() -> void {
 
     uint8_t id1 = buffer[0xa2];
     uint8_t id2 = buffer[0xa3];
+    doubleSideFlag = !!(buffer[3] & 0x80);
 
     for( uint8_t side = 0; side < sides; side++ ) {
 
@@ -167,7 +169,7 @@ auto Structure1541::prepareDxx() -> void {
         }
 
         sectorOffset = sectors + 1;
-        trackOffset = tracksInDxx;
+        trackOffset = doubleSideFlag ? tracksInDxx : 0;
     }
 }
 
@@ -523,24 +525,17 @@ auto Structure1541::writeSector( uint8_t* target, uint8_t* buffer, uint8_t track
     std::memcpy( target + offset + (sectors << 8), buffer, 256 );
 }
 
-auto Structure1541::readSector( uint8_t* src, uint8_t* buffer, uint8_t track, uint8_t sector ) -> bool {
+auto Structure1541::readSector( uint8_t* src, uint8_t* buffer, uint8_t track, uint8_t sector, unsigned offset ) -> bool {
 
     int sectors = countSectors( track, sector );
 
     if (sectors < 0)
         return false;
 
-    std::memcpy( buffer, src + (sectors << 8), 256 );
+    std::memcpy( buffer, src + offset + (sectors << 8), 256 );
 
     return true;
 }
 
-auto Structure1541::D64readSector( uint8_t* buffer, uint8_t track, uint8_t sector ) -> bool {
-
-    if (!rawData)
-        return false;
-
-    return readSector( rawData, buffer, track, sector );
-}
 
 }

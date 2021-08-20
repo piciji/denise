@@ -600,9 +600,6 @@ auto System::power( bool softReset ) -> void {
         system->keyBuffer->add( action, false );
     }
 
-    traps->install();
-    traps->reset();
-
     powerOn = true;
 }
 
@@ -611,6 +608,8 @@ auto System::powerOff() -> void {
     keyBuffer->reset();
     sid->powerOff();
     iecBus->powerOff();
+    if (traps->installed)
+        traps->uninstall();
 }
 
 auto System::initRam(uint8_t*& mem) -> void {
@@ -674,8 +673,8 @@ auto System::run() -> void {
     cpu->setNmi(nmiIncomming != 0);
     iecBus->randomizeRpm();
 
-    bool useRunAhead = !fastForward.config && runAhead.frames
-                       && !keyBuffer->isPrgInjectionInQueue() && !iecBus->diskInsertInProgress;
+    bool useRunAhead = !fastForward.config && runAhead.frames && !traps->installed
+            && !keyBuffer->isPrgInjectionInQueue() && !iecBus->diskInsertInProgress;
 
     if (useRunAhead) {
         runAhead.pos = runAhead.frames;

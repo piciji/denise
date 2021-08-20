@@ -605,3 +605,5 @@ Fast Loader_image = Fast Loader image
 select_Fast Loader_image = select Fast Loader image ...
 Kernal Replacement = Kernal Replacement
 cartridge button = Cartridge Button
+Disk Traps on Autostart = Disk Traps on Autostart
+Disk Traps on Autostart tooltip = faked fast load of first file (less compatible)

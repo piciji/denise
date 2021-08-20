@@ -26,6 +26,9 @@
 * increase App initial loading time (benefit for Frontends)
 * support command line start of disk entries, instead of Load "*"
     * Frontends like Assembly64 support this
+* Virtual Device Traps
+    * Fast Load first file
+    * can be combined with Warp
 
 ## 1.1.1
 * add Final Cartridge 3 support to EF³

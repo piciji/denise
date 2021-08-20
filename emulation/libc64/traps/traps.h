@@ -20,9 +20,9 @@ namespace LIBC64 {
 
         struct Serial {
             int inuse;  // has connected device
-            int isopen[16]; /* isopen flag for each secondary address */
+            int isopen[16];
             BaseDevice* device = nullptr;
-            uint8_t nextbyte[16]; /* next byte to send, per sec. addr. */
+            uint8_t nextbyte[16];
         } serialdevices[16];
 
         uint8_t SerialBuffer[256];
@@ -58,7 +58,7 @@ namespace LIBC64 {
         auto read(unsigned int device, uint8_t secondary) -> uint8_t;
         auto reset() -> void;
 
-        auto send_listen_talk_secondary(uint8_t b) -> void;
+        auto listentalkSecondary(uint8_t b) -> void;
     };
     
     extern Traps* traps;

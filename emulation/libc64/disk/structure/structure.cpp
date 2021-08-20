@@ -425,12 +425,13 @@ auto Structure1541::prepareKeyBufferActions( std::vector<uint8_t>& path ) -> voi
     system->keyBuffer->add( action );
 
     if (!system->secondDriveCable.burstRequested) {
-        action.mode = KeyBuffer::Mode::WaitFor;
-        action.buffer = {'S', 'E', 'A', 'R', 'C', 'H', 'I', 'N', 'G'};
-        action.blinkingCursor = false;
-        action.delay = 0;
-        system->keyBuffer->add(action);
-
+        if (!system->diskTraps) {
+            action.mode = KeyBuffer::Mode::WaitFor;
+            action.buffer = {'S', 'E', 'A', 'R', 'C', 'H', 'I', 'N', 'G'};
+            action.blinkingCursor = false;
+            action.delay = 0;
+            system->keyBuffer->add(action);
+        }
         action.mode = KeyBuffer::Mode::WaitFor;
         action.buffer = {'L', 'O', 'A', 'D', 'I', 'N', 'G'};
         action.alternateBuffer = {'S', 'E', 'A', 'R', 'C', 'H', 'I', 'N', 'G'};
@@ -461,6 +462,11 @@ auto Structure1541::prepareKeyBufferActions( std::vector<uint8_t>& path ) -> voi
     system->keyBuffer->add( action );
 
     autoStarted = true;
+
+    if (system->diskTraps) {
+        traps->install();
+        traps->reset();
+    }
 }
 
 auto Structure1541::create( Type newType, std::string diskName ) -> Emulator::Interface::Data {
@@ -752,6 +758,37 @@ auto Structure1541::getTrackPtr( uint8_t side, uint8_t halfTrack ) -> GcrTrack* 
     return &gcrTracks[ side ][ halfTrack ];
 }
 
+auto Structure1541::readSector( uint8_t* buffer, uint8_t track, uint8_t sector ) -> bool {
+
+    unsigned offset = 0;
+    uint8_t side = 0;
+
+    if (!rawData || (track == 0) )
+        return false;
+
+    if (type == Type::D64 || type == Type::D71) {
+        if (track > tracksInDxx) {
+            offset = countSectors( tracksInDxx, 0 );
+            offset += countSectors( tracksInDxx );
+            offset <<= 8;
+            track -= tracksInDxx;
+        }
+        return readSector(rawData, buffer, track, sector, offset);
+    }
+
+    if (track > 35) {
+        track -= 35;
+        side = 1;
+    }
+
+    track = track * 2 - 2;
+
+    GcrTrack* trackPtr = &gcrTracks[side][track];
+
+    int err = decodeSector(trackPtr, buffer, sector);
+
+    return err == ERR_OK;
+}
 
 }
 

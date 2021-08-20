@@ -8,8 +8,7 @@
     * clockport emulation (i.e. Retro Replay, MMC)
     * CMD Ramlink + HD
     * all the others
-* disk
-    * Virtual Device Traps
+* disk   
     * drive sounds
     * 1581
 * user port

@@ -605,3 +605,5 @@ Fast Loader_image = Schnellladerabbild
 select_Fast Loader_image = Schnellladerabbild auswählen ...
 Kernal Replacement = Kernal Ersatz
 cartridge button = Modul Taster
+Disk Traps on Autostart = Disk Traps bei Autostart
+Disk Traps on Autostart tooltip = gefälschtes schnelles Laden der ersten Datei (weniger kompatibel)

@@ -1,4 +1,39 @@
 
+/*
+ * vdrive.c - Virtual disk-drive implementation.
+ *
+ * Written by
+ *  Andreas Boose <viceteam@t-online.de>
+ *
+ * Based on old code by
+ *  Teemu Rantanen <tvr@cs.hut.fi>
+ *  Jarkko Sonninen <sonninen@lut.fi>
+ *  Jouko Valta <jopi@stekt.oulu.fi>
+ *  Olaf Seibert <rhialto@mbfys.kun.nl>
+ *  Andre Fachat <a.fachat@physik.tu-chemnitz.de>
+ *  Ettore Perazzoli <ettore@comm2000.it>
+ *  pottendo <pottendo@gmx.net>
+ *
+ * This file is part of VICE, the Versatile Commodore Emulator.
+ * See README for copyright notice.
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+ *  02111-1307  USA.
+ *
+ */
+
 #include "../structure/structure.h"
 #include "../drive/drive1541.h"
 #include "virtualDrive.h"
@@ -134,7 +169,6 @@ VirtualDrive::VirtualDrive(Structure1541* structure) : structure(structure) {
     }
 }
 
-
 auto VirtualDrive::reset() -> void {
     for (unsigned i = 0; i < 15; i++) {
         vdrive.buffers[i].mode = BUFFER_NOT_IN_USE;
@@ -151,8 +185,6 @@ auto VirtualDrive::reset() -> void {
     vdrive.dir_part = 0;
     vdrive.last_code = CBMDOS_IPE_OK;
 }
-
-// main calls
 
 auto VirtualDrive::open(const uint8_t* name, unsigned int length, unsigned int secondary) -> int {
     bufferinfo_t* p = &(vdrive.buffers[secondary]);
@@ -438,7 +470,6 @@ auto VirtualDrive::get(uint8_t *data, unsigned int secondary) -> int {
         case BUFFER_PARTITION_READ:
         case BUFFER_DIRECTORY_MORE_READ:
         case BUFFER_SEQUENTIAL:
-            system->interface->log("read seq");
             status = iec_read_sequential(data, secondary);
             break;
 
@@ -597,7 +628,7 @@ auto VirtualDrive::finish() -> void {
     uint8_t bam[256];
     uint8_t id[2];
 
-    if (structure->D64readSector( &bam[0], 18, 0 )) {
+    if (structure->readSector( &bam[0], 18, 0 )) {
         std::memcpy(id, bam + 162, 2);
         structure->drive->ram[0x12] = id[0];
         structure->drive->ram[0x13] = id[1];
@@ -610,7 +641,7 @@ auto VirtualDrive::finish() -> void {
         std::memcpy(&(structure->drive->ram[0x400]), last_read_buffer, 256);
 
         structure->drive->currentHalftrack = last_read_track * 2 - 2;
-        structure->drive->updateStepper( 0 );
+        structure->drive->changeHalfTrack( 0 );
     }
 }
 
@@ -628,7 +659,7 @@ auto VirtualDrive::vdrive_read_sector(uint8_t *buf, unsigned int track, unsigned
 
   //  ret = disk_image_read_sector(vdrive->image, buf, &dadr);
 
-    if (structure->D64readSector(buf, dadr.track, dadr.sector ))
+    if (structure->readSector(buf, dadr.track, dadr.sector ))
         return CBMDOS_IPE_OK;
 
     return CBMDOS_IPE_OK;
@@ -705,49 +736,29 @@ auto VirtualDrive::iec_read_sequential(uint8_t *data, unsigned int secondary) ->
 }
 
 auto VirtualDrive::iec_open_read_directory(unsigned int secondary, cbmdos_cmd_parse_plus_t *cmd_parse) -> int {
-//    int retlen;
-//    bufferinfo_t* p = &(vdrive.buffers[secondary]);
-//
-//    /* we should already be in the proper partition at this point */
-//    if (secondary > 0) {
-//        return iec_open_read_sequential(secondary, vdrive->Header_Track,
-//                                        vdrive->Header_Sector);
-//    }
-//
-//    vdrive_alloc_buffer(p, BUFFER_DIRECTORY_READ);
-//
-//    p->timemode = 0;
-//    if (cmd_parse->command && cmd_parse->commandlength > 2
-//        && cmd_parse->command[1] == '=') {
-//        if (cmd_parse->command[2] == 'T') {
-//            /* if this is CMD time listing, pass on information to
-//               vdrive_dir_first_directory thru "done" */
-//            p->timemode = 1;
-//        } else if (cmd_parse->command[2] == 'P' && vdrive->haspt) {
-//            /* switch out of whatever partition may have been selected */
-//
-//            /* switch to system partition */
-//            p->partition = 255;
-//            /* make sure there is a system partition */
-//            if (vdrive_iec_switch(vdrive, p)) {
-//                vdrive_command_set_error(vdrive, CBMDOS_IPE_NOT_READY, 0, 0);
-//                return SERIAL_ERROR;
-//            }
-//            /* for partition lists, we use a different approach entirely */
-//            p->mode = BUFFER_PARTITION_READ;
-//            retlen = vdrive_dir_part_first_directory(vdrive, cmd_parse->file, cmd_parse->filelength, p);
-//            p->length = (unsigned int)retlen;
-//            p->bufptr = 0;
-//
-//            /* don't unswitch here; caller will do it */
-//            return SERIAL_OK;
-//        }
-//    }
-//    retlen = vdrive_dir_first_directory(vdrive, cmd_parse->file,
-//                                        cmd_parse->filelength, CBMDOS_FT_DEL, p);
-//
-//    p->length = (unsigned int)retlen;
-//    p->bufptr = 0;
+    int retlen;
+    bufferinfo_t* p = &(vdrive.buffers[secondary]);
+
+    /* we should already be in the proper partition at this point */
+    if (secondary > 0) {
+        return iec_open_read_sequential(secondary, vdrive.Header_Track, vdrive.Header_Sector);
+    }
+
+    vdrive_alloc_buffer(p, BUFFER_DIRECTORY_READ);
+
+    p->timemode = 0;
+    if (cmd_parse->command && cmd_parse->commandlength > 2
+        && cmd_parse->command[1] == '=') {
+        if (cmd_parse->command[2] == 'T') {
+            /* if this is CMD time listing, pass on information to
+               vdrive_dir_first_directory thru "done" */
+            p->timemode = 1;
+        }
+    }
+    //retlen = vdrive_dir_first_directory(cmd_parse->file, cmd_parse->filelength, CBMDOS_FT_DEL, p);
+
+    p->length = (unsigned int)retlen;
+    p->bufptr = 0;
 
     return SERIAL_OK;
 }
@@ -946,6 +957,7 @@ auto VirtualDrive::cbmdos_parse_wildcard_compare(const uint8_t *name1, const uin
     unsigned int index;
 
     for (index = 0; index < CBMDOS_SLOT_NAME_LENGTH; index++) {
+
         switch (name1[index]) {
             case '*':
                 return 1; /* rest is not interesting, it's a match */
@@ -956,6 +968,9 @@ auto VirtualDrive::cbmdos_parse_wildcard_compare(const uint8_t *name1, const uin
                 break;
             case 0xa0: /* This one ends, let's see if the other as well */
                 return (name2[index] == 0xa0);
+            case ':':
+                if (index == 0)
+                    break;
             default:
                 if (name1[index] != name2[index]) {
                     return 0; /* does not match */
@@ -976,10 +991,10 @@ auto VirtualDrive::iec_open_read( unsigned int secondary) -> int {
     if (!slot) {
         close( secondary);
         vdrive_command_set_error(CBMDOS_IPE_NOT_FOUND, 0, 0);
-        system->interface->log("no slot");
+        //system->interface->log("no slot");
         return SERIAL_ERROR;
     }
-    system->interface->log("step 9");
+
     type = slot[SLOT_TYPE_OFFSET] & 0x07;
     track = (unsigned int)slot[SLOT_FIRST_TRACK];
     sector = (unsigned int)slot[SLOT_FIRST_SECTOR];
@@ -1033,6 +1048,10 @@ auto VirtualDrive::cbmdos_command_parse_plus(cbmdos_cmd_parse_plus_t *cmd_parse)
         }
         /* look for a ':' to separate the unit/part-path from name */
         p2 = (uint8_t*)std::memchr(p, ':', limit - p);
+        if (p2) {
+            if (*(p2+1) == '*')
+                p2 = NULL;
+        }
         /* check for special commands without : */
         if (*p == '$' || *p == '#') {
             special = 1;
