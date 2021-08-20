@@ -519,14 +519,14 @@ auto IecBus::getDiskListing(Emulator::Interface::Media* media) -> std::vector<Em
     return drives[ media->id ]->structure1541.getListing();
 }
 
-auto IecBus::selectListing( Emulator::Interface::Media* media, unsigned pos ) -> void {
+auto IecBus::selectListing( Emulator::Interface::Media* media, unsigned pos, bool useTraps ) -> void {
     
-    drives[ media->id ]->structure1541.selectListing( pos );
+    drives[ media->id ]->structure1541.selectListing( pos, useTraps );
 }
 
-auto IecBus::selectListing( Emulator::Interface::Media* media,  std::string fileName ) -> void {
+auto IecBus::selectListing( Emulator::Interface::Media* media,  std::string fileName, bool useTraps ) -> void {
 
-    drives[ media->id ]->structure1541.selectListing( fileName );
+    drives[ media->id ]->structure1541.selectListing( fileName, useTraps );
 }
 
 auto IecBus::updateIdleState() -> void {

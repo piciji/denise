@@ -392,7 +392,7 @@ auto Structure1541::buildLoadCommand( std::vector<uint8_t> loadPath, bool forSho
 	return loadPath;
 }
 
-auto Structure1541::selectListing( std::string fileName ) -> void {
+auto Structure1541::selectListing( std::string fileName, bool useTraps ) -> void {
 
     Emulator::PetciiConversion petciiConversion;
 
@@ -402,10 +402,10 @@ auto Structure1541::selectListing( std::string fileName ) -> void {
 
     petcii = buildLoadCommand(petcii);
 
-    prepareKeyBufferActions( petcii );
+    prepareKeyBufferActions( petcii, useTraps );
 }
 
-auto Structure1541::selectListing(  unsigned pos ) -> void {
+auto Structure1541::selectListing(  unsigned pos, bool useTraps ) -> void {
 
     std::vector<uint8_t> path;
     if (pos < listings.size())
@@ -413,10 +413,10 @@ auto Structure1541::selectListing(  unsigned pos ) -> void {
     else
         path = buildLoadCommand({'*'});
 
-    prepareKeyBufferActions( path );
+    prepareKeyBufferActions( path, useTraps );
 }
 
-auto Structure1541::prepareKeyBufferActions( std::vector<uint8_t>& path ) -> void {
+auto Structure1541::prepareKeyBufferActions( std::vector<uint8_t>& path, bool useTraps ) -> void {
 	
     KeyBuffer::Action action;
     
@@ -425,7 +425,7 @@ auto Structure1541::prepareKeyBufferActions( std::vector<uint8_t>& path ) -> voi
     system->keyBuffer->add( action );
 
     if (!system->secondDriveCable.burstRequested) {
-        if (!system->diskTraps) {
+        if (!useTraps) {
             action.mode = KeyBuffer::Mode::WaitFor;
             action.buffer = {'S', 'E', 'A', 'R', 'C', 'H', 'I', 'N', 'G'};
             action.blinkingCursor = false;
@@ -463,7 +463,7 @@ auto Structure1541::prepareKeyBufferActions( std::vector<uint8_t>& path ) -> voi
 
     autoStarted = true;
 
-    if (system->diskTraps) {
+    if (useTraps) {
         traps->install();
         traps->reset();
     }

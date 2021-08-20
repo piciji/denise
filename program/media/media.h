@@ -207,6 +207,7 @@ struct MediaLayout : GUIKIT::HorizontalLayout {
     GUIKIT::FramedVerticalLayout moduleFrame;
     GUIKIT::SwitchLayout moduleSwitch;
     GUIKIT::TreeView mediaTree;
+    GUIKIT::CheckBox useDiskTraps;
     GUIKIT::Button bootCart;
     GUIKIT::Button deactivateCart;
     
@@ -221,7 +222,7 @@ struct MediaLayout : GUIKIT::HorizontalLayout {
 	auto translate() -> void;
     auto updateMediaBlock(MediaGroupLayout::Block* block, FileSetting* fSetting) -> void;
     auto updateVisibility( Emulator::Interface::MediaGroup* mediaGroup, unsigned count ) -> void;
-    auto updateExpansionBootButtonVisibility() -> void;
+    auto updateOptionsVisibility() -> void;
     auto bindSelectorAction( MediaGroupLayout* layout ) -> void;
     auto prepareCreator() -> void;
     auto preparePaths() -> void;	

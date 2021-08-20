@@ -34,7 +34,7 @@ struct Fileloader {
     auto showC64Listing( Emulator::Interface* emulator, Emulator::Interface::MediaGroup* mediaGroup ) -> bool;
     auto resetPreview(Emulator::Interface* emulator, bool light = false) -> void;
     auto convertListing( std::vector<Emulator::Interface::Listing>& emuListings ) -> std::vector<GUIKIT::BrowserWindow::Listing>;
-    auto insertFile( Emulator::Interface* emulator, Emulator::Interface::Media* media, std::string filePath, bool autoLoad = false, unsigned selection = 0 ) -> bool;
+    auto insertFile( Emulator::Interface* emulator, Emulator::Interface::Media* media, std::string filePath, uint8_t autoLoad = 0, unsigned selection = 0 ) -> bool;
     auto insertImage( Emulator::Interface* emulator, Emulator::Interface::Media* media, GUIKIT::File* file, GUIKIT::File::Item* item) -> void;
     auto insertCurrentPreview(Emulator::Interface::MediaGroup* mediaGroup) -> void;
     auto preselectPath( GUIKIT::Settings* settings, std::string& groupName ) -> std::string;

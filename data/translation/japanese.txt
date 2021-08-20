@@ -605,5 +605,5 @@ Fast Loader_image =
 select_Fast Loader_image =
 Kernal Replacement =
 cartridge button =
-Disk Traps on Autostart =
-Disk Traps on Autostart tooltip =
+Virtual Auto Start =
+Virtual Auto Start tooltip =

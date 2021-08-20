@@ -69,6 +69,7 @@ auto Autoloader::postProcessing() -> void {
 
     auto mediaGroup = ddControl.mediaGroups[0];
     bool autoStart = true;
+    bool trapped = false;
     FileSetting* fSetting = nullptr;
     
     if (ddControl.mode == Mode::DragnDrop) {
@@ -79,10 +80,20 @@ auto Autoloader::postProcessing() -> void {
             else if (!activeEmulator || (activeEmulator != ddControl.emulator) )
                 autoStart = true;
         }
+        if (autoStart) {
+            trapped = program->getSettings( ddControl.emulator )->get<bool>("use_disk_traps", false);
+        }
     } else if (ddControl.mode == Mode::Open)
         autoStart = false;
-    else if (ddControl.mode == Mode::AutoStart)
-        autoStart = true;    	    
+    else if (ddControl.mode == Mode::AutoStart) {
+        autoStart = true;
+        trapped = program->getSettings( ddControl.emulator )->get<bool>("use_disk_traps", false);
+    } else if (ddControl.mode == Mode::AutoStartTrapped) {
+        autoStart = true;
+        trapped = true;
+    } else if (ddControl.mode == Mode::AutoStartNotTrapped) {
+        autoStart = true;
+    }
     
     if (!autoStart) {
 
@@ -154,13 +165,13 @@ auto Autoloader::postProcessing() -> void {
         program->power( ddControl.emulator,emuView != nullptr );
 
         if (!useExpansion)
-            program->removeExpansion();        
+            program->removeExpansion();
         
         if (mediaGroup->selected) {
-            ddControl.emulator->selectListing(mediaGroup->selected, ddControl.selection, ddControl.fileName);
+            ddControl.emulator->selectListing(mediaGroup->selected, ddControl.selection, ddControl.fileName, trapped);
             fSetting = FileSetting::getInstance( ddControl.emulator, _underscore(mediaGroup->selected->name) );
         } else {
-            ddControl.emulator->selectListing(&mediaGroup->media[0], ddControl.selection, ddControl.fileName);
+            ddControl.emulator->selectListing(&mediaGroup->media[0], ddControl.selection, ddControl.fileName, trapped);
             fSetting = FileSetting::getInstance( ddControl.emulator, _underscore(mediaGroup->media[0].name) );
         }
         

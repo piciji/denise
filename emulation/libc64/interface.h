@@ -22,7 +22,7 @@ struct Interface : Emulator::Interface {
         ModelIdCiaBurstMode, ModelIdDriveParallelCable, ModelIdDiskDriveModel, ModelIdDiskDrivesConnected, ModelIdTapeDrivesConnected,
         ModelIdDiskDriveSpeed, ModelIdDiskDriveWobble, ModelIdTapeDriveWobble, ModelIdDriveFastLoader,
         ModelIdDriveRam20To3F, ModelIdDriveRam40To5F, ModelIdDriveRam60To7F, ModelIdDriveRam80To9F, ModelIdDriveRamA0ToBF,
-        ModelIdCycleAccurateVideo, ModelIdDiskThread, ModelIdDiskOnDemand, ModelIdD64Accuracy, ModelIdDiskTraps,
+        ModelIdCycleAccurateVideo, ModelIdDiskThread, ModelIdDiskOnDemand, ModelIdD64Accuracy,
     };
     
     enum MediaGroupId {
@@ -91,8 +91,8 @@ struct Interface : Emulator::Interface {
 	auto createDiskImage(unsigned typeId, bool hd = false, std::string name = "", bool ffs = false) -> Data;
     auto getDiskListing(Media* media) -> std::vector<Emulator::Interface::Listing>;
     auto getDiskPreview(uint8_t* data, unsigned size, Media* media = nullptr) -> std::vector<Emulator::Interface::Listing>;
-    auto selectDiskListing(Media* media, unsigned pos) -> void;
-    auto selectDiskListing(Media* media, std::string fileName) -> void;
+    auto selectDiskListing(Media* media, unsigned pos, bool useTraps = false) -> void;
+    auto selectDiskListing(Media* media, std::string fileName, bool useTraps = false) -> void;
     
 	//tape drive handling
 	auto insertTape(Media* media, uint8_t* data, unsigned size) -> void;

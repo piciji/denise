@@ -557,8 +557,6 @@ auto Interface::prepareModels() -> void {
         { "Manual", "SpeedDOS 1541", "DolphinDOS v2 1541", "DolphinDOS v2 Ultimate", "DolphinDOS v3 1541", "DolphinDOS v3 157x",
           "ProfDOS v1 1541", "ProfDOS R3/R4 1541", "ProfDOS R5 1570", "ProfDOS R6 1571", "PrologicDOS Classic 1541", "PrologicDOS 1541", "Turbo Trans"}});
 
-    models.push_back({ModelIdDiskTraps, "Disk Traps on Autostart", Model::Type::Switch, Model::Purpose::DriveSettings, 0});
-
     models.push_back({ModelIdTapeDrivesConnected, "Tape Drives", Model::Type::Combo, Model::Purpose::DriveSettings, 0, {0, 1},
                       { "0", "1" }});
 
@@ -919,20 +917,20 @@ auto Interface::getDiskPreview(uint8_t* data, unsigned size, Media* media) -> st
     return structure.getListing();
 }
 
-auto Interface::selectDiskListing(Media* media, unsigned pos) -> void {
+auto Interface::selectDiskListing(Media* media, unsigned pos, bool useTraps) -> void {
     
     if (!media || !media->group->isDisk())
         return;
     
-    iecBus->selectListing( media, pos );
+    iecBus->selectListing( media, pos, useTraps );
 }
 
-auto Interface::selectDiskListing(Media* media, std::string fileName) -> void {
+auto Interface::selectDiskListing(Media* media, std::string fileName, bool useTraps) -> void {
 
     if (!media || !media->group->isDisk())
         return;
 
-    iecBus->selectListing( media, fileName );
+    iecBus->selectListing( media, fileName, useTraps );
 }
 
 auto Interface::insertTape(Media* media, uint8_t* data, unsigned size) -> void {
@@ -1336,9 +1334,6 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
             system->secondDriveCable.parallelRequested = value & 1;
             system->burstOrParallelUpdate();
             break;
-        case ModelIdDiskTraps:
-            system->diskTraps = value & 1;
-            break;
         case ModelIdDriveFastLoader:
             iecBus->setSpeeder( value );
             break;
@@ -1457,7 +1452,6 @@ auto Interface::getModelValue(unsigned modelId) -> int {
         case ModelIdCiaBurstMode:           return system->secondDriveCable.burstRequested;
         case ModelIdDriveParallelCable:     return system->secondDriveCable.parallelRequested;
         case ModelIdDriveFastLoader:        return (int)iecBus->drives[0]->speeder;
-        case ModelIdDiskTraps:              return system->diskTraps ? 1 : 0;
 
         case ModelIdCycleAccurateVideo:     return system->cycleRendererNextBoot;
         case ModelIdDiskThread:             return iecBus->cpuBurnerRequested;

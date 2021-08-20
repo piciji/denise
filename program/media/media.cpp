@@ -81,25 +81,32 @@ auto MediaLayout::updateSwitchLayout() -> void {
     moduleSwitch.setSelection( navPos );
 }
 
-auto MediaLayout::updateExpansionBootButtonVisibility() -> void {
-    
+auto MediaLayout::updateOptionsVisibility() -> void {
+
     auto item = mediaTree.selected();
-    bool _enabled = false;
-    
+    bool _enabledExpansion = false;
+    bool _enabledDisk = false;
+
     if (item) {
         unsigned navPos = (unsigned)item->userData();
-        
+
         if (navPos < navElements.size()) {
             auto& navElement = navElements[navPos];
 
-            if (navElement.mediaGroupLayout && navElement.mediaGroupLayout->mediaGroup->isExpansion())
-                _enabled = true;          
+            if (navElement.mediaGroupLayout && navElement.mediaGroupLayout->mediaGroup->isDisk())
+                _enabledDisk = true;
+            else if (navElement.mediaGroupLayout && navElement.mediaGroupLayout->mediaGroup->isExpansion())
+                _enabledExpansion = true;
         }
     }
-    
-    if (bootCart.enabled() != _enabled) {
-        bootCart.setEnabled( _enabled );
-        deactivateCart.setEnabled( _enabled );
+
+    if (useDiskTraps.enabled() != _enabledDisk) {
+        useDiskTraps.setEnabled( _enabledDisk );
+    }
+
+    if (bootCart.enabled() != _enabledExpansion) {
+        bootCart.setEnabled( _enabledExpansion );
+        deactivateCart.setEnabled( _enabledExpansion );
     }
 }
 
@@ -189,6 +196,9 @@ auto MediaLayout::build() -> void {
     }
 
     moduleFrame.append( mediaTree, { GUIKIT::Font::scale(165), GUIKIT::Font::scale(300)}, 10 );
+    if (dynamic_cast<LIBC64::Interface*>(emulator)) {
+        moduleFrame.append(useDiskTraps, {0u, 0u}, 10);
+    }
     moduleFrame.append( bootCart, {0u, 0u}, 10 );
     moduleFrame.append( deactivateCart, {0u, 0u} );
     moduleFrame.setPadding(10);
@@ -204,7 +214,7 @@ auto MediaLayout::build() -> void {
         }
         
         updateSwitchLayout();
-        updateExpansionBootButtonVisibility();
+        updateOptionsVisibility();
     };
 		
     tvi = new GUIKIT::TreeViewItem;
@@ -460,7 +470,7 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
             
             program->removeExpansion();
 
-            emulator->selectListing( media, selection );
+            emulator->selectListing( media, selection, "", useDiskTraps.checked() );
        
             auto fSetting = FileSetting::getInstance(emulator, _underscore(media->name) );
             if (fSetting)
@@ -490,7 +500,13 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
             }
         };
     }
-    
+
+    useDiskTraps.onToggle = [this]() {
+        settings->set<bool>("use_disk_traps", useDiskTraps.checked());
+    };
+
+    useDiskTraps.setChecked( settings->get<bool>("use_disk_traps", false) );
+
     bootCart.onActivate = [this]() {
         
         auto selectedItem = mediaTree.selected();
@@ -838,6 +854,8 @@ auto MediaLayout::translate() -> void {
     pathsLayout.setText( trans->get("paths") );
     moduleFrame.setText( trans->get("selection") );   
     bootCart.setText( trans->get("boot cartridge") );
+    useDiskTraps.setText( trans->get("Virtual Auto Start") );
+    useDiskTraps.setTooltip( trans->get("Virtual Auto Start tooltip") );
     deactivateCart.setText( trans->get("deactivate cartridge") );
     if (expansionParent)
         expansionParent->setText( trans->get("cartridges") );
@@ -1096,7 +1114,7 @@ auto MediaLayout::showMediaGroupLayout( Emulator::Interface::MediaGroup* mediaGr
         if (nav.mediaGroupLayout && (nav.mediaGroupLayout->mediaGroup == mediaGroup)) {
             nav.tvi->setSelected();
             updateSwitchLayout();
-            updateExpansionBootButtonVisibility();
+            updateOptionsVisibility();
             break;
         }
     }
@@ -1330,6 +1348,8 @@ auto MediaLayout::updateListings( ) -> void {
 }
 
 auto MediaLayout::loadSettings() -> void {
+
+    useDiskTraps.setChecked( settings->get<bool>("use_disk_traps", false) );
     
     for(auto& nav : navElements) {
         

@@ -107,7 +107,6 @@ struct System {
     bool kernalBootComplete = false;
     bool powerOn = false;
     bool cycleRendererNextBoot = false;
-    bool diskTraps = false;
     
     struct {
         unsigned config;

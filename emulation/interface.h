@@ -409,8 +409,8 @@ struct Interface {
 	virtual auto createDiskImage(unsigned typeId, bool hd = false, std::string name = "", bool ffs = false) -> Data { return {nullptr, 0}; }
     virtual auto getDiskListing(Media* media) -> std::vector<Listing> { return {}; }
     virtual auto getDiskPreview(uint8_t* data, unsigned size, Media* media = nullptr) -> std::vector<Listing> { return {}; }
-    virtual auto selectDiskListing(Media* media, unsigned pos) -> void { }
-    virtual auto selectDiskListing(Media* media, std::string fileName) -> void { }
+    virtual auto selectDiskListing(Media* media, unsigned pos, bool useTraps = false) -> void { }
+    virtual auto selectDiskListing(Media* media, std::string fileName, bool useTraps = false) -> void { }
     
     // hard disk handling
     virtual auto insertHardDisk(Media* media, unsigned size) -> void {} //uses read and write callbacks above because of big data
@@ -582,13 +582,13 @@ struct Interface {
         return {};
     }
     
-    auto selectListing(Media* media, unsigned position, std::string fileName = "") -> bool {
+    auto selectListing(Media* media, unsigned position, std::string fileName = "", bool useTraps = false) -> bool {
         switch(media->group->type) {
 			case MediaGroup::Type::Disk:
 			    if (!fileName.empty() && (position == 0) )
-                    selectDiskListing( media, fileName );
+                    selectDiskListing( media, fileName, useTraps );
 			    else
-                    selectDiskListing( media, position );
+                    selectDiskListing( media, position, useTraps );
                 return true;
 			case MediaGroup::Type::Tape:
                 selectTapeListing( media, position );
