@@ -3,6 +3,7 @@
 
 #include <functional>
 #include <vector>
+#include <string>
 #include "baseDevice.h"
 
 namespace LIBC64 {
