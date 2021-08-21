@@ -23,10 +23,13 @@ auto Traps::add(Trap trap) -> void {
 }
 
 auto Traps::install() -> void {
-    installed = false;
+    installed = trapList.size() > 0;
 
     for(auto& trap : trapList)
-        installed |= install(trap);
+        if (!install(trap)) {
+            installed = false;
+            break;
+        }
 }
 
 auto Traps::install(Trap& t) -> bool {
