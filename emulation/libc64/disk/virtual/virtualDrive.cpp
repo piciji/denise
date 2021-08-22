@@ -640,7 +640,7 @@ auto VirtualDrive::finish() -> void {
 
         std::memcpy(&(structure->drive->ram[0x400]), last_read_buffer, 256);
 
-        structure->drive->currentHalftrack = last_read_track * 2 - 2;
+        structure->drive->currentHalftrack = last_read_track * 2 - 2 + 1;
         structure->drive->changeHalfTrack( 0 );
     }
 }
