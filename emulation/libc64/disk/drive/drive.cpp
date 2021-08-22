@@ -54,11 +54,11 @@ namespace LIBC64 {
     if (attachDelay)              \
         attachDelay--;
     
-auto Drive1541::sync() -> void {
+auto Drive::sync() -> void {
     SYNC 
 }
 
-auto Drive1541::cpuWrite(uint16_t addr, uint8_t data) -> void {
+auto Drive::cpuWrite(uint16_t addr, uint8_t data) -> void {
     SYNC
 
     if (operation & DRIVE_MODE_154x) {
@@ -170,7 +170,7 @@ auto Drive1541::cpuWrite(uint16_t addr, uint8_t data) -> void {
     }
 }
 
-auto Drive1541::cpuRead(uint16_t addr) -> uint8_t {
+auto Drive::cpuRead(uint16_t addr) -> uint8_t {
     SYNC
     if (operation & DRIVE_MODE_154x) {
         if (extendedMemoryMap) {
@@ -341,7 +341,7 @@ auto Drive1541::cpuRead(uint16_t addr) -> uint8_t {
     return addr >> 8;
 }
 
-Drive1541::Drive1541(uint8_t number, Emulator::Interface::Media* mediaConnected ) : structure1541(this) {
+Drive::Drive(uint8_t number, Emulator::Interface::Media* mediaConnected ) : structure1541(this) {
      
     this->number = number; 
 	this->mediaConnected = mediaConnected;
@@ -654,7 +654,7 @@ Drive1541::Drive1541(uint8_t number, Emulator::Interface::Media* mediaConnected 
         motorOff.chunkSize.push_back( 0 );
 } 
 
-Drive1541::~Drive1541() {    
+Drive::~Drive() {
     
     delete[] ram;
     delete[] ram20To3F;
@@ -665,13 +665,13 @@ Drive1541::~Drive1541() {
     delete[] turboTrans;
 }
 
-auto Drive1541::updateDeviceState() -> void {
+auto Drive::updateDeviceState() -> void {
         
     system->interface->updateDeviceState( getMediaConnected(), !readMode, (side * MAX_TRACKS_1541 * 2) + currentHalftrack + 2, via2->lines.iob & 8, !motorOn );
 }
 
 // missing BUS communication
-auto Drive1541::updateIdleDeviceState() -> void {
+auto Drive::updateIdleDeviceState() -> void {
     
     system->interface->updateDeviceState( getMediaConnected(), !readMode, (side * MAX_TRACKS_1541 * 2) + currentHalftrack + 2, false, true );
 
@@ -679,7 +679,7 @@ auto Drive1541::updateIdleDeviceState() -> void {
         system->motorChange( false );
 }
 
-auto Drive1541::updateBus() -> void {
+auto Drive::updateBus() -> void {
     
     clockOut = !((via1->lines.iob >> 3) & 1);    
     dataOut =  !((via1->lines.iob >> 1) & 1);
@@ -689,7 +689,7 @@ auto Drive1541::updateBus() -> void {
         dataOut = 0;
 }
 
-auto Drive1541::power( ) -> void {
+auto Drive::power( ) -> void {
 
     std::memset(ram, 0, 2 * 1024);
     if (expandMemory & (uint8_t)ExpandedMemMode::M20)
@@ -758,7 +758,7 @@ auto Drive1541::power( ) -> void {
     randomizeRpm();
 }
 
-auto Drive1541::updateCycleSpeed(bool mhz2x, bool init) -> void {
+auto Drive::updateCycleSpeed(bool mhz2x, bool init) -> void {
     if (mhz2x) {
         //system->interface->log("2 mhz", 1);
         refCyclesInCpuCycle = 8;
@@ -787,7 +787,7 @@ auto Drive1541::updateCycleSpeed(bool mhz2x, bool init) -> void {
     setSyncPos( syncPos );
 }
 
-auto Drive1541::setSyncPos(int direction) -> void {
+auto Drive::setSyncPos(int direction) -> void {
     if (direction < 0)
         syncPos = syncPosRead;
     else if (direction > 0)
@@ -796,12 +796,12 @@ auto Drive1541::setSyncPos(int direction) -> void {
         syncPos = 0;
 }
 
-auto Drive1541::powerOff( ) -> void {  
+auto Drive::powerOff( ) -> void {
     write();  
     motorOn = false;
 }
 
-auto Drive1541::setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> void {
+auto Drive::setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> void {
 
     if ( (size == 0) || ((size & (size - 1)) != 0) )
         data = nullptr;
@@ -856,7 +856,7 @@ auto Drive1541::setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> vo
     }
 }
 
-auto Drive1541::setViaTransition( bool direction ) -> void {
+auto Drive::setViaTransition( bool direction ) -> void {
 	
 	// we need to check how much the drive is ahead of the c64.
     // if the drive is more than two cycles ahead we need to manually register
@@ -886,7 +886,7 @@ auto Drive1541::setViaTransition( bool direction ) -> void {
 		via1->ca1In( direction, true);
 }
 
-auto Drive1541::detach() -> void {
+auto Drive::detach() -> void {
     write();
     
     if (loaded)
@@ -904,7 +904,7 @@ auto Drive1541::detach() -> void {
     pulseDelta = 1; // to reload quickly
 }
 
-auto Drive1541::attach( Emulator::Interface::Media* media, uint8_t* data, unsigned size, bool loadGracefully ) -> void {
+auto Drive::attach( Emulator::Interface::Media* media, uint8_t* data, unsigned size, bool loadGracefully ) -> void {
     this->media = media;
     detach();
     accum = 0;
@@ -927,7 +927,7 @@ auto Drive1541::attach( Emulator::Interface::Media* media, uint8_t* data, unsign
     postAttach();
 }
 
-auto Drive1541::postAttach() -> void {
+auto Drive::postAttach() -> void {
     pulseIndex = gcrTrack->firstPulse;
 
     loaded = true;
@@ -948,12 +948,12 @@ auto Drive1541::postAttach() -> void {
         operation |= FLUXDATA_LEVEL;
 }
 
-auto Drive1541::setWriteProtect(bool state) -> void {
+auto Drive::setWriteProtect(bool state) -> void {
     
     writeProtected = state;
 }
 
-auto Drive1541::writeprotectSense() -> uint8_t {
+auto Drive::writeprotectSense() -> uint8_t {
 
     if (attachDelay) {
         if (wasAttachDetached) {
@@ -973,7 +973,7 @@ auto Drive1541::writeprotectSense() -> uint8_t {
     return writeProtected ? 0 : 0x10;
 }
 
-auto Drive1541::write() -> void {
+auto Drive::write() -> void {
     
     if (!written)
         return;
@@ -994,17 +994,17 @@ auto Drive1541::write() -> void {
     structure1541.storeWrittenTracks();
 }
 
-auto Drive1541::setSpeed(unsigned rpmScaled) -> void {
+auto Drive::setSpeed(unsigned rpmScaled) -> void {
 
     this->rpm = rpmScaled;
 }
 
-auto Drive1541::setWobble(unsigned wobbleScaled) -> void {
+auto Drive::setWobble(unsigned wobbleScaled) -> void {
 
     this->wobble = wobbleScaled;
 }
 
-auto Drive1541::setType( Type type ) -> void {
+auto Drive::setType( Type type ) -> void {
     this->type = type;
 
     updateCycleSpeed(false);
@@ -1020,7 +1020,7 @@ auto Drive1541::setType( Type type ) -> void {
     setFirmwareByType();
 }
 
-auto Drive1541::setFirmwareByType( ) -> void {
+auto Drive::setFirmwareByType( ) -> void {
     switch (type) {
         default:
         case Type::D1541II:
@@ -1051,7 +1051,7 @@ auto Drive1541::setFirmwareByType( ) -> void {
     }
 }
 
-auto Drive1541::setExpandedMemory( ExpandedMemMode& expandedMemMode, bool state ) -> void {
+auto Drive::setExpandedMemory( ExpandedMemMode& expandedMemMode, bool state ) -> void {
 
     if (state) {
         expandMemory |= (uint8_t)expandedMemMode;
@@ -1062,7 +1062,7 @@ auto Drive1541::setExpandedMemory( ExpandedMemMode& expandedMemMode, bool state 
     extendedMemoryMap = expandMemory || (speeder > 1);
 }
 
-auto Drive1541::setSpeeder(uint8_t speeder) -> void {
+auto Drive::setSpeeder(uint8_t speeder) -> void {
 
     this->speeder = speeder;
 

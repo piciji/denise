@@ -29,10 +29,10 @@
 
 namespace LIBC64 {
 
-struct Drive1541 {
+struct Drive {
         
-    Drive1541( uint8_t number, Emulator::Interface::Media* mediaConnected );
-    ~Drive1541();
+    Drive( uint8_t number, Emulator::Interface::Media* mediaConnected );
+    ~Drive();
 
     enum class Type { D1541, D1541II, D1541C, D1570, D1571 } type;
 

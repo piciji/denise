@@ -76,7 +76,7 @@ auto Fileloader::load(Emulator::Interface* emulator, Emulator::Interface::Media*
         return this->insertFile(emulator, media, filePath, 1, selection);
     }, IDC_BUTTON );
 
-    if (!*alternateFileDialog && group->isDisk() && dynamic_cast<LIBC64::Interface*>(emulator)) {
+    if (!*alternateFileDialog && group->isDisk() && dynamic_cast<LIBC64::Interface*>(emulator) && !settings->get<unsigned>( "use_firmware", 0 )) {
         fileDialogPtr->addCustomButton( trans->get("Virtual Auto Start"), [this, emulator, media](std::string filePath, unsigned selection) {
 
             if (filePath.empty())
@@ -206,7 +206,7 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
         return true;
     }, IDC_BUTTON );
 
-    if (!*alternateFileDialog && dynamic_cast<LIBC64::Interface*>(emulator)) {
+    if (!*alternateFileDialog && dynamic_cast<LIBC64::Interface*>(emulator) && !settings->get<unsigned>( "use_firmware", 0 ) ) {
         fileDialogPtr->addCustomButton( trans->get("Virtual Auto Start"), [this, emulator, settings, mIsAcquiredBefore](std::string filePath, unsigned selection) {
 
             if (filePath.empty())
