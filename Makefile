@@ -149,7 +149,7 @@ obj/virtualDrive64.o: emulation/libc64/disk/virtual/virtualDrive.cpp
 obj/via.o:	emulation/libc64/disk/via/via.cpp
 obj/pia.o:	emulation/tools/pia.cpp
 obj/iec.o:	emulation/libc64/disk/iec.cpp
-obj/drive1541.o:emulation/libc64/disk/drive/drive1541.cpp
+obj/drive1541.o:emulation/libc64/disk/drive/drive.cpp
 obj/structure1541.o:emulation/libc64/disk/structure/structure.cpp
 	$(compiler) $(cppflags) $(flags) -Wno-stringop-overflow $1 -c $< -o $@
 obj/thread.o:emulation/tools/thread.cpp

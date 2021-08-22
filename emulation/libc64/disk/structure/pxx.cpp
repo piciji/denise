@@ -38,7 +38,7 @@
 
 namespace LIBC64 {
 
-    auto Structure1541::analyzeP64() -> bool {
+    auto DiskStructure::analyzeP64() -> bool {
 
         uint8_t* ptr = rawData;
 
@@ -72,7 +72,7 @@ namespace LIBC64 {
         return true;
     }
 
-    auto Structure1541::analyzeP71() -> bool {
+    auto DiskStructure::analyzeP71() -> bool {
 
         uint8_t* ptr = rawData;
 
@@ -106,7 +106,7 @@ namespace LIBC64 {
         return true;
     }
 
-    auto Structure1541::writeP64ToMem(unsigned& memSize) -> uint8_t* {
+    auto DiskStructure::writeP64ToMem(unsigned& memSize) -> uint8_t* {
 
 #define BOUND_CHECK(length) \
     if ( (*pOffset + length) > *pMaxSize) { \
@@ -198,7 +198,7 @@ namespace LIBC64 {
                     int32_t index = gcrTrack->firstPulse;
 
                     while (index >= 0) {
-                        Structure1541::Pulse& pulse = gcrTrack->pulses[index];
+                        DiskStructure::Pulse& pulse = gcrTrack->pulses[index];
 
                         unsigned delta = pulse.position - lastPosition;
 
@@ -278,7 +278,7 @@ namespace LIBC64 {
         return *__buf;
     }
 
-    auto Structure1541::writePxx() -> bool {
+    auto DiskStructure::writePxx() -> bool {
 
         unsigned memSize = 0;
 
@@ -298,7 +298,7 @@ namespace LIBC64 {
         return result;
     }
 
-    auto Structure1541::decodeJob( std::vector<uint8_t*>* workLoad, bool* usePtr ) -> bool {
+    auto DiskStructure::decodeJob( std::vector<uint8_t*>* workLoad, bool* usePtr ) -> bool {
 
         std::vector<Emulator::PredictorEightBitWithPrefix*> predictorPositions;
         std::vector<Emulator::PredictorEightBitWithPrefix*> predictorStrengths;
@@ -424,7 +424,7 @@ namespace LIBC64 {
         return res;
     }
 
-    auto Structure1541::prepareP64Graceful() -> void {
+    auto DiskStructure::prepareP64Graceful() -> void {
 
         if (encodingGraceful.status == 0)
             return;
@@ -485,7 +485,7 @@ namespace LIBC64 {
             prepareP64Graceful();
     }
 
-    auto Structure1541::preparePxx() -> void {
+    auto DiskStructure::preparePxx() -> void {
 
         bool inUse[2][MAX_TRACKS_1541 * 2] = { {0}, {0} };
         bool* usePtr = &inUse[0][0];
@@ -561,7 +561,7 @@ namespace LIBC64 {
 //        }
     }
 
-    inline auto Structure1541::allocatePulse( std::vector<Pulse>& pulses ) -> unsigned {
+    inline auto DiskStructure::allocatePulse( std::vector<Pulse>& pulses ) -> unsigned {
 
         unsigned capacity = pulses.capacity();
         unsigned size = pulses.size();
@@ -580,8 +580,8 @@ namespace LIBC64 {
         return size;
     }
 
-    auto Structure1541::freePulse( GcrTrack* gcrTrack, int32_t index ) -> void {
-        Structure1541::Pulse& pulse = gcrTrack->pulses[index];
+    auto DiskStructure::freePulse( GcrTrack* gcrTrack, int32_t index ) -> void {
+        DiskStructure::Pulse& pulse = gcrTrack->pulses[index];
 
         if (gcrTrack->currentPulse == index)
             gcrTrack->currentPulse = pulse.next;
@@ -597,7 +597,7 @@ namespace LIBC64 {
             gcrTrack->pulses[pulse.next].previous = pulse.previous;
     }
 
-    auto Structure1541::addPulse( GcrTrack* gcrTrack, uint32_t position, uint32_t strength ) -> void {
+    auto DiskStructure::addPulse( GcrTrack* gcrTrack, uint32_t position, uint32_t strength ) -> void {
         // use double linked list for faster write emulation
         // have tried a simple sorted vector but inserting new elements during write emulation completly kill performance
 
@@ -653,7 +653,7 @@ namespace LIBC64 {
         gcrTrack->currentPulse = index;
     }
 
-    inline auto Structure1541::decodeP64( Emulator::Fpaq0& fpaq0, std::vector<Emulator::PredictorEightBitWithPrefix*>& predictors ) -> unsigned {
+    inline auto DiskStructure::decodeP64( Emulator::Fpaq0& fpaq0, std::vector<Emulator::PredictorEightBitWithPrefix*>& predictors ) -> unsigned {
 
         uint32_t result = 0;
 
@@ -672,7 +672,7 @@ namespace LIBC64 {
         return result;
     }
 
-    inline auto Structure1541::encodeP64( Emulator::Fpaq0& fpaq0, std::vector<Emulator::PredictorEightBitWithPrefix*>& predictors, unsigned value ) -> void {
+    inline auto DiskStructure::encodeP64( Emulator::Fpaq0& fpaq0, std::vector<Emulator::PredictorEightBitWithPrefix*>& predictors, unsigned value ) -> void {
 
         for(int i = 0; i < 4; i++) {
 
@@ -685,7 +685,7 @@ namespace LIBC64 {
         }
     }
 
-    auto Structure1541::prepareTracksNotInUse(bool* inUse) -> void {
+    auto DiskStructure::prepareTracksNotInUse(bool* inUse) -> void {
 
         for (int side = 0; side < sides; side++) {
             for (int halfTrack = 0; halfTrack < (MAX_TRACKS_1541 * 2); halfTrack++) {
@@ -711,7 +711,7 @@ namespace LIBC64 {
         }
     }
 
-    auto Structure1541::createPulsesFromGCR( GcrTrack* gcrTrack ) -> void {
+    auto DiskStructure::createPulsesFromGCR( GcrTrack* gcrTrack ) -> void {
         uint32_t positionHi, positionLo, incrementHi, incrementLo, bit;
 
         incrementHi = CyclesPerRevolution300Rpm / gcrTrack->bits;
@@ -735,7 +735,7 @@ namespace LIBC64 {
     }
 
     // this is needed to generate content list (TOC) outside emulation
-    inline auto Structure1541::encodeGCR(GcrTrack* gcrTrack, uint8_t halfTrack) -> void {
+    inline auto DiskStructure::encodeGCR(GcrTrack* gcrTrack, uint8_t halfTrack) -> void {
         uint8_t track = (halfTrack >> 1) + 1;
         unsigned trackSize = countBytes( track );
         uint8_t _speedzone = speedzone( track );
@@ -769,7 +769,7 @@ namespace LIBC64 {
         int32_t index = gcrTrack->firstPulse;
 
         while (index >= 0) {
-            Structure1541::Pulse& pulse = gcrTrack->pulses[index];
+            DiskStructure::Pulse& pulse = gcrTrack->pulses[index];
             index = pulse.next;
 
             if (pulse.strength < 0x80000000)
@@ -811,43 +811,43 @@ namespace LIBC64 {
         }
     }
 
-    auto Structure1541::createPxx( std::string diskName, uint8_t sides ) -> Emulator::Interface::Data {
+    auto DiskStructure::createPxx( std::string diskName, uint8_t sides ) -> Emulator::Interface::Data {
 
         auto temp = createGxx( diskName, sides );
 
-        Structure1541 structure1541;
+        DiskStructure structure;
 
-        structure1541.rawData = temp;
+        structure.rawData = temp;
 
-        structure1541.rawSize = (sides == 2) ? imageSizeG71() : imageSizeG64();
+        structure.rawSize = (sides == 2) ? imageSizeG71() : imageSizeG64();
 
-        if (!structure1541.analyzeG64() && !structure1541.analyzeG71())
+        if (!structure.analyzeG64() && !structure.analyzeG71())
             return {nullptr, 0};
 
-        structure1541.prepareGxx();
+        structure.prepareGxx();
 
         for (int side = 0; side < sides; side++) {
             for (unsigned track = 0; track < TYPICAL_TRACKS; track++) {
 
                 unsigned halfTrack = track << 1;
 
-                GcrTrack* gcrPtr = &structure1541.gcrTracks[side][halfTrack];
+                GcrTrack* gcrPtr = &structure.gcrTracks[side][halfTrack];
 
                 gcrPtr->written = gcrPtr->bits > 0;
 
                 if (gcrPtr->written)
-                    structure1541.createPulsesFromGCR(gcrPtr);
+                    structure.createPulsesFromGCR(gcrPtr);
             }
         }
 
         if (sides == 2)
-            std::memcpy( structure1541.rawData, "P71-1571", 8 );
+            std::memcpy( structure.rawData, "P71-1571", 8 );
         else
-            std::memcpy( structure1541.rawData, "P64-1541", 8 );
+            std::memcpy( structure.rawData, "P64-1541", 8 );
 
         unsigned memSize = 0;
 
-        uint8_t* temp2 = structure1541.writeP64ToMem(memSize);
+        uint8_t* temp2 = structure.writeP64ToMem(memSize);
 
         delete[] temp;
 

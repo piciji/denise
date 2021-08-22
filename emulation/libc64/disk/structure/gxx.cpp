@@ -3,7 +3,7 @@
 
 namespace LIBC64 {
   
-auto Structure1541::analyzeG64() -> bool {
+auto DiskStructure::analyzeG64() -> bool {
 
     if (rawSize < 32)
         return false; // too small
@@ -30,7 +30,7 @@ auto Structure1541::analyzeG64() -> bool {
     return true;
 }
 
-auto Structure1541::analyzeG71() -> bool {
+auto DiskStructure::analyzeG71() -> bool {
 
     if (rawSize < 32)
         return false; // too small
@@ -57,7 +57,7 @@ auto Structure1541::analyzeG71() -> bool {
     return true;
 }
 
-auto Structure1541::getTrackOffsetGxx( uint8_t halfTrack, int& error ) -> uint32_t {
+auto DiskStructure::getTrackOffsetGxx( uint8_t halfTrack, int& error ) -> uint32_t {
     uint8_t buf[4];
     error = 0;
     
@@ -79,7 +79,7 @@ auto Structure1541::getTrackOffsetGxx( uint8_t halfTrack, int& error ) -> uint32
     return offset;
 }
     
-auto Structure1541::prepareGxx() -> void {
+auto DiskStructure::prepareGxx() -> void {
     
     uint8_t buf[2];
     unsigned offset;
@@ -144,7 +144,7 @@ auto Structure1541::prepareGxx() -> void {
     }
 }
     
-auto Structure1541::writeGxx(const GcrTrack* trackPtr, uint8_t side, unsigned halfTrack) -> bool {
+auto DiskStructure::writeGxx(const GcrTrack* trackPtr, uint8_t side, unsigned halfTrack) -> bool {
     int error;
     uint8_t buf[4];
     bool appendTrack = false;
@@ -219,21 +219,21 @@ auto Structure1541::writeGxx(const GcrTrack* trackPtr, uint8_t side, unsigned ha
     return true;
 }
 
-auto Structure1541::imageSizeG64() -> unsigned {
+auto DiskStructure::imageSizeG64() -> unsigned {
     
     unsigned maxBytes = 7928;
     
     return 12 + MAX_TRACKS_1541 * 2 * 8 + TYPICAL_TRACKS * (maxBytes + 2);
 }
 
-auto Structure1541::imageSizeG71() -> unsigned {
+auto DiskStructure::imageSizeG71() -> unsigned {
 
     unsigned maxBytes = 7928;
 
     return 12 + MAX_TRACKS_1541 * 2 * 2 * 8 + TYPICAL_TRACKS * 2 * (maxBytes + 2);
 }
 
-auto Structure1541::createGxx( std::string diskName, uint8_t sides ) -> uint8_t* {
+auto DiskStructure::createGxx( std::string diskName, uint8_t sides ) -> uint8_t* {
     
     uint8_t* temp = new uint8_t[ (sides == 2) ? imageSizeG71() : imageSizeG64() ];
     uint8_t* ptr = temp;

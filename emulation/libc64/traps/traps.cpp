@@ -93,7 +93,7 @@ auto Traps::reset() -> void {
             unsigned drivePos = i - 8;
             if (drivePos < connectedDrives) {
                 p->inuse = true;
-                p->device = (BaseDevice*)iecBus->drivesEnabled[drivePos]->structure1541.virtualDrive;
+                p->device = (BaseDevice*)iecBus->drivesEnabled[drivePos]->structure.virtualDrive;
                 p->device->reset();
             }
         }

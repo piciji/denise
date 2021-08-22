@@ -6,21 +6,21 @@
 #include <vector>
 #include <condition_variable>
 
-#include "drive/drive1541.h"
+#include "drive/drive.h"
 #include "../../interface.h"
 #include "../../tools/serializer.h"
 
 namespace LIBC64 {
 
-struct Drive1541;
+struct Drive;
     
 struct IecBus {
     
     IecBus(Emulator::Interface::MediaGroup* mediaGroup);
     ~IecBus();        
     
-    std::vector<Drive1541*> drives;    
-    std::vector<Drive1541*> drivesEnabled;    
+    std::vector<Drive*> drives;
+    std::vector<Drive*> drivesEnabled;
     
     bool atnOut;
     bool clockOut;
@@ -75,14 +75,14 @@ struct IecBus {
     auto setFastForward( bool state ) -> void;
     auto updateIdleState() -> void;
     auto resetDriveState() -> void;
-    auto setExpandedMemory( Drive1541::ExpandedMemMode expandedMemMode, bool state ) -> void;
-    auto getExpandedMemory( Drive1541::ExpandedMemMode expandedMemMode ) -> bool;
+    auto setExpandedMemory( Drive::ExpandedMemMode expandedMemMode, bool state ) -> void;
+    auto getExpandedMemory( Drive::ExpandedMemMode expandedMemMode ) -> bool;
 	inline auto checkForIdleWrite(uint8_t byte) -> bool  { return (byte & 0x38) == lastByte; }
 
     auto updateSerializationSize() -> void;
     auto insertDiskGracefully() -> void;
 
-    auto setDriveType(Drive1541::Type type) -> void;
+    auto setDriveType(Drive::Type type) -> void;
     auto emulateDxxMoreAccurate(bool state) -> void;
     auto setSpeeder(uint8_t speeder) -> void;
 };

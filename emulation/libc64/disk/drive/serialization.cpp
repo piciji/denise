@@ -1,9 +1,9 @@
 
-#include "drive1541.h"
+#include "drive.h"
 
 namespace LIBC64 {   
     
-auto Drive1541::serialize(Emulator::Serializer& s) -> void {
+auto Drive::serialize(Emulator::Serializer& s) -> void {
 
     s.integer( (uint8_t&)type );
     s.integer( expandMemory );
@@ -84,7 +84,7 @@ auto Drive1541::serialize(Emulator::Serializer& s) -> void {
     via2->serialize( s );
     cpu->serialize( s );
 
-    s.integer( structure1541.encodingGraceful.status );
+    s.integer( structure.encodingGraceful.status );
 
     if (operation & DRIVE_MODE_157x)
         cia->serialize(s);
@@ -96,18 +96,18 @@ auto Drive1541::serialize(Emulator::Serializer& s) -> void {
         updateCycleSpeed( use2Mhz() );
 
         setFirmwareByType();
-        gcrTrack = structure1541.getTrackPtr( side, currentHalftrack );
+        gcrTrack = structure.getTrackPtr( side, currentHalftrack );
         // unserialize VIA before to get state of LED
         updateDeviceState();
 
-        if (structure1541.encodingGraceful.status)
+        if (structure.encodingGraceful.status)
             // state was generated during attaching P64 (gracefully)
             postAttach();
 
-        structure1541.encodingGraceful.reset();
+        structure.encodingGraceful.reset();
     }
        
-    structure1541.serialize( s, written );    
+    structure.serialize( s, written );
 }
 
 }

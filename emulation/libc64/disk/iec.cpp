@@ -56,7 +56,7 @@ IecBus* iecBus;
 IecBus::IecBus(Emulator::Interface::MediaGroup* mediaGroup) {    
     // max 4 drives will be supported
     for( unsigned i = 0; i < 4; i++ ) {    
-        Drive1541* drive = new Drive1541( i, &mediaGroup->media[i] );
+        Drive* drive = new Drive( i, &mediaGroup->media[i] );
         
         drives.push_back( drive );
     }     
@@ -115,7 +115,7 @@ auto IecBus::setFastForward( bool state ) -> void {
 }
 
 auto IecBus::run() -> void {
-    Drive1541* useDrive;
+    Drive* useDrive;
     
     while (1) {
         // we have to sort enabled drives. first run the drives most behind the c64,
@@ -422,9 +422,9 @@ auto IecBus::setDrivesEnabled( uint8_t count ) -> void {
     threaded = drivesEnabled.size() > 0;
 }
 
-auto IecBus::setDriveType(Drive1541::Type type) -> void {
+auto IecBus::setDriveType(Drive::Type type) -> void {
 
-    system->secondDriveCable.burstPossible = (type == Drive1541::Type::D1570) || (type == Drive1541::Type::D1571);
+    system->secondDriveCable.burstPossible = (type == Drive::Type::D1570) || (type == Drive::Type::D1571);
     system->secondDriveCable.parallelPossible = true;
     system->burstOrParallelUpdate();
 
@@ -474,7 +474,7 @@ auto IecBus::updateSerializationSize() -> void {
 
     for (auto drive : drivesEnabled) {
         if (drive->written)
-            drive->structure1541.updateSerializationSize();
+            drive->structure.updateSerializationSize();
     }
 }
 
@@ -482,10 +482,10 @@ auto IecBus::insertDiskGracefully() -> void {
 
     diskInsertInProgress = false;
     for (auto drive : drivesEnabled) {
-        if (drive->structure1541.encodingGraceful.status) {
-            drive->structure1541.prepareP64Graceful();
+        if (drive->structure.encodingGraceful.status) {
+            drive->structure.prepareP64Graceful();
 
-            if (drive->structure1541.encodingGraceful.status) {
+            if (drive->structure.encodingGraceful.status) {
                 diskInsertInProgress = true;
             } else {
                 drive->postAttach();
@@ -516,17 +516,17 @@ auto IecBus::isWriteProtected( Emulator::Interface::Media* media ) -> bool {
 
 auto IecBus::getDiskListing(Emulator::Interface::Media* media) -> std::vector<Emulator::Interface::Listing>& {
     
-    return drives[ media->id ]->structure1541.getListing();
+    return drives[ media->id ]->structure.getListing();
 }
 
 auto IecBus::selectListing( Emulator::Interface::Media* media, unsigned pos, bool useTraps ) -> void {
     
-    drives[ media->id ]->structure1541.selectListing( pos, useTraps );
+    drives[ media->id ]->structure.selectListing( pos, useTraps );
 }
 
 auto IecBus::selectListing( Emulator::Interface::Media* media,  std::string fileName, bool useTraps ) -> void {
 
-    drives[ media->id ]->structure1541.selectListing( fileName, useTraps );
+    drives[ media->id ]->structure.selectListing( fileName, useTraps );
 }
 
 auto IecBus::updateIdleState() -> void {
@@ -580,12 +580,12 @@ auto IecBus::resetTicks() -> void {
 	sysClock = sysTimer.clock;
 }
 
-auto IecBus::setExpandedMemory( Drive1541::ExpandedMemMode expandedMemMode, bool state ) -> void {
+auto IecBus::setExpandedMemory( Drive::ExpandedMemMode expandedMemMode, bool state ) -> void {
     for( auto drive : drives )
         drive->setExpandedMemory( expandedMemMode, state );
 }
 
-auto IecBus::getExpandedMemory( Drive1541::ExpandedMemMode expandedMemMode ) -> bool {
+auto IecBus::getExpandedMemory( Drive::ExpandedMemMode expandedMemMode ) -> bool {
     return (drives[0]->expandMemory & (uint8_t)expandedMemMode) ? true : false;
 }
 

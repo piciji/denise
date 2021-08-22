@@ -1,5 +1,5 @@
 
-#include "drive1541.h"
+#include "drive.h"
 #include "../iec.h"
 #include "mechanics.cpp"
 #include "mechanicsP64.cpp"
@@ -341,12 +341,12 @@ auto Drive::cpuRead(uint16_t addr) -> uint8_t {
     return addr >> 8;
 }
 
-Drive::Drive(uint8_t number, Emulator::Interface::Media* mediaConnected ) : structure1541(this) {
+Drive::Drive(uint8_t number, Emulator::Interface::Media* mediaConnected ) : structure(this) {
      
     this->number = number; 
 	this->mediaConnected = mediaConnected;
 	
-	structure1541.number = number;
+	structure.number = number;
 	type = Type::D1541II;
 	operation = 0;
     expandMemory = 0;
@@ -530,7 +530,7 @@ Drive::Drive(uint8_t number, Emulator::Interface::Media* mediaConnected ) : stru
                 uint8_t _side = side;
                 side = !!(lines->ioa & 4);
 
-                if (!structure1541.hasSecondSide())
+                if (!structure.hasSecondSide())
                     side = 0;
 
                 if (side != _side)
@@ -600,7 +600,7 @@ Drive::Drive(uint8_t number, Emulator::Interface::Media* mediaConnected ) : stru
                     }
                 }
 
-                if (structure1541.autoStarted)
+                if (structure.autoStarted)
                     system->motorChange( _loadingState );
             }
             
@@ -645,7 +645,7 @@ Drive::Drive(uint8_t number, Emulator::Interface::Media* mediaConnected ) : stru
         system->writeParallelHandshake();
     };
 
-    structure1541.write = [this](uint8_t* buffer, unsigned length, unsigned offset) {
+    structure.write = [this](uint8_t* buffer, unsigned length, unsigned offset) {
 		
 		return system->interface->writeMedia( getMedia(), buffer, length, offset );
 	};
@@ -675,7 +675,7 @@ auto Drive::updateIdleDeviceState() -> void {
     
     system->interface->updateDeviceState( getMediaConnected(), !readMode, (side * MAX_TRACKS_1541 * 2) + currentHalftrack + 2, false, true );
 
-    if (structure1541.autoStarted)
+    if (structure.autoStarted)
         system->motorChange( false );
 }
 
@@ -742,8 +742,8 @@ auto Drive::power( ) -> void {
     headOffset = 0;
     currentHalftrack = 17 * 2;
     stepDirection = 0;
-    structure1541.autoStarted = false;
-    structure1541.serializationSize = 0;
+    structure.autoStarted = false;
+    structure.serializationSize = 0;
     pulseIndex = -1;
     pulseDelta = 1;
     comperatorFlipFlop = false;
@@ -895,7 +895,7 @@ auto Drive::detach() -> void {
     if (iecBus->powerOn && use2Mhz() )
         attachDelay <<= 1;
     
-    structure1541.detach();
+    structure.detach();
     motorOff.slowDown = false;
     wasAttachDetached = false;
     
@@ -913,7 +913,7 @@ auto Drive::attach( Emulator::Interface::Media* media, uint8_t* data, unsigned s
     uf4Counter = ue7Counter = 0;
     ue3Counter = 0;
     
-	structure1541.media = media;
+	structure.media = media;
 
     wasAttachDetached = attachDelay != 0;
     attachDelay = DISC_DELAY * 3;
@@ -921,7 +921,7 @@ auto Drive::attach( Emulator::Interface::Media* media, uint8_t* data, unsigned s
     if (iecBus->powerOn && use2Mhz() )
         attachDelay <<= 1;
 
-    if ( !structure1541.attach( data, size, loadGracefully ) )
+    if ( !structure.attach( data, size, loadGracefully ) )
         return;
 
     postAttach();
@@ -937,14 +937,14 @@ auto Drive::postAttach() -> void {
 
     operation &= ~(USERDATA_LEVEL | ENCODEDDATA_LEVEL | FLUXDATA_LEVEL);
 
-    if (structure1541.type == Structure1541::Type::D64 || structure1541.type == Structure1541::Type::D71) {
+    if (structure.type == DiskStructure::Type::D64 || structure.type == DiskStructure::Type::D71) {
         if (emulateDxxMoreAccurate)
             operation |= ENCODEDDATA_LEVEL;
         else
             operation |= USERDATA_LEVEL;
-    } else if (structure1541.type == Structure1541::Type::G64 || structure1541.type == Structure1541::Type::G71)
+    } else if (structure.type == DiskStructure::Type::G64 || structure.type == DiskStructure::Type::G71)
         operation |= ENCODEDDATA_LEVEL;
-    else if (structure1541.type == Structure1541::Type::P64 || structure1541.type == Structure1541::Type::P71)
+    else if (structure.type == DiskStructure::Type::P64 || structure.type == DiskStructure::Type::P71)
         operation |= FLUXDATA_LEVEL;
 }
 
@@ -980,9 +980,9 @@ auto Drive::write() -> void {
     
     written = false;
 
-    if (structure1541.serializationSize) {
-        system->serializationSize -= structure1541.serializationSize;
-        structure1541.serializationSize = 0;
+    if (structure.serializationSize) {
+        system->serializationSize -= structure.serializationSize;
+        structure.serializationSize = 0;
     }
     
     if (!loaded)
@@ -991,7 +991,7 @@ auto Drive::write() -> void {
     if (!system->interface->questionToWrite(media))
         return;
     
-    structure1541.storeWrittenTracks();
+    structure.storeWrittenTracks();
 }
 
 auto Drive::setSpeed(unsigned rpmScaled) -> void {

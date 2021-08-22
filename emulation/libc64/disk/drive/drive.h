@@ -82,7 +82,7 @@ struct Drive {
     Cia8520* cia;
     Emulator::Pia* pia;
     M6502* cpu;
-    Structure1541 structure1541;
+    DiskStructure structure;
     int64_t cycleCounter;
     bool synced;
     uint8_t irqIncomming;
@@ -105,7 +105,7 @@ struct Drive {
     uint8_t turboTransVisible; // 0: rom, 1: ram
     uint8_t turboTransPage;
         
-    Structure1541::GcrTrack* gcrTrack = new Structure1541::GcrTrack;
+    DiskStructure::GcrTrack* gcrTrack = new DiskStructure::GcrTrack;
 
     bool emulateDxxMoreAccurate = false;
     uint8_t currentHalftrack;

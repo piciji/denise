@@ -895,7 +895,7 @@ auto Interface::ejectDisk(Media* media) -> void {
 
 auto Interface::createDiskImage(unsigned typeId, bool hd, std::string name, bool ffs) -> Data {
 	
-    return Structure1541::create( (Structure1541::Type) typeId, name );
+    return DiskStructure::create( (DiskStructure::Type) typeId, name );
 }
 
 auto Interface::getDiskListing(Media* media) -> std::vector<Emulator::Interface::Listing> {
@@ -908,7 +908,7 @@ auto Interface::getDiskListing(Media* media) -> std::vector<Emulator::Interface:
 
 auto Interface::getDiskPreview(uint8_t* data, unsigned size, Media* media) -> std::vector<Emulator::Interface::Listing> {
     
-    Structure1541 structure;
+    DiskStructure structure;
 	structure.number = media ? media->id : 0;
     
     if (!structure.attach( data, size, false ))
@@ -1308,7 +1308,7 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
         case ModelIdSid8: sids[6]->setType( (value & 1) ? Sid::Type::MOS_6581 : Sid::Type::MOS_8580 ); break;
 
         case ModelIdDiskDriveModel:
-            iecBus->setDriveType( Drive1541::Type(value) );
+            iecBus->setDriveType( Drive::Type(value) );
             break;
         case ModelIdDiskDrivesConnected:
             iecBus->setDrivesEnabled( value );
@@ -1338,19 +1338,19 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
             iecBus->setSpeeder( value );
             break;
         case ModelIdDriveRam20To3F:
-            iecBus->setExpandedMemory( Drive1541::ExpandedMemMode::M20, value & 1 );
+            iecBus->setExpandedMemory( Drive::ExpandedMemMode::M20, value & 1 );
             break;
         case ModelIdDriveRam40To5F:
-            iecBus->setExpandedMemory( Drive1541::ExpandedMemMode::M40, value & 1 );
+            iecBus->setExpandedMemory( Drive::ExpandedMemMode::M40, value & 1 );
             break;
         case ModelIdDriveRam60To7F:
-            iecBus->setExpandedMemory( Drive1541::ExpandedMemMode::M60, value & 1 );
+            iecBus->setExpandedMemory( Drive::ExpandedMemMode::M60, value & 1 );
             break;
         case ModelIdDriveRam80To9F:
-            iecBus->setExpandedMemory( Drive1541::ExpandedMemMode::M80, value & 1 );
+            iecBus->setExpandedMemory( Drive::ExpandedMemMode::M80, value & 1 );
             break;
         case ModelIdDriveRamA0ToBF:
-            iecBus->setExpandedMemory( Drive1541::ExpandedMemMode::MA0, value & 1 );
+            iecBus->setExpandedMemory( Drive::ExpandedMemMode::MA0, value & 1 );
             break;
 
         case ModelIdCycleAccurateVideo:
@@ -1458,11 +1458,11 @@ auto Interface::getModelValue(unsigned modelId) -> int {
         case ModelIdDiskOnDemand:           return system->diskSilence.active;
         case ModelIdD64Accuracy:            return (int)iecBus->drives[0]->emulateDxxMoreAccurate;
 
-        case ModelIdDriveRam20To3F:         return (int)iecBus->getExpandedMemory(Drive1541::ExpandedMemMode::M20);
-        case ModelIdDriveRam40To5F:         return (int)iecBus->getExpandedMemory(Drive1541::ExpandedMemMode::M40);
-        case ModelIdDriveRam60To7F:         return (int)iecBus->getExpandedMemory(Drive1541::ExpandedMemMode::M60);
-        case ModelIdDriveRam80To9F:         return (int)iecBus->getExpandedMemory(Drive1541::ExpandedMemMode::M80);
-        case ModelIdDriveRamA0ToBF:         return (int)iecBus->getExpandedMemory(Drive1541::ExpandedMemMode::MA0);
+        case ModelIdDriveRam20To3F:         return (int)iecBus->getExpandedMemory(Drive::ExpandedMemMode::M20);
+        case ModelIdDriveRam40To5F:         return (int)iecBus->getExpandedMemory(Drive::ExpandedMemMode::M40);
+        case ModelIdDriveRam60To7F:         return (int)iecBus->getExpandedMemory(Drive::ExpandedMemMode::M60);
+        case ModelIdDriveRam80To9F:         return (int)iecBus->getExpandedMemory(Drive::ExpandedMemMode::M80);
+        case ModelIdDriveRamA0ToBF:         return (int)iecBus->getExpandedMemory(Drive::ExpandedMemMode::MA0);
     }
     return 0;
 }

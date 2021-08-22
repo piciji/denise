@@ -1,9 +1,9 @@
 
-#include "drive1541.h"
+#include "drive.h"
 
 namespace LIBC64 {   
     
-auto Drive1541::rotateD64() -> void {    
+auto Drive::rotateD64() -> void {
     
     if (!motorRun())
         return;
@@ -101,7 +101,7 @@ auto Drive1541::rotateD64() -> void {
     }
 }
 
-auto Drive1541::byteFetched( bool overflowNotThisCycle ) -> void {
+auto Drive::byteFetched( bool overflowNotThisCycle ) -> void {
 
     ue3Counter = 0;
     latchedByte = writeBuffer = readBuffer & 0xff;
@@ -114,7 +114,7 @@ auto Drive1541::byteFetched( bool overflowNotThisCycle ) -> void {
     }
 }
 
-inline auto Drive1541::readBit() -> bool {
+inline auto Drive::readBit() -> bool {
     uint8_t* trackPtr = gcrTrack->data;
     
     if (!loaded)
@@ -134,7 +134,7 @@ inline auto Drive1541::readBit() -> bool {
     return (trackPtr[byte] >> bit) & 1;
 }
 
-inline auto Drive1541::writeBit( bool state ) -> void {
+inline auto Drive::writeBit( bool state ) -> void {
     uint8_t* trackPtr = gcrTrack->data;
     
     if (!loaded)
@@ -162,7 +162,7 @@ inline auto Drive1541::writeBit( bool state ) -> void {
     gcrTrack->written = 1; // track data has changed, host have to write back
 }
 
-auto Drive1541::motorRun() -> bool {
+auto Drive::motorRun() -> bool {
 
     if (motorOn)
         return true;
@@ -198,7 +198,7 @@ auto Drive1541::motorRun() -> bool {
     return false;
 }
 
-auto Drive1541::motorOffInit() -> void {
+auto Drive::motorOffInit() -> void {
 
     motorOff.delay = 14000 + (rand() % 1000);
     unsigned slowDownCycles = 50000;
@@ -222,7 +222,7 @@ auto Drive1541::motorOffInit() -> void {
     motorOff.slowDown = true;
 }
 
-auto Drive1541::randomizeRpm() -> void {
+auto Drive::randomizeRpm() -> void {
     
     // drive speed is 300 rounds per minute
     // more realistic speed wobbles between 299,75 - 300,25
@@ -252,7 +252,7 @@ auto Drive1541::randomizeRpm() -> void {
     refCyclesPerRevolution = (30000ULL * CyclesPerRevolution300Rpm) / adjusted;
 }
 
-auto Drive1541::updateStepper( uint8_t step ) -> bool {
+auto Drive::updateStepper( uint8_t step ) -> bool {
     
     if (step == 1) {        
         if (currentHalftrack < ((MAX_TRACKS_1541 * 2) - 1) ) {
@@ -292,7 +292,7 @@ auto Drive1541::updateStepper( uint8_t step ) -> bool {
     return false;
 }
 
-auto Drive1541::changeHalfTrack( uint8_t step ) -> void {
+auto Drive::changeHalfTrack( uint8_t step ) -> void {
                     
     updateStepper( step );
 
@@ -301,7 +301,7 @@ auto Drive1541::changeHalfTrack( uint8_t step ) -> void {
         unsigned position = 0;
 
         if (pulseIndex >= 0) {
-            Structure1541::Pulse& pulse = gcrTrack->pulses[pulseIndex];
+            DiskStructure::Pulse& pulse = gcrTrack->pulses[pulseIndex];
 
             if (pulse.position > pulseDelta)
                 position = pulse.position - pulseDelta;
@@ -309,7 +309,7 @@ auto Drive1541::changeHalfTrack( uint8_t step ) -> void {
                 position = CyclesPerRevolution300Rpm - (pulseDelta - pulse.position);
         }
 
-        gcrTrack = structure1541.getTrackPtr( side, currentHalftrack );
+        gcrTrack = structure.getTrackPtr( side, currentHalftrack );
         pulseIndex = gcrTrack->firstPulse;
         pulseDelta = 1;
 
@@ -328,7 +328,7 @@ auto Drive1541::changeHalfTrack( uint8_t step ) -> void {
         unsigned oldTrackSize = gcrTrack->size;
 
         // pointer to next track
-        gcrTrack = structure1541.getTrackPtr( side, currentHalftrack );
+        gcrTrack = structure.getTrackPtr( side, currentHalftrack );
 
         if ( oldTrackSize != 0 )
             // we want to keep alignment between old and new track.
@@ -347,7 +347,7 @@ auto Drive1541::changeHalfTrack( uint8_t step ) -> void {
 
 }
 
-inline auto Drive1541::syncFound() -> uint8_t {
+inline auto Drive::syncFound() -> uint8_t {
     
     if (!readMode || attachDelay )
         return 0x80;

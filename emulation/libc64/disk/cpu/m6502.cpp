@@ -1,6 +1,6 @@
 
 #include "m6502.h"
-#include "../drive/drive1541.h"
+#include "../drive/drive.h"
 
 namespace LIBC64 {	
 	

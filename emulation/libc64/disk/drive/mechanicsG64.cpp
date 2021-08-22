@@ -1,9 +1,9 @@
 
-#include "drive1541.h"
+#include "drive.h"
 
 namespace LIBC64 {
 
-    auto Drive1541::rotateG64( ) -> void {
+    auto Drive::rotateG64( ) -> void {
         unsigned todo;
         bool motorAdvance = motorRun() && loaded;
 

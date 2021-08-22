@@ -35,7 +35,7 @@
  */
 
 #include "../structure/structure.h"
-#include "../drive/drive1541.h"
+#include "../drive/drive.h"
 #include "virtualDrive.h"
 #include "../../system/system.h"
 #include <cstring>
@@ -162,7 +162,7 @@
 
 namespace LIBC64 {
 
-VirtualDrive::VirtualDrive(Structure1541* structure) : structure(structure) {
+VirtualDrive::VirtualDrive(DiskStructure* structure) : structure(structure) {
     for (unsigned i = 0; i < 16; i++) {
         vdrive.buffers[i].mode = BUFFER_NOT_IN_USE;
         vdrive.buffers[i].buffer = nullptr;
@@ -898,8 +898,8 @@ auto VirtualDrive::vdrive_dir_find_next_slot(vdrive_dir_context_t *dir) -> uint8
         int i, h, h2;
         unsigned int sector, max_sector, max_sector_all;
 
-        max_sector = Structure1541::countSectors(dir->track);
-        max_sector_all = Structure1541::countSectors(dir->track);
+        max_sector = DiskStructure::countSectors(dir->track);
+        max_sector_all = DiskStructure::countSectors(dir->track);
         h = (dir->sector / max_sector) * max_sector;
         sector = dir->sector % max_sector;
         sector += 3;

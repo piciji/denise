@@ -1,9 +1,9 @@
 
-#include "drive1541.h"
+#include "drive.h"
 
 namespace LIBC64 {
 
-auto Drive1541::readProfDosEncoder(uint16_t addr)->uint8_t {
+auto Drive::readProfDosEncoder(uint16_t addr)->uint8_t {
     if ( (addr & 0xf000) == 0x7000) {
         if (!(addr & 0x0800)) {
             addr = (uint16_t)((addr & 0xff0f) | (nibble << 4));
@@ -17,7 +17,7 @@ auto Drive1541::readProfDosEncoder(uint16_t addr)->uint8_t {
     return this->romExpanded[ (addr & 0x1fff) & romExpandedMask];
 }
 
-auto Drive1541::readProfDosEncoderV1(uint16_t addr)->uint8_t {
+auto Drive::readProfDosEncoderV1(uint16_t addr)->uint8_t {
     if ( (addr & 0xf000) == 0x8000) {
         if (!(addr & 0x0100)) {
             addr = (uint16_t)((addr & 0xff0f) | (nibble << 4));
@@ -31,7 +31,7 @@ auto Drive1541::readProfDosEncoderV1(uint16_t addr)->uint8_t {
     return this->romExpanded[ (0x2000 | (addr & 0x1fff)) & romExpandedMask ];
 }
 
-auto Drive1541::profDosClockControl(uint16_t addr)->void {
+auto Drive::profDosClockControl(uint16_t addr)->void {
 
     profDosAutoSpeed = false;
     if (addr & 2) {
@@ -50,7 +50,7 @@ auto Drive1541::profDosClockControl(uint16_t addr)->void {
     }
 }
 
-auto Drive1541::profDosAutoClockControl(uint16_t addr)->void {
+auto Drive::profDosAutoClockControl(uint16_t addr)->void {
 
     bool mhz2 = (addr & 0x4000) == 0;
 

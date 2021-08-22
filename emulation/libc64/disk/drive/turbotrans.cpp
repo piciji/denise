@@ -1,9 +1,9 @@
 
-#include "drive1541.h"
+#include "drive.h"
 
 namespace LIBC64 {
 
-auto Drive1541::turboTransWriteControl(uint16_t addr, uint8_t data) -> bool {
+auto Drive::turboTransWriteControl(uint16_t addr, uint8_t data) -> bool {
     if ((addr & 0xf800) == 0x1000) {
         turboTransVisible |= 1;
         return true;

@@ -3,7 +3,7 @@
 
 namespace LIBC64 {
 	
-auto Structure1541::createD64FromPRG( std::string name, uint8_t* prgData, unsigned prgSize ) -> uint8_t* {
+auto DiskStructure::createD64FromPRG( std::string name, uint8_t* prgData, unsigned prgSize ) -> uint8_t* {
 	
 	uint8_t buffer[256];
 	uint8_t* data = createDxx("empty", 1);
@@ -87,7 +87,7 @@ fail:
 	return nullptr;		
 }
 
-auto Structure1541::allocateFreeSector(uint8_t* bamPtr, uint8_t& track, uint8_t& sector) -> bool {
+auto DiskStructure::allocateFreeSector(uint8_t* bamPtr, uint8_t& track, uint8_t& sector) -> bool {
 	
 	unsigned maxSectors;
 	int t, s;
@@ -128,7 +128,7 @@ auto Structure1541::allocateFreeSector(uint8_t* bamPtr, uint8_t& track, uint8_t&
 	return false;
 }
 
-auto Structure1541::allocateNextFreeSector(uint8_t* bamPtr, uint8_t& track, uint8_t& sector) -> bool {
+auto DiskStructure::allocateNextFreeSector(uint8_t* bamPtr, uint8_t& track, uint8_t& sector) -> bool {
 	unsigned maxSectors;
 	int t, s;
 	
@@ -193,7 +193,7 @@ auto Structure1541::allocateNextFreeSector(uint8_t* bamPtr, uint8_t& track, uint
 	return false;
 }
 
-auto Structure1541::allocateDown(uint8_t* bamPtr, uint8_t& track, uint8_t& sector) -> bool {
+auto DiskStructure::allocateDown(uint8_t* bamPtr, uint8_t& track, uint8_t& sector) -> bool {
 	unsigned maxSectors;
 
 	for (unsigned t = track; t >= 1; t--) {
@@ -212,7 +212,7 @@ auto Structure1541::allocateDown(uint8_t* bamPtr, uint8_t& track, uint8_t& secto
 	return false;
 }
 
-auto Structure1541::allocateUp(uint8_t* bamPtr, uint8_t& track, uint8_t& sector) -> bool {
+auto DiskStructure::allocateUp(uint8_t* bamPtr, uint8_t& track, uint8_t& sector) -> bool {
 	unsigned maxSectors;
 
 	for (unsigned t = track; t <= 35; t++) {
@@ -231,7 +231,7 @@ auto Structure1541::allocateUp(uint8_t* bamPtr, uint8_t& track, uint8_t& sector)
 	return false;
 }
 
-auto Structure1541::allocateSector(uint8_t* bamPtr, uint8_t track, uint8_t sector) -> bool {
+auto DiskStructure::allocateSector(uint8_t* bamPtr, uint8_t track, uint8_t sector) -> bool {
 	
 	uint8_t* bamTrackPtr = getBamTrackEntry( bamPtr, track );
 	
@@ -244,7 +244,7 @@ auto Structure1541::allocateSector(uint8_t* bamPtr, uint8_t track, uint8_t secto
 	return false;
 }
 
-auto Structure1541::freeSector(uint8_t* bamPtr, uint8_t track, uint8_t sector) -> bool {
+auto DiskStructure::freeSector(uint8_t* bamPtr, uint8_t track, uint8_t sector) -> bool {
 	
 	uint8_t* bamTrackPtr = getBamTrackEntry( bamPtr, track );
 	
@@ -257,22 +257,22 @@ auto Structure1541::freeSector(uint8_t* bamPtr, uint8_t track, uint8_t sector) -
 	return false;
 }
 
-auto Structure1541::issetBam(uint8_t* bamTrackPtr, unsigned sector) -> bool {
+auto DiskStructure::issetBam(uint8_t* bamTrackPtr, unsigned sector) -> bool {
 	
     return (bamTrackPtr[1 + sector / 8] & (1 << (sector % 8))) != 0;
 }
 
-auto Structure1541::setBam(uint8_t* bamTrackPtr, unsigned sector) -> void {
+auto DiskStructure::setBam(uint8_t* bamTrackPtr, unsigned sector) -> void {
 	
     bamTrackPtr[1 + sector / 8] |= (1 << (sector % 8));    
 }
 
-auto Structure1541::clrBam(uint8_t* bamTrackPtr, unsigned sector) -> void {
+auto DiskStructure::clrBam(uint8_t* bamTrackPtr, unsigned sector) -> void {
 	
     bamTrackPtr[1 + sector / 8] &= ~(1 << (sector % 8)); 
 }
 
-auto Structure1541::getBamTrackEntry( uint8_t* bamPtr, uint8_t track ) -> uint8_t* {
+auto DiskStructure::getBamTrackEntry( uint8_t* bamPtr, uint8_t track ) -> uint8_t* {
 	
 	return track <= TYPICAL_TRACKS
             ? &bamPtr[4 + 4 * (track - 1)] 

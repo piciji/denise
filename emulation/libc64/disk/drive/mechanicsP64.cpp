@@ -1,9 +1,9 @@
 
-#include "drive1541.h"
+#include "drive.h"
 
 namespace LIBC64 {
 
-    auto Drive1541::rotateP64(  ) -> void {
+    auto Drive::rotateP64(  ) -> void {
         unsigned todo;
         bool motorAdvance = motorRun() && loaded;
 
@@ -103,7 +103,7 @@ namespace LIBC64 {
                     pulseDelta -= todo;
 
                     if (!pulseDelta) {
-                        Structure1541::Pulse& pulse = gcrTrack->pulses[pulseIndex];
+                        DiskStructure::Pulse& pulse = gcrTrack->pulses[pulseIndex];
 
                         pulseIndex = pulse.next;
 
@@ -184,7 +184,7 @@ namespace LIBC64 {
 
                         if (flux) {
                             if (!writeProtected) {
-                                Structure1541::Pulse& pulse = gcrTrack->pulses[pulseIndex];
+                                DiskStructure::Pulse& pulse = gcrTrack->pulses[pulseIndex];
                                 unsigned position;
 
                                 if (pulseDelta >= pulse.position)
@@ -192,7 +192,7 @@ namespace LIBC64 {
                                 else
                                     position = pulse.position - pulseDelta;
 
-                                structure1541.addPulse(gcrTrack, position, 0xffffffff);
+                                structure.addPulse(gcrTrack, position, 0xffffffff);
 
                                 if (!written)
                                     written = true;
@@ -204,7 +204,7 @@ namespace LIBC64 {
                         // no new flux at this position ... there is already no flux here ... nothing to do
                     } else {
 
-                        Structure1541::Pulse& pulse = gcrTrack->pulses[pulseIndex];
+                        DiskStructure::Pulse& pulse = gcrTrack->pulses[pulseIndex];
 
                         if (!writeProtected) {
                             if (flux) {
@@ -213,7 +213,7 @@ namespace LIBC64 {
                                     pulse.strength = 0xffffffff;
 
                             } else
-                                structure1541.freePulse(gcrTrack, pulseIndex);
+                                structure.freePulse(gcrTrack, pulseIndex);
 
                             if (!written)
                                 written = true;

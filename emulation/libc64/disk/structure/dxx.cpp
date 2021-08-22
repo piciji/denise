@@ -3,7 +3,7 @@
 
 namespace LIBC64 {
 
-auto Structure1541::analyzeD71() -> bool {
+auto DiskStructure::analyzeD71() -> bool {
 
     uint32_t compareSize = TYPICAL_SIZE << 1;
     uint32_t sectors = compareSize / 256;
@@ -43,7 +43,7 @@ auto Structure1541::analyzeD71() -> bool {
     return true;
 }
 
-auto Structure1541::analyzeD64() -> bool {
+auto DiskStructure::analyzeD64() -> bool {
     
     uint32_t compareSize = TYPICAL_SIZE;
     uint32_t sectors = compareSize / 256;
@@ -83,7 +83,7 @@ auto Structure1541::analyzeD64() -> bool {
     return true;
 }
     
-auto Structure1541::prepareDxx() -> void {
+auto DiskStructure::prepareDxx() -> void {
     
     uint8_t errorCode;
     uint8_t buffer[256];
@@ -173,7 +173,7 @@ auto Structure1541::prepareDxx() -> void {
     }
 }
 
-auto Structure1541::encodeSector(const uint8_t* src, uint8_t* target, uint8_t track, uint8_t sector, uint8_t id1, uint8_t id2, int errorCode) -> void {    
+auto DiskStructure::encodeSector(const uint8_t* src, uint8_t* target, uint8_t track, uint8_t sector, uint8_t id1, uint8_t id2, int errorCode) -> void {
     // if an error map is appended there is one possible error code for each sector only
     // basically a d64 file consists only of raw data, there is no information about the 
     // structure of a track, which would be needed for copy protections.
@@ -233,7 +233,7 @@ auto Structure1541::encodeSector(const uint8_t* src, uint8_t* target, uint8_t tr
     gcr.encode(buf, target);
 }
 
-auto Structure1541::handleAppendedTracksInDxx() -> bool {
+auto DiskStructure::handleAppendedTracksInDxx() -> bool {
     bool appended = false;
 
     for (uint8_t side = 0; side < sides; side++) {
@@ -288,7 +288,7 @@ auto Structure1541::handleAppendedTracksInDxx() -> bool {
     return true;
 }
 
-auto Structure1541::writeDxx(const GcrTrack* trackPtr, uint8_t side, unsigned track, bool& errorMapChanged) -> bool {
+auto DiskStructure::writeDxx(const GcrTrack* trackPtr, uint8_t side, unsigned track, bool& errorMapChanged) -> bool {
     // ok we need to decode the gcr track back in user data and write it out
     unsigned trackSectors = countSectors( track );
     
@@ -351,7 +351,7 @@ auto Structure1541::writeDxx(const GcrTrack* trackPtr, uint8_t side, unsigned tr
     return true;
 }
 
-auto Structure1541::decodeSector( const GcrTrack* trackPtr, uint8_t* dest, uint8_t sector ) -> int {
+auto DiskStructure::decodeSector( const GcrTrack* trackPtr, uint8_t* dest, uint8_t sector ) -> int {
     
     // we need to crawl the cbm dos track, which consists of sync, header, sync, sector data and so on
     unsigned offset = 0;
@@ -406,7 +406,7 @@ auto Structure1541::decodeSector( const GcrTrack* trackPtr, uint8_t* dest, uint8
     return checksum ? ERR_CHECKSUM : ERR_OK; // checksum doesn't match with calculated
 }
 
-auto Structure1541::findSync( const GcrTrack* trackPtr, unsigned& offset, unsigned size ) -> bool {
+auto DiskStructure::findSync( const GcrTrack* trackPtr, unsigned& offset, unsigned size ) -> bool {
     // check for sync mark and adjust offset to the bit following the sync mark
     
     if ( !trackPtr->data || !trackPtr->size )
@@ -451,7 +451,7 @@ auto Structure1541::findSync( const GcrTrack* trackPtr, unsigned& offset, unsign
     return false;
 }
 
-auto Structure1541::decode( const GcrTrack* trackPtr, unsigned offset, uint8_t* buffer, unsigned blockCount ) -> void {
+auto DiskStructure::decode( const GcrTrack* trackPtr, unsigned offset, uint8_t* buffer, unsigned blockCount ) -> void {
     Emulator::Gcr gcr;
     // offset is starting bit in requested track. NOTE: decoding can start mid byte
     // blockCount is the amount of 5-byte gcr blocks we want to decode in 4-byte each
@@ -484,17 +484,17 @@ auto Structure1541::decode( const GcrTrack* trackPtr, unsigned offset, uint8_t* 
     }
 }
 
-auto Structure1541::imageSizeD64() -> unsigned {
+auto DiskStructure::imageSizeD64() -> unsigned {
     
     return TYPICAL_SIZE;
 }
 
-auto Structure1541::imageSizeD71() -> unsigned {
+auto DiskStructure::imageSizeD71() -> unsigned {
 
     return TYPICAL_SIZE << 1;
 }
 
-auto Structure1541::createDxx( std::string diskName, uint8_t sides ) -> uint8_t* {
+auto DiskStructure::createDxx( std::string diskName, uint8_t sides ) -> uint8_t* {
     
     uint8_t buffer[256];    
     std::memset(buffer, 0, 256);
@@ -515,7 +515,7 @@ auto Structure1541::createDxx( std::string diskName, uint8_t sides ) -> uint8_t*
     return temp;    
 }
 
-auto Structure1541::writeSector( uint8_t* target, uint8_t* buffer, uint8_t track, uint8_t sector, unsigned offset) -> void {
+auto DiskStructure::writeSector( uint8_t* target, uint8_t* buffer, uint8_t track, uint8_t sector, unsigned offset) -> void {
         
     int sectors = countSectors( track, sector );
     
@@ -525,7 +525,7 @@ auto Structure1541::writeSector( uint8_t* target, uint8_t* buffer, uint8_t track
     std::memcpy( target + offset + (sectors << 8), buffer, 256 );
 }
 
-auto Structure1541::readSector( uint8_t* src, uint8_t* buffer, uint8_t track, uint8_t sector, unsigned offset ) -> bool {
+auto DiskStructure::readSector( uint8_t* src, uint8_t* buffer, uint8_t track, uint8_t sector, unsigned offset ) -> bool {
 
     int sectors = countSectors( track, sector );
 

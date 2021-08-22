@@ -12,18 +12,18 @@
 #include "../../system/keyBuffer.h"
 #include "../iec.h"
 #include "../virtual/virtualDrive.h"
-#include "../drive/drive1541.h"
+#include "../drive/drive.h"
 
 namespace LIBC64 {
     
-const unsigned Structure1541::MAX_TRACKS = MAX_TRACKS_1541;    
-const unsigned Structure1541::TYPICAL_TRACKS = 35; 
-const unsigned Structure1541::TYPICAL_SIZE = 174848;  // for 35 tracks in cbm dos
-const uint8_t Structure1541::SECTORS_IN_SPEEDZONE[4] = { 17, 18, 19, 21 };
-const unsigned Structure1541::BYTES_IN_SPEEDZONE[4] = { 6250, 6666, 7142, 7692 };
-const uint8_t Structure1541::GAPS_IN_SPEEDZONE[4] = { 9, 12, 17, 8 };
+const unsigned DiskStructure::MAX_TRACKS = MAX_TRACKS_1541;
+const unsigned DiskStructure::TYPICAL_TRACKS = 35;
+const unsigned DiskStructure::TYPICAL_SIZE = 174848;  // for 35 tracks in cbm dos
+const uint8_t DiskStructure::SECTORS_IN_SPEEDZONE[4] = { 17, 18, 19, 21 };
+const unsigned DiskStructure::BYTES_IN_SPEEDZONE[4] = { 6250, 6666, 7142, 7692 };
+const uint8_t DiskStructure::GAPS_IN_SPEEDZONE[4] = { 9, 12, 17, 8 };
     
-Structure1541::Structure1541(Drive1541* drive) : drive(drive) {
+DiskStructure::DiskStructure(Drive* drive) : drive(drive) {
     
     errorMap = nullptr;
     errorMapSize = 0;
@@ -40,12 +40,12 @@ Structure1541::Structure1541(Drive1541* drive) : drive(drive) {
     virtualDrive = new VirtualDrive(this);
 }   
 
-Structure1541::~Structure1541() {
+DiskStructure::~DiskStructure() {
     
     clearTrackData();   
 }
 
-auto Structure1541::attach( uint8_t* data, unsigned size, bool loadGracefully ) -> bool {
+auto DiskStructure::attach( uint8_t* data, unsigned size, bool loadGracefully ) -> bool {
     rawData = data;
     rawSize = size;
     
@@ -63,7 +63,7 @@ auto Structure1541::attach( uint8_t* data, unsigned size, bool loadGracefully ) 
     return true;
 }
 
-auto Structure1541::detach() -> void {  
+auto DiskStructure::detach() -> void {
 	
 	if (created)
 		delete[] created;
@@ -77,7 +77,7 @@ auto Structure1541::detach() -> void {
     encodingGraceful.reset();
 }
 
-auto Structure1541::clearTrackData() -> void {
+auto DiskStructure::clearTrackData() -> void {
     for( unsigned side = 0; side < 2; side++) {
         for (unsigned i = 0; i < (MAX_TRACKS * 2); i++) {
             auto trackPtr = &gcrTracks[side][i];
@@ -106,27 +106,27 @@ auto Structure1541::clearTrackData() -> void {
     errorMapSize = 0;
 }
     
-auto Structure1541::speedzone( uint8_t track ) -> uint8_t {
+auto DiskStructure::speedzone( uint8_t track ) -> uint8_t {
     // speedzone: 0 - 3, depends on track sector count
     return (track < 31) + (track < 25) + (track < 18);
 }   
 
-auto Structure1541::countSectors( uint8_t track ) -> uint8_t {
+auto DiskStructure::countSectors( uint8_t track ) -> uint8_t {
     
     return SECTORS_IN_SPEEDZONE[ speedzone( track ) ];
 }
 
-auto Structure1541::countBytes( uint8_t track ) -> unsigned {
+auto DiskStructure::countBytes( uint8_t track ) -> unsigned {
     
     return BYTES_IN_SPEEDZONE[ speedzone( track ) ];
 }
 
-auto Structure1541::gapSize( uint8_t track ) -> unsigned {
+auto DiskStructure::gapSize( uint8_t track ) -> unsigned {
     
     return GAPS_IN_SPEEDZONE[ speedzone( track ) ];
 }
 
-auto Structure1541::countSectors( uint8_t track, uint8_t sector ) -> int {
+auto DiskStructure::countSectors( uint8_t track, uint8_t sector ) -> int {
     
     int sectors = 0;
     
@@ -144,7 +144,7 @@ auto Structure1541::countSectors( uint8_t track, uint8_t sector ) -> int {
     return sectors;
 }
 
-auto Structure1541::analyze() -> bool {        
+auto DiskStructure::analyze() -> bool {
     
     type = Type::Unknown;
     sides = 1;
@@ -170,7 +170,7 @@ auto Structure1541::analyze() -> bool {
     if ( analyzeP71() )
         return true;
 
-    created = Structure1541::createD64FromPRG( system->interface->getFileNameFromMedia(media), rawData, rawSize );
+    created = DiskStructure::createD64FromPRG( system->interface->getFileNameFromMedia(media), rawData, rawSize );
     
 	if (created) {
 		
@@ -187,7 +187,7 @@ auto Structure1541::analyze() -> bool {
     return false;
 }
 
-auto Structure1541::prepare() -> void {
+auto DiskStructure::prepare() -> void {
     
     switch( type ) {
         case Type::D64:
@@ -205,7 +205,7 @@ auto Structure1541::prepare() -> void {
     }            
 }
 
-auto Structure1541::getLogicalTrack(uint8_t _track, int offset) -> uint8_t {
+auto DiskStructure::getLogicalTrack(uint8_t _track, int offset) -> uint8_t {
     
     int logicalTrack = _track + offset;
 
@@ -226,7 +226,7 @@ auto Structure1541::getLogicalTrack(uint8_t _track, int offset) -> uint8_t {
     : &gcrTracks[ (_T > TYPICAL_TRACKS) ? 1 : 0][ (((_T > TYPICAL_TRACKS) ? (_T - TYPICAL_TRACKS) : _T) - 1) * 2]
 
 // C64 DOS (support 35 tracks per side)
-auto Structure1541::createListing( ) -> void {
+auto DiskStructure::createListing( ) -> void {
 
     if (!rawData || (type == Type::Unknown))
         return;
@@ -357,7 +357,7 @@ auto Structure1541::createListing( ) -> void {
 	loader.push_back( _headlineCmd );
 }
 
-auto Structure1541::getListing( ) -> std::vector<Emulator::Interface::Listing>& {
+auto DiskStructure::getListing( ) -> std::vector<Emulator::Interface::Listing>& {
     
     listings.clear();
     loader.clear();
@@ -367,7 +367,7 @@ auto Structure1541::getListing( ) -> std::vector<Emulator::Interface::Listing>& 
     return listings;
 }
 
-auto Structure1541::buildLoadCommand( std::vector<uint8_t> loadPath, bool forShow ) -> std::vector<uint8_t> {
+auto DiskStructure::buildLoadCommand( std::vector<uint8_t> loadPath, bool forShow ) -> std::vector<uint8_t> {
     
 	if (forShow)
 		loadPath.insert( loadPath.begin(), { 'L', 'O', 'A', 'D', ' ', '"' } );    	
@@ -392,7 +392,7 @@ auto Structure1541::buildLoadCommand( std::vector<uint8_t> loadPath, bool forSho
 	return loadPath;
 }
 
-auto Structure1541::selectListing( std::string fileName, bool useTraps ) -> void {
+auto DiskStructure::selectListing( std::string fileName, bool useTraps ) -> void {
 
     Emulator::PetciiConversion petciiConversion;
 
@@ -405,7 +405,7 @@ auto Structure1541::selectListing( std::string fileName, bool useTraps ) -> void
     prepareKeyBufferActions( petcii, useTraps );
 }
 
-auto Structure1541::selectListing(  unsigned pos, bool useTraps ) -> void {
+auto DiskStructure::selectListing(  unsigned pos, bool useTraps ) -> void {
 
     std::vector<uint8_t> path;
     if (pos < listings.size())
@@ -416,7 +416,7 @@ auto Structure1541::selectListing(  unsigned pos, bool useTraps ) -> void {
     prepareKeyBufferActions( path, useTraps );
 }
 
-auto Structure1541::prepareKeyBufferActions( std::vector<uint8_t>& path, bool useTraps ) -> void {
+auto DiskStructure::prepareKeyBufferActions( std::vector<uint8_t>& path, bool useTraps ) -> void {
 	
     KeyBuffer::Action action;
     
@@ -469,7 +469,7 @@ auto Structure1541::prepareKeyBufferActions( std::vector<uint8_t>& path, bool us
     }
 }
 
-auto Structure1541::create( Type newType, std::string diskName ) -> Emulator::Interface::Data {
+auto DiskStructure::create( Type newType, std::string diskName ) -> Emulator::Interface::Data {
     
     switch( newType ) {
         case Type::D64:
@@ -489,7 +489,7 @@ auto Structure1541::create( Type newType, std::string diskName ) -> Emulator::In
     return {nullptr, 0};
 }
 
-auto Structure1541::createBAM( std::string diskName, uint8_t* buffer, uint8_t* bufferSecondSide ) -> void {
+auto DiskStructure::createBAM( std::string diskName, uint8_t* buffer, uint8_t* bufferSecondSide ) -> void {
 
     Emulator::PetciiConversion petciiConversion;
 
@@ -556,7 +556,7 @@ auto Structure1541::createBAM( std::string diskName, uint8_t* buffer, uint8_t* b
     }
 }
 
-auto Structure1541::cutId( std::string& diskName ) -> std::string {
+auto DiskStructure::cutId( std::string& diskName ) -> std::string {
     std::string id = "  ";
     
     if (diskName.size() == 0)
@@ -579,7 +579,7 @@ auto Structure1541::cutId( std::string& diskName ) -> std::string {
     return id;
 }
 
-auto Structure1541::storeWrittenTracks() -> void {
+auto DiskStructure::storeWrittenTracks() -> void {
     bool appendedTracks = false;
     bool errorMapChanged = false;
 
@@ -624,7 +624,7 @@ auto Structure1541::storeWrittenTracks() -> void {
     }
 }
 
-auto Structure1541::serialize(Emulator::Serializer& s, bool written) -> void {
+auto DiskStructure::serialize(Emulator::Serializer& s, bool written) -> void {
     // serialize structure only, if at least one bit was written
 
     s.integer( autoStarted );
@@ -720,7 +720,7 @@ auto Structure1541::serialize(Emulator::Serializer& s, bool written) -> void {
     }
 }
 
-auto Structure1541::updateSerializationSize() -> void {
+auto DiskStructure::updateSerializationSize() -> void {
     if (serializationSize)
         system->serializationSize -= serializationSize;
 
@@ -728,7 +728,7 @@ auto Structure1541::updateSerializationSize() -> void {
     system->serializationSize += serializationSize;
 }
 
-auto Structure1541::getStateImageSize() -> unsigned {
+auto DiskStructure::getStateImageSize() -> unsigned {
     
     unsigned neededSize = 0;
     bool fluxMode = (type == Type::P64) || (type == Type::P71);
@@ -753,12 +753,12 @@ auto Structure1541::getStateImageSize() -> unsigned {
     return neededSize;
 }
 
-auto Structure1541::getTrackPtr( uint8_t side, uint8_t halfTrack ) -> GcrTrack* {
+auto DiskStructure::getTrackPtr( uint8_t side, uint8_t halfTrack ) -> GcrTrack* {
     
     return &gcrTracks[ side ][ halfTrack ];
 }
 
-auto Structure1541::readSector( uint8_t* buffer, uint8_t track, uint8_t sector ) -> bool {
+auto DiskStructure::readSector( uint8_t* buffer, uint8_t track, uint8_t sector ) -> bool {
 
     unsigned offset = 0;
     uint8_t side = 0;

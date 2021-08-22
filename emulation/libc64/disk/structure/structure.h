@@ -17,12 +17,12 @@ namespace LIBC64 {
 #define MAX_TRACKS_1541 42
 
 struct VirtualDrive;
-struct Drive1541;
+struct Drive;
 
-struct Structure1541 {
+struct DiskStructure {
     
-    Structure1541(Drive1541* drive = nullptr);
-    ~Structure1541();
+    DiskStructure(Drive* drive = nullptr);
+    ~DiskStructure();
 
     static const unsigned MAX_TRACKS;    // 42, that's the maximum some drives can access
     static const unsigned TYPICAL_TRACKS; // 35 tracks for standard cbm dos image
@@ -89,7 +89,7 @@ struct Structure1541 {
     std::vector<Emulator::Interface::Listing> listings;
     std::vector<std::vector<uint8_t>> loader;
     VirtualDrive* virtualDrive = nullptr;
-    Drive1541* drive = nullptr;
+    Drive* drive = nullptr;
 
     auto hasSecondSide() -> bool {
         return sides == 2;

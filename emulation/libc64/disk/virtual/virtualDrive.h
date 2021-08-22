@@ -47,10 +47,10 @@
 
 namespace LIBC64 {
 
-struct Structure1541;
+struct DiskStructure;
 
 struct VirtualDrive : BaseDevice {
-    VirtualDrive(Structure1541* structure);
+    VirtualDrive(DiskStructure* structure);
 
     struct vdrive_dir_context_t {
         uint8_t buffer[256];      /* Current directory sector. */
@@ -201,7 +201,7 @@ struct VirtualDrive : BaseDevice {
         unsigned int recordlength; /* output */
     };
 
-    Structure1541* structure;
+    DiskStructure* structure;
 
     unsigned int last_read_track, last_read_sector;
     uint8_t last_read_buffer[256];

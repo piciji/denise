@@ -1,9 +1,9 @@
 
-#include "drive1541.h"
+#include "drive.h"
 
 namespace LIBC64 {
 
-auto Drive1541::prologicControlClassic(uint8_t addr, uint8_t data) -> void {
+auto Drive::prologicControlClassic(uint8_t addr, uint8_t data) -> void {
 
     if (addr & 1) {
         prologic40TrackMode = (data & 8) == 0;
@@ -26,7 +26,7 @@ auto Drive1541::prologicControlClassic(uint8_t addr, uint8_t data) -> void {
     }
 }
 
-auto Drive1541::prologicControl(uint16_t addr) -> void {
+auto Drive::prologicControl(uint16_t addr) -> void {
 
     if ((addr & 0xf000) == 0xb000) {
         prologic40TrackMode = addr & 0x20;
