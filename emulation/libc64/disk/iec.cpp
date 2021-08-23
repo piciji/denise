@@ -314,7 +314,7 @@ auto IecBus::powerOff() -> void {
     waitForDrives();
     
     for( auto drive : drives )
-        drive->powerOff();    
+        drive->powerOff();
 }
 
 auto IecBus::power() -> void {

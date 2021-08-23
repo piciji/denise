@@ -9,6 +9,7 @@
 #include "../config/archiveViewer.h"
 #include "../states/states.h"
 #include "../cmd/cmd.h"
+#include "../firmware/manager.h"
 
 #define HideMouseIfWasBefore \
     if (mIsAcquiredBefore && !inputDriver->mIsAcquired() && view->fullScreen() && fileDialogPtr && fileDialogPtr->detached()) \
@@ -76,7 +77,7 @@ auto Fileloader::load(Emulator::Interface* emulator, Emulator::Interface::Media*
         return this->insertFile(emulator, media, filePath, 1, selection);
     }, IDC_BUTTON );
 
-    if (!*alternateFileDialog && group->isDisk() && dynamic_cast<LIBC64::Interface*>(emulator) && !settings->get<unsigned>( "use_firmware", 0 )) {
+    if (!*alternateFileDialog && group->isDisk() && dynamic_cast<LIBC64::Interface*>(emulator) ) {
         fileDialogPtr->addCustomButton( trans->get("Virtual Auto Start"), [this, emulator, media](std::string filePath, unsigned selection) {
 
             if (filePath.empty())
@@ -206,7 +207,7 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
         return true;
     }, IDC_BUTTON );
 
-    if (!*alternateFileDialog && dynamic_cast<LIBC64::Interface*>(emulator) && !settings->get<unsigned>( "use_firmware", 0 ) ) {
+    if (!*alternateFileDialog && dynamic_cast<LIBC64::Interface*>(emulator) ) {
         fileDialogPtr->addCustomButton( trans->get("Virtual Auto Start"), [this, emulator, settings, mIsAcquiredBefore](std::string filePath, unsigned selection) {
 
             if (filePath.empty())
@@ -561,6 +562,10 @@ auto Fileloader::insertFile( Emulator::Interface* emulator, Emulator::Interface:
 
             if (!mediaGroup->isExpansion())
                 program->removeExpansion();
+
+            if (autoLoad & USE_TRAPS) {
+                FirmwareManager::getInstance( emulator )->insertDefault();
+            }
 
             if (mediaGroup->selected)
                 emulator->selectListing(mediaGroup->selected, selection, "", autoLoad & USE_TRAPS);

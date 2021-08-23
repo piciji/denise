@@ -30,6 +30,7 @@ struct FirmwareManager {
     auto dataInStore( Image* forImage ) -> bool;
     auto loadImage( Emulator::Interface::Firmware* firmware, unsigned storeLevel ) -> bool;
     auto insert() -> std::vector<std::string>;
+    auto insertDefault() -> void;
     auto insertFirmware(Emulator::Interface::Firmware* firmware, unsigned storeLevel) -> void;
     auto getSetting( Emulator::Interface::Firmware* firmware, unsigned storeLevel ) -> FileSetting*;
 	auto swapIn(Emulator::Interface::Firmware* firmware, unsigned storeLevel) -> std::vector<std::string>;

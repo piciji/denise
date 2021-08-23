@@ -464,8 +464,13 @@ auto DiskStructure::prepareKeyBufferActions( std::vector<uint8_t>& path, bool us
     autoStarted = true;
 
     if (useTraps) {
+        // override a possible speeder
+        drive->extendedMemoryMap = false;
+        system->secondDriveCable.parallelPossible = false;
+        system->burstOrParallelUpdate();
         traps->install();
         traps->reset();
+        system->keyBuffer->forceDefaultKernalDelay(); // a possible speeder use shorter boot time
     }
 }
 

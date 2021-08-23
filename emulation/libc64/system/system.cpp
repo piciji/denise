@@ -572,7 +572,7 @@ auto System::power( bool softReset ) -> void {
     kernalBootComplete = false;
     KeyBuffer::Action action;
     action.mode = KeyBuffer::Mode::WaitDelay;
-    if (iecBus->drives[0]->speeder)
+    if (iecBus->drives[0]->speeder && secondDriveCable.parallelUse)
         action.delay = (unsigned)(interface->stats.fps * ((iecBus->drives[0]->speeder == 10 || iecBus->drives[0]->speeder == 11)
             ? 0.9 : 0.5) );
     else
@@ -605,6 +605,7 @@ auto System::power( bool softReset ) -> void {
 
 auto System::powerOff() -> void {
     powerOn = false;
+    system->secondDriveCable.parallelPossible = true;
     keyBuffer->reset();
     sid->powerOff();
     iecBus->powerOff();

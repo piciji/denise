@@ -10,6 +10,7 @@
 #include "../states/states.h"
 #include "autoloader.h"
 #include "fileloader.h"
+#include "../firmware/manager.h"
 #include "../../data/resource.h"
 #include "../../data/icons.h"
 
@@ -467,10 +468,16 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
             auto media = layout->selectedBlock->media;
             
             program->power( emulator );
+
+            bool trapped = useDiskTraps.checked();
+
+            if (trapped) {
+                FirmwareManager::getInstance( emulator )->insertDefault();
+            }
             
             program->removeExpansion();
 
-            emulator->selectListing( media, selection, "", useDiskTraps.checked() );
+            emulator->selectListing( media, selection, "", trapped );
        
             auto fSetting = FileSetting::getInstance(emulator, _underscore(media->name) );
             if (fSetting)

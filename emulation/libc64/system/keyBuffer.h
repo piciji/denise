@@ -64,7 +64,14 @@ struct KeyBuffer {
 
         hasJobs = true;
     }
-    
+
+    auto forceDefaultKernalDelay() -> void {
+        if (!queue.size())
+            return;
+
+        queue[0].delay = (unsigned)(system->interface->stats.fps * 2.2);
+    }
+
     auto reset() -> void {
       
         queue.clear();

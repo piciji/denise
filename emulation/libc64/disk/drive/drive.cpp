@@ -756,6 +756,7 @@ auto Drive::power( ) -> void {
     updateCycleSpeed(false);
     changeHalfTrack(0);
     randomizeRpm();
+    extendedMemoryMap = expandMemory || (speeder > 1);
 }
 
 auto Drive::updateCycleSpeed(bool mhz2x, bool init) -> void {

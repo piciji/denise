@@ -155,6 +155,14 @@ auto FirmwareManager::getInstance( Emulator::Interface* emulator ) -> FirmwareMa
 	return nullptr;
 }
 
+auto FirmwareManager::insertDefault() -> void {
+
+    for (auto& firmware : emulator->firmwares ) {
+
+        insertFirmware( &firmware, 0 );
+    }
+}
+
 auto FirmwareManager::insert() -> std::vector<std::string> {
     
     missingFirmware.clear();

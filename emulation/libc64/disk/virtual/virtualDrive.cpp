@@ -184,6 +184,7 @@ auto VirtualDrive::reset() -> void {
 
     vdrive.dir_part = 0;
     vdrive.last_code = CBMDOS_IPE_OK;
+    last_read_track = 18;
 }
 
 auto VirtualDrive::open(const uint8_t* name, unsigned int length, unsigned int secondary) -> int {
@@ -608,7 +609,8 @@ auto VirtualDrive::iec_open_read_sequential(unsigned int secondary, unsigned int
 
     status = vdrive_read_sector(p->buffer, track, sector);
     p->length = p->buffer[0] ? 0 : p->buffer[1];
-
+    //system->interface->log("iec open");
+    //system->interface->log(track, 0);
     vdrive_set_last_read(track, sector, p->buffer);
 
     if (status != 0) {
@@ -640,7 +642,7 @@ auto VirtualDrive::finish() -> void {
 
         std::memcpy(&(structure->drive->ram[0x400]), last_read_buffer, 256);
 
-        structure->drive->currentHalftrack = last_read_track * 2 - 2 + 1;
+        structure->drive->currentHalftrack = last_read_track * 2;
         structure->drive->changeHalfTrack( 0 );
     }
 }
@@ -699,6 +701,9 @@ auto VirtualDrive::iec_read_sequential(uint8_t *data, unsigned int secondary) ->
 
             status = vdrive_read_sector(p->buffer, track, sector);
             p->length = p->buffer[0] ? 0 : p->buffer[1];
+            //system->interface->log("iec seq");
+            //system->interface->log(track, 0);
+
             vdrive_set_last_read(track, sector, p->buffer);
 
             if (status == 0) {

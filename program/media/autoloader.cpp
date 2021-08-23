@@ -10,6 +10,7 @@
 #include "../config/archiveViewer.h"
 #include "../cmd/cmd.h"
 #include "../states/states.h"
+#include "../firmware/manager.h"
 
 Autoloader* autoloader = nullptr;
 
@@ -166,6 +167,11 @@ auto Autoloader::postProcessing() -> void {
 
         if (!useExpansion)
             program->removeExpansion();
+
+        if (trapped) {
+            // temporary disable any speeders
+            FirmwareManager::getInstance( ddControl.emulator )->insertDefault();
+        }
         
         if (mediaGroup->selected) {
             ddControl.emulator->selectListing(mediaGroup->selected, ddControl.selection, ddControl.fileName, trapped);
