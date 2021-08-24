@@ -54,12 +54,14 @@ namespace LIBC64 {
                     randCounter -= todo;
 
                     if (!randCounter) {
-                        ue7Counter = speedZone & 3;
-                        uf4Counter = 0;
 
-                        if (ue3Counter == 8)
-                            byteFetched( OVERFLOW_NOT_THIS_CYCLE );
+                        if ( (type != Type::D1570) || (side == 0) ) {
+                            ue7Counter = speedZone & 3;
+                            uf4Counter = 0;
 
+                            if (ue3Counter == 8)
+                                byteFetched(OVERFLOW_NOT_THIS_CYCLE);
+                        }
                        // randCounter = randomizer.rand(0, 367) + 33;  // 2 - 25 micro
                        // randCounter = ( (randomizer.xorShift() >> 16 ) % 367) + 33;
                         randCounter = ( (randomizer.xorShift() >> 16 ) % 202) + 198;
@@ -192,12 +194,14 @@ namespace LIBC64 {
                                 else
                                     position = pulse.position - pulseDelta;
 
-                                structure.addPulse(gcrTrack, position, 0xffffffff);
+                                if (gcrTrack != dummyTrack) {
+                                    structure.addPulse(gcrTrack, position, 0xffffffff);
 
-                                if (!written)
-                                    written = true;
+                                    if (!written)
+                                        written = true;
 
-                                gcrTrack->written |= 1;
+                                    gcrTrack->written |= 1;
+                                }
                             }
                         }
                         // else
@@ -206,7 +210,7 @@ namespace LIBC64 {
 
                         DiskStructure::Pulse& pulse = gcrTrack->pulses[pulseIndex];
 
-                        if (!writeProtected) {
+                        if (!writeProtected && (gcrTrack != dummyTrack)) {
                             if (flux) {
                                 if (pulse.strength != 0xffffffff)
                                     // 1541 always write strong pulses

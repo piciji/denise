@@ -84,12 +84,14 @@ namespace LIBC64 {
                     randCounter -= todo;
 
                     if (!randCounter) {
-                        ue7Counter = speedZone & 3;
-                        uf4Counter = 0;
+                        if ( (type != Type::D1570) || (side == 0) ) {
+                            // there is no second head for 1570, means there are no random flux reversals
+                            ue7Counter = speedZone & 3;
+                            uf4Counter = 0;
 
-                        if (ue3Counter == 8)
-                            byteFetched( OVERFLOW_NOT_THIS_CYCLE );
-
+                            if (ue3Counter == 8)
+                                byteFetched(OVERFLOW_NOT_THIS_CYCLE);
+                        }
                         // freespin relies on that following random flux reversals don't prevent UE3 counter increments.
                         // so a random flux reversal mustn't happen too soon. freespin use this to find out if disk was removed
                         randCounter = ( (randomizer.xorShift() >> 16 ) % 202) + 198;

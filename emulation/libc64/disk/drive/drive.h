@@ -105,7 +105,8 @@ struct Drive {
     uint8_t turboTransVisible; // 0: rom, 1: ram
     uint8_t turboTransPage;
         
-    DiskStructure::GcrTrack* gcrTrack = new DiskStructure::GcrTrack;
+    DiskStructure::GcrTrack* gcrTrack;
+    DiskStructure::GcrTrack* dummyTrack;
 
     bool emulateDxxMoreAccurate = false;
     uint8_t currentHalftrack;

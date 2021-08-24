@@ -345,7 +345,13 @@ Drive::Drive(uint8_t number, Emulator::Interface::Media* mediaConnected ) : stru
      
     this->number = number; 
 	this->mediaConnected = mediaConnected;
-	
+
+	dummyTrack = new DiskStructure::GcrTrack;
+    dummyTrack->pulses.push_back({0,0,1,1});
+    dummyTrack->pulses.push_back({1000,0,0,0});
+    dummyTrack->firstPulse = 0;
+    gcrTrack = dummyTrack;
+
 	structure.number = number;
 	type = Type::D1541II;
 	operation = 0;
@@ -524,19 +530,21 @@ Drive::Drive(uint8_t number, Emulator::Interface::Media* mediaConnected ) : stru
                 if ((lines->ioa ^ lines->ioaOld) & 0x20) {
                     updateCycleSpeed(lines->ioa & 0x20, false);
                 }
-            }
 
-            if (type == Type::D1571) {
                 uint8_t _side = side;
                 side = !!(lines->ioa & 4);
 
                 if (!structure.hasSecondSide())
                     side = 0;
 
-                if (side != _side)
-                    changeHalfTrack( 0 );
-            }
+                if (side != _side) {
+                    changeHalfTrack(0);
 
+                    if ( (type == Type::D1570) && (side == 1) ) {
+                        gcrTrack = dummyTrack;
+                    }
+                }
+            }
             // nothing todo here for 1541 parallel cable mode, because CA2 is triggered in VIA core
         }
     };   
@@ -578,8 +586,13 @@ Drive::Drive(uint8_t number, Emulator::Interface::Media* mediaConnected ) : stru
 
                 uint8_t step = ((lines->iob & 3) - (currentHalftrack & 3)) & 3;
 
-                if (step != 0)
-                    changeHalfTrack( step );                
+                if (step != 0) {
+                    changeHalfTrack(step);
+
+                    if ( (type == Type::D1570) && (side == 1) ) {
+                        gcrTrack = dummyTrack;
+                    }
+                }
             }                            
             
             speedZone = (lines->iob >> 5) & 3;                        
@@ -663,6 +676,7 @@ Drive::~Drive() {
     delete[] ram80To9F;
     delete[] ramA0ToBF;
     delete[] turboTrans;
+    delete dummyTrack;
 }
 
 auto Drive::updateDeviceState() -> void {
@@ -1076,3 +1090,4 @@ auto Drive::setSpeeder(uint8_t speeder) -> void {
 }
 
 }
+
