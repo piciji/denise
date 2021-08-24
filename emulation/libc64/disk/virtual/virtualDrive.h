@@ -223,6 +223,11 @@ struct VirtualDrive : BaseDevice {
     auto vdrive_dir_name_match(uint8_t *slot, uint8_t *nslot, int length, int type) -> unsigned int;
     auto cbmdos_parse_wildcard_compare(const uint8_t *name1, const uint8_t *name2) -> unsigned int;
 
+    auto vdrive_command_execute(const uint8_t *buf, unsigned int length) -> int;
+    auto vdrive_command_memory(uint8_t *buffer, unsigned int length) -> int;
+    auto vdrive_command_memory_read(const uint8_t *buf, uint16_t addr, unsigned int length) -> int;
+    auto vdrive_command_memory_exec(const uint8_t *buf, uint16_t addr, unsigned int length) -> int;
+
     auto flush(unsigned int secondary) -> void;
     auto get(uint8_t* data, unsigned int secondary) -> int;
     auto put(uint8_t data, unsigned int secondary) -> int;

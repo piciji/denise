@@ -160,6 +160,8 @@
 
 #define SLOT_SIZE             32
 
+#define IP_MAX_COMMAND_LEN 128 /* real 58 */
+
 namespace LIBC64 {
 
 VirtualDrive::VirtualDrive(DiskStructure* structure) : structure(structure) {
@@ -563,7 +565,7 @@ auto VirtualDrive::flush(unsigned int secondary) -> void {
     }
 
     if (p->length) {
-        system->interface->log("todo vdrive command execute");
+        vdrive_command_execute(p->buffer, p->bufptr);
         p->bufptr = 0;
     }
 }
@@ -580,7 +582,8 @@ auto VirtualDrive::vdrive_command_set_error(int code, unsigned int track, unsign
 
     p->bufptr = 0;
     p->readmode = CBMDOS_FAM_READ;
-
+    //system->interface->log("error");
+    //system->interface->log(code,0);
     return code;
 }
 
@@ -614,6 +617,7 @@ auto VirtualDrive::iec_open_read_sequential(unsigned int secondary, unsigned int
     vdrive_set_last_read(track, sector, p->buffer);
 
     if (status != 0) {
+        //system->interface->log("serial_error");
         close(secondary);
         return SERIAL_ERROR;
     }
@@ -621,6 +625,9 @@ auto VirtualDrive::iec_open_read_sequential(unsigned int secondary, unsigned int
 }
 
 auto VirtualDrive::vdrive_set_last_read(unsigned int track, unsigned int sector, uint8_t *buffer) -> void {
+    //system->interface->log("track");
+    //system->interface->log(last_read_track,0);
+    //system->interface->log(last_read_sector,0);
     last_read_track = track;
     last_read_sector = sector;
     memcpy(last_read_buffer, buffer, 256);
@@ -639,10 +646,12 @@ auto VirtualDrive::finish() -> void {
         structure->drive->ram[0x18] = last_read_track;
         structure->drive->ram[0x19] = last_read_sector;
         structure->drive->ram[0x22] = last_read_track;
+        structure->drive->ram[0x42] = 239;
 
         std::memcpy(&(structure->drive->ram[0x400]), last_read_buffer, 256);
 
-        structure->drive->currentHalftrack = last_read_track * 2;
+        structure->drive->currentHalftrack = last_read_track * 2 - 2 + 1;
+
         structure->drive->changeHalfTrack( 0 );
     }
 }
@@ -658,8 +667,6 @@ auto VirtualDrive::vdrive_read_sector(uint8_t *buf, unsigned int track, unsigned
 
     dadr.track = track;
     dadr.sector = sector;
-
-  //  ret = disk_image_read_sector(vdrive->image, buf, &dadr);
 
     if (structure->readSector(buf, dadr.track, dadr.sector ))
         return CBMDOS_IPE_OK;
@@ -703,6 +710,7 @@ auto VirtualDrive::iec_read_sequential(uint8_t *data, unsigned int secondary) ->
             p->length = p->buffer[0] ? 0 : p->buffer[1];
             //system->interface->log("iec seq");
             //system->interface->log(track, 0);
+            //system->interface->log(sector, 0);
 
             vdrive_set_last_read(track, sector, p->buffer);
 
@@ -1393,6 +1401,110 @@ auto VirtualDrive::cbmdos_command_parse_plus(cbmdos_cmd_parse_plus_t *cmd_parse)
     }
 
     return CBMDOS_IPE_OK;
+}
+
+// command
+auto VirtualDrive::vdrive_command_execute(const uint8_t *buf, unsigned int length) -> int {
+    int status = CBMDOS_IPE_INVAL, statret1 = 0;
+    uint8_t* p;
+    cbmdos_cmd_parse_plus_t cmd;
+
+    if (!length) {
+        return CBMDOS_IPE_OK;
+    }
+    if (length > IP_MAX_COMMAND_LEN) {
+        vdrive_command_set_error(CBMDOS_IPE_LONG_LINE, 0, 0);
+        return CBMDOS_IPE_LONG_LINE;
+    }
+
+    /* process commands which shouldn't have the CR stripped */
+    /* they check the image context internally before proceeding */
+    switch (buf[0]) {
+        case 'G': /* get partition info */
+           // status = vdrive_command_getpartinfo(vdrive, buf, length);
+           system->interface->log("vdrive command partinfo");
+            goto out3;
+        case 'D': /* delete partition */
+            //status = vdrive_command_deletepart(vdrive, buf, length);
+            system->interface->log("vdrive command del partition");
+            goto out3;
+        case 'M': /* Memory */
+            if (length > 2 && buf[1] == '-') {
+                status = vdrive_command_memory((uint8_t*) buf, length);
+                goto out3;
+            }
+            break;
+    }
+
+
+    out3:
+        return status;
+}
+
+auto VirtualDrive::vdrive_command_memory(uint8_t *buffer, unsigned int length) -> int {
+    uint16_t addr;
+
+    if (length < 5) {
+        return vdrive_command_set_error(CBMDOS_IPE_SYNTAX, 0, 0);
+    }
+
+    addr = buffer[3] | (buffer[4] << 8);
+
+    switch (buffer[2]) {
+        case 'W':
+            system->interface->log("todo vdrive command mem write");
+            //return vdrive_command_memory_write(&(buffer[5]), addr, length);
+        case 'R':
+            return vdrive_command_memory_read(&(buffer[5]), addr, length);
+        case 'E':
+            return vdrive_command_memory_exec( NULL, addr, length);
+    }
+
+    system->interface->log("todo vdrive command memory");
+
+    return vdrive_command_set_error(CBMDOS_IPE_INVAL, 0, 0);
+}
+
+auto VirtualDrive::vdrive_command_memory_read(const uint8_t *buf, uint16_t addr, unsigned int length) -> int {
+    unsigned int len = buf[0];
+    int i;
+    bufferinfo_t *p = &vdrive.buffers[15];
+
+    if (length < 6) {
+
+        if (length < 5) {
+            return vdrive_command_set_error(CBMDOS_IPE_SYNTAX, 0, 0);
+        } else {
+            len = 1; /* when no length byte is present, the length is 1 */
+        }
+    } else {
+
+    }
+
+    if (len == 0) {
+        len = 256;
+    }
+
+    /* move the data */
+    for (i = 0; i < len; i++) {
+        p->buffer[i] = vdrive.ram[(addr + i) & 0x7fff];
+    }
+
+    out:
+    p->length = len;
+    p->bufptr = 0;
+    p->readmode = CBMDOS_FAM_READ;
+
+    /* don't update the buffer as it has the return memory data */
+    return CBMDOS_IPE_MEMORY_READ;
+}
+
+auto VirtualDrive::vdrive_command_memory_exec(const uint8_t *buf, uint16_t addr, unsigned int length) -> int {
+    if (length < 5) {
+        return vdrive_command_set_error( CBMDOS_IPE_SYNTAX, 0, 0);
+    }
+
+    return vdrive_command_set_error(CBMDOS_IPE_OK, 0, 0);
 }
 
 }

@@ -126,7 +126,7 @@ auto Traps::readKernal(uint16_t addr) -> uint8_t {
 auto Traps::attention() -> void {
     uint8_t b;
     Serial* p;
-
+    //system->interface->log("attention");
     b = system->memoryCpu.read( 0x95 ); // BSOUR
 
     if (b == (SERIAL_LISTEN + 0x1f)) {
@@ -165,7 +165,7 @@ auto Traps::attention() -> void {
 
 auto Traps::send() -> void {
     uint8_t data;
-
+    //system->interface->log("send");
     if (secondary == 0) {
         listentalkSecondary(SERIAL_SECONDARY + 0);
     }
@@ -180,7 +180,7 @@ auto Traps::send() -> void {
 
 auto Traps::receive() -> void {
     uint8_t data;
-
+    //system->interface->log("receive");
     if (secondary == 0) {
         listentalkSecondary(SERIAL_SECONDARY + 0);
     }
@@ -203,6 +203,7 @@ auto Traps::receive() -> void {
 }
 
 auto Traps::ready() -> void {
+    //system->interface->log("ready");
     cpu->regA = 1;
     cpu->flagN = 0;
     cpu->flagZ = 0;
@@ -303,9 +304,11 @@ auto Traps::serialcommand(unsigned int device, uint8_t secondary) -> uint8_t {
     switch (secondary & 0xf0) {
         case 0x20:
         case 0x30: // Listen, no call to driver
+            //system->interface->log("listen");
             break;
         case 0x40:
         case 0x50: // Talk, no call to driver
+            //system->interface->log("talk");
             break;
         case 0x60: // Open channel
             if (p->isopen[channel] == FILE_AWAITING_NAME) {
@@ -322,6 +325,7 @@ auto Traps::serialcommand(unsigned int device, uint8_t secondary) -> uint8_t {
             break;
 
         case 0xE0: // Close File
+            //system->interface->log("close");
             p->isopen[channel] = FILE_CLOSED;
             st = (uint8_t)p->device->close( channel );
             break;
