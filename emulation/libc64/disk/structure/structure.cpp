@@ -471,6 +471,7 @@ auto DiskStructure::prepareKeyBufferActions( std::vector<uint8_t>& path, bool us
         traps->install();
         traps->reset();
         system->keyBuffer->forceDefaultKernalDelay(); // a possible speeder use shorter boot time
+        drive->setFirmwareByType();
     }
 }
 
