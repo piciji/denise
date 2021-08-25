@@ -200,7 +200,7 @@ auto Drive::motorRun() -> bool {
 
 auto Drive::motorOffInit() -> void {
 
-    motorOff.delay = 14000 + (rand() % 1000);
+    motorOff.delay = 50000 + (rand() % 1000);
     unsigned slowDownCycles = 50000;
 
     if (use2Mhz()) {
