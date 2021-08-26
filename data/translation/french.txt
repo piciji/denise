@@ -607,3 +607,4 @@ Kernal Replacement =
 cartridge button =
 Virtual Auto Start =
 Virtual Auto Start tooltip =
+Start with last loaded Settings =

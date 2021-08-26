@@ -607,3 +607,4 @@ Kernal Replacement = Kernal Replacement
 cartridge button = Cartridge Button
 Virtual Auto Start = virtual Auto Start
 Virtual Auto Start tooltip = faked fast load of first file (less compatible)
+Start with last loaded Settings = Open emulator with last loaded configuration file

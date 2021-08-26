@@ -1410,6 +1410,7 @@ struct String {
     static auto removeDuplicates( std::vector<std::string>& strs ) -> void;
     static auto convertDoubleToString(double value, unsigned precision = 18) -> std::string;
     static auto findOccurencesOf( std::string str, std::string subStr ) -> unsigned;
+    static auto getFileName(std::string path, bool removeExtension = false) -> std::string;
 
     template<typename T> static auto addThousandSeparator(T digit) -> std::string {
         return addThousandSeparator( std::to_string( digit ) );

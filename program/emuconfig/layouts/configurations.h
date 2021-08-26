@@ -41,7 +41,8 @@ struct SettingsLayout : GUIKIT::FramedVerticalLayout {
         
         Active();
     } active;
-    
+
+    GUIKIT::CheckBox startWithLastConfigCheckbox;
     GUIKIT::ListView listView;
     
     SettingsLayout();
@@ -148,7 +149,6 @@ struct ConfigurationsLayout : GUIKIT::HorizontalLayout {
     auto splitFile( std::string file, unsigned& pos ) -> std::string;
     auto load( std::string path ) -> bool;
     auto loadSettings() -> void;
-    auto saveCurrentSettings() -> void;
     auto updateMemoryPreview() -> void;
     
     ConfigurationsLayout(TabWindow* tabWindow); 

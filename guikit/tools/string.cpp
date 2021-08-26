@@ -322,3 +322,15 @@ auto String::findOccurencesOf( std::string str, std::string subStr ) -> unsigned
     
     return occurrences;
 }
+
+auto String::getFileName(std::string path, bool removeExtension) -> std::string {
+    std::size_t start = path.find_last_of("/");
+    if (start != std::string::npos)
+        path = path.substr(start + 1);
+    if (!removeExtension)
+        return path;
+    std::size_t end = path.find_first_of(".");
+    if (end != std::string::npos)
+        path = path.erase(end);
+    return path;
+}

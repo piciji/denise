@@ -74,7 +74,7 @@ struct Program : Emulator::Interface::Bind {
     auto loadSettings() -> void;
     auto settingsFile( std::string ident = "" ) -> std::string;
     auto getSettings( Emulator::Interface* emulator = nullptr ) -> GUIKIT::Settings*;
-    auto rememberNotToSaveSettings() -> void;	
+    auto forceSavingSomeGlobalSettings() -> void;
     auto initEmulator( Emulator::Interface* emulator ) -> void;
     auto setMemoryPattern( Emulator::Interface* emulator ) -> void;
 

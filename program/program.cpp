@@ -423,8 +423,11 @@ auto Program::willRun() -> bool {
 auto Program::quit() -> void {
     powerOff();
 
-    if (!cmd->debug && globalSettings->get<bool>("save_settings_on_exit", true) ) {
-		saveSettings( true );
+    if (!cmd->debug) {
+        if (globalSettings->get<bool>("save_settings_on_exit", true))
+		    saveSettings( true );
+        else
+            forceSavingSomeGlobalSettings();
     }
     
 	for(auto inputManager : inputManagers)

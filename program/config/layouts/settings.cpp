@@ -91,9 +91,6 @@ SettingsLayout::SettingsLayout() {
     switches.saveSettingsOnExit.setChecked(globalSettings->get<bool>("save_settings_on_exit", true));
     switches.saveSettingsOnExit.onToggle = [&]() {
         globalSettings->set<bool>("save_settings_on_exit", switches.saveSettingsOnExit.checked());
-		
-		if (!switches.saveSettingsOnExit.checked())
-			program->rememberNotToSaveSettings();
     };
     
 	switches.pause.setChecked(globalSettings->get<bool>("pause_focus_loss", false));

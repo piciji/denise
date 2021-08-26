@@ -256,12 +256,12 @@ auto Program::saveSettings(bool onExit) -> void {
 
         auto guid = settings->getGuid();
         
-        std::string path = "";
+        std::string path;
         
         if (guid) {
             Emulator::Interface* emulator = (Emulator::Interface*)guid;
                                    
-            path = settings->get<std::string>("custom_settings", "");
+            path = globalSettings->get<std::string>(emulator->ident + "_custom_settings", "");
             if (path == "")
                 path = settingsFile( emulator->ident + "_" );
             else if (onExit)
@@ -284,25 +284,38 @@ auto Program::loadSettings() -> void {
         
         auto guid = settings->getGuid();
 
-        std::string ident = "global_";
-
         if (guid) {
             Emulator::Interface* emulator = (Emulator::Interface*)guid;
+            bool lastUsed = globalSettings->get<bool>( emulator->ident + "_load_last_settings" );
 
-            ident = emulator->ident + "_";
-        }
-        
-        settings->load( settingsFile( ident ) );         
+            if (lastUsed) {
+                std::string path = globalSettings->get<std::string>(emulator->ident + "_custom_settings", "");
+                if ( (path != "") && settings->load( path ))
+                    continue;
+            }
+            globalSettings->set<std::string>(emulator->ident + "_custom_settings", "");
+            settings->load( settingsFile( emulator->ident + "_" ) );
+
+        } else
+            settings->load( settingsFile( "global_" ) );
     }
 }
 
-auto Program::rememberNotToSaveSettings() -> void {
+auto Program::forceSavingSomeGlobalSettings( ) -> void {
 	GUIKIT::Settings tempSettings;
 	
 	if (!tempSettings.load( settingsFile("global_") ))
 		return;
 	
 	tempSettings.set<bool>("save_settings_on_exit", false);
+
+    for( auto emulator : emulators ) {
+        auto state = globalSettings->get<bool>( emulator->ident + "_load_last_settings", false );
+        auto path = globalSettings->get<std::string>( emulator->ident + "_custom_settings", "");
+
+        tempSettings.set<bool>(emulator->ident + "_load_last_settings", state);
+        tempSettings.set<std::string>(emulator->ident + "_custom_settings", path);
+    }
 	
 	tempSettings.save( settingsFile("global_") );
 }
