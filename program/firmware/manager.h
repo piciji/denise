@@ -34,6 +34,7 @@ struct FirmwareManager {
     auto insertFirmware(Emulator::Interface::Firmware* firmware, unsigned storeLevel) -> void;
     auto getSetting( Emulator::Interface::Firmware* firmware, unsigned storeLevel ) -> FileSetting*;
 	auto swapIn(Emulator::Interface::Firmware* firmware, unsigned storeLevel) -> std::vector<std::string>;
+    auto clear() -> void;
     
     static auto getInstance( Emulator::Interface* emulator ) -> FirmwareManager*;
     FirmwareManager(Emulator::Interface* emulator);

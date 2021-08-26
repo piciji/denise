@@ -13,20 +13,26 @@ FirmwareManager::FirmwareManager(Emulator::Interface* emulator) {
 }
 
 FirmwareManager::~FirmwareManager() {
-    
+    clear();
+}
+
+auto FirmwareManager::clear() -> void {
     for (auto& image : imagesStore) {
         auto activeImage = findActiveImage( image.firmware );
-        
+
         if (activeImage && (image.data == activeImage->data) )
             activeImage->data = nullptr;
-        
+
         if (image.data)
             delete[] image.data;
     }
-    
+
     for (auto& image : imagesActive)
         if (image.data)
             delete[] image.data;
+
+    imagesStore.clear();
+    imagesActive.clear();
 }
 
 auto FirmwareManager::useImage(Emulator::Interface::Firmware* firmware, unsigned storeLevel) -> bool {
