@@ -227,7 +227,9 @@ auto Program::removeExpansion( bool bootableOnly ) -> void {
 	auto emuView = EmuConfigView::TabWindow::getView(activeEmulator);
 	if (emuView)
         emuView->systemLayout->setExpansion( nullptr );
-    
+
+	if (activeEmulator)
+        activeEmulator->powerOff();
     activeEmulator->power();
 }
 

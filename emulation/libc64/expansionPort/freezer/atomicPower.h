@@ -10,7 +10,9 @@ namespace LIBC64 {
             ram = new uint8_t[ 8 * 1024 ];
         }
 
-        auto isBootable( ) -> bool { return true; }
+        // auto isBootable( ) -> bool { return true; }
+
+        auto bootSpeed() -> float { return 0.9; }
 
         ~AtomicPower() {
             delete[] ram;

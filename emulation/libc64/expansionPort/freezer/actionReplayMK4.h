@@ -10,6 +10,8 @@ struct ActionReplayMK4 : Freezer {
     }    
     
     bool enable = true;
+
+    auto bootSpeed() -> float { return 0.9; }
     
     auto writeIo1( uint16_t addr, uint8_t value ) -> void {
         

@@ -9,8 +9,9 @@ struct ActionReplayV4 : Freezer {
         
         ram = new uint8_t[ 8 * 1024 ];
     }
-    
-    auto isBootable( ) -> bool { return true; }    
+
+    // mark non bootable to use delayed autostart
+    //auto isBootable( ) -> bool { return true; }
     
     ~ActionReplayV4() {
         delete[] ram;

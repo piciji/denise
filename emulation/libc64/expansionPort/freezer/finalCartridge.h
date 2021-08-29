@@ -9,6 +9,8 @@ namespace LIBC64 {
 
         }
 
+        virtual auto bootSpeed() -> float { return 2.2; }
+
         auto writeIo1( uint16_t addr, uint8_t value ) -> void {
 
             nmiCall(false);

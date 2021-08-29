@@ -11,7 +11,7 @@ namespace LIBC64 {
 
         }
 
-        auto isBootable( ) -> bool { return true; }
+        // auto isBootable( ) -> bool { return true; }
 
         auto writeIo2( uint16_t addr, uint8_t value ) -> void {
 

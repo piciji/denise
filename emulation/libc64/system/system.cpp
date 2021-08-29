@@ -575,6 +575,8 @@ auto System::power( bool softReset ) -> void {
     if (iecBus->drives[0]->speeder && secondDriveCable.parallelUse)
         action.delay = (unsigned)(interface->stats.fps * ((iecBus->drives[0]->speeder == 10 || iecBus->drives[0]->speeder == 11)
             ? 0.9 : 0.5) );
+    else if (dynamic_cast<Freezer*>(expansionPort))
+        action.delay = (unsigned)(interface->stats.fps * dynamic_cast<Freezer*>(expansionPort)->bootSpeed());
     else
         action.delay = (unsigned)(interface->stats.fps * 2.2);
 
@@ -1002,3 +1004,4 @@ auto System::writeParallelHandshake() -> void {
 }
 
 }
+

@@ -18,7 +18,7 @@ struct GameCart : Cart {
 	
 	static auto createImage(unsigned& imageSize, uint8_t id) -> uint8_t*;
 
-    auto isBootable( ) -> bool {    
+    virtual auto isBootable( ) -> bool {
         return rom ? true : false;
     }
 };    

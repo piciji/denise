@@ -13,6 +13,8 @@ struct Freezer : FreezeButton {
     auto create( Interface::CartridgeId cartridgeId ) -> Cart*;
     
     auto assign(Cart* cart) -> void;
+
+    virtual auto bootSpeed() -> float { return 0.5; }
             
 };    
     

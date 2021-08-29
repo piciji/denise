@@ -9,6 +9,10 @@ namespace LIBC64 {
 
         }
 
+        auto isBootable( ) -> bool {
+            return false;
+        }
+
         auto writeIo1( uint16_t addr, uint8_t value ) -> void {
 
             system->changeExpansionPortMemoryMode( exRom = false, game = false );

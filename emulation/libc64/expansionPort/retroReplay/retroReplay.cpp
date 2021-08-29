@@ -365,9 +365,9 @@ auto RetroReplay::isWriteProtected() -> bool {
     return writeProtect;
 }
 
-auto RetroReplay::isBootable( ) -> bool {
-    return !flashJumper;
-} 
+//auto RetroReplay::isBootable( ) -> bool {
+//    return !flashJumper;
+//}
 
 auto RetroReplay::serialize(Emulator::Serializer& s) -> void {
     
