@@ -332,8 +332,8 @@ auto Drive::cpuRead(uint16_t addr) -> uint8_t {
                         return this->ram80To9F[addr & 0x1fff];
                     }
 
-                    if (((addr & 0xf000) == 0xc000) || ((addr & 0xf000) == 0xd000)) {
-                        if ((proSpeedControl & 0x80) == 0x0) {
+                    if ((addr & 0xe000) == 0xc000) {
+                        if ((proSpeedControl & 0x80) == 0) {
                             // copy programs
                             return this->romExpanded[(0x8000 | (addr & 0x1fff)) & romExpandedMask];
                         }
