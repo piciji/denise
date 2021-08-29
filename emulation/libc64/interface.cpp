@@ -553,9 +553,9 @@ auto Interface::prepareModels() -> void {
     models.push_back({ModelIdDriveParallelCable, "Parallel Cable", Model::Type::Switch, Model::Purpose::DriveSettings, 0});
     models.push_back({ModelIdCiaBurstMode, "CIA Burst Modification", Model::Type::Switch, Model::Purpose::DriveSettings, 0});
 
-    models.push_back({ModelIdDriveFastLoader, "Fast Loader", Model::Type::Combo, Model::Purpose::DriveSettings, 0, {0, 12},
+    models.push_back({ModelIdDriveFastLoader, "Fast Loader", Model::Type::Combo, Model::Purpose::DriveSettings, 0, {0, 13},
         { "Manual", "SpeedDOS 1541", "DolphinDOS v2 1541", "DolphinDOS v2 Ultimate", "DolphinDOS v3 1541", "DolphinDOS v3 157x",
-          "ProfDOS v1 1541", "ProfDOS R3/R4 1541", "ProfDOS R5 1570", "ProfDOS R6 1571", "PrologicDOS Classic 1541", "PrologicDOS 1541", "Turbo Trans"}});
+          "ProfDOS v1 1541", "ProfDOS R3/R4 1541", "ProfDOS R5 1570", "ProfDOS R6 1571", "PrologicDOS Classic 1541", "PrologicDOS 1541", "Turbo Trans", "ProSpeed 1571 v2.0"}});
 
     models.push_back({ModelIdTapeDrivesConnected, "Tape Drives", Model::Type::Combo, Model::Purpose::DriveSettings, 0, {0, 1},
                       { "0", "1" }});

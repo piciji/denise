@@ -48,8 +48,11 @@ namespace LIBC64 {
     }                                                                       \
     via1->process();                                                        \
     via2->process();                                                        \
-    if (operation & DRIVE_MODE_157x)                                        \
-        cia->clock();         \
+    if (operation & DRIVE_MODE_157x) {                                       \
+        cia->clock();                                                   \
+        if (operation & DRIVE_HAS_EXTRA_CIA)                                    \
+            ciaSpeeder->clock();                                                \
+    }                                                                           \
     cycleCounter += iecBus->cpuCylcesPerSecond;             \
     if (attachDelay)              \
         attachDelay--;
@@ -140,6 +143,11 @@ auto Drive::cpuWrite(uint16_t addr, uint8_t data) -> void {
                     pia->write( addr & 3, data );
                     return;
                 }
+            } else if (speeder == 13) {
+                if ((addr & 0xfff0) == 0x9e20) {
+                    ciaSpeeder->write(addr, data);
+                    return;
+                }
             }
 
             if ((expandMemory & (uint8_t) ExpandedMemMode::M40) && (((addr & 0xf000) == 0x5000) || ((addr & 0xf800) == 0x4800) )) { // $4800 - $5ffff
@@ -147,6 +155,9 @@ auto Drive::cpuWrite(uint16_t addr, uint8_t data) -> void {
                 return;
             } else if ((expandMemory & (uint8_t) ExpandedMemMode::M60) && ((addr & 0xe000) == 0x6000)) {
                 this->ram60To7F[addr & 0x1fff] = data;
+                return;
+            } else if ((expandMemory & (uint8_t) ExpandedMemMode::M80) && ((addr & 0xe000) == 0x8000)) {
+                this->ram80To9F[addr & 0x1fff] = data;
                 return;
             }
         }
@@ -308,6 +319,41 @@ auto Drive::cpuRead(uint16_t addr) -> uint8_t {
             if ((addr & 0xe000) == 0x6000)
                 return readProfDosEncoder( addr );
         }
+        else if (speeder == 13) { // proSpeed 1571
+
+            if (proSpeedControl & (1 | 2 | 0x80)) {
+
+                if ((addr & 0xfff0) == 0x9e20) {
+                    return ciaSpeeder->read(addr);
+                }
+
+                if (proSpeedControl & 0x2) {
+                    if ((expandMemory & (uint8_t) ExpandedMemMode::M80) && ((addr & 0xe000) == 0x8000)) {
+                        return this->ram80To9F[addr & 0x1fff];
+                    }
+
+                    if (((addr & 0xf000) == 0xc000) || ((addr & 0xf000) == 0xd000)) {
+                        if ((proSpeedControl & 0x80) == 0x0) {
+                            // copy programs
+                            return this->romExpanded[(0x8000 | (addr & 0x1fff)) & romExpandedMask];
+                        }
+                    }
+
+                    if ((addr & 0xf800) == 0xf800) {
+                        // 35/40 track mode
+                        if ((proSpeedControl & 0x1) == 0x0) {
+                            return this->romExpanded[(0x8000 + 0x3800 + (addr & 0x7ff)) & romExpandedMask];
+                        }
+
+                        return this->romExpanded[(0x8000 + 0x7800 + (addr & 0x7ff)) & romExpandedMask];
+                    }
+                }
+
+                if (addr & 0x8000) {
+                    return this->romExpanded[(((proSpeedControl & 2) ? 0x8000 : 0x0) | (addr & 0x7fff)) & romExpandedMask];
+                }
+            }
+        }
 
         if ((expandMemory & (uint8_t) ExpandedMemMode::M40) && (((addr & 0xf000) == 0x5000) || ((addr & 0xf800) == 0x4800) )) { // $4800 - $5ffff
             return this->ram40To5F[addr & 0x1fff];
@@ -392,6 +438,7 @@ Drive::Drive(uint8_t number, Emulator::Interface::Media* mediaConnected ) : stru
     via1 = new Via( 1 );
     via2 = new Via( 2 );
     cia = new Cia8520( 3 );
+    ciaSpeeder = new Cia8520( 4 );
     cpu = new M6502(this);
     pia = new Emulator::Pia;
 
@@ -444,6 +491,35 @@ Drive::Drive(uint8_t number, Emulator::Interface::Media* mediaConnected ) : stru
         // nothing todo here, because CA(B)2 is triggered and port value is latched on pins
     };
 
+    // proSpeed 1571 v2.0 has extra CIA
+    ciaSpeeder->writePort = [this]( CIA::Base::Port port, CIA::Base::Lines* lines ) {
+
+        if ( lines->prbChange && (port == CIA::Base::PORTB )) {
+            system->writeParallelHandshake();
+        }
+        else if (port == CIA::Base::PORTA ) {
+            proSpeedControl = lines->ioa;
+        }
+    };
+
+    ciaSpeeder->readPort = [this]( CIA::Base::Port port, CIA::Base::Lines* lines ) {
+
+        if ( port == CIA::Base::PORTB ) {
+            if (!system->secondDriveCable.parallelUse )
+                return lines->iob;
+
+            uint8_t out = system->readParallelWithHandshake();
+
+            for (auto drive : iecBus->drivesEnabled) {
+                out &= drive->ciaSpeeder->lines.iob;
+            }
+
+            return out;
+        }
+
+        return lines->ioa;
+    };
+
     cia->serialOut = [this](bool bit) {
         if (dataDirection) {
             if (system->secondDriveCable.burstUse) {
@@ -455,15 +531,21 @@ Drive::Drive(uint8_t number, Emulator::Interface::Media* mediaConnected ) : stru
     cia->writePort = [this]( CIA::Base::Port port, CIA::Base::Lines* lines ) {
 
         if ( lines->prbChange && (port == CIA::Base::PORTB )) {
-            if ((operation & DRIVE_HAS_PIA) == 0)
+
+            if ((operation & (DRIVE_HAS_PIA | DRIVE_HAS_EXTRA_CIA) ) == 0)
                 system->writeParallelHandshake();
+        }
+
+        else if (port == CIA::Base::PORTA ) {
+
         }
     };
 
     cia->readPort = [this]( CIA::Base::Port port, CIA::Base::Lines* lines ) {
 
         if ( port == CIA::Base::PORTB ) {
-            if (!system->secondDriveCable.parallelUse || (operation & DRIVE_HAS_PIA) )
+
+            if (!system->secondDriveCable.parallelUse || (operation & (DRIVE_HAS_PIA | DRIVE_HAS_EXTRA_CIA)) )
                 return lines->iob;
 
             uint8_t out = system->readParallelWithHandshake();
@@ -725,8 +807,10 @@ auto Drive::power( ) -> void {
     via1->reset();
     via2->reset();
     cia->reset();
+    ciaSpeeder->reset();
     pia->reset();
 
+    proSpeedControl = 0xff;
     profDosAutoSpeed = false;
     prologic40TrackMode = false;
     turboTransVisible = 1;
@@ -1083,10 +1167,13 @@ auto Drive::setSpeeder(uint8_t speeder) -> void {
 
     extendedMemoryMap = expandMemory || (speeder > 1);
 
-    operation &= ~DRIVE_HAS_PIA;
+    operation &= ~(DRIVE_HAS_PIA | DRIVE_HAS_EXTRA_CIA);
 
     if (speeder == 4 || speeder == 5 || speeder == 10)
         operation |= DRIVE_HAS_PIA;
+
+    if (speeder == 13)
+        operation |= DRIVE_HAS_EXTRA_CIA;
 }
 
 }

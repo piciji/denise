@@ -26,6 +26,7 @@
 #define DRIVE_MODE_157x 16u
 
 #define DRIVE_HAS_PIA 32u
+#define DRIVE_HAS_EXTRA_CIA 64u  // besides the builtin CIA
 
 namespace LIBC64 {
 
@@ -80,6 +81,7 @@ struct Drive {
     Via* via1;
     Via* via2;
     Cia8520* cia;
+    Cia8520* ciaSpeeder;
     Emulator::Pia* pia;
     M6502* cpu;
     DiskStructure structure;
@@ -104,6 +106,7 @@ struct Drive {
     bool extendedMemoryMap;
     uint8_t turboTransVisible; // 0: rom, 1: ram
     uint8_t turboTransPage;
+    uint8_t proSpeedControl;
         
     DiskStructure::GcrTrack* gcrTrack;
     DiskStructure::GcrTrack* dummyTrack;

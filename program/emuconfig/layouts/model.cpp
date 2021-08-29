@@ -657,6 +657,9 @@ auto ModelLayout::hintDriveSettings() -> void {
     } else if (selection == 12) { // Turbo Trans
         blockRamA0->checkBox.toggle();
         blockDriveModel->combo.setSelection(0);
+    } else if (selection == 13) { // Pro Speed 1571
+        blockRam80->checkBox.toggle();
+        blockDriveModel->combo.setSelection(4);
     }
 
     blockDriveModel->combo.onChange();

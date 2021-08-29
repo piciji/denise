@@ -79,6 +79,7 @@ auto Drive::serialize(Emulator::Serializer& s) -> void {
     s.integer( extendedMemoryMap );
     s.integer( turboTransVisible );
     s.integer( turboTransPage );
+    s.integer( proSpeedControl );
 
     via1->serialize( s );
     via2->serialize( s );
@@ -90,7 +91,9 @@ auto Drive::serialize(Emulator::Serializer& s) -> void {
         cia->serialize(s);
     if (operation & DRIVE_HAS_PIA)
         pia->serialize(s);
-    
+    if (operation & DRIVE_HAS_EXTRA_CIA)
+        ciaSpeeder->serialize(s);
+
     if (s.mode() == Emulator::Serializer::Mode::Load) {
 
         updateCycleSpeed( use2Mhz() );

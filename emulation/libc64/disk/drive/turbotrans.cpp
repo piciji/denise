@@ -31,7 +31,7 @@ auto Drive::turboTransWriteControl(uint16_t addr, uint8_t data) -> bool {
     else if (turboTransVisible & 2) {
         if ((addr & 0xf800) == 0x6800) {
 
-                turboTrans[(turboTransPage << 10) | (addr & 0x3ff)] = data;
+            turboTrans[(turboTransPage << 10) | (addr & 0x3ff)] = data;
             return true;
         }
         else if ((addr & 0xf800) == 0x7000) {

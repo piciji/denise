@@ -255,8 +255,13 @@ auto IecBus::readParallelWithHandshake() -> uint8_t {
             }
         } else {
             if (drive->operation & DRIVE_MODE_157x) {
-                drive->cia->setFlag();
-                out &= drive->cia->lines.iob;
+                if (drive->operation & DRIVE_HAS_EXTRA_CIA) {
+                    drive->ciaSpeeder->setFlag();
+                    out &= drive->ciaSpeeder->lines.iob;
+                } else {
+                    drive->cia->setFlag();
+                    out &= drive->cia->lines.iob;
+                }
             } else {
                 drive->via1->cb1In(false);
                 out &= drive->via1->lines.ioa;
@@ -279,7 +284,10 @@ auto IecBus::readParallel() -> uint8_t {
             }
         } else {
             if (drive->operation & DRIVE_MODE_157x) {
-                out &= drive->cia->lines.iob;
+                if (drive->operation & DRIVE_HAS_EXTRA_CIA)
+                    out &= drive->ciaSpeeder->lines.iob;
+                else
+                    out &= drive->cia->lines.iob;
             } else {
                 out &= drive->via1->lines.ioa;
             }
@@ -299,9 +307,12 @@ auto IecBus::writeParallelHandshake() -> void {
                 drive->pia->ca1In(false);
             }
         } else {
-            if (drive->operation & DRIVE_MODE_157x)
-                drive->cia->setFlag();
-            else
+            if (drive->operation & DRIVE_MODE_157x) {
+                if (drive->operation & DRIVE_HAS_EXTRA_CIA)
+                    drive->ciaSpeeder->setFlag();
+                else
+                    drive->cia->setFlag();
+            } else
                 drive->via1->cb1In(false);
         }
     }

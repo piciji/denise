@@ -275,7 +275,7 @@ auto FirmwareLayout::loadSettings(bool init) -> void {
            //     block->bottom.edit.setText( program->dataFolder() + firmware.name );
             //} else {
                 auto fSetting = manager->getSetting( &firmware, i );
-                if (!init) {
+                if ( (i != 0) && !init) {
                     fSetting->update();
                 }
 
