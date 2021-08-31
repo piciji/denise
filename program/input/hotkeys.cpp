@@ -53,6 +53,7 @@ auto InputManager::setCustomHotkeys() -> void {
 	customHotkeys.push_back( {Hotkey::Id::Power, "power", true} );
 	customHotkeys.push_back( {Hotkey::Id::SoftReset, "Soft Reset", true} );
     customHotkeys.push_back( {Hotkey::Id::AnyLoad, "load software", true} );
+    customHotkeys.push_back( {Hotkey::Id::ToggleBorder, "toggle border", true} );
 
 	if (dynamic_cast<LIBC64::Interface*>(emulator) ) {
 		customHotkeys.push_back( {Hotkey::Id::ToggleSidFilter, "sid_filter_toggle", false} );
@@ -78,7 +79,7 @@ auto InputManager::setCustomHotkeys() -> void {
 	customHotkeys.push_back( {Hotkey::Id::Palette, "Palette", true} );
     customHotkeys.push_back( {Hotkey::Id::Firmware, "Firmware", true} );
 	customHotkeys.push_back( {Hotkey::Id::Border, "Border", true} );
-    customHotkeys.push_back( {Hotkey::Id::DiskSwapper, "Disk_swapper", true} );                        
+    customHotkeys.push_back( {Hotkey::Id::DiskSwapper, "Disk_swapper", true} );
 }
 
 auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> void {
@@ -270,6 +271,28 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
         case Hotkey::ToggleStatus:
             if(!view->exclusiveFullscreen()) view->updateStatusBar( true );
             break;
+
+        case Hotkey::Id::ToggleBorder: {
+            if (!activeEmulator)
+                break;
+
+            typedef Emulator::Interface::CropType CropType;
+            auto cropType = settings->get<unsigned>("crop_type", (unsigned)CropType::Off);
+            if (++cropType > 2)
+                cropType = 0;
+
+            auto emuView = EmuConfigView::TabWindow::getView( activeEmulator );
+
+            if (emuView) {
+                if ((CropType)cropType == CropType::Off) emuView->borderLayout->cropOff.activate();
+                else if ((CropType)cropType == CropType::Monitor) emuView->borderLayout->cropMonitor.activate();
+                else if ((CropType)cropType == CropType::Auto) emuView->borderLayout->cropAuto.activate();
+            } else {
+                settings->set<unsigned>("crop_type", cropType);
+                program->updateCrop(activeEmulator);
+            }
+
+        } break;
 
         case Hotkey::ResetTapeCounter:
         case Hotkey::PlayTape:
