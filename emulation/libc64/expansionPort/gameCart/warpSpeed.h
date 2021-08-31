@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include "gameCart.h"
+
 namespace LIBC64 {
 
     struct WarpSpeed : GameCart {

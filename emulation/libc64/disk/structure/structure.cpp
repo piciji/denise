@@ -13,6 +13,7 @@
 #include "../iec.h"
 #include "../virtual/virtualDrive.h"
 #include "../drive/drive.h"
+#include "../../expansionPort/gameCart/warpSpeed.h"
 
 namespace LIBC64 {
     
@@ -434,13 +435,16 @@ auto DiskStructure::prepareKeyBufferActions( std::vector<uint8_t>& path, bool us
         }
         action.mode = KeyBuffer::Mode::WaitFor;
         action.buffer = {'L', 'O', 'A', 'D', 'I', 'N', 'G'};
+        if (dynamic_cast<WarpSpeed*>(expansionPort))
+            action.buffer = {'W','A','R','P'};
+
         action.alternateBuffer = {'S', 'E', 'A', 'R', 'C', 'H', 'I', 'N', 'G'};
         action.blinkingCursor = false;
         system->keyBuffer->add(action);
     }
     action.callbackId = 4;
     action.mode = KeyBuffer::Mode::WaitFor;
-    action.buffer = {'R', 'E', 'A', 'D', 'Y', '.'};  
+    action.buffer = {'R', 'E', 'A', 'D', 'Y', '.'};
     action.delay = 180;    
     action.alternateBuffer.clear();
     action.blinkingCursor = true;

@@ -572,13 +572,15 @@ auto System::power( bool softReset ) -> void {
     kernalBootComplete = false;
     KeyBuffer::Action action;
     action.mode = KeyBuffer::Mode::WaitDelay;
-    if (iecBus->drives[0]->speeder && secondDriveCable.parallelUse)
+
+    if (dynamic_cast<Freezer*>(expansionPort))
+        action.delay = (unsigned)(interface->stats.fps * dynamic_cast<Freezer*>(expansionPort)->bootSpeed());
+    else if (iecBus->drives[0]->speeder && secondDriveCable.parallelUse)
         action.delay = (unsigned)(interface->stats.fps * ((iecBus->drives[0]->speeder == 10 || iecBus->drives[0]->speeder == 11)
             ? 0.9 : 0.5) );
-    else if (dynamic_cast<Freezer*>(expansionPort))
-        action.delay = (unsigned)(interface->stats.fps * dynamic_cast<Freezer*>(expansionPort)->bootSpeed());
     else
         action.delay = (unsigned)(interface->stats.fps * 2.2);
+
 
     if ( !expansionPort->isBootable() ) {
         system->keyBuffer->add( action, false );
@@ -594,7 +596,6 @@ auto System::power( bool softReset ) -> void {
         action.callbackId = 1;
         action.callback = [this]() { kernalBootComplete = true; };
         system->keyBuffer->add( action );
-
 
     } else {
         action.callbackId = 1;
