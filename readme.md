@@ -18,7 +18,8 @@
     * DolphinDOS v2, v3, Ultimate Hack
     * ProfDOS v1, R3, R4, R5, R6
     * PrologicDos Original and Classic
-    * Turbo Trans ( includes Turbo Access ) 
+    * Turbo Trans ( includes Turbo Access )
+    * ProSpeed 1571 GTI v2.0 
     * support Userport Kernals for all fast6 loader, expect Turbo Trans
     * support Expansionsport Kernals for ProfDOS, PrologicDOS, Turbo Trans
 * bugfix: switch to custom resolutiuon in fullscreen
