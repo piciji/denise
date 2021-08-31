@@ -71,7 +71,10 @@ auto Autoloader::postProcessing() -> void {
     auto mediaGroup = ddControl.mediaGroups[0];
     bool autoStart = true;
     bool trapped = false;
+    bool forceStandardKernal = false;
+
     FileSetting* fSetting = nullptr;
+    GUIKIT::Settings* settings = program->getSettings( ddControl.emulator );
     
     if (ddControl.mode == Mode::DragnDrop) {
         autoStart = globalSettings->get<bool>("autostart_dragndrop", false);
@@ -82,20 +85,29 @@ auto Autoloader::postProcessing() -> void {
                 autoStart = true;
         }
         if (autoStart) {
-            trapped = program->getSettings( ddControl.emulator )->get<bool>("use_disk_traps", false);
+            if (mediaGroup->isDisk())
+                trapped = settings->get<bool>("use_disk_traps", false);
         }
     } else if (ddControl.mode == Mode::Open)
         autoStart = false;
     else if (ddControl.mode == Mode::AutoStart) {
         autoStart = true;
-        trapped = program->getSettings( ddControl.emulator )->get<bool>("use_disk_traps", false);
+        if (mediaGroup->isDisk())
+            trapped = settings->get<bool>("use_disk_traps", false);
     } else if (ddControl.mode == Mode::AutoStartTrapped) {
         autoStart = true;
-        trapped = true;
+        if (mediaGroup->isDisk())
+            trapped = true;
     } else if (ddControl.mode == Mode::AutoStartNotTrapped) {
         autoStart = true;
     }
-    
+
+    if (trapped) // traps require standard kernals
+        forceStandardKernal = true;
+    else if (mediaGroup->isTape()) {
+        forceStandardKernal = settings->get<bool>("autostart_tape_standard_kernal", false);
+    }
+
     if (!autoStart) {
 
         if (mediaGroup->isDrive()) {
@@ -136,7 +148,7 @@ auto Autoloader::postProcessing() -> void {
 				
 				useExpansion = _mediaGroup.expansion;
 				
-				auto curExpansion = ddControl.emulator->getExpansionById( program->getSettings( ddControl.emulator )->get<unsigned>("expansion", 0) );
+				auto curExpansion = ddControl.emulator->getExpansionById( settings->get<unsigned>("expansion", 0) );
 				
 				if (curExpansion) {
 					for (auto& exp : ddControl.emulator->expansions) {
@@ -148,7 +160,7 @@ auto Autoloader::postProcessing() -> void {
 					}
 				}
 				
-				program->getSettings( ddControl.emulator )->set<unsigned>("expansion", useExpansion->id);
+				settings->set<unsigned>("expansion", useExpansion->id);
 
                 if (useExpansion->isRam()) {
                     fileloader->eject( ddControl.emulator, useExpansion->mediaGroup, true );
@@ -163,12 +175,12 @@ auto Autoloader::postProcessing() -> void {
 			}
 		}
         
-        program->power( ddControl.emulator,emuView != nullptr );
+        program->power( ddControl.emulator, emuView != nullptr );
 
         if (!useExpansion)
             program->removeExpansion();
 
-        if (trapped) {
+        if (forceStandardKernal) {
             // temporary disable any speeders
             FirmwareManager::getInstance( ddControl.emulator )->insertDefault();
         }

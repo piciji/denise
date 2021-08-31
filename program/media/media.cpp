@@ -466,27 +466,8 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
             fileloader->insertCurrentPreview( layout->mediaGroup );
 
             auto media = layout->selectedBlock->media;
-            
-            program->power( emulator );
 
-            bool trapped = useDiskTraps.checked();
-
-            if (trapped) {
-                FirmwareManager::getInstance( emulator )->insertDefault();
-            }
-            
-            program->removeExpansion();
-
-            emulator->selectListing( media, selection, "", trapped );
-       
-            auto fSetting = FileSetting::getInstance(emulator, _underscore(media->name) );
-            if (fSetting)
-                program->updateSaveIdent(emulator, fSetting->file);
-            
-            view->setFocused(300);
-
-            if (layout->mediaGroup->isTape() || layout->mediaGroup->isDisk())
-                program->initAutoWarp(layout->mediaGroup);
+            fileloader->autoload(emulator, media, selection, media->group->isDisk() && useDiskTraps.checked());
         };
 
         layout->inject.onActivate = [this, layout]() {

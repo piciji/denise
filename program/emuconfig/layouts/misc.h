@@ -12,15 +12,22 @@ struct RunAheadLayout : GUIKIT::FramedVerticalLayout {
     RunAheadLayout();
 };
 
-struct WarpLayout : GUIKIT::FramedHorizontalLayout {
+struct AutostartLayout : GUIKIT::FramedVerticalLayout {
 
-    GUIKIT::RadioBox off;
-    GUIKIT::RadioBox normal;
-    GUIKIT::RadioBox aggressive;
-    GUIKIT::CheckBox diskFirstFile;
-    GUIKIT::CheckBox tapeFirstFile;
+    struct AutoWarp : GUIKIT::HorizontalLayout {
+        GUIKIT::Label label;
+        GUIKIT::RadioBox off;
+        GUIKIT::RadioBox normal;
+        GUIKIT::RadioBox aggressive;
+        GUIKIT::CheckBox diskFirstFile;
+        GUIKIT::CheckBox tapeFirstFile;
 
-    WarpLayout();
+        AutoWarp();
+    } autoWarp;
+
+    GUIKIT::CheckBox tapeWithStandardKernal;
+
+    AutostartLayout();
 };
 
 struct MiscLayout : GUIKIT::VerticalLayout {
@@ -28,7 +35,7 @@ struct MiscLayout : GUIKIT::VerticalLayout {
     TabWindow* tabWindow;
     Emulator::Interface* emulator;
     RunAheadLayout runAheadLayout;
-    WarpLayout warpLayout;
+    AutostartLayout autostartLayout;
     
     auto translate() -> void;
     auto setRunAheadPerformance(bool state) -> void;

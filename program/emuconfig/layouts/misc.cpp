@@ -13,10 +13,8 @@ RunAheadLayout::RunAheadLayout() : control("") {
     setFont(GUIKIT::Font::system("bold"));   
 }
 
-WarpLayout::WarpLayout() {
-
-    setPadding(10);
-
+AutostartLayout::AutoWarp::AutoWarp() {
+    append(label, {0u, 0u}, 10 );
     append(off, {0u, 0u}, 10 );
     append(normal, {0u, 0u}, 10 );
     append(aggressive, {0u, 0u}, 25 );
@@ -26,6 +24,13 @@ WarpLayout::WarpLayout() {
     GUIKIT::RadioBox::setGroup( off, normal, aggressive );
 
     setAlignment( 0.5 );
+}
+
+AutostartLayout::AutostartLayout() {
+    setPadding(10);
+
+    append(autoWarp, {0u, 0u}, 5 );
+    append(tapeWithStandardKernal, {0u, 0u} );
 
     setFont(GUIKIT::Font::system("bold"));
 }
@@ -47,31 +52,35 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) {
     
     append( runAheadLayout, {~0u, 0u}, 10 );
 
-    append( warpLayout, {~0u, 0u} );
+    append( autostartLayout, {~0u, 0u} );
 
-    warpLayout.off.onActivate = [this]() {
+    autostartLayout.autoWarp.off.onActivate = [this]() {
 
         _settings->set<unsigned>( "auto_warp", 0);
     };
 
-    warpLayout.normal.onActivate = [this]() {
+    autostartLayout.autoWarp.normal.onActivate = [this]() {
 
         _settings->set<unsigned>( "auto_warp", 1);
     };
 
-    warpLayout.aggressive.onActivate = [this]() {
+    autostartLayout.autoWarp.aggressive.onActivate = [this]() {
 
         _settings->set<unsigned>( "auto_warp", 2);
     };
 
-    warpLayout.diskFirstFile.onToggle = [this]() {
+    autostartLayout.autoWarp.diskFirstFile.onToggle = [this]() {
 
-        _settings->set<bool>( "auto_warp_disk_first_file", warpLayout.diskFirstFile.checked());
+        _settings->set<bool>( "auto_warp_disk_first_file", autostartLayout.autoWarp.diskFirstFile.checked());
     };
 
-    warpLayout.tapeFirstFile.onToggle = [this]() {
+    autostartLayout.autoWarp.tapeFirstFile.onToggle = [this]() {
 
-        _settings->set<bool>( "auto_warp_tape_first_file", warpLayout.tapeFirstFile.checked());
+        _settings->set<bool>( "auto_warp_tape_first_file", autostartLayout.autoWarp.tapeFirstFile.checked());
+    };
+
+    autostartLayout.tapeWithStandardKernal.onToggle = [this]() {
+        _settings->set<bool>( "autostart_tape_standard_kernal", autostartLayout.tapeWithStandardKernal.checked() );
     };
 
     runAheadLayout.control.slider.onChange = [this]() {
@@ -132,13 +141,16 @@ auto MiscLayout::translate() -> void {
     
     runAheadLayout.options.disableOnPower.setText( trans->get("disable runAhead on power") );
 
-    warpLayout.setText( trans->get("warp on autostart") );
-    warpLayout.aggressive.setText( trans->get("aggressive") );
-    warpLayout.normal.setText( trans->get("normal") );
-    warpLayout.off.setText( trans->get("off") );
+    autostartLayout.setText( trans->get("auto start") );
+    autostartLayout.autoWarp.label.setText( trans->get("Auto Warp", {}, true) );
+    autostartLayout.autoWarp.aggressive.setText( trans->get("aggressive") );
+    autostartLayout.autoWarp.normal.setText( trans->get("normal") );
+    autostartLayout.autoWarp.off.setText( trans->get("off") );
 
-    warpLayout.diskFirstFile.setText( trans->get("disk warp first file") );
-    warpLayout.tapeFirstFile.setText( trans->get("tape warp first file") );
+    autostartLayout.autoWarp.diskFirstFile.setText( trans->get("disk warp first file") );
+    autostartLayout.autoWarp.tapeFirstFile.setText( trans->get("tape warp first file") );
+
+    autostartLayout.tapeWithStandardKernal.setText( trans->get("tape default kernal") );
 }
 
 auto MiscLayout::loadSettings() -> void {
@@ -146,19 +158,21 @@ auto MiscLayout::loadSettings() -> void {
     unsigned autoWarp = _settings->get<unsigned>( "auto_warp", 0);
 
     if (autoWarp == 0)
-        warpLayout.off.setChecked();
+        autostartLayout.autoWarp.off.setChecked();
     else if (autoWarp == 1)
-        warpLayout.normal.setChecked();
+        autostartLayout.autoWarp.normal.setChecked();
     else if (autoWarp == 2)
-        warpLayout.aggressive.setChecked();
+        autostartLayout.autoWarp.aggressive.setChecked();
 
-    warpLayout.diskFirstFile.setChecked( _settings->get<bool>( "auto_warp_disk_first_file", true) );
+    autostartLayout.autoWarp.diskFirstFile.setChecked( _settings->get<bool>( "auto_warp_disk_first_file", true) );
 
-    warpLayout.tapeFirstFile.setChecked( _settings->get<bool>( "auto_warp_tape_first_file", false) );
+    autostartLayout.autoWarp.tapeFirstFile.setChecked( _settings->get<bool>( "auto_warp_tape_first_file", false) );
 
     setRunAheadPerformance( _settings->get<bool>( "runahead_performance", false) );
     
     runAheadLayout.options.disableOnPower.setChecked( _settings->get<bool>( "runahead_disable", true) );
+
+    autostartLayout.tapeWithStandardKernal.setChecked( _settings->get<bool>( "autostart_tape_standard_kernal", false) );
     
     unsigned pos = _settings->get<unsigned>( "runahead", 0, {0u, 10u});
     

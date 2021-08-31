@@ -533,7 +533,7 @@ auto Fileloader::insertFile( Emulator::Interface* emulator, Emulator::Interface:
 
     auto& items = file->scanArchive();
 
-    archiveViewer->onCallback = [this, file, media, emulator, settings, autoLoad, selection](GUIKIT::File::Item* item) {
+    archiveViewer->onCallback = [this, file, media, emulator, autoLoad, selection](GUIKIT::File::Item* item) {
 
         auto emuView = EmuConfigView::TabWindow::getView( emulator );
 
@@ -546,47 +546,61 @@ auto Fileloader::insertFile( Emulator::Interface* emulator, Emulator::Interface:
             insertImage( emulator, media, file, item );
 
         if (autoLoad & 1) {
-            auto mediaGroup = media->group;
-
-            if (mediaGroup->isDrive()) {
-                autoloader->activateDrive( emulator, mediaGroup, 1 );
-            }
-
-            if (mediaGroup->isExpansion()) {
-                settings->set<unsigned>("expansion", mediaGroup->expansion->id);
-                if (emuView)
-                    emuView->systemLayout->setExpansion( mediaGroup->expansion );
-            }
-
-            program->power( emulator );
-
-            if (!mediaGroup->isExpansion())
-                program->removeExpansion();
-
-            if (autoLoad & USE_TRAPS) {
-                FirmwareManager::getInstance( emulator )->insertDefault();
-            }
-
-            if (mediaGroup->selected)
-                emulator->selectListing(mediaGroup->selected, selection, "", autoLoad & USE_TRAPS);
-            else
-                emulator->selectListing(media, selection, "", autoLoad & USE_TRAPS);
-
-            if (emuView)
-                program->updateSaveIdent( emulator, file->getFileName() );
-
-            if (mediaGroup->isTape())
-                view->updateTapeIcons(Emulator::Interface::TapeMode::Play);
-
-            view->setFocused(300);
-
-            if (mediaGroup->isTape() || mediaGroup->isDisk())
-                program->initAutoWarp(mediaGroup);
+            autoload(emulator, media, selection, autoLoad & USE_TRAPS);
         }
     };
     archiveViewer->setView(items);
 
     return true;
+}
+
+auto Fileloader::autoload(Emulator::Interface* emulator, Emulator::Interface::Media* media, unsigned selection, bool useTraps) -> void {
+    auto mediaGroup = media->group;
+    auto settings = program->getSettings( emulator );
+    auto emuView = EmuConfigView::TabWindow::getView( emulator );
+
+    if (mediaGroup->isDrive()) {
+        autoloader->activateDrive( emulator, mediaGroup, 1 );
+    }
+
+    if (mediaGroup->isExpansion()) {
+        settings->set<unsigned>("expansion", mediaGroup->expansion->id);
+        if (emuView)
+            emuView->systemLayout->setExpansion( mediaGroup->expansion );
+    }
+
+    program->power( emulator );
+
+    if (!mediaGroup->isExpansion())
+        program->removeExpansion();
+
+    bool forceStandardKernal = false;
+    if (media->group->isTape()) {
+        forceStandardKernal = settings->get<bool>("autostart_tape_standard_kernal", false);
+    }
+
+    if (forceStandardKernal || useTraps) {
+        FirmwareManager::getInstance( emulator )->insertDefault();
+    }
+
+    if (mediaGroup->selected)
+        emulator->selectListing(mediaGroup->selected, selection, "", useTraps);
+    else
+        emulator->selectListing(media, selection, "", useTraps);
+
+    if (emuView) {
+        auto fSetting = FileSetting::getInstance(emulator, _underscore(media->name) );
+        if (fSetting)
+            program->updateSaveIdent(emulator, fSetting->file);
+    }
+
+    if (mediaGroup->isTape())
+        view->updateTapeIcons(Emulator::Interface::TapeMode::Play);
+
+    view->setFocused(300);
+
+    if (mediaGroup->isTape() || mediaGroup->isDisk())
+        program->initAutoWarp(mediaGroup);
 }
 
 auto Fileloader::insertImage(Emulator::Interface* emulator, Emulator::Interface::Media* media, GUIKIT::File* file, GUIKIT::File::Item* item) -> void {

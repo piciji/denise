@@ -350,6 +350,8 @@ auto Tape::selectListing( unsigned pos ) -> void {
     action.buffer = {'R', 'U', 'N', '\r'};    
     system->keyBuffer->add(action);
 
+    system->keyBuffer->forceDefaultKernalDelay(); // a possible speeder use shorter boot time
+
     autoStarted = true;
 }
 
