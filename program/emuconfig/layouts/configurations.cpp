@@ -594,8 +594,10 @@ auto ConfigurationsLayout::load( std::string path ) -> bool {
         return false;
     }
 
-    if (activeEmulator)
-        view->poweroff.onActivate();
+    auto _activeEmulatorBefore = activeEmulator;
+
+    if (_activeEmulatorBefore)
+        program->powerOff();
 
     if (!_settings->load(path)) {
         mes->error(trans->get("file_open_error",{
@@ -632,6 +634,9 @@ auto ConfigurationsLayout::load( std::string path ) -> bool {
     this->tabWindow->mediaLayout->loadSettings();        
     
     loadSettings();
+
+    if (_activeEmulatorBefore)
+        program->power(_activeEmulatorBefore);
     
     return true;
 }
