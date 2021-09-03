@@ -278,8 +278,11 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
 
             typedef Emulator::Interface::CropType CropType;
             auto cropType = settings->get<unsigned>("crop_type", (unsigned)CropType::Off);
-            if (++cropType > 2)
+            if (++cropType > 4) {
                 cropType = 0;
+            }
+            if (cropType == 3)
+                cropType = 4;
 
             auto emuView = EmuConfigView::TabWindow::getView( activeEmulator );
 
@@ -287,6 +290,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
                 if ((CropType)cropType == CropType::Off) emuView->borderLayout->cropOff.activate();
                 else if ((CropType)cropType == CropType::Monitor) emuView->borderLayout->cropMonitor.activate();
                 else if ((CropType)cropType == CropType::Auto) emuView->borderLayout->cropAuto.activate();
+                else if ((CropType)cropType == CropType::Free) emuView->borderLayout->cropFree.activate();
             } else {
                 settings->set<unsigned>("crop_type", cropType);
                 program->updateCrop(activeEmulator);
