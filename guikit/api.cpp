@@ -754,6 +754,11 @@ auto ComboButton::setSelection(unsigned selection) -> void {
     p.setSelection(selection);
 }
 
+auto ComboButton::activate(unsigned selection) -> void {
+    setSelection(selection);
+    if(onChange) onChange();
+}
+
 auto ComboButton::setSelectionByUserId(int userId) -> void {
     unsigned selection = 0;
     

@@ -52,7 +52,30 @@ FirmwareLayout::FirmwareLayout(TabWindow* tabWindow) {
             _settings->set<unsigned>( "use_firmware", i );
 			updateVisibility();
             
-            hotSwap(i);                
+            hotSwap(i);
+
+            if (i == 0) {
+                if (dynamic_cast<LIBC64::Interface*>(this->emulator)) {
+                    std::vector<LIBC64::Interface::ModelId> modelIds;
+                    modelIds.push_back( LIBC64::Interface::ModelId::ModelIdDriveParallelCable);
+                    modelIds.push_back( LIBC64::Interface::ModelId::ModelIdCiaBurstMode );
+                    modelIds.push_back( LIBC64::Interface::ModelId::ModelIdDriveRam20To3F );
+                    modelIds.push_back( LIBC64::Interface::ModelId::ModelIdDriveRam40To5F );
+                    modelIds.push_back( LIBC64::Interface::ModelId::ModelIdDriveRam60To7F );
+                    modelIds.push_back( LIBC64::Interface::ModelId::ModelIdDriveRam80To9F );
+                    modelIds.push_back( LIBC64::Interface::ModelId::ModelIdDriveRamA0ToBF );
+
+                    for(auto& _id : modelIds) {
+                        auto block = this->tabWindow->systemLayout->driveModelLayout.getBlock(_id);
+                        if (block && block->checkBox.checked())
+                            block->checkBox.toggle();
+                    }
+
+                    auto blockSpeeder = this->tabWindow->systemLayout->driveModelLayout.getBlock( LIBC64::Interface::ModelId::ModelIdDriveFastLoader );
+                    if (blockSpeeder && blockSpeeder->combo.selection())
+                        blockSpeeder->combo.activate(0);
+                }
+            }
         };
 
         customSelectorLayout.append( *radioBox, {0u, 0u}, i == manager->maxSets ? 0 : 10 );        
