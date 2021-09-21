@@ -87,8 +87,11 @@ auto Drive::serialize(Emulator::Serializer& s) -> void {
 
     s.integer( structure.encodingGraceful.status );
 
-    if (operation & DRIVE_MODE_157x)
+    if (operation & DRIVE_MODE_157x) {
         cia->serialize(s);
+        wd1770->serialize(s);
+    }
+
     if (operation & DRIVE_HAS_PIA)
         pia->serialize(s);
     if (operation & DRIVE_HAS_EXTRA_CIA)
@@ -100,6 +103,16 @@ auto Drive::serialize(Emulator::Serializer& s) -> void {
 
         setFirmwareByType();
         gcrTrack = structure.getTrackPtr( side, currentHalftrack );
+
+        if ( (type == Type::D1570) && (side == 1) ) {
+            gcrTrack = dummyTrack;
+        }
+
+        if (operation & DRIVE_MODE_157x) {
+            wd1770->setTrack( gcrTrack, gcrTrack == dummyTrack );
+            wd1770->setDiskAccessible( motorOn && loaded );
+        }
+
         // unserialize VIA before to get state of LED
         updateDeviceState();
 

@@ -195,7 +195,7 @@ namespace LIBC64 {
                                     position = pulse.position - pulseDelta;
 
                                 if (gcrTrack != dummyTrack) {
-                                    structure.addPulse(gcrTrack, position, 0xffffffff);
+                                    DiskStructure::addPulse(gcrTrack, position, 0xffffffff);
 
                                     if (!written)
                                         written = true;
@@ -217,7 +217,7 @@ namespace LIBC64 {
                                     pulse.strength = 0xffffffff;
 
                             } else
-                                structure.freePulse(gcrTrack, pulseIndex);
+                                DiskStructure::freePulse(gcrTrack, pulseIndex);
 
                             if (!written)
                                 written = true;

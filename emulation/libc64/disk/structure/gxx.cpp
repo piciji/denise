@@ -1,5 +1,6 @@
 
 #include "structure.h"
+#include "../wd177x/wd1770.h"
 
 namespace LIBC64 {
   
@@ -95,6 +96,10 @@ auto DiskStructure::prepareGxx() -> void {
             if (ptr->data)
                 delete[] ptr->data;
 
+            if (ptr->mfmSync)
+                delete[] ptr->mfmSync;
+
+            ptr->mfmSync = nullptr;
             ptr->data = nullptr;
             ptr->size = 0;
             ptr->bits = 1;
@@ -113,12 +118,15 @@ auto DiskStructure::prepareGxx() -> void {
 
                 trackLength = Emulator::copyBufferToInt<uint16_t>(&buf[0]);
 
+                bool mfm = (trackLength & 0x8000) != 0;
+                trackLength &= 0x7fff;
+
                 // header area contains the value for maximal track length.
                 // each track begins with a 2 byte value about track length.
                 // next track isn't following immediately, otherwise a changed
                 // track length would overwrite and corrupt next track.
                 // so each track has a size of max track length.
-                // the difference between real track length and max track length
+                // the gap between real track length and max track length
                 // is filled with zero's.
                 if ((trackLength < 1) || (trackLength > maxTrackLength))
                     continue;
@@ -129,7 +137,13 @@ auto DiskStructure::prepareGxx() -> void {
                 ptr->size = trackLength;
                 ptr->bits = ptr->size << 3;
                 ptr->data = new uint8_t[ptr->size];
-                std::memcpy(ptr->data, rawData + offset + 2, trackLength);
+                ptr->mfmSync = new uint8_t[ptr->size >> 3];
+
+                if (mfm) {
+                    parseMfm(ptr, offset + 2);
+                } else {
+                    std::memcpy(ptr->data, rawData + offset + 2, trackLength);
+                }
 
             } else { // if track doesn't exists
                 ptr->size = countBytes((halfTrack + 2) / 2); // standard length
@@ -138,12 +152,192 @@ auto DiskStructure::prepareGxx() -> void {
                 std::memset(ptr->data, 0x55, ptr->size);
             }
 
+            if (!ptr->mfmSync) {
+                ptr->mfmSync = new uint8_t[ptr->size >> 3];
+                std::memset(ptr->mfmSync, 0x00, ptr->size >> 3);
+            }
+
             if (ptr->bits == 0)
                 ptr->bits = 1;
         }
     }
 }
-    
+
+inline auto DiskStructure::addMfmByte(uint8_t*& dest, uint8_t data, uint16_t& crc) -> void {
+    *dest++ = data;
+    crc = WD1770::CRC1021[(crc >> 8) ^ data] ^ (crc << 8);
+}
+
+auto DiskStructure::parseMfm(GcrTrack* trackPtr, unsigned offset) -> void {
+    unsigned pos;
+    uint16_t crc;
+
+    std::memset(trackPtr->data, 0x4e, trackPtr->size);
+    trackPtr->mfmSync = new uint8_t[trackPtr->size >> 3];
+    std::memset(trackPtr->mfmSync, 0x00, trackPtr->size >> 3);
+
+    if ((offset + (5 * 32 + 2)) >= rawSize)
+        return;
+
+    uint8_t sectorCount = rawData[offset++];
+    uint8_t version = rawData[offset++];
+
+    unsigned dataOffset = offset + 32 * 5;
+
+    if (sectorCount > 32)
+        sectorCount = 0;
+
+    uint8_t* ptr = trackPtr->data;
+
+    unsigned todo = 6250;
+    if (trackPtr->size < todo)
+        todo = trackPtr->size;
+
+    if (todo < 96)
+        return;
+    todo -= 96;
+
+    memset(ptr, 0x4e, 80); ptr += 80;
+    memset(ptr, 0x0, 12); ptr += 12;
+
+    pos = ptr - trackPtr->data;
+    trackPtr->mfmSync[pos >> 3] |= 1 << (pos & 7); pos++;
+    trackPtr->mfmSync[pos >> 3] |= 1 << (pos & 7); pos++;
+    trackPtr->mfmSync[pos >> 3] |= 1 << (pos & 7); pos++;
+
+    addMfmByte(ptr, 0xc2, crc);
+    addMfmByte(ptr, 0xc2, crc);
+    addMfmByte(ptr, 0xc2, crc);
+    addMfmByte(ptr, 0xfc, crc);
+
+    memset(ptr, 0x4e, 50); ptr += 50;
+
+    //memset(ptr, 0x4e, 60); ptr += 60;
+
+    for (unsigned i = 0; i < sectorCount; i++) {
+
+        uint8_t track = rawData[offset++];
+        uint8_t side = rawData[offset++];
+        uint8_t sector = rawData[offset++];
+        uint8_t sectorSize = rawData[offset++];
+        uint8_t errorByte = rawData[offset++];
+
+        if (sectorSize > 3)
+            sectorSize = 3;
+
+        auto blockSize = 12 + 4 + 6 + 22 + 12 + 4 + (128 << sectorSize) + 2 + 22;
+
+        if (todo < blockSize)
+            return;
+
+        todo -= blockSize;
+
+        memset(ptr, 0x0, 12); ptr += 12;
+
+        pos = ptr - trackPtr->data;
+        trackPtr->mfmSync[pos >> 3] |= 1 << (pos & 7); pos++;
+        trackPtr->mfmSync[pos >> 3] |= 1 << (pos & 7); pos++;
+        trackPtr->mfmSync[pos >> 3] |= 1 << (pos & 7); pos++;
+
+        crc = 0xffff;
+        addMfmByte(ptr, 0xa1, crc);
+        addMfmByte(ptr, 0xa1, crc);
+        addMfmByte(ptr, 0xa1, crc);
+        addMfmByte(ptr, 0xfe, crc);
+
+        addMfmByte(ptr, track, crc);
+        addMfmByte(ptr, side, crc);
+        addMfmByte(ptr, sector, crc);
+        addMfmByte(ptr, sectorSize, crc);
+        *ptr++ = crc >> 8;
+        *ptr++ = crc & 0xff;
+        memset(ptr, 0x4e, 22); ptr += 22;
+        memset(ptr, 0x0, 12); ptr += 12;
+
+        pos = ptr - trackPtr->data;
+        trackPtr->mfmSync[pos >> 3] |= 1 << (pos & 7); pos++;
+        trackPtr->mfmSync[pos >> 3] |= 1 << (pos & 7); pos++;
+        trackPtr->mfmSync[pos >> 3] |= 1 << (pos & 7); pos++;
+
+        crc = 0xffff;
+        addMfmByte(ptr, 0xa1, crc);
+        addMfmByte(ptr, 0xa1, crc);
+        addMfmByte(ptr, 0xa1, crc);
+        addMfmByte(ptr, 0xfb, crc);
+
+        if (dataOffset + (128 << sectorSize) >= rawSize)
+            return;
+
+        for (unsigned j = 0; j < (128 << sectorSize); j++) {
+            addMfmByte(ptr, rawData[dataOffset++], crc);
+        }
+
+        *ptr++ = crc >> 8;
+        *ptr++ = crc & 0xff;
+
+        memset(ptr, 0x4e, 22); ptr += 22;
+    }
+}
+
+auto DiskStructure::writeMfm(const GcrTrack* trackPtr, unsigned offset) -> bool {
+    unsigned startOffset = offset;
+    bool isSync = false;
+    uint8_t buf[1] = {0}; // version or errors
+
+    uint8_t* ptr = trackPtr->data;
+
+    offset += 2;
+    unsigned dataOffset = offset + 32 * 5;
+    unsigned sectorSize;
+    unsigned sectorCount = 0;
+    bool align = false;
+
+    unsigned todo = 6250;
+    if (trackPtr->size < todo)
+        todo = trackPtr->size;
+
+    for(unsigned i = 0; i < todo; i++) {
+
+        if (isSync && (ptr[i] == 0xfe) ) {
+
+            if ( write( ptr + i + 1, 4, offset ) != 4)
+                return false;
+
+            if ( write( &buf[0], 1, offset + 4 ) != 1) // errors
+                return false;
+
+            sectorSize = 128 << ptr[i + 1 + 3];
+
+            if (sectorSize > 1024)
+                sectorSize = 1024;
+
+            offset += 5;
+
+            align = true;
+
+            sectorCount++;
+            if (sectorCount == 32)
+                break;
+
+        } else if (align && isSync && (ptr[i] == 0xfb) ) {
+            align = false;
+
+            if ( write( ptr + i + 1, sectorSize, dataOffset ) != sectorSize)
+                return false;
+
+            dataOffset += sectorSize;
+        }
+
+        isSync = ((trackPtr->mfmSync[i >> 3] & (1 << (i & 7))) != 0);
+    }
+
+    write( &buf[0], 1, startOffset + 1 ); // version
+    buf[0] = sectorCount;
+    write( &buf[0], 1, startOffset ); //sectors
+
+    return true;
+}
+
 auto DiskStructure::writeGxx(const GcrTrack* trackPtr, uint8_t side, unsigned halfTrack) -> bool {
     int error;
     uint8_t buf[4];
@@ -170,13 +364,22 @@ auto DiskStructure::writeGxx(const GcrTrack* trackPtr, uint8_t side, unsigned ha
     // or append it at end of file, see above
     Emulator::copyIntToBuffer<uint16_t>( &buf[0], (uint16_t)trackPtr->size );
 
+    if (trackPtr->written & 0x80)
+        // mark mfm track in highest bit of track length
+        buf[1] |= 0x80;
+
     // first 2 bytes are track length
     if ( write( &buf[0], 2, offset ) != 2)
         return false;
-    // next is gcr encoded data of track
-    if ( write( trackPtr->data, trackPtr->size, offset + 2 ) != trackPtr->size )
-        return false;
-    
+    // next is gcr encoded data of track or mfm user data (no mfm encoded data)
+    if (trackPtr->written & 0x80) {
+        if (!writeMfm(trackPtr, offset + 2))
+            return false;
+    } else {
+        if ( write( trackPtr->data, trackPtr->size, offset + 2 ) != trackPtr->size )
+            return false;
+    }
+
     // we need to fill the gap between this track and next one with zeros
     unsigned gapSize = maxTrackLength - trackPtr->size;
     

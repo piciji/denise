@@ -35,6 +35,7 @@ DiskStructure::DiskStructure(Drive* drive) : drive(drive) {
             gcrTracks[side][i].size = 0;
             gcrTracks[side][i].bits = 1;
             gcrTracks[side][i].written = 0;
+            gcrTracks[side][i].mfmSync = nullptr;
         }
     }
 
@@ -86,7 +87,11 @@ auto DiskStructure::clearTrackData() -> void {
             if (trackPtr->data)
                 delete[] trackPtr->data;
 
+            if (trackPtr->mfmSync)
+                delete[] trackPtr->mfmSync;
+
             trackPtr->data = nullptr;
+            trackPtr->mfmSync = nullptr;
             trackPtr->size = 0;
             trackPtr->bits = 1;
             trackPtr->written = 0;

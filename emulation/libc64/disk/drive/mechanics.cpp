@@ -324,6 +324,8 @@ auto Drive::changeHalfTrack( uint8_t step ) -> void {
                 pulseDelta = (CyclesPerRevolution300Rpm - position) + gcrTrack->pulses[pulseIndex].position;
         }
 
+        wd1770->setPulseIndex(pulseIndex, pulseDelta);
+
     } else {    // D64, G64
         unsigned oldTrackSize = gcrTrack->size;
 
@@ -342,6 +344,8 @@ auto Drive::changeHalfTrack( uint8_t step ) -> void {
          else
             headOffset = 0;
     }
+
+    wd1770->setTrack(gcrTrack);
 
     updateDeviceState( );
 

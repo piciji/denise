@@ -67,6 +67,9 @@ struct DiskStructure {
         unsigned bits = 1;
         uint8_t written = 0;
 
+        // not needed for flux based MFM
+        uint8_t* mfmSync = nullptr;
+
         int32_t firstPulse = -1;
         int32_t lastPulse = -1;
         int32_t currentPulse = -1;
@@ -132,8 +135,8 @@ struct DiskStructure {
     static auto countBytes( uint8_t track ) -> unsigned;
     static auto gapSize( uint8_t track ) -> unsigned;
 
-    auto addPulse( GcrTrack* gcrTrack, uint32_t position, uint32_t strength ) -> void;
-    auto freePulse( GcrTrack* gcrTrack, int32_t index ) -> void;
+    static auto addPulse( GcrTrack* gcrTrack, uint32_t position, uint32_t strength ) -> void;
+    static auto freePulse( GcrTrack* gcrTrack, int32_t index ) -> void;
 
     auto updateSerializationSize() -> void;
     auto prepareP64Graceful() -> void;
@@ -177,6 +180,9 @@ private:
     auto preparePxx() -> void;
     auto getTrackOffsetGxx( uint8_t halfTrack, int& error ) -> uint32_t;
     auto handleAppendedTracksInDxx() -> bool;
+    auto addMfmByte(uint8_t*& dest, uint8_t data, uint16_t& crc) -> void;
+    auto parseMfm(GcrTrack* trackPtr, unsigned offset) -> void;
+    auto writeMfm(const GcrTrack* trackPtr, unsigned offset) -> bool;
         
     auto writeDxx(const GcrTrack* trackPtr, uint8_t side, unsigned track, bool& errorMapChanged) -> bool;
     auto writeGxx(const GcrTrack* trackPtr, uint8_t side, unsigned halfTrack) -> bool;
@@ -198,7 +204,7 @@ private:
     auto encodeGCR(GcrTrack* gcrTrack, uint8_t halfTrack) -> void;
     auto prepareTracksNotInUse(bool* inUse) -> void;
     auto createPulsesFromGCR(GcrTrack* gcrTrack) -> void;
-    auto allocatePulse( std::vector<Pulse>& pulses ) -> unsigned;
+    static auto allocatePulse( std::vector<Pulse>& pulses ) -> unsigned;
 };
 
 }

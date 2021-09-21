@@ -49,6 +49,7 @@ namespace LIBC64 {
     via1->process();                                                        \
     via2->process();                                                        \
     if (operation & DRIVE_MODE_157x) {                                       \
+        wd1770->clock();                                                    \
         cia->clock();                                                   \
         if (operation & DRIVE_HAS_EXTRA_CIA)                                    \
             ciaSpeeder->clock();                                                \
@@ -176,7 +177,7 @@ auto Drive::cpuWrite(uint16_t addr, uint8_t data) -> void {
             cia->write(addr, data);
 
         } else if ((addr & 0xe000) == 0x2000) {
-            // todo MFM Controller
+            wd1770->write(addr, data);
         }
     }
 }
@@ -381,7 +382,7 @@ auto Drive::cpuRead(uint16_t addr) -> uint8_t {
         return cia->read(addr);
     }
     else if ((addr & 0xe000) == 0x2000) {
-        return 0;
+        return wd1770->read(addr);
     }
 
     return addr >> 8;
@@ -441,6 +442,9 @@ Drive::Drive(uint8_t number, Emulator::Interface::Media* mediaConnected ) : stru
     ciaSpeeder = new Cia8520( 4 );
     cpu = new M6502(this);
     pia = new Emulator::Pia;
+    wd1770 = new WD1770;
+
+    wd1770->setTrack(dummyTrack, true);
 
     pia->ca2Out = [this](bool direction) {
         if (direction)
@@ -624,6 +628,7 @@ Drive::Drive(uint8_t number, Emulator::Interface::Media* mediaConnected ) : stru
 
                     if ( (type == Type::D1570) && (side == 1) ) {
                         gcrTrack = dummyTrack;
+                        wd1770->setTrack( dummyTrack, true );
                     }
                 }
             }
@@ -673,6 +678,7 @@ Drive::Drive(uint8_t number, Emulator::Interface::Media* mediaConnected ) : stru
 
                     if ( (type == Type::D1570) && (side == 1) ) {
                         gcrTrack = dummyTrack;
+                        wd1770->setTrack( dummyTrack, true );
                     }
                 }
             }                            
@@ -681,8 +687,9 @@ Drive::Drive(uint8_t number, Emulator::Interface::Media* mediaConnected ) : stru
 
             if ((lines->iob ^ lines->iobOld) & 4) {
                 // motor switched between on/off 
-                 motorOn = (lines->iob & 4) != 0;
-                 if (!motorOn)
+                motorOn = (lines->iob & 4) != 0;
+                wd1770->setDiskAccessible(motorOn & loaded);
+                if (!motorOn)
                     motorOffInit();
                 
                 updateDeviceState();
@@ -809,6 +816,7 @@ auto Drive::power( ) -> void {
     cia->reset();
     ciaSpeeder->reset();
     pia->reset();
+    wd1770->reset();
 
     proSpeedControl = 0xff;
     profDosAutoSpeed = false;
@@ -855,6 +863,7 @@ auto Drive::power( ) -> void {
     changeHalfTrack(0);
     randomizeRpm();
     extendedMemoryMap = expandMemory || (speeder > 1);
+    wd1770->setRateInMhz( 1, 16 );
 }
 
 auto Drive::updateCycleSpeed(bool mhz2x, bool init) -> void {
@@ -869,7 +878,7 @@ auto Drive::updateCycleSpeed(bool mhz2x, bool init) -> void {
         }
         syncPosRead = (int64_t)(-0.875 * (double)iecBus->cpuCylcesPerSecond);
         syncPosWrite = (int64_t)(0.875 * (double)iecBus->cpuCylcesPerSecond);
-
+        wd1770->setRateInMhz( 2, 16 );
     } else {
         //system->interface->log("1 mhz", 1);
         refCyclesInCpuCycle = 16;
@@ -881,6 +890,7 @@ auto Drive::updateCycleSpeed(bool mhz2x, bool init) -> void {
         }
         syncPosRead = (int64_t)(-0.455 * (double)iecBus->cpuCylcesPerSecond);
         syncPosWrite = (int64_t)(0.455 * (double)iecBus->cpuCylcesPerSecond);
+        wd1770->setRateInMhz( 1, 16 );
     }
 
     setSyncPos( syncPos );
@@ -898,6 +908,7 @@ auto Drive::setSyncPos(int direction) -> void {
 auto Drive::powerOff( ) -> void {
     write();  
     motorOn = false;
+    wd1770->setDiskAccessible(false);
 }
 
 auto Drive::setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> void {
@@ -999,6 +1010,7 @@ auto Drive::detach() -> void {
     wasAttachDetached = false;
     
     loaded = false;
+    wd1770->setDiskAccessible(false);
     pulseIndex = -1;
     pulseDelta = 1; // to reload quickly
 }
@@ -1027,29 +1039,39 @@ auto Drive::attach( Emulator::Interface::Media* media, uint8_t* data, unsigned s
 }
 
 auto Drive::postAttach() -> void {
+    headOffset = 0;
     pulseIndex = gcrTrack->firstPulse;
+    wd1770->setPulseIndex(pulseIndex, pulseDelta);
 
     loaded = true;
+    wd1770->setDiskAccessible(motorOn);
 
     if (writeProtected && (type == Type::D1570 || type == Type::D1571))
         via1->ca2In( false );
 
     operation &= ~(USERDATA_LEVEL | ENCODEDDATA_LEVEL | FLUXDATA_LEVEL);
+    wd1770->setMode( WD1770::Mode::None );
 
     if (structure.type == DiskStructure::Type::D64 || structure.type == DiskStructure::Type::D71) {
         if (emulateDxxMoreAccurate)
             operation |= ENCODEDDATA_LEVEL;
         else
             operation |= USERDATA_LEVEL;
-    } else if (structure.type == DiskStructure::Type::G64 || structure.type == DiskStructure::Type::G71)
+
+        // no MFM support
+    } else if (structure.type == DiskStructure::Type::G64 || structure.type == DiskStructure::Type::G71) {
         operation |= ENCODEDDATA_LEVEL;
-    else if (structure.type == DiskStructure::Type::P64 || structure.type == DiskStructure::Type::P71)
+        wd1770->setMode( WD1770::Mode::USERDATA ); // MFM is included as user data
+    } else if (structure.type == DiskStructure::Type::P64 || structure.type == DiskStructure::Type::P71) {
         operation |= FLUXDATA_LEVEL;
+        wd1770->setMode( WD1770::Mode::FLUX );
+    }
 }
 
 auto Drive::setWriteProtect(bool state) -> void {
     
     writeProtected = state;
+    wd1770->setWriteProtected( state );
 }
 
 auto Drive::writeprotectSense() -> uint8_t {
@@ -1074,10 +1096,11 @@ auto Drive::writeprotectSense() -> uint8_t {
 
 auto Drive::write() -> void {
     
-    if (!written)
+    if (!written && !wd1770->wasWritten())
         return;
     
     written = false;
+    wd1770->resetWritten();
 
     if (structure.serializationSize) {
         system->serializationSize -= structure.serializationSize;
@@ -1177,4 +1200,3 @@ auto Drive::setSpeeder(uint8_t speeder) -> void {
 }
 
 }
-
