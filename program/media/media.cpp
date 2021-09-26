@@ -445,7 +445,8 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
                 if (activeEmulator != emulator)
                     emulator->insertMedium(block->media, data, file->archiveDataSize( fSetting->id ));
 
-                block->listings = emulator->getListing( block->media );
+                static auto loadWithColumn = settings->getOrInit("autostart_load_with_column", false);
+                block->listings = emulator->getListing( block->media, *loadWithColumn );
 
                 if (mediaGroup->selected ) {
                     if (mediaGroup->selected == block->media)
@@ -820,7 +821,8 @@ auto MediaLayout::updateListing( Emulator::Interface::Media* media ) -> void {
 
         if ( block->media == media ) {
 
-            block->listings = emulator->getListing( media );
+            static auto loadWithColumn = settings->getOrInit("autostart_load_with_column", false);
+            block->listings = emulator->getListing( media, *loadWithColumn );
 
             if ( mediaGroupLayout->selectedBlock->media == media )
                 mediaGroupLayout->updateListing( block );
@@ -1053,7 +1055,8 @@ auto MediaLayout::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* fil
 
     if (showC64Listing(layout)) {
         block->listings.clear();
-        block->listings = emulator->getListing(media);        
+        static auto loadWithColumn = settings->getOrInit("autostart_load_with_column", false);
+        block->listings = emulator->getListing(media, *loadWithColumn);
         block->selector.edit.setFocused();
         layout->updateListing(block);
     }
@@ -1375,7 +1378,8 @@ auto MediaLayout::loadSettings() -> void {
                 if (program->loadImageDataWhenOk(file, fSetting->id, mediaGroup, data)) {
                     filePool->assign(_ident(emulator, block->media->name + "store"), file);
                     emulator->insertMedium(block->media, data, file->archiveDataSize(fSetting->id));
-                    block->listings = emulator->getListing(block->media);
+                    static auto loadWithColumn = settings->getOrInit("autostart_load_with_column", false);
+                    block->listings = emulator->getListing(block->media, *loadWithColumn);
 
                     if (mediaGroup->selected) {
                         if (mediaGroup->selected == block->media)

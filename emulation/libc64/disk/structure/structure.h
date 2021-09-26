@@ -105,8 +105,8 @@ struct DiskStructure {
     auto getTrackPtr( uint8_t side, uint8_t halfTrack ) -> GcrTrack*;
     auto attach( uint8_t* data, unsigned size, bool loadGracefully = false ) -> bool;
     auto detach() -> void;
-    auto createListing() -> void;
-    auto getListing() -> std::vector<Emulator::Interface::Listing>&;
+    auto createListing( bool loadWithColumn = false ) -> void;
+    auto getListing( bool loadWithColumn = false ) -> std::vector<Emulator::Interface::Listing>&;
     auto selectListing( unsigned pos, bool useTraps = false ) -> void;
     auto selectListing( std::string fileName, bool useTraps = false ) -> void;
     auto prepareKeyBufferActions( std::vector<uint8_t>& path, bool useTraps = false ) -> void;

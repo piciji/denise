@@ -25,7 +25,13 @@ struct AutostartLayout : GUIKIT::FramedVerticalLayout {
         AutoWarp();
     } autoWarp;
 
-    GUIKIT::CheckBox tapeWithStandardKernal;
+    struct Options : GUIKIT::HorizontalLayout { ;
+        GUIKIT::CheckBox tapeWithStandardKernal;
+        GUIKIT::CheckBox loadWithColumn;
+        GUIKIT::CheckBox trapsOnDblClick;
+
+        Options();
+    } options;
 
     AutostartLayout();
 };
@@ -35,7 +41,7 @@ struct MiscLayout : GUIKIT::VerticalLayout {
     TabWindow* tabWindow;
     Emulator::Interface* emulator;
     RunAheadLayout runAheadLayout;
-    AutostartLayout autostartLayout;
+    AutostartLayout* autostartLayout = nullptr;
     
     auto translate() -> void;
     auto setRunAheadPerformance(bool state) -> void;

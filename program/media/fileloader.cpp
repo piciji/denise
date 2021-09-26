@@ -88,11 +88,17 @@ auto Fileloader::load(Emulator::Interface* emulator, Emulator::Interface::Media*
     }
 
     if (!*alternateFileDialog && dynamic_cast<LIBC64::Interface*>(emulator)) {
-        fileDialogPtr->addContentView(IDC_LIST, [this, media, emulator](std::string filePath, unsigned selection) {
+        fileDialogPtr->addContentView(IDC_LIST, [this, media, emulator, settings](std::string filePath, unsigned selection) {
+            static auto trapsOnDblClick = settings->getOrInit("autostart_traps_on_dblclick", false);
+
             if (filePath.empty())
                 return false;
 
-            return insertFile(emulator, media, filePath, 1, selection);
+            uint8_t _a = 1;
+            if (*trapsOnDblClick)
+                _a |= USE_TRAPS;
+
+            return insertFile(emulator, media, filePath, _a, selection);
         });
 
         applyPreviewFont( globalSettings->get<unsigned>("dialog_software_preview_fontsize", 11, {6, 14}) );
@@ -154,12 +160,14 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
 
     if (!*alternateFileDialog && dynamic_cast<LIBC64::Interface*>(emulator)) {
         fileDialogPtr->addContentView( IDC_LIST, [this, settings, emulator, mIsAcquiredBefore](std::string filePath, unsigned selection) {
+            static auto trapsOnDblClick = settings->getOrInit("autostart_traps_on_dblclick", false);
+
             if (filePath.empty())
                 return false;
 
             settings->set<std::string>("anyload_path", GUIKIT::File::getPath( filePath ) );
 
-            autoloader->init( {filePath}, false, Autoloader::Mode::AutoStartNotTrapped, selection );
+            autoloader->init( {filePath}, false, *trapsOnDblClick ? Autoloader::Mode::AutoStartTrapped : Autoloader::Mode::AutoStartNotTrapped, selection );
             autoloader->loadFiles();
 
             this->resetPreview(emulator);
@@ -279,7 +287,10 @@ auto Fileloader::applyPreviewFont(unsigned fontSize) -> void {
 
 auto Fileloader::previewFile( std::string filePath, Emulator::Interface* emulator, Emulator::Interface::Media* media ) -> std::vector<GUIKIT::BrowserWindow::Listing> {
 
+    auto settings = program->getSettings( emulator );
     static GUIKIT::Setting* alternateFileDialog = globalSettings->getOrInit("alternate_software_preview", false);
+    static GUIKIT::Setting* loadWithColumn = settings->getOrInit("autostart_load_with_column", false);
+
     Emulator::Interface::MediaGroup* mediaGroup = nullptr;
 
     if (media) {
@@ -301,7 +312,7 @@ auto Fileloader::previewFile( std::string filePath, Emulator::Interface* emulato
     lck.unlock();
 
     if (!previewTimer.onFinished) {
-        previewTimer.onFinished = [this]() {
+        previewTimer.onFinished = [this, settings]() {
             std::unique_lock<std::mutex> lck(previewMutex);
             Emulator::Interface* emulator = queuePreview.emulator;
             uint8_t _status = queuePreview.status;
@@ -309,8 +320,6 @@ auto Fileloader::previewFile( std::string filePath, Emulator::Interface* emulato
             Emulator::Interface::Media* media = queuePreview.media;
             std::vector<GUIKIT::BrowserWindow::Listing> listings = queuePreview.listings;
             lck.unlock();
-
-            auto settings = program->getSettings( emulator );
 
             if ( (_status & 0xc) == 0) {
                 return; // keep waiting
@@ -432,7 +441,7 @@ auto Fileloader::previewFile( std::string filePath, Emulator::Interface* emulato
 
                 if (mediaGroup.isDisk()) {
                     if ( GUIKIT::Vector::find( mediaGroup.suffix, extension ) ) {
-                        listings = emulator->getDiskPreview(data, file.archiveDataSize(0), media);
+                        listings = emulator->getDiskPreview(data, file.archiveDataSize(0), media, *loadWithColumn);
                         group = &mediaGroup;
                         break;
                     }
@@ -628,7 +637,8 @@ auto Fileloader::insertImage(Emulator::Interface* emulator, Emulator::Interface:
             settings->set<unsigned>( _underscore(media->name) + "_pcb", 0);
     }
 
-    emulator->getListing(media);
+    static auto loadWithColumn = settings->getOrInit("autostart_load_with_column", false);
+    emulator->getListing(media, *loadWithColumn);
 
     if (view && activeEmulator && mediaGroup->isTape())
         view->updateTapeIcons();

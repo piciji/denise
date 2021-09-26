@@ -26,11 +26,19 @@ AutostartLayout::AutoWarp::AutoWarp() {
     setAlignment( 0.5 );
 }
 
+AutostartLayout::Options::Options() {
+    append(tapeWithStandardKernal, {0u, 0u}, 10 );
+    append(loadWithColumn, {0u, 0u}, 10 );
+    append(trapsOnDblClick, {0u, 0u} );
+
+    setAlignment( 0.5 );
+}
+
 AutostartLayout::AutostartLayout() {
     setPadding(10);
 
     append(autoWarp, {0u, 0u}, 5 );
-    append(tapeWithStandardKernal, {0u, 0u} );
+    append(options, {0u, 0u} );
 
     setFont(GUIKIT::Font::system("bold"));
 }
@@ -52,36 +60,47 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) {
     
     append( runAheadLayout, {~0u, 0u}, 10 );
 
-    append( autostartLayout, {~0u, 0u} );
+    if (dynamic_cast<LIBC64::Interface*>(emulator)) {
+        autostartLayout = new AutostartLayout;
+        append(*autostartLayout, {~0u, 0u});
 
-    autostartLayout.autoWarp.off.onActivate = [this]() {
+        autostartLayout->autoWarp.off.onActivate = [this]() {
 
-        _settings->set<unsigned>( "auto_warp", 0);
-    };
+            _settings->set<unsigned>("auto_warp", 0);
+        };
 
-    autostartLayout.autoWarp.normal.onActivate = [this]() {
+        autostartLayout->autoWarp.normal.onActivate = [this]() {
 
-        _settings->set<unsigned>( "auto_warp", 1);
-    };
+            _settings->set<unsigned>("auto_warp", 1);
+        };
 
-    autostartLayout.autoWarp.aggressive.onActivate = [this]() {
+        autostartLayout->autoWarp.aggressive.onActivate = [this]() {
 
-        _settings->set<unsigned>( "auto_warp", 2);
-    };
+            _settings->set<unsigned>("auto_warp", 2);
+        };
 
-    autostartLayout.autoWarp.diskFirstFile.onToggle = [this]() {
+        autostartLayout->autoWarp.diskFirstFile.onToggle = [this]() {
 
-        _settings->set<bool>( "auto_warp_disk_first_file", autostartLayout.autoWarp.diskFirstFile.checked());
-    };
+            _settings->set<bool>("auto_warp_disk_first_file", autostartLayout->autoWarp.diskFirstFile.checked());
+        };
 
-    autostartLayout.autoWarp.tapeFirstFile.onToggle = [this]() {
+        autostartLayout->autoWarp.tapeFirstFile.onToggle = [this]() {
 
-        _settings->set<bool>( "auto_warp_tape_first_file", autostartLayout.autoWarp.tapeFirstFile.checked());
-    };
+            _settings->set<bool>("auto_warp_tape_first_file", autostartLayout->autoWarp.tapeFirstFile.checked());
+        };
 
-    autostartLayout.tapeWithStandardKernal.onToggle = [this]() {
-        _settings->set<bool>( "autostart_tape_standard_kernal", autostartLayout.tapeWithStandardKernal.checked() );
-    };
+        autostartLayout->options.tapeWithStandardKernal.onToggle = [this]() {
+            _settings->set<bool>("autostart_tape_standard_kernal", autostartLayout->options.tapeWithStandardKernal.checked());
+        };
+
+        autostartLayout->options.loadWithColumn.onToggle = [this]() {
+            _settings->set<bool>("autostart_load_with_column", autostartLayout->options.loadWithColumn.checked());
+        };
+
+        autostartLayout->options.trapsOnDblClick.onToggle = [this]() {
+            _settings->set<bool>("autostart_traps_on_dblclick", autostartLayout->options.trapsOnDblClick.checked());
+        };
+    }
 
     runAheadLayout.control.slider.onChange = [this]() {
         
@@ -141,39 +160,50 @@ auto MiscLayout::translate() -> void {
     
     runAheadLayout.options.disableOnPower.setText( trans->get("disable runAhead on power") );
 
-    autostartLayout.setText( trans->get("auto start") );
-    autostartLayout.autoWarp.label.setText( trans->get("Auto Warp", {}, true) );
-    autostartLayout.autoWarp.aggressive.setText( trans->get("aggressive") );
-    autostartLayout.autoWarp.normal.setText( trans->get("normal") );
-    autostartLayout.autoWarp.off.setText( trans->get("off") );
+    if (autostartLayout) {
+        autostartLayout->setText(trans->get("auto start"));
+        autostartLayout->autoWarp.label.setText(trans->get("Auto Warp", {}, true));
+        autostartLayout->autoWarp.aggressive.setText(trans->get("aggressive"));
+        autostartLayout->autoWarp.normal.setText(trans->get("normal"));
+        autostartLayout->autoWarp.off.setText(trans->get("off"));
 
-    autostartLayout.autoWarp.diskFirstFile.setText( trans->get("disk warp first file") );
-    autostartLayout.autoWarp.tapeFirstFile.setText( trans->get("tape warp first file") );
+        autostartLayout->autoWarp.diskFirstFile.setText(trans->get("disk warp first file"));
+        autostartLayout->autoWarp.tapeFirstFile.setText(trans->get("tape warp first file"));
 
-    autostartLayout.tapeWithStandardKernal.setText( trans->get("tape default kernal") );
+        autostartLayout->options.tapeWithStandardKernal.setText(trans->get("tape default kernal"));
+
+        autostartLayout->options.loadWithColumn.setText( "Load \":*\"" );
+        autostartLayout->options.trapsOnDblClick.setText(trans->get("virtual start on dblclick"));
+    }
 }
 
 auto MiscLayout::loadSettings() -> void {
 
-    unsigned autoWarp = _settings->get<unsigned>( "auto_warp", 0);
+    if (autostartLayout) {
+        unsigned autoWarp = _settings->get<unsigned>("auto_warp", 0);
 
-    if (autoWarp == 0)
-        autostartLayout.autoWarp.off.setChecked();
-    else if (autoWarp == 1)
-        autostartLayout.autoWarp.normal.setChecked();
-    else if (autoWarp == 2)
-        autostartLayout.autoWarp.aggressive.setChecked();
+        if (autoWarp == 0)
+            autostartLayout->autoWarp.off.setChecked();
+        else if (autoWarp == 1)
+            autostartLayout->autoWarp.normal.setChecked();
+        else if (autoWarp == 2)
+            autostartLayout->autoWarp.aggressive.setChecked();
 
-    autostartLayout.autoWarp.diskFirstFile.setChecked( _settings->get<bool>( "auto_warp_disk_first_file", true) );
+        autostartLayout->autoWarp.diskFirstFile.setChecked(_settings->get<bool>("auto_warp_disk_first_file", true));
 
-    autostartLayout.autoWarp.tapeFirstFile.setChecked( _settings->get<bool>( "auto_warp_tape_first_file", false) );
+        autostartLayout->autoWarp.tapeFirstFile.setChecked(_settings->get<bool>("auto_warp_tape_first_file", false));
 
-    setRunAheadPerformance( _settings->get<bool>( "runahead_performance", false) );
-    
-    runAheadLayout.options.disableOnPower.setChecked( _settings->get<bool>( "runahead_disable", true) );
+        autostartLayout->options.tapeWithStandardKernal.setChecked( _settings->get<bool>("autostart_tape_standard_kernal", false));
 
-    autostartLayout.tapeWithStandardKernal.setChecked( _settings->get<bool>( "autostart_tape_standard_kernal", false) );
-    
+        autostartLayout->options.loadWithColumn.setChecked(_settings->get<bool>("autostart_load_with_column", false));
+
+        autostartLayout->options.trapsOnDblClick.setChecked(_settings->get<bool>("autostart_traps_on_dblclick", false));
+    }
+
+    setRunAheadPerformance(_settings->get<bool>("runahead_performance", false));
+
+    runAheadLayout.options.disableOnPower.setChecked(_settings->get<bool>("runahead_disable", true));
+
     unsigned pos = _settings->get<unsigned>( "runahead", 0, {0u, 10u});
     
     setRunAhead( pos );    

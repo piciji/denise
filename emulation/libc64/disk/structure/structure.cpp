@@ -232,7 +232,7 @@ auto DiskStructure::getLogicalTrack(uint8_t _track, int offset) -> uint8_t {
     : &gcrTracks[ (_T > TYPICAL_TRACKS) ? 1 : 0][ (((_T > TYPICAL_TRACKS) ? (_T - TYPICAL_TRACKS) : _T) - 1) * 2]
 
 // C64 DOS (support 35 tracks per side)
-auto DiskStructure::createListing( ) -> void {
+auto DiskStructure::createListing( bool loadWithColumn ) -> void {
 
     if (!rawData || (type == Type::Unknown))
         return;
@@ -294,7 +294,10 @@ auto DiskStructure::createListing( ) -> void {
     uint8_t* ptr = &buffer2[0];
 
     bool addedHeadline = false;
-    std::vector<uint8_t> _headlineCmd = {':', '*'};
+
+    std::vector<uint8_t> _headlineCmd = {'*'};
+    if (loadWithColumn)
+        _headlineCmd = {':', '*'};
 
     unsigned entry = 0;
     
@@ -308,7 +311,7 @@ auto DiskStructure::createListing( ) -> void {
                 addedHeadline = true;
                 uint8_t type = *(ptr + 0x2);
 
-                if ((type & 7) != 2) // when first file is not a PRG
+                if (loadWithColumn && ((type & 7) != 2) ) // when first file is not a PRG
                     _headlineCmd = {'*'};
 
                 listings.push_back( { id++, listing.buildHeadline( buffer + 0x90, buffer + 0xa5, buffer + 0xa2 ), listing.decodeToScreencode( buildLoadCommand(_headlineCmd, true) ) } );
@@ -363,12 +366,12 @@ auto DiskStructure::createListing( ) -> void {
 	loader.push_back( _headlineCmd );
 }
 
-auto DiskStructure::getListing( ) -> std::vector<Emulator::Interface::Listing>& {
+auto DiskStructure::getListing( bool loadWithColumn ) -> std::vector<Emulator::Interface::Listing>& {
     
     listings.clear();
     loader.clear();
 
-    createListing();
+    createListing( loadWithColumn );
         
     return listings;
 }

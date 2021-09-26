@@ -610,3 +610,4 @@ Start with last loaded Settings = Öffne Emulator mit zuletzt geladener Konfigur
 Auto Warp = automatischer Warp
 tape default kernal = starte Kassette mit Standard Kernal
 toggle border = Rahmen umschalten
+virtual start on dblclick = virtueller Start bei Doppelklick im Datei Dialog

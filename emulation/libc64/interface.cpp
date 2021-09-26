@@ -898,15 +898,15 @@ auto Interface::createDiskImage(unsigned typeId, bool hd, std::string name, bool
     return DiskStructure::create( (DiskStructure::Type) typeId, name );
 }
 
-auto Interface::getDiskListing(Media* media) -> std::vector<Emulator::Interface::Listing> {
+auto Interface::getDiskListing(Media* media, bool alternateLoad) -> std::vector<Emulator::Interface::Listing> {
     
     if (!media || !media->group->isDisk())
         return {};
     
-    return iecBus->getDiskListing( media );
+    return iecBus->getDiskListing( media, alternateLoad );
 }
 
-auto Interface::getDiskPreview(uint8_t* data, unsigned size, Media* media) -> std::vector<Emulator::Interface::Listing> {
+auto Interface::getDiskPreview(uint8_t* data, unsigned size, Media* media, bool alternateLoad) -> std::vector<Emulator::Interface::Listing> {
     
     DiskStructure structure;
 	structure.number = media ? media->id : 0;
@@ -914,7 +914,7 @@ auto Interface::getDiskPreview(uint8_t* data, unsigned size, Media* media) -> st
     if (!structure.attach( data, size, false ))
         return {};
         
-    return structure.getListing();
+    return structure.getListing(alternateLoad);
 }
 
 auto Interface::selectDiskListing(Media* media, unsigned pos, bool useTraps) -> void {

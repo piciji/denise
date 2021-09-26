@@ -1500,6 +1500,8 @@ auto VirtualDrive::vdrive_command_memory_read(const uint8_t *buf, uint16_t addr,
 }
 
 auto VirtualDrive::vdrive_command_memory_exec(const uint8_t *buf, uint16_t addr, unsigned int length) -> int {
+    system->interface->log("vdrive command execute");
+
     if (length < 5) {
         return vdrive_command_set_error( CBMDOS_IPE_SYNTAX, 0, 0);
     }
