@@ -611,3 +611,4 @@ Auto Warp =
 tape default kernal =
 toggle border =
 virtual start on dblclick =
+hungarian =
