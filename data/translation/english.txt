@@ -612,3 +612,4 @@ tape default kernal = run tape with default kernal
 toggle border = Toggle Border
 virtual start on dblclick = virtual Start on double click in file dialog
 hungarian = Hungarian
+Pre-configured = Pre-configured

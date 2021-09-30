@@ -85,6 +85,13 @@ struct MemoryPatternLayout : GUIKIT::FramedVerticalLayout {
         
         ThirdLine();
     } thirdLine;
+
+    struct FourthLine : GUIKIT::HorizontalLayout {
+        GUIKIT::Button preConfigured1;
+        GUIKIT::Button preConfigured2;
+
+        FourthLine();
+    } fourthLine;
     
     GUIKIT::MultilineEdit preview;
     

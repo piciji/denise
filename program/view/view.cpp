@@ -747,6 +747,14 @@ auto View::buildMenu() -> void {
             emuView->show(EmuConfigView::TabWindow::Layout::Border);
         };
         sM.system->append( *sM.border );
+
+        sM.misc = new GUIKIT::MenuItem;
+        sM.misc->setIcon( toolsImage );
+        sM.misc->onActivate = [emulator]() {
+            auto emuView = EmuConfigView::TabWindow::getView( emulator, true );
+            emuView->show(EmuConfigView::TabWindow::Layout::Misc);
+        };
+        sM.system->append( *sM.misc );
 		
 		sM.system->append(*GUIKIT::MenuSeparator::getInstance());						
                 	
@@ -1076,6 +1084,7 @@ auto View::translate() -> void {
         sysMenu.presentation->setText(trans->get("Presentation"));
         sysMenu.palette->setText(trans->get("Palette"));
         sysMenu.border->setText(trans->get("Border"));
+        sysMenu.misc->setText(trans->get("miscellaneous"));
 
         sysMenu.shaderMenu->setText(trans->get("Shader"));            
     }    

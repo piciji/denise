@@ -55,6 +55,14 @@ MemoryPatternLayout::ThirdLine::ThirdLine() {
     setAlignment(0.5);
 }
 
+MemoryPatternLayout::FourthLine::FourthLine() {
+
+    append( preConfigured1, {0u, 0u}, 10 );
+    append( preConfigured2, {0u, 0u} );
+
+    setAlignment(0.5);
+}
+
 MemoryPatternLayout::MemoryPatternLayout(TabWindow* tabWindow) {
     
     setPadding(10);
@@ -67,7 +75,8 @@ MemoryPatternLayout::MemoryPatternLayout(TabWindow* tabWindow) {
     append( firstLine, {0u, 0u}, 10 );
     append( secondLine, {0u, 0u}, 10 );
     append( thirdLine, {0u, 0u}, 10 );
-    append( preview, {size.width + tabWindow->getScrollbarWidth(), size.height * 17} );
+    append( preview, {size.width + tabWindow->getScrollbarWidth(), size.height * 17}, 10 );
+    append( fourthLine, {0u, 0u} );
     
     preview.setFont( GUIKIT::Font::system("", true) );
     preview.setForegroundColor( 0x5a5e63 );
@@ -245,7 +254,41 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
             _settings->set<unsigned>("random_chance", (unsigned) (memoryPattern->thirdLine.randomChanceStepper.getValue()));
 
             this->updateMemoryPreview();
-        };          
+        };
+
+        memoryPattern->fourthLine.preConfigured1.onActivate = [this]() {
+
+            memoryPattern->firstLine.valueStepper.setValue(0);
+            memoryPattern->firstLine.invertValueEveryCombo.setSelectionByUserId(64);
+            memoryPattern->secondLine.lengthRandomCombo.setSelectionByUserId(0);
+            memoryPattern->secondLine.repeatRandomEveryCombo.setSelectionByUserId(0);
+            memoryPattern->thirdLine.randomChanceStepper.setValue(0);
+
+            _settings->set<unsigned>("memory_value", 0);
+            _settings->set<unsigned>("memory_invert_every", 64);
+            _settings->set<unsigned>("memory_random_pattern", 0);
+            _settings->set<unsigned>("memory_random_repeat", 0);
+            _settings->set<unsigned>("random_chance", 0);
+
+            this->updateMemoryPreview();
+        };
+
+        memoryPattern->fourthLine.preConfigured2.onActivate = [this]() {
+
+            memoryPattern->firstLine.valueStepper.setValue(256);
+            memoryPattern->firstLine.invertValueEveryCombo.setSelectionByUserId(64);
+            memoryPattern->secondLine.lengthRandomCombo.setSelectionByUserId(1);
+            memoryPattern->secondLine.repeatRandomEveryCombo.setSelectionByUserId(256);
+            memoryPattern->thirdLine.randomChanceStepper.setValue(0);
+
+            _settings->set<unsigned>("memory_value", 255);
+            _settings->set<unsigned>("memory_invert_every", 64);
+            _settings->set<unsigned>("memory_random_pattern", 1);
+            _settings->set<unsigned>("memory_random_repeat", 256);
+            _settings->set<unsigned>("random_chance", 0);
+
+            this->updateMemoryPreview();
+        };
     }
     settings.listView.onChange = [this]() {
         
@@ -799,6 +842,9 @@ auto ConfigurationsLayout::translate() -> void {
         memoryPattern->secondLine.repeatRandomEveryLabel.setText( trans->get( "repeat random every", {}, true ) );
 
         memoryPattern->thirdLine.randomChanceLabel.setText( trans->get( "random chance", {}, true ) );
+
+        memoryPattern->fourthLine.preConfigured1.setText( trans->get( "pre-configured 1" ) );
+        memoryPattern->fourthLine.preConfigured2.setText( trans->get( "pre-configured 2" ) );
 
         GUIKIT::HorizontalLayout::alignChildrenVertically( {&memoryPattern->firstLine, &memoryPattern->secondLine, &memoryPattern->thirdLine} );
     }

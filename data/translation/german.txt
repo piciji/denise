@@ -612,3 +612,4 @@ tape default kernal = starte Kassette mit Standard Kernal
 toggle border = Rahmen umschalten
 virtual start on dblclick = virtueller Start bei Doppelklick im Datei Dialog
 hungarian = Ungarisch
+pre-configured = Vorkonfiguriert

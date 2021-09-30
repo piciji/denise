@@ -17,6 +17,8 @@
 
 #define USE_TRAPS 0x80
 
+#define TRAPS_ON_DBLCLICK static auto trapsOnDblClick = settings->getOrInit("autostart_traps_on_dblclick", false);
+
 Fileloader* fileloader = nullptr;
 
 Fileloader::Fileloader() {
@@ -89,7 +91,7 @@ auto Fileloader::load(Emulator::Interface* emulator, Emulator::Interface::Media*
 
     if (!*alternateFileDialog && dynamic_cast<LIBC64::Interface*>(emulator)) {
         fileDialogPtr->addContentView(IDC_LIST, [this, media, emulator, settings](std::string filePath, unsigned selection) {
-            static auto trapsOnDblClick = settings->getOrInit("autostart_traps_on_dblclick", false);
+            TRAPS_ON_DBLCLICK
 
             if (filePath.empty())
                 return false;
@@ -160,7 +162,7 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
 
     if (!*alternateFileDialog && dynamic_cast<LIBC64::Interface*>(emulator)) {
         fileDialogPtr->addContentView( IDC_LIST, [this, settings, emulator, mIsAcquiredBefore](std::string filePath, unsigned selection) {
-            static auto trapsOnDblClick = settings->getOrInit("autostart_traps_on_dblclick", false);
+            TRAPS_ON_DBLCLICK
 
             if (filePath.empty())
                 return false;
@@ -235,9 +237,10 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
     }
 
     fileDialogPtr->setCallbacks( [this, emulator, settings, mIsAcquiredBefore](std::string filePath, unsigned selection) {
+        TRAPS_ON_DBLCLICK
         settings->set<std::string>("anyload_path", GUIKIT::File::getPath( filePath ) );
 
-        autoloader->init( {filePath}, false, Autoloader::Mode::AutoStartNotTrapped, selection );
+        autoloader->init( {filePath}, false, *trapsOnDblClick ? Autoloader::Mode::AutoStartTrapped : Autoloader::Mode::AutoStartNotTrapped, selection );
         autoloader->loadFiles();
 
         resetPreview(emulator);
@@ -265,9 +268,10 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
     }
 
     if ( !filePath.empty() ) {
+        TRAPS_ON_DBLCLICK
         settings->set<std::string>("anyload_path", GUIKIT::File::getPath( filePath ) );
 
-        autoloader->init( {filePath}, false, Autoloader::Mode::AutoStartNotTrapped, fileDialogPtr ? fileDialogPtr->getContentViewSelection() : 0 );
+        autoloader->init( {filePath}, false, *trapsOnDblClick ? Autoloader::Mode::AutoStartTrapped : Autoloader::Mode::AutoStartNotTrapped, fileDialogPtr ? fileDialogPtr->getContentViewSelection() : 0 );
         autoloader->loadFiles();
     }
 

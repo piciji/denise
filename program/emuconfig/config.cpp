@@ -69,6 +69,7 @@ auto TabWindow::build() -> void {
     displayImage.loadPng((uint8_t*)Icons::display, sizeof(Icons::display));    
     paletteImage.loadPng((uint8_t*)Icons::palette, sizeof(Icons::palette));
     volumeImage.loadPng((uint8_t*)Icons::volume, sizeof(Icons::volume));
+    miscImage.loadPng((uint8_t*)Icons::tools, sizeof(Icons::tools));
     
     tab.setMargin(10);
     append(tab);        
@@ -99,7 +100,7 @@ auto TabWindow::build() -> void {
     tab.appendHeader("", volumeImage);
     tab.appendHeader("", memoryImage);   
 	tab.appendHeader("", cropImage);
-    tab.appendHeader("", nullptr);
+    tab.appendHeader("", miscImage);
 
     tab.setLayout(Layout::System, *systemLayout, {~0u, ~0u}, false );
     tab.setLayout(Layout::Media, *mediaLayout, {~0u, ~0u}, false );

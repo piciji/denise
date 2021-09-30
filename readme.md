@@ -12,6 +12,9 @@
 * 1570/1571 support
     * support of D71 / G71 / P71 formats
     * Burst Modification
+    * MFM support
+      * P64
+      * G64 (U-II+/U64 compatibility mode)
 * Floppy RAM expansions
 * Floppy Fastloader
     * SpeedDOS
@@ -30,6 +33,7 @@
 * Virtual Device Traps
     * Fast Load first file
     * can be combined with Warp
+* add hungarian translation [thanks to ]
 
 ## 1.1.1
 * add Final Cartridge 3 support to EF³
