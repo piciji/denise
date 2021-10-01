@@ -46,6 +46,9 @@ auto Drive::serialize(Emulator::Serializer& s) -> void {
     s.integer( readBuffer );
     s.integer( writeBuffer );
     s.integer( attachDelay );
+    s.integer( stepperDelay );
+    s.integer( delayInProgress );
+    s.integer( nextStep );
     s.integer( wasAttachDetached );
     s.integer( motorOn );
     s.integer( written );

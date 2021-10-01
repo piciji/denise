@@ -306,7 +306,8 @@ auto Cmd::parse() -> void {
 		globalSettings->set<bool>("dynamic_rate_control", false);
 		globalSettings->set<bool>("fps", true);
 		globalSettings->set("video_screen_text", 0);
-		settingsC64->set<bool>("video_cycle_accuracy", true);				
+		settingsC64->set<bool>("video_cycle_accuracy", true);
+        settingsC64->set<unsigned>("Stepper_Seek_Time", 90);
 		
 		updateModel(emuC64, LIBC64::Interface::ModelIdDisableGreyDotBug, 0);
 	}	

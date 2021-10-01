@@ -452,6 +452,11 @@ auto IecBus::setDriveWobble(unsigned wobbleScaled) -> void {
     for( auto drive : drives )
         drive->setWobble( wobbleScaled );
 }
+
+auto IecBus::setStepperSeekTime(unsigned stepperSeekTimeScaled) -> void {
+    for( auto drive : drives )
+        drive->setStepperSeekTime( stepperSeekTimeScaled );
+}
     
 auto IecBus::setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> void {
     

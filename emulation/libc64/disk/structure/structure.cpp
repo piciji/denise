@@ -663,6 +663,7 @@ auto DiskStructure::serialize(Emulator::Serializer& s, bool written) -> void {
         return;
 
     bool fluxMode = (type == Type::P64) || (type == Type::P71);
+    bool mfmDecodedMode = (drive->operation & (DRIVE_MODE_157x | ENCODEDDATA_LEVEL)) == (DRIVE_MODE_157x | ENCODEDDATA_LEVEL);
 
     for (uint8_t side = 0; side < sides; side++) {
         for (unsigned halfTrack = 0; halfTrack < (MAX_TRACKS * 2); halfTrack++) {
@@ -728,11 +729,26 @@ auto DiskStructure::serialize(Emulator::Serializer& s, bool written) -> void {
 
                         if (gcrTrack->size)
                             gcrTrack->data = new uint8_t[gcrTrack->size];
+
+                        if (mfmDecodedMode) {
+                            if (gcrTrack->mfmSync)
+                                delete[] gcrTrack->mfmSync;
+
+                            gcrTrack->mfmSync = nullptr;
+
+                            if (gcrTrack->size)
+                                gcrTrack->mfmSync = new uint8_t[gcrTrack->size >> 3];
+                        }
                     }
                 }
 
-                if (gcrTrack->size)
+                if (gcrTrack->size) {
                     s.array(gcrTrack->data, gcrTrack->size);
+
+                    if (mfmDecodedMode) {
+                        s.array(gcrTrack->mfmSync, gcrTrack->size >> 3);
+                    }
+                }
             }
         }
     }
@@ -750,6 +766,7 @@ auto DiskStructure::getStateImageSize() -> unsigned {
     
     unsigned neededSize = 0;
     bool fluxMode = (type == Type::P64) || (type == Type::P71);
+    bool mfmDecodedMode = (drive->operation & (DRIVE_MODE_157x | ENCODEDDATA_LEVEL)) == (DRIVE_MODE_157x | ENCODEDDATA_LEVEL);
 
     for (uint8_t side = 0; side < sides; side++) {
         for (unsigned halfTrack = 0; halfTrack < (MAX_TRACKS * 2); halfTrack++) {
@@ -763,8 +780,13 @@ auto DiskStructure::getStateImageSize() -> unsigned {
 
             if (fluxMode) {
                 neededSize += 4 + 16 + gcrTrack->pulses.size() * 16;
-            } else
+            } else {
                 neededSize += 4 + gcrTrack->size;
+
+                if (mfmDecodedMode) {
+                    neededSize += gcrTrack->size >> 3;
+                }
+            }
         }
     }
     

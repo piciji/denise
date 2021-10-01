@@ -23,7 +23,7 @@
     * PrologicDos Original and Classic
     * Turbo Trans ( includes Turbo Access )
     * ProSpeed 1571 GTI v2.0 
-    * support Userport Kernals for all fast6 loader, expect Turbo Trans
+    * support Userport Kernals for all fast loader, expect Turbo Trans
     * support Expansionsport Kernals for ProfDOS, PrologicDOS, Turbo Trans
 * bugfix: switch to custom resolutiuon in fullscreen
 * auto insert newly created disks or tapes

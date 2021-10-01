@@ -59,6 +59,7 @@ struct IecBus {
     auto setDrivesEnabled( uint8_t count ) -> void;
     auto setDriveSpeed(unsigned rpmScaled) -> void;
     auto setDriveWobble(unsigned wobbleScaled) -> void;
+    auto setStepperSeekTime( unsigned stepperSeekTimeScaled ) -> void;
     auto setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> void;
     auto randomizeRpm() -> void;
     auto setCpuCyclesPerSecond( unsigned cycles ) -> void;

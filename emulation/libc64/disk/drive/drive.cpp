@@ -55,9 +55,24 @@ namespace LIBC64 {
             ciaSpeeder->clock();                                                \
     }                                                                           \
     cycleCounter += iecBus->cpuCylcesPerSecond;             \
-    if (attachDelay)              \
-        attachDelay--;
+    if (delayInProgress)              \
+        progressDelay();
     
+auto Drive::progressDelay() -> void {
+    if (attachDelay) {
+        if (--attachDelay == 0) {
+            delayInProgress = stepperDelay;
+        }
+    }
+
+    if (stepperDelay) {
+        if (--stepperDelay == 0) {
+            changeHalfTrack(nextStep);
+            delayInProgress = attachDelay;
+        }
+    }
+}
+
 auto Drive::sync() -> void {
     SYNC 
 }
@@ -410,6 +425,8 @@ Drive::Drive(uint8_t number, Emulator::Interface::Media* mediaConnected ) : stru
 	emulateDxxMoreAccurate = false;
     media = nullptr;
     wasAttachDetached = false;
+    stepperDelay = 0;
+    delayInProgress = !!attachDelay;
 
     frequency = 1000000;
     refCyclesInCpuCycle = 16;
@@ -625,11 +642,6 @@ Drive::Drive(uint8_t number, Emulator::Interface::Media* mediaConnected ) : stru
 
                 if (side != _side) {
                     changeHalfTrack(0);
-
-                    if ( (type == Type::D1570) && (side == 1) ) {
-                        gcrTrack = dummyTrack;
-                        wd1770->setTrack( dummyTrack, true );
-                    }
                 }
             }
             // nothing todo here for 1541 parallel cable mode, because CA2 is triggered in VIA core
@@ -671,14 +683,23 @@ Drive::Drive(uint8_t number, Emulator::Interface::Media* mediaConnected ) : stru
             
             if (lines->iob & 4) { // stepper motor works only when drive motor is active
 
-                uint8_t step = ((lines->iob & 3) - (currentHalftrack & 3)) & 3;
+                if (stepperDelay) {
+                    updateStepper( nextStep );
+                }
 
-                if (step != 0) {
-                    changeHalfTrack(step);
+                uint8_t _step = ((lines->iob & 3) - (currentHalftrack & 3)) & 3;
 
-                    if ( (type == Type::D1570) && (side == 1) ) {
-                        gcrTrack = dummyTrack;
-                        wd1770->setTrack( dummyTrack, true );
+                if (_step != 0) {
+
+                    if (!stepperSeekTime) {
+                        changeHalfTrack(_step);
+                    } else {
+                        nextStep = _step;
+                        stepperDelay = stepperSeekTime;
+                        if ( use2Mhz() )
+                            stepperDelay <<= 1;
+
+                        delayInProgress = true;
                     }
                 }
             }                            
@@ -874,6 +895,7 @@ auto Drive::updateCycleSpeed(bool mhz2x, bool init) -> void {
         if (!init) {
             cycleCounter *= 2;
             attachDelay <<= 1;
+            stepperDelay <<= 1;
             driveCycles = frequency;
         }
         syncPosRead = (int64_t)(-0.875 * (double)iecBus->cpuCylcesPerSecond);
@@ -886,6 +908,7 @@ auto Drive::updateCycleSpeed(bool mhz2x, bool init) -> void {
         if (!init) {
             cycleCounter /= 2;
             attachDelay >>= 1;
+            stepperDelay >>= 1;
             driveCycles = frequency;
         }
         syncPosRead = (int64_t)(-0.455 * (double)iecBus->cpuCylcesPerSecond);
@@ -1004,6 +1027,8 @@ auto Drive::detach() -> void {
 
     if (iecBus->powerOn && use2Mhz() )
         attachDelay <<= 1;
+
+    delayInProgress = attachDelay || stepperDelay;
     
     structure.detach();
     motorOff.slowDown = false;
@@ -1031,6 +1056,8 @@ auto Drive::attach( Emulator::Interface::Media* media, uint8_t* data, unsigned s
 
     if (iecBus->powerOn && use2Mhz() )
         attachDelay <<= 1;
+
+    delayInProgress = attachDelay || stepperDelay;
 
     if ( !structure.attach( data, size, loadGracefully ) )
         return;
@@ -1117,13 +1144,15 @@ auto Drive::write() -> void {
 }
 
 auto Drive::setSpeed(unsigned rpmScaled) -> void {
-
     this->rpm = rpmScaled;
 }
 
 auto Drive::setWobble(unsigned wobbleScaled) -> void {
-
     this->wobble = wobbleScaled;
+}
+
+auto Drive::setStepperSeekTime( unsigned stepperSeekTimeScaled ) -> void {
+    this->stepperSeekTime = stepperSeekTimeScaled * 100;
 }
 
 auto Drive::setType( Type type ) -> void {

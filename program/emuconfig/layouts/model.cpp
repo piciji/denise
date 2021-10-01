@@ -184,8 +184,12 @@ auto ModelLayout::setEvents( ) -> void {
                     }
 
                     std::string unit = "";
-                    if (model->isDriveSettings())
-                        unit = " RPM";
+                    if (model->isDriveSettings()) {
+                        if (dynamic_cast<LIBC64::Interface*>(this->emulator) && (model->id == LIBC64::Interface::ModelIdDiskDriveStepperSeekTime))
+                            unit = " ms";
+                        else
+                            unit = " RPM";
+                    }
 
                     block->sliderLayout.value.setText( displayText + unit );
                     
@@ -306,8 +310,12 @@ auto ModelLayout::updateWidget( Line::Block* block ) -> void {
             displayText = GUIKIT::String::formatFloatingPoint( (float) val / model->scaler, 2);
 
         std::string unit = "";
-        if (model->isDriveSettings())
-            unit = " RPM";
+        if (model->isDriveSettings()) {
+            if (dynamic_cast<LIBC64::Interface*>(this->emulator) && (model->id == LIBC64::Interface::ModelIdDiskDriveStepperSeekTime))
+                unit = " ms";
+            else
+                unit = " RPM";
+        }
 
         block->sliderLayout.value.setText( displayText + unit );
         

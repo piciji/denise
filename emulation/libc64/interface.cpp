@@ -24,7 +24,7 @@
 
 namespace LIBC64 {
 
-const std::string Interface::Version = "1104";
+const std::string Interface::Version = "1105";
     
 Interface::Interface() : Emulator::Interface( "C64" ) {        
     
@@ -543,6 +543,8 @@ auto Interface::prepareModels() -> void {
     models.push_back({ModelIdDiskDriveSpeed, "Disk Speed", Model::Type::Slider, Model::Purpose::DriveSettings, 30000, {27500, 32500}, {}, 500, 100.0 });
 
     models.push_back({ModelIdDiskDriveWobble, "Disk Wobble", Model::Type::Slider, Model::Purpose::DriveSettings, 50, {0, 500}, {}, 50, 100.0 });
+
+    models.push_back({ModelIdDiskDriveStepperSeekTime, "Stepper Seek Time", Model::Type::Slider, Model::Purpose::DriveSettings, 0, {0, 140}, {}, 140, 10.0 });
 
     models.push_back({ModelIdDriveRam20To3F, "RAM $2000-$3FFF", Model::Type::Switch, Model::Purpose::DriveSettings, 0});
     models.push_back({ModelIdDriveRam40To5F, "RAM $4000-$5FFF", Model::Type::Switch, Model::Purpose::DriveSettings, 0});
@@ -1323,6 +1325,9 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
         case ModelIdDiskDriveWobble:
             iecBus->setDriveWobble( value );
             break;
+        case ModelIdDiskDriveStepperSeekTime:
+            iecBus->setStepperSeekTime( value );
+            break;
         case ModelIdDiskDriveSpeed:
             iecBus->setDriveSpeed( value );
             break;
@@ -1448,6 +1453,7 @@ auto Interface::getModelValue(unsigned modelId) -> int {
         case ModelIdTapeDriveWobble:        return tape->hasWobble() ? 1 : 0;
         case ModelIdDiskDriveWobble:        return (int)iecBus->drives[0]->wobble;
         case ModelIdDiskDriveSpeed:         return (int)iecBus->drives[0]->rpm;
+        case ModelIdDiskDriveStepperSeekTime:return (int)iecBus->drives[0]->stepperSeekTime;
 
         case ModelIdCiaBurstMode:           return system->secondDriveCable.burstRequested;
         case ModelIdDriveParallelCable:     return system->secondDriveCable.parallelRequested;

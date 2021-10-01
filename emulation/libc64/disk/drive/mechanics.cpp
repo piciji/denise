@@ -293,8 +293,9 @@ auto Drive::updateStepper( uint8_t step ) -> bool {
 }
 
 auto Drive::changeHalfTrack( uint8_t step ) -> void {
-                    
-    updateStepper( step );
+
+    if (step != 0)
+        updateStepper( step );
 
     if (operation & FLUXDATA_LEVEL) {
 
@@ -345,7 +346,11 @@ auto Drive::changeHalfTrack( uint8_t step ) -> void {
             headOffset = 0;
     }
 
-    wd1770->setTrack(gcrTrack);
+    if ( (type == Type::D1570) && (side == 1) ) {
+        gcrTrack = dummyTrack;
+        wd1770->setTrack( dummyTrack, true );
+    } else
+        wd1770->setTrack(gcrTrack);
 
     updateDeviceState( );
 

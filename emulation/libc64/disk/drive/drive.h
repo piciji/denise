@@ -145,8 +145,12 @@ struct Drive {
     unsigned readBuffer;
     uint8_t writeBuffer;
     uint8_t latchedByte;
-    
+
+    bool delayInProgress = false;
     unsigned attachDelay = 0;
+    unsigned stepperDelay = 0;
+    uint8_t nextStep;
+
     bool wasAttachDetached;
     
     bool motorOn = false;
@@ -160,6 +164,7 @@ struct Drive {
     
     unsigned rpm = 30000;
     unsigned wobble = 50;
+    unsigned stepperSeekTime = 0;
 
     auto sync() -> void;
     auto setSyncPos(int direction) -> void;
@@ -171,6 +176,7 @@ struct Drive {
     auto getMedia() -> Emulator::Interface::Media* { return media; }
 	auto getMediaConnected() -> Emulator::Interface::Media* { return mediaConnected; }
 	auto setType( Type type ) -> void;
+    auto progressDelay() -> void;
     
     auto updateBus() -> void;
     auto setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> void;
@@ -187,6 +193,7 @@ struct Drive {
     auto setWriteProtect(bool state) -> void;
     auto setSpeed( unsigned rpmScaled ) -> void;
     auto setWobble( unsigned wobbleScaled ) -> void;
+    auto setStepperSeekTime( unsigned stepperSeekTimeScaled ) -> void;
 
     auto syncFound() -> uint8_t;
     auto writeprotectSense() -> uint8_t;
