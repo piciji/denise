@@ -1,6 +1,7 @@
 
 auto Translation::get(std::string ident, const std::vector<std::vector<std::string>>& replaces, bool addColon) -> std::string {
     std::string out = String::trim( ident );
+    std::string _ident = out;
     String::toLowerCase( ident );
     std::string digit = removeDigit( ident );
 
@@ -9,7 +10,7 @@ auto Translation::get(std::string ident, const std::vector<std::vector<std::stri
     for(auto& data : list) {
         if(data.ident == ident) {
 			match = true;
-            out = !data.text.empty() ? data.text : String::trim( ident );
+            out = !data.text.empty() ? data.text : _ident;
             if (!digit.empty())
 				out += " " + digit;
             break;
@@ -23,7 +24,7 @@ auto Translation::get(std::string ident, const std::vector<std::vector<std::stri
 		
 		for(auto& data : list)
 			if(data.ident == test) {
-				out = !data.text.empty() ? data.text : String::trim( ident );
+				out = !data.text.empty() ? data.text : _ident;
                 match = true;
 				break;
 			}				

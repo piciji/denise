@@ -71,7 +71,7 @@ auto Fileloader::load(Emulator::Interface* emulator, Emulator::Interface::Media*
         return this->previewFile(file, emulator, media);
     } );
 
-    fileDialogPtr->addCustomButton( trans->get("auto start"), [this, emulator, media](std::string filePath, unsigned selection) {
+    fileDialogPtr->addCustomButton( trans->get("Auto Start"), [this, emulator, media](std::string filePath, unsigned selection) {
 
         if (filePath.empty())
             return false;
@@ -80,7 +80,7 @@ auto Fileloader::load(Emulator::Interface* emulator, Emulator::Interface::Media*
     }, IDC_BUTTON );
 
     if (!*alternateFileDialog && group->isDisk() && dynamic_cast<LIBC64::Interface*>(emulator) ) {
-        fileDialogPtr->addCustomButton( trans->get("Virtual Auto Start"), [this, emulator, media](std::string filePath, unsigned selection) {
+        fileDialogPtr->addCustomButton( trans->get("Virtual Start"), [this, emulator, media](std::string filePath, unsigned selection) {
 
             if (filePath.empty())
                 return false;
@@ -149,6 +149,7 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
     }
 
     auto settings = program->getSettings( emulator );
+    TRAPS_ON_DBLCLICK
 
     if (fileDialogPtr) {
         fileDialogPtr->close();
@@ -218,14 +219,15 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
     }, IDC_BUTTON );
 
     if (!*alternateFileDialog && dynamic_cast<LIBC64::Interface*>(emulator) ) {
-        fileDialogPtr->addCustomButton( trans->get("Virtual Auto Start"), [this, emulator, settings, mIsAcquiredBefore](std::string filePath, unsigned selection) {
+        fileDialogPtr->addCustomButton( trans->get(!*trapsOnDblClick ? "Virtual Start" : "Auto Start"), [this, emulator, settings, mIsAcquiredBefore](std::string filePath, unsigned selection) {
 
             if (filePath.empty())
                 return false;
 
+            TRAPS_ON_DBLCLICK
             settings->set<std::string>("anyload_path", GUIKIT::File::getPath( filePath ) );
 
-            autoloader->init( {filePath}, false, Autoloader::Mode::AutoStartTrapped, selection );
+            autoloader->init( {filePath}, false, !*trapsOnDblClick ? Autoloader::Mode::AutoStartTrapped : Autoloader::Mode::AutoStartNotTrapped, selection );
             autoloader->loadFiles();
 
             resetPreview(emulator);
@@ -237,9 +239,9 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
     }
 
     fileDialogPtr->setCallbacks( [this, emulator, settings, mIsAcquiredBefore](std::string filePath, unsigned selection) {
-        TRAPS_ON_DBLCLICK
         settings->set<std::string>("anyload_path", GUIKIT::File::getPath( filePath ) );
 
+        TRAPS_ON_DBLCLICK
         autoloader->init( {filePath}, false, *trapsOnDblClick ? Autoloader::Mode::AutoStartTrapped : Autoloader::Mode::AutoStartNotTrapped, selection );
         autoloader->loadFiles();
 
@@ -255,20 +257,19 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
 
     fileDialogPtr->resizeTemplate( true, -6 );
 
-    fileDialogPtr->setDefaultButtonText( trans->get("auto start") );
+    fileDialogPtr->setDefaultButtonText( trans->get(*trapsOnDblClick ? "Virtual Start" : "Auto Start") );
 
     fileDialogPtr->setWindow( *view ).setNonModal();
 
     std::string filePath = fileDialogPtr->open();
 
     if (fileDialogPtr && fileDialogPtr->detached()) {
-        // cocoa/gtk doesn't block for modeless dialog
+        // cocoa/gtk don't block for modeless dialog
         // it handles OK state in callback
         return;
     }
 
     if ( !filePath.empty() ) {
-        TRAPS_ON_DBLCLICK
         settings->set<std::string>("anyload_path", GUIKIT::File::getPath( filePath ) );
 
         autoloader->init( {filePath}, false, *trapsOnDblClick ? Autoloader::Mode::AutoStartTrapped : Autoloader::Mode::AutoStartNotTrapped, fileDialogPtr ? fileDialogPtr->getContentViewSelection() : 0 );

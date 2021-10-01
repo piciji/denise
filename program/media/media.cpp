@@ -844,8 +844,8 @@ auto MediaLayout::translate() -> void {
     pathsLayout.setText( trans->get("paths") );
     moduleFrame.setText( trans->get("selection") );   
     bootCart.setText( trans->get("boot cartridge") );
-    useDiskTraps.setText( trans->get("Virtual Auto Start") );
-    useDiskTraps.setTooltip( trans->get("Virtual Auto Start tooltip") );
+    useDiskTraps.setText( trans->get("Virtual Start") );
+    useDiskTraps.setTooltip( trans->get("Virtual Start tooltip") );
     deactivateCart.setText( trans->get("deactivate cartridge") );
     if (expansionParent)
         expansionParent->setText( trans->get("cartridges") );

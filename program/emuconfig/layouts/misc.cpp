@@ -161,7 +161,7 @@ auto MiscLayout::translate() -> void {
     runAheadLayout.options.disableOnPower.setText( trans->get("disable runAhead on power") );
 
     if (autostartLayout) {
-        autostartLayout->setText(trans->get("auto start"));
+        autostartLayout->setText(trans->get("Auto Start"));
         autostartLayout->autoWarp.label.setText(trans->get("Auto Warp", {}, true));
         autostartLayout->autoWarp.aggressive.setText(trans->get("aggressive"));
         autostartLayout->autoWarp.normal.setText(trans->get("normal"));
