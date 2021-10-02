@@ -573,7 +573,7 @@ auto System::power( bool softReset ) -> void {
     KeyBuffer::Action action;
     action.mode = KeyBuffer::Mode::WaitDelay;
 
-    if (dynamic_cast<Freezer*>(expansionPort))
+    if (!debugCart.enable && dynamic_cast<Freezer*>(expansionPort))
         action.delay = (unsigned)(interface->stats.fps * dynamic_cast<Freezer*>(expansionPort)->bootSpeed());
     else if (iecBus->drives[0]->speeder && secondDriveCable.parallelUse)
         action.delay = (unsigned)(interface->stats.fps * ((iecBus->drives[0]->speeder == 10 || iecBus->drives[0]->speeder == 11)
