@@ -516,6 +516,9 @@ struct Interface {
 	// copy/paste
 	virtual auto pasteText( std::string buffer ) -> void {}
 	virtual auto copyText() -> std::string { return ""; }
+
+    // jit
+    virtual auto enableJit(bool state) -> void {}
     
     auto getStatsForSelectedRegion() -> Stats& {  
         return stats;

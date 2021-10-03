@@ -153,6 +153,9 @@ struct Interface : Emulator::Interface {
     auto cropData() -> uint8_t*;
     auto cropPitch() -> unsigned;
 
+    // jit
+    auto enableJit(bool state) -> void;
+
     // sockets
     auto prepareSocket( Media* media, std::string address, std::string port ) -> void;
 

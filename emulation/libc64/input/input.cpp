@@ -181,13 +181,13 @@ auto Input::writeCiaPortB( CIA::Base::Lines* lines ) -> void {
 }
 
 inline auto Input::jitPoll() -> void {
-    if (jit.enable && system->interface->jitPoll()) {
+    if (jit.allow &&   system->interface->jitPoll()) {
         keyboard.poll();
         updateLightpen(!lines ? 0xff : lines->ioa, !lines ? 0xff : lines->iob);
         jit.midscreen = true;
-       // system->interface->log("update", true);
+        //system->interface->log("update", true);
     } else {
-       // system->interface->log("too soon", true);        
+        //system->interface->log("too soon", true);
     } 
     
     //system->interface->log(vicII->getVcounter(), false);
@@ -196,7 +196,7 @@ inline auto Input::jitPoll() -> void {
 
 auto Input::poll() -> void {
 	
-    bool jitDisable = !jit.enable || !jit.midscreen;
+    bool jitDisable = !jit.allow || !jit.midscreen;
     
     //system->interface->log("jit ", true);
     //system->interface->log( !jitDisable ? "on" : "off", false );
@@ -315,10 +315,14 @@ auto Input::connectControlport( Interface::Connector* connector, Interface::Devi
     
     *controlPort = ControlPort::create( device );
     
-    jit.enable = controlPort1->useJitPolling() && controlPort2->useJitPolling();
-    jit.enable = false; 
+    jit.allow = jit.enable && controlPort1->useJitPolling() && controlPort2->useJitPolling();
     
     (*controlPort)->reset();
+}
+
+auto Input::enableJit(bool state) -> void {
+    jit.enable = state;
+    jit.allow = jit.enable && controlPort1->useJitPolling() && controlPort2->useJitPolling();
 }
 
 auto Input::getConnectedDevice( Interface::Connector* connector ) -> Interface::Device* {

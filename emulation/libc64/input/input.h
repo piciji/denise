@@ -23,6 +23,7 @@ struct Input {
     
     struct Jit {
         bool enable = false;
+        bool allow = false;
         bool midscreen = false;
     } jit;
     
@@ -51,6 +52,8 @@ struct Input {
     
     auto drawCursor(bool midScreen = false) -> void;
     auto serialize(Emulator::Serializer& s) -> void;
+
+    auto enableJit(bool state) -> void;
 };
 
 }

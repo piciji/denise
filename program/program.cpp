@@ -151,11 +151,15 @@ auto Program::init() -> void {
 }
 
 auto Program::initEmulator( Emulator::Interface* emulator ) -> void {
+    auto _settings = getSettings(emulator);
+
+    emulator->enableJit( _settings->get<bool>("input_jit", true) );
+
     for (auto& connector : emulator->connectors)
         emulator->connect(&connector, getDevice(emulator, &connector));
     
     for (auto& model : emulator->models)
-        emulator->setModelValue( model.id, getSettings(emulator)->get<int>( _underscore(model.name), model.defaultValue, model.range) );
+        emulator->setModelValue( model.id, _settings->get<int>( _underscore(model.name), model.defaultValue, model.range) );
     
     updateCrop( emulator );
 

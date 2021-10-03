@@ -615,3 +615,5 @@ hungarian = Hungarian
 Pre-configured = Pre-configured
 Stepper Seek Time = Stepper Seek Time
 Stepper Seek Time tooltip = experimental, only for experienced users (useful only for a few G64/P64)
+enable JIT = enable JIT
+JIT tooltip = "Just in time polling" checks inputs directly when queried by the program, instead of at a fixed position between the images.

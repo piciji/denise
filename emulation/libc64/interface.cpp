@@ -1511,6 +1511,10 @@ auto Interface::cropPitch() -> unsigned {
     return system->crop->latest.linePitch;
 }
 
+auto Interface::enableJit(bool state) -> void {
+    system->input->enableJit( state );
+}
+
 auto Interface::activateDebugCart( unsigned limitCycles ) -> void {
     system->setDebugCart( true, limitCycles );    
 }

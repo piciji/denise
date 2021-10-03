@@ -3,6 +3,7 @@ InputSelector::InputSelector() {
     append(device, {~0u, 0u}, 20);
 	append(hotkeys, {0u, 0u});
 	append(spacer, {~0u, 0u});
+    append(jit, {0u, 0u}, 10);
     append(plugin, {0u, 0u}, 10);
     setAlignment(0.5);
 }
@@ -226,6 +227,13 @@ InputLayout::InputLayout(TabWindow* tabWindow) {
         _settings->set<unsigned>("input_assigner", 0);
     };
 
+    selector.jit.onToggle = [this]() {
+        _settings->set<bool>("input_jit", selector.jit.checked());
+        emulator->enableJit( selector.jit.checked() );
+    };
+
+    selector.jit.setChecked( _settings->get<bool>("input_jit", true) );
+
     updateAssigner();
 
     updateKeyLayout();
@@ -403,6 +411,8 @@ auto InputLayout::updateListEntry(unsigned selection, InputMapping* mapping) -> 
 auto InputLayout::translate() -> void {
     stopCapture();
 	selector.hotkeys.setText( trans->get("hotkeys") );
+    selector.jit.setText( trans->get("enable JIT") );
+    selector.jit.setTooltip( trans->get("JIT tooltip") );
     selector.plugin.setText( trans->get("plugin", {}, true) );
     inputList.setHeaderText({ "", trans->get("input"), trans->get("map"), trans->get("alternate_map")});
     mapControl.reset.setText( trans->get( "reset" ) );
@@ -604,4 +614,6 @@ auto InputLayout::loadSettings() -> void {
     updateKeyLayout();
     
     update();
+
+    selector.jit.setChecked( _settings->get<bool>("input_jit", true) );
 }

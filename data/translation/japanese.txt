@@ -615,3 +615,5 @@ hungarian =
 Pre-configured =
 Stepper Seek Time =
 Stepper Seek Time tooltip =
+enable JIT =
+JIT tooltip =
