@@ -71,7 +71,7 @@ auto Fileloader::load(Emulator::Interface* emulator, Emulator::Interface::Media*
         return this->previewFile(file, emulator, media);
     } );
 
-    fileDialogPtr->addCustomButton( trans->get("Auto Start"), [this, emulator, media](std::string filePath, unsigned selection) {
+    fileDialogPtr->addCustomButton( trans->get("Autostart"), [this, emulator, media](std::string filePath, unsigned selection) {
 
         if (filePath.empty())
             return false;
@@ -80,7 +80,7 @@ auto Fileloader::load(Emulator::Interface* emulator, Emulator::Interface::Media*
     }, IDC_BUTTON );
 
     if (!*alternateFileDialog && group->isDisk() && dynamic_cast<LIBC64::Interface*>(emulator) ) {
-        fileDialogPtr->addCustomButton( trans->get("Virtual Start"), [this, emulator, media](std::string filePath, unsigned selection) {
+        fileDialogPtr->addCustomButton( trans->get("VDT Autostart"), [this, emulator, media](std::string filePath, unsigned selection) {
 
             if (filePath.empty())
                 return false;
@@ -219,7 +219,7 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
     }, IDC_BUTTON );
 
     if (!*alternateFileDialog && dynamic_cast<LIBC64::Interface*>(emulator) ) {
-        fileDialogPtr->addCustomButton( trans->get(!*trapsOnDblClick ? "Virtual Start" : "Auto Start"), [this, emulator, settings, mIsAcquiredBefore](std::string filePath, unsigned selection) {
+        fileDialogPtr->addCustomButton( trans->get(!*trapsOnDblClick ? "VDT Autostart" : "Autostart"), [this, emulator, settings, mIsAcquiredBefore](std::string filePath, unsigned selection) {
 
             if (filePath.empty())
                 return false;
@@ -257,7 +257,7 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
 
     fileDialogPtr->resizeTemplate( true, -6 );
 
-    fileDialogPtr->setDefaultButtonText( trans->get(*trapsOnDblClick ? "Virtual Start" : "Auto Start") );
+    fileDialogPtr->setDefaultButtonText( trans->get(*trapsOnDblClick ? "VDT Autostart" : "Autostart") );
 
     fileDialogPtr->setWindow( *view ).setNonModal();
 

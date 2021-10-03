@@ -161,7 +161,7 @@ auto MiscLayout::translate() -> void {
     runAheadLayout.options.disableOnPower.setText( trans->get("disable runAhead on power") );
 
     if (autostartLayout) {
-        autostartLayout->setText(trans->get("Auto Start"));
+        autostartLayout->setText(trans->get("Autostart"));
         autostartLayout->autoWarp.label.setText(trans->get("Auto Warp", {}, true));
         autostartLayout->autoWarp.aggressive.setText(trans->get("aggressive"));
         autostartLayout->autoWarp.normal.setText(trans->get("normal"));
@@ -173,7 +173,7 @@ auto MiscLayout::translate() -> void {
         autostartLayout->options.tapeWithStandardKernal.setText(trans->get("tape default kernal"));
 
         autostartLayout->options.loadWithColumn.setText( "Load \":*\"" );
-        autostartLayout->options.trapsOnDblClick.setText(trans->get("virtual start on dblclick"));
+        autostartLayout->options.trapsOnDblClick.setText(trans->get("VDT Autostart on dblclick"));
     }
 }
 
