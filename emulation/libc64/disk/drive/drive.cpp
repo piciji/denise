@@ -701,6 +701,9 @@ Drive::Drive(uint8_t number, Emulator::Interface::Media* mediaConnected ) : stru
 
                         delayInProgress = true;
                     }
+                } else if (stepperDelay) {
+                    stepperDelay = 0;
+                    changeHalfTrack(0);
                 }
             }                            
             
