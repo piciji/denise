@@ -90,7 +90,7 @@ auto DiskStructure::prepareGxx() -> void {
 
     for (uint8_t side = 0; side < sides; side++) {
         for (unsigned halfTrack = 0; halfTrack < (MAX_TRACKS * 2); halfTrack++) {
-            GcrTrack* ptr = &gcrTracks[side][halfTrack];
+            MTrack* ptr = &gcrTracks[side][halfTrack];
             unsigned totalHalfTrack = side * MAX_TRACKS * 2 + halfTrack;
 
             if (ptr->data)
@@ -168,7 +168,7 @@ inline auto DiskStructure::addMfmByte(uint8_t*& dest, uint8_t data, uint16_t& cr
     crc = WD1770::CRC1021[(crc >> 8) ^ data] ^ (crc << 8);
 }
 
-auto DiskStructure::parseMfm(GcrTrack* trackPtr, unsigned offset) -> void {
+auto DiskStructure::parseMfm(MTrack* trackPtr, unsigned offset) -> void {
     unsigned pos;
     uint16_t crc;
 
@@ -279,7 +279,7 @@ auto DiskStructure::parseMfm(GcrTrack* trackPtr, unsigned offset) -> void {
     }
 }
 
-auto DiskStructure::writeMfm(const GcrTrack* trackPtr, unsigned offset) -> bool {
+auto DiskStructure::writeMfm(const MTrack* trackPtr, unsigned offset) -> bool {
     unsigned startOffset = offset;
     bool isSync = false;
     uint8_t buf[1] = {0}; // version or errors
@@ -338,7 +338,7 @@ auto DiskStructure::writeMfm(const GcrTrack* trackPtr, unsigned offset) -> bool 
     return true;
 }
 
-auto DiskStructure::writeGxx(const GcrTrack* trackPtr, uint8_t side, unsigned halfTrack) -> bool {
+auto DiskStructure::writeGxx(const MTrack* trackPtr, uint8_t side, unsigned halfTrack) -> bool {
     int error;
     uint8_t buf[4];
     bool appendTrack = false;

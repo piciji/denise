@@ -609,7 +609,7 @@ auto DiskStructure::storeWrittenTracks() -> void {
     for (uint8_t side = 0; side < sides; side++) {
         for (unsigned halfTrack = 0; halfTrack < (MAX_TRACKS * 2); halfTrack++) {
 
-            GcrTrack* gcrTrack = getTrackPtr(side, halfTrack);
+            MTrack* gcrTrack = getTrackPtr(side, halfTrack);
 
             if (!(gcrTrack->written & 1) || !gcrTrack->size)
                 continue;
@@ -668,7 +668,7 @@ auto DiskStructure::serialize(Emulator::Serializer& s, bool written) -> void {
     for (uint8_t side = 0; side < sides; side++) {
         for (unsigned halfTrack = 0; halfTrack < (MAX_TRACKS * 2); halfTrack++) {
 
-            GcrTrack* gcrTrack = getTrackPtr(side, halfTrack);
+            MTrack* gcrTrack = getTrackPtr(side, halfTrack);
 
             s.integer(gcrTrack->written);
 
@@ -773,7 +773,7 @@ auto DiskStructure::getStateImageSize() -> unsigned {
 
             neededSize += 1;
 
-            GcrTrack* gcrTrack = getTrackPtr(side, halfTrack);
+            MTrack* gcrTrack = getTrackPtr(side, halfTrack);
 
             if (!(gcrTrack->written & 1))
                 continue;
@@ -793,7 +793,7 @@ auto DiskStructure::getStateImageSize() -> unsigned {
     return neededSize;
 }
 
-auto DiskStructure::getTrackPtr( uint8_t side, uint8_t halfTrack ) -> GcrTrack* {
+auto DiskStructure::getTrackPtr( uint8_t side, uint8_t halfTrack ) -> MTrack* {
     
     return &gcrTracks[ side ][ halfTrack ];
 }
@@ -823,7 +823,7 @@ auto DiskStructure::readSector( uint8_t* buffer, uint8_t track, uint8_t sector )
 
     track = track * 2 - 2;
 
-    GcrTrack* trackPtr = &gcrTracks[side][track];
+    MTrack* trackPtr = &gcrTracks[side][track];
 
     int err = decodeSector(trackPtr, buffer, sector);
 

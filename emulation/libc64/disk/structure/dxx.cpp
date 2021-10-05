@@ -109,7 +109,7 @@ auto DiskStructure::prepareDxx() -> void {
             // ... d64 doesn't support halftracks 1.5, 2.5 ...
             unsigned halfTrack = track * 2 - 2;
             unsigned trackSize = countBytes(track);
-            GcrTrack* trackPtr = &gcrTracks[side][halfTrack];
+            MTrack* trackPtr = &gcrTracks[side][halfTrack];
 
             // there wasn't loaded any image before
             if (!trackPtr->data)
@@ -238,7 +238,7 @@ auto DiskStructure::handleAppendedTracksInDxx() -> bool {
 
     for (uint8_t side = 0; side < sides; side++) {
         for (unsigned track = 1; track <= MAX_TRACKS; track++) {
-            GcrTrack* gcrTrack = getTrackPtr(side, track * 2 - 2);
+            MTrack* gcrTrack = getTrackPtr(side, track * 2 - 2);
 
             if ((track > TYPICAL_TRACKS) && (gcrTrack->written & 1)) {
                 if (track > tracksInDxx) {
@@ -278,7 +278,7 @@ auto DiskStructure::handleAppendedTracksInDxx() -> bool {
 
     for (uint8_t side = 0; side < sides; side++) {
         for (unsigned track = 1; track <= MAX_TRACKS; track++) {
-            GcrTrack* gcrTrack = getTrackPtr(side, track * 2 - 2);
+            MTrack* gcrTrack = getTrackPtr(side, track * 2 - 2);
 
             if (track <= tracksInDxx)
                 gcrTrack->written = 1;
@@ -288,7 +288,7 @@ auto DiskStructure::handleAppendedTracksInDxx() -> bool {
     return true;
 }
 
-auto DiskStructure::writeDxx(const GcrTrack* trackPtr, uint8_t side, unsigned track, bool& errorMapChanged) -> bool {
+auto DiskStructure::writeDxx(const MTrack* trackPtr, uint8_t side, unsigned track, bool& errorMapChanged) -> bool {
     // ok we need to decode the gcr track back in user data and write it out
     unsigned trackSectors = countSectors( track );
     
@@ -351,7 +351,7 @@ auto DiskStructure::writeDxx(const GcrTrack* trackPtr, uint8_t side, unsigned tr
     return true;
 }
 
-auto DiskStructure::decodeSector( const GcrTrack* trackPtr, uint8_t* dest, uint8_t sector ) -> int {
+auto DiskStructure::decodeSector( const MTrack* trackPtr, uint8_t* dest, uint8_t sector ) -> int {
     
     // we need to crawl the cbm dos track, which consists of sync, header, sync, sector data and so on
     unsigned offset = 0;
@@ -406,7 +406,7 @@ auto DiskStructure::decodeSector( const GcrTrack* trackPtr, uint8_t* dest, uint8
     return checksum ? ERR_CHECKSUM : ERR_OK; // checksum doesn't match with calculated
 }
 
-auto DiskStructure::findSync( const GcrTrack* trackPtr, unsigned& offset, unsigned size ) -> bool {
+auto DiskStructure::findSync( const MTrack* trackPtr, unsigned& offset, unsigned size ) -> bool {
     // check for sync mark and adjust offset to the bit following the sync mark
     
     if ( !trackPtr->data || !trackPtr->size )
@@ -451,7 +451,7 @@ auto DiskStructure::findSync( const GcrTrack* trackPtr, unsigned& offset, unsign
     return false;
 }
 
-auto DiskStructure::decode( const GcrTrack* trackPtr, unsigned offset, uint8_t* buffer, unsigned blockCount ) -> void {
+auto DiskStructure::decode( const MTrack* trackPtr, unsigned offset, uint8_t* buffer, unsigned blockCount ) -> void {
     Emulator::Gcr gcr;
     // offset is starting bit in requested track. NOTE: decoding can start mid byte
     // blockCount is the amount of 5-byte gcr blocks we want to decode in 4-byte each

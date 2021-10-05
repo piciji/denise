@@ -161,7 +161,7 @@ namespace LIBC64 {
 
         for (int side = 0; side < sides; side++) {
             for (unsigned halfTrack = 0; halfTrack < (MAX_TRACKS * 2); halfTrack++) {
-                GcrTrack* gcrTrack = getTrackPtr(side, halfTrack);
+                MTrack* gcrTrack = getTrackPtr(side, halfTrack);
 
                 BOUND_CHECK(20)
 
@@ -353,7 +353,7 @@ namespace LIBC64 {
 
                     halfTrack -= 2;
 
-                    GcrTrack* gcrPtr = &gcrTracks[side][halfTrack];
+                    MTrack* gcrPtr = &gcrTracks[side][halfTrack];
                     gcrPtr->pulses.clear();
 
                     uint32_t pulses = Emulator::copyBufferToInt<uint32_t>(_ptr);
@@ -580,7 +580,7 @@ namespace LIBC64 {
         return size;
     }
 
-    auto DiskStructure::freePulse( GcrTrack* gcrTrack, int32_t index ) -> void {
+    auto DiskStructure::freePulse( MTrack* gcrTrack, int32_t index ) -> void {
         DiskStructure::Pulse& pulse = gcrTrack->pulses[index];
 
         if (gcrTrack->currentPulse == index)
@@ -597,7 +597,7 @@ namespace LIBC64 {
             gcrTrack->pulses[pulse.next].previous = pulse.previous;
     }
 
-    auto DiskStructure::addPulse( GcrTrack* gcrTrack, uint32_t position, uint32_t strength ) -> void {
+    auto DiskStructure::addPulse( MTrack* gcrTrack, uint32_t position, uint32_t strength ) -> void {
         // use double linked list for faster write emulation
         // have tried a simple sorted vector but inserting new elements during write emulation completly kill performance
 
@@ -691,7 +691,7 @@ namespace LIBC64 {
             for (int halfTrack = 0; halfTrack < (MAX_TRACKS_1541 * 2); halfTrack++) {
 
                 if ( !*inUse) {
-                    GcrTrack* gcrPtr = &gcrTracks[side][halfTrack];
+                    MTrack* gcrPtr = &gcrTracks[side][halfTrack];
 
                     if (gcrPtr->data)
                         delete[] gcrPtr->data;
@@ -711,7 +711,7 @@ namespace LIBC64 {
         }
     }
 
-    auto DiskStructure::createPulsesFromGCR( GcrTrack* gcrTrack ) -> void {
+    auto DiskStructure::createPulsesFromGCR( MTrack* gcrTrack ) -> void {
         uint32_t positionHi, positionLo, incrementHi, incrementLo, bit;
 
         incrementHi = CyclesPerRevolution300Rpm / gcrTrack->bits;
@@ -735,7 +735,7 @@ namespace LIBC64 {
     }
 
     // this is needed to generate content list (TOC) outside emulation
-    inline auto DiskStructure::encodeGCR(GcrTrack* gcrTrack, uint8_t halfTrack) -> void {
+    inline auto DiskStructure::encodeGCR(MTrack* gcrTrack, uint8_t halfTrack) -> void {
         uint8_t track = (halfTrack >> 1) + 1;
         unsigned trackSize = countBytes( track );
         uint8_t _speedzone = speedzone( track );
@@ -831,7 +831,7 @@ namespace LIBC64 {
 
                 unsigned halfTrack = track << 1;
 
-                GcrTrack* gcrPtr = &structure.gcrTracks[side][halfTrack];
+                MTrack* gcrPtr = &structure.gcrTracks[side][halfTrack];
 
                 gcrPtr->written = gcrPtr->bits > 0;
 

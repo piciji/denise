@@ -408,7 +408,7 @@ Drive::Drive(uint8_t number, Emulator::Interface::Media* mediaConnected ) : stru
     this->number = number; 
 	this->mediaConnected = mediaConnected;
 
-	dummyTrack = new DiskStructure::GcrTrack;
+	dummyTrack = new DiskStructure::MTrack;
     dummyTrack->pulses.push_back({0,0,1,1});
     dummyTrack->pulses.push_back({1000,0,0,0});
     dummyTrack->firstPulse = 0;

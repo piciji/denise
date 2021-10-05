@@ -61,7 +61,7 @@ struct DiskStructure {
         int32_t next;
     };
 
-    struct GcrTrack {
+    struct MTrack { // GCR or MFM track
         uint8_t* data = nullptr;
         unsigned size = 0;
         unsigned bits = 1;
@@ -102,7 +102,7 @@ struct DiskStructure {
     auto analyze() -> bool;   
     static auto create( Type newType, std::string diskName ) -> Emulator::Interface::Data;
     
-    auto getTrackPtr( uint8_t side, uint8_t halfTrack ) -> GcrTrack*;
+    auto getTrackPtr( uint8_t side, uint8_t halfTrack ) -> MTrack*;
     auto attach( uint8_t* data, unsigned size, bool loadGracefully = false ) -> bool;
     auto detach() -> void;
     auto createListing( bool loadWithColumn = false ) -> void;
@@ -135,8 +135,8 @@ struct DiskStructure {
     static auto countBytes( uint8_t track ) -> unsigned;
     static auto gapSize( uint8_t track ) -> unsigned;
 
-    static auto addPulse( GcrTrack* gcrTrack, uint32_t position, uint32_t strength ) -> void;
-    static auto freePulse( GcrTrack* gcrTrack, int32_t index ) -> void;
+    static auto addPulse( MTrack* gcrTrack, uint32_t position, uint32_t strength ) -> void;
+    static auto freePulse( MTrack* gcrTrack, int32_t index ) -> void;
 
     auto updateSerializationSize() -> void;
     auto prepareP64Graceful() -> void;
@@ -148,7 +148,7 @@ private:
     uint32_t rawSize;
 	uint8_t* created = nullptr;
     uint8_t sides;
-    GcrTrack gcrTracks[2][ MAX_TRACKS_1541 * 2 ];
+    MTrack gcrTracks[2][ MAX_TRACKS_1541 * 2 ];
 
     // G64 / G71
     unsigned maxTrackLength;
@@ -181,11 +181,11 @@ private:
     auto getTrackOffsetGxx( uint8_t halfTrack, int& error ) -> uint32_t;
     auto handleAppendedTracksInDxx() -> bool;
     auto addMfmByte(uint8_t*& dest, uint8_t data, uint16_t& crc) -> void;
-    auto parseMfm(GcrTrack* trackPtr, unsigned offset) -> void;
-    auto writeMfm(const GcrTrack* trackPtr, unsigned offset) -> bool;
+    auto parseMfm(MTrack* trackPtr, unsigned offset) -> void;
+    auto writeMfm(const MTrack* trackPtr, unsigned offset) -> bool;
         
-    auto writeDxx(const GcrTrack* trackPtr, uint8_t side, unsigned track, bool& errorMapChanged) -> bool;
-    auto writeGxx(const GcrTrack* trackPtr, uint8_t side, unsigned halfTrack) -> bool;
+    auto writeDxx(const MTrack* trackPtr, uint8_t side, unsigned track, bool& errorMapChanged) -> bool;
+    auto writeGxx(const MTrack* trackPtr, uint8_t side, unsigned halfTrack) -> bool;
     auto writeP64ToMem(unsigned& memSize) -> uint8_t*;
     auto writePxx() -> bool;
     
@@ -194,16 +194,16 @@ private:
     static auto createBAM( std::string diskName, uint8_t* buffer, uint8_t* bufferSecondSide = nullptr ) -> void;
 
     static auto encodeSector(const uint8_t* src, uint8_t* target, uint8_t track, uint8_t sector, uint8_t id1, uint8_t id2, int errorCode) -> void;    
-    auto decodeSector( const GcrTrack* trackPtr, uint8_t* dest, uint8_t sector ) -> int;
-    auto findSync( const GcrTrack* trackPtr, unsigned& offset, unsigned size ) -> bool;
-    auto decode( const GcrTrack* trackPtr, unsigned offset, uint8_t* buffer, unsigned blockCount ) -> void;
+    auto decodeSector( const MTrack* trackPtr, uint8_t* dest, uint8_t sector ) -> int;
+    auto findSync( const MTrack* trackPtr, unsigned& offset, unsigned size ) -> bool;
+    auto decode( const MTrack* trackPtr, unsigned offset, uint8_t* buffer, unsigned blockCount ) -> void;
 
 	inline auto decodeP64( Emulator::Fpaq0& fpaq0, std::vector<Emulator::PredictorEightBitWithPrefix*>& predictors ) -> unsigned;
     inline auto encodeP64( Emulator::Fpaq0& fpaq0, std::vector<Emulator::PredictorEightBitWithPrefix*>& predictors, unsigned value ) -> void;
     auto decodeJob( std::vector<uint8_t*>* workLoad, bool* usePtr ) -> bool;
-    auto encodeGCR(GcrTrack* gcrTrack, uint8_t halfTrack) -> void;
+    auto encodeGCR(MTrack* gcrTrack, uint8_t halfTrack) -> void;
     auto prepareTracksNotInUse(bool* inUse) -> void;
-    auto createPulsesFromGCR(GcrTrack* gcrTrack) -> void;
+    auto createPulsesFromGCR(MTrack* gcrTrack) -> void;
     static auto allocatePulse( std::vector<Pulse>& pulses ) -> unsigned;
 };
 

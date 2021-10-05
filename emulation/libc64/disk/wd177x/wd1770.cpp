@@ -11,7 +11,7 @@ auto WD1770::setMode(WD1770::Mode mode) -> void {
     this->mode = mode;
 }
 
-auto WD1770::setTrack(DiskStructure::GcrTrack* trackPtr, bool dummyTrack) -> void {
+auto WD1770::setTrack(DiskStructure::MTrack* trackPtr, bool dummyTrack) -> void {
     this->trackPtr = trackPtr;
     this->dummyTrack = dummyTrack;
 }
