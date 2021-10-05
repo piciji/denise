@@ -650,14 +650,6 @@ auto System::initRam(uint8_t*& mem) -> void {
     }
 }
 
-auto System::setRunAhead(unsigned frames) -> void {
-    runAhead.frames = frames;
-}
-
-auto System::setRunAheadPerformance(bool state) -> void {
-    runAhead.performance = state;
-}
-
 auto System::run() -> void {
     frameComplete = false;
     runAhead.pos = 0;
@@ -719,11 +711,6 @@ auto System::run() -> void {
         informAboutMotorChange();
 
     checkDebugCart();
-}
-
-auto System::runAheadEnableAudio() -> void {
-    if (runAhead.pos == 1)
-        Sid::disableAudioOut(false);
 }
 
 auto System::isUltimax() -> bool {

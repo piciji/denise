@@ -828,11 +828,17 @@ auto Interface::run() -> void {
 }
 
 auto Interface::runAhead(unsigned frames) -> void {
-    system->setRunAhead( frames );
+    system->runAhead.frames = frames;
+    system->input->allowJit();
 }
 
 auto Interface::runAheadPerformance(bool state) -> void {
-    system->setRunAheadPerformance( state );
+    system->runAhead.performance = state;
+}
+
+auto Interface::runAheadPreventJit(bool state) -> void {
+    system->runAhead.preventJit = state;
+    system->input->allowJit();
 }
 
 auto Interface::getRegionEncoding() -> Region {

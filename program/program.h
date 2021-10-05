@@ -146,6 +146,7 @@ struct Program : Emulator::Interface::Bind {
     auto jitPoll() -> bool override;
     auto resetRunAhead() -> void;
     auto setRunAhead(Emulator::Interface* emulator) -> void;
+    auto setJit(Emulator::Interface* emulator) -> void;
 
     Program();
 };

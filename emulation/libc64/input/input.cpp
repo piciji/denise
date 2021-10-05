@@ -181,7 +181,7 @@ auto Input::writeCiaPortB( CIA::Base::Lines* lines ) -> void {
 }
 
 inline auto Input::jitPoll() -> void {
-    if (jit.allow &&   system->interface->jitPoll()) {
+    if (jit.allow && system->interface->jitPoll()) {
         keyboard.poll();
         updateLightpen(!lines ? 0xff : lines->ioa, !lines ? 0xff : lines->iob);
         jit.midscreen = true;
@@ -314,15 +314,22 @@ auto Input::connectControlport( Interface::Connector* connector, Interface::Devi
         delete *controlPort;
     
     *controlPort = ControlPort::create( device );
-    
-    jit.allow = jit.enable && controlPort1->useJitPolling() && controlPort2->useJitPolling();
+
+    allowJit();
     
     (*controlPort)->reset();
 }
 
 auto Input::enableJit(bool state) -> void {
     jit.enable = state;
-    jit.allow = jit.enable && controlPort1->useJitPolling() && controlPort2->useJitPolling();
+    allowJit();
+}
+
+auto Input::allowJit() -> void {
+    if (system->runAhead.preventJit && system->runAhead.frames)
+        jit.allow = false;
+    else
+        jit.allow = jit.enable && controlPort1->useJitPolling() && controlPort2->useJitPolling();
 }
 
 auto Input::getConnectedDevice( Interface::Connector* connector ) -> Interface::Device* {

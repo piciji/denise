@@ -76,6 +76,7 @@ struct Interface : Emulator::Interface {
 	auto run() -> void; //emulate one frame
     auto runAhead(unsigned frames) -> void;
     auto runAheadPerformance(bool state) -> void;
+    auto runAheadPreventJit(bool state) -> void;
     auto getRegionEncoding() -> Region;	
 	auto getRegionGeometry() -> Region;
 	auto getSubRegion() -> SubRegion;

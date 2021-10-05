@@ -129,11 +129,24 @@ auto Program::resetRunAhead() -> void {
     }   
 }
 
+auto Program::setJit(Emulator::Interface* emulator) -> void {
+
+    auto settings = getSettings(emulator);
+
+    emulator->enableJit( settings->get<bool>("input_jit", true) );
+
+    auto manager = InputManager::getManager(emulator);
+
+    manager->jit.rescanDelay = settings->get<unsigned>("input_jit_delay", 5, {1, 10});
+}
+
 auto Program::setRunAhead(Emulator::Interface* emulator) -> void {
     
-    auto settings = getSettings( activeEmulator );
+    auto settings = getSettings( emulator );
     
     emulator->runAhead( settings->get<unsigned>( "runahead", 0, {0u, 10u}) );
     
     emulator->runAheadPerformance( settings->get<bool>( "runahead_performance", false) );
+
+    emulator->runAheadPreventJit( settings->get<bool>( "runahead_prevent_jit", true ) );
 }

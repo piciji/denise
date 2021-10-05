@@ -1,4 +1,19 @@
 
+JitLayout::JitLayout() : control("ms") {
+    setPadding(10);
+
+    append(active, {0u, 0u}, 10 );
+    append(control, {~0u, 0u} );
+
+    control.slider.setLength(10);
+
+    control.updateValueWidth( "10 " + control.unit );
+
+    setFont(GUIKIT::Font::system("bold"));
+
+    setAlignment( 0.5 );
+}
+
 RunAheadLayout::RunAheadLayout() : control("") {
     
     setPadding(10);
@@ -45,8 +60,9 @@ AutostartLayout::AutostartLayout() {
 
 RunAheadLayout::Options::Options() {
     
-    append(performanceMode, {0u, 0u}, 20 );
-    append(disableOnPower, {0u, 0u} );
+    append(performanceMode, {0u, 0u}, 10 );
+    append(disableOnPower, {0u, 0u}, 10 );
+    append(preventJit, {0u, 0u} );
     
     setAlignment( 0.5 );
 }
@@ -57,7 +73,8 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) {
     this->emulator = tabWindow->emulator;
     
     setMargin(10);
-    
+
+    append( jitLayout, {~0u, 0u}, 10 );
     append( runAheadLayout, {~0u, 0u}, 10 );
 
     if (dynamic_cast<LIBC64::Interface*>(emulator)) {
@@ -126,6 +143,33 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) {
         
         _settings->set<bool>( "runahead_disable", runAheadLayout.options.disableOnPower.checked() );
     };
+
+    runAheadLayout.options.preventJit.onToggle = [this]() {
+        bool state = runAheadLayout.options.preventJit.checked();
+
+        _settings->set<bool>( "runahead_prevent_jit", state );
+
+        this->emulator->runAheadPreventJit( state );
+    };
+
+    jitLayout.control.slider.onChange = [this]() {
+        unsigned pos = jitLayout.control.slider.position();
+        pos += 1;
+
+        jitLayout.control.value.setText( std::to_string(pos) + " " + jitLayout.control.unit );
+
+        _settings->set<unsigned>( "input_jit_delay", pos);
+
+        auto manager = InputManager::getManager(this->emulator);
+
+        manager->jit.rescanDelay = pos;
+    };
+
+    jitLayout.active.onToggle = [this]() {
+        _settings->set<bool>("input_jit", jitLayout.active.checked());
+
+        this->emulator->enableJit( jitLayout.active.checked() );
+    };
                                        
     loadSettings();
 }
@@ -159,6 +203,15 @@ auto MiscLayout::translate() -> void {
     runAheadLayout.control.name.setText( trans->get("frames") );
     
     runAheadLayout.options.disableOnPower.setText( trans->get("disable runAhead on power") );
+
+    runAheadLayout.options.preventJit.setText( trans->get("prevent JIT temporary") );
+
+    jitLayout.setText( trans->get("JIT") );
+    jitLayout.active.setText( trans->get("enable") );
+    jitLayout.active.setTooltip( trans->get("JIT tooltip") );
+    jitLayout.control.name.setText( trans->get("rescan") );
+
+    jitLayout.control.name.setText( trans->get("rescan", {}, true) );
 
     if (autostartLayout) {
         autostartLayout->setText(trans->get("Autostart"));
@@ -206,5 +259,15 @@ auto MiscLayout::loadSettings() -> void {
 
     unsigned pos = _settings->get<unsigned>( "runahead", 0, {0u, 10u});
     
-    setRunAhead( pos );    
+    setRunAhead( pos );
+
+    runAheadLayout.options.preventJit.setChecked(_settings->get<bool>("runahead_prevent_jit", true));
+
+    jitLayout.control.active.setChecked( _settings->get<bool>("input_jit", true) );
+
+    unsigned jitDelay = _settings->get<unsigned>( "input_jit_delay", 5, {1, 10});
+
+    jitLayout.control.slider.setPosition(jitDelay - 1);
+
+    jitLayout.control.value.setText(std::to_string(jitDelay) + " " + jitLayout.control.unit);
 }

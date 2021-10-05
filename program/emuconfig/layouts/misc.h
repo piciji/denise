@@ -1,10 +1,18 @@
 
+struct JitLayout : GUIKIT::FramedHorizontalLayout {
+    GUIKIT::CheckBox active;
+    SliderLayout control;
+
+    JitLayout();
+};
+
 struct RunAheadLayout : GUIKIT::FramedVerticalLayout {
     SliderLayout control;
     
     struct Options : GUIKIT::HorizontalLayout {
         GUIKIT::CheckBox performanceMode;
         GUIKIT::CheckBox disableOnPower;
+        GUIKIT::CheckBox preventJit;
         
         Options();
     } options;
@@ -40,6 +48,7 @@ struct MiscLayout : GUIKIT::VerticalLayout {
     
     TabWindow* tabWindow;
     Emulator::Interface* emulator;
+    JitLayout jitLayout;
     RunAheadLayout runAheadLayout;
     AutostartLayout* autostartLayout = nullptr;
     

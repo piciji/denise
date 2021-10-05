@@ -28,7 +28,7 @@ auto InputManager::jitPoll() -> bool {
     
     auto ts = Chronos::getTimestampInMilliseconds();
     
-    if ((ts - jit.lastTimestamp) > 4) {        
+    if ((ts - jit.lastTimestamp) >= jit.rescanDelay) {
         
         jit.lastTimestamp = ts;
         

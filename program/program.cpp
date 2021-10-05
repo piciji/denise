@@ -153,7 +153,7 @@ auto Program::init() -> void {
 auto Program::initEmulator( Emulator::Interface* emulator ) -> void {
     auto _settings = getSettings(emulator);
 
-    emulator->enableJit( _settings->get<bool>("input_jit", true) );
+    setJit(emulator);
 
     for (auto& connector : emulator->connectors)
         emulator->connect(&connector, getDevice(emulator, &connector));

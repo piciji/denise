@@ -490,6 +490,7 @@ struct Interface {
     virtual auto run() -> void {} //emulate one frame
     virtual auto runAhead(unsigned frames) -> void {}
     virtual auto runAheadPerformance(bool state) -> void {}
+	virtual auto runAheadPreventJit(bool state) -> void {}
     virtual auto getRegionEncoding() -> Region { return Region::Pal; }
 	virtual auto getRegionGeometry() -> Region { return Region::Pal; }
 	virtual auto getSubRegion() -> SubRegion { return SubRegion::Pal_B; }

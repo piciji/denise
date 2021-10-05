@@ -118,6 +118,7 @@ struct System {
         unsigned frames = 0;
         unsigned pos = 0;
         bool performance = false;
+        bool preventJit = true;
         Emulator::MemSerializer serializer;
     } runAhead;
     
@@ -186,10 +187,7 @@ struct System {
     auto setExpansionCallbacks( ExpansionPort* expansionPtr ) -> void;
     auto analyzeExpansion(uint8_t* data, unsigned size, std::string suffix = "") -> Emulator::Interface::Expansion*;
     
-    auto setFastForward( unsigned config ) -> void;    
-    auto setRunAhead(unsigned frames) -> void;
-    auto setRunAheadPerformance(bool state) -> void;
-    auto runAheadEnableAudio() -> void;
+    auto setFastForward( unsigned config ) -> void;
     
     auto setCycleRenderer(bool state) -> void;
 	auto updateStats() -> void;

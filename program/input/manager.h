@@ -97,6 +97,7 @@ struct InputManager {
     struct JIT { // Just In Time Polling
         uint64_t lastTimestamp = 0;
         bool enable = false;
+		uint8_t rescanDelay = 5;
     }; 
     
     static JIT jit;

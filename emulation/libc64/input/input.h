@@ -54,6 +54,7 @@ struct Input {
     auto serialize(Emulator::Serializer& s) -> void;
 
     auto enableJit(bool state) -> void;
+    auto allowJit() -> void;
 };
 
 }
