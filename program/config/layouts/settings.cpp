@@ -50,7 +50,8 @@ PreviewLayout::Top::Top() {
     append(fontSizeCombo,{0u, 0u}, 5);
     append(dialogFontSize,{0u, 0u}, 5);
     append(dialogFontSizeCombo,{0u, 0u}, 20);
-    append(tooltips,{0u, 0u});
+    append(tooltips,{0u, 0u}, 10);
+    append(commodoreHighlight,{0u, 0u});
 
     setAlignment(0.5);    
 }
@@ -187,6 +188,17 @@ SettingsLayout::SettingsLayout() {
     };
     
     previewLayout.top.tooltips.setChecked( globalSettings->get<bool>("software_preview_tooltips", true ) );
+
+    previewLayout.top.commodoreHighlight.onToggle = [this]() {
+        bool state = previewLayout.top.commodoreHighlight.checked();
+
+        globalSettings->set<bool>("software_preview_commodore_hi", state );
+
+        for( auto emuView : emuConfigViews )
+            emuView->mediaLayout->selectionColorListing();
+    };
+
+    previewLayout.top.commodoreHighlight.setChecked( globalSettings->get<bool>("software_preview_commodore_hi", true ) );
     
     previewLayout.previewBox.setBackgroundColor( 0xaaaaaa );
     
@@ -401,6 +413,7 @@ auto SettingsLayout::translate() -> void {
     previewLayout.top.fontSize.setText( trans->get("Font Size", {}, true) );
     previewLayout.top.dialogFontSize.setText( trans->get("Dialog Font Size", {}, true) );    
     previewLayout.top.tooltips.setText( trans->get("Show Tooltips") );
+    previewLayout.top.commodoreHighlight.setText( trans->get("Commodore Highlight Color" ) );
     
     previewLayout.bottom.dialog.setText( trans->get("Dialog Preview")  );
     previewLayout.bottom.dialogWidth.name.setText( trans->get("Width", {}, true) );

@@ -1126,6 +1126,24 @@ auto MediaLayout::colorListing( unsigned foregroundColor, unsigned backgroundCol
         if (nav.mediaGroupLayout && showC64Listing( nav.mediaGroupLayout ) ) {
             nav.mediaGroupLayout->listings.setForegroundColor( foregroundColor );
             nav.mediaGroupLayout->listings.setBackgroundColor( backgroundColor );
+
+            if (globalSettings->get<bool>("software_preview_commodore_hi", true ))
+                nav.mediaGroupLayout->listings.setSelectionColor( backgroundColor, foregroundColor );
+            else
+                nav.mediaGroupLayout->listings.resetSelectionColor();
+        }
+    }
+}
+
+auto MediaLayout::selectionColorListing( ) -> void {
+
+    for (auto& nav : navElements) {
+        if (nav.mediaGroupLayout && showC64Listing( nav.mediaGroupLayout ) ) {
+            if (globalSettings->get<bool>("software_preview_commodore_hi", true ))
+                nav.mediaGroupLayout->listings.setSelectionColor(
+                    nav.mediaGroupLayout->listings.backgroundColor(), nav.mediaGroupLayout->listings.foregroundColor() );
+            else
+                nav.mediaGroupLayout->listings.resetSelectionColor();
         }
     }
 }

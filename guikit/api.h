@@ -658,12 +658,17 @@ struct ListView : Widget {
 	auto setRowTooltip(unsigned selection, std::string tooltip ) -> void;
 	auto getRowTooltip(unsigned selection) -> std::string;
     auto colorRowTooltips(bool colorTip) -> void;
+    auto setSelectionColor(unsigned foregroundColor, unsigned backgroundColor) -> void;
+    auto resetSelectionColor() -> void;
 
     struct {
         bool headerVisible = false;
         unsigned selection = 0;
         bool selected = false;
         bool colorRowTooltips = false;
+        bool overrideSelectionColor = false;
+        unsigned selectionForegroundColor;
+        unsigned selectionBackgroundColor;
         std::vector<std::string> header;
         std::vector<std::vector<std::string>> rows;
 		std::vector<std::string> rowTooltips;
@@ -1061,6 +1066,7 @@ struct BrowserWindow {
     auto setContentViewHeight(unsigned boxHeight) -> BrowserWindow&;
     auto setContentViewBackground(unsigned color) -> BrowserWindow&;
     auto setContentViewForeground(unsigned color) -> BrowserWindow&;
+    auto setContentViewSelection(unsigned foregroundColor, unsigned backgroundColor) -> BrowserWindow&;
     auto setContentViewColorTooltips(bool colorTooltips) -> BrowserWindow&;
     
     // callbacks for cocoa modeless dialog
@@ -1088,6 +1094,11 @@ struct BrowserWindow {
         bool overrideForegroundColor = false;
         unsigned backgroundColor = 0;
         bool overrideBackgroundColor = false;
+
+        bool overrideSelectionColor = false;
+        unsigned selectionForegroundColor = 0;
+        unsigned selectionBackgroundColor = 0;
+
         bool colorTooltips = false;
         std::function<bool (std::string filePath, unsigned selection)> onDblClick = nullptr; 
     };        

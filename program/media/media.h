@@ -238,6 +238,7 @@ struct MediaLayout : GUIKIT::HorizontalLayout {
     auto ejectImage( MediaGroupLayout::Block* block ) -> void;
     auto drop( std::string filePath, MediaGroupLayout::Block* block = nullptr ) -> void;
     auto colorListing( unsigned foregroundColor, unsigned backgroundColor ) -> void;
+    auto selectionColorListing( ) -> void;
     auto fillListing(Emulator::Interface::Media* media, std::vector<GUIKIT::BrowserWindow::Listing>& listings, bool markPreview) -> void;
     auto getMediaGroupTransIdent( Emulator::Interface::MediaGroup* mediaGroup ) -> std::string;
     auto updateJumper(Emulator::Interface::Media* media) -> void;

@@ -619,3 +619,4 @@ JIT =
 JIT tooltip =
 prevent JIT temporary =
 rescan =
+Commodore Highlight Color =

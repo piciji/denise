@@ -961,6 +961,21 @@ auto ListView::colorRowTooltips(bool colorTip) -> void {
     p.colorRowTooltips( colorTip );
 }
 
+auto ListView::setSelectionColor(unsigned foregroundColor, unsigned backgroundColor) -> void {
+    state.overrideSelectionColor = true;
+    state.selectionForegroundColor = foregroundColor;
+    state.selectionBackgroundColor = backgroundColor;
+    p.setSelectionColor(foregroundColor, backgroundColor);
+}
+
+
+auto ListView::resetSelectionColor() -> void {
+    state.overrideSelectionColor = false;
+    state.selectionForegroundColor = 0;
+    state.selectionBackgroundColor = 0;
+    p.setSelectionColor();
+}
+
 ListView::ListView() : Widget(*new pListView(*this)), p((pListView&)Widget::p) { p.init(); }
 
 auto TreeViewItem::append(TreeViewItem& item) -> void {
@@ -1255,6 +1270,12 @@ auto BrowserWindow::setContentViewBackground(unsigned color) -> BrowserWindow& {
 auto BrowserWindow::setContentViewForeground(unsigned color) -> BrowserWindow& {
     state.contentView.foregroundColor = color;
     state.contentView.overrideForegroundColor = true;
+    return *this;
+}
+auto BrowserWindow::setContentViewSelection(unsigned foregroundColor, unsigned backgroundColor) -> BrowserWindow& {
+    state.contentView.selectionForegroundColor = foregroundColor;
+    state.contentView.selectionBackgroundColor = backgroundColor;
+    state.contentView.overrideSelectionColor = true;
     return *this;
 }
 auto BrowserWindow::setContentViewColorTooltips(bool colorTooltips) -> BrowserWindow& {

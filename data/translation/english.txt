@@ -619,3 +619,4 @@ JIT = Just In Time Polling (JIT)
 JIT tooltip = "Just in time polling" checks inputs directly when queried by the program, instead of at a fixed position between the images.
 prevent JIT temporary = suppress JIT when runAhead is active
 rescan = rescan
+Commodore Highlight Color = Commodore Highlight Color

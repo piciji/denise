@@ -447,6 +447,7 @@ struct pListView : pWidget {
     auto measureItem(LPMEASUREITEMSTRUCT lpmis) -> void;
     auto drawItem(LPDRAWITEMSTRUCT lDraw) -> void;
     auto clearBrush() -> void;
+    auto setSelectionColor(unsigned foregroundColor = 0, unsigned backgroundColor = 0) -> void;
 
     pListView(ListView& listView) : pWidget(listView), listView(listView) {}
 };
@@ -677,6 +678,7 @@ struct pBrowserWindow {
     static HWND dummyParent;
     HFONT listFont = nullptr;
     HBRUSH listBgBrush = nullptr;
+    HBRUSH listHiBrush = nullptr;
     std::string selectedPath = "";
     unsigned contentSelection = 0;
     HWND dialogHwnd = nullptr;
@@ -700,7 +702,8 @@ struct pBrowserWindow {
     int customGapBottom = 0;
     int listRelativeX = 0;
     int listWidth = 0;
-    
+    int listItemHeight = 0;
+
     auto directory() -> std::string;
     auto file(bool save) -> std::string;
     auto fileVista(bool save) -> std::string;

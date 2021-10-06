@@ -378,6 +378,7 @@ struct pListView : pWidget {
 	auto colorRowTooltips( bool colorTip ) -> void {}
     auto lockRedraw() -> void {}
     auto unlockRedraw() -> void {}
+    auto setSelectionColor(unsigned foregroundColor = 0, unsigned backgroundColor = 0) -> void {}
 
     auto destroy() -> void;
     static auto onActivate(GtkTreeView* treeView, GtkTreePath* path, GtkTreeViewColumn* column, ListView* self) -> void;

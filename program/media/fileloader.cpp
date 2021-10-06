@@ -108,6 +108,10 @@ auto Fileloader::load(Emulator::Interface* emulator, Emulator::Interface::Media*
         auto videoManager = VideoManager::getInstance( emulator );
         fileDialogPtr->setContentViewBackground( videoManager->getC64Background() );
         fileDialogPtr->setContentViewForeground( videoManager->getC64Foreground() );
+
+        if (globalSettings->get<bool>("software_preview_commodore_hi", true ))
+            fileDialogPtr->setContentViewSelection( videoManager->getC64Background(), videoManager->getC64Foreground() );
+
         fileDialogPtr->setContentViewColorTooltips(true);
     }
 
@@ -184,6 +188,10 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
         auto videoManager = VideoManager::getInstance( emulator );
         fileDialogPtr->setContentViewBackground( videoManager->getC64Background() );
         fileDialogPtr->setContentViewForeground( videoManager->getC64Foreground() );
+
+        if (globalSettings->get<bool>("software_preview_commodore_hi", true ))
+            fileDialogPtr->setContentViewSelection( videoManager->getC64Background(), videoManager->getC64Foreground() );
+
         fileDialogPtr->setContentViewColorTooltips(true);
     }
 

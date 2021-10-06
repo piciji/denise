@@ -432,6 +432,11 @@ auto pListView::setForegroundColor(unsigned color) -> void {
     destroy(hwndTip); 
 }
 
+auto pListView::setSelectionColor(unsigned foregroundColor, unsigned backgroundColor) -> void {
+    if (!hwnd) return;
+    clearBrush();
+}
+
 auto pListView::measureItem(LPMEASUREITEMSTRUCT lpmis) -> void {
     
     if (!hfont)
@@ -448,12 +453,21 @@ auto pListView::drawItem(LPDRAWITEMSTRUCT lDraw) -> void {
     COLORREF colorRef;
     
     if (lDraw->itemState & ODS_SELECTED) {
-        if (!hiBrush)
-            hiBrush = CreateSolidBrush( GetSysColor( COLOR_HIGHLIGHT ) );
-        
+        if (listView.state.overrideSelectionColor) {
+            unsigned color = listView.state.selectionForegroundColor;
+            colorRef = RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff);
+        } else
+            colorRef = GetSysColor( COLOR_HIGHLIGHTTEXT );
+
+        if (!hiBrush) {
+            if (listView.state.overrideSelectionColor) {
+                unsigned color =  listView.state.selectionBackgroundColor;
+                hiBrush = CreateSolidBrush( RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff) );
+            } else
+                hiBrush = CreateSolidBrush(GetSysColor(COLOR_HIGHLIGHT));
+        }
+
         hBrush = hiBrush;
-        
-        colorRef = GetSysColor( COLOR_HIGHLIGHTTEXT );
     } else {
         if (!bgBrush) {
             if (listView.Widget::state.overrideBackgroundColor) {

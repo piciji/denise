@@ -399,13 +399,29 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
                 SendMessage(listBox, WM_SETFONT, (WPARAM)context->listFont, 0);
                 
                 auto size = pFont::size(context->listFont, " ");
+
+                context->listItemHeight = size.height;
                 
                 SendMessage(listBox, LB_SETITEMHEIGHT, 0, size.height);
             }
-            auto colorBg = state->contentView.backgroundColor;                
-            if (state->contentView.overrideBackgroundColor)
-                context->listBgBrush = CreateSolidBrush( RGB((colorBg >> 16) & 0xff, (colorBg >> 8) & 0xff, colorBg & 0xff) );
-            
+            if (!context->listBgBrush) {
+                auto colorBg = state->contentView.backgroundColor;
+
+                if (state->contentView.overrideBackgroundColor)
+                    context->listBgBrush = CreateSolidBrush(RGB((colorBg >> 16) & 0xff, (colorBg >> 8) & 0xff, colorBg & 0xff));
+                else
+                    context->listBgBrush = CreateSolidBrush(GetSysColor(COLOR_WINDOW));
+            }
+
+            if (!context->listHiBrush) {
+                auto colorBg = state->contentView.selectionBackgroundColor;
+
+                if (state->contentView.overrideSelectionColor)
+                    context->listHiBrush = CreateSolidBrush(RGB((colorBg >> 16) & 0xff, (colorBg >> 8) & 0xff, colorBg & 0xff));
+                else
+                    context->listHiBrush = CreateSolidBrush(GetSysColor(COLOR_HIGHLIGHT));
+            }
+
             for(auto& button : state->buttons) {
                 SetDlgItemText(hDlg, button.id, (LPCWSTR)utf16_t(button.text) );
             }
@@ -425,18 +441,86 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
         
         case WM_CTLCOLORLISTBOX: {
             auto colorBg = state->contentView.backgroundColor;
-            auto colorFg = state->contentView.foregroundColor;                  
-            
+            auto colorFg = state->contentView.foregroundColor;
+
             if (state->contentView.overrideBackgroundColor)
-                SetBkColor((HDC)wParam, RGB((colorBg >> 16) & 0xff, (colorBg >> 8) & 0xff, colorBg & 0xff)); 
+                SetBkColor((HDC)wParam, RGB((colorBg >> 16) & 0xff, (colorBg >> 8) & 0xff, colorBg & 0xff));
             if (state->contentView.overrideForegroundColor)
                 SetTextColor((HDC)wParam, RGB((colorFg >> 16) & 0xff, (colorFg >> 8) & 0xff, colorFg & 0xff) );
-            
-            if (state->contentView.overrideBackgroundColor)
-                return (LRESULT)context->listBgBrush;
+
+            if (state->contentView.overrideBackgroundColor) {
+                return (LRESULT) context->listBgBrush;
+            }
             break;
-        }       
-        
+        }
+
+        case WM_MEASUREITEM: {
+            LPMEASUREITEMSTRUCT lpmis = (LPMEASUREITEMSTRUCT)lParam;
+            if ( (lpmis != NULL) && (lpmis->CtlType == ODT_LISTBOX) ) {
+                lpmis->itemHeight = context->listItemHeight;
+                return TRUE;
+            }
+            break;
+        }
+
+        case WM_DRAWITEM: {
+
+            LPDRAWITEMSTRUCT lDraw = (LPDRAWITEMSTRUCT) lParam;
+
+            if ((lDraw != NULL) && (lDraw->CtlType == ODT_LISTBOX)) {
+
+                HBRUSH hBrush;
+                COLORREF colorRef;
+                BrowserWindow::State* state = &context->browserWindow.state;
+
+                if (lDraw->itemID == -1) {
+                    return TRUE;
+                }
+
+                switch (lDraw->itemAction) {
+                    case ODA_SELECT:
+                    case ODA_DRAWENTIRE: {
+
+                        if (lDraw->itemState & ODS_SELECTED) {
+                            if (state->contentView.overrideSelectionColor) {
+                                auto colorFg = state->contentView.selectionForegroundColor;
+                                colorRef = RGB((colorFg >> 16) & 0xff, (colorFg >> 8) & 0xff, colorFg & 0xff);
+                            } else
+                                colorRef = GetSysColor( COLOR_HIGHLIGHTTEXT );
+
+                            hBrush = context->listHiBrush;
+
+                        } else {
+                            hBrush = context->listBgBrush;
+
+                            if (state->contentView.overrideForegroundColor) {
+                                auto colorFg = state->contentView.foregroundColor;
+                                colorRef = RGB((colorFg >> 16) & 0xff, (colorFg >> 8) & 0xff, colorFg & 0xff);
+                            } else
+                                colorRef = GetSysColor( COLOR_WINDOWTEXT );
+                        }
+
+                        auto lRow = lDraw->rcItem;
+
+                        FillRect(lDraw->hDC, &lRow, hBrush);
+
+                        WCHAR lBuf[100];
+
+                        int len = SendMessage(lDraw->hwndItem, LB_GETTEXTLEN, (WPARAM)lDraw->itemID, 0);
+
+                        SendMessage(lDraw->hwndItem, LB_GETTEXT, (WPARAM)lDraw->itemID, (LPARAM)lBuf);
+
+                        SetTextColor(lDraw->hDC, colorRef);
+
+                        DrawText(lDraw->hDC, lBuf, len, &lRow, DT_LEFT | DT_NOPREFIX);
+
+                    } break;
+                }
+                return TRUE;
+            }
+            break;
+        }
+
         case WM_NOTIFY: {
             
             if (((OFNOTIFY*)lParam)->hdr.code == CDN_INITDONE) {
@@ -507,7 +591,7 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
                         if (state->contentView.onDblClick(context->selectedPath, context->contentSelection ))
                             PostMessage(context->dialogHwnd, WM_COMMAND, IDCANCEL, 0); //end dialog
                     }                    
-                }   
+                }
                 
                 else if (HIWORD(wParam) == LBN_SELCHANGE) { 
                     context->contentSelection = SendMessage(listBox, LB_GETCURSEL, 0, 0);
@@ -838,6 +922,9 @@ pBrowserWindow::~pBrowserWindow() {
     
     if (listBgBrush)
         DeleteObject(listBgBrush);
+
+    if (listHiBrush)
+        DeleteObject(listHiBrush);
     
     if (listFont)
         pFont::free(listFont);
@@ -856,6 +943,8 @@ pBrowserWindow::~pBrowserWindow() {
     pDlg = nullptr;    
     
     listBgBrush = nullptr;
+
+    listHiBrush = nullptr;
     
     listFont = nullptr;
     
