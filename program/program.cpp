@@ -370,8 +370,7 @@ auto Program::loopNoGui() -> void {
 }
 
 auto Program::loop() -> void {
-    if( willPoll() )
-        InputManager::poll();
+    InputManager::poll();
 	
 	if( willRun() ){
 		unsigned frames = loopFrames;
@@ -400,9 +399,7 @@ auto Program::loop() -> void {
 }
 
 auto Program::willPoll() -> bool {
-    isFocused = view->focused();
-    
-    if( isFocused || (configView && configView->focused()) )
+    if( view->focused() || (configView && configView->focused()) )
         return true;    
 	
 	for(auto emuView : emuConfigViews)
@@ -416,7 +413,7 @@ auto Program::willRun() -> bool {
 	static auto pauseFocusLoss = globalSettings->getOrInit("pause_focus_loss", false);
 	
 	if (!isRunning || isPause) return false;
-	if (isFocused) return true;
+	if (view->focused()) return true;
 	//no focus
 	if (*pauseFocusLoss) return false;
 	if (view->exclusiveFullscreen()) return false; //exclusive fullscreen can't run in background	

@@ -5,7 +5,7 @@ JitLayout::JitLayout() : control("ms") {
     append(active, {0u, 0u}, 10 );
     append(control, {~0u, 0u} );
 
-    control.slider.setLength(10);
+    control.slider.setLength(8);
 
     control.updateValueWidth( "10 " + control.unit );
 
@@ -209,9 +209,7 @@ auto MiscLayout::translate() -> void {
     jitLayout.setText( trans->get("JIT") );
     jitLayout.active.setText( trans->get("enable") );
     jitLayout.active.setTooltip( trans->get("JIT tooltip") );
-    jitLayout.control.name.setText( trans->get("rescan") );
-
-    jitLayout.control.name.setText( trans->get("rescan", {}, true) );
+    jitLayout.control.name.setText( trans->get("minimum rescan time", {}, true) );
 
     if (autostartLayout) {
         autostartLayout->setText(trans->get("Autostart"));
@@ -265,7 +263,7 @@ auto MiscLayout::loadSettings() -> void {
 
     jitLayout.control.active.setChecked( _settings->get<bool>("input_jit", true) );
 
-    unsigned jitDelay = _settings->get<unsigned>( "input_jit_delay", 5, {1, 10});
+    unsigned jitDelay = _settings->get<unsigned>( "input_jit_delay", 3, {1, 8});
 
     jitLayout.control.slider.setPosition(jitDelay - 1);
 

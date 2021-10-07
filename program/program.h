@@ -46,7 +46,7 @@ struct Message;
 struct Program : Emulator::Interface::Bind {
     bool isRunning;
 	bool isPause;
-    bool isFocused;
+
 	unsigned loopFrames = 0;
 
 	struct {

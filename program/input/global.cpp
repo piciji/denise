@@ -478,7 +478,7 @@ auto InputManager::rememberLastDeviceState() -> void {
         
         // remember id of device just before a driver change.
         // each driver has it's own unique way for generating device id's.
-        // we need to connect these id's, otherwise all taken mappings will be lost when driver is changed
+        // we need to connect these id's, otherwise all taken mappings will be lost when driver has changed
         remember->id = hidDevice->id;
         remember->name = hidDevice->name;
         

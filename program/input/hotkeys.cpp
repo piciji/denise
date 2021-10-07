@@ -552,7 +552,12 @@ auto InputManager::pollHotkeys() -> void {
 	
 	if (hotkeyTriggers.size() == 0)
 		return;
-	
+
+    if (!program->willPoll()) {
+        hotkeyTriggers.clear();
+        return;
+    }
+
 	std::vector<InputMapping*> useTrigger;
 	InputMapping* viewOpen = nullptr;
 	InputMapping* fastForward = nullptr;

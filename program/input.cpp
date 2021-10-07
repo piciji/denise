@@ -47,7 +47,7 @@ auto Program::jitPoll() -> bool {
 auto Program::inputPoll( uint16_t deviceId, uint16_t inputId) -> int16_t {            
     auto guid = activeEmulator->devices[deviceId].inputs[inputId].guid;
     auto mapping = (InputMapping*)guid;
-    if(mapping && isFocused)
+    if(mapping)
         return mapping->state;
     
     return 0;
@@ -137,7 +137,7 @@ auto Program::setJit(Emulator::Interface* emulator) -> void {
 
     auto manager = InputManager::getManager(emulator);
 
-    manager->jit.rescanDelay = settings->get<unsigned>("input_jit_delay", 5, {1, 10});
+    manager->jit.rescanDelay = settings->get<unsigned>("input_jit_delay", 3, {1, 8});
 }
 
 auto Program::setRunAhead(Emulator::Interface* emulator) -> void {

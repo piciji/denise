@@ -618,5 +618,5 @@ Stepper Seek Time tooltip = experimentell, nur für erfahrene Benutzer (sinnvoll
 JIT = Just In Time Polling (JIT)
 JIT tooltip = "Just in time polling" prüft Eingaben direkt dann, wenn vom Programm abgefragt, anstatt an fester Position zwischen den Bildern.
 prevent JIT temporary = JIT unterdrücken bei aktivem runAhead
-rescan = abtasten
+minimum rescan time = Mindest Wartezeit zwischen Eingabe Abtastungen
 Commodore Highlight Color = Commodore Highlight Farbe

@@ -123,22 +123,22 @@ struct RawWorker {
 		
 		riDevice[0].usUsagePage = 1;
 		riDevice[0].usUsage = 6; //Keyboard
-		riDevice[0].dwFlags = RIDEV_INPUTSINK;
+		riDevice[0].dwFlags = 0;
 		riDevice[0].hwndTarget = hwnd;
 
 		riDevice[1].usUsagePage = 1;
 		riDevice[1].usUsage = 2; //Mouse
-		riDevice[1].dwFlags = RIDEV_INPUTSINK;
+		riDevice[1].dwFlags = 0;
 		riDevice[1].hwndTarget = hwnd;
 
 		riDevice[2].usUsagePage = 1;
 		riDevice[2].usUsage = 4; //Joypads
-		riDevice[2].dwFlags = 0;
+		riDevice[2].dwFlags = RIDEV_INPUTSINK;
 		riDevice[2].hwndTarget = hwnd;	
         
         riDevice[3].usUsagePage = 1;
 		riDevice[3].usUsage = 5; //Joysticks
-		riDevice[3].dwFlags = 0;
+		riDevice[3].dwFlags = RIDEV_INPUTSINK;
 		riDevice[3].hwndTarget = hwnd;	        
 				
 		RegisterRawInputDevices(riDevice, 4, sizeof(RAWINPUTDEVICE));

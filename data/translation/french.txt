@@ -618,5 +618,5 @@ Stepper Seek Time tooltip =
 JIT =
 JIT tooltip =
 prevent JIT temporary =
-rescan =
+minimum rescan time =
 Commodore Highlight Color =

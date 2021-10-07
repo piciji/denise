@@ -182,7 +182,7 @@ struct DI_IDENT_CORE : DI_IDENT {
         if (DI_OK == din->CreateDevice(GUID_SysKeyboard, &dinKey, 0)) {
 #endif        			
             dinKey->SetDataFormat(&c_dfDIKeyboard);
-            dinKey->SetCooperativeLevel(NULL, DISCL_NONEXCLUSIVE | DISCL_BACKGROUND);
+            dinKey->SetCooperativeLevel(hwndMain, DISCL_NONEXCLUSIVE | DISCL_BACKGROUND);
             dinKey->Acquire();
 
             for(unsigned id = 0; id <= 0xff; id++) {
@@ -258,11 +258,14 @@ struct DI_IDENT_CORE : DI_IDENT {
 			unsigned _size = hidKeyboard->buttons().inputs.size();
 			unsigned char keystate[_size];
 
-			if (FAILED(dinKey -> GetDeviceState(_size, (LPVOID) keystate))) {
-				dinKey -> Acquire();
-				if (FAILED(dinKey -> GetDeviceState(_size, (LPVOID) keystate)))
-					memset(keystate, 0, sizeof (keystate));
-			}
+            if (GetFocus()) {
+                if (FAILED(dinKey->GetDeviceState(_size, (LPVOID) keystate))) {
+                    dinKey->Acquire();
+                    if (FAILED(dinKey->GetDeviceState(_size, (LPVOID) keystate)))
+                        memset(keystate, 0, sizeof(keystate));
+                }
+            } else
+                memset(keystate, 0, sizeof(keystate));
 		
 			for (auto& input : hidKeyboard->buttons().inputs)
 				input.setValue( !!(keystate[input.id] & 0x80) );
