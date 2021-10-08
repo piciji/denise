@@ -553,7 +553,7 @@ auto InputManager::pollHotkeys() -> void {
 	if (hotkeyTriggers.size() == 0)
 		return;
 
-    if (!program->willPoll()) {
+    if (!Program::hasFocus()) {
         hotkeyTriggers.clear();
         return;
     }

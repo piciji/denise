@@ -149,7 +149,10 @@ auto InputManager::update() -> void {
                 value = mapping->adjustDigitalValue<false>( hid );
 				
 				if ( value != 0) {
-                    
+
+                    if (!Program::focused && mapping->emuDevice && !hid.device->isJoypad() )
+                        continue;
+
 //                    if (hid.disable)
 //                        continue;                    
                     
@@ -184,6 +187,9 @@ auto InputManager::update() -> void {
 
                 } else if (mapping->adjustDigitalValue<true>(hid) == 0)
                     atLeastOneKeyHasSwitched = true;
+
+                if (!Program::focused && mapping->emuDevice && !hid.device->isJoypad() )
+                    goto Next;
             }
 
             if (!aSwitch || atLeastOneKeyHasSwitched) {
@@ -200,8 +206,8 @@ auto InputManager::update() -> void {
                 useMapping->state = 1;
 				
 				if (!mapping->emuDevice)
-					hotkeyTriggers.push_back( useMapping );						
-				
+					hotkeyTriggers.push_back( useMapping );
+
                 for (auto shadow : useMapping->shadowMap)
                     shadows.push_back(shadow);
             }

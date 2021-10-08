@@ -31,6 +31,7 @@ Logger* logger = nullptr;
 Cmd* cmd = nullptr;
 std::vector<FileSetting*> FileSetting::instances = {};
 VideoManager* activeVideoManager = nullptr;
+bool Program::focused = false;
 
 #include "files.cpp"
 #include "video.cpp"
@@ -370,6 +371,7 @@ auto Program::loopNoGui() -> void {
 }
 
 auto Program::loop() -> void {
+    focused = view->focused();
     InputManager::poll();
 	
 	if( willRun() ){
@@ -398,27 +400,27 @@ auto Program::loop() -> void {
         statusHandler->update();
 }
 
-auto Program::willPoll() -> bool {
-    if( view->focused() || (configView && configView->focused()) )
-        return true;    
-	
-	for(auto emuView : emuConfigViews)
-        if (emuView->focused())
-            return true;
-    
-    return false;
-}
-
 auto Program::willRun() -> bool {
 	static auto pauseFocusLoss = globalSettings->getOrInit("pause_focus_loss", false);
 	
 	if (!isRunning || isPause) return false;
-	if (view->focused()) return true;
+	if (focused) return true;
 	//no focus
 	if (*pauseFocusLoss) return false;
 	if (view->exclusiveFullscreen()) return false; //exclusive fullscreen can't run in background	
 	
 	return true;
+}
+
+auto Program::hasFocus() -> bool {
+    if( focused || (configView && configView->focused()) )
+        return true;
+
+    for(auto emuView : emuConfigViews)
+        if (emuView->focused())
+            return true;
+
+    return false;
 }
 
 auto Program::quit() -> void {

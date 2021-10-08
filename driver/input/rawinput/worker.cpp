@@ -123,12 +123,12 @@ struct RawWorker {
 		
 		riDevice[0].usUsagePage = 1;
 		riDevice[0].usUsage = 6; //Keyboard
-		riDevice[0].dwFlags = 0;
+		riDevice[0].dwFlags = RIDEV_INPUTSINK;
 		riDevice[0].hwndTarget = hwnd;
 
 		riDevice[1].usUsagePage = 1;
 		riDevice[1].usUsage = 2; //Mouse
-		riDevice[1].dwFlags = 0;
+		riDevice[1].dwFlags = RIDEV_INPUTSINK;
 		riDevice[1].hwndTarget = hwnd;
 
 		riDevice[2].usUsagePage = 1;

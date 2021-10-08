@@ -46,6 +46,7 @@ struct Message;
 struct Program : Emulator::Interface::Bind {
     bool isRunning;
 	bool isPause;
+    static bool focused;
 
 	unsigned loopFrames = 0;
 
@@ -61,7 +62,6 @@ struct Program : Emulator::Interface::Bind {
     auto loop() -> void;
 	auto loopNoGui() -> void;
 	auto willRun() -> bool;
-    auto willPoll() -> bool;
     auto loadTranslation(std::string file) -> bool;
     auto translationFolder() -> std::string;
     auto dataFolder() -> std::string;
@@ -147,6 +147,8 @@ struct Program : Emulator::Interface::Bind {
     auto resetRunAhead() -> void;
     auto setRunAhead(Emulator::Interface* emulator) -> void;
     auto setJit(Emulator::Interface* emulator) -> void;
+
+    static auto hasFocus() -> bool;
 
     Program();
 };

@@ -261,7 +261,7 @@ auto MiscLayout::loadSettings() -> void {
 
     runAheadLayout.options.preventJit.setChecked(_settings->get<bool>("runahead_prevent_jit", true));
 
-    jitLayout.control.active.setChecked( _settings->get<bool>("input_jit", true) );
+    jitLayout.active.setChecked( _settings->get<bool>("input_jit", true) );
 
     unsigned jitDelay = _settings->get<unsigned>( "input_jit_delay", 3, {1, 8});
 
