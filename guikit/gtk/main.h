@@ -347,6 +347,7 @@ struct pListView : pWidget {
 	
 	GtkWidget* customTooltip = nullptr;
 	Label* customTooltipLabel = nullptr;
+    bool pressed = false;
 
     struct GtkColumn {
         GtkTreeViewColumn* column;
@@ -378,11 +379,12 @@ struct pListView : pWidget {
 	auto colorRowTooltips( bool colorTip ) -> void {}
     auto lockRedraw() -> void {}
     auto unlockRedraw() -> void {}
-    auto setSelectionColor(unsigned foregroundColor = 0, unsigned backgroundColor = 0) -> void {}
+    auto setSelectionColor(unsigned foregroundColor = 0, unsigned backgroundColor = 0) -> void;
 
     auto destroy() -> void;
     static auto onActivate(GtkTreeView* treeView, GtkTreePath* path, GtkTreeViewColumn* column, ListView* self) -> void;
     static auto onChange(GtkTreeView* treeView, ListView* self) -> void;
+    static auto onPress(GtkTreeView* treeView, GdkEventButton* event, ListView* self) -> gboolean;
 	static auto onTooltip(GtkWidget* widget, gint x, gint y, gboolean keyboard_tip, GtkTooltip* tooltip, ListView* self) -> gboolean;
 
     pListView(ListView& listView) : pWidget(listView), listView(listView) { }

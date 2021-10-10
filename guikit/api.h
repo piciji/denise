@@ -660,6 +660,9 @@ struct ListView : Widget {
     auto colorRowTooltips(bool colorTip) -> void;
     auto setSelectionColor(unsigned foregroundColor, unsigned backgroundColor) -> void;
     auto resetSelectionColor() -> void;
+    auto overrideSelectionColor() -> bool { return state.overrideSelectionColor; }
+    auto selectionForegroundColor() -> unsigned { return state.selectionForegroundColor; }
+    auto selectionBackgroundColor() -> unsigned { return state.selectionBackgroundColor; }
 
     struct {
         bool headerVisible = false;

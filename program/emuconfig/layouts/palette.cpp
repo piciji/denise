@@ -117,7 +117,8 @@ PaletteLayout::PaletteLayout(TabWindow* tabWindow) {
             
             std::string rgb = colorLayout->edit.text();                        
             
-            palette.paletteColors[colorPos].rgb = GUIKIT::String::convertHexToInt( rgb, 0 );            
+            palette.paletteColors[colorPos].rgb = GUIKIT::String::convertHexToInt( rgb, 0 );
+            colorLayouts[colorPos]->canvas.setBackgroundColor( palette.paletteColors[colorPos].rgb );
             palette.paletteColors[colorPos].updateChannels();
 
             program->setPalette( this->emulator );    
@@ -187,9 +188,9 @@ PaletteLayout::PaletteLayout(TabWindow* tabWindow) {
         
         _settings->set<unsigned>( "palette", palette.id );
         
-        program->setPalette( this->emulator ); 				
+        program->setPalette( this->emulator );
         
-        this->setPalette( palette );                           
+        this->setPalette( palette );
     };
     
     detailLayout.right.r.slider.onChange = [this]() {
@@ -351,7 +352,6 @@ auto PaletteLayout::updateList() -> void {
     }
     
     listView.setSelection( selected );
-    listView.setSelected();
 }
 
 auto PaletteLayout::updateSliderChange( uint8_t colorChannel, uint8_t bits ) -> void {
@@ -429,7 +429,6 @@ auto PaletteLayout::loadSettings() -> void {
     }
     
     listView.setSelection( selected );
-    listView.setSelected();
         
     auto& palette = getSelectedPalette();
 

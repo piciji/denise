@@ -53,6 +53,9 @@ auto pListView::setSelected(bool selected) -> void {
 }
 
 auto pListView::setSelection(unsigned selection) -> void {
+    if (!subWidget)
+        return;
+
     GtkTreeSelection* treeSelection = gtk_tree_view_get_selection(GTK_TREE_VIEW(subWidget));
     gtk_tree_selection_unselect_all(treeSelection);
     GtkTreePath* path = gtk_tree_path_new_from_string(std::to_string(selection).c_str());
@@ -121,6 +124,7 @@ auto pListView::create() -> void {
     gtk_tree_view_set_search_column(GTK_TREE_VIEW(subWidget), -1);
 
     g_signal_connect(G_OBJECT(subWidget), "cursor-changed", G_CALLBACK(pListView::onChange), (gpointer)&listView);
+    g_signal_connect(G_OBJECT(subWidget), "button-press-event", G_CALLBACK(pListView::onPress), (gpointer)&listView);
     g_signal_connect(G_OBJECT(subWidget), "row-activated", G_CALLBACK(pListView::onActivate), (gpointer)&listView);	
     g_signal_connect(G_OBJECT(subWidget), "query-tooltip", G_CALLBACK(pListView::onTooltip), (gpointer)&listView);
 	
@@ -183,7 +187,18 @@ auto pListView::onActivate(GtkTreeView* treeView, GtkTreePath* path, GtkTreeView
     if(self->onActivate) self->onActivate();
 }
 
+auto pListView::onPress(GtkTreeView* treeView, GdkEventButton* event, ListView* self) -> gboolean {
+    self->p.pressed = true;
+
+    return false;
+}
+
 auto pListView::onChange(GtkTreeView* treeView, ListView* self) -> void {
+    if (!self->p.pressed)
+        return;
+
+    self->p.pressed = false;
+
     GtkTreeIter iter;
     if(!gtk_tree_selection_get_selected(gtk_tree_view_get_selection(treeView), 0, &iter)) return;
     char* path = gtk_tree_model_get_string_from_iter(gtk_tree_view_get_model(treeView), &iter);
@@ -308,9 +323,16 @@ auto pListView::setBackgroundColor(unsigned color) -> void {
         return;	
 	
 	pSystem::addCssClass(subWidget, "customBackgroundColor");
-	
-	pSystem::applyCss( subWidget, ".customBackgroundColor { background-color: " + pSystem::getColorCss( color ) + "; } " +
-	"treeview:selected { border: 1px solid " + pSystem::getColorCss( color, true ) + ";} " );
+
+    if ( !listView.overrideSelectionColor() ) {
+        pSystem::applyCss(subWidget,
+          ".customBackgroundColor { background-color: " + pSystem::getColorCss(color) + "; } " +
+          "treeview:selected { border: 1px solid " + pSystem::getColorCss(color, true) + "; background-color: inherit; color: inherit;} ");
+    } else {
+        pSystem::applyCss(subWidget,
+          ".customBackgroundColor { background-color: " + pSystem::getColorCss(color) + "; } " +
+          "treeview:selected { border: 0px; background-color: " + pSystem::getColorCss( listView.selectionBackgroundColor() ) + "; color: " + pSystem::getColorCss( listView.selectionForegroundColor() ) + "; } ");
+    }
 }
 
 auto pListView::setForegroundColor(unsigned color) -> void {
@@ -325,4 +347,14 @@ auto pListView::setForegroundColor(unsigned color) -> void {
 	pSystem::addCssClass(subWidget, "customColor");
 	
 	pSystem::applyCss( subWidget, ".customColor { color: " + pSystem::getColorCss( color ) + "; }" );
+}
+
+auto pListView::setSelectionColor(unsigned foregroundColor, unsigned backgroundColor) -> void {
+    if (!subWidget)
+        return;
+
+    if ( !listView.overrideSelectionColor() )
+        pSystem::applyCss( subWidget, "treeview:selected { border: 1px solid " + pSystem::getColorCss( widget.backgroundColor(), true ) + "; background-color: inherit; color: inherit; } ");
+    else
+        pSystem::applyCss( subWidget, "treeview:selected { border: 0px; background-color: " + pSystem::getColorCss( backgroundColor ) + "; color: " + pSystem::getColorCss( foregroundColor ) + "; } ");
 }
