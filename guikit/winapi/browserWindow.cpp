@@ -512,6 +512,8 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
 
                         SetTextColor(lDraw->hDC, colorRef);
 
+                        SetBkMode(lDraw->hDC, TRANSPARENT);
+
                         DrawText(lDraw->hDC, lBuf, len, &lRow, DT_LEFT | DT_NOPREFIX);
 
                     } break;
