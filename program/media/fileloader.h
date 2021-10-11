@@ -16,7 +16,7 @@ struct Fileloader {
         Emulator::Interface::Media* media = nullptr;
         Emulator::Interface::Media* lastMedia = nullptr;
         std::string filePath;
-        std::atomic<uint8_t> status = 0; // bit 0:thread alive, 1:new file, 2:reset, 3:preview, 4:anyload
+        std::atomic<uint8_t> status; // bit 0:thread alive, 1:new file, 2:reset, 3:preview, 4:anyload
         std::vector<GUIKIT::BrowserWindow::Listing> listings;
     } queuePreview;
 

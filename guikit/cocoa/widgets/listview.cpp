@@ -108,11 +108,31 @@
         frame.origin.x + textDisplacement, frame.origin.y + listView->p.fontAdjust.yOffset,
         frame.size.width - textDisplacement, frame.size.height + listView->p.fontAdjust.height);
     
-    NSColor* textColor = [self isHighlighted] ? [NSColor alternateSelectedControlTextColor] : [NSColor textColor];
+    NSColor* textColor;
     
-    if(listView->overrideForegroundColor()) {
-        unsigned color = listView->foregroundColor();
-        textColor = GUIKIT::pHelper::getColor( color );
+    if ([self isHighlighted]) {
+        if (listView->overrideSelectionColor())
+            textColor = GUIKIT::pHelper::getColor( listView->selectionForegroundColor());
+        else
+            textColor = [NSColor alternateSelectedControlTextColor];
+    } else {
+        if(listView->overrideForegroundColor()) {
+            textColor = GUIKIT::pHelper::getColor( listView->foregroundColor() );
+        } else
+            textColor = [NSColor textColor];
+    }
+    
+    if ([self isHighlighted] && listView->overrideSelectionColor()) {
+        NSColor* hicol = GUIKIT::pHelper::getColor( listView->selectionBackgroundColor() );
+        
+        [hicol set];
+        if (listView->columnCount() > 1) {
+            NSSize spacing = [[listView->p.cocoaView content] intercellSpacing];
+            frame.size.width += spacing.width;
+        } else
+            frame.size.width = listView->geometry().width;
+            
+        NSRectFill(frame);
     }
     
     [text drawInRect:textRect withAttributes:@{ NSForegroundColorAttributeName:textColor, NSFontAttributeName:[self font] }];

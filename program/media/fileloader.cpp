@@ -28,6 +28,7 @@ Fileloader::Fileloader() {
         if (fileDialogPtr && fileDialogPtr->visible())
             fileDialogPtr->setForeground();
     };
+    queuePreview.status = 0;
 }
 
 auto Fileloader::load(Emulator::Interface* emulator, Emulator::Interface::Media* media) -> void {

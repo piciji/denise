@@ -194,6 +194,10 @@ auto pBrowserWindow::buildView() -> void {
             listView->setBackgroundColor( state.contentView.backgroundColor );
         if (state.contentView.overrideForegroundColor)
             listView->setForegroundColor( state.contentView.foregroundColor );
+            
+        if (state.contentView.overrideSelectionColor)
+            listView->setSelectionColor( state.contentView.selectionForegroundColor, state.contentView.selectionBackgroundColor );
+
         listView->colorRowTooltips( state.contentView.colorTooltips );
         listView->onActivate = [this]() {
             if (browserWindow.state.contentView.onDblClick) {
@@ -208,6 +212,8 @@ auto pBrowserWindow::buildView() -> void {
         maxListWidth = state.contentView.width;
         maxListHeight = state.contentView.height;
         maxContentHeight = maxListHeight + 4;
+         
+        listView->setGeometry({(int)_x, (int)_y, maxListWidth, maxListHeight });
             
         [listView->p.cocoaView setFrame:NSMakeRect(_x, _y, maxListWidth, maxListHeight)];
 
