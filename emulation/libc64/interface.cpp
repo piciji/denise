@@ -1521,6 +1521,10 @@ auto Interface::enableJit(bool state) -> void {
     system->input->enableJit( state );
 }
 
+auto Interface::enableFloppySounds(bool state) -> void {
+    system->enableFloppySounds = state;
+}
+
 auto Interface::activateDebugCart( unsigned limitCycles ) -> void {
     system->setDebugCart( true, limitCycles );    
 }

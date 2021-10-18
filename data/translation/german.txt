@@ -620,3 +620,7 @@ JIT tooltip = "Just in time polling" prüft Eingaben direkt dann, wenn vom Progr
 prevent JIT temporary = JIT unterdrücken bei aktivem runAhead
 minimum rescan time = Mindest Wartezeit zwischen Eingabe Abtastungen
 Commodore Highlight Color = Commodore Highlight Farbe
+Drive Noise = Laufwerksgeräusche
+Floppy = Floppy
+Floppy Profile = Floppy Profil
+Refresh = Aktualisieren

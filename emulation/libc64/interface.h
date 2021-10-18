@@ -157,6 +157,9 @@ struct Interface : Emulator::Interface {
     // jit
     auto enableJit(bool state) -> void;
 
+    // drive sounds
+    auto enableFloppySounds(bool state) -> void;
+
     // sockets
     auto prepareSocket( Media* media, std::string address, std::string port ) -> void;
 

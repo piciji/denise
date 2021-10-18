@@ -31,6 +31,8 @@
 
 namespace LIBC64 {
 
+typedef Emulator::Interface::DriveSound DriveSound;
+
 struct Drive {
         
     Drive( uint8_t number, Emulator::Interface::Media* mediaConnected );
@@ -223,6 +225,7 @@ struct Drive {
     auto profDosAutoClockControl(uint16_t addr) -> void;
     auto prologicControlClassic(uint8_t addr, uint8_t data) -> void;
     auto prologicControl(uint16_t addr) -> void;
+    auto stepSound(bool stepUp) -> void;
 };
   
 }

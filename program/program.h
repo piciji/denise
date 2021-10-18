@@ -20,6 +20,9 @@
 #ifndef IMG_FOLDER
 #define IMG_FOLDER "img"
 #endif
+#ifndef SOUND_FOLDER
+#define SOUND_FOLDER "sounds"
+#endif
 #define SETTINGS_FILE "settings.ini"
 #define DEFAULT_TRANS_FILE "english.txt"
 #define VERSION "1.1.1"
@@ -67,6 +70,7 @@ struct Program : Emulator::Interface::Bind {
     auto dataFolder() -> std::string;
     auto fontFolder() -> std::string;
 	auto imgFolder() -> std::string;
+    auto soundFolder() -> std::string;
     auto shaderFolder() -> std::string;
 	auto appFolder() -> std::string;
     auto getSystemLangFile() -> std::string;
@@ -92,9 +96,10 @@ struct Program : Emulator::Interface::Bind {
     auto exit(int code) -> void override;
 	auto getFileNameFromMedia(Emulator::Interface::Media* media) -> std::string override;
     auto informDriveLoading(bool state) -> void override;
-    auto autoStartFinish(bool soft) -> void;
-	auto addCustomFont() -> void;
+    auto autoStartFinish(bool soft) -> void override;
+    auto mixDriveSound( Emulator::Interface::Media* media, Emulator::Interface::DriveSound driveSound, unsigned data = 0 ) -> void override;
 
+    auto addCustomFont() -> void;
     auto loadImageDataWhenOk( GUIKIT::File* file, unsigned fileId, Emulator::Interface::MediaGroup* group, uint8_t*& data ) -> bool;
     auto showOpenError( std::vector<std::string>& paths, bool warning = false ) -> void;
 	

@@ -33,7 +33,7 @@
 * Virtual Device Traps
     * Fast Load first file
     * can be combined with Warp
-* add hungarian translation [thanks to ]
+* add hungarian translation [thanks to Ferenc]
 * add Just in time polling for faster input recognition
 
 ## 1.1.1

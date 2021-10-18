@@ -274,6 +274,7 @@ auto Drive::updateStepper( uint8_t step ) -> bool {
         stepDirection = 1;
         
     } else if (step == 2) {
+        system->interface->log("step 2");
         // Primitive 7 Sins uses this method
         if (stepDirection == 1) {
             if (currentHalftrack & 1) {
@@ -294,8 +295,12 @@ auto Drive::updateStepper( uint8_t step ) -> bool {
 
 auto Drive::changeHalfTrack( uint8_t step ) -> void {
 
-    if (step != 0)
-        updateStepper( step );
+    if (step != 0 /*&& step != 2*/) {
+        if (system->enableFloppySounds)
+            stepSound( step == 1 );
+
+        updateStepper(step);
+    }
 
     if (operation & FLUXDATA_LEVEL) {
 
@@ -354,6 +359,17 @@ auto Drive::changeHalfTrack( uint8_t step ) -> void {
 
     updateDeviceState( );
 
+}
+
+auto Drive::stepSound(bool stepUp) -> void {
+
+    DriveSound sound = DriveSound::FloppyStep;
+
+    if (!stepUp && (currentHalftrack < 2)) {
+        sound = DriveSound::FloppyHeadBang;
+    }
+
+    system->interface->mixDriveSound( mediaConnected, sound, (currentHalftrack >> 1) + 1 );
 }
 
 inline auto Drive::syncFound() -> uint8_t {

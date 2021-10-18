@@ -515,6 +515,10 @@ auto Program::imgFolder() -> std::string {
     return GUIKIT::System::getResourceFolder(appFolder()) + IMG_FOLDER;
 }
 
+auto Program::soundFolder() -> std::string {
+    return GUIKIT::System::getResourceFolder(appFolder()) + SOUND_FOLDER;
+}
+
 auto Program::log(std::string data, bool newLine) -> void {
 	logger->log(data, newLine);
 }
@@ -572,6 +576,10 @@ auto Program::informDriveLoading(bool state) -> void {
         return;
 
     fastForward( state, warp.aggressive );
+}
+
+auto Program::mixDriveSound( Emulator::Interface::Media* media, Emulator::Interface::DriveSound driveSound, unsigned data ) -> void {
+    audioManager->drive.addSound( media, (Mixer::Drive::DriveSound)driveSound, data );
 }
 
 auto Program::initAutoWarp(Emulator::Interface::MediaGroup* mediaGroup) -> void {

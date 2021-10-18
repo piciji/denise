@@ -10,6 +10,7 @@ dataFolder := data
 fontFolder := fonts
 shaderFolder := shader
 imgFolder := img
+soundFolder := sounds
 
 prefix ?= /usr
 #prefix ?= $(HOME)/.local
@@ -17,7 +18,7 @@ prefix ?= /usr
 include data/Makefile
 
 objects := program view config emuconfig emumodel mediaview archiveviewer states firmware cmd statusbar
-objects += input audio video palette shader bass reverb panning audiorecord wavwriter cosine cosineSSE
+objects += input audio video palette shader bass reverb panning audiorecord wavwriter cosine cosineSSE linearResample driveSounds
 objects += guikit libami libC64 autoloader fileloader
 objects += driver
 ifeq ($(platform),windows)
@@ -29,7 +30,7 @@ objects += cartC64 gameCartC64 freezerC64 reuC64 easyFlashC64 easyFlash3C64 retr
 objects += m6502 via iec prg64 drive1541 structure1541 firmwareC64 pia traps64 virtualDrive64 wd1770
 objects += thread m93c86 mx29lv640eb icons fonts socket fpaq0
 
-prgflags := -DAPP_NAME="\"$(name)\"" -DTRANSLATION_FOLDER="\"$(translationFolder)/\"" -DDATA_FOLDER="\"$(dataFolder)/\"" -DSHADER_FOLDER="\"$(shaderFolder)/\"" -DIMG_FOLDER="\"$(imgFolder)/\""
+prgflags := -DAPP_NAME="\"$(name)\"" -DTRANSLATION_FOLDER="\"$(translationFolder)/\"" -DDATA_FOLDER="\"$(dataFolder)/\"" -DSHADER_FOLDER="\"$(shaderFolder)/\"" -DIMG_FOLDER="\"$(imgFolder)/\"" -DSOUND_FOLDER="\"$(soundFolder)/\""
 flags :=
 link := 
 
@@ -180,8 +181,10 @@ obj/reverb.o:		program/audio/dsp/reverb.cpp
 obj/panning.o:		program/audio/dsp/panning.cpp
 obj/cosine.o:		program/audio/resampler/cosine.cpp
 obj/cosineSSE.o:	program/audio/resampler/cosineSSE.cpp
+obj/linearResample.o: program/audio/resampler/linear.cpp
 obj/audiorecord.o:	program/audio/record/handler.cpp
 obj/wavwriter.o:	program/audio/record/wavWriter.cpp
+obj/driveSounds.o:	program/audio/mixer/drive.cpp
 obj/firmware.o:		program/firmware/manager.cpp
 obj/cmd.o:		program/cmd/cmd.cpp
 obj/palette.o:		program/video/palette.cpp
@@ -204,12 +207,14 @@ build: $(objects)
 	mkdir out/$(name).app/Contents/Resources/$(fontFolder)
 	mkdir out/$(name).app/Contents/Resources/$(shaderFolder)
 	mkdir out/$(name).app/Contents/Resources/$(imgFolder)
+	mkdir out/$(name).app/Contents/Resources/$(soundFolder)
 
 	cp data/Info.plist out/$(name).app/Contents/Info.plist
 	cp data/$(translationFolder)/* out/$(name).app/Contents/Resources/$(translationFolder)/
 	cp data/$(dataFolder)/* out/$(name).app/Contents/Resources/$(dataFolder)/
 	cp data/$(fontFolder)/*.ttf out/$(name).app/Contents/Resources/$(fontFolder)/
 	cp data/$(imgFolder)/bundle/* out/$(name).app/Contents/Resources/$(imgFolder)/
+	cp data/$(soundFolder)/* out/$(name).app/Contents/Resources/$(soundFolder)/
 	cp -r data/shader/* out/$(name).app/Contents/Resources/$(shaderFolder)/
 	
 	cp data/img/$(loname).icns out/$(name).app/Contents/Resources/$(name).icns
@@ -235,7 +240,8 @@ install:
 	$(call copy,data/$(translationFolder),out/$(translationFolder))	
 	$(call copy,data/$(dataFolder),out/$(dataFolder))
 	$(call copy,data/$(imgFolder)/bundle,out/$(imgFolder))
-	$(call copy,data/shader,out/$(shaderFolder), /S)
+	$(call copy,data/$(soundFolder),out/$(soundFolder), /S)
+	$(call copy,data/$(shaderFolder),out/$(shaderFolder), /S)
 	$(call copy,readme.md,out)
 
     ifneq ($(findstring i686, $(shell g++ --version) ),)
@@ -256,6 +262,7 @@ install:
 	mkdir -p $(prefix)/share/$(loname)/$(dataFolder)/
 	mkdir -p $(prefix)/share/$(loname)/$(fontFolder)/
 	mkdir -p $(prefix)/share/$(loname)/$(imgFolder)/
+	mkdir -p $(prefix)/share/$(loname)/$(soundFolder)/
 	mkdir -p $(prefix)/share/$(loname)/$(shaderFolder)/
 
 	if [ -d $(prefix)/local ]; then	\
@@ -270,6 +277,7 @@ install:
 	install -D -m 644 data/$(dataFolder)/* $(prefix)/share/$(loname)/$(dataFolder)
 	install -D -m 644 data/$(fontFolder)/*.ttf $(prefix)/share/$(loname)/$(fontFolder)
 	install -D -m 644 data/$(imgFolder)/bundle/* $(prefix)/share/$(loname)/$(imgFolder)
+	install -D -m 644 data/$(soundFolder)/* $(prefix)/share/$(loname)/$(soundFolder)
 	cp -r data/$(shaderFolder)/* $(prefix)/share/$(loname)/$(shaderFolder)/
     endif
 

@@ -42,6 +42,9 @@ auto AudioManager::setFrequency() -> void {
     this->outputFrequency = (double)frequency;
     
     setResampler();
+
+    drive.unload( );
+    setDriveSounds();
 }
 
 auto AudioManager::setSynchronize() -> void {
@@ -104,13 +107,36 @@ auto AudioManager::setBufferSize() -> void {
 
 auto AudioManager::setVolume() -> void {
     
-    unsigned volume = globalSettings->get<unsigned>("audio_volume", 100u,{0u, 100u});
+    unsigned volume = globalSettings->get<unsigned>("audio_volume", 100u, {0u, 100u});
     bool mute = globalSettings->get<bool>("audio_mute", false);
         
     floatConversion = 0.0;    
     
     if (!mute)
-        floatConversion =  ( (float)volume * 0.01 ) / 32768.0;   
+        floatConversion = ( (float)volume * 0.01 ) / 32768.0;
+}
+
+auto AudioManager::setDriveSounds() -> void {
+    if (!activeEmulator)
+        return;
+
+    auto settings = program->getSettings( activeEmulator );
+
+    mixFloppySounds = settings->get<bool>("audio_floppy", false);
+
+    activeEmulator->enableFloppySounds( mixFloppySounds );
+
+    if (mixFloppySounds) {
+        unsigned volume = settings->get<unsigned>("audio_floppy_volume", 100u, {0u, 100u});
+
+        if (!drive.loaded( activeEmulator, activeEmulator->getDiskMediaGroup() )) {
+            drive.readPack( activeEmulator, activeEmulator->getDiskMediaGroup() );
+        }
+
+        drive.setVolume( activeEmulator, activeEmulator->getDiskMediaGroup(), (float)volume * 0.01 );
+    }
+
+    drive.reset();
 }
 
 auto AudioManager::setAudioDsp() -> void {
@@ -199,6 +225,7 @@ auto AudioManager::power() -> void {
     setBufferSize();
     setAudioDsp();
     setVolume();
+    setDriveSounds();
 
     statistics.average = 0;
     statistics.sum = 0;
@@ -267,6 +294,9 @@ auto AudioManager::flush( ) -> void {
 
     if (dsps.size())
         applyDsp();
+
+    if (mixFloppySounds)
+        drive.mixSound(rData.out, rData.outputFrames << 1);
 
     if ( audioDriver->expectFloatingPoint() ) {
 

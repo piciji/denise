@@ -22,6 +22,19 @@ struct AudioRecordLayout : GUIKIT::FramedVerticalLayout {
     AudioRecordLayout();
 };
 
+struct AudioDriveLayout : GUIKIT::FramedVerticalLayout {
+    SliderLayout floppyVolume;
+
+    struct Selection : GUIKIT::HorizontalLayout {
+        GUIKIT::Label floppyLabel;
+        GUIKIT::ComboButton floppyCombo;
+        GUIKIT::Button update;
+        Selection();
+    } selection;
+
+    AudioDriveLayout();
+};
+
 struct BassControlLayout : GUIKIT::FramedVerticalLayout {
     
     struct TopLayout : GUIKIT::HorizontalLayout {
@@ -96,6 +109,7 @@ struct AudioLayout : GUIKIT::HorizontalLayout {
     GUIKIT::Image recordAudioImage;
     GUIKIT::Image sineImage;
     GUIKIT::Image processorImage;
+    GUIKIT::Image driveImage;
     
     GUIKIT::FramedVerticalLayout moduleFrame;
     GUIKIT::ListView moduleList;
@@ -108,6 +122,7 @@ struct AudioLayout : GUIKIT::HorizontalLayout {
     BassControlLayout bass;
     ReverbControlLayout reverb;
     PanningControlLayout panning;
+    AudioDriveLayout driveLayout;
     
     AudioRecordLayout audioRecord;
     
@@ -115,7 +130,7 @@ struct AudioLayout : GUIKIT::HorizontalLayout {
     
     auto translate() -> void;
     
-    auto loadSettings() -> void;
+    auto loadSettings(bool init = false) -> void;
     
     auto initDsp(SliderLayout* sliderLayout, std::string ident, float defaultVal) -> void;
     
@@ -126,4 +141,6 @@ struct AudioLayout : GUIKIT::HorizontalLayout {
     auto stopRecord() -> void;
     
     auto toggleRecord() -> void;
+
+    auto updateFloppyProfileList() -> void;
 };

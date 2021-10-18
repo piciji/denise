@@ -50,7 +50,8 @@ struct Interface {
     enum class CropType { Off = 0, Monitor = 1, Auto = 2, SemiAuto = 3, Free = 4 };
     enum class TapeMode { Stop = 0, Play = 1, Record = 2, Forward = 3, Rewind = 4, ResetCounter = 5, Unpressed = 6 };
     enum class FastForward { NoAudioOut = 1, NoVideoOut = 2, ReduceVideoOutput = 4, NoVideoSequencer = 8 };
-    
+    enum class DriveSound { FloppyInsert = 1, FloppyEject = 2, FloppySpinUp = 3, FloppySpinDown = 4, FloppyStep = 5, FloppyHeadBang = 6 };
+
     std::string ident;
     
 	Interface( std::string ident ) {
@@ -309,9 +310,10 @@ struct Interface {
         virtual auto exit( int code ) -> void {}
         virtual auto finishVBlank() -> void {}
         virtual auto midScreenCallback( ) -> void {}
-        virtual auto questionToWrite(Media* media) -> bool { return false; }
-        virtual auto informDriveLoading(bool state) -> void {}
-        virtual auto autoStartFinish(bool soft) -> void {}
+        virtual auto questionToWrite(Media*) -> bool { return false; }
+        virtual auto informDriveLoading(bool) -> void {}
+        virtual auto autoStartFinish(bool) -> void {}
+        virtual auto mixDriveSound( Media*, DriveSound, unsigned ) -> void {}
     };
     Bind* bind = nullptr;
 
@@ -386,6 +388,10 @@ struct Interface {
 
     auto autoStartFinish(bool soft) -> void {
         bind->autoStartFinish(soft);
+    }
+
+    auto mixDriveSound( Media* media, DriveSound driveSound, unsigned data = 0 ) -> void {
+        bind->mixDriveSound( media, driveSound, data );
     }
 
     template<typename T> auto log(T data, bool newLine = true, bool asHex = false) -> void {			
@@ -520,6 +526,9 @@ struct Interface {
 
     // jit
     virtual auto enableJit(bool state) -> void {}
+
+    // drive sounds
+    virtual auto enableFloppySounds(bool state) -> void {}
     
     auto getStatsForSelectedRegion() -> Stats& {  
         return stats;

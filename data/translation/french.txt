@@ -620,3 +620,7 @@ JIT tooltip =
 prevent JIT temporary =
 minimum rescan time =
 Commodore Highlight Color =
+Drive Noise =
+Floppy =
+Floppy Profile =
+Refresh =

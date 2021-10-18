@@ -620,3 +620,7 @@ JIT tooltip = "Just in time polling" checks inputs directly when queried by the 
 prevent JIT temporary = suppress JIT when runAhead is active
 minimum rescan time = Minimum waiting time between input sampling
 Commodore Highlight Color = Commodore Highlight Color
+Drive Noise = Drive Noise
+Floppy = Floppy
+Floppy Profile = Floppy Profile
+Refresh = Refresh

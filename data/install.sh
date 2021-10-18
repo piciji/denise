@@ -23,6 +23,7 @@ mkdir -p $prefix/share/denise/translation/
 mkdir -p $prefix/share/denise/data/
 mkdir -p $prefix/share/denise/fonts/
 mkdir -p $prefix/share/denise/img/
+mkdir -p $prefix/share/denise/sounds/
 mkdir -p $prefix/share/denise/shader/
 
 if [ -d $prefix/local ]; then
@@ -38,5 +39,6 @@ install -D -m 644 translation/* $prefix/share/denise/translation
 install -D -m 644 data/* $prefix/share/denise/data
 install -D -m 644 fonts/*.ttf $prefix/share/denise/fonts
 install -D -m 644 img/* $prefix/share/denise/img
+install -D -m 644 sounds/* $prefix/share/denise/sounds
 cp -r shader/* $prefix/share/denise/shader/
 echo "Installation complete"

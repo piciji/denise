@@ -1,4 +1,22 @@
 
+AudioDriveLayout::Selection::Selection() {
+    append( floppyLabel, {0u, 0u}, 10 );
+    append( floppyCombo, {0u, 0u}, 10 );
+    append( update, {0u, 0u} );
+
+    setAlignment( 0.5 );
+}
+
+AudioDriveLayout::AudioDriveLayout() : floppyVolume("%", true) {
+    append( floppyVolume, {~0u, 0u}, 10 );
+    append( selection, {0u, 0u} );
+
+    setPadding(10);
+
+    floppyVolume.slider.setLength( 101 );
+    floppyVolume.updateValueWidth( "100 %" );
+}
+
 AudioRecordLayout::Location::Location() {
     
     append(label, {0u, 0u}, 5 );
@@ -170,12 +188,15 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
     recordAudioImage.loadPng((uint8_t*)Icons::recordAudio, sizeof(Icons::recordAudio));
     sineImage.loadPng((uint8_t*)Icons::sine, sizeof(Icons::sine));
     processorImage.loadPng((uint8_t*)Icons::processor, sizeof(Icons::processor));
+    driveImage.loadPng((uint8_t*)Icons::drive, sizeof(Icons::drive));
     
     if (dynamic_cast<LIBC64::Interface*>(emulator)) {
         moduleList.append( {"SID"} );
         moduleList.setImage(0, 0, processorImage);
     }
-        
+
+    moduleList.append( {"Drive"} );
+    moduleList.setImage(moduleList.rowCount() - 1, 0, driveImage);
     moduleList.append( {"DSP"} );
     moduleList.setImage(moduleList.rowCount() - 1, 0, sineImage);    
     moduleList.append( {"Record"} );    
@@ -210,10 +231,13 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
     
     if (dynamic_cast<LIBC64::Interface*>(emulator)) {
         moduleSwitch.setLayout( 0, settingsLayout, {~0u, ~0u} );
+        moduleSwitch.setLayout( 1, driveLayout, {~0u, ~0u} );
+        moduleSwitch.setLayout( 2, dspFrame, {~0u, ~0u} );
+        moduleSwitch.setLayout( 3, audioRecord, {~0u, ~0u} );
+    } else {
+        moduleSwitch.setLayout( 0, driveLayout, {~0u, ~0u} );
         moduleSwitch.setLayout( 1, dspFrame, {~0u, ~0u} );
         moduleSwitch.setLayout( 2, audioRecord, {~0u, ~0u} );
-    } else {
-        moduleSwitch.setLayout( 0, audioRecord, {~0u, ~0u} );
     }
         
     append( moduleSwitch, {~0u, ~0u} );    
@@ -358,8 +382,64 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
 
         audioRecord.duration.record.setText( trans->get( state ? "Stop" : "Record" ) );
     };
-    
-    loadSettings();
+
+    driveLayout.floppyVolume.active.onToggle = [this]() {
+
+        _settings->set<bool>( "audio_floppy", driveLayout.floppyVolume.active.checked() );
+
+        audioManager->setDriveSounds();
+    };
+
+    driveLayout.floppyVolume.slider.onChange = [this]() {
+        auto value = driveLayout.floppyVolume.slider.position();
+
+        _settings->set<unsigned>( "audio_floppy_volume", value );
+
+        driveLayout.floppyVolume.value.setText( std::to_string( value ) + " %" );
+
+        audioManager->setDriveSounds();
+    };
+
+    driveLayout.selection.floppyCombo.onChange = [this]() {
+
+        std::string folder = driveLayout.selection.floppyCombo.text();
+
+        _settings->set<std::string>( "audio_floppy_folder", folder );
+
+        audioManager->drive.unload( emulator, emulator->getDiskMediaGroup() );
+
+        audioManager->setDriveSounds();
+    };
+
+    driveLayout.selection.update.onActivate = [this]() {
+        updateFloppyProfileList();
+
+        driveLayout.selection.floppyCombo.setSelectionByRow( _settings->get<std::string>("audio_floppy_folder", "") );
+
+        // in case if content doesn't match setting anymore
+        _settings->set<std::string>("audio_floppy_folder", driveLayout.selection.floppyCombo.text() );
+
+        audioManager->drive.unload( emulator, emulator->getDiskMediaGroup() );
+
+        audioManager->setDriveSounds();
+    };
+
+    updateFloppyProfileList();
+
+    loadSettings(true);
+}
+
+auto AudioLayout::updateFloppyProfileList() -> void {
+
+    driveLayout.selection.floppyCombo.reset();
+
+    auto baseFolder = program->soundFolder();
+
+    auto list = GUIKIT::File::getFolderList(baseFolder + "floppy/" + emulator->ident);
+
+    for (auto& info : list) {
+        driveLayout.selection.floppyCombo.append( info.name );
+    }
 }
 
 auto AudioLayout::setDspEvent(SliderLayout* sliderLayout, std::string ident, float defaultVal) -> void {
@@ -411,6 +491,11 @@ auto AudioLayout::translate() -> void {
     panning.bottom.leftMix.name.setText(trans->get("mix left"));
     panning.bottom.rightMix.name.setText(trans->get("mix right"));
 
+    driveLayout.setText( trans->get("Drive Noise") );
+    driveLayout.floppyVolume.active.setText( trans->get("Floppy") );
+    driveLayout.selection.floppyLabel.setText( trans->get("Floppy Profile", {}, true) );
+    driveLayout.selection.update.setText( trans->get("Update") );
+
     audioRecord.setText(trans->get("Audio Record"));
     audioRecord.location.label.setText( trans->get("wav folder") );
     audioRecord.location.select.setText("...");
@@ -422,17 +507,19 @@ auto AudioLayout::translate() -> void {
 
     if (dynamic_cast<LIBC64::Interface*> (emulator)) {
         moduleList.setText(0, 0, trans->get("SID"));
+        moduleList.setText(1, 0, trans->get("Drives"));
+        moduleList.setText(2, 0, trans->get("DSP"));
+        moduleList.setText(3, 0, trans->get("Audio Record"));
+        moduleList.setRowTooltip(2, trans->get("Digital Signal Processing"));
+    } else {
+        moduleList.setText(0, 0, trans->get("Drive Noise"));
         moduleList.setText(1, 0, trans->get("DSP"));
         moduleList.setText(2, 0, trans->get("Audio Record"));
         moduleList.setRowTooltip(1, trans->get("Digital Signal Processing"));
-    } else {
-        moduleList.setText(0, 0, trans->get("DSP"));
-        moduleList.setText(1, 0, trans->get("Audio Record"));
-        moduleList.setRowTooltip(0, trans->get("Digital Signal Processing"));
     }
 }
 
-auto AudioLayout::loadSettings() -> void {
+auto AudioLayout::loadSettings(bool init) -> void {
     if (dynamic_cast<LIBC64::Interface*>(emulator))
         settingsLayout.updateWidgets();
     
@@ -480,7 +567,31 @@ auto AudioLayout::loadSettings() -> void {
     audioRecord.duration.secondsSlider.slider.setPosition( value ); 
                  
     audioRecord.duration.useTimeLimit.setChecked( _settings->get<bool>( "audio_record_timelimit", false) );
-            
+
+    driveLayout.floppyVolume.active.setChecked( _settings->get<bool>( "audio_floppy", false) );
+
+    unsigned floppyVolume = _settings->get<unsigned>("audio_floppy_volume", 100u, {0u, 100u});
+
+    driveLayout.floppyVolume.slider.setPosition( floppyVolume );
+
+    driveLayout.floppyVolume.value.setText(std::to_string(floppyVolume) + " %");
+
+    std::string folderBefore = driveLayout.selection.floppyCombo.text();
+
+    std::string folder = _settings->get<std::string>("audio_floppy_folder", "");
+
+    driveLayout.selection.floppyCombo.setSelectionByRow( folder );
+
+    folder = driveLayout.selection.floppyCombo.text();
+
+    if (!init) {
+        // in case if content doesn't match setting anymore
+        _settings->set<std::string>("audio_floppy_folder", folder);
+
+        if (folderBefore != folder)
+            audioManager->drive.unload(emulator, emulator->getDiskMediaGroup());
+    }
+
     updateVisibility();
 }
 

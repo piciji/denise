@@ -107,6 +107,7 @@ struct System {
     bool kernalBootComplete = false;
     bool powerOn = false;
     bool cycleRendererNextBoot = false;
+    bool enableFloppySounds = false;
     
     struct {
         unsigned config;

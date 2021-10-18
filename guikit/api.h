@@ -552,6 +552,7 @@ struct ComboButton : Widget {
     auto setSelection(unsigned selection) -> void;
     auto activate(unsigned selection) -> void;
     auto setSelectionByUserId(int userId) -> void;
+    auto setSelectionByRow(std::string row) -> void;
     auto setText(unsigned selection, const std::string& text) -> void;
     auto setUserData(unsigned selection, int userData) -> void;
     auto setText(const std::string& text) -> void = delete;

@@ -772,6 +772,22 @@ auto ComboButton::setSelectionByUserId(int userId) -> void {
     setSelection( selection );
 }
 
+auto ComboButton::setSelectionByRow(std::string row) -> void {
+    unsigned selection = 0;
+
+    bool found = false;
+    for( auto& _row : state.rows) {
+        if (_row == row) {
+            found = true;
+            break;
+        }
+
+        selection++;
+    }
+
+    setSelection( found ? selection : 0 );
+}
+
 auto ComboButton::setText(unsigned selection, const std::string& text) -> void {
     if(selection >= state.rows.size()) return;
     state.rows.at(selection) = text;

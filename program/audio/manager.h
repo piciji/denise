@@ -7,6 +7,7 @@
 #include "../program.h"
 #include "../../emulation/interface.h"
 #include "record/handler.h"
+#include "mixer/drive.h"
 
 struct AudioManager {
     
@@ -24,6 +25,8 @@ struct AudioManager {
     Resampler::Cosine cosine;
     Resampler::Data rData;
     AudioRecord::Handler record;
+    Mixer::Drive drive;
+    bool mixFloppySounds = false;
     
     double ratio;    
     bool dynamicRateControl;
@@ -64,6 +67,7 @@ struct AudioManager {
     auto setSynchronize() -> void;
     auto setVolume() -> void;
     auto setRateControl() -> void;
+    auto setDriveSounds() -> void;
     auto setPriority() -> void;
     
     auto setBufferSize() -> void;

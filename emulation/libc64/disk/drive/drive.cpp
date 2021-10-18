@@ -684,6 +684,9 @@ Drive::Drive(uint8_t number, Emulator::Interface::Media* mediaConnected ) : stru
             if (lines->iob & 4) { // stepper motor works only when drive motor is active
 
                 if (stepperDelay) {
+                    if (system->enableFloppySounds)
+                        stepSound( nextStep == 1 );
+
                     updateStepper( nextStep );
                 }
 
@@ -693,6 +696,7 @@ Drive::Drive(uint8_t number, Emulator::Interface::Media* mediaConnected ) : stru
 
                     if (!stepperSeekTime) {
                         changeHalfTrack(_step);
+                        system->interface->log(currentHalftrack);
                     } else {
                         nextStep = _step;
                         stepperDelay = stepperSeekTime;
@@ -715,6 +719,13 @@ Drive::Drive(uint8_t number, Emulator::Interface::Media* mediaConnected ) : stru
                 wd1770->setDiskAccessible(motorOn & loaded);
                 if (!motorOn)
                     motorOffInit();
+
+                if (system->enableFloppySounds) {
+                    if (motorOn)
+                        system->interface->mixDriveSound( this->mediaConnected, DriveSound::FloppySpinUp );
+                    else
+                        system->interface->mixDriveSound( this->mediaConnected, DriveSound::FloppySpinDown );
+                }
                 
                 updateDeviceState();
 
@@ -778,7 +789,7 @@ Drive::Drive(uint8_t number, Emulator::Interface::Media* mediaConnected ) : stru
     
     for(unsigned i = 0; i < motorOff.CHUNKS; i++)
         motorOff.chunkSize.push_back( 0 );
-} 
+}
 
 Drive::~Drive() {
     
@@ -888,6 +899,9 @@ auto Drive::power( ) -> void {
     randomizeRpm();
     extendedMemoryMap = expandMemory || (speeder > 1);
     wd1770->setRateInMhz( 1, 16 );
+
+    if (loaded && system->enableFloppySounds)
+        system->interface->mixDriveSound( mediaConnected, DriveSound::FloppyInsert );
 }
 
 auto Drive::updateCycleSpeed(bool mhz2x, bool init) -> void {
@@ -1025,8 +1039,11 @@ auto Drive::setViaTransition( bool direction ) -> void {
 auto Drive::detach() -> void {
     write();
     
-    if (loaded)
+    if (loaded) {
         attachDelay = DISC_DELAY;
+        if (system->enableFloppySounds)
+            system->interface->mixDriveSound( mediaConnected, DriveSound::FloppyEject );
+    }
 
     if (iecBus->powerOn && use2Mhz() )
         attachDelay <<= 1;
@@ -1061,6 +1078,9 @@ auto Drive::attach( Emulator::Interface::Media* media, uint8_t* data, unsigned s
         attachDelay <<= 1;
 
     delayInProgress = attachDelay || stepperDelay;
+
+    if (iecBus->powerOn && system->enableFloppySounds)
+        system->interface->mixDriveSound( mediaConnected, DriveSound::FloppyInsert );
 
     if ( !structure.attach( data, size, loadGracefully ) )
         return;
@@ -1232,3 +1252,4 @@ auto Drive::setSpeeder(uint8_t speeder) -> void {
 }
 
 }
+
