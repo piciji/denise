@@ -66,6 +66,8 @@ auto States::load( std::string path, bool prependFolder ) -> void {
     forcePowerNextLoad = false;
 
     program->warp.enableAutoWarp = false;
+
+    audioManager->drive.reset();
 }
 
 auto States::save( std::string path, bool prependFolder ) -> void {

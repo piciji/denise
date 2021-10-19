@@ -352,7 +352,7 @@ auto Program::powerOff() -> void {
 		videoDriver->clear();
 		videoDriver->hintExclusiveFullscreen( false );
 		audioDriver->clear();  
-		audioManager->record.finish();
+		audioManager->powerOff();
 		activeEmulator = nullptr;
 		activeVideoManager = nullptr;
 		filePool->unloadOrphaned();
@@ -578,10 +578,6 @@ auto Program::informDriveLoading(bool state) -> void {
     fastForward( state, warp.aggressive );
 }
 
-auto Program::mixDriveSound( Emulator::Interface::Media* media, Emulator::Interface::DriveSound driveSound, unsigned data ) -> void {
-    audioManager->drive.addSound( media, (Mixer::Drive::DriveSound)driveSound, data );
-}
-
 auto Program::initAutoWarp(Emulator::Interface::MediaGroup* mediaGroup) -> void {
     if (!activeEmulator)
         return;
@@ -627,3 +623,4 @@ auto Program::getEmulator( std::string ident ) -> Emulator::Interface* {
     
     return nullptr;
 }
+

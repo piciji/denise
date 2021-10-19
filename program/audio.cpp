@@ -48,3 +48,8 @@ auto Program::audioFlush() -> void {
     if (audioManager->bufferPos)
         audioManager->flush();
 }
+
+auto Program::mixDriveSound( Emulator::Interface::Media* media, Emulator::Interface::DriveSound driveSound, uint8_t data ) -> void {
+    //audioFlush();
+    audioManager->drive.addSound( media, (Mixer::Drive::DriveSound)driveSound, data );
+}

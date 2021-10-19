@@ -14,7 +14,7 @@ struct Base {
     auto setMono(bool state) -> void {
         
         // expects a two channel source
-        // mono simly copies result of left channel to right channel to reduce calculation time
+        // mono simply copies result of left channel to right channel to reduce calculation time
         this->mono = state;
     }
 };

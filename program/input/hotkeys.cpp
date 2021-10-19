@@ -125,6 +125,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             pos += down ? -1 : 1;
             settings->set<unsigned>( "runahead", pos);
             activeEmulator->runAhead( pos );
+            audioManager->drive.reset();
 
             auto emuView = EmuConfigView::TabWindow::getView(activeEmulator);
             if (emuView)

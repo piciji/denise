@@ -127,16 +127,15 @@ auto AudioManager::setDriveSounds() -> void {
     activeEmulator->enableFloppySounds( mixFloppySounds );
 
     if (mixFloppySounds) {
-        unsigned volume = settings->get<unsigned>("audio_floppy_volume", 100u, {0u, 100u});
+        unsigned volume = settings->get<unsigned>("audio_floppy_volume", 100u, {0u, 200u});
 
         if (!drive.loaded( activeEmulator, activeEmulator->getDiskMediaGroup() )) {
             drive.readPack( activeEmulator, activeEmulator->getDiskMediaGroup() );
         }
 
         drive.setVolume( activeEmulator, activeEmulator->getDiskMediaGroup(), (float)volume * 0.01 );
-    }
-
-    drive.reset();
+    } else
+        drive.reset();
 }
 
 auto AudioManager::setAudioDsp() -> void {
@@ -233,6 +232,11 @@ auto AudioManager::power() -> void {
     statistics.min = -1;
     statistics.max = 1;
     statistics.current = 0;
+}
+
+auto AudioManager::powerOff() -> void {
+    record.finish();
+    drive.reset();
 }
 
 auto AudioManager::applyDsp() -> void {

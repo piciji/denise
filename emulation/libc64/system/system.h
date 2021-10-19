@@ -130,6 +130,11 @@ struct System {
     } diskSilence;
 
     struct {
+        bool requestFloppy;
+        bool useFloppy;
+    } driveSounds;
+
+    struct {
         bool burstRequested = false;
         bool parallelRequested = false;
         bool burstPossible = false;
@@ -189,6 +194,8 @@ struct System {
     auto analyzeExpansion(uint8_t* data, unsigned size, std::string suffix = "") -> Emulator::Interface::Expansion*;
     
     auto setFastForward( unsigned config ) -> void;
+    auto setFloppySounds(bool state) -> void;
+    auto updateDriveSounds() -> void;
     
     auto setCycleRenderer(bool state) -> void;
 	auto updateStats() -> void;

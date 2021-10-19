@@ -738,6 +738,20 @@ auto System::setFastForward( unsigned config ) -> void {
     Sid::disableAudioOut(config & (unsigned) Emulator::Interface::FastForward::NoAudioOut);
     vicII->disableSequencer(config & (unsigned) Emulator::Interface::FastForward::NoVideoSequencer);
     iecBus->setFastForward(config & (unsigned) Emulator::Interface::FastForward::NoVideoSequencer);
+    updateDriveSounds();
+}
+
+auto System::setFloppySounds(bool state) -> void {
+    driveSounds.requestFloppy = state;
+    updateDriveSounds();
+}
+
+auto System::updateDriveSounds() -> void {
+    driveSounds.useFloppy = driveSounds.requestFloppy && !fastForward.config && !runAhead.frames;
+
+    if (powerOn && driveSounds.useFloppy) {
+        iecBus->updateDriveSounds();
+    }
 }
 
 auto System::setCycleRenderer(bool state) -> void {

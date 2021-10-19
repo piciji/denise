@@ -257,32 +257,31 @@ auto Drive::updateStepper( uint8_t step ) -> bool {
     if (step == 1) {        
         if (currentHalftrack < ((MAX_TRACKS_1541 * 2) - 1) ) {
             currentHalftrack++;
-            stepDirection = 1;
+            coilDir = 1;
             return true;            
         }
             
-        stepDirection = -1;
+        coilDir = 0;
 
     } else if (step == 3) {
         
         if (currentHalftrack > 0) {
             currentHalftrack--;
-            stepDirection = -1;
+            coilDir = 0;
             return true;
         }
             
-        stepDirection = 1;
+        coilDir = 1;
         
     } else if (step == 2) {
-        system->interface->log("step 2");
         // Primitive 7 Sins uses this method
-        if (stepDirection == 1) {
+        if (coilDir) {
             if (currentHalftrack & 1) {
                 if (updateStepper(1))
                     return updateStepper(1);
             }
 
-        } else if (stepDirection == -1) {
+        } else {
             if ((currentHalftrack & 1) == 0) {
                 if (updateStepper(3))
                     return updateStepper(3);
@@ -295,9 +294,9 @@ auto Drive::updateStepper( uint8_t step ) -> bool {
 
 auto Drive::changeHalfTrack( uint8_t step ) -> void {
 
-    if (step != 0 /*&& step != 2*/) {
-        if (system->enableFloppySounds)
-            stepSound( step == 1 );
+    if (step != 0) {
+        if (system->driveSounds.useFloppy)
+            stepSound( step );
 
         updateStepper(step);
     }
@@ -361,15 +360,19 @@ auto Drive::changeHalfTrack( uint8_t step ) -> void {
 
 }
 
-auto Drive::stepSound(bool stepUp) -> void {
+auto Drive::stepSound(uint8_t step) -> void {
 
     DriveSound sound = DriveSound::FloppyStep;
 
-    if (!stepUp && (currentHalftrack < 2)) {
-        sound = DriveSound::FloppyHeadBang;
+    if (currentHalftrack > 16)
+        sound = DriveSound::FloppyStepUpperTracks;
+
+    else if (currentHalftrack == 0) {
+        if( (step == 3) || ( (step == 2) && !coilDir))
+            sound = DriveSound::FloppyHeadBang;
     }
 
-    system->interface->mixDriveSound( mediaConnected, sound, (currentHalftrack >> 1) + 1 );
+    system->interface->mixDriveSound( mediaConnected, sound, currentHalftrack );
 }
 
 inline auto Drive::syncFound() -> uint8_t {

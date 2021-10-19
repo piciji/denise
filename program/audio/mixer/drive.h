@@ -13,8 +13,8 @@ struct Drive {
     Drive();
     ~Drive();
 
-    enum DriveSound { FloppyInsert = 1, FloppyEject = 2, FloppySpinUp = 3, FloppySpinDown = 4, FloppyStep = 5, FloppyHeadBang = 6,
-        FloppySpin = 12, FloppyStepUpperTracks = 13 };
+    enum DriveSound { FloppyInsert = 1, FloppyEject = 2, FloppySpinUp = 3, FloppySpinDown = 4, FloppySpin = 5,
+            FloppyStep = 6, FloppyStepUpperTracks = 7, FloppyHeadBang = 8 };
 
     struct Assign {
         DriveSound id;
@@ -37,13 +37,15 @@ struct Drive {
         Emulator::Interface::Media* media;
         Sound* first;
         Sound* second;
+        Sound* third;
         unsigned firstOffset;
         unsigned secondOffset;
+        unsigned thirdOffset;
     };
     std::vector<Device> devices;
 
     auto readPack(Emulator::Interface* emulator, Emulator::Interface::MediaGroup* group) -> void;
-    auto addSound(Emulator::Interface::Media* media, DriveSound soundId, unsigned data) -> void;
+    auto addSound(Emulator::Interface::Media* media, DriveSound soundId, uint8_t data = 0) -> void;
     auto mixSound(float* buffer, unsigned bufferSize) -> void;
 
     auto getSound(DriveSound soundId) -> Sound*;

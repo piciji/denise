@@ -610,4 +610,11 @@ auto IecBus::setSpeeder(uint8_t speeder) -> void {
         drive->setSpeeder( speeder );
 }
 
+auto IecBus::updateDriveSounds() -> void {
+    for( auto drive : drives ) {
+        if (drive->motorOn)
+            system->interface->mixDriveSound( drive->mediaConnected, Emulator::Interface::DriveSound::FloppySpin );
+    }
+}
+
 }

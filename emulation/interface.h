@@ -50,7 +50,8 @@ struct Interface {
     enum class CropType { Off = 0, Monitor = 1, Auto = 2, SemiAuto = 3, Free = 4 };
     enum class TapeMode { Stop = 0, Play = 1, Record = 2, Forward = 3, Rewind = 4, ResetCounter = 5, Unpressed = 6 };
     enum class FastForward { NoAudioOut = 1, NoVideoOut = 2, ReduceVideoOutput = 4, NoVideoSequencer = 8 };
-    enum class DriveSound { FloppyInsert = 1, FloppyEject = 2, FloppySpinUp = 3, FloppySpinDown = 4, FloppyStep = 5, FloppyHeadBang = 6 };
+    enum class DriveSound { FloppyInsert = 1, FloppyEject = 2, FloppySpinUp = 3, FloppySpinDown = 4, FloppySpin = 5,
+        FloppyStep = 6, FloppyStepUpperTracks = 7, FloppyHeadBang = 8  };
 
     std::string ident;
     
@@ -313,7 +314,7 @@ struct Interface {
         virtual auto questionToWrite(Media*) -> bool { return false; }
         virtual auto informDriveLoading(bool) -> void {}
         virtual auto autoStartFinish(bool) -> void {}
-        virtual auto mixDriveSound( Media*, DriveSound, unsigned ) -> void {}
+        virtual auto mixDriveSound( Media*, DriveSound, uint8_t data ) -> void {}
     };
     Bind* bind = nullptr;
 
@@ -390,7 +391,7 @@ struct Interface {
         bind->autoStartFinish(soft);
     }
 
-    auto mixDriveSound( Media* media, DriveSound driveSound, unsigned data = 0 ) -> void {
+    auto mixDriveSound( Media* media, DriveSound driveSound, uint8_t data = 0 ) -> void {
         bind->mixDriveSound( media, driveSound, data );
     }
 

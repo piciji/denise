@@ -3,7 +3,44 @@
 #include "../../program.h"
 #include "../resampler/data.h"
 #include "../resampler/linear.h"
+#include "../resampler/cubic.h"
 #include <cstring>
+
+static const signed char stepping[] = {
+        -1, 1, 3, 3, 3, 1, -1, -2, -2, -2, -1, 0, 1, 1, -1, -3, -6, -7, -5, -1, 2,
+        5, 4, 2, -1, -4, -6, -7, -6, -4, -2, -1, -1, -1, -2, -3, -4, -4, -3, 1, 6,
+        9, 9, 5, 0, -4, -6, -6, -4, -3, -2, -1, -1, -3, -7, -11, -13, -12, -8, -1,
+        6, 11, 14, 12, 7, 0, -5, -8, -7, -4, -1, 0, 0, -1, -1, 0, 0, 1, 2, 3, 5, 6,
+        6, 6, 5, 5, 5, 5, 5, 4, 2, -2, -6, -9, -10, -8, -5, -1, 1, 2, 2, 1, -1, -3,
+        -3, -2, 1, 4, 6, 5, 2, -1, -4, -5, -5, -5, -4, -3, -2, -2, -3, -4, -5, -3,
+        -1, 2, 2, 1, -1, -3, -5, -6, -7, -6, -3, 0, 3, 5, 5, 4, 2, -1, -5, -7, -7,
+        -4, 1, 4, 5, 2, -1, -4, -5, -4, -2, 1, 3, 6, 7, 6, 4, 1, -1, -1, 0, 1, 1,
+        0, -1, -3, -4, -5, -5, -4, -2, 0, 2, 2, 1, 0, 1, 3, 5, 7, 7, 6, 3, 0, -2,
+        -3, -3, -3, -3, -2, 0, 1, 3, 3, 2, 0, 0, 0, 1, 1, 0, -2, -3, -4, -3, -1, 0,
+        2, 2, 1, -2, -5, -8, -9, -8, -6, -4, -2, -1, 0, 1, 1, -1, -3, -6, -7, -6,
+        -3, -1, 0, 0, 0, 0, 0, 1, 2, 3, 3, 2, 0, -1, -2, -2, 0, 1, 3, 4, 4, 3, 1,
+        -1, -2, -2, -1, 0, 2, 3, 2, 0, -3, -6, -9, -9, -7, -5, -3, -3, -4, -4, -4,
+        -1, 1, 3, 4, 4, 3, 1, -1, -3, -2, 2, 6, 9, 8, 5, 0, -3, -4, -3, 0, 2, 4, 5,
+        5, 5, 3, 1, 0, -1, -1, -2, -3, -4, -5, -5, -6, -6, -5, -4, -2, -1, 0, 1, 0,
+        0, 1, 2, 3, 3, 4, 5, 5, 4, 2, -2, -7, -11, -13, -12, -9, -6, -3, -2, -1,
+        -2, -2, -1, -1, 0, 1, 2, 4, 6, 5, 3, 0, -3, -5, -4, -3, -2, -2, -1, 1, 3,
+        4, 4, 2, 0, -2, -3, -2, 0, 3, 6, 7, 7, 5, 1, -4, -8, -10, -10, -9, -7, -5,
+        -4, -3, -3, -3, -3, -3, -2, -1, 0, 2, 4, 6, 7, 8, 8, 7, 5, 4, 2, 1, 1, 1,
+        2, 3, 2, 1, 0, -1, -2, -1, -1, -1, 0, 0, 0, -1, -2, -4, -4, -4, -3, -3, -2,
+        -3, -3, -4, -5, -4, -3, -2, 0, 1, 0, -1, -2, -3, -4, -4, -3, -2, -1, 0, 1,
+        2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 1, 0, -2, -2, -3, -3, -2, -1, 1, 2, 2, 1, 0,
+        -2, -3, -2, -1, 1, 2, 2, 2, 1, 1, 0, 0, -1, -2, -2, -2, -2, -1, 0, 0, 1, 2,
+        3, 4, 4, 3, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, -2, -3, -4, -4, -3, -2,
+        -2, -3, -4, -5, -5, -5, -4, -4, -4, -3, -3, -2, -2, -3, -3, -2, -1, 1, 3,
+        4, 4, 4, 5, 5, 6, 7, 6, 5, 4, 3, 2, 2, 2, 2, 1, -1, -3, -4, -5, -6, -6, -5,
+        -4, -2, 0, 1, 0, -1, -2, -2, -2, -2, -2, -1, -1, -1, -1, -1, -2, -2, -2,
+        -2, -2, -1, 0, 1, 2, 2, 2, 2, 1, 1, 1, 1, 0, -1, -1, -2, -2, -2, -1, 0, 0,
+        0, -1, -2, -3, -2, -1, 1, 2, 4, 4, 4, 3, 1, -1, -2, -2, -2, -2, -2, -2, -1,
+        0, 0, 0, -1, -2, -2, -2, 0, 1, 1, -1, -2, -4, -4, -4, -3, -2, -1, -1, -2,
+        -3, -3, -3, -2, -1, 0, 1, 1, 1, 1, 2, 4, 5, 5, 4, 3, 2, 1, 1, 2, 2, 1, 0,
+        0, 0, 1, 3, 3, 4, 4, 3, 2, 0, -2, -3, -2, -1, 0, 1, 0, -2, -4, -6, -7, -7,
+        -7
+};
 
 namespace Mixer {
 
@@ -15,7 +52,7 @@ namespace Mixer {
         assigns.push_back( { DriveSound::FloppyStep, "step" } );
         assigns.push_back( { DriveSound::FloppyHeadBang, "headbang" } );
         assigns.push_back( { DriveSound::FloppySpin, "spin" } );
-        assigns.push_back( { DriveSound::FloppyStepUpperTracks, "upperstep" } );
+        assigns.push_back( { DriveSound::FloppyStepUpperTracks, "stepupper" } );
 
     }
 
@@ -30,14 +67,13 @@ namespace Mixer {
     auto Drive::mixSound(float* buffer, unsigned bufferSize) -> void {
 
         float _f;
-        float _s;
 
-        for(unsigned i = 0; i < bufferSize; i += 2) {
+        for(auto& device : devices) {
 
-            for(auto& device : devices) {
+            if (device.first) {
+                Sound* sound = device.first;
 
-                if (device.first) {
-                    Sound* sound = device.first;
+                for (unsigned i = 0; i < bufferSize; i += 2) {
                     _f = sound->data[device.firstOffset++] * sound->volume;
 
                     buffer[i] = mix(buffer[i], _f);
@@ -49,75 +85,70 @@ namespace Mixer {
 
                     if (device.firstOffset == sound->size) {
                         device.firstOffset = 0;
-
-                        switch(sound->id) {
-                            case FloppySpinUp:
-                                device.first = getSound( FloppySpin );
-                                break;
-                            case FloppySpin: // loop
-                                break;
-                            case FloppySpinDown:
-                                device.first = nullptr;
-                                break;
-                            case FloppyInsert:
-                                device.first = nullptr;
-                                break;
-                            case FloppyEject:
-                                device.first = nullptr;
-                                break;
-                        }
+                        device.first = nullptr;
+                        break;
                     }
                 }
+            }
 
-                if (device.second) {
-                    Sound* sound = device.second;
-                    _s = sound->data[device.secondOffset++] * sound->volume;
+            if (device.second) {
+                Sound* sound = device.second;
 
-                    buffer[i] = mix(buffer[i], _s);
+                for (unsigned i = 0; i < bufferSize; i += 2) {
+                    _f = sound->data[device.secondOffset++] * sound->volume;
+
+                    buffer[i] = mix(buffer[i], _f);
 
                     if (sound->channels == 2)
-                        _s = sound->data[device.secondOffset++] * sound->volume;
+                        _f = sound->data[device.secondOffset++] * sound->volume;
 
-                    buffer[i+1] = mix(buffer[i+1], _s);
+                    buffer[i+1] = mix(buffer[i+1], _f);
 
                     if (device.secondOffset == sound->size) {
                         device.secondOffset = 0;
 
-                        switch(sound->id) {
-                            case FloppyStep:
-                            case FloppyStepUpperTracks:
-                            case FloppyHeadBang:
-                                device.second = nullptr;
+                        if (sound->id == FloppySpinDown) {
+                            device.second = nullptr;
+                            break;
+                        } else if (sound->id == FloppySpinUp) {
+                            device.second = getSound( FloppySpin );
+                            sound = device.second;
+                            if (!sound)
                                 break;
                         }
+                    }
+                }
+            }
+
+            if (device.third) {
+                Sound* sound = device.third;
+
+                for (unsigned i = 0; i < bufferSize; i += 2) {
+                    _f = sound->data[device.thirdOffset++] * sound->volume;
+
+                    buffer[i] = mix(buffer[i], _f);
+
+                    if (sound->channels == 2)
+                        _f = sound->data[device.thirdOffset++] * sound->volume;
+
+                    buffer[i + 1] = mix(buffer[i + 1], _f);
+
+                    if (device.thirdOffset == sound->size) {
+                        device.thirdOffset = 0;
+                        device.third = nullptr;
+                        break;
                     }
                 }
             }
         }
     }
 
-    auto Drive::addSound(Emulator::Interface::Media* media, DriveSound soundId, unsigned data) -> void {
+    auto Drive::addSound(Emulator::Interface::Media* media, DriveSound soundId, uint8_t data) -> void {
         Device* device = nullptr;
-        //if ((soundId == FloppyStep) && (data > 18) )
-          //  soundId  = FloppyStepUpperTracks;
-
-        for(auto& _sound : sounds) {
-            if (!_sound.data)
-                logger->log("heh");
-        }
 
         Sound* sound = getSound( soundId );
 
-        if (!sound ) {
-            logger->log("ss no match");
-            return;
-        }
-
         if (!sound || !sound->data) {
-            logger->log("no match");
-            logger->log(std::to_string(sound->id));
-            logger->log(std::to_string(sound->channels));
-            logger->log(std::to_string(sound->size));
             return;
         }
 
@@ -129,25 +160,29 @@ namespace Mixer {
         }
 
         if (!device) {
-            devices.push_back({media, nullptr, nullptr, 0, 0});
+            devices.push_back({media, nullptr, nullptr,  nullptr,0, 0, 0});
             device = &devices.back();
         }
 
         switch(soundId) {
             case DriveSound::FloppyInsert:
             case DriveSound::FloppyEject:
-                device->second = nullptr;
-            case DriveSound::FloppySpinDown:
-            case DriveSound::FloppySpinUp:
                 device->first = sound;
                 device->firstOffset = 0;
                 break;
-            case DriveSound::FloppyHeadBang:
-                if (device->second)
-                    break;
-            case DriveSound::FloppyStep:
+            case DriveSound::FloppySpinDown:
+            case DriveSound::FloppySpinUp:
+            case DriveSound::FloppySpin:
                 device->second = sound;
                 device->secondOffset = 0;
+                break;
+            case DriveSound::FloppyHeadBang:
+                if (device->third)
+                    break;
+            case DriveSound::FloppyStep:
+            case DriveSound::FloppyStepUpperTracks:
+                device->third = sound;
+                device->thirdOffset = 0;
                 break;
         }
     }
@@ -187,7 +222,7 @@ namespace Mixer {
 
             subFolder = list[0].name;
 
-            logger->log(subFolder);
+          //  logger->log(subFolder);
 
             settings->set<std::string>(ident, subFolder);
 
@@ -208,14 +243,17 @@ namespace Mixer {
 
     auto Drive::readPack(Emulator::Interface* emulator, Emulator::Interface::MediaGroup* group) -> void {
 
+        bool loop[devices.size() + 1]; // to prevent zero array length
+        unsigned l = 0;
+        for(auto& device : devices)
+            loop[l++] = device.second != nullptr && device.second->id == FloppySpin;
+
         unsigned frequency = globalSettings->get<unsigned>("audio_frequency_v2", 48000u, {0u, 48000u});
 
         std::string fullPath;
         auto list = getFiles(emulator, group, fullPath);
 
         for(auto& info : list) {
-
-       //     logger->log(fullPath);
 
             logger->log(info.name);
 
@@ -293,7 +331,7 @@ namespace Mixer {
 
             size = (data[3] << 24) | (data[2] << 16) | (data[1] << 8) | data[0];
             data += 4;
-logger->log(std::to_string(size));
+//logger->log(std::to_string(size));
 
             if (useFloat) {
                 sound->data = new float[ (size >> 2) + 1 ];
@@ -308,9 +346,19 @@ logger->log(std::to_string(size));
                 sound->size = size >> 1;
             }
 
-            if (!sound->data) {
-                logger->log("xXx");
-            }
+//            if (sound->id == FloppyStep || sound->id == FloppyStepUpperTracks) {
+//                sampleRate = 44100;
+//                sound->channels = 1;
+//                sound->size = sizeof(stepping);
+////logger->log(std::to_string(sound->size));
+//                if (sound->data)
+//                    delete[] sound->data;
+//                sound->data = new float[sizeof(stepping)];
+//                for(unsigned x = 0; x < sizeof(stepping); x++) {
+//                    sound->data[x] = (float)(((stepping[x] * 100) * 2000) >> 8) / 32768.0;
+//                }
+//            }
+
 
             file.unload();
 
@@ -338,14 +386,22 @@ logger->log(std::to_string(size));
                 sound->channels = 2;
             }
         }
+
+        reset();
+
+        l = 0;
+        for(auto& device : devices)
+            device.second = loop[l++] ? getSound(FloppySpin) : nullptr;
     }
 
     auto Drive::reset() -> void {
         for(auto& device : devices) {
-            device.second = nullptr;
             device.first = nullptr;
+            device.second = nullptr;
+            device.third = nullptr;
             device.firstOffset = 0;
             device.secondOffset = 0;
+            device.thirdOffset = 0;
         }
     }
 

@@ -33,7 +33,7 @@ auto Drive::serialize(Emulator::Serializer& s) -> void {
     s.integer( byteReadyOverflow );
     s.integer( readMode );
     s.integer( headOffset );
-    s.integer( stepDirection );
+    s.integer( coilDir );
     s.integer( ue3Counter );
     s.integer( refCyclesPerRevolution );
     s.integer( uf6aFlipFlop );

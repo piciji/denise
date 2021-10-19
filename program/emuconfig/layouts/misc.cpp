@@ -128,6 +128,8 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) {
         _settings->set<unsigned>( "runahead", pos);
     
         this->emulator->runAhead( pos );
+
+        audioManager->drive.reset();
     };
     
     runAheadLayout.options.performanceMode.onToggle = [this]() {

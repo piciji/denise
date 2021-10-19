@@ -24,7 +24,7 @@
 
 namespace LIBC64 {
 
-const std::string Interface::Version = "1105";
+const std::string Interface::Version = "1106";
     
 Interface::Interface() : Emulator::Interface( "C64" ) {        
     
@@ -830,6 +830,7 @@ auto Interface::run() -> void {
 auto Interface::runAhead(unsigned frames) -> void {
     system->runAhead.frames = frames;
     system->input->allowJit();
+    system->updateDriveSounds();
 }
 
 auto Interface::runAheadPerformance(bool state) -> void {
@@ -1522,7 +1523,7 @@ auto Interface::enableJit(bool state) -> void {
 }
 
 auto Interface::enableFloppySounds(bool state) -> void {
-    system->enableFloppySounds = state;
+    system->setFloppySounds( state );
 }
 
 auto Interface::activateDebugCart( unsigned limitCycles ) -> void {

@@ -97,7 +97,6 @@ struct Program : Emulator::Interface::Bind {
 	auto getFileNameFromMedia(Emulator::Interface::Media* media) -> std::string override;
     auto informDriveLoading(bool state) -> void override;
     auto autoStartFinish(bool soft) -> void override;
-    auto mixDriveSound( Emulator::Interface::Media* media, Emulator::Interface::DriveSound driveSound, unsigned data = 0 ) -> void override;
 
     auto addCustomFont() -> void;
     auto loadImageDataWhenOk( GUIKIT::File* file, unsigned fileId, Emulator::Interface::MediaGroup* group, uint8_t*& data ) -> bool;
@@ -120,6 +119,7 @@ struct Program : Emulator::Interface::Bind {
 	auto getAudioDriver() -> std::string;
     auto audioSample(int16_t sampleLeft, int16_t sampleRight) -> void override;
     auto audioFlush() -> void override;
+    auto mixDriveSound( Emulator::Interface::Media* media, Emulator::Interface::DriveSound driveSound, uint8_t data = 0) -> void override;
     
     //video
     auto setVideoManagerGlobals() -> void;

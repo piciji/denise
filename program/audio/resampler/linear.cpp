@@ -11,7 +11,6 @@ auto Linear::process( ) -> void {
     float b;
     float mu;
 
-    unsigned cc = 0;
     if (rData->inChannels == 1) {
         float* inp = rData->in;
 
@@ -34,8 +33,6 @@ auto Linear::process( ) -> void {
                 fraction += ratio;
 
                 outp++;
-
-                cc++;
             }
 
             fraction -= 1.0;

@@ -100,7 +100,9 @@ auto System::unserialize(uint8_t* data, unsigned size) -> bool {
     
     serializeAll(s);
 
-    remapCpu();  
+    remapCpu();
+
+    updateDriveSounds();
     
     return true;
 }    

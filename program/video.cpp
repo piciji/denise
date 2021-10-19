@@ -230,6 +230,8 @@ auto Program::fastForward( bool activate, bool aggressive ) -> void {
         globalSettings->set<bool>("video_sync_temp", false, false);
         globalSettings->set<bool>("fps_limit_temp", false, false);
         globalSettings->set<unsigned>("video_crt_temp", (unsigned)VideoManager::CrtMode::None, false);
+
+        audioManager->drive.reset();
     }
 
     if (activate)

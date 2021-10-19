@@ -18,7 +18,7 @@ prefix ?= /usr
 include data/Makefile
 
 objects := program view config emuconfig emumodel mediaview archiveviewer states firmware cmd statusbar
-objects += input audio video palette shader bass reverb panning audiorecord wavwriter cosine cosineSSE linearResample driveSounds
+objects += input audio video palette shader bass reverb panning audiorecord wavwriter cosine cosineSSE linearResample cubicResample driveSounds
 objects += guikit libami libC64 autoloader fileloader
 objects += driver
 ifeq ($(platform),windows)
@@ -182,6 +182,7 @@ obj/panning.o:		program/audio/dsp/panning.cpp
 obj/cosine.o:		program/audio/resampler/cosine.cpp
 obj/cosineSSE.o:	program/audio/resampler/cosineSSE.cpp
 obj/linearResample.o: program/audio/resampler/linear.cpp
+obj/cubicResample.o: program/audio/resampler/cubic.cpp
 obj/audiorecord.o:	program/audio/record/handler.cpp
 obj/wavwriter.o:	program/audio/record/wavWriter.cpp
 obj/driveSounds.o:	program/audio/mixer/drive.cpp
@@ -277,7 +278,7 @@ install:
 	install -D -m 644 data/$(dataFolder)/* $(prefix)/share/$(loname)/$(dataFolder)
 	install -D -m 644 data/$(fontFolder)/*.ttf $(prefix)/share/$(loname)/$(fontFolder)
 	install -D -m 644 data/$(imgFolder)/bundle/* $(prefix)/share/$(loname)/$(imgFolder)
-	install -D -m 644 data/$(soundFolder)/* $(prefix)/share/$(loname)/$(soundFolder)
+	cp -r data/$(soundFolder)/* $(prefix)/share/$(loname)/$(soundFolder)/
 	cp -r data/$(shaderFolder)/* $(prefix)/share/$(loname)/$(shaderFolder)/
     endif
 
