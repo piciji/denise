@@ -218,8 +218,8 @@ build: $(objects)
 	cp data/$(dataFolder)/* out/$(name).app/Contents/Resources/$(dataFolder)/
 	cp data/$(fontFolder)/*.ttf out/$(name).app/Contents/Resources/$(fontFolder)/
 	cp data/$(imgFolder)/bundle/* out/$(name).app/Contents/Resources/$(imgFolder)/
-	cp data/$(soundFolder)/* out/$(name).app/Contents/Resources/$(soundFolder)/
-	cp -r data/shader/* out/$(name).app/Contents/Resources/$(shaderFolder)/
+	cp -r data/$(soundFolder)/* out/$(name).app/Contents/Resources/$(soundFolder)/
+	cp -r data/$(shaderFolder)/* out/$(name).app/Contents/Resources/$(shaderFolder)/
 	
 	cp data/img/$(loname).icns out/$(name).app/Contents/Resources/$(name).icns
 
