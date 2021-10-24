@@ -427,6 +427,7 @@ Drive::Drive(uint8_t number, Emulator::Interface::Media* mediaConnected ) : stru
     wasAttachDetached = false;
     stepperDelay = 0;
     delayInProgress = !!attachDelay;
+    motorOn = false;
 
     frequency = 1000000;
     refCyclesInCpuCycle = 16;
@@ -872,7 +873,7 @@ auto Drive::power( ) -> void {
     randCounter = 0;
     randomizer.initXorShift( 0x1234abcd );
     
-    motorOn = false;
+    motorOn = true;
     motorOff.slowDown = false;
     readBuffer = writeBuffer = 0;
     writeValue = 0x55;
@@ -898,6 +899,13 @@ auto Drive::power( ) -> void {
     randomizeRpm();
     extendedMemoryMap = expandMemory || (speeder > 1);
     wd1770->setRateInMhz( 1, 16 );
+
+    if (system->driveSounds.useFloppy) {
+        if (loaded)
+            system->interface->mixDriveSound(mediaConnected, DriveSound::FloppyInsert);
+
+        system->interface->mixDriveSound( mediaConnected, DriveSound::FloppySpinUp );
+    }
 }
 
 auto Drive::updateCycleSpeed(bool mhz2x, bool init) -> void {
@@ -1037,7 +1045,7 @@ auto Drive::detach() -> void {
     
     if (loaded) {
         attachDelay = DISC_DELAY;
-        if (system->driveSounds.useFloppy)
+        if (iecBus->powerOn && system->driveSounds.useFloppy)
             system->interface->mixDriveSound( mediaConnected, DriveSound::FloppyEject );
     }
 
@@ -1075,8 +1083,8 @@ auto Drive::attach( Emulator::Interface::Media* media, uint8_t* data, unsigned s
 
     delayInProgress = attachDelay || stepperDelay;
 
-    if (system->driveSounds.useFloppy)
-        system->interface->mixDriveSound( mediaConnected, DriveSound::FloppyInsert );
+    if (iecBus->powerOn && system->driveSounds.useFloppy)
+        system->interface->mixDriveSound( mediaConnected, DriveSound::FloppyInsert, wasAttachDetached );
 
     if ( !structure.attach( data, size, loadGracefully ) )
         return;

@@ -188,7 +188,7 @@ auto Program::setMemoryPattern(Emulator::Interface* emulator) -> void {
 
 auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
     bool emuSwap = activeEmulator != emulator;
-    powerOff();			
+    powerOff();
     
     activeEmulator = emulator;
     auto settings = getSettings( emulator );
@@ -623,4 +623,3 @@ auto Program::getEmulator( std::string ident ) -> Emulator::Interface* {
     
     return nullptr;
 }
-

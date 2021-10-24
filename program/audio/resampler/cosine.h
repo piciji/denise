@@ -41,8 +41,6 @@ struct Cosine {
         return (val > 0.5) ? 0.5 : (val < -0.5) ? -0.5 : val;
     }
 
-    #define cc_kernel(x, b)    ((cc_int((x) + 0.5, (b)) - cc_int((x) - 0.5, (b))))
-
     static inline auto add_to(const FrameBuffer* source, FrameBuffer* target, float ratio) -> void {
         target->l += source->l * ratio;
         target->r += source->r * ratio;

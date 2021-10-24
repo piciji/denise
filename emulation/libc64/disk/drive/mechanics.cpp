@@ -368,8 +368,9 @@ auto Drive::stepSound(uint8_t step) -> void {
         sound = DriveSound::FloppyStepUpperTracks;
 
     else if (currentHalftrack == 0) {
-        if( (step == 3) || ( (step == 2) && !coilDir))
+        if( (step == 3) || ( (step == 2) && !coilDir)) {
             sound = DriveSound::FloppyHeadBang;
+        }
     }
 
     system->interface->mixDriveSound( mediaConnected, sound, currentHalftrack );

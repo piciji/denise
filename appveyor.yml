@@ -17,6 +17,7 @@ branches:
   only:
     - master
     - /v\d*\.\d*\.\d*/
+    - drive_sound
   
 environment:
   matrix:

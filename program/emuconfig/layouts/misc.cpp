@@ -126,10 +126,10 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) {
         runAheadLayout.control.value.setText( std::to_string(pos) );
         
         _settings->set<unsigned>( "runahead", pos);
-    
-        this->emulator->runAhead( pos );
 
         audioManager->drive.reset();
+
+        this->emulator->runAhead( pos );
     };
     
     runAheadLayout.options.performanceMode.onToggle = [this]() {

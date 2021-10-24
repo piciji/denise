@@ -44,7 +44,7 @@ auto AudioManager::setFrequency() -> void {
     setResampler();
 
     drive.unload( );
-    setDriveSounds();
+    setDriveSounds( false );
 }
 
 auto AudioManager::setSynchronize() -> void {
@@ -116,7 +116,7 @@ auto AudioManager::setVolume() -> void {
         floatConversion = ( (float)volume * 0.01 ) / 32768.0;
 }
 
-auto AudioManager::setDriveSounds() -> void {
+auto AudioManager::setDriveSounds( bool init ) -> void {
     if (!activeEmulator)
         return;
 
@@ -124,7 +124,8 @@ auto AudioManager::setDriveSounds() -> void {
 
     mixFloppySounds = settings->get<bool>("audio_floppy", false);
 
-    activeEmulator->enableFloppySounds( mixFloppySounds );
+    if (init)
+        activeEmulator->enableFloppySounds( mixFloppySounds );
 
     if (mixFloppySounds) {
         unsigned volume = settings->get<unsigned>("audio_floppy_volume", 100u, {0u, 200u});

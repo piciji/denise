@@ -20,6 +20,8 @@
 
 #include "cosine.h"
 
+#define cc_kernel(x, b)    ((cc_int((x) + 0.5, (b)) - cc_int((x) - 0.5, (b))))
+
 namespace Resampler {
 
 auto Cosine::build() -> void {

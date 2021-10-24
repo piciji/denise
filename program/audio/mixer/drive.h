@@ -30,6 +30,7 @@ struct Drive {
         unsigned size;
         uint8_t channels;
         float volume;
+        float baseVolume;
     };
     std::vector<Sound> sounds;
 
@@ -41,6 +42,7 @@ struct Drive {
         unsigned firstOffset;
         unsigned secondOffset;
         unsigned thirdOffset;
+        uint8_t state;      // bit 0,1,2: step counter, bit 7: detach+attach
     };
     std::vector<Device> devices;
 

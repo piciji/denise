@@ -388,7 +388,8 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
 
         _settings->set<bool>( "audio_floppy", driveLayout.floppyVolume.active.checked() );
 
-        audioManager->setDriveSounds();
+        if (emulator == activeEmulator)
+            audioManager->setDriveSounds();
     };
 
     driveLayout.floppyVolume.slider.onChange = [this]() {
@@ -398,7 +399,8 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
 
         driveLayout.floppyVolume.value.setText( std::to_string( value ) + " %" );
 
-        audioManager->setDriveSounds();
+        if (activeEmulator)
+            audioManager->drive.setVolume( activeEmulator, activeEmulator->getDiskMediaGroup(), (float)value * 0.01 );
     };
 
     driveLayout.selection.floppyCombo.onChange = [this]() {
@@ -408,8 +410,8 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
         _settings->set<std::string>( "audio_floppy_folder", folder );
 
         audioManager->drive.unload( emulator, emulator->getDiskMediaGroup() );
-
-        audioManager->setDriveSounds();
+        if (emulator == activeEmulator)
+            audioManager->setDriveSounds( false );
     };
 
     driveLayout.selection.update.onActivate = [this]() {
@@ -421,8 +423,8 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
         _settings->set<std::string>("audio_floppy_folder", driveLayout.selection.floppyCombo.text() );
 
         audioManager->drive.unload( emulator, emulator->getDiskMediaGroup() );
-
-        audioManager->setDriveSounds();
+        if (emulator == activeEmulator)
+            audioManager->setDriveSounds( false );
     };
 
     updateFloppyProfileList();

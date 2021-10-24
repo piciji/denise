@@ -18,7 +18,7 @@ prefix ?= /usr
 include data/Makefile
 
 objects := program view config emuconfig emumodel mediaview archiveviewer states firmware cmd statusbar
-objects += input audio video palette shader bass reverb panning audiorecord wavwriter cosine cosineSSE linearResample cubicResample driveSounds
+objects += input audio video palette shader bass reverb panning audiorecord wavwriter sinc cosine cosineSSE driveSounds
 objects += guikit libami libC64 autoloader fileloader
 objects += driver
 ifeq ($(platform),windows)
@@ -181,8 +181,11 @@ obj/reverb.o:		program/audio/dsp/reverb.cpp
 obj/panning.o:		program/audio/dsp/panning.cpp
 obj/cosine.o:		program/audio/resampler/cosine.cpp
 obj/cosineSSE.o:	program/audio/resampler/cosineSSE.cpp
-obj/linearResample.o: program/audio/resampler/linear.cpp
-obj/cubicResample.o: program/audio/resampler/cubic.cpp
+#obj/cosinePrecise.o:program/audio/resampler/cosinePrecise.cpp
+obj/sinc.o:		program/audio/resampler/sinc.cpp
+#obj/linearResample.o: program/audio/resampler/linear.cpp
+#obj/cubicResample.o: program/audio/resampler/cubic.cpp
+#obj/hermiteResample.o: program/audio/resampler/hermite.cpp
 obj/audiorecord.o:	program/audio/record/handler.cpp
 obj/wavwriter.o:	program/audio/record/wavWriter.cpp
 obj/driveSounds.o:	program/audio/mixer/drive.cpp

@@ -107,10 +107,9 @@ struct System {
     bool kernalBootComplete = false;
     bool powerOn = false;
     bool cycleRendererNextBoot = false;
-    bool enableFloppySounds = false;
     
     struct {
-        unsigned config;
+        unsigned config = 0;
         unsigned frameCounter;
         bool renderNext;
     } fastForward;
