@@ -78,19 +78,11 @@ namespace Resampler {
 
         auto freeData() -> void;
 
-        static inline auto sinc(double val) -> double {
-            if (fabs(val) < 0.00001)
-                return 1.0;
-            return sin(val) / val;
-        }
+        static inline auto _sinc(double val) -> double;
 
-        static inline auto kaiser_window_function(double index, double beta) -> double {
-            return besseli0(beta * sqrtf(1 - index * index));
-        }
+        static inline auto kaiser_window_function(double index, double beta) -> double;
 
-        static inline auto lanzcos_window_function(double index) -> double {
-            return sinc(M_PI * index);
-        }
+        static inline auto lanzcos_window_function(double index) -> double;
 
         auto init_table_kaiser(double cutoff, float *phase_table, int phases, int taps, bool calculate_delta) -> void;
         auto init_table_lanczos(double cutoff, float *phase_table, int phases, int taps, bool calculate_delta) -> void;

@@ -351,7 +351,7 @@ namespace Resampler {
                 double window_phase = (double)n / (phases * taps); /* [0, 1). */
                 window_phase        = 2.0 * window_phase - 1.0; /* [-1, 1) */
                 sinc_phase          = sidelobes * window_phase;
-                val                 = cutoff * sinc(M_PI * sinc_phase * cutoff) *
+                val                 = cutoff * _sinc(M_PI * sinc_phase * cutoff) *
                                       kaiser_window_function(window_phase, ctx.kaiser_beta) / window_mod;
                 phase_table[i * stride * taps + j] = val;
             }
@@ -382,7 +382,7 @@ namespace Resampler {
                 window_phase        = 2.0 * window_phase - 1.0; /* (-1, 1] */
                 sinc_phase          = sidelobes * window_phase;
 
-                val                 = cutoff * sinc(M_PI * sinc_phase * cutoff) *
+                val                 = cutoff * _sinc(M_PI * sinc_phase * cutoff) *
                                       kaiser_window_function(window_phase, ctx.kaiser_beta) / window_mod;
                 delta = (val - phase_table[phase * stride * taps + j]);
                 phase_table[(phase * stride + 1) * taps + j] = delta;
@@ -406,7 +406,7 @@ namespace Resampler {
                 double window_phase = (double)n / (phases * taps); /* [0, 1). */
                 window_phase        = 2.0 * window_phase - 1.0; /* [-1, 1) */
                 sinc_phase          = sidelobes * window_phase;
-                val                 = cutoff * sinc(M_PI * sinc_phase * cutoff) *
+                val                 = cutoff * _sinc(M_PI * sinc_phase * cutoff) *
                                       lanzcos_window_function(window_phase) / window_mod;
                 phase_table[i * stride * taps + j] = val;
             }
@@ -437,7 +437,7 @@ namespace Resampler {
                 window_phase        = 2.0 * window_phase - 1.0; /* (-1, 1] */
                 sinc_phase          = sidelobes * window_phase;
 
-                val                 = cutoff * sinc(M_PI * sinc_phase * cutoff) *
+                val                 = cutoff * _sinc(M_PI * sinc_phase * cutoff) *
                                       lanzcos_window_function(window_phase) / window_mod;
                 delta = (val - phase_table[phase * stride * taps + j]);
                 phase_table[(phase * stride + 1) * taps + j] = delta;
@@ -492,6 +492,20 @@ namespace Resampler {
         }
 
         return sum;
+    }
+
+    inline auto Sinc::_sinc(double val) -> double {
+        if (fabs(val) < 0.00001)
+            return 1.0;
+        return sin(val) / val;
+    }
+
+    inline auto Sinc::kaiser_window_function(double index, double beta) -> double {
+        return besseli0(beta * sqrtf(1 - index * index));
+    }
+
+    inline auto Sinc::lanzcos_window_function(double index) -> double {
+        return _sinc(M_PI * index);
     }
 
     auto Sinc::freeData() -> void {
