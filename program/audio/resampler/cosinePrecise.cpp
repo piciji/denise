@@ -20,6 +20,10 @@
 
 #include "cosinePrecise.h"
 
+#ifndef M_PI
+#define M_PI    3.14159265358979323846f
+#endif
+
 #define cc_kernel(x, b)    ((cc_int((x) + 0.5, (b)) - cc_int((x) - 0.5, (b))) / (2.0 * M_PI))
 
 namespace Resampler {
@@ -202,4 +206,10 @@ namespace Resampler {
         }
     }
 
+    inline auto CosinePrecise::cc_int(double x, double b) -> double {
+
+        double val = x * b * M_PI + sinf(x * b * M_PI);
+
+        return (val > M_PI) ? M_PI : (val < -M_PI) ? -M_PI : val;
+    }
 }

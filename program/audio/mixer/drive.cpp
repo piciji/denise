@@ -3,7 +3,6 @@
 #include "../../program.h"
 #include "../resampler/data.h"
 #include "../resampler/sinc.h"
-#include "../resampler/cosinePrecise.h"
 #include <cstring>
 
 static const signed char stepping[] = {

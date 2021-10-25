@@ -33,12 +33,7 @@ namespace Resampler {
             float r;
         };
 
-        static inline auto cc_int(double x, double b) -> double {
-
-            double val = x * b * M_PI + sinf(x * b * M_PI);
-
-            return (val > M_PI) ? M_PI : (val < -M_PI) ? -M_PI : val;
-        }
+        static inline auto cc_int(double x, double b) -> double;
 
         static inline auto add_to(const FrameBuffer* source, FrameBuffer* target, double ratio) -> void {
             target->l += source->l * ratio;
