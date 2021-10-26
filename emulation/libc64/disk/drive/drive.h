@@ -225,7 +225,7 @@ struct Drive {
     auto profDosAutoClockControl(uint16_t addr) -> void;
     auto prologicControlClassic(uint8_t addr, uint8_t data) -> void;
     auto prologicControl(uint16_t addr) -> void;
-    auto stepSound(uint8_t step) -> void;
+    auto stepSound(bool headBang) -> void;
 };
   
 }

@@ -295,10 +295,12 @@ auto Drive::updateStepper( uint8_t step ) -> bool {
 auto Drive::changeHalfTrack( uint8_t step ) -> void {
 
     if (step != 0) {
-        if (system->driveSounds.useFloppy)
-            stepSound( step );
+        bool headBang = (currentHalftrack == 0) && ((step == 3) || ( (step == 2) && !coilDir));
 
         updateStepper(step);
+
+        if (system->driveSounds.useFloppy)
+            stepSound( headBang );
     }
 
     if (operation & FLUXDATA_LEVEL) {
@@ -360,18 +362,9 @@ auto Drive::changeHalfTrack( uint8_t step ) -> void {
 
 }
 
-auto Drive::stepSound(uint8_t step) -> void {
+auto Drive::stepSound(bool headBang) -> void {
 
-    DriveSound sound = DriveSound::FloppyStep;
-
-    if (currentHalftrack > 16)
-        sound = DriveSound::FloppyStepUpperTracks;
-
-    else if (currentHalftrack == 0) {
-        if( (step == 3) || ( (step == 2) && !coilDir)) {
-            sound = DriveSound::FloppyHeadBang;
-        }
-    }
+    DriveSound sound = headBang ? DriveSound::FloppyHeadBang : DriveSound::FloppyStep;
 
     system->interface->mixDriveSound( mediaConnected, sound, currentHalftrack );
 }

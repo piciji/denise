@@ -685,10 +685,12 @@ Drive::Drive(uint8_t number, Emulator::Interface::Media* mediaConnected ) : stru
             if (lines->iob & 4) { // stepper motor works only when drive motor is active
 
                 if (stepperDelay) {
-                    if (system->driveSounds.useFloppy)
-                        stepSound( nextStep );
+                    bool headBang = (currentHalftrack == 0) && ((nextStep == 3) || ( (nextStep == 2) && !coilDir));
 
                     updateStepper( nextStep );
+
+                    if (system->driveSounds.useFloppy)
+                        stepSound( headBang );
                 }
 
                 uint8_t _step = ((lines->iob & 3) - (currentHalftrack & 3)) & 3;

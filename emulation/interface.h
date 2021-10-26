@@ -51,7 +51,7 @@ struct Interface {
     enum class TapeMode { Stop = 0, Play = 1, Record = 2, Forward = 3, Rewind = 4, ResetCounter = 5, Unpressed = 6 };
     enum class FastForward { NoAudioOut = 1, NoVideoOut = 2, ReduceVideoOutput = 4, NoVideoSequencer = 8 };
     enum class DriveSound { FloppyInsert = 1, FloppyEject = 2, FloppySpinUp = 3, FloppySpinDown = 4, FloppySpin = 5,
-        FloppyStep = 6, FloppyStepUpperTracks = 7, FloppyHeadBang = 8  };
+        FloppyHeadBang = 6, FloppyStep = 7 };
 
     std::string ident;
     
