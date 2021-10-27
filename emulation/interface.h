@@ -253,6 +253,7 @@ struct Interface {
     struct Stats {
         Region region;
         double sampleRate;
+        uint8_t sampleIntervall;
         double fps;
         bool stereoSound;
         auto isPal() -> bool { return region == Region::Pal; }

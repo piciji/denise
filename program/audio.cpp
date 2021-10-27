@@ -50,6 +50,12 @@ auto Program::audioFlush() -> void {
 }
 
 auto Program::mixDriveSound( Emulator::Interface::Media* media, Emulator::Interface::DriveSound driveSound, uint8_t data ) -> void {
-    audioFlush();
+    auto& stats = activeEmulator->getStatsForSelectedRegion();
+
+    if (stats.sampleIntervall > 2) {
+        if ( (stats.sampleIntervall * audioManager->bufferPos) > (256 << (uint8_t)stats.stereoSound) )
+            audioManager->flush();
+    }
+
     audioManager->drive.addSound( activeEmulator, media, (Mixer::Drive::DriveSound)driveSound, data );
 }

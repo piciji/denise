@@ -118,6 +118,12 @@ namespace Mixer {
                 Sound* sound = device.third;
 
                 for (unsigned i = 0; i < bufferSize; i += 2) {
+                    if (device.thirdOffset == sound->size) {
+                        device.thirdOffset = 0;
+                        device.third = nullptr;
+                        break;
+                    }
+
                     _f = sound->data[device.thirdOffset++] * sound->volume;
 
                     buffer[i] = mix(buffer[i], _f);
@@ -126,12 +132,6 @@ namespace Mixer {
                         _f = sound->data[device.thirdOffset++] * sound->volume;
 
                     buffer[i + 1] = mix(buffer[i + 1], _f);
-
-                    if (device.thirdOffset == sound->size) {
-                        device.thirdOffset = 0;
-                        device.third = nullptr;
-                        break;
-                    }
                 }
             }
         }
@@ -294,7 +294,7 @@ namespace Mixer {
 
         for(auto& info : list) {
 
-            logger->log(info.name);
+            //logger->log(info.name);
 
             Assign* assign = nullptr;
             for(auto& _assign : assigns) {
@@ -341,18 +341,18 @@ namespace Mixer {
 
             data += 20;
             uint8_t sampleType = data[0];
-            logger->log(std::to_string(data[0]));
+            //logger->log(std::to_string(data[0]));
             data += 2;
             if (data[0] > 2)
                 continue; // 1 or 2 channels supported
             sound->channels = data[0];
             data += 2;
             unsigned sampleRate = (data[3] << 24) | (data[2] << 16) | (data[1] << 8) | data[0];
-            logger->log(std::to_string(sampleRate), 0);
-            logger->log(std::to_string(sound->channels), 0);
+            //logger->log(std::to_string(sampleRate), 0);
+            //logger->log(std::to_string(sound->channels), 0);
             data += 10;
             unsigned bytesPerSample = ((data[1] << 8) | data[0]) >> 3;
-            logger->log(std::to_string(bytesPerSample));
+            //logger->log(std::to_string(bytesPerSample));
             data += 2;
             size -= 36;
 
@@ -392,7 +392,7 @@ namespace Mixer {
                 uint32_t _sample;
                 unsigned msb = 1 << ((bytesPerSample << 3) - 1);
                 unsigned mask = (1ull << (bytesPerSample << 3)) - 1;
-                logger->log(std::to_string(mask), 1);
+                //logger->log(std::to_string(mask), 1);
 
                 sound->data = new float[ _samples + 1 ];
 
@@ -416,7 +416,7 @@ namespace Mixer {
             file.unload();
 
             if (frequency != sampleRate) { // need resample
-                logger->log("resample");
+                //logger->log("resample");
                 Resampler::Data rData;
                 rData.out = new float[4096];
 
@@ -462,10 +462,10 @@ namespace Mixer {
             }
 
             sound->playTime = (sound->size / sound->channels) * (1000000.0 / (float)frequency);
-            logger->log("playtime" );
-            logger->log(std::to_string(sound->size), 0);
-            logger->log(std::to_string(sound->channels), 0);
-            logger->log(std::to_string(sound->playTime), 0);
+            //logger->log("playtime" );
+            //logger->log(std::to_string(sound->size), 0);
+            //logger->log(std::to_string(sound->channels), 0);
+            //logger->log(std::to_string(sound->playTime), 0);
         }
 
         reset();
