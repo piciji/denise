@@ -35,6 +35,7 @@ http://vice-emu.sourceforge.net/
 
 Dynamic Rate Control (DRC) formula is copyrighted by RetroArch.
 cosine resampler is copyrighted by RetroArch.
+sinc resampler is copyrighted by RetroArch.
 
 C64 TrueType v1.2.1/Style font is used for listing content in a gui listview
 

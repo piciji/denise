@@ -228,11 +228,19 @@ struct pSquareCanvas : pWidget {
 
 struct pImageView : pWidget {
     ImageView& imageView;
-    auto setImage(Image* image) -> void {}
+    GdkPixbuf* surface = nullptr;
+
+    auto setImage(Image* image) -> void;
     auto setUri( std::string uri ) -> void {}
-    auto onLink() -> void {}
-    auto init() -> void {}
-    auto minimumSize() -> Size { return {0,0}; }
+    auto init() -> void;
+    auto create() -> void;
+    auto update() -> void;
+    auto destroy() -> void;
+    auto minimumSize() -> Size;
+    auto setGeometry(Geometry geometry) -> void;
+    static auto mousePress(GtkWidget* widget, GdkEventButton* event, pImageView* self) -> gboolean;
+    static auto expose(GtkWidget* widget, GdkEventExpose* event, pImageView* self) -> signed;
+    static auto mouseMove(GtkWidget* widget, GdkEventButton* event, pImageView* self) -> gboolean;
 
     pImageView(ImageView& imageView) : pWidget(imageView), imageView(imageView) {}
 };

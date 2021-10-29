@@ -31,6 +31,7 @@ namespace GUIKIT {
 #include "widgets/listview.cpp"
 #include "widgets/treeview.cpp"
 #include "widgets/squareCanvas.cpp"
+#include "widgets/imageView.cpp"
 
 auto pApplication::run() -> void {
     if(Application::loop) {

@@ -3,7 +3,11 @@
 
 ![Denise Logo](https://deniseemu.sourceforge.io/logo.png)
 
-[Downloads](https://sourceforge.net/projects/deniseemu/files/) - [Todo](https://bitbucket.org/piciji/denise/src/master/data/txt/todo.md) - [IssueTracker](https://bitbucket.org/piciji/denise/issues) - [Nightlies](https://ci.appveyor.com/project/piciji/denise/history) - [Build info](https://bitbucket.org/piciji/denise/src/master/data/txt/buildinfo) - [License](https://bitbucket.org/piciji/denise/src/master/data/txt/licence)
+[Downloads](https://sourceforge.net/projects/deniseemu/files/) - [IssueTracker](https://bitbucket.org/piciji/denise/issues) - [Nightlies](https://ci.appveyor.com/project/piciji/denise/history) - [Build info](https://bitbucket.org/piciji/denise/src/master/data/txt/buildinfo) - [License](https://bitbucket.org/piciji/denise/src/master/data/txt/licence)
+
+<a href="https://www.jetbrains.com/?from=Denise">
+<img style="float: right;" src="https://resources.jetbrains.com/storage/products/company/brand/logos/CLion.png" alt="Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trademarks of JetBrains s.r.o." height="150" />
+</a>
 
 # changelog
 
