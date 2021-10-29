@@ -5,13 +5,16 @@ SettingsLayout::~SettingsLayout() {
 
 AboutLayout::AboutLayout() {
     setPadding(10);
-    left.append(left.author, {0u, 0u}, 2);
-    left.append(left.license, {0u, 0u}, 2);
+    left.append(left.empty, {0u, 0u}, 5);
+    left.append(left.author, {0u, 0u}, 5);
+    left.append(left.license, {0u, 0u}, 5);
 	left.append(left.version, {0u, 0u});
 	right.append(right.icons8, {0u, 0u});
 	
-	append(left, {0u, 0u});
+	append(left, {0u, 0u}, 10);
+    append(denise, {0u, 0u});
 	append( *new GUIKIT::Widget, {~0u, 0u});
+    append(clion, {0u, 0u}, 20);
 	append(right, {0u, 0u});
 	
     setFont(GUIKIT::Font::system("bold"));
@@ -77,6 +80,16 @@ dialogHeight("px")
 
 SettingsLayout::SettingsLayout() {
     setMargin(10);
+
+    clion.loadPng((uint8_t*)Logos::cLion, sizeof(Logos::cLion));
+    denise.loadPng((uint8_t*)Logos::denise, sizeof(Logos::denise));
+    about.clion.setImage( &clion );
+    about.clion.setUri( "https://www.jetbrains.com/?from=" APP_NAME );
+    about.clion.setTooltip("Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trademarks of JetBrains s.r.o.");
+
+    about.denise.setImage( &denise );
+    about.denise.setUri( "https://sourceforge.net/projects/deniseemu/" );
+    about.denise.setTooltip( APP_NAME );
     
     upperLayout.append(lang, {~0u, ~0u}, 10);
     upperLayout.append(switches, {~0u, 0u});

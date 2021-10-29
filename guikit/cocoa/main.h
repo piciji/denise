@@ -201,6 +201,17 @@ struct pSquareCanvas : pWidget {
     pSquareCanvas(SquareCanvas& squareCanvas) : pWidget(squareCanvas), squareCanvas(squareCanvas) {}
 };
 
+struct pImageView : pWidget {
+    ImageView& imageView;
+    auto setImage(Image* image) -> void {}
+    auto setUri( std::string uri ) -> void {}
+    auto onLink() -> void {}
+    auto init() -> void {}
+    auto minimumSize() -> Size { return {0,0}; }
+
+    pImageView(ImageView& imageView) : pWidget(imageView), imageView(imageView) {}
+};
+
 struct pButton : pWidget {
     Button& button;
 

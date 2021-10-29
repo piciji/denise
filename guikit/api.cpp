@@ -685,6 +685,19 @@ auto SquareCanvas::setBorderColor(unsigned borderSize, unsigned borderColor) -> 
 
 SquareCanvas::SquareCanvas() : Widget(*new pSquareCanvas(*this)), p((pSquareCanvas&)Widget::p) { p.init(); }
 
+auto ImageView::setImage(Image* image) -> void {
+    state.image = image;
+    p.setImage(image);
+}
+
+auto ImageView::setUri( std::string uri ) -> void {
+    state.uri = uri;
+
+    p.setUri( uri );
+}
+
+ImageView::ImageView() : Widget(*new pImageView(*this)), p((pImageView&)Widget::p) { p.init(); }
+
 Button::Button() : Widget(*new pButton(*this)), p((pButton&)Widget::p) { p.init(); }
 
 auto StepButton::setRange(int16_t minValue, int16_t maxValue) -> void {    

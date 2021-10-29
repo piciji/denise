@@ -52,6 +52,7 @@ struct pViewport;
 struct pFrame;
 struct pTabFrame;
 struct pBrowserWindow;
+struct pImageView;
 struct Zip;
 struct Gzip;
 struct Tar;
@@ -485,6 +486,23 @@ struct SquareCanvas : Widget {
     } state;
     
     SquareCanvas();
+};
+
+struct ImageView : Widget {
+    std::function<void ()> onClick = nullptr;
+
+    auto setImage(Image* image) -> void;
+    auto setUri( std::string uri ) -> void;
+
+    auto uri() -> std::string { return state.uri; };
+
+    struct {
+        Image* image = nullptr;
+        std::string uri = "";
+    } state;
+
+    pImageView& p;
+    ImageView();
 };
 
 struct Button : Widget {

@@ -267,6 +267,19 @@ struct pSquareCanvas : pWidget {
     static auto CALLBACK subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
 };
 
+struct pImageView : pWidget {
+    ImageView& imageView;
+    auto setImage(Image* image) -> void {}
+    auto setUri( std::string uri ) -> void {}
+    auto onLink() -> void;
+    auto rebuild() -> void;
+    auto create() -> void;
+    auto minimumSize() -> Size;
+
+    pImageView(ImageView& imageView) : pWidget(imageView), imageView(imageView) {}
+    static auto CALLBACK subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
+};
+
 struct pButton : pWidget {
     Button& button;
 

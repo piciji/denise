@@ -30,6 +30,7 @@ namespace GUIKIT {
 #include "widgets/viewport.cpp"
 #include "widgets/listview.cpp"
 #include "widgets/treeview.cpp"
+#include "widgets/imageView.cpp"
    
 auto pApplication::run() -> void {
     if (Application::loop) {        
