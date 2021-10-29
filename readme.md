@@ -5,7 +5,7 @@
 
 [Downloads](https://sourceforge.net/projects/deniseemu/files/) - [IssueTracker](https://bitbucket.org/piciji/denise/issues) - [Nightlies](https://ci.appveyor.com/project/piciji/denise/history) - [Build info](https://bitbucket.org/piciji/denise/src/master/data/txt/buildinfo) - [License](https://bitbucket.org/piciji/denise/src/master/data/txt/licence)
 
-[![CLion logo](https://resources.jetbrains.com/storage/products/company/brand/logos/CLion.png){height=150}](https://www.jetbrains.com/?from=Denise)
+[![CLion logo](https://resources.jetbrains.com/storage/products/company/brand/logos/CLion.png){width=352 height=150}](https://www.jetbrains.com/?from=Denise)
 
 # changelog
 
