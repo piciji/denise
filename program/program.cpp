@@ -596,6 +596,15 @@ auto Program::initAutoWarp(Emulator::Interface::MediaGroup* mediaGroup) -> void 
     }
 }
 
+auto Program::jam( Emulator::Interface::Media* media ) -> void {
+
+    std::string out = "CPU Jam";
+    if (media)
+        out = "CPU " + media->name + " Jam";
+
+    statusHandler->setMessage( out, 0, true );
+}
+
 auto Program::getLastUsedEmu() -> Emulator::Interface* {
 	
 	auto ident = globalSettings->get<std::string>("last_used_emu", "");

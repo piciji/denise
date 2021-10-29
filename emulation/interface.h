@@ -316,6 +316,7 @@ struct Interface {
         virtual auto informDriveLoading(bool) -> void {}
         virtual auto autoStartFinish(bool) -> void {}
         virtual auto mixDriveSound( Media*, DriveSound, uint8_t data ) -> void {}
+        virtual auto jam(Media*) -> void {}
     };
     Bind* bind = nullptr;
 
@@ -394,6 +395,10 @@ struct Interface {
 
     auto mixDriveSound( Media* media, DriveSound driveSound, uint8_t data = 0 ) -> void {
         bind->mixDriveSound( media, driveSound, data );
+    }
+
+    auto jam( Media* media = nullptr ) -> void {
+        bind->jam( media );
     }
 
     template<typename T> auto log(T data, bool newLine = true, bool asHex = false) -> void {			

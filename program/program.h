@@ -97,6 +97,7 @@ struct Program : Emulator::Interface::Bind {
 	auto getFileNameFromMedia(Emulator::Interface::Media* media) -> std::string override;
     auto informDriveLoading(bool state) -> void override;
     auto autoStartFinish(bool soft) -> void override;
+    auto jam( Emulator::Interface::Media* media = nullptr ) -> void override;
 
     auto addCustomFont() -> void;
     auto loadImageDataWhenOk( GUIKIT::File* file, unsigned fileId, Emulator::Interface::MediaGroup* group, uint8_t*& data ) -> bool;
