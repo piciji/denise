@@ -672,7 +672,7 @@ Drive::Drive(uint8_t number, Emulator::Interface::Media* mediaConnected ) : stru
             return out;
 
         } else if (type == Type::D1541C) {
-            return (uint8_t) ( ( ( ((currentHalftrack == 0) ? 0 : 1) | 0xfe ) & ~lines->ddra) | ( lines->pra & lines->ddra ) );
+            return (uint8_t) ( ( ( ((currentHalftrack == 0) ? 1 : 0) | 0xfe ) & ~lines->ddra) | ( lines->pra & lines->ddra ) );
         }
 
         return lines->ioa;
