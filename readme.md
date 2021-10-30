@@ -5,6 +5,12 @@
 
 [Downloads](https://sourceforge.net/projects/deniseemu/files/) - [IssueTracker](https://bitbucket.org/piciji/denise/issues) - [Nightlies](https://ci.appveyor.com/project/piciji/denise/history) - [Build info](https://bitbucket.org/piciji/denise/src/master/data/txt/buildinfo) - [License](https://bitbucket.org/piciji/denise/src/master/data/txt/licence)
 
+###developed with
+
+[![CLion logo](https://deniseemu.sourceforge.io/CLion.png)](https://www.jetbrains.com/?from=Denise)
+
+Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trademarks of JetBrains s.r.o.
+
 # changelog
 
 ## 1.1.2 (not yet released)
