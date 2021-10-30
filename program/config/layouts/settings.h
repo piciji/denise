@@ -43,14 +43,12 @@ struct PreviewLayout : GUIKIT::FramedVerticalLayout {
 struct AboutLayout : GUIKIT::FramedHorizontalLayout {
     
     struct Left : GUIKIT::VerticalLayout {
-        GUIKIT::Label empty;
         GUIKIT::Label author;
         GUIKIT::Label license;
         GUIKIT::Label version;        
     } left;
 
     GUIKIT::ImageView denise;
-    GUIKIT::ImageView clion;
     
     struct Right : GUIKIT::VerticalLayout {
         GUIKIT::Hyperlink icons8;
@@ -69,7 +67,6 @@ struct SettingsLayout : GUIKIT::VerticalLayout {
     std::vector<GUIKIT::Image*> images;
     GUIKIT::Timer previewTimer;
     std::vector<std::string> langIdents;
-    GUIKIT::Image clion;
     GUIKIT::Image denise;
 
     auto setLang() -> void;
