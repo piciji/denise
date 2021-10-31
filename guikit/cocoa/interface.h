@@ -215,6 +215,12 @@
     GUIKIT::SquareCanvas* squareCanvas;
 }
 @end
+
+@interface CocoaImageView : NSImageView {
+@public
+    GUIKIT::ImageView* imageView;
+}
+@end
         
 @interface CocoaHyperlink : NSTextField {
 @public

@@ -5,12 +5,12 @@
     if(self = [super initWithFrame:NSMakeRect(0, 0, 0, 0)]) {
         squareCanvas = &squareCanvasReference;
         [self setEditable:NO]; 
-    
+    /*
         NSTrackingArea* area = [[[NSTrackingArea alloc] initWithRect:[self bounds]
           options: NSTrackingMouseEnteredAndExited | NSTrackingMouseMoved | NSTrackingActiveInKeyWindow | NSTrackingInVisibleRect
           owner:self userInfo:nil
         ] autorelease];
-        [self addTrackingArea:area];
+        [self addTrackingArea:area];*/
     }
     return self;
 }

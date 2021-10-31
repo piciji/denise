@@ -28,6 +28,7 @@
 #include "widgets/treeview.cpp"
 #include "widgets/squareCanvas.cpp"
 #include "widgets/hyperlink.cpp"
+#include "widgets/imageView.cpp"
 
 @implementation CocoaDelegate : NSObject
 

@@ -203,11 +203,14 @@ struct pSquareCanvas : pWidget {
 
 struct pImageView : pWidget {
     ImageView& imageView;
-    auto setImage(Image* image) -> void {}
+    NSImage* surface = nullptr;
+
+    auto setImage(Image* image) -> void;
     auto setUri( std::string uri ) -> void {}
-    auto onLink() -> void {}
-    auto init() -> void {}
-    auto minimumSize() -> Size { return {0,0}; }
+    auto init() -> void;
+    auto redraw() -> void;
+    auto minimumSize() -> Size;
+    auto setGeometry(Geometry geometry) -> void;
 
     pImageView(ImageView& imageView) : pWidget(imageView), imageView(imageView) {}
 };
