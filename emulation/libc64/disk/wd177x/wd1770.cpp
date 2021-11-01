@@ -33,6 +33,7 @@ auto WD1770::setWriteProtected(bool state) -> void {
 
 auto WD1770::setDiskAccessible(bool state) -> void { // if motor is not controlled by WD177x
     motorAdvance = state;
+    indexHole = !motorAdvance && (commandType == 1 || commandType == 4);
 }
 
 auto WD1770::read(uint16_t address) -> uint8_t {
@@ -54,7 +55,8 @@ auto WD1770::read(uint16_t address) -> uint8_t {
 
 #define SET_TYPE(_type, _ident) \
     /*system->interface->log("type "#_type" "#_ident);*/ \
-    commandType = _type;
+    commandType = _type;        \
+    indexHole = !motorAdvance && (commandType == 1 || commandType == 4);
 
 auto WD1770::write(uint16_t address, uint8_t value) -> void {
 
@@ -129,6 +131,7 @@ auto WD1770::reset() -> void {
     dataReg = 0;
     indexHoleCounter = 0;
     syncMarkDetector = false;
+    syncMarkDetectorC2 = false;
     syncMark = false;
     delay = 0;
     commandStage = 0;
@@ -156,6 +159,8 @@ auto WD1770::reset() -> void {
     headOffset = 0;
     direction = 0;
     indexHole = false;
+    indexHoleTransition = false;
+    indexHoleWaitBegin = false;
     trackZero = false;
     forceInterruptDelay = 0;
     indexHoleDelay = 0;
@@ -276,6 +281,7 @@ auto WD1770::clock() -> void {
             }
             indexHoleCounter = 0;
             syncMarkDetector = (commandType != 1) && (baseCommand() != WRITE_TRACK);
+            syncMarkDetectorC2 = baseCommand() == READ_TRACK;
             commandStage = 8;
 
         case 8: CHECK_FORCE_INTERRUPT
@@ -394,7 +400,7 @@ auto WD1770::clock() -> void {
                         break;
                     case 7:
                         if (newByte()) {
-                            if (DSR == 0xa1) {
+                            if (syncMark && (DSR == 0xa1)) {
                                 byteCount++;
                                 crc = 0xcdb4;
 
@@ -467,7 +473,7 @@ auto WD1770::clock() -> void {
                         break;
                     case 1:
                         if (newByte()) {
-                            if (DSR == 0xa1) {
+                            if (syncMark && (DSR == 0xa1)) {
                                 byteCount++;
                                 crc = 0xcdb4;
 
@@ -512,6 +518,7 @@ auto WD1770::clock() -> void {
                                 }
 
                             } else if (byteCount == 4) {
+                                DSR &= 3;
                                 if (DSR == 0) sectorLength = 128;
                                 else if (DSR == 1) sectorLength = 256;
                                 else if (DSR == 2) sectorLength = 512;
@@ -562,7 +569,7 @@ auto WD1770::clock() -> void {
                                 break;
                             }
 
-                            if (DSR == 0xa1) {
+                            if (syncMark && (DSR == 0xa1)) {
                                 byteCount++;
                                 crc = 0xcdb4;
 
@@ -753,7 +760,7 @@ auto WD1770::clock() -> void {
                                 break;
                             case 1:
                                 if (newByte()) {
-                                    if (DSR == 0xa1) {
+                                    if (syncMark && (DSR == 0xa1)) {
                                         byteCount++;
                                         crc = 0xcdb4;
 
@@ -806,20 +813,16 @@ auto WD1770::clock() -> void {
                     case READ_TRACK: {
                         switch (commandSubStage) {
                             case 0:
-                                if (indexHole) {
+                                if (indexHoleTransition) {
+                                    indexHoleTransition = false;
                                     commandSubStage = 1;
                                     byteReady = false;
                                 }
                                 break;
                             case 1:
-                                if(newByte()) {
-                                    updateDR();
-                                    commandSubStage = 2;
-                                }
-                                break;
-                            case 2:
                                 // AM detector is always active during read track
-                                if (indexHole) {
+                                if (indexHoleTransition) {
+                                    indexHoleTransition = false;
                                     complete();
                                 } else if (newByte()) {
                                     updateDR();
@@ -850,7 +853,8 @@ auto WD1770::clock() -> void {
                                 }
                                 break;
                             case 2:
-                                if (indexHole) {
+                                if (indexHoleTransition) {
+                                    indexHoleTransition = false;
                                     commandSubStage = 3;
                                     bitCounter = 0;
                                     fluxPending = false;
@@ -863,13 +867,8 @@ auto WD1770::clock() -> void {
                                 }
                                 break;
                             case 3:
-                                if(newByte()) {
-                                    prepareNextByteToWrite();
-                                    commandSubStage = 4;
-                                }
-                                break;
-                            case 4:
-                                if (indexHole) {
+                                if (indexHoleTransition) {
+                                    indexHoleTransition = false;
                                     writeGate = false;
                                     complete();
                                 } else if (newByte()) {
@@ -914,6 +913,7 @@ inline auto WD1770::newByte() -> bool {
 auto WD1770::complete() -> void {
     writeGate = false;
     syncMarkDetector = false;
+    syncMarkDetectorC2 = false;
     commandStage = 9;
     indexHoleCounter = 0;
     delay = 16 << getTimeFactor();
@@ -992,11 +992,13 @@ auto WD1770::readUserData() -> void {
     if (++headOffset >= _maxPos) {
         headOffset = 0;
         indexHole = true;
+        indexHoleTransition = true;
         indexHoleCounter++;
         if (commandType == 1 || commandType == 4)
             status |= DATA_REQUEST_INDEX;
-    } else if (indexHole) {
+    } else if (indexHole && (headOffset == 100)) {
         indexHole = false;
+        indexHoleTransition = false;
         if (commandType == 1 || commandType == 4)
             status &= ~DATA_REQUEST_INDEX;
     }
@@ -1010,11 +1012,11 @@ auto WD1770::readUserData() -> void {
 
         syncMark = syncMarkDetector && ((trackPtr->mfmSync[headOffset >> 3] & (1 << (headOffset & 7))) != 0);
 
-        if (syncMark && indexHole) {
-            indexHole = false;
-            if (commandType == 1 || commandType == 4)
-                status &= ~DATA_REQUEST_INDEX;
-        }
+//        if (syncMark && indexHole) {
+//            indexHole = false;
+//            if (commandType == 1 || commandType == 4)
+//                status &= ~DATA_REQUEST_INDEX;
+//        }
     }
 
     byteReady = true;
@@ -1043,11 +1045,13 @@ auto WD1770::writeUserData() -> void {
     if (++headOffset >= _maxPos) {
         headOffset = 0;
         indexHole = true;
+        indexHoleTransition = true;
         indexHoleCounter++;
         if (commandType == 1 || commandType == 4)
             status |= DATA_REQUEST_INDEX;
-    } else if (indexHole) {
+    } else if (indexHole && (headOffset == 100)) {
         indexHole = false;
+        indexHoleTransition = false;
         if (commandType == 1 || commandType == 4)
             status &= ~DATA_REQUEST_INDEX;
     }
@@ -1097,10 +1101,22 @@ auto WD1770::readFlux() -> void {
         if (indexHoleDelay) {
             indexHoleDelay -= todo;
             if (!indexHoleDelay) {
-                indexHole = false;
+                if (indexHoleWaitBegin && !syncMark) {
+                    indexHoleWaitBegin = false;
+                    indexHoleDelay = 51555;
+                    indexHole = true;
+                    indexHoleTransition = true;
+                    indexHoleCounter++;
 
-                if (commandType == 1 || commandType == 4)
-                    status &= ~DATA_REQUEST_INDEX;
+                    if (commandType == 1 || commandType == 4)
+                        status |= DATA_REQUEST_INDEX;
+                } else {
+                    indexHole = false;
+                    indexHoleTransition = false;
+                    indexHoleWaitBegin = false;
+                    if (commandType == 1 || commandType == 4)
+                        status &= ~DATA_REQUEST_INDEX;
+                }
             }
         }
 
@@ -1144,11 +1160,9 @@ auto WD1770::readFlux() -> void {
                     pulseIndex = trackPtr->firstPulse;
 
                     pulseDelta = trackPtr->pulses[pulseIndex].position + (CyclesPerRevolution300Rpm - pulse.position);
-                    indexHole = true;
-                    indexHoleDelay = 32 * 16;
-                    indexHoleCounter++;
-                    if (commandType == 1 || commandType == 4)
-                        status |= DATA_REQUEST_INDEX;
+                    indexHole = false;
+                    indexHoleWaitBegin = true;
+                    indexHoleDelay = CyclesPerRevolution300Rpm - pulse.position;
                 }
 
                 if ((pulse.strength == 0xffffffff) || (rand() < pulse.strength)) {
@@ -1157,9 +1171,13 @@ auto WD1770::readFlux() -> void {
                         if (rand() & 1)
                             // todo: adjust randomness by distance to border of inspection window
                             decodeMFM(0);
-                    }
 
-                    decodeMFM(1);
+                        decodeMFM(1);
+                    } else if (pulseWidth == 0) {
+                        decodeMFM(0); // no flux area
+                    } else
+                        decodeMFM(1);
+
                     pulseDuration = 38;    // 2.375
                     pulseWidth = 0;
                 }
@@ -1180,9 +1198,16 @@ auto WD1770::decodeMFM( bool bit ) -> void {
         if ((readBuffer & 0x7fff) == 0x4489) {  // a1
             //A1 (missing clock between 4 & 5), no data can produce this unique pattern
             syncMark = true;
-        } else if ( (readBuffer & 0x7fff) == 0x5224) { // c2
+        }
+    }
+
+    if (syncMarkDetectorC2) {
+        if ((readBuffer & 0x7fff) == 0x5224) { // c2
             // C2 (missing clock between 3 & 4), a bug in Controller because data can produce this pattern
             // only a problem during read track, because during read sector AM detector will be disabled on datafield
+            syncMark = true;
+        } else if ((readBuffer & 0x1ff) == 0x29) {
+            // Bug in Controller
             syncMark = true;
         }
     }
@@ -1199,12 +1224,13 @@ auto WD1770::decodeMFM( bool bit ) -> void {
     clockBit ^= 1;
 
     if (syncMark) {
-        if (indexHole) {
-            indexHole = false;
-            indexHoleDelay = 0;
-            if (commandType == 1 || commandType == 4)
-                status &= ~DATA_REQUEST_INDEX;
-        }
+//        if (indexHole) {
+//            indexHole = false;
+//            indexHoleWaitBegin = false;
+//            indexHoleDelay = 0;
+//            if (commandType == 1 || commandType == 4)
+//                status &= ~DATA_REQUEST_INDEX;
+//        }
         clockBit = true;
         bitCounter = 0;
     }
@@ -1233,10 +1259,22 @@ auto WD1770::writeFlux() -> void {
         if (indexHoleDelay) {
             indexHoleDelay -= todo;
             if (!indexHoleDelay) {
-                indexHole = false;
+                if (indexHoleWaitBegin && !fluxRemove) {
+                    indexHoleWaitBegin = false;
+                    indexHoleDelay = 51555;
+                    indexHole = true;
+                    indexHoleTransition = true;
+                    indexHoleCounter++;
 
-                if (commandType == 1 || commandType == 4)
-                    status &= ~DATA_REQUEST_INDEX;
+                    if (commandType == 1 || commandType == 4)
+                        status |= DATA_REQUEST_INDEX;
+                } else {
+                    indexHole = false;
+                    indexHoleTransition = false;
+                    indexHoleWaitBegin = false;
+                    if (commandType == 1 || commandType == 4)
+                        status &= ~DATA_REQUEST_INDEX;
+                }
             }
         }
 
@@ -1347,12 +1385,9 @@ auto WD1770::writeFlux() -> void {
 
                     pulseDelta = trackPtr->pulses[pulseIndex].position + (CyclesPerRevolution300Rpm - pulse.position);
 
-                    indexHole = true;
-                    indexHoleDelay = 32 * 16;
-                    indexHoleCounter++;
-
-                    if (commandType == 1 || commandType == 4)
-                        status |= DATA_REQUEST_INDEX;
+                    indexHole = false;
+                    indexHoleWaitBegin = true;
+                    indexHoleDelay = CyclesPerRevolution300Rpm - pulse.position;
                 }
             }
         }
@@ -1409,6 +1444,7 @@ auto WD1770::serialize(Emulator::Serializer& s) -> void {
     s.integer(sectorReg);
     s.integer(dataReg);
     s.integer(syncMarkDetector);
+    s.integer(syncMarkDetectorC2);
     s.integer(syncMark);
     s.integer(delay);
     s.integer(commandStage);
@@ -1441,6 +1477,8 @@ auto WD1770::serialize(Emulator::Serializer& s) -> void {
 
     s.integer(indexHoleCounter);
     s.integer(indexHole);
+    s.integer(indexHoleTransition);
+    s.integer(indexHoleWaitBegin);
     s.integer(trackZero);
     s.integer(forceInterruptDelay);
     s.integer(indexHoleDelay);

@@ -49,7 +49,7 @@ auto pImageView::update() -> void {
 
 auto pImageView::setGeometry(Geometry geometry) -> void {
 
-    update();
+  //  update();
     pWidget::setGeometry( geometry );
 }
 

@@ -65,6 +65,7 @@ protected:
     uint8_t dataReg;
 
     bool syncMarkDetector;
+    bool syncMarkDetectorC2;
     bool syncMark;
 
     unsigned delay;
@@ -108,7 +109,9 @@ protected:
     bool direction;
 
     uint8_t indexHoleCounter;
+    bool indexHoleTransition;
     bool indexHole;
+    bool indexHoleWaitBegin;
     bool trackZero;
 
     unsigned forceInterruptDelay;
