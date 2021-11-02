@@ -128,7 +128,7 @@ auto AudioManager::setDriveSounds( bool init ) -> void {
         activeEmulator->enableFloppySounds( mixFloppySounds );
 
     if (mixFloppySounds) {
-        unsigned volume = settings->get<unsigned>("audio_floppy_volume", 100u, {0u, 200u});
+        unsigned volume = settings->get<unsigned>("audio_floppy_volume", 100u, {0u, 300u});
 
         if (!drive.loaded( activeEmulator, activeEmulator->getDiskMediaGroup() )) {
             drive.readPack( activeEmulator, activeEmulator->getDiskMediaGroup() );

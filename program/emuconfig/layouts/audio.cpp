@@ -14,7 +14,7 @@ AudioDriveLayout::AudioDriveLayout() : floppyVolume("%", true) {
 
     setPadding(10);
 
-    floppyVolume.slider.setLength( 201 );
+    floppyVolume.slider.setLength( 301 );
     floppyVolume.updateValueWidth( "100 %" );
 }
 
@@ -573,7 +573,7 @@ auto AudioLayout::loadSettings(bool init) -> void {
 
     driveLayout.floppyVolume.active.setChecked( _settings->get<bool>( "audio_floppy", false) );
 
-    unsigned floppyVolume = _settings->get<unsigned>("audio_floppy_volume", 100u, {0u, 200u});
+    unsigned floppyVolume = _settings->get<unsigned>("audio_floppy_volume", 100u, {0u, 300u});
 
     driveLayout.floppyVolume.slider.setPosition( floppyVolume );
 
