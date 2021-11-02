@@ -181,6 +181,7 @@ private:
     auto getTrackOffsetGxx( uint8_t halfTrack, int& error ) -> uint32_t;
     auto handleAppendedTracksInDxx() -> bool;
     auto addMfmByte(uint8_t*& dest, uint8_t data, uint16_t& crc) -> void;
+    auto calcMfmCrc(uint8_t data, uint16_t& crc) -> void;
     auto parseMfm(MTrack* trackPtr, unsigned offset) -> void;
     auto writeMfm(const MTrack* trackPtr, unsigned offset) -> bool;
         

@@ -165,6 +165,10 @@ auto DiskStructure::prepareGxx() -> void {
 
 inline auto DiskStructure::addMfmByte(uint8_t*& dest, uint8_t data, uint16_t& crc) -> void {
     *dest++ = data;
+    calcMfmCrc(data, crc);
+}
+
+inline auto DiskStructure::calcMfmCrc(uint8_t data, uint16_t& crc) -> void {
     crc = WD1770::CRC1021[(crc >> 8) ^ data] ^ (crc << 8);
 }
 
@@ -185,7 +189,7 @@ auto DiskStructure::parseMfm(MTrack* trackPtr, unsigned offset) -> void {
     unsigned dataOffset = offset + 32 * 5;
 
     if (sectorCount > 32)
-        sectorCount = 0;
+        sectorCount = 32;
 
     uint8_t* ptr = trackPtr->data;
 
@@ -222,8 +226,7 @@ auto DiskStructure::parseMfm(MTrack* trackPtr, unsigned offset) -> void {
         uint8_t sectorSize = rawData[offset++];
         uint8_t errorByte = rawData[offset++];
 
-        if (sectorSize > 3)
-            sectorSize = 3;
+        sectorSize &= 3;
 
         auto blockSize = 12 + 4 + 6 + 22 + 12 + 4 + (128 << sectorSize) + 2 + 22;
 
@@ -239,7 +242,7 @@ auto DiskStructure::parseMfm(MTrack* trackPtr, unsigned offset) -> void {
         trackPtr->mfmSync[pos >> 3] |= 1 << (pos & 7); pos++;
         trackPtr->mfmSync[pos >> 3] |= 1 << (pos & 7); pos++;
 
-        crc = 0xffff;
+        crc = (errorByte & 1) ? 0 : 0xffff;
         addMfmByte(ptr, 0xa1, crc);
         addMfmByte(ptr, 0xa1, crc);
         addMfmByte(ptr, 0xa1, crc);
@@ -254,26 +257,31 @@ auto DiskStructure::parseMfm(MTrack* trackPtr, unsigned offset) -> void {
         memset(ptr, 0x4e, 22); ptr += 22;
         memset(ptr, 0x0, 12); ptr += 12;
 
-        pos = ptr - trackPtr->data;
-        trackPtr->mfmSync[pos >> 3] |= 1 << (pos & 7); pos++;
-        trackPtr->mfmSync[pos >> 3] |= 1 << (pos & 7); pos++;
-        trackPtr->mfmSync[pos >> 3] |= 1 << (pos & 7); pos++;
+        if ((errorByte & 4) == 0) {
+            pos = ptr - trackPtr->data;
+            trackPtr->mfmSync[pos >> 3] |= 1 << (pos & 7);
+            pos++;
+            trackPtr->mfmSync[pos >> 3] |= 1 << (pos & 7);
+            pos++;
+            trackPtr->mfmSync[pos >> 3] |= 1 << (pos & 7);
+            pos++;
 
-        crc = 0xffff;
-        addMfmByte(ptr, 0xa1, crc);
-        addMfmByte(ptr, 0xa1, crc);
-        addMfmByte(ptr, 0xa1, crc);
-        addMfmByte(ptr, 0xfb, crc);
+            crc = (errorByte & 2) ? 0 : 0xffff;
+            addMfmByte(ptr, 0xa1, crc);
+            addMfmByte(ptr, 0xa1, crc);
+            addMfmByte(ptr, 0xa1, crc);
+            addMfmByte(ptr, (errorByte & 0x10) ? 0xf8 : 0xfb, crc);
 
-        if (dataOffset + (128 << sectorSize) >= rawSize)
-            return;
+            if (dataOffset + (128 << sectorSize) >= rawSize)
+                return;
 
-        for (unsigned j = 0; j < (128 << sectorSize); j++) {
-            addMfmByte(ptr, rawData[dataOffset++], crc);
+            for (unsigned j = 0; j < (128 << sectorSize); j++) {
+                addMfmByte(ptr, rawData[dataOffset++], crc);
+            }
+
+            *ptr++ = crc >> 8;
+            *ptr++ = crc & 0xff;
         }
-
-        *ptr++ = crc >> 8;
-        *ptr++ = crc & 0xff;
 
         memset(ptr, 0x4e, 22); ptr += 22;
     }
@@ -283,6 +291,8 @@ auto DiskStructure::writeMfm(const MTrack* trackPtr, unsigned offset) -> bool {
     unsigned startOffset = offset;
     bool isSync = false;
     uint8_t buf[1] = {0}; // version or errors
+    uint16_t crc;
+    uint16_t crcFetched;
 
     uint8_t* ptr = trackPtr->data;
 
@@ -291,6 +301,7 @@ auto DiskStructure::writeMfm(const MTrack* trackPtr, unsigned offset) -> bool {
     unsigned sectorSize;
     unsigned sectorCount = 0;
     bool align = false;
+    uint8_t error = 0;
 
     unsigned todo = 6250;
     if (trackPtr->size < todo)
@@ -298,39 +309,85 @@ auto DiskStructure::writeMfm(const MTrack* trackPtr, unsigned offset) -> bool {
 
     for(unsigned i = 0; i < todo; i++) {
 
-        if (isSync && (ptr[i] == 0xfe) ) {
+        if (isSync && (ptr[i] == 0xfc || ptr[i] == 0xfd || ptr[i] == 0xfe || ptr[i] == 0xff) ) {
+            if (sectorCount == 32)
+                break;
 
+            // Track, Side, Sector, Sector Size
             if ( write( ptr + i + 1, 4, offset ) != 4)
                 return false;
 
+            sectorSize = 128 << (ptr[i + 1 + 3] & 3);
+
+            error = 4;
+            crc = 0xffff;
+            calcMfmCrc( 0xa1, crc );
+            calcMfmCrc( 0xa1, crc );
+            calcMfmCrc( 0xa1, crc );
+            calcMfmCrc( ptr[i], crc );
+            calcMfmCrc( ptr[i + 1], crc );
+            calcMfmCrc( ptr[i + 2], crc );
+            calcMfmCrc( ptr[i + 3], crc );
+            calcMfmCrc( ptr[i + 4], crc );
+
+            uint8_t* _dataCrc = ptr + i + 5;
+            crcFetched = (_dataCrc[0] << 8) | _dataCrc[1];
+
+            if(crc != crcFetched) {
+                error |= 1;
+            }
+
+            buf[0] = error;
             if ( write( &buf[0], 1, offset + 4 ) != 1) // errors
                 return false;
-
-            sectorSize = 128 << ptr[i + 1 + 3];
-
-            if (sectorSize > 1024)
-                sectorSize = 1024;
 
             offset += 5;
 
             align = true;
-
             sectorCount++;
-            if (sectorCount == 32)
-                break;
 
-        } else if (align && isSync && (ptr[i] == 0xfb) ) {
+        } else if (align && isSync && (ptr[i] == 0xf8 || ptr[i] == 0xf9 || ptr[i] == 0xfa || ptr[i] == 0xfb) ) {
+
             align = false;
+            error &= ~4;
+
+            if (ptr[i] == 0xf8 || ptr[i] == 0xf9)
+                error |= 0x10;
+
+            crc = 0xffff;
+            calcMfmCrc( 0xa1, crc );
+            calcMfmCrc( 0xa1, crc );
+            calcMfmCrc( 0xa1, crc );
+            calcMfmCrc( ptr[i], crc );
+
+            for (unsigned j = 0; j < sectorSize; j++) {
+                calcMfmCrc( *(ptr + i + 1 + j), crc);
+            }
 
             if ( write( ptr + i + 1, sectorSize, dataOffset ) != sectorSize)
+                return false;
+
+            uint8_t* _dataCrc = ptr + i + 1 + sectorSize;
+            crcFetched = (_dataCrc[0] << 8) | _dataCrc[1];
+
+            if(crc != crcFetched) {
+                error |= 2;
+            }
+
+            buf[0] = error;
+            if ( write( &buf[0], 1, offset - 1 ) != 1) // errors
                 return false;
 
             dataOffset += sectorSize;
         }
 
         isSync = ((trackPtr->mfmSync[i >> 3] & (1 << (i & 7))) != 0);
+        if (isSync && (ptr[i] != 0xa1) ) {
+            isSync = false;
+        }
     }
 
+    buf[0] = 0;
     write( &buf[0], 1, startOffset + 1 ); // version
     buf[0] = sectorCount;
     write( &buf[0], 1, startOffset ); //sectors
