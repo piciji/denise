@@ -59,11 +59,9 @@ std::function<void ()> Application::Cocoa::onQuit;
 std::function<void ()> Application::Cocoa::onDock;
 std::function<void (std::string fileName)> Application::Cocoa::onOpenFile;
 
-auto Application::hasKeyboardAccess() -> bool {
+auto Application::promptKeyboardAccess() -> void {
 #ifdef GUIKIT_COCOA
-    return pApplication::hasKeyboardAccess();
-#else
-    return true;
+    return pApplication::promptKeyboardAccess();
 #endif
 }
     

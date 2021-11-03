@@ -30,6 +30,13 @@
 #include "widgets/hyperlink.cpp"
 #include "widgets/imageView.cpp"
 
+//#import <Foundation/Foundation.h>
+#include <Availability.h>
+#if(__MAC_OS_X_VERSION_MAX_ALLOWED >= 101500)
+    #import <IOKit/hidsystem/IOHIDLib.h>
+#endif
+
+
 @implementation CocoaDelegate : NSObject
 
 -(NSApplicationTerminateReply) applicationShouldTerminate:(NSApplication*)sender {
@@ -368,8 +375,20 @@ auto pApplication::setClipboardText( std::string text ) -> void {
     }
 }
     
-auto pApplication::hasKeyboardAccess() -> bool {
-    return [NSApp isFullKeyboardAccessEnabled];
+auto pApplication::promptKeyboardAccess() -> void {
+    #if(__MAC_OS_X_VERSION_MAX_ALLOWED >= 101500)
+    if (@available(macOS 10.15, *)) {
+        static const IOHIDRequestType accessType = kIOHIDRequestTypeListenEvent;
+        
+        bool allowed = kIOHIDAccessTypeGranted == IOHIDCheckAccess(accessType);
+        
+        if (!allowed) {
+            dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+                IOHIDRequestAccess(accessType);
+            });
+        }
+    }
+    #endif
 }
 
 //window

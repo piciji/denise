@@ -90,9 +90,7 @@ Program::Program() {
     cmd->autoloadImages();
     
     if (!cmd->debug && !cmd->noGui) {
-        if (!GUIKIT::Application::hasKeyboardAccess()) {
-            view->message->warning("The keyboard is locked. Please allow Denise to access it under Security.");
-        }
+        GUIKIT::Application::promptKeyboardAccess();
     }
 }
 
