@@ -367,6 +367,10 @@ auto pApplication::setClipboardText( std::string text ) -> void {
         [pasteBoard setString:[NSString stringWithUTF8String:text.c_str()] forType:NSPasteboardTypeString];
     }
 }
+    
+auto pApplication::hasKeyboardAccess() -> bool {
+    return [NSApp isFullKeyboardAccessEnabled];
+}
 
 //window
 pWindow::pWindow(Window& window) : window(window) {
