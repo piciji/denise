@@ -377,8 +377,8 @@ auto pApplication::setClipboardText( std::string text ) -> void {
     
 auto pApplication::promptKeyboardAccess() -> void {
     #if(__MAC_OS_X_VERSION_MAX_ALLOWED >= 101500)
-    if (@available(macOS 10.15, *)) {
-        static const IOHIDRequestType accessType = kIOHIDRegquestTypeListenEvent;
+    //if (@available(macOS 10.15, *)) {
+        static const IOHIDRequestType accessType = kIOHIDRequestTypeListenEvent;
         
         bool allowed = kIOHIDAccessTypeGranted == IOHIDCheckAccess(accessType);
         
@@ -387,7 +387,7 @@ auto pApplication::promptKeyboardAccess() -> void {
                 IOHIDRequestAccess(accessType);
             });
         }
-    }
+    //}
     #endif
 }
 
