@@ -377,19 +377,25 @@ auto pApplication::setClipboardText( std::string text ) -> void {
     
 auto pApplication::promptKeyboardAccess() -> void {
     #if(__MAC_OS_X_VERSION_MAX_ALLOWED >= 101500)
+
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        bool accessGranted = IOHIDRequestAccess(kIOHIDRequestTypeListenEvent);
+
+        NSLog(@"Access granted: %d", accessGranted);
+    });
     //if (@available(macOS 10.15, *)) {
-        static const IOHIDRequestType accessType = kIOHIDRequestTypeListenEvent;
-
-
-        NSDictionary *const options=@{(__bridge NSString *)kAXTrustedCheckOptionPrompt: @YES};
-            AXIsProcessTrustedWithOptions((__bridge CFDictionaryRef)options);
+//        static const IOHIDRequestType accessType = kIOHIDRequestTypeListenEvent;
+//
+//
+//        NSDictionary *const options=@{(__bridge NSString *)kAXTrustedCheckOptionPrompt: @YES};
+//            AXIsProcessTrustedWithOptions((__bridge CFDictionaryRef)options);
 
    //     bool allowed = kIOHIDAccessTypeGranted == IOHIDCheckAccess(accessType);
         
        // if (!allowed) {
-            dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
-                IOHIDRequestAccess(accessType);
-            });
+//            dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+//                IOHIDRequestAccess(accessType);
+//            });
        // }
     //}
     #endif
