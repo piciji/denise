@@ -15,6 +15,7 @@ Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trade
 
 ## 1.1.2 (not yet released)
 * P64 support
+* 1541, 1541C support
 * 1570/1571 support
     * support of D71 / G71 / P71 formats
     * Burst Modification
@@ -33,8 +34,11 @@ Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trade
     * support Expansionsport Kernals for ProfDOS, PrologicDOS, Turbo Trans
 * bugfix: switch to custom resolutiuon in fullscreen
 * auto insert newly created disks or tapes
-* increase App initial loading time (benefit for Frontends)
-* support command line start of disk entries, instead of Load "*"
+* increase App initial loading time
+* add drive sounds
+  * support for multiple profiles
+  * simply create own WAV folders and select it
+* support command line start of disk entries, besides Load "*"
     * Frontends like Assembly64 support this
 * Virtual Device Traps
     * Fast Load first file

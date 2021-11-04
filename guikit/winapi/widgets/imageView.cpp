@@ -67,7 +67,7 @@ auto CALLBACK pImageView::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LP
             BeginPaint(hwnd, &ps);
             HDC hdc = CreateCompatibleDC(ps.hdc);
 
-            auto bitmap = CreateBitmap(*imageView->state.image);
+            auto bitmap = CreateBitmapWithPremultipliedAlpha(*imageView->state.image);
             SelectObject(hdc, bitmap);
 
             RECT rc;
