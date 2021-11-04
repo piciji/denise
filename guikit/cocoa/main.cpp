@@ -380,12 +380,12 @@ auto pApplication::promptKeyboardAccess() -> void {
     //if (@available(macOS 10.15, *)) {
         static const IOHIDRequestType accessType = kIOHIDRequestTypeListenEvent;
         
-        bool allowed = kIOHIDAccessTypeGranted == IOHIDCheckAccess(accessType);
+   //     bool allowed = kIOHIDAccessTypeGranted == IOHIDCheckAccess(accessType);
         
        // if (!allowed) {
-         //   dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+            dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
                 IOHIDRequestAccess(accessType);
-           // });
+            });
        // }
     //}
     #endif
