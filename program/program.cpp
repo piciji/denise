@@ -88,10 +88,6 @@ Program::Program() {
 	initVideo();
 
     cmd->autoloadImages();
-    
-    if (!cmd->debug && !cmd->noGui) {
-        GUIKIT::Application::promptKeyboardAccess();
-    }
 }
 
 auto Program::addEmulators() -> void {

@@ -150,7 +150,6 @@ struct Application {
     static auto isWinApi() -> bool;
 	static auto requestClipboardText() -> void;
     static auto setClipboardText( std::string text ) -> void;
-    static auto promptKeyboardAccess() -> void;
 
     static bool isQuit;
     static int exitCode;

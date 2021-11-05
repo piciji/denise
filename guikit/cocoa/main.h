@@ -17,8 +17,6 @@ struct pApplication {
     static auto oberserveMenu(NSMenu* menu) -> void;
     static auto requestClipboardText() -> void;
     static auto setClipboardText( std::string text ) -> void;
-    static auto promptKeyboardAccess() -> void;
-
 };
 
 struct pWindow {
