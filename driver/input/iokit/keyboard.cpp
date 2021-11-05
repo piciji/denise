@@ -154,29 +154,18 @@ struct IokitKeyboard {
         
         IOHIDManagerScheduleWithRunLoop(hidManager, CFRunLoopGetMain(), kCFRunLoopDefaultMode);
         
-        bool granted = true;
-#define V10_15 1700
-#if(__MAC_OS_X_VERSION_MAX_ALLOWED >= 101500)
-        if (NSAppKitVersionNumber >= V10_15) {
-            if (kIOHIDAccessTypeGranted != IOHIDCheckAccess(kIOHIDRequestTypeListenEvent)) {
-                granted = IOHIDCheckAccess(kIOHIDRequestTypeListenEvent);
-            }
-        }
-#endif
-        
         if (IOHIDManagerOpen(hidManager, kIOHIDOptionsTypeNone) != kIOReturnSuccess) {
+            #define V10_15 1700
             
-            
-         //   #if(__MAC_OS_X_VERSION_MAX_ALLOWED >= 101500)
-           // if (NSAppKitVersionNumber >= V10_15) {
-             //   if (kIOHIDAccessTypeGranted != IOHIDCheckAccess(kIOHIDRequestTypeListenEvent)) {
-                if (!granted) {
+            #if(__MAC_OS_X_VERSION_MAX_ALLOWED >= 101500)
+            if (NSAppKitVersionNumber >= V10_15) {
+                if (kIOHIDAccessTypeGranted != IOHIDCheckAccess(kIOHIDRequestTypeListenEvent)) {
                     NSURL* uri = [NSURL URLWithString:[NSString stringWithFormat:@"x-apple.systempreferences:com.apple.preference.security?%@", @"Privacy_ListenEvent"]];
                 
                     [[NSWorkspace sharedWorkspace] openURL:uri];
                 }
-           // }
-            //#endif
+            }
+            #endif
         }
         
         return true;
