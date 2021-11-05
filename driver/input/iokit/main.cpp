@@ -1,5 +1,9 @@
 
 #include <IOKit/hid/IOHIDManager.h>
+#if(__MAC_OS_X_VERSION_MAX_ALLOWED >= 101500)
+    #import <IOKit/hidsystem/IOHIDLib.h>
+#endif
+
 #include <CoreFoundation/CoreFoundation.h>
 #include <Carbon/Carbon.h>
 #include <functional>
