@@ -31,10 +31,10 @@
 #include "widgets/imageView.cpp"
 
 //#import <Foundation/Foundation.h>
-#include <Availability.h>
-#if(__MAC_OS_X_VERSION_MAX_ALLOWED >= 101500)
-    #import <IOKit/hidsystem/IOHIDLib.h>
-#endif
+//#include <Availability.h>
+//#if(__MAC_OS_X_VERSION_MAX_ALLOWED >= 101500)
+//    #import <IOKit/hidsystem/IOHIDLib.h>
+//#endif
 
 
 @implementation CocoaDelegate : NSObject
@@ -376,13 +376,13 @@ auto pApplication::setClipboardText( std::string text ) -> void {
 }
     
     auto pApplication::promptKeyboardAccess() -> void {return;
-    #if(__MAC_OS_X_VERSION_MAX_ALLOWED >= 101500)
-
+  //  #if(__MAC_OS_X_VERSION_MAX_ALLOWED >= 101500)
+/*
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         bool accessGranted = IOHIDRequestAccess(kIOHIDRequestTypeListenEvent);
 
         NSLog(@"Access granted: %d", accessGranted);
-    });
+    });*/
     //if (@available(macOS 10.15, *)) {
 //        static const IOHIDRequestType accessType = kIOHIDRequestTypeListenEvent;
 //
@@ -398,7 +398,7 @@ auto pApplication::setClipboardText( std::string text ) -> void {
 //            });
        // }
     //}
-    #endif
+ //   #endif
 }
 
 //window
