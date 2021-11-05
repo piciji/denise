@@ -45,6 +45,7 @@ Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trade
     * can be combined with Warp
 * add hungarian translation [thanks to Ferenc]
 * add Just in time polling for faster input recognition
+* Catalina and above prompts to allow keyboard monitoring if not already so
 
 ## 1.1.1
 * add Final Cartridge 3 support to EF³

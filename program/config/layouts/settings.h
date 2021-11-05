@@ -52,6 +52,7 @@ struct AboutLayout : GUIKIT::FramedHorizontalLayout {
     
     struct Right : GUIKIT::VerticalLayout {
         GUIKIT::Hyperlink icons8;
+        GUIKIT::Hyperlink trackersWorld;
     } right;
 
     AboutLayout();

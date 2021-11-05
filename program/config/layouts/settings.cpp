@@ -8,7 +8,8 @@ AboutLayout::AboutLayout() {
     left.append(left.author, {0u, 0u}, 2);
     left.append(left.license, {0u, 0u}, 2);
 	left.append(left.version, {0u, 0u});
-	right.append(right.icons8, {0u, 0u});
+	right.append(right.icons8, {0u, 0u}, 2);
+    right.append(right.trackersWorld, {0u, 0u});
 	
 	append(left, {0u, 0u}, 10);
     append(denise, {0u, 0u});
@@ -415,6 +416,10 @@ auto SettingsLayout::translate() -> void {
 	about.right.icons8.setText("Icons8: " + link);
 	about.right.icons8.setUri("https://icons8.com", link);
 	about.right.icons8.setTooltip("https://icons8.com");
+
+    about.right.trackersWorld.setText("Trackers-World.NET: " + link);
+    about.right.trackersWorld.setUri("https://www.twdotnet.de/wp/2016/11/c64-floppy-sounds/", link);
+    about.right.trackersWorld.setTooltip("Trackers-World.NET");
     
     previewLayout.setText( trans->get("Software Preview") );
     previewLayout.top.fontSize.setText( trans->get("Font Size", {}, true) );

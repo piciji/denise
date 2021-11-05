@@ -27,7 +27,7 @@ endif
 #objects += m68000
 objects += m6510 ciaBase cia6526 cia8520 vicIIBase vicIICycle vicIIFast systemC64 sid chamberlin tapeC64 inputC64 controlPortC64 acia
 objects += cartC64 gameCartC64 freezerC64 reuC64 easyFlashC64 easyFlash3C64 retroReplayC64 gmod2C64 clipboardC64 geoRamC64 fastloaderC64
-objects += m6502 via iec prg64 drive1541 structure1541 firmwareC64 pia traps64 virtualDrive64 wd1770
+objects += m6502 via iec prg64 driveC64 diskStructureC64 firmwareC64 pia traps64 virtualDrive64 wd1770
 objects += thread m93c86 mx29lv640eb icons logos fonts socket fpaq0
 
 prgflags := -DAPP_NAME="\"$(name)\"" -DTRANSLATION_FOLDER="\"$(translationFolder)/\"" -DDATA_FOLDER="\"$(dataFolder)/\"" -DSHADER_FOLDER="\"$(shaderFolder)/\"" -DIMG_FOLDER="\"$(imgFolder)/\"" -DSOUND_FOLDER="\"$(soundFolder)/\""
@@ -151,8 +151,8 @@ obj/virtualDrive64.o: emulation/libc64/disk/virtual/virtualDrive.cpp
 obj/via.o:	emulation/libc64/disk/via/via.cpp
 obj/pia.o:	emulation/tools/pia.cpp
 obj/iec.o:	emulation/libc64/disk/iec.cpp
-obj/drive1541.o:emulation/libc64/disk/drive/drive.cpp
-obj/structure1541.o:emulation/libc64/disk/structure/structure.cpp
+obj/driveC64.o:emulation/libc64/disk/drive/drive.cpp
+obj/diskStructureC64.o:emulation/libc64/disk/structure/structure.cpp
 	$(compiler) $(cppflags) $(flags) -Wno-stringop-overflow $1 -c $< -o $@
 obj/thread.o:emulation/tools/thread.cpp
 obj/m93c86.o:emulation/tools/m93c86.cpp
