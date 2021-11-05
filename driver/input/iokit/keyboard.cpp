@@ -154,7 +154,14 @@ struct IokitKeyboard {
         
         IOHIDManagerScheduleWithRunLoop(hidManager, CFRunLoopGetMain(), kCFRunLoopDefaultMode);
         
-        IOHIDManagerOpen(hidManager, kIOHIDOptionsTypeNone);
+        if (IOHIDManagerOpen(hidManager, kIOHIDOptionsTypeNone) != kIOReturnSuccess) {
+            #define V10_15 1700
+            if (NSAppKitVersionNumber >= V10_15) {
+                NSURL* uri = [NSURL URLWithString:[NSString stringWithFormat:@"x-apple.systempreferences:com.apple.preference.security?%@", @"Privacy_ListenEvent"]];
+            
+                [[NSWorkspace sharedWorkspace] openURL:uri];
+            }
+        }
         
         return true;
     }

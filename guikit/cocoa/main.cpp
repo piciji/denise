@@ -375,7 +375,7 @@ auto pApplication::setClipboardText( std::string text ) -> void {
     }
 }
     
-auto pApplication::promptKeyboardAccess() -> void {
+    auto pApplication::promptKeyboardAccess() -> void {return;
     #if(__MAC_OS_X_VERSION_MAX_ALLOWED >= 101500)
 
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
