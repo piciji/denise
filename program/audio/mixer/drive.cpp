@@ -194,10 +194,13 @@ namespace Mixer {
                     stepCounts = (device->state + 1) & 7;
                     if (stepCounts <= 4) {
                         device->state = (device->state & ~7) | stepCounts;
-                        lastStep = Chronos::getTimestampInMicroseconds();
+             //           lastStep = Chronos::getTimestampInMicroseconds();
                         break;
                     }
                 }
+
+//                if (device->third && (data & 1))
+  //                  break;
 
                 sound = device->steps[data >> 1];
                 if (!sound || !sound->data) {
@@ -209,18 +212,16 @@ namespace Mixer {
 
                 device->third = sound;
                 device->thirdOffset = 0;
-                ts = Chronos::getTimestampInMicroseconds();
-                delta = ts - lastStep;
+           //     ts = Chronos::getTimestampInMicroseconds();
+               // delta = ts - lastStep;
 
-                if (delta < sound->playTime) {
-                    // size = playtime
-                    // x    = delta
-                    device->thirdOffset = (((sound->playTime - delta) >> 1) * sound->size / sound->playTime) & ~1;
+                //if (delta < sound->playTime) {
+                //    device->thirdOffset = (((sound->playTime - delta) >> 1) * sound->size / sound->playTime) & ~1;
 //                    logger->log("short");
 //                    logger->log(std::to_string(delta));
 //                    logger->log(std::to_string(device->thirdOffset));
-                }
-                lastStep = ts;
+                //}
+                //lastStep = ts;
                 break;
         }
     }
@@ -431,7 +432,7 @@ namespace Mixer {
                 unsigned chunkSize = 512 << ((sound->channels == 2) ? 1 : 0);
                 Resampler::Sinc resampler;
                 resampler.setData(&rData);
-                resampler.reset( (float)frequency / (float)sampleRate, sound->channels, Resampler::Sinc::RESAMPLER_QUALITY_NORMAL );
+                resampler.reset( (float)frequency / (float)sampleRate, sound->channels, Resampler::Sinc::RESAMPLER_QUALITY_HIGHER );
 
                 unsigned todo = sound->size;
                 while(todo) {
@@ -461,7 +462,7 @@ namespace Mixer {
                 sound->channels = 2;
             }
 
-            sound->playTime = (sound->size / sound->channels) * (1000000.0 / (float)frequency);
+           // sound->playTime = (sound->size / sound->channels) * (1000000.0 / (float)frequency);
             //logger->log("playtime" );
             //logger->log(std::to_string(sound->size), 0);
             //logger->log(std::to_string(sound->channels), 0);
