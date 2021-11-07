@@ -166,7 +166,7 @@ auto pStatusBar::updatePart( StatusBar::Part& part ) -> void {
 //			SendMessage(hwnd, SB_SETICON, part.position, (LPARAM) hIcon);
 //			DestroyIcon(hIcon);
 //		} else
-			SendMessage(hwnd, SB_SETTEXT, part.position | SBT_OWNERDRAW | ((pApplication::version <= WindowsXP) ? SBT_NOBORDERS : 0), 0);
+			SendMessage(hwnd, SB_SETTEXT, part.position | SBT_OWNERDRAW | (IsAppThemed() ? 0 : SBT_NOBORDERS), 0);
 	}
 }
 
@@ -187,7 +187,7 @@ auto pStatusBar::update() -> void {
 
     std::vector<int> _widths;
     _widths.push_back( pos );
-    pos -= 11;
+    pos -= 15;
     
     for( i = parts.size() - 1; i >= 0; i-- ) {
         auto& part = parts[i];
@@ -227,7 +227,7 @@ auto pStatusBar::update() -> void {
             part.position = i;
             usedParts.push_back( &part );
             
-            SendMessage(hwnd, SB_SETTEXT, i++ | SBT_OWNERDRAW | ((pApplication::version <= WindowsXP) ? SBT_NOBORDERS : 0), 0);
+            SendMessage(hwnd, SB_SETTEXT, i++ | SBT_OWNERDRAW | (IsAppThemed() ? 0 : SBT_NOBORDERS), 0);
 
             if (part.popupMenu && !part.popupMenu->state.parentWindow)
                 part.popupMenu->p.update(*statusBar.window());            
