@@ -17,8 +17,8 @@ pStatusBar::~pStatusBar() {
 
 auto pStatusBar::create() -> void {    
     
-    hwnd = CreateWindow(STATUSCLASSNAME, L"", WS_CHILD, 0, 0, 0, 0, statusBar.window()->p.hwnd, (HMENU)(unsigned long long)statusBar.id, GetModuleHandle(0), 0);
-	
+    hwnd = CreateWindowEx(WS_EX_COMPOSITED, STATUSCLASSNAME, L"", WS_CHILD, 0, 0, 0, 0, statusBar.window()->p.hwnd, (HMENU)(unsigned long long)statusBar.id, GetModuleHandle(0), 0);
+
 	// SendMessage( hwnd, SB_SETBKCOLOR, 0, GetSysColor(COLOR_MENU));
     
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)&statusBar);
@@ -70,8 +70,8 @@ auto CALLBACK pStatusBar::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LP
         case WM_CONTEXTMENU:
             return 0;
     }
-    //return CallWindowProc(statusBar->p.wndprocOrig, hwnd, msg, wparam, lparam);
-    return pApplication::wndProc(statusBar->p.wndprocOrig, hwnd, msg, wparam, lparam);
+    return CallWindowProc(statusBar->p.wndprocOrig, hwnd, msg, wparam, lparam);
+    //return pApplication::wndProc(statusBar->p.wndprocOrig, hwnd, msg, wparam, lparam);
 }
 
 auto pStatusBar::setTooltip(StatusBar::Part* part) -> void {
@@ -166,7 +166,7 @@ auto pStatusBar::updatePart( StatusBar::Part& part ) -> void {
 //			SendMessage(hwnd, SB_SETICON, part.position, (LPARAM) hIcon);
 //			DestroyIcon(hIcon);
 //		} else
-			SendMessage(hwnd, SB_SETTEXT, part.position | SBT_OWNERDRAW, 0);
+			SendMessage(hwnd, SB_SETTEXT, part.position | SBT_OWNERDRAW | ((pApplication::version <= WindowsXP) ? SBT_NOBORDERS : 0), 0);
 	}
 }
 
@@ -227,7 +227,7 @@ auto pStatusBar::update() -> void {
             part.position = i;
             usedParts.push_back( &part );
             
-            SendMessage(hwnd, SB_SETTEXT, i++ | SBT_OWNERDRAW, 0);
+            SendMessage(hwnd, SB_SETTEXT, i++ | SBT_OWNERDRAW | ((pApplication::version <= WindowsXP) ? SBT_NOBORDERS : 0), 0);
 
             if (part.popupMenu && !part.popupMenu->state.parentWindow)
                 part.popupMenu->p.update(*statusBar.window());            
