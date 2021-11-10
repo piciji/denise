@@ -71,7 +71,6 @@ auto CALLBACK pStatusBar::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LP
             return 0;
     }
     return CallWindowProc(statusBar->p.wndprocOrig, hwnd, msg, wparam, lparam);
-    //return pApplication::wndProc(statusBar->p.wndprocOrig, hwnd, msg, wparam, lparam);
 }
 
 auto pStatusBar::setTooltip(StatusBar::Part* part) -> void {
@@ -118,7 +117,7 @@ auto pStatusBar::setFont(std::string font) -> void {
 
 auto pStatusBar::setText(std::string text) -> void {
     if (hwnd)
-        SendMessage(hwnd, SB_SETTEXT, 0, (LPARAM)(wchar_t*)utf16_t(text));
+        SendMessage(hwnd, SB_SETTEXT, 0 | SBT_NOBORDERS, (LPARAM)(wchar_t*)utf16_t(text));
     
     update();
 }
@@ -165,8 +164,11 @@ auto pStatusBar::updatePart( StatusBar::Part& part ) -> void {
 //			HICON hIcon = CreateHIconWithAlphaBlend( *part.image, GetSysColor(COLOR_MENU) );
 //			SendMessage(hwnd, SB_SETICON, part.position, (LPARAM) hIcon);
 //			DestroyIcon(hIcon);
-//		} else
-			SendMessage(hwnd, SB_SETTEXT, part.position | SBT_OWNERDRAW | (IsAppThemed() ? 0 : SBT_NOBORDERS), 0);
+//		} else {
+            bool _border = IsAppThemed() && ((part.position + 1) < usedParts.size());
+
+            SendMessage(hwnd, SB_SETTEXT, part.position | SBT_OWNERDRAW | (_border ? 0 : SBT_NOBORDERS), 0);
+//      }
 	}
 }
 
@@ -188,13 +190,15 @@ auto pStatusBar::update() -> void {
     std::vector<int> _widths;
     _widths.push_back( pos );
     pos -= 15;
+    unsigned countVisible = 0;
     
     for( i = parts.size() - 1; i >= 0; i-- ) {
         auto& part = parts[i];
         
         if (!part.visible)
             continue;
-            
+
+        countVisible++;
         _widths.push_back( pos );
         
         // first part width doesn't matter. always use remaining space
@@ -223,11 +227,13 @@ auto pStatusBar::update() -> void {
     
     for(auto& part : parts) {
                 
-        if (part.visible) {                    
+        if (part.visible) {
             part.position = i;
             usedParts.push_back( &part );
-            
-            SendMessage(hwnd, SB_SETTEXT, i++ | SBT_OWNERDRAW | (IsAppThemed() ? 0 : SBT_NOBORDERS), 0);
+
+            bool _border = IsAppThemed() && ((i + 1) < countVisible);
+
+            SendMessage(hwnd, SB_SETTEXT, i++ | SBT_OWNERDRAW | (_border ? 0 : SBT_NOBORDERS), 0);
 
             if (part.popupMenu && !part.popupMenu->state.parentWindow)
                 part.popupMenu->p.update(*statusBar.window());            
