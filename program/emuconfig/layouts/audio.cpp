@@ -2,7 +2,7 @@
 AudioDriveLayout::Selection::Selection() {
     append( floppyLabel, {0u, 0u}, 10 );
     append( floppyCombo, {0u, 0u}, 10 );
-    append( update, {0u, 0u} );
+    append( reload, {0u, 0u} );
 
     setAlignment( 0.5 );
 }
@@ -414,7 +414,7 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
             audioManager->setDriveSounds( false );
     };
 
-    driveLayout.selection.update.onActivate = [this]() {
+    driveLayout.selection.reload.onActivate = [this]() {
         updateFloppyProfileList();
 
         driveLayout.selection.floppyCombo.setSelectionByRow( _settings->get<std::string>("audio_floppy_folder", "") );
@@ -497,7 +497,8 @@ auto AudioLayout::translate() -> void {
     driveLayout.setText( trans->get("Drive Noise") );
     driveLayout.floppyVolume.active.setText( trans->get("Floppy") );
     driveLayout.selection.floppyLabel.setText( trans->get("Floppy Profile", {}, true) );
-    driveLayout.selection.update.setText( trans->get("Update") );
+    driveLayout.selection.reload.setText( trans->get("Reload") );
+    driveLayout.selection.reload.setTooltip( trans->get("reload samples tooltip") );
 
     audioRecord.setText(trans->get("Audio Record"));
     audioRecord.location.label.setText( trans->get("wav folder") );

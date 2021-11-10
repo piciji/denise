@@ -121,8 +121,8 @@ SettingsLayout::SettingsLayout() {
 ConfigurationsFolderLayout::ConfigurationsFolderLayout() {
     append( label, {0u, 0u}, 10 );
     append( pathEdit, {~0u, 0u}, 10 );
-    append( emptyButton, {0u, 0u}, 10 );
-    append( selectButton, {0u, 0u} );
+    append( standard, {0u, 0u}, 10 );
+    append( select, {0u, 0u} );
     
     pathEdit.setEditable( false );
     
@@ -432,7 +432,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
 		}
     };    
     
-    settingsFolder.selectButton.onActivate = [this]() {
+    settingsFolder.select.onActivate = [this]() {
 
         auto path = GUIKIT::BrowserWindow()
                 .setTitle(trans->get("select settings folder"))
@@ -452,7 +452,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         updateSettingsList();
     };
     
-    settingsFolder.emptyButton.onActivate = [this]() {
+    settingsFolder.standard.onActivate = [this]() {
         
         if (globalSettings->get<std::string>(emulator->ident + "_custom_settings", "") != "")
             settings.active.standardButton.onActivate();
@@ -570,7 +570,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         States::getInstance( emulator )->save( filePath );                
 	};
     
-    stateFolder.selectButton.onActivate = [this]() {
+    stateFolder.select.onActivate = [this]() {
         auto path = GUIKIT::BrowserWindow()
                 .setTitle(trans->get("select_states_folder"))
                 .setWindow(*this->tabWindow)
@@ -582,7 +582,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         }
     };
 
-    stateFolder.emptyButton.onActivate = [this]() {
+    stateFolder.standard.onActivate = [this]() {
         _settings->set<std::string>("states_folder", "");
         stateFolder.pathEdit.setText("");
     };
@@ -798,8 +798,8 @@ auto ConfigurationsLayout::translate() -> void {
     settings.control.remove.setText( trans->get("remove") );
     
     settingsFolder.label.setText( trans->get("folder", {}, true) );
-    settingsFolder.emptyButton.setText( trans->get("remove") );
-    settingsFolder.selectButton.setText( trans->get("select") );
+    settingsFolder.standard.setText( trans->get("default") );
+    settingsFolder.select.setText( trans->get("select") );
     
     settings.setText( trans->get("settings") );
     settings.active.activeLabel.setText( trans->get("active setting", {}, true) );
@@ -808,8 +808,8 @@ auto ConfigurationsLayout::translate() -> void {
     settings.startWithLastConfigCheckbox.setText( trans->get("Start with last loaded Settings") );
     
     stateFolder.label.setText( trans->get("folder", {}, true) );
-    stateFolder.emptyButton.setText( trans->get("remove") );
-    stateFolder.selectButton.setText( trans->get("select") );
+    stateFolder.standard.setText( trans->get("default") );
+    stateFolder.select.setText( trans->get("select") );
     
     stateFast.top.label.setText( trans->get("labelling", {}, true) );
     stateFast.top.find.setText( trans->get("find") );

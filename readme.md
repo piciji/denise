@@ -13,7 +13,7 @@ Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trade
 
 # changelog
 
-## 1.1.2 (not yet released)
+## 1.1.2
 * P64 support
 * 1541, 1541C support
 * 1570/1571 support
@@ -22,29 +22,30 @@ Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trade
     * MFM support
       * P64
       * G64 (U-II+/U64 compatibility mode)
-* Floppy RAM expansions
+* Floppy RAM expansions and parallel cable
 * Floppy Fastloader
     * SpeedDOS
-    * DolphinDOS v2, v3, Ultimate Hack
+    * DolphinDOS v2, v3, Ultimate compatible
     * ProfDOS v1, R3, R4, R5, R6
     * PrologicDos Original and Classic
-    * Turbo Trans ( includes Turbo Access )
-    * ProSpeed 1571 GTI v2.0 
-    * support Userport Kernals for all fast loader, expect Turbo Trans
-    * support Expansionsport Kernals for ProfDOS, PrologicDOS, Turbo Trans
+    * Turbo Trans with 512k Ram Disk ( includes Turbo Access )
+    * ProSpeed 1571 GTI v2.0
+    * Expansionsport cart for ProfDOS, PrologicDOS, Turbo Trans
+    * Userport plug-in for DolphinDOS, ProfDOS, PrologicDOS, ProSpeed 1571
 * bugfix: switch to custom resolutiuon in fullscreen
 * auto insert newly created disks or tapes
 * increase App initial loading time
 * add drive sounds
-  * support for multiple profiles
-  * simply create own WAV folders and select it
+    * samples provided by [thanks to enigma and Trackers World]
+    * support for multiple profiles
+    * simply create own WAV folders and select it
 * support command line start of disk entries, besides Load "*"
     * Frontends like Assembly64 support this
 * Virtual Device Traps
-    * Fast Load first file
+    * fast load first file
     * can be combined with Warp
 * add hungarian translation [thanks to Ferenc]
-* add Just in time polling for faster input recognition
+* add "Just in time" polling for faster input recognition
 * Catalina and above prompts to allow keyboard monitoring if not already so
 
 ## 1.1.1

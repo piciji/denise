@@ -51,8 +51,8 @@ struct SettingsLayout : GUIKIT::FramedVerticalLayout {
 struct ConfigurationsFolderLayout : GUIKIT::HorizontalLayout {
     GUIKIT::Label label;
     GUIKIT::LineEdit pathEdit;
-    GUIKIT::Button emptyButton;
-    GUIKIT::Button selectButton;
+    GUIKIT::Button standard;
+    GUIKIT::Button select;
     
     ConfigurationsFolderLayout();
 };
