@@ -141,7 +141,7 @@ auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
     statusBar->append( 7, "11 00.0", nullptr, &(view->diskControlMenus[3].menu) ); // disk drive track
     statusBar->append( 8, &(view->ledOffImage), nullptr, &(view->diskControlMenus[3].menu) );    // disk LED
     
-    statusBar->append( 9, "000" );    // tape counter
+    statusBar->append( 9, "000", nullptr, &(view->tapeControlMenu) );    // tape counter
     statusBar->append( 10, &(view->stopStatusImage), nullptr, &(view->tapeControlMenu) );    // tape button icon
 	statusBar->append( 11, "CRT" );    // expansion label
     statusBar->append( 12, &(view->ledOffImage) );    // expansion LED
@@ -149,7 +149,7 @@ auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
     statusBar->append( 14, &(view->recordStatusImage) );    // REC Status
     statusBar->append( 15, "1000" );    // FPS
 
-    statusBar->updateSeparator( 0, true );
+    statusBar->updateSeparator( 0, false );
     statusBar->updateSeparator( 2, true );
     statusBar->updateSeparator( 4, true );
     statusBar->updateSeparator( 6, true );

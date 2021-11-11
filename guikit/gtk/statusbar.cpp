@@ -103,6 +103,11 @@ auto pStatusBar::update() -> void {
 	}
 	
 	auto& parts = statusBar.state.parts;
+    unsigned countVisible = 0;
+    for(auto& part : parts) {
+        if (part.visible)
+            countVisible++;
+    }
 	
 	gtk_grid_set_column_spacing( GTK_GRID(gridWidget), 5 );
 	
@@ -165,7 +170,7 @@ auto pStatusBar::update() -> void {
 		gtk_widget_set_vexpand( gtkWidget, true );
 		gtk_widget_show_all( gtkWidget );
 
-		if (part.appendSeparator && (&part != &parts.back()) ) {
+        if (part.appendSeparator && (usedWidgets.size() < countVisible) ) {
 		    GtkWidget* separator = gtk_separator_new( GTK_ORIENTATION_VERTICAL );
             gtk_grid_attach_next_to (GTK_GRID(gridWidget), separator, nullptr, GtkPositionType::GTK_POS_RIGHT, 1, 1);
             gtk_widget_show_all( separator );
