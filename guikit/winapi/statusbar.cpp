@@ -165,7 +165,7 @@ auto pStatusBar::updatePart( StatusBar::Part& part ) -> void {
 //			SendMessage(hwnd, SB_SETICON, part.position, (LPARAM) hIcon);
 //			DestroyIcon(hIcon);
 //		} else {
-            bool _border = IsAppThemed() && ((part.position + 1) < usedParts.size());
+            bool _border = IsAppThemed() && part.appendSeparator && ((part.position + 1) < usedParts.size());
 
             SendMessage(hwnd, SB_SETTEXT, part.position | SBT_OWNERDRAW | (_border ? 0 : SBT_NOBORDERS), 0);
 //      }
@@ -231,7 +231,7 @@ auto pStatusBar::update() -> void {
             part.position = i;
             usedParts.push_back( &part );
 
-            bool _border = IsAppThemed() && ((i + 1) < countVisible);
+            bool _border = IsAppThemed() && part.appendSeparator && ((i + 1) < countVisible);
 
             SendMessage(hwnd, SB_SETTEXT, i++ | SBT_OWNERDRAW | (_border ? 0 : SBT_NOBORDERS), 0);
 

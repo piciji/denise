@@ -117,6 +117,9 @@ auto CALLBACK pSquareCanvas::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam,
             
             return 0;
         }
+        case WM_NCHITTEST:
+            return HTCLIENT;
+
         case WM_LBUTTONDOWN:
             squareCanvas->onMousePress(Mouse::Button::Left); break;
         case WM_MBUTTONDOWN:
@@ -130,6 +133,7 @@ auto CALLBACK pSquareCanvas::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam,
         case WM_RBUTTONUP:
             squareCanvas->onMouseRelease(Mouse::Button::Right); break;
     }
-    
-    return DefWindowProc(hwnd, msg, wparam, lparam);
+
+    //return CallWindowProc(squareCanvas->p.wndprocOrig, hwnd, msg, wparam, lparam);
+    return pApplication::wndProc(squareCanvas->p.wndprocOrig, hwnd, msg, wparam, lparam);
 }

@@ -123,15 +123,15 @@ auto CALLBACK pApplication::wndProc(WNDPROC windowProc, HWND hwnd, UINT msg, WPA
     Window& window = dynamic_cast<Window*>(base) ? (Window&)*base : *((Widget*)base)->window();
 
     switch(msg) {  
-        case WM_CTLCOLOREDIT: {            
+        case WM_CTLCOLOREDIT: {
             Base* base = (Base*)GetWindowLongPtr((HWND)lparam, GWLP_USERDATA);
             if(base == nullptr) break;
-            
+
             HBRUSH brush = ((Widget*)base)->p.getColor( wparam );
-            
+
             if (!brush)
                 break;
-            
+
             return (LRESULT)brush;
         }
         case WM_CTLCOLORBTN:

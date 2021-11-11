@@ -98,9 +98,13 @@ auto CALLBACK pImageView::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LP
 
             return 1;
 
+        case WM_NCHITTEST:
+            return HTCLIENT;
+
         case WM_LBUTTONDOWN:
             imageView->p.onLink(); break;
     }
 
-    return DefWindowProc(hwnd, msg, wparam, lparam);
+    //return CallWindowProc(imageView->p.wndprocOrig, hwnd, msg, wparam, lparam);
+    return pApplication::wndProc(imageView->p.wndprocOrig, hwnd, msg, wparam, lparam);
 }
