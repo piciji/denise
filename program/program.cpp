@@ -598,6 +598,9 @@ auto Program::initAutoWarp(Emulator::Interface::MediaGroup* mediaGroup) -> void 
 
 auto Program::jam( Emulator::Interface::Media* media ) -> void {
 
+    if (cmd->noGui)
+        return;
+
     std::string out = "CPU Jam";
     if (media)
         out = "CPU " + media->name + " Jam";

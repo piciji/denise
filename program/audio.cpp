@@ -50,6 +50,9 @@ auto Program::audioFlush() -> void {
 }
 
 auto Program::mixDriveSound( Emulator::Interface::Media* media, Emulator::Interface::DriveSound driveSound, uint8_t data ) -> void {
+    if (cmd->noDriver || cmd->debug)
+        return;
+
     auto& stats = activeEmulator->getStatsForSelectedRegion();
 
     if (stats.sampleIntervall > 2) {
