@@ -196,6 +196,7 @@ auto pStatusBar::update() -> void {
     
     delete label;
     
+    unsigned countVisible = 0;
     unsigned width = area.size.width;
     width -= 8;
     
@@ -206,12 +207,14 @@ auto pStatusBar::update() -> void {
         if (!part.visible)
             continue;
         
+        countVisible++;
+        
         if (part.image)
             width -= part.image->width + 3;
         else
             width -= part.width;
             
-        if (part.appendSeparator && (&part != &parts.back()) ) {
+        if (part.appendSeparator && (countVisible > 1) ) {
             width -= 1;
         }
             
@@ -275,7 +278,7 @@ auto pStatusBar::update() -> void {
         
         [cocoaView addSubview: view ];
         
-        if (part.appendSeparator && (&part != &parts.back()) ) {
+        if (part.appendSeparator && (usedWidgets.size() < countVisible) ) {
             NSBox* verticalSeparator = [[NSBox alloc] initWithFrame:NSMakeRect(xPos, 2, 1.0, textHeight - 5)];
             [verticalSeparator setBoxType:NSBoxSeparator];
             
