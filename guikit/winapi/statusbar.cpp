@@ -223,8 +223,8 @@ auto pStatusBar::update() -> void {
             
     SendMessage(hwnd, SB_SETPARTS, partCount, (LPARAM)widths );        
     
-    i = 0;    
-    
+    i = 0;
+
     for(auto& part : parts) {
                 
         if (part.visible) {
@@ -240,7 +240,7 @@ auto pStatusBar::update() -> void {
         }
     }
     // clear right margin area
-    SendMessage(hwnd, SB_SETTEXT, i, (LPARAM)"" );
+    SendMessage(hwnd, SB_SETTEXT, i | SBT_NOBORDERS, (LPARAM)"" );
     
     delete[] widths;
     
