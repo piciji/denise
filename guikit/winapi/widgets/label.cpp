@@ -35,7 +35,7 @@ auto pLabel::create() -> void {
     destroy(hwnd);
     destroy(hwndTip);
     
-    hwnd = CreateWindow(WC_STATIC, L"", WS_CHILD,
+    hwnd = CreateWindow(WC_STATIC, L"", WS_CHILD | SS_NOTIFY,
         0, 0, 0, 0, getParentHandle(), (HMENU)(unsigned long long)label.id, GetModuleHandle(0), 0);
 
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)&label);

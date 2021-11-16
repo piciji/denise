@@ -290,8 +290,11 @@ auto pStatusBar::drawItem(WPARAM wparam, LPARAM lparam) -> void {
             unsigned color = part.overrideForegroundColor;
             SetTextColor(hDC, RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff));
         }
-        
-        rect.top += 1;
+
+        if (IsAppThemed() && (pApplication::version <= Windows7))
+            rect.top += 2;
+        else
+            rect.top += 1;
 
 		rect.left += 1;
         if (part.alignRight)
