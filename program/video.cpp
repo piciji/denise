@@ -265,7 +265,8 @@ auto Program::fastForward( bool activate, bool aggressive ) -> void {
         warp.aggressive = aggressive;
     warp.active = activate;
 
-    statusHandler->resetFrameCounter();
+    if (statusHandler)
+        statusHandler->resetFrameCounter();
 
     activeEmulator->fastForward( forward );
 
