@@ -10,7 +10,7 @@ if [ -f $prefix/share/applications/denise.desktop ]; then rm $prefix/share/appli
 if [ -f $prefix/share/mime/packages/application-x-denise.xml ]; then
   rm $prefix/share/mime/packages/application-x-denise.xml;
   if [ -x "$(command -v update-mime-database)" ]; then update-mime-database $prefix/share/mime; fi
-  if [ -x "$(command -v update-desktop-database)" ]; then update-desktop-database $prefix/share/mime; fi
+  if [ -x "$(command -v update-desktop-database)" ]; then update-desktop-database $prefix/share/applications; fi
 fi
 if [ -d $prefix/share/denise ]; then rm -rf $prefix/share/denise; fi
 

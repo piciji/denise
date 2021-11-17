@@ -287,7 +287,7 @@ install: ## Install
 	read line; if [ $$line = "y" ]; then \
 	    install -D -m 644 data/application-x-$(loname).xml $(prefix)/share/mime/packages/application-x-$(loname).xml; \
 	    if [ $(shell which update-mime-database) ]; then update-mime-database $(prefix)/share/mime; fi; \
-	    if [ $(shell which update-desktop-database) ]; then update-desktop-database $(prefix)/share/mime; fi; \
+	    if [ $(shell which update-desktop-database) ]; then update-desktop-database $(prefix)/share/applications; fi; \
 	fi
 	install -D -m 644 data/$(translationFolder)/* $(prefix)/share/$(loname)/$(translationFolder)
 	install -D -m 644 data/$(dataFolder)/* $(prefix)/share/$(loname)/$(dataFolder)
@@ -309,7 +309,7 @@ uninstall: ## Unistall
 	if [ -f $(prefix)/share/mime/packages/application-x-$(loname).xml ]; then \
 		rm $(prefix)/share/mime/packages/application-x-$(loname).xml; \
 	    if [ $(shell which update-mime-database) ]; then update-mime-database $(prefix)/share/mime; fi; \
-	    if [ $(shell which update-desktop-database) ]; then update-desktop-database $(prefix)/share/mime; fi; \
+	    if [ $(shell which update-desktop-database) ]; then update-desktop-database $(prefix)/share/applications; fi; \
 	fi
 	if [ -d $(prefix)/share/$(loname) ]; then rm -rf $(prefix)/share/$(loname); fi
     endif
