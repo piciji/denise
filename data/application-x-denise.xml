@@ -1,26 +1,38 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
-  <mime-type type="application/x-denise-d64">
+  <mime-type type="application/x-commodore-d64">
     <comment>C64 Disk Image</comment>
     <glob pattern="*.d64"/>
   </mime-type>
-  <mime-type type="application/x-denise-g64">
+  <mime-type type="application/x-commodore-g64">
     <comment>C64 Disk Image</comment>
     <glob pattern="*.g64"/>
   </mime-type>
-  <mime-type type="application/x-denise-tape">
+  <mime-type type="application/x-commodore-p64">
+    <comment>C64 Disk Image</comment>
+    <glob pattern="*.p64"/>
+  </mime-type>
+  <mime-type type="application/x-commodore-d71">
+    <comment>C64 Disk Image</comment>
+    <glob pattern="*.d71"/>
+  </mime-type>
+  <mime-type type="application/x-commodore-g71">
+    <comment>C64 Disk Image</comment>
+    <glob pattern="*.g71"/>
+  </mime-type>
+  <mime-type type="application/x-commodore-tape">
     <comment>C64 Tape Image</comment>
     <glob pattern="*.tap"/>
   </mime-type>
-  <mime-type type="application/x-denise-crt">
+  <mime-type type="application/x-commodore-crt">
     <comment>C64 Expansion Image</comment>
     <glob pattern="*.crt"/>
   </mime-type>
-  <mime-type type="application/x-denise-prg">
+  <mime-type type="application/x-commodore-prg">
     <comment>C64 Program Image</comment>
     <glob pattern="*.prg"/>
   </mime-type>
-  <mime-type type="application/x-denise-sav">
+  <mime-type type="application/x-denise-save">
     <comment>Denise Save Image</comment>
     <glob pattern="*.sav"/>
     <glob pattern="*.sav.images"/>

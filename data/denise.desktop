@@ -6,4 +6,4 @@ Icon=denise.png
 Terminal=false
 Type=Application
 Categories=Game;Emulation;
-MimeType=application/x-denise-d64;application/x-denise-g64;application/x-denise-tape;application/x-denise-crt;application/x-denise-prg;application/x-denise-sav;
+MimeType=application/x-commodore-d64;application/x-commodore-g64;application/x-commodore-p64;application/x-commodore-d71;application/x-commodore-g71;application/x-commodore-tape;application/x-commodore-crt;application/x-commodore-prg;application/x-denise-save;

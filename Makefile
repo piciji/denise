@@ -236,11 +236,17 @@ build: $(objects)
 	$(strip $(compiler) -o out/$(name) $(objects) $(link))
     endif
 
-clean:
+.PHONY: help
+help:
+	@grep -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
+	| sed -n 's/^\(.*\): \(.*\)##\(.*\)/\1\3/p' \
+	| column -t  -s ' '
+
+clean: ## Clean
 	-@$(call delete,obj/*.o)
 	-@$(call delete,out/$(name)*)
 
-install:
+install: ## Install
     ifeq ($(platform),windows)
 	$(call copy,data/$(translationFolder),out/$(translationFolder))	
 	$(call copy,data/$(dataFolder),out/$(dataFolder))
@@ -277,7 +283,12 @@ install:
 	fi
 	install -D -m 644 data/img/$(loname).png $(prefix)/share/icons/$(loname).png
 	install -D -m 644 data/$(loname).desktop $(prefix)/share/applications/$(loname).desktop
-	install -D -m 644 data/application-x-$(loname).xml $(prefix)/share/mime/packages/application-x-$(loname).xml
+	@echo "Install file associations? [y/n]"; \
+	read line; if [ $$line = "y" ]; then \
+	    install -D -m 644 data/application-x-$(loname).xml $(prefix)/share/mime/packages/application-x-$(loname).xml; \
+	    if [ $(shell which update-mime-database) ]; then update-mime-database $(prefix)/share/mime; fi; \
+	    if [ $(shell which update-desktop-database) ]; then update-desktop-database $(prefix)/share/mime; fi; \
+	fi
 	install -D -m 644 data/$(translationFolder)/* $(prefix)/share/$(loname)/$(translationFolder)
 	install -D -m 644 data/$(dataFolder)/* $(prefix)/share/$(loname)/$(dataFolder)
 	install -D -m 644 data/$(fontFolder)/*.ttf $(prefix)/share/$(loname)/$(fontFolder)
@@ -286,7 +297,7 @@ install:
 	cp -r data/$(shaderFolder)/* $(prefix)/share/$(loname)/$(shaderFolder)/
     endif
 
-uninstall:
+uninstall: ## Unistall
     ifeq ($(platform),windows)
     else ifeq ($(platform),macosx)
     else	
@@ -295,6 +306,10 @@ uninstall:
 	
 	if [ -f $(prefix)/share/icons/$(loname).png ]; then rm $(prefix)/share/icons/$(loname).png; fi
 	if [ -f $(prefix)/share/applications/$(loname).desktop ]; then rm $(prefix)/share/applications/$(loname).desktop; fi
-	if [ -f $(prefix)/share/mime/packages/application-x-$(loname).xml ]; then rm $(prefix)/share/mime/packages/application-x-$(loname).xml; fi
+	if [ -f $(prefix)/share/mime/packages/application-x-$(loname).xml ]; then \
+		rm $(prefix)/share/mime/packages/application-x-$(loname).xml; \
+	    if [ $(shell which update-mime-database) ]; then update-mime-database $(prefix)/share/mime; fi; \
+	    if [ $(shell which update-desktop-database) ]; then update-desktop-database $(prefix)/share/mime; fi; \
+	fi
 	if [ -d $(prefix)/share/$(loname) ]; then rm -rf $(prefix)/share/$(loname); fi
     endif

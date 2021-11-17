@@ -19,6 +19,9 @@
             <array>
                 <string>D64</string>
                 <string>G64</string>
+                <string>P64</string>
+                <string>D71</string>
+                <string>G71</string>
             </array>
             <key>CFBundleTypeIconFile</key>
             <string></string>

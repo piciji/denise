@@ -34,7 +34,12 @@ fi
 
 install -D -m 644 denise.png $prefix/share/icons/denise.png
 install -D -m 644 denise.desktop $prefix/share/applications/denise.desktop
-install -D -m 644 application-x-denise.xml $prefix/share/mime/packages/application-x-denise.xml
+echo "Install file associations? [y/n]";
+read line; if [ $line = "y" ]; then
+  install -D -m 644 application-x-denise.xml $prefix/share/mime/packages/application-x-denise.xml;
+  if [ -x "$(command -v update-mime-database)" ]; then update-mime-database $prefix/share/mime; fi
+  if [ -x "$(command -v update-desktop-database)" ]; then update-desktop-database $prefix/share/mime; fi
+fi
 install -D -m 644 translation/* $prefix/share/denise/translation
 install -D -m 644 data/* $prefix/share/denise/data
 install -D -m 644 fonts/*.ttf $prefix/share/denise/fonts
