@@ -24,9 +24,10 @@ struct VideoGeometryLayout : GUIKIT::FramedVerticalLayout {
 struct VideoFrameAdjustLayout : GUIKIT::FramedHorizontalLayout {
     GUIKIT::CheckBox overrideExactFrequency;
     GUIKIT::Label pal;
-    GUIKIT::LineEdit palFrequency;    
+    GUIKIT::LineEdit palFrequency;
     GUIKIT::Label ntsc;
-    GUIKIT::LineEdit ntscFrequency;    
+    GUIKIT::LineEdit ntscFrequency;
+    GUIKIT::Label hint;
     
     VideoFrameAdjustLayout();
 };
@@ -53,6 +54,22 @@ struct VideoSettingsLayout : GUIKIT::FramedHorizontalLayout {
     VideoSettingsLayout();
 };
 
+struct VideoFpsLayout : GUIKIT::FramedVerticalLayout {
+    SliderLayout updateDelay;
+
+    struct DecimalPoint : GUIKIT::HorizontalLayout {
+        GUIKIT::Label label;
+        GUIKIT::RadioBox Zero;
+        GUIKIT::RadioBox One;
+        GUIKIT::RadioBox Two;
+        GUIKIT::RadioBox Three;
+
+        DecimalPoint();
+    } decimalPoint;
+
+    VideoFpsLayout();
+};
+
 struct VideoResolutionLayout : GUIKIT::FramedHorizontalLayout {
 
     GUIKIT::CheckBox active;
@@ -68,6 +85,7 @@ struct VideoLayout : GUIKIT::VerticalLayout {
     CrtEmulationLayout crtEmulation;
 	VideoGeometryLayout videoGeometry;
     VideoResolutionLayout videoResolution;
+    VideoFpsLayout videoFps;
 
     VideoSettingsLayout videoSettingsLayout;
     PathsLayout paths;

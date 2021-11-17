@@ -3,6 +3,8 @@
 
 #include "../program.h"
 
+#define FPS_MEASUREMENTS 250
+
 struct DeviceState {    
     Emulator::Interface::Media* media = nullptr;
     bool write;
@@ -11,6 +13,16 @@ struct DeviceState {
     bool motorOff;
     uint8_t inputsPerFrame;
     bool update = true;
+};
+
+struct FpsCounter {
+    uint64_t deltas[FPS_MEASUREMENTS];
+    uint64_t sum;
+    uint32_t pos;
+    uint64_t last;
+    uint32_t measures;
+    float fps;
+    unsigned updateDelay;
 };
 
 struct StatusHandler {
@@ -39,11 +51,13 @@ struct StatusHandler {
     auto updateAudioRecord( bool state ) -> void;
     auto updateTapeImage( GUIKIT::Image* image ) -> void;
 	auto hideTape() -> void;
-    auto countFrames() -> void;
+    auto updateFrameCounter() -> void;
+    auto resetFrameCounter() -> void;
 
     GUIKIT::StatusBar* statusBar = nullptr;
     uint16_t control;
     std::vector<DeviceState> deviceStates;
+    FpsCounter fpsCounter;
 
     bool showFPS = false;
     bool recordAudio = false;
@@ -59,13 +73,6 @@ struct StatusHandler {
             critical = false;
         }
     } message;
-    
-    // FPS Counter
-    unsigned fps;
-    unsigned fpsCollect;
-    time_t prev_t;
-    time_t curr_t;        
-
 };
 
 extern StatusHandler* statusHandler;

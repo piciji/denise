@@ -65,7 +65,11 @@ struct View : public GUIKIT::Window {
     
     auto loadPlaceholder() -> void;
     auto renderPlaceholder(bool blackScreen = false) -> void;
-           
+    auto setSpeed(unsigned speed) -> void;
+    auto togglePause() -> void;
+    auto updatePauseCheck() -> void;
+    auto updateFastforwardCheck() -> void;
+
     GUIKIT::Viewport viewport;    
     
     std::vector<SystemMenu> sysMenus;
@@ -121,6 +125,24 @@ struct View : public GUIKIT::Window {
 		GUIKIT::MenuItem tapeRewindItem;
 		GUIKIT::MenuItem tapeRecordItem;
 		GUIKIT::MenuItem tapeResetCounterItem;
+
+    GUIKIT::Menu speedControlMenu;
+        GUIKIT::MenuCheckItem fastForwardItem;
+        GUIKIT::MenuCheckItem aggressiveFastForwardItem;
+        GUIKIT::MenuCheckItem pauseItem;
+        GUIKIT::MenuRadioItem percent10Item;
+        GUIKIT::MenuRadioItem percent25Item;
+        GUIKIT::MenuRadioItem percent50Item;
+        GUIKIT::MenuRadioItem percent75Item;
+        GUIKIT::MenuRadioItem percent100Item;
+        GUIKIT::MenuRadioItem percent125Item;
+        GUIKIT::MenuRadioItem percent150Item;
+        GUIKIT::MenuRadioItem percent175Item;
+        GUIKIT::MenuRadioItem percent200Item;
+        GUIKIT::MenuRadioItem percent250Item;
+        GUIKIT::MenuRadioItem percent300Item;
+        GUIKIT::MenuRadioItem percent400Item;
+        GUIKIT::MenuRadioItem percent500Item;
                 
         struct {
             GUIKIT::Menu menu;

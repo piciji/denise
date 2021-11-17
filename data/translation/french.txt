@@ -639,3 +639,6 @@ Equal = Egal
 Arrow Up = Flèche Haut
 Arrow Left = Flèche Bas
 Backspace = Retour
+Refresh =
+Decimal Place =
+frequency correction hint =

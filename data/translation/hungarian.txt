@@ -639,3 +639,6 @@ Equal = =
 Arrow Up = ↑
 Arrow Left = ←
 Backspace = visszatörlés
+Refresh =
+Decimal Place =
+frequency correction hint =

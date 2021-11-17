@@ -3,6 +3,7 @@
 #include "view.h"
 #include "../audio/manager.h"
 #include "../cmd/cmd.h"
+#include "../tools/chronos.h"
 
 StatusHandler* statusHandler = nullptr;
 
@@ -41,28 +42,79 @@ auto StatusHandler::clear() -> void {
     message.clear();
     clearUpdates();
     videoDriver->showMessage( "" );
-    fps = fpsCollect = 0;
 }
 
-auto StatusHandler::countFrames() -> void {
-    fpsCollect++;
-    time( &curr_t );
+auto StatusHandler::resetFrameCounter() -> void {
+    if (!activeEmulator)
+        return;
 
-    if (curr_t != prev_t) {
-        fps = fpsCollect;
-        fpsCollect = 0;
-        
-		if (!cmd->noGui)
-			setFpsCounterUpdate();
+    auto& stats = activeEmulator->getStatsForSelectedRegion();
 
+    unsigned speedPercent = globalSettings->get<unsigned>("speed_percent", 100);
+
+    if (speedPercent != 100)
+        fpsCounter.fps = stats.fps * speedPercent / 100;
+    else
+        fpsCounter.fps = stats.fps;
+
+    fpsCounter.sum = 0;
+    fpsCounter.pos = 0;
+    fpsCounter.measures = 0;
+    fpsCounter.updateDelay = 0;
+    fpsCounter.last = Chronos::getTimestampInMicroseconds();
+    program->loopFrames = 0;
+}
+
+auto StatusHandler::updateFrameCounter() -> void {
+
+    static auto updateIntervall = globalSettings->getOrInit<unsigned>("fps_update", 1000, {200u, 5000u});
+
+    if (fpsCounter.measures == FPS_MEASUREMENTS) {
+        fpsCounter.sum -= fpsCounter.deltas[fpsCounter.pos];
+    } else {
+        fpsCounter.measures++;
+    }
+
+    uint64_t cur = Chronos::getTimestampInMicroseconds();
+
+    uint64_t delta = cur - fpsCounter.last;
+
+    fpsCounter.deltas[fpsCounter.pos++] = delta;
+
+    fpsCounter.sum += delta;
+
+    // FPS_MEASUREMENTS = sum
+    // x = 1s
+
+    // FPS_MEASUREMENTS * 1 = sum * x
+    // x = FPS_MEASUREMENTS / sum
+
+    fpsCounter.fps = (0.99 * fpsCounter.fps) + (1.0 - 0.99) * ((double)fpsCounter.measures / ((double)fpsCounter.sum / 1000000.0) );
+
+    if (fpsCounter.pos == FPS_MEASUREMENTS) {
+        fpsCounter.pos = 0;
+    }
+
+    fpsCounter.last = cur;
+
+    // fps = 1000
+    // x   = intervall
+    // x = fps * intervall / 1000
+
+    unsigned limit = ((unsigned)fpsCounter.fps * (unsigned) *updateIntervall) / 1000;
+
+    if (++fpsCounter.updateDelay >= limit) {
         if (!VideoManager::synchronized)
             // check input polling and message loop every 50 ms
-            program->loopFrames = (fps * 50 ) / 1000;
+            program->loopFrames = ((unsigned)fpsCounter.fps * 50 ) / 1000;
         else
             // check input polling every frame
             program->loopFrames = 0;
+
+        fpsCounter.updateDelay = 0;
+        if (!cmd->noGui)
+            setFpsCounterUpdate();
     }
-    prev_t = curr_t;
 }
 
 auto StatusHandler::updateFPS( bool state ) -> void {
@@ -124,8 +176,8 @@ auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
     
     this->statusBar = statusBar;
     showFPS = globalSettings->get<bool>("fps", false);
-    recordAudio = false;    
-    fps = fpsCollect = 0; 
+    auto countDecimalPoint = globalSettings->get<unsigned>("fps_decimal_point", 3, {0u, 3u});
+    recordAudio = false;
 	control = 0;
 
     statusBar->append( 0, "" );    // status text
@@ -147,7 +199,16 @@ auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
     statusBar->append( 12, &(view->ledOffImage) );    // expansion LED
     statusBar->append( 13, "DRC DRC DRC DRC DRC DRC DRC DRC D" );    // DRC Status
     statusBar->append( 14, &(view->recordStatusImage) );    // REC Status
-    statusBar->append( 15, "1000" );    // FPS
+
+    std::string exampleText = "1000";
+    if (countDecimalPoint) {
+        exampleText += ".";
+
+        for (unsigned i = 0; i < countDecimalPoint; i++)
+            exampleText += "9";
+    }
+
+    statusBar->append( 15, exampleText, nullptr, &(view->speedControlMenu ) );    // FPS
 
     statusBar->updateSeparator( 0, false );
     statusBar->updateSeparator( 2, true );
@@ -182,6 +243,7 @@ auto StatusHandler::transferToOSD( std::string text ) -> void {
 auto StatusHandler::update() -> void {
 
     uint16_t clearMask = ~0;
+    static auto countDecimalPoint = globalSettings->getOrInit<unsigned>("fps_decimal_point", 3u, {0u, 3u});
     
     if (fpsCounterUpdate()) {
         if (message.duration) {
@@ -288,7 +350,10 @@ auto StatusHandler::update() -> void {
             OSDText += " REC ";
         
         if (showFPS) {
-            std::string _FPS = std::to_string(fps);
+            unsigned decimalPoints = (unsigned)*countDecimalPoint;
+            std::string _FPS = decimalPoints
+                    ? GUIKIT::String::formatFloatingPoint(fpsCounter.fps, decimalPoints)
+                    : std::to_string((unsigned)round(fpsCounter.fps));
 
             if (fpsCounterUpdate())
                 statusBar->updateText(15, _FPS, true);

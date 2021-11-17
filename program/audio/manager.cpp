@@ -64,10 +64,16 @@ auto AudioManager::setResampler() -> void {
     inputFrequency = stat.sampleRate;
     
     double monitorRatio = 1.0;
-    
-    bool adjustToMonitorFrequency = globalSettings->get<bool>("video_override_exact", true);        
-                        
-    if (adjustToMonitorFrequency) {
+
+    unsigned speedPercent = globalSettings->get<unsigned>("speed_percent", 100);
+
+    if (speedPercent != 100) {
+
+        inputFrequency = (inputFrequency * (double)speedPercent) / 100.0;
+
+        monitorRatio = (double)speedPercent / 100.0;
+
+    } else if (globalSettings->get<bool>("video_override_exact", true)) {
         double monitorFrequency;
         
         if (stat.isPal())
@@ -213,6 +219,9 @@ auto AudioManager::setRateControl() -> void {
     rateDelta = globalSettings->get<float>("rate_control_delta", 0.005, {0.0, 0.010});        
     
     setBufferSize();
+
+    if (!dynamicRateControl)
+        setResampler();
 }
 
 auto AudioManager::setStatistics() -> void {

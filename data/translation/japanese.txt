@@ -639,3 +639,6 @@ Equal = Equal
 Arrow Up = Arrow Up
 Arrow Left = Arrow Left
 Backspace = Backspace
+Refresh = Refresh
+Decimal Place = Decimal Place
+frequency correction hint = e.g. %value1% or %value2%

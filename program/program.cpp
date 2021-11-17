@@ -298,6 +298,8 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
 		globalSettings->set("last_used_emu", activeEmulator->ident);
 
 		activeVideoManager->initFpsLimit();
+
+        statusHandler->resetFrameCounter();
 	}
 	
 	activeEmulator->power();
@@ -343,8 +345,10 @@ auto Program::powerOff() -> void {
 		activeEmulator->unsetExpansion();
 	}
 	isRunning = false;
+    isPause = false;
 	
 	if (!cmd->noGui) {
+        view->updatePauseCheck();
 		view->showTapeMenu( false );    	
 		statusHandler->clear();
 		if (activeVideoManager)

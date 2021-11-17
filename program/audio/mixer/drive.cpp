@@ -16,6 +16,7 @@ namespace Mixer {
         assigns.push_back( { DriveSound::FloppySpin, "spin" } );
         assigns.push_back( { DriveSound::FloppyHeadBang, "headbang" } );
         assigns.push_back( { DriveSound::FloppyStep, "step" } );
+        assigns.push_back( { DriveSound::FloppyShortStep, "shortstep" } );
 
         assigns.push_back( { DriveSound::FloppyStep1, "step1" } ); assigns.push_back( { DriveSound::FloppyStep2, "step2" } );
         assigns.push_back( { DriveSound::FloppyStep3, "step3" } ); assigns.push_back( { DriveSound::FloppyStep4, "step4" } );
@@ -178,6 +179,7 @@ namespace Mixer {
                 break;
             case DriveSound::FloppySpinDown:
             case DriveSound::FloppySpinUp:
+                //lastStep = Chronos::getTimestampInMilliseconds();
             case DriveSound::FloppySpin:
                 device->second = sound;
                 device->secondOffset = 0;
@@ -194,13 +196,11 @@ namespace Mixer {
                     stepCounts = (device->state + 1) & 7;
                     if (stepCounts <= 4) {
                         device->state = (device->state & ~7) | stepCounts;
-             //           lastStep = Chronos::getTimestampInMicroseconds();
+                        //lastStep = Chronos::getTimestampInMilliseconds();
                         break;
                     }
+                    //device->state &= ~7;
                 }
-
-//                if (device->third && (data & 1))
-  //                  break;
 
                 sound = device->steps[data >> 1];
                 if (!sound || !sound->data) {
@@ -212,16 +212,25 @@ namespace Mixer {
 
                 device->third = sound;
                 device->thirdOffset = 0;
-           //     ts = Chronos::getTimestampInMicroseconds();
-               // delta = ts - lastStep;
-
-                //if (delta < sound->playTime) {
-                //    device->thirdOffset = (((sound->playTime - delta) >> 1) * sound->size / sound->playTime) & ~1;
-//                    logger->log("short");
-//                    logger->log(std::to_string(delta));
-//                    logger->log(std::to_string(device->thirdOffset));
-                //}
-                //lastStep = ts;
+//                ts = Chronos::getTimestampInMilliseconds();
+//                delta = (ts - lastStep) + 1;
+//
+//                if (delta < sound->playTime) {
+//                    stepCounts = (device->state + 1) & 7;
+//
+//                    if (stepCounts > 2) {
+//                        sound = getSound(FloppyShortStep, emulator);
+//                        if (sound && sound->data) {
+//                            device->third = sound;
+//                     //       logger->log("short");
+//                        }
+//                    } else {
+//                        device->state = (device->state & ~7) | stepCounts;
+//                    }
+//                } else
+//                    device->state &= ~7;
+//
+//                lastStep = ts;
                 break;
         }
     }
@@ -462,7 +471,7 @@ namespace Mixer {
                 sound->channels = 2;
             }
 
-           // sound->playTime = (sound->size / sound->channels) * (1000000.0 / (float)frequency);
+            //sound->playTime = (sound->size / sound->channels) * (1000.0 / (float)frequency);
             //logger->log("playtime" );
             //logger->log(std::to_string(sound->size), 0);
             //logger->log(std::to_string(sound->channels), 0);
