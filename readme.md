@@ -3,7 +3,7 @@
 
 ![Denise Logo](https://deniseemu.sourceforge.io/logo.png)
 
-[Downloads](https://sourceforge.net/projects/deniseemu/files/) - [IssueTracker](https://bitbucket.org/piciji/denise/issues) - [Nightlies](https://ci.appveyor.com/project/piciji/denise/history) - [Build info](https://bitbucket.org/piciji/denise/src/master/data/txt/buildinfo) - [License](https://bitbucket.org/piciji/denise/src/master/data/txt/licence)
+[Downloads](https://sourceforge.net/projects/deniseemu/files/) - [IssueTracker](https://bitbucket.org/piciji/denise/issues) - [Nightlies](https://ci.appveyor.com/project/piciji/denise/history) - [Build info](https://bitbucket.org/piciji/denise/src/master/data/txt/buildinfo) - [License](https://bitbucket.org/piciji/denise/src/master/data/txt/licence.md)
 
 #### developed with
 
@@ -20,8 +20,8 @@ Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trade
     * support of D71 / G71 / P71 formats
     * Burst Modification
     * MFM support
-      * P64
-      * G64 (U-II+/U64 compatibility mode)
+        * P64
+        * G64 (U-II+/U64 compatibility mode)
 * Floppy RAM expansions and parallel cable
 * Floppy Fastloader
     * SpeedDOS
@@ -32,7 +32,7 @@ Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trade
     * ProSpeed 1571 GTI v2.0
     * Expansionsport cart for ProfDOS, PrologicDOS, Turbo Trans
     * Userport plug-in for DolphinDOS, ProfDOS, PrologicDOS, ProSpeed 1571
-* bugfix: switch to custom resolutiuon in fullscreen
+* bugfix: switch to custom resolution in fullscreen
 * auto insert newly created disks or tapes
 * increase App initial loading time
 * add drive sounds

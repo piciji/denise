@@ -806,7 +806,7 @@ Drive::~Drive() {
 }
 
 auto Drive::updateDeviceState() -> void {
-        
+    system->diskSilence.idleFrames = 0;
     system->interface->updateDeviceState( getMediaConnected(), !readMode, (side * MAX_TRACKS_1541 * 2) + currentHalftrack + 2, via2->lines.iob & 8, !motorOn );
 }
 

@@ -566,7 +566,7 @@ auto Interface::prepareModels() -> void {
 
     models.push_back({ModelIdCycleAccurateVideo, "Cycle Accurate Video", Model::Type::Switch, Model::Purpose::Performance, 1 });
     models.push_back({ModelIdDiskThread, "Disk Thread", Model::Type::Switch, Model::Purpose::Performance, 0 });
-    models.push_back({ModelIdDiskOnDemand, "Disk On Demand", Model::Type::Switch, Model::Purpose::Performance, 1 });
+    models.push_back({ModelIdDiskOnDemand, "Disk On Demand", Model::Type::Switch, Model::Purpose::Performance, 0 });
 
     models.push_back({ModelIdD64Accuracy, "Emulate D64 More Accurate", Model::Type::Switch, Model::Purpose::Hidden, 0});
 }
