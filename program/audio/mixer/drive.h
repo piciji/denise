@@ -14,7 +14,7 @@ struct Drive {
     ~Drive();
 
     enum DriveSound { FloppyInsert = 1, FloppyEject = 2, FloppySpinUp = 3, FloppySpinDown = 4, FloppySpin = 5,
-        FloppyHeadBang = 6, FloppyStep = 7,
+        FloppyHeadBang = 6, FloppyStep = 7, FloppyShortStep = 8,
 
         FloppySteps = 20,
         FloppyStep1, FloppyStep2, FloppyStep3, FloppyStep4, FloppyStep5, FloppyStep6, FloppyStep7, FloppyStep8,
@@ -39,7 +39,7 @@ struct Drive {
         unsigned size;
         uint8_t channels;
         float volume;
-        unsigned playTime; // in micro seconds
+        unsigned playTime; // in milli seconds
     };
     std::vector<Sound> sounds;
 

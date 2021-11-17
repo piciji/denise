@@ -136,6 +136,7 @@ struct Program : Emulator::Interface::Bind {
     auto setPalette( Emulator::Interface* emulator ) -> void;
     auto finishVBlank() -> void override;
     auto midScreenCallback() -> void override;
+    auto toggleFastForward(bool aggressive) -> void;
     auto fastForward( bool activate, bool aggressive = false ) -> void;
     auto setFpsLimit() -> void;
     auto updateOverallSynchronize() -> void;

@@ -83,7 +83,7 @@ auto Program::videoRefresh(const uint16_t* frame, unsigned width, unsigned heigh
 	if (cmd->noGui)
 		return;
     
-    statusHandler->countFrames();
+    statusHandler->updateFrameCounter();
 	
     if (frame)
         activeVideoManager->renderFrame<uint16_t>(frame, width, height, linePitch);
@@ -94,7 +94,7 @@ auto Program::videoRefresh8(const uint8_t* frame, unsigned width, unsigned heigh
 	if (cmd->noGui)
 		return;
 	
-    statusHandler->countFrames();
+    statusHandler->updateFrameCounter();
 	
     if (frame)
         activeVideoManager->renderFrame<uint8_t>(frame, width, height, linePitch);
@@ -156,6 +156,32 @@ auto Program::updateCrop( Emulator::Interface* emulator ) -> void {
         activeVideoManager->reinitThread();
         activeVideoManager->shader.recreate = true;        
     }
+}
+
+auto Program::toggleFastForward(bool aggressive) -> void {
+    if (!activeEmulator)
+        return;
+
+    bool ff = warp.active && !warp.aggressive;
+    bool ffa = warp.active && warp.aggressive;
+
+    if ( (!ff && !ffa) || (ff && !aggressive) || (ffa && aggressive) )
+        if (warp.motorControlled)
+            warp.enableAutoWarp = false;
+
+    if ( (!aggressive && ffa) || (aggressive && ff) ) {
+        // switch modes (already active)
+        unsigned val = (unsigned)Emulator::Interface::FastForward::NoAudioOut | (unsigned)Emulator::Interface::FastForward::ReduceVideoOutput;
+        if (aggressive)
+            val |= (unsigned)Emulator::Interface::FastForward::NoVideoSequencer;
+
+        activeEmulator->fastForward( val );
+        warp.aggressive = aggressive;
+
+        if (view)
+            view->updateFastforwardCheck();
+    } else
+        fastForward( !ff && !ffa, aggressive);
 }
 
 auto Program::fastForward( bool activate, bool aggressive ) -> void {
@@ -239,7 +265,12 @@ auto Program::fastForward( bool activate, bool aggressive ) -> void {
         warp.aggressive = aggressive;
     warp.active = activate;
 
+    statusHandler->resetFrameCounter();
+
     activeEmulator->fastForward( forward );
+
+    if (view)
+        view->updateFastforwardCheck();
 	
 	updateOverallSynchronize();
 }

@@ -191,30 +191,9 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
                 emuView->inputLayout->updateConnectorButtons();
 		} break;
         case Hotkey::Id::ToggleFastForward:
-        case Hotkey::Id::ToggleFastForwardAggressive: {
-            if (!activeEmulator)
-                break;
-
-            bool ff = program->warp.active && !program->warp.aggressive;
-            bool ffa = program->warp.active && program->warp.aggressive;
-            bool aggressive = id == Hotkey::Id::ToggleFastForwardAggressive;
-
-            if ( (!ff && !ffa) || (ff && !aggressive) || (ffa && aggressive) )
-                if (program->warp.motorControlled)
-                    program->warp.enableAutoWarp = false;
-
-            if ( (!aggressive && ffa) || (aggressive && ff) ) {
-                // switch modes (already active)
-                unsigned val = (unsigned)Emulator::Interface::FastForward::NoAudioOut | (unsigned)Emulator::Interface::FastForward::ReduceVideoOutput;
-                if (id == Hotkey::Id::ToggleFastForwardAggressive)
-                    val |= (unsigned)Emulator::Interface::FastForward::NoVideoSequencer;
-
-                activeEmulator->fastForward( val );
-                program->warp.aggressive = aggressive;
-            } else                
-                program->fastForward( !ff && !ffa, id == Hotkey::Id::ToggleFastForwardAggressive);
-                  
-        } break;        
+        case Hotkey::Id::ToggleFastForwardAggressive:
+            program->toggleFastForward( id == Hotkey::Id::ToggleFastForwardAggressive );
+            break;
         
         case Hotkey::Id::Fullscreen:
             view->setFullScreen( !view->fullScreen() );
@@ -253,8 +232,8 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             openMenu( emulator, id );
             break;
         case Hotkey::Id::Pause:
-            program->isPause ^= 1;
-            audioDriver->clear();
+            view->togglePause();
+            view->updatePauseCheck();
             break;
         case Hotkey::IncSlot:
         case Hotkey::DecSlot: 

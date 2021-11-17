@@ -112,7 +112,8 @@ auto View::build() -> void {
 	};
     
     onUnminimize = [this]() {
-        this->updateViewport();        
+        this->updateViewport();
+        statusHandler->resetFrameCounter();
     };
 	
 	winapi.onMenu = []() {
@@ -566,6 +567,61 @@ auto View::updateShader() -> void {
     }
 }
 
+auto View::setSpeed(unsigned speed) -> void {
+    if (!activeEmulator)
+        return;
+
+    globalSettings->set<unsigned>("speed_percent", speed, false);
+
+    audioManager->setResampler();
+    if (activeVideoManager)
+        activeVideoManager->initFpsLimit();
+
+    if (speed != 100) {
+        if (videoDriver->hasSynchronized())
+            videoDriver->synchronize(false);
+
+        VideoManager::setFpsLimit( false );
+    } else {
+        bool _sync = globalSettings->get<bool>("video_sync", false);
+
+        if (videoDriver->hasSynchronized() != _sync) {
+            videoDriver->synchronize( _sync );
+        }
+
+        VideoManager::setFpsLimit( globalSettings->get("fps_limit", false) );
+    }
+
+    program->updateOverallSynchronize();
+    statusHandler->resetFrameCounter();
+}
+
+auto View::updatePauseCheck() -> void {
+
+    if (program->isPause != pauseItem.checked() )
+        pauseItem.setChecked(program->isPause);
+}
+
+auto View::updateFastforwardCheck() -> void {
+    bool ff = program->warp.active && !program->warp.aggressive;
+    bool ffa = program->warp.active && program->warp.aggressive;
+
+    if (ff != fastForwardItem.checked())
+        fastForwardItem.setChecked(ff);
+
+    if (ffa != aggressiveFastForwardItem.checked())
+        aggressiveFastForwardItem.setChecked(ffa);
+}
+
+auto View::togglePause() -> void {
+    if (!activeEmulator)
+        return;
+    program->isPause ^= 1;
+    audioDriver->clear();
+    if (!program->isPause)
+        statusHandler->resetFrameCounter();
+}
+
 auto View::loadImages() -> void {
     #include "../../data/resource.h" // for win xp only 
     regionImage.loadPng((uint8_t*)Icons::globe, sizeof(Icons::globe));
@@ -830,6 +886,9 @@ auto View::buildMenu() -> void {
     audioSyncItem.onToggle = [&]() {
         globalSettings->set<bool>("audio_sync", audioSyncItem.checked() );
         audioManager->setSynchronize();
+        statusHandler->resetFrameCounter();
+        percent100Item.setChecked();
+        percent100Item.onActivate();
     };
     if ( globalSettings->get<bool>("audio_sync", true) ) audioSyncItem.setChecked();
     optionsMenu.append(audioSyncItem);
@@ -838,6 +897,12 @@ auto View::buildMenu() -> void {
         globalSettings->set<bool>("video_sync", videoSyncItem.checked() );
         program->fastForward( false );
         program->setVideoSynchronize();
+        statusHandler->resetFrameCounter();
+
+        if (videoSyncItem.checked()) {
+            percent100Item.setChecked();
+            percent100Item.onActivate();
+        }
     };
     if ( globalSettings->get<bool>("video_sync", false) ) videoSyncItem.setChecked();
     optionsMenu.append(videoSyncItem);
@@ -845,6 +910,11 @@ auto View::buildMenu() -> void {
     fpsLimitItem.onToggle = [&]() {
         globalSettings->set<bool>("fps_limit", fpsLimitItem.checked() );        
         program->setFpsLimit();
+
+        if (fpsLimitItem.checked()) {
+            percent100Item.setChecked();
+            percent100Item.onActivate();
+        }
     };
     if ( globalSettings->get<bool>("fps_limit", false) ) fpsLimitItem.setChecked();
     optionsMenu.append(fpsLimitItem);
@@ -984,7 +1054,83 @@ auto View::buildMenu() -> void {
 		InputManager::activateHotkey(Hotkey::Id::ResetTapeCounter);
 	};
 	tapeControlMenu.append( tapeResetCounterItem );  
-    
+
+    // speed menu
+    fastForwardItem.onToggle = []() {
+        program->toggleFastForward( false );
+    };
+    speedControlMenu.append( fastForwardItem );
+
+    aggressiveFastForwardItem.onToggle = []() {
+        program->toggleFastForward( true );
+    };
+    speedControlMenu.append( aggressiveFastForwardItem );
+
+    pauseItem.onToggle = [this]() {
+        this->togglePause();
+    };
+    speedControlMenu.append( pauseItem );
+
+    speedControlMenu.append( *GUIKIT::MenuSeparator::getInstance() );
+
+    percent10Item.setText("10 %");
+    percent10Item.onActivate = [this]() { this->setSpeed( 10 ); };
+    speedControlMenu.append( percent10Item );
+
+    percent25Item.setText("25 %");
+    percent25Item.onActivate = [this]() { this->setSpeed( 25 ); };
+    speedControlMenu.append( percent25Item );
+
+    percent50Item.setText("50 %");
+    percent50Item.onActivate = [this]() { this->setSpeed( 50 ); };
+    speedControlMenu.append( percent50Item );
+
+    percent75Item.setText("75 %");
+    percent75Item.onActivate = [this]() { this->setSpeed( 75 ); };
+    speedControlMenu.append( percent75Item );
+
+    percent100Item.setText("100 %");
+    percent100Item.onActivate = [this]() { this->setSpeed( 100 ); };
+    speedControlMenu.append( percent100Item );
+
+    percent125Item.setText("125 %");
+    percent125Item.onActivate = [this]() { this->setSpeed( 125 ); };
+    speedControlMenu.append( percent125Item );
+
+    percent150Item.setText("150 %");
+    percent150Item.onActivate = [this]() { this->setSpeed( 150 ); };
+    speedControlMenu.append( percent150Item );
+
+    percent175Item.setText("175 %");
+    percent175Item.onActivate = [this]() { this->setSpeed( 175 ); };
+    speedControlMenu.append( percent175Item );
+
+    percent200Item.setText("200 %");
+    percent200Item.onActivate = [this]() { this->setSpeed( 200 ); };
+    speedControlMenu.append( percent200Item );
+
+    percent250Item.setText("250 %");
+    percent250Item.onActivate = [this]() { this->setSpeed( 250 ); };
+    speedControlMenu.append( percent250Item );
+
+    percent300Item.setText("300 %");
+    percent300Item.onActivate = [this]() { this->setSpeed( 300 ); };
+    speedControlMenu.append( percent300Item );
+
+    percent400Item.setText("400 %");
+    percent400Item.onActivate = [this]() { this->setSpeed( 400 ); };
+    speedControlMenu.append( percent400Item );
+
+    percent500Item.setText("500 %");
+    percent500Item.onActivate = [this]() { this->setSpeed( 500 ); };
+    speedControlMenu.append( percent500Item );
+
+    GUIKIT::MenuRadioItem::setGroup({&percent10Item, &percent25Item, &percent50Item, &percent75Item,
+                                     &percent100Item, &percent125Item, &percent150Item, &percent175Item, &percent200Item,
+                                     &percent250Item, &percent300Item, &percent400Item, &percent500Item});
+
+    percent100Item.setChecked();
+
     // prepare Disk Control
     unsigned i = 0;
     for (auto& diskControlMenu : diskControlMenus) {
@@ -1148,7 +1294,10 @@ auto View::translate() -> void {
     //cocoa.setHiddenForAppMenuItem(GUIKIT::Window::Cocoa::AppMenuItem::Custom1, true);
 
 	statusBar.updateTooltip(12, trans->get("cartridges") );
-	statusBar.updateTooltip(15, trans->get("FPS") );	
+	statusBar.updateTooltip(15, trans->get("FPS") );
+    pauseItem.setText( trans->get("Pause") );
+    fastForwardItem.setText( trans->get("Toggle_fastforward") );
+    aggressiveFastForwardItem.setText( trans->get("Toggle_fastforward_aggressive") );
 }
 
 auto View::getViewportHandle() -> uintptr_t {

@@ -444,6 +444,16 @@ auto StatusBar::removePart( unsigned id ) -> void {
     state.updatePending = true;
 }
 
+auto StatusBar::updateDimension( unsigned id, std::string text ) -> void {
+    for(auto& part : state.parts) {
+        if (part.id == id) {
+            part.width = p.getWidth( text );
+            state.updatePending = true;
+            break;
+        }
+    }
+}
+
 auto StatusBar::updateText( unsigned id, std::string text, bool alignRight, int overrideForegroundColor ) -> bool {
     for(auto& part : state.parts) {
         if (part.id == id) {

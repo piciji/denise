@@ -302,6 +302,7 @@ struct StatusBar : Base {
     
     auto updateText( unsigned id, std::string text, bool alignRight = false, int overrideForegroundColor = -1 ) -> bool;
     auto updateImage( unsigned id, Image* image ) -> bool;
+    auto updateDimension( unsigned id, std::string text ) -> void;
     auto updateVisible( unsigned id, bool visible ) -> bool;
 	auto updateTooltip( unsigned id, std::string tooltip ) -> bool;
 	auto updateSeparator( unsigned id, bool append ) -> bool;

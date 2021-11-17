@@ -639,3 +639,6 @@ Equal = Gleich
 Arrow Up = Pfeil oben
 Arrow Left = Pfeil unten
 Backspace = Rücktaste
+Refresh = Aktualisieren
+Decimal Place = Nachkommastellen
+frequency correction hint = z.B. %value1% oder %value2%
