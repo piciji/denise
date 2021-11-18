@@ -34,7 +34,7 @@ Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trade
     * Userport plug-in for DolphinDOS, ProfDOS, PrologicDOS, ProSpeed 1571
 * bugfix: switch to custom resolution in fullscreen
 * auto insert newly created disks or tapes
-* increase App initial loading time
+* decrease App initial loading time
 * add drive sounds
     * samples provided by [thanks to enigma and Trackers World]
     * support for multiple profiles
