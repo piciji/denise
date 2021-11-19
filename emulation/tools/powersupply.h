@@ -14,59 +14,51 @@ struct PowerSupply {
 	unsigned ticksPerSecond;
 	unsigned powerFrequency;
 	unsigned baseTicks;
-	unsigned powerCounter;
-	unsigned actualTicks;
+
+    unsigned waitDelay;
+    int aberration;
 	
 	auto init( unsigned ticksPerSecond, unsigned powerFrequency ) -> void {
 		
 		this->ticksPerSecond = ticksPerSecond;
 		this->powerFrequency = powerFrequency;
 		// ideal tick count for each impulse
-		this->baseTicks = ticksPerSecond / powerFrequency;		
-		
-		powerCounter = 0;
-		actualTicks = 0;		
+		this->baseTicks = ticksPerSecond / powerFrequency;
+
+        waitDelay = 0;
+        aberration = 0;
 	}	
 	
-	auto nextTickCount() -> unsigned {		
-		
-		// ideal count of ticks so far within this second
-		unsigned idealTicks = (ticksPerSecond * powerCounter) / powerFrequency;
-		// real value is fluctuating from ideal value
-		unsigned useTicks = baseTicks;
-		
-		// make sure real value doesn't go away too far from ideal value
-		if (actualTicks < idealTicks)
-			useTicks += random();			
-		else
-			useTicks -= random();
-				
-		// last impulse for this second
-		if (++powerCounter == powerFrequency) {
-			// use the remaining ticks
-			useTicks = ticksPerSecond - actualTicks;
-			powerCounter = 0;
-			actualTicks = 0;
-			
-		} else
-			// real value
-			actualTicks += useTicks;
-		
-		return useTicks;
+	auto nextTickCount() -> unsigned {
+
+        unsigned useTicks = baseTicks;
+
+        if (waitDelay == 0) {
+
+            unsigned _rand = rand();
+            waitDelay = _rand & 7;
+
+            if (aberration == 0) {
+                aberration = (_rand >> 3) & 3;
+                useTicks += aberration;
+            } else {
+                useTicks -= aberration;
+            }
+
+        } else {
+            waitDelay--;
+        }
+
+        return useTicks;
 	}
-	
-	auto random() -> unsigned {
-		// 0 - 3
-		return rand() % 4;
-	}
-    
+
     auto serialize(Serializer& s) -> void {
         
         s.integer( ticksPerSecond );
         s.integer( powerFrequency );
         s.integer( baseTicks );
-        s.integer( powerCounter );
-        s.integer( actualTicks );
+        s.integer( aberration );
+        s.integer( waitDelay );
     }
 };
 	
