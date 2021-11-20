@@ -101,6 +101,18 @@ auto Reu::isBootable( ) -> bool {
     return !exRom;
 }
 
+auto Reu::hasFreezeButton() -> bool {
+    if (expander)
+        return expander->hasFreezeButton();
+
+    return false;
+}
+
+auto Reu::freeze() -> void {
+    if (expander)
+        expander->freeze();
+}
+
 auto Reu::prepareRam(unsigned size) -> void {    
     unsigned sizeInKb = size;
 

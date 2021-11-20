@@ -75,6 +75,8 @@ struct Reu : ExpansionPort {
     auto writeReu(uint8_t value) -> void;
     auto allowIrq() -> bool;
     auto isBootable( ) -> bool;
+    auto hasFreezeButton() -> bool;
+    auto freeze() -> void;
     
     inline auto stash() -> void;
     inline auto fetch() -> void;
@@ -90,7 +92,6 @@ struct Reu : ExpansionPort {
     auto writeRomH( uint16_t addr, uint8_t data ) -> void;
     auto writeUltimaxA0( uint16_t addr, uint8_t data ) -> void;
 
-    
     auto hasRom() -> bool { return rom ? true : false; }
 	
 	auto hasSecondaryRom() -> bool { return true; }

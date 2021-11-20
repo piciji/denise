@@ -43,6 +43,7 @@ struct PowerSupply {
                 useTicks += aberration;
             } else {
                 useTicks -= aberration;
+                aberration = 0;
             }
 
         } else {

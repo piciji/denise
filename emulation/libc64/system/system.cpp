@@ -536,7 +536,9 @@ auto System::power( bool softReset ) -> void {
     sysTimer.add( &countDownPowerSupply, powerSupply->nextTickCount(), Emulator::SystemTimer::Action::UpdateExisting );
     initDebugCart();
 
-    iecBus->power();
+    if( !softReset )
+        iecBus->power();
+
     diskSilence.idle = false;
     diskSilence.idleFrames = 0;
     burstOrParallelUpdate();
@@ -1007,4 +1009,3 @@ auto System::writeParallelHandshake() -> void {
 }
 
 }
-
