@@ -221,6 +221,8 @@ build: $(objects)
 	cp data/$(imgFolder)/bundle/* out/$(name).app/Contents/Resources/$(imgFolder)/
 	cp -r data/$(soundFolder)/* out/$(name).app/Contents/Resources/$(soundFolder)/
 	cp -r data/$(shaderFolder)/* out/$(name).app/Contents/Resources/$(shaderFolder)/
+	cp -r data/txt/licence.md out/$(name).app/Contents/Resources/
+	cp -r readme.md out/$(name).app/Contents/Resources/
 	
 	cp data/img/$(loname).icns out/$(name).app/Contents/Resources/$(name).icns
 
@@ -254,6 +256,7 @@ install: ## Install
 	$(call copy,data/$(soundFolder),out/$(soundFolder), /S)
 	$(call copy,data/$(shaderFolder),out/$(shaderFolder), /S)
 	$(call copy,readme.md,out)
+	$(call copy,data/txt/licence.md,out)
 
     ifneq ($(findstring i686, $(shell g++ --version) ),)
 	$(call copy,"data/libs/shared/win32/*.dll",out)

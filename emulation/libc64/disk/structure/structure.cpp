@@ -14,6 +14,7 @@
 #include "../virtual/virtualDrive.h"
 #include "../drive/drive.h"
 #include "../../expansionPort/gameCart/warpSpeed.h"
+#include "../../expansionPort/gameCart/mach5.h"
 
 namespace LIBC64 {
     
@@ -433,7 +434,7 @@ auto DiskStructure::prepareKeyBufferActions( std::vector<uint8_t>& path, bool us
     action.buffer = path;
     system->keyBuffer->add( action );
 
-    if (!system->secondDriveCable.burstRequested) {
+    if (!system->secondDriveCable.burstRequested && !dynamic_cast<Mach5*>(expansionPort)) {
         if (!useTraps) {
             action.mode = KeyBuffer::Mode::WaitFor;
             action.buffer = {'S', 'E', 'A', 'R', 'C', 'H', 'I', 'N', 'G'};

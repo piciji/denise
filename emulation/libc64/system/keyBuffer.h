@@ -275,9 +275,6 @@ struct KeyBuffer {
         for( int i = 0; i < buffer.size(); i++) {
             
             if (ram[adr + i] != (buffer[i] & 63) ) {
-                if (ram[adr + i] != 32)
-                    return Found::No;
-                
                 return Found::NotYet;
             }
         }

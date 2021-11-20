@@ -9,14 +9,12 @@ namespace Emulator {
 
 struct Flash040 {
 	
-    enum Type { TypeNormal, TypeB, Type010, Type032BA01Swap, Type064 } type;
+    enum Type { TypeNormal, TypeB, Type010 } type;
     
     Flash040(Type type) {
         
         this->type = type;
-        this->manufacturerId = 1;
         this->deviceId = 0xa4;
-        this->deviceIdAddr = 1;
         this->size = 524288;
         this->sectorSize = 65536;
         this->sectorBytes = 1;
@@ -24,7 +22,6 @@ struct Flash040 {
         this->unlock2Addr = 0x2aaa;
         this->unlock1Mask = 0x7fff;
         this->unlock2Mask = 0x7fff;
-        this->statusToggleBits = 0x40;
         this->eraseSectorTimeoutCycles = 80;
         this->eraseSectorCycles = 1000000;
         this->eraseChipCycles = 14000000;
@@ -48,33 +45,6 @@ struct Flash040 {
                 this->size = 131072;
                 this->sectorSize = 16384;
                 this->eraseChipCycles = 1000000;
-                break;
-                
-            case Type032BA01Swap:
-                this->deviceId = 0x41;
-                this->size = 4194304;
-                this->sectorBytes = 8;
-                this->unlock1Addr = 0x556;
-                this->unlock2Addr = 0x2a9;
-                this->unlock1Mask = 0x7ff;
-                this->unlock2Mask = 0x7ff;
-                this->statusToggleBits = 0x44;
-                this->eraseSectorTimeoutCycles = 50;
-                this->eraseChipCycles = 64000000;
-                break;
-                
-            case Type064:
-                this->deviceId = 0x7e;
-                this->deviceIdAddr = 2;
-                this->size = 8388608;
-                this->sectorBytes = 16;
-                this->unlock1Addr = 0xaaa;
-                this->unlock2Addr = 0x555;
-                this->unlock1Mask = 0xfff;
-                this->unlock2Mask = 0xfff;
-                this->eraseSectorTimeoutCycles = 50;
-                this->eraseSectorCycles = 500000;
-                this->eraseChipCycles = 64000000;
                 break;
         }
 
@@ -111,14 +81,11 @@ struct Flash040 {
 	uint32_t sectorSize;
     uint32_t sectorShift;
     uint8_t sectorBytes;
-    uint8_t manufacturerId;
     uint8_t deviceId;
-    uint8_t deviceIdAddr;
     uint32_t unlock1Addr;
     uint32_t unlock2Addr;
     uint32_t unlock1Mask;
     uint32_t unlock2Mask;
-    uint8_t statusToggleBits;
     unsigned eraseSectorTimeoutCycles;
     unsigned eraseSectorCycles;
     unsigned eraseChipCycles;
@@ -238,22 +205,13 @@ struct Flash040 {
         switch (state) {
             case State::AutoSelect: {
                 uint8_t _addr = addr & 0xff;
-                
-                if (type == Type032BA01Swap) {                                                
-                    if (_addr == 0) addr = 0;
-                    else if (_addr == 1) addr = 2;
-                    else if (_addr == 2) addr = 1;
-                    else if (_addr == 3) addr = 3;
-                }
-                
-                _addr = addr & 0xff;
 
                 if (_addr == 0)
-                    return manufacturerId;
-                if (_addr == deviceIdAddr)
+                    return 1; // manufacturer Id
+                if (_addr == 1)
                     return deviceId;
                 if (_addr == 2)
-                    return 0;
+                    return 0; // unprotected
                 
                 return data[addr];                
             }
@@ -266,7 +224,7 @@ struct Flash040 {
             case State::SectorErase:
             case State::SectorEraseTimeout: {                
                 uint8_t value = byteToProgram;
-                byteToProgram ^= statusToggleBits;
+                byteToProgram ^= 0x40;
 
                 return (state != State::SectorEraseTimeout) ? (value | 8) : value;
             }
