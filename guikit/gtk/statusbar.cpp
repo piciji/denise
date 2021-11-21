@@ -84,11 +84,11 @@ auto pStatusBar::update() -> void {
 	for( auto widget : usedWidgets )
 		delete widget;
 
-    for( auto separator : separators )
-        gtk_widget_destroy( separator );
+    for( auto helper : helpers )
+        gtk_widget_destroy( helper );
 	
 	usedWidgets.clear();
-    separators.clear();
+    helpers.clear();
 	
 	unsigned partCount = statusBar.state.parts.size();
 	
@@ -131,7 +131,7 @@ auto pStatusBar::update() -> void {
 			gtkWidget = widget->p.gtkWidget;
 			
 			gtk_widget_set_margin_top(gtkWidget, 1);
-			
+
 			usedWidgets.push_back( widget );
 			
 		} else {
@@ -139,29 +139,31 @@ auto pStatusBar::update() -> void {
 
             label->setAlign( part.alignRight ? Label::Align::Right : Label::Align::Left );
 			label->setText( part.text );
-			
+
 			if (part.overrideForegroundColor != -1)
 				label->setForegroundColor( part.overrideForegroundColor );
-			
-			gtkWidget = label->p.gtkWidget; 				
-						
+
+			gtkWidget = label->p.gtkWidget;
+
 			usedWidgets.push_back( label );
 		}
 		
 		if (part.onClick || part.popupMenu) {
-			gtkEventBox = gtk_event_box_new();			
+			gtkEventBox = gtk_event_box_new();
 
 			gtk_widget_add_events(gtkEventBox, GDK_BUTTON_PRESS_MASK | GDK_ENTER_NOTIFY_MASK | GDK_LEAVE_NOTIFY_MASK);
-			
+
 			g_signal_connect(G_OBJECT(gtkEventBox), "button-press-event", G_CALLBACK(pStatusBar::onClick), (gpointer)&part);
-			
+
 			g_signal_connect(G_OBJECT(gtkEventBox), "enter-notify-event", G_CALLBACK(pStatusBar::onEnter), (gpointer)&part);
-			
+
 			g_signal_connect(G_OBJECT(gtkEventBox), "leave-notify-event", G_CALLBACK(pStatusBar::onLeave), (gpointer)&part);
-									
+
 			gtk_container_add(GTK_CONTAINER(gtkEventBox), gtkWidget);
-			
+
 			gtkWidget = gtkEventBox;
+
+            helpers.push_back( gtkEventBox );
 		}
 				
 		gtk_grid_attach_next_to (GTK_GRID(gridWidget), gtkWidget, nullptr, GtkPositionType::GTK_POS_RIGHT, 1, 1);
@@ -174,7 +176,7 @@ auto pStatusBar::update() -> void {
 		    GtkWidget* separator = gtk_separator_new( GTK_ORIENTATION_VERTICAL );
             gtk_grid_attach_next_to (GTK_GRID(gridWidget), separator, nullptr, GtkPositionType::GTK_POS_RIGHT, 1, 1);
             gtk_widget_show_all( separator );
-            separators.push_back( separator );
+            helpers.push_back( separator );
 		}
 	}
 }
