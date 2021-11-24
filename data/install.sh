@@ -27,9 +27,9 @@ mkdir -p $prefix/share/denise/sounds/
 mkdir -p $prefix/share/denise/shader/
 
 if [ -d $prefix/local ]; then
-	install -D -m 755 Denise $prefix/local/bin/Denise;
+	install -D -m 755 denise $prefix/local/bin/denise;
 else
-	install -D -m 755 Denise $prefix/bin/Denise;
+	install -D -m 755 denise $prefix/bin/denise;
 fi
 
 install -D -m 644 denise.png $prefix/share/icons/denise.png

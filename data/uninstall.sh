@@ -2,6 +2,8 @@
 
 prefix=/usr
 
+if [ -f $prefix/local/bin/denise ];	then rm $prefix/local/bin/denise;
+elif [ -f $prefix/bin/denise ];	then rm $prefix/bin/denise; fi
 if [ -f $prefix/local/bin/Denise ];	then rm $prefix/local/bin/Denise;
 elif [ -f $prefix/bin/Denise ];	then rm $prefix/bin/Denise; fi
 

@@ -233,9 +233,11 @@ build: $(objects)
 	install_name_tool -id @executable_path/../Frameworks/libfreetype.6.dylib out/$(name).app/Contents/Frameworks/libfreetype.6.dylib
 	install_name_tool -change `otool -D /usr/local/lib/libfreetype.6.dylib | cut -d':' -f2` @executable_path/../Frameworks/libfreetype.6.dylib out/$(name).app/Contents/MacOS/$(name)
     endif	
-	
+
+	else ifneq ($(platform),x)
+		$(strip $(compiler) -o out/$(name) $(objects) $(link))
     else
-	$(strip $(compiler) -o out/$(name) $(objects) $(link))
+		$(strip $(compiler) -o out/$(loname) $(objects) $(link))
     endif
 
 .PHONY: help
@@ -246,7 +248,12 @@ help:
 
 clean: ## Clean
 	-@$(call delete,obj/*.o)
-	-@$(call delete,out/$(name)*)
+ifneq ($(platform),x)
+		-@$(call delete,out/$(name)*)
+else
+		-@$(call delete,out/$(name)*)
+		-@$(call delete,out/$(loname)*)
+endif
 
 install: ## Install
     ifeq ($(platform),windows)
@@ -280,9 +287,9 @@ install: ## Install
 	mkdir -p $(prefix)/share/$(loname)/$(shaderFolder)/
 
 	if [ -d $(prefix)/local ]; then	\
-	    install -D -m 755 out/$(name) $(prefix)/local/bin/$(name);	\
+	    install -D -m 755 out/$(loname) $(prefix)/local/bin/$(loname);	\
 	else	\
-	    install -D -m 755 out/$(name) $(prefix)/bin/$(name);	\
+	    install -D -m 755 out/$(loname) $(prefix)/bin/$(loname);	\
 	fi
 	install -D -m 644 data/img/$(loname).png $(prefix)/share/icons/$(loname).png
 	install -D -m 644 data/$(loname).desktop $(prefix)/share/applications/$(loname).desktop
@@ -304,6 +311,8 @@ uninstall: ## Unistall
     ifeq ($(platform),windows)
     else ifeq ($(platform),macosx)
     else	
+	if [ -f $(prefix)/local/bin/$(loname) ];	then rm $(prefix)/local/bin/$(loname);	\
+	elif [ -f $(prefix)/bin/$(loname) ];	then rm $(prefix)/bin/$(loname); fi
 	if [ -f $(prefix)/local/bin/$(name) ];	then rm $(prefix)/local/bin/$(name);	\
 	elif [ -f $(prefix)/bin/$(name) ];	then rm $(prefix)/bin/$(name); fi
 	

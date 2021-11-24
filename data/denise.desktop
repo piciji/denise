@@ -1,7 +1,7 @@
 [Desktop Entry]
 Name=Denise
 Comment=c64, amiga500 emulator
-Exec=Denise %F
+Exec=denise %F
 Icon=denise.png
 Terminal=false
 Type=Application
