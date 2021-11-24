@@ -69,8 +69,8 @@ cropBottom("px")
 		program->updateCrop( emulator );
 	};
 	
-	cropAspectCorrect.onToggle = [this]() {
-		_settings->set<unsigned>( "crop_aspect_correct", cropAspectCorrect.checked() );
+	cropAspectCorrect.onToggle = [this](bool checked) {
+		_settings->set<unsigned>( "crop_aspect_correct", checked );
 		program->updateCrop( emulator );
 	};
 	

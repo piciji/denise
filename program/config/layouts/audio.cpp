@@ -86,10 +86,9 @@ volume("%", false, true) {
     
     control.maxRateEdit.setText( GUIKIT::String::formatFloatingPoint( globalSettings->get<double>("rate_control_delta", 0.005, {0.0, 0.010}) ) );
        
-    control.priorityCheckbox.onToggle = [this]() {
-        bool state = control.priorityCheckbox.checked();        
-        globalSettings->set<bool>("audio_priority", state);
-        audioDriver->setHighPriority( state );
+    control.priorityCheckbox.onToggle = [this](bool checked) {
+        globalSettings->set<bool>("audio_priority", checked);
+        audioDriver->setHighPriority( checked );
     };
     
     control.priorityCheckbox.setChecked( globalSettings->get<bool>("audio_priority", false) );

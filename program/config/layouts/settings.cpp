@@ -93,33 +93,33 @@ SettingsLayout::SettingsLayout() {
     append(about, {~0u, 0u});    
 
 	switches.autostartDragnDrop.setChecked(globalSettings->get<bool>("autostart_dragndrop", false));
-    switches.autostartDragnDrop.onToggle = [&]() {
-        globalSettings->set<bool>("autostart_dragndrop", switches.autostartDragnDrop.checked());
+    switches.autostartDragnDrop.onToggle = [&](bool checked) {
+        globalSettings->set<bool>("autostart_dragndrop", checked);
     };
     
     switches.saveSettingsOnExit.setChecked(globalSettings->get<bool>("save_settings_on_exit", true));
-    switches.saveSettingsOnExit.onToggle = [&]() {
-        globalSettings->set<bool>("save_settings_on_exit", switches.saveSettingsOnExit.checked());
+    switches.saveSettingsOnExit.onToggle = [&](bool checked) {
+        globalSettings->set<bool>("save_settings_on_exit", checked);
     };
     
 	switches.pause.setChecked(globalSettings->get<bool>("pause_focus_loss", false));
-    switches.pause.onToggle = [&]() {
-        globalSettings->set<bool>("pause_focus_loss", switches.pause.checked());
+    switches.pause.onToggle = [&](bool checked) {
+        globalSettings->set<bool>("pause_focus_loss", checked);
     };
     
     switches.openFullscreen.setChecked(globalSettings->get<bool>("open_fullscreen", false));
-    switches.openFullscreen.onToggle = [&]() {
-        globalSettings->set<bool>("open_fullscreen", switches.openFullscreen.checked());
+    switches.openFullscreen.onToggle = [&](bool checked) {
+        globalSettings->set<bool>("open_fullscreen", checked);
     };
     
     switches.alternateSoftwarePreview.setChecked(globalSettings->get<bool>("alternate_software_preview", false));
-    switches.alternateSoftwarePreview.onToggle = [&]() {
-        globalSettings->set<bool>("alternate_software_preview", switches.alternateSoftwarePreview.checked());
+    switches.alternateSoftwarePreview.onToggle = [&](bool checked) {
+        globalSettings->set<bool>("alternate_software_preview", checked);
     };
 
     switches.questionMediaWrite.setChecked(globalSettings->get<bool>("question_media_write", true));
-    switches.questionMediaWrite.onToggle = [this]() {
-        globalSettings->set<bool>("question_media_write", switches.questionMediaWrite.checked());
+    switches.questionMediaWrite.onToggle = [](bool checked) {
+        globalSettings->set<bool>("question_media_write", checked);
     };
 
     setLang();
@@ -182,10 +182,8 @@ SettingsLayout::SettingsLayout() {
     
     previewLayout.bottom.dialogHeight.value.setText( std::to_string( previewLayout.bottom.dialogHeight.slider.position() + 100 ) + " px" );
          
-    previewLayout.top.tooltips.onToggle = [this]() {
-        bool state = previewLayout.top.tooltips.checked();
-        
-        globalSettings->set<bool>("software_preview_tooltips", state );
+    previewLayout.top.tooltips.onToggle = [this](bool checked) {
+        globalSettings->set<bool>("software_preview_tooltips", checked );
         
         for( auto emuView : emuConfigViews )
             emuView->mediaLayout->updateListings();
@@ -197,10 +195,8 @@ SettingsLayout::SettingsLayout() {
     
     previewLayout.top.tooltips.setChecked( globalSettings->get<bool>("software_preview_tooltips", true ) );
 
-    previewLayout.top.commodoreHighlight.onToggle = [this]() {
-        bool state = previewLayout.top.commodoreHighlight.checked();
-
-        globalSettings->set<bool>("software_preview_commodore_hi", state );
+    previewLayout.top.commodoreHighlight.onToggle = [](bool checked) {
+        globalSettings->set<bool>("software_preview_commodore_hi", checked );
 
         for( auto emuView : emuConfigViews )
             emuView->mediaLayout->selectionColorListing();

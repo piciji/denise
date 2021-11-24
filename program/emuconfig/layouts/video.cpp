@@ -299,21 +299,18 @@ base( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) )
     setSliderAction<float>( &crtGlitch.randomLineOffset, "random_line_offset", [this](float value) { vManager()->setRandomLineOffset( value ); },
         [this](unsigned position) { return (float)position / 100.0f; } );
     
-    base.option.newLuma.onToggle = [this]() {
-        bool state = base.option.newLuma.checked();
-        _settings->set<bool>( "video_new_luma" + this->sliderIdent(), state);
-        vManager()->setNewLuma( state );
+    base.option.newLuma.onToggle = [this](bool checked) {
+        _settings->set<bool>( "video_new_luma" + this->sliderIdent(), checked);
+        vManager()->setNewLuma( checked );
     };
     
-    base.option.crtRealGamma.onToggle = [this]() {
-        bool state = base.option.crtRealGamma.checked();
-        _settings->set<bool>( "video_crt_real_gamma" + this->sliderIdent(), state);
-        vManager()->setCrtRealGamma( state );
+    base.option.crtRealGamma.onToggle = [this](bool checked) {
+        _settings->set<bool>( "video_crt_real_gamma" + this->sliderIdent(), checked);
+        vManager()->setCrtRealGamma( checked );
     };
 	
-	base.option.linearInterpolation.onToggle = [this]() {
-		
-		_settings->set<unsigned>("video_filter", base.option.linearInterpolation.checked() ? 1 : 0 );
+	base.option.linearInterpolation.onToggle = [this](bool checked) {
+		_settings->set<unsigned>("video_filter", checked ? 1 : 0 );
         program->setVideoFilter();
 	};
 	
@@ -366,16 +363,14 @@ base( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) )
 		updatePresets();
     };    
     
-    gpuBase.option.distortionHires.onToggle = [this]() {
-        bool state = gpuBase.option.distortionHires.checked();
-        _settings->set<bool>("video_distortion_hires" + this->sliderIdent(), state);
-		vManager()->useDistortionHires( state );
+    gpuBase.option.distortionHires.onToggle = [this](bool checked) {
+        _settings->set<bool>("video_distortion_hires" + this->sliderIdent(), checked);
+		vManager()->useDistortionHires( checked );
     };
     
-    gpuBase.option.hires.onToggle = [this]() {
-        bool state = gpuBase.option.hires.checked();
-        _settings->set<bool>("video_hires" + this->sliderIdent(), state);
-		vManager()->useHires( state );
+    gpuBase.option.hires.onToggle = [this](bool checked) {
+        _settings->set<bool>("video_hires" + this->sliderIdent(), checked);
+		vManager()->useHires( checked );
     };    
 	
     gpuBase.firSharp.sharpLeft.onActivate = [this]() {
@@ -411,11 +406,11 @@ base( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) )
         vicIIGlitch.ras.active.setChecked( !_checked );
         vicIIGlitch.cas.active.setChecked( !_checked );
         
-        vicIIGlitch.aec.active.onToggle();
-        vicIIGlitch.ba.active.onToggle();
-        vicIIGlitch.phi0.active.onToggle();
-        vicIIGlitch.ras.active.onToggle();
-        vicIIGlitch.cas.active.onToggle();
+        vicIIGlitch.aec.active.onToggle( !_checked );
+        vicIIGlitch.ba.active.onToggle( !_checked );
+        vicIIGlitch.phi0.active.onToggle( !_checked );
+        vicIIGlitch.ras.active.onToggle( !_checked );
+        vicIIGlitch.cas.active.onToggle( !_checked );
     };
     
     loadSettings();
@@ -424,8 +419,7 @@ base( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) )
 template<typename T> auto VideoLayout::setSliderAction( SliderLayout* layout, std::string baseIdent, std::function<void ( T value )> callBack, std::function<T ( unsigned position )> callTransfer ) -> void {
     		
     if (layout->withActivator)
-        layout->active.onToggle = [this, layout, baseIdent, callBack, callTransfer]() {
-            bool checked = layout->active.checked();
+        layout->active.onToggle = [this, layout, baseIdent, callBack, callTransfer](bool checked) {
             _settings->set<bool>("video_" + baseIdent + "_use" + this->sliderIdent(), checked);
             layout->slider.setEnabled(checked);
             if (layout == &mask.level) {                

@@ -17,7 +17,7 @@ auto pCheckBox::onToggle() -> void {
     setChecked(checkBox.state.checked);
     
     if(checkBox.onToggle)
-        checkBox.onToggle();
+        checkBox.onToggle(checkBox.state.checked);
 }
 
 auto pCheckBox::create() -> void {

@@ -179,16 +179,13 @@ VideoLayout::VideoLayout() {
         program->updateFullscreenSetting();
     };
 
-    videoResolution.active.onToggle = [this]() {
-
-        bool active = videoResolution.active.checked();
-
-        globalSettings->set<bool>("fullscreen_setting_active", active);
+    videoResolution.active.onToggle = [this](bool checked) {
+        globalSettings->set<bool>("fullscreen_setting_active", checked);
 
         program->updateFullscreenSetting();
 
-        videoResolution.display.setEnabled( active );
-        videoResolution.displaySettings.setEnabled( active );
+        videoResolution.display.setEnabled( checked );
+        videoResolution.displaySettings.setEnabled( checked );
     };
 
     videoResolution.active.setChecked( globalSettings->get<bool>("fullscreen_setting_active", false) );
@@ -231,14 +228,14 @@ VideoLayout::VideoLayout() {
     } else
         videoSettingsLayout.remove( videoSettingsLayout.hardSync );
 	
-	videoSettingsLayout.exclusiveFullscreen.onToggle = [this]() {
-		globalSettings->set("exclusive_fullscreen", videoSettingsLayout.exclusiveFullscreen.checked());
+	videoSettingsLayout.exclusiveFullscreen.onToggle = [](bool checked) {
+		globalSettings->set("exclusive_fullscreen", checked);
 		program->hintExclusiveFullscreen();
 	};
     
-    videoSettingsLayout.hardSync.onToggle = [this]() {
-		globalSettings->set("gl_hardsync", videoSettingsLayout.hardSync.checked());
-		videoDriver->hardSync( videoSettingsLayout.hardSync.checked() );
+    videoSettingsLayout.hardSync.onToggle = [](bool checked) {
+		globalSettings->set("gl_hardsync", checked);
+		videoDriver->hardSync( checked );
 	};
     
     std::function<bool (PathsLayout::Block*, const std::string&, const std::string&)> selectPath;
@@ -358,8 +355,8 @@ VideoLayout::VideoLayout() {
     if(globalSettings->get("video_screen_text", 0) == 1) screenTextLayout.option2.setChecked();
     if(globalSettings->get("video_screen_text", 0) == 2) screenTextLayout.option3.setChecked();
     
-    videoFrameAdjust.overrideExactFrequency.onToggle = [this]() {        
-        globalSettings->set<bool>("video_override_exact", videoFrameAdjust.overrideExactFrequency.checked()); 
+    videoFrameAdjust.overrideExactFrequency.onToggle = [this](bool checked) {
+        globalSettings->set<bool>("video_override_exact", checked);
         audioManager->setResampler();
         if (activeVideoManager)
             activeVideoManager->initFpsLimit();
@@ -403,33 +400,29 @@ VideoLayout::VideoLayout() {
     videoFrameAdjust.ntscFrequency.setText( GUIKIT::String::formatFloatingPoint( globalSettings->get<double>("video_ntsc", 60.0, {30.0, 120.0}) ) );
 		
     videoGeometry.aspectCorrect.setChecked( globalSettings->get<bool>("aspect_correct", true) );
-    videoGeometry.aspectCorrect.onToggle = [&]() {
-		bool state = videoGeometry.aspectCorrect.checked();		
-        globalSettings->set<bool>("aspect_correct", state);
-		VideoManager::setAspectCorrect( state );
+    videoGeometry.aspectCorrect.onToggle = [&](bool checked) {
+        globalSettings->set<bool>("aspect_correct", checked);
+		VideoManager::setAspectCorrect( checked );
         view->updateViewport();
     };
 	
 	videoGeometry.integerScaling.setChecked( globalSettings->get<bool>("integer_scaling", false) );
-    videoGeometry.integerScaling.onToggle = [&]() {
-		bool state = videoGeometry.integerScaling.checked();		
-        globalSettings->set<bool>("integer_scaling", state);
-		VideoManager::setIntegerScaling( state );
+    videoGeometry.integerScaling.onToggle = [&](bool checked) {
+        globalSettings->set<bool>("integer_scaling", checked);
+		VideoManager::setIntegerScaling( checked );
         view->updateViewport();
     };
 	
 	crtEmulation.threadMode.setChecked( globalSettings->get<bool>("crt_threaded", true) );
-	crtEmulation.threadMode.onToggle = [this]() {
-		bool state = crtEmulation.threadMode.checked();		
-        globalSettings->set<bool>("crt_threaded", state);
-        VideoManager::setThreaded( state );
+	crtEmulation.threadMode.onToggle = [this](bool checked) {
+        globalSettings->set<bool>("crt_threaded", checked);
+        VideoManager::setThreaded( checked );
     };
     
 	crtEmulation.shaderInputPrecision.setChecked( globalSettings->get<bool>("crt_shader_input_precision", false) );
-    crtEmulation.shaderInputPrecision.onToggle = [this]() {
-		bool state = crtEmulation.shaderInputPrecision.checked();		
-        globalSettings->set<bool>("crt_shader_input_precision", state);
-        VideoManager::setShaderInputPrecision( state );
+    crtEmulation.shaderInputPrecision.onToggle = [this](bool checked) {
+        globalSettings->set<bool>("crt_shader_input_precision", checked);
+        VideoManager::setShaderInputPrecision( checked );
     };
     
     updateFrequencyLayout();

@@ -100,13 +100,12 @@ SwapperLayout::SwapperLayout( MediaLayout* mediaLayout ) {
 		controls.writeProtect.setEnabled(false);		
 	};
 
-	controls.writeProtect.onToggle = [&]() {
+	controls.writeProtect.onToggle = [&](bool checked) {
 		if(!listView.selected()) return;
 		auto pos = listView.selection();
-        auto fSetting = getSetting( pos );		
-		bool state = controls.writeProtect.checked();
+        auto fSetting = getSetting( pos );
 
-        fSetting->setWriteProtect( state );        
+        fSetting->setWriteProtect( checked );
 	};
 	
 	for(unsigned i = 0; i < 15; i++) {

@@ -123,11 +123,11 @@ auto ModelLayout::setEvents( ) -> void {
             
             if (model->isSwitch() ) {	
 
-                block->checkBox.onToggle = [this, block, model]( ) {
+                block->checkBox.onToggle = [this, block, model]( bool checked ) {
 
-                    tabWindow->settings->set<bool>( _underscore(model->name), block->checkBox.checked( ) );
+                    tabWindow->settings->set<bool>( _underscore(model->name), checked );
 
-                    emulator->setModelValue( model->id, block->checkBox.checked( ) );
+                    emulator->setModelValue( model->id, checked );
                                         
                     applyCustomStuff( block, model );
                 };
@@ -737,9 +737,9 @@ auto ModelLayout::appendAudioSelectorLayout() -> void {
     
     append(controlLayout, {0u, 0u}, 5);
     
-    controlLayout.firstAll.onToggle = [this]() {
+    controlLayout.firstAll.onToggle = [this](bool checked) {
         
-        if (!controlLayout.firstAll.checked())
+        if (!checked)
             return;
         
         Line::Block* block;
@@ -763,9 +763,9 @@ auto ModelLayout::appendAudioSelectorLayout() -> void {
         controlLayout.secondAll.setChecked( false );
     };
 
-    controlLayout.secondAll.onToggle = [this]() {
+    controlLayout.secondAll.onToggle = [this](bool checked) {
 
-        if (!controlLayout.secondAll.checked())
+        if (!checked)
             return;
         
         Line::Block* block;

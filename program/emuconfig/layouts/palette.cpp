@@ -268,9 +268,9 @@ PaletteLayout::PaletteLayout(TabWindow* tabWindow) {
             statusHandler->setMessage( trans->get("file_creation_success", {{"%path%", paletteManager->path()}} ) );
     };
     
-    saveLayout.onExit.onToggle = [this]() {
+    saveLayout.onExit.onToggle = [this](bool checked) {
         
-        _settings->set<bool>( "save_palettes_on_exit", saveLayout.onExit.checked() );
+        _settings->set<bool>( "save_palettes_on_exit", checked );
     };
 
     saveLayout.onExit.setChecked( _settings->get<bool>( "save_palettes_on_exit", true ) );

@@ -243,9 +243,9 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
         
     append( moduleSwitch, {~0u, ~0u} );    
     
-    bass.top.active.onToggle = [this]() {
+    bass.top.active.onToggle = [this](bool checked) {
         
-        _settings->set<bool>("audio_bass", bass.top.active.checked() );
+        _settings->set<bool>("audio_bass", checked );
         
         updateVisibility();
         
@@ -286,9 +286,9 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
     };    
     
     // reverb
-    reverb.top.active.onToggle = [this]() {
+    reverb.top.active.onToggle = [this](bool checked) {
         
-        _settings->set<bool>("audio_reverb", reverb.top.active.checked() );
+        _settings->set<bool>("audio_reverb", checked );
         
         updateVisibility();
         
@@ -302,9 +302,9 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
     setDspEvent( &reverb.bottom.roomSize, "audio_reverb_roomsize", 0.56 );
     
     // panning
-    panning.top.active.onToggle = [this]() {
+    panning.top.active.onToggle = [this](bool checked) {
         
-        _settings->set<bool>("audio_panning", panning.top.active.checked() );
+        _settings->set<bool>("audio_panning", checked );
         
         updateVisibility();
         
@@ -316,13 +316,10 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
     setDspEvent( &panning.bottom.leftMix, "audio_panning_right0", 0.0 );
     setDspEvent( &panning.bottom.rightMix, "audio_panning_right1", 1.0 );
         
-    audioRecord.duration.useTimeLimit.onToggle = [this]() {
+    audioRecord.duration.useTimeLimit.onToggle = [this](bool checked) {
+        _settings->set<bool>( "audio_record_timelimit", checked);
         
-        bool state = audioRecord.duration.useTimeLimit.checked();
-        
-        _settings->set<bool>( "audio_record_timelimit", state);
-        
-        audioRecord.duration.setEnabled( state );
+        audioRecord.duration.setEnabled( checked );
         
         audioRecord.duration.useTimeLimit.setEnabled();            
         audioRecord.duration.record.setEnabled();
@@ -368,10 +365,10 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
     };
     
     audioRecord.duration.record.onToggle = [this]() {
-                
-        bool state = audioRecord.duration.record.checked();                
-        
-        if (state) {                      
+
+        bool state = audioRecord.duration.record.checked();
+
+        if (state) {
             std::string errorText;
             if (!audioManager->record.record(this->emulator, errorText)) {
                 mes->error( errorText );
@@ -384,9 +381,9 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
         audioRecord.duration.record.setText( trans->get( state ? "Stop" : "Record" ) );
     };
 
-    driveLayout.floppyVolume.active.onToggle = [this]() {
+    driveLayout.floppyVolume.active.onToggle = [this](bool checked) {
 
-        _settings->set<bool>( "audio_floppy", driveLayout.floppyVolume.active.checked() );
+        _settings->set<bool>( "audio_floppy", checked );
 
         if (emulator == activeEmulator)
             audioManager->setDriveSounds();

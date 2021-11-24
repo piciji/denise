@@ -96,26 +96,26 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) {
             _settings->set<unsigned>("auto_warp", 2);
         };
 
-        autostartLayout->autoWarp.diskFirstFile.onToggle = [this]() {
+        autostartLayout->autoWarp.diskFirstFile.onToggle = [this](bool checked) {
 
-            _settings->set<bool>("auto_warp_disk_first_file", autostartLayout->autoWarp.diskFirstFile.checked());
+            _settings->set<bool>("auto_warp_disk_first_file", checked);
         };
 
-        autostartLayout->autoWarp.tapeFirstFile.onToggle = [this]() {
+        autostartLayout->autoWarp.tapeFirstFile.onToggle = [this](bool checked) {
 
-            _settings->set<bool>("auto_warp_tape_first_file", autostartLayout->autoWarp.tapeFirstFile.checked());
+            _settings->set<bool>("auto_warp_tape_first_file", checked);
         };
 
-        autostartLayout->options.tapeWithStandardKernal.onToggle = [this]() {
-            _settings->set<bool>("autostart_tape_standard_kernal", autostartLayout->options.tapeWithStandardKernal.checked());
+        autostartLayout->options.tapeWithStandardKernal.onToggle = [this](bool checked) {
+            _settings->set<bool>("autostart_tape_standard_kernal", checked);
         };
 
-        autostartLayout->options.loadWithColumn.onToggle = [this]() {
-            _settings->set<bool>("autostart_load_with_column", autostartLayout->options.loadWithColumn.checked());
+        autostartLayout->options.loadWithColumn.onToggle = [this](bool checked) {
+            _settings->set<bool>("autostart_load_with_column", checked);
         };
 
-        autostartLayout->options.trapsOnDblClick.onToggle = [this]() {
-            _settings->set<bool>("autostart_traps_on_dblclick", autostartLayout->options.trapsOnDblClick.checked());
+        autostartLayout->options.trapsOnDblClick.onToggle = [this](bool checked) {
+            _settings->set<bool>("autostart_traps_on_dblclick", checked);
         };
     }
 
@@ -132,26 +132,21 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) {
         this->emulator->runAhead( pos );
     };
     
-    runAheadLayout.options.performanceMode.onToggle = [this]() {
+    runAheadLayout.options.performanceMode.onToggle = [this](bool checked) {
+        _settings->set<bool>( "runahead_performance", checked);
         
-        bool state = runAheadLayout.options.performanceMode.checked();
-        
-        _settings->set<bool>( "runahead_performance", state);
-        
-        this->emulator->runAheadPerformance( state );
+        this->emulator->runAheadPerformance( checked );
     };
     
-    runAheadLayout.options.disableOnPower.onToggle = [this]() {
+    runAheadLayout.options.disableOnPower.onToggle = [this](bool checked) {
         
-        _settings->set<bool>( "runahead_disable", runAheadLayout.options.disableOnPower.checked() );
+        _settings->set<bool>( "runahead_disable", checked );
     };
 
-    runAheadLayout.options.preventJit.onToggle = [this]() {
-        bool state = runAheadLayout.options.preventJit.checked();
+    runAheadLayout.options.preventJit.onToggle = [this](bool checked) {
+        _settings->set<bool>( "runahead_prevent_jit", checked );
 
-        _settings->set<bool>( "runahead_prevent_jit", state );
-
-        this->emulator->runAheadPreventJit( state );
+        this->emulator->runAheadPreventJit( checked );
     };
 
     jitLayout.control.slider.onChange = [this]() {
@@ -167,10 +162,10 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) {
         manager->jit.rescanDelay = pos;
     };
 
-    jitLayout.active.onToggle = [this]() {
-        _settings->set<bool>("input_jit", jitLayout.active.checked());
+    jitLayout.active.onToggle = [this](bool checked) {
+        _settings->set<bool>("input_jit", checked);
 
-        this->emulator->enableJit( jitLayout.active.checked() );
+        this->emulator->enableJit( checked );
     };
                                        
     loadSettings();

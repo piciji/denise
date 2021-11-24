@@ -298,8 +298,8 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         }
     };
 
-    settings.startWithLastConfigCheckbox.onToggle = [this]() {
-        globalSettings->set<bool>( this->emulator->ident + "_load_last_settings", settings.startWithLastConfigCheckbox.checked() );
+    settings.startWithLastConfigCheckbox.onToggle = [this](bool checked) {
+        globalSettings->set<bool>( this->emulator->ident + "_load_last_settings", checked );
     };
 
     settings.startWithLastConfigCheckbox.setChecked( globalSettings->get<bool>( this->emulator->ident + "_load_last_settings", false ) );
@@ -484,9 +484,9 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
 		_settings->set<unsigned>( "save_slot", 0);
 	};
     
-    stateFast.autoSaveIdent.onToggle = [this]() {
+    stateFast.autoSaveIdent.onToggle = [this](bool checked) {
         
-        _settings->set<bool>( "auto_save_ident", stateFast.autoSaveIdent.checked());
+        _settings->set<bool>( "auto_save_ident", checked);
     };
     
     stateFast.listView.onActivate = [this]() {

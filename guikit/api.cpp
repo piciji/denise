@@ -746,7 +746,7 @@ auto CheckBox::setChecked(bool checked) -> void {
 auto CheckBox::toggle() -> void {
     state.checked ^= 1;
     p.setChecked(state.checked);
-    if(onToggle) onToggle();
+    if(onToggle) onToggle(state.checked);
 }
 
 CheckBox::CheckBox() : Widget(*new pCheckBox(*this)), p((pCheckBox&)Widget::p) { p.init(); }

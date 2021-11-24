@@ -319,14 +319,12 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
 			    fileloader->eject( emulator, block->media );
 			};
 
-			block->header.writeprotect.onToggle = [this, block, fSetting, mediaGroup]() {
-				
-				bool state = block->header.writeprotect.checked();
-                
-				emulator->writeProtect(block->media, state);
+			block->header.writeprotect.onToggle = [this, block, fSetting, mediaGroup](bool checked) {
+
+				emulator->writeProtect(block->media, checked);
                 // wp is shared between main image, save states and disk swapper.
                 // i.e. if save state changes it, it's valid for main image too (to keep it simple)
-				fSetting->setWriteProtect(state);
+				fSetting->setWriteProtect(checked);
 			};
 			
 			updateMediaBlock(block, fSetting);
@@ -424,13 +422,11 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
 
                 std::string saveIdent = _underscore( block->media->name + "_jumper_" + jumper.name );
                 
-                jumperBox->onToggle = [this, jumperBox, saveIdent, block, jumperId]() {
+                jumperBox->onToggle = [this, jumperBox, saveIdent, block, jumperId](bool checked) {
 
-                    bool state = jumperBox->checked();
+                    this->settings->set<bool>( saveIdent, checked);
 
-                    this->settings->set<bool>( saveIdent, state);
-
-                    this->emulator->setExpansionJumper(block->media, jumperId, state);
+                    this->emulator->setExpansionJumper(block->media, jumperId, checked);
                 };
             }
         }
@@ -489,8 +485,8 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
         };
     }
 
-    useDiskTraps.onToggle = [this]() {
-        settings->set<bool>("use_disk_traps", useDiskTraps.checked());
+    useDiskTraps.onToggle = [this](bool checked) {
+        settings->set<bool>("use_disk_traps", checked);
     };
 
     useDiskTraps.setChecked( settings->get<bool>("use_disk_traps", false) );

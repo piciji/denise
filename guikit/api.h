@@ -543,7 +543,7 @@ struct CheckButton : Widget {
 };
 
 struct CheckBox : Widget {
-    std::function<void ()> onToggle = nullptr;
+    std::function<void (bool checked)> onToggle = nullptr;
 
     auto setChecked(bool checked = true) -> void;
     auto checked() const -> bool { return state.checked; }

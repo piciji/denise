@@ -14,7 +14,7 @@
 
 -(IBAction) activate:(id)sender {
     checkBox->state.checked = [self state] != NSOffState;
-    if(checkBox->onToggle) checkBox->onToggle();
+    if(checkBox->onToggle) checkBox->onToggle( checkBox->state.checked );
 }
 @end
 

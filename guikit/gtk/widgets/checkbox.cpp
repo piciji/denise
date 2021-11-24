@@ -24,7 +24,7 @@ auto pCheckBox::setText(std::string text) -> void {
 
 auto pCheckBox::onToggle(GtkToggleButton* toggleButton, CheckBox* self) -> void {
     self->state.checked = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(self->p.gtkWidget));
-    if(!self->p.locked && self->onToggle) self->onToggle();
+    if(!self->p.locked && self->onToggle) self->onToggle( self->state.checked );
 }
 
 auto pCheckBox::create() -> void {
