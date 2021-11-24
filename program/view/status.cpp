@@ -66,13 +66,15 @@ auto StatusHandler::resetFrameCounter() -> void {
 }
 
 auto StatusHandler::updateFrameCounter() -> void {
-
+    float deviation;
     static auto updateIntervall = globalSettings->getOrInit<unsigned>("fps_update", 1000, {200u, 5000u});
 
     if (fpsCounter.measures == FPS_MEASUREMENTS) {
         fpsCounter.sum -= fpsCounter.deltas[fpsCounter.pos];
+        deviation = 0.995;
     } else {
         fpsCounter.measures++;
+        deviation = 0.8;
     }
 
     uint64_t cur = Chronos::getTimestampInMicroseconds();
@@ -89,7 +91,7 @@ auto StatusHandler::updateFrameCounter() -> void {
     // FPS_MEASUREMENTS * 1 = sum * x
     // x = FPS_MEASUREMENTS / sum
 
-    fpsCounter.fps = (0.99 * fpsCounter.fps) + (1.0 - 0.99) * ((double)fpsCounter.measures / ((double)fpsCounter.sum / 1000000.0) );
+    fpsCounter.fps = (deviation * fpsCounter.fps) + (1.0 - deviation) * ((double)fpsCounter.measures / ((double)fpsCounter.sum / 1000000.0) );
 
     if (fpsCounter.pos == FPS_MEASUREMENTS) {
         fpsCounter.pos = 0;
@@ -370,3 +372,4 @@ auto StatusHandler::update() -> void {
 	if (!cmd->noDriver)
 		transferToOSD( OSDText );
 }
+

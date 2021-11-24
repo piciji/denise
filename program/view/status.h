@@ -3,7 +3,7 @@
 
 #include "../program.h"
 
-#define FPS_MEASUREMENTS 250
+#define FPS_MEASUREMENTS 300
 
 struct DeviceState {    
     Emulator::Interface::Media* media = nullptr;
