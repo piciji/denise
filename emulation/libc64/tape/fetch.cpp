@@ -149,7 +149,7 @@ inline auto Tape::randomizeGap( unsigned gap ) -> unsigned {
     
     // for realistic behaviour we need some randomness
 	// beware of Jars of Revenge.
-	int adjust = (rand() % 16 ) - 5;
+	int adjust = (rand() & 15 ) - 5;
 	
 	if ( (adjust >= 0) || (gap > -adjust) )
 		return gap + adjust;

@@ -4,17 +4,17 @@
 #include "tape.h"
 
 #define TAPE_FAST_PLAY_ROUNDS_PER_SECOND 4
-#define TAPE_HEAD_SPEED 4.76e-2	// unit: m/s, not valid for fast forward / rewind
-#define TAPE_RADIUS_TAKEUP_SPOOL_EMPTY 1.07e-2 // unit: m
-#define TAPE_COUNTER_TO_SPOOL_RELATION 0.525 // always constant
+#define TAPE_HEAD_SPEED 0.0476	// unit: m/s, not valid for fast forward / rewind
+#define TAPE_RADIUS_TAKEUP_SPOOL_EMPTY 0.0105 // unit: m
+#define TAPE_COUNTER_TO_SPOOL_RELATION 0.52 // always constant
 // there are different thicknesses for 30, 60 or 90 min tapes
 // 90 min tapes with the thickness of 30 min tapes wouldn't fit on the spools
-// hence saving the same prg on a 30 min tape and a 90 min tape should result in
+// hence the same program on a 30 min tape and a 90 min tape should result in
 // different counter positions
 
 // I wouldn't emulate 30, 60 or 90 min tapes, but rather tapes without size limit
 // so we take one thickness value for all tape sizes (not entirely correct)
-#define TAPE_RIBBON_THICKNESS 1.27e-5 // unit: m
+#define TAPE_RIBBON_THICKNESS 0.0000112 // unit: m
 
 #ifndef M_PI 
 #define M_PI    3.14159265358979323846f 
@@ -259,7 +259,6 @@ auto Tape::setCyclesPerSecond( unsigned value ) -> void {
     // for rewinding there is no limitation and the counter would run
     // forever 0, 999, 998 ... 0, 999, and so on
     // we use the amount of elapsed cycles to calculate the tape length
-    // so we can not simple count -1, -2 ...
     // if the cycles fall below zero we have to use the cycle amount of
     // a counter value of 999 and decrease from there
     while(true) {
