@@ -71,13 +71,13 @@ namespace Emulator {
                     }
 
                     // all marked sectors were erased
-                    state = baseState;
+                    endCommand();
                 } break;
 
                 case State::ChipErase:
                     std::memset(data, 0xff, size);
                     written();
-                    state = baseState;
+                    endCommand();
                     break;
 
                 default:
@@ -91,7 +91,7 @@ namespace Emulator {
 
     auto MX29LV640EB::reset() -> void {
         state = State::Read;
-        baseState = State::Read;
+        autoSelect = false;
         byteToProgram = 0;
         clearEraseMask();
     }
@@ -210,33 +210,33 @@ namespace Emulator {
                 if (unlock2(addr) && (value == 0x55))
                     state = State::unlock2;
                 else
-                    state = baseState;
+                    endCommand();
 
                 break;
 
             case State::unlock2:
                 if (!unlock1(addr)) {
-                    state = baseState;
+                    endCommand();
                     break;
                 }
 
                 if (value == 0x90) {
                     state = State::AutoSelect;
-                    baseState = State::AutoSelect;
+                    autoSelect = true;
                 } else if (value == 0xf0) {
                     state = State::Read;
-                    baseState = State::Read;
+                    autoSelect = false;
                 } else if (value == 0xa0) {
                     state = State::Program;
                 } else if (value == 0x80) {
                     state = State::EraseUnlock1;
                 } else
-                    state = baseState;
+                    endCommand();
                 break;
 
             case State::Program:
                 if (programByte(addr, value)) {
-                    state = baseState;
+                    endCommand();
                 } else {
                     state = State::ProgramError;
                 }
@@ -246,7 +246,7 @@ namespace Emulator {
                 if (unlock1(addr) && (value == 0xaa))
                     state = State::EraseUnlock2;
                 else
-                    state = baseState;
+                    endCommand();
 
                 break;
 
@@ -254,7 +254,7 @@ namespace Emulator {
                 if (unlock2(addr) && (value == 0x55))
                     state = State::EraseSelect;
                 else
-                    state = baseState;
+                    endCommand();
 
                 break;
 
@@ -269,7 +269,7 @@ namespace Emulator {
                     state = State::SectorEraseTimeout;
                     events->add(&erase, eraseSectorTimeoutCycles, Emulator::SystemTimer::UpdateExisting);
                 } else {
-                    state = baseState;
+                    endCommand();
                 }
                 break;
 
@@ -278,7 +278,7 @@ namespace Emulator {
                     addSectorForErase(addr);
                     events->add(&erase, eraseSectorTimeoutCycles, Emulator::SystemTimer::UpdateExisting); // recount
                 } else {
-                    state = baseState;
+                    endCommand();
                     clearEraseMask();
                     events->remove(&erase);
                 }
@@ -305,7 +305,7 @@ namespace Emulator {
 
                 } else if (value == 0xf0) { // Reset mode
                     state = State::Read;
-                    baseState = State::Read;
+                    autoSelect = false;
                 }
                 break;
 
@@ -315,10 +315,14 @@ namespace Emulator {
         }
     }
 
+    auto MX29LV640EB::endCommand() -> void {
+        state = autoSelect ? State::AutoSelect : State::Read;
+    }
+
     auto MX29LV640EB::serialize(Emulator::Serializer &s) -> void {
         s.integer(byteToProgram);
         s.integer((uint8_t&) state);
-        s.integer((uint8_t&) baseState);
+        s.integer(autoSelect);
         s.array(eraseMask);
     }
 

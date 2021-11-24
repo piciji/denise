@@ -69,12 +69,12 @@ struct PetciiConversion {
         if (ascii >= 0x7b)
             return PETSCII_UNMAPPED;
 
-        return petcii_fix_dupes( ascii );
+        return _fix( ascii );
     }
     
     auto decode( uint8_t petcii ) -> uint8_t {
 
-        petcii = petcii_fix_dupes( petcii );
+        petcii = _fix( petcii );
 
         if (petcii == 0x0d)
             return '\n';
@@ -137,7 +137,7 @@ struct PetciiConversion {
         return code;
     }
     
-    auto petcii_fix_dupes( uint8_t c ) -> uint8_t {
+    auto _fix( uint8_t c ) -> uint8_t {
         
         if ((c >= 0x60) && (c <= 0x7f))
             return ((c - 0x60) + 0xc0);

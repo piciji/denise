@@ -1,4 +1,26 @@
 
+//  This code is a modification of the resid engine in VICE
+//  You can get a copy of the original here: https://sourceforge.net/projects/vice-emu/
+
+//  ---------------------------------------------------------------------------
+//  This file is part of reSID, a MOS6581 SID emulator engine.
+//  Copyright (C) 2010  Dag Lem <resid@nimrod.no>
+//
+//  This program is free software; you can redistribute it and/or modify
+//  it under the terms of the GNU General Public License as published by
+//  the Free Software Foundation; either version 2 of the License, or
+//  (at your option) any later version.
+//
+//  This program is distributed in the hope that it will be useful,
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//  GNU General Public License for more details.
+//
+//  You should have received a copy of the GNU General Public License
+//  along with this program; if not, write to the Free Software
+//  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+//  ---------------------------------------------------------------------------
+
 #pragma once
 
 /**
@@ -81,7 +103,7 @@
  * 
  * ( (kj - ki) / (dx * a) ) - 3xi - 3xj + 6xi = 0
  * 
- * (kj - ki) / (dx * a) = 3 dx // multiply dx * a and finaly substitue (a)
+ * (kj - ki) / (dx * a) = 3 dx // multiply dx * a and finally substitute (a)
  * 
  * kj - ki = 3 dx^2 * ( ((ki + kj) - 2*dy/dx)/(dx*dx) ) 
  * 

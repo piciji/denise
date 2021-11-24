@@ -11,8 +11,8 @@ namespace Emulator {
 
         MX29LV640EB();
 
-        enum class State {  Read, unlock1, unlock2, AutoSelect, Program, ProgramError, EraseUnlock1, EraseUnlock2,
-            EraseSelect, ChipErase, SectorEraseTimeout, SectorEraseSuspend, SectorErase } state, baseState;
+        enum class State {  Read, unlock1, unlock2, EraseUnlock1, EraseUnlock2, AutoSelect, Program, ProgramError,
+            EraseSelect, ChipErase, SectorEraseTimeout, SectorEraseSuspend, SectorErase } state;
 
         using Callback = std::function<void ()>;
         Callback erase;
@@ -22,7 +22,6 @@ namespace Emulator {
         uint8_t* data = nullptr;
         uint8_t byteToProgram;
         uint8_t eraseMask[MX29LV_SECTORS];
-        bool dirty = false;
 
         uint32_t size;
         uint8_t manufacturerId;
@@ -34,6 +33,7 @@ namespace Emulator {
         unsigned eraseSectorTimeoutCycles;
         unsigned eraseSectorCycles;
         unsigned eraseChipCycles;
+        bool autoSelect;
 
         auto setData( uint8_t* data ) -> void;
 
@@ -56,6 +56,8 @@ namespace Emulator {
         auto read( uint32_t addr ) -> uint8_t;
 
         auto write(uint32_t addr, uint8_t value) -> void;
+
+        auto endCommand() -> void;
 
         auto serialize(Emulator::Serializer& s) -> void;
     };
