@@ -30,6 +30,8 @@ objects += cartC64 gameCartC64 freezerC64 reuC64 easyFlashC64 easyFlash3C64 retr
 objects += m6502 via iec prg64 driveC64 diskStructureC64 firmwareC64 pia traps64 virtualDrive64 wd1770
 objects += thread m93c86 mx29lv640eb icons logos fonts socket fpaq0
 
+deps = $(objects)
+
 prgflags := -DAPP_NAME="\"$(name)\"" -DTRANSLATION_FOLDER="\"$(translationFolder)/\"" -DDATA_FOLDER="\"$(dataFolder)/\"" -DSHADER_FOLDER="\"$(shaderFolder)/\"" -DIMG_FOLDER="\"$(imgFolder)/\"" -DSOUND_FOLDER="\"$(soundFolder)/\""
 flags :=
 link := 
@@ -196,7 +198,9 @@ obj/palette.o:		program/video/palette.cpp
 obj/video.o:		program/video/manager.cpp
 obj/shader.o:		program/video/shader.cpp	
 
+deps := $(patsubst %,obj/%.d,$(deps))
 objects := $(patsubst %,obj/%.o,$(objects))
+-include $(wildcard $(deps))
 loname := $(call strlower,$(name))
 
 build: $(objects)
@@ -237,6 +241,8 @@ build: $(objects)
 	else ifneq ($(platform),x)
 		$(strip $(compiler) -o out/$(name) $(objects) $(link))
     else
+		@sed -i '1 s/$$(wildcard //g;1 s/.o:/.o: $$\(wildcard/g' obj/*.d
+		@sed -i '$$ s/)//g;$$ s/$$/\)/g' obj/*.d
 		$(strip $(compiler) -o out/$(loname) $(objects) $(link))
     endif
 
@@ -248,6 +254,7 @@ help:
 
 clean: ## Clean
 	-@$(call delete,obj/*.o)
+	-@$(call delete,obj/*.d)
 ifneq ($(platform),x)
 		-@$(call delete,out/$(name)*)
 else
