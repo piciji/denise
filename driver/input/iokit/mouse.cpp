@@ -31,9 +31,7 @@ struct CocoaMouse {
         
         hidMouse->axes().inputs[0].setValue( deltaX );
         hidMouse->axes().inputs[1].setValue( deltaY );
-        
-        hidMouse->axes().timeStamp = Chronos::getTimestampInMicroseconds();
-        
+
         NSUInteger buttonState = [NSEvent pressedMouseButtons];
         
         for (auto& input : hidMouse->buttons().inputs) {

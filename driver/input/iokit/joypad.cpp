@@ -380,17 +380,11 @@ struct IokitJoypad {
     }
     
     auto poll(std::vector<Hid::Device*>& devices) -> void {
-        unsigned ts = 0;
-        
+
         while (CFRunLoopRunInMode(CFSTR("DRV_JOYPAD"), 0, TRUE) == kCFRunLoopRunHandledSource) {}
 
         for (auto& jp : joypads) {
-            
-            if (ts == 0)
-                ts = Chronos::getTimestampInMicroseconds();
 
-            jp.hid->axes().timeStamp = ts;
-            
             for(auto& input : jp.hid->buttons().inputs) {
                 auto value = (unsigned) getElementState(jp, jp.buttons[input.id] );
                 input.setValue( value > 1 ? 1 : value );

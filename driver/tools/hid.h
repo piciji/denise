@@ -98,14 +98,13 @@ namespace Hid {
 	};	
 	
 	struct Group {
-		Group(std::string& name, unsigned id) : name(name), id(id) { timeStamp = 0; }		
+		Group(std::string& name, unsigned id) : name(name), id(id) { }
         
 		auto append( std::string name, Key key = Key::Unknown ) -> void {
             inputs.emplace_back( Input{ (unsigned)inputs.size(), name, key } );
         }		
         unsigned id;
-		std::string name;	
-        unsigned long timeStamp; // for analog only
+		std::string name;
 		std::vector<Input> inputs;		
 	};
 	

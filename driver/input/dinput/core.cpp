@@ -273,8 +273,6 @@ struct DI_IDENT_CORE : DI_IDENT {
 			devices.push_back(hidKeyboard);
 		}
 
-        unsigned ts = Chronos::getTimestampInMicroseconds();
-        
 		if (dinMouse) {
 #if DIRECTINPUT_VERSION == 0x500            
 			DIMOUSESTATE m_state;
@@ -304,7 +302,6 @@ struct DI_IDENT_CORE : DI_IDENT {
 			hidMouse->axes().inputs[1].setValue( m_state.lY );
 #endif            
 			hidMouse->axes().inputs[2].setValue( m_state.lZ );
-            hidMouse->axes().timeStamp = ts;
 
 			for (auto& input : hidMouse->buttons().inputs)
 				input.setValue( (bool)m_state.rgbButtons[input.id] );
@@ -366,8 +363,7 @@ struct DI_IDENT_CORE : DI_IDENT {
 					case 5: input.setValue( js.lRy ); break;
 				}
 			}
-            jp.hid->axes().timeStamp = ts;
-			
+
 			for(auto& input : jp.hid->buttons().inputs)
 				input.setValue( (bool)js.rgbButtons[input.id] );
 			

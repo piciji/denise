@@ -82,10 +82,7 @@ template<bool lightMode> auto InputMapping::adjustAnalogValue( Assign& hid ) -> 
     // raw screen position
     if (lightMode && !inputManager->emulator)
         return 0;
-    
-    if (!lightMode)
-        emuDevice->userData = hid.group->timeStamp;
-    
+
     Hid::Device* device = hid.device;
     unsigned groupId = hid.group->id;
     int16_t value = hid.input->value;    

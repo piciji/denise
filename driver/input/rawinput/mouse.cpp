@@ -137,8 +137,6 @@ struct RawMouse {
             mouse.hid->axes().inputs[1].setValue( mouse.relativeY );
             mouse.hid->axes().inputs[2].setValue( mouse.relativeZ );
 
-            mouse.hid->axes().timeStamp = Chronos::getTimestampInMicroseconds();
-
             mouse.relativeX = mouse.relativeY = mouse.relativeZ = 0;
 
             for (auto& input : mouse.hid->buttons().inputs)

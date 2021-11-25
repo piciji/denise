@@ -220,8 +220,6 @@ struct XInput : public Input {
         
         if (mIsAcquired())            
             warpMouse( root_x_return, root_y_return );        
-        
-        hidMouse->axes().timeStamp = Chronos::getTimestampInMicroseconds();
 
         hidMouse->buttons().inputs[0].setValue((bool)(mask_return & Button1Mask));
         hidMouse->buttons().inputs[1].setValue((bool)(mask_return & Button2Mask));

@@ -92,7 +92,6 @@ struct SdlInput {
 	}
 	
     auto pollJoypad(std::vector<Hid::Device*>& devices) -> void {
-        unsigned ts = 0;
 		SDL_JoystickUpdate();
 		unsigned countJoy = (unsigned)SDL_NumJoysticks();
 		
@@ -102,11 +101,6 @@ struct SdlInput {
 		
 		for(auto& jp : joypads) {
 
-            if (ts == 0)
-                ts = Chronos::getTimestampInMicroseconds();
-
-            jp.hid->axes().timeStamp = ts;
-            
 			auto& hats = jp.hid->hats();
 			
 			for (uint hat = 0; hat < hats.inputs.size() / 2; hat++ ) {

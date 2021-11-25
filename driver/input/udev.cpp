@@ -187,16 +187,10 @@ namespace DRIVER {
 		}
 
 		auto pollJoypad(std::vector<Hid::Device*>& devices) -> void {
-            unsigned ts = 0;
-            
+
 			while (hotplugDevicesAvailable()) hotplugDevice();						
 
 			for (auto& jp : joypads) {
-				
-                if(ts == 0)
-                    ts = Chronos::getTimestampInMicroseconds();
-                
-                jp.hid->axes().timeStamp = ts;
 
 				for(auto& input : jp.hid->buttons().inputs)
 					input.oldValue = input.value;		

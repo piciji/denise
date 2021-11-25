@@ -254,9 +254,7 @@ struct RawJoypad {
 	}
 	
 	auto poll(std::vector<Hid::Device*>& devices) -> void {								
-        
-        unsigned ts = 0;
-        
+
 		for(auto& jp : joypads) {
 			auto& hats = jp.hid->hats();
 			
@@ -269,11 +267,6 @@ struct RawJoypad {
                 
                 input.setValue( jp.axis[ jp.axisMap[ input.id ] ] );                
 			}
-            
-            if(ts == 0)
-                ts = Chronos::getTimestampInMicroseconds();           
-            
-            jp.hid->axes().timeStamp = ts;
 
 			for(auto& input : jp.hid->buttons().inputs)
 				input.setValue( jp.buttons[input.id] );
