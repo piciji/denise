@@ -204,7 +204,7 @@ objects := $(patsubst %,obj/%.o,$(objects))
 loname := $(call strlower,$(name))
 
 build: $(objects)
-    ifeq ($(platform),macosx)
+ifeq ($(platform),macosx)
 	if [ -d out/$(name).app ]; then rm -r out/$(name).app; fi
 	mkdir out/$(name).app
 	mkdir out/$(name).app/Contents
@@ -230,21 +230,22 @@ build: $(objects)
 	
 	cp data/img/$(loname).icns out/$(name).app/Contents/Resources/$(name).icns
 
+	find obj -iname "*.d" -type f -exec sed -i '' '1 s/$$(wildcard //;1 s/.o:/.o: $$\(wildcard/;$$ s/)//;$$ s/$$/\)/' {} \;
+
 	$(strip $(compiler) -o out/$(name).app/Contents/MacOS/$(name) $(objects) $(link))
 	
     ifneq ($(findstring freetype,$(drv)),)
 	install -m 755 /usr/local/lib/libfreetype.6.dylib out/$(name).app/Contents/Frameworks/
 	install_name_tool -id @executable_path/../Frameworks/libfreetype.6.dylib out/$(name).app/Contents/Frameworks/libfreetype.6.dylib
 	install_name_tool -change `otool -D /usr/local/lib/libfreetype.6.dylib | cut -d':' -f2` @executable_path/../Frameworks/libfreetype.6.dylib out/$(name).app/Contents/MacOS/$(name)
-    endif	
-
-	else ifeq ($(platform),windows)
-		$(strip $(compiler) -o out/$(name) $(objects) $(link))
-    else
-		@sed -i '1 s/$$(wildcard //g;1 s/.o:/.o: $$\(wildcard/g' obj/*.d
-		@sed -i '$$ s/)//g;$$ s/$$/\)/g' obj/*.d
-		$(strip $(compiler) -o out/$(loname) $(objects) $(link))
     endif
+else ifeq ($(platform),windows)
+    $(strip $(compiler) -o out/$(name) $(objects) $(link))
+else
+    @sed -i '1 s/$$(wildcard //g;1 s/.o:/.o: $$\(wildcard/g' obj/*.d
+    @sed -i '$$ s/)//g;$$ s/$$/\)/g' obj/*.d
+    $(strip $(compiler) -o out/$(loname) $(objects) $(link))
+endif
 
 .PHONY: help
 help:
