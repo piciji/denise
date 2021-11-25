@@ -242,9 +242,9 @@ ifeq ($(platform),macosx)
 else ifeq ($(platform),windows)
     $(strip $(compiler) -o out/$(name) $(objects) $(link))
 else
-    @sed -i '1 s/$$(wildcard //g;1 s/.o:/.o: $$\(wildcard/g' obj/*.d
-    @sed -i '$$ s/)//g;$$ s/$$/\)/g' obj/*.d
-    $(strip $(compiler) -o out/$(loname) $(objects) $(link))
+	@sed -i '1 s/$$(wildcard //g;1 s/.o:/.o: $$\(wildcard/g;$$ s/)//g;$$ s/$$/\)/g' obj/*.d
+
+	$(strip $(compiler) -o out/$(loname) $(objects) $(link))
 endif
 
 .PHONY: help
