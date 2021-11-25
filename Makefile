@@ -240,7 +240,7 @@ ifeq ($(platform),macosx)
 	install_name_tool -change `otool -D /usr/local/lib/libfreetype.6.dylib | cut -d':' -f2` @executable_path/../Frameworks/libfreetype.6.dylib out/$(name).app/Contents/MacOS/$(name)
     endif
 else ifeq ($(platform),windows)
-    $(strip $(compiler) -o out/$(name) $(objects) $(link))
+	$(strip $(compiler) -o out/$(name) $(objects) $(link))
 else
 	@sed -i '1 s/$$(wildcard //g;1 s/.o:/.o: $$\(wildcard/g;$$ s/)//g;$$ s/$$/\)/g' obj/*.d
 
