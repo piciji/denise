@@ -39,6 +39,28 @@ namespace Mixer {
         assigns.push_back( { DriveSound::FloppyStep37, "step37" } ); assigns.push_back( { DriveSound::FloppyStep38, "step38" } );
         assigns.push_back( { DriveSound::FloppyStep39, "step39" } ); assigns.push_back( { DriveSound::FloppyStep40, "step40" } );
         assigns.push_back( { DriveSound::FloppyStep41, "step41" } ); assigns.push_back( { DriveSound::FloppyStep42, "step42" } );
+
+        assigns.push_back( { DriveSound::FloppyShortStep1, "shortstep1" } ); assigns.push_back( { DriveSound::FloppyShortStep2, "shortstep2" } );
+        assigns.push_back( { DriveSound::FloppyShortStep3, "shortstep3" } ); assigns.push_back( { DriveSound::FloppyShortStep4, "shortstep4" } );
+        assigns.push_back( { DriveSound::FloppyShortStep5, "shortstep5" } ); assigns.push_back( { DriveSound::FloppyShortStep6, "shortstep6" } );
+        assigns.push_back( { DriveSound::FloppyShortStep7, "shortstep7" } ); assigns.push_back( { DriveSound::FloppyShortStep8, "shortstep8" } );
+        assigns.push_back( { DriveSound::FloppyShortStep9, "shortstep9" } ); assigns.push_back( { DriveSound::FloppyShortStep10, "shortstep10" } );
+        assigns.push_back( { DriveSound::FloppyShortStep11, "shortstep11" } ); assigns.push_back( { DriveSound::FloppyShortStep12, "shortstep12" } );
+        assigns.push_back( { DriveSound::FloppyShortStep13, "shortstep13" } ); assigns.push_back( { DriveSound::FloppyShortStep14, "shortstep14" } );
+        assigns.push_back( { DriveSound::FloppyShortStep15, "shortstep15" } ); assigns.push_back( { DriveSound::FloppyShortStep16, "shortstep16" } );
+        assigns.push_back( { DriveSound::FloppyShortStep17, "shortstep17" } ); assigns.push_back( { DriveSound::FloppyShortStep18, "shortstep18" } );
+        assigns.push_back( { DriveSound::FloppyShortStep19, "shortstep19" } ); assigns.push_back( { DriveSound::FloppyShortStep20, "shortstep20" } );
+        assigns.push_back( { DriveSound::FloppyShortStep21, "shortstep21" } ); assigns.push_back( { DriveSound::FloppyShortStep22, "shortstep22" } );
+        assigns.push_back( { DriveSound::FloppyShortStep23, "shortstep23" } ); assigns.push_back( { DriveSound::FloppyShortStep24, "shortstep24" } );
+        assigns.push_back( { DriveSound::FloppyShortStep25, "shortstep25" } ); assigns.push_back( { DriveSound::FloppyShortStep26, "shortstep26" } );
+        assigns.push_back( { DriveSound::FloppyShortStep27, "shortstep27" } ); assigns.push_back( { DriveSound::FloppyShortStep28, "shortstep28" } );
+        assigns.push_back( { DriveSound::FloppyShortStep29, "shortstep29" } ); assigns.push_back( { DriveSound::FloppyShortStep30, "shortstep30" } );
+        assigns.push_back( { DriveSound::FloppyShortStep31, "shortstep31" } ); assigns.push_back( { DriveSound::FloppyShortStep32, "shortstep32" } );
+        assigns.push_back( { DriveSound::FloppyShortStep33, "shortstep33" } ); assigns.push_back( { DriveSound::FloppyShortStep34, "shortstep34" } );
+        assigns.push_back( { DriveSound::FloppyShortStep35, "shortstep35" } ); assigns.push_back( { DriveSound::FloppyShortStep36, "shortstep36" } );
+        assigns.push_back( { DriveSound::FloppyShortStep37, "shortstep37" } ); assigns.push_back( { DriveSound::FloppyShortStep38, "shortstep38" } );
+        assigns.push_back( { DriveSound::FloppyShortStep39, "shortstep39" } ); assigns.push_back( { DriveSound::FloppyShortStep40, "shortstep40" } );
+        assigns.push_back( { DriveSound::FloppyShortStep41, "shortstep41" } ); assigns.push_back( { DriveSound::FloppyShortStep42, "shortstep42" } );
     }
 
     Drive::~Drive() {
@@ -179,7 +201,7 @@ namespace Mixer {
                 break;
             case DriveSound::FloppySpinDown:
             case DriveSound::FloppySpinUp:
-                //lastStep = Chronos::getTimestampInMilliseconds();
+                lastStep = Chronos::getTimestampInMilliseconds();
             case DriveSound::FloppySpin:
                 device->second = sound;
                 device->secondOffset = 0;
@@ -196,10 +218,10 @@ namespace Mixer {
                     stepCounts = (device->state + 1) & 7;
                     if (stepCounts <= 4) {
                         device->state = (device->state & ~7) | stepCounts;
-                        //lastStep = Chronos::getTimestampInMilliseconds();
+                        lastStep = Chronos::getTimestampInMilliseconds();
                         break;
                     }
-                    //device->state &= ~7;
+                    device->state &= ~7;
                 }
 
                 sound = device->steps[data >> 1];
@@ -212,25 +234,25 @@ namespace Mixer {
 
                 device->third = sound;
                 device->thirdOffset = 0;
-//                ts = Chronos::getTimestampInMilliseconds();
-//                delta = (ts - lastStep) + 1;
-//
-//                if (delta < sound->playTime) {
-//                    stepCounts = (device->state + 1) & 7;
-//
-//                    if (stepCounts > 2) {
-//                        sound = getSound(FloppyShortStep, emulator);
-//                        if (sound && sound->data) {
-//                            device->third = sound;
-//                     //       logger->log("short");
-//                        }
-//                    } else {
-//                        device->state = (device->state & ~7) | stepCounts;
-//                    }
-//                } else
-//                    device->state &= ~7;
-//
-//                lastStep = ts;
+                ts = Chronos::getTimestampInMilliseconds();
+                delta = (ts - lastStep) + 1;
+
+                if (delta < sound->playTime) {
+                    stepCounts = (device->state + 1) & 7;
+
+                    if (stepCounts > 2) {
+                        sound = device->shortSteps[data >> 1];
+                        if (sound && sound->data) {
+                            device->third = sound;
+                     //       logger->log("short");
+                        }
+                    } else {
+                        device->state = (device->state & ~7) | stepCounts;
+                    }
+                } else
+                    device->state &= ~7;
+
+                lastStep = ts;
                 break;
         }
     }
@@ -471,7 +493,7 @@ namespace Mixer {
                 sound->channels = 2;
             }
 
-            //sound->playTime = (sound->size / sound->channels) * (1000.0 / (float)frequency);
+            sound->playTime = (sound->size / sound->channels) * (1000.0 / (float)frequency);
             //logger->log("playtime" );
             //logger->log(std::to_string(sound->size), 0);
             //logger->log(std::to_string(sound->channels), 0);
@@ -495,15 +517,21 @@ namespace Mixer {
     auto Drive::assignSteps( Device& device ) -> void {
 
         Sound* sound;
+        Sound* soundShort;
+
         for (unsigned t = 1; t <= 42; t++) {
             sound = getSound( (DriveSound)(FloppySteps + t), device.emulator );
+            soundShort = getSound( (DriveSound)(FloppyShortSteps + t), device.emulator );
 
             if (!sound || !sound->data) {
                 device.steps[t-1] = nullptr;
-                continue;
-            }
+            } else
+                device.steps[t-1] = sound;
 
-            device.steps[t-1] = sound;
+            if (!soundShort || !soundShort->data) {
+                device.shortSteps[t-1] = nullptr;
+            } else
+                device.shortSteps[t-1] = soundShort;
         }
 
         sound = getSound( FloppyStep, device.emulator );
@@ -511,11 +539,22 @@ namespace Mixer {
             sound = nullptr;
         }
 
+        soundShort = getSound( FloppyShortStep, device.emulator );
+        if (!soundShort || !soundShort->data) {
+            soundShort = nullptr;
+        }
+
         for (unsigned t = 0; t < 42; t++) {
             if (!device.steps[t]) {
                 device.steps[t] = sound;
             } else {
                 sound = device.steps[t];
+            }
+
+            if (!device.shortSteps[t]) {
+                device.shortSteps[t] = soundShort;
+            } else {
+                soundShort = device.shortSteps[t];
             }
         }
     }

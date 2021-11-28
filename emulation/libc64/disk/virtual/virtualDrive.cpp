@@ -1,6 +1,10 @@
 
+// this is taken from VICE
+// one and only purpose: speed up loading first file
+// removed all parts, which are not needed for loading first file.
+// will be used only in combination with autostart, this way it's not possible to input drive commands not handled here
+
 /*
- * vdrive.c - Virtual disk-drive implementation.
  *
  * Written by
  *  Andreas Boose <viceteam@t-online.de>

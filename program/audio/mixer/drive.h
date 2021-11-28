@@ -23,6 +23,14 @@ struct Drive {
         FloppyStep25, FloppyStep26, FloppyStep27, FloppyStep28, FloppyStep29, FloppyStep30, FloppyStep31, FloppyStep32,
         FloppyStep33, FloppyStep34, FloppyStep35, FloppyStep36, FloppyStep37, FloppyStep38, FloppyStep39, FloppyStep40,
         FloppyStep41, FloppyStep42,
+
+        FloppyShortSteps = 100,
+        FloppyShortStep1, FloppyShortStep2, FloppyShortStep3, FloppyShortStep4, FloppyShortStep5, FloppyShortStep6, FloppyShortStep7, FloppyShortStep8,
+        FloppyShortStep9, FloppyShortStep10, FloppyShortStep11, FloppyShortStep12, FloppyShortStep13, FloppyShortStep14, FloppyShortStep15, FloppyShortStep16,
+        FloppyShortStep17, FloppyShortStep18, FloppyShortStep19, FloppyShortStep20, FloppyShortStep21, FloppyShortStep22, FloppyShortStep23, FloppyShortStep24,
+        FloppyShortStep25, FloppyShortStep26, FloppyShortStep27, FloppyShortStep28, FloppyShortStep29, FloppyShortStep30, FloppyShortStep31, FloppyShortStep32,
+        FloppyShortStep33, FloppyShortStep34, FloppyShortStep35, FloppyShortStep36, FloppyShortStep37, FloppyShortStep38, FloppyShortStep39, FloppyShortStep40,
+        FloppyShortStep41, FloppyShortStep42,
     };
 
     struct Assign {
@@ -55,6 +63,7 @@ struct Drive {
         uint8_t state;      // bit 0,1,2: step counter, bit 7: detach+attach
 
         Sound* steps[42];
+        Sound* shortSteps[42];
     };
     std::vector<Device> devices;
     uint64_t lastStep;
