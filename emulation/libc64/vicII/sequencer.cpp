@@ -256,7 +256,7 @@ inline auto VicIICycle::pipeGraphic( uint32_t flags ) -> void {
 		xScrollPipe = xScroll;
 
 		if (!idleModeTemp) 
-			cBufferPipe1 = cBuffer[dmli];
+			cBufferPipe1 = cBuffer[dmli++];
 		else
 			cBufferPipe1 = 0;
 
@@ -265,9 +265,7 @@ inline auto VicIICycle::pipeGraphic( uint32_t flags ) -> void {
         gBufferUse = false;
     }
 
-	if (enable)
-		dmli++;
-	else
+	if (!enable)
 		dmli = 0;
 }
 
