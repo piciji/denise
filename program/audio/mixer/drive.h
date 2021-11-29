@@ -14,7 +14,7 @@ struct Drive {
     ~Drive();
 
     enum DriveSound { FloppyInsert = 1, FloppyEject = 2, FloppySpinUp = 3, FloppySpinDown = 4, FloppySpin = 5,
-        FloppyHeadBang = 6, FloppyStep = 7, FloppyShortStep = 8,
+        FloppyHeadBang = 6, FloppyStep = 7, FloppyStepShort = 8,
 
         FloppySteps = 20,
         FloppyStep1, FloppyStep2, FloppyStep3, FloppyStep4, FloppyStep5, FloppyStep6, FloppyStep7, FloppyStep8,
@@ -24,13 +24,13 @@ struct Drive {
         FloppyStep33, FloppyStep34, FloppyStep35, FloppyStep36, FloppyStep37, FloppyStep38, FloppyStep39, FloppyStep40,
         FloppyStep41, FloppyStep42,
 
-        FloppyShortSteps = 100,
-        FloppyShortStep1, FloppyShortStep2, FloppyShortStep3, FloppyShortStep4, FloppyShortStep5, FloppyShortStep6, FloppyShortStep7, FloppyShortStep8,
-        FloppyShortStep9, FloppyShortStep10, FloppyShortStep11, FloppyShortStep12, FloppyShortStep13, FloppyShortStep14, FloppyShortStep15, FloppyShortStep16,
-        FloppyShortStep17, FloppyShortStep18, FloppyShortStep19, FloppyShortStep20, FloppyShortStep21, FloppyShortStep22, FloppyShortStep23, FloppyShortStep24,
-        FloppyShortStep25, FloppyShortStep26, FloppyShortStep27, FloppyShortStep28, FloppyShortStep29, FloppyShortStep30, FloppyShortStep31, FloppyShortStep32,
-        FloppyShortStep33, FloppyShortStep34, FloppyShortStep35, FloppyShortStep36, FloppyShortStep37, FloppyShortStep38, FloppyShortStep39, FloppyShortStep40,
-        FloppyShortStep41, FloppyShortStep42,
+        FloppyStepsShort = 100,
+        FloppyStepShort1, FloppyStepShort2, FloppyStepShort3, FloppyStepShort4, FloppyStepShort5, FloppyStepShort6, FloppyStepShort7, FloppyStepShort8,
+        FloppyStepShort9, FloppyStepShort10, FloppyStepShort11, FloppyStepShort12, FloppyStepShort13, FloppyStepShort14, FloppyStepShort15, FloppyStepShort16,
+        FloppyStepShort17, FloppyStepShort18, FloppyStepShort19, FloppyStepShort20, FloppyStepShort21, FloppyStepShort22, FloppyStepShort23, FloppyStepShort24,
+        FloppyStepShort25, FloppyStepShort26, FloppyStepShort27, FloppyStepShort28, FloppyStepShort29, FloppyStepShort30, FloppyStepShort31, FloppyStepShort32,
+        FloppyStepShort33, FloppyStepShort34, FloppyStepShort35, FloppyStepShort36, FloppyStepShort37, FloppyStepShort38, FloppyStepShort39, FloppyStepShort40,
+        FloppyStepShort41, FloppyStepShort42,
     };
 
     struct Assign {
@@ -63,7 +63,7 @@ struct Drive {
         uint8_t state;      // bit 0,1,2: step counter, bit 7: detach+attach
 
         Sound* steps[42];
-        Sound* shortSteps[42];
+        Sound* stepsShort[42];
     };
     std::vector<Device> devices;
     uint64_t lastStep;
