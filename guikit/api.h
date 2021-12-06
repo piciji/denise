@@ -582,8 +582,9 @@ struct ComboButton : Widget {
         std::vector<int> userData;
     } state;
 
+    bool hintVerticalScrollbar = false;
     pComboButton& p;
-    ComboButton();
+    ComboButton(bool hintVerticalScrollbar = false);
 };
 
 struct Slider : Widget {
@@ -1216,6 +1217,7 @@ struct Monitor {
 
     static auto getDisplays() -> std::vector<Property>;
     static auto getSettings( unsigned displayId ) -> std::vector<Property>;
+    static auto getCurrentRefreshRate() -> float;
 
     Monitor() = delete;
 };
@@ -1437,6 +1439,7 @@ struct String {
     static auto remove(std::string& str, const std::vector<std::string>& subStr) -> std::string&;
     static auto replace(std::string& str, const std::string& search, const std::string& replace) -> std::string&;
     static auto isNumber(const std::string& str) -> bool;
+    static auto isFloatNumber(const std::string& str) -> bool;
 	static auto convertToNumber(std::string str) -> int;
     static auto convertIntToHex( int number, bool prepend_0x = true ) -> std::string;
     static auto convertHexToInt( std::string hex, int defaultValueByFailure = 0 ) -> int;

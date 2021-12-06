@@ -111,6 +111,29 @@ auto String::isNumber(const std::string& str) -> bool {
         _str.end(), [](char c) { return !std::isdigit(c); }) == _str.end();
 }
 
+auto String::isFloatNumber(const std::string& str) -> bool {
+    std::string::const_iterator it = str.begin();
+    bool decimalPoint = false;
+    int minSize = 0;
+    if(str.size() > 0 && (str[0] == '-' || str[0] == '+')){
+        it++;
+        minSize++;
+    }
+
+    while(it != str.end()){
+        if(*it == '.'){
+            if(!decimalPoint)
+                decimalPoint = true;
+            else
+                break;
+        } else if(!std::isdigit(*it)) {
+            break;
+        }
+        ++it;
+    }
+    return (str.size() > minSize) && (it == str.end());
+}
+
 auto String::foundSubStr(std::string& str, std::string subStr) -> bool {
     std::size_t found = str.find( subStr );
     return found != std::string::npos;

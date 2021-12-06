@@ -101,7 +101,27 @@ auto Program::videoRefresh8(const uint8_t* frame, unsigned width, unsigned heigh
 }
 
 auto Program::setVideoSynchronize() -> void {
-    videoDriver->synchronize( globalSettings->get<bool>("video_sync", false) );
+    if (!activeEmulator || !audioDriver->hasSynchronized())
+        return;
+
+    bool vsync = globalSettings->get<bool>("video_sync", true);
+    bool adaptive = globalSettings->get<bool>("adaptive_sync", true);
+    bool drc = globalSettings->get<bool>("dynamic_rate_control", false);
+
+    if (vsync && adaptive) {
+        float monitorFrequency = GUIKIT::Monitor::getCurrentRefreshRate();
+        float skew = std::abs(1.0 - (float)audioManager->inputFPS / monitorFrequency );
+
+        if ((skew > 0.001) && (drc || ((float)audioManager->inputFPS > monitorFrequency))) {
+            vsync = false;
+        }
+    }
+
+    if (videoDriver->hasSynchronized() != vsync) {
+        videoDriver->synchronize( vsync );
+    }
+
+    audioManager->setRateControl();
 	updateOverallSynchronize();
 }
 
@@ -114,8 +134,9 @@ auto Program::hintExclusiveFullscreen() -> void {
 }
 
 auto Program::setFpsLimit() -> void {
-	VideoManager::setFpsLimit( globalSettings->get("fps_limit", false) );
-	updateOverallSynchronize();
+//	VideoManager::setFpsLimit( globalSettings->get("fps_limit", false) );
+//    audioManager->setRateControl();
+//	updateOverallSynchronize();
 }
 
 auto Program::setVideoFilter() -> void {
@@ -191,29 +212,15 @@ auto Program::fastForward( bool activate, bool aggressive ) -> void {
     auto settings = getSettings( activeEmulator );
     
     unsigned forward = 0;
-    auto vSync = globalSettings->get<bool>("video_sync", false);
-    auto fpsLimit = globalSettings->get("fps_limit", false);
     VideoManager::CrtMode crtMode = (VideoManager::CrtMode)settings->get<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::None, {0u, 2u});
-    auto emuView = EmuConfigView::TabWindow::getView(activeEmulator);
 
-    if (activate) {                        
-        if (vSync)
-            view->videoSyncItem.toggle();
-
-        if (fpsLimit)
-            view->fpsLimitItem.toggle();
-        
-        globalSettings->set<bool>("video_sync_temp", vSync, false); // remember vsync
-        globalSettings->set<bool>("fps_limit_temp", fpsLimit, false); // remember fps limit
+    if (activate) {
+        if (videoDriver->hasSynchronized())
+            videoDriver->synchronize( false );
 
         if (crtMode != VideoManager::CrtMode::None) {
-            if (emuView)
-                emuView->videoLayout->base.mode.crtNone.activate();
-            else {
-                settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::None);
-                if (videoDriver)
-                    VideoManager::getInstance( activeEmulator )->reloadSettings();
-            }
+            settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::None);
+            VideoManager::getInstance( activeEmulator )->reloadSettings();
         }
 
         globalSettings->set<unsigned>("video_crt_temp", (unsigned)crtMode, false); // remember crt mode
@@ -223,38 +230,21 @@ auto Program::fastForward( bool activate, bool aggressive ) -> void {
             forward |= (unsigned)Emulator::Interface::FastForward::NoVideoSequencer;
 
     } else {
-        auto vSyncTemp = globalSettings->get<bool>("video_sync_temp", false);
-        auto fpsLimitTemp = globalSettings->get<bool>("fps_limit_temp", false);
         VideoManager::CrtMode crtModeTemp = (VideoManager::CrtMode)globalSettings->get<unsigned>("video_crt_temp", (unsigned)VideoManager::CrtMode::None, {0u, 2u});
-        
-        if (vSyncTemp && !vSync)
-            view->videoSyncItem.toggle();
-        
-        if (fpsLimitTemp && !fpsLimit)
-            view->fpsLimitItem.toggle();
+
+        program->setVideoSynchronize();
 
         if (crtMode == VideoManager::CrtMode::None) {
             if (crtModeTemp == VideoManager::CrtMode::Cpu) {
-                if (emuView)
-                    emuView->videoLayout->base.mode.crtCpu.activate();
-                else {
-                    settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::Cpu);
-                    if (videoDriver)
-                        VideoManager::getInstance( activeEmulator )->reloadSettings();
-                }
+                settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::Cpu);
+                VideoManager::getInstance( activeEmulator )->reloadSettings();
+
             } else if (crtModeTemp == VideoManager::CrtMode::Gpu) {
-                if (emuView)
-                    emuView->videoLayout->base.mode.crtGpu.activate();
-                else {
-                    settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::Gpu);
-                    if (videoDriver)
-                        VideoManager::getInstance( activeEmulator )->reloadSettings();
-                }
+                settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::Gpu);
+                VideoManager::getInstance( activeEmulator )->reloadSettings();
             }
         }
-        
-        globalSettings->set<bool>("video_sync_temp", false, false);
-        globalSettings->set<bool>("fps_limit_temp", false, false);
+
         globalSettings->set<unsigned>("video_crt_temp", (unsigned)VideoManager::CrtMode::None, false);
 
         if (audioManager)
@@ -263,6 +253,7 @@ auto Program::fastForward( bool activate, bool aggressive ) -> void {
 
     if (activate)
         warp.aggressive = aggressive;
+
     warp.active = activate;
 
     if (statusHandler)

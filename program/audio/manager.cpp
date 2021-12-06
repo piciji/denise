@@ -5,6 +5,8 @@
 #include "dsp/reverb.h"
 #include "dsp/panning.h"
 #include "../view/status.h"
+#include "../view/view.h"
+#include "../tools/chronos.h"
 
 AudioManager* audioManager = nullptr;
 
@@ -12,7 +14,7 @@ AudioManager::AudioManager() {
     
     floatConversion = 1.0 / 32768.0;
     
-    rData.out = new float[4096];
+    rData.out = new float[6144];
     
     cosine.setData( &rData );    
 }
@@ -47,50 +49,74 @@ auto AudioManager::setFrequency() -> void {
     setDriveSounds( false );
 }
 
-auto AudioManager::setSynchronize() -> void {
-    
-    auto synchronize = globalSettings->get<bool>("audio_sync", true);
+auto AudioManager::setSynchronize(bool synchronize) -> void {
+
+    if (audioDriver->hasSynchronized() == synchronize)
+        return;
+
     audioDriver->synchronize(synchronize);
     program->updateOverallSynchronize();
     setBufferSize();
 }
 
-auto AudioManager::setResampler() -> void {    
+auto AudioManager::setResampler() -> void {
     if (!activeEmulator)
         return;
     
     stat = activeEmulator->getStatsForSelectedRegion();
     
     inputFrequency = stat.sampleRate;
+    inputFPS = stat.fps;
+
+    measureUiUpdate.enable = false;
     
     double monitorRatio = 1.0;
 
-    unsigned speedPercent = globalSettings->get<unsigned>("speed_percent", 100);
+    unsigned speedProfile = globalSettings->get<unsigned>("speed_profile", 0, {0, 10});
 
-    if (speedPercent != 100) {
+    if (speedProfile != 0) {
+        float speed;
+        bool percent;
+        view->getSpeed(speedProfile, speed, percent);
 
-        inputFrequency = (inputFrequency * (double)speedPercent) / 100.0;
+        if (percent) {
+            inputFrequency = (inputFrequency * (double)speed) / 100.0;
 
-        monitorRatio = (double)speedPercent / 100.0;
+            inputFPS = (inputFPS * (double)speed) / 100.0;
+
+            monitorRatio = (double)speed / 100.0;
+
+        } else {
+            inputFrequency = (inputFrequency * (double)speed) / inputFPS;
+
+            inputFPS = speed;
+
+            monitorRatio = (double)speed / inputFPS;
+        }
+
+        measureUiUpdate.enable = monitorRatio < 0.5;
+
+        if (measureUiUpdate.enable) {
+            measureUiUpdate.lastTS = Chronos::getTimestampInMilliseconds();
+        }
 
     } else if (globalSettings->get<bool>("video_override_exact", true)) {
-        double monitorFrequency;
-        
-        if (stat.isPal())
-            monitorFrequency = globalSettings->get<double>("video_pal", 50.0, {25.0, 100.0});
-        else
-            monitorFrequency = globalSettings->get<double>("video_ntsc", 60.0, {30.0, 120.0});
-        
-        inputFrequency = (inputFrequency * monitorFrequency) / stat.fps;   
-        
-        monitorRatio = monitorFrequency / stat.fps;
-    }        
+
+        inputFPS = stat.isPal() ? 50.0 : 60.0;
+
+        inputFrequency = (inputFrequency * inputFPS) / stat.fps;
+
+        monitorRatio = inputFPS / stat.fps;
+    }
     
     ratio = outputFrequency / inputFrequency;
-    
+
     cosine.reset( ratio, stat.stereoSound ? 2 : 1 );   
     
     activeEmulator->setMonitorFpsRatio( monitorRatio );
+
+    // check changed FPS for adaptive sync
+    program->setVideoSynchronize();
 }
 
 auto AudioManager::setBufferSize() -> void {
@@ -98,7 +124,7 @@ auto AudioManager::setBufferSize() -> void {
         return;
 
     stat = activeEmulator->getStatsForSelectedRegion();
-    auto synchronize = globalSettings->get<bool>("audio_sync", true);
+    auto synchronize = audioDriver->hasSynchronized();
     
     bufferSize = 2048;
     
@@ -214,14 +240,15 @@ auto AudioManager::setAudioDsp() -> void {
 
 auto AudioManager::setRateControl() -> void {
     
-    dynamicRateControl = globalSettings->get<bool>("dynamic_rate_control", false);
-    
-    rateDelta = globalSettings->get<float>("rate_control_delta", 0.005, {0.0, 0.010});        
+    dynamicRateControl = (videoDriver->hasSynchronized() || VideoManager::fpsLimit)
+        && globalSettings->get<bool>("dynamic_rate_control", false);
+
+    rateDelta = globalSettings->get<float>("rate_control_delta", 0.005, {0.0, 0.010});
     
     setBufferSize();
 
     if (!dynamicRateControl)
-        setResampler();
+        rData.ratio = ratio;
 }
 
 auto AudioManager::setStatistics() -> void {
@@ -332,6 +359,9 @@ auto AudioManager::flush( ) -> void {
         // 2 byte per channel, 4 byte per audio frame
         audioDriver->addSamples( (uint8_t*) outBuffer, rData.outputFrames << 2);
     }
+
+    if (measureUiUpdate.enable)
+        checkIfUINeedsAnUpdate();
 }
 
 auto AudioManager::calcStatistics( float adjust ) -> void {
@@ -350,5 +380,14 @@ auto AudioManager::calcStatistics( float adjust ) -> void {
         statistics.minRaw = -1;
         statistics.maxRaw = 1;
         statusHandler->setDrcBufferUpdate();
+    }
+}
+
+auto AudioManager::checkIfUINeedsAnUpdate() -> void {
+    unsigned ts = Chronos::getTimestampInMilliseconds();
+
+    if ((ts - measureUiUpdate.lastTS) > 20) {
+        activeEmulator->requestImmediateReturn();
+        measureUiUpdate.lastTS = ts;
     }
 }

@@ -293,6 +293,12 @@ pWindow::pWindow(Window& window) : window(window) {
     locked = false;
     brush = 0;
     hCursor = LoadCursor(0, IDC_ARROW);
+    timerStatusUpdate.setInterval(500);
+    timerStatusUpdate.onFinished = [this]() {
+        timerStatusUpdate.setEnabled(false);
+        if (this->window.statusBar())
+            this->window.statusBar()->p.updatePosition();
+    };
 
     Geometry geo = window.state.geometry;
 
@@ -341,7 +347,7 @@ auto CALLBACK pWindow::wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam
 			if(window.p.onEraseBackground()) return true;     
             break;            
         } 
-        case WM_ACTIVATE:            
+        case WM_ACTIVATE:
 			if ((LOWORD(wparam) == WA_ACTIVE) && (LOWORD(wparam) != WA_CLICKACTIVE)) {
                 if (window.statusBar())
                     window.statusBar()->p.updatePosition();
@@ -354,13 +360,16 @@ auto CALLBACK pWindow::wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam
                     window.onMinimize();
 			}
 			break;
-		case WM_ACTIVATEAPP:            
+		case WM_ACTIVATEAPP:
 			if (LOWORD(wparam) == WA_INACTIVE) {
 				if(window.fullScreen())
                     ShowWindow( hwnd, SW_MINIMIZE );
 			}
 			break;
         case WM_SETFOCUS:
+            if (window.fullScreen() && window.statusBar())
+                window.statusBar()->p.updatePosition();
+
             if (window.onFocus)
                 window.onFocus();
             break;
@@ -576,6 +585,8 @@ auto pWindow::onClose() -> void {
 void pWindow::onMove() {
     if(locked || window.fullScreen()) return;
 
+    timerStatusUpdate.setEnabled();
+
     Geometry windowGeometry = geometry();
     window.state.geometry.x = windowGeometry.x;
     window.state.geometry.y = windowGeometry.y;
@@ -640,7 +651,7 @@ auto pWindow::updateMenu() -> void {
     contextmenu = CreatePopupMenu();
 
     for(auto& menu : window.state.menus) {
-        menu->p.update(window);
+        menu->p.update(&window);
         if(menu->visible()) {
 			unsigned enabled = menu->enabled() ? 0 : MF_GRAYED;
             AppendMenu(hmenu, MF_STRING | MF_POPUP | enabled, (UINT_PTR)menu->p.hmenu, utf16_t(menu->text()) );

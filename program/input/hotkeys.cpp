@@ -25,6 +25,8 @@ auto InputManager::setHotkeys() -> void {
 
     hotkeys.push_back( {Hotkey::Id::Freeze, "freeze button"} );
 
+    hotkeys.push_back( {Hotkey::Id::SyncStatus, "Sync status"} );
+
     hotkeys.push_back( {Hotkey::Id::FloppyAccess, "select_disk_drive"} );
     hotkeys.push_back( {Hotkey::Id::DiskSwap0, "Disk_swapper_call0"} );
     hotkeys.push_back( {Hotkey::Id::DiskSwap1, "Disk_swapper_call1"} );
@@ -231,6 +233,14 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
 		case Hotkey::Id::Configurations:	
             openMenu( emulator, id );
             break;
+        case Hotkey::Id::SyncStatus: {
+            std::string _str = videoDriver->hasSynchronized() ? "vsync " : "";
+            _str += audioDriver->hasSynchronized() ? "async " : "";
+            _str += audioManager->dynamicRateControl ? "drc " : "";
+            float monitorFrequency = GUIKIT::Monitor::getCurrentRefreshRate();
+            _str += std::to_string( monitorFrequency );
+            statusHandler->setMessage(_str);
+        } break;
         case Hotkey::Id::Pause:
             view->togglePause();
             view->updatePauseCheck();

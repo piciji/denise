@@ -102,7 +102,7 @@ struct System {
     uint8_t nmiIncomming; // bit 0: keyboard, bit 1: cia2, bit 2: expansion port
     uint8_t rdyIncomming; // bit 0: vicII, bit 1: expansion port    
     
-    bool frameComplete = false;
+    bool leaveEmulation = false;
     Emulator::Serializer serializer;    
     bool kernalBootComplete = false;
     bool powerOn = false;
@@ -115,6 +115,7 @@ struct System {
     } fastForward;
     
     struct {
+        bool enable = false;
         unsigned frames = 0;
         unsigned pos = 0;
         bool performance = false;

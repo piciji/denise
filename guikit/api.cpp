@@ -832,7 +832,7 @@ auto ComboButton::userData(unsigned selection) const -> int {
     return state.userData[selection];
 }
 
-ComboButton::ComboButton() : Widget(*new pComboButton(*this)), p((pComboButton&)Widget::p) { p.init(); }
+ComboButton::ComboButton(bool hintVerticalScrollbar) : hintVerticalScrollbar(hintVerticalScrollbar),  Widget(*new pComboButton(*this)), p((pComboButton&)Widget::p) { p.init(); }
 
 auto Slider::setLength(unsigned length) -> void {
     state.length = length;
@@ -1514,6 +1514,10 @@ auto Monitor::getDisplays() -> std::vector<Property> {
 auto Monitor::getSettings( unsigned displayId ) -> std::vector<Property> {
     return pMonitor::getSettings( displayId );
 };
+
+auto Monitor::getCurrentRefreshRate() -> float {
+    return pMonitor::getCurrentRefreshRate();
+}
 
 }
 

@@ -60,7 +60,7 @@ auto CALLBACK pStatusBar::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LP
 			if (part != p.hoverPart) {
 				p.hoverPart = part;
 
-				p.setTooltip( part );
+//				p.setTooltip( part );
 
   //              return 0;
 			}
@@ -234,9 +234,6 @@ auto pStatusBar::update() -> void {
             bool _border = IsAppThemed() && part.appendSeparator && ((i + 1) < countVisible);
 
             SendMessage(hwnd, SB_SETTEXT, i++ | SBT_OWNERDRAW | (_border ? 0 : SBT_NOBORDERS), 0);
-
-            if (part.popupMenu && !part.popupMenu->state.parentWindow)
-                part.popupMenu->p.update(*statusBar.window());            
         }
     }
     // clear right margin area

@@ -40,19 +40,6 @@ PathsLayout::PathsLayout() {
     setFont(GUIKIT::Font::system("bold"));
 }
 
-VideoFrameAdjustLayout::VideoFrameAdjustLayout() {
-    append(overrideExactFrequency, {0u, 0u}, 10);
-    append(pal, {0u, 0u}, 5);
-    append(palFrequency, {60u, 0u}, 10);
-    append(ntsc, {0u, 0u}, 5);
-    append(ntscFrequency, {60u, 0u}, 10);
-    append(hint, {~0u, 0u});
-    setAlignment(0.5);
-    setPadding( 10 );
-    setFont(GUIKIT::Font::system("bold"));
-    hint.setForegroundColor( 0xff4500 );
-}
-
 VideoSettingsLayout::VideoSettingsLayout() {
     
     append(exclusiveFullscreen, {0u, 0u}, 10);
@@ -62,8 +49,7 @@ VideoSettingsLayout::VideoSettingsLayout() {
     setFont(GUIKIT::Font::system("bold"));
 }
 
-VideoResolutionLayout::VideoResolutionLayout() {
-
+VideoResolutionLayout::VideoResolutionLayout() : displaySettings(true) {
     append(active, {0u, 0u}, 10 );
     append(display, {0u, 0u}, 10 );
     append(displaySettings, {0u, 0u} );
@@ -72,13 +58,25 @@ VideoResolutionLayout::VideoResolutionLayout() {
     setFont(GUIKIT::Font::system("bold"));
 }
 
-VideoFpsLayout::DecimalPoint::DecimalPoint() {
-    append(label, {0u, 0u}, 10);
-    append(Zero, {0u, 0u}, 10);
-    append(One, {0u, 0u}, 10);
-    append(Two, {0u, 0u}, 10);
+VideoFpsLayout::Options::Options() {
+
+    for (unsigned i = 1; i <= 10; i++)
+        profile.append(std::to_string(i), i - 1);
+
+    append(labelSpeed, {0u, 0u}, 5);
+    append(profile, {0u, 0u}, 10 );
+    append(speed, {50u, 0u}, 10 );
+    append(fps, {0u, 0u}, 5 );
+    append(percent, {0u, 0u} );
+    append(spacer, {~0u, 0u} );
+
+    append(labelDecimalPlace, {0u, 0u}, 5);
+    append(Zero, {0u, 0u}, 5);
+    append(One, {0u, 0u}, 5);
+    append(Two, {0u, 0u}, 5);
     append(Three, {0u, 0u});
 
+    GUIKIT::RadioBox::setGroup( fps, percent );
     GUIKIT::RadioBox::setGroup( Zero, One, Two, Three );
 
     setAlignment(0.5);
@@ -87,7 +85,7 @@ VideoFpsLayout::DecimalPoint::DecimalPoint() {
 VideoFpsLayout::VideoFpsLayout() : updateDelay("ms") {
 
     append(updateDelay, {~0u, 0u}, 2);
-    append(decimalPoint, {0u, 0u});
+    append(options, {~0u, 0u}, 2);
 
     setPadding(10);
     setFont(GUIKIT::Font::system("bold"));
@@ -150,7 +148,6 @@ VideoLayout::VideoLayout() {
 
     append(videoResolution, {~0u, 0u}, 10);
     append(paths, {~0u, 0u}, 10);
-    append(videoFrameAdjust, {~0u, 0u}, 10);
     append(driverLayout, {~0u, 0u}, 5);
     append(videoSettingsLayout, {~0u, 0u}, 5);
 
@@ -307,35 +304,118 @@ VideoLayout::VideoLayout() {
     videoFps.updateDelay.slider.setPosition( fpsUpdate / 200 - 1 );
     videoFps.updateDelay.value.setText( std::to_string( fpsUpdate ) + " " + videoFps.updateDelay.unit );
 
-    videoFps.decimalPoint.Zero.setText("0");
-    videoFps.decimalPoint.Zero.onActivate = [this]() {
+    videoFps.options.Zero.setText("0");
+    videoFps.options.Zero.onActivate = [this]() {
         globalSettings->set<unsigned>("fps_decimal_point", 0);
         statusHandler->statusBar->updateDimension( 15, "1000" );
     };
-    videoFps.decimalPoint.One.setText("1");
-    videoFps.decimalPoint.One.onActivate = [this]() {
+    videoFps.options.One.setText("1");
+    videoFps.options.One.onActivate = [this]() {
         globalSettings->set<unsigned>("fps_decimal_point", 1);
         statusHandler->statusBar->updateDimension( 15, "1000.9" );
     };
-    videoFps.decimalPoint.Two.setText("2");
-    videoFps.decimalPoint.Two.onActivate = [this]() {
+    videoFps.options.Two.setText("2");
+    videoFps.options.Two.onActivate = [this]() {
         globalSettings->set<unsigned>("fps_decimal_point", 2);
         statusHandler->statusBar->updateDimension( 15, "1000.99" );
     };
-    videoFps.decimalPoint.Three.setText("3");
-    videoFps.decimalPoint.Three.onActivate = [this]() {
+    videoFps.options.Three.setText("3");
+    videoFps.options.Three.onActivate = [this]() {
         globalSettings->set<unsigned>("fps_decimal_point", 3);
         statusHandler->statusBar->updateDimension( 15, "1000.999" );
     };
 
     unsigned countDecimal = globalSettings->get<unsigned>("fps_decimal_point", 3, {0u, 3u});
     switch (countDecimal) {
-        case 0: videoFps.decimalPoint.Zero.setChecked(); break;
-        case 1: videoFps.decimalPoint.One.setChecked(); break;
-        case 2: videoFps.decimalPoint.Two.setChecked(); break;
-        case 3: videoFps.decimalPoint.Three.setChecked(); break;
+        case 0: videoFps.options.Zero.setChecked(); break;
+        case 1: videoFps.options.One.setChecked(); break;
+        case 2: videoFps.options.Two.setChecked(); break;
+        case 3: videoFps.options.Three.setChecked(); break;
     }
-        
+
+    videoFps.options.profile.onChange = [this]() {
+        unsigned selection = videoFps.options.profile.selection();
+        selection += 1;
+
+        float speed;
+        bool percent;
+        view->getSpeed(selection, speed, percent);
+
+        videoFps.options.speed.setText( GUIKIT::String::formatFloatingPoint( speed, 3 ) );
+        if (percent)
+            videoFps.options.percent.setChecked();
+        else
+            videoFps.options.fps.setChecked();
+    };
+
+    videoFps.options.speed.onChange = [this]() {
+        unsigned selection = videoFps.options.profile.selection();
+        unsigned speedProfile = globalSettings->get<unsigned>("speed_profile", 0, {0, 10});
+
+        std::string userInput = videoFps.options.speed.text();
+
+        GUIKIT::String::replace(userInput, ",", ".");
+
+        if (userInput.empty() || !GUIKIT::String::isFloatNumber( userInput ) ) {
+            return;
+        }
+
+        std::stringstream ss( userInput );
+        float out = 0.0;
+        ss >> out;
+
+        if (out < 1.0)
+            return;
+
+        selection += 1;
+        globalSettings->set<std::string>("speed_" + std::to_string(selection), userInput);
+
+        if (activeEmulator && (selection == speedProfile)) {
+            audioManager->setResampler();
+            statusHandler->resetFrameCounter();
+        }
+        view->updateSpeedLabels(true);
+    };
+
+    videoFps.options.fps.onActivate = [this]() {
+        unsigned selection = videoFps.options.profile.selection();
+        unsigned speedProfile = globalSettings->get<unsigned>("speed_profile", 0, {0, 10});
+
+        selection += 1;
+        globalSettings->set<bool>("speed_percent_" + std::to_string(selection), false);
+
+        if (activeEmulator && (selection == speedProfile)) {
+            audioManager->setResampler();
+            statusHandler->resetFrameCounter();
+        }
+        view->updateSpeedLabels(true);
+    };
+
+    videoFps.options.percent.onActivate = [this]() {
+        unsigned selection = videoFps.options.profile.selection();
+        unsigned speedProfile = globalSettings->get<unsigned>("speed_profile", 0, {0, 10});
+
+        selection += 1;
+        globalSettings->set<bool>("speed_percent_" + std::to_string(selection), true);
+
+        if (activeEmulator && (selection == speedProfile)) {
+            audioManager->setResampler();
+            statusHandler->resetFrameCounter();
+        }
+        view->updateSpeedLabels(true);
+    };
+
+    videoFps.options.profile.setSelection(0);
+    float speed;
+    bool percent;
+    view->getSpeed(1, speed, percent);
+
+    videoFps.options.speed.setText( GUIKIT::String::formatFloatingPoint( speed ) );
+    if (percent)
+        videoFps.options.percent.setChecked();
+    else
+        videoFps.options.fps.setChecked();
+
     screenTextLayout.option1.onActivate = [this]() {
         globalSettings->set("video_screen_text", 0);
         statusHandler->transferToOSD("");
@@ -354,51 +434,7 @@ VideoLayout::VideoLayout() {
     if(globalSettings->get("video_screen_text", 0) == 0) screenTextLayout.option1.setChecked();
     if(globalSettings->get("video_screen_text", 0) == 1) screenTextLayout.option2.setChecked();
     if(globalSettings->get("video_screen_text", 0) == 2) screenTextLayout.option3.setChecked();
-    
-    videoFrameAdjust.overrideExactFrequency.onToggle = [this](bool checked) {
-        globalSettings->set<bool>("video_override_exact", checked);
-        audioManager->setResampler();
-        if (activeVideoManager)
-            activeVideoManager->initFpsLimit();
-        updateFrequencyLayout();
-    };
-    
-    if ( globalSettings->get<bool>("video_override_exact", true) )
-        videoFrameAdjust.overrideExactFrequency.setChecked();
-    
-    videoFrameAdjust.palFrequency.onChange = [this]() {
-        globalSettings->set<std::string>("video_pal", videoFrameAdjust.palFrequency.text() );
 
-        auto monitorFrequency = globalSettings->get<double>("video_pal", 50.0, {25.0, 100.0});
-
-        if (monitorFrequency < 49 || monitorFrequency >= 51)
-            videoFrameAdjust.hint.setText( trans->get("frequency correction hint", {{"%value1%", "49.95"}, {"%value2%", "50.05"}}));
-        else
-            videoFrameAdjust.hint.setText("");
-
-        audioManager->setResampler();
-        if (activeVideoManager)
-            activeVideoManager->initFpsLimit();
-    };
-    
-    videoFrameAdjust.ntscFrequency.onChange = [this]() {
-        globalSettings->set<std::string>("video_ntsc", videoFrameAdjust.ntscFrequency.text() );
-
-        auto monitorFrequency =  globalSettings->get<double>("video_ntsc", 60.0, {30.0, 120.0});
-
-        if (monitorFrequency < 59 || monitorFrequency >= 61)
-            videoFrameAdjust.hint.setText( trans->get("frequency correction hint", {{"%value1%", "59.95"}, {"%value2%", "60.05"}}));
-        else
-            videoFrameAdjust.hint.setText("");
-
-        audioManager->setResampler();
-        if (activeVideoManager)
-            activeVideoManager->initFpsLimit();
-    };    
-            
-    videoFrameAdjust.palFrequency.setText( GUIKIT::String::formatFloatingPoint( globalSettings->get<double>("video_pal", 50.0, {25.0, 100.0}) ) );
-    videoFrameAdjust.ntscFrequency.setText( GUIKIT::String::formatFloatingPoint( globalSettings->get<double>("video_ntsc", 60.0, {30.0, 120.0}) ) );
-		
     videoGeometry.aspectCorrect.setChecked( globalSettings->get<bool>("aspect_correct", true) );
     videoGeometry.aspectCorrect.onToggle = [&](bool checked) {
         globalSettings->set<bool>("aspect_correct", checked);
@@ -424,17 +460,6 @@ VideoLayout::VideoLayout() {
         globalSettings->set<bool>("crt_shader_input_precision", checked);
         VideoManager::setShaderInputPrecision( checked );
     };
-    
-    updateFrequencyLayout();
-}
-
-auto VideoLayout::updateFrequencyLayout() -> void {
-    auto state = videoFrameAdjust.overrideExactFrequency.checked();
-    
-    videoFrameAdjust.pal.setEnabled( state );
-    videoFrameAdjust.palFrequency.setEnabled( state );
-    videoFrameAdjust.ntsc.setEnabled( state );
-    videoFrameAdjust.ntscFrequency.setEnabled( state );    
 }
 
 auto VideoLayout::translate() -> void {
@@ -467,18 +492,14 @@ auto VideoLayout::translate() -> void {
 	paths.shader.select.setText(trans->get("select"));
 	paths.shader.empty.setText(trans->get("remove"));
 
-    videoFrameAdjust.setText( trans->get("frequency_correction") );
-    videoFrameAdjust.pal.setText("PAL:");
-    videoFrameAdjust.ntsc.setText("NTSC:");
-    videoFrameAdjust.overrideExactFrequency.setText( trans->get("override_exact_frequency") );
-    videoFrameAdjust.overrideExactFrequency.setTooltip( trans->get("override_exact_frequency_tooltip") );
-
     videoResolution.setText( trans->get("preselect fullscreen resolution") );
     videoResolution.active.setText( trans->get("enable") );
 
     videoFps.setText( trans->get("FPS") );
     videoFps.updateDelay.name.setText( trans->get("Refresh", {}, true) );
-    videoFps.decimalPoint.label.setText( trans->get("Decimal Place", {}, true) );
+    videoFps.options.labelDecimalPlace.setText( trans->get("Decimal Place", {}, true) );
 
-    videoFrameAdjust.hint.setText("");
+    videoFps.options.labelSpeed.setText( trans->get("customize speed", {}, true) );
+    videoFps.options.fps.setText( trans->get("FPS") );
+    videoFps.options.percent.setText( trans->get("Percent") );
 }

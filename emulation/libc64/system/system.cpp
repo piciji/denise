@@ -653,7 +653,7 @@ auto System::initRam(uint8_t*& mem) -> void {
 }
 
 auto System::run() -> void {
-    frameComplete = false;
+    leaveEmulation = false;
     runAhead.pos = 0;
     acia->connectionLock = false;
 
@@ -671,10 +671,10 @@ auto System::run() -> void {
     cpu->setNmi(nmiIncomming != 0);
     iecBus->randomizeRpm();
 
-    bool useRunAhead = !fastForward.config && runAhead.frames && !traps->installed
-            && !keyBuffer->isPrgInjectionInQueue() && !iecBus->diskInsertInProgress;
+    runAhead.enable = !fastForward.config && runAhead.frames && !traps->installed
+        && !keyBuffer->isPrgInjectionInQueue() && !iecBus->diskInsertInProgress;
 
-    if (useRunAhead) {
+    if (runAhead.enable) {
         runAhead.pos = runAhead.frames;
         vicII->disableSequencer( runAhead.performance );
         Sid::disableAudioOut( runAhead.frames > 1 );
@@ -682,13 +682,13 @@ auto System::run() -> void {
 
     labelRunAhead:
 
-    while( !frameComplete ) {
+    while( !leaveEmulation ) {
         cpu->process();
         if (!diskSilence.idle && !secondDriveCable.cycleSyncing)
             iecBus->syncDrives();
     }
 
-    if (useRunAhead) {
+    if (runAhead.enable) {
         if (runAhead.frames == runAhead.pos) {
             serializeLight();
         }
@@ -702,7 +702,7 @@ auto System::run() -> void {
                     vicII->disableSequencer(false);
                 }
             }
-            frameComplete = false;
+            leaveEmulation = false;
             goto labelRunAhead;
         }
 
@@ -853,7 +853,7 @@ auto System::videoRefresh( uint8_t* frame, unsigned width, unsigned height, unsi
             iecBus->insertDiskGracefully();
     }
 
-    frameComplete = true;
+    leaveEmulation = true;
 
     if ( keyBuffer->hasJobs )
         keyBuffer->process();

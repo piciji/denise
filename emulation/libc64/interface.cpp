@@ -1702,6 +1702,11 @@ auto Interface::copyText() -> std::string {
     return system->copyText( );
 }
 
+auto Interface::requestImmediateReturn() -> void {
+    system->leaveEmulation = true;
+    system->runAhead.enable = false;
+}
+
 auto Interface::prepareSocket( Media* media, std::string address, std::string port ) -> void {
 
     acia->prepareSocket( media, address, port );

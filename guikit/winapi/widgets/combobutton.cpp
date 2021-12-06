@@ -7,7 +7,7 @@ auto pComboButton::append(std::string text) -> void {
     
     if(SendMessage(hwnd, CB_GETCOUNT, 0, 0) == 1)
         setSelection(0);
-    
+
     calculatedMinimumSize.updated = false;
 }
 
@@ -78,10 +78,14 @@ auto pComboButton::create() -> void {
     
     hwnd = CreateWindow(
         WC_COMBOBOX, L"",
-        WS_CHILD | WS_TABSTOP | CBS_DROPDOWNLIST | CBS_HASSTRINGS,
+        WS_CHILD | WS_TABSTOP | CBS_DROPDOWNLIST | CBS_HASSTRINGS |
+        (comboButton.hintVerticalScrollbar ? WS_VSCROLL : 0),
         0, 0, 0, 0,
         getParentHandle(), (HMENU)(unsigned long long)comboButton.id, GetModuleHandle(0), 0
     );
+
+    //ComboBox_SetMinVisible(hwnd, 30);
+
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)&comboButton);
     wndprocOrig = (WNDPROC)SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)subclassWndProc);
 }

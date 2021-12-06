@@ -12,6 +12,7 @@ auto VideoManager::setAspectCorrect(bool state) -> void {
 
 auto VideoManager::setFpsLimit(bool state) -> void {
 	fpsLimit = state;
+    fpsLimit = false;
 }
 
 auto VideoManager::setThreaded(bool state) -> void {	

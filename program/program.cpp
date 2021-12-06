@@ -280,7 +280,9 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
 		view->renderPlaceholder(true);
 
 		if (emuSwap)
-			setVideoFilter();	
+			setVideoFilter();
+
+        //setVideoSynchronize();
 
 		resetRunAhead();
 
@@ -300,6 +302,10 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
 		activeVideoManager->initFpsLimit();
 
         statusHandler->resetFrameCounter();
+
+        view->updateSpeedLabels();
+
+        view->statusBar.update(true);
 	}
 	
 	activeEmulator->power();

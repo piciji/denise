@@ -663,8 +663,8 @@ template<typename T> auto VideoManager::renderFrame(const T* src, unsigned width
     
 	videoDriver->unlock();
     
-    if (fpsLimit)
-        applyFpsLimit();
+    //if (fpsLimit)
+      //  applyFpsLimit();
     
 	videoDriver->redraw();
     
@@ -1209,10 +1209,7 @@ auto VideoManager::initFpsLimit() -> void {
     double fps = stat.fps;
 
     if ( globalSettings->get<bool>("video_override_exact", true) ) {
-        if (stat.isPal())
-            fps = globalSettings->get<double>("video_pal", 50.0,{25.0, 100.0});
-        else
-            fps = globalSettings->get<double>("video_ntsc", 60.0,{30.0, 120.0});
+        // todo
     }
 
     minimumCapTime = (1000000.0 / fps) + 0.5;

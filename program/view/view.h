@@ -65,7 +65,6 @@ struct View : public GUIKIT::Window {
     
     auto loadPlaceholder() -> void;
     auto renderPlaceholder(bool blackScreen = false) -> void;
-    auto setSpeed(unsigned speed) -> void;
     auto togglePause() -> void;
     auto updatePauseCheck() -> void;
     auto updateFastforwardCheck() -> void;
@@ -100,8 +99,8 @@ struct View : public GUIKIT::Window {
         GUIKIT::MenuItem globalInputItem;
 
         GUIKIT::MenuCheckItem videoSyncItem;
-        GUIKIT::MenuCheckItem audioSyncItem;        
-        GUIKIT::MenuCheckItem fpsLimitItem;      
+        GUIKIT::MenuCheckItem adaptiveSyncItem;
+        GUIKIT::MenuCheckItem fpsLimitItem;
         GUIKIT::MenuCheckItem dynamicRateControl;
 
         GUIKIT::MenuItem fullscreenItem;
@@ -130,20 +129,9 @@ struct View : public GUIKIT::Window {
         GUIKIT::MenuCheckItem fastForwardItem;
         GUIKIT::MenuCheckItem aggressiveFastForwardItem;
         GUIKIT::MenuCheckItem pauseItem;
-        GUIKIT::MenuRadioItem percent10Item;
-        GUIKIT::MenuRadioItem percent25Item;
-        GUIKIT::MenuRadioItem percent50Item;
-        GUIKIT::MenuRadioItem percent75Item;
-        GUIKIT::MenuRadioItem percent100Item;
-        GUIKIT::MenuRadioItem percent125Item;
-        GUIKIT::MenuRadioItem percent150Item;
-        GUIKIT::MenuRadioItem percent175Item;
-        GUIKIT::MenuRadioItem percent200Item;
-        GUIKIT::MenuRadioItem percent250Item;
-        GUIKIT::MenuRadioItem percent300Item;
-        GUIKIT::MenuRadioItem percent400Item;
-        GUIKIT::MenuRadioItem percent500Item;
-                
+        std::vector<GUIKIT::MenuRadioItem*> speedItems;
+        GUIKIT::MenuItem customizeSpeedItem;
+
         struct {
             GUIKIT::Menu menu;
             GUIKIT::MenuItem insert;
@@ -221,6 +209,8 @@ struct View : public GUIKIT::Window {
     GUIKIT::Image ledGreenImage;
             	
     auto questionToWrite(Emulator::Interface::Media* media) -> bool;
+    auto updateSpeedLabels(bool force = false) -> void;
+    auto getSpeed(unsigned pos, float& speed, bool& percent) -> void;
     
     View();
 };

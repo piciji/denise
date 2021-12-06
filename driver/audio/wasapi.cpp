@@ -382,6 +382,7 @@ struct Wasapi : public Audio {
     }
 	
 	Wasapi() {
+        settings.synchronize = false;
         settings.priority = false;
     }
 	

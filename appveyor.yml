@@ -17,6 +17,7 @@ branches:
   only:
     - master
     - /v\d*\.\d*\.\d*/
+    - adaptive_sync
   
 environment:
   matrix:

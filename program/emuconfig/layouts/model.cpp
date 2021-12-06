@@ -545,7 +545,7 @@ auto ModelLayout::applyCustomStuff( Line::Block* block, Emulator::Interface::Mod
                 } break;
                 
             case LIBC64::Interface::ModelIdSidSampleFetch:
-                audioManager->setResampler(); 
+                audioManager->setResampler();
                 break;
 
             case LIBC64::Interface::ModelIdDiskDrivesConnected:

@@ -10,6 +10,7 @@
 #include "../audio/manager.h"
 #include "../../data/icons.h"
 #include "../../data/logos.h"
+#include <sstream>
 
 ConfigView::TabWindow* configView = nullptr;
 

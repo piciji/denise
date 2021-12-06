@@ -23,16 +23,22 @@ auto pMenuBase::freeIcon() -> void {
 auto pMenuBase::setEnabled(bool enabled) -> void {
     if(parentWindow())
         parentWindow()->p.updateMenu();
+    else if (parentMenu())
+        parentMenu()->p.update(nullptr);
 }
 
 auto pMenuBase::setVisible(bool visible) -> void {
     if(parentWindow())
         parentWindow()->p.updateMenu();
+    else if (parentMenu())
+        parentMenu()->p.update(nullptr);
 }
 
 auto pMenuBase::setText(const std::string& text) -> void {
     if(parentWindow())
         parentWindow()->p.updateMenu();
+    else if (parentMenu())
+        parentMenu()->p.update(nullptr);
 }
 
 auto pMenuBase::setIcon(Image& icon) -> void {
@@ -76,7 +82,10 @@ auto pMenuBase::setIcon(Image& icon) -> void {
                 hicon = (HICON)::LoadImage(GetModuleHandle(0), MAKEINTRESOURCE(iconTemp.resourceId), IMAGE_ICON, 0, 0, LR_DEFAULTCOLOR);        
 		}
     }
-    if(parentWindow()) parentWindow()->p.updateMenu();
+    if(parentWindow())
+        parentWindow()->p.updateMenu();
+    else if (parentMenu())
+        parentMenu()->p.update(nullptr);
 }
 
 auto pMenuItem::onActivate() -> void {
@@ -97,7 +106,8 @@ auto pMenuCheckItem::onToggle() -> void {
 
 auto pMenuRadioItem::setChecked() -> void {
     for(auto& item : menuRadioItem.group) {
-        if(item->state.parentMenu) CheckMenuRadioItem(item->state.parentMenu->p.hmenu, item->id, item->id, item->id + (menuRadioItem.id != item->id), MF_BYCOMMAND);
+        if(item->state.parentMenu)
+            CheckMenuRadioItem(item->state.parentMenu->p.hmenu, item->id, item->id, item->id + (menuRadioItem.id != item->id), MF_BYCOMMAND);
     }
 }
 
@@ -117,14 +127,14 @@ auto pMenu::remove(MenuBase& item) -> void {
         parentWindow()->p.updateMenu();
 }
 
-auto pMenu::update(Window& window) -> void {
-    menu.state.parentWindow = &window;
+auto pMenu::update(Window* window) -> void {
+    menu.state.parentWindow = window;
 
     if(hmenu) DestroyMenu(hmenu);
     hmenu = CreatePopupMenu();
 
     for(auto& item : menu.childs) {
-        item->state.parentWindow = &window;
+        item->state.parentWindow = window;
         unsigned enabled = item->enabled() ? 0 : MF_GRAYED;
 		
         if(dynamic_cast<Menu*>(item)) {

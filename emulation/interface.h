@@ -541,6 +541,8 @@ struct Interface {
         return stats;
     }
 
+    virtual auto requestImmediateReturn() -> void {}
+
     // sockets
     virtual auto prepareSocket( Media* media, std::string address, std::string port ) -> void {}
     

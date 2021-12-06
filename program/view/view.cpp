@@ -259,6 +259,7 @@ auto View::setFullScreen(bool fullScreen) -> void {
 	else inputDriver->mUnacquire();	
     
     GUIKIT::Window::setFullScreen(fullScreen);
+    program->setVideoSynchronize();
 }
 
 auto View::exclusiveFullscreen() -> bool {
@@ -567,35 +568,6 @@ auto View::updateShader() -> void {
     }
 }
 
-auto View::setSpeed(unsigned speed) -> void {
-    if (!activeEmulator)
-        return;
-
-    globalSettings->set<unsigned>("speed_percent", speed, false);
-
-    audioManager->setResampler();
-    if (activeVideoManager)
-        activeVideoManager->initFpsLimit();
-
-    if (speed != 100) {
-        if (videoDriver->hasSynchronized())
-            videoDriver->synchronize(false);
-
-        VideoManager::setFpsLimit( false );
-    } else {
-        bool _sync = globalSettings->get<bool>("video_sync", false);
-
-        if (videoDriver->hasSynchronized() != _sync) {
-            videoDriver->synchronize( _sync );
-        }
-
-        VideoManager::setFpsLimit( globalSettings->get("fps_limit", false) );
-    }
-
-    program->updateOverallSynchronize();
-    statusHandler->resetFrameCounter();
-}
-
 auto View::updatePauseCheck() -> void {
 
     if (program->isPause != pauseItem.checked() )
@@ -882,48 +854,53 @@ auto View::buildMenu() -> void {
     optionsMenu.append(settingsItem);
 
     optionsMenu.append(*GUIKIT::MenuSeparator::getInstance());
-    
-    audioSyncItem.onToggle = [&]() {
-        globalSettings->set<bool>("audio_sync", audioSyncItem.checked() );
-        audioManager->setSynchronize();
-        statusHandler->resetFrameCounter();
-        percent100Item.setChecked();
-        percent100Item.onActivate();
-    };
-    if ( globalSettings->get<bool>("audio_sync", true) ) audioSyncItem.setChecked();
-    optionsMenu.append(audioSyncItem);
-    
+
     videoSyncItem.onToggle = [&]() {
         globalSettings->set<bool>("video_sync", videoSyncItem.checked() );
         program->fastForward( false );
         program->setVideoSynchronize();
         statusHandler->resetFrameCounter();
-
-        if (videoSyncItem.checked()) {
-            percent100Item.setChecked();
-            percent100Item.onActivate();
-        }
+        adaptiveSyncItem.setEnabled( videoSyncItem.checked() );
     };
-    if ( globalSettings->get<bool>("video_sync", false) ) videoSyncItem.setChecked();
+    if ( globalSettings->get<bool>("video_sync", true) ) {
+        videoSyncItem.setChecked();
+        adaptiveSyncItem.setEnabled( true );
+    } else
+        adaptiveSyncItem.setEnabled( false );
+
     optionsMenu.append(videoSyncItem);
-    
-    fpsLimitItem.onToggle = [&]() {
-        globalSettings->set<bool>("fps_limit", fpsLimitItem.checked() );        
-        program->setFpsLimit();
 
-        if (fpsLimitItem.checked()) {
-            percent100Item.setChecked();
-            percent100Item.onActivate();
-        }
+    adaptiveSyncItem.onToggle = [&]() {
+        globalSettings->set<bool>("adaptive_sync", adaptiveSyncItem.checked() );
+        program->fastForward( false );
+        program->setVideoSynchronize();
+        //statusHandler->resetFrameCounter();
     };
-    if ( globalSettings->get<bool>("fps_limit", false) ) fpsLimitItem.setChecked();
-    optionsMenu.append(fpsLimitItem);
+    if ( globalSettings->get<bool>("adaptive_sync", true) )
+        adaptiveSyncItem.setChecked();
+
+    optionsMenu.append(adaptiveSyncItem);
+    
+//    fpsLimitItem.onToggle = [&]() {
+//        globalSettings->set<bool>("fps_limit", fpsLimitItem.checked() );
+//        program->setFpsLimit();
+//
+//        if (fpsLimitItem.checked()) {
+//            speedItems[0]->setChecked();
+//            speedItems[0]->onActivate();
+//        }
+//    };
+//    if ( globalSettings->get<bool>("fps_limit", false) ) fpsLimitItem.setChecked();
+//    optionsMenu.append(fpsLimitItem);
 
     dynamicRateControl.onToggle = [&]() {
         globalSettings->set<bool>("dynamic_rate_control", dynamicRateControl.checked() );
-        audioManager->setRateControl();        
+        program->setVideoSynchronize();
+        //audioManager->setRateControl();
     };
-    if ( globalSettings->get<bool>("dynamic_rate_control", false) ) dynamicRateControl.setChecked();
+    if ( globalSettings->get<bool>("dynamic_rate_control", false) )
+        dynamicRateControl.setChecked();
+
     optionsMenu.append(dynamicRateControl);
         
     optionsMenu.append(*GUIKIT::MenuSeparator::getInstance());
@@ -1073,64 +1050,73 @@ auto View::buildMenu() -> void {
 
     speedControlMenu.append( *GUIKIT::MenuSeparator::getInstance() );
 
-    percent10Item.setText("10 %");
-    percent10Item.onActivate = [this]() { this->setSpeed( 10 ); };
-    speedControlMenu.append( percent10Item );
+    // nominal (original speed)
+    auto speedItem = new GUIKIT::MenuRadioItem;
+    speedItem->onActivate = [this]() {
+        globalSettings->set<unsigned>("speed_profile", 0);
+        globalSettings->set<bool>("video_override_exact", false);
+        audioManager->setSynchronize(true);
 
-    percent25Item.setText("25 %");
-    percent25Item.onActivate = [this]() { this->setSpeed( 25 ); };
-    speedControlMenu.append( percent25Item );
+        audioManager->setResampler();
+        statusHandler->resetFrameCounter();
+    };
+    speedControlMenu.append( *speedItem );
+    speedItems.push_back( speedItem );
 
-    percent50Item.setText("50 %");
-    percent50Item.onActivate = [this]() { this->setSpeed( 50 ); };
-    speedControlMenu.append( percent50Item );
+    // monitor (50Hz/60 Hz depends on region)
+    speedItem = new GUIKIT::MenuRadioItem;
+    speedItem->onActivate = [this]() {
+        globalSettings->set<unsigned>("speed_profile", 0);
+        globalSettings->set<bool>("video_override_exact", true);
+        audioManager->setSynchronize(true);
+        audioManager->setResampler();
+        statusHandler->resetFrameCounter();
+    };
+    speedControlMenu.append( *speedItem );
+    speedItems.push_back( speedItem );
 
-    percent75Item.setText("75 %");
-    percent75Item.onActivate = [this]() { this->setSpeed( 75 ); };
-    speedControlMenu.append( percent75Item );
+    // maximum speed
+    speedItem = new GUIKIT::MenuRadioItem;
+    speedItem->onActivate = [this]() {
+        globalSettings->set<unsigned>("speed_profile", 0);
+        audioManager->setSynchronize(false);
+        audioManager->setResampler();
+        videoDriver->synchronize( false );
+        statusHandler->resetFrameCounter();
+    };
+    speedControlMenu.append( *speedItem );
+    speedItems.push_back( speedItem );
 
-    percent100Item.setText("100 %");
-    percent100Item.onActivate = [this]() { this->setSpeed( 100 ); };
-    speedControlMenu.append( percent100Item );
+    for(unsigned i = 1; i <= 10; i++) {
+        auto speedItem = new GUIKIT::MenuRadioItem;
+        speedItem->onActivate = [this, i]() {
+            globalSettings->set<unsigned>("speed_profile", i);
+            audioManager->setSynchronize(true);
+            audioManager->setResampler();
+            statusHandler->resetFrameCounter();
+        };
+        speedControlMenu.append( *speedItem );
+        speedItems.push_back( speedItem );
+    }
 
-    percent125Item.setText("125 %");
-    percent125Item.onActivate = [this]() { this->setSpeed( 125 ); };
-    speedControlMenu.append( percent125Item );
+    unsigned speedProfile = globalSettings->get<unsigned>("speed_profile", 0, {0, 10});
+    bool nominalspeed = !globalSettings->get<bool>("video_override_exact", true);
 
-    percent150Item.setText("150 %");
-    percent150Item.onActivate = [this]() { this->setSpeed( 150 ); };
-    speedControlMenu.append( percent150Item );
+    speedControlMenu.append( *GUIKIT::MenuSeparator::getInstance() );
+    customizeSpeedItem.onActivate = []() {
+        ConfigView::TabWindow::open(ConfigView::TabWindow::Layout::Video);
+    };
+    speedControlMenu.append( customizeSpeedItem );
 
-    percent175Item.setText("175 %");
-    percent175Item.onActivate = [this]() { this->setSpeed( 175 ); };
-    speedControlMenu.append( percent175Item );
+    GUIKIT::MenuRadioItem::setGroup( speedItems );
 
-    percent200Item.setText("200 %");
-    percent200Item.onActivate = [this]() { this->setSpeed( 200 ); };
-    speedControlMenu.append( percent200Item );
-
-    percent250Item.setText("250 %");
-    percent250Item.onActivate = [this]() { this->setSpeed( 250 ); };
-    speedControlMenu.append( percent250Item );
-
-    percent300Item.setText("300 %");
-    percent300Item.onActivate = [this]() { this->setSpeed( 300 ); };
-    speedControlMenu.append( percent300Item );
-
-    percent400Item.setText("400 %");
-    percent400Item.onActivate = [this]() { this->setSpeed( 400 ); };
-    speedControlMenu.append( percent400Item );
-
-    percent500Item.setText("500 %");
-    percent500Item.onActivate = [this]() { this->setSpeed( 500 ); };
-    speedControlMenu.append( percent500Item );
-
-    GUIKIT::MenuRadioItem::setGroup({&percent10Item, &percent25Item, &percent50Item, &percent75Item,
-                                     &percent100Item, &percent125Item, &percent150Item, &percent175Item, &percent200Item,
-                                     &percent250Item, &percent300Item, &percent400Item, &percent500Item});
-
-    percent100Item.setChecked();
-
+    if (speedProfile > 0) {
+        speedItems[speedProfile + 2]->setChecked();
+    } else if (nominalspeed) {
+        speedItems[0]->setChecked();
+    } else {
+        speedItems[1]->setChecked();
+    }
     // prepare Disk Control
     unsigned i = 0;
     for (auto& diskControlMenu : diskControlMenus) {
@@ -1161,6 +1147,44 @@ auto View::buildMenu() -> void {
         
         i++;
     }   
+}
+
+auto View::updateSpeedLabels(bool force) -> void {
+    static int _mode = -1;
+
+    if (force)
+        _mode = -1;
+
+    if (!activeEmulator)
+        return;
+
+    auto stat = activeEmulator->getStatsForSelectedRegion();
+
+    if ( (_mode == -1) || ((int)stat.isPal() != _mode)) {
+
+        _mode = (int)stat.isPal();
+
+        for(unsigned i = 1; i <= 10; i++) {
+            float otherValue;
+            float value;
+            bool percent;
+            view->getSpeed(i, value, percent);
+
+            if (percent) {
+                otherValue = ((float)stat.fps * value) / 100.0;
+
+                speedItems[i+2]->setText( GUIKIT::String::formatFloatingPoint(otherValue, 3) + " FPS (" +
+                    GUIKIT::String::formatFloatingPoint(value, 2) + " %)"
+                );
+            } else {
+                otherValue = (100.0 * value) / (float)stat.fps;
+
+                speedItems[i+2]->setText( GUIKIT::String::formatFloatingPoint(value, 3) + " FPS (" +
+                    GUIKIT::String::formatFloatingPoint(otherValue, 2) + " %)"
+                );
+            }
+        }
+    }
 }
 
 auto View::showTapeMenu( bool show, Emulator::Interface::TapeMode mode ) -> void {
@@ -1247,9 +1271,9 @@ auto View::translate() -> void {
     globalAudioItem.setText( trans->get("audio") );
     globalInputItem.setText( trans->get("input") + " / " + trans->get("hotkeys") );
     settingsItem.setText( trans->get("settings"));
-	
-    audioSyncItem.setText( trans->get("sync_audio"));
+
     videoSyncItem.setText( trans->get("sync_video"));
+    adaptiveSyncItem.setText( trans->get("sync_adaptive"));
     fpsLimitItem.setText( trans->get("Fps Limit"));
     dynamicRateControl.setText( trans->get("dynamic_rate_control"));
 
@@ -1298,6 +1322,11 @@ auto View::translate() -> void {
     pauseItem.setText( trans->get("Pause") );
     fastForwardItem.setText( trans->get("Toggle_fastforward") );
     aggressiveFastForwardItem.setText( trans->get("Toggle_fastforward_aggressive") );
+
+    speedItems[0]->setText( trans->get("original speed") );
+    speedItems[1]->setText( trans->get("compatible speed") );
+    speedItems[2]->setText( trans->get("maximum speed") );
+    customizeSpeedItem.setText( trans->get("customize speed") );
 }
 
 auto View::getViewportHandle() -> uintptr_t {
@@ -1384,4 +1413,25 @@ auto View::questionToWrite(Emulator::Interface::Media* media) -> bool {
         state = message->question( trans->get("question permanent write", {{"%media%", media->name}}) );
     
     return state;
+}
+
+auto View::getSpeed(unsigned pos, float& speed, bool& percent) -> void {
+    percent = true;
+    speed = 100.0;
+
+    switch (pos) {
+        case 1: speed = 50.0; percent = false; break;
+        case 2: speed = 60.0; percent = false; break;
+        case 3: speed = 25.0; break;
+        case 4: speed = 50.0; break;
+        case 5: speed = 125.0; break;
+        case 6: speed = 150.0; break;
+        case 7: speed = 200.0; break;
+        case 8: speed = 250.0; break;
+        case 9: speed = 300.0; break;
+        case 10: speed = 400.0; break;
+    }
+
+    speed = globalSettings->get<float>("speed_" + std::to_string(pos), speed);
+    percent = globalSettings->get<bool>("speed_percent_" + std::to_string(pos), percent);
 }

@@ -3,6 +3,42 @@ std::vector<pMonitor::Device> pMonitor::devices;
 std::vector<pMonitor::Setting> pMonitor::settings;
 pMonitor::Device* pMonitor::activeDevice = nullptr;
 
+#include <dwmapi.h>
+
+auto pMonitor::getCurrentRefreshRate() -> float {
+
+    DWM_TIMING_INFO timingInfo;
+    ZeroMemory(&timingInfo, sizeof(timingInfo));
+    timingInfo.cbSize = sizeof(timingInfo);
+
+    HRESULT result = DwmGetCompositionTimingInfo(NULL, &timingInfo);
+    float rateInterval = 0.0;
+
+    if (result == S_OK) {
+
+        if (timingInfo.rateRefresh.uiDenominator > 0 &&
+                timingInfo.rateRefresh.uiNumerator > 0) {
+
+            rateInterval = ((float)timingInfo.rateRefresh.uiDenominator / 1000000.0)
+                * (float)timingInfo.rateRefresh.uiNumerator;
+
+            if (rateInterval < 1.0)
+                rateInterval = rateInterval * 1000000.0;
+        }
+    }
+
+    if (rateInterval > 0.0)
+        return rateInterval;
+
+    DEVMODE devSetting;
+    ZeroMemory(&devSetting, sizeof(devSetting));
+    devSetting.dmSize = sizeof(DEVMODE);
+
+    EnumDisplaySettingsEx( NULL, ENUM_CURRENT_SETTINGS, &devSetting, 0 );
+
+    return (float)devSetting.dmDisplayFrequency;
+}
+
 auto pMonitor::fetchDisplays() -> void {
     unsigned i = 0;
     CRC32 crc32;
@@ -33,7 +69,7 @@ auto pMonitor::fetchDisplays() -> void {
 
         EnumDisplaySettings(device.DeviceName, ENUM_CURRENT_SETTINGS, &originalSetting);
 
-        devices.push_back({device, originalSetting, crc32.value(), devStr});
+        devices.push_back({crc32.value(), devStr, device, originalSetting});
     }
 }
 
@@ -60,7 +96,7 @@ auto pMonitor::fetchSettings( Device* device ) -> void {
     devSetting.dmSize = sizeof(DEVMODE);
     CRC32 crc32;
 
-    settings.push_back({ device, devSetting, 0, "-" });
+    settings.push_back({ 0, "-", device, devSetting });
 
     while( EnumDisplaySettingsEx( device->displayDevice.DeviceName, i++, &devSetting, 0 ) ) {
 
@@ -82,7 +118,18 @@ auto pMonitor::fetchSettings( Device* device ) -> void {
 
         crc32.calc( (uint8_t*)name.c_str(), name.size() );
 
-        settings.push_back({ device, devSetting, crc32.value(), name });
+        bool found = false;
+        for(auto& setting : settings) {
+            if (setting.id == crc32.value()) {
+                found = true;
+                break;
+            }
+        }
+
+        if (found)
+            continue;
+
+        settings.push_back({ crc32.value(), name, device, devSetting });
     }
 }
 

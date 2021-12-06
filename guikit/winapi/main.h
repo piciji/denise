@@ -58,6 +58,7 @@ struct pWindow {
     COLORREF brushColor;
 
     HCURSOR hCursor;
+    Timer timerStatusUpdate;
 
     auto append(Menu& menu) -> void;
     auto append(Widget& widget) -> void;
@@ -616,7 +617,7 @@ struct pMenu : pMenuBase {
 
     auto append(MenuBase& item) -> void;
     auto remove(MenuBase& item) -> void;
-    auto update(Window& window) -> void;
+    auto update(Window* window) -> void;
 
     pMenu(Menu& menu) : pMenuBase(menu), menu(menu) {}
     ~pMenu();
@@ -781,17 +782,17 @@ struct pSystem {
 struct pMonitor {
 
     struct Device {
-        DISPLAY_DEVICE displayDevice;
-        DEVMODE originalSetting;
         unsigned id;
         std::string ident;
+        DISPLAY_DEVICE displayDevice;
+        DEVMODE originalSetting;
     };
 
     struct Setting {
-        Device* parentDevice;
-        DEVMODE devMode;
         unsigned id;
         std::string ident;
+        Device* parentDevice;
+        DEVMODE devMode;
     };
 
     static std::vector<Device> devices;
@@ -806,6 +807,8 @@ struct pMonitor {
 
     static auto setSetting( unsigned displayId, unsigned settingId ) -> bool;
     static auto resetSetting() -> void;
+
+    static auto getCurrentRefreshRate() -> float;
 };
 
 struct pThread {

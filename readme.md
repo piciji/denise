@@ -13,6 +13,12 @@ Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trade
 
 # changelog
 
+## 1.1.3 (not yet released)
+* add newtronics drive sound theme [thanks to enigma]
+* precise FPS counter and speed selection menu
+    * define custom speeds
+    * define decimal place for FPS counter
+
 ## 1.1.2
 * P64 support
 * 1541, 1541C support

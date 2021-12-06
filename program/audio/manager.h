@@ -20,13 +20,17 @@ struct AudioManager {
     float floatConversion;
     std::vector<DSP::Base*> dsps;
     
-    int16_t outBuffer[4096];
-    float outBufferFloat[4096];
+    int16_t outBuffer[6144];
+    float outBufferFloat[6144];
     Resampler::Cosine cosine;
     Resampler::Data rData;
     AudioRecord::Handler record;
     Mixer::Drive drive;
     bool mixFloppySounds = false;
+    struct {
+        bool enable = false;
+        unsigned lastTS;
+    } measureUiUpdate;
     
     double ratio;    
     bool dynamicRateControl;
@@ -47,6 +51,7 @@ struct AudioManager {
         
     double outputFrequency;
     double inputFrequency;
+    double inputFPS;
 
     Emulator::Interface::Stats stat;
 
@@ -64,7 +69,7 @@ struct AudioManager {
         
     auto setLatency() -> void;
     auto setFrequency() -> void;     
-    auto setSynchronize() -> void;
+    auto setSynchronize(bool synchronize) -> void;
     auto setVolume() -> void;
     auto setRateControl() -> void;
     auto setDriveSounds(bool init = true) -> void;
@@ -77,6 +82,8 @@ struct AudioManager {
     auto power() -> void;
     auto powerOff() -> void;
     auto applyDsp() -> void;
+
+    auto checkIfUINeedsAnUpdate() -> void;
 };
 
 extern AudioManager* audioManager;
