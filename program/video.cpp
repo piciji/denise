@@ -130,7 +130,7 @@ auto Program::setVideoHardSync() -> void {
 }
 
 auto Program::hintExclusiveFullscreen() -> void {
-	videoDriver->hintExclusiveFullscreen( globalSettings->get("exclusive_fullscreen", false) );
+	videoDriver->hintExclusiveFullscreen( globalSettings->get("exclusive_fullscreen", false), view->getCustomFullscreenRefreshRate() );
 }
 
 auto Program::setFpsLimit() -> void {
@@ -298,4 +298,6 @@ auto Program::updateFullscreenSetting() -> void {
         view->setFullscreenSetting( false );
     else
         view->setFullscreenSetting( true, _display, _setting );
+
+    program->hintExclusiveFullscreen();
 }

@@ -1272,8 +1272,8 @@ auto View::translate() -> void {
     globalInputItem.setText( trans->get("input") + " / " + trans->get("hotkeys") );
     settingsItem.setText( trans->get("settings"));
 
-    videoSyncItem.setText( trans->get("sync_video"));
-    adaptiveSyncItem.setText( trans->get("sync_adaptive"));
+    videoSyncItem.setText( trans->get("Video Sync"));
+    adaptiveSyncItem.setText( trans->get("Adaptive Sync"));
     fpsLimitItem.setText( trans->get("Fps Limit"));
     dynamicRateControl.setText( trans->get("dynamic_rate_control"));
 

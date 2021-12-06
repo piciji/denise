@@ -4,6 +4,7 @@
 #include <d3d9.h>
 #include <d3dx9.h>
 #include <math.h>
+#include "../../program/tools/logger.h"
 
 namespace DRIVER {
 	
@@ -34,6 +35,7 @@ struct DVideo : Video {
         HWND handle;
         HWND parent;
 		bool hintExclusiveFullscreen = false;
+        float exclusiveFullscreenRate = 0.0;
     } settings;
 
     struct {
@@ -231,6 +233,7 @@ struct DVideo : Video {
 			if ( (outScreenParent.right == monitorWidth)
 				&& (outScreenParent.bottom == monitorHeight) ) {
 				exclusiveFullscreen = true;
+                logger->log("excl");
 				outScreen.left = (outScreenParent.right - outScreen.right) / 2;
 				outScreen.top = (outScreenParent.bottom - outScreen.bottom) / 2;
 			} else {
@@ -246,7 +249,8 @@ struct DVideo : Video {
 		d3dpp.BackBufferFormat = exclusiveFullscreen ? D3DFMT_X8R8G8B8 : D3DFMT_UNKNOWN;
 		d3dpp.BackBufferWidth = exclusiveFullscreen ? outScreenParent.right : 0;
 		d3dpp.BackBufferHeight = exclusiveFullscreen ? outScreenParent.bottom : 0;
-		d3dpp.FullScreen_RefreshRateInHz = D3DPRESENT_RATE_DEFAULT;
+		d3dpp.FullScreen_RefreshRateInHz = (exclusiveFullscreen && (settings.exclusiveFullscreenRate > 0.0))
+            ? settings.exclusiveFullscreenRate : D3DPRESENT_RATE_DEFAULT;
 
 		d3dpp.PresentationInterval = settings.synchronize ? D3DPRESENT_INTERVAL_ONE : D3DPRESENT_INTERVAL_IMMEDIATE;
 		d3dpp.BackBufferCount = 1;
@@ -486,13 +490,14 @@ struct DVideo : Video {
 		return rect;
 	}
 	
-	auto hintExclusiveFullscreen(bool state) -> void {
+	auto hintExclusiveFullscreen(bool state, float rate = 0.0) -> void {
 		/**
 		 * next time when view port expands to fullscreen, exclusive fullscreen is used instead of a borderless window
 		 * this is a special microsoft direct 3D feature, means lower input latency because of gpu bypasses stuff 
 		 * like aero
 		 */
 		settings.hintExclusiveFullscreen = state;
+        settings.exclusiveFullscreenRate = rate;
 	}
 	
 	auto showMessage(std::string message, bool critical = false) -> void {

@@ -7,28 +7,30 @@ pMonitor::Device* pMonitor::activeDevice = nullptr;
 
 auto pMonitor::getCurrentRefreshRate() -> float {
 
-    DWM_TIMING_INFO timingInfo;
-    ZeroMemory(&timingInfo, sizeof(timingInfo));
-    timingInfo.cbSize = sizeof(timingInfo);
+    if (pApplication::version > Windows7) {
+        DWM_TIMING_INFO timingInfo;
+        ZeroMemory(&timingInfo, sizeof(timingInfo));
+        timingInfo.cbSize = sizeof(timingInfo);
 
-    HRESULT result = DwmGetCompositionTimingInfo(NULL, &timingInfo);
-    float rateInterval = 0.0;
+        HRESULT result = DwmGetCompositionTimingInfo(NULL, &timingInfo);
+        float rateInterval = 0.0;
 
-    if (result == S_OK) {
+        if (result == S_OK) {
 
-        if (timingInfo.rateRefresh.uiDenominator > 0 &&
+            if (timingInfo.rateRefresh.uiDenominator > 0 &&
                 timingInfo.rateRefresh.uiNumerator > 0) {
 
-            rateInterval = ((float)timingInfo.rateRefresh.uiDenominator / 1000000.0)
-                * (float)timingInfo.rateRefresh.uiNumerator;
+                rateInterval = ((float)timingInfo.rateRefresh.uiDenominator / 1000000.0)
+                               * (float)timingInfo.rateRefresh.uiNumerator;
 
-            if (rateInterval < 1.0)
-                rateInterval = rateInterval * 1000000.0;
+                if (rateInterval < 1.0)
+                    rateInterval = rateInterval * 1000000.0;
+            }
         }
-    }
 
-    if (rateInterval > 0.0)
-        return rateInterval;
+        if (rateInterval > 0.0)
+            return rateInterval;
+    }
 
     DEVMODE devSetting;
     ZeroMemory(&devSetting, sizeof(devSetting));
@@ -36,7 +38,14 @@ auto pMonitor::getCurrentRefreshRate() -> float {
 
     EnumDisplaySettingsEx( NULL, ENUM_CURRENT_SETTINGS, &devSetting, 0 );
 
-    return (float)devSetting.dmDisplayFrequency;
+    auto rate = devSetting.dmDisplayFrequency;
+
+    if (rate == 59)
+        rate = 60;
+    else if (rate == 49)
+        rate = 50;
+
+    return (float)rate;
 }
 
 auto pMonitor::fetchDisplays() -> void {
@@ -159,6 +168,40 @@ auto pMonitor::getSettings( unsigned displayId ) -> std::vector<Monitor::Propert
         results.push_back({setting.id, setting.ident});
 
     return results;
+}
+
+auto pMonitor::getRefreshRate( unsigned displayId, unsigned settingId ) -> float {
+
+    if (!devices.size()) {
+        fetchDisplays();
+
+        if (!devices.size())
+            return 0.0;
+    }
+
+    activeDevice = &devices[0];
+    for(auto& _device : devices) {
+        if (_device.id == displayId) {
+            activeDevice = &_device;
+            break;
+        }
+    }
+
+    if (!settings.size() || (settings[0].parentDevice != activeDevice) )
+        fetchSettings( activeDevice );
+
+    Setting* setting = nullptr;
+    for(auto& _setting : settings) {
+        if (_setting.id == settingId) {
+            setting = &_setting;
+            break;
+        }
+    }
+
+    if (!setting)
+        return 0.0;
+
+    return (float)setting->devMode.dmDisplayFrequency;
 }
 
 auto pMonitor::setSetting( unsigned displayId, unsigned settingId ) -> bool {

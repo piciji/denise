@@ -728,6 +728,7 @@ struct pMonitor {
     static auto resetSetting() -> bool;
 
     static auto getCurrentRefreshRate() -> float { return 0.0; }
+    static auto getRefreshRate( unsigned displayId, unsigned settingId ) -> float { return 0.0; }
 };
 
 struct pThread {

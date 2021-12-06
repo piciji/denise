@@ -278,6 +278,14 @@ auto Window::setFullscreenSetting( bool inUse, unsigned displayId, unsigned sett
     fullscreenSetting.settingId = settingId;
 }
 
+auto Window::getCustomFullscreenRefreshRate() -> float {
+
+    if (!fullscreenSetting.inUse)
+        return 0.0;
+
+    return pMonitor::getRefreshRate(fullscreenSetting.displayId, fullscreenSetting.settingId);
+}
+
 auto Window::setResizable(bool resizable) -> void {
     state.resizable = resizable;
     p.setResizable(resizable);

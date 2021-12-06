@@ -43,7 +43,7 @@ struct Video {
     
     virtual auto shaderFormat() -> ShaderType { return ShaderType::NotSupported; }
 	/** direct 3D only */
-	virtual auto hintExclusiveFullscreen(bool state) -> void {}	
+	virtual auto hintExclusiveFullscreen(bool state, float rate = 0.0) -> void {}
 
     virtual ~Video() = default;
     static auto create(const std::string& driver) -> Video*;

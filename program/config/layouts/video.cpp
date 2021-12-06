@@ -65,7 +65,7 @@ VideoFpsLayout::Options::Options() {
 
     append(labelSpeed, {0u, 0u}, 5);
     append(profile, {0u, 0u}, 10 );
-    append(speed, {50u, 0u}, 10 );
+    append(speed, {GUIKIT::Font::scale(50), 0u}, 10 );
     append(fps, {0u, 0u}, 5 );
     append(percent, {0u, 0u} );
     append(spacer, {~0u, 0u} );
