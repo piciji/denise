@@ -35,6 +35,7 @@ struct AudioManager {
     double ratio;    
     bool dynamicRateControl;
     double rateDelta = 0.005;
+    float skew = 0.0;
     
     struct {
         float sum = 0;

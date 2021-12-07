@@ -314,7 +314,11 @@ auto pStatusBar::onClick(LPARAM lparam) -> void {
     if (part->popupMenu) {
         POINT pt;
         GetCursorPos(&pt);
-        int mid = TrackPopupMenuEx(part->popupMenu->p.hmenu, TPM_RIGHTBUTTON | TPM_RETURNCMD, pt.x, pt.y, statusBar.window()->p.hwnd, NULL);
+        int adjust = 0;
+        if (statusBar.window()->fullScreen())
+            adjust = -15;
+
+        int mid = TrackPopupMenuEx(part->popupMenu->p.hmenu, TPM_RIGHTBUTTON | TPM_RETURNCMD, pt.x, pt.y + adjust, statusBar.window()->p.hwnd, NULL);
         if (mid) SendMessage(statusBar.window()->p.hwnd, WM_COMMAND, mid, 0);
     }
 

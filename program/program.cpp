@@ -304,8 +304,6 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
         statusHandler->resetFrameCounter();
 
         view->updateSpeedLabels();
-
-        view->statusBar.update(true);
 	}
 	
 	activeEmulator->power();

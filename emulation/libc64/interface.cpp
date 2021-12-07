@@ -1531,7 +1531,6 @@ auto Interface::activateDebugCart( unsigned limitCycles ) -> void {
 }
 
 auto Interface::fastForward(unsigned config) -> void {
-    
     system->setFastForward( config );
 }
 
@@ -1690,6 +1689,8 @@ auto Interface::videoAddMeta(bool state) -> void {
 
 auto Interface::setMonitorFpsRatio(double ratio) -> void {
     Sid::updateChamberlinFrequencyAll( vicII->frequency() * ratio );
+
+    system->hintSlowSpeed( ratio < 0.5 );
 }
 
 auto Interface::pasteText( std::string buffer ) -> void {
@@ -1704,7 +1705,6 @@ auto Interface::copyText() -> std::string {
 
 auto Interface::requestImmediateReturn() -> void {
     system->leaveEmulation = true;
-    system->runAhead.enable = false;
 }
 
 auto Interface::prepareSocket( Media* media, std::string address, std::string port ) -> void {

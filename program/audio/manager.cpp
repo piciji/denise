@@ -239,9 +239,16 @@ auto AudioManager::setAudioDsp() -> void {
 }
 
 auto AudioManager::setRateControl() -> void {
-    
+
+    bool adaptive = globalSettings->get<bool>("adaptive_sync", true);
+
     dynamicRateControl = (videoDriver->hasSynchronized() || VideoManager::fpsLimit)
         && globalSettings->get<bool>("dynamic_rate_control", false);
+
+    if (dynamicRateControl && adaptive) {
+        if (skew > 0.0015)
+            dynamicRateControl = false;
+    }
 
     rateDelta = globalSettings->get<float>("rate_control_delta", 0.005, {0.0, 0.010});
     

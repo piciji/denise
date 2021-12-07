@@ -54,6 +54,37 @@ std::vector<pMonitor::Device> pMonitor::devices;
 std::vector<pMonitor::Setting> pMonitor::settings;
 pMonitor::Device* pMonitor::activeDevice = nullptr;
 
+auto pMonitor::getCurrentRefreshRate() -> float {
+    float refreshRate = 0.0;
+
+    if (!devices.size())
+        fetchDisplays();
+
+    for(auto& device : devices) {
+        if (!CGDisplayIsMain(device.displayId))
+            continue;
+
+        CVDisplayLinkRef link = NULL;
+
+        CVDisplayLinkCreateWithCGDisplay( device.displayId, &link );
+        CGDisplayModeRef moderef = CGDisplayCopyDisplayMode( device.displayId );
+
+        refreshRate = CGDisplayModeGetRefreshRate(moderef);
+
+        if (refreshRate == 0.0 && link != NULL) {
+            CVTime time = CVDisplayLinkGetNominalOutputVideoRefreshPeriod(link);
+
+            if ((time.flags & kCVTimeIsIndefinite) == 0 && (time.timeValue != 0) )
+                refreshRate = time.timeScale / (double)time.timeValue;
+        }
+
+        CVDisplayLinkRelease(link);
+        CGDisplayModeRelease(moderef);
+    }
+
+    return refreshRate;
+}
+
 auto pMonitor::fetchDisplays() -> void {
 
     devices.clear();

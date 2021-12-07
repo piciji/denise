@@ -59,24 +59,12 @@ VideoResolutionLayout::VideoResolutionLayout() : displaySettings(true) {
 }
 
 VideoFpsLayout::Options::Options() {
-
-    for (unsigned i = 1; i <= 10; i++)
-        profile.append(std::to_string(i), i - 1);
-
-    append(labelSpeed, {0u, 0u}, 5);
-    append(profile, {0u, 0u}, 10 );
-    append(speed, {GUIKIT::Font::scale(50), 0u}, 10 );
-    append(fps, {0u, 0u}, 5 );
-    append(percent, {0u, 0u} );
-    append(spacer, {~0u, 0u} );
-
     append(labelDecimalPlace, {0u, 0u}, 5);
     append(Zero, {0u, 0u}, 5);
     append(One, {0u, 0u}, 5);
     append(Two, {0u, 0u}, 5);
     append(Three, {0u, 0u});
 
-    GUIKIT::RadioBox::setGroup( fps, percent );
     GUIKIT::RadioBox::setGroup( Zero, One, Two, Three );
 
     setAlignment(0.5);
@@ -92,6 +80,23 @@ VideoFpsLayout::VideoFpsLayout() : updateDelay("ms") {
 
     updateDelay.slider.setLength(25);
     updateDelay.updateValueWidth( "5000 " + updateDelay.unit );
+}
+
+VideoSpeedLayout::VideoSpeedLayout() {
+    for (unsigned i = 1; i <= 10; i++)
+        profile.append(std::to_string(i), i - 1);
+
+    append(labelSpeed, {0u, 0u}, 5);
+    append(profile, {0u, 0u}, 10 );
+    append(speed, {GUIKIT::Font::scale(55), 0u}, 10 );
+    append(fps, {0u, 0u}, 5 );
+    append(percent, {0u, 0u} );
+
+    GUIKIT::RadioBox::setGroup( fps, percent );
+
+    setAlignment(0.5);
+    setPadding(10);
+    setFont(GUIKIT::Font::system("bold"));
 }
 
 VideoLayout::VideoLayout() {
@@ -146,6 +151,7 @@ VideoLayout::VideoLayout() {
         program->initVideo();    		
 	};
 
+    append(videoSpeed, {~0u, 0u}, 10);
     append(videoResolution, {~0u, 0u}, 10);
     append(paths, {~0u, 0u}, 10);
     append(driverLayout, {~0u, 0u}, 5);
@@ -333,26 +339,26 @@ VideoLayout::VideoLayout() {
         case 3: videoFps.options.Three.setChecked(); break;
     }
 
-    videoFps.options.profile.onChange = [this]() {
-        unsigned selection = videoFps.options.profile.selection();
+    videoSpeed.profile.onChange = [this]() {
+        unsigned selection = videoSpeed.profile.selection();
         selection += 1;
 
         float speed;
         bool percent;
         view->getSpeed(selection, speed, percent);
 
-        videoFps.options.speed.setText( GUIKIT::String::formatFloatingPoint( speed, 3 ) );
+        videoSpeed.speed.setText( GUIKIT::String::formatFloatingPoint( speed, 3 ) );
         if (percent)
-            videoFps.options.percent.setChecked();
+            videoSpeed.percent.setChecked();
         else
-            videoFps.options.fps.setChecked();
+            videoSpeed.fps.setChecked();
     };
 
-    videoFps.options.speed.onChange = [this]() {
-        unsigned selection = videoFps.options.profile.selection();
+    videoSpeed.speed.onChange = [this]() {
+        unsigned selection = videoSpeed.profile.selection();
         unsigned speedProfile = globalSettings->get<unsigned>("speed_profile", 0, {0, 10});
 
-        std::string userInput = videoFps.options.speed.text();
+        std::string userInput = videoSpeed.speed.text();
 
         GUIKIT::String::replace(userInput, ",", ".");
 
@@ -377,8 +383,8 @@ VideoLayout::VideoLayout() {
         view->updateSpeedLabels(true);
     };
 
-    videoFps.options.fps.onActivate = [this]() {
-        unsigned selection = videoFps.options.profile.selection();
+    videoSpeed.fps.onActivate = [this]() {
+        unsigned selection = videoSpeed.profile.selection();
         unsigned speedProfile = globalSettings->get<unsigned>("speed_profile", 0, {0, 10});
 
         selection += 1;
@@ -391,8 +397,8 @@ VideoLayout::VideoLayout() {
         view->updateSpeedLabels(true);
     };
 
-    videoFps.options.percent.onActivate = [this]() {
-        unsigned selection = videoFps.options.profile.selection();
+    videoSpeed.percent.onActivate = [this]() {
+        unsigned selection = videoSpeed.profile.selection();
         unsigned speedProfile = globalSettings->get<unsigned>("speed_profile", 0, {0, 10});
 
         selection += 1;
@@ -405,16 +411,16 @@ VideoLayout::VideoLayout() {
         view->updateSpeedLabels(true);
     };
 
-    videoFps.options.profile.setSelection(0);
+    videoSpeed.profile.setSelection(0);
     float speed;
     bool percent;
     view->getSpeed(1, speed, percent);
 
-    videoFps.options.speed.setText( GUIKIT::String::formatFloatingPoint( speed ) );
+    videoSpeed.speed.setText( GUIKIT::String::formatFloatingPoint( speed ) );
     if (percent)
-        videoFps.options.percent.setChecked();
+        videoSpeed.percent.setChecked();
     else
-        videoFps.options.fps.setChecked();
+        videoSpeed.fps.setChecked();
 
     screenTextLayout.option1.onActivate = [this]() {
         globalSettings->set("video_screen_text", 0);
@@ -499,7 +505,9 @@ auto VideoLayout::translate() -> void {
     videoFps.updateDelay.name.setText( trans->get("Refresh", {}, true) );
     videoFps.options.labelDecimalPlace.setText( trans->get("Decimal Place", {}, true) );
 
-    videoFps.options.labelSpeed.setText( trans->get("customize speed", {}, true) );
-    videoFps.options.fps.setText( trans->get("FPS") );
-    videoFps.options.percent.setText( trans->get("Percent") );
+    videoSpeed.setText( trans->get("Speed") );
+    videoSpeed.labelSpeed.setText( trans->get("customize speed for menu entry", {}, true) );
+    videoSpeed.fps.setText( trans->get("FPS") );
+    videoSpeed.percent.setText( trans->get("Percent") );
+
 }

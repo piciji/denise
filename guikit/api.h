@@ -1446,6 +1446,7 @@ struct String {
     static auto convertHexToInt( std::string hex, int defaultValueByFailure = 0 ) -> int;
     static auto formatFloatingPoint(double value, uint8_t roundDecimal = 0) -> std::string;
     static auto prependZero( std::string str, unsigned width ) -> std::string;
+    static auto prependLeft( std::string str, char placeHolder, unsigned width ) -> std::string;
     static auto removeDuplicates( std::vector<std::string>& strs ) -> void;
     static auto convertDoubleToString(double value, unsigned precision = 18) -> std::string;
     static auto findOccurencesOf( std::string str, std::string subStr ) -> unsigned;

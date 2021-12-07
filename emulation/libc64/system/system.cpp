@@ -671,10 +671,10 @@ auto System::run() -> void {
     cpu->setNmi(nmiIncomming != 0);
     iecBus->randomizeRpm();
 
-    runAhead.enable = !fastForward.config && runAhead.frames && !traps->installed
+    bool useRunAhead = !fastForward.config && runAhead.frames && !traps->installed
         && !keyBuffer->isPrgInjectionInQueue() && !iecBus->diskInsertInProgress;
 
-    if (runAhead.enable) {
+    if (useRunAhead) {
         runAhead.pos = runAhead.frames;
         vicII->disableSequencer( runAhead.performance );
         Sid::disableAudioOut( runAhead.frames > 1 );
@@ -688,7 +688,7 @@ auto System::run() -> void {
             iecBus->syncDrives();
     }
 
-    if (runAhead.enable) {
+    if (useRunAhead) {
         if (runAhead.frames == runAhead.pos) {
             serializeLight();
         }
@@ -735,8 +735,15 @@ auto System::changeExpansionPortMemoryMode(bool exrom, bool game, bool noUltimax
     remapCpu();
 }
 
+auto System::hintSlowSpeed(bool state) -> void {
+    if (state)
+        fastForward.config |= (unsigned)Interface::FastForward::SlowSpeed;
+    else
+        fastForward.config &= ~(unsigned)Interface::FastForward::SlowSpeed;
+}
+
 auto System::setFastForward( unsigned config ) -> void {
-    fastForward.config = config;
+    fastForward.config = config | (fastForward.config & (unsigned)Interface::FastForward::SlowSpeed);
     Sid::disableAudioOut(config & (unsigned) Emulator::Interface::FastForward::NoAudioOut);
     vicII->disableSequencer(config & (unsigned) Emulator::Interface::FastForward::NoVideoSequencer);
     iecBus->setFastForward(config & (unsigned) Emulator::Interface::FastForward::NoVideoSequencer);

@@ -4,7 +4,6 @@
 #include <d3d9.h>
 #include <d3dx9.h>
 #include <math.h>
-#include "../../program/tools/logger.h"
 
 namespace DRIVER {
 	
@@ -233,7 +232,6 @@ struct DVideo : Video {
 			if ( (outScreenParent.right == monitorWidth)
 				&& (outScreenParent.bottom == monitorHeight) ) {
 				exclusiveFullscreen = true;
-                logger->log("excl");
 				outScreen.left = (outScreenParent.right - outScreen.right) / 2;
 				outScreen.top = (outScreenParent.bottom - outScreen.bottom) / 2;
 			} else {

@@ -115,7 +115,6 @@ struct System {
     } fastForward;
     
     struct {
-        bool enable = false;
         unsigned frames = 0;
         unsigned pos = 0;
         bool performance = false;
@@ -192,7 +191,8 @@ struct System {
     auto destroyExpansions() -> void;
     auto setExpansionCallbacks( ExpansionPort* expansionPtr ) -> void;
     auto analyzeExpansion(uint8_t* data, unsigned size, std::string suffix = "") -> Emulator::Interface::Expansion*;
-    
+
+    auto hintSlowSpeed(bool state) -> void;
     auto setFastForward( unsigned config ) -> void;
     auto setFloppySounds(bool state) -> void;
     auto updateDriveSounds() -> void;

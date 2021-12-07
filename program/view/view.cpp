@@ -1087,6 +1087,8 @@ auto View::buildMenu() -> void {
     speedControlMenu.append( *speedItem );
     speedItems.push_back( speedItem );
 
+    speedControlMenu.append( *GUIKIT::MenuSeparator::getInstance() );
+
     for(unsigned i = 1; i <= 10; i++) {
         auto speedItem = new GUIKIT::MenuRadioItem;
         speedItem->onActivate = [this, i]() {
@@ -1173,14 +1175,14 @@ auto View::updateSpeedLabels(bool force) -> void {
             if (percent) {
                 otherValue = ((float)stat.fps * value) / 100.0;
 
-                speedItems[i+2]->setText( GUIKIT::String::formatFloatingPoint(otherValue, 3) + " FPS (" +
-                    GUIKIT::String::formatFloatingPoint(value, 2) + " %)"
+                speedItems[i+2]->setText( GUIKIT::String::formatFloatingPoint(otherValue, 2) + " FPS ( " +
+                    GUIKIT::String::formatFloatingPoint(value, 1) + " %)"
                 );
             } else {
                 otherValue = (100.0 * value) / (float)stat.fps;
 
-                speedItems[i+2]->setText( GUIKIT::String::formatFloatingPoint(value, 3) + " FPS (" +
-                    GUIKIT::String::formatFloatingPoint(otherValue, 2) + " %)"
+                speedItems[i+2]->setText( GUIKIT::String::formatFloatingPoint(value, 2) + " FPS ( " +
+                    GUIKIT::String::formatFloatingPoint(otherValue, 1) + " %)"
                 );
             }
         }
@@ -1324,7 +1326,7 @@ auto View::translate() -> void {
     aggressiveFastForwardItem.setText( trans->get("Toggle_fastforward_aggressive") );
 
     speedItems[0]->setText( trans->get("original speed") );
-    speedItems[1]->setText( trans->get("compatible speed") );
+    speedItems[1]->setText( trans->get("typical speed") );
     speedItems[2]->setText( trans->get("maximum speed") );
     customizeSpeedItem.setText( trans->get("customize speed") );
 }

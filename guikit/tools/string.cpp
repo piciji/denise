@@ -317,6 +317,20 @@ auto String::prependZero( std::string str, unsigned width ) -> std::string {
     return str;
 }
 
+auto String::prependLeft( std::string str, char placeHolder, unsigned width ) -> std::string {
+
+    if (str.size() >= width )
+        return str;
+
+    unsigned size = width - str.size();
+
+    for (unsigned i = 0; i < size; i++ ) {
+        str = placeHolder + str;
+    }
+
+    return str;
+}
+
 auto String::removeDuplicates( std::vector<std::string>& strs ) -> void {
 	
 	std::unordered_set<std::string> s;

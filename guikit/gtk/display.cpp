@@ -5,6 +5,20 @@ std::vector<pMonitor::Device> pMonitor::devices;
 std::vector<pMonitor::Setting> pMonitor::settings;
 pMonitor::Device* pMonitor::activeDevice = nullptr;
 
+auto pMonitor::getCurrentRefreshRate() -> float {
+    if (!display) {
+        display = XOpenDisplay(NULL);
+
+        if (!display)
+            return 0.0;
+    }
+
+    Window root = DefaultRootWindow(display)
+
+    XRRScreenConfiguration* conf = XRRGetScreenInfo(display, root);
+    return (float)XRRConfigCurrentRate(conf);
+}
+
 static const XRRModeInfo* getModeInfo(const XRRScreenResources* sr, RRMode id) {
     for (int i = 0;  i < sr->nmode;  i++) {
         if (sr->modes[i].id == id)
