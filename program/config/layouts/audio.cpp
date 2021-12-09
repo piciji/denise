@@ -45,9 +45,7 @@ volume("%", false, true) {
 	control.driverLayout.combo.onChange = [this]() {
 		globalSettings->set<std::string>("audio_driver", control.driverLayout.combo.text() );
         audioManager->record.finish();
-        bool syncBefore = audioDriver->hasSynchronized();
 		program->initAudio();
-        audioManager->setSynchronize( syncBefore );
 	};
 	    	
     control.frequencyCombo.onChange = [this]() {

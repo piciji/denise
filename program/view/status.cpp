@@ -50,24 +50,16 @@ auto StatusHandler::resetFrameCounter() -> void {
 
     auto& stats = activeEmulator->getStatsForSelectedRegion();
 
-    unsigned speedProfile = globalSettings->get<unsigned>("speed_profile", 0, {0, 10});
+    float speed;
+    bool percent;
+    view->getSpeedBySelectedProfile(speed, percent);
 
-    if (speedProfile != 0) {
-        float speed;
-        bool percent;
-        view->getSpeed(speedProfile, speed, percent);
+    if (percent) {
+        fpsCounter.fps = (stats.fps * (double)speed) / 100.0;
 
-        if (percent) {
-            fpsCounter.fps = (stats.fps * (double)speed) / 100.0;
-
-        } else {
-            fpsCounter.fps = speed;
-        }
-
-    } else if (globalSettings->get<bool>("video_override_exact", true)) {
-        fpsCounter.fps = stats.isPal() ? 50.0 : 60.0;
-    } else
-        fpsCounter.fps = stats.fps;
+    } else {
+        fpsCounter.fps = speed;
+    }
 
     fpsCounter.sum = 0;
     fpsCounter.pos = 0;

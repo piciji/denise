@@ -1,4 +1,17 @@
 
+SpeedLayout::SpeedLayout() {
+    append(label, {0u, 0u}, 5);
+    append(speed, {GUIKIT::Font::scale(55), 0u}, 10 );
+    append(fps, {0u, 0u}, 5 );
+    append(percent, {0u, 0u} );
+
+    GUIKIT::RadioBox::setGroup( fps, percent );
+
+    setAlignment(0.5);
+    setPadding(10);
+    setFont(GUIKIT::Font::system("bold"));
+}
+
 JitLayout::JitLayout() : control("ms") {
     setPadding(10);
 
@@ -74,6 +87,7 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) {
     
     setMargin(10);
 
+    append( speedLayout, {~0u, 0u}, 10 );
     append( jitLayout, {~0u, 0u}, 10 );
     append( runAheadLayout, {~0u, 0u}, 10 );
 
@@ -167,6 +181,57 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) {
 
         this->emulator->enableJit( checked );
     };
+
+    speedLayout.speed.onChange = [this]() {
+        unsigned speedProfile = _settings->get<unsigned>("speed_profile", 0, {0, 10});
+
+        std::string userInput = speedLayout.speed.text();
+
+        GUIKIT::String::replace(userInput, ",", ".");
+
+        if (userInput.empty() || !GUIKIT::String::isFloatNumber( userInput ) ) {
+            return;
+        }
+
+        std::stringstream ss( userInput );
+        float out = 0.0;
+        ss >> out;
+
+        if (out < 1.0)
+            return;
+
+        _settings->set<std::string>("custom_speed", userInput);
+
+        if (activeEmulator && (10 == speedProfile)) {
+            audioManager->setResampler();
+            statusHandler->resetFrameCounter();
+        }
+        view->updateSpeedLabels(true);
+    };
+
+    speedLayout.percent.onActivate = [this]() {
+        unsigned speedProfile = _settings->get<unsigned>("speed_profile", 0, {0, 10});
+
+        _settings->set<bool>("custom_speed_percent", true);
+
+        if (activeEmulator && (10 == speedProfile)) {
+            audioManager->setResampler();
+            statusHandler->resetFrameCounter();
+        }
+        view->updateSpeedLabels(true);
+    };
+
+    speedLayout.fps.onActivate = [this]() {
+        unsigned speedProfile = _settings->get<unsigned>("speed_profile", 0, {0, 10});
+
+        _settings->set<bool>("custom_speed_percent", false);
+
+        if (activeEmulator && (10 == speedProfile)) {
+            audioManager->setResampler();
+            statusHandler->resetFrameCounter();
+        }
+        view->updateSpeedLabels(true);
+    };
                                        
     loadSettings();
 }
@@ -223,6 +288,11 @@ auto MiscLayout::translate() -> void {
         autostartLayout->options.loadWithColumn.setText( "Load \":*\"" );
         autostartLayout->options.trapsOnDblClick.setText(trans->get("VDT Autostart on dblclick"));
     }
+
+    speedLayout.setText( trans->get("Speed") );
+    speedLayout.label.setText( trans->get("Set speed", {}, true) );
+    speedLayout.fps.setText( trans->get("FPS") );
+    speedLayout.percent.setText( trans->get("Percent") );
 }
 
 auto MiscLayout::loadSettings() -> void {
@@ -265,4 +335,10 @@ auto MiscLayout::loadSettings() -> void {
     jitLayout.control.slider.setPosition(jitDelay - 1);
 
     jitLayout.control.value.setText(std::to_string(jitDelay) + " " + jitLayout.control.unit);
+
+    speedLayout.speed.setText( _settings->get<std::string>("custom_speed", "1") );
+    if (_settings->get<bool>("custom_speed_percent", false))
+        speedLayout.percent.setChecked();
+    else
+        speedLayout.fps.setChecked();
 }

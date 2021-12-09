@@ -82,23 +82,6 @@ VideoFpsLayout::VideoFpsLayout() : updateDelay("ms") {
     updateDelay.updateValueWidth( "5000 " + updateDelay.unit );
 }
 
-VideoSpeedLayout::VideoSpeedLayout() {
-    for (unsigned i = 1; i <= 10; i++)
-        profile.append(std::to_string(i), i - 1);
-
-    append(labelSpeed, {0u, 0u}, 5);
-    append(profile, {0u, 0u}, 10 );
-    append(speed, {GUIKIT::Font::scale(55), 0u}, 10 );
-    append(fps, {0u, 0u}, 5 );
-    append(percent, {0u, 0u} );
-
-    GUIKIT::RadioBox::setGroup( fps, percent );
-
-    setAlignment(0.5);
-    setPadding(10);
-    setFont(GUIKIT::Font::system("bold"));
-}
-
 VideoLayout::VideoLayout() {
     setMargin(10);
 	
@@ -151,7 +134,6 @@ VideoLayout::VideoLayout() {
         program->initVideo();    		
 	};
 
-    append(videoSpeed, {~0u, 0u}, 10);
     append(videoResolution, {~0u, 0u}, 10);
     append(paths, {~0u, 0u}, 10);
     append(driverLayout, {~0u, 0u}, 5);
@@ -339,89 +321,6 @@ VideoLayout::VideoLayout() {
         case 3: videoFps.options.Three.setChecked(); break;
     }
 
-    videoSpeed.profile.onChange = [this]() {
-        unsigned selection = videoSpeed.profile.selection();
-        selection += 1;
-
-        float speed;
-        bool percent;
-        view->getSpeed(selection, speed, percent);
-
-        videoSpeed.speed.setText( GUIKIT::String::formatFloatingPoint( speed, 3 ) );
-        if (percent)
-            videoSpeed.percent.setChecked();
-        else
-            videoSpeed.fps.setChecked();
-    };
-
-    videoSpeed.speed.onChange = [this]() {
-        unsigned selection = videoSpeed.profile.selection();
-        unsigned speedProfile = globalSettings->get<unsigned>("speed_profile", 0, {0, 10});
-
-        std::string userInput = videoSpeed.speed.text();
-
-        GUIKIT::String::replace(userInput, ",", ".");
-
-        if (userInput.empty() || !GUIKIT::String::isFloatNumber( userInput ) ) {
-            return;
-        }
-
-        std::stringstream ss( userInput );
-        float out = 0.0;
-        ss >> out;
-
-        if (out < 1.0)
-            return;
-
-        selection += 1;
-        globalSettings->set<std::string>("speed_" + std::to_string(selection), userInput);
-
-        if (activeEmulator && (selection == speedProfile)) {
-            audioManager->setResampler();
-            statusHandler->resetFrameCounter();
-        }
-        view->updateSpeedLabels(true);
-    };
-
-    videoSpeed.fps.onActivate = [this]() {
-        unsigned selection = videoSpeed.profile.selection();
-        unsigned speedProfile = globalSettings->get<unsigned>("speed_profile", 0, {0, 10});
-
-        selection += 1;
-        globalSettings->set<bool>("speed_percent_" + std::to_string(selection), false);
-
-        if (activeEmulator && (selection == speedProfile)) {
-            audioManager->setResampler();
-            statusHandler->resetFrameCounter();
-        }
-        view->updateSpeedLabels(true);
-    };
-
-    videoSpeed.percent.onActivate = [this]() {
-        unsigned selection = videoSpeed.profile.selection();
-        unsigned speedProfile = globalSettings->get<unsigned>("speed_profile", 0, {0, 10});
-
-        selection += 1;
-        globalSettings->set<bool>("speed_percent_" + std::to_string(selection), true);
-
-        if (activeEmulator && (selection == speedProfile)) {
-            audioManager->setResampler();
-            statusHandler->resetFrameCounter();
-        }
-        view->updateSpeedLabels(true);
-    };
-
-    videoSpeed.profile.setSelection(0);
-    float speed;
-    bool percent;
-    view->getSpeed(1, speed, percent);
-
-    videoSpeed.speed.setText( GUIKIT::String::formatFloatingPoint( speed ) );
-    if (percent)
-        videoSpeed.percent.setChecked();
-    else
-        videoSpeed.fps.setChecked();
-
     screenTextLayout.option1.onActivate = [this]() {
         globalSettings->set("video_screen_text", 0);
         statusHandler->transferToOSD("");
@@ -504,10 +403,5 @@ auto VideoLayout::translate() -> void {
     videoFps.setText( trans->get("FPS") );
     videoFps.updateDelay.name.setText( trans->get("Refresh", {}, true) );
     videoFps.options.labelDecimalPlace.setText( trans->get("Decimal Place", {}, true) );
-
-    videoSpeed.setText( trans->get("Speed") );
-    videoSpeed.labelSpeed.setText( trans->get("customize speed for menu entry", {}, true) );
-    videoSpeed.fps.setText( trans->get("FPS") );
-    videoSpeed.percent.setText( trans->get("Percent") );
 
 }

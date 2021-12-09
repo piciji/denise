@@ -43,16 +43,6 @@ struct VideoSettingsLayout : GUIKIT::FramedHorizontalLayout {
     VideoSettingsLayout();
 };
 
-struct VideoSpeedLayout : GUIKIT::FramedHorizontalLayout {
-    GUIKIT::Label labelSpeed;
-    GUIKIT::ComboButton profile;
-    GUIKIT::LineEdit speed;
-    GUIKIT::RadioBox fps;
-    GUIKIT::RadioBox percent;
-
-    VideoSpeedLayout();
-};
-
 struct VideoFpsLayout : GUIKIT::FramedVerticalLayout {
     SliderLayout updateDelay;
 
@@ -84,7 +74,6 @@ struct VideoLayout : GUIKIT::VerticalLayout {
 	VideoGeometryLayout videoGeometry;
     VideoResolutionLayout videoResolution;
     VideoFpsLayout videoFps;
-    VideoSpeedLayout videoSpeed;
 
     VideoSettingsLayout videoSettingsLayout;
     PathsLayout paths;

@@ -1050,50 +1050,12 @@ auto View::buildMenu() -> void {
 
     speedControlMenu.append( *GUIKIT::MenuSeparator::getInstance() );
 
-    // nominal (original speed)
-    auto speedItem = new GUIKIT::MenuRadioItem;
-    speedItem->onActivate = [this]() {
-        globalSettings->set<unsigned>("speed_profile", 0);
-        globalSettings->set<bool>("video_override_exact", false);
-        audioManager->setSynchronize(true);
-
-        audioManager->setResampler();
-        statusHandler->resetFrameCounter();
-    };
-    speedControlMenu.append( *speedItem );
-    speedItems.push_back( speedItem );
-
-    // monitor (50Hz/60 Hz depends on region)
-    speedItem = new GUIKIT::MenuRadioItem;
-    speedItem->onActivate = [this]() {
-        globalSettings->set<unsigned>("speed_profile", 0);
-        globalSettings->set<bool>("video_override_exact", true);
-        audioManager->setSynchronize(true);
-        audioManager->setResampler();
-        statusHandler->resetFrameCounter();
-    };
-    speedControlMenu.append( *speedItem );
-    speedItems.push_back( speedItem );
-
-    // maximum speed
-    speedItem = new GUIKIT::MenuRadioItem;
-    speedItem->onActivate = [this]() {
-        globalSettings->set<unsigned>("speed_profile", 0);
-        audioManager->setSynchronize(false);
-        audioManager->setResampler();
-        videoDriver->synchronize( false );
-        statusHandler->resetFrameCounter();
-    };
-    speedControlMenu.append( *speedItem );
-    speedItems.push_back( speedItem );
-
-    speedControlMenu.append( *GUIKIT::MenuSeparator::getInstance() );
-
-    for(unsigned i = 1; i <= 10; i++) {
+    for(unsigned i = 0; i <= 10; i++) {
         auto speedItem = new GUIKIT::MenuRadioItem;
         speedItem->onActivate = [this, i]() {
-            globalSettings->set<unsigned>("speed_profile", i);
-            audioManager->setSynchronize(true);
+            auto settings = program->getSettings( activeEmulator );
+            settings->set<unsigned>("speed_profile", i);
+            audioManager->setSynchronize();
             audioManager->setResampler();
             statusHandler->resetFrameCounter();
         };
@@ -1101,24 +1063,27 @@ auto View::buildMenu() -> void {
         speedItems.push_back( speedItem );
     }
 
-    unsigned speedProfile = globalSettings->get<unsigned>("speed_profile", 0, {0, 10});
-    bool nominalspeed = !globalSettings->get<bool>("video_override_exact", true);
+    // maximum speed
+    maximumSpeedItem.onActivate = [this]() {
+        auto settings = program->getSettings( activeEmulator );
+        settings->set<unsigned>("speed_profile", this->speedItems.size() - 1);
+        audioManager->setSynchronize();
+        audioManager->setResampler();
+        statusHandler->resetFrameCounter();
+    };
+    speedControlMenu.append( maximumSpeedItem );
+    speedItems.push_back( &maximumSpeedItem );
 
     speedControlMenu.append( *GUIKIT::MenuSeparator::getInstance() );
     customizeSpeedItem.onActivate = []() {
-        ConfigView::TabWindow::open(ConfigView::TabWindow::Layout::Video);
+        auto emuView = EmuConfigView::TabWindow::getView(activeEmulator, true);
+        if (emuView)
+            emuView->show(EmuConfigView::TabWindow::Layout::Misc);
     };
     speedControlMenu.append( customizeSpeedItem );
 
     GUIKIT::MenuRadioItem::setGroup( speedItems );
 
-    if (speedProfile > 0) {
-        speedItems[speedProfile + 2]->setChecked();
-    } else if (nominalspeed) {
-        speedItems[0]->setChecked();
-    } else {
-        speedItems[1]->setChecked();
-    }
     // prepare Disk Control
     unsigned i = 0;
     for (auto& diskControlMenu : diskControlMenus) {
@@ -1153,39 +1118,47 @@ auto View::buildMenu() -> void {
 
 auto View::updateSpeedLabels(bool force) -> void {
     static int _mode = -1;
+    static Emulator::Interface* _emulator = nullptr;
+    std::string label;
 
-    if (force)
+    if (force) {
         _mode = -1;
+        _emulator = nullptr;
+    }
 
     if (!activeEmulator)
         return;
 
     auto stat = activeEmulator->getStatsForSelectedRegion();
 
-    if ( (_mode == -1) || ((int)stat.isPal() != _mode)) {
+    if ( (_mode == -1) || ((int)stat.isPal() != _mode) || (_emulator != activeEmulator)) {
 
         _mode = (int)stat.isPal();
+        _emulator = activeEmulator;
 
-        for(unsigned i = 1; i <= 10; i++) {
-            float otherValue;
+        speedItems[0]->setText("100 % ( " + GUIKIT::String::formatFloatingPoint( stat.fps, 3) + " FPS)");
+
+        for(unsigned i = 1; i < (speedItems.size() - 1); i++) {
             float value;
             bool percent;
             view->getSpeed(i, value, percent);
 
             if (percent) {
-                otherValue = ((float)stat.fps * value) / 100.0;
-
-                speedItems[i+2]->setText( GUIKIT::String::formatFloatingPoint(otherValue, 2) + " FPS ( " +
-                    GUIKIT::String::formatFloatingPoint(value, 1) + " %)"
-                );
+                label = GUIKIT::String::formatFloatingPoint(value, 2, true) + " %";
             } else {
-                otherValue = (100.0 * value) / (float)stat.fps;
-
-                speedItems[i+2]->setText( GUIKIT::String::formatFloatingPoint(value, 2) + " FPS ( " +
-                    GUIKIT::String::formatFloatingPoint(otherValue, 1) + " %)"
-                );
+                label = GUIKIT::String::formatFloatingPoint(value, 2, true) + " FPS";
             }
+
+            if (i == speedItems.size() - 2)
+                label += " (*)";
+
+            speedItems[i]->setText( label );
         }
+
+        auto settings = program->getSettings( activeEmulator );
+        unsigned speedProfile = settings->get<unsigned>("speed_profile", 0, {0, (unsigned)speedItems.size() - 1});
+        if (!speedItems[speedProfile]->checked())
+            speedItems[speedProfile]->setChecked();
     }
 }
 
@@ -1325,10 +1298,8 @@ auto View::translate() -> void {
     fastForwardItem.setText( trans->get("Toggle_fastforward") );
     aggressiveFastForwardItem.setText( trans->get("Toggle_fastforward_aggressive") );
 
-    speedItems[0]->setText( trans->get("original speed") );
-    speedItems[1]->setText( trans->get("typical speed") );
-    speedItems[2]->setText( trans->get("maximum speed") );
-    customizeSpeedItem.setText( trans->get("customize speed") );
+    maximumSpeedItem.setText( trans->get("maximum speed") );
+    customizeSpeedItem.setText( "(*) " + trans->get("customize speed") );
 }
 
 auto View::getViewportHandle() -> uintptr_t {
@@ -1417,23 +1388,44 @@ auto View::questionToWrite(Emulator::Interface::Media* media) -> bool {
     return state;
 }
 
+auto View::getSpeedBySelectedProfile(float& speed, bool& percent) -> unsigned {
+    auto settings = program->getSettings( activeEmulator );
+    unsigned speedProfile = settings->get<unsigned>("speed_profile", 0, {0, (unsigned)speedItems.size() - 1});
+    getSpeed(speedProfile, speed, percent);
+    return speedProfile;
+}
+
 auto View::getSpeed(unsigned pos, float& speed, bool& percent) -> void {
     percent = true;
     speed = 100.0;
 
+    auto stats = activeEmulator->stats;
+
     switch (pos) {
-        case 1: speed = 50.0; percent = false; break;
-        case 2: speed = 60.0; percent = false; break;
+        case 0: speed = stats.fps; percent = false; break;
+        case 1: speed = stats.isPal() ? 50.0 : 60.0; percent = false; break;
+        case 2: speed = stats.isPal() ? 60.0 : 50.0; percent = false; break;
         case 3: speed = 25.0; break;
         case 4: speed = 50.0; break;
-        case 5: speed = 125.0; break;
-        case 6: speed = 150.0; break;
-        case 7: speed = 200.0; break;
-        case 8: speed = 250.0; break;
-        case 9: speed = 300.0; break;
-        case 10: speed = 400.0; break;
+        case 5: speed = 150.0; break;
+        case 6: speed = 200.0; break;
+        case 7: speed = 250.0; break;
+        case 8: speed = 300.0; break;
+        case 9: speed = 400.0; break;
+        case 10:
+            auto settings = program->getSettings( activeEmulator );
+            speed = settings->get<float>("custom_speed", 1.0);
+            percent = settings->get<bool>("custom_speed_percent", false);
+            break;
     }
+}
 
-    speed = globalSettings->get<float>("speed_" + std::to_string(pos), speed);
-    percent = globalSettings->get<bool>("speed_percent_" + std::to_string(pos), percent);
+auto View::isMaximumSpeed() -> bool {
+    if (!activeEmulator)
+        return false;
+
+    auto settings = program->getSettings( activeEmulator );
+    unsigned speedProfile = settings->get<unsigned>("speed_profile", 0, {0, (unsigned)speedItems.size() - 1});
+
+    return speedProfile == (speedItems.size() - 1);
 }

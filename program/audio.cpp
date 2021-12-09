@@ -13,7 +13,7 @@ auto Program::initAudio() -> void {
     audioDriver = DRIVER::Audio::create( getAudioDriver() );
     audioManager->setFrequency();
     audioManager->setLatency();
-    audioManager->setSynchronize(!cmd->debug);
+    audioManager->setSynchronize();
     audioManager->setRateControl();
     audioManager->setAudioDsp(); 
     audioManager->setStatistics();

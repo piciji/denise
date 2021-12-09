@@ -49,7 +49,13 @@ auto AudioManager::setFrequency() -> void {
     setDriveSounds( false );
 }
 
-auto AudioManager::setSynchronize(bool synchronize) -> void {
+auto AudioManager::setSynchronize() -> void {
+
+    bool synchronize = false;
+    if (cmd->debug)
+        synchronize = false;
+    else if (view)
+        synchronize = !view->isMaximumSpeed();
 
     if (audioDriver->hasSynchronized() == synchronize)
         return;
@@ -72,26 +78,24 @@ auto AudioManager::setResampler() -> void {
     
     double monitorRatio = 1.0;
 
-    unsigned speedProfile = globalSettings->get<unsigned>("speed_profile", 0, {0, 10});
+    float speed;
+    bool percent;
+    unsigned speedProfile = view->getSpeedBySelectedProfile(speed, percent);
 
     if (speedProfile != 0) {
-        float speed;
-        bool percent;
-        view->getSpeed(speedProfile, speed, percent);
-
         if (percent) {
-            inputFrequency = (inputFrequency * (double)speed) / 100.0;
+            inputFrequency = (inputFrequency * (double) speed) / 100.0;
 
-            inputFPS = (inputFPS * (double)speed) / 100.0;
+            inputFPS = (inputFPS * (double) speed) / 100.0;
 
-            monitorRatio = (double)speed / 100.0;
+            monitorRatio = (double) speed / 100.0;
 
         } else {
-            inputFrequency = (inputFrequency * (double)speed) / inputFPS;
+            inputFrequency = (inputFrequency * (double) speed) / inputFPS;
+
+            monitorRatio = (double) speed / inputFPS;
 
             inputFPS = speed;
-
-            monitorRatio = (double)speed / inputFPS;
         }
 
         measureUiUpdate.enable = monitorRatio < 0.5;
@@ -99,14 +103,6 @@ auto AudioManager::setResampler() -> void {
         if (measureUiUpdate.enable) {
             measureUiUpdate.lastTS = Chronos::getTimestampInMilliseconds();
         }
-
-    } else if (globalSettings->get<bool>("video_override_exact", true)) {
-
-        inputFPS = stat.isPal() ? 50.0 : 60.0;
-
-        inputFrequency = (inputFrequency * inputFPS) / stat.fps;
-
-        monitorRatio = inputFPS / stat.fps;
     }
     
     ratio = outputFrequency / inputFrequency;
@@ -264,6 +260,7 @@ auto AudioManager::setStatistics() -> void {
 }
 
 auto AudioManager::power() -> void {
+    setSynchronize();
     setResampler();
     setBufferSize();
     setAudioDsp();

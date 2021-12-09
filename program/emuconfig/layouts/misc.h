@@ -1,4 +1,13 @@
 
+struct SpeedLayout : GUIKIT::FramedHorizontalLayout {
+    GUIKIT::Label label;
+    GUIKIT::LineEdit speed;
+    GUIKIT::RadioBox fps;
+    GUIKIT::RadioBox percent;
+
+    SpeedLayout();
+};
+
 struct JitLayout : GUIKIT::FramedHorizontalLayout {
     GUIKIT::CheckBox active;
     SliderLayout control;
@@ -48,6 +57,7 @@ struct MiscLayout : GUIKIT::VerticalLayout {
     
     TabWindow* tabWindow;
     Emulator::Interface* emulator;
+    SpeedLayout speedLayout;
     JitLayout jitLayout;
     RunAheadLayout runAheadLayout;
     AutostartLayout* autostartLayout = nullptr;

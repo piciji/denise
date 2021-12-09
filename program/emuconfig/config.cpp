@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstring>
+#include <sstream>
 
 std::vector<EmuConfigView::TabWindow*> emuConfigViews;
 

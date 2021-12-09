@@ -130,6 +130,7 @@ struct View : public GUIKIT::Window {
         GUIKIT::MenuCheckItem aggressiveFastForwardItem;
         GUIKIT::MenuCheckItem pauseItem;
         std::vector<GUIKIT::MenuRadioItem*> speedItems;
+        GUIKIT::MenuRadioItem maximumSpeedItem;
         GUIKIT::MenuItem customizeSpeedItem;
 
         struct {
@@ -210,7 +211,9 @@ struct View : public GUIKIT::Window {
             	
     auto questionToWrite(Emulator::Interface::Media* media) -> bool;
     auto updateSpeedLabels(bool force = false) -> void;
+    auto getSpeedBySelectedProfile(float& speed, bool& percent) -> unsigned;
     auto getSpeed(unsigned pos, float& speed, bool& percent) -> void;
+    auto isMaximumSpeed() -> bool;
     
     View();
 };

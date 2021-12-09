@@ -266,7 +266,7 @@ auto String::convertHexToInt( std::string hex, int defaultValueByFailure ) -> in
     return _out;
 }
 
-auto String::formatFloatingPoint(double value, uint8_t roundDecimal) -> std::string {
+auto String::formatFloatingPoint(double value, uint8_t roundDecimal, bool cutTrailingZero) -> std::string {
     
 	if (value == 0.0)
 		return "0";
@@ -289,17 +289,23 @@ auto String::formatFloatingPoint(double value, uint8_t roundDecimal) -> std::str
         str = std::to_string( value );
                         
         str.erase ( str.find( type == Point ? '.' : ',') + roundDecimal + 1, std::string::npos );
-        
+
+        if (cutTrailingZero) {
+            str = str.substr(0, str.find_last_not_of('0') + 1);
+            if (str.find(type == Point ? '.' : ',') == str.size() - 1)
+                str = str.substr(0, str.size() - 1);
+        }
+
         return str;
-    }    
-      
-    int offset = 1; 
+    }
+
+    int offset = 1;
 
     if (str.find_last_not_of('0') == str.find(type == Point ? '.' : ','))
-        offset = 2; 
+        offset = 2;
 
     str.erase ( str.find_last_not_of('0') + offset, std::string::npos );
-    
+
     return str;
 }
 

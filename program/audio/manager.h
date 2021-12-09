@@ -70,7 +70,7 @@ struct AudioManager {
         
     auto setLatency() -> void;
     auto setFrequency() -> void;     
-    auto setSynchronize(bool synchronize) -> void;
+    auto setSynchronize() -> void;
     auto setVolume() -> void;
     auto setRateControl() -> void;
     auto setDriveSounds(bool init = true) -> void;

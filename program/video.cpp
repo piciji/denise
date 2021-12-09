@@ -101,25 +101,28 @@ auto Program::videoRefresh8(const uint8_t* frame, unsigned width, unsigned heigh
 }
 
 auto Program::setVideoSynchronize() -> void {
-    if (!activeEmulator || !audioDriver->hasSynchronized())
+    bool vsync = false;
+    float skew = 0.0;
+
+    if (!activeEmulator)
         return;
 
-    float skew = 0.0;
-    bool vsync = globalSettings->get<bool>("video_sync", true);
-    bool adaptive = globalSettings->get<bool>("adaptive_sync", true);
+    if (audioDriver->hasSynchronized()) {
+        vsync = globalSettings->get<bool>("video_sync", true);
+        bool adaptive = globalSettings->get<bool>("adaptive_sync", true);
 
-    if (vsync && adaptive) {
-        float monitorFrequency = GUIKIT::Monitor::getCurrentRefreshRate();
-        skew = std::abs(1.0 - (float)audioManager->inputFPS / monitorFrequency );
+        if (vsync && adaptive) {
+            float monitorFrequency = GUIKIT::Monitor::getCurrentRefreshRate();
+            skew = std::abs(1.0 - (float)audioManager->inputFPS / monitorFrequency );
 
-        if ((skew > 0.0015) && ((float)audioManager->inputFPS > monitorFrequency)) {
-            vsync = false;
+            if ((skew > 0.0015) && ((float)audioManager->inputFPS > monitorFrequency)) {
+                vsync = false;
+            }
         }
     }
 
-    if (videoDriver->hasSynchronized() != vsync) {
+    if (videoDriver->hasSynchronized() != vsync)
         videoDriver->synchronize( vsync );
-    }
 
     audioManager->skew = skew;
     audioManager->setRateControl();

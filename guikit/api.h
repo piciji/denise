@@ -1444,7 +1444,7 @@ struct String {
 	static auto convertToNumber(std::string str) -> int;
     static auto convertIntToHex( int number, bool prepend_0x = true ) -> std::string;
     static auto convertHexToInt( std::string hex, int defaultValueByFailure = 0 ) -> int;
-    static auto formatFloatingPoint(double value, uint8_t roundDecimal = 0) -> std::string;
+    static auto formatFloatingPoint(double value, uint8_t roundDecimal = 0, bool cutTrailingZero = false) -> std::string;
     static auto prependZero( std::string str, unsigned width ) -> std::string;
     static auto prependLeft( std::string str, char placeHolder, unsigned width ) -> std::string;
     static auto removeDuplicates( std::vector<std::string>& strs ) -> void;

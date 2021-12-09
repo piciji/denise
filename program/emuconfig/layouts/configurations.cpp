@@ -678,6 +678,8 @@ auto ConfigurationsLayout::load( std::string path ) -> bool {
     
     loadSettings();
 
+    view->updateSpeedLabels(true);
+
     if (_activeEmulatorBefore)
         program->power(_activeEmulatorBefore);
     
