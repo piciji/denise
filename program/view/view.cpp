@@ -1397,7 +1397,7 @@ auto View::questionToWrite(Emulator::Interface::Media* media) -> bool {
 
 auto View::getSpeedBySelectedProfile(float& speed, bool& percent) -> unsigned {
     auto settings = program->getSettings( activeEmulator );
-    unsigned speedProfile = settings->get<unsigned>("speed_profile", 0, {0, (unsigned)speedItems.size() - 1});
+    unsigned speedProfile = settings->get<unsigned>("speed_profile", 1, {0, (unsigned)speedItems.size() - 1});
     getSpeed(speedProfile, speed, percent);
     return speedProfile;
 }
@@ -1422,10 +1422,20 @@ auto View::getSpeed(unsigned pos, float& speed, bool& percent) -> void {
         case 10: speed = 250.0; break; // maximum
         case 11:
             auto settings = program->getSettings( activeEmulator );
-            speed = settings->get<float>("custom_speed", 1.234);
+            speed = settings->get<float>("custom_speed", 123.456);
             percent = settings->get<bool>("custom_speed_percent", false);
             break;
     }
+}
+
+auto View::isCustomSpeed() -> bool {
+    if (!activeEmulator)
+        return false;
+
+    auto settings = program->getSettings( activeEmulator );
+    unsigned speedProfile = settings->get<unsigned>("speed_profile", 1, {0, (unsigned)speedItems.size() - 1});
+
+    return speedProfile == (speedItems.size() - 1);
 }
 
 auto View::isMaximumSpeed() -> bool {
@@ -1433,7 +1443,7 @@ auto View::isMaximumSpeed() -> bool {
         return false;
 
     auto settings = program->getSettings( activeEmulator );
-    unsigned speedProfile = settings->get<unsigned>("speed_profile", 0, {0, (unsigned)speedItems.size() - 1});
+    unsigned speedProfile = settings->get<unsigned>("speed_profile", 1, {0, (unsigned)speedItems.size() - 1});
 
     return speedProfile == (speedItems.size() - 2);
 }

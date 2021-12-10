@@ -183,8 +183,6 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) {
     };
 
     speedLayout.speed.onChange = [this]() {
-        unsigned speedProfile = _settings->get<unsigned>("speed_profile", 0, {0, 10});
-
         std::string userInput = speedLayout.speed.text();
 
         GUIKIT::String::replace(userInput, ",", ".");
@@ -202,7 +200,7 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) {
 
         _settings->set<std::string>("custom_speed", userInput);
 
-        if (activeEmulator && (10 == speedProfile)) {
+        if (view->isCustomSpeed()) {
             audioManager->setResampler();
             statusHandler->resetFrameCounter();
         }
@@ -210,11 +208,9 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) {
     };
 
     speedLayout.percent.onActivate = [this]() {
-        unsigned speedProfile = _settings->get<unsigned>("speed_profile", 0, {0, 10});
-
         _settings->set<bool>("custom_speed_percent", true);
 
-        if (activeEmulator && (10 == speedProfile)) {
+        if (view->isCustomSpeed()) {
             audioManager->setResampler();
             statusHandler->resetFrameCounter();
         }
@@ -222,11 +218,9 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) {
     };
 
     speedLayout.fps.onActivate = [this]() {
-        unsigned speedProfile = _settings->get<unsigned>("speed_profile", 0, {0, 10});
-
         _settings->set<bool>("custom_speed_percent", false);
 
-        if (activeEmulator && (10 == speedProfile)) {
+        if (view->isCustomSpeed()) {
             audioManager->setResampler();
             statusHandler->resetFrameCounter();
         }
@@ -336,7 +330,7 @@ auto MiscLayout::loadSettings() -> void {
 
     jitLayout.control.value.setText(std::to_string(jitDelay) + " " + jitLayout.control.unit);
 
-    speedLayout.speed.setText( _settings->get<std::string>("custom_speed", "1.234") );
+    speedLayout.speed.setText( _settings->get<std::string>("custom_speed", "123.456") );
     if (_settings->get<bool>("custom_speed_percent", false))
         speedLayout.percent.setChecked();
     else
