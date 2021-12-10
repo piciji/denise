@@ -114,7 +114,7 @@ struct pStatusBar {
     HWND hwnd = nullptr;
     WNDPROC wndprocOrig;
     HCURSOR hCursor;
-    HWND hwndTip;
+    HWND hwndTip = nullptr;
     StatusBar::Part* hoverPart;
     
     std::vector<StatusBar::Part*> usedParts;

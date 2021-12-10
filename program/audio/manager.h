@@ -20,8 +20,8 @@ struct AudioManager {
     float floatConversion;
     std::vector<DSP::Base*> dsps;
     
-    int16_t outBuffer[6144];
-    float outBufferFloat[6144];
+    int16_t outBuffer[65536];
+    float outBufferFloat[65536];
     Resampler::Cosine cosine;
     Resampler::Data rData;
     AudioRecord::Handler record;

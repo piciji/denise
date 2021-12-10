@@ -14,7 +14,7 @@ AudioManager::AudioManager() {
     
     floatConversion = 1.0 / 32768.0;
     
-    rData.out = new float[6144];
+    rData.out = new float[65536];
     
     cosine.setData( &rData );    
 }

@@ -25,10 +25,10 @@ auto pStatusBar::create() -> void {
     
     wndprocOrig = (WNDPROC)SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)subclassWndProc);
     
-	hwndTip = CreateWindowEx(0, TOOLTIPS_CLASS, NULL,
-		WS_POPUP | TTS_ALWAYSTIP | TTS_USEVISUALSTYLE,
-		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-		hwnd, NULL, GetModuleHandle(0), 0);
+//	hwndTip = CreateWindowEx(0, TOOLTIPS_CLASS, NULL,
+//		WS_POPUP | TTS_ALWAYSTIP | TTS_USEVISUALSTYLE,
+//		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+//		hwnd, NULL, GetModuleHandle(0), 0);
     
     hoverPart = nullptr;
     
@@ -51,18 +51,18 @@ auto CALLBACK pStatusBar::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LP
 
         case WM_MOUSEMOVE: {
             auto& p = statusBar->p;
-            
+
             StatusBar::Part* part = p.getHoverPart( (int)(short) LOWORD(lparam) );
 
             if (part && (part->popupMenu || part->onClick))
                 SetCursor(statusBar->p.hCursor);
-            
+
 			if (part != p.hoverPart) {
 				p.hoverPart = part;
 
 //				p.setTooltip( part );
 
-  //              return 0;
+//              return 0;
 			}
 
         } break;

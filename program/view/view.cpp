@@ -1050,8 +1050,14 @@ auto View::buildMenu() -> void {
 
     speedControlMenu.append( *GUIKIT::MenuSeparator::getInstance() );
 
-    for(unsigned i = 0; i <= 10; i++) {
-        auto speedItem = new GUIKIT::MenuRadioItem;
+    GUIKIT::MenuRadioItem* speedItem;
+
+    for(unsigned i = 0; i <= 11; i++) {
+        if (i == 10)
+            speedItem = &maximumSpeedItem;
+        else
+            speedItem = new GUIKIT::MenuRadioItem;
+
         speedItem->onActivate = [this, i]() {
             auto settings = program->getSettings( activeEmulator );
             settings->set<unsigned>("speed_profile", i);
@@ -1060,27 +1066,21 @@ auto View::buildMenu() -> void {
             statusHandler->resetFrameCounter();
         };
         speedControlMenu.append( *speedItem );
+
+        if (i == 1 || i == 10)
+            speedControlMenu.append( *GUIKIT::MenuSeparator::getInstance() );
+
+        if (i == 10) {
+            customizeSpeedItem.onActivate = []() {
+                auto emuView = EmuConfigView::TabWindow::getView(activeEmulator, true);
+                if (emuView)
+                    emuView->show(EmuConfigView::TabWindow::Layout::Misc);
+            };
+            speedControlMenu.append( customizeSpeedItem );
+        }
+
         speedItems.push_back( speedItem );
     }
-
-    // maximum speed
-    maximumSpeedItem.onActivate = [this]() {
-        auto settings = program->getSettings( activeEmulator );
-        settings->set<unsigned>("speed_profile", this->speedItems.size() - 1);
-        audioManager->setSynchronize();
-        audioManager->setResampler();
-        statusHandler->resetFrameCounter();
-    };
-    speedControlMenu.append( maximumSpeedItem );
-    speedItems.push_back( &maximumSpeedItem );
-
-    speedControlMenu.append( *GUIKIT::MenuSeparator::getInstance() );
-    customizeSpeedItem.onActivate = []() {
-        auto emuView = EmuConfigView::TabWindow::getView(activeEmulator, true);
-        if (emuView)
-            emuView->show(EmuConfigView::TabWindow::Layout::Misc);
-    };
-    speedControlMenu.append( customizeSpeedItem );
 
     GUIKIT::MenuRadioItem::setGroup( speedItems );
 
@@ -1136,27 +1136,34 @@ auto View::updateSpeedLabels(bool force) -> void {
         _mode = (int)stat.isPal();
         _emulator = activeEmulator;
 
-        speedItems[0]->setText("100 % ( " + GUIKIT::String::formatFloatingPoint( stat.fps, 3) + " FPS)");
+        speedItems[0]->setText( GUIKIT::String::formatFloatingPoint( stat.fps, 3) + " FPS ( 100 % )");
 
-        for(unsigned i = 1; i < (speedItems.size() - 1); i++) {
+        unsigned _size = speedItems.size();
+
+        for(unsigned i = 1; i < _size; i++) {
+            if (i == (_size - 2) ) // maximum
+                continue;
+
             float value;
             bool percent;
             view->getSpeed(i, value, percent);
 
             if (percent) {
-                label = GUIKIT::String::formatFloatingPoint(value, 2, true) + " %";
+                label = GUIKIT::String::formatFloatingPoint(value, 3, true) + " %";
             } else {
-                label = GUIKIT::String::formatFloatingPoint(value, 2, true) + " FPS";
+                label = GUIKIT::String::formatFloatingPoint(value, 3, true) + " FPS";
             }
 
-            if (i == speedItems.size() - 2)
-                label += " (*)";
+            if (i == 1) {
+                float otherValue = (100.0 * value) / (float)stat.fps;
+                label += " ( " + GUIKIT::String::formatFloatingPoint(otherValue, 2, true) + " % )";
+            }
 
             speedItems[i]->setText( label );
         }
 
         auto settings = program->getSettings( activeEmulator );
-        unsigned speedProfile = settings->get<unsigned>("speed_profile", 0, {0, (unsigned)speedItems.size() - 1});
+        unsigned speedProfile = settings->get<unsigned>("speed_profile", 1, {0, (unsigned)speedItems.size() - 1});
         if (!speedItems[speedProfile]->checked())
             speedItems[speedProfile]->setChecked();
     }
@@ -1299,7 +1306,7 @@ auto View::translate() -> void {
     aggressiveFastForwardItem.setText( trans->get("Toggle_fastforward_aggressive") );
 
     maximumSpeedItem.setText( trans->get("maximum speed") );
-    customizeSpeedItem.setText( "(*) " + trans->get("customize speed") );
+    customizeSpeedItem.setText( trans->get("customize speed") );
 }
 
 auto View::getViewportHandle() -> uintptr_t {
@@ -1396,25 +1403,26 @@ auto View::getSpeedBySelectedProfile(float& speed, bool& percent) -> unsigned {
 }
 
 auto View::getSpeed(unsigned pos, float& speed, bool& percent) -> void {
-    percent = true;
-    speed = 100.0;
+    percent = false;
+    speed = 50.0;
 
     auto stats = activeEmulator->stats;
 
     switch (pos) {
-        case 0: speed = stats.fps; percent = false; break;
-        case 1: speed = stats.isPal() ? 50.0 : 60.0; percent = false; break;
-        case 2: speed = stats.isPal() ? 60.0 : 50.0; percent = false; break;
+        case 0: speed = stats.fps; break;
+        case 1: speed = stats.isPal() ? 50.0 : 60.0; break;
+        case 2: speed = 5.0; break;
         case 3: speed = 25.0; break;
-        case 4: speed = 50.0; break;
-        case 5: speed = 150.0; break;
-        case 6: speed = 200.0; break;
-        case 7: speed = 250.0; break;
-        case 8: speed = 300.0; break;
-        case 9: speed = 400.0; break;
-        case 10:
+        case 4: speed = stats.isPal() ? 60.0 : 50.0; break;
+        case 5: speed = 70.0; break;
+        case 6: speed = 75.0; break;
+        case 7: speed = 80.0; break;
+        case 8: speed = 90.0; break;
+        case 9: speed = 100.0; break;
+        case 10: speed = 250.0; break; // maximum
+        case 11:
             auto settings = program->getSettings( activeEmulator );
-            speed = settings->get<float>("custom_speed", 1.0);
+            speed = settings->get<float>("custom_speed", 1.234);
             percent = settings->get<bool>("custom_speed_percent", false);
             break;
     }
@@ -1427,5 +1435,5 @@ auto View::isMaximumSpeed() -> bool {
     auto settings = program->getSettings( activeEmulator );
     unsigned speedProfile = settings->get<unsigned>("speed_profile", 0, {0, (unsigned)speedItems.size() - 1});
 
-    return speedProfile == (speedItems.size() - 1);
+    return speedProfile == (speedItems.size() - 2);
 }
