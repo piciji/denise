@@ -5,20 +5,6 @@ std::vector<pMonitor::Device> pMonitor::devices;
 std::vector<pMonitor::Setting> pMonitor::settings;
 pMonitor::Device* pMonitor::activeDevice = nullptr;
 
-auto pMonitor::getCurrentRefreshRate() -> float {
-    if (!display) {
-        display = XOpenDisplay(NULL);
-
-        if (!display)
-            return 0.0;
-    }
-
-    Window root = DefaultRootWindow(display)
-
-    XRRScreenConfiguration* conf = XRRGetScreenInfo(display, root);
-    return (float)XRRConfigCurrentRate(conf);
-}
-
 static const XRRModeInfo* getModeInfo(const XRRScreenResources* sr, RRMode id) {
     for (int i = 0;  i < sr->nmode;  i++) {
         if (sr->modes[i].id == id)
@@ -45,6 +31,42 @@ static double modeRefresh(const XRRModeInfo *mode_info) {
         rate = 0;
 
     return rate;
+}
+
+auto pMonitor::getCurrentRefreshRate() -> float {
+    const XRRModeInfo* mode;
+
+    if (!devices.size())
+        fetchDisplays();
+
+    if (!display)
+        return 0.0;
+
+    if (activeDevice) {
+        mode = getModeInfo(screens, activeDevice->activeMode);
+        return (float) modeRefresh(mode);
+    }
+
+    for(auto& device : devices) {
+
+        if (XRRGetOutputPrimary(display, DefaultRootWindow(display)) == device.xid) {
+
+            for (unsigned j = 0; j < device.outInfo->nmode; j++) {
+
+                if (device.outInfo->modes[j] == device.originalMode) {
+                    mode = getModeInfo(screens, device.outInfo->modes[j]);
+                    return (float) modeRefresh(mode);
+                }
+            }
+        }
+    }
+
+    // fallback (not working reliable)
+    auto screen = DefaultScreen(display);
+    ::Window root = RootWindow(display, screen);
+
+    XRRScreenConfiguration* conf = XRRGetScreenInfo(display, root);
+    return (float)XRRConfigCurrentRate(conf);
 }
 
 auto pMonitor::connect() -> bool {
@@ -93,7 +115,7 @@ auto pMonitor::fetchDisplays() -> void {
 
             XRRCrtcInfo* crtcInfo = XRRGetCrtcInfo(display, screens, outInfo->crtc);
 
-            devices.push_back({crc32.value(), devName, i, outInfo, crtcInfo->mode});
+            devices.push_back({crc32.value(), devName, i, outInfo, crtcInfo->mode, ~0u, screens->outputs[i]});
         }
     }
 }
@@ -220,6 +242,8 @@ auto pMonitor::setSetting( unsigned displayId, unsigned settingId ) -> bool {
     Status status = XRRSetCrtcConfig(display, screens, activeDevice->outInfo->crtc,
         CurrentTime, crtcInfo->x, crtcInfo->y, setting->rrMode, crtcInfo->rotation,
         &screens->outputs[activeDevice->pos], 1);
+
+    activeDevice->activeMode = setting->rrMode;
 
     return status == RRSetConfigSuccess;
 }

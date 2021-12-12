@@ -701,6 +701,8 @@ struct pMonitor {
         unsigned pos;
         XRROutputInfo* outInfo;
         RRMode originalMode;
+        RRMode activeMode;
+        RROutput xid;
     };
 
     struct Setting {
