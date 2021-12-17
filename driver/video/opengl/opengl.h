@@ -55,12 +55,16 @@ struct OpenGLTexture {
 
 struct OpenGLSurface : OpenGLTexture {
 	auto allocate() -> void;
-	auto size(unsigned width, unsigned height) -> void;
+	auto size(unsigned w, unsigned h) -> void;
 	auto release() -> void;
 	auto render(unsigned sourceWidth, unsigned sourceHeight, unsigned targetWidth, unsigned targetHeight) -> void;
 	auto deleteBuffer() -> void;
-    auto getBuffer() -> void*;
+    auto getBuffer(RenderBuffer* renderBuffer = nullptr) -> void*;
     auto cropTexture(OpenGLSurface* src) -> void;
+    auto resize(unsigned w, unsigned h) -> void;
+    auto resize( RenderBuffer* renderBuffer, unsigned w, unsigned h) -> void;
+    auto createTexture(RenderBuffer* renderBuffer = nullptr) -> void;
+    auto updateTexture(RenderBuffer* renderBuffer = nullptr) -> void;
 
 	GLuint program = 0;
 	GLuint framebuffer = 0;
@@ -89,6 +93,7 @@ struct OpenGL : OpenGLProgram {
     struct {
         bool synchronize = false;
         bool hardSync = false;
+        bool threaded = false;
         Video::Filter filter = Video::Filter::Nearest;
         std::vector<ShaderPass*> passes = {};
     } settings;
@@ -111,7 +116,7 @@ struct OpenGL : OpenGLProgram {
 #ifdef DRV_FREETYPE    
     OpenGLText screenText;
 #endif    
-    auto showMessage(std::string message, bool critical = false) -> void;
+   // auto showMessage(std::string message, bool critical = false) -> void;
 
 	std::vector<OpenGLProgram> programs;
 	unsigned outputWidth = 0;

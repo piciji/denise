@@ -16,6 +16,7 @@ auto Program::initVideo() -> void {
     
     setVideoSynchronize();
     setVideoHardSync();
+    setThreadedRenderer();
     setFpsLimit();
     //setVideoFilter();
     updateFullscreenSetting();
@@ -109,14 +110,19 @@ auto Program::setVideoSynchronize() -> void {
 
     if (audioDriver->hasSynchronized()) {
         vsync = globalSettings->get<bool>("video_sync", true);
-        bool adaptive = globalSettings->get<bool>("adaptive_sync", true);
 
-        if (vsync && adaptive) {
-            float monitorFrequency = GUIKIT::Monitor::getCurrentRefreshRate();
-            skew = std::abs(1.0 - (float)audioManager->inputFPS / monitorFrequency );
+        if (vsync) {
+            bool adaptive = globalSettings->get<bool>("adaptive_sync", true);
 
-            if ((skew > 0.0015) && ((float)audioManager->inputFPS > monitorFrequency)) {
-                vsync = false;
+            if (adaptive) {
+                bool threadedRenderer = globalSettings->get("threaded_renderer", false);
+                float monitorFrequency = GUIKIT::Monitor::getCurrentRefreshRate();
+                skew = std::abs(1.0 - (float)audioManager->inputFPS / monitorFrequency );
+
+                if (!threadedRenderer) {
+                    if ((skew > 0.0015) && ((float) audioManager->inputFPS > monitorFrequency))
+                        vsync = false;
+                }
             }
         }
     }
@@ -141,6 +147,11 @@ auto Program::setFpsLimit() -> void {
 //	VideoManager::setFpsLimit( globalSettings->get("fps_limit", false) );
 //    audioManager->setRateControl();
 //	updateOverallSynchronize();
+}
+
+auto Program::setThreadedRenderer() -> void {
+    bool useThreadedRenderer = globalSettings->get("threaded_renderer", false);
+    videoDriver->setThreaded( useThreadedRenderer );
 }
 
 auto Program::setVideoFilter() -> void {

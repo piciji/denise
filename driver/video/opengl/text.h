@@ -1,8 +1,16 @@
 
 #include "../../tools/utf8.h"
+#include <thread>
 
 struct OpenGLText {
-    
+
+    struct {
+        std::string message = "";
+        bool messageUpdated = false;
+        bool critical = false;
+        bool criticalUpdated = false;
+    } current;
+
     FT_Library ft = nullptr;
     FT_Face face = nullptr;
     FT_GlyphSlot glyph;
@@ -14,6 +22,7 @@ struct OpenGLText {
     GLuint fragment = 0;
     
     GLuint textTex = 0;
+    std::mutex updateMutex;
     
     FT_Byte* data = nullptr;
 
@@ -198,7 +207,7 @@ struct OpenGLText {
         
         if (disable || !initialized) 
             return;
-            
+
         unsigned index = 0;
         unsigned code;
         totalWidth = 0;
@@ -287,5 +296,65 @@ struct OpenGLText {
 	
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, totalWidth, totalHeight, 0, GL_RED, GL_UNSIGNED_BYTE, textBuffer);
     }
-            
+
+    auto updateMessage() -> void {
+        updateMutex.lock();
+        if (current.messageUpdated) {
+            current.messageUpdated = false;
+            std::string message = current.message;
+
+            updateMutex.unlock();
+            buildTexture( message );
+            updateMutex.lock();
+        }
+
+        if (current.criticalUpdated) {
+            current.criticalUpdated = false;
+            bool critical = current.critical;
+            updateMutex.unlock();
+
+            if (!disable) {
+                if (critical)
+                    setColor(0.7f, 0.0f, 0.0f, 1.0f);
+                else
+                    setColor(1.0f, 1.0f, 1.0f, 0.8f);
+            }
+        } else
+            updateMutex.unlock();
+    }
+
+    auto updateMessage(std::string message, bool critical, bool instant = true) -> void {
+
+        if (!instant)
+            updateMutex.lock();
+
+        if (!initialized)
+            return;
+
+        if (current.message != message) {
+            current.message = message;
+            if (instant)
+                buildTexture(message);
+            else
+                current.messageUpdated = true;
+        }
+
+        if (current.critical != critical) {
+            current.critical = critical;
+
+            if (instant) {
+                if (!disable) {
+                    if (critical)
+                        setColor(0.7f, 0.0f, 0.0f, 1.0f);
+                    else
+                        setColor(1.0f, 1.0f, 1.0f, 0.8f);
+                }
+            } else
+                current.criticalUpdated = true;
+        }
+
+        if (!instant)
+            updateMutex.unlock();
+
+    }
 };

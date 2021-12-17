@@ -1,10 +1,6 @@
 
 /**
  * v 1.1.1
- * driver is a fork of Higans ruby library, https://byuu.org/
- * it's rewritten and extended by additional drivers like:
- * core audio (osx), raw joypad (windows), iokit (osx)
- * dynamic rate control formula is copyrighted by RetroArch
  */
 
 #ifndef DRIVER_H
@@ -24,10 +20,10 @@ struct Video {
   
     virtual auto init(uintptr_t handle) -> bool { return true; }
     virtual auto term() -> void {}
-    virtual auto lock(unsigned*& data, unsigned& pitch, unsigned width, unsigned height) -> bool { return false; }
-    virtual auto lock(float*& data, unsigned& pitch, unsigned width, unsigned height) -> bool { return false; }
-    virtual auto lock(int32_t*& data, unsigned& pitch, unsigned width, unsigned height) -> bool { return false; }
-    virtual auto unlock() -> void {}
+    virtual auto lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height) -> bool { return false; }
+    virtual auto lock(float*& data, unsigned& pitch, unsigned _width, unsigned _height) -> bool { return false; }
+    virtual auto lock(int32_t*& data, unsigned& pitch, unsigned _width, unsigned _height) -> bool { return false; }
+    virtual auto unlock(bool disallowShader = false) -> void {}
     virtual auto redraw(bool disallowShader = false) -> void {}
     virtual auto clear() -> void {}
     virtual auto setFilter(Filter filter) -> void {}
@@ -39,6 +35,7 @@ struct Video {
     virtual auto synchronize(bool state) -> void {}
 	virtual auto hasSynchronized() -> bool { return false; }
     virtual auto hardSync(bool state) -> void {}
+    virtual auto setThreaded(bool state) -> void {}
 	virtual auto showMessage(std::string message, bool critical = false) -> void {}
     
     virtual auto shaderFormat() -> ShaderType { return ShaderType::NotSupported; }

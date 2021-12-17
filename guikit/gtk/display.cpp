@@ -115,7 +115,8 @@ auto pMonitor::fetchDisplays() -> void {
 
             XRRCrtcInfo* crtcInfo = XRRGetCrtcInfo(display, screens, outInfo->crtc);
 
-            devices.push_back({crc32.value(), devName, i, outInfo, crtcInfo->mode, ~0u, screens->outputs[i]});
+            if (crtcInfo)
+                devices.push_back({crc32.value(), devName, i, outInfo, crtcInfo->mode, ~0u, screens->outputs[i]});
         }
     }
 }

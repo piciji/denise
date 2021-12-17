@@ -19,7 +19,7 @@ include data/Makefile
 
 objects := program view config emuconfig emumodel mediaview archiveviewer states firmware cmd statusbar
 objects += input audio video palette shader bass reverb panning audiorecord wavwriter sinc cosine cosineSSE driveSounds
-objects += guikit libami libC64 autoloader fileloader
+objects += guikit libami libC64 autoloader fileloader renderthread
 objects += driver
 ifeq ($(platform),windows)
     objects += dinput5 dinput7 dinput8 xaudio27 xaudio28 xaudio29
@@ -28,7 +28,7 @@ endif
 objects += m6510 ciaBase cia6526 cia8520 vicIIBase vicIICycle vicIIFast systemC64 sid chamberlin tapeC64 inputC64 controlPortC64 acia
 objects += cartC64 gameCartC64 freezerC64 reuC64 easyFlashC64 easyFlash3C64 retroReplayC64 gmod2C64 clipboardC64 geoRamC64 fastloaderC64
 objects += m6502 via iec prg64 driveC64 diskStructureC64 firmwareC64 pia traps64 virtualDrive64 wd1770
-objects += thread m93c86 mx29lv640eb icons logos fonts socket fpaq0
+objects += emuthread m93c86 mx29lv640eb icons logos fonts socket fpaq0
 
 deps = $(objects)
 
@@ -111,7 +111,8 @@ obj/xaudio28.o:	driver/audio/xaudio2/xaudio28.cpp
 	$(compiler) $(drvflags) $(flags) -Wno-attributes -c $< -o $@
 obj/xaudio29.o:	driver/audio/xaudio2/xaudio29.cpp
 	$(compiler) $(drvflags) $(flags) -Wno-attributes -c $< -o $@
-endif	
+endif
+obj/renderthread.o: driver/video/thread/renderThread.cpp
 
 obj/libami.o:	emulation/libami/interface.cpp
 obj/libC64.o:	emulation/libc64/interface.cpp
@@ -156,7 +157,7 @@ obj/iec.o:	emulation/libc64/disk/iec.cpp
 obj/driveC64.o:emulation/libc64/disk/drive/drive.cpp
 obj/diskStructureC64.o:emulation/libc64/disk/structure/structure.cpp
 	$(compiler) $(cppflags) $(flags) -Wno-stringop-overflow $1 -c $< -o $@
-obj/thread.o:emulation/tools/thread.cpp
+obj/emuthread.o:emulation/tools/thread.cpp
 obj/m93c86.o:emulation/tools/m93c86.cpp
 obj/mx29lv640eb.o:emulation/tools/mx29lv640eb.cpp
 obj/icons.o:data/icons/icons.cpp
@@ -196,7 +197,7 @@ obj/firmware.o:		program/firmware/manager.cpp
 obj/cmd.o:		program/cmd/cmd.cpp
 obj/palette.o:		program/video/palette.cpp
 obj/video.o:		program/video/manager.cpp
-obj/shader.o:		program/video/shader.cpp	
+obj/shader.o:		program/video/shader.cpp
 
 deps := $(patsubst %,obj/%.d,$(deps))
 objects := $(patsubst %,obj/%.o,$(objects))

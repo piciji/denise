@@ -43,7 +43,8 @@ PathsLayout::PathsLayout() {
 VideoSettingsLayout::VideoSettingsLayout() {
     
     append(exclusiveFullscreen, {0u, 0u}, 10);
-    append(hardSync, {0u, 0u}, 10);    
+    append(hardSync, {0u, 0u}, 10);
+    append(threadedRenderer, {0u, 0u});
     setAlignment(0.5);
     setPadding( 10 );
     setFont(GUIKIT::Font::system("bold"));
@@ -222,6 +223,14 @@ VideoLayout::VideoLayout() {
 		globalSettings->set("gl_hardsync", checked);
 		videoDriver->hardSync( checked );
 	};
+
+    videoSettingsLayout.threadedRenderer.onToggle = [](bool checked) {
+        globalSettings->set("threaded_renderer", checked);
+        videoDriver->setThreaded( checked );
+        program->setVideoSynchronize();
+    };
+
+    videoSettingsLayout.threadedRenderer.setChecked(globalSettings->get("threaded_renderer", false));
     
     std::function<bool (PathsLayout::Block*, const std::string&, const std::string&)> selectPath;
 	
@@ -374,6 +383,8 @@ auto VideoLayout::translate() -> void {
 	videoSettingsLayout.exclusiveFullscreen.setTooltip( trans->get("exclusive_fullscreen_tooltip") );
     videoSettingsLayout.hardSync.setText( trans->get("hard_sync") );
 	videoSettingsLayout.hardSync.setTooltip( trans->get("hard_sync_tooltip") );
+    videoSettingsLayout.threadedRenderer.setText( trans->get("render thread") );
+    videoSettingsLayout.threadedRenderer.setTooltip( trans->get("render thread tooltip") );
     videoSettingsLayout.setText( trans->get("driver_properties") );
     
     screenTextLayout.option1.setText( trans->get("disabled") );

@@ -141,6 +141,7 @@ struct Program : Emulator::Interface::Bind {
     auto setFpsLimit() -> void;
     auto updateOverallSynchronize() -> void;
     auto updateFullscreenSetting() -> void;
+    auto setThreadedRenderer() -> void;
 	
     //input
     auto initInput() -> void;

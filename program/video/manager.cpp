@@ -429,7 +429,7 @@ auto VideoManager::injectPhaseTransferError() -> void {
     // back to pal and the approach to stabilize hue.
     // even lines: same transmission as NTSC, the transfered signal is received with an unknown
     // phase shift error. in comparision to NTSC the information is stored in TV. (delay line)
-    // odd lines: V component is phase shifted by 180Â° before transmission. (simply means the V value change sign).
+    // odd lines: V component is phase shifted by 180° before transmission. (simply means the V value change sign).
     // the transmission adds a similiar phase shift error within such a short time of one display line.
     // receiver (TV) reverses sign of V component, which includes a similiar phase shift error like happened in
     // even line. 
@@ -651,7 +651,7 @@ template<typename T> auto VideoManager::renderFrame(const T* src, unsigned width
 		
 	} else if (threaded) {
 		if (!videoDriver->lock(gpuData, gpuPitch, width, scanlines ? (height << 1) : height ))
-			return;
+            return renderCrtThreadedBlank(width, height, src, srcPitch, gpuData, gpuPitch - width);
 		
 		return renderCrtThreaded(width, height, src, srcPitch, gpuData, gpuPitch - width);
 	} else {
@@ -881,6 +881,40 @@ auto VideoManager::useRfModulation() -> bool {
 auto VideoManager::useLineGlitch() -> bool {
 	
 	return baGlitch > 0.0 || aecGlitch > 0.0 || phi0Glitch > 0.0 || casGlitch > 0.0 || rasGlitch > 0.0;
+}
+
+template<typename T> auto VideoManager::renderCrtThreadedBlank(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch ) -> void {
+    static unsigned scaler = (3.0 / 4.0) * 256.0;
+    Render* re = &render[0];
+
+    while (re->ready.load())
+        std::this_thread::yield();
+
+    unsigned cropTop = this->emulator->cropTop();
+    unsigned heightFirstHalfScreen = (height * scaler) >> 8;
+    unsigned destOffset = (width + destPitch) * (heightFirstHalfScreen << (scanlines ? 1 : 0));
+
+    emulator->setLineCallback( true, cropTop + heightFirstHalfScreen );
+
+    re->height = heightFirstHalfScreen;
+    re->width = width;
+    re->srcPitch = srcPitch;
+    re->destPitch = destPitch;
+    re->src = (uint8_t*)src;
+    re->dest = nullptr;
+    re->scanlineDest = nullptr;
+    re->oddLine = cropTop & 1;
+
+    if (!pal)
+        re->reuseFirstLine = false;
+    else if (cropTop) {
+        re->reuseFirstLine = false;
+        if (use16BitSrc)
+            re->src -= (re->width + re->srcPitch) << 1;
+        else
+            re->src -= re->width + re->srcPitch;
+    } else
+        re->reuseFirstLine = true;
 }
 
 template<typename T> auto VideoManager::renderCrtThreaded(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch ) -> void {			    

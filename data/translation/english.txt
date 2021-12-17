@@ -646,3 +646,5 @@ speed = Speed
 Adaptive Sync = Adaptive Sync
 Percent = Percent
 Set speed = freely selectable speed (can be activated via FPS display in status line)
+render thread = Render Thread
+render thread tooltip = Video is rendered in an extra thread.

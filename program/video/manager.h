@@ -197,6 +197,7 @@ struct VideoManager {
     template<typename T> inline auto renderCrtSelection(Render* re) -> void;
     template<typename T> auto renderCrt(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch ) -> void;
     template<typename T> auto renderCrtThreaded(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch ) -> void;
+    template<typename T> auto renderCrtThreadedBlank(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch ) -> void;
     auto convertYUVToRGB(ColorRgb* dest, ColorLumaChroma* src) -> void;
     auto convertYIQToRGB(ColorRgb* dest, ColorLumaChroma* src) -> void;
     auto update() -> void;

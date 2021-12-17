@@ -38,7 +38,8 @@ struct PathsLayout : GUIKIT::FramedVerticalLayout {
 struct VideoSettingsLayout : GUIKIT::FramedHorizontalLayout {
     
     GUIKIT::CheckBox exclusiveFullscreen;
-    GUIKIT::CheckBox hardSync;    
+    GUIKIT::CheckBox hardSync;
+    GUIKIT::CheckBox threadedRenderer;
     
     VideoSettingsLayout();
 };

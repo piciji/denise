@@ -160,7 +160,7 @@ auto Shader::loadInternal() -> void {
 		pass = new ShaderPass;
         addBaseProps(pass);
 		pass->fragment = buildOutputEncoding();
-		pass->ident = "outputEncoding";	
+		pass->ident = "outputEncoding";
 		pass->filter = "nearest";
 		pass->relativeWidth = vManager->firSharp == 0 ? 100 : 200;
         pass->relativeHeight = 100;
@@ -177,24 +177,24 @@ auto Shader::loadInternal() -> void {
             pass->filter = "nearest";
             internalPasses.push_back(pass);
         }
-        
-        if (vManager->isC64() && vManager->useRfModulation() ) {            
+
+        if (vManager->isC64() && vManager->useRfModulation() ) {
             // check if amiga rf modulation causes luma latencies
             pass = new ShaderPass;
             addBaseProps(pass);
             pass->fragment = buildLumaLatency();
-            pass->ident = "lumaLatency";	
+            pass->ident = "lumaLatency";
             pass->filter = "nearest";
             pass->relativeWidth = 100;
             pass->relativeHeight = 100;
             internalPasses.push_back( pass );
         }
-        
+
         if (vManager->lumaNoise || vManager->chromaNoise) {
             ShaderPass* pass = new ShaderPass;
             addBaseProps(pass);
             pass->fragment = buildNoise();
-            pass->ident = "noise";	
+            pass->ident = "noise";
             pass->filter = "nearest";
             pass->relativeWidth = 100;
             pass->relativeHeight = 100;
@@ -209,8 +209,8 @@ auto Shader::loadInternal() -> void {
 		pass->filter = "nearest";
 		pass->relativeWidth = vManager->firSharp == 0 ? 200 : 100;
         pass->relativeHeight = 100;
-        internalPasses.push_back(pass);        
-	                
+        internalPasses.push_back(pass);
+
 		pass = new ShaderPass;
 		pass->primary = false;
 		addBaseProps(pass);
@@ -220,7 +220,7 @@ auto Shader::loadInternal() -> void {
 		pass->relativeWidth = 100;
 		pass->relativeHeight = 100;
 		internalPasses.push_back(pass);
-                
+
         if (vManager->scanlines) {
             pass = new ShaderPass;
             pass->primary = false;
@@ -228,56 +228,56 @@ auto Shader::loadInternal() -> void {
             pass->fragment = buildGammaAndScanlines();
             pass->ident = "scanlines";
             pass->relativeWidth = 100;
-            pass->relativeHeight = 200;			
-            pass->filter = "nearest";		
-            internalPasses.push_back(pass); 
-			
-        } else {			
+            pass->relativeHeight = 200;
+            pass->filter = "nearest";
+            internalPasses.push_back(pass);
+
+        } else {
 			pass = new ShaderPass;
 			pass->primary = false;
 			addBaseProps(pass);
-			pass->fragment = buildGamma();        
-			pass->ident = "gamma";	
+			pass->fragment = buildGamma();
+			pass->ident = "gamma";
 			pass->relativeWidth = 100;
 			pass->relativeHeight = 100;
 			pass->filter = "nearest";
-			internalPasses.push_back( pass );   	
+			internalPasses.push_back( pass );
 		}
-        
+
         if (vManager->bloomGlow) {
             pass = new ShaderPass;
             pass->primary = false;
             addBaseProps(pass);
             pass->fragment = buildBloom(true);
-            pass->ident = "bloomPhase1";			
+            pass->ident = "bloomPhase1";
             pass->relativeWidth = 100;
             pass->relativeHeight = vManager->scanlines ? 100 : 200;
             pass->filter = filter == 1 ? "linear" : "nearest";
             pass->mipmap = true;
-            internalPasses.push_back(pass);		
+            internalPasses.push_back(pass);
 
             pass = new ShaderPass;
             pass->primary = false;
             addBaseProps(pass);
             pass->fragment = buildBloom(false);
-            pass->ident = "bloom";			
+            pass->ident = "bloom";
             pass->relativeWidth = 100;
             pass->relativeHeight = 100;
             pass->filter = "nearest";
-            internalPasses.push_back(pass);	
+            internalPasses.push_back(pass);
         }
                       
         pass = new ShaderPass;
         pass->primary = false;
         addBaseProps(pass);
-		pass->ident = "crop";	
+		pass->ident = "crop";
         // remove first non visible line. it was needed as delay line to calculate first visible line
-        pass->crop.top = (vManager->scanlines || vManager->bloomGlow) ? 2 : 1;    
+        pass->crop.top = (vManager->scanlines || vManager->bloomGlow) ? 2 : 1;
         // same here, we have some pixel offscreen to calculate bandwidth reduction
 		pass->crop.left = SHADER_OFFSCREEN_WIDTH << 1;
 		pass->crop.right = SHADER_OFFSCREEN_WIDTH << 1;
         pass->filter = filter == 1 ? "linear" : "nearest";
-		internalPasses.push_back( pass );         
+		internalPasses.push_back( pass );
                     
         pass = new ShaderPass;
         pass->primary = true;
@@ -295,22 +295,22 @@ auto Shader::loadInternal() -> void {
 		internalPasses.push_back( pass );
     }
 
-	// post shading runs after external shaders        
+	// post shading runs after external shaders
 	if (vManager->usePostShading()) {
 		pass = new ShaderPass;
 		pass->primary = false;
 		pass->external = false;
 		pass->fragment = buildMask();
 		pass->ident = "crtMask";
-        
+
 		pass->relativeHeight = vManager->hires ? 200 : 100;
-		pass->relativeWidth = vManager->hires ? 200 : 100;                        
-        normaliseDimension( pass->relativeWidth, pass->relativeHeight );                
+		pass->relativeWidth = vManager->hires ? 200 : 100;
+        normaliseDimension( pass->relativeWidth, pass->relativeHeight );
 		pass->filter = filter == 1 ? "linear" : "nearest";
         pass->mipmap = true;
-		internalPassesPost.push_back( pass );   
+		internalPassesPost.push_back( pass );
 	}
-	
+
     if (vManager->radialDistortion) {
         pass = new ShaderPass;
         pass->primary = false;
@@ -322,7 +322,7 @@ auto Shader::loadInternal() -> void {
         pass->mipmap = true;
         pass->filter = filter == 1 ? "linear" : "nearest";
         internalPassesPost.push_back(pass);
-    }    
+    }
 }
 
 auto Shader::normaliseDimension( unsigned& widthScale, unsigned& heightScale ) -> void {

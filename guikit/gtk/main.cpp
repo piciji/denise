@@ -56,6 +56,7 @@ auto pApplication::quit() -> void {
 }
 
 auto pApplication::initialize() -> void {
+    XInitThreads();
     gdk_set_allowed_backends("x11");
     gtk_init(nullptr, nullptr);
 }  

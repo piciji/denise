@@ -25,7 +25,8 @@ auto pViewport::setDroppable(bool droppable) -> void {
 }
 
 auto pViewport::handle() -> uintptr_t {
-    return GDK_WINDOW_XID(gtk_widget_get_window(gtkWidget));
+    //return GDK_WINDOW_XID(gtk_widget_get_window(gtkWidget));
+    return (uintptr_t)gtk_widget_get_window(gtkWidget);
 }
 
 auto pViewport::dropEvent(GtkWidget* widget, GdkDragContext* context, gint x, gint y,
