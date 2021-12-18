@@ -131,7 +131,7 @@ struct GLX : public Video, OpenGL, RenderThread {
         XFree(vi);
         XSync(display, False);
         OpenGL::init();
-        clearCurrent();
+        //clearCurrent();
         return true;
     }
 
@@ -162,9 +162,17 @@ struct GLX : public Video, OpenGL, RenderThread {
         if (state != settings.threaded) {
             wait();
             RenderThread::enable(state);
-            settings.threaded = state;
+
             RenderThread::reset();
             width = 0, height = 0;
+
+            if (!state)
+                makeCurrent();
+
+            settings.threaded = state;
+
+            if (state)
+                clearCurrent();
         }
     }
     
@@ -218,9 +226,8 @@ struct GLX : public Video, OpenGL, RenderThread {
 	auto lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height) -> bool {
         if (settings.threaded)
             return RenderThread::lock(data, pitch, _width, _height);
-        makeCurrent();
+
 		OpenGL::size(_width, _height);
-        clearCurrent();
 		return OpenGL::lock(data, pitch);
 	}
 	
@@ -275,7 +282,7 @@ struct GLX : public Video, OpenGL, RenderThread {
     auto redraw(bool disallowShader = false) -> void {
         if (settings.threaded)
             return;
-        makeCurrent();
+        //makeCurrent();
         resizeWindow();
 
         OpenGL::clear();
@@ -287,7 +294,7 @@ struct GLX : public Video, OpenGL, RenderThread {
 
         if(glx.doubleBuffer) glXSwapBuffers(display, glxwindow);
         if(settings.hardSync && settings.synchronize) glFinish();
-        clearCurrent();
+        //clearCurrent();
     }
 
     auto refresh() -> void {
@@ -353,11 +360,13 @@ struct GLX : public Video, OpenGL, RenderThread {
     }
 
     auto makeCurrent() -> void {
-        glXMakeCurrent(display, glxwindow, glxcontext);
+        if (settings.threaded)
+            glXMakeCurrent(display, glxwindow, glxcontext);
     }
 
     auto clearCurrent() -> void {
-        glXMakeCurrent(display, 0, nullptr);
+        if (settings.threaded)
+            glXMakeCurrent(display, 0, nullptr);
     }
 
     auto showMessage(std::string message, bool critical = false) -> void {

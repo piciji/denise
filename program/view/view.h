@@ -215,6 +215,7 @@ struct View : public GUIKIT::Window {
     auto getSpeed(unsigned pos, float& speed, bool& percent) -> void;
     auto isMaximumSpeed() -> bool;
     auto isCustomSpeed() -> bool;
+	auto activateCustomSpeed() -> void;
     
     View();
 };

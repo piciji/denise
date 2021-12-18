@@ -648,3 +648,4 @@ Percent =
 Set speed =
 render thread =
 render thread tooltip =
+Apply =

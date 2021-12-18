@@ -1,9 +1,10 @@
 
 struct SpeedLayout : GUIKIT::FramedHorizontalLayout {
     GUIKIT::Label label;
-    GUIKIT::LineEdit speed;
     GUIKIT::RadioBox fps;
     GUIKIT::RadioBox percent;
+    GUIKIT::LineEdit speed;
+    GUIKIT::Button apply;
 
     SpeedLayout();
 };

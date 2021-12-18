@@ -1021,6 +1021,7 @@ struct MenuRadioItem : MenuBase {
     static auto setGroup(std::vector<MenuRadioItem*> group) -> void;
     auto setChecked() -> void;
     auto checked() const -> bool { return state.checked; }
+    auto activate() -> void;
 
     std::vector<MenuRadioItem*> group;
     pMenuRadioItem& p;

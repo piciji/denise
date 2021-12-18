@@ -1052,8 +1052,10 @@ auto View::buildMenu() -> void {
 
     GUIKIT::MenuRadioItem* speedItem;
 
-    for(unsigned i = 0; i <= 11; i++) {
-        if (i == 10)
+    unsigned steps = 12;
+
+    for(unsigned i = 0; i <= steps; i++) {
+        if (i == (steps - 1))
             speedItem = &maximumSpeedItem;
         else
             speedItem = new GUIKIT::MenuRadioItem;
@@ -1067,10 +1069,10 @@ auto View::buildMenu() -> void {
         };
         speedControlMenu.append( *speedItem );
 
-        if (i == 1 || i == 10)
+        if (i == 1 || i == (steps - 1))
             speedControlMenu.append( *GUIKIT::MenuSeparator::getInstance() );
 
-        if (i == 10) {
+        if (i == (steps - 1)) {
             customizeSpeedItem.onActivate = []() {
                 auto emuView = EmuConfigView::TabWindow::getView(activeEmulator, true);
                 if (emuView)
@@ -1419,13 +1421,18 @@ auto View::getSpeed(unsigned pos, float& speed, bool& percent) -> void {
         case 7: speed = 80.0; break;
         case 8: speed = 90.0; break;
         case 9: speed = 100.0; break;
-        case 10: speed = 250.0; break; // maximum
-        case 11:
+        case 10: speed = 120.0; break;
+        case 11: speed = 250.0; break; // maximum
+        case 12:
             auto settings = program->getSettings( activeEmulator );
             speed = settings->get<float>("custom_speed", 123.456);
             percent = settings->get<bool>("custom_speed_percent", false);
             break;
     }
+}
+
+auto View::activateCustomSpeed() -> void {
+    speedItems[speedItems.size() - 1]->activate();
 }
 
 auto View::isCustomSpeed() -> bool {

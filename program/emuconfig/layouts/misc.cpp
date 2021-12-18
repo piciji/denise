@@ -1,9 +1,10 @@
 
 SpeedLayout::SpeedLayout() {
     append(label, {0u, 0u}, 5);
-    append(speed, {GUIKIT::Font::scale(55), 0u}, 10 );
     append(fps, {0u, 0u}, 5 );
-    append(percent, {0u, 0u} );
+    append(percent, {0u, 0u}, 10 );
+    append(speed, {GUIKIT::Font::scale(50), 0u}, 10 );
+    append(apply, {0u, 0u} );
 
     GUIKIT::RadioBox::setGroup( fps, percent );
 
@@ -226,6 +227,10 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) {
         }
         view->updateSpeedLabels(true);
     };
+
+    speedLayout.apply.onActivate = [this]() {
+        view->activateCustomSpeed();
+    };
                                        
     loadSettings();
 }
@@ -287,6 +292,7 @@ auto MiscLayout::translate() -> void {
     speedLayout.label.setText( trans->get("Set speed", {}, true) );
     speedLayout.fps.setText( trans->get("FPS") );
     speedLayout.percent.setText( trans->get("Percent") );
+    speedLayout.apply.setText( trans->get("enable") );
 }
 
 auto MiscLayout::loadSettings() -> void {

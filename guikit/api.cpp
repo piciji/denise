@@ -1216,6 +1216,11 @@ auto MenuRadioItem::setChecked() -> void {
     p.setChecked();
 }
 
+auto MenuRadioItem::activate() -> void {
+    setChecked();
+    if (onActivate) onActivate();
+}
+
 auto MenuRadioItem::setGroup(std::vector<MenuRadioItem*> group) -> void {
     for(auto& item : group) item->p.setGroup( item->group = group );
     if (group.size()) group.at(0)->setChecked();
