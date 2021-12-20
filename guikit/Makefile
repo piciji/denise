@@ -9,7 +9,7 @@ ifeq ($(platform),windows)
 
 else ifeq ($(platform),macosx)
     uiflags = $(objcppflags) -DGUIKIT_COCOA
-    uilink = -framework Cocoa
+    uilink = -framework Cocoa -framework CoreVideo
 
 else
     #uiflags = $(cppflags) `pkg-config --cflags gtk+-3.0` -DGUIKIT_GTK -DINSTALL_FOLDER="\"$(prefix)\"" -DGDK_DISABLE_DEPRECATED -DGTK_DISABLE_DEPRECATED -DGSEAL_ENABLE

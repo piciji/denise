@@ -79,6 +79,14 @@
     [[NSRunLoop currentRunLoop] addTimer:pApplication::appTimer forMode:NSDefaultRunLoopMode];
 }
 
+- (void)changeDisplay:(NSNotification*)notification {
+    
+    using GUIKIT::Application;
+    if (Application::onDisplayChange)
+        Application::onDisplayChange();
+    
+}
+
 @end
 
 @implementation CocoaWindow : NSWindow
@@ -337,6 +345,10 @@ auto pApplication::initialize() -> void {
         [NSApplication sharedApplication];
         cocoaDelegate = [[CocoaDelegate alloc] init];
         [NSApp setDelegate:cocoaDelegate];
+        
+        NSNotificationCenter* notificationCenter = [NSNotificationCenter defaultCenter];
+
+        [notificationCenter addObserver:cocoaDelegate selector:@selector(changeDisplay:) name:NSApplicationDidChangeScreenParametersNotification object: [NSApplication sharedApplication] ];
     }
 }
 

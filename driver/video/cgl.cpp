@@ -1,8 +1,8 @@
 
 #define GL_ALPHA_TEST 0x0bc0
+#include "thread/renderThread.h"
 #include <Cocoa/Cocoa.h>
 #include "opengl/opengl.h"
-#include "thread/renderThread.h"
 
 namespace DRIVER { struct CGL; }
 
@@ -152,47 +152,45 @@ struct CGL : public Video, OpenGL, RenderThread {
 
     auto refresh() -> void {
 
-        @autoreleasepool{
-                makeCurrent();
-                if ([view lockFocusIfCanDraw]) {
-                    OpenGL::clear();
+        @autoreleasepool {
+            makeCurrent();
+            if ([view lockFocusIfCanDraw]) {
+                OpenGL::clear();
 
-                    bool disallowShader = false;
-                    RenderBuffer* renderBuffer = getBufferToRender();
+                bool disallowShader = false;
+                RenderBuffer* renderBuffer = getBufferToRender();
 
-                    if (renderBuffer) {
-                        renderBuffer->sharedMutex.lock();
-                        width = renderBuffer->width;
-                        height = renderBuffer->height;
+                if (renderBuffer) {
+                    renderBuffer->sharedMutex.lock();
+                    width = renderBuffer->width;
+                    height = renderBuffer->height;
 
-                        if (renderBuffer->updated) {
-                            renderBuffer->updated = false;
-                            createTexture(renderBuffer);
-                        }
-
-                        OpenGL::updateTexture(renderBuffer);
-                        disallowShader = renderBuffer->disallowShader;
-                        renderBuffer->sharedMutex.unlock();
-
-                        accessMutex.lock();
-                        frames--;
-                        accessMutex.unlock();
+                    if (renderBuffer->updated) {
+                        renderBuffer->updated = false;
+                        createTexture(renderBuffer);
                     }
 
-                    OpenGL::refresh(disallowShader);
-#ifdef DRV_FREETYPE
-                    screenText.updateMessage();
-                    screenText.showText(outputWidth, outputHeight, -0.01, 0.01, OpenGLText::ALIGN_RIGHT | OpenGLText::VALIGN_BOTTOM);
-#endif
+                    OpenGL::updateTexture(renderBuffer);
+                    disallowShader = renderBuffer->disallowShader;
+                    renderBuffer->sharedMutex.unlock();
 
-                    [[view
-                    openGLContext] flushBuffer];
-                    if (settings.hardSync && settings.synchronize) glFinish();
-                    [view
-                    unlockFocus];
+                    accessMutex.lock();
+                    frames--;
+                    accessMutex.unlock();
                 }
 
-                clearCurrent();
+                OpenGL::refresh(disallowShader);
+#ifdef DRV_FREETYPE
+                screenText.updateMessage();
+                screenText.showText(outputWidth, outputHeight, -0.01, 0.01, OpenGLText::ALIGN_RIGHT | OpenGLText::VALIGN_BOTTOM);
+#endif
+
+                [[view openGLContext] flushBuffer];
+                if (settings.hardSync && settings.synchronize) glFinish();
+                [view unlockFocus];
+            }
+
+            clearCurrent();
         }
     }
 
@@ -308,7 +306,6 @@ struct CGL : public Video, OpenGL, RenderThread {
         RenderThread::enable(false);
         term();
     }
-    
 };
     
 }
