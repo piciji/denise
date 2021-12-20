@@ -1,6 +1,12 @@
 
 #include "renderThread.h"
 
+#if defined(_WIN32)
+#include <windows.h>
+#else
+#include <pthread.h>
+#endif
+
 namespace DRIVER {
 
     RenderThread::RenderThread() {
@@ -39,7 +45,7 @@ namespace DRIVER {
         if (!prepareBuffer(_width, _height))
             return false;
 
-        pitch = _width;
+        pitch = lockedBuffer->pitch;
         data = lockedBuffer->data;
 
         return true;
@@ -59,6 +65,7 @@ namespace DRIVER {
             deleteBuffer(lockedBuffer);
             lockedBuffer->width = _width;
             lockedBuffer->height = _height;
+            lockedBuffer->pitch = calcPitch( _width );
             lockedBuffer->updated = true;
             resize( lockedBuffer, _width, _height );
         }
@@ -87,6 +94,7 @@ namespace DRIVER {
 
             buffer.width = 0;
             buffer.height = 0;
+            buffer.pitch = 0;
             buffer.updated = false;
             buffer.disallowShader = false;
         }
@@ -227,6 +235,6 @@ namespace DRIVER {
     }
 
     RenderThread::~RenderThread() {
-        kill = true;
+        //enable(false);
     }
 }

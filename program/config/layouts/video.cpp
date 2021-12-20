@@ -228,6 +228,9 @@ VideoLayout::VideoLayout() {
         globalSettings->set("threaded_renderer", checked);
         videoDriver->setThreaded( checked );
         program->setVideoSynchronize();
+        bool vsync = globalSettings->get<bool>("video_sync", true);
+        view->adaptiveSyncItem.setEnabled( vsync && !checked );
+        view->dynamicRateControl.setEnabled( !checked );
     };
 
     videoSettingsLayout.threadedRenderer.setChecked(globalSettings->get("threaded_renderer", false));

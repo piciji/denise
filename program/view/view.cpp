@@ -361,7 +361,7 @@ auto View::updateViewport() -> void {
 			break;
 		}
 	}
-	viewport.setGeometry( geometry ); 
+	viewport.setGeometry( geometry );
 	placeholderTimer.setEnabled(true);
 }
 
@@ -860,13 +860,16 @@ auto View::buildMenu() -> void {
         program->fastForward( false );
         program->setVideoSynchronize();
         statusHandler->resetFrameCounter();
-        adaptiveSyncItem.setEnabled( videoSyncItem.checked() );
+        bool threadedRenderer = globalSettings->get("threaded_renderer", false);
+        adaptiveSyncItem.setEnabled( videoSyncItem.checked() && !threadedRenderer );
     };
-    if ( globalSettings->get<bool>("video_sync", true) ) {
+    bool threadedRenderer = globalSettings->get("threaded_renderer", false);
+    bool vsync = globalSettings->get<bool>("video_sync", true);
+
+    if (vsync)
         videoSyncItem.setChecked();
-        adaptiveSyncItem.setEnabled( true );
-    } else
-        adaptiveSyncItem.setEnabled( false );
+
+    adaptiveSyncItem.setEnabled( !threadedRenderer && vsync );
 
     optionsMenu.append(videoSyncItem);
 
@@ -900,6 +903,8 @@ auto View::buildMenu() -> void {
     };
     if ( globalSettings->get<bool>("dynamic_rate_control", false) )
         dynamicRateControl.setChecked();
+
+    dynamicRateControl.setEnabled( !threadedRenderer );
 
     optionsMenu.append(dynamicRateControl);
         

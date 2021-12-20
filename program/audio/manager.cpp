@@ -237,8 +237,9 @@ auto AudioManager::setAudioDsp() -> void {
 auto AudioManager::setRateControl() -> void {
 
     bool adaptive = globalSettings->get<bool>("adaptive_sync", true);
+    bool threadedRenderer = globalSettings->get("threaded_renderer", false);
 
-    dynamicRateControl = (videoDriver->hasSynchronized() || VideoManager::fpsLimit)
+    dynamicRateControl = !threadedRenderer && (videoDriver->hasSynchronized() || VideoManager::fpsLimit)
         && globalSettings->get<bool>("dynamic_rate_control", false);
 
     if (dynamicRateControl && adaptive) {

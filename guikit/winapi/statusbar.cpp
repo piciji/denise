@@ -43,7 +43,7 @@ auto pStatusBar::create() -> void {
         update();
 }
 
-auto CALLBACK pStatusBar::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT {
+auto pStatusBar::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT {
     StatusBar* statusBar = (StatusBar*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
     if(statusBar == nullptr) return DefWindowProc(hwnd, msg, wparam, lparam);
 
@@ -57,13 +57,13 @@ auto CALLBACK pStatusBar::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LP
             if (part && (part->popupMenu || part->onClick))
                 SetCursor(statusBar->p.hCursor);
 
-			if (part != p.hoverPart) {
-				p.hoverPart = part;
-
+//			if (part != p.hoverPart) {
+//				p.hoverPart = part;
+//
 //				p.setTooltip( part );
-
+//
 //              return 0;
-			}
+//			}
 
         } break;
 

@@ -130,9 +130,7 @@ struct GLX : public Video, OpenGL, RenderThread {
         glx.isDirect = glXIsDirect(display, glxcontext);
         XFree(vi);
         XSync(display, False);
-        OpenGL::init();
-        //clearCurrent();
-        return true;
+        return OpenGL::init();
     }
 
     auto init(uintptr_t _handle) -> bool {
@@ -141,9 +139,8 @@ struct GLX : public Video, OpenGL, RenderThread {
     }
     
     auto synchronize(bool state) -> void {
-        settings.synchronize = state;
-
         wait();
+        settings.synchronize = state;
         makeCurrent();
         if(glXSwapIntervalEXT) glXSwapIntervalEXT(display, glXGetCurrentDrawable(), settings.synchronize ? 1 : 0);
         else if(glXSwapInterval) glXSwapInterval(settings.synchronize ? 1 : 0);
@@ -282,7 +279,7 @@ struct GLX : public Video, OpenGL, RenderThread {
     auto redraw(bool disallowShader = false) -> void {
         if (settings.threaded)
             return;
-        //makeCurrent();
+
         resizeWindow();
 
         OpenGL::clear();
@@ -294,41 +291,40 @@ struct GLX : public Video, OpenGL, RenderThread {
 
         if(glx.doubleBuffer) glXSwapBuffers(display, glxwindow);
         if(settings.hardSync && settings.synchronize) glFinish();
-        //clearCurrent();
     }
 
     auto refresh() -> void {
 
-        RenderBuffer* renderBuffer = getBufferToRender();
-
-        if (!renderBuffer)
-            return;
-
         makeCurrent();
         OpenGL::clear();
-        renderBuffer->sharedMutex.lock();
-        width = renderBuffer->width;
-        height = renderBuffer->height;
 
-        if (renderBuffer->updated) {
-            renderBuffer->updated = false;
-            createTexture(renderBuffer);
+        bool disallowShader = false;
+        RenderBuffer* renderBuffer = getBufferToRender();
+
+        if (renderBuffer) {
+            renderBuffer->sharedMutex.lock();
+            width = renderBuffer->width;
+            height = renderBuffer->height;
+
+            if (renderBuffer->updated) {
+                renderBuffer->updated = false;
+                createTexture(renderBuffer);
+            }
+
+            OpenGL::updateTexture(renderBuffer);
+            disallowShader = renderBuffer->disallowShader;
+            renderBuffer->sharedMutex.unlock();
+
+            accessMutex.lock();
+            frames--;
+            accessMutex.unlock();
         }
-
-        OpenGL::updateTexture(renderBuffer);
-
-        bool disallowShader = renderBuffer->disallowShader;
-        renderBuffer->sharedMutex.unlock();
 
         OpenGL::refresh(disallowShader);
 #ifdef DRV_FREETYPE
         screenText.updateMessage();
         screenText.showText(outputWidth, outputHeight, -0.01, 0.01, OpenGLText::ALIGN_RIGHT | OpenGLText::VALIGN_BOTTOM);
 #endif
-
-        accessMutex.lock();
-        frames--;
-        accessMutex.unlock();
 
         if(glx.doubleBuffer) glXSwapBuffers(display, glxwindow);
         if(settings.hardSync && settings.synchronize) glFinish();
@@ -371,9 +367,7 @@ struct GLX : public Video, OpenGL, RenderThread {
 
     auto showMessage(std::string message, bool critical = false) -> void {
 #ifdef DRV_FREETYPE
-        makeCurrent();
         screenText.updateMessage(message, critical, !settings.threaded);
-        clearCurrent();
 #endif
     }
 
@@ -381,7 +375,10 @@ struct GLX : public Video, OpenGL, RenderThread {
 
     }
 
-    ~GLX() { term(); }
+    ~GLX() {
+        RenderThread::enable(false);
+        term();
+    }
 };
 
 }

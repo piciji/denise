@@ -1,15 +1,17 @@
 
+#include "thread/renderThread.h"
 #include "../tools/win.h"
 #include "../tools/tools.h"
 #include <d3d9.h>
 #include <d3dx9.h>
 #include <math.h>
+#include <cstring>
 
 namespace DRIVER {
 	
 #define D3DVERTEX (D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_TEX1)
 
-struct DVideo : Video {
+struct DVideo : Video, RenderThread {
     LPDIRECT3D9 lpD3D;
     D3DPRESENT_PARAMETERS d3dpp;
     LPDIRECT3DDEVICE9 lpD3DDevice;
@@ -23,9 +25,11 @@ struct DVideo : Video {
 	const unsigned FONT_WIDTH = 1024;
 	unsigned textureWidth = 0;
 	unsigned textureHeight = 0;
+    unsigned pitch;
 
     unsigned inputWidth, inputHeight;
 	RECT outScreen;
+    std::mutex noteMutex;
 
     struct {
         bool synchronize;
@@ -35,6 +39,7 @@ struct DVideo : Video {
         HWND parent;
 		bool hintExclusiveFullscreen = false;
         float exclusiveFullscreenRate = 0.0;
+        bool threaded = false;
     } settings;
 
     struct {
@@ -110,7 +115,7 @@ struct DVideo : Video {
 		vertex[2].v = vertex[3].v = (float) src_h / (float) tex_h;
 
 		vertex_buffer->Lock(0, sizeof (d3dvertex) * 4, (void**) &vertex_ptr, 0);
-		memcpy(vertex_ptr, vertex, sizeof (d3dvertex) * 4);
+		std::memcpy(vertex_ptr, vertex, sizeof (d3dvertex) * 4);
 		vertex_buffer->Unlock();
 
 		lpD3DDevice->SetStreamSource(0, vertex_buffer, 0, sizeof (d3dvertex));
@@ -198,11 +203,12 @@ struct DVideo : Video {
 		note.enable = false;
 
 		updateFilter();
-		clear();
+		_clear();
 		return true;		
 	}
 	
     auto term() -> void {
+        wait();
 		releaseResources();
 		dxRelease(lpD3DDevice);
 		dxRelease(lpD3D);
@@ -287,7 +293,8 @@ struct DVideo : Video {
 		}
 
 		lost = false;
-		recover();				
+		recover();
+        RenderThread::reset();
 		return true;
 	}
 
@@ -296,7 +303,14 @@ struct DVideo : Video {
         return init();
     }
 
+    auto resizeWindow() -> void {
+
+    }
+
     auto redraw(bool disallowShader = false) -> void {
+        if (settings.threaded)
+            return;
+
 		if (lost && !recover()) return;
 
 		unsigned outWidth = outScreen.right;
@@ -320,44 +334,14 @@ struct DVideo : Video {
 		lpD3DDevice->SetTexture(0, texture);
 
 		if (!disallowShader && caps.shader && effects.size() > 0) {
-			D3DXVECTOR4 inputSize;
-			inputSize.x = inputWidth;
-			inputSize.y = inputHeight;
-			inputSize.z = 1.0 / inputHeight;
-			inputSize.w = 1.0 / inputWidth;
-
-			D3DXVECTOR4 outputSize;
-			outputSize.x = outWidth;
-			outputSize.y = outHeight;
-			outputSize.z = 1.0 / outHeight;
-			outputSize.w = 1.0 / outWidth;
-
-			for (auto effect : effects) {
-				UINT passes;
-				effect->Begin(&passes, 0);
-				effect->SetTexture("texture0", texture);
-				effect->SetVector("inputSize", &inputSize);
-				effect->SetVector("outputSize", &outputSize);
-
-				for (unsigned pass = 0; pass < passes; pass++) {
-					effect->BeginPass(pass);
-					lpD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
-					effect->EndPass();
-				}
-				effect->End();
-			}
+            applyShader(outWidth, outHeight);
 		} else {
 			lpD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
 		}
-		
-		if (note.enable) {
-			RECT fontRect;
-			int pos = outLeft + outWidth - FONT_WIDTH;
-			if (pos < 0) pos = 0;
-			SetRect(&fontRect, pos, outHeight - 18, outLeft + outWidth - 5, outHeight - 0);
-			mFont->DrawTextW(NULL, note.message, -1, &fontRect, DT_RIGHT, note.fontColor);
-		}
-		
+
+        if (note.enable)
+            applyNote(outWidth, outHeight, outLeft);
+
 		lpD3DDevice->EndScene();
 
 		/* if (settings.synchronize) {
@@ -376,8 +360,107 @@ struct DVideo : Video {
 			lost = true;
 		}		
 	}
-	
+
+    auto refresh() -> void {
+        bool disallowShader = false;
+        RenderBuffer* renderBuffer = getBufferToRender();
+
+        if (renderBuffer) {
+            renderBuffer->sharedMutex.lock();
+
+            if (renderBuffer->updated) {
+                renderBuffer->updated = false;
+                resize(inputWidth = renderBuffer->width, inputHeight = renderBuffer->height);
+            }
+
+            texture->GetSurfaceLevel(0, &surface);
+            surface->LockRect(&d3dlr, 0, flags.lock);
+
+            std::memcpy( d3dlr.pBits, renderBuffer->data, textureWidth * textureHeight * 4 );
+
+            disallowShader = renderBuffer->disallowShader;
+
+            surface->UnlockRect();
+            dxRelease(surface);
+
+            renderBuffer->sharedMutex.unlock();
+
+            accessMutex.lock();
+            frames--;
+            accessMutex.unlock();
+        }
+
+        unsigned outWidth = outScreen.right;
+        unsigned outHeight = outScreen.bottom;
+        unsigned outLeft = outScreen.left;
+        unsigned outTop = outScreen.top;
+
+        lpD3DDevice->BeginScene();
+        setVertex(inputWidth, inputHeight, textureWidth, textureHeight, outLeft, outTop, outWidth, outHeight);
+        lpD3DDevice->SetTexture(0, texture);
+
+        if (!disallowShader && caps.shader && effects.size() > 0) {
+            applyShader(outWidth, outHeight);
+        } else {
+            lpD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+        }
+
+        noteMutex.lock();
+        if (note.enable)
+            applyNote(outWidth, outHeight, outLeft);
+        noteMutex.unlock();
+
+        lpD3DDevice->EndScene();
+
+        if (lpD3DDevice->Present(0, 0, 0, 0) == D3DERR_DEVICELOST) {
+            lost = true;
+        }
+    }
+
+    inline auto applyNote(unsigned outWidth, unsigned outHeight, unsigned outLeft ) -> void {
+        RECT fontRect;
+        int pos = outLeft + outWidth - FONT_WIDTH;
+        if (pos < 0)
+            pos = 0;
+        SetRect(&fontRect, pos, outHeight - 18, outLeft + outWidth - 5, outHeight - 0);
+        mFont->DrawTextW(NULL, note.message, -1, &fontRect, DT_RIGHT, note.fontColor);
+    }
+
+    auto applyShader(unsigned outWidth, unsigned outHeight) -> void {
+        D3DXVECTOR4 inputSize;
+        inputSize.x = inputWidth;
+        inputSize.y = inputHeight;
+        inputSize.z = 1.0 / inputHeight;
+        inputSize.w = 1.0 / inputWidth;
+
+        D3DXVECTOR4 outputSize;
+        outputSize.x = outWidth;
+        outputSize.y = outHeight;
+        outputSize.z = 1.0 / outHeight;
+        outputSize.w = 1.0 / outWidth;
+
+        for (auto effect : effects) {
+            UINT passes;
+            effect->Begin(&passes, 0);
+            effect->SetTexture("texture0", texture);
+            effect->SetVector("inputSize", &inputSize);
+            effect->SetVector("outputSize", &outputSize);
+
+            for (unsigned pass = 0; pass < passes; pass++) {
+                effect->BeginPass(pass);
+                lpD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+                effect->EndPass();
+            }
+            effect->End();
+        }
+    }
+
     auto clear() -> void {
+        wait();
+        _clear();
+    }
+
+    auto _clear() -> void {
 		if (!lpD3DDevice) return;
 		if (lost && !recover()) return;
 
@@ -395,11 +478,37 @@ struct DVideo : Video {
 		}
 	}
 	
-    auto lock(unsigned*& data, unsigned& pitch, unsigned width, unsigned height) -> bool {
-		if (lost && !recover()) return false;
+    auto lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height) -> bool {
+
+        if (lost && !recover()) {
+            RenderThread::reset();
+            return false;
+        }
+
+        if (settings.threaded) {
+
+            unsigned outWidth = outScreen.right;
+            unsigned outHeight = outScreen.bottom;
+
+            RECT windowsize = getDimension( settings.handle );
+
+            if ((outWidth != windowsize.right) || (outHeight != windowsize.bottom)) {
+                wait();
+                init();
+                setShader(settings.passes);
+                return false;
+            }
+
+            if( settings.synchronize && IsIconic( settings.parent ) ) {
+                wait();
+                return false;
+            }
+
+            return RenderThread::lock(data, pitch, _width, _height);
+        }
 		
-		if(width != inputWidth || height != inputHeight) {
-			resize( inputWidth = width, inputHeight = height );
+		if(_width != inputWidth || _height != inputHeight) {
+			resize( inputWidth = _width, inputHeight = _height );
 		}
 		
 		texture->GetSurfaceLevel(0, &surface);
@@ -411,7 +520,12 @@ struct DVideo : Video {
 		return true;		
 	}
 	
-    auto unlock() -> void {
+    auto unlock(bool disallowShader = false) -> void {
+        if (settings.threaded) {
+            RenderThread::unlock(disallowShader);
+            return;
+        }
+
         if (!surface)
             return;
 		// first we duplicate the last pixel in each line
@@ -432,10 +546,28 @@ struct DVideo : Video {
 		surface->UnlockRect();
 		dxRelease(surface);
 	}
-	
+
+    auto resize(RenderBuffer* renderBuffer, unsigned w, unsigned h) -> void {
+
+        w = roundUpPowerOfTwo( w + 1 );
+        h = roundUpPowerOfTwo( h );
+
+        if(d3dcaps.MaxTextureWidth < w)
+            w = d3dcaps.MaxTextureWidth;
+
+        if (d3dcaps.MaxTextureHeight < h)
+            h = d3dcaps.MaxTextureHeight;
+
+        renderBuffer->data = new uint32_t[w * h]();
+    }
+
+    auto calcPitch( unsigned _width ) -> unsigned {
+
+        return roundUpPowerOfTwo( _width + 1 );
+    }
+
 	auto resize(unsigned width, unsigned height) -> void {
-        // width + 1: read the comment directly above of this 
-        
+
         width = roundUpPowerOfTwo( width + 1 );
 		height = roundUpPowerOfTwo( height );
         
@@ -459,6 +591,7 @@ struct DVideo : Video {
 	}	  
 	
     auto synchronize(bool state) -> void {
+        wait();
         settings.synchronize = state;
         if (!settings.handle) return;
         init();
@@ -497,17 +630,39 @@ struct DVideo : Video {
 		settings.hintExclusiveFullscreen = state;
         settings.exclusiveFullscreenRate = rate;
 	}
-	
+
+    auto setThreaded(bool state) -> void {
+
+        if (state != settings.threaded) {
+            wait();
+            RenderThread::enable(state);
+
+            RenderThread::reset();
+            textureWidth = 0, textureHeight = 0;
+            lost = true;
+            settings.threaded = state;
+        }
+    }
+
 	auto showMessage(std::string message, bool critical = false) -> void {
+        if (settings.threaded)
+            noteMutex.lock();
+
 		note.enable = !message.empty();
-		if (!note.enable) return;
-		
+		if (!note.enable) {
+            goto out;
+        }
+
 		note.message = Win::utf16_t( message );
 
 		if (critical)
 			note.fontColor = D3DCOLOR_ARGB(255, 155, 0, 0);
 		else
 			note.fontColor = D3DCOLOR_ARGB(155, 255, 255, 255);
+
+        out:
+        if (settings.threaded)
+            noteMutex.unlock();
 	}
     
     auto shaderFormat() -> ShaderType { return ShaderType::HLSL; }
@@ -533,7 +688,10 @@ struct DVideo : Video {
 		AddFontMemResourceEx( &sourceCodePro, sizeof(sourceCodePro), NULL, &nFonts );
 	}
 	
-    ~DVideo() { term(); }
+    ~DVideo() {
+        RenderThread::enable(false);
+        term();
+    }
 };
 
 #undef D3DVERTEX

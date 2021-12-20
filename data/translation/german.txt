@@ -649,4 +649,3 @@ Set speed = frei wählbare Geschwindigkeit (aktivierbar über FPS Anzeige in Sta
 render thread = Render Thread
 render thread tooltip = Video wird in einem extra Thread gerendert.
 Apply = Anwenden
-switch profile = Profil wechseln

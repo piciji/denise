@@ -15,6 +15,7 @@ namespace DRIVER {
         float* dataFloat = nullptr;
         unsigned width = 0;
         unsigned height = 0;
+        unsigned pitch = 0;
         bool updated = false;
         bool disallowShader = false;
     };
@@ -53,6 +54,7 @@ namespace DRIVER {
 
         virtual auto refresh() -> void = 0;
         virtual auto resize(RenderBuffer* _buffer, unsigned _width, unsigned _height) -> void = 0;
+        virtual auto calcPitch( unsigned _width ) -> unsigned { return _width; }
     };
 
 }

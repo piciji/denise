@@ -5,7 +5,7 @@
 
 ifeq ($(platform),windows)
     uiflags = $(cppflags) -DGUIKIT_WINAPI
-    uilink = -lkernel32 -luser32 -lgdi32 -lole32 -lcomctl32 -lcomdlg32 -luxtheme -lshlwapi -lmsimg32 -luuid -ldwmapi
+    uilink = -lkernel32 -luser32 -lgdi32 -lole32 -lcomctl32 -lcomdlg32 -luxtheme -lshlwapi -lmsimg32 -luuid -ldwmapi -lwinmm
 
 else ifeq ($(platform),macosx)
     uiflags = $(objcppflags) -DGUIKIT_COCOA

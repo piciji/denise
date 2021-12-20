@@ -156,7 +156,7 @@ struct DI_IDENT_CORE : DI_IDENT {
 		hidKeyboard->id = 0;
 		hidMouse->id = 1;
 
-        CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+        //CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
         HRESULT res;
         
 #if DIRECTINPUT_VERSION == 0x500   

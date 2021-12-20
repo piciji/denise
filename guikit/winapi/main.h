@@ -136,7 +136,7 @@ struct pStatusBar {
     
     auto onClick(LPARAM lparam) -> void;
     auto getHoverPart(int xPos) -> StatusBar::Part*;
-    static auto CALLBACK subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
+    static auto subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
     
     pStatusBar(StatusBar& statusBar);
     ~pStatusBar();

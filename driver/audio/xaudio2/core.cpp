@@ -172,7 +172,7 @@ struct XA_IDENT_CORE : XA_IDENT, public IXAudio2VoiceCallback {
         // the overall size is dividable by chunk size
         chunkSizeAll = chunkSize * XA_CHUNKS;
     
-        CoInitializeEx(0, COINIT_MULTITHREADED);
+        //CoInitializeEx(0, COINIT_MULTITHREADED);
 
         if ( FAILED(XAudio2Create( &pXAudio2, 0, XAUDIO2_DEFAULT_PROCESSOR)) )
             goto error;

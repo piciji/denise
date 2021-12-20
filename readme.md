@@ -18,6 +18,10 @@ Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trade
 * precise FPS counter and speed selection menu
     * define custom speeds
     * define decimal place for FPS counter
+* add addaptive sync to temporarly disable Vsync when emulation speed overrun monitor refresh
+* add option to render in a separate thread
+    * keeps Vsync usable when emulation speed overrun monitor refresh
+     
 
 ## 1.1.2
 * P64 support

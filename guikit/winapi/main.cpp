@@ -1,5 +1,6 @@
 #include "main.h"
 #include "../tools/crc32.h"
+#include <mmsystem.h>
 
 namespace GUIKIT {
 
@@ -59,6 +60,8 @@ auto pApplication::processMessage(MSG& msg) -> void {
 }
 
 auto pApplication::quit() -> void {
+    timeEndPeriod(1);
+    CoUninitialize();
     PostQuitMessage(0);
     
     if (uxTheme)
@@ -73,6 +76,9 @@ FN_BeginBufferedPaint pApplication::pfnBeginBufferedPaint = nullptr;
 FN_EndBufferedPaint pApplication::pfnEndBufferedPaint = nullptr;
 
 auto pApplication::initialize() -> void {
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    timeBeginPeriod(1);
+    SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
     CoInitialize(0);
     InitCommonControls();
 
@@ -585,6 +591,7 @@ auto pWindow::onClose() -> void {
 void pWindow::onMove() {
     if(locked || window.fullScreen()) return;
 
+    timerStatusUpdate.setInterval(300);
     timerStatusUpdate.setEnabled();
 
     Geometry windowGeometry = geometry();
@@ -597,9 +604,6 @@ void pWindow::onMove() {
 auto pWindow::onSize() -> void {
     if(locked || window.fullScreen()) return;
 
-    if (window.statusBar())
-        window.statusBar()->p.updatePosition();
-
     Geometry windowGeometry = geometry();
     window.state.geometry.width = windowGeometry.width;
     window.state.geometry.height = windowGeometry.height;
@@ -610,6 +614,9 @@ auto pWindow::onSize() -> void {
         geom.x = geom.y = 0;
         window.state.layout->setGeometry(geom);
     }
+
+    if (window.statusBar())
+        window.statusBar()->p.updatePosition();
 
     if(window.onSize) window.onSize();
 }
