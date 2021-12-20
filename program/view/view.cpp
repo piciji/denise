@@ -163,6 +163,10 @@ auto View::build() -> void {
 		if (activeEmulator && !text.empty())
 			activeEmulator->pasteText(text);
 	};
+
+    GUIKIT::Application::onDisplayChange = [this]() {
+        displayChangeTimer.setEnabled();
+    };
         
 	placeholderTimer.setInterval(40);
 	placeholderTimer.onFinished = [this]() {
@@ -172,6 +176,12 @@ auto View::build() -> void {
 	};
 	
 	anyloadTimer.setInterval(40);
+    displayChangeTimer.setInterval(300);
+    displayChangeTimer.onFinished = [this]() {
+        displayChangeTimer.setEnabled(false);
+        //statusHandler->setMessage( std::to_string(GUIKIT::Monitor::getCurrentRefreshRate()) );
+        program->setVideoSynchronize();
+    };
 	
 	viewport.onMousePress = [this](GUIKIT::Mouse::Button button) {
 		

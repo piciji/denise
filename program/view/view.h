@@ -8,6 +8,7 @@ struct View : public GUIKIT::Window {
     Message* message;
 	GUIKIT::Timer placeholderTimer;
 	GUIKIT::Timer anyloadTimer;
+	GUIKIT::Timer displayChangeTimer;
     GUIKIT::StatusBar statusBar;
     GUIKIT::Image placeholder;    
         

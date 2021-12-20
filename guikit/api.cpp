@@ -51,6 +51,7 @@ int Application::exitCode = 0;
 std::string Application::name;
 std::function<void ()> Application::loop = nullptr;
 std::function<void (std::string text)> Application::onClipboardRequest = nullptr;
+std::function<void ()> Application::onDisplayChange = nullptr;
 
 std::function<void ()> Application::Cocoa::onAbout;
 std::function<void ()> Application::Cocoa::onPreferences;

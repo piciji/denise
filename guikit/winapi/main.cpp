@@ -76,10 +76,9 @@ FN_BeginBufferedPaint pApplication::pfnBeginBufferedPaint = nullptr;
 FN_EndBufferedPaint pApplication::pfnEndBufferedPaint = nullptr;
 
 auto pApplication::initialize() -> void {
-    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED); // same as CoInitialize(0)
     timeBeginPeriod(1);
     SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
-    CoInitialize(0);
     InitCommonControls();
 
     WNDCLASS wc;
@@ -290,6 +289,11 @@ auto CALLBACK pApplication::wndProc(WNDPROC windowProc, HWND hwnd, UINT msg, WPA
             }            
             break;
         }
+        case WM_DISPLAYCHANGE: {
+            if (Application::onDisplayChange)
+                Application::onDisplayChange();
+        }
+        break;
     }
     return windowProc(hwnd, msg, wparam, lparam);
 }

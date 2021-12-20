@@ -140,6 +140,7 @@ struct CustomFont {
 struct Application {    
     static std::function<void ()> loop;
 	static std::function<void (std::string text)> onClipboardRequest;
+    static std::function<void ()> onDisplayChange;
 
     static auto initialize() -> void;
     static auto run() -> void;
