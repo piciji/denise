@@ -153,6 +153,14 @@ namespace DRIVER {
 
         return &renderBuffers[fetchPos++];
     }
+    
+    auto RenderThread::getLastBufferToRender() -> RenderBuffer* {
+        
+        if (fetchPos)
+            return &renderBuffers[fetchPos-1];
+        
+        return nullptr;
+    }
 
     auto RenderThread::wait() -> void {
         // needed for threaded CRT via CPU rendering
@@ -223,6 +231,8 @@ namespace DRIVER {
         SetPriorityClass( (HANDLE)h, REALTIME_PRIORITY_CLASS);
         SetThreadPriority( (HANDLE)h, THREAD_PRIORITY_TIME_CRITICAL);
 
+#elseif defined( __APPLE__ )
+        
 #else
         sched_param sch_params;
         sch_params.sched_priority = 99;

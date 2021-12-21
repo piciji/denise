@@ -179,7 +179,7 @@ auto View::build() -> void {
     displayChangeTimer.setInterval(300);
     displayChangeTimer.onFinished = [this]() {
         displayChangeTimer.setEnabled(false);
-        //statusHandler->setMessage( std::to_string(GUIKIT::Monitor::getCurrentRefreshRate()) );
+        statusHandler->setMessage( std::to_string(GUIKIT::Monitor::getCurrentRefreshRate()) );
         program->setVideoSynchronize();
     };
 	
@@ -269,7 +269,8 @@ auto View::setFullScreen(bool fullScreen) -> void {
 	else inputDriver->mUnacquire();	
     
     GUIKIT::Window::setFullScreen(fullScreen);
-    program->setVideoSynchronize();
+    displayChangeTimer.setEnabled();
+    //program->setVideoSynchronize();
 }
 
 auto View::exclusiveFullscreen() -> bool {

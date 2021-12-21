@@ -130,6 +130,11 @@ struct CGL : public Video, OpenGL, RenderThread {
     void redraw(bool disallowShader = false) {
         if (settings.threaded)
             return;
+        
+        _redraw(disallowShader);
+    }
+    
+    void _redraw(bool disallowShader, RenderBuffer* renderBuffer = nullptr) {
 
         @autoreleasepool {
             if([view lockFocusIfCanDraw]) {
@@ -137,7 +142,7 @@ struct CGL : public Video, OpenGL, RenderThread {
                 outputWidth = area.size.width, outputHeight = area.size.height;
 
                 OpenGL::clear();
-                OpenGLSurface::updateTexture();
+                OpenGLSurface::updateTexture(renderBuffer);
                 OpenGL::refresh(disallowShader);
 #ifdef DRV_FREETYPE
                 screenText.showText(outputWidth, outputHeight, -0.01, 0.01, OpenGLText::ALIGN_RIGHT | OpenGLText::VALIGN_BOTTOM);
@@ -193,7 +198,7 @@ struct CGL : public Video, OpenGL, RenderThread {
             clearCurrent();
         }
     }
-
+    
     void synchronize(bool state) {
         wait();
         settings.synchronize = state;
@@ -294,7 +299,7 @@ struct CGL : public Video, OpenGL, RenderThread {
 
     auto clearCurrent() -> void {
         if (settings.threaded)
-            [[view openGLContext] clearCurrentContext];
+            [NSOpenGLContext clearCurrentContext];
     }
 
     CGL() {
@@ -320,7 +325,7 @@ struct CGL : public Video, OpenGL, RenderThread {
 }
 
 -(void) reshape {
-    video->redraw();
+    video->_redraw(true, video->settings.threaded ? video->getLastBufferToRender() : nullptr);
 }
 
 @end

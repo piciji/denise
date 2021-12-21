@@ -26,6 +26,7 @@ struct pWindow {
     bool fullScreenToggleDelay = false;
     bool keepMenuVisibility = false;
     NSCursor* customCursor = nullptr;
+    BackgroundView* backgroundView = nullptr;
 
     auto append(Menu& menu) -> void;
     auto append(Widget& widget) -> void;

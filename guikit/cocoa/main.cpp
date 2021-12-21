@@ -155,6 +155,7 @@
         [self setAutorecalculatesKeyViewLoop: YES];
     }
     
+    
     if(GUIKIT::Application::loop) {
         GUIKIT::pApplication::oberserveMenu( menuBarContext );
     }
@@ -287,6 +288,25 @@
 
 @end
 
+@implementation BackgroundView : NSView
+
+-(id) initWith:(unsigned)_color {
+    if(self = [super initWithFrame:NSMakeRect(0, 0, 0, 0)]) {
+        bgcolor = _color;
+    }
+    return self;
+}
+
+-(void) setColor:(unsigned) color {
+    bgcolor = color;
+}
+
+-(void) drawRect:(NSRect)rect {
+    [GUIKIT::pHelper::getColor(bgcolor) setFill];
+    NSRectFillUsingOperation(rect, NSCompositeSourceOver);
+}
+@end
+
 namespace GUIKIT {
 
 CocoaDelegate* pApplication::cocoaDelegate = nullptr;
@@ -342,6 +362,11 @@ auto pApplication::quit() -> void {
 
 auto pApplication::initialize() -> void {
     @autoreleasepool {
+        
+        [[NSProcessInfo processInfo] beginActivityWithOptions: NSActivityUserInitiated | NSActivityLatencyCritical reason: @"video synchron output"];
+        
+        [[NSThread currentThread] setQualityOfService: NSQualityOfServiceUserInteractive];
+        
         [NSApplication sharedApplication];
         cocoaDelegate = [[CocoaDelegate alloc] init];
         [NSApp setDelegate:cocoaDelegate];
@@ -484,12 +509,25 @@ auto pWindow::setMenuVisible(bool visible) -> void {
 
 auto pWindow::setBackgroundColor(unsigned color) -> void {
     @autoreleasepool {
+        
+        if (!backgroundView) {
+            backgroundView = [[BackgroundView alloc] initWith: color];
+            [[cocoaWindow contentView] addSubview: backgroundView positioned:NSWindowBelow relativeTo:nil];
+
+        } else
+            [backgroundView setColor: color];
+        
+        [backgroundView setFrame:[[cocoaWindow contentView] bounds]];
+        
+        /*
+         dont use this, breaks VSYNC in openGL
         NSView* _view = [cocoaWindow contentView];
         
         [_view setWantsLayer:YES];
         
         [_view.layer setBackgroundColor:pHelper::getColor(color).CGColor
          ];
+         */
     }
 }
 
@@ -593,6 +631,9 @@ auto pWindow::sizeEvent() -> void {
     if (window.statusBar())
         window.statusBar()->p.reposition();
 
+    if (backgroundView)
+        [backgroundView setFrame:[[cocoaWindow contentView] bounds]];
+        
     if(!locked && window.onSize) window.onSize();
 }
 

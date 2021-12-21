@@ -38,6 +38,7 @@ namespace DRIVER {
 
         auto getBufferToDraw() -> RenderBuffer*;
         auto getBufferToRender() -> RenderBuffer*;
+        auto getLastBufferToRender() -> RenderBuffer*;
 
         auto initWorker() -> void;
         auto deleteBuffer(RenderBuffer* buffer) -> void;

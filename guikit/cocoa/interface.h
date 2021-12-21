@@ -151,6 +151,12 @@
 }
 @end
 
+@interface BackgroundView : NSView {
+@public
+    unsigned bgcolor;
+}
+@end
+
 @interface CocoaListViewContent : NSTableView {
     GUIKIT::ListView* listView;
     NSTrackingArea* trackingArea;
