@@ -230,6 +230,9 @@ auto Program::fastForward( bool activate, bool aggressive ) -> void {
     VideoManager::CrtMode crtMode = (VideoManager::CrtMode)settings->get<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::None, {0u, 2u});
 
     if (activate) {
+        warp.active = true;
+        warp.aggressive = aggressive;
+
         if (videoDriver->hasSynchronized())
             videoDriver->synchronize( false );
 
@@ -245,6 +248,7 @@ auto Program::fastForward( bool activate, bool aggressive ) -> void {
             forward |= (unsigned)Emulator::Interface::FastForward::NoVideoSequencer;
 
     } else {
+        warp.active = false;
         VideoManager::CrtMode crtModeTemp = (VideoManager::CrtMode)globalSettings->get<unsigned>("video_crt_temp", (unsigned)VideoManager::CrtMode::None, {0u, 2u});
 
         program->setVideoSynchronize();
@@ -265,11 +269,6 @@ auto Program::fastForward( bool activate, bool aggressive ) -> void {
         if (audioManager)
             audioManager->drive.reset();
     }
-
-    if (activate)
-        warp.aggressive = aggressive;
-
-    warp.active = activate;
 
     if (statusHandler)
         statusHandler->resetFrameCounter();

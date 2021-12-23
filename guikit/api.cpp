@@ -1517,8 +1517,8 @@ auto System::printToCmd( std::string str ) -> void {
     pSystem::printToCmd( str );
 }
 
-auto Thread::setPriorityRealtime( std::thread& th ) -> void {
-    pThread::setThreadPriorityRealtime( th );
+auto ThreadPriority::setPriority( Mode mode, float minProcessingTimeInMilliSeconds, float maxProcessingTimeInMilliSeconds ) -> bool {
+    return pThreadPriority::setPriority( mode, minProcessingTimeInMilliSeconds, maxProcessingTimeInMilliSeconds );
 }
 
 auto Monitor::getDisplays() -> std::vector<Property> {

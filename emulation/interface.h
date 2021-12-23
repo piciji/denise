@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <functional>
+#include <thread>
 
 namespace Emulator {
     
@@ -52,6 +53,7 @@ struct Interface {
     enum class FastForward { NoAudioOut = 1, NoVideoOut = 2, ReduceVideoOutput = 4, NoVideoSequencer = 8, SlowSpeed = 16 };
     enum class DriveSound { FloppyInsert = 1, FloppyEject = 2, FloppySpinUp = 3, FloppySpinDown = 4, FloppySpin = 5,
         FloppyHeadBang = 6, FloppyStep = 7 };
+    enum class ThreadPriority { Normal = 0, High = 1, Realtime = 2 };
 
     std::string ident;
     
@@ -315,8 +317,9 @@ struct Interface {
         virtual auto questionToWrite(Media*) -> bool { return false; }
         virtual auto informDriveLoading(bool) -> void {}
         virtual auto autoStartFinish(bool) -> void {}
-        virtual auto mixDriveSound( Media*, DriveSound, uint8_t data ) -> void {}
+        virtual auto mixDriveSound( Media*, DriveSound, uint8_t ) -> void {}
         virtual auto jam(Media*) -> void {}
+        virtual auto setThreadPriority(ThreadPriority, float, float) -> bool { return false; }
     };
     Bind* bind = nullptr;
 
@@ -399,6 +402,10 @@ struct Interface {
 
     auto jam( Media* media = nullptr ) -> void {
         bind->jam( media );
+    }
+
+    auto setThreadPriority(ThreadPriority priority, float minProcessingTimeInMilliSeconds = 0.0, float maxProcessingTimeInMilliSeconds = 0.0) -> bool {
+        return bind->setThreadPriority( priority, minProcessingTimeInMilliSeconds, maxProcessingTimeInMilliSeconds);
     }
 
     template<typename T> auto log(T data, bool newLine = true, bool asHex = false) -> void {			

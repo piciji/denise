@@ -31,6 +31,7 @@ struct IecBus {
     int64_t cpuCylcesPerSecond;
     std::atomic<bool> ready;
     std::atomic<bool> idle;
+    std::atomic<bool> updatePriority;
     bool threaded = false;
     uint8_t drivesConnected;
     std::condition_variable cv;

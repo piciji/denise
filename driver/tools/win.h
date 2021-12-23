@@ -188,5 +188,3 @@ struct Win {
     }
 
 };
-
-//unsigned Win::version = Win::getVersion();

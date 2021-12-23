@@ -430,14 +430,23 @@ auto getVersion() -> unsigned {
 	return (versionInfo.dwMajorVersion << 8) | versionInfo.dwMinorVersion;
 }
 
+auto pThreadPriority::setPriority( ThreadPriority::Mode mode, float minProcessingTimeInMilliSeconds, float maxProcessingTimeInMilliSeconds ) -> bool {
 
-auto pThread::setThreadPriorityRealtime( std::thread& th ) -> void {
-    
-    std::thread::native_handle_type h = th.native_handle();
-    
-    SetPriorityClass((HANDLE) h, REALTIME_PRIORITY_CLASS);
-    
-    SetThreadPriority((HANDLE) h, THREAD_PRIORITY_TIME_CRITICAL);    
+    int prio = 0;
+    switch(mode) {
+        default:
+        case ThreadPriority::Mode::Normal:
+            prio = THREAD_PRIORITY_NORMAL;
+            break;
+        case ThreadPriority::Mode::High:
+            prio = THREAD_PRIORITY_HIGHEST;
+            break;
+        case ThreadPriority::Mode::Realtime:
+            prio = THREAD_PRIORITY_TIME_CRITICAL;
+            break;
+    }
+
+    return SetThreadPriority(GetCurrentThread(), prio) != 0;
 }
 
 inline auto getDim( RECT& rect ) -> Size {

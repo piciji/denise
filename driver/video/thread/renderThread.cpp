@@ -1,11 +1,7 @@
 
 #include "renderThread.h"
-
-#if defined(_WIN32)
-#include <windows.h>
-#else
-#include <pthread.h>
-#endif
+#include "../../tools/threadPriority.h"
+// #include "../../../program/tools/logger.h"
 
 namespace DRIVER {
 
@@ -178,7 +174,7 @@ namespace DRIVER {
             while (kill) {
                 std::this_thread::yield();
             }
-            RenderThread::initWorker();
+            initWorker();
         } else {
             kill = true;
             cv.notify_one();
@@ -193,6 +189,9 @@ namespace DRIVER {
             std::mutex cvM;
             std::unique_lock<std::mutex> lk(cvM);
 
+            if (ThreadPriority::setPriority( ThreadPriority::Mode::Realtime, 3.0, 5.0 )) {
+                // logger->log("increased render thread prio");
+            }
             kill = false;
             ready = false;
 
@@ -218,30 +217,7 @@ namespace DRIVER {
             }
         });
 
-        setThreadPriorityRealtime( worker );
-
         worker.detach();
-    }
-
-    auto RenderThread::setThreadPriorityRealtime( std::thread& th ) -> void {
-
-#if defined(_WIN32)
-
-        std::thread::native_handle_type h = th.native_handle();
-        SetPriorityClass( (HANDLE)h, REALTIME_PRIORITY_CLASS);
-        SetThreadPriority( (HANDLE)h, THREAD_PRIORITY_TIME_CRITICAL);
-
-#elseif defined( __APPLE__ )
-        
-#else
-        sched_param sch_params;
-        sch_params.sched_priority = 99;
-
-        if (pthread_setschedparam( th.native_handle(), SCHED_RR, &sch_params)) {
-
-        }
-
-#endif
     }
 
     RenderThread::~RenderThread() {

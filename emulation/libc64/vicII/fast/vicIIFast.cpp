@@ -4,7 +4,6 @@
 #include "scanline.cpp"
 #include "silence.cpp"
 #include "register.cpp"
-#include "../../../tools/thread.h"
 
 namespace LIBC64 {  
 

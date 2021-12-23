@@ -193,6 +193,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
     activeEmulator = emulator;
     auto settings = getSettings( emulator );
     activeVideoManager = VideoManager::getInstance( emulator );
+    activeVideoManager->updateCrtThreads();
 	uint8_t* data;
     std::vector<std::string> brokenPaths;
 
@@ -642,4 +643,16 @@ auto Program::getEmulator( std::string ident ) -> Emulator::Interface* {
     }
     
     return nullptr;
+}
+
+auto Program::setThreadPriority( Emulator::Interface::ThreadPriority priority, float minProcessingTimeInMilliSeconds, float maxProcessingTimeInMilliSeconds) -> bool {
+
+    bool result = GUIKIT::ThreadPriority::setPriority( (GUIKIT::ThreadPriority::Mode)priority, minProcessingTimeInMilliSeconds, maxProcessingTimeInMilliSeconds );
+
+    if (!result) {
+        if (priority == Emulator::Interface::ThreadPriority::Realtime)
+            result = GUIKIT::ThreadPriority::setPriority(GUIKIT::ThreadPriority::Mode::High);
+    }
+
+    return result;
 }

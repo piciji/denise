@@ -327,14 +327,51 @@ auto pHelper::getColor(unsigned color) -> NSColor* {
 
 }
 
-auto pThread::setThreadPriorityRealtime( std::thread& th ) -> void {
-    
-    sched_param sch_params;
-    sch_params.sched_priority = 99;
+auto pThreadPriority::setPriority( ThreadPriority::Mode mode, float minProcessingTimeInMilliSeconds, float maxProcessingTimeInMilliSeconds ) -> bool {
 
-    if (pthread_setschedparam( th.native_handle(), SCHED_RR, &sch_params)) {
+    kern_return_t result;
+    mach_port_t machId = pthread_mach_thread_np( pthread_self() );
 
-    } 
+    thread_extended_policy_data_t extended;
+    policy.timeshare = (mode == ThreadPriority::Mode::Normal) ? 1 : 0;
+    result = thread_policy_set( machId, THREAD_EXTENDED_POLICY, (thread_policy_t)&extended, THREAD_EXTENDED_POLICY_COUNT);
+
+    if (result != KERN_SUCCESS) {
+        mach_error("thread policy error", result);
+    }
+
+    switch(mode) {
+        default:
+        case ThreadPriority::Mode::Normal: {
+            thread_standard_policy_data_t standard;
+            result = thread_policy_set( machId, THREAD_STANDARD_POLICY, (thread_policy_t)&standard, THREAD_STANDARD_POLICY_COUNT);
+        } break;
+        case ThreadPriority::Mode::High:
+            thread_precedence_policy_data_t precedence;
+            precedence.importance = 63;
+            result = thread_policy_set( machId, THREAD_PRECEDENCE_POLICY, (thread_policy_t)&precedence, THREAD_PRECEDENCE_POLICY_COUNT);
+            break;
+        case ThreadPriority::Mode::Realtime: {
+            mach_timebase_info_data_t tb_info;
+            mach_timebase_info(&tb_info);
+            double _clock = ((double)tb_info.denom / (double)tb_info.numer) * 1000.0;
+
+            thread_time_constraint_policy_data_t timeConstraints;
+            timeConstraints.period = 0;
+            timeConstraints.computation = (unsigned)(minProcessingTimeInMilliSeconds * _clock * 1000.0);
+            timeConstraints.constraint = (unsigned)(maxProcessingTimeInMilliSeconds * _clock * 1000.0);
+            timeConstraints.preemptible = false;
+
+            result = thread_policy_set( machId, THREAD_TIME_CONSTRAINT_POLICY, (thread_policy_t)&timeConstraints, THREAD_TIME_CONSTRAINT_POLICY_COUNT);
+        } break;
+    }
+
+    if (result != KERN_SUCCESS) {
+        mach_error("thread policy error", result);
+        return false;
+    }
+
+    return true;
 }
     
 }

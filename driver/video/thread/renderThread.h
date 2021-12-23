@@ -50,7 +50,6 @@ namespace DRIVER {
         auto lock(float*& data, unsigned& pitch, unsigned _width, unsigned _height) -> bool;
         auto unlock(bool disallowShader = false) -> void;
         auto reset() -> void;
-        auto setThreadPriorityRealtime( std::thread& th ) -> void;
         auto wait() -> void;
 
         virtual auto refresh() -> void = 0;

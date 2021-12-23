@@ -1,6 +1,5 @@
 
 #include "iec.h"
-#include "../../tools/thread.h"
 
 namespace LIBC64 {
     
@@ -60,39 +59,44 @@ IecBus::IecBus(Emulator::Interface::MediaGroup* mediaGroup) {
         
         drives.push_back( drive );
     }     
-    
+
     idle = true;
+    updatePriority = true;
     powerOn = false;
-        
-    std::thread worker( [this] {       
-               
+
+    std::thread worker( [this] {
+
         std::chrono::milliseconds duration(5);
         std::mutex cvM;
         std::unique_lock<std::mutex> lk(cvM);
-        
+
         while(1) {
-            
+
             ready = false;
-            
+
+            if (updatePriority) {
+                system->interface->setThreadPriority(
+                        idle ? Emulator::Interface::ThreadPriority::High : Emulator::Interface::ThreadPriority::Realtime, 0.1, 0.2 );
+                updatePriority = false;
+            }
+
             // let drive thread wait until main thread signals a safe start
             while (!ready.load()) {
 
                 if (idle.load()) {
                     if (cv.wait_for(lk, duration, [this](){ return ready.load(); }))
-                        break;                    
+                        break;
                 } else
-                    std::this_thread::yield();                         
+                    std::this_thread::yield();
             }
-            
+
             run();
-        }       
-      
-    } );    
-    
-    Emulator::setThreadPriorityRealtime( worker );
-    
+        }
+
+    } );
+
     worker.detach();
-}  
+}
 
 IecBus::~IecBus() {
     
@@ -112,6 +116,15 @@ auto IecBus::setFastForward( bool state ) -> void {
     cpuBurner = (state && (drivesConnected > 1) ) ? state : cpuBurnerRequested;
     
     updateIdleState();          
+}
+
+auto IecBus::updateIdleState() -> void {
+    bool _idle = idle;
+    idle = (powerOn && drivesConnected > 0) ? !cpuBurner : true;
+
+    if (_idle != idle) {
+        updatePriority = true;
+    }
 }
 
 auto IecBus::run() -> void {
@@ -321,6 +334,7 @@ auto IecBus::writeParallelHandshake() -> void {
 auto IecBus::powerOff() -> void {
     
     idle = true;
+    updatePriority = true;
     powerOn = false;
     waitForDrives();
     
@@ -543,11 +557,6 @@ auto IecBus::selectListing( Emulator::Interface::Media* media, unsigned pos, boo
 auto IecBus::selectListing( Emulator::Interface::Media* media,  std::string fileName, bool useTraps ) -> void {
 
     drives[ media->id ]->structure.selectListing( fileName, useTraps );
-}
-
-auto IecBus::updateIdleState() -> void {
-    
-    idle = (powerOn && drivesConnected > 0) ? !cpuBurner : true;
 }
 
 auto IecBus::serialize(Emulator::Serializer& s) -> void {

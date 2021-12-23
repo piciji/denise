@@ -438,12 +438,25 @@ auto pFont::convertCss(GtkWidget* widget, PangoFontDescription* font) -> std::st
 	return css;			
 }
 
-auto pThread::setThreadPriorityRealtime( std::thread& th ) -> void {
-    
+auto pThreadPriority::setPriority( ThreadPriority::Mode mode, float minProcessingTimeInMilliSeconds, float maxProcessingTimeInMilliSeconds ) -> bool {
+
+    const int policy = SCHED_RR;
+    const int minPrio = sched_get_priority_min(policy);
+    const int maxPrio = sched_get_priority_max(policy);
     sched_param sch_params;
-    sch_params.sched_priority = 99;
 
-    if (pthread_setschedparam( th.native_handle(), SCHED_RR, &sch_params)) {
+    switch(mode) {
+        default:
+        case ThreadPriority::Mode::Normal:
+            sch_params.sched_priority = (minPrio + maxPrio) / 2;
+            break;
+        case ThreadPriority::Mode::High:
+            sch_params.sched_priority = maxPrio - 3;
+            break;
+        case ThreadPriority::Mode::Realtime:
+            sch_params.sched_priority = maxPrio - 1;
+            break;
+    }
 
-    } 
+    return pthread_setschedparam( pthread_self(), policy, &sch_params) == 0;
 }

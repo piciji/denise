@@ -55,7 +55,6 @@ struct Audio {
     virtual auto setFrequency(unsigned value) -> void {}
     virtual auto setLatency(unsigned value) -> void {}
     virtual auto synchronize(bool state) -> void {}
-    virtual auto setSample( double samples[] ) -> bool { return false; }
     virtual auto addSamples( const uint8_t* buffer, unsigned size) -> void {}
     virtual auto getCenterBufferDeviation() -> double { return 0.0; }
     virtual auto expectFloatingPoint() -> bool { return true; }

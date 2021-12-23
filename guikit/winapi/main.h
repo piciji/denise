@@ -812,8 +812,8 @@ struct pMonitor {
     static auto getRefreshRate( unsigned displayId, unsigned settingId ) -> float;
 };
 
-struct pThread {
-    static auto setThreadPriorityRealtime(std::thread& th) -> void;
+struct pThreadPriority {
+    static auto setPriority(ThreadPriority::Mode mode, float minProcessingTimeInMilliSeconds = 0, float maxProcessingTimeInMilliSeconds = 0) -> bool;
 };
 
 struct utf16_t {

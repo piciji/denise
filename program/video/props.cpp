@@ -25,7 +25,10 @@ auto VideoManager::setThreaded(bool state) -> void {
 		videoManager->emulator->setFinishVblankCallback( (videoManager->crtMode == CrtMode::Cpu) && threaded );
 		videoManager->emulator->setLineCallback( (videoManager->crtMode == CrtMode::Cpu) && threaded );		
 		videoManager->reinitThread();
-	}		
+
+        if (!program->warp.active)
+            videoManager->enableCrtThread((videoManager->crtMode == CrtMode::Cpu) && threaded && (videoManager == activeVideoManager));
+	}
 }
 
 auto VideoManager::setShaderInputPrecision(bool state) -> void {
@@ -50,12 +53,17 @@ auto VideoManager::useColorSpectrum(bool state) -> void {
 auto VideoManager::setCrtMode(CrtMode _mode) -> void {        
     unlockDriver();
     
-    this->crtMode = _mode;	
-	emulator->setFinishVblankCallback( (_mode == CrtMode::Cpu) && threaded );
-	emulator->setLineCallback( (_mode == CrtMode::Cpu) && threaded );
+    this->crtMode = _mode;
+    bool useRenderThread = (_mode == CrtMode::Cpu) && threaded;
+
+	emulator->setFinishVblankCallback( useRenderThread );
+	emulator->setLineCallback( useRenderThread );
 	reinitThread();
 	shader.recreate = true;
     colorTableUpdated = false;
+
+    if (!program->warp.active)
+        enableCrtThread(useRenderThread && (this == activeVideoManager));
 }
 
 auto VideoManager::setPalette(Emulator::Interface::Palette* palette) -> void {        

@@ -1225,9 +1225,13 @@ struct Monitor {
     Monitor() = delete;
 };
 
-struct Thread {
-    
-    static auto setPriorityRealtime( std::thread& th ) -> void;
+// priority changes of std::threads isn't portable and needs to be handled carefully.
+// furthermore it's not possible (Windows, macOS) to change priority of std::thread from other threads, so priority is changed only for caller thread
+struct ThreadPriority {
+
+    enum class Mode { Normal = 0, High = 1, Realtime = 2 };
+
+    static auto setPriority( Mode mode, float minProcessingTimeInMilliSeconds = 0, float maxProcessingTimeInMilliSeconds = 0 ) -> bool;
 };
 
 struct File {

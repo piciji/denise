@@ -98,6 +98,7 @@ struct Program : Emulator::Interface::Bind {
     auto informDriveLoading(bool state) -> void override;
     auto autoStartFinish(bool soft) -> void override;
     auto jam( Emulator::Interface::Media* media = nullptr ) -> void override;
+    auto setThreadPriority(Emulator::Interface::ThreadPriority priority, float minProcessingTimeInMilliSeconds, float maxProcessingTimeInMilliSeconds) -> bool override;
 
     auto addCustomFont() -> void;
     auto loadImageDataWhenOk( GUIKIT::File* file, unsigned fileId, Emulator::Interface::MediaGroup* group, uint8_t*& data ) -> bool;

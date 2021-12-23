@@ -10,7 +10,6 @@
 #include "filter/main.cpp"
 #include "filter/external.cpp"
 #include "serialization.cpp"
-#include "../../tools/thread.h"
 #include "../../tools/clamp.h"
 #include "../../tools/systimer.h"
 
@@ -131,7 +130,7 @@ Sid::Sid( Type type ) : filter( this ), chamberlinFilter(filter) {
 //		}
 //	});	
 //    
-//    Emulator::setThreadPriorityRealtime( worker );
+//  system->interface->setThreadPriority( Emulator::Interface::ThreadPriority::Realtime, 1.0, 1.0 );
 //	
 //	worker.detach();
 }

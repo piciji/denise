@@ -86,8 +86,10 @@ struct VideoManager {
         bool oddLine;
         bool reuseFirstLine;
         std::atomic<bool> ready;
+        std::atomic<bool> kill;
         std::condition_variable cv;
-    } render[2];  
+    } render[2];
+    bool workerCreated = false;
 	
     unsigned scalingCount = 0;
     
@@ -216,7 +218,9 @@ struct VideoManager {
     auto convertPaletteToLumaChroma() -> void;
     auto preCalcGamma() -> void;
     auto preCalcRfModulation() -> void;
-    template<bool _16bitSrc> auto createWorker() -> void;
+    template<bool _16bitSrc> auto createWorker(Render* re) -> void;
+    auto enableCrtThread( bool state) -> void;
+    auto updateCrtThreads() -> void;
     auto waitForRenderer() -> void;
     template<bool withScanlines, bool rfModulation, typename T> auto renderPalCrt( Render* re ) -> void;
     template<bool withScanlines, bool rfModulation, typename T> auto renderNtscCrt( Render* re ) -> void;
@@ -225,7 +229,7 @@ struct VideoManager {
     
     static auto getInstance( Emulator::Interface* emulator ) -> VideoManager*;
     static auto unlockDriver() -> void;
-	static auto updateWhenNotRunning() -> void;    
+	static auto updateWhenNotRunning() -> void;
     
     auto useRfModulation() -> bool;
     auto useLineGlitch() -> bool;

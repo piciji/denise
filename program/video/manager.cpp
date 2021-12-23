@@ -49,6 +49,7 @@ VideoManager::VideoManager(Emulator::Interface* emulator) : shader(this) {
 	mask = 0xffff;
 	metaShift = 0;
 	use16BitSrc = true;
+    workerCreated = false;
 	
 	if (isC64()) {
 		mask = 0xf;
@@ -116,13 +117,10 @@ VideoManager::VideoManager(Emulator::Interface* emulator) : shader(this) {
     luminance = 1.0;
     
     lightFromCenter = 1.0;
-    
+
+    render[0].kill = false;
+    render[1].kill = false;
     reinitThread(true);
-    
-	if (use16BitSrc)
-		createWorker<true>();    
-	else
-		createWorker<false>();    
 }
 
 auto VideoManager::update() -> void {
@@ -749,37 +747,79 @@ template<typename T> inline auto VideoManager::renderToLumaChroma(unsigned width
     }
 }
 
-template<bool _16bitSrc> auto VideoManager::createWorker() -> void {        
-    
-    for( unsigned t = 0; t < 2; t++ ) {
-    
-        std::thread worker([this, t] {
+auto VideoManager::updateCrtThreads() -> void {
+    for (auto videoManager : videoManagers) {
+        bool useRenderThread = false;
 
-            std::chrono::milliseconds duration(5);
-            std::mutex cvM;
-            std::unique_lock<std::mutex> lk(cvM);
-            Render* re = &render[t];
-            re->dest = nullptr;
+        if (videoManager == this) {
+            if ((crtMode == CrtMode::Cpu) && threaded)
+                useRenderThread = true;
+        }
 
-            while (1) {
-                re->ready = false;
-
-                while (!re->ready.load()) {
-
-                    if (re->cv.wait_for(lk, duration, [this, re]() { return re->ready.load(); }))
-                        break; 
-                }                
-				if (_16bitSrc)
-					renderCrtSelection<uint16_t>( re );
-				else
-					renderCrtSelection<uint8_t>( re );
-            }
-        });
-        
-        GUIKIT::Thread::setPriorityRealtime( worker );
-
-        worker.detach();
+        videoManager->enableCrtThread(useRenderThread);
     }
+}
+
+auto VideoManager::enableCrtThread( bool state) -> void {
+
+    if (workerCreated == state)
+        return;
+
+    for( unsigned t = 0; t < 2; t++ ) {
+        Render* re = &render[t];
+
+        if (state) {
+            while (re->kill) {
+                std::this_thread::yield();
+            }
+
+            if (use16BitSrc)
+                createWorker<true>( re );
+            else
+                createWorker<false>( re );
+
+        } else {
+            re->kill = true;
+            re->cv.notify_one();
+        }
+    }
+
+    workerCreated = state;
+}
+
+template<bool _16bitSrc> auto VideoManager::createWorker(Render* re) -> void {
+
+    std::thread worker([this, re] {
+
+        std::chrono::milliseconds duration(5);
+        std::mutex cvM;
+        std::unique_lock<std::mutex> lk(cvM);
+
+        re->dest = nullptr;
+        re->kill = false;
+
+        while (1) {
+            re->ready = false;
+
+            while (!re->ready.load()) {
+
+                if (re->kill) {
+                    re->kill = false;
+                    return;
+                }
+
+                if (re->cv.wait_for(lk, duration, [re]() { return re->ready.load(); }))
+                    break;
+            }
+            if (_16bitSrc)
+                renderCrtSelection<uint16_t>( re );
+            else
+                renderCrtSelection<uint8_t>( re );
+        }
+    });
+
+    worker.detach();
+
 }
 
 auto VideoManager::waitForRenderer() -> void {
@@ -1302,6 +1342,7 @@ auto VideoManager::free() -> void {
 }
 
 VideoManager::~VideoManager() {
+    enableCrtThread(false);
     free();
 }
 
