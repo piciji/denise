@@ -60,17 +60,22 @@ struct VideoManager {
     ~VideoManager();
         
 	static bool synchronized;
-    static bool threaded;
+    static bool crtThreaded;
     static bool shaderInputPrecision;
 	static bool integerScaling;
 	static bool aspectCorrect;
     static bool fpsLimit;
+    static uint8_t frameRenderPos;
+    static uint8_t frameRenderTrigger;
 	
-    static auto setThreaded(bool state) -> void;
+    static auto setCrtThreaded(bool state) -> void;
     static auto setShaderInputPrecision(bool state) -> void;
     static auto setAspectCorrect(bool state) -> void;
     static auto setIntegerScaling(bool state) -> void;
     static auto setFpsLimit(bool state) -> void;
+    static auto setFrameRender(uint8_t limit) -> void;
+    static auto setSynchronize() -> void;
+    static auto setHardSync() -> void;
     
     enum class MaskType : unsigned { Aperture = 0u, ShadowMask = 1u, SlotMask = 2u } maskType;
     enum class CrtMode : unsigned { None = 0u, Cpu = 1u, Gpu = 2u } crtMode;
@@ -104,7 +109,7 @@ struct VideoManager {
     
     uint32_t* colorTable = nullptr;
     uint32_t* colorTableNoGamma = nullptr;
-    auto reinitThread( bool initMem = false ) -> void;
+    auto reinitCrtThread( bool initMem = false ) -> void;
         
     uint16_t mask;
 	uint8_t metaShift;
@@ -221,7 +226,7 @@ struct VideoManager {
     template<bool _16bitSrc> auto createWorker(Render* re) -> void;
     auto enableCrtThread( bool state) -> void;
     auto updateCrtThreads() -> void;
-    auto waitForRenderer() -> void;
+    auto waitForRenderer() -> bool;
     template<bool withScanlines, bool rfModulation, typename T> auto renderPalCrt( Render* re ) -> void;
     template<bool withScanlines, bool rfModulation, typename T> auto renderNtscCrt( Render* re ) -> void;
     auto powerOff() -> void;    

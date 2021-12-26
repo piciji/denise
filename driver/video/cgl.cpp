@@ -241,6 +241,8 @@ struct CGL : public Video, OpenGL, RenderThread {
         }
     }
 
+    auto hasThreaded() -> bool { return settings.threaded; }
+
     auto setShader(std::vector<ShaderPass*> passes) -> void {
         wait();
         makeCurrent();

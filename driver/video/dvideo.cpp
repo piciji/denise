@@ -303,10 +303,6 @@ struct DVideo : Video, RenderThread {
         return init();
     }
 
-    auto resizeWindow() -> void {
-
-    }
-
     auto redraw(bool disallowShader = false) -> void {
         if (settings.threaded)
             return;
@@ -643,6 +639,8 @@ struct DVideo : Video, RenderThread {
             settings.threaded = state;
         }
     }
+
+    auto hasThreaded() -> bool { return settings.threaded; }
 
 	auto showMessage(std::string message, bool critical = false) -> void {
         if (settings.threaded)

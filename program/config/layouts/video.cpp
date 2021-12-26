@@ -227,10 +227,10 @@ VideoLayout::VideoLayout() {
     videoSettingsLayout.threadedRenderer.onToggle = [](bool checked) {
         globalSettings->set("threaded_renderer", checked);
         videoDriver->setThreaded( checked );
-        program->setVideoSynchronize();
+        VideoManager::setSynchronize();
         bool vsync = globalSettings->get<bool>("video_sync", true);
         view->adaptiveSyncItem.setEnabled( vsync && !checked );
-        view->dynamicRateControl.setEnabled( !checked );
+        view->dynamicRateControl.setEnabled( vsync && !checked );
     };
 
     videoSettingsLayout.threadedRenderer.setChecked(globalSettings->get("threaded_renderer", false));
@@ -369,7 +369,7 @@ VideoLayout::VideoLayout() {
 	crtEmulation.threadMode.setChecked( globalSettings->get<bool>("crt_threaded", true) );
 	crtEmulation.threadMode.onToggle = [this](bool checked) {
         globalSettings->set<bool>("crt_threaded", checked);
-        VideoManager::setThreaded( checked );
+        VideoManager::setCrtThreaded( checked );
     };
     
 	crtEmulation.shaderInputPrecision.setChecked( globalSettings->get<bool>("crt_shader_input_precision", false) );

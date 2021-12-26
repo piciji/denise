@@ -9,16 +9,19 @@
 #include "../media/media.h"
 #include "../view/view.h"
 #include "props.cpp"
+#include "sync.cpp"
 #include "../../driver/tools/shaderpass.h"
 #include "../tools/chronos.h"
 #include "../view/status.h"
 
 bool VideoManager::synchronized = true;
-bool VideoManager::threaded = true;
+bool VideoManager::crtThreaded = true;
 bool VideoManager::shaderInputPrecision = false;
 bool VideoManager::aspectCorrect = true;
 bool VideoManager::integerScaling = false;
 bool VideoManager::fpsLimit = false;
+uint8_t VideoManager::frameRenderPos = 0;
+uint8_t VideoManager::frameRenderTrigger = 1;
 
 std::vector<VideoManager*> videoManagers;
 
@@ -38,6 +41,11 @@ auto VideoManager::updateWhenNotRunning() -> void {
 		if (videoManager->needUpdate())
 			videoManager->update();
 	}
+}
+
+auto VideoManager::setFrameRender(uint8_t limit) -> void {
+    frameRenderTrigger = limit;
+    frameRenderPos = 0;
 }
 
 VideoManager::VideoManager(Emulator::Interface* emulator) : shader(this) {
@@ -120,7 +128,7 @@ VideoManager::VideoManager(Emulator::Interface* emulator) : shader(this) {
 
     render[0].kill = false;
     render[1].kill = false;
-    reinitThread(true);
+    reinitCrtThread(true);
 }
 
 auto VideoManager::update() -> void {
@@ -614,8 +622,14 @@ template<typename T> auto VideoManager::renderFrame(const T* src, unsigned width
         if(integerScaling)
             scalingCount = 10;	
         
-        reinitThread();
+        reinitCrtThread();
     }
+
+    if (++frameRenderPos != frameRenderTrigger) {
+        return;
+    }
+
+    frameRenderPos = 0;
 
 //    int64_t res = (int64_t)Chronos::getTimestampInMicroseconds() - lastCapTime;
 //
@@ -647,7 +661,7 @@ template<typename T> auto VideoManager::renderFrame(const T* src, unsigned width
 			renderToRgbNoGamma(width, height, src, srcPitch, gpuData, gpuPitch - width );
 		}
 		
-	} else if (threaded) {
+	} else if (crtThreaded) {
 		if (!videoDriver->lock(gpuData, gpuPitch, width, scanlines ? (height << 1) : height ))
             return renderCrtThreadedBlank(width, height, src, srcPitch, gpuData, gpuPitch - width);
 		
@@ -752,7 +766,7 @@ auto VideoManager::updateCrtThreads() -> void {
         bool useRenderThread = false;
 
         if (videoManager == this) {
-            if ((crtMode == CrtMode::Cpu) && threaded)
+            if ((crtMode == CrtMode::Cpu) && crtThreaded)
                 useRenderThread = true;
         }
 
@@ -822,12 +836,14 @@ template<bool _16bitSrc> auto VideoManager::createWorker(Render* re) -> void {
 
 }
 
-auto VideoManager::waitForRenderer() -> void {
+auto VideoManager::waitForRenderer() -> bool {
 
 	Render* re = &render[1];
 
 	while (re->ready.load())
-		std::this_thread::yield(); 
+		std::this_thread::yield();
+
+    return frameRenderPos == 0;
 }
 
 // 1. start 1. thread half screen
@@ -841,16 +857,16 @@ auto VideoManager::renderMidScreen( ) -> void {
 	Render* re = &render[0];
 	
 	if (!colorTableUpdated)
-		reinitThread();
+		reinitCrtThread();
 	
-	if (!re->dest)
+	if (!re->dest || frameRenderPos)
 		return;	
 
 	re->ready.store(1);
 	re->cv.notify_one();	
 }
 
-auto VideoManager::reinitThread( bool initMem ) -> void {
+auto VideoManager::reinitCrtThread( bool initMem ) -> void {
 
     Render* re = &render[0];
     re->dest = nullptr;
@@ -1260,11 +1276,10 @@ auto VideoManager::unlockDriver() -> void {
     if (!activeVideoManager)
         return;
 
-    if (!activeVideoManager->threaded || (activeVideoManager->crtMode != CrtMode::Cpu ) )
+    if (!activeVideoManager->crtThreaded || (activeVideoManager->crtMode != CrtMode::Cpu ) )
         return;
-    
-    activeVideoManager->waitForRenderer();
-    if (!videoDriver)
+
+    if (!activeVideoManager->waitForRenderer() || !videoDriver)
         return;
     videoDriver->unlock();
     videoDriver->redraw();
@@ -1272,7 +1287,7 @@ auto VideoManager::unlockDriver() -> void {
 
 auto VideoManager::powerOff() -> void {
     unlockDriver();         
-	reinitThread();
+	reinitCrtThread();
     currentHeight = 0;        
 }
 

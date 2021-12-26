@@ -180,7 +180,7 @@ auto View::build() -> void {
     displayChangeTimer.onFinished = [this]() {
         displayChangeTimer.setEnabled(false);
         statusHandler->setMessage( std::to_string(GUIKIT::Monitor::getCurrentRefreshRate()) );
-        program->setVideoSynchronize();
+        VideoManager::setSynchronize();
     };
 	
 	viewport.onMousePress = [this](GUIKIT::Mouse::Button button) {
@@ -270,7 +270,6 @@ auto View::setFullScreen(bool fullScreen) -> void {
     
     GUIKIT::Window::setFullScreen(fullScreen);
     displayChangeTimer.setEnabled();
-    //program->setVideoSynchronize();
 }
 
 auto View::exclusiveFullscreen() -> bool {
@@ -869,10 +868,11 @@ auto View::buildMenu() -> void {
     videoSyncItem.onToggle = [&]() {
         globalSettings->set<bool>("video_sync", videoSyncItem.checked() );
         program->fastForward( false );
-        program->setVideoSynchronize();
+        VideoManager::setSynchronize();
         statusHandler->resetFrameCounter();
         bool threadedRenderer = globalSettings->get("threaded_renderer", false);
         adaptiveSyncItem.setEnabled( videoSyncItem.checked() && !threadedRenderer );
+        dynamicRateControl.setEnabled( videoSyncItem.checked() && !threadedRenderer );
     };
     bool threadedRenderer = globalSettings->get("threaded_renderer", false);
     bool vsync = globalSettings->get<bool>("video_sync", true);
@@ -887,7 +887,7 @@ auto View::buildMenu() -> void {
     adaptiveSyncItem.onToggle = [&]() {
         globalSettings->set<bool>("adaptive_sync", adaptiveSyncItem.checked() );
         program->fastForward( false );
-        program->setVideoSynchronize();
+        VideoManager::setSynchronize();
         //statusHandler->resetFrameCounter();
     };
     if ( globalSettings->get<bool>("adaptive_sync", true) )
@@ -909,13 +909,13 @@ auto View::buildMenu() -> void {
 
     dynamicRateControl.onToggle = [&]() {
         globalSettings->set<bool>("dynamic_rate_control", dynamicRateControl.checked() );
-        program->setVideoSynchronize();
+        VideoManager::setSynchronize();
         //audioManager->setRateControl();
     };
     if ( globalSettings->get<bool>("dynamic_rate_control", false) )
         dynamicRateControl.setChecked();
 
-    dynamicRateControl.setEnabled( !threadedRenderer );
+    dynamicRateControl.setEnabled( !threadedRenderer && vsync );
 
     optionsMenu.append(dynamicRateControl);
         

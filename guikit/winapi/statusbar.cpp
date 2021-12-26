@@ -17,7 +17,7 @@ pStatusBar::~pStatusBar() {
 
 auto pStatusBar::create() -> void {    
     
-    hwnd = CreateWindowEx(WS_EX_COMPOSITED, STATUSCLASSNAME, L"", WS_CHILD, 0, 0, 0, 0, statusBar.window()->p.hwnd, (HMENU)(unsigned long long)statusBar.id, GetModuleHandle(0), 0);
+    hwnd = CreateWindow( STATUSCLASSNAME, L"", WS_CHILD, 0, 0, 0, 0, statusBar.window()->p.hwnd, (HMENU)(unsigned long long)statusBar.id, GetModuleHandle(0), 0);
 
 	// SendMessage( hwnd, SB_SETBKCOLOR, 0, GetSysColor(COLOR_MENU));
     
@@ -124,8 +124,8 @@ auto pStatusBar::setText(std::string text) -> void {
 
 auto pStatusBar::updatePosition() -> void {
     
-    //if (hwnd)
-      //  SetWindowPos(hwnd, NULL, 0, 0, 0, 0, SWP_NOZORDER | SWP_FRAMECHANGED);
+    if (hwnd)
+        SetWindowPos(hwnd, NULL, 0, 0, 0, 0, SWP_NOZORDER | SWP_FRAMECHANGED);
     
     update();
 }
@@ -281,7 +281,6 @@ auto pStatusBar::drawItem(WPARAM wparam, LPARAM lparam) -> void {
 //        DeleteDC( hdcMem );
         
     } else {
-		SetBkMode(hDC, TRANSPARENT);
 		
         if (part.overrideForegroundColor != -1) {
             unsigned color = part.overrideForegroundColor;
@@ -299,7 +298,8 @@ auto pStatusBar::drawItem(WPARAM wparam, LPARAM lparam) -> void {
         else if ( !part.width )
             rect.left += 4;
 
-        DrawText(hDC, utf16_t(part.text.c_str()), -1, &rect, DT_SINGLELINE | DT_NOCLIP | (part.alignRight ? DT_RIGHT : 0)  );
+        SetBkMode(hDC, TRANSPARENT);
+        DrawText(hDC, utf16_t(part.text.c_str()), -1, &rect, DT_SINGLELINE | DT_NOCLIP | (part.alignRight ? DT_RIGHT : 0) );
     }
 }
 

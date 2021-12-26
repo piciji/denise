@@ -14,8 +14,8 @@ auto Program::initVideo() -> void {
 
     videoDriver = DRIVER::Video::create( getVideoDriver() );
     
-    setVideoSynchronize();
-    setVideoHardSync();
+    VideoManager::setSynchronize();
+    VideoManager::setHardSync();
     setThreadedRenderer();
     setFpsLimit();
     //setVideoFilter();
@@ -29,7 +29,7 @@ auto Program::initVideo() -> void {
 	videoDriver->setFilter( DRIVER::Video::Filter::Linear );
 
     if (activeVideoManager)
-        activeVideoManager->reinitThread(true);    
+        activeVideoManager->reinitCrtThread(true);
         
     // opengl crt shader only at the moment
     for( auto emuView : emuConfigViews )
@@ -39,7 +39,7 @@ auto Program::initVideo() -> void {
         VideoManager::getInstance( emulator )->reloadSettings();
 	
 	VideoManager::setShaderInputPrecision( globalSettings->get<bool>("shader_input_precision", false) );
-	VideoManager::setThreaded( globalSettings->get<bool>("crt_threaded", true) );
+	VideoManager::setCrtThreaded( globalSettings->get<bool>("crt_threaded", true) );
 	
 	if (!cmd->debug) {
 		view->loadPlaceholder();
@@ -64,18 +64,19 @@ auto Program::getVideoDriver() -> std::string {
 
 auto Program::finishVBlank() -> void {
     
-    activeVideoManager->waitForRenderer();
+    if (!activeVideoManager->waitForRenderer())
+        return;
 
     videoDriver->unlock();
     
-    if (VideoManager::fpsLimit)
-        activeVideoManager->applyFpsLimit();
+    //if (VideoManager::fpsLimit)
+      //  activeVideoManager->applyFpsLimit();
     
     videoDriver->redraw();
 }
 
 auto Program::midScreenCallback() -> void {
-    
+
     activeVideoManager->renderMidScreen();
 }
 
@@ -99,44 +100,6 @@ auto Program::videoRefresh8(const uint8_t* frame, unsigned width, unsigned heigh
 	
     if (frame)
         activeVideoManager->renderFrame<uint8_t>(frame, width, height, linePitch);
-}
-
-auto Program::setVideoSynchronize() -> void {
-    bool vsync = false;
-    float skew = 0.0;
-
-    if (!activeEmulator)
-        return;
-
-    if (audioDriver->hasSynchronized()) {
-        vsync = globalSettings->get<bool>("video_sync", true);
-
-        if (vsync) {
-            bool adaptive = globalSettings->get<bool>("adaptive_sync", true);
-
-            if (adaptive) {
-                bool threadedRenderer = globalSettings->get("threaded_renderer", false);
-                float monitorFrequency = GUIKIT::Monitor::getCurrentRefreshRate();
-                skew = std::abs(1.0 - (float)audioManager->inputFPS / monitorFrequency );
-
-                if (!threadedRenderer) {
-                    if ((skew > 0.0015) && ((float) audioManager->inputFPS > monitorFrequency))
-                        vsync = false;
-                }
-            }
-        }
-    }
-
-    if (videoDriver->hasSynchronized() != vsync)
-        videoDriver->synchronize( vsync );
-
-    audioManager->skew = skew;
-    audioManager->setRateControl();
-	updateOverallSynchronize();
-}
-
-auto Program::setVideoHardSync() -> void {
-    videoDriver->hardSync( globalSettings->get<bool>("gl_hardsync", false) );
 }
 
 auto Program::hintExclusiveFullscreen() -> void {
@@ -189,7 +152,7 @@ auto Program::updateCrop( Emulator::Interface* emulator ) -> void {
 	emulator->crop( (Emulator::Interface::CropType) type, aspectCorrect, left, right, top, bottom );
     
     if (activeVideoManager) {
-        activeVideoManager->reinitThread();
+        activeVideoManager->reinitCrtThread();
         activeVideoManager->shader.recreate = true;        
     }
 }
@@ -232,6 +195,7 @@ auto Program::fastForward( bool activate, bool aggressive ) -> void {
     if (activate) {
         warp.active = true;
         warp.aggressive = aggressive;
+        VideoManager::setFrameRender(1);
 
         if (videoDriver->hasSynchronized())
             videoDriver->synchronize( false );
@@ -251,7 +215,7 @@ auto Program::fastForward( bool activate, bool aggressive ) -> void {
         warp.active = false;
         VideoManager::CrtMode crtModeTemp = (VideoManager::CrtMode)globalSettings->get<unsigned>("video_crt_temp", (unsigned)VideoManager::CrtMode::None, {0u, 2u});
 
-        program->setVideoSynchronize();
+        VideoManager::setSynchronize();
 
         if (crtMode == VideoManager::CrtMode::None) {
             if (crtModeTemp == VideoManager::CrtMode::Cpu) {

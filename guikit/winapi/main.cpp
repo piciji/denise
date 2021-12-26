@@ -303,7 +303,7 @@ pWindow::pWindow(Window& window) : window(window) {
     locked = false;
     brush = 0;
     hCursor = LoadCursor(0, IDC_ARROW);
-    timerStatusUpdate.setInterval(500);
+    timerStatusUpdate.setInterval(100);
     timerStatusUpdate.onFinished = [this]() {
         timerStatusUpdate.setEnabled(false);
         if (this->window.statusBar())
@@ -342,13 +342,17 @@ auto CALLBACK pWindow::wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam
         case WM_CLOSE: window.p.onClose(); return true;
         case WM_MOVE: window.p.onMove(); break;
         case WM_SIZE: window.p.onSize(); break;
+        case WM_SIZING:
+            //window.p.timerStatusUpdate.setEnabled();
+            break;
         case WM_DROPFILES: window.p.onDrop(wparam); return false;
 		case WM_ENTERMENULOOP:
 			if(window.winapi.onMenu) window.winapi.onMenu();
 			break;
-        case WM_ENTERSIZEMOVE:            
+        case WM_ENTERSIZEMOVE:
             break;
         case WM_EXITSIZEMOVE:
+
             break;
         case WM_PAINT:
             break;
@@ -595,7 +599,6 @@ auto pWindow::onClose() -> void {
 void pWindow::onMove() {
     if(locked || window.fullScreen()) return;
 
-    timerStatusUpdate.setInterval(300);
     timerStatusUpdate.setEnabled();
 
     Geometry windowGeometry = geometry();

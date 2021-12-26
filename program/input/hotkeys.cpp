@@ -234,9 +234,10 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             openMenu( emulator, id );
             break;
         case Hotkey::Id::SyncStatus: {
-            std::string _str = videoDriver->hasSynchronized() ? "vsync " : "";
-            _str += audioDriver->hasSynchronized() ? "async " : "";
-            _str += audioManager->dynamicRateControl ? "drc " : "";
+            std::string _str = videoDriver->hasSynchronized() ? "Vsync " : "";
+            _str += videoDriver->hasThreaded() ? "Threaded " : "";
+            _str += audioDriver->hasSynchronized() ? "Audiosync " : "";
+            _str += audioManager->dynamicRateControl ? "DRC " : "";
             float monitorFrequency = GUIKIT::Monitor::getCurrentRefreshRate();
             _str += std::to_string( monitorFrequency );
             statusHandler->setMessage(_str);

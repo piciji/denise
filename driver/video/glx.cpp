@@ -172,6 +172,8 @@ struct GLX : public Video, OpenGL, RenderThread {
                 clearCurrent();
         }
     }
+
+    auto hasThreaded() -> bool { return settings.threaded; }
     
     auto shaderFormat() -> ShaderType { return ShaderType::GLSL; }
     

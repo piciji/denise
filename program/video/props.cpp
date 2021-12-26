@@ -15,19 +15,19 @@ auto VideoManager::setFpsLimit(bool state) -> void {
     fpsLimit = false;
 }
 
-auto VideoManager::setThreaded(bool state) -> void {	
+auto VideoManager::setCrtThreaded(bool state) -> void {
     
     unlockDriver(); 
 
-    threaded = state;
+    crtThreaded = state;
 	
 	for (auto videoManager : videoManagers) {
-		videoManager->emulator->setFinishVblankCallback( (videoManager->crtMode == CrtMode::Cpu) && threaded );
-		videoManager->emulator->setLineCallback( (videoManager->crtMode == CrtMode::Cpu) && threaded );		
-		videoManager->reinitThread();
+		videoManager->emulator->setFinishVblankCallback( (videoManager->crtMode == CrtMode::Cpu) && crtThreaded );
+		videoManager->emulator->setLineCallback( (videoManager->crtMode == CrtMode::Cpu) && crtThreaded );
+		videoManager->reinitCrtThread();
 
         if (!program->warp.active)
-            videoManager->enableCrtThread((videoManager->crtMode == CrtMode::Cpu) && threaded && (videoManager == activeVideoManager));
+            videoManager->enableCrtThread((videoManager->crtMode == CrtMode::Cpu) && crtThreaded && (videoManager == activeVideoManager));
 	}
 }
 
@@ -54,11 +54,11 @@ auto VideoManager::setCrtMode(CrtMode _mode) -> void {
     unlockDriver();
     
     this->crtMode = _mode;
-    bool useRenderThread = (_mode == CrtMode::Cpu) && threaded;
+    bool useRenderThread = (_mode == CrtMode::Cpu) && crtThreaded;
 
 	emulator->setFinishVblankCallback( useRenderThread );
 	emulator->setLineCallback( useRenderThread );
-	reinitThread();
+	reinitCrtThread();
 	shader.recreate = true;
     colorTableUpdated = false;
 
@@ -144,11 +144,11 @@ auto VideoManager::setLumaFall( float pixel ) -> void {
 }
 
 auto VideoManager::setScanlines(unsigned intensity) -> void {
-    waitForRenderer();    
+    waitForRenderer();
     updateShader( "", "gammaAndScanlines", scanlines, (uint8_t)intensity );
     this->scanlines = intensity;
     colorTableUpdated = false;
-    reinitThread();
+    reinitCrtThread();
 }
 // shader only features
 auto VideoManager::setBloomGlow( unsigned intensity ) -> void {
@@ -501,7 +501,7 @@ auto VideoManager::reloadSettings() -> void {
     setCrtRealGamma( _crtRealGamma );
 	
 	// update only, crt mode could be changed
-    VideoManager::setThreaded( VideoManager::threaded ); 
+    VideoManager::setCrtThreaded( VideoManager::crtThreaded );
 	VideoManager::setShaderInputPrecision( VideoManager::shaderInputPrecision );
     
     applyMeta();
