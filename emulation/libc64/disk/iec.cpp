@@ -74,12 +74,6 @@ IecBus::IecBus(Emulator::Interface::MediaGroup* mediaGroup) {
 
             ready = false;
 
-            if (updatePriority) {
-                system->interface->setThreadPriority(
-                        idle ? Emulator::Interface::ThreadPriority::High : Emulator::Interface::ThreadPriority::Realtime, 0.1, 0.2 );
-                updatePriority = false;
-            }
-
             // let drive thread wait until main thread signals a safe start
             while (!ready.load()) {
 
@@ -88,6 +82,13 @@ IecBus::IecBus(Emulator::Interface::MediaGroup* mediaGroup) {
                         break;
                 } else
                     std::this_thread::yield();
+            }
+
+            if (updatePriority) {
+                if (system->interface->setThreadPriority(idle ? Emulator::Interface::ThreadPriority::High : Emulator::Interface::ThreadPriority::Realtime, 0.1, 0.2 )) {
+                    //system->interface->log(idle ? "IEC prio change high" : "IEC prio change realtime");
+                }
+                updatePriority = false;
             }
 
             run();
