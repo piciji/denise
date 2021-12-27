@@ -85,8 +85,8 @@ IecBus::IecBus(Emulator::Interface::MediaGroup* mediaGroup) {
             }
 
             if (updatePriority) {
-                if (system->interface->setThreadPriority(idle ? Emulator::Interface::ThreadPriority::High : Emulator::Interface::ThreadPriority::Realtime, 0.1, 0.2 )) {
-                    //system->interface->log(idle ? "IEC prio change high" : "IEC prio change realtime");
+                if (system->interface->setThreadPriority(idle ? Emulator::Interface::ThreadPriority::High : Emulator::Interface::ThreadPriority::High, 0.1, 0.2 )) {
+                   // system->interface->log(idle ? "IEC prio change high" : "IEC prio change realtime");
                 }
                 updatePriority = false;
             }

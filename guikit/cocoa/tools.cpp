@@ -1,3 +1,5 @@
+#include <mach/mach.h>
+#include <mach/mach_time.h>
 
 @implementation CocoaTimer : NSObject
 
@@ -333,7 +335,7 @@ auto pThreadPriority::setPriority( ThreadPriority::Mode mode, float minProcessin
     mach_port_t machId = pthread_mach_thread_np( pthread_self() );
 
     thread_extended_policy_data_t extended;
-    policy.timeshare = (mode == ThreadPriority::Mode::Normal) ? 1 : 0;
+    extended.timeshare = (mode == ThreadPriority::Mode::Normal) ? 1 : 0;
     result = thread_policy_set( machId, THREAD_EXTENDED_POLICY, (thread_policy_t)&extended, THREAD_EXTENDED_POLICY_COUNT);
 
     if (result != KERN_SUCCESS) {

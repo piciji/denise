@@ -7,6 +7,8 @@
     #include <windows.h>
 #elif defined( __APPLE__ )
     #include <pthread.h>
+    #include <mach/mach.h>
+    #include <mach/mach_time.h>
 #else
     #include <pthread.h>
 #endif
@@ -49,12 +51,12 @@ struct ThreadPriority {
     }
 
 #elif defined( __APPLE__ )
-    static auto _setPriority( ThreadPriorityMode mode, float minProcessingTimeInMilliSeconds = 0, float maxProcessingTimeInMilliSeconds = 0 ) -> bool {
+    static auto _setPriority( ThreadPriority::Mode mode, float minProcessingTimeInMilliSeconds = 0, float maxProcessingTimeInMilliSeconds = 0 ) -> bool {
         kern_return_t result;
         mach_port_t machId = pthread_mach_thread_np( pthread_self() );
 
         thread_extended_policy_data_t extended;
-        policy.timeshare = (mode == ThreadPriority::Mode::Normal) ? 1 : 0;
+        extended.timeshare = (mode == ThreadPriority::Mode::Normal) ? 1 : 0;
         result = thread_policy_set( machId, THREAD_EXTENDED_POLICY, (thread_policy_t)&extended, THREAD_EXTENDED_POLICY_COUNT);
 
         if (result != KERN_SUCCESS) {
@@ -95,7 +97,7 @@ struct ThreadPriority {
         return true;
     }
 #else
-    static auto _setPriority( ThreadPriorityMode mode, float minProcessingTimeInMilliSeconds = 0, float maxProcessingTimeInMilliSeconds = 0 ) -> bool {
+    static auto _setPriority( ThreadPriority::Mode mode, float minProcessingTimeInMilliSeconds = 0, float maxProcessingTimeInMilliSeconds = 0 ) -> bool {
         const int policy = SCHED_RR;
         const int minPrio = sched_get_priority_min(policy);
         const int maxPrio = sched_get_priority_max(policy);

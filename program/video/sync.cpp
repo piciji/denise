@@ -25,7 +25,7 @@ auto VideoManager::setSynchronize() -> void {
 
                 if ((uint8_t)intpart <= 1) {
                     skew = std::abs(1.0 - ratio );
-                    if ((skew > VIDEO_SKEW) && ((float) audioManager->inputFPS > monitorFrequency))
+                    if ((skew > VIDEO_SKEW) /*&& ((float) audioManager->inputFPS > monitorFrequency)*/)
                         threadedRenderer = true;
                 } else {
                     if (fractpart > VIDEO_SKEW)
