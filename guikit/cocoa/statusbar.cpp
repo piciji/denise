@@ -55,7 +55,7 @@ auto pStatusBar::create() -> void {
         
         [cocoaView setWantsLayer:YES];
 
-        [cocoaView setBackgroundColor: [NSColor textBackgroundColor]];
+        [cocoaView.layer setBackgroundColor: [NSColor textBackgroundColor].CGColor];
 
         [[statusBar.window()->p.cocoaWindow contentView] addSubview:cocoaView positioned:NSWindowBelow relativeTo:nil];
     }
