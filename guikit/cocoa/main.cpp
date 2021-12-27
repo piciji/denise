@@ -498,6 +498,8 @@ auto pWindow::setStatusVisible(bool visible) -> void {
         window.statusBar()->p.setVisible( visible );
 
         setGeometry( !window.fullScreen() ? window.state.geometry : geometry());
+        
+        positionBGView();
     }
 }
     
@@ -517,8 +519,7 @@ auto pWindow::setBackgroundColor(unsigned color) -> void {
         } else
             [backgroundView setColor: color];
         
-        [backgroundView setFrame:[[cocoaWindow contentView] bounds]];
-        
+        positionBGView();
         /*
          dont use this, breaks VSYNC in openGL
         NSView* _view = [cocoaWindow contentView];
@@ -529,6 +530,21 @@ auto pWindow::setBackgroundColor(unsigned color) -> void {
          ];
          */
     }
+}
+    
+auto pWindow::positionBGView() -> void {
+    if (!backgroundView)
+        return;
+    
+    NSRect area = [[cocoaWindow contentView] bounds];
+    
+    if (window.statusBar()) {
+        auto _h = window.statusBar()->p.getHeight();
+        area.size.height -= _h;
+        area.origin.y += _h;
+    }
+        
+    [backgroundView setFrame: area];
 }
 
 auto pWindow::focused() -> bool {
@@ -631,9 +647,9 @@ auto pWindow::sizeEvent() -> void {
     if (window.statusBar())
         window.statusBar()->p.reposition();
 
-    if (backgroundView)
-        [backgroundView setFrame:[[cocoaWindow contentView] bounds]];
-        
+    //if (backgroundView)
+      //  [backgroundView setFrame:[[cocoaWindow contentView] bounds]];
+            
     if(!locked && window.onSize) window.onSize();
 }
 
