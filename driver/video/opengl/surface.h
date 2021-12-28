@@ -111,38 +111,11 @@ auto OpenGLSurface::size(unsigned w, unsigned h) -> void {
 	if(width == w && height == h) return;
 	width = w, height = h;
 
-//	if(texture)
-//        glDeleteTextures(1, &texture);
-//
-//	texture = 0;
 	deleteBuffer();
 
     resize(w, h);
 
-//    if (!internalFormatMatchesData)
-//        buffer = new uint32_t[w * h]();
-//    else if (format == GL_RGB32F)
-//        bufferFloat = new float[w * h * 3]();
-//    else if (format == GL_RGBA32F)
-//        bufferFloat = new float[w * h * 4]();
-//    else if (format == GL_RGB32I)
-//        bufferInt = new int32_t[w * h * 3]();
-//    else if (format == GL_RGBA32I)
-//        bufferInt = new int32_t[w * h * 4]();
-//    else
-//        buffer = new uint32_t[w * h]();
-
     createTexture();
-
-//	glGenTextures(1, &texture);
-//	glBindTexture(GL_TEXTURE_2D, texture);
-//
-//    glTexImage2D(GL_TEXTURE_2D, 0, format, w, h, 0, getFormat(), getType(), getBuffer() );
-//
-//    if (mipmap) {
-//        glHint(GL_GENERATE_MIPMAP_HINT, GL_NICEST);
-//        glGenerateMipmap(GL_TEXTURE_2D);
-//    }
 
 	if(framebuffer) {
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, framebuffer);

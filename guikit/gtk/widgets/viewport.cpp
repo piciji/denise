@@ -12,6 +12,8 @@ auto pViewport::create() -> void {
     g_signal_connect(G_OBJECT(gtkWidget), "leave-notify-event", G_CALLBACK(pViewport::mouseLeave), (gpointer)this);
     g_signal_connect(G_OBJECT(gtkWidget), "motion-notify-event", G_CALLBACK(pViewport::mouseMove), (gpointer)this);
 	g_signal_connect(G_OBJECT(gtkWidget), "draw", G_CALLBACK(pViewport::drawEvent), (gpointer)this);
+
+    g_signal_connect(gtk_widget_get_screen(gtkWidget), "monitors_changed", G_CALLBACK(pViewport::monitorsChanged), (gpointer)this);
 }
 
 auto pViewport::init() -> void {
@@ -80,4 +82,12 @@ auto pViewport::drawEvent(GtkWidget* widget, cairo_t* context, pViewport* self) 
 	cairo_set_source_rgba(context, 0.0, 0.0, 0.0, 1.0);
 	cairo_paint(context);
 	return true;
+}
+
+auto pViewport::monitorsChanged(GdkScreen* screen, pViewport* self) -> void {
+
+    pMonitor::fetchDisplays();
+
+    if (Application::onDisplayChange)
+        Application::onDisplayChange();
 }

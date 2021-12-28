@@ -297,8 +297,10 @@ install: ## Install
 
 	if [ -d $(prefix)/local ]; then	\
 	    install -D -m 755 out/$(loname) $(prefix)/local/bin/$(loname);	\
+	    setcap cap_sys_nice=ep $(prefix)/local/bin/$(loname); \
 	else	\
 	    install -D -m 755 out/$(loname) $(prefix)/bin/$(loname);	\
+	    setcap cap_sys_nice=ep $(prefix)/bin/$(loname); \
 	fi
 	install -D -m 644 data/img/$(loname).png $(prefix)/share/icons/$(loname).png
 	install -D -m 644 data/$(loname).desktop $(prefix)/share/applications/$(loname).desktop

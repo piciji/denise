@@ -50,8 +50,10 @@ auto VideoManager::setSynchronize() -> void {
 
     setFrameRender( frameRenderEach );
 
-    audioManager->allowDrc = vsync && !threadedRenderer && (frameRenderEach == 1) && (skew <= VIDEO_SKEW);
-    audioManager->setRateControl();
+    if (audioManager) {
+        audioManager->allowDrc = vsync && !threadedRenderer && (frameRenderEach == 1) && (skew <= VIDEO_SKEW);
+        audioManager->setRateControl();
+    }
     program->updateOverallSynchronize();
 }
 

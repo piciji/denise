@@ -190,8 +190,9 @@ namespace DRIVER {
             std::unique_lock<std::mutex> lk(cvM);
 
             //if (ThreadPriority::setPriority( ThreadPriority::Mode::Realtime, 3.0, 5.0 )) {
-                // logger->log("increased render thread prio");
+            //     logger->log("increased render thread prio");
             //}
+
             kill = false;
             ready = false;
 

@@ -386,8 +386,8 @@ auto VideoLayout::translate() -> void {
 	videoSettingsLayout.exclusiveFullscreen.setTooltip( trans->get("exclusive_fullscreen_tooltip") );
     videoSettingsLayout.hardSync.setText( trans->get("hard_sync") );
 	videoSettingsLayout.hardSync.setTooltip( trans->get("hard_sync_tooltip") );
-    videoSettingsLayout.threadedRenderer.setText( trans->get("render thread") );
-    videoSettingsLayout.threadedRenderer.setTooltip( trans->get("render thread tooltip") );
+    videoSettingsLayout.threadedRenderer.setText( trans->get("Threaded Renderer") );
+    videoSettingsLayout.threadedRenderer.setTooltip( trans->get("Threaded Renderer tooltip") );
     videoSettingsLayout.setText( trans->get("driver_properties") );
     
     screenTextLayout.option1.setText( trans->get("disabled") );

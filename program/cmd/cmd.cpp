@@ -301,6 +301,7 @@ auto Cmd::parse() -> void {
 	if (debug) {
 		dynamic_cast<LIBC64::Interface*> (emuC64)->activateDebugCart( cycles );
 		globalSettings->set<bool>("video_sync", false);
+        globalSettings->set<bool>("threaded_renderer", false);
 		globalSettings->set<bool>("fps_limit", false);
 		globalSettings->set<bool>("fps", true);
 		globalSettings->set("video_screen_text", 0);

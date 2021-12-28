@@ -234,13 +234,13 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             openMenu( emulator, id );
             break;
         case Hotkey::Id::SyncStatus: {
-            std::string _str = videoDriver->hasSynchronized() ? "Vsync " : "";
-            _str += videoDriver->hasThreaded() ? "Threaded " : "";
-            _str += audioDriver->hasSynchronized() ? "Audiosync " : "";
-            _str += audioManager->dynamicRateControl ? "DRC " : "";
+            std::string _str = videoDriver->hasSynchronized() ? "Vsync    " : "";
+            _str += videoDriver->hasThreaded() ? "Threaded    " : "";
+            _str += audioDriver->hasSynchronized() ? "Audiosync    " : "";
+            _str += audioManager->dynamicRateControl ? "DRC    " : "";
             float monitorFrequency = GUIKIT::Monitor::getCurrentRefreshRate();
-            _str += std::to_string( monitorFrequency );
-            statusHandler->setMessage(_str);
+            _str += GUIKIT::String::convertDoubleToString(monitorFrequency, 3 );
+            statusHandler->setMessage(_str, 6);
         } break;
         case Hotkey::Id::Pause:
             view->togglePause();

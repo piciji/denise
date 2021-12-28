@@ -96,7 +96,7 @@ auto pMonitor::disconnect() -> void {
 
 auto pMonitor::fetchDisplays() -> void {
 
-    if (!connect())
+    if (activeDevice || !connect())
         return;
 
     devices.clear();

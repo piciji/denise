@@ -486,6 +486,7 @@ struct pViewport : public pWidget {
     static auto mousePress(GtkWidget* widget, GdkEventButton* event, pViewport* self) -> gboolean;
     static auto mouseRelease(GtkWidget* widget, GdkEventButton* event, pViewport* self) -> gboolean;
 	static auto drawEvent(GtkWidget* widget, cairo_t* context, pViewport* self) -> gboolean;
+    static auto monitorsChanged(GdkScreen* screen, pViewport* self) -> void;
 
     auto init() -> void;
     auto create() -> void;

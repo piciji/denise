@@ -98,6 +98,8 @@ struct ThreadPriority {
     }
 #else
     static auto _setPriority( ThreadPriority::Mode mode, float minProcessingTimeInMilliSeconds = 0, float maxProcessingTimeInMilliSeconds = 0 ) -> bool {
+        // setcap cap_sys_nice=ep /usr/local/bin/your-program
+
         const int policy = SCHED_RR;
         const int minPrio = sched_get_priority_min(policy);
         const int maxPrio = sched_get_priority_max(policy);
@@ -105,13 +107,13 @@ struct ThreadPriority {
 
         switch(mode) {
             default:
-            case ThreadPriorityMode::Normal:
+            case Mode::Normal:
                 sch_params.sched_priority = (minPrio + maxPrio) / 2;
                 break;
-            case ThreadPriorityMode::High:
+            case Mode::High:
                 sch_params.sched_priority = maxPrio - 3;
                 break;
-            case ThreadPriorityMode::Realtime:
+            case Mode::Realtime:
                 sch_params.sched_priority = maxPrio - 1;
                 break;
         }

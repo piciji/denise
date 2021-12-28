@@ -28,8 +28,10 @@ mkdir -p $prefix/share/denise/shader/
 
 if [ -d $prefix/local ]; then
 	install -D -m 755 denise $prefix/local/bin/denise;
+	setcap cap_sys_nice=ep $prefix/local/bin/denise;
 else
 	install -D -m 755 denise $prefix/bin/denise;
+	setcap cap_sys_nice=ep $prefix/bin/denise;
 fi
 
 install -D -m 644 denise.png $prefix/share/icons/denise.png
