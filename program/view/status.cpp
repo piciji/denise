@@ -27,7 +27,10 @@ auto StatusHandler::updateDeviceState( Emulator::Interface::Media* media, bool w
 }
 
 auto StatusHandler::setMessage(std::string txt, unsigned duration, bool critical ) -> void {
-    
+
+    if (duration == 0)
+        duration = 1;
+
     message.txt = txt;
     message.duration = duration;
     message.critical = critical;

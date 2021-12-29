@@ -485,6 +485,12 @@ auto IecBus::emulateDxxMoreAccurate(bool state) -> void {
         drive->emulateDxxMoreAccurate = state;
 }
 
+auto IecBus::disalignTracks(bool state) -> void {
+
+    for( auto drive : drives )
+        drive->structure.disalignTracks = state;
+}
+
 auto IecBus::resetDriveState() -> void {
     
     for( auto drive : drivesEnabled )

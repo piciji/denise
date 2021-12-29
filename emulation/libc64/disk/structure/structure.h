@@ -36,6 +36,7 @@ struct DiskStructure {
 	Emulator::Interface::Media* media = nullptr;
 	bool autoStarted = false;
     unsigned serializationSize = 0;
+    bool disalignTracks = false;
     
     std::function<unsigned (uint8_t*, unsigned, unsigned)> write = [](uint8_t* buffer, unsigned length, unsigned offset){ return 0; };    
     
@@ -206,6 +207,7 @@ private:
     auto prepareTracksNotInUse(bool* inUse) -> void;
     auto createPulsesFromGCR(MTrack* gcrTrack) -> void;
     static auto allocatePulse( std::vector<Pulse>& pulses ) -> unsigned;
+    static auto disalignTrack(uint8_t* ptr, unsigned trackSize, unsigned lastTrackSize, unsigned& offset) -> void;
 };
 
 }

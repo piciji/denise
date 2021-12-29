@@ -90,6 +90,8 @@ auto DiskStructure::prepareDxx() -> void {
     unsigned sectorOffset = 0;
     unsigned trackOffset = 0;
     bool doubleSideFlag = false;
+    unsigned alignOffset = 0;
+    unsigned trackSize = 0;
 
     // first we fetch the bam sector to extract the id, needed for all sector headers
     int sectors = countSectors( 18, 0 );
@@ -107,8 +109,10 @@ auto DiskStructure::prepareDxx() -> void {
             // track 1.5 -> means half track 1
             // track 2 -> means half track 2
             // ... d64 doesn't support halftracks 1.5, 2.5 ...
+
+            unsigned lastTrackSize = trackSize;
             unsigned halfTrack = track * 2 - 2;
-            unsigned trackSize = countBytes(track);
+            trackSize = countBytes(track);
             MTrack* trackPtr = &gcrTracks[side][halfTrack];
 
             // there wasn't loaded any image before
@@ -157,6 +161,9 @@ auto DiskStructure::prepareDxx() -> void {
                     // + speedzone dependant gap
                     ptr += 340 + 9 + gaps + 5;
                 }
+
+                if (disalignTracks)
+                    disalignTrack(trackPtr->data, trackSize, lastTrackSize, alignOffset);
             }
             // half tracks are not supported by D64
             trackPtr = &gcrTracks[side][++halfTrack];

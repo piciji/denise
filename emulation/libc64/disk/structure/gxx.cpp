@@ -84,7 +84,9 @@ auto DiskStructure::prepareGxx() -> void {
     
     uint8_t buf[2];
     unsigned offset;
+    unsigned alignOffset = 0;
     unsigned trackLength;
+    unsigned lastTrackLength = 0;
     unsigned maxHalfTracks = rawData[9];
     int error;
 
@@ -150,6 +152,11 @@ auto DiskStructure::prepareGxx() -> void {
                 ptr->bits = ptr->size << 3;
                 ptr->data = new uint8_t[ptr->size];
                 std::memset(ptr->data, 0x55, ptr->size);
+            }
+
+            if (disalignTracks) {
+                disalignTrack(ptr->data, ptr->size, lastTrackLength, alignOffset);
+                lastTrackLength = ptr->size;
             }
 
             if (!ptr->mfmSync) {

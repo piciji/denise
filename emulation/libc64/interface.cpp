@@ -528,11 +528,11 @@ auto Interface::prepareModels() -> void {
     models.push_back({ModelIdCpuLaxMagic, "LAX Magic Byte", Model::Type::Hex, Model::Purpose::Misc, 0xee, { 0, 0xff }});
     // c64c use custom ic instead of discrete glue logic
     models.push_back({ModelIdGlueLogic, "Custom IC Glue Logic", Model::Type::Switch, Model::Purpose::Misc, 0});
-    // emulate the buggy vertical line in first two border pixels
-    models.push_back({ModelIdLeftLineAnomaly, "Left Line Anomaly", Model::Type::Combo, Model::Purpose::Misc, 0, {0, 2},
-		{"Off", "Solid White", "Register Color"}});               
 	// disable grey dot bug for 85xx VIC-II
 	models.push_back({ModelIdDisableGreyDotBug, "Disable Grey Dot Bug", Model::Type::Switch, Model::Purpose::Misc, 0});
+    // emulate the buggy vertical line in first two border pixels
+    models.push_back({ModelIdLeftLineAnomaly, "Left Line Anomaly", Model::Type::Combo, Model::Purpose::Misc, 0, {0, 2},
+                      {"Off", "Solid White", "Register Color"}});
 
     models.push_back({ModelIdDiskDrivesConnected, "Disk Drives", Model::Type::Combo, Model::Purpose::DriveSettings, 1, {0, 4},
                       { "0", "1", "2", "3", "4" }});
@@ -569,6 +569,8 @@ auto Interface::prepareModels() -> void {
     models.push_back({ModelIdDiskOnDemand, "Disk On Demand", Model::Type::Switch, Model::Purpose::Performance, 0 });
 
     models.push_back({ModelIdD64Accuracy, "Emulate D64 More Accurate", Model::Type::Switch, Model::Purpose::Hidden, 0});
+
+    models.push_back({ModelIdDisalignTrack, "Disalign Tracks", Model::Type::Switch, Model::Purpose::Hidden, 0});
 }
 
 auto Interface::prepareFirmware() -> void {
@@ -1378,6 +1380,9 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
         case ModelIdD64Accuracy:
             iecBus->emulateDxxMoreAccurate( value & 1 );
             break;
+        case ModelIdDisalignTrack:
+            iecBus->disalignTracks( value & 1 );
+            break;
     }    
 }
 
@@ -1470,6 +1475,7 @@ auto Interface::getModelValue(unsigned modelId) -> int {
         case ModelIdDiskThread:             return iecBus->cpuBurnerRequested;
         case ModelIdDiskOnDemand:           return system->diskSilence.active;
         case ModelIdD64Accuracy:            return (int)iecBus->drives[0]->emulateDxxMoreAccurate;
+        case ModelIdDisalignTrack:          return (int)iecBus->drives[0]->structure.disalignTracks;
 
         case ModelIdDriveRam20To3F:         return (int)iecBus->getExpandedMemory(Drive::ExpandedMemMode::M20);
         case ModelIdDriveRam40To5F:         return (int)iecBus->getExpandedMemory(Drive::ExpandedMemMode::M40);

@@ -831,5 +831,39 @@ auto DiskStructure::readSector( uint8_t* buffer, uint8_t track, uint8_t sector )
     return err == ERR_OK;
 }
 
+auto DiskStructure::disalignTrack(uint8_t* ptr, unsigned trackSize, unsigned lastTrackSize, unsigned& offset) -> void {
+    // used to pass skew tests only. like real disks the track alignment doesn't change later on.
+    // to do it right, the stepper emulation should be enabled when writing disks.
+    // the skew tests should be reworked.
+    static uint8_t* tempData = nullptr;
+    static unsigned tempSize = 0;
+
+    if (!trackSize)
+        return;
+
+    if (trackSize > tempSize) {
+        if (tempData)
+            delete[] tempData;
+
+        tempData = new uint8_t[trackSize];
+        tempSize = trackSize;
+    }
+
+    // 200 ms = 1 round
+    //  14 ms = x  (step time)
+    //  x = 14 / 200
+    if (lastTrackSize) {
+        offset += (lastTrackSize * 14) / 200;
+        offset %= lastTrackSize;
+        if (offset)
+            offset = (offset * trackSize) / lastTrackSize;
+    }
+    offset %= trackSize;
+
+    std::memcpy(tempData, ptr, trackSize);
+    std::memcpy(ptr + offset, tempData, trackSize - offset);
+    std::memcpy(ptr, tempData + (trackSize - offset), offset);
+}
+
 }
 
