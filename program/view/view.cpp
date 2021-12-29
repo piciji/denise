@@ -179,7 +179,10 @@ auto View::build() -> void {
     displayChangeTimer.setInterval(300);
     displayChangeTimer.onFinished = [this]() {
         displayChangeTimer.setEnabled(false);
-        statusHandler->setMessage( std::to_string(GUIKIT::Monitor::getCurrentRefreshRate()) );
+        //statusHandler->setMessage( std::to_string(GUIKIT::Monitor::getCurrentRefreshRate()) );
+        if (videoDriver && !fullScreen())
+            videoDriver->forceResize();
+
         VideoManager::setSynchronize();
     };
 	

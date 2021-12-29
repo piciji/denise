@@ -456,6 +456,11 @@ struct DVideo : Video, RenderThread {
         _clear();
     }
 
+    auto forceResize() -> void {
+        if (settings.handle)
+            init();
+    }
+
     auto _clear() -> void {
 		if (!lpD3DDevice) return;
 		if (lost && !recover()) return;

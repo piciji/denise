@@ -38,6 +38,7 @@ struct Video {
     virtual auto setThreaded(bool state) -> void {}
     virtual auto hasThreaded() -> bool { return false; }
 	virtual auto showMessage(std::string message, bool critical = false) -> void {}
+    virtual auto forceResize() -> void {}
     
     virtual auto shaderFormat() -> ShaderType { return ShaderType::NotSupported; }
 	/** direct 3D only */
