@@ -1,5 +1,5 @@
 
-struct FirmwareContainer : GUIKIT::VerticalLayout {   
+struct FirmwareContainer : GUIKIT::FramedVerticalLayout {
     
     struct Block : GUIKIT::VerticalLayout {
         unsigned typeId;   
@@ -18,15 +18,15 @@ struct FirmwareContainer : GUIKIT::VerticalLayout {
             GUIKIT::Button open;
             GUIKIT::Button eject;
 
-            Bottom( bool readOnly = false );
+            Bottom();
         } bottom;
 
-        Block( bool readOnly = false );
+        Block();
     };
-    
-    unsigned storeLevel;
-    
-    std::vector<Block*> blocks;    
+
+    std::vector<Block*> blocks;
+
+    FirmwareContainer();
 };
 
 struct FirmwareLayout : GUIKIT::VerticalLayout {
@@ -34,15 +34,13 @@ struct FirmwareLayout : GUIKIT::VerticalLayout {
     TabWindow* tabWindow;
     Emulator::Interface* emulator;     
     FirmwareManager* manager;
-    
-    std::vector<GUIKIT::Layout*> containers;
-    GUIKIT::SwitchLayout switchLayout;
-    FirmwareContainer::Block* selectedBlock = nullptr;        
-    GUIKIT::FramedVerticalLayout boxLayout;
+
+    FirmwareContainer containerLayout;
+    FirmwareContainer::Block* selectedBlock = nullptr;
     GUIKIT::HorizontalLayout customSelectorLayout;  
 	std::vector<GUIKIT::RadioBox*> selectorBoxes;  
     
-    auto assign( std::string path, FirmwareContainer::Block* block, FileSetting* fSetting ) -> void;
+    auto assign( std::string path, FirmwareContainer::Block* block, FileSetting* fSetting, unsigned storeLevel ) -> void;
     auto translate() -> void;
     auto drop( std::string path ) -> void;
 	auto updateVisibility() -> void;
