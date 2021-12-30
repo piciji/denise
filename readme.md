@@ -16,11 +16,11 @@ Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trade
 ## 1.1.3 (not yet released)
 * add newtronics drive sound theme [thanks to enigma]
 * precise FPS counter and speed selection menu
-    * define custom speeds
+    * define custom speed
     * define decimal place for FPS counter
-* add addaptive sync to temporarly disable Vsync when emulation speed overrun monitor refresh
 * add option to render in a separate thread
-    * keeps Vsync usable when emulation speed overrun monitor refresh
+* add addaptive sync
+    * automatically selects the best sync options for requested emulation speed
      
 
 ## 1.1.2

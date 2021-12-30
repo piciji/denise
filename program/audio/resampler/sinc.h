@@ -29,6 +29,7 @@
 
 #include <functional>
 #include <math.h>
+#include <cstdint>
 
 #include "data.h"
 
