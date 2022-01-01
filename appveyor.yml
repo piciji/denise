@@ -163,10 +163,8 @@ for:
       - image: macos
 
   init:
-    - if "%Target%"=="macos-arm" ( export architecture=arm64-apple-macos11)
-    - if "%Target%"=="macos" ( export architecture=)
-    - if "%Target%"=="macos-arm" ( export ident=arm64_)
-    - if "%Target%"=="macos" ( export ident=)
+    - sh: if [[ $Target == macos-arm ]]; then export architecture=arm64-apple-macos11 ; fi
+    - sh: if [[ $Target == macos-arm ]]; then export ident=arm64_ ; fi
 
   install:      
     - sh: test -e freetype-2.9.1.tar.gz && echo "File exists" || curl -L https://download.savannah.gnu.org/releases/freetype/freetype-2.9.1.tar.gz --output freetype-2.9.1.tar.gz
