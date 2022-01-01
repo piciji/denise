@@ -182,7 +182,7 @@ for:
     - sh: cd freetype-2.9.1
     - sh: ./configure --enable-static --without-zlib --without-bzip2 --without-png && make && make install
     - sh: cd ..  
-    - sh: make Target=${architecture}" && make install
+    - sh: make Target="${architecture}" && make install
     
   after_build:
     - sh: |
