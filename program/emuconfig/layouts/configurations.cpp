@@ -658,23 +658,23 @@ auto ConfigurationsLayout::load( std::string path ) -> bool {
 
     view->updateDeviceSelection(this->emulator);    
     
-    this->tabWindow->audioLayout->loadSettings();
+    if(this->tabWindow->audioLayout) this->tabWindow->audioLayout->loadSettings();
 
-    this->tabWindow->borderLayout->loadSettings();
+    if(this->tabWindow->borderLayout) this->tabWindow->borderLayout->loadSettings();
 
-    this->tabWindow->firmwareLayout->loadSettings();    
-    
-    this->tabWindow->inputLayout->loadSettings();
+    if(this->tabWindow->firmwareLayout) this->tabWindow->firmwareLayout->loadSettings();
 
-    this->tabWindow->miscLayout->loadSettings();
+    if(this->tabWindow->inputLayout) this->tabWindow->inputLayout->loadSettings();
 
-    this->tabWindow->paletteLayout->loadSettings();        
+    if(this->tabWindow->miscLayout) this->tabWindow->miscLayout->loadSettings();
 
-    this->tabWindow->systemLayout->loadSettings();        
+    if(this->tabWindow->paletteLayout) this->tabWindow->paletteLayout->loadSettings();
 
-    this->tabWindow->videoLayout->loadSettings();
-    
-    this->tabWindow->mediaLayout->loadSettings();        
+    if(this->tabWindow->systemLayout) this->tabWindow->systemLayout->loadSettings();
+
+    if(this->tabWindow->videoLayout) this->tabWindow->videoLayout->loadSettings();
+
+    if(this->tabWindow->mediaLayout) this->tabWindow->mediaLayout->loadSettings();
     
     loadSettings();
 

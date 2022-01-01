@@ -75,20 +75,20 @@ auto TabWindow::build() -> void {
     tab.setMargin(10);
     append(tab);        
     
-    inputLayout = new InputLayout( this );
-    systemLayout = new SystemLayout( this );
-    mediaLayout = new MediaView::MediaLayout( this );    
-    configurationsLayout = new ConfigurationsLayout( this );
-    firmwareLayout = new FirmwareLayout( this );
-    videoLayout = new VideoLayout( this );
-    
-    if (dynamic_cast<LIBC64::Interface*>(emulator)) {
-        paletteLayout = new PaletteLayout( this );        
-    }
-    audioLayout = new AudioLayout( this );
-    borderLayout = new BorderLayout( this );
-    miscLayout = new MiscLayout( this );
-    mediaLayout->build();
+//    inputLayout = new InputLayout( this );
+//    systemLayout = new SystemLayout( this );
+//    mediaLayout = new MediaView::MediaLayout( this );
+//    configurationsLayout = new ConfigurationsLayout( this );
+//    firmwareLayout = new FirmwareLayout( this );
+//    videoLayout = new VideoLayout( this );
+//
+//    if (dynamic_cast<LIBC64::Interface*>(emulator)) {
+//        paletteLayout = new PaletteLayout( this );
+//    }
+//    audioLayout = new AudioLayout( this );
+//    borderLayout = new BorderLayout( this );
+//    miscLayout = new MiscLayout( this );
+//    mediaLayout->build();
     
     tab.appendHeader("", systemImage);
     tab.appendHeader("", driveImage);
@@ -103,19 +103,19 @@ auto TabWindow::build() -> void {
 	tab.appendHeader("", cropImage);
     tab.appendHeader("", miscImage);
 
-    tab.setLayout(Layout::System, *systemLayout, {~0u, ~0u}, false );
-    tab.setLayout(Layout::Media, *mediaLayout, {~0u, ~0u}, false );
-    tab.setLayout(Layout::Configurations, *configurationsLayout, {~0u, ~0u}, false );
-	tab.setLayout(Layout::Control, *inputLayout, {~0u, ~0u}, false );
-	tab.setLayout(Layout::Presentation, *videoLayout, {~0u, ~0u}, false );
-	if (dynamic_cast<LIBC64::Interface*>(emulator)) {
-        tab.setLayout(Layout::Palette, *paletteLayout, {~0u, ~0u}, false );
-    }
-    
-    tab.setLayout(Layout::Audio, *audioLayout, {~0u, ~0u}, false );
-    tab.setLayout(Layout::Firmware, *firmwareLayout, {~0u, ~0u}, false );
-	tab.setLayout(Layout::Border, *borderLayout, {~0u, ~0u}, false );
-    tab.setLayout(Layout::Misc, *miscLayout, {~0u, ~0u} );
+//    tab.setLayout(Layout::System, *systemLayout, {~0u, ~0u}, false );
+//    tab.setLayout(Layout::Media, *mediaLayout, {~0u, ~0u}, false );
+//    tab.setLayout(Layout::Configurations, *configurationsLayout, {~0u, ~0u}, false );
+//	tab.setLayout(Layout::Control, *inputLayout, {~0u, ~0u}, false );
+//	tab.setLayout(Layout::Presentation, *videoLayout, {~0u, ~0u}, false );
+//	if (dynamic_cast<LIBC64::Interface*>(emulator)) {
+//        tab.setLayout(Layout::Palette, *paletteLayout, {~0u, ~0u}, false );
+//    }
+//
+//    tab.setLayout(Layout::Audio, *audioLayout, {~0u, ~0u}, false );
+//    tab.setLayout(Layout::Firmware, *firmwareLayout, {~0u, ~0u}, false );
+//	tab.setLayout(Layout::Border, *borderLayout, {~0u, ~0u}, false );
+//    tab.setLayout(Layout::Misc, *miscLayout, {~0u, ~0u}, false );
 
     onClose = [this]() {
         setVisible(false);
@@ -137,10 +137,17 @@ auto TabWindow::build() -> void {
     };
     
     onDrop = [&]( std::vector<std::string> files ) {
-        if ( tab.selection() == Layout::Firmware )
-            firmwareLayout->drop( files[0] );
-        else if ( tab.selection() == Layout::Media )
-            mediaLayout->drop( files[0] );
+        if ( tab.selection() == Layout::Firmware ) {
+            if (firmwareLayout)
+                firmwareLayout->drop(files[0]);
+        } else if ( tab.selection() == Layout::Media ) {
+            if(mediaLayout)
+                mediaLayout->drop(files[0]);
+        }
+    };
+
+    tab.onChange = [&]() {
+        prepareLayout( (TabWindow::Layout)tab.selection() );
     };
 
     translate();
@@ -149,20 +156,16 @@ auto TabWindow::build() -> void {
 auto TabWindow::translate() -> void {
     setTitle( trans->get("config") + " - " + emulator->ident );
 
-    inputLayout->translate();
-    systemLayout->translate();
-    mediaLayout->translate();
-    configurationsLayout->translate();
-    firmwareLayout->translate();
-    borderLayout->translate();
-    videoLayout->translate();
-    if (paletteLayout) 
-        paletteLayout->translate();
-
-    if (audioLayout)
-        audioLayout->translate();
-
-    miscLayout->translate();
+    if(inputLayout) inputLayout->translate();
+    if(systemLayout) systemLayout->translate();
+    if(mediaLayout) mediaLayout->translate();
+    if(configurationsLayout) configurationsLayout->translate();
+    if(firmwareLayout) firmwareLayout->translate();
+    if(borderLayout) borderLayout->translate();
+    if(videoLayout) videoLayout->translate();
+    if(paletteLayout) paletteLayout->translate();
+    if(audioLayout) audioLayout->translate();
+    if(miscLayout) miscLayout->translate();
 
     tab.setHeader(Layout::Control, trans->get("control"));
     tab.setHeader(Layout::System, trans->get("system"));
@@ -197,8 +200,78 @@ auto TabWindow::show(Layout layout) -> void {
 	setFocused();
 }
 
+auto TabWindow::prepareLayout(Layout layout) -> void {
+    switch(layout) {
+        case Layout::Control:
+            if (!inputLayout) {
+                inputLayout = new InputLayout( this );
+                inputLayout->translate();
+                tab.setLayout(Layout::Control, *inputLayout, {~0u, ~0u} );
+            } break;
+        case Layout::System:
+            if (!systemLayout) {
+                systemLayout = new SystemLayout(this);
+                systemLayout->translate();
+                tab.setLayout(Layout::System, *systemLayout, {~0u, ~0u} );
+            } break;
+        case Layout::Media:
+            if (!mediaLayout) {
+                mediaLayout = new MediaView::MediaLayout( this );
+                mediaLayout->build();
+                mediaLayout->translate();
+                tab.setLayout(Layout::Media, *mediaLayout, {~0u, ~0u} );
+            } break;
+        case Layout::Configurations:
+            if (!configurationsLayout) {
+                configurationsLayout = new ConfigurationsLayout( this );
+                configurationsLayout->translate();
+                tab.setLayout(Layout::Configurations, *configurationsLayout, {~0u, ~0u} );
+            } break;
+        case Layout::Firmware:
+            if (!firmwareLayout) {
+                firmwareLayout = new FirmwareLayout( this );
+                firmwareLayout->translate();
+                tab.setLayout(Layout::Firmware, *firmwareLayout, {~0u, ~0u} );
+            } break;
+        case Layout::Presentation:
+            if (!videoLayout) {
+                videoLayout = new VideoLayout( this );
+                videoLayout->translate();
+                tab.setLayout(Layout::Presentation, *videoLayout, {~0u, ~0u} );
+            } break;
+        case Layout::Palette:
+            if (!paletteLayout) {
+                if (dynamic_cast<LIBC64::Interface*>(emulator)) {
+                    paletteLayout = new PaletteLayout( this );
+                    paletteLayout->translate();
+                    tab.setLayout(Layout::Palette, *paletteLayout, {~0u, ~0u} );
+                }
+            } break;
+        case Layout::Audio:
+            if (!audioLayout) {
+                audioLayout = new AudioLayout( this );
+                audioLayout->translate();
+                tab.setLayout(Layout::Audio, *audioLayout, {~0u, ~0u} );
+            } break;
+        case Layout::Border:
+            if (!borderLayout) {
+                borderLayout = new BorderLayout( this );
+                borderLayout->translate();
+                tab.setLayout(Layout::Border, *borderLayout, {~0u, ~0u} );
+            } break;
+        case Layout::Misc:
+            if (!miscLayout) {
+                miscLayout = new MiscLayout( this );
+                miscLayout->translate();
+                tab.setLayout(Layout::Misc, *miscLayout, {~0u, ~0u} );
+            } break;
+    }
+}
+
 auto TabWindow::setLayout(Layout layout) -> void {
-    
+
+    prepareLayout( layout );
+
     if ( (unsigned)layout != tab.selection() )
         tab.setSelection( (unsigned)layout );
 }

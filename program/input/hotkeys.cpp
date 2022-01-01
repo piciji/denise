@@ -97,7 +97,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
                 break;
 
             auto emuView = EmuConfigView::TabWindow::getView(activeEmulator);
-            if (emuView) {
+            if (emuView && emuView->audioLayout) {
                 emuView->audioLayout->toggleRecord();
             } else {
                 if (audioManager->record.run()) {
@@ -130,7 +130,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             activeEmulator->runAhead( pos );
 
             auto emuView = EmuConfigView::TabWindow::getView(activeEmulator);
-            if (emuView)
+            if (emuView && emuView->miscLayout)
                 emuView->miscLayout->setRunAhead( pos );
 
             statusHandler->setMessage( trans->get( "runahead input latency", {{"%count%", std::to_string(pos) }} ) );  
@@ -142,7 +142,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
                 break;
 
             auto emuView = EmuConfigView::TabWindow::getView(activeEmulator);
-            if (emuView)
+            if (emuView && emuView->systemLayout)
                 emuView->systemLayout->performanceModelLayout.toggleCheckbox( activeEmulator->getModelIdOfCycleRenderer() );
             else {
                 auto model = activeEmulator->getModel( activeEmulator->getModelIdOfCycleRenderer() );
@@ -166,7 +166,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             activeEmulator->runAheadPerformance( state );
 
             auto emuView = EmuConfigView::TabWindow::getView(activeEmulator);
-            if (emuView)
+            if (emuView && emuView->miscLayout)
                 emuView->miscLayout->setRunAheadPerformance( state );
             
             statusHandler->setMessage( trans->get( !state ? "runahead accuracy mode" : "runahead performance mode" ) );  
@@ -189,7 +189,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
 			view->checkInputDevice( emulator, connector2, connectedDevice1 );
 
             auto emuView = EmuConfigView::TabWindow::getView(activeEmulator);
-            if (emuView)
+            if (emuView && emuView->inputLayout)
                 emuView->inputLayout->updateConnectorButtons();
 		} break;
         case Hotkey::Id::ToggleFastForward:
@@ -278,7 +278,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
 
             auto emuView = EmuConfigView::TabWindow::getView( activeEmulator );
 
-            if (emuView) {
+            if (emuView && emuView->borderLayout) {
                 if ((CropType)cropType == CropType::Off) emuView->borderLayout->cropOff.activate();
                 else if ((CropType)cropType == CropType::Monitor) emuView->borderLayout->cropMonitor.activate();
                 else if ((CropType)cropType == CropType::Auto) emuView->borderLayout->cropAuto.activate();
@@ -350,7 +350,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             auto emuView = EmuConfigView::TabWindow::getView( activeEmulator );
             bool state = false;
 
-            if (emuView)
+            if (emuView && emuView->audioLayout)
                 state = emuView->audioLayout->settingsLayout.toggleCheckbox( C64Interface::ModelIdDigiboost );
             else {
                 auto model = activeEmulator->getModel( C64Interface::ModelIdDigiboost );
@@ -370,9 +370,8 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             auto emuView = EmuConfigView::TabWindow::getView( activeEmulator );
             unsigned val;
 
-            if (emuView) {
+            if (emuView && emuView->systemLayout) {
                 val = emuView->systemLayout->modelLayout.nextOption( C64Interface::ModelIdSid );
-                emuView->audioLayout->settingsLayout.updateWidget( C64Interface::ModelIdSid );
             } else {
                 auto model = activeEmulator->getModel( C64Interface::ModelIdSid );
                 if (model) {
@@ -385,6 +384,10 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
                 }
             }
 
+            if (emuView->audioLayout) {
+                emuView->audioLayout->settingsLayout.updateWidget( C64Interface::ModelIdSid );
+            }
+
             statusHandler->setMessage( trans->get( val == 1 ? "sid_6581_on" : "sid_8580_on" ) );
         } break;
         case Hotkey::Id::ToggleSidFilter: {
@@ -393,7 +396,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             auto emuView = EmuConfigView::TabWindow::getView( activeEmulator );
             bool state = false;
 
-            if (emuView)
+            if (emuView && emuView->audioLayout)
                 state = emuView->audioLayout->settingsLayout.toggleCheckbox( C64Interface::ModelIdFilter );
             else {
                 auto model = activeEmulator->getModel( C64Interface::ModelIdFilter );
@@ -415,7 +418,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             auto emuView = EmuConfigView::TabWindow::getView( activeEmulator );
             int state;
 
-            if (emuView)
+            if (emuView && emuView->audioLayout)
                 state = emuView->audioLayout->settingsLayout.stepRange( _sid == 0 ? C64Interface::ModelIdBias8580 : C64Interface::ModelIdBias6581,
                         id == Hotkey::AdjustBiasUp ? 100: -100 );
             else {
@@ -525,7 +528,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             activeEmulator->writeProtectDisk(media, (file->isArchived() || file->isReadOnly()) ? true : fSetting->writeProtect);
             media->guid = uintptr_t(file);
             auto emuView = EmuConfigView::TabWindow::getView( activeEmulator );
-            if (emuView)
+            if (emuView && emuView->mediaLayout)
                 emuView->mediaLayout->updateWriteProtection( media, fSetting->writeProtect );
 
             filePool->assign( _ident(activeEmulator, media->name), file);
@@ -730,11 +733,17 @@ auto InputManager::openMenu( Emulator::Interface* emulator, Hotkey::Id id ) -> v
         case Hotkey::Id::Palette:
             emuView->showDelayed( EmuConfigView::TabWindow::Layout::Palette ); break;
         case Hotkey::Id::DiskSwapper:
-            emuView->mediaLayout->showDiskSwapper();
+            if (!emuView->mediaLayout)
+                emuView->prepareLayout(EmuConfigView::TabWindow::Layout::Media);
+
+            emuView->mediaLayout->setDiskSwapperView();
             emuView->showDelayed( EmuConfigView::TabWindow::Layout::Media );
             break;
         case Hotkey::Id::Software:
-            emuView->mediaLayout->show();
+            if (!emuView->mediaLayout)
+                emuView->prepareLayout(EmuConfigView::TabWindow::Layout::Media);
+
+            emuView->mediaLayout->setMediaView();
             emuView->showDelayed( EmuConfigView::TabWindow::Layout::Media );
             break;
         case Hotkey::Id::System:

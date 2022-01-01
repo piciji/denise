@@ -482,7 +482,7 @@ auto States::updateConnectedDevices() -> void {
 
     auto emuView = EmuConfigView::TabWindow::getView( emulator );
 
-    if (emuView)
+    if (emuView && emuView->inputLayout)
         emuView->inputLayout->updateConnectorButtons();
 
     view->setCursor( emulator );
@@ -518,14 +518,16 @@ auto States::updateModels() -> void {
     auto emuView = EmuConfigView::TabWindow::getView( emulator );
 
     if (emuView) {
-        emuView->systemLayout->modelLayout.updateWidgets();
-        emuView->systemLayout->driveModelLayout.updateWidgets();
+        if (emuView->systemLayout) {
+            emuView->systemLayout->modelLayout.updateWidgets();
+            emuView->systemLayout->driveModelLayout.updateWidgets();
+        }
         if (emuView->audioLayout)
             emuView->audioLayout->settingsLayout.updateWidgets();
     }
 
     if (regionChange) {
-        if (emuView)
+        if (emuView && emuView->videoLayout)
             emuView->videoLayout->updatePresets();
         else if (videoDriver)
             VideoManager::getInstance( emulator )->reloadSettings();
@@ -555,7 +557,7 @@ auto States::updateExpansionJumper() -> void {
             settings->set<bool>( _underscore(saveIdent), state);
         }
 
-        if (emuView)
+        if (emuView && emuView->mediaLayout)
             emuView->mediaLayout->updateJumper( mediaGroup.selected );
     }        
 }
@@ -578,7 +580,7 @@ auto States::updateWriteProtection(std::vector<Emulator::Interface::Media*> load
         auto fSetting = FileSetting::getInstance( emulator, _underscore(media->name) );
         fSetting->setWriteProtect( state );
 
-        if (emuView)
+        if (emuView && emuView->mediaLayout)
             emuView->mediaLayout->updateWriteProtection( media, state );
     }       
 }

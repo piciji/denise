@@ -32,7 +32,7 @@ MediaLayout::MediaLayout(EmuConfigView::TabWindow* tabWindow) {
     this->settings = program->getSettings( emulator );
 }
 
-auto MediaLayout::show() -> void {		
+auto MediaLayout::setMediaView() -> void {
        
     GUIKIT::TreeViewItem* diskItem = nullptr;
     
@@ -56,7 +56,7 @@ auto MediaLayout::show() -> void {
     }
 }
 
-auto MediaLayout::showDiskSwapper() -> void {
+auto MediaLayout::setDiskSwapperView() -> void {
     
     for(auto& nav : navElements) {
 
@@ -509,8 +509,9 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
             return;
         
 		this->settings->set<unsigned>("expansion", navElement.mediaGroupLayout->mediaGroup->expansion->id);
-		
-        tabWindow->systemLayout->setExpansion( navElement.mediaGroupLayout->mediaGroup->expansion );
+
+        if (tabWindow->systemLayout)
+            tabWindow->systemLayout->setExpansion( navElement.mediaGroupLayout->mediaGroup->expansion );
         
         program->power( emulator );
         
@@ -520,8 +521,9 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
     deactivateCart.onActivate = [this]() {        
         
 		this->settings->set<unsigned>("expansion", 0);
-		
-        tabWindow->systemLayout->setExpansion( nullptr );
+
+        if (tabWindow->systemLayout)
+            tabWindow->systemLayout->setExpansion( nullptr );
         
         program->power( emulator );
         

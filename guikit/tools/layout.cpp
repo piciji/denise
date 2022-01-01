@@ -463,12 +463,13 @@ TabFrameLayout::TabFrame::TabFrame() : Widget(*new pTabFrame(*this)), p((pTabFra
 TabFrameLayout::TabFrameLayout() {
     frameWidget = new TabFrame;
     getTabFrame()->onChange = [this]() {
+        if(onChange) onChange();
+
         TabFrameLayout* topTab = getTopMostParentTabFrame(this);
         topTab->setVisible();
         if (Sizable::state.visible && state.synchronized) {
             setGeometry( state.geometry );
         }
-        if(onChange) onChange();
     };
 }
 

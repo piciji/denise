@@ -49,6 +49,9 @@ FirmwareLayout::FirmwareLayout(TabWindow* tabWindow) {
 
             if (i == 0) {
                 if (dynamic_cast<LIBC64::Interface*>(this->emulator)) {
+                    if (!this->tabWindow->systemLayout)
+                        this->tabWindow->prepareLayout( EmuConfigView::TabWindow::Layout::System );
+
                     auto blockSpeeder = this->tabWindow->systemLayout->driveModelLayout.getBlock(
                             LIBC64::Interface::ModelId::ModelIdDriveFastLoader);
                     if (blockSpeeder && blockSpeeder->combo.selection())

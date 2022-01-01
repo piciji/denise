@@ -137,8 +137,10 @@ SettingsLayout::SettingsLayout() {
         
         globalSettings->set<unsigned>("software_preview_fontsize", previewLayout.top.fontSizeCombo.userData());
         
-        for( auto emuView : emuConfigViews )
-            emuView->mediaLayout->updateListingFont( previewLayout.top.fontSizeCombo.userData() );
+        for( auto emuView : emuConfigViews ) {
+            if (emuView->mediaLayout)
+                emuView->mediaLayout->updateListingFont(previewLayout.top.fontSizeCombo.userData());
+        }
     };
     
     previewLayout.top.fontSizeCombo.setSelection( globalSettings->get<unsigned>("software_preview_fontsize", 12, {6, 14}) - 6 );
@@ -185,8 +187,10 @@ SettingsLayout::SettingsLayout() {
     previewLayout.top.tooltips.onToggle = [this](bool checked) {
         globalSettings->set<bool>("software_preview_tooltips", checked );
         
-        for( auto emuView : emuConfigViews )
-            emuView->mediaLayout->updateListings();
+        for( auto emuView : emuConfigViews ) {
+            if(emuView->mediaLayout)
+                emuView->mediaLayout->updateListings();
+        }
         
         previewLayout.previewBox.reset();
         
@@ -198,8 +202,10 @@ SettingsLayout::SettingsLayout() {
     previewLayout.top.commodoreHighlight.onToggle = [](bool checked) {
         globalSettings->set<bool>("software_preview_commodore_hi", checked );
 
-        for( auto emuView : emuConfigViews )
-            emuView->mediaLayout->selectionColorListing();
+        for( auto emuView : emuConfigViews ) {
+            if(emuView->mediaLayout)
+                emuView->mediaLayout->selectionColorListing();
+        }
     };
 
     previewLayout.top.commodoreHighlight.setChecked( globalSettings->get<bool>("software_preview_commodore_hi", true ) );
@@ -327,7 +333,8 @@ auto SettingsLayout::changeLang() -> void {
 	
 	for( auto emuView : emuConfigViews ) {
         emuView->translate();
-        emuView->inputLayout->loadDeviceList();
+        if(emuView->inputLayout)
+            emuView->inputLayout->loadDeviceList();
         emuView->synchronizeLayout();
 	}
 }

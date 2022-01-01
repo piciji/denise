@@ -215,8 +215,8 @@ struct MediaLayout : GUIKIT::HorizontalLayout {
     SwapperLayout* swapperLayout = nullptr;
 
     auto build() -> void;	
-    auto show() -> void;
-    auto showDiskSwapper() -> void;
+    auto setMediaView() -> void;
+    auto setDiskSwapperView() -> void;
     auto updateSwitchLayout() -> void;
 	
 	auto translate() -> void;

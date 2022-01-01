@@ -32,8 +32,10 @@ auto Program::initVideo() -> void {
         activeVideoManager->reinitCrtThread(true);
         
     // opengl crt shader only at the moment
-    for( auto emuView : emuConfigViews )
-        emuView->videoLayout->updateVisibillity();
+    for( auto emuView : emuConfigViews ) {
+        if (emuView->videoLayout)
+            emuView->videoLayout->updateVisibillity();
+    }
         
     for( auto emulator : emulators )        
         VideoManager::getInstance( emulator )->reloadSettings();

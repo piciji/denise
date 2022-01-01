@@ -345,12 +345,12 @@ auto Fileloader::previewFile( std::string filePath, Emulator::Interface* emulato
                 Emulator::Interface::MediaGroup* group = media->group;
 
                 auto emuView = EmuConfigView::TabWindow::getView( emulator, *alternateFileDialog );
-                if(emuView)
+                if(emuView && emuView->mediaLayout)
                     emuView->mediaLayout->fillListing(media, listings, !queuePreview.lastMedia);
 
                 queuePreview.lastMedia = media;
 
-                if (emuView)
+                if (emuView && emuView->mediaLayout)
                     emuView->mediaLayout->showMediaGroupLayout(group);
 
                 if (fileDialogPtr)
@@ -529,7 +529,7 @@ auto Fileloader::eject(Emulator::Interface* emulator, Emulator::Interface::Media
 
     auto emuView = EmuConfigView::TabWindow::getView( emulator );
 
-    if (emuView) {
+    if (emuView && emuView->mediaLayout) {
         emuView->mediaLayout->ejectImage( media );
     }
 }
@@ -557,7 +557,7 @@ auto Fileloader::insertFile( Emulator::Interface* emulator, Emulator::Interface:
         if (!item || (item->info.size == 0) )
             return program->errorOpen( file, item, emuView ? emuView->message : view->message );
 
-        if (emuView)
+        if (emuView && emuView->mediaLayout)
             emuView->mediaLayout->insertImage(media, file, item);
         else
             insertImage( emulator, media, file, item );
@@ -582,7 +582,7 @@ auto Fileloader::autoload(Emulator::Interface* emulator, Emulator::Interface::Me
 
     if (mediaGroup->isExpansion()) {
         settings->set<unsigned>("expansion", mediaGroup->expansion->id);
-        if (emuView)
+        if (emuView && emuView->systemLayout)
             emuView->systemLayout->setExpansion( mediaGroup->expansion );
     }
 
@@ -731,7 +731,7 @@ auto Fileloader::showC64Listing( Emulator::Interface* emulator, Emulator::Interf
 auto Fileloader::resetPreview(Emulator::Interface* emulator, bool light) -> void {
     auto emuView = EmuConfigView::TabWindow::getView( emulator );
 
-    if (emuView)
+    if (emuView && emuView->mediaLayout)
         emuView->mediaLayout->resetPreview(light);
 
     queuePreview.lastMedia = nullptr;

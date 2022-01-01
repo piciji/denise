@@ -191,7 +191,7 @@ auto Program::updateSaveIdent( Emulator::Interface* emulator, std::string fileNa
 
     auto emuView = EmuConfigView::TabWindow::getView( emulator );
 
-    if (emuView)
+    if (emuView && emuView->configurationsLayout)
         emuView->configurationsLayout->updateSaveIdent( fileName );
 }
 
@@ -225,7 +225,7 @@ auto Program::removeExpansion( bool bootableOnly ) -> void {
 	program->getSettings( activeEmulator )->set<unsigned>("expansion", 0);
 	
 	auto emuView = EmuConfigView::TabWindow::getView(activeEmulator);
-	if (emuView)
+	if (emuView && emuView->systemLayout)
         emuView->systemLayout->setExpansion( nullptr );
 
 	if (activeEmulator)

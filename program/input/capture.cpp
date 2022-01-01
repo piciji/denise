@@ -57,8 +57,10 @@ auto InputManager::fetch() -> void {
 		bindHidsGlobal();
 		if (configView)
 		    configView->inputLayout->loadInputList();
-		for( auto emuView : emuConfigViews )
-            emuView->inputLayout->update();
+		for( auto emuView : emuConfigViews ) {
+            if (emuView->inputLayout)
+                emuView->inputLayout->update();
+        }
 	}
 }
 

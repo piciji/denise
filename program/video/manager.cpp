@@ -170,7 +170,7 @@ auto VideoManager::updateListingColors() -> void {
 
     auto emuView = EmuConfigView::TabWindow::getView( emulator );
 
-    if (emuView)
+    if (emuView && emuView->mediaLayout)
         emuView->mediaLayout->colorListing( colorTable[14], colorTable[6] );
 }
 

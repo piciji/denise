@@ -23,8 +23,10 @@ auto Program::initInput() -> void {
     if (configView)
 	    configView->inputLayout->loadInputList();
 
-	for( auto emuView : emuConfigViews )
-        emuView->inputLayout->loadDeviceList();
+	for( auto emuView : emuConfigViews ) {
+        if (emuView->inputLayout)
+            emuView->inputLayout->loadDeviceList();
+    }
 }
 
 auto Program::getInputDriver() -> std::string {
@@ -124,7 +126,7 @@ auto Program::resetRunAhead() -> void {
 
         auto emuView = EmuConfigView::TabWindow::getView( activeEmulator );
 
-        if (emuView)
+        if (emuView && emuView->miscLayout)
             emuView->miscLayout->setRunAhead( 0, false );
     }   
 }

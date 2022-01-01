@@ -40,9 +40,13 @@ OSX
 opengl, openal should already installed (system frameworks)
 don't forget to update SDK (commandline tools), when upgrading OS: xcode-select --install
 
+sudo ln -s /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/* /usr/local/include/
+xcrun --show-sdk-path
+export SDKROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/
+
+
 install brew first: /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 brew install pkg-config
-brew install sdl2
 sudo easy_install pip && sudo pip install dmgbuild
 
 compile freetype

@@ -528,7 +528,8 @@ auto ModelLayout::applyCustomStuff( Line::Block* block, Emulator::Interface::Mod
                 break;
                 
             case LIBC64::Interface::ModelIdVicIIModel:
-                tabWindow->videoLayout->updatePresets();
+                if (tabWindow->videoLayout)
+                    tabWindow->videoLayout->updatePresets();
 
                 if (this->emulator == activeEmulator)
                     program->power(activeEmulator);
@@ -537,10 +538,15 @@ auto ModelLayout::applyCustomStuff( Line::Block* block, Emulator::Interface::Mod
             case LIBC64::Interface::ModelIdSid: {
                 auto emuView = EmuConfigView::TabWindow::getView(this->emulator);
 
-                if (this == &emuView->systemLayout->modelLayout)
-                    emuView->audioLayout->settingsLayout.updateWidget(LIBC64::Interface::ModelIdSid);
-                else
+                if (!emuView->systemLayout)
+                    break;
+
+                if (this == &emuView->systemLayout->modelLayout) {
+                    if (emuView->audioLayout)
+                        emuView->audioLayout->settingsLayout.updateWidget(LIBC64::Interface::ModelIdSid);
+                } else {
                     emuView->systemLayout->modelLayout.updateWidget(LIBC64::Interface::ModelIdSid);
+                }
                 
                 } break;
                 
@@ -549,7 +555,8 @@ auto ModelLayout::applyCustomStuff( Line::Block* block, Emulator::Interface::Mod
                 break;
 
             case LIBC64::Interface::ModelIdDiskDrivesConnected:
-                tabWindow->mediaLayout->updateVisibility( emulator->getDiskMediaGroup(), block->combo.selection() );
+                if(tabWindow->mediaLayout)
+                    tabWindow->mediaLayout->updateVisibility( emulator->getDiskMediaGroup(), block->combo.selection() );
                 tabWindow->settings->remove( "access_floppy" );
                 // fall through
             case LIBC64::Interface::ModelIdTapeDrivesConnected:

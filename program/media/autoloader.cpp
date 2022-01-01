@@ -127,7 +127,7 @@ auto Autoloader::postProcessing() -> void {
             emuView->setFocused();
         }
 
-        if (emuView)
+        if (emuView && emuView->mediaLayout)
             emuView->mediaLayout->showMediaGroupLayout(mediaGroup);
 
     } else {
@@ -170,7 +170,7 @@ auto Autoloader::postProcessing() -> void {
                     }
                 }
 
-                if (emuView)
+                if (emuView && emuView->systemLayout)
                     emuView->systemLayout->setExpansion( useExpansion );
 			}
 		}
@@ -297,7 +297,7 @@ auto Autoloader::loadFile( GUIKIT::File* file, GUIKIT::File::Item* item ) -> voi
 					if (!media)
 						media = &mediaGroup.media[ alreadyInUse ];
 
-					if (emuView)
+					if (emuView && emuView->mediaLayout)
                         emuView->mediaLayout->insertImage(media, file, item);
 					else
 						fileloader->insertImage( emulator, media, file, item );
@@ -354,8 +354,8 @@ auto Autoloader::activateDrive( Emulator::Interface* emulator, Emulator::Interfa
     auto emuView = EmuConfigView::TabWindow::getView( emulator );
 
     if (emuView) {
-        emuView->systemLayout->driveModelLayout.updateWidget( modelId );
-        emuView->mediaLayout->updateVisibility( mediaGroup, requestedCount );
+        if(emuView->systemLayout) emuView->systemLayout->driveModelLayout.updateWidget( modelId );
+        if(emuView->mediaLayout) emuView->mediaLayout->updateVisibility( mediaGroup, requestedCount );
     }
 }
 

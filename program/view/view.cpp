@@ -462,7 +462,7 @@ auto View::setConnectors() -> void {
                     emulator->connect(connector.id, device.id);
                     InputManager::getManager(emulator)->updateMappingsInUse();
                     auto emuView = EmuConfigView::TabWindow::getView(emulator);
-                    if (emuView)
+                    if (emuView && emuView->inputLayout)
                         emuView->inputLayout->updateConnectorButtons();
                     view->setCursor(emulator);
                 };
@@ -503,7 +503,7 @@ auto View::setConnectors() -> void {
             settings->set<unsigned>( _underscore(connector2->name), connectedDevice1->id);
 
             auto emuView = EmuConfigView::TabWindow::getView(emulator);
-            if (emuView)
+            if (emuView && emuView->inputLayout)
                 emuView->inputLayout->updateConnectorButtons();
             
             view->checkInputDevice(emulator, connector1, connectedDevice2);
@@ -724,8 +724,8 @@ auto View::buildMenu() -> void {
         sM.media->setIcon( driveImage );
         sM.media->onActivate = [emulator]() {
             auto emuView = EmuConfigView::TabWindow::getView( emulator, true );
-            emuView->mediaLayout->show();
             emuView->show(EmuConfigView::TabWindow::Layout::Media);
+            emuView->mediaLayout->setMediaView();
 	    };
         sM.system->append( *sM.media );
 		

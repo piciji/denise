@@ -244,7 +244,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
                 emulator->writeProtect(&media, (file->isArchived() || file->isReadOnly()) ? true : fSetting->writeProtect);
 
                 auto emuView = EmuConfigView::TabWindow::getView( activeEmulator );
-                if (emuView)
+                if (emuView && emuView->mediaLayout)
                     emuView->mediaLayout->updateWriteProtection( &media, fSetting->writeProtect );
 
                 filePool->assign( _ident(emulator, media.name + "store"), file);
@@ -335,7 +335,7 @@ auto Program::powerOff() -> void {
                     // medium was written by emulation, lets update the listing
                     if (!cmd->noGui && file->wasDataChanged() && filePool->has( _ident(activeEmulator, media.name + "store"), file)) {
                         auto emuView = EmuConfigView::TabWindow::getView( activeEmulator );
-                        if (emuView)
+                        if (emuView && emuView->mediaLayout)
                             emuView->mediaLayout->updateListing( &media );
                     }
                 }                        
