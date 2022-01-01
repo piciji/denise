@@ -7,6 +7,7 @@ skip_commits:
     - '**/*.md'
 
 image:
+  - macos-bigsur
   - macos
   - Visual Studio 2019
   - Ubuntu2004
@@ -53,8 +54,17 @@ matrix:
     - image: macos
       Target: win32
     - image: macos
-      Target: linux      
-
+      Target: linux
+    - image: macos
+      Target: macos-arm
+    - image: macos-bigsur
+      Target: win64
+    - image: macos-bigsur
+      Target: win32
+    - image: macos-bigsur
+      Target: linux
+    - image: macos-bigsur
+      Target: macos
 for:
 -    
   matrix:
@@ -162,10 +172,6 @@ for:
     only:
       - image: macos
 
-  init:
-    - sh: if [[ $Target == macos-arm ]]; then export architecture=arm64-apple-macos11 ; fi
-    - sh: if [[ $Target == macos-arm ]]; then export ident=arm64_ ; fi
-
   install:      
     - sh: test -e freetype-2.9.1.tar.gz && echo "File exists" || curl -L https://download.savannah.gnu.org/releases/freetype/freetype-2.9.1.tar.gz --output freetype-2.9.1.tar.gz
     - tar -zxf freetype-2.9.1.tar.gz
@@ -182,17 +188,17 @@ for:
     - sh: cd freetype-2.9.1
     - sh: ./configure --enable-static --without-zlib --without-bzip2 --without-png && make && make install
     - sh: cd ..  
-    - sh: make Target="${architecture}" && make install
+    - sh: make && make install
     
   after_build:
     - sh: |
         if [ "${APPVEYOR_REPO_TAG}" == "false" ]
         then
-          export gzTarget=denise_osx_${ident}build_$(echo ${APPVEYOR_REPO_COMMIT} | cut -c 1-7).dmg
+          export gzTarget=denise_osx_build_$(echo ${APPVEYOR_REPO_COMMIT} | cut -c 1-7).dmg
           export gzSrc=out/Denise.dmg
           
         else        
-          export gzTarget=denise_osx_${ident}${APPVEYOR_REPO_TAG_NAME}.dmg
+          export gzTarget=denise_osx_${APPVEYOR_REPO_TAG_NAME}.dmg
           export gzSrc=out/Denise.dmg
         fi
         
@@ -201,6 +207,38 @@ for:
   artifacts:
     - path: 'denise*.dmg'
     
+-
+  matrix:
+    only:
+      - image: macos-bigsur
+
+  install:
+    - sh: sudo python -m pip install biplist
+    - sh: sudo pip install dmgbuild
+
+  before_build:
+    - sh: export MACOSX_DEPLOYMENT_TARGET=11
+
+  build_script:
+    - sh: make Target=arm64-apple-macos11 && make install
+
+  after_build:
+    - sh: |
+        if [ "${APPVEYOR_REPO_TAG}" == "false" ]
+        then
+          export gzTarget=denise_osx_arm64_build_$(echo ${APPVEYOR_REPO_COMMIT} | cut -c 1-7).dmg
+          export gzSrc=out/Denise.dmg
+        
+        else        
+          export gzTarget=denise_osx_arm64_${APPVEYOR_REPO_TAG_NAME}.dmg
+          export gzSrc=out/Denise.dmg
+        fi
+        
+        sudo mv "${gzSrc}" "${gzTarget}"
+
+  artifacts:
+    - path: 'denise*.dmg'
+
 
 deploy:
 #  - provider: FTP
