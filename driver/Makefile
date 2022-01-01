@@ -16,7 +16,9 @@ else
 
 endif
 # show in screen status text for opengl
+ifeq ($(Target),)
 drv += freetype
+endif
 env :=
 
 

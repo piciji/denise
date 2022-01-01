@@ -4,6 +4,8 @@
 # gprof := 1
 
 DEBUG ?= 0
+Target ?=
+
 name := Denise
 translationFolder := translation
 dataFolder := data
@@ -34,7 +36,7 @@ deps = $(objects)
 
 prgflags := -DAPP_NAME="\"$(name)\"" -DTRANSLATION_FOLDER="\"$(translationFolder)/\"" -DDATA_FOLDER="\"$(dataFolder)/\"" -DSHADER_FOLDER="\"$(shaderFolder)/\"" -DIMG_FOLDER="\"$(imgFolder)/\"" -DSOUND_FOLDER="\"$(soundFolder)/\""
 flags :=
-link := 
+link := $(architecture)
 
 ifeq ($(platform),windows)
     link += -static -lws2_32

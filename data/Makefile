@@ -32,11 +32,20 @@ ifeq ($(compiler),)
     endif
 endif
 
+architecture :=
+ifneq ($(Target),)
+    ifneq ($(findstring clang,$(compiler)),)
+    architecture += -target $(Target)
+	else
+	architecture += -march=$(Target)
+    endif
+endif
+
 ifeq ($(platform),macosx)
-    cppflags := -x c++ -std=c++14 -MD
-    objcppflags := -x objective-c++ -std=c++14 -MD
+    cppflags := $(architecture) -x c++ -std=c++14 -MD
+    objcppflags := $(architecture) -x objective-c++ -std=c++14 -MD
 else	
-    cppflags := -x c++ -std=c++17 -MD
+    cppflags := $(architecture) -x c++ -std=c++17 -MD
 endif
 	
 compile = \

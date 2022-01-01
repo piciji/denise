@@ -17,10 +17,12 @@ branches:
   only:
     - master
     - /v\d*\.\d*\.\d*/
-    - adaptive_sync
+    - arm64
   
 environment:
   matrix:
+    - Job: macOS ARM 64-bit
+      Target: macos-arm
     - Job: macOS 64-bit
       Target: macos
     - Job: Linux 64-bit
@@ -36,12 +38,16 @@ matrix:
       Target: linux
     - image: Visual Studio 2019
       Target: macos
+    - image: Visual Studio 2019
+      Target: macos-arm
     - image: Ubuntu2004
       Target: win64
     - image: Ubuntu2004
       Target: win32
     - image: Ubuntu2004
       Target: macos
+    - image: Ubuntu2004
+      Target: macos-arm
     - image: macos
       Target: win64
     - image: macos
@@ -155,7 +161,13 @@ for:
   matrix:
     only:
       - image: macos
-      
+
+  init:
+    - if "%Target%"=="macos-arm" ( export architecture=arm64-apple-macos11)
+    - if "%Target%"=="macos" ( export architecture=)
+    - if "%Target%"=="macos-arm" ( export ident=arm64_)
+    - if "%Target%"=="macos" ( export ident=)
+
   install:      
     - sh: test -e freetype-2.9.1.tar.gz && echo "File exists" || curl -L https://download.savannah.gnu.org/releases/freetype/freetype-2.9.1.tar.gz --output freetype-2.9.1.tar.gz
     - tar -zxf freetype-2.9.1.tar.gz
@@ -172,17 +184,17 @@ for:
     - sh: cd freetype-2.9.1
     - sh: ./configure --enable-static --without-zlib --without-bzip2 --without-png && make && make install
     - sh: cd ..  
-    - sh: make && make install
+    - sh: make Target=${architecture}" && make install
     
   after_build:
     - sh: |
         if [ "${APPVEYOR_REPO_TAG}" == "false" ]
         then
-          export gzTarget=denise_osx_build_$(echo ${APPVEYOR_REPO_COMMIT} | cut -c 1-7).dmg
+          export gzTarget=denise_osx_${ident}build_$(echo ${APPVEYOR_REPO_COMMIT} | cut -c 1-7).dmg
           export gzSrc=out/Denise.dmg
           
         else        
-          export gzTarget=denise_osx_${APPVEYOR_REPO_TAG_NAME}.dmg
+          export gzTarget=denise_osx_${ident}${APPVEYOR_REPO_TAG_NAME}.dmg
           export gzSrc=out/Denise.dmg
         fi
         
