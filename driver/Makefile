@@ -16,9 +16,9 @@ else
 
 endif
 # show in screen status text for opengl
-ifeq ($(Target),)
+#ifeq ($(Arch),)
 drv += freetype
-endif
+#endif
 env :=
 
 

@@ -33,11 +33,11 @@ ifeq ($(compiler),)
 endif
 
 architecture :=
-ifneq ($(Target),)
+ifneq ($(Arch),)
     ifneq ($(findstring clang,$(compiler)),)
-    architecture += -target $(Target)
+    architecture += -target $(Arch)
 	else
-	architecture += -march=$(Target)
+	architecture += -march=$(Arch)
     endif
 endif
 

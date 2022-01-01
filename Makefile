@@ -4,7 +4,7 @@
 # gprof := 1
 
 DEBUG ?= 0
-Target ?=
+Arch ?=
 
 name := Denise
 translationFolder := translation
