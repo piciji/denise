@@ -43,19 +43,24 @@ volume("%", false, true) {
     if (control.driverLayout.combo.rows() == 1) control.driverLayout.setEnabled(false);
 	
 	control.driverLayout.combo.onChange = [this]() {
+        emuThread->lock();
 		globalSettings->set<std::string>("audio_driver", control.driverLayout.combo.text() );
         audioManager->record.finish();
 		program->initAudio();
+        emuThread->unlock();
 	};
 	    	
     control.frequencyCombo.onChange = [this]() {
+        emuThread->lock();
         globalSettings->set<unsigned>("audio_frequency_v2", control.frequencyCombo.userData());
         audioManager->record.finish();
         audioManager->setFrequency();
         audioManager->setAudioDsp();
+        emuThread->unlock();
     };
     
     latency.slider.onChange = [this]() {
+        emuThread->lock();
         auto value = latency.slider.position();
         auto minimumLatency = audioDriver->getMinimumLatency();
         
@@ -63,32 +68,41 @@ volume("%", false, true) {
         updateLatencySlider();
         audioManager->record.finish();
         audioManager->setLatency();
+        emuThread->unlock();
     };
     
     volume.slider.onChange = [this]() {
+        emuThread->lock();
         auto value = volume.slider.position();
         globalSettings->set<unsigned>("audio_volume", value);
         volume.value.setText( std::to_string( value ) + " %" );
         audioManager->setVolume();
+        emuThread->unlock();
     };
     
     volume.defaultButton.onActivate = [this]() {
+        emuThread->lock();
         globalSettings->set<unsigned>("audio_volume", 100);
         volume.value.setText( std::to_string( 100 ) + " %" );
         volume.slider.setPosition( 100 );
         audioManager->setVolume();
+        emuThread->unlock();
     };    
     
     control.maxRateEdit.onChange = [this]() {
+        emuThread->lock();
         globalSettings->set<std::string>("rate_control_delta", control.maxRateEdit.text() );
         audioManager->setRateControl();
+        emuThread->unlock();
     };
     
     control.maxRateEdit.setText( GUIKIT::String::formatFloatingPoint( globalSettings->get<double>("rate_control_delta", 0.005, {0.0, 0.010}) ) );
        
     control.priorityCheckbox.onToggle = [this](bool checked) {
+        emuThread->lock();
         globalSettings->set<bool>("audio_priority", checked);
         audioDriver->setHighPriority( checked );
+        emuThread->unlock();
     };
     
     control.priorityCheckbox.setChecked( globalSettings->get<bool>("audio_priority", false) );

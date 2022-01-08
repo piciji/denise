@@ -33,7 +33,6 @@ auto EmuThread::enable(bool state) -> void {
         while (kill) {
             std::this_thread::yield();
         }
-      //  cv.notify_one();
     }
 }
 
@@ -57,10 +56,6 @@ auto EmuThread::initWorker() -> void {
 
     std::thread worker([this] {
 
-//        std::chrono::milliseconds duration(5);
-//        std::mutex cvM;
-//        std::unique_lock<std::mutex> lk(cvM);
-
   //      if (GUIKIT::ThreadPriority::setPriority( GUIKIT::ThreadPriority::Mode::High, 3.0, 5.0 )) {
         //     logger->log("increased render thread prio");
    //     }
@@ -69,54 +64,33 @@ auto EmuThread::initWorker() -> void {
         attention = false;
         acknowledged = false;
         freeContext = false;
-        uint64_t ts = Chronos::getTimestampInMilliseconds();
 
         while (1) {
 
-           // while (!ready.load()) {
-                if (kill) {
-                    kill = false;
-                    videoDriver->freeContext();
-                    return;
-                }
+            if (kill) {
+                kill = false;
+                videoDriver->freeContext();
+                return;
+            }
 
-                if (freeContext) {
-                    logger->log("free");
-                    freeContext = false;
-                    videoDriver->freeContext();
-                }
+            if (freeContext) {
+                freeContext = false;
+                videoDriver->freeContext();
+            }
 
-                if (attention) {
-                    logger->log("attention");
-                    attention = false;
-                    acknowledged = true;
+            if (attention) {
+                attention = false;
+                acknowledged = true;
 
-                    while(acknowledged) {
-                        std::this_thread::yield();
-                    }
+                while(acknowledged) {
+                    std::this_thread::yield();
                 }
-            //}
+            }
 
             program->loop();
 
-//                auto ts2 = Chronos::getTimestampInMilliseconds();
-//
-//                if (program->isRunning && ((ts2 - ts) >= 18))
-//                    logger->log(std::to_string(ts2 - ts));
-//                else
-//                    logger->log("-");
-//                ts = ts2;
-
-
-            //accessMutex.lock();
-
-            //accessMutex.unlock();
         }
     });
-//    sched_param sch_params;
-//    sch_params.sched_priority = 99;
-//
-//    pthread_setschedparam( worker.native_handle(), SCHED_RR, &sch_params);
 
     worker.detach();
 }

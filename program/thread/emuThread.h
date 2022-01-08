@@ -18,8 +18,6 @@ struct EmuThread {
     std::atomic<bool> kill;
     std::atomic<bool> freeContext;
 
-    std::condition_variable cv;
- //   std::mutex accessMutex;
     std::mutex statusMutex;
 
     auto lock() -> bool;

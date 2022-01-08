@@ -19,7 +19,7 @@ include data/Makefile
 
 objects := program view config emuconfig emumodel mediaview archiveviewer states firmware cmd statusbar
 objects += input audio video palette shader bass reverb panning audiorecord wavwriter sinc cosine cosineSSE driveSounds
-objects += guikit libami libC64 autoloader fileloader renderthread
+objects += guikit libami libC64 autoloader fileloader renderthread emuthread
 objects += driver
 ifeq ($(platform),windows)
     objects += dinput5 dinput7 dinput8 xaudio27 xaudio28 xaudio29
@@ -113,6 +113,7 @@ obj/xaudio29.o:	driver/audio/xaudio2/xaudio29.cpp
 	$(compiler) $(drvflags) $(flags) -Wno-attributes -c $< -o $@
 endif
 obj/renderthread.o: driver/video/thread/renderThread.cpp
+obj/emuthread.o:		program/thread/emuThread.cpp
 
 obj/libami.o:	emulation/libami/interface.cpp
 obj/libC64.o:	emulation/libc64/interface.cpp

@@ -64,6 +64,7 @@ struct Program : Emulator::Interface::Bind {
     auto quit() -> void;
     auto loop() -> void;
 	auto loopNoGui() -> void;
+    auto loopUserInterface() -> void;
 	auto willRun() -> bool;
     auto loadTranslation(std::string file) -> bool;
     auto translationFolder() -> std::string;
@@ -84,7 +85,7 @@ struct Program : Emulator::Interface::Bind {
 
     auto init() -> void;
     auto addEmulators() -> void;
-    auto power( Emulator::Interface* emulator, bool regular = true ) -> void;
+    auto power( Emulator::Interface* emulator, bool regular = true, bool unlock = true ) -> void;
 	auto reset( Emulator::Interface* emulator ) -> void;
     auto powerOff() -> void;
     auto readMedia(Emulator::Interface::Media* media, uint8_t* buffer, unsigned length, unsigned offset) -> unsigned override;
@@ -115,6 +116,7 @@ struct Program : Emulator::Interface::Bind {
     auto prepareSocket(Emulator::Interface::Media* media, Emulator::Interface* emulator, std::string address) -> void;
     auto initAutoWarp(Emulator::Interface::MediaGroup* mediaGroup) -> void;
     auto updateSaveIdent(Emulator::Interface* emulator, std::string fileName) -> void;
+    auto initUserInterface() -> void;
     
     //audio
     auto initAudio() -> void;

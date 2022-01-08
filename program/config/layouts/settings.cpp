@@ -32,7 +32,8 @@ SwitchesLayout::SwitchesLayout() {
     append(saveSettingsOnExit, {~0u, 0u}, 3);
     append(openFullscreen, {~0u, 0u}, 3);
     append(alternateSoftwarePreview, {~0u, 0u}, 3);
-    append(questionMediaWrite, {~0u, 0u});
+    append(questionMediaWrite, {~0u, 0u}, 3);
+    append(threadedUI, {~0u, 0u});
     setFont(GUIKIT::Font::system("bold"));
 }
 
@@ -122,10 +123,18 @@ SettingsLayout::SettingsLayout() {
         globalSettings->set<bool>("question_media_write", checked);
     };
 
+    switches.threadedUI.setChecked(globalSettings->get<bool>("threaded_ui", true));
+    switches.threadedUI.onToggle = [](bool checked) {
+        globalSettings->set<bool>("threaded_ui", checked);
+        program->initUserInterface();
+    };
+
     setLang();
     
     lang.listView.onChange = [&]() {
+        emuThread->lock();
         changeLang();
+        emuThread->unlock();
     };
     
     for(unsigned i = 6; i <= 14; i++) {
@@ -408,6 +417,7 @@ auto SettingsLayout::translate() -> void {
     switches.openFullscreen.setText(trans->get("open_fullscreen"));
     switches.alternateSoftwarePreview.setText(trans->get("alternate software preview"));
     switches.questionMediaWrite.setText(trans->get("confirm writes"));
+    switches.threadedUI.setText(trans->get("Threaded UI"));
 
     about.left.license.setText( trans->get("license", {}, true) + " " + LICENSE );
     about.left.author.setText( trans->get("author", {}, true) + " " + AUTHOR );

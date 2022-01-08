@@ -649,3 +649,5 @@ Set speed =
 Threaded Renderer =
 Threaded Renderer tooltip =
 Apply =
+Threaded UI =
+Threaded UI tooltip =

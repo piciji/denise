@@ -4,6 +4,7 @@
 #include "../audio/manager.h"
 #include "../cmd/cmd.h"
 #include "../tools/chronos.h"
+#include "../thread/emuThread.h"
 
 StatusHandler* statusHandler = nullptr;
 
@@ -147,8 +148,8 @@ auto StatusHandler::updateDRC( bool state ) -> void {
 auto StatusHandler::updateAudioRecord( bool state ) -> void {
     
     recordAudio = state;
-    statusBar->updateVisible(14, recordAudio);
-    statusBar->update();
+    updateVisible(14, recordAudio);
+    updateStatusBar();
 }
 
 auto StatusHandler::updateTapeImage( GUIKIT::Image* image ) -> void {
@@ -171,13 +172,13 @@ auto StatusHandler::updateTapeImage( GUIKIT::Image* image ) -> void {
         }
     }
     
-    statusBar->updateImage( 10, image );        
+    updateImage( 10, image );
 }
 
 auto StatusHandler::hideTape() -> void {
-	statusBar->updateVisible(9, false);
-	statusBar->updateVisible(10, false);
-	statusBar->update();
+	updateVisible(9, false);
+	updateVisible(10, false);
+    updateStatusBar();
 }
 
 auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
@@ -251,9 +252,14 @@ auto StatusHandler::transferToOSD( std::string text ) -> void {
 
 auto StatusHandler::update() -> void {
 
+    bool emuThreadEnabled = emuThread->enabled;
+
     uint16_t clearMask = ~0;
     static auto countDecimalPoint = globalSettings->getOrInit<unsigned>("fps_decimal_point", 3u, {0u, 3u});
-    
+
+    if (emuThreadEnabled)
+        emuThread->statusMutex.lock();
+
     if (fpsCounterUpdate()) {
         if (message.duration) {
             if (--message.duration == 0) {
@@ -266,7 +272,7 @@ auto StatusHandler::update() -> void {
     std::string OSDText = message.txt;
     
     if (messageUpdate())        
-        statusBar->updateText(0, message.txt, true, message.critical ? 0xe92828 : -1 );
+        updateText(0, message.txt, true, message.critical ? 0xe92828 : -1 );
 
     if (activeEmulator) {
         if (deviceUpdate()) {
@@ -293,33 +299,33 @@ auto StatusHandler::update() -> void {
                     } else
                         name += GUIKIT::String::prependZero( std::to_string( deviceState.position ), 2 );                
 
-                    statusBar->updateText(media->id * 2 + 1, name);
+                    updateText(media->id * 2 + 1, name);
 
                     GUIKIT::Image* image = &(view->ledOffImage);
                     if (deviceState.LED & 1)
                         image = deviceState.write ? &(view->ledRedImage) : &(view->ledGreenImage);
 
-                    statusBar->updateImage(media->id * 2 + 2, image);
+                    updateImage(media->id * 2 + 2, image);
 
                 } else if (group->isTape()) {
 
                     std::string name = GUIKIT::String::prependZero( std::to_string( deviceState.position ), 3 );
 
-                    statusBar->updateText(9, name);
+                    updateText(9, name);
 
                     // we don't use the tape mode of emulation core, because it doesn't match the "tape button press" state
                     // in all cases, e.g. when tape is forwarded until end, mode changes to "stop" but play button keeps in pressed state.
                     if ( view->tapePlayItem.icon() == &view->playhiImage )
-                        statusBar->updateImage( 10, deviceState.motorOff ? &(view->playPauseStatusImage) : &(view->playStatusImage) );
+                        updateImage( 10, deviceState.motorOff ? &(view->playPauseStatusImage) : &(view->playStatusImage) );
                     
                     else if ( view->tapeForwardItem.icon() == &view->forwardhiImage )
-                        statusBar->updateImage( 10, deviceState.motorOff ? &(view->forwardPauseStatusImage) : &(view->forwardStatusImage) );
+                        updateImage( 10, deviceState.motorOff ? &(view->forwardPauseStatusImage) : &(view->forwardStatusImage) );
 
                     else if ( view->tapeRewindItem.icon() == &view->rewindhiImage )
-                        statusBar->updateImage( 10, deviceState.motorOff ? &(view->rewindPauseStatusImage) : &(view->rewindStatusImage) );
+                        updateImage( 10, deviceState.motorOff ? &(view->rewindPauseStatusImage) : &(view->rewindStatusImage) );
                     
                     else if ( view->tapeRecordItem.icon() == &view->recordhiImage )
-                        statusBar->updateImage( 10, deviceState.motorOff ? &(view->recordPauseStatusImage) : &(view->recordStatusImage) );
+                        updateImage( 10, deviceState.motorOff ? &(view->recordPauseStatusImage) : &(view->recordStatusImage) );
                     
                 } else if (group->isExpansion()) {
 
@@ -334,8 +340,8 @@ auto StatusHandler::update() -> void {
                     if ((deviceState.LED >> deviceState.inputsPerFrame) & 1)
                         image = &(view->ledGreenImage); 
 
-					statusBar->updateVisible(11, true);
-                    statusBar->updateImage(12, image);
+					updateVisible(11, true);
+                    updateImage(12, image);
                 }                
             }
         }                        
@@ -349,7 +355,7 @@ auto StatusHandler::update() -> void {
             out += " Ø " + GUIKIT::String::formatFloatingPoint(drcS.average, 2) + "%";
 
             if (drcBufferUpdate())
-                statusBar->updateText(13, out, true);
+                updateText(13, out, true);
 
             if (message.txt.empty())
                 OSDText += out;
@@ -365,18 +371,47 @@ auto StatusHandler::update() -> void {
                     : std::to_string((unsigned)round(fpsCounter.fps));
 
             if (fpsCounterUpdate())
-                statusBar->updateText(15, _FPS, true);
+                updateText(15, _FPS, true);
 
             if (message.txt.empty())
                 OSDText += " " + _FPS;            
         }
-    }    
-        
-    statusBar->update();    
+    }
+
+    updateStatusBar();
     
     clearUpdates( clearMask );
-    
-	if (!cmd->noDriver)
+
+    if (emuThreadEnabled)
+        emuThread->statusMutex.unlock();
+
+    if (!cmd->noDriver)
 		transferToOSD( OSDText );
+}
+
+auto StatusHandler::updateVisible(unsigned id, bool visible) -> void {
+    if (emuThread->enabled)
+        emuThread->addStatusUpdate(id, (int)visible);
+    else
+        statusBar->updateVisible(id, visible);
+}
+
+auto StatusHandler::updateText(unsigned id, std::string text, bool alignRight, int overrideForegroundColor) -> void {
+    if (emuThread->enabled)
+        emuThread->addStatusUpdate(id, -1, nullptr, text, alignRight, overrideForegroundColor);
+    else
+        statusBar->updateText(id, text, alignRight, overrideForegroundColor);
+}
+
+auto StatusHandler::updateImage(unsigned id, GUIKIT::Image* image) -> void {
+    if (emuThread->enabled)
+        emuThread->addStatusUpdate(id, -1, image);
+    else
+        statusBar->updateImage(id, image);
+}
+
+auto StatusHandler::updateStatusBar() -> void {
+    if (!emuThread->enabled)
+        statusBar->update();
 }
 

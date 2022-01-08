@@ -15,6 +15,7 @@
 #include "cmd/cmd.h"
 #include "media/autoloader.h"
 #include "media/fileloader.h"
+#include "thread/emuThread.h"
 #include <random>
 
 Program* program = nullptr;
@@ -52,16 +53,12 @@ int main(int argc, char** argv) {
 }
 
 Program::Program() {
-    program = this;    
-	if (cmd->noGui)
-		GUIKIT::Application::loop = [this]() { loopNoGui(); };    
-	else
-		GUIKIT::Application::loop = [this]() { loop(); };    
-		
+    program = this;
     GUIKIT::Application::name = APP_NAME;
     globalSettings = new GUIKIT::Settings;
 	autoloader = new Autoloader;
 	fileloader = new Fileloader;
+    emuThread = new EmuThread;
     settingsStorage.push_back( globalSettings );
 	if(!cmd->noGui) {
 		view = new View;
@@ -87,7 +84,24 @@ Program::Program() {
 	initAudio();
 	initVideo();
 
+    initUserInterface();
     cmd->autoloadImages();
+}
+
+auto Program::initUserInterface() -> void {
+    bool threadedUI = globalSettings->get<bool>("threaded_ui", true);
+
+    if (cmd->noGui) {
+        GUIKIT::Application::setLoop( [this]() { loopNoGui(); } );
+        emuThread->enable( false );
+    } else if (!threadedUI) {
+        GUIKIT::Application::setLoop( [this]() { loop(); } );
+        emuThread->enable( false );
+    } else {
+        videoDriver->freeContext();
+        GUIKIT::Application::setLoop(  [this]() { loopUserInterface(); } );
+        emuThread->enable( true );
+    }
 }
 
 auto Program::addEmulators() -> void {
@@ -186,7 +200,8 @@ auto Program::setMemoryPattern(Emulator::Interface* emulator) -> void {
     emulator->setMemoryInitParams( value, invertEvery, randomPatternLength, repeatRandomPattern, randomChance );
 }
 
-auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
+auto Program::power( Emulator::Interface* emulator, bool regular, bool unlock ) -> void {
+    emuThread->lock();
     bool emuSwap = activeEmulator != emulator;
     powerOff();
     
@@ -310,6 +325,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
 	activeEmulator->power();
 	isRunning = true;
 	isPause = false;
+    emuThread->unlock();
 }
 
 auto Program::reset( Emulator::Interface* emulator ) -> void {
@@ -317,12 +333,14 @@ auto Program::reset( Emulator::Interface* emulator ) -> void {
 		power(emulator);
 		return;
 	}
-		
+
+    emuThread->lock();
 	emulator->reset();
+    emuThread->unlock();
 }
 
-auto Program::powerOff() -> void {    
-    
+auto Program::powerOff() -> void {
+    bool locked = emuThread->lock();
     if ( activeEmulator ) {
         fastForward( false );
         activeEmulator->powerOff();
@@ -371,6 +389,9 @@ auto Program::powerOff() -> void {
 		InputManager::resetJit();
 	}
     warp.enableAutoWarp = false;
+
+    if (locked)
+        emuThread->unlock();
 }
 
 auto Program::loopNoGui() -> void {
@@ -380,8 +401,10 @@ auto Program::loopNoGui() -> void {
 }
 
 auto Program::loop() -> void {
-    focused = view->focused();
-    InputManager::poll();
+    if (!emuThread->enabled)
+        focused = view->focused();
+
+   // InputManager::poll();
 	
 	if( willRun() ){
 		unsigned frames = loopFrames;
@@ -407,6 +430,12 @@ auto Program::loop() -> void {
     
     if (statusHandler->hasUpdates())
         statusHandler->update();
+}
+// when emu thread is active
+auto Program::loopUserInterface() -> void {
+    GUIKIT::System::sleep( 5 );
+    emuThread->handleStatusUpdate();
+    focused = view->focused();
 }
 
 auto Program::willRun() -> bool {
@@ -434,6 +463,7 @@ auto Program::hasFocus() -> bool {
 
 auto Program::quit() -> void {
     powerOff();
+    delete emuThread;
 
     if (!cmd->debug) {
         if (globalSettings->get<bool>("save_settings_on_exit", true))
@@ -467,6 +497,7 @@ auto Program::quit() -> void {
     globalSettings = nullptr;
     
     // in case of exit request from emulation core
+
     GUIKIT::Application::loop = nullptr;
 }
 

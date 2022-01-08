@@ -12,6 +12,7 @@
 #include "../media/fileloader.h"
 #include "placeholder.cpp"
 #include "../../data/icons.h"
+#include "../thread/emuThread.h"
 
 View* view = nullptr;
 
@@ -160,8 +161,11 @@ auto View::build() -> void {
     };
 	
 	GUIKIT::Application::onClipboardRequest = [](std::string text) {
-		if (activeEmulator && !text.empty())
-			activeEmulator->pasteText(text);
+		if (activeEmulator && !text.empty()) {
+            emuThread->lock();
+            activeEmulator->pasteText(text);
+            emuThread->unlock();
+        }
 	};
 
     GUIKIT::Application::onDisplayChange = [this]() {
@@ -180,10 +184,13 @@ auto View::build() -> void {
     displayChangeTimer.onFinished = [this]() {
         displayChangeTimer.setEnabled(false);
         //statusHandler->setMessage( std::to_string(GUIKIT::Monitor::getCurrentRefreshRate()) );
+        emuThread->freeContext = true;
+        emuThread->lock();
         if (videoDriver && !fullScreen())
             videoDriver->forceResize();
 
         VideoManager::setSynchronize();
+        emuThread->unlock();
     };
 	
 	viewport.onMousePress = [this](GUIKIT::Mouse::Button button) {
@@ -225,8 +232,10 @@ auto View::setAnyload( Emulator::Interface* emulator ) -> void {
 		inputDriver->mUnacquire();
 	
 	anyloadTimer.onFinished = [this, emulator, mIsAcquiredBefore]() {
-		anyloadTimer.setEnabled(false);		
+		anyloadTimer.setEnabled(false);
+        emuThread->lock();
 		fileloader->anyLoad( emulator, mIsAcquiredBefore );
+        emuThread->unlock();
 	};
 	
 	anyloadTimer.setEnabled();
@@ -247,9 +256,10 @@ auto View::setDragnDrop() -> void {
     
     viewport.onDrop = []( std::vector<std::string> files ) {
 
+        emuThread->lock();
         autoloader->init( files, false, Autoloader::Mode::DragnDrop );
-        
-        autoloader->loadFiles();            
+        autoloader->loadFiles();
+        emuThread->unlock();
     };        
 }
 
@@ -270,7 +280,7 @@ auto View::update() -> void {
 auto View::setFullScreen(bool fullScreen) -> void {
 	if(fullScreen && program->isRunning) inputDriver->mAcquire();
 	else inputDriver->mUnacquire();	
-    
+
     GUIKIT::Window::setFullScreen(fullScreen);
     displayChangeTimer.setEnabled();
 }
@@ -458,6 +468,7 @@ auto View::setConnectors() -> void {
                 item->setText( trans->get(device.name));
 
                 item->onActivate = [emulator, connector, device, settings]() {
+                    emuThread->lock();
                     settings->set<unsigned>( _underscore(connector.name), device.id);
                     emulator->connect(connector.id, device.id);
                     InputManager::getManager(emulator)->updateMappingsInUse();
@@ -465,6 +476,7 @@ auto View::setConnectors() -> void {
                     if (emuView && emuView->inputLayout)
                         emuView->inputLayout->updateConnectorButtons();
                     view->setCursor(emulator);
+                    emuThread->unlock();
                 };
 
                 connectorMenu->append(*item);
@@ -489,7 +501,7 @@ auto View::setConnectors() -> void {
 		inputItem->setText(emulator->ident + " " + trans->get("swap_ports") );
         
         inputItem->onActivate = [emulator, settings]() {
-            
+            emuThread->lock();
             auto connector1 = emulator->getConnector( 0 );
             auto connectedDevice1 = emulator->getConnectedDevice( connector1 );
             
@@ -498,7 +510,9 @@ auto View::setConnectors() -> void {
             
             emulator->connect( connector1, connectedDevice2 );
             emulator->connect( connector2, connectedDevice1 );
-            
+
+            emuThread->unlock();
+
             settings->set<unsigned>( _underscore(connector1->name), connectedDevice2->id);
             settings->set<unsigned>( _underscore(connector2->name), connectedDevice1->id);
 
@@ -570,11 +584,13 @@ auto View::updateShader() -> void {
                 }
             }
             item->onToggle = [item, vManager]() {
+                emuThread->lock();
                 if (item->checked()) {
 					vManager->shader.addActiveShader(item->text());
                 } else {
                     vManager->shader.removeActiveShader(item->text());
                 }
+                emuThread->unlock();
             };
             sM.shaderMenu->append(*item);
         }
@@ -680,8 +696,9 @@ auto View::buildMenu() -> void {
 		sM.poweronAndRemoveExpansions = new GUIKIT::MenuItem;
         sM.poweronAndRemoveExpansions->setIcon( powerImage );
         sM.poweronAndRemoveExpansions->onActivate = [emulator]() {
-		    program->power(emulator);
+		    program->power(emulator, true, false);
             program->removeExpansion( false );
+            emuThread->unlock();
 	    };	
         sM.system->append( *sM.poweronAndRemoveExpansions );
 
@@ -695,7 +712,9 @@ auto View::buildMenu() -> void {
         sM.freeze = new GUIKIT::MenuItem;
         sM.freeze->setIcon( freezeImage );
         sM.freeze->onActivate = [emulator]() {
+            emuThread->lock();
 		    emulator->freezeButton();
+            emuThread->unlock();
 	    };	
         sM.freeze->setEnabled(false);
         sM.system->append( *sM.freeze );
@@ -704,7 +723,9 @@ auto View::buildMenu() -> void {
             sM.menu = new GUIKIT::MenuItem;
             sM.menu->setIcon( menuImage );
             sM.menu->onActivate = [emulator]() {
+                emuThread->lock();
                 emulator->customCartridgeButton();
+                emuThread->unlock();
             };
             sM.menu->setEnabled(false);
             sM.system->append(*sM.menu);
@@ -828,8 +849,9 @@ auto View::buildMenu() -> void {
         if (!activeEmulator)
             return;
 
+        emuThread->lock();
         std::string text = activeEmulator->copyText( );
-
+        emuThread->unlock();
         GUIKIT::Application::setClipboardText( text );
     };
 
@@ -870,9 +892,12 @@ auto View::buildMenu() -> void {
 
     videoSyncItem.onToggle = [&]() {
         globalSettings->set<bool>("video_sync", videoSyncItem.checked() );
+        emuThread->freeContext = true;
+        emuThread->lock();
         program->fastForward( false );
         VideoManager::setSynchronize();
         statusHandler->resetFrameCounter();
+        emuThread->unlock();
         bool threadedRenderer = globalSettings->get("threaded_renderer", false);
         adaptiveSyncItem.setEnabled( videoSyncItem.checked() && !threadedRenderer );
         dynamicRateControl.setEnabled( videoSyncItem.checked() && !threadedRenderer );
@@ -889,8 +914,11 @@ auto View::buildMenu() -> void {
 
     adaptiveSyncItem.onToggle = [&]() {
         globalSettings->set<bool>("adaptive_sync", adaptiveSyncItem.checked() );
+        emuThread->freeContext = true;
+        emuThread->lock();
         program->fastForward( false );
         VideoManager::setSynchronize();
+        emuThread->unlock();
         //statusHandler->resetFrameCounter();
     };
     if ( globalSettings->get<bool>("adaptive_sync", true) )
@@ -912,7 +940,9 @@ auto View::buildMenu() -> void {
 
     dynamicRateControl.onToggle = [&]() {
         globalSettings->set<bool>("dynamic_rate_control", dynamicRateControl.checked() );
+        emuThread->lock();
         VideoManager::setSynchronize();
+        emuThread->unlock();
         //audioManager->setRateControl();
     };
     if ( globalSettings->get<bool>("dynamic_rate_control", false) )
@@ -927,6 +957,7 @@ auto View::buildMenu() -> void {
     fullscreenItem.onActivate = [this]() {
         inputDriver->mUnacquire();
         GUIKIT::Window::setFullScreen(!fullScreen());
+        displayChangeTimer.setEnabled();
     };
         
     optionsMenu.append(fullscreenItem);
@@ -935,7 +966,9 @@ auto View::buildMenu() -> void {
             
     muteItem.onToggle = [&]() {
         globalSettings->set<bool>("audio_mute", muteItem.checked() );
+        emuThread->lock();
         audioManager->setVolume();
+        emuThread->unlock();
     };
     if ( globalSettings->get<bool>("audio_mute", false) ) muteItem.setChecked();
     optionsMenu.append(muteItem);
@@ -1012,7 +1045,9 @@ auto View::buildMenu() -> void {
          if (!activeEmulator)
              emulator = program->getLastUsedEmu();
 
+        emuThread->lock();
         fileloader->eject( emulator, emulator->getTape(0) );
+        emuThread->unlock();
     };    
     
     tapeControlMenu.append( ejectTapeItem );
@@ -1053,12 +1088,16 @@ auto View::buildMenu() -> void {
 
     // speed menu
     fastForwardItem.onToggle = []() {
+        emuThread->lock();
         program->toggleFastForward( false );
+        emuThread->unlock();
     };
     speedControlMenu.append( fastForwardItem );
 
     aggressiveFastForwardItem.onToggle = []() {
+        emuThread->lock();
         program->toggleFastForward( true );
+        emuThread->unlock();
     };
     speedControlMenu.append( aggressiveFastForwardItem );
 
@@ -1082,9 +1121,11 @@ auto View::buildMenu() -> void {
         speedItem->onActivate = [this, i]() {
             auto settings = program->getSettings( activeEmulator );
             settings->set<unsigned>("speed_profile", i);
+            emuThread->lock();
             audioManager->setSynchronize();
             audioManager->setResampler();
             statusHandler->resetFrameCounter();
+            emuThread->unlock();
         };
         speedControlMenu.append( *speedItem );
 
@@ -1129,7 +1170,9 @@ auto View::buildMenu() -> void {
             if (!activeEmulator)
                 emulator = program->getLastUsedEmu();
 
+            emuThread->lock();
             fileloader->eject( emulator, emulator->getDisk(i) );
+            emuThread->unlock();
         };
         diskControlMenu.menu.append( diskControlMenu.eject );
         

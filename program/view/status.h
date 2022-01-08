@@ -54,6 +54,11 @@ struct StatusHandler {
     auto updateFrameCounter() -> void;
     auto resetFrameCounter() -> void;
 
+    auto updateVisible(unsigned id, bool visible) -> void;
+    auto updateText(unsigned id, std::string text, bool alignRight = false, int overrideForegroundColor = -1) -> void;
+    auto updateImage(unsigned id, GUIKIT::Image* image) -> void;
+    auto updateStatusBar() -> void;
+
     GUIKIT::StatusBar* statusBar = nullptr;
     uint16_t control;
     std::vector<DeviceState> deviceStates;

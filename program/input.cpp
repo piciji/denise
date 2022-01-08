@@ -7,10 +7,10 @@ auto Program::initInput() -> void {
 	
 	if (inputDriver) delete inputDriver;
     
-    if (cmd->noDriver) {
+  //  if (cmd->noDriver) {
         inputDriver = new DRIVER::Input;
         return;
-    }
+    //}
     
     inputDriver = DRIVER::Input::create( getInputDriver() );
 	

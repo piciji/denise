@@ -22,6 +22,8 @@ struct GLX : public Video, OpenGL, RenderThread {
     GLXWindow glxwindow = 0;
     GdkWindow* handle;
 
+    bool hasRendererContext = false;
+
     struct {
         signed version_major = 0;
         signed version_minor = 0;
@@ -32,23 +34,22 @@ struct GLX : public Video, OpenGL, RenderThread {
     auto init() -> bool {
         term();
 
-        //window must be realized (appear onscreen)
-        display = XOpenDisplay(0);
-        if (display) {
-            while (XPending(display)) {
-                XEvent event;
-                XNextEvent(display, &event);
-            }
-            XCloseDisplay(display);
-        }
-
         display = GDK_WINDOW_XDISPLAY(handle);
+        if (!display)
+            return false;
+
+        //window must be realized (appear onscreen)
+        while (XPending(display)) {
+            XEvent event;
+            XNextEvent(display, &event);
+        }
 
 		screen = DefaultScreen(display);
 
         glXQueryVersion(display, &glx.version_major, &glx.version_minor);
         //require GLX 1.3+ API
-        if(glx.version_major < 1 || (glx.version_major == 1 && glx.version_minor < 3)) return false;
+        if(glx.version_major < 1 || (glx.version_major == 1 && glx.version_minor < 3))
+            return false;
 
         XWindowAttributes window_attributes;
         XGetWindowAttributes(display, GDK_WINDOW_XID(handle), &window_attributes);
@@ -56,7 +57,6 @@ struct GLX : public Video, OpenGL, RenderThread {
         //let GLX determine the best Visual to use for GL output; provide a few hints
         //note: some video drivers will override double buffering attribute
         signed attributeList[] = {
-            GLX_X_RENDERABLE, True,
             GLX_DRAWABLE_TYPE, GLX_WINDOW_BIT,
             GLX_RENDER_TYPE, GLX_RGBA_BIT,
             GLX_DOUBLEBUFFER, True,
@@ -68,7 +68,8 @@ struct GLX : public Video, OpenGL, RenderThread {
 
         signed fbCount;
         GLXFBConfig* fbConfig = glXChooseFBConfig(display, screen, attributeList, &fbCount);
-        if(fbCount == 0) return false;
+        if(fbCount == 0)
+            return false;
 
         XVisualInfo* vi = glXGetVisualFromFBConfig(display, fbConfig[0]);
 
@@ -87,12 +88,6 @@ struct GLX : public Video, OpenGL, RenderThread {
         XSetWindowBackground(display, xwindow, 0);
         XMapWindow(display, xwindow);
         XFlush(display);
-
-        //window must be realized (appear onscreen) before we make the context current
-//        while(XPending(display)) {
-//            XEvent event;
-//            XNextEvent(display, &event);
-//        }
 
         glxcontext = glXCreateContext(display, vi, /* sharelist = */ 0, /* direct = */ GL_TRUE);
         glXMakeCurrent(display, glxwindow = xwindow, glxcontext);
@@ -130,7 +125,9 @@ struct GLX : public Video, OpenGL, RenderThread {
         glx.isDirect = glXIsDirect(display, glxcontext);
         XFree(vi);
         XSync(display, False);
-        return OpenGL::init();
+        bool res = OpenGL::init();
+        clearCurrent();
+        return res;
     }
 
     auto init(uintptr_t _handle) -> bool {
@@ -163,13 +160,9 @@ struct GLX : public Video, OpenGL, RenderThread {
             RenderThread::reset();
             width = 0, height = 0;
 
-            if (!state)
-                makeCurrent();
-
             settings.threaded = state;
 
-            if (state)
-                clearCurrent();
+            clearCurrent();
         }
     }
 
@@ -226,6 +219,7 @@ struct GLX : public Video, OpenGL, RenderThread {
         if (settings.threaded)
             return RenderThread::lock(data, pitch, _width, _height);
 
+        makeCurrent(true);
 		OpenGL::size(_width, _height);
 		return OpenGL::lock(data, pitch);
 	}
@@ -234,6 +228,7 @@ struct GLX : public Video, OpenGL, RenderThread {
         if (settings.threaded)
             return RenderThread::lock(data, pitch, _width, _height);
 
+        makeCurrent(true);
         OpenGL::size(_width, _height);
         return OpenGL::lock(data, pitch);
     }
@@ -242,6 +237,7 @@ struct GLX : public Video, OpenGL, RenderThread {
         if (settings.threaded)
             return RenderThread::lock(data, pitch, _width, _height);
 
+        makeCurrent(true);
 		OpenGL::size(_width, _height);
 		return OpenGL::lock(data, pitch);
 	}
@@ -266,7 +262,12 @@ struct GLX : public Video, OpenGL, RenderThread {
         clearCurrent();
     }
 
+    auto forceResize() -> void {
+        resizeWindow();
+    }
+
     auto resizeWindow() -> void {
+
         XWindowAttributes parent, child;
         XGetWindowAttributes(display, GDK_WINDOW_XID(handle), &parent);
         XGetWindowAttributes(display, xwindow, &child);
@@ -357,20 +358,31 @@ struct GLX : public Video, OpenGL, RenderThread {
         glXSwapIntervalEXT = nullptr;
     }
 
-    auto makeCurrent() -> void {
-        if (settings.threaded)
-            glXMakeCurrent(display, glxwindow, glxcontext);
+    auto makeCurrent(bool isRenderer = false) -> void {
+
+        if (isRenderer) {
+            if(!hasRendererContext) {
+                hasRendererContext = true;
+            } else
+                return;
+        }
+
+        glXMakeCurrent(display, glxwindow, glxcontext);
     }
 
     auto clearCurrent() -> void {
-        if (settings.threaded)
-            glXMakeCurrent(display, 0, nullptr);
+        glXMakeCurrent(display, 0, nullptr);
+        hasRendererContext = false;
     }
 
     auto showMessage(std::string message, bool critical = false) -> void {
 #ifdef DRV_FREETYPE
         screenText.updateMessage(message, critical, !settings.threaded);
 #endif
+    }
+
+    auto freeContext() -> void {
+        clearCurrent();
     }
 
     GLX() {
