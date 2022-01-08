@@ -55,9 +55,7 @@ auto pMultilineEdit::create() -> void {
 	buffer = gtk_text_view_get_buffer( GTK_TEXT_VIEW(subWidget) );
 	
 	gtk_container_add(GTK_CONTAINER(gtkWidget), subWidget);
-	
-	//pSystem::addCssClass(gtkWidget, "scrollBox");
-	
+
     g_signal_connect_swapped(G_OBJECT(buffer), "changed", G_CALLBACK(pMultilineEdit::onChange), (gpointer)&multilineEdit);
 	g_signal_connect_swapped(G_OBJECT(subWidget), "focus-in-event", G_CALLBACK(pMultilineEdit::onFocus), (gpointer)&multilineEdit);
 	

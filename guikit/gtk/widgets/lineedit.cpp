@@ -1,17 +1,29 @@
 
 auto pLineEdit::minimumSize() -> Size {
+    if (calculatedMinimumSize.updated)
+        return calculatedMinimumSize.minimumSize;
+
+    Size fontSize = pFont::size(pfont, widget.text());
     Size size = getMinimumSize();
-	
+
 	auto context = gtk_widget_get_style_context (gtkWidget);
     auto state = gtk_widget_get_state_flags (gtkWidget);
 	GtkBorder padding;
-	GtkBorder border;	
+	GtkBorder border;
 
 	gtk_style_context_get_padding (context, state, &padding);
 	gtk_style_context_get_border (context, state, &border);
-	
-    return {size.width + padding.left + padding.right + border.left + border.right,
-		size.height + padding.top + padding.bottom + border.top + border.bottom};
+
+    if (size.height == 0) {
+        size.height = fontSize.height + padding.top + padding.bottom + border.top + border.bottom;
+    }
+
+    calculatedMinimumSize.minimumSize = {fontSize.width + padding.left + padding.right + border.left + border.right,
+                                         size.height};
+
+    calculatedMinimumSize.updated = true;
+
+    return calculatedMinimumSize.minimumSize;
 }
 
 auto pLineEdit::setEditable(bool editable) -> void {

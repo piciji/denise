@@ -1,6 +1,6 @@
 
 /**
- * v 1.8.0
+ * v 1.9.0
  */
 
 #ifndef GUIKIT_H
@@ -146,6 +146,7 @@ struct Application {
     static auto run() -> void;
     static auto processEvents() -> void;
     static auto quit() -> void;
+    static auto setLoop( std::function<void ()> loop ) -> void;
     static auto isCocoa() -> bool;
     static auto isGtk() -> bool;
     static auto isWinApi() -> bool;

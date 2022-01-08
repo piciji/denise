@@ -78,6 +78,8 @@ auto pListView::create() -> void {
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(gtkWidget), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
     gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(gtkWidget), GTK_SHADOW_ETCHED_IN);
 
+    pSystem::applyCss( gtkWidget, "scrolledwindow undershoot.top, scrolledwindow undershoot.right, scrolledwindow undershoot.bottom, scrolledwindow undershoot.left { background-image: none; }");
+
     auto headerText = listView.state.header;
 
     if(headerText.size() == 0) headerText.push_back("");
@@ -147,6 +149,8 @@ auto pListView::destroy() -> void {
 auto pListView::init() -> void {
     create();
     setHeaderVisible( listView.headerVisible() );
+    setForegroundColor( listView.foregroundColor() );
+    setBackgroundColor( listView.backgroundColor() );
 
     for(unsigned i=0; i < listView.rowCount(); i++) {
         auto& row = listView.state.rows.at(i);

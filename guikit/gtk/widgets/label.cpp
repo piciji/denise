@@ -1,6 +1,6 @@
 
 auto pLabel::minimumSize() -> Size {
-    Size size = getMinimumSize();
+    Size size = getMinimumFontSize();
     return {size.width, size.height};
 }
 

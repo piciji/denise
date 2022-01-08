@@ -98,6 +98,11 @@ auto Application::quit() -> void {
     MenuSeparator::cleanInstances();
 }
 
+auto Application::setLoop( std::function<void ()> loop ) -> void {
+    Application::loop = loop;
+    pApplication::switchLoopMode();
+}
+
 auto Application::initialize() -> void {
     static bool initialized = false;
 

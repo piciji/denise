@@ -1,7 +1,7 @@
 
 auto pCheckBox::minimumSize() -> Size {
-    Size size = getMinimumSize();
-		
+    Size size = getMinimumFontSize();
+    //return {size.width, size.height};
     return {size.width + 16 + 4, size.height + 2};
 }
 

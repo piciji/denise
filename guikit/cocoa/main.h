@@ -88,6 +88,7 @@ struct pStatusBar {
     
     auto update() -> void;
     auto updatePart( StatusBar::Part& part ) -> void;
+    auto updateTooltip( StatusBar::Part& part ) -> void { updatePart(part); }
     auto setVisible(bool visible) -> void;
     auto getHeight() -> unsigned;
     auto reposition() -> void;

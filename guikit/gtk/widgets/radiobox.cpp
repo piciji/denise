@@ -1,8 +1,9 @@
 
 auto pRadioBox::minimumSize() -> Size {
-    Size size = getMinimumSize();
-	
-	return {size.width + 16 + 4, size.height + 4};
+    Size size = getMinimumFontSize();
+    //return {size.width, size.height};
+
+    return {size.width + 16 + 4, size.height + 4};
 }
 
 auto pRadioBox::setGeometry(Geometry geometry) -> void {

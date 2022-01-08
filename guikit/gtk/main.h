@@ -12,6 +12,7 @@ struct pApplication {
     static auto run() -> void;
     static auto processEvents() -> void;
     static auto quit() -> void;
+    static auto switchLoopMode() -> void;
     static auto initialize() -> void;
 	static auto requestClipboardText() -> void;
     static auto setClipboardText( std::string text ) -> void;
@@ -97,6 +98,7 @@ struct pStatusBar {
         
     auto update() -> void;
     auto updatePart( StatusBar::Part& part ) -> void;
+    auto updateTooltip( StatusBar::Part& part ) -> void;
     auto setVisible(bool visible) -> void;
     auto getHeight() -> unsigned;    
 	auto getWidth(std::string text) -> unsigned { return 0; }
@@ -134,6 +136,7 @@ struct pWidget {
     virtual auto setForegroundColor(unsigned color) -> void;
     virtual auto setBackgroundColor(unsigned color) -> void;
 	auto getMinimumSize() -> Size;
+    auto getMinimumFontSize() -> Size;
     auto setTooltip(std::string tooltip) -> void;
     auto add() -> void;
     virtual auto init() -> void {}

@@ -34,17 +34,24 @@ namespace GUIKIT {
 #include "widgets/imageView.cpp"
 
 auto pApplication::run() -> void {
-    if(Application::loop) {
-        while(!Application::isQuit) {            
+
+    while(!Application::isQuit) {
+        if(Application::loop) {
             Application::loop();
-			processEvents();
-        }
-    } else if (!Application::isQuit)
-		gtk_main();
+
+            processEvents();
+        } else
+            gtk_main();
+    }
 }
 
 auto pApplication::processEvents() -> void {
     while( gtk_events_pending() ) gtk_main_iteration_do(false);
+}
+
+auto pApplication::switchLoopMode() -> void {
+    if(gtk_main_level())
+        gtk_main_quit();
 }
 
 auto pApplication::quit() -> void {
@@ -59,6 +66,14 @@ auto pApplication::initialize() -> void {
     XInitThreads();
     gdk_set_allowed_backends("x11");
     gtk_init(nullptr, nullptr);
+
+// don't apply global CSS because of micro stutter
+//    #include "css.cpp"
+//    GtkCssProvider* cssProvider = gtk_css_provider_new();
+//    gtk_css_provider_load_from_data(cssProvider, css.c_str(), -1, NULL);
+//    gtk_style_context_add_provider_for_screen(gdk_screen_get_default(),
+//                                              GTK_STYLE_PROVIDER(cssProvider),
+//                                              GTK_STYLE_PROVIDER_PRIORITY_USER);
 }  
 
 auto pApplication::pasteClipboardCallback(GtkClipboard* clipboard, const gchar* text, gpointer data) -> void {
@@ -190,20 +205,12 @@ pWindow::pWindow(Window& window) : window(window) {
 		
     lastAllocation.width  = lastAllocation.height = 0;
     widget = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-	
-	#include "css.cpp"
-	
-	GtkCssProvider* cssProvider = gtk_css_provider_new();
-	gtk_css_provider_load_from_data(cssProvider, css.c_str(), -1, NULL);
-	gtk_style_context_add_provider_for_screen(gdk_screen_get_default(),
-								   GTK_STYLE_PROVIDER(cssProvider),
-								   GTK_STYLE_PROVIDER_PRIORITY_USER);
     
     setIcon( pSystem::getIconFolder() );
 
-	auto visual = gdk_screen_get_rgba_visual(gdk_screen_get_default());
-	if(!visual) visual = gdk_screen_get_system_visual(gdk_screen_get_default());
-	if(visual) gtk_widget_set_visual(widget, visual);
+//	auto visual = gdk_screen_get_rgba_visual(gdk_screen_get_default());
+//	if(!visual) visual = gdk_screen_get_system_visual(gdk_screen_get_default());
+	//if(visual) gtk_widget_set_visual(widget, visual);
 	
 	gtk_widget_add_events(widget, GDK_BUTTON_PRESS_MASK | GDK_CONFIGURE);
     gtk_widget_set_app_paintable(widget, true);
@@ -216,7 +223,7 @@ pWindow::pWindow(Window& window) : window(window) {
     gtk_box_pack_start(GTK_BOX(verticalLayout), menu, false, false, 0);
 	contextMenu = gtk_menu_new();
     
-    mainDisplay = gtk_fixed_new();		
+    mainDisplay = gtk_fixed_new();
     gtk_box_pack_start(GTK_BOX(verticalLayout), mainDisplay, true, true, 0);
     gtk_widget_show(mainDisplay);
 
@@ -230,18 +237,18 @@ pWindow::pWindow(Window& window) : window(window) {
     g_signal_connect(G_OBJECT(widget), "delete-event", G_CALLBACK(Window_close), (gpointer)&window);
 	g_signal_connect(G_OBJECT(widget), "draw", G_CALLBACK(Window_draw), (gpointer)&window);
 	g_signal_connect(G_OBJECT(mainDisplay), "draw", G_CALLBACK(Window_draw_main), (gpointer)&window);
-	
+
     g_signal_connect(G_OBJECT(widget), "configure-event", G_CALLBACK(Window_configure), (gpointer)this);
 	g_signal_connect(G_OBJECT(mainDisplay), "size-allocate", G_CALLBACK(Window_sizeAllocate), (gpointer)this);
-	
-    g_signal_connect(G_OBJECT(widget), "drag-data-received", G_CALLBACK(Window_drop), (gpointer)&window);    
+
+    g_signal_connect(G_OBJECT(widget), "drag-data-received", G_CALLBACK(Window_drop), (gpointer)&window);
 	g_signal_connect(G_OBJECT(widget), "button-press-event", G_CALLBACK(Window_onButtonPressed), (gpointer)&window);
 	g_signal_connect(G_OBJECT(widget), "window-state-event", G_CALLBACK(Window_stateChange), (gpointer)&window);
 	
 	auto widgetClass = GTK_WIDGET_GET_CLASS(mainDisplay);
 	widgetClass->get_preferred_width  = Window_getPreferredWidth;
 	widgetClass->get_preferred_height = Window_getPreferredHeight;
-	
+
 	g_object_set_data(G_OBJECT(widget), "window", (gpointer)this);
 	g_object_set_data(G_OBJECT(mainDisplay), "window", (gpointer)this);
 
@@ -340,7 +347,7 @@ auto pWindow::append(Layout& layout) -> void {
 }
 
 auto pWindow::addCustomFont( CustomFont* customFont ) -> bool {
-	
+
     return pFont::add( customFont );
 }
 

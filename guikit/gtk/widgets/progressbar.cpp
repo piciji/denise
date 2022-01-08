@@ -1,6 +1,8 @@
 
 auto pProgressBar::minimumSize() -> Size {
-    return {0, 25};
+    Size size = getMinimumSize();
+    return {0, size.height};
+    //return {0, 25};
 }
 
 auto pProgressBar::create() -> void {
