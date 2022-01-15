@@ -200,8 +200,7 @@ auto Program::setMemoryPattern(Emulator::Interface* emulator) -> void {
     emulator->setMemoryInitParams( value, invertEvery, randomPatternLength, repeatRandomPattern, randomChance );
 }
 
-auto Program::power( Emulator::Interface* emulator, bool regular, bool unlock ) -> void {
-    emuThread->lock();
+auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
     bool emuSwap = activeEmulator != emulator;
     powerOff();
     
@@ -325,7 +324,6 @@ auto Program::power( Emulator::Interface* emulator, bool regular, bool unlock ) 
 	activeEmulator->power();
 	isRunning = true;
 	isPause = false;
-    emuThread->unlock();
 }
 
 auto Program::reset( Emulator::Interface* emulator ) -> void {
@@ -334,13 +332,10 @@ auto Program::reset( Emulator::Interface* emulator ) -> void {
 		return;
 	}
 
-    emuThread->lock();
 	emulator->reset();
-    emuThread->unlock();
 }
 
 auto Program::powerOff() -> void {
-    bool locked = emuThread->lock();
     if ( activeEmulator ) {
         fastForward( false );
         activeEmulator->powerOff();
@@ -372,7 +367,8 @@ auto Program::powerOff() -> void {
 	
 	if (!cmd->noGui) {
         view->updatePauseCheck();
-		view->showTapeMenu( false );    	
+		view->showTapeMenu( false );
+        emuThread->clearEvents();
 		statusHandler->clear();
 		if (activeVideoManager)
 			activeVideoManager->powerOff();
@@ -389,9 +385,6 @@ auto Program::powerOff() -> void {
 		InputManager::resetJit();
 	}
     warp.enableAutoWarp = false;
-
-    if (locked)
-        emuThread->unlock();
 }
 
 auto Program::loopNoGui() -> void {
@@ -401,11 +394,12 @@ auto Program::loopNoGui() -> void {
 }
 
 auto Program::loop() -> void {
-    if (!emuThread->enabled)
+    if (!emuThread->enabled) {
         focused = view->focused();
+    }
 
-   // InputManager::poll();
-	
+    InputManager::poll();
+
 	if( willRun() ){
 		unsigned frames = loopFrames;
 		
@@ -433,9 +427,10 @@ auto Program::loop() -> void {
 }
 // when emu thread is active
 auto Program::loopUserInterface() -> void {
-    GUIKIT::System::sleep( 5 );
-    emuThread->handleStatusUpdate();
+    GUIKIT::System::sleep( 1 );
     focused = view->focused();
+    emuThread->handleStatusUpdate();
+    emuThread->handleUIEvents();
 }
 
 auto Program::willRun() -> bool {
@@ -462,7 +457,9 @@ auto Program::hasFocus() -> bool {
 }
 
 auto Program::quit() -> void {
+    emuThread->lock();
     powerOff();
+    emuThread->unlock();
     delete emuThread;
 
     if (!cmd->debug) {
@@ -604,7 +601,10 @@ auto Program::autoStartFinish(bool soft) -> void {
     if (soft && warp.motorControlled)
         return;
 
-    fastForward( false );
+    if (emuThread->enabled) {
+        emuThread->updateFastForward = 0;
+    } else
+        fastForward( false );
 }
 
 auto Program::informDriveLoading(bool state) -> void {
@@ -615,7 +615,10 @@ auto Program::informDriveLoading(bool state) -> void {
     if (warp.active == state)
         return;
 
-    fastForward( state, warp.aggressive );
+    if (emuThread->enabled) {
+        emuThread->updateFastForward = state;
+    } else
+        fastForward( state, warp.aggressive );
 }
 
 auto Program::initAutoWarp(Emulator::Interface::MediaGroup* mediaGroup) -> void {

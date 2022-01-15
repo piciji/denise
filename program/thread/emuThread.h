@@ -13,15 +13,24 @@ struct EmuThread {
     bool enabled = false;
     std::atomic<bool> attention;
     std::atomic<bool> acknowledged;
+    std::atomic<bool> finishAudioRecord;
+    std::atomic<int> updateFastForward;
+    std::atomic<bool> pollHotkeys;
 
     std::atomic<bool> ready;
     std::atomic<bool> kill;
     std::atomic<bool> freeContext;
 
     std::mutex statusMutex;
+    std::mutex hotkeyMutex;
 
-    auto lock() -> bool;
+    auto lock(bool freeDriverContext = false) -> bool;
     auto unlock() -> void;
+
+    auto lockHotkeys() -> void;
+    auto unlockHotkeys() -> void;
+    auto lockStatus() -> void;
+    auto unlockStatus() -> void;
 
     auto enable(bool state) -> void;
 
@@ -39,6 +48,8 @@ struct EmuThread {
 
     auto addStatusUpdate(unsigned id, int visible = -1, GUIKIT::Image* image = nullptr, std::string text = "", bool alignRight = false, int overrideForegroundColor = -1 ) -> void;
     auto handleStatusUpdate( ) -> void;
+    auto handleUIEvents() -> void;
+    auto clearEvents() -> void;
 };
 
 extern EmuThread* emuThread;

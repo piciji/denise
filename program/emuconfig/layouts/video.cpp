@@ -301,96 +301,130 @@ base( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) )
     
     base.option.newLuma.onToggle = [this](bool checked) {
         _settings->set<bool>( "video_new_luma" + this->sliderIdent(), checked);
+        emuThread->lock();
         vManager()->setNewLuma( checked );
+        emuThread->unlock();
     };
     
     base.option.crtRealGamma.onToggle = [this](bool checked) {
         _settings->set<bool>( "video_crt_real_gamma" + this->sliderIdent(), checked);
+        emuThread->lock();
         vManager()->setCrtRealGamma( checked );
+        emuThread->unlock();
     };
 	
 	base.option.linearInterpolation.onToggle = [this](bool checked) {
 		_settings->set<unsigned>("video_filter", checked ? 1 : 0 );
+        emuThread->lock(true);
         program->setVideoFilter();
+        emuThread->unlock();
 	};
 	
 	base.option.linearInterpolation.setChecked( globalSettings->get<unsigned>("video_filter", 1u, {0u, 1u}) );
         
     mask.type.apertureMask.onActivate = [this]() {
         _settings->set<unsigned>( "video_mask_type" + this->sliderIdent(), (unsigned)VideoManager::MaskType::Aperture);
+        emuThread->lock(true);
         vManager()->setMaskType( VideoManager::MaskType::Aperture );
+        emuThread->unlock();
     };
 
     mask.type.shadowMask.onActivate = [this]() {
         _settings->set<unsigned>( "video_mask_type" + this->sliderIdent(), (unsigned)VideoManager::MaskType::ShadowMask);
+        emuThread->lock(true);
         vManager()->setMaskType( VideoManager::MaskType::ShadowMask );
+        emuThread->unlock();
     };   
     
     mask.type.slotMask.onActivate = [this]() {
         _settings->set<unsigned>( "video_mask_type" + this->sliderIdent(), (unsigned)VideoManager::MaskType::SlotMask);
+        emuThread->lock(true);
         vManager()->setMaskType( VideoManager::MaskType::SlotMask );
+        emuThread->unlock();
     }; 
     
     base.mode.reset.onActivate = [this]() {
         vManager()->resetSettings();
+        emuThread->lock(true);
         updatePresets();
+        emuThread->unlock();
     };
     
     base.mode.palette.onActivate = [this]() {
         _settings->set<bool>( "video_spectrum", false);
+        emuThread->lock(true);
         updatePresets();
+        emuThread->unlock();
     };
     
     base.mode.spectrum.onActivate = [this]() {
         _settings->set<bool>("video_spectrum", true);
+        emuThread->lock(true);
         updatePresets();
+        emuThread->unlock();
     };       
 
     base.mode.crtNone.onActivate = [this]() {
         _settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::None);
         globalSettings->set<unsigned>("video_crt_temp", (unsigned)VideoManager::CrtMode::None, false);
+        emuThread->lock(true);
         program->fastForward( false );
         updatePresets();
+        emuThread->unlock();
     };
     
     base.mode.crtCpu.onActivate = [this]() {
         _settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::Cpu);
+        emuThread->lock(true);
         program->fastForward( false );
 		updatePresets();
+        emuThread->unlock();
     };
     
     base.mode.crtGpu.onActivate = [this]() {
         _settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::Gpu);
+        emuThread->lock(true);
         program->fastForward( false );
 		updatePresets();
+        emuThread->unlock();
     };    
     
     gpuBase.option.distortionHires.onToggle = [this](bool checked) {
         _settings->set<bool>("video_distortion_hires" + this->sliderIdent(), checked);
+        emuThread->lock(true);
 		vManager()->useDistortionHires( checked );
+        emuThread->unlock();
     };
     
     gpuBase.option.hires.onToggle = [this](bool checked) {
         _settings->set<bool>("video_hires" + this->sliderIdent(), checked);
+        emuThread->lock(true);
 		vManager()->useHires( checked );
+        emuThread->unlock();
     };    
 	
     gpuBase.firSharp.sharpLeft.onActivate = [this]() {
         
         _settings->set<int>("video_fir_filter_sharp" + this->sliderIdent(), -1);
+        emuThread->lock(true);
         VideoManager::getInstance(this->emulator)->setFirFilterSharp( -1 );
+        emuThread->unlock();
     };
 
     gpuBase.firSharp.sharpRight.onActivate = [this]() {
 
         _settings->set<int>("video_fir_filter_sharp" + this->sliderIdent(), 1);
+        emuThread->lock(true);
         VideoManager::getInstance(this->emulator)->setFirFilterSharp( 1 );
+        emuThread->unlock();
     };
 
     gpuBase.firSharp.natural.onActivate = [this]() {
 
         _settings->set<int>("video_fir_filter_sharp" + this->sliderIdent(), 0);
+        emuThread->lock(true);
         VideoManager::getInstance(this->emulator)->setFirFilterSharp( 0 );
+        emuThread->unlock();
     };    
     
     vicIIGlitch.toggleAll.onActivate = [this]() {
@@ -407,15 +441,17 @@ base( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) )
         vicIIGlitch.phi0.active.setChecked( !_checked );
         vicIIGlitch.ras.active.setChecked( !_checked );
         vicIIGlitch.cas.active.setChecked( !_checked );
-        
+
+        emuThread->lock(true);
         vicIIGlitch.aec.active.onToggle( !_checked );
         vicIIGlitch.ba.active.onToggle( !_checked );
         vicIIGlitch.phi0.active.onToggle( !_checked );
         vicIIGlitch.ras.active.onToggle( !_checked );
         vicIIGlitch.cas.active.onToggle( !_checked );
+        emuThread->unlock();
     };
-    
-    loadSettings();
+
+    loadSettings(true);
 }
 
 template<typename T> auto VideoLayout::setSliderAction( SliderLayout* layout, std::string baseIdent, std::function<void ( T value )> callBack, std::function<T ( unsigned position )> callTransfer ) -> void {
@@ -436,9 +472,13 @@ template<typename T> auto VideoLayout::setSliderAction( SliderLayout* layout, st
 				bloom.weight.slider.setEnabled( bloom.weight.active.checked() );
 			}
             
-            unsigned position = layout->slider.position();  
-			T value = callTransfer( position );			
+            unsigned position = layout->slider.position();
+			T value = callTransfer( position );
+            bool nested = !emuThread->lock(true);
             callBack( checked ? value : T(0) );
+
+            if (!nested)
+                emuThread->unlock();
         };
 
     layout->slider.onChange = [this, layout, baseIdent, callBack, callTransfer]() {
@@ -453,20 +493,24 @@ template<typename T> auto VideoLayout::setSliderAction( SliderLayout* layout, st
 			layout->value.setText( GUIKIT::String::formatFloatingPoint(value, roundDigits) + " " + unit);
 		else
 			layout->value.setText( std::to_string(value) + " " + unit);
-        
+
+        bool nested = !emuThread->lock(true);
         if (layout->withActivator) {
             bool checked = layout->active.checked();
             callBack( checked ? value : T(0) );
         } else
             callBack( value );
+
+        if (!nested)
+            emuThread->unlock();
     };	
 }
 
-auto VideoLayout::updatePresets() -> void {
+auto VideoLayout::updatePresets(bool reloadDriver) -> void {
     
     auto [VPARAMS] = VideoManager::getInstance( emulator )->getSettings( );
     
-    if (videoDriver)
+    if (videoDriver && reloadDriver)
         VideoManager::getInstance( emulator )->reloadSettings();
     
 	base.option.newLuma.setChecked( _newLuma );
@@ -758,7 +802,7 @@ auto VideoLayout::sliderIdent() -> std::string {
 	return ident;
 }
 
-auto VideoLayout::loadSettings() -> void {
+auto VideoLayout::loadSettings(bool init) -> void {
     VideoManager::CrtMode crtMode = (VideoManager::CrtMode)_settings->get<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::None, {0u, 2u});
     
     if (crtMode == VideoManager::CrtMode::Gpu)
@@ -773,5 +817,5 @@ auto VideoLayout::loadSettings() -> void {
     else
         base.mode.palette.setChecked();
         
-    updatePresets();
+    updatePresets(!init);
 }

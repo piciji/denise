@@ -913,7 +913,7 @@ auto Shader::buildBandwidthReduction() -> std::string {
         out += "vec3(" + _doubleToStr(luma) + "," + _doubleToStr(chromaUI) + "," + _doubleToStr(chromaVQ) + ");";        
         
     }
-        
+
 	out += R"( fragColor = vec4( yuv, 1.0 ); } )";
     
     return out;

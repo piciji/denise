@@ -159,67 +159,87 @@ auto OpenGLSurface::release() -> void {
 auto OpenGLSurface::render(unsigned sourceWidth, unsigned sourceHeight, unsigned targetWidth, unsigned targetHeight) -> void {
 	glViewport(0, 0, targetWidth, targetHeight);
 
-	float w = 1.0;
-	float h = 1.0;
-	float u = (float)targetWidth, v = (float)targetHeight;
-	GLint location;
+    if (mvp.width != targetWidth || mvp.height != targetHeight) {
+        mvp.width = targetWidth;
+        mvp.height = targetHeight;
 
-	GLfloat modelView[] = {
-	  1, 0, 0, 0,
-	  0, 1, 0, 0,
-	  0, 0, 1, 0,
-	  0, 0, 0, 1,
-	};
+        float w = 1.0;
+        float h = 1.0;
+        float u = (float)targetWidth, v = (float)targetHeight;
+        GLint location;
 
-	GLfloat projection[] = {
-	   2.0f/u,  0.0f,    0.0f, 0.0f,
-	   0.0f,    2.0f/v,  0.0f, 0.0f,
-	   0.0f,    0.0f,   -1.0f, 0.0f,
-	  -1.0f,   -1.0f,    0.0f, 1.0f,
-	};
+        GLfloat modelView[] = {
+          1, 0, 0, 0,
+          0, 1, 0, 0,
+          0, 0, 1, 0,
+          0, 0, 0, 1,
+        };
 
-	GLfloat modelViewProjection[4 * 4];
-	MatrixMultiply(modelViewProjection, modelView, 4, 4, projection, 4, 4);
+        std::memcpy(mvp.modelView, modelView, 16 * sizeof(GLfloat));
 
-	GLfloat vertices[] = {
-	  0, 0, 0, 1,
-	  u, 0, 0, 1,
-	  0, v, 0, 1,
-	  u, v, 0, 1,
-	};
+        GLfloat projection[] = {
+           2.0f/u,  0.0f,    0.0f, 0.0f,
+           0.0f,    2.0f/v,  0.0f, 0.0f,
+           0.0f,    0.0f,   -1.0f, 0.0f,
+          -1.0f,   -1.0f,    0.0f, 1.0f,
+        };
 
-	GLfloat positions[4 * 4];
-	for(unsigned n = 0; n < 16; n += 4) {
-		MatrixMultiply(&positions[n], &vertices[n], 1, 4, modelViewProjection, 4, 4);
-	}
+        std::memcpy(mvp.projection, projection, 16 * sizeof(GLfloat));
 
-	GLfloat texCoords[] = {
-	  0, 0,
-	  w, 0,
-	  0, h,
-	  w, h,
-	};
+        MatrixMultiply(mvp.modelViewProjection, modelView, 4, 4, projection, 4, 4);
 
-	_glUniformMatrix4fv("modelView", modelView);
-	_glUniformMatrix4fv("projection", projection);
-	_glUniformMatrix4fv("modelViewProjection", modelViewProjection);
+        GLfloat vertices[] = {
+          0, 0, 0, 1,
+          u, 0, 0, 1,
+          0, v, 0, 1,
+          u, v, 0, 1,
+        };
+
+        std::memcpy(mvp.vertices, vertices, 16 * sizeof(GLfloat));
+
+        for(unsigned n = 0; n < 16; n += 4) {
+            MatrixMultiply(&mvp.positions[n], &vertices[n], 1, 4, mvp.modelViewProjection, 4, 4);
+        }
+
+        GLfloat texCoords[] = {
+          0, 0,
+          w, 0,
+          0, h,
+          w, h,
+        };
+
+        std::memcpy(mvp.texCoords, texCoords, 8 * sizeof(GLfloat));
+
+        glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
+        glBufferData(GL_ARRAY_BUFFER, 16 * sizeof(GLfloat), mvp.vertices, GL_STATIC_DRAW);
+
+        glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
+        glBufferData(GL_ARRAY_BUFFER, 16 * sizeof(GLfloat), mvp.positions, GL_STATIC_DRAW);
+
+        glBindBuffer(GL_ARRAY_BUFFER, vbo[2]);
+        glBufferData(GL_ARRAY_BUFFER, 8 * sizeof(GLfloat), mvp.texCoords, GL_STATIC_DRAW);
+    }
+
+	_glUniformMatrix4fv("modelView", mvp.modelView);
+	_glUniformMatrix4fv("projection", mvp.projection);
+	_glUniformMatrix4fv("modelViewProjection", mvp.modelViewProjection);
 
 	glBindVertexArray(vao);
-
+//
 	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
-	glBufferData(GL_ARRAY_BUFFER, 16 * sizeof(GLfloat), vertices, GL_STATIC_DRAW);
+//	glBufferData(GL_ARRAY_BUFFER, 16 * sizeof(GLfloat), mvp.vertices, GL_STATIC_DRAW);
 	GLuint locationVertex = glGetAttribLocation(program, "vertex");
 	glEnableVertexAttribArray(locationVertex);
 	glVertexAttribPointer(locationVertex, 4, GL_FLOAT, GL_FALSE, 0, 0);
-
+//
 	glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
-	glBufferData(GL_ARRAY_BUFFER, 16 * sizeof(GLfloat), positions, GL_STATIC_DRAW);
+//	glBufferData(GL_ARRAY_BUFFER, 16 * sizeof(GLfloat), mvp.positions, GL_STATIC_DRAW);
 	GLuint locationPosition = glGetAttribLocation(program, "position");
 	glEnableVertexAttribArray(locationPosition);
 	glVertexAttribPointer(locationPosition, 4, GL_FLOAT, GL_FALSE, 0, 0);
-
+//
 	glBindBuffer(GL_ARRAY_BUFFER, vbo[2]);
-	glBufferData(GL_ARRAY_BUFFER, 8 * sizeof(GLfloat), texCoords, GL_STATIC_DRAW);
+//	glBufferData(GL_ARRAY_BUFFER, 8 * sizeof(GLfloat), mvp.texCoords, GL_STATIC_DRAW);
 	GLuint locationTexCoord = glGetAttribLocation(program, "texCoord");
 	glEnableVertexAttribArray(locationTexCoord);
 	glVertexAttribPointer(locationTexCoord, 2, GL_FLOAT, GL_FALSE, 0, 0);

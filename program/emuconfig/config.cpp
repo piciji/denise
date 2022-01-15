@@ -14,6 +14,7 @@
 #include "../media/media.h"
 #include "../audio/manager.h"
 #include "../../data/icons.h"
+#include "../thread/emuThread.h"
 
 #include <vector>
 #include <algorithm>

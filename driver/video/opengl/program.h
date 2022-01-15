@@ -41,6 +41,9 @@ auto OpenGLProgram::bind(ShaderPass& pass) -> std::string {
 
 	OpenGLSurface::allocate();
 	_glLinkProgram( &pass, program, error );
+
+    mvp.width = 0;
+    mvp.height = 0;
     
     return error;
 }

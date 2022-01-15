@@ -6,10 +6,11 @@
 #include "../../tools/logger.h"
 #include "../../emuconfig/config.h"
 #include "../../view/status.h"
+#include "../../thread/emuThread.h"
 
 namespace AudioRecord {
     
-auto Handler::record( Emulator::Interface* emulator, std::string& errorText ) -> bool {
+auto Handler::start( Emulator::Interface* emulator, std::string& errorText ) -> bool {
 
     finish();
     
@@ -130,10 +131,10 @@ auto Handler::checkTime() -> void {
     if (timeLimit > (curTime - startTime) )
         return;
 
-    finish();        
+    finish( true );
 }
 
-auto Handler::finish() -> void {
+auto Handler::finish(bool timeup) -> void {
 
     if (!wavWriter)
         return;
@@ -145,9 +146,15 @@ auto Handler::finish() -> void {
     wavWriter = nullptr;
     
     if (activeEmulator) {
-        auto emuView = EmuConfigView::TabWindow::getView(activeEmulator);
-        if (emuView)
-            emuView->audioLayout->stopRecord();
+
+        if (timeup && emuThread->enabled) {
+            emuThread->finishAudioRecord = true;
+        } else {
+            auto emuView = EmuConfigView::TabWindow::getView(activeEmulator);
+
+            if (emuView && emuView->audioLayout)
+                emuView->audioLayout->stopRecord();
+        }
     }
 
     statusHandler->updateAudioRecord( false );

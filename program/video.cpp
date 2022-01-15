@@ -66,15 +66,16 @@ auto Program::getVideoDriver() -> std::string {
 
 auto Program::finishVBlank() -> void {
     
-    if (!activeVideoManager->waitForRenderer())
+    if (!activeVideoManager->waitForCrtRenderer())
         return;
 
-    videoDriver->unlock();
+    //videoDriver->unlock();
     
     //if (VideoManager::fpsLimit)
       //  activeVideoManager->applyFpsLimit();
     
-    videoDriver->redraw();
+    //videoDriver->redraw();
+    videoDriver->unlockAndRedraw();
 }
 
 auto Program::midScreenCallback() -> void {
@@ -155,7 +156,7 @@ auto Program::updateCrop( Emulator::Interface* emulator ) -> void {
     
     if (activeVideoManager) {
         activeVideoManager->reinitCrtThread();
-        activeVideoManager->shader.recreate = true;        
+        activeVideoManager->shader.recreate = true;
     }
 }
 

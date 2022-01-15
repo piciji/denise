@@ -108,8 +108,7 @@ VideoLayout::VideoLayout() {
 	}
 	
 	driverLayout.combo.onChange = [this]() {
-        emuThread->freeContext = true;
-        emuThread->lock();
+        emuThread->lock(true);
 		globalSettings->set<std::string>("video_driver", driverLayout.combo.text() );
         
 		globalSettings->set("exclusive_fullscreen", false);
@@ -158,8 +157,8 @@ VideoLayout::VideoLayout() {
 
         program->updateFullscreenSetting();
 
-        videoResolution.synchronizeLayout();
         emuThread->unlock();
+        videoResolution.synchronizeLayout();
     };
 
     videoResolution.displaySettings.onChange = [this]() {
@@ -236,8 +235,7 @@ VideoLayout::VideoLayout() {
 	};
 
     videoSettingsLayout.threadedRenderer.onToggle = [](bool checked) {
-        emuThread->freeContext = true;
-        emuThread->lock();
+        emuThread->lock(true);
         globalSettings->set("threaded_renderer", checked);
         VideoManager::setSynchronize();
         bool vsync = globalSettings->get<bool>("video_sync", true);

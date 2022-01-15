@@ -171,8 +171,13 @@ auto StatusHandler::updateTapeImage( GUIKIT::Image* image ) -> void {
             }
         }
     }
-    
+
+    emuThread->lockStatus();
+
     updateImage( 10, image );
+
+    emuThread->unlockStatus();
+
 }
 
 auto StatusHandler::hideTape() -> void {
@@ -257,8 +262,7 @@ auto StatusHandler::update() -> void {
     uint16_t clearMask = ~0;
     static auto countDecimalPoint = globalSettings->getOrInit<unsigned>("fps_decimal_point", 3u, {0u, 3u});
 
-    if (emuThreadEnabled)
-        emuThread->statusMutex.lock();
+    emuThread->lockStatus();
 
     if (fpsCounterUpdate()) {
         if (message.duration) {
@@ -382,8 +386,7 @@ auto StatusHandler::update() -> void {
     
     clearUpdates( clearMask );
 
-    if (emuThreadEnabled)
-        emuThread->statusMutex.unlock();
+    emuThread->unlockStatus();
 
     if (!cmd->noDriver)
 		transferToOSD( OSDText );

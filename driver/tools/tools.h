@@ -1,5 +1,6 @@
 
 #pragma once
+#include <vector>
 
 template<unsigned bits> inline auto sclamp(const signed x) -> signed {
     enum : signed { b = 1U << (bits - 1), m = b - 1 };

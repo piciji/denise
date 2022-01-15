@@ -673,12 +673,13 @@ template<typename T> auto VideoManager::renderFrame(const T* src, unsigned width
 		renderCrt(width, height, src, srcPitch, gpuData, gpuPitch - width);
 	}		           
     
-	videoDriver->unlock();
+	//videoDriver->unlock();
     
     //if (fpsLimit)
       //  applyFpsLimit();
     
-	videoDriver->redraw();
+	//videoDriver->redraw();
+    videoDriver->unlockAndRedraw();
     
     //lastCapTime = Chronos::getTimestampInMicroseconds();    
 }
@@ -836,7 +837,7 @@ template<bool _16bitSrc> auto VideoManager::createWorker(Render* re) -> void {
 
 }
 
-auto VideoManager::waitForRenderer() -> bool {
+auto VideoManager::waitForCrtRenderer() -> bool {
 
 	Render* re = &render[1];
 
@@ -1279,14 +1280,16 @@ auto VideoManager::unlockDriver() -> void {
     if (!activeVideoManager->crtThreaded || (activeVideoManager->crtMode != CrtMode::Cpu ) )
         return;
 
-    if (!activeVideoManager->waitForRenderer() || !videoDriver)
+    if (!activeVideoManager->waitForCrtRenderer() || !videoDriver)
         return;
-    videoDriver->unlock();
-    videoDriver->redraw();
+    //videoDriver->unlock();
+    //videoDriver->redraw();
+    //videoDriver->freeContext();
+    videoDriver->unlockAndRedraw(false, true);
 }
 
 auto VideoManager::powerOff() -> void {
-    unlockDriver();         
+    unlockDriver();
 	reinitCrtThread();
     currentHeight = 0;        
 }

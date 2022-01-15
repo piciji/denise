@@ -39,8 +39,9 @@ auto View::renderPlaceholder(bool blackScreen) -> void {
 				gpu_data += gpu_pitch - (placeholder.width );
 			}
 
-            videoDriver->unlock(true);
-            videoDriver->redraw(true);
+            //videoDriver->unlock(true);
+            //videoDriver->redraw(true);
+            videoDriver->unlockAndRedraw(true, true);
 		}
 	} else { // blackscreen
 		if (videoDriver->lock(gpu_data, gpu_pitch, 256, 256)) {
@@ -52,8 +53,9 @@ auto View::renderPlaceholder(bool blackScreen) -> void {
 				gpu_data += gpu_pitch - 256;
 			}
 
-            videoDriver->unlock(true);
-            videoDriver->redraw(true);
+            //videoDriver->unlock(true);
+            //videoDriver->redraw(true);
+            videoDriver->unlockAndRedraw(true, true);
 		}
 	}
 

@@ -4,6 +4,8 @@
 #include <X11/XKBlib.h>
 #include <gdk/gdkx.h>
 #include <cstring>
+#include <thread>
+#include <atomic>
 
 #include "../tools/hid.h"
 #include "../tools/chronos.h"
@@ -16,6 +18,8 @@ struct XInput : public Input {
 	
 	std::string joypadDriver = "";
     unsigned char _keycode[256];
+
+    std::atomic<bool> kill;
     
 #ifdef DRV_SDLINPUT
     SdlInput* sdl;
@@ -28,6 +32,19 @@ struct XInput : public Input {
     Window rootwindow;
     unsigned relativex, relativey;
     const unsigned warpMargin = 50;
+    std::mutex keyMutex;
+
+    char keyState[32];
+
+    struct {
+        int16_t x = 0;
+        int16_t y = 0;
+        bool left = false;
+        bool middle = false;
+        bool right = false;
+        bool up;
+        bool down;
+    } mouseState;
     
     bool mouseAcquired;
     uintptr_t handle;
@@ -45,10 +62,10 @@ struct XInput : public Input {
 	#ifdef DRV_SDLINPUT
 		if (joypadDriver == "sdl")
 			if (!sdl->init()) {}
-	#endif 
+	#endif
 	#ifdef DRV_UDEV
 		if (joypadDriver == "udev")
-			if (!udev->init()) {}				
+			if (!udev->init()) {}
 	#endif
 		display = XOpenDisplay(0);
 		rootwindow = DefaultRootWindow(display);
@@ -69,7 +86,7 @@ struct XInput : public Input {
 			hidKeyboard->buttons().append( (std::string)ident, getKeyCode( (std::string)ident, (uint8_t)keycode ) );
             //printf("%s %d \n", ident, keycode);
             
-			_keycode[_count++] = keycode;			
+			_keycode[_count++] = keycode;
         }
         		
 		mouseAcquired = false;
@@ -84,6 +101,8 @@ struct XInput : public Input {
 		hidMouse->buttons().append("Right");
 		hidMouse->buttons().append("Up");
 		hidMouse->buttons().append("Down");
+
+        initWorker();
 
 		return true;
 	}
@@ -187,16 +206,36 @@ struct XInput : public Input {
     auto poll() -> std::vector<Hid::Device*> {
 		std::vector<Hid::Device*> devices;
 
-		pollKeyboard( devices );
+        keyMutex.lock();
+        for (auto& input : hidKeyboard->buttons().inputs)
+            input.setValue( (bool)(keyState[_keycode[input.id] >> 3] & (1 << (_keycode[input.id] & 7))) );
 
-        pollMouse( devices );
+        hidMouse->axes().inputs[0].setValue(mouseState.x);
+        hidMouse->axes().inputs[1].setValue(mouseState.y);
+        mouseState.x = 0;
+        mouseState.y = 0;
+
+        hidMouse->buttons().inputs[0].setValue(mouseState.left);
+        hidMouse->buttons().inputs[1].setValue(mouseState.middle);
+        hidMouse->buttons().inputs[2].setValue(mouseState.right);
+        hidMouse->buttons().inputs[3].setValue(mouseState.up);
+        hidMouse->buttons().inputs[4].setValue(mouseState.down);
+
+        keyMutex.unlock();
+
+        devices.push_back(hidKeyboard);
+        devices.push_back(hidMouse);
+
+		//pollKeyboard( devices );
+
+        //pollMouse( devices );
 		
 	#ifdef DRV_SDLINPUT
 		if (joypadDriver == "sdl") sdl->pollJoypad(devices);
-	#endif 
+	#endif
 	#ifdef DRV_UDEV
 		if (joypadDriver == "udev") udev->pollJoypad(devices);
-	#endif 
+	#endif
 			
 		return devices;
 	}
@@ -275,6 +314,53 @@ struct XInput : public Input {
 		
 		devices.push_back(hidKeyboard);
 	}
+
+    auto initWorker() -> void {
+
+        std::thread worker([this] {
+            kill = false;
+            char state[32];
+            Window root_return, child_return;
+            int root_x_return = 0, root_y_return = 0;
+            int win_x_return = 0, win_y_return = 0;
+            unsigned int mask_return = 0;
+
+            while(true) {
+                if (kill) {
+                    kill = false;
+                    return;
+                }
+
+                usleep( 10000 );
+
+                XQueryKeymap(display, state);
+
+                XQueryPointer(display, rootwindow,
+                              &root_return, &child_return, &root_x_return, &root_y_return,
+                              &win_x_return, &win_y_return, &mask_return);
+
+                keyMutex.lock();
+                mouseState.x += (int16_t) (root_x_return - relativex);
+                mouseState.y += (int16_t) (root_y_return - relativey);
+                mouseState.left = (bool)(mask_return & Button1Mask);
+                mouseState.middle = (bool)(mask_return & Button2Mask);
+                mouseState.right = (bool)(mask_return & Button3Mask);
+                mouseState.up = (bool)(mask_return & Button4Mask);
+                mouseState.down = (bool)(mask_return & Button5Mask);
+
+                std::memcpy(keyState, state, 32);
+                keyMutex.unlock();
+
+                relativex = root_x_return;
+                relativey = root_y_return;
+
+                if (mIsAcquired())
+                    warpMouse( root_x_return, root_y_return );
+            }
+        });
+
+        worker.detach();
+    }
 		
     auto mAcquire() -> void {
 		if (mIsAcquired()) return;
@@ -313,7 +399,7 @@ struct XInput : public Input {
 	XInput(std::string joypadDriver = "") {
 		this->joypadDriver = joypadDriver;
 		
-		#ifdef DRV_SDLINPUT	
+		#ifdef DRV_SDLINPUT
 			if (this->joypadDriver == "sdl") sdl = new SdlInput();
 		#endif
 		#ifdef DRV_UDEV
@@ -322,15 +408,20 @@ struct XInput : public Input {
 		
 		handle = 0;
 	}
-	~XInput() { 
+	~XInput() {
+        kill = true;
+        while (kill) {
+            std::this_thread::yield();
+        }
+
 		term();
 
-		#ifdef DRV_SDLINPUT 
+		#ifdef DRV_SDLINPUT
 			if (joypadDriver == "sdl") delete sdl;
-		#endif 
+		#endif
 		#ifdef DRV_UDEV
 			if (joypadDriver == "udev") delete udev;
-		#endif 
+		#endif
 	}
 };
 

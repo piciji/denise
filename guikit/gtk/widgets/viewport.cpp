@@ -1,7 +1,7 @@
 
 auto pViewport::create() -> void {
     destroy();
-    gtkWidget = gtk_event_box_new();
+    gtkWidget = gtk_drawing_area_new();
 
     gtk_widget_add_events(gtkWidget,
     GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_LEAVE_NOTIFY_MASK | GDK_POINTER_MOTION_MASK);

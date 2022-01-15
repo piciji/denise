@@ -70,8 +70,11 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
     memorySliderReset.setInterval(500);
     
     memorySliderReset.onFinished = [this]() {
-        if (activeEmulator)
+        if (activeEmulator) {
+            emuThread->lock();
             program->power(activeEmulator);
+            emuThread->unlock();
+        }
         
         memorySliderReset.setEnabled(false);
     };
@@ -130,8 +133,11 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
                 _settings->set<unsigned>( "expansion", block->expansion->id);
                 updateExpansionMemory();
 
-				if (activeEmulator)
-					program->power(activeEmulator);
+				if (activeEmulator) {
+                    emuThread->lock();
+                    program->power(activeEmulator);
+                    emuThread->unlock();
+                }
             };
         }
     }       

@@ -49,6 +49,10 @@ auto pMonitor::getCurrentRefreshRate() -> float {
 }
 
 auto pMonitor::fetchDisplays() -> void {
+
+    if (activeDevice)
+        return;
+
     unsigned i = 0;
     CRC32 crc32;
     devices.clear();

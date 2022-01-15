@@ -248,8 +248,9 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
         _settings->set<bool>("audio_bass", checked );
         
         updateVisibility();
-        
+        emuThread->lock();
         audioManager->setAudioDsp();
+        emuThread->unlock();
     };
     
     bass.top.frequency.slider.onChange = [this]() {
@@ -259,8 +260,10 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
         _settings->set<unsigned>("audio_bass_freq", val );
         
         bass.top.frequency.value.setText( std::to_string(val) + " Hz" );
-        
+
+        emuThread->lock();
         audioManager->setAudioDsp();
+        emuThread->unlock();
     };
     
     bass.bottom.gain.slider.onChange = [this]() {
@@ -270,8 +273,10 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
         _settings->set<unsigned>("audio_bass_gain", val );
         
         bass.bottom.gain.value.setText( std::to_string(val) );
-        
+
+        emuThread->lock();
         audioManager->setAudioDsp();
+        emuThread->unlock();
     };
     
     bass.bottom.reduceClipping.slider.onChange = [this]() {
@@ -281,8 +286,10 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
         _settings->set<float>("audio_bass_clipping", val);
         
         bass.bottom.reduceClipping.value.setText( GUIKIT::String::convertDoubleToString( val, 1) );
-        
+
+        emuThread->lock();
         audioManager->setAudioDsp();
+        emuThread->unlock();
     };    
     
     // reverb
@@ -291,8 +298,10 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
         _settings->set<bool>("audio_reverb", checked );
         
         updateVisibility();
-        
+
+        emuThread->lock();
         audioManager->setAudioDsp();
+        emuThread->unlock();
     };           
     
     setDspEvent( &reverb.top.dryTime, "audio_reverb_drytime", 0.43 );
@@ -307,8 +316,10 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
         _settings->set<bool>("audio_panning", checked );
         
         updateVisibility();
-        
+
+        emuThread->lock();
         audioManager->setAudioDsp();
+        emuThread->unlock();
     };
     
     setDspEvent( &panning.top.leftMix, "audio_panning_left0", 1.0 );
@@ -323,8 +334,10 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
         
         audioRecord.duration.useTimeLimit.setEnabled();            
         audioRecord.duration.record.setEnabled();
-        
+
+        emuThread->lock();
         audioManager->record.setTimeLimit();
+        emuThread->unlock();
     };
     
     audioRecord.location.select.onActivate = [this]() {
@@ -349,8 +362,10 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
         _settings->set<unsigned>( "audio_record_minutes", pos );
         
         audioRecord.duration.minutesSlider.value.setText( std::to_string(pos) );
-        
+
+        emuThread->lock();
         audioManager->record.setTimeLimit();
+        emuThread->unlock();
     };
     
     audioRecord.duration.secondsSlider.slider.onChange = [this]() {
@@ -360,17 +375,19 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
         _settings->set<unsigned>( "audio_record_seconds", pos );
         
         audioRecord.duration.secondsSlider.value.setText( std::to_string(pos) );
-        
+
+        emuThread->lock();
         audioManager->record.setTimeLimit();
+        emuThread->unlock();
     };
     
     audioRecord.duration.record.onToggle = [this]() {
 
         bool state = audioRecord.duration.record.checked();
-
+        emuThread->lock();
         if (state) {
             std::string errorText;
-            if (!audioManager->record.record(this->emulator, errorText)) {
+            if (!audioManager->record.start(this->emulator, errorText)) {
                 mes->error( errorText );
                 audioRecord.duration.record.setChecked(false);
                 return;
@@ -378,6 +395,7 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
         } else
             audioManager->record.finish();
 
+        emuThread->unlock();
         audioRecord.duration.record.setText( trans->get( state ? "Stop" : "Record" ) );
     };
 
@@ -385,8 +403,11 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
 
         _settings->set<bool>( "audio_floppy", checked );
 
-        if (emulator == activeEmulator)
+        if (emulator == activeEmulator) {
+            emuThread->lock();
             audioManager->setDriveSounds();
+            emuThread->unlock();
+        }
     };
 
     driveLayout.floppyVolume.slider.onChange = [this]() {
@@ -396,8 +417,11 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
 
         driveLayout.floppyVolume.value.setText( std::to_string( value ) + " %" );
 
-        if (activeEmulator)
-            audioManager->drive.setVolume( activeEmulator, activeEmulator->getDiskMediaGroup(), (float)value * 0.01 );
+        if (activeEmulator) {
+            emuThread->lock();
+            audioManager->drive.setVolume(activeEmulator, activeEmulator->getDiskMediaGroup(), (float) value * 0.01);
+            emuThread->unlock();
+        }
     };
 
     driveLayout.selection.floppyCombo.onChange = [this]() {
@@ -406,9 +430,11 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
 
         _settings->set<std::string>( "audio_floppy_folder", folder );
 
+        emuThread->lock();
         audioManager->drive.unload( emulator, emulator->getDiskMediaGroup() );
         if (emulator == activeEmulator)
             audioManager->setDriveSounds( false );
+        emuThread->unlock();
     };
 
     driveLayout.selection.reload.onActivate = [this]() {
@@ -419,9 +445,11 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
         // in case if content doesn't match setting anymore
         _settings->set<std::string>("audio_floppy_folder", driveLayout.selection.floppyCombo.text() );
 
+        emuThread->lock();
         audioManager->drive.unload( emulator, emulator->getDiskMediaGroup() );
         if (emulator == activeEmulator)
             audioManager->setDriveSounds( false );
+        emuThread->unlock();
     };
 
     updateFloppyProfileList();
@@ -452,7 +480,9 @@ auto AudioLayout::setDspEvent(SliderLayout* sliderLayout, std::string ident, flo
 
         sliderLayout->value.setText( GUIKIT::String::convertDoubleToString(val, 2) );
 
+        emuThread->lock();
         audioManager->setAudioDsp();
+        emuThread->unlock();
     };    
 }
 
@@ -620,7 +650,9 @@ auto AudioLayout::toggleRecord() -> void {
 }
 
 auto AudioLayout::stopRecord() -> void {
-    
-    if (audioRecord.duration.record.checked())
-        audioRecord.duration.record.toggle();
+
+    if (audioRecord.duration.record.checked()) {
+        audioRecord.duration.record.setText( trans->get( "Record" ) );
+        audioRecord.duration.record.setChecked(false);
+    }
 }

@@ -3,6 +3,8 @@
 #include "../tools/chronos.h"
 #include "../view/view.h"
 #include "emuThread.h"
+#include "../emuconfig/config.h"
+#include "../input/manager.h"
 
 EmuThread* emuThread = nullptr;
 
@@ -10,6 +12,10 @@ EmuThread::EmuThread() {
     kill = false;
     attention = false;
     acknowledged = false;
+    finishAudioRecord = false;
+    pollHotkeys = false;
+    enabled = false;
+    updateFastForward = -1;
 }
 
 EmuThread::~EmuThread() {
@@ -36,8 +42,11 @@ auto EmuThread::enable(bool state) -> void {
     }
 }
 
-auto EmuThread::lock() -> bool {
-    if  (!enabled || acknowledged)
+auto EmuThread::lock(bool freeDriverContext) -> bool {
+    //if (freeDriverContext)
+        freeContext = true;
+
+    if  (!enabled || acknowledged /* check for nesting */ )
         return false;
 
     attention = true;
@@ -56,9 +65,9 @@ auto EmuThread::initWorker() -> void {
 
     std::thread worker([this] {
 
-  //      if (GUIKIT::ThreadPriority::setPriority( GUIKIT::ThreadPriority::Mode::High, 3.0, 5.0 )) {
-        //     logger->log("increased render thread prio");
-   //     }
+        //if (GUIKIT::ThreadPriority::setPriority( GUIKIT::ThreadPriority::Mode::Realtime, 3.0, 5.0 )) {
+          //   logger->log("increased render thread prio");
+        //}
 
         kill = false;
         attention = false;
@@ -127,5 +136,51 @@ auto EmuThread::handleStatusUpdate( ) -> void {
     }
 
     statusBar.update();
+}
 
+auto EmuThread::handleUIEvents() -> void {
+
+    if (finishAudioRecord) {
+        finishAudioRecord = false;
+        auto emuView = EmuConfigView::TabWindow::getView(activeEmulator);
+        if (emuView && emuView->audioLayout)
+            emuView->audioLayout->stopRecord();
+    }
+
+    if (updateFastForward != -1) {
+        program->fastForward( updateFastForward, program->warp.aggressive );
+        updateFastForward = -1;
+    }
+
+    if (pollHotkeys) {
+        pollHotkeys = false;
+        InputManager::pollHotkeys();
+    }
+}
+
+auto EmuThread::clearEvents() -> void {
+    statusUpdates.clear();
+    finishAudioRecord = false;
+    updateFastForward = -1;
+    pollHotkeys = false;
+}
+
+auto EmuThread::lockHotkeys() -> void {
+    if (enabled)
+        hotkeyMutex.lock();
+}
+
+auto EmuThread::unlockHotkeys() -> void {
+    if (enabled)
+        hotkeyMutex.unlock();
+}
+
+auto EmuThread::lockStatus() -> void {
+    if (enabled)
+        statusMutex.lock();
+}
+
+auto EmuThread::unlockStatus() -> void {
+    if (enabled)
+        statusMutex.unlock();
 }

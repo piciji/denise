@@ -290,6 +290,8 @@ auto CALLBACK pApplication::wndProc(WNDPROC windowProc, HWND hwnd, UINT msg, WPA
             break;
         }
         case WM_DISPLAYCHANGE: {
+            pMonitor::fetchDisplays();
+
             if (Application::onDisplayChange)
                 Application::onDisplayChange();
         }

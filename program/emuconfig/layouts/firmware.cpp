@@ -45,6 +45,7 @@ FirmwareLayout::FirmwareLayout(TabWindow* tabWindow) {
             _settings->set<unsigned>("use_firmware", i);
             updateVisibility();
 
+            emuThread->lock();
             hotSwap(i);
 
             if (i == 0) {
@@ -58,6 +59,7 @@ FirmwareLayout::FirmwareLayout(TabWindow* tabWindow) {
                         blockSpeeder->combo.activate(0);
                 }
             }
+            emuThread->unlock();
         };
 
         customSelectorLayout.append(*radioBox, {0u, 0u}, i == manager->maxSets ? 0 : 10);
@@ -79,12 +81,14 @@ FirmwareLayout::FirmwareLayout(TabWindow* tabWindow) {
             auto& firmware = emulator->firmwares[block->typeId];
             auto fSetting = manager->getSetting( &firmware, storeLevel );
 
+            emuThread->lock();
             block->bottom.edit.setText("");
             block->top.fileLabel.setText("");
             fSetting->init();
             this->manager->addImage(&firmware, storeLevel, nullptr, 0);
             selectedBlock = block;
             hotSwap( storeLevel );
+            emuThread->unlock();
         };
 
         block->bottom.edit.onFocus = [this, block]() {
@@ -203,6 +207,7 @@ auto FirmwareLayout::assign(std::string path, FirmwareContainer::Block* block, F
 		uint8_t* copy = new uint8_t[size];
 		std::memcpy(copy, data, size);
 
+        emuThread->lock();
 		this->manager->addImage( &firmware, storeLevel, copy, size );
 		
         selectedBlock = block;
@@ -210,6 +215,7 @@ auto FirmwareLayout::assign(std::string path, FirmwareContainer::Block* block, F
         filePool->unloadOrphaned();
         
         hotSwap( storeLevel );
+        emuThread->unlock();
     };
 
     archiveViewer->setView(items);

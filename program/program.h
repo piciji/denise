@@ -85,7 +85,7 @@ struct Program : Emulator::Interface::Bind {
 
     auto init() -> void;
     auto addEmulators() -> void;
-    auto power( Emulator::Interface* emulator, bool regular = true, bool unlock = true ) -> void;
+    auto power( Emulator::Interface* emulator, bool regular = true ) -> void;
 	auto reset( Emulator::Interface* emulator ) -> void;
     auto powerOff() -> void;
     auto readMedia(Emulator::Interface::Media* media, uint8_t* buffer, unsigned length, unsigned offset) -> unsigned override;

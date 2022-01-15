@@ -121,7 +121,9 @@ PaletteLayout::PaletteLayout(TabWindow* tabWindow) {
             colorLayouts[colorPos]->canvas.setBackgroundColor( palette.paletteColors[colorPos].rgb );
             palette.paletteColors[colorPos].updateChannels();
 
-            program->setPalette( this->emulator );    
+            emuThread->lock();
+            program->setPalette( this->emulator );
+            emuThread->unlock();
             
             if (!detailLayout.enabled())
                 detailLayout.setEnabled();
@@ -187,8 +189,10 @@ PaletteLayout::PaletteLayout(TabWindow* tabWindow) {
         auto& palette = getSelectedPalette();
         
         _settings->set<unsigned>( "palette", palette.id );
-        
+
+        emuThread->lock();
         program->setPalette( this->emulator );
+        emuThread->unlock();
         
         this->setPalette( palette );
     };
@@ -223,13 +227,15 @@ PaletteLayout::PaletteLayout(TabWindow* tabWindow) {
     controlLayout.create.onActivate = [this]() {
         
         PaletteManager* paletteManager = PaletteManager::getInstance( emulator );
-        
+
+        emuThread->lock();
         auto& palette = paletteManager->add( getSelectedPalette() );
+        emuThread->unlock();
         
         _settings->set<unsigned>( "palette", palette.id );
         
         updateList();
-        
+
         setPalette( palette );
     };
     
@@ -244,7 +250,8 @@ PaletteLayout::PaletteLayout(TabWindow* tabWindow) {
         
         if (!palette.editable)
             return;
-        
+
+        emuThread->lock();
         paletteManager->remove( palette );
         
         auto& _palette = emulator->palettes[0];
@@ -252,10 +259,11 @@ PaletteLayout::PaletteLayout(TabWindow* tabWindow) {
         _settings->set<unsigned>( "palette", _palette.id );
         
         updateList();
-        
+
         setPalette( _palette );
         
-        program->setPalette( this->emulator ); 
+        program->setPalette( this->emulator );
+        emuThread->unlock();
     };
     
     saveLayout.allChanges.onActivate = [this]() {
@@ -369,7 +377,9 @@ auto PaletteLayout::updateSliderChange( uint8_t colorChannel, uint8_t bits ) -> 
     palette.paletteColors[colorPos].rgb = rgb;
     palette.paletteColors[colorPos].updateChannels();
 
+    emuThread->lock();
     program->setPalette(this->emulator);
+    emuThread->unlock();
 
     detailLayout.left.canvas.setBackgroundColor(rgb);
 

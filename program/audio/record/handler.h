@@ -24,7 +24,7 @@ struct Handler {
     
     bool useFloat;
 		
-    auto record( Emulator::Interface* emulator, std::string& errorText ) -> bool;
+    auto start( Emulator::Interface* emulator, std::string& errorText ) -> bool;
     
     auto setTimeLimit() -> void;
     
@@ -34,7 +34,7 @@ struct Handler {
     
     auto checkTime() -> void;
     
-    auto finish() -> void;
+    auto finish(bool timeup = false) -> void;
 };
 
 }

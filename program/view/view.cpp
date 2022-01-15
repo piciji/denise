@@ -71,12 +71,13 @@ auto View::build() -> void {
         GUIKIT::Application::quit();
     };
     
-    onMove = [this]() { 
+    onMove = [this]() {
         if (fullScreen()) return;
         GUIKIT::Geometry geometry = this->geometry();
         globalSettings->set<int>("screen_x", geometry.x);
         globalSettings->set<int>("screen_y", geometry.y);
-		audioDriver->clear();
+        if (!emuThread->enabled)
+		    audioDriver->clear();
     };
     
     onSize = [this]() {
@@ -96,7 +97,8 @@ auto View::build() -> void {
             globalSettings->set<int>("screen_height", geometry.height);
         }
         updateViewport();
-		audioDriver->clear();
+        if (!emuThread->enabled)
+		    audioDriver->clear();
     };
 	
 	onContext = [this]() {
@@ -184,8 +186,7 @@ auto View::build() -> void {
     displayChangeTimer.onFinished = [this]() {
         displayChangeTimer.setEnabled(false);
         //statusHandler->setMessage( std::to_string(GUIKIT::Monitor::getCurrentRefreshRate()) );
-        emuThread->freeContext = true;
-        emuThread->lock();
+        emuThread->lock(true);
         if (videoDriver && !fullScreen())
             videoDriver->forceResize();
 
@@ -196,13 +197,15 @@ auto View::build() -> void {
 	viewport.onMousePress = [this](GUIKIT::Mouse::Button button) {
 		
 		if (program->isRunning || (button != GUIKIT::Mouse::Button::Left))
-			return;	
-		
+			return;
+
+        emuThread->lock(true);
 		if (cursorForPlaceholderInUpperTriangle()) {
 			program->power( program->getEmulator("C64") );
 		} else {
 			
 		}
+        emuThread->unlock();
 	};
     
     viewport.onMouseMove = [this](GUIKIT::Position& pos) {
@@ -233,9 +236,7 @@ auto View::setAnyload( Emulator::Interface* emulator ) -> void {
 	
 	anyloadTimer.onFinished = [this, emulator, mIsAcquiredBefore]() {
 		anyloadTimer.setEnabled(false);
-        emuThread->lock();
 		fileloader->anyLoad( emulator, mIsAcquiredBefore );
-        emuThread->unlock();
 	};
 	
 	anyloadTimer.setEnabled();
@@ -584,7 +585,7 @@ auto View::updateShader() -> void {
                 }
             }
             item->onToggle = [item, vManager]() {
-                emuThread->lock();
+                emuThread->lock(true);
                 if (item->checked()) {
 					vManager->shader.addActiveShader(item->text());
                 } else {
@@ -689,14 +690,17 @@ auto View::buildMenu() -> void {
         sM.poweron = new GUIKIT::MenuItem;
         sM.poweron->setIcon( powerImage );
         sM.poweron->onActivate = [emulator]() {
+            emuThread->lock(true);
 		    program->power(emulator);
+            emuThread->unlock();
 	    };	
         sM.system->append( *sM.poweron );
 		
 		sM.poweronAndRemoveExpansions = new GUIKIT::MenuItem;
         sM.poweronAndRemoveExpansions->setIcon( powerImage );
         sM.poweronAndRemoveExpansions->onActivate = [emulator]() {
-		    program->power(emulator, true, false);
+            emuThread->lock();
+		    program->power(emulator);
             program->removeExpansion( false );
             emuThread->unlock();
 	    };	
@@ -705,7 +709,9 @@ auto View::buildMenu() -> void {
 		        
         sM.reset = new GUIKIT::MenuItem;
         sM.reset->onActivate = [emulator]() {
+            emuThread->lock();
 		    program->reset(emulator);
+            emuThread->unlock();
 	    };	
         sM.reset->setIcon( powerImage );
         sM.system->append( *sM.reset );
@@ -892,8 +898,7 @@ auto View::buildMenu() -> void {
 
     videoSyncItem.onToggle = [&]() {
         globalSettings->set<bool>("video_sync", videoSyncItem.checked() );
-        emuThread->freeContext = true;
-        emuThread->lock();
+        emuThread->lock(true);
         program->fastForward( false );
         VideoManager::setSynchronize();
         statusHandler->resetFrameCounter();
@@ -914,8 +919,7 @@ auto View::buildMenu() -> void {
 
     adaptiveSyncItem.onToggle = [&]() {
         globalSettings->set<bool>("adaptive_sync", adaptiveSyncItem.checked() );
-        emuThread->freeContext = true;
-        emuThread->lock();
+        emuThread->lock(true);
         program->fastForward( false );
         VideoManager::setSynchronize();
         emuThread->unlock();
@@ -999,7 +1003,10 @@ auto View::buildMenu() -> void {
 
 	poweroff.setIcon( poweroffImage );
 	poweroff.onActivate = [this]() {
+        emuThread->lock(true);
 		program->powerOff();
+        emuThread->unlock();
+
 		videoDriver->setFilter( DRIVER::Video::Filter::Linear );
 		this->updateViewport();
 
@@ -1121,7 +1128,7 @@ auto View::buildMenu() -> void {
         speedItem->onActivate = [this, i]() {
             auto settings = program->getSettings( activeEmulator );
             settings->set<unsigned>("speed_profile", i);
-            emuThread->lock();
+            emuThread->lock(true);
             audioManager->setSynchronize();
             audioManager->setResampler();
             statusHandler->resetFrameCounter();

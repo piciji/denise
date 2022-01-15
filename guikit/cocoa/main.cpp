@@ -82,6 +82,10 @@
 - (void)changeDisplay:(NSNotification*)notification {
     
     using GUIKIT::Application;
+    using GUIKIT::pMonitor;
+
+    pMonitor::fetchDisplays();
+
     if (Application::onDisplayChange)
         Application::onDisplayChange();
     

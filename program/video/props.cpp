@@ -132,19 +132,19 @@ auto VideoManager::setBlur( unsigned blur ) -> void {
 }
 
 auto VideoManager::setLumaRise( float pixel ) -> void {
-    
+
 	updateShader("lumaLatency", "lumaRise", lumaRise, pixel == 0.0 ? 0.0 : (double)(1.0 / (double)pixel));    
 	colorTableUpdated = false;
 }
 
 auto VideoManager::setLumaFall( float pixel ) -> void {
-	    
+
 	updateShader("lumaLatency", "lumaFall", lumaFall, pixel == 0.0 ? 0.0 : (double)(1.0 / (double)pixel) );
 	colorTableUpdated = false;
 }
 
 auto VideoManager::setScanlines(unsigned intensity) -> void {
-    waitForRenderer();
+    waitForCrtRenderer();
     updateShader( "", "gammaAndScanlines", scanlines, (uint8_t)intensity );
     this->scanlines = intensity;
     colorTableUpdated = false;
@@ -255,13 +255,13 @@ auto VideoManager::setFirFilterSharp( int sharp ) -> void {
 }
 
 auto VideoManager::useDistortionHires(bool state) -> void {
-    
+
     distortionHires = state;
     shader.recreate = true;
 }
 
 auto VideoManager::useHires(bool state) -> void {
-    
+
     hires = state;
     shader.recreate = true;
 }

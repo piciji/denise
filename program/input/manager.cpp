@@ -164,8 +164,11 @@ auto InputManager::update() -> void {
                     
                     useMapping->state = value;
 					
-					if (!mapping->emuDevice)
-						hotkeyTriggers.push_back( useMapping );						
+					if (!mapping->emuDevice) {
+                        emuThread->lockHotkeys();
+                        hotkeyTriggers.push_back(useMapping);
+                        emuThread->unlockHotkeys();
+                    }
 					
                     for(auto shadow : useMapping->shadowMap)
                         shadows.push_back( shadow );
@@ -205,8 +208,12 @@ auto InputManager::update() -> void {
                 
                 useMapping->state = 1;
 				
-				if (!mapping->emuDevice)
-					hotkeyTriggers.push_back( useMapping );
+				if (!mapping->emuDevice) {
+                    emuThread->lockHotkeys();
+                    hotkeyTriggers.push_back( useMapping );
+                    emuThread->unlockHotkeys();
+                }
+
 
                 for (auto shadow : useMapping->shadowMap)
                     shadows.push_back(shadow);

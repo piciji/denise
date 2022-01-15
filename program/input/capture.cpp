@@ -18,8 +18,11 @@ auto InputManager::poll() -> void {
         jit.enable = false;
       //  logger->log("jit", true);
     }
-            
-    pollHotkeys();
+
+    if (emuThread->enabled)
+        emuThread->pollHotkeys = true;
+    else
+        pollHotkeys();
 }
 
 auto InputManager::jitPoll() -> bool {
@@ -33,7 +36,8 @@ auto InputManager::jitPoll() -> bool {
         jit.lastTimestamp = ts;
         
         fetch();
-        getManager( activeEmulator )->update();
+        getManager(activeEmulator)->update();
+
         jit.enable = true;
         
         return true;

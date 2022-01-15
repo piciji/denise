@@ -279,12 +279,23 @@ struct GLX : public Video, OpenGL, RenderThread {
         outputWidth = parent.width, outputHeight = parent.height;
     }
 
+    auto unlockAndRedraw(bool disallowShader = false, bool freeContext = false) -> void {
+        if (settings.threaded) {
+            resizeWindow();
+            RenderThread::unlock(disallowShader);
+        } else
+            redraw(disallowShader);
+
+        if (freeContext)
+            clearCurrent();
+    }
+
     auto redraw(bool disallowShader = false) -> void {
         if (settings.threaded)
             return;
 
         resizeWindow();
-
+        makeCurrent(true);
         OpenGL::clear();
         OpenGLSurface::updateTexture();
         OpenGL::refresh(disallowShader);
@@ -358,12 +369,13 @@ struct GLX : public Video, OpenGL, RenderThread {
         glXSwapIntervalEXT = nullptr;
     }
 
-    auto makeCurrent(bool isRenderer = false) -> void {
+    auto makeCurrent(bool usePermanent = false) -> void {
 
-        if (isRenderer) {
+        if (usePermanent) {
             if(!hasRendererContext) {
                 hasRendererContext = true;
             } else
+                // for non threaded mode, we don't want to bind context each frame for speed reasons
                 return;
         }
 
