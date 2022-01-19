@@ -2,10 +2,15 @@
 std::vector<pMonitor::Device> pMonitor::devices;
 std::vector<pMonitor::Setting> pMonitor::settings;
 pMonitor::Device* pMonitor::activeDevice = nullptr;
+pMonitor::Setting* pMonitor::activeSetting = nullptr;
 
 #include <dwmapi.h>
 
 auto pMonitor::getCurrentRefreshRate() -> float {
+
+    if (activeDevice && activeSetting) {
+        return (float)activeSetting->devMode.dmDisplayFrequency;
+    }
 
     if (pApplication::version > Windows7) {
         DWM_TIMING_INFO timingInfo;
@@ -228,20 +233,20 @@ auto pMonitor::setSetting( unsigned displayId, unsigned settingId ) -> bool {
     if (!settings.size() || (settings[0].parentDevice != activeDevice) )
         fetchSettings( activeDevice );
 
-    Setting* setting = nullptr;
+    activeSetting = nullptr;
     for(auto& _setting : settings) {
         if (_setting.id == settingId) {
-            setting = &_setting;
+            activeSetting = &_setting;
             break;
         }
     }
 
-    if (!setting)
+    if (!activeSetting)
         return false;
 
     auto result = ChangeDisplaySettingsEx(
         activeDevice->displayDevice.DeviceName,
-        &setting->devMode,
+        &activeSetting->devMode,
         nullptr,
         CDS_FULLSCREEN,
         0
@@ -264,5 +269,6 @@ auto pMonitor::resetSetting() -> void {
     );
 
     activeDevice = nullptr;
+    activeSetting = nullptr;
 }
 

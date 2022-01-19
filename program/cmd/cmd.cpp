@@ -2,6 +2,7 @@
 #include "cmd.h"
 #include "../view/view.h"
 #include "../media/autoloader.h"
+#include "../thread/emuThread.h"
 
 auto Cmd::set(int argc, char** argv) -> void {        	
 	
@@ -372,6 +373,7 @@ auto Cmd::autoloadImages() -> void {
         return;
     }
 
+    emuThread->lock();
     if (debug) {
         autoloader->init( arguments, true, Autoloader::Mode::AutoStart, 1 );
     } else {
@@ -379,20 +381,26 @@ auto Cmd::autoloadImages() -> void {
     }
 
     autoloader->loadFiles();
+
+    if (activeEmulator) {
+        typedef Emulator::Interface EmuInt;
+
+        if (aggressiveFastforward)
+            activeEmulator->fastForward( (unsigned)EmuInt::FastForward::NoAudioOut | (unsigned)EmuInt::FastForward::ReduceVideoOutput | (unsigned)EmuInt::FastForward::NoVideoSequencer );
+        else if (noDriver || noGui)
+            activeEmulator->fastForward( (unsigned)EmuInt::FastForward::NoAudioOut | (unsigned)EmuInt::FastForward::NoVideoOut );
+        else if (debug)
+            activeEmulator->fastForward( (unsigned)EmuInt::FastForward::NoAudioOut );
+    }
+
+    emuThread->unlock();
     
     if (!debug && !noDriver && !noGui && globalSettings->get<bool>("open_fullscreen", false)) {
-        view->setFullScreen(true);
+        GUIKIT::System::sleep( 500 );
+        emuThread->lock();
+        view->switchFullScreen(true);
+        emuThread->unlock();
     }
-	typedef Emulator::Interface EmuInt;
-	
-	if (activeEmulator) {
-		if (aggressiveFastforward)
-			activeEmulator->fastForward( (unsigned)EmuInt::FastForward::NoAudioOut | (unsigned)EmuInt::FastForward::ReduceVideoOutput | (unsigned)EmuInt::FastForward::NoVideoSequencer );
-		else if (noDriver || noGui)
-			activeEmulator->fastForward( (unsigned)EmuInt::FastForward::NoAudioOut | (unsigned)EmuInt::FastForward::NoVideoOut );	
-		else if (debug)
-			activeEmulator->fastForward( (unsigned)EmuInt::FastForward::NoAudioOut );
-	}
 
     autoload = false;
 }

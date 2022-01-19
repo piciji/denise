@@ -14,8 +14,8 @@ struct EmuThread {
     std::atomic<bool> attention;
     std::atomic<bool> acknowledged;
     std::atomic<bool> finishAudioRecord;
-    std::atomic<int> updateFastForward;
     std::atomic<bool> pollHotkeys;
+    std::atomic<bool> updatePaletteForSoftwareView;
 
     std::atomic<bool> ready;
     std::atomic<bool> kill;
@@ -23,14 +23,20 @@ struct EmuThread {
 
     std::mutex statusMutex;
     std::mutex hotkeyMutex;
+    std::mutex crtMutex;
+    std::mutex paletteForSoftwareView;
 
-    auto lock(bool freeDriverContext = false) -> bool;
+    auto lock() -> bool;
     auto unlock() -> void;
 
     auto lockHotkeys() -> void;
     auto unlockHotkeys() -> void;
     auto lockStatus() -> void;
     auto unlockStatus() -> void;
+    auto lockCrt() -> void;
+    auto unlockCrt() -> void;
+    auto lockPaletteForSoftwareView() -> void;
+    auto unlockPaletteForSoftwareView() -> void;
 
     auto enable(bool state) -> void;
 

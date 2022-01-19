@@ -199,6 +199,7 @@ auto CALLBACK pApplication::wndProc(WNDPROC windowProc, HWND hwnd, UINT msg, WPA
             if(dynamic_cast<ListView*>(base) && ((LPNMHDR)lparam)->code == LVN_ITEMCHANGED) { ((ListView*)base)->p.onChange(lparam); break; }
             if(dynamic_cast<ListView*>(base) && ((LPNMHDR)lparam)->code == LVN_ITEMACTIVATE) { ((ListView*)base)->p.onActivate(); break; }
             if(dynamic_cast<ListView*>(base) && ((LPNMHDR)lparam)->code == NM_CUSTOMDRAW) { return ((ListView*)base)->p.onCustomDraw(lparam); }
+            if(dynamic_cast<CheckBox*>(base) && ((LPNMHDR)lparam)->code == NM_CUSTOMDRAW) { return ((CheckBox*)base)->p.onCustomDraw(lparam); }
             if(dynamic_cast<TreeView*>(base) && ((LPNMHDR)lparam)->code == TVN_SELCHANGED) { ((TreeView*)base)->p.onChange(); break; }
             if(dynamic_cast<TreeView*>(base) && ((LPNMHDR)lparam)->code == TVN_ITEMEXPANDED) { ((TreeView*)base)->p.onExpanded(lparam); break; }
             if(dynamic_cast<TreeView*>(base) && ((LPNMHDR)lparam)->code == NM_DBLCLK) { ((TreeView*)base)->p.onActivate(); break; }
@@ -550,10 +551,10 @@ auto pWindow::setFullScreen(bool fullScreen) -> void {
     if (!window.resizable()) return;
     locked = true;
     if(!fullScreen) {
-        pMonitor::resetSetting();
         SetWindowLongPtr(hwnd, GWL_STYLE, WS_VISIBLE | (window.resizable() ? ResizableStyle : FixedStyle));
         setGeometry(window.state.geometry);
 		SetWindowPos(hwnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+        pMonitor::resetSetting();
     } else {
         if (window.fullscreenSetting.inUse)
             pMonitor::setSetting( window.fullscreenSetting.displayId, window.fullscreenSetting.settingId );

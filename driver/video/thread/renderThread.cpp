@@ -206,8 +206,13 @@ namespace DRIVER {
 
                     if (cv.wait_for(lk, duration, [this]() {
                         return ready.load();
-                    }))
+                    })) {
+                        if (kill) {
+                            kill = false;
+                            return;
+                        }
                         break;
+                    }
                 }
 
                 refresh();

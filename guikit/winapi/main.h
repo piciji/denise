@@ -344,6 +344,7 @@ struct pCheckBox : pWidget {
     auto onToggle() -> void;
     auto rebuild() -> void;
     auto create() -> void;
+    auto onCustomDraw(LPARAM lparam) -> LRESULT;
     
     static auto CALLBACK subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
 
@@ -799,6 +800,7 @@ struct pMonitor {
     static std::vector<Device> devices;
     static std::vector<Setting> settings;
     static Device* activeDevice;
+    static Setting* activeSetting;
 
     static auto fetchDisplays() -> void;
     static auto getDisplays() -> std::vector<Monitor::Property>;

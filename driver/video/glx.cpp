@@ -125,6 +125,8 @@ struct GLX : public Video, OpenGL, RenderThread {
         glx.isDirect = glXIsDirect(display, glxcontext);
         XFree(vi);
         XSync(display, False);
+
+        RenderThread::reset();
         bool res = OpenGL::init();
         clearCurrent();
         return res;

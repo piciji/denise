@@ -16,7 +16,7 @@ auto Program::initVideo() -> void {
     
     VideoManager::setSynchronize();
     VideoManager::setHardSync();
-    setThreadedRenderer();
+  //  setThreadedRenderer();
     setFpsLimit();
     //setVideoFilter();
     updateFullscreenSetting();
@@ -106,7 +106,11 @@ auto Program::videoRefresh8(const uint8_t* frame, unsigned width, unsigned heigh
 }
 
 auto Program::hintExclusiveFullscreen() -> void {
-	videoDriver->hintExclusiveFullscreen( globalSettings->get("exclusive_fullscreen", false), view->getCustomFullscreenRefreshRate() );
+
+    if (!isRunning || !globalSettings->get("exclusive_fullscreen", false) || globalSettings->get<bool>("threaded_ui", false))
+        videoDriver->hintExclusiveFullscreen( false );
+    else
+	    videoDriver->hintExclusiveFullscreen( true, view->getCustomFullscreenRefreshRate() );
 }
 
 auto Program::setFpsLimit() -> void {

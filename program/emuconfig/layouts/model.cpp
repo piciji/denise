@@ -128,7 +128,7 @@ auto ModelLayout::setEvents( ) -> void {
 
                     tabWindow->settings->set<bool>( _underscore(model->name), checked );
 
-                    emuThread->lock(true);
+                    emuThread->lock();
                     emulator->setModelValue( model->id, checked );
                     applyCustomStuff( block, model );
                     emuThread->unlock();
@@ -142,7 +142,7 @@ auto ModelLayout::setEvents( ) -> void {
 						
 						tabWindow->settings->set<unsigned>(_underscore(model->name), val);
 
-                        emuThread->lock(true);
+                        emuThread->lock();
 						emulator->setModelValue( model->id, val );
                         applyCustomStuff( block, model );
                         emuThread->unlock();
@@ -158,7 +158,7 @@ auto ModelLayout::setEvents( ) -> void {
 					
 					tabWindow->settings->set<unsigned>( _underscore(model->name), val);
 
-                    emuThread->lock(true);
+                    emuThread->lock();
 					emulator->setModelValue( model->id, val );
                     applyCustomStuff( block, model );
                     emuThread->unlock();
@@ -197,7 +197,7 @@ auto ModelLayout::setEvents( ) -> void {
 
                     block->sliderLayout.value.setText( displayText + unit );
 
-                    emuThread->lock(true);
+                    emuThread->lock();
                     emulator->setModelValue( model->id, val );
                     applyCustomStuff( block, model );
                     emuThread->unlock();
@@ -225,7 +225,7 @@ auto ModelLayout::setEvents( ) -> void {
 
                     tabWindow->settings->set<int>( _underscore(model->name), val );
 
-                    emuThread->lock(true);
+                    emuThread->lock();
                     emulator->setModelValue( model->id, val );
                     applyCustomStuff( block, model );
                     emuThread->unlock();

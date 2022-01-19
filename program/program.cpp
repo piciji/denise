@@ -89,17 +89,17 @@ Program::Program() {
 }
 
 auto Program::initUserInterface() -> void {
-    bool threadedUI = globalSettings->get<bool>("threaded_ui", true);
+    bool threadedUI = globalSettings->get<bool>("threaded_ui", false);
 
     if (cmd->noGui) {
-        GUIKIT::Application::setLoop( [this]() { loopNoGui(); } );
+        GUIKIT::Application::loop = [this]() { loopNoGui(); };
         emuThread->enable( false );
     } else if (!threadedUI) {
-        GUIKIT::Application::setLoop( [this]() { loop(); } );
+        GUIKIT::Application::loop = [this]() { loop(); };
         emuThread->enable( false );
     } else {
         videoDriver->freeContext();
-        GUIKIT::Application::setLoop(  [this]() { loopUserInterface(); } );
+        GUIKIT::Application::loop = [this]() { loopUserInterface(); };
         emuThread->enable( true );
     }
 }
@@ -302,7 +302,6 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
 		resetRunAhead();
 
 		archiveViewer->setVisible(false);
-		view->update();	
 		view->setCursor( activeEmulator );
 		view->updateCartButtons( activeEmulator );
 
@@ -324,6 +323,8 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
 	activeEmulator->power();
 	isRunning = true;
 	isPause = false;
+
+    hintExclusiveFullscreen( );
 }
 
 auto Program::reset( Emulator::Interface* emulator ) -> void {
@@ -373,7 +374,7 @@ auto Program::powerOff() -> void {
 		if (activeVideoManager)
 			activeVideoManager->powerOff();
 		videoDriver->clear();
-		videoDriver->hintExclusiveFullscreen( false );
+		hintExclusiveFullscreen( );
 		audioDriver->clear();  
 		audioManager->powerOff();
 		activeEmulator = nullptr;
@@ -601,10 +602,8 @@ auto Program::autoStartFinish(bool soft) -> void {
     if (soft && warp.motorControlled)
         return;
 
-    if (emuThread->enabled) {
-        emuThread->updateFastForward = 0;
-    } else
-        fastForward( false );
+    videoDriver->freeContext();
+    fastForward( false );
 }
 
 auto Program::informDriveLoading(bool state) -> void {
@@ -615,10 +614,8 @@ auto Program::informDriveLoading(bool state) -> void {
     if (warp.active == state)
         return;
 
-    if (emuThread->enabled) {
-        emuThread->updateFastForward = state;
-    } else
-        fastForward( state, warp.aggressive );
+    videoDriver->freeContext();
+    fastForward( state, warp.aggressive );
 }
 
 auto Program::initAutoWarp(Emulator::Interface::MediaGroup* mediaGroup) -> void {

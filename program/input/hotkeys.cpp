@@ -206,7 +206,8 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             break;
         
         case Hotkey::Id::Fullscreen:
-            view->setFullScreen( !view->fullScreen() );
+            emuThread->lock();
+            view->switchFullScreen( !view->fullScreen() );
             break;
 			
 		case Hotkey::Power:

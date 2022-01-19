@@ -12,7 +12,6 @@ struct pApplication {
     static auto run() -> void;
     static auto processEvents() -> void;
     static auto quit() -> void;
-    static auto switchLoopMode() -> void;
     static auto initialize() -> void;
 	static auto requestClipboardText() -> void;
     static auto setClipboardText( std::string text ) -> void;

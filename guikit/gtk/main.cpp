@@ -35,23 +35,17 @@ namespace GUIKIT {
 
 auto pApplication::run() -> void {
 
-    while(!Application::isQuit) {
-        if(Application::loop) {
+    if(Application::loop) {
+        while(!Application::isQuit) {
             Application::loop();
-
             processEvents();
-        } else
-            gtk_main();
-    }
+        }
+    } else if (!Application::isQuit)
+        gtk_main();
 }
 
 auto pApplication::processEvents() -> void {
     while( gtk_events_pending() ) gtk_main_iteration_do(false);
-}
-
-auto pApplication::switchLoopMode() -> void {
-    if(gtk_main_level())
-        gtk_main_quit();
 }
 
 auto pApplication::quit() -> void {

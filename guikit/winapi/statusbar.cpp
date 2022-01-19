@@ -189,7 +189,7 @@ auto pStatusBar::update() -> void {
 
     std::vector<int> _widths;
     _widths.push_back( pos );
-    pos -= 15;
+    pos -= 20;
     unsigned countVisible = 0;
     
     for( i = parts.size() - 1; i >= 0; i-- ) {

@@ -214,7 +214,7 @@ struct DVideo : Video, RenderThread {
 		dxRelease(lpD3D);
 	}
 	
-    auto init() -> bool {
+    auto init(bool disallowExclusiveFullscreen = true) -> bool {
 		term();
 
 		if ((lpD3D = Direct3DCreate9(D3D_SDK_VERSION)) == NULL) {
@@ -222,13 +222,14 @@ struct DVideo : Video, RenderThread {
 		}
 		
 		bool exclusiveFullscreen = false;
+
 		HWND handle = settings.handle;
 		outScreen = getDimension ( settings.handle );
 		outScreen.left = outScreen.top = 0;
 		RECT outScreenParent;
         settings.parent = getParentHandle();
 		
-		if (settings.hintExclusiveFullscreen) {
+		if (settings.hintExclusiveFullscreen && !disallowExclusiveFullscreen) {
 			handle = settings.parent;
 			outScreenParent = getDimension( handle );
 			
@@ -242,8 +243,8 @@ struct DVideo : Video, RenderThread {
 				outScreen.top = (outScreenParent.bottom - outScreen.bottom) / 2;
 			} else {
 				handle = settings.handle;
-			}								
-		}		
+			}
+		}
 			
 		ZeroMemory(&d3dpp, sizeof (d3dpp));
 
@@ -303,6 +304,20 @@ struct DVideo : Video, RenderThread {
         return init();
     }
 
+    auto unlockAndRedraw(bool disallowShader = false, bool freeContext = false) -> void {
+        if (settings.threaded) {
+            RenderThread::unlock(disallowShader);
+        } else {
+            if (surface) {
+                fixLinearFilter();
+                surface->UnlockRect();
+                dxRelease(surface);
+            }
+
+            redraw(disallowShader);
+        }
+    }
+
     auto redraw(bool disallowShader = false) -> void {
         if (settings.threaded)
             return;
@@ -317,7 +332,7 @@ struct DVideo : Video, RenderThread {
 		RECT windowsize = getDimension( settings.handle );
 
 		if ((outWidth != windowsize.right) || (outHeight != windowsize.bottom)) {
-			init();
+			init(false);
 			setShader(settings.passes);
 			return;
 		}
@@ -457,8 +472,10 @@ struct DVideo : Video, RenderThread {
     }
 
     auto forceResize() -> void {
-        if (settings.handle)
-            init();
+        if (settings.handle) {
+            init(false);
+            setShader(settings.passes);
+        }
     }
 
     auto _clear() -> void {
@@ -495,7 +512,7 @@ struct DVideo : Video, RenderThread {
 
             if ((outWidth != windowsize.right) || (outHeight != windowsize.bottom)) {
                 wait();
-                init();
+                init(false);
                 setShader(settings.passes);
                 return false;
             }
@@ -529,24 +546,30 @@ struct DVideo : Video, RenderThread {
 
         if (!surface)
             return;
-		// first we duplicate the last pixel in each line
-		// to fix a sporadically bug for linear filter in last vertical line
-		// the filter uses adjacent pixel to calcluate actual pixel
-		// the duplicated vertical line is not visible but used for filter calculations
-		unsigned* data = (unsigned*) d3dlr.pBits;
-		unsigned pitch = d3dlr.Pitch;
-		
-		data += inputWidth;
-		pitch >>= 2;
-		
-		for(unsigned _h = 0; _h < inputHeight; _h++) {						
-			*data = *(data-1);
-			data += pitch;
-		}
+
+        fixLinearFilter();
+
 		// unlock now
 		surface->UnlockRect();
 		dxRelease(surface);
 	}
+
+    inline auto fixLinearFilter() -> void {
+        // first we duplicate the last pixel in each line
+        // to fix a sporadically bug for linear filtering in last vertical line
+        // the filter uses adjacent pixel to calcluate actual pixel
+        // the duplicated vertical line is not visible but used for filter calculations
+        unsigned* data = (unsigned*) d3dlr.pBits;
+        unsigned pitch = d3dlr.Pitch;
+
+        data += inputWidth;
+        pitch >>= 2;
+
+        for(unsigned _h = 0; _h < inputHeight; _h++) {
+            *data = *(data-1);
+            data += pitch;
+        }
+    }
 
     auto resize(RenderBuffer* renderBuffer, unsigned w, unsigned h) -> void {
 
@@ -595,7 +618,7 @@ struct DVideo : Video, RenderThread {
         wait();
         settings.synchronize = state;
         if (!settings.handle) return;
-        init();
+        init(false);
 		setShader( settings.passes );
     }
 	
@@ -632,6 +655,14 @@ struct DVideo : Video, RenderThread {
         settings.exclusiveFullscreenRate = rate;
 	}
 
+    virtual auto disableExclusiveFullscreen() -> void {
+        if (settings.hintExclusiveFullscreen) {
+            wait();
+            init();
+            setShader(settings.passes);
+        }
+    }
+
     auto setThreaded(bool state) -> void {
 
         if (state != settings.threaded) {
@@ -640,7 +671,9 @@ struct DVideo : Video, RenderThread {
 
             RenderThread::reset();
             textureWidth = 0, textureHeight = 0;
-            lost = true;
+            //lost = true;
+            init(false);
+            setShader(settings.passes);
             settings.threaded = state;
         }
     }
@@ -685,6 +718,7 @@ struct DVideo : Video, RenderThread {
 		settings.synchronize = false;
 		settings.handle = nullptr;
 		settings.hintExclusiveFullscreen = false;
+        settings.threaded = false;
 		
 		#include "../tools/fonts.c"
 		DWORD nFonts;	

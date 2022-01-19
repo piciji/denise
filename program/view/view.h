@@ -38,7 +38,6 @@ struct View : public GUIKIT::Window {
     auto getViewportHandle() -> uintptr_t;
 
     auto build() -> void;
-	auto update() -> void;
     auto setConnectors() -> void;
     auto checkInputDevice( Emulator::Interface* emulator, Emulator::Interface::Connector* connector, Emulator::Interface::Device* device ) -> void;
     auto updateDeviceSelection( Emulator::Interface* emulator ) -> void;
@@ -52,7 +51,7 @@ struct View : public GUIKIT::Window {
     auto buildMenu() -> void;
     auto updateViewport() -> void;
 	auto updateShader() -> void;
-	auto setFullScreen(bool fullScreen = true) -> void;
+	auto switchFullScreen(bool fullScreen = true, bool forceUnacquire = false) -> void;
 	auto exclusiveFullscreen() -> bool;
     auto updateMenuBar( bool toggle = false ) -> void;
     auto updateStatusBar(bool toggle = false ) -> void;

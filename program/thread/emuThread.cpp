@@ -15,7 +15,6 @@ EmuThread::EmuThread() {
     finishAudioRecord = false;
     pollHotkeys = false;
     enabled = false;
-    updateFastForward = -1;
 }
 
 EmuThread::~EmuThread() {
@@ -42,13 +41,12 @@ auto EmuThread::enable(bool state) -> void {
     }
 }
 
-auto EmuThread::lock(bool freeDriverContext) -> bool {
-    //if (freeDriverContext)
-        freeContext = true;
+auto EmuThread::lock() -> bool {
 
     if  (!enabled || acknowledged /* check for nesting */ )
         return false;
 
+    freeContext = true;
     attention = true;
     while(attention) {
         std::this_thread::yield();
@@ -147,21 +145,26 @@ auto EmuThread::handleUIEvents() -> void {
             emuView->audioLayout->stopRecord();
     }
 
-    if (updateFastForward != -1) {
-        program->fastForward( updateFastForward, program->warp.aggressive );
-        updateFastForward = -1;
-    }
-
     if (pollHotkeys) {
         pollHotkeys = false;
         InputManager::pollHotkeys();
+    }
+
+    if (updatePaletteForSoftwareView) {
+        updatePaletteForSoftwareView = false;
+        auto emulator = program->getEmulator("C64");
+        auto emuView = EmuConfigView::TabWindow::getView( emulator );
+        auto vManager = VideoManager::getInstance( emulator );
+
+        if (emuView && emuView->mediaLayout)
+            emuView->mediaLayout->colorListing( vManager->getC64Foreground(), vManager->getC64Background() );
     }
 }
 
 auto EmuThread::clearEvents() -> void {
     statusUpdates.clear();
     finishAudioRecord = false;
-    updateFastForward = -1;
+    updatePaletteForSoftwareView = false;
     pollHotkeys = false;
 }
 
@@ -183,4 +186,24 @@ auto EmuThread::lockStatus() -> void {
 auto EmuThread::unlockStatus() -> void {
     if (enabled)
         statusMutex.unlock();
+}
+
+auto EmuThread::lockCrt() -> void {
+    if (enabled)
+        crtMutex.lock();
+}
+
+auto EmuThread::unlockCrt() -> void {
+    if (enabled)
+        crtMutex.unlock();
+}
+
+auto EmuThread::lockPaletteForSoftwareView() -> void {
+    if (enabled)
+        paletteForSoftwareView.lock();
+}
+
+auto EmuThread::unlockPaletteForSoftwareView() -> void {
+    if (enabled)
+        paletteForSoftwareView.unlock();
 }

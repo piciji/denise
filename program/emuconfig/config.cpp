@@ -244,8 +244,8 @@ auto TabWindow::prepareLayout(Layout layout) -> void {
             if (!paletteLayout) {
                 if (dynamic_cast<LIBC64::Interface*>(emulator)) {
                     paletteLayout = new PaletteLayout( this );
-                    paletteLayout->translate();
                     tab.setLayout(Layout::Palette, *paletteLayout, {~0u, ~0u} );
+                    paletteLayout->translate();
                 }
             } break;
         case Layout::Audio:

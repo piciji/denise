@@ -102,15 +102,20 @@ auto View::build() -> void {
     };
 	
 	onContext = [this]() {
-        if ( program->couldDeviceBlockSecondMouseButton( ) )
+        emuThread->lock();
+        if ( program->couldDeviceBlockSecondMouseButton( ) ) {
+            emuThread->unlock();
             return false;
+        }
                         
 		bool allow = !inputDriver->mIsAcquired();
 		                
 		if (allow && exclusiveFullscreen()) {
 			InputManager::activateHotkey(Hotkey::Id::Fullscreen);
 			allow = false;
-		}		
+		}
+
+        emuThread->unlock();
 		return allow;
 	};
     
@@ -124,18 +129,21 @@ auto View::build() -> void {
 	};
 	
 	GUIKIT::BrowserWindow::onCall = []() {
-		audioDriver->clear();
+        if (!globalSettings->get<bool>("threaded_ui", false) || !globalSettings->get("threaded_renderer", false))
+		    audioDriver->clear();
 	};
 
     GUIKIT::Application::Cocoa::onOpenFile = [] (std::string fileName) {
-        
+
+        emuThread->lock();
         autoloader->init( {fileName}, false, Autoloader::Mode::AutoStart );
         
         autoloader->loadFiles();
         
         if (!cmd->debug && !cmd->noDriver && !cmd->noGui && globalSettings->get<bool>("open_fullscreen", false)) {
-            view->setFullScreen(true);
+            view->switchFullScreen(true);
         }
+        emuThread->unlock();
     };
     
     //osx extra menu points
@@ -186,7 +194,7 @@ auto View::build() -> void {
     displayChangeTimer.onFinished = [this]() {
         displayChangeTimer.setEnabled(false);
         //statusHandler->setMessage( std::to_string(GUIKIT::Monitor::getCurrentRefreshRate()) );
-        emuThread->lock(true);
+        emuThread->lock();
         if (videoDriver && !fullScreen())
             videoDriver->forceResize();
 
@@ -199,7 +207,7 @@ auto View::build() -> void {
 		if (program->isRunning || (button != GUIKIT::Mouse::Button::Left))
 			return;
 
-        emuThread->lock(true);
+        emuThread->lock();
 		if (cursorForPlaceholderInUpperTriangle()) {
 			program->power( program->getEmulator("C64") );
 		} else {
@@ -270,25 +278,24 @@ auto View::show() -> void {
     updateViewport();
 }
 
-auto View::update() -> void {
-	if ( exclusiveFullscreen() ) {
-		setStatusVisible(false);
-		updateViewport();
-	}
-	program->hintExclusiveFullscreen();
-}
-
-auto View::setFullScreen(bool fullScreen) -> void {
-	if(fullScreen && program->isRunning) inputDriver->mAcquire();
+auto View::switchFullScreen(bool fullScreen, bool forceUnacquire) -> void {
+	if(!forceUnacquire && fullScreen && program->isRunning) inputDriver->mAcquire();
 	else inputDriver->mUnacquire();	
+
+    if (!fullScreen && videoDriver)
+        videoDriver->disableExclusiveFullscreen();
+
+    if (activeVideoManager)
+        activeVideoManager->unlockDriver();
 
     GUIKIT::Window::setFullScreen(fullScreen);
     displayChangeTimer.setEnabled();
 }
 
 auto View::exclusiveFullscreen() -> bool {
-	static auto exclusiveFullscreen = globalSettings->getOrInit("exclusive_fullscreen", false);	
-	return *exclusiveFullscreen && fullScreen() && program->isRunning;
+	static auto exclusiveFullscreen = globalSettings->getOrInit("exclusive_fullscreen", false);
+    static auto threadedUI = globalSettings->getOrInit("threaded_ui", false);
+	return *exclusiveFullscreen && !*threadedUI && fullScreen() && program->isRunning;
 }
 
 auto View::updateMenuBar( bool toggle ) -> void {
@@ -585,7 +592,7 @@ auto View::updateShader() -> void {
                 }
             }
             item->onToggle = [item, vManager]() {
-                emuThread->lock(true);
+                emuThread->lock();
                 if (item->checked()) {
 					vManager->shader.addActiveShader(item->text());
                 } else {
@@ -690,7 +697,7 @@ auto View::buildMenu() -> void {
         sM.poweron = new GUIKIT::MenuItem;
         sM.poweron->setIcon( powerImage );
         sM.poweron->onActivate = [emulator]() {
-            emuThread->lock(true);
+            emuThread->lock();
 		    program->power(emulator);
             emuThread->unlock();
 	    };	
@@ -898,7 +905,7 @@ auto View::buildMenu() -> void {
 
     videoSyncItem.onToggle = [&]() {
         globalSettings->set<bool>("video_sync", videoSyncItem.checked() );
-        emuThread->lock(true);
+        emuThread->lock();
         program->fastForward( false );
         VideoManager::setSynchronize();
         statusHandler->resetFrameCounter();
@@ -919,7 +926,7 @@ auto View::buildMenu() -> void {
 
     adaptiveSyncItem.onToggle = [&]() {
         globalSettings->set<bool>("adaptive_sync", adaptiveSyncItem.checked() );
-        emuThread->lock(true);
+        emuThread->lock();
         program->fastForward( false );
         VideoManager::setSynchronize();
         emuThread->unlock();
@@ -959,9 +966,9 @@ auto View::buildMenu() -> void {
     optionsMenu.append(*GUIKIT::MenuSeparator::getInstance());
         
     fullscreenItem.onActivate = [this]() {
-        inputDriver->mUnacquire();
-        GUIKIT::Window::setFullScreen(!fullScreen());
-        displayChangeTimer.setEnabled();
+        emuThread->lock();
+        switchFullScreen( !fullScreen(), true );
+        emuThread->unlock();
     };
         
     optionsMenu.append(fullscreenItem);
@@ -1003,7 +1010,7 @@ auto View::buildMenu() -> void {
 
 	poweroff.setIcon( poweroffImage );
 	poweroff.onActivate = [this]() {
-        emuThread->lock(true);
+        emuThread->lock();
 		program->powerOff();
         emuThread->unlock();
 
@@ -1128,7 +1135,7 @@ auto View::buildMenu() -> void {
         speedItem->onActivate = [this, i]() {
             auto settings = program->getSettings( activeEmulator );
             settings->set<unsigned>("speed_profile", i);
-            emuThread->lock(true);
+            emuThread->lock();
             audioManager->setSynchronize();
             audioManager->setResampler();
             statusHandler->resetFrameCounter();
@@ -1456,7 +1463,7 @@ auto View::questionToWrite(Emulator::Interface::Media* media) -> bool {
         return false;
     
     if (exclusiveFullscreen())
-        setFullScreen( false );
+        switchFullScreen( false );
     
     bool state = !globalSettings->get<bool>("question_media_write", true);
     
