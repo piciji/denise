@@ -92,15 +92,15 @@ auto Program::initUserInterface() -> void {
     bool threadedUI = globalSettings->get<bool>("threaded_ui", false);
 
     if (cmd->noGui) {
-        GUIKIT::Application::loop = [this]() { loopNoGui(); };
-        emuThread->enable( false );
+		emuThread->enable( false );
+        GUIKIT::Application::loop = [this]() { loopNoGui(); };        
     } else if (!threadedUI) {
-        GUIKIT::Application::loop = [this]() { loop(); };
-        emuThread->enable( false );
+		emuThread->enable( false );
+        GUIKIT::Application::loop = [this]() { loop(); };        
     } else {
         videoDriver->freeContext();
-        GUIKIT::Application::loop = [this]() { loopUserInterface(); };
-        emuThread->enable( true );
+		GUIKIT::Application::loop = [this]() { loopUserInterface(); };
+		emuThread->enable( true );        
     }
 }
 

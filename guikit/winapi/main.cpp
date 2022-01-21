@@ -333,6 +333,10 @@ auto pWindow::handle() -> uintptr_t {
     return (uintptr_t)hwnd;
 }
 
+auto pWindow::tellMeShouldICreateTheUIRightAway() -> bool {
+	return !IsAppThemed() || (pApplication::version <= WindowsXP);
+}
+
 auto CALLBACK pWindow::wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT {
     if(Application::isQuit) return DefWindowProc(hwnd, msg, wparam, lparam);
 

@@ -37,8 +37,8 @@ auto CALLBACK pViewport::wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
     Viewport& viewport = (Viewport&)*base;
 
     switch(msg) {
-        case WM_ERASEBKGND: 
-            return 0;
+        //case WM_ERASEBKGND: 
+          //  return 0;
         case WM_DROPFILES: {
             std::vector<std::string> paths = getDropPaths(wparam);
             if(!paths.empty() && viewport.onDrop) {

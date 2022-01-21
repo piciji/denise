@@ -47,7 +47,7 @@ auto pMenuBase::setIcon(Image& icon) -> void {
     if (!icon.empty()) {
 		Image iconTemp = icon; //deep copy, don't change raw data of original
 		
-		if(pApplication::version >= WindowsVista) { //Vista and later versions
+		if(IsAppThemed() && (pApplication::version >= WindowsVista)) { //Vista and later versions
             iconTemp.scaleNearest(15, 15);     
             // without premultiplied alpha, edges looks mangy in win32
             hbitmap = CreateBitmapWithPremultipliedAlpha( iconTemp );
@@ -180,7 +180,7 @@ auto pMenuBase::setMenuItemInfo(HMENU parent) -> void {
 	MENUITEMINFO mii = {sizeof(MENUITEMINFO)};
 	mii.cbSize = sizeof(mii);
 
-	if (pApplication::version < WindowsVista) {
+	if (!IsAppThemed() || (pApplication::version < WindowsVista)) {
 		setMenuInfo( parent );
 
 		mii.fMask = MIIM_FTYPE | MIIM_BITMAP;
@@ -259,7 +259,8 @@ auto pMenuBase::drawItem( LPDRAWITEMSTRUCT lpdis ) -> bool {
 	::DeleteObject(iconinfo.hbmColor);
 	::DeleteObject(iconinfo.hbmMask);
 
-	::DrawIconEx(lpdis->hDC, lpdis->rcItem.left, lpdis->rcItem.top, hIcon, bitmap.bmWidth, bitmap.bmHeight, 0, NULL, DI_NORMAL);
+	if (((MenuBase*) base)->enabled())
+		::DrawIconEx(lpdis->hDC, lpdis->rcItem.left, lpdis->rcItem.top, hIcon, bitmap.bmWidth, bitmap.bmHeight, 0, NULL, DI_NORMAL);
 
 	return TRUE;
 }

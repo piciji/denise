@@ -244,6 +244,7 @@ struct Window : Base {
     auto setDefaultCursor( ) -> void;
     auto setPointerCursor( ) -> void;
     auto getScrollbarWidth() -> unsigned;
+	auto tellMeShouldICreateTheUIRightAway() -> bool;
 	
 	static auto addCustomFont( CustomFont* customFont ) -> bool;
 	static auto countCustomFonts() -> unsigned;

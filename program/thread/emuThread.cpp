@@ -14,6 +14,7 @@ EmuThread::EmuThread() {
     acknowledged = false;
     finishAudioRecord = false;
     pollHotkeys = false;
+	updateViewport = false;
     enabled = false;
 }
 
@@ -24,9 +25,7 @@ EmuThread::~EmuThread() {
 auto EmuThread::enable(bool state) -> void {
 
     if (state == enabled)
-        return;
-
-    enabled = state;
+        return;  
 
     if (state) {
         while (kill) {
@@ -39,6 +38,8 @@ auto EmuThread::enable(bool state) -> void {
             std::this_thread::yield();
         }
     }
+	
+	enabled = state;
 }
 
 auto EmuThread::lock() -> bool {
@@ -75,8 +76,8 @@ auto EmuThread::initWorker() -> void {
         while (1) {
 
             if (kill) {
-                kill = false;
-                videoDriver->freeContext();
+				videoDriver->freeContext();
+                kill = false;                
                 return;
             }
 
@@ -159,12 +160,16 @@ auto EmuThread::handleUIEvents() -> void {
         if (emuView && emuView->mediaLayout)
             emuView->mediaLayout->colorListing( vManager->getC64Foreground(), vManager->getC64Background() );
     }
+	
+	if (updateViewport)
+		view->updateViewport();
 }
 
 auto EmuThread::clearEvents() -> void {
     statusUpdates.clear();
     finishAudioRecord = false;
     updatePaletteForSoftwareView = false;
+	updateViewport = false;
     pollHotkeys = false;
 }
 

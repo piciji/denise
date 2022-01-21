@@ -9,9 +9,11 @@ struct View : public GUIKIT::Window {
 	GUIKIT::Timer placeholderTimer;
 	GUIKIT::Timer anyloadTimer;
 	GUIKIT::Timer displayChangeTimer;
+	GUIKIT::Timer fullscreenOnStartUp;
     GUIKIT::StatusBar statusBar;
-    GUIKIT::Image placeholder;    
-        
+    GUIKIT::Image placeholder;
+	bool requestFullscreenSwitch = false;
+	
     struct SystemMenu {
         Emulator::Interface* emulator;
         GUIKIT::Menu* system;
@@ -155,7 +157,6 @@ struct View : public GUIKIT::Window {
         GUIKIT::MenuItem insertDiskImage4;
         GUIKIT::MenuItem ejectDiskImage4;
 		
-    GUIKIT::Image regionImage;
     GUIKIT::Image powerImage;
     GUIKIT::Image poweroffImage;
     GUIKIT::Image freezeImage;

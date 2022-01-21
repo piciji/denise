@@ -637,8 +637,12 @@ template<typename T> auto VideoManager::renderFrame(const T* src, unsigned width
     }           
         
 	if (scalingCount) {
-		if (--scalingCount == 0)
-			view->updateViewport();                
+		if (--scalingCount == 0) {
+			if (emuThread->enabled)
+				emuThread->updateViewport = true;
+			else
+				view->updateViewport();
+		}
 	}
 	
     if (height != currentHeight) {     

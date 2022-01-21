@@ -27,6 +27,7 @@ static const unsigned Windows2000  = 0x0500;
 static const unsigned WindowsXP    = 0x0501;
 static const unsigned WindowsVista = 0x0600;
 static const unsigned Windows7     = 0x0601;
+static const unsigned Windows8     = 0x0602;
 
 struct pApplication {
     static auto run() -> void;
@@ -100,6 +101,8 @@ struct pWindow {
     auto changeCursor( Image& image, unsigned hotSpotX, unsigned hotSpotY ) -> void;
     auto setDefaultCursor() -> void;
     auto setPointerCursor() -> void;
+	auto tellMeShouldICreateTheUIRightAway() -> bool;
+	
 	static auto addCustomFont( CustomFont* customFont ) -> bool;
     static auto CALLBACK wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
 

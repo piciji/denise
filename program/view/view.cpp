@@ -133,7 +133,7 @@ auto View::build() -> void {
 		    audioDriver->clear();
 	};
 
-    GUIKIT::Application::Cocoa::onOpenFile = [] (std::string fileName) {
+    GUIKIT::Application::Cocoa::onOpenFile = [this] (std::string fileName) {
 
         emuThread->lock();
         autoloader->init( {fileName}, false, Autoloader::Mode::AutoStart );
@@ -141,7 +141,7 @@ auto View::build() -> void {
         autoloader->loadFiles();
         
         if (!cmd->debug && !cmd->noDriver && !cmd->noGui && globalSettings->get<bool>("open_fullscreen", false)) {
-            view->switchFullScreen(true);
+            fullscreenOnStartUp.setEnabled();
         }
         emuThread->unlock();
     };
@@ -179,7 +179,10 @@ auto View::build() -> void {
 	};
 
     GUIKIT::Application::onDisplayChange = [this]() {
-        displayChangeTimer.setEnabled();
+		
+		if (!displayChangeTimer.enabled()) {
+			displayChangeTimer.setEnabled();
+		}
     };
         
 	placeholderTimer.setInterval(40);
@@ -190,17 +193,34 @@ auto View::build() -> void {
 	};
 	
 	anyloadTimer.setInterval(40);
-    displayChangeTimer.setInterval(300);
+    displayChangeTimer.setInterval(500);
     displayChangeTimer.onFinished = [this]() {
         displayChangeTimer.setEnabled(false);
         //statusHandler->setMessage( std::to_string(GUIKIT::Monitor::getCurrentRefreshRate()) );
         emuThread->lock();
-        if (videoDriver && !fullScreen())
+        
+		if (videoDriver && fullscreenSetting.inUse
+			&& globalSettings->get<bool>("threaded_ui", false)
+			&& globalSettings->get<bool>("threaded_renderer", false))
             videoDriver->forceResize();
+		
+		else if (!requestFullscreenSwitch && !fullScreen()) {
+			videoDriver->forceResize();
+		}
 
         VideoManager::setSynchronize();
+		placeholderTimer.setEnabled(true);
+		requestFullscreenSwitch = false;
         emuThread->unlock();
     };
+	
+	fullscreenOnStartUp.setInterval(500);
+	fullscreenOnStartUp.onFinished = [this]() {
+		fullscreenOnStartUp.setEnabled(false);
+		emuThread->lock();
+        switchFullScreen(true);
+        emuThread->unlock();
+	};
 	
 	viewport.onMousePress = [this](GUIKIT::Mouse::Button button) {
 		
@@ -279,6 +299,7 @@ auto View::show() -> void {
 }
 
 auto View::switchFullScreen(bool fullScreen, bool forceUnacquire) -> void {
+	requestFullscreenSwitch = true;
 	if(!forceUnacquire && fullScreen && program->isRunning) inputDriver->mAcquire();
 	else inputDriver->mUnacquire();	
 
@@ -633,41 +654,75 @@ auto View::togglePause() -> void {
 
 auto View::loadImages() -> void {
     #include "../../data/resource.h" // for win xp only 
-    regionImage.loadPng((uint8_t*)Icons::globe, sizeof(Icons::globe));
+    	
     powerImage.loadPng((uint8_t*)Icons::power, sizeof(Icons::power));
+	powerImage.setResourceId( ID_POWER );
     freezeImage.loadPng((uint8_t*)Icons::freeze, sizeof(Icons::freeze));
+	freezeImage.setResourceId( ID_FREEZE );
     menuImage.loadPng((uint8_t*)Icons::menu, sizeof(Icons::menu));
+	menuImage.setResourceId( ID_MENU );
 	poweroffImage.loadPng((uint8_t*)Icons::shutdown, sizeof(Icons::shutdown));
+	poweroffImage.setResourceId( ID_SHUTDOWN );
     firmwareImage.loadPng((uint8_t*)Icons::memory, sizeof(Icons::memory));
+	firmwareImage.setResourceId( ID_MEMORY );
     driveImage.loadPng((uint8_t*)Icons::drive, sizeof(Icons::drive));
+	driveImage.setResourceId( ID_DRIVE );
     swapperImage.loadPng((uint8_t*)Icons::swapper, sizeof(Icons::swapper));
+	swapperImage.setResourceId( ID_SWAPPER );
     scriptImage.loadPng((uint8_t*)Icons::script, sizeof(Icons::script));
+	scriptImage.setResourceId( ID_SCRIPT );
     systemImage.loadPng((uint8_t*)Icons::system, sizeof(Icons::system));
+	systemImage.setResourceId( ID_SYSTEM );
     joystickImage.loadPng((uint8_t*)Icons::joystick, sizeof(Icons::joystick));
+	joystickImage.setResourceId( ID_JOYSTICK );
     volumeImage.loadPng((uint8_t*)Icons::volume, sizeof(Icons::volume));
+	volumeImage.setResourceId( ID_VOLUME );
     plugImage.loadPng((uint8_t*)Icons::plug, sizeof(Icons::plug));
+	plugImage.setResourceId( ID_PLUG );
     displayImage.loadPng((uint8_t*)Icons::display, sizeof(Icons::display));
+	displayImage.setResourceId( ID_DISPLAY );
     toolsImage.loadPng((uint8_t*)Icons::tools, sizeof(Icons::tools));
+	toolsImage.setResourceId( ID_TOOLS );
 	quitImage.loadPng((uint8_t*)Icons::quit, sizeof(Icons::quit));
+	quitImage.setResourceId( ID_QUIT );
 	keyboardImage.loadPng((uint8_t*)Icons::keyboard, sizeof(Icons::keyboard));
+	keyboardImage.setResourceId( ID_KEYBOARD );
 	colorImage.loadPng((uint8_t*)Icons::color, sizeof(Icons::color));
+	colorImage.setResourceId( ID_COLOR );
 	tapeImage.loadPng((uint8_t*)Icons::tape, sizeof(Icons::tape));
+	tapeImage.setResourceId( ID_TAPE );
     paletteImage.loadPng((uint8_t*)Icons::palette, sizeof(Icons::palette));
+	paletteImage.setResourceId( ID_PALETTE );
     cropImage.loadPng((uint8_t*)Icons::crop, sizeof(Icons::crop));
+	cropImage.setResourceId( ID_CROP );
     playImage.loadPng((uint8_t*)Icons::play, sizeof(Icons::play));
+	playImage.setResourceId( ID_PLAY );
     playhiImage.loadPng((uint8_t*)Icons::playHi, sizeof(Icons::playHi));
+	playhiImage.setResourceId( ID_PLAYHI );
     stopImage.loadPng((uint8_t*)Icons::stop, sizeof(Icons::stop));
+	stopImage.setResourceId( ID_STOP );
     stophiImage.loadPng((uint8_t*)Icons::stopHi, sizeof(Icons::stopHi));
+	stophiImage.setResourceId( ID_STOPHI );
     recordImage.loadPng((uint8_t*)Icons::record, sizeof(Icons::record));
+	recordImage.setResourceId( ID_RECORD );
     recordhiImage.loadPng((uint8_t*)Icons::recordHi, sizeof(Icons::recordHi));
+	recordhiImage.setResourceId( ID_RECORDHI );
     forwardImage.loadPng((uint8_t*)Icons::forward, sizeof(Icons::forward));
+	forwardImage.setResourceId( ID_FORWARD );
     forwardhiImage.loadPng((uint8_t*)Icons::forwardHi, sizeof(Icons::forwardHi));
+	forwardhiImage.setResourceId( ID_FORWARDHI );
     rewindImage.loadPng((uint8_t*)Icons::rewind, sizeof(Icons::rewind));
+	rewindImage.setResourceId( ID_REWIND );
     rewindhiImage.loadPng((uint8_t*)Icons::rewindHi, sizeof(Icons::rewindHi));
+	rewindhiImage.setResourceId( ID_REWINDHI );
 	counterImage.loadPng((uint8_t*)Icons::counter, sizeof(Icons::counter));
+	counterImage.setResourceId( ID_COUNTER );
     diskImage.loadPng((uint8_t*) Icons::disk, sizeof (Icons::disk));
+	diskImage.setResourceId( ID_DISK );
 	editImage.loadPng((uint8_t*)Icons::edit, sizeof(Icons::edit));
+	editImage.setResourceId( ID_EDIT );
     ejectImage.loadPng((uint8_t*)Icons::eject, sizeof(Icons::eject));
+	ejectImage.setResourceId( ID_EJECT );
 
     playPauseStatusImage.loadPng((uint8_t*)Icons::playPauseStatus, sizeof(Icons::playPauseStatus));
     forwardPauseStatusImage.loadPng((uint8_t*)Icons::forwardPauseStatus, sizeof(Icons::forwardPauseStatus));

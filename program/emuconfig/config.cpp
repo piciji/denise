@@ -76,21 +76,6 @@ auto TabWindow::build() -> void {
     tab.setMargin(10);
     append(tab);        
     
-//    inputLayout = new InputLayout( this );
-//    systemLayout = new SystemLayout( this );
-//    mediaLayout = new MediaView::MediaLayout( this );
-//    configurationsLayout = new ConfigurationsLayout( this );
-//    firmwareLayout = new FirmwareLayout( this );
-//    videoLayout = new VideoLayout( this );
-//
-//    if (dynamic_cast<LIBC64::Interface*>(emulator)) {
-//        paletteLayout = new PaletteLayout( this );
-//    }
-//    audioLayout = new AudioLayout( this );
-//    borderLayout = new BorderLayout( this );
-//    miscLayout = new MiscLayout( this );
-//    mediaLayout->build();
-    
     tab.appendHeader("", systemImage);
     tab.appendHeader("", driveImage);
     tab.appendHeader("", scriptImage);
@@ -103,21 +88,36 @@ auto TabWindow::build() -> void {
     tab.appendHeader("", memoryImage);   
 	tab.appendHeader("", cropImage);
     tab.appendHeader("", miscImage);
+	
+	if (tellMeShouldICreateTheUIRightAway()) {
+		inputLayout = new InputLayout( this );
+		systemLayout = new SystemLayout( this );
+		mediaLayout = new MediaView::MediaLayout( this );
+		configurationsLayout = new ConfigurationsLayout( this );
+		firmwareLayout = new FirmwareLayout( this );
+		videoLayout = new VideoLayout( this );
+		if (dynamic_cast<LIBC64::Interface*>(emulator))
+			paletteLayout = new PaletteLayout( this );
 
-//    tab.setLayout(Layout::System, *systemLayout, {~0u, ~0u}, false );
-//    tab.setLayout(Layout::Media, *mediaLayout, {~0u, ~0u}, false );
-//    tab.setLayout(Layout::Configurations, *configurationsLayout, {~0u, ~0u}, false );
-//	tab.setLayout(Layout::Control, *inputLayout, {~0u, ~0u}, false );
-//	tab.setLayout(Layout::Presentation, *videoLayout, {~0u, ~0u}, false );
-//	if (dynamic_cast<LIBC64::Interface*>(emulator)) {
-//        tab.setLayout(Layout::Palette, *paletteLayout, {~0u, ~0u}, false );
-//    }
-//
-//    tab.setLayout(Layout::Audio, *audioLayout, {~0u, ~0u}, false );
-//    tab.setLayout(Layout::Firmware, *firmwareLayout, {~0u, ~0u}, false );
-//	tab.setLayout(Layout::Border, *borderLayout, {~0u, ~0u}, false );
-//    tab.setLayout(Layout::Misc, *miscLayout, {~0u, ~0u}, false );
+		audioLayout = new AudioLayout( this );
+		borderLayout = new BorderLayout( this );
+		miscLayout = new MiscLayout( this );
+		mediaLayout->build();
+		
+		tab.setLayout(Layout::System, *systemLayout, {~0u, ~0u}, false );
+		tab.setLayout(Layout::Media, *mediaLayout, {~0u, ~0u}, false );
+		tab.setLayout(Layout::Configurations, *configurationsLayout, {~0u, ~0u}, false );
+		tab.setLayout(Layout::Control, *inputLayout, {~0u, ~0u}, false );
+		tab.setLayout(Layout::Presentation, *videoLayout, {~0u, ~0u}, false );
+		if (dynamic_cast<LIBC64::Interface*>(emulator))
+			tab.setLayout(Layout::Palette, *paletteLayout, {~0u, ~0u}, false );
 
+		tab.setLayout(Layout::Audio, *audioLayout, {~0u, ~0u}, false );
+		tab.setLayout(Layout::Firmware, *firmwareLayout, {~0u, ~0u}, false );
+		tab.setLayout(Layout::Border, *borderLayout, {~0u, ~0u}, false );
+		tab.setLayout(Layout::Misc, *miscLayout, {~0u, ~0u} );
+	}
+    
     onClose = [this]() {
         setVisible(false);
         view->setFocused();

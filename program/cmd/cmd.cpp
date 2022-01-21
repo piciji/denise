@@ -396,10 +396,7 @@ auto Cmd::autoloadImages() -> void {
     emuThread->unlock();
     
     if (!debug && !noDriver && !noGui && globalSettings->get<bool>("open_fullscreen", false)) {
-        GUIKIT::System::sleep( 500 );
-        emuThread->lock();
-        view->switchFullScreen(true);
-        emuThread->unlock();
+        view->fullscreenOnStartUp.setEnabled();
     }
 
     autoload = false;

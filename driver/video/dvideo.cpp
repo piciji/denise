@@ -332,9 +332,9 @@ struct DVideo : Video, RenderThread {
 		RECT windowsize = getDimension( settings.handle );
 
 		if ((outWidth != windowsize.right) || (outHeight != windowsize.bottom)) {
-			init(false);
+			if (!init(false))
+				return;
 			setShader(settings.passes);
-			return;
 		}
         
         if( settings.synchronize && IsIconic( settings.parent ) )
@@ -351,7 +351,7 @@ struct DVideo : Video, RenderThread {
 		}
 
         if (note.enable)
-            applyNote(outWidth, outHeight, outLeft);
+            applyNote(outWidth, outHeight, outLeft, outTop);
 
 		lpD3DDevice->EndScene();
 
@@ -388,6 +388,8 @@ struct DVideo : Video, RenderThread {
             surface->LockRect(&d3dlr, 0, flags.lock);
 
             std::memcpy( d3dlr.pBits, renderBuffer->data, textureWidth * textureHeight * 4 );
+			
+			fixLinearFilter();
 
             disallowShader = renderBuffer->disallowShader;
 
@@ -418,7 +420,7 @@ struct DVideo : Video, RenderThread {
 
         noteMutex.lock();
         if (note.enable)
-            applyNote(outWidth, outHeight, outLeft);
+            applyNote(outWidth, outHeight, outLeft, outTop);
         noteMutex.unlock();
 
         lpD3DDevice->EndScene();
@@ -428,12 +430,12 @@ struct DVideo : Video, RenderThread {
         }
     }
 
-    inline auto applyNote(unsigned outWidth, unsigned outHeight, unsigned outLeft ) -> void {
+    inline auto applyNote(unsigned outWidth, unsigned outHeight, unsigned outLeft, unsigned outTop ) -> void {
         RECT fontRect;
         int pos = outLeft + outWidth - FONT_WIDTH;
         if (pos < 0)
             pos = 0;
-        SetRect(&fontRect, pos, outHeight - 18, outLeft + outWidth - 5, outHeight - 0);
+        SetRect(&fontRect, pos, outHeight + outTop - 18, outLeft + outWidth - 5, outHeight + outTop - 0);
         mFont->DrawTextW(NULL, note.message, -1, &fontRect, DT_RIGHT, note.fontColor);
     }
 
@@ -512,9 +514,9 @@ struct DVideo : Video, RenderThread {
 
             if ((outWidth != windowsize.right) || (outHeight != windowsize.bottom)) {
                 wait();
-                init(false);
+                if (!init(false))
+					return false;
                 setShader(settings.passes);
-                return false;
             }
 
             if( settings.synchronize && IsIconic( settings.parent ) ) {
