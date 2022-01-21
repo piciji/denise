@@ -143,8 +143,8 @@ auto VideoManager::setLumaFall( float pixel ) -> void {
 	colorTableUpdated = false;
 }
 
-auto VideoManager::setScanlines(unsigned intensity) -> void {
-    waitForCrtRenderer();
+auto VideoManager::setScanlines(unsigned intensity, uint8_t pos) -> void {
+    waitForCrtRenderer(pos);
     updateShader( "", "gammaAndScanlines", scanlines, (uint8_t)intensity );
     this->scanlines = intensity;
     colorTableUpdated = false;

@@ -866,9 +866,9 @@ template<bool _16bitSrc> auto VideoManager::createWorker(Render* re) -> void {
 
 }
 
-auto VideoManager::waitForCrtRenderer() -> bool {
+auto VideoManager::waitForCrtRenderer(uint8_t pos) -> bool {
 
-	Render* re = &render[1];
+	Render* re = &render[pos];
 
 	while (re->ready.load())
 		std::this_thread::yield();
@@ -1386,7 +1386,7 @@ auto VideoManager::applyDataUpdates() -> void {
         else if (dataUpdate.ident == "brightness")          setBrightness( dataUpdate.dataU );
         else if (dataUpdate.ident == "contrast")            setContrast( dataUpdate.dataU );
         else if (dataUpdate.ident == "phase")               setPhase( dataUpdate.dataI );
-        else if (dataUpdate.ident == "scanlines")           setScanlines( dataUpdate.dataU );
+        else if (dataUpdate.ident == "scanlines")           setScanlines( dataUpdate.dataU, 0 );
         else if (dataUpdate.ident == "blur")                setBlur( dataUpdate.dataU );
         else if (dataUpdate.ident == "phase_error")         setPhaseError( dataUpdate.dataF );
         else if (dataUpdate.ident == "hanover_bars")        setHanoverBars( dataUpdate.dataI );

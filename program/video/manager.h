@@ -103,7 +103,7 @@ struct VideoManager {
         unsigned* scanlineDest;
         bool oddLine;
         bool reuseFirstLine;
-        std::atomic<bool> ready;
+        std::atomic<bool> ready = false;
         std::atomic<bool> kill;
         std::condition_variable cv;
     } render[2];
@@ -239,7 +239,7 @@ struct VideoManager {
     template<bool _16bitSrc> auto createWorker(Render* re) -> void;
     auto enableCrtThread( bool state) -> void;
     auto updateCrtThreads() -> void;
-    auto waitForCrtRenderer() -> bool;
+    auto waitForCrtRenderer(uint8_t pos = 1) -> bool;
     template<bool withScanlines, bool rfModulation, typename T> auto renderPalCrt( Render* re ) -> void;
     template<bool withScanlines, bool rfModulation, typename T> auto renderNtscCrt( Render* re ) -> void;
     auto powerOff() -> void;    
@@ -267,7 +267,7 @@ struct VideoManager {
     auto setPhaseError(float phaseError) -> void;
     auto setHanoverBars( int saturationDelta ) -> void;
     auto setBlur( unsigned blur ) -> void;
-    auto setScanlines(unsigned intensity) -> void;
+    auto setScanlines(unsigned intensity, uint8_t pos = 1) -> void;
     
     auto setBloomGlow( unsigned intensity ) -> void;
     auto setBloomRadius( unsigned intensity ) -> void;
