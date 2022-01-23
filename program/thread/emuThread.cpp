@@ -170,6 +170,7 @@ auto EmuThread::handleUIEvents() -> void {
     }
 	
 	if (updateViewport) {
+        updateViewport = false;
         view->updateViewport();
     }
 }

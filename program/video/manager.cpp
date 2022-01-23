@@ -638,9 +638,9 @@ template<typename T> auto VideoManager::renderFrame(const T* src, unsigned width
         
 	if (scalingCount) {
 		if (--scalingCount == 0) {
-//			if (emuThread->enabled)
-//				emuThread->updateViewport = true;
-//			else
+			if (emuThread->enabled)
+				emuThread->updateViewport = true;
+			else
 				view->updateViewport();
 		}
 	}
@@ -649,10 +649,7 @@ template<typename T> auto VideoManager::renderFrame(const T* src, unsigned width
         currentHeight = height;
         
         if(integerScaling) {
-          //  if (emuThread->enabled)
-            //    emuThread->updateViewport = true;
-            //else
-                scalingCount = 10;
+            scalingCount = 10;
         }
 
         
