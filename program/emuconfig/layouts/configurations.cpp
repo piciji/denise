@@ -648,6 +648,8 @@ auto ConfigurationsLayout::load( std::string path ) -> bool {
         return false;
     }
 
+    std::string _audioFloppyFolder = _settings->get<std::string>("audio_floppy_folder", "");
+
     if (activeEmulator)
         program->powerOff();
 
@@ -665,7 +667,15 @@ auto ConfigurationsLayout::load( std::string path ) -> bool {
     inputManager->updateAnalogSensitivity();
     inputManager->bindHids();
 
-    view->updateDeviceSelection(this->emulator);    
+    auto firmwareManager = FirmwareManager::getInstance(this->emulator);
+    firmwareManager->reload();
+
+    std::string audioFloppyFolder = _settings->get<std::string>("audio_floppy_folder", "");
+
+    if (_audioFloppyFolder != audioFloppyFolder)
+        audioManager->drive.unload(this->emulator, this->emulator->getDiskMediaGroup());
+
+    view->updateDeviceSelection(this->emulator);
     
     if(this->tabWindow->audioLayout) this->tabWindow->audioLayout->loadSettings();
 
@@ -681,11 +691,15 @@ auto ConfigurationsLayout::load( std::string path ) -> bool {
 
     if(this->tabWindow->systemLayout) this->tabWindow->systemLayout->loadSettings();
 
-    if(this->tabWindow->videoLayout) this->tabWindow->videoLayout->loadSettings();
+    if(this->tabWindow->videoLayout)
+        this->tabWindow->videoLayout->loadSettings();
     else if (videoDriver)
         VideoManager::getInstance( emulator )->reloadSettings();
 
-    if(this->tabWindow->mediaLayout) this->tabWindow->mediaLayout->loadSettings();
+    if(this->tabWindow->mediaLayout)
+        this->tabWindow->mediaLayout->loadSettings();
+    else
+        fileloader->loadSettings(this->emulator);
     
     loadSettings();
 

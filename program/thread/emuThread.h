@@ -17,6 +17,7 @@ struct EmuThread {
     std::atomic<bool> pollHotkeys;
     std::atomic<bool> updatePaletteForSoftwareView;
 	std::atomic<bool> updateViewport;
+    std::atomic<bool> updateBorder;
 
     std::atomic<bool> ready;
     std::atomic<bool> kill;
@@ -24,7 +25,7 @@ struct EmuThread {
 
     std::mutex statusMutex;
     std::mutex hotkeyMutex;
-    std::mutex crtMutex;
+    std::mutex videoMutex;
     std::mutex paletteForSoftwareView;
 
     auto lock() -> bool;
@@ -34,8 +35,8 @@ struct EmuThread {
     auto unlockHotkeys() -> void;
     auto lockStatus() -> void;
     auto unlockStatus() -> void;
-    auto lockCrt() -> void;
-    auto unlockCrt() -> void;
+    auto lockVideo() -> void;
+    auto unlockVideo() -> void;
     auto lockPaletteForSoftwareView() -> void;
     auto unlockPaletteForSoftwareView() -> void;
 

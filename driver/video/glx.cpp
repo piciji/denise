@@ -391,7 +391,12 @@ struct GLX : public Video, OpenGL, RenderThread {
 
     auto showMessage(std::string message, bool critical = false) -> void {
 #ifdef DRV_FREETYPE
-        screenText.updateMessage(message, critical, !settings.threaded);
+        if (settings.threaded) {
+            screenText.updateMessage(message, critical, false);
+        } else {
+            makeCurrent(true);
+            screenText.updateMessage(message, critical, true);
+        }
 #endif
     }
 

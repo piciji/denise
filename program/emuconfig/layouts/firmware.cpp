@@ -129,7 +129,7 @@ FirmwareLayout::FirmwareLayout(TabWindow* tabWindow) {
     append(customSelectorLayout, {~0u, 0u}, 10);
     append(containerLayout, {~0u, ~0u});
     
-    loadSettings( true );
+    loadSettings(  );
         
     setMargin( 10 );    
 }
@@ -258,22 +258,22 @@ auto FirmwareLayout::drop( std::string path ) -> void {
     }
 }
 
-auto FirmwareLayout::loadSettings(bool init) -> void {
+auto FirmwareLayout::loadSettings() -> void {
     
     auto firmwareInUse = _settings->get<unsigned>( "use_firmware", 0, {0, manager->maxSets} );
 
-    for (unsigned i = 0; i <= manager->maxSets; i++) {
-        for (auto& firmware : emulator->firmwares) {
-            auto fSetting = manager->getSetting( &firmware, i );
-            if ( (i != 0) && !init) {
-                fSetting->update();
-            }
-        }
-    }
+//    for (unsigned i = 0; i <= manager->maxSets; i++) {
+//        for (auto& firmware : emulator->firmwares) {
+//            auto fSetting = manager->getSetting( &firmware, i );
+//            if ( (i != 0) && !init) {
+//                fSetting->update();
+//            }
+//        }
+//    }
 
-    if (!init) {
-        manager->clear();
-    }
+//    if (!init) {
+//        manager->clear();
+//    }
     
     if (selectorBoxes.size() > firmwareInUse)
         selectorBoxes[firmwareInUse]->setChecked();    

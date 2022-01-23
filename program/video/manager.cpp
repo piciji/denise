@@ -638,9 +638,9 @@ template<typename T> auto VideoManager::renderFrame(const T* src, unsigned width
         
 	if (scalingCount) {
 		if (--scalingCount == 0) {
-			if (emuThread->enabled)
-				emuThread->updateViewport = true;
-			else
+//			if (emuThread->enabled)
+//				emuThread->updateViewport = true;
+//			else
 				view->updateViewport();
 		}
 	}
@@ -648,8 +648,13 @@ template<typename T> auto VideoManager::renderFrame(const T* src, unsigned width
     if (height != currentHeight) {     
         currentHeight = height;
         
-        if(integerScaling)
-            scalingCount = 10;	
+        if(integerScaling) {
+          //  if (emuThread->enabled)
+            //    emuThread->updateViewport = true;
+            //else
+                scalingCount = 10;
+        }
+
         
         reinitCrtThread();
     }
@@ -1365,19 +1370,19 @@ template<typename T> auto VideoManager::updateData(std::string ident, T data) ->
         dataUpdate.dataI = data;
     }
 
-    emuThread->lockCrt();
+    emuThread->lockVideo();
     dataUpdates.push_back( dataUpdate );
     dataUpdatesPending = true;
-    emuThread->unlockCrt();
+    emuThread->unlockVideo();
 }
 
 auto VideoManager::applyDataUpdates() -> void {
 
-    emuThread->lockCrt();
+    emuThread->lockVideo();
     dataUpdatesPending = false;
     auto _dataUpdates = dataUpdates;
     dataUpdates.clear();
-    emuThread->unlockCrt();
+    emuThread->unlockVideo();
 
     for(auto& dataUpdate : _dataUpdates) {
 

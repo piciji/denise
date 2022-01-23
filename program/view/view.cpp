@@ -384,7 +384,7 @@ auto View::updateViewport() -> void {
 	}
 	
 	if (VideoManager::aspectCorrect) {
-		
+
 		while(1) {
 			_height = geometry.height;
 			int _width = (unsigned)(((double(_height) / 3.0) * 4.0) + 0.5);
@@ -392,24 +392,24 @@ auto View::updateViewport() -> void {
 			if (_width > geometry.width) {
 				if (integerScaling) {
 					_height = geometry.height - currentHeight;
-					
+
 					if (_height >= currentHeight) {
 						geometry.y += (geometry.height - _height) / 2;
 						geometry.height = _height;
-						continue;						
-					}					
+						continue;
+					}
 				}
-				                
+
 				_height = (unsigned)(((double(geometry.width) / 4.0) * 3.0) + 0.5);
 				geometry.x = 0;
 				geometry.y += (geometry.height - _height) / 2;
-				geometry.height = _height;				
-				
+				geometry.height = _height;
+
 			} else {
 				geometry.x = (geometry.width - _width) / 2;
 				geometry.width = _width;
 			}
-			
+
 			break;
 		}
 	}

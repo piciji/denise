@@ -15,6 +15,7 @@ EmuThread::EmuThread() {
     finishAudioRecord = false;
     pollHotkeys = false;
 	updateViewport = false;
+    updateBorder = false;
     enabled = false;
 }
 
@@ -95,6 +96,13 @@ auto EmuThread::initWorker() -> void {
                 }
             }
 
+            if (updateBorder && activeEmulator) {
+                videoMutex.lock();
+                program->updateCrop(activeEmulator);
+                updateBorder = false;
+                videoMutex.unlock();
+            }
+
             program->loop();
 
         }
@@ -161,8 +169,9 @@ auto EmuThread::handleUIEvents() -> void {
             emuView->mediaLayout->colorListing( vManager->getC64Foreground(), vManager->getC64Background() );
     }
 	
-	if (updateViewport)
-		view->updateViewport();
+	if (updateViewport) {
+        view->updateViewport();
+    }
 }
 
 auto EmuThread::clearEvents() -> void {
@@ -170,6 +179,7 @@ auto EmuThread::clearEvents() -> void {
     finishAudioRecord = false;
     updatePaletteForSoftwareView = false;
 	updateViewport = false;
+    updateBorder = false;
     pollHotkeys = false;
 }
 
@@ -193,14 +203,14 @@ auto EmuThread::unlockStatus() -> void {
         statusMutex.unlock();
 }
 
-auto EmuThread::lockCrt() -> void {
+auto EmuThread::lockVideo() -> void {
     if (enabled)
-        crtMutex.lock();
+        videoMutex.lock();
 }
 
-auto EmuThread::unlockCrt() -> void {
+auto EmuThread::unlockVideo() -> void {
     if (enabled)
-        crtMutex.unlock();
+        videoMutex.unlock();
 }
 
 auto EmuThread::lockPaletteForSoftwareView() -> void {

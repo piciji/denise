@@ -774,3 +774,19 @@ auto Fileloader::preselectPath( GUIKIT::Settings* settings, std::string& groupNa
 
     return path;
 }
+
+auto Fileloader::loadSettings(Emulator::Interface* emulator) -> void {
+
+    for(auto& group : emulator->mediaGroups) {
+        for(auto& media : group.media) {
+            auto fSetting = FileSetting::getInstance(emulator, _underscore(media.name) );
+            fSetting->update();
+        }
+    }
+
+    // swapper
+    for (unsigned i = 0; i < 15; i++) {
+        auto fSetting = FileSetting::getInstance( emulator, "swapper_" + std::to_string( i ) );
+        fSetting->update();
+    }
+}

@@ -15,6 +15,7 @@
 #include "../audio/manager.h"
 #include "../../data/icons.h"
 #include "../thread/emuThread.h"
+#include "../media/fileloader.h"
 
 #include <vector>
 #include <algorithm>
@@ -89,7 +90,8 @@ auto TabWindow::build() -> void {
 	tab.appendHeader("", cropImage);
     tab.appendHeader("", miscImage);
 	
-	if (tellMeShouldICreateTheUIRightAway()) {
+	//if (tellMeShouldICreateTheUIRightAway()) {
+    if (0) {
 		inputLayout = new InputLayout( this );
 		systemLayout = new SystemLayout( this );
 		mediaLayout = new MediaView::MediaLayout( this );

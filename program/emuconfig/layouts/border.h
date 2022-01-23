@@ -26,6 +26,7 @@ struct BorderLayout : GUIKIT::VerticalLayout {
     auto translate() -> void;
 	auto updateVisibillity() -> void;
     auto loadSettings() -> void;
+    auto updateCrop(std::string property, unsigned value) -> void;
 
     BorderLayout(TabWindow* tabWindow);
 };

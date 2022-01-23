@@ -454,7 +454,7 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
 
     updateFloppyProfileList();
 
-    loadSettings(true);
+    loadSettings();
 }
 
 auto AudioLayout::updateFloppyProfileList() -> void {
@@ -550,7 +550,7 @@ auto AudioLayout::translate() -> void {
     }
 }
 
-auto AudioLayout::loadSettings(bool init) -> void {
+auto AudioLayout::loadSettings() -> void {
     if (dynamic_cast<LIBC64::Interface*>(emulator))
         settingsLayout.updateWidgets();
     
@@ -607,7 +607,7 @@ auto AudioLayout::loadSettings(bool init) -> void {
 
     driveLayout.floppyVolume.value.setText(std::to_string(floppyVolume) + " %");
 
-    std::string folderBefore = driveLayout.selection.floppyCombo.text();
+    //std::string folderBefore = driveLayout.selection.floppyCombo.text();
 
     std::string folder = _settings->get<std::string>("audio_floppy_folder", "");
 
@@ -615,13 +615,13 @@ auto AudioLayout::loadSettings(bool init) -> void {
 
     folder = driveLayout.selection.floppyCombo.text();
 
-    if (!init) {
+  //  if (!init) {
         // in case if content doesn't match setting anymore
         _settings->set<std::string>("audio_floppy_folder", folder);
 
-        if (folderBefore != folder)
-            audioManager->drive.unload(emulator, emulator->getDiskMediaGroup());
-    }
+      //  if (folderBefore != folder)
+        //    audioManager->drive.unload(emulator, emulator->getDiskMediaGroup());
+   // }
 
     updateVisibility();
 }
