@@ -105,12 +105,19 @@ auto Program::videoRefresh8(const uint8_t* frame, unsigned width, unsigned heigh
         activeVideoManager->renderFrame<uint8_t>(frame, width, height, linePitch);
 }
 
+auto Program::canExclusiveFullscreen() -> bool {
+
+    return isRunning
+        && globalSettings->get("exclusive_fullscreen", false)
+        && !globalSettings->get<bool>("threaded_ui", false);
+}
+
 auto Program::hintExclusiveFullscreen() -> void {
 
-    if (!isRunning || !globalSettings->get("exclusive_fullscreen", false) || globalSettings->get<bool>("threaded_ui", false))
-        videoDriver->hintExclusiveFullscreen( false );
+    if (canExclusiveFullscreen())
+        videoDriver->hintExclusiveFullscreen( true, view->getCustomFullscreenRefreshRate() );
     else
-	    videoDriver->hintExclusiveFullscreen( true, view->getCustomFullscreenRefreshRate() );
+        videoDriver->hintExclusiveFullscreen( false );
 }
 
 auto Program::setFpsLimit() -> void {

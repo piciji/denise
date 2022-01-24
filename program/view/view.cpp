@@ -82,7 +82,7 @@ auto View::build() -> void {
     
     onSize = [this]() {
         if (fullScreen()) {
-			if (view->exclusiveFullscreen())
+			if (program->canExclusiveFullscreen())
 				setStatusVisible( false );
 			else
 				updateStatusBar();
@@ -110,7 +110,7 @@ auto View::build() -> void {
                         
 		bool allow = !inputDriver->mIsAcquired();
 		                
-		if (allow && exclusiveFullscreen()) {
+		if (allow && videoDriver && videoDriver->hasExclusiveFullscreen() ) {
 			InputManager::activateHotkey(Hotkey::Id::Fullscreen);
 			allow = false;
 		}
@@ -311,12 +311,6 @@ auto View::switchFullScreen(bool fullScreen, bool forceUnacquire) -> void {
 
     GUIKIT::Window::setFullScreen(fullScreen);
     displayChangeTimer.setEnabled();
-}
-
-auto View::exclusiveFullscreen() -> bool {
-	static auto exclusiveFullscreen = globalSettings->getOrInit("exclusive_fullscreen", false);
-    static auto threadedUI = globalSettings->getOrInit("threaded_ui", false);
-	return *exclusiveFullscreen && !*threadedUI && fullScreen() && program->isRunning;
 }
 
 auto View::updateMenuBar( bool toggle ) -> void {
@@ -1517,7 +1511,7 @@ auto View::questionToWrite(Emulator::Interface::Media* media) -> bool {
         // archive, removing of write protection is not supported
         return false;
     
-    if (exclusiveFullscreen())
+    if (videoDriver && videoDriver->hasExclusiveFullscreen())
         switchFullScreen( false );
     
     bool state = !globalSettings->get<bool>("question_media_write", true);

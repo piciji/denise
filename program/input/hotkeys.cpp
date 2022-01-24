@@ -278,7 +278,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             if(!view->fullScreen()) view->updateMenuBar( true );
             break;
         case Hotkey::ToggleStatus:
-            if(!view->exclusiveFullscreen()) view->updateStatusBar( true );
+            if(!videoDriver || !videoDriver->hasExclusiveFullscreen()) view->updateStatusBar( true );
             break;
 
         case Hotkey::Id::ToggleBorder: {

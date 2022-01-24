@@ -652,7 +652,6 @@ template<typename T> auto VideoManager::renderFrame(const T* src, unsigned width
             scalingCount = 10;
         }
 
-        
         reinitCrtThread();
     }
 

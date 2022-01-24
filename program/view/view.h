@@ -54,7 +54,6 @@ struct View : public GUIKIT::Window {
     auto updateViewport() -> void;
 	auto updateShader() -> void;
 	auto switchFullScreen(bool fullScreen = true, bool forceUnacquire = false) -> void;
-	auto exclusiveFullscreen() -> bool;
     auto updateMenuBar( bool toggle = false ) -> void;
     auto updateStatusBar(bool toggle = false ) -> void;
     auto loadCursor() -> void;

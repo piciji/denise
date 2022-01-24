@@ -90,8 +90,7 @@ auto TabWindow::build() -> void {
 	tab.appendHeader("", cropImage);
     tab.appendHeader("", miscImage);
 	
-	//if (tellMeShouldICreateTheUIRightAway()) {
-    if (0) {
+	if (tellMeShouldICreateTheUIRightAway()) {
 		inputLayout = new InputLayout( this );
 		systemLayout = new SystemLayout( this );
 		mediaLayout = new MediaView::MediaLayout( this );

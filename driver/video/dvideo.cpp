@@ -39,6 +39,7 @@ struct DVideo : Video, RenderThread {
         HWND parent;
 		bool hintExclusiveFullscreen = false;
         float exclusiveFullscreenRate = 0.0;
+        bool exclusiveFullscreen = false;
         bool threaded = false;
     } settings;
 
@@ -204,6 +205,7 @@ struct DVideo : Video, RenderThread {
 
 		updateFilter();
 		_clear();
+        RenderThread::reset();
 		return true;		
 	}
 	
@@ -293,9 +295,9 @@ struct DVideo : Video, RenderThread {
 			flags.lock = D3DLOCK_NOSYSLOCK | D3DLOCK_DISCARD;
 		}
 
+        settings.exclusiveFullscreen = exclusiveFullscreen;
 		lost = false;
 		recover();
-        RenderThread::reset();
 		return true;
 	}
 
@@ -620,8 +622,15 @@ struct DVideo : Video, RenderThread {
         wait();
         settings.synchronize = state;
         if (!settings.handle) return;
-        init(false);
-		setShader( settings.passes );
+
+        if (settings.exclusiveFullscreen) {
+            d3dpp.PresentationInterval = state ? D3DPRESENT_INTERVAL_ONE : D3DPRESENT_INTERVAL_IMMEDIATE;
+            lost = true;
+            recover();
+        } else {
+            init(false);
+            setShader( settings.passes );
+        }
     }
 	
 	auto hasSynchronized() -> bool { return settings.synchronize; }
@@ -657,8 +666,10 @@ struct DVideo : Video, RenderThread {
         settings.exclusiveFullscreenRate = rate;
 	}
 
-    virtual auto disableExclusiveFullscreen() -> void {
-        if (settings.hintExclusiveFullscreen) {
+    auto hasExclusiveFullscreen() -> bool { return settings.exclusiveFullscreen; }
+
+    auto disableExclusiveFullscreen() -> void {
+        if (settings.exclusiveFullscreen) {
             wait();
             init();
             setShader(settings.passes);
@@ -671,11 +682,11 @@ struct DVideo : Video, RenderThread {
             wait();
             RenderThread::enable(state);
 
-            RenderThread::reset();
             textureWidth = 0, textureHeight = 0;
-            //lost = true;
             init(false);
             setShader(settings.passes);
+            //lost = true;
+            //recover();
             settings.threaded = state;
         }
     }
@@ -720,6 +731,7 @@ struct DVideo : Video, RenderThread {
 		settings.synchronize = false;
 		settings.handle = nullptr;
 		settings.hintExclusiveFullscreen = false;
+        settings.exclusiveFullscreen = false;
         settings.threaded = false;
 		
 		#include "../tools/fonts.c"

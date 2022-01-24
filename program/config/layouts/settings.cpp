@@ -128,6 +128,7 @@ SettingsLayout::SettingsLayout() {
     switches.threadedUI.onToggle = [](bool checked) {
         globalSettings->set<bool>("threaded_ui", checked);
         configView->videoLayout->updateDriverPropsVisibility();
+        VideoManager::unlockDriver();
         program->hintExclusiveFullscreen();
         program->initUserInterface();
     };

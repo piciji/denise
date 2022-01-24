@@ -44,6 +44,7 @@ struct Video {
     
     virtual auto shaderFormat() -> ShaderType { return ShaderType::NotSupported; }
 	/** direct 3D only */
+	virtual auto hasExclusiveFullscreen() -> bool { return false; }
 	virtual auto hintExclusiveFullscreen(bool state, float rate = 0.0) -> void {}
     virtual auto disableExclusiveFullscreen() -> void {}
 
