@@ -133,6 +133,9 @@ VideoManager::VideoManager(Emulator::Interface* emulator) : shader(this) {
 
     render[0].kill = false;
     render[1].kill = false;
+    render[0].ready = false;
+    render[1].ready = false;
+
     reinitCrtThread(true);
 }
 

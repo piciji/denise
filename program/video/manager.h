@@ -103,7 +103,7 @@ struct VideoManager {
         unsigned* scanlineDest;
         bool oddLine;
         bool reuseFirstLine;
-        std::atomic<bool> ready = false;
+        std::atomic<bool> ready;
         std::atomic<bool> kill;
         std::condition_variable cv;
     } render[2];

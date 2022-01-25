@@ -21,7 +21,7 @@ auto InputManager::setHotkeys() -> void {
     hotkeys.push_back( {Hotkey::Id::RunAheadDown, "runahead down"} );	
     hotkeys.push_back( {Hotkey::Id::RunAheadToggleMode, "runahead toggle mode"} );	
     
-    hotkeys.push_back( {Hotkey::Id::ToggleRenderer, "Toggle renderer"} );	
+    hotkeys.push_back( {Hotkey::Id::ToggleCycleRenderer, "Toggle Cycle renderer"} );	
     hotkeys.push_back( {Hotkey::Id::AudioRecord, "audio record"} );
 
     hotkeys.push_back( {Hotkey::Id::Freeze, "freeze button"} );
@@ -140,7 +140,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
 
         } break;
             
-        case Hotkey::Id::ToggleRenderer: {
+        case Hotkey::Id::ToggleCycleRenderer: {
             if (!activeEmulator)
                 break;
 

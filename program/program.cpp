@@ -102,6 +102,7 @@ auto Program::initUserInterface() -> void {
 		GUIKIT::Application::loop = [this]() { loopUserInterface(); };
 		emuThread->enable( true );        
     }
+    videoDriver->allowReshaping( !threadedUI );
 }
 
 auto Program::addEmulators() -> void {
