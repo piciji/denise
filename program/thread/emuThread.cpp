@@ -64,11 +64,11 @@ auto EmuThread::unlock() -> void {
 auto EmuThread::initWorker() -> void {
 
     std::thread worker([this] {
-
-        //if (GUIKIT::ThreadPriority::setPriority( GUIKIT::ThreadPriority::Mode::Realtime, 3.0, 5.0 )) {
-          //   logger->log("increased render thread prio");
-        //}
-
+#ifdef __APPLE__
+        if (GUIKIT::ThreadPriority::setPriority( GUIKIT::ThreadPriority::Mode::High, 3.0, 5.0 )) {
+          //   logger->log("increased emu thread prio");
+        }
+#endif
         kill = false;
         attention = false;
         acknowledged = false;
