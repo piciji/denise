@@ -159,18 +159,19 @@
         [self setAutorecalculatesKeyViewLoop: YES];
     }
     
-    
-    if(GUIKIT::Application::loop) {
-        GUIKIT::pApplication::oberserveMenu( menuBarContext );
-    }
-    
     return self;
 }
 
 -(void)sendEvent:(NSEvent*)event {
+    static bool initMenuRunLoop = false;
+    
     if([event type] == NSRightMouseDown) {
         if (window->onContext) {
             if (window->onContext() && window->state.menus.size() > 0) {
+                if (!initMenuRunLoop) {
+                    initMenuRunLoop = true;
+                    GUIKIT::pApplication::observeMenu( menuBarContext );
+                }
               //  [[menuBar itemAtIndex:0] setHidden: TRUE];
                 [NSMenu popUpContextMenu:menuBarContext withEvent:event forView:NULL];
                 //[[menuBar itemAtIndex:0] setHidden: FALSE];
@@ -319,7 +320,7 @@ NSTimer* pApplication::appTimer = nullptr;
 auto pApplication::run() -> void {
     if(Application::loop) {
         setAppTimer();
-        oberserveMenu( [NSApp mainMenu] );
+        observeMenu( [NSApp mainMenu] );
     }
 
     @autoreleasepool {
@@ -327,8 +328,12 @@ auto pApplication::run() -> void {
     }
 }
 
-auto pApplication::oberserveMenu(NSMenu* menu) -> void {
+auto pApplication::observeMenu(NSMenu* menu) -> void {
     NSNotificationCenter* notificationCenter = [NSNotificationCenter defaultCenter];
+ 
+    [notificationCenter removeObserver:cocoaDelegate name:NSMenuDidBeginTrackingNotification object:menu];
+    
+    [notificationCenter removeObserver:cocoaDelegate name:NSMenuDidEndTrackingNotification object:menu];
     
     [notificationCenter addObserver:cocoaDelegate selector:@selector(beganTracking:) name:NSMenuDidBeginTrackingNotification object:menu];
     

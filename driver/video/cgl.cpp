@@ -61,6 +61,7 @@ struct CGL : public Video, OpenGL, RenderThread {
             [view unlockFocus];
         }
 
+        resizeWindow();
         RenderThread::reset();
         clear();
         clearCurrent();
@@ -112,7 +113,7 @@ struct CGL : public Video, OpenGL, RenderThread {
 
     auto unlock(bool disallowShader = false) -> void {
         if (settings.threaded) {
-            resizeWindow();
+            //resizeWindow();
             RenderThread::unlock(disallowShader);
         }
     }
@@ -153,22 +154,21 @@ struct CGL : public Video, OpenGL, RenderThread {
     
     auto unlockAndRedraw(bool disallowShader = false, bool freeContext = false) -> void {
         if (settings.threaded) {
-            resizeWindow();
+            //resizeWindow();
             RenderThread::unlock(disallowShader);
         } else
             redraw(disallowShader);
             
-            if (freeContext)
-                clearCurrent();
+        if (freeContext)
+            clearCurrent();
     }
 
     void _redraw(bool disallowShader, RenderBuffer* renderBuffer = nullptr) {
 
-        //makeCurrent(true);
         @autoreleasepool {
             if([view lockFocusIfCanDraw]) {
-                auto area = [view frame];
-                outputWidth = area.size.width, outputHeight = area.size.height;
+                //auto area = [view frame];
+                //outputWidth = area.size.width, outputHeight = area.size.height;
 
                 OpenGL::clear();
                 OpenGLSurface::updateTexture(renderBuffer);
@@ -369,6 +369,7 @@ struct CGL : public Video, OpenGL, RenderThread {
 }
 
 -(void) reshape {
+    video->resizeWindow();
     if (!video->useReshaping)
         return;
     

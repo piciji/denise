@@ -132,6 +132,12 @@
 }
 @end
 
+@interface CocoaSliderCell : NSSliderCell {
+@public
+    GUIKIT::Slider* slider;
+}
+@end
+
 @interface CocoaRadioBox : NSButton {
 @public
     GUIKIT::RadioBox* radioBox;

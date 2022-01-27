@@ -1,4 +1,49 @@
 
+@implementation CocoaSliderCell : NSSliderCell
+
+-(id) initWith:(GUIKIT::Slider&)sliderReference {
+    if(self = [super init]) {
+        slider = &sliderReference;
+        
+        [self setTarget:self];
+        [self setAction:@selector(activate:)];
+        [self setMinValue:0];
+    
+    }
+    return self;
+}
+
+-(void)stopTracking:(NSPoint)lastPoint at:(NSPoint)stopPoint inView:(NSView *)controlView mouseIsUp:(BOOL)flag {
+    
+    if (flag == YES) {
+        using GUIKIT::pApplication;
+        pApplication::setAppTimer();
+        
+        [[NSRunLoop currentRunLoop] addTimer:pApplication::appTimer forMode:NSDefaultRunLoopMode];
+
+        slider->state.position = [self doubleValue];
+        if(slider->onChange) slider->onChange();
+    }
+    
+    [super stopTracking:lastPoint at:stopPoint inView:controlView mouseIsUp:flag];
+}
+
+-(void)startTrackingAt:(NSPoint)startPoint inView:(NSView*)controlView {
+    
+    using GUIKIT::pApplication;
+    pApplication::setAppTimer();
+    
+    [[NSRunLoop currentRunLoop] addTimer:pApplication::appTimer forMode:NSRunLoopCommonModes];
+    
+    [super startTrackingAt:startPoint inView:controlView];
+}
+
+-(IBAction) activate:(id)sender {
+    slider->state.position = [self doubleValue];
+    if(slider->onChange) slider->onChange();
+}
+@end
+
 @implementation CocoaVerticalSlider : NSSlider
 
 -(id) initWith:(GUIKIT::Slider&)sliderReference {
@@ -8,6 +53,9 @@
         [self setTarget:self];
         [self setAction:@selector(activate:)];
         [self setMinValue:0];
+        
+        CocoaSliderCell* notifySliderCell = [[[CocoaSliderCell alloc] initWith: *slider] autorelease];
+        [self setCell:notifySliderCell];
     }
     return self;
 }
@@ -27,6 +75,9 @@
         [self setTarget:self];
         [self setAction:@selector(activate:)];
         [self setMinValue:0];
+        
+        CocoaSliderCell* notifySliderCell = [[[CocoaSliderCell alloc] initWith: *slider] autorelease];
+        [self setCell:notifySliderCell];
     }
     return self;
 }
