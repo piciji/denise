@@ -234,6 +234,7 @@ struct Window : Base {
     auto resizable() const -> bool { return state.resizable; }
     auto menuVisible() const -> bool { return state.menuVisible; }
     auto statusVisible() const -> bool { return state.statusVisible; }
+    auto aspectRatio() const -> Size { return state.aspectRatio; }
     auto droppable() const -> bool { return state.droppable; }
     auto minimized() -> bool;
     auto title() const -> std::string { return state.title; }
@@ -245,6 +246,7 @@ struct Window : Base {
     auto setPointerCursor( ) -> void;
     auto getScrollbarWidth() -> unsigned;
 	auto tellMeShouldICreateTheUIRightAway() -> bool;
+    auto setAspectRatio(Size ratio) -> void;
 	
 	static auto addCustomFont( CustomFont* customFont ) -> bool;
 	static auto countCustomFonts() -> unsigned;
@@ -263,6 +265,7 @@ struct Window : Base {
         Layout* layout = nullptr;
         Image* cursorImage = nullptr;
         StatusBar* statusBar = nullptr;
+        Size aspectRatio = {0,0};
     } state;
 
     struct {

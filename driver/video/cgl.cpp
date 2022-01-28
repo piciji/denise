@@ -345,6 +345,10 @@ struct CGL : public Video, OpenGL, RenderThread {
         [NSOpenGLContext clearCurrentContext];
         hasRendererContext = false;
     }
+    
+    auto freeContext() -> void {
+        clearCurrent();
+    }
 
     CGL() {
         view = nil;

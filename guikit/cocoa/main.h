@@ -64,6 +64,7 @@ struct pWindow {
     auto setForeground() -> void;
     auto getScrollbarWidth() -> unsigned { return 20; }
     auto positionBGView() -> void;
+    auto applyAspectRatio() -> void;
     
     bool disableIconsInTopMenu = false;
 

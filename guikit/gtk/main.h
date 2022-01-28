@@ -72,6 +72,7 @@ struct pWindow {
 	auto restore() -> void;
 	auto setForeground() -> void;
     auto getScrollbarWidth() -> unsigned { return 15; }
+    auto applyAspectRatio() -> void {}
 	
 	auto moveWindow(GdkEvent* event) -> void;
 	auto sizeWindow(GtkAllocation* allocation) -> void;

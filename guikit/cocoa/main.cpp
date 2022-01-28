@@ -207,6 +207,32 @@
     window->p.sizeEvent();
 }
 
+- (NSSize)windowWillResize:(NSWindow *)sender toSize:(NSSize)frameSize {
+    
+    auto aspect = window->aspectRatio();
+    bool inFullScreen = window->fullScreen();
+    
+    if (inFullScreen || (aspect.width == 0)) {
+        //[window->p.cocoaWindow setContentResizeIncrements: NSMakeSize(1,1)];
+        return frameSize;
+    }
+    
+    unsigned statusHeight = 0;
+    NSRect area = [[window->p.cocoaWindow contentView] bounds];
+    
+    aspect.height = area.size.width * aspect.height / aspect.width;
+    aspect.width = area.size.width;
+    
+    if (window->statusBar())
+        statusHeight = window->statusBar()->p.getHeight();
+        
+    aspect.height += statusHeight;
+        
+    [window->p.cocoaWindow setContentAspectRatio: NSMakeSize(aspect.width, aspect.height)];
+    
+    return frameSize;
+}
+
 -(void)windowDidMiniaturize:(NSNotification*)notification {
     if (window->onMinimize)
         window->onMinimize();
@@ -220,6 +246,7 @@
 -(void) windowWillEnterFullScreen:(NSNotification*)notification {
     window->state.fullScreen = true;
     window->p.fullScreenToggleDelay = true;
+    [window->p.cocoaWindow setContentResizeIncrements:NSMakeSize(1, 1)];
 }
 
 -(void) windowDidEnterFullScreen:(NSNotification*)notification {
@@ -438,6 +465,12 @@ auto pWindow::handle() -> uintptr_t {
     return (uintptr_t)cocoaWindow;
 }
 
+auto pWindow::applyAspectRatio() -> void {
+    if (window.fullScreen() || (window.aspectRatio().width == 0)) {
+        [window.p.cocoaWindow setContentResizeIncrements: NSMakeSize(1,1)];
+    }
+}
+    
 auto pWindow::setTitleForAppMenuItem(Window::Cocoa::AppMenuItem appMenuItem, std::string title) -> void {
     [[[[[cocoaWindow menuBar] itemAtIndex:0] submenu] itemAtIndex:appMenuItem] setTitle:[NSString stringWithUTF8String:title.c_str()]];
 }

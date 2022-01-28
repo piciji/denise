@@ -91,6 +91,7 @@ struct pWindow {
     auto handle() -> uintptr_t;
     auto setForeground() -> void;
     auto getScrollbarWidth() -> unsigned { return 20; }
+    auto applyAspectRatio() -> void {}
 
     auto onEraseBackground() -> bool;
     auto onClose() -> void;

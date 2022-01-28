@@ -24,6 +24,7 @@ auto View::build() -> void {
     setTitle( APP_NAME " " VERSION );
     setBackgroundColor(0);
     cocoa.setDisableIconsInTopMenu(true);
+    setAspectRatio( {4,3} );
     
     GUIKIT::Geometry defaultGeometry = {100, 100, 600, 400};
     

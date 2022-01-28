@@ -327,6 +327,11 @@ auto Window::geometry() -> Geometry {
     return p.geometry();
 }
 
+auto Window::setAspectRatio(Size ratio) -> void {
+    state.aspectRatio = ratio;
+    p.applyAspectRatio();
+}
+    
 auto Window::changeCursor( Image& image, unsigned hotSpotX, unsigned hotSpotY ) -> void {
     if (state.cursorImage == &image)
         return;
