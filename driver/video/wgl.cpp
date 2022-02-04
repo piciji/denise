@@ -174,14 +174,18 @@ struct WGL : Video, OpenGL, RenderThread {
             clearCurrent();
     }
 
+    auto redrawCustom(bool disallowShader = false) -> void {
+        redraw(disallowShader);
+    }
+
 	auto redraw(bool disallowShader = false) -> void {
-        if (settings.threaded)
-            return;
+       // if (settings.threaded)
+         //   wait();
 
         resizeWindow();
         makeCurrent(true);
         OpenGL::clear();
-        OpenGLSurface::updateTexture();
+        OpenGLSurface::updateTexture( settings.threaded ? getLastBufferToRender() : nullptr );
 		OpenGL::refresh(disallowShader);
 #ifdef DRV_FREETYPE
         screenText.showText(outputWidth, outputHeight, -0.01, 0.01, OpenGLText::ALIGN_RIGHT | OpenGLText::VALIGN_BOTTOM);

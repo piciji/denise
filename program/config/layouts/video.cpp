@@ -19,6 +19,7 @@ InScreenTextLayout::InScreenTextLayout() {
 
 VideoGeometryLayout::VideoGeometryLayout() {
 	append( aspectCorrect, {0u, 0u}, 5 );
+    append( aspectCorrectResizing, {0u, 0u}, 5 );
 	append( integerScaling, {0u, 0u} );
 	
 	setPadding(10);
@@ -196,7 +197,7 @@ VideoLayout::VideoLayout() {
         videoSettingsLayout.exclusiveFullscreen.setEnabled(false);
 
         if (selectedDriver == "Direct3D") {
-            videoSettingsLayout.exclusiveFullscreen.setEnabled( !globalSettings->get<bool>("threaded_ui", false) );
+            videoSettingsLayout.exclusiveFullscreen.setEnabled( !globalSettings->get<bool>("threaded_emu", false) );
             videoSettingsLayout.exclusiveFullscreen.setChecked(globalSettings->get("exclusive_fullscreen", false));
         }
     } else
@@ -352,21 +353,21 @@ VideoLayout::VideoLayout() {
     screenTextLayout.option1.onActivate = [this]() {
         emuThread->lock();
         globalSettings->set("video_screen_text", 0);
-        statusHandler->transferToOSD("");
+        statusHandler->setMessage("");
         emuThread->unlock();
     };
     
     screenTextLayout.option2.onActivate = [this]() {
         emuThread->lock();
         globalSettings->set("video_screen_text", 1);
-        statusHandler->transferToOSD("");
+        statusHandler->setMessage("");
         emuThread->unlock();
     };
     
     screenTextLayout.option3.onActivate = [this]() {
         emuThread->lock();
         globalSettings->set("video_screen_text", 2);
-        statusHandler->transferToOSD("");
+        statusHandler->setMessage("");
         emuThread->unlock();
     };
     
@@ -379,6 +380,20 @@ VideoLayout::VideoLayout() {
         emuThread->lock();
         globalSettings->set<bool>("aspect_correct", checked);
 		VideoManager::setAspectCorrect( checked );
+        view->updatePreventBgRedraw( );
+        view->updateViewport();
+        emuThread->unlock();
+    };
+
+    videoGeometry.aspectCorrectResizing.setChecked( globalSettings->get<bool>("aspect_correct_resizing", true) );
+    videoGeometry.aspectCorrectResizing.onToggle = [&](bool checked) {
+        emuThread->lock();
+        globalSettings->set<bool>("aspect_correct_resizing", checked);
+        if (checked)
+            view->setAspectRatio( {4, 3} );
+        else
+            view->setAspectRatio( {0, 0} );
+        view->updatePreventBgRedraw( );
         view->updateViewport();
         emuThread->unlock();
     };
@@ -388,6 +403,7 @@ VideoLayout::VideoLayout() {
         emuThread->lock();
         globalSettings->set<bool>("integer_scaling", checked);
 		VideoManager::setIntegerScaling( checked );
+        view->updatePreventBgRedraw( );
         view->updateViewport();
         emuThread->unlock();
     };
@@ -432,6 +448,7 @@ auto VideoLayout::translate() -> void {
 	
 	videoGeometry.setText(trans->get("geometry"));
 	videoGeometry.aspectCorrect.setText(trans->get("aspect_ratio"));
+    videoGeometry.aspectCorrectResizing.setText(trans->get("resize aspect corrected"));
 	videoGeometry.integerScaling.setText(trans->get("integer_scaling"));
     
     driverLayout.name.setText( trans->get("driver", {}, true) );
@@ -452,7 +469,7 @@ auto VideoLayout::translate() -> void {
 
 auto VideoLayout::updateDriverPropsVisibility() -> void {
     auto selected = driverLayout.combo.text();
-    auto threadedUI = globalSettings->get<bool>("threaded_ui", false);
+    auto threadedUI = globalSettings->get<bool>("threaded_emu", false);
 
     if (selected == "Direct3D") {
         videoSettingsLayout.exclusiveFullscreen.setEnabled( !threadedUI );

@@ -82,7 +82,7 @@ auto TabWindow::build() -> void {
         globalSettings->set<int>("screen_settings_y", geometry.y);
     };
 
-    onSize = [&]() {
+    onSize = [&](GUIKIT::Window::SIZE_MODE sizeMode) {
         if (fullScreen()) return;
         GUIKIT::Geometry geometry = this->geometry();
         globalSettings->set<unsigned>("screen_settings_width", geometry.width);

@@ -94,7 +94,11 @@ auto pApplication::initialize() -> void {
     wc.style = CS_HREDRAW | CS_VREDRAW;
     RegisterClass(&wc);
 
-    wc.hbrBackground = CreateSolidBrush(RGB(0, 0, 0));
+    wc.hbrBackground = (HBRUSH)GetStockObject (BLACK_BRUSH);
+    wc.lpszClassName = L"app_video_gui";
+    RegisterClass(&wc);
+
+    wc.hbrBackground = NULL;
     wc.hIcon = LoadIcon(0, IDI_APPLICATION);
     wc.lpfnWndProc = pViewport::wndProc;
     wc.lpszClassName = L"app_viewport";
@@ -302,9 +306,10 @@ auto CALLBACK pApplication::wndProc(WNDPROC windowProc, HWND hwnd, UINT msg, WPA
 }
 
 //window
-pWindow::pWindow(Window& window) : window(window) {
+pWindow::pWindow(Window& window, Window::Hints hints) : window(window) {
     locked = false;
     brush = 0;
+    bgRedraw = 0;
     hCursor = LoadCursor(0, IDC_ARROW);
     timerStatusUpdate.setInterval(100);
     timerStatusUpdate.onFinished = [this]() {
@@ -315,7 +320,11 @@ pWindow::pWindow(Window& window) : window(window) {
 
     Geometry geo = window.state.geometry;
 
-    hwnd = CreateWindow( L"app_gui", L"", ResizableStyle | (IsAppThemed( ) ? WS_CLIPCHILDREN : 0), geo.x, geo.y, geo.width, geo.height, 0, 0, GetModuleHandle(0), 0);
+    if (hints == Window::Hints::Video)
+        hwnd = CreateWindow( L"app_video_gui", L"", ResizableStyle, geo.x, geo.y, geo.width, geo.height, 0, 0, GetModuleHandle(0), 0);
+    else
+        hwnd = CreateWindow( L"app_gui", L"", ResizableStyle | (IsAppThemed( ) ? WS_CLIPCHILDREN : 0), geo.x, geo.y, geo.width, geo.height, 0, 0, GetModuleHandle(0), 0);
+
     hmenu = CreateMenu();
 	contextmenu = CreatePopupMenu();        
 
@@ -348,25 +357,50 @@ auto CALLBACK pWindow::wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam
     switch(msg) {
         case WM_CLOSE: window.p.onClose(); return true;
         case WM_MOVE: window.p.onMove(); break;
-        case WM_SIZE: window.p.onSize(); break;
+        case WM_SIZE: window.p.onSize( wparam ); break;
         case WM_SIZING:
-            //window.p.timerStatusUpdate.setEnabled();
+            window.p.onSizing((int)wparam, *((LPRECT)lparam));
             break;
         case WM_DROPFILES: window.p.onDrop(wparam); return false;
 		case WM_ENTERMENULOOP:
 			if(window.winapi.onMenu) window.winapi.onMenu();
 			break;
         case WM_ENTERSIZEMOVE:
-            break;
-        case WM_EXITSIZEMOVE:
+            if (window.onResizeStart && !window.fullScreen())
+                window.onResizeStart();
 
-            break;
+          //  if (!window.fullScreen() && !window.preventBackgroundRedrawing())
+            //    window.p.bgRedraw = 1;
+            return 0;
+        case WM_EXITSIZEMOVE:
+            if (window.p.bgRedraw == 1) {
+                window.p.bgRedraw = 2;
+                InvalidateRect( hwnd, NULL, true );
+            }
+
+            if (window.onResizeEnd && !window.fullScreen())
+                window.onResizeEnd();
+            return 0;
         case WM_PAINT:
+            if (window.p.bgRedraw == 2) {
+                window.p.bgRedraw = 0;
+                return true;
+            }
             break;
             
-        case WM_ERASEBKGND: {     
-			if(window.p.onEraseBackground()) return true;     
-            break;            
+        case WM_ERASEBKGND: {
+            if (!window.fullScreen() && window.preventBackgroundRedrawing())
+                // prevent thread driven opengl/directx flickering during resize
+                return 0;
+
+            if (window.p.bgRedraw == 1)
+                return 1;
+
+            if(window.p.onEraseBackground())
+                return 1;
+
+            // use theme color
+            break;
         } 
         case WM_ACTIVATE:
 			if ((LOWORD(wparam) == WA_ACTIVE) && (LOWORD(wparam) != WA_CLICKACTIVE)) {
@@ -578,7 +612,7 @@ auto pWindow::setFullScreen(bool fullScreen) -> void {
         });
     }
     locked = false;
-    if(window.onSize) window.onSize();
+    if(window.onSize) window.onSize(Window::SIZE_MODE::Default);
 }
 
 auto pWindow::onDrop(WPARAM wparam) -> void {
@@ -615,7 +649,7 @@ void pWindow::onMove() {
     if(window.onMove) window.onMove();
 }
 
-auto pWindow::onSize() -> void {
+auto pWindow::onSize(WPARAM wparam) -> void {
     if(locked || window.fullScreen()) return;
 
     Geometry windowGeometry = geometry();
@@ -632,7 +666,115 @@ auto pWindow::onSize() -> void {
     if (window.statusBar())
         window.statusBar()->p.updatePosition();
 
-    if(window.onSize) window.onSize();
+    Window::SIZE_MODE sMode = Window::SIZE_MODE::Default;
+    if (wparam == SIZE_MINIMIZED)
+        sMode = Window::SIZE_MODE::Minimized;
+    else if (wparam == SIZE_MAXIMIZED)
+        sMode = Window::SIZE_MODE::Maximized;
+
+    if(window.onSize) window.onSize( sMode );
+}
+
+auto pWindow::onSizing(int edge, RECT &rect) -> void {
+
+    if (window.fullScreen() || (window.aspectRatio().width == 0))
+        return;
+
+    int frameX = GetSystemMetrics(SM_CXSIZEFRAME) * 2;
+    int frameY = GetSystemMetrics(SM_CYSIZEFRAME) * 2 + /*GetSystemMetrics(SM_CYMENU) +*/ GetSystemMetrics(SM_CYCAPTION);
+
+    if(window.statusBar() && window.statusVisible())
+        frameY += window.statusBar()->p.getHeight();
+
+    MENUBARINFO mbi;
+    mbi.cbSize = sizeof(MENUBARINFO);
+    mbi.rcBar = {0, 0, 0, 0};
+
+    if (window.menuVisible() && GetMenuBarInfo(hwnd, OBJID_MENU, 0, &mbi)) {
+        frameY += mbi.rcBar.bottom - mbi.rcBar.top;
+        frameY += GetSystemMetrics( SM_CYMENU ) - GetSystemMetrics( SM_CYMENUSIZE );
+    }
+
+    float sizeX = (float)((rect.right - rect.left) - frameX);
+    float sizeY = (float)((rect.bottom - rect.top) - frameY);
+
+    float ratioX = (float)window.aspectRatio().width;
+    float ratioY = (float)window.aspectRatio().height;
+
+    switch (edge) {
+        case WMSZ_BOTTOM:
+        case WMSZ_TOP: {
+            int size_x = frameX + (int)((sizeY * ratioX) / ratioY + 0.5);
+
+            rect.left = (rect.left + rect.right) / 2 - size_x / 2;
+            rect.right = rect.left + size_x;
+        } break;
+        case WMSZ_BOTTOMLEFT: {
+            int size_x, size_y;
+
+            if (sizeX * ratioY > sizeY * ratioX) {
+                size_x = rect.right - rect.left;
+                size_y = frameY + (int)(((float)(size_x - frameX) * ratioY) / ratioX + 0.5);
+            } else {
+                size_y = rect.bottom - rect.top;
+                size_x = frameX + (int)(((float)(size_y - frameY) * ratioX) / ratioY + 0.5);
+            }
+
+            rect.left = rect.right - size_x;
+            rect.bottom = rect.top + size_y;
+        } break;
+        case WMSZ_BOTTOMRIGHT: {
+            int size_x, size_y;
+
+            if (sizeX * ratioY > sizeY * ratioX) {
+                size_x = rect.right - rect.left;
+                size_y = frameY + (int)(((float)(size_x - frameX) * ratioY) / ratioX + 0.5);
+
+                rect.right = rect.left + size_x;
+                rect.bottom = rect.top + size_y;
+            } else {
+                size_y = rect.bottom - rect.top;
+                size_x = frameX + (int)(((float)(size_y - frameY) * ratioX) / ratioY + 0.5);
+            }
+
+            rect.right = rect.left + size_x;
+            rect.bottom = rect.top + size_y;
+        } break;
+        case WMSZ_LEFT:
+        case WMSZ_RIGHT: {
+            int size_y = frameY + (int)((sizeX * ratioY) / ratioX + 0.5);
+            rect.top = (rect.top + rect.bottom) / 2 - size_y / 2;
+            rect.bottom = rect.top + size_y;
+        } break;
+        case WMSZ_TOPLEFT: {
+            int size_x, size_y;
+
+            if (sizeX * ratioY > sizeY * ratioX) {
+                size_x = rect.right - rect.left;
+                size_y = frameY + (int)(((float)(size_x - frameX) * ratioY) / ratioX + 0.5);
+            } else {
+                size_y = rect.bottom - rect.top;
+                size_x = frameX + (int)(((float)(size_y - frameY) * ratioX) / ratioY + 0.5);
+            }
+
+            rect.left = rect.right - size_x;
+            rect.top = rect.bottom - size_y;
+        } break;
+        case WMSZ_TOPRIGHT: {
+            int size_x, size_y;
+
+            if (sizeX * ratioY > sizeY * ratioX) {
+                size_x = rect.right - rect.left;
+                size_y = frameY + (int)(((float)(size_x - frameX) * ratioY) / ratioX + 0.5);
+            } else {
+                size_y = rect.bottom - rect.top;
+                size_x = frameX + (int)(((float)(size_y - frameY) * ratioX) / ratioY + 0.5);
+            }
+
+            rect.right = rect.left + size_x;
+            rect.top = rect.bottom - size_y;
+        } break;
+    }
 }
 
 auto pWindow::append(Menu& menu) -> void {

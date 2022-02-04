@@ -45,7 +45,7 @@ auto StatusHandler::clear() -> void {
     statusBar->update();
     message.clear();
     clearUpdates();
-    videoDriver->showMessage( "" );
+    statusHandler->setMessage("");
 }
 
 auto StatusHandler::resetFrameCounter() -> void {
@@ -251,8 +251,6 @@ auto StatusHandler::transferToOSD( std::string text ) -> void {
 
     } else
         videoDriver->showMessage( text, message.critical );
-
-    view->renderPlaceholder();   
 }
 
 auto StatusHandler::update() -> void {

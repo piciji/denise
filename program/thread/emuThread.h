@@ -30,6 +30,7 @@ struct EmuThread {
 
     auto lock() -> bool;
     auto unlock() -> void;
+    auto locked() -> bool { return attention || acknowledged; }
 
     auto lockHotkeys() -> void;
     auto unlockHotkeys() -> void;

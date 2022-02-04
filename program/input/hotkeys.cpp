@@ -263,7 +263,8 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             view->updatePauseCheck();
             break;
         case Hotkey::IncSlot:
-        case Hotkey::DecSlot: 
+        case Hotkey::DecSlot:
+            emuThread->lock();
             States::getInstance( emulator )->changeSlot( id == Hotkey::DecSlot );
             break;
         case Hotkey::Loadstate:

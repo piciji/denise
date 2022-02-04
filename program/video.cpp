@@ -68,13 +68,10 @@ auto Program::finishVBlank() -> void {
     
     if (!activeVideoManager->waitForCrtRenderer())
         return;
-
-    //videoDriver->unlock();
     
     //if (VideoManager::fpsLimit)
       //  activeVideoManager->applyFpsLimit();
-    
-    //videoDriver->redraw();
+
     videoDriver->unlockAndRedraw();
 }
 
@@ -105,11 +102,26 @@ auto Program::videoRefresh8(const uint8_t* frame, unsigned width, unsigned heigh
         activeVideoManager->renderFrame<uint8_t>(frame, width, height, linePitch);
 }
 
+auto Program::videoRefreshLatest() -> void {
+    if (cmd->noGui || !activeEmulator)
+        return;
+
+    statusHandler->resetFrameCounter();
+
+    if (dynamic_cast<LIBC64::Interface*>( activeEmulator )) {
+        activeVideoManager->renderFrame<uint8_t>(activeEmulator->cropData(), activeEmulator->cropWidth(),
+            activeEmulator->cropHeight(), activeEmulator->cropPitch());
+    } else {
+        activeVideoManager->renderFrame<uint16_t>((uint16_t*)activeEmulator->cropData(), activeEmulator->cropWidth(),
+            activeEmulator->cropHeight(), activeEmulator->cropPitch());
+    }
+}
+
 auto Program::canExclusiveFullscreen() -> bool {
 
     return isRunning
         && globalSettings->get("exclusive_fullscreen", false)
-        && !globalSettings->get<bool>("threaded_ui", false);
+        && !globalSettings->get<bool>("threaded_emu", false);
 }
 
 auto Program::hintExclusiveFullscreen() -> void {

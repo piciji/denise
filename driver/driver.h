@@ -25,6 +25,7 @@ struct Video {
     virtual auto lock(int32_t*& data, unsigned& pitch, unsigned _width, unsigned _height) -> bool { return false; }
     virtual auto unlock(bool disallowShader = false) -> void {}
     virtual auto redraw(bool disallowShader = false) -> void {}
+    virtual auto redrawCustom(bool disallowShader = false) -> void {}
     virtual auto unlockAndRedraw(bool disallowShader = false, bool freeContext = false) -> void {}
     virtual auto clear() -> void {}
     virtual auto setFilter(Filter filter) -> void {}
@@ -41,6 +42,8 @@ struct Video {
 	virtual auto showMessage(std::string message, bool critical = false) -> void {}
     virtual auto forceResize() -> void {}
     virtual auto freeContext() -> void {}
+    virtual auto lockResize() -> void {}
+    virtual auto unlockResize() -> void {}
     
     virtual auto shaderFormat() -> ShaderType { return ShaderType::NotSupported; }
 	/** direct 3D only */

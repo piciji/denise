@@ -89,7 +89,7 @@ Program::Program() {
 }
 
 auto Program::initUserInterface() -> void {
-    bool threadedUI = globalSettings->get<bool>("threaded_ui", false);
+    bool threadedUI = globalSettings->get<bool>("threaded_emu", false);
 
     if (cmd->noGui) {
 		emuThread->enable( false );
@@ -376,7 +376,7 @@ auto Program::powerOff() -> void {
 			activeVideoManager->powerOff();
 		videoDriver->clear();
         videoDriver->hintExclusiveFullscreen( false );
-		audioDriver->clear();  
+		audioDriver->clear();
 		audioManager->powerOff();
 		activeEmulator = nullptr;
 		activeVideoManager = nullptr;
@@ -423,7 +423,7 @@ auto Program::loop() -> void {
 		GUIKIT::System::sleep( 20 );
 		VideoManager::updateWhenNotRunning();
 	}
-    
+
     if (statusHandler->hasUpdates())
         statusHandler->update();
 }
@@ -461,6 +461,8 @@ auto Program::hasFocus() -> bool {
 auto Program::quit() -> void {
     emuThread->lock();
     powerOff();
+    if (statusHandler)
+        statusHandler->clearUpdates();
     emuThread->unlock();
     delete emuThread;
 
@@ -487,8 +489,7 @@ auto Program::quit() -> void {
 	delete filePool;
     delete cmd;
 	delete autoloader;
-	if (statusHandler)
-		statusHandler->clearUpdates();
+
     
     for(auto settings : settingsStorage)
         delete settings;

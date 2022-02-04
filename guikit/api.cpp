@@ -118,8 +118,9 @@ auto Application::setClipboardText( std::string text ) -> void {
 //window
 std::vector<CustomFont*> Window::customFonts;
 
-Window::Window() : p(*new pWindow(*this)), Base(), cocoa(*this), winapi(*this) {
+Window::Window(Hints hints) : p(*new pWindow(*this, hints)), Base(), cocoa(*this), winapi(*this) {
     state.widgetFont = Font::system();
+    this->hints = hints;
 }
 
 Window::~Window() { 
@@ -330,6 +331,10 @@ auto Window::geometry() -> Geometry {
 auto Window::setAspectRatio(Size ratio) -> void {
     state.aspectRatio = ratio;
     p.applyAspectRatio();
+}
+
+auto Window::setPreventBackgroundRedrawing(bool prevent) -> void {
+    state.preventBackgroundRedrawing = prevent;
 }
     
 auto Window::changeCursor( Image& image, unsigned hotSpotX, unsigned hotSpotY ) -> void {

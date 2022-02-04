@@ -16,15 +16,30 @@
 
 View* view = nullptr;
 
-View::View() {
+View::View() : GUIKIT::Window(GUIKIT::Window::Hints::Video) {
     message = new Message(this);
+}
+
+inline auto View::isBGCompletlyCovered() -> bool {
+    static auto aspectCorrectResize = globalSettings->getOrInit<bool>("aspect_correct_resizing", true);
+
+    return (!VideoManager::aspectCorrect || *aspectCorrectResize) && !VideoManager::integerScaling;
+}
+
+auto View::updatePreventBgRedraw() -> void {
+
+    setPreventBackgroundRedrawing( isBGCompletlyCovered() );
 }
 
 auto View::build() -> void {
     setTitle( APP_NAME " " VERSION );
     setBackgroundColor(0);
     cocoa.setDisableIconsInTopMenu(true);
-    setAspectRatio( {4,3} );
+
+    if (globalSettings->get<bool>("aspect_correct_resizing", true))
+        setAspectRatio( {4,3} );
+    else
+        setAspectRatio( {0,0} );
     
     GUIKIT::Geometry defaultGeometry = {100, 100, 600, 400};
     
@@ -81,7 +96,7 @@ auto View::build() -> void {
 		    audioDriver->clear();
     };
     
-    onSize = [this]() {
+    onSize = [this](GUIKIT::Window::SIZE_MODE sizeMode ) {
         if (fullScreen()) {
 			if (program->canExclusiveFullscreen())
 				setStatusVisible( false );
@@ -97,9 +112,57 @@ auto View::build() -> void {
             globalSettings->set<int>("screen_width", geometry.width);
             globalSettings->set<int>("screen_height", geometry.height);
         }
-        updateViewport();
-        if (!emuThread->enabled)
+
+        if (sizeMode != GUIKIT::Window::SIZE_MODE::Default) {
+            this->setPreventBackgroundRedrawing( false );
+            updateViewport();
+
+        } else {
+            updatePreventBgRedraw();
+
+            if (!fullScreen() && !requestFullscreenSwitch && emuThread->enabled && isBGCompletlyCovered()) {
+                videoDriver->lockResize();
+                updateViewport();
+                videoDriver->unlockResize();
+            } else
+                updateViewport();
+
+            if (!fullScreen() && !requestFullscreenSwitch) {
+                if (activeVideoManager) {
+
+                    if (emuThread->enabled) {
+                        if (!isBGCompletlyCovered()) {
+                            if (emuThread->locked()) {
+                                activeVideoManager->waitForCrtRenderer();
+                                videoDriver->redrawCustom();
+                            }
+                        }
+                    } else {
+                        activeVideoManager->waitForCrtRenderer();
+                        videoDriver->redraw();
+                        videoDriver->freeContext();
+                    }
+                } else
+                    videoDriver->redraw(true);
+            }
+        }
+
+        if (!emuThread->enabled || !isBGCompletlyCovered())
 		    audioDriver->clear();
+    };
+
+    onResizeStart = [this]() {
+        if (activeVideoManager && !fullScreen() && !requestFullscreenSwitch && emuThread->enabled && !isBGCompletlyCovered() ) {
+            this->setPreventBackgroundRedrawing( false );
+            emuThread->lock();
+        }
+    };
+
+    onResizeEnd = [this]() {
+        if (emuThread->enabled && emuThread->locked()) {
+            videoDriver->freeContext();
+            emuThread->unlock();
+        }
     };
 	
 	onContext = [this]() {
@@ -130,7 +193,7 @@ auto View::build() -> void {
 	};
 	
 	GUIKIT::BrowserWindow::onCall = []() {
-        if (!globalSettings->get<bool>("threaded_ui", false) || !globalSettings->get("threaded_renderer", false))
+        if (!globalSettings->get<bool>("threaded_emu", false) || !globalSettings->get("threaded_renderer", false))
 		    audioDriver->clear();
 	};
 
@@ -201,7 +264,7 @@ auto View::build() -> void {
         emuThread->lock();
         
 		if (videoDriver && fullscreenSetting.inUse
-			&& globalSettings->get<bool>("threaded_ui", false)
+			&& globalSettings->get<bool>("threaded_emu", false)
 			&& globalSettings->get<bool>("threaded_renderer", false))
             videoDriver->forceResize();
 		

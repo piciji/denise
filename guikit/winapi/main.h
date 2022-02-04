@@ -60,6 +60,7 @@ struct pWindow {
 
     HCURSOR hCursor;
     Timer timerStatusUpdate;
+    uint8_t bgRedraw = 0;
 
     auto append(Menu& menu) -> void;
     auto append(Widget& widget) -> void;
@@ -96,7 +97,8 @@ struct pWindow {
     auto onEraseBackground() -> bool;
     auto onClose() -> void;
     auto onMove() -> void;
-    auto onSize() -> void;
+    auto onSize(WPARAM wparam) -> void;
+    auto onSizing(int edge, RECT &rect) -> void;
     auto onDrop(WPARAM wparam) -> void;
     auto updateMenu() -> void;
     auto changeCursor( Image& image, unsigned hotSpotX, unsigned hotSpotY ) -> void;
@@ -107,7 +109,7 @@ struct pWindow {
 	static auto addCustomFont( CustomFont* customFont ) -> bool;
     static auto CALLBACK wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
 
-    pWindow(Window& window);
+    pWindow(Window& window, Window::Hints hints = Window::Hints::Default );
     ~pWindow();
 };
 
