@@ -66,7 +66,7 @@ auto Program::getVideoDriver() -> std::string {
 
 auto Program::finishVBlank() -> void {
     
-    if (!activeVideoManager->waitForCrtRenderer())
+    if (!activeVideoManager->waitForCrtRenderer(1))
         return;
     
     //if (VideoManager::fpsLimit)

@@ -113,38 +113,36 @@ auto View::build() -> void {
             globalSettings->set<int>("screen_height", geometry.height);
         }
 
-        if (sizeMode != GUIKIT::Window::SIZE_MODE::Default) {
+        if (fullScreen() || requestFullscreenSwitch || (sizeMode != GUIKIT::Window::SIZE_MODE::Default)) {
             this->setPreventBackgroundRedrawing( false );
             updateViewport();
 
         } else {
             updatePreventBgRedraw();
-
-            if (!fullScreen() && !requestFullscreenSwitch && emuThread->enabled && isBGCompletlyCovered()) {
+			
+            if (activeVideoManager && emuThread->enabled && isBGCompletlyCovered()) {
                 videoDriver->lockResize();
                 updateViewport();
                 videoDriver->unlockResize();
             } else
                 updateViewport();
 
-            if (!fullScreen() && !requestFullscreenSwitch) {
-                if (activeVideoManager) {
-
-                    if (emuThread->enabled) {
-                        if (!isBGCompletlyCovered()) {
-                            if (emuThread->locked()) {
-                                activeVideoManager->waitForCrtRenderer();
-                                videoDriver->redrawCustom();
-                            }
-                        }
-                    } else {
-                        activeVideoManager->waitForCrtRenderer();
-                        videoDriver->redraw();
-                        videoDriver->freeContext();
-                    }
-                } else
-                    videoDriver->redraw(true);
-            }
+      
+			if (activeVideoManager) {
+				if (emuThread->enabled) {
+					if (!isBGCompletlyCovered()) {
+						if (emuThread->locked()) {
+							activeVideoManager->waitForCrtRenderer();
+							videoDriver->redrawCustom();
+						}
+					}
+				} else {
+					activeVideoManager->waitForCrtRenderer();
+					videoDriver->redraw();
+					videoDriver->freeContext();
+				}
+			} else
+				videoDriver->redraw(true);
         }
 
         if (!emuThread->enabled || !isBGCompletlyCovered())

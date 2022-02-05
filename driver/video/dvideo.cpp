@@ -5,6 +5,7 @@
 #include <d3d9.h>
 #include <d3dx9.h>
 #include <math.h>
+#include <uxtheme.h>
 #include <cstring>
 
 namespace DRIVER {
@@ -30,6 +31,7 @@ struct DVideo : Video, RenderThread {
     unsigned inputWidth, inputHeight;
     RECT outScreen;
     std::mutex noteMutex;
+	bool themed = true;
 
     struct {
         bool synchronize;
@@ -388,8 +390,11 @@ struct DVideo : Video, RenderThread {
     }
 
     auto redraw(bool disallowShader = false) -> void {
+		if (!themed)
+			return redrawCustom(disallowShader);			
+		
         resizeMutexThreaded.lock();
-        _redraw(disallowShader, true);
+		_redraw(disallowShader, true);			
         resizeMutexThreaded.unlock();
     }
 
@@ -631,7 +636,12 @@ struct DVideo : Video, RenderThread {
             }
 
             return RenderThread::lock(data, pitch, _width, _height);
-        }
+        } else {
+			if (lost && !recover()) {
+				if (!init())
+					return false;              
+			}
+		}
 
         if(_width != inputWidth || _height != inputHeight) {
             resize( inputWidth = _width, inputHeight = _height );
@@ -832,6 +842,7 @@ struct DVideo : Video, RenderThread {
         texture = 0;
 
         lost = true;
+		themed = IsAppThemed();
         settings.filter = Filter::Nearest;
         settings.synchronize = false;
         settings.handle = nullptr;

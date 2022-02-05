@@ -178,10 +178,20 @@ struct WGL : Video, OpenGL, RenderThread {
         redraw(disallowShader);
     }
 
+	auto lockResize() -> void {
+        resizeMutex.lock();
+        resizeMutexThreaded.lock();
+    }
+
+    auto unlockResize() -> void {
+        resizeMutexThreaded.unlock();
+        resizeMutex.unlock();
+    }
+	
 	auto redraw(bool disallowShader = false) -> void {
        // if (settings.threaded)
          //   wait();
-
+		resizeMutex.lock();
         resizeWindow();
         makeCurrent(true);
         OpenGL::clear();
@@ -192,10 +202,11 @@ struct WGL : Video, OpenGL, RenderThread {
 #endif
 		SwapBuffers(display);
         if(settings.hardSync && settings.synchronize) glFinish();
+		resizeMutex.unlock();
 	}
 
     auto refresh() -> void {
-
+		
         makeCurrent();
         OpenGL::clear();
 
@@ -219,7 +230,7 @@ struct WGL : Video, OpenGL, RenderThread {
             frames--;
             accessMutex.unlock();
         }
-
+		resizeMutexThreaded.lock();
         OpenGL::refresh(disallowShader);
 #ifdef DRV_FREETYPE
         screenText.updateMessage();
@@ -228,8 +239,9 @@ struct WGL : Video, OpenGL, RenderThread {
 
         SwapBuffers(display);
         if(settings.hardSync && settings.synchronize) glFinish();
-
+		resizeMutexThreaded.unlock();
         clearCurrent();
+		
     }
 	
 	bool init(uintptr_t _handle) {

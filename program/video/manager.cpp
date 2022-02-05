@@ -706,12 +706,9 @@ template<typename T> auto VideoManager::renderFrame(const T* src, unsigned width
 		renderCrt(width, height, src, srcPitch, gpuData, gpuPitch - width);
 	}		           
     
-	//videoDriver->unlock();
-    
     //if (fpsLimit)
       //  applyFpsLimit();
     
-	//videoDriver->redraw();
     videoDriver->unlockAndRedraw();
     
     //lastCapTime = Chronos::getTimestampInMicroseconds();    
@@ -868,6 +865,15 @@ template<bool _16bitSrc> auto VideoManager::createWorker(Render* re) -> void {
 
     worker.detach();
 
+}
+
+auto VideoManager::waitForCrtRenderer() -> void {
+
+    if (!crtThreaded || (crtMode != CrtMode::Cpu ) )
+        return;	
+	
+	waitForCrtRenderer(0);
+	waitForCrtRenderer(1);
 }
 
 auto VideoManager::waitForCrtRenderer(uint8_t pos) -> bool {
@@ -1313,7 +1319,7 @@ auto VideoManager::unlockDriver() -> void {
     if (!activeVideoManager->crtThreaded || (activeVideoManager->crtMode != CrtMode::Cpu ) )
         return;
 
-    if (!activeVideoManager->waitForCrtRenderer() || !videoDriver)
+    if (!activeVideoManager->waitForCrtRenderer(1) || !videoDriver)
         return;
 
     videoDriver->unlockAndRedraw(false, true);

@@ -239,7 +239,8 @@ struct VideoManager {
     template<bool _16bitSrc> auto createWorker(Render* re) -> void;
     auto enableCrtThread( bool state) -> void;
     auto updateCrtThreads() -> void;
-    auto waitForCrtRenderer(uint8_t pos = 1) -> bool;
+	auto waitForCrtRenderer() -> void;
+    auto waitForCrtRenderer(uint8_t pos) -> bool;
     template<bool withScanlines, bool rfModulation, typename T> auto renderPalCrt( Render* re ) -> void;
     template<bool withScanlines, bool rfModulation, typename T> auto renderNtscCrt( Render* re ) -> void;
     auto powerOff() -> void;    
