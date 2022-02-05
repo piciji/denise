@@ -131,7 +131,6 @@ struct Program : Emulator::Interface::Bind {
 	auto getVideoDriver() -> std::string;
     auto videoRefresh(const uint16_t* frame, unsigned width, unsigned height, unsigned linePitch) -> void override;
 	auto videoRefresh8(const uint8_t* frame, unsigned width, unsigned height, unsigned linePitch) -> void override;
-    auto videoRefreshLatest() -> void;
 	auto hintExclusiveFullscreen() -> void;
     auto canExclusiveFullscreen() -> bool;
     auto setVideoFilter() -> void;   

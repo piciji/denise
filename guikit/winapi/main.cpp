@@ -321,7 +321,7 @@ pWindow::pWindow(Window& window, Window::Hints hints) : window(window) {
     Geometry geo = window.state.geometry;
 
     if (hints == Window::Hints::Video)
-        hwnd = CreateWindow( L"app_video_gui", L"", ResizableStyle | (IsAppThemed( ) ? WS_CLIPCHILDREN : WS_CLIPCHILDREN), geo.x, geo.y, geo.width, geo.height, 0, 0, GetModuleHandle(0), 0);
+        hwnd = CreateWindow( L"app_video_gui", L"", ResizableStyle | WS_CLIPCHILDREN, geo.x, geo.y, geo.width, geo.height, 0, 0, GetModuleHandle(0), 0);
     else
         hwnd = CreateWindow( L"app_gui", L"", ResizableStyle | WS_CLIPCHILDREN, geo.x, geo.y, geo.width, geo.height, 0, 0, GetModuleHandle(0), 0);
 
@@ -589,7 +589,7 @@ auto pWindow::setFullScreen(bool fullScreen) -> void {
     if (!window.resizable()) return;
     locked = true;
     if(!fullScreen) {
-        SetWindowLongPtr(hwnd, GWL_STYLE, WS_VISIBLE | (IsAppThemed() ? WS_CLIPCHILDREN : WS_CLIPCHILDREN) | (window.resizable() ? ResizableStyle : FixedStyle));
+        SetWindowLongPtr(hwnd, GWL_STYLE, WS_VISIBLE | WS_CLIPCHILDREN | (window.resizable() ? ResizableStyle : FixedStyle));
         setGeometry(window.state.geometry);
 		SetWindowPos(hwnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
         pMonitor::resetSetting();
