@@ -154,7 +154,7 @@ struct CGL : public Video, OpenGL, RenderThread {
     }
     
     auto unlockResize() -> void {
-        _redraw(true, settings.threaded ? getLastBufferToRender() : nullptr);
+        _redraw(false, settings.threaded ? getLastBufferToRender() : nullptr);
 
         resizeMutexThreaded.unlock();
         resizeMutex.unlock();

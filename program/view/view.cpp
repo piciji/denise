@@ -10,9 +10,9 @@
 #include "status.h"
 #include "../media/autoloader.h"
 #include "../media/fileloader.h"
-#include "placeholder.cpp"
 #include "../../data/icons.h"
 #include "../thread/emuThread.h"
+#include "placeholder.cpp"
 
 View* view = nullptr;
 
@@ -258,7 +258,7 @@ auto View::build() -> void {
         
 	placeholderTimer.setInterval(40);
 	placeholderTimer.onFinished = [this]() {
-		placeholderTimer.setEnabled(false);		
+		placeholderTimer.setEnabled(false);
 		renderPlaceholder(false);
         renderPlaceholder(false);
 	};
