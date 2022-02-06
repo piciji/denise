@@ -20,15 +20,21 @@ View::View() : GUIKIT::Window(GUIKIT::Window::Hints::Video) {
     message = new Message(this);
 }
 
-inline auto View::isBGCompletlyCovered() -> bool {
+inline auto View::useUnblockedResizing() -> bool {
+    
     static auto aspectCorrectResize = globalSettings->getOrInit<bool>("aspect_correct_resizing", true);
-
-    return (!VideoManager::aspectCorrect || *aspectCorrectResize) && !VideoManager::integerScaling;
+    
+    if (!causeBGRedrawVideoFlicker())
+        return true;
+    
+    bool bgCompletlyCovered = !VideoManager::aspectCorrect || *aspectCorrectResize;
+    
+    return bgCompletlyCovered && !VideoManager::integerScaling;
 }
 
 auto View::updatePreventBgRedraw() -> void {
-
-    setPreventBackgroundRedrawing( isBGCompletlyCovered() );
+    // take effect for winapi only to prevent flickering
+    setPreventBackgroundRedrawing( useUnblockedResizing() );
 }
 
 auto View::build() -> void {
@@ -120,7 +126,7 @@ auto View::build() -> void {
         } else {
             updatePreventBgRedraw();
 			
-            if (activeVideoManager && emuThread->enabled && isBGCompletlyCovered()) {
+            if (activeVideoManager && emuThread->enabled && useUnblockedResizing()) {
                 videoDriver->lockResize();
                 updateViewport();
                 videoDriver->unlockResize();
@@ -130,7 +136,7 @@ auto View::build() -> void {
       
 			if (activeVideoManager) {
 				if (emuThread->enabled) {
-					if (!isBGCompletlyCovered()) {
+					if (!useUnblockedResizing()) {
 						if (emuThread->locked()) {
 							activeVideoManager->waitForCrtRenderer();
 							videoDriver->redrawCustom();
@@ -138,19 +144,22 @@ auto View::build() -> void {
 					}
 				} else {
 					activeVideoManager->waitForCrtRenderer();
-					videoDriver->redraw();
-					videoDriver->freeContext();
+                    if (!videoDriver->hasReshaping()) {
+                        videoDriver->redraw();
+                        videoDriver->freeContext();
+                    }
 				}
-			} else
+			} else if (!videoDriver->hasReshaping()) {
 				videoDriver->redraw(true);
+            }
         }
 
-        if (!emuThread->enabled || !isBGCompletlyCovered())
+        if (!emuThread->enabled || !useUnblockedResizing())
 		    audioDriver->clear();
     };
 
     onResizeStart = [this]() {
-        if (activeVideoManager && !fullScreen() && !requestFullscreenSwitch && emuThread->enabled && !isBGCompletlyCovered() ) {
+        if (activeVideoManager && !fullScreen() && !requestFullscreenSwitch && emuThread->enabled && !useUnblockedResizing() ) {
             this->setPreventBackgroundRedrawing( false );
             emuThread->lock();
         }

@@ -469,10 +469,10 @@ auto VideoLayout::translate() -> void {
 
 auto VideoLayout::updateDriverPropsVisibility() -> void {
     auto selected = driverLayout.combo.text();
-    auto threadedUI = globalSettings->get<bool>("threaded_emu", false);
+    auto threadedEmu = globalSettings->get<bool>("threaded_emu", false);
 
     if (selected == "Direct3D") {
-        videoSettingsLayout.exclusiveFullscreen.setEnabled( !threadedUI );
+        videoSettingsLayout.exclusiveFullscreen.setEnabled( !threadedEmu );
         videoSettingsLayout.hardSync.setEnabled(false);
 
     } else if(GUIKIT::String::foundSubStr(selected, "GL")) {

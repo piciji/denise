@@ -51,7 +51,8 @@ struct Video {
 	virtual auto hintExclusiveFullscreen(bool state, float rate = 0.0) -> void {}
     virtual auto disableExclusiveFullscreen() -> void {}
     /** CGL only */
-    virtual auto allowReshaping(bool state) -> void {}
+    virtual auto hasReshaping() -> bool { return false; }
+    virtual auto setReshaping(bool state) -> void {}
 
     virtual ~Video() = default;
     static auto create(const std::string& driver) -> Video*;

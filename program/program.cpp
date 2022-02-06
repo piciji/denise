@@ -89,12 +89,12 @@ Program::Program() {
 }
 
 auto Program::initUserInterface() -> void {
-    bool threadedUI = globalSettings->get<bool>("threaded_emu", false);
+    bool threadedEmu = globalSettings->get<bool>("threaded_emu", false);
 
     if (cmd->noGui) {
 		emuThread->enable( false );
         GUIKIT::Application::loop = [this]() { loopNoGui(); };        
-    } else if (!threadedUI) {
+    } else if (!threadedEmu) {
 		emuThread->enable( false );
         GUIKIT::Application::loop = [this]() { loop(); };        
     } else {
@@ -102,7 +102,7 @@ auto Program::initUserInterface() -> void {
 		GUIKIT::Application::loop = [this]() { loopUserInterface(); };
 		emuThread->enable( true );        
     }
-    videoDriver->allowReshaping( !threadedUI );
+    videoDriver->setReshaping( !threadedEmu );
 }
 
 auto Program::addEmulators() -> void {

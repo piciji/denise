@@ -69,7 +69,7 @@ struct View : public GUIKIT::Window {
     auto togglePause() -> void;
     auto updatePauseCheck() -> void;
     auto updateFastforwardCheck() -> void;
-    auto isBGCompletlyCovered() -> bool;
+    auto useUnblockedResizing() -> bool;
     auto updatePreventBgRedraw() -> void;
 
     GUIKIT::Viewport viewport;    

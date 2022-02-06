@@ -143,21 +143,37 @@ struct CGL : public Video, OpenGL, RenderThread {
     auto forceResize() -> void {
         resizeWindow();
     }
+    
+    auto redrawCustom(bool disallowShader = false) -> void {
+        redraw(disallowShader);
+    }
+    
+    auto lockResize() -> void {
+        resizeMutex.lock();
+        resizeMutexThreaded.lock();
+    }
+    
+    auto unlockResize() -> void {
+        _redraw(true, settings.threaded ? getLastBufferToRender() : nullptr);
+
+        resizeMutexThreaded.unlock();
+        resizeMutex.unlock();
+    }
 
     void redraw(bool disallowShader = false) {
-        if (settings.threaded)
-            return;
-        
         makeCurrent(true);
         _redraw(disallowShader);
     }
     
     auto unlockAndRedraw(bool disallowShader = false, bool freeContext = false) -> void {
         if (settings.threaded) {
-            //resizeWindow();
+            resizeWindow();
             RenderThread::unlock(disallowShader);
-        } else
+        } else {
+            resizeMutex.lock();
             redraw(disallowShader);
+            resizeMutex.unlock();
+        }
             
         if (freeContext)
             clearCurrent();
@@ -167,9 +183,8 @@ struct CGL : public Video, OpenGL, RenderThread {
 
         @autoreleasepool {
             if([view lockFocusIfCanDraw]) {
-                //auto area = [view frame];
-                //outputWidth = area.size.width, outputHeight = area.size.height;
-
+                resizeWindow();
+    
                 OpenGL::clear();
                 OpenGLSurface::updateTexture(renderBuffer);
                 OpenGL::refresh(disallowShader);
@@ -179,13 +194,14 @@ struct CGL : public Video, OpenGL, RenderThread {
 
                 [[view openGLContext] flushBuffer];
                 if(settings.hardSync && settings.synchronize) glFinish();
+              
                 [view unlockFocus];
             }
         }
     }
 
     auto refresh() -> void {
-
+        resizeMutexThreaded.lock();
         @autoreleasepool {
             makeCurrent();
             if ([view lockFocusIfCanDraw]) {
@@ -221,11 +237,14 @@ struct CGL : public Video, OpenGL, RenderThread {
 
                 [[view openGLContext] flushBuffer];
                 if (settings.hardSync && settings.synchronize) glFinish();
+                    
                 [view unlockFocus];
             }
 
             clearCurrent();
+           
         }
+        resizeMutexThreaded.unlock();
     }
     
     void synchronize(bool state) {
@@ -251,7 +270,11 @@ struct CGL : public Video, OpenGL, RenderThread {
         settings.hardSync = state;
     }
 
-    auto allowReshaping(bool state) -> void {
+    auto hasReshaping() -> bool {
+        return true;
+    }
+    
+    auto setReshaping(bool state) -> void {
         useReshaping = state;
     }
     
@@ -373,10 +396,9 @@ struct CGL : public Video, OpenGL, RenderThread {
 }
 
 -(void) reshape {
-    video->resizeWindow();
     if (!video->useReshaping)
         return;
-    
+
     video->makeCurrent();
     video->_redraw(true, video->settings.threaded ? video->getLastBufferToRender() : nullptr);
     video->clearCurrent();

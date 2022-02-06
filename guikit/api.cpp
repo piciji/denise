@@ -337,6 +337,13 @@ auto Window::setPreventBackgroundRedrawing(bool prevent) -> void {
     state.preventBackgroundRedrawing = prevent;
 }
     
+auto Window::causeBGRedrawVideoFlicker() const -> bool {
+    if (Application::isGtk() || Application::isCocoa())
+        return false;
+    
+    return true;
+}
+    
 auto Window::changeCursor( Image& image, unsigned hotSpotX, unsigned hotSpotY ) -> void {
     if (state.cursorImage == &image)
         return;

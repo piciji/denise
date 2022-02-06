@@ -262,7 +262,7 @@
 
 -(void) windowDidExitFullScreen:(NSNotification*)notification {    
     window->p.setGeometry( window->state.geometry );
-    if(window->onSize) window->onSize();
+    if(window->onSize) window->onSize(GUIKIT::Window::SIZE_MODE::Default);
     window->p.fullScreenToggleDelay = false;
 }
 
@@ -442,7 +442,7 @@ auto pApplication::setClipboardText( std::string text ) -> void {
 }
 
 //window
-pWindow::pWindow(Window& window) : window(window) {
+pWindow::pWindow(Window& window, Window::Hints hints) : window(window) {
     @autoreleasepool {
         cocoaWindow = [[CocoaWindow alloc] initWith:window];
         
@@ -692,7 +692,7 @@ auto pWindow::sizeEvent() -> void {
     //if (backgroundView)
       //  [backgroundView setFrame:[[cocoaWindow contentView] bounds]];
             
-    if(!locked && window.onSize) window.onSize();
+    if(!locked && window.onSize) window.onSize(Window::SIZE_MODE::Default);
 }
 
 auto pWindow::append(Menu& menu) -> void {    

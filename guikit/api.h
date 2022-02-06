@@ -169,7 +169,7 @@ struct Application {
 };
 
 struct Window : Base {
-    enum class SIZE_MODE { Default, Minimized, Maximized, Restored };
+    enum class SIZE_MODE { Default, Minimized, Maximized };
 
     std::function<void ()> onClose = nullptr;
     std::function<void ()> onMove = nullptr;
@@ -255,6 +255,8 @@ struct Window : Base {
 	auto tellMeShouldICreateTheUIRightAway() -> bool;
     auto setAspectRatio(Size ratio) -> void;
     auto setPreventBackgroundRedrawing(bool prevent) -> void;
+    
+    auto causeBGRedrawVideoFlicker() const -> bool;
 	
 	static auto addCustomFont( CustomFont* customFont ) -> bool;
 	static auto countCustomFonts() -> unsigned;
