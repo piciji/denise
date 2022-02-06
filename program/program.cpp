@@ -102,7 +102,7 @@ auto Program::initUserInterface() -> void {
 		GUIKIT::Application::loop = [this]() { loopUserInterface(); };
 		emuThread->enable( true );        
     }
-    videoDriver->setReshaping( !threadedEmu );
+    videoDriver->setReshaping( !isRunning || !threadedEmu );
 }
 
 auto Program::addEmulators() -> void {
@@ -319,6 +319,8 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
         statusHandler->resetFrameCounter();
 
         view->updateSpeedLabels();
+            
+        videoDriver->setReshaping( !emuThread->enabled );
 	}
 	
 	activeEmulator->power();
@@ -376,6 +378,7 @@ auto Program::powerOff() -> void {
 			activeVideoManager->powerOff();
 		videoDriver->clear();
         videoDriver->hintExclusiveFullscreen( false );
+        videoDriver->setReshaping( true );
 		audioDriver->clear();
 		audioManager->powerOff();
 		activeEmulator = nullptr;
