@@ -189,7 +189,7 @@ namespace DRIVER {
             std::mutex cvM;
             std::unique_lock<std::mutex> lk(cvM);
 #ifdef __APPLE__
-            if (ThreadPriority::setPriority( ThreadPriority::Mode::High, 3.0, 5.0 )) {
+            if (ThreadPriority::setPriority( ThreadPriority::Mode::Realtime, 3.0, 5.0 )) {
             //     logger->log("increased render thread prio");
             }
 #endif

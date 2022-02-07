@@ -148,14 +148,17 @@ struct CGL : public Video, OpenGL, RenderThread {
         redraw(disallowShader);
     }
     
+    auto shouldResizeWhenThreaded() -> bool { return false; }
+    
     auto lockResize() -> void {
         resizeMutex.lock();
         resizeMutexThreaded.lock();
     }
     
     auto unlockResize() -> void {
-        _redraw(false, settings.threaded ? getLastBufferToRender() : nullptr);
-
+        if (NSAppKitVersionNumber < 2022) // before Big Sur
+            _redraw(false, settings.threaded ? getLastBufferToRender() : nullptr);
+        
         resizeMutexThreaded.unlock();
         resizeMutex.unlock();
     }

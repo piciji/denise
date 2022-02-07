@@ -159,16 +159,38 @@ auto View::build() -> void {
     };
 
     onResizeStart = [this]() {
-        if (activeVideoManager && !fullScreen() && !requestFullscreenSwitch && emuThread->enabled && !useUnblockedResizing() ) {
+        if (activeVideoManager && emuThread->enabled && !fullScreen() && !requestFullscreenSwitch) {
+            
+            if (!useUnblockedResizing()) {
+                this->setPreventBackgroundRedrawing( false );
+                emuThread->lock();
+                
+            } else if (!videoDriver->shouldResizeWhenThreaded() && videoDriver->hasThreaded()) {
+                emuThread->lock();
+                videoDriver->setThreaded( false );
+                emuThread->unlock();
+                requestRenderThreadAfterResizing = true;
+            }
+        }
+        
+        /*if (activeVideoManager && !fullScreen() && !requestFullscreenSwitch && emuThread->enabled && !useUnblockedResizing() ) {
             this->setPreventBackgroundRedrawing( false );
             emuThread->lock();
-        }
+        }*/
     };
 
     onResizeEnd = [this]() {
+        
         if (emuThread->enabled && emuThread->locked()) {
             videoDriver->freeContext();
             emuThread->unlock();
+        }
+        
+        if (requestRenderThreadAfterResizing) {
+            emuThread->lock();
+            videoDriver->setThreaded( true );
+            emuThread->unlock();
+            requestRenderThreadAfterResizing = false;
         }
     };
 	

@@ -207,6 +207,16 @@
     window->p.sizeEvent();
 }
 
+-(void)windowWillStartLiveResize:(NSNotification *)notification {
+    if (window->onResizeStart && !window->fullScreen())
+        window->onResizeStart();
+}
+
+-(void)windowDidEndLiveResize:(NSNotification *)notification {
+    if (window->onResizeEnd && !window->fullScreen())
+        window->onResizeEnd();
+}
+
 - (NSSize)windowWillResize:(NSWindow *)sender toSize:(NSSize)frameSize {
     
     auto aspect = window->aspectRatio();

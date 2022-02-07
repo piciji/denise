@@ -39,6 +39,7 @@ struct Video {
     virtual auto hardSync(bool state) -> void {}
     virtual auto setThreaded(bool state) -> void {}
     virtual auto hasThreaded() -> bool { return false; }
+    virtual auto shouldResizeWhenThreaded() -> bool { return true; }
 	virtual auto showMessage(std::string message, bool critical = false) -> void {}
     virtual auto forceResize() -> void {}
     virtual auto freeContext() -> void {}
