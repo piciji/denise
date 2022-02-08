@@ -53,7 +53,7 @@
         [self setTarget:self];
         [self setAction:@selector(activate:)];
         [self setMinValue:0];
-        [self setVertical:YES];
+        [self setVertical:1];
         
         CocoaSliderCell* notifySliderCell = [[[CocoaSliderCell alloc] initWith: *slider] autorelease];
         [self setCell:notifySliderCell];
@@ -76,7 +76,7 @@
         [self setTarget:self];
         [self setAction:@selector(activate:)];
         [self setMinValue:0];
-        [self setVertical:NO];
+        [self setVertical:0];
         
         CocoaSliderCell* notifySliderCell = [[[CocoaSliderCell alloc] initWith: *slider] autorelease];
         [self setCell:notifySliderCell];
