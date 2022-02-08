@@ -1,9 +1,9 @@
 
 #define GL_ALPHA_TEST 0x0bc0
-#define NSAppKitVersionNumber10_14 1671
 #include "thread/renderThread.h"
 #include <Cocoa/Cocoa.h>
 #include "opengl/opengl.h"
+#define NSAppKitVersionNumber10_14 1671
 
 namespace DRIVER { struct CGL; }
 

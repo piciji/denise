@@ -157,6 +157,7 @@
         [appMenu addItem:item];
         
         [self setAutorecalculatesKeyViewLoop: YES];
+        [self setMinSize:NSMakeSize(100,100)];
     }
     
     return self;
