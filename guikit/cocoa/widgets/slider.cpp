@@ -92,6 +92,7 @@ namespace GUIKIT {
     
 auto pSlider::minimumSize() -> Size {
     unsigned thickness = (unsigned)[cocoaView knobThickness];
+    thickness += 1;
     
     if (slider.orientation == Slider::Orientation::VERTICAL)
         return {thickness, thickness};
