@@ -53,9 +53,10 @@
         [self setTarget:self];
         [self setAction:@selector(activate:)];
         [self setMinValue:0];
-        [self setVertical:1];
         
         CocoaSliderCell* notifySliderCell = [[[CocoaSliderCell alloc] initWith: *slider] autorelease];
+        
+        [notifySliderCell setVertical:1];
         [self setCell:notifySliderCell];
     }
     return self;
@@ -76,9 +77,10 @@
         [self setTarget:self];
         [self setAction:@selector(activate:)];
         [self setMinValue:0];
-        [self setVertical:0];
         
         CocoaSliderCell* notifySliderCell = [[[CocoaSliderCell alloc] initWith: *slider] autorelease];
+        
+        [notifySliderCell setVertical:0];
         [self setCell:notifySliderCell];
     }
     return self;
@@ -94,13 +96,11 @@ namespace GUIKIT {
     
 auto pSlider::minimumSize() -> Size {
     unsigned thickness = (unsigned)[cocoaView knobThickness];
-    //if (!GUIKIT::hasMinimumVersion(10, 10))
-      //  thickness = 26; //wtf
     
     if (slider.orientation == Slider::Orientation::VERTICAL)
-        return {thickness, thickness};
+        return {thickness, thickness + 1};
         
-    return {thickness, thickness};
+    return {thickness + 1, thickness};
 }
     
 auto pSlider::setGeometry(Geometry geometry) -> void {
