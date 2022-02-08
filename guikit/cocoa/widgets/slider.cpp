@@ -56,7 +56,6 @@
         
         CocoaSliderCell* notifySliderCell = [[[CocoaSliderCell alloc] initWith: *slider] autorelease];
         
-        [notifySliderCell setVertical:1];
         [self setCell:notifySliderCell];
     }
     return self;
@@ -71,17 +70,16 @@
 @implementation CocoaHorizontalSlider : NSSlider
 
 -(id) initWith:(GUIKIT::Slider&)sliderReference {
-    if(self = [super initWithFrame:NSMakeRect(0, 0, 1, 0)]) {
+    if(self = [super initWithFrame:NSMakeRect(0, 0, 10, 0)]) {
         slider = &sliderReference;
         
         [self setTarget:self];
         [self setAction:@selector(activate:)];
         [self setMinValue:0];
         
-        CocoaSliderCell* notifySliderCell = [[[CocoaSliderCell alloc] initWith: *slider] autorelease];
+       // CocoaSliderCell* notifySliderCell = [[[CocoaSliderCell alloc] initWith: *slider] autorelease];
         
-        [notifySliderCell setVertical:0];
-        [self setCell:notifySliderCell];
+       // [self setCell:notifySliderCell];
     }
     return self;
 }
@@ -100,7 +98,7 @@ auto pSlider::minimumSize() -> Size {
     if (slider.orientation == Slider::Orientation::VERTICAL)
         return {thickness, thickness + 1};
         
-    return {thickness + 1, thickness};
+    return {thickness + 10, thickness};
 }
     
 auto pSlider::setGeometry(Geometry geometry) -> void {
