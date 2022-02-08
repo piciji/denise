@@ -43,6 +43,7 @@ don't forget to update SDK (commandline tools), when upgrading OS: xcode-select 
 sudo ln -s /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/* /usr/local/include/
 xcrun --show-sdk-path
 export SDKROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/
+export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/
 
 
 install brew first: /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"

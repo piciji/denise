@@ -41,6 +41,7 @@ ifeq ($(platform),windows)
 else ifeq ($(platform),macosx)
     flags += -w -stdlib=libc++
     link += -lc++ -lobjc
+    export MACOSX_DEPLOYMENT_TARGET=10.9
 else
     link += -lpthread -no-pie      
 endif

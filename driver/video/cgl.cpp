@@ -1,5 +1,6 @@
 
 #define GL_ALPHA_TEST 0x0bc0
+#define NSAppKitVersionNumber10_14 1671
 #include "thread/renderThread.h"
 #include <Cocoa/Cocoa.h>
 #include "opengl/opengl.h"
@@ -148,7 +149,7 @@ struct CGL : public Video, OpenGL, RenderThread {
         redraw(disallowShader);
     }
     
-    auto shouldResizeWhenThreaded() -> bool { return false; }
+    auto shouldResizeWhenThreaded() -> bool { return NSAppKitVersionNumber < NSAppKitVersionNumber10_14; }
     
     auto lockResize() -> void {
         resizeMutex.lock();
@@ -156,7 +157,7 @@ struct CGL : public Video, OpenGL, RenderThread {
     }
     
     auto unlockResize() -> void {
-        if (NSAppKitVersionNumber < 2022) // before Big Sur
+        if (NSAppKitVersionNumber < NSAppKitVersionNumber10_14) // before Mojave
             _redraw(false, settings.threaded ? getLastBufferToRender() : nullptr);
         
         resizeMutexThreaded.unlock();
