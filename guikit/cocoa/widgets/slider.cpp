@@ -55,7 +55,6 @@
         [self setMinValue:0];
         
         CocoaSliderCell* notifySliderCell = [[[CocoaSliderCell alloc] initWith: *slider] autorelease];
-        
         [self setCell:notifySliderCell];
     }
     return self;
@@ -70,16 +69,15 @@
 @implementation CocoaHorizontalSlider : NSSlider
 
 -(id) initWith:(GUIKIT::Slider&)sliderReference {
-    if(self = [super initWithFrame:NSMakeRect(0, 0, 10, 0)]) {
+    if(self = [super initWithFrame:NSMakeRect(0, 0, 1, 0)]) {
         slider = &sliderReference;
         
         [self setTarget:self];
         [self setAction:@selector(activate:)];
         [self setMinValue:0];
         
-       // CocoaSliderCell* notifySliderCell = [[[CocoaSliderCell alloc] initWith: *slider] autorelease];
-        
-       // [self setCell:notifySliderCell];
+        CocoaSliderCell* notifySliderCell = [[[CocoaSliderCell alloc] initWith: *slider] autorelease];
+        [self setCell:notifySliderCell];
     }
     return self;
 }
@@ -93,12 +91,16 @@
 namespace GUIKIT {
     
 auto pSlider::minimumSize() -> Size {
-    unsigned thickness = (unsigned)[cocoaView knobThickness];
+    unsigned thickness = 18;
+    if (GUIKIT::hasMinimumVersion(10, 10)) {
+        // don't access knob thickness in Mavericks or slider will be always vertical... wtf
+        thickness = (unsigned)[cocoaView knobThickness];
+    }
     
     if (slider.orientation == Slider::Orientation::VERTICAL)
-        return {thickness, thickness + 1};
+        return {thickness, thickness};
         
-    return {thickness + 10, thickness};
+    return {thickness, thickness};
 }
     
 auto pSlider::setGeometry(Geometry geometry) -> void {

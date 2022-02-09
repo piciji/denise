@@ -412,8 +412,9 @@ auto pApplication::initialize() -> void {
         
         [[NSProcessInfo processInfo] beginActivityWithOptions: NSActivityUserInitiated | NSActivityLatencyCritical reason: @"video synchron output"];
         
-        if ([NSThread respondsToSelector:@selector(setQualityOfService:)])
+        if ([[NSThread currentThread] respondsToSelector:@selector(setQualityOfService:)]) {
             [[NSThread currentThread] setQualityOfService: NSQualityOfServiceUserInteractive];
+        }
         
         [NSApplication sharedApplication];
         cocoaDelegate = [[CocoaDelegate alloc] init];
