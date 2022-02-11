@@ -281,25 +281,62 @@ struct GLX : public Video, OpenGL, RenderThread {
         outputWidth = parent.width, outputHeight = parent.height;
     }
 
+    auto lockResize() -> void {
+        resizeMutex.lock();
+        resizeMutexThreaded.lock();
+    }
+
+    auto unlockResize() -> void {
+        redrawCustom();
+
+        resizeMutexThreaded.unlock();
+        resizeMutex.unlock();
+    }
+
+    auto hintResizing(bool state) -> void {
+        settings.resizing = state;
+    }
+
     auto unlockAndRedraw(bool disallowShader = false, bool freeContext = false) -> void {
         if (settings.threaded) {
             resizeWindow();
             RenderThread::unlock(disallowShader);
         } else
-            redraw(disallowShader);
+            _redraw(disallowShader);
 
         if (freeContext)
             clearCurrent();
     }
 
     auto redraw(bool disallowShader = false) -> void {
-        if (settings.threaded)
-            return;
+        resizeMutex.lock();
+        resizeMutexThreaded.lock();
+        redrawCustom(disallowShader);
+        resizeMutexThreaded.unlock();
+        resizeMutex.unlock();
+    }
 
+    auto redrawCustom(bool disallowShader = false) -> void {
         resizeWindow();
+        makeCurrent();
+       // OpenGL::clear();
+        OpenGLSurface::updateTexture(settings.threaded ? getLastBufferToRender() : nullptr);
+        OpenGL::refresh(disallowShader);
+#ifdef DRV_FREETYPE
+        screenText.showText(outputWidth, outputHeight, -0.01, 0.01, OpenGLText::ALIGN_RIGHT | OpenGLText::VALIGN_BOTTOM);
+#endif
+        if(glx.doubleBuffer) glXSwapBuffers(display, glxwindow);
+        //  if(settings.hardSync && settings.synchronize) glFinish();
+        clearCurrent();
+    }
+
+    auto _redraw(bool disallowShader = false) -> void {
+        resizeWindow();
+        resizeMutex.lock();
         makeCurrent(true);
+
         OpenGL::clear();
-        OpenGLSurface::updateTexture();
+        OpenGLSurface::updateTexture(settings.threaded ? getLastBufferToRender() : nullptr );
         OpenGL::refresh(disallowShader);
 #ifdef DRV_FREETYPE
         screenText.showText(outputWidth, outputHeight, -0.01, 0.01, OpenGLText::ALIGN_RIGHT | OpenGLText::VALIGN_BOTTOM);
@@ -307,10 +344,14 @@ struct GLX : public Video, OpenGL, RenderThread {
 
         if(glx.doubleBuffer) glXSwapBuffers(display, glxwindow);
         if(settings.hardSync && settings.synchronize) glFinish();
+        if (settings.resizing)
+            clearCurrent();
+        resizeMutex.unlock();
     }
 
     auto refresh() -> void {
 
+        resizeMutexThreaded.lock();
         makeCurrent();
         OpenGL::clear();
 
@@ -346,6 +387,7 @@ struct GLX : public Video, OpenGL, RenderThread {
         if(settings.hardSync && settings.synchronize) glFinish();
 
         clearCurrent();
+        resizeMutexThreaded.unlock();
     }
 
     auto term() -> void {

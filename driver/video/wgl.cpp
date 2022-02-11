@@ -189,8 +189,6 @@ struct WGL : Video, OpenGL, RenderThread {
     }
 	
 	auto redraw(bool disallowShader = false) -> void {
-       // if (settings.threaded)
-         //   wait();
 		resizeMutex.lock();
         resizeWindow();
         makeCurrent(true);

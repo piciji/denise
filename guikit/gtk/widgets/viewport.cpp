@@ -11,7 +11,7 @@ auto pViewport::create() -> void {
     g_signal_connect(G_OBJECT(gtkWidget), "button-release-event", G_CALLBACK(pViewport::mouseRelease), (gpointer)this);
     g_signal_connect(G_OBJECT(gtkWidget), "leave-notify-event", G_CALLBACK(pViewport::mouseLeave), (gpointer)this);
     g_signal_connect(G_OBJECT(gtkWidget), "motion-notify-event", G_CALLBACK(pViewport::mouseMove), (gpointer)this);
-	g_signal_connect(G_OBJECT(gtkWidget), "draw", G_CALLBACK(pViewport::drawEvent), (gpointer)this);
+    //g_signal_connect(G_OBJECT(gtkWidget), "draw", G_CALLBACK(pViewport::drawEvent), (gpointer)this);
 
     g_signal_connect(gtk_widget_get_screen(gtkWidget), "monitors_changed", G_CALLBACK(pViewport::monitorsChanged), (gpointer)this);
 }

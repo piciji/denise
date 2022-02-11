@@ -91,7 +91,7 @@ auto pWidget::setGeometry(Geometry geometry) -> void {
 	if (!widget.visible()) 
 		gtk_widget_set_visible(gtkWidget, true);
 	
-    gtk_fixed_move(GTK_FIXED(parentGtk), gtkWidget, geometry.x, geometry.y);		
+    gtk_fixed_move(GTK_FIXED(parentGtk), gtkWidget, geometry.x, geometry.y);
     gtk_widget_set_size_request(gtkWidget, geometry.width, geometry.height);	
 	
 	if (!widget.visible()) 

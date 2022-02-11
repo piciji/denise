@@ -36,8 +36,10 @@ struct pWindow {
     Timer timer;
 	Timer timerResize;
 	Timer timerFullscreen;
+    Timer timerWorkaround;
     GdkCursor* cursor = nullptr;
 	bool isMinimized = false;
+    bool resizing = false;
 
     auto append(Menu& menu) -> void;
     auto append(Widget& widget) -> void;
@@ -72,14 +74,15 @@ struct pWindow {
 	auto restore() -> void;
 	auto setForeground() -> void;
     auto getScrollbarWidth() -> unsigned { return 15; }
-    auto applyAspectRatio() -> void {}
+    auto applyAspectRatio() -> void;
+    auto updateGeometryHint() -> void;
 	
 	auto moveWindow(GdkEvent* event) -> void;
 	auto sizeWindow(GtkAllocation* allocation) -> void;
     
     static auto addCustomFont( CustomFont* customFont ) -> bool;
 
-    pWindow(Window& window);
+    pWindow(Window& window, Window::Hints hints = Window::Hints::Default);
 };
 
 struct pStatusBar {

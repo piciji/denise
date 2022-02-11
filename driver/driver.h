@@ -45,6 +45,7 @@ struct Video {
     virtual auto freeContext() -> void {}
     virtual auto lockResize() -> void {}
     virtual auto unlockResize() -> void {}
+    virtual auto hintResizing(bool state) -> void {}
     
     virtual auto shaderFormat() -> ShaderType { return ShaderType::NotSupported; }
 	/** direct 3D only */
