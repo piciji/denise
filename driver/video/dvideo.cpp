@@ -5,10 +5,11 @@
 #include <d3d9.h>
 #include <d3dx9.h>
 #include <math.h>
+#include <uxtheme.h>
 #include <cstring>
 
 namespace DRIVER {
-	
+
 #define D3DVERTEX (D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_TEX1)
 
 struct DVideo : Video, RenderThread {
@@ -20,31 +21,33 @@ struct DVideo : Video, RenderThread {
     LPDIRECT3DTEXTURE9 texture;
     LPDIRECT3DVERTEXBUFFER9 vertex_buffer, *vertex_ptr;
     D3DLOCKED_RECT d3dlr;
-	std::vector<LPD3DXEFFECT> effects;
-	ID3DXFont* mFont;
-	const unsigned FONT_WIDTH = 1024;
-	unsigned textureWidth = 0;
-	unsigned textureHeight = 0;
+    std::vector<LPD3DXEFFECT> effects;
+    ID3DXFont* mFont;
+    const unsigned FONT_WIDTH = 1024;
+    unsigned textureWidth = 0;
+    unsigned textureHeight = 0;
     unsigned pitch;
 
     unsigned inputWidth, inputHeight;
-	RECT outScreen;
+    RECT outScreen;
     std::mutex noteMutex;
+	bool themed = true;
 
     struct {
         bool synchronize;
         Filter filter = Video::Filter::Nearest;
-		std::vector<ShaderPass*> passes = {};
+        std::vector<ShaderPass*> passes = {};
         HWND handle;
         HWND parent;
-		bool hintExclusiveFullscreen = false;
+        bool hintExclusiveFullscreen = false;
         float exclusiveFullscreenRate = 0.0;
+        bool exclusiveFullscreen = false;
         bool threaded = false;
     } settings;
 
     struct {
         bool dynamic;
-		bool shader;
+        bool shader;
     } caps;
 
     struct {
@@ -53,12 +56,12 @@ struct DVideo : Video, RenderThread {
         unsigned lock;
         unsigned filter;
     } flags;
-	
-	struct {
-		wchar_t* message;
-		bool enable = false;
-		D3DCOLOR fontColor;
-	} note;
+
+    struct {
+        wchar_t* message;
+        bool enable = false;
+        D3DCOLOR fontColor;
+    } note;
 
     struct d3dvertex {
         float x, y, z, rhw; //screen coords
@@ -69,295 +72,408 @@ struct DVideo : Video, RenderThread {
     bool lost;
 
     auto releaseResources() -> void {
-		releaseShader();
-		dxRelease(surface);
-		dxRelease(texture);
-		dxRelease(vertex_buffer);
-		dxRelease(mFont);
-	}
-	
-	auto releaseShader() -> void {
-		for (auto effect : effects) {
-			dxRelease(effect);
-		}
-		effects.clear();		
-	}
-	
+        releaseShader();
+        dxRelease(surface);
+        dxRelease(texture);
+        dxRelease(vertex_buffer);
+        dxRelease(mFont);
+    }
+
+    auto releaseShader() -> void {
+        for (auto effect : effects) {
+            dxRelease(effect);
+        }
+        effects.clear();
+    }
+
     auto updateFilter() -> void {
-		if (!lpD3DDevice) return;
-		if (lost && !recover()) return;
+        if (!lpD3DDevice) return;
+        if (lost && !recover()) {
+            if (!init())
+                return;
+        }
 
-		flags.filter = D3DTEXF_POINT;
-		if (settings.filter == Video::Filter::Nearest) flags.filter = D3DTEXF_POINT;
-		else if (settings.filter == Video::Filter::Linear) flags.filter = D3DTEXF_LINEAR;
+        flags.filter = D3DTEXF_POINT;
+        if (settings.filter == Video::Filter::Nearest) flags.filter = D3DTEXF_POINT;
+        else if (settings.filter == Video::Filter::Linear) flags.filter = D3DTEXF_LINEAR;
 
-		lpD3DDevice->SetSamplerState(0, D3DSAMP_MINFILTER, flags.filter);
-		lpD3DDevice->SetSamplerState(0, D3DSAMP_MAGFILTER, flags.filter);
-		lpD3DDevice->SetSamplerState(0, D3DSAMP_MIPFILTER, flags.filter);
-	}
-	
+        lpD3DDevice->SetSamplerState(0, D3DSAMP_MINFILTER, flags.filter);
+        lpD3DDevice->SetSamplerState(0, D3DSAMP_MAGFILTER, flags.filter);
+        lpD3DDevice->SetSamplerState(0, D3DSAMP_MIPFILTER, flags.filter);
+    }
+
     auto setVertex(unsigned src_w, unsigned src_h, unsigned tex_w, unsigned tex_h, unsigned dest_x, unsigned dest_y, unsigned dest_w, unsigned dest_h) -> void {
-		d3dvertex vertex[4];
+        d3dvertex vertex[4];
 
-		vertex[0].x = vertex[2].x = ((float) dest_x) - 0.5f;
-		vertex[1].x = vertex[3].x = ((float) dest_x + (float) dest_w) - 0.5f;
-		vertex[0].y = vertex[1].y = ((float) dest_y) - 0.5f;
-		vertex[2].y = vertex[3].y = ((float) dest_y + (float) dest_h) - 0.5f;
+        vertex[0].x = vertex[2].x = ((float) dest_x) - 0.5f;
+        vertex[1].x = vertex[3].x = ((float) dest_x + (float) dest_w) - 0.5f;
+        vertex[0].y = vertex[1].y = ((float) dest_y) - 0.5f;
+        vertex[2].y = vertex[3].y = ((float) dest_y + (float) dest_h) - 0.5f;
 
-		vertex[0].z = vertex[1].z = 1.0;
-		vertex[2].z = vertex[3].z = 1.0;
-		vertex[0].rhw = vertex[1].rhw = 1.0;
-		vertex[2].rhw = vertex[3].rhw = 1.0;
+        vertex[0].z = vertex[1].z = 1.0;
+        vertex[2].z = vertex[3].z = 1.0;
+        vertex[0].rhw = vertex[1].rhw = 1.0;
+        vertex[2].rhw = vertex[3].rhw = 1.0;
 
-		vertex[0].u = vertex[2].u = 0;
-		vertex[1].u = vertex[3].u = (float) src_w / (float) tex_w;
-		vertex[0].v = vertex[1].v = 0;
-		vertex[2].v = vertex[3].v = (float) src_h / (float) tex_h;
+        vertex[0].u = vertex[2].u = 0;
+        vertex[1].u = vertex[3].u = (float) src_w / (float) tex_w;
+        vertex[0].v = vertex[1].v = 0;
+        vertex[2].v = vertex[3].v = (float) src_h / (float) tex_h;
 
-		vertex_buffer->Lock(0, sizeof (d3dvertex) * 4, (void**) &vertex_ptr, 0);
-		std::memcpy(vertex_ptr, vertex, sizeof (d3dvertex) * 4);
-		vertex_buffer->Unlock();
+        vertex_buffer->Lock(0, sizeof (d3dvertex) * 4, (void**) &vertex_ptr, 0);
+        std::memcpy(vertex_ptr, vertex, sizeof (d3dvertex) * 4);
+        vertex_buffer->Unlock();
 
-		lpD3DDevice->SetStreamSource(0, vertex_buffer, 0, sizeof (d3dvertex));
-	}
-	
-	auto setShader(std::vector<ShaderPass*> passes) -> void {
-		
-		settings.passes = passes;
-		releaseShader();
+        lpD3DDevice->SetStreamSource(0, vertex_buffer, 0, sizeof (d3dvertex));
+    }
 
-		for (auto pass : passes) {
-            
+    auto setShader(std::vector<ShaderPass*> passes) -> void {
+
+        settings.passes = passes;
+        releaseShader();
+
+        for (auto pass : passes) {
+
             if (pass->fragment.empty())
                 continue;
-            
+
             if (!caps.shader || !lpD3DDevice) {
                 pass->error = "no shader support";
                 continue;
             }
-            
-			if (pass->fragment.empty()) continue;
 
-			LPD3DXBUFFER pBufferErrors = nullptr;
-			LPD3DXEFFECT effect = nullptr;
+            if (pass->fragment.empty()) continue;
 
-			HRESULT hr = D3DXCreateEffect(lpD3DDevice, (const void*) pass->fragment.c_str(), lstrlenA(pass->fragment.c_str()), NULL, NULL, 0, NULL, &effect, &pBufferErrors);
+            LPD3DXBUFFER pBufferErrors = nullptr;
+            LPD3DXEFFECT effect = nullptr;
 
-			if (pBufferErrors) {
-				char* errorMessage = (char*) pBufferErrors->GetBufferPointer();
-				std::string str(errorMessage);
-				pass->error = str;
-				delete pBufferErrors;
-			}
+            HRESULT hr = D3DXCreateEffect(lpD3DDevice, (const void*) pass->fragment.c_str(), lstrlenA(pass->fragment.c_str()), NULL, NULL, 0, NULL, &effect, &pBufferErrors);
 
-			if (!SUCCEEDED(hr)) continue;
+            if (pBufferErrors) {
+                char* errorMessage = (char*) pBufferErrors->GetBufferPointer();
+                std::string str(errorMessage);
+                pass->error = str;
+                delete pBufferErrors;
+            }
 
-			D3DXHANDLE hTech;
-			effect->FindNextValidTechnique(NULL, &hTech);
-			effect->SetTechnique(hTech);
+            if (!SUCCEEDED(hr)) continue;
 
-			effects.push_back(effect);
-		}
-	}
-	
+            D3DXHANDLE hTech;
+            effect->FindNextValidTechnique(NULL, &hTech);
+            effect->SetTechnique(hTech);
+
+            effects.push_back(effect);
+        }
+    }
+
+    auto reset(bool exclusiveFullscreenNeedInit = true) -> bool {
+
+        bool exclusiveFullscreen = false;
+
+        HWND handle = settings.handle;
+        outScreen = getDimension ( settings.handle );
+        outScreen.left = outScreen.top = 0;
+
+        RECT outScreenParent;
+        settings.parent = getParentHandle();
+
+        if (settings.hintExclusiveFullscreen) {
+            handle = settings.parent;
+            outScreenParent = getDimension( handle );
+
+            unsigned monitorWidth = GetSystemMetrics(SM_CXSCREEN);
+            unsigned monitorHeight = GetSystemMetrics(SM_CYSCREEN);
+
+            if ( (outScreenParent.right == monitorWidth)
+                 && (outScreenParent.bottom == monitorHeight) ) {
+                exclusiveFullscreen = true;
+                outScreen.left = (outScreenParent.right - outScreen.right) / 2;
+                outScreen.top = (outScreenParent.bottom - outScreen.bottom) / 2;
+
+                if (exclusiveFullscreenNeedInit)
+                    return false;
+            } else {
+                handle = settings.handle;
+            }
+        }
+
+        ZeroMemory(&d3dpp, sizeof (d3dpp));
+
+        d3dpp.hDeviceWindow = handle;
+        d3dpp.Windowed = !exclusiveFullscreen;
+        d3dpp.BackBufferFormat = exclusiveFullscreen ? D3DFMT_X8R8G8B8 : D3DFMT_UNKNOWN;
+        d3dpp.BackBufferWidth = exclusiveFullscreen ? outScreenParent.right : 0;
+        d3dpp.BackBufferHeight = exclusiveFullscreen ? outScreenParent.bottom : 0;
+        d3dpp.FullScreen_RefreshRateInHz = (exclusiveFullscreen && (settings.exclusiveFullscreenRate > 0.0))
+                                           ? settings.exclusiveFullscreenRate : D3DPRESENT_RATE_DEFAULT;
+
+        d3dpp.PresentationInterval = settings.synchronize ? D3DPRESENT_INTERVAL_ONE : D3DPRESENT_INTERVAL_IMMEDIATE;
+        d3dpp.BackBufferCount = 1;
+        d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
+        d3dpp.Flags = D3DPRESENTFLAG_LOCKABLE_BACKBUFFER | D3DPRESENTFLAG_VIDEO;
+
+        d3dpp.MultiSampleQuality = 0; //antialiasing
+        d3dpp.MultiSampleType = D3DMULTISAMPLE_NONE; //antialiasing
+        d3dpp.EnableAutoDepthStencil = false; //Z-Buffer
+        d3dpp.AutoDepthStencilFormat = D3DFMT_UNKNOWN; //Z-Buffer
+
+        settings.exclusiveFullscreen = exclusiveFullscreen;
+
+        lost = true;
+        return recover();
+    }
+
     auto recover() -> bool {
-		if (!lpD3DDevice) {
-			return false;
-		}
+        if (!lpD3DDevice) {
+            return false;
+        }
 
-		if (lost) {
-			releaseResources();
-			if (lpD3DDevice->Reset(&d3dpp) != D3D_OK) return false;
-		}
+        if (lost) {
+            releaseResources();
+            if (lpD3DDevice->Reset(&d3dpp) != D3D_OK) return false;
+        }
 
-		lost = false;
+        lost = false;
 
-		lpD3DDevice->SetDialogBoxMode(false);
+        lpD3DDevice->SetDialogBoxMode(false);
 
-		lpD3DDevice->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
-		lpD3DDevice->SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TEXTURE); //Textur color
-		lpD3DDevice->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_DIFFUSE); //Vertex color -ignore
+        lpD3DDevice->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
+        lpD3DDevice->SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TEXTURE); //Textur color
+        lpD3DDevice->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_DIFFUSE); //Vertex color -ignore
 
-		lpD3DDevice->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
-		lpD3DDevice->SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE); //Textur alpha
-		lpD3DDevice->SetTextureStageState(0, D3DTSS_ALPHAARG2, D3DTA_DIFFUSE); //Vertex alpha -ignore
+        lpD3DDevice->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
+        lpD3DDevice->SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE); //Textur alpha
+        lpD3DDevice->SetTextureStageState(0, D3DTSS_ALPHAARG2, D3DTA_DIFFUSE); //Vertex alpha -ignore
 
-		lpD3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
-		lpD3DDevice->SetRenderState(D3DRS_LIGHTING, false);
-		lpD3DDevice->SetRenderState(D3DRS_ZENABLE, false);
+        lpD3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
+        lpD3DDevice->SetRenderState(D3DRS_LIGHTING, false);
+        lpD3DDevice->SetRenderState(D3DRS_ZENABLE, false);
 
-		lpD3DDevice->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
-		lpD3DDevice->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
-		lpD3DDevice->SetRenderState(D3DRS_ALPHABLENDENABLE, true);
+        lpD3DDevice->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
+        lpD3DDevice->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
+        lpD3DDevice->SetRenderState(D3DRS_ALPHABLENDENABLE, true);
 
-		lpD3DDevice->SetFVF(D3DVERTEX); //set vertex format
+        lpD3DDevice->SetFVF(D3DVERTEX); //set vertex format
 
-		lpD3DDevice->CreateVertexBuffer(sizeof (d3dvertex) * 4, flags.v_usage, D3DVERTEX, static_cast<D3DPOOL> (flags.v_pool), &vertex_buffer, NULL);
+        lpD3DDevice->CreateVertexBuffer(sizeof (d3dvertex) * 4, flags.v_usage, D3DVERTEX, static_cast<D3DPOOL> (flags.v_pool), &vertex_buffer, NULL);
 
-		textureWidth = 0;
-		textureHeight = 0;
-		resize(inputWidth = 256, inputHeight = 256);
+        textureWidth = 0;
+        textureHeight = 0;
+        resize(inputWidth, inputHeight);
 
-		D3DXCreateFont(lpD3DDevice, 15, 0, 0, 0, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS,
-				DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE, TEXT("Source Code Pro"), &mFont);
-		note.enable = false;
+        D3DXCreateFont(lpD3DDevice, 15, 0, 0, 0, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS,
+                       DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE, TEXT("Source Code Pro"), &mFont);
+        note.enable = false;
 
-		updateFilter();
-		_clear();
-		return true;		
-	}
-	
+        updateFilter();
+        //RenderThread::reset();
+        return true;
+    }
+
     auto term() -> void {
         wait();
-		releaseResources();
-		dxRelease(lpD3DDevice);
-		dxRelease(lpD3D);
-	}
-	
-    auto init() -> bool {
-		term();
+        releaseResources();
+        dxRelease(lpD3DDevice);
+        dxRelease(lpD3D);
+    }
 
-		if ((lpD3D = Direct3DCreate9(D3D_SDK_VERSION)) == NULL) {
-			return false;
-		}
-		
-		bool exclusiveFullscreen = false;
-		HWND handle = settings.handle;
-		outScreen = getDimension ( settings.handle );
-		outScreen.left = outScreen.top = 0;
-		RECT outScreenParent;
+    auto init(bool disallowExclusiveFullscreen = false) -> bool {
+        term();
+
+        if ((lpD3D = Direct3DCreate9(D3D_SDK_VERSION)) == NULL) {
+            return false;
+        }
+
+        bool exclusiveFullscreen = false;
+
+        HWND handle = settings.handle;
+        outScreen = getDimension ( settings.handle );
+        outScreen.left = outScreen.top = 0;
+        RECT outScreenParent;
         settings.parent = getParentHandle();
-		
-		if (settings.hintExclusiveFullscreen) {
-			handle = settings.parent;
-			outScreenParent = getDimension( handle );
-			
-			unsigned monitorWidth = GetSystemMetrics(SM_CXSCREEN);
-			unsigned monitorHeight = GetSystemMetrics(SM_CYSCREEN);
-			
-			if ( (outScreenParent.right == monitorWidth)
-				&& (outScreenParent.bottom == monitorHeight) ) {
-				exclusiveFullscreen = true;
-				outScreen.left = (outScreenParent.right - outScreen.right) / 2;
-				outScreen.top = (outScreenParent.bottom - outScreen.bottom) / 2;
-			} else {
-				handle = settings.handle;
-			}								
-		}		
-			
-		ZeroMemory(&d3dpp, sizeof (d3dpp));
 
-		d3dpp.hDeviceWindow = handle;				
+        if (settings.hintExclusiveFullscreen && !disallowExclusiveFullscreen) {
+            handle = settings.parent;
+            outScreenParent = getDimension( handle );
 
-		d3dpp.Windowed = !exclusiveFullscreen;
-		d3dpp.BackBufferFormat = exclusiveFullscreen ? D3DFMT_X8R8G8B8 : D3DFMT_UNKNOWN;
-		d3dpp.BackBufferWidth = exclusiveFullscreen ? outScreenParent.right : 0;
-		d3dpp.BackBufferHeight = exclusiveFullscreen ? outScreenParent.bottom : 0;
-		d3dpp.FullScreen_RefreshRateInHz = (exclusiveFullscreen && (settings.exclusiveFullscreenRate > 0.0))
-            ? settings.exclusiveFullscreenRate : D3DPRESENT_RATE_DEFAULT;
+            unsigned monitorWidth = GetSystemMetrics(SM_CXSCREEN);
+            unsigned monitorHeight = GetSystemMetrics(SM_CYSCREEN);
 
-		d3dpp.PresentationInterval = settings.synchronize ? D3DPRESENT_INTERVAL_ONE : D3DPRESENT_INTERVAL_IMMEDIATE;
-		d3dpp.BackBufferCount = 1;
-		d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
-		d3dpp.Flags = D3DPRESENTFLAG_LOCKABLE_BACKBUFFER | D3DPRESENTFLAG_VIDEO;
+            if ( (outScreenParent.right == monitorWidth)
+                 && (outScreenParent.bottom == monitorHeight) ) {
+                exclusiveFullscreen = true;
+                outScreen.left = (outScreenParent.right - outScreen.right) / 2;
+                outScreen.top = (outScreenParent.bottom - outScreen.bottom) / 2;
+            } else {
+                handle = settings.handle;
+            }
+        }
 
-		d3dpp.MultiSampleQuality = 0; //antialiasing
-		d3dpp.MultiSampleType = D3DMULTISAMPLE_NONE; //antialiasing
-		d3dpp.EnableAutoDepthStencil = false; //Z-Buffer
-		d3dpp.AutoDepthStencilFormat = D3DFMT_UNKNOWN; //Z-Buffer
+        ZeroMemory(&d3dpp, sizeof (d3dpp));
 
-		HRESULT hr = lpD3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, handle,
-				D3DCREATE_HARDWARE_VERTEXPROCESSING, &d3dpp, &lpD3DDevice);
+        d3dpp.hDeviceWindow = handle;
 
-		if (!SUCCEEDED(hr) || !lpD3DDevice) {
-			return false;
-		}
+        d3dpp.Windowed = !exclusiveFullscreen;
+        d3dpp.BackBufferFormat = exclusiveFullscreen ? D3DFMT_X8R8G8B8 : D3DFMT_UNKNOWN;
+        d3dpp.BackBufferWidth = exclusiveFullscreen ? outScreenParent.right : 0;
+        d3dpp.BackBufferHeight = exclusiveFullscreen ? outScreenParent.bottom : 0;
+        d3dpp.FullScreen_RefreshRateInHz = (exclusiveFullscreen && (settings.exclusiveFullscreenRate > 0.0))
+                                           ? settings.exclusiveFullscreenRate : D3DPRESENT_RATE_DEFAULT;
 
-		lpD3DDevice->GetDeviceCaps(&d3dcaps);
+        d3dpp.PresentationInterval = settings.synchronize ? D3DPRESENT_INTERVAL_ONE : D3DPRESENT_INTERVAL_IMMEDIATE;
+        d3dpp.BackBufferCount = 1;
+        d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
+        d3dpp.Flags = D3DPRESENTFLAG_LOCKABLE_BACKBUFFER | D3DPRESENTFLAG_VIDEO;
 
-		caps.dynamic = !!(d3dcaps.Caps2 & D3DCAPS2_DYNAMICTEXTURES);
-		caps.shader = d3dcaps.PixelShaderVersion > D3DPS_VERSION(1, 4);
+        d3dpp.MultiSampleQuality = 0; //antialiasing
+        d3dpp.MultiSampleType = D3DMULTISAMPLE_NONE; //antialiasing
+        d3dpp.EnableAutoDepthStencil = false; //Z-Buffer
+        d3dpp.AutoDepthStencilFormat = D3DFMT_UNKNOWN; //Z-Buffer
 
-		if (caps.dynamic) {
-			flags.t_usage = D3DUSAGE_DYNAMIC;
-			flags.v_usage = D3DUSAGE_WRITEONLY | D3DUSAGE_DYNAMIC;
-			flags.t_pool = D3DPOOL_DEFAULT;
-			flags.v_pool = D3DPOOL_DEFAULT;
-			flags.lock = D3DLOCK_NOSYSLOCK | D3DLOCK_DISCARD;
-		} else {
-			flags.t_usage = 0;
-			flags.v_usage = D3DUSAGE_WRITEONLY;
-			flags.t_pool = D3DPOOL_MANAGED;
-			flags.v_pool = D3DPOOL_MANAGED;
-			flags.lock = D3DLOCK_NOSYSLOCK | D3DLOCK_DISCARD;
-		}
+        HRESULT hr = lpD3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, handle,
+                                         D3DCREATE_HARDWARE_VERTEXPROCESSING, &d3dpp, &lpD3DDevice);
 
-		lost = false;
-		recover();
+        if (!SUCCEEDED(hr) || !lpD3DDevice) {
+            return false;
+        }
+
+        lpD3DDevice->GetDeviceCaps(&d3dcaps);
+
+        caps.dynamic = !!(d3dcaps.Caps2 & D3DCAPS2_DYNAMICTEXTURES);
+        caps.shader = d3dcaps.PixelShaderVersion > D3DPS_VERSION(1, 4);
+
+        if (caps.dynamic) {
+            flags.t_usage = D3DUSAGE_DYNAMIC;
+            flags.v_usage = D3DUSAGE_WRITEONLY | D3DUSAGE_DYNAMIC;
+            flags.t_pool = D3DPOOL_DEFAULT;
+            flags.v_pool = D3DPOOL_DEFAULT;
+            flags.lock = D3DLOCK_NOSYSLOCK | D3DLOCK_DISCARD;
+        } else {
+            flags.t_usage = 0;
+            flags.v_usage = D3DUSAGE_WRITEONLY;
+            flags.t_pool = D3DPOOL_MANAGED;
+            flags.v_pool = D3DPOOL_MANAGED;
+            flags.lock = D3DLOCK_NOSYSLOCK | D3DLOCK_DISCARD;
+        }
+
+        settings.exclusiveFullscreen = exclusiveFullscreen;
+        lost = false;
+        inputWidth = 256, inputHeight = 256;
+        recover();
         RenderThread::reset();
-		return true;
-	}
+
+        setShader(settings.passes);
+        return true;
+    }
 
     auto init(uintptr_t handle) -> bool {
         settings.handle = (HWND) handle;
-        return init();
+        return init(true);
+    }
+
+    auto unlockAndRedraw(bool disallowShader = false, bool freeContext = false) -> void {
+
+        if (settings.threaded) {
+            RenderThread::unlock(disallowShader);
+        } else {
+            resizeMutex.lock();
+            if (surface) {
+                fixLinearFilter();
+                surface->UnlockRect();
+                dxRelease(surface);
+            }
+
+            _redraw(disallowShader);
+
+            resizeMutex.unlock();
+        }
     }
 
     auto redraw(bool disallowShader = false) -> void {
-        if (settings.threaded)
-            return;
-
-		if (lost && !recover()) return;
-
-		unsigned outWidth = outScreen.right;
-		unsigned outHeight = outScreen.bottom;
-		unsigned outLeft = outScreen.left;
-		unsigned outTop = outScreen.top;
+		if (!themed)
+			return redrawCustom(disallowShader);			
 		
-		RECT windowsize = getDimension( settings.handle );
+        resizeMutexThreaded.lock();
+		_redraw(disallowShader, true);			
+        resizeMutexThreaded.unlock();
+    }
 
-		if ((outWidth != windowsize.right) || (outHeight != windowsize.bottom)) {
-			init();
-			setShader(settings.passes);
-			return;
-		}
-        
+    auto redrawCustom(bool disallowShader = false) -> void {
+        resizeMutexThreaded.lock();
+
+        lpD3DDevice->BeginScene();
+
+        lpD3DDevice->SetTexture(0, texture);
+
+        lpD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+
+        lpD3DDevice->EndScene();
+
+        if (lpD3DDevice->Present(0, 0, 0, 0) == D3DERR_DEVICELOST) {
+            lost = true;
+        }
+
+        resizeMutexThreaded.unlock();
+    }
+
+    inline auto _redraw(bool disallowShader = false, bool useReset = false) -> void {
+
+        unsigned outWidth = outScreen.right;
+        unsigned outHeight = outScreen.bottom;
+        unsigned outLeft = outScreen.left;
+        unsigned outTop = outScreen.top;
+
+        RECT windowsize = getDimension(settings.handle);
+        if ((outWidth != windowsize.right) || (outHeight != windowsize.bottom)) {
+            wait();
+            bool result = false;
+            if (useReset)
+                result = reset();
+
+            if (!result) {
+                if (!init())
+                    return;
+            }
+        }
+
         if( settings.synchronize && IsIconic( settings.parent ) )
             return;
 
-		lpD3DDevice->BeginScene();
-		setVertex(inputWidth, inputHeight, textureWidth, textureHeight, outLeft, outTop, outWidth, outHeight);
-		lpD3DDevice->SetTexture(0, texture);
+        lpD3DDevice->BeginScene();
+        setVertex(inputWidth, inputHeight, textureWidth, textureHeight, outLeft, outTop, outWidth, outHeight);
+        lpD3DDevice->SetTexture(0, texture);
 
-		if (!disallowShader && caps.shader && effects.size() > 0) {
+        if (!disallowShader && caps.shader && effects.size() > 0) {
             applyShader(outWidth, outHeight);
-		} else {
-			lpD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
-		}
+        } else {
+            lpD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+        }
 
         if (note.enable)
-            applyNote(outWidth, outHeight, outLeft);
+            applyNote(outWidth, outHeight, outLeft, outTop);
 
-		lpD3DDevice->EndScene();
+        lpD3DDevice->EndScene();
 
-		/* if (settings.synchronize) {
-			 D3DRASTER_STATUS status;
-			 while(true) {
-				 lpD3DDevice->GetRasterStatus(0, &status);
-				 if(status.InVBlank == false) break;
-			 }
-			 while(true) {
-				 lpD3DDevice->GetRasterStatus(0, &status);
-				 if(status.InVBlank == true) break;
-			 }
-		 }*/
+        /* if (settings.synchronize) {
+             D3DRASTER_STATUS status;
+             while(true) {
+                 lpD3DDevice->GetRasterStatus(0, &status);
+                 if(status.InVBlank == false) break;
+             }
+             while(true) {
+                 lpD3DDevice->GetRasterStatus(0, &status);
+                 if(status.InVBlank == true) break;
+             }
+         }*/
 
-		if (lpD3DDevice->Present(0, 0, 0, 0) == D3DERR_DEVICELOST) {
-			lost = true;
-		}		
-	}
+        if (lpD3DDevice->Present(0, 0, 0, 0) == D3DERR_DEVICELOST) {
+            lost = true;
+        }
+    }
 
     auto refresh() -> void {
+        resizeMutexThreaded.lock();
+
         bool disallowShader = false;
         RenderBuffer* renderBuffer = getBufferToRender();
 
@@ -373,6 +489,8 @@ struct DVideo : Video, RenderThread {
             surface->LockRect(&d3dlr, 0, flags.lock);
 
             std::memcpy( d3dlr.pBits, renderBuffer->data, textureWidth * textureHeight * 4 );
+
+            fixLinearFilter();
 
             disallowShader = renderBuffer->disallowShader;
 
@@ -403,7 +521,7 @@ struct DVideo : Video, RenderThread {
 
         noteMutex.lock();
         if (note.enable)
-            applyNote(outWidth, outHeight, outLeft);
+            applyNote(outWidth, outHeight, outLeft, outTop);
         noteMutex.unlock();
 
         lpD3DDevice->EndScene();
@@ -411,14 +529,16 @@ struct DVideo : Video, RenderThread {
         if (lpD3DDevice->Present(0, 0, 0, 0) == D3DERR_DEVICELOST) {
             lost = true;
         }
+
+        resizeMutexThreaded.unlock();
     }
 
-    inline auto applyNote(unsigned outWidth, unsigned outHeight, unsigned outLeft ) -> void {
+    inline auto applyNote(unsigned outWidth, unsigned outHeight, unsigned outLeft, unsigned outTop ) -> void {
         RECT fontRect;
         int pos = outLeft + outWidth - FONT_WIDTH;
         if (pos < 0)
             pos = 0;
-        SetRect(&fontRect, pos, outHeight - 18, outLeft + outWidth - 5, outHeight - 0);
+        SetRect(&fontRect, pos, outHeight + outTop - 18, outLeft + outWidth - 5, outHeight + outTop - 0);
         mFont->DrawTextW(NULL, note.message, -1, &fontRect, DT_RIGHT, note.fontColor);
     }
 
@@ -457,34 +577,43 @@ struct DVideo : Video, RenderThread {
     }
 
     auto forceResize() -> void {
-        if (settings.handle)
+        if (settings.handle) {
             init();
+        }
     }
 
     auto _clear() -> void {
-		if (!lpD3DDevice) return;
-		if (lost && !recover()) return;
-
-		texture->GetSurfaceLevel(0, &surface);
-
-		if (surface) {
-			lpD3DDevice->ColorFill(surface, 0, D3DCOLOR_XRGB(0x00, 0x00, 0x00));
-			dxRelease(surface);
-		}
-
-		//clear primary display and all backbuffers
-		for (unsigned i = 0; i < 2; i++) {
-			lpD3DDevice->Clear(0, 0, D3DCLEAR_TARGET, D3DCOLOR_XRGB(0x00, 0x00, 0x00), 1.0f, 0);
-			lpD3DDevice->Present(0, 0, 0, 0);
-		}
-	}
-	
-    auto lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height) -> bool {
-
+        if (!lpD3DDevice) return;
         if (lost && !recover()) {
-            RenderThread::reset();
-            return false;
+            if (!init())
+                return;
         }
+
+        texture->GetSurfaceLevel(0, &surface);
+
+        if (surface) {
+            lpD3DDevice->ColorFill(surface, 0, D3DCOLOR_XRGB(0x00, 0x00, 0x00));
+            dxRelease(surface);
+        }
+
+        //clear primary display and all backbuffers
+        for (unsigned i = 0; i < 2; i++) {
+            lpD3DDevice->Clear(0, 0, D3DCLEAR_TARGET, D3DCOLOR_XRGB(0x00, 0x00, 0x00), 1.0f, 0);
+            lpD3DDevice->Present(0, 0, 0, 0);
+        }
+    }
+
+    auto lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height) -> bool {
+        resizeMutex.lock();
+
+        bool result = _lock(data, pitch, _width, _height);
+
+        resizeMutex.unlock();
+
+        return result;
+    }
+
+    inline auto _lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height) -> bool {
 
         if (settings.threaded) {
 
@@ -493,11 +622,12 @@ struct DVideo : Video, RenderThread {
 
             RECT windowsize = getDimension( settings.handle );
 
-            if ((outWidth != windowsize.right) || (outHeight != windowsize.bottom)) {
+            if (lost || (outWidth != windowsize.right) || (outHeight != windowsize.bottom)) {
                 wait();
-                init();
-                setShader(settings.passes);
-                return false;
+                if (!reset()) {
+                    if (!init())
+                        return false;
+                }
             }
 
             if( settings.synchronize && IsIconic( settings.parent ) ) {
@@ -506,21 +636,26 @@ struct DVideo : Video, RenderThread {
             }
 
             return RenderThread::lock(data, pitch, _width, _height);
-        }
-		
-		if(_width != inputWidth || _height != inputHeight) {
-			resize( inputWidth = _width, inputHeight = _height );
+        } else {
+			if (lost && !recover()) {
+				if (!init())
+					return false;              
+			}
 		}
-		
-		texture->GetSurfaceLevel(0, &surface);
 
-		surface->LockRect(&d3dlr, 0, flags.lock);
-		pitch = d3dlr.Pitch;
+        if(_width != inputWidth || _height != inputHeight) {
+            resize( inputWidth = _width, inputHeight = _height );
+        }
+
+        texture->GetSurfaceLevel(0, &surface);
+
+        surface->LockRect(&d3dlr, 0, flags.lock);
+        pitch = d3dlr.Pitch;
         pitch >>= 2;
-		data = (unsigned*) d3dlr.pBits;
-		return true;		
-	}
-	
+        data = (unsigned*) d3dlr.pBits;
+        return true;
+    }
+
     auto unlock(bool disallowShader = false) -> void {
         if (settings.threaded) {
             RenderThread::unlock(disallowShader);
@@ -529,24 +664,30 @@ struct DVideo : Video, RenderThread {
 
         if (!surface)
             return;
-		// first we duplicate the last pixel in each line
-		// to fix a sporadically bug for linear filter in last vertical line
-		// the filter uses adjacent pixel to calcluate actual pixel
-		// the duplicated vertical line is not visible but used for filter calculations
-		unsigned* data = (unsigned*) d3dlr.pBits;
-		unsigned pitch = d3dlr.Pitch;
-		
-		data += inputWidth;
-		pitch >>= 2;
-		
-		for(unsigned _h = 0; _h < inputHeight; _h++) {						
-			*data = *(data-1);
-			data += pitch;
-		}
-		// unlock now
-		surface->UnlockRect();
-		dxRelease(surface);
-	}
+
+        fixLinearFilter();
+
+        // unlock now
+        surface->UnlockRect();
+        dxRelease(surface);
+    }
+
+    inline auto fixLinearFilter() -> void {
+        // first we duplicate the last pixel in each line
+        // to fix a sporadically bug for linear filtering in last vertical line
+        // the filter uses adjacent pixel to calcluate actual pixel
+        // the duplicated vertical line is not visible but used for filter calculations
+        unsigned* data = (unsigned*) d3dlr.pBits;
+        unsigned pitch = d3dlr.Pitch;
+
+        data += inputWidth;
+        pitch >>= 2;
+
+        for(unsigned _h = 0; _h < inputHeight; _h++) {
+            *data = *(data-1);
+            data += pitch;
+        }
+    }
 
     auto resize(RenderBuffer* renderBuffer, unsigned w, unsigned h) -> void {
 
@@ -567,70 +708,80 @@ struct DVideo : Video, RenderThread {
         return roundUpPowerOfTwo( _width + 1 );
     }
 
-	auto resize(unsigned width, unsigned height) -> void {
+    auto resize(unsigned width, unsigned height) -> void {
 
         width = roundUpPowerOfTwo( width + 1 );
-		height = roundUpPowerOfTwo( height );
-        
+        height = roundUpPowerOfTwo( height );
+
         if (width == textureWidth && height == textureHeight)
             return;
-        
+
         textureWidth = width;
         textureHeight = height;
-        
+
         if(d3dcaps.MaxTextureWidth < textureWidth)
             textureWidth = d3dcaps.MaxTextureWidth;
-        
+
         if (d3dcaps.MaxTextureHeight < textureHeight)
             textureHeight = d3dcaps.MaxTextureHeight;
 
-		if(texture)
-			texture->Release();
-		
-		lpD3DDevice->CreateTexture( textureWidth, textureHeight, 1, flags.t_usage, D3DFMT_X8R8G8B8,
-			static_cast<D3DPOOL> (flags.t_pool), &texture, nullptr);
-	}	  
-	
+        if(texture)
+            texture->Release();
+
+        lpD3DDevice->CreateTexture( textureWidth, textureHeight, 1, flags.t_usage, D3DFMT_X8R8G8B8,
+                                    static_cast<D3DPOOL> (flags.t_pool), &texture, nullptr);
+    }
+
     auto synchronize(bool state) -> void {
         wait();
         settings.synchronize = state;
         if (!settings.handle) return;
-        init();
-		setShader( settings.passes );
+
+        if (!reset(false) && !init())
+            return;
     }
-	
-	auto hasSynchronized() -> bool { return settings.synchronize; }
+
+    auto hasSynchronized() -> bool { return settings.synchronize; }
 
     auto setFilter(Filter filter) -> void {
-		if (filter == settings.filter)
-			return;
-		
+        if (filter == settings.filter)
+            return;
+
         settings.filter = filter;
         updateFilter();
     }
-	
-	auto getParentHandle() -> HWND {
-		HWND parent = GetParent( settings.handle );
-		if(!parent) return settings.handle;
-		return parent;		
-	}
-	
-	auto getDimension(HWND handle) -> RECT {
-		RECT rect;
-		GetClientRect(handle, &rect);
-		
-		return rect;
-	}
-	
-	auto hintExclusiveFullscreen(bool state, float rate = 0.0) -> void {
-		/**
-		 * next time when view port expands to fullscreen, exclusive fullscreen is used instead of a borderless window
-		 * this is a special microsoft direct 3D feature, means lower input latency because of gpu bypasses stuff 
-		 * like aero
-		 */
-		settings.hintExclusiveFullscreen = state;
+
+    auto getParentHandle() -> HWND {
+        HWND parent = GetParent( settings.handle );
+        if(!parent) return settings.handle;
+        return parent;
+    }
+
+    auto getDimension(HWND handle) -> RECT {
+        RECT rect;
+        GetClientRect(handle, &rect);
+
+        return rect;
+    }
+
+    auto hintExclusiveFullscreen(bool state, float rate = 0.0) -> void {
+        /**
+         * next time when view port expands to fullscreen, exclusive fullscreen is used instead of a borderless window
+         * this is a special microsoft direct 3D feature, means lower input latency because of gpu bypasses stuff
+         * like aero
+         */
+        settings.hintExclusiveFullscreen = state;
         settings.exclusiveFullscreenRate = rate;
-	}
+    }
+
+    auto hasExclusiveFullscreen() -> bool { return settings.exclusiveFullscreen; }
+
+    auto disableExclusiveFullscreen() -> void {
+        if (settings.exclusiveFullscreen) {
+            wait();
+            init(true);
+        }
+    }
 
     auto setThreaded(bool state) -> void {
 
@@ -638,59 +789,72 @@ struct DVideo : Video, RenderThread {
             wait();
             RenderThread::enable(state);
 
-            RenderThread::reset();
             textureWidth = 0, textureHeight = 0;
-            lost = true;
+            init();
             settings.threaded = state;
         }
     }
 
     auto hasThreaded() -> bool { return settings.threaded; }
 
-	auto showMessage(std::string message, bool critical = false) -> void {
+    auto showMessage(std::string message, bool critical = false) -> void {
         if (settings.threaded)
             noteMutex.lock();
 
-		note.enable = !message.empty();
-		if (!note.enable) {
+        note.enable = !message.empty();
+        if (!note.enable) {
             goto out;
         }
 
-		note.message = Win::utf16_t( message );
+        note.message = Win::utf16_t( message );
 
-		if (critical)
-			note.fontColor = D3DCOLOR_ARGB(255, 155, 0, 0);
-		else
-			note.fontColor = D3DCOLOR_ARGB(155, 255, 255, 255);
+        if (critical)
+            note.fontColor = D3DCOLOR_ARGB(255, 155, 0, 0);
+        else
+            note.fontColor = D3DCOLOR_ARGB(155, 255, 255, 255);
 
         out:
         if (settings.threaded)
             noteMutex.unlock();
-	}
-    
+    }
+
     auto shaderFormat() -> ShaderType { return ShaderType::HLSL; }
 
-	
+    auto lockResize() -> void {
+        resizeMutex.lock();
+        resizeMutexThreaded.lock();
+    }
+
+    auto unlockResize() -> void {
+        if (!reset())
+            init();
+        resizeMutexThreaded.unlock();
+        resizeMutex.unlock();
+    }
+
     DVideo() {
-		lpD3DDevice = 0;
-		lpD3D = 0;
-		mFont = 0;
+        lpD3DDevice = 0;
+        lpD3D = 0;
+        mFont = 0;
 
-		vertex_buffer = 0;
-		surface = 0;
-		texture = 0;
+        vertex_buffer = 0;
+        surface = 0;
+        texture = 0;
 
-		lost = true;
-		settings.filter = Filter::Nearest;
-		settings.synchronize = false;
-		settings.handle = nullptr;
-		settings.hintExclusiveFullscreen = false;
-		
-		#include "../tools/fonts.c"
-		DWORD nFonts;	
-		AddFontMemResourceEx( &sourceCodePro, sizeof(sourceCodePro), NULL, &nFonts );
-	}
-	
+        lost = true;
+		themed = IsAppThemed();
+        settings.filter = Filter::Nearest;
+        settings.synchronize = false;
+        settings.handle = nullptr;
+        settings.hintExclusiveFullscreen = false;
+        settings.exclusiveFullscreen = false;
+        settings.threaded = false;
+
+#include "../tools/fonts.c"
+        DWORD nFonts;
+        AddFontMemResourceEx( &sourceCodePro, sizeof(sourceCodePro), NULL, &nFonts );
+    }
+
     ~DVideo() {
         RenderThread::enable(false);
         term();

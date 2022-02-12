@@ -166,14 +166,7 @@ auto OpenGL::clear() -> void {
 }
 
 auto OpenGL::refresh(bool disallowShader) -> void {
-	//clear();
-            
-//	glActiveTexture(GL_TEXTURE0);
-//	glBindTexture(GL_TEXTURE_2D, texture);
-//    // load user data to main texture
-//    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, getFormat(), getType(), getBuffer());
-   // updateTexture();
-    
+
     if (mipmap) {
         glHint(GL_GENERATE_MIPMAP_HINT, GL_NICEST);
         glGenerateMipmap(GL_TEXTURE_2D);
@@ -200,15 +193,15 @@ auto OpenGL::refresh(bool disallowShader) -> void {
         if (p.crop.active) {
             targetWidth = sources[0].width - p.crop.left - p.crop.right;
             targetHeight = sources[0].height - p.crop.top - p.crop.bottom;
-            
+
             p.size(targetWidth, targetHeight);
             p.cropTexture( pLast );
-                        
+
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, p.framebuffer);
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, p.texture);
 
-            sources.insert(sources.begin(), {p.texture, p.width, p.height, p.filter, p.wrap, p.mipmap}); 
+            sources.insert(sources.begin(), {p.texture, p.width, p.height, p.filter, p.wrap, p.mipmap});
             continue;
         }
         
@@ -238,7 +231,7 @@ auto OpenGL::refresh(bool disallowShader) -> void {
 		}
 
         for(auto& customTexture : p.customTextures) {
-            _glUniform1i(customTexture.attribute, id);       
+            _glUniform1i(customTexture.attribute, id);
             glActiveTexture(GL_TEXTURE0 + (id++));
             glBindTexture(customTexture.target, customTexture.texture);
         }
@@ -275,10 +268,6 @@ auto OpenGL::refresh(bool disallowShader) -> void {
 	_glParameters(sources[0].filter, sources[0].wrap, sources[0].mipmap);
 
 	render(sources[0].width, sources[0].height, outputWidth, outputHeight);
-
-//#ifdef DRV_FREETYPE
-//    screenText.showText(outputWidth, outputHeight, -0.01, 0.01, OpenGLText::ALIGN_RIGHT | OpenGLText::VALIGN_BOTTOM);
-//#endif
 
 }
 
@@ -337,30 +326,3 @@ auto OpenGL::term() -> void {
 	initialized = false;
 }
 
-//auto OpenGL::showMessage(std::string message, bool critical) -> void {
-//#ifdef DRV_FREETYPE
-//    if (!screenText.initialized)
-//        return;
-//
-//    if (screenText.current.message != message) {
-//        screenText.current.message = message;
-//        if (!settings.threaded)
-//            screenText.buildTexture(message);
-//        else
-//            screenText.current.updated = true;
-//    }
-//
-//    if (screenText.disable)
-//        return;
-//
-//    if (screenText.current.critical != critical) {
-//        screenText.current.critical = critical;
-//        screenText.current.updated = true;
-//
-//        if (critical)
-//            screenText.setColor(0.7f, 0.0f, 0.0f, 1.0f);
-//        else
-//            screenText.setColor(1.0f, 1.0f, 1.0f, 0.8f);
-//    }
-//#endif
-//}

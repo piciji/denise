@@ -118,13 +118,22 @@ auto Application::setClipboardText( std::string text ) -> void {
 //window
 std::vector<CustomFont*> Window::customFonts;
 
-Window::Window() : p(*new pWindow(*this)), Base(), cocoa(*this), winapi(*this) {
+Window::Window(Hints hints) : p(*new pWindow(*this, hints)), Base(), cocoa(*this), winapi(*this) {
     state.widgetFont = Font::system();
+    this->hints = hints;
 }
 
 Window::~Window() { 
     delete &p;
     delete focusTimer;
+}
+
+auto Window::tellMeShouldICreateTheUIRightAway() -> bool {
+#ifdef GUIKIT_WINAPI
+    return p.tellMeShouldICreateTheUIRightAway();
+#else
+    return false;
+#endif 
 }
 
 auto Window::append(Menu& menu) -> void {
@@ -319,6 +328,22 @@ auto Window::geometry() -> Geometry {
     return p.geometry();
 }
 
+auto Window::setAspectRatio(Size ratio) -> void {
+    state.aspectRatio = ratio;
+    p.applyAspectRatio();
+}
+
+auto Window::setPreventBackgroundRedrawing(bool prevent) -> void {
+    state.preventBackgroundRedrawing = prevent;
+}
+    
+auto Window::causeBGRedrawVideoFlicker() const -> bool {
+    if (Application::isGtk() || Application::isCocoa())
+        return false;
+    
+    return true;
+}
+    
 auto Window::changeCursor( Image& image, unsigned hotSpotX, unsigned hotSpotY ) -> void {
     if (state.cursorImage == &image)
         return;

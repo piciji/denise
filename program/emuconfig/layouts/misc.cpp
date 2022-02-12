@@ -3,7 +3,7 @@ SpeedLayout::SpeedLayout() {
     append(label, {0u, 0u}, 5);
     append(fps, {0u, 0u}, 5 );
     append(percent, {0u, 0u}, 10 );
-    append(speed, {GUIKIT::Font::scale(50), 0u}, 10 );
+    append(speed, {GUIKIT::Font::scale(55), 0u}, 10 );
     append(apply, {0u, 0u} );
 
     GUIKIT::RadioBox::setGroup( fps, percent );
@@ -142,15 +142,18 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) {
         
         _settings->set<unsigned>( "runahead", pos);
 
+        emuThread->lock();
         audioManager->drive.reset();
-
         this->emulator->runAhead( pos );
+        emuThread->unlock();
     };
     
     runAheadLayout.options.performanceMode.onToggle = [this](bool checked) {
         _settings->set<bool>( "runahead_performance", checked);
-        
+
+        emuThread->lock();
         this->emulator->runAheadPerformance( checked );
+        emuThread->unlock();
     };
     
     runAheadLayout.options.disableOnPower.onToggle = [this](bool checked) {
@@ -161,7 +164,9 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) {
     runAheadLayout.options.preventJit.onToggle = [this](bool checked) {
         _settings->set<bool>( "runahead_prevent_jit", checked );
 
+        emuThread->lock();
         this->emulator->runAheadPreventJit( checked );
+        emuThread->unlock();
     };
 
     jitLayout.control.slider.onChange = [this]() {
@@ -180,7 +185,9 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) {
     jitLayout.active.onToggle = [this](bool checked) {
         _settings->set<bool>("input_jit", checked);
 
+        emuThread->lock();
         this->emulator->enableJit( checked );
+        emuThread->unlock();
     };
 
     speedLayout.speed.onChange = [this]() {
@@ -202,8 +209,10 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) {
         _settings->set<std::string>("custom_speed", userInput);
 
         if (view->isCustomSpeed()) {
+            emuThread->lock();
             audioManager->setResampler();
             statusHandler->resetFrameCounter();
+            emuThread->unlock();
         }
         view->updateSpeedLabels(true);
     };
@@ -212,8 +221,10 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) {
         _settings->set<bool>("custom_speed_percent", true);
 
         if (view->isCustomSpeed()) {
+            emuThread->lock();
             audioManager->setResampler();
             statusHandler->resetFrameCounter();
+            emuThread->unlock();
         }
         view->updateSpeedLabels(true);
     };
@@ -222,8 +233,10 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) {
         _settings->set<bool>("custom_speed_percent", false);
 
         if (view->isCustomSpeed()) {
+            emuThread->lock();
             audioManager->setResampler();
             statusHandler->resetFrameCounter();
+            emuThread->unlock();
         }
         view->updateSpeedLabels(true);
     };

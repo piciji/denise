@@ -7,3 +7,4 @@ denise.xcodeproj
 .idea/
 ._*
 Build/
+.DS_Store

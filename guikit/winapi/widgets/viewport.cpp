@@ -3,7 +3,7 @@ auto pViewport::create() -> void {
     destroy(hwnd);
     destroy(hwndTip);    
     
-    SetWindowLong(viewport.window()->p.hwnd, GWL_STYLE, (GetWindowLong(viewport.window()->p.hwnd, GWL_STYLE) & ~WS_CLIPCHILDREN));
+    //SetWindowLong(viewport.window()->p.hwnd, GWL_STYLE, (GetWindowLong(viewport.window()->p.hwnd, GWL_STYLE) & ~WS_CLIPCHILDREN));
     
     hwnd = CreateWindow(L"app_viewport", L"",
         WS_CHILD | WS_DISABLED,
@@ -37,8 +37,8 @@ auto CALLBACK pViewport::wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
     Viewport& viewport = (Viewport&)*base;
 
     switch(msg) {
-        case WM_ERASEBKGND: 
-            return 0;
+        //case WM_ERASEBKGND: 
+          //  return 0;
         case WM_DROPFILES: {
             std::vector<std::string> paths = getDropPaths(wparam);
             if(!paths.empty() && viewport.onDrop) {

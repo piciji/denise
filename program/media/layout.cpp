@@ -208,9 +208,9 @@ auto MediaGroupLayout::updateVisibility( unsigned count, bool init ) -> void {
             if (!init)
                 block->header.eject.onActivate(); 
         }
-    }    
-    
-	synchronizeLayout();
+    }
+
+    mediaLayout->synchronizeLayout();
 	
     if (!listingInVisibleBlock)
         updateListing( blocks[0] );	  

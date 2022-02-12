@@ -16,7 +16,7 @@ auto Program::initVideo() -> void {
     
     VideoManager::setSynchronize();
     VideoManager::setHardSync();
-    setThreadedRenderer();
+  //  setThreadedRenderer();
     setFpsLimit();
     //setVideoFilter();
     updateFullscreenSetting();
@@ -66,15 +66,13 @@ auto Program::getVideoDriver() -> std::string {
 
 auto Program::finishVBlank() -> void {
     
-    if (!activeVideoManager->waitForRenderer())
+    if (!activeVideoManager->waitForCrtRenderer(1))
         return;
-
-    videoDriver->unlock();
     
     //if (VideoManager::fpsLimit)
       //  activeVideoManager->applyFpsLimit();
-    
-    videoDriver->redraw();
+
+    videoDriver->unlockAndRedraw();
 }
 
 auto Program::midScreenCallback() -> void {
@@ -104,8 +102,19 @@ auto Program::videoRefresh8(const uint8_t* frame, unsigned width, unsigned heigh
         activeVideoManager->renderFrame<uint8_t>(frame, width, height, linePitch);
 }
 
+auto Program::canExclusiveFullscreen() -> bool {
+
+    return isRunning
+        && globalSettings->get("exclusive_fullscreen", false)
+        && !globalSettings->get<bool>("threaded_emu", false);
+}
+
 auto Program::hintExclusiveFullscreen() -> void {
-	videoDriver->hintExclusiveFullscreen( globalSettings->get("exclusive_fullscreen", false), view->getCustomFullscreenRefreshRate() );
+
+    if (canExclusiveFullscreen())
+        videoDriver->hintExclusiveFullscreen( true, view->getCustomFullscreenRefreshRate() );
+    else
+        videoDriver->hintExclusiveFullscreen( false );
 }
 
 auto Program::setFpsLimit() -> void {
@@ -155,7 +164,7 @@ auto Program::updateCrop( Emulator::Interface* emulator ) -> void {
     
     if (activeVideoManager) {
         activeVideoManager->reinitCrtThread();
-        activeVideoManager->shader.recreate = true;        
+        activeVideoManager->shader.recreate = true;
     }
 }
 

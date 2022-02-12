@@ -73,22 +73,22 @@ auto VideoManager::setPalette(Emulator::Interface::Palette* palette) -> void {
         colorTableUpdated = false;	
 }
 
-auto VideoManager::setSaturation(int saturation) -> void {    
+auto VideoManager::setSaturation(unsigned saturation) -> void {
     this->saturation = (double)saturation / 100.0;
     colorTableUpdated = false;
 }
 
-auto VideoManager::setContrast(int contrast) -> void {    
+auto VideoManager::setContrast(unsigned contrast) -> void {
     this->contrast = (double)contrast / 100.0;
     colorTableUpdated = false;
 }
 
-auto VideoManager::setBrightness(int brightness) -> void {    
+auto VideoManager::setBrightness(unsigned brightness) -> void {
     this->brightness = (double)brightness - 100.0;
     colorTableUpdated = false;
 }
 
-auto VideoManager::setGamma(int gamma) -> void {    
+auto VideoManager::setGamma(unsigned gamma) -> void {
     this->gamma = (double)gamma / 100.0;
     colorTableUpdated = false;
 }
@@ -103,8 +103,8 @@ auto VideoManager::setPhase( int degree ) -> void {
 	colorTableUpdated = false;
 }
 
-auto VideoManager::setPhaseError( double phaseError ) -> void {
-    this->phaseError = phaseError;
+auto VideoManager::setPhaseError( float phaseError ) -> void {
+    this->phaseError = (double)phaseError;
 	shader.transferOutputEncoding();
     colorTableUpdated = false;
 }
@@ -132,19 +132,19 @@ auto VideoManager::setBlur( unsigned blur ) -> void {
 }
 
 auto VideoManager::setLumaRise( float pixel ) -> void {
-    
-	updateShader("lumaLatency", "lumaRise", lumaRise, pixel == 0.0 ? 0.0 : (double)(1.0 / (double)pixel));    
+
+	updateShader("lumaLatency", "lumaRise", lumaRise, pixel == 0.0 ? 0.0 : (double)(1.0 / (double)pixel));
 	colorTableUpdated = false;
 }
 
 auto VideoManager::setLumaFall( float pixel ) -> void {
-	    
+
 	updateShader("lumaLatency", "lumaFall", lumaFall, pixel == 0.0 ? 0.0 : (double)(1.0 / (double)pixel) );
 	colorTableUpdated = false;
 }
 
-auto VideoManager::setScanlines(unsigned intensity) -> void {
-    waitForRenderer();
+auto VideoManager::setScanlines(unsigned intensity, uint8_t pos) -> void {
+    waitForCrtRenderer(pos);
     updateShader( "", "gammaAndScanlines", scanlines, (uint8_t)intensity );
     this->scanlines = intensity;
     colorTableUpdated = false;
@@ -171,7 +171,8 @@ auto VideoManager::setBloomWeight( float intensity ) -> void {
 
 auto VideoManager::setRadialDistortion( unsigned intensity ) -> void {
 	updateShader("radialDistortion", "Factor", radialDistortion, (float)intensity / 100.0f);
-    shader.transferRadialDistortion();
+    if (!shader.recreate)
+        shader.transferRadialDistortion();
 }
 
 auto VideoManager::setMaskPitch( float intensity ) -> void {
@@ -185,7 +186,7 @@ auto VideoManager::setMaskDpi( unsigned intensity ) -> void {
 }
 
 auto VideoManager::setMaskLevel( unsigned intensity ) -> void {
-	updateShader("crtMask", "maskLevel", maskLevel, (float)intensity / 100.0f);  	
+	updateShader("crtMask", "maskLevel", maskLevel, (float)intensity / 100.0f);
 }
 
 auto VideoManager::setMaskType(MaskType maskType) -> void {
@@ -222,14 +223,14 @@ auto VideoManager::setAecGlitch( float intensity ) -> void {
 }
 
 auto VideoManager::setPhi0Glitch( float intensity ) -> void {
-		updateShader("outputEncoding", "PHI0", phi0Glitch, smoothIntensity(intensity));
+    updateShader("outputEncoding", "PHI0", phi0Glitch, smoothIntensity(intensity));
 }
 
 auto VideoManager::setCasGlitch( float intensity ) -> void {
     updateShader("outputEncoding", "CAS", casGlitch, smoothIntensity(intensity));
 }
 
-auto VideoManager::setRasGlitch( float intensity ) -> void {  
+auto VideoManager::setRasGlitch( float intensity ) -> void {
     updateShader("outputEncoding", "RAS", rasGlitch, smoothIntensity(intensity));
 }
 
@@ -255,13 +256,13 @@ auto VideoManager::setFirFilterSharp( int sharp ) -> void {
 }
 
 auto VideoManager::useDistortionHires(bool state) -> void {
-    
+
     distortionHires = state;
     shader.recreate = true;
 }
 
 auto VideoManager::useHires(bool state) -> void {
-    
+
     hires = state;
     shader.recreate = true;
 }

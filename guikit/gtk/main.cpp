@@ -34,13 +34,14 @@ namespace GUIKIT {
 #include "widgets/imageView.cpp"
 
 auto pApplication::run() -> void {
+
     if(Application::loop) {
-        while(!Application::isQuit) {            
+        while(!Application::isQuit) {
             Application::loop();
-			processEvents();
+            processEvents();
         }
     } else if (!Application::isQuit)
-		gtk_main();
+        gtk_main();
 }
 
 auto pApplication::processEvents() -> void {
@@ -59,6 +60,14 @@ auto pApplication::initialize() -> void {
     XInitThreads();
     gdk_set_allowed_backends("x11");
     gtk_init(nullptr, nullptr);
+
+// don't apply global CSS because of micro stutter
+//    #include "css.cpp"
+//    GtkCssProvider* cssProvider = gtk_css_provider_new();
+//    gtk_css_provider_load_from_data(cssProvider, css.c_str(), -1, NULL);
+//    gtk_style_context_add_provider_for_screen(gdk_screen_get_default(),
+//                                              GTK_STYLE_PROVIDER(cssProvider),
+//                                              GTK_STYLE_PROVIDER_PRIORITY_USER);
 }  
 
 auto pApplication::pasteClipboardCallback(GtkClipboard* clipboard, const gchar* text, gpointer data) -> void {
@@ -143,6 +152,9 @@ static auto Window_configure(GtkWidget* widget, GdkEvent* event, pWindow* p) -> 
 }
 
 static auto Window_sizeAllocate(GtkWidget* widget, GtkAllocation* allocation, pWindow* p) -> void {
+    if (allocation->height < 0)
+        return;
+
 	p->sizeWindow( allocation );
 }
 
@@ -186,24 +198,16 @@ static auto Window_stateChange(GtkWidget* widget, GdkEventWindowState* event, Wi
 	return false;
 }
 
-pWindow::pWindow(Window& window) : window(window) {
+pWindow::pWindow(Window& window, Window::Hints hints) : window(window) {
 		
     lastAllocation.width  = lastAllocation.height = 0;
     widget = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-	
-	#include "css.cpp"
-	
-	GtkCssProvider* cssProvider = gtk_css_provider_new();
-	gtk_css_provider_load_from_data(cssProvider, css.c_str(), -1, NULL);
-	gtk_style_context_add_provider_for_screen(gdk_screen_get_default(),
-								   GTK_STYLE_PROVIDER(cssProvider),
-								   GTK_STYLE_PROVIDER_PRIORITY_USER);
     
     setIcon( pSystem::getIconFolder() );
 
-	auto visual = gdk_screen_get_rgba_visual(gdk_screen_get_default());
-	if(!visual) visual = gdk_screen_get_system_visual(gdk_screen_get_default());
-	if(visual) gtk_widget_set_visual(widget, visual);
+//	auto visual = gdk_screen_get_rgba_visual(gdk_screen_get_default());
+//	if(!visual) visual = gdk_screen_get_system_visual(gdk_screen_get_default());
+	//if(visual) gtk_widget_set_visual(widget, visual);
 	
 	gtk_widget_add_events(widget, GDK_BUTTON_PRESS_MASK | GDK_CONFIGURE);
     gtk_widget_set_app_paintable(widget, true);
@@ -216,7 +220,7 @@ pWindow::pWindow(Window& window) : window(window) {
     gtk_box_pack_start(GTK_BOX(verticalLayout), menu, false, false, 0);
 	contextMenu = gtk_menu_new();
     
-    mainDisplay = gtk_fixed_new();		
+    mainDisplay = gtk_fixed_new();
     gtk_box_pack_start(GTK_BOX(verticalLayout), mainDisplay, true, true, 0);
     gtk_widget_show(mainDisplay);
 
@@ -230,18 +234,18 @@ pWindow::pWindow(Window& window) : window(window) {
     g_signal_connect(G_OBJECT(widget), "delete-event", G_CALLBACK(Window_close), (gpointer)&window);
 	g_signal_connect(G_OBJECT(widget), "draw", G_CALLBACK(Window_draw), (gpointer)&window);
 	g_signal_connect(G_OBJECT(mainDisplay), "draw", G_CALLBACK(Window_draw_main), (gpointer)&window);
-	
+
     g_signal_connect(G_OBJECT(widget), "configure-event", G_CALLBACK(Window_configure), (gpointer)this);
 	g_signal_connect(G_OBJECT(mainDisplay), "size-allocate", G_CALLBACK(Window_sizeAllocate), (gpointer)this);
-	
-    g_signal_connect(G_OBJECT(widget), "drag-data-received", G_CALLBACK(Window_drop), (gpointer)&window);    
+
+    g_signal_connect(G_OBJECT(widget), "drag-data-received", G_CALLBACK(Window_drop), (gpointer)&window);
 	g_signal_connect(G_OBJECT(widget), "button-press-event", G_CALLBACK(Window_onButtonPressed), (gpointer)&window);
 	g_signal_connect(G_OBJECT(widget), "window-state-event", G_CALLBACK(Window_stateChange), (gpointer)&window);
 	
 	auto widgetClass = GTK_WIDGET_GET_CLASS(mainDisplay);
 	widgetClass->get_preferred_width  = Window_getPreferredWidth;
 	widgetClass->get_preferred_height = Window_getPreferredHeight;
-	
+
 	g_object_set_data(G_OBJECT(widget), "window", (gpointer)this);
 	g_object_set_data(G_OBJECT(mainDisplay), "window", (gpointer)this);
 
@@ -252,18 +256,26 @@ pWindow::pWindow(Window& window) : window(window) {
         locked = false;
     };
 	
-	timerResize.setInterval(50);
+	timerResize.setInterval(100);
 	timerResize.onFinished = [this]() {
         timerResize.setEnabled(false);
-		
+
 		if(this->window.state.layout) {
             this->window.state.layout->resetSynchronisation();
 			Geometry layoutGeometry = this->window.geometry();
 			layoutGeometry.x = layoutGeometry.y = 0;
 			this->window.state.layout->setGeometry(layoutGeometry);
 		}
-		
-		if( this->window.onSize) this->window.onSize();
+
+        if (this->window.fullScreen() || this->timerWorkaround.enabled()) {
+            if (this->window.onSize) this->window.onSize(Window::SIZE_MODE::Default);
+        }
+
+        if (resizing) {
+            resizing = false;
+            if (this->window.onResizeEnd && !this->window.fullScreen())
+                this->window.onResizeEnd();
+        }
     };
 
     timerFullscreen.setInterval( 1000 );
@@ -272,6 +284,47 @@ pWindow::pWindow(Window& window) : window(window) {
         locked = false;
         setGeometry(this->window.state.geometry);
     };
+
+    timerWorkaround.setInterval( 3500 );
+    timerWorkaround.onFinished = [this]() {
+        timerWorkaround.setEnabled(false);
+    };
+}
+
+auto pWindow::applyAspectRatio() -> void {
+
+    updateGeometryHint();
+}
+
+auto pWindow::updateGeometryHint() -> void {
+
+    unsigned hints = GDK_HINT_MIN_SIZE /*| GDK_HINT_RESIZE_INC*/;
+    GdkGeometry geom;
+    unsigned statusHeight = 0;
+    auto aspect = window.aspectRatio();
+
+    if (!window.fullScreen() && aspect.width && aspect.height) {
+
+        aspect.height = window.state.geometry.width * aspect.height / aspect.width + 0.5;
+        aspect.width = window.state.geometry.width;
+
+        if (window.statusBar())
+            statusHeight = window.statusBar()->p.getHeight();
+
+        aspect.height += statusHeight + menuHeight;
+
+        double ratio = (double)aspect.width / (double)aspect.height;
+        geom.min_aspect = ratio;
+        geom.max_aspect = ratio;
+        hints |= GdkWindowHints::GDK_HINT_ASPECT;
+    }
+
+    geom.min_width = 100;
+    geom.min_height = 100;
+   // geom.width_inc = 15;
+   // geom.height_inc = 15;
+
+    gtk_window_set_geometry_hints(GTK_WINDOW(widget), GTK_WIDGET(mainDisplay), &geom, (GdkWindowHints)hints);
 }
 
 auto pWindow::handle() -> uintptr_t {
@@ -291,6 +344,8 @@ auto pWindow::setFocused() -> void {
 
 auto pWindow::setResizable(bool resizable) -> void {
     gtk_window_set_resizable(GTK_WINDOW(widget), resizable);
+
+    updateGeometryHint();
 }
 
 auto pWindow::setTitle(std::string text) -> void {
@@ -340,7 +395,7 @@ auto pWindow::append(Layout& layout) -> void {
 }
 
 auto pWindow::addCustomFont( CustomFont* customFont ) -> bool {
-	
+
     return pFont::add( customFont );
 }
 
@@ -457,6 +512,7 @@ auto pWindow::setMenuVisible(bool visible) -> void {
     if (window.fullScreen()) gtk_window_fullscreen(GTK_WINDOW(widget));
 		
     resize( geometry() );
+    updateGeometryHint();
 }
 
 auto pWindow::calcMenuHeight() -> void {
@@ -478,18 +534,20 @@ auto pWindow::setStatusVisible(bool visible) -> void {
     if (!gtk_widget_get_visible(widget)) return;
 
     if (window.fullScreen()) gtk_window_fullscreen(GTK_WINDOW(widget));
-		
-	// Why? 
+
+	// Why?
 	// switching language between asian and european changes menu height
 	calcMenuHeight();
 	
-    resize( geometry() );		
+    resize( geometry() );
+
+    updateGeometryHint();
 }
 
 auto pWindow::sizeWindow(GtkAllocation* allocation) -> void {
-	
+
     if( !window.visible() ) return;
-	if (!gtk_widget_get_realized(widget)) return;
+	if (!gtk_widget_get_realized(mainDisplay)) return;
 	
     if( allocation->width == lastAllocation.width
     && allocation->height == lastAllocation.height ) return;
@@ -498,8 +556,25 @@ auto pWindow::sizeWindow(GtkAllocation* allocation) -> void {
         window.state.geometry.width  = allocation->width;
         window.state.geometry.height = allocation->height;
     }
-	
+
+    if (!resizing) {
+        resizing = true;
+        if (window.onResizeStart && !window.fullScreen())
+            window.onResizeStart();
+    }
+
 	timerResize.setEnabled();
+    if (window.aspectRatio().width)
+        updateGeometryHint();
+
+    if(this->window.state.layout) {
+        this->window.state.layout->resetSynchronisation();
+        Geometry layoutGeometry = this->window.geometry();
+        layoutGeometry.x = layoutGeometry.y = 0;
+        this->window.state.layout->setGeometry(layoutGeometry);
+    }
+
+    if( this->window.onSize) this->window.onSize(Window::SIZE_MODE::Default);
 	
     lastAllocation = *allocation;
 }
@@ -518,11 +593,6 @@ auto pWindow::setGeometry(Geometry geometry) -> void {
     calcMenuHeight();
 
     gtk_window_move(GTK_WINDOW(widget), geometry.x , geometry.y );
-
-    GdkGeometry geom;
-    geom.min_width  = window.resizable() ? 1 : geometry.width;
-    geom.min_height = window.resizable() ? 1 : geometry.height;
-    gtk_window_set_geometry_hints(GTK_WINDOW(widget), GTK_WIDGET(mainDisplay), &geom, GDK_HINT_MIN_SIZE);
 
     resize(geometry);
 
@@ -568,6 +638,7 @@ auto pWindow::setFullScreen(bool fullScreen) -> void {
     if (!window.resizable()) return;
     locked = true;
     timer.setEnabled();
+    timerWorkaround.setEnabled();
 
     if(!fullScreen) {
 

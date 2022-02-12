@@ -15,6 +15,7 @@
 #include "cmd/cmd.h"
 #include "media/autoloader.h"
 #include "media/fileloader.h"
+#include "thread/emuThread.h"
 #include <random>
 
 Program* program = nullptr;
@@ -52,16 +53,12 @@ int main(int argc, char** argv) {
 }
 
 Program::Program() {
-    program = this;    
-	if (cmd->noGui)
-		GUIKIT::Application::loop = [this]() { loopNoGui(); };    
-	else
-		GUIKIT::Application::loop = [this]() { loop(); };    
-		
+    program = this;
     GUIKIT::Application::name = APP_NAME;
     globalSettings = new GUIKIT::Settings;
 	autoloader = new Autoloader;
 	fileloader = new Fileloader;
+    emuThread = new EmuThread;
     settingsStorage.push_back( globalSettings );
 	if(!cmd->noGui) {
 		view = new View;
@@ -87,7 +84,25 @@ Program::Program() {
 	initAudio();
 	initVideo();
 
+    initUserInterface();
     cmd->autoloadImages();
+}
+
+auto Program::initUserInterface() -> void {
+    bool threadedEmu = globalSettings->get<bool>("threaded_emu", false);
+
+    if (cmd->noGui) {
+		emuThread->enable( false );
+        GUIKIT::Application::loop = [this]() { loopNoGui(); };        
+    } else if (!threadedEmu) {
+		emuThread->enable( false );
+        GUIKIT::Application::loop = [this]() { loop(); };        
+    } else {
+        videoDriver->freeContext();
+		GUIKIT::Application::loop = [this]() { loopUserInterface(); };
+		emuThread->enable( true );        
+    }
+    videoDriver->setReshaping( !isRunning || !threadedEmu );
 }
 
 auto Program::addEmulators() -> void {
@@ -288,7 +303,6 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
 		resetRunAhead();
 
 		archiveViewer->setVisible(false);
-		view->update();	
 		view->setCursor( activeEmulator );
 		view->updateCartButtons( activeEmulator );
 
@@ -305,11 +319,15 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
         statusHandler->resetFrameCounter();
 
         view->updateSpeedLabels();
+            
+        videoDriver->setReshaping( !emuThread->enabled );
 	}
 	
 	activeEmulator->power();
 	isRunning = true;
 	isPause = false;
+
+    hintExclusiveFullscreen( );
 }
 
 auto Program::reset( Emulator::Interface* emulator ) -> void {
@@ -317,12 +335,11 @@ auto Program::reset( Emulator::Interface* emulator ) -> void {
 		power(emulator);
 		return;
 	}
-		
+
 	emulator->reset();
 }
 
-auto Program::powerOff() -> void {    
-    
+auto Program::powerOff() -> void {
     if ( activeEmulator ) {
         fastForward( false );
         activeEmulator->powerOff();
@@ -354,13 +371,15 @@ auto Program::powerOff() -> void {
 	
 	if (!cmd->noGui) {
         view->updatePauseCheck();
-		view->showTapeMenu( false );    	
+		view->showTapeMenu( false );
+        emuThread->clearEvents();
 		statusHandler->clear();
 		if (activeVideoManager)
 			activeVideoManager->powerOff();
 		videoDriver->clear();
-		videoDriver->hintExclusiveFullscreen( false );
-		audioDriver->clear();  
+        videoDriver->hintExclusiveFullscreen( false );
+        videoDriver->setReshaping( true );
+		audioDriver->clear();
 		audioManager->powerOff();
 		activeEmulator = nullptr;
 		activeVideoManager = nullptr;
@@ -380,9 +399,12 @@ auto Program::loopNoGui() -> void {
 }
 
 auto Program::loop() -> void {
-    focused = view->focused();
+    if (!emuThread->enabled) {
+        focused = view->focused();
+    }
+
     InputManager::poll();
-	
+
 	if( willRun() ){
 		unsigned frames = loopFrames;
 		
@@ -404,9 +426,16 @@ auto Program::loop() -> void {
 		GUIKIT::System::sleep( 20 );
 		VideoManager::updateWhenNotRunning();
 	}
-    
+
     if (statusHandler->hasUpdates())
         statusHandler->update();
+}
+// when emu thread is active
+auto Program::loopUserInterface() -> void {
+    GUIKIT::System::sleep( 1 );
+    focused = view->focused();
+    emuThread->handleStatusUpdate();
+    emuThread->handleUIEvents();
 }
 
 auto Program::willRun() -> bool {
@@ -416,7 +445,7 @@ auto Program::willRun() -> bool {
 	if (focused) return true;
 	//no focus
 	if (*pauseFocusLoss) return false;
-	if (view->exclusiveFullscreen()) return false; //exclusive fullscreen can't run in background	
+	if (videoDriver && videoDriver->hasExclusiveFullscreen()) return false; //exclusive fullscreen can't run in background
 	
 	return true;
 }
@@ -433,7 +462,12 @@ auto Program::hasFocus() -> bool {
 }
 
 auto Program::quit() -> void {
+    emuThread->lock();
     powerOff();
+    if (statusHandler)
+        statusHandler->clearUpdates();
+    emuThread->unlock();
+    delete emuThread;
 
     if (!cmd->debug) {
         if (globalSettings->get<bool>("save_settings_on_exit", true))
@@ -458,8 +492,7 @@ auto Program::quit() -> void {
 	delete filePool;
     delete cmd;
 	delete autoloader;
-	if (statusHandler)
-		statusHandler->clearUpdates();
+
     
     for(auto settings : settingsStorage)
         delete settings;
@@ -467,6 +500,7 @@ auto Program::quit() -> void {
     globalSettings = nullptr;
     
     // in case of exit request from emulation core
+
     GUIKIT::Application::loop = nullptr;
 }
 
@@ -573,6 +607,7 @@ auto Program::autoStartFinish(bool soft) -> void {
     if (soft && warp.motorControlled)
         return;
 
+    videoDriver->freeContext();
     fastForward( false );
 }
 
@@ -584,6 +619,7 @@ auto Program::informDriveLoading(bool state) -> void {
     if (warp.active == state)
         return;
 
+    videoDriver->freeContext();
     fastForward( state, warp.aggressive );
 }
 

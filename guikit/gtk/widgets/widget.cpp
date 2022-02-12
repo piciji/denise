@@ -30,12 +30,31 @@ auto pWidget::setFont(std::string font) -> void {
 
 inline auto pWidget::getMinimumSize() -> Size {
     if (calculatedMinimumSize.updated)
-        return calculatedMinimumSize.minimumSize;        
-    
-    calculatedMinimumSize.minimumSize = pFont::size(pfont, widget.text());
+        return calculatedMinimumSize.minimumSize;
+
+    gint minimumHeight;
+    gint naturalHeight;
+    gtk_widget_get_preferred_height(gtkWidget, &minimumHeight, &naturalHeight);
+
+    gint minimumWidth;
+    gint naturalWidth;
+    gtk_widget_get_preferred_width(gtkWidget, &minimumWidth, &naturalWidth);
+
+    calculatedMinimumSize.minimumSize = {(unsigned)minimumWidth, (unsigned)minimumHeight};
 
     calculatedMinimumSize.updated = true;
     
+    return calculatedMinimumSize.minimumSize;
+}
+
+inline auto pWidget::getMinimumFontSize() -> Size {
+    if (calculatedMinimumSize.updated)
+        return calculatedMinimumSize.minimumSize;
+
+    calculatedMinimumSize.minimumSize = pFont::size(pfont, widget.text());
+
+    calculatedMinimumSize.updated = true;
+
     return calculatedMinimumSize.minimumSize;
 }
 
@@ -72,7 +91,7 @@ auto pWidget::setGeometry(Geometry geometry) -> void {
 	if (!widget.visible()) 
 		gtk_widget_set_visible(gtkWidget, true);
 	
-    gtk_fixed_move(GTK_FIXED(parentGtk), gtkWidget, geometry.x, geometry.y);		
+    gtk_fixed_move(GTK_FIXED(parentGtk), gtkWidget, geometry.x, geometry.y);
     gtk_widget_set_size_request(gtkWidget, geometry.width, geometry.height);	
 	
 	if (!widget.visible()) 
@@ -114,9 +133,9 @@ auto pWidget::add() -> void {
     
     setFont( widget.font() );
     widget.setEnabled(widget.enabled());
-    widget.setVisible(widget.visible());   
-    setBackgroundColor( widget.backgroundColor() );
+    widget.setVisible(widget.visible());
     setForegroundColor( widget.foregroundColor() );
+    setBackgroundColor( widget.backgroundColor() );
 }
 
 auto pWidget::setBackgroundColor(unsigned color) -> void {
@@ -127,13 +146,10 @@ auto pWidget::setBackgroundColor(unsigned color) -> void {
 	
     if( !widget.overrideBackgroundColor() )
         return;	    			
-	
-	std::string _color = "rgb(" + std::to_string( (color >> 16) & 0xff ) + ", " + std::to_string( (color >> 8) & 0xff )
-		+ ", " + std::to_string( color & 0xff ) + ")";
-	
+
 	pSystem::addCssClass(gtkWidget, "customBgColor");
 	
-	pSystem::applyCss( gtkWidget, ".customBgColor { background-color: " + _color + " }" );
+	pSystem::applyCss( gtkWidget, ".customBgColor { background-color: " + pSystem::getColorCss(color) + " }" );
 }
 
 auto pWidget::setForegroundColor(unsigned color) -> void {
@@ -145,10 +161,7 @@ auto pWidget::setForegroundColor(unsigned color) -> void {
     if( !widget.overrideForegroundColor() )
         return;	
 
-	std::string _color = "rgb(" + std::to_string((color >> 16) & 0xff) + ", " + std::to_string((color >> 8) & 0xff)
-		+ ", " + std::to_string(color & 0xff) + ")";
-
 	pSystem::addCssClass(gtkWidget, "customTextColor");
 
-	pSystem::applyCss(gtkWidget, ".customTextColor { color: " + _color + " }");
+	pSystem::applyCss(gtkWidget, ".customTextColor { color: " + pSystem::getColorCss(color) + " }");
 }

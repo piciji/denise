@@ -30,6 +30,9 @@ namespace DRIVER {
         std::condition_variable cv;
         std::mutex accessMutex;
 
+        std::mutex resizeMutex;
+        std::mutex resizeMutexThreaded;
+
         RenderBuffer renderBuffers[RENDER_BUFFER_COUNT];
         RenderBuffer* lockedBuffer;
         uint8_t fillPos;

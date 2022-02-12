@@ -14,7 +14,7 @@ struct pApplication {
     static auto quit() -> void;
     static auto initialize() -> void;
     static auto setAppTimer() -> void;
-    static auto oberserveMenu(NSMenu* menu) -> void;
+    static auto observeMenu(NSMenu* menu) -> void;
     static auto requestClipboardText() -> void;
     static auto setClipboardText( std::string text ) -> void;
 };
@@ -64,12 +64,13 @@ struct pWindow {
     auto setForeground() -> void;
     auto getScrollbarWidth() -> unsigned { return 20; }
     auto positionBGView() -> void;
+    auto applyAspectRatio() -> void;
     
     bool disableIconsInTopMenu = false;
 
     static auto addCustomFont(CustomFont* customFont) -> bool;
     
-    pWindow(Window& window);
+    pWindow(Window& window, Window::Hints hints = Window::Hints::Default);
     ~pWindow();
 };
 
@@ -88,6 +89,7 @@ struct pStatusBar {
     
     auto update() -> void;
     auto updatePart( StatusBar::Part& part ) -> void;
+    auto updateTooltip( StatusBar::Part& part ) -> void { updatePart(part); }
     auto setVisible(bool visible) -> void;
     auto getHeight() -> unsigned;
     auto reposition() -> void;

@@ -315,11 +315,13 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
             return;
 
         std::string path = program->settingsFile( this->emulator->ident + "_" );
-        
+
+        emuThread->lock();
         if (this->load( path )) {
             globalSettings->set<std::string>(emulator->ident + "_custom_settings", "");
             settings.active.fileLabel.setText( trans->get("default") );
         }
+        emuThread->unlock();
     };
     
     settings.control.load.onActivate = [this]() {
@@ -334,10 +336,12 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
 
         std::string path = getSettingsFolder() + fileName;
 
+        emuThread->lock();
         if (this->load( path )) {
             globalSettings->set<std::string>(emulator->ident + "_custom_settings", path);
             settings.active.fileLabel.setText( fileName );
         }
+        emuThread->unlock();
     };
     
     settings.control.save.onActivate = [this]() {
@@ -424,8 +428,11 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
 				
 				path = program->settingsFile(this->emulator->ident + "_");
 
+                emuThread->lock();
 				if (this->load(path))					
-					settings.active.fileLabel.setText(trans->get("default"));				
+					settings.active.fileLabel.setText(trans->get("default"));
+
+                emuThread->unlock();
 			}
 			
             updateSettingsList();
@@ -498,8 +505,10 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         std::string baseName = splitFile( stateFast.listView.text(selection, 1), statePos );
         stateFast.top.edit.setText( baseName );
         _settings->set<std::string>("save_ident", baseName);
-        
+
+        emuThread->lock();
         States::getInstance( emulator )->load( stateFast.listView.text(selection, 1), true );
+        emuThread->unlock();
         view->setFocused(300);
 	};	
 		
@@ -542,9 +551,11 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
 		
 		if (filePath.empty()) return;
             
-        _settings->set<std::string>( "save_direct_folder", GUIKIT::File::getPath( filePath ) ); 
-		
+        _settings->set<std::string>( "save_direct_folder", GUIKIT::File::getPath( filePath ) );
+
+        emuThread->lock();
         States::getInstance(emulator)->load(filePath);
+        emuThread->unlock();
         view->setFocused(300);
 	};
 	
@@ -637,9 +648,9 @@ auto ConfigurationsLayout::load( std::string path ) -> bool {
         return false;
     }
 
-    auto _activeEmulatorBefore = activeEmulator;
+    std::string _audioFloppyFolder = _settings->get<std::string>("audio_floppy_folder", "");
 
-    if (_activeEmulatorBefore)
+    if (activeEmulator)
         program->powerOff();
 
     if (!_settings->load(path)) {
@@ -656,7 +667,15 @@ auto ConfigurationsLayout::load( std::string path ) -> bool {
     inputManager->updateAnalogSensitivity();
     inputManager->bindHids();
 
-    view->updateDeviceSelection(this->emulator);    
+    auto firmwareManager = FirmwareManager::getInstance(this->emulator);
+    firmwareManager->reload();
+
+    std::string audioFloppyFolder = _settings->get<std::string>("audio_floppy_folder", "");
+
+    if (_audioFloppyFolder != audioFloppyFolder)
+        audioManager->drive.unload(this->emulator, this->emulator->getDiskMediaGroup());
+
+    view->updateDeviceSelection(this->emulator);
     
     if(this->tabWindow->audioLayout) this->tabWindow->audioLayout->loadSettings();
 
@@ -672,17 +691,22 @@ auto ConfigurationsLayout::load( std::string path ) -> bool {
 
     if(this->tabWindow->systemLayout) this->tabWindow->systemLayout->loadSettings();
 
-    if(this->tabWindow->videoLayout) this->tabWindow->videoLayout->loadSettings();
+    if(this->tabWindow->videoLayout)
+        this->tabWindow->videoLayout->loadSettings();
+    else if (videoDriver)
+        VideoManager::getInstance( emulator )->reloadSettings();
 
-    if(this->tabWindow->mediaLayout) this->tabWindow->mediaLayout->loadSettings();
+    if(this->tabWindow->mediaLayout)
+        this->tabWindow->mediaLayout->loadSettings();
+    else
+        fileloader->loadSettings(this->emulator);
     
     loadSettings();
 
     view->updateSpeedLabels(true);
 
-    if (_activeEmulatorBefore)
-        program->power(_activeEmulatorBefore);
-    
+    program->power(this->emulator);
+
     return true;
 }
 

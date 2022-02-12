@@ -29,6 +29,11 @@ auto View::renderPlaceholder(bool blackScreen) -> void {
 	uint8_t* data = placeholder.data;	
 	
 	if (!blackScreen && !placeholder.empty()) {
+        bool _needLock = emuThread->enabled && !emuThread->locked();
+
+        if (_needLock)
+            emuThread->lock();
+
 		if (videoDriver->lock(gpu_data, gpu_pitch, placeholder.width, placeholder.height)) {
 
 			for (_h = 0; _h < placeholder.height; _h++) {
@@ -39,9 +44,11 @@ auto View::renderPlaceholder(bool blackScreen) -> void {
 				gpu_data += gpu_pitch - (placeholder.width );
 			}
 
-            videoDriver->unlock(true);
-            videoDriver->redraw(true);
+            videoDriver->unlockAndRedraw(true, true);
 		}
+
+        if (_needLock)
+            emuThread->unlock();
 	} else { // blackscreen
 		if (videoDriver->lock(gpu_data, gpu_pitch, 256, 256)) {
 
@@ -52,11 +59,9 @@ auto View::renderPlaceholder(bool blackScreen) -> void {
 				gpu_data += gpu_pitch - 256;
 			}
 
-            videoDriver->unlock(true);
-            videoDriver->redraw(true);
+            videoDriver->unlockAndRedraw(true, true);
 		}
 	}
-
 }
 
 auto View::cursorForPlaceholderInUpperTriangle(GUIKIT::Position& p) -> bool {

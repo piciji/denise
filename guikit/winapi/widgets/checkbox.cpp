@@ -33,6 +33,33 @@ auto pCheckBox::create() -> void {
     wndprocOrig = (WNDPROC)SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)subclassWndProc);    
 }
 
+auto pCheckBox::onCustomDraw(LPARAM lparam) -> LRESULT {
+    LPNMCUSTOMDRAW lpcd = (LPNMCUSTOMDRAW)lparam;
+
+    switch(lpcd->dwDrawStage) {
+        case CDDS_PREPAINT:
+            if (checkBox.overrideForegroundColor()) {
+                const int textLength = ::GetWindowTextLength(lpcd->hdr.hwndFrom);
+                if (textLength > 0) {
+                    TCHAR* buttonText = new TCHAR[textLength+1];
+                    //SIZE dimensions = {0};
+                    ::GetWindowText(lpcd->hdr.hwndFrom, buttonText, textLength+1);
+                    //::GetTextExtentPoint32(lpcd->hdc, buttonText, textLength, &dimensions);
+                    //const int xPos = (lpcd->rc.right - dimensions.cx) / 2;
+                    //const int yPos = (lpcd->rc.bottom - dimensions.cy) / 2;
+                    static Size containerSize = pWidget::getScaledContainerSize( {16, 2} );
+                    ::SetBkMode(lpcd->hdc, TRANSPARENT);
+                    auto color = checkBox.foregroundColor();
+                    ::SetTextColor(lpcd->hdc, RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff) );
+                    ::TextOut(lpcd->hdc, containerSize.width, containerSize.height, buttonText, textLength);
+                    delete[] buttonText;
+                    return CDRF_SKIPDEFAULT;
+                }
+            }
+    }
+    return CDRF_DODEFAULT;
+}
+
 auto CALLBACK pCheckBox::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT {
     CheckBox* checkBox = (CheckBox*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
     if(checkBox == nullptr) return DefWindowProc(hwnd, msg, wparam, lparam);

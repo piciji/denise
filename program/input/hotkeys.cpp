@@ -3,6 +3,7 @@
 #include "../tools/DiskFinder.h"
 #include "../view/status.h"
 #include "../audio/manager.h"
+#include "../thread/emuThread.h"
 
 std::vector<InputMapping*> InputManager::hotkeyTriggers;
 
@@ -20,7 +21,7 @@ auto InputManager::setHotkeys() -> void {
     hotkeys.push_back( {Hotkey::Id::RunAheadDown, "runahead down"} );	
     hotkeys.push_back( {Hotkey::Id::RunAheadToggleMode, "runahead toggle mode"} );	
     
-    hotkeys.push_back( {Hotkey::Id::ToggleRenderer, "Toggle renderer"} );	
+    hotkeys.push_back( {Hotkey::Id::ToggleCycleRenderer, "Toggle Cycle renderer"} );	
     hotkeys.push_back( {Hotkey::Id::AudioRecord, "audio record"} );
 
     hotkeys.push_back( {Hotkey::Id::Freeze, "freeze button"} );
@@ -100,11 +101,12 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             if (emuView && emuView->audioLayout) {
                 emuView->audioLayout->toggleRecord();
             } else {
+                emuThread->lock();
                 if (audioManager->record.run()) {
                     audioManager->record.finish();
                 } else {
                     std::string errorText;
-                    if (!audioManager->record.record(activeEmulator, errorText)) {
+                    if (!audioManager->record.start(activeEmulator, errorText)) {
                         statusHandler->setMessage(errorText, 3, true);
                     }
                 }
@@ -126,9 +128,10 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
 
             pos += down ? -1 : 1;
             settings->set<unsigned>( "runahead", pos);
+            emuThread->lock();
             audioManager->drive.reset();
             activeEmulator->runAhead( pos );
-
+            emuThread->unlock();
             auto emuView = EmuConfigView::TabWindow::getView(activeEmulator);
             if (emuView && emuView->miscLayout)
                 emuView->miscLayout->setRunAhead( pos );
@@ -137,7 +140,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
 
         } break;
             
-        case Hotkey::Id::ToggleRenderer: {
+        case Hotkey::Id::ToggleCycleRenderer: {
             if (!activeEmulator)
                 break;
 
@@ -147,6 +150,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             else {
                 auto model = activeEmulator->getModel( activeEmulator->getModelIdOfCycleRenderer() );
                 if (model) {
+                    emuThread->lock();
                     bool val = activeEmulator->getModelValue( model->id );
                     settings->set<bool>( _underscore(model->name), !val );
                     activeEmulator->setModelValue( model->id, !val );
@@ -162,8 +166,10 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             
             bool state = settings->get<bool>( "runahead_performance", false);
             state ^= 1;
-            settings->set<bool>( "runahead_performance", state);            
+            settings->set<bool>( "runahead_performance", state);
+            emuThread->lock();
             activeEmulator->runAheadPerformance( state );
+            emuThread->unlock();
 
             auto emuView = EmuConfigView::TabWindow::getView(activeEmulator);
             if (emuView && emuView->miscLayout)
@@ -173,6 +179,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
         } break;
         
 		case Hotkey::Id::SwapInputDevices: {
+            emuThread->lock();
 			auto connector1 = emulator->getConnector( 0 );
             auto connectedDevice1 = emulator->getConnectedDevice( connector1 );
             
@@ -194,18 +201,22 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
 		} break;
         case Hotkey::Id::ToggleFastForward:
         case Hotkey::Id::ToggleFastForwardAggressive:
+            emuThread->lock();
             program->toggleFastForward( id == Hotkey::Id::ToggleFastForwardAggressive );
             break;
         
         case Hotkey::Id::Fullscreen:
-            view->setFullScreen( !view->fullScreen() );
+            emuThread->lock();
+            view->switchFullScreen( !view->fullScreen() );
             break;
 			
 		case Hotkey::Power:
+            emuThread->lock();
 			program->power(emulator);
 			break;
 			
 		case Hotkey::SoftReset:
+            emuThread->lock();
 			program->reset(emulator);
 			break;
 			
@@ -252,20 +263,23 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             view->updatePauseCheck();
             break;
         case Hotkey::IncSlot:
-        case Hotkey::DecSlot: 
+        case Hotkey::DecSlot:
+            emuThread->lock();
             States::getInstance( emulator )->changeSlot( id == Hotkey::DecSlot );
             break;
         case Hotkey::Loadstate:
+            emuThread->lock();
             States::getInstance( emulator )->load();
             break;
         case Hotkey::Savestate:
+            emuThread->lock();
             States::getInstance( emulator )->save();
             break;
         case Hotkey::ToggleMenu:
             if(!view->fullScreen()) view->updateMenuBar( true );
             break;
         case Hotkey::ToggleStatus:
-            if(!view->exclusiveFullscreen()) view->updateStatusBar( true );
+            if(!videoDriver || !videoDriver->hasExclusiveFullscreen()) view->updateStatusBar( true );
             break;
 
         case Hotkey::Id::ToggleBorder: {
@@ -289,6 +303,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
                 else if ((CropType)cropType == CropType::Free) emuView->borderLayout->cropFree.activate();
             } else {
                 settings->set<unsigned>("crop_type", cropType);
+                emuThread->lock();
                 program->updateCrop(activeEmulator);
             }
 
@@ -305,6 +320,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
 
             program->informDriveLoading(false);
 
+            emuThread->lock();
             auto media = activeEmulator->getTape( 0 );
             if (!media)
                 break;
@@ -313,7 +329,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
 
             if (driveCount == 0) {
                 statusHandler->setMessage( trans->get("tape_disconnect"), 3, true );
-                return;
+                break;
             }                        
 
             typedef Emulator::Interface::TapeMode TapeMode;
@@ -357,6 +373,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             if (emuView && emuView->audioLayout)
                 state = emuView->audioLayout->settingsLayout.toggleCheckbox( C64Interface::ModelIdDigiboost );
             else {
+                emuThread->lock();
                 auto model = activeEmulator->getModel( C64Interface::ModelIdDigiboost );
                 if (model) {
                     state = activeEmulator->getModelValue( model->id );
@@ -377,6 +394,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             if (emuView && emuView->systemLayout) {
                 val = emuView->systemLayout->modelLayout.nextOption( C64Interface::ModelIdSid );
             } else {
+                emuThread->lock();
                 auto model = activeEmulator->getModel( C64Interface::ModelIdSid );
                 if (model) {
                     val = activeEmulator->getModelValue( model->id );
@@ -403,6 +421,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             if (emuView && emuView->audioLayout)
                 state = emuView->audioLayout->settingsLayout.toggleCheckbox( C64Interface::ModelIdFilter );
             else {
+                emuThread->lock();
                 auto model = activeEmulator->getModel( C64Interface::ModelIdFilter );
                 if (model) {
                     state = activeEmulator->getModelValue( model->id );
@@ -426,6 +445,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
                 state = emuView->audioLayout->settingsLayout.stepRange( _sid == 0 ? C64Interface::ModelIdBias8580 : C64Interface::ModelIdBias6581,
                         id == Hotkey::AdjustBiasUp ? 100: -100 );
             else {
+                emuThread->lock();
                 auto model = activeEmulator->getModel( _sid == 0 ? C64Interface::ModelIdBias8580 : C64Interface::ModelIdBias6581);
 
                 if (model) {
@@ -443,6 +463,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             if (!activeEmulator)
                 break;
 
+            emuThread->lock();
             auto defaultMedia = activeEmulator->getDisk( 0 );
 
             if (!defaultMedia)
@@ -468,11 +489,13 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
         }
 
         case Hotkey::Freeze:
+            emuThread->lock();
             if (activeEmulator)
                 activeEmulator->freezeButton();
             break;
 
         case Hotkey::EF3Menu:
+            emuThread->lock();
             if (activeEmulator)
                 activeEmulator->customCartridgeButton();
             break;
@@ -488,6 +511,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             auto mediaId = settings->get<unsigned>("access_floppy", 0u, {0u, 3u});
             GUIKIT::File* file;
 
+            emuThread->lock();
             auto media = activeEmulator->getDisk( mediaId );
             if (!media)
                 break;                                        
@@ -545,15 +569,21 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             break;	
         }
     }
+    emuThread->unlock();
 }
 
 auto InputManager::pollHotkeys() -> void {
-	
-	if (hotkeyTriggers.size() == 0)
-		return;
+
+    emuThread->lockHotkeys();
+    if (hotkeyTriggers.size() == 0) {
+        emuThread->unlockHotkeys();
+        return;
+    }
+    auto _hotkeyTriggers = hotkeyTriggers;
+    hotkeyTriggers.clear();
+    emuThread->unlockHotkeys();
 
     if (!Program::hasFocus()) {
-        hotkeyTriggers.clear();
         return;
     }
 
@@ -567,7 +597,7 @@ auto InputManager::pollHotkeys() -> void {
 	
 	auto useEmu = activeEmulator;
 	
-	for( auto trigger : hotkeyTriggers ) {
+	for( auto trigger : _hotkeyTriggers ) {
 		
 		switch(trigger->hotkeyId) {
 			case Hotkey::Id::SwapInputDevices:
@@ -668,8 +698,6 @@ auto InputManager::pollHotkeys() -> void {
     
     if (anyLoad)
 		useTrigger.push_back( anyLoad );
-	
-    hotkeyTriggers.clear();
     
 	for( auto trigger : useTrigger )			
 		fireHotkey( trigger->inputManager ? trigger->inputManager->emulator : nullptr, (Hotkey::Id)trigger->hotkeyId );   		
@@ -687,7 +715,9 @@ auto InputManager::activateHotkey(Hotkey::Id id, Emulator::Interface* emulator) 
 				continue;
 			
 			if (mapping->hotkeyId == id) {
+                emuThread->lockHotkeys();
 				hotkeyTriggers.push_back( mapping );
+                emuThread->unlockHotkeys();
 				return;
 			}
 		}

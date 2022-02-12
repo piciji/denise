@@ -66,6 +66,17 @@ struct OpenGLSurface : OpenGLTexture {
     auto createTexture(RenderBuffer* renderBuffer = nullptr) -> void;
     auto updateTexture(RenderBuffer* renderBuffer = nullptr) -> void;
 
+    struct {
+        GLfloat modelView[16];
+        GLfloat projection[16];
+        GLfloat vertices[16];
+        GLfloat texCoords[8];
+        GLfloat modelViewProjection[4 * 4];
+        GLfloat positions[4 * 4];
+        unsigned width = 0;
+        unsigned height = 0;
+    } mvp;
+
 	GLuint program = 0;
 	GLuint framebuffer = 0;
 	GLuint vao = 0;
@@ -94,6 +105,7 @@ struct OpenGL : OpenGLProgram {
         bool synchronize = false;
         bool hardSync = false;
         bool threaded = false;
+        bool resizing = false;
         Video::Filter filter = Video::Filter::Nearest;
         std::vector<ShaderPass*> passes = {};
     } settings;

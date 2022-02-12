@@ -82,6 +82,10 @@
 - (void)changeDisplay:(NSNotification*)notification {
     
     using GUIKIT::Application;
+    using GUIKIT::pMonitor;
+
+    pMonitor::fetchDisplays();
+
     if (Application::onDisplayChange)
         Application::onDisplayChange();
     
@@ -153,20 +157,22 @@
         [appMenu addItem:item];
         
         [self setAutorecalculatesKeyViewLoop: YES];
-    }
-    
-    
-    if(GUIKIT::Application::loop) {
-        GUIKIT::pApplication::oberserveMenu( menuBarContext );
+        [self setMinSize:NSMakeSize(100,100)];
     }
     
     return self;
 }
 
 -(void)sendEvent:(NSEvent*)event {
+    static bool initMenuRunLoop = false;
+    
     if([event type] == NSRightMouseDown) {
         if (window->onContext) {
             if (window->onContext() && window->state.menus.size() > 0) {
+                if (!initMenuRunLoop) {
+                    initMenuRunLoop = true;
+                    GUIKIT::pApplication::observeMenu( menuBarContext );
+                }
               //  [[menuBar itemAtIndex:0] setHidden: TRUE];
                 [NSMenu popUpContextMenu:menuBarContext withEvent:event forView:NULL];
                 //[[menuBar itemAtIndex:0] setHidden: FALSE];
@@ -202,6 +208,42 @@
     window->p.sizeEvent();
 }
 
+-(void)windowWillStartLiveResize:(NSNotification *)notification {
+    if (window->onResizeStart && !window->fullScreen())
+        window->onResizeStart();
+}
+
+-(void)windowDidEndLiveResize:(NSNotification *)notification {
+    if (window->onResizeEnd && !window->fullScreen())
+        window->onResizeEnd();
+}
+
+- (NSSize)windowWillResize:(NSWindow *)sender toSize:(NSSize)frameSize {
+    
+    auto aspect = window->aspectRatio();
+    bool inFullScreen = window->fullScreen();
+    
+    if (inFullScreen || (aspect.width == 0)) {
+        //[window->p.cocoaWindow setContentResizeIncrements: NSMakeSize(1,1)];
+        return frameSize;
+    }
+    
+    unsigned statusHeight = 0;
+    NSRect area = [[window->p.cocoaWindow contentView] bounds];
+    
+    aspect.height = area.size.width * aspect.height / aspect.width;
+    aspect.width = area.size.width;
+    
+    if (window->statusBar())
+        statusHeight = window->statusBar()->p.getHeight();
+        
+    aspect.height += statusHeight;
+        
+    [window->p.cocoaWindow setContentAspectRatio: NSMakeSize(aspect.width, aspect.height)];
+    
+    return frameSize;
+}
+
 -(void)windowDidMiniaturize:(NSNotification*)notification {
     if (window->onMinimize)
         window->onMinimize();
@@ -215,6 +257,7 @@
 -(void) windowWillEnterFullScreen:(NSNotification*)notification {
     window->state.fullScreen = true;
     window->p.fullScreenToggleDelay = true;
+    [window->p.cocoaWindow setContentResizeIncrements:NSMakeSize(1, 1)];
 }
 
 -(void) windowDidEnterFullScreen:(NSNotification*)notification {
@@ -230,7 +273,7 @@
 
 -(void) windowDidExitFullScreen:(NSNotification*)notification {    
     window->p.setGeometry( window->state.geometry );
-    if(window->onSize) window->onSize();
+    if(window->onSize) window->onSize(GUIKIT::Window::SIZE_MODE::Default);
     window->p.fullScreenToggleDelay = false;
 }
 
@@ -315,7 +358,7 @@ NSTimer* pApplication::appTimer = nullptr;
 auto pApplication::run() -> void {
     if(Application::loop) {
         setAppTimer();
-        oberserveMenu( [NSApp mainMenu] );
+        observeMenu( [NSApp mainMenu] );
     }
 
     @autoreleasepool {
@@ -323,8 +366,12 @@ auto pApplication::run() -> void {
     }
 }
 
-auto pApplication::oberserveMenu(NSMenu* menu) -> void {
+auto pApplication::observeMenu(NSMenu* menu) -> void {
     NSNotificationCenter* notificationCenter = [NSNotificationCenter defaultCenter];
+ 
+    [notificationCenter removeObserver:cocoaDelegate name:NSMenuDidBeginTrackingNotification object:menu];
+    
+    [notificationCenter removeObserver:cocoaDelegate name:NSMenuDidEndTrackingNotification object:menu];
     
     [notificationCenter addObserver:cocoaDelegate selector:@selector(beganTracking:) name:NSMenuDidBeginTrackingNotification object:menu];
     
@@ -365,7 +412,9 @@ auto pApplication::initialize() -> void {
         
         [[NSProcessInfo processInfo] beginActivityWithOptions: NSActivityUserInitiated | NSActivityLatencyCritical reason: @"video synchron output"];
         
-        [[NSThread currentThread] setQualityOfService: NSQualityOfServiceUserInteractive];
+        if ([[NSThread currentThread] respondsToSelector:@selector(setQualityOfService:)]) {
+            [[NSThread currentThread] setQualityOfService: NSQualityOfServiceUserInteractive];
+        }
         
         [NSApplication sharedApplication];
         cocoaDelegate = [[CocoaDelegate alloc] init];
@@ -406,7 +455,7 @@ auto pApplication::setClipboardText( std::string text ) -> void {
 }
 
 //window
-pWindow::pWindow(Window& window) : window(window) {
+pWindow::pWindow(Window& window, Window::Hints hints) : window(window) {
     @autoreleasepool {
         cocoaWindow = [[CocoaWindow alloc] initWith:window];
         
@@ -429,6 +478,12 @@ auto pWindow::handle() -> uintptr_t {
     return (uintptr_t)cocoaWindow;
 }
 
+auto pWindow::applyAspectRatio() -> void {
+    if (window.fullScreen() || (window.aspectRatio().width == 0)) {
+        [window.p.cocoaWindow setContentResizeIncrements: NSMakeSize(1,1)];
+    }
+}
+    
 auto pWindow::setTitleForAppMenuItem(Window::Cocoa::AppMenuItem appMenuItem, std::string title) -> void {
     [[[[[cocoaWindow menuBar] itemAtIndex:0] submenu] itemAtIndex:appMenuItem] setTitle:[NSString stringWithUTF8String:title.c_str()]];
 }
@@ -650,7 +705,7 @@ auto pWindow::sizeEvent() -> void {
     //if (backgroundView)
       //  [backgroundView setFrame:[[cocoaWindow contentView] bounds]];
             
-    if(!locked && window.onSize) window.onSize();
+    if(!locked && window.onSize) window.onSize(Window::SIZE_MODE::Default);
 }
 
 auto pWindow::append(Menu& menu) -> void {    

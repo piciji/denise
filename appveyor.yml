@@ -203,10 +203,10 @@ for:
         fi
         
         sudo mv "${gzSrc}" "${gzTarget}"
-    
+
   artifacts:
     - path: 'denise*.dmg'
-    
+
 -
   matrix:
     only:

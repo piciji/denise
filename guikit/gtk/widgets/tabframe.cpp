@@ -11,18 +11,21 @@ auto pTabFrame::borderSize() -> unsigned {
 }
 
 auto pTabFrame::minimumSize() -> Size {
-	if (calculatedMinimumSize.updated)
-        return calculatedMinimumSize.minimumSize; 
-		
-    std::string text = tabFrame.text(0);
-    Size size = pFont::size(pfont, text);	
+//    Size size = getMinimumSize();
+//    return {size.width, size.height};
 
-	calculatedMinimumSize.updated = true;	
-	
+	if (calculatedMinimumSize.updated)
+        return calculatedMinimumSize.minimumSize;
+
+    std::string text = tabFrame.text(0);
+    Size size = pFont::size(pfont, text);
+
+	calculatedMinimumSize.updated = true;
+
 	auto _border = borderSize();
-	
+
     calculatedMinimumSize.minimumSize = {size.width + (_border << 1) + 55, (_border << 1) + 30 };
-	
+
 	return calculatedMinimumSize.minimumSize;
 }
 

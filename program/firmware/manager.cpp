@@ -16,6 +16,20 @@ FirmwareManager::~FirmwareManager() {
     clear();
 }
 
+auto FirmwareManager::reload() -> void {
+
+    for (unsigned i = 0; i <= maxSets; i++) {
+        for (auto& firmware : emulator->firmwares) {
+            auto fSetting = getSetting( &firmware, i );
+            if (i != 0) {
+                fSetting->update();
+            }
+        }
+    }
+
+    clear();
+}
+
 auto FirmwareManager::clear() -> void {
     for (auto& image : imagesStore) {
         auto activeImage = findActiveImage( image.firmware );

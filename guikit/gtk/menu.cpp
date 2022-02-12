@@ -179,10 +179,12 @@ auto pMenuCheckItem::toggle(GtkCheckMenuItem* gtkCheckMenuItem, MenuCheckItem* s
 auto pMenuCheckItem::init() -> void {
     element.widget = gtk_check_menu_item_new_with_mnemonic("");
 	elementC.widget = gtk_check_menu_item_new_with_mnemonic("");
-	
-	gtk_style_context_add_class (gtk_widget_get_style_context(element.widget), "paddingMenuItem");	
-	gtk_style_context_add_class (gtk_widget_get_style_context(elementC.widget), "paddingMenuItem");	
-	
+
+    pSystem::addCssClass(element.widget, "paddingMenuItem");
+    pSystem::applyCss( element.widget, ".paddingMenuItem { padding-left: 25px; }");
+    pSystem::addCssClass(elementC.widget, "paddingMenuItem");
+    pSystem::applyCss( elementC.widget, ".paddingMenuItem { padding-left: 25px; }");
+
     setChecked(menuCheckItem.checked());
     setText( menuBase.text() );
     g_signal_connect(G_OBJECT(element.widget), "toggled", G_CALLBACK(pMenuCheckItem::toggle), (gpointer)&menuCheckItem);
@@ -210,8 +212,12 @@ auto pMenuRadioItem::activate(GtkCheckMenuItem* gtkCheckMenuItem, MenuRadioItem*
 auto pMenuRadioItem::init() -> void {
     element.widget = gtk_radio_menu_item_new_with_mnemonic(0, "");
 	elementC.widget = gtk_radio_menu_item_new_with_mnemonic(0, "");
-	gtk_style_context_add_class (gtk_widget_get_style_context(element.widget), "paddingMenuItem");	
-	gtk_style_context_add_class (gtk_widget_get_style_context(elementC.widget), "paddingMenuItem");	
+
+    pSystem::addCssClass(element.widget, "paddingMenuItem");
+    pSystem::applyCss( element.widget, ".paddingMenuItem { padding-left: 25px; }");
+    pSystem::addCssClass(elementC.widget, "paddingMenuItem");
+    pSystem::applyCss( elementC.widget, ".paddingMenuItem { padding-left: 25px; }");
+
     setGroup(menuRadioItem.group);
     setText( menuBase.text() );
     for(auto& item : menuRadioItem.group) {

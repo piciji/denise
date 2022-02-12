@@ -10,19 +10,42 @@
 #include "status.h"
 #include "../media/autoloader.h"
 #include "../media/fileloader.h"
-#include "placeholder.cpp"
 #include "../../data/icons.h"
+#include "../thread/emuThread.h"
+#include "placeholder.cpp"
 
 View* view = nullptr;
 
-View::View() {
+View::View() : GUIKIT::Window(GUIKIT::Window::Hints::Video) {
     message = new Message(this);
+}
+
+inline auto View::useUnblockedResizing() -> bool {
+    
+    static auto aspectCorrectResize = globalSettings->getOrInit<bool>("aspect_correct_resizing", true);
+    
+    if (!causeBGRedrawVideoFlicker())
+        return true;
+    
+    bool bgCompletlyCovered = !VideoManager::aspectCorrect || *aspectCorrectResize;
+    
+    return bgCompletlyCovered && !VideoManager::integerScaling;
+}
+
+auto View::updatePreventBgRedraw() -> void {
+    // take effect for winapi only to prevent flickering
+    setPreventBackgroundRedrawing( useUnblockedResizing() );
 }
 
 auto View::build() -> void {
     setTitle( APP_NAME " " VERSION );
     setBackgroundColor(0);
     cocoa.setDisableIconsInTopMenu(true);
+
+    if (globalSettings->get<bool>("aspect_correct_resizing", true))
+        setAspectRatio( {4,3} );
+    else
+        setAspectRatio( {0,0} );
     
     GUIKIT::Geometry defaultGeometry = {100, 100, 600, 400};
     
@@ -70,17 +93,18 @@ auto View::build() -> void {
         GUIKIT::Application::quit();
     };
     
-    onMove = [this]() { 
+    onMove = [this]() {
         if (fullScreen()) return;
         GUIKIT::Geometry geometry = this->geometry();
         globalSettings->set<int>("screen_x", geometry.x);
         globalSettings->set<int>("screen_y", geometry.y);
-		audioDriver->clear();
+        if (!emuThread->enabled)
+		    audioDriver->clear();
     };
     
-    onSize = [this]() {
+    onSize = [this](GUIKIT::Window::SIZE_MODE sizeMode ) {
         if (fullScreen()) {
-			if (view->exclusiveFullscreen())
+			if (program->canExclusiveFullscreen())
 				setStatusVisible( false );
 			else
 				updateStatusBar();
@@ -89,25 +113,117 @@ auto View::build() -> void {
         } else {
             updateMenuBar();
             updateStatusBar();
-            
+
             GUIKIT::Geometry geometry = this->geometry();
             globalSettings->set<int>("screen_width", geometry.width);
             globalSettings->set<int>("screen_height", geometry.height);
         }
-        updateViewport();
-		audioDriver->clear();
+
+        if (fullScreen() || requestFullscreenSwitch || (sizeMode != GUIKIT::Window::SIZE_MODE::Default)) {
+            this->setPreventBackgroundRedrawing( false );
+            updateViewport();
+
+        } else {
+            updatePreventBgRedraw();
+			
+            if (activeVideoManager && emuThread->enabled && useUnblockedResizing()) {
+                videoDriver->lockResize();
+                updateViewport();
+                videoDriver->unlockResize();
+            } else
+                updateViewport();
+
+      
+			if (activeVideoManager) {
+				if (emuThread->enabled) {
+					if (!useUnblockedResizing()) {
+						if (emuThread->locked()) {
+							activeVideoManager->waitForCrtRenderer();
+							videoDriver->redrawCustom();
+						}
+					}
+				} else {
+					activeVideoManager->waitForCrtRenderer();
+                    if (!videoDriver->hasReshaping()) {
+                        videoDriver->redraw();
+                        videoDriver->freeContext();
+                    }
+				}
+			} else if (!videoDriver->hasReshaping()) {
+				videoDriver->redraw(true);
+            }
+        }
+
+        if (!emuThread->enabled || !useUnblockedResizing())
+		    audioDriver->clear();
+    };
+
+    onResizeStart = [this]() {
+        videoDriver->hintResizing(true);
+
+        if (activeVideoManager && !fullScreen() && !requestFullscreenSwitch) {
+
+            if (GUIKIT::Application::isGtk()) {
+                if (videoDriver->hasSynchronized()) {
+                    emuThread->lock();
+                    videoDriver->synchronize(false);
+                    emuThread->unlock();
+                    resizeCustomMode = 2;
+                }
+            } else {
+                if (emuThread->enabled) {
+                    if (!useUnblockedResizing()) {
+                        this->setPreventBackgroundRedrawing(false);
+                        emuThread->lock();
+
+                    } else if (!videoDriver->shouldResizeWhenThreaded() && videoDriver->hasThreaded()) {
+                        emuThread->lock();
+                        videoDriver->setThreaded(false);
+                        emuThread->unlock();
+                        resizeCustomMode = 1;
+                    }
+                }
+            }
+        }
+    };
+
+    onResizeEnd = [this]() {
+
+        if (emuThread->enabled && emuThread->locked()) {
+            videoDriver->freeContext();
+            emuThread->unlock();
+        }
+        
+        if (resizeCustomMode) {
+            emuThread->lock();
+            if (resizeCustomMode == 1)
+                videoDriver->setThreaded( true );
+
+            else if (resizeCustomMode == 2)
+                videoDriver->synchronize(true);
+
+            emuThread->unlock();
+            resizeCustomMode = 0;
+        }
+
+        videoDriver->hintResizing(false);
     };
 	
 	onContext = [this]() {
-        if ( program->couldDeviceBlockSecondMouseButton( ) )
+        emuThread->lock();
+        if ( program->couldDeviceBlockSecondMouseButton( ) ) {
+            emuThread->unlock();
             return false;
+        }
                         
 		bool allow = !inputDriver->mIsAcquired();
 		                
-		if (allow && exclusiveFullscreen()) {
+		if (allow && videoDriver && videoDriver->hasExclusiveFullscreen() ) {
 			InputManager::activateHotkey(Hotkey::Id::Fullscreen);
 			allow = false;
-		}		
+		}
+
+        emuThread->unlock();
 		return allow;
 	};
     
@@ -121,18 +237,21 @@ auto View::build() -> void {
 	};
 	
 	GUIKIT::BrowserWindow::onCall = []() {
-		audioDriver->clear();
+        if (!globalSettings->get<bool>("threaded_emu", false) || !globalSettings->get("threaded_renderer", false))
+		    audioDriver->clear();
 	};
 
-    GUIKIT::Application::Cocoa::onOpenFile = [] (std::string fileName) {
-        
+    GUIKIT::Application::Cocoa::onOpenFile = [this] (std::string fileName) {
+
+        emuThread->lock();
         autoloader->init( {fileName}, false, Autoloader::Mode::AutoStart );
         
         autoloader->loadFiles();
         
         if (!cmd->debug && !cmd->noDriver && !cmd->noGui && globalSettings->get<bool>("open_fullscreen", false)) {
-            view->setFullScreen(true);
+            fullscreenOnStartUp.setEnabled();
         }
+        emuThread->unlock();
     };
     
     //osx extra menu points
@@ -160,42 +279,69 @@ auto View::build() -> void {
     };
 	
 	GUIKIT::Application::onClipboardRequest = [](std::string text) {
-		if (activeEmulator && !text.empty())
-			activeEmulator->pasteText(text);
+		if (activeEmulator && !text.empty()) {
+            emuThread->lock();
+            activeEmulator->pasteText(text);
+            emuThread->unlock();
+        }
 	};
 
     GUIKIT::Application::onDisplayChange = [this]() {
-        displayChangeTimer.setEnabled();
+		
+		if (!displayChangeTimer.enabled()) {
+			displayChangeTimer.setEnabled();
+		}
     };
         
 	placeholderTimer.setInterval(40);
 	placeholderTimer.onFinished = [this]() {
-		placeholderTimer.setEnabled(false);		
+		placeholderTimer.setEnabled(false);
 		renderPlaceholder(false);
         renderPlaceholder(false);
 	};
 	
 	anyloadTimer.setInterval(40);
-    displayChangeTimer.setInterval(300);
+    displayChangeTimer.setInterval(500);
     displayChangeTimer.onFinished = [this]() {
         displayChangeTimer.setEnabled(false);
         //statusHandler->setMessage( std::to_string(GUIKIT::Monitor::getCurrentRefreshRate()) );
-        if (videoDriver && !fullScreen())
+        emuThread->lock();
+        
+		if (videoDriver && fullscreenSetting.inUse
+			&& globalSettings->get<bool>("threaded_emu", false)
+			&& globalSettings->get<bool>("threaded_renderer", false))
             videoDriver->forceResize();
+		
+		else if (!requestFullscreenSwitch && !fullScreen()) {
+			videoDriver->forceResize();
+		}
 
         VideoManager::setSynchronize();
+		placeholderTimer.setEnabled(true);
+		requestFullscreenSwitch = false;
+        emuThread->unlock();
     };
+	
+	fullscreenOnStartUp.setInterval(500);
+	fullscreenOnStartUp.onFinished = [this]() {
+		fullscreenOnStartUp.setEnabled(false);
+		emuThread->lock();
+        switchFullScreen(true);
+        emuThread->unlock();
+	};
 	
 	viewport.onMousePress = [this](GUIKIT::Mouse::Button button) {
 		
 		if (program->isRunning || (button != GUIKIT::Mouse::Button::Left))
-			return;	
-		
+			return;
+
+        emuThread->lock();
 		if (cursorForPlaceholderInUpperTriangle()) {
 			program->power( program->getEmulator("C64") );
 		} else {
 			
 		}
+        emuThread->unlock();
 	};
     
     viewport.onMouseMove = [this](GUIKIT::Position& pos) {
@@ -225,7 +371,7 @@ auto View::setAnyload( Emulator::Interface* emulator ) -> void {
 		inputDriver->mUnacquire();
 	
 	anyloadTimer.onFinished = [this, emulator, mIsAcquiredBefore]() {
-		anyloadTimer.setEnabled(false);		
+		anyloadTimer.setEnabled(false);
 		fileloader->anyLoad( emulator, mIsAcquiredBefore );
 	};
 	
@@ -247,9 +393,10 @@ auto View::setDragnDrop() -> void {
     
     viewport.onDrop = []( std::vector<std::string> files ) {
 
+        emuThread->lock();
         autoloader->init( files, false, Autoloader::Mode::DragnDrop );
-        
-        autoloader->loadFiles();            
+        autoloader->loadFiles();
+        emuThread->unlock();
     };        
 }
 
@@ -259,25 +406,19 @@ auto View::show() -> void {
     updateViewport();
 }
 
-auto View::update() -> void {
-	if ( exclusiveFullscreen() ) {
-		setStatusVisible(false);
-		updateViewport();
-	}
-	program->hintExclusiveFullscreen();
-}
-
-auto View::setFullScreen(bool fullScreen) -> void {
-	if(fullScreen && program->isRunning) inputDriver->mAcquire();
+auto View::switchFullScreen(bool fullScreen, bool forceUnacquire) -> void {
+	requestFullscreenSwitch = true;
+	if(!forceUnacquire && fullScreen && program->isRunning) inputDriver->mAcquire();
 	else inputDriver->mUnacquire();	
-    
+
+    if (!fullScreen && videoDriver)
+        videoDriver->disableExclusiveFullscreen();
+
+    if (activeVideoManager)
+        activeVideoManager->unlockDriver();
+
     GUIKIT::Window::setFullScreen(fullScreen);
     displayChangeTimer.setEnabled();
-}
-
-auto View::exclusiveFullscreen() -> bool {
-	static auto exclusiveFullscreen = globalSettings->getOrInit("exclusive_fullscreen", false);	
-	return *exclusiveFullscreen && fullScreen() && program->isRunning;
 }
 
 auto View::updateMenuBar( bool toggle ) -> void {
@@ -345,7 +486,7 @@ auto View::updateViewport() -> void {
 	}
 	
 	if (VideoManager::aspectCorrect) {
-		
+
 		while(1) {
 			_height = geometry.height;
 			int _width = (unsigned)(((double(_height) / 3.0) * 4.0) + 0.5);
@@ -353,24 +494,24 @@ auto View::updateViewport() -> void {
 			if (_width > geometry.width) {
 				if (integerScaling) {
 					_height = geometry.height - currentHeight;
-					
+
 					if (_height >= currentHeight) {
 						geometry.y += (geometry.height - _height) / 2;
 						geometry.height = _height;
-						continue;						
-					}					
+						continue;
+					}
 				}
-				                
+
 				_height = (unsigned)(((double(geometry.width) / 4.0) * 3.0) + 0.5);
 				geometry.x = 0;
 				geometry.y += (geometry.height - _height) / 2;
-				geometry.height = _height;				
-				
+				geometry.height = _height;
+
 			} else {
 				geometry.x = (geometry.width - _width) / 2;
 				geometry.width = _width;
 			}
-			
+
 			break;
 		}
 	}
@@ -458,6 +599,7 @@ auto View::setConnectors() -> void {
                 item->setText( trans->get(device.name));
 
                 item->onActivate = [emulator, connector, device, settings]() {
+                    emuThread->lock();
                     settings->set<unsigned>( _underscore(connector.name), device.id);
                     emulator->connect(connector.id, device.id);
                     InputManager::getManager(emulator)->updateMappingsInUse();
@@ -465,6 +607,7 @@ auto View::setConnectors() -> void {
                     if (emuView && emuView->inputLayout)
                         emuView->inputLayout->updateConnectorButtons();
                     view->setCursor(emulator);
+                    emuThread->unlock();
                 };
 
                 connectorMenu->append(*item);
@@ -489,7 +632,7 @@ auto View::setConnectors() -> void {
 		inputItem->setText(emulator->ident + " " + trans->get("swap_ports") );
         
         inputItem->onActivate = [emulator, settings]() {
-            
+            emuThread->lock();
             auto connector1 = emulator->getConnector( 0 );
             auto connectedDevice1 = emulator->getConnectedDevice( connector1 );
             
@@ -498,7 +641,9 @@ auto View::setConnectors() -> void {
             
             emulator->connect( connector1, connectedDevice2 );
             emulator->connect( connector2, connectedDevice1 );
-            
+
+            emuThread->unlock();
+
             settings->set<unsigned>( _underscore(connector1->name), connectedDevice2->id);
             settings->set<unsigned>( _underscore(connector2->name), connectedDevice1->id);
 
@@ -570,11 +715,13 @@ auto View::updateShader() -> void {
                 }
             }
             item->onToggle = [item, vManager]() {
+                emuThread->lock();
                 if (item->checked()) {
 					vManager->shader.addActiveShader(item->text());
                 } else {
                     vManager->shader.removeActiveShader(item->text());
                 }
+                emuThread->unlock();
             };
             sM.shaderMenu->append(*item);
         }
@@ -609,41 +756,75 @@ auto View::togglePause() -> void {
 
 auto View::loadImages() -> void {
     #include "../../data/resource.h" // for win xp only 
-    regionImage.loadPng((uint8_t*)Icons::globe, sizeof(Icons::globe));
+    	
     powerImage.loadPng((uint8_t*)Icons::power, sizeof(Icons::power));
+	powerImage.setResourceId( ID_POWER );
     freezeImage.loadPng((uint8_t*)Icons::freeze, sizeof(Icons::freeze));
+	freezeImage.setResourceId( ID_FREEZE );
     menuImage.loadPng((uint8_t*)Icons::menu, sizeof(Icons::menu));
+	menuImage.setResourceId( ID_MENU );
 	poweroffImage.loadPng((uint8_t*)Icons::shutdown, sizeof(Icons::shutdown));
+	poweroffImage.setResourceId( ID_SHUTDOWN );
     firmwareImage.loadPng((uint8_t*)Icons::memory, sizeof(Icons::memory));
+	firmwareImage.setResourceId( ID_MEMORY );
     driveImage.loadPng((uint8_t*)Icons::drive, sizeof(Icons::drive));
+	driveImage.setResourceId( ID_DRIVE );
     swapperImage.loadPng((uint8_t*)Icons::swapper, sizeof(Icons::swapper));
+	swapperImage.setResourceId( ID_SWAPPER );
     scriptImage.loadPng((uint8_t*)Icons::script, sizeof(Icons::script));
+	scriptImage.setResourceId( ID_SCRIPT );
     systemImage.loadPng((uint8_t*)Icons::system, sizeof(Icons::system));
+	systemImage.setResourceId( ID_SYSTEM );
     joystickImage.loadPng((uint8_t*)Icons::joystick, sizeof(Icons::joystick));
+	joystickImage.setResourceId( ID_JOYSTICK );
     volumeImage.loadPng((uint8_t*)Icons::volume, sizeof(Icons::volume));
+	volumeImage.setResourceId( ID_VOLUME );
     plugImage.loadPng((uint8_t*)Icons::plug, sizeof(Icons::plug));
+	plugImage.setResourceId( ID_PLUG );
     displayImage.loadPng((uint8_t*)Icons::display, sizeof(Icons::display));
+	displayImage.setResourceId( ID_DISPLAY );
     toolsImage.loadPng((uint8_t*)Icons::tools, sizeof(Icons::tools));
+	toolsImage.setResourceId( ID_TOOLS );
 	quitImage.loadPng((uint8_t*)Icons::quit, sizeof(Icons::quit));
+	quitImage.setResourceId( ID_QUIT );
 	keyboardImage.loadPng((uint8_t*)Icons::keyboard, sizeof(Icons::keyboard));
+	keyboardImage.setResourceId( ID_KEYBOARD );
 	colorImage.loadPng((uint8_t*)Icons::color, sizeof(Icons::color));
+	colorImage.setResourceId( ID_COLOR );
 	tapeImage.loadPng((uint8_t*)Icons::tape, sizeof(Icons::tape));
+	tapeImage.setResourceId( ID_TAPE );
     paletteImage.loadPng((uint8_t*)Icons::palette, sizeof(Icons::palette));
+	paletteImage.setResourceId( ID_PALETTE );
     cropImage.loadPng((uint8_t*)Icons::crop, sizeof(Icons::crop));
+	cropImage.setResourceId( ID_CROP );
     playImage.loadPng((uint8_t*)Icons::play, sizeof(Icons::play));
+	playImage.setResourceId( ID_PLAY );
     playhiImage.loadPng((uint8_t*)Icons::playHi, sizeof(Icons::playHi));
+	playhiImage.setResourceId( ID_PLAYHI );
     stopImage.loadPng((uint8_t*)Icons::stop, sizeof(Icons::stop));
+	stopImage.setResourceId( ID_STOP );
     stophiImage.loadPng((uint8_t*)Icons::stopHi, sizeof(Icons::stopHi));
+	stophiImage.setResourceId( ID_STOPHI );
     recordImage.loadPng((uint8_t*)Icons::record, sizeof(Icons::record));
+	recordImage.setResourceId( ID_RECORD );
     recordhiImage.loadPng((uint8_t*)Icons::recordHi, sizeof(Icons::recordHi));
+	recordhiImage.setResourceId( ID_RECORDHI );
     forwardImage.loadPng((uint8_t*)Icons::forward, sizeof(Icons::forward));
+	forwardImage.setResourceId( ID_FORWARD );
     forwardhiImage.loadPng((uint8_t*)Icons::forwardHi, sizeof(Icons::forwardHi));
+	forwardhiImage.setResourceId( ID_FORWARDHI );
     rewindImage.loadPng((uint8_t*)Icons::rewind, sizeof(Icons::rewind));
+	rewindImage.setResourceId( ID_REWIND );
     rewindhiImage.loadPng((uint8_t*)Icons::rewindHi, sizeof(Icons::rewindHi));
+	rewindhiImage.setResourceId( ID_REWINDHI );
 	counterImage.loadPng((uint8_t*)Icons::counter, sizeof(Icons::counter));
+	counterImage.setResourceId( ID_COUNTER );
     diskImage.loadPng((uint8_t*) Icons::disk, sizeof (Icons::disk));
+	diskImage.setResourceId( ID_DISK );
 	editImage.loadPng((uint8_t*)Icons::edit, sizeof(Icons::edit));
+	editImage.setResourceId( ID_EDIT );
     ejectImage.loadPng((uint8_t*)Icons::eject, sizeof(Icons::eject));
+	ejectImage.setResourceId( ID_EJECT );
 
     playPauseStatusImage.loadPng((uint8_t*)Icons::playPauseStatus, sizeof(Icons::playPauseStatus));
     forwardPauseStatusImage.loadPng((uint8_t*)Icons::forwardPauseStatus, sizeof(Icons::forwardPauseStatus));
@@ -673,29 +854,37 @@ auto View::buildMenu() -> void {
         sM.poweron = new GUIKIT::MenuItem;
         sM.poweron->setIcon( powerImage );
         sM.poweron->onActivate = [emulator]() {
+            emuThread->lock();
 		    program->power(emulator);
+            emuThread->unlock();
 	    };	
         sM.system->append( *sM.poweron );
 		
 		sM.poweronAndRemoveExpansions = new GUIKIT::MenuItem;
         sM.poweronAndRemoveExpansions->setIcon( powerImage );
         sM.poweronAndRemoveExpansions->onActivate = [emulator]() {
+            emuThread->lock();
 		    program->power(emulator);
             program->removeExpansion( false );
+            emuThread->unlock();
 	    };	
         sM.system->append( *sM.poweronAndRemoveExpansions );
 
 		        
         sM.reset = new GUIKIT::MenuItem;
         sM.reset->onActivate = [emulator]() {
+            emuThread->lock();
 		    program->reset(emulator);
+            emuThread->unlock();
 	    };	
         sM.reset->setIcon( powerImage );
         sM.system->append( *sM.reset );
         sM.freeze = new GUIKIT::MenuItem;
         sM.freeze->setIcon( freezeImage );
         sM.freeze->onActivate = [emulator]() {
+            emuThread->lock();
 		    emulator->freezeButton();
+            emuThread->unlock();
 	    };	
         sM.freeze->setEnabled(false);
         sM.system->append( *sM.freeze );
@@ -704,7 +893,9 @@ auto View::buildMenu() -> void {
             sM.menu = new GUIKIT::MenuItem;
             sM.menu->setIcon( menuImage );
             sM.menu->onActivate = [emulator]() {
+                emuThread->lock();
                 emulator->customCartridgeButton();
+                emuThread->unlock();
             };
             sM.menu->setEnabled(false);
             sM.system->append(*sM.menu);
@@ -828,8 +1019,9 @@ auto View::buildMenu() -> void {
         if (!activeEmulator)
             return;
 
+        emuThread->lock();
         std::string text = activeEmulator->copyText( );
-
+        emuThread->unlock();
         GUIKIT::Application::setClipboardText( text );
     };
 
@@ -870,9 +1062,11 @@ auto View::buildMenu() -> void {
 
     videoSyncItem.onToggle = [&]() {
         globalSettings->set<bool>("video_sync", videoSyncItem.checked() );
+        emuThread->lock();
         program->fastForward( false );
         VideoManager::setSynchronize();
         statusHandler->resetFrameCounter();
+        emuThread->unlock();
         bool threadedRenderer = globalSettings->get("threaded_renderer", false);
         adaptiveSyncItem.setEnabled( videoSyncItem.checked() && !threadedRenderer );
         dynamicRateControl.setEnabled( videoSyncItem.checked() && !threadedRenderer );
@@ -889,8 +1083,10 @@ auto View::buildMenu() -> void {
 
     adaptiveSyncItem.onToggle = [&]() {
         globalSettings->set<bool>("adaptive_sync", adaptiveSyncItem.checked() );
+        emuThread->lock();
         program->fastForward( false );
         VideoManager::setSynchronize();
+        emuThread->unlock();
         //statusHandler->resetFrameCounter();
     };
     if ( globalSettings->get<bool>("adaptive_sync", true) )
@@ -912,7 +1108,9 @@ auto View::buildMenu() -> void {
 
     dynamicRateControl.onToggle = [&]() {
         globalSettings->set<bool>("dynamic_rate_control", dynamicRateControl.checked() );
+        emuThread->lock();
         VideoManager::setSynchronize();
+        emuThread->unlock();
         //audioManager->setRateControl();
     };
     if ( globalSettings->get<bool>("dynamic_rate_control", false) )
@@ -925,8 +1123,9 @@ auto View::buildMenu() -> void {
     optionsMenu.append(*GUIKIT::MenuSeparator::getInstance());
         
     fullscreenItem.onActivate = [this]() {
-        inputDriver->mUnacquire();
-        GUIKIT::Window::setFullScreen(!fullScreen());
+        emuThread->lock();
+        switchFullScreen( !fullScreen(), true );
+        emuThread->unlock();
     };
         
     optionsMenu.append(fullscreenItem);
@@ -935,7 +1134,9 @@ auto View::buildMenu() -> void {
             
     muteItem.onToggle = [&]() {
         globalSettings->set<bool>("audio_mute", muteItem.checked() );
+        emuThread->lock();
         audioManager->setVolume();
+        emuThread->unlock();
     };
     if ( globalSettings->get<bool>("audio_mute", false) ) muteItem.setChecked();
     optionsMenu.append(muteItem);
@@ -966,7 +1167,10 @@ auto View::buildMenu() -> void {
 
 	poweroff.setIcon( poweroffImage );
 	poweroff.onActivate = [this]() {
+        emuThread->lock();
 		program->powerOff();
+        emuThread->unlock();
+
 		videoDriver->setFilter( DRIVER::Video::Filter::Linear );
 		this->updateViewport();
 
@@ -1012,7 +1216,9 @@ auto View::buildMenu() -> void {
          if (!activeEmulator)
              emulator = program->getLastUsedEmu();
 
+        emuThread->lock();
         fileloader->eject( emulator, emulator->getTape(0) );
+        emuThread->unlock();
     };    
     
     tapeControlMenu.append( ejectTapeItem );
@@ -1053,12 +1259,16 @@ auto View::buildMenu() -> void {
 
     // speed menu
     fastForwardItem.onToggle = []() {
+        emuThread->lock();
         program->toggleFastForward( false );
+        emuThread->unlock();
     };
     speedControlMenu.append( fastForwardItem );
 
     aggressiveFastForwardItem.onToggle = []() {
+        emuThread->lock();
         program->toggleFastForward( true );
+        emuThread->unlock();
     };
     speedControlMenu.append( aggressiveFastForwardItem );
 
@@ -1082,9 +1292,11 @@ auto View::buildMenu() -> void {
         speedItem->onActivate = [this, i]() {
             auto settings = program->getSettings( activeEmulator );
             settings->set<unsigned>("speed_profile", i);
+            emuThread->lock();
             audioManager->setSynchronize();
             audioManager->setResampler();
             statusHandler->resetFrameCounter();
+            emuThread->unlock();
         };
         speedControlMenu.append( *speedItem );
 
@@ -1129,7 +1341,9 @@ auto View::buildMenu() -> void {
             if (!activeEmulator)
                 emulator = program->getLastUsedEmu();
 
+            emuThread->lock();
             fileloader->eject( emulator, emulator->getDisk(i) );
+            emuThread->unlock();
         };
         diskControlMenu.menu.append( diskControlMenu.eject );
         
@@ -1405,8 +1619,8 @@ auto View::questionToWrite(Emulator::Interface::Media* media) -> bool {
         // archive, removing of write protection is not supported
         return false;
     
-    if (exclusiveFullscreen())
-        setFullScreen( false );
+    if (videoDriver && videoDriver->hasExclusiveFullscreen())
+        switchFullScreen( false );
     
     bool state = !globalSettings->get<bool>("question_media_write", true);
     

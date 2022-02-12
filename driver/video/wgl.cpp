@@ -23,6 +23,8 @@ struct WGL : Video, OpenGL, RenderThread {
 	HGLRC wglcontext = nullptr;
     HWND handle = nullptr;
 
+    bool hasRendererContext = false;
+
 	auto synchronize(bool state) -> void {
         wait();
         settings.synchronize = state;
@@ -51,13 +53,9 @@ struct WGL : Video, OpenGL, RenderThread {
             RenderThread::reset();
             width = 0, height = 0;
 
-            if (!state)
-                makeCurrent();
-
             settings.threaded = state;
 
-            if (state)
-                clearCurrent();
+            clearCurrent();
         }
     }
 
@@ -112,6 +110,7 @@ struct WGL : Video, OpenGL, RenderThread {
         if (settings.threaded)
             return RenderThread::lock(data, pitch, _width, _height);
 
+        makeCurrent(true);
         OpenGL::size(_width, _height);
         return OpenGL::lock(data, pitch);
     }
@@ -120,6 +119,7 @@ struct WGL : Video, OpenGL, RenderThread {
         if (settings.threaded)
             return RenderThread::lock(data, pitch, _width, _height);
 
+        makeCurrent(true);
         OpenGL::size(_width, _height);
         return OpenGL::lock(data, pitch);
     }
@@ -128,6 +128,7 @@ struct WGL : Video, OpenGL, RenderThread {
         if (settings.threaded)
             return RenderThread::lock(data, pitch, _width, _height);
 
+        makeCurrent(true);
         OpenGL::size(_width, _height);
         return OpenGL::lock(data, pitch);
     }
@@ -152,30 +153,58 @@ struct WGL : Video, OpenGL, RenderThread {
         clearCurrent();
 	}
 
+    auto forceResize() -> void {
+        resizeWindow();
+    }
+
     auto resizeWindow() -> void {
         RECT rc;
         GetClientRect(handle, &rc);
         outputWidth = rc.right - rc.left, outputHeight = rc.bottom - rc.top;
     }
 
+    auto unlockAndRedraw(bool disallowShader = false, bool freeContext = false) -> void {
+        if (settings.threaded) {
+            resizeWindow();
+            RenderThread::unlock(disallowShader);
+        } else
+            redraw(disallowShader);
+
+        if (freeContext)
+            clearCurrent();
+    }
+
+    auto redrawCustom(bool disallowShader = false) -> void {
+        redraw(disallowShader);
+    }
+
+	auto lockResize() -> void {
+        resizeMutex.lock();
+        resizeMutexThreaded.lock();
+    }
+
+    auto unlockResize() -> void {
+        resizeMutexThreaded.unlock();
+        resizeMutex.unlock();
+    }
+	
 	auto redraw(bool disallowShader = false) -> void {
-        if (settings.threaded)
-            return;
-
+		resizeMutex.lock();
         resizeWindow();
-
+        makeCurrent(true);
         OpenGL::clear();
-        OpenGLSurface::updateTexture();
+        OpenGLSurface::updateTexture( settings.threaded ? getLastBufferToRender() : nullptr );
 		OpenGL::refresh(disallowShader);
 #ifdef DRV_FREETYPE
         screenText.showText(outputWidth, outputHeight, -0.01, 0.01, OpenGLText::ALIGN_RIGHT | OpenGLText::VALIGN_BOTTOM);
 #endif
 		SwapBuffers(display);
         if(settings.hardSync && settings.synchronize) glFinish();
+		resizeMutex.unlock();
 	}
 
     auto refresh() -> void {
-
+		
         makeCurrent();
         OpenGL::clear();
 
@@ -199,7 +228,7 @@ struct WGL : Video, OpenGL, RenderThread {
             frames--;
             accessMutex.unlock();
         }
-
+		resizeMutexThreaded.lock();
         OpenGL::refresh(disallowShader);
 #ifdef DRV_FREETYPE
         screenText.updateMessage();
@@ -208,8 +237,9 @@ struct WGL : Video, OpenGL, RenderThread {
 
         SwapBuffers(display);
         if(settings.hardSync && settings.synchronize) glFinish();
-
+		resizeMutexThreaded.unlock();
         clearCurrent();
+		
     }
 	
 	bool init(uintptr_t _handle) {
@@ -255,12 +285,19 @@ struct WGL : Video, OpenGL, RenderThread {
 		}
 
         RenderThread::reset();
-		return OpenGL::init();
+        bool res = OpenGL::init();
+        clearCurrent();
+        return res;
 	}
 	
 	auto showMessage(std::string message, bool critical = false) -> void {
 #ifdef DRV_FREETYPE
-        screenText.updateMessage(message, critical, !settings.threaded);
+        if (settings.threaded) {
+            screenText.updateMessage(message, critical, false);
+        } else {
+            makeCurrent(true);
+            screenText.updateMessage(message, critical, true);
+        }
 #endif
     }
 
@@ -272,14 +309,25 @@ struct WGL : Video, OpenGL, RenderThread {
 		wglcontext = nullptr;
 	}
 
-    auto makeCurrent() -> void {
-        if (settings.threaded)
-            wglMakeCurrent(display, wglcontext);
+    auto makeCurrent(bool usePermanent = false) -> void {
+        if (usePermanent) {
+            if(!hasRendererContext) {
+                hasRendererContext = true;
+            } else
+                // for non threaded mode, we don't want to bind context each frame for speed reasons
+                return;
+        }
+
+        wglMakeCurrent(display, wglcontext);
     }
 
     auto clearCurrent() -> void {
-        if (settings.threaded)
-            wglMakeCurrent(display, nullptr);
+        wglMakeCurrent(display, nullptr);
+        hasRendererContext = false;
+    }
+
+    auto freeContext() -> void {
+        clearCurrent();
     }
 };
 

@@ -913,7 +913,7 @@ auto Shader::buildBandwidthReduction() -> std::string {
         out += "vec3(" + _doubleToStr(luma) + "," + _doubleToStr(chromaUI) + "," + _doubleToStr(chromaVQ) + ");";        
         
     }
-        
+
 	out += R"( fragColor = vec4( yuv, 1.0 ); } )";
     
     return out;
@@ -1268,17 +1268,17 @@ auto Shader::transferOutputEncoding() -> void {
 
     if (!vManager->isC64())
         return;
-    
+
     setAttribute("outputEncoding", "BA", vManager->baGlitch);
     setAttribute("outputEncoding", "AEC", vManager->aecGlitch);
     setAttribute("outputEncoding", "PHI0", vManager->phi0Glitch);
     setAttribute("outputEncoding", "RAS", vManager->rasGlitch);
     setAttribute("outputEncoding", "CAS", vManager->casGlitch);
-    
+
     unsigned cropLeft = vManager->emulator->cropLeft();
     cropLeft += vManager->pal ? 2 : 4;
     cropLeft &= 7;
-    
+
     setAttribute("outputEncoding", "cyclePixel", (int)cropLeft );
 }
 

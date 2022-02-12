@@ -145,9 +145,9 @@ struct VideoLayout : GUIKIT::TabFrameLayout {
     	
     auto translate() -> void;
     auto sliderIdent() -> std::string;
-    auto updatePresets() -> void;
+    auto updatePresets(bool reloadDriver = true) -> void;
     auto updateVisibillity() -> void;
-    auto loadSettings() -> void;
+    auto loadSettings(bool init = false) -> void;
     
     template<typename T> auto setSliderAction( SliderLayout* layout, std::string baseIdent, std::function<void ( T value )> callBack, std::function<T ( unsigned position )> callTransfer = [](unsigned position) { return position; } ) -> void;
     auto vManager() -> VideoManager* { return VideoManager::getInstance(emulator); }

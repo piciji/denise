@@ -11,6 +11,9 @@
 #define NSAppKitVersionNumber10_13  1561
 #define NSAppKitVersionNumber10_14  1671
 #define NSAppKitVersionNumber10_15  1700
+#define NSAppKitVersionNumber11  2022
+#define NSAppKitVersionNumber12  2113
+
 
 auto hasMinimumVersion(unsigned major, unsigned minor) -> bool {
     
@@ -18,11 +21,19 @@ auto hasMinimumVersion(unsigned major, unsigned minor) -> bool {
     
     if (major == 11) {
         switch(minor) {
+            default:
             case 0: // Big Sur 11.0
-                return _internalVersion > NSAppKitVersionNumber10_15;
+                return _internalVersion >= NSAppKitVersionNumber11;
 
         }
-        
+    } else if (major == 12) {
+        switch(minor) {
+            default:
+            case 0: // Monterey 12.0
+                return _internalVersion >= NSAppKitVersionNumber12;
+
+        }
+            
     } else if (major == 10) {
         
         switch(minor) {

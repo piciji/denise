@@ -3,6 +3,7 @@
 #include "thread/renderThread.h"
 #include <Cocoa/Cocoa.h>
 #include "opengl/opengl.h"
+#define NSAppKitVersionNumber10_14 1671
 
 namespace DRIVER { struct CGL; }
 
@@ -19,9 +20,12 @@ namespace DRIVER {
 struct CGL : public Video, OpenGL, RenderThread {
     VideoCGL* view = nullptr;
     NSView* handle;
+    bool hasRendererContext = false;
+    bool useReshaping = true;
 
     bool init() {
         term();
+        bool res;
 
         @autoreleasepool {
             NSOpenGLPixelFormatAttribute attributes[] = {
@@ -48,7 +52,7 @@ struct CGL : public Video, OpenGL, RenderThread {
 
             [[view openGLContext] makeCurrentContext];
             
-            OpenGL::init();
+            res = OpenGL::init();
             
             auto version = (const char*)glGetString(GL_VERSION);
             
@@ -58,8 +62,11 @@ struct CGL : public Video, OpenGL, RenderThread {
             [view unlockFocus];
         }
 
+        resizeWindow();
+        RenderThread::reset();
         clear();
-        return true;
+        clearCurrent();
+        return res;
     }
 
     bool init(uintptr_t _handle) {
@@ -82,6 +89,7 @@ struct CGL : public Video, OpenGL, RenderThread {
         if (settings.threaded)
             return RenderThread::lock(data, pitch, _width, _height);
 
+        makeCurrent(true);
         OpenGL::size(_width, _height);
         return OpenGL::lock(data, pitch);
     }
@@ -90,6 +98,7 @@ struct CGL : public Video, OpenGL, RenderThread {
         if (settings.threaded)
             return RenderThread::lock(data, pitch, _width, _height);
 
+        makeCurrent(true);
         OpenGL::size(_width, _height);
         return OpenGL::lock(data, pitch);
     }
@@ -98,14 +107,14 @@ struct CGL : public Video, OpenGL, RenderThread {
         if (settings.threaded)
             return RenderThread::lock(data, pitch, _width, _height);
 
+        makeCurrent(true);
         OpenGL::size(_width, _height);
         return OpenGL::lock(data, pitch);
     }
 
     auto unlock(bool disallowShader = false) -> void {
         if (settings.threaded) {
-            auto area = [view frame];
-            outputWidth = area.size.width, outputHeight = area.size.height;
+            //resizeWindow();
             RenderThread::unlock(disallowShader);
         }
     }
@@ -127,20 +136,59 @@ struct CGL : public Video, OpenGL, RenderThread {
         }
     }
 
-    void redraw(bool disallowShader = false) {
-        if (settings.threaded)
-            return;
+    auto resizeWindow() -> void {
+        auto area = [view frame];
+        outputWidth = area.size.width, outputHeight = area.size.height;
+    }
+    
+    auto forceResize() -> void {
+        resizeWindow();
+    }
+    
+    auto redrawCustom(bool disallowShader = false) -> void {
+        redraw(disallowShader);
+    }
+    
+    auto shouldResizeWhenThreaded() -> bool { return NSAppKitVersionNumber < NSAppKitVersionNumber10_14; }
+    
+    auto lockResize() -> void {
+        resizeMutex.lock();
+        resizeMutexThreaded.lock();
+    }
+    
+    auto unlockResize() -> void {
+        if (NSAppKitVersionNumber < NSAppKitVersionNumber10_14) // before Mojave
+            _redraw(false, settings.threaded ? getLastBufferToRender() : nullptr);
         
+        resizeMutexThreaded.unlock();
+        resizeMutex.unlock();
+    }
+
+    void redraw(bool disallowShader = false) {
+        makeCurrent(true);
         _redraw(disallowShader);
     }
     
+    auto unlockAndRedraw(bool disallowShader = false, bool freeContext = false) -> void {
+        if (settings.threaded) {
+            resizeWindow();
+            RenderThread::unlock(disallowShader);
+        } else {
+            resizeMutex.lock();
+            redraw(disallowShader);
+            resizeMutex.unlock();
+        }
+            
+        if (freeContext)
+            clearCurrent();
+    }
+
     void _redraw(bool disallowShader, RenderBuffer* renderBuffer = nullptr) {
 
         @autoreleasepool {
             if([view lockFocusIfCanDraw]) {
-                auto area = [view frame];
-                outputWidth = area.size.width, outputHeight = area.size.height;
-
+                resizeWindow();
+    
                 OpenGL::clear();
                 OpenGLSurface::updateTexture(renderBuffer);
                 OpenGL::refresh(disallowShader);
@@ -150,13 +198,14 @@ struct CGL : public Video, OpenGL, RenderThread {
 
                 [[view openGLContext] flushBuffer];
                 if(settings.hardSync && settings.synchronize) glFinish();
+              
                 [view unlockFocus];
             }
         }
     }
 
     auto refresh() -> void {
-
+        resizeMutexThreaded.lock();
         @autoreleasepool {
             makeCurrent();
             if ([view lockFocusIfCanDraw]) {
@@ -192,11 +241,14 @@ struct CGL : public Video, OpenGL, RenderThread {
 
                 [[view openGLContext] flushBuffer];
                 if (settings.hardSync && settings.synchronize) glFinish();
+                    
                 [view unlockFocus];
             }
 
             clearCurrent();
+           
         }
+        resizeMutexThreaded.unlock();
     }
     
     void synchronize(bool state) {
@@ -222,6 +274,14 @@ struct CGL : public Video, OpenGL, RenderThread {
         settings.hardSync = state;
     }
 
+    auto hasReshaping() -> bool {
+        return true;
+    }
+    
+    auto setReshaping(bool state) -> void {
+        useReshaping = state;
+    }
+    
     auto setThreaded(bool state) -> void {
 
         if (state != settings.threaded) {
@@ -231,13 +291,9 @@ struct CGL : public Video, OpenGL, RenderThread {
             RenderThread::reset();
             width = 0, height = 0;
 
-            if (!state)
-                makeCurrent();
-
             settings.threaded = state;
 
-            if (state)
-                clearCurrent();
+            clearCurrent();
         }
     }
 
@@ -290,18 +346,35 @@ struct CGL : public Video, OpenGL, RenderThread {
     
     auto showMessage(std::string message, bool critical = false) -> void {
 #ifdef DRV_FREETYPE
-        screenText.updateMessage(message, critical, !settings.threaded);
+        if (settings.threaded) {
+            screenText.updateMessage(message, critical, false);
+        } else {
+            makeCurrent(true);
+            screenText.updateMessage(message, critical, true);
+        }
 #endif
+
     }
 
-    auto makeCurrent() -> void {
-        if (settings.threaded)
-            [[view openGLContext] makeCurrentContext];
+    auto makeCurrent(bool usePermanent = false) -> void {
+        if (usePermanent) {
+            if(!hasRendererContext) {
+                hasRendererContext = true;
+            } else
+                // for non threaded mode, we don't want to bind context each frame for speed reasons
+                return;
+        }
+
+        [[view openGLContext] makeCurrentContext];
     }
 
     auto clearCurrent() -> void {
-        if (settings.threaded)
-            [NSOpenGLContext clearCurrentContext];
+        [NSOpenGLContext clearCurrentContext];
+        hasRendererContext = false;
+    }
+    
+    auto freeContext() -> void {
+        clearCurrent();
     }
 
     CGL() {
@@ -327,7 +400,12 @@ struct CGL : public Video, OpenGL, RenderThread {
 }
 
 -(void) reshape {
+    if (!video->useReshaping)
+        return;
+
+    video->makeCurrent();
     video->_redraw(true, video->settings.threaded ? video->getLastBufferToRender() : nullptr);
+    video->clearCurrent();
 }
 
 @end

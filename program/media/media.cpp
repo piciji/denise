@@ -13,6 +13,7 @@
 #include "../firmware/manager.h"
 #include "../../data/resource.h"
 #include "../../data/icons.h"
+#include "../thread/emuThread.h"
 
 #include <thread>
 #include <vector>
@@ -316,12 +317,16 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
 
 			block->header.eject.onActivate = [this, block]() {
 
+                emuThread->lock();
 			    fileloader->eject( emulator, block->media );
+                emuThread->unlock();
 			};
 
 			block->header.writeprotect.onToggle = [this, block, fSetting, mediaGroup](bool checked) {
 
+                emuThread->lock();
 				emulator->writeProtect(block->media, checked);
+                emuThread->unlock();
                 // wp is shared between main image, save states and disk swapper.
                 // i.e. if save state changes it, it's valid for main image too (to keep it simple)
 				fSetting->setWriteProtect(checked);
@@ -426,7 +431,9 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
 
                     this->settings->set<bool>( saveIdent, checked);
 
+                    emuThread->lock();
                     this->emulator->setExpansionJumper(block->media, jumperId, checked);
+                    emuThread->unlock();
                 };
             }
         }
@@ -459,11 +466,13 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
             
             auto selection = layout->listings.selection( );
 
+            emuThread->lock();
             fileloader->insertCurrentPreview( layout->mediaGroup );
 
             auto media = layout->selectedBlock->media;
 
             fileloader->autoload(emulator, media, selection, media->group->isDisk() && useDiskTraps.checked());
+            emuThread->unlock();
         };
 
         layout->inject.onActivate = [this, layout]() {
@@ -477,11 +486,13 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
                 selection = 0;
             
             auto media = layout->selectedBlock->media;
-                                    
+
+            emuThread->lock();
             if ( emulator->selectListing( media, selection ) ) {
                 statusHandler->setMessage( trans->get( "program_injected" ) );
                 view->setFocused( 300 );                
             }
+            emuThread->unlock();
         };
     }
 
@@ -512,8 +523,10 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
 
         if (tabWindow->systemLayout)
             tabWindow->systemLayout->setExpansion( navElement.mediaGroupLayout->mediaGroup->expansion );
-        
+
+        emuThread->lock();
         program->power( emulator );
+        emuThread->unlock();
         
         view->setFocused( 300 );                
     };
@@ -524,8 +537,10 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
 
         if (tabWindow->systemLayout)
             tabWindow->systemLayout->setExpansion( nullptr );
-        
+
+        emuThread->lock();
         program->power( emulator );
+        emuThread->unlock();
         
         view->setFocused( 300 );                
     };
@@ -677,7 +692,9 @@ auto MediaLayout::createImage( Emulator::Interface::MediaGroup* mediaGroup ) -> 
         auto media = emulator->getMedia( *mediaGroup, insertId );
         if (media) {
             auto items = filePtr->scanArchive();
+            emuThread->lock();
             insertImage(media, filePtr, &items[0]);
+            emuThread->unlock();
         }
     }
             
@@ -1203,7 +1220,9 @@ auto MediaLayout::drop( std::string filePath, MediaGroupLayout::Block* block ) -
         if (!item || (item->info.size == 0) )
             return program->errorOpen( file, item, message );        
 
-        insertImage( block, file, item );        
+        emuThread->lock();
+        insertImage( block, file, item );
+        emuThread->unlock();
     };
 
     archiveViewer->setView(items);

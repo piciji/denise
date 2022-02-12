@@ -7,6 +7,7 @@
 #include "../../audio/manager.h"
 #include "../../../emulation/libc64/interface.h"
 #include "../../media/media.h"
+#include "../../thread/emuThread.h"
 #include "model.h"
 
 namespace EmuConfigView {   
@@ -127,9 +128,10 @@ auto ModelLayout::setEvents( ) -> void {
 
                     tabWindow->settings->set<bool>( _underscore(model->name), checked );
 
+                    emuThread->lock();
                     emulator->setModelValue( model->id, checked );
-                                        
                     applyCustomStuff( block, model );
+                    emuThread->unlock();
                 };
 
 			} else if (model->isRadio() ) {	
@@ -139,10 +141,11 @@ auto ModelLayout::setEvents( ) -> void {
 					option->onActivate = [this, block, model, val]() {
 						
 						tabWindow->settings->set<unsigned>(_underscore(model->name), val);
-						
+
+                        emuThread->lock();
 						emulator->setModelValue( model->id, val );
-						
                         applyCustomStuff( block, model );
+                        emuThread->unlock();
 					};
 					val++;
 				}
@@ -155,9 +158,10 @@ auto ModelLayout::setEvents( ) -> void {
 					
 					tabWindow->settings->set<unsigned>( _underscore(model->name), val);
 
+                    emuThread->lock();
 					emulator->setModelValue( model->id, val );
-                    
                     applyCustomStuff( block, model );
+                    emuThread->unlock();
 				};
 					
             } else if (model->isSlider() ) {	
@@ -192,10 +196,11 @@ auto ModelLayout::setEvents( ) -> void {
                     }
 
                     block->sliderLayout.value.setText( displayText + unit );
-                    
+
+                    emuThread->lock();
                     emulator->setModelValue( model->id, val );
-                    
                     applyCustomStuff( block, model );
+                    emuThread->unlock();
                 };
                 
             } else {
@@ -220,13 +225,13 @@ auto ModelLayout::setEvents( ) -> void {
 
                     tabWindow->settings->set<int>( _underscore(model->name), val );
 
+                    emuThread->lock();
                     emulator->setModelValue( model->id, val );
-                    
                     applyCustomStuff( block, model );
+                    emuThread->unlock();
                 };			
             }            
         }
-        
 	}
 }
 
@@ -530,6 +535,8 @@ auto ModelLayout::applyCustomStuff( Line::Block* block, Emulator::Interface::Mod
             case LIBC64::Interface::ModelIdVicIIModel:
                 if (tabWindow->videoLayout)
                     tabWindow->videoLayout->updatePresets();
+                else if (videoDriver)
+                    VideoManager::getInstance( emulator )->reloadSettings();
 
                 if (this->emulator == activeEmulator)
                     program->power(activeEmulator);

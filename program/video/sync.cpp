@@ -42,6 +42,11 @@ auto VideoManager::setSynchronize() -> void {
             vsync = false;
     }
 
+	if (activeVideoManager) {
+		activeVideoManager->waitForCrtRenderer();
+		activeVideoManager->reinitCrtThread();		
+	}
+		
     if (videoDriver->hasThreaded() != threadedRenderer)
         videoDriver->setThreaded( threadedRenderer );
 

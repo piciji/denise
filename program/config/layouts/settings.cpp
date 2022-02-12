@@ -32,8 +32,10 @@ SwitchesLayout::SwitchesLayout() {
     append(saveSettingsOnExit, {~0u, 0u}, 3);
     append(openFullscreen, {~0u, 0u}, 3);
     append(alternateSoftwarePreview, {~0u, 0u}, 3);
-    append(questionMediaWrite, {~0u, 0u});
+    append(questionMediaWrite, {~0u, 0u}, 3);
+    append(threadedEmu, {~0u, 0u});
     setFont(GUIKIT::Font::system("bold"));
+    threadedEmu.setForegroundColor( 0xff4500 );
 }
 
 PreviewLayout::PreviewLayout() {
@@ -122,10 +124,21 @@ SettingsLayout::SettingsLayout() {
         globalSettings->set<bool>("question_media_write", checked);
     };
 
+    switches.threadedEmu.setChecked(globalSettings->get<bool>("threaded_emu", false));
+    switches.threadedEmu.onToggle = [](bool checked) {
+        globalSettings->set<bool>("threaded_emu", checked);
+        configView->videoLayout->updateDriverPropsVisibility();
+        VideoManager::unlockDriver();
+        program->hintExclusiveFullscreen();
+        program->initUserInterface();
+    };
+
     setLang();
     
     lang.listView.onChange = [&]() {
+        emuThread->lock();
         changeLang();
+        emuThread->unlock();
     };
     
     for(unsigned i = 6; i <= 14; i++) {
@@ -408,6 +421,8 @@ auto SettingsLayout::translate() -> void {
     switches.openFullscreen.setText(trans->get("open_fullscreen"));
     switches.alternateSoftwarePreview.setText(trans->get("alternate software preview"));
     switches.questionMediaWrite.setText(trans->get("confirm writes"));
+    switches.threadedEmu.setText(trans->get("Threaded Emu"));
+    switches.threadedEmu.setTooltip(trans->get("Threaded Emu tooltip"));
 
     about.left.license.setText( trans->get("license", {}, true) + " " + LICENSE );
     about.left.author.setText( trans->get("author", {}, true) + " " + AUTHOR );

@@ -1,16 +1,16 @@
 
 auto pCheckButton::minimumSize() -> Size {
     Size size = getMinimumSize();
-	
-	auto context = gtk_widget_get_style_context (gtkWidget);
-    auto state = gtk_widget_get_state_flags (gtkWidget);
-	GtkBorder padding;
-	GtkBorder border;
-	
-	gtk_style_context_get_border (context, state, &border);
-		
-    return {size.width + 4 + border.left + border.right + 10,
-		size.height + border.top + border.bottom + 10};
+    return {size.width, size.height};
+//	auto context = gtk_widget_get_style_context (gtkWidget);
+//    auto state = gtk_widget_get_state_flags (gtkWidget);
+//	GtkBorder padding;
+//	GtkBorder border;
+//
+//	gtk_style_context_get_border (context, state, &border);
+//
+//    return {size.width + 4 + border.left + border.right + 10,
+//		size.height + border.top + border.bottom + 10};
 }
 
 auto pCheckButton::setChecked(bool checked) -> void {
@@ -29,9 +29,6 @@ auto pCheckButton::create() -> void {
     destroy();
     gtkWidget = gtk_toggle_button_new();
     g_signal_connect(G_OBJECT(gtkWidget), "toggled", G_CALLBACK(pCheckButton::onToggle), (gpointer)&checkButton);
-	
-	pSystem::addCssClass(gtkWidget, "removePadding");	
-	pSystem::applyCss( gtkWidget, ".removePadding { padding-left: 2px; padding-right: 2px; padding-top: 0px; padding-bottom: 0px;}" );
 }
 
 auto pCheckButton::init() -> void {

@@ -153,7 +153,9 @@ auto pTreeView::create() -> void {
     
     gtkWidget = gtk_scrolled_window_new(0, 0);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(gtkWidget), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-    gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(gtkWidget), GTK_SHADOW_ETCHED_IN);
+    gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(gtkWidget), GTK_SHADOW_OUT);
+
+    pSystem::applyCss( gtkWidget, "scrolledwindow undershoot.top, scrolledwindow undershoot.right, scrolledwindow undershoot.bottom, scrolledwindow undershoot.left { background-image: none; }");
 
     gtkTreeStore = gtk_tree_store_new(2, GDK_TYPE_PIXBUF, G_TYPE_STRING);
     gtkTreeModel = GTK_TREE_MODEL(gtkTreeStore);

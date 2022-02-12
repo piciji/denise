@@ -59,12 +59,14 @@ InputLayout::InputLayout() {
     reset.onActivate = [&]() {
         if (!configView->message->question( trans->get("reset_device_question") ))
 			return;
-        
+
+        emuThread->lock();
         stopCapture();
 
 		InputManager::unmapHotkeys();
     
 		loadInputList();
+        emuThread->unlock();
     };
     
     assigner.overwriteRadio.onActivate = [this]() {
@@ -80,32 +82,46 @@ InputLayout::InputLayout() {
     else
         assigner.appendRadio.setChecked( );
 
-    control.erase.onActivate = [this]() {   
+    control.erase.onActivate = [this]() {
+        emuThread->lock();
         eraseSelected( );
+        emuThread->unlock();
     };
     
-    control.eraseAlt.onActivate = [this]() {   
+    control.eraseAlt.onActivate = [this]() {
+        emuThread->lock();
         eraseSelected( true );
+        emuThread->unlock();
     };
 	
 	control.linker.onActivate = [this]() {
-		linkSelected();	
+        emuThread->lock();
+		linkSelected();
+        emuThread->unlock();
 	};   
     
     control.linkerAlt.onActivate = [this]() {
-		linkSelected( true );	
+        emuThread->lock();
+		linkSelected( true );
+        emuThread->unlock();
 	}; 
 
     control.mapper.onActivate = [this]() {
+        emuThread->lock();
         mapSelected();
+        emuThread->unlock();
     };
 
     control.mapperAlt.onActivate = [this]() {
+        emuThread->lock();
         mapSelected(true);
+        emuThread->unlock();
     };
 
     inputList.onActivate = [this]() {
+        emuThread->lock();
         mapSelected();
+        emuThread->unlock();
     };
 
     inputList.onChange = [&]() {
@@ -118,9 +134,12 @@ InputLayout::InputLayout() {
     };
 
 	driverLayout.combo.onChange = [this]() {
+        emuThread->lock();
 		globalSettings->set<std::string>("input_driver", driverLayout.combo.text());
         InputManager::rememberLastDeviceState();
 		program->initInput();
+        emuThread->unlock();
+
 	};    
     
     stopCapture();

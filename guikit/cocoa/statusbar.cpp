@@ -10,8 +10,11 @@
 }
 - (void)mouseDown:(NSEvent*)event {
     
-    if (part && part->popupMenu)
+    if (part && part->popupMenu) {
+        GUIKIT::pApplication::observeMenu([part->popupMenu->p.cocoaBase cocoaMenu]);
+        
         [NSMenu popUpContextMenu: [part->popupMenu->p.cocoaBase cocoaMenu] withEvent:event forView:NULL];
+    }
     
     if (part && part->onClick)
         part->onClick();

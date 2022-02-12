@@ -1,6 +1,6 @@
 
 /**
- * v 1.8.0
+ * v 1.9.0
  */
 
 #ifndef GUIKIT_H
@@ -169,14 +169,20 @@ struct Application {
 };
 
 struct Window : Base {
+    enum class SIZE_MODE { Default, Minimized, Maximized };
+
     std::function<void ()> onClose = nullptr;
     std::function<void ()> onMove = nullptr;
-    std::function<void ()> onSize = nullptr;
+    std::function<void (SIZE_MODE sizeMode )> onSize = nullptr;
+    std::function<void ()> onResizeStart = nullptr;
+    std::function<void ()> onResizeEnd = nullptr;
     std::function<void (std::vector<std::string>)> onDrop = nullptr;
 	std::function<bool ()> onContext = nullptr;
     std::function<void ()> onMinimize = nullptr;
     std::function<void ()> onUnminimize = nullptr; 
 	std::function<void ()> onFocus = nullptr;
+
+    enum class Hints { Default, Video } hints = Hints::Default;
     
     enum class Cursor { Default, Pointer, Image } cursor = Cursor::Default;
 
@@ -234,6 +240,8 @@ struct Window : Base {
     auto resizable() const -> bool { return state.resizable; }
     auto menuVisible() const -> bool { return state.menuVisible; }
     auto statusVisible() const -> bool { return state.statusVisible; }
+    auto aspectRatio() const -> Size { return state.aspectRatio; }
+    auto preventBackgroundRedrawing() const -> bool { return state.preventBackgroundRedrawing; }
     auto droppable() const -> bool { return state.droppable; }
     auto minimized() -> bool;
     auto title() const -> std::string { return state.title; }
@@ -244,6 +252,11 @@ struct Window : Base {
     auto setDefaultCursor( ) -> void;
     auto setPointerCursor( ) -> void;
     auto getScrollbarWidth() -> unsigned;
+	auto tellMeShouldICreateTheUIRightAway() -> bool;
+    auto setAspectRatio(Size ratio) -> void;
+    auto setPreventBackgroundRedrawing(bool prevent) -> void;
+    
+    auto causeBGRedrawVideoFlicker() const -> bool;
 	
 	static auto addCustomFont( CustomFont* customFont ) -> bool;
 	static auto countCustomFonts() -> unsigned;
@@ -262,6 +275,8 @@ struct Window : Base {
         Layout* layout = nullptr;
         Image* cursorImage = nullptr;
         StatusBar* statusBar = nullptr;
+        Size aspectRatio = {0,0};
+        bool preventBackgroundRedrawing = false;
     } state;
 
     struct {
@@ -274,7 +289,7 @@ struct Window : Base {
     Timer* focusTimer = nullptr;
     
     pWindow& p;
-    Window();
+    Window(Hints hints = Hints::Default);
     ~Window();
 };
 

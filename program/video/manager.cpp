@@ -8,6 +8,7 @@
 #include "../emuconfig/config.h"
 #include "../media/media.h"
 #include "../view/view.h"
+#include "../thread/emuThread.h"
 #include "props.cpp"
 #include "sync.cpp"
 #include "../../driver/tools/shaderpass.h"
@@ -38,6 +39,9 @@ auto VideoManager::getInstance( Emulator::Interface* emulator ) -> VideoManager*
 auto VideoManager::updateWhenNotRunning() -> void {
 	
 	for (auto videoManager : videoManagers) {
+        if (videoManager->dataUpdatesPending)
+            videoManager->applyDataUpdates();
+
 		if (videoManager->needUpdate())
 			videoManager->update();
 	}
@@ -76,6 +80,7 @@ VideoManager::VideoManager(Emulator::Interface* emulator) : shader(this) {
 	saturation = 1.0;    
 
     colorTableUpdated = false;
+    dataUpdatesPending = false;
 
     lumaChromaTable = new ColorLumaChroma[this->colorCount];      
     evenTable = new ColorLumaChroma[this->colorCount];  
@@ -128,6 +133,9 @@ VideoManager::VideoManager(Emulator::Interface* emulator) : shader(this) {
 
     render[0].kill = false;
     render[1].kill = false;
+    render[0].ready = false;
+    render[1].ready = false;
+
     reinitCrtThread(true);
 }
 
@@ -164,22 +172,38 @@ auto VideoManager::update() -> void {
     colorTableUpdated = true;    
 }
 
-auto VideoManager::updateListingColors() -> void {    
+auto VideoManager::updateListingColors() -> void {
     if (!isC64())
         return;
+
+    emuThread->lockPaletteForSoftwareView();
+    softwareViewForegroundColor = colorTable[14];
+    softwareViewBackgroundColor = colorTable[6];
+    emuThread->unlockPaletteForSoftwareView();
+
+    if (emuThread->enabled) {
+        emuThread->updatePaletteForSoftwareView = true;
+        return;
+    }
 
     auto emuView = EmuConfigView::TabWindow::getView( emulator );
 
     if (emuView && emuView->mediaLayout)
-        emuView->mediaLayout->colorListing( colorTable[14], colorTable[6] );
+        emuView->mediaLayout->colorListing( softwareViewForegroundColor, softwareViewBackgroundColor );
 }
 
 auto VideoManager::getC64Foreground() -> unsigned {
-    return colorTable[14];
+    emuThread->lockPaletteForSoftwareView();
+    unsigned _color = softwareViewForegroundColor;
+    emuThread->unlockPaletteForSoftwareView();
+    return _color;
 }
 
 auto VideoManager::getC64Background() -> unsigned {
-    return colorTable[6];
+    emuThread->lockPaletteForSoftwareView();
+    unsigned _color = softwareViewBackgroundColor;
+    emuThread->unlockPaletteForSoftwareView();
+    return _color;
 }
 
 auto VideoManager::generateC64ColorSpectrum() -> void {
@@ -261,7 +285,7 @@ auto VideoManager::adjustPalette() -> void {
         adjustGamma(rgb.r); adjustGamma(rgb.g); adjustGamma(rgb.b);
         
         colorTable[c] = 255 << 24 | uclamp8( rgb.r ) << 16 | uclamp8( rgb.g ) << 8 | uclamp8( rgb.b );
-    }    
+    }
 }
 
 auto VideoManager::convertPaletteToLumaChroma() -> void {
@@ -593,8 +617,12 @@ template<typename T> auto VideoManager::renderFrame(const T* src, unsigned width
     unsigned* gpuData;
 	float* gpuDataFloat;
 
+    if (dataUpdatesPending) {
+        applyDataUpdates();
+    }
+
     if ( needUpdate() )
-		update(); 
+        update();
     
     if ( shader.recreate ) {
         shader.loadInternal();
@@ -605,23 +633,28 @@ template<typename T> auto VideoManager::renderFrame(const T* src, unsigned width
 
         error |= !shader.sendToDriver();
 
-        if (error)
-            view->updateShader();
+        //if (error)
+          //  view->updateShader();
 		
         shader.recreate  = false;
     }           
         
 	if (scalingCount) {
-		if (--scalingCount == 0)
-			view->updateViewport();                
+		if (--scalingCount == 0) {
+			if (emuThread->enabled)
+				emuThread->updateViewport = true;
+			else
+				view->updateViewport();
+		}
 	}
 	
     if (height != currentHeight) {     
         currentHeight = height;
         
-        if(integerScaling)
-            scalingCount = 10;	
-        
+        if(integerScaling) {
+            scalingCount = 10;
+        }
+
         reinitCrtThread();
     }
 
@@ -673,12 +706,10 @@ template<typename T> auto VideoManager::renderFrame(const T* src, unsigned width
 		renderCrt(width, height, src, srcPitch, gpuData, gpuPitch - width);
 	}		           
     
-	videoDriver->unlock();
-    
     //if (fpsLimit)
       //  applyFpsLimit();
     
-	videoDriver->redraw();
+    videoDriver->unlockAndRedraw();
     
     //lastCapTime = Chronos::getTimestampInMicroseconds();    
 }
@@ -836,9 +867,18 @@ template<bool _16bitSrc> auto VideoManager::createWorker(Render* re) -> void {
 
 }
 
-auto VideoManager::waitForRenderer() -> bool {
+auto VideoManager::waitForCrtRenderer() -> void {
 
-	Render* re = &render[1];
+    if (!crtThreaded || (crtMode != CrtMode::Cpu ) )
+        return;	
+	
+	waitForCrtRenderer(0);
+	waitForCrtRenderer(1);
+}
+
+auto VideoManager::waitForCrtRenderer(uint8_t pos) -> bool {
+
+	Render* re = &render[pos];
 
 	while (re->ready.load())
 		std::this_thread::yield();
@@ -1279,16 +1319,16 @@ auto VideoManager::unlockDriver() -> void {
     if (!activeVideoManager->crtThreaded || (activeVideoManager->crtMode != CrtMode::Cpu ) )
         return;
 
-    if (!activeVideoManager->waitForRenderer() || !videoDriver)
+    if (!activeVideoManager->waitForCrtRenderer(1) || !videoDriver)
         return;
-    videoDriver->unlock();
-    videoDriver->redraw();
+
+    videoDriver->unlockAndRedraw(false, true);
 }
 
 auto VideoManager::powerOff() -> void {
-    unlockDriver();         
+    unlockDriver();
 	reinitCrtThread();
-    currentHeight = 0;        
+    currentHeight = 0;
 }
 
 auto VideoManager::initFpsLimit() -> void {
@@ -1319,6 +1359,77 @@ auto VideoManager::applyFpsLimit() -> void {
     }    
     
     lastCapTime = Chronos::getTimestampInMicroseconds();
+}
+
+template<typename T> auto VideoManager::updateData(std::string ident, T data) -> void {
+    DataUpdates dataUpdate;
+    dataUpdate.ident = ident;
+
+    if (std::is_same<T, float>::value) {
+        dataUpdate.dataF = data;
+    } else if (std::is_same<T, bool>::value) {
+        dataUpdate.dataB = data;
+    } else if (std::is_same<T, unsigned>::value) {
+        dataUpdate.dataU = data;
+    } else if (std::is_same<T, int>::value) {
+        dataUpdate.dataI = data;
+    }
+
+    emuThread->lockVideo();
+    dataUpdates.push_back( dataUpdate );
+    dataUpdatesPending = true;
+    emuThread->unlockVideo();
+}
+
+auto VideoManager::applyDataUpdates() -> void {
+
+    emuThread->lockVideo();
+    dataUpdatesPending = false;
+    auto _dataUpdates = dataUpdates;
+    dataUpdates.clear();
+    emuThread->unlockVideo();
+
+    for(auto& dataUpdate : _dataUpdates) {
+
+        if (dataUpdate.ident == "gamma")                    setGamma( dataUpdate.dataU );
+        else if (dataUpdate.ident == "saturation")          setSaturation( dataUpdate.dataU );
+        else if (dataUpdate.ident == "brightness")          setBrightness( dataUpdate.dataU );
+        else if (dataUpdate.ident == "contrast")            setContrast( dataUpdate.dataU );
+        else if (dataUpdate.ident == "phase")               setPhase( dataUpdate.dataI );
+        else if (dataUpdate.ident == "scanlines")           setScanlines( dataUpdate.dataU, 0 );
+        else if (dataUpdate.ident == "blur")                setBlur( dataUpdate.dataU );
+        else if (dataUpdate.ident == "phase_error")         setPhaseError( dataUpdate.dataF );
+        else if (dataUpdate.ident == "hanover_bars")        setHanoverBars( dataUpdate.dataI );
+        else if (dataUpdate.ident == "mask_pitch")          setMaskPitch( dataUpdate.dataF );
+        else if (dataUpdate.ident == "mask_dpi")            setMaskDpi( dataUpdate.dataU );
+        else if (dataUpdate.ident == "mask_level")          setMaskLevel( dataUpdate.dataU );
+        else if (dataUpdate.ident == "mask_luminance")      setMaskLuminance( dataUpdate.dataU );
+        else if (dataUpdate.ident == "fir_filter_length")   setFirFilterLength( dataUpdate.dataU );
+        else if (dataUpdate.ident == "luma_noise")          setLumaNoise( dataUpdate.dataF );
+        else if (dataUpdate.ident == "chroma_noise")        setChromaNoise( dataUpdate.dataF );
+        else if (dataUpdate.ident == "radial_distortion")   setRadialDistortion( dataUpdate.dataU );
+        else if (dataUpdate.ident == "aec_glitch")          setAecGlitch( dataUpdate.dataF );
+        else if (dataUpdate.ident == "ba_glitch")           setBaGlitch( dataUpdate.dataF );
+        else if (dataUpdate.ident == "phi0_glitch")         setPhi0Glitch( dataUpdate.dataF );
+        else if (dataUpdate.ident == "ras_glitch")          setRasGlitch( dataUpdate.dataF );
+        else if (dataUpdate.ident == "cas_glitch")          setCasGlitch( dataUpdate.dataF );
+        else if (dataUpdate.ident == "luma_rise")           setLumaRise( dataUpdate.dataF );
+        else if (dataUpdate.ident == "luma_fall")           setLumaFall( dataUpdate.dataF );
+        else if (dataUpdate.ident == "light_from_center")   setLightFromCenter( dataUpdate.dataU );
+        else if (dataUpdate.ident == "luminance")           setLuminance( dataUpdate.dataU );
+        else if (dataUpdate.ident == "bloom_glow")          setBloomGlow( dataUpdate.dataU );
+        else if (dataUpdate.ident == "bloom_variance")      setBloomVariance( dataUpdate.dataF );
+        else if (dataUpdate.ident == "bloom_radius")        setBloomRadius( dataUpdate.dataU );
+        else if (dataUpdate.ident == "bloom_weight")        setBloomWeight( dataUpdate.dataF );
+        else if (dataUpdate.ident == "random_line_offset")  setRandomLineOffset( dataUpdate.dataF );
+
+        else if (dataUpdate.ident == "video_new_luma")          setNewLuma( dataUpdate.dataB );
+        else if (dataUpdate.ident == "video_crt_real_gamma")    setCrtRealGamma( dataUpdate.dataB );
+        else if (dataUpdate.ident == "video_mask_type")         setMaskType( (MaskType)dataUpdate.dataU );
+        else if (dataUpdate.ident == "video_distortion_hires")  useDistortionHires( dataUpdate.dataB );
+        else if (dataUpdate.ident == "video_hires")             useHires( dataUpdate.dataB );
+        else if (dataUpdate.ident == "video_fir_filter_sharp")  setFirFilterSharp( dataUpdate.dataI );
+    }
 }
 
 auto VideoManager::isC64() -> bool {    
@@ -1363,3 +1474,7 @@ VideoManager::~VideoManager() {
 
 template auto VideoManager::renderFrame<uint8_t>(const uint8_t* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
 template auto VideoManager::renderFrame<uint16_t>(const uint16_t* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
+template auto VideoManager::updateData<bool>(std::string ident, bool data) -> void;
+template auto VideoManager::updateData<int>(std::string ident, int data) -> void;
+template auto VideoManager::updateData<unsigned>(std::string ident, unsigned data) -> void;
+template auto VideoManager::updateData<float>(std::string ident, float data) -> void;

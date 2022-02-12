@@ -27,6 +27,7 @@ static const unsigned Windows2000  = 0x0500;
 static const unsigned WindowsXP    = 0x0501;
 static const unsigned WindowsVista = 0x0600;
 static const unsigned Windows7     = 0x0601;
+static const unsigned Windows8     = 0x0602;
 
 struct pApplication {
     static auto run() -> void;
@@ -59,6 +60,7 @@ struct pWindow {
 
     HCURSOR hCursor;
     Timer timerStatusUpdate;
+    uint8_t bgRedraw = 0;
 
     auto append(Menu& menu) -> void;
     auto append(Widget& widget) -> void;
@@ -90,20 +92,24 @@ struct pWindow {
     auto handle() -> uintptr_t;
     auto setForeground() -> void;
     auto getScrollbarWidth() -> unsigned { return 20; }
+    auto applyAspectRatio() -> void {}
 
     auto onEraseBackground() -> bool;
     auto onClose() -> void;
     auto onMove() -> void;
-    auto onSize() -> void;
+    auto onSize(WPARAM wparam) -> void;
+    auto onSizing(int edge, RECT &rect) -> void;
     auto onDrop(WPARAM wparam) -> void;
     auto updateMenu() -> void;
     auto changeCursor( Image& image, unsigned hotSpotX, unsigned hotSpotY ) -> void;
     auto setDefaultCursor() -> void;
     auto setPointerCursor() -> void;
+	auto tellMeShouldICreateTheUIRightAway() -> bool;
+	
 	static auto addCustomFont( CustomFont* customFont ) -> bool;
     static auto CALLBACK wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
 
-    pWindow(Window& window);
+    pWindow(Window& window, Window::Hints hints = Window::Hints::Default );
     ~pWindow();
 };
 
@@ -128,6 +134,7 @@ struct pStatusBar {
     auto drawItem(WPARAM wparam, LPARAM lparam) -> void;
     auto update() -> void;
     auto updatePart( StatusBar::Part& part ) -> void;
+    auto updateTooltip( StatusBar::Part& part ) -> void { updatePart(part); }
     auto updatePosition() -> void;
     auto setStatusVisible(bool visible) -> void;
     auto getHeight() -> unsigned;
@@ -343,6 +350,7 @@ struct pCheckBox : pWidget {
     auto onToggle() -> void;
     auto rebuild() -> void;
     auto create() -> void;
+    auto onCustomDraw(LPARAM lparam) -> LRESULT;
     
     static auto CALLBACK subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
 
@@ -798,6 +806,7 @@ struct pMonitor {
     static std::vector<Device> devices;
     static std::vector<Setting> settings;
     static Device* activeDevice;
+    static Setting* activeSetting;
 
     static auto fetchDisplays() -> void;
     static auto getDisplays() -> std::vector<Monitor::Property>;

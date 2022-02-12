@@ -21,7 +21,7 @@ include data/Makefile
 
 objects := program view config emuconfig emumodel mediaview archiveviewer states firmware cmd statusbar
 objects += input audio video palette shader bass reverb panning audiorecord wavwriter sinc cosine cosineSSE driveSounds
-objects += guikit libami libC64 autoloader fileloader renderthread
+objects += guikit libami libC64 autoloader fileloader renderthread emuthread
 objects += driver
 ifeq ($(platform),windows)
     objects += dinput5 dinput7 dinput8 xaudio27 xaudio28 xaudio29
@@ -43,6 +43,7 @@ ifeq ($(platform),windows)
 else ifeq ($(platform),macosx)
     flags += -w -stdlib=libc++
     link += -lc++ -lobjc
+    export MACOSX_DEPLOYMENT_TARGET=10.9
 else
     link += -lpthread -no-pie      
 endif
@@ -115,6 +116,7 @@ obj/xaudio29.o:	driver/audio/xaudio2/xaudio29.cpp
 	$(compiler) $(drvflags) $(flags) -Wno-attributes -c $< -o $@
 endif
 obj/renderthread.o: driver/video/thread/renderThread.cpp
+obj/emuthread.o:		program/thread/emuThread.cpp
 
 obj/libami.o:	emulation/libami/interface.cpp
 obj/libC64.o:	emulation/libc64/interface.cpp
@@ -299,10 +301,8 @@ install: ## Install
 
 	if [ -d $(prefix)/local ]; then	\
 	    install -D -m 755 out/$(loname) $(prefix)/local/bin/$(loname);	\
-	    setcap cap_sys_nice=ep $(prefix)/local/bin/$(loname); \
 	else	\
 	    install -D -m 755 out/$(loname) $(prefix)/bin/$(loname);	\
-	    setcap cap_sys_nice=ep $(prefix)/bin/$(loname); \
 	fi
 	install -D -m 644 data/img/$(loname).png $(prefix)/share/icons/$(loname).png
 	install -D -m 644 data/$(loname).desktop $(prefix)/share/applications/$(loname).desktop

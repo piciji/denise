@@ -56,7 +56,7 @@ auto ArchiveViewer::build() -> void {
         globalSettings->set<int>("screen_archiveviewer_y", geometry.y);
     };
 
-    onSize = [&]() {
+    onSize = [&](GUIKIT::Window::SIZE_MODE sizeMode) {
         if (fullScreen()) return;
         GUIKIT::Geometry geometry = this->geometry();
         globalSettings->set<unsigned>("screen_archiveviewer_width", geometry.width);

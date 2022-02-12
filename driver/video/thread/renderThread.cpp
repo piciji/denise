@@ -188,11 +188,11 @@ namespace DRIVER {
             std::chrono::milliseconds duration(5);
             std::mutex cvM;
             std::unique_lock<std::mutex> lk(cvM);
-
-            //if (ThreadPriority::setPriority( ThreadPriority::Mode::Realtime, 3.0, 5.0 )) {
+#ifdef __APPLE__
+            if (ThreadPriority::setPriority( ThreadPriority::Mode::Realtime, 3.0, 5.0 )) {
             //     logger->log("increased render thread prio");
-            //}
-
+            }
+#endif
             kill = false;
             ready = false;
 
@@ -206,8 +206,13 @@ namespace DRIVER {
 
                     if (cv.wait_for(lk, duration, [this]() {
                         return ready.load();
-                    }))
+                    })) {
+                        if (kill) {
+                            kill = false;
+                            return;
+                        }
                         break;
+                    }
                 }
 
                 refresh();

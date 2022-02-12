@@ -258,14 +258,14 @@ struct DI_IDENT_CORE : DI_IDENT {
 			unsigned _size = hidKeyboard->buttons().inputs.size();
 			unsigned char keystate[_size];
 
-            if (GetFocus()) {
+         //   if (GetFocus()) {
                 if (FAILED(dinKey->GetDeviceState(_size, (LPVOID) keystate))) {
                     dinKey->Acquire();
                     if (FAILED(dinKey->GetDeviceState(_size, (LPVOID) keystate)))
                         memset(keystate, 0, sizeof(keystate));
                 }
-            } else
-                memset(keystate, 0, sizeof(keystate));
+           // } else
+             //   memset(keystate, 0, sizeof(keystate));
 		
 			for (auto& input : hidKeyboard->buttons().inputs)
 				input.setValue( !!(keystate[input.id] & 0x80) );

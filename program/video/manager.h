@@ -79,7 +79,20 @@ struct VideoManager {
     
     enum class MaskType : unsigned { Aperture = 0u, ShadowMask = 1u, SlotMask = 2u } maskType;
     enum class CrtMode : unsigned { None = 0u, Cpu = 1u, Gpu = 2u } crtMode;
-    
+
+    struct DataUpdates {
+        std::string ident;
+        unsigned dataU;
+        int dataI;
+        float dataF;
+        bool dataB;
+    };
+
+    std::vector<DataUpdates> dataUpdates;
+    bool dataUpdatesPending;
+    unsigned softwareViewForegroundColor;
+    unsigned softwareViewBackgroundColor;
+
     struct Render {        
         unsigned width;
         unsigned height;
@@ -226,7 +239,8 @@ struct VideoManager {
     template<bool _16bitSrc> auto createWorker(Render* re) -> void;
     auto enableCrtThread( bool state) -> void;
     auto updateCrtThreads() -> void;
-    auto waitForRenderer() -> bool;
+	auto waitForCrtRenderer() -> void;
+    auto waitForCrtRenderer(uint8_t pos) -> bool;
     template<bool withScanlines, bool rfModulation, typename T> auto renderPalCrt( Render* re ) -> void;
     template<bool withScanlines, bool rfModulation, typename T> auto renderNtscCrt( Render* re ) -> void;
     auto powerOff() -> void;    
@@ -244,22 +258,22 @@ struct VideoManager {
     auto useColorSpectrum(bool state) -> void; // color spectrum or palette
     auto setCrtMode(CrtMode _mode) -> void;
     
-    auto setSaturation(int saturation) -> void;
-    auto setBrightness(int brightness) -> void;
-    auto setGamma(int gamma) -> void;
-    auto setContrast(int contrast) -> void;
+    auto setSaturation(unsigned saturation) -> void;
+    auto setBrightness(unsigned brightness) -> void;
+    auto setGamma(unsigned gamma) -> void;
+    auto setContrast(unsigned contrast) -> void;
     auto setNewLuma(bool state) -> void;
     auto setCrtRealGamma(bool state) -> void;
     auto setPhase( int degree ) -> void;
-    auto setPhaseError(double phaseError) -> void;
+    auto setPhaseError(float phaseError) -> void;
     auto setHanoverBars( int saturationDelta ) -> void;
     auto setBlur( unsigned blur ) -> void;
-    auto setScanlines(unsigned intensity) -> void;
+    auto setScanlines(unsigned intensity, uint8_t pos = 1) -> void;
     
     auto setBloomGlow( unsigned intensity ) -> void;
     auto setBloomRadius( unsigned intensity ) -> void;
     auto setBloomVariance( float intensity ) -> void;
-    auto setBloomWeight( float intensity ) -> void;    
+    auto setBloomWeight( float intensity ) -> void;
     auto setRadialDistortion( unsigned intensity ) -> void;
     auto setMaskPitch( float intensity ) -> void;
     auto setMaskDpi( unsigned intensity ) -> void;
@@ -272,13 +286,13 @@ struct VideoManager {
     auto setAecGlitch( float intensity ) -> void;
     auto setPhi0Glitch( float intensity ) -> void;
     auto setCasGlitch( float intensity ) -> void;
-    auto setRasGlitch( float intensity ) -> void;     
+    auto setRasGlitch( float intensity ) -> void;
     auto setFirFilterLength( unsigned length ) -> void;
     auto setFirFilterSharp( int sharp ) -> void;
     auto smoothIntensity( float intensity ) -> float;
     
     auto setLumaRise( float pixel ) -> void;
-    auto setLumaFall( float pixel ) -> void;   
+    auto setLumaFall( float pixel ) -> void;
     
     auto setLightFromCenter( unsigned intensity ) -> void;
     auto setLuminance( unsigned intensity ) -> void;
@@ -296,6 +310,9 @@ struct VideoManager {
     
     auto applyFpsLimit() -> void;
     auto initFpsLimit() -> void;
+
+    template<typename T> auto updateData(std::string ident, T data) -> void;
+    auto applyDataUpdates() -> void;
 };
 
 extern std::vector<VideoManager*> videoManagers;

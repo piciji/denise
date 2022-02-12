@@ -476,7 +476,7 @@ auto Interface::prepareModels() -> void {
     // adjust center frequency for Sid 8580
 	models.push_back({ModelIdBias8580, "SID 8580 Filter Bias", Model::Type::Slider, Model::Purpose::AudioSettings, -3000, {-5000, 5000}, {}, 400, 1.0 });
     // use each 'x' sample. lower value means better quality but high cpu usage by resampler
-    models.push_back({ModelIdSidSampleFetch, "SID Sample Interval", Model::Type::Radio, Model::Purpose::AudioResampler, 3, {0, 3}, {"1", "2", "7", "18"}});
+    models.push_back({ModelIdSidSampleFetch, "SID Sample Interval", Model::Type::Radio, Model::Purpose::AudioResampler, 1, {0, 3}, {"1", "2", "7", "18"}});
     // equals volume of filter types
     models.push_back({ModelIdSidFilterVolumeEqualizer, "SID Filter Equalizer", Model::Type::Switch, Model::Purpose::AudioSettings, 0});
     // extra Sids    

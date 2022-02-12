@@ -80,7 +80,8 @@ InputLayout::InputLayout(TabWindow* tabWindow) {
         Emulator::Interface::Connector* connectorPtr = &connector;
         
         pluginConnector->onToggle = [&, pluginConnector, connectorPtr]() {
-            
+
+            emuThread->lock();
             auto device = emulator->getUnplugDevice();
             
             if (pluginConnector->checked())
@@ -89,7 +90,7 @@ InputLayout::InputLayout(TabWindow* tabWindow) {
             this->emulator->connect( connectorPtr, device );
             
             InputManager::getManager( this->emulator )->updateMappingsInUse();
-            
+            emuThread->unlock();
             _settings->set<unsigned>( _underscore(connectorPtr->name), device->id);
             
             view->checkInputDevice( emulator, connectorPtr, device );
@@ -115,6 +116,7 @@ InputLayout::InputLayout(TabWindow* tabWindow) {
         if (!mes->question( trans->get("reset_device_question") ))
 			return;
 
+        emuThread->lock();
         stopCapture();
                 
 		if (hotkeyMode())
@@ -123,34 +125,49 @@ InputLayout::InputLayout(TabWindow* tabWindow) {
 			InputManager::getManager( this->emulator )->unmapDevice( deviceId() );        
     
 		update();
+        emuThread->unlock();
     };
 
-    control.erase.onActivate = [this]() {         
+    control.erase.onActivate = [this]() {
+        emuThread->lock();
         eraseSelected();
+        emuThread->unlock();
     };
 
-    control.eraseAlt.onActivate = [this]() {        
+    control.eraseAlt.onActivate = [this]() {
+        emuThread->lock();
         eraseSelected( true );
+        emuThread->unlock();
     };
 	
 	control.linker.onActivate = [this]() {
+        emuThread->lock();
         linkSelected();
+        emuThread->unlock();
 	};
 
     control.linkerAlt.onActivate = [this]() {
+        emuThread->lock();
         linkSelected( true );
+        emuThread->unlock();
     };
     
-    control.mapper.onActivate = [this]() {  
+    control.mapper.onActivate = [this]() {
+        emuThread->lock();
         mapSelected();
+        emuThread->unlock();
     };
     
-    control.mapperAlt.onActivate = [this]() {  
+    control.mapperAlt.onActivate = [this]() {
+        emuThread->lock();
         mapSelected( true );
+        emuThread->unlock();
     };
     
-    inputList.onActivate = [this]() {		
+    inputList.onActivate = [this]() {
+        emuThread->lock();
 		mapSelected();
+        emuThread->unlock();
     };
 
     mapControl.automap.onActivate = [&]() {
@@ -161,7 +178,8 @@ InputLayout::InputLayout(TabWindow* tabWindow) {
             return;
         
         if ( mes->question( trans->get("layout_map_question") ) ) {
-            
+
+            emuThread->lock();
             InputManager::getManager( this->emulator )->unmapDevice( deviceId() );                
             
             auto type = mapControl.keyLayout.userData( selection );
@@ -171,6 +189,7 @@ InputLayout::InputLayout(TabWindow* tabWindow) {
             InputManager::getManager( this->emulator )->updateMappingsInUse();
             
             update();
+            emuThread->unlock();
         }
     };
     
@@ -201,7 +220,8 @@ InputLayout::InputLayout(TabWindow* tabWindow) {
         
 		if(hotkeyMode())
 			return;
-		
+
+        emuThread->lock();
         auto& device = emulator->devices[ deviceId() ];
         
         unsigned position = mapControl.analogSensitivity.slider.position();
@@ -211,11 +231,14 @@ InputLayout::InputLayout(TabWindow* tabWindow) {
         _settings->set<unsigned>("analog_sensitivity_" + _underscore(device.name), position);
         
         InputManager::getManager( this->emulator )->updateAnalogSensitivity( &device );
+        emuThread->unlock();
     };    
 	
-	selector.hotkeys.onToggle = [this]() {		
+	selector.hotkeys.onToggle = [this]() {
+        emuThread->lock();
 		stopCapture();
-		update();	
+		update();
+        emuThread->unlock();
 	};
 
     assigner.overwriteRadio.onActivate = [this]() {

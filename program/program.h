@@ -64,6 +64,7 @@ struct Program : Emulator::Interface::Bind {
     auto quit() -> void;
     auto loop() -> void;
 	auto loopNoGui() -> void;
+    auto loopUserInterface() -> void;
 	auto willRun() -> bool;
     auto loadTranslation(std::string file) -> bool;
     auto translationFolder() -> std::string;
@@ -115,6 +116,7 @@ struct Program : Emulator::Interface::Bind {
     auto prepareSocket(Emulator::Interface::Media* media, Emulator::Interface* emulator, std::string address) -> void;
     auto initAutoWarp(Emulator::Interface::MediaGroup* mediaGroup) -> void;
     auto updateSaveIdent(Emulator::Interface* emulator, std::string fileName) -> void;
+    auto initUserInterface() -> void;
     
     //audio
     auto initAudio() -> void;
@@ -128,8 +130,9 @@ struct Program : Emulator::Interface::Bind {
     auto initVideo() -> void;
 	auto getVideoDriver() -> std::string;
     auto videoRefresh(const uint16_t* frame, unsigned width, unsigned height, unsigned linePitch) -> void override;
-	auto videoRefresh8(const uint8_t* frame, unsigned width, unsigned height, unsigned linePitch) -> void override;    
+	auto videoRefresh8(const uint8_t* frame, unsigned width, unsigned height, unsigned linePitch) -> void override;
 	auto hintExclusiveFullscreen() -> void;
+    auto canExclusiveFullscreen() -> bool;
     auto setVideoFilter() -> void;   
 	auto updateCrop( Emulator::Interface* emulator ) -> void;
     auto setPalette( Emulator::Interface* emulator ) -> void;

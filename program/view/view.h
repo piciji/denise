@@ -9,9 +9,12 @@ struct View : public GUIKIT::Window {
 	GUIKIT::Timer placeholderTimer;
 	GUIKIT::Timer anyloadTimer;
 	GUIKIT::Timer displayChangeTimer;
+	GUIKIT::Timer fullscreenOnStartUp;
     GUIKIT::StatusBar statusBar;
-    GUIKIT::Image placeholder;    
-        
+    GUIKIT::Image placeholder;
+	bool requestFullscreenSwitch = false;
+    uint8_t resizeCustomMode = 0;
+	
     struct SystemMenu {
         Emulator::Interface* emulator;
         GUIKIT::Menu* system;
@@ -38,7 +41,6 @@ struct View : public GUIKIT::Window {
     auto getViewportHandle() -> uintptr_t;
 
     auto build() -> void;
-	auto update() -> void;
     auto setConnectors() -> void;
     auto checkInputDevice( Emulator::Interface* emulator, Emulator::Interface::Connector* connector, Emulator::Interface::Device* device ) -> void;
     auto updateDeviceSelection( Emulator::Interface* emulator ) -> void;
@@ -52,8 +54,7 @@ struct View : public GUIKIT::Window {
     auto buildMenu() -> void;
     auto updateViewport() -> void;
 	auto updateShader() -> void;
-	auto setFullScreen(bool fullScreen = true) -> void;
-	auto exclusiveFullscreen() -> bool;
+	auto switchFullScreen(bool fullScreen = true, bool forceUnacquire = false) -> void;
     auto updateMenuBar( bool toggle = false ) -> void;
     auto updateStatusBar(bool toggle = false ) -> void;
     auto loadCursor() -> void;
@@ -69,6 +70,8 @@ struct View : public GUIKIT::Window {
     auto togglePause() -> void;
     auto updatePauseCheck() -> void;
     auto updateFastforwardCheck() -> void;
+    auto useUnblockedResizing() -> bool;
+    auto updatePreventBgRedraw() -> void;
 
     GUIKIT::Viewport viewport;    
     
@@ -156,7 +159,6 @@ struct View : public GUIKIT::Window {
         GUIKIT::MenuItem insertDiskImage4;
         GUIKIT::MenuItem ejectDiskImage4;
 		
-    GUIKIT::Image regionImage;
     GUIKIT::Image powerImage;
     GUIKIT::Image poweroffImage;
     GUIKIT::Image freezeImage;

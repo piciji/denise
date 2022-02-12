@@ -10,6 +10,7 @@
 #include "../states/states.h"
 #include "../cmd/cmd.h"
 #include "../firmware/manager.h"
+#include "../thread/emuThread.h"
 
 #define HideMouseIfWasBefore \
     if (mIsAcquiredBefore && !inputDriver->mIsAcquired() && view->fullScreen() && fileDialogPtr && fileDialogPtr->detached()) \
@@ -172,8 +173,10 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
 
             settings->set<std::string>("anyload_path", GUIKIT::File::getPath( filePath ) );
 
+            emuThread->lock();
             autoloader->init( {filePath}, false, _useTraps ? Autoloader::Mode::AutoStartTrapped : Autoloader::Mode::AutoStartNotTrapped, selection );
             autoloader->loadFiles();
+            emuThread->unlock();
 
             this->resetPreview(emulator);
 
@@ -214,8 +217,10 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
 
         settings->set<std::string>("anyload_path", GUIKIT::File::getPath( filePath ) );
 
+        emuThread->lock();
         autoloader->init( {filePath}, false, Autoloader::Mode::Open );
         autoloader->loadFiles();
+        emuThread->unlock();
 
         resetPreview(emulator);
 
@@ -231,8 +236,10 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
                 return false;
             settings->set<std::string>("anyload_path", GUIKIT::File::getPath( filePath ) );
 
+            emuThread->lock();
             autoloader->init( {filePath}, false, !_useTraps ? Autoloader::Mode::AutoStartTrapped : Autoloader::Mode::AutoStartNotTrapped, selection );
             autoloader->loadFiles();
+            emuThread->unlock();
 
             resetPreview(emulator);
 
@@ -245,8 +252,10 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
     fileDialogPtr->setCallbacks( [this, emulator, settings, mIsAcquiredBefore, _useTraps](std::string filePath, unsigned selection) {
         settings->set<std::string>("anyload_path", GUIKIT::File::getPath( filePath ) );
 
+        emuThread->lock();
         autoloader->init( {filePath}, false, _useTraps ? Autoloader::Mode::AutoStartTrapped : Autoloader::Mode::AutoStartNotTrapped, selection );
         autoloader->loadFiles();
+        emuThread->unlock();
 
         resetPreview(emulator);
 
@@ -275,8 +284,10 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
     if ( !filePath.empty() ) {
         settings->set<std::string>("anyload_path", GUIKIT::File::getPath( filePath ) );
 
+        emuThread->lock();
         autoloader->init( {filePath}, false, _useTraps ? Autoloader::Mode::AutoStartTrapped : Autoloader::Mode::AutoStartNotTrapped, fileDialogPtr ? fileDialogPtr->getContentViewSelection() : 0 );
         autoloader->loadFiles();
+        emuThread->unlock();
     }
 
     resetPreview(emulator);
@@ -557,6 +568,7 @@ auto Fileloader::insertFile( Emulator::Interface* emulator, Emulator::Interface:
         if (!item || (item->info.size == 0) )
             return program->errorOpen( file, item, emuView ? emuView->message : view->message );
 
+        emuThread->lock();
         if (emuView && emuView->mediaLayout)
             emuView->mediaLayout->insertImage(media, file, item);
         else
@@ -565,6 +577,7 @@ auto Fileloader::insertFile( Emulator::Interface* emulator, Emulator::Interface:
         if (autoLoad & 1) {
             autoload(emulator, media, selection, autoLoad & USE_TRAPS);
         }
+        emuThread->unlock();
     };
     archiveViewer->setView(items);
 
@@ -760,4 +773,20 @@ auto Fileloader::preselectPath( GUIKIT::Settings* settings, std::string& groupNa
         path = settings->get<std::string>( baseFolderIdent + "_auto", "" );
 
     return path;
+}
+
+auto Fileloader::loadSettings(Emulator::Interface* emulator) -> void {
+
+    for(auto& group : emulator->mediaGroups) {
+        for(auto& media : group.media) {
+            auto fSetting = FileSetting::getInstance(emulator, _underscore(media.name) );
+            fSetting->update();
+        }
+    }
+
+    // swapper
+    for (unsigned i = 0; i < 15; i++) {
+        auto fSetting = FileSetting::getInstance( emulator, "swapper_" + std::to_string( i ) );
+        fSetting->update();
+    }
 }

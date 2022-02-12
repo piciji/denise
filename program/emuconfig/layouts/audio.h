@@ -130,7 +130,7 @@ struct AudioLayout : GUIKIT::HorizontalLayout {
     
     auto translate() -> void;
     
-    auto loadSettings(bool init = false) -> void;
+    auto loadSettings() -> void;
     
     auto initDsp(SliderLayout* sliderLayout, std::string ident, float defaultVal) -> void;
     

@@ -19,6 +19,7 @@ InScreenTextLayout::InScreenTextLayout() {
 
 VideoGeometryLayout::VideoGeometryLayout() {
 	append( aspectCorrect, {0u, 0u}, 5 );
+    append( aspectCorrectResizing, {0u, 0u}, 5 );
 	append( integerScaling, {0u, 0u} );
 	
 	setPadding(10);
@@ -111,19 +112,11 @@ VideoLayout::VideoLayout() {
 		globalSettings->set<std::string>("video_driver", driverLayout.combo.text() );
         
 		globalSettings->set("exclusive_fullscreen", false);
-		videoSettingsLayout.exclusiveFullscreen.setEnabled(false);
 		videoSettingsLayout.exclusiveFullscreen.setChecked(false);
-        videoSettingsLayout.hardSync.setEnabled(false);
-		
-        auto selected = driverLayout.combo.text();
-        
-		if (selected == "Direct3D") {
-			videoSettingsLayout.exclusiveFullscreen.setEnabled();			
-            
-		} else if(GUIKIT::String::foundSubStr(selected, "GL")) {
-            videoSettingsLayout.hardSync.setEnabled();
-        }
 
+        updateDriverPropsVisibility();
+
+        emuThread->lock();
         for (auto emulator : emulators) {
             program->getSettings(emulator)->set<std::string>( "shader", "");
             auto vManager = VideoManager::getInstance(emulator);
@@ -131,8 +124,10 @@ VideoLayout::VideoLayout() {
 		}
 		
         VideoManager::unlockDriver();
-		view->updateShader();        
-        program->initVideo();    		
+		view->updateShader();
+        program->initVideo();
+        videoDriver->hintExclusiveFullscreen( false );
+        emuThread->unlock();
 	};
 
     append(videoResolution, {~0u, 0u}, 10);
@@ -141,7 +136,7 @@ VideoLayout::VideoLayout() {
     append(videoSettingsLayout, {~0u, 0u}, 5);
 
     videoResolution.display.onChange = [this]() {
-
+        emuThread->lock();
         auto displayId = videoResolution.display.userData();
 
         videoResolution.displaySettings.reset();
@@ -155,23 +150,27 @@ VideoLayout::VideoLayout() {
 
         program->updateFullscreenSetting();
 
+        emuThread->unlock();
         videoResolution.synchronizeLayout();
     };
 
     videoResolution.displaySettings.onChange = [this]() {
-
+        emuThread->lock();
         globalSettings->set<unsigned>("fullscreen_setting", videoResolution.displaySettings.userData() );
 
         program->updateFullscreenSetting();
+        emuThread->unlock();
     };
 
     videoResolution.active.onToggle = [this](bool checked) {
+        emuThread->lock();
         globalSettings->set<bool>("fullscreen_setting_active", checked);
 
         program->updateFullscreenSetting();
 
         videoResolution.display.setEnabled( checked );
         videoResolution.displaySettings.setEnabled( checked );
+        emuThread->unlock();
     };
 
     videoResolution.active.setChecked( globalSettings->get<bool>("fullscreen_setting_active", false) );
@@ -198,36 +197,39 @@ VideoLayout::VideoLayout() {
         videoSettingsLayout.exclusiveFullscreen.setEnabled(false);
 
         if (selectedDriver == "Direct3D") {
-            videoSettingsLayout.exclusiveFullscreen.setEnabled();
+            videoSettingsLayout.exclusiveFullscreen.setEnabled( !globalSettings->get<bool>("threaded_emu", false) );
             videoSettingsLayout.exclusiveFullscreen.setChecked(globalSettings->get("exclusive_fullscreen", false));
         }
     } else
         videoSettingsLayout.remove( videoSettingsLayout.exclusiveFullscreen );
     
     if( showHardSync ) {        
-        videoSettingsLayout.hardSync.setEnabled(false);
+        videoSettingsLayout.hardSync.setEnabled( GUIKIT::String::foundSubStr(selectedDriver, "GL") );
         videoSettingsLayout.hardSync.setChecked(globalSettings->get("gl_hardsync", false));
-        
-        if(GUIKIT::String::foundSubStr(selectedDriver, "GL")) {
-            videoSettingsLayout.hardSync.setEnabled();            
-        }
     } else
         videoSettingsLayout.remove( videoSettingsLayout.hardSync );
 	
 	videoSettingsLayout.exclusiveFullscreen.onToggle = [](bool checked) {
+        emuThread->lock();
 		globalSettings->set("exclusive_fullscreen", checked);
+
 		program->hintExclusiveFullscreen();
+        emuThread->unlock();
 	};
     
     videoSettingsLayout.hardSync.onToggle = [](bool checked) {
+        emuThread->lock();
 		globalSettings->set("gl_hardsync", checked);
 		videoDriver->hardSync( checked );
+        emuThread->unlock();
 	};
 
     videoSettingsLayout.threadedRenderer.onToggle = [](bool checked) {
+        emuThread->lock();
+        VideoManager::unlockDriver();
         globalSettings->set("threaded_renderer", checked);
-        videoDriver->setThreaded( checked );
         VideoManager::setSynchronize();
+        emuThread->unlock();
         bool vsync = globalSettings->get<bool>("video_sync", true);
         view->adaptiveSyncItem.setEnabled( vsync && !checked );
         view->dynamicRateControl.setEnabled( vsync && !checked );
@@ -252,6 +254,7 @@ VideoLayout::VideoLayout() {
 	};
 	
 	paths.shader.select.onActivate = [&, selectPath]() {
+        emuThread->lock();
 		if (selectPath(&paths.shader, "select_shader_folder", "shader_folder")) {
             for (auto emulator : emulators) {
                 program->getSettings(emulator)->set<std::string>( "shader", "");
@@ -264,9 +267,11 @@ VideoLayout::VideoLayout() {
 			if (activeVideoManager)
 				activeVideoManager->shader.sendToDriver();			
 		}
+        emuThread->unlock();
 	};
 	
 	paths.shader.empty.onActivate = [&]() {
+        emuThread->lock();
         globalSettings->set<std::string>("shader_folder", "");
         paths.shader.edit.setText( "" );
         
@@ -279,7 +284,9 @@ VideoLayout::VideoLayout() {
         view->updateShader();
         
 		if (activeVideoManager)
-			activeVideoManager->shader.sendToDriver();	
+			activeVideoManager->shader.sendToDriver();
+
+        emuThread->unlock();
     };
 
 	paths.shader.edit.setText( globalSettings->get<std::string>("shader_folder", "") );
@@ -291,6 +298,7 @@ VideoLayout::VideoLayout() {
     append(videoFps, {~0u, 0u});
 
     videoFps.updateDelay.slider.onChange = [this]() {
+        emuThread->lock();
 
         unsigned position = videoFps.updateDelay.slider.position();
         position = (position + 1) * 200;
@@ -298,6 +306,7 @@ VideoLayout::VideoLayout() {
         globalSettings->set<unsigned>("fps_update", position);
 
         videoFps.updateDelay.value.setText( std::to_string(position) + " " + videoFps.updateDelay.unit );
+        emuThread->unlock();
     };
 
     unsigned fpsUpdate = globalSettings->get<unsigned>("fps_update", 1000u, {200u, 5000u});
@@ -306,23 +315,31 @@ VideoLayout::VideoLayout() {
 
     videoFps.options.Zero.setText("0");
     videoFps.options.Zero.onActivate = [this]() {
+        emuThread->lock();
         globalSettings->set<unsigned>("fps_decimal_point", 0);
         statusHandler->statusBar->updateDimension( 15, "1000" );
+        emuThread->unlock();
     };
     videoFps.options.One.setText("1");
     videoFps.options.One.onActivate = [this]() {
+        emuThread->lock();
         globalSettings->set<unsigned>("fps_decimal_point", 1);
         statusHandler->statusBar->updateDimension( 15, "1000.9" );
+        emuThread->unlock();
     };
     videoFps.options.Two.setText("2");
     videoFps.options.Two.onActivate = [this]() {
+        emuThread->lock();
         globalSettings->set<unsigned>("fps_decimal_point", 2);
         statusHandler->statusBar->updateDimension( 15, "1000.99" );
+        emuThread->unlock();
     };
     videoFps.options.Three.setText("3");
     videoFps.options.Three.onActivate = [this]() {
+        emuThread->lock();
         globalSettings->set<unsigned>("fps_decimal_point", 3);
         statusHandler->statusBar->updateDimension( 15, "1000.999" );
+        emuThread->unlock();
     };
 
     unsigned countDecimal = globalSettings->get<unsigned>("fps_decimal_point", 3, {0u, 3u});
@@ -334,18 +351,24 @@ VideoLayout::VideoLayout() {
     }
 
     screenTextLayout.option1.onActivate = [this]() {
+        emuThread->lock();
         globalSettings->set("video_screen_text", 0);
-        statusHandler->transferToOSD("");
+        statusHandler->setMessage("");
+        emuThread->unlock();
     };
     
     screenTextLayout.option2.onActivate = [this]() {
+        emuThread->lock();
         globalSettings->set("video_screen_text", 1);
-        statusHandler->transferToOSD("");
+        statusHandler->setMessage("");
+        emuThread->unlock();
     };
     
     screenTextLayout.option3.onActivate = [this]() {
+        emuThread->lock();
         globalSettings->set("video_screen_text", 2);
-        statusHandler->transferToOSD("");
+        statusHandler->setMessage("");
+        emuThread->unlock();
     };
     
     if(globalSettings->get("video_screen_text", 0) == 0) screenTextLayout.option1.setChecked();
@@ -354,28 +377,51 @@ VideoLayout::VideoLayout() {
 
     videoGeometry.aspectCorrect.setChecked( globalSettings->get<bool>("aspect_correct", true) );
     videoGeometry.aspectCorrect.onToggle = [&](bool checked) {
+        emuThread->lock();
         globalSettings->set<bool>("aspect_correct", checked);
 		VideoManager::setAspectCorrect( checked );
+        view->updatePreventBgRedraw( );
         view->updateViewport();
+        emuThread->unlock();
+    };
+
+    videoGeometry.aspectCorrectResizing.setChecked( globalSettings->get<bool>("aspect_correct_resizing", true) );
+    videoGeometry.aspectCorrectResizing.onToggle = [&](bool checked) {
+        emuThread->lock();
+        globalSettings->set<bool>("aspect_correct_resizing", checked);
+        if (checked)
+            view->setAspectRatio( {4, 3} );
+        else
+            view->setAspectRatio( {0, 0} );
+        view->updatePreventBgRedraw( );
+        view->updateViewport();
+        emuThread->unlock();
     };
 	
 	videoGeometry.integerScaling.setChecked( globalSettings->get<bool>("integer_scaling", false) );
     videoGeometry.integerScaling.onToggle = [&](bool checked) {
+        emuThread->lock();
         globalSettings->set<bool>("integer_scaling", checked);
 		VideoManager::setIntegerScaling( checked );
+        view->updatePreventBgRedraw( );
         view->updateViewport();
+        emuThread->unlock();
     };
 	
 	crtEmulation.threadMode.setChecked( globalSettings->get<bool>("crt_threaded", true) );
 	crtEmulation.threadMode.onToggle = [this](bool checked) {
+        emuThread->lock();
         globalSettings->set<bool>("crt_threaded", checked);
         VideoManager::setCrtThreaded( checked );
+        emuThread->unlock();
     };
     
 	crtEmulation.shaderInputPrecision.setChecked( globalSettings->get<bool>("crt_shader_input_precision", false) );
     crtEmulation.shaderInputPrecision.onToggle = [this](bool checked) {
+        emuThread->lock();
         globalSettings->set<bool>("crt_shader_input_precision", checked);
         VideoManager::setShaderInputPrecision( checked );
+        emuThread->unlock();
     };
 }
 
@@ -402,6 +448,7 @@ auto VideoLayout::translate() -> void {
 	
 	videoGeometry.setText(trans->get("geometry"));
 	videoGeometry.aspectCorrect.setText(trans->get("aspect_ratio"));
+    videoGeometry.aspectCorrectResizing.setText(trans->get("resize aspect corrected"));
 	videoGeometry.integerScaling.setText(trans->get("integer_scaling"));
     
     driverLayout.name.setText( trans->get("driver", {}, true) );
@@ -418,4 +465,18 @@ auto VideoLayout::translate() -> void {
     videoFps.updateDelay.name.setText( trans->get("Refresh", {}, true) );
     videoFps.options.labelDecimalPlace.setText( trans->get("Decimal Place", {}, true) );
 
+}
+
+auto VideoLayout::updateDriverPropsVisibility() -> void {
+    auto selected = driverLayout.combo.text();
+    auto threadedEmu = globalSettings->get<bool>("threaded_emu", false);
+
+    if (selected == "Direct3D") {
+        videoSettingsLayout.exclusiveFullscreen.setEnabled( !threadedEmu );
+        videoSettingsLayout.hardSync.setEnabled(false);
+
+    } else if(GUIKIT::String::foundSubStr(selected, "GL")) {
+        videoSettingsLayout.exclusiveFullscreen.setEnabled(false);
+        videoSettingsLayout.hardSync.setEnabled();
+    }
 }
