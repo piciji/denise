@@ -2,7 +2,7 @@
 #pragma once
 
 #include <functional>
-#include "../../tools/branchPrediction.h"
+#include "../../tools/macros.h"
 #include "../interface.h"
 #include "../m6510/m6510.h"
 #include "../../cia/m6526.h"

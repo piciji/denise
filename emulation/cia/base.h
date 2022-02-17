@@ -5,7 +5,7 @@
 
 #include "../tools/systimer.h"
 #include "../tools/serializer.h"
-#include "../tools/branchPrediction.h"
+#include "../tools/macros.h"
 
 #define CIA_MASK_WRITE0 1
 #define CIA_MASK_WRITE1 2

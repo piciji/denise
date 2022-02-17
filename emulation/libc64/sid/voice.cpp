@@ -187,7 +187,7 @@ inline auto Sid::Voice::clock() -> void {
 
 inline auto Sid::Voice::setWaveformOutput() -> void {
 	
-	if (likely( waveform )) {		
+	if (likely( waveform )) {
 		int ix = (accumulator ^ (~syncSource->accumulator & ringMsbMask)) >> 12;
 
 		waveformOutput = wave[ix & 0xfff] & ( noPulse | pulseOutput ) & noNoiseOrNoiseOutput;
@@ -204,7 +204,7 @@ inline auto Sid::Voice::setWaveformOutput() -> void {
 			accumulator &= (waveformOutput << 12) | 0x7fffff;
 		}
 
-		if (unlikely(waveform > 0x8) && likely(!test) && likely(shiftPipeline != 1) ) 
+		if (unlikely(waveform > 0x8) && likely(!test) && likely(shiftPipeline != 1) )
 			// Combined waveforms write to the shift register.
 			writeShiftRegister();
         

@@ -1,6 +1,7 @@
 
 #include "sid.h"
 
+#include "../../tools/macros.h"
 #include "../system/system.h"
 #include "multisid.cpp"
 #include "register.cpp"
@@ -236,7 +237,7 @@ auto Sid::getResampleQuality( ) -> uint8_t {
                 return 3;
     } 
         
-    __builtin_unreachable(); 
+    __unreachable
 }
 
 auto Sid::setType( Type type ) -> void {

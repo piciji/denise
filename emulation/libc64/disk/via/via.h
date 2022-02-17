@@ -4,6 +4,7 @@
 #include <functional>
 
 #include "../../../tools/serializer.h"
+#include "../../../tools/macros.h"
 
 #define VIA_FORCE_LOAD_TIMERA0 1
 #define VIA_FORCE_LOAD_TIMERA1 2

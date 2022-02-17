@@ -2,7 +2,7 @@
 #pragma once
 
 #include <cstdint>
-#include "../../tools/branchPrediction.h"
+#include "../../tools/macros.h"
 #include "../../tools/serializer.h"
 
 #define VIC_MAX_LINE_LENGTH 65 * 8

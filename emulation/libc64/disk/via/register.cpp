@@ -115,7 +115,7 @@ auto Via::read( uint16_t pos ) -> uint8_t {
 			return ier | 0x80;
 	}
     
-    __builtin_unreachable();
+   __unreachable
 }
    
 

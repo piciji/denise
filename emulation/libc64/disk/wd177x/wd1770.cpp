@@ -2,6 +2,7 @@
 #include "wd1770.h"
 #include <random>
 #include "../../system/system.h"
+#include "../../../tools/macros.h"
 
 #define CyclesPerRevolution300Rpm 3200000
 
@@ -50,7 +51,7 @@ auto WD1770::read(uint16_t address) -> uint8_t {
             return dataReg;
     }
 
-    __builtin_unreachable();
+    __unreachable
 }
 
 #define SET_TYPE(_type, _ident) \
