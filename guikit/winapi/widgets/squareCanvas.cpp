@@ -69,7 +69,7 @@ auto CALLBACK pSquareCanvas::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam,
             bmi.bmiHeader.biBitCount = 32;
             bmi.bmiHeader.biCompression = BI_RGB;
             bmi.bmiHeader.biWidth = width;
-            bmi.bmiHeader.biHeight = -height;
+            bmi.bmiHeader.biHeight = -((long)height);
             bmi.bmiHeader.biSizeImage = width * height * sizeof (uint32_t);
             void* bits = nullptr;
             HBITMAP bitmap = CreateDIBSection(hdc, &bmi, DIB_RGB_COLORS, &bits, nullptr, 0);

@@ -287,9 +287,9 @@ base( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) )
     setSliderAction<float>( &vicIIGlitch.cas, "cas_glitch", [this](float value) { vManager()->setCasGlitch( value ); },
         [this](unsigned position) { return (float)std::max(position, 1u) / 10.0f; } );
     setSliderAction<float>( &hf.lumaRise, "luma_rise", [this](float value) { vManager()->setLumaRise( value ); },
-        [this](unsigned position) { return ((float)std::max(position, 1u) / 10.0f) + 1.0; } );
+        [this](unsigned position) { return ((float)std::max(position, 1u) / 10.0f) + 1.0f; } );
     setSliderAction<float>( &hf.lumaFall, "luma_fall", [this](float value) { vManager()->setLumaFall( value ); },
-        [this](unsigned position) { return ((float)std::max(position, 1u) / 10.0f) + 1.0; } );
+        [this](unsigned position) { return ((float)std::max(position, 1u) / 10.0f) + 1.0f; } );
     setSliderAction<unsigned>( &gpuBase.lightFromCenter, "light_from_center", [this](unsigned value) { vManager()->setLightFromCenter( value ); },
         [this](unsigned position) { return std::max(position, 1u); } );
     setSliderAction<unsigned>( &gpuBase.luminance, "luminance", [this](unsigned value) { vManager()->setLuminance( value ); } );

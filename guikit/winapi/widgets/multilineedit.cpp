@@ -34,10 +34,12 @@ auto pMultilineEdit::text() -> std::string {
         return widget.text();
     
     unsigned length = GetWindowTextLength(hwnd);
-    wchar_t text[length + 1];
+    wchar_t* text = new wchar_t[length + 1];
     GetWindowText(hwnd, text, length + 1);
     text[length] = 0;
-    return utf8_t(text);
+    std::string out = utf8_t(text);
+    delete[] text;
+    return out;
 }
 
 auto pMultilineEdit::onChange() -> void {

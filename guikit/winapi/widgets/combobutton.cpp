@@ -20,7 +20,7 @@ auto pComboButton::minimumSize() -> Size {
     
     unsigned maximumWidth = 0;
     for(auto& text : comboButton.state.rows)
-        maximumWidth = std::max(maximumWidth, pFont::size(hfont, text).width);
+        maximumWidth = std::max<unsigned>(maximumWidth, pFont::size(hfont, text).width);
     
     calculatedMinimumSize.updated = true;
     

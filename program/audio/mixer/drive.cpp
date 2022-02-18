@@ -313,7 +313,7 @@ namespace Mixer {
 
     auto Drive::readPack(Emulator::Interface* emulator, Emulator::Interface::MediaGroup* group) -> void {
 
-        bool loop[devices.size() + 1]; // to prevent zero array length
+        bool* loop = new bool[devices.size() + 1]; // to prevent zero array length
         unsigned l = 0;
         for(auto& device : devices) {
             loop[l++] = device.second != nullptr && device.second->id == FloppySpin;
@@ -512,6 +512,8 @@ namespace Mixer {
             if (loop[l++])
                 addSound( emulator, device.media, FloppySpin );
         }
+
+        delete[] loop;
     }
 
     auto Drive::assignSteps( Device& device ) -> void {

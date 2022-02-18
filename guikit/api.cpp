@@ -1,8 +1,14 @@
 
 #include <cstring>
+#ifdef _MSC_VER
+#include <io.h>
+#include "winapi/dirent.h"
+#else
 #include <dirent.h>
-#include <sys/stat.h>
 #include <unistd.h>
+#endif
+
+#include <sys/stat.h>
 #include <ctime>
 #include <cmath>
 #include <sstream>
@@ -302,8 +308,8 @@ auto Window::setResizable(bool resizable) -> void {
 }
 
 auto Window::setGeometry(Geometry geometry) -> void {
-    geometry.width = std::min(geometry.width, pSystem::getDesktopSize().width);
-    geometry.height = std::min(geometry.height, pSystem::getDesktopSize().height);
+    geometry.width = std::min<unsigned>(geometry.width, pSystem::getDesktopSize().width);
+    geometry.height = std::min<unsigned>(geometry.height, pSystem::getDesktopSize().height);
     state.geometry = geometry;
     p.setGeometry(geometry);
 }

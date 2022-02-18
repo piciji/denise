@@ -3,7 +3,7 @@ auto ExpansionLayout::build( Emulator::Interface* emulator ) -> void {
     unsigned blocksPerLine = 4;
     auto& expansions = emulator->expansions;
     
-    Line* line;
+    Line* line = nullptr;
     unsigned i = 0;
     unsigned lineCount = (expansions.size() / blocksPerLine);
     lineCount += ((expansions.size() % blocksPerLine) != 0) ? 1 : 0;

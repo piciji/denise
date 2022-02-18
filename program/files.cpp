@@ -337,7 +337,7 @@ auto Program::addCustomFont() -> void {
     font->name = "C64 Pro";
     font->data = (uint8_t*)Fonts::c64Pro;
     font->size = sizeof(Fonts::c64Pro);
-    font->filePath = fontFolder() + "/C64_Pro-STYLE121.ttf";
+    font->filePath = fontFolder() + "C64_Pro-STYLE121.ttf";
     bool useCustomFont = GUIKIT::Window::addCustomFont( font );
     ((LIBC64::Interface*) getEmulator("C64"))->convertPetsciiToScreencode( useCustomFont );
 }

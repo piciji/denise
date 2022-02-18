@@ -1,8 +1,12 @@
 #include <windows.h>
 #include "resource.h"
 
-1 24 "denise.Manifest"
-2 ICON DISCARDABLE "ico/denise.ico"
+#ifndef ID_MANIFEST
+#define ID_MANIFEST 101
+#endif
+
+ID_MANIFEST RT_MANIFEST "denise.Manifest"
+ID_ICON ICON DISCARDABLE "ico/denise.ico"
 
 ID_GLOBE        ICON    "ico/globe.ico"
 ID_FILTER       ICON    "ico/filter.ico"

@@ -8,3 +8,6 @@ denise.xcodeproj
 ._*
 Build/
 .DS_Store
+msvc/.vs/
+msvc/x64/
+msvc/x86/

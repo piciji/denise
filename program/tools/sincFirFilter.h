@@ -75,7 +75,7 @@ struct SincFirFilter {
         if ((N % 2) == 0)
             N += 1;
         
-        double windowF[N];              
+        double* windowF = new double[N];
         chebyshevWin( &windowF[0], N, 50.0 );
         //blackmanWin( &windowF[0], N );
         
@@ -98,6 +98,8 @@ struct SincFirFilter {
         for (int n = 0; n < N; n++) {
             samples[n] /= _sum;
         }
+
+        delete[] windowF;
         
         return samples;
     }

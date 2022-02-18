@@ -198,7 +198,11 @@ auto File::truncate() -> bool {
     if (mode == Mode::Read)
         return false;
 
-    int result = ftruncate(fileno(fp), 0);        
+    #ifdef _MSC_VER
+        int result = _chsize(fileno(fp), 0);
+    #else
+        int result = ftruncate(fileno(fp), 0);
+    #endif
 
     return result == 0;
 }

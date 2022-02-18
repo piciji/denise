@@ -158,7 +158,7 @@ auto States::oneMediumOnly(Emulator::Interface::MediaGroup* group, Emulator::Int
         if ((&media == mediaInUse) || media.secondary)
             continue;
 
-        media.guid = uintptr_t(nullptr);
+        media.guid = (uintptr_t)(nullptr);
         filePool->assign( _ident(emulator, media.name), nullptr);
         updateImage(nullptr, &media);
     }
@@ -190,7 +190,7 @@ auto States::loadImagePaths( GUIKIT::Settings* loadSettings ) -> std::vector<Emu
             if (setting->path.empty()) {
                 if (!mediaSelected || media.secondary) {
                     emulator->ejectMedium( &media );
-                    media.guid = uintptr_t(nullptr);
+                    media.guid = (uintptr_t)(nullptr);
                     filePool->assign( _ident(emulator, media.name), nullptr);  
                     updateImage( nullptr, &media );
                 }

@@ -240,7 +240,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
             
             auto fSetting = FileSetting::getInstance( emulator, _underscore( media.name ) );
 
-            media.guid = uintptr_t(nullptr);
+            media.guid = (uintptr_t)(nullptr);
 
             if (!IPMode) {
                 GUIKIT::File *file = filePool->get(fSetting->path);

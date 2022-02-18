@@ -789,14 +789,14 @@ auto ConfigurationsLayout::updateMemoryPreview() -> void {
     
     while(true) {
         
-        sprintf( hex, "%04x", addr );
+        sprintf_s( hex, "%04x", addr );
         
         out += (std::string)hex;
         out += ": ";
 
         for (i = 0; i < 16; i++, addr++) {
 
-            sprintf(hex, "%02x", pattern[addr]);
+            sprintf_s(hex, "%02x", pattern[addr]);
 
             out += (std::string)hex;
             out += " ";

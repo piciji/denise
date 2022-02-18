@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <unordered_set>
 #include <thread>
+#include <iterator>
 
 namespace GUIKIT {
 
@@ -1386,7 +1387,7 @@ struct Settings {
     template<typename T>
     auto get(const std::string& ident, T defaultValue = T(), std::vector<T> range = {} ) -> T {
         auto result = get(type_info<T>(), ident, defaultValue);
-		return !range.empty() ? std::min( std::max(result, (T)range[0]), (T)range[1] ) : result;
+		return !range.empty() ? std::min<T>( std::max<T>(result, (T)range[0]), (T)range[1] ) : result;
     }
 	
 	template<typename T> auto getOrInit(const std::string& ident, T defaultValue = T(), std::vector<T> range = {}) -> Setting* {

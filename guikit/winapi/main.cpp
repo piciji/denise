@@ -2,6 +2,11 @@
 #include "../tools/crc32.h"
 #include <mmsystem.h>
 
+#ifdef _MSC_VER
+#pragma warning(disable:4996)
+#define PATH_MAX MAX_PATH
+#endif
+
 namespace GUIKIT {
 
 #include "tools.cpp"
@@ -119,9 +124,10 @@ auto pApplication::initialize() -> void {
 
 auto pApplication::currentWorkingDirectory() -> std::string {
     if ( !cwd.empty() ) return cwd;
-    wchar_t path[PATH_MAX] = L"";
-    _wgetcwd(path, sizeof(path));
+    wchar_t* path = new wchar_t[PATH_MAX];
+    _wgetcwd(path, PATH_MAX);
     cwd = utf8_t(path);
+    delete[] path;
     return cwd;
 }
 

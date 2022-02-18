@@ -6,22 +6,22 @@
 #define APP_NAME "Denise"
 #endif
 #ifndef TRANSLATION_FOLDER
-#define TRANSLATION_FOLDER "translation"
+#define TRANSLATION_FOLDER "translation/"
 #endif
 #ifndef DATA_FOLDER
-#define DATA_FOLDER "data"
+#define DATA_FOLDER "data/"
 #endif
 #ifndef FONT_FOLDER
-#define FONT_FOLDER "fonts"
+#define FONT_FOLDER "fonts/"
 #endif
 #ifndef SHADER_FOLDER
-#define SHADER_FOLDER "shader"
+#define SHADER_FOLDER "shader/"
 #endif
 #ifndef IMG_FOLDER
-#define IMG_FOLDER "img"
+#define IMG_FOLDER "img/"
 #endif
 #ifndef SOUND_FOLDER
-#define SOUND_FOLDER "sounds"
+#define SOUND_FOLDER "sounds/"
 #endif
 #define SETTINGS_FILE "settings.ini"
 #define DEFAULT_TRANS_FILE "english.txt"

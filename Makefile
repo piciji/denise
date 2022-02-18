@@ -86,8 +86,8 @@ all: build;
 
 ifeq ($(platform),windows)
 objects += resource
-obj/resource.o: data/resource.rc
-	windres data/resource.rc obj/resource.o
+obj/resource.o: data/resource_mingw.rc
+	windres data/resource_mingw.rc obj/resource.o
 endif
 
 %.o: $<; $(call compile)

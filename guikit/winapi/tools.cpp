@@ -151,7 +151,7 @@ auto CreateBitmap(Image& image, bool structureOnly ) -> HBITMAP {
     memset(&bitmapInfo, 0, sizeof(BITMAPINFO));
     bitmapInfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
     bitmapInfo.bmiHeader.biWidth = image.width;
-    bitmapInfo.bmiHeader.biHeight = -image.height;
+    bitmapInfo.bmiHeader.biHeight = -((long)image.height);
     bitmapInfo.bmiHeader.biPlanes = 1;
     bitmapInfo.bmiHeader.biBitCount = 32;
     bitmapInfo.bmiHeader.biCompression = BI_RGB;

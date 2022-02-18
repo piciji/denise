@@ -148,7 +148,7 @@ auto Layout::setMargin(unsigned margin) -> void {
 }
 
 auto Layout::setAlignment(double alignment) -> void {
-    state.alignment = std::max(0.0, std::min(1.0, alignment));
+    state.alignment = std::max<double>(0.0, std::min<double>(1.0, alignment));
 }
 
 auto Layout::addDisplacement(Geometry& geometry, unsigned offset) -> void {
@@ -177,7 +177,7 @@ auto Layout::addFrameSize(Size min) -> Size {
     Size minimumSize = frameWidget->p.minimumSize();
 
     min.width += borderSize << 1;
-    min.width = std::max(min.width, minimumSize.width);
+    min.width = std::max<unsigned>(min.width, minimumSize.width);
     min.height += minimumSize.height;
     return min;
 }
@@ -194,8 +194,8 @@ auto FixedLayout::setGeometry(Geometry geometry) -> void {
     auto children = this->children;
     for(auto& child : children) {
 
-        child.position.x = std::max(0, child.position.x);
-        child.position.y = std::max(0, child.position.y);
+        child.position.x = std::max<signed int>(0, child.position.x);
+        child.position.y = std::max<signed int>(0, child.position.y);
         child.size.width = child.size.width == Size::Minimum ? child.sizable->minimumSize().width : child.size.width;
         child.size.height = child.size.height == Size::Minimum ? child.sizable->minimumSize().height : child.size.height;
 
@@ -233,10 +233,10 @@ auto HorizontalLayout::minimumSize() -> Size {
 
     for(auto& child : children) {
         if(child.size.height == Size::Minimum || child.size.height == Size::Maximum) {
-            min.height = std::max(min.height, child.sizable->minimumSize().height);
+            min.height = std::max<unsigned>(min.height, child.sizable->minimumSize().height);
             continue;
         }
-        min.height = std::max(min.height, child.size.height);
+        min.height = std::max<unsigned>(min.height, child.size.height);
     }
 
     if(frameWidget) min = addFrameSize(min);
@@ -276,7 +276,7 @@ auto HorizontalLayout::setGeometry(Geometry containerGeometry) -> void {
     }
 
     unsigned maximumHeight = 0;
-    for(auto& child : children) maximumHeight = std::max(maximumHeight, child.size.height);
+    for(auto& child : children) maximumHeight = std::max<unsigned>(maximumHeight, child.size.height);
 
     for(auto& child : children) {
         int pivot = (maximumHeight - child.size.height) * state.alignment;
@@ -295,10 +295,10 @@ auto VerticalLayout::minimumSize() -> Size {
 
     for(auto& child : children) {
         if(child.size.width == Size::Minimum || child.size.width == Size::Maximum) {
-            min.width = std::max(min.width, child.sizable->minimumSize().width);
+            min.width = std::max<unsigned>(min.width, child.sizable->minimumSize().width);
             continue;
         }
-        min.width = std::max(min.width, child.size.width);
+        min.width = std::max<unsigned>(min.width, child.size.width);
     }
 
     for(auto& child : children) {
@@ -347,7 +347,7 @@ auto VerticalLayout::setGeometry(Geometry containerGeometry) -> void {
     }
 
     unsigned maximumWidth = 0;
-    for(auto& child : children) maximumWidth = std::max(maximumWidth, child.size.width);
+    for(auto& child : children) maximumWidth = std::max<unsigned>(maximumWidth, child.size.width);
 
     for(auto& child : children) {
         int pivot = (maximumWidth - child.size.width) * state.alignment;
@@ -508,8 +508,8 @@ auto TabFrameLayout::minimumSize() -> Size {
     Size min;
 
     for(auto& child : children) {
-        min.width  = std::max(min.width,  child.sizable->minimumSize().width);
-        min.height = std::max(min.height, child.sizable->minimumSize().height);
+        min.width  = std::max<unsigned>(min.width,  child.sizable->minimumSize().width);
+        min.height = std::max<unsigned>(min.height, child.sizable->minimumSize().height);
     }
 
     min = addFrameSize(min);
@@ -542,8 +542,8 @@ auto TabFrameLayout::setGeometry(Geometry containerGeometry) -> void {
             if (child.size.width == Size::Minimum) child.size.width = child.sizable->minimumSize().width;
             if (child.size.height == Size::Minimum) child.size.height = child.sizable->minimumSize().height;
 
-            child.size.width = std::min(child.size.width, geometry.width);
-            child.size.height = std::min(child.size.height, geometry.height);
+            child.size.width = std::min<unsigned>(child.size.width, geometry.width);
+            child.size.height = std::min<unsigned>(child.size.height, geometry.height);
 
             Geometry childGeometry = {geometry.x, geometry.y, child.size.width, child.size.height};
             child.sizable->setGeometry(childGeometry);
@@ -682,8 +682,8 @@ auto SwitchLayout::setGeometry(Geometry containerGeometry) -> void {
             if (child.size.width == Size::Minimum) child.size.width = child.sizable->minimumSize().width;
             if (child.size.height == Size::Minimum) child.size.height = child.sizable->minimumSize().height;
 
-            child.size.width = std::min(child.size.width, geometry.width);
-            child.size.height = std::min(child.size.height, geometry.height);
+            child.size.width = std::min<unsigned>(child.size.width, geometry.width);
+            child.size.height = std::min<unsigned>(child.size.height, geometry.height);
 
             Geometry childGeometry = {geometry.x, geometry.y, child.size.width, child.size.height};
             child.sizable->setGeometry(childGeometry);
@@ -698,8 +698,8 @@ auto SwitchLayout::minimumSize() -> Size {
     Size min;
 
     for(auto& child : children) {
-        min.width  = std::max(min.width,  child.sizable->minimumSize().width);
-        min.height = std::max(min.height, child.sizable->minimumSize().height);
+        min.width  = std::max<unsigned>(min.width,  child.sizable->minimumSize().width);
+        min.height = std::max<unsigned>(min.height, child.sizable->minimumSize().height);
     }
 
     min.width += Layout::state.margin * 2;
@@ -766,7 +766,7 @@ auto HorizontalLayout::alignChildrenVertically( std::vector<HorizontalLayout*> l
             if (i >= neededWidths.size())
                 neededWidths.push_back(0);
             
-            neededWidths[i] = std::max(neededWidths[i], child.sizable->minimumSize().width);
+            neededWidths[i] = std::max<unsigned>(neededWidths[i], child.sizable->minimumSize().width);
             
             i++;
         }                
