@@ -375,7 +375,7 @@ auto CALLBACK pWindow::wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam
             if (window.onResizeStart && !window.fullScreen())
                 window.onResizeStart();
 
-          //  if (!window.fullScreen() && !window.preventBackgroundRedrawing())
+          //  if (!window.fullScreen())
             //    window.p.bgRedraw = 1;
             return 0;
         case WM_EXITSIZEMOVE:
@@ -395,8 +395,7 @@ auto CALLBACK pWindow::wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam
             break;
             
         case WM_ERASEBKGND: {
-            if (!window.fullScreen() && window.preventBackgroundRedrawing())
-                // prevent thread driven opengl/directx flickering during resize
+            if (!window.fullScreen() && (window.hints == Window::Hints::Video))
                 return 0;
 
             if (window.p.bgRedraw == 1)

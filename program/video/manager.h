@@ -62,17 +62,11 @@ struct VideoManager {
 	static bool synchronized;
     static bool crtThreaded;
     static bool shaderInputPrecision;
-	static bool integerScaling;
-	static bool aspectCorrect;
-    static bool fpsLimit;
     static uint8_t frameRenderPos;
     static uint8_t frameRenderTrigger;
 	
     static auto setCrtThreaded(bool state) -> void;
     static auto setShaderInputPrecision(bool state) -> void;
-    static auto setAspectCorrect(bool state) -> void;
-    static auto setIntegerScaling(bool state) -> void;
-    static auto setFpsLimit(bool state) -> void;
     static auto setFrameRender(uint8_t limit) -> void;
     static auto setSynchronize() -> void;
     static auto setHardSync() -> void;
@@ -307,9 +301,6 @@ struct VideoManager {
     auto resetSettings() -> void;
     auto getModeIdent() -> std::string;
     auto applyMeta() -> void;
-    
-    auto applyFpsLimit() -> void;
-    auto initFpsLimit() -> void;
 
     template<typename T> auto updateData(std::string ident, T data) -> void;
     auto applyDataUpdates() -> void;

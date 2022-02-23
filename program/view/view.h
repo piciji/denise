@@ -70,8 +70,6 @@ struct View : public GUIKIT::Window {
     auto togglePause() -> void;
     auto updatePauseCheck() -> void;
     auto updateFastforwardCheck() -> void;
-    auto useUnblockedResizing() -> bool;
-    auto updatePreventBgRedraw() -> void;
 
     GUIKIT::Viewport viewport;    
     
@@ -104,7 +102,7 @@ struct View : public GUIKIT::Window {
 
         GUIKIT::MenuCheckItem videoSyncItem;
         GUIKIT::MenuCheckItem adaptiveSyncItem;
-        GUIKIT::MenuCheckItem fpsLimitItem;
+        GUIKIT::MenuCheckItem vrrItem;
         GUIKIT::MenuCheckItem dynamicRateControl;
 
         GUIKIT::MenuItem fullscreenItem;

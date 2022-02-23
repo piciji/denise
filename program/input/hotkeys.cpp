@@ -252,6 +252,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
                 _str += VideoManager::frameRenderTrigger > 1 ? "(" + std::to_string(VideoManager::frameRenderTrigger) + "x)  " : "  ";
             }
 
+            _str += videoDriver->hasVRR() ? "VRR  " : "";
             _str += audioDriver->hasSynchronized() ? "Audiosync  " : "";
             _str += audioManager->dynamicRateControl ? "DRC  " : "";
             float monitorFrequency = GUIKIT::Monitor::getCurrentRefreshRate();

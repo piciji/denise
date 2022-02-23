@@ -90,7 +90,10 @@ struct CGL : public Video, OpenGL, RenderThread {
             return RenderThread::lock(data, pitch, _width, _height);
 
         makeCurrent(true);
-        OpenGL::size(_width, _height);
+        if (OpenGL::size(_width, _height)) {
+            integerScalingHeight = _height;
+            calcViewport();
+        }
         return OpenGL::lock(data, pitch);
     }
 
@@ -99,7 +102,10 @@ struct CGL : public Video, OpenGL, RenderThread {
             return RenderThread::lock(data, pitch, _width, _height);
 
         makeCurrent(true);
-        OpenGL::size(_width, _height);
+        if (OpenGL::size(_width, _height)) {
+            integerScalingHeight = _height;
+            calcViewport();
+        }
         return OpenGL::lock(data, pitch);
     }
 
@@ -108,20 +114,25 @@ struct CGL : public Video, OpenGL, RenderThread {
             return RenderThread::lock(data, pitch, _width, _height);
 
         makeCurrent(true);
-        OpenGL::size(_width, _height);
+        if (OpenGL::size(_width, _height)) {
+            integerScalingHeight = _height;
+            calcViewport();
+        }
         return OpenGL::lock(data, pitch);
     }
 
     auto unlock(bool disallowShader = false) -> void {
         if (settings.threaded) {
-            //resizeWindow();
+            resizeWindow();
             RenderThread::unlock(disallowShader);
         }
     }
 
     auto resize(RenderBuffer* _buffer, unsigned _width, unsigned _height) -> void {
-
         OpenGL::resize( _buffer, _width, _height );
+
+        integerScalingHeight = _height;
+        calcViewport();
     }
 
     void clear() {
@@ -136,13 +147,25 @@ struct CGL : public Video, OpenGL, RenderThread {
         }
     }
 
-    auto resizeWindow() -> void {
+    auto resizeWindow(bool _force = false) -> void {
         auto area = [view frame];
-        outputWidth = area.size.width, outputHeight = area.size.height;
+
+        unsigned _windowWidth = area.size.width;
+        unsigned _windowHeight = area.size.height;
+
+        if (!_force) {
+            if ( (_windowWidth == windowWidth) && (_windowHeight == windowHeight) )
+                return;
+        }
+
+        windowWidth = _windowWidth;
+        windowHeight = _windowHeight;
+
+        calcViewport();
     }
     
     auto forceResize() -> void {
-        resizeWindow();
+        resizeWindow(true);
     }
     
     auto redrawCustom(bool disallowShader = false) -> void {
@@ -196,8 +219,14 @@ struct CGL : public Video, OpenGL, RenderThread {
                 screenText.showText(outputWidth, outputHeight, -0.01, 0.01, OpenGLText::ALIGN_RIGHT | OpenGLText::VALIGN_BOTTOM);
 #endif
 
-                [[view openGLContext] flushBuffer];
-                if(settings.hardSync && settings.synchronize) glFinish();
+                if (settings.vrr) {
+                    if (settings.hardSync) glFinish();
+                    waitVRR();
+                    [[view openGLContext] flushBuffer];
+                } else {
+                    [[view openGLContext] flushBuffer];
+                    if (settings.hardSync && settings.synchronize) glFinish();
+                }
               
                 [view unlockFocus];
             }
@@ -238,9 +267,14 @@ struct CGL : public Video, OpenGL, RenderThread {
                 screenText.updateMessage();
                 screenText.showText(outputWidth, outputHeight, -0.01, 0.01, OpenGLText::ALIGN_RIGHT | OpenGLText::VALIGN_BOTTOM);
 #endif
-
-                [[view openGLContext] flushBuffer];
-                if (settings.hardSync && settings.synchronize) glFinish();
+                if (settings.vrr) {
+                    if (settings.hardSync) glFinish();
+                    waitVRR();
+                    [[view openGLContext] flushBuffer];
+                } else {
+                    [[view openGLContext] flushBuffer];
+                    if (settings.hardSync && settings.synchronize) glFinish();
+                }
                     
                 [view unlockFocus];
             }
@@ -355,6 +389,26 @@ struct CGL : public Video, OpenGL, RenderThread {
 #endif
 
     }
+
+    auto setAspectCorrection(float width, float height, bool integerScaling) -> void {
+        wait();
+        settings.aspectWidth = width;
+        settings.aspectHeight = height;
+        settings.integerScaling = integerScaling;
+
+        calcViewport();
+    }
+
+    auto setVRR(bool state, float speed = 0.0) -> void {
+        wait();
+        settings.vrr = state;
+        settings.vrrSpeed = speed;
+
+        if (state)
+            initVRR(speed);
+    }
+
+    auto hasVRR() -> bool { return settings.vrr; }
 
     auto makeCurrent(bool usePermanent = false) -> void {
         if (usePermanent) {

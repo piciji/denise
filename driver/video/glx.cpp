@@ -222,7 +222,10 @@ struct GLX : public Video, OpenGL, RenderThread {
             return RenderThread::lock(data, pitch, _width, _height);
 
         makeCurrent(true);
-		OpenGL::size(_width, _height);
+        if (OpenGL::size(_width, _height)) {
+            integerScalingHeight = _height;
+            calcViewport();
+        }
 		return OpenGL::lock(data, pitch);
 	}
 	
@@ -231,7 +234,10 @@ struct GLX : public Video, OpenGL, RenderThread {
             return RenderThread::lock(data, pitch, _width, _height);
 
         makeCurrent(true);
-        OpenGL::size(_width, _height);
+        if (OpenGL::size(_width, _height)) {
+            integerScalingHeight = _height;
+            calcViewport();
+        }
         return OpenGL::lock(data, pitch);
     }
     
@@ -240,7 +246,10 @@ struct GLX : public Video, OpenGL, RenderThread {
             return RenderThread::lock(data, pitch, _width, _height);
 
         makeCurrent(true);
-		OpenGL::size(_width, _height);
+        if (OpenGL::size(_width, _height)) {
+            integerScalingHeight = _height;
+            calcViewport();
+        }
 		return OpenGL::lock(data, pitch);
 	}
 
@@ -252,8 +261,10 @@ struct GLX : public Video, OpenGL, RenderThread {
     }
 
     auto resize(RenderBuffer* _buffer, unsigned _width, unsigned _height) -> void {
-
         OpenGL::resize( _buffer, _width, _height );
+
+        integerScalingHeight = _height;
+        calcViewport();
     }
 
     auto clear() -> void {
@@ -265,11 +276,10 @@ struct GLX : public Video, OpenGL, RenderThread {
     }
 
     auto forceResize() -> void {
-        resizeWindow();
+        resizeWindow(true);
     }
 
-    auto resizeWindow() -> void {
-
+    auto resizeWindow(bool _force = false) -> void {
         XWindowAttributes parent, child;
         XGetWindowAttributes(display, GDK_WINDOW_XID(handle), &parent);
         XGetWindowAttributes(display, xwindow, &child);
@@ -278,7 +288,18 @@ struct GLX : public Video, OpenGL, RenderThread {
             XResizeWindow(display, xwindow, parent.width, parent.height);
         }
 
-        outputWidth = parent.width, outputHeight = parent.height;
+        unsigned _windowWidth = parent.width;
+        unsigned _windowHeight = parent.height;
+
+        if (!_force) {
+            if ( (_windowWidth == windowWidth) && (_windowHeight == windowHeight) )
+                return;
+        }
+
+        windowWidth = _windowWidth;
+        windowHeight = _windowHeight;
+
+        calcViewport();
     }
 
     auto lockResize() -> void {
@@ -326,7 +347,6 @@ struct GLX : public Video, OpenGL, RenderThread {
         screenText.showText(outputWidth, outputHeight, -0.01, 0.01, OpenGLText::ALIGN_RIGHT | OpenGLText::VALIGN_BOTTOM);
 #endif
         if(glx.doubleBuffer) glXSwapBuffers(display, glxwindow);
-        //  if(settings.hardSync && settings.synchronize) glFinish();
         clearCurrent();
     }
 
@@ -342,8 +362,15 @@ struct GLX : public Video, OpenGL, RenderThread {
         screenText.showText(outputWidth, outputHeight, -0.01, 0.01, OpenGLText::ALIGN_RIGHT | OpenGLText::VALIGN_BOTTOM);
 #endif
 
-        if(glx.doubleBuffer) glXSwapBuffers(display, glxwindow);
-        if(settings.hardSync && settings.synchronize) glFinish();
+        if (settings.vrr) {
+            if (settings.hardSync) glFinish();
+            waitVRR();
+            glXSwapBuffers(display, glxwindow);
+        } else {
+            if (glx.doubleBuffer) glXSwapBuffers(display, glxwindow);
+            if (settings.hardSync && settings.synchronize) glFinish();
+        }
+
         if (settings.resizing)
             clearCurrent();
         resizeMutex.unlock();
@@ -382,9 +409,14 @@ struct GLX : public Video, OpenGL, RenderThread {
         screenText.updateMessage();
         screenText.showText(outputWidth, outputHeight, -0.01, 0.01, OpenGLText::ALIGN_RIGHT | OpenGLText::VALIGN_BOTTOM);
 #endif
-
-        if(glx.doubleBuffer) glXSwapBuffers(display, glxwindow);
-        if(settings.hardSync && settings.synchronize) glFinish();
+        if (settings.vrr) {
+            if (settings.hardSync) glFinish();
+            waitVRR();
+            glXSwapBuffers(display, glxwindow);
+        } else {
+            if (glx.doubleBuffer) glXSwapBuffers(display, glxwindow);
+            if (settings.hardSync && settings.synchronize) glFinish();
+        }
 
         clearCurrent();
         resizeMutexThreaded.unlock();
@@ -425,6 +457,26 @@ struct GLX : public Video, OpenGL, RenderThread {
 
         glXMakeCurrent(display, glxwindow, glxcontext);
     }
+
+    auto setAspectCorrection(float width, float height, bool integerScaling) -> void {
+        wait();
+        settings.aspectWidth = width;
+        settings.aspectHeight = height;
+        settings.integerScaling = integerScaling;
+
+        calcViewport();
+    }
+
+    auto setVRR(bool state, float speed = 0.0) -> void {
+        wait();
+        settings.vrr = state;
+        settings.vrrSpeed = speed;
+
+        if (state)
+            initVRR(speed);
+    }
+
+    auto hasVRR() -> bool { return settings.vrr; }
 
     auto clearCurrent() -> void {
         glXMakeCurrent(display, 0, nullptr);

@@ -55,9 +55,9 @@ struct OpenGLTexture {
 
 struct OpenGLSurface : OpenGLTexture {
 	auto allocate() -> void;
-	auto size(unsigned w, unsigned h) -> void;
+	auto size(unsigned w, unsigned h) -> bool;
 	auto release() -> void;
-	auto render(unsigned sourceWidth, unsigned sourceHeight, unsigned targetWidth, unsigned targetHeight) -> void;
+	auto render(unsigned targetLeft, unsigned targetTop, unsigned targetWidth, unsigned targetHeight) -> void;
 	auto deleteBuffer() -> void;
     auto getBuffer(RenderBuffer* renderBuffer = nullptr) -> void*;
     auto cropTexture(OpenGLSurface* src) -> void;
@@ -108,6 +108,13 @@ struct OpenGL : OpenGLProgram {
         bool resizing = false;
         Video::Filter filter = Video::Filter::Nearest;
         std::vector<ShaderPass*> passes = {};
+
+        float aspectWidth = 1.0;
+        float aspectHeight = 1.0;
+        bool integerScaling = false;
+
+        bool vrr;
+        float vrrSpeed = 0.0;
     } settings;
 
 	auto shader(std::vector<ShaderPass*> passes) -> void;
@@ -123,18 +130,28 @@ struct OpenGL : OpenGLProgram {
 	auto init() -> bool;
 	auto term() -> void;
     auto hardSync(unsigned frames = 0) -> void;
-    auto getCustomTexture( std::string _program, std::string attribute ) -> CustomTexture*;	
+    auto getCustomTexture( std::string _program, std::string attribute ) -> CustomTexture*;
+    auto calcViewport() -> void;
+    auto initVRR(float speed) -> void;
+    auto waitVRR() -> void;
     
 #ifdef DRV_FREETYPE    
     OpenGLText screenText;
-#endif    
-   // auto showMessage(std::string message, bool critical = false) -> void;
+#endif
 
 	std::vector<OpenGLProgram> programs;
 	unsigned outputWidth = 0;
 	unsigned outputHeight = 0;
+    int outputLeft = 0;
+    int outputTop = 0;
 	bool initialized = false;
-    
+    unsigned integerScalingHeight = 0;
+    unsigned windowWidth = 0;
+    unsigned windowHeight = 0;
+
+    int64_t lastCapTime;
+    int64_t minimumCapTime;
+
     GLsync fences[4];
     unsigned fenceCount = 0;  
 };
@@ -142,6 +159,8 @@ struct OpenGL : OpenGLProgram {
 #include "surface.h"
 #include "program.h"
 #include "main.h"
+#include "viewport.h"
+#include "vrr.h"
 
 }
 

@@ -126,7 +126,7 @@ struct Program : Emulator::Interface::Bind {
     auto mixDriveSound( Emulator::Interface::Media* media, Emulator::Interface::DriveSound driveSound, uint8_t data = 0) -> void override;
     
     //video
-    auto setVideoManagerGlobals() -> void;
+    auto setVideoDimension() -> void;
     auto initVideo() -> void;
 	auto getVideoDriver() -> std::string;
     auto videoRefresh(const uint16_t* frame, unsigned width, unsigned height, unsigned linePitch) -> void override;
@@ -140,10 +140,8 @@ struct Program : Emulator::Interface::Bind {
     auto midScreenCallback() -> void override;
     auto toggleFastForward(bool aggressive) -> void;
     auto fastForward( bool activate, bool aggressive = false ) -> void;
-    auto setFpsLimit() -> void;
     auto updateOverallSynchronize() -> void;
     auto updateFullscreenSetting() -> void;
-    auto setThreadedRenderer() -> void;
 	
     //input
     auto initInput() -> void;

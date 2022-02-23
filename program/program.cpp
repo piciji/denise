@@ -314,8 +314,6 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
 
 		globalSettings->set("last_used_emu", activeEmulator->ident);
 
-		activeVideoManager->initFpsLimit();
-
         statusHandler->resetFrameCounter();
 
         view->updateSpeedLabels();

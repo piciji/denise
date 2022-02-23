@@ -16,9 +16,8 @@ auto Program::initVideo() -> void {
     
     VideoManager::setSynchronize();
     VideoManager::setHardSync();
-  //  setThreadedRenderer();
-    setFpsLimit();
     //setVideoFilter();
+    setVideoDimension();
     updateFullscreenSetting();
 	    
     if ( !videoDriver->init( view->getViewportHandle() ) ) {
@@ -42,16 +41,20 @@ auto Program::initVideo() -> void {
 	
 	VideoManager::setShaderInputPrecision( globalSettings->get<bool>("shader_input_precision", false) );
 	VideoManager::setCrtThreaded( globalSettings->get<bool>("crt_threaded", true) );
-	
+
 	if (!cmd->debug) {
 		view->loadPlaceholder();
         view->renderPlaceholder();
 	}
 }
 
-auto Program::setVideoManagerGlobals() -> void {
-	VideoManager::setAspectCorrect( globalSettings->get<bool>("aspect_correct", true) );
-	VideoManager::setIntegerScaling( globalSettings->get<bool>("integer_scaling", false) );
+auto Program::setVideoDimension() -> void {
+    bool integerScaling = globalSettings->get<bool>("integer_scaling", false);
+
+    if (globalSettings->get<bool>("aspect_correct", true)) {
+        videoDriver->setAspectCorrection( 4.0, 3.0, integerScaling);
+    } else
+        videoDriver->setAspectCorrection( 1.0, 1.0, integerScaling);
 }
 
 auto Program::getVideoDriver() -> std::string {
@@ -68,9 +71,6 @@ auto Program::finishVBlank() -> void {
     
     if (!activeVideoManager->waitForCrtRenderer(1))
         return;
-    
-    //if (VideoManager::fpsLimit)
-      //  activeVideoManager->applyFpsLimit();
 
     videoDriver->unlockAndRedraw();
 }
@@ -115,17 +115,6 @@ auto Program::hintExclusiveFullscreen() -> void {
         videoDriver->hintExclusiveFullscreen( true, view->getCustomFullscreenRefreshRate() );
     else
         videoDriver->hintExclusiveFullscreen( false );
-}
-
-auto Program::setFpsLimit() -> void {
-//	VideoManager::setFpsLimit( globalSettings->get("fps_limit", false) );
-//    audioManager->setRateControl();
-//	updateOverallSynchronize();
-}
-
-auto Program::setThreadedRenderer() -> void {
-    bool useThreadedRenderer = globalSettings->get("threaded_renderer", false);
-    videoDriver->setThreaded( useThreadedRenderer );
 }
 
 auto Program::setVideoFilter() -> void {
@@ -211,6 +200,9 @@ auto Program::fastForward( bool activate, bool aggressive ) -> void {
         if (videoDriver->hasSynchronized())
             videoDriver->synchronize( false );
 
+        if (videoDriver->hasVRR())
+            videoDriver->setVRR(false);
+
         if (crtMode != VideoManager::CrtMode::None) {
             settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::None);
             VideoManager::getInstance( activeEmulator )->reloadSettings();
@@ -265,12 +257,12 @@ auto Program::updateOverallSynchronize() -> void {
 		return;	
 	
 	bool vSync = videoDriver->hasSynchronized();
+
+    bool vrr = videoDriver->hasVRR();
 	
 	bool aSync = audioDriver->hasSynchronized();
-	
-	bool fpsLimit = VideoManager::fpsLimit;	
-	
-	if ( vSync || fpsLimit || aSync )
+
+	if ( vSync || vrr || aSync )
 		VideoManager::synchronized = true;
 }
 

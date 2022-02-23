@@ -164,6 +164,10 @@ auto Window::isApended(Menu& menu) -> bool {
     return false;
 }
 
+auto Window::hasAppended(Widget& widget) -> bool {
+    return widget.Sizable::state.window == this;
+}
+
 auto Window::append(Widget& widget) -> void {
     widget.Sizable::state.window = this;
     p.append(widget);
@@ -339,17 +343,6 @@ auto Window::setAspectRatio(Size ratio) -> void {
     p.applyAspectRatio();
 }
 
-auto Window::setPreventBackgroundRedrawing(bool prevent) -> void {
-    state.preventBackgroundRedrawing = prevent;
-}
-    
-auto Window::causeBGRedrawVideoFlicker() const -> bool {
-    if (Application::isGtk() || Application::isCocoa())
-        return false;
-    
-    return true;
-}
-    
 auto Window::changeCursor( Image& image, unsigned hotSpotX, unsigned hotSpotY ) -> void {
     if (state.cursorImage == &image)
         return;

@@ -239,7 +239,7 @@ auto OpenGL::refresh(bool disallowShader) -> void {
 		glActiveTexture(GL_TEXTURE0);
 		_glParameters(sources[0].filter, sources[0].wrap, sources[0].mipmap);
 
-		p.render(sources[0].width, sources[0].height, targetWidth, targetHeight);
+		p.render(0, 0, targetWidth, targetHeight);
 		glBindTexture(GL_TEXTURE_2D, p.texture);
         if (p.mipmap) {
             glHint(GL_GENERATE_MIPMAP_HINT, GL_NICEST);
@@ -267,7 +267,7 @@ auto OpenGL::refresh(bool disallowShader) -> void {
 
 	_glParameters(sources[0].filter, sources[0].wrap, sources[0].mipmap);
 
-	render(sources[0].width, sources[0].height, outputWidth, outputHeight);
+	render(outputLeft, outputTop, outputWidth, outputHeight);
 
 }
 

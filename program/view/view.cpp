@@ -20,23 +20,6 @@ View::View() : GUIKIT::Window(GUIKIT::Window::Hints::Video) {
     message = new Message(this);
 }
 
-inline auto View::useUnblockedResizing() -> bool {
-    
-    static auto aspectCorrectResize = globalSettings->getOrInit<bool>("aspect_correct_resizing", true);
-    
-    if (!causeBGRedrawVideoFlicker())
-        return true;
-    
-    bool bgCompletlyCovered = !VideoManager::aspectCorrect || *aspectCorrectResize;
-    
-    return bgCompletlyCovered && !VideoManager::integerScaling;
-}
-
-auto View::updatePreventBgRedraw() -> void {
-    // take effect for winapi only to prevent flickering
-    setPreventBackgroundRedrawing( useUnblockedResizing() );
-}
-
 auto View::build() -> void {
     setTitle( APP_NAME " " VERSION );
     setBackgroundColor(0);
@@ -120,13 +103,13 @@ auto View::build() -> void {
         }
 
         if (fullScreen() || requestFullscreenSwitch || (sizeMode != GUIKIT::Window::SIZE_MODE::Default)) {
-            this->setPreventBackgroundRedrawing( false );
+           // this->setPreventBackgroundRedrawing( false );
             updateViewport();
 
         } else {
-            updatePreventBgRedraw();
+      //      updatePreventBgRedraw();
 			
-            if (activeVideoManager && emuThread->enabled && useUnblockedResizing()) {
+            if (activeVideoManager && emuThread->enabled /*&& useUnblockedResizing()*/) {
                 videoDriver->lockResize();
                 updateViewport();
                 videoDriver->unlockResize();
@@ -136,12 +119,12 @@ auto View::build() -> void {
       
 			if (activeVideoManager) {
 				if (emuThread->enabled) {
-					if (!useUnblockedResizing()) {
+					/*if (!useUnblockedResizing()) {
 						if (emuThread->locked()) {
 							activeVideoManager->waitForCrtRenderer();
 							videoDriver->redrawCustom();
 						}
-					}
+					}*/
 				} else {
 					activeVideoManager->waitForCrtRenderer();
                     if (!videoDriver->hasReshaping()) {
@@ -154,7 +137,7 @@ auto View::build() -> void {
             }
         }
 
-        if (!emuThread->enabled || !useUnblockedResizing())
+        if (!emuThread->enabled /*|| !useUnblockedResizing()*/)
 		    audioDriver->clear();
     };
 
@@ -172,11 +155,11 @@ auto View::build() -> void {
                 }
             } else {
                 if (emuThread->enabled) {
-                    if (!useUnblockedResizing()) {
+                   /* if (!useUnblockedResizing()) {
                         this->setPreventBackgroundRedrawing(false);
                         emuThread->lock();
 
-                    } else if (!videoDriver->shouldResizeWhenThreaded() && videoDriver->hasThreaded()) {
+                    } else */ if (!videoDriver->shouldResizeWhenThreaded() && videoDriver->hasThreaded()) {
                         emuThread->lock();
                         videoDriver->setThreaded(false);
                         emuThread->unlock();
@@ -189,10 +172,10 @@ auto View::build() -> void {
 
     onResizeEnd = [this]() {
 
-        if (emuThread->enabled && emuThread->locked()) {
-            videoDriver->freeContext();
-            emuThread->unlock();
-        }
+//        if (emuThread->enabled && emuThread->locked()) {
+//            videoDriver->freeContext();
+//            emuThread->unlock();
+//        }
         
         if (resizeCustomMode) {
             emuThread->lock();
@@ -297,7 +280,7 @@ auto View::build() -> void {
 	placeholderTimer.onFinished = [this]() {
 		placeholderTimer.setEnabled(false);
 		renderPlaceholder(false);
-        renderPlaceholder(false);
+        //renderPlaceholder(false);
 	};
 	
 	anyloadTimer.setInterval(40);
@@ -401,7 +384,6 @@ auto View::setDragnDrop() -> void {
 }
 
 auto View::show() -> void {
-    program->setVideoManagerGlobals();
     setVisible();
     updateViewport();
 }
@@ -458,63 +440,9 @@ auto View::updateStatusBar(bool toggle) -> void {
 }
 
 auto View::updateViewport() -> void {
-	unsigned currentHeight = 0;
-	bool integerScaling = false;
-	int _height;
     GUIKIT::Geometry geometry = this->geometry();
     geometry.x = geometry.y = 0;
-    
-    if (activeVideoManager) {
-        integerScaling = VideoManager::integerScaling;
-        currentHeight = activeVideoManager->currentHeight;
-        
-        if ((currentHeight == 0) || (geometry.height < currentHeight))
-            integerScaling = false;
-		
-		_height = currentHeight;
-    }	
 
-	if (integerScaling) {
-		while (geometry.height > _height)
-			_height += currentHeight;
-
-		while (_height > geometry.height)
-			_height -= currentHeight;
-
-		geometry.y = (geometry.height - _height) / 2;
-		geometry.height = _height;
-	}
-	
-	if (VideoManager::aspectCorrect) {
-
-		while(1) {
-			_height = geometry.height;
-			int _width = (unsigned)(((double(_height) / 3.0) * 4.0) + 0.5);
-
-			if (_width > geometry.width) {
-				if (integerScaling) {
-					_height = geometry.height - currentHeight;
-
-					if (_height >= currentHeight) {
-						geometry.y += (geometry.height - _height) / 2;
-						geometry.height = _height;
-						continue;
-					}
-				}
-
-				_height = (unsigned)(((double(geometry.width) / 4.0) * 3.0) + 0.5);
-				geometry.x = 0;
-				geometry.y += (geometry.height - _height) / 2;
-				geometry.height = _height;
-
-			} else {
-				geometry.x = (geometry.width - _width) / 2;
-				geometry.width = _width;
-			}
-
-			break;
-		}
-	}
 	viewport.setGeometry( geometry );
 	placeholderTimer.setEnabled(true);
 }
@@ -1068,11 +996,15 @@ auto View::buildMenu() -> void {
         statusHandler->resetFrameCounter();
         emuThread->unlock();
         bool threadedRenderer = globalSettings->get("threaded_renderer", false);
+
         adaptiveSyncItem.setEnabled( videoSyncItem.checked() && !threadedRenderer );
-        dynamicRateControl.setEnabled( videoSyncItem.checked() && !threadedRenderer );
+        dynamicRateControl.setEnabled( (videoSyncItem.checked() || vrrItem.checked()) && !threadedRenderer );
+        vrrItem.setEnabled( threadedRenderer || !(videoSyncItem.checked() && adaptiveSyncItem.checked()) );
     };
     bool threadedRenderer = globalSettings->get("threaded_renderer", false);
     bool vsync = globalSettings->get<bool>("video_sync", true);
+    bool vrr = globalSettings->get<bool>("vrr_sync", false);
+    bool adaptive = globalSettings->get<bool>("adaptive_sync", true);
 
     if (vsync)
         videoSyncItem.setChecked();
@@ -1088,23 +1020,26 @@ auto View::buildMenu() -> void {
         VideoManager::setSynchronize();
         emuThread->unlock();
         //statusHandler->resetFrameCounter();
+        bool threadedRenderer = globalSettings->get("threaded_renderer", false);
+        vrrItem.setEnabled( threadedRenderer || !(videoSyncItem.checked() && adaptiveSyncItem.checked()) );
     };
-    if ( globalSettings->get<bool>("adaptive_sync", true) )
+    if ( adaptive )
         adaptiveSyncItem.setChecked();
 
     optionsMenu.append(adaptiveSyncItem);
-    
-//    fpsLimitItem.onToggle = [&]() {
-//        globalSettings->set<bool>("fps_limit", fpsLimitItem.checked() );
-//        program->setFpsLimit();
-//
-//        if (fpsLimitItem.checked()) {
-//            speedItems[0]->setChecked();
-//            speedItems[0]->onActivate();
-//        }
-//    };
-//    if ( globalSettings->get<bool>("fps_limit", false) ) fpsLimitItem.setChecked();
-//    optionsMenu.append(fpsLimitItem);
+
+    vrrItem.setEnabled( threadedRenderer || !(vsync && adaptive) );
+
+    vrrItem.onToggle = [&]() {
+        globalSettings->set<bool>("vrr_sync", vrrItem.checked() );
+        emuThread->lock();
+        VideoManager::setSynchronize();
+        emuThread->unlock();
+        bool threadedRenderer = globalSettings->get("threaded_renderer", false);
+        dynamicRateControl.setEnabled( (videoSyncItem.checked() || vrrItem.checked()) && !threadedRenderer );
+    };
+    if ( vrr ) vrrItem.setChecked();
+    optionsMenu.append(vrrItem);
 
     dynamicRateControl.onToggle = [&]() {
         globalSettings->set<bool>("dynamic_rate_control", dynamicRateControl.checked() );
@@ -1116,7 +1051,7 @@ auto View::buildMenu() -> void {
     if ( globalSettings->get<bool>("dynamic_rate_control", false) )
         dynamicRateControl.setChecked();
 
-    dynamicRateControl.setEnabled( !threadedRenderer && vsync );
+    dynamicRateControl.setEnabled( !threadedRenderer && (vsync || vrr) );
 
     optionsMenu.append(dynamicRateControl);
         
@@ -1491,7 +1426,7 @@ auto View::translate() -> void {
 
     videoSyncItem.setText( trans->get("Video Sync"));
     adaptiveSyncItem.setText( trans->get("Adaptive Sync"));
-    fpsLimitItem.setText( trans->get("Fps Limit"));
+    vrrItem.setText( trans->get("VRR"));
     dynamicRateControl.setText( trans->get("dynamic_rate_control"));
 
     fullscreenItem.setText( trans->get("fullscreen"));
