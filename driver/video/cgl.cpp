@@ -402,7 +402,6 @@ struct CGL : public Video, OpenGL, RenderThread {
     auto setVRR(bool state, float speed = 0.0) -> void {
         wait();
         settings.vrr = state;
-        settings.vrrSpeed = speed;
 
         if (state)
             initVRR(speed);

@@ -45,6 +45,7 @@ ID_FREEZE       ICON    "ico/freeze.ico"
 ID_MENU         ICON    "ico/menu.ico"
 ID_EJECT        ICON    "ico/eject.ico"
 ID_EDIT         ICON    "ico/edit.ico"
+ID_FAN          ICON    "ico/fan.ico"
 
 IDD_FILE_TEMPLATE DIALOG DISCARDABLE 0, 0, 486, 205
 STYLE WS_CHILD | WS_CLIPSIBLINGS | DS_3DLOOK | DS_CONTROL | WS_VISIBLE | NOT WS_BORDER | NOT WS_POPUP | NOT WS_SYSMENU

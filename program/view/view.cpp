@@ -146,14 +146,19 @@ auto View::build() -> void {
 
         if (activeVideoManager && !fullScreen() && !requestFullscreenSwitch) {
 
-            if (GUIKIT::Application::isGtk()) {
-                if (videoDriver->hasSynchronized()) {
-                    emuThread->lock();
-                    videoDriver->synchronize(false);
-                    emuThread->unlock();
-                    resizeCustomMode = 2;
-                }
-            } else {
+            if (videoDriver->needResizingPreparations()) {
+                emuThread->lock();
+                videoDriver->prepareResizing();
+                emuThread->unlock();
+            }
+//            if (GUIKIT::Application::isGtk()) {
+//                if (videoDriver->hasSynchronized()) {
+//                    emuThread->lock();
+//                    videoDriver->synchronize(false);
+//                    emuThread->unlock();
+//                    resizeCustomMode = 2;
+//                }
+//            } else {
                 if (emuThread->enabled) {
                    /* if (!useUnblockedResizing()) {
                         this->setPreventBackgroundRedrawing(false);
@@ -166,7 +171,7 @@ auto View::build() -> void {
                         resizeCustomMode = 1;
                     }
                 }
-            }
+           // }
         }
     };
 
@@ -182,11 +187,17 @@ auto View::build() -> void {
             if (resizeCustomMode == 1)
                 videoDriver->setThreaded( true );
 
-            else if (resizeCustomMode == 2)
-                videoDriver->synchronize(true);
+         //   else if (resizeCustomMode == 2)
+           //     videoDriver->synchronize(true);
 
             emuThread->unlock();
             resizeCustomMode = 0;
+        }
+
+        if (videoDriver->needResizingPreparations()) {
+            emuThread->lock();
+            videoDriver->endResizing();
+            emuThread->unlock();
         }
 
         videoDriver->hintResizing(false);
@@ -753,6 +764,8 @@ auto View::loadImages() -> void {
 	editImage.setResourceId( ID_EDIT );
     ejectImage.loadPng((uint8_t*)Icons::eject, sizeof(Icons::eject));
 	ejectImage.setResourceId( ID_EJECT );
+    fanImage.loadPng((uint8_t*)Icons::fan, sizeof(Icons::fan));
+    fanImage.setResourceId( ID_FAN );
 
     playPauseStatusImage.loadPng((uint8_t*)Icons::playPauseStatus, sizeof(Icons::playPauseStatus));
     forwardPauseStatusImage.loadPng((uint8_t*)Icons::forwardPauseStatus, sizeof(Icons::forwardPauseStatus));
@@ -1193,6 +1206,8 @@ auto View::buildMenu() -> void {
 	tapeControlMenu.append( tapeResetCounterItem );  
 
     // speed menu
+    speedControlMenu.setIcon( fanImage );
+
     fastForwardItem.onToggle = []() {
         emuThread->lock();
         program->toggleFastForward( false );
@@ -1339,6 +1354,13 @@ auto View::updateSpeedLabels(bool force) -> void {
     }
 }
 
+auto View::showSpeedMenu( bool show ) -> void {
+    if (show == isApended(speedControlMenu))
+        return;
+
+    show ? append( speedControlMenu ) : remove( speedControlMenu );
+}
+
 auto View::showTapeMenu( bool show, Emulator::Interface::TapeMode mode ) -> void {
         
     if (show)
@@ -1443,7 +1465,8 @@ auto View::translate() -> void {
 	tapeControlMenu.setText( trans->get("Datasette") );
     insertTapeItem.setText( trans->get("insert") );
     ejectTapeItem.setText( trans->get("eject") );
-    
+    speedControlMenu.setText( trans->get("Speed") );
+
     for (auto& diskControlMenu : diskControlMenus) {
         diskControlMenu.insert.setText( trans->get("insert") );
         diskControlMenu.eject.setText( trans->get("eject") );

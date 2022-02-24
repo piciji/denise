@@ -21,6 +21,8 @@ struct GLX : public Video, OpenGL, RenderThread {
     GLXContext glxcontext = nullptr;
     GLXWindow glxwindow = 0;
     GdkWindow* handle;
+    bool useVRR = false;
+    bool useResizing = false;
 
     bool hasRendererContext = false;
 
@@ -315,7 +317,33 @@ struct GLX : public Video, OpenGL, RenderThread {
     }
 
     auto hintResizing(bool state) -> void {
-        settings.resizing = state;
+        useResizing = state;
+    }
+
+    virtual auto needResizingPreparations() -> bool {
+        return settings.synchronize || settings.vrr;
+    }
+
+    auto prepareResizing() -> void {
+        wait();
+        makeCurrent();
+        if (settings.synchronize) {
+            if (glXSwapIntervalEXT) glXSwapIntervalEXT(display, glXGetCurrentDrawable(), 0);
+            else if (glXSwapInterval) glXSwapInterval(0);
+        }
+        useVRR = false;
+        clearCurrent();
+    }
+
+    auto endResizing() -> void {
+        wait();
+        makeCurrent();
+        if (settings.synchronize) {
+            if (glXSwapIntervalEXT) glXSwapIntervalEXT(display, glXGetCurrentDrawable(), 1);
+            else if (glXSwapInterval) glXSwapInterval(1);
+        }
+        useVRR = settings.vrr;
+        clearCurrent();
     }
 
     auto unlockAndRedraw(bool disallowShader = false, bool freeContext = false) -> void {
@@ -362,7 +390,7 @@ struct GLX : public Video, OpenGL, RenderThread {
         screenText.showText(outputWidth, outputHeight, -0.01, 0.01, OpenGLText::ALIGN_RIGHT | OpenGLText::VALIGN_BOTTOM);
 #endif
 
-        if (settings.vrr) {
+        if (useVRR) {
             if (settings.hardSync) glFinish();
             waitVRR();
             glXSwapBuffers(display, glxwindow);
@@ -371,8 +399,9 @@ struct GLX : public Video, OpenGL, RenderThread {
             if (settings.hardSync && settings.synchronize) glFinish();
         }
 
-        if (settings.resizing)
+        if (useResizing)
             clearCurrent();
+
         resizeMutex.unlock();
     }
 
@@ -409,7 +438,7 @@ struct GLX : public Video, OpenGL, RenderThread {
         screenText.updateMessage();
         screenText.showText(outputWidth, outputHeight, -0.01, 0.01, OpenGLText::ALIGN_RIGHT | OpenGLText::VALIGN_BOTTOM);
 #endif
-        if (settings.vrr) {
+        if (useVRR) {
             if (settings.hardSync) glFinish();
             waitVRR();
             glXSwapBuffers(display, glxwindow);
@@ -470,7 +499,7 @@ struct GLX : public Video, OpenGL, RenderThread {
     auto setVRR(bool state, float speed = 0.0) -> void {
         wait();
         settings.vrr = state;
-        settings.vrrSpeed = speed;
+        useVRR = state;
 
         if (state)
             initVRR(speed);

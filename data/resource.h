@@ -44,3 +44,4 @@
 #define ID_MENU			32034
 #define ID_EJECT	    32035
 #define ID_EDIT			32036
+#define ID_FAN			32037

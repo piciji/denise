@@ -105,7 +105,6 @@ struct OpenGL : OpenGLProgram {
         bool synchronize = false;
         bool hardSync = false;
         bool threaded = false;
-        bool resizing = false;
         Video::Filter filter = Video::Filter::Nearest;
         std::vector<ShaderPass*> passes = {};
 
@@ -114,7 +113,6 @@ struct OpenGL : OpenGLProgram {
         bool integerScaling = false;
 
         bool vrr = false;
-        float vrrSpeed = 0.0;
     } settings;
 
 	auto shader(std::vector<ShaderPass*> passes) -> void;

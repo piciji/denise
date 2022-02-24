@@ -1,6 +1,10 @@
 
 // G-Sync, FreeSync support (VRR variable refresh rate)
 
+#ifndef DRV_WGL
+#include <unistd.h>
+#endif
+
 auto OpenGL::initVRR(float speed) -> void {
 
     minimumCapTime = (1000000.0 / speed) + 0.5;
@@ -27,7 +31,7 @@ auto OpenGL::waitVRR() -> void {
 #ifdef DRV_WGL
         Sleep(sleepInMilli);
 #else
-        usleep( sleepInMilli * 1000 )
+        usleep( sleepInMilli * 1000 );
 #endif
 
         remaining = lastCapTime - Chronos::getTimestampInMicroseconds();

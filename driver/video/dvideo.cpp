@@ -52,10 +52,8 @@ struct DVideo : Video, RenderThread {
         float aspectWidth = 1.0;
         float aspectHeight = 1.0;
         bool integerScaling = false;
-        bool resizing = false;
 
         bool vrr = false;
-        float vrrSpeed = 0.0;
     } settings;
 
     struct {
@@ -924,16 +922,9 @@ struct DVideo : Video, RenderThread {
         }
     }
 
-    auto hintResizing(bool state) -> void {
-        if (state != settings.resizing) {
-            settings.resizing = state;
-        }
-    }
-
     auto setVRR(bool state, float speed = 0.0) -> void {
         wait();
         settings.vrr = state;
-        settings.vrrSpeed = speed;
 
         if (state) {
             minimumCapTime = (1000000.0 / speed) + 0.5;
@@ -990,7 +981,6 @@ struct DVideo : Video, RenderThread {
         settings.threaded = false;
 		settings.vrr = false;
 		settings.integerScaling = false;
-		settings.resizing = false;
 
 #include "../tools/fonts.c"
         DWORD nFonts;

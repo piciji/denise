@@ -44,7 +44,12 @@ struct Video {
     virtual auto freeContext() -> void {}
     virtual auto lockResize() -> void {}
     virtual auto unlockResize() -> void {}
+
     virtual auto hintResizing(bool state) -> void {}
+    virtual auto needResizingPreparations() -> bool { return false; }
+    virtual auto prepareResizing() -> void {}
+    virtual auto endResizing() -> void {}
+
     virtual auto setVRR(bool state, float speed = 0.0) -> void {}
     virtual auto hasVRR() -> bool { return false; }
 
