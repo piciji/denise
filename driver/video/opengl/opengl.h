@@ -113,7 +113,7 @@ struct OpenGL : OpenGLProgram {
         float aspectHeight = 1.0;
         bool integerScaling = false;
 
-        bool vrr;
+        bool vrr = false;
         float vrrSpeed = 0.0;
     } settings;
 

@@ -54,7 +54,7 @@ struct DVideo : Video, RenderThread {
         bool integerScaling = false;
         bool resizing = false;
 
-        bool vrr;
+        bool vrr = false;
         float vrrSpeed = 0.0;
     } settings;
 
@@ -187,6 +187,7 @@ struct DVideo : Video, RenderThread {
         calcDimension();
 
         RECT outScreenParent;
+		settings.parent = getParentHandle();
 
         if (settings.hintExclusiveFullscreen) {
             handle = settings.parent;
@@ -810,7 +811,11 @@ struct DVideo : Video, RenderThread {
             RenderThread::enable(state);
 
             textureWidth = 0, textureHeight = 0;
-            init();
+			if (settings.exclusiveFullscreen)
+				reset(false);
+			else
+				init();
+			
             settings.threaded = state;
         }
     }
@@ -983,6 +988,9 @@ struct DVideo : Video, RenderThread {
         settings.hintExclusiveFullscreen = false;
         settings.exclusiveFullscreen = false;
         settings.threaded = false;
+		settings.vrr = false;
+		settings.integerScaling = false;
+		settings.resizing = false;
 
 #include "../tools/fonts.c"
         DWORD nFonts;

@@ -60,7 +60,7 @@ struct pWindow {
 
     HCURSOR hCursor;
     Timer timerStatusUpdate;
-    uint8_t bgRedraw = 0;
+	bool preventRedraw = false;
 
     auto append(Menu& menu) -> void;
     auto append(Widget& widget) -> void;

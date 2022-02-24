@@ -280,7 +280,7 @@ auto View::build() -> void {
 	placeholderTimer.onFinished = [this]() {
 		placeholderTimer.setEnabled(false);
 		renderPlaceholder(false);
-        //renderPlaceholder(false);
+        renderPlaceholder(false);
 	};
 	
 	anyloadTimer.setInterval(40);
