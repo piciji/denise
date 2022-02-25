@@ -169,9 +169,6 @@ struct CGL : public Video, OpenGL, RenderThread {
         resizeWindow(true);
     }
     
-    auto supportReshaping() -> bool {
-        return true;
-    }
     //auto shouldResizeWhenThreaded() -> bool { return NSAppKitVersionNumber < NSAppKitVersionNumber10_14; }
         
     auto needResizingPreparations(bool useEmuThread) -> bool {
@@ -223,7 +220,7 @@ struct CGL : public Video, OpenGL, RenderThread {
 
     void redraw(bool disallowShader = false) {
         makeCurrent(true);
-        _redraw(disallowShader);
+        _redraw(disallowShader, settings.threaded ? getLastBufferToRender() : nullptr);
     }
     
     auto unlockAndRedraw(bool disallowShader = false, bool freeContext = false) -> void {
@@ -340,10 +337,6 @@ struct CGL : public Video, OpenGL, RenderThread {
     auto hardSync(bool state) -> void {
         wait();
         settings.hardSync = state;
-    }
-
-    auto suppportReshaping() -> bool {
-        return true;
     }
     
     auto setReshaping(bool state) -> void {
@@ -487,7 +480,7 @@ struct CGL : public Video, OpenGL, RenderThread {
     return self;
 }
 
--(void) reshape {
+-(void) reshape {return;
     if (!video->useReshaping)
         return;
     
