@@ -168,11 +168,14 @@ struct CGL : public Video, OpenGL, RenderThread {
     auto forceResize() -> void {
         resizeWindow(true);
     }
-        
+    
+    auto supportReshaping() -> bool {
+        return true;
+    }
     //auto shouldResizeWhenThreaded() -> bool { return NSAppKitVersionNumber < NSAppKitVersionNumber10_14; }
         
     auto needResizingPreparations(bool useEmuThread) -> bool {
-        return (useEmuThread || settings.threaded) && (settings.synchronize || settings.vrr);
+        return (useEmuThread) && (settings.synchronize || settings.vrr);
     }
     
     auto prepareResizing() -> void {
