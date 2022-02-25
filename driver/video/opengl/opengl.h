@@ -146,6 +146,7 @@ struct OpenGL : OpenGLProgram {
     unsigned integerScalingHeight = 0;
     unsigned windowWidth = 0;
     unsigned windowHeight = 0;
+    bool useShader = false;
 
     int64_t lastCapTime;
     int64_t minimumCapTime;

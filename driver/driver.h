@@ -38,7 +38,7 @@ struct Video {
     virtual auto hardSync(bool state) -> void {}
     virtual auto setThreaded(bool state) -> void {}
     virtual auto hasThreaded() -> bool { return false; }
-    virtual auto shouldResizeWhenThreaded() -> bool { return true; }
+//    virtual auto shouldResizeWhenThreaded() -> bool { return true; }
 	virtual auto showMessage(std::string message, bool critical = false) -> void {}
     virtual auto forceResize() -> void {}
     virtual auto freeContext() -> void {}
@@ -46,7 +46,7 @@ struct Video {
     virtual auto unlockResize() -> void {}
 
     virtual auto hintResizing(bool state) -> void {}
-    virtual auto needResizingPreparations() -> bool { return false; }
+    virtual auto needResizingPreparations(bool useEmuThread) -> bool { return false; }
     virtual auto prepareResizing() -> void {}
     virtual auto endResizing() -> void {}
 
@@ -61,7 +61,7 @@ struct Video {
 	virtual auto hintExclusiveFullscreen(bool state, float rate = 0.0) -> void {}
     virtual auto disableExclusiveFullscreen() -> void {}
     /** CGL only */
-    virtual auto hasReshaping() -> bool { return false; }
+    virtual auto supportReshaping() -> bool { return false; }
     virtual auto setReshaping(bool state) -> void {}
 
     virtual ~Video() = default;

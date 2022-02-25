@@ -320,7 +320,7 @@ struct GLX : public Video, OpenGL, RenderThread {
         useResizing = state;
     }
 
-    virtual auto needResizingPreparations() -> bool {
+    auto needResizingPreparations(bool useEmuThread) -> bool {
         return settings.synchronize || settings.vrr;
     }
 

@@ -166,7 +166,8 @@ auto OpenGL::clear() -> void {
 }
 
 auto OpenGL::refresh(bool disallowShader) -> void {
-
+    useShader = !disallowShader;
+    
     if (mipmap) {
         glHint(GL_GENERATE_MIPMAP_HINT, GL_NICEST);
         glGenerateMipmap(GL_TEXTURE_2D);
@@ -187,7 +188,7 @@ auto OpenGL::refresh(bool disallowShader) -> void {
     unsigned targetHeight;
     OpenGLProgram* pLast = nullptr;
     
-	if (!disallowShader)
+	if (useShader)
 	for(auto& p : programs) {
         
         if (p.crop.active) {

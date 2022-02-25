@@ -127,12 +127,12 @@ auto View::build() -> void {
 					}*/
 				} else {
 					activeVideoManager->waitForCrtRenderer();
-                    if (!videoDriver->hasReshaping()) {
+                    if (!videoDriver->supportReshaping()) {
                         videoDriver->redraw();
                         videoDriver->freeContext();
                     }
 				}
-			} else if (!videoDriver->hasReshaping()) {
+			} else if (!videoDriver->supportReshaping()) {
 				videoDriver->redraw(true);
             }
         }
@@ -146,7 +146,7 @@ auto View::build() -> void {
 
         if (activeVideoManager && !fullScreen() && !requestFullscreenSwitch) {
 
-            if (videoDriver->needResizingPreparations()) {
+            if (videoDriver->needResizingPreparations(emuThread->enabled)) {
                 emuThread->lock();
                 videoDriver->prepareResizing();
                 emuThread->unlock();
@@ -159,18 +159,18 @@ auto View::build() -> void {
 //                    resizeCustomMode = 2;
 //                }
 //            } else {
-                if (emuThread->enabled) {
-                   /* if (!useUnblockedResizing()) {
+           /*     if (emuThread->enabled) {
+                    if (!useUnblockedResizing()) {
                         this->setPreventBackgroundRedrawing(false);
                         emuThread->lock();
 
-                    } else */ if (!videoDriver->shouldResizeWhenThreaded() && videoDriver->hasThreaded()) {
+                    } else  if (!videoDriver->shouldResizeWhenThreaded() && videoDriver->hasThreaded()) {
                         emuThread->lock();
                         videoDriver->setThreaded(false);
                         emuThread->unlock();
                         resizeCustomMode = 1;
                     }
-                }
+                }*/
            // }
         }
     };
@@ -182,24 +182,26 @@ auto View::build() -> void {
 //            emuThread->unlock();
 //        }
         
-        if (resizeCustomMode) {
+      /*  if (resizeCustomMode) {
             emuThread->lock();
             if (resizeCustomMode == 1)
                 videoDriver->setThreaded( true );
 
-         //   else if (resizeCustomMode == 2)
-           //     videoDriver->synchronize(true);
+            else if (resizeCustomMode == 2)
+                videoDriver->synchronize(true);
 
             emuThread->unlock();
             resizeCustomMode = 0;
-        }
+        }*/
 
-        if (videoDriver->needResizingPreparations()) {
-            emuThread->lock();
-            videoDriver->endResizing();
-            emuThread->unlock();
+        if (activeVideoManager && !fullScreen() && !requestFullscreenSwitch) {
+            if (videoDriver->needResizingPreparations(emuThread->enabled)) {
+                emuThread->lock();
+                videoDriver->endResizing();
+                emuThread->unlock();
+            }
         }
-
+        
         videoDriver->hintResizing(false);
     };
 	

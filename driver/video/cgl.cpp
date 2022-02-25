@@ -22,6 +22,7 @@ struct CGL : public Video, OpenGL, RenderThread {
     NSView* handle;
     bool hasRendererContext = false;
     bool useReshaping = true;
+    bool useVRR = false;
 
     bool init() {
         term();
@@ -167,12 +168,42 @@ struct CGL : public Video, OpenGL, RenderThread {
     auto forceResize() -> void {
         resizeWindow(true);
     }
-    
-    auto redrawCustom(bool disallowShader = false) -> void {
-        redraw(disallowShader);
+        
+    //auto shouldResizeWhenThreaded() -> bool { return NSAppKitVersionNumber < NSAppKitVersionNumber10_14; }
+        
+    auto needResizingPreparations(bool useEmuThread) -> bool {
+        return (useEmuThread || settings.threaded) && (settings.synchronize || settings.vrr);
     }
     
-    auto shouldResizeWhenThreaded() -> bool { return NSAppKitVersionNumber < NSAppKitVersionNumber10_14; }
+    auto prepareResizing() -> void {
+        if (!view)
+            return;
+        wait();
+        @autoreleasepool {
+            makeCurrent();
+            if (settings.synchronize) {
+                int synchronize = 0;
+                [[view openGLContext] setValues:&synchronize forParameter:NSOpenGLCPSwapInterval];
+            }
+            useVRR = false;
+            clearCurrent();
+        }
+    }
+    
+    auto endResizing() -> void {
+        if (!view)
+            return;
+        wait();
+        @autoreleasepool {
+            makeCurrent();
+            if (settings.synchronize) {
+                int synchronize = 1;
+                [[view openGLContext] setValues:&synchronize forParameter:NSOpenGLCPSwapInterval];
+            }
+            useVRR = settings.vrr;
+            clearCurrent();
+        }
+    }
     
     auto lockResize() -> void {
         resizeMutex.lock();
@@ -219,7 +250,7 @@ struct CGL : public Video, OpenGL, RenderThread {
                 screenText.showText(outputWidth, outputHeight, -0.01, 0.01, OpenGLText::ALIGN_RIGHT | OpenGLText::VALIGN_BOTTOM);
 #endif
 
-                if (settings.vrr) {
+                if (useVRR) {
                     if (settings.hardSync) glFinish();
                     waitVRR();
                     [[view openGLContext] flushBuffer];
@@ -267,7 +298,7 @@ struct CGL : public Video, OpenGL, RenderThread {
                 screenText.updateMessage();
                 screenText.showText(outputWidth, outputHeight, -0.01, 0.01, OpenGLText::ALIGN_RIGHT | OpenGLText::VALIGN_BOTTOM);
 #endif
-                if (settings.vrr) {
+                if (useVRR) {
                     if (settings.hardSync) glFinish();
                     waitVRR();
                     [[view openGLContext] flushBuffer];
@@ -308,7 +339,7 @@ struct CGL : public Video, OpenGL, RenderThread {
         settings.hardSync = state;
     }
 
-    auto hasReshaping() -> bool {
+    auto suppportReshaping() -> bool {
         return true;
     }
     
@@ -402,6 +433,7 @@ struct CGL : public Video, OpenGL, RenderThread {
     auto setVRR(bool state, float speed = 0.0) -> void {
         wait();
         settings.vrr = state;
+        useVRR = state;
 
         if (state)
             initVRR(speed);
@@ -455,9 +487,9 @@ struct CGL : public Video, OpenGL, RenderThread {
 -(void) reshape {
     if (!video->useReshaping)
         return;
-
+    
     video->makeCurrent();
-    video->_redraw(true, video->settings.threaded ? video->getLastBufferToRender() : nullptr);
+    video->_redraw(!video->useShader, video->settings.threaded ? video->getLastBufferToRender() : nullptr);
     video->clearCurrent();
 }
 
