@@ -136,18 +136,18 @@ auto View::build() -> void {
                 emuThread->lock();
                 videoDriver->prepareResizing();
                 emuThread->unlock();
+                customResizeMode = true;
             }
         }
     };
 
     onResizeEnd = [this]() {
 
-        if (activeVideoManager && !fullScreen() && !requestFullscreenSwitch) {
-            if (videoDriver->needResizingPreparations(emuThread->enabled)) {
-                emuThread->lock();
-                videoDriver->endResizing();
-                emuThread->unlock();
-            }
+        if (customResizeMode) {
+            emuThread->lock();
+            videoDriver->endResizing();
+            emuThread->unlock();
+            customResizeMode = false;
         }
         
         videoDriver->hintResizing(false);

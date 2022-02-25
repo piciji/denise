@@ -13,6 +13,7 @@ struct View : public GUIKIT::Window {
     GUIKIT::StatusBar statusBar;
     GUIKIT::Image placeholder;
 	bool requestFullscreenSwitch = false;
+    bool customResizeMode = false;
 	
     struct SystemMenu {
         Emulator::Interface* emulator;
