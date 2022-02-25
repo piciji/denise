@@ -14,7 +14,6 @@ EmuThread::EmuThread() {
     acknowledged = false;
     finishAudioRecord = false;
     pollHotkeys = false;
-	updateViewport = false;
     updateBorder = false;
     enabled = false;
 }
@@ -168,18 +167,12 @@ auto EmuThread::handleUIEvents() -> void {
         if (emuView && emuView->mediaLayout)
             emuView->mediaLayout->colorListing( vManager->getC64Foreground(), vManager->getC64Background() );
     }
-	
-	if (updateViewport) {
-        updateViewport = false;
-        view->updateViewport();
-    }
 }
 
 auto EmuThread::clearEvents() -> void {
     statusUpdates.clear();
     finishAudioRecord = false;
     updatePaletteForSoftwareView = false;
-	updateViewport = false;
     updateBorder = false;
     pollHotkeys = false;
 }

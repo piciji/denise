@@ -102,9 +102,7 @@ struct VideoManager {
         std::condition_variable cv;
     } render[2];
     bool workerCreated = false;
-	
-    unsigned scalingCount = 0;
-    
+
     uint32_t* tempDest = nullptr;
     ColorLumaChroma delayLine[ 512 ];
 	ColorRgb lineBefore[ 512 ];
@@ -185,10 +183,7 @@ struct VideoManager {
     ColorLumaChroma* lumaChromaTable = nullptr;
     ColorLumaChroma* evenTable = nullptr;
     ColorLumaChroma* oddTable = nullptr;
-    
-    int64_t lastCapTime;
-    int64_t minimumCapTime;    
-    
+
     bool colorTableUpdated = false;
     inline auto needUpdate() -> bool { return !colorTableUpdated; }
     auto useCrtMode() -> bool;

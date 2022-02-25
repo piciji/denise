@@ -17,7 +17,7 @@ branches:
   only:
     - master
     - /v\d*\.\d*\.\d*/
-    - threaded_ui
+    - vrr_sync
   
 environment:
   matrix:

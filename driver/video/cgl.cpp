@@ -21,7 +21,6 @@ struct CGL : public Video, OpenGL, RenderThread {
     VideoCGL* view = nullptr;
     NSView* handle;
     bool hasRendererContext = false;
-    bool useReshaping = true;
     bool useVRR = false;
 
     bool init() {
@@ -339,10 +338,6 @@ struct CGL : public Video, OpenGL, RenderThread {
         settings.hardSync = state;
     }
     
-    auto setReshaping(bool state) -> void {
-        useReshaping = state;
-    }
-    
     auto setThreaded(bool state) -> void {
 
         if (state != settings.threaded) {
@@ -480,10 +475,9 @@ struct CGL : public Video, OpenGL, RenderThread {
     return self;
 }
 
--(void) reshape {return;
-    if (!video->useReshaping)
-        return;
-    
+-(void) reshape {
+    return;
+
     video->makeCurrent();
     video->_redraw(!video->useShader, video->settings.threaded ? video->getLastBufferToRender() : nullptr);
     video->clearCurrent();

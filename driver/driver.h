@@ -38,7 +38,7 @@ struct Video {
     virtual auto hardSync(bool state) -> void {}
     virtual auto setThreaded(bool state) -> void {}
     virtual auto hasThreaded() -> bool { return false; }
-//    virtual auto shouldResizeWhenThreaded() -> bool { return true; }
+
 	virtual auto showMessage(std::string message, bool critical = false) -> void {}
     virtual auto forceResize() -> void {}
     virtual auto freeContext() -> void {}
@@ -60,9 +60,6 @@ struct Video {
 	virtual auto hasExclusiveFullscreen() -> bool { return false; }
 	virtual auto hintExclusiveFullscreen(bool state, float rate = 0.0) -> void {}
     virtual auto disableExclusiveFullscreen() -> void {}
-    /** CGL only */
-    virtual auto supportReshaping() -> bool { return false; }
-    virtual auto setReshaping(bool state) -> void {}
 
     virtual ~Video() = default;
     static auto create(const std::string& driver) -> Video*;

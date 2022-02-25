@@ -633,24 +633,10 @@ template<typename T> auto VideoManager::renderFrame(const T* src, unsigned width
           //  view->updateShader();
 		
         shader.recreate  = false;
-    }           
-        
-//	if (scalingCount) {
-//		if (--scalingCount == 0) {
-//			if (emuThread->enabled)
-//				emuThread->updateViewport = true;
-//			else
-//				view->updateViewport();
-//		}
-//	}
+    }
 	
     if (height != currentHeight) {     
         currentHeight = height;
-        
-//        if(integerScaling) {
-//            scalingCount = 10;
-//        }
-
         reinitCrtThread();
     }
 
@@ -660,11 +646,6 @@ template<typename T> auto VideoManager::renderFrame(const T* src, unsigned width
 
     frameRenderPos = 0;
 
-//    int64_t res = (int64_t)Chronos::getTimestampInMicroseconds() - lastCapTime;
-//
-//    if (res > 5000)
-//        logger->log(std::to_string( res ));
-    
 	if ( !useCrtMode() ) {
 		if (!videoDriver->lock(gpuData, gpuPitch, width, height))
 			return; 
@@ -703,8 +684,6 @@ template<typename T> auto VideoManager::renderFrame(const T* src, unsigned width
 	}		           
 
     videoDriver->unlockAndRedraw();
-    
-    //lastCapTime = Chronos::getTimestampInMicroseconds();    
 }
 
 template<typename T> inline auto VideoManager::renderToRgb(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch) -> void {
