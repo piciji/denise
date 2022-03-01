@@ -4,6 +4,7 @@
 #include "../view/status.h"
 #include "../audio/manager.h"
 #include "../thread/emuThread.h"
+#include "../media/fileloader.h"
 
 std::vector<InputMapping*> InputManager::hotkeyTriggers;
 
@@ -545,6 +546,10 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             
             file = filePool->get( fSetting->path );
 
+            GUIKIT::File::Item item;
+            item.id = fSetting->id;
+            item.info.name = fSetting->file;
+
             if (!file || !file->isSizeValid(MAX_MEDIUM_SIZE) ||                
                 ((data = file->archiveData(fSetting->id)) == nullptr)
             ) {  
@@ -552,21 +557,21 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
                 break;
             }
 
-            //activeEmulator->ejectDisk( media );
-            activeEmulator->insertDisk(media, data, file->archiveDataSize(fSetting->id), true);
-            activeEmulator->writeProtectDisk(media, (file->isArchived() || file->isReadOnly()) ? true : fSetting->writeProtect);
-            media->guid = uintptr_t(file);
+            filePool->assign( _ident(activeEmulator, "swapper_" + std::to_string(swapPos)), file);
+
             auto emuView = EmuConfigView::TabWindow::getView( activeEmulator );
+            if (emuView && emuView->mediaLayout)
+                emuView->mediaLayout->insertImage( media, file, &item );
+            else
+                fileloader->insertImage( activeEmulator, media, file, &item );
+
+            activeEmulator->writeProtectDisk(media, (file->isArchived() || file->isReadOnly()) ? true : fSetting->writeProtect);
+
             if (emuView && emuView->mediaLayout)
                 emuView->mediaLayout->updateWriteProtection( media, fSetting->writeProtect );
 
-            filePool->assign( _ident(activeEmulator, media->name), file);
-            filePool->assign( _ident(activeEmulator, "swapper_" + std::to_string(swapPos)), file);
-            filePool->unloadOrphaned();
-            program->updateSaveIdent( activeEmulator, fSetting->file );
+            statusHandler->setMessage( trans->get("insert_floppy", {{"%drive%", media->name},{"%file%", fSetting->file}}) );
 
-            States::getInstance( activeEmulator )->updateImage( fSetting, media );
-            statusHandler->setMessage( trans->get("insert_floppy", {{"%drive%", media->name},{"%file%", fSetting->file}}) );		
             break;	
         }
     }

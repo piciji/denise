@@ -317,9 +317,12 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
 
 			block->header.eject.onActivate = [this, block]() {
 
-                emuThread->lock();
+                bool locked = emuThread->lock();
 			    fileloader->eject( emulator, block->media );
-                emuThread->unlock();
+
+                if (locked)
+                    // nested lock when changing drive count ... so don't unlock here
+                    emuThread->unlock();
 			};
 
 			block->header.writeprotect.onToggle = [this, block, fSetting, mediaGroup](bool checked) {
@@ -1016,7 +1019,7 @@ auto MediaLayout::ejectImage( MediaGroupLayout::Block* block ) -> void {
     updateMediaBlock(block, fSetting);
 }
 
-auto MediaLayout::insertImage(Emulator::Interface::Media* media, GUIKIT::File* file, GUIKIT::File::Item* item) -> void {
+auto MediaLayout::insertImage(Emulator::Interface::Media* media, GUIKIT::File* file, GUIKIT::File::Item* item, bool fromState) -> void {
     
     auto layout = getMediaGroupLayout( media->group );
     
@@ -1026,13 +1029,13 @@ auto MediaLayout::insertImage(Emulator::Interface::Media* media, GUIKIT::File* f
     for( auto block : layout->blocks ) {
         
         if (block->media == media) {
-            insertImage( block, file, item );
+            insertImage( block, file, item, fromState );
             break;
         }
     }        
 }
 
-auto MediaLayout::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* file, GUIKIT::File::Item* item ) -> void {
+auto MediaLayout::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* file, GUIKIT::File::Item* item, bool fromState) -> void {
    
     if (!block)
         return;
@@ -1068,16 +1071,18 @@ auto MediaLayout::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* fil
     if (showC64Listing(layout)) {
         block->listings.clear();
         block->listings = emulator->getListing(media, settings->get<bool>("autostart_load_with_column", false));
-        block->selector.edit.setFocused();
+        layout->selectedBlock = block;
         layout->updateListing(block);
     }
 
-    if (activeEmulator && mediaGroup->isTape())
+    if (!fromState && activeEmulator && mediaGroup->isTape())
         view->updateTapeIcons();
     
     if (mediaGroup->selected && !media->secondary && !block->header.inUse.checked() ) {
         block->header.inUse.setChecked();
-        block->header.inUse.onActivate();
+        layout->selectedBlock = block;
+        layout->mediaGroup->selected = block->media;
+        settings->set<unsigned>( _underscore(layout->mediaGroup->name) + "_selected", block->media->id);
     }
 
     filePool->assign( _ident(emulator, media->name + "store"), file);    
@@ -1093,9 +1098,9 @@ auto MediaLayout::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* fil
     else
         States::getInstance(emulator)->forcePowerNextLoad = true;
 
-    updateMediaBlock(block, fSetting);  
+    updateMediaBlock(block, fSetting);
     
-    if (mediaGroup->isDrive())
+    if (!fromState && mediaGroup->isDrive())
         program->updateSaveIdent( emulator, fSetting->file );
 }
 

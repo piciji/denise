@@ -206,14 +206,14 @@ auto MediaGroupLayout::updateVisibility( unsigned count, bool init ) -> void {
             count--;
         } else {
             if (!init)
-                block->header.eject.onActivate(); 
+                block->header.eject.onActivate();
         }
     }
 
     mediaLayout->synchronizeLayout();
 	
     if (!listingInVisibleBlock)
-        updateListing( blocks[0] );	  
+        updateListing( blocks[0] );
 }
 
 auto MediaGroupLayout::getBlock(Emulator::Interface::Media* media) -> Block* {

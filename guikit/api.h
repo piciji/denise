@@ -1074,7 +1074,7 @@ struct Timer : Base {
 };
 
 struct BrowserWindow {
-	static std::function<void ()> onCall;	
+	static std::function<void ()> onCall;
 
 	struct Listing {
 		std::string entry;
@@ -1107,8 +1107,7 @@ struct BrowserWindow {
     auto setContentViewForeground(unsigned color) -> BrowserWindow&;
     auto setContentViewSelection(unsigned foregroundColor, unsigned backgroundColor) -> BrowserWindow&;
     auto setContentViewColorTooltips(bool colorTooltips) -> BrowserWindow&;
-    
-    // callbacks for cocoa modeless dialog
+
     auto setCallbacks( std::function<void (std::string filePath, unsigned selection)> onOkClick, std::function<void ()> onCancelClick ) -> BrowserWindow&;
     auto getContentViewSelection() -> unsigned;
     auto resizeTemplate(bool resize, int adjust = 0) -> BrowserWindow&;    
