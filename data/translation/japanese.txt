@@ -653,3 +653,4 @@ Threaded Emu tooltip = experimental emulation in an extra thread (please report 
 Toggle Cycle renderer = 描画方式の切り替え
 resize aspect corrected = fixed 4:3 window size
 VRR = G-Sync/FreeSync (VRR)
+hide until reset = Hide until Reset

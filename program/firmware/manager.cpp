@@ -75,7 +75,7 @@ auto FirmwareManager::useImage(Emulator::Interface::Firmware* firmware, unsigned
         activeImage->size = image->size;
     }     
     
-    emulator->setFirmware(firmware->id, image->data, image->size);
+    emulator->setFirmware(firmware->id, image->data, image->size, storeLevel == 0);
 
     States::getInstance( emulator )->updateFirmware( !storeLevel ? nullptr : getSetting( firmware, storeLevel ), firmware );
     

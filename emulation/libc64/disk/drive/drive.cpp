@@ -428,6 +428,7 @@ Drive::Drive(uint8_t number, Emulator::Interface::Media* mediaConnected ) : stru
     stepperDelay = 0;
     delayInProgress = !!attachDelay;
     motorOn = false;
+    hidden = false;
 
     frequency = 1000000;
     refCyclesInCpuCycle = 16;
@@ -869,6 +870,7 @@ auto Drive::power( ) -> void {
     readMode = true;
     byteReady = true;
     ca1Line = true;
+    hidden = false;
     cpu->power();    
  
     ue7Counter = uf4Counter = 0;
@@ -903,7 +905,7 @@ auto Drive::power( ) -> void {
     wd1770->setRateInMhz( 1, 16 );
 
     if (system->driveSounds.useFloppy) {
-        if (loaded)
+        if (loaded && !iecBus->powerOn)
             system->interface->mixDriveSound(mediaConnected, DriveSound::FloppyInsert);
 
         system->interface->mixDriveSound( mediaConnected, DriveSound::FloppySpinUp );
@@ -1255,6 +1257,10 @@ auto Drive::setSpeeder(uint8_t speeder) -> void {
 
     if (speeder == 13)
         operation |= DRIVE_HAS_EXTRA_CIA;
+}
+
+auto Drive::hide() -> void {
+    hidden = true;
 }
 
 }

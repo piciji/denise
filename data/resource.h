@@ -45,3 +45,4 @@
 #define ID_EJECT	    32035
 #define ID_EDIT			32036
 #define ID_FAN			32037
+#define ID_HIDE			32038

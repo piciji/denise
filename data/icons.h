@@ -117,4 +117,6 @@ extern uint8_t eject[275];
 
 extern uint8_t menu[223];
 
+extern uint8_t hide[528];
+
 }

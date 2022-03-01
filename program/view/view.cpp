@@ -716,6 +716,8 @@ auto View::loadImages() -> void {
 	ejectImage.setResourceId( ID_EJECT );
     fanImage.loadPng((uint8_t*)Icons::fan, sizeof(Icons::fan));
     fanImage.setResourceId( ID_FAN );
+    hideImage.loadPng((uint8_t*)Icons::hide, sizeof(Icons::hide));
+    hideImage.setResourceId( ID_HIDE );
 
     playPauseStatusImage.loadPng((uint8_t*)Icons::playPauseStatus, sizeof(Icons::playPauseStatus));
     forwardPauseStatusImage.loadPng((uint8_t*)Icons::forwardPauseStatus, sizeof(Icons::forwardPauseStatus));
@@ -1246,7 +1248,37 @@ auto View::buildMenu() -> void {
             emuThread->unlock();
         };
         diskControlMenu.menu.append( diskControlMenu.eject );
-        
+
+        diskControlMenu.menu.append( *GUIKIT::MenuSeparator::getInstance() );
+
+        diskControlMenu.reset.setIcon( powerImage );
+
+        diskControlMenu.reset.onActivate = [i]() {
+            auto emulator = activeEmulator;
+
+            if (!activeEmulator)
+                emulator = program->getLastUsedEmu();
+
+            emuThread->lock();
+            emulator->resetDrive( emulator->getDisk(i) );
+            emuThread->unlock();
+        };
+        diskControlMenu.menu.append( diskControlMenu.reset );
+
+        diskControlMenu.hide.setIcon( hideImage );
+
+        diskControlMenu.hide.onActivate = [i]() {
+            auto emulator = activeEmulator;
+
+            if (!activeEmulator)
+                emulator = program->getLastUsedEmu();
+
+            emuThread->lock();
+            emulator->hideDrive( emulator->getDisk(i) );
+            emuThread->unlock();
+        };
+        diskControlMenu.menu.append( diskControlMenu.hide );
+
         i++;
     }   
 }
@@ -1420,6 +1452,8 @@ auto View::translate() -> void {
     for (auto& diskControlMenu : diskControlMenus) {
         diskControlMenu.insert.setText( trans->get("insert") );
         diskControlMenu.eject.setText( trans->get("eject") );
+        diskControlMenu.reset.setText( trans->get("Hard Reset") );
+        diskControlMenu.hide.setText( trans->get("hide until reset") );
     }
     
 	tapePlayItem.setText( trans->get("tape_play_key") );

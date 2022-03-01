@@ -140,6 +140,8 @@ struct View : public GUIKIT::Window {
         GUIKIT::Menu menu;
         GUIKIT::MenuItem insert;
         GUIKIT::MenuItem eject;
+        GUIKIT::MenuItem reset;
+        GUIKIT::MenuItem hide;
     } diskControlMenus[4];
 		
     GUIKIT::Image powerImage;
@@ -165,6 +167,7 @@ struct View : public GUIKIT::Window {
     GUIKIT::Image diskImage;
 	GUIKIT::Image editImage;
     GUIKIT::Image fanImage;
+    GUIKIT::Image hideImage;
     
     GUIKIT::Image playImage;
     GUIKIT::Image playhiImage;

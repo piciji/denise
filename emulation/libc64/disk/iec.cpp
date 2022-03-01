@@ -352,7 +352,6 @@ auto IecBus::power() -> void {
     
     ready = false;
 
-    powerOn = true;
     cpuBurner = cpuBurnerRequested;
     updateIdleState();
 
@@ -361,6 +360,8 @@ auto IecBus::power() -> void {
     for( auto drive : drivesEnabled ) {                   
         drive->power();
     }
+
+    powerOn = true;
 }
 
 auto IecBus::writeCia( uint8_t byte ) -> bool {
@@ -410,7 +411,9 @@ auto IecBus::updatePort() -> void {
     port = (dataOut << 7) | (clockOut << 6);
     
     for (auto drive : drivesEnabled) {
-        
+        if (drive->hidden)
+            continue;
+
         // override it by data sended from drives
         // Note: bit state 1 means "false", and 0 means "true"
         // a line will become "false" (released) only if all devices signal false
@@ -446,6 +449,20 @@ auto IecBus::setDrivesEnabled( uint8_t count ) -> void {
     }
     
     threaded = drivesEnabled.size() > 0;
+}
+
+auto IecBus::hideDrive( Interface::Media* media ) -> void {
+    // games like Roland's Retrace look for drives and crash if find one as kind of copy protection
+    drives[ media->id ]->hide();
+}
+
+auto IecBus::resetDrive( Interface::Media* media) -> void {
+
+    waitForDrives();
+
+    system->diskIdleOff();
+
+    drives[media->id]->power();
 }
 
 auto IecBus::setDriveType(Drive::Type type) -> void {

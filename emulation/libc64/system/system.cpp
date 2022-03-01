@@ -475,11 +475,17 @@ System::~System() {
     destroyExpansions();
 }
 
-auto System::setFirmware( unsigned typeId, uint8_t* data, unsigned size ) -> void {
+auto System::setFirmware( unsigned typeId, uint8_t* data, unsigned size, bool allowPatching ) -> void {
 
     switch (typeId) {
         case Interface::FirmwareIdKernal:
-            if (!data || (size != 8192))
+            if (allowPatching && vicII->oldOne()) {
+                if (vicII->isNTSCGeometry())
+                    data = (uint8_t*)Firmware::kernalRomRev1;
+                else
+                    data = (uint8_t*)Firmware::kernalRomRev2;
+
+            } else if (!data || (size != 8192))
                 data = (uint8_t*)Firmware::kernalRom;
             kernalRom = data;
             break;

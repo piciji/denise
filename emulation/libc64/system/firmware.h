@@ -11,7 +11,11 @@ extern uint8_t basicRom[8192];
 
 extern uint8_t charRom[4096];
 
-extern uint8_t kernalRom[8192];
+extern uint8_t kernalRom[8192]; // rev3 default kernal
+
+extern uint8_t kernalRomRev1[8192];
+
+extern uint8_t kernalRomRev2[8192];
 
 extern uint8_t drive1541IIRom[16384];
 
