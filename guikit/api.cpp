@@ -144,14 +144,14 @@ auto Window::tellMeShouldICreateTheUIRightAway() -> bool {
 
 auto Window::append(Menu& menu) -> void {
     state.menus.push_back(&menu);
-    menu.state.parentWindow = this;
+    menu.MenuBase::state.parentWindow = this;
     p.append(menu);
 }
 
 auto Window::remove(Menu& menu) -> void {
     if (Vector::eraseVectorElement<Menu*>(state.menus, &menu)) {
         p.remove(menu);
-        menu.state.parentWindow = nullptr;
+        menu.MenuBase::state.parentWindow = nullptr;
     }
 }
 
@@ -1177,9 +1177,13 @@ auto MenuBase::setIcon(Image& icon) -> void {
 
 Menu::Menu() : MenuBase(*new pMenu(*this)), p((pMenu&)MenuBase::p) { p.init(); }
 Menu::~Menu() {
-    if(!state.parentMenu && state.parentWindow) {
-        state.parentWindow->remove(*this);
+    if(!parentMenu() && parentWindow()) {
+        parentWindow()->remove(*this);
     }
+}
+
+auto Menu::showContextOnly(bool contextOnly) -> void {
+    state.contextOnly = contextOnly;
 }
     
 auto Menu::append(MenuBase& item) -> void {

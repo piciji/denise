@@ -362,8 +362,9 @@ auto pWindow::focused() -> bool {
 }
 
 auto pWindow::append(Menu& menu) -> void {
-	gtk_menu_shell_append(GTK_MENU_SHELL(this->contextMenu), menu.p.elementC.widget);	
-    gtk_menu_shell_append(GTK_MENU_SHELL(this->menu), menu.p.element.widget);    	
+	gtk_menu_shell_append(GTK_MENU_SHELL(this->contextMenu), menu.p.elementC.widget);
+    if (!menu.contextOnly())
+        gtk_menu_shell_append(GTK_MENU_SHELL(this->menu), menu.p.element.widget);
 	gtk_widget_show(menu.p.element.widget);
 	gtk_widget_show(menu.p.elementC.widget);
 }

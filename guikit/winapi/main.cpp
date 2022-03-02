@@ -812,7 +812,9 @@ auto pWindow::updateMenu() -> void {
         menu->p.update(&window);
         if(menu->visible()) {
 			unsigned enabled = menu->enabled() ? 0 : MF_GRAYED;
-            AppendMenu(hmenu, MF_STRING | MF_POPUP | enabled, (UINT_PTR)menu->p.hmenu, utf16_t(menu->text()) );
+            if (!menu->contextOnly())
+                AppendMenu(hmenu, MF_STRING | MF_POPUP | enabled, (UINT_PTR)menu->p.hmenu, utf16_t(menu->text()) );
+
 			AppendMenu(contextmenu, MF_STRING | MF_POPUP | enabled, (UINT_PTR)menu->p.hmenu, utf16_t(menu->text()) );
 
 			menu->p.setMenuItemInfo(contextmenu);

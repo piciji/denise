@@ -141,7 +141,7 @@ struct View : public GUIKIT::Window {
         GUIKIT::MenuItem insert;
         GUIKIT::MenuItem eject;
         GUIKIT::MenuItem reset;
-        GUIKIT::MenuItem hide;
+        GUIKIT::MenuItem inactive;
     } diskControlMenus[4];
 		
     GUIKIT::Image powerImage;
@@ -206,6 +206,7 @@ struct View : public GUIKIT::Window {
     auto isMaximumSpeed() -> bool;
     auto isCustomSpeed() -> bool;
 	auto activateCustomSpeed() -> void;
+	auto threadedRendererWasToggled(bool state) -> void;
     
     View();
 };

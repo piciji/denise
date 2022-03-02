@@ -130,7 +130,7 @@ auto pMenu::rebuild() -> void {
 }
 
 auto pMenu::append(MenuBase& item) -> void {
-    item.state.parentWindow = menu.state.parentWindow;
+    item.state.parentWindow = menu.parentWindow();
     gtk_menu_shell_append(GTK_MENU_SHELL(gtkMenu), item.p.element.widget);
 	gtk_menu_shell_append(GTK_MENU_SHELL(cgtkMenu), item.p.elementC.widget);
     gtk_widget_show(item.p.element.widget);

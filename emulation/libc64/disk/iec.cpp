@@ -349,12 +349,8 @@ auto IecBus::power() -> void {
     
     port = 0xc0;
     lastByte = 0;
-    
     ready = false;
-
     cpuBurner = cpuBurnerRequested;
-    updateIdleState();
-
     sysClock = sysTimer.clock;
             
     for( auto drive : drivesEnabled ) {                   
@@ -362,6 +358,7 @@ auto IecBus::power() -> void {
     }
 
     powerOn = true;
+    updateIdleState();
 }
 
 auto IecBus::writeCia( uint8_t byte ) -> bool {
@@ -452,7 +449,7 @@ auto IecBus::setDrivesEnabled( uint8_t count ) -> void {
 }
 
 auto IecBus::hideDrive( Interface::Media* media ) -> void {
-    // games like Roland's Retrace look for drives and crash if find one as kind of copy protection
+    // games like Roland's Ratrace look for drives and crash if find one as kind of copy protection
     drives[ media->id ]->hide();
 }
 

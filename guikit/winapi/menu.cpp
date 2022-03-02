@@ -128,7 +128,7 @@ auto pMenu::remove(MenuBase& item) -> void {
 }
 
 auto pMenu::update(Window* window) -> void {
-    menu.state.parentWindow = window;
+    menu.MenuBase::state.parentWindow = window;
 
     if(hmenu) DestroyMenu(hmenu);
     hmenu = CreatePopupMenu();

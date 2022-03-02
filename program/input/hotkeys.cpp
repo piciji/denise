@@ -28,6 +28,7 @@ auto InputManager::setHotkeys() -> void {
     hotkeys.push_back( {Hotkey::Id::Freeze, "freeze button"} );
 
     hotkeys.push_back( {Hotkey::Id::SyncStatus, "Sync status"} );
+    hotkeys.push_back( {Hotkey::Id::ThreadedRenderer, "Threaded Renderer"} );
 
     hotkeys.push_back( {Hotkey::Id::FloppyAccess, "select_disk_drive"} );
     hotkeys.push_back( {Hotkey::Id::DiskSwap0, "Disk_swapper_call0"} );
@@ -259,6 +260,22 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             float monitorFrequency = GUIKIT::Monitor::getCurrentRefreshRate();
             _str += GUIKIT::String::convertDoubleToString(monitorFrequency, 3 );
             statusHandler->setMessage(_str, 6);
+        } break;
+        case Hotkey::Id::ThreadedRenderer: {
+            VideoManager::unlockDriver();
+            bool checked = globalSettings->get("threaded_renderer", false);
+            checked ^= 1;
+
+            globalSettings->set("threaded_renderer", checked);
+
+            if (view)
+                view->threadedRendererWasToggled(checked);
+
+            if (configView)
+                configView->videoLayout->videoSettingsLayout.threadedRenderer.setChecked(checked);
+
+            emuThread->lock();
+            VideoManager::setSynchronize();
         } break;
         case Hotkey::Id::Pause:
             view->togglePause();

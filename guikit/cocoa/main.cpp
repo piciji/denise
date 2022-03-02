@@ -713,15 +713,17 @@ auto pWindow::append(Menu& menu) -> void {
     @autoreleasepool {
         if (disableIconsInTopMenu)
             [menu.p.cocoaBase setImage:nil];
-        
-        [[cocoaWindow menuBar] addItem:menu.p.cocoaBase];
+
+        if (!menu.contextOnly())
+            [[cocoaWindow menuBar] addItem:menu.p.cocoaBase];
         [[cocoaWindow menuBarContext] addItem:menu.p.cocoaBaseContext];
     }
 }
 
 auto pWindow::remove(Menu& menu) -> void {
     @autoreleasepool {
-        [[cocoaWindow menuBar] removeItem:menu.p.cocoaBase];
+        if (!menu.contextOnly())
+            [[cocoaWindow menuBar] removeItem:menu.p.cocoaBase];
         [[cocoaWindow menuBarContext] removeItem:menu.p.cocoaBaseContext];
     }
 }
