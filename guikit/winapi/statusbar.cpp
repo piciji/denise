@@ -31,6 +31,8 @@ auto pStatusBar::create() -> void {
 //		hwnd, NULL, GetModuleHandle(0), 0);
     
     hoverPart = nullptr;
+
+    //brush = GetSysColorBrush(COLOR_MENU);
     
     unsigned partCount = statusBar.state.parts.size();
     
@@ -66,6 +68,19 @@ auto pStatusBar::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
 //			}
 
         } break;
+//       case WM_ERASEBKGND:
+//            RECT rc;
+//            GetClientRect(hwnd, &rc);
+//            PAINTSTRUCT ps;
+//            BeginPaint(hwnd, &ps);
+//            FillRect(ps.hdc, &rc, statusBar->p.brush);
+//            EndPaint(hwnd, &ps);
+//            return 1;
+//
+//        case WM_PAINT: {
+//            InvalidateRect(hwnd, NULL, false);
+//            break;
+//        }
 
         case WM_CONTEXTMENU:
             return 0;
@@ -189,7 +204,7 @@ auto pStatusBar::update() -> void {
 
     std::vector<int> _widths;
     _widths.push_back( pos );
-    pos -= 20;
+    pos -= 15;
     unsigned countVisible = 0;
     
     for( i = parts.size() - 1; i >= 0; i-- ) {
@@ -250,6 +265,14 @@ auto pStatusBar::drawItem(WPARAM wparam, LPARAM lparam) -> void {
     
     HDC hDC = ((DRAWITEMSTRUCT*)lparam)->hDC;
     UINT itemID = ((DRAWITEMSTRUCT*)lparam)->itemID;
+    auto _size = usedParts.size();
+    if (_size == 0)
+        return;
+
+    if (itemID >= _size) {
+        itemID = _size - 1;
+    }      
+
     auto& part = *usedParts[itemID];
     
     if (part.image) {
@@ -298,7 +321,8 @@ auto pStatusBar::drawItem(WPARAM wparam, LPARAM lparam) -> void {
         else if ( !part.width )
             rect.left += 4;
 
-        SetBkMode(hDC, TRANSPARENT);
+       // SetBkMode(hDC, TRANSPARENT);
+        SetBkColor(hDC, GetSysColor(COLOR_MENU));
         DrawText(hDC, utf16_t(part.text.c_str()), -1, &rect, DT_SINGLELINE | DT_NOCLIP | (part.alignRight ? DT_RIGHT : 0) );
     }
 }

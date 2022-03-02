@@ -1,5 +1,6 @@
 
 #include "../../../tools/systimer.h"
+#include "../../../tools/macros.h"
 #include "acia.h"
 
 namespace LIBC64 {
@@ -331,7 +332,7 @@ auto Acia::readIo( uint16_t addr ) -> uint8_t {
             return 0;
     }
 
-    __builtin_unreachable();
+    __unreachable
 }
 
 auto Acia::prepareSocket( Emulator::Interface::Media* media, std::string address, std::string port ) -> void {

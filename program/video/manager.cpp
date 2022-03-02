@@ -18,9 +18,6 @@
 bool VideoManager::synchronized = true;
 bool VideoManager::crtThreaded = true;
 bool VideoManager::shaderInputPrecision = false;
-bool VideoManager::aspectCorrect = true;
-bool VideoManager::integerScaling = false;
-bool VideoManager::fpsLimit = false;
 uint8_t VideoManager::frameRenderPos = 0;
 uint8_t VideoManager::frameRenderTrigger = 1;
 
@@ -117,8 +114,7 @@ VideoManager::VideoManager(Emulator::Interface* emulator) : shader(this) {
     phaseError = 22.5; 
     hanoverBars = (int32_t)(0.8 * 128.0); // 20% saturation loss
     hanoverBarsAlt = 0;
-    
-    integerScaling = false;
+
     currentHeight = 0;
 	
 	tempDest = new uint32_t[ 512 * 768 ];
@@ -637,24 +633,10 @@ template<typename T> auto VideoManager::renderFrame(const T* src, unsigned width
           //  view->updateShader();
 		
         shader.recreate  = false;
-    }           
-        
-	if (scalingCount) {
-		if (--scalingCount == 0) {
-			if (emuThread->enabled)
-				emuThread->updateViewport = true;
-			else
-				view->updateViewport();
-		}
-	}
+    }
 	
     if (height != currentHeight) {     
         currentHeight = height;
-        
-        if(integerScaling) {
-            scalingCount = 10;
-        }
-
         reinitCrtThread();
     }
 
@@ -664,11 +646,6 @@ template<typename T> auto VideoManager::renderFrame(const T* src, unsigned width
 
     frameRenderPos = 0;
 
-//    int64_t res = (int64_t)Chronos::getTimestampInMicroseconds() - lastCapTime;
-//
-//    if (res > 5000)
-//        logger->log(std::to_string( res ));
-    
 	if ( !useCrtMode() ) {
 		if (!videoDriver->lock(gpuData, gpuPitch, width, height))
 			return; 
@@ -705,13 +682,8 @@ template<typename T> auto VideoManager::renderFrame(const T* src, unsigned width
 		
 		renderCrt(width, height, src, srcPitch, gpuData, gpuPitch - width);
 	}		           
-    
-    //if (fpsLimit)
-      //  applyFpsLimit();
-    
+
     videoDriver->unlockAndRedraw();
-    
-    //lastCapTime = Chronos::getTimestampInMicroseconds();    
 }
 
 template<typename T> inline auto VideoManager::renderToRgb(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch) -> void {
@@ -1329,36 +1301,6 @@ auto VideoManager::powerOff() -> void {
     unlockDriver();
 	reinitCrtThread();
     currentHeight = 0;
-}
-
-auto VideoManager::initFpsLimit() -> void {
-
-    auto stat = emulator->getStatsForSelectedRegion();
-
-    double fps = stat.fps;
-
-    if ( globalSettings->get<bool>("video_override_exact", true) ) {
-        // todo
-    }
-
-    minimumCapTime = (1000000.0 / fps) + 0.5;
-    
-    lastCapTime = Chronos::getTimestampInMicroseconds();
-}
-
-auto VideoManager::applyFpsLimit() -> void {
-                   
-    int64_t sleepMs  = ((lastCapTime + minimumCapTime) - (int64_t)Chronos::getTimestampInMicroseconds()) / 1000;    
-    
-    if (sleepMs > 0) {
-        lastCapTime += minimumCapTime;
-        
-        GUIKIT::System::sleep( sleepMs );
-        
-        return;
-    }    
-    
-    lastCapTime = Chronos::getTimestampInMicroseconds();
 }
 
 template<typename T> auto VideoManager::updateData(std::string ident, T data) -> void {

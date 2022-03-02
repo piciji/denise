@@ -83,6 +83,7 @@ auto Drive::serialize(Emulator::Serializer& s) -> void {
     s.integer( turboTransVisible );
     s.integer( turboTransPage );
     s.integer( proSpeedControl );
+    s.integer( hidden );
 
     via1->serialize( s );
     via2->serialize( s );

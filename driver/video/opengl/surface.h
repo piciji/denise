@@ -107,8 +107,8 @@ auto OpenGLSurface::resize(RenderBuffer* renderBuffer, unsigned w, unsigned h) -
         renderBuffer->data = new uint32_t[w * h]();
 }
 
-auto OpenGLSurface::size(unsigned w, unsigned h) -> void {
-	if(width == w && height == h) return;
+auto OpenGLSurface::size(unsigned w, unsigned h) -> bool {
+	if(width == w && height == h) return false;
 	width = w, height = h;
 
 	deleteBuffer();
@@ -122,6 +122,8 @@ auto OpenGLSurface::size(unsigned w, unsigned h) -> void {
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
 		deleteBuffer();
 	}
+
+    return true;
 }
 
 auto OpenGLSurface::cropTexture(OpenGLSurface* src) -> void {    
@@ -156,8 +158,8 @@ auto OpenGLSurface::release() -> void {
 	width = 0, height = 0;
 }
 
-auto OpenGLSurface::render(unsigned sourceWidth, unsigned sourceHeight, unsigned targetWidth, unsigned targetHeight) -> void {
-	glViewport(0, 0, targetWidth, targetHeight);
+auto OpenGLSurface::render(unsigned targetLeft, unsigned targetTop, unsigned targetWidth, unsigned targetHeight) -> void {
+	glViewport(targetLeft, targetTop, targetWidth, targetHeight);
 
     if (mvp.width != targetWidth || mvp.height != targetHeight) {
         mvp.width = targetWidth;

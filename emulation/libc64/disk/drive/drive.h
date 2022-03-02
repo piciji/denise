@@ -111,6 +111,7 @@ struct Drive {
     uint8_t turboTransVisible; // 0: rom, 1: ram
     uint8_t turboTransPage;
     uint8_t proSpeedControl;
+    bool hidden;
         
     DiskStructure::MTrack* gcrTrack;
     DiskStructure::MTrack* dummyTrack;
@@ -179,6 +180,7 @@ struct Drive {
 	auto getMediaConnected() -> Emulator::Interface::Media* { return mediaConnected; }
 	auto setType( Type type ) -> void;
     auto progressDelay() -> void;
+    auto hide() -> void;
     
     auto updateBus() -> void;
     auto setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> void;

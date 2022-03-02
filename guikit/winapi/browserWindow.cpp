@@ -104,11 +104,9 @@ auto pBrowserWindow::fileVista(bool save) -> std::string {
     auto& state = browserWindow.state;
     std::string name = "";
     HRESULT hr;      
-    
-    COMDLG_FILTERSPEC aFileTypes[ state.filters.size() ];
-    
-    utf16_t* utfConvert[state.filters.size() << 1];
-    
+
+    COMDLG_FILTERSPEC* aFileTypes = new COMDLG_FILTERSPEC[state.filters.size()];
+
     unsigned i = 0;
     for(auto& filter : state.filters) {
         std::vector<std::string> tokens = String::split(filter, '(');
@@ -124,11 +122,10 @@ auto pBrowserWindow::fileVista(bool save) -> std::string {
         
         std::replace( part2.begin(), part2.end(), ',', ';');
         
-        utfConvert[(i << 1) + 0] = new utf16_t( part1 );
-        utfConvert[(i << 1) + 1] = new utf16_t( part2 );
+        utf16_t* u1 = new utf16_t(part1);
+        utf16_t* u2 = new utf16_t(part2);
 
-        aFileTypes[i] = { *utfConvert[(i << 1) + 0], *utfConvert[(i << 1) + 1] };
-        
+        aFileTypes[i] = {*u1, *u2};
         i++;
     }   
     
@@ -151,9 +148,13 @@ auto pBrowserWindow::fileVista(bool save) -> std::string {
     
     pDlg->SetFileTypes ( state.filters.size(), aFileTypes );
     
-    for(i = 0; i < (state.filters.size() << 1); i++ )
-        delete utfConvert[i];
-    
+    for (i = 0; i < state.filters.size(); i++) {
+        delete aFileTypes[i].pszName;
+        delete aFileTypes[i].pszSpec;        
+    }
+
+    delete[] aFileTypes;
+
     utf16_t wtitle(state.title.c_str());
     
     std::string path = state.path;
@@ -554,7 +555,7 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
                                 for( auto& row : rows ) {                                
                                     SendMessage( listBox, LB_ADDSTRING, 0, (LPARAM)(wchar_t*)utf16_t(row.entry) );
 
-                                    maximumWidth = std::max(maximumWidth, pFont::size(context->listFont, row.entry).width);
+                                    maximumWidth = std::max<unsigned>(maximumWidth, pFont::size(context->listFont, row.entry).width);
                                     
                                     context->toolTips.push_back( row.tooltip );
                                 }                                
@@ -637,7 +638,7 @@ auto pBrowserWindow::setListings( std::vector<BrowserWindow::Listing>& listings 
     for( auto& row : listings ) {
         SendMessage( listBox, LB_ADDSTRING, 0, (LPARAM)(wchar_t*)utf16_t(row.entry) );
 
-        maximumWidth = std::max(maximumWidth, pFont::size(listFont, row.entry).width);
+        maximumWidth = std::max<unsigned>(maximumWidth, pFont::size(listFont, row.entry).width);
 
         toolTips.push_back( row.tooltip );
     }
@@ -805,7 +806,7 @@ auto pBrowserWindow::resize( HWND fileDialogView, bool init ) -> void {
             
             auto size = pFont::size(Font::system(), button.text);
             width = size.width + 10;
-            width = std::max( 70, width );
+            width = std::max<int>( 70, width );
             
             int height = std::abs(rect.bottom - rect.top);
             int relativeX = std::abs(rect.left - rCustomView.right);
@@ -823,7 +824,7 @@ auto pBrowserWindow::resize( HWND fileDialogView, bool init ) -> void {
     
     for (auto& button : buttons) {
         
-        buttonTotalHeight = std::max(buttonTotalHeight, button.relativeY + button.height);
+        buttonTotalHeight = std::max<int>(buttonTotalHeight, button.relativeY + button.height);
     }
     
     int contentHeight = dialogHeight - buttonTotalHeight - customGapTop - customGapBottom + (browserWindow.state.resizeAdjust * dpiX) / 72;

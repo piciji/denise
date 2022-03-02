@@ -321,10 +321,11 @@ auto CALLBACK pFrame::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM
                 
                 SelectObject(memHdc, widget->p.hfont);
                 unsigned length = GetWindowTextLength(hwnd);
-                wchar_t text[length + 1];
+                wchar_t* text = new wchar_t[length + 1];
                 GetWindowText(hwnd, text, length + 1);
                 text[length] = 0;
                 DrawText(memHdc, text, -1, &rcTemp, DT_LEFT | DT_END_ELLIPSIS);
+                delete[] text;
             }
             
             BitBlt(hdc, 0, 0, width, height, memHdc, 0, 0, SRCCOPY);

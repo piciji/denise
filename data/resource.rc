@@ -1,8 +1,12 @@
 #include <windows.h>
 #include "resource.h"
 
-1 24 "denise.Manifest"
-2 ICON DISCARDABLE "ico/denise.ico"
+#ifndef ID_MANIFEST
+#define ID_MANIFEST 101
+#endif
+
+ID_MANIFEST RT_MANIFEST "denise.Manifest"
+ID_ICON ICON DISCARDABLE "ico/denise.ico"
 
 ID_GLOBE        ICON    "ico/globe.ico"
 ID_FILTER       ICON    "ico/filter.ico"
@@ -41,6 +45,8 @@ ID_FREEZE       ICON    "ico/freeze.ico"
 ID_MENU         ICON    "ico/menu.ico"
 ID_EJECT        ICON    "ico/eject.ico"
 ID_EDIT         ICON    "ico/edit.ico"
+ID_FAN          ICON    "ico/fan.ico"
+ID_HIDE         ICON    "ico/hide.ico"
 
 IDD_FILE_TEMPLATE DIALOG DISCARDABLE 0, 0, 486, 205
 STYLE WS_CHILD | WS_CLIPSIBLINGS | DS_3DLOOK | DS_CONTROL | WS_VISIBLE | NOT WS_BORDER | NOT WS_POPUP | NOT WS_SYSMENU

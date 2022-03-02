@@ -6,22 +6,22 @@
 #define APP_NAME "Denise"
 #endif
 #ifndef TRANSLATION_FOLDER
-#define TRANSLATION_FOLDER "translation"
+#define TRANSLATION_FOLDER "translation/"
 #endif
 #ifndef DATA_FOLDER
-#define DATA_FOLDER "data"
+#define DATA_FOLDER "data/"
 #endif
 #ifndef FONT_FOLDER
-#define FONT_FOLDER "fonts"
+#define FONT_FOLDER "fonts/"
 #endif
 #ifndef SHADER_FOLDER
-#define SHADER_FOLDER "shader"
+#define SHADER_FOLDER "shader/"
 #endif
 #ifndef IMG_FOLDER
-#define IMG_FOLDER "img"
+#define IMG_FOLDER "img/"
 #endif
 #ifndef SOUND_FOLDER
-#define SOUND_FOLDER "sounds"
+#define SOUND_FOLDER "sounds/"
 #endif
 #define SETTINGS_FILE "settings.ini"
 #define DEFAULT_TRANS_FILE "english.txt"
@@ -126,7 +126,7 @@ struct Program : Emulator::Interface::Bind {
     auto mixDriveSound( Emulator::Interface::Media* media, Emulator::Interface::DriveSound driveSound, uint8_t data = 0) -> void override;
     
     //video
-    auto setVideoManagerGlobals() -> void;
+    auto setVideoDimension() -> void;
     auto initVideo() -> void;
 	auto getVideoDriver() -> std::string;
     auto videoRefresh(const uint16_t* frame, unsigned width, unsigned height, unsigned linePitch) -> void override;
@@ -140,10 +140,8 @@ struct Program : Emulator::Interface::Bind {
     auto midScreenCallback() -> void override;
     auto toggleFastForward(bool aggressive) -> void;
     auto fastForward( bool activate, bool aggressive = false ) -> void;
-    auto setFpsLimit() -> void;
     auto updateOverallSynchronize() -> void;
     auto updateFullscreenSetting() -> void;
-    auto setThreadedRenderer() -> void;
 	
     //input
     auto initInput() -> void;

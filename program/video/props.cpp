@@ -2,19 +2,6 @@
 #include "manager.h"
 #include "../program.h"
 
-auto VideoManager::setIntegerScaling(bool state) -> void {    
-    integerScaling = state;
-}
-
-auto VideoManager::setAspectCorrect(bool state) -> void {
-	aspectCorrect = state;
-}
-
-auto VideoManager::setFpsLimit(bool state) -> void {
-	fpsLimit = state;
-    fpsLimit = false;
-}
-
 auto VideoManager::setCrtThreaded(bool state) -> void {
     
     unlockDriver(); 

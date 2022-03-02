@@ -13,7 +13,7 @@ struct View : public GUIKIT::Window {
     GUIKIT::StatusBar statusBar;
     GUIKIT::Image placeholder;
 	bool requestFullscreenSwitch = false;
-    uint8_t resizeCustomMode = 0;
+    bool customResizeMode = false;
 	
     struct SystemMenu {
         Emulator::Interface* emulator;
@@ -46,6 +46,7 @@ struct View : public GUIKIT::Window {
     auto updateDeviceSelection( Emulator::Interface* emulator ) -> void;
 	auto removeMenuTree( GUIKIT::Menu* menu = nullptr ) -> void;
 	auto showTapeMenu( bool show, Emulator::Interface::TapeMode mode = Emulator::Interface::TapeMode::Unpressed ) -> void;
+    auto showSpeedMenu( bool show = true ) -> void;
     auto updateTapeIcons( Emulator::Interface::TapeMode mode = Emulator::Interface::TapeMode::Unpressed ) -> void;
     auto updateTapeStatusIcons( Emulator::Interface::TapeMode mode ) -> void;
     auto updateCartButtons( Emulator::Interface* emulator ) -> void;
@@ -70,8 +71,6 @@ struct View : public GUIKIT::Window {
     auto togglePause() -> void;
     auto updatePauseCheck() -> void;
     auto updateFastforwardCheck() -> void;
-    auto useUnblockedResizing() -> bool;
-    auto updatePreventBgRedraw() -> void;
 
     GUIKIT::Viewport viewport;    
     
@@ -104,7 +103,7 @@ struct View : public GUIKIT::Window {
 
         GUIKIT::MenuCheckItem videoSyncItem;
         GUIKIT::MenuCheckItem adaptiveSyncItem;
-        GUIKIT::MenuCheckItem fpsLimitItem;
+        GUIKIT::MenuCheckItem vrrItem;
         GUIKIT::MenuCheckItem dynamicRateControl;
 
         GUIKIT::MenuItem fullscreenItem;
@@ -137,27 +136,13 @@ struct View : public GUIKIT::Window {
         GUIKIT::MenuRadioItem maximumSpeedItem;
         GUIKIT::MenuItem customizeSpeedItem;
 
-        struct {
-            GUIKIT::Menu menu;
-            GUIKIT::MenuItem insert;
-            GUIKIT::MenuItem eject;
-        } diskControlMenus[4];
-        
-    GUIKIT::Menu diskControlMenu1;
-        GUIKIT::MenuItem insertDiskImage1;
-        GUIKIT::MenuItem ejectDiskImage1;
-
-    GUIKIT::Menu diskControlMenu2;
-        GUIKIT::MenuItem insertDiskImage2;
-        GUIKIT::MenuItem ejectDiskImage2;
-
-    GUIKIT::Menu diskControlMenu3;
-        GUIKIT::MenuItem insertDiskImage3;
-        GUIKIT::MenuItem ejectDiskImage3;
-
-    GUIKIT::Menu diskControlMenu4;
-        GUIKIT::MenuItem insertDiskImage4;
-        GUIKIT::MenuItem ejectDiskImage4;
+    struct {
+        GUIKIT::Menu menu;
+        GUIKIT::MenuItem insert;
+        GUIKIT::MenuItem eject;
+        GUIKIT::MenuItem reset;
+        GUIKIT::MenuItem hide;
+    } diskControlMenus[4];
 		
     GUIKIT::Image powerImage;
     GUIKIT::Image poweroffImage;
@@ -181,6 +166,8 @@ struct View : public GUIKIT::Window {
 	GUIKIT::Image tapeImage;
     GUIKIT::Image diskImage;
 	GUIKIT::Image editImage;
+    GUIKIT::Image fanImage;
+    GUIKIT::Image hideImage;
     
     GUIKIT::Image playImage;
     GUIKIT::Image playhiImage;

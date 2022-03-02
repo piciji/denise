@@ -503,10 +503,13 @@ namespace LIBC64 {
 
         offset = 24;
 
-        auto coreCount = std::thread::hardware_concurrency();
+        uint8_t coreCount = std::thread::hardware_concurrency();
         coreCount = (coreCount < 4) ? 1 : coreCount >> 1;
+        if (coreCount > 8)
+            coreCount = 8;
 
-        std::vector<uint8_t*> jobs[coreCount];
+        std::vector<uint8_t*> jobs[8];
+
         unsigned core = 0;
         while(1) {
             offset += 12;

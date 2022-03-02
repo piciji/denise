@@ -431,6 +431,8 @@ struct Interface {
     virtual auto getDiskPreview(uint8_t* data, unsigned size, Media* media = nullptr, bool alternateLoad = false) -> std::vector<Listing> { return {}; }
     virtual auto selectDiskListing(Media* media, unsigned pos, bool useTraps = false) -> void { }
     virtual auto selectDiskListing(Media* media, std::string fileName, bool useTraps = false) -> void { }
+    virtual auto resetDrive(Media* media) -> void { }
+    virtual auto hideDrive(Media* media) -> void { }
     
     // hard disk handling
     virtual auto insertHardDisk(Media* media, unsigned size) -> void {} //uses read and write callbacks above because of big data
@@ -501,7 +503,7 @@ struct Interface {
     virtual auto setMemoryInitParams(uint8_t value, unsigned invertEvery, unsigned randomPatternLength, unsigned repeatRandomPattern, unsigned randomChance) -> void {}
     virtual auto getMemoryInitPattern( uint8_t* pattern ) -> void {}
     virtual auto getMemorySize() -> unsigned { return 0; }
-    virtual auto setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> void {}
+    virtual auto setFirmware(unsigned typeId, uint8_t* data, unsigned size, bool allowPatching) -> void {}
     virtual auto getCharRom() -> Firmware* { return nullptr; }
     
     virtual auto power() -> void {} //hard reset

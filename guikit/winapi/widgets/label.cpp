@@ -93,7 +93,7 @@ auto CALLBACK pLabel::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM
             
             SelectObject(memHdc, ((Widget*)label)->p.hfont);
             unsigned length = GetWindowTextLength(hwnd);
-            wchar_t text[length + 1];
+            wchar_t* text = new wchar_t[length + 1];
             GetWindowText(hwnd, text, length + 1);
             text[length] = 0;
             DrawText(memHdc, text, -1, &rc, DT_CALCRECT | DT_END_ELLIPSIS);
@@ -118,6 +118,7 @@ auto CALLBACK pLabel::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM
             DeleteDC    (memHdc);
             DeleteDC    (hdc);
             EndPaint(hwnd, &ps);
+            delete[] text;
             return 0;
         }
     }

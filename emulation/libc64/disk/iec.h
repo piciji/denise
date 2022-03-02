@@ -58,6 +58,8 @@ struct IecBus {
     auto syncDrivesEachCycle( ) -> void;
     auto resetTicks() -> void;
     auto setDrivesEnabled( uint8_t count ) -> void;
+	auto hideDrive( Interface::Media* media ) -> void;
+    auto resetDrive( Interface::Media* media ) -> void;
     auto setDriveSpeed(unsigned rpmScaled) -> void;
     auto setDriveWobble(unsigned wobbleScaled) -> void;
     auto setStepperSeekTime( unsigned stepperSeekTimeScaled ) -> void;

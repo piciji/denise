@@ -62,17 +62,11 @@ struct VideoManager {
 	static bool synchronized;
     static bool crtThreaded;
     static bool shaderInputPrecision;
-	static bool integerScaling;
-	static bool aspectCorrect;
-    static bool fpsLimit;
     static uint8_t frameRenderPos;
     static uint8_t frameRenderTrigger;
 	
     static auto setCrtThreaded(bool state) -> void;
     static auto setShaderInputPrecision(bool state) -> void;
-    static auto setAspectCorrect(bool state) -> void;
-    static auto setIntegerScaling(bool state) -> void;
-    static auto setFpsLimit(bool state) -> void;
     static auto setFrameRender(uint8_t limit) -> void;
     static auto setSynchronize() -> void;
     static auto setHardSync() -> void;
@@ -108,9 +102,7 @@ struct VideoManager {
         std::condition_variable cv;
     } render[2];
     bool workerCreated = false;
-	
-    unsigned scalingCount = 0;
-    
+
     uint32_t* tempDest = nullptr;
     ColorLumaChroma delayLine[ 512 ];
 	ColorRgb lineBefore[ 512 ];
@@ -191,10 +183,7 @@ struct VideoManager {
     ColorLumaChroma* lumaChromaTable = nullptr;
     ColorLumaChroma* evenTable = nullptr;
     ColorLumaChroma* oddTable = nullptr;
-    
-    int64_t lastCapTime;
-    int64_t minimumCapTime;    
-    
+
     bool colorTableUpdated = false;
     inline auto needUpdate() -> bool { return !colorTableUpdated; }
     auto useCrtMode() -> bool;
@@ -307,9 +296,6 @@ struct VideoManager {
     auto resetSettings() -> void;
     auto getModeIdent() -> std::string;
     auto applyMeta() -> void;
-    
-    auto applyFpsLimit() -> void;
-    auto initFpsLimit() -> void;
 
     template<typename T> auto updateData(std::string ident, T data) -> void;
     auto applyDataUpdates() -> void;

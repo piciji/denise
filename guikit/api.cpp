@@ -1,8 +1,14 @@
 
 #include <cstring>
+#ifdef _MSC_VER
+#include <io.h>
+#include "winapi/dirent.h"
+#else
 #include <dirent.h>
-#include <sys/stat.h>
 #include <unistd.h>
+#endif
+
+#include <sys/stat.h>
 #include <ctime>
 #include <cmath>
 #include <sstream>
@@ -158,6 +164,10 @@ auto Window::isApended(Menu& menu) -> bool {
     return false;
 }
 
+auto Window::hasAppended(Widget& widget) -> bool {
+    return widget.Sizable::state.window == this;
+}
+
 auto Window::append(Widget& widget) -> void {
     widget.Sizable::state.window = this;
     p.append(widget);
@@ -302,8 +312,8 @@ auto Window::setResizable(bool resizable) -> void {
 }
 
 auto Window::setGeometry(Geometry geometry) -> void {
-    geometry.width = std::min(geometry.width, pSystem::getDesktopSize().width);
-    geometry.height = std::min(geometry.height, pSystem::getDesktopSize().height);
+    geometry.width = std::min<unsigned>(geometry.width, pSystem::getDesktopSize().width);
+    geometry.height = std::min<unsigned>(geometry.height, pSystem::getDesktopSize().height);
     state.geometry = geometry;
     p.setGeometry(geometry);
 }
@@ -333,17 +343,6 @@ auto Window::setAspectRatio(Size ratio) -> void {
     p.applyAspectRatio();
 }
 
-auto Window::setPreventBackgroundRedrawing(bool prevent) -> void {
-    state.preventBackgroundRedrawing = prevent;
-}
-    
-auto Window::causeBGRedrawVideoFlicker() const -> bool {
-    if (Application::isGtk() || Application::isCocoa())
-        return false;
-    
-    return true;
-}
-    
 auto Window::changeCursor( Image& image, unsigned hotSpotX, unsigned hotSpotY ) -> void {
     if (state.cursorImage == &image)
         return;

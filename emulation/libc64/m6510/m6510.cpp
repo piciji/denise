@@ -235,7 +235,7 @@ STEAL:
         goto STEAL;
     }		
     
-	if (unlikely(addr == 0x0000)) {        
+	if (unlikely(addr == 0x0000)) {
 		return ddr;   
     }
     

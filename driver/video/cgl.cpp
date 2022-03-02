@@ -21,7 +21,7 @@ struct CGL : public Video, OpenGL, RenderThread {
     VideoCGL* view = nullptr;
     NSView* handle;
     bool hasRendererContext = false;
-    bool useReshaping = true;
+    bool useVRR = false;
 
     bool init() {
         term();
@@ -90,7 +90,10 @@ struct CGL : public Video, OpenGL, RenderThread {
             return RenderThread::lock(data, pitch, _width, _height);
 
         makeCurrent(true);
-        OpenGL::size(_width, _height);
+        if (OpenGL::size(_width, _height)) {
+            integerScalingHeight = _height;
+            calcViewport();
+        }
         return OpenGL::lock(data, pitch);
     }
 
@@ -99,7 +102,10 @@ struct CGL : public Video, OpenGL, RenderThread {
             return RenderThread::lock(data, pitch, _width, _height);
 
         makeCurrent(true);
-        OpenGL::size(_width, _height);
+        if (OpenGL::size(_width, _height)) {
+            integerScalingHeight = _height;
+            calcViewport();
+        }
         return OpenGL::lock(data, pitch);
     }
 
@@ -108,20 +114,25 @@ struct CGL : public Video, OpenGL, RenderThread {
             return RenderThread::lock(data, pitch, _width, _height);
 
         makeCurrent(true);
-        OpenGL::size(_width, _height);
+        if (OpenGL::size(_width, _height)) {
+            integerScalingHeight = _height;
+            calcViewport();
+        }
         return OpenGL::lock(data, pitch);
     }
 
     auto unlock(bool disallowShader = false) -> void {
         if (settings.threaded) {
-            //resizeWindow();
+            resizeWindow();
             RenderThread::unlock(disallowShader);
         }
     }
 
     auto resize(RenderBuffer* _buffer, unsigned _width, unsigned _height) -> void {
-
         OpenGL::resize( _buffer, _width, _height );
+
+        integerScalingHeight = _height;
+        calcViewport();
     }
 
     void clear() {
@@ -136,20 +147,62 @@ struct CGL : public Video, OpenGL, RenderThread {
         }
     }
 
-    auto resizeWindow() -> void {
+    auto resizeWindow(bool _force = false) -> void {
         auto area = [view frame];
-        outputWidth = area.size.width, outputHeight = area.size.height;
+
+        unsigned _windowWidth = area.size.width;
+        unsigned _windowHeight = area.size.height;
+
+        if (!_force) {
+            if ( (_windowWidth == windowWidth) && (_windowHeight == windowHeight) )
+                return;
+        }
+
+        windowWidth = _windowWidth;
+        windowHeight = _windowHeight;
+
+        calcViewport();
     }
     
     auto forceResize() -> void {
-        resizeWindow();
+        resizeWindow(true);
     }
     
-    auto redrawCustom(bool disallowShader = false) -> void {
-        redraw(disallowShader);
+    //auto shouldResizeWhenThreaded() -> bool { return NSAppKitVersionNumber < NSAppKitVersionNumber10_14; }
+        
+    auto needResizingPreparations(bool useEmuThread) -> bool {
+        return (useEmuThread) && (settings.synchronize || settings.vrr);
     }
     
-    auto shouldResizeWhenThreaded() -> bool { return NSAppKitVersionNumber < NSAppKitVersionNumber10_14; }
+    auto prepareResizing() -> void {
+        if (!view)
+            return;
+        wait();
+        @autoreleasepool {
+            makeCurrent();
+            if (settings.synchronize) {
+                int synchronize = 0;
+                [[view openGLContext] setValues:&synchronize forParameter:NSOpenGLCPSwapInterval];
+            }
+            useVRR = false;
+            clearCurrent();
+        }
+    }
+    
+    auto endResizing() -> void {
+        if (!view)
+            return;
+        wait();
+        @autoreleasepool {
+            makeCurrent();
+            if (settings.synchronize) {
+                int synchronize = 1;
+                [[view openGLContext] setValues:&synchronize forParameter:NSOpenGLCPSwapInterval];
+            }
+            useVRR = settings.vrr;
+            clearCurrent();
+        }
+    }
     
     auto lockResize() -> void {
         resizeMutex.lock();
@@ -166,7 +219,7 @@ struct CGL : public Video, OpenGL, RenderThread {
 
     void redraw(bool disallowShader = false) {
         makeCurrent(true);
-        _redraw(disallowShader);
+        _redraw(disallowShader, settings.threaded ? getLastBufferToRender() : nullptr);
     }
     
     auto unlockAndRedraw(bool disallowShader = false, bool freeContext = false) -> void {
@@ -196,8 +249,14 @@ struct CGL : public Video, OpenGL, RenderThread {
                 screenText.showText(outputWidth, outputHeight, -0.01, 0.01, OpenGLText::ALIGN_RIGHT | OpenGLText::VALIGN_BOTTOM);
 #endif
 
-                [[view openGLContext] flushBuffer];
-                if(settings.hardSync && settings.synchronize) glFinish();
+                if (useVRR) {
+                    if (settings.hardSync) glFinish();
+                    waitVRR();
+                    [[view openGLContext] flushBuffer];
+                } else {
+                    [[view openGLContext] flushBuffer];
+                    if (settings.hardSync && settings.synchronize) glFinish();
+                }
               
                 [view unlockFocus];
             }
@@ -238,9 +297,14 @@ struct CGL : public Video, OpenGL, RenderThread {
                 screenText.updateMessage();
                 screenText.showText(outputWidth, outputHeight, -0.01, 0.01, OpenGLText::ALIGN_RIGHT | OpenGLText::VALIGN_BOTTOM);
 #endif
-
-                [[view openGLContext] flushBuffer];
-                if (settings.hardSync && settings.synchronize) glFinish();
+                if (useVRR) {
+                    if (settings.hardSync) glFinish();
+                    waitVRR();
+                    [[view openGLContext] flushBuffer];
+                } else {
+                    [[view openGLContext] flushBuffer];
+                    if (settings.hardSync && settings.synchronize) glFinish();
+                }
                     
                 [view unlockFocus];
             }
@@ -272,14 +336,6 @@ struct CGL : public Video, OpenGL, RenderThread {
     auto hardSync(bool state) -> void {
         wait();
         settings.hardSync = state;
-    }
-
-    auto hasReshaping() -> bool {
-        return true;
-    }
-    
-    auto setReshaping(bool state) -> void {
-        useReshaping = state;
     }
     
     auto setThreaded(bool state) -> void {
@@ -356,6 +412,26 @@ struct CGL : public Video, OpenGL, RenderThread {
 
     }
 
+    auto setAspectCorrection(float width, float height, bool integerScaling) -> void {
+        wait();
+        settings.aspectWidth = width;
+        settings.aspectHeight = height;
+        settings.integerScaling = integerScaling;
+
+        calcViewport();
+    }
+
+    auto setVRR(bool state, float speed = 0.0) -> void {
+        wait();
+        settings.vrr = state;
+        useVRR = state;
+
+        if (state)
+            initVRR(speed);
+    }
+
+    auto hasVRR() -> bool { return settings.vrr; }
+
     auto makeCurrent(bool usePermanent = false) -> void {
         if (usePermanent) {
             if(!hasRendererContext) {
@@ -400,11 +476,10 @@ struct CGL : public Video, OpenGL, RenderThread {
 }
 
 -(void) reshape {
-    if (!video->useReshaping)
-        return;
+    return;
 
     video->makeCurrent();
-    video->_redraw(true, video->settings.threaded ? video->getLastBufferToRender() : nullptr);
+    video->_redraw(!video->useShader, video->settings.threaded ? video->getLastBufferToRender() : nullptr);
     video->clearCurrent();
 }
 

@@ -753,7 +753,7 @@ auto VirtualDrive::iec_read_sequential(uint8_t *data, unsigned int secondary) ->
 }
 
 auto VirtualDrive::iec_open_read_directory(unsigned int secondary, cbmdos_cmd_parse_plus_t *cmd_parse) -> int {
-    int retlen;
+    int retlen = 0;
     bufferinfo_t* p = &(vdrive.buffers[secondary]);
 
     /* we should already be in the proper partition at this point */

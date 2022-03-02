@@ -2,6 +2,11 @@
 #include "../tools/crc32.h"
 #include <mmsystem.h>
 
+#ifdef _MSC_VER
+#pragma warning(disable:4996)
+#define PATH_MAX MAX_PATH
+#endif
+
 namespace GUIKIT {
 
 #include "tools.cpp"
@@ -94,10 +99,6 @@ auto pApplication::initialize() -> void {
     wc.style = CS_HREDRAW | CS_VREDRAW;
     RegisterClass(&wc);
 
-    wc.hbrBackground = (HBRUSH)GetStockObject (BLACK_BRUSH);
-    wc.lpszClassName = L"app_video_gui";
-    RegisterClass(&wc);
-
     wc.hbrBackground = NULL;
     wc.hIcon = LoadIcon(0, IDI_APPLICATION);
     wc.lpfnWndProc = pViewport::wndProc;
@@ -119,9 +120,10 @@ auto pApplication::initialize() -> void {
 
 auto pApplication::currentWorkingDirectory() -> std::string {
     if ( !cwd.empty() ) return cwd;
-    wchar_t path[PATH_MAX] = L"";
-    _wgetcwd(path, sizeof(path));
+    wchar_t* path = new wchar_t[PATH_MAX];
+    _wgetcwd(path, PATH_MAX);
     cwd = utf8_t(path);
+    delete[] path;
     return cwd;
 }
 
@@ -309,7 +311,7 @@ auto CALLBACK pApplication::wndProc(WNDPROC windowProc, HWND hwnd, UINT msg, WPA
 pWindow::pWindow(Window& window, Window::Hints hints) : window(window) {
     locked = false;
     brush = 0;
-    bgRedraw = 0;
+	preventRedraw = false;
     hCursor = LoadCursor(0, IDC_ARROW);
     timerStatusUpdate.setInterval(100);
     timerStatusUpdate.onFinished = [this]() {
@@ -317,13 +319,18 @@ pWindow::pWindow(Window& window, Window::Hints hints) : window(window) {
         if (this->window.statusBar())
             this->window.statusBar()->p.updatePosition();
     };
+	
+	if (hints == Window::Hints::Video) {
+		Timer startUp;
+		startUp.setInterval(1000);
+		startUp.onFinished = [this]() {
+			this->preventRedraw = true;
+		};
+	}
 
     Geometry geo = window.state.geometry;
 
-    if (hints == Window::Hints::Video)
-        hwnd = CreateWindow( L"app_video_gui", L"", ResizableStyle | WS_CLIPCHILDREN, geo.x, geo.y, geo.width, geo.height, 0, 0, GetModuleHandle(0), 0);
-    else
-        hwnd = CreateWindow( L"app_gui", L"", ResizableStyle | WS_CLIPCHILDREN, geo.x, geo.y, geo.width, geo.height, 0, 0, GetModuleHandle(0), 0);
+	hwnd = CreateWindow( L"app_gui", L"", ResizableStyle | WS_CLIPCHILDREN, geo.x, geo.y, geo.width, geo.height, 0, 0, GetModuleHandle(0), 0);
 
     hmenu = CreateMenu();
 	contextmenu = CreatePopupMenu();        
@@ -369,32 +376,19 @@ auto CALLBACK pWindow::wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam
             if (window.onResizeStart && !window.fullScreen())
                 window.onResizeStart();
 
-          //  if (!window.fullScreen() && !window.preventBackgroundRedrawing())
-            //    window.p.bgRedraw = 1;
             return 0;
         case WM_EXITSIZEMOVE:
-            if (window.p.bgRedraw == 1) {
-                window.p.bgRedraw = 2;
-                InvalidateRect( hwnd, NULL, true );
-            }
 
             if (window.onResizeEnd && !window.fullScreen())
                 window.onResizeEnd();
             return 0;
         case WM_PAINT:
-            if (window.p.bgRedraw == 2) {
-                window.p.bgRedraw = 0;
-                return true;
-            }
+
             break;
             
         case WM_ERASEBKGND: {
-            if (!window.fullScreen() && window.preventBackgroundRedrawing())
-                // prevent thread driven opengl/directx flickering during resize
+            if (!window.fullScreen() && window.p.preventRedraw)
                 return 0;
-
-            if (window.p.bgRedraw == 1)
-                return 1;
 
             if(window.p.onEraseBackground())
                 return 1;

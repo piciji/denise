@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <unordered_set>
 #include <thread>
+#include <iterator>
 
 namespace GUIKIT {
 
@@ -205,6 +206,7 @@ struct Window : Base {
     auto append(Menu& menu) -> void;
     auto append(Layout& layout) -> void;
     auto append(Widget& widget) -> void;
+    auto hasAppended(Widget& widget) -> bool;
     auto append(StatusBar& statusBar) -> void;
     auto remove(Menu& menu) -> void;
     auto remove(Layout& layout) -> void;
@@ -241,7 +243,6 @@ struct Window : Base {
     auto menuVisible() const -> bool { return state.menuVisible; }
     auto statusVisible() const -> bool { return state.statusVisible; }
     auto aspectRatio() const -> Size { return state.aspectRatio; }
-    auto preventBackgroundRedrawing() const -> bool { return state.preventBackgroundRedrawing; }
     auto droppable() const -> bool { return state.droppable; }
     auto minimized() -> bool;
     auto title() const -> std::string { return state.title; }
@@ -254,9 +255,6 @@ struct Window : Base {
     auto getScrollbarWidth() -> unsigned;
 	auto tellMeShouldICreateTheUIRightAway() -> bool;
     auto setAspectRatio(Size ratio) -> void;
-    auto setPreventBackgroundRedrawing(bool prevent) -> void;
-    
-    auto causeBGRedrawVideoFlicker() const -> bool;
 	
 	static auto addCustomFont( CustomFont* customFont ) -> bool;
 	static auto countCustomFonts() -> unsigned;
@@ -276,7 +274,6 @@ struct Window : Base {
         Image* cursorImage = nullptr;
         StatusBar* statusBar = nullptr;
         Size aspectRatio = {0,0};
-        bool preventBackgroundRedrawing = false;
     } state;
 
     struct {
@@ -1077,7 +1074,7 @@ struct Timer : Base {
 };
 
 struct BrowserWindow {
-	static std::function<void ()> onCall;	
+	static std::function<void ()> onCall;
 
 	struct Listing {
 		std::string entry;
@@ -1110,8 +1107,7 @@ struct BrowserWindow {
     auto setContentViewForeground(unsigned color) -> BrowserWindow&;
     auto setContentViewSelection(unsigned foregroundColor, unsigned backgroundColor) -> BrowserWindow&;
     auto setContentViewColorTooltips(bool colorTooltips) -> BrowserWindow&;
-    
-    // callbacks for cocoa modeless dialog
+
     auto setCallbacks( std::function<void (std::string filePath, unsigned selection)> onOkClick, std::function<void ()> onCancelClick ) -> BrowserWindow&;
     auto getContentViewSelection() -> unsigned;
     auto resizeTemplate(bool resize, int adjust = 0) -> BrowserWindow&;    
@@ -1386,7 +1382,7 @@ struct Settings {
     template<typename T>
     auto get(const std::string& ident, T defaultValue = T(), std::vector<T> range = {} ) -> T {
         auto result = get(type_info<T>(), ident, defaultValue);
-		return !range.empty() ? std::min( std::max(result, (T)range[0]), (T)range[1] ) : result;
+		return !range.empty() ? std::min<T>( std::max<T>(result, (T)range[0]), (T)range[1] ) : result;
     }
 	
 	template<typename T> auto getOrInit(const std::string& ident, T defaultValue = T(), std::vector<T> range = {}) -> Setting* {

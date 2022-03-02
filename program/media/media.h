@@ -232,8 +232,8 @@ struct MediaLayout : GUIKIT::HorizontalLayout {
     auto createImage( Emulator::Interface::MediaGroup* mediaGroup ) -> void;
     auto showMediaGroupLayout( Emulator::Interface::MediaGroup* mediaGroup ) -> void;
     auto getMediaGroupLayout( Emulator::Interface::MediaGroup* mediaGroup ) -> MediaGroupLayout*;   
-    auto insertImage( MediaGroupLayout::Block* block, GUIKIT::File* file, GUIKIT::File::Item* item ) -> void;
-    auto insertImage( Emulator::Interface::Media* media, GUIKIT::File* file, GUIKIT::File::Item* item ) -> void;
+    auto insertImage( MediaGroupLayout::Block* block, GUIKIT::File* file, GUIKIT::File::Item* item, bool fromState = false ) -> void;
+    auto insertImage( Emulator::Interface::Media* media, GUIKIT::File* file, GUIKIT::File::Item* item, bool fromState = false ) -> void;
     auto ejectImage( Emulator::Interface::Media* media ) -> void;
     auto ejectImage( MediaGroupLayout::Block* block ) -> void;
     auto drop( std::string filePath, MediaGroupLayout::Block* block = nullptr ) -> void;

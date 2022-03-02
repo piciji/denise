@@ -264,6 +264,9 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
     }, [this, emulator, mIsAcquiredBefore]() {
         this->resetPreview(emulator);
 
+        if (view)
+            view->setFocused(300);
+
         HideMouseIfWasBefore
     } );
 
@@ -288,6 +291,8 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
         autoloader->init( {filePath}, false, _useTraps ? Autoloader::Mode::AutoStartTrapped : Autoloader::Mode::AutoStartNotTrapped, fileDialogPtr ? fileDialogPtr->getContentViewSelection() : 0 );
         autoloader->loadFiles();
         emuThread->unlock();
+    } else if (view) {
+        view->setFocused(300);
     }
 
     resetPreview(emulator);
@@ -633,7 +638,7 @@ auto Fileloader::autoload(Emulator::Interface* emulator, Emulator::Interface::Me
         program->initAutoWarp(mediaGroup);
 }
 
-auto Fileloader::insertImage(Emulator::Interface* emulator, Emulator::Interface::Media* media, GUIKIT::File* file, GUIKIT::File::Item* item) -> void {
+auto Fileloader::insertImage(Emulator::Interface* emulator, Emulator::Interface::Media* media, GUIKIT::File* file, GUIKIT::File::Item* item, bool fromState) -> void {
 
     auto mediaGroup = media->group;
 
@@ -660,7 +665,7 @@ auto Fileloader::insertImage(Emulator::Interface* emulator, Emulator::Interface:
 
     emulator->getListing(media, settings->get<bool>("autostart_load_with_column", false));
 
-    if (view && activeEmulator && mediaGroup->isTape())
+    if (!fromState && view && activeEmulator && mediaGroup->isTape())
         view->updateTapeIcons();
 
     if (mediaGroup->selected && !media->secondary )
@@ -680,7 +685,7 @@ auto Fileloader::insertImage(Emulator::Interface* emulator, Emulator::Interface:
         else
             States::getInstance(emulator)->forcePowerNextLoad = true;
 
-        if (mediaGroup->isDrive())
+        if (!fromState && mediaGroup->isDrive())
             program->updateSaveIdent( emulator, fSetting->file );
     }
 }

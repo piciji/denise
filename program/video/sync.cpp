@@ -8,6 +8,8 @@ auto VideoManager::setSynchronize() -> void {
     bool vsync = globalSettings->get<bool>("video_sync", true);
     bool threadedRenderer = globalSettings->get("threaded_renderer", false);
     bool adaptive = globalSettings->get<bool>("adaptive_sync", true);
+    bool vrr = globalSettings->get<bool>("vrr_sync", false);
+
     unsigned frameRenderEach = 1;
     float skew = 0.0;
 
@@ -19,6 +21,7 @@ auto VideoManager::setSynchronize() -> void {
             float monitorFrequency = GUIKIT::Monitor::getCurrentRefreshRate();
 
             if (!threadedRenderer) {
+                vrr = false;
                 float ratio = (float)audioManager->inputFPS / monitorFrequency;
                 float intpart;
                 float fractpart = std::modf (ratio, &intpart);
@@ -36,6 +39,8 @@ auto VideoManager::setSynchronize() -> void {
             }
         }
     } else if (!threadedRenderer) {
+        vrr = false;
+
         if (adaptive)
             threadedRenderer = true;
         else
@@ -44,7 +49,7 @@ auto VideoManager::setSynchronize() -> void {
 
 	if (activeVideoManager) {
 		activeVideoManager->waitForCrtRenderer();
-		activeVideoManager->reinitCrtThread();		
+		activeVideoManager->reinitCrtThread();
 	}
 		
     if (videoDriver->hasThreaded() != threadedRenderer)
@@ -53,10 +58,12 @@ auto VideoManager::setSynchronize() -> void {
     if (videoDriver->hasSynchronized() != vsync)
         videoDriver->synchronize( vsync );
 
+    videoDriver->setVRR( vrr, (float)audioManager->inputFPS );
+
     setFrameRender( frameRenderEach );
 
     if (audioManager) {
-        audioManager->allowDrc = vsync && !threadedRenderer && (frameRenderEach == 1) && (skew <= VIDEO_SKEW);
+        audioManager->allowDrc = (vsync || vrr) && !threadedRenderer && (frameRenderEach == 1) && (skew <= VIDEO_SKEW);
         audioManager->setRateControl();
     }
     program->updateOverallSynchronize();

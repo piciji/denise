@@ -39,7 +39,7 @@ struct Tar {
 
             File file;
             file.size = fileLength;
-            unsigned nameLength = std::min((size_t)100, strlen(tar->name));
+            unsigned nameLength = std::min<size_t>((size_t)100, strlen(tar->name));
 
             file.name = std::string(tar->name, nameLength);
 

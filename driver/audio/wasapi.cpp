@@ -61,7 +61,7 @@ struct Wasapi : public Audio {
 	}
 
 	auto clear() -> void {   
-		if (cleared) return;        
+		if (cleared) return;
         
         if (settings.exclusive)
             EnterCriticalSection( &criticalSection );

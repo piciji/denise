@@ -111,7 +111,10 @@ struct WGL : Video, OpenGL, RenderThread {
             return RenderThread::lock(data, pitch, _width, _height);
 
         makeCurrent(true);
-        OpenGL::size(_width, _height);
+        if (OpenGL::size(_width, _height)) {
+            integerScalingHeight = _height;
+            calcViewport();
+        }
         return OpenGL::lock(data, pitch);
     }
 
@@ -120,7 +123,10 @@ struct WGL : Video, OpenGL, RenderThread {
             return RenderThread::lock(data, pitch, _width, _height);
 
         makeCurrent(true);
-        OpenGL::size(_width, _height);
+        if (OpenGL::size(_width, _height)) {
+            integerScalingHeight = _height;
+            calcViewport();
+        }
         return OpenGL::lock(data, pitch);
     }
 
@@ -129,7 +135,10 @@ struct WGL : Video, OpenGL, RenderThread {
             return RenderThread::lock(data, pitch, _width, _height);
 
         makeCurrent(true);
-        OpenGL::size(_width, _height);
+        if (OpenGL::size(_width, _height)) {
+            integerScalingHeight = _height;
+            calcViewport();
+        }
         return OpenGL::lock(data, pitch);
     }
 
@@ -141,8 +150,10 @@ struct WGL : Video, OpenGL, RenderThread {
     }
 
     auto resize(RenderBuffer* _buffer, unsigned _width, unsigned _height) -> void {
-
         OpenGL::resize( _buffer, _width, _height );
+
+        integerScalingHeight = _height;
+        calcViewport();
     }
 
 	auto clear() -> void {
@@ -154,13 +165,24 @@ struct WGL : Video, OpenGL, RenderThread {
 	}
 
     auto forceResize() -> void {
-        resizeWindow();
+        resizeWindow(true);
     }
 
-    auto resizeWindow() -> void {
+    auto resizeWindow(bool _force = false) -> void {
         RECT rc;
         GetClientRect(handle, &rc);
-        outputWidth = rc.right - rc.left, outputHeight = rc.bottom - rc.top;
+        unsigned _windowWidth = rc.right - rc.left;
+        unsigned _windowHeight = rc.bottom - rc.top;
+
+        if (!_force) {
+            if ( (_windowWidth == windowWidth) && (_windowHeight == windowHeight) )
+                return;
+        }
+
+        windowWidth = _windowWidth;
+        windowHeight = _windowHeight;
+
+        calcViewport();
     }
 
     auto unlockAndRedraw(bool disallowShader = false, bool freeContext = false) -> void {
@@ -172,10 +194,6 @@ struct WGL : Video, OpenGL, RenderThread {
 
         if (freeContext)
             clearCurrent();
-    }
-
-    auto redrawCustom(bool disallowShader = false) -> void {
-        redraw(disallowShader);
     }
 
 	auto lockResize() -> void {
@@ -198,8 +216,14 @@ struct WGL : Video, OpenGL, RenderThread {
 #ifdef DRV_FREETYPE
         screenText.showText(outputWidth, outputHeight, -0.01, 0.01, OpenGLText::ALIGN_RIGHT | OpenGLText::VALIGN_BOTTOM);
 #endif
-		SwapBuffers(display);
-        if(settings.hardSync && settings.synchronize) glFinish();
+        if (settings.vrr) {
+            if (settings.hardSync) glFinish();
+            waitVRR();
+            SwapBuffers(display);
+        } else {
+            SwapBuffers(display);
+            if (settings.hardSync && settings.synchronize) glFinish();
+        }
 		resizeMutex.unlock();
 	}
 
@@ -234,9 +258,15 @@ struct WGL : Video, OpenGL, RenderThread {
         screenText.updateMessage();
         screenText.showText(outputWidth, outputHeight, -0.01, 0.01, OpenGLText::ALIGN_RIGHT | OpenGLText::VALIGN_BOTTOM);
 #endif
+        if (settings.vrr) {
+            if (settings.hardSync) glFinish();
+            waitVRR();
+            SwapBuffers(display);
+        } else {
+            SwapBuffers(display);
+            if (settings.hardSync && settings.synchronize) glFinish();
+        }
 
-        SwapBuffers(display);
-        if(settings.hardSync && settings.synchronize) glFinish();
 		resizeMutexThreaded.unlock();
         clearCurrent();
 		
@@ -300,6 +330,25 @@ struct WGL : Video, OpenGL, RenderThread {
         }
 #endif
     }
+
+    auto setAspectCorrection(float width, float height, bool integerScaling) -> void {
+        wait();
+        settings.aspectWidth = width;
+        settings.aspectHeight = height;
+        settings.integerScaling = integerScaling;
+
+        calcViewport();
+    }
+
+    auto setVRR(bool state, float speed = 0.0) -> void {
+        wait();
+        settings.vrr = state;
+
+        if (state)
+            initVRR(speed);
+    }
+
+    auto hasVRR() -> bool { return settings.vrr; }
 
 	auto term() -> void {
         wait();

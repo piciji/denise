@@ -30,7 +30,7 @@
 #include <cstdint>
 #include <functional>
 #include "../../../tools/serializer.h"
-#include "../../../tools/branchPrediction.h"
+#include "../../../tools/macros.h"
 
 namespace LIBC64 {
 

@@ -231,8 +231,12 @@ VideoLayout::VideoLayout() {
         VideoManager::setSynchronize();
         emuThread->unlock();
         bool vsync = globalSettings->get<bool>("video_sync", true);
+        bool vrr = globalSettings->get<bool>("vrr_sync", false);
+        bool adaptive = globalSettings->get<bool>("adaptive_sync", true);
+
         view->adaptiveSyncItem.setEnabled( vsync && !checked );
-        view->dynamicRateControl.setEnabled( vsync && !checked );
+        view->vrrItem.setEnabled( checked || !(vsync && adaptive) );
+        view->dynamicRateControl.setEnabled( (vsync || vrr) && !checked );
     };
 
     videoSettingsLayout.threadedRenderer.setChecked(globalSettings->get("threaded_renderer", false));
@@ -379,8 +383,7 @@ VideoLayout::VideoLayout() {
     videoGeometry.aspectCorrect.onToggle = [&](bool checked) {
         emuThread->lock();
         globalSettings->set<bool>("aspect_correct", checked);
-		VideoManager::setAspectCorrect( checked );
-        view->updatePreventBgRedraw( );
+        program->setVideoDimension();
         view->updateViewport();
         emuThread->unlock();
     };
@@ -393,7 +396,6 @@ VideoLayout::VideoLayout() {
             view->setAspectRatio( {4, 3} );
         else
             view->setAspectRatio( {0, 0} );
-        view->updatePreventBgRedraw( );
         view->updateViewport();
         emuThread->unlock();
     };
@@ -402,8 +404,7 @@ VideoLayout::VideoLayout() {
     videoGeometry.integerScaling.onToggle = [&](bool checked) {
         emuThread->lock();
         globalSettings->set<bool>("integer_scaling", checked);
-		VideoManager::setIntegerScaling( checked );
-        view->updatePreventBgRedraw( );
+        program->setVideoDimension();
         view->updateViewport();
         emuThread->unlock();
     };

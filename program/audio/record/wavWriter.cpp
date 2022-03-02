@@ -76,7 +76,7 @@ auto WavWriter::finish() -> void {
     
 auto WavWriter::writeChunk( unsigned value, uint8_t size, unsigned offset ) -> void {
     
-    uint8_t buffer[size];
+    uint8_t* buffer = new uint8_t[size];
     
     auto fp = file.getHandle();
     
@@ -91,6 +91,8 @@ auto WavWriter::writeChunk( unsigned value, uint8_t size, unsigned offset ) -> v
         fseek(fp, offset, SEEK_SET);    
     
     fwrite(buffer, 1, size, fp);
+
+    delete[] buffer;
 }
 
 }

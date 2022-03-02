@@ -2,7 +2,7 @@
 #pragma once
 
 #include <cstdint>
-#include "../../tools/branchPrediction.h"
+#include "../../tools/macros.h"
 #include "../../tools/serializer.h"
 
 #define VIC_MAX_LINE_LENGTH 65 * 8
@@ -108,6 +108,7 @@ struct VicIIBase {
 	auto setUltimaxPhi1(bool state ) -> void { ultimaxPhi1 = state; };
     auto setUltimaxPhi2(bool state ) -> void { ultimaxPhi2 = state; };
     auto setUltimax(bool state ) -> void { ultimaxPhi1 = ultimaxPhi2 = state; };
+    auto oldOne() -> bool { return oldIrqMode; }
 
 protected:     
     bool ultimaxPhi1;

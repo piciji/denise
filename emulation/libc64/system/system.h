@@ -2,7 +2,7 @@
 #pragma once
 
 #include <functional>
-#include "../../tools/branchPrediction.h"
+#include "../../tools/macros.h"
 #include "../interface.h"
 #include "../m6510/m6510.h"
 #include "../../cia/m6526.h"
@@ -162,7 +162,7 @@ struct System {
     
     #include "testbench.h"
     
-    auto setFirmware( unsigned typeId, uint8_t* data, unsigned size ) -> void;
+    auto setFirmware( unsigned typeId, uint8_t* data, unsigned size, bool allowPatching ) -> void;
     
     auto remapCpu() -> void;
 	auto isUltimax() -> bool;

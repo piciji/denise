@@ -111,7 +111,9 @@ auto Autoloader::postProcessing() -> void {
     if (!autoStart) {
 
         if (mediaGroup->isDrive()) {
-            if ( emuView && emuView->visible())
+            if (view && activeEmulator && (ddControl.mode == Mode::Open) )
+                view->setFocused(300);
+            else if ( emuView && emuView->visible())
                 emuView->setFocused();
             
         } else {

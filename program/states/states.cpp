@@ -3,6 +3,7 @@
 #include "../firmware/manager.h"
 #include "../view/status.h"
 #include "../audio/manager.h"
+#include "../media/fileloader.h"
 
 std::vector<States*> states;
 
@@ -158,7 +159,7 @@ auto States::oneMediumOnly(Emulator::Interface::MediaGroup* group, Emulator::Int
         if ((&media == mediaInUse) || media.secondary)
             continue;
 
-        media.guid = uintptr_t(nullptr);
+        media.guid = (uintptr_t)(nullptr);
         filePool->assign( _ident(emulator, media.name), nullptr);
         updateImage(nullptr, &media);
     }
@@ -190,7 +191,7 @@ auto States::loadImagePaths( GUIKIT::Settings* loadSettings ) -> std::vector<Emu
             if (setting->path.empty()) {
                 if (!mediaSelected || media.secondary) {
                     emulator->ejectMedium( &media );
-                    media.guid = uintptr_t(nullptr);
+                    media.guid = (uintptr_t)(nullptr);
                     filePool->assign( _ident(emulator, media.name), nullptr);  
                     updateImage( nullptr, &media );
                 }
@@ -233,16 +234,27 @@ auto States::loadImagePaths( GUIKIT::Settings* loadSettings ) -> std::vector<Emu
                 continue;
             }                                    
 
-            emulator->ejectMedium( mediaInUse );
-			
-			mediaInUse->guid = uintptr_t(file);
-            emulator->insertMedium( mediaInUse, data, file->archiveDataSize( setting->id ));
-                       
-            if (!GUIKIT::Vector::find( loadedMedia, mediaInUse ))
-                loadedMedia.push_back( mediaInUse );
-                       
-            filePool->assign( _ident(emulator, mediaInUse->name), file);
-            updateImage( setting, mediaInUse );
+            if (mediaGroup.isDrive()) {
+                GUIKIT::File::Item item;
+                item.id = setting->id;
+                item.info.name = setting->file;
+                auto emuView = EmuConfigView::TabWindow::getView( emulator );
+                if (emuView && emuView->mediaLayout)
+                    emuView->mediaLayout->insertImage( mediaInUse, file, &item, true );
+                else
+                    fileloader->insertImage( emulator, mediaInUse, file, &item, true );
+            } else {
+                emulator->ejectMedium(mediaInUse);
+
+                mediaInUse->guid = uintptr_t(file);
+                emulator->insertMedium(mediaInUse, data, file->archiveDataSize(setting->id));
+
+                filePool->assign(_ident(emulator, mediaInUse->name), file);
+                updateImage(setting, mediaInUse);
+            }
+
+            if (!GUIKIT::Vector::find(loadedMedia, mediaInUse))
+                loadedMedia.push_back(mediaInUse);
         }
                         
         if (mediaSelected)
@@ -536,8 +548,8 @@ auto States::updateModels() -> void {
     if (regionChange || resamplerChange) {
         audioManager->power();
 
-        if (activeVideoManager)
-            activeVideoManager->initFpsLimit();
+        //if (activeVideoManager)
+          //  activeVideoManager->initFpsLimit();
     }
 }
 

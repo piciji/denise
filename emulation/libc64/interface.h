@@ -94,6 +94,8 @@ struct Interface : Emulator::Interface {
     auto getDiskPreview(uint8_t* data, unsigned size, Media* media = nullptr, bool alternateLoad = false) -> std::vector<Emulator::Interface::Listing>;
     auto selectDiskListing(Media* media, unsigned pos, bool useTraps = false) -> void;
     auto selectDiskListing(Media* media, std::string fileName, bool useTraps = false) -> void;
+    auto resetDrive(Media* media) -> void;
+    auto hideDrive(Media* media) -> void;
     
 	//tape drive handling
 	auto insertTape(Media* media, uint8_t* data, unsigned size) -> void;
@@ -136,7 +138,7 @@ struct Interface : Emulator::Interface {
 	auto loadstate(uint8_t* data, unsigned size) -> bool;       
 
 	//firmware
-	auto setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> void;
+	auto setFirmware(unsigned typeId, uint8_t* data, unsigned size, bool allowPatching) -> void;
     auto getCharRom() -> Firmware*;
 	
 	//models

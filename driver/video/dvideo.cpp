@@ -2,6 +2,7 @@
 #include "thread/renderThread.h"
 #include "../tools/win.h"
 #include "../tools/tools.h"
+#include "../tools/chronos.h"
 #include <d3d9.h>
 #include <d3dx9.h>
 #include <math.h>
@@ -26,12 +27,16 @@ struct DVideo : Video, RenderThread {
     const unsigned FONT_WIDTH = 1024;
     unsigned textureWidth = 0;
     unsigned textureHeight = 0;
-    unsigned pitch;
+    unsigned integerScalingHeight = 0;
 
     unsigned inputWidth, inputHeight;
     RECT outScreen;
+    RECT lastWindowSize = {0};
     std::mutex noteMutex;
 	bool themed = true;
+
+    int64_t lastCapTime;
+    int64_t minimumCapTime;
 
     struct {
         bool synchronize;
@@ -43,6 +48,12 @@ struct DVideo : Video, RenderThread {
         float exclusiveFullscreenRate = 0.0;
         bool exclusiveFullscreen = false;
         bool threaded = false;
+
+        float aspectWidth = 1.0;
+        float aspectHeight = 1.0;
+        bool integerScaling = false;
+
+        bool vrr = false;
     } settings;
 
     struct {
@@ -171,11 +182,10 @@ struct DVideo : Video, RenderThread {
         bool exclusiveFullscreen = false;
 
         HWND handle = settings.handle;
-        outScreen = getDimension ( settings.handle );
-        outScreen.left = outScreen.top = 0;
+        calcDimension();
 
         RECT outScreenParent;
-        settings.parent = getParentHandle();
+		settings.parent = getParentHandle();
 
         if (settings.hintExclusiveFullscreen) {
             handle = settings.parent;
@@ -187,8 +197,6 @@ struct DVideo : Video, RenderThread {
             if ( (outScreenParent.right == monitorWidth)
                  && (outScreenParent.bottom == monitorHeight) ) {
                 exclusiveFullscreen = true;
-                outScreen.left = (outScreenParent.right - outScreen.right) / 2;
-                outScreen.top = (outScreenParent.bottom - outScreen.bottom) / 2;
 
                 if (exclusiveFullscreenNeedInit)
                     return false;
@@ -287,8 +295,7 @@ struct DVideo : Video, RenderThread {
         bool exclusiveFullscreen = false;
 
         HWND handle = settings.handle;
-        outScreen = getDimension ( settings.handle );
-        outScreen.left = outScreen.top = 0;
+        calcDimension();
         RECT outScreenParent;
         settings.parent = getParentHandle();
 
@@ -302,8 +309,6 @@ struct DVideo : Video, RenderThread {
             if ( (outScreenParent.right == monitorWidth)
                  && (outScreenParent.bottom == monitorHeight) ) {
                 exclusiveFullscreen = true;
-                outScreen.left = (outScreenParent.right - outScreen.right) / 2;
-                outScreen.top = (outScreenParent.bottom - outScreen.bottom) / 2;
             } else {
                 handle = settings.handle;
             }
@@ -418,13 +423,8 @@ struct DVideo : Video, RenderThread {
 
     inline auto _redraw(bool disallowShader = false, bool useReset = false) -> void {
 
-        unsigned outWidth = outScreen.right;
-        unsigned outHeight = outScreen.bottom;
-        unsigned outLeft = outScreen.left;
-        unsigned outTop = outScreen.top;
-
         RECT windowsize = getDimension(settings.handle);
-        if ((outWidth != windowsize.right) || (outHeight != windowsize.bottom)) {
+        if ((windowsize.right != lastWindowSize.right) || (windowsize.bottom != lastWindowSize.bottom)) {
             wait();
             bool result = false;
             if (useReset)
@@ -435,6 +435,11 @@ struct DVideo : Video, RenderThread {
                     return;
             }
         }
+
+        unsigned outWidth = outScreen.right;
+        unsigned outHeight = outScreen.bottom;
+        unsigned outLeft = outScreen.left;
+        unsigned outTop = outScreen.top;
 
         if( settings.synchronize && IsIconic( settings.parent ) )
             return;
@@ -465,6 +470,10 @@ struct DVideo : Video, RenderThread {
                  if(status.InVBlank == true) break;
              }
          }*/
+
+        if (settings.vrr) {
+            waitVRR();
+        }
 
         if (lpD3DDevice->Present(0, 0, 0, 0) == D3DERR_DEVICELOST) {
             lost = true;
@@ -525,6 +534,10 @@ struct DVideo : Video, RenderThread {
         noteMutex.unlock();
 
         lpD3DDevice->EndScene();
+
+        if (settings.vrr) {
+            waitVRR();
+        }
 
         if (lpD3DDevice->Present(0, 0, 0, 0) == D3DERR_DEVICELOST) {
             lost = true;
@@ -617,13 +630,11 @@ struct DVideo : Video, RenderThread {
 
         if (settings.threaded) {
 
-            unsigned outWidth = outScreen.right;
-            unsigned outHeight = outScreen.bottom;
-
             RECT windowsize = getDimension( settings.handle );
 
-            if (lost || (outWidth != windowsize.right) || (outHeight != windowsize.bottom)) {
+            if (lost || (integerScalingHeight != _height) || (lastWindowSize.right != windowsize.right) || (lastWindowSize.bottom != windowsize.bottom)) {
                 wait();
+                integerScalingHeight = _height;
                 if (!reset()) {
                     if (!init())
                         return false;
@@ -645,6 +656,14 @@ struct DVideo : Video, RenderThread {
 
         if(_width != inputWidth || _height != inputHeight) {
             resize( inputWidth = _width, inputHeight = _height );
+        }
+
+        if (_height != integerScalingHeight) {
+            integerScalingHeight = _height;
+            if (!reset()) {
+                if (!init())
+                    return false;
+            }
         }
 
         texture->GetSurfaceLevel(0, &surface);
@@ -790,7 +809,11 @@ struct DVideo : Video, RenderThread {
             RenderThread::enable(state);
 
             textureWidth = 0, textureHeight = 0;
-            init();
+			if (settings.exclusiveFullscreen)
+				reset(false);
+			else
+				init();
+			
             settings.threaded = state;
         }
     }
@@ -832,6 +855,113 @@ struct DVideo : Video, RenderThread {
         resizeMutex.unlock();
     }
 
+    auto setAspectCorrection(float width, float height, bool integerScaling) -> void {
+        wait();
+        settings.aspectWidth = width;
+        settings.aspectHeight = height;
+        settings.integerScaling = integerScaling;
+        integerScalingHeight = 0;
+
+        if (settings.handle)
+            init();
+    }
+
+    auto calcDimension() -> void {
+        lastWindowSize = getDimension( settings.handle );
+        outScreen = lastWindowSize;
+
+        bool integerScaling = settings.integerScaling;
+        int _height = integerScalingHeight;
+        outScreen.top = outScreen.left = 0;
+
+        if ((integerScalingHeight == 0) || (outScreen.bottom < integerScalingHeight))
+            integerScaling = false;
+
+        if (integerScaling) {
+            while (outScreen.bottom > _height)
+                _height += integerScalingHeight;
+
+            while (_height > outScreen.bottom)
+                _height -= integerScalingHeight;
+
+            outScreen.top = (outScreen.bottom - _height) / 2;
+            outScreen.bottom = _height;
+        }
+
+        if (settings.aspectWidth != 1.0) {
+            float _aspectWidth = settings.aspectWidth;
+            float _aspectHeight = settings.aspectHeight;
+
+            while(1) {
+                _height = outScreen.bottom;
+                int _width = (unsigned)(((float(_height) / _aspectHeight) * _aspectWidth) + 0.5);
+
+                if (_width > outScreen.right) {
+                    if (integerScaling) {
+                        _height = outScreen.bottom - integerScalingHeight;
+
+                        if (_height >= integerScalingHeight) {
+                            outScreen.top += (outScreen.bottom - _height) / 2;
+                            outScreen.bottom = _height;
+                            continue;
+                        }
+                    }
+
+                    _height = (unsigned)(((float(outScreen.right) / _aspectWidth) * _aspectHeight) + 0.5);
+                    outScreen.left = 0;
+                    outScreen.top += (outScreen.bottom - _height) / 2;
+                    outScreen.bottom = _height;
+
+                } else {
+                    outScreen.left = (outScreen.right - _width) / 2;
+                    outScreen.right = _width;
+                }
+
+                break;
+            }
+        }
+    }
+
+    auto setVRR(bool state, float speed = 0.0) -> void {
+        wait();
+        settings.vrr = state;
+
+        if (state) {
+            minimumCapTime = (1000000.0 / speed) + 0.5;
+            lastCapTime = Chronos::getTimestampInMicroseconds();
+        }
+    }
+
+    auto hasVRR() -> bool { return settings.vrr; }
+
+    auto waitVRR() -> void {
+
+        lastCapTime += minimumCapTime;
+        int64_t remaining  = lastCapTime - Chronos::getTimestampInMicroseconds();
+
+        if (remaining <= 0) {
+            lastCapTime = Chronos::getTimestampInMicroseconds();
+            return;
+        }
+
+        if (remaining >= 3000) {
+
+            remaining -= 1500;
+
+            unsigned sleepInMilli = (unsigned) ((float) remaining / 1000.0);
+
+            Sleep(sleepInMilli);
+
+            remaining = lastCapTime - Chronos::getTimestampInMicroseconds();
+        }
+
+        // we need exact frame pacing
+        while(remaining > 0) {
+            //std::this_thread::yield();
+            remaining = lastCapTime - Chronos::getTimestampInMicroseconds();
+        }
+    }
+
     DVideo() {
         lpD3DDevice = 0;
         lpD3D = 0;
@@ -849,6 +979,8 @@ struct DVideo : Video, RenderThread {
         settings.hintExclusiveFullscreen = false;
         settings.exclusiveFullscreen = false;
         settings.threaded = false;
+		settings.vrr = false;
+		settings.integerScaling = false;
 
 #include "../tools/fonts.c"
         DWORD nFonts;

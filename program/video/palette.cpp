@@ -186,7 +186,7 @@ auto PaletteManager::reorder(Emulator::Interface::Palette* palette) -> bool {
     if (palette->paletteColors.size() != getSize())
         return false;
     
-    unsigned paletteColors[getSize()];
+    unsigned* paletteColors = new unsigned[getSize()];
     
     for(auto color : palette->paletteColors) {
         
@@ -212,6 +212,8 @@ auto PaletteManager::reorder(Emulator::Interface::Palette* palette) -> bool {
         palette->paletteColors[i].name = getIdent(i);
         palette->paletteColors[i].updateChannels();
     }
+
+    delete[] paletteColors;
     
     return true;   
 }

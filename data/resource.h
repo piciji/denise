@@ -1,4 +1,6 @@
-        
+
+#define ID_ICON 2
+
 #define IDD_FILE_TEMPLATE    33000
 #define IDC_FRAME           1119
 #define IDC_LIST            1112
@@ -42,3 +44,5 @@
 #define ID_MENU			32034
 #define ID_EJECT	    32035
 #define ID_EDIT			32036
+#define ID_FAN			32037
+#define ID_HIDE			32038

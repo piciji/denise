@@ -24,7 +24,7 @@
 
 namespace LIBC64 {
 
-const std::string Interface::Version = "1121";
+const std::string Interface::Version = "1122";
     
 Interface::Interface() : Emulator::Interface( "C64" ) {        
     
@@ -904,6 +904,14 @@ auto Interface::ejectDisk(Media* media) -> void {
     iecBus->detach( media );
 }
 
+auto Interface::resetDrive(Media* media) -> void {
+    iecBus->resetDrive( media );
+}
+
+auto Interface::hideDrive(Media* media) -> void {
+    iecBus->hideDrive( media );
+}
+
 auto Interface::createDiskImage(unsigned typeId, bool hd, std::string name, bool ffs) -> Data {
 	
     return DiskStructure::create( (DiskStructure::Type) typeId, name );
@@ -1213,10 +1221,10 @@ auto Interface::loadstate(uint8_t* data, unsigned size) -> bool {
 	return system->unserialize( data, size );
 }
 
-auto Interface::setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> void {
+auto Interface::setFirmware(unsigned typeId, uint8_t* data, unsigned size, bool allowPatching) -> void {
 	if (typeId >= firmwares.size()) return;
     
-    system->setFirmware( typeId, data, size );
+    system->setFirmware( typeId, data, size, allowPatching );
 }
 
 auto Interface::getCharRom() -> Firmware* {

@@ -102,7 +102,6 @@ auto Program::initUserInterface() -> void {
 		GUIKIT::Application::loop = [this]() { loopUserInterface(); };
 		emuThread->enable( true );        
     }
-    videoDriver->setReshaping( !isRunning || !threadedEmu );
 }
 
 auto Program::addEmulators() -> void {
@@ -240,7 +239,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
             
             auto fSetting = FileSetting::getInstance( emulator, _underscore( media.name ) );
 
-            media.guid = uintptr_t(nullptr);
+            media.guid = (uintptr_t)(nullptr);
 
             if (!IPMode) {
                 GUIKIT::File *file = filePool->get(fSetting->path);
@@ -306,6 +305,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
 		view->setCursor( activeEmulator );
 		view->updateCartButtons( activeEmulator );
 
+        view->showSpeedMenu();
 		if (emulator->getModelValue( emulator->getModelIdOfEnabledDrives( emulator->getTapeMediaGroup() ) ) )
 			view->showTapeMenu( true );
 		// a few emulation units generate random values
@@ -314,13 +314,9 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
 
 		globalSettings->set("last_used_emu", activeEmulator->ident);
 
-		activeVideoManager->initFpsLimit();
-
         statusHandler->resetFrameCounter();
 
         view->updateSpeedLabels();
-            
-        videoDriver->setReshaping( !emuThread->enabled );
 	}
 	
 	activeEmulator->power();
@@ -372,13 +368,13 @@ auto Program::powerOff() -> void {
 	if (!cmd->noGui) {
         view->updatePauseCheck();
 		view->showTapeMenu( false );
+        view->showSpeedMenu( false );
         emuThread->clearEvents();
 		statusHandler->clear();
 		if (activeVideoManager)
 			activeVideoManager->powerOff();
 		videoDriver->clear();
         videoDriver->hintExclusiveFullscreen( false );
-        videoDriver->setReshaping( true );
 		audioDriver->clear();
 		audioManager->powerOff();
 		activeEmulator = nullptr;

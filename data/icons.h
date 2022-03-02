@@ -105,6 +105,8 @@ extern uint8_t ledGreen[247];
 
 extern uint8_t edit[526];
 
+extern uint8_t fan[1195];
+
 //extern uint8_t forwardStatus[455];
 extern uint8_t playPauseStatus[302];
 extern uint8_t forwardPauseStatus[405];
@@ -114,5 +116,7 @@ extern uint8_t recordPauseStatus[356];
 extern uint8_t eject[275];
 
 extern uint8_t menu[223];
+
+extern uint8_t hide[528];
 
 }

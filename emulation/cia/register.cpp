@@ -57,8 +57,8 @@ auto Base::read( unsigned pos ) -> uint8_t {
         case 0xf:						
 			return timer[T_B].control & 0xef;
 	}
-    
-    __builtin_unreachable(); 
+
+    __unreachable
 }
 
 auto Base::write( unsigned pos, uint8_t value ) -> void {

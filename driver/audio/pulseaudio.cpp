@@ -18,7 +18,9 @@ struct PulseAudio : public Audio {
         unsigned latency;
         unsigned minimumLatency;
         uintptr_t handle;        
-    } settings;    
+    } settings;
+
+    bool cleared;
     
 	auto synchronize(bool state) -> void {
 		settings.synchronize = state;
@@ -56,6 +58,8 @@ struct PulseAudio : public Audio {
                 break;
         }
     }
+
+    static auto stream_success_cb(pa_stream* s, int success, void* data) -> void {}
 
     static auto stream_state_cb(pa_stream* s, void* data) -> void {
         PulseAudio* pulse = (PulseAudio*)data;
@@ -122,6 +126,7 @@ struct PulseAudio : public Audio {
 
     auto init() -> bool {
         term();
+        cleared = false;
         
         const pa_buffer_attr* serverAttr = NULL;                
         pa_buffer_attr bufferAttr = {0};
@@ -200,8 +205,8 @@ struct PulseAudio : public Audio {
         return true;
     }
     
-    auto addSamples( const uint8_t* buffer, unsigned size) -> void {       
-
+    auto addSamples( const uint8_t* buffer, unsigned size) -> void {
+        cleared = false;
         pa_threaded_mainloop_lock( device.mainloop );
         
         while (size) {
@@ -225,6 +230,18 @@ struct PulseAudio : public Audio {
         }
 
         pa_threaded_mainloop_unlock( device.mainloop );
+    }
+
+    auto clear() -> void {
+        if (cleared) return;
+
+        pa_threaded_mainloop_lock(device.mainloop);
+        pa_stream_cork(device.stream, true, stream_success_cb, device.mainloop);
+        pa_stream_flush(device.stream, stream_success_cb, device.mainloop);
+        pa_stream_cork(device.stream, false, stream_success_cb, device.mainloop);
+        pa_threaded_mainloop_unlock( device.mainloop );
+
+        cleared = true;
     }
 
     auto writeAvailable() -> unsigned {

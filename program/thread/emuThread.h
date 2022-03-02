@@ -16,7 +16,6 @@ struct EmuThread {
     std::atomic<bool> finishAudioRecord;
     std::atomic<bool> pollHotkeys;
     std::atomic<bool> updatePaletteForSoftwareView;
-	std::atomic<bool> updateViewport;
     std::atomic<bool> updateBorder;
 
     std::atomic<bool> ready;
