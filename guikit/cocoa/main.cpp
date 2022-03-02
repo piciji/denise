@@ -722,7 +722,8 @@ auto pWindow::append(Menu& menu) -> void {
 
 auto pWindow::remove(Menu& menu) -> void {
     @autoreleasepool {
-        [[cocoaWindow menuBar] removeItem:menu.p.cocoaBase];
+        if (!menu.contextOnly())
+            [[cocoaWindow menuBar] removeItem:menu.p.cocoaBase];
         [[cocoaWindow menuBarContext] removeItem:menu.p.cocoaBaseContext];
     }
 }
