@@ -713,8 +713,9 @@ auto pWindow::append(Menu& menu) -> void {
     @autoreleasepool {
         if (disableIconsInTopMenu)
             [menu.p.cocoaBase setImage:nil];
-        
-        [[cocoaWindow menuBar] addItem:menu.p.cocoaBase];
+
+        if (!menu.contextOnly())
+            [[cocoaWindow menuBar] addItem:menu.p.cocoaBase];
         [[cocoaWindow menuBarContext] addItem:menu.p.cocoaBaseContext];
     }
 }

@@ -652,4 +652,4 @@ Threaded Emu tooltip =
 Toggle Cycle renderer = 
 resize aspect corrected =
 VRR =
-hide until reset =
+inactive until reset =

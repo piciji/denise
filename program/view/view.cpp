@@ -1159,6 +1159,7 @@ auto View::buildMenu() -> void {
 
     // speed menu
     speedControlMenu.setIcon( fanImage );
+    speedControlMenu.showContextOnly(true);
 
     fastForwardItem.onToggle = []() {
         emuThread->lock();
@@ -1265,9 +1266,9 @@ auto View::buildMenu() -> void {
         };
         diskControlMenu.menu.append( diskControlMenu.reset );
 
-        diskControlMenu.hide.setIcon( hideImage );
+        diskControlMenu.inactive.setIcon( hideImage );
 
-        diskControlMenu.hide.onActivate = [i]() {
+        diskControlMenu.inactive.onActivate = [i]() {
             auto emulator = activeEmulator;
 
             if (!activeEmulator)
@@ -1277,7 +1278,7 @@ auto View::buildMenu() -> void {
             emulator->hideDrive( emulator->getDisk(i) );
             emuThread->unlock();
         };
-        diskControlMenu.menu.append( diskControlMenu.hide );
+        diskControlMenu.menu.append( diskControlMenu.inactive );
 
         i++;
     }   
@@ -1453,7 +1454,7 @@ auto View::translate() -> void {
         diskControlMenu.insert.setText( trans->get("insert") );
         diskControlMenu.eject.setText( trans->get("eject") );
         diskControlMenu.reset.setText( trans->get("Hard Reset") );
-        diskControlMenu.hide.setText( trans->get("hide until reset") );
+        diskControlMenu.inactive.setText( trans->get("inactive until reset") );
     }
     
 	tapePlayItem.setText( trans->get("tape_play_key") );
@@ -1628,4 +1629,14 @@ auto View::isMaximumSpeed() -> bool {
     unsigned speedProfile = settings->get<unsigned>("speed_profile", 1, {0, (unsigned)speedItems.size() - 1});
 
     return speedProfile == (speedItems.size() - 2);
+}
+
+auto View::threadedRendererWasToggled(bool state) -> void {
+    bool vsync = globalSettings->get<bool>("video_sync", true);
+    bool vrr = globalSettings->get<bool>("vrr_sync", false);
+    bool adaptive = globalSettings->get<bool>("adaptive_sync", true);
+
+    view->adaptiveSyncItem.setEnabled(vsync && !state);
+    view->vrrItem.setEnabled(state || !(vsync && adaptive));
+    view->dynamicRateControl.setEnabled((vsync || vrr) && !state);
 }

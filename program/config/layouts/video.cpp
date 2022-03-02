@@ -230,13 +230,8 @@ VideoLayout::VideoLayout() {
         globalSettings->set("threaded_renderer", checked);
         VideoManager::setSynchronize();
         emuThread->unlock();
-        bool vsync = globalSettings->get<bool>("video_sync", true);
-        bool vrr = globalSettings->get<bool>("vrr_sync", false);
-        bool adaptive = globalSettings->get<bool>("adaptive_sync", true);
 
-        view->adaptiveSyncItem.setEnabled( vsync && !checked );
-        view->vrrItem.setEnabled( checked || !(vsync && adaptive) );
-        view->dynamicRateControl.setEnabled( (vsync || vrr) && !checked );
+        view->threadedRendererWasToggled(checked);
     };
 
     videoSettingsLayout.threadedRenderer.setChecked(globalSettings->get("threaded_renderer", false));

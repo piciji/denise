@@ -982,6 +982,8 @@ struct MenuBase : Base {
     auto setVisible(bool visible = true) -> void;
     auto setText(const std::string& text) -> void;
     auto setIcon(Image& icon) -> void;
+    auto parentMenu() -> Menu* { return state.parentMenu; }
+    auto parentWindow() -> Window* { return state.parentWindow; }
 
     struct {
         bool enabled = true;
@@ -1002,6 +1004,12 @@ struct Menu : MenuBase {
     auto append(MenuBase& item) -> void;
     auto remove(MenuBase& item) -> void;
     auto reset() -> void;
+    auto contextOnly() const -> bool { return state.contextOnly; }
+    auto showContextOnly(bool contextOnly) -> void;
+
+    struct {
+        bool contextOnly = false;
+    } state;
 
     std::vector<MenuBase*> childs;
     pMenu& p;

@@ -68,7 +68,7 @@ struct Hotkey {
         ToggleFastForward, ToggleFastForwardAggressive, Presentation, Palette, Border, System, Firmware, Control,
 		SwapInputDevices, Power, SoftReset, AnyLoad,
         RunAheadUp, RunAheadDown, RunAheadToggleMode, AudioRecord, ToggleCycleRenderer, EF3Menu, Freeze, ToggleBorder,
-        SyncStatus,
+        SyncStatus, ThreadedRenderer
     } id;
     std::string name;
 	bool share;
