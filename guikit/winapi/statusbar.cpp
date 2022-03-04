@@ -77,10 +77,10 @@ auto pStatusBar::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
 //            EndPaint(hwnd, &ps);
 //            return 1;
 //
-//        case WM_PAINT: {
-//            InvalidateRect(hwnd, NULL, false);
-//            break;
-//        }
+        case WM_PAINT: {
+            InvalidateRect(hwnd, NULL, false);
+            break;
+        }
 
         case WM_CONTEXTMENU:
             return 0;
@@ -321,8 +321,8 @@ auto pStatusBar::drawItem(WPARAM wparam, LPARAM lparam) -> void {
         else if ( !part.width )
             rect.left += 4;
 
-       // SetBkMode(hDC, TRANSPARENT);
-        SetBkColor(hDC, GetSysColor(COLOR_MENU));
+        SetBkMode(hDC, TRANSPARENT);
+       // SetBkColor(hDC, GetSysColor(COLOR_MENU));
         DrawText(hDC, utf16_t(part.text.c_str()), -1, &rect, DT_SINGLELINE | DT_NOCLIP | (part.alignRight ? DT_RIGHT : 0) );
     }
 }
