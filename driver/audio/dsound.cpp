@@ -84,7 +84,7 @@ struct DAudio : Audio {
 		void* output;
         
         while(size) {
-            unsigned stepSize = std::min( size, chunkSize - chunkPosition );
+            unsigned stepSize = std::min<unsigned>( size, chunkSize - chunkPosition );
 
             std::memcpy( chunkBuffer + chunkPosition, buffer, stepSize );
             
@@ -218,7 +218,7 @@ struct DAudio : Audio {
     }
 	
     auto setLatency(unsigned value) -> void {		
-        settings.latency = std::max(settings.minimumLatency, value);
+        settings.latency = std::max<unsigned>(settings.minimumLatency, value);
         if (settings.handle)
             init();        
     }

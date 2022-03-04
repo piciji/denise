@@ -90,7 +90,7 @@ struct XA_IDENT_CORE : XA_IDENT, public IXAudio2VoiceCallback {
     }
 	
     auto setLatency(unsigned value) -> void {		
-        settings.latency = std::max(settings.minimumLatency, value);
+        settings.latency = std::max<unsigned>(settings.minimumLatency, value);
         
         if (settings.handle)
             init();        
@@ -238,7 +238,7 @@ struct XA_IDENT_CORE : XA_IDENT, public IXAudio2VoiceCallback {
 
         while (size) {
             // fill up current chunk
-            unsigned stepSize = std::min( size, chunkSize - chunkPosition );
+            unsigned stepSize = std::min<unsigned>( size, chunkSize - chunkPosition );
 
             std::memcpy( circularBuffer + writeChunk * chunkSize + chunkPosition, buffer, stepSize );
 

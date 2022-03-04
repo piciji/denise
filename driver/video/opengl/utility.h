@@ -82,10 +82,11 @@ static auto _glCreateShader(GLuint program, GLuint type, const char* source, std
 	if(result == GL_FALSE) {		
 		GLint length = 0;
 		glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &length);
-		char text[length + 1];
+		char* text = new char[length + 1];
 		glGetShaderInfoLog(shader, length, &length, text);
 		text[length] = 0;
 		error += "\nshader compile error: " + (std::string)text;
+		delete[] text;
 		return 0;
 	}
 	glAttachShader(program, shader);
@@ -100,10 +101,11 @@ static auto _glLinkProgram(ShaderPass* pass, GLuint program, std::string& error)
 	if(result == GL_FALSE) {
 		GLint length = 0;
 		glGetProgramiv(program, GL_INFO_LOG_LENGTH, &length);
-		char text[length + 1];
+		char* text = new char[length + 1];
 		glGetProgramInfoLog(program, length, &length, text);
 		text[length] = 0;
 		error += "\nshader linker error: " + (std::string)text;
+		delete[] text;
 	}
     
     if (pass && !pass->external)
@@ -117,9 +119,10 @@ static auto _glLinkProgram(ShaderPass* pass, GLuint program, std::string& error)
 	if(result == GL_FALSE) {
 		GLint length = 0;
 		glGetProgramiv(program, GL_INFO_LOG_LENGTH, &length);
-		char text[length + 1];
+		char* text = new char[length + 1];
 		glGetProgramInfoLog(program, length, &length, text);
 		text[length] = 0;
 		error += "\nshader validation error: " + (std::string)text;
+		delete[] text;
 	}
 }

@@ -51,7 +51,7 @@ struct OpenAL : public Audio {
 	}
 
 	auto setLatency(unsigned value) -> void {
-		settings.latency = std::max(value, settings.minimumLatency);
+		settings.latency = std::max<unsigned>(value, settings.minimumLatency);
 		if (settings.handle) {
 			init();
 		}
@@ -201,7 +201,7 @@ struct OpenAL : public Audio {
 
 		while(size) {
 			
-			unsigned stepSize = std::min(chunkSize - chunkPosition, size);
+			unsigned stepSize = std::min<unsigned>(chunkSize - chunkPosition, size);
 			std::memcpy(chunkBuffer + chunkPosition, buffer, stepSize);
 			
 			buffer += stepSize;
@@ -261,7 +261,7 @@ struct OpenAL : public Audio {
         
         int halfSize = (int) (chunkSizeAll / 2);
 
-        int avail = std::max(0,  (int)(writeBuffer * chunkSize) - (int)chunkPosition);                
+        int avail = std::max<int>(0,  (int)(writeBuffer * chunkSize) - (int)chunkPosition);                
 
         int deltaMid = avail - halfSize;
  
