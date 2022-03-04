@@ -272,10 +272,12 @@ struct KeyBuffer {
         else 
             adr = screenAdr;        
 
-        for( int i = 0; i < buffer.size(); i++) {
-            
-            if (ram[adr + i] != (buffer[i] & 63) ) {
-                return Found::NotYet;
+        if (buffer.size()) {
+            for (int i = 0; i < buffer.size(); i++) {
+
+                if (ram[adr + i] != (buffer[i] & 63)) {
+                    return Found::NotYet;
+                }
             }
         }
 

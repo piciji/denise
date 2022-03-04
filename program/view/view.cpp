@@ -1453,7 +1453,7 @@ auto View::translate() -> void {
     for (auto& diskControlMenu : diskControlMenus) {
         diskControlMenu.insert.setText( trans->get("insert") );
         diskControlMenu.eject.setText( trans->get("eject") );
-        diskControlMenu.reset.setText( trans->get("Hard Reset") );
+        diskControlMenu.reset.setText( trans->get("Reset Floppy") );
         diskControlMenu.inactive.setText( trans->get("inactive until reset") );
     }
     

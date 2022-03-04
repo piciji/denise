@@ -614,6 +614,10 @@ auto Fileloader::autoload(Emulator::Interface* emulator, Emulator::Interface::Me
         forceStandardKernal = settings->get<bool>("autostart_tape_standard_kernal", false);
     }
 
+    auto useExpansion = emulator->getExpansion();
+    if (useTraps && (useExpansion && !useExpansion->isEmpty()))
+        useTraps = false;
+
     if (forceStandardKernal || useTraps) {
         FirmwareManager::getInstance( emulator )->insertDefault();
     }

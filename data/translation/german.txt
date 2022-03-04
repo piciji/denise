@@ -653,3 +653,4 @@ Toggle Cycle renderer = Zyklen/Scanline Renderer umschalten
 resize aspect corrected = fixe 4:3 Fenster Größe
 VRR = G-Sync/FreeSync (VRR)
 inactive until reset = Inaktiv bis Reset
+Reset Floppy = Reset Floppy

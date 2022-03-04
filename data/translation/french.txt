@@ -653,3 +653,4 @@ Toggle Cycle renderer =
 resize aspect corrected =
 VRR =
 inactive until reset =
+Reset Floppy =

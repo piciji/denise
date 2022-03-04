@@ -15,6 +15,7 @@
 #include "../drive/drive.h"
 #include "../../expansionPort/gameCart/warpSpeed.h"
 #include "../../expansionPort/gameCart/mach5.h"
+#include "../../expansionPort/gameCart/supergames.h"
 
 namespace LIBC64 {
     
@@ -434,7 +435,14 @@ auto DiskStructure::prepareKeyBufferActions( std::vector<uint8_t>& path, bool us
     action.buffer = path;
     system->keyBuffer->add( action );
 
-    if (!system->secondDriveCable.burstRequested && !dynamic_cast<Mach5*>(expansionPort)) {
+    if (dynamic_cast<SuperGames*>(expansionPort) && dynamic_cast<SuperGames*>(expansionPort)->mafiosino) {
+        action.mode = KeyBuffer::Mode::WaitFor;
+        action.buffer = {};
+        action.blinkingCursor = true;
+        action.delay = 0;
+        system->keyBuffer->add(action);
+
+    } else if (!system->secondDriveCable.burstRequested && !dynamic_cast<Mach5*>(expansionPort)) {
         if (!useTraps) {
             action.mode = KeyBuffer::Mode::WaitFor;
             action.buffer = {'S', 'E', 'A', 'R', 'C', 'H', 'I', 'N', 'G'};
@@ -451,6 +459,7 @@ auto DiskStructure::prepareKeyBufferActions( std::vector<uint8_t>& path, bool us
         action.blinkingCursor = false;
         system->keyBuffer->add(action);
     }
+
     action.callbackId = 4;
     action.mode = KeyBuffer::Mode::WaitFor;
     action.buffer = {'R', 'E', 'A', 'D', 'Y', '.'};

@@ -182,11 +182,14 @@ auto Autoloader::postProcessing() -> void {
         if (!useExpansion)
             program->removeExpansion();
 
-        if (forceStandardKernal) {
+        useExpansion = ddControl.emulator->getExpansion();
+        if (trapped && (useExpansion && !useExpansion->isEmpty()))
+            trapped = false;
+        else if (forceStandardKernal) {
             // temporary disable any speeders
             FirmwareManager::getInstance( ddControl.emulator )->insertDefault();
         }
-        
+
         if (mediaGroup->selected) {
             ddControl.emulator->selectListing(mediaGroup->selected, ddControl.selection, ddControl.fileName, trapped);
             fSetting = FileSetting::getInstance( ddControl.emulator, _underscore(mediaGroup->selected->name) );
