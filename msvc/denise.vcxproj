@@ -1,0 +1,1067 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\data\fonts.h" />
+    <ClInclude Include="..\data\icons.h" />
+    <ClInclude Include="..\data\logos.h" />
+    <ClInclude Include="..\data\resource.h" />
+    <ClInclude Include="..\driver\audio\xaudio2\header27.h" />
+    <ClInclude Include="..\driver\audio\xaudio2\header29.h" />
+    <ClInclude Include="..\driver\audio\xaudio2\xaudio2.h" />
+    <ClInclude Include="..\driver\audio\xaudio2\xaudio27.h" />
+    <ClInclude Include="..\driver\audio\xaudio2\xaudio28.h" />
+    <ClInclude Include="..\driver\audio\xaudio2\xaudio29.h" />
+    <ClInclude Include="..\driver\driver.h" />
+    <ClInclude Include="..\driver\input\dinput\dinput.h" />
+    <ClInclude Include="..\driver\input\dinput\v5.h" />
+    <ClInclude Include="..\driver\input\dinput\v7.h" />
+    <ClInclude Include="..\driver\input\dinput\v8.h" />
+    <ClInclude Include="..\driver\tools\chronos.h" />
+    <ClInclude Include="..\driver\tools\crc32.h" />
+    <ClInclude Include="..\driver\tools\font.h" />
+    <ClInclude Include="..\driver\tools\hid.h" />
+    <ClInclude Include="..\driver\tools\shaderpass.h" />
+    <ClInclude Include="..\driver\tools\threadPriority.h" />
+    <ClInclude Include="..\driver\tools\tools.h" />
+    <ClInclude Include="..\driver\tools\utf8.h" />
+    <ClInclude Include="..\driver\tools\win.h" />
+    <ClInclude Include="..\driver\video\opengl\bind.h" />
+    <ClInclude Include="..\driver\video\opengl\main.h" />
+    <ClInclude Include="..\driver\video\opengl\opengl.h" />
+    <ClInclude Include="..\driver\video\opengl\program.h" />
+    <ClInclude Include="..\driver\video\opengl\shaders.h" />
+    <ClInclude Include="..\driver\video\opengl\surface.h" />
+    <ClInclude Include="..\driver\video\opengl\text.h" />
+    <ClInclude Include="..\driver\video\opengl\utility.h" />
+    <ClInclude Include="..\driver\video\thread\renderThread.h" />
+    <ClInclude Include="..\emulation\cia\base.h" />
+    <ClInclude Include="..\emulation\cia\m6526.h" />
+    <ClInclude Include="..\emulation\cia\m8520.h" />
+    <ClInclude Include="..\emulation\interface.h" />
+    <ClInclude Include="..\emulation\libami\interface.h" />
+    <ClInclude Include="..\emulation\libc64\disk\cia\cia8520.h" />
+    <ClInclude Include="..\emulation\libc64\disk\cpu\m6502.h" />
+    <ClInclude Include="..\emulation\libc64\disk\drive\drive.h" />
+    <ClInclude Include="..\emulation\libc64\disk\iec.h" />
+    <ClInclude Include="..\emulation\libc64\disk\structure\structure.h" />
+    <ClInclude Include="..\emulation\libc64\disk\via\via.h" />
+    <ClInclude Include="..\emulation\libc64\disk\virtual\virtualDrive.h" />
+    <ClInclude Include="..\emulation\libc64\disk\wd177x\wd1770.h" />
+    <ClInclude Include="..\emulation\libc64\expansionPort\acia\acia.h" />
+    <ClInclude Include="..\emulation\libc64\expansionPort\cart\cart.h" />
+    <ClInclude Include="..\emulation\libc64\expansionPort\cart\freezeButton.h" />
+    <ClInclude Include="..\emulation\libc64\expansionPort\easyFlash\eapi-am29f040.h" />
+    <ClInclude Include="..\emulation\libc64\expansionPort\easyFlash\eapi-mx29640b.h" />
+    <ClInclude Include="..\emulation\libc64\expansionPort\easyFlash\easyFlash.h" />
+    <ClInclude Include="..\emulation\libc64\expansionPort\easyFlash\easyFlash3.h" />
+    <ClInclude Include="..\emulation\libc64\expansionPort\expansionPort.h" />
+    <ClInclude Include="..\emulation\libc64\expansionPort\fastloader\fastloader.h" />
+    <ClInclude Include="..\emulation\libc64\expansionPort\freezer\actionReplayMK2.h" />
+    <ClInclude Include="..\emulation\libc64\expansionPort\freezer\actionReplayMK3.h" />
+    <ClInclude Include="..\emulation\libc64\expansionPort\freezer\actionReplayMK4.h" />
+    <ClInclude Include="..\emulation\libc64\expansionPort\freezer\actionReplayV4.h" />
+    <ClInclude Include="..\emulation\libc64\expansionPort\freezer\atomicPower.h" />
+    <ClInclude Include="..\emulation\libc64\expansionPort\freezer\finalCartridge.h" />
+    <ClInclude Include="..\emulation\libc64\expansionPort\freezer\finalCartridge3.h" />
+    <ClInclude Include="..\emulation\libc64\expansionPort\freezer\finalCartridgePlus.h" />
+    <ClInclude Include="..\emulation\libc64\expansionPort\freezer\freezer.h" />
+    <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\cart16k.h" />
+    <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\funplay.h" />
+    <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\gameCart.h" />
+    <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\mach5.h" />
+    <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\magicDesk.h" />
+    <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\ocean.h" />
+    <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\pagefox.h" />
+    <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\ross.h" />
+    <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\simonsBasic.h" />
+    <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\supergames.h" />
+    <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\system3.h" />
+    <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\warpSpeed.h" />
+    <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\westermann.h" />
+    <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\zaxxon.h" />
+    <ClInclude Include="..\emulation\libc64\expansionPort\geoRam\geoRam.h" />
+    <ClInclude Include="..\emulation\libc64\expansionPort\gmod\gmod2.h" />
+    <ClInclude Include="..\emulation\libc64\expansionPort\retroReplay\retroReplay.h" />
+    <ClInclude Include="..\emulation\libc64\expansionPort\reu\reu.h" />
+    <ClInclude Include="..\emulation\libc64\input\controlPort\analogControl.h" />
+    <ClInclude Include="..\emulation\libc64\input\controlPort\controlPort.h" />
+    <ClInclude Include="..\emulation\libc64\input\controlPort\lightControl.h" />
+    <ClInclude Include="..\emulation\libc64\input\input.h" />
+    <ClInclude Include="..\emulation\libc64\input\keyboard.h" />
+    <ClInclude Include="..\emulation\libc64\interface.h" />
+    <ClInclude Include="..\emulation\libc64\m6510\m6510.h" />
+    <ClInclude Include="..\emulation\libc64\m6510\optable.h" />
+    <ClInclude Include="..\emulation\libc64\prg\prg.h" />
+    <ClInclude Include="..\emulation\libc64\sid\sid.h" />
+    <ClInclude Include="..\emulation\libc64\system\clipboard.h" />
+    <ClInclude Include="..\emulation\libc64\system\firmware.h" />
+    <ClInclude Include="..\emulation\libc64\system\gluelogic.h" />
+    <ClInclude Include="..\emulation\libc64\system\keyBuffer.h" />
+    <ClInclude Include="..\emulation\libc64\system\memory.h" />
+    <ClInclude Include="..\emulation\libc64\system\system.h" />
+    <ClInclude Include="..\emulation\libc64\system\testbench.h" />
+    <ClInclude Include="..\emulation\libc64\tape\tape.h" />
+    <ClInclude Include="..\emulation\libc64\traps\baseDevice.h" />
+    <ClInclude Include="..\emulation\libc64\traps\traps.h" />
+    <ClInclude Include="..\emulation\libc64\vicII\base.h" />
+    <ClInclude Include="..\emulation\libc64\vicII\fast\vicIIFast.h" />
+    <ClInclude Include="..\emulation\libc64\vicII\flags.h" />
+    <ClInclude Include="..\emulation\libc64\vicII\vicII.h" />
+    <ClInclude Include="..\emulation\tools\buffer.h" />
+    <ClInclude Include="..\emulation\tools\clamp.h" />
+    <ClInclude Include="..\emulation\tools\crc32.h" />
+    <ClInclude Include="..\emulation\tools\crop.h" />
+    <ClInclude Include="..\emulation\tools\dac.h" />
+    <ClInclude Include="..\emulation\tools\flash040.h" />
+    <ClInclude Include="..\emulation\tools\fpaq0.h" />
+    <ClInclude Include="..\emulation\tools\gcr.h" />
+    <ClInclude Include="..\emulation\tools\listing.h" />
+    <ClInclude Include="..\emulation\tools\m93c86.h" />
+    <ClInclude Include="..\emulation\tools\macros.h" />
+    <ClInclude Include="..\emulation\tools\mx29lv640eb.h" />
+    <ClInclude Include="..\emulation\tools\petcii.h" />
+    <ClInclude Include="..\emulation\tools\pia.h" />
+    <ClInclude Include="..\emulation\tools\powersupply.h" />
+    <ClInclude Include="..\emulation\tools\quadratureEncoder.h" />
+    <ClInclude Include="..\emulation\tools\rand.h" />
+    <ClInclude Include="..\emulation\tools\serializer.h" />
+    <ClInclude Include="..\emulation\tools\socket.h" />
+    <ClInclude Include="..\emulation\tools\splines.h" />
+    <ClInclude Include="..\emulation\tools\systimer.h" />
+    <ClInclude Include="..\guikit\api.h" />
+    <ClInclude Include="..\guikit\tools\crc32.h" />
+    <ClInclude Include="..\guikit\tools\decode\gzip.h" />
+    <ClInclude Include="..\guikit\tools\decode\inflate.h" />
+    <ClInclude Include="..\guikit\tools\decode\png.h" />
+    <ClInclude Include="..\guikit\tools\decode\zip.h" />
+    <ClInclude Include="..\guikit\tools\encode\png.h" />
+    <ClInclude Include="..\guikit\tools\file\chunk.h" />
+    <ClInclude Include="..\guikit\tools\file\tar.h" />
+    <ClInclude Include="..\guikit\winapi\dirent.h" />
+    <ClInclude Include="..\guikit\winapi\main.h" />
+    <ClInclude Include="..\program\audio\dsp\base.h" />
+    <ClInclude Include="..\program\audio\dsp\bass.h" />
+    <ClInclude Include="..\program\audio\dsp\data.h" />
+    <ClInclude Include="..\program\audio\dsp\panning.h" />
+    <ClInclude Include="..\program\audio\dsp\reverb.h" />
+    <ClInclude Include="..\program\audio\manager.h" />
+    <ClInclude Include="..\program\audio\mixer\drive.h" />
+    <ClInclude Include="..\program\audio\record\handler.h" />
+    <ClInclude Include="..\program\audio\record\wavWriter.h" />
+    <ClInclude Include="..\program\audio\resampler\cosine.h" />
+    <ClInclude Include="..\program\audio\resampler\cosinePrecise.h" />
+    <ClInclude Include="..\program\audio\resampler\cosineSSE.h" />
+    <ClInclude Include="..\program\audio\resampler\cubic.h" />
+    <ClInclude Include="..\program\audio\resampler\data.h" />
+    <ClInclude Include="..\program\audio\resampler\hermite.h" />
+    <ClInclude Include="..\program\audio\resampler\linear.h" />
+    <ClInclude Include="..\program\audio\resampler\sinc.h" />
+    <ClInclude Include="..\program\cmd\cmd.h" />
+    <ClInclude Include="..\program\config\archiveViewer.h" />
+    <ClInclude Include="..\program\config\config.h" />
+    <ClInclude Include="..\program\config\layouts\audio.h" />
+    <ClInclude Include="..\program\config\layouts\driver.h" />
+    <ClInclude Include="..\program\config\layouts\input.h" />
+    <ClInclude Include="..\program\config\layouts\settings.h" />
+    <ClInclude Include="..\program\config\layouts\video.h" />
+    <ClInclude Include="..\program\config\slider.h" />
+    <ClInclude Include="..\program\emuconfig\config.h" />
+    <ClInclude Include="..\program\emuconfig\layouts\audio.h" />
+    <ClInclude Include="..\program\emuconfig\layouts\border.h" />
+    <ClInclude Include="..\program\emuconfig\layouts\configurations.h" />
+    <ClInclude Include="..\program\emuconfig\layouts\firmware.h" />
+    <ClInclude Include="..\program\emuconfig\layouts\input.h" />
+    <ClInclude Include="..\program\emuconfig\layouts\misc.h" />
+    <ClInclude Include="..\program\emuconfig\layouts\model.h" />
+    <ClInclude Include="..\program\emuconfig\layouts\palette.h" />
+    <ClInclude Include="..\program\emuconfig\layouts\system.h" />
+    <ClInclude Include="..\program\emuconfig\layouts\video.h" />
+    <ClInclude Include="..\program\firmware\manager.h" />
+    <ClInclude Include="..\program\input\manager.h" />
+    <ClInclude Include="..\program\media\autoloader.h" />
+    <ClInclude Include="..\program\media\fileloader.h" />
+    <ClInclude Include="..\program\media\media.h" />
+    <ClInclude Include="..\program\program.h" />
+    <ClInclude Include="..\program\states\states.h" />
+    <ClInclude Include="..\program\thread\emuThread.h" />
+    <ClInclude Include="..\program\tools\chronos.h" />
+    <ClInclude Include="..\program\tools\circularBuffer.h" />
+    <ClInclude Include="..\program\tools\DiskFinder.h" />
+    <ClInclude Include="..\program\tools\filepool.h" />
+    <ClInclude Include="..\program\tools\filesetting.h" />
+    <ClInclude Include="..\program\tools\gaussianBlur.h" />
+    <ClInclude Include="..\program\tools\logger.h" />
+    <ClInclude Include="..\program\tools\mathVector.h" />
+    <ClInclude Include="..\program\tools\shortcuts.h" />
+    <ClInclude Include="..\program\tools\sincFirFilter.h" />
+    <ClInclude Include="..\program\video\manager.h" />
+    <ClInclude Include="..\program\video\palette.h" />
+    <ClInclude Include="..\program\video\shader.h" />
+    <ClInclude Include="..\program\view\message.h" />
+    <ClInclude Include="..\program\view\status.h" />
+    <ClInclude Include="..\program\view\view.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\data\fonts\fonts.cpp" />
+    <ClCompile Include="..\data\icons\icons.cpp" />
+    <ClCompile Include="..\data\icons\logos.cpp" />
+    <ClCompile Include="..\driver\audio\dsound.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\driver\audio\openal.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\driver\audio\wasapi.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\driver\audio\xaudio2\core.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\driver\audio\xaudio2\xaudio27.cpp" />
+    <ClCompile Include="..\driver\audio\xaudio2\xaudio28.cpp" />
+    <ClCompile Include="..\driver\audio\xaudio2\xaudio29.cpp" />
+    <ClCompile Include="..\driver\driver.cpp" />
+    <ClCompile Include="..\driver\input\dinput\core.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\driver\input\dinput\v5.cpp" />
+    <ClCompile Include="..\driver\input\dinput\v7.cpp" />
+    <ClCompile Include="..\driver\input\dinput\v8.cpp" />
+    <ClCompile Include="..\driver\input\rawinput\hid.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\driver\input\rawinput\joypad.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\driver\input\rawinput\keyboard.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\driver\input\rawinput\main.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\driver\input\rawinput\mouse.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\driver\input\rawinput\worker.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\driver\tools\fonts.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\driver\video\dvideo.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\driver\video\thread\renderThread.cpp" />
+    <ClCompile Include="..\driver\video\wgl.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\cia\base.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(Filename)_cia</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)_cia</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\emulation\cia\m6526.cpp" />
+    <ClCompile Include="..\emulation\cia\m8520.cpp" />
+    <ClCompile Include="..\emulation\cia\register.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\interface.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(Filename)_ami</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)_ami</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\disk\cpu\m6502.cpp" />
+    <ClCompile Include="..\emulation\libc64\disk\cpu\opcodes.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\disk\drive\drive.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)_disk</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(Filename)_file</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\disk\drive\mechanics.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\disk\drive\mechanicsG64.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\disk\drive\mechanicsP64.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\disk\drive\profdos.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\disk\drive\prologic.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\disk\drive\serialization.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\disk\drive\turbotrans.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\disk\iec.cpp" />
+    <ClCompile Include="..\emulation\libc64\disk\structure\dxx.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\disk\structure\gxx.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\disk\structure\prg.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\disk\structure\pxx.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\disk\structure\structure.cpp" />
+    <ClCompile Include="..\emulation\libc64\disk\via\register.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\disk\via\serialization.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\disk\via\via.cpp" />
+    <ClCompile Include="..\emulation\libc64\disk\virtual\virtualDrive.cpp" />
+    <ClCompile Include="..\emulation\libc64\disk\wd177x\wd1770.cpp" />
+    <ClCompile Include="..\emulation\libc64\expansionPort\acia\acia.cpp" />
+    <ClCompile Include="..\emulation\libc64\expansionPort\cart\cart.cpp" />
+    <ClCompile Include="..\emulation\libc64\expansionPort\easyFlash\easyFlash.cpp" />
+    <ClCompile Include="..\emulation\libc64\expansionPort\easyFlash\easyFlash3.cpp" />
+    <ClCompile Include="..\emulation\libc64\expansionPort\fastloader\fastloader.cpp" />
+    <ClCompile Include="..\emulation\libc64\expansionPort\freezer\freezer.cpp" />
+    <ClCompile Include="..\emulation\libc64\expansionPort\gameCart\gameCart.cpp" />
+    <ClCompile Include="..\emulation\libc64\expansionPort\geoRam\geoRam.cpp" />
+    <ClCompile Include="..\emulation\libc64\expansionPort\gmod\gmod2.cpp" />
+    <ClCompile Include="..\emulation\libc64\expansionPort\retroReplay\memoryHandler.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\expansionPort\retroReplay\retroReplay.cpp" />
+    <ClCompile Include="..\emulation\libc64\expansionPort\reu\reu.cpp" />
+    <ClCompile Include="..\emulation\libc64\input\controlPort\controlPort.cpp" />
+    <ClCompile Include="..\emulation\libc64\input\controlPort\GunStick.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\input\controlPort\InkwellLightpen.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\input\controlPort\joypad.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\input\controlPort\MagnumLightPhaser.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\input\controlPort\mouse1351.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\input\controlPort\mouseNeos.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\input\controlPort\paddles.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\input\controlPort\StackLightpen.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\input\controlPort\StackLightRifle.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\input\input.cpp" />
+    <ClCompile Include="..\emulation\libc64\interface.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)_c64</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(Filename)_c64</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\m6510\m6510.cpp" />
+    <ClCompile Include="..\emulation\libc64\m6510\opcodes.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\prg\prg.cpp" />
+    <ClCompile Include="..\emulation\libc64\sid\clone.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\sid\envelope.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\sid\filter\build.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\sid\filter\chamberlin.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\sid\filter\external.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\sid\filter\main.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\sid\filter\opamp.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\sid\multisid.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\sid\register.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\sid\serialization.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\sid\sid.cpp" />
+    <ClCompile Include="..\emulation\libc64\sid\tables.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\sid\voice.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\system\clipboard.cpp" />
+    <ClCompile Include="..\emulation\libc64\system\expansion.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\system\firmware.cpp" />
+    <ClCompile Include="..\emulation\libc64\system\map.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\system\serialization.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\system\system.cpp" />
+    <ClCompile Include="..\emulation\libc64\tape\counter.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\tape\fetch.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\tape\serialization.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\tape\tape.cpp" />
+    <ClCompile Include="..\emulation\libc64\tape\write.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\traps\traps.cpp" />
+    <ClCompile Include="..\emulation\libc64\vicII\base.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)_vic</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\vicII\colorWheel.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\vicII\cycleTable.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\vicII\dma.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\vicII\fast\register.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\vicII\fast\scanline.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\vicII\fast\serialization.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\vicII\fast\silence.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\vicII\fast\vicIIFast.cpp" />
+    <ClCompile Include="..\emulation\libc64\vicII\fetch.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\vicII\register.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\vicII\sequencer.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\vicII\serialization.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\vicII\silence.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\vicII\verticalLineAnomaly.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\vicII\vicII.cpp" />
+    <ClCompile Include="..\emulation\tools\fpaq0.cpp" />
+    <ClCompile Include="..\emulation\tools\m93c86.cpp" />
+    <ClCompile Include="..\emulation\tools\mx29lv640eb.cpp" />
+    <ClCompile Include="..\emulation\tools\pia.cpp" />
+    <ClCompile Include="..\emulation\tools\socket.cpp" />
+    <ClCompile Include="..\guikit\api.cpp" />
+    <ClCompile Include="..\guikit\tools\file\file.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\guikit\tools\image.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\guikit\tools\layout.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\guikit\tools\setting.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\guikit\tools\string.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\guikit\tools\translate.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\guikit\tools\utf8.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\browserWindow.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\clipboard.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\display.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\main.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\menu.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\messageWindow.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\statusbar.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\tools.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\widgets\button.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\widgets\checkbox.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\widgets\checkbutton.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\widgets\combobutton.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\widgets\frame.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\widgets\hyperlink.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\widgets\imageView.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\widgets\label.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\widgets\lineedit.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\widgets\listview.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\widgets\multilineedit.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\widgets\progressbar.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\widgets\radiobox.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\widgets\slider.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\widgets\squareCanvas.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\widgets\stepbutton.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\widgets\tabframe.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\widgets\treeview.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\widgets\viewport.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\widgets\widget.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\program\audio.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\program\audio\dsp\bass.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\program\audio\dsp\panning.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\program\audio\dsp\reverb.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\program\audio\manager.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(Filename)_audio</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)_audio</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\program\audio\mixer\drive.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(Filename)_mixer</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)_mixer</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\program\audio\record\handler.cpp" />
+    <ClCompile Include="..\program\audio\record\wavWriter.cpp" />
+    <ClCompile Include="..\program\audio\resampler\cosine.cpp" />
+    <ClCompile Include="..\program\audio\resampler\cosinePrecise.cpp" />
+    <ClCompile Include="..\program\audio\resampler\cosineSSE.cpp" />
+    <ClCompile Include="..\program\audio\resampler\cubic.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\program\audio\resampler\hermite.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\program\audio\resampler\linear.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\program\audio\resampler\sinc.cpp" />
+    <ClCompile Include="..\program\cmd\cmd.cpp" />
+    <ClCompile Include="..\program\config\archiveViewer.cpp" />
+    <ClCompile Include="..\program\config\config.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(Filename)_config</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)_config</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\program\config\layouts\audio.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\program\config\layouts\input.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\program\config\layouts\settings.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\program\config\layouts\video.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\program\emuconfig\config.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(Filename)_emuconfig</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)_emuconfig</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\program\emuconfig\layouts\audio.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\program\emuconfig\layouts\border.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\program\emuconfig\layouts\configurations.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\program\emuconfig\layouts\firmware.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\program\emuconfig\layouts\input.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\program\emuconfig\layouts\misc.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\program\emuconfig\layouts\model.cpp" />
+    <ClCompile Include="..\program\emuconfig\layouts\palette.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\program\emuconfig\layouts\system.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\program\emuconfig\layouts\video.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\program\files.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\program\firmware\manager.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(Filename)_firmware</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)_firmware</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\program\input.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\program\input\capture.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\program\input\global.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\program\input\hotkeys.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\program\input\layout.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\program\input\manager.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(Filename)_input</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)_input</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\program\input\mapping.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\program\media\autoloader.cpp" />
+    <ClCompile Include="..\program\media\fileloader.cpp" />
+    <ClCompile Include="..\program\media\layout.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\program\media\media.cpp" />
+    <ClCompile Include="..\program\media\swapper.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\program\program.cpp" />
+    <ClCompile Include="..\program\states\states.cpp" />
+    <ClCompile Include="..\program\thread\emuThread.cpp" />
+    <ClCompile Include="..\program\video.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\program\video\manager.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(Filename)_video</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)_video</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\program\video\mask.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\program\video\palette.cpp" />
+    <ClCompile Include="..\program\video\props.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\program\video\shader.cpp" />
+    <ClCompile Include="..\program\video\sync.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\program\view\placeholder.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\program\view\status.cpp" />
+    <ClCompile Include="..\program\view\view.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\emulation\libc64\sid\filter\circuit" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="..\data\resource.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Manifest Include="..\data\denise.Manifest" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>16.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{28ba1fef-7c30-4d0f-8452-fc61fff29406}</ProjectGuid>
+    <RootNamespace>denise</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0.19041.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\out\</OutDir>
+    <IncludePath>$(VC_IncludePath);$(WindowsSdk_71A_IncludePath);$(DXSDK_DIR)include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSdk_71A_LibraryPath_x64);$(DXSDK_DIR)Lib\$(PlatformTarget);$(LibraryPath);</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <IncludePath>$(VC_IncludePath);$(WindowsSdk_71A_IncludePath);$(DXSDK_DIR)include;$(IncludePath);</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSdk_71A_LibraryPath_x64);$(DXSDK_DIR)Lib\$(PlatformTarget);$(LibraryPath);</LibraryPath>
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\out\</OutDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>DRV_FREETYPE;DRV_WGL;DRV_OPENAL;DRV_XAUDIO27;DRV_XAUDIO28;DRV_XAUDIO29;DRV_WASAPI;DRV_RAWINPUT;DRV_DINPUT5;DRV_DINPUT7;DRV_DINPUT8;DRV_DSOUND;DRV_DIRECT3D;GUIKIT_WINAPI;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>false</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <Optimization>Disabled</Optimization>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <OmitFramePointers>false</OmitFramePointers>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
+      <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>freetype.lib;opengl32.lib;openal32.lib;Xaudio2.lib;ksuser.lib; uuid.lib;avrt.lib;dinput8.lib;dxguid.lib;dsound.lib;d3d9.lib;d3dx9.lib;dwmapi.lib;winmm.lib;shlwapi.lib;msimg32.lib;uxtheme.lib;comctl32.lib;ws2_32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <PostBuildEvent>
+      <Command>xcopy "$(ProjectDir)..\data\translation\*.*" "$(TargetDir)translation\" /e /y /i /r
+xcopy "$(ProjectDir)..\data\img\bundle\*.*" "$(TargetDir)img\" /e /y /i /r
+xcopy "$(ProjectDir)..\data\data\*.*" "$(TargetDir)data\" /e /y /i /r
+xcopy "$(ProjectDir)..\data\shader\*.*" "$(TargetDir)shader\" /e /y /i /r
+xcopy "$(ProjectDir)..\data\sounds\*.*" "$(TargetDir)sounds\" /e /y /i /r
+xcopy "$(ProjectDir)..\data\libs\shared\win64\*.dll" "$(TargetDir)" /e /y /i /r</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>DRV_FREETYPE;DRV_WGL;DRV_OPENAL;DRV_XAUDIO27;DRV_XAUDIO28;DRV_XAUDIO29;DRV_WASAPI;DRV_RAWINPUT;DRV_DINPUT5;DRV_DINPUT7;DRV_DINPUT8;DRV_DSOUND;DRV_DIRECT3D;GUIKIT_WINAPI;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>false</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <OmitFramePointers>true</OmitFramePointers>
+      <EnableFiberSafeOptimizations>false</EnableFiberSafeOptimizations>
+      <Optimization>Full</Optimization>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>freetype.lib;opengl32.lib;openal32.lib;Xaudio2.lib;ksuser.lib; uuid.lib;avrt.lib;dinput8.lib;dxguid.lib;dsound.lib;d3d9.lib;d3dx9.lib;dwmapi.lib;winmm.lib;shlwapi.lib;msimg32.lib;uxtheme.lib;comctl32.lib;ws2_32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalOptions>/ENTRY:"mainCRTStartup" %(AdditionalOptions)</AdditionalOptions>
+    </Link>
+    <PostBuildEvent>
+      <Command>xcopy "$(ProjectDir)..\data\translation\*.*" "$(TargetDir)translation\" /e /y /i /r
+xcopy "$(ProjectDir)..\data\img\bundle\*.*" "$(TargetDir)img\" /e /y /i /r
+xcopy "$(ProjectDir)..\data\data\*.*" "$(TargetDir)data\" /e /y /i /r
+xcopy "$(ProjectDir)..\data\shader\*.*" "$(TargetDir)shader\" /e /y /i /r
+xcopy "$(ProjectDir)..\data\sounds\*.*" "$(TargetDir)sounds\" /e /y /i /r
+xcopy "$(ProjectDir)..\data\libs\shared\win64\*.dll" "$(TargetDir)" /e /y /i /r</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
