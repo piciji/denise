@@ -90,8 +90,8 @@ auto VicIIFast::clock() -> void {
         if (vCounter == vStart) {
             updateBorderData();
             visibleLine = true;
-            if (lineCallback.finishVblank)
-                system->VicVblankCallback();
+            //if (lineCallback.finishVblank)
+              //  system->VicVblankCallback();
             
         } else if (lineVCounter == vHeight) {
             visibleLine = false;

@@ -962,6 +962,13 @@ struct DVideo : Video, RenderThread {
         }
     }
 
+//    auto freeContext() -> void {
+//        if (lockedBuffer) {
+//            lockedBuffer->sharedMutex.unlock();
+//            lockedBuffer = nullptr;
+//        }
+//    }
+
     DVideo() {
         lpD3DDevice = 0;
         lpD3D = 0;

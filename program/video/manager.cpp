@@ -673,10 +673,14 @@ template<typename T> auto VideoManager::renderFrame(const T* src, unsigned width
 		
 	} else if (crtThreaded) {
 		if (!videoDriver->lock(gpuData, gpuPitch, width, scanlines ? (height << 1) : height ))
-            return renderCrtThreadedBlank(width, height, src, srcPitch, gpuData, gpuPitch - width);
-		
-		return renderCrtThreaded(width, height, src, srcPitch, gpuData, gpuPitch - width);
-	} else {
+            renderCrtThreadedBlank(width, height, src, srcPitch, gpuData, gpuPitch - width);
+		else
+		    renderCrtThreaded(width, height, src, srcPitch, gpuData, gpuPitch - width);
+
+     //   if (!waitForCrtRenderer(1))
+       //     return;
+
+    } else {
 		if (!videoDriver->lock(gpuData, gpuPitch, width, scanlines ? (height << 1) : height))
 			return;
 		
@@ -782,7 +786,7 @@ auto VideoManager::enableCrtThread( bool state) -> void {
     if (workerCreated == state)
         return;
 
-    for( unsigned t = 0; t < 2; t++ ) {
+    for( unsigned t = 0; t < 1; t++ ) {
         Render* re = &render[t];
 
         if (state) {
@@ -850,10 +854,12 @@ auto VideoManager::waitForCrtRenderer() -> void {
 
 auto VideoManager::waitForCrtRenderer(uint8_t pos) -> bool {
 
-	Render* re = &render[pos];
+    if (pos == 0) {
+        Render* re = &render[pos];
 
-	while (re->ready.load())
-		std::this_thread::yield();
+        while (re->ready.load())
+            std::this_thread::yield();
+    }
 
     return frameRenderPos == 0;
 }
@@ -952,7 +958,7 @@ auto VideoManager::useLineGlitch() -> bool {
 }
 
 template<typename T> auto VideoManager::renderCrtThreadedBlank(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch ) -> void {
-    static unsigned scaler = (3.0 / 4.0) * 256.0;
+    static unsigned scaler = (2.0 / 3.0) * 256.0;
     Render* re = &render[0];
 
     while (re->ready.load())
@@ -986,7 +992,7 @@ template<typename T> auto VideoManager::renderCrtThreadedBlank(unsigned width, u
 }
 
 template<typename T> auto VideoManager::renderCrtThreaded(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch ) -> void {			    
-    static unsigned scaler = (3.0 / 4.0) * 256.0;
+    static unsigned scaler = (2.0 / 3.0) * 256.0;
 	Render* re = &render[0];
 	Render* re1 = &render[1];
 	
@@ -1020,8 +1026,13 @@ template<typename T> auto VideoManager::renderCrtThreaded(unsigned width, unsign
 		
 		re1->oddLine = re->oddLine;		
 		
-        re1->ready.store(1);
-        re1->cv.notify_one();
+      //  re1->ready.store(1);
+      //  re1->cv.notify_one();
+
+        if (use16BitSrc)
+            renderCrtSelection<uint16_t>( re1 );
+        else
+            renderCrtSelection<uint8_t>( re1 );
 	}
     
     emulator->setLineCallback( true, cropTop + heightFirstHalfScreen );
@@ -1284,7 +1295,7 @@ auto VideoManager::convertYIQToRGB(ColorRgb* dest, ColorLumaChroma* src) -> void
 	dest->b = src->y - 1.089 * src->u_i + 1.677 * src->v_q;
 }
 
-auto VideoManager::unlockDriver() -> void {
+auto VideoManager::unlockDriver() -> void {return;
     if (!activeVideoManager)
         return;
 

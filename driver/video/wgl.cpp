@@ -376,6 +376,10 @@ struct WGL : Video, OpenGL, RenderThread {
     }
 
     auto freeContext() -> void {
+//        if (lockedBuffer) {
+//            lockedBuffer->sharedMutex.unlock();
+//            lockedBuffer = nullptr;
+//        }
         clearCurrent();
     }
 };
