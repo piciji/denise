@@ -44,7 +44,16 @@ struct SettingsLayout : GUIKIT::FramedVerticalLayout {
 
     GUIKIT::CheckBox startWithLastConfigCheckbox;
     GUIKIT::ListView listView;
-    
+
+    struct FolderType : GUIKIT::HorizontalLayout {
+        GUIKIT::Label location;
+        GUIKIT::RadioBox home;
+        GUIKIT::RadioBox emu;
+        GUIKIT::RadioBox own;
+
+        FolderType();
+    } folderType;
+
     SettingsLayout();
 };
 
@@ -150,7 +159,6 @@ struct ConfigurationsLayout : GUIKIT::HorizontalLayout {
 	}; 
     
     auto translate() -> void;
-    auto getSettingsFolder( bool createFolder = false ) -> std::string;
     auto updateSettingsList() -> void;
     auto updateSaveIdent( std::string fileName ) -> void;
     auto splitFile( std::string file, unsigned& pos ) -> std::string;

@@ -78,8 +78,10 @@ struct Program : Emulator::Interface::Bind {
     auto saveSettings(bool onExit = false) -> void;
     auto loadSettings() -> void;
     auto settingsFile( std::string ident = "" ) -> std::string;
+    auto settingsFileFromEmuFolder( std::string ident ) -> std::string;
     auto getSettings( Emulator::Interface* emulator = nullptr ) -> GUIKIT::Settings*;
     auto forceSavingSomeGlobalSettings() -> void;
+    auto getCustomSettingsFolder( Emulator::Interface* emulator, bool createFolder = false ) -> std::string;
     auto initEmulator( Emulator::Interface* emulator ) -> void;
     auto setMemoryPattern( Emulator::Interface* emulator ) -> void;
 

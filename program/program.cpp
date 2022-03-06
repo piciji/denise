@@ -544,7 +544,11 @@ auto Program::fontFolder() -> std::string {
 auto Program::settingsFile( std::string ident ) -> std::string {
 
 	return GUIKIT::System::getUserDataFolder(appFolder()) + ident + SETTINGS_FILE;
-} 
+}
+
+auto Program::settingsFileFromEmuFolder( std::string ident ) -> std::string {
+    return GUIKIT::System::getResourceFolder(appFolder()) + "settings/" + ident + SETTINGS_FILE;
+}
 
 auto Program::shaderFolder() -> std::string {
     return GUIKIT::System::getResourceFolder(appFolder()) + SHADER_FOLDER;
