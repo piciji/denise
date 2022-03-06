@@ -262,7 +262,7 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             statusHandler->setMessage(_str, 6);
         } break;
         case Hotkey::Id::ThreadedRenderer: {
-            bool checked = globalSettings->get("threaded_renderer", false);
+            bool checked = globalSettings->get("threaded_renderer", true);
             checked ^= 1;
 
             globalSettings->set("threaded_renderer", checked);

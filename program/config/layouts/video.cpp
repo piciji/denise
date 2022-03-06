@@ -232,7 +232,7 @@ VideoLayout::VideoLayout() {
         view->threadedRendererWasToggled(checked);
     };
 
-    videoSettingsLayout.threadedRenderer.setChecked(globalSettings->get("threaded_renderer", false));
+    videoSettingsLayout.threadedRenderer.setChecked(globalSettings->get("threaded_renderer", true));
     
     std::function<bool (PathsLayout::Block*, const std::string&, const std::string&)> selectPath;
 	

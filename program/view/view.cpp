@@ -181,7 +181,7 @@ auto View::build() -> void {
 	};
 	
 	GUIKIT::BrowserWindow::onCall = []() {
-        if (!globalSettings->get<bool>("threaded_emu", false) || !globalSettings->get("threaded_renderer", false))
+        if (!globalSettings->get<bool>("threaded_emu", false) || !globalSettings->get("threaded_renderer", true))
 		    audioDriver->clear();
 	};
 
@@ -253,7 +253,7 @@ auto View::build() -> void {
         
 		if (videoDriver && fullscreenSetting.inUse
 			&& globalSettings->get<bool>("threaded_emu", false)
-			&& globalSettings->get<bool>("threaded_renderer", false))
+			&& globalSettings->get<bool>("threaded_renderer", true))
             videoDriver->forceResize();
 		
 		else if (!requestFullscreenSwitch && !fullScreen()) {
@@ -957,13 +957,13 @@ auto View::buildMenu() -> void {
         VideoManager::setSynchronize();
         statusHandler->resetFrameCounter();
         emuThread->unlock();
-        bool threadedRenderer = globalSettings->get("threaded_renderer", false);
+        bool threadedRenderer = globalSettings->get("threaded_renderer", true);
 
         adaptiveSyncItem.setEnabled( videoSyncItem.checked() && !threadedRenderer );
         dynamicRateControl.setEnabled( (videoSyncItem.checked() || vrrItem.checked()) && !threadedRenderer );
         vrrItem.setEnabled( threadedRenderer || !(videoSyncItem.checked() && adaptiveSyncItem.checked()) );
     };
-    bool threadedRenderer = globalSettings->get("threaded_renderer", false);
+    bool threadedRenderer = globalSettings->get("threaded_renderer", true);
     bool vsync = globalSettings->get<bool>("video_sync", true);
     bool vrr = globalSettings->get<bool>("vrr_sync", false);
     bool adaptive = globalSettings->get<bool>("adaptive_sync", true);
@@ -982,7 +982,7 @@ auto View::buildMenu() -> void {
         VideoManager::setSynchronize();
         emuThread->unlock();
         //statusHandler->resetFrameCounter();
-        bool threadedRenderer = globalSettings->get("threaded_renderer", false);
+        bool threadedRenderer = globalSettings->get("threaded_renderer", true);
         vrrItem.setEnabled( threadedRenderer || !(videoSyncItem.checked() && adaptiveSyncItem.checked()) );
     };
     if ( adaptive )
@@ -997,7 +997,7 @@ auto View::buildMenu() -> void {
         emuThread->lock();
         VideoManager::setSynchronize();
         emuThread->unlock();
-        bool threadedRenderer = globalSettings->get("threaded_renderer", false);
+        bool threadedRenderer = globalSettings->get("threaded_renderer", true);
         dynamicRateControl.setEnabled( (videoSyncItem.checked() || vrrItem.checked()) && !threadedRenderer );
     };
     if ( vrr ) vrrItem.setChecked();

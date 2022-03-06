@@ -6,7 +6,7 @@
 
 auto VideoManager::setSynchronize() -> void {
     bool vsync = globalSettings->get<bool>("video_sync", true);
-    bool threadedRenderer = globalSettings->get("threaded_renderer", false);
+    bool threadedRenderer = globalSettings->get("threaded_renderer", true);
     bool adaptive = globalSettings->get<bool>("adaptive_sync", true);
     bool vrr = globalSettings->get<bool>("vrr_sync", false);
 
@@ -18,9 +18,8 @@ auto VideoManager::setSynchronize() -> void {
 
     if (audioDriver->hasSynchronized()) {
         if (vsync && adaptive) {
-            float monitorFrequency = GUIKIT::Monitor::getCurrentRefreshRate();
-
             if (!threadedRenderer) {
+                float monitorFrequency = GUIKIT::Monitor::getCurrentRefreshRate();
                 vrr = false;
                 float ratio = (float)audioManager->inputFPS / monitorFrequency;
                 float intpart;
