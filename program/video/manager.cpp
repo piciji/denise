@@ -786,8 +786,13 @@ auto VideoManager::enableCrtThread( bool state) -> void {
     if (workerCreated == state)
         return;
 
-    for( unsigned t = 0; t < 1; t++ ) {
+    for( unsigned t = 0; t < 2; t++ ) {
         Render* re = &render[t];
+        re->dest = nullptr;
+        re->kill = false;
+
+        if (t == 1)
+            continue;
 
         if (state) {
             while (re->kill) {
