@@ -52,7 +52,6 @@ struct VicIIBase {
 	struct {
 		bool use;
 		unsigned line;
-		bool finishVblank;
 	} lineCallback;
 
 	struct {

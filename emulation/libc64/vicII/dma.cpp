@@ -129,9 +129,7 @@ inline auto VicIICycle::advanceCycle() -> void {
             // can not display the whole non blanking area.
             // cropping is done later and not within Vic emulation
             visibleLine = true; // non v-blank
-          //  if (lineCallback.finishVblank)
-            //    system->VicVblankCallback();
-            			
+
         } else if ( lineVCounter == vHeight ) {
             visibleLine = false; // v-blank
             

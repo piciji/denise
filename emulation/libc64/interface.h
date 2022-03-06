@@ -177,7 +177,6 @@ struct Interface : Emulator::Interface {
     auto getChroma(uint8_t index) -> double; 
     
     auto setLineCallback(bool state, unsigned scanline = 0) -> void;
-    auto setFinishVblankCallback(bool state) -> void;
     
     auto setMemory(MemoryType* memoryType, unsigned memoryId) -> void;
     auto setMemoryInitParams(uint8_t value, unsigned invertEvery, unsigned randomPatternLength, unsigned repeatRandomPattern, unsigned randomChance) -> void;

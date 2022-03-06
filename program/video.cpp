@@ -67,14 +67,6 @@ auto Program::getVideoDriver() -> std::string {
 	return DRIVER::Video::preferred();
 }
 
-auto Program::finishVBlank() -> void {
-    
-    if (!activeVideoManager->waitForCrtRenderer(1))
-        return;
-
-    videoDriver->unlockAndRedraw();
-}
-
 auto Program::midScreenCallback() -> void {
 
     activeVideoManager->renderMidScreen();

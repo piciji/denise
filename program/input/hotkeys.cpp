@@ -262,7 +262,6 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             statusHandler->setMessage(_str, 6);
         } break;
         case Hotkey::Id::ThreadedRenderer: {
-            VideoManager::unlockDriver();
             bool checked = globalSettings->get("threaded_renderer", false);
             checked ^= 1;
 

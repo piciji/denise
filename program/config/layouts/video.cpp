@@ -122,8 +122,7 @@ VideoLayout::VideoLayout() {
             auto vManager = VideoManager::getInstance(emulator);
             vManager->shader.loadExternal();
 		}
-		
-        VideoManager::unlockDriver();
+
 		view->updateShader();
         program->initVideo();
         videoDriver->hintExclusiveFullscreen( false );
@@ -226,7 +225,6 @@ VideoLayout::VideoLayout() {
 
     videoSettingsLayout.threadedRenderer.onToggle = [](bool checked) {
         emuThread->lock();
-        VideoManager::unlockDriver();
         globalSettings->set("threaded_renderer", checked);
         VideoManager::setSynchronize();
         emuThread->unlock();

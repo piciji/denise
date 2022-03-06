@@ -207,7 +207,6 @@ struct System {
 	auto setVicIrq( bool state ) -> void;
 	auto setVicRdy(bool state) -> void;
 	auto VicMidScreenCallback() -> void;
-	auto VicVblankCallback() -> void;
 
 	auto pasteText( std::string buffer ) -> void;
     auto copyText( ) -> std::string;

@@ -357,9 +357,6 @@ auto View::switchFullScreen(bool fullScreen, bool forceUnacquire) -> void {
     if (!fullScreen && videoDriver)
         videoDriver->disableExclusiveFullscreen();
 
-    if (activeVideoManager)
-        activeVideoManager->unlockDriver();
-
     GUIKIT::Window::setFullScreen(fullScreen);
     displayChangeTimer.setEnabled();
 }

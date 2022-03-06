@@ -1569,12 +1569,6 @@ auto Interface::setLineCallback(bool state, unsigned scanline) -> void {
 
 }
 
-auto Interface::setFinishVblankCallback(bool state) -> void {
-    
-    vicIIFast->lineCallback.finishVblank = state;
-    vicIICycle->lineCallback.finishVblank = state;
-}
-
 auto Interface::setMemory(MemoryType* memoryType, unsigned memoryId) -> void {
     
     for( auto& expansion : expansions ) {
