@@ -391,7 +391,7 @@ struct GLX : public Video, OpenGL, RenderThread {
 #endif
 
         if (useVRR) {
-            if (settings.hardSync) glFinish();
+            glFinish();
             waitVRR();
             glXSwapBuffers(display, glxwindow);
         } else {
@@ -439,7 +439,7 @@ struct GLX : public Video, OpenGL, RenderThread {
         screenText.showText(outputWidth, outputHeight, -0.01, 0.01, OpenGLText::ALIGN_RIGHT | OpenGLText::VALIGN_BOTTOM);
 #endif
         if (useVRR) {
-            if (settings.hardSync) glFinish();
+            glFinish();
             waitVRR();
             glXSwapBuffers(display, glxwindow);
         } else {
