@@ -448,7 +448,7 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
             if (program->loadImageDataWhenOk(file, fSetting->id, mediaGroup, data)) {
 
                 filePool->assign( _ident(emulator, block->media->name + "store"), file);
-                if (activeEmulator != emulator)
+                if (mediaGroup->selected || (activeEmulator != emulator))
                     emulator->insertMedium(block->media, data, file->archiveDataSize( fSetting->id ));
 
                 block->listings = emulator->getListing( block->media, settings->get<bool>("autostart_load_with_column", false) );

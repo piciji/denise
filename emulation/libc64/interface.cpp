@@ -1171,7 +1171,7 @@ auto Interface::ejectProgram(Media* media) -> void {
 
 auto Interface::getLoadedProgram(unsigned& size) -> uint8_t* {
 	
-	return system->prgInUse->getMemory( size );
+	return Prg::getMemory( size );
 }
 
 auto Interface::getProgramListing(Media* media) -> std::vector<Emulator::Interface::Listing> {

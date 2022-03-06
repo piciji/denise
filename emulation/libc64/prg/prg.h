@@ -36,7 +36,7 @@ struct Prg {
 	auto set( uint8_t* data, unsigned size ) -> void;    
     auto serialize(Emulator::Serializer& s) -> void;
 	auto inject( ) -> void;	
-	auto getMemory(unsigned& prgSize) -> uint8_t*;	
+	static auto getMemory(unsigned& prgSize) -> uint8_t*;
 	auto createListing() -> void;	
 	auto getListing() -> std::vector<Emulator::Interface::Listing>;	
 	auto prepareT64( ) -> void;	

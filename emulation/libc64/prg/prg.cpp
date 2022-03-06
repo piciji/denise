@@ -68,6 +68,7 @@ auto Prg::set( uint8_t* data, unsigned size ) -> void {
         preparePrg();										
 }
 
+// deprecated, because of state file generation before a prg injection are suppressed
 auto Prg::serialize(Emulator::Serializer& s) -> void {
 
     int chunkId = useChunk ? useChunk->id : -1;
