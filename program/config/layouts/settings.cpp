@@ -128,7 +128,6 @@ SettingsLayout::SettingsLayout() {
     switches.threadedEmu.onToggle = [](bool checked) {
         globalSettings->set<bool>("threaded_emu", checked);
         configView->videoLayout->updateDriverPropsVisibility();
-        VideoManager::unlockDriver();
         program->hintExclusiveFullscreen();
         program->initUserInterface();
     };

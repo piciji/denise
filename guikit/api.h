@@ -381,7 +381,7 @@ struct Widget : Sizable {
     auto setEnabled(bool enabled = true) -> void;
     auto setVisible(bool visible = true) -> void;
     // "special font" hint is only handled in listviews at the moment.
-    // in this case vertical spacing in completly removed.
+    // in this case vertical spacing is completly removed.
     auto setFont(const std::string& font, bool specialFont = false) -> void;
     auto minimumSize() -> Size;
     auto setGeometry(Geometry geometry) -> void; //use this to control geometry manually for widgets without layout, layouts set widget geometry automatically

@@ -416,7 +416,7 @@ auto DiskStructure::selectListing( std::string fileName, bool useTraps ) -> void
     prepareKeyBufferActions( petcii, useTraps );
 }
 
-auto DiskStructure::selectListing(  unsigned pos, bool useTraps ) -> void {
+auto DiskStructure::selectListing( unsigned pos, bool useTraps ) -> void {
 
     std::vector<uint8_t> path;
     if (pos < listings.size())

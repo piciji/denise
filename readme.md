@@ -22,10 +22,13 @@ Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trade
     * allows Vsync for non standard refresh rates, which prevents tearing
 * added option for adaptive sync
     * automatically selects the best sync option for requested emulation speed
-* fixed scrolling for Linux and macOS (it's smooth again)
+* fixed jerky scrolling for Linux and macOS (it's smooth again)
 * added option to change the size of the window in the correct aspect ratio
 * added option to emulate in a separate thread besides UI (experimental)
     * don't block audio/video when browsing file dialog or moving window
+* fix support for VRR displays (G-Sync/FreeSync)
+    * disable VSync, enable VRR
+* using revision 1/2 kernals when selecting old VIC's
      
 
 ## 1.1.2

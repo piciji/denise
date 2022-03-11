@@ -138,7 +138,6 @@ struct Program : Emulator::Interface::Bind {
     auto setVideoFilter() -> void;   
 	auto updateCrop( Emulator::Interface* emulator ) -> void;
     auto setPalette( Emulator::Interface* emulator ) -> void;
-    auto finishVBlank() -> void override;
     auto midScreenCallback() -> void override;
     auto toggleFastForward(bool aggressive) -> void;
     auto fastForward( bool activate, bool aggressive = false ) -> void;

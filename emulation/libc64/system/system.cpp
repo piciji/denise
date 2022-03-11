@@ -900,11 +900,6 @@ auto System::VicMidScreenCallback() -> void {
     interface->midScreenCallback();
 }
 
-auto System::VicVblankCallback() -> void {
-    if (!runAhead.pos)
-        interface->finishVBlank();
-}
-
 auto System::pasteText( std::string buffer ) -> void {
     keyBuffer->paste( buffer );
 }

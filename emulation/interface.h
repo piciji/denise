@@ -312,7 +312,6 @@ struct Interface {
         virtual auto updateDeviceState(Media*, bool, unsigned, bool, bool ) -> void {}
         virtual auto log(std::string, bool) -> void {} //for debugging
         virtual auto exit( int code ) -> void {}
-        virtual auto finishVBlank() -> void {}
         virtual auto midScreenCallback( ) -> void {}
         virtual auto questionToWrite(Media*) -> bool { return false; }
         virtual auto informDriveLoading(bool) -> void {}
@@ -346,10 +345,6 @@ struct Interface {
 	
 	auto videoRefresh8(const uint8_t* frame, unsigned width, unsigned height, unsigned linePitch) -> void {
         bind->videoRefresh8(frame, width, height, linePitch);
-    }
-    
-    auto finishVBlank() -> void {
-        bind->finishVBlank();
     }
     
     auto midScreenCallback() -> void {
@@ -531,7 +526,6 @@ struct Interface {
     
     //sets alternative per line callbacks
     virtual auto setLineCallback(bool state, unsigned scanline = 0) -> void {}
-    virtual auto setFinishVblankCallback(bool state) -> void {}
 
     virtual auto fastForward(unsigned config) -> void {}
 	virtual auto getForward() -> unsigned { return 0; }
