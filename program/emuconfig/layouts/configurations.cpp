@@ -106,6 +106,17 @@ SettingsLayout::Active::Active() {
     setAlignment(0.5);
 }
 
+SettingsLayout::FolderType::FolderType() {
+    append(location,{0u, 0u}, 10);
+    append(home,{0u, 0u}, 10);
+    append(emu,{0u, 0u}, 10);
+    append(own,{0u, 0u});
+
+    setAlignment(0.5);
+
+    GUIKIT::RadioBox::setGroup(home, emu, own);
+}
+
 SettingsLayout::SettingsLayout() {
     setPadding(10);
     setFont(GUIKIT::Font::system("bold"));
@@ -115,7 +126,8 @@ SettingsLayout::SettingsLayout() {
     append(control, {~0u, 0u}, 5);
     append(active, {~0u, 0u}, 5);
     append(startWithLastConfigCheckbox,{~0u, 0u}, 5);
-    append(listView, {~0u, ~0u});
+    append(listView, {~0u, ~0u}, 5);
+    append(folderType, {0u, 0u});
 }
 
 ConfigurationsFolderLayout::ConfigurationsFolderLayout() {
@@ -334,11 +346,11 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
 
         std::string fileName = _list.text(selection, 0);
 
-        std::string path = getSettingsFolder() + fileName;
+        std::string path = program->getCustomSettingsFolder(emulator) + fileName;
 
         emuThread->lock();
         if (this->load( path )) {
-            globalSettings->set<std::string>(emulator->ident + "_custom_settings", path);
+            globalSettings->set<std::string>(emulator->ident + "_custom_settings", fileName);
             settings.active.fileLabel.setText( fileName );
         }
         emuThread->unlock();
@@ -346,20 +358,22 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
     
     settings.control.save.onActivate = [this]() {
         auto& _list = settings.listView;
-        std::string path;
+        std::string fileName;
         
         if (!_list.selected()) {
-            path = globalSettings->get<std::string>(emulator->ident + "_custom_settings", "");
-            if (path == "")
+            fileName = globalSettings->get<std::string>(emulator->ident + "_custom_settings", "");
+            if (fileName == "")
                 return;
+            // remove absolute path (deprecated)
+            fileName = GUIKIT::String::getFileName(fileName);
 
         } else {
             unsigned selection = _list.selection();
 
-            std::string fileName = _list.text( selection, 0 );
-
-            path = getSettingsFolder() + fileName;
+            fileName = _list.text( selection, 0 );
         }
+
+        std::string path = program->getCustomSettingsFolder(emulator, true) + fileName;
 
         GUIKIT::File file(path);
 
@@ -381,7 +395,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         if (fileName == "")
             fileName = trans->get("alternate settings");
         
-        std::string path = getSettingsFolder( true ) + fileName;
+        std::string path = program->getCustomSettingsFolder(emulator, true) + fileName;
         
         GUIKIT::File file( path );
         
@@ -392,7 +406,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
 
         if (_settings->save( path)) {
             mes->information( trans->get("file_creation_success", {{"%path%", path}}) );
-            globalSettings->set(emulator->ident + "_custom_settings", path);
+            globalSettings->set(emulator->ident + "_custom_settings", fileName);
             settings.active.fileLabel.setText( fileName );
             updateSettingsList();
             
@@ -407,8 +421,10 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
             return;
         
         unsigned selection = _list.selection();
+
+        std::string fileName = _list.text( selection, 0 );
                 
-        std::string path = getSettingsFolder() + _list.text( selection, 0 );
+        std::string path = program->getCustomSettingsFolder(emulator) + fileName;
         
         GUIKIT::File file( path );
 
@@ -423,7 +439,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
             mes->error( trans->get("file deletion error", {{"%path%", path}}) );
         else {
 			
-			if (path == globalSettings->get<std::string>(emulator->ident + "_custom_settings", "")) {
+			if (fileName == globalSettings->get<std::string>(emulator->ident + "_custom_settings", "")) {
                 globalSettings->set<std::string>(emulator->ident + "_custom_settings", "");
 				
 				path = program->settingsFile(this->emulator->ident + "_");
@@ -458,21 +474,53 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         
         updateSettingsList();
     };
-    
-    settingsFolder.standard.onActivate = [this]() {
-        
+
+    settingsFolder.remove( settingsFolder.standard );
+
+    settings.folderType.home.onActivate = [this]() {
         if (globalSettings->get<std::string>(emulator->ident + "_custom_settings", "") != "")
             settings.active.standardButton.onActivate();
-                
-        settingsFolder.pathEdit.setText( "" );                
-        
-        globalSettings->set<std::string>( emulator->ident + "_settings_path", "" );
-        
+
+        globalSettings->set<unsigned>( emulator->ident + "_settings_folder_mode", 0 );
+
+        settingsFolder.setEnabled(false);
         updateSettingsList();
     };
-    
-    settingsFolder.pathEdit.setText( globalSettings->get<std::string>( emulator->ident + "_settings_path", "" ) );
 
+    settings.folderType.emu.onActivate = [this]() {
+        if (globalSettings->get<std::string>(emulator->ident + "_custom_settings", "") != "")
+            settings.active.standardButton.onActivate();
+
+        globalSettings->set<unsigned>( emulator->ident + "_settings_folder_mode", 1 );
+
+        settingsFolder.setEnabled(false);
+        updateSettingsList();
+    };
+
+    settings.folderType.own.onActivate = [this]() {
+        if (globalSettings->get<std::string>(emulator->ident + "_custom_settings", "") != "")
+            settings.active.standardButton.onActivate();
+
+        globalSettings->set<unsigned>( emulator->ident + "_settings_folder_mode", 2 );
+
+        settingsFolder.setEnabled(true);
+        updateSettingsList();
+    };
+
+    std::string _settingsPath = globalSettings->get<std::string>( emulator->ident + "_settings_path", "" );
+    unsigned floderMode = globalSettings->get<unsigned>( emulator->ident + "_settings_folder_mode", _settingsPath == "" ? 0 : 2 );
+
+    switch(floderMode) {
+        case 0: settings.folderType.home.setChecked(); break;
+        case 1: settings.folderType.emu.setChecked(); break;
+        case 2: settings.folderType.own.setChecked(); break;
+    }
+
+    if (floderMode != 2) {
+        settingsFolder.setEnabled(false);
+    }
+
+    settingsFolder.pathEdit.setText( _settingsPath );
 
     if (!settings.startWithLastConfigCheckbox.checked())
         settings.active.fileLabel.setText(trans->get("default"));
@@ -606,7 +654,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
 auto ConfigurationsLayout::updateSettingsList() -> void {    
     settings.listView.reset();
     
-    auto infos = GUIKIT::File::getFolderList( getSettingsFolder() );
+    auto infos = GUIKIT::File::getFolderList( program->getCustomSettingsFolder( emulator ) );
     
     std::vector<SettingLine> lines;
 
@@ -617,24 +665,6 @@ auto ConfigurationsLayout::updateSettingsList() -> void {
 
     for (auto& line : lines)
         settings.listView.append( {line.fileName, line.date} );    
-}            
-            
-auto ConfigurationsLayout::getSettingsFolder( bool createFolder ) -> std::string {
-    
-    auto path = globalSettings->get<std::string>( emulator->ident + "_settings_path", "");
-
-    if (path.empty()) {
-        std::string _emuIdent = emulator->ident;
-        path = program->appFolder() + "/settings/" + GUIKIT::String::toLowerCase(_emuIdent);
-        std::string basePath = GUIKIT::System::getUserDataFolder( );
-        
-        if (createFolder)
-            GUIKIT::File::createDir( path, basePath );
-        
-        path = basePath + path;
-    }
-    
-    return GUIKIT::File::beautifyPath(path);
 }
 
 auto ConfigurationsLayout::load( std::string path ) -> bool {
@@ -832,6 +862,11 @@ auto ConfigurationsLayout::translate() -> void {
     settings.active.standardButton.setText( trans->get("default") );
     settings.listView.setHeaderText({trans->get("file"), trans->get("date")});
     settings.startWithLastConfigCheckbox.setText( trans->get("Start with last loaded Settings") );
+
+    settings.folderType.location.setText( trans->get("save location", {}, true) );
+    settings.folderType.home.setText( trans->get("home folder") );
+    settings.folderType.emu.setText( trans->get("emu folder") );
+    settings.folderType.own.setText( trans->get("own folder") );
     
     stateFolder.label.setText( trans->get("folder", {}, true) );
     stateFolder.standard.setText( trans->get("default") );

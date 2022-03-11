@@ -417,6 +417,7 @@ auto SettingsLayout::translate() -> void {
 	switches.pause.setText(trans->get("pause_focus_loss"));
     switches.autostartDragnDrop.setText(trans->get("autostart_dragndrop"));
     switches.saveSettingsOnExit.setText(trans->get("save_changes_on_exit"));
+    switches.saveSettingsOnExit.setTooltip(trans->get("save changes on exit tooltip"));
     switches.openFullscreen.setText(trans->get("open_fullscreen"));
     switches.alternateSoftwarePreview.setText(trans->get("alternate software preview"));
     switches.questionMediaWrite.setText(trans->get("confirm writes"));
