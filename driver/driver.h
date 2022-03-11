@@ -79,7 +79,7 @@ struct Audio {
     virtual auto expectFloatingPoint() -> bool { return true; }
     virtual auto getMinimumLatency() -> unsigned { return 1; }
     virtual auto setHighPriority(bool state) -> void {}
-	virtual auto hasSynchronized() -> bool { return false; }
+	virtual auto hasSynchronized() -> bool { return true; }
 
     virtual ~Audio() = default;
     static auto create(const std::string& driver) -> Audio*;
