@@ -441,6 +441,8 @@ struct Interface {
     virtual auto controlTape(Media* media, TapeMode mode) -> void {}
     virtual auto getTapeControl(Media* media) -> TapeMode { return TapeMode::Unpressed; }
 	virtual auto createTapeImage(unsigned& imageSize) -> uint8_t* { return nullptr; }
+    virtual auto getTapeListing(Media* media) -> std::vector<Listing> { return {}; }
+    virtual auto getTapePreview(uint8_t* data, unsigned size, Media* media = nullptr) -> std::vector<Listing> { return {}; }
     virtual auto selectTapeListing(Media* media, unsigned pos) -> void { }
     // expansion handling
     virtual auto insertExpansionImage(Media* media, uint8_t* data, unsigned size) -> void {}
@@ -598,7 +600,8 @@ struct Interface {
         switch(media->group->type) {
 			case MediaGroup::Type::Disk:
                 return getDiskListing( media, alternateLoad );
-			case MediaGroup::Type::Tape: break;
+			case MediaGroup::Type::Tape:
+                return getTapeListing( media );
 			case MediaGroup::Type::Program:
                 return getProgramListing( media );
 			case MediaGroup::Type::Expansion: break;

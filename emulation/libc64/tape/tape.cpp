@@ -12,7 +12,7 @@ namespace LIBC64 {
     
 Tape* tape = nullptr;
 
-Tape::Tape( Emulator::Interface::Media* mediaConnected ) {
+Tape::Tape( Emulator::Interface::Media* mediaConnected ) : structure(this) {
     
     media = nullptr;
 	this->mediaConnected = mediaConnected;
@@ -218,7 +218,7 @@ auto Tape::reset(bool fromLoad) -> void {
 	fetchPos = 0;
 	fetchSize = 0;
 	motorIn = false;
-	pos = 0x14;
+	curPos = 0x14;
 	mode = Mode::Stop;
 	nextMode = Mode::Stop;
 	writeBit = true;	
@@ -232,8 +232,8 @@ auto Tape::load(Emulator::Interface::Media* media, uint8_t* data, unsigned size)
     this->media = media;
 	unload();
 	
-	this->data = data;
-    this->size = size;
+	this->rawData = data;
+    this->rawSize = size;
     
     if (!readHeader()) {
 		loaded = false;
@@ -243,7 +243,7 @@ auto Tape::load(Emulator::Interface::Media* media, uint8_t* data, unsigned size)
 	loaded = true;
 
 	cyclesTotal = 0;
-	pos = 0x14;
+	curPos = 0x14;
 	directionForward = lastDirectionForward = true;
 	mode = nextMode = Mode::Stop;
 
@@ -255,7 +255,9 @@ auto Tape::load(Emulator::Interface::Media* media, uint8_t* data, unsigned size)
 			break;
 
 		cyclesTotal += gaps;
-	}			
+	}
+
+    structure.setData( rawData, rawSize );
 	
 	reset(true);
 }
@@ -264,8 +266,8 @@ auto Tape::unload() -> void {
     setMode( Mode::Stop );
 	writeBuffer();
 	
-	this->size = 0;
-	this->data = 0;
+	this->rawSize = 0;
+	this->rawData = nullptr;
 	loaded = false;
 	motorIn = false;
     writeQuestionState = 0;
@@ -274,13 +276,13 @@ auto Tape::unload() -> void {
 
 auto Tape::readHeader() -> bool {
 	
-	if (size < 21)
+	if (rawSize < 21)
 		return false;
 	
 	uint8_t* header;
 	
-	if (data)		
-		header = data;
+	if (rawData)
+		header = rawData;
 	
 	else {		
 		header = new uint8_t[20];
@@ -294,7 +296,7 @@ auto Tape::readHeader() -> bool {
 			
 	version = header[0xc];
 	
-	if (!data)
+	if (!rawData)
 		delete[] header;
 			
 	return true;
@@ -308,8 +310,16 @@ auto Tape::setWobble(bool state) -> void {
 	wobble = state;
 }
 
+auto Tape::getListing() -> std::vector<Emulator::Interface::Listing>& {
+
+    return structure.getListing();
+}
+
 auto Tape::selectListing( unsigned pos ) -> void {
-    // at the moment only position at 0 possible
+    if (pos > 0) {
+        curPos = structure.getFilePosition(pos);
+        fetchPos = 0;
+    }
 
     KeyBuffer::Action action;
     action.mode = KeyBuffer::Mode::Input;

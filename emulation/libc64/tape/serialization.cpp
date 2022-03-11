@@ -30,7 +30,7 @@ auto Tape::serialize(Emulator::Serializer& s) -> void {
     s.integer( version );
     s.integer( fetchPos );
     s.integer( fetchSize );
-    s.integer( pos );
+    s.integer( curPos );
     s.integer( writeProtect );
     s.integer( writeQuestionState );
     s.integer( autoStarted );

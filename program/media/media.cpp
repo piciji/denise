@@ -982,7 +982,7 @@ auto MediaLayout::showC64Listing( MediaGroupLayout* layout ) -> bool {
     
     auto mediaGroup = layout->mediaGroup;
     
-    if ( mediaGroup->isDisk() || mediaGroup->isProgram())
+    if ( mediaGroup->isDrive() || mediaGroup->isProgram())
         return true;
         
     return false;

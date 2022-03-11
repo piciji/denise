@@ -23,7 +23,7 @@ auto Tape::writeIn(bool bit) -> void {
 	if (!writeBit)
 		return;    
     
-	if (!loaded || data || !motorIn || mode != Mode::Record)
+	if (!loaded || rawData || !motorIn || mode != Mode::Record)
 		return;
 	
 	unsigned cyclesElapsed = sysTimer.fallBackCycles( writeClock );
@@ -77,11 +77,11 @@ auto Tape::addByteToWriteBuffer(uint8_t byte) -> void {
 }
 
 auto Tape::writeBuffer() -> void {
-	if (data || (writePos == 0) )
+	if (rawData || (writePos == 0) )
 		return;
 	
-	unsigned writeSize = write(writeData, writePos, pos );
-	pos += writeSize;
+	unsigned writeSize = write(writeData, writePos, curPos );
+    curPos += writeSize;
 		
 	if (writeSize != writePos) {
         writePos = 0;
@@ -90,13 +90,13 @@ auto Tape::writeBuffer() -> void {
 	
 	writePos = 0;
 	
-	if (pos <= size)
+	if (curPos <= rawSize)
 		return;
 	// file has increased
-	size = pos;
+    rawSize = curPos;
 	// write new file size to header
 	uint8_t entry[4];
-	uint32_t hSize = size - 20;
+	uint32_t hSize = rawSize - 20;
 	
 	entry[0] = hSize & 0xff;
 	entry[1] = (hSize >> 8) & 0xff;

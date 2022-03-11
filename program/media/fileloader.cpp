@@ -471,6 +471,14 @@ auto Fileloader::previewFile( std::string filePath, Emulator::Interface* emulato
                     }
                 }
 
+                if (mediaGroup.isTape()) {
+                    if ( GUIKIT::Vector::find( mediaGroup.suffix, extension ) ) {
+                        listings = emulator->getTapePreview(data, file.archiveDataSize(0), media);
+                        group = &mediaGroup;
+                        break;
+                    }
+                }
+
                 if (mediaGroup.isProgram()) {
                     if ( GUIKIT::Vector::find( mediaGroup.suffix, extension ) ) {
                         listings = emulator->getProgramPreview(data, file.archiveDataSize(0));
@@ -744,7 +752,7 @@ auto Fileloader::showC64Listing( Emulator::Interface* emulator, Emulator::Interf
     if ( !dynamic_cast<LIBC64::Interface*>(emulator) )
         return false;
 
-    if ( mediaGroup->isDisk() || mediaGroup->isProgram())
+    if ( mediaGroup->isDrive() || mediaGroup->isProgram())
         return true;
 
     return false;

@@ -43,7 +43,7 @@ struct C64Listing {
 		return out;
     }
     
-    auto buildListing( uint8_t* namePtr, unsigned size, uint8_t type ) -> std::vector<uint8_t> {
+    auto buildListing( uint8_t* namePtr, unsigned size, uint8_t type, bool turboTape = false ) -> std::vector<uint8_t> {
         loader.clear();
 		std::vector<uint8_t> out;		
 		bool a0Found = false;
@@ -77,7 +77,7 @@ struct C64Listing {
                 out.push_back(decodeToScreencode(0x20));
         }
         
-        appendType( out, type );
+        appendType( out, type, turboTape );
         
         prependBlockSize( out, size, 5 );
 		
@@ -109,9 +109,11 @@ struct C64Listing {
 			target.insert( target.begin(), *(str.c_str() + i) );		
 	}
     
-    auto appendType(std::vector<uint8_t>& target, uint8_t type) -> void {
-        
-        if (type & 0x80)
+    auto appendType(std::vector<uint8_t>& target, uint8_t type, bool turboTape) -> void {
+
+        if (turboTape)
+            target.push_back( decodeToScreencode( 'T' ) );
+        else if (type & 0x80)
             target.push_back( 0x20 );
         else
             target.push_back( decodeToScreencode( 42 ) );

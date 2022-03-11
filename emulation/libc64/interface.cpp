@@ -3,6 +3,7 @@
 #include "system/system.h"
 #include "prg/prg.h"
 #include "tape/tape.h"
+#include "tape/structure.h"
 #include "sid/sid.h"
 #include "vicII/fast/vicIIFast.h"
 #include "vicII/vicII.h"
@@ -995,6 +996,20 @@ auto Interface::getTapeControl(Media* media) -> TapeMode {
         return TapeMode::Stop;
     
     return (TapeMode)tape->getMode();
+}
+
+auto Interface::getTapeListing(Media* media) -> std::vector<Emulator::Interface::Listing> {
+    if (!media || !media->group->isTape())
+        return {};
+
+    return tape->getListing();
+}
+
+auto Interface::getTapePreview(uint8_t* data, unsigned size, Media* media) -> std::vector<Emulator::Interface::Listing> {
+    TapeStructure structure(tape);
+    structure.setData( data, size );
+
+    return structure.getListing();
 }
 
 auto Interface::selectTapeListing(Media* media, unsigned pos) -> void {
