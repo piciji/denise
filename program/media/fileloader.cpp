@@ -79,7 +79,7 @@ auto Fileloader::load(Emulator::Interface* emulator, Emulator::Interface::Media*
         return this->insertFile(emulator, media, filePath, 1, selection);
     }, IDC_BUTTON );
 
-    if (!*alternateFileDialog && group->isDisk() && dynamic_cast<LIBC64::Interface*>(emulator) ) {
+    if (!*alternateFileDialog && group->isDrive() && dynamic_cast<LIBC64::Interface*>(emulator) ) {
         fileDialogPtr->addCustomButton( trans->get("VDT Autostart"), [this, emulator, media](std::string filePath, unsigned selection) {
 
             if (filePath.empty())

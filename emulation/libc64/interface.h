@@ -107,7 +107,7 @@ struct Interface : Emulator::Interface {
     auto getTapeControl(Media* media) -> TapeMode;
     auto getTapeListing(Media* media) -> std::vector<Emulator::Interface::Listing>;
     auto getTapePreview(uint8_t* data, unsigned size, Media* media = nullptr) -> std::vector<Emulator::Interface::Listing>;
-    auto selectTapeListing(Media* media, unsigned pos) -> void;
+    auto selectTapeListing(Media* media, unsigned pos, bool useTraps = false) -> void;
 
 	//expansion handling
 	auto insertExpansionImage(Media* media, uint8_t* data, unsigned size) -> void;

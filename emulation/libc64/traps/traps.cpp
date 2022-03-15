@@ -2,6 +2,7 @@
 #include "traps.h"
 #include "../system/system.h"
 #include "../disk/iec.h"
+#include "../tape/tape.h"
 
 #define FILE_CLOSED           0
 #define FILE_AWAITING_NAME    1
@@ -22,14 +23,32 @@ auto Traps::add(Trap trap) -> void {
     trapList.push_back( trap );
 }
 
-auto Traps::install() -> void {
+auto Traps::installSerial() -> void {
     installed = trapList.size() > 0;
 
-    for(auto& trap : trapList)
+    for(auto& trap : trapList) {
+        if(trap.name.find("Serial") == std::string::npos)
+            continue;
+
         if (!install(trap)) {
             installed = false;
             break;
         }
+    }
+}
+
+auto Traps::installTape() -> void {
+    installed = trapList.size() > 0;
+
+    for(auto& trap : trapList) {
+        if(trap.name.find("Tape") == std::string::npos)
+            continue;
+
+        if (!install(trap)) {
+            installed = false;
+            break;
+        }
+    }
 }
 
 auto Traps::install(Trap& t) -> bool {
@@ -208,6 +227,63 @@ auto Traps::ready() -> void {
     cpu->flagN = 0;
     cpu->flagZ = 0;
     cpu->regP &= ~4; // int off
+}
+
+auto Traps::tapeFindHeader() -> void {
+    uint16_t addr = system->memoryCpu.read( 0xb2 ) | (system->memoryCpu.read( 0xb3 ) << 8);
+
+    uint8_t* buf = system->ram + addr;
+
+    TapeStructure::FileEntry* fileEntry = tape->structure.getCurFile();
+
+    if (fileEntry) {
+        tape->setPosition( fileEntry->dataOffset );
+
+        buf[0] = 3;
+        buf[1] = fileEntry->startAddr & 0xff;
+        buf[2] = fileEntry->startAddr >> 8;
+        buf[3] = fileEntry->endAddr & 0xff;
+        buf[4] = fileEntry->endAddr >> 8;
+        std::memcpy( buf + 5, fileEntry->header + 5, 192 - 5 );
+    } else
+        buf[0] = 5; // end of tape marker
+
+    system->memoryCpu.write(0x90, 0);
+    system->memoryCpu.write(0x93, 0);
+
+    system->memoryCpu.write(0x29f, 0);
+    system->memoryCpu.write(0x2a0, 0);
+
+    cpu->regP &= ~1; // reset carry
+    cpu->flagZ = 0;
+}
+
+auto Traps::tapeReceive() -> void {
+    uint16_t start = system->memoryCpu.read( 0xc1 ) | (system->memoryCpu.read( 0xc2 ) << 8);
+    uint16_t end = system->memoryCpu.read( 0xae ) | (system->memoryCpu.read( 0xaf ) << 8);
+    int size = (int)(end - start);
+
+    uint8_t st = 0x40;
+
+    if (cpu->regX == 0x0e) {
+        TapeStructure::FileEntry* fileEntry = tape->structure.readCurFile();
+
+        if (fileEntry) {
+            std::memcpy( system->ram + (int)start, fileEntry->buffer, fileEntry->size );
+
+            tape->setPosition( tape->structure.curPos );
+        } else {
+            st = 0x10;
+        }
+    }
+
+    setSt(st);
+
+    cpu->regP &= ~1; // carry off
+    cpu->regP &= ~4; // int off
+
+    system->memoryCpu.write(0xc0, 0x01 ); // stop motor
+    uninstall();
 }
 
 auto Traps::listentalkSecondary(uint8_t b) -> void {

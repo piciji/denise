@@ -1381,10 +1381,8 @@ auto View::updateTapeStatusIcons( Emulator::Interface::TapeMode mode ) -> void {
         default: break;
     //    case TapeMode::Stop:        image = &stophiImage; break;
     }
-    
+
     statusHandler->updateTapeImage( image );
-        
-    statusBar.update();
 }
 
 auto View::translate() -> void {

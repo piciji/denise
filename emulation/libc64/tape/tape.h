@@ -26,7 +26,9 @@ struct Tape {
 	std::function<void ()> setReadTransition = [](){};
     std::function<unsigned (uint8_t*, unsigned, unsigned)> read = [](uint8_t* buffer, unsigned length, unsigned offset){ return 0; };
 	std::function<unsigned (uint8_t*, unsigned, unsigned)> write = [](uint8_t* buffer, unsigned length, unsigned offset){ return 0; };
-	std::function<void (bool)> senseOut = [](bool state){};	
+	std::function<void (bool)> senseOut = [](bool state){};
+
+    TapeStructure structure;
 
 	auto setEnabled( bool state ) -> void;
 	auto isEnabled() -> bool { return enabled; }
@@ -43,16 +45,16 @@ struct Tape {
 	auto createTap( unsigned& imageSize ) -> uint8_t*;
     auto serialize(Emulator::Serializer& s) -> void;
     auto serializeLight(Emulator::Serializer& s) -> void;
-    auto selectListing( unsigned pos ) -> void;
+    auto selectListing( unsigned pos, bool useTraps = false ) -> void;
 	auto setWobble(bool state) -> void;
 	auto hasWobble() -> bool { return wobble; }
     auto getMedia() -> Emulator::Interface::Media* { return media; }
 	auto getMediaConnected() -> Emulator::Interface::Media* { return mediaConnected; }
     auto updateDeviceState() -> void;
     auto getListing() -> std::vector<Emulator::Interface::Listing>&;
+    auto setPosition( unsigned pos ) -> void;
 	
 protected:
-    TapeStructure structure;
 	Emulator::Interface::Media* media; 
 	Emulator::Interface::Media* mediaConnected; // update status LED if there was no tape inserted
     std::function<void ()> worker;

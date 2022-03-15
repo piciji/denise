@@ -29,8 +29,14 @@ auto StatusHandler::updateDeviceState( Emulator::Interface::Media* media, bool w
 
 auto StatusHandler::setMessage(std::string txt, unsigned duration, bool critical ) -> void {
 
-    if (duration == 0)
-        duration = 1;
+    if (txt == "")
+        duration = 0;
+    else {
+        if (duration == 0)
+            duration = 1;
+
+        duration *= (unsigned)fpsCounter.fps;
+    }
 
     message.txt = txt;
     message.duration = duration;
@@ -125,6 +131,13 @@ auto StatusHandler::updateFrameCounter() -> void {
         if (!cmd->noGui)
             setFpsCounterUpdate();
     }
+
+    if (message.duration) {
+        if (--message.duration == 0) {
+            message.clear();
+            setMessageUpdate();
+        }
+    }
 }
 
 auto StatusHandler::updateFPS( bool state ) -> void {
@@ -175,9 +188,9 @@ auto StatusHandler::updateTapeImage( GUIKIT::Image* image ) -> void {
     emuThread->lockStatus();
 
     updateImage( 10, image );
+    updateStatusBar();
 
     emuThread->unlockStatus();
-
 }
 
 auto StatusHandler::hideTape() -> void {
@@ -255,21 +268,10 @@ auto StatusHandler::transferToOSD( std::string text ) -> void {
 
 auto StatusHandler::update() -> void {
 
-    bool emuThreadEnabled = emuThread->enabled;
-
     uint16_t clearMask = ~0;
     static auto countDecimalPoint = globalSettings->getOrInit<unsigned>("fps_decimal_point", 3u, {0u, 3u});
 
     emuThread->lockStatus();
-
-    if (fpsCounterUpdate()) {
-        if (message.duration) {
-            if (--message.duration == 0) {
-                message.clear();
-                setMessageUpdate();
-            }
-        }
-    }
     
     std::string OSDText = message.txt;
     

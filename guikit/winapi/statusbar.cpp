@@ -173,6 +173,11 @@ auto pStatusBar::getWidth(std::string text) -> unsigned {
 }
 
 auto pStatusBar::updatePart( StatusBar::Part& part ) -> void {
+    if (part.position < 0) {
+        statusBar.state.updatePending = true;
+        return;
+    }
+
     if (hwnd) {
 //		if (part.image) {
 //			// alpha blend transparent part, because of winapi draws some 3D effect

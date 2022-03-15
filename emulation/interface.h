@@ -443,7 +443,7 @@ struct Interface {
 	virtual auto createTapeImage(unsigned& imageSize) -> uint8_t* { return nullptr; }
     virtual auto getTapeListing(Media* media) -> std::vector<Listing> { return {}; }
     virtual auto getTapePreview(uint8_t* data, unsigned size, Media* media = nullptr) -> std::vector<Listing> { return {}; }
-    virtual auto selectTapeListing(Media* media, unsigned pos) -> void { }
+    virtual auto selectTapeListing(Media* media, unsigned pos, bool useTraps = false) -> void { }
     // expansion handling
     virtual auto insertExpansionImage(Media* media, uint8_t* data, unsigned size) -> void {}
     virtual auto ejectExpansionImage(Media* media) -> void {}
@@ -619,7 +619,7 @@ struct Interface {
                     selectDiskListing( media, position, useTraps );
                 return true;
 			case MediaGroup::Type::Tape:
-                selectTapeListing( media, position );
+                selectTapeListing( media, position, useTraps );
                 return true;
 			case MediaGroup::Type::Program:
                 return selectProgramListing( media, position );

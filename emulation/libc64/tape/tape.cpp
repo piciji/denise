@@ -7,6 +7,7 @@
 #include "write.cpp"
 #include "serialization.cpp"
 #include "../system/keyBuffer.h"
+#include "../traps/traps.h"
 
 namespace LIBC64 {
     
@@ -315,11 +316,26 @@ auto Tape::getListing() -> std::vector<Emulator::Interface::Listing>& {
     return structure.getListing();
 }
 
-auto Tape::selectListing( unsigned pos ) -> void {
-    if (pos > 0) {
-        curPos = structure.getFilePosition(pos);
-        fetchPos = 0;
+auto Tape::selectListing( unsigned pos, bool useTraps ) -> void {
+
+    if (pos == 0)
+        pos = 1;
+
+    curPos = 0x14;
+    if (structure.setFile(pos - 1))  {
+        if (pos > 1) {
+            curPos = structure.getCurFile()->offset;
+        }
     }
+
+    fetchPos = 0;
+
+    if (useTraps) {
+        traps->installTape();
+    }
+
+    if ( system->kernalBootComplete )
+        return;
 
     KeyBuffer::Action action;
     action.mode = KeyBuffer::Mode::Input;
@@ -357,12 +373,17 @@ auto Tape::selectListing( unsigned pos ) -> void {
     };
     action.waitCallback = nullptr;
     action.mode = KeyBuffer::Mode::Input;
-    action.buffer = {'R', 'U', 'N', '\r'};    
+    action.buffer = {'R', 'U', 'N', '\r'};
     system->keyBuffer->add(action);
 
     system->keyBuffer->forceDefaultKernalDelay(); // a possible speeder use shorter boot time
 
     autoStarted = true;
+}
+
+auto Tape::setPosition( unsigned pos ) -> void {
+    curPos = pos;
+    fetchPos = 0;
 }
 
 }

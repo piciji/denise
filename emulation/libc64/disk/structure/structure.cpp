@@ -320,7 +320,8 @@ auto DiskStructure::createListing( bool loadWithColumn ) -> void {
                 loader.push_back( _headlineCmd );
             }
 
-            std::vector<uint8_t> entry = listing.buildListing( ptr + 0x5, listingSize, *(ptr + 0x2) );
+            uint8_t type = *(ptr + 0x2);
+            std::vector<uint8_t> entry = listing.buildListing( ptr + 0x5, listingSize, type & ~0x30 );
             
             std::vector<uint8_t> loadCommand;
             
@@ -490,7 +491,7 @@ auto DiskStructure::prepareKeyBufferActions( std::vector<uint8_t>& path, bool us
         drive->extendedMemoryMap = false;
         system->secondDriveCable.parallelPossible = false;
         system->burstOrParallelUpdate();
-        traps->install();
+        traps->installSerial();
         traps->reset();
         system->keyBuffer->forceDefaultKernalDelay(); // a possible speeder use shorter boot time
         drive->setFirmwareByType();

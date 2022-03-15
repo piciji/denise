@@ -87,7 +87,7 @@ auto Program::errorFirmwareSize(GUIKIT::File::Item* item, Message* message ) -> 
 
 
 auto Program::readMedia(Emulator::Interface::Media* media, uint8_t* buffer, unsigned length, unsigned offset) -> unsigned {
-	if (!activeEmulator || !media->guid)
+	if (!media->guid)
 		return 0;
     
     auto file = (GUIKIT::File*)media->guid;

@@ -87,7 +87,7 @@ auto MediaLayout::updateOptionsVisibility() -> void {
 
     auto item = mediaTree.selected();
     bool _enabledExpansion = false;
-    bool _enabledDisk = false;
+    bool _enabledTraps = false;
 
     if (item) {
         unsigned navPos = (unsigned)item->userData();
@@ -95,15 +95,19 @@ auto MediaLayout::updateOptionsVisibility() -> void {
         if (navPos < navElements.size()) {
             auto& navElement = navElements[navPos];
 
-            if (navElement.mediaGroupLayout && navElement.mediaGroupLayout->mediaGroup->isDisk())
-                _enabledDisk = true;
-            else if (navElement.mediaGroupLayout && navElement.mediaGroupLayout->mediaGroup->isExpansion())
+            if (navElement.mediaGroupLayout && navElement.mediaGroupLayout->mediaGroup->isDisk()) {
+                _enabledTraps = true;
+                useTraps.setChecked( settings->get<bool>("use_disk_traps", false) );
+            } else if (navElement.mediaGroupLayout && navElement.mediaGroupLayout->mediaGroup->isTape()) {
+                _enabledTraps = true;
+                useTraps.setChecked( settings->get<bool>("use_tape_traps", false) );
+            } else if (navElement.mediaGroupLayout && navElement.mediaGroupLayout->mediaGroup->isExpansion())
                 _enabledExpansion = true;
         }
     }
 
-    if (useDiskTraps.enabled() != _enabledDisk) {
-        useDiskTraps.setEnabled( _enabledDisk );
+    if (useTraps.enabled() != _enabledTraps) {
+        useTraps.setEnabled( _enabledTraps );
     }
 
     if (bootCart.enabled() != _enabledExpansion) {
@@ -199,7 +203,7 @@ auto MediaLayout::build() -> void {
 
     moduleFrame.append( mediaTree, { GUIKIT::Font::scale(165), GUIKIT::Font::scale(300)}, 10 );
     if (dynamic_cast<LIBC64::Interface*>(emulator)) {
-        moduleFrame.append(useDiskTraps, {0u, 0u}, 10);
+        moduleFrame.append(useTraps, {0u, 0u}, 10);
     }
     moduleFrame.append( bootCart, {0u, 0u}, 10 );
     moduleFrame.append( deactivateCart, {0u, 0u} );
@@ -448,8 +452,10 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
             if (program->loadImageDataWhenOk(file, fSetting->id, mediaGroup, data)) {
 
                 filePool->assign( _ident(emulator, block->media->name + "store"), file);
-                if (mediaGroup->selected || (activeEmulator != emulator))
-                    emulator->insertMedium(block->media, data, file->archiveDataSize( fSetting->id ));
+                if (mediaGroup->selected || (activeEmulator != emulator)) {
+                    block->media->guid = uintptr_t(file);
+                    emulator->insertMedium(block->media, data, file->archiveDataSize(fSetting->id));
+                }
 
                 block->listings = emulator->getListing( block->media, settings->get<bool>("autostart_load_with_column", false) );
 
@@ -474,7 +480,7 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
 
             auto media = layout->selectedBlock->media;
 
-            fileloader->autoload(emulator, media, selection, media->group->isDisk() && useDiskTraps.checked());
+            fileloader->autoload(emulator, media, selection, media->group->isDrive() && useTraps.checked());
             emuThread->unlock();
         };
 
@@ -492,40 +498,38 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
 
             emuThread->lock();
             if ( emulator->selectListing( media, selection ) ) {
-                statusHandler->setMessage( trans->get( "program_injected" ) );
+                if (media->group->isTape())
+                    statusHandler->setMessage( trans->get( "tape spooled" ) );
+                else
+                    statusHandler->setMessage( trans->get( "program_injected" ) );
                 view->setFocused( 300 );                
             }
             emuThread->unlock();
         };
     }
 
-    useDiskTraps.onToggle = [this](bool checked) {
-        settings->set<bool>("use_disk_traps", checked);
+    useTraps.onToggle = [this](bool checked) {
+        auto layout = this->getActiveLayout();
+
+        if (layout && layout->mediaGroup->isDisk())
+            settings->set<bool>("use_disk_traps", checked);
+        else if (layout && layout->mediaGroup->isTape())
+            settings->set<bool>("use_tape_traps", checked);
     };
 
-    useDiskTraps.setChecked( settings->get<bool>("use_disk_traps", false) );
+    useTraps.setChecked( settings->get<bool>("use_disk_traps", false) );
 
     bootCart.onActivate = [this]() {
-        
-        auto selectedItem = mediaTree.selected();
-        
-        if (!selectedItem)
+
+        auto mediaGroupLayout = getActiveLayout();
+
+        if (!mediaGroupLayout || !mediaGroupLayout->mediaGroup->isExpansion())
             return;
         
-        auto navPos = (unsigned)selectedItem->userData();
-        
-        if (navPos >= navElements.size())
-            return;
-        
-        auto& navElement = navElements[navPos];
-        
-        if (!navElement.mediaGroupLayout || !navElement.mediaGroupLayout->mediaGroup->isExpansion())
-            return;
-        
-		this->settings->set<unsigned>("expansion", navElement.mediaGroupLayout->mediaGroup->expansion->id);
+		this->settings->set<unsigned>("expansion", mediaGroupLayout->mediaGroup->expansion->id);
 
         if (tabWindow->systemLayout)
-            tabWindow->systemLayout->setExpansion( navElement.mediaGroupLayout->mediaGroup->expansion );
+            tabWindow->systemLayout->setExpansion( mediaGroupLayout->mediaGroup->expansion );
 
         emuThread->lock();
         program->power( emulator );
@@ -859,8 +863,8 @@ auto MediaLayout::translate() -> void {
     pathsLayout.setText( trans->get("paths") );
     moduleFrame.setText( trans->get("selection") );   
     bootCart.setText( trans->get("boot cartridge") );
-    useDiskTraps.setText( trans->get("VDT Autostart") );
-    useDiskTraps.setTooltip( trans->get("VDT Autostart tooltip") );
+    useTraps.setText( trans->get("VDT Autostart") );
+    useTraps.setTooltip( trans->get("VDT Autostart tooltip") );
     deactivateCart.setText( trans->get("deactivate cartridge") );
     if (expansionParent)
         expansionParent->setText( trans->get("cartridges") );
@@ -882,8 +886,11 @@ auto MediaLayout::translate() -> void {
         auto mediaGroup = nav.mediaGroupLayout->mediaGroup;
         
         nav.mediaGroupLayout->setText( trans->get( mediaGroup->name + "_insert") );
-        nav.mediaGroupLayout->inject.setText( trans->get("program_inject") );
-        
+        if (mediaGroup->isProgram())
+            nav.mediaGroupLayout->inject.setText( trans->get("program_inject") );
+        else if (mediaGroup->isTape())
+            nav.mediaGroupLayout->inject.setText( trans->get("tape spool") );
+
         for ( auto block : nav.mediaGroupLayout->blocks ) {
             block->header.writeprotect.setText(trans->get("write_protected"));
             block->header.eject.setText(trans->get("eject"));
@@ -1376,8 +1383,13 @@ auto MediaLayout::updateListings( ) -> void {
 
 auto MediaLayout::loadSettings() -> void {
 
-    useDiskTraps.setChecked( settings->get<bool>("use_disk_traps", false) );
-    
+    auto selectedLayout = this->getActiveLayout();
+
+    if (selectedLayout && selectedLayout->mediaGroup->isDisk())
+        useTraps.setChecked( settings->get<bool>("use_disk_traps", false) );
+    else if (selectedLayout && selectedLayout->mediaGroup->isTape())
+        useTraps.setChecked( settings->get<bool>("use_tape_traps", false) );
+
     for(auto& nav : navElements) {
         
         if (!nav.mediaGroupLayout)
@@ -1412,6 +1424,7 @@ auto MediaLayout::loadSettings() -> void {
                 uint8_t* data;
                
                 if (program->loadImageDataWhenOk(file, fSetting->id, mediaGroup, data)) {
+                    block->media->guid = uintptr_t(file);
                     filePool->assign(_ident(emulator, block->media->name + "store"), file);
                     emulator->insertMedium(block->media, data, file->archiveDataSize(fSetting->id));
                     block->listings = emulator->getListing(block->media, settings->get<bool>("autostart_load_with_column", false));

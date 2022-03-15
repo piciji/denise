@@ -661,3 +661,5 @@ home folder = Home Folder
 emu folder = Emulator Folder
 own folder = Own Folder
 save location = Memory Location
+tape spool = fast-forward to selected file
+tape spooled = Tape has been rewound to the selected file.

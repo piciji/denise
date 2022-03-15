@@ -7,7 +7,7 @@
 #include "baseDevice.h"
 
 namespace LIBC64 {
-    
+
     struct Traps {
         
         struct Trap {
@@ -35,7 +35,8 @@ namespace LIBC64 {
         uint8_t secondary;
         
         auto add(Trap trap) -> void;
-        auto install() -> void;
+        auto installSerial() -> void;
+        auto installTape() -> void;
         auto install(Trap& t) -> bool;
         auto uninstall() -> void;
         auto uninstall(Trap& t) -> void;
@@ -47,6 +48,9 @@ namespace LIBC64 {
         auto send() -> void;
         auto receive() -> void;
         auto ready() -> void;
+
+        auto tapeFindHeader() -> void;
+        auto tapeReceive() -> void;
 
         auto setSt(uint8_t st) -> void;
         auto serialcommand(unsigned int device, uint8_t secondary) -> uint8_t;

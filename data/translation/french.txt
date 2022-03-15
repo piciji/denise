@@ -660,3 +660,5 @@ home folder =
 emu folder =
 own folder =
 save location =
+tape spool =
+tape spooled =

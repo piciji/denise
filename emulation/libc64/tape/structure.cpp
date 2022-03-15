@@ -2,8 +2,6 @@
 #include "structure.h"
 #include "tape.h"
 
-#define TAPE_FETCH_SIZE 50 * 1024
-
 #define SHORT_PULSE(p)          (p >= 36 && p <= 54)
 #define MIDDLE_PULSE(p)         (p >= 55 && p <= 73)
 #define LONG_PULSE(p)           (p >= 74 && p <= 100)
@@ -27,6 +25,14 @@ TapeStructure::TapeStructure(Tape* tape) {
 
 TapeStructure::~TapeStructure() {
     delete[] fetchData;
+    clearBuffer();
+}
+
+auto TapeStructure::clearBuffer() -> void {
+    for (auto& f : fileEntries) {
+        if (f.buffer)
+            delete[] f.buffer;
+    }
 }
 
 auto TapeStructure::getListing( ) -> std::vector<Emulator::Interface::Listing>& {
@@ -39,51 +45,70 @@ auto TapeStructure::getListing( ) -> std::vector<Emulator::Interface::Listing>& 
 
     listings.clear();
 
+    clearBuffer();
+
+    fileEntries.clear();
+
     listing.convertToScreencode = system->interface->convertToScreencode;
 
     listings.push_back( {id++, listing.buildHeadline( &head[0] ) } );
 
     while( nextFile(fileEntry) ) {
 
+       // fileEntry.offset = curPos;
         uint8_t type = (fileEntry.type == 4) ? 1 : 2 ;
+        type |= 0x20;
+        if (fileEntry.turoTape)
+            type |= 0x10;
 
-        // round up in case of fractional block
-        unsigned size = (fileEntry.endAddr - fileEntry.startAddr + 253) / 254;
+        unsigned size = 0;
+        if (fileEntry.type != 4)
+            size = (fileEntry.endAddr - fileEntry.startAddr + 253) / 254; // round up in case of fractional block
 
-        listings.push_back( {id++, listing.buildListing( &(fileEntry.name[0]), size, type, fileEntry.turoTape ) });
+        listings.push_back( {id++, listing.buildListing( &(fileEntry.name[0]), size, type ) });
+
+        fileEntries.push_back(fileEntry);
     }
+
+    if (listings.size())
+        curFileEntry = &(fileEntries[0]);
+    else
+        curFileEntry = nullptr;
+
+    setPosition(0x14);
 
     return listings;
 }
 
-auto TapeStructure::getFilePosition( unsigned fileNumber ) -> unsigned {
-    setPosition(0x14);
-    FileEntry fileEntry;
-
-    while(nextFile(fileEntry)) {
-
-        if (fileEntry.number == fileNumber)
-            break;
+auto TapeStructure::setFile( unsigned fileNumber ) -> bool {
+    for(auto& fileEntry : fileEntries) {
+        if (fileEntry.number == fileNumber) {
+            curFileEntry = &fileEntry;
+            return true;
+        }
     }
 
-    return curPos;
+    return false;
+}
+
+auto TapeStructure::getCurFile() -> FileEntry* {
+    return curFileEntry;
 }
 
 auto TapeStructure::analyzeFile() -> int {
     int pulse;
     unsigned hintCBM = 0;
-    unsigned startCBM = 0;
+    unsigned startCBM = curPos;
     unsigned hintTT = 0;
-    unsigned startTT = 0;
+    unsigned startTT = curPos;
     unsigned posBefore;
 
-    while ((hintCBM < 1000) && (hintTT < 1600)) {
-
+    while (true) {
         posBefore = curPos;
         pulse = fetchPulse();
 
         if (pulse == -1) // end of tape
-            return UNKNOWN;
+            break;
 
         if (SHORT_PULSE(pulse)) {
             hintCBM++;
@@ -110,100 +135,80 @@ auto TapeStructure::analyzeFile() -> int {
                 hintTT = 0;
             }
         }
-    }
 
-    if (hintTT >= 1600) {
-        setPosition( startTT + 2 );
-        return TURBO_TAPE;
-    }
+        if (hintTT >= 1500) {
+            setPosition( startTT + 2 );
+            return TURBO_TAPE;
+        }
 
-    setPosition( startCBM );
-    return CBM_TAPE;
-}
-
-auto TapeStructure::findCbm() -> bool {
-    int pulse;
-    unsigned hintCBM = 0;
-    unsigned startCBM = 0;
-
-    while (hintCBM < 32) {
-        pulse = fetchPulse();
-
-        if (pulse == -1) // end of tape
-            return false;
-
-        if (SHORT_PULSE(pulse)) {
-            hintCBM++;
-        } else {
-            hintCBM = 0;
-            startCBM = curPos;
+        if (hintCBM >= 1000) {
+            setPosition( startCBM );
+            return CBM_TAPE;
         }
     }
 
-    setPosition( startCBM );
-    return true;
+    return UNKNOWN;
 }
 
-auto TapeStructure::skipCbm() -> bool {
+auto TapeStructure::jumpOverCbmGap() -> bool {
     int data;
     unsigned tempPos;
     unsigned tempPos2;
-    uint8_t tries = 0;
+    unsigned tries = 0;
+    bool found = false;
 
     while (1) {
         tempPos = curPos;
         data = fetchPulse( );
         tempPos2 = curPos;
 
-        if (LONG_PULSE(data)) {
-            setPosition( tempPos );
-            data = getByte();
+        if (data < 0)
+            return false;
 
-            if (data == -1)
-                return false;
+        if (found) {
+            if (LONG_PULSE(data)) {
+                setPosition(tempPos);
+                data = getByte();
 
-            if (data < -1) {
-                if (++tries > 35) {
+                if (data == -1)
+                    return false;
+
+                if (data < -1) {
+                    if (++tries > 30) {
+                        break;
+                    }
+
+                    setPosition(tempPos2);
+                } else {
+                    setPosition(tempPos);
                     break;
                 }
-
-                setPosition( tempPos2 );
-            } else {
-                setPosition( tempPos );
-                break;
+            } else if (!SHORT_PULSE(data)) {
+                if (++tries > 30) {
+                    break;
+                };
             }
-        } else if (data < 0) {
-            return false;
-        } else if (!SHORT_PULSE(data)) {
-            break;
+        } else {
+            if (SHORT_PULSE(data)) {
+                if (++tries == 32) {
+                    tries = 0;
+                    found = true;
+                }
+            } else
+                tries = 0;
         }
     }
 
     return true;
 }
 
-auto TapeStructure::skipCbmFile(bool seq) -> bool {
-
-    if (!skipCbm())
-        return false;
-
-    if (!findCbm()) // skip repeated header
-        return false;
-
-    if (!skipCbm())
-        return false;
-
+auto TapeStructure::jumpOverCbmFile(bool seq) -> bool {
     if (seq) {
         uint8_t buffer[193];
         unsigned tempPos;
 
         while (1) {
             tempPos = curPos;
-
-            if (!findCbm()) {
-                setPosition( tempPos );
-                break;
-            }
 
             bool state = readCbmBlock(buffer, 193);
             if (!state || (buffer[0] != 2) ) {
@@ -212,23 +217,16 @@ auto TapeStructure::skipCbmFile(bool seq) -> bool {
             }
         }
     } else {
-        if (!findCbm()) // skip data
+        if (!jumpOverCbmGap()) // data
             return false;
-
-        if (!skipCbm())
-            return false;
-
-        if (!findCbm()) // skip repeated data
-            return false;
-
-        if (!skipCbm())
+        if (!jumpOverCbmGap()) // repeated data
             return false;
     }
 
     return true;
 }
 
-auto TapeStructure::skipTT() -> bool {
+auto TapeStructure::jumpOverTTGap() -> bool {
     int data;
 
     while(1) {
@@ -246,26 +244,8 @@ auto TapeStructure::skipTT() -> bool {
     return true;
 }
 
-auto TapeStructure::skipTTFile() -> bool {
-    uint8_t buffer[193];
-
-    bool state = readTTBlock(buffer, 193, true);
-    if (state)
-        state = readTTBlock(nullptr, ((buffer[3] << 8) | buffer[2]) - ((buffer[1] << 8) | buffer[0]) + 1);
-
-    return state;
-}
-
 auto TapeStructure::nextFile(FileEntry& fileEntry) -> bool {
     unsigned fileType;
-    unsigned tempPos;
-
-    if (fileEntry.number >= 0) {
-        if (fileEntry.turoTape)
-            skipTTFile();
-        else
-            skipCbmFile(fileEntry.type == 4);
-    }
 
     while (true) {
         if ((fileType = analyzeFile()) == UNKNOWN)
@@ -273,24 +253,19 @@ auto TapeStructure::nextFile(FileEntry& fileEntry) -> bool {
 
         fileEntry.turoTape = fileType == TURBO_TAPE;
 
-        tempPos = curPos;
+        fileEntry.offset = curPos;
 
         if (fileEntry.turoTape) {
             if (!readTTHeader(fileEntry)) {
-                setPosition( tempPos );
-                skipTT();
+                setPosition( fileEntry.offset );
+                jumpOverTTGap();
                 continue;
             }
 
         } else {
             if (!readCbmHeader(fileEntry)) {
-                setPosition( tempPos );
-                int pulse;
-
-                do {
-                    pulse = fetchPulse();
-                } while (SHORT_PULSE(pulse));
-
+                setPosition( fileEntry.offset );
+                jumpOverCbmGap();
                 continue;
             }
         }
@@ -298,25 +273,31 @@ auto TapeStructure::nextFile(FileEntry& fileEntry) -> bool {
         if (fileEntry.type == 5) // end of tape marker
             return false;
 
-        setPosition( tempPos );
         break;
     }
 
+    fileEntry.dataOffset = curPos;
     fileEntry.number++;
+
+    // jump over the file data, if not successfull still use the header data for UI listing
+    if (fileEntry.turoTape)
+        readTTBlock(nullptr, fileEntry.endAddr - fileEntry.startAddr + 1);
+    else
+        jumpOverCbmFile(fileEntry.type == 4);
+
     return true;
 }
 
 auto TapeStructure::readCbmHeader(FileEntry& fileEntry) -> bool {
-    uint8_t buffer[255];
+    uint8_t* buffer = &fileEntry.header[0];
 
-    if (!readCbmBlock(buffer, 255))
+    if (!readCbmBlock(buffer, 193))
         return false;
 
     if (buffer[0] != 1 && buffer[0] != 3 && buffer[0] != 4)
         return false;
 
     fileEntry.type = buffer[0];  // 1, 3 PRG, 4 SEQ
-    fileEntry.turoTape = false;
     fileEntry.startAddr = (buffer[2] << 8) | buffer[1];
     fileEntry.endAddr = (buffer[4] << 8) | buffer[3];
     std::memcpy(fileEntry.name, buffer + 5, 16);
@@ -324,7 +305,7 @@ auto TapeStructure::readCbmHeader(FileEntry& fileEntry) -> bool {
 }
 
 auto TapeStructure::readTTHeader(FileEntry& fileEntry) -> bool {
-    uint8_t buffer[193];
+    uint8_t* buffer = &fileEntry.header[0];
 
     if (!readTTBlock(buffer, 193, true))
         return false;
@@ -339,7 +320,7 @@ auto TapeStructure::readTTHeader(FileEntry& fileEntry) -> bool {
 auto TapeStructure::readTTBlock(uint8_t* buffer, unsigned size, bool header) -> bool {
     int data;
 
-    if (!skipTT())
+    if (!jumpOverTTGap())
         return false;
 
     for (int countdown = 9; countdown > 0; countdown--) {
@@ -394,47 +375,39 @@ auto TapeStructure::readCbmBlock(uint8_t* buffer, unsigned size) -> bool {
             return false;
 
         if (data < 0) {
+            // pass was not successfull at all. clear all errors to indicate second pass not to check for double errors.
+            // means that each single error in second pass let fail the whole block
             errors.clear();
 
         } else if (errors.size() == 0) {
-            if (pass == 1) {
-                bool res = findCbm();
-                res &= skipCbm();
-
-                if (!res)
-                    return false;
-            }
-
             uint8_t parity = 0;
             for (unsigned i = 0; i < size; i++)
                 parity ^= buffer[i];
 
-            return !parity;
-        }
-
-        if (pass < 2) {
-            if (!findCbm())
-                return false;
+            if (pass == 1) {
+                if (!parity)
+                    // there were no errors in pass1, so jump over pass2 because we don't need any data from it
+                    return jumpOverCbmGap();
+            } else
+                return !parity;
         }
     }
-
     return false;
 }
 
 auto TapeStructure::readCbmBlock(uint8_t* buffer, unsigned& size, std::vector<unsigned>& errors, uint8_t& pass) -> int {
-
     int data;
     uint8_t _pass;
-    unsigned count = 0;
+    unsigned offset = 0;
     bool firstPass = pass == 1;
 
-    if (!skipCbm())
+    if (!jumpOverCbmGap())
         return -1;
 
     for (uint8_t countDown = 9; countDown > 0; countDown--) {
         data = getByte();
 
-        if (data < 0)
+        if (data == -1)
             return data;
 
         if (countDown != (data & 0x7f))
@@ -456,39 +429,38 @@ auto TapeStructure::readCbmBlock(uint8_t* buffer, unsigned& size, std::vector<un
             return -1;
 
         if (data == -3) { // end of block
-            size = count;
+            size = offset;
             if (!firstPass)
-                // possible errors from first pass were handeld, so clear them
+                // possible errors from first pass were handled, so clear them
                 errors.clear();
             return 0;
         }
 
         if (data == -2) { // other errors
             if (firstPass) {
-                errors.push_back(count);
+                errors.push_back(offset);
 
                 if (errors.size() == 30)
-                    return -5;
+                    return -2;
 
             } else {
                 if (errors.size() == 0)
                     // first round was not successful at all, otherwise we would not be in the 2nd round without at least one error.
-                    return -6;
+                    return -2;
 
                 // first block has some errors, make sure there are no double errors on specific positions
-                for(auto& error : errors) {
-                    if (error == count)
-                        return -6;
+                for(auto& errorOffset : errors) {
+                    if (errorOffset == offset)
+                        return -2;
                 }
             }
-
-            count++;
         } else {
-            if (count == size)
-                return -4;
+            if (offset == size)
+                return -2;
 
-            buffer[count++] = (uint8_t)data;
+            buffer[offset] = (uint8_t)data;
         }
+        offset++;
     }
 }
 
@@ -562,9 +534,9 @@ auto TapeStructure::getBit() -> int {
         return -1;
 
     if (SHORT_PULSE(pulse1) && (MIDDLE_PULSE(pulse2) || LONG_PULSE(pulse2)))
-        return 0; // S-M
+        return 0; // S - M
     else if ((MIDDLE_PULSE(pulse1) || LONG_PULSE(pulse1)) && SHORT_PULSE(pulse2))
-        return 1; // M-S
+        return 1; // M - S
 
     return -2;
 }
@@ -592,8 +564,6 @@ auto TapeStructure::fetchPulse( ) -> int {
 auto TapeStructure::readForward( uint8_t& byte ) -> bool {
 
     if (rawData) {
-        // tape image was fully loaded because of compressed file
-        // tape image can't be written in this case
         if (curPos == rawSize)
             return false;
 
@@ -602,8 +572,6 @@ auto TapeStructure::readForward( uint8_t& byte ) -> bool {
         return true;
     }
 
-    // uncompressed files shouldn't load before
-    // needed data will be loaded by callback in chunks
     if (fetchPos == 0) {
 
         fetchSize = this->tape->read( fetchData, TAPE_FETCH_SIZE, curPos );
@@ -634,6 +602,103 @@ auto TapeStructure::setData(uint8_t* data, unsigned size) -> void {
 auto TapeStructure::setPosition( unsigned pos ) -> void {
     curPos = pos;
     fetchPos = 0;
+}
+
+auto TapeStructure::readCurFile() -> FileEntry* {
+
+    if (!curFileEntry)
+        return nullptr;
+
+    if (curFileEntry->number < 0) {
+        if (!nextFile(*curFileEntry))
+            return nullptr;
+    }
+
+    setPosition( curFileEntry->offset );
+
+    if (readFile(*curFileEntry))
+        return curFileEntry;
+
+    return nullptr;
+}
+
+auto TapeStructure::readFile(FileEntry& fileEntry) -> bool {
+
+    if (fileEntry.buffer) {
+        delete[] fileEntry.buffer;
+        fileEntry.buffer = nullptr;
+        fileEntry.size = 0;
+    }
+
+    if (fileEntry.turoTape)
+        return readTTFile(fileEntry);
+
+    return readCbmFile(fileEntry);
+}
+
+auto TapeStructure::readTTFile(FileEntry& fileEntry) -> bool {
+    if (!readTTHeader(fileEntry))
+        return false;
+
+    unsigned size = fileEntry.endAddr - fileEntry.startAddr + 1;
+    if (size < 0)
+        return false;
+
+    fileEntry.size = size;
+    fileEntry.buffer = new uint8_t[size];
+
+    return readTTBlock(fileEntry.buffer, fileEntry.size);
+}
+
+auto TapeStructure::readCbmFile(FileEntry& fileEntry) -> bool {
+    if (!readCbmHeader( fileEntry ))
+        return false;
+
+    switch(fileEntry.type) {
+        case 1:
+        case 3:
+            return readCbmFilePrg(fileEntry);
+        case 4:
+            return readCbmFileSeq(fileEntry);
+    }
+    return false;
+}
+
+auto TapeStructure::readCbmFilePrg(FileEntry& fileEntry) -> bool {
+    unsigned size = fileEntry.endAddr - fileEntry.startAddr + 1;
+
+    if (size < 0)
+        return false;
+
+    fileEntry.size = size;
+    fileEntry.buffer = new uint8_t[size];
+
+    return readCbmBlock( fileEntry.buffer, fileEntry.size );
+}
+
+auto TapeStructure::readCbmFileSeq(FileEntry& fileEntry) -> bool {
+    uint8_t buffer[193];
+
+    while(true) {
+        if (!readCbmBlock( buffer, 193 ))
+            return false;
+
+        if (buffer[0] != 2)
+            break;
+
+        uint8_t* _buf = new uint8_t[fileEntry.size + 191];
+
+        if (fileEntry.buffer) {
+            std::memcpy( _buf, fileEntry.buffer, fileEntry.size );
+            delete[] fileEntry.buffer;
+        }
+
+        std::memcpy( _buf + fileEntry.size, buffer + 1, 191 );
+        fileEntry.size += 191;
+        fileEntry.buffer = _buf;
+    }
+
+    return true;
 }
 
 }

@@ -43,7 +43,7 @@ struct C64Listing {
 		return out;
     }
     
-    auto buildListing( uint8_t* namePtr, unsigned size, uint8_t type, bool turboTape = false ) -> std::vector<uint8_t> {
+    auto buildListing( uint8_t* namePtr, unsigned size, uint8_t type ) -> std::vector<uint8_t> {
         loader.clear();
 		std::vector<uint8_t> out;		
 		bool a0Found = false;
@@ -77,7 +77,7 @@ struct C64Listing {
                 out.push_back(decodeToScreencode(0x20));
         }
         
-        appendType( out, type, turboTape );
+        appendType( out, type );
         
         prependBlockSize( out, size, 5 );
 		
@@ -101,19 +101,25 @@ struct C64Listing {
     auto prependBlockSize( std::vector<uint8_t>& target, unsigned size, unsigned padding) -> void {
 		
 		std::string str = std::to_string( size );		
-		
-		for(int i = 0; i < (padding - str.size()); i++)
-			target.insert( target.begin(), 0x20 );
+
+        if (str.size() < padding) {
+            for (int i = 0; i < (padding - str.size()); i++)
+                target.insert(target.begin(), 0x20);
+        }
 		
 		for(int i = str.size() - 1; i >= 0; i--)
 			target.insert( target.begin(), *(str.c_str() + i) );		
 	}
     
-    auto appendType(std::vector<uint8_t>& target, uint8_t type, bool turboTape) -> void {
+    auto appendType(std::vector<uint8_t>& target, uint8_t type) -> void {
 
-        if (turboTape)
-            target.push_back( decodeToScreencode( 'T' ) );
-        else if (type & 0x80)
+        if (type & 0x20) { // TAPE
+            target.push_back( 0x20 );
+            if (type & 0x10) // TURBO TAPE
+                target.push_back( decodeToScreencode( 'T' ) );
+            else
+                target.push_back( 0x20 );
+        } else if (type & 0x80)
             target.push_back( 0x20 );
         else
             target.push_back( decodeToScreencode( 42 ) );
@@ -131,9 +137,11 @@ struct C64Listing {
         }
         
         for (unsigned i = 0; i < str.size(); i++)            
-            target.push_back( decodeToScreencode( str[i] ) );     
-        
-        if ( type & 0x40 )
+            target.push_back( decodeToScreencode( str[i] ) );
+
+        if (type & 0x20) { // TAPE
+
+        } else if ( type & 0x40 )
             target.push_back( decodeToScreencode( 60 ) );     
     }
     

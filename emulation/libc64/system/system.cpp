@@ -463,6 +463,9 @@ System::System(Interface* interface) {
     traps->add({"SerialSendByte", 0xED41, 0xEDAB, { 0x20, 0x97, 0xEE }, []() { traps->send(); } });
     traps->add({"SerialReceiveByte", 0xEE14, 0xEDAB, { 0xA9, 0x00, 0x85 }, []() { traps->receive(); } });
     traps->add({"SerialReady", 0xEEA9, 0xEDAB, { 0xAD, 0x00, 0xDD }, []() { traps->ready(); } });
+
+    traps->add({"TapeFindHeader", 0xF72F, 0xF732, { 0x20, 0x41, 0xF8 }, []() { traps->tapeFindHeader(); } });
+    traps->add({"TapeReceive", 0xF8A1, 0xFC93, { 0x20, 0xBD, 0xFC }, []() { traps->tapeReceive(); } });
 }
 
 System::~System() {

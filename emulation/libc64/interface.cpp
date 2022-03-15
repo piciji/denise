@@ -1012,9 +1012,9 @@ auto Interface::getTapePreview(uint8_t* data, unsigned size, Media* media) -> st
     return structure.getListing();
 }
 
-auto Interface::selectTapeListing(Media* media, unsigned pos) -> void {
+auto Interface::selectTapeListing(Media* media, unsigned pos, bool useTraps) -> void {
 	
-	tape->selectListing( pos );
+	tape->selectListing( pos, useTraps );
 }
 
 auto Interface::createTapeImage(unsigned& imageSize) -> uint8_t* {

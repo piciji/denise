@@ -87,6 +87,8 @@ auto Autoloader::postProcessing() -> void {
         if (autoStart) {
             if (mediaGroup->isDisk())
                 trapped = settings->get<bool>("use_disk_traps", false);
+            else if (mediaGroup->isTape())
+                trapped = settings->get<bool>("use_tape_traps", false);
         }
     } else if (ddControl.mode == Mode::Open)
         autoStart = false;
@@ -94,9 +96,11 @@ auto Autoloader::postProcessing() -> void {
         autoStart = true;
         if (mediaGroup->isDisk())
             trapped = settings->get<bool>("use_disk_traps", false);
+        else if (mediaGroup->isTape())
+            trapped = settings->get<bool>("use_tape_traps", false);
     } else if (ddControl.mode == Mode::AutoStartTrapped) {
         autoStart = true;
-        if (mediaGroup->isDisk())
+        if (mediaGroup->isDrive())
             trapped = true;
     } else if (ddControl.mode == Mode::AutoStartNotTrapped) {
         autoStart = true;
@@ -203,7 +207,7 @@ auto Autoloader::postProcessing() -> void {
         
 		if (view) {
 			if (mediaGroup->isTape())
-				view->updateTapeIcons(Emulator::Interface::TapeMode::Play);  
+				view->updateTapeIcons(Emulator::Interface::TapeMode::Play);
 
 			view->setFocused(300);
 

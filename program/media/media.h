@@ -207,7 +207,7 @@ struct MediaLayout : GUIKIT::HorizontalLayout {
     GUIKIT::FramedVerticalLayout moduleFrame;
     GUIKIT::SwitchLayout moduleSwitch;
     GUIKIT::TreeView mediaTree;
-    GUIKIT::CheckBox useDiskTraps;
+    GUIKIT::CheckBox useTraps;
     GUIKIT::Button bootCart;
     GUIKIT::Button deactivateCart;
     

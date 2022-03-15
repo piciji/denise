@@ -302,7 +302,7 @@ struct StatusBar : Base {
         int overrideForegroundColor = -1;
         bool alignRight = false;
         bool visible = false;
-        unsigned position = 0;
+        int position = -1;
         bool appendSeparator = false;
     };
     

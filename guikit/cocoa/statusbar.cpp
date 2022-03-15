@@ -298,7 +298,12 @@ auto pStatusBar::update() -> void {
 }
 
 auto pStatusBar::updatePart( StatusBar::Part& part ) -> void {
-    
+
+    if (part.position < 0) {
+        statusBar.state.updatePending = true;
+        return;
+    }
+
     if (part.position >= usedWidgets.size())
         return;
     

@@ -29,6 +29,10 @@ Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trade
 * fix support for VRR displays (G-Sync/FreeSync)
     * disable VSync, enable VRR
 * using revision 1/2 kernals when selecting old VIC's
+* show tape content in User Interface
+    * start files without manual fast-forward
+    * fast-forward to selected file without autostart
+    * Virtual Device Traps: load files (PRG and Turbo Tapes) instant
      
 
 ## 1.1.2
