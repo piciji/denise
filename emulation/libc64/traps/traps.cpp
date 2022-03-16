@@ -237,7 +237,7 @@ auto Traps::tapeFindHeader() -> void {
     TapeStructure::FileEntry* fileEntry = tape->structure.getCurFile();
 
     if (fileEntry) {
-        tape->setPosition( fileEntry->dataOffset );
+        tape->setPosition( fileEntry->dataOffset, true );
 
         buf[0] = 3;
         buf[1] = fileEntry->startAddr & 0xff;
@@ -271,7 +271,7 @@ auto Traps::tapeReceive() -> void {
         if (fileEntry) {
             std::memcpy( system->ram + (int)start, fileEntry->buffer, fileEntry->size );
 
-            tape->setPosition( tape->structure.curPos );
+            tape->setPosition( tape->structure.curPos, false  );
         } else {
             st = 0x10;
         }

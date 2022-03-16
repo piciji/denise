@@ -381,9 +381,14 @@ auto Tape::selectListing( unsigned pos, bool useTraps ) -> void {
     autoStarted = true;
 }
 
-auto Tape::setPosition( unsigned pos ) -> void {
+auto Tape::setPosition( unsigned pos, bool find ) -> void {
     curPos = pos;
     fetchPos = 0;
+
+    if (find)
+        sysTimer.remove(&worker);
+    else
+        sysTimer.add(&worker, 5, Emulator::SystemTimer::Action::UpdateExisting);
 }
 
 }

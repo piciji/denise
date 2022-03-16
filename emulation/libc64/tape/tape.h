@@ -52,7 +52,7 @@ struct Tape {
 	auto getMediaConnected() -> Emulator::Interface::Media* { return mediaConnected; }
     auto updateDeviceState() -> void;
     auto getListing() -> std::vector<Emulator::Interface::Listing>&;
-    auto setPosition( unsigned pos ) -> void;
+    auto setPosition( unsigned pos, bool find ) -> void;
 	
 protected:
 	Emulator::Interface::Media* media; 
