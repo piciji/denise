@@ -64,6 +64,7 @@ namespace LIBC64 {
         auto reset() -> void;
 
         auto listentalkSecondary(uint8_t b) -> void;
+        auto testForComplexTapeLoader() -> bool;
     };
     
     extern Traps* traps;

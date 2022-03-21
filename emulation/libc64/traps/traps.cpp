@@ -229,6 +229,34 @@ auto Traps::ready() -> void {
     cpu->regP &= ~4; // int off
 }
 
+auto Traps::testForComplexTapeLoader() -> bool {
+
+    TapeStructure::FileEntry* fileEntry = tape->structure.getCurFile();
+
+    if (!fileEntry)
+        return false;
+
+    if (fileEntry->type == 3) {
+        unsigned size = fileEntry->endAddr - fileEntry->startAddr + 1;
+
+        if (size > 1000) {
+            // 4 game pack no 1, 4 Zzzap Sizzlers
+            if ((fileEntry->startAddr <= 0x314) && ((fileEntry->startAddr + size) > 0x315)) {
+                system->interface->log("x2");
+                fileEntry = tape->structure.readCurFile();
+
+                auto pos = 0x314 - fileEntry->startAddr;
+
+                if (fileEntry->buffer[pos] == 0x2c && fileEntry->buffer[pos + 1] == 0xf9) {
+                    system->interface->log("x3");
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
 auto Traps::tapeFindHeader() -> void {
     uint16_t addr = system->memoryCpu.read( 0xb2 ) | (system->memoryCpu.read( 0xb3 ) << 8);
 
@@ -238,13 +266,20 @@ auto Traps::tapeFindHeader() -> void {
 
     if (fileEntry) {
         tape->setPosition( fileEntry->dataOffset, true );
+        system->interface->log(fileEntry->startAddr,1,1);
+        system->interface->log(addr,1,1);
+        system->interface->log(fileEntry->header[0],1);
 
-        buf[0] = 3;
+        buf[0] = fileEntry->type;
         buf[1] = fileEntry->startAddr & 0xff;
         buf[2] = fileEntry->startAddr >> 8;
         buf[3] = fileEntry->endAddr & 0xff;
         buf[4] = fileEntry->endAddr >> 8;
-        std::memcpy( buf + 5, fileEntry->header + 5, 192 - 5 );
+
+        system->interface->log(fileEntry->headerSize);
+
+        // game "brian bloodaxe" has more bytes as typical header size
+        std::memcpy( buf + 5, fileEntry->header + 5, std::min<unsigned>(fileEntry->headerSize, 192) - 5 );
     } else
         buf[0] = 5; // end of tape marker
 
@@ -259,19 +294,35 @@ auto Traps::tapeFindHeader() -> void {
 }
 
 auto Traps::tapeReceive() -> void {
-    uint16_t start = system->memoryCpu.read( 0xc1 ) | (system->memoryCpu.read( 0xc2 ) << 8);
-    uint16_t end = system->memoryCpu.read( 0xae ) | (system->memoryCpu.read( 0xaf ) << 8);
-    int size = (int)(end - start);
-
+    uint16_t start, end;
+    TapeStructure::FileEntry* fileEntry;
     uint8_t st = 0x40;
 
     if (cpu->regX == 0x0e) {
-        TapeStructure::FileEntry* fileEntry = tape->structure.readCurFile();
+        fileEntry = tape->structure.readCurFile();
 
         if (fileEntry) {
-            std::memcpy( system->ram + (int)start, fileEntry->buffer, fileEntry->size );
+            if (fileEntry->type == 1) {
+                // some Novaload versions use relocatable PRG's
+                start = system->memoryCpu.read(0xc3) | (system->memoryCpu.read(0xc4) << 8);
+                end = system->memoryCpu.read( 0xac ) | (system->memoryCpu.read( 0xad ) << 8);
+            } else { // typical
+                start = system->memoryCpu.read(0xc1) | (system->memoryCpu.read(0xc2) << 8);
+                end = system->memoryCpu.read( 0xae ) | (system->memoryCpu.read( 0xaf ) << 8);
+            }
 
-            tape->setPosition( tape->structure.curPos, false  );
+            // mastertronic loader expect it
+            system->memoryCpu.write(0xac, fileEntry->endAddr & 0xff);
+            system->memoryCpu.write(0xad, fileEntry->endAddr >> 8);
+
+            system->interface->log("file ok",1);
+            system->interface->log(fileEntry->size,0);
+
+            // game "Ah diddum" has one byte more as in header specified.
+            std::memcpy( system->ram + start, fileEntry->buffer, fileEntry->size );
+
+            tape->setPosition( tape->structure.curPos, false );
+
         } else {
             st = 0x10;
         }
@@ -283,6 +334,12 @@ auto Traps::tapeReceive() -> void {
     cpu->regP &= ~4; // int off
 
     system->memoryCpu.write(0xc0, 0x01 ); // stop motor
+
+//    uint8_t es[64 * 1024] = {};
+//
+//    for (unsigned i = 0; i < (64 * 1024); i++)
+//       system->ram[i] = es[i];
+
     uninstall();
 }
 

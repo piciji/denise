@@ -32,6 +32,8 @@ auto TapeStructure::clearBuffer() -> void {
     for (auto& f : fileEntries) {
         if (f.buffer)
             delete[] f.buffer;
+        if (f.header)
+            delete[] f.header;
     }
 }
 
@@ -49,31 +51,52 @@ auto TapeStructure::getListing( ) -> std::vector<Emulator::Interface::Listing>& 
 
     fileEntries.clear();
 
+    curFileEntry = nullptr;
+
     listing.convertToScreencode = system->interface->convertToScreencode;
+    listing.tapeMode = false;
 
     listings.push_back( {id++, listing.buildHeadline( &head[0] ) } );
 
     while( nextFile(fileEntry) ) {
 
-       // fileEntry.offset = curPos;
         uint8_t type = (fileEntry.type == 4) ? 1 : 2 ;
         type |= 0x20;
         if (fileEntry.turoTape)
             type |= 0x10;
 
         unsigned size = 0;
-        if (fileEntry.type != 4)
-            size = (fileEntry.endAddr - fileEntry.startAddr + 253) / 254; // round up in case of fractional block
+        if (fileEntry.type != 4) {
+            if (fileEntry.startAddr < fileEntry.endAddr)
+                size = (fileEntry.endAddr - fileEntry.startAddr + 253) / 254; // round up in case of fractional block
+        }
 
-        listings.push_back( {id++, listing.buildListing( &(fileEntry.name[0]), size, type ) });
+        system->interface->log("next");
+        uint8_t* name = new uint8_t[16];
+        for(unsigned i = 0; i < 16; i++) {
+            uint8_t* pos = fileEntry.header + 5 + i;
+
+            system->interface->log( *(pos), 0, 1 );
+
+            if ((*pos <= 0x1f) || (*pos == 0xa2))
+                name[i] = 0x20;
+            else if (*pos >= 0x60 && *pos <= 0x7f)
+                name[i] = *pos + 0x80;
+            else if (*pos >= 0x80 && *pos <= 0x9f)
+                name[i] = 0x20;
+            else
+                name[i] = *pos;
+        }
+
+        listings.push_back( {id++, listing.buildListing( name, size, type ) });
 
         fileEntries.push_back(fileEntry);
+
+        delete[] name;
     }
 
-    if (listings.size())
+    if (fileEntries.size())
         curFileEntry = &(fileEntries[0]);
-    else
-        curFileEntry = nullptr;
 
     setPosition(0x14);
 
@@ -204,13 +227,15 @@ auto TapeStructure::jumpOverCbmGap() -> bool {
 
 auto TapeStructure::jumpOverCbmFile(bool seq) -> bool {
     if (seq) {
-        uint8_t buffer[193];
+        allocatedSize = 193;
+        unsigned _size = allocatedSize;
+        uint8_t buffer[allocatedSize];
         unsigned tempPos;
 
         while (1) {
             tempPos = curPos;
 
-            bool state = readCbmBlock(buffer, 193);
+            bool state = readCbmBlock(buffer, _size, false);
             if (!state || (buffer[0] != 2) ) {
                 setPosition( tempPos );
                 break;
@@ -252,6 +277,8 @@ auto TapeStructure::nextFile(FileEntry& fileEntry) -> bool {
             return false;
 
         fileEntry.turoTape = fileType == TURBO_TAPE;
+        fileEntry.header = nullptr;
+        fileEntry.buffer = nullptr;
 
         fileEntry.offset = curPos;
 
@@ -289,31 +316,46 @@ auto TapeStructure::nextFile(FileEntry& fileEntry) -> bool {
 }
 
 auto TapeStructure::readCbmHeader(FileEntry& fileEntry) -> bool {
-    uint8_t* buffer = &fileEntry.header[0];
+    allocatedSize = 1024; // maximum
+    if (!fileEntry.header) {
+        // will allocate enough space in case of "end of file" marker is non standard
+        fileEntry.header = new uint8_t[allocatedSize];
+    }
+    fileEntry.headerSize = 192; // typical
 
-    if (!readCbmBlock(buffer, 193))
+    if (!readCbmBlock(fileEntry.header, fileEntry.headerSize, false))
         return false;
 
-    if (buffer[0] != 1 && buffer[0] != 3 && buffer[0] != 4)
+    if (fileEntry.headerSize < (16 + 5))
         return false;
 
-    fileEntry.type = buffer[0];  // 1, 3 PRG, 4 SEQ
-    fileEntry.startAddr = (buffer[2] << 8) | buffer[1];
-    fileEntry.endAddr = (buffer[4] << 8) | buffer[3];
-    std::memcpy(fileEntry.name, buffer + 5, 16);
+    if (fileEntry.header[0] != 1 && fileEntry.header[0] != 3 && fileEntry.header[0] != 4) // type 2 and 5 are no header blocks
+        return false;
+
+    // $01 relocatable program
+    // $02 Data block for SEQ file
+    // $03 non-relocatable program
+    // $04 SEQ file header
+    // $05 End-of-tape marker
+    fileEntry.type = fileEntry.header[0];
+    fileEntry.startAddr = (fileEntry.header[2] << 8) | fileEntry.header[1];
+    fileEntry.endAddr = (fileEntry.header[4] << 8) | fileEntry.header[3];
     return true;
 }
 
 auto TapeStructure::readTTHeader(FileEntry& fileEntry) -> bool {
-    uint8_t* buffer = &fileEntry.header[0];
+    if (!fileEntry.header) {
+        fileEntry.header = new uint8_t[192];
+    }
 
-    if (!readTTBlock(buffer, 193, true))
+    fileEntry.headerSize = 192;
+
+    if (!readTTBlock(fileEntry.header, fileEntry.headerSize, true))
         return false;
 
-    fileEntry.type = 1; // TPRG
-    fileEntry.startAddr = (buffer[1] << 8) | buffer[0];
-    fileEntry.endAddr = (buffer[3] << 8) | buffer[2];
-    std::memcpy(fileEntry.name, buffer + 5, 16);
+    fileEntry.type = 3; // TPRG  // pilot byte 2: non-relocatable program, todo pilot byte 1: relocatable
+    fileEntry.startAddr = (fileEntry.header[1] << 8) | fileEntry.header[0];
+    fileEntry.endAddr = (fileEntry.header[3] << 8) | fileEntry.header[2];
     return true;
 }
 
@@ -365,7 +407,7 @@ auto TapeStructure::readTTBlock(uint8_t* buffer, unsigned size, bool header) -> 
     return true;
 }
 
-auto TapeStructure::readCbmBlock(uint8_t* buffer, unsigned size) -> bool {
+auto TapeStructure::readCbmBlock(uint8_t* buffer, unsigned& size, bool forceSecondPassEvenFirstPassIsErrorFree) -> bool {
     std::vector<unsigned> errors;
 
     for (uint8_t pass = 1; pass <= 2; pass++) {
@@ -373,6 +415,9 @@ auto TapeStructure::readCbmBlock(uint8_t* buffer, unsigned size) -> bool {
 
         if (data == -1)
             return false;
+
+        if (!buffer) // second pass dummy mode
+            return true;
 
         if (data < 0) {
             // pass was not successfull at all. clear all errors to indicate second pass not to check for double errors.
@@ -385,9 +430,13 @@ auto TapeStructure::readCbmBlock(uint8_t* buffer, unsigned size) -> bool {
                 parity ^= buffer[i];
 
             if (pass == 1) {
-                if (!parity)
+                if (!parity) {
                     // there were no errors in pass1, so jump over pass2 because we don't need any data from it
-                    return jumpOverCbmGap();
+                    if (!forceSecondPassEvenFirstPassIsErrorFree)
+                        return jumpOverCbmGap();
+                    else // dummy run second pass in order to get the correct resume position for custom loaders
+                        buffer = nullptr;
+                }
             } else
                 return !parity;
         }
@@ -406,6 +455,9 @@ auto TapeStructure::readCbmBlock(uint8_t* buffer, unsigned& size, std::vector<un
 
     for (uint8_t countDown = 9; countDown > 0; countDown--) {
         data = getByte();
+
+        if (!buffer) // dummy mode
+            continue;
 
         if (data == -1)
             return data;
@@ -436,7 +488,7 @@ auto TapeStructure::readCbmBlock(uint8_t* buffer, unsigned& size, std::vector<un
             return 0;
         }
 
-        if (data == -2) { // other errors
+        if (buffer && (data == -2)) { // other errors
             if (firstPass) {
                 errors.push_back(offset);
 
@@ -455,10 +507,12 @@ auto TapeStructure::readCbmBlock(uint8_t* buffer, unsigned& size, std::vector<un
                 }
             }
         } else {
-            if (offset == size)
+            if (offset == allocatedSize) {
                 return -2;
+            }
 
-            buffer[offset] = (uint8_t)data;
+            if (buffer)
+                buffer[offset] = (uint8_t)data;
         }
         offset++;
     }
@@ -655,8 +709,8 @@ auto TapeStructure::readCbmFile(FileEntry& fileEntry) -> bool {
         return false;
 
     switch(fileEntry.type) {
-        case 1:
-        case 3:
+        case 1: // relocatable  (traps take care of this)
+        case 3: // non relocatable
             return readCbmFilePrg(fileEntry);
         case 4:
             return readCbmFileSeq(fileEntry);
@@ -665,22 +719,27 @@ auto TapeStructure::readCbmFile(FileEntry& fileEntry) -> bool {
 }
 
 auto TapeStructure::readCbmFilePrg(FileEntry& fileEntry) -> bool {
+    allocatedSize = 64 * 1024;
     unsigned size = fileEntry.endAddr - fileEntry.startAddr + 1;
 
     if (size < 0)
         return false;
 
-    fileEntry.size = size;
-    fileEntry.buffer = new uint8_t[size];
+  //  allocatedSize = size + 100;
 
-    return readCbmBlock( fileEntry.buffer, fileEntry.size );
+    fileEntry.size = size;
+    fileEntry.buffer = new uint8_t[allocatedSize];
+
+    return readCbmBlock( fileEntry.buffer, fileEntry.size, true );
 }
 
 auto TapeStructure::readCbmFileSeq(FileEntry& fileEntry) -> bool {
-    uint8_t buffer[193];
+    allocatedSize = 193;
+    unsigned _size = allocatedSize;
+    uint8_t buffer[allocatedSize];
 
     while(true) {
-        if (!readCbmBlock( buffer, 193 ))
+        if (!readCbmBlock( buffer, _size, true ))
             return false;
 
         if (buffer[0] != 2)

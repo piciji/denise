@@ -17,6 +17,9 @@ struct C64Listing {
     // default conversion is ascii
     // if host uses a custom c64 font, activate screencode conversion
     bool convertToScreencode;
+
+    //
+    bool tapeMode = false;
     
     PetciiConversion conv;
     
@@ -63,8 +66,8 @@ struct C64Listing {
 
                     a0Found = true;
 
-                } else {								
-                    out.push_back( decodeToScreencode( code ) );			
+                } else {
+                    out.push_back( decodeToScreencode( code ) );
 
                     if (!a0Found)
                         loader.push_back( code );
@@ -147,7 +150,7 @@ struct C64Listing {
     
     auto decodeToScreencode( uint8_t petscii ) -> uint8_t {
         
-        return convertToScreencode ? conv.decodeToScreencode( petscii )
+        return convertToScreencode ? conv.decodeToScreencode( petscii, tapeMode )
                 : conv.decode( petscii );
     }
     

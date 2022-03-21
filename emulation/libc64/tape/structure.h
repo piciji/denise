@@ -17,8 +17,9 @@ struct TapeStructure {
     Tape* tape = nullptr;
 
     struct FileEntry {
-        uint8_t header[193];
-        uint8_t name[16];
+        uint8_t* header = nullptr;
+        unsigned headerSize = 0;
+
         uint8_t type;
         bool turoTape;
         uint16_t startAddr;
@@ -41,6 +42,7 @@ struct TapeStructure {
     unsigned fetchSize;
     unsigned curPos;
     uint8_t* fetchData;
+    unsigned allocatedSize;
 
     auto setData(uint8_t* data, unsigned size) -> void;
     auto analyzeFile() -> int;
@@ -50,7 +52,7 @@ struct TapeStructure {
     auto getTTByte() -> int;
 
     auto readCbmHeader(FileEntry& fileEntry) -> bool;
-    auto readCbmBlock(uint8_t* buffer, unsigned size) -> bool;
+    auto readCbmBlock(uint8_t* buffer, unsigned& size, bool forceSecondPassEvenFirstPassIsErrorFree) -> bool;
     auto readCbmBlock(uint8_t* buffer, unsigned& size, std::vector<unsigned>& errors, uint8_t& pass) -> int;
     auto nextFile(FileEntry& fileEntry) -> bool;
 

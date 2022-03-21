@@ -331,7 +331,8 @@ auto Tape::selectListing( unsigned pos, bool useTraps ) -> void {
     fetchPos = 0;
 
     if (useTraps) {
-        traps->installTape();
+        if (!traps->testForComplexTapeLoader())
+            traps->installTape();
     }
 
     if ( system->kernalBootComplete )
@@ -382,13 +383,35 @@ auto Tape::selectListing( unsigned pos, bool useTraps ) -> void {
 }
 
 auto Tape::setPosition( unsigned pos, bool find ) -> void {
-    curPos = pos;
-    fetchPos = 0;
 
-    if (find)
+    static unsigned df;
+
+    if (find) {
+        df = sysTimer.delay(&worker);
         sysTimer.remove(&worker);
-    else
-        sysTimer.add(&worker, 5, Emulator::SystemTimer::Action::UpdateExisting);
+        curPos = pos;
+    } else {
+        sysTimer.add(&worker, df, Emulator::SystemTimer::Action::UpdateExisting);
+
+        unsigned gaps;
+        bool _longGap;
+        curPos = 0x14; // skip tape header
+        cycles = 0;
+        fetchPos = 0;
+
+        while( true ) {
+            gaps = fetchGap(_longGap);
+
+            cycles += gaps;
+
+            if (gaps == 0 || (curPos >= pos))
+                break;
+        }
+
+        updateCounter();
+    }
+
+    fetchPos = 0;
 }
 
 }
