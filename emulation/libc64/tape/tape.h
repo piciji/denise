@@ -54,7 +54,7 @@ struct Tape {
     auto getListing() -> std::vector<Emulator::Interface::Listing>&;
     auto setPosition( unsigned pos, bool find ) -> void;
 	
-//protected:
+protected:
 	Emulator::Interface::Media* media; 
 	Emulator::Interface::Media* mediaConnected; // update status LED if there was no tape inserted
     std::function<void ()> worker;
