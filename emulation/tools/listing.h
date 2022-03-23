@@ -18,9 +18,6 @@ struct C64Listing {
     // if host uses a custom c64 font, activate screencode conversion
     bool convertToScreencode;
 
-    //
-    bool tapeMode = false;
-    
     PetciiConversion conv;
     
     auto buildHeadline( uint8_t* namePtr, uint8_t* dosTypePtr = nullptr, uint8_t* extPtr = nullptr ) -> std::vector<uint8_t> {
@@ -150,7 +147,7 @@ struct C64Listing {
     
     auto decodeToScreencode( uint8_t petscii ) -> uint8_t {
         
-        return convertToScreencode ? conv.decodeToScreencode( petscii, tapeMode )
+        return convertToScreencode ? conv.decodeToScreencode( petscii )
                 : conv.decode( petscii );
     }
     
