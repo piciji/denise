@@ -695,29 +695,6 @@ auto System::run() -> void {
         cpu->process();
         if (!diskSilence.idle && !secondDriveCable.cycleSyncing)
             iecBus->syncDrives();
-
-        //traps->add({"TapeFindHeader", 0xF72F, 0xF732, { 0x20, 0x41, 0xF8 }, []() { traps->tapeFindHeader(); } });
-        //traps->add({"TapeReceive", 0xF8A1, 0xFC93, { 0x20, 0xBD, 0xFC }, []() { traps->tapeReceive(); } });
-// 0x2a7 start 3585
-        if (cpu->pc == 0xFC93) {
-//     if ( tape->curPos == 50950) {
-//
-//       // if (cpu->pc == 0xFC93) {
-//        //if (cpu->pc == 0xF732) {
-////        if (cpu->pc == 0xF8A1) {
-////
-//            system->interface->log("mem");
-//            for (unsigned i = 0; i < (64 * 1024); i++) {
-//             //   system->interface->log( i,1, 1 );
-//               // system->interface->log( system->ram[i],0, 1 );
-//
-//                system->interface->log( system->ram[i],0 );
-//                system->interface->log( ",",0 );
-//            }
-////
-//         interface->exit( 0 );
-//         return;
-        }
     }
 
     if (useRunAhead) {

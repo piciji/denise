@@ -71,18 +71,37 @@ auto TapeStructure::getListing( ) -> std::vector<Emulator::Interface::Listing>& 
                 size = (fileEntry.endAddr - fileEntry.startAddr + 253) / 254; // round up in case of fractional block
         }
 
-        system->interface->log("next");
+  //      system->interface->log("header");
         uint8_t* name = new uint8_t[16];
+        std::memset(name, 0x20, 16);
+
+        bool invisibleTextColor = false;
         for(unsigned i = 0; i < 16; i++) {
             uint8_t* pos = fileEntry.header + 5 + i;
 
-            system->interface->log( *(pos), 0, 1 );
+//            system->interface->log( *(pos), 0, 1 );
 
-            if ((*pos <= 0x1f) || (*pos == 0xa2))
+            if (*pos == 0x1f) { // control to change text color "blue" ... means inivisible chars
+                invisibleTextColor = true;
+                continue;
+            }
+
+            if (invisibleTextColor && (
+                    (*pos == 0x05) || (*pos == 0x1c) || (*pos == 0x1e) || (*pos == 0x81) || (*pos == 0x90) || (*pos == 0x95)
+                ||  (*pos == 0x96) || (*pos == 0x97) || (*pos == 0x98) || (*pos == 0x99) || (*pos == 0x9a) || (*pos == 0x9b)
+                ||  (*pos == 0x9c) || (*pos == 0x9e) || (*pos == 0x9f) )) {
+                invisibleTextColor = false;
+                continue;
+            }
+
+            if (invisibleTextColor)
+                continue;
+
+            if (*pos <= 0x1f) // control
                 name[i] = 0x20;
-            else if (*pos >= 0x60 && *pos <= 0x7f)
-                name[i] = *pos + 0x80;
-            else if (*pos >= 0x80 && *pos <= 0x9f)
+            else if (*pos >= 0x60 && *pos <= 0x6f)
+                name[i] = *pos - 0x60;
+            else if (*pos >= 0x80 && *pos <= 0x9f) // control
                 name[i] = 0x20;
             else
                 name[i] = *pos;
@@ -438,7 +457,8 @@ auto TapeStructure::readCbmBlock(uint8_t* buffer, unsigned& size, bool forceSeco
                         buffer = nullptr;
                 }
             } else
-                return !parity;
+                // we gracefully ignore second pass parity error, otherwise Goonies wouldn't work
+                return true;
         }
     }
     return false;
@@ -668,21 +688,20 @@ auto TapeStructure::readCurFile() -> FileEntry* {
             return nullptr;
     }
 
+    if (curFileEntry->buffer)
+        return curFileEntry;
+
     setPosition( curFileEntry->offset );
 
-    if (readFile(*curFileEntry))
+    if (readFile(*curFileEntry)) {
+        curFileEntry->endOffset = curPos;
         return curFileEntry;
+    }
 
     return nullptr;
 }
 
 auto TapeStructure::readFile(FileEntry& fileEntry) -> bool {
-
-    if (fileEntry.buffer) {
-        delete[] fileEntry.buffer;
-        fileEntry.buffer = nullptr;
-        fileEntry.size = 0;
-    }
 
     if (fileEntry.turoTape)
         return readTTFile(fileEntry);
@@ -725,9 +744,8 @@ auto TapeStructure::readCbmFilePrg(FileEntry& fileEntry) -> bool {
     if (size < 0)
         return false;
 
-  //  allocatedSize = size + 100;
-
     fileEntry.size = size;
+
     fileEntry.buffer = new uint8_t[allocatedSize];
 
     return readCbmBlock( fileEntry.buffer, fileEntry.size, true );
@@ -736,11 +754,14 @@ auto TapeStructure::readCbmFilePrg(FileEntry& fileEntry) -> bool {
 auto TapeStructure::readCbmFileSeq(FileEntry& fileEntry) -> bool {
     allocatedSize = 193;
     unsigned _size = allocatedSize;
-    uint8_t buffer[allocatedSize];
+    uint8_t* buffer = new uint8_t[allocatedSize];
+    fileEntry.size = 0;
 
     while(true) {
-        if (!readCbmBlock( buffer, _size, true ))
+        if (!readCbmBlock( buffer, _size, true )) {
+            delete[] buffer;
             return false;
+        }
 
         if (buffer[0] != 2)
             break;
@@ -756,6 +777,8 @@ auto TapeStructure::readCbmFileSeq(FileEntry& fileEntry) -> bool {
         fileEntry.size += 191;
         fileEntry.buffer = _buf;
     }
+
+    delete[] buffer;
 
     return true;
 }

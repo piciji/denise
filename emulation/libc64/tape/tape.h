@@ -118,6 +118,8 @@ struct Tape {
     auto readBackward( uint8_t& byte ) -> bool;
     auto readForward( uint8_t& byte, unsigned count ) -> bool;
     auto readForward( uint8_t& byte ) -> bool;
+
+	auto advanceCounterToPos(unsigned pos) -> void;
 };    
     
 extern Tape* tape;

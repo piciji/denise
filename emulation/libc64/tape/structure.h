@@ -28,6 +28,7 @@ struct TapeStructure {
 
         unsigned offset = 0;
         unsigned dataOffset = 0;
+        unsigned endOffset = 0;
 
         uint8_t* buffer = nullptr;
         unsigned size = 0;

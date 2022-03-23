@@ -98,12 +98,18 @@ auto Autoloader::postProcessing() -> void {
             trapped = settings->get<bool>("use_disk_traps", false);
         else if (mediaGroup->isTape())
             trapped = settings->get<bool>("use_tape_traps", false);
-    } else if (ddControl.mode == Mode::AutoStartTrapped) {
+    } else if (ddControl.mode == Mode::AutoStartPrimary || ddControl.mode == Mode::AutoStartSecondary) {
         autoStart = true;
-        if (mediaGroup->isDrive())
-            trapped = true;
-    } else if (ddControl.mode == Mode::AutoStartNotTrapped) {
-        autoStart = true;
+
+        if (mediaGroup->isDrive()) {
+            if (mediaGroup->isDisk())
+                trapped = settings->get<bool>("autostart_traps_on_dblclick", false);
+            else if (mediaGroup->isTape())
+                trapped = settings->get<bool>("autostart_tape_traps_on_dblclick", false);
+
+            if (ddControl.mode == Mode::AutoStartSecondary)
+                trapped ^= 1;
+        }
     }
 
     if (trapped) // traps require standard kernals

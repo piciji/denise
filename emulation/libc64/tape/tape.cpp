@@ -324,7 +324,7 @@ auto Tape::selectListing( unsigned pos, bool useTraps ) -> void {
     curPos = 0x14;
     if (structure.setFile(pos - 1))  {
         if (pos > 1) {
-            curPos = structure.getCurFile()->offset;
+            advanceCounterToPos( structure.getCurFile()->offset );
         }
     }
 
@@ -382,33 +382,37 @@ auto Tape::selectListing( unsigned pos, bool useTraps ) -> void {
     autoStarted = true;
 }
 
+auto Tape::advanceCounterToPos(unsigned pos) -> void {
+    bool _longGap;
+    unsigned gaps;
+    curPos = 0x14; // skip tape header
+    fetchPos = 0;
+
+    while( true ) {
+        gaps = fetchGap(_longGap);
+
+        cycles += gaps;
+
+        if (gaps == 0 || (curPos >= pos))
+            break;
+    }
+
+    updateCounter();
+    curPos = pos;
+    fetchPos = 0;
+    gapsRemaining = 0;
+}
+
 auto Tape::setPosition( unsigned pos, bool find ) -> void {
 
-    static unsigned df;
-
     if (find) {
-        df = sysTimer.delay(&worker);
         sysTimer.remove(&worker);
         curPos = pos;
     } else {
-        sysTimer.add(&worker, df, Emulator::SystemTimer::Action::UpdateExisting);
+        sysTimer.remove(&motorOff);
+        sysTimer.add(&worker, 1, Emulator::SystemTimer::Action::UpdateExisting);
 
-        unsigned gaps;
-        bool _longGap;
-        curPos = 0x14; // skip tape header
-        cycles = 0;
-        fetchPos = 0;
-
-        while( true ) {
-            gaps = fetchGap(_longGap);
-
-            cycles += gaps;
-
-            if (gaps == 0 || (curPos >= pos))
-                break;
-        }
-
-        updateCounter();
+        advanceCounterToPos(pos);
     }
 
     fetchPos = 0;

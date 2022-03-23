@@ -233,24 +233,69 @@ auto Traps::testForComplexTapeLoader() -> bool {
 
     TapeStructure::FileEntry* fileEntry = tape->structure.getCurFile();
 
-    if (!fileEntry)
+    if (!fileEntry || fileEntry->turoTape)
         return false;
 
     if (fileEntry->type == 3) {
-        unsigned size = fileEntry->endAddr - fileEntry->startAddr + 1;
+        if (fileEntry->startAddr == 0x29f && fileEntry->endAddr == 0x30c) // APB
+            return true;
 
-        if (size > 1000) {
-            // 4 game pack no 1, 4 Zzzap Sizzlers
-            if ((fileEntry->startAddr <= 0x314) && ((fileEntry->startAddr + size) > 0x315)) {
-                system->interface->log("x2");
-                fileEntry = tape->structure.readCurFile();
+        if (fileEntry->startAddr == 0x302 && fileEntry->endAddr == 0x304) // boggit the borred - septical II
+            return true;
 
-                auto pos = 0x314 - fileEntry->startAddr;
+        if (fileEntry->startAddr == 0x2bc && fileEntry->endAddr == 0x304) // ciphoid
+            return true;
 
-                if (fileEntry->buffer[pos] == 0x2c && fileEntry->buffer[pos + 1] == 0xf9) {
-                    system->interface->log("x3");
+        if (fileEntry->startAddr == 0x300 && fileEntry->endAddr == 0x30C) // cricket crazy
+            return true;
+
+        if ((fileEntry->startAddr <= 0x314) && (fileEntry->endAddr >= 0x314) ) {
+            //system->interface->log("x2");
+            fileEntry = tape->structure.readCurFile();
+            if (!fileEntry)
+                return true;
+
+            auto pos = 0x314 - fileEntry->startAddr;
+
+            if (fileEntry->endAddr >= 0x315) {
+                //system->interface->log(fileEntry->buffer[pos],1,1);
+                //system->interface->log(fileEntry->buffer[pos+1],1,1);
+                if (fileEntry->buffer[pos] == 0 && fileEntry->buffer[pos + 1] == 0) { // Flintstones
+
                     return true;
                 }
+                // 4 game pack no 1, 4 Zzzap Sizzlers
+                if (fileEntry->buffer[pos] == 0x2c && fileEntry->buffer[pos + 1] == 0xf9) {
+                    //system->interface->log("x3");
+
+                    //system->interface->log( fileEntry->startAddr, 1,1 );
+                    //system->interface->log( fileEntry->endAddr,1,1 );
+
+                    // disallow
+                    // 0x2a7 - 0x10a7
+                    // 0x300 - 0x370
+                    // 0x300 - 0x334
+
+                    // allow
+                    if ( (fileEntry->startAddr == 0x29f && fileEntry->endAddr == 0x33b)
+                         || (fileEntry->startAddr == 0x29f && fileEntry->endAddr == 0x3c0)
+                         || (fileEntry->startAddr == 0x2b0 && fileEntry->endAddr == 0x334)
+                         || (fileEntry->startAddr == 0x2a7 && fileEntry->endAddr == 0x3ff) // Frak 64
+                         || (fileEntry->startAddr == 0x2a7 && fileEntry->endAddr == 0x34f) // Goonies
+                            ) {
+
+                        return false;
+                    }
+                    return true;
+                }
+            } else { // 0x314 only
+                //system->interface->log(fileEntry->buffer[pos]);
+                if ((fileEntry->buffer[pos] == 0x43) // Arcade classic
+                || (fileEntry->buffer[pos] == 0xc2) // emlyn hughes
+                ) {
+                    return true;
+                }
+
             }
         }
     }
@@ -266,9 +311,8 @@ auto Traps::tapeFindHeader() -> void {
 
     if (fileEntry) {
         tape->setPosition( fileEntry->dataOffset, true );
-        system->interface->log(fileEntry->startAddr,1,1);
-        system->interface->log(addr,1,1);
-        system->interface->log(fileEntry->header[0],1);
+//        system->interface->log(fileEntry->startAddr,1,1);
+//        system->interface->log(fileEntry->endAddr,1,1);
 
         buf[0] = fileEntry->type;
         buf[1] = fileEntry->startAddr & 0xff;
@@ -276,9 +320,6 @@ auto Traps::tapeFindHeader() -> void {
         buf[3] = fileEntry->endAddr & 0xff;
         buf[4] = fileEntry->endAddr >> 8;
 
-        system->interface->log(fileEntry->headerSize);
-
-        // game "brian bloodaxe" has more bytes as typical header size
         std::memcpy( buf + 5, fileEntry->header + 5, std::min<unsigned>(fileEntry->headerSize, 192) - 5 );
     } else
         buf[0] = 5; // end of tape marker
@@ -315,13 +356,13 @@ auto Traps::tapeReceive() -> void {
             system->memoryCpu.write(0xac, fileEntry->endAddr & 0xff);
             system->memoryCpu.write(0xad, fileEntry->endAddr >> 8);
 
-            system->interface->log("file ok",1);
-            system->interface->log(fileEntry->size,0);
+           // system->interface->log("file ok",1);
+           // system->interface->log(fileEntry->size,0, 1);
 
             // game "Ah diddum" has one byte more as in header specified.
             std::memcpy( system->ram + start, fileEntry->buffer, fileEntry->size );
 
-            tape->setPosition( tape->structure.curPos, false );
+            tape->setPosition( fileEntry->endOffset, false );
 
         } else {
             st = 0x10;
@@ -334,11 +375,6 @@ auto Traps::tapeReceive() -> void {
     cpu->regP &= ~4; // int off
 
     system->memoryCpu.write(0xc0, 0x01 ); // stop motor
-
-//    uint8_t es[64 * 1024] = {};
-//
-//    for (unsigned i = 0; i < (64 * 1024); i++)
-//       system->ram[i] = es[i];
 
     uninstall();
 }

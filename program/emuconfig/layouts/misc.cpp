@@ -55,10 +55,16 @@ AutostartLayout::AutoWarp::AutoWarp() {
     setAlignment( 0.5 );
 }
 
+AutostartLayout::PrimaryStart::PrimaryStart() {
+    append(diskTrapsOnDblClick, {0u, 0u}, 10 );
+    append(tapeTrapsOnDblClick, {0u, 0u} );
+
+    setAlignment( 0.5 );
+}
+
 AutostartLayout::Options::Options() {
     append(tapeWithStandardKernal, {0u, 0u}, 10 );
-    append(loadWithColumn, {0u, 0u}, 10 );
-    append(trapsOnDblClick, {0u, 0u} );
+    append(loadWithColumn, {0u, 0u} );
 
     setAlignment( 0.5 );
 }
@@ -67,6 +73,7 @@ AutostartLayout::AutostartLayout() {
     setPadding(10);
 
     append(autoWarp, {0u, 0u}, 5 );
+    append(primaryStart, {0u, 0u}, 5 );
     append(options, {0u, 0u} );
 
     setFont(GUIKIT::Font::system("bold"));
@@ -129,8 +136,12 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) {
             _settings->set<bool>("autostart_load_with_column", checked);
         };
 
-        autostartLayout->options.trapsOnDblClick.onToggle = [this](bool checked) {
+        autostartLayout->primaryStart.diskTrapsOnDblClick.onToggle = [this](bool checked) {
             _settings->set<bool>("autostart_traps_on_dblclick", checked);
+        };
+
+        autostartLayout->primaryStart.tapeTrapsOnDblClick.onToggle = [this](bool checked) {
+            _settings->set<bool>("autostart_tape_traps_on_dblclick", checked);
         };
     }
 
@@ -298,7 +309,8 @@ auto MiscLayout::translate() -> void {
         autostartLayout->options.tapeWithStandardKernal.setText(trans->get("tape default kernal"));
 
         autostartLayout->options.loadWithColumn.setText( "Load \":*\"" );
-        autostartLayout->options.trapsOnDblClick.setText(trans->get("VDT Autostart on dblclick"));
+        autostartLayout->primaryStart.diskTrapsOnDblClick.setText(trans->get("VDT Disk Autostart on dblclick"));
+        autostartLayout->primaryStart.tapeTrapsOnDblClick.setText(trans->get("VDT Tape Autostart on dblclick"));
     }
 
     speedLayout.setText( trans->get("Speed") );
@@ -328,7 +340,9 @@ auto MiscLayout::loadSettings() -> void {
 
         autostartLayout->options.loadWithColumn.setChecked(_settings->get<bool>("autostart_load_with_column", false));
 
-        autostartLayout->options.trapsOnDblClick.setChecked(_settings->get<bool>("autostart_traps_on_dblclick", false));
+        autostartLayout->primaryStart.diskTrapsOnDblClick.setChecked(_settings->get<bool>("autostart_traps_on_dblclick", false));
+
+        autostartLayout->primaryStart.tapeTrapsOnDblClick.setChecked(_settings->get<bool>("autostart_tape_traps_on_dblclick", false));
     }
 
     setRunAheadPerformance(_settings->get<bool>("runahead_performance", false));

@@ -91,7 +91,12 @@ auto Fileloader::load(Emulator::Interface* emulator, Emulator::Interface::Media*
 
     if (!*alternateFileDialog && dynamic_cast<LIBC64::Interface*>(emulator)) {
         fileDialogPtr->addContentView(IDC_LIST, [this, media, emulator, settings](std::string filePath, unsigned selection) {
-            auto _useTraps = settings->get<bool>("autostart_traps_on_dblclick", false);
+            auto _useTraps = false;
+
+            if (media->group->isTape())
+                _useTraps = settings->get<bool>("autostart_tape_traps_on_dblclick", false);
+            if (media->group->isDisk())
+                _useTraps = settings->get<bool>("autostart_traps_on_dblclick", false);
 
             if (filePath.empty())
                 return false;
@@ -153,7 +158,6 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
     }
 
     auto settings = program->getSettings( emulator );
-    auto _useTraps = settings->get<bool>("autostart_traps_on_dblclick", false);
 
     if (fileDialogPtr) {
         fileDialogPtr->close();
@@ -166,7 +170,7 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
     fileDialogPtr->setTemplateId( IDD_FILE_TEMPLATE );
 
     if (!*alternateFileDialog && dynamic_cast<LIBC64::Interface*>(emulator)) {
-        fileDialogPtr->addContentView( IDC_LIST, [this, settings, emulator, mIsAcquiredBefore, _useTraps](std::string filePath, unsigned selection) {
+        fileDialogPtr->addContentView( IDC_LIST, [this, settings, emulator, mIsAcquiredBefore](std::string filePath, unsigned selection) {
 
             if (filePath.empty())
                 return false;
@@ -174,7 +178,7 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
             settings->set<std::string>("anyload_path", GUIKIT::File::getPath( filePath ) );
 
             emuThread->lock();
-            autoloader->init( {filePath}, false, _useTraps ? Autoloader::Mode::AutoStartTrapped : Autoloader::Mode::AutoStartNotTrapped, selection );
+            autoloader->init( {filePath}, false, Autoloader::Mode::AutoStartPrimary, selection );
             autoloader->loadFiles();
             emuThread->unlock();
 
@@ -230,14 +234,14 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
     }, IDC_BUTTON );
 
     if (!*alternateFileDialog && dynamic_cast<LIBC64::Interface*>(emulator) ) {
-        fileDialogPtr->addCustomButton( trans->get(!_useTraps ? "VDT Autostart" : "Autostart"), [this, emulator, settings, mIsAcquiredBefore, _useTraps](std::string filePath, unsigned selection) {
+        fileDialogPtr->addCustomButton( trans->get("ALT Autostart"), [this, emulator, settings, mIsAcquiredBefore](std::string filePath, unsigned selection) {
 
             if (filePath.empty())
                 return false;
             settings->set<std::string>("anyload_path", GUIKIT::File::getPath( filePath ) );
 
             emuThread->lock();
-            autoloader->init( {filePath}, false, !_useTraps ? Autoloader::Mode::AutoStartTrapped : Autoloader::Mode::AutoStartNotTrapped, selection );
+            autoloader->init( {filePath}, false, Autoloader::Mode::AutoStartSecondary, selection );
             autoloader->loadFiles();
             emuThread->unlock();
 
@@ -249,11 +253,11 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
         }, IDC_BUTTON1 );
     }
 
-    fileDialogPtr->setCallbacks( [this, emulator, settings, mIsAcquiredBefore, _useTraps](std::string filePath, unsigned selection) {
+    fileDialogPtr->setCallbacks( [this, emulator, settings, mIsAcquiredBefore](std::string filePath, unsigned selection) {
         settings->set<std::string>("anyload_path", GUIKIT::File::getPath( filePath ) );
 
         emuThread->lock();
-        autoloader->init( {filePath}, false, _useTraps ? Autoloader::Mode::AutoStartTrapped : Autoloader::Mode::AutoStartNotTrapped, selection );
+        autoloader->init( {filePath}, false, Autoloader::Mode::AutoStartPrimary, selection );
         autoloader->loadFiles();
         emuThread->unlock();
 
@@ -272,7 +276,7 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
 
     fileDialogPtr->resizeTemplate( true, -6 );
 
-    fileDialogPtr->setDefaultButtonText( trans->get(_useTraps ? "VDT Autostart" : "Autostart") );
+    fileDialogPtr->setDefaultButtonText( trans->get("Autostart") );
 
     fileDialogPtr->setWindow( *view ).setNonModal();
 
@@ -288,7 +292,7 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
         settings->set<std::string>("anyload_path", GUIKIT::File::getPath( filePath ) );
 
         emuThread->lock();
-        autoloader->init( {filePath}, false, _useTraps ? Autoloader::Mode::AutoStartTrapped : Autoloader::Mode::AutoStartNotTrapped, fileDialogPtr ? fileDialogPtr->getContentViewSelection() : 0 );
+        autoloader->init( {filePath}, false, Autoloader::Mode::AutoStartPrimary, fileDialogPtr ? fileDialogPtr->getContentViewSelection() : 0 );
         autoloader->loadFiles();
         emuThread->unlock();
     } else if (view) {
