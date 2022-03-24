@@ -77,6 +77,7 @@ protected:
     uint8_t writeQuestionState = 0;
 	bool writeBit;
     unsigned writeClock;
+    unsigned writeCounterClock;
     uint64_t cycles;
     uint64_t cycles999;
 	unsigned cylcesPerSecond;
@@ -106,7 +107,8 @@ protected:
     
 	// write
 	auto addByteToWriteBuffer(uint8_t byte) -> void;
-	auto writeBuffer() -> void;	
+	auto writeBuffer() -> void;
+    auto advanceWriteCounter() -> void;
 	
     // fetch
     auto nextGap() -> unsigned;

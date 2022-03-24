@@ -193,7 +193,7 @@ auto Tape::setMode( unsigned mode, bool buttonPress ) -> void {
         case Mode::Record:
 			senseOut( true );
             directionForward = true;
-			writeClock = sysTimer.clock;	
+			writeClock = writeCounterClock = sysTimer.clock;
 			// a write changes the file pos, so we have to invalidate the read buffer
 			// because it's content is not aligned anymore
 			fetchPos = 0;
@@ -213,7 +213,7 @@ auto Tape::reset(bool fromLoad) -> void {
     counter = 0;
 	counterOffset = 0;
 	writePos = 0;
-	writeClock = sysTimer.clock;
+	writeClock = writeCounterClock = sysTimer.clock;
 	cycles = 0;	
 	directionForward = lastDirectionForward = true;
 	fetchPos = 0;

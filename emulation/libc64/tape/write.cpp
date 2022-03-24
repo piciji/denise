@@ -15,57 +15,62 @@ auto Tape::isWriteProtected() -> bool {
 }
 
 auto Tape::writeIn(bool bit) -> void {
-    if (!enabled || (writeBit == bit))
-		return;
-	
-	writeBit = bit;	
-	
-	if (!writeBit)
-		return;    
-    
-	if (!loaded || rawData || !motorIn || mode != Mode::Record)
-		return;
-	
-	unsigned cyclesElapsed = sysTimer.fallBackCycles( writeClock );
-	
-    if (cyclesElapsed <= 7)
+    bool _wb = writeBit;
+    writeBit = bit;
+
+    if (!enabled || !loaded || rawData || !motorIn || mode != Mode::Record)
         return;
-    
-    if (writeProtect)
-        // mechanical protection, record button isn't pressable
-        return;    
-    
+
+    if (writeProtect) // mechanical protection, record button isn't pressable
+        return;
+
+    if (!writeBit || (writeBit == _wb)) {
+        return advanceWriteCounter();
+    }
+
+    unsigned cyclesElapsed = sysTimer.fallBackCycles( writeClock );
+
+    if (cyclesElapsed <= 7)
+        return advanceWriteCounter();
+
     if (writeQuestionState == 1)
-        goto End;
+        return advanceWriteCounter();
        
     if (!writeQuestionState) {
         if (!system->interface->questionToWrite(media)) {
             writeQuestionState = 1; // don't ask again
-            goto End;
+            return advanceWriteCounter();
         }
         writeQuestionState = 2; 
     }
     
     if (cyclesElapsed <= (255 * 8 + 7) ) {
-		
 		addByteToWriteBuffer( (uint8_t)(cyclesElapsed / 8) );
-        
-    } else {
-        // long gap
+    } else { // long gap
 		addByteToWriteBuffer( 0 );
 		addByteToWriteBuffer( cyclesElapsed & 0xff );
 		addByteToWriteBuffer( (cyclesElapsed >> 8) & 0xff );
 		addByteToWriteBuffer( (cyclesElapsed >> 16) & 0xff );
     }
 
-End:    
-	cycles += cyclesElapsed;
-	if (cycles > cyclesTotal)
-		cyclesTotal = cycles;
-	
     writeClock = sysTimer.clock;
-	
-	updateCounter();
+
+    advanceWriteCounter();
+}
+
+auto Tape::advanceWriteCounter() -> void {
+    unsigned cyclesElapsed = sysTimer.fallBackCycles( writeCounterClock );
+
+    if (cyclesElapsed < 100000)
+        return;
+
+    cycles += cyclesElapsed;
+    if (cycles > cyclesTotal)
+        cyclesTotal = cycles;
+
+    updateCounter();
+
+    writeCounterClock = sysTimer.clock;
 }
 
 auto Tape::addByteToWriteBuffer(uint8_t byte) -> void {

@@ -17,6 +17,7 @@ auto Tape::serialize(Emulator::Serializer& s) -> void {
     s.integer( writePos );
     s.integer( writeBit );
     s.integer( writeClock );
+    s.integer( writeCounterClock );
     s.integer( cycles );
     s.integer( cycles999 );
     s.integer( cylcesPerSecond );
