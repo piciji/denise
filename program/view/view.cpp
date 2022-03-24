@@ -106,7 +106,7 @@ auto View::build() -> void {
             updateViewport();
 
         } else {
-            if (activeVideoManager && emuThread->enabled) {
+            if (activeVideoManager && emuThread->enabled && !program->isPause) {
                 videoDriver->lockResize();
                 updateViewport();
                 videoDriver->unlockResize();
@@ -114,11 +114,13 @@ auto View::build() -> void {
                 updateViewport();
       
 			if (activeVideoManager) {
-				if (!emuThread->enabled) {
-					activeVideoManager->waitForCrtRenderer();
+                if (!emuThread->enabled || program->isPause) {
+                    activeVideoManager->waitForCrtRenderer();
+                    emuThread->lock();
                     videoDriver->redraw();
                     videoDriver->freeContext();
-				}
+                    emuThread->unlock();
+                }
 			} else {
 				videoDriver->redraw(true);
             }
