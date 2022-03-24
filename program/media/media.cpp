@@ -451,7 +451,9 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
 
             if (program->loadImageDataWhenOk(file, fSetting->id, mediaGroup, data)) {
 
-                filePool->assign( _ident(emulator, block->media->name + "store"), file);
+                if (!mediaGroup->isProgram())
+                    filePool->assign( _ident(emulator, block->media->name + "store"), file);
+
                 if (mediaGroup->selected || (activeEmulator != emulator)) {
                     block->media->guid = uintptr_t(file);
                     emulator->insertMedium(block->media, data, file->archiveDataSize(fSetting->id));
@@ -1067,7 +1069,8 @@ auto MediaLayout::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* fil
         media->guid = uintptr_t(file);
         emulator->insertMedium(media, data, size);
         emulator->writeProtect(media, false);
-        filePool->assign( _ident(emulator, media->name), file);
+        if (!mediaGroup->isProgram())
+            filePool->assign( _ident(emulator, media->name), file);
     } else {        
         if (media->pcbLayout && mediaGroup->expansion->pcbs.size()) {
             block->selector.combo.setSelection(0);
@@ -1092,13 +1095,15 @@ auto MediaLayout::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* fil
         settings->set<unsigned>( _underscore(layout->mediaGroup->name) + "_selected", block->media->id);
     }
 
-    filePool->assign( _ident(emulator, media->name + "store"), file);    
-    filePool->unloadOrphaned();
+    if (!mediaGroup->isProgram())
+        filePool->assign( _ident(emulator, media->name + "store"), file);
 
     fSetting->setPath(file->getFile(), !cmd->autoload);
     fSetting->setFile(item->info.name, !cmd->autoload);
     fSetting->setId(item->id, !cmd->autoload);
     fSetting->setWriteProtect(false, !cmd->autoload);
+
+    filePool->unloadOrphaned();
 
     if (!mediaGroup->isExpansion())
         States::getInstance(emulator)->updateImage(fSetting, media);
@@ -1425,7 +1430,8 @@ auto MediaLayout::loadSettings() -> void {
                
                 if (program->loadImageDataWhenOk(file, fSetting->id, mediaGroup, data)) {
                     block->media->guid = uintptr_t(file);
-                    filePool->assign(_ident(emulator, block->media->name + "store"), file);
+                    if (!mediaGroup->isProgram())
+                        filePool->assign(_ident(emulator, block->media->name + "store"), file);
                     emulator->insertMedium(block->media, data, file->archiveDataSize(fSetting->id));
                     block->listings = emulator->getListing(block->media, settings->get<bool>("autostart_load_with_column", false));
 

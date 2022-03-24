@@ -8,6 +8,7 @@
 namespace LIBC64 {		
 
 struct Prg {
+    ~Prg();
     Emulator::Interface::Media* media = nullptr;
     
 	// loaded file

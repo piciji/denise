@@ -5,7 +5,6 @@
 #include "../emuconfig/config.h"
 #include "../media/media.h"
 #include "../view/view.h"
-#include "../tools/filepool.h"
 #include "../tools/filesetting.h"
 #include "../config/archiveViewer.h"
 #include "../cmd/cmd.h"

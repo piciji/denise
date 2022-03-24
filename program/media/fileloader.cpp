@@ -672,7 +672,8 @@ auto Fileloader::insertImage(Emulator::Interface* emulator, Emulator::Interface:
         media->guid = uintptr_t(file);
         emulator->insertMedium(media, data, size);
         emulator->writeProtect(media, false);
-        filePool->assign(_ident(emulator, media->name), file);
+        if (!mediaGroup->isProgram())
+            filePool->assign(_ident(emulator, media->name), file);
     } else {
 
         if (mediaGroup->expansion->pcbs.size())
@@ -687,13 +688,15 @@ auto Fileloader::insertImage(Emulator::Interface* emulator, Emulator::Interface:
     if (mediaGroup->selected && !media->secondary )
         settings->set<unsigned>( _underscore(mediaGroup->name) + "_selected", media->id);
 
-    filePool->assign(_ident(emulator, media->name + "store"), file);
-    filePool->unloadOrphaned();
+    if (!mediaGroup->isProgram())
+        filePool->assign(_ident(emulator, media->name + "store"), file);
 
     fSetting->setPath(file->getFile(), !cmd->autoload);
     fSetting->setFile(item->info.name, !cmd->autoload);
     fSetting->setId(item->id, !cmd->autoload);
     fSetting->setWriteProtect(false, !cmd->autoload);
+
+    filePool->unloadOrphaned();
 
     if (!cmd->noGui) {
         if (!mediaGroup->isExpansion())

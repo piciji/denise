@@ -1175,13 +1175,13 @@ auto Interface::insertProgram(Media* media, uint8_t* data, unsigned size) -> voi
 }
 
 auto Interface::ejectProgram(Media* media) -> void {
-    if (!media || !media->group->isProgram())
-        return;
-    
-    auto prg = Prg::getInstance( media );
-    if (!prg)
-        return;
-    prg->unset();
+//    if (!media || !media->group->isProgram())
+//        return;
+//
+//    auto prg = Prg::getInstance( media );
+//    if (!prg)
+//        return;
+//    prg->unset();
 }
 
 auto Interface::getLoadedProgram(unsigned& size) -> uint8_t* {

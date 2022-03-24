@@ -261,9 +261,10 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
                 if (emuView && emuView->mediaLayout)
                     emuView->mediaLayout->updateWriteProtection( &media, fSetting->writeProtect );
 
-                filePool->assign( _ident(emulator, media.name + "store"), file);
-
-                filePool->assign( _ident(emulator, media.name), file);
+                if (!mediaGroup.isProgram()) {
+                    filePool->assign(_ident(emulator, media.name + "store"), file);
+                    filePool->assign(_ident(emulator, media.name), file);
+                }
 
             } else { // IP socket mode
                 program->prepareSocket( &media, emulator, fSetting->path );
