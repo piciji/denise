@@ -149,15 +149,16 @@ auto Fileloader::load(Emulator::Interface* emulator, Emulator::Interface::Media*
 }
 
 auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore ) -> void {
-
+	auto settings = program->getSettings( emulator );
     static GUIKIT::Setting* alternateFileDialog = globalSettings->getOrInit("alternate_software_preview", false);
+	static GUIKIT::Setting* diskTrapped = settings->getOrInit("autostart_traps_on_dblclick", false);
+	static GUIKIT::Setting* tapeTrapped = settings->getOrInit("autostart_tape_traps_on_dblclick", false);
+	
     auto emuView = EmuConfigView::TabWindow::getView( emulator );
 
     if (*alternateFileDialog && emuView && emuView->visible()) {
         emuView->setFocused();
-    }
-
-    auto settings = program->getSettings( emulator );
+    }	    
 
     if (fileDialogPtr) {
         fileDialogPtr->close();
@@ -234,6 +235,14 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
     }, IDC_BUTTON );
 
     if (!*alternateFileDialog && dynamic_cast<LIBC64::Interface*>(emulator) ) {
+		std::string tooltip = "";
+		if (!*diskTrapped && !*tapeTrapped)
+			tooltip = trans->get("VDT Drive Autostart");
+		else if (!*diskTrapped)
+			tooltip = trans->get("VDT Disk Autostart");
+		else if (!*tapeTrapped)
+			tooltip = trans->get("VDT Tape Autostart");
+	
         fileDialogPtr->addCustomButton( trans->get("ALT Autostart"), [this, emulator, settings, mIsAcquiredBefore](std::string filePath, unsigned selection) {
 
             if (filePath.empty())
@@ -250,7 +259,7 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
             HideMouseIfWasBefore
 
             return true;
-        }, IDC_BUTTON1 );
+        }, IDC_BUTTON1, tooltip );
     }
 
     fileDialogPtr->setCallbacks( [this, emulator, settings, mIsAcquiredBefore](std::string filePath, unsigned selection) {
@@ -277,6 +286,16 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
     fileDialogPtr->resizeTemplate( true, -6 );
 
     fileDialogPtr->setDefaultButtonText( trans->get("Autostart") );
+	
+	std::string tooltip = "";
+	if (*diskTrapped && *tapeTrapped)
+		tooltip = trans->get("VDT Drive Autostart");
+	else if (*diskTrapped)
+		tooltip = trans->get("VDT Disk Autostart");
+	else if (*tapeTrapped)
+		tooltip = trans->get("VDT Tape Autostart");
+	
+	fileDialogPtr->setDefaultButtonTooltip( tooltip );
 
     fileDialogPtr->setWindow( *view ).setNonModal();
 

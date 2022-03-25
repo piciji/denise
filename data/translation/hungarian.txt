@@ -664,3 +664,6 @@ tape spooled =
 VDT Disk Autostart on dblclick = autostart dupla kattintásra
 VDT Tape Autostart on dblclick =
 ALT Autostart =
+VDT Disk Autostart = 
+VDT Tape Autostart = 
+VDT Drive Autostart = 

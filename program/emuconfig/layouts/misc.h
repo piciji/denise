@@ -43,19 +43,19 @@ struct AutostartLayout : GUIKIT::FramedVerticalLayout {
         AutoWarp();
     } autoWarp;
 
-    struct PrimaryStart : GUIKIT::HorizontalLayout {
+    struct DiskStart : GUIKIT::HorizontalLayout {
         GUIKIT::CheckBox diskTrapsOnDblClick;
-        GUIKIT::CheckBox tapeTrapsOnDblClick;
-
-        PrimaryStart();
-    } primaryStart;
-
-    struct Options : GUIKIT::HorizontalLayout { ;
-        GUIKIT::CheckBox tapeWithStandardKernal;
         GUIKIT::CheckBox loadWithColumn;
 
-        Options();
-    } options;
+        DiskStart();
+    } diskStart;
+
+    struct TapeStart : GUIKIT::HorizontalLayout {
+		GUIKIT::CheckBox tapeTrapsOnDblClick;		
+        GUIKIT::CheckBox tapeWithStandardKernal;        
+
+        TapeStart();
+    } tapeStart;
 
     AutostartLayout();
 };

@@ -664,3 +664,6 @@ tape spooled = Tape has been rewound to the selected file.
 VDT Disk Autostart on dblclick =
 VDT Tape Autostart on dblclick =
 ALT Autostart =
+VDT Disk Autostart = 
+VDT Tape Autostart = 
+VDT Drive Autostart = 

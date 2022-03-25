@@ -386,6 +386,8 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
                 }                    
                 
                 SetDlgItemText( context->dialogHwnd, IDOK, (LPCWSTR)utf16_t(state->textOk) );
+				
+				context->setButtonTooltip(hwndOk, state->toolTip);
             }
             
             if (!state->textCancel.empty())
@@ -424,9 +426,10 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
             }
 
             for(auto& button : state->buttons) {
-                SetDlgItemText(hDlg, button.id, (LPCWSTR)utf16_t(button.text) );
+                SetDlgItemText(hDlg, button.id, (LPCWSTR)utf16_t(button.text) );				
+				context->setButtonTooltip(GetDlgItem(hDlg, button.id), button.toolTip);
             }
-                                  
+			
             SetWindowLongPtr(listBox, GWLP_USERDATA, (LONG_PTR)context);
             WNDPROC wndprocOrig = (WNDPROC)SetWindowLongPtr(listBox, GWLP_WNDPROC, (LONG_PTR)subclassListbox);
             SetProp( listBox, L"OLDWNDPROC", (HANDLE)wndprocOrig );
@@ -731,6 +734,28 @@ auto pBrowserWindow::setToolTip(HWND hwnd, int curItem, RECT rect) -> void {
     toolInfo.lpszText = wtooltip;
     
     SendMessage(hwndTip, TTM_ADDTOOL, 0, (LPARAM)&toolInfo);
+}
+
+auto pBrowserWindow::setButtonTooltip(HWND buttonHwnd, std::string tooltip) -> void {
+    if(tooltip.empty())
+        return;
+    
+	HWND toolTip = CreateWindowEx(0, TOOLTIPS_CLASS, NULL,
+		WS_POPUP | TTS_ALWAYSTIP | TTS_USEVISUALSTYLE,
+		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+		buttonHwnd, NULL, GetModuleHandle(0), 0);    
+            
+    utf16_t wtooltip(tooltip);
+
+    TOOLINFO toolInfo = { 0 };
+    toolInfo.cbSize = sizeof(toolInfo);
+    toolInfo.hwnd = GetParent(buttonHwnd);
+    toolInfo.uFlags = TTF_IDISHWND | TTF_SUBCLASS;
+    toolInfo.uId = (UINT_PTR)buttonHwnd;
+    toolInfo.lpszText = wtooltip;
+
+    SendMessage(toolTip, TTM_ADDTOOL, 0, (LPARAM)&toolInfo);
+	SendMessage(toolTip, TTM_SETDELAYTIME, TTDT_INITIAL, 1500);
 }
 
 auto pBrowserWindow::adjustDialogByScreenResolution(HWND fileDialogView, HWND listBox) -> void {

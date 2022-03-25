@@ -1101,8 +1101,9 @@ struct BrowserWindow {
     auto setPath(const std::string& path) -> BrowserWindow&;
     auto setTitle(const std::string& title) -> BrowserWindow&;
     auto setOnChangeCallback( std::function<std::vector<BrowserWindow::Listing> (std::string file)> onSelectionChange ) -> BrowserWindow&;
-    auto addCustomButton( std::string text, std::function<bool (std::string filePath, unsigned selection)> onClick, unsigned id = 0 ) -> BrowserWindow&;
+    auto addCustomButton( std::string text, std::function<bool (std::string filePath, unsigned selection)> onClick, unsigned id = 0, std::string toolTip = "" ) -> BrowserWindow&;
     auto setDefaultButtonText(std::string textOk, std::string textCancel = "") -> BrowserWindow&;
+	auto setDefaultButtonTooltip(std::string toolTip) -> BrowserWindow&;
 	auto setNonModal() -> BrowserWindow&;
 	auto setListings( std::vector<BrowserWindow::Listing>& listings ) -> void;
 
@@ -1125,6 +1126,7 @@ struct BrowserWindow {
     
     struct CustomButton {        
         std::string text;
+		std::string toolTip = "";
         std::function<bool (std::string filePath, unsigned selection)> onClick = nullptr;        
         unsigned id = 0; // for template usage
     };
@@ -1164,6 +1166,7 @@ struct BrowserWindow {
         int resizeAdjust = 0;
         std::string textOk = "";
         std::string textCancel = "";
+		std::string toolTip = "";
 		bool modal = true;
     } state;
 

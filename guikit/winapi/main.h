@@ -711,7 +711,7 @@ struct pBrowserWindow {
     std::vector<std::string> toolTips;
 
     struct Button {
-        HWND hwnd;    
+        HWND hwnd;
         int width;
         int height;
         int relativeX;
@@ -739,6 +739,7 @@ struct pBrowserWindow {
     auto contentViewSelection() -> unsigned;
     auto createTooltip(HWND hwnd) -> void;
     auto setToolTip(HWND hwnd, int curItem, RECT rect) -> void;
+	auto setButtonTooltip(HWND buttonHwnd, std::string tooltip) -> void;
     auto relayMesssageToToolTip(HWND hwnd, UINT umsg, WPARAM wparam, LPARAM lparam) -> void;
     auto setListings( std::vector<BrowserWindow::Listing>& listings ) -> void;
     
