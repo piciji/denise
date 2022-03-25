@@ -236,14 +236,19 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
 
     if (!*alternateFileDialog && dynamic_cast<LIBC64::Interface*>(emulator) ) {
 		std::string tooltip = "";
-		if (!*diskTrapped && !*tapeTrapped)
-			tooltip = trans->get("VDT Drive Autostart");
-		else if (!*diskTrapped)
+		std::string buttonText = "ALT Autostart";
+		
+		if (!*diskTrapped && !*tapeTrapped) {			
+			buttonText = "VDT Autostart";
+		} else if (!*diskTrapped)
 			tooltip = trans->get("VDT Disk Autostart");
 		else if (!*tapeTrapped)
 			tooltip = trans->get("VDT Tape Autostart");
+		else {
+			buttonText = "Autostart";
+		}
 	
-        fileDialogPtr->addCustomButton( trans->get("ALT Autostart"), [this, emulator, settings, mIsAcquiredBefore](std::string filePath, unsigned selection) {
+        fileDialogPtr->addCustomButton( trans->get( buttonText ), [this, emulator, settings, mIsAcquiredBefore](std::string filePath, unsigned selection) {
 
             if (filePath.empty())
                 return false;
@@ -283,17 +288,19 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
         HideMouseIfWasBefore
     } );
 
-    fileDialogPtr->resizeTemplate( true, -6 );
-
-    fileDialogPtr->setDefaultButtonText( trans->get("Autostart") );
+    fileDialogPtr->resizeTemplate( true, -6 );   
 	
 	std::string tooltip = "";
-	if (*diskTrapped && *tapeTrapped)
-		tooltip = trans->get("VDT Drive Autostart");
-	else if (*diskTrapped)
+	std::string buttonText = "Autostart";
+	
+	if (*diskTrapped && *tapeTrapped) {
+		buttonText = "VDT Autostart";
+	} else if (*diskTrapped)
 		tooltip = trans->get("VDT Disk Autostart");
 	else if (*tapeTrapped)
 		tooltip = trans->get("VDT Tape Autostart");
+	
+	fileDialogPtr->setDefaultButtonText( trans->get( buttonText ) );
 	
 	fileDialogPtr->setDefaultButtonTooltip( tooltip );
 
