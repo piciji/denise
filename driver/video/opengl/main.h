@@ -21,10 +21,10 @@ auto OpenGL::shader(std::vector<ShaderPass*> passes) -> void {
 		pass->error = programs[n].bind( *pass );
 	} 
     
-    OpenGLSurface::release();   
+    OpenGLSurface::release();
     
-    if (primaryPass) {             
-        primaryPass->error = OpenGLProgram::bind( *primaryPass );        
+    if (primaryPass) {
+        primaryPass->error = OpenGLProgram::bind( *primaryPass );
     } else {
         primaryPass = new ShaderPass;
         primaryPass->primary = true;
@@ -266,7 +266,7 @@ auto OpenGL::refresh(bool disallowShader) -> void {
 	_glUniform4f("targetSize", targetWidth, targetHeight, 1.0 / targetWidth, 1.0 / targetHeight);
 	_glUniform4f("outputSize", outputWidth, outputHeight, 1.0 / outputWidth, 1.0 / outputHeight);
 
-	_glParameters(sources[0].filter, sources[0].wrap, sources[0].mipmap);
+	_glParameters(sources[0].filter, GL_CLAMP_TO_EDGE, sources[0].mipmap);
 
 	render(outputLeft, outputTop, outputWidth, outputHeight);
 
