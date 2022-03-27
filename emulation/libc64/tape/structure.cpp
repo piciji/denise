@@ -712,9 +712,10 @@ auto TapeStructure::readTTFile(FileEntry& fileEntry) -> bool {
     if (!readTTHeader(fileEntry))
         return false;
 
+	if (fileEntry.endAddr < fileEntry.startAddr)
+		return false;
+	
     unsigned size = fileEntry.endAddr - fileEntry.startAddr + 1;
-    if (size < 0)
-        return false;
 
     fileEntry.size = size;
     fileEntry.buffer = new uint8_t[size];

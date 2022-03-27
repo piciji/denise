@@ -235,7 +235,9 @@ auto Traps::testForComplexTapeLoader() -> bool {
 
     if (!fileEntry || fileEntry->turoTape)
         return false;
-
+	
+	//system->interface->log("Typ");
+	//system->interface->log(fileEntry->type, 0);
     if (fileEntry->type == 3) {
         if (fileEntry->startAddr == 0x29f && fileEntry->endAddr == 0x30c) // APB
             return true;
@@ -289,6 +291,7 @@ auto Traps::testForComplexTapeLoader() -> bool {
                     return true;
                 }
             } else { // 0x314 only
+				//system->interface->log("0x314 only");
                 //system->interface->log(fileEntry->buffer[pos]);
                 if ((fileEntry->buffer[pos] == 0x43) // Arcade classic
                 || (fileEntry->buffer[pos] == 0xc2) // emlyn hughes
@@ -352,7 +355,7 @@ auto Traps::tapeReceive() -> void {
                 end = system->memoryCpu.read( 0xae ) | (system->memoryCpu.read( 0xaf ) << 8);
             }
 
-            // mastertronic loader expect it
+            // Kernel does this and mastertronic loader expect it
             system->memoryCpu.write(0xac, fileEntry->endAddr & 0xff);
             system->memoryCpu.write(0xad, fileEntry->endAddr >> 8);
 
@@ -375,6 +378,9 @@ auto Traps::tapeReceive() -> void {
     cpu->regP &= ~4; // int off
 
     system->memoryCpu.write(0xc0, 0x01 ); // stop motor
+	
+	// Hunchback expects this in input buffer
+	system->ram[0x32a] = 62;
 
     uninstall();
 }
