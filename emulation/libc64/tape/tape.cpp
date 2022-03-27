@@ -28,8 +28,13 @@ Tape::Tape( Emulator::Interface::Media* mediaConnected ) : structure(this) {
         motorIn = false;
         updateCounter();
         updateDeviceState();
-        if (autoStarted && (counter >= 15))
-            system->motorChange( false );
+        if (autoStarted) {
+            if (traps->installed)
+                return;
+
+            if (counter >= 15)
+                system->motorChange( false );
+        }
     };
 	
     worker = [this]() {
