@@ -98,7 +98,7 @@ auto TapeStructure::getListing( ) -> std::vector<Emulator::Interface::Listing>& 
 
             if (*pos <= 0x1f) // control
                 name[i] = 0x20;
-            else if (*pos >= 0x60 && *pos <= 0x6f)
+            else if (*pos >= 0x60 && *pos <= 0x7a)
                 name[i] = *pos - 0x60;
             else if (*pos >= 0x80 && *pos <= 0x9f) // control
                 name[i] = 0x20;

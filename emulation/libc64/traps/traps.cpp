@@ -251,6 +251,12 @@ auto Traps::testForComplexTapeLoader() -> bool {
         if (fileEntry->startAddr == 0x300 && fileEntry->endAddr == 0x30C) // cricket crazy
             return true;
 
+        if (fileEntry->startAddr == 0x2a7 && fileEntry->endAddr == 0x305) // mutant monty
+            return true;
+
+        if (fileEntry->startAddr == 0x2a7 && fileEntry->endAddr == 0x308) // orbitron
+            return true;
+
         if ((fileEntry->startAddr <= 0x314) && (fileEntry->endAddr >= 0x314) ) {
             //system->interface->log("x2");
             fileEntry = tape->structure.readCurFile();
@@ -279,11 +285,12 @@ auto Traps::testForComplexTapeLoader() -> bool {
                     // 0x300 - 0x334
 
                     // allow
-                    if ( (fileEntry->startAddr == 0x29f && fileEntry->endAddr == 0x33b)
-                         || (fileEntry->startAddr == 0x29f && fileEntry->endAddr == 0x3c0)
+                    if ( /*(fileEntry->startAddr == 0x29f && fileEntry->endAddr == 0x33b) */ // armalyte
+                          (fileEntry->startAddr == 0x29f && fileEntry->endAddr == 0x3c0)
                          || (fileEntry->startAddr == 0x2b0 && fileEntry->endAddr == 0x334)
                          || (fileEntry->startAddr == 0x2a7 && fileEntry->endAddr == 0x3ff) // Frak 64
                          || (fileEntry->startAddr == 0x2a7 && fileEntry->endAddr == 0x34f) // Goonies
+                         || (fileEntry->startAddr == 0x29f && fileEntry->endAddr == 0x41c) // Pacland
                             ) {
 
                         return false;
