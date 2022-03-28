@@ -97,17 +97,23 @@ auto Autoloader::postProcessing() -> void {
             trapped = settings->get<bool>("use_disk_traps", false);
         else if (mediaGroup->isTape())
             trapped = settings->get<bool>("use_tape_traps", false);
-    } else if (ddControl.mode == Mode::AutoStartPrimary || ddControl.mode == Mode::AutoStartSecondary) {
+    } else if (ddControl.mode == Mode::AutoStartPrimary) {
         autoStart = true;
+        trapped = false;
+
+    } else if (ddControl.mode == Mode::AutoStartSecondary) {
+        autoStart = true;
+        trapped = true;
+
+    } else if (ddControl.mode == Mode::AutoStartDblClick) {
+        autoStart = true;
+        trapped = false;
 
         if (mediaGroup->isDrive()) {
             if (mediaGroup->isDisk())
                 trapped = settings->get<bool>("autostart_traps_on_dblclick", false);
             else if (mediaGroup->isTape())
                 trapped = settings->get<bool>("autostart_tape_traps_on_dblclick", false);
-
-            if (ddControl.mode == Mode::AutoStartSecondary)
-                trapped ^= 1;
         }
     }
 

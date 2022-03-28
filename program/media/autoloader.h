@@ -5,7 +5,7 @@
 #include "../../guikit/api.h"
 
 struct Autoloader {
-	enum class Mode { DragnDrop = 0, Open = 1, AutoStart = 2, AutoStartPrimary = 3, AutoStartSecondary = 4 };
+	enum class Mode { DragnDrop = 0, Open = 1, AutoStart = 2, AutoStartPrimary = 3, AutoStartSecondary = 4, AutoStartDblClick = 5 };
 
 	struct {
 		Emulator::Interface* emulator;
