@@ -821,6 +821,8 @@ auto pBrowserWindow::resize( HWND fileDialogView, bool init ) -> void {
         }
 
         buttons.clear();
+		int relativeX = -1;
+		
         for (auto& button : browserWindow.state.buttons) {
             HWND hwnd = GetDlgItem(fileDialogView, button.id);
             if (!hwnd)
@@ -835,13 +837,18 @@ auto pBrowserWindow::resize( HWND fileDialogView, bool init ) -> void {
             
             auto size = pFont::size(Font::system(), button.text);
             width = size.width + 10;
-            width = std::max<int>( 70, width );
+			if (!IsAppThemed())
+				width += 10;
             
-            int height = std::abs(rect.bottom - rect.top);
-            int relativeX = std::abs(rect.left - rCustomView.right);
+			if (relativeX == -1)
+				relativeX = std::abs(rect.left - rCustomView.right);
+							
+			int height = std::abs(rect.bottom - rect.top);
             int relativeY = std::abs(rect.top - (listBox ? rListBox.bottom : rCustomView.top) );
 
             buttons.push_back({hwnd, width, height, relativeX, relativeY});
+			
+			relativeX += width + pFont::scale(20);
         }   
     }   
     
