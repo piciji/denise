@@ -367,27 +367,31 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
                 
                 HWND hwndOk = GetDlgItem(context->dialogHwnd, IDOK);
 
-                okFont = pFont::create( Font::system() );
+                if (state->hideOkButton)
+                    ShowWindow(hwndOk, SW_HIDE);
+                else {
+                    okFont = pFont::create(Font::system());
 
-                auto size = pFont::size(okFont, state->textOk);
+                    auto size = pFont::size(okFont, state->textOk);
 
-                RECT rect;
+                    RECT rect;
 
-                GetWindowRect(hwndOk, &rect);
+                    GetWindowRect(hwndOk, &rect);
 
-                if ((rect.right - rect.left) < size.width) {
-                    pFont::free( okFont );
+                    if ((rect.right - rect.left) < size.width) {
+                        pFont::free(okFont);
 
-                    okFont = pFont::create( Font::system(7) );
+                        okFont = pFont::create(Font::system(7));
 
-                    SendMessage(hwndOk, WM_SETFONT, (WPARAM)okFont, 0);
+                        SendMessage(hwndOk, WM_SETFONT, (WPARAM) okFont, 0);
 
-                    MoveWindow(hwndOk, 445, 325, 120, 24, TRUE); 
-                }                    
-                
-                SetDlgItemText( context->dialogHwnd, IDOK, (LPCWSTR)utf16_t(state->textOk) );
-				
-				context->setButtonTooltip(hwndOk, state->toolTip);
+                        MoveWindow(hwndOk, 445, 325, 120, 24, TRUE);
+                    }
+
+                    SetDlgItemText(context->dialogHwnd, IDOK, (LPCWSTR) utf16_t(state->textOk));
+
+                    context->setButtonTooltip(hwndOk, state->toolTip);
+                }
             }
             
             if (!state->textCancel.empty())

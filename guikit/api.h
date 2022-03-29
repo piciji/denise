@@ -1106,6 +1106,7 @@ struct BrowserWindow {
 	auto setDefaultButtonTooltip(std::string toolTip) -> BrowserWindow&;
 	auto setNonModal() -> BrowserWindow&;
 	auto setListings( std::vector<BrowserWindow::Listing>& listings ) -> void;
+    auto hideOkButton() -> void;
 
     auto setTemplateId(int id) -> BrowserWindow&;
     auto addContentView(unsigned id, std::function<bool (std::string filePath, unsigned selection)> onDblClick) -> BrowserWindow&;
@@ -1168,6 +1169,7 @@ struct BrowserWindow {
         std::string textCancel = "";
 		std::string toolTip = "";
 		bool modal = true;
+        bool hideOkButton = false;
     } state;
 
     pBrowserWindow& p;    

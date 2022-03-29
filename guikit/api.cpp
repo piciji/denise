@@ -1420,6 +1420,10 @@ auto BrowserWindow::setDefaultButtonTooltip(std::string toolTip) -> BrowserWindo
 	return *this;
 }
 
+auto BrowserWindow::hideOkButton() -> void {
+    state.hideOkButton = true;
+}
+
 auto BrowserWindow::transformFilter( std::string description, const std::string& suffix ) -> std::string {
 	
 	std::vector<std::string> _suffix;
