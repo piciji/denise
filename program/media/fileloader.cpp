@@ -297,14 +297,16 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
     } );
 
     fileDialogPtr->resizeTemplate( true, -6 );   
-	
-	std::string tooltip = "";
+
+    std::string buttonTxt = "Autostart";
     if (*diskTrapped || *tapeTrapped) {
-        if (!*alternateFileDialog)
+        if (!*alternateFileDialog) {
             fileDialogPtr->hideOkButton();
+            buttonTxt = "Ok";
+        }
     }
 	
-	fileDialogPtr->setDefaultButtonText( trans->get( "Autostart" ) );
+	fileDialogPtr->setDefaultButtonText( trans->get( buttonTxt ) );
 	
 	//fileDialogPtr->setDefaultButtonTooltip( tooltip );
 
