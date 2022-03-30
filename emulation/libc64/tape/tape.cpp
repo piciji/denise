@@ -375,7 +375,7 @@ auto Tape::selectListing( unsigned pos, bool useTraps ) -> void {
 
     action.callbackId = 5;
     action.callback = [this]() {
-        system->interface->autoStartFinish(false);
+        system->interface->autoStartFinish(true);
     };
     action.waitCallback = nullptr;
     action.mode = KeyBuffer::Mode::Input;

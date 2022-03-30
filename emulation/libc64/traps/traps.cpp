@@ -235,16 +235,10 @@ auto Traps::testForComplexTapeLoader() -> bool {
 
     if (!fileEntry || fileEntry->turoTape)
         return false;
-	
-	//system->interface->log("Typ");
-	//system->interface->log(fileEntry->type, 0);
+
+    // system->interface->log( fileEntry->startAddr, 1,1 );
+    // system->interface->log( fileEntry->endAddr,1,1 );
     if (fileEntry->type == 3) {
-        if (fileEntry->startAddr == 0x29f && fileEntry->endAddr == 0x30c) // APB
-            return true;
-
-        if (fileEntry->startAddr == 0x302 && fileEntry->endAddr == 0x304) // boggit the borred - septical II
-            return true;
-
         if (fileEntry->startAddr == 0x2bc && fileEntry->endAddr == 0x304) // ciphoid
             return true;
 
@@ -256,6 +250,17 @@ auto Traps::testForComplexTapeLoader() -> bool {
 
         if (fileEntry->startAddr == 0x2a7 && fileEntry->endAddr == 0x308) // orbitron
             return true;
+
+        if( (fileEntry->startAddr == 0x29f && fileEntry->endAddr == 0x33b) // cyberload
+        ) {
+            for (unsigned i = 0; i <= 0xffff; i++)
+                system->ram[i] = 255 ^ (((i / 64) & 1) ? 0xff : 0x00);
+        }
+        else if( (fileEntry->startAddr == 0x29f && fileEntry->endAddr == 0x30c) // APB
+        ) {
+            for (unsigned i = 0; i <= 0xffff; i++)
+                system->ram[i] = ((i / 64) & 1) ? 0xff : 0x00;
+        }
 
         if ((fileEntry->startAddr <= 0x314) && (fileEntry->endAddr >= 0x314) ) {
             //system->interface->log("x2");
@@ -285,8 +290,9 @@ auto Traps::testForComplexTapeLoader() -> bool {
                     // 0x300 - 0x334
 
                     // allow
-                    if ( /*(fileEntry->startAddr == 0x29f && fileEntry->endAddr == 0x33b) */ // armalyte
-                          (fileEntry->startAddr == 0x29f && fileEntry->endAddr == 0x3c0)
+                    if ( (fileEntry->startAddr == 0x29f && fileEntry->endAddr == 0x33b) // cyberload
+                         || (fileEntry->startAddr == 0x29f && fileEntry->endAddr == 0x338) // Sanxion (cyberload)
+                         || (fileEntry->startAddr == 0x29f && fileEntry->endAddr == 0x3c0)
                          || (fileEntry->startAddr == 0x2b0 && fileEntry->endAddr == 0x334)
                          || (fileEntry->startAddr == 0x2a7 && fileEntry->endAddr == 0x3ff) // Frak 64
                          || (fileEntry->startAddr == 0x2a7 && fileEntry->endAddr == 0x34f) // Goonies
@@ -321,8 +327,8 @@ auto Traps::tapeFindHeader() -> void {
 
     if (fileEntry) {
         tape->setPosition( fileEntry->dataOffset, true );
-//        system->interface->log(fileEntry->startAddr,1,1);
-//        system->interface->log(fileEntry->endAddr,1,1);
+        // system->interface->log(fileEntry->startAddr,1,1);
+        // system->interface->log(fileEntry->endAddr,1,1);
 
         buf[0] = fileEntry->type;
         buf[1] = fileEntry->startAddr & 0xff;
@@ -366,11 +372,18 @@ auto Traps::tapeReceive() -> void {
             system->memoryCpu.write(0xac, fileEntry->endAddr & 0xff);
             system->memoryCpu.write(0xad, fileEntry->endAddr >> 8);
 
-           // system->interface->log("file ok",1);
-           // system->interface->log(fileEntry->size,0, 1);
+            // system->interface->log("file ok",1);
+            // system->interface->log(fileEntry->size,0, 1);
+
+            auto _size = fileEntry->size;
+            // small 3 byte programs expect 2 bytes only
+            if ( (fileEntry->startAddr == 0x29f && fileEntry->endAddr == 0x2a1) // Skull & Crossbone
+                || (fileEntry->startAddr == 0x302 && fileEntry->endAddr == 0x304) // boggit the borred - septical II
+            )
+                _size -= 1; // why ?
 
             // game "Ah diddum" has one byte more as in header specified.
-            std::memcpy( system->ram + start, fileEntry->buffer, fileEntry->size );
+            std::memcpy( system->ram + start, fileEntry->buffer, _size );
 
             tape->setPosition( fileEntry->endOffset, false );
 

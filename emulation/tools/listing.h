@@ -20,9 +20,9 @@ struct C64Listing {
 
     PetciiConversion conv;
     
-    auto buildHeadline( uint8_t* namePtr, uint8_t* dosTypePtr = nullptr, uint8_t* extPtr = nullptr ) -> std::vector<uint8_t> {
+    auto buildHeadline( uint8_t* namePtr, uint8_t* dosTypePtr = nullptr, uint8_t* extPtr = nullptr ) -> std::vector<uint16_t> {
                      
-        std::vector<uint8_t> out;
+        std::vector<uint16_t> out;
         
         out.push_back( decodeToScreencodeHi( 0x22 ) );
 		
@@ -43,9 +43,9 @@ struct C64Listing {
 		return out;
     }
     
-    auto buildListing( uint8_t* namePtr, unsigned size, uint8_t type ) -> std::vector<uint8_t> {
+    auto buildListing( uint8_t* namePtr, unsigned size, uint8_t type ) -> std::vector<uint16_t> {
         loader.clear();
-		std::vector<uint8_t> out;		
+		std::vector<uint16_t> out;
 		bool a0Found = false;
 		
         if (namePtr) {           
@@ -55,7 +55,7 @@ struct C64Listing {
 
                 uint8_t code = *(namePtr + i);
 
-                if (code == 0xa0) {
+                if (code == 0xa0 && ((type & 0x20) == 0) ) {
                     if ( !a0Found )
                         out.push_back( decodeToScreencode( 0x22 ) );
                     else
@@ -84,9 +84,9 @@ struct C64Listing {
 		return out;
 	}
     
-    auto buildFreeLine( unsigned size ) -> std::vector<uint8_t> {
+    auto buildFreeLine( unsigned size ) -> std::vector<uint16_t> {
         
-		std::vector<uint8_t> out;
+		std::vector<uint16_t> out;
         
         std::string str = "BLOCKS FREE.";
         
@@ -98,7 +98,7 @@ struct C64Listing {
         return out;
     }
     
-    auto prependBlockSize( std::vector<uint8_t>& target, unsigned size, unsigned padding) -> void {
+    auto prependBlockSize( std::vector<uint16_t>& target, unsigned size, unsigned padding) -> void {
 		
 		std::string str = std::to_string( size );		
 
@@ -111,7 +111,7 @@ struct C64Listing {
 			target.insert( target.begin(), *(str.c_str() + i) );		
 	}
     
-    auto appendType(std::vector<uint8_t>& target, uint8_t type) -> void {
+    auto appendType(std::vector<uint16_t>& target, uint8_t type) -> void {
 
         if (type & 0x20) { // TAPE
             target.push_back( 0x20 );
@@ -157,9 +157,9 @@ struct C64Listing {
                 : conv.decode( petscii );
     }
 	
-	auto decodeToScreencode( std::vector<uint8_t> line ) -> std::vector<uint8_t> {
+	auto decodeToScreencode( std::vector<uint8_t> line ) -> std::vector<uint16_t> {
 		
-		std::vector<uint8_t> out;
+		std::vector<uint16_t> out;
 		
 		for ( auto& code : line ) {
 			

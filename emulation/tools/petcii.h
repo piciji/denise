@@ -107,7 +107,9 @@ struct PetciiConversion {
     
     auto decodeToScreencode( uint8_t petcii ) -> uint8_t {
 
-        if (petcii >= 0x40 && petcii <= 0x5f) {
+        if (petcii <= 0x1f) {
+            return petcii | 0x80;
+        } else if (petcii >= 0x40 && petcii <= 0x5f) {
 			return (uint8_t) (petcii - 0x40);
 		} else if (petcii >= 0x60 && petcii <= 0x7f) {
 			return (uint8_t) (petcii - 0x20);

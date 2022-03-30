@@ -70,18 +70,35 @@ auto TapeStructure::getListing( ) -> std::vector<Emulator::Interface::Listing>& 
                 size = (fileEntry.endAddr - fileEntry.startAddr + 253) / 254; // round up in case of fractional block
         }
 
-  //      system->interface->log("header");
+        // system->interface->log("listing");
         uint8_t* name = new uint8_t[16];
         std::memset(name, 0x20, 16);
 
         bool invisibleTextColor = false;
+        bool textMode[16] = {false};
+        bool reverseMode[16] = {false};
+        bool curTextMode = false;
+        bool curReverseMode = false;
+
         for(unsigned i = 0; i < 16; i++) {
             uint8_t* pos = fileEntry.header + 5 + i;
 
-//            system->interface->log( *(pos), 0, 1 );
+            // system->interface->log( *(pos), 0, 1 );
 
             if (*pos == 0x1f) { // control to change text color "blue" ... means inivisible chars
                 invisibleTextColor = true;
+                continue;
+            } else if (*pos == 0xe) {
+                curTextMode = true;
+                continue;
+            } else if (*pos == 0x8e) {
+                curTextMode = false;
+                continue;
+            } else if (*pos == 0x12) {
+                curReverseMode = true;
+                continue;
+            } else if (*pos == 0x92) {
+                curReverseMode = false;
                 continue;
             }
 
@@ -98,15 +115,27 @@ auto TapeStructure::getListing( ) -> std::vector<Emulator::Interface::Listing>& 
 
             if (*pos <= 0x1f) // control
                 name[i] = 0x20;
-            else if (*pos >= 0x60 && *pos <= 0x7a)
-                name[i] = *pos - 0x60;
             else if (*pos >= 0x80 && *pos <= 0x9f) // control
                 name[i] = 0x20;
-            else
+            else {
                 name[i] = *pos;
+                reverseMode[i] = curReverseMode;
+            }
+
+            textMode[i] = curTextMode;
         }
 
-        listings.push_back( {id++, listing.buildListing( name, size, type ) });
+        auto out = listing.buildListing( name, size, type );
+
+        for(unsigned i = 0; i < 16; i++) {
+            if (reverseMode[i])
+                out[i + 6] |= 0x80;
+
+            if (textMode[i])
+                out[i + 6] |= 0x100;
+        }
+
+        listings.push_back( {id++, out });
 
         fileEntries.push_back(fileEntry);
 
@@ -511,7 +540,7 @@ auto TapeStructure::readCbmBlock(uint8_t* buffer, unsigned& size, std::vector<un
             if (firstPass) {
                 errors.push_back(offset);
 
-                if (errors.size() == 30)
+                if (errors.size() == 32)
                     return -2;
 
             } else {

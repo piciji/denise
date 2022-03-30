@@ -321,9 +321,9 @@ auto DiskStructure::createListing( bool loadWithColumn ) -> void {
             }
 
             uint8_t type = *(ptr + 0x2);
-            std::vector<uint8_t> entry = listing.buildListing( ptr + 0x5, listingSize, type & ~0x30 );
+            std::vector<uint16_t> entry = listing.buildListing( ptr + 0x5, listingSize, type & ~0x30 );
             
-            std::vector<uint8_t> loadCommand;
+            std::vector<uint16_t> loadCommand;
             
             if (listingSize)
                 loadCommand = listing.decodeToScreencode( buildLoadCommand( listing.loader, true ) );
