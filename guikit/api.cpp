@@ -142,6 +142,14 @@ auto Window::tellMeShouldICreateTheUIRightAway() -> bool {
 #endif 
 }
 
+auto Window::allowAspectCorrectResizing() -> bool {
+#ifdef GUIKIT_GTK
+    return p.allowAspectCorrectResizing();
+#endif
+
+    return true;
+}
+
 auto Window::append(Menu& menu) -> void {
     state.menus.push_back(&menu);
     menu.MenuBase::state.parentWindow = this;

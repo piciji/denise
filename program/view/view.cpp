@@ -25,7 +25,7 @@ auto View::build() -> void {
     setBackgroundColor(0);
     cocoa.setDisableIconsInTopMenu(true);
 
-    if (globalSettings->get<bool>("aspect_correct_resizing", true))
+    if (globalSettings->get<bool>("aspect_correct_resizing", false))
         setAspectRatio( {4,3} );
     else
         setAspectRatio( {0,0} );

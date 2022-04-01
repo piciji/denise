@@ -381,7 +381,7 @@ VideoLayout::VideoLayout() {
         emuThread->unlock();
     };
 
-    videoGeometry.aspectCorrectResizing.setChecked( globalSettings->get<bool>("aspect_correct_resizing", true) );
+    videoGeometry.aspectCorrectResizing.setChecked( globalSettings->get<bool>("aspect_correct_resizing", false) );
     videoGeometry.aspectCorrectResizing.onToggle = [&](bool checked) {
         emuThread->lock();
         globalSettings->set<bool>("aspect_correct_resizing", checked);
@@ -392,6 +392,9 @@ VideoLayout::VideoLayout() {
         view->updateViewport();
         emuThread->unlock();
     };
+
+    if (!configView->allowAspectCorrectResizing())
+        videoGeometry.aspectCorrectResizing.setEnabled(false);
 	
 	videoGeometry.integerScaling.setChecked( globalSettings->get<bool>("integer_scaling", false) );
     videoGeometry.integerScaling.onToggle = [&](bool checked) {

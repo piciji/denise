@@ -255,6 +255,7 @@ struct Window : Base {
     auto getScrollbarWidth() -> unsigned;
 	auto tellMeShouldICreateTheUIRightAway() -> bool;
     auto setAspectRatio(Size ratio) -> void;
+    auto allowAspectCorrectResizing() -> bool;
 	
 	static auto addCustomFont( CustomFont* customFont ) -> bool;
 	static auto countCustomFonts() -> unsigned;
