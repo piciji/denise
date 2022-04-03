@@ -426,8 +426,9 @@ auto Cmd::collectAllowedSuffix() -> std::vector<std::string> {
             for (auto suffix : mediaGroup.suffix) {
                 
                 GUIKIT::String::toLowerCase( suffix );
-                
-                allowedSuffix.push_back( suffix );
+
+                if (!GUIKIT::Vector::find(allowedSuffix, suffix))
+                    allowedSuffix.push_back( suffix );
             }
         }
     }

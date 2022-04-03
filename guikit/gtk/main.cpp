@@ -343,6 +343,7 @@ pWindow::pWindow(Window& window, Window::Hints hints) : window(window) {
 			this->window.state.layout->setGeometry(layoutGeometry);
 		}
 
+        // update layout, otherwise status container is placed at wrong position when switching fullscreen
         gtk_box_set_child_packing (GTK_BOX(verticalLayout), statusContainer, false, false, 0, GTK_PACK_START);
 
         if (resizing) {
@@ -375,7 +376,7 @@ auto pWindow::updateGeometryHint() -> void {
     if (!window.fullScreen() && aspect.width && aspect.height &&
             pApplication::desktopSession == pApplication::DesktopSession::Cinnamon) {
 
-        aspect.height = window.state.geometry.width * aspect.height / aspect.width + 0.5;
+        aspect.height = (unsigned)((float)window.state.geometry.width * ((float)aspect.height / (float)aspect.width) + 0.5);
         aspect.width = window.state.geometry.width;
 
         if (window.statusBar())
@@ -384,7 +385,7 @@ auto pWindow::updateGeometryHint() -> void {
         aspect.height += statusHeight + menuHeight;
 
         double ratio = (double)aspect.width / (double)aspect.height;
-  //      geom.min_aspect = ratio;
+        geom.min_aspect = ratio;
         geom.max_aspect = ratio;
         hints |= GdkWindowHints::GDK_HINT_ASPECT;
     }

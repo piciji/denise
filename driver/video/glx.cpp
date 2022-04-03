@@ -141,11 +141,13 @@ struct GLX : public Video, OpenGL, RenderThread {
     
     auto synchronize(bool state) -> void {
         wait();
+        resizeMutex.lock();
         settings.synchronize = state;
         makeCurrent();
         if(glXSwapIntervalEXT) glXSwapIntervalEXT(display, glXGetCurrentDrawable(), settings.synchronize ? 1 : 0);
         else if(glXSwapInterval) glXSwapInterval(settings.synchronize ? 1 : 0);
         clearCurrent();
+        resizeMutex.unlock();
     }
     
     auto hasSynchronized() -> bool { return settings.synchronize; }
@@ -176,58 +178,81 @@ struct GLX : public Video, OpenGL, RenderThread {
     
     auto setShader(std::vector<ShaderPass*> passes) -> void {
         wait();
+        resizeMutex.lock();
         makeCurrent();
         settings.passes = passes;
         OpenGL::shader( passes );
         RenderThread::reset();
         clearCurrent();
+        resizeMutex.unlock();
     }
     
     auto setShaderAttribute( std::string _program, std::string attribute, float value ) -> void {
         wait();
+        resizeMutex.lock();
         makeCurrent();
         OpenGL::shaderAttribute( _program, attribute, value );
         clearCurrent();
+        resizeMutex.unlock();
     }
 	
 	auto setShaderAttribute( std::string _program, std::string attribute, int value ) -> void {
         wait();
+        resizeMutex.lock();
         makeCurrent();
         OpenGL::shaderAttribute( _program, attribute, value );
         clearCurrent();
+        resizeMutex.unlock();
     }
 	
 	auto setShaderAttribute(std::string _program, std::string attribute, float* data, unsigned size) -> void {
         wait();
+        resizeMutex.lock();
         makeCurrent();
         OpenGL::shaderAttribute( _program, attribute, data, size );
         clearCurrent();
+        resizeMutex.unlock();
     }
 
 	auto setShaderAttribute(std::string _program, std::string attribute, uint32_t* data, unsigned _width, unsigned _height) -> void {
         wait();
+        resizeMutex.lock();
         makeCurrent();
         OpenGL::shaderAttribute( _program, attribute, data, _width, _height );
         clearCurrent();
+        resizeMutex.unlock();
     }
 	
     auto setFilter(Filter filter) -> void {
         wait();
+        resizeMutex.lock();
         makeCurrent();
         settings.filter = filter;
         OpenGL::filter = filter == Filter::Linear ? GL_LINEAR : GL_NEAREST;
         clearCurrent();
+        resizeMutex.unlock();
     }
 
 	auto lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height) -> bool {
         if (settings.threaded)
             return RenderThread::lock(data, pitch, _width, _height);
 
+        // resizing could generate 2 "makeCurrent" in a row without "clear" in between,
+        // mainly during opening APP with attached file (which start emulation)
+        bool _useResizing = useResizing;
+        if (_useResizing)
+            resizeMutex.lock();
+
         makeCurrent(true);
         if (OpenGL::size(_width, _height)) {
             integerScalingHeight = _height;
             calcViewport();
         }
+        if (_useResizing) {
+            clearCurrent();
+            resizeMutex.unlock();
+        }
+
 		return OpenGL::lock(data, pitch);
 	}
 	
@@ -235,11 +260,20 @@ struct GLX : public Video, OpenGL, RenderThread {
         if (settings.threaded)
             return RenderThread::lock(data, pitch, _width, _height);
 
+        bool _useResizing = useResizing;
+        if (_useResizing)
+            resizeMutex.lock();
+
         makeCurrent(true);
         if (OpenGL::size(_width, _height)) {
             integerScalingHeight = _height;
             calcViewport();
         }
+        if (_useResizing) {
+            clearCurrent();
+            resizeMutex.unlock();
+        }
+
         return OpenGL::lock(data, pitch);
     }
     
@@ -247,11 +281,20 @@ struct GLX : public Video, OpenGL, RenderThread {
         if (settings.threaded)
             return RenderThread::lock(data, pitch, _width, _height);
 
+        bool _useResizing = useResizing;
+        if (_useResizing)
+            resizeMutex.lock();
+
         makeCurrent(true);
         if (OpenGL::size(_width, _height)) {
             integerScalingHeight = _height;
             calcViewport();
         }
+        if (_useResizing) {
+            clearCurrent();
+            resizeMutex.unlock();
+        }
+
 		return OpenGL::lock(data, pitch);
 	}
 
@@ -406,7 +449,6 @@ struct GLX : public Video, OpenGL, RenderThread {
     }
 
     auto refresh() -> void {
-
         resizeMutexThreaded.lock();
         makeCurrent();
         OpenGL::clear();

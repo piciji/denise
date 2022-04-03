@@ -93,14 +93,14 @@ auto Program::initUserInterface() -> void {
 
     if (cmd->noGui) {
 		emuThread->enable( false );
-        GUIKIT::Application::loop = [this]() { loopNoGui(); };        
+        GUIKIT::Application::loop = [this]() { loopNoGui(); };
     } else if (!threadedEmu) {
 		emuThread->enable( false );
-        GUIKIT::Application::loop = [this]() { loop(); };        
+        GUIKIT::Application::loop = [this]() { loop(); };
     } else {
         videoDriver->freeContext();
 		GUIKIT::Application::loop = [this]() { loopUserInterface(); };
-		emuThread->enable( true );        
+		emuThread->enable( true );
     }
 }
 
@@ -489,15 +489,13 @@ auto Program::quit() -> void {
 	delete filePool;
     delete cmd;
 	delete autoloader;
-
     
     for(auto settings : settingsStorage)
         delete settings;
-    
-    globalSettings = nullptr;
+
+    // don't deinitialize "global settings", because of APP shutdown may trigger Window resizing which needs info from global settings
     
     // in case of exit request from emulation core
-
     GUIKIT::Application::loop = nullptr;
 }
 
