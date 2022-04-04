@@ -177,6 +177,10 @@ auto View::build() -> void {
         this->updateViewport();
         statusHandler->resetFrameCounter();
     };
+
+    onRealize = [this]() {
+        program->finishStartup();
+    };
 	
 	winapi.onMenu = []() {
 	//	audioDriver->clear();

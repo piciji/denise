@@ -393,9 +393,6 @@ VideoLayout::VideoLayout() {
         emuThread->unlock();
     };
 
-    if (!configView->allowAspectCorrectResizing())
-        videoGeometry.aspectCorrectResizing.setEnabled(false);
-	
 	videoGeometry.integerScaling.setChecked( globalSettings->get<bool>("integer_scaling", false) );
     videoGeometry.integerScaling.onToggle = [&](bool checked) {
         emuThread->lock();

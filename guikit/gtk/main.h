@@ -80,7 +80,6 @@ struct pWindow {
     auto getScrollbarWidth() -> unsigned { return 15; }
     auto applyAspectRatio() -> void;
     auto updateGeometryHint() -> void;
-    auto allowAspectCorrectResizing() -> bool;
     static auto mouseMove(GtkWidget* widget, GdkEventButton* event, pWindow* self) -> gboolean;
     static auto mousePress(GtkWidget* widget, GdkEventButton* event, pWindow* self) -> gboolean;
     static auto mouseRelease(GtkWidget* widget, GdkEventButton* event, pWindow* self) -> gboolean;
@@ -96,6 +95,7 @@ struct pWindow {
     static auto getPreferredHeight(GtkWidget* widget, int* minimalHeight, int* naturalHeight) -> void;
     static auto onButtonPressed(GtkWidget* widget, GdkEventButton* event, Window* window) -> gboolean;
     static auto stateChange(GtkWidget* widget, GdkEventWindowState* event, Window* window) -> gboolean;
+    static auto onRealize(GtkWidget* widget, pWindow* self) -> void;
 	
 	auto moveWindow(GdkEvent* event) -> void;
 	auto sizeWindow(GtkAllocation* allocation) -> void;

@@ -91,8 +91,6 @@ auto pApplication::fetchDesktopSession() -> void {
         desktopSession = DesktopSession::XFCE;
     else if (String::findString(currentDesktop, "Unity"))
         desktopSession = DesktopSession::Unity;
-
-    //desktopSession = DesktopSession::Cinnamon;
 }
 
 auto pApplication::pasteClipboardCallback(GtkClipboard* clipboard, const gchar* text, gpointer data) -> void {
@@ -120,6 +118,11 @@ auto pApplication::setClipboardText( std::string text ) -> void {
 
 //window
 
+auto pWindow::onRealize(GtkWidget* widget, pWindow* self) -> void {
+    if (self->window.onRealize)
+        self->window.onRealize();
+}
+
 auto pWindow::mouseMove(GtkWidget* widget, GdkEventButton* event, pWindow* self) -> gboolean {
     if (self->viewport)
         return pViewport::mouseMove( widget, event, self->viewport );
@@ -145,10 +148,6 @@ auto pWindow::monitorsChanged(GdkScreen* screen, pWindow* self) -> void {
     if (self->viewport) {
         pViewport::monitorsChanged(screen, self->viewport);
     }
-}
-
-auto pWindow::allowAspectCorrectResizing() -> bool {
-    return pApplication::desktopSession == pApplication::DesktopSession::Cinnamon;
 }
 
 auto pWindow::drawMain(GtkWidget* widget, cairo_t* context, Window* window) -> gboolean {
@@ -262,7 +261,7 @@ auto pWindow::stateChange(GtkWidget* widget, GdkEventWindowState* event, Window*
 }
 
 pWindow::pWindow(Window& window, Window::Hints hints) : window(window) {
-		
+
     lastAllocation.width  = lastAllocation.height = 0;
     widget = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     viewport = nullptr;
@@ -310,6 +309,7 @@ pWindow::pWindow(Window& window, Window::Hints hints) : window(window) {
     g_signal_connect(G_OBJECT(widget), "drag-data-received", G_CALLBACK(pWindow::drop), (gpointer)&window);
 	g_signal_connect(G_OBJECT(widget), "button-press-event", G_CALLBACK(pWindow::onButtonPressed), (gpointer)&window);
 	g_signal_connect(G_OBJECT(widget), "window-state-event", G_CALLBACK(pWindow::stateChange), (gpointer)&window);
+    g_signal_connect(G_OBJECT(mainDisplay), "realize", G_CALLBACK (pWindow::onRealize), (gpointer)this);
 
     if (hints == Window::Hints::Video) {
         g_signal_connect(G_OBJECT(mainDisplay), "motion-notify-event", G_CALLBACK(pWindow::mouseMove), (gpointer)this);
@@ -373,8 +373,7 @@ auto pWindow::updateGeometryHint() -> void {
     unsigned statusHeight = 0;
     auto aspect = window.aspectRatio();
 
-    if (!window.fullScreen() && aspect.width && aspect.height &&
-            pApplication::desktopSession == pApplication::DesktopSession::Cinnamon) {
+    if (!window.fullScreen() && aspect.width && aspect.height) {
 
         aspect.height = (unsigned)((float)window.state.geometry.width * ((float)aspect.height / (float)aspect.width) + 0.5);
         aspect.width = window.state.geometry.width;
@@ -383,9 +382,16 @@ auto pWindow::updateGeometryHint() -> void {
             statusHeight = window.statusBar()->p.getHeight();
 
         aspect.height += statusHeight + menuHeight;
+        if (pApplication::desktopSession == pApplication::DesktopSession::KDE) {
+            // todo: don't understand why this is necessary, works as expected in Cinnamon, need to test Mate, XFCE, Gnome, Unity
+            if (aspect.height > 21)
+                aspect.height -= 21;
+        }
 
         double ratio = (double)aspect.width / (double)aspect.height;
-        geom.min_aspect = ratio;
+        if (pApplication::desktopSession == pApplication::DesktopSession::Cinnamon)
+            // blocks resizing in KDE, works in Cinnamon, need to test the others
+            geom.min_aspect = ratio;
         geom.max_aspect = ratio;
         hints |= GdkWindowHints::GDK_HINT_ASPECT;
     }
@@ -395,7 +401,7 @@ auto pWindow::updateGeometryHint() -> void {
    // geom.width_inc = 15;
    // geom.height_inc = 15;
 
-    gtk_window_set_geometry_hints(GTK_WINDOW(widget), GTK_WIDGET(mainDisplay), &geom, (GdkWindowHints)hints);
+    gtk_window_set_geometry_hints(GTK_WINDOW(widget), nullptr, &geom, (GdkWindowHints)hints);
 }
 
 auto pWindow::handle() -> uintptr_t {
@@ -639,7 +645,7 @@ auto pWindow::sizeWindow(GtkAllocation* allocation) -> void {
     }
 
 	timerResize.setEnabled();
-    if (window.aspectRatio().width && (pApplication::desktopSession == pApplication::DesktopSession::Cinnamon))
+    if (window.aspectRatio().width)
         updateGeometryHint();
 
     if(this->window.state.layout) {

@@ -182,6 +182,7 @@ struct Window : Base {
     std::function<void ()> onMinimize = nullptr;
     std::function<void ()> onUnminimize = nullptr; 
 	std::function<void ()> onFocus = nullptr;
+    std::function<void ()> onRealize = nullptr;
 
     enum class Hints { Default, Video } hints = Hints::Default;
     
@@ -255,7 +256,6 @@ struct Window : Base {
     auto getScrollbarWidth() -> unsigned;
 	auto tellMeShouldICreateTheUIRightAway() -> bool;
     auto setAspectRatio(Size ratio) -> void;
-    auto allowAspectCorrectResizing() -> bool;
 	
 	static auto addCustomFont( CustomFont* customFont ) -> bool;
 	static auto countCustomFonts() -> unsigned;

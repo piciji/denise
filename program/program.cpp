@@ -78,11 +78,15 @@ Program::Program() {
 		InputManager::build();
 		view->build();
 		view->show();
+    } else {
+        finishStartup();
     }
+}
 
-	initInput();
-	initAudio();
-	initVideo();
+auto Program::finishStartup() -> void {
+    initInput();
+    initAudio();
+    initVideo();
 
     initUserInterface();
     cmd->autoloadImages();
