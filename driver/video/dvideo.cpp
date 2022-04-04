@@ -386,7 +386,6 @@ struct DVideo : Video, RenderThread {
         } else {
             resizeMutex.lock();
             if (surface) {
-                fixLinearFilter();
                 surface->UnlockRect();
                 dxRelease(surface);
             }
@@ -501,8 +500,6 @@ struct DVideo : Video, RenderThread {
             surface->LockRect(&d3dlr, 0, flags.lock);
 
             std::memcpy( d3dlr.pBits, renderBuffer->data, textureWidth * textureHeight * 4 );
-
-            fixLinearFilter();
 
             disallowShader = renderBuffer->disallowShader;
 
@@ -687,29 +684,9 @@ struct DVideo : Video, RenderThread {
         if (!surface)
             return;
 
-        fixLinearFilter();
-
         // unlock now
         surface->UnlockRect();
         dxRelease(surface);
-    }
-
-	// deprecated
-    inline auto fixLinearFilter() -> void { return;
-        // first we duplicate the last pixel in each line
-        // to fix a sporadically bug for linear filtering in last vertical line
-        // the filter uses adjacent pixel to calcluate actual pixel
-        // the duplicated vertical line is not visible but used for filter calculations
-        unsigned* data = (unsigned*) d3dlr.pBits;
-        unsigned pitch = d3dlr.Pitch;
-
-        data += inputWidth;
-        pitch >>= 2;
-
-        for(unsigned _h = 0; _h < inputHeight; _h++) {
-            *data = *(data-1);
-            data += pitch;
-        }
     }
 
     auto resize(RenderBuffer* renderBuffer, unsigned w, unsigned h) -> void {
