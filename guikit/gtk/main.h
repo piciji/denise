@@ -56,7 +56,7 @@ struct pWindow {
     auto setGeometry(Geometry geometry) -> void;
     auto setBackgroundColor(unsigned color) -> void;
     auto setFocused() -> void;
-    auto setVisible(bool visible) -> void;
+    auto setVisible(bool visible) -> bool;
     auto setResizable(bool resizable) -> void;
     auto setTitle(std::string text) -> void;
     auto setMenuVisible(bool visible) -> void;

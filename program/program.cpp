@@ -76,8 +76,11 @@ Program::Program() {
 
 	if(!cmd->noGui) {
 		InputManager::build();
-		view->build();
-		view->show();
+		view->build();		
+		if (view->setVisible()) {			
+			view->updateViewport();
+			finishStartup();
+		}
     } else {
         finishStartup();
     }
@@ -88,8 +91,8 @@ auto Program::finishStartup() -> void {
     initAudio();
     initVideo();
 
-    initUserInterface();
     cmd->autoloadImages();
+	initUserInterface();
 }
 
 auto Program::initUserInterface() -> void {

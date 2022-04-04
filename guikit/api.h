@@ -218,7 +218,7 @@ struct Window : Base {
         setBackgroundColor(r << 16 | g << 8 | b);
     }
     auto setBackgroundColor(unsigned color) -> void;
-    auto setVisible(bool visible = true) -> void;
+    auto setVisible(bool visible = true) -> bool;
     auto restore() -> void; // from minimized
     auto setFocused() -> void;
 	auto setFocused(unsigned delay) -> void;

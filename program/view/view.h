@@ -37,7 +37,6 @@ struct View : public GUIKIT::Window {
     };
 
     auto translate() -> void;
-    auto show() -> void ;
     auto getViewportHandle() -> uintptr_t;
 
     auto build() -> void;

@@ -179,6 +179,7 @@ auto View::build() -> void {
     };
 
     onRealize = [this]() {
+		updateViewport();
         program->finishStartup();
     };
 	
@@ -348,11 +349,6 @@ auto View::setDragnDrop() -> void {
         autoloader->loadFiles();
         emuThread->unlock();
     };        
-}
-
-auto View::show() -> void {
-    setVisible();
-    updateViewport();
 }
 
 auto View::switchFullScreen(bool fullScreen, bool forceUnacquire) -> void {

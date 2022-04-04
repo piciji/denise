@@ -564,7 +564,7 @@ auto pWindow::moveWindow(GdkEvent* event) -> void {
 // the following stuff is so buggy in GTK, wasted two days to get it working.
 // problem: wrong window geometry while toggling menu, status, fullscreen or fullscreen and menu/status toggling same time
 
-auto pWindow::setVisible(bool visible) -> void {
+auto pWindow::setVisible(bool visible) -> bool {
     
 	if (visible)
 		setGeometry( geometry() );	
@@ -579,7 +579,9 @@ auto pWindow::setVisible(bool visible) -> void {
 		setMenuVisible(false);
 		
 	else if (visible)
-		setMenuVisible(true);	
+		setMenuVisible(true);
+	
+	return false; // wait for realize event
 }
 
 auto pWindow::setMenuVisible(bool visible) -> void {

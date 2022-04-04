@@ -74,7 +74,7 @@ struct pWindow {
     auto setStatusFont(std::string font) -> void;
     auto setBackgroundColor(unsigned color) -> void;
     auto setFocused() -> void;
-    auto setVisible(bool visible) -> void;
+    auto setVisible(bool visible) -> bool;
     auto restore() -> void;
     auto setResizable(bool resizable) -> void;
     auto setStatusText(std::string text) -> void;

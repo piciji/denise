@@ -232,10 +232,10 @@ auto Window::setBackgroundColor(unsigned color) -> void {
     p.setBackgroundColor(color);
 }
 
-auto Window::setVisible(bool visible) -> void {
+auto Window::setVisible(bool visible) -> bool {
     state.visible = visible;
     synchronizeLayout();
-    p.setVisible(visible);
+    return p.setVisible(visible);
 }
 
 auto Window::restore() -> void {
