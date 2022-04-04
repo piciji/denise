@@ -1,5 +1,8 @@
 
 #define IDC_FRAME           1119
+#define IDC_BUTTON          1113
+#define IDC_BUTTON1         1114
+#define IDC_BUTTON2         1115
 
 HWND pBrowserWindow::dummyParent = nullptr;
 
@@ -429,10 +432,17 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
                     context->listHiBrush = CreateSolidBrush(GetSysColor(COLOR_HIGHLIGHT));
             }
 
+			std::vector<unsigned> dlgButtonIds = {IDC_BUTTON, IDC_BUTTON1, IDC_BUTTON2};
+			
             for(auto& button : state->buttons) {
                 SetDlgItemText(hDlg, button.id, (LPCWSTR)utf16_t(button.text) );				
 				context->setButtonTooltip(GetDlgItem(hDlg, button.id), button.toolTip);
+				Vector::eraseVectorElement(dlgButtonIds, button.id);
             }
+			
+			for (auto dlgButtonId : dlgButtonIds) {
+				ShowWindow(GetDlgItem(hDlg, dlgButtonId), SW_HIDE);
+			}
 			
             SetWindowLongPtr(listBox, GWLP_USERDATA, (LONG_PTR)context);
             WNDPROC wndprocOrig = (WNDPROC)SetWindowLongPtr(listBox, GWLP_WNDPROC, (LONG_PTR)subclassListbox);
@@ -793,6 +803,7 @@ auto pBrowserWindow::resize( HWND fileDialogView, bool init ) -> void {
     RECT rDialogView;
     RECT rCustomView;
     RECT rListBox;
+	unsigned buttonMargin = pFont::scale(20);
     
     HWND customView = GetDlgItem(fileDialogView, IDC_FRAME);
     
@@ -822,6 +833,7 @@ auto pBrowserWindow::resize( HWND fileDialogView, bool init ) -> void {
 
         buttons.clear();
 		int relativeX = -1;
+		unsigned buttonBarWidth = 0;
 		
         for (auto& button : browserWindow.state.buttons) {
             HWND hwnd = GetDlgItem(fileDialogView, button.id);
@@ -842,15 +854,28 @@ auto pBrowserWindow::resize( HWND fileDialogView, bool init ) -> void {
             
 			if (relativeX == -1)
 				relativeX = std::abs(rect.left - rCustomView.right);
-							
+					
 			int height = std::abs(rect.bottom - rect.top);
             int relativeY = std::abs(rect.top - (listBox ? rListBox.bottom : rCustomView.top) );
 
             buttons.push_back({hwnd, width, height, relativeX, relativeY});
 			
-			relativeX += width + pFont::scale(20);
-        }   
-    }   
+			relativeX += width + buttonMargin;
+			
+			buttonBarWidth += width + buttonMargin;
+        }
+		
+		if (listBox && buttonBarWidth) { // center button Bar
+			buttonBarWidth -= buttonMargin;
+			if (buttonBarWidth < listWidth) {
+				unsigned delta = (listWidth - buttonBarWidth) >> 1;
+				for (auto& button : buttons) {
+					button.relativeX += delta;
+				}			
+			}
+		}
+    }
+	
     
     int dialogWidth = std::abs(rDialogView.right - rDialogView.left);
     int dialogHeight = std::abs(rDialogView.bottom - rDialogView.top);    

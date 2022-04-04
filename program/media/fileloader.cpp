@@ -235,6 +235,24 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
     }, IDC_BUTTON );
 
     if (!*alternateFileDialog && dynamic_cast<LIBC64::Interface*>(emulator) ) {
+				
+        fileDialogPtr->addCustomButton( trans->get( "VDT Autostart" ), [this, emulator, settings, mIsAcquiredBefore](std::string filePath, unsigned selection) {
+
+            if (filePath.empty())
+                return false;
+            settings->set<std::string>("anyload_path", GUIKIT::File::getPath( filePath ) );
+
+            emuThread->lock();
+            autoloader->init( {filePath}, false, Autoloader::Mode::AutoStartSecondary, selection );
+            autoloader->loadFiles();
+            emuThread->unlock();
+
+            resetPreview(emulator);
+
+            HideMouseIfWasBefore
+
+            return true;
+        }, IDC_BUTTON1 );
 		
         if (*diskTrapped || *tapeTrapped) {
             fileDialogPtr->addCustomButton( trans->get( "Autostart" ), [this, emulator, settings, mIsAcquiredBefore](std::string filePath, unsigned selection) {
@@ -253,26 +271,8 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
                 HideMouseIfWasBefore
 
                 return true;
-            }, IDC_BUTTON1 );
+            }, IDC_BUTTON2 );
         }
-		
-        fileDialogPtr->addCustomButton( trans->get( "VDT Autostart" ), [this, emulator, settings, mIsAcquiredBefore](std::string filePath, unsigned selection) {
-
-            if (filePath.empty())
-                return false;
-            settings->set<std::string>("anyload_path", GUIKIT::File::getPath( filePath ) );
-
-            emuThread->lock();
-            autoloader->init( {filePath}, false, Autoloader::Mode::AutoStartSecondary, selection );
-            autoloader->loadFiles();
-            emuThread->unlock();
-
-            resetPreview(emulator);
-
-            HideMouseIfWasBefore
-
-            return true;
-        }, IDC_BUTTON2 );
     }
 
     fileDialogPtr->setCallbacks( [this, emulator, settings, mIsAcquiredBefore](std::string filePath, unsigned selection) {
