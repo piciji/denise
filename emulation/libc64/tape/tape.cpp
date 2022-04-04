@@ -361,13 +361,17 @@ auto Tape::selectListing( unsigned pos, bool useTraps ) -> void {
     action.callbackId = 4;
     action.mode = KeyBuffer::Mode::WaitFor;
     action.buffer = {'R', 'E', 'A', 'D', 'Y', '.'};
-    action.delay = 800;
+    action.delay = 800; // seconds
     action.alternateBuffer.clear();
     action.blinkingCursor = true;
     action.callback = nullptr;
-    action.waitCallback = [this]() {
+    action.waitCallback = [this]( KeyBuffer::Action* action) {
         if (system->checkForAutoStarter()) {
-            system->keyBuffer->reset();
+			// keep check for "ready" alive, some games autostart first file and then load another file without autostarting it
+			action->position = 0;
+			action->delay = 5000; // frames
+			action->waitCallback = nullptr;
+         //   system->keyBuffer->reset();
             system->interface->autoStartFinish(true);
         }
     };

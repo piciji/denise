@@ -252,6 +252,7 @@ auto Traps::testForComplexTapeLoader() -> bool {
             return true;
 
         if( (fileEntry->startAddr == 0x29f && fileEntry->endAddr == 0x33b) // cyberload
+			|| (fileEntry->startAddr == 0x29f && fileEntry->endAddr == 0x338) // sanxion
         ) {
             for (unsigned i = 0; i <= 0xffff; i++)
                 system->ram[i] = 255 ^ (((i / 64) & 1) ? 0xff : 0x00);
@@ -379,6 +380,7 @@ auto Traps::tapeReceive() -> void {
             // small 3 byte programs expect 2 bytes only
             if ( (fileEntry->startAddr == 0x29f && fileEntry->endAddr == 0x2a1) // Skull & Crossbone
                 || (fileEntry->startAddr == 0x302 && fileEntry->endAddr == 0x304) // boggit the borred - septical II
+				|| (fileEntry->startAddr == 0x2a7 && fileEntry->endAddr == 0x304) // crackpots, keystone capers
             )
                 _size -= 1; // why ?
 

@@ -467,7 +467,7 @@ auto DiskStructure::prepareKeyBufferActions( std::vector<uint8_t>& path, bool us
     action.delay = 180;    
     action.alternateBuffer.clear();
     action.blinkingCursor = true;
-    action.waitCallback = [this]() {
+    action.waitCallback = [this](KeyBuffer::Action* action) {
         if (system->checkForAutoStarter()) {
             system->keyBuffer->reset();
             system->interface->autoStartFinish(true);

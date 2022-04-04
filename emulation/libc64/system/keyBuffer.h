@@ -36,7 +36,7 @@ struct KeyBuffer {
         unsigned delay = 0;
         bool blinkingCursor = false;
         std::function<void ( )> callback = nullptr;
-        std::function<void ( )> waitCallback = nullptr;
+        std::function<void (Action* action )> waitCallback = nullptr;
         
         unsigned position = 0;
     };
@@ -116,7 +116,7 @@ struct KeyBuffer {
                     action.callback = []() { tape->setMode( Tape::Mode::Play ); };
 
                 else if (action.callbackId == 4)
-                    action.waitCallback = []() {
+                    action.waitCallback = [](Action* action) {
                         if (system->checkForAutoStarter()) {
                             system->keyBuffer->reset();
                             system->interface->autoStartFinish(true);
@@ -213,7 +213,7 @@ struct KeyBuffer {
                 } else if ( result == Found::NotYet ) {
                     // wait some more time
                     if (action.waitCallback)
-                        action.waitCallback();
+                        action.waitCallback(&action);
                     return;
                 }
                 // result == Yes
