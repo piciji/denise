@@ -586,6 +586,7 @@ struct DVideo : Video, RenderThread {
 
     auto clear() -> void {
         wait();
+        lost = true;
         _clear();
     }
 
