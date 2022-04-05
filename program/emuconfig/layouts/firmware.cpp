@@ -72,7 +72,7 @@ FirmwareLayout::FirmwareLayout(TabWindow* tabWindow) {
         containerLayout.blocks.push_back(block);
         containerLayout.append(*block,{~0u, 0u}, &emulator->firmwares.back() == &firmware ? 0 : 5);
 
-        block->top.fileLabelTitle.setText(trans->get(firmware.name,{}, true));
+        block->top.fileLabelTitle.setText(firmware.name);
 
         block->bottom.eject.onActivate = [this, block]() {
             auto storeLevel = _settings->get<unsigned>("use_firmware", 0, {0, manager->maxSets});
@@ -105,7 +105,7 @@ FirmwareLayout::FirmwareLayout(TabWindow* tabWindow) {
             std::string filePath = GUIKIT::BrowserWindow()
                 .setWindow(*this->tabWindow)
                 .setTitle(trans->get("select_firmware_image",{
-                    {"%type%", firmware.name}
+                    {"%type%", trans->get(firmware.name)}
                 }))
                 .setFilters({trans->get("firmware_image") + " (*)"})
                 .setPath(_settings->get<std::string>("firmware_path", ""))
@@ -228,6 +228,7 @@ auto FirmwareLayout::translate() -> void {
     for( auto block : containerLayout.blocks ) {
         block->bottom.open.setText( trans->get("open") );
         block->bottom.eject.setText( trans->get("eject") );
+        block->top.fileLabelTitle.setText(trans->get(emulator->firmwares[block->typeId].name, {}, true));
     }
 
     for (auto box : selectorBoxes) {
@@ -262,19 +263,6 @@ auto FirmwareLayout::loadSettings() -> void {
     
     auto firmwareInUse = _settings->get<unsigned>( "use_firmware", 0, {0, manager->maxSets} );
 
-//    for (unsigned i = 0; i <= manager->maxSets; i++) {
-//        for (auto& firmware : emulator->firmwares) {
-//            auto fSetting = manager->getSetting( &firmware, i );
-//            if ( (i != 0) && !init) {
-//                fSetting->update();
-//            }
-//        }
-//    }
-
-//    if (!init) {
-//        manager->clear();
-//    }
-    
     if (selectorBoxes.size() > firmwareInUse)
         selectorBoxes[firmwareInUse]->setChecked();    
     
