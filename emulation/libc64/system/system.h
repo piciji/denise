@@ -23,6 +23,7 @@ struct Input;
 struct KeyBuffer;	
 struct GlueLogic;
 struct ExpansionPort;
+struct DebugCart;
 
 struct System {   
     
@@ -76,7 +77,8 @@ struct System {
     uint8_t* charRom = nullptr;
     uint8_t* kernalRom = nullptr;
     uint8_t* basicRom = nullptr;
-    
+
+    DebugCart* debugCart = nullptr;
     Interface* interface;  
     ExpansionPort* noExpansion;
     Prg* prgInUse = nullptr;
@@ -160,8 +162,6 @@ struct System {
         bool motor;
     } observer;
     
-    #include "testbench.h"
-    
     auto setFirmware( unsigned typeId, uint8_t* data, unsigned size, bool allowPatching ) -> void;
     
     auto remapCpu() -> void;
@@ -223,6 +223,9 @@ struct System {
     auto readParallelWithHandshake() -> uint8_t;
     auto readParallel() -> uint8_t;
     auto writeParallelHandshake() -> void;
+    auto isC64C() -> bool;
+    auto activateDebugCart(unsigned limitCycles) -> void;
+    auto enabledDebugCart() -> bool;
 };
 
 extern System* system;

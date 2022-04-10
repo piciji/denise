@@ -1,47 +1,73 @@
 
-struct {
-    bool enable = false;
-    bool exit = false;
-    uint8_t exitCode;
-    unsigned cycles;
-    unsigned frames;
-    unsigned frameCounter = 0;    
-} debugCart;
+#pragma once
 
-auto setDebugCart( bool enable, unsigned cycles = 0 ) -> void {
-    
-    debugCart.enable = enable;
-    debugCart.cycles = cycles;
-}
+#include "system.h"
+#include "../vicII/base.h"
+#include "../expansionPort/reu/reu.h"
 
-auto initDebugCart() -> void {
-    debugCart.exit = false;
-	
-    if (!debugCart.enable)
-        return;
-        	
-	debugCart.frames = debugCart.cycles / vicII->cyclesPerFrame();
-	debugCart.frames += 1;
-    
-    debugCart.frameCounter = 0;  
+namespace LIBC64 {
+
+    struct DebugCart {
+
+        bool enable = false;
+        bool exit = false;
+        uint8_t exitCode;
+        unsigned cycles;
+        unsigned frames;
+        unsigned frameCounter = 0;
+        bool delayFrame = false;
+
+        auto setExit(uint8_t exitCode) -> void {
+            if (exit)
+                return;
+            this->exitCode = exitCode;
+            exit = true;
+
+            if (!vicII->inVisibleArea())
+                system->leaveEmulation = true;
+            else if (dynamic_cast<Reu*>(expansionPort))
+                delayFrame = true;
+        }
+
+        auto set(bool enable, unsigned cycles = 0) -> void {
+            this->enable = enable;
+            this->cycles = cycles;
+        }
+
+        auto init() -> void {
+            exit = false;
+            delayFrame = false;
+
+            if (!enable)
+                return;
+
+            frames = cycles / vicII->cyclesPerFrame();
+            frames += 1;
+
+            frameCounter = 0;
+        }
+
+        auto check() -> void {
+            if (!enable)
+                return;
+
+            if (exit) {
+                if (delayFrame) {
+                    delayFrame = false;
+                    return;
+                }
+
+                system->interface->exit(exitCode);
+                return;
+            }
+
+            if (!cycles)
+                return;
+
+            if (++frameCounter == frames) {
+                exit = true;
+                system->interface->exit(1);
+            }
+        }
+    };
 }
-    
-inline auto checkDebugCart() -> void {
-    
-    if (!debugCart.enable)
-        return;
-    
-    if (debugCart.exit) {
-        interface->exit( debugCart.exitCode );
-        return;
-    }
-    
-    if (!debugCart.cycles)
-        return;
-    
-    if (++debugCart.frameCounter == debugCart.frames) {
-        debugCart.exit = true;
-        interface->exit( 1 );
-    }
-}
-    

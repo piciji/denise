@@ -57,11 +57,10 @@ auto VideoManager::setSynchronize() -> void {
     if (videoDriver->hasSynchronized() != vsync)
         videoDriver->synchronize( vsync );
 
-    videoDriver->setVRR( vrr, (float)audioManager->inputFPS );
-
     setFrameRender( frameRenderEach );
 
     if (audioManager) {
+        videoDriver->setVRR( vrr, (float)audioManager->inputFPS );
         audioManager->allowDrc = (vsync || vrr) && !threadedRenderer && (frameRenderEach == 1) && (skew <= VIDEO_SKEW);
         audioManager->setRateControl();
     }

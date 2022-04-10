@@ -329,7 +329,7 @@ auto Input::allowJit() -> void {
     if (system->runAhead.preventJit && system->runAhead.frames)
         jit.allow = false;
     else
-        jit.allow = jit.enable && !system->debugCart.enable && controlPort1->useJitPolling() && controlPort2->useJitPolling();
+        jit.allow = jit.enable && !system->enabledDebugCart() && controlPort1->useJitPolling() && controlPort2->useJitPolling();
 }
 
 auto Input::getConnectedDevice( Interface::Connector* connector ) -> Interface::Device* {

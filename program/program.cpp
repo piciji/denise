@@ -96,6 +96,9 @@ auto Program::finishStartup() -> void {
 }
 
 auto Program::initUserInterface() -> void {
+    if (GUIKIT::Application::isQuit)
+        return;
+
     bool threadedEmu = globalSettings->get<bool>("threaded_emu", false);
 
     if (cmd->noGui) {

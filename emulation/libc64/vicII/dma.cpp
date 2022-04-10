@@ -101,11 +101,11 @@ inline auto VicIICycle::advanceCycle() -> void {
 		vcBase = vc = 0;
 		refreshCounter = 0xff;
 		allowBadlines = false;
-    }   
+    }
     
 	if (++cycle == lineCycles) {	
-		cycle = 0;  
-		
+		cycle = 0;
+
 		// Note: line complete but vcounter is not incremented at this point
 		if (vCounter == 0xf7)
 			allowBadlines = false;		
@@ -113,7 +113,7 @@ inline auto VicIICycle::advanceCycle() -> void {
 		if (++vCounter == lines ) {
 			// last line is not reseted this cycle but next
 			vCounter -= 1;
-			initVCounter = true;	
+			initVCounter = true;
 		} else {
 			// when vCounter increments to 0x30 we check for DEN
             // the above check in this function would miss the first cycle in line
@@ -122,33 +122,33 @@ inline auto VicIICycle::advanceCycle() -> void {
 		}
 		
 		setLineBuffer();
-		
+
 		if ( vCounter == vStart ) {
             updateBorderData();
-            // we buffer all pixel data in non blanking area, of course a CRT 
+            // we buffer all pixel data in non blanking area, of course a CRT
             // can not display the whole non blanking area.
             // cropping is done later and not within Vic emulation
             visibleLine = true; // non v-blank
 
         } else if ( lineVCounter == vHeight ) {
             visibleLine = false; // v-blank
-            
+
             if (leftLineAnomaly.mode)
                 insertVerticalLineAnomaly( lineCallback.line, lineVCounter );
-            
+
             // push out the frame to host
             // we crop the h-blanking area before
-            system->videoRefresh( frameBuffer + firstVisiblePixel, 
+            system->videoRefresh( frameBuffer + firstVisiblePixel,
                 hWidth, lineVCounter, VIC_MAX_LINE_LENGTH - hWidth
             );
 			lineVCounter = 0;
 		} else if (lineCallback.use && (lineVCounter == lineCallback.line)) {
             if (leftLineAnomaly.mode)
                 insertVerticalLineAnomaly( 0, lineVCounter );
-            
+
             system->VicMidScreenCallback();
-        }		 
-	} 
+        }
+	}
 
     sprite0DmaLateBA = false;
 }
@@ -275,15 +275,6 @@ inline auto VicIICycle::updateBAState( uint32_t flags ) -> void {
 			aecDelay--;		
 	} else		
 		aecDelay = 4;	
-}
-
-auto VicIICycle::reuBaLow() -> bool {
-    // of course the expansion port sees the same BA state like CPU RDY line.
-    // there is a known case, when BA calculation takes more time within cycle.
-    // for cpu it doesn't matter, because it checks later in cycle.
-    // REU seems to check this sooner and can't recognize BA in this special cycle.
-    
-    return baLow && !sprite0DmaLateBA;
 }
 
 inline auto VicIICycle::updateBadLine() -> void {

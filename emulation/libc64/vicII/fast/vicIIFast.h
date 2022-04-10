@@ -22,6 +22,7 @@ struct VicIIFast : VicIIBase {
     auto triggerLightPen( bool state, uint8_t subCycle ) -> void;
 	auto isScanlineRenderer() -> bool { return true; }
 	auto reuBaLow() -> bool { return baLow; }
+    auto reuSprite0() -> bool { return false; }
 	auto setMeta( bool state ) -> void;
    
 protected:

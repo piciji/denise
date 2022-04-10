@@ -1556,7 +1556,7 @@ auto Interface::enableFloppySounds(bool state) -> void {
 }
 
 auto Interface::activateDebugCart( unsigned limitCycles ) -> void {
-    system->setDebugCart( true, limitCycles );    
+    system->activateDebugCart( limitCycles );
 }
 
 auto Interface::fastForward(unsigned config) -> void {

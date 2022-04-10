@@ -15,6 +15,7 @@
 #include "../expansionPort/freezer/actionReplayMK2.h"
 #include "clipboard.h"
 #include "firmware.h"
+#include "testbench.h"
 #include <cstring>
 
 #include "expansion.cpp"
@@ -39,6 +40,8 @@ System::System(Interface* interface) {
     kernalRom = (uint8_t*)Firmware::kernalRom;
     basicRom = (uint8_t*)Firmware::basicRom;
     charRom = (uint8_t*)Firmware::charRom;
+
+    debugCart = new DebugCart;
 
     createExpansions();
     vicIICycle = new VicIICycle;
@@ -222,10 +225,8 @@ System::System(Interface* interface) {
     };
 
     writeDebugReg = [this](uint16_t addr, uint8_t value) {
-        if ( (addr & 0xff) == 0xff) {
-            debugCart.exitCode = value;
-            debugCart.exit = true;
-        }
+        if ( (addr & 0xff) == 0xff)
+            debugCart->setExit(value);
 
         Sid::updateClock();
 
@@ -543,7 +544,7 @@ auto System::power( bool softReset ) -> void {
     iecBus->setCpuCyclesPerSecond( vicII->frequency() );
 
     sysTimer.add( &countDownPowerSupply, powerSupply->nextTickCount(), Emulator::SystemTimer::Action::UpdateExisting );
-    initDebugCart();
+    debugCart->init();
 
     if( !softReset )
         iecBus->power();
@@ -584,7 +585,7 @@ auto System::power( bool softReset ) -> void {
     KeyBuffer::Action action;
     action.mode = KeyBuffer::Mode::WaitDelay;
 
-    if (!debugCart.enable && dynamic_cast<Freezer*>(expansionPort))
+    if (!debugCart->enable && dynamic_cast<Freezer*>(expansionPort))
         action.delay = (unsigned)(interface->stats.fps * dynamic_cast<Freezer*>(expansionPort)->bootSpeed());
     else if (iecBus->drives[0]->speeder && secondDriveCable.parallelUse)
         action.delay = (unsigned)(interface->stats.fps * ((iecBus->drives[0]->speeder == 10 || iecBus->drives[0]->speeder == 11)
@@ -721,7 +722,7 @@ auto System::run() -> void {
     if (observer.motorChange)
         informAboutMotorChange();
 
-    checkDebugCart();
+    debugCart->check();
 }
 
 auto System::isUltimax() -> bool {
@@ -1017,6 +1018,18 @@ auto System::writeParallelHandshake() -> void {
             fastloader->via.ca1In(false);
         }
     }
+}
+
+auto System::isC64C() -> bool {
+    return glueLogic->type == GlueLogic::Type::CustomIC;
+}
+
+auto System::activateDebugCart(unsigned limitCycles) -> void {
+    debugCart->set( true, limitCycles );
+}
+
+auto System::enabledDebugCart() -> bool {
+    return debugCart->enable;
 }
 
 }

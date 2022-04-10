@@ -10,7 +10,12 @@ struct VicIICycle : VicIIBase {
 	
 	auto clock() -> void;
 	auto clockSilence() -> void;
-	auto reuBaLow() -> bool;
+    // of course expansion port sees the same BA state like CPU RDY line.
+    // but there is a known case, when BA calculation takes more time within cycle.
+    // for CPU it doesn't matter, because it checks later in cycle.
+    // REU seems to check this sooner and can't recognize BA in this special cycle.
+	auto reuBaLow() -> bool { return baLow && !sprite0DmaLateBA; }
+    auto reuSprite0() -> bool { return sprite0DmaLateBA; }
 	auto serialize(Emulator::Serializer& s) -> void;
 	auto readReg(uint8_t addr) -> uint8_t;
 	auto writeReg(uint8_t addr, uint8_t value) -> void;

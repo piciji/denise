@@ -67,6 +67,7 @@ struct VicIIBase {
 	
     virtual auto clock() -> void = 0;    
 	virtual auto reuBaLow() -> bool = 0;
+    virtual auto reuSprite0() -> bool = 0;
 	virtual auto serialize(Emulator::Serializer& s) -> void = 0;
 	virtual auto readReg( uint8_t addr ) -> uint8_t = 0;
     virtual auto writeReg( uint8_t addr, uint8_t value ) -> void = 0;	
@@ -108,6 +109,7 @@ struct VicIIBase {
     auto setUltimaxPhi2(bool state ) -> void { ultimaxPhi2 = state; };
     auto setUltimax(bool state ) -> void { ultimaxPhi1 = ultimaxPhi2 = state; };
     auto oldOne() -> bool { return oldIrqMode; }
+    auto inVisibleArea() -> bool { return visibleLine; }
 
 protected:     
     bool ultimaxPhi1;
