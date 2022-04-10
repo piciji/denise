@@ -1,5 +1,8 @@
 
 #define IDC_FRAME           1119
+#define IDC_BUTTON          1113
+#define IDC_BUTTON1         1114
+#define IDC_BUTTON2         1115
 
 HWND pBrowserWindow::dummyParent = nullptr;
 
@@ -367,25 +370,31 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
                 
                 HWND hwndOk = GetDlgItem(context->dialogHwnd, IDOK);
 
-                okFont = pFont::create( Font::system() );
+                if (state->hideOkButton)
+                    ShowWindow(hwndOk, SW_HIDE);
+                else {
+                    okFont = pFont::create(Font::system());
 
-                auto size = pFont::size(okFont, state->textOk);
+                    auto size = pFont::size(okFont, state->textOk);
 
-                RECT rect;
+                    RECT rect;
 
-                GetWindowRect(hwndOk, &rect);
+                    GetWindowRect(hwndOk, &rect);
 
-                if ((rect.right - rect.left) < size.width) {
-                    pFont::free( okFont );
+                    if ((rect.right - rect.left) < size.width) {
+                        pFont::free(okFont);
 
-                    okFont = pFont::create( Font::system(7) );
+                        okFont = pFont::create(Font::system(7));
 
-                    SendMessage(hwndOk, WM_SETFONT, (WPARAM)okFont, 0);
+                        SendMessage(hwndOk, WM_SETFONT, (WPARAM) okFont, 0);
 
-                    MoveWindow(hwndOk, 445, 325, 120, 24, TRUE); 
-                }                    
-                
-                SetDlgItemText( context->dialogHwnd, IDOK, (LPCWSTR)utf16_t(state->textOk) );
+                        MoveWindow(hwndOk, 445, 325, 120, 24, TRUE);
+                    }
+
+                    SetDlgItemText(context->dialogHwnd, IDOK, (LPCWSTR) utf16_t(state->textOk));
+
+                    context->setButtonTooltip(hwndOk, state->toolTip);
+                }
             }
             
             if (!state->textCancel.empty())
@@ -423,10 +432,18 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
                     context->listHiBrush = CreateSolidBrush(GetSysColor(COLOR_HIGHLIGHT));
             }
 
+			std::vector<unsigned> dlgButtonIds = {IDC_BUTTON, IDC_BUTTON1, IDC_BUTTON2};
+			
             for(auto& button : state->buttons) {
-                SetDlgItemText(hDlg, button.id, (LPCWSTR)utf16_t(button.text) );
+                SetDlgItemText(hDlg, button.id, (LPCWSTR)utf16_t(button.text) );				
+				context->setButtonTooltip(GetDlgItem(hDlg, button.id), button.toolTip);
+				Vector::eraseVectorElement(dlgButtonIds, button.id);
             }
-                                  
+			
+			for (auto dlgButtonId : dlgButtonIds) {
+				ShowWindow(GetDlgItem(hDlg, dlgButtonId), SW_HIDE);
+			}
+			
             SetWindowLongPtr(listBox, GWLP_USERDATA, (LONG_PTR)context);
             WNDPROC wndprocOrig = (WNDPROC)SetWindowLongPtr(listBox, GWLP_WNDPROC, (LONG_PTR)subclassListbox);
             SetProp( listBox, L"OLDWNDPROC", (HANDLE)wndprocOrig );
@@ -733,6 +750,28 @@ auto pBrowserWindow::setToolTip(HWND hwnd, int curItem, RECT rect) -> void {
     SendMessage(hwndTip, TTM_ADDTOOL, 0, (LPARAM)&toolInfo);
 }
 
+auto pBrowserWindow::setButtonTooltip(HWND buttonHwnd, std::string tooltip) -> void {
+    if(tooltip.empty())
+        return;
+    
+	HWND toolTip = CreateWindowEx(0, TOOLTIPS_CLASS, NULL,
+		WS_POPUP | TTS_ALWAYSTIP | TTS_USEVISUALSTYLE,
+		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+		buttonHwnd, NULL, GetModuleHandle(0), 0);    
+            
+    utf16_t wtooltip(tooltip);
+
+    TOOLINFO toolInfo = { 0 };
+    toolInfo.cbSize = sizeof(toolInfo);
+    toolInfo.hwnd = GetParent(buttonHwnd);
+    toolInfo.uFlags = TTF_IDISHWND | TTF_SUBCLASS;
+    toolInfo.uId = (UINT_PTR)buttonHwnd;
+    toolInfo.lpszText = wtooltip;
+
+    SendMessage(toolTip, TTM_ADDTOOL, 0, (LPARAM)&toolInfo);
+	SendMessage(toolTip, TTM_SETDELAYTIME, TTDT_INITIAL, 1500);
+}
+
 auto pBrowserWindow::adjustDialogByScreenResolution(HWND fileDialogView, HWND listBox) -> void {
    
     RECT rDialogView;
@@ -764,6 +803,7 @@ auto pBrowserWindow::resize( HWND fileDialogView, bool init ) -> void {
     RECT rDialogView;
     RECT rCustomView;
     RECT rListBox;
+	unsigned buttonMargin = pFont::scale(20);
     
     HWND customView = GetDlgItem(fileDialogView, IDC_FRAME);
     
@@ -792,6 +832,9 @@ auto pBrowserWindow::resize( HWND fileDialogView, bool init ) -> void {
         }
 
         buttons.clear();
+		int relativeX = -1;
+		unsigned buttonBarWidth = 0;
+		
         for (auto& button : browserWindow.state.buttons) {
             HWND hwnd = GetDlgItem(fileDialogView, button.id);
             if (!hwnd)
@@ -806,15 +849,33 @@ auto pBrowserWindow::resize( HWND fileDialogView, bool init ) -> void {
             
             auto size = pFont::size(Font::system(), button.text);
             width = size.width + 10;
-            width = std::max<int>( 70, width );
+			if (!IsAppThemed())
+				width += 10;
             
-            int height = std::abs(rect.bottom - rect.top);
-            int relativeX = std::abs(rect.left - rCustomView.right);
+			if (relativeX == -1)
+				relativeX = std::abs(rect.left - rCustomView.right);
+					
+			int height = std::abs(rect.bottom - rect.top);
             int relativeY = std::abs(rect.top - (listBox ? rListBox.bottom : rCustomView.top) );
 
             buttons.push_back({hwnd, width, height, relativeX, relativeY});
-        }   
-    }   
+			
+			relativeX += width + buttonMargin;
+			
+			buttonBarWidth += width + buttonMargin;
+        }
+		
+		if (listBox && buttonBarWidth) { // center button Bar
+			buttonBarWidth -= buttonMargin;
+			if (buttonBarWidth < listWidth) {
+				unsigned delta = (listWidth - buttonBarWidth) >> 1;
+				for (auto& button : buttons) {
+					button.relativeX += delta;
+				}			
+			}
+		}
+    }
+	
     
     int dialogWidth = std::abs(rDialogView.right - rDialogView.left);
     int dialogHeight = std::abs(rDialogView.bottom - rDialogView.top);    

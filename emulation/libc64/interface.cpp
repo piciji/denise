@@ -3,6 +3,7 @@
 #include "system/system.h"
 #include "prg/prg.h"
 #include "tape/tape.h"
+#include "tape/structure.h"
 #include "sid/sid.h"
 #include "vicII/fast/vicIIFast.h"
 #include "vicII/vicII.h"
@@ -24,7 +25,7 @@
 
 namespace LIBC64 {
 
-const std::string Interface::Version = "1122";
+const std::string Interface::Version = "1123";
     
 Interface::Interface() : Emulator::Interface( "C64" ) {        
     
@@ -997,9 +998,23 @@ auto Interface::getTapeControl(Media* media) -> TapeMode {
     return (TapeMode)tape->getMode();
 }
 
-auto Interface::selectTapeListing(Media* media, unsigned pos) -> void {
+auto Interface::getTapeListing(Media* media) -> std::vector<Emulator::Interface::Listing> {
+    if (!media || !media->group->isTape())
+        return {};
+
+    return tape->getListing();
+}
+
+auto Interface::getTapePreview(uint8_t* data, unsigned size, Media* media) -> std::vector<Emulator::Interface::Listing> {
+    TapeStructure structure(tape);
+    structure.setData( data, size );
+
+    return structure.getListing();
+}
+
+auto Interface::selectTapeListing(Media* media, unsigned pos, bool useTraps) -> void {
 	
-	tape->selectListing( pos );
+	tape->selectListing( pos, useTraps );
 }
 
 auto Interface::createTapeImage(unsigned& imageSize) -> uint8_t* {
@@ -1160,18 +1175,18 @@ auto Interface::insertProgram(Media* media, uint8_t* data, unsigned size) -> voi
 }
 
 auto Interface::ejectProgram(Media* media) -> void {
-    if (!media || !media->group->isProgram())
-        return;
-    
-    auto prg = Prg::getInstance( media );
-    if (!prg)
-        return;
-    prg->unset();
+//    if (!media || !media->group->isProgram())
+//        return;
+//
+//    auto prg = Prg::getInstance( media );
+//    if (!prg)
+//        return;
+//    prg->unset();
 }
 
 auto Interface::getLoadedProgram(unsigned& size) -> uint8_t* {
 	
-	return system->prgInUse->getMemory( size );
+	return Prg::getMemory( size );
 }
 
 auto Interface::getProgramListing(Media* media) -> std::vector<Emulator::Interface::Listing> {
@@ -1541,7 +1556,7 @@ auto Interface::enableFloppySounds(bool state) -> void {
 }
 
 auto Interface::activateDebugCart( unsigned limitCycles ) -> void {
-    system->setDebugCart( true, limitCycles );    
+    system->activateDebugCart( limitCycles );
 }
 
 auto Interface::fastForward(unsigned config) -> void {
@@ -1567,12 +1582,6 @@ auto Interface::setLineCallback(bool state, unsigned scanline) -> void {
     vicIICycle->lineCallback.use = state;
     vicIICycle->lineCallback.line = scanline;	
 
-}
-
-auto Interface::setFinishVblankCallback(bool state) -> void {
-    
-    vicIIFast->lineCallback.finishVblank = state;
-    vicIICycle->lineCallback.finishVblank = state;
 }
 
 auto Interface::setMemory(MemoryType* memoryType, unsigned memoryId) -> void {

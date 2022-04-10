@@ -35,7 +35,6 @@ VicIIBase::VicIIBase() {
 	
     lineCallback.use = false;
     lineCallback.line = 0;
-    lineCallback.finishVblank = false; 
 }	
 
 VicIIBase::~VicIIBase() {

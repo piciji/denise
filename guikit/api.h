@@ -182,6 +182,7 @@ struct Window : Base {
     std::function<void ()> onMinimize = nullptr;
     std::function<void ()> onUnminimize = nullptr; 
 	std::function<void ()> onFocus = nullptr;
+    std::function<void ()> onRealize = nullptr;
 
     enum class Hints { Default, Video } hints = Hints::Default;
     
@@ -217,7 +218,7 @@ struct Window : Base {
         setBackgroundColor(r << 16 | g << 8 | b);
     }
     auto setBackgroundColor(unsigned color) -> void;
-    auto setVisible(bool visible = true) -> void;
+    auto setVisible(bool visible = true) -> bool;
     auto restore() -> void; // from minimized
     auto setFocused() -> void;
 	auto setFocused(unsigned delay) -> void;
@@ -302,7 +303,7 @@ struct StatusBar : Base {
         int overrideForegroundColor = -1;
         bool alignRight = false;
         bool visible = false;
-        unsigned position = 0;
+        int position = -1;
         bool appendSeparator = false;
     };
     
@@ -381,7 +382,7 @@ struct Widget : Sizable {
     auto setEnabled(bool enabled = true) -> void;
     auto setVisible(bool visible = true) -> void;
     // "special font" hint is only handled in listviews at the moment.
-    // in this case vertical spacing in completly removed.
+    // in this case vertical spacing is completly removed.
     auto setFont(const std::string& font, bool specialFont = false) -> void;
     auto minimumSize() -> Size;
     auto setGeometry(Geometry geometry) -> void; //use this to control geometry manually for widgets without layout, layouts set widget geometry automatically
@@ -1101,10 +1102,12 @@ struct BrowserWindow {
     auto setPath(const std::string& path) -> BrowserWindow&;
     auto setTitle(const std::string& title) -> BrowserWindow&;
     auto setOnChangeCallback( std::function<std::vector<BrowserWindow::Listing> (std::string file)> onSelectionChange ) -> BrowserWindow&;
-    auto addCustomButton( std::string text, std::function<bool (std::string filePath, unsigned selection)> onClick, unsigned id = 0 ) -> BrowserWindow&;
+    auto addCustomButton( std::string text, std::function<bool (std::string filePath, unsigned selection)> onClick, unsigned id = 0, std::string toolTip = "" ) -> BrowserWindow&;
     auto setDefaultButtonText(std::string textOk, std::string textCancel = "") -> BrowserWindow&;
+	auto setDefaultButtonTooltip(std::string toolTip) -> BrowserWindow&;
 	auto setNonModal() -> BrowserWindow&;
 	auto setListings( std::vector<BrowserWindow::Listing>& listings ) -> void;
+    auto hideOkButton() -> void;
 
     auto setTemplateId(int id) -> BrowserWindow&;
     auto addContentView(unsigned id, std::function<bool (std::string filePath, unsigned selection)> onDblClick) -> BrowserWindow&;
@@ -1125,6 +1128,7 @@ struct BrowserWindow {
     
     struct CustomButton {        
         std::string text;
+		std::string toolTip = "";
         std::function<bool (std::string filePath, unsigned selection)> onClick = nullptr;        
         unsigned id = 0; // for template usage
     };
@@ -1164,7 +1168,9 @@ struct BrowserWindow {
         int resizeAdjust = 0;
         std::string textOk = "";
         std::string textCancel = "";
+		std::string toolTip = "";
 		bool modal = true;
+        bool hideOkButton = false;
     } state;
 
     pBrowserWindow& p;    

@@ -25,7 +25,7 @@ auto View::build() -> void {
     setBackgroundColor(0);
     cocoa.setDisableIconsInTopMenu(true);
 
-    if (globalSettings->get<bool>("aspect_correct_resizing", true))
+    if (globalSettings->get<bool>("aspect_correct_resizing", false))
         setAspectRatio( {4,3} );
     else
         setAspectRatio( {0,0} );
@@ -106,7 +106,7 @@ auto View::build() -> void {
             updateViewport();
 
         } else {
-            if (activeVideoManager && emuThread->enabled) {
+            if (activeVideoManager && emuThread->enabled && !program->isPause) {
                 videoDriver->lockResize();
                 updateViewport();
                 videoDriver->unlockResize();
@@ -114,11 +114,13 @@ auto View::build() -> void {
                 updateViewport();
       
 			if (activeVideoManager) {
-				if (!emuThread->enabled) {
-					activeVideoManager->waitForCrtRenderer();
+                if (!emuThread->enabled || program->isPause) {
+                    activeVideoManager->waitForCrtRenderer();
+                    emuThread->lock();
                     videoDriver->redraw();
                     videoDriver->freeContext();
-				}
+                    emuThread->unlock();
+                }
 			} else {
 				videoDriver->redraw(true);
             }
@@ -175,13 +177,18 @@ auto View::build() -> void {
         this->updateViewport();
         statusHandler->resetFrameCounter();
     };
+
+    onRealize = [this]() {
+		updateViewport();
+        program->finishStartup();
+    };
 	
 	winapi.onMenu = []() {
 	//	audioDriver->clear();
 	};
 	
 	GUIKIT::BrowserWindow::onCall = []() {
-        if (!globalSettings->get<bool>("threaded_emu", false) || !globalSettings->get("threaded_renderer", false))
+        if (!globalSettings->get<bool>("threaded_emu", false) || !globalSettings->get("threaded_renderer", true))
 		    audioDriver->clear();
 	};
 
@@ -253,7 +260,7 @@ auto View::build() -> void {
         
 		if (videoDriver && fullscreenSetting.inUse
 			&& globalSettings->get<bool>("threaded_emu", false)
-			&& globalSettings->get<bool>("threaded_renderer", false))
+			&& globalSettings->get<bool>("threaded_renderer", true))
             videoDriver->forceResize();
 		
 		else if (!requestFullscreenSwitch && !fullScreen()) {
@@ -344,11 +351,6 @@ auto View::setDragnDrop() -> void {
     };        
 }
 
-auto View::show() -> void {
-    setVisible();
-    updateViewport();
-}
-
 auto View::switchFullScreen(bool fullScreen, bool forceUnacquire) -> void {
 	requestFullscreenSwitch = true;
 	if(!forceUnacquire && fullScreen && program->isRunning) inputDriver->mAcquire();
@@ -356,9 +358,6 @@ auto View::switchFullScreen(bool fullScreen, bool forceUnacquire) -> void {
 
     if (!fullScreen && videoDriver)
         videoDriver->disableExclusiveFullscreen();
-
-    if (activeVideoManager)
-        activeVideoManager->unlockDriver();
 
     GUIKIT::Window::setFullScreen(fullScreen);
     displayChangeTimer.setEnabled();
@@ -960,13 +959,13 @@ auto View::buildMenu() -> void {
         VideoManager::setSynchronize();
         statusHandler->resetFrameCounter();
         emuThread->unlock();
-        bool threadedRenderer = globalSettings->get("threaded_renderer", false);
+        bool threadedRenderer = globalSettings->get("threaded_renderer", true);
 
         adaptiveSyncItem.setEnabled( videoSyncItem.checked() && !threadedRenderer );
         dynamicRateControl.setEnabled( (videoSyncItem.checked() || vrrItem.checked()) && !threadedRenderer );
         vrrItem.setEnabled( threadedRenderer || !(videoSyncItem.checked() && adaptiveSyncItem.checked()) );
     };
-    bool threadedRenderer = globalSettings->get("threaded_renderer", false);
+    bool threadedRenderer = globalSettings->get("threaded_renderer", true);
     bool vsync = globalSettings->get<bool>("video_sync", true);
     bool vrr = globalSettings->get<bool>("vrr_sync", false);
     bool adaptive = globalSettings->get<bool>("adaptive_sync", true);
@@ -985,7 +984,7 @@ auto View::buildMenu() -> void {
         VideoManager::setSynchronize();
         emuThread->unlock();
         //statusHandler->resetFrameCounter();
-        bool threadedRenderer = globalSettings->get("threaded_renderer", false);
+        bool threadedRenderer = globalSettings->get("threaded_renderer", true);
         vrrItem.setEnabled( threadedRenderer || !(videoSyncItem.checked() && adaptiveSyncItem.checked()) );
     };
     if ( adaptive )
@@ -1000,7 +999,7 @@ auto View::buildMenu() -> void {
         emuThread->lock();
         VideoManager::setSynchronize();
         emuThread->unlock();
-        bool threadedRenderer = globalSettings->get("threaded_renderer", false);
+        bool threadedRenderer = globalSettings->get("threaded_renderer", true);
         dynamicRateControl.setEnabled( (videoSyncItem.checked() || vrrItem.checked()) && !threadedRenderer );
     };
     if ( vrr ) vrrItem.setChecked();
@@ -1384,10 +1383,8 @@ auto View::updateTapeStatusIcons( Emulator::Interface::TapeMode mode ) -> void {
         default: break;
     //    case TapeMode::Stop:        image = &stophiImage; break;
     }
-    
+
     statusHandler->updateTapeImage( image );
-        
-    statusBar.update();
 }
 
 auto View::translate() -> void {
@@ -1453,7 +1450,7 @@ auto View::translate() -> void {
     for (auto& diskControlMenu : diskControlMenus) {
         diskControlMenu.insert.setText( trans->get("insert") );
         diskControlMenu.eject.setText( trans->get("eject") );
-        diskControlMenu.reset.setText( trans->get("Hard Reset") );
+        diskControlMenu.reset.setText( trans->get("Reset Floppy") );
         diskControlMenu.inactive.setText( trans->get("inactive until reset") );
     }
     

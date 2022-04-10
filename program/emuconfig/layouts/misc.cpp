@@ -55,10 +55,16 @@ AutostartLayout::AutoWarp::AutoWarp() {
     setAlignment( 0.5 );
 }
 
-AutostartLayout::Options::Options() {
-    append(tapeWithStandardKernal, {0u, 0u}, 10 );
-    append(loadWithColumn, {0u, 0u}, 10 );
-    append(trapsOnDblClick, {0u, 0u} );
+AutostartLayout::DiskStart::DiskStart() {
+    append(diskTrapsOnDblClick, {0u, 0u}, 20 );
+	append(loadWithColumn, {0u, 0u} );    
+
+    setAlignment( 0.5 );
+}
+
+AutostartLayout::TapeStart::TapeStart() {
+	append(tapeTrapsOnDblClick, {0u, 0u}, 20 );    
+    append(tapeWithStandardKernal, {0u, 0u} );
 
     setAlignment( 0.5 );
 }
@@ -67,7 +73,8 @@ AutostartLayout::AutostartLayout() {
     setPadding(10);
 
     append(autoWarp, {0u, 0u}, 5 );
-    append(options, {0u, 0u} );
+    append(diskStart, {0u, 0u}, 5 );
+    append(tapeStart, {0u, 0u} );
 
     setFont(GUIKIT::Font::system("bold"));
 }
@@ -121,16 +128,20 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) {
             _settings->set<bool>("auto_warp_tape_first_file", checked);
         };
 
-        autostartLayout->options.tapeWithStandardKernal.onToggle = [this](bool checked) {
+        autostartLayout->tapeStart.tapeWithStandardKernal.onToggle = [this](bool checked) {
             _settings->set<bool>("autostart_tape_standard_kernal", checked);
         };
 
-        autostartLayout->options.loadWithColumn.onToggle = [this](bool checked) {
+        autostartLayout->diskStart.loadWithColumn.onToggle = [this](bool checked) {
             _settings->set<bool>("autostart_load_with_column", checked);
         };
 
-        autostartLayout->options.trapsOnDblClick.onToggle = [this](bool checked) {
+        autostartLayout->diskStart.diskTrapsOnDblClick.onToggle = [this](bool checked) {
             _settings->set<bool>("autostart_traps_on_dblclick", checked);
+        };
+
+        autostartLayout->tapeStart.tapeTrapsOnDblClick.onToggle = [this](bool checked) {
+            _settings->set<bool>("autostart_tape_traps_on_dblclick", checked);
         };
     }
 
@@ -295,10 +306,11 @@ auto MiscLayout::translate() -> void {
         autostartLayout->autoWarp.diskFirstFile.setText(trans->get("disk warp first file"));
         autostartLayout->autoWarp.tapeFirstFile.setText(trans->get("tape warp first file"));
 
-        autostartLayout->options.tapeWithStandardKernal.setText(trans->get("tape default kernal"));
+        autostartLayout->tapeStart.tapeWithStandardKernal.setText(trans->get("tape default kernal"));
 
-        autostartLayout->options.loadWithColumn.setText( "Load \":*\"" );
-        autostartLayout->options.trapsOnDblClick.setText(trans->get("VDT Autostart on dblclick"));
+        autostartLayout->diskStart.loadWithColumn.setText( "Load \":*\"" );
+        autostartLayout->diskStart.diskTrapsOnDblClick.setText(trans->get("VDT Disk Autostart on dblclick"));
+        autostartLayout->tapeStart.tapeTrapsOnDblClick.setText(trans->get("VDT Tape Autostart on dblclick"));
     }
 
     speedLayout.setText( trans->get("Speed") );
@@ -324,11 +336,13 @@ auto MiscLayout::loadSettings() -> void {
 
         autostartLayout->autoWarp.tapeFirstFile.setChecked(_settings->get<bool>("auto_warp_tape_first_file", false));
 
-        autostartLayout->options.tapeWithStandardKernal.setChecked( _settings->get<bool>("autostart_tape_standard_kernal", false));
+        autostartLayout->tapeStart.tapeWithStandardKernal.setChecked( _settings->get<bool>("autostart_tape_standard_kernal", false));
 
-        autostartLayout->options.loadWithColumn.setChecked(_settings->get<bool>("autostart_load_with_column", false));
+        autostartLayout->diskStart.loadWithColumn.setChecked(_settings->get<bool>("autostart_load_with_column", false));
 
-        autostartLayout->options.trapsOnDblClick.setChecked(_settings->get<bool>("autostart_traps_on_dblclick", false));
+        autostartLayout->diskStart.diskTrapsOnDblClick.setChecked(_settings->get<bool>("autostart_traps_on_dblclick", false));
+
+        autostartLayout->tapeStart.tapeTrapsOnDblClick.setChecked(_settings->get<bool>("autostart_tape_traps_on_dblclick", false));
     }
 
     setRunAheadPerformance(_settings->get<bool>("runahead_performance", false));

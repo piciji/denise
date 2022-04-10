@@ -509,7 +509,7 @@ auto pWindow::setFocused() -> void {
     }
 }
 
-auto pWindow::setVisible(bool visible) -> void {
+auto pWindow::setVisible(bool visible) -> bool {
     @autoreleasepool {
         if(visible) {
             try {
@@ -523,6 +523,7 @@ auto pWindow::setVisible(bool visible) -> void {
         }
         else [cocoaWindow orderOut:nil];
     }
+    return true;
 }
     
 auto pWindow::keepMenuVisibilityOnDisplay(bool state) -> void {

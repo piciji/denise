@@ -127,10 +127,11 @@ VideoManager::VideoManager(Emulator::Interface* emulator) : shader(this) {
     
     lightFromCenter = 1.0;
 
-    render[0].kill = false;
-    render[1].kill = false;
-    render[0].ready = false;
-    render[1].ready = false;
+    for(unsigned i = 0; i < 2; i++) {
+        render[i].kill = false;
+        render[i].ready = false;
+        render[i].dest = nullptr;
+    }
 
     reinitCrtThread(true);
 }
@@ -673,10 +674,11 @@ template<typename T> auto VideoManager::renderFrame(const T* src, unsigned width
 		
 	} else if (crtThreaded) {
 		if (!videoDriver->lock(gpuData, gpuPitch, width, scanlines ? (height << 1) : height ))
-            return renderCrtThreadedBlank(width, height, src, srcPitch, gpuData, gpuPitch - width);
-		
-		return renderCrtThreaded(width, height, src, srcPitch, gpuData, gpuPitch - width);
-	} else {
+            renderCrtThreadedBlank(width, height, src, srcPitch, gpuData, gpuPitch - width);
+		else
+		    renderCrtThreaded(width, height, src, srcPitch, gpuData, gpuPitch - width);
+
+    } else {
 		if (!videoDriver->lock(gpuData, gpuPitch, width, scanlines ? (height << 1) : height))
 			return;
 		
@@ -784,6 +786,10 @@ auto VideoManager::enableCrtThread( bool state) -> void {
 
     for( unsigned t = 0; t < 2; t++ ) {
         Render* re = &render[t];
+        re->dest = nullptr;
+
+        if (t == 1)
+            continue;
 
         if (state) {
             while (re->kill) {
@@ -842,26 +848,13 @@ template<bool _16bitSrc> auto VideoManager::createWorker(Render* re) -> void {
 auto VideoManager::waitForCrtRenderer() -> void {
 
     if (!crtThreaded || (crtMode != CrtMode::Cpu ) )
-        return;	
-	
-	waitForCrtRenderer(0);
-	waitForCrtRenderer(1);
+        return;
+
+    Render* re = &render[0];
+
+    while (re->ready.load())
+        std::this_thread::yield();
 }
-
-auto VideoManager::waitForCrtRenderer(uint8_t pos) -> bool {
-
-	Render* re = &render[pos];
-
-	while (re->ready.load())
-		std::this_thread::yield();
-
-    return frameRenderPos == 0;
-}
-
-// 1. start 1. thread half screen
-// 2. vblank: lock driver, start 2. thread
-// 3. wait first thread and copy result, update render params for first thread
-// 4. end vblank: wait 2. thread and unlock + redraw
 
 // half screen
 auto VideoManager::renderMidScreen( ) -> void {
@@ -952,7 +945,7 @@ auto VideoManager::useLineGlitch() -> bool {
 }
 
 template<typename T> auto VideoManager::renderCrtThreadedBlank(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch ) -> void {
-    static unsigned scaler = (3.0 / 4.0) * 256.0;
+    static unsigned scaler = (2.0 / 3.0) * 256.0;
     Render* re = &render[0];
 
     while (re->ready.load())
@@ -986,7 +979,7 @@ template<typename T> auto VideoManager::renderCrtThreadedBlank(unsigned width, u
 }
 
 template<typename T> auto VideoManager::renderCrtThreaded(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch ) -> void {			    
-    static unsigned scaler = (3.0 / 4.0) * 256.0;
+    static unsigned scaler = (2.0 / 3.0) * 256.0;
 	Render* re = &render[0];
 	Render* re1 = &render[1];
 	
@@ -1018,10 +1011,12 @@ template<typename T> auto VideoManager::renderCrtThreaded(unsigned width, unsign
         
 		re1->src = re->src;
 		
-		re1->oddLine = re->oddLine;		
-		
-        re1->ready.store(1);
-        re1->cv.notify_one();
+		re1->oddLine = re->oddLine;
+
+        if (use16BitSrc)
+            renderCrtSelection<uint16_t>( re1 );
+        else
+            renderCrtSelection<uint8_t>( re1 );
 	}
     
     emulator->setLineCallback( true, cropTop + heightFirstHalfScreen );
@@ -1284,21 +1279,7 @@ auto VideoManager::convertYIQToRGB(ColorRgb* dest, ColorLumaChroma* src) -> void
 	dest->b = src->y - 1.089 * src->u_i + 1.677 * src->v_q;
 }
 
-auto VideoManager::unlockDriver() -> void {
-    if (!activeVideoManager)
-        return;
-
-    if (!activeVideoManager->crtThreaded || (activeVideoManager->crtMode != CrtMode::Cpu ) )
-        return;
-
-    if (!activeVideoManager->waitForCrtRenderer(1) || !videoDriver)
-        return;
-
-    videoDriver->unlockAndRedraw(false, true);
-}
-
 auto VideoManager::powerOff() -> void {
-    unlockDriver();
 	reinitCrtThread();
     currentHeight = 0;
 }
@@ -1338,7 +1319,7 @@ auto VideoManager::applyDataUpdates() -> void {
         else if (dataUpdate.ident == "brightness")          setBrightness( dataUpdate.dataU );
         else if (dataUpdate.ident == "contrast")            setContrast( dataUpdate.dataU );
         else if (dataUpdate.ident == "phase")               setPhase( dataUpdate.dataI );
-        else if (dataUpdate.ident == "scanlines")           setScanlines( dataUpdate.dataU, 0 );
+        else if (dataUpdate.ident == "scanlines")           setScanlines( dataUpdate.dataU );
         else if (dataUpdate.ident == "blur")                setBlur( dataUpdate.dataU );
         else if (dataUpdate.ident == "phase_error")         setPhaseError( dataUpdate.dataF );
         else if (dataUpdate.ident == "hanover_bars")        setHanoverBars( dataUpdate.dataI );

@@ -160,8 +160,8 @@ namespace DRIVER {
 
     auto RenderThread::wait() -> void {
         // needed for threaded CRT via CPU rendering
-        if (lockedBuffer)
-            lockedBuffer->sharedMutex.unlock();
+       // if (lockedBuffer)
+         //   lockedBuffer->sharedMutex.unlock();
 
         while(ready) {
             std::this_thread::yield();

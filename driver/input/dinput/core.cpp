@@ -7,6 +7,10 @@
 #include "../../tools/tools.h"
 #include "../../tools/chronos.h"
 
+#ifndef DI8DEVCLASS_GAMECTRL
+#define DI8DEVCLASS_GAMECTRL DIDEVTYPE_JOYSTICK
+#endif
+
 namespace DRIVER {            
     
 struct DI_IDENT_CORE : DI_IDENT {        
@@ -256,7 +260,7 @@ struct DI_IDENT_CORE : DI_IDENT {
 		
 		if (dinKey) {
 			unsigned _size = hidKeyboard->buttons().inputs.size();
-			unsigned char keystate[_size];
+			unsigned char* keystate = new unsigned char[_size];
 
          //   if (GetFocus()) {
                 if (FAILED(dinKey->GetDeviceState(_size, (LPVOID) keystate))) {
@@ -271,6 +275,8 @@ struct DI_IDENT_CORE : DI_IDENT {
 				input.setValue( !!(keystate[input.id] & 0x80) );
 			
 			devices.push_back(hidKeyboard);
+
+			delete[] keystate;
 		}
 
 		if (dinMouse) {

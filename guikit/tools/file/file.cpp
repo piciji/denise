@@ -74,7 +74,10 @@ auto File::close() -> void {
 
 auto File::unload() -> void {
     freeData(&data);
-    if(type == Type::Zip) for(auto& file : zip->files) freeData(&file.data);
+    if(type == Type::Zip) {
+        for(auto& file : zip->files)
+            freeData(&file.data);
+    }
     items.clear();
     filePath = "";
     fileInfo.size = 0;

@@ -325,10 +325,10 @@ auto MediaGroupLayout::build() -> void {
         
         applyFont(_fontSize);
         
-        if ( mediaGroup->isProgram( ) )
+        if ( mediaGroup->isProgram( ) || mediaGroup->isTape() )
             append( inject, {0u, 0u}, 3 );
             
-        if ( mediaGroup->isProgram( ) || mediaGroup->isDisk() )
+        if ( mediaGroup->isProgram( ) || mediaGroup->isDrive() )
             append( listings, {~0u, ~0u} );
 	}
 }

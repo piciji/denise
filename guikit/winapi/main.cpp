@@ -441,10 +441,11 @@ auto pWindow::setFocused() -> void {
     SetFocus(hwnd);
 }
 
-auto pWindow::setVisible(bool visible) -> void {
+auto pWindow::setVisible(bool visible) -> bool {
     ShowWindow(hwnd, visible ? SW_SHOWNORMAL : SW_HIDE);
     if (window.statusBar())
         window.statusBar()->p.update();
+	return true; // WM_SHOWWINDOW is unreliable, don't need to wait for this event like GTK
 }
 
 auto pWindow::restore() -> void {

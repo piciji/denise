@@ -74,7 +74,7 @@ struct pWindow {
     auto setStatusFont(std::string font) -> void;
     auto setBackgroundColor(unsigned color) -> void;
     auto setFocused() -> void;
-    auto setVisible(bool visible) -> void;
+    auto setVisible(bool visible) -> bool;
     auto restore() -> void;
     auto setResizable(bool resizable) -> void;
     auto setStatusText(std::string text) -> void;
@@ -711,7 +711,7 @@ struct pBrowserWindow {
     std::vector<std::string> toolTips;
 
     struct Button {
-        HWND hwnd;    
+        HWND hwnd;
         int width;
         int height;
         int relativeX;
@@ -739,6 +739,7 @@ struct pBrowserWindow {
     auto contentViewSelection() -> unsigned;
     auto createTooltip(HWND hwnd) -> void;
     auto setToolTip(HWND hwnd, int curItem, RECT rect) -> void;
+	auto setButtonTooltip(HWND buttonHwnd, std::string tooltip) -> void;
     auto relayMesssageToToolTip(HWND hwnd, UINT umsg, WPARAM wparam, LPARAM lparam) -> void;
     auto setListings( std::vector<BrowserWindow::Listing>& listings ) -> void;
     

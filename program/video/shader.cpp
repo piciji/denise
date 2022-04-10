@@ -290,7 +290,7 @@ auto Shader::loadInternal() -> void {
         
         pass = new ShaderPass;
         pass->primary = true;
-		pass->ident = "primary";		
+		pass->ident = "primary";
 		pass->filter = filter == 1 ? "linear" : "nearest";
 		internalPasses.push_back( pass );
     }

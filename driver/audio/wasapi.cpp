@@ -8,6 +8,10 @@
 #include <endpointvolume.h>
 #include <functiondiscoverykeys_devpkey.h>
 
+#ifdef _MSC_VER
+DEFINE_GUID(IID_IAudioClient, 0x1cb9ad4c, 0xdbfa, 0x4c32, 0xb1,0x78, 0xc2,0xf5,0x68,0xa7,0x03,0xb2);
+#endif
+
 #define WS_CHUNKS 16
 #define WS_CHUNKS_MASK (WS_CHUNKS - 1)
 
@@ -163,7 +167,7 @@ struct Wasapi : public Audio {
                 }
             }
             
-            unsigned stepSize = std::min(bufferSize - chunkPosition, size);
+            unsigned stepSize = std::min<unsigned>(bufferSize - chunkPosition, size);
             
             EnterCriticalSection( &criticalSection );            
             
@@ -204,7 +208,7 @@ struct Wasapi : public Audio {
 					return;
 						
 			bytesAvail = framesAvail * frameSize;
-			bytesAvail = std::min( bytesAvail, size );
+			bytesAvail = std::min<unsigned>( bytesAvail, size );
 			// in case of buffer size is smaller than available size.
             // incomming size is always frame aligned.
 			framesAvail = bytesAvail / frameSize;
@@ -255,7 +259,7 @@ struct Wasapi : public Audio {
             
             // expect latency in 100ns units: 1 ms = 1'000 micro = 1'000'000 ns = 10'000 units
             // respect driver reported minimum latency
-            auto latency = std::max(devicePeriod, (REFERENCE_TIME) settings.latency * 10000);
+            auto latency = std::max<REFERENCE_TIME>(devicePeriod, (REFERENCE_TIME) settings.latency * 10000);
             
             auto result = audioClient->Initialize(AUDCLNT_SHAREMODE_EXCLUSIVE, AUDCLNT_STREAMFLAGS_EVENTCALLBACK, latency, latency, &wf.Format, nullptr);            
             
@@ -302,7 +306,7 @@ struct Wasapi : public Audio {
             if(audioClient->GetDevicePeriod(&devicePeriod, nullptr))
                 return false;
 
-            auto latency = std::max(devicePeriod, (REFERENCE_TIME) settings.latency * 10000);
+            auto latency = std::max<REFERENCE_TIME>(devicePeriod, (REFERENCE_TIME) settings.latency * 10000);
 
             settings.minimumLatency = devicePeriod / 10000;
 

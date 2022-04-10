@@ -122,8 +122,7 @@ VideoLayout::VideoLayout() {
             auto vManager = VideoManager::getInstance(emulator);
             vManager->shader.loadExternal();
 		}
-		
-        VideoManager::unlockDriver();
+
 		view->updateShader();
         program->initVideo();
         videoDriver->hintExclusiveFullscreen( false );
@@ -226,7 +225,6 @@ VideoLayout::VideoLayout() {
 
     videoSettingsLayout.threadedRenderer.onToggle = [](bool checked) {
         emuThread->lock();
-        VideoManager::unlockDriver();
         globalSettings->set("threaded_renderer", checked);
         VideoManager::setSynchronize();
         emuThread->unlock();
@@ -234,7 +232,7 @@ VideoLayout::VideoLayout() {
         view->threadedRendererWasToggled(checked);
     };
 
-    videoSettingsLayout.threadedRenderer.setChecked(globalSettings->get("threaded_renderer", false));
+    videoSettingsLayout.threadedRenderer.setChecked(globalSettings->get("threaded_renderer", true));
     
     std::function<bool (PathsLayout::Block*, const std::string&, const std::string&)> selectPath;
 	
@@ -383,7 +381,7 @@ VideoLayout::VideoLayout() {
         emuThread->unlock();
     };
 
-    videoGeometry.aspectCorrectResizing.setChecked( globalSettings->get<bool>("aspect_correct_resizing", true) );
+    videoGeometry.aspectCorrectResizing.setChecked( globalSettings->get<bool>("aspect_correct_resizing", false) );
     videoGeometry.aspectCorrectResizing.onToggle = [&](bool checked) {
         emuThread->lock();
         globalSettings->set<bool>("aspect_correct_resizing", checked);
@@ -394,7 +392,7 @@ VideoLayout::VideoLayout() {
         view->updateViewport();
         emuThread->unlock();
     };
-	
+
 	videoGeometry.integerScaling.setChecked( globalSettings->get<bool>("integer_scaling", false) );
     videoGeometry.integerScaling.onToggle = [&](bool checked) {
         emuThread->lock();

@@ -5,7 +5,6 @@
 #include "../emuconfig/config.h"
 #include "../media/media.h"
 #include "../view/view.h"
-#include "../tools/filepool.h"
 #include "../tools/filesetting.h"
 #include "../config/archiveViewer.h"
 #include "../cmd/cmd.h"
@@ -87,6 +86,8 @@ auto Autoloader::postProcessing() -> void {
         if (autoStart) {
             if (mediaGroup->isDisk())
                 trapped = settings->get<bool>("use_disk_traps", false);
+            else if (mediaGroup->isTape())
+                trapped = settings->get<bool>("use_tape_traps", false);
         }
     } else if (ddControl.mode == Mode::Open)
         autoStart = false;
@@ -94,12 +95,26 @@ auto Autoloader::postProcessing() -> void {
         autoStart = true;
         if (mediaGroup->isDisk())
             trapped = settings->get<bool>("use_disk_traps", false);
-    } else if (ddControl.mode == Mode::AutoStartTrapped) {
+        else if (mediaGroup->isTape())
+            trapped = settings->get<bool>("use_tape_traps", false);
+    } else if (ddControl.mode == Mode::AutoStartPrimary) {
         autoStart = true;
-        if (mediaGroup->isDisk())
-            trapped = true;
-    } else if (ddControl.mode == Mode::AutoStartNotTrapped) {
+        trapped = false;
+
+    } else if (ddControl.mode == Mode::AutoStartSecondary) {
         autoStart = true;
+        trapped = true;
+
+    } else if (ddControl.mode == Mode::AutoStartDblClick) {
+        autoStart = true;
+        trapped = false;
+
+        if (mediaGroup->isDrive()) {
+            if (mediaGroup->isDisk())
+                trapped = settings->get<bool>("autostart_traps_on_dblclick", false);
+            else if (mediaGroup->isTape())
+                trapped = settings->get<bool>("autostart_tape_traps_on_dblclick", false);
+        }
     }
 
     if (trapped) // traps require standard kernals
@@ -182,11 +197,14 @@ auto Autoloader::postProcessing() -> void {
         if (!useExpansion)
             program->removeExpansion();
 
-        if (forceStandardKernal) {
+        useExpansion = ddControl.emulator->getExpansion();
+        if (trapped && (useExpansion && !useExpansion->isEmpty()))
+            trapped = false;
+        else if (forceStandardKernal) {
             // temporary disable any speeders
             FirmwareManager::getInstance( ddControl.emulator )->insertDefault();
         }
-        
+
         if (mediaGroup->selected) {
             ddControl.emulator->selectListing(mediaGroup->selected, ddControl.selection, ddControl.fileName, trapped);
             fSetting = FileSetting::getInstance( ddControl.emulator, _underscore(mediaGroup->selected->name) );
@@ -200,7 +218,7 @@ auto Autoloader::postProcessing() -> void {
         
 		if (view) {
 			if (mediaGroup->isTape())
-				view->updateTapeIcons(Emulator::Interface::TapeMode::Play);  
+				view->updateTapeIcons(Emulator::Interface::TapeMode::Play);
 
 			view->setFocused(300);
 

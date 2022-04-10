@@ -6,8 +6,12 @@
 
 namespace LIBC64 {
 	
-std::vector<Prg*> prgs;    
-    
+std::vector<Prg*> prgs;
+
+Prg::~Prg() {
+    unset();
+}
+
 auto Prg::select( unsigned pos ) -> bool {
 
 	auto _size = listings.size();
@@ -50,15 +54,21 @@ auto Prg::unset() -> void {
     useChunk = nullptr;
     chunks.clear();
     headlinePtr = nullptr;
+    if (this->data) {
+        delete[] this->data;
+        this->data = nullptr;
+    }
 }
 
 auto Prg::set( uint8_t* data, unsigned size ) -> void {
-    this->data = data;
     this->size = size;		
     unset();
 
     if ( !data || !size )
         return;
+
+    this->data = new uint8_t[size];
+    std::memcpy(this->data, data, size);
 
     if ( isP00() )		
         prepareP00();			
@@ -68,6 +78,7 @@ auto Prg::set( uint8_t* data, unsigned size ) -> void {
         preparePrg();										
 }
 
+// deprecated, because of state file generation before a prg injection is suppressed
 auto Prg::serialize(Emulator::Serializer& s) -> void {
 
     int chunkId = useChunk ? useChunk->id : -1;

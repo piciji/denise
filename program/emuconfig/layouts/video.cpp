@@ -381,7 +381,6 @@ base( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) )
 
     base.mode.crtNone.onActivate = [this]() {
         _settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::None);
-        globalSettings->set<unsigned>("video_crt_temp", (unsigned)VideoManager::CrtMode::None, false);
         emuThread->lock();
         program->fastForward( false );
         updatePresets();

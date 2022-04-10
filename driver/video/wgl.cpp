@@ -217,7 +217,7 @@ struct WGL : Video, OpenGL, RenderThread {
         screenText.showText(outputWidth, outputHeight, -0.01, 0.01, OpenGLText::ALIGN_RIGHT | OpenGLText::VALIGN_BOTTOM);
 #endif
         if (settings.vrr) {
-            if (settings.hardSync) glFinish();
+            glFinish();
             waitVRR();
             SwapBuffers(display);
         } else {
@@ -259,7 +259,7 @@ struct WGL : Video, OpenGL, RenderThread {
         screenText.showText(outputWidth, outputHeight, -0.01, 0.01, OpenGLText::ALIGN_RIGHT | OpenGLText::VALIGN_BOTTOM);
 #endif
         if (settings.vrr) {
-            if (settings.hardSync) glFinish();
+            glFinish();
             waitVRR();
             SwapBuffers(display);
         } else {

@@ -77,10 +77,10 @@ auto pStatusBar::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
 //            EndPaint(hwnd, &ps);
 //            return 1;
 //
-//        case WM_PAINT: {
-//            InvalidateRect(hwnd, NULL, false);
-//            break;
-//        }
+        case WM_PAINT: {
+            InvalidateRect(hwnd, NULL, false);
+            break;
+        }
 
         case WM_CONTEXTMENU:
             return 0;
@@ -173,6 +173,11 @@ auto pStatusBar::getWidth(std::string text) -> unsigned {
 }
 
 auto pStatusBar::updatePart( StatusBar::Part& part ) -> void {
+    if (part.position < 0) {
+        statusBar.state.updatePending = true;
+        return;
+    }
+
     if (hwnd) {
 //		if (part.image) {
 //			// alpha blend transparent part, because of winapi draws some 3D effect
@@ -321,8 +326,8 @@ auto pStatusBar::drawItem(WPARAM wparam, LPARAM lparam) -> void {
         else if ( !part.width )
             rect.left += 4;
 
-       // SetBkMode(hDC, TRANSPARENT);
-        SetBkColor(hDC, GetSysColor(COLOR_MENU));
+        SetBkMode(hDC, TRANSPARENT);
+       // SetBkColor(hDC, GetSysColor(COLOR_MENU));
         DrawText(hDC, utf16_t(part.text.c_str()), -1, &rect, DT_SINGLELINE | DT_NOCLIP | (part.alignRight ? DT_RIGHT : 0) );
     }
 }

@@ -1,0 +1,1507 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Ressourcendateien">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="emulation">
+      <UniqueIdentifier>{8b431497-8732-4aa4-aa67-0ec0598c5545}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="emulation\cia">
+      <UniqueIdentifier>{f250d19c-1a47-4b7a-883c-2cc27ad97e78}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="emulation\libami">
+      <UniqueIdentifier>{d450adb2-ff9a-43ac-b7c3-d09b55305d5d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="emulation\libc64">
+      <UniqueIdentifier>{dbe25af4-0303-41ae-aa1e-dd2a73128685}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="emulation\tools">
+      <UniqueIdentifier>{4e61d2b9-e119-43c7-8e15-2cf2d3a1a251}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="emulation\libc64\disk">
+      <UniqueIdentifier>{1a496acf-3a4b-44c3-9b30-3fc315b9ac75}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="emulation\libc64\disk\cia">
+      <UniqueIdentifier>{737a22f0-c3b9-43be-81d8-d794f335b9b0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="emulation\libc64\disk\cpu">
+      <UniqueIdentifier>{bd4f12da-679f-4ddb-806b-3e0b9d7f270b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="emulation\libc64\disk\drive">
+      <UniqueIdentifier>{700d82af-0cab-40ae-abb5-ae82ff0c02bc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="emulation\libc64\disk\structure">
+      <UniqueIdentifier>{22ad8104-3a27-4ffe-ac14-25880dfe1c88}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="emulation\libc64\disk\via">
+      <UniqueIdentifier>{b8b57eb9-754f-477b-9218-b47c6f2fd646}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="emulation\libc64\disk\virtual">
+      <UniqueIdentifier>{7ec86797-fe02-4f62-b1cd-aa5593baf2d9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="emulation\libc64\disk\wd177x">
+      <UniqueIdentifier>{b88822e3-7027-4058-9c35-92a40e8eb4c5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="emulation\libc64\expansionPort">
+      <UniqueIdentifier>{2b33ffbd-1f98-48be-a0bb-4dcf896600b6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="emulation\libc64\expansionPort\acia">
+      <UniqueIdentifier>{cff4f171-6cd4-413d-8fe3-54f1ed236204}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="emulation\libc64\expansionPort\cart">
+      <UniqueIdentifier>{2d9f0d4f-276b-4645-9324-71db4f084c1a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="emulation\libc64\expansionPort\easyFlash">
+      <UniqueIdentifier>{079c6d6f-1c3f-40fa-a8fe-f45366e53909}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="emulation\libc64\expansionPort\fastloader">
+      <UniqueIdentifier>{fcee7c4d-0401-457d-99cb-115b16fcf9b8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="emulation\libc64\expansionPort\freezer">
+      <UniqueIdentifier>{b42e4749-ce54-4ded-9f6d-837c3703b483}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="emulation\libc64\expansionPort\gameCart">
+      <UniqueIdentifier>{93f03737-43f1-4778-83cf-7d0bddca60d8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="emulation\libc64\expansionPort\geoRam">
+      <UniqueIdentifier>{b3c81e2f-eefb-4279-99b3-1536ad9d54b0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="emulation\libc64\expansionPort\gmod">
+      <UniqueIdentifier>{d15c0add-f188-4b36-91ce-a1d252d96ff0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="emulation\libc64\expansionPort\retroReplay">
+      <UniqueIdentifier>{247c1719-c997-4c55-be9b-df90379a4f83}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="emulation\libc64\expansionPort\reu">
+      <UniqueIdentifier>{64d41e7f-f6d2-4637-af6e-324e0a7bc91d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="emulation\libc64\input">
+      <UniqueIdentifier>{6444ff07-f285-4fd5-9c3b-fe21486c6405}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="emulation\libc64\input\controlPort">
+      <UniqueIdentifier>{dfdc2136-64f2-4fae-ac56-129c3def1a97}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="emulation\libc64\m6510">
+      <UniqueIdentifier>{c4202e91-8054-46b8-8de2-f72861cf806b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="emulation\libc64\prg">
+      <UniqueIdentifier>{a44cd84d-eff0-40e6-aede-5fc47f6ce07b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="emulation\libc64\sid">
+      <UniqueIdentifier>{3b53ec18-be44-4e02-965b-3b9a47729aeb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="emulation\libc64\sid\filter">
+      <UniqueIdentifier>{22242ca1-ee12-4dd4-87dc-745d41698754}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="emulation\libc64\system">
+      <UniqueIdentifier>{0196e74b-d86e-49a6-af22-ffbc1c3400f8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="emulation\libc64\tape">
+      <UniqueIdentifier>{3b9c07c6-0c9d-4bfa-8204-328873f5f1ca}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="emulation\libc64\traps">
+      <UniqueIdentifier>{fabebaa6-1be3-4390-9cc1-1e8ac01030e2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="emulation\libc64\vicII">
+      <UniqueIdentifier>{45b474f1-1e08-4c23-98cb-65c50135d2ea}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="emulation\libc64\vicII\fast">
+      <UniqueIdentifier>{b8ebd3bc-fe09-4384-8917-d09ebc66bb03}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="guikit">
+      <UniqueIdentifier>{00108017-fd0a-4423-b01f-da503e54b9b3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="guikit\winapi">
+      <UniqueIdentifier>{abe1c625-f178-449e-8425-b12f566b1b84}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="guikit\winapi\widgets">
+      <UniqueIdentifier>{d97c31ec-40cd-4c9f-bcb7-bd51847719f2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="guikit\tools">
+      <UniqueIdentifier>{3d739879-60d2-487d-90d9-c353bbcd9c1c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="guikit\tools\decode">
+      <UniqueIdentifier>{a3073c58-3cb3-4a17-adb7-7fd6d4538c23}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="guikit\tools\encode">
+      <UniqueIdentifier>{391ae559-2546-4e54-af06-f1a5aeaa441d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="guikit\tools\file">
+      <UniqueIdentifier>{f79ecfca-2bfb-4695-a856-00e7c2f877ca}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="driver">
+      <UniqueIdentifier>{a011c3d1-9234-4483-bf9c-ae07f5b42d54}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="driver\audio">
+      <UniqueIdentifier>{e17036a2-71ed-44e2-9aba-24af5eb62b9a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="driver\video">
+      <UniqueIdentifier>{46dea21e-ced9-4232-8952-168b02398e30}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="driver\input">
+      <UniqueIdentifier>{0cf406c8-23aa-41e0-8859-f3f7419519e9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="driver\tools">
+      <UniqueIdentifier>{7e1c9c83-a8f3-45d7-80c7-6e735414288d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="driver\audio\xaudio2">
+      <UniqueIdentifier>{afae64fb-ebdb-4421-9bb5-d95001edfca4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="driver\input\rawinput">
+      <UniqueIdentifier>{3f1b1d92-1708-4df0-9f4b-95475f3fcdf9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="driver\input\dinput">
+      <UniqueIdentifier>{f17f82cb-c347-4e16-94dc-0827e8223b85}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="driver\video\opengl">
+      <UniqueIdentifier>{329949e5-ad45-4982-b9df-dfe4a6e10001}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="driver\video\thread">
+      <UniqueIdentifier>{ee662aa0-0121-4ce8-ad6d-843089d57379}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="program">
+      <UniqueIdentifier>{4e34c35e-96e0-42e2-8c9b-daeb67597663}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="program\audio">
+      <UniqueIdentifier>{730c4aa9-5fb6-4fed-93f8-47e77ab537d1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="program\cmd">
+      <UniqueIdentifier>{43bb4b3e-e383-4741-a0dc-ddf895084a53}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="program\config">
+      <UniqueIdentifier>{500a0fc3-2477-4d0f-9098-dd86a4361a80}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="program\emuconfig">
+      <UniqueIdentifier>{d26ae861-fae5-49c9-9d16-73aed1aa7bef}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="program\firmware">
+      <UniqueIdentifier>{1ff047e0-6d1e-47d5-b542-9c8a3897bdb7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="program\input">
+      <UniqueIdentifier>{5d215e3b-03e2-45c6-ad94-c7777b121cda}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="program\media">
+      <UniqueIdentifier>{0b031e7c-f765-44bd-8dbb-c30f42fc4e87}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="program\states">
+      <UniqueIdentifier>{4e1b9d47-3c26-44af-8780-083f8811f9e0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="program\thread">
+      <UniqueIdentifier>{41b2c72c-88a2-46ca-ad9f-ec3636d1b673}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="program\tools">
+      <UniqueIdentifier>{495049a2-ffb8-4e9f-901a-259ebb8b9c07}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="program\video">
+      <UniqueIdentifier>{1ecb53e9-3c44-4932-b438-0360b640d41c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="program\view">
+      <UniqueIdentifier>{61ebeb47-1ed1-4692-a9c8-3056cb0006f6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="program\audio\dsp">
+      <UniqueIdentifier>{fbda0b9d-526d-4823-8b58-cad6be9cd6a4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="program\audio\mixer">
+      <UniqueIdentifier>{ee75e964-c146-4d82-ac2d-844d586bb346}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="program\audio\record">
+      <UniqueIdentifier>{82868c6e-b41f-49d1-b823-8b3f74b37cb8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="program\audio\resampler">
+      <UniqueIdentifier>{f29b66c8-b050-48bd-8eec-648cfd0635f4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="program\config\layouts">
+      <UniqueIdentifier>{416dddc3-f303-4e5c-a413-4d9fcb6ce53e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="program\emuconfig\layouts">
+      <UniqueIdentifier>{1b031f05-5c22-4dae-9dc4-285e75840929}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="data">
+      <UniqueIdentifier>{9017ee46-fde1-4fc5-9ede-feff369834b0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="data\icons">
+      <UniqueIdentifier>{babab93d-d2a1-4d13-82d9-48c3f9a308ee}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="data\fonts">
+      <UniqueIdentifier>{8f540149-3aee-4fa1-9674-10ab1bd0d948}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\emulation\interface.h">
+      <Filter>emulation</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\cia\base.h">
+      <Filter>emulation\cia</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\cia\m6526.h">
+      <Filter>emulation\cia</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\cia\m8520.h">
+      <Filter>emulation\cia</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libami\interface.h">
+      <Filter>emulation\libami</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\tools\petcii.h">
+      <Filter>emulation\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\tools\pia.h">
+      <Filter>emulation\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\tools\powersupply.h">
+      <Filter>emulation\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\tools\quadratureEncoder.h">
+      <Filter>emulation\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\tools\rand.h">
+      <Filter>emulation\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\tools\serializer.h">
+      <Filter>emulation\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\tools\socket.h">
+      <Filter>emulation\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\tools\splines.h">
+      <Filter>emulation\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\tools\systimer.h">
+      <Filter>emulation\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\tools\buffer.h">
+      <Filter>emulation\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\tools\clamp.h">
+      <Filter>emulation\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\tools\crc32.h">
+      <Filter>emulation\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\tools\crop.h">
+      <Filter>emulation\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\tools\dac.h">
+      <Filter>emulation\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\tools\flash040.h">
+      <Filter>emulation\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\tools\fpaq0.h">
+      <Filter>emulation\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\tools\gcr.h">
+      <Filter>emulation\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\tools\listing.h">
+      <Filter>emulation\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\tools\m93c86.h">
+      <Filter>emulation\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\tools\mx29lv640eb.h">
+      <Filter>emulation\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\disk\iec.h">
+      <Filter>emulation\libc64\disk</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\disk\cia\cia8520.h">
+      <Filter>emulation\libc64\disk\cia</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\disk\cpu\m6502.h">
+      <Filter>emulation\libc64\disk\cpu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\disk\drive\drive.h">
+      <Filter>emulation\libc64\disk\drive</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\disk\structure\structure.h">
+      <Filter>emulation\libc64\disk\structure</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\disk\via\via.h">
+      <Filter>emulation\libc64\disk\via</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\disk\virtual\virtualDrive.h">
+      <Filter>emulation\libc64\disk\virtual</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\disk\wd177x\wd1770.h">
+      <Filter>emulation\libc64\disk\wd177x</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\expansionPort\acia\acia.h">
+      <Filter>emulation\libc64\expansionPort\acia</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\expansionPort\cart\cart.h">
+      <Filter>emulation\libc64\expansionPort\cart</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\expansionPort\cart\freezeButton.h">
+      <Filter>emulation\libc64\expansionPort\cart</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\expansionPort\easyFlash\easyFlash.h">
+      <Filter>emulation\libc64\expansionPort\easyFlash</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\expansionPort\easyFlash\easyFlash3.h">
+      <Filter>emulation\libc64\expansionPort\easyFlash</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\expansionPort\easyFlash\eapi-am29f040.h">
+      <Filter>emulation\libc64\expansionPort\easyFlash</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\expansionPort\easyFlash\eapi-mx29640b.h">
+      <Filter>emulation\libc64\expansionPort\easyFlash</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\expansionPort\fastloader\fastloader.h">
+      <Filter>emulation\libc64\expansionPort\fastloader</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\expansionPort\freezer\atomicPower.h">
+      <Filter>emulation\libc64\expansionPort\freezer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\expansionPort\freezer\finalCartridge.h">
+      <Filter>emulation\libc64\expansionPort\freezer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\expansionPort\freezer\finalCartridge3.h">
+      <Filter>emulation\libc64\expansionPort\freezer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\expansionPort\freezer\finalCartridgePlus.h">
+      <Filter>emulation\libc64\expansionPort\freezer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\expansionPort\freezer\freezer.h">
+      <Filter>emulation\libc64\expansionPort\freezer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\expansionPort\freezer\actionReplayMK2.h">
+      <Filter>emulation\libc64\expansionPort\freezer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\expansionPort\freezer\actionReplayMK3.h">
+      <Filter>emulation\libc64\expansionPort\freezer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\expansionPort\freezer\actionReplayMK4.h">
+      <Filter>emulation\libc64\expansionPort\freezer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\expansionPort\freezer\actionReplayV4.h">
+      <Filter>emulation\libc64\expansionPort\freezer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\ross.h">
+      <Filter>emulation\libc64\expansionPort\gameCart</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\simonsBasic.h">
+      <Filter>emulation\libc64\expansionPort\gameCart</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\supergames.h">
+      <Filter>emulation\libc64\expansionPort\gameCart</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\system3.h">
+      <Filter>emulation\libc64\expansionPort\gameCart</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\warpSpeed.h">
+      <Filter>emulation\libc64\expansionPort\gameCart</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\westermann.h">
+      <Filter>emulation\libc64\expansionPort\gameCart</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\zaxxon.h">
+      <Filter>emulation\libc64\expansionPort\gameCart</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\cart16k.h">
+      <Filter>emulation\libc64\expansionPort\gameCart</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\funplay.h">
+      <Filter>emulation\libc64\expansionPort\gameCart</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\gameCart.h">
+      <Filter>emulation\libc64\expansionPort\gameCart</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\mach5.h">
+      <Filter>emulation\libc64\expansionPort\gameCart</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\magicDesk.h">
+      <Filter>emulation\libc64\expansionPort\gameCart</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\ocean.h">
+      <Filter>emulation\libc64\expansionPort\gameCart</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\pagefox.h">
+      <Filter>emulation\libc64\expansionPort\gameCart</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\expansionPort\geoRam\geoRam.h">
+      <Filter>emulation\libc64\expansionPort\geoRam</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\expansionPort\gmod\gmod2.h">
+      <Filter>emulation\libc64\expansionPort\gmod</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\expansionPort\reu\reu.h">
+      <Filter>emulation\libc64\expansionPort\reu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\expansionPort\retroReplay\retroReplay.h">
+      <Filter>emulation\libc64\expansionPort\retroReplay</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\expansionPort\expansionPort.h">
+      <Filter>emulation\libc64\expansionPort</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\input\input.h">
+      <Filter>emulation\libc64\input</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\input\keyboard.h">
+      <Filter>emulation\libc64\input</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\input\controlPort\controlPort.h">
+      <Filter>emulation\libc64\input\controlPort</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\input\controlPort\lightControl.h">
+      <Filter>emulation\libc64\input\controlPort</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\input\controlPort\analogControl.h">
+      <Filter>emulation\libc64\input\controlPort</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\m6510\m6510.h">
+      <Filter>emulation\libc64\m6510</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\m6510\optable.h">
+      <Filter>emulation\libc64\m6510</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\prg\prg.h">
+      <Filter>emulation\libc64\prg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\sid\sid.h">
+      <Filter>emulation\libc64\sid</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\system\gluelogic.h">
+      <Filter>emulation\libc64\system</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\system\keyBuffer.h">
+      <Filter>emulation\libc64\system</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\system\memory.h">
+      <Filter>emulation\libc64\system</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\system\system.h">
+      <Filter>emulation\libc64\system</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\system\testbench.h">
+      <Filter>emulation\libc64\system</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\system\clipboard.h">
+      <Filter>emulation\libc64\system</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\system\firmware.h">
+      <Filter>emulation\libc64\system</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\tape\tape.h">
+      <Filter>emulation\libc64\tape</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\traps\traps.h">
+      <Filter>emulation\libc64\traps</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\traps\baseDevice.h">
+      <Filter>emulation\libc64\traps</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\vicII\flags.h">
+      <Filter>emulation\libc64\vicII</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\vicII\vicII.h">
+      <Filter>emulation\libc64\vicII</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\vicII\base.h">
+      <Filter>emulation\libc64\vicII</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\vicII\fast\vicIIFast.h">
+      <Filter>emulation\libc64\vicII\fast</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\interface.h">
+      <Filter>emulation\libc64</Filter>
+    </ClInclude>
+    <ClInclude Include="..\guikit\api.h">
+      <Filter>guikit</Filter>
+    </ClInclude>
+    <ClInclude Include="..\guikit\winapi\main.h">
+      <Filter>guikit\winapi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\guikit\tools\crc32.h">
+      <Filter>guikit\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\guikit\tools\file\tar.h">
+      <Filter>guikit\tools\file</Filter>
+    </ClInclude>
+    <ClInclude Include="..\guikit\tools\file\chunk.h">
+      <Filter>guikit\tools\file</Filter>
+    </ClInclude>
+    <ClInclude Include="..\guikit\tools\decode\inflate.h">
+      <Filter>guikit\tools\decode</Filter>
+    </ClInclude>
+    <ClInclude Include="..\guikit\tools\decode\png.h">
+      <Filter>guikit\tools\decode</Filter>
+    </ClInclude>
+    <ClInclude Include="..\guikit\tools\decode\zip.h">
+      <Filter>guikit\tools\decode</Filter>
+    </ClInclude>
+    <ClInclude Include="..\guikit\tools\decode\gzip.h">
+      <Filter>guikit\tools\decode</Filter>
+    </ClInclude>
+    <ClInclude Include="..\guikit\tools\encode\png.h">
+      <Filter>guikit\tools\encode</Filter>
+    </ClInclude>
+    <ClInclude Include="..\guikit\winapi\dirent.h">
+      <Filter>guikit\winapi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\driver\driver.h">
+      <Filter>driver</Filter>
+    </ClInclude>
+    <ClInclude Include="..\driver\tools\shaderpass.h">
+      <Filter>driver\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\driver\tools\threadPriority.h">
+      <Filter>driver\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\driver\tools\tools.h">
+      <Filter>driver\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\driver\tools\utf8.h">
+      <Filter>driver\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\driver\tools\win.h">
+      <Filter>driver\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\driver\tools\chronos.h">
+      <Filter>driver\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\driver\tools\crc32.h">
+      <Filter>driver\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\driver\tools\font.h">
+      <Filter>driver\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\driver\tools\hid.h">
+      <Filter>driver\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\driver\audio\xaudio2\header29.h">
+      <Filter>driver\audio\xaudio2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\driver\audio\xaudio2\xaudio2.h">
+      <Filter>driver\audio\xaudio2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\driver\audio\xaudio2\xaudio27.h">
+      <Filter>driver\audio\xaudio2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\driver\audio\xaudio2\xaudio28.h">
+      <Filter>driver\audio\xaudio2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\driver\audio\xaudio2\xaudio29.h">
+      <Filter>driver\audio\xaudio2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\driver\audio\xaudio2\header27.h">
+      <Filter>driver\audio\xaudio2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\driver\input\dinput\v5.h">
+      <Filter>driver\input\dinput</Filter>
+    </ClInclude>
+    <ClInclude Include="..\driver\input\dinput\v7.h">
+      <Filter>driver\input\dinput</Filter>
+    </ClInclude>
+    <ClInclude Include="..\driver\input\dinput\v8.h">
+      <Filter>driver\input\dinput</Filter>
+    </ClInclude>
+    <ClInclude Include="..\driver\input\dinput\dinput.h">
+      <Filter>driver\input\dinput</Filter>
+    </ClInclude>
+    <ClInclude Include="..\driver\video\thread\renderThread.h">
+      <Filter>driver\video\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\driver\video\opengl\opengl.h">
+      <Filter>driver\video\opengl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\driver\video\opengl\program.h">
+      <Filter>driver\video\opengl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\driver\video\opengl\shaders.h">
+      <Filter>driver\video\opengl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\driver\video\opengl\surface.h">
+      <Filter>driver\video\opengl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\driver\video\opengl\text.h">
+      <Filter>driver\video\opengl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\driver\video\opengl\utility.h">
+      <Filter>driver\video\opengl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\driver\video\opengl\bind.h">
+      <Filter>driver\video\opengl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\driver\video\opengl\main.h">
+      <Filter>driver\video\opengl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\program.h">
+      <Filter>program</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\audio\manager.h">
+      <Filter>program\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\audio\dsp\data.h">
+      <Filter>program\audio\dsp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\audio\dsp\panning.h">
+      <Filter>program\audio\dsp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\audio\dsp\reverb.h">
+      <Filter>program\audio\dsp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\audio\dsp\base.h">
+      <Filter>program\audio\dsp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\audio\dsp\bass.h">
+      <Filter>program\audio\dsp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\audio\mixer\drive.h">
+      <Filter>program\audio\mixer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\audio\resampler\cubic.h">
+      <Filter>program\audio\resampler</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\audio\resampler\data.h">
+      <Filter>program\audio\resampler</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\audio\resampler\hermite.h">
+      <Filter>program\audio\resampler</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\audio\resampler\linear.h">
+      <Filter>program\audio\resampler</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\audio\resampler\sinc.h">
+      <Filter>program\audio\resampler</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\audio\resampler\cosine.h">
+      <Filter>program\audio\resampler</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\audio\resampler\cosinePrecise.h">
+      <Filter>program\audio\resampler</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\audio\resampler\cosineSSE.h">
+      <Filter>program\audio\resampler</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\audio\record\handler.h">
+      <Filter>program\audio\record</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\audio\record\wavWriter.h">
+      <Filter>program\audio\record</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\cmd\cmd.h">
+      <Filter>program\cmd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\config\archiveViewer.h">
+      <Filter>program\config</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\config\config.h">
+      <Filter>program\config</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\config\slider.h">
+      <Filter>program\config</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\config\layouts\audio.h">
+      <Filter>program\config\layouts</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\config\layouts\driver.h">
+      <Filter>program\config\layouts</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\config\layouts\input.h">
+      <Filter>program\config\layouts</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\config\layouts\settings.h">
+      <Filter>program\config\layouts</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\config\layouts\video.h">
+      <Filter>program\config\layouts</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\emuconfig\config.h">
+      <Filter>program\emuconfig</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\emuconfig\layouts\input.h">
+      <Filter>program\emuconfig\layouts</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\emuconfig\layouts\misc.h">
+      <Filter>program\emuconfig\layouts</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\emuconfig\layouts\model.h">
+      <Filter>program\emuconfig\layouts</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\emuconfig\layouts\palette.h">
+      <Filter>program\emuconfig\layouts</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\emuconfig\layouts\system.h">
+      <Filter>program\emuconfig\layouts</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\emuconfig\layouts\video.h">
+      <Filter>program\emuconfig\layouts</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\emuconfig\layouts\audio.h">
+      <Filter>program\emuconfig\layouts</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\emuconfig\layouts\border.h">
+      <Filter>program\emuconfig\layouts</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\emuconfig\layouts\configurations.h">
+      <Filter>program\emuconfig\layouts</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\emuconfig\layouts\firmware.h">
+      <Filter>program\emuconfig\layouts</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\firmware\manager.h">
+      <Filter>program\firmware</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\input\manager.h">
+      <Filter>program\input</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\media\fileloader.h">
+      <Filter>program\media</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\media\media.h">
+      <Filter>program\media</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\media\autoloader.h">
+      <Filter>program\media</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\states\states.h">
+      <Filter>program\states</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\thread\emuThread.h">
+      <Filter>program\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\tools\logger.h">
+      <Filter>program\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\tools\mathVector.h">
+      <Filter>program\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\tools\shortcuts.h">
+      <Filter>program\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\tools\sincFirFilter.h">
+      <Filter>program\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\tools\chronos.h">
+      <Filter>program\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\tools\circularBuffer.h">
+      <Filter>program\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\tools\DiskFinder.h">
+      <Filter>program\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\tools\filepool.h">
+      <Filter>program\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\tools\filesetting.h">
+      <Filter>program\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\tools\gaussianBlur.h">
+      <Filter>program\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\video\palette.h">
+      <Filter>program\video</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\video\shader.h">
+      <Filter>program\video</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\video\manager.h">
+      <Filter>program\video</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\view\status.h">
+      <Filter>program\view</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\view\view.h">
+      <Filter>program\view</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\view\message.h">
+      <Filter>program\view</Filter>
+    </ClInclude>
+    <ClInclude Include="..\data\logos.h">
+      <Filter>data\icons</Filter>
+    </ClInclude>
+    <ClInclude Include="..\data\fonts.h">
+      <Filter>data\icons</Filter>
+    </ClInclude>
+    <ClInclude Include="..\data\icons.h">
+      <Filter>data\icons</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\tools\macros.h">
+      <Filter>emulation\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\data\resource.h">
+      <Filter>Ressourcendateien</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\emulation\cia\base.cpp">
+      <Filter>emulation\cia</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\cia\m6526.cpp">
+      <Filter>emulation\cia</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\cia\m8520.cpp">
+      <Filter>emulation\cia</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\interface.cpp">
+      <Filter>emulation\libami</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\tools\pia.cpp">
+      <Filter>emulation\tools</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\tools\socket.cpp">
+      <Filter>emulation\tools</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\tools\fpaq0.cpp">
+      <Filter>emulation\tools</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\tools\m93c86.cpp">
+      <Filter>emulation\tools</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\tools\mx29lv640eb.cpp">
+      <Filter>emulation\tools</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\disk\iec.cpp">
+      <Filter>emulation\libc64\disk</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\disk\cpu\opcodes.cpp">
+      <Filter>emulation\libc64\disk\cpu</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\disk\cpu\m6502.cpp">
+      <Filter>emulation\libc64\disk\cpu</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\disk\drive\mechanicsG64.cpp">
+      <Filter>emulation\libc64\disk\drive</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\disk\drive\mechanicsP64.cpp">
+      <Filter>emulation\libc64\disk\drive</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\disk\drive\profdos.cpp">
+      <Filter>emulation\libc64\disk\drive</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\disk\drive\prologic.cpp">
+      <Filter>emulation\libc64\disk\drive</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\disk\drive\serialization.cpp">
+      <Filter>emulation\libc64\disk\drive</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\disk\drive\turbotrans.cpp">
+      <Filter>emulation\libc64\disk\drive</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\disk\drive\drive.cpp">
+      <Filter>emulation\libc64\disk\drive</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\disk\drive\mechanics.cpp">
+      <Filter>emulation\libc64\disk\drive</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\disk\structure\gxx.cpp">
+      <Filter>emulation\libc64\disk\structure</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\disk\structure\prg.cpp">
+      <Filter>emulation\libc64\disk\structure</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\disk\structure\pxx.cpp">
+      <Filter>emulation\libc64\disk\structure</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\disk\structure\structure.cpp">
+      <Filter>emulation\libc64\disk\structure</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\disk\structure\dxx.cpp">
+      <Filter>emulation\libc64\disk\structure</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\disk\via\serialization.cpp">
+      <Filter>emulation\libc64\disk\via</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\disk\via\via.cpp">
+      <Filter>emulation\libc64\disk\via</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\disk\via\register.cpp">
+      <Filter>emulation\libc64\disk\via</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\disk\virtual\virtualDrive.cpp">
+      <Filter>emulation\libc64\disk\virtual</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\disk\wd177x\wd1770.cpp">
+      <Filter>emulation\libc64\disk\wd177x</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\expansionPort\acia\acia.cpp">
+      <Filter>emulation\libc64\expansionPort\acia</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\expansionPort\cart\cart.cpp">
+      <Filter>emulation\libc64\expansionPort\cart</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\expansionPort\easyFlash\easyFlash.cpp">
+      <Filter>emulation\libc64\expansionPort\easyFlash</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\expansionPort\easyFlash\easyFlash3.cpp">
+      <Filter>emulation\libc64\expansionPort\easyFlash</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\expansionPort\fastloader\fastloader.cpp">
+      <Filter>emulation\libc64\expansionPort\fastloader</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\expansionPort\freezer\freezer.cpp">
+      <Filter>emulation\libc64\expansionPort\freezer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\expansionPort\gameCart\gameCart.cpp">
+      <Filter>emulation\libc64\expansionPort\gameCart</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\expansionPort\geoRam\geoRam.cpp">
+      <Filter>emulation\libc64\expansionPort\geoRam</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\expansionPort\gmod\gmod2.cpp">
+      <Filter>emulation\libc64\expansionPort\gmod</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\expansionPort\reu\reu.cpp">
+      <Filter>emulation\libc64\expansionPort\reu</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\expansionPort\retroReplay\retroReplay.cpp">
+      <Filter>emulation\libc64\expansionPort\retroReplay</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\expansionPort\retroReplay\memoryHandler.cpp">
+      <Filter>emulation\libc64\expansionPort\retroReplay</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\input\input.cpp">
+      <Filter>emulation\libc64\input</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\input\controlPort\GunStick.cpp">
+      <Filter>emulation\libc64\input\controlPort</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\input\controlPort\InkwellLightpen.cpp">
+      <Filter>emulation\libc64\input\controlPort</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\input\controlPort\joypad.cpp">
+      <Filter>emulation\libc64\input\controlPort</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\input\controlPort\MagnumLightPhaser.cpp">
+      <Filter>emulation\libc64\input\controlPort</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\input\controlPort\mouse1351.cpp">
+      <Filter>emulation\libc64\input\controlPort</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\input\controlPort\mouseNeos.cpp">
+      <Filter>emulation\libc64\input\controlPort</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\input\controlPort\paddles.cpp">
+      <Filter>emulation\libc64\input\controlPort</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\input\controlPort\StackLightpen.cpp">
+      <Filter>emulation\libc64\input\controlPort</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\input\controlPort\StackLightRifle.cpp">
+      <Filter>emulation\libc64\input\controlPort</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\input\controlPort\controlPort.cpp">
+      <Filter>emulation\libc64\input\controlPort</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\m6510\opcodes.cpp">
+      <Filter>emulation\libc64\m6510</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\m6510\m6510.cpp">
+      <Filter>emulation\libc64\m6510</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\prg\prg.cpp">
+      <Filter>emulation\libc64\prg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\sid\multisid.cpp">
+      <Filter>emulation\libc64\sid</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\sid\register.cpp">
+      <Filter>emulation\libc64\sid</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\sid\serialization.cpp">
+      <Filter>emulation\libc64\sid</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\sid\sid.cpp">
+      <Filter>emulation\libc64\sid</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\sid\tables.cpp">
+      <Filter>emulation\libc64\sid</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\sid\voice.cpp">
+      <Filter>emulation\libc64\sid</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\sid\clone.cpp">
+      <Filter>emulation\libc64\sid</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\sid\envelope.cpp">
+      <Filter>emulation\libc64\sid</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\sid\filter\external.cpp">
+      <Filter>emulation\libc64\sid\filter</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\sid\filter\main.cpp">
+      <Filter>emulation\libc64\sid\filter</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\sid\filter\opamp.cpp">
+      <Filter>emulation\libc64\sid\filter</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\sid\filter\build.cpp">
+      <Filter>emulation\libc64\sid\filter</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\sid\filter\chamberlin.cpp">
+      <Filter>emulation\libc64\sid\filter</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\system\map.cpp">
+      <Filter>emulation\libc64\system</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\system\serialization.cpp">
+      <Filter>emulation\libc64\system</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\system\system.cpp">
+      <Filter>emulation\libc64\system</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\system\clipboard.cpp">
+      <Filter>emulation\libc64\system</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\system\expansion.cpp">
+      <Filter>emulation\libc64\system</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\system\firmware.cpp">
+      <Filter>emulation\libc64\system</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\tape\serialization.cpp">
+      <Filter>emulation\libc64\tape</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\tape\tape.cpp">
+      <Filter>emulation\libc64\tape</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\tape\write.cpp">
+      <Filter>emulation\libc64\tape</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\tape\counter.cpp">
+      <Filter>emulation\libc64\tape</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\tape\fetch.cpp">
+      <Filter>emulation\libc64\tape</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\traps\traps.cpp">
+      <Filter>emulation\libc64\traps</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\vicII\register.cpp">
+      <Filter>emulation\libc64\vicII</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\vicII\sequencer.cpp">
+      <Filter>emulation\libc64\vicII</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\vicII\serialization.cpp">
+      <Filter>emulation\libc64\vicII</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\vicII\silence.cpp">
+      <Filter>emulation\libc64\vicII</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\vicII\verticalLineAnomaly.cpp">
+      <Filter>emulation\libc64\vicII</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\vicII\vicII.cpp">
+      <Filter>emulation\libc64\vicII</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\vicII\base.cpp">
+      <Filter>emulation\libc64\vicII</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\vicII\colorWheel.cpp">
+      <Filter>emulation\libc64\vicII</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\vicII\cycleTable.cpp">
+      <Filter>emulation\libc64\vicII</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\vicII\dma.cpp">
+      <Filter>emulation\libc64\vicII</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\vicII\fetch.cpp">
+      <Filter>emulation\libc64\vicII</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\vicII\fast\serialization.cpp">
+      <Filter>emulation\libc64\vicII\fast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\vicII\fast\silence.cpp">
+      <Filter>emulation\libc64\vicII\fast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\vicII\fast\vicIIFast.cpp">
+      <Filter>emulation\libc64\vicII\fast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\vicII\fast\register.cpp">
+      <Filter>emulation\libc64\vicII\fast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\vicII\fast\scanline.cpp">
+      <Filter>emulation\libc64\vicII\fast</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\interface.cpp">
+      <Filter>emulation\libc64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\cia\register.cpp">
+      <Filter>emulation\cia</Filter>
+    </ClCompile>
+    <ClCompile Include="..\guikit\api.cpp">
+      <Filter>guikit</Filter>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\widgets\multilineedit.cpp">
+      <Filter>guikit\winapi\widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\widgets\progressbar.cpp">
+      <Filter>guikit\winapi\widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\widgets\radiobox.cpp">
+      <Filter>guikit\winapi\widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\widgets\slider.cpp">
+      <Filter>guikit\winapi\widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\widgets\squareCanvas.cpp">
+      <Filter>guikit\winapi\widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\widgets\stepbutton.cpp">
+      <Filter>guikit\winapi\widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\widgets\tabframe.cpp">
+      <Filter>guikit\winapi\widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\widgets\treeview.cpp">
+      <Filter>guikit\winapi\widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\widgets\viewport.cpp">
+      <Filter>guikit\winapi\widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\widgets\widget.cpp">
+      <Filter>guikit\winapi\widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\widgets\button.cpp">
+      <Filter>guikit\winapi\widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\widgets\checkbox.cpp">
+      <Filter>guikit\winapi\widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\widgets\checkbutton.cpp">
+      <Filter>guikit\winapi\widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\widgets\combobutton.cpp">
+      <Filter>guikit\winapi\widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\widgets\frame.cpp">
+      <Filter>guikit\winapi\widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\widgets\hyperlink.cpp">
+      <Filter>guikit\winapi\widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\widgets\imageView.cpp">
+      <Filter>guikit\winapi\widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\widgets\label.cpp">
+      <Filter>guikit\winapi\widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\widgets\lineedit.cpp">
+      <Filter>guikit\winapi\widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\widgets\listview.cpp">
+      <Filter>guikit\winapi\widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\menu.cpp">
+      <Filter>guikit\winapi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\messageWindow.cpp">
+      <Filter>guikit\winapi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\statusbar.cpp">
+      <Filter>guikit\winapi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\tools.cpp">
+      <Filter>guikit\winapi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\browserWindow.cpp">
+      <Filter>guikit\winapi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\clipboard.cpp">
+      <Filter>guikit\winapi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\display.cpp">
+      <Filter>guikit\winapi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\main.cpp">
+      <Filter>guikit\winapi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\guikit\tools\layout.cpp">
+      <Filter>guikit\tools</Filter>
+    </ClCompile>
+    <ClCompile Include="..\guikit\tools\setting.cpp">
+      <Filter>guikit\tools</Filter>
+    </ClCompile>
+    <ClCompile Include="..\guikit\tools\string.cpp">
+      <Filter>guikit\tools</Filter>
+    </ClCompile>
+    <ClCompile Include="..\guikit\tools\translate.cpp">
+      <Filter>guikit\tools</Filter>
+    </ClCompile>
+    <ClCompile Include="..\guikit\tools\utf8.cpp">
+      <Filter>guikit\tools</Filter>
+    </ClCompile>
+    <ClCompile Include="..\guikit\tools\image.cpp">
+      <Filter>guikit\tools</Filter>
+    </ClCompile>
+    <ClCompile Include="..\guikit\tools\file\file.cpp">
+      <Filter>guikit\tools\file</Filter>
+    </ClCompile>
+    <ClCompile Include="..\driver\driver.cpp">
+      <Filter>driver</Filter>
+    </ClCompile>
+    <ClCompile Include="..\driver\tools\fonts.c">
+      <Filter>driver\tools</Filter>
+    </ClCompile>
+    <ClCompile Include="..\driver\audio\dsound.cpp">
+      <Filter>driver\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="..\driver\audio\openal.cpp">
+      <Filter>driver\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="..\driver\audio\wasapi.cpp">
+      <Filter>driver\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="..\driver\audio\xaudio2\xaudio27.cpp">
+      <Filter>driver\audio\xaudio2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\driver\audio\xaudio2\xaudio28.cpp">
+      <Filter>driver\audio\xaudio2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\driver\audio\xaudio2\xaudio29.cpp">
+      <Filter>driver\audio\xaudio2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\driver\audio\xaudio2\core.cpp">
+      <Filter>driver\audio\xaudio2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\driver\input\dinput\v7.cpp">
+      <Filter>driver\input\dinput</Filter>
+    </ClCompile>
+    <ClCompile Include="..\driver\input\dinput\v8.cpp">
+      <Filter>driver\input\dinput</Filter>
+    </ClCompile>
+    <ClCompile Include="..\driver\input\dinput\core.cpp">
+      <Filter>driver\input\dinput</Filter>
+    </ClCompile>
+    <ClCompile Include="..\driver\input\dinput\v5.cpp">
+      <Filter>driver\input\dinput</Filter>
+    </ClCompile>
+    <ClCompile Include="..\driver\input\rawinput\mouse.cpp">
+      <Filter>driver\input\rawinput</Filter>
+    </ClCompile>
+    <ClCompile Include="..\driver\input\rawinput\worker.cpp">
+      <Filter>driver\input\rawinput</Filter>
+    </ClCompile>
+    <ClCompile Include="..\driver\input\rawinput\hid.cpp">
+      <Filter>driver\input\rawinput</Filter>
+    </ClCompile>
+    <ClCompile Include="..\driver\input\rawinput\joypad.cpp">
+      <Filter>driver\input\rawinput</Filter>
+    </ClCompile>
+    <ClCompile Include="..\driver\input\rawinput\keyboard.cpp">
+      <Filter>driver\input\rawinput</Filter>
+    </ClCompile>
+    <ClCompile Include="..\driver\input\rawinput\main.cpp">
+      <Filter>driver\input\rawinput</Filter>
+    </ClCompile>
+    <ClCompile Include="..\driver\video\wgl.cpp">
+      <Filter>driver\video</Filter>
+    </ClCompile>
+    <ClCompile Include="..\driver\video\dvideo.cpp">
+      <Filter>driver\video</Filter>
+    </ClCompile>
+    <ClCompile Include="..\driver\video\thread\renderThread.cpp">
+      <Filter>driver\video\thread</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\program.cpp">
+      <Filter>program</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\video.cpp">
+      <Filter>program</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\audio.cpp">
+      <Filter>program</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\files.cpp">
+      <Filter>program</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\input.cpp">
+      <Filter>program</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\audio\manager.cpp">
+      <Filter>program\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\audio\dsp\panning.cpp">
+      <Filter>program\audio\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\audio\dsp\reverb.cpp">
+      <Filter>program\audio\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\audio\dsp\bass.cpp">
+      <Filter>program\audio\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\audio\mixer\drive.cpp">
+      <Filter>program\audio\mixer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\audio\resampler\hermite.cpp">
+      <Filter>program\audio\resampler</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\audio\resampler\linear.cpp">
+      <Filter>program\audio\resampler</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\audio\resampler\sinc.cpp">
+      <Filter>program\audio\resampler</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\audio\resampler\cosine.cpp">
+      <Filter>program\audio\resampler</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\audio\resampler\cosinePrecise.cpp">
+      <Filter>program\audio\resampler</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\audio\resampler\cosineSSE.cpp">
+      <Filter>program\audio\resampler</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\audio\resampler\cubic.cpp">
+      <Filter>program\audio\resampler</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\audio\record\wavWriter.cpp">
+      <Filter>program\audio\record</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\audio\record\handler.cpp">
+      <Filter>program\audio\record</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\cmd\cmd.cpp">
+      <Filter>program\cmd</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\config\archiveViewer.cpp">
+      <Filter>program\config</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\config\config.cpp">
+      <Filter>program\config</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\config\layouts\input.cpp">
+      <Filter>program\config\layouts</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\config\layouts\settings.cpp">
+      <Filter>program\config\layouts</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\config\layouts\video.cpp">
+      <Filter>program\config\layouts</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\config\layouts\audio.cpp">
+      <Filter>program\config\layouts</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\emuconfig\config.cpp">
+      <Filter>program\emuconfig</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\emuconfig\layouts\input.cpp">
+      <Filter>program\emuconfig\layouts</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\emuconfig\layouts\misc.cpp">
+      <Filter>program\emuconfig\layouts</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\emuconfig\layouts\model.cpp">
+      <Filter>program\emuconfig\layouts</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\emuconfig\layouts\palette.cpp">
+      <Filter>program\emuconfig\layouts</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\emuconfig\layouts\system.cpp">
+      <Filter>program\emuconfig\layouts</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\emuconfig\layouts\video.cpp">
+      <Filter>program\emuconfig\layouts</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\emuconfig\layouts\audio.cpp">
+      <Filter>program\emuconfig\layouts</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\emuconfig\layouts\border.cpp">
+      <Filter>program\emuconfig\layouts</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\emuconfig\layouts\configurations.cpp">
+      <Filter>program\emuconfig\layouts</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\emuconfig\layouts\firmware.cpp">
+      <Filter>program\emuconfig\layouts</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\firmware\manager.cpp">
+      <Filter>program\firmware</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\input\layout.cpp">
+      <Filter>program\input</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\input\manager.cpp">
+      <Filter>program\input</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\input\mapping.cpp">
+      <Filter>program\input</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\input\capture.cpp">
+      <Filter>program\input</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\input\global.cpp">
+      <Filter>program\input</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\input\hotkeys.cpp">
+      <Filter>program\input</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\media\layout.cpp">
+      <Filter>program\media</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\media\media.cpp">
+      <Filter>program\media</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\media\swapper.cpp">
+      <Filter>program\media</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\media\autoloader.cpp">
+      <Filter>program\media</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\media\fileloader.cpp">
+      <Filter>program\media</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\states\states.cpp">
+      <Filter>program\states</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\thread\emuThread.cpp">
+      <Filter>program\thread</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\video\props.cpp">
+      <Filter>program\video</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\video\shader.cpp">
+      <Filter>program\video</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\video\sync.cpp">
+      <Filter>program\video</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\video\manager.cpp">
+      <Filter>program\video</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\video\mask.cpp">
+      <Filter>program\video</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\video\palette.cpp">
+      <Filter>program\video</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\view\view.cpp">
+      <Filter>program\view</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\view\placeholder.cpp">
+      <Filter>program\view</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\view\status.cpp">
+      <Filter>program\view</Filter>
+    </ClCompile>
+    <ClCompile Include="..\data\icons\icons.cpp">
+      <Filter>data\icons</Filter>
+    </ClCompile>
+    <ClCompile Include="..\data\icons\logos.cpp">
+      <Filter>data\icons</Filter>
+    </ClCompile>
+    <ClCompile Include="..\data\fonts\fonts.cpp">
+      <Filter>data\fonts</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\emulation\libc64\sid\filter\circuit">
+      <Filter>emulation\libc64\sid\filter</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="..\data\resource.rc">
+      <Filter>Ressourcendateien</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Manifest Include="..\data\denise.Manifest">
+      <Filter>Ressourcendateien</Filter>
+    </Manifest>
+  </ItemGroup>
+</Project>

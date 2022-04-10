@@ -3,13 +3,9 @@
 #include "../program.h"
 
 auto VideoManager::setCrtThreaded(bool state) -> void {
-    
-    unlockDriver(); 
-
     crtThreaded = state;
 	
 	for (auto videoManager : videoManagers) {
-		videoManager->emulator->setFinishVblankCallback( (videoManager->crtMode == CrtMode::Cpu) && crtThreaded );
 		videoManager->emulator->setLineCallback( (videoManager->crtMode == CrtMode::Cpu) && crtThreaded );
 		videoManager->reinitCrtThread();
 
@@ -38,12 +34,10 @@ auto VideoManager::useColorSpectrum(bool state) -> void {
 }
 
 auto VideoManager::setCrtMode(CrtMode _mode) -> void {        
-    unlockDriver();
-    
+
     this->crtMode = _mode;
     bool useRenderThread = (_mode == CrtMode::Cpu) && crtThreaded;
 
-	emulator->setFinishVblankCallback( useRenderThread );
 	emulator->setLineCallback( useRenderThread );
 	reinitCrtThread();
 	shader.recreate = true;
@@ -130,8 +124,8 @@ auto VideoManager::setLumaFall( float pixel ) -> void {
 	colorTableUpdated = false;
 }
 
-auto VideoManager::setScanlines(unsigned intensity, uint8_t pos) -> void {
-    waitForCrtRenderer(pos);
+auto VideoManager::setScanlines(unsigned intensity) -> void {
+    waitForCrtRenderer();
     updateShader( "", "gammaAndScanlines", scanlines, (uint8_t)intensity );
     this->scanlines = intensity;
     colorTableUpdated = false;

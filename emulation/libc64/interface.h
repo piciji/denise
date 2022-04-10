@@ -105,7 +105,9 @@ struct Interface : Emulator::Interface {
 	auto createTapeImage(unsigned& imageSize) -> uint8_t*;
     auto controlTape(Media* media, TapeMode mode) -> void;
     auto getTapeControl(Media* media) -> TapeMode;
-    auto selectTapeListing(Media* media, unsigned pos) -> void;
+    auto getTapeListing(Media* media) -> std::vector<Emulator::Interface::Listing>;
+    auto getTapePreview(uint8_t* data, unsigned size, Media* media = nullptr) -> std::vector<Emulator::Interface::Listing>;
+    auto selectTapeListing(Media* media, unsigned pos, bool useTraps = false) -> void;
 
 	//expansion handling
 	auto insertExpansionImage(Media* media, uint8_t* data, unsigned size) -> void;
@@ -177,7 +179,6 @@ struct Interface : Emulator::Interface {
     auto getChroma(uint8_t index) -> double; 
     
     auto setLineCallback(bool state, unsigned scanline = 0) -> void;
-    auto setFinishVblankCallback(bool state) -> void;
     
     auto setMemory(MemoryType* memoryType, unsigned memoryId) -> void;
     auto setMemoryInitParams(uint8_t value, unsigned invertEvery, unsigned randomPatternLength, unsigned repeatRandomPattern, unsigned randomChance) -> void;

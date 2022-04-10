@@ -17,6 +17,7 @@ auto Tape::serialize(Emulator::Serializer& s) -> void {
     s.integer( writePos );
     s.integer( writeBit );
     s.integer( writeClock );
+    s.integer( writeCounterClock );
     s.integer( cycles );
     s.integer( cycles999 );
     s.integer( cylcesPerSecond );
@@ -30,7 +31,7 @@ auto Tape::serialize(Emulator::Serializer& s) -> void {
     s.integer( version );
     s.integer( fetchPos );
     s.integer( fetchSize );
-    s.integer( pos );
+    s.integer( curPos );
     s.integer( writeProtect );
     s.integer( writeQuestionState );
     s.integer( autoStarted );

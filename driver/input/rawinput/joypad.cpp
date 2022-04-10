@@ -181,7 +181,7 @@ struct RawJoypad {
 		unsigned hat = 0;
 		
 		unsigned long usageLength = data.pButtonCaps->Range.UsageMax - data.pButtonCaps->Range.UsageMin + 1;
-		USAGE usage[usageLength];
+		USAGE* usage = new USAGE[usageLength];
 		
 		RJ_STEP( HidP_GetUsages( HidP_Input, data.pButtonCaps->UsagePage, 0, usage, &usageLength, data.pPreparsedData,
 			(PCHAR) input->data.hid.bRawData, input->data.hid.dwSizeHid) == HIDP_STATUS_SUCCESS )
@@ -249,7 +249,8 @@ struct RawJoypad {
 			}
 		}
 
-		End:
+	End:
+		delete[] usage;
 		return;					
 	}
 	

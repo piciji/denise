@@ -229,14 +229,12 @@ struct VideoManager {
     auto enableCrtThread( bool state) -> void;
     auto updateCrtThreads() -> void;
 	auto waitForCrtRenderer() -> void;
-    auto waitForCrtRenderer(uint8_t pos) -> bool;
     template<bool withScanlines, bool rfModulation, typename T> auto renderPalCrt( Render* re ) -> void;
     template<bool withScanlines, bool rfModulation, typename T> auto renderNtscCrt( Render* re ) -> void;
     auto powerOff() -> void;    
     auto renderMidScreen( ) -> void;
     
     static auto getInstance( Emulator::Interface* emulator ) -> VideoManager*;
-    static auto unlockDriver() -> void;
 	static auto updateWhenNotRunning() -> void;
     
     auto useRfModulation() -> bool;
@@ -257,7 +255,7 @@ struct VideoManager {
     auto setPhaseError(float phaseError) -> void;
     auto setHanoverBars( int saturationDelta ) -> void;
     auto setBlur( unsigned blur ) -> void;
-    auto setScanlines(unsigned intensity, uint8_t pos = 1) -> void;
+    auto setScanlines(unsigned intensity) -> void;
     
     auto setBloomGlow( unsigned intensity ) -> void;
     auto setBloomRadius( unsigned intensity ) -> void;

@@ -21,12 +21,34 @@ auto pViewport::init() -> void {
     setDroppable(viewport.droppable());
 }
 
+auto pViewport::add() -> void {
+    // putting the viewport directly in an expanding box performs better
+    if (viewport.window()->hints == Window::Hints::Video) {
+        destroy();
+        return;
+    }
+
+    pWidget::add();
+}
+
+auto pViewport::setGeometry(Geometry geometry) -> void {
+    if (viewport.window()->hints == Window::Hints::Video)
+        return;
+
+    pWidget::setGeometry( geometry );
+}
+
 auto pViewport::setDroppable(bool droppable) -> void {
+    if (!gtkWidget)
+        return;
+
     gtk_drag_dest_set(gtkWidget, GTK_DEST_DEFAULT_ALL, nullptr, 0, GDK_ACTION_COPY);
     if(droppable) gtk_drag_dest_add_uri_targets(gtkWidget);
 }
 
 auto pViewport::handle() -> uintptr_t {
+    if (viewport.window()->hints == Window::Hints::Video)
+        return (uintptr_t) gtk_widget_get_window(viewport.window()->p.mainDisplay);
     //return GDK_WINDOW_XID(gtk_widget_get_window(gtkWidget));
     return (uintptr_t)gtk_widget_get_window(gtkWidget);
 }
@@ -55,8 +77,6 @@ auto pViewport::mouseMove(GtkWidget* widget, GdkEventButton* event, pViewport* s
     return true;
 }
 
-static auto Window_onButtonPressed(GtkWidget* widget, GdkEventButton* event, Window* window) -> gboolean;
-
 auto pViewport::mousePress(GtkWidget* widget, GdkEventButton* event, pViewport* self) -> gboolean {
     if(self->viewport.onMousePress) switch(event->button) {
         case 1: self->viewport.onMousePress(Mouse::Button::Left); break;
@@ -64,7 +84,7 @@ auto pViewport::mousePress(GtkWidget* widget, GdkEventButton* event, pViewport* 
         case 3: self->viewport.onMousePress(Mouse::Button::Right); break;
     }
 	
-	if (event->button == 3) Window_onButtonPressed(widget, event, self->widget.window());
+	if (event->button == 3) pWindow::onButtonPressed(widget, event, self->widget.window());
 	
     return true;
 }

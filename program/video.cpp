@@ -67,14 +67,6 @@ auto Program::getVideoDriver() -> std::string {
 	return DRIVER::Video::preferred();
 }
 
-auto Program::finishVBlank() -> void {
-    
-    if (!activeVideoManager->waitForCrtRenderer(1))
-        return;
-
-    videoDriver->unlockAndRedraw();
-}
-
 auto Program::midScreenCallback() -> void {
 
     activeVideoManager->renderMidScreen();
@@ -206,9 +198,8 @@ auto Program::fastForward( bool activate, bool aggressive ) -> void {
         if (crtMode != VideoManager::CrtMode::None) {
             settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::None);
             VideoManager::getInstance( activeEmulator )->reloadSettings();
+            settings->set<unsigned>("video_crt", (unsigned)crtMode);
         }
-
-        globalSettings->set<unsigned>("video_crt_temp", (unsigned)crtMode, false); // remember crt mode
 
         forward = (unsigned)Emulator::Interface::FastForward::NoAudioOut | (unsigned)Emulator::Interface::FastForward::ReduceVideoOutput;
         if (aggressive)
@@ -216,22 +207,12 @@ auto Program::fastForward( bool activate, bool aggressive ) -> void {
 
     } else {
         warp.active = false;
-        VideoManager::CrtMode crtModeTemp = (VideoManager::CrtMode)globalSettings->get<unsigned>("video_crt_temp", (unsigned)VideoManager::CrtMode::None, {0u, 2u});
 
         VideoManager::setSynchronize();
 
-        if (crtMode == VideoManager::CrtMode::None) {
-            if (crtModeTemp == VideoManager::CrtMode::Cpu) {
-                settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::Cpu);
-                VideoManager::getInstance( activeEmulator )->reloadSettings();
-
-            } else if (crtModeTemp == VideoManager::CrtMode::Gpu) {
-                settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::Gpu);
-                VideoManager::getInstance( activeEmulator )->reloadSettings();
-            }
+        if (crtMode != VideoManager::CrtMode::None) {
+            VideoManager::getInstance( activeEmulator )->reloadSettings();
         }
-
-        globalSettings->set<unsigned>("video_crt_temp", (unsigned)VideoManager::CrtMode::None, false);
 
         if (audioManager)
             audioManager->drive.reset();

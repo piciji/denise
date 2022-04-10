@@ -289,7 +289,7 @@ auto M6510::busWrite( uint16_t addr, uint8_t data ) -> void {
         
 	} else {
 		// Expansion Port DMA send AEC and BA same cycle,
-		// so it's possible that CPU take a 'Write' whith decoupled BUS.
+		// so it's possible that CPU take a 'Write' with decoupled BUS.
 		// VIC send AEC three cycles later than BA, because there is a maximum of three 'Writes' in a row,
 		// a 'Write' with decoupled BUS can not happen.	
 		// so need only check for expansion DMA

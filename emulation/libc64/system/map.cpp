@@ -2,7 +2,7 @@
 #define IO_MAPPING  \
     memoryCpu.map( &readVicReg, &writeVicReg, 0xd0, 0xd3);      \
                                                                 \
-    if (!debugCart.enable)                                      \
+    if (!debugCart->enable)                                     \
         memoryCpu.map( &readSidReg, &writeSidReg, 0xd4, 0xd7);  \
     else {                                                      \
         memoryCpu.map( &readSidReg, &writeSidReg, 0xd4, 0xd6);  \

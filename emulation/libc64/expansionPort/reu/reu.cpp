@@ -26,6 +26,9 @@ Reu::Reu() : ExpansionPort() {
         swapRead = false;
         steal = false;
         dmaCall( true );
+        //system->interface->log( "start" );
+        //system->interface->log( vicII->getVcounter(), 0 );
+        //system->interface->log( vicII->getCycle(), 0 );
     };
     
     finish = [this]() {
@@ -302,71 +305,70 @@ inline auto Reu::verify() -> void {
     decrementTransferLength(); 
 }
 
-inline auto Reu::swap() -> void {
-    
+auto Reu::swap() -> void {
     if (!swapRead) {
-        if (vicBaLow & 1)
-            return;
-        busValue = readReu();
-        busValue2 = system->memoryCpu.read( bus.addr = hostAddr);
-        
-    } else {
-
-        if ((vicBaLow & 3) == 3) {
-            return;
+        if ((vicBaLow & 3) == 1) {
+            if (transferLength == reg.transferLength)
+                return;
         }
-		
-		if ((vicBaLow & 3) == 1)
-			if (transferLength == 1)
-				return;
-        
-        writeReu( busValue2 );
-        system->memoryCpu.write( bus.addr = hostAddr, busValue);
-        incrementAddresses();      
-        decrementTransferLength(); 
+
+        if ((vicBaLow & 15) != 15) {
+            busValue = readReu();
+
+            if (((vicBaLow & 1) != 0) && system->isC64C())
+                busValue2 = system->ram[bus.addr = hostAddr];
+            else
+                busValue2 = system->memoryCpu.read(bus.addr = hostAddr);
+        }
+
+    } else {
+        if (((vicBaLow & 1) == 0) || (transferLength == 1) ) {
+            writeReu( busValue2 );
+            system->memoryCpu.write( bus.addr = hostAddr, busValue);
+            incrementAddresses();
+            decrementTransferLength();
+        }
     }
-        
+
     swapRead ^= 1;
 }
 
-inline auto Reu::fetch() -> void { 
-	
+inline auto Reu::fetch() -> void {
     if ((vicBaLow & 3) == 3) { // first BA cycle is usable for REU
         return;
     }
-	
-	if ((vicBaLow & 3) == 1)
-		if (transferLength == 1)
-			return;
+
+    if (vicBaLow & 2) { // BA off
+        if (transferLength == (reg.transferLength-1))
+            return;
+
+    } else if (vicBaLow & 1) { // BA on
+        if (transferLength == 1)
+            return;
+    }
     
 	busFloating = busValue = readReu();
     
     system->memoryCpu.write( bus.addr = hostAddr, busValue );
-    incrementAddresses();     
-	if (transferLength == 1) {
-		busFloating = readReu(); // dummy read
-		//system->interface->log( "fin fetch", 1 );
-		//system->interface->log( vicII->getVcounter(), 0 );
-		//system->interface->log( vicII->getCycle(), 0 );
-	}
+    incrementAddresses();
 
-	
+	if (transferLength == 1)
+		busFloating = readReu(); // dummy read
+
     decrementTransferLength();	
 }
 
 inline auto Reu::stash() -> void {
     if (vicBaLow & 1) // VIC needs this cycle
-        return;    	
-    
-    busFloating = busValue = system->memoryCpu.read( bus.addr = hostAddr );    
-    
+        return;
+
+    if (vicII->reuSprite0() && system->isC64C())
+        busFloating = busValue = system->ram[bus.addr = hostAddr];
+    else
+        busFloating = busValue = system->memoryCpu.read( bus.addr = hostAddr );
+
     writeReu( busValue );
-    incrementAddresses();   
-	if (transferLength == 1) {
-		//system->interface->log( "fin stash", 1 );
-		//system->interface->log( vicII->getVcounter(), 0 );
-		//system->interface->log( vicII->getCycle(), 0 );
-	}	
+    incrementAddresses();
     decrementTransferLength();
 }
 
@@ -482,9 +484,15 @@ auto Reu::writeIo2( uint16_t addr, uint8_t value ) -> void {
             reuAddr = (reuAddr & 0xffff) | (value << 16);
             break;
         case 7:
+            //system->interface->log(dma,1);
+            //system->interface->log("tl",0);
+            //system->interface->log(reg.transferLength,0);
             transferLength = reg.transferLength = (reg.transferLength & 0xff00) | value;
             break;
         case 8:
+            //system->interface->log(dma,1);
+            //system->interface->log("th",0);
+            //system->interface->log(reg.transferLength,0);
             transferLength = reg.transferLength = (reg.transferLength & 0xff) | (value << 8);
             break;
         case 9:

@@ -259,11 +259,10 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
             _str += audioManager->dynamicRateControl ? "DRC  " : "";
             float monitorFrequency = GUIKIT::Monitor::getCurrentRefreshRate();
             _str += GUIKIT::String::convertDoubleToString(monitorFrequency, 3 );
-            statusHandler->setMessage(_str, 6);
+            statusHandler->setMessage(_str, 5);
         } break;
         case Hotkey::Id::ThreadedRenderer: {
-            VideoManager::unlockDriver();
-            bool checked = globalSettings->get("threaded_renderer", false);
+            bool checked = globalSettings->get("threaded_renderer", true);
             checked ^= 1;
 
             globalSettings->set("threaded_renderer", checked);

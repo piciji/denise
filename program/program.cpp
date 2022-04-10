@@ -76,31 +76,41 @@ Program::Program() {
 
 	if(!cmd->noGui) {
 		InputManager::build();
-		view->build();
-		view->show();
+		view->build();		
+		if (view->setVisible()) {			
+			view->updateViewport();
+			finishStartup();
+		}
+    } else {
+        finishStartup();
     }
+}
 
-	initInput();
-	initAudio();
-	initVideo();
+auto Program::finishStartup() -> void {
+    initInput();
+    initAudio();
+    initVideo();
 
-    initUserInterface();
     cmd->autoloadImages();
+	initUserInterface();
 }
 
 auto Program::initUserInterface() -> void {
+    if (GUIKIT::Application::isQuit)
+        return;
+
     bool threadedEmu = globalSettings->get<bool>("threaded_emu", false);
 
     if (cmd->noGui) {
 		emuThread->enable( false );
-        GUIKIT::Application::loop = [this]() { loopNoGui(); };        
+        GUIKIT::Application::loop = [this]() { loopNoGui(); };
     } else if (!threadedEmu) {
 		emuThread->enable( false );
-        GUIKIT::Application::loop = [this]() { loop(); };        
+        GUIKIT::Application::loop = [this]() { loop(); };
     } else {
         videoDriver->freeContext();
 		GUIKIT::Application::loop = [this]() { loopUserInterface(); };
-		emuThread->enable( true );        
+		emuThread->enable( true );
     }
 }
 
@@ -261,9 +271,10 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
                 if (emuView && emuView->mediaLayout)
                     emuView->mediaLayout->updateWriteProtection( &media, fSetting->writeProtect );
 
-                filePool->assign( _ident(emulator, media.name + "store"), file);
-
-                filePool->assign( _ident(emulator, media.name), file);
+                if (!mediaGroup.isProgram()) {
+                    filePool->assign(_ident(emulator, media.name + "store"), file);
+                    filePool->assign(_ident(emulator, media.name), file);
+                }
 
             } else { // IP socket mode
                 program->prepareSocket( &media, emulator, fSetting->path );
@@ -488,15 +499,13 @@ auto Program::quit() -> void {
 	delete filePool;
     delete cmd;
 	delete autoloader;
-
     
     for(auto settings : settingsStorage)
         delete settings;
-    
-    globalSettings = nullptr;
+
+    // don't deinitialize "global settings", because of APP shutdown may trigger Window resizing which needs info from global settings
     
     // in case of exit request from emulation core
-
     GUIKIT::Application::loop = nullptr;
 }
 
@@ -544,7 +553,11 @@ auto Program::fontFolder() -> std::string {
 auto Program::settingsFile( std::string ident ) -> std::string {
 
 	return GUIKIT::System::getUserDataFolder(appFolder()) + ident + SETTINGS_FILE;
-} 
+}
+
+auto Program::settingsFileFromEmuFolder( std::string ident ) -> std::string {
+    return GUIKIT::System::getResourceFolder(appFolder()) + "settings/" + ident + SETTINGS_FILE;
+}
 
 auto Program::shaderFolder() -> std::string {
     return GUIKIT::System::getResourceFolder(appFolder()) + SHADER_FOLDER;

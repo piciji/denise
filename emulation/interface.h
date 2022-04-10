@@ -245,8 +245,8 @@ struct Interface {
 	// general purpose emulator output listing
 	struct Listing {
 		unsigned id;
-		std::vector<uint8_t> line; // host is responsible for conversion, e.g. c64 use petscii charset
-		std::vector<uint8_t> loadCommand;
+		std::vector<uint16_t> line; // host is responsible for conversion, e.g. c64 use petscii charset
+		std::vector<uint16_t> loadCommand;
 	};	
     
     enum Region : uint8_t { Pal = 0, Ntsc = 1 };
@@ -312,7 +312,6 @@ struct Interface {
         virtual auto updateDeviceState(Media*, bool, unsigned, bool, bool ) -> void {}
         virtual auto log(std::string, bool) -> void {} //for debugging
         virtual auto exit( int code ) -> void {}
-        virtual auto finishVBlank() -> void {}
         virtual auto midScreenCallback( ) -> void {}
         virtual auto questionToWrite(Media*) -> bool { return false; }
         virtual auto informDriveLoading(bool) -> void {}
@@ -346,10 +345,6 @@ struct Interface {
 	
 	auto videoRefresh8(const uint8_t* frame, unsigned width, unsigned height, unsigned linePitch) -> void {
         bind->videoRefresh8(frame, width, height, linePitch);
-    }
-    
-    auto finishVBlank() -> void {
-        bind->finishVBlank();
     }
     
     auto midScreenCallback() -> void {
@@ -446,7 +441,9 @@ struct Interface {
     virtual auto controlTape(Media* media, TapeMode mode) -> void {}
     virtual auto getTapeControl(Media* media) -> TapeMode { return TapeMode::Unpressed; }
 	virtual auto createTapeImage(unsigned& imageSize) -> uint8_t* { return nullptr; }
-    virtual auto selectTapeListing(Media* media, unsigned pos) -> void { }
+    virtual auto getTapeListing(Media* media) -> std::vector<Listing> { return {}; }
+    virtual auto getTapePreview(uint8_t* data, unsigned size, Media* media = nullptr) -> std::vector<Listing> { return {}; }
+    virtual auto selectTapeListing(Media* media, unsigned pos, bool useTraps = false) -> void { }
     // expansion handling
     virtual auto insertExpansionImage(Media* media, uint8_t* data, unsigned size) -> void {}
     virtual auto ejectExpansionImage(Media* media) -> void {}
@@ -531,7 +528,6 @@ struct Interface {
     
     //sets alternative per line callbacks
     virtual auto setLineCallback(bool state, unsigned scanline = 0) -> void {}
-    virtual auto setFinishVblankCallback(bool state) -> void {}
 
     virtual auto fastForward(unsigned config) -> void {}
 	virtual auto getForward() -> unsigned { return 0; }
@@ -604,7 +600,8 @@ struct Interface {
         switch(media->group->type) {
 			case MediaGroup::Type::Disk:
                 return getDiskListing( media, alternateLoad );
-			case MediaGroup::Type::Tape: break;
+			case MediaGroup::Type::Tape:
+                return getTapeListing( media );
 			case MediaGroup::Type::Program:
                 return getProgramListing( media );
 			case MediaGroup::Type::Expansion: break;
@@ -622,7 +619,7 @@ struct Interface {
                     selectDiskListing( media, position, useTraps );
                 return true;
 			case MediaGroup::Type::Tape:
-                selectTapeListing( media, position );
+                selectTapeListing( media, position, useTraps );
                 return true;
 			case MediaGroup::Type::Program:
                 return selectProgramListing( media, position );

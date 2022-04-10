@@ -78,8 +78,10 @@ struct Program : Emulator::Interface::Bind {
     auto saveSettings(bool onExit = false) -> void;
     auto loadSettings() -> void;
     auto settingsFile( std::string ident = "" ) -> std::string;
+    auto settingsFileFromEmuFolder( std::string ident ) -> std::string;
     auto getSettings( Emulator::Interface* emulator = nullptr ) -> GUIKIT::Settings*;
     auto forceSavingSomeGlobalSettings() -> void;
+    auto getCustomSettingsFolder( Emulator::Interface* emulator, bool createFolder = false ) -> std::string;
     auto initEmulator( Emulator::Interface* emulator ) -> void;
     auto setMemoryPattern( Emulator::Interface* emulator ) -> void;
 
@@ -100,6 +102,7 @@ struct Program : Emulator::Interface::Bind {
     auto autoStartFinish(bool soft) -> void override;
     auto jam( Emulator::Interface::Media* media = nullptr ) -> void override;
     auto setThreadPriority(Emulator::Interface::ThreadPriority priority, float minProcessingTimeInMilliSeconds, float maxProcessingTimeInMilliSeconds) -> bool override;
+    auto finishStartup() -> void;
 
     auto addCustomFont() -> void;
     auto loadImageDataWhenOk( GUIKIT::File* file, unsigned fileId, Emulator::Interface::MediaGroup* group, uint8_t*& data ) -> bool;
@@ -136,7 +139,6 @@ struct Program : Emulator::Interface::Bind {
     auto setVideoFilter() -> void;   
 	auto updateCrop( Emulator::Interface* emulator ) -> void;
     auto setPalette( Emulator::Interface* emulator ) -> void;
-    auto finishVBlank() -> void override;
     auto midScreenCallback() -> void override;
     auto toggleFastForward(bool aggressive) -> void;
     auto fastForward( bool activate, bool aggressive = false ) -> void;

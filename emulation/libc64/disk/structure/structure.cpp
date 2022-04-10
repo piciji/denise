@@ -15,6 +15,7 @@
 #include "../drive/drive.h"
 #include "../../expansionPort/gameCart/warpSpeed.h"
 #include "../../expansionPort/gameCart/mach5.h"
+#include "../../expansionPort/gameCart/supergames.h"
 
 namespace LIBC64 {
     
@@ -319,9 +320,10 @@ auto DiskStructure::createListing( bool loadWithColumn ) -> void {
                 loader.push_back( _headlineCmd );
             }
 
-            std::vector<uint8_t> entry = listing.buildListing( ptr + 0x5, listingSize, *(ptr + 0x2) );
+            uint8_t type = *(ptr + 0x2);
+            std::vector<uint16_t> entry = listing.buildListing( ptr + 0x5, listingSize, type & ~0x30 );
             
-            std::vector<uint8_t> loadCommand;
+            std::vector<uint16_t> loadCommand;
             
             if (listingSize)
                 loadCommand = listing.decodeToScreencode( buildLoadCommand( listing.loader, true ) );
@@ -415,7 +417,7 @@ auto DiskStructure::selectListing( std::string fileName, bool useTraps ) -> void
     prepareKeyBufferActions( petcii, useTraps );
 }
 
-auto DiskStructure::selectListing(  unsigned pos, bool useTraps ) -> void {
+auto DiskStructure::selectListing( unsigned pos, bool useTraps ) -> void {
 
     std::vector<uint8_t> path;
     if (pos < listings.size())
@@ -434,7 +436,14 @@ auto DiskStructure::prepareKeyBufferActions( std::vector<uint8_t>& path, bool us
     action.buffer = path;
     system->keyBuffer->add( action );
 
-    if (!system->secondDriveCable.burstRequested && !dynamic_cast<Mach5*>(expansionPort)) {
+    if (dynamic_cast<SuperGames*>(expansionPort) && dynamic_cast<SuperGames*>(expansionPort)->mafiosino) {
+        action.mode = KeyBuffer::Mode::WaitFor;
+        action.buffer = {};
+        action.blinkingCursor = true;
+        action.delay = 0;
+        system->keyBuffer->add(action);
+
+    } else if (!system->secondDriveCable.burstRequested && !dynamic_cast<Mach5*>(expansionPort)) {
         if (!useTraps) {
             action.mode = KeyBuffer::Mode::WaitFor;
             action.buffer = {'S', 'E', 'A', 'R', 'C', 'H', 'I', 'N', 'G'};
@@ -451,13 +460,14 @@ auto DiskStructure::prepareKeyBufferActions( std::vector<uint8_t>& path, bool us
         action.blinkingCursor = false;
         system->keyBuffer->add(action);
     }
+
     action.callbackId = 4;
     action.mode = KeyBuffer::Mode::WaitFor;
     action.buffer = {'R', 'E', 'A', 'D', 'Y', '.'};
     action.delay = 180;    
     action.alternateBuffer.clear();
     action.blinkingCursor = true;
-    action.waitCallback = [this]() {
+    action.waitCallback = [this](KeyBuffer::Action* action) {
         if (system->checkForAutoStarter()) {
             system->keyBuffer->reset();
             system->interface->autoStartFinish(true);
@@ -481,7 +491,7 @@ auto DiskStructure::prepareKeyBufferActions( std::vector<uint8_t>& path, bool us
         drive->extendedMemoryMap = false;
         system->secondDriveCable.parallelPossible = false;
         system->burstOrParallelUpdate();
-        traps->install();
+        traps->installSerial();
         traps->reset();
         system->keyBuffer->forceDefaultKernalDelay(); // a possible speeder use shorter boot time
         drive->setFirmwareByType();

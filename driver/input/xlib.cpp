@@ -31,6 +31,7 @@ struct XInput : public Input {
     Display* display = nullptr;
     Window rootwindow;
     unsigned relativex, relativey;
+    int rememberX, rememberY;
     const unsigned warpMargin = 50;
     std::mutex keyMutex;
 
@@ -92,6 +93,8 @@ struct XInput : public Input {
 		mouseAcquired = false;
 		relativex = 0;
 		relativey = 0;
+        rememberX = 0;
+        rememberY = 0;
 
 		hidMouse->axes().append("X");
 		hidMouse->axes().append("Y");
@@ -374,7 +377,16 @@ struct XInput : public Input {
             
 			XGrabButton(display, AnyButton, AnyModifier, rootwindow, false,
 					0, GrabModeAsync, GrabModeAsync, rootwindow, 0);
-                        
+
+
+            Window root_return, child_return;
+            int win_x_return = 0, win_y_return = 0;
+            unsigned int mask_return = 0;
+
+            XQueryPointer(display, rootwindow,
+                          &root_return, &child_return, &rememberX, &rememberY,
+                          &win_x_return, &win_y_return, &mask_return);
+
 			mouseAcquired = true;
             
 			return;
@@ -388,7 +400,11 @@ struct XInput : public Input {
 			XUngrabPointer(display, CurrentTime);
 			XUngrabButton(display, AnyButton, AnyModifier, rootwindow);
 			XFixesShowCursor(display, rootwindow);
-			mouseAcquired = false;
+
+            if (rememberX && rememberY)
+                XWarpPointer(display, None, rootwindow, 0, 0, 0, 0, rememberX, rememberY);
+
+            mouseAcquired = false;
 		}  	
 	}
 	

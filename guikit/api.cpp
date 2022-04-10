@@ -232,10 +232,10 @@ auto Window::setBackgroundColor(unsigned color) -> void {
     p.setBackgroundColor(color);
 }
 
-auto Window::setVisible(bool visible) -> void {
+auto Window::setVisible(bool visible) -> bool {
     state.visible = visible;
     synchronizeLayout();
-    p.setVisible(visible);
+    return p.setVisible(visible);
 }
 
 auto Window::restore() -> void {
@@ -1404,8 +1404,8 @@ auto BrowserWindow::setListings( std::vector<BrowserWindow::Listing>& listings )
     p.setListings( listings );
 }
 
-auto BrowserWindow::addCustomButton( std::string text, std::function<bool (std::string filePath, unsigned selection)> onClick, unsigned id ) -> BrowserWindow& {
-    state.buttons.push_back({text, onClick, id});            
+auto BrowserWindow::addCustomButton( std::string text, std::function<bool (std::string filePath, unsigned selection)> onClick, unsigned id, std::string toolTip ) -> BrowserWindow& {
+    state.buttons.push_back({text, toolTip, onClick, id});            
     return *this;
 }
 
@@ -1413,6 +1413,15 @@ auto BrowserWindow::setDefaultButtonText(std::string textOk, std::string textCan
     state.textOk = textOk;
     state.textCancel = textCancel;
     return *this;
+}
+
+auto BrowserWindow::setDefaultButtonTooltip(std::string toolTip) -> BrowserWindow& {
+	state.toolTip = toolTip;
+	return *this;
+}
+
+auto BrowserWindow::hideOkButton() -> void {
+    state.hideOkButton = true;
 }
 
 auto BrowserWindow::transformFilter( std::string description, const std::string& suffix ) -> std::string {

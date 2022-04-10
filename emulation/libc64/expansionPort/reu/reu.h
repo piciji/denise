@@ -50,7 +50,7 @@ struct Reu : ExpansionPort {
     uint8_t busValue;
     uint8_t busValue2;    
 	uint8_t busFloating;
-    bool swapRead;   
+    bool swapRead;
 
     auto writeIo1( uint16_t addr, uint8_t value ) -> void;    
     auto readIo1( uint16_t addr ) -> uint8_t;    

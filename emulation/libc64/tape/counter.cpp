@@ -107,7 +107,7 @@
 // t/a + b^2 / (4 * a^2) = (c + b/(2*a))^2
 // [square root this equation]
 // sqrt( t/a + b^2 / (4 * a^2) ) = c + b/(2*a)
-// [isolate c finaly]
+// [isolate c]
 // c = sqrt( t/a + b^2 / (4 * a^2) ) - b/(2*a)
 // [insert substitution for a and b]
 // c = sqrt( (t * v * k^2) / (h * Pi) +  (r0^2 * 4 * Pi^2 * v^2 * k^4 ) / ( 4 * v^2 * k^2 * h^2 * Pi^2 ) ) 

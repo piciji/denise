@@ -79,7 +79,7 @@ auto Fileloader::load(Emulator::Interface* emulator, Emulator::Interface::Media*
         return this->insertFile(emulator, media, filePath, 1, selection);
     }, IDC_BUTTON );
 
-    if (!*alternateFileDialog && group->isDisk() && dynamic_cast<LIBC64::Interface*>(emulator) ) {
+    if (!*alternateFileDialog && group->isDrive() && dynamic_cast<LIBC64::Interface*>(emulator) ) {
         fileDialogPtr->addCustomButton( trans->get("VDT Autostart"), [this, emulator, media](std::string filePath, unsigned selection) {
 
             if (filePath.empty())
@@ -91,7 +91,12 @@ auto Fileloader::load(Emulator::Interface* emulator, Emulator::Interface::Media*
 
     if (!*alternateFileDialog && dynamic_cast<LIBC64::Interface*>(emulator)) {
         fileDialogPtr->addContentView(IDC_LIST, [this, media, emulator, settings](std::string filePath, unsigned selection) {
-            auto _useTraps = settings->get<bool>("autostart_traps_on_dblclick", false);
+            auto _useTraps = false;
+
+            if (media->group->isTape())
+                _useTraps = settings->get<bool>("autostart_tape_traps_on_dblclick", false);
+            if (media->group->isDisk())
+                _useTraps = settings->get<bool>("autostart_traps_on_dblclick", false);
 
             if (filePath.empty())
                 return false;
@@ -144,16 +149,16 @@ auto Fileloader::load(Emulator::Interface* emulator, Emulator::Interface::Media*
 }
 
 auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore ) -> void {
-
+	auto settings = program->getSettings( emulator );
     static GUIKIT::Setting* alternateFileDialog = globalSettings->getOrInit("alternate_software_preview", false);
+	static GUIKIT::Setting* diskTrapped = settings->getOrInit("autostart_traps_on_dblclick", false);
+	static GUIKIT::Setting* tapeTrapped = settings->getOrInit("autostart_tape_traps_on_dblclick", false);
+	
     auto emuView = EmuConfigView::TabWindow::getView( emulator );
 
     if (*alternateFileDialog && emuView && emuView->visible()) {
         emuView->setFocused();
-    }
-
-    auto settings = program->getSettings( emulator );
-    auto _useTraps = settings->get<bool>("autostart_traps_on_dblclick", false);
+    }	    
 
     if (fileDialogPtr) {
         fileDialogPtr->close();
@@ -166,7 +171,7 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
     fileDialogPtr->setTemplateId( IDD_FILE_TEMPLATE );
 
     if (!*alternateFileDialog && dynamic_cast<LIBC64::Interface*>(emulator)) {
-        fileDialogPtr->addContentView( IDC_LIST, [this, settings, emulator, mIsAcquiredBefore, _useTraps](std::string filePath, unsigned selection) {
+        fileDialogPtr->addContentView( IDC_LIST, [this, settings, emulator, mIsAcquiredBefore](std::string filePath, unsigned selection) {
 
             if (filePath.empty())
                 return false;
@@ -174,7 +179,7 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
             settings->set<std::string>("anyload_path", GUIKIT::File::getPath( filePath ) );
 
             emuThread->lock();
-            autoloader->init( {filePath}, false, _useTraps ? Autoloader::Mode::AutoStartTrapped : Autoloader::Mode::AutoStartNotTrapped, selection );
+            autoloader->init( {filePath}, false, Autoloader::Mode::AutoStartDblClick, selection );
             autoloader->loadFiles();
             emuThread->unlock();
 
@@ -230,14 +235,15 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
     }, IDC_BUTTON );
 
     if (!*alternateFileDialog && dynamic_cast<LIBC64::Interface*>(emulator) ) {
-        fileDialogPtr->addCustomButton( trans->get(!_useTraps ? "VDT Autostart" : "Autostart"), [this, emulator, settings, mIsAcquiredBefore, _useTraps](std::string filePath, unsigned selection) {
+				
+        fileDialogPtr->addCustomButton( trans->get( "VDT Autostart" ), [this, emulator, settings, mIsAcquiredBefore](std::string filePath, unsigned selection) {
 
             if (filePath.empty())
                 return false;
             settings->set<std::string>("anyload_path", GUIKIT::File::getPath( filePath ) );
 
             emuThread->lock();
-            autoloader->init( {filePath}, false, !_useTraps ? Autoloader::Mode::AutoStartTrapped : Autoloader::Mode::AutoStartNotTrapped, selection );
+            autoloader->init( {filePath}, false, Autoloader::Mode::AutoStartSecondary, selection );
             autoloader->loadFiles();
             emuThread->unlock();
 
@@ -247,13 +253,33 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
 
             return true;
         }, IDC_BUTTON1 );
+		
+        if (*diskTrapped || *tapeTrapped) {
+            fileDialogPtr->addCustomButton( trans->get( "Autostart" ), [this, emulator, settings, mIsAcquiredBefore](std::string filePath, unsigned selection) {
+
+                if (filePath.empty())
+                    return false;
+                settings->set<std::string>("anyload_path", GUIKIT::File::getPath( filePath ) );
+
+                emuThread->lock();
+                autoloader->init( {filePath}, false, Autoloader::Mode::AutoStartPrimary, selection );
+                autoloader->loadFiles();
+                emuThread->unlock();
+
+                resetPreview(emulator);
+
+                HideMouseIfWasBefore
+
+                return true;
+            }, IDC_BUTTON2 );
+        }
     }
 
-    fileDialogPtr->setCallbacks( [this, emulator, settings, mIsAcquiredBefore, _useTraps](std::string filePath, unsigned selection) {
+    fileDialogPtr->setCallbacks( [this, emulator, settings, mIsAcquiredBefore](std::string filePath, unsigned selection) {
         settings->set<std::string>("anyload_path", GUIKIT::File::getPath( filePath ) );
 
         emuThread->lock();
-        autoloader->init( {filePath}, false, _useTraps ? Autoloader::Mode::AutoStartTrapped : Autoloader::Mode::AutoStartNotTrapped, selection );
+        autoloader->init( {filePath}, false, Autoloader::Mode::AutoStartDblClick, selection );
         autoloader->loadFiles();
         emuThread->unlock();
 
@@ -270,9 +296,19 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
         HideMouseIfWasBefore
     } );
 
-    fileDialogPtr->resizeTemplate( true, -6 );
+    fileDialogPtr->resizeTemplate( true, -6 );   
 
-    fileDialogPtr->setDefaultButtonText( trans->get(_useTraps ? "VDT Autostart" : "Autostart") );
+    std::string buttonTxt = "Autostart";
+    if (*diskTrapped || *tapeTrapped) {
+        if (!*alternateFileDialog) {
+            fileDialogPtr->hideOkButton();
+            buttonTxt = "Ok";
+        }
+    }
+	
+	fileDialogPtr->setDefaultButtonText( trans->get( buttonTxt ) );
+	
+	//fileDialogPtr->setDefaultButtonTooltip( tooltip );
 
     fileDialogPtr->setWindow( *view ).setNonModal();
 
@@ -288,7 +324,7 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
         settings->set<std::string>("anyload_path", GUIKIT::File::getPath( filePath ) );
 
         emuThread->lock();
-        autoloader->init( {filePath}, false, _useTraps ? Autoloader::Mode::AutoStartTrapped : Autoloader::Mode::AutoStartNotTrapped, fileDialogPtr ? fileDialogPtr->getContentViewSelection() : 0 );
+        autoloader->init( {filePath}, false, Autoloader::Mode::AutoStartDblClick, fileDialogPtr ? fileDialogPtr->getContentViewSelection() : 0 );
         autoloader->loadFiles();
         emuThread->unlock();
     } else if (view) {
@@ -471,6 +507,14 @@ auto Fileloader::previewFile( std::string filePath, Emulator::Interface* emulato
                     }
                 }
 
+                if (mediaGroup.isTape()) {
+                    if ( GUIKIT::Vector::find( mediaGroup.suffix, extension ) ) {
+                        listings = emulator->getTapePreview(data, file.archiveDataSize(0), media);
+                        group = &mediaGroup;
+                        break;
+                    }
+                }
+
                 if (mediaGroup.isProgram()) {
                     if ( GUIKIT::Vector::find( mediaGroup.suffix, extension ) ) {
                         listings = emulator->getProgramPreview(data, file.archiveDataSize(0));
@@ -614,6 +658,10 @@ auto Fileloader::autoload(Emulator::Interface* emulator, Emulator::Interface::Me
         forceStandardKernal = settings->get<bool>("autostart_tape_standard_kernal", false);
     }
 
+    auto useExpansion = emulator->getExpansion();
+    if (useTraps && (useExpansion && !useExpansion->isEmpty()))
+        useTraps = false;
+
     if (forceStandardKernal || useTraps) {
         FirmwareManager::getInstance( emulator )->insertDefault();
     }
@@ -656,7 +704,8 @@ auto Fileloader::insertImage(Emulator::Interface* emulator, Emulator::Interface:
         media->guid = uintptr_t(file);
         emulator->insertMedium(media, data, size);
         emulator->writeProtect(media, false);
-        filePool->assign(_ident(emulator, media->name), file);
+        if (!mediaGroup->isProgram())
+            filePool->assign(_ident(emulator, media->name), file);
     } else {
 
         if (mediaGroup->expansion->pcbs.size())
@@ -671,13 +720,15 @@ auto Fileloader::insertImage(Emulator::Interface* emulator, Emulator::Interface:
     if (mediaGroup->selected && !media->secondary )
         settings->set<unsigned>( _underscore(mediaGroup->name) + "_selected", media->id);
 
-    filePool->assign(_ident(emulator, media->name + "store"), file);
-    filePool->unloadOrphaned();
+    if (!mediaGroup->isProgram())
+        filePool->assign(_ident(emulator, media->name + "store"), file);
 
     fSetting->setPath(file->getFile(), !cmd->autoload);
     fSetting->setFile(item->info.name, !cmd->autoload);
     fSetting->setId(item->id, !cmd->autoload);
     fSetting->setWriteProtect(false, !cmd->autoload);
+
+    filePool->unloadOrphaned();
 
     if (!cmd->noGui) {
         if (!mediaGroup->isExpansion())
@@ -740,7 +791,7 @@ auto Fileloader::showC64Listing( Emulator::Interface* emulator, Emulator::Interf
     if ( !dynamic_cast<LIBC64::Interface*>(emulator) )
         return false;
 
-    if ( mediaGroup->isDisk() || mediaGroup->isProgram())
+    if ( mediaGroup->isDrive() || mediaGroup->isProgram())
         return true;
 
     return false;

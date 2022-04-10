@@ -33,6 +33,8 @@ namespace GUIKIT {
 #include "widgets/squareCanvas.cpp"
 #include "widgets/imageView.cpp"
 
+pApplication::DesktopSession pApplication::desktopSession = pApplication::DesktopSession::Unknown;
+
 auto pApplication::run() -> void {
 
     if(Application::loop) {
@@ -68,7 +70,28 @@ auto pApplication::initialize() -> void {
 //    gtk_style_context_add_provider_for_screen(gdk_screen_get_default(),
 //                                              GTK_STYLE_PROVIDER(cssProvider),
 //                                              GTK_STYLE_PROVIDER_PRIORITY_USER);
+
+    fetchDesktopSession();
 }  
+
+auto pApplication::fetchDesktopSession() -> void {
+    desktopSession = DesktopSession::Unknown;
+
+    const char* currentDesktop = getenv("XDG_CURRENT_DESKTOP");
+
+    if (String::findString(currentDesktop, "Cinnamon"))
+        desktopSession = DesktopSession::Cinnamon;
+    else if (String::findString(currentDesktop, "GNOME"))
+        desktopSession = DesktopSession::Gnome;
+    else if (String::findString(currentDesktop, "KDE"))
+        desktopSession = DesktopSession::KDE;
+    else if (String::findString(currentDesktop, "MATE"))
+        desktopSession = DesktopSession::Mate;
+    else if (String::findString(currentDesktop, "XFCE"))
+        desktopSession = DesktopSession::XFCE;
+    else if (String::findString(currentDesktop, "Unity"))
+        desktopSession = DesktopSession::Unity;
+}
 
 auto pApplication::pasteClipboardCallback(GtkClipboard* clipboard, const gchar* text, gpointer data) -> void {
 	
@@ -95,7 +118,39 @@ auto pApplication::setClipboardText( std::string text ) -> void {
 
 //window
 
-static auto Window_draw_main(GtkWidget* widget, cairo_t* context, Window* window) -> gboolean {
+auto pWindow::onRealize(GtkWidget* widget, pWindow* self) -> void {
+    if (self->window.onRealize)
+        self->window.onRealize();
+}
+
+auto pWindow::mouseMove(GtkWidget* widget, GdkEventButton* event, pWindow* self) -> gboolean {
+    if (self->viewport)
+        return pViewport::mouseMove( widget, event, self->viewport );
+
+    return false;
+}
+
+auto pWindow::mousePress(GtkWidget* widget, GdkEventButton* event, pWindow* self) -> gboolean {
+    if (self->viewport)
+        return pViewport::mousePress( widget, event, self->viewport );
+
+    return false;
+}
+
+auto pWindow::mouseRelease(GtkWidget* widget, GdkEventButton* event, pWindow* self) -> gboolean {
+    if (self->viewport)
+        return pViewport::mouseRelease( widget, event, self->viewport );
+
+    return false;
+}
+
+auto pWindow::monitorsChanged(GdkScreen* screen, pWindow* self) -> void {
+    if (self->viewport) {
+        pViewport::monitorsChanged(screen, self->viewport);
+    }
+}
+
+auto pWindow::drawMain(GtkWidget* widget, cairo_t* context, Window* window) -> gboolean {
 	
     if(!window->p.overrideBackgroundColor) {		
 		auto style = gtk_widget_get_style_context(widget);
@@ -124,7 +179,7 @@ static auto Window_draw_main(GtkWidget* widget, cairo_t* context, Window* window
     return false;
 }
 
-static auto Window_draw(GtkWidget* widget, cairo_t* context, Window* window) -> gboolean {
+auto pWindow::draw(GtkWidget* widget, cairo_t* context, Window* window) -> gboolean {
 	  	
 	auto style = gtk_widget_get_style_context(widget);
 	GtkAllocation allocation;
@@ -133,32 +188,32 @@ static auto Window_draw(GtkWidget* widget, cairo_t* context, Window* window) -> 
 	return false;
 }
 
-static auto Window_close(GtkWidget* widget, GdkEvent* event, Window* window) -> gint {
+auto pWindow::close(GtkWidget* widget, GdkEvent* event, Window* window) -> gint {
     if(window->onClose) window->onClose();
     else window->setVisible(false);
     return true;
 }
 
-static auto Window_drop(GtkWidget* widget, GdkDragContext* context, gint x, gint y, GtkSelectionData* data, guint type, guint timestamp, Window* window) -> void {
+auto pWindow::drop(GtkWidget* widget, GdkDragContext* context, gint x, gint y, GtkSelectionData* data, guint type, guint timestamp, Window* window) -> void {
     if( !window->state.droppable ) return;
     auto paths = getDropPaths(data);
     if(paths.empty()) return;
     if(window->onDrop) window->onDrop(paths);
 }
 
-static auto Window_configure(GtkWidget* widget, GdkEvent* event, pWindow* p) -> gboolean {
+auto pWindow::configure(GtkWidget* widget, GdkEvent* event, pWindow* p) -> gboolean {
 	p->moveWindow( event );
 	return false;
 }
 
-static auto Window_sizeAllocate(GtkWidget* widget, GtkAllocation* allocation, pWindow* p) -> void {
+auto pWindow::sizeAllocate(GtkWidget* widget, GtkAllocation* allocation, pWindow* p) -> void {
     if (allocation->height < 0)
         return;
 
 	p->sizeWindow( allocation );
 }
 
-static auto Window_getPreferredWidth(GtkWidget* widget, int* minimalWidth, int* naturalWidth) -> void {
+auto pWindow::getPreferredWidth(GtkWidget* widget, int* minimalWidth, int* naturalWidth) -> void {
   
 	if(auto p = (pWindow*)g_object_get_data(G_OBJECT(widget), "window")) {		
 		*minimalWidth = 1;
@@ -166,7 +221,7 @@ static auto Window_getPreferredWidth(GtkWidget* widget, int* minimalWidth, int* 
 	}	
 }
 
-static auto Window_getPreferredHeight(GtkWidget* widget, int* minimalHeight, int* naturalHeight) -> void {
+auto pWindow::getPreferredHeight(GtkWidget* widget, int* minimalHeight, int* naturalHeight) -> void {
   
 	if(auto p = (pWindow*)g_object_get_data(G_OBJECT(widget), "window")) {		
 		*minimalHeight = 1;
@@ -174,7 +229,7 @@ static auto Window_getPreferredHeight(GtkWidget* widget, int* minimalHeight, int
 	}
 }
 
-static auto Window_onButtonPressed(GtkWidget* widget, GdkEventButton* event, Window* window) -> gboolean {
+auto pWindow::onButtonPressed(GtkWidget* widget, GdkEventButton* event, Window* window) -> gboolean {
 		
 	if (event->type == GDK_BUTTON_PRESS && event->button == 3) {		
 		if (!window->onContext) return false;
@@ -184,9 +239,8 @@ static auto Window_onButtonPressed(GtkWidget* widget, GdkEventButton* event, Win
 	return true;
 }
 
-static auto Window_stateChange(GtkWidget* widget, GdkEventWindowState* event, Window* window) -> gboolean {
-	window->p.isMinimized = false;
-	
+auto pWindow::stateChange(GtkWidget* widget, GdkEventWindowState* event, Window* window) -> gboolean {
+
 	if(event->new_window_state & GDK_WINDOW_STATE_ICONIFIED) {
 		window->p.isMinimized = true;
 		if(window->onMinimize)
@@ -194,14 +248,23 @@ static auto Window_stateChange(GtkWidget* widget, GdkEventWindowState* event, Wi
 	} else if(event->new_window_state & GDK_WINDOW_STATE_FOCUSED) {
 		if (window->onFocus)
 			window->onFocus();
+
+        if (window->p.isMinimized) {
+            if(window->onUnminimize)
+                window->onUnminimize();
+
+            window->p.isMinimized = false;
+        }
 	}
+
 	return false;
 }
 
 pWindow::pWindow(Window& window, Window::Hints hints) : window(window) {
-		
+
     lastAllocation.width  = lastAllocation.height = 0;
     widget = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    viewport = nullptr;
     
     setIcon( pSystem::getIconFolder() );
 
@@ -219,8 +282,13 @@ pWindow::pWindow(Window& window, Window::Hints hints) : window(window) {
     menu = gtk_menu_bar_new();
     gtk_box_pack_start(GTK_BOX(verticalLayout), menu, false, false, 0);
 	contextMenu = gtk_menu_new();
-    
-    mainDisplay = gtk_fixed_new();
+
+    if (hints == Window::Hints::Video) {
+        mainDisplay = gtk_drawing_area_new();
+        gtk_widget_add_events(mainDisplay, GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_POINTER_MOTION_MASK);
+    } else
+        mainDisplay = gtk_fixed_new();
+
     gtk_box_pack_start(GTK_BOX(verticalLayout), mainDisplay, true, true, 0);
     gtk_widget_show(mainDisplay);
 
@@ -231,20 +299,28 @@ pWindow::pWindow(Window& window, Window::Hints hints) : window(window) {
 		
     setResizable(window.resizable());
 
-    g_signal_connect(G_OBJECT(widget), "delete-event", G_CALLBACK(Window_close), (gpointer)&window);
-	g_signal_connect(G_OBJECT(widget), "draw", G_CALLBACK(Window_draw), (gpointer)&window);
-	g_signal_connect(G_OBJECT(mainDisplay), "draw", G_CALLBACK(Window_draw_main), (gpointer)&window);
+    g_signal_connect(G_OBJECT(widget), "delete-event", G_CALLBACK(pWindow::close), (gpointer)&window);
+	g_signal_connect(G_OBJECT(widget), "draw", G_CALLBACK(pWindow::draw), (gpointer)&window);
+	g_signal_connect(G_OBJECT(mainDisplay), "draw", G_CALLBACK(pWindow::drawMain), (gpointer)&window);
 
-    g_signal_connect(G_OBJECT(widget), "configure-event", G_CALLBACK(Window_configure), (gpointer)this);
-	g_signal_connect(G_OBJECT(mainDisplay), "size-allocate", G_CALLBACK(Window_sizeAllocate), (gpointer)this);
+    g_signal_connect(G_OBJECT(widget), "configure-event", G_CALLBACK(pWindow::configure), (gpointer)this);
+	g_signal_connect(G_OBJECT(mainDisplay), "size-allocate", G_CALLBACK(pWindow::sizeAllocate), (gpointer)this);
 
-    g_signal_connect(G_OBJECT(widget), "drag-data-received", G_CALLBACK(Window_drop), (gpointer)&window);
-	g_signal_connect(G_OBJECT(widget), "button-press-event", G_CALLBACK(Window_onButtonPressed), (gpointer)&window);
-	g_signal_connect(G_OBJECT(widget), "window-state-event", G_CALLBACK(Window_stateChange), (gpointer)&window);
+    g_signal_connect(G_OBJECT(widget), "drag-data-received", G_CALLBACK(pWindow::drop), (gpointer)&window);
+	g_signal_connect(G_OBJECT(widget), "button-press-event", G_CALLBACK(pWindow::onButtonPressed), (gpointer)&window);
+	g_signal_connect(G_OBJECT(widget), "window-state-event", G_CALLBACK(pWindow::stateChange), (gpointer)&window);
+    g_signal_connect(G_OBJECT(mainDisplay), "realize", G_CALLBACK (pWindow::onRealize), (gpointer)this);
+
+    if (hints == Window::Hints::Video) {
+        g_signal_connect(G_OBJECT(mainDisplay), "motion-notify-event", G_CALLBACK(pWindow::mouseMove), (gpointer)this);
+        g_signal_connect(G_OBJECT(mainDisplay), "button-press-event", G_CALLBACK(pWindow::mousePress), (gpointer)this);
+        g_signal_connect(G_OBJECT(mainDisplay), "button-release-event", G_CALLBACK(pWindow::mouseRelease), (gpointer)this);
+        g_signal_connect(gtk_widget_get_screen(mainDisplay), "monitors_changed", G_CALLBACK(pWindow::monitorsChanged), (gpointer)this);
+    }
 	
 	auto widgetClass = GTK_WIDGET_GET_CLASS(mainDisplay);
-	widgetClass->get_preferred_width  = Window_getPreferredWidth;
-	widgetClass->get_preferred_height = Window_getPreferredHeight;
+	widgetClass->get_preferred_width  = pWindow::getPreferredWidth;
+	widgetClass->get_preferred_height = pWindow::getPreferredHeight;
 
 	g_object_set_data(G_OBJECT(widget), "window", (gpointer)this);
 	g_object_set_data(G_OBJECT(mainDisplay), "window", (gpointer)this);
@@ -267,9 +343,8 @@ pWindow::pWindow(Window& window, Window::Hints hints) : window(window) {
 			this->window.state.layout->setGeometry(layoutGeometry);
 		}
 
-        if (this->window.fullScreen() || this->timerWorkaround.enabled()) {
-            if (this->window.onSize) this->window.onSize(Window::SIZE_MODE::Default);
-        }
+        // update layout, otherwise status container is placed at wrong position when switching fullscreen
+        gtk_box_set_child_packing (GTK_BOX(verticalLayout), statusContainer, false, false, 0, GTK_PACK_START);
 
         if (resizing) {
             resizing = false;
@@ -283,11 +358,6 @@ pWindow::pWindow(Window& window, Window::Hints hints) : window(window) {
         timerFullscreen.setEnabled(false);
         locked = false;
         setGeometry(this->window.state.geometry);
-    };
-
-    timerWorkaround.setInterval( 3500 );
-    timerWorkaround.onFinished = [this]() {
-        timerWorkaround.setEnabled(false);
     };
 }
 
@@ -305,16 +375,23 @@ auto pWindow::updateGeometryHint() -> void {
 
     if (!window.fullScreen() && aspect.width && aspect.height) {
 
-        aspect.height = window.state.geometry.width * aspect.height / aspect.width + 0.5;
+        aspect.height = (unsigned)((float)window.state.geometry.width * ((float)aspect.height / (float)aspect.width) + 0.5);
         aspect.width = window.state.geometry.width;
 
         if (window.statusBar())
             statusHeight = window.statusBar()->p.getHeight();
 
         aspect.height += statusHeight + menuHeight;
+        if (pApplication::desktopSession == pApplication::DesktopSession::KDE) {
+            // todo: don't understand why this is necessary, works as expected in Cinnamon, need to test Mate, XFCE, Gnome, Unity
+            if (aspect.height > 21)
+                aspect.height -= 21;
+        }
 
         double ratio = (double)aspect.width / (double)aspect.height;
-        geom.min_aspect = ratio;
+        if (pApplication::desktopSession == pApplication::DesktopSession::Cinnamon)
+            // blocks resizing in KDE, works in Cinnamon, need to test the others
+            geom.min_aspect = ratio;
         geom.max_aspect = ratio;
         hints |= GdkWindowHints::GDK_HINT_ASPECT;
     }
@@ -324,7 +401,7 @@ auto pWindow::updateGeometryHint() -> void {
    // geom.width_inc = 15;
    // geom.height_inc = 15;
 
-    gtk_window_set_geometry_hints(GTK_WINDOW(widget), GTK_WIDGET(mainDisplay), &geom, (GdkWindowHints)hints);
+    gtk_window_set_geometry_hints(GTK_WINDOW(widget), nullptr, &geom, (GdkWindowHints)hints);
 }
 
 auto pWindow::handle() -> uintptr_t {
@@ -374,6 +451,9 @@ auto pWindow::remove(Menu& menu) -> void {
 }
 
 auto pWindow::append(Widget& widget) -> void {
+    if (dynamic_cast<Viewport*>(&widget))
+        viewport = dynamic_cast<pViewport*>(&widget.p);
+
     widget.p.add();
 }
 
@@ -484,7 +564,7 @@ auto pWindow::moveWindow(GdkEvent* event) -> void {
 // the following stuff is so buggy in GTK, wasted two days to get it working.
 // problem: wrong window geometry while toggling menu, status, fullscreen or fullscreen and menu/status toggling same time
 
-auto pWindow::setVisible(bool visible) -> void {
+auto pWindow::setVisible(bool visible) -> bool {
     
 	if (visible)
 		setGeometry( geometry() );	
@@ -499,7 +579,9 @@ auto pWindow::setVisible(bool visible) -> void {
 		setMenuVisible(false);
 		
 	else if (visible)
-		setMenuVisible(true);	
+		setMenuVisible(true);
+	
+	return false; // wait for realize event
 }
 
 auto pWindow::setMenuVisible(bool visible) -> void {
@@ -639,7 +721,6 @@ auto pWindow::setFullScreen(bool fullScreen) -> void {
     if (!window.resizable()) return;
     locked = true;
     timer.setEnabled();
-    timerWorkaround.setEnabled();
 
     if(!fullScreen) {
 

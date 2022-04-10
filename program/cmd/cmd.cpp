@@ -123,6 +123,7 @@ auto Cmd::parse() -> void {
 	bool hasRam0001Test = false;
 	bool hasDefaultTest = false;
 	bool emulateD64WithMoreAccuracy = false; // use G64 emulation
+    bool useCustomICGlueLogic = false;
 
     for( auto& arg : arguments ) {
         if (limitCyclesNext) {
@@ -157,7 +158,7 @@ auto Cmd::parse() -> void {
         
         if (screenshotPathNext) {
             screenshotPathNext = false;     	
-            settingsC64->set<unsigned>( "crop_type", (unsigned)EmuInt::CropType::Monitor );            
+            settingsC64->set<unsigned>( "crop_type", (unsigned)EmuInt::CropType::Monitor );
             screenshotPath = arg; 
             continue;
         }
@@ -278,6 +279,8 @@ auto Cmd::parse() -> void {
 						hasFuxxorTest = true;
 					else if (!hasRam0001Test && GUIKIT::String::foundSubStr( temp, "ram0001" ))
 						hasRam0001Test = true;
+                    else if (!useCustomICGlueLogic && GUIKIT::String::foundSubStr( temp, "reutiming2" ) && !GUIKIT::String::foundSubStr( temp, "m2." ) )
+                        useCustomICGlueLogic = true;
                     else if (!emulateD64WithMoreAccuracy && GUIKIT::String::foundSubStr( temp, "rpm3." ))
                         emulateD64WithMoreAccuracy = true;
 									
@@ -303,7 +306,6 @@ auto Cmd::parse() -> void {
 		dynamic_cast<LIBC64::Interface*> (emuC64)->activateDebugCart( cycles );
 		globalSettings->set<bool>("video_sync", false);
         globalSettings->set<bool>("threaded_renderer", false);
-		globalSettings->set<bool>("fps_limit", false);
 		globalSettings->set<bool>("fps", true);
 		globalSettings->set("video_screen_text", 0);
 		settingsC64->set<bool>("video_cycle_accuracy", true);
@@ -344,6 +346,9 @@ auto Cmd::parse() -> void {
 
     if(emulateD64WithMoreAccuracy)
         settingsC64->set<unsigned>("Emulate_D64_More_Accurate", 1);
+
+    if(useCustomICGlueLogic)
+        settingsC64->set<bool>("Custom_IC_Glue_Logic", true);
 	
 	if (fastTestbench)
 		autostartPrg = 1;
@@ -426,8 +431,9 @@ auto Cmd::collectAllowedSuffix() -> std::vector<std::string> {
             for (auto suffix : mediaGroup.suffix) {
                 
                 GUIKIT::String::toLowerCase( suffix );
-                
-                allowedSuffix.push_back( suffix );
+
+                if (!GUIKIT::Vector::find(allowedSuffix, suffix))
+                    allowedSuffix.push_back( suffix );
             }
         }
     }

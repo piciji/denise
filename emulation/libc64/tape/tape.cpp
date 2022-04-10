@@ -7,12 +7,13 @@
 #include "write.cpp"
 #include "serialization.cpp"
 #include "../system/keyBuffer.h"
+#include "../traps/traps.h"
 
 namespace LIBC64 {
     
 Tape* tape = nullptr;
 
-Tape::Tape( Emulator::Interface::Media* mediaConnected ) {
+Tape::Tape( Emulator::Interface::Media* mediaConnected ) : structure(this) {
     
     media = nullptr;
 	this->mediaConnected = mediaConnected;
@@ -27,8 +28,13 @@ Tape::Tape( Emulator::Interface::Media* mediaConnected ) {
         motorIn = false;
         updateCounter();
         updateDeviceState();
-        if (autoStarted && (counter >= 15))
-            system->motorChange( false );
+        if (autoStarted) {
+            if (traps->installed)
+                return;
+
+            if (counter >= 15)
+                system->motorChange( false );
+        }
     };
 	
     worker = [this]() {
@@ -192,7 +198,7 @@ auto Tape::setMode( unsigned mode, bool buttonPress ) -> void {
         case Mode::Record:
 			senseOut( true );
             directionForward = true;
-			writeClock = sysTimer.clock;	
+			writeClock = writeCounterClock = sysTimer.clock;
 			// a write changes the file pos, so we have to invalidate the read buffer
 			// because it's content is not aligned anymore
 			fetchPos = 0;
@@ -212,13 +218,13 @@ auto Tape::reset(bool fromLoad) -> void {
     counter = 0;
 	counterOffset = 0;
 	writePos = 0;
-	writeClock = sysTimer.clock;
+	writeClock = writeCounterClock = sysTimer.clock;
 	cycles = 0;	
 	directionForward = lastDirectionForward = true;
 	fetchPos = 0;
 	fetchSize = 0;
 	motorIn = false;
-	pos = 0x14;
+	curPos = 0x14;
 	mode = Mode::Stop;
 	nextMode = Mode::Stop;
 	writeBit = true;	
@@ -232,8 +238,8 @@ auto Tape::load(Emulator::Interface::Media* media, uint8_t* data, unsigned size)
     this->media = media;
 	unload();
 	
-	this->data = data;
-    this->size = size;
+	this->rawData = data;
+    this->rawSize = size;
     
     if (!readHeader()) {
 		loaded = false;
@@ -243,7 +249,7 @@ auto Tape::load(Emulator::Interface::Media* media, uint8_t* data, unsigned size)
 	loaded = true;
 
 	cyclesTotal = 0;
-	pos = 0x14;
+	curPos = 0x14;
 	directionForward = lastDirectionForward = true;
 	mode = nextMode = Mode::Stop;
 
@@ -255,7 +261,9 @@ auto Tape::load(Emulator::Interface::Media* media, uint8_t* data, unsigned size)
 			break;
 
 		cyclesTotal += gaps;
-	}			
+	}
+
+    structure.setData( rawData, rawSize );
 	
 	reset(true);
 }
@@ -264,8 +272,8 @@ auto Tape::unload() -> void {
     setMode( Mode::Stop );
 	writeBuffer();
 	
-	this->size = 0;
-	this->data = 0;
+	this->rawSize = 0;
+	this->rawData = nullptr;
 	loaded = false;
 	motorIn = false;
     writeQuestionState = 0;
@@ -274,13 +282,13 @@ auto Tape::unload() -> void {
 
 auto Tape::readHeader() -> bool {
 	
-	if (size < 21)
+	if (rawSize < 21)
 		return false;
 	
 	uint8_t* header;
 	
-	if (data)		
-		header = data;
+	if (rawData)
+		header = rawData;
 	
 	else {		
 		header = new uint8_t[20];
@@ -294,7 +302,7 @@ auto Tape::readHeader() -> bool {
 			
 	version = header[0xc];
 	
-	if (!data)
+	if (!rawData)
 		delete[] header;
 			
 	return true;
@@ -308,8 +316,32 @@ auto Tape::setWobble(bool state) -> void {
 	wobble = state;
 }
 
-auto Tape::selectListing( unsigned pos ) -> void {
-    // at the moment only position at 0 possible
+auto Tape::getListing() -> std::vector<Emulator::Interface::Listing>& {
+
+    return structure.getListing();
+}
+
+auto Tape::selectListing( unsigned pos, bool useTraps ) -> void {
+
+    if (pos == 0)
+        pos = 1;
+
+    curPos = 0x14;
+    if (structure.setFile(pos - 1))  {
+        if (pos > 1) {
+            advanceCounterToPos( structure.getCurFile()->offset );
+        }
+    }
+
+    fetchPos = 0;
+
+    if (useTraps) {
+        if (!traps->testForComplexTapeLoader())
+            traps->installTape();
+    }
+
+    if ( system->kernalBootComplete )
+        return;
 
     KeyBuffer::Action action;
     action.mode = KeyBuffer::Mode::Input;
@@ -329,13 +361,17 @@ auto Tape::selectListing( unsigned pos ) -> void {
     action.callbackId = 4;
     action.mode = KeyBuffer::Mode::WaitFor;
     action.buffer = {'R', 'E', 'A', 'D', 'Y', '.'};
-    action.delay = 800;
+    action.delay = 800; // seconds
     action.alternateBuffer.clear();
     action.blinkingCursor = true;
     action.callback = nullptr;
-    action.waitCallback = [this]() {
+    action.waitCallback = [this]( KeyBuffer::Action* action) {
         if (system->checkForAutoStarter()) {
-            system->keyBuffer->reset();
+			// keep check for "ready" alive, some games autostart first file and then load another file without autostarting it
+			action->position = 0;
+			action->delay = 5000; // frames
+			action->waitCallback = nullptr;
+         //   system->keyBuffer->reset();
             system->interface->autoStartFinish(true);
         }
     };
@@ -343,16 +379,52 @@ auto Tape::selectListing( unsigned pos ) -> void {
 
     action.callbackId = 5;
     action.callback = [this]() {
-        system->interface->autoStartFinish(false);
+        system->interface->autoStartFinish(true);
     };
     action.waitCallback = nullptr;
     action.mode = KeyBuffer::Mode::Input;
-    action.buffer = {'R', 'U', 'N', '\r'};    
+    action.buffer = {'R', 'U', 'N', '\r'};
     system->keyBuffer->add(action);
 
     system->keyBuffer->forceDefaultKernalDelay(); // a possible speeder use shorter boot time
 
     autoStarted = true;
+}
+
+auto Tape::advanceCounterToPos(unsigned pos) -> void {
+    bool _longGap;
+    unsigned gaps;
+    curPos = 0x14; // skip tape header
+    fetchPos = 0;
+
+    while( true ) {
+        gaps = fetchGap(_longGap);
+
+        cycles += gaps;
+
+        if (gaps == 0 || (curPos >= pos))
+            break;
+    }
+
+    updateCounter();
+    curPos = pos;
+    fetchPos = 0;
+    gapsRemaining = 0;
+}
+
+auto Tape::setPosition( unsigned pos, bool find ) -> void {
+
+    if (find) {
+        sysTimer.remove(&worker);
+        curPos = pos;
+    } else {
+        sysTimer.remove(&motorOff);
+        sysTimer.add(&worker, 1, Emulator::SystemTimer::Action::UpdateExisting);
+
+        advanceCounterToPos(pos);
+    }
+
+    fetchPos = 0;
 }
 
 }

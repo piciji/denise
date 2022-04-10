@@ -223,13 +223,13 @@ struct OpenGLText {
             
             totalWidth += (glyph->advance.x >> 6 );            
             
-            upHeight = std::max(upHeight, (unsigned)(glyph->bitmap.rows ));
+            upHeight = std::max<unsigned>(upHeight, (unsigned)(glyph->bitmap.rows ));
 			
 			if (glyph->bitmap_top < 0)
 				continue;
             
             if (glyph->bitmap.rows > glyph->bitmap_top)
-                downHeight = std::max(downHeight, glyph->bitmap.rows - glyph->bitmap_top);
+                downHeight = std::max<unsigned>(downHeight, glyph->bitmap.rows - glyph->bitmap_top);
         }
         
         upHeight += 1;

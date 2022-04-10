@@ -181,23 +181,28 @@ auto pStatusBar::update() -> void {
 	}
 }
 
-auto pStatusBar::updateTooltip( StatusBar::Part& part ) -> void {
-    if (part.tooltip.empty())
-        return;
-
-    if (part.position >= usedWidgets.size())
-        return;
-
-    if (!statusBar.window() || !gridWidget)
-        return;
-
-    Widget* widget = usedWidgets[ part.position ];
-
-    gtk_widget_set_tooltip_text(widget->p.gtkWidget, part.tooltip.c_str());
-}
+//auto pStatusBar::updateTooltip( StatusBar::Part& part ) -> void {
+//    if (part.tooltip.empty())
+//        return;
+//
+//    if (part.position >= usedWidgets.size())
+//        return;
+//
+//    if (!statusBar.window() || !gridWidget)
+//        return;
+//
+//    Widget* widget = usedWidgets[ part.position ];
+//
+//    gtk_widget_set_tooltip_text(widget->p.gtkWidget, part.tooltip.c_str());
+//}
 
 auto pStatusBar::updatePart( StatusBar::Part& part ) -> void {
-	
+
+    if (part.position < 0) {
+        statusBar.state.updatePending = true;
+        return;
+    }
+
 	if (part.position >= usedWidgets.size())
 		return;
 

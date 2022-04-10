@@ -120,9 +120,9 @@ auto pBrowserWindow::file(bool save) -> std::string {
 	gtk_dialog_add_button( (GtkDialog*)dialog, _cancel, GTK_RESPONSE_CANCEL );	
 	
 	for(auto& button : state.buttons)		
-		gtk_dialog_add_button( (GtkDialog*)dialog, button.text.c_str(), button.id );	
-	
-	gtk_dialog_add_button( (GtkDialog*)dialog, _ok, GTK_RESPONSE_ACCEPT );
+		gtk_dialog_add_button( (GtkDialog*)dialog, button.text.c_str(), button.id );
+
+    gtk_dialog_add_button( (GtkDialog*)dialog, _ok, GTK_RESPONSE_ACCEPT );
 
     g_signal_connect(G_OBJECT(dialog), "delete-event", G_CALLBACK(pBrowserWindow::closeHandler), (gpointer)this);
 
@@ -160,6 +160,13 @@ auto pBrowserWindow::file(bool save) -> std::string {
 		close();
 	} else
 		gtk_widget_show_all( GTK_WIDGET(dialog) );
+
+    if (state.hideOkButton) {
+        // allow to add Ok button first and hide later, otherwise the double click action doesn't work
+        GtkWidget* okButton = gtk_dialog_get_widget_for_response( GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT );
+        if (okButton)
+            gtk_widget_set_visible(okButton, false);
+    }
 	
     return name;	
 }

@@ -108,6 +108,9 @@ struct DVideo : Video, RenderThread {
         if (settings.filter == Video::Filter::Nearest) flags.filter = D3DTEXF_POINT;
         else if (settings.filter == Video::Filter::Linear) flags.filter = D3DTEXF_LINEAR;
 
+		lpD3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP );
+		lpD3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP );
+		
         lpD3DDevice->SetSamplerState(0, D3DSAMP_MINFILTER, flags.filter);
         lpD3DDevice->SetSamplerState(0, D3DSAMP_MAGFILTER, flags.filter);
         lpD3DDevice->SetSamplerState(0, D3DSAMP_MIPFILTER, flags.filter);
@@ -116,20 +119,20 @@ struct DVideo : Video, RenderThread {
     auto setVertex(unsigned src_w, unsigned src_h, unsigned tex_w, unsigned tex_h, unsigned dest_x, unsigned dest_y, unsigned dest_w, unsigned dest_h) -> void {
         d3dvertex vertex[4];
 
-        vertex[0].x = vertex[2].x = ((float) dest_x) - 0.5f;
-        vertex[1].x = vertex[3].x = ((float) dest_x + (float) dest_w) - 0.5f;
-        vertex[0].y = vertex[1].y = ((float) dest_y) - 0.5f;
-        vertex[2].y = vertex[3].y = ((float) dest_y + (float) dest_h) - 0.5f;
+        vertex[0].x = vertex[2].x = ((float) dest_x);
+        vertex[1].x = vertex[3].x = ((float) dest_x + (float) dest_w);
+        vertex[0].y = vertex[1].y = ((float) dest_y);
+        vertex[2].y = vertex[3].y = ((float) dest_y + (float) dest_h);
 
         vertex[0].z = vertex[1].z = 1.0;
         vertex[2].z = vertex[3].z = 1.0;
         vertex[0].rhw = vertex[1].rhw = 1.0;
         vertex[2].rhw = vertex[3].rhw = 1.0;
 
-        vertex[0].u = vertex[2].u = 0;
-        vertex[1].u = vertex[3].u = (float) src_w / (float) tex_w;
-        vertex[0].v = vertex[1].v = 0;
-        vertex[2].v = vertex[3].v = (float) src_h / (float) tex_h;
+        vertex[0].u = vertex[2].u = 0.0;
+        vertex[1].u = vertex[3].u = ((float) (src_w) - 0.5f) / (float) tex_w;
+        vertex[0].v = vertex[1].v = 0.0;
+        vertex[2].v = vertex[3].v = ((float) (src_h) - 0.5f) / (float) tex_h;
 
         vertex_buffer->Lock(0, sizeof (d3dvertex) * 4, (void**) &vertex_ptr, 0);
         std::memcpy(vertex_ptr, vertex, sizeof (d3dvertex) * 4);
@@ -252,7 +255,7 @@ struct DVideo : Video, RenderThread {
         lpD3DDevice->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
         lpD3DDevice->SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE); //Textur alpha
         lpD3DDevice->SetTextureStageState(0, D3DTSS_ALPHAARG2, D3DTA_DIFFUSE); //Vertex alpha -ignore
-
+		
         lpD3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
         lpD3DDevice->SetRenderState(D3DRS_LIGHTING, false);
         lpD3DDevice->SetRenderState(D3DRS_ZENABLE, false);
@@ -383,7 +386,6 @@ struct DVideo : Video, RenderThread {
         } else {
             resizeMutex.lock();
             if (surface) {
-                fixLinearFilter();
                 surface->UnlockRect();
                 dxRelease(surface);
             }
@@ -499,8 +501,6 @@ struct DVideo : Video, RenderThread {
 
             std::memcpy( d3dlr.pBits, renderBuffer->data, textureWidth * textureHeight * 4 );
 
-            fixLinearFilter();
-
             disallowShader = renderBuffer->disallowShader;
 
             surface->UnlockRect();
@@ -586,6 +586,7 @@ struct DVideo : Video, RenderThread {
 
     auto clear() -> void {
         wait();
+        lost = true;
         _clear();
     }
 
@@ -684,28 +685,9 @@ struct DVideo : Video, RenderThread {
         if (!surface)
             return;
 
-        fixLinearFilter();
-
         // unlock now
         surface->UnlockRect();
         dxRelease(surface);
-    }
-
-    inline auto fixLinearFilter() -> void {
-        // first we duplicate the last pixel in each line
-        // to fix a sporadically bug for linear filtering in last vertical line
-        // the filter uses adjacent pixel to calcluate actual pixel
-        // the duplicated vertical line is not visible but used for filter calculations
-        unsigned* data = (unsigned*) d3dlr.pBits;
-        unsigned pitch = d3dlr.Pitch;
-
-        data += inputWidth;
-        pitch >>= 2;
-
-        for(unsigned _h = 0; _h < inputHeight; _h++) {
-            *data = *(data-1);
-            data += pitch;
-        }
     }
 
     auto resize(RenderBuffer* renderBuffer, unsigned w, unsigned h) -> void {

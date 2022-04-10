@@ -16,10 +16,16 @@ struct pApplication {
 	static auto requestClipboardText() -> void;
     static auto setClipboardText( std::string text ) -> void;
 	static auto pasteClipboardCallback(GtkClipboard* clipboard, const gchar* text, gpointer data) -> void;
+    static auto fetchDesktopSession() -> void;
+
+    enum class DesktopSession { Cinnamon, KDE, Gnome, XFCE, Mate, Unity, Unknown };
+
+    static DesktopSession desktopSession;
 };
 
 struct pWindow {
     Window& window;
+    pViewport* viewport = nullptr;
     GtkWidget* widget;
     GtkWidget* verticalLayout;
     GtkWidget* menu;
@@ -31,12 +37,10 @@ struct pWindow {
     unsigned backgroundColor;
     unsigned statusHeight = 0;
     unsigned menuHeight = 0;
-    PangoFontDescription* pStatusfont = nullptr;
     bool locked = false;
     Timer timer;
 	Timer timerResize;
 	Timer timerFullscreen;
-    Timer timerWorkaround;
     GdkCursor* cursor = nullptr;
 	bool isMinimized = false;
     bool resizing = false;
@@ -52,7 +56,7 @@ struct pWindow {
     auto setGeometry(Geometry geometry) -> void;
     auto setBackgroundColor(unsigned color) -> void;
     auto setFocused() -> void;
-    auto setVisible(bool visible) -> void;
+    auto setVisible(bool visible) -> bool;
     auto setResizable(bool resizable) -> void;
     auto setTitle(std::string text) -> void;
     auto setMenuVisible(bool visible) -> void;
@@ -76,6 +80,22 @@ struct pWindow {
     auto getScrollbarWidth() -> unsigned { return 15; }
     auto applyAspectRatio() -> void;
     auto updateGeometryHint() -> void;
+    static auto mouseMove(GtkWidget* widget, GdkEventButton* event, pWindow* self) -> gboolean;
+    static auto mousePress(GtkWidget* widget, GdkEventButton* event, pWindow* self) -> gboolean;
+    static auto mouseRelease(GtkWidget* widget, GdkEventButton* event, pWindow* self) -> gboolean;
+    static auto monitorsChanged(GdkScreen* screen, pWindow* self) -> void;
+
+    static auto drawMain(GtkWidget* widget, cairo_t* context, Window* window) -> gboolean;
+    static auto draw(GtkWidget* widget, cairo_t* context, Window* window) -> gboolean;
+    static auto close(GtkWidget* widget, GdkEvent* event, Window* window) -> gint;
+    static auto drop(GtkWidget* widget, GdkDragContext* context, gint x, gint y, GtkSelectionData* data, guint type, guint timestamp, Window* window) -> void;
+    static auto configure(GtkWidget* widget, GdkEvent* event, pWindow* p) -> gboolean;
+    static auto sizeAllocate(GtkWidget* widget, GtkAllocation* allocation, pWindow* p) -> void;
+    static auto getPreferredWidth(GtkWidget* widget, int* minimalWidth, int* naturalWidth) -> void;
+    static auto getPreferredHeight(GtkWidget* widget, int* minimalHeight, int* naturalHeight) -> void;
+    static auto onButtonPressed(GtkWidget* widget, GdkEventButton* event, Window* window) -> gboolean;
+    static auto stateChange(GtkWidget* widget, GdkEventWindowState* event, Window* window) -> gboolean;
+    static auto onRealize(GtkWidget* widget, pWindow* self) -> void;
 	
 	auto moveWindow(GdkEvent* event) -> void;
 	auto sizeWindow(GtkAllocation* allocation) -> void;
@@ -101,7 +121,7 @@ struct pStatusBar {
         
     auto update() -> void;
     auto updatePart( StatusBar::Part& part ) -> void;
-    auto updateTooltip( StatusBar::Part& part ) -> void;
+    //auto updateTooltip( StatusBar::Part& part ) -> void;
     auto setVisible(bool visible) -> void;
     auto getHeight() -> unsigned;    
 	auto getWidth(std::string text) -> unsigned { return 0; }
@@ -141,7 +161,7 @@ struct pWidget {
 	auto getMinimumSize() -> Size;
     auto getMinimumFontSize() -> Size;
     auto setTooltip(std::string tooltip) -> void;
-    auto add() -> void;
+    virtual auto add() -> void;
     virtual auto init() -> void {}
     virtual auto getContainerWidget(int selection = -1) -> GtkWidget* { return nullptr; }
     virtual auto getDisplacement() -> Position { return {0,0}; }
@@ -486,6 +506,8 @@ struct pViewport : public pWidget {
 
     auto handle() -> uintptr_t;
     auto setDroppable(bool droppable) -> void;
+    auto setGeometry(Geometry geometry) -> void;
+    auto add() -> void;
     static auto dropEvent(GtkWidget* widget, GdkDragContext* context, gint x, gint y, GtkSelectionData* data, guint type, guint timestamp, Viewport* viewport) -> void;
     static auto mouseLeave(GtkWidget* widget, GdkEventButton* event, pViewport* self) -> gboolean;
     static auto mouseMove(GtkWidget* widget, GdkEventButton* event, pViewport* self) -> gboolean;

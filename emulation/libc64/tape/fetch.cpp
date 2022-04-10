@@ -36,7 +36,7 @@ auto Tape::nextGap() -> unsigned {
 		// there are no long gaps possible
 		return shortGap( byteBefore );
     
-    unsigned rememberPos = pos;
+    unsigned rememberPos = curPos;
 	
 	if ( !readBackward( byte, 3 ) || byte ) {
         // short gap because we have rewinded back completly and
@@ -44,7 +44,7 @@ auto Tape::nextGap() -> unsigned {
         // or byte is non zero, see explanation above
 		
 		// forward to position before current position
-        while( rememberPos != pos )
+        while( rememberPos != curPos )
             if(!readForward( byte ))
 				return 0;
         
@@ -90,7 +90,7 @@ auto Tape::nextGap() -> unsigned {
 	
 	// read forward from known aligned position
 	// remember if previous gap was long or not
-	while( pos <= rememberPos )		
+	while( curPos <= rememberPos )
 		gap = fetchGap( _longGap );
     
 	//  move to beginning of previous gap, depends if long or short gap
@@ -148,7 +148,7 @@ inline auto Tape::randomizeGap( unsigned gap ) -> unsigned {
         return gap;
     
     // for realistic behaviour we need some randomness
-	// beware of Jars of Revenge.
+	// beware of Jars of Revenge, Time Traveller
 	int adjust = (rand() & 15 ) - 5;
 	
 	if ( (adjust >= 0) || (gap > -adjust) )
@@ -171,13 +171,13 @@ auto Tape::readForward( uint8_t& byte, unsigned count ) -> bool {
 
 auto Tape::readForward( uint8_t& byte ) -> bool {
 
-    if (data) {
+    if (rawData) {
         // tape image was fully loaded because of compressed file
         // tape image can't be written in this case
-        if (pos == size)
+        if (curPos == rawSize)
             return false;
 
-        byte = data[pos++];		
+        byte = rawData[curPos++];
 
         return true;
     }
@@ -187,14 +187,14 @@ auto Tape::readForward( uint8_t& byte ) -> bool {
    
     if (fetchPos == 0) {
 
-        fetchSize = read( fetchData, TAPE_FETCH_SIZE, pos );
+        fetchSize = read( fetchData, TAPE_FETCH_SIZE, curPos );
 
         if (fetchSize == 0)
             return false;
     }
 
     byte = fetchData[fetchPos++];
-    pos++;
+    curPos++;
 
     if (fetchPos == fetchSize)
         fetchPos = 0;
@@ -215,14 +215,14 @@ auto Tape::readBackward( uint8_t& byte, unsigned count ) -> bool {
 
 auto Tape::readBackward( uint8_t& byte ) -> bool {
     
-    if (pos == 0x14) //end of header
+    if (curPos == 0x14) //end of header
         return false;
-    
-    pos--;
-            
-    if (data) {
 
-        byte = data[pos];		
+    curPos--;
+            
+    if (rawData) {
+
+        byte = rawData[curPos];
 
         return true;
     }     
@@ -230,10 +230,10 @@ auto Tape::readBackward( uint8_t& byte ) -> bool {
     if (fetchPos == 0) {
         
         unsigned fetchStart = 0;
-        fetchSize = pos + 1;
+        fetchSize = curPos + 1;
 
-        if (pos > TAPE_FETCH_SIZE) {
-            fetchStart = pos - TAPE_FETCH_SIZE + 1;
+        if (curPos > TAPE_FETCH_SIZE) {
+            fetchStart = curPos - TAPE_FETCH_SIZE + 1;
             fetchSize = TAPE_FETCH_SIZE;
         } 
 

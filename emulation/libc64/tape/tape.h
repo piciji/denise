@@ -3,6 +3,7 @@
 
 #include "../../tools/serializer.h"
 #include "../system/system.h"
+#include "structure.h"
 
 #define TAPE_MOTOR_DELAY 32000
 #define TAPE_ZERO_GAP 20000
@@ -25,7 +26,9 @@ struct Tape {
 	std::function<void ()> setReadTransition = [](){};
     std::function<unsigned (uint8_t*, unsigned, unsigned)> read = [](uint8_t* buffer, unsigned length, unsigned offset){ return 0; };
 	std::function<unsigned (uint8_t*, unsigned, unsigned)> write = [](uint8_t* buffer, unsigned length, unsigned offset){ return 0; };
-	std::function<void (bool)> senseOut = [](bool state){};	
+	std::function<void (bool)> senseOut = [](bool state){};
+
+    TapeStructure structure;
 
 	auto setEnabled( bool state ) -> void;
 	auto isEnabled() -> bool { return enabled; }
@@ -42,22 +45,24 @@ struct Tape {
 	auto createTap( unsigned& imageSize ) -> uint8_t*;
     auto serialize(Emulator::Serializer& s) -> void;
     auto serializeLight(Emulator::Serializer& s) -> void;
-    auto selectListing( unsigned pos ) -> void;
+    auto selectListing( unsigned pos, bool useTraps = false ) -> void;
 	auto setWobble(bool state) -> void;
 	auto hasWobble() -> bool { return wobble; }
     auto getMedia() -> Emulator::Interface::Media* { return media; }
 	auto getMediaConnected() -> Emulator::Interface::Media* { return mediaConnected; }
     auto updateDeviceState() -> void;
+    auto getListing() -> std::vector<Emulator::Interface::Listing>&;
+    auto setPosition( unsigned pos, bool find ) -> void;
 	
-protected:	
+protected:
 	Emulator::Interface::Media* media; 
 	Emulator::Interface::Media* mediaConnected; // update status LED if there was no tape inserted
     std::function<void ()> worker;
     std::function<void ()> motorOff;
 	std::function<void ()> delayMode;
-    
-    uint8_t* data = nullptr;
-    unsigned size;           
+
+    uint8_t* rawData = nullptr;
+    unsigned rawSize;
     
 	uint8_t* fetchData;
 	uint8_t* writeData;
@@ -72,6 +77,7 @@ protected:
     uint8_t writeQuestionState = 0;
 	bool writeBit;
     unsigned writeClock;
+    unsigned writeCounterClock;
     uint64_t cycles;
     uint64_t cycles999;
 	unsigned cylcesPerSecond;
@@ -87,7 +93,7 @@ protected:
     uint8_t version;
     unsigned fetchPos; // position in fetched chunk
     unsigned fetchSize; // size of fetched chunk
-    unsigned pos; // overall position in tap file
+    unsigned curPos; // overall position in tap file
 	bool wobble = false;    
     
     auto readHeader() -> bool;			
@@ -101,7 +107,8 @@ protected:
     
 	// write
 	auto addByteToWriteBuffer(uint8_t byte) -> void;
-	auto writeBuffer() -> void;	
+	auto writeBuffer() -> void;
+    auto advanceWriteCounter() -> void;
 	
     // fetch
     auto nextGap() -> unsigned;
@@ -113,6 +120,8 @@ protected:
     auto readBackward( uint8_t& byte ) -> bool;
     auto readForward( uint8_t& byte, unsigned count ) -> bool;
     auto readForward( uint8_t& byte ) -> bool;
+
+	auto advanceCounterToPos(unsigned pos) -> void;
 };    
     
 extern Tape* tape;
