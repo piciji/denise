@@ -132,6 +132,7 @@
         } else
             frame.size.width = listView->geometry().width;
             
+        frame.origin.x -= 5;
         NSRectFill(frame);
     }
     

@@ -13,6 +13,7 @@ namespace DRIVER { struct CGL; }
 }
 -(id) initWith:(DRIVER::CGL*)video pixelFormat:(NSOpenGLPixelFormat*)pixelFormat;
 -(void) reshape;
+-(void) update;
 @end
 
 namespace DRIVER {
@@ -22,10 +23,14 @@ struct CGL : public Video, OpenGL, RenderThread {
     NSView* handle;
     bool hasRendererContext = false;
     bool useVRR = false;
+    bool useResizing = false;
+    bool oldResizeBehaviour = false;
 
     bool init() {
         term();
         bool res;
+        // before Mojave
+        oldResizeBehaviour = NSAppKitVersionNumber < NSAppKitVersionNumber10_14;
 
         @autoreleasepool {
             NSOpenGLPixelFormatAttribute attributes[] = {
@@ -74,6 +79,10 @@ struct CGL : public Video, OpenGL, RenderThread {
         return init();
     }
 
+    auto hintResizing(bool state) -> void {
+        useResizing = state;
+    }
+
     void term() {
         wait();
         OpenGL::term();
@@ -88,12 +97,21 @@ struct CGL : public Video, OpenGL, RenderThread {
     auto lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height) -> bool {
         if (settings.threaded)
             return RenderThread::lock(data, pitch, _width, _height);
+        
+        bool _useResizing = useResizing;
+        if (_useResizing)
+            resizeMutex.lock();
 
         makeCurrent(true);
         if (OpenGL::size(_width, _height)) {
             integerScalingHeight = _height;
             calcViewport();
         }
+        if (_useResizing) {
+            clearCurrent();
+            resizeMutex.unlock();
+        }
+
         return OpenGL::lock(data, pitch);
     }
 
@@ -101,11 +119,20 @@ struct CGL : public Video, OpenGL, RenderThread {
         if (settings.threaded)
             return RenderThread::lock(data, pitch, _width, _height);
 
+        bool _useResizing = useResizing;
+        if (_useResizing)
+            resizeMutex.lock();
+
         makeCurrent(true);
         if (OpenGL::size(_width, _height)) {
             integerScalingHeight = _height;
             calcViewport();
         }
+        if (_useResizing) {
+            clearCurrent();
+            resizeMutex.unlock();
+        }
+
         return OpenGL::lock(data, pitch);
     }
 
@@ -113,11 +140,20 @@ struct CGL : public Video, OpenGL, RenderThread {
         if (settings.threaded)
             return RenderThread::lock(data, pitch, _width, _height);
 
+        bool _useResizing = useResizing;
+        if (_useResizing)
+            resizeMutex.lock();
+
         makeCurrent(true);
         if (OpenGL::size(_width, _height)) {
             integerScalingHeight = _height;
             calcViewport();
         }
+        if (_useResizing) {
+            clearCurrent();
+            resizeMutex.unlock();
+        }
+
         return OpenGL::lock(data, pitch);
     }
 
@@ -168,13 +204,12 @@ struct CGL : public Video, OpenGL, RenderThread {
         resizeWindow(true);
     }
     
-    //auto shouldResizeWhenThreaded() -> bool { return NSAppKitVersionNumber < NSAppKitVersionNumber10_14; }
-        
     auto needResizingPreparations(bool useEmuThread) -> bool {
-        return (useEmuThread) && (settings.synchronize || settings.vrr);
+        return false;
+        //return (useEmuThread) && (settings.synchronize || settings.vrr);
     }
     
-    auto prepareResizing() -> void {
+    auto prepareResizing() -> void { return;
         if (!view)
             return;
         wait();
@@ -189,7 +224,7 @@ struct CGL : public Video, OpenGL, RenderThread {
         }
     }
     
-    auto endResizing() -> void {
+    auto endResizing() -> void { return;
         if (!view)
             return;
         wait();
@@ -205,13 +240,18 @@ struct CGL : public Video, OpenGL, RenderThread {
     }
     
     auto lockResize() -> void {
+        if (!oldResizeBehaviour)
+            return;
         resizeMutex.lock();
         resizeMutexThreaded.lock();
     }
     
     auto unlockResize() -> void {
-        if (NSAppKitVersionNumber < NSAppKitVersionNumber10_14) // before Mojave
-            _redraw(false, settings.threaded ? getLastBufferToRender() : nullptr);
+        if (!oldResizeBehaviour)
+            return;
+
+//        if (NSAppKitVersionNumber < NSAppKitVersionNumber10_14) // before Mojave
+        _redraw(false, settings.threaded ? getLastBufferToRender() : nullptr);
         
         resizeMutexThreaded.unlock();
         resizeMutex.unlock();
@@ -220,6 +260,9 @@ struct CGL : public Video, OpenGL, RenderThread {
     void redraw(bool disallowShader = false) {
         makeCurrent(true);
         _redraw(disallowShader, settings.threaded ? getLastBufferToRender() : nullptr);
+        
+        if (useResizing)
+            clearCurrent();
     }
     
     auto unlockAndRedraw(bool disallowShader = false, bool freeContext = false) -> void {
@@ -249,7 +292,9 @@ struct CGL : public Video, OpenGL, RenderThread {
                 screenText.showText(outputWidth, outputHeight, -0.01, 0.01, OpenGLText::ALIGN_RIGHT | OpenGLText::VALIGN_BOTTOM);
 #endif
 
-                if (useVRR) {
+                if (useResizing)
+                    [[view openGLContext] flushBuffer];
+                else if (useVRR) {
                     glFinish();
                     waitVRR();
                     [[view openGLContext] flushBuffer];
@@ -297,7 +342,9 @@ struct CGL : public Video, OpenGL, RenderThread {
                 screenText.updateMessage();
                 screenText.showText(outputWidth, outputHeight, -0.01, 0.01, OpenGLText::ALIGN_RIGHT | OpenGLText::VALIGN_BOTTOM);
 #endif
-                if (useVRR) {
+                if (useResizing)
+                    [[view openGLContext] flushBuffer];
+                else if (useVRR) {
                     glFinish();
                     waitVRR();
                     [[view openGLContext] flushBuffer];
@@ -317,6 +364,7 @@ struct CGL : public Video, OpenGL, RenderThread {
     
     void synchronize(bool state) {
         wait();
+        resizeMutex.lock();
         settings.synchronize = state;
 
         if(view) {
@@ -327,6 +375,7 @@ struct CGL : public Video, OpenGL, RenderThread {
                 clearCurrent();
             }
         }
+        resizeMutex.unlock();
     }
     
     auto hasSynchronized() -> bool { return settings.synchronize; }
@@ -357,47 +406,59 @@ struct CGL : public Video, OpenGL, RenderThread {
 
     auto setShader(std::vector<ShaderPass*> passes) -> void {
         wait();
+        resizeMutex.lock();
         makeCurrent();
         settings.passes = passes;
         OpenGL::shader( passes );
         RenderThread::reset();
         clearCurrent();
+        resizeMutex.unlock();
     }
     
     auto setShaderAttribute( std::string _program, std::string attribute, float value ) -> void {
         wait();
+        resizeMutex.lock();
         makeCurrent();
         OpenGL::shaderAttribute( _program, attribute, value );
         clearCurrent();
+        resizeMutex.unlock();
     }
     
     auto setShaderAttribute( std::string _program, std::string attribute, int value ) -> void {
         wait();
+        resizeMutex.lock();
         makeCurrent();
         OpenGL::shaderAttribute( _program, attribute, value );
         clearCurrent();
+        resizeMutex.unlock();
     }
     
     auto setShaderAttribute(std::string _program, std::string attribute, float* data, unsigned size) -> void {
         wait();
+        resizeMutex.lock();
         makeCurrent();
         OpenGL::shaderAttribute( _program, attribute, data, size );
         clearCurrent();
+        resizeMutex.unlock();
     }
     
     auto setShaderAttribute(std::string _program, std::string attribute, uint32_t* data, unsigned _width, unsigned _height) -> void {
         wait();
+        resizeMutex.lock();
         makeCurrent();
         OpenGL::shaderAttribute( _program, attribute, data, _width, _height );
         clearCurrent();
+        resizeMutex.unlock();
     }
     
     auto setFilter(Filter filter) -> void {
         wait();
+        resizeMutex.lock();
         makeCurrent();
         settings.filter = filter;
         OpenGL::filter = filter == Filter::Linear ? GL_LINEAR : GL_NEAREST;
         clearCurrent();
+        resizeMutex.unlock();
     }
     
     auto showMessage(std::string message, bool critical = false) -> void {
@@ -452,6 +513,21 @@ struct CGL : public Video, OpenGL, RenderThread {
     auto freeContext() -> void {
         clearCurrent();
     }
+    
+    auto innerUpdate() -> void {
+        if (oldResizeBehaviour) {
+            [[view openGLContext] update];
+            return;
+        }
+        
+        resizeMutex.lock();
+        resizeMutexThreaded.lock();
+        makeCurrent();
+        [[view openGLContext] update];
+        clearCurrent();
+        resizeMutexThreaded.unlock();
+        resizeMutex.unlock();
+    }
 
     CGL() {
         view = nil;
@@ -473,6 +549,10 @@ struct CGL : public Video, OpenGL, RenderThread {
         video = videoPointer;
     }
     return self;
+}
+
+-(void) update {
+    video->innerUpdate();
 }
 
 -(void) reshape {

@@ -43,7 +43,12 @@ ifeq ($(platform),windows)
 else ifeq ($(platform),macosx)
     flags += -w -stdlib=libc++
     link += -lc++ -lobjc
-    export MACOSX_DEPLOYMENT_TARGET=10.9
+    nativeArch := $(shell uname -a)
+    ifneq ($(findstring arm64,$(nativeArch)),)
+        export MACOSX_DEPLOYMENT_TARGET=11
+    else
+        export MACOSX_DEPLOYMENT_TARGET=10.9
+    endif
 else
     link += -lpthread -no-pie      
 endif
