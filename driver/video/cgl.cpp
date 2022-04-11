@@ -205,11 +205,10 @@ struct CGL : public Video, OpenGL, RenderThread {
     }
     
     auto needResizingPreparations(bool useEmuThread) -> bool {
-        return false;
-        //return (useEmuThread) && (settings.synchronize || settings.vrr);
+        return (useEmuThread) && (settings.synchronize || settings.vrr);
     }
     
-    auto prepareResizing() -> void { return;
+    auto prepareResizing() -> void {
         if (!view)
             return;
         wait();
@@ -224,7 +223,7 @@ struct CGL : public Video, OpenGL, RenderThread {
         }
     }
     
-    auto endResizing() -> void { return;
+    auto endResizing() -> void {
         if (!view)
             return;
         wait();
