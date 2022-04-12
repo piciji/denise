@@ -17,9 +17,9 @@ struct ThreadPriority {
 
     enum Mode { Normal, High, Realtime };
 
-    static auto setPriority( ThreadPriority::Mode mode, float minProcessingTimeInMilliSeconds = 0, float maxProcessingTimeInMilliSeconds = 0 ) -> bool {
+    static auto setPriority( ThreadPriority::Mode mode, float typicalProcessingTimeInMilliSeconds = 0, float maxProcessingTimeInMilliSeconds = 0 ) -> bool {
 
-        if (!_setPriority( mode, minProcessingTimeInMilliSeconds, maxProcessingTimeInMilliSeconds )) {
+        if (!_setPriority( mode, typicalProcessingTimeInMilliSeconds, maxProcessingTimeInMilliSeconds )) {
 
             if ( mode == Mode::Realtime)
                 return _setPriority( ThreadPriority::Mode::High );
@@ -31,7 +31,7 @@ struct ThreadPriority {
     }
 
 #if defined(_WIN32)
-    static auto _setPriority( ThreadPriority::Mode mode, float minProcessingTimeInMilliSeconds = 0, float maxProcessingTimeInMilliSeconds = 0 ) -> bool {
+    static auto _setPriority( ThreadPriority::Mode mode, float typicalProcessingTimeInMilliSeconds = 0, float maxProcessingTimeInMilliSeconds = 0 ) -> bool {
 
         int prio;
         switch(mode) {
@@ -51,7 +51,7 @@ struct ThreadPriority {
     }
 
 #elif defined( __APPLE__ )
-    static auto _setPriority( ThreadPriority::Mode mode, float minProcessingTimeInMilliSeconds = 0, float maxProcessingTimeInMilliSeconds = 0 ) -> bool {
+    static auto _setPriority( ThreadPriority::Mode mode, float typicalProcessingTimeInMilliSeconds = 0, float maxProcessingTimeInMilliSeconds = 0 ) -> bool {
         kern_return_t result;
         mach_port_t machId = pthread_mach_thread_np( pthread_self() );
 
@@ -81,7 +81,7 @@ struct ThreadPriority {
 
                 thread_time_constraint_policy_data_t timeConstraints;
                 timeConstraints.period = 0;
-                timeConstraints.computation = (unsigned)(minProcessingTimeInMilliSeconds * _clock * 1000.0);
+                timeConstraints.computation = (unsigned)(typicalProcessingTimeInMilliSeconds * _clock * 1000.0);
                 timeConstraints.constraint = (unsigned)(maxProcessingTimeInMilliSeconds * _clock * 1000.0);
                 timeConstraints.preemptible = false;
 

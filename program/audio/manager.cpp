@@ -26,7 +26,7 @@ AudioManager::~AudioManager() {
 
 auto AudioManager::setLatency() -> void {
     
-    unsigned latency = globalSettings->get<unsigned>("audio_latency", 64u, {1u, 120u});
+    unsigned latency = globalSettings->get<unsigned>("audio_latency", 30u, {1u, 120u});
     audioDriver->setLatency( latency );
 }
 

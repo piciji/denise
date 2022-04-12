@@ -618,7 +618,7 @@ struct pMonitor {
 };
 
 struct pThreadPriority {
-    static auto setPriority(ThreadPriority::Mode mode, float minProcessingTimeInMilliSeconds = 0, float maxProcessingTimeInMilliSeconds = 0) -> bool;
+    static auto setPriority(ThreadPriority::Mode mode, float typicalProcessingTimeInMilliSeconds = 0, float maxProcessingTimeInMilliSeconds = 0) -> bool;
 };
     
 struct pHelper {

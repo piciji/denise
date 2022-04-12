@@ -329,8 +329,9 @@ auto pHelper::getColor(unsigned color) -> NSColor* {
 
 }
 
-auto pThreadPriority::setPriority( ThreadPriority::Mode mode, float minProcessingTimeInMilliSeconds, float maxProcessingTimeInMilliSeconds ) -> bool {
+auto pThreadPriority::setPriority( ThreadPriority::Mode mode, float typicalProcessingTimeInMilliSeconds, float maxProcessingTimeInMilliSeconds ) -> bool {
 
+    [[NSThread currentThread] setThreadPriority: 1.0];
     kern_return_t result;
     mach_port_t machId = pthread_mach_thread_np( pthread_self() );
 
@@ -360,7 +361,7 @@ auto pThreadPriority::setPriority( ThreadPriority::Mode mode, float minProcessin
 
             thread_time_constraint_policy_data_t timeConstraints;
             timeConstraints.period = 0;
-            timeConstraints.computation = (unsigned)(minProcessingTimeInMilliSeconds * _clock * 1000.0);
+            timeConstraints.computation = (unsigned)(typicalProcessingTimeInMilliSeconds * _clock * 1000.0);
             timeConstraints.constraint = (unsigned)(maxProcessingTimeInMilliSeconds * _clock * 1000.0);
             timeConstraints.preemptible = false;
 

@@ -408,13 +408,16 @@ auto pApplication::quit() -> void {
 }
 
 auto pApplication::initialize() -> void {
+    
+    [NSThread detachNewThreadSelector: @selector(class) toTarget: [NSObject class] withObject: nil];
+    
+    [[NSProcessInfo processInfo] beginActivityWithOptions: NSActivityUserInitiated | NSActivityLatencyCritical reason: @"video synchron output"];
+    
+    if ([[NSThread currentThread] respondsToSelector:@selector(setQualityOfService:)]) {
+        [[NSThread currentThread] setQualityOfService: NSQualityOfServiceUserInteractive];
+    }
+    
     @autoreleasepool {
-        
-        [[NSProcessInfo processInfo] beginActivityWithOptions: NSActivityUserInitiated | NSActivityLatencyCritical reason: @"video synchron output"];
-        
-        if ([[NSThread currentThread] respondsToSelector:@selector(setQualityOfService:)]) {
-            [[NSThread currentThread] setQualityOfService: NSQualityOfServiceUserInteractive];
-        }
         
         [NSApplication sharedApplication];
         cocoaDelegate = [[CocoaDelegate alloc] init];
@@ -457,6 +460,7 @@ auto pApplication::setClipboardText( std::string text ) -> void {
 //window
 pWindow::pWindow(Window& window, Window::Hints hints) : window(window) {
     @autoreleasepool {
+        backgroundView = nullptr;
         cocoaWindow = [[CocoaWindow alloc] initWith:window];
         
         static bool once = true;
@@ -566,8 +570,11 @@ auto pWindow::setMenuVisible(bool visible) -> void {
 }
 
 auto pWindow::setBackgroundColor(unsigned color) -> void {
+    
+    if (window.hints == Window::Hints::Video)
+        return;
+    
     @autoreleasepool {
-        
         if (!backgroundView) {
             backgroundView = [[BackgroundView alloc] initWith: color];
             [[cocoaWindow contentView] addSubview: backgroundView positioned:NSWindowBelow relativeTo:nil];
@@ -703,8 +710,8 @@ auto pWindow::sizeEvent() -> void {
     if (window.statusBar())
         window.statusBar()->p.reposition();
 
-    //if (backgroundView)
-      //  [backgroundView setFrame:[[cocoaWindow contentView] bounds]];
+    if (backgroundView)
+        positionBGView();
             
     if(!locked && window.onSize) window.onSize(Window::SIZE_MODE::Default);
 }

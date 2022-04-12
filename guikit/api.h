@@ -1256,7 +1256,7 @@ struct ThreadPriority {
 
     enum class Mode { Normal = 0, High = 1, Realtime = 2 };
 
-    static auto setPriority( Mode mode, float minProcessingTimeInMilliSeconds = 0, float maxProcessingTimeInMilliSeconds = 0 ) -> bool;
+    static auto setPriority( Mode mode, float typicalProcessingTimeInMilliSeconds = 0, float maxProcessingTimeInMilliSeconds = 0 ) -> bool;
 };
 
 struct File {

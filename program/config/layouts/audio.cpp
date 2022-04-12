@@ -124,7 +124,7 @@ volume("%", false, true) {
 
 auto AudioLayout::updateLatencySlider() -> void {
     
-    auto valLatency = globalSettings->get<unsigned>("audio_latency", 64u, {1u, 120u});
+    auto valLatency = globalSettings->get<unsigned>("audio_latency", 30u, {1u, 120u});
     auto minimumLatency = audioDriver->getMinimumLatency();
     auto maximumLatency = 120;
     valLatency = std::max( valLatency, minimumLatency );
