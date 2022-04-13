@@ -277,9 +277,15 @@ auto Program::saveSettings(bool onExit) -> void {
             }
             
         } else {
-            // save to emu folder too
-            path = settingsFileFromEmuFolder("global_");
-            settings->save( path );
+            for (auto& emulator : emulators) {
+                if (1 == globalSettings->get<unsigned>( emulator->ident + "_settings_folder_mode", 0 )) {
+                    // save to emu folder too
+                    path = settingsFileFromEmuFolder("global_");
+                    settings->save(path);
+                    break;
+                }
+            }
+
             // save to user folder
             path = settingsFile("global_");
         }
