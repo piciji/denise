@@ -490,7 +490,10 @@ auto View::setConnectors() -> void {
                     emuThread->lock();
                     settings->set<unsigned>( _underscore(connector.name), device.id);
                     emulator->connect(connector.id, device.id);
-                    InputManager::getManager(emulator)->updateMappingsInUse();
+                    auto manager = InputManager::getManager(emulator);
+                    manager->updateMappingsInUse();
+                    manager->updateAutofireMappingsInUse();
+
                     auto emuView = EmuConfigView::TabWindow::getView(emulator);
                     if (emuView && emuView->inputLayout)
                         emuView->inputLayout->updateConnectorButtons();

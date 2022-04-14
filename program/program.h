@@ -157,6 +157,7 @@ struct Program : Emulator::Interface::Bind {
     auto resetRunAhead() -> void;
     auto setRunAhead(Emulator::Interface* emulator) -> void;
     auto setJit(Emulator::Interface* emulator) -> void;
+    auto setAutofire(Emulator::Interface* emulator) -> void;
 
     static auto hasFocus() -> bool;
 

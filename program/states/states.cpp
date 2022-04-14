@@ -489,8 +489,11 @@ auto States::updateConnectedDevices() -> void {
         view->checkInputDevice( emulator, &connector, device );
     }
     
-    if (deviceIds.size() > 0)
-        InputManager::getManager( emulator )->updateMappingsInUse();
+    if (deviceIds.size() > 0) {
+        auto manager = InputManager::getManager(emulator);
+        manager->updateMappingsInUse();
+        manager->updateAutofireMappingsInUse();
+    }
 
     auto emuView = EmuConfigView::TabWindow::getView( emulator );
 

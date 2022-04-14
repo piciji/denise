@@ -107,6 +107,7 @@ auto InputManager::setMappings() -> void {
                     mapper->parent = nullptr;
                     mapper->alternate = nullptr;
                     mapper->inputManager = manager;
+                    mapper->autoFire = false;
                     input.guid = (uintptr_t) mapper;
                     
                     for( auto& inputId : input.shadowMap ) {
@@ -119,6 +120,10 @@ auto InputManager::setMappings() -> void {
                     manager->addMapping( mapper );
                     if (!mapper->isAnalog())
                         mapper->generateAlternate( settings );
+
+                    if (device.isJoypad() && GUIKIT::String::foundSubStr(input.name, "Button" )) {
+                        manager->autoFireMappings.push_back( mapper );
+                    }
                 }
             }
 			

@@ -152,3 +152,20 @@ auto Program::setRunAhead(Emulator::Interface* emulator) -> void {
 
     emulator->runAheadPreventJit( settings->get<bool>( "runahead_prevent_jit", true ) );
 }
+
+auto Program::setAutofire(Emulator::Interface* emulator) -> void {
+
+    auto settings = getSettings( emulator );
+
+    auto manager = InputManager::getManager( emulator );
+
+    manager->autoFireMode = settings->get<unsigned>( "autofire_mode", 0 );
+
+    manager->autoFireFrequency = settings->get<unsigned>( "autofire_frequency", 1, {1, 200} );
+
+    for (auto mapping : manager->autoFireMappings) {
+        mapping->autoFire = settings->get<bool>( "autofire_" + mapping->setting->getIdent(), false );
+    }
+
+    manager->updateAutofireMappingsInUse();
+}

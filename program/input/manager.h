@@ -39,6 +39,8 @@ struct InputMapping {
     int16_t state;
     bool hasUnknownAssignment = false;
     int analogSensitivity = 16384;
+    bool autoFire = false;
+    unsigned autoFirePos = 0;
 	
 	auto isAnalog() const -> bool { return type == Analog; }
     auto isSwitch() const -> bool { return type == Switch; }
@@ -120,6 +122,11 @@ struct InputManager {
 	std::vector<InputMapping*> mappings;
     std::vector<InputMapping*> mappingsInUse;
     std::vector<InputMapping*> andTriggers;
+    unsigned autoFireFrequency;
+    unsigned autoFireMode;
+    std::vector<InputMapping*> autoFireMappings;
+    std::vector<InputMapping*> autoFireMappingsInUse;
+    bool allowAutofire = false;
 
 	static std::vector<InputMapping*> hotkeyTriggers;
     static bool driverChange;
@@ -158,6 +165,7 @@ struct InputManager {
     auto initMapping(InputMapping* mapping) -> void;
 	auto sort() -> void;				
     auto updateMappingsInUse() -> void;
+    auto updateAutofireMappingsInUse() -> void;
     auto matchButtons( Emulator::Interface::Device::Input* emuInput, Hid::Input* hidInput ) -> bool;
     auto priorizeConnectedDevicesOverKeyboard() -> void;
     auto alternateSort() -> void;
@@ -166,6 +174,8 @@ struct InputManager {
 	auto unmapCustomHotkeys() -> void;   
     auto bindHids() -> void;
     auto resetMappings() -> void;
+    auto handleAutofire(InputMapping* mapping, InputMapping* useMapping, bool toggleOn) -> void;
+    auto handleTouchlessAutofire() -> void;
     
     inline auto updateAndTrigger() -> void;
     inline auto addAndTrigger(InputMapping* newTrigger) -> void;

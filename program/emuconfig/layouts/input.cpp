@@ -1,4 +1,29 @@
 
+AutofireControl::AutofireControl(Emulator::Interface* emulator) {
+    append(label, {0u, 0u}, 5);
+
+    auto manager = InputManager::getManager(emulator);
+
+    auto buttonCount = manager->autoFireMappings.size() >> 1;
+
+    for (unsigned i = 0; i < buttonCount; i++) {
+        auto checkBox = new GUIKIT::CheckBox;
+        activeButtons.push_back( checkBox );
+        append(*checkBox, {0u, 0u}, 10);
+    }
+
+    append(typical, {0u, 0u}, 10);
+    append(free, {0u, 0u}, 30);
+    append(sliderLayout, {~0u, 0u});
+
+    GUIKIT::RadioBox::setGroup(typical, free);
+
+    sliderLayout.slider.setLength( 200 );
+    sliderLayout.updateValueWidth( "999" );
+
+    setAlignment( 0.5 );
+}
+
 InputSelector::InputSelector() {
     append(device, {~0u, 0u}, 20);
 	append(hotkeys, {0u, 0u});
@@ -31,7 +56,7 @@ InputMapControl::InputMapControl() : analogSensitivity("%") {
     append(keyLayoutLabel, {0u, 0u}, 5);
     append(keyLayout, {0u, 0u}, 10);
     append(automap, {0u, 0u}, 10);
-    append(analogSensitivity, {~0u, 0u}, 10);    
+    append(analogSensitivity, {~0u, 0u}, 10);
     append(reset, {0u, 0u});    
     
     setAlignment( 0.5 );
@@ -57,7 +82,7 @@ InputAssign::InputAssign() {
     setAlignment(0.5);
 }
 
-InputLayout::InputLayout(TabWindow* tabWindow) {
+InputLayout::InputLayout(TabWindow* tabWindow) : autofireControl(tabWindow->emulator) {
     this->tabWindow = tabWindow;
     this->emulator = tabWindow->emulator;
     
@@ -88,8 +113,11 @@ InputLayout::InputLayout(TabWindow* tabWindow) {
                 device = emulator->getDevice( deviceId() );
             
             this->emulator->connect( connectorPtr, device );
-            
-            InputManager::getManager( this->emulator )->updateMappingsInUse();
+
+            auto manager = InputManager::getManager( this->emulator );
+            manager->updateMappingsInUse();
+            manager->updateAutofireMappingsInUse();
+
             emuThread->unlock();
             _settings->set<unsigned>( _underscore(connectorPtr->name), device->id);
             
@@ -107,10 +135,59 @@ InputLayout::InputLayout(TabWindow* tabWindow) {
     append(assigner, {~0u, 0u}, 10);
     append(inputList, {~0u, ~0u}, 10);
     append(control, {~0u, 0u}, 10);
-    append(mapControl, {~0u, 0u});
+    append(mapControl, {~0u, 0u}, 10);
+    append(autofireControl, {~0u, 0u});
 
     captureTimer.setInterval(3500);
     pollTimer.setInterval(50);
+
+    auto manager = InputManager::getManager( this->emulator );
+    unsigned buttonPos = 0;
+
+    for (auto checkBox : autofireControl.activeButtons) {
+        checkBox->onToggle = [this, manager, buttonPos](bool checked) {
+            unsigned i = 0;
+            for (auto mapping : manager->autoFireMappings) {
+                if (mapping->emuDevice == &emulator->devices[ deviceId() ]) {
+                    if (i++ == buttonPos) {
+                        _settings->set<bool>( "autofire_" + mapping->setting->getIdent(), checked );
+                        emuThread->lock();
+                        mapping->autoFire = checked;
+                        manager->updateAutofireMappingsInUse();
+                        emuThread->unlock();
+                        break;
+                    }
+                }
+            }
+        };
+
+        buttonPos++;
+    }
+
+    autofireControl.typical.onActivate = [this, manager]() {
+        _settings->set<unsigned>( "autofire_mode", 0 );
+        emuThread->lock();
+        manager->autoFireMode = 0;
+        emuThread->unlock();
+    };
+
+    autofireControl.free.onActivate = [this, manager]() {
+        _settings->set<unsigned>( "autofire_mode", 1 );
+        emuThread->lock();
+        manager->autoFireMode = 1;
+        emuThread->unlock();
+    };
+
+    autofireControl.sliderLayout.slider.onChange = [this, manager]() {
+        unsigned position = autofireControl.sliderLayout.slider.position();
+        position += 1;
+        _settings->set<unsigned>( "autofire_frequency", position );
+        autofireControl.sliderLayout.value.setText( std::to_string(position) );
+
+        emuThread->lock();
+        manager->autoFireFrequency = position;
+        emuThread->unlock();
+    };
 
     mapControl.reset.onActivate = [this]() {
         if (!mes->question( trans->get("reset_device_question") ))
@@ -253,6 +330,8 @@ InputLayout::InputLayout(TabWindow* tabWindow) {
 
     updateKeyLayout();
 
+    updateAutofireLayout();
+
     loadDeviceList();
 }
 
@@ -353,6 +432,7 @@ auto InputLayout::loadInputList(unsigned deviceId) -> void {
     updateConnectorButtons();
     enableConnectorButtons();
     updateAnalogSensitivity();
+    updateAutofireActiveLayout();
 }
 
 auto InputLayout::loadHotkeyList() -> void {
@@ -378,7 +458,9 @@ auto InputLayout::loadHotkeyList() -> void {
     mapControl.analogSensitivity.setEnabled( false );
 	
 	for(auto& connectorButton : selector.connectorButtons)        
-        connectorButton.checkButton->setEnabled( false );  
+        connectorButton.checkButton->setEnabled( false );
+
+    autofireControl.setEnabled(false);
 }
 
 auto InputLayout::updateAnalogSensitivity() -> void {
@@ -403,6 +485,40 @@ auto InputLayout::updateKeyLayout() -> void {
             break;
         }
     }
+}
+
+auto InputLayout::updateAutofireActiveLayout() -> void {
+    auto manager = InputManager::getManager( this->emulator );
+    unsigned boxPos = 0;
+
+    for (auto mapping : manager->autoFireMappings) {
+        if (mapping->emuDevice == &emulator->devices[deviceId()]) {
+            //autofireControl.activeButtons[boxPos]->setEnabled();
+            autofireControl.activeButtons[boxPos++]->setChecked( _settings->get<bool>( "autofire_" + mapping->setting->getIdent(), false ) );
+
+            if (!autofireControl.enabled())
+                autofireControl.setEnabled();
+        }
+    }
+
+    if (!boxPos)
+        autofireControl.setEnabled(false);
+
+   // for ( ;boxPos < autofireControl.activeButtons.size(); boxPos++)
+     //   autofireControl.activeButtons[boxPos]->setEnabled( false );
+}
+
+auto InputLayout::updateAutofireLayout() -> void {
+    unsigned autoFireMode = _settings->get<unsigned>( "autofire_mode", 0 );
+
+    if (autoFireMode == 0)
+        autofireControl.typical.setChecked();
+    else /* if (autoFireMode == 1) */
+        autofireControl.free.setChecked();
+
+    unsigned position = _settings->get<unsigned>( "autofire_frequency", 1, {1, 200} );
+    autofireControl.sliderLayout.value.setText( std::to_string(position) );
+    autofireControl.sliderLayout.slider.setPosition( position - 1 );
 }
 
 auto InputLayout::appendListEntry(std::string& name, InputMapping* mapping, GUIKIT::Image* image) -> void {
@@ -440,7 +556,7 @@ auto InputLayout::translate() -> void {
     control.mapperAlt.setText( trans->get( "assign" ) );
     control.alternate.setText( trans->get( "alternate", {}, true ) );
     
-    mapControl.keyLayoutLabel.setText( trans->get("layout") );
+    mapControl.keyLayoutLabel.setText( trans->get("layout", {}, true) );
     mapControl.keyLayout.setTooltip( trans->get("keyboard_layout_tip") );
     mapControl.automap.setText( trans->get("assign") );
     mapControl.analogSensitivity.name.setText( trans->get("analog_sensitivity", {}, true) );
@@ -457,6 +573,15 @@ auto InputLayout::translate() -> void {
     
     for(auto& connectorButton : selector.connectorButtons) 
         connectorButton.checkButton->setText( trans->get( connectorButton.connector->name ) );
+
+    i = 1;
+    for(auto box : autofireControl.activeButtons)
+        box->setText( trans->get("Button " + std::to_string(i++)) );
+
+    autofireControl.label.setText( trans->get("Autofire", {}, true) );
+    autofireControl.typical.setText( trans->get("Typical") );
+    autofireControl.free.setText( trans->get("Free") );
+    autofireControl.sliderLayout.name.setText( trans->get("Frequency") );
     
     SliderLayout::scale({&mapControl.analogSensitivity}, "100 %");
 }
@@ -625,6 +750,8 @@ auto InputLayout::loadSettings() -> void {
     updateAssigner();
 
     updateKeyLayout();
+
+    updateAutofireLayout();
     
     update();
 }

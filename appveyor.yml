@@ -18,7 +18,7 @@ branches:
   only:
     - master
     - /v\d*\.\d*\.\d*/
-    - arm64
+    - autofire
   
 environment:
   matrix:
