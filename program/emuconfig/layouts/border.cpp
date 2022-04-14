@@ -41,104 +41,63 @@ cropBottom("px")
 	cropOff.onActivate = [this]() {
         updateCrop("crop_type", (unsigned)CropType::Off);
 
-		//_settings->set<unsigned>( "crop_type", (unsigned)CropType::Off );
 		updateVisibillity();
-        // emuThread->lock();
-		// program->updateCrop( emulator );
-        // emuThread->unlock();
 	};
     
 	cropMonitor.onActivate = [this]( ) {
         updateCrop("crop_type", (unsigned)CropType::Monitor);
 
-//		_settings->set<unsigned>( "crop_type", (unsigned)CropType::Monitor );
 		updateVisibillity();
-//        emuThread->lock();
-//		program->updateCrop( emulator );
-//        emuThread->unlock();
 	};
 
 	cropAuto.onActivate = [this]( ) {
         updateCrop("crop_type", (unsigned)CropType::Auto);
 
-//		_settings->set<unsigned>( "crop_type", (unsigned)CropType::Auto );
 		updateVisibillity();
-//        emuThread->lock();
-//		program->updateCrop( emulator );
-//        emuThread->unlock();
 	};
 
 	cropSemiAuto.onActivate = [this]( ) {
         updateCrop("crop_type", (unsigned)CropType::SemiAuto);
 
-//		_settings->set<unsigned>( "crop_type", (unsigned)CropType::SemiAuto );
 		updateVisibillity();
-//        emuThread->lock();
-//		program->updateCrop( emulator );
-//        emuThread->unlock();
 	};
 
 	cropFree.onActivate = [this]( ) {
         updateCrop("crop_type", (unsigned)CropType::Free);
 
-//		_settings->set<unsigned>( "crop_type", (unsigned)CropType::Free );
 		updateVisibillity();
-//        emuThread->lock();
-//		program->updateCrop( emulator );
-//        emuThread->unlock();
 	};
 	
 	cropAspectCorrect.onToggle = [this](bool checked) {
         updateCrop("crop_aspect_correct", checked);
-
-//		_settings->set<unsigned>( "crop_aspect_correct", checked );
-//        emuThread->lock();
-//		program->updateCrop( emulator );
-//        emuThread->unlock();
 	};
 	
 	cropLeft.slider.onChange = [this]() {
         auto value = cropLeft.slider.position();
         updateCrop("crop_left", value);
 
-//		_settings->set<unsigned>( "crop_left", value);
 		cropLeft.value.setText( std::to_string( value ) + " px" );
-//        emuThread->lock();
-//		program->updateCrop( emulator );
-//        emuThread->unlock();
 	};
 
 	cropRight.slider.onChange = [this]( ) {
 		auto value = cropRight.slider.position( );
         updateCrop("crop_right", value);
 
-//		_settings->set<unsigned>( "crop_right", value );
 		cropRight.value.setText( std::to_string( value ) + " px" );
-//        emuThread->lock();
-//		program->updateCrop( emulator );
-//        emuThread->unlock();
 	};
 
 	cropTop.slider.onChange = [this]( ) {
 		auto value = cropTop.slider.position( );
         updateCrop("crop_top", value);
 
-//		_settings->set<unsigned>( "crop_top", value );
 		cropTop.value.setText( std::to_string( value ) + " px" );
-//        emuThread->lock();
-//		program->updateCrop( emulator );
-//        emuThread->unlock();
 	};
 
 	cropBottom.slider.onChange = [this]( ) {
 		auto value = cropBottom.slider.position( );
         updateCrop("crop_bottom", value);
 
-//		_settings->set<unsigned>( "crop_bottom", value );
 		cropBottom.value.setText( std::to_string( value ) + " px" );
-//        emuThread->lock();
-//		program->updateCrop( emulator );
-//        emuThread->unlock();
 	};
     	
     loadSettings();
