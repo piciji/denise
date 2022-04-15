@@ -162,17 +162,19 @@ auto InputManager::update() -> void {
                     if (blockedByAndTrigger( hid ))
                         continue;
 					
-					if (!mapping->emuDevice) {
+					if (aSwitch) {
                         emuThread->lockHotkeys();
                         hotkeyTriggers.push_back(useMapping);
                         emuThread->unlockHotkeys();
-                    } else if (useMapping->autoFire && (autoFireMode == 0) && Program::focused) {
+                    } else if (useMapping->autoFire /*&& (autoFireMode == 0)*/ && Program::focused) {
                         handleAutofire(mapping, useMapping, mapping->adjustDigitalValue<true>(hid) == 0);
                     } else
                         useMapping->state = value;
-					
-                    for(auto shadow : useMapping->shadowMap)
-                        shadows.push_back( shadow );
+
+                    for(auto shadow : useMapping->shadowMap) {
+                        shadow->virtualLinked = useMapping;
+                        shadows.push_back(shadow);
+                    }
 
 					break;
 				}
@@ -230,18 +232,18 @@ auto InputManager::update() -> void {
             continue;
 	}
     
-    if(shadows.size())
-        for(auto shadow : shadows)
-            shadow->state = 1;
+    if(shadows.size()) {
+        for (auto shadow : shadows)
+            shadow->state = shadow->virtualLinked->state;
+    }
 
-    if (allowAutofire && (autoFireMode == 1))
+    if (allowAutofire && Program::focused/* && (autoFireMode == 1)*/)
         handleTouchlessAutofire();
 }
 
 auto InputManager::handleTouchlessAutofire() -> void {
-    for (auto mapping : autoFireMappingsInUse) {
-        if (mapping->state || !Program::focused );
-        else {
+    for (auto mapping : autoFireMappings) {
+        if (!mapping->state) {
             bool initAutofire = false;
             for(auto& hid : mapping->hids) {
                 if (mapping->adjustDigitalValue<true>(hid) == 1) {
@@ -278,7 +280,10 @@ auto InputManager::handleAutofire(InputMapping* mapping, InputMapping* useMappin
                 if (mapping->autoFirePos == 0)
                     useMapping->state = 1;
             }
-        }
+        } else if (mapping->autoFirePos == 0)
+            useMapping->state = 1;
+        else
+            useMapping->state = 0x80;
     }
 }
 
@@ -349,8 +354,10 @@ auto InputManager::updateMappingsInUse() -> void {
         for (auto& connector : emulator->connectors)            
             connectedDevices.push_back( emulator->getConnectedDevice( &connector ) );
     }
-    
-    mappingsInUse.clear();        
+
+    auto copyAutofireMappings = autoFireMappings;
+    autoFireMappings.clear();
+    mappingsInUse.clear();
     
     for(auto mapping : mappings) {	
         
@@ -361,27 +368,16 @@ auto InputManager::updateMappingsInUse() -> void {
         else if (mapping->emuDevice->isKeyboard())
             addMappingInUse( mapping );
         
-        else if ( GUIKIT::Vector::find( connectedDevices, mapping->emuDevice ) )
-            addMappingInUse( mapping );                
+        else if ( GUIKIT::Vector::find( connectedDevices, mapping->emuDevice ) ) {
+            addMappingInUse(mapping);
+
+            if (GUIKIT::Vector::find(copyAutofireMappings, mapping))
+                autoFireMappings.push_back(mapping);
+        }
     }
     
     sort();
     //priorizeConnectedDevicesOverKeyboard();
-}
-
-auto InputManager::updateAutofireMappingsInUse() -> void {
-    std::vector<Emulator::Interface::Device*> connectedDevices;
-    autoFireMappingsInUse.clear();
-
-    for (auto& connector : emulator->connectors)
-        connectedDevices.push_back( emulator->getConnectedDevice( &connector ) );
-
-    for(auto mapping : autoFireMappings) {
-        if ( mapping->autoFire && GUIKIT::Vector::find( connectedDevices, mapping->emuDevice ) )
-            autoFireMappingsInUse.push_back(mapping);
-    }
-
-    allowAutofire = autoFireMappingsInUse.size() > 0;
 }
 
 auto InputManager::sort() -> void {

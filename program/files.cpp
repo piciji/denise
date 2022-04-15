@@ -343,6 +343,8 @@ auto Program::forceSavingSomeGlobalSettings( ) -> void {
 	
 	tempSettings.set<bool>("save_settings_on_exit", false);
 
+    bool saveToEmuFolder = false;
+
     for( auto emulator : emulators ) {
         std::string _emuIdent = emulator->ident;
 
@@ -351,13 +353,17 @@ auto Program::forceSavingSomeGlobalSettings( ) -> void {
         std::string path = globalSettings->get<std::string>( _emuIdent + "_settings_path", "");
         unsigned floderMode = globalSettings->get<unsigned>( _emuIdent + "_settings_folder_mode", path == "" ? 0 : 2 );
 
+        saveToEmuFolder |= floderMode == 1;
+
         tempSettings.set<bool>(_emuIdent + "_load_last_settings", state);
         tempSettings.set<std::string>(_emuIdent + "_custom_settings", customSetting);
         tempSettings.set<std::string>(_emuIdent + "_settings_path", path);
         tempSettings.set<unsigned>(_emuIdent + "_settings_folder_mode", floderMode);
     }
 
-	tempSettings.save( settingsFileFromEmuFolder("global_") );
+    if (saveToEmuFolder)
+	    tempSettings.save( settingsFileFromEmuFolder("global_") );
+
     tempSettings.save( settingsFile("global_") );
 }
 

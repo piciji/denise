@@ -28,6 +28,7 @@ struct InputMapping {
     InputMapping* alternate = nullptr;
     InputMapping* parent = nullptr;
     InputMapping* sortedNext = nullptr;
+    InputMapping* virtualLinked = nullptr;
     
     Emulator::Interface::Device* emuDevice = nullptr;
 	unsigned hotkeyId;
@@ -70,7 +71,9 @@ struct Hotkey {
         ToggleFastForward, ToggleFastForwardAggressive, Presentation, Palette, Border, System, Firmware, Control,
 		SwapInputDevices, Power, SoftReset, AnyLoad,
         RunAheadUp, RunAheadDown, RunAheadToggleMode, AudioRecord, ToggleCycleRenderer, EF3Menu, Freeze, ToggleBorder,
-        SyncStatus, ThreadedRenderer
+        SyncStatus, ThreadedRenderer,
+
+        Autofire = 1000,
     } id;
     std::string name;
 	bool share;
@@ -123,9 +126,7 @@ struct InputManager {
     std::vector<InputMapping*> mappingsInUse;
     std::vector<InputMapping*> andTriggers;
     unsigned autoFireFrequency;
-    unsigned autoFireMode;
     std::vector<InputMapping*> autoFireMappings;
-    std::vector<InputMapping*> autoFireMappingsInUse;
     bool allowAutofire = false;
 
 	static std::vector<InputMapping*> hotkeyTriggers;
@@ -145,7 +146,7 @@ struct InputManager {
 	static auto poll() -> void;
 	static auto pollHotkeys() -> void;
 	static auto activateHotkey(Hotkey::Id id, Emulator::Interface* emulator = nullptr) -> void;
-    static auto fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> void;
+    static auto fireHotkey(InputMapping* trigger) -> void;
 	static auto unmapHotkeys() -> void;
     static auto assumeLayoutType() -> KeyboardLayout::Type;
     static auto rememberLastDeviceState() -> void;
@@ -165,11 +166,11 @@ struct InputManager {
     auto initMapping(InputMapping* mapping) -> void;
 	auto sort() -> void;				
     auto updateMappingsInUse() -> void;
-    auto updateAutofireMappingsInUse() -> void;
     auto matchButtons( Emulator::Interface::Device::Input* emuInput, Hid::Input* hidInput ) -> bool;
     auto priorizeConnectedDevicesOverKeyboard() -> void;
     auto alternateSort() -> void;
     auto updateAnalogSensitivity(Emulator::Interface::Device* updateDevice = nullptr) -> void;
+    auto updateAutofireFrequency() -> void;
 	auto setCustomHotkeys() -> void;
 	auto unmapCustomHotkeys() -> void;   
     auto bindHids() -> void;

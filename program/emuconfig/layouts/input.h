@@ -19,7 +19,7 @@ struct InputControl : GUIKIT::HorizontalLayout {
     GUIKIT::Button mapper;
     GUIKIT::Button linker;
     GUIKIT::Button erase;
-    GUIKIT::Widget spacer;
+    SliderLayout autofireSlider;
     GUIKIT::Label alternate;
     GUIKIT::Button mapperAlt;
     GUIKIT::Button linkerAlt;
@@ -45,17 +45,6 @@ struct InputAssign : GUIKIT::HorizontalLayout {
     GUIKIT::RadioBox appendRadio;
     
     InputAssign();
-};
-
-struct AutofireControl : GUIKIT::HorizontalLayout {
-    GUIKIT::Label label;
-    std::vector<GUIKIT::CheckBox*> activeButtons;
-
-    GUIKIT::RadioBox typical;
-    GUIKIT::RadioBox free;
-    SliderLayout sliderLayout;
-
-    AutofireControl(Emulator::Interface* emulator);
 };
 
 struct InputLayout : GUIKIT::VerticalLayout {
@@ -86,14 +75,12 @@ struct InputLayout : GUIKIT::VerticalLayout {
 	auto triggerHotkeyMode() -> void;
     auto updateAssigner() -> void;
     auto loadSettings() -> void;
-    auto updateAutofireActiveLayout() -> void;
-    auto updateAutofireLayout() -> void;
+    auto updateAutofireFrequency() -> void;
     
     InputSelector selector;
     InputControl control;
     InputMapControl mapControl;
     InputAssign assigner;
-    AutofireControl autofireControl;
     
     GUIKIT::ListView inputList;
 

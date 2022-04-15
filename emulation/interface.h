@@ -46,6 +46,7 @@ struct Interface {
         AltAnd2, 
         
         JoyUpRight, JoyDownRight, JoyUpLeft, JoyDownLeft,
+        Autofire, ToggleAutofire,
     };
     
     enum class CropType { Off = 0, Monitor = 1, Auto = 2, SemiAuto = 3, Free = 4 };

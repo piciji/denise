@@ -695,6 +695,7 @@ auto ConfigurationsLayout::load( std::string path ) -> bool {
     auto inputManager = InputManager::getManager(this->emulator);
     inputManager->resetMappings();
     inputManager->updateAnalogSensitivity();
+    inputManager->updateAutofireFrequency();
     inputManager->bindHids();
 
     auto firmwareManager = FirmwareManager::getInstance(this->emulator);

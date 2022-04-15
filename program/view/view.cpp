@@ -492,7 +492,6 @@ auto View::setConnectors() -> void {
                     emulator->connect(connector.id, device.id);
                     auto manager = InputManager::getManager(emulator);
                     manager->updateMappingsInUse();
-                    manager->updateAutofireMappingsInUse();
 
                     auto emuView = EmuConfigView::TabWindow::getView(emulator);
                     if (emuView && emuView->inputLayout)

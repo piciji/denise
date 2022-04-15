@@ -72,34 +72,10 @@ Program::Program() {
 	filePool = new FilePool(10);
 
     addEmulators();
-    //init();
-
-    if (!cmd->debug) {
-        loadSettings();
-
-        if (!loadTranslation(globalSettings->get<std::string>("translation", getSystemLangFile()))) {
-            if (view)
-                view->message->error("language plugin not found");
-        }
-    }
-
-    cmd->parse();
-
-    if(!cmd->noGui)
-        InputManager::build();
-
-    for( auto emulator : emulators )
-        initEmulator( emulator );
-
-    logger->setSavePath( GUIKIT::System::getUserDataFolder(appFolder()) );
-
-    if (!cmd->debug)
-        addCustomFont();
-
-    isRunning = isPause = false;
+    init();
 
 	if(!cmd->noGui) {
-		//InputManager::build();
+		InputManager::build();
 		view->build();		
 		if (view->setVisible()) {			
 			view->updateViewport();
@@ -218,8 +194,6 @@ auto Program::initEmulator( Emulator::Interface* emulator ) -> void {
 
     setRunAhead( emulator );
 
-    setAutofire( emulator );
-    
     if (dynamic_cast<LIBC64::Interface*>( emulator ))
         setMemoryPattern( emulator );
 }

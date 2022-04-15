@@ -1494,7 +1494,7 @@ struct Vector {
 	template<typename T>
     static auto eraseVectorElement(std::vector<T>& v, T element) -> bool {
 		for (unsigned i = 0; i < v.size(); i++)
-			if (v.at(i) == element) return v.erase(v.begin() + i), true;
+			if (v[i] == element) return v.erase(v.begin() + i), true;
 		return false;
 	}
     

@@ -87,8 +87,10 @@ auto InputManager::setCustomHotkeys() -> void {
     customHotkeys.push_back( {Hotkey::Id::DiskSwapper, "Disk_swapper", true} );
 }
 
-auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> void {
-    
+auto InputManager::fireHotkey(InputMapping* trigger) -> void {
+    Emulator::Interface* emulator = trigger->inputManager ? trigger->inputManager->emulator : nullptr;
+    Hotkey::Id id = (Hotkey::Id)trigger->hotkeyId;
+
     typedef LIBC64::Interface C64Interface;
     typedef LIBAMI::Interface AmigaInterface;
     
@@ -588,8 +590,19 @@ auto InputManager::fireHotkey(Emulator::Interface* emulator, Hotkey::Id id) -> v
 
             statusHandler->setMessage( trans->get("insert_floppy", {{"%drive%", media->name},{"%file%", fSetting->file}}) );
 
-            break;	
+            break;
         }
+        case Hotkey::Autofire: {
+            auto& autoFireMappings = trigger->inputManager->autoFireMappings;
+            auto mapping = trigger->shadowMap[0];
+
+            if (GUIKIT::Vector::find(autoFireMappings, mapping))
+                GUIKIT::Vector::eraseVectorElement(autoFireMappings, mapping);
+            else
+                autoFireMappings.push_back( mapping );
+
+            trigger->inputManager->allowAutofire = autoFireMappings.size() > 0;
+        } break;
     }
     emuThread->unlock();
 }
@@ -721,8 +734,8 @@ auto InputManager::pollHotkeys() -> void {
     if (anyLoad)
 		useTrigger.push_back( anyLoad );
     
-	for( auto trigger : useTrigger )			
-		fireHotkey( trigger->inputManager ? trigger->inputManager->emulator : nullptr, (Hotkey::Id)trigger->hotkeyId );   		
+	for( auto trigger : useTrigger )
+        fireHotkey( trigger );
 }
 
 auto InputManager::activateHotkey(Hotkey::Id id, Emulator::Interface* emulator) -> void {

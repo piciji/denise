@@ -25,6 +25,8 @@ auto InputManager::init() -> void {
             continue;
         
         manager->updateAnalogSensitivity();
+
+        manager->updateAutofireFrequency();
         
         auto settings = program->getSettings( manager->emulator );
         
@@ -88,7 +90,7 @@ auto InputManager::resetMappings() -> void {
 
 auto InputManager::setMappings() -> void {
     Emulator::Interface::Device::Input* alternateInput;
-            
+
 	for (auto manager : inputManagers) {
 		if (manager->emulator) {		
             auto settings = program->getSettings( manager->emulator );
@@ -107,23 +109,27 @@ auto InputManager::setMappings() -> void {
                     mapper->parent = nullptr;
                     mapper->alternate = nullptr;
                     mapper->inputManager = manager;
-                    mapper->autoFire = false;
+
+                    mapper->autoFire = device.isJoypad() && (input.key == Emulator::Interface::Key::Autofire);
+                    if (device.isJoypad() && (input.key == Emulator::Interface::Key::ToggleAutofire)) {
+                        mapper->type = InputMapping::Type::Switch;
+                        mapper->inputManager = manager;
+                        mapper->hotkeyId = Hotkey::Id::Autofire; // share id, later identified by mapping
+                    }
+
                     input.guid = (uintptr_t) mapper;
                     
                     for( auto& inputId : input.shadowMap ) {
                         auto inputPtr = &device.inputs[ inputId ];
 
-                        if (inputPtr->isDigital())
-                            mapper->shadowMap.push_back( (InputMapping*)(inputPtr->guid) );
+                        if (inputPtr->isDigital()) {
+                            mapper->shadowMap.push_back((InputMapping*) (inputPtr->guid));
+                        }
                     }
                     
                     manager->addMapping( mapper );
                     if (!mapper->isAnalog())
                         mapper->generateAlternate( settings );
-
-                    if (device.isJoypad() && GUIKIT::String::foundSubStr(input.name, "Button" )) {
-                        manager->autoFireMappings.push_back( mapper );
-                    }
                 }
             }
 			
@@ -135,6 +141,7 @@ auto InputManager::setMappings() -> void {
 				mapper->state = 0;
 				mapper->type = InputMapping::Type::Switch;
 				mapper->anded = 1;
+                mapper->autoFire = false;
 				mapper->emuDevice = nullptr;
 				mapper->hotkeyId = item.id;
 				mapper->parent = nullptr;
@@ -159,6 +166,7 @@ auto InputManager::setMappings() -> void {
         mapper->state = 0;
         mapper->type = InputMapping::Type::Switch;
 		mapper->anded = 1;
+        mapper->autoFire = false;
         mapper->emuDevice = nullptr;
 		mapper->hotkeyId = item.id;
         mapper->parent = nullptr;
@@ -557,6 +565,11 @@ auto InputManager::getDeviceFromIdent( unsigned id ) -> Hid::Device* {
     }
     
     return nullptr;
+}
+
+auto InputManager::updateAutofireFrequency() -> void {
+
+    autoFireFrequency = program->getSettings(emulator)->get<unsigned>( "autofire_frequency", 1, {1, 200} );
 }
 
 auto InputManager::updateAnalogSensitivity(Emulator::Interface::Device* updateDevice) -> void {
