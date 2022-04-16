@@ -7,7 +7,7 @@ InputSelector::InputSelector() {
     setAlignment(0.5);
 }
 
-InputControl::InputControl() {
+InputControl::InputControl() : autofireSlider("FPS") {
     mapper.setEnabled(false);
     erase.setEnabled(false);
     linker.setEnabled(false);
@@ -24,8 +24,8 @@ InputControl::InputControl() {
 	append(linkerAlt, {0u, 0u}, 10);     
     append(eraseAlt, {0u, 0u});
 
-    autofireSlider.slider.setLength( 100 );
-    autofireSlider.updateValueWidth( "100" );
+    autofireSlider.slider.setLength( 99 );
+    autofireSlider.updateValueWidth( "99 FPS" );
     
     setAlignment( 0.5 );
 }
@@ -122,7 +122,7 @@ InputLayout::InputLayout(TabWindow* tabWindow) {
         unsigned position = control.autofireSlider.slider.position();
         position += 1;
         _settings->set<unsigned>( "autofire_frequency", position );
-        control.autofireSlider.value.setText( std::to_string(position) );
+        control.autofireSlider.setValue( std::to_string(position) );
 
         emuThread->lock();
         manager->updateAutofireFrequency();
@@ -231,8 +231,6 @@ InputLayout::InputLayout(TabWindow* tabWindow) {
         control.eraseAlt.setEnabled(!mapping->isAnalog() && inputList.selected());
         control.linkerAlt.setEnabled(!mapping->isAnalog() && inputList.selected());
         control.mapperAlt.setEnabled( !mapping->isAnalog() && inputList.selected() );
-
-        updateSliderVisibillity( mapping->emuDevice );
     };
 
     mapControl.analogSensitivity.slider.onChange = [this]() {
@@ -374,7 +372,6 @@ auto InputLayout::loadInputList(unsigned deviceId) -> void {
     updateConnectorButtons();
     enableConnectorButtons();
     updateAnalogSensitivity();
-    updateSliderVisibillity( &device );
 }
 
 auto InputLayout::loadHotkeyList() -> void {
@@ -386,7 +383,8 @@ auto InputLayout::loadHotkeyList() -> void {
 	control.linkerAlt.setEnabled(false);
     control.mapperAlt.setEnabled(false);
 
-    updateSliderVisibillity( );
+    if (mapControl.analogSensitivity.enabled())
+        mapControl.analogSensitivity.setEnabled(false);
 	
     inputList.lockRedraw();
     
@@ -413,6 +411,9 @@ auto InputLayout::updateAnalogSensitivity() -> void {
     mapControl.analogSensitivity.value.setText( std::to_string(position) + " " + mapControl.analogSensitivity.unit );
     
     mapControl.analogSensitivity.slider.setPosition( position );
+
+    if (!mapControl.analogSensitivity.enabled())
+        mapControl.analogSensitivity.setEnabled(true);
 }
 
 auto InputLayout::updateKeyLayout() -> void {
@@ -429,8 +430,8 @@ auto InputLayout::updateKeyLayout() -> void {
 }
 
 auto InputLayout::updateAutofireFrequency() -> void {
-    unsigned position = _settings->get<unsigned>( "autofire_frequency", 1, {1, 100} );
-    control.autofireSlider.value.setText( std::to_string(position) );
+    unsigned position = _settings->get<unsigned>( "autofire_frequency", 1, {1, 99} );
+    control.autofireSlider.setValue( std::to_string(position) );
     control.autofireSlider.slider.setPosition( position - 1 );
 }
 
@@ -663,22 +664,4 @@ auto InputLayout::loadSettings() -> void {
     updateAutofireFrequency();
     
     update();
-}
-
-auto InputLayout::updateSliderVisibillity(Emulator::Interface::Device* emuDevice) -> void {
-
-    if (hotkeyMode()) {
-        if (mapControl.analogSensitivity.enabled())
-            mapControl.analogSensitivity.setEnabled(false);
-        if (control.autofireSlider.enabled())
-            control.autofireSlider.setEnabled(false);
-    } else {
-        if (!mapControl.analogSensitivity.enabled())
-            mapControl.analogSensitivity.setEnabled(true);
-
-        bool _enabled = emuDevice && emuDevice->isJoypad();
-
-        if (_enabled != control.autofireSlider.enabled())
-            control.autofireSlider.setEnabled( _enabled );
-    }
 }

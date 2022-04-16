@@ -28,7 +28,11 @@ struct SliderLayout : GUIKIT::HorizontalLayout {
 
         setAlignment(0.5);
     }
-    
+
+    auto setValue(std::string text) -> void {
+        value.setText( text + " " + unit );
+    }
+
     auto getLabelMinimumWidth() -> unsigned {
         if (withActivator)
             return active.minimumSize().width;
