@@ -76,6 +76,7 @@ struct InputLayout : GUIKIT::VerticalLayout {
     auto updateAssigner() -> void;
     auto loadSettings() -> void;
     auto updateAutofireFrequency() -> void;
+    auto updateSliderVisibillity(Emulator::Interface::Device* emuDevice = nullptr) -> void;
     
     InputSelector selector;
     InputControl control;

@@ -127,7 +127,7 @@ struct InputManager {
     std::vector<InputMapping*> andTriggers;
     unsigned autoFireFrequency;
     std::vector<InputMapping*> autoFireMappings;
-    bool allowAutofire = false;
+    bool allowTouchlessAutofire = false;
 
 	static std::vector<InputMapping*> hotkeyTriggers;
     static bool driverChange;

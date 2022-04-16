@@ -601,7 +601,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             else
                 autoFireMappings.push_back( mapping );
 
-            trigger->inputManager->allowAutofire = autoFireMappings.size() > 0;
+            trigger->inputManager->allowTouchlessAutofire = autoFireMappings.size() > 0;
         } break;
     }
     emuThread->unlock();

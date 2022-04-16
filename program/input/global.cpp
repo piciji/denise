@@ -569,7 +569,10 @@ auto InputManager::getDeviceFromIdent( unsigned id ) -> Hid::Device* {
 
 auto InputManager::updateAutofireFrequency() -> void {
 
-    autoFireFrequency = program->getSettings(emulator)->get<unsigned>( "autofire_frequency", 1, {1, 200} );
+    autoFireFrequency = program->getSettings(emulator)->get<unsigned>( "autofire_frequency", 1, {1, 100} );
+
+    for(auto mapper : autoFireMappings)
+        mapper->autoFirePos = 1;
 }
 
 auto InputManager::updateAnalogSensitivity(Emulator::Interface::Device* updateDevice) -> void {

@@ -602,9 +602,12 @@ auto Interface::prepareDevices() -> void {
 		device.inputs.push_back( {2, "Left"} );
 		device.inputs.push_back( {3, "Right"} );
 		device.inputs.push_back( {4, "Button 1"} );
+        device.inputs.push_back( {5, "Button 2"} );
 
         device.addVirtual( "Button 1 Autofire", { 4 }, Key::Autofire );
         device.addVirtual( "Button 1 Toggle Autofire", { 4 }, Key::ToggleAutofire );
+        device.addVirtual( "Button 2 Autofire", { 5 }, Key::Autofire );
+        device.addVirtual( "Button 2 Toggle Autofire", { 5 }, Key::ToggleAutofire );
 
         device.addVirtual( "Diagonal Up-Right", { 0, 3 }, Key::JoyUpRight );
         device.addVirtual( "Diagonal Down-Right", { 1, 3 }, Key::JoyDownRight );

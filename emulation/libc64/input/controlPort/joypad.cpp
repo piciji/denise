@@ -16,7 +16,11 @@ struct Joypad : ControlPort {
         
         return out;
     }
-    
+
+    auto getPotX() -> uint8_t {
+        return (system->interface->inputPoll( device->id, 5 ) & 1) ? 0 : 0xff;
+    }
+
     auto useJitPolling() -> bool {
         return true;
     }

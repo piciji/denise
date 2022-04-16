@@ -18,14 +18,14 @@ InputControl::InputControl() {
     append(mapper, {0u, 0u}, 10);     
 	append(linker, {0u, 0u}, 10);     
     append(erase, {0u, 0u}, 10);
-    append(autofireSlider, {~0u, 0u}, 20);
+    append(autofireSlider, {~0u, 0u}, 10);
     append(alternate, {0u, 0u}, 5);  
     append(mapperAlt, {0u, 0u}, 10);     
 	append(linkerAlt, {0u, 0u}, 10);     
     append(eraseAlt, {0u, 0u});
 
-    autofireSlider.slider.setLength( 10 );
-    autofireSlider.updateValueWidth( "1 / 10" );
+    autofireSlider.slider.setLength( 100 );
+    autofireSlider.updateValueWidth( "100" );
     
     setAlignment( 0.5 );
 }
@@ -125,7 +125,7 @@ InputLayout::InputLayout(TabWindow* tabWindow) {
         control.autofireSlider.value.setText( std::to_string(position) );
 
         emuThread->lock();
-        manager->autoFireFrequency = position;
+        manager->updateAutofireFrequency();
         emuThread->unlock();
     };
 
@@ -231,7 +231,8 @@ InputLayout::InputLayout(TabWindow* tabWindow) {
         control.eraseAlt.setEnabled(!mapping->isAnalog() && inputList.selected());
         control.linkerAlt.setEnabled(!mapping->isAnalog() && inputList.selected());
         control.mapperAlt.setEnabled( !mapping->isAnalog() && inputList.selected() );
-        control.autofireSlider.setEnabled( mapping->emuDevice->isJoypad() && inputList.selected() );
+
+        updateSliderVisibillity( mapping->emuDevice );
     };
 
     mapControl.analogSensitivity.slider.onChange = [this]() {
@@ -373,6 +374,7 @@ auto InputLayout::loadInputList(unsigned deviceId) -> void {
     updateConnectorButtons();
     enableConnectorButtons();
     updateAnalogSensitivity();
+    updateSliderVisibillity( &device );
 }
 
 auto InputLayout::loadHotkeyList() -> void {
@@ -383,7 +385,8 @@ auto InputLayout::loadHotkeyList() -> void {
     control.eraseAlt.setEnabled(false);
 	control.linkerAlt.setEnabled(false);
     control.mapperAlt.setEnabled(false);
-    control.autofireSlider.setEnabled(false);
+
+    updateSliderVisibillity( );
 	
     inputList.lockRedraw();
     
@@ -396,7 +399,6 @@ auto InputLayout::loadHotkeyList() -> void {
 	
 	mapControl.keyLayout.setEnabled( false );    
     mapControl.automap.setEnabled( false );
-    mapControl.analogSensitivity.setEnabled( false );
 	
 	for(auto& connectorButton : selector.connectorButtons)        
         connectorButton.checkButton->setEnabled( false );
@@ -427,7 +429,7 @@ auto InputLayout::updateKeyLayout() -> void {
 }
 
 auto InputLayout::updateAutofireFrequency() -> void {
-    unsigned position = _settings->get<unsigned>( "autofire_frequency", 1, {1, 200} );
+    unsigned position = _settings->get<unsigned>( "autofire_frequency", 1, {1, 100} );
     control.autofireSlider.value.setText( std::to_string(position) );
     control.autofireSlider.slider.setPosition( position - 1 );
 }
@@ -442,6 +444,9 @@ auto InputLayout::appendListEntry(std::string& name, InputMapping* mapping, GUIK
 		
 	if (image)
 		inputList.setImage( inputList.rowCount() - 1, 0, *image );
+
+    if (mapping->emuDevice && mapping->emuDevice->isJoypad() && GUIKIT::String::foundSubStr(name, "Toggle Autofire"))
+        inputList.setRowTooltip( inputList.rowCount() - 1, trans->get("autofire on focus") );
 }
 
 auto InputLayout::updateListEntry(unsigned selection, InputMapping* mapping) -> void {
@@ -485,7 +490,7 @@ auto InputLayout::translate() -> void {
     for(auto& connectorButton : selector.connectorButtons) 
         connectorButton.checkButton->setText( trans->get( connectorButton.connector->name ) );
 
-    control.autofireSlider.name.setText( trans->get("Frequency") );
+    control.autofireSlider.name.setText( trans->get("Autofire Rate", {}, true) );
     
     SliderLayout::scale({&mapControl.analogSensitivity}, "100 %");
 }
@@ -658,4 +663,22 @@ auto InputLayout::loadSettings() -> void {
     updateAutofireFrequency();
     
     update();
+}
+
+auto InputLayout::updateSliderVisibillity(Emulator::Interface::Device* emuDevice) -> void {
+
+    if (hotkeyMode()) {
+        if (mapControl.analogSensitivity.enabled())
+            mapControl.analogSensitivity.setEnabled(false);
+        if (control.autofireSlider.enabled())
+            control.autofireSlider.setEnabled(false);
+    } else {
+        if (!mapControl.analogSensitivity.enabled())
+            mapControl.analogSensitivity.setEnabled(true);
+
+        bool _enabled = emuDevice && emuDevice->isJoypad();
+
+        if (_enabled != control.autofireSlider.enabled())
+            control.autofireSlider.setEnabled( _enabled );
+    }
 }

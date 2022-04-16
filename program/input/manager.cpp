@@ -166,7 +166,7 @@ auto InputManager::update() -> void {
                         emuThread->lockHotkeys();
                         hotkeyTriggers.push_back(useMapping);
                         emuThread->unlockHotkeys();
-                    } else if (useMapping->autoFire /*&& (autoFireMode == 0)*/ && Program::focused) {
+                    } else if (useMapping->autoFire && Program::focused) {
                         handleAutofire(mapping, useMapping, mapping->adjustDigitalValue<true>(hid) == 0);
                     } else
                         useMapping->state = value;
@@ -237,7 +237,7 @@ auto InputManager::update() -> void {
             shadow->state = shadow->virtualLinked->state;
     }
 
-    if (allowAutofire && Program::focused/* && (autoFireMode == 1)*/)
+    if (allowTouchlessAutofire && Program::focused)
         handleTouchlessAutofire();
 }
 
@@ -375,7 +375,8 @@ auto InputManager::updateMappingsInUse() -> void {
                 autoFireMappings.push_back(mapping);
         }
     }
-    
+
+    allowTouchlessAutofire = autoFireMappings.size() > 0;
     sort();
     //priorizeConnectedDevicesOverKeyboard();
 }
