@@ -61,7 +61,7 @@ struct Keyboard {
 			cols[7] |= 1 << 1;
 		}			
     }
-    // next we need a keyboard matrix resolver, there is a 8 x 8 gird of resistors
+    // there is a 8 x 8 gird of resistors
     // cia1 port A access the rows and cia1 port B the columns
     // by pressed keys rows and columns influence each other, so reading port A is
     // influenced by port B and vice versa.
@@ -75,67 +75,43 @@ struct Keyboard {
     // like the first or second. A forth ghost key would activate on the row of the third
     // key and the column of the first or sesond key.
 
-    auto matrixActivateRow( uint8_t row, uint8_t& activeRows, uint8_t& activeColumns ) -> void {
-        // we have scanned this row already
-        if ( (1 << row) & activeRows )
+    auto matrixResolveRow( uint8_t pos, uint8_t& linkedRows, uint8_t& linkedCols ) -> void {
+        matrixResolve<true>(pos, linkedRows, linkedCols );
+    }
+
+    auto matrixResolveCol( uint8_t pos, uint8_t& linkedRows, uint8_t& linkedCols ) -> void {
+        matrixResolve<false>(pos, linkedRows, linkedCols );
+    }
+
+    template<bool followRow> inline auto matrixResolve( uint8_t pos, uint8_t& linkedRows, uint8_t& linkedCols ) -> void {
+        if ( (1 << pos) & (followRow ? linkedRows : linkedCols) ) // already checked
             return;
 
-        activeRows |= 1 << row;
-        
-        // get all columns of this row, whose keys are pressed
-        uint8_t colMask = rows[ row ];
-        
-        for( unsigned col = 0; col < 8; col++ )  
-            if ( colMask & (1 << col) & ~activeColumns )
-                matrixActivateColumn( col, activeRows, activeColumns );
-    }
-    
-    auto matrixActivateColumn( uint8_t column, uint8_t& activeRows, uint8_t& activeColumns ) -> void {        
-        // we have scanned this column already
-        if ( (1 << column) & activeColumns )
+        if (followRow)
+            linkedRows |= 1 << pos;
+        else
+            linkedCols |= 1 << pos;
+
+        uint8_t mask = followRow ? rows[ pos ] : cols[ pos ];
+        if ((mask & (followRow ? ~linkedCols : ~linkedRows)) == 0)
             return;
 
-        activeColumns |= 1 << column;
-        
-        // get all rows of this column, whose keys are pressed
-        uint8_t rowMask = cols[ column ];
-        
-        for( unsigned row = 0; row < 8; row++ )  
-            if ( rowMask & (1 << row) & ~activeRows )
-                matrixActivateRow( row, activeRows, activeColumns );
-    }
-
-    auto matrixGetActiveRowsByColumn( uint8_t column ) -> uint8_t {
-        uint8_t activeRows = 0;
-        uint8_t activeColumns = 0;
-        matrixActivateColumn( column, activeRows, activeColumns );
-        return activeRows;
-    }
-
-    auto matrixGetActiveRowsByRow( uint8_t row ) -> uint8_t {
-        uint8_t activeRows = 0;
-        uint8_t activeColumns = 0;
-        matrixActivateRow( row, activeRows, activeColumns );
-        return activeRows;
-    }
-
-    auto matrixGetActiveColumnsByColumn( uint8_t column ) -> uint8_t {
-        uint8_t activeRows = 0;
-        uint8_t activeColumns = 0;
-        matrixActivateColumn( column, activeRows, activeColumns );
-        return activeColumns;
-    }
-
-    auto matrixGetActiveColumnsByRow( uint8_t row ) -> uint8_t {
-        uint8_t activeRows = 0;
-        uint8_t activeColumns = 0;
-        matrixActivateRow( row, activeRows, activeColumns );
-        return activeColumns;
+        for( pos = 0; pos < 8; pos++ ) {
+            if (followRow) {
+                if (mask & (1 << pos) & ~linkedCols)
+                    matrixResolve<false>(pos, linkedRows, linkedCols);
+            } else {
+                if ( mask & (1 << pos) & ~linkedRows )
+                    matrixResolve<true>( pos, linkedRows, linkedCols );
+            }
+        }
     }
         
 	auto reset() -> void {
 		shiftLockPressed = false;
 		shiftLock = false;
+        std::memset(cols, 0, 8);
+        std::memset(rows, 0, 8);
 	}
 	
 	auto restore() -> bool {

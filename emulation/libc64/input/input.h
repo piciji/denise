@@ -39,9 +39,7 @@ struct Input {
     
     auto updateLightpen( uint8_t ioa, uint8_t iob ) -> void;
 	auto poll() -> void;
-    
-    auto moreThanTwoRowsActivated( uint8_t row ) -> bool;
-    
+
     auto restore() -> bool;
     auto reset() -> void;
     
