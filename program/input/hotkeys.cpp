@@ -593,13 +593,14 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             break;
         }
         case Hotkey::Autofire: {
+            emuThread->lock();
             auto& autoFireMappings = trigger->inputManager->autoFireMappings;
             auto mapping = trigger->shadowMap[0];
 
             if (GUIKIT::Vector::find(autoFireMappings, mapping))
                 GUIKIT::Vector::eraseVectorElement(autoFireMappings, mapping);
             else
-                autoFireMappings.push_back( mapping );
+                autoFireMappings.push_back(mapping);
 
             trigger->inputManager->allowTouchlessAutofire = autoFireMappings.size() > 0;
         } break;

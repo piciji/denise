@@ -47,6 +47,18 @@ struct InputAssign : GUIKIT::HorizontalLayout {
     InputAssign();
 };
 
+struct AutofireControl : GUIKIT::HorizontalLayout {
+    GUIKIT::Label label;
+
+    struct Buttons {
+        GUIKIT::Button* toggleButton;
+        InputMapping* mapping;
+    };
+    std::vector<Buttons> buttons;
+
+    AutofireControl(Emulator::Interface* emulator);
+};
+
 struct InputLayout : GUIKIT::VerticalLayout {
 
     TabWindow* tabWindow;
@@ -57,7 +69,7 @@ struct InputLayout : GUIKIT::VerticalLayout {
 	auto loadHotkeyList() -> void;
     auto loadInputList(unsigned deviceId) -> void;
     auto appendListEntry(std::string& name, InputMapping* mapping, GUIKIT::Image* image) -> void;
-    auto updateListEntry(unsigned selection, InputMapping* mapping) -> void;
+    auto updateListEntry(unsigned selection, InputMapping* mapping, bool setFocus = true) -> void;
     auto deviceId() -> unsigned;
     auto inputId() -> unsigned;
     auto displayInputCall() -> void;
@@ -81,6 +93,7 @@ struct InputLayout : GUIKIT::VerticalLayout {
     InputControl control;
     InputMapControl mapControl;
     InputAssign assigner;
+    AutofireControl autofireControl;
     
     GUIKIT::ListView inputList;
 

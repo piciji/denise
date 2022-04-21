@@ -230,6 +230,7 @@ auto InputMapping::generateAlternate( GUIKIT::Settings* settingContainer ) -> vo
     this->alternate->emuDevice = this->emuDevice;
 	this->alternate->hotkeyId = this->hotkeyId;
     this->alternate->alternate = nullptr;
+    this->alternate->isShadowed = this->isShadowed;
     this->alternate->inputManager = this->inputManager;
     
 }

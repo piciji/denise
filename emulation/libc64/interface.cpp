@@ -597,12 +597,12 @@ auto Interface::prepareDevices() -> void {
 	}
 
 	{   Device device{ id++, "Joypad #1", Device::Type::Joypad };
-		device.inputs.push_back( {0, "Up"} );
-		device.inputs.push_back( {1, "Down"} );
-		device.inputs.push_back( {2, "Left"} );
-		device.inputs.push_back( {3, "Right"} );
-		device.inputs.push_back( {4, "Button 1"} );
-        device.inputs.push_back( {5, "Button 2"} );
+		device.inputs.push_back( {0, "Up", Key::Direction} );
+		device.inputs.push_back( {1, "Down", Key::Direction} );
+		device.inputs.push_back( {2, "Left", Key::Direction} );
+		device.inputs.push_back( {3, "Right", Key::Direction} );
+		device.inputs.push_back( {4, "Button 1", Key::Button} );
+        device.inputs.push_back( {5, "Button 2", Key::Button} );
 
         device.addVirtual( "Button 1 Autofire", { 4 }, Key::Autofire );
         device.addVirtual( "Button 1 Toggle Autofire", { 4 }, Key::ToggleAutofire );

@@ -43,11 +43,17 @@ auto InputManager::addMapping(InputMapping* mapping) -> void {
 
 auto InputManager::addMappingInUse(InputMapping* mapping) -> void {
     
-    if (mapping->hids.size() > 0)
+    if (mapping->isShadowed || (mapping->hids.size() > 0))
         mappingsInUse.push_back( mapping );
-    
-    if (mapping->alternate && (mapping->alternate->hids.size() > 0) )
-        mappingsInUse.push_back( mapping->alternate );
+    else
+        mapping->state = 0;
+
+    if (mapping->alternate) {
+        if (mapping->alternate->isShadowed || (mapping->alternate->hids.size() > 0))
+            mappingsInUse.push_back( mapping->alternate );
+        else
+            mapping->alternate->state = 0;
+    }
 }
 
 auto InputManager::unmapDevice(unsigned deviceId) -> void {
@@ -166,6 +172,7 @@ auto InputManager::update() -> void {
                         emuThread->lockHotkeys();
                         hotkeyTriggers.push_back(useMapping);
                         emuThread->unlockHotkeys();
+                        break;
                     } else if (useMapping->autoFire && Program::focused) {
                         handleAutofire(mapping, useMapping, mapping->adjustDigitalValue<true>(hid) == 0);
                     } else
@@ -208,18 +215,20 @@ auto InputManager::update() -> void {
                             goto Next;
                     }                    
                 }
-                
-                useMapping->state = 1;
-				
-				if (!mapping->emuDevice) {
+
+                if (aSwitch) {
                     emuThread->lockHotkeys();
-                    hotkeyTriggers.push_back( useMapping );
+                    hotkeyTriggers.push_back(useMapping);
                     emuThread->unlockHotkeys();
-                }
+                } else if (useMapping->autoFire && Program::focused) {
+                    handleAutofire(mapping, useMapping, atLeastOneKeyHasSwitched);
+                } else
+                    useMapping->state = 1;
 
-
-                for (auto shadow : useMapping->shadowMap)
+                for (auto shadow : useMapping->shadowMap) {
+                    shadow->virtualLinked = useMapping;
                     shadows.push_back(shadow);
+                }
             }
                         
             // 2 or more keys are "and" joined successfully.
@@ -271,7 +280,7 @@ auto InputManager::handleAutofire(InputMapping* mapping, InputMapping* useMappin
         useMapping->state = 1;
     } else {
         if (!jit.enable ||
-            ((Chronos::getTimestampInMilliseconds() - jit.lastTimestamp) > 10)) {
+            ((Chronos::getTimestampInMilliseconds() - jit.lastTimestamp) > jit.rescanDelay)) {
             if (mapping->autoFirePos == 0) {
                 mapping->autoFirePos = autoFireFrequency;
                 useMapping->state = 0x80;

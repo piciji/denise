@@ -1,4 +1,29 @@
 
+AutofireControl::AutofireControl(Emulator::Interface* emulator) {
+    append(label, {0u, 0u}, 5);
+
+    auto manager = InputManager::getManager(emulator);
+
+    for (auto& device : emulator->devices) {
+        if (!device.isJoypad())
+            continue;
+
+        for (auto& input : device.inputs) {
+            if (input.key == Emulator::Interface::Key::ToggleAutofire) {
+                auto toggleButton = new GUIKIT::Button;
+                auto mapping = (InputMapping*)input.guid;
+
+                buttons.push_back( {toggleButton, mapping->shadowMap[0]} );
+                append(*toggleButton, {0u, 0u}, 10);
+
+                break; // only first fire button
+            }
+        }
+    }
+
+    setAlignment( 0.5 );
+}
+
 InputSelector::InputSelector() {
     append(device, {~0u, 0u}, 20);
 	append(hotkeys, {0u, 0u});
@@ -7,7 +32,7 @@ InputSelector::InputSelector() {
     setAlignment(0.5);
 }
 
-InputControl::InputControl() : autofireSlider("FPS") {
+InputControl::InputControl() : autofireSlider("") {
     mapper.setEnabled(false);
     erase.setEnabled(false);
     linker.setEnabled(false);
@@ -25,7 +50,7 @@ InputControl::InputControl() : autofireSlider("FPS") {
     append(eraseAlt, {0u, 0u});
 
     autofireSlider.slider.setLength( 99 );
-    autofireSlider.updateValueWidth( "99 FPS" );
+    autofireSlider.updateValueWidth( "99" );
     
     setAlignment( 0.5 );
 }
@@ -60,7 +85,9 @@ InputAssign::InputAssign() {
     setAlignment(0.5);
 }
 
-InputLayout::InputLayout(TabWindow* tabWindow) {
+
+
+InputLayout::InputLayout(TabWindow* tabWindow) : autofireControl(tabWindow->emulator) {
     this->tabWindow = tabWindow;
     this->emulator = tabWindow->emulator;
     
@@ -113,9 +140,30 @@ InputLayout::InputLayout(TabWindow* tabWindow) {
     append(inputList, {~0u, ~0u}, 10);
     append(control, {~0u, 0u}, 10);
     append(mapControl, {~0u, 0u}, 10);
+    append(autofireControl, {~0u, 0u});
 
     captureTimer.setInterval(3500);
     pollTimer.setInterval(50);
+
+
+    for (auto& button : autofireControl.buttons) {
+        auto mapping = button.mapping;
+        auto toggleButton = button.toggleButton;
+
+        toggleButton->onActivate = [mapping]() {
+            auto manager = mapping->inputManager;
+            auto& autoFireMappings =manager->autoFireMappings;
+
+            emuThread->lock();
+            if (GUIKIT::Vector::find(autoFireMappings, mapping))
+                GUIKIT::Vector::eraseVectorElement(autoFireMappings, mapping);
+            else
+                autoFireMappings.push_back( mapping );
+
+            manager->allowTouchlessAutofire = autoFireMappings.size() > 0;
+            emuThread->unlock();
+        };
+    }
 
     control.autofireSlider.slider.onChange = [this]() {
         auto manager = InputManager::getManager( this->emulator );
@@ -450,10 +498,11 @@ auto InputLayout::appendListEntry(std::string& name, InputMapping* mapping, GUIK
         inputList.setRowTooltip( inputList.rowCount() - 1, trans->get("autofire on focus") );
 }
 
-auto InputLayout::updateListEntry(unsigned selection, InputMapping* mapping) -> void {
+auto InputLayout::updateListEntry(unsigned selection, InputMapping* mapping, bool setFocus) -> void {
     unsigned column = !mapping->parent ? 2 : 3;
     inputList.setText(selection, column,  mapping->getDescription() );
-    inputList.setSelection(selection);
+    if (setFocus)
+        inputList.setSelection(selection);
 }
 
 auto InputLayout::translate() -> void {
@@ -490,6 +539,12 @@ auto InputLayout::translate() -> void {
     
     for(auto& connectorButton : selector.connectorButtons) 
         connectorButton.checkButton->setText( trans->get( connectorButton.connector->name ) );
+
+    autofireControl.label.setText( trans->get("toggle turbo fire", {}, true) );
+    for(auto& button : autofireControl.buttons) {
+        auto mapping = button.mapping;
+        button.toggleButton->setText( trans->get(mapping->emuDevice->name) );
+    }
 
     control.autofireSlider.name.setText( trans->get("Autofire Rate", {}, true) );
     
@@ -631,10 +686,16 @@ auto InputLayout::mapSelected( bool alternate ) -> void {
     pollTimer.setEnabled();
     bool overwriteMode = _settings->get<unsigned>("input_assigner", 1) == 1;
 
-    pollTimer.onFinished = [&, mapping, selection, overwriteMode]() {
-        if (InputManager::capture(overwriteMode)) {
+    pollTimer.onFinished = [this, mapping, selection, overwriteMode]() {
+        uint8_t result;
+        if (result = InputManager::capture(overwriteMode)) {
             stopCapture();
             updateListEntry(selection, mapping);
+
+            auto manager = InputManager::getManager(emulator);
+
+            if (result & 0x80)
+                mes->warning( trans->get("map button for autofire hint") );
         }
     };
     captureTimer.onFinished = [&]() {

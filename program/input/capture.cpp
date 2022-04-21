@@ -77,9 +77,11 @@ auto InputManager::capture(InputMapping* _captureObject) -> void {
     fetch();
 }
 
-auto InputManager::capture( bool overwriteExisting ) -> bool {        
+auto InputManager::capture( bool overwriteExisting ) -> uint8_t {
+    static unsigned countAssignments = 0;
+
     if (captureObject == nullptr)
-        return false;
+        return 0;
     
     fetch();
 	
@@ -119,7 +121,8 @@ auto InputManager::capture( bool overwriteExisting ) -> bool {
                             goto CaptureEnd;
                     }
                     
-                    captureObject->hids.push_back({ hidDevice, &group, &input, qualifier, 0 });                    
+                    captureObject->hids.push_back({ hidDevice, &group, &input, qualifier, 0 });
+                    countAssignments++;
                 }
                 
                 if (result == 1)
@@ -134,12 +137,75 @@ auto InputManager::capture( bool overwriteExisting ) -> bool {
     if (retry && (--retry == 0) ) {                	
 
         CaptureEnd:
+        if (overwriteExisting && (countAssignments > 1) ) {
+            captureObject->anded = true;
+        }
+        bool removedMappings = preventSharingOfAutoFireMappings(captureObject, captureObject->hids.back());
 		captureObject->updateSetting();
 		captureObject = nullptr;
         retry = 0;
-		updateAllMappingsInUse();        
-		return true;
+        countAssignments = 0;
+		updateAllMappingsInUse();
+		return removedMappings ? 0x80 | 1 : 1;
 	}
     
-	return false;
+	return 0;
+}
+
+auto InputManager::preventSharingOfAutoFireMappings(InputMapping* captureObject, InputMapping::Assign& captureHid) -> bool {
+    unsigned i;
+    unsigned pos;
+    bool removedMappings = false;
+
+    if (captureObject->anded && (captureObject->hids.size() > 1) )
+        return false;
+    auto manager = captureObject->inputManager;
+    if (!manager)
+        return false;
+    auto emulator = manager->emulator;
+    if (!emulator)
+        return false;
+
+    if (!captureObject->emuDevice || !captureObject->emuDevice->isJoypad())
+        return false;
+
+    auto emuView = EmuConfigView::TabWindow::getView( emulator );
+
+    for (auto& input : captureObject->emuDevice->inputs) {
+        if (input.key == Emulator::Interface::Key::Button || input.key == Emulator::Interface::Key::Autofire || input.key == Emulator::Interface::Key::ToggleAutofire ) {
+            InputMapping* mapper = (InputMapping*)input.guid;
+
+            if (!mapper)
+                continue;
+
+            i = 0;
+            while(i++ < 2) {
+                pos = 0;
+                if (mapper == captureObject || (mapper->anded && (mapper->hids.size() > 1) ) );
+                else {
+                    for (auto& hid : mapper->hids) {
+                        if (hid.device == captureHid.device && hid.group->id == captureHid.group->id &&
+                            hid.input->id == captureHid.input->id && hid.qualifier == captureHid.qualifier) {
+                            GUIKIT::Vector::eraseVectorPos(mapper->hids, pos);
+                            mapper->updateSetting();
+                            if (emuView && emuView->inputLayout)
+                                emuView->inputLayout->updateListEntry(input.id, mapper, false);
+                            removedMappings = true;
+                            break;
+                        }
+                        pos++;
+                    }
+                }
+
+                if (mapper->alternate)
+                    mapper = mapper->alternate;
+                else if (mapper->parent)
+                    mapper = mapper->parent;
+                else
+                    break;
+            }
+        }
+    }
+
+    return removedMappings;
 }

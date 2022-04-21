@@ -30,7 +30,10 @@ struct SliderLayout : GUIKIT::HorizontalLayout {
     }
 
     auto setValue(std::string text) -> void {
-        value.setText( text + " " + unit );
+        if (unit == "")
+            value.setText( text );
+        else
+            value.setText( text + " " + unit );
     }
 
     auto getLabelMinimumWidth() -> unsigned {

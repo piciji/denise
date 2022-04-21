@@ -41,6 +41,7 @@ struct InputMapping {
     bool hasUnknownAssignment = false;
     int analogSensitivity = 16384;
     bool autoFire = false;
+    bool isShadowed = false;
     unsigned autoFirePos = 0;
 	
 	auto isAnalog() const -> bool { return type == Analog; }
@@ -141,7 +142,7 @@ struct InputManager {
     static auto automap( KeyboardLayout::Type type, Emulator::Interface::Key key ) -> std::vector<std::vector<Hid::Key>>;
 	static auto bindHidsGlobal() -> void;
 	static auto capture(InputMapping* _captureObject) -> void;
-    static auto capture( bool overwriteExisting = false ) -> bool;
+    static auto capture( bool overwriteExisting = false ) -> uint8_t;
 	static auto fetch() -> void;
 	static auto poll() -> void;
 	static auto pollHotkeys() -> void;
@@ -157,13 +158,14 @@ struct InputManager {
 	static auto updateAllMappingsInUse( bool emuOnly = false ) -> void;
     static auto jitPoll() -> bool;
     static auto resetJit() -> void;
+    static auto preventSharingOfAutoFireMappings(InputMapping* captureObject, InputMapping::Assign& captureHid) -> bool;
 	
     auto autoAssign( KeyboardLayout::Type type, bool keyboardOnly = true ) -> void;
 	auto addMapping(InputMapping* mapping) -> void;
     auto addMappingInUse(InputMapping* mapping) -> void;
     auto update() -> void;
     auto unmapDevice(unsigned deviceId) -> void;
-    auto initMapping(InputMapping* mapping) -> void;
+    auto initMapping(InputMapping* mapping) -> bool;
 	auto sort() -> void;				
     auto updateMappingsInUse() -> void;
     auto matchButtons( Emulator::Interface::Device::Input* emuInput, Hid::Input* hidInput ) -> bool;

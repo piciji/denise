@@ -668,3 +668,4 @@ Button 2 Autofire =
 Button 2 Toggle Autofire =
 Autofire Rate =
 Autofire on focus =
+toggle turbo fire =

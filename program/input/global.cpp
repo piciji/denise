@@ -109,6 +109,7 @@ auto InputManager::setMappings() -> void {
                     mapper->parent = nullptr;
                     mapper->alternate = nullptr;
                     mapper->inputManager = manager;
+                    mapper->isShadowed = false;
 
                     mapper->autoFire = device.isJoypad() && (input.key == Emulator::Interface::Key::Autofire);
                     if (device.isJoypad() && (input.key == Emulator::Interface::Key::ToggleAutofire)) {
@@ -123,7 +124,9 @@ auto InputManager::setMappings() -> void {
                         auto inputPtr = &device.inputs[ inputId ];
 
                         if (inputPtr->isDigital()) {
-                            mapper->shadowMap.push_back((InputMapping*) (inputPtr->guid));
+                            auto shadowMapper = (InputMapping*) (inputPtr->guid);
+                            mapper->shadowMap.push_back(shadowMapper);
+                            shadowMapper->isShadowed = true;
                         }
                     }
                     
@@ -146,6 +149,7 @@ auto InputManager::setMappings() -> void {
 				mapper->hotkeyId = item.id;
 				mapper->parent = nullptr;
 				mapper->inputManager = manager;
+                mapper->isShadowed = false;
 				item.guid = (uintptr_t) mapper;
 
 				if (item.share) {
@@ -171,6 +175,7 @@ auto InputManager::setMappings() -> void {
 		mapper->hotkeyId = item.id;
         mapper->parent = nullptr;
         mapper->inputManager = nullptr; // shared mapper don't belong to a specific manager
+        mapper->isShadowed = false;
         item.guid = (uintptr_t) mapper;
 		
 		for (auto manager : inputManagers)
