@@ -80,6 +80,9 @@ struct CGL : public Video, OpenGL, RenderThread {
     }
 
     auto hintResizing(bool state) -> void {
+        if (useVRR && useResizing && !state)
+            lastCapTime = Chronos::getTimestampInMicroseconds();
+            
         useResizing = state;
     }
 

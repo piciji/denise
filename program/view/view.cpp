@@ -133,7 +133,7 @@ auto View::build() -> void {
     onResizeStart = [this]() {
         videoDriver->hintResizing(true);
 
-        if (activeVideoManager && !fullScreen() && !requestFullscreenSwitch) {
+        if (activeVideoManager /*&& !fullScreen() && !requestFullscreenSwitch*/) {
             if (videoDriver->needResizingPreparations(emuThread->enabled)) {
                 emuThread->lock();
                 videoDriver->prepareResizing();

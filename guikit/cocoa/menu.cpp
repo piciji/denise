@@ -54,10 +54,7 @@ shouldCancel:(BOOL)shouldCancel {
     return self;
 }
 -(void) activate {
-    menuCheckItem->state.checked = !menuCheckItem->checked();
-    auto state = menuCheckItem->checked() ? NSOnState : NSOffState;
-    [self setState:state];
-    if(menuCheckItem->onToggle) menuCheckItem->onToggle();
+    menuCheckItem->toggle();
 }
 @end
 
