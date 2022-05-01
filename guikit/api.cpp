@@ -1570,5 +1570,9 @@ auto Monitor::getCurrentRefreshRate() -> float {
     return pMonitor::getCurrentRefreshRate();
 }
 
+auto Monitor::getCurrentResolution() -> Size {
+    return pMonitor::getCurrentResolution();
+}
+
 }
 

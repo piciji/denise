@@ -326,7 +326,7 @@ pWindow::pWindow(Window& window, Window::Hints hints) : window(window) {
 	g_object_set_data(G_OBJECT(mainDisplay), "window", (gpointer)this);
 
 	
-    timer.setInterval(100);
+    timer.setInterval(150);
     timer.onFinished = [this]() {
         timer.setEnabled(false);
         locked = false;
@@ -346,14 +346,19 @@ pWindow::pWindow(Window& window, Window::Hints hints) : window(window) {
         // update layout, otherwise status container is placed at wrong position when switching fullscreen
         gtk_box_set_child_packing (GTK_BOX(verticalLayout), statusContainer, false, false, 0, GTK_PACK_START);
 
+        if (requestFullscreenToggle)
+            if( this->window.onSize) this->window.onSize(Window::SIZE_MODE::Default);
+
         if (resizing) {
             resizing = false;
             if (this->window.onResizeEnd && !this->window.fullScreen())
                 this->window.onResizeEnd();
         }
+
+        requestFullscreenToggle = false;
     };
 
-    timerFullscreen.setInterval( 1000 );
+    timerFullscreen.setInterval( 150 );
     timerFullscreen.onFinished = [this]() {
         timerFullscreen.setEnabled(false);
         locked = false;
@@ -383,14 +388,14 @@ auto pWindow::updateGeometryHint() -> void {
 
         aspect.height += statusHeight + menuHeight;
         if (pApplication::desktopSession == pApplication::DesktopSession::KDE) {
-            // todo: don't understand why this is necessary, works as expected in Cinnamon, need to test Mate, XFCE, Gnome, Unity
+            // todo: don't understand why this is necessary, works as expected in Cinnamon and GNOME, need to test others
             if (aspect.height > 21)
                 aspect.height -= 21;
         }
 
         double ratio = (double)aspect.width / (double)aspect.height;
         if (pApplication::desktopSession == pApplication::DesktopSession::Cinnamon)
-            // blocks resizing in KDE, works in Cinnamon, need to test the others
+            // blocks resizing in KDE and GNOME, works in Cinnamon, need to test others
             geom.min_aspect = ratio;
         geom.max_aspect = ratio;
         hints |= GdkWindowHints::GDK_HINT_ASPECT;
@@ -398,8 +403,6 @@ auto pWindow::updateGeometryHint() -> void {
 
     geom.min_width = 100;
     geom.min_height = 100;
-   // geom.width_inc = 15;
-   // geom.height_inc = 15;
 
     gtk_window_set_geometry_hints(GTK_WINDOW(widget), nullptr, &geom, (GdkWindowHints)hints);
 }
@@ -561,16 +564,13 @@ auto pWindow::moveWindow(GdkEvent* event) -> void {
     }
 }
 
-// the following stuff is so buggy in GTK, wasted two days to get it working.
-// problem: wrong window geometry while toggling menu, status, fullscreen or fullscreen and menu/status toggling same time
-
 auto pWindow::setVisible(bool visible) -> bool {
     
 	if (visible)
 		setGeometry( geometry() );	
 	
 	if (!window.menuVisible()) //dirty hack:
-		/* if menu is not enabled when showing window, first calculation of menu size gives wrong results */
+		/* if menu is not enabled when showing window, first calculation of menu size gives wrong results, so do it stealthy */
 		gtk_widget_set_visible(menu, true);
 	
     gtk_widget_set_visible(widget, visible);
@@ -592,7 +592,7 @@ auto pWindow::setMenuVisible(bool visible) -> void {
 
     calcMenuHeight();
 
-    if (window.fullScreen()) gtk_window_fullscreen(GTK_WINDOW(widget));
+    //if (window.fullScreen()) gtk_window_fullscreen(GTK_WINDOW(widget));
 		
     resize( geometry() );
     updateGeometryHint();
@@ -616,7 +616,7 @@ auto pWindow::setStatusVisible(bool visible) -> void {
 	
     if (!gtk_widget_get_visible(widget)) return;
 
-    if (window.fullScreen()) gtk_window_fullscreen(GTK_WINDOW(widget));
+    //if (window.fullScreen()) gtk_window_fullscreen(GTK_WINDOW(widget));
 
 	// Why?
 	// switching language between asian and european changes menu height
@@ -657,7 +657,8 @@ auto pWindow::sizeWindow(GtkAllocation* allocation) -> void {
         this->window.state.layout->setGeometry(layoutGeometry);
     }
 
-    if( this->window.onSize) this->window.onSize(Window::SIZE_MODE::Default);
+    if (!requestFullscreenToggle)
+        if( this->window.onSize) this->window.onSize(Window::SIZE_MODE::Default);
 	
     lastAllocation = *allocation;
 }
@@ -720,20 +721,21 @@ auto pWindow::setForeground() -> void {
 auto pWindow::setFullScreen(bool fullScreen) -> void {
     if (!window.resizable()) return;
     locked = true;
+    requestFullscreenToggle = true;
     timer.setEnabled();
 
     if(!fullScreen) {
 
-        if (pMonitor::resetSetting()) {
-            timer.setEnabled(false);
-            locked = true;
-            timerFullscreen.setEnabled();
-            gtk_window_unfullscreen(GTK_WINDOW(widget));
+        if (pMonitor::resetSetting())
+            timerFullscreen.setInterval(1000);
+        else
+            timerFullscreen.setInterval(150);
 
-        } else {
-            gtk_window_unfullscreen(GTK_WINDOW(widget));
-            setGeometry(window.state.geometry);
-        }
+        timer.setEnabled(false);
+        locked = true;
+        timerFullscreen.setEnabled();
+        gtk_window_unfullscreen(GTK_WINDOW(widget));
+
     } else {
         if (window.fullscreenSetting.inUse)
             pMonitor::setSetting( window.fullscreenSetting.displayId, window.fullscreenSetting.settingId );

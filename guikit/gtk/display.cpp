@@ -69,6 +69,23 @@ auto pMonitor::getCurrentRefreshRate() -> float {
     return (float)XRRConfigCurrentRate(conf);
 }
 
+auto pMonitor::getCurrentResolution() -> Size {
+    const XRRModeInfo* mode;
+
+    if (!devices.size())
+        fetchDisplays();
+
+    if (!display)
+        return {0,0};
+
+    if (activeDevice) {
+        mode = getModeInfo(screens, activeDevice->activeMode);
+        return { mode->width, mode->height };
+    }
+
+    return {0,0};
+}
+
 auto pMonitor::connect() -> bool {
     if (!display) {
         display = XOpenDisplay(NULL);
@@ -116,7 +133,8 @@ auto pMonitor::fetchDisplays() -> void {
             XRRCrtcInfo* crtcInfo = XRRGetCrtcInfo(display, screens, outInfo->crtc);
 
             if (crtcInfo)
-                devices.push_back({crc32.value(), devName, i, outInfo, crtcInfo->mode, ~0u, screens->outputs[i]});
+                devices.push_back({crc32.value(), devName, i, outInfo,
+                                   crtcInfo->mode, crtcInfo->mode, screens->outputs[i], crtcInfo->x, crtcInfo->y});
         }
     }
 }
@@ -147,10 +165,16 @@ auto pMonitor::fetchSettings( Device* device ) -> void {
 
     for (unsigned j = 0; j < device->outInfo->nmode; j++) {
 
-        const XRRModeInfo* mode = getModeInfo( screens, device->outInfo->modes[j] );
+        RRMode rrModeId = device->outInfo->modes[j];
+
+        const XRRModeInfo* mode = getModeInfo( screens, rrModeId );
 
         if (!mode || (mode->modeFlags & RR_Interlace) )
             continue;
+
+        if (rrModeId == device->xid) {
+      //      device->activeMode = mode->id;
+        }
 
         double refresh = modeRefresh(mode);
 
@@ -238,13 +262,55 @@ auto pMonitor::setSetting( unsigned displayId, unsigned settingId ) -> bool {
     if (!setting)
         return false;
 
+    auto screen = DefaultScreen (display);
+
     XRRCrtcInfo* crtcInfo = XRRGetCrtcInfo(display, screens, activeDevice->outInfo->crtc);
+
+    if (!crtcInfo)
+        return false;
+
+    activeDevice->activeMode = setting->rrMode;
+
+    unsigned screenWidth = 0;
+    unsigned screenHeight = 0;
+    int screenWidthMM;
+    int screenHeightMM;
+
+    for(auto& device : devices) {
+        const XRRModeInfo* _mode = getModeInfo( screens, device.activeMode  );
+
+        if ((device.x + _mode->width) > screenWidth)
+            screenWidth = device.x + _mode->width;
+
+        if((device.y + _mode->height) > screenHeight)
+            screenHeight = device.y + _mode->height;
+    }
+
+    if (screenWidth == 0 || screenHeight == 0) {
+        activeDevice->activeMode = activeDevice->originalMode;
+        return false;
+    }
+
+    if (screenWidth != DisplayWidth (display, screen) || screenHeight != DisplayHeight (display, screen)) {
+        double dpi = (25.4 * (double)DisplayHeight (display, screen)) / (double)DisplayHeightMM(display, screen);
+
+        screenWidthMM = (int)((25.4 * (double)screenWidth) / dpi);
+        screenHeightMM = (int)((25.4 * (double)screenHeight) / dpi);
+    } else {
+        screenWidthMM = DisplayWidthMM (display, screen);
+        screenHeightMM = DisplayHeightMM (display, screen);
+    }
+
+    XRRSetCrtcConfig (display, screens, activeDevice->outInfo->crtc, CurrentTime,
+                      0, 0, None, RR_Rotate_0, NULL, 0);
+
+    //printf ("screen %d: %dx%d %dx%d mm \n", screen, screenWidth, screenHeight, screenWidthMM, screenHeightMM);
+
+    XRRSetScreenSize(display, DefaultRootWindow(display), screenWidth, screenHeight, screenWidthMM, screenHeightMM);
 
     Status status = XRRSetCrtcConfig(display, screens, activeDevice->outInfo->crtc,
         CurrentTime, crtcInfo->x, crtcInfo->y, setting->rrMode, crtcInfo->rotation,
         &screens->outputs[activeDevice->pos], 1);
-
-    activeDevice->activeMode = setting->rrMode;
 
     return status == RRSetConfigSuccess;
 }
@@ -254,11 +320,23 @@ auto pMonitor::resetSetting() -> bool {
     if (!activeDevice)
         return false;
 
+    auto screen = DefaultScreen (display);
+    XRRSetScreenSize (display, DefaultRootWindow(display),
+                      DisplayWidth (display, screen),
+                      DisplayHeight (display, screen),
+                      DisplayWidthMM (display, screen),
+                      DisplayHeightMM (display, screen));
+
     XRRCrtcInfo* crtcInfo = XRRGetCrtcInfo(display, screens, activeDevice->outInfo->crtc);
+
+    if (!crtcInfo)
+        return false;
 
     Status status = XRRSetCrtcConfig(display, screens, activeDevice->outInfo->crtc,
         CurrentTime, crtcInfo->x, crtcInfo->y, activeDevice->originalMode, crtcInfo->rotation,
         &screens->outputs[activeDevice->pos], 1);
+
+    activeDevice->activeMode = activeDevice->originalMode;
 
     activeDevice = nullptr;
 

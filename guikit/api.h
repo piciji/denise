@@ -1246,6 +1246,7 @@ struct Monitor {
     static auto getDisplays() -> std::vector<Property>;
     static auto getSettings( unsigned displayId ) -> std::vector<Property>;
     static auto getCurrentRefreshRate() -> float;
+    static auto getCurrentResolution() -> Size;
 
     Monitor() = delete;
 };

@@ -24,7 +24,12 @@ auto pTabFrame::minimumSize() -> Size {
 
 	auto _border = borderSize();
 
-    calculatedMinimumSize.minimumSize = {size.width + (_border << 1) + 55, (_border << 1) + 30 };
+    int _adjust = 0;
+    if (pApplication::desktopSession == pApplication::DesktopSession::Gnome) {
+        _adjust = 5;
+    }
+
+    calculatedMinimumSize.minimumSize = {size.width + (_border << 1) + 55, (_border << 1) + 30 + _adjust };
 
 	return calculatedMinimumSize.minimumSize;
 }

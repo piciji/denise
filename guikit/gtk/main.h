@@ -44,6 +44,7 @@ struct pWindow {
     GdkCursor* cursor = nullptr;
 	bool isMinimized = false;
     bool resizing = false;
+    bool requestFullscreenToggle = false;
 
     auto append(Menu& menu) -> void;
     auto append(Widget& widget) -> void;
@@ -732,6 +733,8 @@ struct pMonitor {
         RRMode originalMode;
         RRMode activeMode;
         RROutput xid;
+        int x;
+        int y;
     };
 
     struct Setting {
@@ -759,6 +762,7 @@ struct pMonitor {
     static auto resetSetting() -> bool;
 
     static auto getCurrentRefreshRate() -> float;
+    static auto getCurrentResolution() -> Size;
     static auto getRefreshRate( unsigned displayId, unsigned settingId ) -> float { return 0.0; }
 };
 
