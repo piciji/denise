@@ -748,7 +748,7 @@ auto ModelLayout::appendAudioSelectorLayout() -> void {
     controlLayout.append(controlLayout.label, {test.minimumSize().width, 0u}, 5);
     controlLayout.append(controlLayout.firstAll, {0u, 0u}, 5);
     controlLayout.append(controlLayout.secondAll, {0u, 0u}, 20);
-    
+    controlLayout.setAlignment(0.5);
     append(controlLayout, {0u, 0u}, 5);
     
     controlLayout.firstAll.onToggle = [this](bool checked) {

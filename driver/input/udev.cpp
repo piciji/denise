@@ -4,7 +4,13 @@
 #include <sys/poll.h>
 #include <fcntl.h>
 #include <libudev.h>
+
+#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__) || defined(__OpenBSD__)
+#include <dev/evdev/input.h>
+#else
 #include <linux/input.h>
+#endif
+
 #include <string>
 #include <vector>
 #include <cstring>

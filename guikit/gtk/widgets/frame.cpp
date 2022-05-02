@@ -22,8 +22,14 @@ auto pFrame::setGeometry(Geometry geometry) -> void {
     Size size = pFont::size(pfont, widget.text());
     size.height >>= 1;
     if (!widget.text().empty()) size.height = 0;
-    geometry.y -= size.height;
-    geometry.height += size.height;
+    
+	int _adjust = 0;
+    if (pApplication::desktopSession == pApplication::DesktopSession::Mate) {
+        _adjust = 4;
+    }
+    
+    geometry.y -= size.height + _adjust;
+    geometry.height += size.height + _adjust;
 
 	// place label 5 px from left
 	gfloat _align = 5.0 / (gfloat)(geometry.width - size.width);
@@ -36,7 +42,12 @@ auto pFrame::setGeometry(Geometry geometry) -> void {
 auto pFrame::getDisplacement() -> Position {
     Size size = pFont::size(pfont, widget.text());
     if (widget.text().empty()) size.height >>= 1;
-	size.height += 2;
+    
+	int _adjust = 2;
+    if (pApplication::desktopSession == pApplication::DesktopSession::Mate) {
+        _adjust = 4;
+    }
+	size.height += _adjust;
 		
     return { (signed)frameSize().width, (signed)size.height };
 }

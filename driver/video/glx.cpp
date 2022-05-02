@@ -441,8 +441,8 @@ struct GLX : public Video, OpenGL, RenderThread {
             waitVRR();
             glXSwapBuffers(display, glxwindow);
         } else {
-            if (glx.doubleBuffer) glXSwapBuffers(display, glxwindow);
-            if (settings.hardSync && settings.synchronize) glFinish();
+			if (settings.hardSync && settings.synchronize) glFinish();
+            if (glx.doubleBuffer) glXSwapBuffers(display, glxwindow);            
         }
 
         if (useResizing)
@@ -488,8 +488,8 @@ struct GLX : public Video, OpenGL, RenderThread {
             waitVRR();
             glXSwapBuffers(display, glxwindow);
         } else {
-            if (glx.doubleBuffer) glXSwapBuffers(display, glxwindow);
-            if (settings.hardSync && settings.synchronize) glFinish();
+			if (settings.hardSync && settings.synchronize) glFinish();
+            if (glx.doubleBuffer) glXSwapBuffers(display, glxwindow);            
         }
 
         clearCurrent();

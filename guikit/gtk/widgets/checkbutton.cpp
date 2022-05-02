@@ -1,7 +1,7 @@
 
 auto pCheckButton::minimumSize() -> Size {
     Size size = getMinimumSize();
-    return {size.width, size.height};
+    return {size.width + 8, size.height};
 //	auto context = gtk_widget_get_style_context (gtkWidget);
 //    auto state = gtk_widget_get_state_flags (gtkWidget);
 //	GtkBorder padding;

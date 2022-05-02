@@ -1,9 +1,27 @@
 
 auto pRadioBox::minimumSize() -> Size {
-    Size size = getMinimumFontSize();
-    //return {size.width, size.height};
+	static bool initialized = false;
+	static gint minimumHeight = 0;
+	static gint minimumWidth = 0;
+	Size size = getMinimumFontSize();
+	
+	if (!initialized) {
+		initialized = true;
+		gint natural;
+		gtk_widget_get_preferred_height(gtkWidget, &minimumHeight, &natural);
+		gtk_widget_get_preferred_width(gtkWidget, &minimumWidth, &natural);		
+		
+		if (minimumWidth > size.width)
+			minimumWidth -= size.width;
+	}	
+    return {size.width + minimumWidth, std::max((unsigned)minimumHeight, size.height) };
 
-    return {size.width + 16 + 4, size.height + 4};
+    //int _adjust = 4;
+    //if (pApplication::desktopSession == pApplication::DesktopSession::Mate) {
+    //    _adjust = 10;
+    //}
+
+    //return {size.width + 16 + _adjust, size.height + _adjust};
 }
 
 auto pRadioBox::setGeometry(Geometry geometry) -> void {

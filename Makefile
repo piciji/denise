@@ -49,8 +49,10 @@ else ifeq ($(platform),macosx)
     else
         export MACOSX_DEPLOYMENT_TARGET=10.9
     endif
+else ifeq ($(platform),BSD)
+    link += -static-libgcc -static-libstdc++ -lpthread -no-pie
 else
-    link += -lpthread -no-pie      
+    link += -lpthread -no-pie
 endif
 
 ifeq ($(gprof), 1)    
@@ -253,6 +255,10 @@ ifeq ($(platform),macosx)
 	codesign --force --deep -s - out/$(name).app
 else ifeq ($(platform),windows)
 	$(strip $(compiler) -o out/$(name) $(objects) $(link))
+else ifeq ($(platform),BSD)
+	@sed -i '' '1 s/$$(wildcard //g;1 s/.o:/.o: $$\(wildcard/g;$$ s/)//g;$$ s/$$/\)/g' obj/*.d
+
+	$(strip $(compiler) -o out/$(loname) $(objects) $(link))
 else
 	@sed -i '1 s/$$(wildcard //g;1 s/.o:/.o: $$\(wildcard/g;$$ s/)//g;$$ s/$$/\)/g' obj/*.d
 
@@ -307,22 +313,22 @@ install: ## Install
 	mkdir -p $(prefix)/share/$(loname)/$(shaderFolder)/
 
 	if [ -d $(prefix)/local ]; then	\
-	    install -D -m 755 out/$(loname) $(prefix)/local/bin/$(loname);	\
+	    install -m 755 out/$(loname) $(prefix)/local/bin/$(loname);	\
 	else	\
-	    install -D -m 755 out/$(loname) $(prefix)/bin/$(loname);	\
+	    install -m 755 out/$(loname) $(prefix)/bin/$(loname);	\
 	fi
-	install -D -m 644 data/img/$(loname).png $(prefix)/share/icons/$(loname).png
-	install -D -m 644 data/$(loname).desktop $(prefix)/share/applications/$(loname).desktop
+	install -m 644 data/img/$(loname).png $(prefix)/share/icons/$(loname).png
+	install -m 644 data/$(loname).desktop $(prefix)/share/applications/$(loname).desktop
 	@echo "Install file associations? [y/n]"; \
 	read line; if [ $$line = "y" ]; then \
-	    install -D -m 644 data/application-x-$(loname).xml $(prefix)/share/mime/packages/application-x-$(loname).xml; \
+	    install -m 644 data/application-x-$(loname).xml $(prefix)/share/mime/packages/application-x-$(loname).xml; \
 	    if [ $(shell which update-mime-database) ]; then update-mime-database $(prefix)/share/mime; fi; \
 	    if [ $(shell which update-desktop-database) ]; then update-desktop-database $(prefix)/share/applications; fi; \
 	fi
-	install -D -m 644 data/$(translationFolder)/* $(prefix)/share/$(loname)/$(translationFolder)
-	install -D -m 644 data/$(dataFolder)/* $(prefix)/share/$(loname)/$(dataFolder)
-	install -D -m 644 data/$(fontFolder)/*.ttf $(prefix)/share/$(loname)/$(fontFolder)
-	install -D -m 644 data/$(imgFolder)/bundle/* $(prefix)/share/$(loname)/$(imgFolder)
+	install -m 644 data/$(translationFolder)/* $(prefix)/share/$(loname)/$(translationFolder)
+	install -m 644 data/$(dataFolder)/* $(prefix)/share/$(loname)/$(dataFolder)
+	install -m 644 data/$(fontFolder)/*.ttf $(prefix)/share/$(loname)/$(fontFolder)
+	install -m 644 data/$(imgFolder)/bundle/* $(prefix)/share/$(loname)/$(imgFolder)
 	cp -r data/$(soundFolder)/* $(prefix)/share/$(loname)/$(soundFolder)/
 	cp -r data/$(shaderFolder)/* $(prefix)/share/$(loname)/$(shaderFolder)/
     endif

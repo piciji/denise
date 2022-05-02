@@ -22,6 +22,10 @@
 #define SOCKET_ERROR -1
 #endif
 
+#ifndef IPPROTO_TCP
+#define IPPROTO_TCP 6
+#endif
+
 namespace Emulator {
 
     Socket::~Socket() {
