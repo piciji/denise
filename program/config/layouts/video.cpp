@@ -204,7 +204,7 @@ VideoLayout::VideoLayout() {
     
     if( showHardSync ) {        
         videoSettingsLayout.hardSync.setEnabled( GUIKIT::String::foundSubStr(selectedDriver, "GL") );
-        videoSettingsLayout.hardSync.setChecked(globalSettings->get("gl_hardsync", false));
+        videoSettingsLayout.hardSync.setChecked(globalSettings->get("gl_hardsync", true));
     } else
         videoSettingsLayout.remove( videoSettingsLayout.hardSync );
 	

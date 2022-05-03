@@ -25,8 +25,21 @@ AudioManager::~AudioManager() {
 }
 
 auto AudioManager::setLatency() -> void {
-    
+
     unsigned latency = globalSettings->get<unsigned>("audio_latency", 30u, {1u, 120u});
+
+    if (latency > 30) {
+        // one time update, when user use old default latency setting of 64 or higher than 30. why ?
+        // it's much too high for continuous smooth scrolling
+        // todo: remove it later
+        auto latUpd = globalSettings->get<bool>("audio_latency_update", false);
+        if (!latUpd) {
+            latency = 30;
+            globalSettings->set<bool>("audio_latency_update", true);
+            globalSettings->set<unsigned>("audio_latency", 30u);
+        }
+    }
+
     audioDriver->setLatency( latency );
 }
 

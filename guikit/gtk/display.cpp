@@ -264,11 +264,6 @@ auto pMonitor::setSetting( unsigned displayId, unsigned settingId ) -> bool {
 
     auto screen = DefaultScreen (display);
 
-    XRRCrtcInfo* crtcInfo = XRRGetCrtcInfo(display, screens, activeDevice->outInfo->crtc);
-
-    if (!crtcInfo)
-        return false;
-
     activeDevice->activeMode = setting->rrMode;
 
     unsigned screenWidth = 0;
@@ -301,18 +296,35 @@ auto pMonitor::setSetting( unsigned displayId, unsigned settingId ) -> bool {
         screenHeightMM = DisplayHeightMM (display, screen);
     }
 
-    XRRSetCrtcConfig (display, screens, activeDevice->outInfo->crtc, CurrentTime,
-                      0, 0, None, RR_Rotate_0, NULL, 0);
-
     //printf ("screen %d: %dx%d %dx%d mm \n", screen, screenWidth, screenHeight, screenWidthMM, screenHeightMM);
 
+    Status status;
+
+    for(auto& device : devices) { // disable
+        status = XRRSetCrtcConfig (display, screens, device.outInfo->crtc, CurrentTime, 0, 0, None, RR_Rotate_0, NULL, 0);
+
+        if (status != RRSetConfigSuccess) {
+            resetSetting();
+            return false;
+        }
+    }
+
+    // set overall screen size
     XRRSetScreenSize(display, DefaultRootWindow(display), screenWidth, screenHeight, screenWidthMM, screenHeightMM);
 
-    Status status = XRRSetCrtcConfig(display, screens, activeDevice->outInfo->crtc,
-        CurrentTime, crtcInfo->x, crtcInfo->y, setting->rrMode, crtcInfo->rotation,
-        &screens->outputs[activeDevice->pos], 1);
+    for(auto& device : devices) {
+        XRRCrtcInfo* crtcInfo = XRRGetCrtcInfo(display, screens, device.outInfo->crtc);
 
-    return status == RRSetConfigSuccess;
+        status = XRRSetCrtcConfig(display, screens, device.outInfo->crtc,
+                                         CurrentTime, device.x, device.y, device.activeMode, crtcInfo->rotation,
+                                         &screens->outputs[device.pos], 1);
+
+        if (status != RRSetConfigSuccess) {
+            resetSetting();
+            return false;
+        }
+    }
+    return true;
 }
 
 auto pMonitor::resetSetting() -> bool {
@@ -320,25 +332,32 @@ auto pMonitor::resetSetting() -> bool {
     if (!activeDevice)
         return false;
 
+    activeDevice->activeMode = activeDevice->originalMode;
+
+    activeDevice = nullptr;
+
     auto screen = DefaultScreen (display);
+
+    Status status;
+
+    for(auto& device : devices) { // disable
+        status = XRRSetCrtcConfig (display, screens, device.outInfo->crtc, CurrentTime, 0, 0, None, RR_Rotate_0, NULL, 0);
+    }
+
     XRRSetScreenSize (display, DefaultRootWindow(display),
                       DisplayWidth (display, screen),
                       DisplayHeight (display, screen),
                       DisplayWidthMM (display, screen),
                       DisplayHeightMM (display, screen));
 
-    XRRCrtcInfo* crtcInfo = XRRGetCrtcInfo(display, screens, activeDevice->outInfo->crtc);
+    for(auto& device : devices) {
+        XRRCrtcInfo* crtcInfo = XRRGetCrtcInfo(display, screens, device.outInfo->crtc);
 
-    if (!crtcInfo)
-        return false;
+        status = XRRSetCrtcConfig(display, screens, device.outInfo->crtc,
+                                         CurrentTime, device.x, device.y, device.originalMode,
+                                         crtcInfo->rotation,
+                                         &screens->outputs[device.pos], 1);
+    }
 
-    Status status = XRRSetCrtcConfig(display, screens, activeDevice->outInfo->crtc,
-        CurrentTime, crtcInfo->x, crtcInfo->y, activeDevice->originalMode, crtcInfo->rotation,
-        &screens->outputs[activeDevice->pos], 1);
-
-    activeDevice->activeMode = activeDevice->originalMode;
-
-    activeDevice = nullptr;
-
-    return status == RRSetConfigSuccess;
+    return true;
 }
