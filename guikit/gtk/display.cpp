@@ -229,6 +229,7 @@ auto pMonitor::getSettings( unsigned displayId ) -> std::vector<Monitor::Propert
 }
 
 auto pMonitor::setSetting( unsigned displayId, unsigned settingId ) -> bool {
+    Status status;
 
     if (!connect())
         return false;
@@ -298,10 +299,13 @@ auto pMonitor::setSetting( unsigned displayId, unsigned settingId ) -> bool {
 
     //printf ("screen %d: %dx%d %dx%d mm \n", screen, screenWidth, screenHeight, screenWidthMM, screenHeightMM);
 
-    Status status;
+    XGrabServer(display);
 
-    for(auto& device : devices) { // disable
-        status = XRRSetCrtcConfig (display, screens, device.outInfo->crtc, CurrentTime, 0, 0, None, RR_Rotate_0, NULL, 0);
+    for (auto &device: devices) { // disable
+        if (&device != activeDevice)
+            continue;
+
+        status = XRRSetCrtcConfig(display, screens, device.outInfo->crtc, CurrentTime, 0, 0, None, RR_Rotate_0, NULL, 0);
 
         if (status != RRSetConfigSuccess) {
             resetSetting();
@@ -312,52 +316,69 @@ auto pMonitor::setSetting( unsigned displayId, unsigned settingId ) -> bool {
     // set overall screen size
     XRRSetScreenSize(display, DefaultRootWindow(display), screenWidth, screenHeight, screenWidthMM, screenHeightMM);
 
-    for(auto& device : devices) {
+    for (auto &device: devices) {
+        if (&device != activeDevice)
+            continue;
+
         XRRCrtcInfo* crtcInfo = XRRGetCrtcInfo(display, screens, device.outInfo->crtc);
 
         status = XRRSetCrtcConfig(display, screens, device.outInfo->crtc,
-                                         CurrentTime, device.x, device.y, device.activeMode, crtcInfo->rotation,
-                                         &screens->outputs[device.pos], 1);
+                                  CurrentTime, device.x, device.y, device.activeMode, crtcInfo->rotation,
+                                  &screens->outputs[device.pos], 1);
 
         if (status != RRSetConfigSuccess) {
             resetSetting();
             return false;
         }
     }
+
+    XUngrabServer(display);
+    XSync(display, false);
+
     return true;
 }
 
 auto pMonitor::resetSetting() -> bool {
-
+    Status status;
     if (!activeDevice)
         return false;
 
     activeDevice->activeMode = activeDevice->originalMode;
 
-    activeDevice = nullptr;
-
     auto screen = DefaultScreen (display);
 
-    Status status;
+    XGrabServer (display);
 
-    for(auto& device : devices) { // disable
-        status = XRRSetCrtcConfig (display, screens, device.outInfo->crtc, CurrentTime, 0, 0, None, RR_Rotate_0, NULL, 0);
+    for (auto &device: devices) { // disable
+
+        if (&device != activeDevice)
+            continue;
+
+        status = XRRSetCrtcConfig(display, screens, device.outInfo->crtc, CurrentTime, 0, 0, None, RR_Rotate_0, NULL, 0);
     }
 
-    XRRSetScreenSize (display, DefaultRootWindow(display),
-                      DisplayWidth (display, screen),
-                      DisplayHeight (display, screen),
-                      DisplayWidthMM (display, screen),
-                      DisplayHeightMM (display, screen));
+    XRRSetScreenSize(display, DefaultRootWindow(display),
+                     DisplayWidth (display, screen),
+                     DisplayHeight (display, screen),
+                     DisplayWidthMM (display, screen),
+                     DisplayHeightMM (display, screen));
 
-    for(auto& device : devices) {
+    for (auto &device: devices) {
+        if (&device != activeDevice)
+            continue;
+
         XRRCrtcInfo* crtcInfo = XRRGetCrtcInfo(display, screens, device.outInfo->crtc);
 
         status = XRRSetCrtcConfig(display, screens, device.outInfo->crtc,
-                                         CurrentTime, device.x, device.y, device.originalMode,
-                                         crtcInfo->rotation,
-                                         &screens->outputs[device.pos], 1);
+                                  CurrentTime, device.x, device.y, device.originalMode,
+                                  crtcInfo->rotation,
+                                  &screens->outputs[device.pos], 1);
     }
+
+    XUngrabServer(display);
+    XSync(display, false);
+
+    activeDevice = nullptr;
 
     return true;
 }

@@ -201,7 +201,14 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         if (!moduleList.selected())
             return;
 
-        moduleSwitch.setSelection( moduleList.selection() );
+        auto _sel = moduleList.selection();
+
+        if (memoryPattern && _sel == 2) {
+            GUIKIT::HorizontalLayout::alignChildrenVertically( {&memoryPattern->firstLine, &memoryPattern->secondLine, &memoryPattern->thirdLine} );
+            memoryPattern->updateLayout();
+        }
+
+        moduleSwitch.setSelection( _sel );
     };
         
     append( moduleFrame, {0u, 0u}, 10 );
