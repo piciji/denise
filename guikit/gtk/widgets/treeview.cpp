@@ -161,6 +161,7 @@ auto pTreeView::create() -> void {
     gtkTreeModel = GTK_TREE_MODEL(gtkTreeStore);
 
     subWidget = gtk_tree_view_new_with_model(gtkTreeModel);
+    g_object_set(subWidget, "margin-bottom", 16, NULL);
     gtkTreeView = GTK_TREE_VIEW(subWidget);
     gtkTreeSelection = gtk_tree_view_get_selection(gtkTreeView);
     gtk_tree_view_set_headers_visible(gtkTreeView, false);

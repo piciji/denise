@@ -3,7 +3,9 @@ SpeedLayout::SpeedLayout() {
     append(label, {0u, 0u}, 5);
     append(fps, {0u, 0u}, 5 );
     append(percent, {0u, 0u}, 10 );
-    append(speed, {GUIKIT::Font::scale(55), 0u}, 10 );
+    GUIKIT::LineEdit test;
+    test.setText("999.99");
+    append(speed, {test.minimumSize().width, 0u}, 10 );
     append(apply, {0u, 0u} );
 
     GUIKIT::RadioBox::setGroup( fps, percent );

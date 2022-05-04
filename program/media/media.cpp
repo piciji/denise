@@ -201,7 +201,7 @@ auto MediaLayout::build() -> void {
 		bindSelectorAction( mediaGroupLayout );
     }
 
-    moduleFrame.append( mediaTree, { GUIKIT::Font::scale(165), GUIKIT::Font::scale(300)}, 10 );
+    moduleFrame.append( mediaTree, { GUIKIT::Font::scale(170), GUIKIT::Font::scale(300)}, 10 );
     if (dynamic_cast<LIBC64::Interface*>(emulator)) {
         moduleFrame.append(useTraps, {0u, 0u}, 10);
     }
