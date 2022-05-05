@@ -47,3 +47,4 @@
 #define ID_EDIT			32036
 #define ID_FAN			32037
 #define ID_HIDE			32038
+#define ID_FULLSCREEN   32039

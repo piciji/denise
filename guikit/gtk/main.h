@@ -78,7 +78,7 @@ struct pWindow {
 	auto minimized() -> bool;
 	auto restore() -> void;
 	auto setForeground() -> void;
-    auto getScrollbarWidth() -> unsigned { return 15; }
+    auto getScrollbarWidth() -> unsigned { return 25; }
     auto applyAspectRatio() -> void;
     auto updateGeometryHint() -> void;
     static auto mouseMove(GtkWidget* widget, GdkEventButton* event, pWindow* self) -> gboolean;
@@ -593,6 +593,7 @@ struct pMenuBase {
 	} element, elementC;
 	
     bool locked = false;
+    bool updatedPadding = false;
 
     auto setEnabled(bool enabled) -> void;
     auto setVisible(bool visible) -> void;
@@ -612,6 +613,7 @@ struct pMenu : pMenuBase {
     Menu& menu;
     GtkWidget* gtkMenu = nullptr;
 	GtkWidget* cgtkMenu = nullptr;
+    std::string paddingLeft = ""; // only for check and radio childs
 
     auto append(MenuBase& item) -> void;
     auto remove(MenuBase& item) -> void;

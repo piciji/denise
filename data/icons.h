@@ -119,4 +119,6 @@ extern uint8_t menu[223];
 
 extern uint8_t hide[528];
 
+extern uint8_t fullscreen[426];
+
 }

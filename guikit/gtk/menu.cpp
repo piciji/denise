@@ -1,5 +1,7 @@
 
 //base
+#define ICON_SPACING 6
+
 pMenuBase::~pMenuBase() {
 	destroy();
 }
@@ -98,8 +100,9 @@ auto pMenu::init() -> void {
 		
     element.widget = gtk_menu_item_new();
 	elementC.widget = gtk_menu_item_new();
-	element.box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
-	elementC.box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+
+	element.box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, ICON_SPACING);
+	elementC.box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, ICON_SPACING);
 	gtk_container_add (GTK_CONTAINER (element.widget), element.box);
 	gtk_container_add (GTK_CONTAINER (elementC.widget), elementC.box);
 	
@@ -135,6 +138,29 @@ auto pMenu::append(MenuBase& item) -> void {
 	gtk_menu_shell_append(GTK_MENU_SHELL(cgtkMenu), item.p.elementC.widget);
     gtk_widget_show(item.p.element.widget);
 	gtk_widget_show(item.p.elementC.widget);
+
+    if (!updatedPadding) {
+        // calculate space to align check and radio symbols with icons for normal menu items
+        updatedPadding = true;
+        GtkStyleContext* context = gtk_widget_get_style_context(item.p.element.widget);
+        auto state = gtk_widget_get_state_flags(item.p.element.widget);
+        GtkBorder padding;
+        gtk_style_context_get_padding (context, state, &padding);
+        for(auto& child : menu.childs) {
+            if (!child->icon()->empty()) {
+                paddingLeft = std::to_string( padding.left + child->icon()->width + ICON_SPACING );
+                break;
+            }
+        }
+    }
+
+    if (!item.p.updatedPadding && (dynamic_cast<MenuCheckItem*>(&item) || dynamic_cast<MenuRadioItem*>(&item)) && !paddingLeft.empty()) {
+        pSystem::addCssClass(item.p.element.widget, "paddingMenuItem");
+        pSystem::applyCss(item.p.element.widget, ".paddingMenuItem { padding-left: " + paddingLeft + "px; }");
+        pSystem::addCssClass(item.p.elementC.widget, "paddingMenuItem");
+        pSystem::applyCss(item.p.elementC.widget, ".paddingMenuItem { padding-left: " + paddingLeft + "px; }");
+        item.p.updatedPadding = true;
+    }
 }
 
 auto pMenu::remove(MenuBase& item) -> void {
@@ -153,11 +179,11 @@ auto pMenuItem::init() -> void {
     element.widget = gtk_menu_item_new();
 	elementC.widget = gtk_menu_item_new();	
 	
-	element.box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
-	elementC.box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+	element.box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, ICON_SPACING);
+	elementC.box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, ICON_SPACING);
 	gtk_container_add (GTK_CONTAINER (element.widget), element.box);
 	gtk_container_add (GTK_CONTAINER (elementC.widget), elementC.box);
-	
+
     g_signal_connect_swapped(G_OBJECT(element.widget), "activate", G_CALLBACK(pMenuItem::activate), (gpointer)&menuItem);
 	g_signal_connect_swapped(G_OBJECT(elementC.widget), "activate", G_CALLBACK(pMenuItem::activate), (gpointer)&menuItem);
 	updateItemBox(element);
@@ -179,11 +205,6 @@ auto pMenuCheckItem::toggle(GtkCheckMenuItem* gtkCheckMenuItem, MenuCheckItem* s
 auto pMenuCheckItem::init() -> void {
     element.widget = gtk_check_menu_item_new_with_mnemonic("");
 	elementC.widget = gtk_check_menu_item_new_with_mnemonic("");
-
-    pSystem::addCssClass(element.widget, "paddingMenuItem");
-    pSystem::applyCss( element.widget, ".paddingMenuItem { padding-left: 25px; }");
-    pSystem::addCssClass(elementC.widget, "paddingMenuItem");
-    pSystem::applyCss( elementC.widget, ".paddingMenuItem { padding-left: 25px; }");
 
     setChecked(menuCheckItem.checked());
     setText( menuBase.text() );
@@ -212,11 +233,6 @@ auto pMenuRadioItem::activate(GtkCheckMenuItem* gtkCheckMenuItem, MenuRadioItem*
 auto pMenuRadioItem::init() -> void {
     element.widget = gtk_radio_menu_item_new_with_mnemonic(0, "");
 	elementC.widget = gtk_radio_menu_item_new_with_mnemonic(0, "");
-
-    pSystem::addCssClass(element.widget, "paddingMenuItem");
-    pSystem::applyCss( element.widget, ".paddingMenuItem { padding-left: 25px; }");
-    pSystem::addCssClass(elementC.widget, "paddingMenuItem");
-    pSystem::applyCss( elementC.widget, ".paddingMenuItem { padding-left: 25px; }");
 
     setGroup(menuRadioItem.group);
     setText( menuBase.text() );
