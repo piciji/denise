@@ -387,15 +387,15 @@ auto pWindow::updateGeometryHint() -> void {
 
         aspect.height += statusHeight + menuHeight;
         if (pApplication::desktopSession == pApplication::DesktopSession::KDE) {
-            // todo: don't understand why this is necessary, works as expected in Cinnamon and GNOME, need to test others
+            // todo: don't understand why this is necessary, works as expected in Cinnamon, GNOME or Mate, need to test others
             if (aspect.height > 21)
                 aspect.height -= 21;
         }
 
         double ratio = (double)aspect.width / (double)aspect.height;
-        if (pApplication::desktopSession == pApplication::DesktopSession::Cinnamon)
-            // blocks resizing in KDE and GNOME, works in Cinnamon, need to test others
-            geom.min_aspect = ratio;
+        if (pApplication::desktopSession == pApplication::DesktopSession::Cinnamon || pApplication::desktopSession == pApplication::DesktopSession::Mate)            
+            geom.min_aspect = ratio; // blocks resizing in KDE and GNOME, works in Cinnamon or Mate, need to test others
+            
         geom.max_aspect = ratio;
         hints |= GdkWindowHints::GDK_HINT_ASPECT;
     }
