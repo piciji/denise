@@ -167,6 +167,7 @@ struct View : public GUIKIT::Window {
 	GUIKIT::Image editImage;
     GUIKIT::Image fanImage;
     GUIKIT::Image hideImage;
+    GUIKIT::Image fullscreenImage;
     
     GUIKIT::Image playImage;
     GUIKIT::Image playhiImage;

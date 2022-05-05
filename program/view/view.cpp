@@ -30,7 +30,7 @@ auto View::build() -> void {
     else
         setAspectRatio( {0,0} );
     
-    GUIKIT::Geometry defaultGeometry = {100, 100, 600, 400};
+    GUIKIT::Geometry defaultGeometry = {100, 100, 800, 600};
     
     GUIKIT::Geometry geometry = {globalSettings->get<int>("screen_x", defaultGeometry.x)
         ,globalSettings->get<int>("screen_y", defaultGeometry.y)
@@ -719,6 +719,8 @@ auto View::loadImages() -> void {
     fanImage.setResourceId( ID_FAN );
     hideImage.loadPng((uint8_t*)Icons::hide, sizeof(Icons::hide));
     hideImage.setResourceId( ID_HIDE );
+    fullscreenImage.loadPng((uint8_t*)Icons::fullscreen, sizeof(Icons::fullscreen));
+    fullscreenImage.setResourceId( ID_FULLSCREEN );
 
     playPauseStatusImage.loadPng((uint8_t*)Icons::playPauseStatus, sizeof(Icons::playPauseStatus));
     forwardPauseStatusImage.loadPng((uint8_t*)Icons::forwardPauseStatus, sizeof(Icons::forwardPauseStatus));
@@ -1028,6 +1030,7 @@ auto View::buildMenu() -> void {
         switchFullScreen( !fullScreen(), true );
         emuThread->unlock();
     };
+    fullscreenItem.setIcon(fullscreenImage);
         
     optionsMenu.append(fullscreenItem);
         

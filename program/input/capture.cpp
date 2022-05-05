@@ -77,11 +77,11 @@ auto InputManager::capture(InputMapping* _captureObject) -> void {
     fetch();
 }
 
-auto InputManager::capture( bool overwriteExisting ) -> uint8_t {
+auto InputManager::capture( bool overwriteExisting ) -> bool {
     static unsigned countAssignments = 0;
 
     if (captureObject == nullptr)
-        return 0;
+        return false;
     
     fetch();
 	
@@ -140,13 +140,13 @@ auto InputManager::capture( bool overwriteExisting ) -> uint8_t {
         if (overwriteExisting && (countAssignments > 1) ) {
             captureObject->anded = true;
         }
-        bool removedMappings = preventSharingOfAutoFireMappings(captureObject, captureObject->hids.back());
+        preventSharingOfAutoFireMappings(captureObject, captureObject->hids.back());
 		captureObject->updateSetting();
 		captureObject = nullptr;
         retry = 0;
         countAssignments = 0;
 		updateAllMappingsInUse();
-		return removedMappings ? 0x80 | 1 : 1;
+		return true;
 	}
     
 	return 0;

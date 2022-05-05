@@ -19,7 +19,7 @@ struct InputControl : GUIKIT::HorizontalLayout {
     GUIKIT::Button mapper;
     GUIKIT::Button linker;
     GUIKIT::Button erase;
-    SliderLayout autofireSlider;
+    GUIKIT::Widget spacing;
     GUIKIT::Label alternate;
     GUIKIT::Button mapperAlt;
     GUIKIT::Button linkerAlt;
@@ -55,6 +55,8 @@ struct AutofireControl : GUIKIT::HorizontalLayout {
         InputMapping* mapping;
     };
     std::vector<Buttons> buttons;
+
+    SliderLayout autofireSlider;
 
     AutofireControl(Emulator::Interface* emulator);
 };

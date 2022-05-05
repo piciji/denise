@@ -142,7 +142,7 @@ struct InputManager {
     static auto automap( KeyboardLayout::Type type, Emulator::Interface::Key key ) -> std::vector<std::vector<Hid::Key>>;
 	static auto bindHidsGlobal() -> void;
 	static auto capture(InputMapping* _captureObject) -> void;
-    static auto capture( bool overwriteExisting = false ) -> uint8_t;
+    static auto capture( bool overwriteExisting = false ) -> bool;
 	static auto fetch() -> void;
 	static auto poll() -> void;
 	static auto pollHotkeys() -> void;
