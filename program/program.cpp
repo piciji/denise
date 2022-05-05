@@ -389,14 +389,15 @@ auto Program::powerOff() -> void {
         videoDriver->hintExclusiveFullscreen( false );
 		audioDriver->clear();
 		audioManager->powerOff();
-		activeEmulator = nullptr;
-		activeVideoManager = nullptr;
 		filePool->unloadOrphaned();
 		view->updateCartButtons(nullptr);
 		updateSaveIdent( nullptr );
 		InputManager::urgentUpdate = true;
 		InputManager::resetJit();
 	}
+
+    activeEmulator = nullptr;
+    activeVideoManager = nullptr;
     warp.enableAutoWarp = false;
 }
 

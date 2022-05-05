@@ -204,7 +204,7 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
     moduleList.setImage(moduleList.rowCount() - 1, 0, recordAudioImage);
         
     moduleList.setSelection(0);
-    moduleFrame.append( moduleList, { GUIKIT::Font::scale(130), GUIKIT::Font::scale(100)} );
+    moduleFrame.append( moduleList, { GUIKIT::Font::scale(140), GUIKIT::Font::scale(100)} );
     moduleFrame.setPadding(10);
     moduleFrame.setFont( GUIKIT::Font::system("bold") );
     
