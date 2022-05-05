@@ -372,7 +372,8 @@ auto Program::powerOff() -> void {
             }				
         }
 		activeEmulator->unsetExpansion();
-        InputManager::getManager(activeEmulator)->resetTouchlessAutofire();
+        if (auto inputManager = InputManager::getManager(activeEmulator))
+            inputManager->resetTouchlessAutofire();
 	}
 	isRunning = false;
     isPause = false;
