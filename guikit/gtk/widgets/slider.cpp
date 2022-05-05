@@ -1,24 +1,10 @@
 
 auto pSlider::minimumSize() -> Size {
-	
-//	GtkStyleContext* context = gtk_widget_get_style_context (gtkWidget);
-//	gint minLength;	
-//	gtk_style_context_get_style ( context, "slider-width", &minLength, NULL);
-	
-//	auto state = gtk_widget_get_state_flags (gtkWidget);
-//	GtkBorder padding;
-	
-//	gtk_style_context_get_padding (context, state, &padding);
-	
 	Size size = getMinimumSize();
     if (slider.orientation == Slider::Orientation::VERTICAL)
 		return {size.width, 0 };
-		//return {(unsigned)(minLength + padding.left + padding.right), 0};
-		
-	
+
 	return {0, size.height };
-		
-    //return {0, (unsigned)(minLength + padding.top + padding.bottom - 0) };
 }
 
 auto pSlider::setLength(unsigned length) -> void {

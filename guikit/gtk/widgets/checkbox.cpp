@@ -15,16 +15,6 @@ auto pCheckBox::minimumSize() -> Size {
 			minimumWidth -= size.width;
 	}	
     return {size.width + minimumWidth, std::max((unsigned)minimumHeight, size.height) };
-    
-    //Size size = getMinimumSize();
-    //return {size.width, size.height};
-    
-	//int _adjust = 4;
-    //if (pApplication::desktopSession == pApplication::DesktopSession::Mate) {
-    //    _adjust = 10;
-    //}
-    
-    //return {size.width + 16 + _adjust, size.height + _adjust};
 }
 
 auto pCheckBox::setGeometry(Geometry geometry) -> void {
