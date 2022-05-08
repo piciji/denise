@@ -133,7 +133,9 @@ struct System {
     struct {
         bool requestFloppy;
         bool useFloppy;
-    } driveSounds;
+		bool requestTape;
+		bool useTape;
+	} driveSounds;
 
     struct {
         bool burstRequested = false;
@@ -195,6 +197,7 @@ struct System {
     auto hintSlowSpeed(bool state) -> void;
     auto setFastForward( unsigned config ) -> void;
     auto setFloppySounds(bool state) -> void;
+	auto setTapeSounds(bool state) -> void;
     auto updateDriveSounds() -> void;
     
     auto setCycleRenderer(bool state) -> void;

@@ -26,6 +26,8 @@ Tape::Tape( Emulator::Interface::Media* mediaConnected ) : structure(this) {
         if (!enabled)
             return;
         motorIn = false;
+
+        updateMotorSound();
         updateCounter();
         updateDeviceState();
         if (autoStarted) {
@@ -118,6 +120,48 @@ auto Tape::updateDeviceState() -> void {
     system->interface->updateDeviceState( getMediaConnected(), mode == Mode::Record, counter, false, !motorIn );
 }
 
+auto Tape::setMotorSound() -> void {
+    if (motorIn) {
+        switch(mode) {
+            case Mode::Play:
+            case Mode::Record:
+                system->interface->mixDriveSound(mediaConnected, DriveSound::TapePlaySpin);
+                break;
+            case Mode::Rewind:
+                system->interface->mixDriveSound(mediaConnected, DriveSound::TapeRewindSpin);
+                break;
+            case Mode::Forward:
+                system->interface->mixDriveSound(mediaConnected, DriveSound::TapeForwardSpin);
+                break;
+        }
+    }
+}
+
+auto Tape::updateMotorSound(bool soft) -> void {
+    if (!system->driveSounds.useTape)
+        return;
+
+    if (motorIn) {
+        switch(mode) {
+            case Mode::Play:
+            case Mode::Record:
+                system->interface->mixDriveSound(mediaConnected, soft ? DriveSound::TapePlaySpinUp : DriveSound::TapePlaySpin);
+                break;
+            case Mode::Rewind:
+                system->interface->mixDriveSound(mediaConnected, DriveSound::TapeRewindSpin);
+                break;
+            case Mode::Forward:
+                system->interface->mixDriveSound(mediaConnected, DriveSound::TapeForwardSpin);
+                break;
+            case Mode::Stop:
+                system->interface->mixDriveSound(mediaConnected, DriveSound::TapeSpinDown, 1);
+                break;
+        }
+    } else {
+        system->interface->mixDriveSound(mediaConnected, DriveSound::TapeSpinDown, mode == Mode::Stop);
+    }
+}
+
 auto Tape::setMotorIn( bool state ) -> void {
 	
 	if (!enabled)
@@ -131,6 +175,7 @@ auto Tape::setMotorIn( bool state ) -> void {
 		
         if (!motorIn) {
             motorIn = true;
+            updateMotorSound();
             updateDeviceState();
             if (autoStarted)
                 system->motorChange( true );
@@ -150,7 +195,7 @@ auto Tape::getMode( ) -> Mode {
     return mode;
 }
 
-auto Tape::setMode( unsigned mode, bool buttonPress ) -> void {
+auto Tape::setMode( unsigned mode ) -> void {
 	
 	if (!enabled)
 		return;
@@ -192,7 +237,10 @@ auto Tape::setMode( unsigned mode, bool buttonPress ) -> void {
             if (motorIn && !sysTimer.has( &worker )) {
                 sysTimer.add(&worker, TAPE_MOTOR_DELAY);
             }
-                
+
+            if (system->driveSounds.useTape)
+                system->interface->mixDriveSound(mediaConnected, DriveSound::TapeAnyButton);
+
             break;
         
         case Mode::Record:
@@ -202,18 +250,35 @@ auto Tape::setMode( unsigned mode, bool buttonPress ) -> void {
 			// a write changes the file pos, so we have to invalidate the read buffer
 			// because it's content is not aligned anymore
 			fetchPos = 0;
+            if (system->driveSounds.useTape)
+                system->interface->mixDriveSound(mediaConnected, DriveSound::TapeAnyButton);
+
             break;      
 			
 		case Mode::Stop:
 			senseOut( false );
-			break;
+
+            if (system->driveSounds.useTape)
+                system->interface->mixDriveSound(mediaConnected, DriveSound::TapeStopButton);
+            break;
     }
         
 	this->mode = (Mode)mode;
 	updateCounter();
+    updateMotorSound(false);
 }
 
-auto Tape::reset(bool fromLoad) -> void {
+auto Tape::power() -> void {
+    reset();
+
+    autoStarted = false;
+    if (system->driveSounds.useTape) {
+        if (loaded && !system->powerOn)
+            system->interface->mixDriveSound(mediaConnected, DriveSound::TapeInsert);
+    }
+}
+
+auto Tape::reset() -> void {
     writeQuestionState = 0;
     counter = 0;
 	counterOffset = 0;
@@ -229,13 +294,11 @@ auto Tape::reset(bool fromLoad) -> void {
 	nextMode = Mode::Stop;
 	writeBit = true;	
 	gapsRemaining = nextGap();
-
-	if (!fromLoad)
-        autoStarted = false;
 }
 
 auto Tape::load(Emulator::Interface::Media* media, uint8_t* data, unsigned size) -> void {		
     this->media = media;
+    bool attachDetach = loaded;
 	unload();
 	
 	this->rawData = data;
@@ -265,12 +328,20 @@ auto Tape::load(Emulator::Interface::Media* media, uint8_t* data, unsigned size)
 
     structure.setData( rawData, rawSize );
 	
-	reset(true);
+	reset();
+
+    if (system->powerOn && system->driveSounds.useTape)
+        system->interface->mixDriveSound( mediaConnected, DriveSound::TapeInsert, attachDetach );
 }
 
 auto Tape::unload() -> void {
     setMode( Mode::Stop );
 	writeBuffer();
+
+    if (loaded) {
+        if (system->powerOn && system->driveSounds.useTape)
+            system->interface->mixDriveSound( mediaConnected, DriveSound::TapeEject );
+    }
 	
 	this->rawSize = 0;
 	this->rawData = nullptr;
@@ -354,7 +425,7 @@ auto Tape::selectListing( unsigned pos, bool useTraps ) -> void {
     action.delay = 0;
     action.callbackId = 3;
 	action.callback = [this]() {
-        this->setMode( Tape::Mode::Play, true );
+        this->setMode( Tape::Mode::Play );
 	};
     system->keyBuffer->add( action );
 
@@ -417,6 +488,7 @@ auto Tape::setPosition( unsigned pos, bool find ) -> void {
     if (find) {
         sysTimer.remove(&worker);
         curPos = pos;
+        system->interface->mixDriveSound(mediaConnected, DriveSound::TapeSpinDown);
     } else {
         sysTimer.remove(&motorOff);
         sysTimer.add(&worker, 1, Emulator::SystemTimer::Action::UpdateExisting);

@@ -26,7 +26,9 @@ struct AudioManager {
     Resampler::Data rData;
     AudioRecord::Handler record;
     Mixer::Drive drive;
-    bool mixFloppySounds = false;
+
+    bool mixDriveSounds = false;
+
     struct {
         bool enable = false;
         unsigned lastTS;

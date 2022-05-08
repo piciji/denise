@@ -23,14 +23,18 @@ struct AudioRecordLayout : GUIKIT::FramedVerticalLayout {
 };
 
 struct AudioDriveLayout : GUIKIT::FramedVerticalLayout {
-    SliderLayout floppyVolume;
-
     struct Selection : GUIKIT::HorizontalLayout {
-        GUIKIT::Label floppyLabel;
-        GUIKIT::ComboButton floppyCombo;
+        GUIKIT::Label label;
+        GUIKIT::ComboButton combo;
         GUIKIT::Button reload;
         Selection();
-    } selection;
+    };
+
+    SliderLayout floppyVolume;
+    Selection floppySelection;
+
+    SliderLayout tapeVolume;
+    Selection tapeSelection;
 
     AudioDriveLayout();
 };
@@ -143,4 +147,5 @@ struct AudioLayout : GUIKIT::HorizontalLayout {
     auto toggleRecord() -> void;
 
     auto updateFloppyProfileList() -> void;
+    auto updateTapeProfileList() -> void;
 };

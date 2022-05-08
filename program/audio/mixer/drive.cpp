@@ -9,58 +9,68 @@
 namespace Mixer {
 
     Drive::Drive() {
-        assigns.push_back( { DriveSound::FloppyInsert, "insert" } );
-        assigns.push_back( { DriveSound::FloppyEject, "eject" } );
-        assigns.push_back( { DriveSound::FloppySpinUp, "spinup" } );
-        assigns.push_back( { DriveSound::FloppySpinDown, "spindown" } );
-        assigns.push_back( { DriveSound::FloppySpin, "spin" } );
-        assigns.push_back( { DriveSound::FloppyHeadBang, "headbang" } );
-        assigns.push_back( { DriveSound::FloppyStep, "step" } );
-        assigns.push_back( { DriveSound::FloppyStepShort, "stepshort" } );
+        floppyAssigns.push_back( { DriveSound::FloppyInsert, "insert" } );
+        floppyAssigns.push_back( { DriveSound::FloppyEject, "eject" } );
+        floppyAssigns.push_back( { DriveSound::FloppySpinUp, "spinup" } );
+        floppyAssigns.push_back( { DriveSound::FloppySpinDown, "spindown" } );
+        floppyAssigns.push_back( { DriveSound::FloppySpin, "spin" } );
+        floppyAssigns.push_back( { DriveSound::FloppyHeadBang, "headbang" } );
+        floppyAssigns.push_back( { DriveSound::FloppyStep, "step" } );
+        floppyAssigns.push_back( { DriveSound::FloppyStepShort, "stepshort" } );
 
-        assigns.push_back( { DriveSound::FloppyStep1, "step1" } ); assigns.push_back( { DriveSound::FloppyStep2, "step2" } );
-        assigns.push_back( { DriveSound::FloppyStep3, "step3" } ); assigns.push_back( { DriveSound::FloppyStep4, "step4" } );
-        assigns.push_back( { DriveSound::FloppyStep5, "step5" } ); assigns.push_back( { DriveSound::FloppyStep6, "step6" } );
-        assigns.push_back( { DriveSound::FloppyStep7, "step7" } ); assigns.push_back( { DriveSound::FloppyStep8, "step8" } );
-        assigns.push_back( { DriveSound::FloppyStep9, "step9" } ); assigns.push_back( { DriveSound::FloppyStep10, "step10" } );
-        assigns.push_back( { DriveSound::FloppyStep11, "step11" } ); assigns.push_back( { DriveSound::FloppyStep12, "step12" } );
-        assigns.push_back( { DriveSound::FloppyStep13, "step13" } ); assigns.push_back( { DriveSound::FloppyStep14, "step14" } );
-        assigns.push_back( { DriveSound::FloppyStep15, "step15" } ); assigns.push_back( { DriveSound::FloppyStep16, "step16" } );
-        assigns.push_back( { DriveSound::FloppyStep17, "step17" } ); assigns.push_back( { DriveSound::FloppyStep18, "step18" } );
-        assigns.push_back( { DriveSound::FloppyStep19, "step19" } ); assigns.push_back( { DriveSound::FloppyStep20, "step20" } );
-        assigns.push_back( { DriveSound::FloppyStep21, "step21" } ); assigns.push_back( { DriveSound::FloppyStep22, "step22" } );
-        assigns.push_back( { DriveSound::FloppyStep23, "step23" } ); assigns.push_back( { DriveSound::FloppyStep24, "step24" } );
-        assigns.push_back( { DriveSound::FloppyStep25, "step25" } ); assigns.push_back( { DriveSound::FloppyStep26, "step26" } );
-        assigns.push_back( { DriveSound::FloppyStep27, "step27" } ); assigns.push_back( { DriveSound::FloppyStep28, "step28" } );
-        assigns.push_back( { DriveSound::FloppyStep29, "step29" } ); assigns.push_back( { DriveSound::FloppyStep30, "step30" } );
-        assigns.push_back( { DriveSound::FloppyStep31, "step31" } ); assigns.push_back( { DriveSound::FloppyStep32, "step32" } );
-        assigns.push_back( { DriveSound::FloppyStep33, "step33" } ); assigns.push_back( { DriveSound::FloppyStep34, "step34" } );
-        assigns.push_back( { DriveSound::FloppyStep35, "step35" } ); assigns.push_back( { DriveSound::FloppyStep36, "step36" } );
-        assigns.push_back( { DriveSound::FloppyStep37, "step37" } ); assigns.push_back( { DriveSound::FloppyStep38, "step38" } );
-        assigns.push_back( { DriveSound::FloppyStep39, "step39" } ); assigns.push_back( { DriveSound::FloppyStep40, "step40" } );
-        assigns.push_back( { DriveSound::FloppyStep41, "step41" } ); assigns.push_back( { DriveSound::FloppyStep42, "step42" } );
+        tapeAssigns.push_back( { DriveSound::TapeInsert, "insert" } );
+        tapeAssigns.push_back( { DriveSound::TapeEject, "eject" } );
+        tapeAssigns.push_back( { DriveSound::TapeAnyButton, "anybutton" } );
+        tapeAssigns.push_back( { DriveSound::TapeStopButton, "stopbutton" } );
+        tapeAssigns.push_back( { DriveSound::TapePlaySpinUp, "playspinup" } );
+        tapeAssigns.push_back( { DriveSound::TapePlaySpin, "playspin" } );
+        tapeAssigns.push_back( { DriveSound::TapeSpinDown, "spindown" } );
+        tapeAssigns.push_back( { DriveSound::TapeForwardSpin, "forwardspin" } );
+        tapeAssigns.push_back( { DriveSound::TapeRewindSpin, "rewindspin" } );
 
-        assigns.push_back( { DriveSound::FloppyStepShort1, "stepshort1" } ); assigns.push_back( { DriveSound::FloppyStepShort2, "stepshort2" } );
-        assigns.push_back( { DriveSound::FloppyStepShort3, "stepshort3" } ); assigns.push_back( { DriveSound::FloppyStepShort4, "stepshort4" } );
-        assigns.push_back( { DriveSound::FloppyStepShort5, "stepshort5" } ); assigns.push_back( { DriveSound::FloppyStepShort6, "stepshort6" } );
-        assigns.push_back( { DriveSound::FloppyStepShort7, "stepshort7" } ); assigns.push_back( { DriveSound::FloppyStepShort8, "stepshort8" } );
-        assigns.push_back( { DriveSound::FloppyStepShort9, "stepshort9" } ); assigns.push_back( { DriveSound::FloppyStepShort10, "stepshort10" } );
-        assigns.push_back( { DriveSound::FloppyStepShort11, "stepshort11" } ); assigns.push_back( { DriveSound::FloppyStepShort12, "stepshort12" } );
-        assigns.push_back( { DriveSound::FloppyStepShort13, "stepshort13" } ); assigns.push_back( { DriveSound::FloppyStepShort14, "stepshort14" } );
-        assigns.push_back( { DriveSound::FloppyStepShort15, "stepshort15" } ); assigns.push_back( { DriveSound::FloppyStepShort16, "stepshort16" } );
-        assigns.push_back( { DriveSound::FloppyStepShort17, "stepshort17" } ); assigns.push_back( { DriveSound::FloppyStepShort18, "stepshort18" } );
-        assigns.push_back( { DriveSound::FloppyStepShort19, "stepshort19" } ); assigns.push_back( { DriveSound::FloppyStepShort20, "stepshort20" } );
-        assigns.push_back( { DriveSound::FloppyStepShort21, "stepshort21" } ); assigns.push_back( { DriveSound::FloppyStepShort22, "stepshort22" } );
-        assigns.push_back( { DriveSound::FloppyStepShort23, "stepshort23" } ); assigns.push_back( { DriveSound::FloppyStepShort24, "stepshort24" } );
-        assigns.push_back( { DriveSound::FloppyStepShort25, "stepshort25" } ); assigns.push_back( { DriveSound::FloppyStepShort26, "stepshort26" } );
-        assigns.push_back( { DriveSound::FloppyStepShort27, "stepshort27" } ); assigns.push_back( { DriveSound::FloppyStepShort28, "stepshort28" } );
-        assigns.push_back( { DriveSound::FloppyStepShort29, "stepshort29" } ); assigns.push_back( { DriveSound::FloppyStepShort30, "stepshort30" } );
-        assigns.push_back( { DriveSound::FloppyStepShort31, "stepshort31" } ); assigns.push_back( { DriveSound::FloppyStepShort32, "stepshort32" } );
-        assigns.push_back( { DriveSound::FloppyStepShort33, "stepshort33" } ); assigns.push_back( { DriveSound::FloppyStepShort34, "stepshort34" } );
-        assigns.push_back( { DriveSound::FloppyStepShort35, "stepshort35" } ); assigns.push_back( { DriveSound::FloppyStepShort36, "stepshort36" } );
-        assigns.push_back( { DriveSound::FloppyStepShort37, "stepshort37" } ); assigns.push_back( { DriveSound::FloppyStepShort38, "stepshort38" } );
-        assigns.push_back( { DriveSound::FloppyStepShort39, "stepshort39" } ); assigns.push_back( { DriveSound::FloppyStepShort40, "stepshort40" } );
-        assigns.push_back( { DriveSound::FloppyStepShort41, "stepshort41" } ); assigns.push_back( { DriveSound::FloppyStepShort42, "stepshort42" } );
+        floppyAssigns.push_back( { DriveSound::FloppyStep1, "step1" } ); floppyAssigns.push_back( { DriveSound::FloppyStep2, "step2" } );
+        floppyAssigns.push_back( { DriveSound::FloppyStep3, "step3" } ); floppyAssigns.push_back( { DriveSound::FloppyStep4, "step4" } );
+        floppyAssigns.push_back( { DriveSound::FloppyStep5, "step5" } ); floppyAssigns.push_back( { DriveSound::FloppyStep6, "step6" } );
+        floppyAssigns.push_back( { DriveSound::FloppyStep7, "step7" } ); floppyAssigns.push_back( { DriveSound::FloppyStep8, "step8" } );
+        floppyAssigns.push_back( { DriveSound::FloppyStep9, "step9" } ); floppyAssigns.push_back( { DriveSound::FloppyStep10, "step10" } );
+        floppyAssigns.push_back( { DriveSound::FloppyStep11, "step11" } ); floppyAssigns.push_back( { DriveSound::FloppyStep12, "step12" } );
+        floppyAssigns.push_back( { DriveSound::FloppyStep13, "step13" } ); floppyAssigns.push_back( { DriveSound::FloppyStep14, "step14" } );
+        floppyAssigns.push_back( { DriveSound::FloppyStep15, "step15" } ); floppyAssigns.push_back( { DriveSound::FloppyStep16, "step16" } );
+        floppyAssigns.push_back( { DriveSound::FloppyStep17, "step17" } ); floppyAssigns.push_back( { DriveSound::FloppyStep18, "step18" } );
+        floppyAssigns.push_back( { DriveSound::FloppyStep19, "step19" } ); floppyAssigns.push_back( { DriveSound::FloppyStep20, "step20" } );
+        floppyAssigns.push_back( { DriveSound::FloppyStep21, "step21" } ); floppyAssigns.push_back( { DriveSound::FloppyStep22, "step22" } );
+        floppyAssigns.push_back( { DriveSound::FloppyStep23, "step23" } ); floppyAssigns.push_back( { DriveSound::FloppyStep24, "step24" } );
+        floppyAssigns.push_back( { DriveSound::FloppyStep25, "step25" } ); floppyAssigns.push_back( { DriveSound::FloppyStep26, "step26" } );
+        floppyAssigns.push_back( { DriveSound::FloppyStep27, "step27" } ); floppyAssigns.push_back( { DriveSound::FloppyStep28, "step28" } );
+        floppyAssigns.push_back( { DriveSound::FloppyStep29, "step29" } ); floppyAssigns.push_back( { DriveSound::FloppyStep30, "step30" } );
+        floppyAssigns.push_back( { DriveSound::FloppyStep31, "step31" } ); floppyAssigns.push_back( { DriveSound::FloppyStep32, "step32" } );
+        floppyAssigns.push_back( { DriveSound::FloppyStep33, "step33" } ); floppyAssigns.push_back( { DriveSound::FloppyStep34, "step34" } );
+        floppyAssigns.push_back( { DriveSound::FloppyStep35, "step35" } ); floppyAssigns.push_back( { DriveSound::FloppyStep36, "step36" } );
+        floppyAssigns.push_back( { DriveSound::FloppyStep37, "step37" } ); floppyAssigns.push_back( { DriveSound::FloppyStep38, "step38" } );
+        floppyAssigns.push_back( { DriveSound::FloppyStep39, "step39" } ); floppyAssigns.push_back( { DriveSound::FloppyStep40, "step40" } );
+        floppyAssigns.push_back( { DriveSound::FloppyStep41, "step41" } ); floppyAssigns.push_back( { DriveSound::FloppyStep42, "step42" } );
+
+        floppyAssigns.push_back( { DriveSound::FloppyStepShort1, "stepshort1" } ); floppyAssigns.push_back( { DriveSound::FloppyStepShort2, "stepshort2" } );
+        floppyAssigns.push_back( { DriveSound::FloppyStepShort3, "stepshort3" } ); floppyAssigns.push_back( { DriveSound::FloppyStepShort4, "stepshort4" } );
+        floppyAssigns.push_back( { DriveSound::FloppyStepShort5, "stepshort5" } ); floppyAssigns.push_back( { DriveSound::FloppyStepShort6, "stepshort6" } );
+        floppyAssigns.push_back( { DriveSound::FloppyStepShort7, "stepshort7" } ); floppyAssigns.push_back( { DriveSound::FloppyStepShort8, "stepshort8" } );
+        floppyAssigns.push_back( { DriveSound::FloppyStepShort9, "stepshort9" } ); floppyAssigns.push_back( { DriveSound::FloppyStepShort10, "stepshort10" } );
+        floppyAssigns.push_back( { DriveSound::FloppyStepShort11, "stepshort11" } ); floppyAssigns.push_back( { DriveSound::FloppyStepShort12, "stepshort12" } );
+        floppyAssigns.push_back( { DriveSound::FloppyStepShort13, "stepshort13" } ); floppyAssigns.push_back( { DriveSound::FloppyStepShort14, "stepshort14" } );
+        floppyAssigns.push_back( { DriveSound::FloppyStepShort15, "stepshort15" } ); floppyAssigns.push_back( { DriveSound::FloppyStepShort16, "stepshort16" } );
+        floppyAssigns.push_back( { DriveSound::FloppyStepShort17, "stepshort17" } ); floppyAssigns.push_back( { DriveSound::FloppyStepShort18, "stepshort18" } );
+        floppyAssigns.push_back( { DriveSound::FloppyStepShort19, "stepshort19" } ); floppyAssigns.push_back( { DriveSound::FloppyStepShort20, "stepshort20" } );
+        floppyAssigns.push_back( { DriveSound::FloppyStepShort21, "stepshort21" } ); floppyAssigns.push_back( { DriveSound::FloppyStepShort22, "stepshort22" } );
+        floppyAssigns.push_back( { DriveSound::FloppyStepShort23, "stepshort23" } ); floppyAssigns.push_back( { DriveSound::FloppyStepShort24, "stepshort24" } );
+        floppyAssigns.push_back( { DriveSound::FloppyStepShort25, "stepshort25" } ); floppyAssigns.push_back( { DriveSound::FloppyStepShort26, "stepshort26" } );
+        floppyAssigns.push_back( { DriveSound::FloppyStepShort27, "stepshort27" } ); floppyAssigns.push_back( { DriveSound::FloppyStepShort28, "stepshort28" } );
+        floppyAssigns.push_back( { DriveSound::FloppyStepShort29, "stepshort29" } ); floppyAssigns.push_back( { DriveSound::FloppyStepShort30, "stepshort30" } );
+        floppyAssigns.push_back( { DriveSound::FloppyStepShort31, "stepshort31" } ); floppyAssigns.push_back( { DriveSound::FloppyStepShort32, "stepshort32" } );
+        floppyAssigns.push_back( { DriveSound::FloppyStepShort33, "stepshort33" } ); floppyAssigns.push_back( { DriveSound::FloppyStepShort34, "stepshort34" } );
+        floppyAssigns.push_back( { DriveSound::FloppyStepShort35, "stepshort35" } ); floppyAssigns.push_back( { DriveSound::FloppyStepShort36, "stepshort36" } );
+        floppyAssigns.push_back( { DriveSound::FloppyStepShort37, "stepshort37" } ); floppyAssigns.push_back( { DriveSound::FloppyStepShort38, "stepshort38" } );
+        floppyAssigns.push_back( { DriveSound::FloppyStepShort39, "stepshort39" } ); floppyAssigns.push_back( { DriveSound::FloppyStepShort40, "stepshort40" } );
+        floppyAssigns.push_back( { DriveSound::FloppyStepShort41, "stepshort41" } ); floppyAssigns.push_back( { DriveSound::FloppyStepShort42, "stepshort42" } );
     }
 
     Drive::~Drive() {
@@ -94,13 +104,14 @@ namespace Mixer {
                         device.firstOffset = 0;
                         if (device.state & 0x80) {
                             device.state &= ~0x80;
-                            sound = getSound( FloppyInsert, activeEmulator );
+                            sound = getSound( device.media->group->isDisk() ? FloppyInsert : TapeInsert, activeEmulator );
                             if (!sound || !sound->data) {
                                 device.first = nullptr;
                             } else
                                 device.first = sound;
                         } else
                             device.first = nullptr;
+
                         break;
                     }
                 }
@@ -132,6 +143,16 @@ namespace Mixer {
                                 break;
                             }
                             device.second = sound;
+                        } else if (sound->id == TapePlaySpinUp) {
+                            sound = getSound( TapePlaySpin, activeEmulator );
+                            if (!sound || !sound->data) {
+                                device.second = nullptr;
+                                break;
+                            }
+                            device.second = sound;
+                        } else if (sound->id == TapeSpinDown) {
+                            device.second = nullptr;
+                            break;
                         }
                     }
                 }
@@ -144,6 +165,19 @@ namespace Mixer {
                     if (device.thirdOffset == sound->size) {
                         device.thirdOffset = 0;
                         device.third = nullptr;
+
+                        if (device.media->group->isTape()) {
+                            if (device.state & 0x1f) {
+                                sound = getSound( (DriveSound)(device.state & 0x1f), activeEmulator );
+                                if (sound && sound->data) {
+                                    device.second = sound;
+                                    device.secondOffset = 0;
+                                }
+
+                                device.state &= ~0x1f;
+                            }
+                        }
+
                         break;
                     }
 
@@ -170,9 +204,8 @@ namespace Mixer {
 
         if (soundId != FloppyStep) {
             sound = getSound( soundId, emulator );
-            if (!sound || !sound->data) {
-                return;
-            }
+            if (!sound || !sound->data)
+                sound = nullptr;
         }
 
         for(auto& _device : devices) {
@@ -185,26 +218,60 @@ namespace Mixer {
         if (!device) {
             devices.push_back({emulator, media, nullptr, nullptr,  nullptr, 0, 0, 0, 0});
             device = &devices.back();
-            assignSteps(*device);
+
+            if (media->group->isDisk())
+                assignSteps(*device);
         }
 
         switch(soundId) {
+            case DriveSound::TapeInsert:
             case DriveSound::FloppyInsert:
-                if (device->first && (data & 1)) { // detach + attach
+                //if (device->first && (data & 1)) { // detach + attach
+                if (device->first && (device->first->id == DriveSound::TapeEject || device->first->id == DriveSound::FloppyEject)) {
                     device->state |= 0x80;
                     break;
                 }
+            case DriveSound::TapeEject:
             case DriveSound::FloppyEject:
                 device->state &= ~0x80;
                 device->first = sound;
                 device->firstOffset = 0;
                 break;
+
+            case DriveSound::TapeSpinDown:
+                device->state &= ~0x1f;
+                if (!device->second)
+                    break;
+                else if (data == 1) {
+                    device->second = nullptr;
+                    break;
+                }
+            case DriveSound::TapePlaySpinUp:
+            case DriveSound::TapePlaySpin:
+            case DriveSound::TapeForwardSpin:
+            case DriveSound::TapeRewindSpin:
+                device->secondOffset = 0;
+                device->state &= ~0x1f;
+
+                if (device->third && device->third->id == DriveSound::TapeStopButton) {
+                    device->second = nullptr;
+                } else if (device->first || device->third)
+                    device->state |= soundId; // remember to start when button press is done
+                else
+                    device->second = sound;
+                break;
+
             case DriveSound::FloppySpinDown:
             case DriveSound::FloppySpinUp:
                 lastStep = Chronos::getTimestampInMilliseconds();
             case DriveSound::FloppySpin:
                 device->second = sound;
                 device->secondOffset = 0;
+                break;
+            case DriveSound::TapeAnyButton:
+            case DriveSound::TapeStopButton:
+                device->third = sound;
+                device->thirdOffset = 0;
                 break;
             case DriveSound::FloppyHeadBang:
                 device->state &= ~7;
@@ -313,10 +380,10 @@ namespace Mixer {
 
     auto Drive::readPack(Emulator::Interface* emulator, Emulator::Interface::MediaGroup* group) -> void {
 
-        bool* loop = new bool[devices.size() + 1]; // to prevent zero array length
+        unsigned* loopedSounds = new unsigned [devices.size() + 1]; // to prevent possible zero array length
         unsigned l = 0;
         for(auto& device : devices) {
-            loop[l++] = device.second != nullptr && device.second->id == FloppySpin;
+            loopedSounds[l++] = (device.emulator == emulator && device.second != nullptr) ? device.second->id : 0;
         }
 
         unsigned frequency = globalSettings->get<unsigned>("audio_frequency_v2", 48000u, {0u, 48000u});
@@ -329,7 +396,8 @@ namespace Mixer {
             //logger->log(info.name);
 
             Assign* assign = nullptr;
-            for(auto& _assign : assigns) {
+
+            for(auto& _assign : (group->isTape() ? tapeAssigns : floppyAssigns) ) {
                 if ( GUIKIT::String::toLowerCase(info.name) == (_assign.fileName + ".wav")) {
                     assign = &_assign;
                     break;
@@ -500,20 +568,24 @@ namespace Mixer {
             //logger->log(std::to_string(sound->playTime), 0);
         }
 
-        reset();
+        reset( group );
 
-        for(auto& device : devices ) {
-            if (device.emulator == emulator)
-                assignSteps(device);
+        if (group->isDisk()) {
+            for (auto& device: devices) {
+                if (device.media->group->isDisk() && (device.emulator == emulator))
+                    assignSteps(device);
+            }
         }
 
         l = 0;
         for(auto& device : devices) {
-            if (loop[l++])
-                addSound( emulator, device.media, FloppySpin );
+            unsigned id = loopedSounds[l++];
+
+            if (id == FloppySpin || id == TapePlaySpin || id == TapeForwardSpin || id == TapeRewindSpin)
+                addSound(device.emulator, device.media, (DriveSound)id);
         }
 
-        delete[] loop;
+        delete[] loopedSounds;
     }
 
     auto Drive::assignSteps( Device& device ) -> void {
@@ -561,15 +633,17 @@ namespace Mixer {
         }
     }
 
-    auto Drive::reset() -> void {
+    auto Drive::reset(Emulator::Interface::MediaGroup* group) -> void {
         for(auto& device : devices) {
-            device.first = nullptr;
-            device.second = nullptr;
-            device.third = nullptr;
-            device.firstOffset = 0;
-            device.secondOffset = 0;
-            device.thirdOffset = 0;
-            device.state = 0;
+            if (!group || (group == device.media->group)) {
+                device.first = nullptr;
+                device.second = nullptr;
+                device.third = nullptr;
+                device.firstOffset = 0;
+                device.secondOffset = 0;
+                device.thirdOffset = 0;
+                device.state = 0;
+            }
         }
     }
 

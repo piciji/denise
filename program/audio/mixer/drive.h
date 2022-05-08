@@ -16,6 +16,9 @@ struct Drive {
     enum DriveSound { FloppyInsert = 1, FloppyEject = 2, FloppySpinUp = 3, FloppySpinDown = 4, FloppySpin = 5,
         FloppyHeadBang = 6, FloppyStep = 7, FloppyStepShort = 8,
 
+        TapeInsert = 10, TapeEject = 11, TapeAnyButton = 12, TapeStopButton = 13,
+        TapePlaySpinUp = 14, TapePlaySpin = 15, TapeSpinDown = 16, TapeForwardSpin = 17, TapeRewindSpin = 18,
+
         FloppySteps = 20,
         FloppyStep1, FloppyStep2, FloppyStep3, FloppyStep4, FloppyStep5, FloppyStep6, FloppyStep7, FloppyStep8,
         FloppyStep9, FloppyStep10, FloppyStep11, FloppyStep12, FloppyStep13, FloppyStep14, FloppyStep15, FloppyStep16,
@@ -37,7 +40,8 @@ struct Drive {
         DriveSound id;
         std::string fileName;
     };
-    std::vector<Assign> assigns;
+    std::vector<Assign> floppyAssigns;
+    std::vector<Assign> tapeAssigns;
 
     struct Sound {
         Emulator::Interface* emulator;
@@ -73,7 +77,7 @@ struct Drive {
     auto mixSound(float* buffer, unsigned bufferSize) -> void;
 
     auto getSound(DriveSound soundId, Emulator::Interface* emulator) -> Sound*;
-    auto reset() -> void;
+    auto reset(Emulator::Interface::MediaGroup* group = nullptr) -> void;
     auto loaded(Emulator::Interface* emulator, Emulator::Interface::MediaGroup* group) -> bool;
     auto unload(Emulator::Interface* emulator, Emulator::Interface::MediaGroup* group) -> void;
     auto unload() -> void;

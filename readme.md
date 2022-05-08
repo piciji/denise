@@ -33,7 +33,9 @@ Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trade
     * start files without manual fast-forward
     * fast-forward to selected file without autostart
     * Virtual Device Traps: load files (PRG and Turbo Tapes) instant
-     
+* added Tape drive sounds 
+* FreeBSD support
+* macOS M1 support
 
 ## 1.1.2
 * P64 support

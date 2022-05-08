@@ -1,21 +1,25 @@
 
 AudioDriveLayout::Selection::Selection() {
-    append( floppyLabel, {0u, 0u}, 10 );
-    append( floppyCombo, {0u, 0u}, 10 );
+    append( label, {0u, 0u}, 10 );
+    append( combo, {0u, 0u}, 10 );
     append( reload, {0u, 0u} );
 
     setAlignment( 0.5 );
 }
 
-AudioDriveLayout::AudioDriveLayout() : floppyVolume("%", true) {
+AudioDriveLayout::AudioDriveLayout() : floppyVolume("%", true), tapeVolume("%", true) {
     append( floppyVolume, {~0u, 0u}, 10 );
-    append( selection, {0u, 0u} );
-
+    append( floppySelection, {0u, 0u}, 10 );
+    append( tapeVolume, {~0u, 0u}, 10 );
+    append( tapeSelection, {0u, 0u} );
 
     setPadding(10);
+    setFont(GUIKIT::Font::system("bold"));
 
     floppyVolume.slider.setLength( 301 );
     floppyVolume.updateValueWidth( "100 %" );
+    tapeVolume.slider.setLength( 301 );
+    tapeVolume.updateValueWidth( "100 %" );
 }
 
 AudioRecordLayout::Location::Location() {
@@ -424,9 +428,9 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
         }
     };
 
-    driveLayout.selection.floppyCombo.onChange = [this]() {
+    driveLayout.floppySelection.combo.onChange = [this]() {
 
-        std::string folder = driveLayout.selection.floppyCombo.text();
+        std::string folder = driveLayout.floppySelection.combo.text();
 
         _settings->set<std::string>( "audio_floppy_folder", folder );
 
@@ -437,13 +441,13 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
         emuThread->unlock();
     };
 
-    driveLayout.selection.reload.onActivate = [this]() {
+    driveLayout.floppySelection.reload.onActivate = [this]() {
         updateFloppyProfileList();
 
-        driveLayout.selection.floppyCombo.setSelectionByRow( _settings->get<std::string>("audio_floppy_folder", "") );
+        driveLayout.floppySelection.combo.setSelectionByRow( _settings->get<std::string>("audio_floppy_folder", "") );
 
         // in case if content doesn't match setting anymore
-        _settings->set<std::string>("audio_floppy_folder", driveLayout.selection.floppyCombo.text() );
+        _settings->set<std::string>("audio_floppy_folder", driveLayout.floppySelection.combo.text() );
 
         emuThread->lock();
         audioManager->drive.unload( emulator, emulator->getDiskMediaGroup() );
@@ -452,21 +456,89 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
         emuThread->unlock();
     };
 
+    driveLayout.tapeVolume.active.onToggle = [this](bool checked) {
+
+        _settings->set<bool>( "audio_tape", checked );
+
+        if (emulator == activeEmulator) {
+            emuThread->lock();
+            audioManager->setDriveSounds();
+            emuThread->unlock();
+        }
+    };
+
+    driveLayout.tapeVolume.slider.onChange = [this]() {
+        auto value = driveLayout.tapeVolume.slider.position();
+
+        _settings->set<unsigned>( "audio_tape_volume", value );
+
+        driveLayout.tapeVolume.value.setText( std::to_string( value ) + " %" );
+
+        if (activeEmulator) {
+            emuThread->lock();
+            audioManager->drive.setVolume(activeEmulator, activeEmulator->getTapeMediaGroup(), (float) value * 0.01);
+            emuThread->unlock();
+        }
+    };
+
+    driveLayout.tapeSelection.combo.onChange = [this]() {
+
+        std::string folder = driveLayout.tapeSelection.combo.text();
+
+        _settings->set<std::string>( "audio_tape_folder", folder );
+
+        emuThread->lock();
+        audioManager->drive.unload( emulator, emulator->getTapeMediaGroup() );
+        if (emulator == activeEmulator)
+            audioManager->setDriveSounds( false );
+        emuThread->unlock();
+    };
+
+    driveLayout.tapeSelection.reload.onActivate = [this]() {
+        updateTapeProfileList();
+
+        driveLayout.tapeSelection.combo.setSelectionByRow( _settings->get<std::string>("audio_tape_folder", "") );
+
+        // in case if content doesn't match setting anymore
+        _settings->set<std::string>("audio_tape_folder", driveLayout.tapeSelection.combo.text() );
+
+        emuThread->lock();
+        audioManager->drive.unload( emulator, emulator->getTapeMediaGroup() );
+        if (emulator == activeEmulator)
+            audioManager->setDriveSounds( false );
+        emuThread->unlock();
+    };
+
     updateFloppyProfileList();
+
+    updateTapeProfileList();
 
     loadSettings();
 }
 
 auto AudioLayout::updateFloppyProfileList() -> void {
 
-    driveLayout.selection.floppyCombo.reset();
+    driveLayout.floppySelection.combo.reset();
 
     auto baseFolder = program->soundFolder();
 
     auto list = GUIKIT::File::getFolderList(baseFolder + "floppy/" + emulator->ident);
 
     for (auto& info : list) {
-        driveLayout.selection.floppyCombo.append( info.name );
+        driveLayout.floppySelection.combo.append( info.name );
+    }
+}
+
+auto AudioLayout::updateTapeProfileList() -> void {
+
+    driveLayout.tapeSelection.combo.reset();
+
+    auto baseFolder = program->soundFolder();
+
+    auto list = GUIKIT::File::getFolderList(baseFolder + "tape/" + emulator->ident);
+
+    for (auto& info : list) {
+        driveLayout.tapeSelection.combo.append( info.name );
     }
 }
 
@@ -523,9 +595,13 @@ auto AudioLayout::translate() -> void {
 
     driveLayout.setText( trans->get("Drive Noise") );
     driveLayout.floppyVolume.active.setText( trans->get("Floppy") );
-    driveLayout.selection.floppyLabel.setText( trans->get("Floppy Profile", {}, true) );
-    driveLayout.selection.reload.setText( trans->get("Reload") );
-    driveLayout.selection.reload.setTooltip( trans->get("reload samples tooltip") );
+    driveLayout.floppySelection.label.setText( trans->get("Floppy Profile", {}, true) );
+    driveLayout.floppySelection.reload.setText( trans->get("Reload") );
+    driveLayout.floppySelection.reload.setTooltip( trans->get("reload samples tooltip") );
+    driveLayout.tapeVolume.active.setText( trans->get("Tape") );
+    driveLayout.tapeSelection.label.setText( trans->get("Tape Profile", {}, true) );
+    driveLayout.tapeSelection.reload.setText( trans->get("Reload") );
+    driveLayout.tapeSelection.reload.setTooltip( trans->get("reload samples tooltip") );
 
     audioRecord.setText(trans->get("Audio Record"));
     audioRecord.location.label.setText( trans->get("wav folder") );
@@ -599,6 +675,7 @@ auto AudioLayout::loadSettings() -> void {
                  
     audioRecord.duration.useTimeLimit.setChecked( _settings->get<bool>( "audio_record_timelimit", false) );
 
+
     driveLayout.floppyVolume.active.setChecked( _settings->get<bool>( "audio_floppy", false) );
 
     unsigned floppyVolume = _settings->get<unsigned>("audio_floppy_volume", 100u, {0u, 300u});
@@ -607,21 +684,30 @@ auto AudioLayout::loadSettings() -> void {
 
     driveLayout.floppyVolume.value.setText(std::to_string(floppyVolume) + " %");
 
-    //std::string folderBefore = driveLayout.selection.floppyCombo.text();
-
     std::string folder = _settings->get<std::string>("audio_floppy_folder", "");
 
-    driveLayout.selection.floppyCombo.setSelectionByRow( folder );
+    driveLayout.floppySelection.combo.setSelectionByRow( folder );
 
-    folder = driveLayout.selection.floppyCombo.text();
+    folder = driveLayout.floppySelection.combo.text();
 
-  //  if (!init) {
-        // in case if content doesn't match setting anymore
-        _settings->set<std::string>("audio_floppy_folder", folder);
+    _settings->set<std::string>("audio_floppy_folder", folder);
 
-      //  if (folderBefore != folder)
-        //    audioManager->drive.unload(emulator, emulator->getDiskMediaGroup());
-   // }
+
+    driveLayout.tapeVolume.active.setChecked( _settings->get<bool>( "audio_tape", false) );
+
+    unsigned tapeVolume = _settings->get<unsigned>("audio_tape_volume", 100u, {0u, 300u});
+
+    driveLayout.tapeVolume.slider.setPosition( tapeVolume );
+
+    driveLayout.tapeVolume.value.setText(std::to_string(tapeVolume) + " %");
+
+    folder = _settings->get<std::string>("audio_tape_folder", "");
+
+    driveLayout.tapeSelection.combo.setSelectionByRow( folder );
+
+    folder = driveLayout.tapeSelection.combo.text();
+
+    _settings->set<std::string>("audio_tape_folder", folder);
 
     updateVisibility();
 }

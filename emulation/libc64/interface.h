@@ -163,6 +163,7 @@ struct Interface : Emulator::Interface {
 
     // drive sounds
     auto enableFloppySounds(bool state) -> void;
+    auto enableTapeSounds(bool state) -> void;
 
     // sockets
     auto prepareSocket( Media* media, std::string address, std::string port ) -> void;

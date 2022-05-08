@@ -14,8 +14,10 @@
 
 #include <cstdlib>
 
-namespace LIBC64 {	
-    
+namespace LIBC64 {
+
+typedef Emulator::Interface::DriveSound DriveSound;
+
 struct Tape {
     
     Tape( Emulator::Interface::Media* mediaConnected );
@@ -36,11 +38,12 @@ struct Tape {
 	auto setMotorIn( bool state ) -> void;
 	auto load(Emulator::Interface::Media* media, uint8_t* data, unsigned size) -> void;
     auto unload() -> void;
-	auto reset(bool fromLoad = false) -> void;
+	auto reset() -> void;
+    auto power() -> void;
 	auto setWriteProtect(bool state) -> void;
     auto isWriteProtected() -> bool;
 	auto setCyclesPerSecond( unsigned value ) -> void;	
-	auto setMode( unsigned mode, bool buttonPress = false ) -> void;
+	auto setMode( unsigned mode ) -> void;
     auto getMode( ) -> Mode;
 	auto createTap( unsigned& imageSize ) -> uint8_t*;
     auto serialize(Emulator::Serializer& s) -> void;
@@ -53,6 +56,7 @@ struct Tape {
     auto updateDeviceState() -> void;
     auto getListing() -> std::vector<Emulator::Interface::Listing>&;
     auto setPosition( unsigned pos, bool find ) -> void;
+    auto setMotorSound() -> void;
 	
 protected:
 	Emulator::Interface::Media* media; 
@@ -122,6 +126,7 @@ protected:
     auto readForward( uint8_t& byte ) -> bool;
 
 	auto advanceCounterToPos(unsigned pos) -> void;
+    auto updateMotorSound(bool soft = true) -> void;
 };    
     
 extern Tape* tape;

@@ -686,6 +686,7 @@ auto ConfigurationsLayout::load( std::string path ) -> bool {
     }
 
     std::string _audioFloppyFolder = _settings->get<std::string>("audio_floppy_folder", "");
+    std::string _audioTapeFolder = _settings->get<std::string>("audio_tape_folder", "");
 
     if (activeEmulator)
         program->powerOff();
@@ -709,9 +710,13 @@ auto ConfigurationsLayout::load( std::string path ) -> bool {
     firmwareManager->reload();
 
     std::string audioFloppyFolder = _settings->get<std::string>("audio_floppy_folder", "");
+    std::string audioTapeFolder = _settings->get<std::string>("audio_tape_folder", "");
 
     if (_audioFloppyFolder != audioFloppyFolder)
         audioManager->drive.unload(this->emulator, this->emulator->getDiskMediaGroup());
+
+    if (_audioTapeFolder != audioTapeFolder)
+        audioManager->drive.unload(this->emulator, this->emulator->getTapeMediaGroup());
 
     view->updateDeviceSelection(this->emulator);
     

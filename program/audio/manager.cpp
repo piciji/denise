@@ -163,21 +163,43 @@ auto AudioManager::setDriveSounds( bool init ) -> void {
 
     auto settings = program->getSettings( activeEmulator );
 
-    mixFloppySounds = settings->get<bool>("audio_floppy", false);
+    bool mixFloppySounds = settings->get<bool>("audio_floppy", false);
+    bool mixTapeSounds = settings->get<bool>("audio_tape", false);
 
-    if (init)
-        activeEmulator->enableFloppySounds( mixFloppySounds );
+    mixDriveSounds = mixFloppySounds | mixTapeSounds;
+
+    if (init) {
+        activeEmulator->enableFloppySounds(mixFloppySounds);
+        activeEmulator->enableTapeSounds(mixTapeSounds);
+    }
+
+    Emulator::Interface::MediaGroup* group = activeEmulator->getDiskMediaGroup();
 
     if (mixFloppySounds) {
         unsigned volume = settings->get<unsigned>("audio_floppy_volume", 100u, {0u, 300u});
 
-        if (!drive.loaded( activeEmulator, activeEmulator->getDiskMediaGroup() )) {
-            drive.readPack( activeEmulator, activeEmulator->getDiskMediaGroup() );
+        if (!drive.loaded( activeEmulator, group )) {
+            drive.readPack( activeEmulator, group );
         }
 
-        drive.setVolume( activeEmulator, activeEmulator->getDiskMediaGroup(), (float)volume * 0.01 );
+        drive.setVolume( activeEmulator, group, (float)volume * 0.01 );
     } else
-        drive.reset();
+        drive.reset(group);
+
+    group = activeEmulator->getTapeMediaGroup();
+
+    if (group) { // amiga has no tape
+        if (mixTapeSounds) {
+            unsigned volume = settings->get<unsigned>("audio_tape_volume", 100u, {0u, 300u});
+
+            if (!drive.loaded(activeEmulator, group)) {
+                drive.readPack(activeEmulator, group);
+            }
+
+            drive.setVolume(activeEmulator, group, (float) volume * 0.01);
+        } else
+            drive.reset(group);
+    }
 }
 
 auto AudioManager::setAudioDsp() -> void {
@@ -345,7 +367,7 @@ auto AudioManager::flush( ) -> void {
     if (dsps.size())
         applyDsp();
 
-    if (mixFloppySounds)
+    if (mixDriveSounds)
         drive.mixSound(rData.out, rData.outputFrames << 1);
 
     if ( audioDriver->expectFloatingPoint() ) {

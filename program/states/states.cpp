@@ -549,9 +549,6 @@ auto States::updateModels() -> void {
     
     if (regionChange || resamplerChange) {
         audioManager->power();
-
-        //if (activeVideoManager)
-          //  activeVideoManager->initFpsLimit();
     }
 }
 

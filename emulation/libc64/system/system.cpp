@@ -536,7 +536,7 @@ auto System::power( bool softReset ) -> void {
     cia2->reset();
     input->reset();
 
-    tape->reset();
+    tape->power();
     glueLogic->reset();
 
     powerSupply->init( vicII->frequency(), vicII->isNTSCGeometry() ? 60 : 50 );
@@ -765,11 +765,20 @@ auto System::setFloppySounds(bool state) -> void {
     updateDriveSounds();
 }
 
+auto System::setTapeSounds(bool state) -> void {
+    driveSounds.requestTape = state;
+    updateDriveSounds();
+}
+
 auto System::updateDriveSounds() -> void {
     driveSounds.useFloppy = driveSounds.requestFloppy && !fastForward.config && !runAhead.frames;
+    driveSounds.useTape = driveSounds.requestTape && !fastForward.config && !runAhead.frames;
 
-    if (powerOn && driveSounds.useFloppy) {
-        iecBus->updateDriveSounds();
+    if (powerOn) {
+        if (driveSounds.useFloppy)
+            iecBus->updateDriveSounds();
+        if (driveSounds.useTape)
+            tape->setMotorSound();
     }
 }
 

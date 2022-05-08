@@ -993,7 +993,7 @@ auto Interface::ejectTape(Media* media) -> void {
 
 auto Interface::controlTape(Media* media, TapeMode mode) -> void {
 	
-    tape->setMode( (Tape::Mode)mode, true );
+    tape->setMode( (Tape::Mode)mode );
 }
 
 auto Interface::getTapeControl(Media* media) -> TapeMode {
@@ -1559,6 +1559,10 @@ auto Interface::enableJit(bool state) -> void {
 
 auto Interface::enableFloppySounds(bool state) -> void {
     system->setFloppySounds( state );
+}
+
+auto Interface::enableTapeSounds(bool state) -> void {
+    system->setTapeSounds( state );
 }
 
 auto Interface::activateDebugCart( unsigned limitCycles ) -> void {
