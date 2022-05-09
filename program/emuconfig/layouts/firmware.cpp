@@ -180,8 +180,8 @@ auto FirmwareLayout::assign(std::string path, FirmwareContainer::Block* block, F
     // remember path
     _settings->set<std::string>("firmware_path", file->getPath());
 
-    if (!file->isSizeValid(MAX_MEDIUM_SIZE))
-        return program->errorMediumSize( file, mes );  
+    if (!file->exists() || !file->isSizeValid(MAX_MEDIUM_SIZE))
+        return program->errorMediumSize( file, mes );
     
     auto& items = file->scanArchive();
 

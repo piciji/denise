@@ -44,7 +44,7 @@ auto pApplication::run() -> void {
             Application::loop();
             processEvents();
         }
-    } else {
+    } else if(!Application::isQuit) {
         MSG msg;
         while(GetMessage(&msg, 0, 0, 0)) {
             processMessage(msg);

@@ -42,7 +42,9 @@ auto Program::getInputDriver() -> std::string {
 }
 
 auto Program::jitPoll() -> bool {
-    
+    if (cmd->noGui)
+        return false;
+
     return InputManager::jitPoll();
 }
 

@@ -242,7 +242,7 @@ auto Autoloader::loadFiles() -> void {
     if (!file)
         return loadFiles();
 
-    if (!file->isSizeValid(MAX_MEDIUM_SIZE)) {
+    if (!file->exists() || !file->isSizeValid(MAX_MEDIUM_SIZE)) {
         if (!ddControl.silentError)
             program->errorMediumSize(file, view->message);
 

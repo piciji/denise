@@ -568,7 +568,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             item.id = fSetting->id;
             item.info.name = fSetting->file;
 
-            if (!file || !file->isSizeValid(MAX_MEDIUM_SIZE) ||                
+            if (!file || !file->exists() || !file->isSizeValid(MAX_MEDIUM_SIZE) ||
                 ((data = file->archiveData(fSetting->id)) == nullptr)
             ) {  
                 statusHandler->setMessage(trans->get("file_open_error", {{ "%path%", fSetting->file }}), 2, true);

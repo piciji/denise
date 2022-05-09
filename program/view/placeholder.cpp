@@ -20,7 +20,7 @@ auto View::loadPlaceholder() -> void {
 
 auto View::renderPlaceholder(bool blackScreen) -> void {
 
-	if (cmd->debug || cmd->autoload || program->isRunning || GUIKIT::Application::isQuit)
+	if (cmd->debug || cmd->noGui || cmd->autoload || cmd->attach || program->isRunning || GUIKIT::Application::isQuit)
 		return;
 	
 	unsigned gpu_pitch;

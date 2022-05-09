@@ -287,7 +287,7 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
                 
 				savePath( mediaGroup->name, testFile.getPath() );
 
-                if (!testFile.isSizeValid(MAX_HARDDISK_SIZE)) {
+                if (!testFile.exists() || !testFile.isSizeValid(MAX_HARDDISK_SIZE)) {
 					message->error(trans->get("file_size_error",{
 						{"%path%", filePath},
 						{"%size%", GUIKIT::File::SizeFormated(MAX_HARDDISK_SIZE)}
@@ -295,9 +295,7 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
 				} else if (testFile.isArchived()) {
 					message->error(trans->get("archive_none"));
 				} else if (!testFile.open(GUIKIT::File::Mode::Update)) {
-					message->error(trans->get("file_open_error",{
-						{"%path%", filePath}
-					}));
+                    program->errorOpen(&testFile, message);
 				} else {
 					fSetting->setPath(filePath);
 					block->selector.edit.setText(filePath);
@@ -1227,8 +1225,8 @@ auto MediaLayout::drop( std::string filePath, MediaGroupLayout::Block* block ) -
     if (!file)
         return;
 
-    if (!file->isSizeValid(MAX_MEDIUM_SIZE))  
-        return program->errorMediumSize( file, message );    
+    if (!file->exists() || !file->isSizeValid(MAX_MEDIUM_SIZE))
+        return program->errorMediumSize( file, message );
 
     auto& items = file->scanArchive();
 

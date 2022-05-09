@@ -30,7 +30,7 @@ auto Program::loadImageDataWhenOk( GUIKIT::File* file, unsigned fileId, Emulator
     // hard disks will not preloaded
     // we check only for max size
     if ( group->isHardDisk() ) {        
-        if (file->isArchived() ||
+        if (!file->exists() || file->isArchived() ||
             !file->isSizeValid(MAX_HARDDISK_SIZE) || 
             !file->open(GUIKIT::File::Mode::Update)) {
             
@@ -40,7 +40,7 @@ auto Program::loadImageDataWhenOk( GUIKIT::File* file, unsigned fileId, Emulator
         return true;
     }
     
-    if (!file->isSizeValid(MAX_MEDIUM_SIZE))
+    if (!file->exists() || !file->isSizeValid(MAX_MEDIUM_SIZE))
         return false;
     
     // non archived tape images will be loaded in chunks when needed
@@ -54,6 +54,15 @@ auto Program::loadImageDataWhenOk( GUIKIT::File* file, unsigned fileId, Emulator
 	data = file->archiveData( fileId );
 	
 	return data != nullptr;
+}
+
+auto Program::errorOpen(GUIKIT::File* file, Message* message ) -> void {
+
+    message->error(trans->get( "file_open_error", {
+            { "%path%", file->getFile() }
+    }));
+
+    filePool->unloadOrphaned();
 }
 
 auto Program::errorOpen(GUIKIT::File* file, GUIKIT::File::Item* item, Message* message ) -> void {
@@ -253,6 +262,7 @@ auto Program::prepareSocket(Emulator::Interface::Media* media, Emulator::Interfa
 auto Program::saveSettings(bool onExit) -> void {
 
     bool errorShown = false;
+    bool saveToEmuFolder = false;
 
     for (auto settings : settingsStorage) {
 
@@ -279,11 +289,18 @@ auto Program::saveSettings(bool onExit) -> void {
         } else {
             for (auto& emulator : emulators) {
                 if (1 == globalSettings->get<unsigned>( emulator->ident + "_settings_folder_mode", 0 )) {
-                    // save to emu folder too
-                    path = settingsFileFromEmuFolder("global_");
-                    settings->save(path);
+                    saveToEmuFolder = true;
                     break;
                 }
+            }
+
+            path = settingsFileFromEmuFolder("global_");
+            if (saveToEmuFolder)
+                settings->save(path);
+            else {
+                GUIKIT::File file(path);
+                if (file.exists())
+                    file.del();
             }
 
             // save to user folder
@@ -335,6 +352,7 @@ auto Program::loadSettings() -> void {
 
 auto Program::forceSavingSomeGlobalSettings( ) -> void {
 	GUIKIT::Settings tempSettings;
+    std::string path;
 
     if (!tempSettings.load(settingsFileFromEmuFolder("global_"))) {
         if (!tempSettings.load(settingsFile("global_")))
@@ -350,7 +368,7 @@ auto Program::forceSavingSomeGlobalSettings( ) -> void {
 
         auto state = globalSettings->get<bool>( _emuIdent + "_load_last_settings", false );
         auto customSetting = globalSettings->get<std::string>( _emuIdent + "_custom_settings", "");
-        std::string path = globalSettings->get<std::string>( _emuIdent + "_settings_path", "");
+        path = globalSettings->get<std::string>( _emuIdent + "_settings_path", "");
         unsigned floderMode = globalSettings->get<unsigned>( _emuIdent + "_settings_folder_mode", path == "" ? 0 : 2 );
 
         saveToEmuFolder |= floderMode == 1;
@@ -361,8 +379,14 @@ auto Program::forceSavingSomeGlobalSettings( ) -> void {
         tempSettings.set<unsigned>(_emuIdent + "_settings_folder_mode", floderMode);
     }
 
+    path = settingsFileFromEmuFolder("global_");
     if (saveToEmuFolder)
-	    tempSettings.save( settingsFileFromEmuFolder("global_") );
+	    tempSettings.save( path );
+    else {
+        GUIKIT::File file(path);
+        if (file.exists())
+            file.del();
+    }
 
     tempSettings.save( settingsFile("global_") );
 }

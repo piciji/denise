@@ -109,6 +109,7 @@ struct Program : Emulator::Interface::Bind {
     auto showOpenError( std::vector<std::string>& paths, bool warning = false ) -> void;
 	
     auto errorOpen(GUIKIT::File* file, GUIKIT::File::Item* item, Message* message ) -> void;
+    auto errorOpen(GUIKIT::File* file, Message* message ) -> void;
     auto errorMediumSize(GUIKIT::File* file, Message* message ) -> void;
     auto errorFirmwareSize(GUIKIT::File::Item* item, Message* message ) -> void;
     auto setExpansionSelection( Emulator::Interface* emulator ) -> void;

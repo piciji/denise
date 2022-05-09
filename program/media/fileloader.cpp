@@ -605,8 +605,8 @@ auto Fileloader::insertFile( Emulator::Interface* emulator, Emulator::Interface:
 
     settings->set<std::string>( _underscore(media->group->name) + "_folder_auto", file->getPath());
 
-    if (!file->isSizeValid(MAX_MEDIUM_SIZE))
-        return program->errorMediumSize( file, emuView ? emuView->message : view->message ), true;
+    if (!file->exists() || !file->isSizeValid(MAX_MEDIUM_SIZE))
+        return program->errorMediumSize( file, emuView ? emuView->message : view->message ), false;
 
     auto& items = file->scanArchive();
 

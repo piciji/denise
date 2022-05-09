@@ -57,8 +57,8 @@ SwapperLayout::SwapperLayout( MediaLayout* mediaLayout ) {
         
         savePath( file->getPath() );
 
-		if (!file->isSizeValid(MAX_MEDIUM_SIZE))
-            return program->errorMediumSize( file, this->mediaLayout->message );  
+		if (!file->exists() || !file->isSizeValid(MAX_MEDIUM_SIZE))
+            return program->errorMediumSize( file, this->mediaLayout->message );
 		
 		auto& items = file->scanArchive();
 

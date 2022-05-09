@@ -12,7 +12,16 @@ struct Cmd {
     
     std::vector<std::string> arguments;
 
+    struct Attachments {
+        Emulator::Interface* emulator;
+        Emulator::Interface::Media* media;
+        std::string path;
+    };
+
+    std::vector<Attachments> attachments;
+
     bool autoload = false;
+    bool attach = false;
     bool noDriver = false;
     bool noGui = false;
     bool debug = false;
@@ -28,6 +37,8 @@ struct Cmd {
     auto parse() -> void;
     
     auto autoloadImages() -> void;
+
+    auto attachImages() -> void;
     
     auto updateModel( Emulator::Interface* emulator, unsigned ident, int value) -> void;
 

@@ -156,9 +156,8 @@ auto Program::init() -> void {
     if (!cmd->debug) {
         loadSettings();
 
-        if (!loadTranslation(globalSettings->get<std::string>("translation", getSystemLangFile()))) {
-			if (view)
-				view->message->error("language plugin not found");
+        if (view && !loadTranslation(globalSettings->get<std::string>("translation", getSystemLangFile()))) {
+            view->message->error("language plugin not found");
         }		
     }
     
@@ -429,8 +428,8 @@ auto Program::loop() -> void {
 			activeEmulator->run();
 	}
 	else {
-        if (GUIKIT::Application::exitCode)
-            return view->onClose();
+      //  if (!emuThread->enabled && GUIKIT::Application::exitCode)
+        //    return view->onClose();
         
 		audioDriver->clear();
 		GUIKIT::System::sleep( 20 );
@@ -588,8 +587,12 @@ auto Program::exit(int code) -> void {
 		program->quit();
         GUIKIT::Application::quit();
 			
-	} else if (isRunning)
+	} else if (/*isRunning &&*/ !emuThread->enabled)
         view->onClose();
+
+    // this function doesn't close the APP when emu thread is enabled.
+    // debug cart always disable emu thread.
+    // other possible exit calls (i.e. broken autostart path) happen before emu thread is spawned
 }
 
 auto Program::updateDeviceState( Emulator::Interface::Media* media, bool write, unsigned position, bool LED, bool motorOff ) -> void {

@@ -2,6 +2,7 @@
 #include "cmd.h"
 #include "../view/view.h"
 #include "../media/autoloader.h"
+#include "../media/fileloader.h"
 #include "../thread/emuThread.h"
 
 auto Cmd::set(int argc, char** argv) -> void {        	
@@ -49,7 +50,7 @@ auto Cmd::printHelp() -> void {
         return;
     }    
     
-    GUIKIT::System::printToCmd( "Usage: Denise [option]... [image path]... \n\n" );
+    GUIKIT::System::printToCmd( "Usage: Denise [option]... [image paths]... \n\n" );
     GUIKIT::System::printToCmd( "Available command-line options:\n" );
 
 	struct Options {
@@ -61,6 +62,12 @@ auto Cmd::printHelp() -> void {
 	std::vector<Options> options;
 	options.push_back({"-v, --version", "Output program version", ""});
 	options.push_back({"-h, --help", "Output this help screen", ""});
+
+    options.push_back({"-attach1", "Attach tape image", "<image path>"});
+    options.push_back({"-attach8", "Attach disk image in Device 8", "<image path>"});
+    options.push_back({"-attach9", "Attach disk image in Device 9", "<image path>"});
+    options.push_back({"-attach10", "Attach disk image in Device 10", "<image path>"});
+    options.push_back({"-attach11", "Attach disk image in Device 11", "<image path>"});
 
 	options.push_back({"-vic-6569R3", "Select VIC-II 6569R3 and PAL mode", ""});
 	options.push_back({"-vic-8565", "Select VIC-II 8565 and PAL mode", ""});
@@ -124,6 +131,7 @@ auto Cmd::parse() -> void {
 	bool hasDefaultTest = false;
 	bool emulateD64WithMoreAccuracy = false; // use G64 emulation
     bool useCustomICGlueLogic = false;
+    Emulator::Interface::Media* attachMediaC64 = nullptr;
 
     for( auto& arg : arguments ) {
         if (limitCyclesNext) {
@@ -166,7 +174,14 @@ auto Cmd::parse() -> void {
 		if(autostartPrgNext) {
 			autostartPrgNext = false;			
 			setAutoStartPrg( arg );
+            continue;
 		}
+
+        if (attachMediaC64) {
+            attachments.push_back({emuC64, attachMediaC64, arg});
+            attachMediaC64 = nullptr;
+            continue;
+        }
         
         if (arg == "-vic-6569R3") { // pal 
 			updateModel( emuC64, LIBC64::Interface::ModelIdVicIIModel, 0 );
@@ -230,7 +245,18 @@ auto Cmd::parse() -> void {
 		}
         else if (arg == "-autostart-prg") {
             autostartPrgNext = true;
-                        
+
+        } else if (arg == "-attach8") {
+            attachMediaC64 = emuC64->getDisk(0);
+        } else if (arg == "-attach9") {
+            attachMediaC64 = emuC64->getDisk(1);
+        } else if (arg == "-attach10") {
+            attachMediaC64 = emuC64->getDisk(2);
+        } else if (arg == "-attach11") {
+            attachMediaC64 = emuC64->getDisk(3);
+        } else if (arg == "-attach1") {
+            attachMediaC64 = emuC64->getTape(0);
+
         } else {
             std::string temp = arg;
             GUIKIT::String::toLowerCase( temp );
@@ -306,11 +332,13 @@ auto Cmd::parse() -> void {
 		dynamic_cast<LIBC64::Interface*> (emuC64)->activateDebugCart( cycles );
 		globalSettings->set<bool>("video_sync", false);
         globalSettings->set<bool>("threaded_renderer", false);
+        globalSettings->set<bool>("threaded_emu", false);
 		globalSettings->set<bool>("fps", true);
 		globalSettings->set("video_screen_text", 0);
 		settingsC64->set<bool>("video_cycle_accuracy", true);
         settingsC64->set<unsigned>("Stepper_Seek_Time", 90);
         settingsC64->set<unsigned>("Disalign_Tracks", 1);
+        settingsC64->set<unsigned>("video_crt", 0);
 		
 		updateModel(emuC64, LIBC64::Interface::ModelIdDisableGreyDotBug, 0);
 	}	
@@ -367,9 +395,31 @@ auto Cmd::parse() -> void {
     }
 		
     arguments = paths;
+
+    attach = attachments.size() > 0;
+}
+
+auto Cmd::attachImages() -> void {
+    Emulator::Interface* powerEmulator = nullptr;
+
+    for(auto& attachment : attachments) {
+        if (attachment.media->group->isDisk())
+            autoloader->activateDrive( attachment.emulator, attachment.media->group, attachment.media->id + 1 );
+
+        if (fileloader->insertFile(attachment.emulator, attachment.media, attachment.path))
+            powerEmulator = attachment.emulator;
+    }
+
+    if (powerEmulator && !autoload) {
+        program->power( powerEmulator );
+    }
+
+    attach = false;
 }
 
 auto Cmd::autoloadImages() -> void {
+    if (attach)
+        attachImages();
 
     if (!autoload) {
         if (noGui)
@@ -378,7 +428,6 @@ auto Cmd::autoloadImages() -> void {
         return;
     }
 
-    emuThread->lock();
     if (debug) {
         autoloader->init( arguments, true, Autoloader::Mode::AutoStart, 1 );
     } else {
@@ -398,7 +447,8 @@ auto Cmd::autoloadImages() -> void {
             activeEmulator->fastForward( (unsigned)EmuInt::FastForward::NoAudioOut );
     }
 
-    emuThread->unlock();
+    if (GUIKIT::Application::exitCode)
+        return;
     
     if (!debug && !noDriver && !noGui && globalSettings->get<bool>("open_fullscreen", false)) {
         view->fullscreenOnStartUp.setEnabled();
