@@ -558,7 +558,7 @@ auto Program::settingsFile( std::string ident ) -> std::string {
 }
 
 auto Program::settingsFileFromEmuFolder( std::string ident ) -> std::string {
-    return GUIKIT::System::getResourceFolder(appFolder()) + "settings/" + ident + SETTINGS_FILE;
+    return GUIKIT::System::getResourceFolder(appFolder()) + ident + SETTINGS_FILE;
 }
 
 auto Program::shaderFolder() -> std::string {
@@ -587,11 +587,11 @@ auto Program::exit(int code) -> void {
 		program->quit();
         GUIKIT::Application::quit();
 			
-	} else if (/*isRunning &&*/ !emuThread->enabled)
+	} else if (!emuThread->enabled)
         view->onClose();
 
     // this function doesn't close the APP when emu thread is enabled.
-    // debug cart always disable emu thread.
+    // debug cart always disables emu thread.
     // other possible exit calls (i.e. broken autostart path) happen before emu thread is spawned
 }
 

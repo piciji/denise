@@ -259,10 +259,24 @@ auto Program::prepareSocket(Emulator::Interface::Media* media, Emulator::Interfa
 }
 
 // settings
-auto Program::saveSettings(bool onExit) -> void {
+auto Program::undockSettings() -> bool {
+    for (auto settings : settingsStorage) {
+        auto guid = settings->getGuid();
 
+        if (guid) {
+            Emulator::Interface* emulator = (Emulator::Interface*)guid;
+
+            settings->save( settingsFileFromEmuFolder(emulator->ident + "_") );
+        } else {
+            if (!settings->save( settingsFileFromEmuFolder("global_") ))
+                return false;
+        }
+    }
+    return true;
+}
+
+auto Program::saveSettings(bool onExit) -> void {
     bool errorShown = false;
-    bool saveToEmuFolder = false;
 
     for (auto settings : settingsStorage) {
 
@@ -275,9 +289,14 @@ auto Program::saveSettings(bool onExit) -> void {
                                    
             path = globalSettings->get<std::string>(emulator->ident + "_custom_settings", "");
 
-            if (path == "")
-                path = settingsFile(emulator->ident + "_");
-            else if (onExit)
+            if (path == "") {
+                path = settingsFileFromEmuFolder(emulator->ident + "_");
+
+                GUIKIT::File file(path);
+                if (!file.exists())
+                    path = settingsFile(emulator->ident + "_");
+
+            } else if (onExit)
                 continue;
             else {
                 // remove absolute path (deprecated)
@@ -287,30 +306,18 @@ auto Program::saveSettings(bool onExit) -> void {
             }
             
         } else {
-            for (auto& emulator : emulators) {
-                if (1 == globalSettings->get<unsigned>( emulator->ident + "_settings_folder_mode", 0 )) {
-                    saveToEmuFolder = true;
-                    break;
-                }
-            }
-
             path = settingsFileFromEmuFolder("global_");
-            if (saveToEmuFolder)
-                settings->save(path);
-            else {
-                GUIKIT::File file(path);
-                if (file.exists())
-                    file.del();
-            }
 
-            // save to user folder
-            path = settingsFile("global_");
+            GUIKIT::File file(path);
+            if (!file.exists())
+                path = settingsFile("global_");
         }
 
         if (!settings->save( path )) {
-            if (!errorShown)
-                view->message->warning(trans->get("cfg_not_save",{{"%path%", path}}));
-            errorShown = true;
+            if (!errorShown) {
+                view->message->warning(trans->get("cfg_not_save", {{"%path%", path}}));
+                errorShown = true;
+            }
         }
     }
 }
@@ -340,12 +347,14 @@ auto Program::loadSettings() -> void {
 
             globalSettings->set<std::string>(emulator->ident + "_custom_settings", "");
 
-            settings->load(settingsFile(emulator->ident + "_"));
+            if (!settings->load(settingsFileFromEmuFolder(emulator->ident + "_")))
+                settings->load(settingsFile(emulator->ident + "_"));
 
         } else {
-            if (!settings->load(settingsFileFromEmuFolder("global_"))) {
+            if (!settings->load(settingsFileFromEmuFolder("global_")))
                 settings->load(settingsFile("global_"));
-            }
+            else
+                settings->set<bool>("undock", true, false);
         }
     }
 }
@@ -353,15 +362,15 @@ auto Program::loadSettings() -> void {
 auto Program::forceSavingSomeGlobalSettings( ) -> void {
 	GUIKIT::Settings tempSettings;
     std::string path;
+    bool useEmuFolder = true;
 
     if (!tempSettings.load(settingsFileFromEmuFolder("global_"))) {
+        useEmuFolder = false;
         if (!tempSettings.load(settingsFile("global_")))
             return;
     }
 	
 	tempSettings.set<bool>("save_settings_on_exit", false);
-
-    bool saveToEmuFolder = false;
 
     for( auto emulator : emulators ) {
         std::string _emuIdent = emulator->ident;
@@ -369,26 +378,13 @@ auto Program::forceSavingSomeGlobalSettings( ) -> void {
         auto state = globalSettings->get<bool>( _emuIdent + "_load_last_settings", false );
         auto customSetting = globalSettings->get<std::string>( _emuIdent + "_custom_settings", "");
         path = globalSettings->get<std::string>( _emuIdent + "_settings_path", "");
-        unsigned floderMode = globalSettings->get<unsigned>( _emuIdent + "_settings_folder_mode", path == "" ? 0 : 2 );
-
-        saveToEmuFolder |= floderMode == 1;
 
         tempSettings.set<bool>(_emuIdent + "_load_last_settings", state);
         tempSettings.set<std::string>(_emuIdent + "_custom_settings", customSetting);
         tempSettings.set<std::string>(_emuIdent + "_settings_path", path);
-        tempSettings.set<unsigned>(_emuIdent + "_settings_folder_mode", floderMode);
     }
 
-    path = settingsFileFromEmuFolder("global_");
-    if (saveToEmuFolder)
-	    tempSettings.save( path );
-    else {
-        GUIKIT::File file(path);
-        if (file.exists())
-            file.del();
-    }
-
-    tempSettings.save( settingsFile("global_") );
+    tempSettings.save( useEmuFolder ? settingsFileFromEmuFolder("global_") : settingsFile("global_") );
 }
 
 auto Program::getCustomSettingsFolder( Emulator::Interface* emulator, bool createFolder ) -> std::string {
@@ -397,23 +393,10 @@ auto Program::getCustomSettingsFolder( Emulator::Interface* emulator, bool creat
     std::string path = globalSettings->get<std::string>( _emuIdent + "_settings_path", "");
     std::string basePath;
 
-    unsigned floderMode = globalSettings->get<unsigned>( _emuIdent + "_settings_folder_mode", path == "" ? 0 : 2 );
+    if (path == "") {
+        path = program->appFolder() + "/settings/" + GUIKIT::String::toLowerCase(_emuIdent);
+        basePath = GUIKIT::System::getUserDataFolder();
 
-    if ((floderMode == 2) && (path == ""))
-        floderMode = 0;
-
-    switch(floderMode) {
-        case 0:
-            path = program->appFolder() + "/settings/" + GUIKIT::String::toLowerCase(_emuIdent);
-            basePath = GUIKIT::System::getUserDataFolder();
-            break;
-        case 1:
-            path = "settings/" + GUIKIT::String::toLowerCase(_emuIdent);
-            basePath = GUIKIT::System::getResourceFolder( appFolder() );
-            break;
-    }
-
-    if ((basePath != "") && (floderMode != 2)) {
         if (createFolder)
             GUIKIT::File::createDir( path, basePath );
 

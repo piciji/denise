@@ -99,22 +99,12 @@ SettingsLayout::Control::Control() {
 SettingsLayout::Active::Active() {
     append(activeLabel,{0u, 0u}, 10);
     append(fileLabel,{~0u, 0u});
+    append(undockButton,{0u, 0u}, 10);
     append(standardButton,{0u, 0u});
 
     fileLabel.setFont(GUIKIT::Font::system("bold"));    
 
     setAlignment(0.5);
-}
-
-SettingsLayout::FolderType::FolderType() {
-    append(location,{0u, 0u}, 10);
-    append(home,{0u, 0u}, 10);
-    append(emu,{0u, 0u}, 10);
-    append(own,{0u, 0u});
-
-    setAlignment(0.5);
-
-    GUIKIT::RadioBox::setGroup(home, emu, own);
 }
 
 SettingsLayout::SettingsLayout() {
@@ -127,7 +117,6 @@ SettingsLayout::SettingsLayout() {
     append(active, {~0u, 0u}, 5);
     append(startWithLastConfigCheckbox,{~0u, 0u}, 5);
     append(listView, {~0u, ~0u}, 5);
-    append(folderType, {0u, 0u});
 }
 
 ConfigurationsFolderLayout::ConfigurationsFolderLayout() {
@@ -327,19 +316,38 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         
         settings.control.load.onActivate();
     };
-    
+
+    bool undockMode = globalSettings->get<bool>("undock", false);
+
+    if (undockMode || GUIKIT::Application::isGtk())
+        settings.active.remove( settings.active.undockButton );
+
+    settings.active.undockButton.onActivate = [this]() {
+
+        if (mes->question( trans->get("undock settings") ) ) {
+            program->undockSettings();
+
+            settings.active.remove( settings.active.undockButton );
+        }
+    };
+
     settings.active.standardButton.onActivate = [this]() {
         
         if ("" == globalSettings->get<std::string>( emulator->ident + "_custom_settings", ""))
             return;
 
-        std::string path = program->settingsFile( this->emulator->ident + "_" );
-
         emuThread->lock();
-        if (this->load( path )) {
-            globalSettings->set<std::string>(emulator->ident + "_custom_settings", "");
-            settings.active.fileLabel.setText( trans->get("default") );
+
+        if (!this->load(program->settingsFileFromEmuFolder(emulator->ident + "_"), false)) {
+            if (!this->load(program->settingsFile(emulator->ident + "_"))) {
+                emuThread->unlock();
+                return;
+            }
         }
+
+        globalSettings->set<std::string>(emulator->ident + "_custom_settings", "");
+        settings.active.fileLabel.setText( trans->get("default") );
+
         emuThread->unlock();
     };
     
@@ -448,12 +456,17 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
 			
 			if (fileName == globalSettings->get<std::string>(emulator->ident + "_custom_settings", "")) {
                 globalSettings->set<std::string>(emulator->ident + "_custom_settings", "");
-				
-				path = program->settingsFile(this->emulator->ident + "_");
 
                 emuThread->lock();
-				if (this->load(path))					
-					settings.active.fileLabel.setText(trans->get("default"));
+
+                if (!this->load(program->settingsFileFromEmuFolder(emulator->ident + "_"), false)) {
+                    if (!this->load(program->settingsFile(emulator->ident + "_"))) {
+                        emuThread->unlock();
+                        return;
+                    }
+                }
+
+                settings.active.fileLabel.setText(trans->get("default"));
 
                 emuThread->unlock();
 			}
@@ -474,7 +487,8 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         
         if (globalSettings->get<std::string>(emulator->ident + "_custom_settings", "") != "")
             settings.active.standardButton.onActivate();
-        
+
+        settingsFolder.pathEdit.setEnabled();
         settingsFolder.pathEdit.setText( path );
         
         globalSettings->set<std::string>( emulator->ident + "_settings_path", path );
@@ -482,52 +496,25 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         updateSettingsList();
     };
 
-    settingsFolder.remove( settingsFolder.standard );
-
-    settings.folderType.home.onActivate = [this]() {
+    settingsFolder.standard.onActivate = [this]() {
         if (globalSettings->get<std::string>(emulator->ident + "_custom_settings", "") != "")
             settings.active.standardButton.onActivate();
 
-        globalSettings->set<unsigned>( emulator->ident + "_settings_folder_mode", 0 );
+        settingsFolder.pathEdit.setText( "" );
 
-        settingsFolder.setEnabled(false);
-        updateSettingsList();
-    };
+        globalSettings->set<std::string>( emulator->ident + "_settings_path", "" );
 
-    settings.folderType.emu.onActivate = [this]() {
-        if (globalSettings->get<std::string>(emulator->ident + "_custom_settings", "") != "")
-            settings.active.standardButton.onActivate();
+        settingsFolder.pathEdit.setText( trans->get("home folder") );
 
-        globalSettings->set<unsigned>( emulator->ident + "_settings_folder_mode", 1 );
+        settingsFolder.pathEdit.setEnabled(false);
 
-        settingsFolder.setEnabled(false);
-        updateSettingsList();
-    };
-
-    settings.folderType.own.onActivate = [this]() {
-        if (globalSettings->get<std::string>(emulator->ident + "_custom_settings", "") != "")
-            settings.active.standardButton.onActivate();
-
-        globalSettings->set<unsigned>( emulator->ident + "_settings_folder_mode", 2 );
-
-        settingsFolder.setEnabled(true);
         updateSettingsList();
     };
 
     std::string _settingsPath = globalSettings->get<std::string>( emulator->ident + "_settings_path", "" );
-    unsigned floderMode = globalSettings->get<unsigned>( emulator->ident + "_settings_folder_mode", _settingsPath == "" ? 0 : 2 );
 
-    switch(floderMode) {
-        case 0: settings.folderType.home.setChecked(); break;
-        case 1: settings.folderType.emu.setChecked(); break;
-        case 2: settings.folderType.own.setChecked(); break;
-    }
-
-    if (floderMode != 2) {
-        settingsFolder.setEnabled(false);
-    }
-
-    settingsFolder.pathEdit.setText( _settingsPath );
+    settingsFolder.pathEdit.setText( _settingsPath == "" ? trans->get("home folder") : _settingsPath );
+    settingsFolder.pathEdit.setEnabled(_settingsPath != "");
 
     if (!settings.startWithLastConfigCheckbox.checked())
         settings.active.fileLabel.setText(trans->get("default"));
@@ -674,14 +661,15 @@ auto ConfigurationsLayout::updateSettingsList() -> void {
         settings.listView.append( {line.fileName, line.date} );    
 }
 
-auto ConfigurationsLayout::load( std::string path ) -> bool {
+auto ConfigurationsLayout::load( std::string path, bool showError ) -> bool {
 
     GUIKIT::File file(path);
 
     if (!file.exists()) {
-        mes->error(trans->get("file_open_error",{
-            {"%path%", path}
-        }));
+        if (showError)
+            mes->error(trans->get("file_open_error",{
+                {"%path%", path}
+            }));
         return false;
     }
 
@@ -692,9 +680,10 @@ auto ConfigurationsLayout::load( std::string path ) -> bool {
         program->powerOff();
 
     if (!_settings->load(path)) {
-        mes->error(trans->get("file_open_error",{
-            {"%path%", path}
-        }));
+        if (showError)
+            mes->error(trans->get("file_open_error",{
+                {"%path%", path}
+            }));
         return false;
     }
 
@@ -867,19 +856,15 @@ auto ConfigurationsLayout::translate() -> void {
     settings.control.remove.setText( trans->get("remove") );
     
     settingsFolder.label.setText( trans->get("folder", {}, true) );
-    settingsFolder.standard.setText( trans->get("default") );
+    settingsFolder.standard.setText( trans->get("home folder") );
     settingsFolder.select.setText( trans->get("select") );
     
     settings.setText( trans->get("settings") );
     settings.active.activeLabel.setText( trans->get("active setting", {}, true) );
+    settings.active.undockButton.setText( trans->get("undock") );
     settings.active.standardButton.setText( trans->get("default") );
     settings.listView.setHeaderText({trans->get("file"), trans->get("date")});
     settings.startWithLastConfigCheckbox.setText( trans->get("Start with last loaded Settings") );
-
-    settings.folderType.location.setText( trans->get("save location", {}, true) );
-    settings.folderType.home.setText( trans->get("home folder") );
-    settings.folderType.emu.setText( trans->get("emu folder") );
-    settings.folderType.own.setText( trans->get("own folder") );
     
     stateFolder.label.setText( trans->get("folder", {}, true) );
     stateFolder.standard.setText( trans->get("default") );
