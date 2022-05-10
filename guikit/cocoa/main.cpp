@@ -356,6 +356,9 @@ CocoaDelegate* pApplication::cocoaDelegate = nullptr;
 NSTimer* pApplication::appTimer = nullptr;
 
 auto pApplication::run() -> void {
+    if(Application::isQuit)
+        return;
+
     if(Application::loop) {
         setAppTimer();
         observeMenu( [NSApp mainMenu] );
