@@ -665,7 +665,9 @@ auto Program::jam( Emulator::Interface::Media* media ) -> void {
     if (media)
         out = "CPU " + media->name + " Jam";
 
+    emuThread->lockStatus();
     statusHandler->setMessage( out, 10, true );
+    emuThread->unlockStatus();
 }
 
 auto Program::getLastUsedEmu() -> Emulator::Interface* {

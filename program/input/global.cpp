@@ -111,7 +111,7 @@ auto InputManager::setMappings() -> void {
                     mapper->inputManager = manager;
                     mapper->isShadowed = false;
 
-                    mapper->autoFire = device.isJoypad() && (input.key == Emulator::Interface::Key::Autofire);
+                    mapper->autoFire = device.isJoypad() && (input.key == Emulator::Interface::Key::Autofire || input.key == Emulator::Interface::Key::AutofireDirection);
                     if (device.isJoypad() && (input.key == Emulator::Interface::Key::ToggleAutofire)) {
                         mapper->type = InputMapping::Type::Switch;
                         mapper->inputManager = manager;

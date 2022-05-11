@@ -409,7 +409,7 @@ auto InputLayout::loadInputList(unsigned deviceId) -> void {
             }
         }
                     
-        appendListEntry( useName, (InputMapping*)input.guid, image );
+        appendListEntry( useName, input, image );
         
         if (counter) {
             if (--counter == 0) {
@@ -443,8 +443,11 @@ auto InputLayout::loadHotkeyList() -> void {
     inputList.lockRedraw();
     
 	for (auto& input : InputManager::getManager( emulator )->customHotkeys ) {
-		
-		appendListEntry( input.name, (InputMapping*)input.guid, nullptr );
+
+        InputMapping* mapping = (InputMapping*)input.guid;
+
+        inputList.append({ "", trans->get( input.name ), mapping->getDescription(),
+                           mapping->alternate ? mapping->alternate->getDescription() : "" });
 	}
     
     inputList.unlockRedraw();
@@ -489,8 +492,10 @@ auto InputLayout::updateAutofireFrequency() -> void {
     autofireControl.autofireSlider.slider.setPosition( position - 1 );
 }
 
-auto InputLayout::appendListEntry(std::string& name, InputMapping* mapping, GUIKIT::Image* image) -> void {
-    
+auto InputLayout::appendListEntry(std::string& name, Emulator::Interface::Device::Input& input, GUIKIT::Image* image) -> void {
+
+    InputMapping* mapping = (InputMapping*)input.guid;
+
     if (image && mapping->shadowMap.size() > 0)
         image = &virtualKeyImage;
     
@@ -500,8 +505,20 @@ auto InputLayout::appendListEntry(std::string& name, InputMapping* mapping, GUIK
 	if (image)
 		inputList.setImage( inputList.rowCount() - 1, 0, *image );
 
-    if (mapping->emuDevice && mapping->emuDevice->isJoypad() && GUIKIT::String::foundSubStr(name, "Autofire"))
-        inputList.setRowTooltip( inputList.rowCount() - 1, trans->get("autofire on focus") );
+    if (mapping->emuDevice && mapping->emuDevice->isJoypad()) {
+        if (input.key == Emulator::Interface::Key::Direction);
+        else if (input.key == Emulator::Interface::Key::Button) {
+            if (name == "Button 2")
+                inputList.setRowTooltip(inputList.rowCount() - 1, trans->get("Second Button tooltip"));
+        } else if (input.key == Emulator::Interface::Key::ToggleAutofire)
+            inputList.setRowTooltip(inputList.rowCount() - 1, trans->get("Autofire tooltip"));
+        else if (input.key == Emulator::Interface::Key::Autofire)
+            inputList.setRowTooltip(inputList.rowCount() - 1, trans->get("Turbo Button tooltip"));
+        else if (input.key == Emulator::Interface::Key::AutofireDirection)
+            inputList.setRowTooltip(inputList.rowCount() - 1, trans->get("Turbo Direction tooltip"));
+        else // diagonal
+            inputList.setRowTooltip(inputList.rowCount() - 1, trans->get("Diagonal tooltip"));
+    }
 }
 
 auto InputLayout::updateListEntry(unsigned selection, InputMapping* mapping, bool setFocus) -> void {

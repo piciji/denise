@@ -608,6 +608,8 @@ auto Interface::prepareDevices() -> void {
         device.addVirtual( "Button 1 Autofire", { 4 }, Key::ToggleAutofire );
         device.addVirtual( "Button 2 Turbo", { 5 }, Key::Autofire );
         device.addVirtual( "Button 2 Autofire", { 5 }, Key::ToggleAutofire );
+        device.addVirtual( "Left Turbo", { 2 }, Key::AutofireDirection );
+        device.addVirtual( "Right Turbo", { 3 }, Key::AutofireDirection );
 
         device.addVirtual( "Diagonal Up-Right", { 0, 3 }, Key::JoyUpRight );
         device.addVirtual( "Diagonal Down-Right", { 1, 3 }, Key::JoyDownRight );

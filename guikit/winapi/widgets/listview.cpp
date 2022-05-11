@@ -208,6 +208,7 @@ auto pListView::updateRowToolTip(HWND hwnd, int curItem, RECT rect) -> void {
     toolInfo.lpszText = wtooltip;
     
     SendMessage(hwndTip, TTM_ADDTOOL, 0, (LPARAM)&toolInfo);
+    SendMessage(hwndTip, TTM_SETDELAYTIME, TTDT_AUTOPOP, 25000);
 }
 
 auto pListView::clearBrush() -> void {

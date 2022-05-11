@@ -70,7 +70,7 @@ struct InputLayout : GUIKIT::VerticalLayout {
     auto loadDeviceList() -> void;
 	auto loadHotkeyList() -> void;
     auto loadInputList(unsigned deviceId) -> void;
-    auto appendListEntry(std::string& name, InputMapping* mapping, GUIKIT::Image* image) -> void;
+    auto appendListEntry(std::string& name, Emulator::Interface::Device::Input& input, GUIKIT::Image* image) -> void;
     auto updateListEntry(unsigned selection, InputMapping* mapping, bool setFocus = true) -> void;
     auto deviceId() -> unsigned;
     auto inputId() -> unsigned;
