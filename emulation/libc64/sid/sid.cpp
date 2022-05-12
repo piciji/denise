@@ -237,7 +237,7 @@ auto Sid::getResampleQuality( ) -> uint8_t {
                 return 3;
     } 
         
-    __unreachable
+    _unreachable
 }
 
 auto Sid::setType( Type type ) -> void {

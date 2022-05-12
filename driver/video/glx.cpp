@@ -87,7 +87,7 @@ struct GLX : public Video, OpenGL, RenderThread {
         /* x = */ 0, /* y = */ 0, window_attributes.width, window_attributes.height,
         /* border_width = */ 0, vi->depth, InputOutput, vi->visual,
         CWColormap | CWBorderPixel, &attributes);
-        XSetWindowBackground(display, xwindow, 0);
+        // XSetWindowBackground(display, xwindow, 0);
         XMapWindow(display, xwindow);
         XFlush(display);
 

@@ -51,7 +51,7 @@ auto WD1770::read(uint16_t address) -> uint8_t {
             return dataReg;
     }
 
-    __unreachable
+    _unreachable
 }
 
 #define SET_TYPE(_type, _ident) \

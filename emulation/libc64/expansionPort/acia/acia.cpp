@@ -332,7 +332,7 @@ auto Acia::readIo( uint16_t addr ) -> uint8_t {
             return 0;
     }
 
-    __unreachable
+    _unreachable
 }
 
 auto Acia::prepareSocket( Emulator::Interface::Media* media, std::string address, std::string port ) -> void {
