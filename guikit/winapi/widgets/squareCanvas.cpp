@@ -22,7 +22,7 @@ auto pSquareCanvas::rebuild() -> void {
 
 auto pSquareCanvas::setBackgroundColor( unsigned color ) -> void {
     if (hwnd)
-        InvalidateRect(hwnd, 0, false);
+        RedrawWindow(hwnd, NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
 }
 
 auto pSquareCanvas::setBorderColor(unsigned borderSize, unsigned borderColor) -> void {
@@ -42,7 +42,7 @@ auto CALLBACK pSquareCanvas::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam,
         
     switch(msg) {
         case WM_GETDLGCODE: return DLGC_STATIC | DLGC_WANTCHARS;
-        case WM_ERASEBKGND: 
+        case WM_ERASEBKGND:
             return 0;
         case WM_PAINT:
         {
@@ -105,7 +105,7 @@ auto CALLBACK pSquareCanvas::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam,
 
             RECT rc;
             GetClientRect(hwnd, &rc);
-            DrawThemeParentBackground(hwnd, ps.hdc, &rc);
+          //  DrawThemeParentBackground(hwnd, ps.hdc, &rc);
 
             BLENDFUNCTION bf{AC_SRC_OVER, 0, (BYTE) 255, AC_SRC_ALPHA};
             AlphaBlend(ps.hdc, 0, 0, width, height, hdc, 0, 0, width, height, bf);
