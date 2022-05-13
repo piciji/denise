@@ -729,7 +729,7 @@ auto System::isUltimax() -> bool {
     return ((mode >> 3) & 3) == 2;
 }
 
-auto System::changeExpansionPortMemoryMode(bool exrom, bool game, bool noUltimaxIfVicHasTheBus) -> void {
+auto System::changeExpansionPortMemoryMode(bool exrom, bool game, bool noUltimaxIfVicHasTheBus, bool speedHack) -> void {
 
     uint8_t cartMode = (mode >> 3) & 3;
     uint8_t cartModeNew = (exrom << 1) | game;
@@ -742,7 +742,7 @@ auto System::changeExpansionPortMemoryMode(bool exrom, bool game, bool noUltimax
     mode &= 7;
     mode |= cartModeNew << 3;
 
-    remapCpu();
+    remapCpu(speedHack);
 }
 
 auto System::hintSlowSpeed(bool state) -> void {

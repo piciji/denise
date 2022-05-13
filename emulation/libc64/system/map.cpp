@@ -16,7 +16,12 @@
 
 namespace LIBC64 {
 
-auto System::remapCpu( ) -> void {
+auto System::remapCpu(bool speedHack) -> void {
+
+    // speed hack is used for Final Cartridge Plus (not 3+)
+    // the cart uses Ulitmax in second half cycle when accessing some address ranges
+    // switching causes a rebuild of memory map, which happens very often (50 FPS speed hit)
+    // the hack prevents to rebuild areas, which are not accessed when cart switched to Ultimax mode
 
     if (expansionPort == noExpansion) {
         
@@ -49,10 +54,10 @@ auto System::remapCpu( ) -> void {
     memoryCpu.map( &readRam, &writeRam, 0x0, 0x0f );
 
     // 10 - 7f
-    if ( ultimax )
-        memoryCpu.map( &readUnmapped, &writeUnmapped, 0x10, 0x7f );
+    if ( ultimax && !speedHack )
+        memoryCpu.mapFast( &readUnmapped, &writeUnmapped, 0x10, 0x7f );
     else
-        memoryCpu.map( &readRam, &writeRam, 0x10, 0x7f );
+        memoryCpu.mapFast( &readRam, &writeRam, 0x10, 0x7f );
 
     // 80 - 9f
     if ( ultimax ) {
@@ -81,13 +86,13 @@ auto System::remapCpu( ) -> void {
         memoryCpu.map( &readRam, &writeRamAtA0ToBF, 0xa0, 0xbf );
 
     // c0 - cf
-    if ( ultimax )
-        memoryCpu.map( &readUnmapped, &writeUnmapped, 0xc0, 0xcf );
+    if ( ultimax && !speedHack )
+        memoryCpu.mapFast( &readUnmapped, &writeUnmapped, 0xc0, 0xcf );
     else
-        memoryCpu.map( &readRam, &writeRam, 0xc0, 0xcf );
+        memoryCpu.mapFast( &readRam, &writeRam, 0xc0, 0xcf );
 
     // d0 - df
-    if ( ultimax || subMode == 5 || subMode == 6 || subMode == 7 ) {
+    if ( (ultimax && !speedHack) || subMode == 5 || subMode == 6 || subMode == 7 ) {
         IO_MAPPING
     } else if ( (subMode == 1 || subMode == 2 || subMode == 3) && (mode != 1)  ) {
 

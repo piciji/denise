@@ -166,9 +166,9 @@ struct System {
     
     auto setFirmware( unsigned typeId, uint8_t* data, unsigned size, bool allowPatching ) -> void;
     
-    auto remapCpu() -> void;
+    auto remapCpu(bool speedHack = false) -> void;
 	auto isUltimax() -> bool;
-	auto changeExpansionPortMemoryMode(bool exrom, bool game, bool noUltimaxIfVicHasTheBus = false) -> void;
+	auto changeExpansionPortMemoryMode(bool exrom, bool game, bool noUltimaxIfVicHasTheBus = false, bool speedHack = false) -> void;
     
     auto power(bool softReset = false) -> void;
 	auto powerOff() -> void;

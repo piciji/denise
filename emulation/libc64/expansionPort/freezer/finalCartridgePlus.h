@@ -59,17 +59,17 @@ struct FinalCartridgePlus : Freezer {
         if(!enableRomL && !enableRomH)
             return system->changeExpansionPortMemoryMode( exRom = true, game = true, true );
 
-        if (_addr >= 0x8000 && _addr <= 0x9fff) {
+        if (_addr >= 0x8000 && _addr <= 0xbfff) {
             if ( enableRomL)
-                return system->changeExpansionPortMemoryMode(exRom = true, game = false, true);
+                return system->changeExpansionPortMemoryMode(exRom = true, game = false, true, true);
 
-        } else if (_addr >= 0xa000 && _addr <= 0xbfff) {
-            if ( enableRomL)
-                return system->changeExpansionPortMemoryMode(exRom = true, game = false, true);
+     //   } else if (_addr >= 0xa000 && _addr <= 0xbfff) {
+       //     if ( enableRomL)
+         //       return system->changeExpansionPortMemoryMode(exRom = true, game = false, true, true);
 
         } else if ( _addr >= 0xe000 && _addr <= 0xffff ) {
             if ( enableRomH)
-                return system->changeExpansionPortMemoryMode(exRom = true, game = false, true);
+                return system->changeExpansionPortMemoryMode(exRom = true, game = false, true, true);
         }
 
         system->changeExpansionPortMemoryMode( exRom = true, game = true, true );

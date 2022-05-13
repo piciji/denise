@@ -18,7 +18,18 @@ struct Memory {
         map(read, pageLo, pageHi );
         map(write, pageLo, pageHi );
     }
-    
+
+    auto mapFast( Read* read, Write* write, uint8_t pageLo, uint8_t pageHi ) -> void {
+
+        if (reads[ pageLo ] == read)
+            return;
+
+        for ( unsigned page = pageLo; page <= pageHi; page++ ) {
+            reads[page] = read;
+            writes[ page ] = write;
+        }
+    }
+
     auto map( Read* read, uint8_t pageLo, uint8_t pageHi ) -> void {
         
         if (reads[ pageLo ] == read)
