@@ -118,6 +118,7 @@
     <ClInclude Include="..\emulation\libc64\system\memory.h" />
     <ClInclude Include="..\emulation\libc64\system\system.h" />
     <ClInclude Include="..\emulation\libc64\system\testbench.h" />
+    <ClInclude Include="..\emulation\libc64\tape\structure.h" />
     <ClInclude Include="..\emulation\libc64\tape\tape.h" />
     <ClInclude Include="..\emulation\libc64\traps\baseDevice.h" />
     <ClInclude Include="..\emulation\libc64\traps\traps.h" />
@@ -355,7 +356,10 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="..\emulation\libc64\disk\structure\structure.cpp" />
+    <ClCompile Include="..\emulation\libc64\disk\structure\structure.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(Filename)_disk</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)_disk</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="..\emulation\libc64\disk\via\register.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
@@ -502,6 +506,10 @@
     <ClCompile Include="..\emulation\libc64\tape\serialization.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\tape\structure.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(Filename)_tape</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)_tape</ObjectFileName>
     </ClCompile>
     <ClCompile Include="..\emulation\libc64\tape\tape.cpp" />
     <ClCompile Include="..\emulation\libc64\tape\write.cpp">

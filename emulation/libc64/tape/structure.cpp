@@ -276,7 +276,7 @@ auto TapeStructure::jumpOverCbmFile(bool seq) -> bool {
     if (seq) {
         allocatedSize = 193;
         unsigned _size = allocatedSize;
-        uint8_t buffer[allocatedSize];
+        uint8_t* buffer = new uint8_t[allocatedSize];
         unsigned tempPos;
 
         while (1) {
@@ -288,6 +288,8 @@ auto TapeStructure::jumpOverCbmFile(bool seq) -> bool {
                 break;
             }
         }
+
+        delete[] buffer;
     } else {
         if (!jumpOverCbmGap()) // data
             return false;

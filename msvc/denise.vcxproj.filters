@@ -826,6 +826,9 @@
     <ClInclude Include="..\data\resource.h">
       <Filter>Ressourcendateien</Filter>
     </ClInclude>
+    <ClInclude Include="..\emulation\libc64\tape\structure.h">
+      <Filter>emulation\libc64\tape</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\emulation\cia\base.cpp">
@@ -1487,6 +1490,9 @@
     </ClCompile>
     <ClCompile Include="..\data\fonts\fonts.cpp">
       <Filter>data\fonts</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\tape\structure.cpp">
+      <Filter>emulation\libc64\tape</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
