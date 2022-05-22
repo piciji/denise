@@ -16,24 +16,24 @@ Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trade
 ## 1.1.3 (not yet released)
 * added newtronics drive sound theme [thanks to enigma]
 * precise FPS counter and speed selection menu
-    * define custom speed
+    * define a custom speed
     * define decimal place for FPS counter
 * added option to render in a separate thread
-    * allows Vsync for non standard refresh rates, which prevents tearing
+    * improves VSync for non standard refresh rates, which prevents tearing
 * added option for adaptive sync
     * automatically selects the best sync option for requested emulation speed
-* fixed jerky scrolling for Linux and macOS (it's smooth again)
+* fixed jerky scrolling for Linux and macOS
 * added option to change the size of the window in the correct aspect ratio
 * added option to emulate in a separate thread besides UI (experimental)
-    * don't block audio/video when browsing file dialog or moving window
+    * don't block audio/video when browsing file dialog or moving/sizing window
 * fix support for VRR displays (G-Sync/FreeSync)
     * disable VSync, enable VRR
 * using revision 1/2 kernals when selecting old VIC's
 * show tape content in User Interface
     * start files without manual fast-forward
-    * fast-forward to selected file without autostart
-    * Virtual Device Traps: load files (PRG and Turbo Tapes) instant
-* added Tape drive sounds 
+    * fast-forward to selected file without autostartig it
+    * Virtual Device Traps: load tape files (PRG and Turbo Tapes) instant
+* added tape drive sounds 
 * FreeBSD support
 * macOS M1 support
 

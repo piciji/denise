@@ -1603,7 +1603,7 @@ auto View::getSpeed(unsigned pos, float& speed, bool& percent) -> void {
         case 11: speed = 250.0; break; // maximum
         case 12:
             auto settings = program->getSettings( activeEmulator );
-            speed = settings->get<float>("custom_speed", 123.456);
+            speed = settings->get<float>("custom_speed", 59.95);
             percent = settings->get<bool>("custom_speed_percent", false);
             break;
     }

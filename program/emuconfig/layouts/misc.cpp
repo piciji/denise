@@ -365,7 +365,7 @@ auto MiscLayout::loadSettings() -> void {
 
     jitLayout.control.value.setText(std::to_string(jitDelay) + " " + jitLayout.control.unit);
 
-    speedLayout.speed.setText( _settings->get<std::string>("custom_speed", "123.456") );
+    speedLayout.speed.setText( _settings->get<std::string>("custom_speed", "59.95") );
     if (_settings->get<bool>("custom_speed_percent", false))
         speedLayout.percent.setChecked();
     else
