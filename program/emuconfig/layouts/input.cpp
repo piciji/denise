@@ -167,6 +167,9 @@ InputLayout::InputLayout(TabWindow* tabWindow) : autofireControl(tabWindow->emul
             }
 
             manager->allowTouchlessAutofire = autoFireMappings.size() > 0;
+
+            statusHandler->setMessage( trans->get( GUIKIT::Vector::find(autoFireMappings, mapping) ? "Autofire active" : "Autofire inactive" ), 5 );
+
             emuThread->unlock();
         };
     }

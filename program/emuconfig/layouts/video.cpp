@@ -307,19 +307,11 @@ base( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) )
     base.option.newLuma.onToggle = [this](bool checked) {
         _settings->set<bool>( "video_new_luma" + this->sliderIdent(), checked);
         vManager()->updateData<bool>("video_new_luma", checked);
-
-//        emuThread->lock();
-//        vManager()->setNewLuma( checked );
-//        emuThread->unlock();
     };
     
     base.option.crtRealGamma.onToggle = [this](bool checked) {
         _settings->set<bool>( "video_crt_real_gamma" + this->sliderIdent(), checked);
         vManager()->updateData<bool>("video_crt_real_gamma", checked);
-
-//        emuThread->lock();
-//        vManager()->setCrtRealGamma( checked );
-//        emuThread->unlock();
     };
 	
 	base.option.linearInterpolation.onToggle = [this](bool checked) {
@@ -334,29 +326,17 @@ base( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) )
     mask.type.apertureMask.onActivate = [this]() {
         _settings->set<unsigned>( "video_mask_type" + this->sliderIdent(), (unsigned)VideoManager::MaskType::Aperture);
         vManager()->updateData<unsigned>("video_mask_type", (unsigned)VideoManager::MaskType::Aperture);
-
-//        emuThread->lock(true);
-//        vManager()->setMaskType( VideoManager::MaskType::Aperture );
-//        emuThread->unlock();
     };
 
     mask.type.shadowMask.onActivate = [this]() {
         _settings->set<unsigned>( "video_mask_type" + this->sliderIdent(), (unsigned)VideoManager::MaskType::ShadowMask);
         vManager()->updateData<unsigned>("video_mask_type", (unsigned)VideoManager::MaskType::ShadowMask);
-
-//        emuThread->lock(true);
-//        vManager()->setMaskType( VideoManager::MaskType::ShadowMask );
-//        emuThread->unlock();
-    };   
+    };
     
     mask.type.slotMask.onActivate = [this]() {
         _settings->set<unsigned>( "video_mask_type" + this->sliderIdent(), (unsigned)VideoManager::MaskType::SlotMask);
         vManager()->updateData<unsigned>("video_mask_type", (unsigned)VideoManager::MaskType::SlotMask);
-
-//        emuThread->lock(true);
-//        vManager()->setMaskType( VideoManager::MaskType::SlotMask );
-//        emuThread->unlock();
-    }; 
+    };
     
     base.mode.reset.onActivate = [this]() {
         vManager()->resetSettings();
@@ -406,50 +386,30 @@ base( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) )
     gpuBase.option.distortionHires.onToggle = [this](bool checked) {
         _settings->set<bool>("video_distortion_hires" + this->sliderIdent(), checked);
         vManager()->updateData<bool>("video_distortion_hires", checked);
-
-//        emuThread->lock(true);
-//		vManager()->useDistortionHires( checked );
-//        emuThread->unlock();
     };
     
     gpuBase.option.hires.onToggle = [this](bool checked) {
         _settings->set<bool>("video_hires" + this->sliderIdent(), checked);
         vManager()->updateData<bool>("video_hires", checked);
-
-//        emuThread->lock(true);
-//		vManager()->useHires( checked );
-//        emuThread->unlock();
-    };    
+    };
 	
     gpuBase.firSharp.sharpLeft.onActivate = [this]() {
         
         _settings->set<int>("video_fir_filter_sharp" + this->sliderIdent(), -1);
         vManager()->updateData<int>("video_fir_filter_sharp", -1);
-
-//        emuThread->lock(true);
-//        VideoManager::getInstance(this->emulator)->setFirFilterSharp( -1 );
-//        emuThread->unlock();
     };
 
     gpuBase.firSharp.sharpRight.onActivate = [this]() {
 
         _settings->set<int>("video_fir_filter_sharp" + this->sliderIdent(), 1);
         vManager()->updateData<int>("video_fir_filter_sharp", 1);
-
-//        emuThread->lock(true);
-//        VideoManager::getInstance(this->emulator)->setFirFilterSharp( 1 );
-//        emuThread->unlock();
     };
 
     gpuBase.firSharp.natural.onActivate = [this]() {
 
         _settings->set<int>("video_fir_filter_sharp" + this->sliderIdent(), 0);
         vManager()->updateData<int>("video_fir_filter_sharp", 0);
-
-//        emuThread->lock(true);
-//        VideoManager::getInstance(this->emulator)->setFirFilterSharp( 0 );
-//        emuThread->unlock();
-    };    
+    };
     
     vicIIGlitch.toggleAll.onActivate = [this]() {
         
@@ -466,13 +426,11 @@ base( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) )
         vicIIGlitch.ras.active.setChecked( !_checked );
         vicIIGlitch.cas.active.setChecked( !_checked );
 
-        //emuThread->lock(true);
         vicIIGlitch.aec.active.onToggle( !_checked );
         vicIIGlitch.ba.active.onToggle( !_checked );
         vicIIGlitch.phi0.active.onToggle( !_checked );
         vicIIGlitch.ras.active.onToggle( !_checked );
         vicIIGlitch.cas.active.onToggle( !_checked );
-        //emuThread->unlock();
     };
 
     loadSettings(true);
@@ -498,13 +456,8 @@ template<typename T> auto VideoLayout::setSliderAction( SliderLayout* layout, st
             
             unsigned position = layout->slider.position();
 			T value = callTransfer( position );
-        //    bool nested = !emuThread->lock(true);
-            //callBack( checked ? value : T(0) );
 
             vManager()->updateData(baseIdent, checked ? value : T(0));
-
-          //  if (!nested)
-            //    emuThread->unlock();
         };
 
     layout->slider.onChange = [this, layout, baseIdent, callBack, callTransfer]() {
@@ -520,16 +473,12 @@ template<typename T> auto VideoLayout::setSliderAction( SliderLayout* layout, st
 		else
 			layout->value.setText( std::to_string(value) + " " + unit);
 
-     //   emuThread->lockCrt();
         if (layout->withActivator) {
             bool checked = layout->active.checked();
-         //   callBack( checked ? value : T(0) );
             vManager()->updateData(baseIdent, checked ? value : T(0));
         } else {
-         //   callBack(value);
             vManager()->updateData(baseIdent, value);
         }
-       // emuThread->unlockCrt();
     };
 }
 

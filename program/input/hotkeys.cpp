@@ -30,6 +30,9 @@ auto InputManager::setHotkeys() -> void {
     hotkeys.push_back( {Hotkey::Id::SyncStatus, "Sync status"} );
     hotkeys.push_back( {Hotkey::Id::ThreadedRenderer, "Threaded Renderer"} );
 
+    hotkeys.push_back( {Hotkey::Id::ToggleCRTCPU, "toggle CRT CPU"} );
+    hotkeys.push_back( {Hotkey::Id::ToggleCRTGPU, "toggle CRT GPU"} );
+
     hotkeys.push_back( {Hotkey::Id::FloppyAccess, "select_disk_drive"} );
     hotkeys.push_back( {Hotkey::Id::DiskSwap0, "Disk_swapper_call0"} );
     hotkeys.push_back( {Hotkey::Id::DiskSwap1, "Disk_swapper_call1"} );
@@ -277,6 +280,29 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
 
             emuThread->lock();
             VideoManager::setSynchronize();
+        } break;
+        case Hotkey::Id::ToggleCRTGPU:
+        case Hotkey::Id::ToggleCRTCPU: {
+            if (!activeEmulator)
+                break;
+            emuThread->lock();
+            unsigned _mode = (id == Hotkey::Id::ToggleCRTCPU) ? (unsigned)VideoManager::CrtMode::Cpu : (unsigned)VideoManager::CrtMode::Gpu;
+            unsigned _current = settings->get<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::None);
+
+            if (id == Hotkey::Id::ToggleCRTCPU && _current == (unsigned)VideoManager::CrtMode::Cpu) {
+                _mode = (unsigned)VideoManager::CrtMode::None;
+            } else if (id == Hotkey::Id::ToggleCRTGPU && _current == (unsigned)VideoManager::CrtMode::Gpu) {
+                _mode = (unsigned)VideoManager::CrtMode::None;
+            }
+
+            settings->set<unsigned>("video_crt", _mode);
+            program->fastForward( false );
+            auto emuView = EmuConfigView::TabWindow::getView( activeEmulator );
+            if (emuView && emuView->videoLayout)
+                emuView->videoLayout->loadSettings();
+            else
+                VideoManager::getInstance( activeEmulator )->reloadSettings();
+
         } break;
         case Hotkey::Id::Pause:
             view->togglePause();
@@ -603,6 +629,9 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
                 autoFireMappings.push_back(mapping);
 
             trigger->inputManager->allowTouchlessAutofire = autoFireMappings.size() > 0;
+
+            if (activeEmulator)
+                statusHandler->setMessage( trans->get( GUIKIT::Vector::find(autoFireMappings, mapping) ? "Autofire active" : "Autofire inactive" ), 5 );
         } break;
     }
     emuThread->unlock();
