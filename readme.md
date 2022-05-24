@@ -20,20 +20,32 @@ Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trade
     * define decimal place for FPS counter
 * added option to render in a separate thread
     * improves VSync for non standard refresh rates, which prevents tearing
-* added option for adaptive sync
+* added option for adaptive sync (not to be confused with VRR)
     * automatically selects the best sync option for requested emulation speed
+    * need to detect correct refresh rate (use hotkey to confirm it)
 * fixed jerky scrolling for Linux and macOS
 * added option to change the size of the window in the correct aspect ratio
-* added option to emulate in a separate thread besides UI (experimental)
-    * don't block audio/video when browsing file dialog or moving/sizing window
+* added option to emulate in a separate thread besides UI
+    * audio/video when browsing the file dialog or moving/sizing window is not blocked
 * fix support for VRR displays (G-Sync/FreeSync)
-    * disable VSync, enable VRR
+    * don't forget to enabale VRR in your display settings
+    * set display refresh rate to maximum
+    * don't forget to disable VSync in emulator
+    * Linux and macOS don't support VRR in window mode (not an emulator problem)
+    * old direct3D9 driver in Denise support it only in exclusive fullscreen
+    * use openGL in Windows (supports VRR in window and fullscreen mode) 
 * using revision 1/2 kernals when selecting old VIC's
+    * only happens if standard firmware is selected
 * show tape content in User Interface
     * start files without manual fast-forward
     * fast-forward to selected file without autostartig it
-    * Virtual Device Traps: load tape files (PRG and Turbo Tapes) instant
-* added tape drive sounds 
+    * Virtual Device Traps: load tape files (PRG or Turbo Tapes) instantly
+* added autofire
+    * typical or self-firing continuous fire (superimposed by a press on the fire button)
+    * turbo fire for left/right directions (shaking games)
+* added support for second fire button (Cheetah Annihilator)
+* added tape drive sounds
+    * you can add your own sounds
 * FreeBSD support
 * macOS M1 support
 
