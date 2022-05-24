@@ -12,6 +12,11 @@
 namespace DRIVER {
 
 #define D3DVERTEX (D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_TEX1)
+#ifndef MAX_MONITORS
+#define MAX_MONITORS 9
+#endif
+
+auto CALLBACK MonitorEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData) -> BOOL;
 
 struct DVideo : Video, RenderThread {
     LPDIRECT3D9 lpD3D;
@@ -37,6 +42,9 @@ struct DVideo : Video, RenderThread {
 
     int64_t lastCapTime;
     int64_t minimumCapTime;
+
+    HMONITOR monList[MAX_MONITORS];
+    unsigned monPos = 0;
 
     struct {
         bool synchronize;
@@ -180,8 +188,33 @@ struct DVideo : Video, RenderThread {
         }
     }
 
-    auto reset(bool exclusiveFullscreenNeedInit = true) -> bool {
+    auto getFullscreenAdapter(HWND handle) -> int {
+        MONITORINFO info;
+        info.cbSize = sizeof(info);
+        HMONITOR hMon = MonitorFromWindow( handle, MONITOR_DEFAULTTONEAREST);
 
+        if (!hMon)
+            return -1;
+
+        if (GetMonitorInfo(hMon, &info)) {
+            RECT outScreenParent = getDimension( handle );
+            unsigned monitorWidth = std::abs(info.rcMonitor.right - info.rcMonitor.left);
+            unsigned monitorHeight = std::abs(info.rcMonitor.bottom - info.rcMonitor.top);
+
+            if ( (outScreenParent.right == monitorWidth)
+                 && (outScreenParent.bottom == monitorHeight) ) {
+
+                for (unsigned i = 0; i < monPos; i++) {
+                    if (monList[i] == hMon) {
+                        return i;
+                    }
+                }
+            }
+        }
+        return -1;
+    }
+
+    auto reset(bool exclusiveFullscreenNeedInit = true) -> bool {
         bool exclusiveFullscreen = false;
 
         HWND handle = settings.handle;
@@ -194,11 +227,7 @@ struct DVideo : Video, RenderThread {
             handle = settings.parent;
             outScreenParent = getDimension( handle );
 
-            unsigned monitorWidth = GetSystemMetrics(SM_CXSCREEN);
-            unsigned monitorHeight = GetSystemMetrics(SM_CYSCREEN);
-
-            if ( (outScreenParent.right == monitorWidth)
-                 && (outScreenParent.bottom == monitorHeight) ) {
+            if ( getFullscreenAdapter(handle) >= 0 ) {
                 exclusiveFullscreen = true;
 
                 if (exclusiveFullscreenNeedInit)
@@ -289,7 +318,12 @@ struct DVideo : Video, RenderThread {
     }
 
     auto init(bool disallowExclusiveFullscreen = false) -> bool {
+        int adapterId = -1;
         term();
+
+        if (monPos == 0) {
+            EnumDisplayMonitors(NULL, NULL, MonitorEnumProc, (LPARAM)this );
+        }
 
         if ((lpD3D = Direct3DCreate9(D3D_SDK_VERSION)) == NULL) {
             return false;
@@ -305,12 +339,9 @@ struct DVideo : Video, RenderThread {
         if (settings.hintExclusiveFullscreen && !disallowExclusiveFullscreen) {
             handle = settings.parent;
             outScreenParent = getDimension( handle );
+            adapterId = getFullscreenAdapter(handle);
 
-            unsigned monitorWidth = GetSystemMetrics(SM_CXSCREEN);
-            unsigned monitorHeight = GetSystemMetrics(SM_CYSCREEN);
-
-            if ( (outScreenParent.right == monitorWidth)
-                 && (outScreenParent.bottom == monitorHeight) ) {
+            if (adapterId >= 0) {
                 exclusiveFullscreen = true;
             } else {
                 handle = settings.handle;
@@ -338,7 +369,7 @@ struct DVideo : Video, RenderThread {
         d3dpp.EnableAutoDepthStencil = false; //Z-Buffer
         d3dpp.AutoDepthStencilFormat = D3DFMT_UNKNOWN; //Z-Buffer
 
-        HRESULT hr = lpD3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, handle,
+        HRESULT hr = lpD3D->CreateDevice(exclusiveFullscreen ? adapterId : D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, handle,
                                          D3DCREATE_HARDWARE_VERTEXPROCESSING, &d3dpp, &lpD3DDevice);
 
         if (!SUCCEEDED(hr) || !lpD3DDevice) {
@@ -948,6 +979,7 @@ struct DVideo : Video, RenderThread {
         lpD3DDevice = 0;
         lpD3D = 0;
         mFont = 0;
+        monPos = 0;
 
         vertex_buffer = 0;
         surface = 0;
@@ -976,6 +1008,13 @@ struct DVideo : Video, RenderThread {
 };
 
 #undef D3DVERTEX
+
+auto CALLBACK MonitorEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData) -> BOOL {
+    DVideo* dVideo = (DVideo*)dwData;
+
+    dVideo->monList[dVideo->monPos++] = hMonitor;
+    return true;  // continue enumerating
+}
 
 }
 

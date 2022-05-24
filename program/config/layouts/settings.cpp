@@ -421,8 +421,8 @@ auto SettingsLayout::translate() -> void {
     switches.openFullscreen.setText(trans->get("open_fullscreen"));
     switches.alternateSoftwarePreview.setText(trans->get("alternate software preview"));
     switches.questionMediaWrite.setText(trans->get("confirm writes"));
-    switches.threadedEmu.setText(trans->get("Threaded Emu"));
-    switches.threadedEmu.setTooltip(trans->get("Threaded Emu tooltip"));
+    switches.threadedEmu.setText(trans->get("Threaded Emulation"));
+    switches.threadedEmu.setTooltip(trans->get("Threaded Emulation tooltip"));
 
     about.left.license.setText( trans->get("license", {}, true) + " " + LICENSE );
     about.left.author.setText( trans->get("author", {}, true) + " " + AUTHOR );

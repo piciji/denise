@@ -282,6 +282,8 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             VideoManager::setSynchronize();
         } break;
         case Hotkey::Id::ToggleCRTGPU:
+            if(videoDriver->shaderFormat() != DRIVER::Video::ShaderType::GLSL)
+                break;
         case Hotkey::Id::ToggleCRTCPU: {
             if (!activeEmulator)
                 break;

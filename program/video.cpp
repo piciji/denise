@@ -97,7 +97,7 @@ auto Program::videoRefresh8(const uint8_t* frame, unsigned width, unsigned heigh
 auto Program::canExclusiveFullscreen() -> bool {
 
     return isRunning
-        && globalSettings->get("exclusive_fullscreen", false)
+        && globalSettings->get<bool>("exclusive_fullscreen", false)
         && !globalSettings->get<bool>("threaded_emu", false);
 }
 
