@@ -13,7 +13,7 @@ AutofireControl::AutofireControl(Emulator::Interface* emulator) : autofireSlider
                 auto toggleButton = new GUIKIT::Button;
                 auto mapping = (InputMapping*)input.guid;
 
-                buttons.push_back( {toggleButton, mapping->shadowMap[0]} );
+                buttons.push_back( {toggleButton, mapping->shadowMap[0], manager->isAutofireActive(mapping->shadowMap[0])} );
                 append(*toggleButton, {0u, 0u}, 10);
 
                 break; // only first fire button
@@ -151,24 +151,18 @@ InputLayout::InputLayout(TabWindow* tabWindow) : autofireControl(tabWindow->emul
         auto mapping = button.mapping;
         auto toggleButton = button.toggleButton;
 
-        toggleButton->onActivate = [mapping]() {
+        toggleButton->onActivate = [this, mapping]() {
             if (!activeEmulator)
                 return;
 
             auto manager = mapping->inputManager;
-            auto& autoFireMappings = manager->autoFireMappings;
 
             emuThread->lock();
-            if (GUIKIT::Vector::find(autoFireMappings, mapping))
-                GUIKIT::Vector::eraseVectorElement(autoFireMappings, mapping);
-            else {
-                autoFireMappings.push_back(mapping);
-                view->setFocused();
-            }
+            manager->toggleAutofire(mapping);
 
-            manager->allowTouchlessAutofire = autoFireMappings.size() > 0;
+            statusHandler->setMessage( trans->get( manager->isAutofireActive(mapping) ? "Autofire active" : "Autofire inactive" ), 5 );
 
-            statusHandler->setMessage( trans->get( GUIKIT::Vector::find(autoFireMappings, mapping) ? "Autofire active" : "Autofire inactive" ), 5 );
+            this->updatedAutofireButtonHints();
 
             emuThread->unlock();
         };
@@ -567,15 +561,34 @@ auto InputLayout::translate() -> void {
         connectorButton.checkButton->setText( trans->get( connectorButton.connector->name ) );
 
     autofireControl.label.setText( trans->get("toggle autofire", {}, true) );
+    autofireControl.label.setTooltip( trans->get("toggle autofire hint") );
+
     for(auto& button : autofireControl.buttons) {
         auto mapping = button.mapping;
         button.toggleButton->setText( trans->get(mapping->emuDevice->name) );
-        button.toggleButton->setTooltip( trans->get("toggle autofire hint") );
+        button.toggleButton->setTooltip( trans->get( button.enabled ? "enabled" : "disabled") );
     }
 
     autofireControl.autofireSlider.name.setText( trans->get("Autofire Rate", {}, true) );
     
     SliderLayout::scale({&mapControl.analogSensitivity}, "100 %");
+}
+
+auto InputLayout::updatedAutofireButtonHints() -> void {
+    auto manager = InputManager::getManager( emulator );
+
+    for(auto& button : autofireControl.buttons) {
+        auto mapping = button.mapping;
+
+        bool enabled = manager->isAutofireActive( mapping );
+
+        if (button.enabled == enabled)
+            continue;
+
+        button.enabled = enabled;
+
+        button.toggleButton->setTooltip( trans->get( enabled ? "enabled" : "disabled") );
+    }
 }
 
 auto InputLayout::displayInputCall() -> void {

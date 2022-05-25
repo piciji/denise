@@ -53,6 +53,7 @@ struct AutofireControl : GUIKIT::HorizontalLayout {
     struct Buttons {
         GUIKIT::Button* toggleButton;
         InputMapping* mapping;
+        bool enabled;
     };
     std::vector<Buttons> buttons;
 
@@ -90,6 +91,7 @@ struct InputLayout : GUIKIT::VerticalLayout {
     auto updateAssigner() -> void;
     auto loadSettings() -> void;
     auto updateAutofireFrequency() -> void;
+    auto updatedAutofireButtonHints() -> void;
 
     InputSelector selector;
     InputControl control;

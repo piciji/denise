@@ -583,6 +583,13 @@ auto InputManager::updateAutofireFrequency() -> void {
 auto InputManager::resetTouchlessAutofire() -> void {
     autoFireMappings.clear();
     allowTouchlessAutofire = false;
+
+    if (!emulator)
+        return;
+
+    auto emuView = EmuConfigView::TabWindow::getView( emulator );
+    if (emuView && emuView->inputLayout)
+        emuView->inputLayout->updatedAutofireButtonHints();
 }
 
 auto InputManager::updateAnalogSensitivity(Emulator::Interface::Device* updateDevice) -> void {
@@ -614,7 +621,21 @@ auto InputManager::updateAnalogSensitivity(Emulator::Interface::Device* updateDe
 			
             if (mapper->alternate)
                 mapper->alternate->analogSensitivity = mapper->analogSensitivity;
-        }        
-        
+        }
     }
+}
+
+auto InputManager::toggleAutofire(InputMapping* trigger) -> void {
+
+    if (isAutofireActive(trigger))
+        GUIKIT::Vector::eraseVectorElement(autoFireMappings, trigger);
+    else if (GUIKIT::Vector::find(mappingsInUse, trigger))
+        autoFireMappings.push_back(trigger);
+
+    allowTouchlessAutofire = autoFireMappings.size() > 0;
+}
+
+auto InputManager::isAutofireActive(InputMapping* trigger) -> bool {
+
+    return GUIKIT::Vector::find(autoFireMappings, trigger);
 }

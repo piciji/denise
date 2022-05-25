@@ -180,6 +180,8 @@ struct InputManager {
     auto handleAutofire(InputMapping* mapping, InputMapping* useMapping, bool toggleOn) -> void;
     auto handleTouchlessAutofire() -> void;
     auto resetTouchlessAutofire() -> void;
+	auto isAutofireActive(InputMapping* trigger) -> bool;
+	auto toggleAutofire(InputMapping* trigger) -> void;
     
     inline auto updateAndTrigger() -> void;
     inline auto addAndTrigger(InputMapping* newTrigger) -> void;

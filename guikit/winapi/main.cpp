@@ -368,6 +368,11 @@ auto CALLBACK pWindow::wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam
         case WM_SIZING:
             window.p.onSizing((int)wparam, *((LPRECT)lparam));
             break;
+        case WM_GETMINMAXINFO: {
+            LPMINMAXINFO lpMMI = (LPMINMAXINFO)lparam;
+            lpMMI->ptMinTrackSize.x = 200;
+            lpMMI->ptMinTrackSize.y = 200;
+        } return 0;
         case WM_DROPFILES: window.p.onDrop(wparam); return false;
 		case WM_ENTERMENULOOP:
 			if(window.winapi.onMenu) window.winapi.onMenu();

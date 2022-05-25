@@ -388,6 +388,12 @@ auto InputManager::updateMappingsInUse() -> void {
     allowTouchlessAutofire = autoFireMappings.size() > 0;
     sort();
     //priorizeConnectedDevicesOverKeyboard();
+
+    if (emulator && (autoFireMappings.size() != copyAutofireMappings.size())) {
+        auto emuView = EmuConfigView::TabWindow::getView( emulator );
+        if (emuView && emuView->inputLayout)
+            emuView->inputLayout->updatedAutofireButtonHints();
+    }
 }
 
 auto InputManager::sort() -> void {

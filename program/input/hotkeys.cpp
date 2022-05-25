@@ -621,19 +621,20 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             break;
         }
         case Hotkey::Autofire: {
+            if (!activeEmulator)
+                break;
             emuThread->lock();
-            auto& autoFireMappings = trigger->inputManager->autoFireMappings;
+            auto manager = trigger->inputManager;
             auto mapping = trigger->shadowMap[0];
 
-            if (GUIKIT::Vector::find(autoFireMappings, mapping))
-                GUIKIT::Vector::eraseVectorElement(autoFireMappings, mapping);
-            else
-                autoFireMappings.push_back(mapping);
+            manager->toggleAutofire(mapping);
 
-            trigger->inputManager->allowTouchlessAutofire = autoFireMappings.size() > 0;
+            statusHandler->setMessage( trans->get( manager->isAutofireActive(mapping) ? "Autofire active" : "Autofire inactive" ), 5 );
 
-            if (activeEmulator)
-                statusHandler->setMessage( trans->get( GUIKIT::Vector::find(autoFireMappings, mapping) ? "Autofire active" : "Autofire inactive" ), 5 );
+            auto emuView = EmuConfigView::TabWindow::getView( activeEmulator );
+            if (emuView && emuView->inputLayout)
+                emuView->inputLayout->updatedAutofireButtonHints();
+
         } break;
     }
     emuThread->unlock();
