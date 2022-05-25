@@ -549,6 +549,7 @@ struct pFrame : pWidget {
     auto create() -> void;
     auto setVisible(bool visible) -> void;
 	auto getBorderColor() -> COLORREF;
+    auto setEnabled(bool enabled) -> void;
 	
 	auto setText(std::string text) -> void;
 	auto setFont(std::string font) -> void;

@@ -277,6 +277,10 @@ auto CALLBACK pFrame::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM
             SelectObject(memHdc, memBitmap);
 			
 			SetBkMode(memHdc, TRANSPARENT);
+         //   if (widget->enabled())
+           //     SetTextColor(memHdc, GetSysColor(COLOR_WINDOWTEXT) );
+            //else
+              //  SetTextColor(memHdc, GetSysColor(COLOR_GRAYTEXT) );
 
 			HBRUSH brush = widget->p.getBackgroundBrush();
             
@@ -378,6 +382,12 @@ inline auto pFrame::getBorderColor() -> COLORREF {
 auto pFrame::setText(std::string text) -> void {
     pWidget::setText(text);
     
+    if (hwnd)
+        InvalidateRect(hwnd, 0, false);
+}
+
+auto pFrame::setEnabled(bool enabled) -> void {
+    return;
     if (hwnd)
         InvalidateRect(hwnd, 0, false);
 }
