@@ -187,7 +187,7 @@ struct WGL : Video, OpenGL, RenderThread {
 
     auto unlockAndRedraw(bool disallowShader = false, bool freeContext = false) -> void {
         if (settings.threaded) {
-            resizeWindow();
+           // resizeWindow();
             RenderThread::unlock(disallowShader);
         } else
             redraw(disallowShader);
@@ -253,6 +253,7 @@ struct WGL : Video, OpenGL, RenderThread {
             accessMutex.unlock();
         }
 		resizeMutexThreaded.lock();
+        resizeWindow();
         OpenGL::refresh(disallowShader);
 #ifdef DRV_FREETYPE
         screenText.updateMessage();

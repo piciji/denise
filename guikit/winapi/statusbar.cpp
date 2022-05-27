@@ -78,7 +78,8 @@ auto pStatusBar::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
 //            return 1;
 //
         case WM_PAINT: {
-            InvalidateRect(hwnd, NULL, false);
+            //InvalidateRect(hwnd, NULL, false);
+            SetWindowPos(hwnd, NULL, 0, 0, 0, 0, SWP_NOZORDER | SWP_FRAMECHANGED);
             break;
         }
 
@@ -137,12 +138,13 @@ auto pStatusBar::setText(std::string text) -> void {
     update();
 }
 
-auto pStatusBar::updatePosition() -> void {
-    
+auto pStatusBar::updatePosition(bool frameOnly) -> void {
+
     if (hwnd)
         SetWindowPos(hwnd, NULL, 0, 0, 0, 0, SWP_NOZORDER | SWP_FRAMECHANGED);
-    
-    update();
+
+    if (!frameOnly)
+        update();
 }
 
 auto pStatusBar::setStatusVisible(bool visible) -> void {
@@ -195,7 +197,7 @@ auto pStatusBar::updatePart( StatusBar::Part& part ) -> void {
 auto pStatusBar::update() -> void {
     int i;
     RECT rect;
-    int pos;
+    int pos = 10;
     int* widths;
     usedParts.clear();
     
@@ -205,28 +207,33 @@ auto pStatusBar::update() -> void {
     auto& parts = statusBar.state.parts;
     
     GetWindowRect(hwnd, &rect);
-    pos = rect.right - rect.left;
+   // pos = rect.right - rect.left;
 
     std::vector<int> _widths;
-    _widths.push_back( pos );
-    pos -= 15;
+  //  _widths.push_back( pos );
+ //   pos -= 15;
     unsigned countVisible = 0;
     
-    for( i = parts.size() - 1; i >= 0; i-- ) {
+    //for( i = parts.size() - 1; i >= 0; i-- ) {
+    for( i = 0; i < parts.size() - 1; i++ ) {
         auto& part = parts[i];
         
         if (!part.visible)
             continue;
 
         countVisible++;
-        _widths.push_back( pos );
+        //_widths.push_back( pos );
         
         // first part width doesn't matter. always use remaining space
         if (part.image)
-            pos -= part.image->width + 7;
+            pos += part.image->width + 7;
         else
-            pos -= part.width;
+            pos += part.width;
+
+        _widths.push_back( pos );
     }
+
+    _widths.push_back( rect.right - rect.left );
 
     if (_widths.size() == 1) {
         SendMessage(hwnd, SB_SETPARTS, 0, 0);
@@ -237,9 +244,10 @@ auto pStatusBar::update() -> void {
     
     widths = new int[partCount];
     
-    i = partCount;
+    //i = partCount;
+    i = 0;
     for( auto& width : _widths )
-        widths[--i] = width;
+        widths[i++] = width;
             
     SendMessage(hwnd, SB_SETPARTS, partCount, (LPARAM)widths );        
     
@@ -257,7 +265,7 @@ auto pStatusBar::update() -> void {
         }
     }
     // clear right margin area
-    SendMessage(hwnd, SB_SETTEXT, i | SBT_NOBORDERS, (LPARAM)"" );
+   // SendMessage(hwnd, SB_SETTEXT, i | SBT_NOBORDERS, (LPARAM)"" );
     
     delete[] widths;
     
@@ -361,20 +369,22 @@ auto pStatusBar::getHoverPart(int xPos) -> StatusBar::Part* {
     RECT rect;
     GetWindowRect(hwnd, &rect);
 
-    int pos = rect.right - rect.left;
-    pos -= 11;
+    //int pos = rect.right - rect.left;
+    //pos -= 11;
+    int pos = 10;
 
     unsigned partCount = usedParts.size();
 
-    for (int i = partCount - 1; i >= 0; i--) {
+   // for (int i = partCount - 1; i >= 0; i--) {
+   for(unsigned i = 0; i < partCount; i++) {
         part = usedParts[i];
 
         if (part->image)
-            pos -= part->image->width + 7;
+            pos += part->image->width + 7;
         else
-            pos -= part->width;
+            pos += part->width;
 
-        if (xPos > pos)
+        if (xPos < pos)
             return part;        
     }
     

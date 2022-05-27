@@ -663,8 +663,8 @@ auto pWindow::onSize(WPARAM wparam) -> void {
         window.state.layout->setGeometry(geom);
     }
 
-    if (window.statusBar())
-        window.statusBar()->p.updatePosition();
+   // if (window.statusBar() && window.statusVisible())
+     //   window.statusBar()->p.updatePosition(true);
 
     Window::SIZE_MODE sMode = Window::SIZE_MODE::Default;
     if (wparam == SIZE_MINIMIZED)
@@ -676,7 +676,7 @@ auto pWindow::onSize(WPARAM wparam) -> void {
 }
 
 auto pWindow::onSizing(int edge, RECT &rect) -> void {
-	timerStatusUpdate.setEnabled();	
+	timerStatusUpdate.setEnabled();
 	
     if (window.fullScreen() || (window.aspectRatio().width == 0))
         return;

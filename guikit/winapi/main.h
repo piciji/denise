@@ -136,7 +136,7 @@ struct pStatusBar {
     auto update() -> void;
     auto updatePart( StatusBar::Part& part ) -> void;
     auto updateTooltip( StatusBar::Part& part ) -> void { updatePart(part); }
-    auto updatePosition() -> void;
+    auto updatePosition(bool frameOnly = false) -> void;
     auto setStatusVisible(bool visible) -> void;
     auto getHeight() -> unsigned;
     auto getWidth(std::string text) -> unsigned;

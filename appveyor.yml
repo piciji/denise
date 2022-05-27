@@ -18,7 +18,7 @@ branches:
   only:
     - master
     - /v\d*\.\d*\.\d*/
-    - autofire
+    - left_align_status
   
 environment:
   matrix:
