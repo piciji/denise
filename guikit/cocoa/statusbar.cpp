@@ -202,8 +202,8 @@ auto pStatusBar::update() -> void {
     delete label;
     
     unsigned countVisible = 0;
-    unsigned width = area.size.width;
-    width -= 8;
+   // unsigned width = area.size.width;
+   // width -= 8;
     
     for (int i = parts.size() - 1; i >= 0; i-- ) {
         
@@ -214,18 +214,18 @@ auto pStatusBar::update() -> void {
         
         countVisible++;
         
-        if (part.image)
-            width -= part.image->width + 3;
-        else
-            width -= part.width;
-            
-        if (part.appendSeparator && (countVisible > 1) ) {
-            width -= 1;
-        }
+//        if (part.image)
+//            width -= part.image->width + 3;
+//        else
+//            width -= part.width;
+//
+//        if (part.appendSeparator && (countVisible > 1) ) {
+//            width -= 1;
+//        }
             
     }
     
-    unsigned xPos = 0;
+    unsigned xPos = 5;
     NSView* view;
     
     for (auto& part : parts) {
@@ -265,16 +265,16 @@ auto pStatusBar::update() -> void {
 
             label->setAlign( part.alignRight ? Label::Align::Right : Label::Align::Left );
                 
-            if (xPos == 0)
-                width += part.width;
-            else
-                width = part.width;
+//            if (xPos == 0)
+//                width += part.width;
+//            else
+//                width = part.width;
                 
             view = label->p.cocoaView;
                 
-            [view setFrame:NSMakeRect(xPos, -2, width, textHeight)];
+            [view setFrame:NSMakeRect(xPos, -2, part.width, textHeight)];
             
-            xPos += width;
+            xPos += part.width;
             
             usedWidgets.push_back( label );
         }
