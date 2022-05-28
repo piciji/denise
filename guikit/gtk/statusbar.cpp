@@ -111,7 +111,7 @@ auto pStatusBar::update() -> void {
 	
 	gtk_grid_set_column_spacing( GTK_GRID(gridWidget), 5 );
 	
-	gtk_widget_set_halign( gridWidget, GTK_ALIGN_END );	
+	gtk_widget_set_halign( gridWidget, GTK_ALIGN_START );
 	
 	for(auto& part : parts) {
 		
