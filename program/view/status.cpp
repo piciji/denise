@@ -47,7 +47,7 @@ auto StatusHandler::setMessage(std::string txt, unsigned duration, bool critical
 
 auto StatusHandler::clear() -> void {    
     statusBar->hideContent();
-    statusBar->updateText(0, "");
+    statusBar->updateText(15, "");
     statusBar->update();
     message.clear();
     clearUpdates();
@@ -144,7 +144,7 @@ auto StatusHandler::updateFPS( bool state ) -> void {
     
     showFPS = state;
     if (!showFPS) {
-        statusBar->updateVisible(14, false);
+        statusBar->updateVisible(0, false);
         statusBar->update();
     }
 }
@@ -153,7 +153,7 @@ auto StatusHandler::updateDRC( bool state ) -> void {
     
     if (!state) {
         clearUpdates( 8 );
-        statusBar->updateVisible(12, false);
+        statusBar->updateVisible(13, false);
         statusBar->update();
     }
 }
@@ -161,7 +161,7 @@ auto StatusHandler::updateDRC( bool state ) -> void {
 auto StatusHandler::updateAudioRecord( bool state ) -> void {
     
     recordAudio = state;
-    updateVisible(13, recordAudio);
+    updateVisible(14, recordAudio);
     updateStatusBar();
 }
 
@@ -187,15 +187,15 @@ auto StatusHandler::updateTapeImage( GUIKIT::Image* image ) -> void {
 
     emuThread->lockStatus();
 
-    updateImage( 9, image );
+    updateImage( 10, image );
     updateStatusBar();
 
     emuThread->unlockStatus();
 }
 
 auto StatusHandler::hideTape() -> void {
-	updateVisible(8, false);
 	updateVisible(9, false);
+	updateVisible(10, false);
     updateStatusBar();
 }
 
@@ -210,23 +210,6 @@ auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
 
 //    statusBar->append( 0, "" );    // status text
 //	statusBar->updateVisible(0, true);
-	    
-    // up to 4 disk drives
-    statusBar->append( 0, "8 00.0", nullptr, &(view->diskControlMenus[0].menu) ); // disk drive track
-    statusBar->append( 1, &(view->ledOffImage), nullptr, &(view->diskControlMenus[0].menu) );    // disk LED
-    statusBar->append( 2, "9 00.0", nullptr, &(view->diskControlMenus[1].menu) ); // disk drive track
-    statusBar->append( 3, &(view->ledOffImage), nullptr, &(view->diskControlMenus[1].menu) );    // disk LED
-    statusBar->append( 4, "10 00.0", nullptr, &(view->diskControlMenus[2].menu) ); // disk drive track
-    statusBar->append( 5, &(view->ledOffImage), nullptr, &(view->diskControlMenus[2].menu) );    // disk LED
-    statusBar->append( 6, "11 00.0", nullptr, &(view->diskControlMenus[3].menu) ); // disk drive track
-    statusBar->append( 7, &(view->ledOffImage), nullptr, &(view->diskControlMenus[3].menu) );    // disk LED
-    
-    statusBar->append( 8, "000", nullptr, &(view->tapeControlMenu) );    // tape counter
-    statusBar->append( 9, &(view->stopStatusImage), nullptr, &(view->tapeControlMenu) );    // tape button icon
-	statusBar->append( 10, "CRT" );    // expansion label
-    statusBar->append( 11, &(view->ledOffImage) );    // expansion LED
-    statusBar->append( 12, "DRC DRC DRC DRC DRC DRC DRC DRC D" );    // DRC Status
-    statusBar->append( 13, &(view->recordStatusImage) );    // REC Status
 
     std::string exampleText = "1000";
     if (countDecimalPoint) {
@@ -236,18 +219,35 @@ auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
             exampleText += "9";
     }
 
-    statusBar->append( 14, exampleText, nullptr, &(view->speedControlMenu ) );    // FPS
+    statusBar->append( 0, exampleText, nullptr, &(view->speedControlMenu ) );    // FPS
+
+	    
+    // up to 4 disk drives
+    statusBar->append( 1, "8 00.0", nullptr, &(view->diskControlMenus[0].menu) ); // disk drive track
+    statusBar->append( 2, &(view->ledOffImage), nullptr, &(view->diskControlMenus[0].menu) );    // disk LED
+    statusBar->append( 3, "9 00.0", nullptr, &(view->diskControlMenus[1].menu) ); // disk drive track
+    statusBar->append( 4, &(view->ledOffImage), nullptr, &(view->diskControlMenus[1].menu) );    // disk LED
+    statusBar->append( 5, "10 00.0", nullptr, &(view->diskControlMenus[2].menu) ); // disk drive track
+    statusBar->append( 6, &(view->ledOffImage), nullptr, &(view->diskControlMenus[2].menu) );    // disk LED
+    statusBar->append( 7, "11 00.0", nullptr, &(view->diskControlMenus[3].menu) ); // disk drive track
+    statusBar->append( 8, &(view->ledOffImage), nullptr, &(view->diskControlMenus[3].menu) );    // disk LED
+    
+    statusBar->append( 9, "000", nullptr, &(view->tapeControlMenu) );    // tape counter
+    statusBar->append( 10, &(view->stopStatusImage), nullptr, &(view->tapeControlMenu) );    // tape button icon
+	statusBar->append( 11, "CRT" );    // expansion label
+    statusBar->append( 12, &(view->ledOffImage) );    // expansion LED
+    statusBar->append( 13, "DRC DRC DRC DRC DRC DRC DRC DRC D" );    // DRC Status
+    statusBar->append( 14, &(view->recordStatusImage) );    // REC Status
 
     statusBar->append( 15, "" );    // status text
     statusBar->updateVisible(15, true);
 
-   // statusBar->updateSeparator( 0, false );
-    statusBar->updateSeparator( 1, true );
-    statusBar->updateSeparator( 3, true );
-    statusBar->updateSeparator( 5, true );
-    statusBar->updateSeparator( 7, true );
-    statusBar->updateSeparator( 9, true );
-    statusBar->updateSeparator( 11, true );
+    statusBar->updateSeparator( 0, true );
+    statusBar->updateSeparator( 2, true );
+    statusBar->updateSeparator( 4, true );
+    statusBar->updateSeparator( 6, true );
+    statusBar->updateSeparator( 8, true );
+    statusBar->updateSeparator( 10, true );
     statusBar->updateSeparator( 12, true );
     statusBar->updateSeparator( 13, true );
     statusBar->updateSeparator( 14, true );
@@ -306,33 +306,33 @@ auto StatusHandler::update() -> void {
                     } else
                         name += GUIKIT::String::prependZero( std::to_string( deviceState.position ), 2 );                
 
-                    updateText(media->id * 2, name, media->id == 0);
+                    updateText(media->id * 2 + 1, name);
 
                     GUIKIT::Image* image = &(view->ledOffImage);
                     if (deviceState.LED & 1)
                         image = deviceState.write ? &(view->ledRedImage) : &(view->ledGreenImage);
 
-                    updateImage(media->id * 2 + 1, image);
+                    updateImage(media->id * 2 + 2, image);
 
                 } else if (group->isTape()) {
 
                     std::string name = GUIKIT::String::prependZero( std::to_string( deviceState.position ), 3 );
 
-                    updateText(8, name);
+                    updateText(9, name);
 
                     // we don't use the tape mode of emulation core, because it doesn't match the "tape button press" state
                     // in all cases, e.g. when tape is forwarded until end, mode changes to "stop" but play button keeps in pressed state.
                     if ( view->tapePlayItem.icon() == &view->playhiImage )
-                        updateImage( 9, deviceState.motorOff ? &(view->playPauseStatusImage) : &(view->playStatusImage) );
+                        updateImage( 10, deviceState.motorOff ? &(view->playPauseStatusImage) : &(view->playStatusImage) );
                     
                     else if ( view->tapeForwardItem.icon() == &view->forwardhiImage )
-                        updateImage( 9, deviceState.motorOff ? &(view->forwardPauseStatusImage) : &(view->forwardStatusImage) );
+                        updateImage( 10, deviceState.motorOff ? &(view->forwardPauseStatusImage) : &(view->forwardStatusImage) );
 
                     else if ( view->tapeRewindItem.icon() == &view->rewindhiImage )
-                        updateImage( 9, deviceState.motorOff ? &(view->rewindPauseStatusImage) : &(view->rewindStatusImage) );
+                        updateImage( 10, deviceState.motorOff ? &(view->rewindPauseStatusImage) : &(view->rewindStatusImage) );
                     
                     else if ( view->tapeRecordItem.icon() == &view->recordhiImage )
-                        updateImage( 9, deviceState.motorOff ? &(view->recordPauseStatusImage) : &(view->recordStatusImage) );
+                        updateImage( 10, deviceState.motorOff ? &(view->recordPauseStatusImage) : &(view->recordStatusImage) );
                     
                 } else if (group->isExpansion()) {
 
@@ -347,8 +347,8 @@ auto StatusHandler::update() -> void {
                     if ((deviceState.LED >> deviceState.inputsPerFrame) & 1)
                         image = &(view->ledGreenImage); 
 
-					updateVisible(10, true);
-                    updateImage(11, image);
+					updateVisible(11, true);
+                    updateImage(12, image);
                 }                
             }
         }                        
@@ -362,7 +362,7 @@ auto StatusHandler::update() -> void {
             out += " Ø " + GUIKIT::String::formatFloatingPoint(drcS.average, 2) + "%";
 
             if (drcBufferUpdate())
-                updateText(12, out, true);
+                updateText(13, out, true);
 
             if (message.txt.empty())
                 OSDText += out;
@@ -378,7 +378,7 @@ auto StatusHandler::update() -> void {
                     : std::to_string((unsigned)round(fpsCounter.fps));
 
             if (fpsCounterUpdate())
-                updateText(14, _FPS, true);
+                updateText(0, _FPS, true);
 
             if (message.txt.empty())
                 OSDText += " " + _FPS;            

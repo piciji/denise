@@ -933,6 +933,11 @@ struct DVideo : Video, RenderThread {
                 break;
             }
         }
+
+        viewport.x = outScreen.left;
+        viewport.y = outScreen.top;
+        viewport.width = outScreen.right;
+        viewport.height = outScreen.bottom;
     }
 
     auto setVRR(bool state, float speed = 0.0) -> void {

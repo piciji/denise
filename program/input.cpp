@@ -105,13 +105,25 @@ auto Program::absoluteMouseToEmu( Emulator::Interface* emulator ) -> GUIKIT::Pos
     // absolute mouse position within viewport.
     GUIKIT::Position absPos = view->viewport.getMousePosition();
 
-    GUIKIT::Geometry geometry = view->viewport.geometry();
+    // GUIKIT::Geometry geometry = view->viewport.geometry();
+    DRIVER::Viewport& viewport = videoDriver->getViewport();
+
+    if (absPos.x > viewport.x)
+        absPos.x -= viewport.x;
+    else
+        absPos.x = 0;
+
+    if (absPos.y > viewport.y)
+        absPos.y -= viewport.y;
+    else
+        absPos.y = 0;
+
     unsigned emuWidth = emulator->cropWidth();
     unsigned emuHeight = emulator->cropHeight();
 
     // scale host position to emu position    
-    absPos.x = (absPos.x * emuWidth) / geometry.width;
-    absPos.y = (absPos.y * emuHeight) / geometry.height;     
+    absPos.x = (absPos.x * emuWidth) / viewport.width;
+    absPos.y = (absPos.y * emuHeight) / viewport.height;
 
     return absPos;  
 }

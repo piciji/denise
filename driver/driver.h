@@ -14,6 +14,15 @@
 
 namespace DRIVER {
 
+struct Viewport {
+    unsigned width = 0;
+    unsigned height = 0;
+    int x = 0;
+    int y = 0;
+};
+
+extern Viewport viewport;
+
 struct Video {	
     enum class ShaderType { GLSL, HLSL, NotSupported };
     enum class Filter { Nearest = 0, Linear = 1 };
@@ -54,7 +63,8 @@ struct Video {
     virtual auto hasVRR() -> bool { return false; }
 
     virtual auto setAspectCorrection(float width, float height, bool integerScaling = false) -> void {}
-    
+    auto getViewport() -> Viewport& { return viewport; }
+
     virtual auto shaderFormat() -> ShaderType { return ShaderType::NotSupported; }
 	/** direct 3D only */
 	virtual auto hasExclusiveFullscreen() -> bool { return false; }

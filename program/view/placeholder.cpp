@@ -64,10 +64,24 @@ auto View::renderPlaceholder(bool blackScreen) -> void {
 	}
 }
 
-auto View::cursorForPlaceholderInUpperTriangle(GUIKIT::Position& p) -> bool {
-    
-    signed _w = viewport.geometry().width;
-    signed _h = viewport.geometry().height;
+auto View::cursorForPlaceholderInUpperTriangle(GUIKIT::Position p) -> bool {
+
+    DRIVER::Viewport& viewport = videoDriver->getViewport();
+    signed _w = viewport.width;
+    signed _h = viewport.height;
+
+    if (p.x >= viewport.x)
+        p.x -= viewport.x;
+    else
+        return false;
+
+    if (p.y >= viewport.y)
+        p.y -= viewport.y;
+    else
+        return false;
+
+	if (p.x > _w || p.y > _h)
+		return false;
 
     GUIKIT::Position a(0,0);
     GUIKIT::Position b(_w * 1.55, 0);

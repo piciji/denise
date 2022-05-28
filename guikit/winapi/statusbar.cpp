@@ -18,6 +18,7 @@ pStatusBar::~pStatusBar() {
 auto pStatusBar::create() -> void {    
     
     hwnd = CreateWindow( STATUSCLASSNAME, L"", WS_CHILD, 0, 0, 0, 0, statusBar.window()->p.hwnd, (HMENU)(unsigned long long)statusBar.id, GetModuleHandle(0), 0);
+    //hwnd = CreateWindowEx( WS_EX_COMPOSITED, STATUSCLASSNAME, L"", WS_CHILD, 0, 0, 0, 0, statusBar.window()->p.hwnd, (HMENU)(unsigned long long)statusBar.id, GetModuleHandle(0), 0);
 
 	// SendMessage( hwnd, SB_SETBKCOLOR, 0, GetSysColor(COLOR_MENU));
     
@@ -79,7 +80,7 @@ auto pStatusBar::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
 //
         case WM_PAINT: {
             //InvalidateRect(hwnd, NULL, false);
-            SetWindowPos(hwnd, NULL, 0, 0, 0, 0, SWP_NOZORDER | SWP_FRAMECHANGED);
+            SetWindowPos(hwnd, NULL, 0, 0, 0, 0, SWP_NOZORDER | SWP_FRAMECHANGED | SWP_NOREDRAW);
             break;
         }
 
@@ -235,7 +236,7 @@ auto pStatusBar::update() -> void {
 
     _widths.push_back( rect.right - rect.left );
 
-    if (_widths.size() == 1) {
+    if (_widths.size() == 0) {
         SendMessage(hwnd, SB_SETPARTS, 0, 0);
         return;
     }
@@ -333,6 +334,8 @@ auto pStatusBar::drawItem(WPARAM wparam, LPARAM lparam) -> void {
             rect.right -= 4;
         else if ( !part.width )
             rect.left += 4;
+        else if (itemID == 0)
+            rect.left += 12;
 
         SetBkMode(hDC, TRANSPARENT);
        // SetBkColor(hDC, GetSysColor(COLOR_MENU));
@@ -368,14 +371,10 @@ auto pStatusBar::getHoverPart(int xPos) -> StatusBar::Part* {
 
     RECT rect;
     GetWindowRect(hwnd, &rect);
-
-    //int pos = rect.right - rect.left;
-    //pos -= 11;
     int pos = 10;
 
     unsigned partCount = usedParts.size();
 
-   // for (int i = partCount - 1; i >= 0; i--) {
    for(unsigned i = 0; i < partCount; i++) {
         part = usedParts[i];
 

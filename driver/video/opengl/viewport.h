@@ -54,4 +54,9 @@ auto OpenGL::calcViewport() -> void {
             break;
         }
     }
+
+    viewport.x = outputLeft;
+    viewport.y = outputTop;
+    viewport.width = outputWidth;
+    viewport.height = outputHeight;
 }

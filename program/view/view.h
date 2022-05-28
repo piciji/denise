@@ -61,7 +61,7 @@ struct View : public GUIKIT::Window {
     auto setCursor( Emulator::Interface* emulator ) -> void;
     auto setDragnDrop() -> void;
     auto getSysMenu( Emulator::Interface* emulator ) -> SystemMenu*;
-    auto cursorForPlaceholderInUpperTriangle(GUIKIT::Position& p) -> bool;
+    auto cursorForPlaceholderInUpperTriangle(GUIKIT::Position p) -> bool;
     auto cursorForPlaceholderInUpperTriangle() -> bool;
     auto loadImages() -> void;
     

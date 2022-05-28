@@ -123,6 +123,7 @@ auto View::build() -> void {
                 }
 			} else {
 				videoDriver->redraw(true);
+                videoDriver->freeContext();
             }
         }
 
@@ -248,7 +249,6 @@ auto View::build() -> void {
 	placeholderTimer.onFinished = [this]() {
 		placeholderTimer.setEnabled(false);
 		renderPlaceholder(false);
-        //renderPlaceholder(false);
 	};
 	
 	anyloadTimer.setInterval(40);

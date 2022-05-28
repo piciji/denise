@@ -67,6 +67,8 @@
 
 namespace DRIVER {
 
+Viewport viewport;
+
 auto Video::available() -> std::vector<std::string> {
 	return {
 	#ifdef DRV_DIRECT3D
