@@ -141,28 +141,31 @@ auto StatusHandler::updateFrameCounter() -> void {
 }
 
 auto StatusHandler::updateFPS( bool state ) -> void {
-    
+    emuThread->lockStatus();
     showFPS = state;
     if (!showFPS) {
-        statusBar->updateVisible(0, false);
-        statusBar->update();
+        updateVisible(0, false);
+        updateStatusBar();
     }
+    emuThread->unlockStatus();
 }
 
 auto StatusHandler::updateDRC( bool state ) -> void {
-    
+    emuThread->lockStatus();
     if (!state) {
         clearUpdates( 8 );
-        statusBar->updateVisible(13, false);
-        statusBar->update();
+        updateVisible(13, false);
+        updateStatusBar();
     }
+    emuThread->unlockStatus();
 }
 
 auto StatusHandler::updateAudioRecord( bool state ) -> void {
-    
+    emuThread->lockStatus();
     recordAudio = state;
     updateVisible(14, recordAudio);
     updateStatusBar();
+    emuThread->unlockStatus();
 }
 
 auto StatusHandler::updateTapeImage( GUIKIT::Image* image ) -> void {

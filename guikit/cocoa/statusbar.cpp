@@ -205,7 +205,8 @@ auto pStatusBar::update() -> void {
    // unsigned width = area.size.width;
    // width -= 8;
     
-    for (int i = parts.size() - 1; i >= 0; i-- ) {
+    for(unsigned i = 0; i < parts.size(); i++) {
+    //for (int i = parts.size() - 1; i >= 0; i-- ) {
         
         auto& part = parts[i];
         
@@ -228,11 +229,13 @@ auto pStatusBar::update() -> void {
     unsigned xPos = 5;
     NSView* view;
     
+    unsigned i = 0;
     for (auto& part : parts) {
         
         if (!part.visible)
             continue;
         
+        i++;
         part.position = usedWidgets.size();
         
         if (part.image) {
@@ -272,7 +275,10 @@ auto pStatusBar::update() -> void {
                 
             view = label->p.cocoaView;
                 
-            [view setFrame:NSMakeRect(xPos, -2, part.width, textHeight)];
+            if (i == countVisible && (area.size.width > xPos) )
+                [view setFrame:NSMakeRect(xPos, -2, area.size.width - xPos, textHeight)];
+            else
+                [view setFrame:NSMakeRect(xPos, -2, part.width, textHeight)];
             
             xPos += part.width;
             
