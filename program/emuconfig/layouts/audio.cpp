@@ -392,6 +392,7 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
         if (state) {
             std::string errorText;
             if (!audioManager->record.start(this->emulator, errorText)) {
+                emuThread->unlock();
                 mes->error( errorText );
                 audioRecord.duration.record.setChecked(false);
                 return;
