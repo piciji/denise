@@ -18,7 +18,6 @@ branches:
   only:
     - master
     - /v\d*\.\d*\.\d*/
-    - left_align_status
   
 environment:
   matrix:

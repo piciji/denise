@@ -707,20 +707,6 @@ struct DVideo : Video, RenderThread {
         return true;
     }
 
-    auto unlock(bool disallowShader = false) -> void {
-        if (settings.threaded) {
-            RenderThread::unlock(disallowShader);
-            return;
-        }
-
-        if (!surface)
-            return;
-
-        // unlock now
-        surface->UnlockRect();
-        dxRelease(surface);
-    }
-
     auto resize(RenderBuffer* renderBuffer, unsigned w, unsigned h) -> void {
 
         w = roundUpPowerOfTwo( w + 1 );

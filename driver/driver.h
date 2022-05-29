@@ -32,7 +32,6 @@ struct Video {
     virtual auto lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height) -> bool { return false; }
     virtual auto lock(float*& data, unsigned& pitch, unsigned _width, unsigned _height) -> bool { return false; }
     virtual auto lock(int32_t*& data, unsigned& pitch, unsigned _width, unsigned _height) -> bool { return false; }
-    virtual auto unlock(bool disallowShader = false) -> void {}
     virtual auto redraw(bool disallowShader = false) -> void {}
     virtual auto unlockAndRedraw(bool disallowShader = false, bool freeContext = false) -> void {}
     virtual auto clear() -> void {}

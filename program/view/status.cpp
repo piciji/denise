@@ -211,9 +211,6 @@ auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
     recordAudio = false;
 	control = 0;
 
-//    statusBar->append( 0, "" );    // status text
-//	statusBar->updateVisible(0, true);
-
     std::string exampleText = "1000";
     if (countDecimalPoint) {
         exampleText += ".";

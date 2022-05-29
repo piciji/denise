@@ -160,13 +160,6 @@ struct CGL : public Video, OpenGL, RenderThread {
         return OpenGL::lock(data, pitch);
     }
 
-    auto unlock(bool disallowShader = false) -> void {
-        if (settings.threaded) {
-            resizeWindow();
-            RenderThread::unlock(disallowShader);
-        }
-    }
-
     auto resize(RenderBuffer* _buffer, unsigned _width, unsigned _height) -> void {
         OpenGL::resize( _buffer, _width, _height );
 
