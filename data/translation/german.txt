@@ -679,3 +679,6 @@ undock = Abkoppeln
 undock settings = Koppelt die Konfiguration dieses Emulator Ordners ab und ermöglicht eine von den anderen Versionen unabhängige Konfiguaration. Dies läßt sich nur durch manuelles Löschen aller settings Dateien im Emulator Ordner rückgängig machen. Ausführen ?
 toggle CRT CPU = CRT über CPU umschalten
 toggle CRT GPU = CRT über GPU umschalten
+Tape = Datasette
+Tape Profile = Datasette Profile
+Sync status = Sync Status

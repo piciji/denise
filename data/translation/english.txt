@@ -679,3 +679,6 @@ undock = Undock
 undock settings = Decouples the configuration of this emulator folder and allows configuration independent of the other versions. This can only be undone by manually deleting all settings files in the emulator folder. Execute?
 toggle CRT CPU = toggle CRT via CPU
 toggle CRT GPU = toggle CRT via GPU
+Tape = Tape
+Tape Profile = Tape Profile
+Sync status = Sync status
