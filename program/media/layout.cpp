@@ -210,7 +210,7 @@ auto MediaGroupLayout::updateVisibility( unsigned count, bool init ) -> void {
         }
     }
 
-    mediaLayout->synchronizeLayout();
+    mediaLayout->moduleSwitch.synchronizeLayout();
 	
     if (!listingInVisibleBlock)
         updateListing( blocks[0] );

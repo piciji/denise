@@ -185,9 +185,28 @@ auto pListView::onActivate(GtkTreeView* treeView, GtkTreePath* path, GtkTreeView
     char* pathname = gtk_tree_path_to_string(path);
     try {
         self->state.selection = std::stoi( pathname );
-    } catch( ... ) { g_free(pathname); return; }
+    } catch( ... ) {
+        g_free(pathname);
+        return;
+    }
 
     g_free(pathname);
+
+    GList* cols = gtk_tree_view_get_columns(treeView);
+
+    unsigned i = 0;
+    while(cols != NULL) {
+        if (column == GTK_TREE_VIEW_COLUMN(cols->data))
+            break;
+
+        cols = cols->next;
+        i++;
+    }
+
+    self->state.column = i;
+
+    g_list_free (cols);
+
     if(self->onActivate) self->onActivate();
 }
 
