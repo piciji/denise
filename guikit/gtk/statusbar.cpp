@@ -129,8 +129,11 @@ auto pStatusBar::update() -> void {
 			widget->p.gtkWidget = (GtkWidget*)CreateImage( *part.image );
 				
 			gtkWidget = widget->p.gtkWidget;
-			
-			gtk_widget_set_margin_top(gtkWidget, 1);
+
+            if (pApplication::desktopSession == pApplication::DesktopSession::Cinnamon)
+			    gtk_widget_set_margin_top(gtkWidget, 1);
+            else
+                gtk_widget_set_margin_top(gtkWidget, 2);
 
 			usedWidgets.push_back( widget );
 			
