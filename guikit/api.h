@@ -671,6 +671,7 @@ struct ListView : Widget {
     auto rowCount() const -> unsigned { return state.rows.size(); }
     auto columnCount() const -> unsigned { return state.header.size(); }
     auto selection() const -> unsigned { return state.selection; }
+    auto column() const -> unsigned { return state.column; }
     auto selected() const -> bool { return state.selected; }
     auto lockRedraw() -> void;
     auto unlockRedraw() -> void;
@@ -703,6 +704,7 @@ struct ListView : Widget {
     struct {
         bool headerVisible = false;
         unsigned selection = 0;
+        unsigned column = 0;
         bool selected = false;
         bool colorRowTooltips = false;
         bool overrideSelectionColor = false;

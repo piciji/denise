@@ -234,7 +234,7 @@ InputLayout::InputLayout(TabWindow* tabWindow) : autofireControl(tabWindow->emul
     
     inputList.onActivate = [this]() {
         emuThread->lock();
-		mapSelected();
+        mapSelected( inputList.column() == 3 );
         emuThread->unlock();
     };
 

@@ -120,7 +120,7 @@ InputLayout::InputLayout() {
 
     inputList.onActivate = [this]() {
         emuThread->lock();
-        mapSelected();
+        mapSelected( inputList.column() == 2 );
         emuThread->unlock();
     };
 

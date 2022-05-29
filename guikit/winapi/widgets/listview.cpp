@@ -307,12 +307,14 @@ auto pListView::onChange(LPARAM lparam) -> void {
     if(!(nmlistview->uChanged & LVIF_STATE)) return;
 
     unsigned selection = nmlistview->iItem;
+   // unsigned column = nmlistview->iSubItem;
 
     if((nmlistview->uOldState & LVIS_FOCUSED) && !(nmlistview->uNewState & LVIS_FOCUSED)) {
         listView.state.selected = false;
     } else if(!(nmlistview->uOldState & LVIS_SELECTED) && (nmlistview->uNewState & LVIS_SELECTED)) {
         listView.state.selected = true;
         listView.state.selection = selection;
+     //   listView.state.column = column;
         if(!locked && listView.onChange) listView.onChange();
     } else if (listView.selected() && (ListView_GetSelectedCount(hwnd) == 0) ) {
         listView.state.selected = false;
@@ -320,7 +322,10 @@ auto pListView::onChange(LPARAM lparam) -> void {
     }
 }
 
-auto pListView::onActivate() -> void {
+auto pListView::onActivate(LPARAM lparam) -> void {
+    LPNMLISTVIEW nmlistview = (LPNMLISTVIEW)lparam;
+    listView.state.column = nmlistview->iSubItem;
+
     if(listView.state.rows.empty() || !listView.state.selected) return;
     if(listView.onActivate) listView.onActivate();
 }

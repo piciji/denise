@@ -466,7 +466,7 @@ struct pListView : pWidget {
     auto createTooltip(bool useBallon = false) -> void;
     
     auto onChange(LPARAM lparam) -> void;
-    auto onActivate() -> void;
+    auto onActivate(LPARAM lparam) -> void;
     
     auto measureItem(LPMEASUREITEMSTRUCT lpmis) -> void;
     auto drawItem(LPDRAWITEMSTRUCT lDraw) -> void;
