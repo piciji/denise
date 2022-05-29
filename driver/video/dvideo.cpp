@@ -848,8 +848,10 @@ struct DVideo : Video, RenderThread {
     }
 
     auto unlockResize() -> void {
-        if (!reset())
+        if (!reset()) {
+            wait();
             init();
+        }
         resizeMutexThreaded.unlock();
         resizeMutex.unlock();
     }
