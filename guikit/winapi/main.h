@@ -105,6 +105,7 @@ struct pWindow {
     auto setDefaultCursor() -> void;
     auto setPointerCursor() -> void;
 	auto tellMeShouldICreateTheUIRightAway() -> bool;
+	static auto XPOrBelowOrWin7InXPMode() -> bool;
 	
 	static auto addCustomFont( CustomFont* customFont ) -> bool;
     static auto CALLBACK wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
@@ -136,7 +137,7 @@ struct pStatusBar {
     auto update() -> void;
     auto updatePart( StatusBar::Part& part ) -> void;
     auto updateTooltip( StatusBar::Part& part ) -> void { updatePart(part); }
-    auto updatePosition(bool frameOnly = false) -> void;
+    auto updatePosition() -> void;
     auto setStatusVisible(bool visible) -> void;
     auto getHeight() -> unsigned;
     auto getWidth(std::string text) -> unsigned;

@@ -350,6 +350,12 @@ auto pWindow::handle() -> uintptr_t {
 }
 
 auto pWindow::tellMeShouldICreateTheUIRightAway() -> bool {
+	return XPOrBelowOrWin7InXPMode();
+}
+
+inline auto pWindow::XPOrBelowOrWin7InXPMode() -> bool {
+	// in Win8 and above visual styles can't be turned off anymore, so App is always themed.
+	// when App is not themed, it means Win7 visual styles looks and behaves as XP (classic mode)
 	return !IsAppThemed() || (pApplication::version <= WindowsXP);
 }
 
@@ -664,7 +670,7 @@ auto pWindow::onSize(WPARAM wparam) -> void {
     }
 
    // if (window.statusBar() && window.statusVisible())
-     //   window.statusBar()->p.updatePosition(true);
+     //   window.statusBar()->p.updatePosition();
 
     Window::SIZE_MODE sMode = Window::SIZE_MODE::Default;
     if (wparam == SIZE_MINIMIZED)

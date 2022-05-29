@@ -17,8 +17,11 @@ pStatusBar::~pStatusBar() {
 
 auto pStatusBar::create() -> void {    
     
-    hwnd = CreateWindow( STATUSCLASSNAME, L"", WS_CHILD, 0, 0, 0, 0, statusBar.window()->p.hwnd, (HMENU)(unsigned long long)statusBar.id, GetModuleHandle(0), 0);
-    //hwnd = CreateWindowEx( WS_EX_COMPOSITED, STATUSCLASSNAME, L"", WS_CHILD, 0, 0, 0, 0, statusBar.window()->p.hwnd, (HMENU)(unsigned long long)statusBar.id, GetModuleHandle(0), 0);
+	if (pWindow::XPOrBelowOrWin7InXPMode())
+		hwnd = CreateWindowEx( WS_EX_COMPOSITED, STATUSCLASSNAME, L"", WS_CHILD, 0, 0, 0, 0, statusBar.window()->p.hwnd, (HMENU)(unsigned long long)statusBar.id, GetModuleHandle(0), 0);
+	else
+		hwnd = CreateWindow( STATUSCLASSNAME, L"", WS_CHILD, 0, 0, 0, 0, statusBar.window()->p.hwnd, (HMENU)(unsigned long long)statusBar.id, GetModuleHandle(0), 0);
+    
 
 	// SendMessage( hwnd, SB_SETBKCOLOR, 0, GetSysColor(COLOR_MENU));
     
@@ -139,13 +142,12 @@ auto pStatusBar::setText(std::string text) -> void {
     update();
 }
 
-auto pStatusBar::updatePosition(bool frameOnly) -> void {
+auto pStatusBar::updatePosition() -> void {
 
-    if (hwnd)
-        SetWindowPos(hwnd, NULL, 0, 0, 0, 0, SWP_NOZORDER | SWP_FRAMECHANGED);
+   // if (hwnd)
+     //   SetWindowPos(hwnd, NULL, 0, 0, 0, 0, SWP_NOZORDER | SWP_FRAMECHANGED);
 
-    if (!frameOnly)
-        update();
+	update();
 }
 
 auto pStatusBar::setStatusVisible(bool visible) -> void {
@@ -198,7 +200,7 @@ auto pStatusBar::updatePart( StatusBar::Part& part ) -> void {
 auto pStatusBar::update() -> void {
     int i;
     RECT rect;
-    int pos = 10;
+    int pos = 2;
     int* widths;
     usedParts.clear();
     
@@ -208,14 +210,11 @@ auto pStatusBar::update() -> void {
     auto& parts = statusBar.state.parts;
     
     GetWindowRect(hwnd, &rect);
-   // pos = rect.right - rect.left;
 
     std::vector<int> _widths;
-  //  _widths.push_back( pos );
- //   pos -= 15;
+
     unsigned countVisible = 0;
-    
-    //for( i = parts.size() - 1; i >= 0; i-- ) {
+        
     for( i = 0; i < parts.size() - 1; i++ ) {
         auto& part = parts[i];
         
@@ -223,7 +222,6 @@ auto pStatusBar::update() -> void {
             continue;
 
         countVisible++;
-        //_widths.push_back( pos );
         
         // first part width doesn't matter. always use remaining space
         if (part.image)
@@ -245,7 +243,6 @@ auto pStatusBar::update() -> void {
     
     widths = new int[partCount];
     
-    //i = partCount;
     i = 0;
     for( auto& width : _widths )
         widths[i++] = width;
@@ -253,7 +250,6 @@ auto pStatusBar::update() -> void {
     SendMessage(hwnd, SB_SETPARTS, partCount, (LPARAM)widths );        
     
     i = 0;
-
     for(auto& part : parts) {
                 
         if (part.visible) {
@@ -335,7 +331,7 @@ auto pStatusBar::drawItem(WPARAM wparam, LPARAM lparam) -> void {
         else if ( !part.width )
             rect.left += 4;
         else if (itemID == 0)
-            rect.left += 12;
+            rect.left += 4;
 
         SetBkMode(hDC, TRANSPARENT);
        // SetBkColor(hDC, GetSysColor(COLOR_MENU));
@@ -371,7 +367,7 @@ auto pStatusBar::getHoverPart(int xPos) -> StatusBar::Part* {
 
     RECT rect;
     GetWindowRect(hwnd, &rect);
-    int pos = 10;
+    int pos = 2;
 
     unsigned partCount = usedParts.size();
 
