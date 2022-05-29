@@ -152,60 +152,66 @@ auto InputManager::capture( bool overwriteExisting ) -> bool {
 	return 0;
 }
 
-auto InputManager::preventSharingOfAutoFireMappings(InputMapping* captureObject, InputMapping::Assign& captureHid) -> bool {
-    unsigned i;
+auto InputManager::preventSharingOfAutoFireMappings(InputMapping* captureObject, InputMapping::Assign& captureHid) -> void {
     unsigned pos;
-    bool removedMappings = false;
+    bool found = false;
+    std::vector<Emulator::Interface::Device::Input*> _inputs;
 
     if (captureObject->anded && (captureObject->hids.size() > 1) )
-        return false;
+        return;
     auto manager = captureObject->inputManager;
     if (!manager)
-        return false;
+        return;
     auto emulator = manager->emulator;
     if (!emulator)
-        return false;
+        return;
 
     if (!captureObject->emuDevice || !captureObject->emuDevice->isJoypad())
-        return false;
+        return;
 
     auto emuView = EmuConfigView::TabWindow::getView( emulator );
 
     for (auto& input : captureObject->emuDevice->inputs) {
+        InputMapping* mapper = (InputMapping*)input.guid;
+
+        if (!mapper)
+            continue;
+
         if (input.key == Emulator::Interface::Key::Button || input.key == Emulator::Interface::Key::Autofire || input.key == Emulator::Interface::Key::ToggleAutofire ) {
-            InputMapping* mapper = (InputMapping*)input.guid;
-
-            if (!mapper)
-                continue;
-
-            i = 0;
-            while(i++ < 2) {
-                pos = 0;
-                if (mapper == captureObject || (mapper->anded && (mapper->hids.size() > 1) ) );
-                else {
-                    for (auto& hid : mapper->hids) {
-                        if (hid.device == captureHid.device && hid.group->id == captureHid.group->id &&
-                            hid.input->id == captureHid.input->id && hid.qualifier == captureHid.qualifier) {
-                            GUIKIT::Vector::eraseVectorPos(mapper->hids, pos);
-                            mapper->updateSetting();
-                            if (emuView && emuView->inputLayout)
-                                emuView->inputLayout->updateListEntry(input.id, mapper, false);
-                            removedMappings = true;
-                            break;
-                        }
-                        pos++;
-                    }
-                }
-
-                if (mapper->alternate)
-                    mapper = mapper->alternate;
-                else if (mapper->parent)
-                    mapper = mapper->parent;
-                else
-                    break;
-            }
+            if (mapper == captureObject || mapper->alternate == captureObject)
+                found = true;
+            else
+                _inputs.push_back( &input );
         }
     }
 
-    return removedMappings;
+    if (!found || (_inputs.size() == 0) )
+        return;
+
+    for (auto input : _inputs) {
+        InputMapping* mapper = (InputMapping*)input->guid;
+
+        while(1) {
+            pos = 0;
+            if (mapper->anded && (mapper->hids.size() > 1) );
+            else {
+                for (auto& hid : mapper->hids) {
+                    if (hid.device == captureHid.device && hid.group->id == captureHid.group->id &&
+                        hid.input->id == captureHid.input->id && hid.qualifier == captureHid.qualifier) {
+                        GUIKIT::Vector::eraseVectorPos(mapper->hids, pos);
+                        mapper->updateSetting();
+                        if (emuView && emuView->inputLayout)
+                            emuView->inputLayout->updateListEntry(input->id, mapper, false);
+                        break;
+                    }
+                    pos++;
+                }
+            }
+
+            if (mapper->alternate)
+                mapper = mapper->alternate;
+            else
+                break;
+        }
+    }
 }
