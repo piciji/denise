@@ -215,7 +215,7 @@ auto pStatusBar::update() -> void {
 
     unsigned countVisible = 0;
         
-    for( i = 0; i < parts.size() - 1; i++ ) {
+    for( i = 0; i < parts.size(); i++ ) {
         auto& part = parts[i];
         
         if (!part.visible)
@@ -226,18 +226,20 @@ auto pStatusBar::update() -> void {
         // first part width doesn't matter. always use remaining space
         if (part.image)
             pos += part.image->width + 7;
-        else
+        else if (part.width)
             pos += part.width;
+		else
+			continue;
 
         _widths.push_back( pos );
     }
 
-    _widths.push_back( rect.right - rect.left );
-
-    if (_widths.size() == 0) {
-        SendMessage(hwnd, SB_SETPARTS, 0, 0);
-        return;
-    }
+   // if (_widths.size() == 0) {
+     //   SendMessage(hwnd, SB_SETPARTS, 0, 0);
+       // return;
+    //}
+	
+	_widths.push_back( rect.right - rect.left );
         
     unsigned partCount = _widths.size();
     

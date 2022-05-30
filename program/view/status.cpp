@@ -378,7 +378,7 @@ auto StatusHandler::update() -> void {
                     : std::to_string((unsigned)round(fpsCounter.fps));
 
             if (fpsCounterUpdate())
-                updateText(0, _FPS, true);
+                updateText(0, _FPS);
 
             if (message.txt.empty())
                 OSDText += " " + _FPS;            
