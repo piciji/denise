@@ -316,7 +316,12 @@
 }
 
 -(IBAction) doubleAction:(id)sender {
+    listView->state.column = 0;
     if([content clickedRow] >= 0) {
+        if([content clickedColumn] >= 0) {
+            listView->state.column = [content clickedColumn];
+        }
+
         [self activate:self];
     }
 }

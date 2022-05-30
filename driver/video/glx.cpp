@@ -387,6 +387,7 @@ struct GLX : public Video, OpenGL, RenderThread {
 
     auto unlockAndRedraw(bool disallowShader = false, bool freeContext = false) -> void {
         if (settings.threaded) {
+            resizeWindow();
             RenderThread::unlock(disallowShader);
         } else
             _redraw(disallowShader);
@@ -470,7 +471,6 @@ struct GLX : public Video, OpenGL, RenderThread {
             accessMutex.unlock();
         }
 
-        resizeWindow();
         OpenGL::refresh(disallowShader);
 #ifdef DRV_FREETYPE
         screenText.updateMessage();
