@@ -2,12 +2,14 @@
 struct CocoaMouse {
     
     Hid::Mouse* hidMouse = nullptr;
+    bool mouseAcquired;
     
     auto init() -> void {
         term();
         
         hidMouse = new Hid::Mouse;
         hidMouse->id = 1;
+        mouseAcquired = false;
         
         hidMouse->axes().append("X");
         hidMouse->axes().append("Y");
@@ -45,17 +47,19 @@ struct CocoaMouse {
         if(mIsAcquired()) return;
         CGAssociateMouseAndMouseCursorPosition(false);
         CGDisplayHideCursor(0);
+        mouseAcquired = true;
     }
     
     auto mUnacquire() -> void {
         if(mIsAcquired()) {
             CGAssociateMouseAndMouseCursorPosition(true);
             CGDisplayShowCursor(0);
+            mouseAcquired = false;
         }
     }
     
     auto mIsAcquired() -> bool {
-        return !CGCursorIsVisible();
+        return mouseAcquired /*!CGCursorIsVisible()*/; // deprecated and not working reliable
     }
     
     ~CocoaMouse() {

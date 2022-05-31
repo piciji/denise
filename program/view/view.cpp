@@ -270,6 +270,7 @@ auto View::build() -> void {
         VideoManager::setSynchronize();
 		placeholderTimer.setEnabled(true);
 		requestFullscreenSwitch = false;
+        videoDriver->blockVRR(false);
         emuThread->unlock();
     };
 	
@@ -359,6 +360,7 @@ auto View::switchFullScreen(bool fullScreen, bool forceUnacquire) -> void {
     if (!fullScreen && videoDriver)
         videoDriver->disableExclusiveFullscreen();
 
+    videoDriver->blockVRR(true);
     GUIKIT::Window::setFullScreen(fullScreen);
     displayChangeTimer.setEnabled();
 }
