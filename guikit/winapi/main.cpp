@@ -231,9 +231,14 @@ auto CALLBACK pApplication::wndProc(WNDPROC windowProc, HWND hwnd, UINT msg, WPA
 			if (!window.onContext()) break;
 
 			POINT pt;
-			GetCursorPos(&pt);						
+			GetCursorPos(&pt);
+			
 			int mid = TrackPopupMenuEx(window.p.contextmenu, TPM_RIGHTBUTTON | TPM_RETURNCMD, pt.x, pt.y, hwnd, NULL);
-			if (mid) SendMessage(hwnd, WM_COMMAND, mid, 0);
+			if (window.fullScreen() && window.p.XPOrBelowOrWin7InXPMode())
+				window.statusBar()->update();
+			
+			if (mid)
+				SendMessage(hwnd, WM_COMMAND, mid, 0);
 			break;
 		}
         case WM_HSCROLL:
@@ -595,7 +600,9 @@ auto pWindow::setFullScreen(bool fullScreen) -> void {
     if (!window.resizable()) return;
     locked = true;
     if(!fullScreen) {
-        SetWindowLongPtr(hwnd, GWL_STYLE, WS_VISIBLE | WS_CLIPCHILDREN | (window.resizable() ? ResizableStyle : FixedStyle));
+        SetWindowLongPtr(hwnd, GWL_STYLE, WS_VISIBLE | WS_CLIPCHILDREN | (window.resizable() ? ResizableStyle : FixedStyle));		
+		SetWindowLongPtr(hwnd, GWL_EXSTYLE, (GetWindowLongPtr(hwnd, GWL_EXSTYLE) & ~WS_EX_APPWINDOW));
+		
         setGeometry(window.state.geometry);
 		SetWindowPos(hwnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
         pMonitor::resetSetting();
@@ -610,14 +617,15 @@ auto pWindow::setFullScreen(bool fullScreen) -> void {
         GetMonitorInfo(monitor, &info);
         RECT rc = info.rcMonitor;
         Geometry geometry = {(signed)rc.left, (signed)rc.top, (unsigned)(rc.right - rc.left), (unsigned)(rc.bottom - rc.top) };
-        SetWindowLongPtr(hwnd, GWL_STYLE, WS_VISIBLE | WS_POPUP);
+        SetWindowLongPtr(hwnd, GWL_STYLE, WS_VISIBLE /*| WS_POPUP*/); // popup prevents messagebox topmost in opengl fullscreen
+		SetWindowLongPtr(hwnd, GWL_EXSTYLE, (GetWindowLongPtr(hwnd, GWL_EXSTYLE) | WS_EX_APPWINDOW));
         Geometry margin = frameMargin();
         setGeometry({
             geometry.x + margin.x, geometry.y + margin.y,
             geometry.width - margin.width, geometry.height - margin.height
         });
     }
-    window.statusBar()->p.setComposited( !fullScreen );
+    //window.statusBar()->p.setComposited( !fullScreen );
     locked = false;
     if(window.onSize) window.onSize(Window::SIZE_MODE::Default);
 }

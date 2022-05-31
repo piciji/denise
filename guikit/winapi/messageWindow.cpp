@@ -19,24 +19,24 @@ auto pMessageWindow::translateButtons(MessageWindow::Buttons buttons) -> UINT {
 
 auto pMessageWindow::error(MessageWindow::State& state) -> MessageWindow::Response {
     return translateResponse( MessageBox( state.window ? state.window->p.hwnd : 0,
-        utf16_t(state.text), utf16_t(state.title), MB_ICONERROR | translateButtons(state.buttons)
+        utf16_t(state.text), utf16_t(state.title), MB_TOPMOST | MB_ICONERROR | translateButtons(state.buttons)
     ));
 }
 
 auto pMessageWindow::information(MessageWindow::State& state) -> MessageWindow::Response {
     return translateResponse( MessageBox( state.window ? state.window->p.hwnd : 0,
-        utf16_t(state.text), utf16_t(state.title), MB_ICONINFORMATION | translateButtons(state.buttons)
+        utf16_t(state.text), utf16_t(state.title), MB_TOPMOST | MB_ICONINFORMATION | translateButtons(state.buttons)
     ));
 }
 
 auto pMessageWindow::question(MessageWindow::State& state) -> MessageWindow::Response {
     return translateResponse( MessageBox( state.window ? state.window->p.hwnd : 0,
-        utf16_t(state.text), utf16_t(state.title), MB_ICONQUESTION | translateButtons(state.buttons)
+        utf16_t(state.text), utf16_t(state.title), MB_TOPMOST | MB_ICONQUESTION | translateButtons(state.buttons)
     ));
 }
 
 auto pMessageWindow::warning(MessageWindow::State& state) -> MessageWindow::Response {
     return translateResponse( MessageBox( state.window ? state.window->p.hwnd : 0,
-        utf16_t(state.text), utf16_t(state.title), MB_ICONWARNING | translateButtons(state.buttons)
+        utf16_t(state.text), utf16_t(state.title), MB_TOPMOST | MB_ICONWARNING | translateButtons(state.buttons)
     ));
 }

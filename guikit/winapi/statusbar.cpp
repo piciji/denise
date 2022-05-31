@@ -62,6 +62,7 @@ auto pStatusBar::setComposited(bool state) -> void {
 auto pStatusBar::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT {
     StatusBar* statusBar = (StatusBar*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
     if(statusBar == nullptr) return DefWindowProc(hwnd, msg, wparam, lparam);
+	static bool xpMode = pWindow::XPOrBelowOrWin7InXPMode();
 
     switch(msg) {
 
@@ -92,8 +93,9 @@ auto pStatusBar::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
 //            return 1;
 //
         case WM_PAINT: {
-            //InvalidateRect(hwnd, NULL, false);
-            SetWindowPos(hwnd, NULL, 0, 0, 0, 0, SWP_NOZORDER | SWP_FRAMECHANGED | SWP_NOREDRAW);
+			if (xpMode && statusBar->window()->fullScreen() );
+			else
+				SetWindowPos(hwnd, NULL, 0, 0, 0, 0, SWP_NOZORDER | SWP_FRAMECHANGED | SWP_NOREDRAW);
             break;
         }
 
