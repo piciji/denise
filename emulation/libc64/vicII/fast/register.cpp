@@ -247,10 +247,19 @@ auto VicIIFast::writeReg( uint8_t addr, uint8_t value ) -> void {
 				if ( !spr->expandY )
 					spr->expandYFlop = true;
 				
-				if (!flipBefore && spr->expandYFlop && (cycle == 14) )
-					// sprite crunching
-					spr->mc = (0x2a & (spr->mcBase & spr->mc)) | (0x15 & (spr->mcBase | spr->mc));
-			}                
+				if (!flipBefore && spr->expandYFlop && (cycle == 14) ) {
+                    // sprite crunching
+
+                    if (!sprCrunching) {
+                        // set scanline render pos to end of line (MUIFLI fix)
+                        cycleTab[32] &= ~ScanlineRender;
+                        cycleTab[53] |= ScanlineRender;
+                        sprCrunching = true;
+                    }
+
+                    spr->mc = (0x2a & (spr->mcBase & spr->mc)) | (0x15 & (spr->mcBase | spr->mc));
+                }
+			}
         } break;
         
         case 0x18: {

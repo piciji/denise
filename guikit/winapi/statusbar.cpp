@@ -49,6 +49,16 @@ auto pStatusBar::create() -> void {
         update();
 }
 
+auto pStatusBar::setComposited(bool state) -> void {
+    if (!hwnd || !pWindow::XPOrBelowOrWin7InXPMode())
+        return;
+
+    if (state)
+        SetWindowLong(hwnd, GWL_EXSTYLE, (GetWindowLong(hwnd, GWL_EXSTYLE) | WS_EX_COMPOSITED));
+    else
+        SetWindowLong(hwnd, GWL_EXSTYLE, (GetWindowLong(hwnd, GWL_EXSTYLE) & ~WS_EX_COMPOSITED));
+}
+
 auto pStatusBar::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT {
     StatusBar* statusBar = (StatusBar*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
     if(statusBar == nullptr) return DefWindowProc(hwnd, msg, wparam, lparam);

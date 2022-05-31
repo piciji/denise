@@ -142,6 +142,7 @@ struct pStatusBar {
     auto getHeight() -> unsigned;
     auto getWidth(std::string text) -> unsigned;
     auto setTooltip(StatusBar::Part* part) -> void;
+    auto setComposited(bool state) -> void;
     
     auto onClick(LPARAM lparam) -> void;
     auto getHoverPart(int xPos) -> StatusBar::Part*;

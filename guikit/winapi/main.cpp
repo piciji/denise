@@ -617,6 +617,7 @@ auto pWindow::setFullScreen(bool fullScreen) -> void {
             geometry.width - margin.width, geometry.height - margin.height
         });
     }
+    window.statusBar()->p.setComposited( !fullScreen );
     locked = false;
     if(window.onSize) window.onSize(Window::SIZE_MODE::Default);
 }

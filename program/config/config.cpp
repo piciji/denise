@@ -28,7 +28,12 @@ TabWindow::TabWindow() {
 auto TabWindow::build() -> void {
     cocoa.keepMenuVisibilityOnDisplay();
 
-    GUIKIT::Geometry defaultGeometry = {100, 100, GUIKIT::Font::scale(810), GUIKIT::Font::scale(540)};
+    GUIKIT::Geometry defaultGeometry = {100, 100, GUIKIT::Font::scale(700), GUIKIT::Font::scale(500)};
+
+    if (GUIKIT::Application::isGtk()) {
+        defaultGeometry.width = 810;
+        defaultGeometry.height = 540;
+    }
     
     GUIKIT::Geometry geometry = {globalSettings->get<int>("screen_settings_x", defaultGeometry.x)
         ,globalSettings->get<int>("screen_settings_y", defaultGeometry.y)

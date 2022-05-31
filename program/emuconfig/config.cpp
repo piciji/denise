@@ -53,12 +53,12 @@ TabWindow::TabWindow(Emulator::Interface* emulator) {
 auto TabWindow::build() -> void {
     cocoa.keepMenuVisibilityOnDisplay();
     setDroppable();
-	    
-    GUIKIT::Geometry defaultGeometry = {50, 50, GUIKIT::Font::scale(1200), GUIKIT::Font::scale(700)};
-    
-    if (GUIKIT::Application::isCocoa()) {
-        defaultGeometry.width = 1000;
-        defaultGeometry.height = 570;
+
+    GUIKIT::Geometry defaultGeometry = {50, 50, GUIKIT::Font::scale(1000), GUIKIT::Font::scale(570)};
+
+    if (GUIKIT::Application::isGtk()) {
+        defaultGeometry.width = 1200;
+        defaultGeometry.height = 700;
     }
     
     GUIKIT::Geometry geometry = {settings->get<int>("screen_settings_x", defaultGeometry.x)
