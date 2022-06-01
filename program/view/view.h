@@ -9,6 +9,7 @@ struct View : public GUIKIT::Window {
 	GUIKIT::Timer placeholderTimer;
 	GUIKIT::Timer anyloadTimer;
 	GUIKIT::Timer displayChangeTimer;
+    GUIKIT::Timer vrrLockTimer;
 	GUIKIT::Timer fullscreenOnStartUp;
     GUIKIT::StatusBar statusBar;
     GUIKIT::Image placeholder;

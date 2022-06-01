@@ -327,6 +327,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             if(!view->fullScreen()) view->updateMenuBar( true );
             break;
         case Hotkey::ToggleStatus:
+            emuThread->lock();
             if(!videoDriver || !videoDriver->hasExclusiveFullscreen()) view->updateStatusBar( true );
             break;
 

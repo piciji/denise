@@ -219,11 +219,15 @@ auto View::build() -> void {
     };
     
     GUIKIT::Application::Cocoa::onPreferences = [] {
+        emuThread->lock();
         ConfigView::TabWindow::open(ConfigView::TabWindow::Layout::Settings);
+        emuThread->unlock();
     };
     	
 	GUIKIT::Application::Cocoa::onCustom1 = []() {
+        emuThread->lock();
 		program->saveSettings();
+        emuThread->unlock();
 	};
 	
     GUIKIT::Application::Cocoa::onDock = [] {
@@ -270,10 +274,15 @@ auto View::build() -> void {
         VideoManager::setSynchronize();
 		placeholderTimer.setEnabled(true);
 		requestFullscreenSwitch = false;
-        videoDriver->blockVRR(false);
         emuThread->unlock();
     };
 	
+    vrrLockTimer.setInterval(1500);
+    vrrLockTimer.onFinished = [this]() {
+        vrrLockTimer.setEnabled(false);
+        videoDriver->blockVRR(false);
+    };
+    
 	fullscreenOnStartUp.setInterval(500);
 	fullscreenOnStartUp.onFinished = [this]() {
 		fullscreenOnStartUp.setEnabled(false);
@@ -357,8 +366,11 @@ auto View::switchFullScreen(bool fullScreen, bool forceUnacquire) -> void {
 	if(!forceUnacquire && fullScreen && program->isRunning) inputDriver->mAcquire();
 	else inputDriver->mUnacquire();	
 
-    if (!fullScreen && videoDriver)
+    if (!fullScreen && videoDriver) {
         videoDriver->disableExclusiveFullscreen();
+        videoDriver->blockVRR(true);
+        vrrLockTimer.setEnabled();
+    }
 
     videoDriver->blockVRR(true);
     GUIKIT::Window::setFullScreen(fullScreen);

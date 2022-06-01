@@ -129,7 +129,9 @@ auto TabWindow::build() -> void {
 	}
     
     onClose = [this]() {
+        emuThread->lock();
         setVisible(false);
+        emuThread->unlock();
         view->setFocused();
     };
 
