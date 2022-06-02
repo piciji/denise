@@ -61,6 +61,7 @@ struct Video {
     virtual auto setVRR(bool state, float speed = 0.0) -> void {}
     virtual auto hasVRR() -> bool { return false; }
     virtual auto blockVRR(bool state) -> void {}
+    virtual auto changeThreadPriorityToRealtime(bool state) -> void {}
 
     virtual auto setAspectCorrection(float width, float height, bool integerScaling = false) -> void {}
     auto getViewport() -> Viewport& { return viewport; }

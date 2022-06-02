@@ -220,7 +220,7 @@ struct CGL : public Video, OpenGL, RenderThread {
         }
     }
     
-    auto blockVRR(bool state) -> void {
+    auto blockVRR(bool state) -> void {return;
         if(!settings.vrr)
             return;
         
@@ -228,6 +228,10 @@ struct CGL : public Video, OpenGL, RenderThread {
         lockVRR = state;
         if (!state)
             lastCapTime = Chronos::getTimestampInMicroseconds();
+    }
+    
+    auto changeThreadPriorityToRealtime(bool state) -> void {
+        changePriorityToRealtime(state);
     }
     
     auto endResizing() -> void {

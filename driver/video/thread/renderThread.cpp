@@ -177,6 +177,11 @@ namespace DRIVER {
             cv.notify_one();
         }
     }
+    
+    auto RenderThread::changePriorityToRealtime(bool state) -> void {
+        realtime = state;
+        updatePriority = true;
+    }
 
     auto RenderThread::initWorker() -> void {
 
@@ -189,6 +194,8 @@ namespace DRIVER {
             if (ThreadPriority::setPriority( ThreadPriority::Mode::Realtime, 3.0, 5.0 )) {
             //     logger->log("increased render thread prio");
             }
+            updatePriority = false;
+            realtime = true;
 #endif
             kill = false;
             ready = false;
@@ -200,6 +207,16 @@ namespace DRIVER {
                         kill = false;
                         return;
                     }
+                    
+#ifdef __APPLE__
+                    if (updatePriority) {
+                        updatePriority = false;
+                        
+                        if (ThreadPriority::setPriority( realtime ? ThreadPriority::Mode::Realtime : ThreadPriority::Mode::Normal, 3.0, 5.0 )) {
+                            //     logger->log(realtime ? "render thread realtime prio" : "render thread normal prio");
+                        }
+                    }
+#endif
 
                     if (cv.wait_for(lk, duration, [this]() {
                         return ready.load();

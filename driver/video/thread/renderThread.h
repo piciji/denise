@@ -27,6 +27,10 @@ namespace DRIVER {
 
         std::atomic<bool> ready;
         std::atomic<bool> kill;
+#ifdef __APPLE__
+        std::atomic<bool> updatePriority;
+        std::atomic<bool> realtime;
+#endif
         std::condition_variable cv;
         std::mutex accessMutex;
 
@@ -46,6 +50,7 @@ namespace DRIVER {
         auto initWorker() -> void;
         auto deleteBuffer(RenderBuffer* buffer) -> void;
         auto enable(bool state) -> void;
+        auto changePriorityToRealtime(bool state) -> void;
 
         auto prepareBuffer(unsigned _width, unsigned _height) -> bool;
         auto lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height) -> bool;

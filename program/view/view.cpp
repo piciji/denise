@@ -277,10 +277,12 @@ auto View::build() -> void {
         emuThread->unlock();
     };
 	
-    vrrLockTimer.setInterval(1500);
-    vrrLockTimer.onFinished = [this]() {
-        vrrLockTimer.setEnabled(false);
-        videoDriver->blockVRR(false);
+    priorityTimer.setInterval(1500);
+    priorityTimer.onFinished = [this]() {
+        priorityTimer.setEnabled(false);
+        emuThread->lock();
+        videoDriver->changeThreadPriorityToRealtime(true);
+        emuThread->unlock();
     };
     
 	fullscreenOnStartUp.setInterval(500);
@@ -368,11 +370,12 @@ auto View::switchFullScreen(bool fullScreen, bool forceUnacquire) -> void {
 
     if (!fullScreen && videoDriver) {
         videoDriver->disableExclusiveFullscreen();
-        videoDriver->blockVRR(true);
-        vrrLockTimer.setEnabled();
+        if (GUIKIT::Application::isCocoa()) {
+            videoDriver->changeThreadPriorityToRealtime(false);
+            priorityTimer.setEnabled();
+        }
     }
 
-    videoDriver->blockVRR(true);
     GUIKIT::Window::setFullScreen(fullScreen);
     displayChangeTimer.setEnabled();
 }
