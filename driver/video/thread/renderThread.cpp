@@ -179,8 +179,13 @@ namespace DRIVER {
     }
     
     auto RenderThread::changePriorityToRealtime(bool state) -> void {
+        // only macOS need higher thread priorities to prevent scrolling hiccups.
+        // there are some situations, when a realtime priority blocks the system forever, mostly "un-fullscreen" with higher rendering speed.
+        // in these situations we temporarly decrese priority to normal
+#ifdef __APPLE__
         realtime = state;
         updatePriority = true;
+#endif
     }
 
     auto RenderThread::initWorker() -> void {

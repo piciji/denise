@@ -11,6 +11,7 @@ struct View : public GUIKIT::Window {
 	GUIKIT::Timer displayChangeTimer;
     GUIKIT::Timer priorityTimer;
 	GUIKIT::Timer fullscreenOnStartUp;
+    GUIKIT::Timer cursorHideTimer;
     GUIKIT::StatusBar statusBar;
     GUIKIT::Image placeholder;
 	bool requestFullscreenSwitch = false;

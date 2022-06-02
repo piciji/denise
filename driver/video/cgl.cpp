@@ -25,7 +25,6 @@ struct CGL : public Video, OpenGL, RenderThread {
     bool useVRR = false;
     bool useResizing = false;
     bool oldResizeBehaviour = false;
-    bool lockVRR = false;
 
     bool init() {
         term();
@@ -220,16 +219,6 @@ struct CGL : public Video, OpenGL, RenderThread {
         }
     }
     
-    auto blockVRR(bool state) -> void {return;
-        if(!settings.vrr)
-            return;
-        
-        wait();
-        lockVRR = state;
-        if (!state)
-            lastCapTime = Chronos::getTimestampInMicroseconds();
-    }
-    
     auto changeThreadPriorityToRealtime(bool state) -> void {
         changePriorityToRealtime(state);
     }
@@ -302,7 +291,7 @@ struct CGL : public Video, OpenGL, RenderThread {
                 screenText.showText(outputWidth, outputHeight, -0.01, 0.01, OpenGLText::ALIGN_RIGHT | OpenGLText::VALIGN_BOTTOM);
 #endif
 
-                if (useResizing || lockVRR)
+                if (useResizing)
                     [[view openGLContext] flushBuffer];
                 else if (useVRR) {
                     glFinish();
@@ -352,7 +341,7 @@ struct CGL : public Video, OpenGL, RenderThread {
                 screenText.updateMessage();
                 screenText.showText(outputWidth, outputHeight, -0.01, 0.01, OpenGLText::ALIGN_RIGHT | OpenGLText::VALIGN_BOTTOM);
 #endif
-                if (useResizing || lockVRR)
+                if (useResizing)
                     [[view openGLContext] flushBuffer];
                 else if (useVRR) {
                     glFinish();

@@ -292,6 +292,12 @@ auto View::build() -> void {
         switchFullScreen(true);
         emuThread->unlock();
 	};
+    
+    cursorHideTimer.setInterval(1000);
+    cursorHideTimer.onFinished = [this]() {
+        cursorHideTimer.setEnabled(false);
+        inputDriver->mAcquire();
+    };
 	
 	viewport.onMousePress = [this](GUIKIT::Mouse::Button button) {
 		
@@ -365,8 +371,15 @@ auto View::setDragnDrop() -> void {
 
 auto View::switchFullScreen(bool fullScreen, bool forceUnacquire) -> void {
 	requestFullscreenSwitch = true;
-	if(!forceUnacquire && fullScreen && program->isRunning) inputDriver->mAcquire();
-	else inputDriver->mUnacquire();	
+    if(!forceUnacquire && fullScreen && program->isRunning) {
+        if (GUIKIT::Application::isCocoa()) {
+            cursorHideTimer.setEnabled();
+        } else
+            inputDriver->mAcquire();
+    } else {
+        cursorHideTimer.setEnabled(false);
+        inputDriver->mUnacquire();
+    }
 
     if (!fullScreen && videoDriver) {
         videoDriver->disableExclusiveFullscreen();
