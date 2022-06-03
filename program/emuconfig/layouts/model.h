@@ -20,7 +20,7 @@ struct ModelLayout : GUIKIT::FramedVerticalLayout {
             GUIKIT::Label label;
             GUIKIT::LineEdit lineEdit;
 
-            Block(Emulator::Interface::Model* model);
+            Block(Emulator::Interface::Model* model, ModelLayout* layout);
         };
         std::vector<Block*> blocks;       
         
@@ -76,6 +76,8 @@ struct ModelLayout : GUIKIT::FramedVerticalLayout {
     auto updateBiasVisibillity() -> void;
 
     auto updateBurstVisibillity() -> void;
+
+    auto getAlignedWidth(Emulator::Interface::Model* model = nullptr) -> unsigned;
     
     ModelLayout();
 };

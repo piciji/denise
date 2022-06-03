@@ -14,7 +14,7 @@ namespace EmuConfigView {
     
 #define mes this->tabWindow->message    
     
-ModelLayout::Line::Block::Block(Emulator::Interface::Model* model) {
+ModelLayout::Line::Block::Block(Emulator::Interface::Model* model, ModelLayout* layout) {
     
 	this->model = model;
     
@@ -22,7 +22,7 @@ ModelLayout::Line::Block::Block(Emulator::Interface::Model* model) {
 		append(checkBox, {0u, 0u} );
 		
 	} else if (model->isRadio()) {		
-		append(label, {0u, 0u}, 5 );
+		append(label, {layout->getAlignedWidth(model), 0u}, 5 );
 		
 		for(auto& option : model->options) {
 			auto radio = new GUIKIT::RadioBox;
@@ -98,7 +98,7 @@ auto ModelLayout::build( TabWindow* tabWindow, Emulator::Interface* emulator, st
             }
         }
         
-        auto block = new Line::Block(&model);
+        auto block = new Line::Block(&model, this);
         line->blocks.push_back(block);
         if (model.isSlider())
             line->append(*block,{~0u, 0u}, 15);
@@ -738,14 +738,34 @@ auto ModelLayout::updateExtraAudioChipsVisibillity() -> void {
         controlLayout.setEnabled( true );
 }
 
+auto ModelLayout::getAlignedWidth(Emulator::Interface::Model* model) -> unsigned {
+    static unsigned sidWidth = 0u;
+    unsigned result = 0u; // minimum size
+
+    if (!dynamic_cast<LIBC64::Interface*>( emulator ))
+        return result;
+
+    if (!model || (model->id == LIBC64::Interface::ModelIdSid || model->id == LIBC64::Interface::ModelIdSid2
+                || model->id == LIBC64::Interface::ModelIdSid3 || model->id == LIBC64::Interface::ModelIdSid4
+                || model->id == LIBC64::Interface::ModelIdSid5 || model->id == LIBC64::Interface::ModelIdSid6
+                || model->id == LIBC64::Interface::ModelIdSid7 || model->id == LIBC64::Interface::ModelIdSid8)) {
+
+        if (sidWidth == 0) {
+            GUIKIT::Label test;
+            test.setText("SID 8:");
+            sidWidth = test.minimumSize().width + (model ? 1 : 2);
+        }
+        result = sidWidth;
+    }
+
+    return result;
+}
+
 auto ModelLayout::appendAudioSelectorLayout() -> void {
     
     update( *lines[lines.size() - 1], 10 );    
-    
-    GUIKIT::Label test;
-    test.setText("SID 8:");
-    
-    controlLayout.append(controlLayout.label, {test.minimumSize().width, 0u}, 5);
+
+    controlLayout.append(controlLayout.label, {getAlignedWidth(), 0u}, 5);
     controlLayout.append(controlLayout.firstAll, {0u, 0u}, 5);
     controlLayout.append(controlLayout.secondAll, {0u, 0u}, 20);
     controlLayout.setAlignment(0.5);
