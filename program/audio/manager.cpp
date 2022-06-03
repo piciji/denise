@@ -168,23 +168,22 @@ auto AudioManager::setDriveSounds( bool init ) -> void {
 
     mixDriveSounds = mixFloppySounds | mixTapeSounds;
 
-    if (init) {
-        activeEmulator->enableFloppySounds(mixFloppySounds);
-        activeEmulator->enableTapeSounds(mixTapeSounds);
-    }
-
     Emulator::Interface::MediaGroup* group = activeEmulator->getDiskMediaGroup();
 
-    if (mixFloppySounds) {
-        unsigned volume = settings->get<unsigned>("audio_floppy_volume", 100u, {0u, 300u});
+    if (group) {
+        if (mixFloppySounds) {
+            unsigned volume = settings->get<unsigned>("audio_floppy_volume", 100u, {0u, 300u});
 
-        if (!drive.loaded( activeEmulator, group )) {
-            drive.readPack( activeEmulator, group );
-        }
+            if (!drive.loaded(activeEmulator, group))
+                drive.readPack(activeEmulator, group);
 
-        drive.setVolume( activeEmulator, group, (float)volume * 0.01 );
-    } else
-        drive.reset(group);
+            drive.setVolume(activeEmulator, group, (float) volume * 0.01);
+        } else
+            drive.reset(group);
+    }
+
+    if (init)
+        activeEmulator->enableFloppySounds(mixFloppySounds);
 
     group = activeEmulator->getTapeMediaGroup();
 
@@ -192,14 +191,16 @@ auto AudioManager::setDriveSounds( bool init ) -> void {
         if (mixTapeSounds) {
             unsigned volume = settings->get<unsigned>("audio_tape_volume", 100u, {0u, 300u});
 
-            if (!drive.loaded(activeEmulator, group)) {
+            if (!drive.loaded(activeEmulator, group))
                 drive.readPack(activeEmulator, group);
-            }
 
             drive.setVolume(activeEmulator, group, (float) volume * 0.01);
         } else
             drive.reset(group);
     }
+
+    if (init)
+        activeEmulator->enableTapeSounds(mixTapeSounds);
 }
 
 auto AudioManager::setAudioDsp() -> void {

@@ -570,11 +570,11 @@ namespace Mixer {
 
         reset( group );
 
-        if (group->isDisk()) {
-            for (auto& device: devices) {
-                if (device.media->group->isDisk() && (device.emulator == emulator))
-                    assignSteps(device);
-            }
+        // update all devices (other groups/emulators too) because "push_back" to a vector can change memory position of existing elements.
+        // element pointer become invalid (beware the traps)
+        for (auto& device: devices) {
+            if (device.media->group->isDisk())
+                assignSteps(device);
         }
 
         l = 0;
