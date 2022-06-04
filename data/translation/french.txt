@@ -682,3 +682,4 @@ toggle CRT GPU = Basculer sur le CRT via le CPU
 Tape = Cassette
 Tape Profile =  Profil de la Cassette
 Sync status = Sync status
+allow opposite directions =

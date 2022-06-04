@@ -43,6 +43,7 @@ struct InputMapping {
     bool autoFire = false;
     bool isShadowed = false;
     unsigned autoFirePos = 0;
+    InputMapping* illegalMapping = nullptr;
 	
 	auto isAnalog() const -> bool { return type == Analog; }
     auto isSwitch() const -> bool { return type == Switch; }
@@ -129,6 +130,7 @@ struct InputManager {
     unsigned autoFireFrequency;
     std::vector<InputMapping*> autoFireMappings;
     bool allowTouchlessAutofire = false;
+    GUIKIT::Setting* oppositeSetting;
 
 	static std::vector<InputMapping*> hotkeyTriggers;
     static bool driverChange;
@@ -182,6 +184,8 @@ struct InputManager {
     auto resetTouchlessAutofire() -> void;
 	auto isAutofireActive(InputMapping* trigger) -> bool;
 	auto toggleAutofire(InputMapping* trigger) -> void;
+    auto setIllegalMappings() -> void;
+    auto updateOppositeDirections() -> void;
     
     inline auto updateAndTrigger() -> void;
     inline auto addAndTrigger(InputMapping* newTrigger) -> void;

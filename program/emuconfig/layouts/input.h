@@ -3,6 +3,7 @@ struct InputSelector : GUIKIT::HorizontalLayout {
     GUIKIT::ComboButton device;
 	GUIKIT::CheckButton hotkeys;
 	GUIKIT::Widget spacer;
+    GUIKIT::CheckBox oppositeDirections;
     GUIKIT::Label plugin;
     
     struct AssignedConnector {
@@ -91,6 +92,7 @@ struct InputLayout : GUIKIT::VerticalLayout {
     auto updateAssigner() -> void;
     auto loadSettings() -> void;
     auto updateAutofireFrequency() -> void;
+    auto updateOppsiteDirections() -> void;
     auto updatedAutofireButtonHints() -> void;
 
     InputSelector selector;

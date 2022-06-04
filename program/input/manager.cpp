@@ -71,7 +71,7 @@ auto InputManager::unmapDevice(unsigned deviceId) -> void {
 }
 
 auto InputManager::update() -> void {
-    
+
     if (InputManager::urgentUpdate) {
         alternateSort();
         andTriggers.clear();
@@ -81,6 +81,9 @@ auto InputManager::update() -> void {
 	int16_t value;
     unsigned ignoreBelow = 0;
     std::vector<InputMapping*> shadows;
+    std::vector<InputMapping*> illegals;
+    bool hasShadow = false;
+    bool hasIllegal = false;
     bool aSwitch;
     unsigned hidSize;
     uiMouse.updated = false;
@@ -178,9 +181,20 @@ auto InputManager::update() -> void {
                     } else
                         useMapping->state = value;
 
+                    if (useMapping->illegalMapping && !*oppositeSetting) {
+                        illegals.push_back(useMapping);
+                        hasIllegal = true;
+                    }
+
                     for(auto shadow : useMapping->shadowMap) {
                         shadow->virtualLinked = useMapping;
+                        if (shadow->illegalMapping && !*oppositeSetting) {
+                            illegals.push_back(shadow);
+                            hasIllegal = true;
+                        }
+
                         shadows.push_back(shadow);
+                        hasShadow = true;
                     }
 
 					break;
@@ -228,6 +242,7 @@ auto InputManager::update() -> void {
                 for (auto shadow : useMapping->shadowMap) {
                     shadow->virtualLinked = useMapping;
                     shadows.push_back(shadow);
+                    hasShadow = true;
                 }
             }
                         
@@ -240,10 +255,19 @@ auto InputManager::update() -> void {
         Next:
             continue;
 	}
-    
-    if(shadows.size()) {
+
+    if(hasShadow) {
         for (auto shadow : shadows)
             shadow->state = shadow->virtualLinked->state;
+    }
+
+    if(hasIllegal) {
+        for(auto illegal : illegals) {
+            if (illegal->state == illegal->illegalMapping->state) {
+                illegal->state = 0;
+                illegal->illegalMapping->state = 0;
+            }
+        }
     }
 
     if (allowTouchlessAutofire && Program::focused)

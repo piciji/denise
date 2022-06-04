@@ -27,6 +27,8 @@ auto InputManager::init() -> void {
         manager->updateAnalogSensitivity();
 
         manager->updateAutofireFrequency();
+
+        manager->updateOppositeDirections();
         
         auto settings = program->getSettings( manager->emulator );
         
@@ -85,6 +87,21 @@ auto InputManager::resetMappings() -> void {
         
         mapper->setting = settings->add( settingIdent );
         mapper->alternate->setting = settings->add(settingIdent + "_alt");
+    }
+}
+
+auto InputManager::setIllegalMappings() -> void {
+    InputMapping* mapper;
+
+    for (auto& device : emulator->devices) {
+        if (!device.isJoypad())
+            continue;
+        // up <> down
+        mapper = (InputMapping*)device.inputs[0].guid;
+        mapper->illegalMapping = (InputMapping*)device.inputs[1].guid;
+        // left <> right
+        mapper = (InputMapping*)device.inputs[2].guid;
+        mapper->illegalMapping = (InputMapping*)device.inputs[3].guid;
     }
 }
 
@@ -160,6 +177,8 @@ auto InputManager::setMappings() -> void {
 
 				mapper->generateAlternate( settings );
 			}
+
+            manager->setIllegalMappings();
 		}
 	}
 	
@@ -570,6 +589,14 @@ auto InputManager::getDeviceFromIdent( unsigned id ) -> Hid::Device* {
     }
     
     return nullptr;
+}
+
+auto InputManager::updateOppositeDirections() -> void {
+    if (!emulator)
+        return;
+
+    auto settings = program->getSettings( emulator );
+    oppositeSetting = settings->getOrInit<bool>("allow_opposite_directions", false);
 }
 
 auto InputManager::updateAutofireFrequency() -> void {

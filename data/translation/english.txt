@@ -682,3 +682,4 @@ toggle CRT GPU = toggle CRT via GPU
 Tape = Tape
 Tape Profile = Tape Profile
 Sync status = Sync status
+allow opposite directions = allow opposite directions

@@ -668,8 +668,8 @@ struct DVideo : Video, RenderThread {
                 wait();
                 integerScalingHeight = _height;
                 if (!reset()) {
-                    if (!init())
-                        return false;
+                    init();
+                    return false;
                 }
             }
 
@@ -681,8 +681,8 @@ struct DVideo : Video, RenderThread {
             return RenderThread::lock(data, pitch, _width, _height);
         } else {
 			if (lost && !recover()) {
-				if (!init())
-					return false;              
+				init();
+                return false;
 			}
 		}
 
@@ -693,8 +693,8 @@ struct DVideo : Video, RenderThread {
         if (_height != integerScalingHeight) {
             integerScalingHeight = _height;
             if (!reset()) {
-                if (!init())
-                    return false;
+                init();
+                return false;
             }
         }
 

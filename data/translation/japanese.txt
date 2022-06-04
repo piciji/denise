@@ -682,3 +682,4 @@ toggle CRT GPU = CRTエミュレーションをGPUで行う
 Tape = カセット
 Tape Profile = カセットプロファイル
 Sync status = Sync status
+allow opposite directions =

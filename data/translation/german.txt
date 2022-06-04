@@ -682,3 +682,4 @@ toggle CRT GPU = CRT über GPU umschalten
 Tape = Datasette
 Tape Profile = Datasette Profile
 Sync status = Sync Status
+allow opposite directions = entgegengesetzte Richtungen zulassen

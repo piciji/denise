@@ -766,7 +766,7 @@ auto ModelLayout::appendAudioSelectorLayout() -> void {
     update( *lines[lines.size() - 1], 10 );    
 
     controlLayout.append(controlLayout.label, {getAlignedWidth(), 0u}, 5);
-    controlLayout.append(controlLayout.firstAll, {0u, 0u}, 5);
+    controlLayout.append(controlLayout.firstAll, {0u, 0u}, GUIKIT::Application::isCocoa() ? 7 : 5);
     controlLayout.append(controlLayout.secondAll, {0u, 0u}, 20);
     controlLayout.setAlignment(0.5);
     append(controlLayout, {0u, 0u}, 5);
