@@ -17,9 +17,9 @@ pStatusBar::~pStatusBar() {
 
 auto pStatusBar::create() -> void {    
     
-	if (pWindow::XPOrBelowOrWin7InXPMode())
-		hwnd = CreateWindowEx( WS_EX_COMPOSITED, STATUSCLASSNAME, L"", WS_CHILD, 0, 0, 0, 0, statusBar.window()->p.hwnd, (HMENU)(unsigned long long)statusBar.id, GetModuleHandle(0), 0);
-	else
+	//if (pWindow::XPOrBelowOrWin7InXPMode())
+	//	hwnd = CreateWindowEx( WS_EX_COMPOSITED, STATUSCLASSNAME, L"", WS_CHILD, 0, 0, 0, 0, statusBar.window()->p.hwnd, (HMENU)(unsigned long long)statusBar.id, GetModuleHandle(0), 0);
+	//else
 		hwnd = CreateWindow( STATUSCLASSNAME, L"", WS_CHILD, 0, 0, 0, 0, statusBar.window()->p.hwnd, (HMENU)(unsigned long long)statusBar.id, GetModuleHandle(0), 0);
     
 

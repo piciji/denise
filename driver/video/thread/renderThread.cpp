@@ -224,7 +224,7 @@ namespace DRIVER {
 #endif
 
                     if (cv.wait_for(lk, duration, [this]() {
-                        return ready.load();
+                        return ready.load() || kill.load();
                     })) {
                         if (kill) {
                             kill = false;

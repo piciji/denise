@@ -229,6 +229,7 @@ struct DVideo : Video, RenderThread {
 
             if ( getFullscreenAdapter(handle) >= 0 ) {
                 exclusiveFullscreen = true;
+				_clear();
 
                 if (exclusiveFullscreenNeedInit)
                     return false;
