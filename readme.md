@@ -13,13 +13,14 @@ Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trade
 
 # changelog
 
-## 1.1.3 (not yet released)
+## 1.1.3
 * added newtronics drive sound theme [thanks to enigma]
 * precise FPS counter and speed selection menu
     * define a custom speed
     * define decimal place for FPS counter
 * added option to render in a separate thread
     * improves VSync for non standard refresh rates, which prevents tearing
+    * new default setting
 * added option for adaptive sync (not to be confused with VRR)
     * automatically selects the best sync option for requested emulation speed
     * need to detect correct refresh rate (use hotkey to confirm it)
@@ -43,6 +44,8 @@ Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trade
 * added autofire
     * typical or self-firing continuous fire (superimposed by a press on the fire button)
     * turbo fire for left/right directions (shaking games)
+* added option to allow opposite directions
+    * by default, simultaneous pressing of opposite directions (left<>right, top<>down) is ignored
 * added support for second fire button (Cheetah Annihilator)
 * added tape drive sounds
     * you can add your own sounds

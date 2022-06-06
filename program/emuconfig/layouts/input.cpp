@@ -32,7 +32,6 @@ InputSelector::InputSelector() {
     append(device, {~0u, 0u}, 20);
 	append(hotkeys, {0u, 0u});
 	append(spacer, {~0u, 0u});
-    append(oppositeDirections, {0u, 0u}, 20);
     append(plugin, {0u, 0u}, 10);
     setAlignment(0.5);
 }
@@ -47,7 +46,8 @@ InputControl::InputControl() {
 
     append(mapper, {0u, 0u}, 10);     
 	append(linker, {0u, 0u}, 10);     
-    append(erase, {0u, 0u});
+    append(erase, {0u, 0u}, 10);
+    append(oppositeDirections, {0u, 0u});
     append(spacing, {~0u, 0u});
     append(alternate, {0u, 0u}, 5);  
     append(mapperAlt, {0u, 0u}, 10);     
@@ -310,7 +310,7 @@ InputLayout::InputLayout(TabWindow* tabWindow) : autofireControl(tabWindow->emul
         emuThread->unlock();
 	};
 
-    selector.oppositeDirections.onToggle = [this](bool checked) {
+    control.oppositeDirections.onToggle = [this](bool checked) {
         emuThread->lock();
         _settings->set<bool>("allow_opposite_directions", checked);
         emuThread->unlock();
@@ -344,7 +344,7 @@ auto InputLayout::updateAssigner() -> void {
 
 auto InputLayout::updateOppsiteDirections() -> void {
 
-    selector.oppositeDirections.setChecked( _settings->get<bool>("allow_opposite_directions", false) );
+    control.oppositeDirections.setChecked( _settings->get<bool>("allow_opposite_directions", false) );
 }
 
 auto InputLayout::stopCapture() -> void {
@@ -543,7 +543,7 @@ auto InputLayout::translate() -> void {
     stopCapture();
 	selector.hotkeys.setText( trans->get("hotkeys") );
     selector.plugin.setText( trans->get("plugin", {}, true) );
-    selector.oppositeDirections.setText( trans->get("allow opposite directions") );
+    control.oppositeDirections.setText( trans->get("allow opposite directions") );
     inputList.setHeaderText({ "", trans->get("input"), trans->get("map"), trans->get("alternate_map")});
     mapControl.reset.setText( trans->get( "reset" ) );
     mapControl.reset.setTooltip( trans->get( "reset_device_info" ) );
