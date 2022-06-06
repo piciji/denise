@@ -130,12 +130,13 @@ auto pStatusBar::update() -> void {
 				
 			gtkWidget = widget->p.gtkWidget;
 
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
+#else
             if (pApplication::desktopSession == pApplication::DesktopSession::XFCE || pApplication::desktopSession == pApplication::DesktopSession::KDE)
                 gtk_widget_set_margin_top(gtkWidget, 2);
-            else if (pApplication::desktopSession == pApplication::DesktopSession::Mate); // no margin needed
-            else // Cinnamon, Gnome, untested
+            else // Cinnamon, Mate, Gnome, untested
                 gtk_widget_set_margin_top(gtkWidget, 1);
-
+#endif
 			usedWidgets.push_back( widget );
 			
 		} else {
