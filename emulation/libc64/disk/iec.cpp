@@ -120,12 +120,12 @@ auto IecBus::setFastForward( bool state ) -> void {
 }
 
 auto IecBus::updateIdleState() -> void {
-    bool _idle = idle;
+   // bool _idle = idle;
     idle = (powerOn && drivesConnected > 0) ? !cpuBurner : true;
 
-    if (_idle != idle) {
-        updatePriority = true;
-    }
+    //if (_idle != idle) {
+    //    updatePriority = true;
+    //}
 }
 
 auto IecBus::run() -> void {
@@ -335,7 +335,7 @@ auto IecBus::writeParallelHandshake() -> void {
 auto IecBus::powerOff() -> void {
     
     idle = true;
-    updatePriority = true;
+    //updatePriority = true;
     powerOn = false;
     waitForDrives();
     

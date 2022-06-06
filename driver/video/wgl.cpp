@@ -48,6 +48,7 @@ struct WGL : Video, OpenGL, RenderThread {
 
         if (state != settings.threaded) {
             wait();
+			clearCurrent();
             RenderThread::enable(state);
 
             RenderThread::reset();
@@ -55,7 +56,7 @@ struct WGL : Video, OpenGL, RenderThread {
 
             settings.threaded = state;
 
-            clearCurrent();
+            
         }
     }
 

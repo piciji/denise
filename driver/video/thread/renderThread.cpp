@@ -208,10 +208,10 @@ namespace DRIVER {
             while (1) {
 
                 while (!ready.load()) {
-                    if (kill) {
+                 /*   if (kill) {
                         kill = false;
                         return;
-                    }
+                    }*/
                     
 #ifdef __APPLE__
                     if (updatePriority) {

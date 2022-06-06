@@ -826,14 +826,22 @@ template<bool _16bitSrc> auto VideoManager::createWorker(Render* re) -> void {
 
             while (!re->ready.load()) {
 
-                if (re->kill) {
+              /*  if (re->kill) {
                     re->kill = false;
                     return;
-                }
+                }*/
 
-                if (re->cv.wait_for(lk, duration, [re]() { return re->ready.load(); }))
-                    break;
+                if (re->cv.wait_for(lk, duration, [re]() {
+					return re->ready.load() || re->kill.load();
+				})) {
+					if (re->kill) {
+						re->kill = false;
+						return;
+					}
+					break;
+				}
             }
+			
             if (_16bitSrc)
                 renderCrtSelection<uint16_t>( re );
             else
