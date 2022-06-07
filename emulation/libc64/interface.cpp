@@ -25,7 +25,7 @@
 
 namespace LIBC64 {
 
-const std::string Interface::Version = "113";
+const std::string Interface::Version = "1131";
     
 Interface::Interface() : Emulator::Interface( "C64" ) {        
     
@@ -1496,7 +1496,7 @@ auto Interface::getModelValue(unsigned modelId) -> int {
         case ModelIdTapeDriveWobble:        return tape->hasWobble() ? 1 : 0;
         case ModelIdDiskDriveWobble:        return (int)iecBus->drives[0]->wobble;
         case ModelIdDiskDriveSpeed:         return (int)iecBus->drives[0]->rpm;
-        case ModelIdDiskDriveStepperSeekTime:return (int)iecBus->drives[0]->stepperSeekTime;
+        case ModelIdDiskDriveStepperSeekTime:return (int)(iecBus->drives[0]->stepperSeekTime / 100);
 
         case ModelIdCiaBurstMode:           return system->secondDriveCable.burstRequested;
         case ModelIdDriveParallelCable:     return system->secondDriveCable.parallelRequested;

@@ -46,6 +46,7 @@ auto Drive::serialize(Emulator::Serializer& s) -> void {
     s.integer( readBuffer );
     s.integer( writeBuffer );
     s.integer( attachDelay );
+    s.integer( stepperSeekTime );
     s.integer( stepperDelay );
     s.integer( delayInProgress );
     s.integer( nextStep );
