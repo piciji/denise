@@ -826,11 +826,6 @@ template<bool _16bitSrc> auto VideoManager::createWorker(Render* re) -> void {
 
             while (!re->ready.load()) {
 
-              /*  if (re->kill) {
-                    re->kill = false;
-                    return;
-                }*/
-
                 if (re->cv.wait_for(lk, duration, [re]() {
 					return re->ready.load() || re->kill.load();
 				})) {

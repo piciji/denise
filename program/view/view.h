@@ -7,7 +7,6 @@
 struct View : public GUIKIT::Window {
     Message* message;
 	GUIKIT::Timer placeholderTimer;
-	GUIKIT::Timer placeholderLongTimer;
 	GUIKIT::Timer anyloadTimer;
 	GUIKIT::Timer displayChangeTimer;
     GUIKIT::Timer priorityTimer;
@@ -55,7 +54,7 @@ struct View : public GUIKIT::Window {
 	auto setAnyload(Emulator::Interface* emulator) -> void;
 
     auto buildMenu() -> void;
-    auto updateViewport(bool moreDelay = false) -> void;
+    auto updateViewport() -> void;
 	auto updateShader() -> void;
 	auto switchFullScreen(bool fullScreen = true, bool forceUnacquire = false) -> void;
     auto updateMenuBar( bool toggle = false ) -> void;

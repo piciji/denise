@@ -208,17 +208,13 @@ namespace DRIVER {
             while (1) {
 
                 while (!ready.load()) {
-                 /*   if (kill) {
-                        kill = false;
-                        return;
-                    }*/
-                    
+
 #ifdef __APPLE__
                     if (updatePriority) {
                         updatePriority = false;
                         
                         if (ThreadPriority::setPriority( realtime ? ThreadPriority::Mode::Realtime : ThreadPriority::Mode::Normal, 3.0, 5.0 )) {
-                            //     logger->log(realtime ? "render thread realtime prio" : "render thread normal prio");
+                            // logger->log(realtime ? "render thread realtime prio" : "render thread normal prio");
                         }
                     }
 #endif

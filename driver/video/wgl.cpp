@@ -182,11 +182,12 @@ struct WGL : Video, OpenGL, RenderThread {
     auto unlockAndRedraw(bool disallowShader = false, bool freeContext = false) -> void {
         if (settings.threaded) {
             RenderThread::unlock(disallowShader);
-        } else
+        } else {
             redraw(disallowShader);
 
-        if (freeContext)
-            clearCurrent();
+            if (freeContext)
+                clearCurrent();
+        }
     }
 
 	auto lockResize() -> void {
