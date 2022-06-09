@@ -95,7 +95,7 @@ auto Video::preferred() -> std::string {
 
 auto Video::create(const std::string& driver) -> Video* {
     #ifdef DRV_DIRECT3D
-        if(driver == "Direct3D") return new DVideo();
+        if(driver == "Direct3D") return new DVideo( !IsAppThemed() || (Win::version <= 0x0501) );
 	#endif
 
 	#ifdef DRV_WGL

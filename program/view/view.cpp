@@ -255,6 +255,12 @@ auto View::build() -> void {
 		renderPlaceholder(false);
 	};
 	
+	placeholderLongTimer.setInterval(80);
+	placeholderLongTimer.onFinished = [this]() {
+		placeholderLongTimer.setEnabled(false);
+		renderPlaceholder(false);
+	};
+	
 	anyloadTimer.setInterval(40);
     displayChangeTimer.setInterval(500);
     displayChangeTimer.onFinished = [this]() {
@@ -429,12 +435,15 @@ auto View::updateStatusBar(bool toggle) -> void {
         updateViewport();
 }
 
-auto View::updateViewport() -> void {
+auto View::updateViewport(bool moreDelay) -> void {
     GUIKIT::Geometry geometry = this->geometry();
     geometry.x = geometry.y = 0;
 
 	viewport.setGeometry( geometry );
-	placeholderTimer.setEnabled(true);
+	if (moreDelay)
+		placeholderLongTimer.setEnabled(true);
+	else
+		placeholderTimer.setEnabled(true);
 }
 
 auto View::checkInputDevice( Emulator::Interface* emulator, Emulator::Interface::Connector* connector, Emulator::Interface::Device* device ) -> void {
@@ -1106,7 +1115,7 @@ auto View::buildMenu() -> void {
         emuThread->unlock();
 
 		videoDriver->setFilter( DRIVER::Video::Filter::Linear );
-		this->updateViewport();
+		this->updateViewport(true);
 
 		if (cursorForPlaceholderInUpperTriangle()) {
 			view->setPointerCursor();

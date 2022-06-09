@@ -16,6 +16,9 @@ namespace DRIVER {
 #define MAX_MONITORS 9
 #endif
 
+static HMONITOR monList[MAX_MONITORS];
+static unsigned monPos = 0;
+
 auto CALLBACK MonitorEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData) -> BOOL;
 
 struct DVideo : Video, RenderThread {
@@ -38,13 +41,10 @@ struct DVideo : Video, RenderThread {
     RECT outScreen;
     RECT lastWindowSize = {0};
     std::mutex noteMutex;
-	bool themed = true;
+	const bool XPMode;
 
     int64_t lastCapTime;
     int64_t minimumCapTime;
-
-    HMONITOR monList[MAX_MONITORS];
-    unsigned monPos = 0;
 
     struct {
         bool synchronize;
@@ -323,7 +323,7 @@ struct DVideo : Video, RenderThread {
         term();
 
         if (monPos == 0) {
-            EnumDisplayMonitors(NULL, NULL, MonitorEnumProc, (LPARAM)this );
+            EnumDisplayMonitors(NULL, NULL, MonitorEnumProc, (LPARAM)NULL );
         }
 
         if ((lpD3D = Direct3DCreate9(D3D_SDK_VERSION)) == NULL) {
@@ -430,8 +430,9 @@ struct DVideo : Video, RenderThread {
         }
     }
 
+
     auto redraw(bool disallowShader = false) -> void {
-		if (!themed)
+		if (XPMode)
 			return redrawCustom(disallowShader);			
 		
         resizeMutexThreaded.lock();
@@ -453,21 +454,20 @@ struct DVideo : Video, RenderThread {
         if (lpD3DDevice->Present(0, 0, 0, 0) == D3DERR_DEVICELOST) {
             lost = true;
         }
-
+		
         resizeMutexThreaded.unlock();
     }
-
-    inline auto _redraw(bool disallowShader = false) -> void {
-
-        RECT windowsize = getDimension(settings.handle);
-        if ((windowsize.right != lastWindowSize.right) || (windowsize.bottom != lastWindowSize.bottom)) {
-            wait();
-
-            if (!reset()) {
-                if (!init())
-                    return;
-            }
-        }
+	
+    auto _redraw(bool disallowShader) -> void {
+		RECT windowsize;
+		
+		if (!XPMode) {
+			windowsize = getDimension(settings.handle);
+			if ((windowsize.right != lastWindowSize.right) || (windowsize.bottom != lastWindowSize.bottom)) {
+				if (!resetOrInit())
+					return;
+			}
+		}
 
         unsigned outWidth = outScreen.right;
         unsigned outHeight = outScreen.bottom;
@@ -511,6 +511,14 @@ struct DVideo : Video, RenderThread {
         if (lpD3DDevice->Present(0, 0, 0, 0) == D3DERR_DEVICELOST) {
             lost = true;
         }
+		
+		if (XPMode) {
+			windowsize = getDimension(settings.handle);
+			if ((windowsize.right != lastWindowSize.right) || (windowsize.bottom != lastWindowSize.bottom)) {
+				if (!resetOrInit())
+					return;
+			}
+		}
     }
 
     auto refresh() -> void {
@@ -963,8 +971,19 @@ struct DVideo : Video, RenderThread {
             remaining = lastCapTime - Chronos::getTimestampInMicroseconds();
         }
     }
+	
+	auto resetOrInit() -> bool {
+		wait();
 
-    DVideo() {
+		if (!reset()) {
+			if (!init())
+				return false;
+		}
+		
+		return true;
+	}
+	
+    DVideo(bool XPMode) : XPMode(XPMode) {
         lpD3DDevice = 0;
         lpD3D = 0;
         mFont = 0;
@@ -974,8 +993,7 @@ struct DVideo : Video, RenderThread {
         surface = 0;
         texture = 0;
 
-        lost = true;
-		themed = IsAppThemed();
+        lost = true;		
         settings.filter = Filter::Nearest;
         settings.synchronize = false;
         settings.handle = nullptr;
@@ -999,9 +1017,8 @@ struct DVideo : Video, RenderThread {
 #undef D3DVERTEX
 
 auto CALLBACK MonitorEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData) -> BOOL {
-    DVideo* dVideo = (DVideo*)dwData;
 
-    dVideo->monList[dVideo->monPos++] = hMonitor;
+    monList[monPos++] = hMonitor;
     return true;  // continue enumerating
 }
 
