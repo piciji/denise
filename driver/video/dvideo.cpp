@@ -414,7 +414,9 @@ struct DVideo : Video, RenderThread {
     auto unlockAndRedraw(bool disallowShader = false, bool freeContext = false) -> void {
 
         if (settings.threaded) {
+            resizeMutex.lock();
             RenderThread::unlock(disallowShader);
+            resizeMutex.unlock();
         } else {
             resizeMutex.lock();
             if (surface) {
@@ -433,7 +435,7 @@ struct DVideo : Video, RenderThread {
 			return redrawCustom(disallowShader);			
 		
         resizeMutexThreaded.lock();
-		_redraw(disallowShader, true);			
+		_redraw(disallowShader);
         resizeMutexThreaded.unlock();
     }
 
@@ -455,16 +457,13 @@ struct DVideo : Video, RenderThread {
         resizeMutexThreaded.unlock();
     }
 
-    inline auto _redraw(bool disallowShader = false, bool useReset = false) -> void {
+    inline auto _redraw(bool disallowShader = false) -> void {
 
         RECT windowsize = getDimension(settings.handle);
         if ((windowsize.right != lastWindowSize.right) || (windowsize.bottom != lastWindowSize.bottom)) {
             wait();
-            bool result = false;
-            if (useReset)
-                result = reset();
 
-            if (!result) {
+            if (!reset()) {
                 if (!init())
                     return;
             }
@@ -669,8 +668,8 @@ struct DVideo : Video, RenderThread {
                 wait();
                 integerScalingHeight = _height;
                 if (!reset()) {
-                    init();
-                    return false;
+                    if (!init())
+                        return false;
                 }
             }
 
@@ -682,8 +681,8 @@ struct DVideo : Video, RenderThread {
             return RenderThread::lock(data, pitch, _width, _height);
         } else {
 			if (lost && !recover()) {
-				init();
-                return false;
+				if (!init())
+                    return false;
 			}
 		}
 
@@ -694,8 +693,8 @@ struct DVideo : Video, RenderThread {
         if (_height != integerScalingHeight) {
             integerScalingHeight = _height;
             if (!reset()) {
-                init();
-                return false;
+                if (!init())
+                    return false;
             }
         }
 
@@ -849,10 +848,6 @@ struct DVideo : Video, RenderThread {
     }
 
     auto unlockResize() -> void {
-        if (!reset()) {
-            wait();
-            init();
-        }
         resizeMutexThreaded.unlock();
         resizeMutex.unlock();
     }
