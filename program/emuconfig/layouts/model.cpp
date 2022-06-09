@@ -258,7 +258,6 @@ auto ModelLayout::updateWidgets( ) -> void {
             if (tabWindow->mediaLayout && block->model->isDriveSettings() &&
             (emulator->getModelIdOfEnabledDrives(emulator->getDiskMediaGroup()) == block->model->id) ) {
                 tabWindow->mediaLayout->updateVisibility( emulator->getDiskMediaGroup(), block->combo.selection() );
-                tabWindow->settings->remove( "access_floppy" );
             }
         }
     }
@@ -564,7 +563,6 @@ auto ModelLayout::applyCustomStuff( Line::Block* block, Emulator::Interface::Mod
             case LIBC64::Interface::ModelIdDiskDrivesConnected:
                 if(tabWindow->mediaLayout)
                     tabWindow->mediaLayout->updateVisibility( emulator->getDiskMediaGroup(), block->combo.selection() );
-                tabWindow->settings->remove( "access_floppy" );
                 // fall through
             case LIBC64::Interface::ModelIdTapeDrivesConnected:
             case LIBC64::Interface::ModelIdDriveRam20To3F:

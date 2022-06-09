@@ -561,9 +561,19 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             GUIKIT::File* file;
 
             emuThread->lock();
-            auto media = activeEmulator->getDisk( mediaId );
+            auto defaultMedia = activeEmulator->getDisk( 0 );
+            auto mediaGroup = defaultMedia->group;
+
+            unsigned enabledCount = activeEmulator->getModelValue( activeEmulator->getModelIdOfEnabledDrives(mediaGroup) );
+            if (enabledCount > mediaGroup->media.size())
+                enabledCount = mediaGroup->media.size();
+
+            auto media = defaultMedia;
+            if ( ( mediaId < mediaGroup->media.size() ) && ( mediaId < enabledCount ) )
+                media = activeEmulator->getDisk( mediaId );
+
             if (!media)
-                break;                                        
+                break;
 
             uint8_t* data;						
 

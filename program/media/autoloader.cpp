@@ -369,8 +369,6 @@ auto Autoloader::activateDrive( Emulator::Interface* emulator, Emulator::Interfa
 
     emulator->setModelValue( modelId, requestedCount );
 
-	settings->remove( "access_floppy" );
-
     auto emuView = EmuConfigView::TabWindow::getView( emulator );
 
     if (emuView) {

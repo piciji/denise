@@ -535,7 +535,12 @@ auto States::updateModels() -> void {
         if (emuView->systemLayout) {
             emuView->systemLayout->modelLayout.updateWidgets();
             emuView->systemLayout->driveModelLayout.updateWidgets();
+
+        } else if (emuView->mediaLayout) {
+            int value = emulator->getModelValue(emulator->getModelIdOfEnabledDrives(emulator->getDiskMediaGroup()));
+            emuView->mediaLayout->updateVisibility( emulator->getDiskMediaGroup(), value );
         }
+
         if (emuView->audioLayout)
             emuView->audioLayout->settingsLayout.updateWidgets();
     }
