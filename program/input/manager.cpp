@@ -188,10 +188,10 @@ auto InputManager::update() -> void {
 
                     for(auto shadow : useMapping->shadowMap) {
                         shadow->virtualLinked = useMapping;
-                        if (shadow->illegalMapping && !*oppositeSetting) {
-                            illegals.push_back(shadow);
-                            hasIllegal = true;
-                        }
+//                        if (shadow->illegalMapping && !*oppositeSetting) {
+//                            illegals.push_back(shadow);
+//                            hasIllegal = true;
+//                        }
 
                         shadows.push_back(shadow);
                         hasShadow = true;
