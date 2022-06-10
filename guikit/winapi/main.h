@@ -124,6 +124,7 @@ struct pStatusBar {
     HWND hwndTip = nullptr;
     HBRUSH brush;
     StatusBar::Part* hoverPart;
+    bool lock = false;
     
     std::vector<StatusBar::Part*> usedParts;
     

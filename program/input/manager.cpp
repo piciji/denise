@@ -306,8 +306,13 @@ auto InputManager::handleAutofire(InputMapping* mapping, InputMapping* useMappin
         if (!jit.enable ||
             ((Chronos::getTimestampInMilliseconds() - jit.lastTimestamp) > jit.rescanDelay)) {
             if (mapping->autoFirePos == 0) {
-                mapping->autoFirePos = autoFireFrequency;
-                useMapping->state = 0x80;
+                if (autoFireHold) {
+                    mapping->autoFirePos = autoFireFrequency + 1;
+                    useMapping->state = 1;
+                } else {
+                    mapping->autoFirePos = autoFireFrequency;
+                    useMapping->state = 0x80;
+                }
             } else {
                 mapping->autoFirePos--;
                 if (mapping->autoFirePos == 0)

@@ -601,7 +601,9 @@ auto InputManager::updateOppositeDirections() -> void {
 
 auto InputManager::updateAutofireFrequency() -> void {
 
-    autoFireFrequency = program->getSettings(emulator)->get<unsigned>( "autofire_frequency", 1, {1, 99} );
+    auto settings = program->getSettings(emulator);
+    autoFireHold = settings->get<unsigned>( "autofire_hold", false );
+    autoFireFrequency = settings->get<unsigned>( "autofire_frequency", 1, {1, 99} );
 
     for(auto mapper : autoFireMappings)
         mapper->autoFirePos = 1;

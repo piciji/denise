@@ -683,3 +683,4 @@ Tape = Datasette
 Tape Profile = Datasette Profile
 Sync status = Sync Status
 allow opposite directions = entgegengesetzte Richtungen zulassen
+hold Autofire = Dauerfeuer länger halten

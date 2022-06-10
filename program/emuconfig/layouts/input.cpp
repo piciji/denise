@@ -21,7 +21,8 @@ AutofireControl::AutofireControl(Emulator::Interface* emulator) : autofireSlider
         }
     }
 
-    append(autofireSlider, {~0u, 0u});
+    append(autofireSlider, {~0u, 0u}, 10);
+    append(autofireHold, {0u, 0u});
     autofireSlider.slider.setLength( 99 );
     autofireSlider.updateValueWidth( "99" );
 
@@ -176,6 +177,14 @@ InputLayout::InputLayout(TabWindow* tabWindow) : autofireControl(tabWindow->emul
         _settings->set<unsigned>( "autofire_frequency", position );
         autofireControl.autofireSlider.setValue( std::to_string(position) );
 
+        emuThread->lock();
+        manager->updateAutofireFrequency();
+        emuThread->unlock();
+    };
+
+    autofireControl.autofireHold.onToggle = [this](bool checked) {
+        auto manager = InputManager::getManager( this->emulator );
+        _settings->set<bool>( "autofire_hold", checked );
         emuThread->lock();
         manager->updateAutofireFrequency();
         emuThread->unlock();
@@ -501,6 +510,7 @@ auto InputLayout::updateAutofireFrequency() -> void {
     unsigned position = _settings->get<unsigned>( "autofire_frequency", 1, {1, 99} );
     autofireControl.autofireSlider.setValue( std::to_string(position) );
     autofireControl.autofireSlider.slider.setPosition( position - 1 );
+    autofireControl.autofireHold.setChecked( _settings->get<bool>( "autofire_hold", false ) );
 }
 
 auto InputLayout::appendListEntry(std::string& name, Emulator::Interface::Device::Input& input, GUIKIT::Image* image) -> void {
@@ -585,6 +595,7 @@ auto InputLayout::translate() -> void {
     }
 
     autofireControl.autofireSlider.name.setText( trans->get("Autofire Rate", {}, true) );
+    autofireControl.autofireHold.setText( trans->get("hold Autofire") );
     
     SliderLayout::scale({&mapControl.analogSensitivity}, "100 %");
 }

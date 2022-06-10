@@ -59,6 +59,7 @@ struct AutofireControl : GUIKIT::HorizontalLayout {
     std::vector<Buttons> buttons;
 
     SliderLayout autofireSlider;
+    GUIKIT::CheckBox autofireHold;
 
     AutofireControl(Emulator::Interface* emulator);
 };

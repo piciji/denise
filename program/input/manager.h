@@ -128,6 +128,7 @@ struct InputManager {
     std::vector<InputMapping*> mappingsInUse;
     std::vector<InputMapping*> andTriggers;
     unsigned autoFireFrequency;
+    bool autoFireHold = false;
     std::vector<InputMapping*> autoFireMappings;
     bool allowTouchlessAutofire = false;
     GUIKIT::Setting* oppositeSetting;
