@@ -95,7 +95,7 @@ auto Video::preferred() -> std::string {
 
 auto Video::create(const std::string& driver) -> Video* {
     #ifdef DRV_DIRECT3D
-        if(driver == "Direct3D") return new DVideo( !IsAppThemed() || (Win::version <= 0x0501) );
+        if(driver == "Direct3D") return new DVideo( !IsAppThemed() || (Win::getVersion() <= 0x0501) );
 	#endif
 
 	#ifdef DRV_WGL
@@ -117,17 +117,17 @@ auto Audio::available() -> std::vector<std::string> {
     std::vector<std::string> list;
 
     #ifdef DRV_XAUDIO29
-		if (Win::version >= 0x0a00)
+		if (Win::getVersion() >= 0x0a00)
             list.push_back("XAudio 2.9"); 
 	#endif
         
     #ifdef DRV_XAUDIO28
-		if (Win::version >= 0x0602)
+		if (Win::getVersion() >= 0x0602)
             list.push_back("XAudio 2.8"); 
 	#endif
         
     #ifdef DRV_XAUDIO27
-        if (Win::version >= 0x0501)
+        if (Win::getVersion() >= 0x0501)
             list.push_back("XAudio 2.7"); 
 	#endif
 	
@@ -161,17 +161,17 @@ auto Audio::available() -> std::vector<std::string> {
 auto Audio::preferred() -> std::string {
 
     #ifdef DRV_XAUDIO29
-        if (Win::version >= 0x0a00)
+        if (Win::getVersion() >= 0x0a00)
             return "XAudio 2.9";
     #endif
     
     #ifdef DRV_XAUDIO28
-        if (Win::version >= 0x0602)
+        if (Win::getVersion() >= 0x0602)
             return "XAudio 2.8";
     #endif
         
     #ifdef DRV_XAUDIO27
-        if (Win::version >= 0x0501)
+        if (Win::getVersion() >= 0x0501)
             return "XAudio 2.7";
     #endif
 
@@ -204,15 +204,15 @@ auto Audio::create(const std::string& driver) -> Audio* {
 	#endif
 
     #ifdef DRV_XAUDIO27
-        if(driver == "XAudio 2.7" && Win::version >= 0x0501 ) return new XAudio2(27u);
+        if(driver == "XAudio 2.7" && Win::getVersion() >= 0x0501 ) return new XAudio2(27u);
 	#endif
 
     #ifdef DRV_XAUDIO28
-        if(driver == "XAudio 2.8" && Win::version >= 0x0602 ) return new XAudio2(28u);
+        if(driver == "XAudio 2.8" && Win::getVersion() >= 0x0602 ) return new XAudio2(28u);
 	#endif
 
     #ifdef DRV_XAUDIO29
-        if(driver == "XAudio 2.9" && Win::version >= 0x0a00) return new XAudio2(29u);
+        if(driver == "XAudio 2.9" && Win::getVersion() >= 0x0a00) return new XAudio2(29u);
 	#endif
 
 	#ifdef DRV_PULSEAUDIO

@@ -5,8 +5,6 @@
 #include "../../driver.h"
 #include "../../tools/win.h"
 
-unsigned Win::version = Win::getVersion();
-
 #if defined (DRV_XAUDIO27) && !defined(DRV_XAUDIO28) && !defined(DRV_XAUDIO29)
     #define _WIN32_WINNT 0x0501
     #define XA_IDENT Audio

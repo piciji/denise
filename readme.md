@@ -14,27 +14,35 @@ Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trade
 # changelog
 
 ## 1.1.3
-* added newtronics drive sound theme [thanks to enigma]
+* added newtronics drive sound profile [thanks to enigma]
 * precise FPS counter and speed selection menu
     * define a custom speed
-    * define decimal place for FPS counter
-* added option to render in a separate thread
-    * improves VSync for non standard refresh rates, which prevents tearing
-    * new default setting
+    * define decimal place and refresh interval for FPS counter
+* added option to render in a separate thread [threaded renderer]
+    * improves VSync for non standard refresh rates, like 50.125 Hz
+    * new default setting, because most reliable
 * added option for adaptive sync (not to be confused with VRR)
     * automatically selects the best sync option for requested emulation speed
-    * need to detect correct refresh rate (use hotkey to confirm it)
+    * outperforms threaded renderer, but it needs more attention
+    * first it needs threaded renderer to be disabled
+    * need to detect correct refresh rate (use new sync hotkey to confirm if it fits)
+    * refresh rate detection works for primary screen only (at the moment)
+    * threaded renderer will be enabled automatically if display refresh rate differs from user requested emu speed
+    * skips frames when user requested emu speed is a multiple of display refresh rate
 * fixed jerky scrolling for Linux and macOS
 * added option to change the size of the window in the correct aspect ratio
-* added option to emulate in a separate thread besides UI
-    * audio/video when browsing the file dialog or moving/sizing window is not blocked
+* added option to emulate in a separate thread besides User Interface
+    * unblocked audio/video when browsing the file dialog or moving/sizing window
 * fix support for VRR displays (G-Sync/FreeSync)
-    * don't forget to enabale VRR in your display settings
+    * reduce input lag by 20 ms (PAL)
+    * don't forget to enabale VRR in your monitor OSD or display software
     * set display refresh rate to maximum
     * don't forget to disable VSync in emulator
     * Linux and macOS don't support VRR in window mode (not an emulator problem)
     * old direct3D9 driver in Denise support it only in exclusive fullscreen
-    * use openGL in Windows (supports VRR in window and fullscreen mode) 
+    * use openGL in Windows (supports VRR in window and fullscreen mode)
+    * when changing the emu speed, within the VRR interval, the scrolling remains soft
+    * without adjusting the display refresh rate you can switch between 50.125 Hz (PAL) and 59.826 Hz (NTSC)
 * using revision 1/2 kernals when selecting old VIC's
     * only happens if standard firmware is selected
 * show tape content in User Interface
@@ -44,13 +52,16 @@ Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trade
 * added autofire
     * typical or self-firing continuous fire (superimposed by a press on the fire button)
     * turbo fire for left/right directions (shaking games)
+    * adjustable autofire frequency 
 * added option to allow opposite directions
     * by default, simultaneous pressing of opposite directions (left<>right, top<>down) is ignored
 * added support for second fire button (Cheetah Annihilator)
 * added tape drive sounds
-    * you can add your own sounds
+    * like floppies, you can add your own sound profiles
+    * you can send me new profiles and I will integrate them permanently with the next release
 * FreeBSD support
 * macOS M1 support
+* a lot of fixes
 
 ## 1.1.2
 * P64 support

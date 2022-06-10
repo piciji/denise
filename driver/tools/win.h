@@ -16,12 +16,15 @@
 
 struct Win {
 
-    static unsigned version;
-    
     typedef LONG NTSTATUS, *PNTSTATUS;
     typedef NTSTATUS(WINAPI* RtlGetVersionPtr)(PRTL_OSVERSIONINFOW);
 
     static auto getVersion() -> unsigned {
+        static unsigned version = 0;
+
+        if (version)
+            return version;
+
         HMODULE hMod = ::GetModuleHandleW(L"ntdll.dll");
         if (hMod) {
             RtlGetVersionPtr fxPtr = (RtlGetVersionPtr)::GetProcAddress(hMod, "RtlGetVersion");
@@ -30,7 +33,8 @@ struct Win {
                 rovi.dwOSVersionInfoSize = sizeof (rovi);
                 if (0x00000000 == fxPtr(&rovi)) {
                     FreeLibrary(hMod);
-                    return (rovi.dwMajorVersion << 8) | rovi.dwMinorVersion;
+                    version = (rovi.dwMajorVersion << 8) | rovi.dwMinorVersion;
+                    return version;
                 }
             }
         }
@@ -42,7 +46,8 @@ struct Win {
         versionInfo.dwOSVersionInfoSize = sizeof (OSVERSIONINFO);
         GetVersionEx(&versionInfo);
 
-        return (versionInfo.dwMajorVersion << 8) | versionInfo.dwMinorVersion;
+        version = (versionInfo.dwMajorVersion << 8) | versionInfo.dwMinorVersion;
+        return version;
     }
     
     //convert wide char to utf8
