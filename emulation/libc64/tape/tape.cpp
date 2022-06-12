@@ -273,7 +273,7 @@ auto Tape::power() -> void {
 
     autoStarted = false;
     if (system->driveSounds.useTape) {
-        if (loaded && !system->powerOn)
+        if (loaded && enabled && !system->powerOn)
             system->interface->mixDriveSound(mediaConnected, DriveSound::TapeInsert);
     }
 }
@@ -330,7 +330,7 @@ auto Tape::load(Emulator::Interface::Media* media, uint8_t* data, unsigned size)
 	
 	reset();
 
-    if (system->powerOn && system->driveSounds.useTape)
+    if (system->powerOn && enabled && system->driveSounds.useTape)
         system->interface->mixDriveSound( mediaConnected, DriveSound::TapeInsert, attachDetach );
 }
 
@@ -339,7 +339,7 @@ auto Tape::unload() -> void {
 	writeBuffer();
 
     if (loaded) {
-        if (system->powerOn && system->driveSounds.useTape)
+        if (system->powerOn && enabled && system->driveSounds.useTape)
             system->interface->mixDriveSound( mediaConnected, DriveSound::TapeEject );
     }
 	
