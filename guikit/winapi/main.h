@@ -54,6 +54,7 @@ struct pWindow {
     HMENU hmenu;
 	HMENU contextmenu;
     bool locked;
+    bool resizingInProgress = false;
 
     HBRUSH brush;
     COLORREF brushColor;
@@ -124,7 +125,7 @@ struct pStatusBar {
     HWND hwndTip = nullptr;
     HBRUSH brush;
     StatusBar::Part* hoverPart;
-    bool lock = false;
+    bool locked = false;
     
     std::vector<StatusBar::Part*> usedParts;
     

@@ -96,8 +96,8 @@ auto pStatusBar::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
             auto& p = statusBar->p;
 			if (xpMode && statusBar->window()->fullScreen() );
 			else {
-                if (p.lock)
-                    p.lock = false;
+                if (p.locked )
+                    p.locked = false;
                 else
                     SetWindowPos(hwnd, NULL, 0, 0, 0, 0, SWP_NOZORDER | SWP_FRAMECHANGED | SWP_NOREDRAW);
             }
@@ -285,7 +285,7 @@ auto pStatusBar::update() -> void {
     
     delete[] widths;
 
-    lock = false;
+    locked = false;
     SetWindowPos(hwnd, NULL, 0, 0, 0, 0, SWP_NOZORDER | SWP_FRAMECHANGED);
 }
 
@@ -357,7 +357,7 @@ auto pStatusBar::drawItem(WPARAM wparam, LPARAM lparam) -> void {
        // SetBkColor(hDC, GetSysColor(COLOR_MENU));
         DrawText(hDC, utf16_t(part.text.c_str()), -1, &rect, DT_SINGLELINE | DT_NOCLIP | (part.alignRight ? DT_RIGHT : 0) );
     }
-    lock = true;
+    locked = !statusBar.window()->p.resizingInProgress;
 }
 
 auto pStatusBar::onClick(LPARAM lparam) -> void {

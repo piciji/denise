@@ -389,12 +389,13 @@ auto CALLBACK pWindow::wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam
 			if(window.winapi.onMenu) window.winapi.onMenu();
 			break;
         case WM_ENTERSIZEMOVE:
+            window.p.resizingInProgress = true;
             if (window.onResizeStart && !window.fullScreen())
                 window.onResizeStart();
 
             return 0;
         case WM_EXITSIZEMOVE:
-
+            window.p.resizingInProgress = false;
             if (window.onResizeEnd && !window.fullScreen())
                 window.onResizeEnd();
             return 0;
