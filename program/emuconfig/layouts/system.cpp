@@ -113,13 +113,12 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
     for( auto block : memoryLayout.blocks ) {
         auto memoryType = block->memoryType;
         
-        block->sliderLayout.slider.onChange = [this, block, memoryType]() {
-			unsigned pos = block->sliderLayout.slider.position();
-			if (pos >= memoryType->memory.size())
+        block->sliderLayout.slider.onChange = [this, block, memoryType](unsigned position) {
+			if (position >= memoryType->memory.size())
 				return;
 			
-            _settings->set<unsigned>( _underscore(memoryType->name) + "_mem", pos);
-            block->sliderLayout.value.setText( getSizeString( memoryType->memory[pos].size ) );
+            _settings->set<unsigned>( _underscore(memoryType->name) + "_mem", position);
+            block->sliderLayout.value.setText( getSizeString( memoryType->memory[position].size ) );
 
 			if (activeEmulator)                
                 memorySliderReset.setEnabled();				            

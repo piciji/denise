@@ -170,9 +170,8 @@ InputLayout::InputLayout(TabWindow* tabWindow) : autofireControl(tabWindow->emul
         };
     }
 
-    autofireControl.autofireSlider.slider.onChange = [this]() {
+    autofireControl.autofireSlider.slider.onChange = [this](unsigned position) {
         auto manager = InputManager::getManager( this->emulator );
-        unsigned position = autofireControl.autofireSlider.slider.position();
         position += 1;
         _settings->set<unsigned>( "autofire_frequency", position );
         autofireControl.autofireSlider.setValue( std::to_string(position) );
@@ -294,16 +293,13 @@ InputLayout::InputLayout(TabWindow* tabWindow) : autofireControl(tabWindow->emul
         control.mapperAlt.setEnabled( !mapping->isAnalog() && inputList.selected() );
     };
 
-    mapControl.analogSensitivity.slider.onChange = [this]() {
-        
+    mapControl.analogSensitivity.slider.onChange = [this](unsigned position) {
 		if(hotkeyMode())
 			return;
 
         emuThread->lock();
         auto& device = emulator->devices[ deviceId() ];
-        
-        unsigned position = mapControl.analogSensitivity.slider.position();
-        
+
         mapControl.analogSensitivity.value.setText( std::to_string(position) + " " + mapControl.analogSensitivity.unit );    
     
         _settings->set<unsigned>("analog_sensitivity_" + _underscore(device.name), position);

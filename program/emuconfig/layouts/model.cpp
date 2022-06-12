@@ -166,10 +166,7 @@ auto ModelLayout::setEvents( ) -> void {
 					
             } else if (model->isSlider() ) {	
                 
-                block->sliderLayout.slider.onChange = [this, block, model]() {
-                    
-                    unsigned pos = block->sliderLayout.slider.position();
-                    
+                block->sliderLayout.slider.onChange = [this, block, model](unsigned position) {
                     int _min = model->range[0];
                     
                     int _max = model->range[1];
@@ -178,7 +175,7 @@ auto ModelLayout::setEvents( ) -> void {
                     
                     int stepSize = range / model->steps;
                     
-                    int val = pos * stepSize + _min;
+                    int val = position * stepSize + _min;
 
                     tabWindow->settings->set<int>( _underscore(model->name), val );
 
@@ -443,7 +440,7 @@ auto ModelLayout::stepRange(unsigned id, int step) -> int {
 
                     block->sliderLayout.slider.setPosition(pos);
                     
-                    block->sliderLayout.slider.onChange();
+                    block->sliderLayout.slider.onChange(pos);
                     
                     return newValue;
                 }

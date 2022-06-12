@@ -294,10 +294,9 @@ VideoLayout::VideoLayout() {
     append(hLayout, {~0u, 0u}, 10);
     append(videoFps, {~0u, 0u});
 
-    videoFps.updateDelay.slider.onChange = [this]() {
+    videoFps.updateDelay.slider.onChange = [this](unsigned position) {
         emuThread->lock();
 
-        unsigned position = videoFps.updateDelay.slider.position();
         position = (position + 1) * 200;
 
         globalSettings->set<unsigned>("fps_update", position);

@@ -603,7 +603,7 @@ struct ComboButton : Widget {
 };
 
 struct Slider : Widget {
-    std::function<void ()> onChange = nullptr;
+    std::function<void (unsigned position)> onChange = nullptr;
 
     auto length() const -> unsigned { return state.length; }
     auto position() const -> unsigned { return state.position; }

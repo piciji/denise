@@ -72,32 +72,28 @@ cropBottom("px")
         updateCrop("crop_aspect_correct", checked);
 	};
 	
-	cropLeft.slider.onChange = [this]() {
-        auto value = cropLeft.slider.position();
-        updateCrop("crop_left", value);
+	cropLeft.slider.onChange = [this](unsigned position) {
+        updateCrop("crop_left", position);
 
-		cropLeft.value.setText( std::to_string( value ) + " px" );
+		cropLeft.value.setText( std::to_string( position ) + " px" );
 	};
 
-	cropRight.slider.onChange = [this]( ) {
-		auto value = cropRight.slider.position( );
-        updateCrop("crop_right", value);
+	cropRight.slider.onChange = [this](unsigned position) {
+        updateCrop("crop_right", position);
 
-		cropRight.value.setText( std::to_string( value ) + " px" );
+		cropRight.value.setText( std::to_string( position ) + " px" );
 	};
 
-	cropTop.slider.onChange = [this]( ) {
-		auto value = cropTop.slider.position( );
-        updateCrop("crop_top", value);
+	cropTop.slider.onChange = [this](unsigned position) {
+        updateCrop("crop_top", position);
 
-		cropTop.value.setText( std::to_string( value ) + " px" );
+		cropTop.value.setText( std::to_string( position ) + " px" );
 	};
 
-	cropBottom.slider.onChange = [this]( ) {
-		auto value = cropBottom.slider.position( );
-        updateCrop("crop_bottom", value);
+	cropBottom.slider.onChange = [this](unsigned position) {
+        updateCrop("crop_bottom", position);
 
-		cropBottom.value.setText( std::to_string( value ) + " px" );
+		cropBottom.value.setText( std::to_string( position ) + " px" );
 	};
     	
     loadSettings();

@@ -460,8 +460,7 @@ template<typename T> auto VideoLayout::setSliderAction( SliderLayout* layout, st
             vManager()->updateData(baseIdent, checked ? value : T(0));
         };
 
-    layout->slider.onChange = [this, layout, baseIdent, callBack, callTransfer]() {
-        unsigned position = layout->slider.position();  
+    layout->slider.onChange = [this, layout, baseIdent, callBack, callTransfer](unsigned position) {
 		T value = callTransfer( position );	
         auto unit = layout->unit;
         auto roundDigits = (layout == &mask.pitch || layout == &crtGlitch.randomLineOffset || layout == &bloom.weight) ? 2 : 1;

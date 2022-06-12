@@ -59,23 +59,21 @@ volume("%", false, true) {
         emuThread->unlock();
     };
     
-    latency.slider.onChange = [this]() {
+    latency.slider.onChange = [this](unsigned position) {
         emuThread->lock();
-        auto value = latency.slider.position();
         auto minimumLatency = audioDriver->getMinimumLatency();
         
-        globalSettings->set<unsigned>("audio_latency", value + minimumLatency);
+        globalSettings->set<unsigned>("audio_latency", position + minimumLatency);
         updateLatencySlider();
         audioManager->record.finish();
         audioManager->setLatency();
         emuThread->unlock();
     };
     
-    volume.slider.onChange = [this]() {
+    volume.slider.onChange = [this](unsigned position) {
         emuThread->lock();
-        auto value = volume.slider.position();
-        globalSettings->set<unsigned>("audio_volume", value);
-        volume.value.setText( std::to_string( value ) + " %" );
+        globalSettings->set<unsigned>("audio_volume", position);
+        volume.value.setText( std::to_string( position ) + " %" );
         audioManager->setVolume();
         emuThread->unlock();
     };

@@ -197,28 +197,22 @@ PaletteLayout::PaletteLayout(TabWindow* tabWindow) {
         this->setPalette( palette );
     };
     
-    detailLayout.right.r.slider.onChange = [this]() {
-        
-		auto position = detailLayout.right.r.slider.position();
-		
+    detailLayout.right.r.slider.onChange = [this](unsigned position) {
+
 		detailLayout.right.r.value.setText( std::to_string(position) );
 		
         updateSliderChange(position, 16);                
     };
 
-    detailLayout.right.g.slider.onChange = [this]() {
+    detailLayout.right.g.slider.onChange = [this](unsigned position) {
 
-		auto position = detailLayout.right.g.slider.position();
-		
 		detailLayout.right.g.value.setText( std::to_string(position) );
 
         updateSliderChange(position, 8);
     };
 
-    detailLayout.right.b.slider.onChange = [this]() {
+    detailLayout.right.b.slider.onChange = [this](unsigned position) {
 
-		auto position = detailLayout.right.b.slider.position();
-		
 		detailLayout.right.b.value.setText( std::to_string(position) );
 
         updateSliderChange( position, 0);

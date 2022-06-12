@@ -40,5 +40,5 @@ auto pSlider::onChange(GtkRange* gtkRange, Slider* self) -> void {
     unsigned position = (unsigned)gtk_range_get_value(gtkRange);
     if(self->state.position == position) return;
     self->state.position = position;
-    if(self->onChange) self->onChange();
+    if(self->onChange) self->onChange(position);
 }

@@ -79,5 +79,5 @@ auto pSlider::onChange() -> void {
     slider.state.position = position;
     
     if(slider.onChange)
-        slider.onChange();
+        slider.onChange(position);
 }

@@ -167,13 +167,11 @@ SettingsLayout::SettingsLayout() {
     
     previewLayout.top.dialogFontSizeCombo.setSelection( globalSettings->get<unsigned>("dialog_software_preview_fontsize", 11, {6, 14}) - 6 );
     
-    previewLayout.bottom.dialogWidth.slider.onChange = [this]() {
+    previewLayout.bottom.dialogWidth.slider.onChange = [this](unsigned position) {
+
+        previewLayout.bottom.dialogWidth.value.setText( std::to_string( position + 200 ) + " px" );
         
-        unsigned pos = previewLayout.bottom.dialogWidth.slider.position();
-        
-        previewLayout.bottom.dialogWidth.value.setText( std::to_string( pos + 200 ) + " px" );                
-        
-        globalSettings->set<unsigned>("dialog_software_preview_width", pos + 200 );
+        globalSettings->set<unsigned>("dialog_software_preview_width", position + 200 );
         
         previewTimer.setEnabled(true);
     };
@@ -183,13 +181,11 @@ SettingsLayout::SettingsLayout() {
     previewLayout.bottom.dialogWidth.value.setText( std::to_string( previewLayout.bottom.dialogWidth.slider.position() + 200 ) + " px" );            
     
     
-    previewLayout.bottom.dialogHeight.slider.onChange = [this]() {
+    previewLayout.bottom.dialogHeight.slider.onChange = [this](unsigned position) {
+
+        previewLayout.bottom.dialogHeight.value.setText( std::to_string( position + 100 ) + " px" );
         
-        unsigned pos = previewLayout.bottom.dialogHeight.slider.position();
-        
-        previewLayout.bottom.dialogHeight.value.setText( std::to_string( pos + 100 ) + " px" );                
-        
-        globalSettings->set<unsigned>("dialog_software_preview_height", pos + 100 );        
+        globalSettings->set<unsigned>("dialog_software_preview_height", position + 100 );
     };
     
     previewLayout.bottom.dialogHeight.slider.setPosition( globalSettings->get<unsigned>("dialog_software_preview_height", 200, {100, 600}) - 100 );

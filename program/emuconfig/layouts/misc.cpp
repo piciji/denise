@@ -147,17 +147,15 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) {
         };
     }
 
-    runAheadLayout.control.slider.onChange = [this]() {
+    runAheadLayout.control.slider.onChange = [this](unsigned position) {
+
+        runAheadLayout.control.value.setText( std::to_string(position) );
         
-        unsigned pos = runAheadLayout.control.slider.position();
-        
-        runAheadLayout.control.value.setText( std::to_string(pos) );
-        
-        _settings->set<unsigned>( "runahead", pos);
+        _settings->set<unsigned>( "runahead", position);
 
         emuThread->lock();
         audioManager->drive.reset();
-        this->emulator->runAhead( pos );
+        this->emulator->runAhead( position );
         emuThread->unlock();
     };
     
@@ -182,17 +180,16 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) {
         emuThread->unlock();
     };
 
-    jitLayout.control.slider.onChange = [this]() {
-        unsigned pos = jitLayout.control.slider.position();
-        pos += 1;
+    jitLayout.control.slider.onChange = [this](unsigned position) {
+        position += 1;
 
-        jitLayout.control.value.setText( std::to_string(pos) + " " + jitLayout.control.unit );
+        jitLayout.control.value.setText( std::to_string(position) + " " + jitLayout.control.unit );
 
-        _settings->set<unsigned>( "input_jit_delay", pos);
+        _settings->set<unsigned>( "input_jit_delay", position);
 
         auto manager = InputManager::getManager(this->emulator);
 
-        manager->jit.rescanDelay = pos;
+        manager->jit.rescanDelay = position;
     };
 
     jitLayout.active.onToggle = [this](bool checked) {

@@ -257,9 +257,9 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
         emuThread->unlock();
     };
     
-    bass.top.frequency.slider.onChange = [this]() {
+    bass.top.frequency.slider.onChange = [this](unsigned position) {
         
-        unsigned val = bass.top.frequency.slider.position() + 20;
+        unsigned val = position + 20;
         
         _settings->set<unsigned>("audio_bass_freq", val );
         
@@ -270,22 +270,19 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
         emuThread->unlock();
     };
     
-    bass.bottom.gain.slider.onChange = [this]() {
+    bass.bottom.gain.slider.onChange = [this](unsigned position) {
+        _settings->set<unsigned>("audio_bass_gain", position );
         
-        unsigned val = bass.bottom.gain.slider.position();
-        
-        _settings->set<unsigned>("audio_bass_gain", val );
-        
-        bass.bottom.gain.value.setText( std::to_string(val) );
+        bass.bottom.gain.value.setText( std::to_string(position) );
 
         emuThread->lock();
         audioManager->setAudioDsp();
         emuThread->unlock();
     };
     
-    bass.bottom.reduceClipping.slider.onChange = [this]() {
+    bass.bottom.reduceClipping.slider.onChange = [this](unsigned position) {
         
-        float val = (float)bass.bottom.reduceClipping.slider.position() / 10.0;
+        float val = (float)position / 10.0;
         
         _settings->set<float>("audio_bass_clipping", val);
         
@@ -359,26 +356,20 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
         _settings->set<std::string>( "audio_record_path", path );
     };
     
-    audioRecord.duration.minutesSlider.slider.onChange = [this]() {
+    audioRecord.duration.minutesSlider.slider.onChange = [this](unsigned position) {
+        _settings->set<unsigned>( "audio_record_minutes", position );
         
-        unsigned pos = audioRecord.duration.minutesSlider.slider.position();
-        
-        _settings->set<unsigned>( "audio_record_minutes", pos );
-        
-        audioRecord.duration.minutesSlider.value.setText( std::to_string(pos) );
+        audioRecord.duration.minutesSlider.value.setText( std::to_string(position) );
 
         emuThread->lock();
         audioManager->record.setTimeLimit();
         emuThread->unlock();
     };
     
-    audioRecord.duration.secondsSlider.slider.onChange = [this]() {
-
-        unsigned pos = audioRecord.duration.secondsSlider.slider.position();
+    audioRecord.duration.secondsSlider.slider.onChange = [this](unsigned position) {
+        _settings->set<unsigned>( "audio_record_seconds", position );
         
-        _settings->set<unsigned>( "audio_record_seconds", pos );
-        
-        audioRecord.duration.secondsSlider.value.setText( std::to_string(pos) );
+        audioRecord.duration.secondsSlider.value.setText( std::to_string(position) );
 
         emuThread->lock();
         audioManager->record.setTimeLimit();
@@ -415,16 +406,14 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
         }
     };
 
-    driveLayout.floppyVolume.slider.onChange = [this]() {
-        auto value = driveLayout.floppyVolume.slider.position();
+    driveLayout.floppyVolume.slider.onChange = [this](unsigned position) {
+        _settings->set<unsigned>( "audio_floppy_volume", position );
 
-        _settings->set<unsigned>( "audio_floppy_volume", value );
-
-        driveLayout.floppyVolume.value.setText( std::to_string( value ) + " %" );
+        driveLayout.floppyVolume.value.setText( std::to_string( position ) + " %" );
 
         if (activeEmulator) {
             emuThread->lock();
-            audioManager->drive.setVolume(activeEmulator, activeEmulator->getDiskMediaGroup(), (float) value * 0.01);
+            audioManager->drive.setVolume(activeEmulator, activeEmulator->getDiskMediaGroup(), (float) position * 0.01);
             emuThread->unlock();
         }
     };
@@ -468,16 +457,15 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
         }
     };
 
-    driveLayout.tapeVolume.slider.onChange = [this]() {
-        auto value = driveLayout.tapeVolume.slider.position();
+    driveLayout.tapeVolume.slider.onChange = [this](unsigned position) {
 
-        _settings->set<unsigned>( "audio_tape_volume", value );
+        _settings->set<unsigned>( "audio_tape_volume", position );
 
-        driveLayout.tapeVolume.value.setText( std::to_string( value ) + " %" );
+        driveLayout.tapeVolume.value.setText( std::to_string( position ) + " %" );
 
         if (activeEmulator) {
             emuThread->lock();
-            audioManager->drive.setVolume(activeEmulator, activeEmulator->getTapeMediaGroup(), (float) value * 0.01);
+            audioManager->drive.setVolume(activeEmulator, activeEmulator->getTapeMediaGroup(), (float)position * 0.01);
             emuThread->unlock();
         }
     };
@@ -545,9 +533,9 @@ auto AudioLayout::updateTapeProfileList() -> void {
 
 auto AudioLayout::setDspEvent(SliderLayout* sliderLayout, std::string ident, float defaultVal) -> void {
 
-    sliderLayout->slider.onChange = [this, sliderLayout, ident]() {
+    sliderLayout->slider.onChange = [this, sliderLayout, ident](unsigned position) {
 
-        float val = (float)sliderLayout->slider.position() / 100.0;
+        float val = (float)position / 100.0;
 
         _settings->set<float>(ident, val);
 

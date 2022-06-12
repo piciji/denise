@@ -21,8 +21,9 @@
         
         [[NSRunLoop currentRunLoop] addTimer:pApplication::appTimer forMode:NSDefaultRunLoopMode];
 
-        slider->state.position = [self doubleValue];
-        if(slider->onChange) slider->onChange();
+        unsigned pos = [self doubleValue];
+        slider->state.position = pos;
+        if(slider->onChange) slider->onChange(pos);
     }
     
     [super stopTracking:lastPoint at:stopPoint inView:controlView mouseIsUp:flag];
@@ -39,8 +40,9 @@
 }
 
 -(IBAction) activate:(id)sender {
-    slider->state.position = [self doubleValue];
-    if(slider->onChange) slider->onChange();
+    unsigned pos = [self doubleValue];
+    slider->state.position = pos;
+    if(slider->onChange) slider->onChange(pos);
 }
 @end
 
@@ -61,8 +63,9 @@
 }
 
 -(IBAction) activate:(id)sender {
-    slider->state.position = [self doubleValue];
-    if(slider->onChange) slider->onChange();
+    unsigned pos = [self doubleValue];
+    slider->state.position = pos;
+    if(slider->onChange) slider->onChange(pos);
 }
 @end
 
@@ -83,8 +86,9 @@
 }
 
 -(IBAction) activate:(id)sender {
-    slider->state.position = [self doubleValue];
-    if(slider->onChange) slider->onChange();
+    unsigned pos = [self doubleValue];
+    slider->state.position = pos;
+    if(slider->onChange) slider->onChange(pos);
 }
 @end
 
