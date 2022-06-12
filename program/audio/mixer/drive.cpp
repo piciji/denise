@@ -379,6 +379,9 @@ namespace Mixer {
     }
 
     auto Drive::readPack(Emulator::Interface* emulator, Emulator::Interface::MediaGroup* group) -> void {
+        Assign* assign = nullptr;
+        uint8_t* data;
+        unsigned size;
 
         unsigned* loopedSounds = new unsigned [devices.size() + 1]; // to prevent possible zero array length
         unsigned l = 0;
@@ -392,175 +395,175 @@ namespace Mixer {
         auto list = getFiles(emulator, group, fullPath);
 
         for(auto& info : list) {
-
-            //logger->log(info.name);
-
-            Assign* assign = nullptr;
-
-            for(auto& _assign : (group->isTape() ? tapeAssigns : floppyAssigns) ) {
-                if ( GUIKIT::String::toLowerCase(info.name) == (_assign.fileName + ".wav")) {
-                    assign = &_assign;
-                    break;
-                }
-            }
-
-            if (!assign)
-                continue;
-
             GUIKIT::File file;
             file.setFile( fullPath + info.name );
-            if (!file.open())
-                continue;
 
-            unsigned size = file.getSize();
-            if (size == 0)
-                continue;
-
-            uint8_t* data = file.read();
-
-            if (data == nullptr)
-                continue;
-
-            Sound* sound = nullptr;
-            for(auto& _sound : sounds) {
-                if (_sound.id == assign->id && _sound.emulator == emulator) {
-                    sound = &_sound;
-                    break;
-                }
-            }
-
-            if (!sound) {
-                sounds.push_back({ emulator, group, assign->id, nullptr, 0, 0, 0.0, 0 });
-                sound = &sounds.back();
-            }
-
-            if (sound->data) {
-                delete[] sound->data;
-                sound->data = nullptr;
-            }
-
-            data += 20;
-            uint8_t sampleType = data[0];
-            //logger->log(std::to_string(data[0]));
-            data += 2;
-            if (data[0] > 2)
-                continue; // 1 or 2 channels supported
-            sound->channels = data[0];
-            data += 2;
-            unsigned sampleRate = (data[3] << 24) | (data[2] << 16) | (data[1] << 8) | data[0];
-            //logger->log(std::to_string(sampleRate), 0);
-            //logger->log(std::to_string(sound->channels), 0);
-            data += 10;
-            unsigned bytesPerSample = ((data[1] << 8) | data[0]) >> 3;
-            //logger->log(std::to_string(bytesPerSample));
-            data += 2;
-            size -= 36;
-
-            bool dataBlock = false;
-
-            while(size >= 4) {
-                if (data[0] == 0x64 && data[1] == 0x61 && data[2] == 0x74 && data[3] == 0x61) {
-                    dataBlock = true;
-                    break;
-                }
-
-                data += 4;
-                size -= 4;
-            }
-
-            if (!dataBlock)
-                continue;
-
-            data += 4;
-
-            size = (data[3] << 24) | (data[2] << 16) | (data[1] << 8) | data[0];
-            data += 4;
-
-            if (sampleType == 3) { // float
-                if (bytesPerSample != 4)
-                    continue; // double not supported
-
-                sound->data = new float[ (size >> 2) + 1 ];
-                std::memcpy( (uint8_t*)sound->data, data, size );
-                sound->size = size >> 2;
-
-            } else if (sampleType == 1) { // PCM
-                if ( bytesPerSample > 4)
+            for( auto& item : file.scanArchive() ) {
+                size = file.archiveDataSize(item.id);
+                if (size == 0)
+                    continue;
+                data = file.archiveData(item.id);
+                if (data == nullptr)
                     continue;
 
-                unsigned _samples = size / bytesPerSample;
-                uint32_t _sample;
-                unsigned msb = 1 << ((bytesPerSample << 3) - 1);
-                unsigned mask = (1ull << (bytesPerSample << 3)) - 1;
-                //logger->log(std::to_string(mask), 1);
-
-                sound->data = new float[ _samples + 1 ];
-
-                for (unsigned i = 0; i < _samples; i++) {
-                    _sample = 0;
-                    for(unsigned j = 0; j < bytesPerSample; j++) {
-                        _sample |= *data++ << (j << 3);
-                    }
-
-                    if((bytesPerSample > 1) && (_sample & msb)) {
-                        sound->data[i] = (float)(int32_t)(_sample | (mask ^ ~0)) / (float)msb;
-                    } else {
-                        sound->data[i] = (float)(int32_t)(_sample & mask) / (float)msb;
+                for (auto& _assign: (group->isTape() ? tapeAssigns : floppyAssigns)) {
+                    if (GUIKIT::String::toLowerCase(item.info.name) == (_assign.fileName + ".wav")) {
+                        assign = &_assign;
+                        break;
                     }
                 }
 
-                sound->size = _samples;
-            } else
-                continue; // not supported
+                if (!assign)
+                    continue;
 
-            file.unload();
-
-            if (frequency != sampleRate) { // need resample
-                //logger->log("resample");
-                Resampler::Data rData;
-                rData.out = new float[4096];
-
-                unsigned _samples = (uint64_t)sound->size * (uint64_t)frequency / (uint64_t)sampleRate;
-                _samples += 100;
-                if (sound->channels == 1)
-                    _samples <<= 1;
-                float* result = new float[_samples];
-
-                unsigned offsetIn = 0;
-                unsigned offsetOut = 0;
-                unsigned chunkSize = 512 << ((sound->channels == 2) ? 1 : 0);
-                Resampler::Sinc resampler;
-                resampler.setData(&rData);
-                resampler.reset( (float)frequency / (float)sampleRate, sound->channels, Resampler::Sinc::RESAMPLER_QUALITY_HIGHER );
-
-                unsigned todo = sound->size;
-                while(todo) {
-                    if (todo < chunkSize) {
-                        chunkSize = todo;
+                Sound* sound = nullptr;
+                for (auto& _sound: sounds) {
+                    if (_sound.id == assign->id && _sound.emulator == emulator) {
+                        sound = &_sound;
+                        break;
                     }
-
-                    rData.inputFrames = chunkSize >> ((sound->channels == 2) ? 1 : 0);
-                    rData.in = sound->data + offsetIn;
-                    resampler.process();
-
-                    std::memcpy((uint8_t*)result + offsetOut, (uint8_t*)rData.out, rData.outputFrames * sizeof(float) * 2 );
-                    offsetOut += rData.outputFrames * sizeof(float) * 2;
-
-                    offsetIn += chunkSize;
-
-                    todo -= chunkSize;
                 }
 
-                if (sound->data)
+                if (!sound) {
+                    sounds.push_back({emulator, group, assign->id, nullptr, 0, 0, 0.0, 0});
+                    sound = &sounds.back();
+                }
+
+                if (sound->data) {
                     delete[] sound->data;
+                    sound->data = nullptr;
+                }
 
-                delete[] rData.out;
+                data += 20;
+                uint8_t sampleType = data[0];
+                //logger->log(std::to_string(data[0]));
+                data += 2;
+                if (data[0] > 2)
+                    continue; // 1 or 2 channels supported
+                sound->channels = data[0];
+                data += 2;
+                unsigned sampleRate = (data[3] << 24) | (data[2] << 16) | (data[1] << 8) | data[0];
+                //logger->log(std::to_string(sampleRate), 0);
+                //logger->log(std::to_string(sound->channels), 0);
+                data += 10;
+                unsigned bytesPerSample = ((data[1] << 8) | data[0]) >> 3;
+                //logger->log(std::to_string(bytesPerSample));
+                data += 2;
+                size -= 36;
 
-                sound->data = result;
-                sound->size = offsetOut / sizeof(float);
-                sound->channels = 2;
+                bool dataBlock = false;
+
+                while (size >= 4) {
+                    if (data[0] == 0x64 && data[1] == 0x61 && data[2] == 0x74 && data[3] == 0x61) {
+                        dataBlock = true;
+                        break;
+                    }
+
+                    data += 4;
+                    size -= 4;
+                }
+
+                if (!dataBlock)
+                    continue;
+
+                data += 4;
+
+                size = (data[3] << 24) | (data[2] << 16) | (data[1] << 8) | data[0];
+                data += 4;
+
+                if (sampleType == 3) { // float
+                    if (bytesPerSample != 4)
+                        continue; // double not supported
+
+                    sound->data = new float[(size >> 2) + 1];
+                    std::memcpy((uint8_t*) sound->data, data, size);
+                    sound->size = size >> 2;
+
+                } else if (sampleType == 1) { // PCM
+                    if (bytesPerSample > 4)
+                        continue;
+
+                    unsigned _samples = size / bytesPerSample;
+                    uint32_t _sample;
+                    unsigned msb = 1 << ((bytesPerSample << 3) - 1);
+                    unsigned mask = (1ull << (bytesPerSample << 3)) - 1;
+                    //logger->log(std::to_string(mask), 1);
+
+                    sound->data = new float[_samples + 1];
+
+                    for (unsigned i = 0; i < _samples; i++) {
+                        _sample = 0;
+                        for (unsigned j = 0; j < bytesPerSample; j++) {
+                            _sample |= *data++ << (j << 3);
+                        }
+
+                        if ((bytesPerSample > 1) && (_sample & msb)) {
+                            sound->data[i] = (float) (int32_t) (_sample | (mask ^ ~0)) / (float) msb;
+                        } else {
+                            sound->data[i] = (float) (int32_t) (_sample & mask) / (float) msb;
+                        }
+                    }
+
+                    sound->size = _samples;
+                } else
+                    continue; // not supported
+
+                if (frequency != sampleRate) { // need resample
+                    //logger->log("resample");
+                    Resampler::Data rData;
+                    rData.out = new float[4096];
+
+                    unsigned _samples = (uint64_t) sound->size * (uint64_t) frequency / (uint64_t) sampleRate;
+                    _samples += 100;
+                    if (sound->channels == 1)
+                        _samples <<= 1;
+                    float* result = new float[_samples];
+
+                    unsigned offsetIn = 0;
+                    unsigned offsetOut = 0;
+                    unsigned chunkSize = 512 << ((sound->channels == 2) ? 1 : 0);
+                    Resampler::Sinc resampler;
+                    resampler.setData(&rData);
+
+                    Resampler::Sinc::Quality quality = Resampler::Sinc::RESAMPLER_QUALITY_HIGHER;
+                    if (assign->id >= FloppySteps) {
+                        // logger->log(item.info.name);
+                        quality = Resampler::Sinc::RESAMPLER_QUALITY_NORMAL;
+                    }
+
+                    resampler.reset((float) frequency / (float) sampleRate, sound->channels, quality);
+
+                    unsigned todo = sound->size;
+                    while (todo) {
+                        if (todo < chunkSize) {
+                            chunkSize = todo;
+                        }
+
+                        rData.inputFrames = chunkSize >> ((sound->channels == 2) ? 1 : 0);
+                        rData.in = sound->data + offsetIn;
+                        resampler.process();
+
+                        std::memcpy((uint8_t*) result + offsetOut, (uint8_t*) rData.out,
+                                    rData.outputFrames * sizeof(float) * 2);
+                        offsetOut += rData.outputFrames * sizeof(float) * 2;
+
+                        offsetIn += chunkSize;
+
+                        todo -= chunkSize;
+                    }
+
+                    if (sound->data)
+                        delete[] sound->data;
+
+                    delete[] rData.out;
+
+                    sound->data = result;
+                    sound->size = offsetOut / sizeof(float);
+                    sound->channels = 2;
+                }
             }
 
+            file.unload();
             //sound->playTime = (sound->size / sound->channels) * (1000.0 / (float)frequency);
             //logger->log("playtime" );
             //logger->log(std::to_string(sound->size), 0);
