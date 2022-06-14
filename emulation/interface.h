@@ -240,6 +240,7 @@ struct Interface {
 		auto isGraphicChip() const -> bool { return purpose == Purpose::GraphicChip; }
         auto isSoundChip() const -> bool { return purpose == Purpose::SoundChip; }
         auto isAudioResampler() const -> bool { return purpose == Purpose::AudioResampler; }
+        auto isAudioSettings() const -> bool { return purpose == Purpose::AudioSettings; }
         auto isDriveSettings() const -> bool { return purpose == Purpose::DriveSettings; }
         auto isPerformance() const -> bool { return purpose == Purpose::Performance; }
         auto isHidden() const -> bool { return purpose == Purpose::Hidden; }
@@ -546,6 +547,7 @@ struct Interface {
     // drive sounds
     virtual auto enableFloppySounds(bool state) -> void {}
     virtual auto enableTapeSounds(bool state) -> void {}
+    virtual auto setTapeLoadingNoise(unsigned volume) -> void {}
     
     auto getStatsForSelectedRegion() -> Stats& {  
         return stats;

@@ -36,6 +36,8 @@ struct AudioDriveLayout : GUIKIT::FramedVerticalLayout {
     SliderLayout tapeVolume;
     Selection tapeSelection;
 
+    SliderLayout tapeNoiseVolume;
+
     AudioDriveLayout();
 };
 

@@ -59,6 +59,8 @@ System::System(Interface* interface) {
 
     requestedSids = 0;
 
+    tapeNoise.circularBuffer.resize(500, 0);
+
     input = new Input;
     for (auto& media : interface->mediaGroups[Interface::MediaGroupIdProgram].media) {
         auto prg = new Prg;
@@ -286,15 +288,7 @@ System::System(Interface* interface) {
         return (colorRam[ addr & 0x3ff ] & 0xf) | ( vicII->lastReadPhase1() & ~0xf );
     };
 
-    Sid::audioRefresh = [this](int16_t sample) {
-        if (!runAhead.pos)
-            this->interface->audioSample( sample, sample );
-    };
-
-    Sid::audioRefreshStereo = [this](int16_t sampleL, int16_t sampleR) {
-        if (!runAhead.pos)
-            this->interface->audioSample( sampleL, sampleR );
-    };
+    setAudioRefresh();
 
     Sid::getPotX = [this]() {
 
@@ -580,6 +574,8 @@ auto System::power( bool softReset ) -> void {
         fastForward.frameCounter = 0;
         fastForward.renderNext = false;
     }
+
+    tapeNoise.reset();
 
     kernalBootComplete = false;
     KeyBuffer::Action action;
@@ -1039,6 +1035,81 @@ auto System::activateDebugCart(unsigned limitCycles) -> void {
 
 auto System::enabledDebugCart() -> bool {
     return debugCart->enable;
+}
+
+auto System::setTapeLoadingNoise(unsigned volume) -> void {
+    bool _enableBefore = tapeNoise.enabled;
+    tapeNoise.enabled = volume > 0;
+    tapeNoise.amplitude = (int)volume * -10;
+    tapeNoise.reset();
+
+    if (_enableBefore != tapeNoise.enabled)
+        setAudioRefresh();
+}
+
+auto System::TapeNoise::reset() -> void {
+    active = false;
+    duration = 0;
+    amplitude = (amplitude > 0) ? -amplitude : amplitude;
+    circularBuffer.reset();
+}
+
+auto System::tapeNoiseSetSample( unsigned duration ) -> void {
+    unsigned half = duration >> 1;
+    tapeNoise.circularBuffer.write( (duration & 1) ? (half + 1) : half );
+    tapeNoise.circularBuffer.write( half );
+    tapeNoise.active = true;
+}
+
+auto System::setAudioRefresh() -> void {
+
+    if (tapeNoise.enabled) {
+        Sid::audioRefresh = [this](int16_t sample) {
+            if (!runAhead.pos) {
+                if (tapeNoise.active) {
+                    if (tapeNoise.duration > 0) {
+                        sample = (int)sample + tapeNoise.amplitude;
+                        tapeNoise.duration -= Sid::sampleLimit;
+                    } else if (tapeNoise.circularBuffer.pending()) {
+                        tapeNoise.duration += (int)tapeNoise.circularBuffer.read() - 1;
+                        tapeNoise.amplitude = -tapeNoise.amplitude;
+                        sample = (int)sample + tapeNoise.amplitude;
+                    } else
+                        tapeNoise.active = false;
+                }
+                this->interface->audioSample(sample, sample);
+            }
+        };
+
+        Sid::audioRefreshStereo = [this](int16_t sampleL, int16_t sampleR) {
+            if (!runAhead.pos) {
+                if (tapeNoise.active) {
+                    if (tapeNoise.duration > 0) {
+                        sampleL = (int)sampleL + tapeNoise.amplitude;
+                        sampleR = (int)sampleR + tapeNoise.amplitude;
+                        tapeNoise.duration -= Sid::sampleLimit;
+                    } else if (tapeNoise.circularBuffer.pending()) {
+                        tapeNoise.duration += (int)tapeNoise.circularBuffer.read() - 1;
+                        tapeNoise.amplitude = -tapeNoise.amplitude;
+                        sampleL = (int)sampleL + tapeNoise.amplitude;
+                        sampleR = (int)sampleR + tapeNoise.amplitude;
+                    } else
+                        tapeNoise.active = false;
+                }
+                this->interface->audioSample(sampleL, sampleR);
+            }
+        };
+    } else {
+        Sid::audioRefresh = [this](int16_t sample) {
+            if (!runAhead.pos)
+                this->interface->audioSample(sample, sample);
+        };
+
+        Sid::audioRefreshStereo = [this](int16_t sampleL, int16_t sampleR) {
+            if (!runAhead.pos)
+                this->interface->audioSample( sampleL, sampleR );
+        };
+    }
 }
 
 }

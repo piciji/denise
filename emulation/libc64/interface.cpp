@@ -1567,6 +1567,10 @@ auto Interface::enableTapeSounds(bool state) -> void {
     system->setTapeSounds( state );
 }
 
+auto Interface::setTapeLoadingNoise(unsigned volume) -> void {
+    system->setTapeLoadingNoise( volume );
+}
+
 auto Interface::activateDebugCart( unsigned limitCycles ) -> void {
     system->activateDebugCart( limitCycles );
 }

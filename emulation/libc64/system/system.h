@@ -10,6 +10,7 @@
 #include "memory.h"
 #include "../../tools/systimer.h"
 #include "../../tools/crop.h"
+#include "../../tools/circularBuffer.h"
 
 namespace Emulator {
     struct PowerSupply;
@@ -163,6 +164,16 @@ struct System {
         bool motorChange = false;
         bool motor;
     } observer;
+
+    struct TapeNoise {
+        bool enabled = false;
+        bool active = false;
+        int duration = 0;
+        int amplitude = 0;
+        CircularBuffer<unsigned> circularBuffer;
+
+        auto reset() -> void;
+    } tapeNoise;
     
     auto setFirmware( unsigned typeId, uint8_t* data, unsigned size, bool allowPatching ) -> void;
     
@@ -199,6 +210,7 @@ struct System {
     auto setFloppySounds(bool state) -> void;
 	auto setTapeSounds(bool state) -> void;
     auto updateDriveSounds() -> void;
+    auto setTapeLoadingNoise(unsigned volume) -> void;
     
     auto setCycleRenderer(bool state) -> void;
 	auto updateStats() -> void;
@@ -229,6 +241,10 @@ struct System {
     auto isC64C() -> bool;
     auto activateDebugCart(unsigned limitCycles) -> void;
     auto enabledDebugCart() -> bool;
+
+    auto tapeNoiseEnabled() -> bool { return tapeNoise.enabled && !runAhead.pos; }
+    auto tapeNoiseSetSample( unsigned duration ) -> void;
+    auto setAudioRefresh() -> void;
 };
 
 extern System* system;

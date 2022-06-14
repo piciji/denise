@@ -684,3 +684,5 @@ Tape Profile = Tape Profile
 Sync status = Sync status
 allow opposite directions = allow opposite directions
 hold Autofire = hold Autofire longer
+Tape Noise = Tape Noise
+spanish = Spanish

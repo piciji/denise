@@ -76,6 +76,7 @@ struct AudioManager {
     auto setVolume() -> void;
     auto setRateControl() -> void;
     auto setDriveSounds(bool init = true) -> void;
+    auto setTapeNoise( ) -> void;
     auto setPriority() -> void;
     
     auto setBufferSize() -> void;

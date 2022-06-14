@@ -5,7 +5,7 @@
 
 template<typename T>
 struct CircularBuffer {
-
+    
     CircularBuffer() = default;
 
     ~CircularBuffer() {

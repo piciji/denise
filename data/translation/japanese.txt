@@ -684,3 +684,5 @@ Tape Profile = テープのプロファイル
 Sync status = 同期状態
 allow opposite directions = 反対方向を許可
 hold Autofire =
+Tape Noise =
+spanish =

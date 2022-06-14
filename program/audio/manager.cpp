@@ -157,6 +157,19 @@ auto AudioManager::setVolume() -> void {
         floatConversion = ( (float)volume * 0.01 ) / 32768.0;
 }
 
+auto AudioManager::setTapeNoise( ) -> void {
+    if (!activeEmulator)
+        return;
+
+    auto settings = program->getSettings( activeEmulator );
+
+    bool active = settings->get<bool>( "audio_tape_noise", false);
+
+    unsigned volume = settings->get<unsigned>("audio_tape_noise_volume", 100u, {0u, 300u});
+
+    activeEmulator->setTapeLoadingNoise( active ? volume : 0 );
+}
+
 auto AudioManager::setDriveSounds( bool init ) -> void {
     if (!activeEmulator)
         return;
@@ -294,6 +307,7 @@ auto AudioManager::power() -> void {
     setAudioDsp();
     setVolume();
     setDriveSounds();
+    setTapeNoise();
 
     statistics.average = 0;
     statistics.sum = 0;

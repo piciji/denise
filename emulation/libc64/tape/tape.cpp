@@ -88,8 +88,13 @@ Tape::Tape( Emulator::Interface::Media* mediaConnected ) : structure(this) {
                 cycles -= gaps;    
         }            		
 			
-        if (gaps)
-            sysTimer.add( &worker, gaps * speedAdjustment());
+        if (gaps) {
+            sysTimer.add(&worker, gaps * speedAdjustment());
+
+            if (system->tapeNoiseEnabled() && (mode == Tape::Mode::Play)) {
+                system->tapeNoiseSetSample( gaps );
+            }
+        }
 		
         updateCounter();
     };     

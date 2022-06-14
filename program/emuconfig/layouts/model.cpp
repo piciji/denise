@@ -14,7 +14,7 @@ namespace EmuConfigView {
     
 #define mes this->tabWindow->message    
     
-ModelLayout::Line::Block::Block(Emulator::Interface::Model* model, ModelLayout* layout) {
+ModelLayout::Line::Block::Block(Emulator::Interface::Model* model, ModelLayout* layout) : combo(model->isCombo() && model->isAudioSettings()) {
     
 	this->model = model;
     

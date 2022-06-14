@@ -684,3 +684,4 @@ Tape Profile =  Profil de la Cassette
 Sync status = Statut de la Synchro
 allow opposite directions = Autorise les directions opposés
 hold Autofire =
+Tape Noise =

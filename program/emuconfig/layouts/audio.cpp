@@ -7,19 +7,22 @@ AudioDriveLayout::Selection::Selection() {
     setAlignment( 0.5 );
 }
 
-AudioDriveLayout::AudioDriveLayout() : floppyVolume("%", true), tapeVolume("%", true) {
+AudioDriveLayout::AudioDriveLayout() : floppyVolume("%", true), tapeVolume("%", true), tapeNoiseVolume("%", true) {
     append( floppyVolume, {~0u, 0u}, 10 );
     append( floppySelection, {0u, 0u}, 10 );
     append( tapeVolume, {~0u, 0u}, 10 );
-    append( tapeSelection, {0u, 0u} );
+    append( tapeSelection, {0u, 0u}, 10 );
+    append( tapeNoiseVolume, {~0u, 0u} );
 
     setPadding(10);
     setFont(GUIKIT::Font::system("bold"));
 
     floppyVolume.slider.setLength( 301 );
-    floppyVolume.updateValueWidth( "100 %" );
+    floppyVolume.updateValueWidth( "300 %" );
     tapeVolume.slider.setLength( 301 );
-    tapeVolume.updateValueWidth( "100 %" );
+    tapeVolume.updateValueWidth( "300 %" );
+    tapeNoiseVolume.slider.setLength( 301 );
+    tapeNoiseVolume.updateValueWidth( "300 %" );
 }
 
 AudioRecordLayout::Location::Location() {
@@ -470,6 +473,30 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
         }
     };
 
+    driveLayout.tapeNoiseVolume.active.onToggle = [this](bool checked) {
+
+        _settings->set<bool>( "audio_tape_noise", checked );
+
+        if (emulator == activeEmulator) {
+            emuThread->lock();
+            audioManager->setTapeNoise();
+            emuThread->unlock();
+        }
+    };
+
+    driveLayout.tapeNoiseVolume.slider.onChange = [this](unsigned position) {
+
+        _settings->set<unsigned>( "audio_tape_noise_volume", position );
+
+        driveLayout.tapeNoiseVolume.value.setText( std::to_string( position ) + " %" );
+
+        if (emulator == activeEmulator) {
+            emuThread->lock();
+            audioManager->setTapeNoise();
+            emuThread->unlock();
+        }
+    };
+
     driveLayout.tapeSelection.combo.onChange = [this]() {
 
         std::string folder = driveLayout.tapeSelection.combo.text();
@@ -591,6 +618,7 @@ auto AudioLayout::translate() -> void {
     driveLayout.tapeSelection.label.setText( trans->get("Tape Profile", {}, true) );
     driveLayout.tapeSelection.reload.setText( trans->get("Reload") );
     driveLayout.tapeSelection.reload.setTooltip( trans->get("reload samples tooltip") );
+    driveLayout.tapeNoiseVolume.active.setText( trans->get("Tape Noise") );
 
     audioRecord.setText(trans->get("Audio Record"));
     audioRecord.location.label.setText( trans->get("wav folder") );
@@ -697,6 +725,15 @@ auto AudioLayout::loadSettings() -> void {
     folder = driveLayout.tapeSelection.combo.text();
 
     _settings->set<std::string>("audio_tape_folder", folder);
+
+
+    driveLayout.tapeNoiseVolume.active.setChecked( _settings->get<bool>( "audio_tape_noise", false) );
+
+    unsigned tapeNoiseVolume = _settings->get<unsigned>("audio_tape_noise_volume", 100u, {0u, 300u});
+
+    driveLayout.tapeNoiseVolume.slider.setPosition( tapeVolume );
+
+    driveLayout.tapeNoiseVolume.value.setText(std::to_string(tapeVolume) + " %");
 
     updateVisibility();
 }
