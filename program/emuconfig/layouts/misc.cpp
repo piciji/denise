@@ -57,26 +57,26 @@ AutostartLayout::AutoWarp::AutoWarp() {
     setAlignment( 0.5 );
 }
 
-AutostartLayout::DiskStart::DiskStart() {
-    append(diskTrapsOnDblClick, {0u, 0u}, 20 );
-	append(loadWithColumn, {0u, 0u} );    
-
-    setAlignment( 0.5 );
+AutostartLayout::StartWrapper::StartWrapper() {
+    append(start, {0u, 0u}, 10);
+    append(option, {0u, 0u});
 }
 
-AutostartLayout::TapeStart::TapeStart() {
-	append(tapeTrapsOnDblClick, {0u, 0u}, 20 );    
-    append(tapeWithStandardKernal, {0u, 0u} );
+AutostartLayout::StartWrapper::Start::Start() {
+    append(diskTrapsOnDblClick, {0u, 0u}, 5 );
+    append(tapeTrapsOnDblClick, {0u, 0u} );
+}
 
-    setAlignment( 0.5 );
+AutostartLayout::StartWrapper::Option::Option() {
+    append(loadWithColumn, {0u, 0u}, 5 );
+    append(tapeWithStandardKernal, {0u, 0u} );
 }
 
 AutostartLayout::AutostartLayout() {
     setPadding(10);
 
     append(autoWarp, {0u, 0u}, 5 );
-    append(diskStart, {0u, 0u}, 5 );
-    append(tapeStart, {0u, 0u} );
+    append(startWrapper, {0u, 0u} );
 
     setFont(GUIKIT::Font::system("bold"));
 }
@@ -130,19 +130,19 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) {
             _settings->set<bool>("auto_warp_tape_first_file", checked);
         };
 
-        autostartLayout->tapeStart.tapeWithStandardKernal.onToggle = [this](bool checked) {
+        autostartLayout->startWrapper.option.tapeWithStandardKernal.onToggle = [this](bool checked) {
             _settings->set<bool>("autostart_tape_standard_kernal", checked);
         };
 
-        autostartLayout->diskStart.loadWithColumn.onToggle = [this](bool checked) {
+        autostartLayout->startWrapper.option.loadWithColumn.onToggle = [this](bool checked) {
             _settings->set<bool>("autostart_load_with_column", checked);
         };
 
-        autostartLayout->diskStart.diskTrapsOnDblClick.onToggle = [this](bool checked) {
+        autostartLayout->startWrapper.start.diskTrapsOnDblClick.onToggle = [this](bool checked) {
             _settings->set<bool>("autostart_traps_on_dblclick", checked);
         };
 
-        autostartLayout->tapeStart.tapeTrapsOnDblClick.onToggle = [this](bool checked) {
+        autostartLayout->startWrapper.start.tapeTrapsOnDblClick.onToggle = [this](bool checked) {
             _settings->set<bool>("autostart_tape_traps_on_dblclick", checked);
         };
     }
@@ -305,11 +305,10 @@ auto MiscLayout::translate() -> void {
         autostartLayout->autoWarp.diskFirstFile.setText(trans->get("disk warp first file"));
         autostartLayout->autoWarp.tapeFirstFile.setText(trans->get("tape warp first file"));
 
-        autostartLayout->tapeStart.tapeWithStandardKernal.setText(trans->get("tape default kernal"));
-
-        autostartLayout->diskStart.loadWithColumn.setText( "Load \":*\"" );
-        autostartLayout->diskStart.diskTrapsOnDblClick.setText(trans->get("VDT Disk Autostart on dblclick"));
-        autostartLayout->tapeStart.tapeTrapsOnDblClick.setText(trans->get("VDT Tape Autostart on dblclick"));
+        autostartLayout->startWrapper.option.tapeWithStandardKernal.setText(trans->get("tape default kernal"));
+        autostartLayout->startWrapper.option.loadWithColumn.setText( "Load \":*\"" );
+        autostartLayout->startWrapper.start.diskTrapsOnDblClick.setText(trans->get("VDT Disk Autostart on dblclick"));
+        autostartLayout->startWrapper.start.tapeTrapsOnDblClick.setText(trans->get("VDT Tape Autostart on dblclick"));
     }
 
     speedLayout.setText( trans->get("Speed") );
@@ -335,13 +334,13 @@ auto MiscLayout::loadSettings() -> void {
 
         autostartLayout->autoWarp.tapeFirstFile.setChecked(_settings->get<bool>("auto_warp_tape_first_file", false));
 
-        autostartLayout->tapeStart.tapeWithStandardKernal.setChecked( _settings->get<bool>("autostart_tape_standard_kernal", false));
+        autostartLayout->startWrapper.option.tapeWithStandardKernal.setChecked( _settings->get<bool>("autostart_tape_standard_kernal", false));
 
-        autostartLayout->diskStart.loadWithColumn.setChecked(_settings->get<bool>("autostart_load_with_column", false));
+        autostartLayout->startWrapper.option.loadWithColumn.setChecked(_settings->get<bool>("autostart_load_with_column", false));
 
-        autostartLayout->diskStart.diskTrapsOnDblClick.setChecked(_settings->get<bool>("autostart_traps_on_dblclick", false));
+        autostartLayout->startWrapper.start.diskTrapsOnDblClick.setChecked(_settings->get<bool>("autostart_traps_on_dblclick", false));
 
-        autostartLayout->tapeStart.tapeTrapsOnDblClick.setChecked(_settings->get<bool>("autostart_tape_traps_on_dblclick", false));
+        autostartLayout->startWrapper.start.tapeTrapsOnDblClick.setChecked(_settings->get<bool>("autostart_tape_traps_on_dblclick", false));
     }
 
     setRunAheadPerformance(_settings->get<bool>("runahead_performance", false));

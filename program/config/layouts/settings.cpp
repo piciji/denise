@@ -54,10 +54,14 @@ PreviewLayout::Top::Top() {
     append(fontSizeCombo,{0u, 0u}, 5);
     append(dialogFontSize,{0u, 0u}, 5);
     append(dialogFontSizeCombo,{0u, 0u}, 20);
-    append(tooltips,{0u, 0u}, 10);
-    append(commodoreHighlight,{0u, 0u});
+    append(option,{0u, 0u});
 
     setAlignment(0.5);    
+}
+
+PreviewLayout::Top::Option::Option() {
+    append(tooltips,{0u, 0u}, 2);
+    append(commodoreHighlight,{0u, 0u});
 }
 
 PreviewLayout::Bottom::Bottom() :
@@ -192,7 +196,7 @@ SettingsLayout::SettingsLayout() {
     
     previewLayout.bottom.dialogHeight.value.setText( std::to_string( previewLayout.bottom.dialogHeight.slider.position() + 100 ) + " px" );
          
-    previewLayout.top.tooltips.onToggle = [this](bool checked) {
+    previewLayout.top.option.tooltips.onToggle = [this](bool checked) {
         globalSettings->set<bool>("software_preview_tooltips", checked );
         
         for( auto emuView : emuConfigViews ) {
@@ -205,9 +209,9 @@ SettingsLayout::SettingsLayout() {
         previewTimer.setEnabled(true);
     };
     
-    previewLayout.top.tooltips.setChecked( globalSettings->get<bool>("software_preview_tooltips", true ) );
+    previewLayout.top.option.tooltips.setChecked( globalSettings->get<bool>("software_preview_tooltips", true ) );
 
-    previewLayout.top.commodoreHighlight.onToggle = [](bool checked) {
+    previewLayout.top.option.commodoreHighlight.onToggle = [](bool checked) {
         globalSettings->set<bool>("software_preview_commodore_hi", checked );
 
         for( auto emuView : emuConfigViews ) {
@@ -216,7 +220,7 @@ SettingsLayout::SettingsLayout() {
         }
     };
 
-    previewLayout.top.commodoreHighlight.setChecked( globalSettings->get<bool>("software_preview_commodore_hi", true ) );
+    previewLayout.top.option.commodoreHighlight.setChecked( globalSettings->get<bool>("software_preview_commodore_hi", true ) );
     
     previewLayout.previewBox.setBackgroundColor( 0xaaaaaa );
     
@@ -438,8 +442,8 @@ auto SettingsLayout::translate() -> void {
     previewLayout.setText( trans->get("Software Preview") );
     previewLayout.top.fontSize.setText( trans->get("Font Size", {}, true) );
     previewLayout.top.dialogFontSize.setText( trans->get("Dialog Font Size", {}, true) );    
-    previewLayout.top.tooltips.setText( trans->get("Show Tooltips") );
-    previewLayout.top.commodoreHighlight.setText( trans->get("Commodore Highlight Color" ) );
+    previewLayout.top.option.tooltips.setText( trans->get("Show Tooltips") );
+    previewLayout.top.option.commodoreHighlight.setText( trans->get("Commodore Highlight Color" ) );
     
     previewLayout.bottom.dialog.setText( trans->get("Dialog Preview")  );
     previewLayout.bottom.dialogWidth.name.setText( trans->get("Width", {}, true) );

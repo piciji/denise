@@ -1,7 +1,8 @@
 
 AudioDriveLayout::Selection::Selection() {
     append( label, {0u, 0u}, 10 );
-    append( combo, {0u, 0u}, 10 );
+    append( combo, {0u, 0u} );
+    append( spacer, {~0u, 0u} );
     append( reload, {0u, 0u} );
 
     setAlignment( 0.5 );
@@ -9,9 +10,9 @@ AudioDriveLayout::Selection::Selection() {
 
 AudioDriveLayout::AudioDriveLayout() : floppyVolume("%", true), tapeVolume("%", true), tapeNoiseVolume("%", true) {
     append( floppyVolume, {~0u, 0u}, 10 );
-    append( floppySelection, {0u, 0u}, 10 );
+    append( floppySelection, {~0u, 0u}, 10 );
     append( tapeVolume, {~0u, 0u}, 10 );
-    append( tapeSelection, {0u, 0u}, 10 );
+    append( tapeSelection, {~0u, 0u}, 10 );
     append( tapeNoiseVolume, {~0u, 0u} );
 
     setPadding(10);
@@ -611,11 +612,11 @@ auto AudioLayout::translate() -> void {
 
     driveLayout.setText( trans->get("Drive Noise") );
     driveLayout.floppyVolume.active.setText( trans->get("Floppy") );
-    driveLayout.floppySelection.label.setText( trans->get("Floppy Profile", {}, true) );
+    driveLayout.floppySelection.label.setText( trans->get("Floppy Profile") );
     driveLayout.floppySelection.reload.setText( trans->get("Reload") );
     driveLayout.floppySelection.reload.setTooltip( trans->get("reload samples tooltip") );
     driveLayout.tapeVolume.active.setText( trans->get("Tape") );
-    driveLayout.tapeSelection.label.setText( trans->get("Tape Profile", {}, true) );
+    driveLayout.tapeSelection.label.setText( trans->get("Tape Profile") );
     driveLayout.tapeSelection.reload.setText( trans->get("Reload") );
     driveLayout.tapeSelection.reload.setTooltip( trans->get("reload samples tooltip") );
     driveLayout.tapeNoiseVolume.active.setText( trans->get("Tape Noise") );
@@ -641,6 +642,13 @@ auto AudioLayout::translate() -> void {
         moduleList.setText(2, 0, trans->get("Audio Record"));
         moduleList.setRowTooltip(1, trans->get("Digital Signal Processing"));
     }
+
+    unsigned neededWidth = driveLayout.floppySelection.label.minimumSize().width;
+    neededWidth = std::max(neededWidth, driveLayout.tapeSelection.label.minimumSize().width);
+    neededWidth = SliderLayout::scale({&driveLayout.floppyVolume, &driveLayout.tapeVolume, &driveLayout.tapeNoiseVolume}, "300 %", neededWidth);
+
+    driveLayout.floppySelection.children[ 0 ].size.width = neededWidth;
+    driveLayout.tapeSelection.children[ 0 ].size.width = neededWidth;
 }
 
 auto AudioLayout::loadSettings() -> void {

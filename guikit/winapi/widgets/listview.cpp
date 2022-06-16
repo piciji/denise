@@ -208,7 +208,6 @@ auto pListView::updateRowToolTip(HWND hwnd, int curItem, RECT rect) -> void {
     toolInfo.lpszText = wtooltip;
     
     SendMessage(hwndTip, TTM_ADDTOOL, 0, (LPARAM)&toolInfo);
-    SendMessage(hwndTip, TTM_SETDELAYTIME, TTDT_AUTOPOP, 25000);
 }
 
 auto pListView::clearBrush() -> void {
@@ -261,7 +260,12 @@ auto pListView::createTooltip(bool useBallon) -> void {
     }
     
     if (hfont)
-        SendMessage(hwndTip, WM_SETFONT, (WPARAM)hfont, 0);     
+        SendMessage(hwndTip, WM_SETFONT, (WPARAM)hfont, 0);
+
+    if (!listView.specialFont()) {
+        SendMessage(hwndTip, TTM_SETDELAYTIME, TTDT_AUTOPOP, 25000);
+        SendMessage(hwndTip, TTM_SETMAXTIPWIDTH, 0, 800);
+    }
 }
 
 auto pListView::rebuild() -> void {

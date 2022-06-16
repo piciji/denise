@@ -26,6 +26,7 @@ struct AudioDriveLayout : GUIKIT::FramedVerticalLayout {
     struct Selection : GUIKIT::HorizontalLayout {
         GUIKIT::Label label;
         GUIKIT::ComboButton combo;
+        GUIKIT::Widget spacer;
         GUIKIT::Button reload;
         Selection();
     };

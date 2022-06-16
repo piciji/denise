@@ -22,9 +22,14 @@ struct PreviewLayout : GUIKIT::FramedVerticalLayout {
         GUIKIT::ComboButton fontSizeCombo;
         GUIKIT::Label dialogFontSize;
         GUIKIT::ComboButton dialogFontSizeCombo;
-        GUIKIT::CheckBox tooltips;
-        GUIKIT::CheckBox commodoreHighlight;
-        
+
+        struct Option : GUIKIT::VerticalLayout {
+            GUIKIT::CheckBox tooltips;
+            GUIKIT::CheckBox commodoreHighlight;
+
+            Option();
+        } option;
+
         Top();
     } top;
     
