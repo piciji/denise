@@ -131,7 +131,8 @@ struct InputManager {
     bool autoFireHold = false;
     std::vector<InputMapping*> autoFireMappings;
     bool allowTouchlessAutofire = false;
-    GUIKIT::Setting* oppositeSetting;
+    bool oppositeDirections;
+    uint8_t prioritise = 0; // 0: allow both, 1: prioritise controlport, 2: prioritise keyboard
 
 	static std::vector<InputMapping*> hotkeyTriggers;
     static bool driverChange;
@@ -172,7 +173,7 @@ struct InputManager {
 	auto sort() -> void;				
     auto updateMappingsInUse() -> void;
     auto matchButtons( Emulator::Interface::Device::Input* emuInput, Hid::Input* hidInput ) -> bool;
-    auto priorizeConnectedDevicesOverKeyboard() -> void;
+    auto prioritiseConnectedDevicesOverKeyboard() -> void;
     auto alternateSort() -> void;
     auto updateAnalogSensitivity(Emulator::Interface::Device* updateDevice = nullptr) -> void;
     auto updateAutofireFrequency() -> void;
@@ -186,7 +187,7 @@ struct InputManager {
 	auto isAutofireActive(InputMapping* trigger) -> bool;
 	auto toggleAutofire(InputMapping* trigger) -> void;
     auto setIllegalMappings() -> void;
-    auto updateOppositeDirections() -> void;
+    auto updateMiscSettings() -> void;
     
     inline auto updateAndTrigger() -> void;
     inline auto addAndTrigger(InputMapping* newTrigger) -> void;

@@ -37,6 +37,21 @@ InputSelector::InputSelector() {
     setAlignment(0.5);
 }
 
+InputControl::OptionControl::PrioritiseLayout::PrioritiseLayout() {
+    append(label, {0u, 0u}, 10);
+    append(none, {0u, 0u}, 10);
+    append(controlPort, {0u, 0u}, 10);
+    append(keyboard, {0u, 0u});
+
+    GUIKIT::RadioBox::setGroup( none, controlPort, keyboard );
+    setAlignment(0.5);
+}
+
+InputControl::OptionControl::OptionControl() {
+    append(prioritiseLayout, {0u, 0u}, 8);
+    append(oppositeDirections, {0u, 0u});
+}
+
 InputControl::InputControl() {
     mapper.setEnabled(false);
     erase.setEnabled(false);
@@ -48,7 +63,9 @@ InputControl::InputControl() {
     append(mapper, {0u, 0u}, 10);     
 	append(linker, {0u, 0u}, 10);     
     append(erase, {0u, 0u}, 10);
-    append(oppositeDirections, {0u, 0u});
+
+    append(optionControl, {0u, 0u});
+
     append(spacing, {~0u, 0u});
     append(alternate, {0u, 0u}, 5);  
     append(mapperAlt, {0u, 0u}, 10);     
@@ -315,9 +332,34 @@ InputLayout::InputLayout(TabWindow* tabWindow) : autofireControl(tabWindow->emul
         emuThread->unlock();
 	};
 
-    control.oppositeDirections.onToggle = [this](bool checked) {
+    control.optionControl.oppositeDirections.onToggle = [this](bool checked) {
         emuThread->lock();
         _settings->set<bool>("allow_opposite_directions", checked);
+        InputManager::getManager( this->emulator )->updateMiscSettings();
+        emuThread->unlock();
+    };
+
+    control.optionControl.prioritiseLayout.none.onActivate = [this]() {
+        emuThread->lock();
+        _settings->set<unsigned >("prioritise_mappings", 0);
+        InputManager::getManager( this->emulator )->updateMiscSettings();
+        InputManager::getManager( this->emulator )->updateMappingsInUse();
+        emuThread->unlock();
+    };
+
+    control.optionControl.prioritiseLayout.controlPort.onActivate = [this]() {
+        emuThread->lock();
+        _settings->set<unsigned >("prioritise_mappings", 1);
+        InputManager::getManager( this->emulator )->updateMiscSettings();
+        InputManager::getManager( this->emulator )->updateMappingsInUse();
+        emuThread->unlock();
+    };
+
+    control.optionControl.prioritiseLayout.keyboard.onActivate = [this]() {
+        emuThread->lock();
+        _settings->set<unsigned >("prioritise_mappings", 2);
+        InputManager::getManager( this->emulator )->updateMiscSettings();
+        InputManager::getManager( this->emulator )->updateMappingsInUse();
         emuThread->unlock();
     };
 
@@ -335,7 +377,7 @@ InputLayout::InputLayout(TabWindow* tabWindow) : autofireControl(tabWindow->emul
 
     updateAutofireFrequency();
 
-    updateOppsiteDirections();
+    updateMiscSettings();
 
     loadDeviceList();
 }
@@ -347,9 +389,15 @@ auto InputLayout::updateAssigner() -> void {
         assigner.appendRadio.setChecked();
 }
 
-auto InputLayout::updateOppsiteDirections() -> void {
+auto InputLayout::updateMiscSettings() -> void {
+    control.optionControl.oppositeDirections.setChecked( _settings->get<bool>("allow_opposite_directions", false) );
 
-    control.oppositeDirections.setChecked( _settings->get<bool>("allow_opposite_directions", false) );
+    auto prio = _settings->get<unsigned>("prioritise_mappings", 1, {0,2});
+    switch(prio) {
+        case 0: control.optionControl.prioritiseLayout.none.setChecked(); break;
+        case 1: control.optionControl.prioritiseLayout.controlPort.setChecked(); break;
+        case 2: control.optionControl.prioritiseLayout.keyboard.setChecked(); break;
+    }
 }
 
 auto InputLayout::stopCapture() -> void {
@@ -549,7 +597,14 @@ auto InputLayout::translate() -> void {
     stopCapture();
 	selector.hotkeys.setText( trans->get("hotkeys") );
     selector.plugin.setText( trans->get("plugin", {}, true) );
-    control.oppositeDirections.setText( trans->get("allow opposite directions") );
+    control.optionControl.oppositeDirections.setText( trans->get("allow opposite directions") );
+    control.optionControl.prioritiseLayout.label.setText( trans->get("prioritise double mappings", {}, true) );
+    control.optionControl.prioritiseLayout.none.setText( trans->get("none") );
+    control.optionControl.prioritiseLayout.none.setTooltip( trans->get("prioritise no input device") );
+    control.optionControl.prioritiseLayout.controlPort.setText( trans->get("Controlport") );
+    control.optionControl.prioritiseLayout.controlPort.setTooltip( trans->get("prioritise controlport") );
+    control.optionControl.prioritiseLayout.keyboard.setText( trans->get("Keyboard") );
+    control.optionControl.prioritiseLayout.keyboard.setTooltip( trans->get("prioritise keyboard") );
     inputList.setHeaderText({ "", trans->get("input"), trans->get("map"), trans->get("alternate_map")});
     mapControl.reset.setText( trans->get( "reset" ) );
     mapControl.reset.setTooltip( trans->get( "reset_device_info" ) );
@@ -782,7 +837,7 @@ auto InputLayout::loadSettings() -> void {
 
     updateAutofireFrequency();
 
-    updateOppsiteDirections();
+    updateMiscSettings();
     
     update();
 }

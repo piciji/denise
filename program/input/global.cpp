@@ -28,7 +28,7 @@ auto InputManager::init() -> void {
 
         manager->updateAutofireFrequency();
 
-        manager->updateOppositeDirections();
+        manager->updateMiscSettings();
         
         auto settings = program->getSettings( manager->emulator );
         
@@ -299,13 +299,8 @@ auto InputManager::matchButtons( Emulator::Interface::Device::Input* emuInput, H
     return false;
 }
 
-auto InputManager::priorizeConnectedDevicesOverKeyboard() -> void {
+auto InputManager::prioritiseConnectedDevicesOverKeyboard() -> void {
 
-    for(auto mapping : mappingsInUse) {        
-        for(auto& hid : mapping->hids)
-            hid.disable = false;
-    }
-    
     if (!emulator)
         return;
     
@@ -333,14 +328,9 @@ auto InputManager::priorizeConnectedDevicesOverKeyboard() -> void {
     if (connectedDevices.size() == 0)
         return;
     
-    for( auto& device : emulator->devices ) {
-        if (device.isKeyboard())
-            continue;
-        
-        if (!GUIKIT::Vector::find( connectedDevices, &device ))
-            continue;
-        
-        for (auto& input : device.inputs) {            
+    for( auto device : connectedDevices ) {
+
+        for (auto& input : device->inputs) {
             if (!input.isDigital())
                 continue;
             
@@ -351,7 +341,7 @@ auto InputManager::priorizeConnectedDevicesOverKeyboard() -> void {
                 if (mapper->hids.size() == 0)
                     goto NextMapper;
 
-                if (mapper->hids.size() > 1)
+                if (mapper->anded && (mapper->hids.size() > 1))
                     goto NextMapper;
 
                 for (auto& hid : mapper->hids) {
@@ -365,7 +355,7 @@ auto InputManager::priorizeConnectedDevicesOverKeyboard() -> void {
                             if (keyboardMapper->hids.size() == 0)
                                 goto NextKeyboardMapper;
 
-                            if (keyboardMapper->hids.size() > 1)
+                            if (keyboardMapper->anded && (keyboardMapper->hids.size() > 1))
                                 goto NextKeyboardMapper;
 
                             for (auto& keyboardHid : keyboardMapper->hids) {
@@ -375,7 +365,10 @@ auto InputManager::priorizeConnectedDevicesOverKeyboard() -> void {
                                 
                                 if (keyboardHid.device == hid.device && keyboardHid.group == hid.group
                                 && keyboardHid.input == hid.input && keyboardHid.qualifier == hid.qualifier ) {
-                                    keyboardHid.disable = true;                                                        
+                                    if (prioritise == 1)
+                                        keyboardHid.disable = true;
+                                    else
+                                        hid.disable = true;
                                 }
                             }
                             
@@ -591,15 +584,18 @@ auto InputManager::getDeviceFromIdent( unsigned id ) -> Hid::Device* {
     return nullptr;
 }
 
-auto InputManager::updateOppositeDirections() -> void {
+auto InputManager::updateMiscSettings() -> void {
     if (!emulator)
         return;
 
-    auto settings = program->getSettings( emulator );
-    oppositeSetting = settings->getOrInit<bool>("allow_opposite_directions", false);
+    auto settings = program->getSettings(emulator);
+    oppositeDirections = settings->get<bool>("allow_opposite_directions", false);
+    prioritise = settings->get<unsigned>("prioritise_mappings", 1, {0,2});
 }
 
 auto InputManager::updateAutofireFrequency() -> void {
+    if (!emulator)
+        return;
 
     auto settings = program->getSettings(emulator);
     autoFireHold = settings->get<unsigned>( "autofire_hold", false );

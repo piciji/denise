@@ -19,7 +19,21 @@ struct InputControl : GUIKIT::HorizontalLayout {
     GUIKIT::Button mapper;
     GUIKIT::Button linker;
     GUIKIT::Button erase;
-    GUIKIT::CheckBox oppositeDirections;
+
+    struct OptionControl : GUIKIT::VerticalLayout {
+        struct PrioritiseLayout : GUIKIT::HorizontalLayout {
+            GUIKIT::Label label;
+            GUIKIT::RadioBox none;
+            GUIKIT::RadioBox controlPort;
+            GUIKIT::RadioBox keyboard;
+
+            PrioritiseLayout();
+        } prioritiseLayout;
+        GUIKIT::CheckBox oppositeDirections;
+
+        OptionControl();
+    } optionControl;
+
     GUIKIT::Widget spacing;
     GUIKIT::Label alternate;
     GUIKIT::Button mapperAlt;
@@ -93,7 +107,7 @@ struct InputLayout : GUIKIT::VerticalLayout {
     auto updateAssigner() -> void;
     auto loadSettings() -> void;
     auto updateAutofireFrequency() -> void;
-    auto updateOppsiteDirections() -> void;
+    auto updateMiscSettings() -> void;
     auto updatedAutofireButtonHints() -> void;
 
     InputSelector selector;

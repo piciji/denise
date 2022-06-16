@@ -48,11 +48,17 @@ auto InputManager::addMappingInUse(InputMapping* mapping) -> void {
     else
         mapping->state = 0;
 
+    for(auto& hid : mapping->hids)
+        hid.disable = false;
+
     if (mapping->alternate) {
         if (mapping->alternate->isShadowed || (mapping->alternate->hids.size() > 0))
             mappingsInUse.push_back( mapping->alternate );
         else
             mapping->alternate->state = 0;
+
+        for(auto& hid : mapping->alternate->hids)
+            hid.disable = false;
     }
 }
 
@@ -162,8 +168,8 @@ auto InputManager::update() -> void {
                     if (!Program::focused && mapping->emuDevice && !hid.device->isJoypad() )
                         continue;
 
-//                    if (hid.disable)
-//                        continue;                    
+                    if (hid.disable)
+                        continue;
                     
 					if (aSwitch && (mapping->adjustDigitalValue<true>( hid ) != 0) )
                         continue;					
@@ -181,18 +187,13 @@ auto InputManager::update() -> void {
                     } else
                         useMapping->state = value;
 
-                    if (useMapping->illegalMapping && !*oppositeSetting) {
+                    if (useMapping->illegalMapping && !oppositeDirections) {
                         illegals.push_back(useMapping);
                         hasIllegal = true;
                     }
 
                     for(auto shadow : useMapping->shadowMap) {
                         shadow->virtualLinked = useMapping;
-//                        if (shadow->illegalMapping && !*oppositeSetting) {
-//                            illegals.push_back(shadow);
-//                            hasIllegal = true;
-//                        }
-
                         shadows.push_back(shadow);
                         hasShadow = true;
                     }
@@ -416,7 +417,9 @@ auto InputManager::updateMappingsInUse() -> void {
 
     allowTouchlessAutofire = autoFireMappings.size() > 0;
     sort();
-    //priorizeConnectedDevicesOverKeyboard();
+
+    if(prioritise)
+        prioritiseConnectedDevicesOverKeyboard();
 
     if (emulator && (autoFireMappings.size() != copyAutofireMappings.size())) {
         auto emuView = EmuConfigView::TabWindow::getView( emulator );

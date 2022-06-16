@@ -13,6 +13,17 @@ Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trade
 
 # changelog
 
+## 1.1.3.1 (not yet released)
+* spanish translation [thanks to Muzza]
+* tape loading sounds (playing as audio cassette)
+* fixed a bug for windows UI not listing all addresses for multi SID's in drop-down list
+* faster loading of floppy drive profile with a lot of stepper WAV's for each track
+    * newtronics drive sound profile no longer blocks emulation on first start
+* added option to hold autofire for two frames (instead of one)
+    * improves autofire on directional buttons for shaking games
+    * hint: some autofire compatible joysticks do this
+* added option to prioritise controlport over keyboard and vice versa
+
 ## 1.1.3
 * added newtronics drive sound profile [thanks to enigma]
 * precise FPS counter and speed selection menu
