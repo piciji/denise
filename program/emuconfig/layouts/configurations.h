@@ -59,31 +59,31 @@ struct ConfigurationsFolderLayout : GUIKIT::HorizontalLayout {
 };
 
 struct MemoryPatternLayout : GUIKIT::FramedVerticalLayout {
-    
+
     struct FirstLine : GUIKIT::HorizontalLayout {
-        
+
         GUIKIT::Label valueLabel;
         GUIKIT::StepButton valueStepper;
         GUIKIT::Label invertValueEveryLabel;
-        GUIKIT::ComboButton invertValueEveryCombo;        
-        
+        GUIKIT::ComboButton invertValueEveryCombo;
+
         FirstLine();
     } firstLine;
-    
+
     struct SecondLine : GUIKIT::HorizontalLayout {
-        
+
         GUIKIT::Label lengthRandomLabel;
         GUIKIT::ComboButton lengthRandomCombo;
         GUIKIT::Label repeatRandomEveryLabel;
         GUIKIT::ComboButton repeatRandomEveryCombo;
-        
+
         SecondLine();
     } secondLine;
-    
+
     struct ThirdLine : GUIKIT::HorizontalLayout {
         GUIKIT::Label randomChanceLabel;
         GUIKIT::StepButton randomChanceStepper;
-        
+
         ThirdLine();
     } thirdLine;
 

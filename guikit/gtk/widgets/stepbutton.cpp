@@ -22,7 +22,7 @@ auto pStepButton::updateRange() -> void {
 auto pStepButton::setValue( int16_t value ) -> void {
 	locked = true;
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(gtkWidget), value);
-    setFont( widget.font() );    
+    setFont( widget.font() );
 	locked = false;
 }
 

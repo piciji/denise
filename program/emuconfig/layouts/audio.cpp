@@ -237,7 +237,9 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
     dspFrame.append( bass, {~0u, 0u}, 5 );
     dspFrame.append( reverb, {~0u, 0u}, 5 );
     dspFrame.append( panning, {~0u, 0u} );
-    
+
+    append( moduleSwitch, {~0u, ~0u} );
+
     if (dynamic_cast<LIBC64::Interface*>(emulator)) {
         moduleSwitch.setLayout( 0, settingsLayout, {~0u, ~0u} );
         moduleSwitch.setLayout( 1, driveLayout, {~0u, ~0u} );
@@ -248,8 +250,6 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
         moduleSwitch.setLayout( 1, dspFrame, {~0u, ~0u} );
         moduleSwitch.setLayout( 2, audioRecord, {~0u, ~0u} );
     }
-        
-    append( moduleSwitch, {~0u, ~0u} );    
     
     bass.top.active.onToggle = [this](bool checked) {
         

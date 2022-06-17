@@ -181,7 +181,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
     moduleList.setImage(2, 0, memImage);
     
     moduleList.setSelection(0);
-    moduleFrame.append( moduleList, { GUIKIT::Font::scale(130), GUIKIT::Font::scale(100)} );
+    moduleFrame.append( moduleList, { GUIKIT::Font::scale(140), GUIKIT::Font::scale(100)} );
     moduleFrame.setPadding(10);
     moduleFrame.setFont( GUIKIT::Font::system("bold") );
     
@@ -192,12 +192,11 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
 
         auto _sel = moduleList.selection();
 
+        moduleSwitch.setSelection( _sel );
         if (memoryPattern && _sel == 2) {
             GUIKIT::HorizontalLayout::alignChildrenVertically( {&memoryPattern->firstLine, &memoryPattern->secondLine, &memoryPattern->thirdLine} );
             memoryPattern->updateLayout();
         }
-
-        moduleSwitch.setSelection( _sel );
     };
         
     append( moduleFrame, {0u, 0u}, 10 );
@@ -211,13 +210,12 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
     
     if(dynamic_cast<LIBC64::Interface*>(emulator))
         memoryPattern = new MemoryPatternLayout(tabWindow);
-    
+
+    append( moduleSwitch, {~0u, ~0u} );
     moduleSwitch.setLayout( 0, settingsFrame, {~0u, ~0u} );
     moduleSwitch.setLayout( 1, statesFrame, {~0u, ~0u} );
     if(memoryPattern)
         moduleSwitch.setLayout( 2, *memoryPattern, {~0u, ~0u} );
-    
-    append( moduleSwitch, {~0u, ~0u} );
     
     if(memoryPattern) {
 		
@@ -907,5 +905,7 @@ auto ConfigurationsLayout::translate() -> void {
         memoryPattern->fourthLine.preConfigured2.setText( trans->get( "pre-configured 2" ) );
 
         GUIKIT::HorizontalLayout::alignChildrenVertically( {&memoryPattern->firstLine, &memoryPattern->secondLine, &memoryPattern->thirdLine} );
+
+        memoryPattern->updateLayout();
     }
 }

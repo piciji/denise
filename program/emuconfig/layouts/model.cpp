@@ -454,7 +454,7 @@ auto ModelLayout::translate( std::string theme ) -> void {
     
     setText( trans->get( theme ) );
 
-    controlLayout.label.setText( trans->get("all", {}, true) );
+    controlLayout.label.setText( trans->get("all") );
     controlLayout.firstAll.setText( "8580" );
     controlLayout.secondAll.setText( "6581" ); 
     

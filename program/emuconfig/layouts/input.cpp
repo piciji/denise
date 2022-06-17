@@ -39,8 +39,8 @@ InputSelector::InputSelector() {
 
 InputControl::OptionControl::PrioritiseLayout::PrioritiseLayout() {
     append(label, {0u, 0u}, 10);
-    append(none, {0u, 0u}, 10);
-    append(controlPort, {0u, 0u}, 10);
+    append(none, {0u, 0u}, 5);
+    append(controlPort, {0u, 0u}, 5);
     append(keyboard, {0u, 0u});
 
     GUIKIT::RadioBox::setGroup( none, controlPort, keyboard );
