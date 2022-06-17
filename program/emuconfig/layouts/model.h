@@ -13,12 +13,12 @@ struct ModelLayout : GUIKIT::FramedVerticalLayout {
         
         struct Block : GUIKIT::HorizontalLayout {
             Emulator::Interface::Model* model;
-            GUIKIT::CheckBox checkBox;
-			GUIKIT::ComboButton combo;
-            SliderLayout sliderLayout;
+            GUIKIT::CheckBox* checkBox = nullptr;
+			GUIKIT::ComboButton* combo = nullptr;
+            SliderLayout* sliderLayout = nullptr;
 			std::vector<GUIKIT::RadioBox*> options;
-            GUIKIT::Label label;
-            GUIKIT::LineEdit lineEdit;
+            GUIKIT::Label* label = nullptr;
+            GUIKIT::LineEdit* lineEdit = nullptr;
 
             Block(Emulator::Interface::Model* model, ModelLayout* layout);
         };

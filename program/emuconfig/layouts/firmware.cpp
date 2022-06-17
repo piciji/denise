@@ -55,8 +55,8 @@ FirmwareLayout::FirmwareLayout(TabWindow* tabWindow) {
 
                     auto blockSpeeder = this->tabWindow->systemLayout->driveModelLayout.getBlock(
                             LIBC64::Interface::ModelId::ModelIdDriveFastLoader);
-                    if (blockSpeeder && blockSpeeder->combo.selection())
-                        blockSpeeder->combo.activate(0);
+                    if (blockSpeeder && blockSpeeder->combo->selection())
+                        blockSpeeder->combo->activate(0);
                 }
             }
             emuThread->unlock();

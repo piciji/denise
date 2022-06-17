@@ -14,15 +14,17 @@ namespace EmuConfigView {
     
 #define mes this->tabWindow->message    
     
-ModelLayout::Line::Block::Block(Emulator::Interface::Model* model, ModelLayout* layout) : combo(model->isCombo() && model->isAudioSettings()) {
+ModelLayout::Line::Block::Block(Emulator::Interface::Model* model, ModelLayout* layout) {
     
 	this->model = model;
     
 	if (model->isSwitch()) {
-		append(checkBox, {0u, 0u} );
+        checkBox = new GUIKIT::CheckBox;
+		append(*checkBox, {0u, 0u} );
 		
-	} else if (model->isRadio()) {		
-		append(label, {layout->getAlignedWidth(model), 0u}, 5 );
+	} else if (model->isRadio()) {
+        label = new GUIKIT::Label;
+		append(*label, {layout->getAlignedWidth(model), 0u}, 5 );
 		
 		for(auto& option : model->options) {
 			auto radio = new GUIKIT::RadioBox;
@@ -31,25 +33,30 @@ ModelLayout::Line::Block::Block(Emulator::Interface::Model* model, ModelLayout* 
 		}
 		GUIKIT::RadioBox::setGroup( options );
 		
-	} else if (model->isCombo()) {		
-		append(label, {0u, 0u}, 5 );
+	} else if (model->isCombo()) {
+        label = new GUIKIT::Label;
+		append(*label, {0u, 0u}, 5 );
 		
 		int i = 0;
+        combo = new GUIKIT::ComboButton(model->isCombo() && model->isAudioSettings());
 		for(auto& option : model->options)			
-			combo.append( option, i++ );		
+			combo->append( option, i++ );
 		
-		append( combo, {0u, 0u} );	
+		append( *combo, {0u, 0u} );
 
     } else if (model->isSlider()) {
-        append(sliderLayout, {~0u, 0u});
-        sliderLayout.updateValueWidth( std::to_string( model->range[0] < 0 ? model->range[0] : model->range[1] ) );
-        sliderLayout.slider.setLength( model->steps + 1 );
+        sliderLayout = new ::SliderLayout;
+        append(*sliderLayout, {~0u, 0u});
+        sliderLayout->updateValueWidth( std::to_string( model->range[0] < 0 ? model->range[0] : model->range[1] ) );
+        sliderLayout->slider.setLength( model->steps + 1 );
         
 	} else {
         GUIKIT::LineEdit tester;
         tester.setText( model->isHex() ? "0xAA" : std::to_string(model->range[0]) );
-		append(label, {0u, 0u}, 5 );
-		append(lineEdit, {tester.minimumSize().width, 0u} );
+        label = new GUIKIT::Label;
+        lineEdit = new GUIKIT::LineEdit;
+		append(*label, {0u, 0u}, 5 );
+		append(*lineEdit, {tester.minimumSize().width, 0u} );
 	}
         
 	setAlignment(0.5);
@@ -124,7 +131,7 @@ auto ModelLayout::setEvents( ) -> void {
             
             if (model->isSwitch() ) {	
 
-                block->checkBox.onToggle = [this, block, model]( bool checked ) {
+                block->checkBox->onToggle = [this, block, model]( bool checked ) {
 
                     tabWindow->settings->set<bool>( _underscore(model->name), checked );
 
@@ -152,9 +159,9 @@ auto ModelLayout::setEvents( ) -> void {
 
 			} else if (model->isCombo() ) {	
 									
-				block->combo.onChange = [this, block, model]() {
+				block->combo->onChange = [this, block, model]() {
 
-					int val = block->combo.userData();
+					int val = block->combo->userData();
 					
 					tabWindow->settings->set<unsigned>( _underscore(model->name), val);
 
@@ -166,7 +173,7 @@ auto ModelLayout::setEvents( ) -> void {
 					
             } else if (model->isSlider() ) {	
                 
-                block->sliderLayout.slider.onChange = [this, block, model](unsigned position) {
+                block->sliderLayout->slider.onChange = [this, block, model](unsigned position) {
                     int _min = model->range[0];
                     
                     int _max = model->range[1];
@@ -192,7 +199,7 @@ auto ModelLayout::setEvents( ) -> void {
                             unit = " RPM";
                     }
 
-                    block->sliderLayout.value.setText( displayText + unit );
+                    block->sliderLayout->value.setText( displayText + unit );
 
                     emuThread->lock();
                     emulator->setModelValue( model->id, val );
@@ -202,15 +209,15 @@ auto ModelLayout::setEvents( ) -> void {
                 
             } else {
 
-                block->lineEdit.onChange = [this, block, model]() {
+                block->lineEdit->onChange = [this, block, model]() {
                                         
                     int val;
-                    auto str = block->lineEdit.text();
+                    auto str = block->lineEdit->text();
 
                     if ( model->isHex() ) {                    
                         val = GUIKIT::String::convertHexToInt( str, model->defaultValue );
                     } else
-                        val = block->lineEdit.value();
+                        val = block->lineEdit->value();
 
                     auto range = model->range;
 
@@ -238,7 +245,7 @@ auto ModelLayout::alignSlider( std::string maxText ) -> void {
     for (auto line : lines) {
         for (auto block : line->blocks) {
             if (block->model->isSlider()) {
-                sliderLayouts.push_back( (SliderLayout*)&block->sliderLayout );
+                sliderLayouts.push_back( (SliderLayout*)block->sliderLayout );
             }
         }
     }
@@ -254,7 +261,7 @@ auto ModelLayout::updateWidgets( ) -> void {
 
             if (tabWindow->mediaLayout && block->model->isDriveSettings() &&
             (emulator->getModelIdOfEnabledDrives(emulator->getDiskMediaGroup()) == block->model->id) ) {
-                tabWindow->mediaLayout->updateVisibility( emulator->getDiskMediaGroup(), block->combo.selection() );
+                tabWindow->mediaLayout->updateVisibility( emulator->getDiskMediaGroup(), block->combo->selection() );
             }
         }
     }
@@ -286,7 +293,7 @@ auto ModelLayout::updateWidget( Line::Block* block ) -> void {
         return;
 	
 	if (model->isSwitch() ) {
-		block->checkBox.setChecked( tabWindow->settings->get<bool>( _underscore(model->name), model->defaultValue ) );
+		block->checkBox->setChecked( tabWindow->settings->get<bool>( _underscore(model->name), model->defaultValue ) );
 		return;
 	}
     
@@ -304,7 +311,7 @@ auto ModelLayout::updateWidget( Line::Block* block ) -> void {
 
         unsigned pos = (val - _min) / stepSize;
         
-        block->sliderLayout.slider.setPosition( pos );
+        block->sliderLayout->slider.setPosition( pos );
 
         std::string displayText = std::to_string(val);
         if (model->scaler != 1.0)
@@ -318,7 +325,7 @@ auto ModelLayout::updateWidget( Line::Block* block ) -> void {
                 unit = " RPM";
         }
 
-        block->sliderLayout.value.setText( displayText + unit );
+        block->sliderLayout->value.setText( displayText + unit );
         
         return;
     }
@@ -339,16 +346,16 @@ auto ModelLayout::updateWidget( Line::Block* block ) -> void {
 	
 	if (model->isCombo() ) {
 		auto usedVal = tabWindow->settings->get<int>( _underscore(model->name), model->defaultValue, model->range );
-		block->combo.setSelection( usedVal );		
+		block->combo->setSelection( usedVal );
 		return;
 	}
 	
 	auto _val = tabWindow->settings->get<int>( _underscore(model->name), model->defaultValue, model->range );
 
 	if ( model->isHex() )                 
-		block->lineEdit.setText( GUIKIT::String::convertIntToHex( _val ) );
+		block->lineEdit->setText( GUIKIT::String::convertIntToHex( _val ) );
 	else            
-		block->lineEdit.setValue( _val );	
+		block->lineEdit->setValue( _val );
 }
 
 auto ModelLayout::toggleCheckbox(unsigned id) -> bool {
@@ -360,9 +367,9 @@ auto ModelLayout::toggleCheckbox(unsigned id) -> bool {
                 if (!block->model->isSwitch())
                     continue;
                 
-                block->checkBox.toggle();
+                block->checkBox->toggle();
                 
-                return block->checkBox.checked();
+                return block->checkBox->checked();
             }
         }        
 	}
@@ -392,13 +399,13 @@ auto ModelLayout::nextOption(unsigned id) -> unsigned {
                     }
                 }                
                 else if (block->model->isCombo() ) {
-                    val = block->combo.selection() + 1;
+                    val = block->combo->selection() + 1;
                     
-                    if (val == block->combo.rows())
+                    if (val == block->combo->rows())
                         val = 0;
                     
-                    block->combo.setSelection( val );	
-                    block->combo.onChange();
+                    block->combo->setSelection( val );
+                    block->combo->onChange();
                     return val;
                 }
             }
@@ -428,8 +435,8 @@ auto ModelLayout::stepRange(unsigned id, int step) -> int {
                     newValue = _min;
                 
                 if (model->isRange()) {
-                    block->lineEdit.setValue( newValue );            
-                    block->lineEdit.onChange();
+                    block->lineEdit->setValue( newValue );
+                    block->lineEdit->onChange();
                     return newValue;
                     
                 } else if (model->isSlider()) {
@@ -438,9 +445,9 @@ auto ModelLayout::stepRange(unsigned id, int step) -> int {
 
                     unsigned pos = (newValue + _max) / stepSize;
 
-                    block->sliderLayout.slider.setPosition(pos);
+                    block->sliderLayout->slider.setPosition(pos);
                     
-                    block->sliderLayout.slider.onChange(pos);
+                    block->sliderLayout->slider.onChange(pos);
                     
                     return newValue;
                 }
@@ -465,35 +472,31 @@ auto ModelLayout::translate( std::string theme ) -> void {
             std::string tooltip;
             std::string name = getIdent( model, tooltip );
 
-            if (model->isSwitch())
-                block->checkBox.setTooltip(trans->get(tooltip));
+            if (model->isSwitch()) {
+                block->checkBox->setText(trans->get( name ));
+                block->checkBox->setTooltip(trans->get(tooltip));
 
-            else if (model->isRadio()) {
+            } else if (model->isRadio()) {
                 unsigned pos = 0;
                 for (auto option : block->options) {
                     option->setText(trans->get(model->options[pos++]));
                 }
-                block->label.setTooltip(trans->get(tooltip));
 
             } else if (model->isCombo()) {
-
                 unsigned pos = 0;
                 for (auto option : model->options) {
-                    block->combo.setText(pos++, trans->get(option));
+                    block->combo->setText(pos++, trans->get(option));
                 }
 
-                block->label.setTooltip(trans->get(tooltip));
-
             } else if (model->isSlider()) {
-                block->sliderLayout.name.setTooltip(trans->get(tooltip));
-            } else
-                block->label.setTooltip(trans->get(tooltip));
+                block->sliderLayout->name.setText(trans->get( name, {}, true ));
+                block->sliderLayout->name.setTooltip(trans->get(tooltip));
+            }
 
-            block->checkBox.setText(trans->get( name ));
-            if (model->isSlider())
-                block->sliderLayout.name.setText(trans->get( name, {}, true ));
-            else
-                block->label.setText(trans->get( name, {}, model->isRadio() || model->isCombo() ));
+            if (block->label) {
+                block->label->setText(trans->get(name, {}, model->isRadio() || model->isCombo()));
+                block->label->setTooltip(trans->get(tooltip));
+            }
         }
     }
 }
@@ -559,7 +562,7 @@ auto ModelLayout::applyCustomStuff( Line::Block* block, Emulator::Interface::Mod
 
             case LIBC64::Interface::ModelIdDiskDrivesConnected:
                 if(tabWindow->mediaLayout)
-                    tabWindow->mediaLayout->updateVisibility( emulator->getDiskMediaGroup(), block->combo.selection() );
+                    tabWindow->mediaLayout->updateVisibility( emulator->getDiskMediaGroup(), block->combo->selection() );
                 // fall through
             case LIBC64::Interface::ModelIdTapeDrivesConnected:
             case LIBC64::Interface::ModelIdDriveRam20To3F:
@@ -600,9 +603,9 @@ auto ModelLayout::applyCustomStuff( Line::Block* block, Emulator::Interface::Mod
 auto ModelLayout::updateBurstVisibillity() -> void {
     auto blockBurstMode = getBlock( LIBC64::Interface::ModelIdCiaBurstMode );
     auto blockDriveModel = getBlock( LIBC64::Interface::ModelIdDiskDriveModel );
-    auto selection = blockDriveModel->combo.selection();
+    auto selection = blockDriveModel->combo->selection();
 
-    blockBurstMode->checkBox.setEnabled( selection == 3 || selection == 4 );
+    blockBurstMode->checkBox->setEnabled( selection == 3 || selection == 4 );
 }
 
 auto ModelLayout::hintDriveSettings() -> void {
@@ -619,67 +622,67 @@ auto ModelLayout::hintDriveSettings() -> void {
     auto blockRam60 = getBlock( LIBC64::Interface::ModelIdDriveRam60To7F );
     auto blockRam80 = getBlock( LIBC64::Interface::ModelIdDriveRam80To9F );
     auto blockRamA0 = getBlock( LIBC64::Interface::ModelIdDriveRamA0ToBF );
-    auto selection = blockFastloader->combo.selection();
+    auto selection = blockFastloader->combo->selection();
 
-    if (blockBurst->checkBox.checked())
-        blockBurst->checkBox.toggle();
-    if (!blockParallel->checkBox.checked())
-        blockParallel->checkBox.toggle();
-    if (blockRam20->checkBox.checked())
-        blockRam20->checkBox.toggle();
-    if (blockRam40->checkBox.checked())
-        blockRam40->checkBox.toggle();
-    if (blockRam60->checkBox.checked())
-        blockRam60->checkBox.toggle();
-    if (blockRam80->checkBox.checked())
-        blockRam80->checkBox.toggle();
-    if (blockRamA0->checkBox.checked())
-        blockRamA0->checkBox.toggle();
+    if (blockBurst->checkBox->checked())
+        blockBurst->checkBox->toggle();
+    if (!blockParallel->checkBox->checked())
+        blockParallel->checkBox->toggle();
+    if (blockRam20->checkBox->checked())
+        blockRam20->checkBox->toggle();
+    if (blockRam40->checkBox->checked())
+        blockRam40->checkBox->toggle();
+    if (blockRam60->checkBox->checked())
+        blockRam60->checkBox->toggle();
+    if (blockRam80->checkBox->checked())
+        blockRam80->checkBox->toggle();
+    if (blockRamA0->checkBox->checked())
+        blockRamA0->checkBox->toggle();
 
     if (selection == 0) {
-        blockParallel->checkBox.toggle();
+        blockParallel->checkBox->toggle();
     } else if (selection == 1) { // SpeedDOS
-        blockDriveModel->combo.setSelection(1);
+        blockDriveModel->combo->setSelection(1);
     } else if (selection == 2) { // DolphinDOS v2
-        blockRam80->checkBox.toggle();
-        blockDriveModel->combo.setSelection(1);
+        blockRam80->checkBox->toggle();
+        blockDriveModel->combo->setSelection(1);
     } else if (selection == 3) { // DolphinDOS v2 Ultimate
-        blockRam40->checkBox.toggle();
-        blockRam60->checkBox.toggle();
-        blockDriveModel->combo.setSelection(1);
+        blockRam40->checkBox->toggle();
+        blockRam60->checkBox->toggle();
+        blockDriveModel->combo->setSelection(1);
     } else if (selection == 4) { // DolphinDOS v3 1541
-        blockRam60->checkBox.toggle();
-        blockDriveModel->combo.setSelection(1);
+        blockRam60->checkBox->toggle();
+        blockDriveModel->combo->setSelection(1);
     } else if (selection == 5) { // DolphinDOS v3 157x
-        blockRam60->checkBox.toggle();
-        blockDriveModel->combo.setSelection(4);
+        blockRam60->checkBox->toggle();
+        blockDriveModel->combo->setSelection(4);
     } else if (selection == 6) { // ProfDOS v1 1541
-        blockRamA0->checkBox.toggle();
-        blockDriveModel->combo.setSelection(0);
+        blockRamA0->checkBox->toggle();
+        blockDriveModel->combo->setSelection(0);
     } else if (selection == 7) { // ProfDOS R4 1541
-        blockRam40->checkBox.toggle();
-        blockDriveModel->combo.setSelection(0);
+        blockRam40->checkBox->toggle();
+        blockDriveModel->combo->setSelection(0);
     } else if (selection == 8) { // ProfDOS R5 1570
-        blockRam40->checkBox.toggle();
-        blockDriveModel->combo.setSelection(3);
+        blockRam40->checkBox->toggle();
+        blockDriveModel->combo->setSelection(3);
     } else if (selection == 9) { // ProfDOS R6 1571
-        blockRam40->checkBox.toggle();
-        blockDriveModel->combo.setSelection(4);
+        blockRam40->checkBox->toggle();
+        blockDriveModel->combo->setSelection(4);
     } else if (selection == 10) { // PrologicDOS Classic 1541
-        blockRam80->checkBox.toggle();
-        blockDriveModel->combo.setSelection(0);
+        blockRam80->checkBox->toggle();
+        blockDriveModel->combo->setSelection(0);
     } else if (selection == 11) { // PrologicDOS 1541
-        blockRam80->checkBox.toggle();
-        blockDriveModel->combo.setSelection(0);
+        blockRam80->checkBox->toggle();
+        blockDriveModel->combo->setSelection(0);
     } else if (selection == 12) { // Turbo Trans
-        blockRamA0->checkBox.toggle();
-        blockDriveModel->combo.setSelection(0);
+        blockRamA0->checkBox->toggle();
+        blockDriveModel->combo->setSelection(0);
     } else if (selection == 13) { // Pro Speed 1571
-        blockRam80->checkBox.toggle();
-        blockDriveModel->combo.setSelection(4);
+        blockRam80->checkBox->toggle();
+        blockDriveModel->combo->setSelection(4);
     }
 
-    blockDriveModel->combo.onChange();
+    blockDriveModel->combo->onChange();
 
     if (activeBefore)
         program->power(emulator);
