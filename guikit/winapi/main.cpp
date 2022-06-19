@@ -598,9 +598,14 @@ auto pWindow::geometry() -> Geometry {
 }
 
 auto pWindow::applyMaximizeCorrection(Geometry& geo) -> void {
-    if (IsZoomed(hwnd) && (getVersionNew() >= Windows10) ) {
-        geo.y += 6;
-        geo.height -= 6;
+    if (IsZoomed(hwnd)) {
+		if (getVersionNew() >= Windows10) {
+			geo.y += 6;
+			geo.height -= 6;
+		} else if (getVersionNew() >= Windows7) {
+			geo.y += 4;
+			geo.height -= 4;
+		}
     }
 }
 

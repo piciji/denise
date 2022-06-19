@@ -48,7 +48,7 @@ InputControl::OptionControl::PrioritiseLayout::PrioritiseLayout() {
 }
 
 InputControl::OptionControl::OptionControl() {
-    append(prioritiseLayout, {0u, 0u}, 8);
+    append(prioritiseLayout, {0u, 0u}, GUIKIT::Font::scale(8));
     append(oppositeDirections, {0u, 0u});
 }
 
