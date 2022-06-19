@@ -79,6 +79,8 @@ auto View::build() -> void {
     onMove = [this]() {
         if (fullScreen()) return;
         GUIKIT::Geometry geometry = this->geometry();
+        applyMaximizeCorrection(geometry);
+
         globalSettings->set<int>("screen_x", geometry.x);
         globalSettings->set<int>("screen_y", geometry.y);
         if (!emuThread->enabled)
@@ -98,11 +100,16 @@ auto View::build() -> void {
             updateStatusBar();
 
             GUIKIT::Geometry geometry = this->geometry();
+
+            if (sizeMode == GUIKIT::Window::SIZE_MODE::Maximized)
+                applyMaximizeCorrection(geometry);
+
             globalSettings->set<int>("screen_width", geometry.width);
             globalSettings->set<int>("screen_height", geometry.height);
         }
 
         if (fullScreen() || requestFullscreenSwitch || (sizeMode != GUIKIT::Window::SIZE_MODE::Default)) {
+            placeholderTimer.setData( sizeMode == GUIKIT::Window::SIZE_MODE::Maximized ? 1 : 0 );
             updateViewport();
 
         } else {
@@ -253,6 +260,10 @@ auto View::build() -> void {
 	placeholderTimer.onFinished = [this]() {
 		placeholderTimer.setEnabled(false);
 		renderPlaceholder();
+        if (placeholderTimer.data()) { // dirty hack when maximizing
+            renderPlaceholder();
+            placeholderTimer.setData(0);
+        }
 	};
 	
 	anyloadTimer.setInterval(40);

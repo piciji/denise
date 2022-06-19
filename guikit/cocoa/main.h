@@ -65,6 +65,7 @@ struct pWindow {
     auto getScrollbarWidth() -> unsigned { return 20; }
     auto positionBGView() -> void;
     auto applyAspectRatio() -> void;
+    auto applyMaximizeCorrection(Geometry& geo) -> void {}
     
     bool disableIconsInTopMenu = false;
 

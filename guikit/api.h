@@ -1,6 +1,6 @@
 
 /**
- * v 1.9.0
+ * v 1.9.5
  */
 
 #ifndef GUIKIT_H
@@ -256,6 +256,7 @@ struct Window : Base {
     auto getScrollbarWidth() -> unsigned;
 	auto tellMeShouldICreateTheUIRightAway() -> bool;
     auto setAspectRatio(Size ratio) -> void;
+    auto applyMaximizeCorrection(Geometry& geo) -> void;
 	
 	static auto addCustomFont( CustomFont* customFont ) -> bool;
 	static auto countCustomFonts() -> unsigned;
@@ -1072,12 +1073,15 @@ struct Timer : Base {
     struct State {
         bool enabled = false;
         unsigned interval = 0;
+        unsigned data = 0;
     } state;
 
     auto enabled() const -> bool { return state.enabled; }
     auto interval() const -> unsigned { return state.interval; }
+    auto data() const -> unsigned { return state.data; }
     auto setEnabled(bool enabled = true) -> void;
     auto setInterval(unsigned intervalInMs) -> void;
+    auto setData(unsigned data) -> void;
 
     pTimer& p;
     Timer();

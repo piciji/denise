@@ -597,17 +597,25 @@ auto pWindow::geometry() -> Geometry {
     return {x, y, width, height};
 }
 
+auto pWindow::applyMaximizeCorrection(Geometry& geo) -> void {
+    if (IsZoomed(hwnd) && (getVersionNew() >= Windows10) ) {
+        geo.y += 6;
+        geo.height -= 6;
+    }
+}
+
 auto pWindow::setFullScreen(bool fullScreen) -> void {
     if (!window.resizable()) return;
     locked = true;
     if(!fullScreen) {
-        SetWindowLongPtr(hwnd, GWL_STYLE, WS_VISIBLE | WS_CLIPCHILDREN | (window.resizable() ? ResizableStyle : FixedStyle));		
+        SetWindowLongPtr(hwnd, GWL_STYLE, WS_VISIBLE | WS_CLIPCHILDREN | (window.resizable() ? ResizableStyle : FixedStyle) | (unfullscreenZoomed ? WS_MAXIMIZE : 0));
 		SetWindowLongPtr(hwnd, GWL_EXSTYLE, (GetWindowLongPtr(hwnd, GWL_EXSTYLE) & ~WS_EX_APPWINDOW));
 		
         setGeometry(window.state.geometry);
 		SetWindowPos(hwnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
         pMonitor::resetSetting();
     } else {
+        unfullscreenZoomed = IsZoomed(hwnd);
         if (window.fullscreenSetting.inUse)
             pMonitor::setSetting( window.fullscreenSetting.displayId, window.fullscreenSetting.settingId );
 
@@ -679,14 +687,14 @@ auto pWindow::onSize(WPARAM wparam) -> void {
         window.state.layout->setGeometry(geom);
     }
 
-   // if (window.statusBar() && window.statusVisible())
-     //   window.statusBar()->p.updatePosition();
-
     Window::SIZE_MODE sMode = Window::SIZE_MODE::Default;
     if (wparam == SIZE_MINIMIZED)
         sMode = Window::SIZE_MODE::Minimized;
-    else if (wparam == SIZE_MAXIMIZED)
+    else if (wparam == SIZE_MAXIMIZED) {
         sMode = Window::SIZE_MODE::Maximized;
+        if (window.statusBar() && window.statusVisible())
+            window.statusBar()->p.updatePosition();
+    }
 
     if(window.onSize) window.onSize( sMode );
 }

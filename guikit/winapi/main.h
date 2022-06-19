@@ -28,6 +28,8 @@ static const unsigned WindowsXP    = 0x0501;
 static const unsigned WindowsVista = 0x0600;
 static const unsigned Windows7     = 0x0601;
 static const unsigned Windows8     = 0x0602;
+static const unsigned Windows81    = 0x0603;
+static const unsigned Windows10    = 0x0a00;
 
 struct pApplication {
     static auto run() -> void;
@@ -55,6 +57,7 @@ struct pWindow {
 	HMENU contextmenu;
     bool locked;
     bool resizingInProgress = false;
+    bool unfullscreenZoomed = false;
 
     HBRUSH brush;
     COLORREF brushColor;
@@ -94,6 +97,7 @@ struct pWindow {
     auto setForeground() -> void;
     auto getScrollbarWidth() -> unsigned { return 20; }
     auto applyAspectRatio() -> void {}
+    auto applyMaximizeCorrection(Geometry& geo) -> void;
 
     auto onEraseBackground() -> bool;
     auto onClose() -> void;

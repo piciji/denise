@@ -430,6 +430,39 @@ auto getVersion() -> unsigned {
 	return (versionInfo.dwMajorVersion << 8) | versionInfo.dwMinorVersion;
 }
 
+typedef NTSTATUS(WINAPI* RtlGetVersionPtr)(PRTL_OSVERSIONINFOW);
+
+static auto getVersionNew() -> unsigned {
+    static unsigned version = 0;
+
+    if (version)
+        return version;
+
+    HMODULE hMod = ::GetModuleHandleW(L"ntdll.dll");
+    if (hMod) {
+        RtlGetVersionPtr fxPtr = (RtlGetVersionPtr)::GetProcAddress(hMod, "RtlGetVersion");
+        if (fxPtr != nullptr) {
+            RTL_OSVERSIONINFOW rovi = {0};
+            rovi.dwOSVersionInfoSize = sizeof (rovi);
+            if (0x00000000 == fxPtr(&rovi)) {
+                FreeLibrary(hMod);
+                version = (rovi.dwMajorVersion << 8) | rovi.dwMinorVersion;
+                return version;
+            }
+        }
+    }
+
+    if (hMod)
+        FreeLibrary(hMod);
+
+    OSVERSIONINFO versionInfo{0};
+    versionInfo.dwOSVersionInfoSize = sizeof (OSVERSIONINFO);
+    GetVersionEx(&versionInfo);
+
+    version = (versionInfo.dwMajorVersion << 8) | versionInfo.dwMinorVersion;
+    return version;
+}
+
 auto pThreadPriority::setPriority( ThreadPriority::Mode mode, float minProcessingTimeInMilliSeconds, float maxProcessingTimeInMilliSeconds ) -> bool {
 
     int prio = 0;

@@ -343,6 +343,10 @@ auto Window::setAspectRatio(Size ratio) -> void {
     p.applyAspectRatio();
 }
 
+auto Window::applyMaximizeCorrection(Geometry& geo) -> void {
+    p.applyMaximizeCorrection(geo);
+}
+
 auto Window::changeCursor( Image& image, unsigned hotSpotX, unsigned hotSpotY ) -> void {
     if (state.cursorImage == &image)
         return;
@@ -1268,6 +1272,11 @@ auto Timer::setInterval(unsigned intervalInMs) -> void {
     state.interval = intervalInMs;
     p.setInterval(intervalInMs);
 }
+
+auto Timer::setData(unsigned data) -> void {
+    state.data = data;
+}
+
 //browserWindow
 std::function<void ()> BrowserWindow::onCall = nullptr;
 

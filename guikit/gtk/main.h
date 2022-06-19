@@ -80,6 +80,7 @@ struct pWindow {
 	auto setForeground() -> void;
     auto getScrollbarWidth() -> unsigned { return 25; }
     auto applyAspectRatio() -> void;
+    auto applyMaximizeCorrection(Geometry& geo) -> void {}
     auto updateGeometryHint() -> void;
     static auto mouseMove(GtkWidget* widget, GdkEventButton* event, pWindow* self) -> gboolean;
     static auto mousePress(GtkWidget* widget, GdkEventButton* event, pWindow* self) -> gboolean;
