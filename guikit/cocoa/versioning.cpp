@@ -14,6 +14,9 @@
 #define NSAppKitVersionNumber11  2022
 #define NSAppKitVersionNumber12  2113
 
+auto isBigSur() -> bool {    
+    return (NSAppKitVersionNumber >= NSAppKitVersionNumber11) && (NSAppKitVersionNumber < NSAppKitVersionNumber12);
+}
 
 auto hasMinimumVersion(unsigned major, unsigned minor) -> bool {
     
