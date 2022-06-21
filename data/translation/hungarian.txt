@@ -683,6 +683,7 @@ Tape Profile = Magnó profil
 Sync status = Szinkronizálási állapot
 allow opposite directions = ellentétes irányok engedélyezése
 hold Autofire =
+hold Autofire tooltip =
 Tape Noise =
 spanish =
 prioritise double mappings =

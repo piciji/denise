@@ -38,7 +38,7 @@ InputSelector::InputSelector() {
 }
 
 InputControl::OptionControl::PrioritiseLayout::PrioritiseLayout() {
-    append(label, {0u, 0u}, 10);
+    append(label, {0u, 0u}, 7);
     append(none, {0u, 0u}, 5);
     append(controlPort, {0u, 0u}, 5);
     append(keyboard, {0u, 0u});
@@ -647,6 +647,7 @@ auto InputLayout::translate() -> void {
 
     autofireControl.autofireSlider.name.setText( trans->get("Autofire Rate", {}, true) );
     autofireControl.autofireHold.setText( trans->get("hold Autofire") );
+    autofireControl.autofireHold.setTooltip( trans->get("hold Autofire tooltip") );
     
     SliderLayout::scale({&mapControl.analogSensitivity}, "100 %");
 }

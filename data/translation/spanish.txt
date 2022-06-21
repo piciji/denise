@@ -683,6 +683,7 @@ Tape Profile = Perfil de cinta
 Sync status = Estado de sincronización
 allow opposite directions = permitir direcciones opuestas
 hold Autofire = mantener Disparo continuo más tiempo
+hold Autofire tooltip =
 Tape Noise =
 spanish = Español
 prioritise double mappings =
