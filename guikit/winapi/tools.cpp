@@ -430,6 +430,7 @@ auto getVersion() -> unsigned {
 	return (versionInfo.dwMajorVersion << 8) | versionInfo.dwMinorVersion;
 }
 
+typedef LONG NTSTATUS, *PNTSTATUS;
 typedef NTSTATUS(WINAPI* RtlGetVersionPtr)(PRTL_OSVERSIONINFOW);
 
 static auto getVersionNew() -> unsigned {
