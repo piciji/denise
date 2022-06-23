@@ -126,6 +126,12 @@ auto IecBus::updateIdleState() -> void {
     //if (_idle != idle) {
     //    updatePriority = true;
     //}
+#ifdef __APPLE__
+    if (powerOn && drivesConnected == 4) { // force, otherwise there is a huge slowdown
+        idle = false;
+        cpuBurner = true;
+    }
+#endif
 }
 
 auto IecBus::run() -> void {
