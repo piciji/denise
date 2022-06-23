@@ -47,7 +47,7 @@ auto pComboButton::minimumSize() -> Size {
     
 auto pComboButton::setGeometry(Geometry geometry) -> void {
     pWidget::setGeometry({
-        geometry.x - 2, geometry.y + (GUIKIT::isBigSur() ? 1 : 0),
+        geometry.x - 2, geometry.y + (GUIKIT::hasMinimumVersion(10, 15) ? 1 : 0),
         geometry.width + 4, geometry.height
     });
 }
