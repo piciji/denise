@@ -177,4 +177,3 @@ extern Emulator::Interface* activeEmulator;
 extern VideoManager* activeVideoManager;
 
 #endif
-
