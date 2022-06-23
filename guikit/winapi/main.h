@@ -56,7 +56,6 @@ struct pWindow {
     HMENU hmenu;
 	HMENU contextmenu;
     bool locked;
-    bool resizingInProgress = false;
     bool unfullscreenZoomed = false;
 
     HBRUSH brush;
@@ -130,6 +129,7 @@ struct pStatusBar {
     HBRUSH brush;
     StatusBar::Part* hoverPart;
     bool locked = false;
+	bool disableLock = false;
     
     std::vector<StatusBar::Part*> usedParts;
     
@@ -149,6 +149,7 @@ struct pStatusBar {
     auto getWidth(std::string text) -> unsigned;
     auto setTooltip(StatusBar::Part* part) -> void;
     auto setComposited(bool state) -> void;
+	auto setLockDisabled(bool state) -> void;
     
     auto onClick(LPARAM lparam) -> void;
     auto getHoverPart(int xPos) -> StatusBar::Part*;

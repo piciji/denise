@@ -230,12 +230,20 @@ auto CALLBACK pApplication::wndProc(WNDPROC windowProc, HWND hwnd, UINT msg, WPA
 			if (GetMenuItemCount(window.p.contextmenu) <= 0) break;			
 			if (!window.onContext()) break;
 
+			if ( window.statusBar( ) )
+				window.statusBar( )->p.setLockDisabled( true );
+			
 			POINT pt;
 			GetCursorPos(&pt);
 			
 			int mid = TrackPopupMenuEx(window.p.contextmenu, TPM_RIGHTBUTTON | TPM_RETURNCMD, pt.x, pt.y, hwnd, NULL);
-			if (window.fullScreen() && window.p.XPOrBelowOrWin7InXPMode())
-				window.statusBar()->update();
+
+			if ( window.statusBar( ) ) {
+				window.statusBar( )->p.setLockDisabled( false );
+				
+				if (window.fullScreen() && window.p.XPOrBelowOrWin7InXPMode())
+					window.statusBar()->update();
+			}
 			
 			if (mid)
 				SendMessage(hwnd, WM_COMMAND, mid, 0);
@@ -386,16 +394,28 @@ auto CALLBACK pWindow::wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam
         } return 0;
         case WM_DROPFILES: window.p.onDrop(wparam); return false;
 		case WM_ENTERMENULOOP:
+			if ( window.statusBar( ) )
+				window.statusBar( )->p.setLockDisabled(true);
+
 			if(window.winapi.onMenu) window.winapi.onMenu();
 			break;
+			
+		case WM_EXITMENULOOP:
+			if ( window.statusBar( ) )
+				window.statusBar( )->p.setLockDisabled( false );
+			break;
         case WM_ENTERSIZEMOVE:
-            window.p.resizingInProgress = true;
+			if ( window.statusBar( ) )
+				window.statusBar( )->p.setLockDisabled(true);
+
             if (window.onResizeStart && !window.fullScreen())
                 window.onResizeStart();
 
             return 0;
         case WM_EXITSIZEMOVE:
-            window.p.resizingInProgress = false;
+			if ( window.statusBar( ) )
+				window.statusBar( )->p.setLockDisabled(false);
+
             if (window.onResizeEnd && !window.fullScreen())
                 window.onResizeEnd();
             return 0;

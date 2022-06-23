@@ -357,7 +357,12 @@ auto pStatusBar::drawItem(WPARAM wparam, LPARAM lparam) -> void {
        // SetBkColor(hDC, GetSysColor(COLOR_MENU));
         DrawText(hDC, utf16_t(part.text.c_str()), -1, &rect, DT_SINGLELINE | DT_NOCLIP | (part.alignRight ? DT_RIGHT : 0) );
     }
-    locked = !statusBar.window()->p.resizingInProgress;
+    locked = !disableLock;
+}
+
+auto pStatusBar::setLockDisabled(bool state) -> void {
+	disableLock = state;
+	locked = false;
 }
 
 auto pStatusBar::onClick(LPARAM lparam) -> void {
