@@ -21,7 +21,7 @@ Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trade
 * faster loading of floppy drive profile with a lot of stepper WAV's for each track
     * newtronics drive sound profile no longer blocks emulation on first start
 * added option to hold autofire a little bit longer
-    * improves autofire on directional buttons for shaking games
+    * a few games benefit from it, applies to all active Turbo functions
     * hint: some autofire compatible joysticks do this
 * added option to prioritise Controlport over keyboard and vice versa
     * double assignments are temporarily inactivated
