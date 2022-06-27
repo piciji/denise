@@ -592,7 +592,7 @@ auto Program::exit(int code) -> void {
 
     // this function doesn't close the APP when emu thread is enabled.
     // debug cart always disables emu thread.
-    // other possible exit calls (i.e. broken autostart path) happen before emu thread is spawned
+    // other possible exit calls (e.g. broken autostart path) happen before emu thread is spawned
 }
 
 auto Program::updateDeviceState( Emulator::Interface::Media* media, bool write, unsigned position, bool LED, bool motorOff ) -> void {

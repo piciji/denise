@@ -13,8 +13,8 @@ Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trade
 
 # changelog
 
-## 1.1.3.1 (not yet released)
-* thanks for the countless tests [thanks to AW182]
+## 1.1.3.1
+* thanks for the countless tests and suggestions [thanks to AW182]
 * thanks for spanish translation [thanks to Muzza]
 * tape loading sounds (playing as audio cassette)
 * fixed a bug for windows UI not listing all addresses for multi SID's in drop-down list
@@ -25,7 +25,7 @@ Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trade
     * hint: some autofire compatible joysticks do this
 * added option to prioritise Controlport over keyboard and vice versa
     * double assignments are temporarily inactivated
-    * e.g. using cursor keys as joystick replacement and vice versa
+    * e.g. using cursor keys as joystick replacement
 
 ## 1.1.3
 * added newtronics drive sound profile [thanks to enigma]
