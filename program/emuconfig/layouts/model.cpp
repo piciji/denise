@@ -743,14 +743,15 @@ auto ModelLayout::getAlignedWidth(Emulator::Interface::Model* model) -> unsigned
     if (!dynamic_cast<LIBC64::Interface*>( emulator ))
         return result;
 
-    if (!model || (model->id == LIBC64::Interface::ModelIdSid || model->id == LIBC64::Interface::ModelIdSid2
+    if (!model || ( ((model->id == LIBC64::Interface::ModelIdSid) && GUIKIT::Vector::find(purposes, Emulator::Interface::Model::AudioSettings) )
+                || model->id == LIBC64::Interface::ModelIdSid2
                 || model->id == LIBC64::Interface::ModelIdSid3 || model->id == LIBC64::Interface::ModelIdSid4
                 || model->id == LIBC64::Interface::ModelIdSid5 || model->id == LIBC64::Interface::ModelIdSid6
                 || model->id == LIBC64::Interface::ModelIdSid7 || model->id == LIBC64::Interface::ModelIdSid8)) {
 
         if (sidWidth == 0) {
             GUIKIT::Label test;
-            test.setText("SID 8:");
+            test.setText("SID 10:");
             sidWidth = test.minimumSize().width + (model ? 1 : 2);
         }
         result = sidWidth;
