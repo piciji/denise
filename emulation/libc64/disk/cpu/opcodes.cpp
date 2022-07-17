@@ -150,15 +150,15 @@ auto M6502::process() -> void {
         return; }    
     
 // GET	                    				
-#define GET_INDEXED_INDIRECT( LAST )		\
+#define GET_INDEXED_INDIRECT( LAST, FORCE )		\
     SWITCH0 \
         INDEXED_INDIRECT					\
     SWITCH1 \
         READ##LAST( absolute )
 
-#define GET_INDIRECT_INDEXED( LAST )		\
+#define GET_INDIRECT_INDEXED( LAST, FORCE )		\
     SWITCH0 \
-        INDIRECT_INDEXED( false )			\
+        INDIRECT_INDEXED( FORCE )			\
     SWITCH1 \
         READ##LAST( absIndexed )
 //
@@ -173,7 +173,7 @@ auto M6502::process() -> void {
         ZERO 				\
         READ( zeroPage )    
     
-#define GET_ZERO( LAST )		\
+#define GET_ZERO( LAST, FORCE )		\
     _GET_ZERO##LAST
 //
 #define _GET_ZERO_INDEXED_REGX_LAST	\
@@ -187,7 +187,7 @@ auto M6502::process() -> void {
         ZERO_PAGE_INDEXED( regX )			\
         READ( zeroPage )     
     
-#define GET_ZERO_INDEXED_REGX( LAST )	\
+#define GET_ZERO_INDEXED_REGX( LAST, FORCE )	\
     _GET_ZERO_INDEXED_REGX##LAST
 //		
 #define _GET_ZERO_INDEXED_REGY_LAST	\
@@ -201,28 +201,28 @@ auto M6502::process() -> void {
         ZERO_PAGE_INDEXED( regY )			\
         READ( zeroPage )   
     
-#define GET_ZERO_INDEXED_REGY( LAST )	\
+#define GET_ZERO_INDEXED_REGY( LAST, FORCE )	\
     _GET_ZERO_INDEXED_REGY##LAST    
 //	
-#define GET_ABS( LAST )			\
+#define GET_ABS( LAST, FORCE )			\
     SWITCH0 \
         ABS							\
     SWITCH1 \
         READ##LAST( absolute ) 
 	
-#define GET_ABS_INDEXED_REGX( LAST )	\
+#define GET_ABS_INDEXED_REGX( LAST, FORCE )	\
     SWITCH0 \
-        ABS_INDEXED( regX, false )		\
+        ABS_INDEXED( regX, FORCE )		\
     SWITCH1 \
         READ##LAST( absIndexed )
 	
-#define GET_ABS_INDEXED_REGY( LAST )	\
+#define GET_ABS_INDEXED_REGY( LAST, FORCE )	\
     SWITCH0 \
-        ABS_INDEXED( regY, false )		\
+        ABS_INDEXED( regY, FORCE )		\
     SWITCH1 \
         READ##LAST( absIndexed )
 	
-#define GET_IMM( LAST )		\
+#define GET_IMM( LAST, FORCE )		\
     SWITCH0 \
     SWITCH1 \
         READ_PC_INC##LAST
@@ -300,25 +300,25 @@ auto M6502::process() -> void {
 	
 ///////////////
 #define ORA( GET )		\
-	GET(_LAST)			\
+	GET(_LAST, false)			\
 	regA |= dataBus;		\
 	SET_FLAG_ZN( regA ) \
     SWITCH_END            
 
 #define AND( GET )		\
-	GET(_LAST)			\
+	GET(_LAST, false)			\
 	regA &= dataBus;		\
 	SET_FLAG_ZN( regA ) \
     SWITCH_END
     	
 #define EOR( GET )		\
-	GET(_LAST)			\
+	GET(_LAST, false)			\
 	regA ^= dataBus;	\
 	SET_FLAG_ZN( regA ) \
     SWITCH_END
 	
 #define	ASL( GET, SET )	\
-	GET()						\
+	GET(, true)						\
 	SET_FLAG_C( dataBus & 0x80 )		\
 	_value = dataBus << 1;	\
     SET_FLAG_ZN( _value )   \
@@ -334,7 +334,7 @@ SWITCH01    \
 SWITCH_END
 	
 #define	LSR( GET, SET )	\
-	GET()						\
+	GET(, true)						\
 	SET_FLAG_C( dataBus & 1 )		\
 	_value = dataBus >> 1;	\
     SET_FLAG_ZN( _value )    \
@@ -350,7 +350,7 @@ SWITCH01    \
 SWITCH_END
 		
 #define BIT( GET )					\
-	GET(_LAST)					\
+	GET(_LAST, false)					\
 	SET_FLAG_Z( dataBus & regA )	\
 	SET_FLAG_N( dataBus )			\
 	SET_FLAG_V( dataBus & 0x40 )    \
@@ -358,7 +358,7 @@ SWITCH_END
     SWITCH_END    
 	
 #define ROL( GET, SET )						\
-	GET()									\
+	GET(, true)									\
 	_value = (dataBus << 1) | GET_FLAG_C;	\
 	SET_FLAG_C( dataBus & 0x80 )			\
     SET_FLAG_ZN( _value )    \
@@ -375,7 +375,7 @@ SWITCH01    \
 SWITCH_END    
 	
 #define ROR( GET, SET )						\
-	GET()									\
+	GET(, true)									\
 	_value = (dataBus >> 1) | (GET_FLAG_C << 7);	\
 	SET_FLAG_C( dataBus & 1 )			\
     SET_FLAG_ZN( _value )    \
@@ -392,7 +392,7 @@ SWITCH01    \
 SWITCH_END    
 
 #define DEC( GET, SET )	\
-	GET()					\
+	GET(, true)					\
 	_value = dataBus - 1;	\
     SET_FLAG_ZN( _value )    \
 	SET##_DUMMY \
@@ -406,7 +406,7 @@ SWITCH01    \
 SWITCH_END    
 	
 #define INC( GET, SET )	\
-	GET()					\
+	GET(, true)					\
 	_value = dataBus + 1;	\
     SET_FLAG_ZN( _value )    \
 	SET##_DUMMY	\
@@ -420,13 +420,13 @@ SWITCH01    \
 SWITCH_END   
 	
 #define LD( GET, REG )	\
-	GET(_LAST)					\
+	GET(_LAST, false)					\
 	REG = dataBus;		\
 	SET_FLAG_ZN( dataBus )  \
     SWITCH_END      
 	
 #define CP( GET, REG )	\
-	GET(_LAST)					\
+	GET(_LAST, false)					\
 	{ uint16_t result = REG - dataBus; \
 	SET_FLAG_C( result < 0x100 ) \
 	SET_FLAG_ZN( result & 0xff ) } \
@@ -464,7 +464,7 @@ SWITCH_END
 	regA = result & 0xff; }    
     
 #define ADC( GET )	\
-    GET(_LAST)			\
+    GET(_LAST, false)			\
     _ADC  \
     soBlock = 1;    \
     SWITCH_END
@@ -485,7 +485,7 @@ SWITCH_END
 	SET_FLAG_C( result > 0xff ) }
 
 #define SBC( GET )	\
-    GET(_LAST)			\
+    GET(_LAST, false)			\
     _SBC   \
     soBlock = 1;    \
     SWITCH_END
@@ -664,7 +664,7 @@ SWITCH_END
 	
 //undocumented		
 #define	SLO( GET, SET )	\
-	GET()	\
+	GET(, true)	\
 	SET_FLAG_C( dataBus & 0x80 )	\
 	_value = dataBus << 1;	\
     regA |= _value;		\
@@ -673,7 +673,7 @@ SWITCH_END
     SWITCH_END
 	
 #define	RLA( GET, SET )	\
-	GET()	\
+	GET(, true)	\
 	_value = (dataBus << 1) | GET_FLAG_C;	\
 	SET_FLAG_C( dataBus & 0x80 )			\
     regA &= _value;		\
@@ -682,7 +682,7 @@ SWITCH_END
     SWITCH_END
 	
 #define	SRE( GET, SET )	\
-	GET()	\
+	GET(, true)	\
 	SET_FLAG_C( dataBus & 1 )	\
 	_value = dataBus >> 1;	\
     regA ^= _value;		\
@@ -691,18 +691,18 @@ SWITCH_END
     SWITCH_END
 
 #define DUMMY( GET )	\
-	GET(_LAST)  \
+	GET(_LAST, false)  \
     SWITCH_END                   
 	
 #define ANC	\
-	GET_IMM(_LAST)			\
+	GET_IMM(_LAST, false)			\
 	regA &= dataBus;		\
 	SET_FLAG_ZN( regA ) \
     SET_FLAG_C( GET_FLAG_N )    \
     SWITCH_END	
 		
 #define ALR	\
-	GET_IMM(_LAST)	\
+	GET_IMM(_LAST, false)	\
 	regA &= dataBus;	\
 	SET_FLAG_C( regA & 1 )	\
 	regA >>= 1;	\
@@ -710,7 +710,7 @@ SWITCH_END
     SWITCH_END	    
 	
 #define RRA( GET, SET )	\
-	GET()	\
+	GET(, true)	\
 	_value = (dataBus >> 1) | (GET_FLAG_C << 7);	\
 	SET_FLAG_C( dataBus & 1 )	\
 	SET##_DUMMY \
@@ -719,7 +719,7 @@ SWITCH_END
     SWITCH_END
 
 #define ARR	\
-	GET_IMM(_LAST)	\
+	GET_IMM(_LAST, false)	\
 	{ dataBus &= regA;	\
 	uint8_t result = (dataBus >> 1) | (GET_FLAG_C << 7);	\
 	if (GET_FLAG_D) { \
@@ -782,7 +782,7 @@ SWITCH01    \
 SWITCH_END 
 	
 #define LAX( GET )	\
-	GET(_LAST)	\
+	GET(_LAST, false)	\
 	regA = regX = dataBus;	\
 	SET_FLAG_ZN( dataBus )  \
     SWITCH_END
@@ -795,14 +795,14 @@ SWITCH01    \
 SWITCH_END 
 	
 #define LAS	\
-	GET_ABS_INDEXED_REGY(_LAST)	\
+	GET_ABS_INDEXED_REGY(_LAST, false)	\
 	regA = dataBus & regS; \
 	regX = regS = regA;	\
 	SET_FLAG_ZN( regA ) \
     SWITCH_END 
 	
 #define DCP( GET, SET )	\
-	GET()	\
+	GET(, true)	\
 	_value = dataBus - 1;	\
     SET_FLAG_C( regA >= _value ) \
 	SET_FLAG_ZN( (regA - _value) & 0xff )   \
@@ -810,7 +810,7 @@ SWITCH_END
     SWITCH_END
 	
 #define SBX	\
-	GET_IMM(_LAST) \
+	GET_IMM(_LAST, false) \
 	{ uint16_t result = (regA & regX) - dataBus;	\
 	SET_FLAG_C( result < 0x100 )	\
 	regX = result & 0xff;	\
@@ -818,7 +818,7 @@ SWITCH_END
     SWITCH_END 
 	
 #define ISC( GET, SET )	\
-	GET()	\
+	GET(, true)	\
 	_value = dataBus + 1;	\
 	SET##_DUMMY \
     dataBus = _value;   \
