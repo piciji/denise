@@ -7,41 +7,6 @@
 #include "../tools/serializer.h"
 #include "../tools/macros.h"
 
-#define CIA_MASK_WRITE0 1
-#define CIA_MASK_WRITE1 2
-
-#define CIA_ACK0	4
-#define CIA_ACK1	8
-
-#define CIA_INT0	0x10
-#define CIA_INT1	0x20
-
-#define CIA_CNT0	0x40
-#define CIA_CNT1	0x80
-#define CIA_CNT2	0x100
-
-// force load last one cycle only, triggered by an underflow or forced by control register
-#define CIA_FL_TA0  0x200
-#define CIA_FL_TA1  0x400
-#define CIA_FL_TA2  0x800
-
-// underlow lasts one cycle, pb 6/7 may need to know
-#define CIA_UF_TA0  0x1000
-#define CIA_UF_TA1  0x2000
-
-#define CIA_FL_TB0  0x4000
-#define CIA_FL_TB1  0x8000
-#define CIA_FL_TB2  0x10000
-
-#define CIA_UF_TB0  0x20000
-#define CIA_UF_TB1  0x40000
-
-#define CIA_INT		(CIA_INT0 | CIA_INT1)
-#define CIA_CNT		(CIA_CNT0 | CIA_CNT1 | CIA_CNT2)
-#define CIA_CNT_NEW	(CIA_CNT1 | CIA_CNT2)
-
-#define CIA_MASK	~(0x80000 | CIA_MASK_WRITE0 | CIA_ACK0 | CIA_INT0 | CIA_CNT0 | CIA_FL_TA0 | CIA_UF_TA0 | CIA_FL_TB0 | CIA_UF_TB0 )
-
 namespace CIA {
     
 struct Base {
