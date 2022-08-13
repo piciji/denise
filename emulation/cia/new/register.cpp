@@ -154,6 +154,7 @@ template<> auto Cia::write<MOS_6526>( unsigned pos, uint8_t value ) -> void {
         case 9:
         case 0xa:
         case 0xb: {
+            bool changed;
             uint8_t shifter = (pos - 8) << 3;
 
             if (pos == 8)
@@ -168,8 +169,6 @@ template<> auto Cia::write<MOS_6526>( unsigned pos, uint8_t value ) -> void {
                 if ( ( ( value & 0x1f ) == 0x12 ) && !( timerB.control & 0x80 ) )
                     value ^= 0x80; //flip AM / PM
             }
-
-            bool changed;
 
             if (timerB.control & 0x80) {
 
@@ -247,7 +246,7 @@ template<> auto Cia::write<MOS_8520>( unsigned pos, uint8_t value ) -> void {
     writeGeneric<MOS_8520>( pos, value );
 }
 
-template<uint8_t model> auto Cia::writeGeneric( unsigned pos, uint8_t value ) -> void {
+template<CiaModel model> auto Cia::writeGeneric( unsigned pos, uint8_t value ) -> void {
 
     switch( pos ) {
 

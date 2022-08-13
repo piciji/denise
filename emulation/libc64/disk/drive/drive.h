@@ -14,7 +14,7 @@
 #include "../cpu/m6502.h"
 #include "../../../tools/rand.h"
 #include "../../../tools/serializer.h"
-#include "../cia/cia8520.h"
+#include "../../../cia/new/cia.h"
 #include "../../../tools/pia.h"
 #include "../wd177x/wd1770.h"
 #include <cstdlib>
@@ -83,8 +83,8 @@ struct Drive {
         
     Via* via1;
     Via* via2;
-    Cia8520* cia;
-    Cia8520* ciaSpeeder;
+    Cia* cia;
+    Cia* ciaSpeeder;
     WD1770* wd1770;
     Emulator::Pia* pia;
     M6502* cpu;

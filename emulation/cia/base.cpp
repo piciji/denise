@@ -232,31 +232,32 @@ auto Base::handleInterrupt( uint8_t number ) -> void {
 
 template<uint8_t timerId> inline auto Base::updateState( ) -> void {
 	
-	Timer& rTimer = timer[timerId];	
-	
-	if ( rTimer.run && (rTimer.counter == 0) ) {
-        
-        delay |= timerId == T_A ? (CIA_UF_TA0 | CIA_FL_TA1) : (CIA_UF_TB0 | CIA_FL_TB1);
-        
-		timerId == T_A ? timerAUnderflow() : timerBUnderflow();
-        
-        if (rTimer.oneshot) {
-            
-            rTimer.control &= ~1;
+	Timer& rTimer = timer[timerId];
 
-            events->remove(&(rTimer.start));
-            
-            rTimer.run = 0;
+    if ( rTimer.run ) {
+        if (rTimer.counter == 0) {
+            delay |= timerId == T_A ? (CIA_UF_TA0 | CIA_FL_TA1) : (CIA_UF_TB0 | CIA_FL_TB1);
+
+            timerId == T_A ? timerAUnderflow() : timerBUnderflow();
+
+            if (rTimer.oneshot) {
+
+                rTimer.control &= ~1;
+
+                events->remove(&(rTimer.start));
+
+                rTimer.run = 0;
+            }
+
+            rTimer.counter = rTimer.latch;
         }
-	}	
-	
-    if ( delay & ( timerId == T_A ? CIA_FL_TA1 : CIA_FL_TB1 ) ) {
-        
-		rTimer.counter = rTimer.latch;
-				
-	} else if (rTimer.run)
-        // happens in second half cycle, a CIA read same cycle miss decrementing
-		rTimer.counter--;	
+        else if ( delay & ( timerId == T_A ? CIA_FL_TA1 : CIA_FL_TB1 ) )
+            rTimer.counter = rTimer.latch;
+        else
+            rTimer.counter--;
+
+    } else if ( delay & ( timerId == T_A ? CIA_FL_TA1 : CIA_FL_TB1 ) )
+        rTimer.counter = rTimer.latch;
 }
 
 template<uint8_t timerId> inline auto Base::readCounter( ) -> uint16_t {
