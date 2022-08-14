@@ -1,5 +1,33 @@
 
 #include "m68000.h"
+
+#ifdef REF
+    #ifdef REF_INCLUDE
+    #include REF_INCLUDE
+    #endif
+    #define REF_CALL ref.
+#else
+    #define REF_CALL
+#endif
+
+#define READ_WORD       REF_CALL readWord
+#define READ_BYTE       REF_CALL readByte
+#define WRITE_WORD      REF_CALL writeWord
+#define WRITE_BYTE      REF_CALL writeByte
+#ifdef FC_SUPPORT
+#define READ_WORD_PRG   REF_CALL readWordPRG
+#define READ_BYTE_PRG   REF_CALL readBytePRG
+#else
+#define READ_WORD_PRG   READ_WORD
+#define READ_BYTE_PRG   READ_BYTE
+#endif
+#define SYNC            REF_CALL sync
+#define IACK_CYCLE      REF_CALL iackCycle
+#define RESET_OUT       REF_CALL resetOut
+#define ADR_EXC_ACCESS  REF_CALL adrExcAccess
+#define TAS_CYCLE_BEGIN REF_CALL tasCycleBegin
+#define TAS_CYCLE_END   REF_CALL tasCycleEnd
+
 #include "memory.cpp"
 #include "optable.cpp"
 #include "instruction.cpp"
@@ -7,10 +35,6 @@
 #include "exception.cpp"
 
 namespace M68FAMILY {
-
-M68000::M68000() {
-    build();
-}
 
 M68000::~M68000() {
     if (mulCycleLookup)
@@ -21,7 +45,7 @@ auto M68000::process()->void {
 
     if (control) { // for performance only
         if (control & Halt)
-            return sync(4);
+            return SYNC(4);
 
         if (control & TraceScheduled) // highest prioritized group 1 exception
             return traceException();
@@ -37,7 +61,7 @@ auto M68000::process()->void {
 
         if (control & Stop) {
             sampleInterrupt(); // if not detected, 4 extra cycles.
-            sync(4);
+            SYNC(4);
 
             if (!s)
                 // when stop instruction switch to user mode and no trace was active at beginning of instruction
@@ -69,18 +93,18 @@ auto M68000::reset() -> void { // highest prioritized group 0 routine
     s = true;
     i = 7;
     iplPins = iplSample = 0;
-    sync(12); // confirmed with fx68k
+    SYNC(12); // confirmed with fx68k
     
     regsA[7] = ssp = read<Long, FC_PRG>(0); // sets FC1
     pc = read<Long, FC_PRG>(4); // sets FC1 too
 
     if (misaligned<Long>(pc)) { // bus/address error during group 0 service routine halts CPU.
-        sync(4 + 4);
+        SYNC(4 + 4);
         return setHalt();
     }
 
     firstPrefetch();
-    sync(2);
+    SYNC(2);
     prefetch<SampleIPL>();
 }
 
@@ -148,10 +172,10 @@ auto M68000::setHalt() -> void {
 
 template<uint8_t Inst> auto M68000::cyclesBit(uint8_t bit) -> void {
     switch(Inst) {
-        case Btst: sync(2); break;
-        case Bclr: sync( bit > 15 ? 6 : 4); break;
+        case Btst: SYNC(2); break;
+        case Bclr: SYNC( bit > 15 ? 6 : 4); break;
         case Bset:
-        case Bchg: sync( bit > 15 ? 4 : 2 ); break;
+        case Bchg: SYNC( bit > 15 ? 4 : 2 ); break;
     }
 }
 
@@ -161,7 +185,7 @@ template<uint8_t Inst> auto M68000::cyclesMul(uint16_t data) -> void {
             data = ((data << 1) ^ data) & 0xffff;
             /* fallthrough */
         case Mulu:
-            sync( mulCycleLookup[data] );
+            SYNC( mulCycleLookup[data] );
             break;
     }
 }
@@ -184,7 +208,7 @@ template<uint8_t Inst> auto M68000::cyclesDiv(uint32_t dividend, uint16_t diviso
                 }
             }
         }
-        sync( cycles );
+        SYNC( cycles );
 
     } else if constexpr(Inst == Divs) {
         int32_t _dividend = (int32_t)dividend;
@@ -206,7 +230,7 @@ template<uint8_t Inst> auto M68000::cyclesDiv(uint32_t dividend, uint16_t diviso
             aquot <<= 1;
         }
 
-        sync( mcycles << 1 );
+        SYNC( mcycles << 1 );
     }
 }
 

@@ -46,7 +46,7 @@ auto M68000::group1Exception(uint8_t vector) -> void {
     pc -= 2;
 
     control &= ~(Stop | Trace | TraceScheduled);
-    sync(4);
+    SYNC(4);
     uint32_t& sp = regsA[7];
 
     if (misaligned(sp))
@@ -69,7 +69,7 @@ auto M68000::IRQException() -> void { // a group 1 exception
     pc -= 2;
 
     control &= ~(IRQ | Stop | Trace | TraceScheduled);
-    sync(6);
+    SYNC(6);
     uint32_t& sp = regsA[7];
 
     if (misaligned(sp))
@@ -77,7 +77,7 @@ auto M68000::IRQException() -> void { // a group 1 exception
 
     write<Word>(sp - 2, pc & 0xffff);
     uint16_t vectorAdr = (uint16_t)getInterruptVector( iplSample & 7 ) << 2;
-    sync(4); // justify vector (2 shift operations)
+    SYNC(4); // justify vector (2 shift operations)
     sp -= 6;
     write<Word>(sp + 0, SR);
     write<Word>(sp + 2, (pc >> 16) & 0xffff);
@@ -85,37 +85,6 @@ auto M68000::IRQException() -> void { // a group 1 exception
 
     // when IPL sample state changes, another IRQ service routine could be processed without a single instruction in between.
     // this also applies for a possible address exception which not causing a double fault.
-}
-
-auto M68000::IackCycle(uint8_t level, uint8_t& vector) -> uint8_t {
-    // override this method, based on examples below.
-
-    // for slower 6800 peripheral devices (like CIA, PIA) respond with VPA, which uses auto-vectored interrupts.
-    // is synchronized to E-Clock and generates wait states internally.
-    // BUS cycle needs between 10 - 19 clocks, depends on timing, when peripheral device raises VPA and the internal state of E-Clock.
-    // if the BUS cycle is terminated too late, externally caused waiting cycles are added.
-    // this core doesn't count cycles (override class), which are needed to calculate the state of the E-Clock. (1/10 of CPU main clock).
-    // sync( <external wait cycles> ); // optional
-    // sync( internalWaitCyclesBasedOnEClock( <elapsed clock cycles so far> ) ); // internal wait cycles, which can not be prevented.
-    // vector is fixed by CPU.
-    // return AUTO_VECTOR;
-
-    // respond with DTACK (like a normal 68000 cycle), which uses user-vectored interrupts
-    // sync( <external wait cycles> ); // optional
-    // external device puts vector on data BUS after analyzing interrupt level from A1 - A3.
-    // vector = 24 + level; // e.g. Amiga (often confused with auto-vectored interrupts because the same vectors are used.)
-    // return USER_VECTOR;
-
-    // uninitialized vector (technically a user-vectored interrupt)
-    // 15 is a Motorola convention, a recommendation to the interrupt controllers if the peripheral has not been initialized with an appropriate vector.
-    // external device puts vector on Data BUS.
-    vector = 15;
-    return USER_VECTOR;
-
-    // respond with BERR (BUS error)
-    // sync( <external wait cycles> ); // optional
-    // vector is fixed by CPU.
-    // return SPURIOUS;
 }
 
 auto M68000::getInterruptVector(uint8_t level) -> uint8_t {
@@ -128,8 +97,8 @@ auto M68000::getInterruptVector(uint8_t level) -> uint8_t {
     // spurious vector: by raising BERR line, IACK cycle will be terminated and a spurious interrupt is generated. data BUS is ignored.
     uint8_t vector;
 
-    sync(2);
-    uint8_t terminate = IackCycle( level, vector );
+    SYNC(2);
+    uint8_t terminate = IACK_CYCLE( level, vector );
 
     if (terminate & USER_VECTOR) {
         // user vector presented on data BUS (64 - 255), but CPU allows user vectors < 64 too (e.g. Amiga)
@@ -141,7 +110,7 @@ auto M68000::getInterruptVector(uint8_t level) -> uint8_t {
     } else // uninitialized
         vector = 15;
 
-    sync(2);
+    SYNC(2);
     return vector;
 }
 
@@ -176,21 +145,23 @@ auto M68000::addressException(uint32_t adr, uint32_t _pc, uint8_t flags, uint16_
     // AS line is asserted and in case of a "Write", data is put on data BUS.
     // periphery typically treat a BUS cycle as valid when DS is asserted.
 
-    sync(2);
+    SYNC(2);
     // some periphery observe AS line only (which is asserted during address exception) and treat this as a valid BUS cycle.
     // periphery can not see A0 (simply there is no A0 line), A0 is determined by LDS (which is not asserted)
     // override following function for such periphery.
-    adrExcAccess(!!(flags & 16), adr & ~1, flags & 3, value);
+    #ifdef ADR_EXC_BUS_CYCLE
+    ADR_EXC_ACCESS(!!(flags & 16), adr & ~1, flags & 3, value);
+    #endif
 
     uint16_t SR = getSR();
     setSuperVisor();
     control &= ~(Trace | TraceScheduled);
     uint16_t code = (ird & 0xffe0) | flags | ((SR & 0x2000) ? 4 : 0);
-    sync( 2 + 8); // finish the BUS cycle, put address (and data) on BUS, but without asserting UDS or LDS.
+    SYNC( 2 + 8); // finish the BUS cycle, put address (and data) on BUS, but without asserting UDS or LDS.
 
     uint32_t& sp = regsA[7];
     if (misaligned<Long>(sp)) {
-        sync(4 + 4); // finish the BUS cycle
+        SYNC(4 + 4); // finish the BUS cycle
         return setHalt();
     }
 
@@ -213,14 +184,14 @@ auto M68000::executeAt(uint16_t adr, uint8_t group) -> void { // 18 cycles
     
     if (misaligned<Long>(pc)) {
         if (group == 0) { // bus/address error during group 0 service routine halts CPU, Interrupt to vector 2 or 3 doesn't
-            sync(4 + 4); // finish the BUS cycle
+            SYNC(4 + 4); // finish the BUS cycle
             return setHalt();
         }
         return addressException(pc, adr/* not PC here, always vector adr */, SF_READ | SF_PRG | (group != 2 ? SF_EXC : 0) );
     }
 
     firstPrefetch();
-    sync(2);
+    SYNC(2);
     prefetch<SampleIPL>();
 }
 

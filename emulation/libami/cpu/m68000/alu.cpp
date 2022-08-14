@@ -301,7 +301,6 @@ template<uint8_t Inst> auto M68000::bit(uint32_t data, uint8_t bit) -> uint32_t 
         default: // Btst:
             return data;
     }
-    _unreachable
 }
 
 template<uint8_t Inst> auto M68000::ccr(uint8_t data) -> void {
@@ -339,7 +338,7 @@ template<uint8_t Inst> auto M68000::testCondition() -> bool {
         case 14: return n == v && !z;
         case 15: return n != v || z;
     }
-    _unreachable
+    return false; // unreachable
 }
 
 template<uint8_t Size> auto M68000::defaultFlags(uint32_t data) -> void {

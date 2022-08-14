@@ -10,7 +10,7 @@ template<uint8_t Inst, uint8_t Size> auto M68000::opImmShift(uint16_t opcode) ->
 
     prefetch<SampleIPL>();
     uint32_t result = shifter<Inst, Size>(readRegD<Size>( reg ), shift );
-    sync( (Size == Long ? 4 : 2) + shift * 2);
+    SYNC( (Size == Long ? 4 : 2) + shift * 2);
     writeRegD<Size>(reg, result);
 }
 
@@ -20,7 +20,7 @@ template<uint8_t Inst, uint8_t Size> auto M68000::opRegShift(uint16_t opcode) ->
 
     prefetch<SampleIPL>();
     uint32_t result = shifter<Inst, Size>(readRegD<Size>( reg ), shift );
-    sync( (Size == Long ? 4 : 2) + shift * 2);
+    SYNC( (Size == Long ? 4 : 2) + shift * 2);
     writeRegD<Size>(reg, result);
 }
 
@@ -44,7 +44,7 @@ template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opBit(uint16_t o
     result = bit<Inst>(result, bits);
     prefetch<SampleIPL>();
 
-    if constexpr(Mode == Immediate) sync(2);
+    if constexpr(Mode == Immediate) SYNC(2);
     if constexpr(Mode == DataRegisterDirect) cyclesBit<Inst>(bits);
     if constexpr(Inst != Btst) writeEA<Mode, Size>(ea, result);
 }
@@ -73,7 +73,7 @@ template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opClr(uint16_t o
     n = v = c = false;
     prefetch<SampleIPL>();
 
-    if constexpr( Mode == DataRegisterDirect && Size == Long) sync( 2 );
+    if constexpr( Mode == DataRegisterDirect && Size == Long) SYNC( 2 );
     writeEA<Mode, Size>(ea, 0);
 }
 
@@ -85,7 +85,7 @@ template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opNbcd(uint16_t 
     result = bcd<Sbcd, Size>(result, 0);
     prefetch<SampleIPL>();
 
-    if constexpr( Mode == DataRegisterDirect ) sync( 2 );
+    if constexpr( Mode == DataRegisterDirect ) SYNC( 2 );
     writeEA<Mode, Byte>(ea, result);
 }
 
@@ -97,7 +97,7 @@ template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opNeg(uint16_t o
     result = arithmetic<Inst, Size>(result, 0);
     prefetch<SampleIPL>();
 
-    if constexpr( Mode == DataRegisterDirect && Size == Long) sync( 2 );
+    if constexpr( Mode == DataRegisterDirect && Size == Long) SYNC( 2 );
     writeEA<Mode, Size>(ea, result);
 }
 
@@ -109,7 +109,7 @@ template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opScc(uint16_t o
     result = testCondition<Inst>() ? 0xff : 0;
 
     prefetch<SampleIPL>();
-    if ( result && Mode == DataRegisterDirect ) sync( 2 );
+    if ( result && Mode == DataRegisterDirect ) SYNC( 2 );
     writeEA<Mode, Byte>(ea, result);
 }
 
@@ -127,11 +127,14 @@ template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opTas(uint16_t o
     result |= 0x80;
 
     if ( Mode != DataRegisterDirect )
-        sync( 2 );
+        SYNC( 2 );
 
     writeEA<Mode, Byte, TasCycle>(ea, result);
-    if (Mode != DataRegisterDirect)
-        tasCycleEnd();
+
+    #ifdef TAS_SPINLOCK
+    if constexpr(Mode != DataRegisterDirect)
+        TAS_CYCLE_END();
+    #endif
 
     prefetch<SampleIPL>();
 }
@@ -154,8 +157,8 @@ template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opArithmetic(uin
     prefetch<SampleIPL>();
 
     if constexpr (Size == Long) {
-        if constexpr(isDirectMode<Mode>())  sync(4);
-        else                                sync(2);
+        if constexpr(isDirectMode<Mode>())  SYNC(4);
+        else                                SYNC(2);
     }
 
     writeRegD<Size>(reg, arithmetic<Inst, Size>( result, readRegD<Size>(reg) ));
@@ -168,7 +171,7 @@ template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opCmp(uint16_t o
         return;
 
     prefetch<SampleIPL>();
-    if constexpr(Size == Long) sync( 2 );
+    if constexpr(Size == Long) SYNC( 2 );
     arithmetic<Cmp, Size>( result, readRegD<Size>(reg) );
 }
 
@@ -181,7 +184,7 @@ template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opArithmeticEA(u
     result = arithmetic<Inst, Size>(readRegD<Size>(reg), result);
     prefetch<SampleIPL>();
 
-    if constexpr (Size == Long && isRegisterMode<Mode>()) sync(4);
+    if constexpr (Size == Long && isRegisterMode<Mode>()) SYNC(4);
     writeEA<Mode, Size>(ea, result);
 }
 
@@ -194,8 +197,8 @@ template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opArithmeticA(ui
     result = sign<Size>(result);
 
     prefetch<SampleIPL>();
-    if constexpr( Size == Word || isDirectMode<Mode>() ) sync(4);
-    else sync(2);
+    if constexpr( Size == Word || isDirectMode<Mode>() ) SYNC(4);
+    else SYNC(2);
 
     writeRegA(reg, Inst == Adda ? (result + readRegA<Long>(reg)) : (readRegA<Long>(reg) - result) );
 }
@@ -209,7 +212,7 @@ template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opCmpa(uint16_t 
     result = sign<Size>(result);
     arithmetic<Cmp, Size>( result, readRegA<Long>(reg) );
     prefetch<SampleIPL>();
-    sync( 2 );
+    SYNC( 2 );
 }
 
 template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opMul(uint16_t opcode) -> void {
@@ -244,7 +247,7 @@ template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opDiv(uint16_t o
             n = false;
             z = true;
         }
-        sync(8);
+        SYNC(8);
         trapException(5);
         return;
     }
@@ -277,8 +280,8 @@ template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opDiv(uint16_t o
     }
 
     if (overflow) {
-        if constexpr(Inst == Divu)  sync(6);
-        else                        sync( ((int32_t)dividend < 0) ? 14 : 12 );
+        if constexpr(Inst == Divu)  SYNC(6);
+        else                        SYNC( ((int32_t)dividend < 0) ? 14 : 12 );
 
         v = n = true;
         c = z = false;
@@ -383,8 +386,8 @@ template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opArithmeticI(ui
     result = arithmetic<Inst, Size>( imm, result);
     
     if constexpr(Size == Long && isRegisterMode<Mode>()) {
-        if constexpr(Inst == Cmp)   sync(2);
-        else                        sync(4);
+        if constexpr(Inst == Cmp)   SYNC(2);
+        else                        SYNC(4);
     }
     
     if constexpr(Inst != Cmp)
@@ -405,7 +408,7 @@ template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opArithmeticQ(ui
     else
         result = arithmetic<Inst, Size>( operand, result);
 
-    if (Mode == AddressRegisterDirect || (Size == Long && Mode == DataRegisterDirect)) sync( 4 );
+    if (Mode == AddressRegisterDirect || (Size == Long && Mode == DataRegisterDirect)) SYNC( 4 );
     writeEA<Mode, Size>(ea, result);
 }
 
@@ -418,7 +421,7 @@ template<uint8_t Inst, uint8_t Size> auto M68000::opMoveQ(uint16_t opcode) -> vo
 }
 
 template<uint8_t Inst, uint8_t Size> auto M68000::opBcc(uint16_t opcode) -> void {
-    sync(2);
+    SYNC(2);
 
     if (testCondition<Inst>()) {
         uint32_t newPC = pc + (Size == Word ? (int16_t)irc : (int8_t)(opcode & 0xff));
@@ -429,7 +432,7 @@ template<uint8_t Inst, uint8_t Size> auto M68000::opBcc(uint16_t opcode) -> void
         pc = newPC;
         fullPrefetch<SampleIPL>();
     } else {
-        sync(2);
+        SYNC(2);
         if (Size == Word) readExtensionWord();
         prefetch<SampleIPL>();
     }
@@ -437,7 +440,7 @@ template<uint8_t Inst, uint8_t Size> auto M68000::opBcc(uint16_t opcode) -> void
 
 template<uint8_t Inst, uint8_t Size> auto M68000::opBsr(uint16_t opcode) -> void {
     uint32_t& sp = regsA[7];
-    sync(2);
+    SYNC(2);
     sp -= 4;
 
     if (misaligned<Long>(sp))
@@ -453,7 +456,7 @@ template<uint8_t Inst, uint8_t Size> auto M68000::opBsr(uint16_t opcode) -> void
 }
 
 template<uint8_t Inst, uint8_t Size> auto M68000::opDbcc(uint16_t opcode) -> void {
-    sync(2);
+    SYNC(2);
     uint8_t reg = opcode & 7;
     uint32_t memPC = pc;
     
@@ -472,7 +475,7 @@ template<uint8_t Inst, uint8_t Size> auto M68000::opDbcc(uint16_t opcode) -> voi
             return;
         }
     } else
-        sync(2);
+        SYNC(2);
     
     pc = memPC + 2;
     fullPrefetch<SampleIPL>();
@@ -481,8 +484,8 @@ template<uint8_t Inst, uint8_t Size> auto M68000::opDbcc(uint16_t opcode) -> voi
 template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opJmp(uint16_t opcode) -> void {
     uint32_t adr = calcEA<Mode, Long, SkipExtension>(opcode & 7);
     
-    if constexpr(isIndexMode<Mode>())                                   sync(4);
-    if constexpr(Mode == AbsoluteShort || isDisplacementMode<Mode>())   sync(2);
+    if constexpr(isIndexMode<Mode>())                                   SYNC(4);
+    if constexpr(Mode == AbsoluteShort || isDisplacementMode<Mode>())   SYNC(2);
 
     if (misaligned<Long>(adr))
         return addressException(adr, (Mode == AbsoluteLong) ? pc - 2 : pc, SF_READ | SF_PRG);
@@ -494,8 +497,8 @@ template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opJmp(uint16_t o
 template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opJsr(uint16_t opcode) -> void {
     uint32_t adr = calcEA<Mode, Long, SkipExtension>(opcode & 7);
 
-    if constexpr(isIndexMode<Mode>())                                   sync(4);
-    if constexpr(Mode == AbsoluteShort || isDisplacementMode<Mode>())   sync(2);
+    if constexpr(isIndexMode<Mode>())                                   SYNC(4);
+    if constexpr(Mode == AbsoluteShort || isDisplacementMode<Mode>())   SYNC(2);
     
     if constexpr(isAbsMode<Mode>())
         pc += 2;
@@ -522,7 +525,7 @@ template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opJsr(uint16_t o
 
 template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opLea(uint16_t opcode) -> void {
     writeRegA( (opcode >> 9) & 7, calcEA<Mode, Long>(opcode & 7) );
-    if constexpr(isIndexMode<Mode>()) sync(2);
+    if constexpr(isIndexMode<Mode>()) SYNC(2);
     prefetch<SampleIPL>();
 }
 
@@ -532,7 +535,7 @@ template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opPea(uint16_t o
 
     if constexpr(!isAbsMode<Mode>()) {
         sampleInterrupt(); // like all the other IPL sample points, it happens one clock cycle sooner (confirmed with fx68k)
-        if constexpr(isIndexMode<Mode>()) sync(2);
+        if constexpr(isIndexMode<Mode>()) SYNC(2);
         prefetch();
     }
 
@@ -649,8 +652,8 @@ template<uint8_t Inst, uint8_t Size> auto M68000::opArithmeticX(uint16_t opcode)
     uint8_t destReg = (opcode >> 9) & 7;
 
     prefetch<SampleIPL>();
-    if constexpr(Size == Long)  sync(4);
-    if constexpr(Inst == Abcd || Inst == Sbcd) sync(2);
+    if constexpr(Size == Long)  SYNC(4);
+    if constexpr(Inst == Abcd || Inst == Sbcd) SYNC(2);
 
     writeRegD<Size>( destReg, arithmetic<Inst, Size>(readRegD<Size>( opcode & 7 ), readRegD<Size>( destReg ) ) );
 }
@@ -662,7 +665,7 @@ template<uint8_t Inst, uint8_t Size> auto M68000::opArithmeticXEa(uint16_t opcod
 
     ea = readRegA( srcReg );
     ea -= (Size == Byte && srcReg == 7) ? 2 : Size;
-    sync(2);
+    SYNC(2);
 
     if (misaligned<Size>(ea)) {
         if constexpr(Size == Word) writeRegA(srcReg, ea);
@@ -721,7 +724,7 @@ template<uint8_t Inst, uint8_t Size> auto M68000::opCmpm(uint16_t opcode) -> voi
 template<uint8_t Inst, uint8_t Size> auto M68000::opCcr(uint16_t opcode) -> void {
     uint8_t data = irc & 0xff;
     readExtensionWord();
-    sync(8); // confirmed with fx68k
+    SYNC(8); // confirmed with fx68k
     ccr<Inst>( data );
     fullPrefetch<SampleIPL>(); // first fetch is dummy at same address like extension word
 }
@@ -732,7 +735,7 @@ template<uint8_t Inst, uint8_t Size> auto M68000::opSr(uint16_t opcode) -> void 
 
     uint16_t data = irc;
     readExtensionWord();
-    sync(8);
+    SYNC(8);
     sr<Inst>( data );
     fullPrefetch<SampleIPL>(); // first fetch is dummy at same address like extension word
 }
@@ -748,16 +751,16 @@ template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opChk(uint16_t o
     z = zero<Word>( dataD );
     v = c = n = false;
 
-    sync(4);
+    SYNC(4);
     if ( (int16_t)dataD > (int16_t)result) {
-        sync(4);
+        SYNC(4);
         n = negative<Word>(dataD); // z, n flag changes happen not here, but later in exception routine
         return trapException( 6 );
     }
 
-    sync(2);
+    SYNC(2);
     if ((int16_t)dataD < 0) {
-        sync(4);
+        SYNC(4);
         n = true;
         return trapException( 6 );
     }
@@ -771,7 +774,7 @@ template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opMoveFromSr(uin
         return;
 
     prefetch<SampleIPL>();
-    if constexpr(isRegisterMode<Mode>()) sync(2);
+    if constexpr(isRegisterMode<Mode>()) SYNC(2);
 
     writeEA<Mode, Size>(ea, getSR() );
 }
@@ -784,7 +787,7 @@ template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opMoveToSr(uint1
     if (!readEA<Mode, Size>(opcode & 7, result, ea))
         return;
 
-    sync(4);
+    SYNC(4);
     setSR( result );
     fullPrefetch<SampleIPL>();
 }
@@ -794,26 +797,26 @@ template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opMoveToCcr(uint
     if (!readEA<Mode, Size>(opcode & 7, result, ea))
         return;
 
-    sync(4);
+    SYNC(4);
     setCCR( result & 0xff );
     fullPrefetch<SampleIPL>();
 }
 
 template<uint8_t Inst, uint8_t Size> auto M68000::opExgDxDy(uint16_t opcode) -> void {
     prefetch<SampleIPL>();
-    sync(2);
+    SYNC(2);
     std::swap( regsD[opcode & 7], regsD[(opcode >> 9) & 7 ] );
 }
 
 template<uint8_t Inst, uint8_t Size> auto M68000::opExgAxAy(uint16_t opcode) -> void {
     prefetch<SampleIPL>();
-    sync(2);
+    SYNC(2);
     std::swap( regsA[opcode & 7], regsA[(opcode >> 9) & 7 ] );
 }
 
 template<uint8_t Inst, uint8_t Size> auto M68000::opExgAxDy(uint16_t opcode) -> void {
     prefetch<SampleIPL>();
-    sync(2);
+    SYNC(2);
     std::swap( regsA[opcode & 7], regsD[(opcode >> 9) & 7 ] );
 }
 
@@ -848,11 +851,11 @@ auto M68000::opReset(uint16_t opcode) -> void {
     if (!s)
         return privilegeException();
 
-    sync(2);
+    SYNC(2);
     sampleInterrupt();
-    sync(2);
-    resetOut(); // assert reset line after 4.5 clocks for 124 clocks (128.5)
-    sync(124);
+    SYNC(2);
+    RESET_OUT(); // assert reset line after 4.5 clocks for 124 clocks (128.5)
+    SYNC(124);
     prefetch();
 }
 
@@ -920,8 +923,8 @@ auto M68000::opStop(uint16_t opcode) -> void {
     sampleInterrupt(); // if detected, no stop at all. like all the other sampling points (one clock cycle sooner)
     setSR( irc );
     control |= Stop;
-    sync(4);
-    pc += 4; // no extension word, no prefetch -> internal: sync(2), pc += 2, sync(2) pc += 2
+    SYNC(4);
+    pc += 4; // no extension word, no prefetch -> internal: SYNC(2), pc += 2, SYNC(2) pc += 2
     // e.g. IRQ detected one clock before opcode edge = 4 extra cycles
     // e.g. IRQ detected at opcode edge = 8 extra cycles
 }
@@ -935,7 +938,7 @@ template<uint8_t Inst, uint8_t Size> auto M68000::opSwap(uint16_t opcode) -> voi
 }
 
 template<uint8_t Inst, uint8_t Size> auto M68000::opTrap(uint16_t opcode) -> void {
-    sync(4);
+    SYNC(4);
     trapException( (opcode & 0xf) + 32 );
 }
 

@@ -103,20 +103,20 @@ template<uint8_t Size, uint8_t Flags> auto M68000::read(uint32_t adr) -> uint32_
     uint32_t result;
 
     if constexpr (Size == Long) {
-        sync(2);
+        SYNC(2);
         if constexpr (Flags & PRG) {
-            result = readWordPRG(adr & 0xffffff) << 16;
-            sync(4);
-            result |= readWordPRG((adr + 2) & 0xffffff);
+            result = READ_WORD_PRG(adr & 0xffffff) << 16;
+            SYNC(4);
+            result |= READ_WORD_PRG((adr + 2) & 0xffffff);
         } else if constexpr(Flags & Reverse) { // only addx.l and subx.l
-            result = readWord((adr + 2) & 0xffffff);
-            sync(4);
-            result |= readWord(adr & 0xffffff) << 16;
+            result = READ_WORD((adr + 2) & 0xffffff);
+            SYNC(4);
+            result |= READ_WORD(adr & 0xffffff) << 16;
         } else {
-            result = readWord(adr & 0xffffff) << 16;
-            // only "unlink" fetches IPL here. to prevent splitting in two sync(2), we do a two word access.
-            sync(4);
-            result |= readWord((adr + 2) & 0xffffff);
+            result = READ_WORD(adr & 0xffffff) << 16;
+            // only "unlink" fetches IPL here. to prevent splitting in two SYNC(2), we do a two word access.
+            SYNC(4);
+            result |= READ_WORD((adr + 2) & 0xffffff);
         }
     } else {
         // analyzed from fx68k, the sample point happens a half micro cycle (= one clock cycle) before.
@@ -126,52 +126,53 @@ template<uint8_t Size, uint8_t Flags> auto M68000::read(uint32_t adr) -> uint32_
         if constexpr(Flags & SampleIPL)
             sampleInterrupt();
 
-        sync(2);
+        SYNC(2);
 
+        #ifdef TAS_SPINLOCK
         if constexpr(Flags & TasCycle)
-            tasCycleBegin();
-
+            TAS_CYCLE_BEGIN();
+        #endif
         if constexpr (Size == Byte) {
-            if constexpr (Flags & PRG)  result = readBytePRG(adr & 0xffffff);
-            else                        result = readByte(adr & 0xffffff);
+            if constexpr (Flags & PRG)  result = READ_BYTE_PRG(adr & 0xffffff);
+            else                        result = READ_BYTE(adr & 0xffffff);
         } else {
-            if constexpr (Flags & PRG)  result = readWordPRG(adr & 0xffffff);
-            else                        result = readWord(adr & 0xffffff);
+            if constexpr (Flags & PRG)  result = READ_WORD_PRG(adr & 0xffffff);
+            else                        result = READ_WORD(adr & 0xffffff);
         }
     }
-    sync(2);
+    SYNC(2);
     return result;
 }
 
 template<uint8_t Size, uint8_t Flags> auto M68000::write(uint32_t adr, uint32_t data) -> void {
 
     if constexpr (Size == Long) {
-        sync(2);
+        SYNC(2);
         if (Flags & Reverse) {
-            writeWord(adr & 0xffffff, data >> 16);
-            sync(2);
+            WRITE_WORD(adr & 0xffffff, data >> 16);
+            SYNC(2);
 
             if constexpr(Flags & SampleIPL) // move
                 sampleInterrupt();
 
-            sync(2);
-            writeWord((adr + 2) & 0xffffff, data & 0xffff);
+            SYNC(2);
+            WRITE_WORD((adr + 2) & 0xffffff, data & 0xffff);
         } else {
-            writeWord((adr + 2) & 0xffffff, data & 0xffff);
-            sync(4);
-            writeWord(adr & 0xffffff, data >> 16);
+            WRITE_WORD((adr + 2) & 0xffffff, data & 0xffff);
+            SYNC(4);
+            WRITE_WORD(adr & 0xffffff, data >> 16);
         }
     } else {
         if constexpr(Flags & SampleIPL) // move
             sampleInterrupt();
 
-        sync(2);
+        SYNC(2);
         if constexpr (Size == Byte)
-            writeByte(adr & 0xffffff, data);
+            WRITE_BYTE(adr & 0xffffff, data);
         else
-            writeWord(adr & 0xffffff, data);
+            WRITE_WORD(adr & 0xffffff, data);
     }
-    sync(2);
+    SYNC(2);
 }
 
 template<uint8_t Mode, uint8_t Size, uint8_t Flags> auto M68000::readEA(uint8_t reg, uint32_t& result, uint32_t& ea) -> bool {
@@ -220,7 +221,7 @@ template<uint8_t Mode, uint8_t Size, uint8_t Flags> auto M68000::calcEA(uint8_t 
             return readRegA( reg );
             
         case AddressRegisterIndirectWithPreDecrement:
-            if constexpr((Flags & ConcurrentAdrCalc) == 0) sync(2);
+            if constexpr((Flags & ConcurrentAdrCalc) == 0) SYNC(2);
             adr = readRegA( reg );
             
             adr -= (Size == Byte && reg == 7) ? 2 : Size;
@@ -232,7 +233,7 @@ template<uint8_t Mode, uint8_t Size, uint8_t Flags> auto M68000::calcEA(uint8_t 
             return adr;
             
         case AddressRegisterIndirectWithIndex: {
-            sync(2);
+            SYNC(2);
             uint32_t dispReg = readRegD( (irc & 0x7000) >> 12 );
             adr = readRegA( reg ) + (!(irc & 0x800) ? (int16_t)dispReg : dispReg) + (int8_t)(irc & 0xff);
 
@@ -257,7 +258,7 @@ template<uint8_t Mode, uint8_t Size, uint8_t Flags> auto M68000::calcEA(uint8_t 
             return adr;
             
         case ProgramCounterIndirectWithIndex: {
-            sync(2);
+            SYNC(2);
             uint32_t dispReg = readRegD( (irc & 0x7000) >> 12 );
             adr = pc + (!(irc & 0x800) ? (int16_t)dispReg : dispReg) + (int8_t)(irc & 0xff);
 

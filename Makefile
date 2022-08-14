@@ -26,7 +26,7 @@ objects += driver
 ifeq ($(platform),windows)
     objects += dinput5 dinput7 dinput8 xaudio27 xaudio28 xaudio29
 endif
-#objects += m68000
+objects += m68000 m68000Core systemAMI agnusAMI inputAMI controlPortAMI keyboardAMI
 objects += m6510 ciaBase cia6526 ciaNew vicIIBase vicIICycle vicIIFast systemC64 sid chamberlin tapeC64 tapeStructureC64 inputC64 controlPortC64 acia
 objects += cartC64 gameCartC64 freezerC64 reuC64 easyFlashC64 easyFlash3C64 retroReplayC64 gmod2C64 clipboardC64 geoRamC64 fastloaderC64
 objects += m6502 via iec prg64 driveC64 diskStructureC64 firmwareC64 pia traps64 virtualDrive64 wd1770
@@ -127,13 +127,20 @@ obj/emuthread.o:		program/thread/emuThread.cpp
 
 obj/libami.o:	emulation/libami/interface.cpp
 obj/libC64.o:	emulation/libc64/interface.cpp
-#obj/m68000.o:	libami/cpu/m680x0/m68000.cpp
 obj/m6510.o:	emulation/libc64/m6510/m6510.cpp
 obj/m6502.o:	emulation/libc64/disk/cpu/m6502.cpp
 
 obj/ciaBase.o:	emulation/cia/base.cpp	
 obj/cia6526.o:	emulation/cia/m6526.cpp
 obj/ciaNew.o:	emulation/cia/new/cia.cpp
+
+obj/m68000Core.o:	emulation/libami/cpu/m68000/m68000.cpp
+obj/m68000.o:	emulation/libami/cpu/m68000.cpp
+obj/agnusAMI.o:	emulation/libami/agnus/agnus.cpp
+obj/systemAMI.o: emulation/libami/system/system.cpp
+obj/inputAMI.o:	emulation/libami/input/input.cpp
+obj/controlPortAMI.o: emulation/libami/input/controlPort/controlPort.cpp
+obj/keyboardAMI.o: emulation/libami/input/keyboard/keyboard.cpp
 
 obj/vicIIBase.o:emulation/libc64/vicII/base.cpp
 obj/vicIICycle.o:emulation/libc64/vicII/vicII.cpp
