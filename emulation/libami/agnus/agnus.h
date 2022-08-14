@@ -3,12 +3,13 @@
 
 #include "../../cia/new/cia.h"
 #include "../cpu/m68000.h"
+#include "../../tools/events.h"
 
 namespace LIBAMI {
 
 struct Cpu;
 
-struct Agnus {
+struct Agnus : Emulator::Events<10> {
 
     Agnus(Cpu& cpu, Cia& cia1, Cia& cia2);
 
