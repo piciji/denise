@@ -500,6 +500,8 @@ struct Interface {
     // draw cursor by yourself. that is usefull if you want to draw the cursor in a higher resolution.
     // of course, the coordinates are in native resoltion of the emulated system. you need to convert them.
     virtual auto getCursorPosition( Device* device, int16_t& x, int16_t& y ) -> bool { return false; }
+    // As a rule, retro systems query the status of the connected input devices. Some devices, such as the Amiga keyboard, take the initiative and send input to the computer.
+    virtual auto sendKeyCode(bool pressed, uint8_t keyCode) -> void {}
     
     virtual auto setMemory(MemoryType* memoryType, unsigned memoryId) -> void {}    
     virtual auto setMemoryInitParams(uint8_t value, unsigned invertEvery, unsigned randomPatternLength, unsigned repeatRandomPattern, unsigned randomChance) -> void {}

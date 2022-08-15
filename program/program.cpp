@@ -307,8 +307,6 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
 		if (emuSwap)
 			setVideoFilter();
 
-        //setVideoSynchronize();
-
 		resetRunAhead();
 
 		archiveViewer->setVisible(false);
@@ -333,6 +331,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
 	isRunning = true;
 	isPause = false;
 
+    InputManager::setupKeycodeTransfer();
     hintExclusiveFullscreen( );
 }
 
@@ -399,6 +398,7 @@ auto Program::powerOff() -> void {
     activeEmulator = nullptr;
     activeVideoManager = nullptr;
     warp.enableAutoWarp = false;
+    InputManager::setupKeycodeTransfer();
 }
 
 auto Program::loopNoGui() -> void {

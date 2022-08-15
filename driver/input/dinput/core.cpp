@@ -16,6 +16,9 @@ namespace DRIVER {
 struct DI_IDENT_CORE : DI_IDENT {        
     HWND hwndMain = nullptr;
 	HWND hwndHotPlug = nullptr;
+    HANDLE changeHandler = nullptr;
+    HANDLE workerThread = nullptr;
+    CRITICAL_SECTION mcsSc;
     
 #if DIRECTINPUT_VERSION == 0x0500
     LPDIRECTINPUT din;
@@ -30,6 +33,7 @@ struct DI_IDENT_CORE : DI_IDENT {
     
     bool mAcquired = false;
 	bool deviceChanged = false;
+    char keyStates[256] = {0};
 
 	struct Joypad {
         
@@ -187,6 +191,11 @@ struct DI_IDENT_CORE : DI_IDENT {
 #endif        			
             dinKey->SetDataFormat(&c_dfDIKeyboard);
             dinKey->SetCooperativeLevel(hwndMain, DISCL_NONEXCLUSIVE | DISCL_BACKGROUND);
+
+            changeHandler = CreateEvent(NULL, false, false, NULL);
+            if (dinKey->SetEventNotification(changeHandler) == S_OK)
+                workerThread = CreateThread(NULL, 0, DI_IDENT_CORE::EntryPoint, (void*)this, 0, NULL);
+
             dinKey->Acquire();
 
             for(unsigned id = 0; id <= 0xff; id++) {
@@ -248,7 +257,38 @@ struct DI_IDENT_CORE : DI_IDENT {
 		if(hidMouse) delete hidMouse, hidMouse = nullptr;
 		if(hidKeyboard) delete hidKeyboard, hidKeyboard = nullptr;	
 		if(hwndHotPlug) DestroyWindow(hwndHotPlug), hwndHotPlug = nullptr;
+        if(workerThread) TerminateThread(workerThread, 0);
+        if(changeHandler) CloseHandle(changeHandler), changeHandler = nullptr;
 	}
+
+    auto run() -> void {
+
+        WaitForSingleObject(changeHandler, INFINITE);
+
+        unsigned char newStates[256] = {0};
+        if (FAILED(dinKey->GetDeviceState(_size, (LPVOID) newStates))) {
+            dinKey->Acquire();
+            if (FAILED(dinKey->GetDeviceState(_size, (LPVOID) newStates)))
+                memset(newState, 0, sizeof(newState));
+        }
+
+        if (keyCallback) {
+            uint8_t oldState;
+            uint8_t newState;
+            for (unsigned key = 0; key < 256; key) {
+                oldState = keyStates[key];
+                newState = newStates[key];
+
+                if (oldState != newState) {
+                    (*keyCallback)( !!newState, key);
+                }
+            }
+        }
+
+        EnterCriticalSection( &mcsSc );
+        std::memcpy(keyStates, newStates, 256);
+        LeaveCriticalSection( &mcsSc );
+    }
 	
     auto poll() -> std::vector<Hid::Device*> {
 		std::vector<Hid::Device*> devices;
@@ -263,17 +303,23 @@ struct DI_IDENT_CORE : DI_IDENT {
 			unsigned char* keystate = new unsigned char[_size];
 
          //   if (GetFocus()) {
+            if (!workerThread) {
                 if (FAILED(dinKey->GetDeviceState(_size, (LPVOID) keystate))) {
                     dinKey->Acquire();
                     if (FAILED(dinKey->GetDeviceState(_size, (LPVOID) keystate)))
                         memset(keystate, 0, sizeof(keystate));
                 }
+            }
+
+            EnterCriticalSection( &mcsSc );
+            for (auto& input : hidKeyboard->buttons().inputs)
+                input.setValue( !!(keystate[input.id] & 0x80) );
+            LeaveCriticalSection( &mcsSc );
+
            // } else
              //   memset(keystate, 0, sizeof(keystate));
-		
-			for (auto& input : hidKeyboard->buttons().inputs)
-				input.setValue( !!(keystate[input.id] & 0x80) );
-			
+
+
 			devices.push_back(hidKeyboard);
 
 			delete[] keystate;
@@ -447,6 +493,16 @@ struct DI_IDENT_CORE : DI_IDENT {
 		DI_IDENT_CORE* worker = (DI_IDENT_CORE*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
 		return worker->wndProc(hwnd, msg, wparam, lparam);
 	}
+
+    static auto WINAPI EntryPoint(void* param) -> DWORD {
+        DI_IDENT_CORE* worker = (DI_IDENT_CORE*)param;
+        worker->run();
+        return 0;
+    }
+
+    auto setKeyboardCallback( KeyCallback* callback ) -> void {
+        this->keyCallback = callback;
+    }
 		
     DI_IDENT_CORE(unsigned version = 0) : DI_IDENT() {
 		din = 0;

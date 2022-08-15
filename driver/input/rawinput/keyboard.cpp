@@ -51,7 +51,14 @@ struct RawKeyboard {
 		if (isE0) scanCode |= 0x80;
 
 		keys[scanCode & 0xff] = !wasUp;
+
+        if (keyCallback)
+            (*keyCallback)( !wasUp, scanCode & 0xff);
 	}
+
+    auto setKeyboardCallback( KeyCallback* callback ) -> void {
+        this->keyCallback = callback;
+    }
 	
 	auto poll(std::vector<Hid::Device*>& devices) -> void {
 		

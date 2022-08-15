@@ -213,6 +213,13 @@ struct IokitKeyboard {
         long pressed = IOHIDValueGetIntegerValue(value);
         
         keysPressed[scancode] = pressed ? true : false;
+
+        if (keyCallback)
+            (*keyCallback)( pressed, scancode);
+    }
+
+    auto setKeyboardCallback( KeyCallback* callback ) -> void {
+        this->keyCallback = callback;
     }
 
     static auto HIDKeyboardCallback(void* context, IOReturn result, void* sender, IOHIDValueRef value) -> void {

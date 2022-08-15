@@ -1,6 +1,23 @@
 
 #include "manager.h"
 
+DRIVER::Input::KeyCallback InputManager::keyCallback = [](bool pressed, uint8_t keyCode) {
+    if (Program::focused && activeEmulator) {
+        activeEmulator->sendKeyCode(pressed, keyCode);
+        if (pressed)
+            statusHandler->setMessage("pressed " + std::to_string(keyCode));
+        else
+            statusHandler->setMessage("released " + std::to_string(keyCode));
+    }
+};
+
+auto InputManager::setupKeycodeTransfer() -> void {
+    if (dynamic_cast<LIBAMI::Interface*>(activeEmulator))
+        inputDriver->setKeyboardCallback( &keyCallback );
+    else
+        inputDriver->setKeyboardCallback( &keyCallback );
+}
+
 auto InputManager::resetJit() -> void {
     jit.enable = false;
     jit.lastTimestamp = 0;

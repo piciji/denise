@@ -101,6 +101,7 @@ struct InputManager {
     static unsigned retry;
 	static std::vector<Hid::Device*> hidDevices;
     static bool urgentUpdate;
+    static DRIVER::Input::KeyCallback keyCallback;
     
     struct JIT { // Just In Time Polling
         uint64_t lastTimestamp = 0;
@@ -163,6 +164,7 @@ struct InputManager {
     static auto jitPoll() -> bool;
     static auto resetJit() -> void;
     static auto preventSharingOfAutoFireMappings(InputMapping* captureObject, InputMapping::Assign& captureHid) -> void;
+    static auto setupKeycodeTransfer() -> void;
 	
     auto autoAssign( KeyboardLayout::Type type, bool keyboardOnly = true ) -> void;
 	auto addMapping(InputMapping* mapping) -> void;
