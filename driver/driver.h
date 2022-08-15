@@ -8,6 +8,7 @@
 
 #include <string>
 #include <vector>
+#include <functional>
 
 #include "tools/hid.h"
 #include "tools/shaderpass.h"

@@ -60,6 +60,10 @@ struct Iokit : Input {
         mouse.mUnacquire();
     }
     
+    auto setKeyboardCallback( KeyCallback* callback ) -> void {
+        keyboard.keyCallback = callback;
+    }
+    
     auto mIsAcquired() -> bool {
         return mouse.mIsAcquired();
     }

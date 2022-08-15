@@ -4,6 +4,7 @@ struct IokitKeyboard {
     Hid::Keyboard* hidKeyboard = nullptr;
     bool keysPressed[256] = {0};
     OsxKeyNames keyNames;
+    Input::KeyCallback* keyCallback = nullptr;
     
     auto init() -> bool {
         term();
@@ -216,10 +217,6 @@ struct IokitKeyboard {
 
         if (keyCallback)
             (*keyCallback)( pressed, scancode);
-    }
-
-    auto setKeyboardCallback( KeyCallback* callback ) -> void {
-        this->keyCallback = callback;
     }
 
     static auto HIDKeyboardCallback(void* context, IOReturn result, void* sender, IOHIDValueRef value) -> void {
