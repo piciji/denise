@@ -8,7 +8,13 @@ namespace LIBAMI {
 
 System* system = nullptr;
 
-System::System(Interface* interface) : cia1(1), cia2(2), cpu(agnus), agnus( cpu, cia1, cia2 ), input(interface) {
+System::System(Interface* interface) :
+cia1(1),
+cia2(2),
+cpu(agnus),
+agnus( cpu, cia1, cia2 ),
+input(agnus, interface) {
+
     this->interface = interface;
 
     cia1.serialOut = [this](bool bit) {
@@ -38,8 +44,8 @@ System::System(Interface* interface) : cia1(1), cia2(2), cpu(agnus), agnus( cpu,
 }
 
 auto System::power(bool softReset) -> void {
-    agnus.mapMemory();
-    agnus.setOVL(true);
+
+    agnus.reset();
 
     if( !softReset ) {
         cpu.power();

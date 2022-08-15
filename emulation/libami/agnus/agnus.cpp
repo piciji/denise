@@ -10,6 +10,8 @@ Agnus::Agnus(Cpu& cpu, Cia& cia1, Cia& cia2) : cpu(cpu), cia1(cia1), cia2(cia2) 
 
 auto Agnus::reset() -> void {
     eClockPosition = 2;
+    mapMemory();
+    setOVL(true);
 }
 
 auto Agnus::resetOut() -> void {
@@ -76,9 +78,10 @@ auto Agnus::setOVL(bool state) -> void {
 }
 
 auto Agnus::sync(uint16_t cycles) -> void {
-    cycles >>= 1;
 
     while( cycles ) {
+
+        processEvents();
 
         eClockPosition += 2;
         if (eClockPosition == 10) {
@@ -92,7 +95,7 @@ auto Agnus::sync(uint16_t cycles) -> void {
             cia2.clock();
         }
 
-        cycles--;
+        cycles -= 2;
     }
 }
 

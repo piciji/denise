@@ -15,6 +15,8 @@ struct Agnus : Emulator::Events<10> {
 
     enum { Unmapped, CHIP_MEM, SLOW_MEM, KICK_ROM, EXT_ROM, MMIO_CUSTOM, MMIO_CIA, MMIO_RTC };
 
+    enum class EventSlot : uint8_t { KBD };
+
     Cpu& cpu;
     Cia& cia1;
     Cia& cia2;
@@ -48,6 +50,9 @@ struct Agnus : Emulator::Events<10> {
     auto sync(uint16_t cycles) -> void;
     auto iackCycle(uint8_t level, uint8_t& vector) -> uint8_t;
     auto resetOut() -> void;
+
+    auto msecToDMACycles(unsigned ms) -> unsigned { return 3550 * ms; } // average for PAL/NTSC, todo: check if more accuracy is needed
+    auto usecToDMACycles(unsigned us) -> unsigned { return 3.55f * (float)us + 0.5f; }
 
 };
 

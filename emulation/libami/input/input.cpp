@@ -2,6 +2,7 @@
 #include "input.h"
 #include "controlPort/controlPort.h"
 #include "../system/system.h"
+#include "../agnus/agnus.h"
 #include "../../tools/bits.h"
 
 #define portAOutputLo (lines->ddra & ~lines->pra)
@@ -11,8 +12,9 @@
 
 namespace LIBAMI {
 
-Input::Input(Emulator::Interface* interface) {
+Input::Input(Agnus& agnus, Emulator::Interface* interface) : agnus(agnus), keyboard(interface, agnus) {
     this->interface = interface;
+
     controlPort1 = new ControlPort(interface);
     controlPort2 = new ControlPort(interface);
 

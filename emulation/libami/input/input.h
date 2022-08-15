@@ -6,17 +6,20 @@
 
 #include "../../tools/serializer.h"
 #include "../../interface.h"
+
 #include "keyboard/keyboard.h"
 
 namespace LIBAMI {
 
 struct ControlPort;
+struct Agnus;
 
 struct Input {
 
-    Input(Emulator::Interface* interface);
+    Input(Agnus& agnus, Emulator::Interface* interface);
 
     Emulator::Interface* interface;
+    Agnus& agnus;
     ControlPort* controlPort1 = nullptr;
     ControlPort* controlPort2 = nullptr;
     Keyboard keyboard;
