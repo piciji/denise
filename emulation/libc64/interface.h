@@ -159,7 +159,7 @@ struct Interface : Emulator::Interface {
     auto cropPitch() -> unsigned;
 
     // jit
-    auto enableJit(bool state) -> void;
+    auto setInputSampling(uint8_t mode) -> void;
 
     // drive sounds
     auto enableFloppySounds(bool state) -> void;

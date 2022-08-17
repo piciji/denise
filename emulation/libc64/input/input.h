@@ -20,12 +20,14 @@ struct Input {
     Keyboard keyboard;
     CIA::Base::Lines* lines = nullptr;
     uint8_t potMask;
-    
-    struct Jit {
-        bool enable = false;
+
+    enum SamplingMode { Static_Sampling = 0, Restricted_Dynamic_Sampling = 1, Dynamic_Sampling = 2 };
+
+    struct Sampling {
+        SamplingMode mode = Dynamic_Sampling;
         bool allow = false;
-        bool midscreen = false;
-    } jit;
+        uint8_t midscreen = 0;
+    } sampling;
     
     auto connectControlport( Interface::Connector* connector, Interface::Device* device ) -> void;
     auto getConnectedDevice( Interface::Connector* connector ) -> Interface::Device*;
@@ -51,8 +53,8 @@ struct Input {
     auto drawCursor(bool midScreen = false) -> void;
     auto serialize(Emulator::Serializer& s) -> void;
 
-    auto enableJit(bool state) -> void;
-    auto allowJit() -> void;
+    auto setSampling(uint8_t mode) -> void;
+    auto updateSampling() -> void;
 };
 
 }
