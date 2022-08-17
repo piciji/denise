@@ -41,11 +41,11 @@ auto Program::getInputDriver() -> std::string {
 	return DRIVER::Input::preferred();
 }
 
-auto Program::jitPoll() -> bool {
+auto Program::jitPoll(uint8_t delay) -> bool {
     if (cmd->noGui)
         return false;
 
-    return InputManager::jitPoll();
+    return InputManager::jitPoll(delay);
 }
 
 auto Program::inputPoll( uint16_t deviceId, uint16_t inputId) -> int16_t {            
@@ -149,11 +149,11 @@ auto Program::setJit(Emulator::Interface* emulator) -> void {
 
     auto settings = getSettings(emulator);
 
-    emulator->enableJit( settings->get<bool>("input_jit", true) );
+    emulator->setInputSampling( settings->get<unsigned>("input_sampling", 2, {0, 2}) );
 
     auto manager = InputManager::getManager(emulator);
 
-    manager->jit.rescanDelay = settings->get<unsigned>("input_jit_delay", 3, {1, 8});
+    manager->jit.rescanDelay = settings->get<unsigned>("input_jit_delay", 5, {1, 10});
 }
 
 auto Program::setRunAhead(Emulator::Interface* emulator) -> void {

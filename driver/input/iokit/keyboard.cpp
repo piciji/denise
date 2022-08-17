@@ -216,7 +216,7 @@ struct IokitKeyboard {
         keysPressed[scancode] = pressed ? true : false;
 
         if (keyCallback)
-            (*keyCallback)( pressed, scancode);
+            (*keyCallback)();
     }
 
     static auto HIDKeyboardCallback(void* context, IOReturn result, void* sender, IOHIDValueRef value) -> void {

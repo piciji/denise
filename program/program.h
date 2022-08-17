@@ -45,6 +45,7 @@
 
 struct FileSetting;
 struct Message;
+struct InputManager;
 
 struct Program : Emulator::Interface::Bind {
     bool isRunning;
@@ -155,7 +156,7 @@ struct Program : Emulator::Interface::Bind {
     auto isAnalogDeviceConnected( ) -> bool;
     auto couldDeviceBlockSecondMouseButton( ) -> bool;
     auto absoluteMouseToEmu( Emulator::Interface* emulator ) -> GUIKIT::Position;
-    auto jitPoll() -> bool override;
+    auto jitPoll(uint8_t delay) -> bool override;
     auto resetRunAhead() -> void;
     auto setRunAhead(Emulator::Interface* emulator) -> void;
     auto setJit(Emulator::Interface* emulator) -> void;
@@ -174,6 +175,7 @@ extern std::vector<Emulator::Interface*> emulators;
 extern std::vector<GUIKIT::Settings*> settingsStorage;
 extern GUIKIT::Settings* globalSettings;
 extern Emulator::Interface* activeEmulator;
+extern InputManager* activeInputManager;
 extern VideoManager* activeVideoManager;
 
 #endif

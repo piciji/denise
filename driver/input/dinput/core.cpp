@@ -1,6 +1,7 @@
 
 #include <dinput.h>
 #include <dbt.h>
+#include <cstring>
 
 #include "../../tools/win.h"
 #include "../../tools/hid.h"
@@ -18,7 +19,9 @@ struct DI_IDENT_CORE : DI_IDENT {
 	HWND hwndHotPlug = nullptr;
     HANDLE changeHandler = nullptr;
     HANDLE workerThread = nullptr;
-    CRITICAL_SECTION mcsSc;
+    CRITICAL_SECTION criticalSection;
+
+    KeyCallback* keyCallback = nullptr;
     
 #if DIRECTINPUT_VERSION == 0x0500
     LPDIRECTINPUT din;
@@ -33,7 +36,7 @@ struct DI_IDENT_CORE : DI_IDENT {
     
     bool mAcquired = false;
 	bool deviceChanged = false;
-    char keyStates[256] = {0};
+    unsigned char keyStates[256] = {0};
 
 	struct Joypad {
         
@@ -193,9 +196,10 @@ struct DI_IDENT_CORE : DI_IDENT {
             dinKey->SetCooperativeLevel(hwndMain, DISCL_NONEXCLUSIVE | DISCL_BACKGROUND);
 
             changeHandler = CreateEvent(NULL, false, false, NULL);
-            if (dinKey->SetEventNotification(changeHandler) == S_OK)
-                workerThread = CreateThread(NULL, 0, DI_IDENT_CORE::EntryPoint, (void*)this, 0, NULL);
-
+            if (dinKey->SetEventNotification(changeHandler) == S_OK) {
+                InitializeCriticalSection(&criticalSection);
+                workerThread = CreateThread(NULL, 0, DI_IDENT_CORE::EntryPoint, (void*) this, 0, NULL);
+            }
             dinKey->Acquire();
 
             for(unsigned id = 0; id <= 0xff; id++) {
@@ -257,37 +261,43 @@ struct DI_IDENT_CORE : DI_IDENT {
 		if(hidMouse) delete hidMouse, hidMouse = nullptr;
 		if(hidKeyboard) delete hidKeyboard, hidKeyboard = nullptr;	
 		if(hwndHotPlug) DestroyWindow(hwndHotPlug), hwndHotPlug = nullptr;
-        if(workerThread) TerminateThread(workerThread, 0);
+        if(workerThread) {
+            DeleteCriticalSection(&criticalSection);
+            TerminateThread(workerThread, 0);
+        }
         if(changeHandler) CloseHandle(changeHandler), changeHandler = nullptr;
 	}
 
     auto run() -> void {
 
-        WaitForSingleObject(changeHandler, INFINITE);
+        while(true) {
+            WaitForSingleObject(changeHandler, INFINITE);
 
-        unsigned char newStates[256] = {0};
-        if (FAILED(dinKey->GetDeviceState(_size, (LPVOID) newStates))) {
-            dinKey->Acquire();
-            if (FAILED(dinKey->GetDeviceState(_size, (LPVOID) newStates)))
-                memset(newState, 0, sizeof(newState));
-        }
+            unsigned char newStates[256] = {0};
+            if (FAILED(dinKey->GetDeviceState(256, (LPVOID) &newStates))) {
+                dinKey->Acquire();
+                if (FAILED(dinKey->GetDeviceState(256, (LPVOID) &newStates)))
+                    memset(newStates, 0, sizeof(newStates));
+            }
 
-        if (keyCallback) {
-            uint8_t oldState;
-            uint8_t newState;
-            for (unsigned key = 0; key < 256; key) {
-                oldState = keyStates[key];
-                newState = newStates[key];
+            if (keyCallback) {
+                uint8_t oldState;
+                uint8_t newState;
+                for (unsigned key = 0; key < 256; key++) {
+                    oldState = keyStates[key];
+                    newState = newStates[key];
 
-                if (oldState != newState) {
-                    (*keyCallback)( !!newState, key);
+                    if (oldState != newState) {
+                        (*keyCallback)();
+                    }
                 }
             }
-        }
 
-        EnterCriticalSection( &mcsSc );
-        std::memcpy(keyStates, newStates, 256);
-        LeaveCriticalSection( &mcsSc );
+            EnterCriticalSection(&criticalSection);
+            std::memcpy(&keyStates, &newStates, 256);
+            LeaveCriticalSection(&criticalSection);
+        }
+        ExitThread(0);
     }
 	
     auto poll() -> std::vector<Hid::Device*> {
@@ -299,30 +309,24 @@ struct DI_IDENT_CORE : DI_IDENT {
 		}		
 		
 		if (dinKey) {
-			unsigned _size = hidKeyboard->buttons().inputs.size();
-			unsigned char* keystate = new unsigned char[_size];
-
          //   if (GetFocus()) {
             if (!workerThread) {
-                if (FAILED(dinKey->GetDeviceState(_size, (LPVOID) keystate))) {
+                if (FAILED(dinKey->GetDeviceState(sizeof(keyStates), (LPVOID) keyStates))) {
                     dinKey->Acquire();
-                    if (FAILED(dinKey->GetDeviceState(_size, (LPVOID) keystate)))
-                        memset(keystate, 0, sizeof(keystate));
+                    if (FAILED(dinKey->GetDeviceState(sizeof(keyStates), (LPVOID) keyStates)))
+                        memset(keyStates, 0, sizeof(keyStates));
                 }
             }
 
-            EnterCriticalSection( &mcsSc );
+            EnterCriticalSection( &criticalSection );
             for (auto& input : hidKeyboard->buttons().inputs)
-                input.setValue( !!(keystate[input.id] & 0x80) );
-            LeaveCriticalSection( &mcsSc );
+                input.setValue( !!(keyStates[input.id] & 0x80) );
+            LeaveCriticalSection( &criticalSection );
 
            // } else
              //   memset(keystate, 0, sizeof(keystate));
 
-
 			devices.push_back(hidKeyboard);
-
-			delete[] keystate;
 		}
 
 		if (dinMouse) {

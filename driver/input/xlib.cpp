@@ -344,18 +344,10 @@ struct XInput : public Input {
                               &win_x_return, &win_y_return, &mask_return);
 
                 if (keyCallback) {
-                    uint8_t _state;
-                    uint8_t _toggled;
-
                     for(unsigned i = 0; i < 32; i++) {
-                        _state = state[i];
-                        _toggled = _state ^ keyState[i];
-
-                        if (_toggled) {
-                            for(uint8_t bit = 0; bit < 7; bit++) {
-                                if ((_toggled >> bit) & 1)
-                                    (*keyCallback)( (_state >> bit) & 1, (i << 3) | bit);
-                            }
+                        if (state[i] ^ keyState[i]) {
+                            (*keyCallback)();
+                            break;
                         }
                     }
                 }

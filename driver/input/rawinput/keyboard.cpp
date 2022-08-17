@@ -2,6 +2,7 @@
 struct RawKeyboard {
 	Hid::Keyboard* hidKeyboard = nullptr;
 	bool keys[256] = {0};
+    KeyCallback* keyCallback = nullptr;
 	
 	auto init() -> void {
 		term();
@@ -24,7 +25,7 @@ struct RawKeyboard {
 		unsigned scanCode = input->data.keyboard.MakeCode;
 		unsigned flags = input->data.keyboard.Flags;
 		unsigned virtualKey = input->data.keyboard.VKey;
-		bool wasUp = ((flags & RI_KEY_BREAK) != 0);
+		bool pressed = ((flags & RI_KEY_BREAK) == 0);
 
 		if (virtualKey == 255)
 			return;
@@ -50,15 +51,11 @@ struct RawKeyboard {
 
 		if (isE0) scanCode |= 0x80;
 
-		keys[scanCode & 0xff] = !wasUp;
+        if (keyCallback && (keys[scanCode & 0xff] != pressed))
+            (*keyCallback)();
 
-        if (keyCallback)
-            (*keyCallback)( !wasUp, scanCode & 0xff);
+        keys[scanCode & 0xff] = pressed;
 	}
-
-    auto setKeyboardCallback( KeyCallback* callback ) -> void {
-        this->keyCallback = callback;
-    }
 	
 	auto poll(std::vector<Hid::Device*>& devices) -> void {
 		

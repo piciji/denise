@@ -109,6 +109,14 @@ struct DInput : Input {
         
         return {};
     }
+
+    auto setKeyboardCallback( KeyCallback* callback ) -> void {
+        switch( version ) {
+            case 0x0500: dinput5->setKeyboardCallback(callback); break;
+            case 0x0700: dinput7->setKeyboardCallback(callback); break;
+            case 0x0800: dinput8->setKeyboardCallback(callback); break;
+        }
+    }
     
 };
     

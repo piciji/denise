@@ -99,7 +99,7 @@ struct Audio {
 };
 
 struct Input {
-    using KeyCallback = std::function<void (bool pressed, uint8_t keycode)>;
+    using KeyCallback = std::function<void ()>;
 
     virtual auto init(uintptr_t handle) -> bool { return true; }
     virtual auto term() -> void {}

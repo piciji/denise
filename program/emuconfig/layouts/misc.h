@@ -9,11 +9,19 @@ struct SpeedLayout : GUIKIT::FramedHorizontalLayout {
     SpeedLayout();
 };
 
-struct JitLayout : GUIKIT::FramedHorizontalLayout {
-    GUIKIT::CheckBox active;
+struct InputSamplingLayout : GUIKIT::FramedVerticalLayout {
+
+    struct Options : GUIKIT::HorizontalLayout {
+        GUIKIT::RadioBox staticMode;
+        GUIKIT::RadioBox restrictedDynamicMode;
+        GUIKIT::RadioBox dynamicMode;
+
+        Options();
+    } options;
+
     SliderLayout control;
 
-    JitLayout();
+    InputSamplingLayout();
 };
 
 struct RunAheadLayout : GUIKIT::FramedVerticalLayout {
@@ -22,7 +30,7 @@ struct RunAheadLayout : GUIKIT::FramedVerticalLayout {
     struct Options : GUIKIT::HorizontalLayout {
         GUIKIT::CheckBox performanceMode;
         GUIKIT::CheckBox disableOnPower;
-        GUIKIT::CheckBox preventJit;
+        GUIKIT::CheckBox preventDynamic;
         
         Options();
     } options;
@@ -69,7 +77,7 @@ struct MiscLayout : GUIKIT::VerticalLayout {
     TabWindow* tabWindow;
     Emulator::Interface* emulator;
     SpeedLayout speedLayout;
-    JitLayout jitLayout;
+    InputSamplingLayout inputSamplingLayout;
     RunAheadLayout runAheadLayout;
     AutostartLayout* autostartLayout = nullptr;
     

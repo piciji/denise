@@ -32,8 +32,9 @@ InputManager::JIT InputManager::jit;
 #include "mapping.cpp"
 #include "layout.cpp"
 
-InputManager::InputManager(Emulator::Interface* emulator) {    
+InputManager::InputManager(Emulator::Interface* emulator) {
     this->emulator = emulator;
+    this->sendKeyChange = emulator && emulator->needExternalKeyUpdates();
 }
 
 auto InputManager::addMapping(InputMapping* mapping) -> void {
@@ -76,7 +77,7 @@ auto InputManager::unmapDevice(unsigned deviceId) -> void {
     updateMappingsInUse();
 }
 
-auto InputManager::update() -> void {
+template<bool changeTrigger> auto InputManager::update() -> void {
 
     if (InputManager::urgentUpdate) {
         alternateSort();
@@ -92,12 +93,16 @@ auto InputManager::update() -> void {
     bool hasIllegal = false;
     bool aSwitch;
     unsigned hidSize;
+    uint8_t changeState;
     uiMouse.updated = false;
     InputMapping* useMapping;
 	
     updateAndTrigger();    
     
 	for(auto mapping : mappingsInUse) {		       
+
+        if constexpr (changeTrigger)
+            changeState = 0;
 
         useMapping = mapping;
         if (mapping->parent)
@@ -106,7 +111,12 @@ auto InputManager::update() -> void {
         if (!mapping->isAnalog()) {
             if ( (mapping->sortedNext == nullptr) && (useMapping->state != 0) )
                 // parent or alternate mapping has already triggered, no need to check the other one
-                continue;        
+                continue;
+
+            if constexpr (changeTrigger) {
+                if (useMapping->state)
+                    changeState = 1;
+            }
 
             useMapping->state = 0;
         }
@@ -184,8 +194,11 @@ auto InputManager::update() -> void {
                         break;
                     } else if (useMapping->autoFire && Program::focused) {
                         handleAutofire(mapping, useMapping, mapping->adjustDigitalValue<true>(hid) == 0);
-                    } else
+                    } else {
                         useMapping->state = value;
+                        if constexpr (changeTrigger)
+                            changeState ^= 0x81;
+                    }
 
                     if (useMapping->illegalMapping && !oppositeDirections) {
                         illegals.push_back(useMapping);
@@ -237,8 +250,11 @@ auto InputManager::update() -> void {
                     emuThread->unlockHotkeys();
                 } else if (useMapping->autoFire && Program::focused) {
                     handleAutofire(mapping, useMapping, atLeastOneKeyHasSwitched);
-                } else
+                } else {
                     useMapping->state = 1;
+                    if constexpr (changeTrigger)
+                        changeState ^= 0x81;
+                }
 
                 for (auto shadow : useMapping->shadowMap) {
                     shadow->virtualLinked = useMapping;
@@ -254,12 +270,26 @@ auto InputManager::update() -> void {
 		}
         
         Next:
-            continue;
+        if constexpr (changeTrigger) {
+            if (changeState & 1) {
+                if (!aSwitch && useMapping->emuDevice->isKeyboard()) {
+                    //statusHandler->setMessage(changeState & 0x80 ? "press" : "release");
+                    if (useMapping->shadowMap.size()) {
+                        for (auto shadow: useMapping->shadowMap)
+                            activeEmulator->sendKeyChange(changeState & 0x80, shadow->emuInput);
+                    } else
+                        activeEmulator->sendKeyChange(changeState & 0x80, useMapping->emuInput);
+                }
+            }
+        }
+        continue;
 	}
 
-    if(hasShadow) {
-        for (auto shadow : shadows)
-            shadow->state = shadow->virtualLinked->state;
+    if constexpr (!changeTrigger) {
+        if (hasShadow) {
+            for (auto shadow: shadows)
+                shadow->state = shadow->virtualLinked->state;
+        }
     }
 
     if(hasIllegal) {

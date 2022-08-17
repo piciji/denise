@@ -67,6 +67,10 @@ struct RawInput : Input {
 	auto mIsAcquired() -> bool {
 		return rawWorker.mouse.mIsAcquired();
 	}
+
+    auto setKeyboardCallback( KeyCallback* callback ) -> void {
+        rawWorker.keyboard.keyCallback = callback;
+    }
 		
 	auto term() -> void {
 		if(workerThread) TerminateThread(workerThread, 0);

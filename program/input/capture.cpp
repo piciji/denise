@@ -1,21 +1,19 @@
 
 #include "manager.h"
 
-DRIVER::Input::KeyCallback InputManager::keyCallback = [](bool pressed, uint8_t keyCode) {
+DRIVER::Input::KeyCallback InputManager::keyCallback = []() {
     if (Program::focused && activeEmulator) {
-        activeEmulator->sendKeyCode(pressed, keyCode);
-        if (pressed)
-            statusHandler->setMessage("pressed " + std::to_string(keyCode));
-        else
-            statusHandler->setMessage("released " + std::to_string(keyCode));
+        poll(true);
+        jit.enable = true;
+        //statusHandler->setMessage("key change");
     }
 };
 
 auto InputManager::setupKeycodeTransfer() -> void {
-    if (dynamic_cast<LIBAMI::Interface*>(activeEmulator))
+    if (sendKeyChange)
         inputDriver->setKeyboardCallback( &keyCallback );
     else
-        inputDriver->setKeyboardCallback( &keyCallback );
+        inputDriver->setKeyboardCallback( nullptr );
 }
 
 auto InputManager::resetJit() -> void {
@@ -23,17 +21,20 @@ auto InputManager::resetJit() -> void {
     jit.lastTimestamp = 0;
 }
 
-auto InputManager::poll() -> void {
+auto InputManager::poll(bool force) -> void {
     if (captureObject)
         return;
 
-    if (!jit.enable) {
+    if (force || !jit.enable) {
         fetch();
-        getManager(activeEmulator)->update();
-      //  logger->log("normal", true);
+        if (activeInputManager->sendKeyChange)
+            activeInputManager->update<true>();
+        else
+            activeInputManager->update<false>();
+        //logger->log("normal", true);
     } else {
         jit.enable = false;
-      //  logger->log("jit", true);
+        //logger->log("jit", true);
     }
 
     if (emuThread->enabled)
@@ -42,21 +43,21 @@ auto InputManager::poll() -> void {
         pollHotkeys();
 }
 
-auto InputManager::jitPoll() -> bool {
+auto InputManager::jitPoll(uint8_t delay) -> bool {
     if (captureObject)
         return false;
     
     auto ts = Chronos::getTimestampInMilliseconds();
     
-    if ((ts - jit.lastTimestamp) >= jit.rescanDelay) {
-        
+    if ((ts - jit.lastTimestamp) >= (delay ? delay : jit.rescanDelay)) {
         jit.lastTimestamp = ts;
         
         fetch();
-        getManager(activeEmulator)->update();
-
+        if (activeInputManager->sendKeyChange)
+            activeInputManager->update<true>();
+        else
+            activeInputManager->update<false>();
         jit.enable = true;
-        
         return true;
     }       
     

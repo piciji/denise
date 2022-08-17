@@ -39,13 +39,13 @@ struct Base {
 	 */
 	std::function<void (bool state)> irqCall;
 	
-    virtual auto read(unsigned pos) -> uint8_t;
-    virtual auto write(unsigned pos, uint8_t value) -> void;
-    virtual auto reset() -> void;
+    auto read(unsigned pos) -> uint8_t;
+    auto write(unsigned pos, uint8_t value) -> void;
+    auto reset() -> void;
 	/**
 	 * define it in derived class
 	 */
-	virtual auto tod() -> void = 0;
+	auto tod() -> void {}
 	
 	/**
      * amiga 500: a cia clock lasts 10 cpu cycles
@@ -64,7 +64,7 @@ struct Base {
 	auto positiveCntTransition( ) -> void;
     auto setNewVersion( bool newVersion ) -> void;
     auto isNewVersion() -> bool;
-    virtual auto serialize(Emulator::Serializer& s) -> void;
+    auto serialize(Emulator::Serializer& s) -> void;
 	
 	uint8_t model; // for debugging purposes
 protected:

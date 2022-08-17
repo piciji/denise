@@ -304,7 +304,7 @@ struct Interface {
 
     //callbacks
     struct Bind {
-        virtual auto jitPoll() -> bool { return false; }
+        virtual auto jitPoll(uint8_t delay) -> bool { return false; }
         virtual auto inputPoll(uint16_t, uint16_t) -> int16_t { return 0; }
 		virtual auto videoRefresh8(const uint8_t*, unsigned, unsigned, unsigned) -> void {}
         virtual auto videoRefresh(const uint16_t*, unsigned, unsigned, unsigned) -> void {}		
@@ -327,8 +327,8 @@ struct Interface {
     };
     Bind* bind = nullptr;
 
-    auto jitPoll() -> bool {
-        return bind->jitPoll();
+    auto jitPoll(uint8_t delay) -> bool {
+        return bind->jitPoll(delay);
     }
     
     auto inputPoll(uint16_t deviceId, uint16_t inputId) -> int16_t {
@@ -501,7 +501,8 @@ struct Interface {
     // of course, the coordinates are in native resoltion of the emulated system. you need to convert them.
     virtual auto getCursorPosition( Device* device, int16_t& x, int16_t& y ) -> bool { return false; }
     // As a rule, retro systems query the status of the connected input devices. Some devices, such as the Amiga keyboard, take the initiative and send input to the computer.
-    virtual auto sendKeyCode(bool pressed, uint8_t keyCode) -> void {}
+    virtual auto needExternalKeyUpdates() -> bool { return false; }
+    virtual auto sendKeyChange(bool pressed, Device::Input* input) -> void {}
     
     virtual auto setMemory(MemoryType* memoryType, unsigned memoryId) -> void {}    
     virtual auto setMemoryInitParams(uint8_t value, unsigned invertEvery, unsigned randomPatternLength, unsigned repeatRandomPattern, unsigned randomChance) -> void {}
@@ -544,7 +545,7 @@ struct Interface {
 	virtual auto copyText() -> std::string { return ""; }
 
     // jit
-    virtual auto enableJit(bool state) -> void {}
+    virtual auto setInputSampling(uint8_t mode) -> void {}
 
     // drive sounds
     virtual auto enableFloppySounds(bool state) -> void {}
