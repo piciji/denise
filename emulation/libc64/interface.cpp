@@ -840,7 +840,7 @@ auto Interface::run() -> void {
 
 auto Interface::runAhead(unsigned frames) -> void {
     system->runAhead.frames = frames;
-    system->input->allowJit();
+    system->input->updateSampling();
     system->updateDriveSounds();
 }
 
@@ -850,7 +850,7 @@ auto Interface::runAheadPerformance(bool state) -> void {
 
 auto Interface::runAheadPreventJit(bool state) -> void {
     system->runAhead.preventJit = state;
-    system->input->allowJit();
+    system->input->updateSampling();
 }
 
 auto Interface::getRegionEncoding() -> Region {
@@ -1555,8 +1555,8 @@ auto Interface::cropPitch() -> unsigned {
     return system->crop->latest.linePitch;
 }
 
-auto Interface::enableJit(bool state) -> void {
-    system->input->enableJit( state );
+auto Interface::setInputSampling(uint8_t mode) -> void {
+    system->input->setSampling( mode );
 }
 
 auto Interface::enableFloppySounds(bool state) -> void {

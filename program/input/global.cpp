@@ -44,6 +44,7 @@ auto InputManager::init() -> void {
         
     autoAssignHotkeys();
 	bindHidsGlobal();
+    activeInputManager->setupKeycodeTransfer();
 }
 
 auto InputManager::assumeLayoutType() -> KeyboardLayout::Type {
@@ -123,6 +124,7 @@ auto InputManager::setMappings() -> void {
                     mapper->type = (InputMapping::Type)input.type;
                     mapper->anded = 0;
                     mapper->emuDevice = &device;
+                    mapper->emuInput = &input;
                     mapper->parent = nullptr;
                     mapper->alternate = nullptr;
                     mapper->inputManager = manager;
@@ -163,6 +165,7 @@ auto InputManager::setMappings() -> void {
 				mapper->anded = 1;
                 mapper->autoFire = false;
 				mapper->emuDevice = nullptr;
+                mapper->emuInput = nullptr;
 				mapper->hotkeyId = item.id;
 				mapper->parent = nullptr;
 				mapper->inputManager = manager;
@@ -191,6 +194,7 @@ auto InputManager::setMappings() -> void {
 		mapper->anded = 1;
         mapper->autoFire = false;
         mapper->emuDevice = nullptr;
+        mapper->emuInput = nullptr;
 		mapper->hotkeyId = item.id;
         mapper->parent = nullptr;
         mapper->inputManager = nullptr; // shared mapper don't belong to a specific manager
@@ -462,8 +466,7 @@ auto InputManager::bindHids( ) -> void {
                     } else if (!driverChange)
                         mapping->hasUnknownAssignment = true;
 
-                } catch (...) {
-                    /* conversion to uint failed */                }
+                } catch (...) { /* conversion to uint failed */ }
 
                 GUIKIT::Vector::eraseVectorPos(parts, 0, 4);
             }

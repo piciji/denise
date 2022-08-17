@@ -8,6 +8,7 @@
 
 #include <string>
 #include <vector>
+#include <functional>
 
 #include "tools/hid.h"
 #include "tools/shaderpass.h"
@@ -98,12 +99,15 @@ struct Audio {
 };
 
 struct Input {
+    using KeyCallback = std::function<void ()>;
+
     virtual auto init(uintptr_t handle) -> bool { return true; }
     virtual auto term() -> void {}
     virtual auto mAcquire() -> void {}
     virtual auto mUnacquire() -> void {}
     virtual auto mIsAcquired() -> bool { return false; }
 	virtual auto poll() -> std::vector<Hid::Device*> { return {}; }
+    virtual auto setKeyboardCallback( KeyCallback* callback ) -> void {}
 	
 	virtual ~Input() = default;
     static auto create(const std::string& driver) -> Input*;

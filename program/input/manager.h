@@ -31,6 +31,7 @@ struct InputMapping {
     InputMapping* virtualLinked = nullptr;
     
     Emulator::Interface::Device* emuDevice = nullptr;
+    Emulator::Interface::Device::Input* emuInput = nullptr;
 	unsigned hotkeyId;
 	
     InputManager* inputManager = nullptr;
@@ -101,6 +102,7 @@ struct InputManager {
     static unsigned retry;
 	static std::vector<Hid::Device*> hidDevices;
     static bool urgentUpdate;
+    static DRIVER::Input::KeyCallback keyCallback;
     
     struct JIT { // Just In Time Polling
         uint64_t lastTimestamp = 0;
@@ -133,6 +135,7 @@ struct InputManager {
     bool allowTouchlessAutofire = false;
     bool oppositeDirections;
     uint8_t prioritise = 0; // 0: allow both, 1: prioritise controlport, 2: prioritise keyboard
+    bool sendKeyChange;
 
 	static std::vector<InputMapping*> hotkeyTriggers;
     static bool driverChange;
@@ -148,7 +151,7 @@ struct InputManager {
 	static auto capture(InputMapping* _captureObject) -> void;
     static auto capture( bool overwriteExisting = false ) -> bool;
 	static auto fetch() -> void;
-	static auto poll() -> void;
+	static auto poll(bool force = false) -> void;
 	static auto pollHotkeys() -> void;
 	static auto activateHotkey(Hotkey::Id id, Emulator::Interface* emulator = nullptr) -> void;
     static auto fireHotkey(InputMapping* trigger) -> void;
@@ -160,14 +163,14 @@ struct InputManager {
     static auto getDeviceFromIdent( unsigned id ) -> Hid::Device*;
     static auto openMenu( Emulator::Interface* emulator, Hotkey::Id id ) -> void;
 	static auto updateAllMappingsInUse( bool emuOnly = false ) -> void;
-    static auto jitPoll() -> bool;
+    static auto jitPoll(uint8_t delay) -> bool;
     static auto resetJit() -> void;
     static auto preventSharingOfAutoFireMappings(InputMapping* captureObject, InputMapping::Assign& captureHid) -> void;
 	
     auto autoAssign( KeyboardLayout::Type type, bool keyboardOnly = true ) -> void;
 	auto addMapping(InputMapping* mapping) -> void;
     auto addMappingInUse(InputMapping* mapping) -> void;
-    auto update() -> void;
+    template<bool changeTrigger = false> auto update() -> void;
     auto unmapDevice(unsigned deviceId) -> void;
     auto initMapping(InputMapping* mapping) -> bool;
 	auto sort() -> void;				
@@ -188,6 +191,7 @@ struct InputManager {
 	auto toggleAutofire(InputMapping* trigger) -> void;
     auto setIllegalMappings() -> void;
     auto updateMiscSettings() -> void;
+    auto setupKeycodeTransfer() -> void;
     
     inline auto updateAndTrigger() -> void;
     inline auto addAndTrigger(InputMapping* newTrigger) -> void;

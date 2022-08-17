@@ -15,19 +15,26 @@ SpeedLayout::SpeedLayout() {
     setFont(GUIKIT::Font::system("bold"));
 }
 
-JitLayout::JitLayout() : control("ms") {
+InputSamplingLayout::Options::Options() {
+    append(staticMode, {0u, 0u}, 10);
+    append(restrictedDynamicMode, {0u, 0u}, 10);
+    append(dynamicMode, {0u, 0u});
+
+    setAlignment(0.5);
+    GUIKIT::RadioBox::setGroup( staticMode, restrictedDynamicMode, dynamicMode );
+}
+
+InputSamplingLayout::InputSamplingLayout() : control("ms") {
     setPadding(10);
 
-    append(active, {0u, 0u}, 10 );
+    append(options, {0u, 0u}, 5 );
     append(control, {~0u, 0u} );
 
-    control.slider.setLength(8);
+    control.slider.setLength(10);
 
     control.updateValueWidth( "10 " + control.unit );
 
     setFont(GUIKIT::Font::system("bold"));
-
-    setAlignment( 0.5 );
 }
 
 RunAheadLayout::RunAheadLayout() : control("") {
@@ -85,7 +92,7 @@ RunAheadLayout::Options::Options() {
     
     append(performanceMode, {0u, 0u}, 10 );
     append(disableOnPower, {0u, 0u}, 10 );
-    append(preventJit, {0u, 0u} );
+    append(preventDynamic, {0u, 0u} );
     
     setAlignment( 0.5 );
 }
@@ -98,7 +105,7 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) {
     setMargin(10);
 
     append( speedLayout, {~0u, 0u}, 10 );
-    append( jitLayout, {~0u, 0u}, 10 );
+    append( inputSamplingLayout, {~0u, 0u}, 10 );
     append( runAheadLayout, {~0u, 0u}, 10 );
 
     if (dynamic_cast<LIBC64::Interface*>(emulator)) {
@@ -172,7 +179,7 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) {
         _settings->set<bool>( "runahead_disable", checked );
     };
 
-    runAheadLayout.options.preventJit.onToggle = [this](bool checked) {
+    runAheadLayout.options.preventDynamic.onToggle = [this](bool checked) {
         _settings->set<bool>( "runahead_prevent_jit", checked );
 
         emuThread->lock();
@@ -180,10 +187,10 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) {
         emuThread->unlock();
     };
 
-    jitLayout.control.slider.onChange = [this](unsigned position) {
+    inputSamplingLayout.control.slider.onChange = [this](unsigned position) {
         position += 1;
 
-        jitLayout.control.value.setText( std::to_string(position) + " " + jitLayout.control.unit );
+        inputSamplingLayout.control.value.setText( std::to_string(position) + " " + inputSamplingLayout.control.unit );
 
         _settings->set<unsigned>( "input_jit_delay", position);
 
@@ -192,12 +199,37 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) {
         manager->jit.rescanDelay = position;
     };
 
-    jitLayout.active.onToggle = [this](bool checked) {
-        _settings->set<bool>("input_jit", checked);
+    inputSamplingLayout.options.staticMode.onActivate = [this]() {
+        _settings->set<unsigned>("input_sampling", 0);
 
         emuThread->lock();
-        this->emulator->enableJit( checked );
+        this->emulator->setInputSampling( 0 );
+        InputManager::resetJit();
         emuThread->unlock();
+
+        inputSamplingLayout.control.setEnabled(false);
+    };
+
+    inputSamplingLayout.options.restrictedDynamicMode.onActivate = [this]() {
+        _settings->set<unsigned>("input_sampling", 1);
+
+        emuThread->lock();
+        this->emulator->setInputSampling( 1 );
+        InputManager::resetJit();
+        emuThread->unlock();
+
+        inputSamplingLayout.control.setEnabled(false);
+    };
+
+    inputSamplingLayout.options.dynamicMode.onActivate = [this]() {
+        _settings->set<unsigned>("input_sampling", 2);
+
+        emuThread->lock();
+        this->emulator->setInputSampling( 2 );
+        InputManager::resetJit();
+        emuThread->unlock();
+
+        inputSamplingLayout.control.setEnabled(true);
     };
 
     speedLayout.speed.onChange = [this]() {
@@ -288,12 +320,17 @@ auto MiscLayout::translate() -> void {
     
     runAheadLayout.options.disableOnPower.setText( trans->get("disable runAhead on power") );
 
-    runAheadLayout.options.preventJit.setText( trans->get("prevent JIT temporary") );
+    runAheadLayout.options.preventDynamic.setText( trans->get("prevent dynamic sampling") );
 
-    jitLayout.setText( trans->get("JIT") );
-    jitLayout.active.setText( trans->get("enable") );
-    jitLayout.active.setTooltip( trans->get("JIT tooltip") );
-    jitLayout.control.name.setText( trans->get("minimum rescan time", {}, true) );
+    inputSamplingLayout.setText( trans->get("Input sampling") );
+    inputSamplingLayout.options.staticMode.setText( trans->get("static sampling") );
+    inputSamplingLayout.options.staticMode.setTooltip( trans->get("static sampling tooltip") );
+    inputSamplingLayout.options.restrictedDynamicMode.setText( trans->get("restricted dynamic sampling") );
+    inputSamplingLayout.options.restrictedDynamicMode.setTooltip( trans->get("restricted dynamic sampling tooltip") );
+    inputSamplingLayout.options.dynamicMode.setText( trans->get("dynamic sampling") );
+    inputSamplingLayout.options.dynamicMode.setTooltip( trans->get("dynamic sampling tooltip") );
+
+    inputSamplingLayout.control.name.setText( trans->get("minimum rescan time", {}, true) );
 
     if (autostartLayout) {
         autostartLayout->setText(trans->get("Autostart"));
@@ -351,15 +388,20 @@ auto MiscLayout::loadSettings() -> void {
     
     setRunAhead( pos );
 
-    runAheadLayout.options.preventJit.setChecked(_settings->get<bool>("runahead_prevent_jit", true));
+    runAheadLayout.options.preventDynamic.setChecked(_settings->get<bool>("runahead_prevent_jit", true));
 
-    jitLayout.active.setChecked( _settings->get<bool>("input_jit", true) );
+    unsigned inputSamplingMode = _settings->get<unsigned>("input_sampling", 2, {0, 2});
+    if (inputSamplingMode == 0) inputSamplingLayout.options.staticMode.setChecked();
+    else if (inputSamplingMode == 1) inputSamplingLayout.options.restrictedDynamicMode.setChecked();
+    else if (inputSamplingMode == 2) inputSamplingLayout.options.dynamicMode.setChecked();
 
-    unsigned jitDelay = _settings->get<unsigned>( "input_jit_delay", 3, {1, 8});
+    unsigned jitDelay = _settings->get<unsigned>( "input_jit_delay", 5, {1, 10});
 
-    jitLayout.control.slider.setPosition(jitDelay - 1);
+    inputSamplingLayout.control.slider.setPosition(jitDelay - 1);
 
-    jitLayout.control.value.setText(std::to_string(jitDelay) + " " + jitLayout.control.unit);
+    inputSamplingLayout.control.value.setText(std::to_string(jitDelay) + " " + inputSamplingLayout.control.unit);
+
+    inputSamplingLayout.control.setEnabled( inputSamplingMode == 2 );
 
     speedLayout.speed.setText( _settings->get<std::string>("custom_speed", "59.95") );
     if (_settings->get<bool>("custom_speed_percent", false))

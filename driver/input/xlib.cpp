@@ -15,6 +15,7 @@ namespace DRIVER {
 struct XInput : public Input {
 	Hid::Mouse* hidMouse = nullptr;
 	Hid::Keyboard* hidKeyboard = nullptr;
+    KeyCallback* keyCallback = nullptr;
 	
 	std::string joypadDriver = "";
     unsigned char _keycode[256];
@@ -342,6 +343,15 @@ struct XInput : public Input {
                               &root_return, &child_return, &root_x_return, &root_y_return,
                               &win_x_return, &win_y_return, &mask_return);
 
+                if (keyCallback) {
+                    for(unsigned i = 0; i < 32; i++) {
+                        if (state[i] ^ keyState[i]) {
+                            (*keyCallback)();
+                            break;
+                        }
+                    }
+                }
+
                 keyMutex.lock();
                 mouseState.x += (int16_t) (root_x_return - relativex);
                 mouseState.y += (int16_t) (root_y_return - relativey);
@@ -363,6 +373,10 @@ struct XInput : public Input {
         });
 
         worker.detach();
+    }
+
+    auto setKeyboardCallback( KeyCallback* callback ) -> void {
+        this->keyCallback = callback;
     }
 		
     auto mAcquire() -> void {

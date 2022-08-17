@@ -112,26 +112,20 @@ auto Input::writeCiaPortB( CIA::Base::Lines* lines ) -> void {
 }
 
 inline auto Input::jitPoll() -> void {
-    if (jit.allow && system->interface->jitPoll()) {
-        keyboard.poll();
-        updateLightpen(!lines ? 0xff : lines->ioa, !lines ? 0xff : lines->iob);
-        jit.midscreen = true;
-        //system->interface->log("update", true);
-    } else {
-        //system->interface->log("too soon", true);
-    } 
-    
-    //system->interface->log(vicII->getVcounter(), false);
-
+    if (sampling.allow && ((sampling.mode == Dynamic_Sampling) || (sampling.midscreen < 2))) {
+        if (system->interface->jitPoll(sampling.mode == Restricted_Dynamic_Sampling ? 5 : 0)) {
+            keyboard.poll();
+            updateLightpen(!lines ? 0xff : lines->ioa, !lines ? 0xff : lines->iob);
+            sampling.midscreen++;
+            //system->interface->log(vicII->getVcounter(), false);
+        }
+    }
 }
 
 auto Input::poll() -> void {
 	
-    bool jitDisable = !jit.allow || !jit.midscreen;
-    
-    //system->interface->log("jit ", true);
-    //system->interface->log( !jitDisable ? "on" : "off", false );
-    
+    bool jitDisable = !sampling.allow || (sampling.midscreen == 0);
+
     if ( jitDisable )
         keyboard.poll(); 
     
@@ -141,8 +135,8 @@ auto Input::poll() -> void {
     if (jitDisable)
         // changed keyboard or joyport state can trigger lightpen    
         updateLightpen( !lines ? 0xff : lines->ioa, !lines ? 0xff : lines->iob );
-    
-    jit.midscreen = false;
+
+    sampling.midscreen = 0;
 }
 
 auto Input::drawCursor(bool midScreen) -> void {
@@ -203,7 +197,7 @@ auto Input::reset() -> void {
     keyboard.reset();
     controlPort1->reset();
     controlPort2->reset();
-    jit.midscreen = false;
+    sampling.midscreen = 0;
 }
 
 auto Input::connectControlport( Interface::Connector* connector, Interface::Device* device ) -> void {
@@ -221,21 +215,21 @@ auto Input::connectControlport( Interface::Connector* connector, Interface::Devi
     
     *controlPort = ControlPort::create( device );
 
-    allowJit();
+    updateSampling();
     
     (*controlPort)->reset();
 }
 
-auto Input::enableJit(bool state) -> void {
-    jit.enable = state;
-    allowJit();
+auto Input::setSampling(uint8_t mode) -> void {
+    sampling.mode = (SamplingMode)mode;
+    updateSampling();
 }
 
-auto Input::allowJit() -> void {
+auto Input::updateSampling() -> void {
     if (system->runAhead.preventJit && system->runAhead.frames)
-        jit.allow = false;
+        sampling.allow = false;
     else
-        jit.allow = jit.enable && !system->enabledDebugCart() && controlPort1->useJitPolling() && controlPort2->useJitPolling();
+        sampling.allow = (sampling.mode != 0) && !system->enabledDebugCart() && controlPort1->useJitPolling() && controlPort2->useJitPolling();
 }
 
 auto Input::getConnectedDevice( Interface::Connector* connector ) -> Interface::Device* {
@@ -291,8 +285,8 @@ auto Input::serialize(Emulator::Serializer& s) -> void {
         controlPort->serialize( s );
     }
     
-    if ( s.mode() == Emulator::Serializer::Mode::Load ) 
-        jit.midscreen = false;
+    if ( s.mode() == Emulator::Serializer::Mode::Load )
+        sampling.midscreen = 0;
 }
 
 }

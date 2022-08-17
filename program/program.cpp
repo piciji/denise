@@ -32,6 +32,7 @@ Logger* logger = nullptr;
 Cmd* cmd = nullptr;
 std::vector<FileSetting*> FileSetting::instances = {};
 VideoManager* activeVideoManager = nullptr;
+InputManager* activeInputManager = nullptr;
 bool Program::focused = false;
 
 #include "files.cpp"
@@ -124,8 +125,10 @@ auto Program::addEmulators() -> void {
     emulators.push_back( emulatorAmi );
 
     // this manager includes only hotkeys (when emulation is inactive)
-	if (!cmd->noGui)
-		inputManagers.push_back( new InputManager( ) );
+	if (!cmd->noGui) {
+        activeInputManager = new InputManager();
+        inputManagers.push_back(activeInputManager);
+    }
     
     for( auto emulator : emulators ) {
         auto settings = new GUIKIT::Settings;
@@ -216,7 +219,9 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
     activeEmulator = emulator;
     auto settings = getSettings( emulator );
     activeVideoManager = VideoManager::getInstance( emulator );
+    activeInputManager = InputManager::getManager(emulator);
     activeVideoManager->updateCrtThreads();
+    activeInputManager->setupKeycodeTransfer();
 	uint8_t* data;
     std::vector<std::string> brokenPaths;
 
@@ -307,8 +312,6 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
 		if (emuSwap)
 			setVideoFilter();
 
-        //setVideoSynchronize();
-
 		resetRunAhead();
 
 		archiveViewer->setVisible(false);
@@ -398,6 +401,8 @@ auto Program::powerOff() -> void {
 
     activeEmulator = nullptr;
     activeVideoManager = nullptr;
+    activeInputManager = InputManager::getManager(nullptr); // there is a manager, when no emulation is active ... because of hotkey handling
+    activeInputManager->setupKeycodeTransfer();
     warp.enableAutoWarp = false;
 }
 
