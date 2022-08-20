@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include "serializer.h"
+
 template<typename T>
 struct CircularBuffer {
     
@@ -52,6 +54,18 @@ struct CircularBuffer {
         return readPosition != writePosition;
     }
 
+    auto empty() const -> bool {
+        return readPosition == writePosition;
+    }
+
+    auto fill() const -> unsigned {
+        return (ringSize + writePosition - readPosition) % ringSize;
+    }
+
+    auto full() const -> bool {
+        return fill() == (ringSize - 1);
+    }
+
     auto read() -> T {
         T result = ring[readPosition];
         
@@ -70,6 +84,13 @@ struct CircularBuffer {
         
         if (++writePosition == ringSize)
             writePosition = 0;
+    }
+
+    // expects prepared "ring"
+    auto serialize( Emulator::Serializer& s ) -> void {
+        s.integer( readPosition );
+        s.integer( writePosition );
+        s.array( ring, ringSize );
     }
 
 private:

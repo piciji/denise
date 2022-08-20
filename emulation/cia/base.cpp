@@ -54,7 +54,7 @@ crb( timer[T_B].control )
     
     writePort = []( Port, Lines* ) {};    
 	irqCall = [](bool state) {};
-    serialOut = [](bool bit) {};
+    serialOut = [](bool spLine, bool cntLine) {};
 	
 	for( unsigned i = 0; i < 2; i++ ) {			       
 		
@@ -118,7 +118,7 @@ crb( timer[T_B].control )
 		if (cnt)			
 			sdrShift <<= 1;
 		else
-			serialOut( (sdrShift & 0x80) != 0 );
+			serialOut( (sdrShift & 0x80) != 0, false );
 
 		if (--sdrShiftCount == 1) {
 			this->events->add(&finishSdr, 2, Emulator::SystemTimer::Action::UpdateExisting);
@@ -364,7 +364,7 @@ auto Base::shiftOut() -> void {
 }
 
 /**
- * external device shifts in data bit by bit
+ * external device shifts in data bit by bit, assumes raising CNT line
  */
 auto Base::serialIn( bool bit ) -> void {
 	
@@ -383,16 +383,6 @@ auto Base::serialIn( bool bit ) -> void {
 		sdr = sdrShift;
         this->events->add(&finishSdr, 2, Emulator::SystemTimer::Action::UpdateExisting);
     }
-}
-
-auto Base::serialIn( uint8_t byte ) -> void {
-
-    if (cra & 0x40) //SP pin is defined as output
-        return;
-
-    sdrShiftCount = 0;
-    sdr = byte;
-    intIncomming |= 8;
 }
 
 // set cnt external without serial bit shifting
@@ -434,6 +424,7 @@ auto Base::switchSerialDirection(bool input) -> void {
 
 	cnt = CIA_CNT0;
 	delay |= CIA_CNT0;
+    serialOut(input, true);
 
 	events->remove(&flipCnt);
 	events->remove(&flipDummy);

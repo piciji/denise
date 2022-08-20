@@ -13,13 +13,13 @@ cia1(1),
 cia2(2),
 cpu(agnus),
 agnus( cpu, cia1, cia2 ),
-input(agnus, interface) {
+input(agnus, cia1, interface) {
 
     this->interface = interface;
 
-    cia1.serialOut = [this](bool bit) {
-
-
+    cia1.serialOut = [this](bool spLine, bool cntLine) {
+        // Keyboard computer is not interested in CNT line changes, triggered by CIA
+        input.keyboard.handshake(spLine);
     };
 
 
@@ -41,22 +41,35 @@ input(agnus, interface) {
 
         }
     };
+
+    cia2.writePort = [this]( Cia::Port port, Cia::Lines* lines ) {
+
+        if ( port == Cia::PORTA ) {
+            cia2.setCNTAndSP( lines->ioa & 2, lines->ioa & 1 );
+        }
+    };
 }
 
-auto System::power(bool softReset) -> void {
+auto System::power(bool softReset, bool resetInstruction) -> void {
 
     agnus.reset();
 
-    if( !softReset ) {
-        cpu.power();
+    if (!resetInstruction) {
+        if (!softReset) {
+            cpu.power();
 
-    } else {
-        cpu.reset();
+        } else {
+            cpu.reset();
+        }
     }
+
+    if (!softReset)
+        resetFromKeyboard = 0;
 
     cia1.reset();
     cia2.reset();
     agnus.reset();
+    input.reset();
 
     powerOn = true;
 }
@@ -68,11 +81,29 @@ auto System::powerOff() -> void {
 auto System::run() -> void {
     leaveEmulation = false;
 
+    input.poll();
+
+    if (resetFromKeyboard) {
+        if ((resetFromKeyboard & 0x80) == 0) {
+            power(true);
+            resetFromKeyboard |= 0x80;
+        }
+
+        while (resetFromKeyboard) { // CPU and most chips on hold, Denise hasn't a reset line
+            input.checkForEmergencyPoll(); // wait for releasing reset key combination
+            agnus.processEvents();
+            // todo leave each frame
+        }
+    }
+
     while( !leaveEmulation ) {
         cpu.process();
     }
 }
 
+auto System::informAboutKeyUpdate() -> void {
+    input.sampling.emergencyPolling = true; // call from another thread
+}
 
 auto System::setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> void {
     if (size >= (512 * 1024))

@@ -69,6 +69,9 @@ auto M68000::process()->void {
                 privilegeException();
             return;
         }
+
+        if (control & ResetRoutine)
+            return resetRoutine();
     }
     
     (this->*opTable[ird])(ird);
@@ -88,24 +91,11 @@ auto M68000::power() -> void {
 
 auto M68000::reset() -> void { // highest prioritized group 0 routine
     // E-Clock phase is unchanged on soft reset, but depends on reset pulse duration.
-    control = 0;
     c = v = z = n = x = false;
     s = true;
     i = 7;
     iplPins = iplSample = 0;
-    SYNC(12); // confirmed with fx68k
-    
-    regsA[7] = ssp = read<Long, FC_PRG>(0); // sets FC1
-    pc = read<Long, FC_PRG>(4); // sets FC1 too
-
-    if (misaligned<Long>(pc)) { // bus/address error during group 0 service routine halts CPU.
-        SYNC(4 + 4);
-        return setHalt();
-    }
-
-    firstPrefetch();
-    SYNC(2);
-    prefetch<SampleIPL>();
+    control = ResetRoutine; // emulation begins, when reset line is de-asserted
 }
 
 auto M68000::getCCR() -> uint8_t {

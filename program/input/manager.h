@@ -151,7 +151,7 @@ struct InputManager {
 	static auto capture(InputMapping* _captureObject) -> void;
     static auto capture( bool overwriteExisting = false ) -> bool;
 	static auto fetch() -> void;
-	static auto poll(bool force = false) -> void;
+	static auto poll() -> void;
 	static auto pollHotkeys() -> void;
 	static auto activateHotkey(Hotkey::Id id, Emulator::Interface* emulator = nullptr) -> void;
     static auto fireHotkey(InputMapping* trigger) -> void;
@@ -163,7 +163,7 @@ struct InputManager {
     static auto getDeviceFromIdent( unsigned id ) -> Hid::Device*;
     static auto openMenu( Emulator::Interface* emulator, Hotkey::Id id ) -> void;
 	static auto updateAllMappingsInUse( bool emuOnly = false ) -> void;
-    static auto jitPoll(uint8_t delay) -> bool;
+    static auto jitPoll(int delay) -> bool;
     static auto resetJit() -> void;
     static auto preventSharingOfAutoFireMappings(InputMapping* captureObject, InputMapping::Assign& captureHid) -> void;
 	

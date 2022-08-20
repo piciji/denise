@@ -195,6 +195,23 @@ auto M68000::executeAt(uint16_t adr, uint8_t group) -> void { // 18 cycles
     prefetch<SampleIPL>();
 }
 
+auto M68000::resetRoutine() -> void { // highest prioritized group 0 routine
+    SYNC(12); // confirmed with fx68k
+    control &= ~ResetRoutine;
+
+    regsA[7] = ssp = read<Long, FC_PRG>(0); // sets FC1
+    pc = read<Long, FC_PRG>(4); // sets FC1 too
+
+    if (misaligned<Long>(pc)) { // bus/address error during group 0 service routine halts CPU.
+        SYNC(4 + 4);
+        return setHalt();
+    }
+
+    firstPrefetch();
+    SYNC(2);
+    prefetch<SampleIPL>();
+}
+
 auto M68000::setSuperVisor(bool state) -> void {
     if (s == state)
         return;

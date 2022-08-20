@@ -156,10 +156,11 @@ struct Program : Emulator::Interface::Bind {
     auto isAnalogDeviceConnected( ) -> bool;
     auto couldDeviceBlockSecondMouseButton( ) -> bool;
     auto absoluteMouseToEmu( Emulator::Interface* emulator ) -> GUIKIT::Position;
-    auto jitPoll(uint8_t delay) -> bool override;
+    auto jitPoll(int delay) -> bool override;
     auto resetRunAhead() -> void;
     auto setRunAhead(Emulator::Interface* emulator) -> void;
     auto setJit(Emulator::Interface* emulator) -> void;
+    auto informCapsLock(bool state) -> void override;
 
     static auto hasFocus() -> bool;
 

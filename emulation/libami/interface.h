@@ -59,6 +59,9 @@ struct Interface : Emulator::Interface  {
 
     auto setModelValue(unsigned modelId, int value) -> void;
 
+    auto sendKeyChange(bool pressed, Device::Input* input) -> void;
+    auto informAboutKeyUpdate() -> void;
+
 private:
     auto prepareDevices() -> void;
     auto prepareMemory() -> void;

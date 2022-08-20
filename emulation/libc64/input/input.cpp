@@ -113,7 +113,7 @@ auto Input::writeCiaPortB( CIA::Base::Lines* lines ) -> void {
 
 inline auto Input::jitPoll() -> void {
     if (sampling.allow && ((sampling.mode == Dynamic_Sampling) || (sampling.midscreen < 2))) {
-        if (system->interface->jitPoll(sampling.mode == Restricted_Dynamic_Sampling ? 5 : 0)) {
+        if (system->interface->jitPoll(sampling.mode == Restricted_Dynamic_Sampling ? 5 : -1)) {
             keyboard.poll();
             updateLightpen(!lines ? 0xff : lines->ioa, !lines ? 0xff : lines->iob);
             sampling.midscreen++;

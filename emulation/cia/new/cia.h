@@ -31,7 +31,7 @@ struct Cia {
     std::function<uint8_t ( Port port, Lines* lines )> readPort;
     std::function<void ( Port port, Lines* lines )> writePort;
 
-    std::function<void (bool bit)> serialOut;
+    std::function<void (bool spLine, bool cntLine)> serialOut;
     std::function<void (bool state)> irqCall;
 
     template<CiaModel model> auto read(unsigned pos) -> uint8_t;

@@ -78,7 +78,7 @@ protected:
         ProgramCounterIndirectWithIndex = 7 + 3,
         Immediate = 7 + 4,
     };
-    enum { Normal = 0, IRQ = 1, Trace = 2, Halt = 4, Stop = 8, TraceScheduled = 16, IRQScheduled = 32 };
+    enum { Normal = 0, IRQ = 1, Trace = 2, Halt = 4, Stop = 8, TraceScheduled = 16, IRQScheduled = 32, ResetRoutine = 64 };
 
     uint32_t regsD[8];
     uint32_t regsA[8];
@@ -317,6 +317,7 @@ private:
     template<uint8_t Mode, uint8_t Size> auto addressExceptionMoveEA(uint32_t ea, uint32_t data) -> void;
     auto addressException(uint32_t adr, uint32_t _pc, uint8_t flags, uint16_t value = 0) -> void;
 
+    auto resetRoutine() -> void;
     auto group1Exception(uint8_t vector) -> void;
     auto IRQException() -> void;
     auto traceException() -> void;

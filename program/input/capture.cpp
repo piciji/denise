@@ -3,8 +3,8 @@
 
 DRIVER::Input::KeyCallback InputManager::keyCallback = []() {
     if (Program::focused && activeEmulator) {
-        poll(true);
-        jit.enable = true;
+        activeEmulator->informAboutKeyUpdate();
+        jit.enable = false;
         //statusHandler->setMessage("key change");
     }
 };
@@ -21,11 +21,11 @@ auto InputManager::resetJit() -> void {
     jit.lastTimestamp = 0;
 }
 
-auto InputManager::poll(bool force) -> void {
+auto InputManager::poll() -> void {
     if (captureObject)
         return;
 
-    if (force || !jit.enable) {
+    if (!jit.enable) {
         fetch();
         if (activeInputManager->sendKeyChange)
             activeInputManager->update<true>();
@@ -43,13 +43,13 @@ auto InputManager::poll(bool force) -> void {
         pollHotkeys();
 }
 
-auto InputManager::jitPoll(uint8_t delay) -> bool {
+auto InputManager::jitPoll(int delay) -> bool {
     if (captureObject)
         return false;
     
     auto ts = Chronos::getTimestampInMilliseconds();
-    
-    if ((ts - jit.lastTimestamp) >= (delay ? delay : jit.rescanDelay)) {
+
+    if ((ts - jit.lastTimestamp) >= ( (delay >= 0) ? delay : jit.rescanDelay)) {
         jit.lastTimestamp = ts;
         
         fetch();

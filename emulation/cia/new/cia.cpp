@@ -14,7 +14,7 @@ Cia::Cia( uint8_t ident ) {
 
     writePort = []( Port, Lines* ) {};
     irqCall = [](bool state) {};
-    serialOut = [](bool bit) {};
+    serialOut = [](bool spLine, bool cntLine) {};
 
     newVersion = true;
 }
@@ -318,7 +318,6 @@ auto Cia::serialIn(bool spLine) -> void {
     }
 }
 
-// use this for serial in or stepping the counters
 auto Cia::setCNTAndSP(bool cntLine, bool spLine) -> void {
     if (cntLine == (!!cnt))
         // only by positive edge transition, state of SP line is recognized and timer steps (if activated)
@@ -371,6 +370,7 @@ auto Cia::switchSerialDirection(bool input) -> void {
 
     cnt = CIA_CNT0;
     delay |= CIA_CNT0;
+    serialOut(input, true);
 
     delay &= ~(CIA_FLIP_CNT0 | CIA_FLIP_CNT1 | CIA_FLIP_CNT2 | CIA_FLIP_DUMMY0 | CIA_FLIP_DUMMY1);
     sdrShiftCount = 0;
@@ -390,7 +390,7 @@ auto Cia::flipCnt() -> void {
     if (cnt)
         sdrShift <<= 1;
     else
-        serialOut( (sdrShift & 0x80) != 0 );
+        serialOut( (sdrShift & 0x80) != 0, false ); // SP data is valid on falling edge
 
     if (--sdrShiftCount == 1) {
         delay &= ~(CIA_FINISH_SDR1 | CIA_FINISH_SDR2);

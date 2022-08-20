@@ -309,11 +309,11 @@ System::System(Interface* interface) {
         cpu->setIrq( irqIncomming != 0 );
     };
 
-    cia1->serialOut = [this](bool bit) {
+    cia1->serialOut = [this](bool spLine, bool cntLine) {
 
-        if (secondDriveCable.burstUse) {
+        if (!cntLine && secondDriveCable.burstUse) {
             diskIdleOff();
-            iecBus->serialShift(bit);
+            iecBus->serialShift(spLine);
         }
     };
 

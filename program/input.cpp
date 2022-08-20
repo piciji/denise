@@ -41,7 +41,7 @@ auto Program::getInputDriver() -> std::string {
 	return DRIVER::Input::preferred();
 }
 
-auto Program::jitPoll(uint8_t delay) -> bool {
+auto Program::jitPoll(int delay) -> bool {
     if (cmd->noGui)
         return false;
 
@@ -55,6 +55,10 @@ auto Program::inputPoll( uint16_t deviceId, uint16_t inputId) -> int16_t {
         return mapping->state;
     
     return 0;
+}
+
+auto Program::informCapsLock(bool state) -> void {
+
 }
 
 auto Program::getDevice( Emulator::Interface* emulator, Emulator::Interface::Connector* connector ) -> Emulator::Interface::Device* {

@@ -6,23 +6,21 @@
 
 namespace Emulator {
 
-using EventCallback = std::function<void(uint8_t id)>;
+using EventCallback = std::function<void(uint8_t)>;
 
-template<uint8_t Slots>
+template<uint8_t Channels>
 struct Events {
-
-    static EventCallback dummy;
 
     struct Event {
 
-        EventCallback& callback = dummy;
+        EventCallback* callback = nullptr;
 
         unsigned clock = 0;
 
-        uint8_t id = 0;
+        uint8_t job = 0;
     };
 
-    Event eventStore[Slots];
+    Event eventStore[Channels];
 
     unsigned clock = 0;
 
@@ -34,62 +32,76 @@ struct Events {
         }
     }
 
-    template<uint8_t Slot>
-    auto addEvent(EventCallback& callback) -> void {
-        eventStore[Slot] = { callback, 0, 0 };
+    template<uint8_t Channel>
+    auto addEvent(EventCallback* callback) -> void {
+        eventStore[Channel].callback = callback;
     }
 
-    template<uint8_t Slot>
-    auto updateEvent(uint8_t id, unsigned delay) -> void {
+    template<uint8_t Channel>
+    auto updateEvent(uint8_t job, unsigned delay) -> void {
         delay += clock;
 
-        Event& event = eventStore[Slot];
-        event.id = id;
+        Event& event = eventStore[Channel];
+        event.job = job;
         event.clock = delay;
 
         if (delay < nextClock)
             nextClock = delay;
     }
 
-    template<uint8_t Slot>
-    auto hasActiveEvent() -> bool {
-        Event& event = eventStore[Slot];
-        return event.id != 0;
+    template<uint8_t Channel>
+    auto getActiveEvent() -> uint8_t {
+        Event& event = eventStore[Channel];
+        return event.job;
     }
 
-    template<uint8_t Slot>
+    template<uint8_t Channel>
     auto getEventDelay() -> unsigned {
-        Event& event = eventStore[Slot];
+        Event& event = eventStore[Channel];
         return (event.clock - clock) & 0xffffffff;
     }
 
-    template<uint8_t Slot>
+    template<uint8_t Channel>
     auto setEventInactive() -> void {
-        Event& event = eventStore[Slot];
-        event.id = 0;
+        Event& event = eventStore[Channel];
+        event.job = 0;
+    }
+
+    auto fallBackCycles( unsigned _last ) -> unsigned {
+        return (clock - _last) & 0xffffffff;
+    }
+
+    auto clearEvents(std::vector<uint8_t> exceptions) -> void {
+        for(uint8_t Channel = 0; Channel < Channels; Channel++) {
+            if (std::find(exceptions.begin(), exceptions.end(), Channel) != exceptions.end())
+                continue;
+
+            Event& event = eventStore[Channel];
+            event.job = 0;
+        }
     }
 
 protected:
     auto serialize( Serializer& s ) -> void {
-        s.integer(clock);
+        s.integer( clock );
         s.integer( nextClock );
 
-        for(unsigned slot = 0; slot < Slots; slot++) {
-            Event& event = eventStore[slot];
+        for(unsigned Channel = 0; Channel < Channels; Channel++) {
+            Event& event = eventStore[Channel];
             s.integer( event.clock );
-            s.integer( event.id );
+            s.integer( event.job );
         }
     }
 
 private:
-    template<uint8_t Slot = Slots>
+    template<uint8_t Channel = Channels>
     inline auto unroll() -> void {
-        Event& event = eventStore[Slot];
+        Event& event = eventStore[Channel];
 
-        if (event.id) {
+        if (event.job) {
             if (event.clock == clock) {
-                (event.callback)(event.id);
-                event.id = 0;
+                (*event.callback)(event.job);
+                event.job = 0;
             } else {
                 if (clock == nextClock)
                     nextClock = event.clock;
@@ -98,12 +110,10 @@ private:
             }
         }
 
-        if constexpr (Slot)
-            unroll<Slot - 1>();
+        if constexpr (Channel)
+            unroll<Channel - 1>();
     }
 };
 
-template<uint8_t Slots>
-EventCallback Events<Slots>::dummy = [](uint8_t){};
 
 }

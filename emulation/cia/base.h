@@ -33,7 +33,7 @@ struct Base {
 	/**
 	 * send shifted out bit to external device 
 	 */    
-    std::function<void (bool bit)> serialOut;
+    std::function<void (bool spLine, bool cntLine)> serialOut;
     /**
 	 * inform external devices if irq line switches to low state
 	 */
@@ -55,7 +55,6 @@ struct Base {
     auto clock() -> void;
 	
     auto serialIn( bool bit ) -> void;
-    auto serialIn( uint8_t byte ) -> void;
 
 	/*
 	 * external device forces cia to generate an irq

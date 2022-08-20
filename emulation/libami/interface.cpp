@@ -192,7 +192,7 @@ auto Interface::prepareDevices() -> void {
         device.inputs.push_back( {74, "Left Shift", Key::ShiftLeft} ); device.inputs.push_back( {75, "Right Shift", Key::ShiftRight} );
         device.inputs.push_back( {76, "Capslock", Key::ShiftLock} ); device.inputs.push_back( {77, "Ctrl", Key::ControlLeft} );
         device.inputs.push_back( {78, "Left Alt", Key::AltLeft} ); device.inputs.push_back( {79, "Right Alt", Key::AltRight} );
-        device.inputs.push_back( {80, "Left ", Key::SystemLeft} ); device.inputs.push_back( {81, "Right ", Key::SystemRight} );
+        device.inputs.push_back( {80, "Left Ami", Key::SystemLeft} ); device.inputs.push_back( {81, "Right Ami", Key::SystemRight} );
         device.inputs.push_back( {82, "Help", Key::Help} );
         // these keys differs between keyboard layouts, we use the uk keyboard layout for identifying the keys
         device.inputs.push_back( {83, "shared 1", Key::Shared1, { {Device::Layout::Uk, "["}, {Device::Layout::Us, "["}, {Device::Layout::De, "ü"}, {Device::Layout::Fr, "è"} } } );
@@ -380,6 +380,14 @@ auto Interface::checkstate(uint8_t* data, unsigned size) -> bool {
 }
 auto Interface::loadstate(uint8_t* data, unsigned size) -> bool {
     return false;
+}
+
+auto Interface::sendKeyChange(bool pressed, Device::Input* input) -> void {
+    system->input.keyboard.sendKeyChange(pressed, input);
+}
+
+auto Interface::informAboutKeyUpdate() -> void {
+    system->informAboutKeyUpdate();
 }
 
 }

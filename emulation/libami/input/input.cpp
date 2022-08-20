@@ -12,7 +12,7 @@
 
 namespace LIBAMI {
 
-Input::Input(Agnus& agnus, Emulator::Interface* interface) : agnus(agnus), keyboard(interface, agnus) {
+Input::Input(Agnus& agnus, Cia& cia1, Emulator::Interface* interface) : cia1(cia1), agnus(agnus), keyboard(interface, agnus, cia1) {
     this->interface = interface;
 
     controlPort1 = new ControlPort(interface);
@@ -37,36 +37,36 @@ auto Input::readCiaPortA( ) -> uint8_t {
     return out;
 }
 
+auto Input::checkForEmergencyPoll() -> void {
+    if (sampling.emergencyPolling) {
+        system->interface->jitPoll(0);
+        sampling.emergencyPolling = false;
+    }
+}
 
 inline auto Input::jitPoll() -> void {
-    if (jit.allow && interface->jitPoll()) {
-        keyboard.poll();
 
-        jit.midscreen = true;
-        //system->interface->log("update", true);
-    } else {
-        //system->interface->log("too soon", true);
+    if (sampling.allow && (sampling.emergencyPolling || (sampling.mode == Dynamic_Sampling) || (sampling.midscreen < 2))) {
+        if (system->interface->jitPoll(sampling.emergencyPolling ? 0 : (sampling.mode == Restricted_Dynamic_Sampling ? 5 : -1))) {
+            sampling.emergencyPolling = false;
+            sampling.midscreen++;
+            //system->interface->log(vicII->getVcounter(), false);
+        }
     }
-
-
 }
 
 auto Input::poll() -> void {
 
-    bool jitDisable = !jit.allow || !jit.midscreen;
+    bool jitDisable = !sampling.allow || (sampling.midscreen == 0);
 
     //system->interface->log("jit ", true);
     //system->interface->log( !jitDisable ? "on" : "off", false );
 
-    if ( jitDisable )
-        keyboard.poll();
-
     controlPort1->poll();
     controlPort2->poll();
 
-
-
-    jit.midscreen = false;
+    sampling.midscreen = 0;
+    sampling.emergencyPolling = false;
 }
 
 auto Input::drawCursor(bool midScreen) -> void {
@@ -107,10 +107,13 @@ auto Input::readPotY() -> uint8_t {
 auto Input::reset() -> void {
     //lines = nullptr;
     potMask = 1;
-    keyboard.reset();
+
+    if (!system->resetFromKeyboard)
+        keyboard.reset();
+
     controlPort1->reset();
     controlPort2->reset();
-    jit.midscreen = false;
+    sampling.midscreen = 0;
 }
 
 auto Input::connectControlport( Emulator::Interface::Connector* connector, Emulator::Interface::Device* device ) -> void {
@@ -128,21 +131,21 @@ auto Input::connectControlport( Emulator::Interface::Connector* connector, Emula
 
     *controlPort = ControlPort::create( interface, device );
 
-    allowJit();
+    updateSampling();
 
     (*controlPort)->reset();
 }
 
-auto Input::enableJit(bool state) -> void {
-    jit.enable = state;
-    allowJit();
+auto Input::setSampling(uint8_t mode) -> void {
+    sampling.mode = (SamplingMode)mode;
+    updateSampling();
 }
 
-auto Input::allowJit() -> void {
+auto Input::updateSampling() -> void {
     if (system->runAhead.preventJit && system->runAhead.frames)
-        jit.allow = false;
+        sampling.allow = false;
     else
-        jit.allow = jit.enable && controlPort1->useJitPolling() && controlPort2->useJitPolling();
+        sampling.allow = (sampling.mode != 0) && controlPort1->useJitPolling() && controlPort2->useJitPolling();
 }
 
 auto Input::getConnectedDevice( Emulator::Interface::Connector* connector ) -> Emulator::Interface::Device* {
@@ -199,7 +202,7 @@ auto Input::serialize(Emulator::Serializer& s) -> void {
     }
 
     if ( s.mode() == Emulator::Serializer::Mode::Load )
-        jit.midscreen = false;
+        sampling.midscreen = 0;
 }
 
 }

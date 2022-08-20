@@ -42,11 +42,13 @@ struct System {
 
     bool leaveEmulation = false;
     bool powerOn = false;
+    uint8_t resetFromKeyboard = 0;
 
     auto setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> void;
-    auto power(bool softReset = false) -> void;
+    auto power(bool softReset = false, bool resetInstruction = false) -> void;
     auto powerOff() -> void;
     auto run() -> void;
+    auto informAboutKeyUpdate() -> void;
 
 
 };

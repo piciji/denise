@@ -9,6 +9,8 @@
 
 #include "keyboard/keyboard.h"
 
+struct Cia;
+
 namespace LIBAMI {
 
 struct ControlPort;
@@ -16,21 +18,25 @@ struct Agnus;
 
 struct Input {
 
-    Input(Agnus& agnus, Emulator::Interface* interface);
+    Input(Agnus& agnus, Cia& cia1, Emulator::Interface* interface);
 
     Emulator::Interface* interface;
     Agnus& agnus;
+    Cia& cia1;
     ControlPort* controlPort1 = nullptr;
     ControlPort* controlPort2 = nullptr;
     Keyboard keyboard;
   //  Cia::Lines* lines = nullptr;
     uint8_t potMask;
 
-    struct Jit {
-        bool enable = false;
+    enum SamplingMode { Static_Sampling = 0, Restricted_Dynamic_Sampling = 1, Dynamic_Sampling = 2 };
+
+    struct Sampling {
+        SamplingMode mode = Dynamic_Sampling;
         bool allow = false;
-        bool midscreen = false;
-    } jit;
+        uint8_t midscreen = 0;
+        bool emergencyPolling = false;
+    } sampling;
 
     auto connectControlport( Emulator::Interface::Connector* connector, Emulator::Interface::Device* device ) -> void;
     auto getConnectedDevice( Emulator::Interface::Connector* connector ) -> Emulator::Interface::Device*;
@@ -44,14 +50,16 @@ struct Input {
 
     auto jitPoll() -> void;
 
+    auto checkForEmergencyPoll() -> void;
+
     auto readPotX() -> uint8_t;
     auto readPotY() -> uint8_t;
 
     auto drawCursor(bool midScreen = false) -> void;
     auto serialize(Emulator::Serializer& s) -> void;
 
-    auto enableJit(bool state) -> void;
-    auto allowJit() -> void;
+    auto setSampling(uint8_t mode) -> void;
+    auto updateSampling() -> void;
 };
 
 }

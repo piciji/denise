@@ -543,10 +543,10 @@ Drive::Drive(uint8_t number, Emulator::Interface::Media* mediaConnected ) : stru
         return lines->ioa;
     };
 
-    cia->serialOut = [this](bool bit) {
+    cia->serialOut = [this](bool spLine, bool cntLine) {
         if (dataDirection) {
-            if (system->secondDriveCable.burstUse) {
-                cia1->serialIn(bit);
+            if (!cntLine && system->secondDriveCable.burstUse) {
+                cia1->serialIn(spLine);
             }
         }
     };

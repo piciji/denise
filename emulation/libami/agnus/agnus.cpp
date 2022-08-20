@@ -1,6 +1,7 @@
 
 #include "agnus.h"
 #include "../../tools/sanitizer.h"
+#include "../system/system.h"
 
 namespace LIBAMI {
 
@@ -12,10 +13,20 @@ auto Agnus::reset() -> void {
     eClockPosition = 2;
     mapMemory();
     setOVL(true);
+    clearEvents( {EVENT_KBD} ); // don't clear possible running Keyboard event because of hard reset timer
 }
 
 auto Agnus::resetOut() -> void {
+    system->power( true, true );
+}
 
+auto Agnus::pullResetLine(bool state) -> void {
+    if (state) {
+        system->leaveEmulation = true;
+        system->resetFromKeyboard = 1;
+    } else {
+        system->resetFromKeyboard = false;
+    }
 }
 
 auto Agnus::mapMemory() -> void {

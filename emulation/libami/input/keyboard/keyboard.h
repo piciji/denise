@@ -6,6 +6,9 @@ namespace Emulator {
 }
 
 #include "../../../interface.h"
+#include "../../../tools/circularBuffer.h"
+
+struct Cia;
 
 namespace LIBAMI {
 
@@ -13,21 +16,38 @@ struct Agnus;
 
 struct Keyboard {
 
-    using Callback = std::function<void(uint8_t id)>;
+    using Callback = std::function<void(uint8_t)>;
+    CircularBuffer<uint8_t> queue;
+    bool keyState[128];
+    static const uint8_t keymap[96];
 
-    enum {  };
+    enum State { KBD_Send, KBD_Selftest, KBD_Wait_For_Timeout, KBD_Initiate, KBD_Terminate, KBD_Hardreset,
+            KBD_Transfer, KBD_Transfer1, KBD_Transfer2,
+            KBD_Lost_Sync_Init, KBD_Lost_Sync_Transmit
+    } state, memState;
 
     Callback callback;
 
-    Keyboard(Emulator::Interface* interface, Agnus& agnus);
+    Keyboard(Emulator::Interface* interface, Agnus& agnus, Cia& cia);
     Agnus& agnus;
+    Cia& cia;
+    unsigned handshakeClock;
+    uint8_t shiftOut;
+    uint8_t shiftPos;
+    uint8_t curCode;
+    bool overflow;
+    bool capsLock;
+    bool hardReset;
+
     Emulator::Interface* interface;
     Emulator::Interface::Device* device = nullptr;
 
-    auto poll() -> void;
-
     auto reset() -> void;
     auto setDevice( Emulator::Interface::Device* device ) -> void;
+    auto sendKeyChange(bool pressed, Emulator::Interface::Device::Input* input) -> void;
+    auto handshake(bool spLine) -> void;
+    auto sendCode(uint8_t code) -> void;
+    auto resync() -> void;
 
     auto serialize( Emulator::Serializer& s ) -> void;
 };
