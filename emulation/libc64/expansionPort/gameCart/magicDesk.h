@@ -33,6 +33,9 @@ namespace LIBC64 {
 
             cRomL = getChip(0);
             cRomH = nullptr;
+            // sub hunter: override wrongly seted header
+            game = true;
+            exRom = false;
         }
     };
 
