@@ -455,7 +455,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
                 }
             }
 
-            if (emuView->audioLayout) {
+            if (emuView && emuView->audioLayout) {
                 emuView->audioLayout->settingsLayout.updateWidget( C64Interface::ModelIdSid );
             }
 
