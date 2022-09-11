@@ -23,7 +23,7 @@ Keyboard::Keyboard(Emulator::Interface* interface, Agnus& agnus, Cia& cia) : agn
 
     queue.resize(10);
 
-    callback = [&](uint8_t job) {
+    callback = [&](uint8_t job, uint16_t data) {
 
         switch (job) {
             case KBD_Selftest:

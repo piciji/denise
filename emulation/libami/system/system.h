@@ -7,6 +7,7 @@
 #include "../../cia/new/cia.h"
 #include "../cpu/m68000.h"
 #include "../agnus/agnus.h"
+#include "../agnus/blitter.h"
 
 namespace LIBAMI {
 
@@ -17,6 +18,7 @@ struct System {
     Interface* interface;
     Input input;
     Cpu cpu;
+    Blitter blitter;
     Agnus agnus;
     Cia cia1;
     Cia cia2;

@@ -16,7 +16,7 @@ struct Agnus;
 
 struct Keyboard {
 
-    using Callback = std::function<void(uint8_t)>;
+    using EventCallback = std::function<void(uint8_t, uint16_t)>;
     CircularBuffer<uint8_t> queue;
     bool keyState[128];
     static const uint8_t keymap[96];
@@ -26,7 +26,7 @@ struct Keyboard {
             KBD_Lost_Sync_Init, KBD_Lost_Sync_Transmit
     } state, memState;
 
-    Callback callback;
+    EventCallback callback;
 
     Keyboard(Emulator::Interface* interface, Agnus& agnus, Cia& cia);
     Agnus& agnus;

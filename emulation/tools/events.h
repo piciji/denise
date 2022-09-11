@@ -6,7 +6,7 @@
 
 namespace Emulator {
 
-using EventCallback = std::function<void(uint8_t)>;
+using EventCallback = std::function<void(uint8_t, uint16_t)>;
 
 template<uint8_t Channels>
 struct Events {
@@ -18,6 +18,8 @@ struct Events {
         unsigned clock = 0;
 
         uint8_t job = 0;
+
+        uint16_t data = 0;
     };
 
     Event eventStore[Channels];
@@ -38,15 +40,36 @@ struct Events {
     }
 
     template<uint8_t Channel>
-    auto updateEvent(uint8_t job, unsigned delay) -> void {
+    auto updateEvent(uint8_t job, unsigned delay, uint16_t data = 0) -> void {
         delay += clock;
 
         Event& event = eventStore[Channel];
         event.job = job;
         event.clock = delay;
+        event.data = data;
 
         if (delay < nextClock)
             nextClock = delay;
+    }
+
+    template<uint8_t Channel>
+    auto updateEventAndExecuteExistingBefore(uint8_t job, unsigned delay, uint16_t data = 0) -> void {
+        Event& event = eventStore[Channel];
+
+        if (event.job)
+            (*event.callback)(event.job, event.data);
+
+        updateEvent<Channel>(job, delay, data);
+    }
+
+    template<uint8_t Channel>
+    auto forceEvent() -> void {
+        Event& event = eventStore[Channel];
+
+        if (event.job) {
+            (*event.callback)(event.job, event.data);
+            event.job = 0;
+        }
     }
 
     template<uint8_t Channel>
@@ -100,7 +123,7 @@ private:
 
         if (event.job) {
             if (event.clock == clock) {
-                (*event.callback)(event.job);
+                (*event.callback)(event.job, event.data);
                 event.job = 0;
             } else {
                 if (clock == nextClock)

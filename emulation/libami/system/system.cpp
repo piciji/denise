@@ -12,7 +12,7 @@ System::System(Interface* interface) :
 cia1(1),
 cia2(2),
 cpu(agnus),
-agnus( cpu, cia1, cia2 ),
+agnus( cpu, blitter, cia1, cia2 ),
 input(agnus, cia1, interface) {
 
     this->interface = interface;

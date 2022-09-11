@@ -2,11 +2,27 @@
 #include "agnus.h"
 #include "../../tools/sanitizer.h"
 #include "../system/system.h"
+#include "register.cpp"
 
 namespace LIBAMI {
 
-Agnus::Agnus(Cpu& cpu, Cia& cia1, Cia& cia2) : cpu(cpu), cia1(cia1), cia2(cia2) {
+Agnus::Agnus(Cpu& cpu, Blitter& blitter, Cia& cia1, Cia& cia2) : cpu(cpu), blitter(blitter), cia1(cia1), cia2(cia2) {
 
+    dmaPointerUpdate = [&](uint8_t job, uint16_t data) {
+
+        switch (job) {
+            case PTR_BLT_A_H: blitter.setBltAptH(data); break;
+            case PTR_BLT_A_L: blitter.setBltAptL(data); break;
+            case PTR_BLT_B_H: blitter.setBltBptH(data); break;
+            case PTR_BLT_B_L: blitter.setBltBptL(data); break;
+            case PTR_BLT_C_H: blitter.setBltCptH(data); break;
+            case PTR_BLT_C_L: blitter.setBltCptL(data); break;
+            case PTR_BLT_D_H: blitter.setBltDptH(data); break;
+            case PTR_BLT_D_L: blitter.setBltDptL(data); break;
+        }
+    };
+
+    addEvent<Agnus::EVENT_DMA_POINTER>( &dmaPointerUpdate );
 }
 
 auto Agnus::reset() -> void {
@@ -88,24 +104,50 @@ auto Agnus::setOVL(bool state) -> void {
     }
 }
 
+auto Agnus::addWaitstatesToCPU() -> void {
+
+    countWaitCycles = 0;
+    while (busUsage[hPos] != BUS_FREE) {
+        dmaCycle();
+        countWaitCycles++;
+    }
+
+    busUsage[hPos] = BUS_USAGE_CPU;
+}
+
+inline auto Agnus::dmaCycle() -> void {
+    hPos++;
+
+    if (actions) {
+        uint32_t _actions = actions;
+
+        if (_actions & ACT_BLITTER)
+            blitter.process();
+    }
+
+    processEvents();
+
+    eClockPosition += 2;
+    if (eClockPosition == 10) {
+        // CIA accesses must be tuned to E-Clock. One CIA BUS cycle corresponds to 2 + [6,8,10,12,14] + 2 CPU cycles.
+        // The programming is coordinated in such a way that the CIA is first driven forward and then the register access takes place.
+        // Tests, that evaluate CIA timers are difficult because while waiting for access, the CIA internally progresses 1 or 2 cycles.
+        // To make matters worse, the E-Clock phase can change with each cold start.
+        eClockPosition = 0;
+        cia1.clock();
+        cia2.clock();
+    }
+}
+
 auto Agnus::sync(uint16_t cycles) -> void {
+    // triggers DMA cycle following current CPU micro cycle.
+    // means it is always a DMA cycle ahead of CPU to find out if next cycle is usable for CPU, otherwise we have to take back
+    // "sync" of second micro of current BUS cycle to apply right amount of cycles
 
+    // register accesses happen after DMA for that cycle, because a written value can't be used this cycle.
+    // a register read is more problematic, because it could wrongly read back changes of this cycle. handle this manually
     while( cycles ) {
-
-        processEvents();
-
-        eClockPosition += 2;
-        if (eClockPosition == 10) {
-            // CIA accesses must be tuned to E-Clock. One CIA BUS cycle corresponds to 2 + [6,8,10,12,14] + 2 CPU cycles.
-            // The programming is coordinated in such a way that the CIA is first driven forward by a cycle and then the register access takes place.
-            // (By CPU design) the last 2 CPU cycles always take place after access. So the CIA has to progress a cycle beforehand to make sure that the order is right.
-            // Tests that evaluate CIA timers are difficult because while waiting for access, the CIA internally progresses 1 or 2 cycles.
-            // To make matters worse, the E-Clock phase can change with each cold start.
-            eClockPosition = 0;
-            cia1.clock();
-            cia2.clock();
-        }
-
+        dmaCycle();
         cycles -= 2;
     }
 }
@@ -118,9 +160,11 @@ auto Agnus::iackCycle(uint8_t level, uint8_t& vector) -> uint8_t {
 auto Agnus::readByte(uint32_t adr) -> uint8_t {
     switch( mapper[adr >> 16] ) {
         case CHIP_MEM:
+            addWaitstatesToCPU();
             dataBus = *(chipMem + (adr & chipMemMask));
             break;
         case MMIO_CUSTOM:
+            addWaitstatesToCPU();
             break;
         case MMIO_CIA: {
             sync( cpu.internalWaitCyclesBasedOnEClock<2>( eClockPosition ) );
@@ -133,6 +177,7 @@ auto Agnus::readByte(uint32_t adr) -> uint8_t {
             }
         } break;
         case SLOW_MEM:
+            addWaitstatesToCPU();
             dataBus = *(slowMem + (adr - 0xc00000));
             break;
         case KICK_ROM:
@@ -149,27 +194,95 @@ auto Agnus::readByte(uint32_t adr) -> uint8_t {
     return (uint8_t)dataBus;
 }
 
+auto Agnus::canBlitterUseBus() -> bool {
+    if (busUsage[hPos] != BUS_FREE)
+        return false; // a higher DMA
+
+    if (!useBlitterDMA())
+        return false; // blitter get stuck
+
+    if (!blitterNasty() && (countWaitCycles >= 3))
+        return false; // if blitter has no priority over CPU all wait cycles matter, not only the cycles when blitter can proceed
+
+    return true;
+};
+
+template<uint8_t ptrEvent> auto Agnus::fetchBlitterDma(uint32_t adr, uint16_t& result) -> bool {
+    if(!canBlitterUseBus())
+        return false;
+
+    busUsage[hPos] = BUS_USAGE_BLITTER;
+
+    result = _swapWord(*(uint16_t*)(chipMem + (adr & chipMemMask)));
+
+    // if a modified pointer is used in the next cycle, the change is ignored.
+    if ((getActiveEvent<EVENT_DMA_POINTER>() & ~1) == ptrEvent)
+        setEventInactive<EVENT_DMA_POINTER>();
+
+    return true;
+}
+
+auto Agnus::writeBlitterDma(uint32_t adr, uint16_t value) -> bool {
+    if(!canBlitterUseBus())
+        return false;
+
+    busUsage[hPos] = BUS_USAGE_BLITTER;
+
+    *(uint16_t*)(chipMem + (adr & chipMemMask)) = _swapWord(value);
+
+    if ((getActiveEvent<EVENT_DMA_POINTER>() & ~1) == 8)
+        setEventInactive<EVENT_DMA_POINTER>();
+
+    return true;
+}
+
+template<uint8_t ptrEvent> auto Agnus::fetchBlitterDmaNoBUSCheck(uint32_t adr, uint16_t& result) -> void {
+    busUsage[hPos] = BUS_USAGE_BLITTER;
+
+    result = _swapWord(*(uint16_t*)(chipMem + (adr & chipMemMask)));
+
+    if ((getActiveEvent<EVENT_DMA_POINTER>() & ~1) == ptrEvent)
+        setEventInactive<EVENT_DMA_POINTER>();
+}
+
+auto Agnus::writeBlitterDmaNoBUSCheck(uint32_t adr, uint16_t value) -> void {
+    busUsage[hPos] = BUS_USAGE_BLITTER;
+
+    *(uint16_t*)(chipMem + (adr & chipMemMask)) = _swapWord(value);
+
+    if ((getActiveEvent<EVENT_DMA_POINTER>() & ~1) == 8)
+        setEventInactive<EVENT_DMA_POINTER>();
+}
+
 auto Agnus::readWord(uint32_t adr) -> uint16_t {
     // 68k is big endian, modern architecture is little endian
     switch( mapper[adr >> 16] ) {
         case CHIP_MEM:
+            addWaitstatesToCPU();
             dataBus = _swapWord(*(uint16_t*)(chipMem + (adr & chipMemMask)));
             break;
         case MMIO_CUSTOM:
+            addWaitstatesToCPU();
             break;
         case MMIO_CIA: {
             // always leads to the time for the next CIA cycle, after which the register is accessed.
+
+            // CIA CS (Chip Select) happens when A12/A13 and VMA (respond of VPA in 68k E-Mode) are active.
+            // Gary assert VPA but don't see A12/A13. It only see the upper address bits and knows when in general CIA area.
+            // hence Gary asserts VPA, even if no CIA is selected at all ... "case 0x3000" in switch/case below.
+            // same applies to CIA writes.
             sync( cpu.internalWaitCyclesBasedOnEClock<2>( eClockPosition ) );
             uint8_t reg = (adr >> 8) & 0xf;
             switch(adr & 0x3000) {
                 case 0x0000: dataBus = cia1.read<MOS_8520>( reg ) | (cia2.read<MOS_8520>( reg ) << 8); break;
                 case 0x1000: dataBus = (dataBus >> 8) | (cia2.read<MOS_8520>( reg ) << 8); break;
                 case 0x2000: dataBus = cia1.read<MOS_8520>( reg ) | (dataBus << 8); break;
-                    // case 0x3000: break; get last BUS value, should be IRC in most cases
-                    // todo: check for 0x3000 if Agnus asserts VPA (E-Clock cycle) too
+                // case 0x3000: break; get last BUS value, should be IRC in most cases
+                // E-Clock is used too
             }
         } break;
         case SLOW_MEM:
+            addWaitstatesToCPU();
             dataBus = _swapWord(*(uint16_t*)(slowMem + (adr - 0xc00000)));
             break;
         case KICK_ROM:
@@ -189,9 +302,12 @@ auto Agnus::readWord(uint32_t adr) -> uint16_t {
 auto Agnus::writeByte(uint32_t adr, uint8_t value) -> void {
     switch( mapper[adr >> 16] ) {
         case CHIP_MEM:
+            addWaitstatesToCPU();
             dataBus = *(chipMem + (adr & chipMemMask)) = value;
             break;
         case MMIO_CUSTOM:
+            addWaitstatesToCPU();
+            writeCustom( adr & 0x1fe, value | (value << 8) );
             break;
         case MMIO_CIA: {
             sync( cpu.internalWaitCyclesBasedOnEClock<2>( eClockPosition ) );
@@ -202,6 +318,7 @@ auto Agnus::writeByte(uint32_t adr, uint8_t value) -> void {
                 cia2.write<MOS_8520>( reg, value );
         } break;
         case SLOW_MEM:
+            addWaitstatesToCPU();
             dataBus = *(slowMem + (adr - 0xc00000)) = value;
             break;
         case KICK_ROM:
@@ -219,9 +336,12 @@ auto Agnus::writeByte(uint32_t adr, uint8_t value) -> void {
 auto Agnus::writeWord(uint32_t adr, uint16_t value) -> void {
     switch( mapper[adr >> 16] ) {
         case CHIP_MEM:
+            addWaitstatesToCPU();
             *(uint16_t*)(chipMem + (adr & chipMemMask)) = _swapWord(value);
             break;
         case MMIO_CUSTOM:
+            addWaitstatesToCPU();
+            writeCustom( adr & 0x1fe, value );
             break;
         case MMIO_CIA: {
             sync( cpu.internalWaitCyclesBasedOnEClock<2>( eClockPosition ) );
@@ -232,6 +352,7 @@ auto Agnus::writeWord(uint32_t adr, uint16_t value) -> void {
                 cia2.write<MOS_8520>( reg, (uint8_t)(value >> 8) );
         } break;
         case SLOW_MEM:
+            addWaitstatesToCPU();
             *(uint16_t*)(slowMem + (adr - 0xc00000)) = _swapWord(value);
             break;
         case KICK_ROM:

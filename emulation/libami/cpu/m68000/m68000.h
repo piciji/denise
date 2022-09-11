@@ -12,6 +12,7 @@
 #pragma once
 
 #include <algorithm>
+#include <cstdint>
 
 // Explanations are below
 // #define FC_SUPPORT

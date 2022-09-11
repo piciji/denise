@@ -91,6 +91,7 @@ auto M68000::getInterruptVector(uint8_t level) -> uint8_t {
     // IACK cycle is a special (4 cycle minimum) read operation which is finished by a handshake.
     // IACK cycle is recognized by external devices, when all function codes FC0-2 bits set.
     // the interrupt level is placed on A1 - A3, A4 - A23 are all set.
+    // Amiga seems to detect this cycle, when A4 - A23 are all set, because function codes are routed directly to Expansion Port
     // like any other BUS cycle, it's terminated by one of the following methods.
     // user vector: by raising DTACK line, after placing vector on data BUS.
     // auto vector: by raising VPA line, IACK cycle will be terminated and an auto vectored interrupt is generated. data BUS is ignored.
