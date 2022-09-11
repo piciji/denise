@@ -71,11 +71,27 @@ auto Sid::getSidByAdr(uint16_t addr, bool ioArea) -> Sid* {
 auto Sid::writeSid(uint16_t addr, uint8_t value) -> void {
     
     uint16_t _addr = addr & 0xffe0;
+    bool match = false;
     
     for (auto useSid : useSids) {
-        if ( !useSid->ioMask || (_addr == useSid->ioMask) )
-            useSid->writeIO( addr, value );
+        if ( _addr == useSid->ioMask ) {
+            useSid->writeIO(addr, value);
+            match = true;
+        }
     }
+
+    if (match)
+        return;
+
+    for (auto useSid : useSids) {
+        if (!useSid->ioMask) {
+            useSid->writeIO(addr, value);
+            match = true;
+        }
+    }
+
+    if (!match)
+        sid->writeIO( addr, value );
 }
 
 auto Sid::writeSidIO(uint16_t addr, uint8_t value) -> void {
