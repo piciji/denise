@@ -23,6 +23,13 @@ Agnus::Agnus(Cpu& cpu, Blitter& blitter, Cia& cia1, Cia& cia2) : cpu(cpu), blitt
     };
 
     addEvent<Agnus::EVENT_DMA_POINTER>( &dmaPointerUpdate );
+
+    busUsage[0] = BUS_FREE;
+    busUsage[1] = BUS_USAGE_REFRESH;
+    busUsage[3] = BUS_USAGE_REFRESH;
+    busUsage[5] = BUS_USAGE_REFRESH;
+
+    busUsage[0xe3] = BUS_USAGE_REFRESH; // ntsc only
 }
 
 auto Agnus::reset() -> void {
@@ -116,7 +123,23 @@ auto Agnus::addWaitstatesToCPU() -> void {
 }
 
 inline auto Agnus::dmaCycle() -> void {
-    hPos++;
+
+    switch(++hPos) {
+        case 0xe2:
+            if (!lol) {
+                busUsage[0xe2] = BUS_USAGE_REFRESH;
+            } else {
+                busUsage[0xe2] = BUS_FREE;
+            }
+            break;
+        case 0xe3:
+            if (!lol)
+                eol();
+            break;
+        case 0xe4: // additional NTSC cycle
+            eol();
+            break;
+    }
 
     if (actions) {
         uint32_t _actions = actions;
@@ -136,6 +159,17 @@ inline auto Agnus::dmaCycle() -> void {
         eClockPosition = 0;
         cia1.clock();
         cia2.clock();
+    }
+}
+
+auto Agnus::eol() -> void {
+    hPos = 0;
+    if (lolToggle) lol ^= 1;
+
+    unsigned lines = ntsc ? (lof ? 263 : 262) : (lof ? 313 : 312);
+    if (++vPos == lines) {
+        vPos = 0;
+        if (lofToggle) lof ^= 1;
     }
 }
 

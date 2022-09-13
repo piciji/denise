@@ -22,7 +22,7 @@
 #define FILL_IDLE 0x100
 #define AT_LEAST_ONE_SHIFTOUT 0x200
 #define LINE_MODE 0x400
-#define SHIFT_CHANGE 0x8000
+#define STAGE_CHANGE 0x8000
 
 namespace LIBAMI {
 
@@ -236,16 +236,16 @@ auto Blitter::stateMachine() -> void {
         shifter = (shifter & ~STAGE_B) | ((shifter & STAGE_A) << 1);
     }
 
-    if (shifter & SHIFT_CHANGE) { // change channel usage
-        shifter &= ~SHIFT_CHANGE;
+    if (shifter & STAGE_CHANGE) { // change channel usage
+        shifter &= ~STAGE_CHANGE;
 
         shifter &= ~0x5f0;
         shifter |= ((bltcon0 >> 4) & 0xf0);
         if (hasFillmodeIdle())
-            shifter |= FILL_IDLE; // fillmode idle
+            shifter |= FILL_IDLE;
 
         if (bltcon1 & 1) {
-            shifter |= LINE_MODE; // line mode
+            shifter |= LINE_MODE;
             skipY = true;
         } else
             skipY = hasSkipY();

@@ -21,7 +21,9 @@ struct Agnus : Emulator::Events<10> {
 
     enum { ACT_BLITTER = 1 };
 
-    enum { BUS_FREE, BUS_USAGE_BLITTER, BUS_USAGE_CPU };
+    enum { BUS_FREE, BUS_USAGE_BLITTER, BUS_USAGE_CPU, BUS_USAGE_REFRESH, BUS_USAGE_AUDIO };
+
+    enum { PAL, NTSC };
 
     Cpu& cpu;
     Blitter& blitter;
@@ -34,6 +36,7 @@ struct Agnus : Emulator::Events<10> {
     uint8_t mapper[256] = {0};
     uint8_t busUsage[228];
     uint8_t hPos;
+    uint16_t vPos;
 
     uint8_t* chipMem = nullptr;
     unsigned chipMemMask = 0;
@@ -49,11 +52,16 @@ struct Agnus : Emulator::Events<10> {
     uint16_t dmaCon;
     unsigned countWaitCycles;
 
-    unsigned cpuCycles;
     uint8_t eClockPosition;
+    bool lol;
+    bool lof;
+    bool lolToggle;
+    bool lofToggle;
+    bool ntsc;
 
-    bool useBlitterDMA() const { return (dmaCon & 0x240) == 0x240; }
-    bool blitterNasty() const  { return dmaCon & 0x400; }
+    auto eol() -> void;
+    auto useBlitterDMA() -> bool const { return (dmaCon & 0x240) == 0x240; }
+    auto blitterNasty() -> bool const { return dmaCon & 0x400; }
 
     auto reset() -> void;
     auto setMemory(unsigned typeId, unsigned size) -> void;

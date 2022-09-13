@@ -1,0 +1,8 @@
+
+namespace LIBAMI {
+
+struct Copper {
+
+};
+
+}

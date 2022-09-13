@@ -261,7 +261,7 @@ template<uint16_t jobs, uint8_t nextCycle> auto Blitter::lineMode() -> void {
             bltApt += (int16_t)bltAmod;
     }
 
-    // realy occurs after first shift out or each time ?
+    // really occurs after first shift out or each time ?
     if constexpr (jobs & BLT_UPDATE_SIGN) { // don't need an active channel A
         if (0 > (int16_t)bltApt)    bltcon1 |= BLT_SIGN;
         else                        bltcon1 &= ~BLT_SIGN;

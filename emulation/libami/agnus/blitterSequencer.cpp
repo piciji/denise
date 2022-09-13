@@ -75,7 +75,7 @@ auto Blitter::process() -> void {
         case LLE:
             // when channel usage was changed while Blitter was running, we switch to slower low level emulation (LLE).
             // there is no reason to waste performance with LLE, when Blitter operates normally.
-            // only a write to blitsize disables LLE and begins with fixed micro instructions.
+            // only a "write" to blit size disables LLE and begins with fixed micro instructions.
             stateMachine();
             break;
 
@@ -215,7 +215,7 @@ auto Blitter::process() -> void {
         _mF_D_mSO(0x17) _mF_D_mSO(0x37) _mF_D_mSO(0x57) _mF_D_mSO(0x77) _mF_D_mSO(0x97) _mF_D_mSO(0xb7) _mF_D_mSO(0xd7) _mF_D_mSO(0xf7)
             blockMode<BLT_WriteD | BLT_DESC>(); break;
 
-// line draw for a horizontal blitsize of 2
+// line draw for a horizontal blit size of two
 
         // cycle 1
         _L_SO(0x81) _L_SO(0x91) _L_SO(0xa1) _L_SO(0xb1) _L_SO(0xc1) _L_SO(0xd1) _L_SO(0xe1) _L_SO(0xf1)

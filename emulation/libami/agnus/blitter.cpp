@@ -1,4 +1,6 @@
 
+//#define START_WITH_STATE_MACHINE
+
 #include "blitter.h"
 #include "agnus.h"
 #include "../../tools/serializer.h"
@@ -16,7 +18,7 @@ Blitter::Blitter(Agnus& agnus) : agnus(agnus) {
     callback = [&](uint8_t job, uint16_t data) {
         switch (job) {
             case BLT_Start:
-                if (restartTimer == 3) { // recognition cycle after writing to blitsize
+                if (restartTimer == 3) { // recognition cycle after writing to blit size
                     busy = true;
                     zero = true;
                     bltADatOld = 0;
@@ -24,8 +26,8 @@ Blitter::Blitter(Agnus& agnus) : agnus(agnus) {
                     curW = bltSizeW;
                     curH = bltSizeH;
                     restartTimer = 2;
-                    // when the cycle after writing to blitsize is calculation of "Final D" or later then last D will be written (if allowed),
-                    // otherwise a running Blit ends here. linedraw always ends here.
+                    // when the cycle after writing to blit size is calculation of "Final D" or later, then last D will be written (if allowed),
+                    // otherwise a running Blit ends here. line draw always ends here.
                     if ((flags & (0x400 | LLE)) || (flags & 7) < 6) {
                         flags = 0;
                         agnus.actions &= ~Agnus::ACT_BLITTER;
@@ -36,18 +38,34 @@ Blitter::Blitter(Agnus& agnus) : agnus(agnus) {
                         fillCarry = isFci();
                         oneDotPerLine = false;
 
-                        if (bltcon1 & 1) { // linedraw
+                        if (bltcon1 & 1) { // line draw
+#ifndef START_WITH_STATE_MACHINE
                             if (bltSizeW == 2)
                                 flags = ((bltcon0 >> 4) & 0xf0) | 0x400 | 1;
-                            else { // start with LLE
-                                shifter = 1;
+                            else // start with LLE
+#endif
+                            {
+                                shifter = 1 | LINE_MODE;
+                                shifter |= ((bltcon0 >> 4) & 0xf0);
                                 shiftOut = false;
                                 skipB = curSkipB = hasSkipB();
-                                skipY = curSkipY = true; // always skipped for linedraw
+                                skipY = curSkipY = true; // always skipped for line draw
                                 flags = LLE;
                             }
-                        } else
+                        } else {
+#ifdef START_WITH_STATE_MACHINE
+                            shifter = 1;
+                            shifter |= ((bltcon0 >> 4) & 0xf0);
+                            if (hasFillmodeIdle())
+                                shifter |= FILL_IDLE;
+                            shiftOut = false;
+                            skipB = curSkipB = hasSkipB();
+                            skipY = curSkipY = hasSkipY();
+                            flags = LLE;
+#else
                             flags = ((bltcon0 >> 4) & 0xf0) | (desc << 9) | (isFillMode() << 8) | 1;
+#endif
+                        }
 
                         agnus.actions |= Agnus::ACT_BLITTER;
                         return;
@@ -198,7 +216,7 @@ auto Blitter::setBltCon0(uint16_t value) -> void {
     bltcon0 = value;
 
     if (flags == LLE)
-        shifter |= SHIFT_CHANGE;
+        shifter |= STAGE_CHANGE;
 }
 
 auto Blitter::setBltCon1(uint16_t value) -> void {
@@ -207,7 +225,7 @@ auto Blitter::setBltCon1(uint16_t value) -> void {
     desc = value & 2;
 
     if (flags == LLE)
-        shifter |= SHIFT_CHANGE;
+        shifter |= STAGE_CHANGE;
     else {
         flags &= ~0x300;
         if (desc)           flags |= 0x200;
