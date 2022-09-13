@@ -18,6 +18,8 @@ ifeq ($(platform),)
 	    platform := windows
 	else ifneq ($(findstring Darwin,$(uname)),)
 	    platform := macosx
+	else ifneq ($(findstring NetBSD,$(uname)),)
+		platform := NetBSD
     else ifneq ($(findstring BSD,$(uname)),)
 	    platform := BSD
 	else
@@ -31,9 +33,6 @@ ifeq ($(compiler),)
     compiler := g++
     ifeq ($(platform),macosx)
 	compiler := clang++
-    endif
-    ifeq ($(platform),BSD)
-	compiler := g++10
     endif
 endif
 

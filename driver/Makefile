@@ -11,6 +11,9 @@ ifeq ($(platform),windows)
 else ifeq ($(platform),macosx)
     drv += cgl openal coreaudio iokit
 
+else ifeq ($(platform),NetBSD)
+	drv += glx openal pulseaudio xlib sdlinput
+
 else
     drv += glx openal pulseaudio xlib udev sdlinput
 
@@ -35,7 +38,11 @@ else ifeq ($(platform),macosx)
 else
     drvflags = $(cppflags) 
     drvflags += $(shell pkg-config --cflags gtk+-3.0)
+    ifeq ($(platform),NetBSD)
+    drvlink = -Wl,-R,/usr/X11R7/lib -lX11 -lXext -lXfixes
+    else
     drvlink = -lX11 -lXext -ldl -lXfixes
+    endif
     drvlink += $(if $(findstring openal,$(drv)),-lopenal)
     ifneq ($(findstring xlib,$(drv)),)
 	drvlink += $(if $(findstring sdl,$(drv)), $(shell $(env)sdl2-config --libs))
