@@ -12,7 +12,9 @@ System::System(Interface* interface) :
 cia1(1),
 cia2(2),
 cpu(agnus),
-agnus( cpu, blitter, cia1, cia2 ),
+blitter(agnus),
+copper(agnus),
+agnus( cpu, blitter, copper, cia1, cia2 ),
 input(agnus, cia1, interface) {
 
     this->interface = interface;
@@ -68,7 +70,6 @@ auto System::power(bool softReset, bool resetInstruction) -> void {
 
     cia1.reset();
     cia2.reset();
-    agnus.reset();
     input.reset();
 
     powerOn = true;
@@ -99,6 +100,8 @@ auto System::run() -> void {
     while( !leaveEmulation ) {
         cpu.process();
     }
+
+    agnus.setEventInactive<Agnus::EVENT_LEAVE_EMULATION>();
 }
 
 auto System::informAboutKeyUpdate() -> void {

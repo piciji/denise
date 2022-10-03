@@ -94,7 +94,7 @@ auto Blitter::stateMachine() -> void {
             }
         } else if (shifter & STAGE_B) { // B (optional) ... second bit in shifter can only be one, if channel B is in use, so no extra check needed
             // for a blit size of two there is one dummy access and so on
-            agnus.fetchBlitterDmaNoBUSCheck<4>(bltBpt, bltBdat);
+            agnus.fetchBlitterDmaNoBUSCheck<Agnus::PTR_BLT_B_H>(bltBpt, bltBdat);
 
             if (curW == 1) // last, or first if horizontal size is one
                 bltBpt += bltBmod;
@@ -108,12 +108,12 @@ auto Blitter::stateMachine() -> void {
                     bltcon1 -= 0x1000;
 
                 if (shifter & BLT_C)
-                    agnus.fetchBlitterDmaNoBUSCheck<4>(bltCpt, bltCdat); // maybe happens each blit, expect last one ?
+                    agnus.fetchBlitterDmaNoBUSCheck<Agnus::PTR_BLT_C_H>(bltCpt, bltCdat); // maybe happens each blit, expect last one ?
 
             } else if ((curW + 1) == bltSizeW) { // second only (means "last" by typical horizontal size), never when horizontal size is one
                 if (shifter & BLT_C) {
                     if (writeLineDot)
-                        agnus.writeBlitterDmaNoBUSCheck(bltDpt, bltDdat); // second or last ?
+                        agnus.writeBlitterDmaNoBUSCheck(bltDpt, doff ? agnus.dataBus : bltDdat); // second or last ?
 
                     if (agnus.getActiveEvent<Agnus::EVENT_DMA_POINTER>())
                         agnus.forceEvent<Agnus::EVENT_DMA_POINTER>();
@@ -136,6 +136,7 @@ auto Blitter::stateMachine() -> void {
                         }
                     }
                 }
+                bltDpt = bltCpt;
             }
         }
     } else { // block mode
@@ -163,7 +164,7 @@ auto Blitter::stateMachine() -> void {
         uint8_t channel = channels[shifter & 0x3ff];
 
         if (channel == 1) {
-            agnus.fetchBlitterDmaNoBUSCheck<2>(bltApt, bltAdat);
+            agnus.fetchBlitterDmaNoBUSCheck<Agnus::PTR_BLT_A_H>(bltApt, bltAdat);
 
             if (desc)  bltApt += -2;
             else       bltApt += +2;
@@ -173,7 +174,7 @@ auto Blitter::stateMachine() -> void {
                 else       bltApt += bltAmod;
             }
         } else if (channel == 2) {
-            agnus.fetchBlitterDmaNoBUSCheck<4>(bltBpt, bltBdat);
+            agnus.fetchBlitterDmaNoBUSCheck<Agnus::PTR_BLT_B_H>(bltBpt, bltBdat);
 
             if (desc)  bltBpt += -2;
             else       bltBpt += +2;
@@ -183,7 +184,7 @@ auto Blitter::stateMachine() -> void {
                 else       bltBpt += bltBmod;
             }
         } else if (channel == 3) {
-            agnus.fetchBlitterDmaNoBUSCheck<6>(bltCpt, bltCdat);
+            agnus.fetchBlitterDmaNoBUSCheck<Agnus::PTR_BLT_C_H>(bltCpt, bltCdat);
 
             if  (desc)  bltCpt += -2;
             else        bltCpt += +2;
@@ -193,7 +194,7 @@ auto Blitter::stateMachine() -> void {
                 else       bltCpt += bltCmod;
             }
         } else if (channel == 4) {
-            agnus.writeBlitterDmaNoBUSCheck(bltDpt, bltDdat);
+            agnus.writeBlitterDmaNoBUSCheck(bltDpt, doff ? agnus.dataBus : bltDdat);
 
             if (desc)  bltDpt += -2;
             else       bltDpt += 2;
@@ -209,7 +210,7 @@ auto Blitter::stateMachine() -> void {
         if (skipB)
             shifter &= ~(STAGE_A | STAGE_B);
         else
-            // this is critical because now more than one shifter bit can get into the pipeline, resulting in faster counting down of the horizontal counter.
+            // this is critical because more than one shifter bit can get into the pipeline, resulting in faster counting down of the horizontal counter.
             shifter = (shifter & ~(STAGE_B | STAGE_X)) | ((shifter & STAGE_A) << 1) | ((shifter & STAGE_A) << 2);
 
         curSkipB = skipB;
@@ -259,12 +260,21 @@ auto Blitter::stateMachine() -> void {
             curW = bltSizeW;
 
             if (!--curH) {
-                busy = false;
-                // todo signal IRQ to Paula here, Paula has another 2-4? CPU cycle delay from external
-                if (bltcon1 & 1)
+
+                if (bltcon1 & 1) {
                     agnus.actions &= ~Agnus::ACT_BLITTER;
-                else
+                    // todo signal IRQ to Paula here, Paula has another 2-4? CPU cycle delay from external
+                    busy = false;
+                    copper.blitterBusyUpdate();
+                } else {
                     flags = ((bltcon0 >> 4) & 0xf0) | (desc << 9) | (isFillMode() << 8) | 0xd; // 5 + shift out
+
+                    //if (!agnus.aga() || !(bltcon0 & 0x100) ) { // OCS, ECS and AGA (only, if there is no D write)
+                        // todo: signal IRQ to Paula here, Paula has another 2-4? CPU cycle delay from external
+                        busy = false;
+                        copper.blitterBusyUpdate();
+                    //}
+                }
             }
         }
     } else

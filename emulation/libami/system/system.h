@@ -8,6 +8,7 @@
 #include "../cpu/m68000.h"
 #include "../agnus/agnus.h"
 #include "../agnus/blitter.h"
+#include "../agnus/copper.h"
 
 namespace LIBAMI {
 
@@ -19,6 +20,7 @@ struct System {
     Input input;
     Cpu cpu;
     Blitter blitter;
+    Copper copper;
     Agnus agnus;
     Cia cia1;
     Cia cia2;

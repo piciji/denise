@@ -207,6 +207,12 @@ auto Blitter::process() -> void {
 
         // cycle 6
         _mF_mD_mSO(0x16) _mF_mD_mSO(0x36) _mF_mD_mSO(0x56) _mF_mD_mSO(0x76) _mF_mD_mSO(0x96) _mF_mD_mSO(0xb6) _mF_mD_mSO(0xd6) _mF_mD_mSO(0xf6)
+            //if (agnus.aga()) {
+                // todo: for AGA send IRQ here
+                // busy = false;
+                // copper.blitterBusyUpdate();
+            //}
+
             flags = (flags & 0xfff8) | 7; break; // don't need a free BUS
 
         // cycle 7

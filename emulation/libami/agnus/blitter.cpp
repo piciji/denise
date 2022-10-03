@@ -3,6 +3,7 @@
 
 #include "blitter.h"
 #include "agnus.h"
+#include "copper.h"
 #include "../../tools/serializer.h"
 #include "minterm.cpp"
 #include "blitterCycle.cpp"
@@ -11,7 +12,7 @@
 
 namespace LIBAMI {
 
-Blitter::Blitter(Agnus& agnus) : agnus(agnus) {
+Blitter::Blitter(Agnus& agnus) : agnus(agnus), copper(agnus.copper) {
     preFill();
     prepareChannel();
 
@@ -20,6 +21,7 @@ Blitter::Blitter(Agnus& agnus) : agnus(agnus) {
             case BLT_Start:
                 if (restartTimer == 3) { // recognition cycle after writing to blit size
                     busy = true;
+                    copper.blitterBusyUpdate();
                     zero = true;
                     bltADatOld = 0;
                     bltBDatOld = 0;
@@ -135,15 +137,16 @@ auto Blitter::activateLLEWhenNeeded(uint8_t bltRegister, uint16_t value) -> void
     if (flags == LLE)
         return; // already activated
 
-    if ( !(agnus.actions & Agnus::ACT_BLITTER) || (agnus.getActiveEvent<Agnus::EVENT_BLITTER>() == BLT_Start) )
+    if (!(agnus.actions & Agnus::ACT_BLITTER))
         return; // LLE is only needed when channel/line/fill mode is changed while Blitter is running
 
     uint8_t cycle = flags & 7;
-    if (!(flags & 0x400) && cycle >= 5)
-        return; // for final D calc or final D write, there is no need for LLE in this late state of operation
 
     if (bltRegister == 0x40) { // bltcon0
         if ((value & 0xf00) == (bltcon0 & 0xf00))
+            return;
+
+        if (!(flags & 0x400) && cycle >= 5) // final D calc or final D write
             return;
 
         skipB = curSkipB = hasSkipB();
@@ -154,6 +157,9 @@ auto Blitter::activateLLEWhenNeeded(uint8_t bltRegister, uint16_t value) -> void
 
         if (((bltcon1 ^ value) & 1) == 0) { // no toggeling of block <> line
             if ((value & 1) == 0) { // keeps block mode. check for possible change of "fill" which could cause a cycle change
+                if (cycle >= 5)
+                    return;
+
                 uint16_t tmp = bltcon1;
                 bltcon1 = value;
                 skipY = hasSkipY();
@@ -161,6 +167,14 @@ auto Blitter::activateLLEWhenNeeded(uint8_t bltRegister, uint16_t value) -> void
 
                 if (skipY == curSkipY)
                     return;
+            } else
+                return; // keep line mode
+
+        } else if (value & 1) { // switch block to line
+            if (cycle >= 5) {
+                if (cycle != 7)
+                    agnus.actions &= ~Agnus::ACT_BLITTER;
+                return;
             }
         }
 
@@ -209,6 +223,7 @@ auto Blitter::reset() -> void {
     bltADatOld = 0;
     bltBDatOld = 0;
     desc = false;
+    doff = false;
 }
 
 auto Blitter::setBltCon0(uint16_t value) -> void {
@@ -217,12 +232,24 @@ auto Blitter::setBltCon0(uint16_t value) -> void {
 
     if (flags == LLE)
         shifter |= STAGE_CHANGE;
+    else {
+        if ((flags & 7) != 7) { // can not prevent Final D write. no check for line mode needed, because there is no cycle 7
+            flags &= ~0xf0;
+            flags |= ((bltcon0 >> 4) & 0xf0);
+        }
+    }
+}
+
+auto Blitter::setBltCon0L(uint16_t value) -> void {
+    bltcon0 &= ~0xff;
+    bltcon0 |= value & 0xff;
 }
 
 auto Blitter::setBltCon1(uint16_t value) -> void {
     activateLLEWhenNeeded( 0x42, value );
     bltcon1 = value;
     desc = value & 2;
+    doff = agnus.ecs() && (bltcon1 & 0x80);
 
     if (flags == LLE)
         shifter |= STAGE_CHANGE;
@@ -291,6 +318,19 @@ auto Blitter::setBltSize(uint16_t value) -> void {
 
     if (!bltSizeH) bltSizeH = 1024;
     if (!bltSizeW) bltSizeW = 64;
+
+    restartTimer = 3;
+    agnus.updateEvent<Agnus::EVENT_BLITTER>(BLT_Start, 1);
+}
+
+auto Blitter::setBltSizeV(uint16_t value) -> void {
+    bltSizeH = value & 0x7fff;
+    if (!bltSizeH) bltSizeH = 0x8000;
+}
+
+auto Blitter::setBltSizeH(uint16_t value) -> void {
+    bltSizeW = value & 0x7ff;
+    if (!bltSizeW) bltSizeW = 0x800;
 
     restartTimer = 3;
     agnus.updateEvent<Agnus::EVENT_BLITTER>(BLT_Start, 1);
@@ -370,6 +410,7 @@ auto Blitter::serialize(Emulator::Serializer& s) -> void {
     s.integer(curSkipY);
     s.integer(shifter);
     s.integer(shiftOut);
+    s.integer(doff);
 }
 
 }

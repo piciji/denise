@@ -15,7 +15,7 @@ namespace LIBAMI {
 template<uint16_t jobs, uint8_t nextCycle> auto Blitter::blockMode() -> void {
 
     if constexpr (jobs & BLT_FetchA) {
-        if (!agnus.fetchBlitterDma<2>(bltApt, bltAdat))
+        if (!agnus.fetchBlitterDma<Agnus::PTR_BLT_A_H>(bltApt, bltAdat))
             return;
 
         if constexpr (jobs & BLT_DESC)  bltApt += -2;
@@ -26,7 +26,7 @@ template<uint16_t jobs, uint8_t nextCycle> auto Blitter::blockMode() -> void {
             else                            bltApt += bltAmod;
         }
     } else if constexpr (jobs & BLT_FetchB) {
-        if (!agnus.fetchBlitterDma<4>(bltBpt, bltBdat))
+        if (!agnus.fetchBlitterDma<Agnus::PTR_BLT_B_H>(bltBpt, bltBdat))
             return;
 
         if constexpr (jobs & BLT_DESC)  bltBpt += -2;
@@ -37,7 +37,7 @@ template<uint16_t jobs, uint8_t nextCycle> auto Blitter::blockMode() -> void {
             else                            bltBpt += bltBmod;
         }
     } else if constexpr (jobs & BLT_FetchC) {
-        if (!agnus.fetchBlitterDma<6>(bltCpt, bltCdat))
+        if (!agnus.fetchBlitterDma<Agnus::PTR_BLT_C_H>(bltCpt, bltCdat))
             return;
 
         if constexpr (jobs & BLT_DESC)  bltCpt += -2;
@@ -48,7 +48,7 @@ template<uint16_t jobs, uint8_t nextCycle> auto Blitter::blockMode() -> void {
             else                            bltCpt += bltCmod;
         }
     } else if constexpr ( jobs & BLT_WriteD ) {
-        if (!agnus.writeBlitterDma(bltDpt, bltDdat))
+        if (!agnus.writeBlitterDma(bltDpt, doff ? agnus.dataBus : bltDdat))
             return;
 
         if constexpr (jobs & BLT_DESC)  bltDpt += -2;
@@ -108,8 +108,11 @@ template<uint16_t jobs, uint8_t nextCycle> auto Blitter::blockMode() -> void {
             curW = bltSizeW;
 
             if (!--curH) {
-                busy = false;
-                // todo signal IRQ to Paula here, Paula has another 2-4? CPU cycle delay from external
+                //if (!agnus.aga() || !(bltcon0 & 0x100) ) { // OCS, ECS and AGA (only, if there is no D write)
+                    // todo: signal IRQ to Paula here, Paula has another 2-4? CPU cycle delay from external
+                    busy = false;
+                    copper.blitterBusyUpdate();
+                //}
                 flags = (flags & 0xfff0) | (8 | 5); // shift out and cycle 5
                 return;
             }
@@ -152,19 +155,19 @@ template<uint16_t jobs, uint8_t nextCycle> auto Blitter::blockMode() -> void {
 template<uint16_t jobs, uint8_t nextCycle> auto Blitter::lineMode() -> void {
 
     if constexpr (jobs & BLT_FetchB) {
-        if (!agnus.fetchBlitterDma<4>(bltBpt, bltBdat))
+        if (!agnus.fetchBlitterDma<Agnus::PTR_BLT_B_H>(bltBpt, bltBdat))
             return;
 
         if constexpr (jobs & BLT_B_MOD)
             bltBpt += bltBmod;
 
     } else if constexpr (jobs & BLT_FetchC) {
-        if (!agnus.fetchBlitterDma<6>(bltCpt, bltCdat))
+        if (!agnus.fetchBlitterDma<Agnus::PTR_BLT_C_H>(bltCpt, bltCdat))
             return;
 
     } else if constexpr (jobs & BLT_WriteD) {
         if (writeLineDot) {
-            if (!agnus.writeBlitterDma(bltDpt, bltDdat))
+            if (!agnus.writeBlitterDma(bltDpt, doff ? agnus.dataBus : bltDdat))
                 return;
         } else if (!agnus.canBlitterUseBus())
             return;
@@ -270,6 +273,7 @@ template<uint16_t jobs, uint8_t nextCycle> auto Blitter::lineMode() -> void {
     if constexpr (jobs & BLT_NEXT) {
         if (!--curH) {
             busy = false;
+            copper.blitterBusyUpdate();
             // todo signal IRQ to Paula here, Paula has another 2-4? CPU cycle delay from external
             agnus.actions &= ~Agnus::ACT_BLITTER;
             return;

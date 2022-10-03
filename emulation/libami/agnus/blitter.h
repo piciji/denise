@@ -12,6 +12,7 @@ namespace Emulator {
 namespace LIBAMI {
 
 struct Agnus;
+struct Copper;
 
 struct Blitter {
 
@@ -27,6 +28,7 @@ struct Blitter {
 
     EventCallback callback;
     Agnus& agnus;
+    Copper& copper;
 
     uint16_t fill[1024];
     uint8_t channels[1024];
@@ -84,6 +86,8 @@ struct Blitter {
     uint16_t shifter;
     bool shiftOut;
 
+    bool doff;
+
     auto doMinterm(uint8_t operation, uint16_t a, uint16_t b, uint16_t c) const -> uint16_t;
 
     auto stateMachine() -> void;
@@ -108,6 +112,7 @@ struct Blitter {
     auto serialize(Emulator::Serializer& s) -> void;
 
     auto setBltCon0(uint16_t value) -> void;
+    auto setBltCon0L(uint16_t value) -> void;
     auto setBltCon1(uint16_t value) -> void;
     auto setBltAfwm(uint16_t value) -> void;
     auto setBltAlwm(uint16_t value) -> void;
@@ -121,6 +126,8 @@ struct Blitter {
     auto setBltDptL(uint16_t value) -> void;
 
     auto setBltSize(uint16_t value) -> void;
+    auto setBltSizeV(uint16_t value) -> void;
+    auto setBltSizeH(uint16_t value) -> void;
     auto setBltCMod(uint16_t value) -> void;
     auto setBltBMod(uint16_t value) -> void;
     auto setBltAMod(uint16_t value) -> void;
