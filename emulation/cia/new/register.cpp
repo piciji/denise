@@ -1,16 +1,17 @@
 
 #include "cia.h"
 
-template<> auto Cia::read<MOS_6526>( unsigned pos ) -> uint8_t {
+template<uint8_t model>
+auto Cia<model>::read( unsigned pos ) -> uint8_t {
 
     switch (pos & 0xf) {
         case 0:
-            return readPort( PORTA, &lines );
+            return readPort(PORTA, &lines);
 
         case 1: {
-            uint8_t out = readPort( PORTB, &lines );
+            uint8_t out = readPort(PORTB, &lines);
 
-            adjustBit6And7( out );
+            adjustBit6And7(out);
 
             return out;
         }
@@ -33,103 +34,57 @@ template<> auto Cia::read<MOS_6526>( unsigned pos ) -> uint8_t {
             return readCounter<T_B>() >> 8;
 
         case 8:
-            if(!todLatched)
-                todLatch = todc;
+            if constexpr (model == MOS_8520) {
+                if (todLatched) {
+                    todLatched = false;
+                    return todLatch & 0xff;
+                }
+                return todc & 0xff;
+            } else {
+                if (!todLatched)
+                    todLatch = todc;
 
-            todLatched = false;
-
-            return (todLatch >> 0) & 0xff;
-
-        case 9:
-            if(!todLatched)
-                todLatch = todc;
-
-            return (todLatch >> 8) & 0xff;
-
-        case 0xa:
-            if(!todLatched)
-                todLatch = todc;
-
-            return (todLatch >> 16) & 0xff;
-
-        case 0xb:
-            if(!todLatched)
-                todLatch = todc;
-
-            todLatched = true;
-
-            return (todLatch >> 24) & 0xff;
-
-        case 0xc:
-            return sdr;
-
-        case 0xd:
-            delay |= CIA_ACK0;
-            return icr;
-
-        case 0xe:
-            return timerA.control & 0xef;
-
-        case 0xf:
-            return timerB.control & 0xef;
-    }
-    _unreachable
-}
-
-template<> auto Cia::read<MOS_8520>( unsigned pos ) -> uint8_t {
-
-    switch (pos & 0xf) {
-        case 0:
-            return readPort( PORTA, &lines );
-
-        case 1: {
-            uint8_t out = readPort( PORTB, &lines );
-
-            adjustBit6And7( out );
-
-            return out;
-        }
-        case 2:
-            return lines.ddra;
-
-        case 3:
-            return lines.ddrb;
-
-        case 4:
-            return readCounter<T_A>() & 0xff;
-
-        case 5:
-            return readCounter<T_A>() >> 8;
-
-        case 6:
-            return readCounter<T_B>() & 0xff;
-
-        case 7:
-            return readCounter<T_B>() >> 8;
-
-        case 8:
-            if (todLatched) {
                 todLatched = false;
-                return todLatch & 0xff;
+
+                return (todLatch >> 0) & 0xff;
             }
-            return todc & 0xff;
 
         case 9:
-            if (todLatched) {
+            if constexpr (model == MOS_8520) {
+                if (todLatched) {
+                    return (todLatch >> 8) & 0xff;
+                }
+                return (todc >> 8) & 0xff;
+            } else {
+                if (!todLatched)
+                    todLatch = todc;
+
                 return (todLatch >> 8) & 0xff;
             }
-            return (todc >> 8) & 0xff;
-
         case 0xa:
-            if (!todLatched) {
-                if ( !(timerB.control & 0x80) ) todLatched = true;
-                todLatch = todc;
+            if constexpr (model == MOS_8520) {
+                if (!todLatched) {
+                    if ( !(timerB.control & 0x80) ) todLatched = true;
+                    todLatch = todc;
+                }
+                return (todLatch >> 16) & 0xff;
+            } else {
+                if (!todLatched)
+                    todLatch = todc;
+
+                return (todLatch >> 16) & 0xff;
             }
-            return (todLatch >> 16) & 0xff;
-
         case 0xb:
-            return 0xff;
+            if constexpr (model == MOS_8520)
+                return 0xff;
+            else {
+                if (!todLatched)
+                    todLatch = todc;
 
+                todLatched = true;
+
+                return (todLatch >> 24) & 0xff;
+            }
         case 0xc:
             return sdr;
 
@@ -146,107 +101,9 @@ template<> auto Cia::read<MOS_8520>( unsigned pos ) -> uint8_t {
     _unreachable
 }
 
-template<> auto Cia::write<MOS_6526>( unsigned pos, uint8_t value ) -> void {
+template<uint8_t model>
+auto Cia<model>::write( unsigned pos, uint8_t value ) -> void {
     pos &= 0xf;
-
-    switch (pos) {
-        case 8:
-        case 9:
-        case 0xa:
-        case 0xb: {
-            bool changed;
-            uint8_t shifter = (pos - 8) << 3;
-
-            if (pos == 8)
-                value &= 0x0f;
-            else if (pos == 9)
-                value &= 0x7f;
-            else if (pos == 0xa)
-                value &= 0x7f;
-            else { // 0xb
-                value &= 0x9f;
-
-                if ( ( ( value & 0x1f ) == 0x12 ) && !( timerB.control & 0x80 ) )
-                    value ^= 0x80; //flip AM / PM
-            }
-
-            if (timerB.control & 0x80) {
-
-                changed = value != ( ( alarm >> shifter ) & 0xff);
-
-                alarm = (alarm & ~(0xff << shifter) ) | (value << shifter);
-
-            } else {
-                if (pos == 8) {
-                    if (!todActive)
-                        tickCounter = 0;
-
-                    todActive = true;
-
-                } else if (pos == 0xb)
-                    todActive = false;
-
-                changed = value != ( ( todc >> shifter ) & 0xff);
-
-                todc = (todc & ~(0xff << shifter) ) | (value << shifter);
-            }
-
-            if (changed)
-                if ( todc == alarm )
-                    intIncomming |= 4;
-
-            return;
-        }
-    }
-
-    writeGeneric<MOS_6526>( pos, value );
-}
-
-template<> auto Cia::write<MOS_8520>( unsigned pos, uint8_t value ) -> void {
-    pos &= 0xf;
-
-    switch (pos) {
-        case 8:
-        case 9:
-        case 0xa: {
-            uint8_t shifter = (pos - 8) << 3;
-            bool changed;
-
-            if (timerB.control & 0x80) {
-                changed = value != ( ( alarm >> shifter ) & 0xff);
-
-                alarm = (alarm & ~(0xff << shifter) ) | (value << shifter);
-
-            } else {
-                if (pos == 8)
-                    todActive = true;
-
-                else if (pos == 0xa)
-                    todActive = false;
-
-                changed = value != ((todc >> shifter) & 0xff);
-
-                todc = (todc & ~(0xff << shifter)) | (value << shifter);
-            }
-
-            if ( changed && (todc == alarm ))
-                intIncomming |= 4;
-
-            return;
-        }
-
-        case 0xb: //unused
-            return;
-
-        case 0xe:
-            value &= 0x7f;
-            break;
-    }
-
-    writeGeneric<MOS_8520>( pos, value );
-}
-
-template<CiaModel model> auto Cia::writeGeneric( unsigned pos, uint8_t value ) -> void {
 
     switch( pos ) {
 
@@ -356,6 +213,60 @@ template<CiaModel model> auto Cia::writeGeneric( unsigned pos, uint8_t value ) -
             }
             break;
 
+        case 0xb:
+            if constexpr (model == MOS_8520)
+                break;
+        case 8:
+        case 9:
+        case 0xa: {
+            bool changed;
+            uint8_t shifter = (pos - 8) << 3;
+
+            if constexpr (model == MOS_6526) {
+                if (pos == 8)
+                    value &= 0x0f;
+                else if (pos == 9)
+                    value &= 0x7f;
+                else if (pos == 0xa)
+                    value &= 0x7f;
+                else { // 0xb
+                    value &= 0x9f;
+
+                    if (((value & 0x1f) == 0x12) && !(timerB.control & 0x80))
+                        value ^= 0x80; //flip AM / PM
+                }
+            }
+
+            if (timerB.control & 0x80) {
+
+                changed = value != ((alarm >> shifter) & 0xff);
+
+                alarm = (alarm & ~(0xff << shifter)) | (value << shifter);
+
+            } else {
+                if (pos == 8) {
+                    if (!todActive)
+                        tickCounter = 0;
+
+                    todActive = true;
+
+                } else if (model == MOS_8520 && pos == 0xa) {
+                    todActive = false;
+                    tickCounter = 0;
+                } else if (pos == 0xb)
+                    todActive = false;
+
+                changed = value != ((todc >> shifter) & 0xff);
+
+                todc = (todc & ~(0xff << shifter)) | (value << shifter);
+            }
+
+            if (changed && (todc == alarm))
+                intIncomming |= 4;
+
+            break;
+        }
+
         case 0xc:
             sdr = value;
             delay &= ~CIA_START_SDR1;
@@ -409,6 +320,10 @@ template<CiaModel model> auto Cia::writeGeneric( unsigned pos, uint8_t value ) -
                 if ((delay & CIA_STOP_TA1) == 0)
                     delay |= CIA_STOP_TA0;
             }
+
+            if constexpr (model == MOS_8520)
+                value &= 0x7f;
+
             timerA.control = value;
         } break;
 
@@ -451,8 +366,8 @@ template<CiaModel model> auto Cia::writeGeneric( unsigned pos, uint8_t value ) -
         } break;
     }
 }
-
-auto Cia::adjustBit6And7( uint8_t& inOut ) -> void {
+template<uint8_t model>
+auto Cia<model>::adjustBit6And7( uint8_t& inOut ) -> void {
     if (timerB.control & 2) {
         inOut &= ~0x80;
         if ( ( (timerB.control & 4) ? timerB.toggle : (delay & CIA_UF_TB1) ) )

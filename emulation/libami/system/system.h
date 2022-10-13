@@ -22,8 +22,8 @@ struct System {
     Blitter blitter;
     Copper copper;
     Agnus agnus;
-    Cia cia1;
-    Cia cia2;
+    Cia<MOS_8520> cia1;
+    Cia<MOS_8520> cia2;
 
     struct {
         unsigned config = 0;
@@ -46,7 +46,6 @@ struct System {
 
     bool leaveEmulation = false;
     bool powerOn = false;
-    uint8_t resetFromKeyboard = 0;
 
     auto setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> void;
     auto power(bool softReset = false, bool resetInstruction = false) -> void;

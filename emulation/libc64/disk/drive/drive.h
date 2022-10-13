@@ -83,8 +83,8 @@ struct Drive {
         
     Via* via1;
     Via* via2;
-    Cia* cia;
-    Cia* ciaSpeeder;
+    Cia<MOS_8520>* cia;
+    Cia<MOS_8520>* ciaSpeeder;
     WD1770* wd1770;
     Emulator::Pia* pia;
     M6502* cpu;

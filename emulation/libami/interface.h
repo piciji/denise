@@ -12,7 +12,8 @@ struct Interface : Emulator::Interface  {
     ~Interface() {}
 
     enum ModelId {
-        ModelIdLowPassFilter = 0,
+        ModelIdSystem,
+        ModelIdLowPassFilter,
     };
 
     enum MediaGroupId {

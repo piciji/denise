@@ -161,7 +161,7 @@ auto Drive::cpuWrite(uint16_t addr, uint8_t data) -> void {
                 }
             } else if (speeder == 13) {
                 if ((addr & 0xfff0) == 0x9e20) {
-                    ciaSpeeder->write<MOS_8520>(addr, data);
+                    ciaSpeeder->write(addr, data);
                     return;
                 }
             }
@@ -189,7 +189,7 @@ auto Drive::cpuWrite(uint16_t addr, uint8_t data) -> void {
             via2->write(addr, data);
 
         } else if ((addr & 0xc000) == 0x4000) {
-            cia->write<MOS_8520>(addr, data);
+            cia->write(addr, data);
 
         } else if ((addr & 0xe000) == 0x2000) {
             wd1770->write(addr, data);
@@ -340,7 +340,7 @@ auto Drive::cpuRead(uint16_t addr) -> uint8_t {
             if (proSpeedControl & (1 | 2 | 0x80)) {
 
                 if ((addr & 0xfff0) == 0x9e20) {
-                    return ciaSpeeder->read<MOS_8520>(addr);
+                    return ciaSpeeder->read(addr);
                 }
 
                 if (proSpeedControl & 0x2) {
@@ -394,7 +394,7 @@ auto Drive::cpuRead(uint16_t addr) -> uint8_t {
         return via2->read(addr);
 
     } else if ((addr & 0xc000) == 0x4000) {
-        return cia->read<MOS_8520>(addr);
+        return cia->read(addr);
     }
     else if ((addr & 0xe000) == 0x2000) {
         return wd1770->read(addr);
@@ -457,8 +457,8 @@ Drive::Drive(uint8_t number, Emulator::Interface::Media* mediaConnected ) : stru
     
     via1 = new Via( 1 );
     via2 = new Via( 2 );
-    cia = new Cia( 3 );
-    ciaSpeeder = new Cia( 4 );
+    cia = new Cia<MOS_8520>( 3 );
+    ciaSpeeder = new Cia<MOS_8520>( 4 );
     cpu = new M6502(this);
     pia = new Emulator::Pia;
     wd1770 = new WD1770;
@@ -515,19 +515,19 @@ Drive::Drive(uint8_t number, Emulator::Interface::Media* mediaConnected ) : stru
     };
 
     // proSpeed 1571 v2.0 has extra CIA
-    ciaSpeeder->writePort = [this]( Cia::Port port, Cia::Lines* lines ) {
+    ciaSpeeder->writePort = [this]( Cia<MOS_8520>::Port port, Cia<MOS_8520>::Lines* lines ) {
 
-        if ( lines->prbChange && (port == Cia::PORTB )) {
+        if ( lines->prbChange && (port == Cia<MOS_8520>::PORTB )) {
             system->writeParallelHandshake();
         }
-        else if (port == Cia::PORTA ) {
+        else if (port == Cia<MOS_8520>::PORTA ) {
             proSpeedControl = lines->ioa;
         }
     };
 
-    ciaSpeeder->readPort = [this]( Cia::Port port, Cia::Lines* lines ) {
+    ciaSpeeder->readPort = [this]( Cia<MOS_8520>::Port port, Cia<MOS_8520>::Lines* lines ) {
 
-        if ( port == Cia::PORTB ) {
+        if ( port == Cia<MOS_8520>::PORTB ) {
             if (!system->secondDriveCable.parallelUse )
                 return lines->iob;
 
@@ -551,22 +551,22 @@ Drive::Drive(uint8_t number, Emulator::Interface::Media* mediaConnected ) : stru
         }
     };
 
-    cia->writePort = [this]( Cia::Port port, Cia::Lines* lines ) {
+    cia->writePort = [this]( Cia<MOS_8520>::Port port, Cia<MOS_8520>::Lines* lines ) {
 
-        if ( lines->prbChange && (port == Cia::PORTB )) {
+        if ( lines->prbChange && (port == Cia<MOS_8520>::PORTB )) {
 
             if ((operation & (DRIVE_HAS_PIA | DRIVE_HAS_EXTRA_CIA) ) == 0)
                 system->writeParallelHandshake();
         }
 
-        else if (port == Cia::PORTA ) {
+        else if (port == Cia<MOS_8520>::PORTA ) {
 
         }
     };
 
-    cia->readPort = [this]( Cia::Port port, Cia::Lines* lines ) {
+    cia->readPort = [this]( Cia<MOS_8520>::Port port, Cia<MOS_8520>::Lines* lines ) {
 
-        if ( port == Cia::PORTB ) {
+        if ( port == Cia<MOS_8520>::PORTB ) {
 
             if (!system->secondDriveCable.parallelUse || (operation & (DRIVE_HAS_PIA | DRIVE_HAS_EXTRA_CIA)) )
                 return lines->iob;

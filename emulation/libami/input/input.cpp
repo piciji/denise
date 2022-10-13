@@ -12,7 +12,7 @@
 
 namespace LIBAMI {
 
-Input::Input(Agnus& agnus, Cia& cia1, Emulator::Interface* interface) : cia1(cia1), agnus(agnus), keyboard(interface, agnus, cia1) {
+Input::Input(Agnus& agnus, Cia<MOS_8520>& cia1, Emulator::Interface* interface) : cia1(cia1), agnus(agnus), keyboard(interface, agnus, cia1) {
     this->interface = interface;
 
     controlPort1 = new ControlPort(interface);
@@ -108,7 +108,7 @@ auto Input::reset() -> void {
     //lines = nullptr;
     potMask = 1;
 
-    if (!system->resetFromKeyboard)
+    if (!agnus.resetFromKeyboard)
         keyboard.reset();
 
     controlPort1->reset();

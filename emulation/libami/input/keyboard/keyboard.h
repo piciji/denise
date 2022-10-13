@@ -8,6 +8,8 @@ namespace Emulator {
 #include "../../../interface.h"
 #include "../../../tools/circularBuffer.h"
 
+#define MOS_8520 1
+template<uint8_t model>
 struct Cia;
 
 namespace LIBAMI {
@@ -28,9 +30,9 @@ struct Keyboard {
 
     EventCallback callback;
 
-    Keyboard(Emulator::Interface* interface, Agnus& agnus, Cia& cia);
+    Keyboard(Emulator::Interface* interface, Agnus& agnus, Cia<MOS_8520>& cia);
     Agnus& agnus;
-    Cia& cia;
+    Cia<MOS_8520>& cia;
     unsigned handshakeClock;
     uint8_t shiftOut;
     uint8_t shiftPos;

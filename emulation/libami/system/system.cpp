@@ -14,7 +14,7 @@ cia2(2),
 cpu(agnus),
 blitter(agnus),
 copper(agnus),
-agnus( cpu, blitter, copper, cia1, cia2 ),
+agnus( cpu, blitter, copper, cia1, cia2, input ),
 input(agnus, cia1, interface) {
 
     this->interface = interface;
@@ -25,18 +25,20 @@ input(agnus, cia1, interface) {
     };
 
 
-    cia1.readPort = [this]( Cia::Port port, Cia::Lines* lines ) {
+    cia1.readPort = [this]( Cia<MOS_8520>::Port port, Cia<MOS_8520>::Lines* lines ) {
 
-        if ( port == Cia::PORTA )
+        if ( port == Cia<MOS_8520>::PORTA )
             return (uint8_t)(input.readCiaPortA( ) & lines->ioa);
 
         return (uint8_t)0xff;
     };
 
-    cia1.writePort = [this]( Cia::Port port, Cia::Lines* lines ) {
+    cia1.writePort = [this]( Cia<MOS_8520>::Port port, Cia<MOS_8520>::Lines* lines ) {
 
-        if ( port == Cia::PORTA ) {
+        if ( port == Cia<MOS_8520>::PORTA ) {
          //   if (lines->ioa != lines->ioaOld)
+            if ((lines->ioa ^ lines->ioaOld) & 1)
+                agnus.setOVL(lines->ioa & 1);
 
         } else {
             //if (lines->iob != lines->iobOld)
@@ -44,9 +46,9 @@ input(agnus, cia1, interface) {
         }
     };
 
-    cia2.writePort = [this]( Cia::Port port, Cia::Lines* lines ) {
+    cia2.writePort = [this]( Cia<MOS_8520>::Port port, Cia<MOS_8520>::Lines* lines ) {
 
-        if ( port == Cia::PORTA ) {
+        if ( port == Cia<MOS_8520>::PORTA ) {
             cia2.setCNTAndSP( lines->ioa & 2, lines->ioa & 1 );
         }
     };
@@ -54,7 +56,7 @@ input(agnus, cia1, interface) {
 
 auto System::power(bool softReset, bool resetInstruction) -> void {
 
-    agnus.reset();
+    agnus.reset(softReset);
 
     if (!resetInstruction) {
         if (!softReset) {
@@ -64,9 +66,6 @@ auto System::power(bool softReset, bool resetInstruction) -> void {
             cpu.reset();
         }
     }
-
-    if (!softReset)
-        resetFromKeyboard = 0;
 
     cia1.reset();
     cia2.reset();
@@ -84,18 +83,8 @@ auto System::run() -> void {
 
     input.poll();
 
-    if (resetFromKeyboard) {
-        if ((resetFromKeyboard & 0x80) == 0) {
-            power(true);
-            resetFromKeyboard |= 0x80;
-        }
-
-        while (resetFromKeyboard) { // CPU and most chips on hold, Denise hasn't a reset line
-            input.checkForEmergencyPoll(); // wait for releasing reset key combination
-            agnus.processEvents();
-            // todo leave each frame
-        }
-    }
+    if (agnus.resetFromKeyboard)
+        agnus.waitKeyboardReset();
 
     while( !leaveEmulation ) {
         cpu.process();

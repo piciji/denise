@@ -26,7 +26,7 @@ struct Events {
 
     unsigned clock = 0;
 
-    unsigned nextClock = 0;
+    unsigned nextClock = ~0;
 
     inline auto processEvents() -> void {
         if (++clock == nextClock) {
@@ -94,14 +94,14 @@ struct Events {
         return (clock - _last) & 0xffffffff;
     }
 
-    auto clearEvents(std::vector<uint8_t> exceptions) -> void {
+    auto clearEvents() -> void {
         for(uint8_t Channel = 0; Channel < Channels; Channel++) {
-            if (std::find(exceptions.begin(), exceptions.end(), Channel) != exceptions.end())
-                continue;
-
             Event& event = eventStore[Channel];
             event.job = 0;
         }
+
+        clock = 0;
+        nextClock = ~0;
     }
 
 protected:

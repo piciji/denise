@@ -3,14 +3,17 @@
 #include "../../tools/sanitizer.h"
 #include "../system/system.h"
 #include "register.cpp"
+#include "dma.cpp"
 
 #define ERSY (bplCon0 & 2)
+#define eCyclePosition  10 - (((eClockCycle - clock) & 0xffffffff) << 1)
 
 namespace LIBAMI {
 
-Agnus::Agnus(Cpu& cpu, Blitter& blitter, Copper& copper, Cia& cia1, Cia& cia2) : cpu(cpu), blitter(blitter), copper(copper), cia1(cia1), cia2(cia2) {
+Agnus::Agnus(Cpu& cpu, Blitter& blitter, Copper& copper, Cia<MOS_8520>& cia1, Cia<MOS_8520>& cia2, Input& input)
+: cpu(cpu), blitter(blitter), copper(copper), cia1(cia1), cia2(cia2), input(input) {
 
-    dmaPointerUpdate = [&](uint8_t job, uint16_t data) {
+    dmaUpdate = [&](uint8_t job, uint16_t data) {
 
         switch (job) {
             case PTR_BLT_A_H: blitter.setBltAptH(data); break;
@@ -22,24 +25,23 @@ Agnus::Agnus(Cpu& cpu, Blitter& blitter, Copper& copper, Cia& cia1, Cia& cia2) :
             case PTR_BLT_D_H: blitter.setBltDptH(data); break;
             case PTR_BLT_D_L: blitter.setBltDptL(data); break;
             case PTR_REF: setRefPtr(data); break;
+            case PTR_BPL_1_H: setBpl1ptH(data); break;
+            case PTR_BPL_1_L: setBpl1ptL(data); break;
+            case PTR_BPL_2_H: setBpl2ptH(data); break;
+            case PTR_BPL_2_L: setBpl2ptL(data); break;
+            case PTR_BPL_3_H: setBpl3ptH(data); break;
+            case PTR_BPL_3_L: setBpl3ptL(data); break;
+            case PTR_BPL_4_H: setBpl4ptH(data); break;
+            case PTR_BPL_4_L: setBpl4ptL(data); break;
+            case PTR_BPL_5_H: setBpl5ptH(data); break;
+            case PTR_BPL_5_L: setBpl5ptL(data); break;
+            case PTR_BPL_6_H: setBpl6ptH(data); break;
+            case PTR_BPL_6_L: setBpl6ptL(data); break;
+            case DMACON: dmaControl(data); break;
         }
     };
 
-    addEvent<Agnus::EVENT_DMA_POINTER>( &dmaPointerUpdate );
-
-    regUpdate = [&](uint8_t job, uint16_t data) {
-
-        switch (job) {
-            case DMACON:
-                if (data & 0x8000)
-                    dmaCon |= data & 0x7ff;
-                else
-                    dmaCon &= ~data; // no masking needed, unused upper 5 bits will never be set
-                break;
-        }
-    };
-
-    addEvent<Agnus::EVENT_REG_UPDATE>( &regUpdate );
+    addEvent<Agnus::EVENT_DMA_UPDATE>( &dmaUpdate );
 
     leaveEmulation = [&](uint8_t job, uint16_t data) {
         // When a frame is fully calculated, control is given back to the user interface.
@@ -49,10 +51,44 @@ Agnus::Agnus(Cpu& cpu, Blitter& blitter, Copper& copper, Cia& cia1, Cia& cia2) :
     };
 
     addEvent<Agnus::EVENT_LEAVE_EMULATION>( &leaveEmulation );
+
+    countDownPowerSupply = [&](uint8_t job, uint16_t data) {
+        cia1.tod( );
+
+        updateEvent<EVENT_POWER_SUPPLY>(~0, powerSupply.nextTickCount());
+    };
+
+    addEvent<Agnus::EVENT_POWER_SUPPLY>( &countDownPowerSupply );
+
+    bplCallback = [&](uint8_t job, uint16_t data) {
+
+        if (!bplActive && bplFetchPossible && (hPos == ddfStart) && useBitplaneDMA()) {
+            bplActive = true;
+            actions |= ACT_BPL;
+            bplCycle = (bplCon0 >> 4) & 0x700;
+        } else if (bplActive && (hPos == ddfStop)) {
+            stopFetching = true;
+        }
+
+        updateDdfEvent(hPos);
+    };
+
+    addEvent<Agnus::EVENT_BPL>( &bplCallback );
+
+    wom = new uint8_t[256 * 1024];
 }
 
-auto Agnus::reset() -> void {
-    eClockPosition = 2;
+auto Agnus::dmaControl(uint16_t data) -> void {
+    if (data & 0x8000)
+        dmaCon |= data & 0x7ff;
+    else
+        dmaCon &= ~data; // no masking needed, unused upper 5 bits will never be set
+}
+
+auto Agnus::reset(bool softReset) -> void {
+    auto resetDelay = getEventDelay<EVENT_KBD>();
+    clearEvents();
+
     hPos = 5; // 4 + 1 (ahead)
     lol = false;
     lolToggle = ntsc;
@@ -60,12 +96,33 @@ auto Agnus::reset() -> void {
     lofToggle = false;
     lines = ntsc ? 261 : 311;
     rDmaPtr = 0;
+    if (!softReset) {
+        resetFromKeyboard = 0;
+        womLock = false;
+        std::memset(wom, 0, 256 * 1024);
+    } else {
+        if (resetFromKeyboard && resetDelay)
+            updateEvent<EVENT_KBD>(Keyboard::KBD_Hardreset, resetDelay);
+    }
 
     blitter.reset();
     copper.reset();
     mapMemory();
     setOVL(true);
-    clearEvents( {EVENT_KBD} ); // don't clear possible running Keyboard event because of hard reset timer
+
+    if (model == A1000) {
+        powerSupply.init((ntsc ? FREQUENCY_NTSC : FREQUENCY_PAL) >> 3, ntsc ? 60 : 50);
+        updateEvent<EVENT_POWER_SUPPLY>(~0, powerSupply.nextTickCount());
+    } else
+        setEventInactive<EVENT_POWER_SUPPLY>();
+
+    if (!softReset || !resetFromKeyboard)
+        initCiaClock();
+
+}
+
+auto Agnus::initCiaClock() -> void {
+    eClockCycle = clock + 4; // begin a DMA cycle later
 }
 
 auto Agnus::resetOut() -> void {
@@ -75,14 +132,15 @@ auto Agnus::resetOut() -> void {
 auto Agnus::pullResetLine(bool state) -> void {
     if (state) {
         system->leaveEmulation = true;
-        system->resetFromKeyboard = 1;
+        resetFromKeyboard = 1;
     } else {
-        system->resetFromKeyboard = 0;
+        resetFromKeyboard = 0;
     }
 }
 
 auto Agnus::mapMemory() -> void {
-    uint8_t kickAssignment = kickRom ? KICK_ROM : Unmapped;
+    uint8_t romAssignment = kickRom ? KICK_ROM : Unmapped;
+    uint8_t romOrwomAssignment = (model == A1000) ? WOM : romAssignment;
 
     for(unsigned i = 0; i <= 0x1f; i++) // max 2 MB (mirrored)
         mapper[i] = CHIP_MEM;
@@ -117,17 +175,22 @@ auto Agnus::mapMemory() -> void {
             mapper[i] = EXT_ROM;
     } else {
         for (unsigned i = 0xe0; i <= 0xe7; i++)
-            mapper[i] = kickAssignment; // mirror
+            mapper[i] = romAssignment; // mirror
     }
 
     for(unsigned i = 0xe8; i <= 0xef; i++)
         mapper[i] = Unmapped; // auto config
 
     for(unsigned i = 0xf0; i <= 0xf7; i++)
-        mapper[i] = Unmapped; // extended ROM CD32
+        mapper[i] = Unmapped; // extended ROM, CD32
 
     for (unsigned i = 0xf8; i <= 0xff; i++)
-        mapper[i] = kickAssignment;
+        mapper[i] = romOrwomAssignment;
+
+    if ((model == A1000) && !womLock) {
+        for (unsigned i = 0xf8; i <= 0xfb; i++)
+            mapper[i] = romAssignment;
+    }
 }
 
 auto Agnus::setOVL(bool state) -> void {
@@ -140,18 +203,42 @@ auto Agnus::setOVL(bool state) -> void {
     }
 }
 
+auto Agnus::waitKeyboardReset() -> void {
+    if ((resetFromKeyboard & 0x80) == 0) {
+        system->power(true);
+        resetFromKeyboard |= 0x80;
+    }
+
+    updateEvent<EVENT_LEAVE_EMULATION>(~0, 150000);
+
+    while(true) { // CPU and most chips on hold, Denise hasn't a reset line
+        input.checkForEmergencyPoll(); // wait for releasing reset key combination
+        processEvents();
+
+        if (leaveEmulation)
+            break;
+
+        if (!resetFromKeyboard) {
+            initCiaClock();
+            setEventInactive<Agnus::EVENT_LEAVE_EMULATION>();
+            break;
+        }
+    }
+}
+
 auto Agnus::addWaitstatesToCPU() -> void {
 
     countWaitCycles = 0;
-    while (busUsage[hPos] != BUS_FREE) {
+    while (busUsage != BUS_FREE) {
         dmaCycle();
         countWaitCycles++;
     }
 
-    busUsage[hPos] = BUS_USAGE_CPU;
+    // busUsage = BUS_USAGE_CPU;
 }
 
 inline auto Agnus::dmaCycle() -> void {
+    busUsage = BUS_FREE;
 
     switch(hPos) {
         case 1:
@@ -162,6 +249,9 @@ inline auto Agnus::dmaCycle() -> void {
                     resyncCounter = 0;
                     system->leaveEmulation = true; // sync up user interface
                 }
+            } else {
+                if (bplActive || bplQueue)
+                    actions |= ACT_BPL;
             }
             break;
 
@@ -203,14 +293,34 @@ inline auto Agnus::dmaCycle() -> void {
                 rDmaPtr += 0x200; // RAS and CAS were replaced. To increase RAS, the "adder" must be moved 8 bits
                 rDmaPtr &= chipMemMask;
             }
-            if ((getActiveEvent<EVENT_DMA_POINTER>() ) == PTR_REF)
-                setEventInactive<EVENT_DMA_POINTER>(); // ignore it, because was updated last cycle
+            if ((getActiveEvent<EVENT_DMA_UPDATE>() ) == PTR_REF)
+                setEventInactive<EVENT_DMA_UPDATE>(); // ignore it, because was updated last cycle
 
-            busUsage[hPos] = BUS_USAGE_REFRESH;
+            busUsage = BUS_USAGE_REFRESH;
             break;
 
-        case 0xe1:
+        case 0x24:
+            cia2.tod();
             break;
+
+        case 0x13:
+            if (!lof && vPos == (ntsc ? 6 : 5) ) {
+                if (model != A1000) cia1.tod();
+            }
+
+        case 0x18:
+            bplFetchPossible = true;
+            break;
+
+        case 0xd7:
+            if (bplActive)
+                stopFetching = true;
+            break;
+
+        case 0x85:
+            if (lof && vPos == (ntsc ? 6 : 5) ) {
+                if (model != A1000) cia1.tod();
+            }
 
         case 0xe2:
             if (!lol) {
@@ -223,9 +333,16 @@ inline auto Agnus::dmaCycle() -> void {
         case 0xe3:
             if (!lol) {// short line
                 hPos = 0;
+                if (ddfStart < ddfStop)     updateEvent<EVENT_BPL>(~0, ddfStart + 1);
+                else                        updateEvent<EVENT_BPL>(~0, ddfStop + 1);
                 if (lolToggle) lol ^= 1;
                 shortLineBefore = true;
                 actions &= ~ACT_COPPER; // "even" cycle 0 after a short line is not usable by Copper, otherwise Copper would progress 2 cycles in a row.
+
+                if (actions & ACT_BPL) {
+                    fetchPlanes<true>();
+                    actions &= ~ACT_BPL;
+                }
             } else {
                 shortLineBefore = false;
                 if (vPos == (lines + lof) ) {
@@ -236,6 +353,8 @@ inline auto Agnus::dmaCycle() -> void {
             break;
         case 0xe4: // NTSC long line
             hPos = 0;
+            if (ddfStart < ddfStop)     updateEvent<EVENT_BPL>(~0, ddfStart + 1);
+            else                        updateEvent<EVENT_BPL>(~0, ddfStop + 1);
             if (lolToggle) lol ^= 1;
             break;
         // register change of HPos could lead to a wrap around of 8 bit counter.
@@ -243,6 +362,9 @@ inline auto Agnus::dmaCycle() -> void {
 
     if (actions) {
         uint32_t _actions = actions;
+
+        if (_actions & ACT_BPL)
+            fetchPlanes();
 
         if (_actions & ACT_COPPER) {
             if ((hPos & 1) == 0)
@@ -257,13 +379,12 @@ inline auto Agnus::dmaCycle() -> void {
     hPos++; // reading V(H)POS get the already incremented (pointing to next cycle) position, Copper uses the current position for comparisons.
     // to avoid another switch/case we don't update hPos wraparounds or vPos incrementations now. if VPOS is readed, we temporarly do these steps.
 
-    eClockPosition += 2;
-    if (eClockPosition == 10) {
+    if (eClockCycle == clock) {
         // CIA accesses must be tuned to E-Clock. One CIA BUS cycle corresponds to 2 + [6,8,10,12,14] + 2 CPU cycles.
         // The programming is coordinated in such a way that the CIA is first driven forward and then the register access takes place.
         // Tests, that evaluate CIA timers are difficult because while waiting for access, the CIA internally progresses 1 or 2 cycles.
         // To make matters worse, the E-Clock phase can change with each cold start.
-        eClockPosition = 0;
+        eClockCycle = clock + 5;
         cia1.clock();
         cia2.clock();
     }
@@ -275,7 +396,7 @@ auto Agnus::POSR(bool vhpos) -> uint16_t {
     auto _lol = lol;
     auto _lof = lof;
 
-    // for performance reasons, following is calculated with beginning of next cycle.
+    // for performance reasons following is calculated with beginning of next cycle, so we do it temporarly
     if (h == 1) {
         if (ERSY) h = 0;
     } else if (h == 2) {
@@ -338,12 +459,12 @@ auto Agnus::readByte(uint32_t adr) -> uint8_t {
                 dataBus = (uint8_t)(readCustom<true>(adr) >> 8);
             break;
         case MMIO_CIA: {
-            sync( cpu.internalWaitCyclesBasedOnEClock<2>( eClockPosition ) );
+            sync( cpu.internalWaitCyclesBasedOnEClock<2>( eCyclePosition ) );
             uint8_t reg = (adr >> 8) & 0xf;
             switch(adr & 0x3000) {
-                case 0x0000: dataBus = (adr & 1) ? cia1.read<MOS_8520>( reg ) : cia2.read<MOS_8520>( reg ); break;
-                case 0x1000: dataBus = (adr & 1) ? (uint8_t)dataBus : cia2.read<MOS_8520>( reg ); break;
-                case 0x2000: dataBus = (adr & 1) ? cia1.read<MOS_8520>( reg ) : (dataBus >> 8); break;
+                case 0x0000: dataBus = (adr & 1) ? cia1.read( reg ) : cia2.read( reg ); break;
+                case 0x1000: dataBus = (adr & 1) ? (uint8_t)dataBus : cia2.read( reg ); break;
+                case 0x2000: dataBus = (adr & 1) ? cia1.read( reg ) : (dataBus >> 8); break;
                 case 0x3000: dataBus = (adr & 1) ? (uint8_t)dataBus : (dataBus >> 8); break;
             }
         } break;
@@ -356,6 +477,9 @@ auto Agnus::readByte(uint32_t adr) -> uint8_t {
             break;
         case EXT_ROM:
             dataBus = *(extRom + (adr & extRomMask));
+            break;
+        case WOM:
+            dataBus = *(wom + (adr & 0x3ffff));
             break;
         case MMIO_RTC:
             break;
@@ -383,12 +507,12 @@ auto Agnus::readWord(uint32_t adr) -> uint16_t {
             // Gary assert VPA but don't see A12/A13. It only see the upper address bits and knows when in general CIA area.
             // hence Gary asserts VPA, even if no CIA is selected at all ... "case 0x3000" in switch/case below.
             // same applies to CIA writes.
-            sync( cpu.internalWaitCyclesBasedOnEClock<2>( eClockPosition ) );
+            sync( cpu.internalWaitCyclesBasedOnEClock<2>( eCyclePosition ) );
             uint8_t reg = (adr >> 8) & 0xf;
             switch(adr & 0x3000) {
-                case 0x0000: dataBus = cia1.read<MOS_8520>( reg ) | (cia2.read<MOS_8520>( reg ) << 8); break;
-                case 0x1000: dataBus = (dataBus >> 8) | (cia2.read<MOS_8520>( reg ) << 8); break;
-                case 0x2000: dataBus = cia1.read<MOS_8520>( reg ) | (dataBus << 8); break;
+                case 0x0000: dataBus = cia1.read( reg ) | (cia2.read( reg ) << 8); break;
+                case 0x1000: dataBus = (dataBus >> 8) | (cia2.read( reg ) << 8); break;
+                case 0x2000: dataBus = cia1.read( reg ) | (dataBus << 8); break;
                 // case 0x3000: break; get last BUS value, should be IRC in most cases
                 // E-Clock is used too
             }
@@ -403,6 +527,9 @@ auto Agnus::readWord(uint32_t adr) -> uint16_t {
         case EXT_ROM:
             dataBus = _swapWord(*(uint16_t*)(extRom + (adr & extRomMask)));
             break;
+        case WOM:
+            dataBus = _swapWord(*(uint16_t*)(wom + (adr & 0x3ffff)));
+            break;
         case MMIO_RTC:
             break;
         case Unmapped:
@@ -415,27 +542,34 @@ auto Agnus::writeByte(uint32_t adr, uint8_t value) -> void {
     switch( mapper[adr >> 16] ) {
         case CHIP_MEM:
             addWaitstatesToCPU();
-            dataBus = *(chipMem + (adr & chipMemMask)) = value;
+            *(chipMem + (adr & chipMemMask)) = value;
             break;
         case MMIO_CUSTOM:
             addWaitstatesToCPU();
             writeCustom( adr & 0x1fe, value | (value << 8) );
             break;
         case MMIO_CIA: {
-            sync( cpu.internalWaitCyclesBasedOnEClock<2>( eClockPosition ) );
+            sync( cpu.internalWaitCyclesBasedOnEClock<2>( eCyclePosition ) );
             uint8_t reg = (adr >> 8) & 0xf;
             if ((adr & 0x1000) == 0)
-                cia1.write<MOS_8520>( reg, value );
+                cia1.write( reg, value );
             if ((adr & 0x2000) == 0)
-                cia2.write<MOS_8520>( reg, value );
+                cia2.write( reg, value );
         } break;
         case SLOW_MEM:
             addWaitstatesToCPU();
-            dataBus = *(slowMem + (adr - 0xc00000)) = value;
+            *(slowMem + (adr - 0xc00000)) = value;
             break;
         case KICK_ROM:
+            if (model == A1000 && !womLock) {
+                womLock = true;
+                for (unsigned i = 0xf8; i <= 0xfb; i++) mapper[i] = WOM;
+            }
             break;
         case EXT_ROM:
+            break;
+        case WOM:
+            if (!womLock) *(wom + (adr & 0x3ffff)) = value;
             break;
         case MMIO_RTC:
             break;
@@ -456,19 +590,27 @@ auto Agnus::writeWord(uint32_t adr, uint16_t value) -> void {
             writeCustom( adr & 0x1fe, value );
             break;
         case MMIO_CIA: {
-            sync( cpu.internalWaitCyclesBasedOnEClock<2>( eClockPosition ) );
+            sync( cpu.internalWaitCyclesBasedOnEClock<2>( eCyclePosition ) );
             uint8_t reg = (adr >> 8) & 0xf;
             if ((adr & 0x1000) == 0)
-                cia1.write<MOS_8520>( reg, (uint8_t)value );
+                cia1.write( reg, (uint8_t)value );
             if ((adr & 0x2000) == 0)
-                cia2.write<MOS_8520>( reg, (uint8_t)(value >> 8) );
+                cia2.write( reg, (uint8_t)(value >> 8) );
         } break;
         case SLOW_MEM:
             addWaitstatesToCPU();
             *(uint16_t*)(slowMem + (adr - 0xc00000)) = _swapWord(value);
             break;
         case KICK_ROM:
+            if (model == A1000 && !womLock) {
+                womLock = true;
+                for (unsigned i = 0xf8; i <= 0xfb; i++) mapper[i] = WOM;
+            }
+            break;
         case EXT_ROM:
+            break;
+        case WOM:
+            if (!womLock) *(uint16_t*)(wom + (adr & 0x3ffff)) = _swapWord(value);
             break;
         case MMIO_RTC:
             break;
@@ -479,7 +621,7 @@ auto Agnus::writeWord(uint32_t adr, uint16_t value) -> void {
 }
 
 auto Agnus::canCopperUseBus() -> bool {
-    if (busUsage[hPos] != BUS_FREE)
+    if (busUsage != BUS_FREE)
         return false; // a higher DMA
 
     if (!useCopperDMA())
@@ -490,7 +632,7 @@ auto Agnus::canCopperUseBus() -> bool {
 
 auto Agnus::allocateCopper() -> bool {
     if (canCopperUseBus()) {
-        busUsage[hPos] = BUS_USAGE_COPPER;
+        busUsage = BUS_USAGE_COPPER;
         return true;
     }
     return false;
@@ -500,7 +642,7 @@ auto Agnus::fetchCopperDma(uint32_t adr, uint16_t& result) -> bool {
     if(!canCopperUseBus())
         return false;
 
-    busUsage[hPos] = BUS_USAGE_COPPER;
+    busUsage = BUS_USAGE_COPPER;
 
     result = _swapWord(*(uint16_t*)(chipMem + (adr & chipMemMask)));
 
@@ -511,7 +653,7 @@ auto Agnus::fetchCopperDma(uint32_t adr, uint16_t& result) -> bool {
 
 auto Agnus::fetchCopperDmaNoBUSCheck(uint32_t adr, uint16_t& result) -> void {
 
-    busUsage[hPos] = BUS_USAGE_COPPER;
+    busUsage = BUS_USAGE_COPPER;
 
     result = _swapWord(*(uint16_t*)(chipMem + (adr & chipMemMask)));
 
@@ -519,7 +661,7 @@ auto Agnus::fetchCopperDmaNoBUSCheck(uint32_t adr, uint16_t& result) -> void {
 }
 
 auto Agnus::canBlitterUseBus() -> bool {
-    if (busUsage[hPos] != BUS_FREE)
+    if (busUsage != BUS_FREE)
         return false; // a higher DMA
 
     if (!useBlitterDMA())
@@ -535,15 +677,15 @@ template<uint8_t ptrEvent> auto Agnus::fetchBlitterDma(uint32_t adr, uint16_t& r
     if(!canBlitterUseBus())
         return false;
 
-    busUsage[hPos] = BUS_USAGE_BLITTER;
+    busUsage = BUS_USAGE_BLITTER;
 
     result = _swapWord(*(uint16_t*)(chipMem + (adr & chipMemMask)));
 
     dataBus = result;
 
     // if a modified pointer is used in the next cycle, the change is ignored.
-    if ((getActiveEvent<EVENT_DMA_POINTER>() & ~1) == ptrEvent)
-        setEventInactive<EVENT_DMA_POINTER>();
+    if ((getActiveEvent<EVENT_DMA_UPDATE>() & ~1) == ptrEvent)
+        setEventInactive<EVENT_DMA_UPDATE>();
 
     return true;
 }
@@ -552,38 +694,38 @@ auto Agnus::writeBlitterDma(uint32_t adr, uint16_t value) -> bool {
     if(!canBlitterUseBus())
         return false;
 
-    busUsage[hPos] = BUS_USAGE_BLITTER;
+    busUsage = BUS_USAGE_BLITTER;
 
     *(uint16_t*)(chipMem + (adr & chipMemMask)) = _swapWord(value);
 
     dataBus = value;
 
-    if ((getActiveEvent<EVENT_DMA_POINTER>() & ~1) == PTR_BLT_D_H)
-        setEventInactive<EVENT_DMA_POINTER>();
+    if ((getActiveEvent<EVENT_DMA_UPDATE>() & ~1) == PTR_BLT_D_H)
+        setEventInactive<EVENT_DMA_UPDATE>();
 
     return true;
 }
 
 template<uint8_t ptrEvent> auto Agnus::fetchBlitterDmaNoBUSCheck(uint32_t adr, uint16_t& result) -> void {
-    busUsage[hPos] = BUS_USAGE_BLITTER;
+    busUsage = BUS_USAGE_BLITTER;
 
     result = _swapWord(*(uint16_t*)(chipMem + (adr & chipMemMask)));
 
     dataBus = result;
 
-    if ((getActiveEvent<EVENT_DMA_POINTER>() & ~1) == ptrEvent)
-        setEventInactive<EVENT_DMA_POINTER>();
+    if ((getActiveEvent<EVENT_DMA_UPDATE>() & ~1) == ptrEvent)
+        setEventInactive<EVENT_DMA_UPDATE>();
 }
 
 auto Agnus::writeBlitterDmaNoBUSCheck(uint32_t adr, uint16_t value) -> void {
-    busUsage[hPos] = BUS_USAGE_BLITTER;
+    busUsage = BUS_USAGE_BLITTER;
 
     *(uint16_t*)(chipMem + (adr & chipMemMask)) = _swapWord(value);
 
     dataBus = value;
 
-    if ((getActiveEvent<EVENT_DMA_POINTER>() & ~1) == PTR_BLT_D_H)
-        setEventInactive<EVENT_DMA_POINTER>();
+    if ((getActiveEvent<EVENT_DMA_UPDATE>() & ~1) == PTR_BLT_D_H)
+        setEventInactive<EVENT_DMA_UPDATE>();
 }
 
 auto Agnus::setMemory(unsigned typeId, unsigned size) -> void {

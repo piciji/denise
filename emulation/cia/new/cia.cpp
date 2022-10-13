@@ -4,7 +4,8 @@
 #include "register.cpp"
 #include "tod.cpp"
 
-Cia::Cia( uint8_t ident ) {
+template<uint8_t model>
+Cia<model>::Cia( uint8_t ident ) {
     this->ident = ident;
 
     readPort = []( Port port, Lines* plines ) {
@@ -19,7 +20,8 @@ Cia::Cia( uint8_t ident ) {
     newVersion = true;
 }
 
-auto Cia::reset() -> void {
+template<uint8_t model>
+auto Cia<model>::reset() -> void {
     lines.pra = lines.prb = 0;
     lines.ddra = lines.ddrb = 0;
     lines.ioa = lines.iob = 0xff;
@@ -35,7 +37,7 @@ auto Cia::reset() -> void {
     cnt = CIA_CNT0;
     sdrForceFinish = false;
 
-    delay = 0;
+    delay = CIA_TOD1;
     icrTemp = 0;
     intIncomming = 0;
 
@@ -59,7 +61,8 @@ auto Cia::reset() -> void {
     tickCounter = 0;
 }
 
-auto Cia::clock() -> void {
+template<uint8_t model>
+auto Cia<model>::clock() -> void {
     const uint64_t _delay = delay;
 
     if (_delay & CIA_TASKS) {
@@ -78,6 +81,14 @@ auto Cia::clock() -> void {
                 irqCall( true );
         }
         if (_delay & CIA_UPD_ICR_ONLY1) icr = icrTemp;
+
+        if constexpr(model == MOS_8520) { // todo for 6526
+            if (_delay & CIA_TOD4) {
+                delay |= CIA_TOD0;
+                if (tickCounter)
+                    todIncrement();
+            }
+        }
 
         if (_delay & CIA_TASKS_UNLIKELY) {
             if (_delay & CIA_STEPOUT_TA1) timerA.run &= ~2;
@@ -120,13 +131,18 @@ auto Cia::clock() -> void {
         intIncomming = 0;
     }
 
-    if (delay & (CIA_INT1 | CIA_ACK0))
-        newVersion ? interruptControl() : interruptControlOld();
+    if (delay & (CIA_INT1 | CIA_ACK0)) {
+        if constexpr (model == MOS_8520)
+            interruptControl();
+        else
+            newVersion ? interruptControl() : interruptControlOld();
+    }
 
     delay = ((delay << 1) & CIA_MASK) | cnt;
 }
 
-inline auto Cia::interruptControl() -> void {
+template<uint8_t model>
+inline auto Cia<model>::interruptControl() -> void {
     // for new cia models
     if (delay & CIA_INT1) {
         // interrupt is incomming and allowed by icr mask, a write in mask register
@@ -154,7 +170,8 @@ inline auto Cia::interruptControl() -> void {
     }
 }
 
-inline auto Cia::interruptControlOld() -> void {
+template<uint8_t model>
+inline auto Cia<model>::interruptControlOld() -> void {
     // for old cia models, interrupt is incomming one cycle later
     if (delay & CIA_INT1) {
 
@@ -180,7 +197,8 @@ inline auto Cia::interruptControlOld() -> void {
     }
 }
 
-auto Cia::handleInterrupt( uint8_t number ) -> void {
+template<uint8_t model>
+auto Cia<model>::handleInterrupt( uint8_t number ) -> void {
     icr |= number;
     icrTemp |= number;
 
@@ -197,10 +215,14 @@ auto Cia::handleInterrupt( uint8_t number ) -> void {
         return;
     }
 
-    delay |= newVersion ? CIA_INT1 : CIA_INT0;
+    if constexpr (model == MOS_8520)
+        delay |= CIA_INT1;
+    else
+        delay |= newVersion ? CIA_INT1 : CIA_INT0;
 }
 
-template<uint8_t timerId> inline auto Cia::updateState( ) -> void {
+template<uint8_t model>
+template<uint8_t timerId> inline auto Cia<model>::updateState( ) -> void {
     Timer& rTimer = timerId == T_A ? timerA : timerB;
 
     if ( rTimer.run ) {
@@ -229,7 +251,8 @@ template<uint8_t timerId> inline auto Cia::updateState( ) -> void {
         rTimer.counter = rTimer.latch;
 }
 
-template<uint8_t timerId> inline auto Cia::readCounter( ) -> uint16_t {
+template<uint8_t model>
+template<uint8_t timerId> inline auto Cia<model>::readCounter( ) -> uint16_t {
     Timer& rTimer = timerId == T_A ? timerA : timerB;
 
     if (rTimer.run && !(delay & ( timerId == T_A ? CIA_FL_TA2 : CIA_FL_TB2 )) )
@@ -238,7 +261,8 @@ template<uint8_t timerId> inline auto Cia::readCounter( ) -> uint16_t {
     return rTimer.counter;
 }
 
-auto Cia::timerAUnderflow() -> void {
+template<uint8_t model>
+auto Cia<model>::timerAUnderflow() -> void {
     if (timerA.control & 0x40)
         shiftOut();
 
@@ -253,7 +277,8 @@ auto Cia::timerAUnderflow() -> void {
     handleInterrupt( 1 );
 }
 
-auto Cia::timerBUnderflow() -> void {
+template<uint8_t model>
+auto Cia<model>::timerBUnderflow() -> void {
     timerB.toggle ^= 1;
 
     handleInterrupt( 2 );
@@ -263,25 +288,32 @@ auto Cia::timerBUnderflow() -> void {
     // next cycle like expected but the second bit in icr is not seted
     // note: acknowledge cycle is not the cycle when the read happened but the
     // cycle after
-    if ( (delay & CIA_ACK0) && !newVersion) {
-        icrTemp &= ~2;
-        icr &= ~2;
+
+    if constexpr (model == MOS_6526) {
+        if ((delay & CIA_ACK0) && !newVersion) {
+            icrTemp &= ~2;
+            icr &= ~2;
+        }
     }
 }
 
-auto Cia::setFlag() -> void {
+template<uint8_t model>
+auto Cia<model>::setFlag() -> void {
     intIncomming |= 0x10;
 }
 
-auto Cia::setNewVersion( bool state ) -> void {
+template<uint8_t model>
+auto Cia<model>::setNewVersion( bool state ) -> void {
     newVersion = state;
 }
 
-auto Cia::isNewVersion() -> bool {
+template<uint8_t model>
+auto Cia<model>::isNewVersion() -> bool {
     return newVersion;
 }
 
-auto Cia::shiftOut() -> void {
+template<uint8_t model>
+auto Cia<model>::shiftOut() -> void {
     //timer A defines speed for this
 
     if ( sdrLoaded && !sdrShiftCount)
@@ -299,7 +331,8 @@ auto Cia::shiftOut() -> void {
 
 // calling this function from extern assumes positive edge of CNT line.
 // this saves you the need to reset the CNT pin to trigger another transition.
-auto Cia::serialIn(bool spLine) -> void {
+template<uint8_t model>
+auto Cia<model>::serialIn(bool spLine) -> void {
     cnt = CIA_CNT0;
     delay |= CIA_CNT0;
     positiveCntTransition();
@@ -318,7 +351,8 @@ auto Cia::serialIn(bool spLine) -> void {
     }
 }
 
-auto Cia::setCNTAndSP(bool cntLine, bool spLine) -> void {
+template<uint8_t model>
+auto Cia<model>::setCNTAndSP(bool cntLine, bool spLine) -> void {
     if (cntLine == (!!cnt))
         // only by positive edge transition, state of SP line is recognized and timer steps (if activated)
         return;
@@ -329,7 +363,8 @@ auto Cia::setCNTAndSP(bool cntLine, bool spLine) -> void {
         cnt = 0;
 }
 
-auto Cia::positiveCntTransition( ) -> void {
+template<uint8_t model>
+auto Cia<model>::positiveCntTransition( ) -> void {
     if ((timerA.control & 0x21) == 0x21) {//timer A is driven by cnt pin transition
         delay &= ~CIA_STEP_TA1;
         delay |= CIA_STEP_TA0;
@@ -341,13 +376,14 @@ auto Cia::positiveCntTransition( ) -> void {
     }
 }
 
-auto Cia::switchSerialDirection(bool input) -> void {
+template<uint8_t model>
+auto Cia<model>::switchSerialDirection(bool input) -> void {
 
     if (input) {
-        if (!newVersion)
-            sdrForceFinish = (delay & CIA_CNT) != CIA_CNT;
-        else
+        if ((model == MOS_8520) || newVersion)
             sdrForceFinish = (delay & CIA_CNT_NEW) != CIA_CNT_NEW;
+        else
+            sdrForceFinish = (delay & CIA_CNT) != CIA_CNT;
 
         if (!sdrForceFinish) {
             if (sdrShiftCount != 2 && (delay & CIA_FLIP_CNT2 )  )
@@ -378,7 +414,8 @@ auto Cia::switchSerialDirection(bool input) -> void {
     sdrLoaded = false;
 }
 
-auto Cia::flipCnt() -> void {
+template<uint8_t model>
+auto Cia<model>::flipCnt() -> void {
     if (!sdrShiftCount)
         return;
 
@@ -405,7 +442,8 @@ auto Cia::flipCnt() -> void {
     }
 };
 
-auto Cia::serialize(Emulator::Serializer& s) -> void {
+template<uint8_t model>
+auto Cia<model>::serialize(Emulator::Serializer& s) -> void {
     s.integer( lines.pra );
     s.integer( lines.prb );
     s.integer( lines.ddra );
@@ -452,3 +490,31 @@ auto Cia::serialize(Emulator::Serializer& s) -> void {
     s.integer( todc );
     s.integer( tickCounter );
 }
+
+template Cia<MOS_6526>::Cia( uint8_t ident);
+template Cia<MOS_8520>::Cia( uint8_t ident);
+
+template auto Cia<MOS_6526>::reset() -> void;
+template auto Cia<MOS_8520>::reset() -> void;
+template auto Cia<MOS_6526>::clock() -> void;
+template auto Cia<MOS_8520>::clock() -> void;
+template auto Cia<MOS_6526>::read(unsigned pos) -> uint8_t;
+template auto Cia<MOS_8520>::read(unsigned pos) -> uint8_t;
+template auto Cia<MOS_6526>::write(unsigned pos, uint8_t value) -> void;
+template auto Cia<MOS_8520>::write(unsigned pos, uint8_t value) -> void;
+template auto Cia<MOS_6526>::tod() -> void;
+template auto Cia<MOS_8520>::tod() -> void;
+
+template auto Cia<MOS_6526>::serialIn(bool spLine) -> void;
+template auto Cia<MOS_8520>::serialIn(bool spLine) -> void;
+template auto Cia<MOS_6526>::setCNTAndSP(bool cntLine, bool spLine = false) -> void;
+template auto Cia<MOS_8520>::setCNTAndSP(bool cntLine, bool spLine = false) -> void;
+
+template auto Cia<MOS_6526>::setFlag() -> void;
+template auto Cia<MOS_8520>::setFlag() -> void;
+
+template auto Cia<MOS_6526>::serialize(Emulator::Serializer& s) -> void;
+template auto Cia<MOS_8520>::serialize(Emulator::Serializer& s) -> void;
+
+template auto Cia<MOS_6526>::setNewVersion( bool newVersion ) -> void;
+template auto Cia<MOS_6526>::isNewVersion() -> bool;

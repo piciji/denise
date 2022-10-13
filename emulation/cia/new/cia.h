@@ -6,8 +6,10 @@
 #include "../../tools/serializer.h"
 #include "../../tools/macros.h"
 
-enum CiaModel { MOS_6526, MOS_8520 };
+#define MOS_6526 0
+#define MOS_8520 1
 
+template<uint8_t model>
 struct Cia {
     Cia( uint8_t ident);
 
@@ -34,9 +36,9 @@ struct Cia {
     std::function<void (bool spLine, bool cntLine)> serialOut;
     std::function<void (bool state)> irqCall;
 
-    template<CiaModel model> auto read(unsigned pos) -> uint8_t;
-    template<CiaModel model> auto write(unsigned pos, uint8_t value) -> void;
-    template<CiaModel model> auto tod() -> void;
+    auto read(unsigned pos) -> uint8_t;
+    auto write(unsigned pos, uint8_t value) -> void;
+    auto tod() -> void;
     auto reset() -> void;
 
     auto clock() -> void;
@@ -64,7 +66,7 @@ protected:
         bool toggle;
     } timerA, timerB;
 
-    bool newVersion = true; // 6526a, 8520a instead of 6526, 8520
+    bool newVersion = true; // 6526a
     uint8_t icrTemp;
 
     uint8_t sdr;
@@ -99,6 +101,6 @@ protected:
     auto interruptControl() -> void;
     auto interruptControlOld() -> void;
     template<uint8_t timerId> inline auto readCounter( ) -> uint16_t;
-    template<CiaModel model> auto writeGeneric(unsigned pos, uint8_t value) -> void;
+    auto todIncrement() -> void;
 
 };

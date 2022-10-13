@@ -20,8 +20,12 @@ Blitter::Blitter(Agnus& agnus) : agnus(agnus), copper(agnus.copper) {
         switch (job) {
             case BLT_Start:
                 if (restartTimer == 3) { // recognition cycle after writing to blit size
-                    busy = true;
-                    copper.blitterBusyUpdate();
+                    if (agnus.model != Agnus::A1000) {
+                        busy = true;
+                        copper.blitterBusyUpdate();
+                    } else
+                        busy = false;
+
                     zero = true;
                     bltADatOld = 0;
                     bltBDatOld = 0;
@@ -36,6 +40,11 @@ Blitter::Blitter(Agnus& agnus) : agnus(agnus), copper(agnus.copper) {
                     }
 
                 } else if (agnus.canBlitterUseBus()) {
+                    if (!busy && (agnus.model == Agnus::A1000)) {
+                        busy = true;
+                        copper.blitterBusyUpdate();
+                    }
+
                     if (--restartTimer == 0) {
                         fillCarry = isFci();
                         oneDotPerLine = false;

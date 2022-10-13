@@ -8,7 +8,9 @@
 #include "../../interface.h"
 
 #include "keyboard/keyboard.h"
+#include "../../cia/new/cia.h"
 
+template<uint8_t model>
 struct Cia;
 
 namespace LIBAMI {
@@ -18,11 +20,11 @@ struct Agnus;
 
 struct Input {
 
-    Input(Agnus& agnus, Cia& cia1, Emulator::Interface* interface);
+    Input(Agnus& agnus, Cia<MOS_8520>& cia1, Emulator::Interface* interface);
 
     Emulator::Interface* interface;
     Agnus& agnus;
-    Cia& cia1;
+    Cia<MOS_8520>& cia1;
     ControlPort* controlPort1 = nullptr;
     ControlPort* controlPort2 = nullptr;
     Keyboard keyboard;
