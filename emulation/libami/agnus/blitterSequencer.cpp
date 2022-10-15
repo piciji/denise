@@ -72,6 +72,9 @@ auto Blitter::process() -> void {
         // e.g. 0 -> 0 -> shift out (never computes and writes D dat, never updates blit counter -> Blitter get stuck)
         // e.g. 1 -> 1 -> 0 -> shift out (computes D dat two times, decrements counter two times each period)
 
+        case 0:
+            startBlit(); break;
+
         case LLE:
             // when channel usage was changed while Blitter was running, we switch to slower low level emulation (LLE).
             // there is no reason to waste performance with LLE, when Blitter operates normally.
@@ -196,30 +199,26 @@ auto Blitter::process() -> void {
 
         // cycle 5
         _nF_mD_mSO(0x05) _nF_mD_mSO(0x25) _nF_mD_mSO(0x45) _nF_mD_mSO(0x65) _nF_mD_mSO(0x85) _nF_mD_mSO(0xa5) _nF_mD_mSO(0xc5) _nF_mD_mSO(0xe5)
-            blockMode<BLT_CALC>(); break;
+            blockMode<BLT_CALC | BLT_IDLE>();
+            startBlit(); break;
         _F_mD_mSO(0x05) _F_mD_mSO(0x25) _F_mD_mSO(0x45) _F_mD_mSO(0x65) _F_mD_mSO(0x85) _F_mD_mSO(0xa5) _F_mD_mSO(0xc5) _F_mD_mSO(0xe5)
-            blockMode<BLT_CALC | BLT_FILL>(); break;
+            blockMode<BLT_CALC | BLT_FILL | BLT_IDLE>();
+            startBlit(); break;
 
         _nF_mD_mSO(0x15) _nF_mD_mSO(0x35) _nF_mD_mSO(0x55) _nF_mD_mSO(0x75) _nF_mD_mSO(0x95) _nF_mD_mSO(0xb5) _nF_mD_mSO(0xd5) _nF_mD_mSO(0xf5)
-            blockMode<BLT_CALC, 6>(); break;
+            blockMode<BLT_CALC | BLT_IDLE, 6>();
+            startBlit(); break;
         _F_mD_mSO(0x15) _F_mD_mSO(0x35) _F_mD_mSO(0x55) _F_mD_mSO(0x75) _F_mD_mSO(0x95) _F_mD_mSO(0xb5) _F_mD_mSO(0xd5) _F_mD_mSO(0xf5)
-            blockMode<BLT_CALC | BLT_FILL, 6>(); break;
+            blockMode<BLT_CALC | BLT_FILL | BLT_IDLE, 6>();
+            startBlit(); break;
 
         // cycle 6
-        _mF_mD_mSO(0x16) _mF_mD_mSO(0x36) _mF_mD_mSO(0x56) _mF_mD_mSO(0x76) _mF_mD_mSO(0x96) _mF_mD_mSO(0xb6) _mF_mD_mSO(0xd6) _mF_mD_mSO(0xf6)
-            //if (agnus.aga()) {
-                // todo: for AGA send IRQ here
-                // busy = false;
-                // copper.blitterBusyUpdate();
-            //}
-
-            flags = (flags & 0xfff8) | 7; break; // don't need a free BUS
-
-        // cycle 7
-        _mF_nD_mSO(0x17) _mF_nD_mSO(0x37) _mF_nD_mSO(0x57) _mF_nD_mSO(0x77) _mF_nD_mSO(0x97) _mF_nD_mSO(0xb7) _mF_nD_mSO(0xd7) _mF_nD_mSO(0xf7)
-            blockMode<BLT_WriteD>(); break;
-        _mF_D_mSO(0x17) _mF_D_mSO(0x37) _mF_D_mSO(0x57) _mF_D_mSO(0x77) _mF_D_mSO(0x97) _mF_D_mSO(0xb7) _mF_D_mSO(0xd7) _mF_D_mSO(0xf7)
-            blockMode<BLT_WriteD | BLT_DESC>(); break;
+        _mF_nD_mSO(0x16) _mF_nD_mSO(0x36) _mF_nD_mSO(0x56) _mF_nD_mSO(0x76) _mF_nD_mSO(0x96) _mF_nD_mSO(0xb6) _mF_nD_mSO(0xd6) _mF_nD_mSO(0xf6)
+            blockMode<BLT_WriteD>();
+            startBlit(); break;
+        _mF_D_mSO(0x16) _mF_D_mSO(0x36) _mF_D_mSO(0x56) _mF_D_mSO(0x76) _mF_D_mSO(0x96) _mF_D_mSO(0xb6) _mF_D_mSO(0xd6) _mF_D_mSO(0xf6)
+            blockMode<BLT_WriteD | BLT_DESC>();
+            startBlit(); break;
 
 // line draw for a horizontal blit size of two
 
@@ -262,7 +261,7 @@ auto Blitter::process() -> void {
 
         // cycle 5
         _L_mSO(0x45) _L_mSO(0x55) _L_mSO(0x65) _L_mSO(0x75) _L_mSO(0xc5) _L_mSO(0xd5) _L_mSO(0xe5) _L_mSO(0xf5)
-            lineMode<BLT_FetchB | BLT_B_MOD, 5>(); break;
+            lineMode<BLT_FetchB | BLT_B_MOD, 6>(); break;
 
         // cycle 6
         _L_mSO(0x66) _L_mSO(0x76) _L_mSO(0xe6) _L_mSO(0xf6)

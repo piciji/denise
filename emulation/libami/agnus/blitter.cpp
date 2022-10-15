@@ -15,82 +15,75 @@ namespace LIBAMI {
 Blitter::Blitter(Agnus& agnus) : agnus(agnus), copper(agnus.copper) {
     preFill();
     prepareChannel();
-
-    callback = [&](uint8_t job, uint16_t data) {
-        switch (job) {
-            case BLT_Start:
-                if (restartTimer == 3) { // recognition cycle after writing to blit size
-                    if (agnus.model != Agnus::A1000) {
-                        busy = true;
-                        copper.blitterBusyUpdate();
-                    } else
-                        busy = false;
-
-                    zero = true;
-                    bltADatOld = 0;
-                    bltBDatOld = 0;
-                    curW = bltSizeW;
-                    curH = bltSizeH;
-                    restartTimer = 2;
-                    // when the cycle after writing to blit size is calculation of "Final D" or later, then last D will be written (if allowed),
-                    // otherwise a running Blit ends here. line draw always ends here.
-                    if ((flags & (0x400 | LLE)) || (flags & 7) < 6) {
-                        flags = 0;
-                        agnus.actions &= ~Agnus::ACT_BLITTER;
-                    }
-
-                } else if (agnus.canBlitterUseBus()) {
-                    if (!busy && (agnus.model == Agnus::A1000)) {
-                        busy = true;
-                        copper.blitterBusyUpdate();
-                    }
-
-                    if (--restartTimer == 0) {
-                        fillCarry = isFci();
-                        oneDotPerLine = false;
-
-                        if (bltcon1 & 1) { // line draw
-#ifndef START_WITH_STATE_MACHINE
-                            if (bltSizeW == 2)
-                                flags = ((bltcon0 >> 4) & 0xf0) | 0x400 | 1;
-                            else // start with LLE
-#endif
-                            {
-                                shifter = 1 | LINE_MODE;
-                                shifter |= ((bltcon0 >> 4) & 0xf0);
-                                shiftOut = false;
-                                skipB = curSkipB = hasSkipB();
-                                skipY = curSkipY = true; // always skipped for line draw
-                                flags = LLE;
-                            }
-                        } else {
-#ifdef START_WITH_STATE_MACHINE
-                            shifter = 1;
-                            shifter |= ((bltcon0 >> 4) & 0xf0);
-                            if (hasFillmodeIdle())
-                                shifter |= FILL_IDLE;
-                            shiftOut = false;
-                            skipB = curSkipB = hasSkipB();
-                            skipY = curSkipY = hasSkipY();
-                            flags = LLE;
-#else
-                            flags = ((bltcon0 >> 4) & 0xf0) | (desc << 9) | (isFillMode() << 8) | 1;
-#endif
-                        }
-
-                        agnus.actions |= Agnus::ACT_BLITTER;
-                        return;
-                    }
-                }
-
-                agnus.updateEvent<Agnus::EVENT_BLITTER>(BLT_Start, 1);
-                break;
-        }
-    };
-
-    agnus.addEvent<Agnus::EVENT_BLITTER>( &callback );
 }
 
+auto Blitter::prepareBlit() -> void {
+    zero = true;
+    busy = agnus.model != Agnus::A1000;
+    agnus.updateEventAndExecuteExistingBefore<Agnus::EVENT_ONE_CYCLE_DELAY>(Agnus::BLT_INIT, 2);
+}
+
+auto Blitter::initBlit() -> void {
+    bltADatOld = 0;
+    bltBDatOld = 0;
+    curW = bltSizeW;
+    curH = bltSizeH;
+    // when the cycle after writing to blit size is calculation of "Final D" or later, then last D will be written (if allowed),
+    // otherwise a running Blit ends here. line draw always ends here.
+    if ((flags & (LINE_MODE | LLE)) || (flags & 7) < 6)
+        flags = 0;
+
+    restartTimer = 2;
+    agnus.actions |= Agnus::ACT_BLITTER;
+}
+
+auto Blitter::startBlit() -> void {
+    if (restartTimer) {
+        if ( (agnus.busUsage == Agnus::BUS_USAGE_BLITTER) || agnus.canBlitterUseBus()) {
+            if ((restartTimer == 2) && (agnus.model == Agnus::A1000) ) { // if A1000 Blitter get this cycle
+                busy = true;
+                copper.blitterBusyUpdate();
+            }
+
+            if (--restartTimer == 0) {
+                fillCarry = isFci();
+                oneDotPerLine = false;
+
+                if (bltcon1 & 1) { // line draw
+#ifndef START_WITH_STATE_MACHINE
+                    if (bltSizeW == 2)
+                        flags = ((bltcon0 >> 4) & 0xf0) | LINE_MODE | 1;
+                    else // start with LLE
+#endif
+                    {
+                        shifter = 1 | LINE_MODE;
+                        shifter |= ((bltcon0 >> 4) & 0xf0);
+                        shiftOut = false;
+                        skipB = curSkipB = hasSkipB();
+                        skipY = curSkipY = true; // always skipped for line draw
+                        flags = LLE;
+                    }
+                } else {
+#ifdef START_WITH_STATE_MACHINE
+                    shifter = 1;
+                    shifter |= ((bltcon0 >> 4) & 0xf0);
+                    if (hasFillmodeIdle())
+                        shifter |= FILL_IDLE;
+                    shiftOut = false;
+                    skipB = curSkipB = hasSkipB();
+                    skipY = curSkipY = hasSkipY();
+                    flags = LLE;
+#else
+                    flags = ((bltcon0 >> 4) & 0xf0) | (desc << 9) | (isFillMode() << 8) | 1;
+#endif
+                }
+
+                agnus.actions |= Agnus::ACT_BLITTER;
+            }
+        }
+    } else if (!flags)
+        agnus.actions &= ~Agnus::ACT_BLITTER;
+}
 
 auto Blitter::preFill() -> void {
     uint16_t mask;
@@ -155,7 +148,7 @@ auto Blitter::activateLLEWhenNeeded(uint8_t bltRegister, uint16_t value) -> void
         if ((value & 0xf00) == (bltcon0 & 0xf00))
             return;
 
-        if (!(flags & 0x400) && cycle >= 5) // final D calc or final D write
+        if (!(flags & LINE_MODE) && cycle >= 5) // final D calc or final D write
             return;
 
         skipB = curSkipB = hasSkipB();
@@ -181,8 +174,8 @@ auto Blitter::activateLLEWhenNeeded(uint8_t bltRegister, uint16_t value) -> void
 
         } else if (value & 1) { // switch block to line
             if (cycle >= 5) {
-                if (cycle != 7)
-                    agnus.actions &= ~Agnus::ACT_BLITTER;
+                if (cycle == 5)
+                    flags = 0;
                 return;
             }
         }
@@ -224,6 +217,13 @@ auto Blitter::activateLLEWhenNeeded(uint8_t bltRegister, uint16_t value) -> void
     flags = LLE; // activate LLE
 }
 
+auto Blitter::finish() -> void {
+    // todo: signal IRQ to Paula here, Paula has another 2-4? CPU cycle delay from external
+    busy = false;
+    copper.blitterBusyUpdate();
+    agnus.updateEventAndExecuteExistingBefore<Agnus::EVENT_ONE_CYCLE_DELAY>(Agnus::BLT_BUSY_DELAY, 1);
+}
+
 auto Blitter::reset() -> void {
     bltcon0 = 0;
     bltcon1 = 0;
@@ -242,9 +242,12 @@ auto Blitter::setBltCon0(uint16_t value) -> void {
     if (flags == LLE)
         shifter |= STAGE_CHANGE;
     else {
-        if ((flags & 7) != 7) { // can not prevent Final D write. no check for line mode needed, because there is no cycle 7
-            flags &= ~0xf0;
-            flags |= ((bltcon0 >> 4) & 0xf0);
+        // line mode or non final D cycles switch to LLE, Final D write can't prevented anymore.
+        if ((flags & 7) == 5) { // Final D calc (block mode, cycle 5) could enable/disable Final D write.
+            if (!(flags & LINE_MODE)) {
+                flags &= ~0xf0;
+                flags |= ((bltcon0 >> 4) & 0xf0);
+            }
         }
     }
 }
@@ -328,8 +331,7 @@ auto Blitter::setBltSize(uint16_t value) -> void {
     if (!bltSizeH) bltSizeH = 1024;
     if (!bltSizeW) bltSizeW = 64;
 
-    restartTimer = 3;
-    agnus.updateEvent<Agnus::EVENT_BLITTER>(BLT_Start, 1);
+    prepareBlit();
 }
 
 auto Blitter::setBltSizeV(uint16_t value) -> void {
@@ -341,8 +343,7 @@ auto Blitter::setBltSizeH(uint16_t value) -> void {
     bltSizeW = value & 0x7ff;
     if (!bltSizeW) bltSizeW = 0x800;
 
-    restartTimer = 3;
-    agnus.updateEvent<Agnus::EVENT_BLITTER>(BLT_Start, 1);
+    prepareBlit();
 }
 
 auto Blitter::setBltCMod(uint16_t value) -> void {

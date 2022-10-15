@@ -21,13 +21,13 @@ struct Agnus : Emulator::Events<10> {
 
     enum { Unmapped, CHIP_MEM, SLOW_MEM, KICK_ROM, EXT_ROM, WOM, MMIO_CUSTOM, MMIO_CIA, MMIO_RTC };
 
-    enum { EVENT_KBD, EVENT_DMA_UPDATE, EVENT_BLITTER, EVENT_LEAVE_EMULATION, EVENT_POWER_SUPPLY, EVENT_BPL };
+    enum { EVENT_KBD, EVENT_ONE_CYCLE_DELAY, EVENT_LEAVE_EMULATION, EVENT_POWER_SUPPLY, EVENT_BPL };
 
     enum { DMA_None = 0, DMACON = 1,
            PTR_BLT_A_H, PTR_BLT_A_L, PTR_BLT_B_H, PTR_BLT_B_L, PTR_BLT_C_H, PTR_BLT_C_L, PTR_BLT_D_H, PTR_BLT_D_L,
            PTR_BPL_1_H, PTR_BPL_1_L, PTR_BPL_2_H, PTR_BPL_2_L, PTR_BPL_3_H, PTR_BPL_3_L,
            PTR_BPL_4_H, PTR_BPL_4_L, PTR_BPL_5_H, PTR_BPL_5_L, PTR_BPL_6_H, PTR_BPL_6_L,
-           PTR_REF,
+           PTR_REF, BLT_INIT, BLT_BUSY_DELAY,
     };
 
     enum { ACT_BLITTER = 1, ACT_COPPER = 2, ACT_BPL = 4 };
@@ -50,7 +50,7 @@ struct Agnus : Emulator::Events<10> {
     Cia<MOS_8520>& cia1;
     Cia<MOS_8520>& cia2;
 
-    Emulator::EventCallback dmaUpdate;
+    Emulator::EventCallback oneCycleDelay;
     Emulator::EventCallback leaveEmulation;
     Emulator::EventCallback countDownPowerSupply;
     Emulator::EventCallback bplCallback;
@@ -96,7 +96,6 @@ struct Agnus : Emulator::Events<10> {
     uint16_t dmaCon;
     uint16_t bplCon0;
     unsigned countWaitCycles;
-    unsigned resyncCounter;
     unsigned positionChanges;
     uint32_t rDmaPtr;
 

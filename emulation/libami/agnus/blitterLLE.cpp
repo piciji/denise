@@ -59,15 +59,15 @@ auto Blitter::stateMachine() -> void {
             if (curW == bltSizeW) { // first
                 if (shifter & AT_LEAST_ONE_SHIFTOUT) {
                     if (shifter & BLT_A) { // use A
-                        if (agnus.getActiveEvent<Agnus::EVENT_DMA_UPDATE>())
-                            agnus.forceEvent<Agnus::EVENT_DMA_UPDATE>();
+                        if ((agnus.getActiveEvent<Agnus::EVENT_ONE_CYCLE_DELAY>() & ~1) == Agnus::PTR_BLT_A_H)
+                            agnus.forceEvent<Agnus::EVENT_ONE_CYCLE_DELAY>();
 
                         if (bltcon1 & BLT_SIGN)
                             bltApt += (int16_t) bltBmod;
                         else
                             bltApt += (int16_t) bltAmod;
                     }
-                    // needs this at least one shiftout before ?
+                    // needs at least one shiftout before ?
                     if (0 > (int16_t) bltApt)   bltcon1 |= BLT_SIGN;
                     else                        bltcon1 &= ~BLT_SIGN;
                 }
@@ -78,8 +78,8 @@ auto Blitter::stateMachine() -> void {
                 oneDotPerLine = true;
             } else if ((curW + 1) == bltSizeW) { // second only (means "last" by typical horizontal size), never when horizontal size is one
                 if (shifter & BLT_C) {
-                    if (agnus.getActiveEvent<Agnus::EVENT_DMA_UPDATE>())
-                        agnus.forceEvent<Agnus::EVENT_DMA_UPDATE>();
+                    if ((agnus.getActiveEvent<Agnus::EVENT_ONE_CYCLE_DELAY>() & ~1) == Agnus::PTR_BLT_C_H)
+                        agnus.forceEvent<Agnus::EVENT_ONE_CYCLE_DELAY>();
 
                     if (bltcon1 & BLT_SUD) {
                         if (bltcon1 & BLT_AUL)  LINE_DECX
@@ -93,7 +93,7 @@ auto Blitter::stateMachine() -> void {
                 }
             }
         } else if (shifter & STAGE_B) { // B (optional) ... second bit in shifter can only be one, if channel B is in use, so no extra check needed
-            // for a blit size of two there is one dummy access and so on
+            // for a blit size of two or more there are dummy accesses
             agnus.fetchBlitterDmaNoBUSCheck<Agnus::PTR_BLT_B_H>(bltBpt, bltBdat);
 
             if (curW == 1) // last, or first if horizontal size is one
@@ -115,8 +115,8 @@ auto Blitter::stateMachine() -> void {
                     if (writeLineDot)
                         agnus.writeBlitterDmaNoBUSCheck(bltDpt, doff ? agnus.dataBus : bltDdat); // second or last ?
 
-                    if (agnus.getActiveEvent<Agnus::EVENT_DMA_UPDATE>())
-                        agnus.forceEvent<Agnus::EVENT_DMA_UPDATE>();
+                    if ((agnus.getActiveEvent<Agnus::EVENT_ONE_CYCLE_DELAY>() & ~1) == Agnus::PTR_BLT_C_H)
+                        agnus.forceEvent<Agnus::EVENT_ONE_CYCLE_DELAY>();
 
                     if (!(bltcon1 & BLT_SUD)) {
                         if (bltcon1 & BLT_AUL)
@@ -210,7 +210,7 @@ auto Blitter::stateMachine() -> void {
         if (skipB)
             shifter &= ~(STAGE_A | STAGE_B);
         else
-            // this is critical because more than one shifter bit can get into the pipeline, resulting in faster counting down of the horizontal counter.
+            // this is critical because more than one shifter bit can get into the pipeline, resulting in faster counting down.
             shifter = (shifter & ~(STAGE_B | STAGE_X)) | ((shifter & STAGE_A) << 1) | ((shifter & STAGE_A) << 2);
 
         curSkipB = skipB;
@@ -252,6 +252,11 @@ auto Blitter::stateMachine() -> void {
             skipY = hasSkipY();
 
         skipB = hasSkipB();
+
+        if (!curSkipY && skipY)
+            shiftOut = false;
+        else
+            shiftOut = skipY ? shifter & STAGE_X : shifter & STAGE_Y;
     }
 
     if (shiftOut) {
@@ -260,20 +265,14 @@ auto Blitter::stateMachine() -> void {
             curW = bltSizeW;
 
             if (!--curH) {
-
                 if (bltcon1 & 1) {
-                    agnus.actions &= ~Agnus::ACT_BLITTER;
-                    // todo signal IRQ to Paula here, Paula has another 2-4? CPU cycle delay from external
-                    busy = false;
-                    copper.blitterBusyUpdate();
+                    flags = 0;
+                    finish();
                 } else {
                     flags = ((bltcon0 >> 4) & 0xf0) | (desc << 9) | (isFillMode() << 8) | 0xd; // 5 + shift out
 
-                    //if (!agnus.aga() || !(bltcon0 & 0x100) ) { // OCS, ECS and AGA (only, if there is no D write)
-                        // todo: signal IRQ to Paula here, Paula has another 2-4? CPU cycle delay from external
-                        busy = false;
-                        copper.blitterBusyUpdate();
-                    //}
+                    if (!agnus.aga() || !(bltcon0 & 0x100) ) // OCS, ECS and AGA (only, if there is no D write)
+                        finish();
                 }
             }
         }

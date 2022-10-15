@@ -16,17 +16,13 @@ struct Copper;
 
 struct Blitter {
 
-    using EventCallback = std::function<void(uint8_t, uint16_t)>;
-    enum { BLT_Start };
-
     enum { BLT_NONE = 0, BLT_FetchA = 1, BLT_FetchB = 2, BLT_FetchC = 4, BLT_WriteD = 8,
-            BLT_ShiftA = 16, BLT_ShiftB = 32, BLT_CALC = 64, BLT_FILL = 128,
-            BLT_NEXT = 256, BLT_DESC = 512,
-            BLT_BH = 1024, BLT_LINE_X = 2048, BLT_LINE_Y = 4096, BLT_B_MOD = 8192, BLT_UPDATE_SIGN = 16384 };
+            BLT_ShiftA = 0x10, BLT_ShiftB = 0x20, BLT_CALC = 0x40, BLT_FILL = 0x80,
+            BLT_NEXT = 0x100, BLT_DESC = 0x200,
+            BLT_BH = 0x400, BLT_LINE_X = 0x800, BLT_LINE_Y = 0x1000, BLT_B_MOD = 0x2000, BLT_UPDATE_SIGN = 0x4000, BLT_IDLE = 0x8000 };
 
     Blitter(Agnus& agnus);
 
-    EventCallback callback;
     Agnus& agnus;
     Copper& copper;
 
@@ -94,6 +90,10 @@ struct Blitter {
     auto prepareChannel() -> void;
     auto process() -> void;
     auto reset() -> void;
+    auto prepareBlit() -> void;
+    auto initBlit() -> void;
+    auto startBlit() -> void;
+    auto finish() -> void;
     template<uint16_t jobs, uint8_t nextCycle = 0> auto blockMode() -> void;
     template<uint16_t jobs, uint8_t nextCycle = 0> auto lineMode() -> void;
 

@@ -75,43 +75,43 @@ template<uint8_t pos, bool addMod> auto Agnus::fetchPlane() -> void {
         bpl1pt += 2;
         if constexpr (addMod) bpl1pt += bpl1Mod;
         bpl1pt &= chipMemMask;
-        if ((getActiveEvent<EVENT_DMA_UPDATE>() & ~1) == PTR_BPL_1_H)
-            setEventInactive<EVENT_DMA_UPDATE>();
+        if ((getActiveEvent<EVENT_ONE_CYCLE_DELAY>() & ~1) == PTR_BPL_1_H)
+            setEventInactive<EVENT_ONE_CYCLE_DELAY>();
     } else if constexpr ( pos == 2) {
         plane2dat = _swapWord(*(uint16_t*) (chipMem + bpl2pt));
         bpl2pt += 2;
         if constexpr (addMod) bpl2pt += bpl2Mod;
         bpl2pt &= chipMemMask;
-        if ((getActiveEvent<EVENT_DMA_UPDATE>() & ~1) == PTR_BPL_2_H)
-            setEventInactive<EVENT_DMA_UPDATE>();
+        if ((getActiveEvent<EVENT_ONE_CYCLE_DELAY>() & ~1) == PTR_BPL_2_H)
+            setEventInactive<EVENT_ONE_CYCLE_DELAY>();
     } else if constexpr ( pos == 3) {
         plane3dat = _swapWord(*(uint16_t*) (chipMem + bpl3pt));
         bpl3pt += 2;
         if constexpr (addMod) bpl3pt += bpl1Mod;
         bpl3pt &= chipMemMask;
-        if ((getActiveEvent<EVENT_DMA_UPDATE>() & ~1) == PTR_BPL_3_H)
-            setEventInactive<EVENT_DMA_UPDATE>();
+        if ((getActiveEvent<EVENT_ONE_CYCLE_DELAY>() & ~1) == PTR_BPL_3_H)
+            setEventInactive<EVENT_ONE_CYCLE_DELAY>();
     } else if constexpr ( pos == 4) {
         plane4dat = _swapWord(*(uint16_t*) (chipMem + bpl4pt));
         bpl4pt += 2;
         if constexpr (addMod) bpl4pt += bpl2Mod;
         bpl4pt &= chipMemMask;
-        if ((getActiveEvent<EVENT_DMA_UPDATE>() & ~1) == PTR_BPL_4_H)
-            setEventInactive<EVENT_DMA_UPDATE>();
+        if ((getActiveEvent<EVENT_ONE_CYCLE_DELAY>() & ~1) == PTR_BPL_4_H)
+            setEventInactive<EVENT_ONE_CYCLE_DELAY>();
     } else if constexpr ( pos == 5) {
         plane5dat = _swapWord(*(uint16_t*) (chipMem + bpl5pt));
         bpl5pt += 2;
         if constexpr (addMod) bpl5pt += bpl1Mod;
         bpl5pt &= chipMemMask;
-        if ((getActiveEvent<EVENT_DMA_UPDATE>() & ~1) == PTR_BPL_5_H)
-            setEventInactive<EVENT_DMA_UPDATE>();
+        if ((getActiveEvent<EVENT_ONE_CYCLE_DELAY>() & ~1) == PTR_BPL_5_H)
+            setEventInactive<EVENT_ONE_CYCLE_DELAY>();
     } else if constexpr ( pos == 6) {
         plane6dat = _swapWord(*(uint16_t*) (chipMem + bpl6pt));
         bpl6pt += 2;
         if constexpr (addMod) bpl6pt += bpl2Mod;
         bpl6pt &= chipMemMask;
-        if ((getActiveEvent<EVENT_DMA_UPDATE>() & ~1) == PTR_BPL_6_H)
-            setEventInactive<EVENT_DMA_UPDATE>();
+        if ((getActiveEvent<EVENT_ONE_CYCLE_DELAY>() & ~1) == PTR_BPL_6_H)
+            setEventInactive<EVENT_ONE_CYCLE_DELAY>();
     }
 
     busUsage = BUS_USAGE_BPL;

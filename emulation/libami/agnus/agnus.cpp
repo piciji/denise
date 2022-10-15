@@ -13,7 +13,7 @@ namespace LIBAMI {
 Agnus::Agnus(Cpu& cpu, Blitter& blitter, Copper& copper, Cia<MOS_8520>& cia1, Cia<MOS_8520>& cia2, Input& input)
 : cpu(cpu), blitter(blitter), copper(copper), cia1(cia1), cia2(cia2), input(input) {
 
-    dmaUpdate = [&](uint8_t job, uint16_t data) {
+    oneCycleDelay = [&](uint8_t job, uint16_t data) {
 
         switch (job) {
             case PTR_BLT_A_H: blitter.setBltAptH(data); break;
@@ -38,10 +38,12 @@ Agnus::Agnus(Cpu& cpu, Blitter& blitter, Copper& copper, Cia<MOS_8520>& cia1, Ci
             case PTR_BPL_6_H: setBpl6ptH(data); break;
             case PTR_BPL_6_L: setBpl6ptL(data); break;
             case DMACON: dmaControl(data); break;
+            case BLT_INIT: blitter.initBlit(); break;
+            case BLT_BUSY_DELAY: break;
         }
     };
 
-    addEvent<Agnus::EVENT_DMA_UPDATE>( &dmaUpdate );
+    addEvent<Agnus::EVENT_ONE_CYCLE_DELAY>( &oneCycleDelay );
 
     leaveEmulation = [&](uint8_t job, uint16_t data) {
         // When a frame is fully calculated, control is given back to the user interface.
@@ -89,7 +91,7 @@ auto Agnus::reset(bool softReset) -> void {
     auto resetDelay = getEventDelay<EVENT_KBD>();
     clearEvents();
 
-    hPos = 5; // 4 + 1 (ahead)
+    hPos = 4;
     lol = false;
     lolToggle = ntsc;
     lof = false;
@@ -228,27 +230,27 @@ auto Agnus::waitKeyboardReset() -> void {
 
 auto Agnus::addWaitstatesToCPU() -> void {
 
-    countWaitCycles = 0;
     while (busUsage != BUS_FREE) {
         dmaCycle();
         countWaitCycles++;
     }
 
-    // busUsage = BUS_USAGE_CPU;
+    countWaitCycles = 0;
+    busUsage = BUS_USAGE_CPU;
 }
 
 inline auto Agnus::dmaCycle() -> void {
+    processEvents();
     busUsage = BUS_FREE;
 
-    switch(hPos) {
+    switch(++hPos) {
         case 1:
             if (ERSY) {
                 hPos = 0; // need external sync to proceed
-                
-                if (++resyncCounter == 1000000) {
-                    resyncCounter = 0;
-                    system->leaveEmulation = true; // sync up user interface
-                }
+
+                if (!getActiveEvent<EVENT_LEAVE_EMULATION>())
+                    updateEvent<EVENT_LEAVE_EMULATION>(~0, 150000);
+
             } else {
                 if (bplActive || bplQueue)
                     actions |= ACT_BPL;
@@ -293,8 +295,8 @@ inline auto Agnus::dmaCycle() -> void {
                 rDmaPtr += 0x200; // RAS and CAS were replaced. To increase RAS, the "adder" must be moved 8 bits
                 rDmaPtr &= chipMemMask;
             }
-            if ((getActiveEvent<EVENT_DMA_UPDATE>() ) == PTR_REF)
-                setEventInactive<EVENT_DMA_UPDATE>(); // ignore it, because was updated last cycle
+            if ((getActiveEvent<EVENT_ONE_CYCLE_DELAY>() ) == PTR_REF)
+                setEventInactive<EVENT_ONE_CYCLE_DELAY>(); // ignore it, because was updated last cycle
 
             busUsage = BUS_USAGE_REFRESH;
             break;
@@ -375,10 +377,6 @@ inline auto Agnus::dmaCycle() -> void {
             blitter.process();
     }
 
-    processEvents();
-    hPos++; // reading V(H)POS get the already incremented (pointing to next cycle) position, Copper uses the current position for comparisons.
-    // to avoid another switch/case we don't update hPos wraparounds or vPos incrementations now. if VPOS is readed, we temporarly do these steps.
-
     if (eClockCycle == clock) {
         // CIA accesses must be tuned to E-Clock. One CIA BUS cycle corresponds to 2 + [6,8,10,12,14] + 2 CPU cycles.
         // The programming is coordinated in such a way that the CIA is first driven forward and then the register access takes place.
@@ -391,12 +389,13 @@ inline auto Agnus::dmaCycle() -> void {
 }
 
 auto Agnus::POSR(bool vhpos) -> uint16_t {
-    auto h = hPos;
+    auto h = hPos + 1;
     auto v = vPos;
     auto _lol = lol;
     auto _lof = lof;
 
-    // for performance reasons following is calculated with beginning of next cycle, so we do it temporarly
+    // reading V(H)POS get the already incremented (pointing to next cycle) position, Copper uses the current position for comparisons.
+    // for performance reasons following is calculated with beginning of next cycle, so we do it here temporarly
     if (h == 1) {
         if (ERSY) h = 0;
     } else if (h == 2) {
@@ -684,8 +683,8 @@ template<uint8_t ptrEvent> auto Agnus::fetchBlitterDma(uint32_t adr, uint16_t& r
     dataBus = result;
 
     // if a modified pointer is used in the next cycle, the change is ignored.
-    if ((getActiveEvent<EVENT_DMA_UPDATE>() & ~1) == ptrEvent)
-        setEventInactive<EVENT_DMA_UPDATE>();
+    if ((getActiveEvent<EVENT_ONE_CYCLE_DELAY>() & ~1) == ptrEvent)
+        setEventInactive<EVENT_ONE_CYCLE_DELAY>();
 
     return true;
 }
@@ -700,8 +699,8 @@ auto Agnus::writeBlitterDma(uint32_t adr, uint16_t value) -> bool {
 
     dataBus = value;
 
-    if ((getActiveEvent<EVENT_DMA_UPDATE>() & ~1) == PTR_BLT_D_H)
-        setEventInactive<EVENT_DMA_UPDATE>();
+    if ((getActiveEvent<EVENT_ONE_CYCLE_DELAY>() & ~1) == PTR_BLT_D_H)
+        setEventInactive<EVENT_ONE_CYCLE_DELAY>();
 
     return true;
 }
@@ -713,8 +712,8 @@ template<uint8_t ptrEvent> auto Agnus::fetchBlitterDmaNoBUSCheck(uint32_t adr, u
 
     dataBus = result;
 
-    if ((getActiveEvent<EVENT_DMA_UPDATE>() & ~1) == ptrEvent)
-        setEventInactive<EVENT_DMA_UPDATE>();
+    if ((getActiveEvent<EVENT_ONE_CYCLE_DELAY>() & ~1) == ptrEvent)
+        setEventInactive<EVENT_ONE_CYCLE_DELAY>();
 }
 
 auto Agnus::writeBlitterDmaNoBUSCheck(uint32_t adr, uint16_t value) -> void {
@@ -724,8 +723,8 @@ auto Agnus::writeBlitterDmaNoBUSCheck(uint32_t adr, uint16_t value) -> void {
 
     dataBus = value;
 
-    if ((getActiveEvent<EVENT_DMA_UPDATE>() & ~1) == PTR_BLT_D_H)
-        setEventInactive<EVENT_DMA_UPDATE>();
+    if ((getActiveEvent<EVENT_ONE_CYCLE_DELAY>() & ~1) == PTR_BLT_D_H)
+        setEventInactive<EVENT_ONE_CYCLE_DELAY>();
 }
 
 auto Agnus::setMemory(unsigned typeId, unsigned size) -> void {
