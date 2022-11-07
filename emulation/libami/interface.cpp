@@ -28,7 +28,7 @@ auto Interface::prepareFirmware() -> void {
 
 auto Interface::prepareModels() -> void {
 
-    models.push_back({ModelIdSystem, "Modell", Model::Type::Radio, Model::Purpose::Misc, 1, {0, 1}, {"A1000", "A500"} });
+    models.push_back({ModelIdSystem, "System", Model::Type::Radio, Model::Purpose::Misc, 1, {0, 2}, {"A1000", "A500 (OCS)", "A500 (ECS Agnus)"} });
     models.push_back({ModelIdLowPassFilter, "Low Pass Filter", Model::Type::Switch, Model::Purpose::AudioSettings, 1}); //0 - off, 1 - on, means software decides
 
 }
@@ -391,6 +391,11 @@ auto Interface::sendKeyChange(bool pressed, Device::Input* input) -> void {
 
 auto Interface::informAboutKeyUpdate() -> void {
     system->informAboutKeyUpdate();
+}
+
+auto Interface::setLineCallback(bool state, unsigned scanline) -> void {
+    system->denise.lineCallback.use = state;
+    system->denise.lineCallback.line = scanline;
 }
 
 }

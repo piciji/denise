@@ -14,7 +14,8 @@ cia2(2),
 cpu(agnus),
 blitter(agnus),
 copper(agnus),
-agnus( cpu, blitter, copper, cia1, cia2, input ),
+denise(agnus),
+agnus(cpu, denise, blitter, copper, cia1, cia2, input),
 input(agnus, cia1, interface) {
 
     this->interface = interface;
@@ -51,6 +52,28 @@ input(agnus, cia1, interface) {
         if ( port == Cia<MOS_8520>::PORTA ) {
             cia2.setCNTAndSP( lines->ioa & 2, lines->ioa & 1 );
         }
+    };
+
+    crop.monitorBorderCallback = [this](unsigned& top, unsigned& bottom, unsigned& left, unsigned& right) {
+        left = 21; // 384 CRT monitor, 342 CRT TV
+        right = 21;
+
+        top = agnus.ntsc ? 5 : 7;
+        bottom = agnus.ntsc ? 1 : 14;
+
+        if (denise.hiresFrame) {
+            left <<= 1;
+            right <<= 1;
+        }
+        if (denise.useInterlace & 0x80) {
+            top <<= 1;
+            bottom <<= 1;
+        }
+    };
+
+    crop.removeBorderCallback = [this](unsigned& top, unsigned& bottom, unsigned& left, unsigned& right) {
+        left = denise.crop.left;
+        right = denise.crop.right;
     };
 }
 
@@ -121,6 +144,44 @@ auto System::setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> void 
     }
 }
 
+auto System::videoRefresh( uint16_t* frame, unsigned width, unsigned height, unsigned linePitch, uint8_t interlace) -> void {
+    if (!runAhead.pos && frame) {
+        crop.apply( frame, width, height, linePitch );
+        // for lightguns
+        // input.drawCursor();
+    }
 
+    if (fastForward.config & (unsigned)Interface::FastForward::NoVideoOut)
+        frame = nullptr;
+
+    else if (fastForward.renderNext) {
+        fastForward.renderNext = false;
+        denise.disableSequencer( fastForward.config & (unsigned)Interface::FastForward::NoVideoSequencer );
+
+    } else if (fastForward.config & (unsigned)Interface::FastForward::ReduceVideoOutput) {
+        frame = nullptr;
+
+        if ((++fastForward.frameCounter & 15) == 0) {
+            fastForward.frameCounter = 0;
+            denise.disableSequencer( false );
+            fastForward.renderNext = true;
+        }
+    }
+
+    if (!runAhead.pos) {
+        this->interface->videoRefresh(frame, width, height, linePitch, interlace);
+    }
+
+    leaveEmulation = true;
+}
+
+auto System::videoMidScreenCallback() -> void {
+    if (runAhead.pos)
+        return;
+
+  //  input.drawCursor(true);
+
+    interface->midScreenCallback();
+}
 
 }

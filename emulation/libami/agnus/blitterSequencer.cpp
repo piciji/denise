@@ -73,7 +73,8 @@ auto Blitter::process() -> void {
         // e.g. 1 -> 1 -> 0 -> shift out (computes D dat two times, decrements counter two times each period)
 
         case 0:
-            startBlit(); break;
+            startBlit();
+            break;
 
         case LLE:
             // when channel usage was changed while Blitter was running, we switch to slower low level emulation (LLE).

@@ -5,34 +5,35 @@
 #include "../../tools/events.h"
 #include "../../tools/powersupply.h"
 
+// todo: Bitplane DMA conflicts
+
 #define FREQUENCY_PAL   28375160
 #define FREQUENCY_NTSC  28636360
 
 namespace LIBAMI {
 
 struct Cpu;
+struct Denise;
 struct Blitter;
 struct Copper;
 struct Input;
 
 struct Agnus : Emulator::Events<10> {
 
-    Agnus(Cpu& cpu, Blitter& blitter, Copper& copper, Cia<MOS_8520>& cia1, Cia<MOS_8520>& cia2, Input& input);
+    Agnus(Cpu& cpu, Denise& denise, Blitter& blitter, Copper& copper, Cia<MOS_8520>& cia1, Cia<MOS_8520>& cia2, Input& input);
 
     enum { Unmapped, CHIP_MEM, SLOW_MEM, KICK_ROM, EXT_ROM, WOM, MMIO_CUSTOM, MMIO_CIA, MMIO_RTC };
 
-    enum { EVENT_KBD, EVENT_ONE_CYCLE_DELAY, EVENT_LEAVE_EMULATION, EVENT_POWER_SUPPLY, EVENT_BPL };
+    enum { EVENT_KBD, EVENT_ONE_CYCLE_DELAY, EVENT_LEAVE_EMULATION, EVENT_POWER_SUPPLY };
 
     enum { DMA_None = 0, DMACON = 1,
            PTR_BLT_A_H, PTR_BLT_A_L, PTR_BLT_B_H, PTR_BLT_B_L, PTR_BLT_C_H, PTR_BLT_C_L, PTR_BLT_D_H, PTR_BLT_D_L,
-           PTR_BPL_1_H, PTR_BPL_1_L, PTR_BPL_2_H, PTR_BPL_2_L, PTR_BPL_3_H, PTR_BPL_3_L,
-           PTR_BPL_4_H, PTR_BPL_4_L, PTR_BPL_5_H, PTR_BPL_5_L, PTR_BPL_6_H, PTR_BPL_6_L,
-           PTR_REF, BLT_INIT, BLT_BUSY_DELAY,
+           BLT_INIT, BLT_BUSY_DELAY,
     };
 
-    enum { ACT_BLITTER = 1, ACT_COPPER = 2, ACT_BPL = 4 };
+    enum { ACT_BLITTER = 1, ACT_COPPER = 2, ACT_BPL = 4, ACT_SPRITE = 8 };
 
-    enum { BUS_FREE, BUS_USAGE_BPL, BUS_USAGE_BLITTER, BUS_USAGE_COPPER, BUS_USAGE_CPU, BUS_USAGE_REFRESH, BUS_USAGE_AUDIO };
+    enum { BUS_FREE, BUS_USAGE_BPL, BUS_USAGE_SPRITE, BUS_USAGE_BLITTER, BUS_USAGE_COPPER, BUS_USAGE_CPU, BUS_USAGE_REFRESH, BUS_USAGE_AUDIO };
 
     enum { PAL, NTSC };
 
@@ -43,6 +44,7 @@ struct Agnus : Emulator::Events<10> {
     enum Model { A1000, A500 } model;
 
     Cpu& cpu;
+    Denise& denise;
     Blitter& blitter;
     Copper& copper;
     Input& input;
@@ -53,13 +55,31 @@ struct Agnus : Emulator::Events<10> {
     Emulator::EventCallback oneCycleDelay;
     Emulator::EventCallback leaveEmulation;
     Emulator::EventCallback countDownPowerSupply;
-    Emulator::EventCallback bplCallback;
-    uint32_t actions = 0;
+    uint8_t actions = 0;
 
     uint8_t mapper[256] = {0};
     uint8_t busUsage;
     uint8_t hPos;
     uint16_t vPos;
+    uint16_t vStart;
+    uint16_t vStop;
+
+    bool vBlankEnd;
+    bool vBlankEndNext;
+    bool vBlank;
+    bool vBlankStart;
+    int sprStartLimit;
+    uint16_t beamCon;
+
+    struct Sprite {
+        uint32_t ptr;
+        uint16_t pos;
+        uint16_t ctl;
+        uint16_t vStart;
+        uint16_t vStop;
+        bool fetchData;
+        uint8_t enable;
+    } sprites[8];
 
     uint8_t ddfStart;
     uint8_t ddfStop;
@@ -71,15 +91,8 @@ struct Agnus : Emulator::Events<10> {
     uint32_t bpl5pt;
     uint32_t bpl6pt;
 
-    uint16_t bpl1Mod;
-    uint16_t bpl2Mod;
-
-    uint16_t plane1dat;
-    uint16_t plane2dat;
-    uint16_t plane3dat;
-    uint16_t plane4dat;
-    uint16_t plane5dat;
-    uint16_t plane6dat;
+    int16_t bpl1Mod;
+    int16_t bpl2Mod;
 
     uint8_t* chipMem = nullptr;
     unsigned chipMemMask = 0;
@@ -94,9 +107,9 @@ struct Agnus : Emulator::Events<10> {
     bool useRTC = false;
     uint16_t dataBus = 0;
     uint16_t dmaCon;
+    uint16_t dmaConImm;
     uint16_t bplCon0;
     unsigned countWaitCycles;
-    unsigned positionChanges;
     uint32_t rDmaPtr;
 
     unsigned eClockCycle;
@@ -110,20 +123,26 @@ struct Agnus : Emulator::Events<10> {
     bool shortLineBefore;
     bool womLock = false;
     uint8_t resetFromKeyboard = 0;
-    bool bplFetchPossible;
-    bool bplActive;
     bool stopFetching;
     uint16_t bplCycle;
     uint32_t bplQueue;
+    uint32_t sprQueue;
+    uint8_t ddfStartMatch;
+    bool harddis;
+    bool ddfEnableBefore;
+    uint8_t bplState;
+    bool hardStop;
+
+    bool diwFlipFlop;
 
     auto ecsAndHigher() -> bool const { return mode & (Mode::ECS | Mode::AGA); }
     auto ecs() -> bool const { return mode == Mode::ECS; }
     auto aga() -> bool const { return mode == Mode::AGA; }
 
-    auto useSpriteDMA() -> bool const { return (dmaCon & 0x220) == 0x220; }
+    auto useSpriteDMA() -> bool const { return (dmaConImm & 0x220) == 0x220; }
     auto useBlitterDMA() -> bool const { return (dmaCon & 0x240) == 0x240; }
     auto useCopperDMA() -> bool const { return (dmaCon & 0x280) == 0x280; }
-    auto useBitplaneDMA() -> bool const { return (dmaCon & 0x300) == 0x300; }
+    auto useBitplaneDMA() -> bool const { return (dmaConImm & 0x300) == 0x300; }
     auto blitterNasty() -> bool const { return dmaCon & 0x400; }
 
     auto reset(bool softReset) -> void;
@@ -182,9 +201,20 @@ struct Agnus : Emulator::Events<10> {
 
     auto waitKeyboardReset() -> void;
     template<bool onlyProgressQueue = false> auto fetchPlanes() -> void;
-    auto updateDdfEvent(uint8_t hComp) -> void;
     template<uint8_t pos, bool addMod> auto fetchPlane() -> void;
+    template<uint8_t num, bool first> auto spriteControl() -> void;
+    auto bplStartStop() -> void;
+    auto fetchSprites() -> void;
+    template<uint8_t nr, uint8_t target> auto fetchSprite() -> void;
+    template<uint8_t nr> auto SPRxCTL() -> void;
 
+    template<uint8_t num> auto setSpr1ptH(uint16_t value) -> void;
+    template<uint8_t num> auto setSpr1ptL(uint16_t value) -> void;
+    auto updateHarddis() -> void;
+    auto isEquLine() -> bool;
+    auto updateVdiw() -> void;
+    auto setDiwStrt(uint16_t value) -> void;
+    auto setDiwStop(uint16_t value) -> void;
 };
 
 }

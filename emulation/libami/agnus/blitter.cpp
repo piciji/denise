@@ -233,6 +233,7 @@ auto Blitter::reset() -> void {
     bltBDatOld = 0;
     desc = false;
     doff = false;
+    flags = 0;
 }
 
 auto Blitter::setBltCon0(uint16_t value) -> void {

@@ -53,6 +53,22 @@ struct Events {
     }
 
     template<uint8_t Channel>
+    auto updateEventDelayOrNew(uint8_t job, unsigned delay, uint16_t data = 0) -> void {
+        delay += clock;
+
+        Event& event = eventStore[Channel];
+        event.clock = delay;
+
+        if (!event.job) {
+            event.job = job;
+            event.data = data;
+        }
+
+        if (delay < nextClock)
+            nextClock = delay;
+    }
+
+    template<uint8_t Channel>
     auto updateEventAndExecuteExistingBefore(uint8_t job, unsigned delay, uint16_t data = 0) -> void {
         Event& event = eventStore[Channel];
 
@@ -76,6 +92,12 @@ struct Events {
     auto getActiveEvent() -> uint8_t {
         Event& event = eventStore[Channel];
         return event.job;
+    }
+
+    template<uint8_t Channel>
+    auto getActiveEventData() -> uint8_t {
+        Event& event = eventStore[Channel];
+        return event.job ? event.data : 0;
     }
 
     template<uint8_t Channel>

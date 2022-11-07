@@ -307,7 +307,7 @@ struct Interface {
         virtual auto jitPoll(int delay) -> bool { return false; }
         virtual auto inputPoll(uint16_t, uint16_t) -> int16_t { return 0; }
 		virtual auto videoRefresh8(const uint8_t*, unsigned, unsigned, unsigned) -> void {}
-        virtual auto videoRefresh(const uint16_t*, unsigned, unsigned, unsigned) -> void {}		
+        virtual auto videoRefresh(const uint16_t*, unsigned, unsigned, unsigned, uint8_t) -> void {}
         virtual auto audioSample(int16_t, int16_t) -> void {}
         virtual auto audioFlush() -> void {}
         virtual auto readMedia(Media*, uint8_t*, unsigned, unsigned) -> unsigned { return 0; }
@@ -345,8 +345,8 @@ struct Interface {
     }
 
     //return color format is native
-    auto videoRefresh(const uint16_t* frame, unsigned width, unsigned height, unsigned linePitch) -> void {
-        bind->videoRefresh(frame, width, height, linePitch);
+    auto videoRefresh(const uint16_t* frame, unsigned width, unsigned height, unsigned linePitch, uint8_t interlace) -> void {
+        bind->videoRefresh(frame, width, height, linePitch, interlace);
     }
 	
 	auto videoRefresh8(const uint8_t* frame, unsigned width, unsigned height, unsigned linePitch) -> void {

@@ -10,8 +10,8 @@
 
 namespace LIBAMI {
 
-Agnus::Agnus(Cpu& cpu, Blitter& blitter, Copper& copper, Cia<MOS_8520>& cia1, Cia<MOS_8520>& cia2, Input& input)
-: cpu(cpu), blitter(blitter), copper(copper), cia1(cia1), cia2(cia2), input(input) {
+Agnus::Agnus(Cpu& cpu, Denise& denise, Blitter& blitter, Copper& copper, Cia<MOS_8520>& cia1, Cia<MOS_8520>& cia2, Input& input)
+: cpu(cpu), denise(denise), blitter(blitter), copper(copper), cia1(cia1), cia2(cia2), input(input) {
 
     oneCycleDelay = [&](uint8_t job, uint16_t data) {
 
@@ -24,20 +24,7 @@ Agnus::Agnus(Cpu& cpu, Blitter& blitter, Copper& copper, Cia<MOS_8520>& cia1, Ci
             case PTR_BLT_C_L: blitter.setBltCptL(data); break;
             case PTR_BLT_D_H: blitter.setBltDptH(data); break;
             case PTR_BLT_D_L: blitter.setBltDptL(data); break;
-            case PTR_REF: setRefPtr(data); break;
-            case PTR_BPL_1_H: setBpl1ptH(data); break;
-            case PTR_BPL_1_L: setBpl1ptL(data); break;
-            case PTR_BPL_2_H: setBpl2ptH(data); break;
-            case PTR_BPL_2_L: setBpl2ptL(data); break;
-            case PTR_BPL_3_H: setBpl3ptH(data); break;
-            case PTR_BPL_3_L: setBpl3ptL(data); break;
-            case PTR_BPL_4_H: setBpl4ptH(data); break;
-            case PTR_BPL_4_L: setBpl4ptL(data); break;
-            case PTR_BPL_5_H: setBpl5ptH(data); break;
-            case PTR_BPL_5_L: setBpl5ptL(data); break;
-            case PTR_BPL_6_H: setBpl6ptH(data); break;
-            case PTR_BPL_6_L: setBpl6ptL(data); break;
-            case DMACON: dmaControl(data); break;
+            case DMACON: dmaCon = dmaConImm; break;
             case BLT_INIT: blitter.initBlit(); break;
             case BLT_BUSY_DELAY: break;
         }
@@ -62,29 +49,14 @@ Agnus::Agnus(Cpu& cpu, Blitter& blitter, Copper& copper, Cia<MOS_8520>& cia1, Ci
 
     addEvent<Agnus::EVENT_POWER_SUPPLY>( &countDownPowerSupply );
 
-    bplCallback = [&](uint8_t job, uint16_t data) {
-
-        if (!bplActive && bplFetchPossible && (hPos == ddfStart) && useBitplaneDMA()) {
-            bplActive = true;
-            actions |= ACT_BPL;
-            bplCycle = (bplCon0 >> 4) & 0x700;
-        } else if (bplActive && (hPos == ddfStop)) {
-            stopFetching = true;
-        }
-
-        updateDdfEvent(hPos);
-    };
-
-    addEvent<Agnus::EVENT_BPL>( &bplCallback );
-
     wom = new uint8_t[256 * 1024];
 }
 
 auto Agnus::dmaControl(uint16_t data) -> void {
     if (data & 0x8000)
-        dmaCon |= data & 0x7ff;
+        dmaConImm |= data & 0x7ff;
     else
-        dmaCon &= ~data; // no masking needed, unused upper 5 bits will never be set
+        dmaConImm &= ~data; // no masking needed, unused upper 5 bits will never be set
 }
 
 auto Agnus::reset(bool softReset) -> void {
@@ -92,6 +64,7 @@ auto Agnus::reset(bool softReset) -> void {
     clearEvents();
 
     hPos = 4;
+    vPos = 0;
     lol = false;
     lolToggle = ntsc;
     lof = false;
@@ -107,6 +80,7 @@ auto Agnus::reset(bool softReset) -> void {
             updateEvent<EVENT_KBD>(Keyboard::KBD_Hardreset, resetDelay);
     }
 
+    denise.power();
     blitter.reset();
     copper.reset();
     mapMemory();
@@ -240,7 +214,6 @@ auto Agnus::addWaitstatesToCPU() -> void {
 }
 
 inline auto Agnus::dmaCycle() -> void {
-    processEvents();
     busUsage = BUS_FREE;
 
     switch(++hPos) {
@@ -252,26 +225,56 @@ inline auto Agnus::dmaCycle() -> void {
                     updateEvent<EVENT_LEAVE_EMULATION>(~0, 150000);
 
             } else {
-                if (bplActive || bplQueue)
+                if (bplState || bplQueue)
                     actions |= ACT_BPL;
             }
             break;
 
         case 2:
+            if (vBlankStart)
+                vBlankStart = false;
+
             if (initVCounter) {
+                diwFlipFlop = false;
                 initVCounter = false;
                 vPos = 0;
+                if (model == A1000) {
+                    vBlank = true;
+                    vBlankStart = true;
+                }
+
             } else {
                 vPos++;
                 vPos &= ecsAndHigher() ? 0x7ff : 0x1ff; // register change of VPos could lead to a wrap around of 9-bit (OCS Agnus) counter.
+                if (vBlankEnd) {
+                    vBlankEnd = false;
+                    vBlankEndNext = true;
+                } else {
+                    vBlankEnd = vPos == (ntsc ? 19 : 24);
+                    if (vBlankEnd)
+                        vBlank = false;
+                    vBlankEndNext = false;
+                }
+
+                if ( (vPos == (lines + lof)) && (model != A1000) ) {
+                    vBlank = true;
+                    vBlankStart = true;
+                }
             }
+
+            updateVdiw();
             actions |= ACT_COPPER;
             break;
 
-        case 3: // adjust HRM DMA view by 4 cycles to Beam position
+        case 3: // de-adjust HRM DMA view by 4 (-1 + 4) cycles to Beam position
             if (vPos == 0) {
                 copper.strobeCOPJMP(false, Trigger_Vsync);
             }
+
+            if (isEquLine()) denise.strequ();
+            else if (vBlank) denise.strvbl();
+            else denise.strhor();
+
         case 5:
         case 7:
         case 9:
@@ -295,28 +298,54 @@ inline auto Agnus::dmaCycle() -> void {
                 rDmaPtr += 0x200; // RAS and CAS were replaced. To increase RAS, the "adder" must be moved 8 bits
                 rDmaPtr &= chipMemMask;
             }
-            if ((getActiveEvent<EVENT_ONE_CYCLE_DELAY>() ) == PTR_REF)
-                setEventInactive<EVENT_ONE_CYCLE_DELAY>(); // ignore it, because was updated last cycle
 
             busUsage = BUS_USAGE_REFRESH;
             break;
 
-        case 0x24:
-            cia2.tod();
+        case 0xd:
+            bplQueue = 0;
+            break; // hsync start
+
+        case 0x16: if (!vBlank) spriteControl<0, true>(); break;
+        case 0x18:
+            hardStop = false;
+            if (!vBlank) spriteControl<0, false>();
             break;
+        case 0x1a: if (!vBlank) spriteControl<1, true>(); break;
+        case 0x1c: if (!vBlank) spriteControl<1, false>(); break;
+        case 0x1e: if (!vBlank) spriteControl<2, true>(); break;
+        case 0x20: if (!vBlank) spriteControl<2, false>(); break;
+        case 0x22: if (!vBlank) spriteControl<3, true>(); break;
+        case 0x24: // hsync end
+            cia2.tod();
+            if (!vBlank) spriteControl<3, false>();
+            break;
+        case 0x26: if (!vBlank) spriteControl<4, true>(); break;
+        case 0x28: if (!vBlank) spriteControl<4, false>(); break;
+        case 0x2a: if (!vBlank) spriteControl<5, true>(); break;
+        case 0x2c: if (!vBlank) spriteControl<5, false>(); break;
+        case 0x2e: if (!vBlank) spriteControl<6, true>(); break;
+        case 0x30: if (!vBlank) spriteControl<6, false>(); break;
+        case 0x32: if (!vBlank) spriteControl<7, true>(); break;
+        case 0x34: if (!vBlank) spriteControl<7, false>(); break;
+        case 0x35:
+            break;
+
+        case 0x38: actions &= ~ACT_SPRITE; break;
 
         case 0x13:
             if (!lof && vPos == (ntsc ? 6 : 5) ) {
                 if (model != A1000) cia1.tod();
             }
 
-        case 0x18:
-            bplFetchPossible = true;
-            break;
-
         case 0xd7:
-            if (bplActive)
-                stopFetching = true;
+            if (ecsAndHigher())
+                hardStop = true;
+
+            if (bplState && (bplState != 4)) {
+                if (!ecsAndHigher() || !harddis)
+                    stopFetching = true;
+            }
             break;
 
         case 0x85:
@@ -333,10 +362,8 @@ inline auto Agnus::dmaCycle() -> void {
             }
             break;
         case 0xe3:
-            if (!lol) {// short line
+            if (!lol) { // short line
                 hPos = 0;
-                if (ddfStart < ddfStop)     updateEvent<EVENT_BPL>(~0, ddfStart + 1);
-                else                        updateEvent<EVENT_BPL>(~0, ddfStop + 1);
                 if (lolToggle) lol ^= 1;
                 shortLineBefore = true;
                 actions &= ~ACT_COPPER; // "even" cycle 0 after a short line is not usable by Copper, otherwise Copper would progress 2 cycles in a row.
@@ -345,6 +372,7 @@ inline auto Agnus::dmaCycle() -> void {
                     fetchPlanes<true>();
                     actions &= ~ACT_BPL;
                 }
+
             } else {
                 shortLineBefore = false;
                 if (vPos == (lines + lof) ) {
@@ -355,23 +383,31 @@ inline auto Agnus::dmaCycle() -> void {
             break;
         case 0xe4: // NTSC long line
             hPos = 0;
-            if (ddfStart < ddfStop)     updateEvent<EVENT_BPL>(~0, ddfStart + 1);
-            else                        updateEvent<EVENT_BPL>(~0, ddfStop + 1);
             if (lolToggle) lol ^= 1;
             break;
-        // register change of HPos could lead to a wrap around of 8 bit counter.
+        // register change of HPos could lead to a wrap around of counter.
     }
 
+    processEvents();
+    bplStartStop();
+    denise.process();
+
     if (actions) {
-        uint32_t _actions = actions;
+        uint8_t _actions = actions;
 
         if (_actions & ACT_BPL)
             fetchPlanes();
+
+        if (_actions & ACT_SPRITE)
+            fetchSprites();
 
         if (_actions & ACT_COPPER) {
             if ((hPos & 1) == 0)
                 copper.process();
         }
+
+        // there is no problem of execution order if Copper writes to Blitter register, because Blitter can not proceed in that cycle.
+        // exception cycle 5: (Final D calculation) before Final D write. this Blitter cycle don't need to be free.
 
         if (_actions & ACT_BLITTER)
             blitter.process();
@@ -791,6 +827,44 @@ auto Agnus::setRefPtr(uint16_t value) -> void {
         if (chipMemMask == 0x1fffff) { // 2 MB ECS
             if (value & 16)
                 rDmaPtr |= 0x100000;
+        }
+    }
+}
+
+auto Agnus::updateHarddis() -> void {
+
+    harddis = (beamCon & 0x80) || (beamCon & 0x4000) || (bplCon0 & 0xc0);
+}
+
+auto Agnus::isEquLine() -> bool {
+    if (ntsc)
+        return vPos <= 10;
+
+    return vPos <= (lof ? 9 : 8);
+}
+
+auto Agnus::setDiwStrt(uint16_t value) -> void {
+    vStart = value & 0xff;
+    updateVdiw();
+}
+
+auto Agnus::setDiwStop(uint16_t value) -> void {
+    vStop = value & 0xff;
+    if ((value & 0x80) == 0)
+        vStop |= 0x100;
+    updateVdiw();
+}
+
+auto Agnus::updateVdiw() -> void {
+    if ((vPos == vStart) && !vBlankStart) {
+        if (!diwFlipFlop) {
+            diwFlipFlop = true;
+        }
+    }
+
+    if ((vPos == vStop) || vBlankStart) {
+        if (diwFlipFlop) {
+            diwFlipFlop = false;
         }
     }
 }

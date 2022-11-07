@@ -195,6 +195,7 @@ auto Copper::blitterBusyUpdate() -> void {
     if (ir2 & 0x8000)
         return; // don't wait for Blitter
 
+    // it seems a Blitter Busy change is detected in non Copper cycle too.
     agnus.actions |= Agnus::ACT_COPPER;
 
     if (state == Read1AfterSkip) {
@@ -270,7 +271,7 @@ auto Copper::strobeCOPJMP(bool firstLocation, uint8_t triggeredBy) -> void {
         if (triggeredBy == Agnus::Trigger_Copper)
             state = Strobe1;
         else
-            state = (agnus.hPos & 1) ? Strobe1 : Strobe1Unaligned; // at this point: hPos has already incremented to next cycle
+            state = (agnus.hPos & 1) ? Strobe1Unaligned : Strobe1;
     } else if (triggeredBy == Agnus::Trigger_CPU) {
         prevState = state;
         state = Strobe0;
