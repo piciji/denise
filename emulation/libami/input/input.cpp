@@ -30,10 +30,22 @@ auto Input::readCiaPortA( ) -> uint8_t {
  //   this->lines = lines;
 
     jitPoll();
+    uint8_t out = controlPort1->readButton1() << 6;
+    out |= controlPort2->readButton1() << 7;
+    return out;
+}
 
-    uint8_t out = controlPort1->readFire() << 6;
-    out |= controlPort2->readFire() << 7;
+auto Input::readDenisePortA() -> uint16_t {
+    jitPoll();
+    uint16_t out = 0;
+    out |= controlPort1->readDirection();
+    return out;
+}
 
+auto Input::readDenisePortB() -> uint16_t {
+    jitPoll();
+    uint16_t out = 0;
+    out |= controlPort2->readDirection();
     return out;
 }
 
@@ -50,20 +62,23 @@ inline auto Input::jitPoll() -> void {
         if (system->interface->jitPoll(sampling.emergencyPolling ? 0 : (sampling.mode == Restricted_Dynamic_Sampling ? 5 : -1))) {
             sampling.emergencyPolling = false;
             sampling.midscreen++;
+            controlPort1->poll();
+            controlPort2->poll();
             //system->interface->log(vicII->getVcounter(), false);
         }
     }
 }
 
-auto Input::poll() -> void {
+auto Input::initFrame() -> void {
 
-    bool jitDisable = !sampling.allow || (sampling.midscreen == 0);
-
+    // bool jitDisable = !sampling.allow || (sampling.midscreen == 0);
     //system->interface->log("jit ", true);
     //system->interface->log( !jitDisable ? "on" : "off", false );
 
-    controlPort1->poll();
-    controlPort2->poll();
+    if (!sampling.allow) {
+        controlPort1->poll();
+        controlPort2->poll();
+    }
 
     sampling.midscreen = 0;
     sampling.emergencyPolling = false;

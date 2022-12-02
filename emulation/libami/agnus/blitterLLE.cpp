@@ -1,10 +1,6 @@
 
 /**
  * blitter shifter behaviour has been reversed enginered from WinUAE
- *
- * UAE - The Un*x Amiga Emulator
- * (c) 2002 - 2021 Toni Wilen
- *
  * Programming is currently experimental and numerous borderline cases need to be cross-checked.
  *
  */

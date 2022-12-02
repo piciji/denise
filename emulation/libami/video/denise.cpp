@@ -3,14 +3,14 @@
 #include "../agnus/agnus.h"
 #include "../system/system.h"
 
-#define LINE_BUFFER_WIDTH 910
+#define LINE_BUFFER_WIDTH 1024
 #define LINE_BUFFER_HEIGHT 600
 
 #define LINE_MAX_WIDTH 384
 
 namespace LIBAMI {
 
-Denise::Denise(Agnus& agnus) : agnus(agnus) {
+Denise::Denise(Agnus& agnus, Input& input) : agnus(agnus), input(input) {
     frameBuffer = new uint16_t[LINE_BUFFER_WIDTH * LINE_BUFFER_HEIGHT];
     lineCallback.use = false;
     lineCallback.line = 0;
@@ -20,6 +20,14 @@ Denise::~Denise() {
     delete[] frameBuffer;
 }
 
+auto Denise::joy0Dat() -> uint16_t {
+    return input.readDenisePortA();
+}
+
+auto Denise::joy1Dat() -> uint16_t {
+    return input.readDenisePortB();
+}
+
 auto Denise::power() -> void {
     hPos = 2;
     std::fill_n(colors, 64, 0);
@@ -27,7 +35,6 @@ auto Denise::power() -> void {
     hires = false;
     ham = false;
     doublePlayfield = false;
-    interlace = false;
     useInterlace = 0;
     activePlanes = 0;
 
@@ -139,12 +146,14 @@ auto Denise::endHblank() -> void {
             crop.left = 0;
             crop.right = 0;
             hiresFrame = hires ? 1 : 0; // can switch to hires mid frame
-            useInterlace = (interlace ? 0x80 : 0) | agnus.lof; // todo: interlace change mid frame
+            // Denise doesn't need to know if Interlace is active. However, in order to arrange the resulting image in memory,
+            // we need this information here.
+            useInterlace = (agnus.lace() ? 0x80 : 0) | agnus.lof;
             if (agnus.lof)
                 lineVCounter = 1;
         }
 
-        if (lineVCounter >= LINE_BUFFER_HEIGHT)
+        if (lineVCounter >= LINE_BUFFER_HEIGHT) // could happen, if Agnus beam position has been changed
             lineVCounter = LINE_BUFFER_HEIGHT - 1;
 
         linePtr = frameBuffer + lineVCounter * LINE_BUFFER_WIDTH;
@@ -163,8 +172,8 @@ auto Denise::setDiwStop(uint16_t value) -> void {
 auto Denise::setColor( uint8_t pos, uint16_t value ) -> void {
     colors[pos] = value;
 
-    if (model == OCS_A1000)
-        colors[ 32 + pos ] = value; // prevent EHB
+    if (model == OCS_A1000_NO_EHB)
+        colors[ 32 + pos ] = value;
     else {
         //extra half brite
         uint8_t r = (value >> 8) & 0xf;
@@ -231,7 +240,6 @@ auto Denise::setBplCon0( uint16_t value ) -> void {
 
     doublePlayfield = value & 0x400;
     ham = value & 0x800;
-    interlace = value & 4;
     activePlanes = (value >> 12) & 7;
 }
 
@@ -456,7 +464,8 @@ template<bool useHires> auto Denise::processPixel() -> void {
                     updateCropRight();
                 colIndex = colIndex2 = 0;
                 _ham = false;
-                if (model != OCS_A1000)
+                if (model & (OCS_A1000 | OCS_A1000_NO_EHB) );
+                else
                     sprData = 0;
             }
         }
@@ -559,7 +568,7 @@ template<bool useHires> auto Denise::processPixel() -> void {
         } else
             color = 0; // blank
     } else
-        color = colors[0]; // border
+        color = hBlank ? 0 : colors[0]; // border
 
     *(linePtr + linePos++) = color;
 
@@ -567,6 +576,9 @@ template<bool useHires> auto Denise::processPixel() -> void {
         if (hiresFrame & 0x80) // lores frame with hires content
             *(linePtr + linePos++) = color;
     }
+
+    // if agnus misses strobe
+    linePos &= LINE_BUFFER_WIDTH - 1;
 }
 
 auto Denise::process() -> void {
@@ -647,7 +659,6 @@ auto Denise::serialize(Emulator::Serializer& s) -> void {
     s.integer(hires);
     s.integer(ham);
     s.integer(doublePlayfield);
-    s.integer(interlace);
     s.integer(useInterlace);
     s.integer(activePlanes);
     s.integer(hamColor);

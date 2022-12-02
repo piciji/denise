@@ -46,7 +46,10 @@ struct Input {
 
     auto readCiaPortA(  ) -> uint8_t;
 
-    auto poll() -> void;
+    auto readDenisePortA() -> uint16_t;
+    auto readDenisePortB() -> uint16_t;
+
+    auto initFrame() -> void;
 
     auto reset() -> void;
 

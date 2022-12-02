@@ -15,7 +15,7 @@ struct Events {
 
         EventCallback* callback = nullptr;
 
-        unsigned clock = 0;
+        uint64_t clock = 0;
 
         uint8_t job = 0;
 
@@ -24,9 +24,9 @@ struct Events {
 
     Event eventStore[Channels];
 
-    unsigned clock = 0;
+    uint64_t clock = 0;
 
-    unsigned nextClock = ~0;
+    uint64_t nextClock = ~0;
 
     inline auto processEvents() -> void {
         if (++clock == nextClock) {
@@ -103,7 +103,13 @@ struct Events {
     template<uint8_t Channel>
     auto getEventDelay() -> unsigned {
         Event& event = eventStore[Channel];
-        return (event.clock - clock) & 0xffffffff;
+        return event.clock - clock;
+    }
+
+    template<uint8_t Channel>
+    auto getEventClock() -> uint64_t {
+        Event& event = eventStore[Channel];
+        return event.clock;
     }
 
     template<uint8_t Channel>
@@ -112,8 +118,8 @@ struct Events {
         event.job = 0;
     }
 
-    auto fallBackCycles( unsigned _last ) -> unsigned {
-        return (clock - _last) & 0xffffffff;
+    auto fallBackCycles( uint64_t lastClock ) -> uint64_t {
+        return clock - lastClock;
     }
 
     auto clearEvents() -> void {
@@ -127,7 +133,7 @@ struct Events {
     }
 
 protected:
-    auto serialize( Serializer& s ) -> void {
+    auto serializeEvents( Serializer& s ) -> void {
         s.integer( clock );
         s.integer( nextClock );
 
@@ -135,6 +141,7 @@ protected:
             Event& event = eventStore[Channel];
             s.integer( event.clock );
             s.integer( event.job );
+            s.integer( event.data );
         }
     }
 

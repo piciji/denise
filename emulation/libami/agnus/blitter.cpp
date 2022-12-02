@@ -9,6 +9,7 @@
 #include "blitterCycle.cpp"
 #include "blitterSequencer.cpp"
 #include "blitterLLE.cpp"
+#include "../paula/paula.h"
 
 namespace LIBAMI {
 
@@ -19,7 +20,7 @@ Blitter::Blitter(Agnus& agnus) : agnus(agnus), copper(agnus.copper) {
 
 auto Blitter::prepareBlit() -> void {
     zero = true;
-    busy = agnus.model != Agnus::A1000;
+    busy = agnus.model != Agnus::OCS_A1000;
     agnus.updateEventAndExecuteExistingBefore<Agnus::EVENT_ONE_CYCLE_DELAY>(Agnus::BLT_INIT, 2);
 }
 
@@ -40,7 +41,7 @@ auto Blitter::initBlit() -> void {
 auto Blitter::startBlit() -> void {
     if (restartTimer) {
         if ( (agnus.busUsage == Agnus::BUS_USAGE_BLITTER) || agnus.canBlitterUseBus()) {
-            if ((restartTimer == 2) && (agnus.model == Agnus::A1000) ) { // if A1000 Blitter get this cycle
+            if ((restartTimer == 2) && (agnus.model == Agnus::OCS_A1000) ) { // if A1000 Blitter get this cycle
                 busy = true;
                 copper.blitterBusyUpdate();
             }
@@ -218,7 +219,7 @@ auto Blitter::activateLLEWhenNeeded(uint8_t bltRegister, uint16_t value) -> void
 }
 
 auto Blitter::finish() -> void {
-    // todo: signal IRQ to Paula here, Paula has another 2-4? CPU cycle delay from external
+    agnus.paula.pulseInt3();
     busy = false;
     copper.blitterBusyUpdate();
     agnus.updateEventAndExecuteExistingBefore<Agnus::EVENT_ONE_CYCLE_DELAY>(Agnus::BLT_BUSY_DELAY, 1);

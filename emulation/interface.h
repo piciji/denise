@@ -325,6 +325,7 @@ struct Interface {
         virtual auto jam(Media*) -> void {}
         virtual auto setThreadPriority(ThreadPriority, float, float) -> bool { return false; }
         virtual auto informCapsLock(bool state) -> void {}
+        virtual auto fpsChanged() -> void {}
     };
     Bind* bind = nullptr;
 
@@ -411,6 +412,14 @@ struct Interface {
 
     auto informCapsLock(bool state) -> void {
         bind->informCapsLock( state );
+    }
+
+    auto fpsChanged() -> void {
+        bind->fpsChanged();
+    }
+
+    auto log(std::string data, bool newLine = true) -> void {
+        bind->log(data, newLine);
     }
 
     template<typename T> auto log(T data, bool newLine = true, bool asHex = false) -> void {			
@@ -536,6 +545,7 @@ struct Interface {
     virtual auto cropTop() -> unsigned { return 0; }
     virtual auto cropLeft() -> unsigned { return 0; }
     virtual auto cropData() -> uint8_t* { return nullptr; }
+    virtual auto cropData16() -> uint16_t* { return nullptr; }
     virtual auto cropPitch() -> unsigned { return 0; }
     
     virtual auto videoAddMeta(bool state) -> void {}

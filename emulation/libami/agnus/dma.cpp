@@ -3,6 +3,19 @@
 
 namespace LIBAMI {
 
+template<uint8_t nr> auto Agnus::setAudPtH(uint16_t value) -> void {
+    AudioDmaChannel& cha = audioDmaChannels[nr];
+    cha.ptrLatch &= 0xffff;
+    cha.ptrLatch |= value << 16;
+    cha.ptrLatch &= chipMemMask;
+}
+
+template<uint8_t nr> auto Agnus::setAudPtL(uint16_t value) -> void {
+    AudioDmaChannel& cha = audioDmaChannels[nr];
+    cha.ptrLatch &= ~0xffff;
+    cha.ptrLatch |= value & 0xfffe;
+}
+
 auto Agnus::setBpl1ptH(uint16_t value) -> void {
     bpl1pt &= 0xffff;
     bpl1pt |= value << 16;
@@ -71,32 +84,38 @@ auto Agnus::setBpl6ptL(uint16_t value) -> void {
 
 template<uint8_t pos, bool addMod> auto Agnus::fetchPlane() -> void {
     if constexpr ( pos == 1) {
-        denise.setBpl1Dat( _swapWord(*(uint16_t*) (chipMem + bpl1pt)) );
+        dataBus = _swapWord(*(uint16_t*) (chipMem + bpl1pt));
+        denise.setBpl1Dat( dataBus );
         bpl1pt += 2;
         if constexpr (addMod) bpl1pt += bpl1Mod;
         bpl1pt &= chipMemMask;
     } else if constexpr ( pos == 2) {
-        denise.setBpl2Dat( _swapWord(*(uint16_t*) (chipMem + bpl2pt)) );
+        dataBus = _swapWord(*(uint16_t*) (chipMem + bpl2pt));
+        denise.setBpl2Dat( dataBus );
         bpl2pt += 2;
         if constexpr (addMod) bpl2pt += bpl2Mod;
         bpl2pt &= chipMemMask;
     } else if constexpr ( pos == 3) {
-        denise.setBpl3Dat( _swapWord(*(uint16_t*) (chipMem + bpl3pt)) );
+        dataBus = _swapWord(*(uint16_t*) (chipMem + bpl3pt));
+        denise.setBpl3Dat( dataBus );
         bpl3pt += 2;
         if constexpr (addMod) bpl3pt += bpl1Mod;
         bpl3pt &= chipMemMask;
     } else if constexpr ( pos == 4) {
-        denise.setBpl4Dat( _swapWord(*(uint16_t*) (chipMem + bpl4pt)) );
+        dataBus = _swapWord(*(uint16_t*) (chipMem + bpl4pt));
+        denise.setBpl4Dat( dataBus );
         bpl4pt += 2;
         if constexpr (addMod) bpl4pt += bpl2Mod;
         bpl4pt &= chipMemMask;
     } else if constexpr ( pos == 5) {
-        denise.setBpl5Dat( _swapWord(*(uint16_t*) (chipMem + bpl5pt)) );
+        dataBus = _swapWord(*(uint16_t*) (chipMem + bpl5pt));
+        denise.setBpl5Dat( dataBus );
         bpl5pt += 2;
         if constexpr (addMod) bpl5pt += bpl1Mod;
         bpl5pt &= chipMemMask;
     } else if constexpr ( pos == 6) {
-        denise.setBpl6Dat( _swapWord(*(uint16_t*) (chipMem + bpl6pt)) );
+        dataBus = _swapWord(*(uint16_t*) (chipMem + bpl6pt));
+        denise.setBpl6Dat( dataBus );
         bpl6pt += 2;
         if constexpr (addMod) bpl6pt += bpl2Mod;
         bpl6pt &= chipMemMask;
@@ -236,7 +255,7 @@ template<bool onlyProgressQueue> auto Agnus::fetchPlanes() -> void {
                 bplState = 0;
                 if (!ecsAndHigher())
                     hardStop = true;
-                sprStartLimit = 0x100;
+                sprInhibited = false;
                 break;
 // hires
             UseBplHires4(0) UseBplHires5(0) UseBplHires6(0) UseBplHires7(0)
@@ -325,6 +344,7 @@ template<bool onlyProgressQueue> auto Agnus::fetchPlanes() -> void {
     bplQueue >>= 8;
 }
 
+// bitplane start/stop behaviour has been reversed enginered from WinUAE
 auto Agnus::bplStartStop() -> void {
     bool ecs = ecsAndHigher();
     uint8_t _state = bplState;
@@ -346,7 +366,7 @@ auto Agnus::bplStartStop() -> void {
         }
         bplCycle &= BPL_ADD_MOD; // keep mod state
         bplCycle |= 0x8000; // empty queue
-        sprStartLimit = 0x100;
+        sprInhibited = false;
     }
 
     if (ecs) { // ECS / AGA
@@ -368,11 +388,10 @@ auto Agnus::bplStartStop() -> void {
         }
 
         if (!(_hPos & 1)) {
-            bool ddfEnable = useBitplaneDMA() && diwFlipFlop && (ddfStartMatch == 1) && (!hardStop || harddis);
+            bool ddfEnable = useBitplaneDMA() && diwFlipFlop && (ddfStartMatch == 1) && (!hardStop || harddisH);
             if (!bplState && ddfEnable && !ddfEnableBefore) {
                 bplState = 1;
-                if (sprStartLimit > _hPos)
-                    sprStartLimit = _hPos; // possible sprite/bitplane conflict
+                sprInhibited = true;
             }
             ddfEnableBefore = ddfEnable;
         }
@@ -382,8 +401,8 @@ auto Agnus::bplStartStop() -> void {
 
         if (!bplState && !hardStop && (_hPos == ddfStart) && useBitplaneDMA() && diwFlipFlop) {
             bplState = 1;
-            if (sprStartLimit > _hPos)
-                sprStartLimit = _hPos - 1;
+            sprInhibited = true;
+            sprQueue &= 0xffffff;
         }
     }
 
@@ -414,7 +433,7 @@ template<uint8_t num, bool first> auto Agnus::spriteControl() -> void {
     }
 
     if (useSpriteDMA() && spr->enable && !vBlankEnd) {
-        if (hPos <= sprStartLimit) {
+        if (!sprInhibited) {
             actions |= ACT_SPRITE;
 
             if (first)
@@ -423,7 +442,7 @@ template<uint8_t num, bool first> auto Agnus::spriteControl() -> void {
                 sprQueue |= ((0xc0 | num) << 24);
 
             if (!spr->fetchData)
-                sprQueue |= 0x20;
+                sprQueue |= 0x20 << 24;
         }
     }
 
@@ -433,17 +452,34 @@ template<uint8_t num, bool first> auto Agnus::spriteControl() -> void {
     }
 };
 
+template<uint8_t nr> auto Agnus::fetchSample(bool reset) -> void {
+    AudioDmaChannel& cha = audioDmaChannels[nr];
+
+    dataBus = _swapWord(*(uint16_t*) (chipMem + cha.ptr));
+
+    if (reset)
+        cha.ptr = cha.ptrLatch;
+    else
+        cha.ptr += 2;
+
+    cha.ptr &= chipMemMask;
+
+    paula.audxDat<nr>( dataBus ); // put on RGA BUS
+}
+
 template<uint8_t nr, uint8_t target> inline auto Agnus::fetchSprite() -> void {
+    dataBus = _swapWord(*(uint16_t*) (chipMem + sprites[nr].ptr));
+
     if constexpr (target == 0) {
-        denise.setSprDatA(nr, _swapWord(*(uint16_t *) (chipMem + sprites[nr].ptr)));
+        denise.setSprDatA(nr, dataBus );
     } else if constexpr (target == 1) {
-        denise.setSprDatB(nr, _swapWord(*(uint16_t *) (chipMem + sprites[nr].ptr)));
+        denise.setSprDatB(nr, dataBus );
     } else if constexpr (target == 2) {
-        sprites[nr].pos = _swapWord(*(uint16_t *) (chipMem + sprites[nr].ptr));
+        sprites[nr].pos = dataBus;
         SPRxCTL<nr>();
         denise.setSprPos( nr, sprites[nr].pos );
     } else {
-        sprites[nr].ctl = _swapWord(*(uint16_t *) (chipMem + sprites[nr].ptr));
+        sprites[nr].ctl = dataBus;
         SPRxCTL<nr>();
         denise.setSprCtl( nr, sprites[nr].ctl );
     }

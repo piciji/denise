@@ -72,7 +72,7 @@ auto Program::midScreenCallback() -> void {
     activeVideoManager->renderMidScreen();
 }
 
-auto Program::videoRefresh(const uint16_t* frame, unsigned width, unsigned height, unsigned linePitch) -> void {
+auto Program::videoRefresh(const uint16_t* frame, unsigned width, unsigned height, unsigned linePitch, uint8_t interlace) -> void {
 
 	if (cmd->noGui)
 		return;

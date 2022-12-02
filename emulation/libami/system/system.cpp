@@ -3,6 +3,7 @@
 #include "../input/input.h"
 #include "../../tools/sanitizer.h"
 #include  "../../tools/macros.h"
+#include "serialization.cpp"
 
 namespace LIBAMI {
 
@@ -12,10 +13,9 @@ System::System(Interface* interface) :
 cia1(1),
 cia2(2),
 cpu(agnus),
-blitter(agnus),
-copper(agnus),
-denise(agnus),
-agnus(cpu, denise, blitter, copper, cia1, cia2, input),
+denise(agnus, input),
+paula(agnus, cpu, input),
+agnus(cpu, denise, paula, cia1, cia2, input),
 input(agnus, cia1, interface) {
 
     this->interface = interface;
@@ -41,10 +41,16 @@ input(agnus, cia1, interface) {
             if ((lines->ioa ^ lines->ioaOld) & 1)
                 agnus.setOVL(lines->ioa & 1);
 
+            paula.setLedFilter(lines->ioa & 2);
+
         } else {
             //if (lines->iob != lines->iobOld)
 
         }
+    };
+
+    cia1.irqCall = [this]( bool state ) {
+        paula.setInt2(state);
     };
 
     cia2.writePort = [this]( Cia<MOS_8520>::Port port, Cia<MOS_8520>::Lines* lines ) {
@@ -52,6 +58,10 @@ input(agnus, cia1, interface) {
         if ( port == Cia<MOS_8520>::PORTA ) {
             cia2.setCNTAndSP( lines->ioa & 2, lines->ioa & 1 );
         }
+    };
+
+    cia2.irqCall = [this]( bool state ) {
+        paula.setInt6(state);
     };
 
     crop.monitorBorderCallback = [this](unsigned& top, unsigned& bottom, unsigned& left, unsigned& right) {
@@ -79,11 +89,17 @@ input(agnus, cia1, interface) {
 
 auto System::power(bool softReset, bool resetInstruction) -> void {
 
-    agnus.reset(softReset);
+    agnus.power(softReset);
 
     if (!resetInstruction) {
         if (!softReset) {
+            calcSerializationSize();
+
             cpu.power();
+
+            fastForward.config = 0;
+            fastForward.frameCounter = 0;
+            fastForward.renderNext = false;
 
         } else {
             cpu.reset();
@@ -99,18 +115,51 @@ auto System::power(bool softReset, bool resetInstruction) -> void {
 
 auto System::powerOff() -> void {
     powerOn = false;
+    agnus.powerOff();
+    updateStats();
 }
 
 auto System::run() -> void {
     leaveEmulation = false;
+    runAhead.pos = 0;
 
-    input.poll();
+    input.initFrame();
 
     if (agnus.resetFromKeyboard)
         agnus.waitKeyboardReset();
 
-    while( !leaveEmulation ) {
+    bool useRunAhead = !fastForward.config && runAhead.frames && agnus.womLocked();
+
+    if (useRunAhead) {
+        runAhead.pos = runAhead.frames;
+        denise.disableSequencer( runAhead.performance );
+        paula.disableAudioOut( runAhead.frames > 1 );
+    }
+
+    labelRunAhead:
+
+    while( !leaveEmulation )
         cpu.process();
+
+    if (useRunAhead) {
+        if (runAhead.frames == runAhead.pos) {
+            serializeLight();
+        }
+
+        if (runAhead.pos) {
+            if (runAhead.pos == 2)
+                paula.disableAudioOut(false);
+
+            if (--runAhead.pos == 0) {
+                if (!denise.useSequencer()) {
+                    denise.disableSequencer(false);
+                }
+            }
+            leaveEmulation = false;
+            goto labelRunAhead;
+        }
+
+        unserializeLight();
     }
 
     agnus.setEventInactive<Agnus::EVENT_LEAVE_EMULATION>();
@@ -175,6 +224,12 @@ auto System::videoRefresh( uint16_t* frame, unsigned width, unsigned height, uns
     leaveEmulation = true;
 }
 
+auto System::audioRefresh(int16_t left, int16_t right) -> void {
+    if (!runAhead.pos) {
+        this->interface->audioSample(left, right);
+    }
+}
+
 auto System::videoMidScreenCallback() -> void {
     if (runAhead.pos)
         return;
@@ -182,6 +237,66 @@ auto System::videoMidScreenCallback() -> void {
   //  input.drawCursor(true);
 
     interface->midScreenCallback();
+}
+
+auto System::setModel(uint8_t model) -> void {
+
+    if (model == 0) {
+        agnus.model = Agnus::Model::OCS_A1000;
+        denise.model = Denise::Model::OCS_A1000;
+    } else if (model == 1) {
+        agnus.model = Agnus::Model::OCS;
+        denise.model = Denise::Model::OCS;
+    } else if (model == 2) {
+        agnus.model = Agnus::Model::ECS;
+        denise.model = Denise::Model::OCS;
+    }
+}
+
+auto System::getModel() -> uint8_t {
+    if (agnus.model == Agnus::Model::OCS_A1000)
+        return 0;
+    if (agnus.model == Agnus::Model::OCS)
+        return 1;
+    if (agnus.model == Agnus::Model::ECS && denise.model == Denise::Model::OCS)
+        return 2;
+
+    return 2;
+}
+
+auto System::updateStats() -> void {
+    interface->stats.region = agnus.ntsc ? Interface::Region::Ntsc : Interface::Region::Pal;
+    interface->stats.sampleIntervall = paula.sampleLimit;
+    interface->stats.sampleRate = (double)agnus.frequency() / (double)paula.sampleLimit;
+    interface->stats.fps = agnus.fps;
+    interface->stats.stereoSound = true;
+}
+
+auto System::hintSlowSpeed(bool state) -> void {
+    if (state)
+        fastForward.config |= (unsigned)Interface::FastForward::SlowSpeed;
+    else
+        fastForward.config &= ~(unsigned)Interface::FastForward::SlowSpeed;
+}
+
+auto System::setRegion( Interface::Region region ) -> void {
+    agnus.ntsc = region == Interface::Region::Ntsc;
+    paula.setFilter();
+    agnus.resetFps();
+    updateStats();
+}
+
+auto System::setResampleQuality( int value ) -> void {
+    paula.setResampleQuality( value );
+    updateStats();
+}
+
+auto System::setFastForward( unsigned config ) -> void {
+    fastForward.config = config | (fastForward.config & (unsigned)Interface::FastForward::SlowSpeed);
+    paula.disableAudioOut(config & (unsigned) Emulator::Interface::FastForward::NoAudioOut);
+    denise.disableSequencer(config & (unsigned) Emulator::Interface::FastForward::NoVideoSequencer);
+    //disk.setFastForward(config & (unsigned) Emulator::Interface::FastForward::NoVideoSequencer);
+   // updateDriveSounds();
 }
 
 }

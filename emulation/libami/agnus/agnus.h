@@ -1,37 +1,55 @@
 
 #pragma once
 
+#include "blitter.h"
+#include "copper.h"
 #include "../../cia/new/cia.h"
 #include "../../tools/events.h"
 #include "../../tools/powersupply.h"
 
-// todo: Bitplane DMA conflicts
-
-#define FREQUENCY_PAL   28375160
-#define FREQUENCY_NTSC  28636360
+/**
+ * todos:
+ * AGA
+ *
+ * Bitplane <> Strobe, Refresh, DMAL conflicts
+ *      Is there software that specifically triggers such a conflict to achieve something meaningful ?
+ *
+ * variable vsync, hsync start/stop, hcenter (interlace: vsync on long fields)
+ *      alter the position when the electron beam is moved back. This should happen during the blanking period. (no color output)
+ *      otherwise, artifacts will occur during this process.
+ *      can this be used in any sense from an emulation point of view ? is there software for this ?
+ *      note: altered syncing/blanking don't change FPS
+ *
+ * variable hblank start/stop
+ *      what is it used for? hsync should be enough, because only csync (h+v sync) is visible for ECS Denise.
+ *      OCS Denise has hardwired horizontal blanking.
+ *
+ * UHRES/DUAL stuff (using two screens independantly ?)
+ *      was there ever software for this?
+ */
 
 namespace LIBAMI {
 
 struct Cpu;
 struct Denise;
-struct Blitter;
-struct Copper;
+struct Paula;
 struct Input;
 
-struct Agnus : Emulator::Events<10> {
+struct Agnus : Emulator::Events<6> {
 
-    Agnus(Cpu& cpu, Denise& denise, Blitter& blitter, Copper& copper, Cia<MOS_8520>& cia1, Cia<MOS_8520>& cia2, Input& input);
+    Agnus(Cpu& cpu, Denise& denise, Paula& paula, Cia<MOS_8520>& cia1, Cia<MOS_8520>& cia2, Input& input);
+    ~Agnus();
 
     enum { Unmapped, CHIP_MEM, SLOW_MEM, KICK_ROM, EXT_ROM, WOM, MMIO_CUSTOM, MMIO_CIA, MMIO_RTC };
 
-    enum { EVENT_KBD, EVENT_ONE_CYCLE_DELAY, EVENT_LEAVE_EMULATION, EVENT_POWER_SUPPLY };
+    enum { EVENT_KBD, EVENT_ONE_CYCLE_DELAY, EVENT_LEAVE_EMULATION, EVENT_POWER_SUPPLY, EVENT_AUDIO_STATE, EVENT_HTOTAL };
 
     enum { DMA_None = 0, DMACON = 1,
            PTR_BLT_A_H, PTR_BLT_A_L, PTR_BLT_B_H, PTR_BLT_B_L, PTR_BLT_C_H, PTR_BLT_C_L, PTR_BLT_D_H, PTR_BLT_D_L,
            BLT_INIT, BLT_BUSY_DELAY,
     };
 
-    enum { ACT_BLITTER = 1, ACT_COPPER = 2, ACT_BPL = 4, ACT_SPRITE = 8 };
+    enum { ACT_BLITTER = 1, ACT_COPPER = 2, ACT_BPL = 4, ACT_SPRITE = 8, ACT_IRQ_DELAY = 16 };
 
     enum { BUS_FREE, BUS_USAGE_BPL, BUS_USAGE_SPRITE, BUS_USAGE_BLITTER, BUS_USAGE_COPPER, BUS_USAGE_CPU, BUS_USAGE_REFRESH, BUS_USAGE_AUDIO };
 
@@ -39,22 +57,23 @@ struct Agnus : Emulator::Events<10> {
 
     enum { Trigger_Read, Trigger_CPU, Trigger_Copper, Trigger_Vsync };
 
-    enum Mode { OCS = 1, ECS = 2, AGA = 4 } mode; // AGA not supported at the moment
-
-    enum Model { A1000, A500 } model;
+    enum Model { OCS_A1000 = 1, OCS = 2, ECS = 4, AGA = 8 } model = OCS;
 
     Cpu& cpu;
     Denise& denise;
-    Blitter& blitter;
-    Copper& copper;
+    Paula& paula;
     Input& input;
-    Emulator::PowerSupply powerSupply;
     Cia<MOS_8520>& cia1;
     Cia<MOS_8520>& cia2;
+
+    Emulator::PowerSupply powerSupply;
+    Blitter blitter;
+    Copper copper;
 
     Emulator::EventCallback oneCycleDelay;
     Emulator::EventCallback leaveEmulation;
     Emulator::EventCallback countDownPowerSupply;
+    Emulator::EventCallback eventHTotal;
     uint8_t actions = 0;
 
     uint8_t mapper[256] = {0};
@@ -63,12 +82,23 @@ struct Agnus : Emulator::Events<10> {
     uint16_t vPos;
     uint16_t vStart;
     uint16_t vStop;
+    uint16_t dmal;
+    double fps;
+    uint64_t frameClock;
+    uint8_t fpsChange;
 
     bool vBlankEnd;
     bool vBlankEndNext;
     bool vBlank;
     bool vBlankStart;
-    int sprStartLimit;
+    bool sprInhibited;
+
+    uint16_t lines;
+    uint16_t vTotal;
+    uint16_t vBStrt;
+    uint16_t vBStop;
+    uint8_t hTotal;
+
     uint16_t beamCon;
 
     struct Sprite {
@@ -80,6 +110,26 @@ struct Agnus : Emulator::Events<10> {
         bool fetchData;
         uint8_t enable;
     } sprites[8];
+
+    struct AudioDmaChannel {
+        uint32_t ptr;
+        uint32_t ptrLatch;
+    } audioDmaChannels[4];
+
+
+    // need this for runAhead
+    struct MemChange {
+        uint32_t address;
+        uint16_t value;
+    };
+
+    MemChange* chipMemChange;
+    MemChange* slowMemChange;
+    unsigned chipMemChangeSize;
+    unsigned slowMemChangeSize;
+    unsigned chipMemChangePos;
+    unsigned slowMemChangePos;
+    bool trackMemChanges;
 
     uint8_t ddfStart;
     uint8_t ddfStop;
@@ -112,13 +162,12 @@ struct Agnus : Emulator::Events<10> {
     unsigned countWaitCycles;
     uint32_t rDmaPtr;
 
-    unsigned eClockCycle;
+    uint64_t eClockCycle;
     bool lol;
     bool lof;
     bool lolToggle;
-    bool lofToggle;
     bool ntsc;
-    unsigned lines;
+
     bool initVCounter;
     bool shortLineBefore;
     bool womLock = false;
@@ -128,16 +177,19 @@ struct Agnus : Emulator::Events<10> {
     uint32_t bplQueue;
     uint32_t sprQueue;
     uint8_t ddfStartMatch;
-    bool harddis;
+    bool harddisH;
+    bool harddisV;
     bool ddfEnableBefore;
     uint8_t bplState;
     bool hardStop;
 
     bool diwFlipFlop;
 
-    auto ecsAndHigher() -> bool const { return mode & (Mode::ECS | Mode::AGA); }
-    auto ecs() -> bool const { return mode == Mode::ECS; }
-    auto aga() -> bool const { return mode == Mode::AGA; }
+    auto frequency() -> unsigned;
+    auto ecsAndHigher() -> bool const { return model & (Model::ECS | Model::AGA); }
+    auto ecs() -> bool const { return model == Model::ECS; }
+    auto aga() -> bool const { return model == Model::AGA; }
+    auto womLocked() -> bool const { return (model != OCS_A1000) || womLock; }
 
     auto useSpriteDMA() -> bool const { return (dmaConImm & 0x220) == 0x220; }
     auto useBlitterDMA() -> bool const { return (dmaCon & 0x240) == 0x240; }
@@ -145,7 +197,8 @@ struct Agnus : Emulator::Events<10> {
     auto useBitplaneDMA() -> bool const { return (dmaConImm & 0x300) == 0x300; }
     auto blitterNasty() -> bool const { return dmaCon & 0x400; }
 
-    auto reset(bool softReset) -> void;
+    auto power(bool softReset) -> void;
+    auto powerOff() -> void;
     auto setMemory(unsigned typeId, unsigned size) -> void;
     auto mapMemory() -> void;
     auto setOVL(bool state) -> void;
@@ -215,6 +268,21 @@ struct Agnus : Emulator::Events<10> {
     auto updateVdiw() -> void;
     auto setDiwStrt(uint16_t value) -> void;
     auto setDiwStop(uint16_t value) -> void;
+    auto setDiwHigh(uint16_t value) -> void;
+    auto lace() const -> bool { return bplCon0 & 4; }
+
+    template<uint8_t nr> auto fetchSample(bool reset) -> void;
+    template<uint8_t nr> auto setAudPtH(uint16_t value) -> void;
+    template<uint8_t nr> auto setAudPtL(uint16_t value) -> void;
+
+    auto observeFrameDuration() -> void;
+    auto resetFps() -> void;
+    auto updateVCounter() -> void;
+
+    auto serialize(Emulator::Serializer& s, bool light = false) -> void;
+
+    auto rememberChipMem(uint32_t adr) -> void;
+    auto rememberSlowMem(uint32_t adr) -> void;
 };
 
 }

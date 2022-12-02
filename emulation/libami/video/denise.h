@@ -10,21 +10,23 @@ namespace Emulator {
 namespace LIBAMI {
 
 struct Agnus;
+struct Input;
 
 // A1000 + OCS Denise, todo: ECS Denise
 struct Denise {
-    Denise(Agnus& agnus);
+    Denise(Agnus& agnus, Input& input);
     ~Denise();
 
-    enum Model : uint8_t { OCS_A1000, OCS, ECS } model = OCS;
+    enum Model : uint8_t { OCS_A1000_NO_EHB = 1, OCS_A1000 = 2, OCS = 4 } model = OCS;
     Agnus& agnus;
+    Input& input;
+
     uint16_t hPos; // 9 bit counter
     uint16_t colors[64];
     uint8_t ready;
     bool hires;
     bool ham;
     bool doublePlayfield;
-    bool interlace;
     uint8_t useInterlace;
     uint8_t activePlanes;
     uint16_t hamColor;
@@ -97,7 +99,11 @@ struct Denise {
     auto process() -> void;
     auto power() -> void;
     auto disableSequencer(bool state) -> void { enableSequencer = !state; }
+    inline auto useSequencer() -> bool { return enableSequencer; }
     auto serialize(Emulator::Serializer& s) -> void;
+
+    auto joy0Dat() -> uint16_t;
+    auto joy1Dat() -> uint16_t;
 
     auto setDiwStrt(uint16_t value) -> void;
     auto setDiwStop(uint16_t value) -> void;

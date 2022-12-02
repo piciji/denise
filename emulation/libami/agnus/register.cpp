@@ -14,8 +14,32 @@ template<bool byteAccess> auto Agnus::readCustom(uint16_t adr, bool triggeredByW
         case 6:
             return POSR(true);
 
+        case 0xa:
+            return denise.joy0Dat();
+
+        case 0xc:
+            return denise.joy1Dat();
+
         case 0xe:
             return denise.getClxDat();
+
+        case 0x10:
+            return paula.getAdkCon();
+
+        case 0x12:
+            return paula.pot0Dat();
+
+        case 0x14:
+            return paula.pot1Dat();
+
+        case 0x16:
+            return paula.potGoR();
+
+        case 0x1c:
+            return paula.getIntena();
+
+        case 0x1e:
+            return paula.getIntreq();
 
         default:
             if (!triggeredByWrite) {
@@ -35,6 +59,7 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
     switch(adr) {
         case 0x28:
             if (hPos == 2 || hPos == 4 || hPos == 6 || hPos == 8)
+                // ref pointer is pipelined a cycle before usage and can't be written in such cycles
                 break;
 
             setRefPtr(value);
@@ -42,6 +67,10 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
 
         case 0x2e:
             copper.setCopCon(value);
+            break;
+
+        case 0x34:
+            paula.potGo(value);
             break;
 
         case 0x40:
@@ -155,7 +184,7 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
                 ddfStartMatch = 0; // ecs
                 if (bplState == 1) {
                     bplState = 0;
-                    sprStartLimit = 0x100;
+                    sprInhibited = false;
                     ddfEnableBefore = false; // ecs
                 }
             }
@@ -173,15 +202,34 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
             // for performance reasons BLitter/Copper DMA usage is determined in the execution cycle.
             // Therefore, the change will only be visible in the cycle after next.
             updateEventAndExecuteExistingBefore<EVENT_ONE_CYCLE_DELAY>(DMACON, 2, value);
+
+            if ((dmaCon ^ dmaConImm) & 0x21f)
+                paula.dmaCon( dmaConImm );
+
         } break;
 
         case 0x98:
             denise.setClxCon(value);
             break;
 
+        case 0x9a:
+            paula.setIntena(value);
+            break;
+
+        case 0x9c:
+            paula.setIntreq(value);
+            break;
+
+        case 0x9e:
+            paula.setAdkCon(value);
+            break;
+
         case 0x2a: {
-            // todo: Vpos/Hpos changes could alter refresh rate. (e.g. PAL with 60 Hz)
-            lof = value & 0x8000; // could result in a wrap around of VPos
+            bool lolBefore = lol;
+            bool lofBefore = lof;
+            uint16_t vPosBefore = vPos;
+
+            lof = value & 0x8000; // could result in a wrap around of vPos
             vPos &= 0xff;
             if (ecsAndHigher()) {
                 vPos |= (value & 7) << 8;
@@ -190,19 +238,63 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
                 vPos |= (value & 1) << 8;
             }
 
+            if (lolBefore != lol || lofBefore != lof)
+                fpsChange |= 1;
+            if (vPosBefore != vPos)
+                fpsChange |= 2;
+
             if (!getActiveEvent<EVENT_LEAVE_EMULATION>())
                 updateEvent<EVENT_LEAVE_EMULATION>(~0, 150000);
 
         } break;
-            // todo: Vpos/Hpos changes could alter refresh rate. (e.g. PAL with 60 Hz)
-        case 0x2c:
+
+        case 0x2c: {
+            uint16_t vPosBefore = vPos;
+            uint8_t hPosBefore = hPos;
+
             hPos = value & 0xff;
+            if (hPos)
+                // For ease of use, the emulator increases the position at the beginning of the cycle.
+                // However, when writing the position manually, this is a problem.
+                hPos--;
+
             vPos &= 0x300;
             vPos |= value >> 8;
 
+            if (vPosBefore != vPos || hPosBefore != hPos)
+                fpsChange |= 2;
+
             if (!getActiveEvent<EVENT_LEAVE_EMULATION>())
                 updateEvent<EVENT_LEAVE_EMULATION>(~0, 150000);
-            break;
+        } break;
+
+        case 0xa0: setAudPtH<0>(value); break;
+        case 0xa2: setAudPtL<0>(value); break;
+        case 0xa4: paula.audxLen<0>(value); break;
+        case 0xa6: paula.audxPer<0>(value); break;
+        case 0xa8: paula.audxVol<0>(value); break;
+        case 0xaa: paula.audxDat<0>(value); break;
+
+        case 0xb0: setAudPtH<1>(value); break;
+        case 0xb2: setAudPtL<1>(value); break;
+        case 0xb4: paula.audxLen<1>(value); break;
+        case 0xb6: paula.audxPer<1>(value); break;
+        case 0xb8: paula.audxVol<1>(value); break;
+        case 0xba: paula.audxDat<1>(value); break;
+
+        case 0xc0: setAudPtH<2>(value); break;
+        case 0xc2: setAudPtL<2>(value); break;
+        case 0xc4: paula.audxLen<2>(value); break;
+        case 0xc6: paula.audxPer<2>(value); break;
+        case 0xc8: paula.audxVol<2>(value); break;
+        case 0xca: paula.audxDat<2>(value); break;
+
+        case 0xd0: setAudPtH<3>(value); break;
+        case 0xd2: setAudPtL<3>(value); break;
+        case 0xd4: paula.audxLen<3>(value); break;
+        case 0xd6: paula.audxPer<3>(value); break;
+        case 0xd8: paula.audxVol<3>(value); break;
+        case 0xda: paula.audxDat<3>(value); break;
 
         case 0xe0:
             if ((bplQueue & 7) != 1) setBpl1ptH(value);
@@ -240,16 +332,20 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
         case 0xf6:
             if ((bplQueue & 7) != 6) setBpl6ptL(value);
             break;
-        case 0x100:
+        case 0x100: {
+            if ((value ^ bplCon0) & 4) // lace change
+                fpsChange |= 1;
+
             bplCon0 = value & ~0xb1;
+
             if (bplState) {
                 bplCycle &= ~0x30; // lores
-                if (bplCon0 & 0x40)         bplCycle |= 0x20; // shires
-                else if (bplCon0 & 0x8000)  bplCycle |= 0x10; // hires
+                if (bplCon0 & 0x40) bplCycle |= 0x20; // shires
+                else if (bplCon0 & 0x8000) bplCycle |= 0x10; // hires
             }
             updateHarddis();
             denise.setBplCon0(value);
-            break;
+        } break;
 
         case 0x102:
             denise.setBplCon1(value);
@@ -332,8 +428,15 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
 
         case 0x1dc: // beamcon
             if (ecsAndHigher()) {
+                if ((beamCon ^ value) & VARBEAMEN)
+                    fpsChange |= 1;
+
                 beamCon = value;
-                lolToggle = !(value & 0x800) && !(value & 0x20);
+                bool lolToggleBefore = lolToggle;
+                lolToggle = !(value & LOLDIS) && !(value & BEAM_PAL);
+                if (lolToggleBefore != lolToggle)
+                    fpsChange |= 1;
+
                 updateHarddis();
             }
             break;
@@ -384,7 +487,72 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
         case 0x176: denise.setSprDatB(6, value); break;
         case 0x17e: denise.setSprDatB(7, value); break;
 
+        case 0x1c0:
+            if (ecsAndHigher()) {
+                hTotal = value & 0xff;
+                fpsChange |= 1;
+            }
 
+        case 0x1c2:
+            if (ecsAndHigher()) {
+                // system->interface->log( "hsync stop written " + std::to_string(value));
+            }
+
+        case 0x1c4:
+            if (ecsAndHigher()) {
+                // system->interface->log( "hblank start written " + std::to_string(value));
+            }
+
+        case 0x1c6:
+            if (ecsAndHigher()) {
+                // system->interface->log( "hblank stop written " + std::to_string(value));
+            }
+
+        case 0x1c8:
+            if (ecsAndHigher()) {
+                vTotal = value & 0x7ff;
+                fpsChange |= 1;
+            }
+            break;
+
+        case 0x1ca:
+            if (ecsAndHigher()) {
+                // system->interface->log( "vsync stop written " + std::to_string(value));
+            }
+
+        case 0x1cc:
+            if (ecsAndHigher()) {
+                vBStrt = value & 0x7ff;
+            }
+            break;
+
+        case 0x1ce:
+            if (ecsAndHigher()) {
+                vBStop = value & 0x7ff;
+            }
+            break;
+
+        case 0x1de:
+            if (ecsAndHigher()) {
+                // system->interface->log( "hsync start written " + std::to_string(value));
+            }
+            break;
+
+        case 0x1e0:
+            if (ecsAndHigher()) {
+                // system->interface->log( "vsync start written " + std::to_string(value));
+            }
+            break;
+
+        case 0x1e2:
+            if (ecsAndHigher()) {
+                // system->interface->log( "hcenter written " + std::to_string(value));
+            }
+            break;
+
+        case 0x1e4:
+            setDiwHigh(value);
+            break;
 
         default:
             if (triggeredBy != Trigger_Read)

@@ -10,11 +10,11 @@ const std::string Interface::Version = "114";
 
 Interface::Interface() : Emulator::Interface( "Amiga" ) {
 
-    prepareFirmware();
-    prepareModels();
     prepareMedia();
-    prepareMemory();
+    prepareFirmware();
     prepareDevices();
+    prepareModels();
+    prepareMemory();
     preparePalettes();
     prepareExpansions();
 
@@ -28,8 +28,10 @@ auto Interface::prepareFirmware() -> void {
 
 auto Interface::prepareModels() -> void {
 
-    models.push_back({ModelIdSystem, "System", Model::Type::Radio, Model::Purpose::Misc, 1, {0, 2}, {"A1000", "A500 (OCS)", "A500 (ECS Agnus)"} });
+    models.push_back({ModelIdSystem, "System", Model::Type::Radio, Model::Purpose::Misc, 1, {0, 2}, {"A1000", "A500 (Full OCS)", "A500 (ECS Agnus, OCS Denise)"} });
     models.push_back({ModelIdLowPassFilter, "Low Pass Filter", Model::Type::Switch, Model::Purpose::AudioSettings, 1}); //0 - off, 1 - on, means software decides
+    models.push_back({ModelIdRegion, "Region", Model::Type::Combo, Model::Purpose::GraphicChip, 0, {0, 1}, { "PAL", "NTSC" }});
+    models.push_back({ModelIdDiskDrivesConnected, "Disk Drives", Model::Type::Combo, Model::Purpose::DriveSettings, 1, {0, 4}, { "0", "1", "2", "3", "4" }});
 
 }
 
@@ -91,7 +93,7 @@ auto Interface::prepareMemory() -> void {
 
 auto Interface::prepareExpansions() -> void {
 
-    //expansions.push_back( { ExpansionIdNone, "Empty", Expansion::Type::Empty, nullptr, nullptr } );
+    expansions.push_back( { ExpansionIdNone, "Empty", Expansion::Type::Empty, nullptr, nullptr } );
     //expansions.push_back( { ExpansionIdFast, "Fast", Expansion::Type::Ram, &memoryTypes[2], nullptr } );
 
 }
@@ -259,31 +261,45 @@ auto Interface::prepareDevices() -> void {
 }
 
 auto Interface::preparePalettes() -> void {
+    uint32_t color;
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
 
     palettes.push_back({ 0, "Default", false });
 
     for (unsigned i = 0; i < 4096; i++) {
-        uint32_t color = ((i & 0xf) << 0) | ((i & 0xf) << 4)
+        color = ((i & 0xf) << 0) | ((i & 0xf) << 4)
                          | ((i & 0xf0) << 4) | ((i & 0xf0) << 8)
                          | ((i & 0xf00) << 8) | ((i & 0xf00) << 12);
 
-        palettes[0].paletteColors.push_back( {"", color} );
+        r = (color >> 16) & 0xff;
+        g = (color >> 8) & 0xff;
+        b = (color >> 0) & 0xff;
 
-        palettes[0].paletteColors.back().updateChannels();
+        palettes[0].paletteColors.push_back( {"", color, r, g, b} );
     }
 }
 
 auto Interface::connect(unsigned connectorId, unsigned deviceId) -> void {
-
+    system->input.connectControlport( getConnector( connectorId ), getDevice( deviceId ) );
 }
 
 auto Interface::connect(Connector* connector, Device* device) -> void {
-
+    system->input.connectControlport( connector, device );
 }
 
 auto Interface::getConnectedDevice( Connector* connector ) -> Device* {
+    auto device = system->input.getConnectedDevice( connector );
 
-    return getUnplugDevice();
+    if (!device)
+        return getUnplugDevice();
+
+    return device;
+}
+
+auto Interface::getCursorPosition( Device* device, int16_t& x, int16_t& y ) -> bool {
+    return system->input.getCursorPosition( device, x, y );
 }
 
 auto Interface::setMemory(MemoryType* memoryType, unsigned memoryId) -> void {
@@ -320,8 +336,78 @@ auto Interface::run() -> void {
     system->run();
 }
 
+auto Interface::runAhead(unsigned frames) -> void {
+    system->runAhead.frames = frames;
+    system->input.updateSampling();
+    // system->updateDriveSounds();
+}
+
+auto Interface::runAheadPerformance(bool state) -> void {
+    system->runAhead.performance = state;
+}
+
+auto Interface::runAheadPreventJit(bool state) -> void {
+    system->runAhead.preventJit = state;
+    system->input.updateSampling();
+}
+
+auto Interface::getRegionEncoding() -> Region {
+    return system->agnus.ntsc ? Region::Ntsc : Region::Pal;
+}
+
+auto Interface::getRegionGeometry() -> Region {
+    return system->agnus.ntsc ? Region::Ntsc : Region::Pal;
+}
+
+auto Interface::getSubRegion() -> SubRegion {
+    return system->agnus.ntsc ? SubRegion::Ntsc_M : SubRegion::Pal_B;
+}
+
+auto Interface::setMonitorFpsRatio(double ratio) -> void {
+    system->hintSlowSpeed( ratio < 0.5 );
+}
+
 auto Interface::setModelValue(unsigned modelId, int value) -> void {
-    return;
+    switch (modelId) {
+        case ModelIdSystem:
+            system->setModel( value );
+            break;
+        case ModelIdRegion:
+            system->setRegion( (Region)value );
+            break;
+        case ModelIdLowPassFilter:
+            system->paula.enableFilter = (bool)value;
+            break;
+        case ModelIdSampleFetch:
+            system->setResampleQuality( value );
+            break;
+        case ModelIdDiskDrivesConnected:
+            break;
+    }
+}
+
+auto Interface::getModelValue(unsigned modelId) -> int {
+    switch (modelId) {
+        case ModelIdSystem:
+            return (int)system->getModel();
+        case ModelIdRegion:
+            return (int)system->agnus.ntsc;
+        case ModelIdLowPassFilter:
+            return (int)system->paula.enableFilter;
+        case ModelIdSampleFetch:
+            return system->paula.getResampleQuality();
+        case ModelIdDiskDrivesConnected:
+            return 0;
+    }
+
+    return 0;
+}
+
+auto Interface::getModelIdOfEnabledDrives(MediaGroup* group) -> unsigned {
+    if (group->isDisk())
+        return ModelIdDiskDrivesConnected;
+
+    return ~0;
 }
 
 auto Interface::insertDisk(Media* media, uint8_t* data, unsigned size, bool loadGracefully) -> void {
@@ -334,18 +420,12 @@ auto Interface::writeProtectDisk(Media* media, bool state) -> void {
         return;
 }
 
+auto Interface::isWriteProtectedDisk(Media* media) -> bool {
+    return false;
+}
+
 auto Interface::ejectDisk(Media* media) -> void {
     if (!media || !media->group->isDisk())
-        return;
-}
-
-auto Interface::insertHardDisk(Media* media, unsigned size) -> void {
-    if (!media || !media->group->isHardDisk())
-        return;
-}
-
-auto Interface::ejectHardDisk(Media* media) -> void {
-    if (!media || !media->group->isHardDisk())
         return;
 }
 
@@ -354,35 +434,35 @@ auto Interface::createDiskImage(unsigned typeId, bool hd, std::string name, bool
     return {nullptr, 0};
 }
 
-auto Interface::createHardDisk(std::function<void (uint8_t* buffer, unsigned length, unsigned offset)> onCreate, unsigned size, std::string name) -> void {
-    unsigned bufferLength = 10u * 1024u * 1024u;
-    if (size > (512u * 1024u * 1024u) ) {
-        bufferLength = 50u * 1024u * 1024u;
-    }
-    uint8_t* data = new uint8_t[bufferLength];
+//auto Interface::createHardDisk(std::function<void (uint8_t* buffer, unsigned length, unsigned offset)> onCreate, unsigned size, std::string name) -> void {
+//    unsigned bufferLength = 10u * 1024u * 1024u;
+//    if (size > (512u * 1024u * 1024u) ) {
+//        bufferLength = 50u * 1024u * 1024u;
+//    }
+//    uint8_t* data = new uint8_t[bufferLength];
+//
+//    for ( long long offset = 0; offset < size; offset += bufferLength ) {
+//        memset(data, 0, bufferLength);
+//
+//        unsigned length = bufferLength;
+//        if ((offset + bufferLength) > size) {
+//            length = size - offset;
+//        }
+//
+//        onCreate(data, length, offset);
+//    }
+//
+//    delete[] data;
+//}
 
-    for ( long long offset = 0; offset < size; offset += bufferLength ) {
-        memset(data, 0, bufferLength);
-
-        unsigned length = bufferLength;
-        if ((offset + bufferLength) > size) {
-            length = size - offset;
-        }
-
-        onCreate(data, length, offset);
-    }
-
-    delete[] data;
-}
-
-auto Interface::savestate() -> uint8_t* {
-    return nullptr;
+auto Interface::savestate(unsigned& size) -> uint8_t* {
+    return system->serialize( size );
 }
 auto Interface::checkstate(uint8_t* data, unsigned size) -> bool {
-    return false;
+    return system->checkSerialization( data, size );
 }
 auto Interface::loadstate(uint8_t* data, unsigned size) -> bool {
-    return false;
+    return system->unserialize( data, size );
 }
 
 auto Interface::sendKeyChange(bool pressed, Device::Input* input) -> void {
@@ -396,6 +476,55 @@ auto Interface::informAboutKeyUpdate() -> void {
 auto Interface::setLineCallback(bool state, unsigned scanline) -> void {
     system->denise.lineCallback.use = state;
     system->denise.lineCallback.line = scanline;
+}
+
+auto Interface::crop( CropType type, bool aspectCorrect, unsigned left, unsigned right, unsigned top, unsigned bottom ) -> void {
+    system->crop.settings.type = type;
+    system->crop.settings.aspectCorrect = aspectCorrect;
+    system->crop.settings.left = left;
+    system->crop.settings.right = right;
+    system->crop.settings.top = top;
+    system->crop.settings.bottom = bottom;
+}
+
+auto Interface::cropWidth() -> unsigned {
+    return system->crop.latest.width;
+}
+
+auto Interface::cropHeight() -> unsigned {
+    return system->crop.latest.height;
+}
+
+auto Interface::cropTop() -> unsigned {
+    return system->crop.latest.top;
+}
+
+auto Interface::cropLeft() -> unsigned {
+    return system->crop.latest.left;
+}
+
+auto Interface::cropData16() -> uint16_t* {
+    return system->crop.latest.frame;
+}
+
+auto Interface::cropPitch() -> unsigned {
+    return system->crop.latest.linePitch;
+}
+
+auto Interface::requestImmediateReturn() -> void {
+    system->leaveEmulation = true;
+}
+
+auto Interface::setInputSampling(uint8_t mode) -> void {
+    system->input.setSampling( mode );
+}
+
+auto Interface::fastForward(unsigned config) -> void {
+    system->setFastForward( config );
+}
+
+auto Interface::getForward() -> unsigned {
+    return system->fastForward.config;
 }
 
 }

@@ -1,7 +1,6 @@
 
 #include "copper.h"
 #include "agnus.h"
-#include "blitter.h"
 
 namespace LIBAMI {
 

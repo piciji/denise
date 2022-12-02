@@ -3,6 +3,7 @@
 #include "controlPort.h"
 
 #include "joypad.cpp"
+#include "mouse.cpp"
 
 
 namespace LIBAMI  {

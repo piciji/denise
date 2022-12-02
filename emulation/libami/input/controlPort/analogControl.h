@@ -30,7 +30,7 @@ struct AnalogControl : ControlPort {
     }
 
     auto useJitPolling() -> bool {
-        return false;
+        return true;
     }
 };
 
