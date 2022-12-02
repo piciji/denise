@@ -410,6 +410,7 @@ template<CiaModel model> auto Cia::writeGeneric( unsigned pos, uint8_t value ) -
                     delay |= CIA_STOP_TA0;
             }
             timerA.control = value;
+            updatePortB();
         } break;
 
         case 0xf: {
@@ -448,11 +449,23 @@ template<CiaModel model> auto Cia::writeGeneric( unsigned pos, uint8_t value ) -
             }
 
             timerB.control = value;
+            updatePortB();
         } break;
     }
 }
 
-auto Cia::adjustBit6And7( uint8_t& inOut ) -> void {
+auto Cia::updatePortB() -> void {
+    lines.iob = lines.prb | ~lines.ddrb;
+    adjustBit6And7(lines.iob);
+
+    if (lines.iob != lines.iobOld) {
+        lines.prbChange = true;
+        writePort(PORTB, &lines);
+        lines.iobOld = lines.iob;
+    }
+}
+
+inline auto Cia::adjustBit6And7( uint8_t& inOut ) -> void {
     if (timerB.control & 2) {
         inOut &= ~0x80;
         if ( ( (timerB.control & 4) ? timerB.toggle : (delay & CIA_UF_TB1) ) )

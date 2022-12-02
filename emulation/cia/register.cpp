@@ -220,7 +220,17 @@ auto Base::write( unsigned pos, uint8_t value ) -> void {
 				}
             }						
 			
-            pT->control = value;            
+            pT->control = value;
+
+            lines.iob = lines.prb | ~lines.ddrb;
+            adjustBit6And7(lines.iob);
+
+            if (lines.iob != lines.iobOld) {
+                lines.prbChange = true;
+                writePort(PORTB, &lines);
+                lines.iobOld = lines.iob;
+            }
+
 		} break;
 	}
 }

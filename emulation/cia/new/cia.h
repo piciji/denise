@@ -96,6 +96,7 @@ protected:
     auto handleInterrupt( uint8_t number ) -> void;
     template<uint8_t timerId> auto updateState() -> void;
     auto adjustBit6And7( uint8_t& inOut ) -> void;
+    auto updatePortB() -> void;
     auto interruptControl() -> void;
     auto interruptControlOld() -> void;
     template<uint8_t timerId> inline auto readCounter( ) -> uint16_t;
