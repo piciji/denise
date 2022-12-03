@@ -221,7 +221,8 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
     activeVideoManager = VideoManager::getInstance( emulator );
     activeInputManager = InputManager::getManager(emulator);
     activeVideoManager->updateCrtThreads();
-    activeInputManager->setupKeycodeTransfer();
+    if (activeInputManager)
+        activeInputManager->setupKeycodeTransfer();
 	uint8_t* data;
     std::vector<std::string> brokenPaths;
 
@@ -402,7 +403,8 @@ auto Program::powerOff() -> void {
     activeEmulator = nullptr;
     activeVideoManager = nullptr;
     activeInputManager = InputManager::getManager(nullptr); // there is a manager, when no emulation is active ... because of hotkey handling
-    activeInputManager->setupKeycodeTransfer();
+    if (activeInputManager)
+        activeInputManager->setupKeycodeTransfer();
     warp.enableAutoWarp = false;
 }
 
