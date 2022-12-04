@@ -57,7 +57,8 @@ AutostartLayout::AutoWarp::AutoWarp() {
     append(normal, {0u, 0u}, 10 );
     append(aggressive, {0u, 0u}, 25 );
     append(diskFirstFile, {0u, 0u}, 10 );
-    append(tapeFirstFile, {0u, 0u} );
+    append(tapeFirstFile, {0u, 0u}, 10 );
+    append(disableWarpWhenInput, {0u, 0u} );
 
     GUIKIT::RadioBox::setGroup( off, normal, aggressive );
 
@@ -130,11 +131,27 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) {
         autostartLayout->autoWarp.diskFirstFile.onToggle = [this](bool checked) {
 
             _settings->set<bool>("auto_warp_disk_first_file", checked);
+
+            autostartLayout->autoWarp.disableWarpWhenInput.setEnabled( !checked );
         };
 
         autostartLayout->autoWarp.tapeFirstFile.onToggle = [this](bool checked) {
 
             _settings->set<bool>("auto_warp_tape_first_file", checked);
+        };
+
+        autostartLayout->autoWarp.disableWarpWhenInput.onToggle = [this](bool checked) {
+
+            _settings->set<bool>("auto_warp_off_input", checked);
+            emuThread->lock();
+            if (activeEmulator) {
+                auto autoStartedMediaGroup = emulator->autoStartedByMediaGroup();
+
+                if (autoStartedMediaGroup->isDisk())
+                    program->warp.inputControlled = checked;
+            }
+
+            emuThread->unlock();
         };
 
         autostartLayout->startWrapper.option.tapeWithStandardKernal.onToggle = [this](bool checked) {
@@ -341,6 +358,8 @@ auto MiscLayout::translate() -> void {
 
         autostartLayout->autoWarp.diskFirstFile.setText(trans->get("disk warp first file"));
         autostartLayout->autoWarp.tapeFirstFile.setText(trans->get("tape warp first file"));
+        autostartLayout->autoWarp.disableWarpWhenInput.setText(trans->get("disable warp when input"));
+        autostartLayout->autoWarp.disableWarpWhenInput.setTooltip( trans->get("disable warp when input tooltip") );
 
         autostartLayout->startWrapper.option.tapeWithStandardKernal.setText(trans->get("tape default kernal"));
         autostartLayout->startWrapper.option.loadWithColumn.setText( "Load \":*\"" );
@@ -368,6 +387,10 @@ auto MiscLayout::loadSettings() -> void {
             autostartLayout->autoWarp.aggressive.setChecked();
 
         autostartLayout->autoWarp.diskFirstFile.setChecked(_settings->get<bool>("auto_warp_disk_first_file", true));
+
+        autostartLayout->autoWarp.disableWarpWhenInput.setChecked(_settings->get<bool>("auto_warp_off_input", false));
+
+        autostartLayout->autoWarp.disableWarpWhenInput.setEnabled( !autostartLayout->autoWarp.diskFirstFile.checked() );
 
         autostartLayout->autoWarp.tapeFirstFile.setChecked(_settings->get<bool>("auto_warp_tape_first_file", false));
 

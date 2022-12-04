@@ -633,19 +633,28 @@ auto Program::autoStartFinish(bool soft) -> void {
     fastForward( false );
 }
 
-auto Program::informDriveLoading(bool state) -> void {
+auto Program::hintAutoWarp(uint8_t state) -> void {
 
     if (!activeEmulator || !warp.enableAutoWarp || !warp.motorControlled)
         return;
 
-    if (warp.active == state)
+    bool motorOn = state & 1;
+    bool inputRequested = state & 2;
+    bool suggestWarp = motorOn;
+
+    if (motorOn) {
+        if (warp.inputControlled && inputRequested)
+            suggestWarp = false;
+    }
+
+    if (warp.active == suggestWarp)
         return;
 
     videoDriver->freeContext();
-    fastForward( state, warp.aggressive );
+    fastForward( suggestWarp, warp.aggressive );
 }
 
-auto Program::initAutoWarp(Emulator::Interface::MediaGroup* mediaGroup) -> void {
+auto Program::initAutoWarp(Emulator::Interface::MediaGroup* mediaGroup, bool initOnly) -> void {
     if (!activeEmulator)
         return;
 
@@ -654,12 +663,18 @@ auto Program::initAutoWarp(Emulator::Interface::MediaGroup* mediaGroup) -> void 
     warp.enableAutoWarp = _autoWarp != 0;
 
     if (warp.enableAutoWarp) {
-        if (mediaGroup->isDisk())
-            warp.motorControlled = !program->getSettings( activeEmulator )->get<bool>("auto_warp_disk_first_file", true);
-        else
-            warp.motorControlled = !program->getSettings( activeEmulator )->get<bool>("auto_warp_tape_first_file", false);
+        if (mediaGroup->isDisk()) {
+            warp.motorControlled = !program->getSettings(activeEmulator)->get<bool>("auto_warp_disk_first_file", true);
+            warp.inputControlled = program->getSettings(activeEmulator)->get<bool>("auto_warp_off_input", false);
+        } else {
+            warp.motorControlled = !program->getSettings(activeEmulator)->get<bool>("auto_warp_tape_first_file", false);
+            warp.inputControlled = false;
+        }
 
-        fastForward(true, _autoWarp == 2);
+        if (!initOnly)
+            fastForward(true, _autoWarp == 2);
+        else if (warp.motorControlled)
+            warp.aggressive = _autoWarp == 2;
     }
 }
 

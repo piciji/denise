@@ -697,3 +697,5 @@ restricted dynamic sampling tooltip = Mindestens einmal, maximal zweimal pro Bil
 dynamic sampling = dynamisch (JIT)
 dynamic sampling tooltip = Wie die Einstellung "dynamisch begrenzt", jedoch können unbegrenzt viele Eingabe-Abtastungen pro Bild erfolgen. Die Anzahl der Abtastungen hängt davon ab, wie oft die Software Eingaben abfragt. Zudem wird über einen Regler gesteuert, wieviel Zeit mindestens zwischen zwei Abtastungen vergehen muss. Dies verhindert Performance-Einbußen, wenn Software zu häufig abfragt.
 prevent dynamic sampling = dynamische Eingabe-Abtastung unterdrücken bei aktivem runAhead
+disable warp when input = Eingabe Prüfung beendet Warp
+disable warp when input tooltip = Der automatische Warp wird weiterhin über den Laufwerks Motor gesteuert. Es gibt jedoch Spiele, welche den Motor sehr spät abstellen und somit läuft der Warp zu lange. Das führt dazu, dass man bereits einen Treffer kassiert hat. Diese Option stellt den Warp auch ab, wenn die Software bereits die Eingabe prüft.

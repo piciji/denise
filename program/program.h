@@ -60,6 +60,7 @@ struct Program : Emulator::Interface::Bind {
         // auto Warp
         bool enableAutoWarp = false;
         bool motorControlled = false;
+        bool inputControlled = false;
 	} warp;
 
     auto quit() -> void;
@@ -100,7 +101,7 @@ struct Program : Emulator::Interface::Bind {
     auto questionToWrite(Emulator::Interface::Media* media) -> bool override;
     auto exit(int code) -> void override;
 	auto getFileNameFromMedia(Emulator::Interface::Media* media) -> std::string override;
-    auto informDriveLoading(bool state) -> void override;
+    auto hintAutoWarp(uint8_t state) -> void override;
     auto autoStartFinish(bool soft) -> void override;
     auto jam( Emulator::Interface::Media* media = nullptr ) -> void override;
     auto setThreadPriority(Emulator::Interface::ThreadPriority priority, float minProcessingTimeInMilliSeconds, float maxProcessingTimeInMilliSeconds) -> bool override;
@@ -120,7 +121,7 @@ struct Program : Emulator::Interface::Bind {
 	auto getEmulator( std::string ident ) -> Emulator::Interface*;
     auto removeExpansion( bool bootableOnly = true ) -> void;
     auto prepareSocket(Emulator::Interface::Media* media, Emulator::Interface* emulator, std::string address) -> void;
-    auto initAutoWarp(Emulator::Interface::MediaGroup* mediaGroup) -> void;
+    auto initAutoWarp(Emulator::Interface::MediaGroup* mediaGroup, bool initOnly = false) -> void;
     auto updateSaveIdent(Emulator::Interface* emulator, std::string fileName) -> void;
     auto initUserInterface() -> void;
     

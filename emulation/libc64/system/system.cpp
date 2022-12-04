@@ -328,6 +328,11 @@ System::System(Interface* interface) {
 
     cia1->readPort = [this]( CIA::Base::Port port, CIA::Base::Lines* lines ) {
 
+        if (!observer.inputLock) {
+            if (++observer.inputFetches == 25)
+                hintObserverInputRequested();
+        }
+
         if ( port == CIA::Base::PORTA )
             return input->readCiaPortA( lines );
 
@@ -555,6 +560,9 @@ auto System::power( bool softReset ) -> void {
         cpu->power();
         observer.enterRom = false;
         observer.memoryAccesses = 0;
+        observer.stateChange = false;
+        observer.inputLock = true;
+        observer.inputFetches = 0;
     } else {
         // vic hasn't a reset line ... means no change ?
         cpu->reset();
@@ -715,8 +723,8 @@ auto System::run() -> void {
         unserializeLight();
     }
 
-    if (observer.motorChange)
-        informAboutMotorChange();
+    if (observer.stateChange)
+        informAboutStateChange();
 
     debugCart->check();
 }
@@ -939,14 +947,23 @@ auto System::checkForAutoStarter() -> bool {
     return false;
 }
 
-auto System::motorChange(bool state) -> void {
-    observer.motorChange = true;
+inline auto System::hintObserverInputRequested() -> void {
+    observer.stateChange = true;
+    observer.inputLock = true;
+}
+
+auto System::hintObserverMotorChange(bool state) -> void {
+    observer.stateChange = true;
+    observer.inputFetches = 0;
+    observer.inputLock = !(state && !observer.motor && observer.memoryAccesses);
     observer.motor = state;
 }
 
-auto System::informAboutMotorChange() -> void {
-    observer.motorChange = false;
-    interface->informDriveLoading( observer.motor );
+auto System::informAboutStateChange() -> void {
+    observer.stateChange = false;
+    uint8_t newState = observer.motor;
+    if (observer.inputFetches >= 25) newState |= 2;
+    interface->hintAutoWarp( newState );
 }
 
 auto System::burstOrParallelUpdate() -> void {

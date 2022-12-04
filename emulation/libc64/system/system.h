@@ -161,8 +161,10 @@ struct System {
     struct {
         bool enterRom = false;
         uint8_t memoryAccesses = 0;
-        bool motorChange = false;
+        bool stateChange = false;
         bool motor;
+        uint8_t inputFetches = 0;
+        bool inputLock = true;
     } observer;
 
     struct TapeNoise {
@@ -228,8 +230,9 @@ struct System {
     auto runAheadInProgress() -> bool { return runAhead.frames != 0; }
 
     auto checkForAutoStarter() -> bool;
-    auto motorChange(bool state) -> void;
-    auto informAboutMotorChange() -> void;
+    auto hintObserverMotorChange(bool state) -> void;
+    auto hintObserverInputRequested() -> void;
+    auto informAboutStateChange() -> void;
 
     auto burstOrParallelUpdate() -> void;
     auto driveCycleSyncingUpdate() -> void;

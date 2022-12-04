@@ -195,6 +195,8 @@ struct Interface : Emulator::Interface {
 
     auto pasteText(std::string buffer ) -> void;
     auto copyText() -> std::string;
+
+    auto autoStartedByMediaGroup() -> MediaGroup*;
 private:
 	auto prepareDevices() -> void;
 	auto prepareMedia() -> void;

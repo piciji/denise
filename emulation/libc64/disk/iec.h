@@ -91,6 +91,7 @@ struct IecBus {
     auto disalignTracks(bool state) -> void;
     auto setSpeeder(uint8_t speeder) -> void;
     auto updateDriveSounds() -> void;
+    auto wasAutostarted() -> bool;
 };
    
 extern IecBus* iecBus;

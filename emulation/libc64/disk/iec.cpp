@@ -586,6 +586,14 @@ auto IecBus::selectListing( Emulator::Interface::Media* media,  std::string file
     drives[ media->id ]->structure.selectListing( fileName, useTraps );
 }
 
+auto IecBus::wasAutostarted() -> bool {
+    for (auto drive : drivesEnabled) {
+        if (drive->structure.autoStarted)
+            return true;
+    }
+    return false;
+}
+
 auto IecBus::serialize(Emulator::Serializer& s) -> void {
     // depends on region, enabled drives, firmware and disk images.
     

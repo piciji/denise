@@ -367,7 +367,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             if (!activeEmulator || !dynamic_cast<LIBC64::Interface*>(activeEmulator) )
                 break;
 
-            program->informDriveLoading(false);
+            program->hintAutoWarp(0);
 
             emuThread->lock();
             auto media = activeEmulator->getTape( 0 );

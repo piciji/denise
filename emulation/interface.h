@@ -319,7 +319,7 @@ struct Interface {
         virtual auto exit( int code ) -> void {}
         virtual auto midScreenCallback( ) -> void {}
         virtual auto questionToWrite(Media*) -> bool { return false; }
-        virtual auto informDriveLoading(bool) -> void {}
+        virtual auto hintAutoWarp(uint8_t) -> void {}
         virtual auto autoStartFinish(bool) -> void {}
         virtual auto mixDriveSound( Media*, DriveSound, uint8_t ) -> void {}
         virtual auto jam(Media*) -> void {}
@@ -388,8 +388,8 @@ struct Interface {
         bind->exit( code );
     }
 
-    auto informDriveLoading(bool state) -> void {
-        bind->informDriveLoading( state );
+    auto hintAutoWarp(uint8_t state) -> void {
+        bind->hintAutoWarp( state );
     }
 
     auto autoStartFinish(bool soft) -> void {
@@ -551,6 +551,8 @@ struct Interface {
     virtual auto enableFloppySounds(bool state) -> void {}
     virtual auto enableTapeSounds(bool state) -> void {}
     virtual auto setTapeLoadingNoise(unsigned volume) -> void {}
+
+    virtual auto autoStartedByMediaGroup() -> MediaGroup* { return nullptr; }
     
     auto getStatsForSelectedRegion() -> Stats& {  
         return stats;

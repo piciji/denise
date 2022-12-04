@@ -25,7 +25,7 @@
 
 namespace LIBC64 {
 
-const std::string Interface::Version = "1131";
+const std::string Interface::Version = "1132";
     
 Interface::Interface() : Emulator::Interface( "C64" ) {        
     
@@ -1763,6 +1763,16 @@ auto Interface::getModelIdOfEnabledDrives(MediaGroup* group) -> unsigned {
 
 auto Interface::getModelIdOfCycleRenderer() -> unsigned {
     return ModelIdCycleAccurateVideo;
+}
+
+auto Interface::autoStartedByMediaGroup() -> MediaGroup* {
+    if (iecBus->wasAutostarted())
+        return getDiskMediaGroup();
+
+    if (tape->wasAutostarted())
+        return getTapeMediaGroup();
+
+    return nullptr;
 }
 
 }
