@@ -106,15 +106,15 @@ auto InputManager::automap( KeyboardLayout::Type type, Emulator::Interface::Key 
     if ( key == EmuKey::ShiftRight ) return {{Hid::Key::ShiftRight}};
            
     if ( key == EmuKey::Space ) return {{Hid::Key::Space}};
-    if ( key == EmuKey::ArrowLeft ) return {{Hid::Key::End}};
+    if ( key == EmuKey::ArrowLeft ) return {{Hid::Key::Next}};
     if ( key == EmuKey::Home ) return {{Hid::Key::Home}};
     if ( key == EmuKey::RunStop ) return {{Hid::Key::Esc}};
-    if ( key == EmuKey::ArrowUp ) return {{Hid::Key::Next}};
+    if ( key == EmuKey::ArrowUp ) return {{Hid::Key::Prior}};
     if ( key == EmuKey::ControlLeft ) return {{Hid::Key::ControlLeft}};
     if ( key == EmuKey::Commodore ) return {{Hid::Key::ControlLeft}};
     if ( key == EmuKey::Ctrl ) return {{Hid::Key::Tab}};
     if ( key == EmuKey::ShiftLock ) return {{Hid::Key::CapsLock}};
-    if ( key == EmuKey::Restore ) return {{Hid::Key::ControlRight}};
+    if ( key == EmuKey::Restore ) return {{Hid::Key::End}};
     if ( key == EmuKey::Del ) return {{Hid::Key::Delete}};
     if ( key == EmuKey::Help ) return {{Hid::Key::Home}};
     if ( key == EmuKey::Esc ) return {{Hid::Key::Esc}};
