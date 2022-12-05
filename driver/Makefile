@@ -6,7 +6,7 @@
 # some drivers like dinput (5, 7, 8) and xaudio (2.7, 2.8, 2.9) are supported in multiple versions.
 
 ifeq ($(platform),windows)
-    drv += wgl direct3d dsound dinput5 dinput7 dinput8 xaudio27 xaudio28 xaudio29 openal wasapi rawinput
+    drv += wgl direct3d dsound dinput5 dinput7 dinput8 xaudio27 xaudio28 xaudio29 wasapi rawinput
 
 else ifeq ($(platform),macosx)
     drv += cgl openal coreaudio iokit
