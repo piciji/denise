@@ -55,6 +55,15 @@ struct DiskFinder {
             case 13: return "m";
             case 14: return "n";
             case 15: return "o";
+            case 16: return "p";
+            case 17: return "q";
+            case 18: return "r";
+            case 19: return "s";
+            case 20: return "t";
+            case 21: return "u";
+            case 22: return "v";
+            case 23: return "w";
+            case 24: return "x";
         }         
         
         return "";
@@ -209,6 +218,15 @@ struct DiskFinder {
             case 13: temp = _small ? temp + "m" : temp + "M"; break;
             case 14: temp = _small ? temp + "n" : temp + "N"; break;
             case 15: temp = _small ? temp + "o" : temp + "O"; break;
+            case 16: temp = _small ? temp + "p" : temp + "P"; break;
+            case 17: temp = _small ? temp + "q" : temp + "Q"; break;
+            case 18: temp = _small ? temp + "r" : temp + "R"; break;
+            case 19: temp = _small ? temp + "s" : temp + "S"; break;
+            case 20: temp = _small ? temp + "t" : temp + "T"; break;
+            case 21: temp = _small ? temp + "u" : temp + "U"; break;
+            case 22: temp = _small ? temp + "v" : temp + "V"; break;
+            case 23: temp = _small ? temp + "w" : temp + "W"; break;
+            case 24: temp = _small ? temp + "x" : temp + "X"; break;
             default:
                 return "";
         }

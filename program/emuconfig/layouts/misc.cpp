@@ -144,10 +144,10 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) {
 
             _settings->set<bool>("auto_warp_off_input", checked);
             emuThread->lock();
-            if (activeEmulator) {
+            if (activeEmulator == emulator) {
                 auto autoStartedMediaGroup = emulator->autoStartedByMediaGroup();
 
-                if (autoStartedMediaGroup->isDisk())
+                if (autoStartedMediaGroup && autoStartedMediaGroup->isDisk())
                     program->warp.inputControlled = checked;
             }
 
@@ -357,7 +357,9 @@ auto MiscLayout::translate() -> void {
         autostartLayout->autoWarp.off.setText(trans->get("off"));
 
         autostartLayout->autoWarp.diskFirstFile.setText(trans->get("disk warp first file"));
+        autostartLayout->autoWarp.diskFirstFile.setTooltip(trans->get("warp first file tooltip"));
         autostartLayout->autoWarp.tapeFirstFile.setText(trans->get("tape warp first file"));
+        autostartLayout->autoWarp.tapeFirstFile.setTooltip(trans->get("warp first file tooltip"));
         autostartLayout->autoWarp.disableWarpWhenInput.setText(trans->get("disable warp when input"));
         autostartLayout->autoWarp.disableWarpWhenInput.setTooltip( trans->get("disable warp when input tooltip") );
 

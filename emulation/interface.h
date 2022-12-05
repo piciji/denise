@@ -650,6 +650,21 @@ struct Interface {
         
         return nullptr;
     }
+
+    auto getEnabledDisk( unsigned mediaId ) -> Media* {
+        for(auto& mediaGroup : mediaGroups) {
+            if (mediaGroup.isDisk()) {
+                unsigned enabledCount = getModelValue(getModelIdOfEnabledDrives(&mediaGroup));
+                if (enabledCount > mediaGroup.media.size())
+                    enabledCount = mediaGroup.media.size();
+
+                if (enabledCount > mediaId)
+                    return &mediaGroup.media[mediaId];
+                return &mediaGroup.media[0];
+            }
+        }
+        return nullptr;
+    }
     
     auto getTape( unsigned mediaId ) -> Media* {        
         for(auto& mediaGroup : mediaGroups)            

@@ -34,6 +34,8 @@ auto InputManager::setHotkeys() -> void {
     hotkeys.push_back( {Hotkey::Id::ToggleCRTGPU, "toggle CRT GPU"} );
 
     hotkeys.push_back( {Hotkey::Id::FloppyAccess, "select_disk_drive"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwapUp, "Disk_swapper_up"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwapDown, "Disk_swapper_down"} );
     hotkeys.push_back( {Hotkey::Id::DiskSwap0, "Disk_swapper_call0"} );
     hotkeys.push_back( {Hotkey::Id::DiskSwap1, "Disk_swapper_call1"} );
     hotkeys.push_back( {Hotkey::Id::DiskSwap2, "Disk_swapper_call2"} );
@@ -44,11 +46,6 @@ auto InputManager::setHotkeys() -> void {
     hotkeys.push_back( {Hotkey::Id::DiskSwap7, "Disk_swapper_call7"} );
     hotkeys.push_back( {Hotkey::Id::DiskSwap8, "Disk_swapper_call8"} );
     hotkeys.push_back( {Hotkey::Id::DiskSwap9, "Disk_swapper_call9"} );
-    hotkeys.push_back( {Hotkey::Id::DiskSwap10, "Disk_swapper_call10"} );
-    hotkeys.push_back( {Hotkey::Id::DiskSwap11, "Disk_swapper_call11"} );
-    hotkeys.push_back( {Hotkey::Id::DiskSwap12, "Disk_swapper_call12"} );
-    hotkeys.push_back( {Hotkey::Id::DiskSwap13, "Disk_swapper_call13"} );
-    hotkeys.push_back( {Hotkey::Id::DiskSwap14, "Disk_swapper_call14"} );
 }
 
 auto InputManager::setCustomHotkeys() -> void {
@@ -88,6 +85,7 @@ auto InputManager::setCustomHotkeys() -> void {
     customHotkeys.push_back( {Hotkey::Id::Firmware, "Firmware", true} );
 	customHotkeys.push_back( {Hotkey::Id::Border, "Border", true} );
     customHotkeys.push_back( {Hotkey::Id::DiskSwapper, "Disk_swapper", true} );
+    customHotkeys.push_back( {Hotkey::Id::DiskAutoStart, "Disk_autostart", true} );
 }
 
 auto InputManager::fireHotkey(InputMapping* trigger) -> void {
@@ -513,24 +511,11 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
                 break;
 
             emuThread->lock();
-            auto defaultMedia = activeEmulator->getDisk( 0 );
-
-            if (!defaultMedia)
+            auto mediaId = settings->get<unsigned>("access_floppy", 0u, {0u, 3u});
+            mediaId++;
+            auto media = activeEmulator->getEnabledDisk(mediaId);
+            if (!media)
                 break;
-
-            auto mediaGroup = defaultMedia->group;
-
-            auto mediaId = settings->get<unsigned>("access_floppy", 0u, {0u, (unsigned)mediaGroup->media.size() - 1u});
-            unsigned enabledCount = activeEmulator->getModelValue( activeEmulator->getModelIdOfEnabledDrives(mediaGroup) );
-            if (enabledCount > mediaGroup->media.size())
-                enabledCount = mediaGroup->media.size();
-
-            mediaId++; // switch to next
-
-            auto media = defaultMedia;
-
-            if ( ( mediaId < mediaGroup->media.size() ) && ( mediaId < enabledCount ) )
-                media = activeEmulator->getDisk( mediaId );                    
 
             settings->set<unsigned>( "access_floppy", media->id, false);
             statusHandler->setMessage( trans->get("access_floppy", {{"%drive%", media->name}}) );								                    
@@ -548,36 +533,46 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             if (activeEmulator)
                 activeEmulator->customCartridgeButton();
             break;
+
+        case Hotkey::DiskAutoStart: {
+            emuThread->lock();
+            auto mediaId = settings->get<unsigned>("access_floppy", 0u, {0u, 3u});
+            auto media = emulator->getEnabledDisk(mediaId);
+
+            if (media)
+                fileloader->autoload(emulator, media, 0, settings->get<bool>("autostart_traps_on_dblclick", false) );
+        } break;
         
         case Hotkey::DiskSwap0: case Hotkey::DiskSwap1: case Hotkey::DiskSwap2:
         case Hotkey::DiskSwap3: case Hotkey::DiskSwap4: case Hotkey::DiskSwap5:
         case Hotkey::DiskSwap6: case Hotkey::DiskSwap7: case Hotkey::DiskSwap8:
-        case Hotkey::DiskSwap9: case Hotkey::DiskSwap10: case Hotkey::DiskSwap11:
-        case Hotkey::DiskSwap12: case Hotkey::DiskSwap13: case Hotkey::DiskSwap14: {
+        case Hotkey::DiskSwap9: case Hotkey::DiskSwapUp: case Hotkey::DiskSwapDown: {
             if (!activeEmulator)
                 break;
 
             auto mediaId = settings->get<unsigned>("access_floppy", 0u, {0u, 3u});
             GUIKIT::File* file;
+            uint8_t* data;
 
             emuThread->lock();
-            auto defaultMedia = activeEmulator->getDisk( 0 );
-            auto mediaGroup = defaultMedia->group;
-
-            unsigned enabledCount = activeEmulator->getModelValue( activeEmulator->getModelIdOfEnabledDrives(mediaGroup) );
-            if (enabledCount > mediaGroup->media.size())
-                enabledCount = mediaGroup->media.size();
-
-            auto media = defaultMedia;
-            if ( ( mediaId < mediaGroup->media.size() ) && ( mediaId < enabledCount ) )
-                media = activeEmulator->getDisk( mediaId );
-
+            auto media = activeEmulator->getEnabledDisk(mediaId);
             if (!media)
                 break;
 
-            uint8_t* data;						
+            int swapPos = settings->get<int>("swap pos", 1u);
 
-            auto swapPos = id - Hotkey::DiskSwap0;
+            if (id == Hotkey::DiskSwapUp)
+                swapPos++;
+            else if (id == Hotkey::DiskSwapDown)
+                swapPos--;
+            else
+                swapPos = id - Hotkey::DiskSwap0;
+
+            if (swapPos < 0) swapPos = 24;
+            else if (swapPos > 24) swapPos = 0;
+
+            settings->set<int>("swap pos", swapPos, false);
+
             FileSetting* fSetting = FileSetting::getInstance( activeEmulator, "swapper_" + std::to_string(swapPos) );
             
             FileSetting fs;
@@ -673,16 +668,16 @@ auto InputManager::pollHotkeys() -> void {
 	InputMapping* deviceSwapper = nullptr;
 	InputMapping* starter = nullptr;
     InputMapping* anyLoad = nullptr;
+    InputMapping* diskAutostart = nullptr;
 	
 	auto useEmu = activeEmulator;
-	
-	for( auto trigger : _hotkeyTriggers ) {
+    if (!useEmu)
+        useEmu = program->getLastUsedEmu();
+
+    for( auto trigger : _hotkeyTriggers ) {
 		
 		switch(trigger->hotkeyId) {
 			case Hotkey::Id::SwapInputDevices:
-				if (!useEmu) 
-					useEmu = program->getLastUsedEmu();	
-								
 				if (!deviceSwapper)
 					deviceSwapper = trigger;				
 				else if (useEmu == trigger->inputManager->emulator)
@@ -699,9 +694,6 @@ auto InputManager::pollHotkeys() -> void {
 			case Hotkey::Id::System:
 			case Hotkey::Id::Control:
 			case Hotkey::Id::Configurations:
-				if (!useEmu) 
-					useEmu = program->getLastUsedEmu();				
-				
 				if (!viewOpen)
 					viewOpen = trigger;				
 				
@@ -720,9 +712,6 @@ auto InputManager::pollHotkeys() -> void {
 			case Hotkey::DecSlot: 
 			case Hotkey::Loadstate:
 			case Hotkey::Savestate:
-				if (!useEmu) 
-					useEmu = program->getLastUsedEmu();				
-
 				if (!stateHandler)
 					stateHandler = trigger;				
 				
@@ -732,9 +721,6 @@ auto InputManager::pollHotkeys() -> void {
 				
 			case Hotkey::Power:
 			case Hotkey::SoftReset:
-				if (!useEmu) 
-					useEmu = program->getLastUsedEmu();				
-
 				if (!starter)
 					starter = trigger;				
 				
@@ -743,15 +729,20 @@ auto InputManager::pollHotkeys() -> void {
 				break;
 				
             case Hotkey::AnyLoad:
-				if (!useEmu) 
-					useEmu = program->getLastUsedEmu();				
-
 				if (!anyLoad)
 					anyLoad = trigger;				
 				
 				else if (useEmu == trigger->inputManager->emulator)
 					anyLoad = trigger;
 				break;
+
+            case Hotkey::DiskAutoStart:
+                if (!diskAutostart)
+                    diskAutostart = trigger;
+
+                else if (useEmu == trigger->inputManager->emulator)
+                    diskAutostart = trigger;
+                break;
                 
 			default:
 				if (!GUIKIT::Vector::find( useTrigger, trigger ))
@@ -768,6 +759,9 @@ auto InputManager::pollHotkeys() -> void {
 	
 	if(stateHandler)
 		useTrigger.push_back( stateHandler );
+
+    if(diskAutostart)
+        useTrigger.push_back( diskAutostart );
 	
 	if(deviceSwapper)
 		useTrigger.push_back( deviceSwapper );

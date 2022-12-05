@@ -108,7 +108,7 @@ SwapperLayout::SwapperLayout( MediaLayout* mediaLayout ) {
         fSetting->setWriteProtect( checked );
 	};
 	
-	for(unsigned i = 0; i < 15; i++) {
+	for(unsigned i = 0; i < 25; i++) {
 		auto fSetting = getSetting( i );		
 		listView.append({std::to_string(i), fSetting->path, fSetting->file });
 	}        
@@ -117,7 +117,7 @@ SwapperLayout::SwapperLayout( MediaLayout* mediaLayout ) {
 auto SwapperLayout::loadSettings() -> void {
     listView.reset();
     
-    for (unsigned i = 0; i < 15; i++) {
+    for (unsigned i = 0; i < 25; i++) {
         auto fSetting = getSetting(i);
         fSetting->update();
         listView.append({std::to_string(i), fSetting->path, fSetting->file});

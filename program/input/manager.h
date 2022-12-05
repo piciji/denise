@@ -69,12 +69,11 @@ struct Hotkey {
 		PlayTape, RecordTape, StopTape, ForwardTape, RewindTape, ResetTapeCounter,
 		FloppyAccess,
 		DiskSwap0, DiskSwap1, DiskSwap2, DiskSwap3, DiskSwap4, DiskSwap5, DiskSwap6,
-        DiskSwap7, DiskSwap8, DiskSwap9, DiskSwap10, DiskSwap11,
-        DiskSwap12, DiskSwap13, DiskSwap14,
+        DiskSwap7, DiskSwap8, DiskSwap9,
         ToggleFastForward, ToggleFastForwardAggressive, Presentation, Palette, Border, System, Firmware, Control,
 		SwapInputDevices, Power, SoftReset, AnyLoad,
         RunAheadUp, RunAheadDown, RunAheadToggleMode, AudioRecord, ToggleCycleRenderer, EF3Menu, Freeze, ToggleBorder,
-        SyncStatus, ThreadedRenderer, ToggleCRTCPU, ToggleCRTGPU,
+        SyncStatus, ThreadedRenderer, ToggleCRTCPU, ToggleCRTGPU, DiskSwapUp, DiskSwapDown, DiskAutoStart,
 
         Autofire = 1000,
     } id;
