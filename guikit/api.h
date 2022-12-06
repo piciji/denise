@@ -1098,6 +1098,7 @@ struct BrowserWindow {
     
     auto directory() -> std::string;
     auto open() -> std::string;
+    auto openMulti() -> std::vector<std::string>;
     auto save() -> std::string;
     auto detached() -> bool;
     auto visible() -> bool;

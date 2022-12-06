@@ -329,7 +329,7 @@ System::System(Interface* interface) {
     cia1->readPort = [this]( CIA::Base::Port port, CIA::Base::Lines* lines ) {
 
         if (!observer.inputLock) {
-            if (++observer.inputFetches == 25)
+            if (++observer.inputFetches == 6)
                 hintObserverInputRequested();
         }
 
@@ -962,7 +962,7 @@ auto System::hintObserverMotorChange(bool state) -> void {
 auto System::informAboutStateChange() -> void {
     observer.stateChange = false;
     uint8_t newState = observer.motor;
-    if (observer.inputFetches >= 25) newState |= 2;
+    if (observer.inputFetches >= 6) newState |= 2;
     interface->hintAutoWarp( newState );
 }
 

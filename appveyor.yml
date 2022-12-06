@@ -18,6 +18,7 @@ branches:
   only:
     - master
     - /v\d*\.\d*\.\d*/
+    - multi_chooser
   
 environment:
   matrix:

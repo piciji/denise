@@ -739,7 +739,8 @@ struct pBrowserWindow {
 
     auto directory() -> std::string;
     auto file(bool save) -> std::string;
-    auto fileVista(bool save) -> std::string;
+    auto fileMulti() -> std::vector<std::string>;
+    auto fileVista(bool save, bool multi = false) -> std::vector<std::string>;
     auto close() -> void; 
     auto setForeground() -> void;
     auto resize(HWND fileDialogView, bool init = false) -> void;

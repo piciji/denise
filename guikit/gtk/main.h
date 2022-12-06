@@ -671,6 +671,7 @@ struct pBrowserWindow {
 	
     auto directory() -> std::string;
     auto file(bool save) -> std::string;
+    auto fileMulti() -> std::vector<std::string> { return {file(false)}; }
 	auto close() -> void;
 	auto detached() -> bool;
 	auto visible() -> bool;

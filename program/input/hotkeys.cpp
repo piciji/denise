@@ -46,6 +46,11 @@ auto InputManager::setHotkeys() -> void {
     hotkeys.push_back( {Hotkey::Id::DiskSwap7, "Disk_swapper_call7"} );
     hotkeys.push_back( {Hotkey::Id::DiskSwap8, "Disk_swapper_call8"} );
     hotkeys.push_back( {Hotkey::Id::DiskSwap9, "Disk_swapper_call9"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwap10, "Disk_swapper_call10"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwap11, "Disk_swapper_call11"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwap12, "Disk_swapper_call12"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwap13, "Disk_swapper_call13"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwap14, "Disk_swapper_call14"} );
 }
 
 auto InputManager::setCustomHotkeys() -> void {
@@ -546,7 +551,9 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
         case Hotkey::DiskSwap0: case Hotkey::DiskSwap1: case Hotkey::DiskSwap2:
         case Hotkey::DiskSwap3: case Hotkey::DiskSwap4: case Hotkey::DiskSwap5:
         case Hotkey::DiskSwap6: case Hotkey::DiskSwap7: case Hotkey::DiskSwap8:
-        case Hotkey::DiskSwap9: case Hotkey::DiskSwapUp: case Hotkey::DiskSwapDown: {
+        case Hotkey::DiskSwap9: case Hotkey::DiskSwap10: case Hotkey::DiskSwap11:
+        case Hotkey::DiskSwap12: case Hotkey::DiskSwap13: case Hotkey::DiskSwap14:
+        case Hotkey::DiskSwapUp: case Hotkey::DiskSwapDown: {
             if (!activeEmulator)
                 break;
 
@@ -568,8 +575,8 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             else
                 swapPos = id - Hotkey::DiskSwap0;
 
-            if (swapPos < 0) swapPos = 24;
-            else if (swapPos > 24) swapPos = 0;
+            if (swapPos < 0) swapPos = SWAPPER_SLOTS - 1;
+            else if (swapPos >= SWAPPER_SLOTS) swapPos = 0;
 
             settings->set<int>("swap pos", swapPos, false);
 

@@ -10,6 +10,8 @@ struct FileSetting;
 #include "../program.h"
 #include "../emuconfig/config.h"
 
+#define SWAPPER_SLOTS 25
+
 namespace MediaView {
 
 struct MediaLayout;
@@ -43,6 +45,9 @@ struct SwapperLayout : GUIKIT::VerticalLayout {
     auto preselectPath( ) -> std::string;
 	auto savePath( std::string path ) -> void;
     auto loadSettings() -> void;
+    auto clearSlot(unsigned pos) -> void;
+    auto updateWP(bool state, bool force = false) -> void;
+    auto forceWP() -> void { updateWP(true, true); }
     
     SwapperLayout(MediaLayout* mediaLayout);
 };

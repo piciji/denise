@@ -841,7 +841,7 @@ auto Fileloader::loadSettings(Emulator::Interface* emulator) -> void {
     }
 
     // swapper
-    for (unsigned i = 0; i < 25; i++) {
+    for (unsigned i = 0; i < SWAPPER_SLOTS; i++) {
         auto fSetting = FileSetting::getInstance( emulator, "swapper_" + std::to_string( i ) );
         fSetting->update();
     }

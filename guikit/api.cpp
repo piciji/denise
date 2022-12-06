@@ -1293,6 +1293,11 @@ auto BrowserWindow::open() -> std::string {
     return p.file(false);
 }
 
+auto BrowserWindow::openMulti() -> std::vector<std::string> {
+    if (onCall) onCall();
+    return p.fileMulti();
+}
+
 auto BrowserWindow::save() -> std::string {
 	if (onCall) onCall();
     return p.file(true);
