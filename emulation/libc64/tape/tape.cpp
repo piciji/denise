@@ -448,14 +448,14 @@ auto Tape::selectListing( unsigned pos, bool useTraps ) -> void {
 			action->delay = 5000; // frames
 			action->waitCallback = nullptr;
          //   system->keyBuffer->reset();
-            system->interface->autoStartFinish(true);
+            system->autoStartFinish(true);
         }
     };
     system->keyBuffer->add(action);
 
     action.callbackId = 5;
     action.callback = [this]() {
-        system->interface->autoStartFinish(true);
+        system->autoStartFinish(true);
     };
     action.waitCallback = nullptr;
     action.mode = KeyBuffer::Mode::Input;

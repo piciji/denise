@@ -328,9 +328,9 @@ System::System(Interface* interface) {
 
     cia1->readPort = [this]( CIA::Base::Port port, CIA::Base::Lines* lines ) {
 
-        if (!observer.inputLock) {
-            if (++observer.inputFetches == 6)
-                hintObserverInputRequested();
+        if (observer.inputFetches) {
+            if (!--observer.inputFetches)
+                observer.stateChange = true;
         }
 
         if ( port == CIA::Base::PORTA )
@@ -561,6 +561,7 @@ auto System::power( bool softReset ) -> void {
         observer.enterRom = false;
         observer.memoryAccesses = 0;
         observer.stateChange = false;
+        observer.motor = false;
         observer.inputLock = true;
         observer.inputFetches = 0;
     } else {
@@ -947,22 +948,23 @@ auto System::checkForAutoStarter() -> bool {
     return false;
 }
 
-inline auto System::hintObserverInputRequested() -> void {
-    observer.stateChange = true;
-    observer.inputLock = true;
+auto System::autoStartFinish(bool soft) -> void {
+    observer.inputLock = false;
+    interface->autoStartFinish(soft);
 }
 
 auto System::hintObserverMotorChange(bool state) -> void {
     observer.stateChange = true;
-    observer.inputFetches = 0;
-    observer.inputLock = !(state && !observer.motor && observer.memoryAccesses);
+    if (!observer.inputLock && state && !observer.motor)
+        observer.inputFetches = 15;
+
     observer.motor = state;
 }
 
 auto System::informAboutStateChange() -> void {
     observer.stateChange = false;
     uint8_t newState = observer.motor;
-    if (observer.inputFetches >= 6) newState |= 2;
+    if (!observer.inputLock && !observer.inputFetches) newState |= 2;
     interface->hintAutoWarp( newState );
 }
 
