@@ -1,12 +1,14 @@
 
 SwapperControlLayout::SwapperControlLayout() {
-	append(writeProtect,{0u, 0u});
+	append(writeProtect,{0u, 0u}, 10);
+    append(insertButton,{0u, 0u});
     append(spacer,{~0u, 0u});
     append(ejectAllButton,{0u, 0u}, 10);
     append(ejectButton,{0u, 0u}, 10);
     append(openButton,{0u, 0u});
 	writeProtect.setChecked();
 	writeProtect.setEnabled(false);
+    setAlignment(0.5);
 }
 
 SwapperLayout::SwapperLayout( MediaLayout* mediaLayout ) {
@@ -49,7 +51,7 @@ SwapperLayout::SwapperLayout( MediaLayout* mediaLayout ) {
 
 		std::vector<std::string> filePaths = GUIKIT::BrowserWindow()
 			.setWindow( *(this->mediaLayout->tabWindow) )
-			.setTitle( trans->get("select_disk_image") )
+			.setTitle( trans->get("select_swapper_image") )
 			.setPath( preselectPath( ) )
 			.setFilters({ suffix,
 				trans->get("all_files")})
@@ -144,6 +146,15 @@ SwapperLayout::SwapperLayout( MediaLayout* mediaLayout ) {
         clearSlot( listView.selection() + 1 );
 	};
 
+    controls.insertButton.onActivate = [this]() {
+        if(!listView.selected()) return;
+
+        emuThread->lock();
+        fileloader->insertSwapDisk( emulator, listView.selection() + 1 );
+        InputManager::activateHotkey(Hotkey::Id::DiskAutoStart, emulator);
+        emuThread->unlock();
+    };
+
     controls.ejectAllButton.onActivate = [this]() {
         for (unsigned i = 1; i < SWAPPER_SLOTS; i++)
             clearSlot( i );
@@ -175,6 +186,7 @@ auto SwapperLayout::loadSettings() -> void {
 auto SwapperLayout::translate() -> void {
     listView.setHeaderText({"#", trans->get("path"), trans->get("file")});
     controls.openButton.setText(trans->get("open"));
+    controls.insertButton.setText(trans->get("insert and load"));
     controls.ejectButton.setText(trans->get("eject"));
     controls.ejectAllButton.setText(trans->get("eject all"));
 	controls.writeProtect.setText(trans->get("write_protected"));

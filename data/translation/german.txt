@@ -704,4 +704,6 @@ Disk_swapper_up = nächste Diskette einlegen
 Disk_swapper_down = vorherige Diskette einlegen
 Disk_autostart = Autostart Diskette
 eject all = alle Auswerfen
-order selected = markierte Dateien in Klick Reihenfolge übergeben
+order selected = Übernahme in Klick-Reihenfolge
+select_swapper_image = Diskettenabbild(er) auswählen ... (Mehrfachauswahl mit STRG)
+insert and load = Einlegen und Laden
