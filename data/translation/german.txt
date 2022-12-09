@@ -703,3 +703,5 @@ warp first file tooltip = Wenn aktiviert, beschleunigt ein zugeschalteter Auto W
 Disk_swapper_up = nächste Diskette einlegen
 Disk_swapper_down = vorherige Diskette einlegen
 Disk_autostart = Autostart Diskette
+eject all = alle Auswerfen
+order selected = markierte Dateien in Klick Reihenfolge übergeben

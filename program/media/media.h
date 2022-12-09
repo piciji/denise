@@ -25,9 +25,11 @@ struct NavElement {
 
 struct SwapperControlLayout : GUIKIT::HorizontalLayout {
 	GUIKIT::CheckBox writeProtect;
-    GUIKIT::Widget spacer;    
+    GUIKIT::Widget spacer;
+
+    GUIKIT::Button ejectAllButton;
+    GUIKIT::Button ejectButton;
     GUIKIT::Button openButton;
-    GUIKIT::Button ejectButton;    
     
     SwapperControlLayout();
 };

@@ -703,3 +703,5 @@ warp first file tooltip =
 Disk_swapper_up =
 Disk_swapper_down =
 Disk_autostart =
+eject all =
+order selected =

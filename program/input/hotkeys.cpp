@@ -566,7 +566,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             if (!media)
                 break;
 
-            int swapPos = settings->get<int>("swap pos", 1u);
+            int swapPos = settings->get<int>("swap_pos", 1u);
 
             if (id == Hotkey::DiskSwapUp)
                 swapPos++;
@@ -578,12 +578,12 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             if (swapPos < 0) swapPos = SWAPPER_SLOTS - 1;
             else if (swapPos >= SWAPPER_SLOTS) swapPos = 0;
 
-            settings->set<int>("swap pos", swapPos, false);
+            settings->set<int>("swap_pos", swapPos, false);
 
             FileSetting* fSetting = FileSetting::getInstance( activeEmulator, "swapper_" + std::to_string(swapPos) );
             
             FileSetting fs;
-            if (fSetting->path.empty()) {                
+            if (fSetting->path.empty() || (swapPos == 0) ) {
                 fSetting = &fs;
                 // auto create 
                 auto srcSetting = FileSetting::getInstance(activeEmulator, _underscore(media->name) );

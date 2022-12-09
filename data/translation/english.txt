@@ -703,3 +703,5 @@ warp first file tooltip = When activated, a connected Auto Warp only speeds up t
 Disk_swapper_up = insert the next disk
 Disk_swapper_down = insert previous disk
 Disk_autostart = autostart disk
+eject all = eject all
+order selected = pass selected files in click order

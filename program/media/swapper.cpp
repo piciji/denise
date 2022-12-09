@@ -1,9 +1,10 @@
 
 SwapperControlLayout::SwapperControlLayout() {
 	append(writeProtect,{0u, 0u});
-    append(spacer,{~0u, 0u});	
-    append(openButton,{0u, 0u}, 10);
-    append(ejectButton,{0u, 0u});
+    append(spacer,{~0u, 0u});
+    append(ejectAllButton,{0u, 0u}, 10);
+    append(ejectButton,{0u, 0u}, 10);
+    append(openButton,{0u, 0u});
 	writeProtect.setChecked();
 	writeProtect.setEnabled(false);
 }
@@ -20,7 +21,7 @@ SwapperLayout::SwapperLayout( MediaLayout* mediaLayout ) {
     append(controls,{~0u, 0u});
 	
 	listView.onChange = [this]() {
-		auto pos = listView.selection();
+		auto pos = listView.selection() + 1;
 		auto fSetting = getSetting( pos );
         GUIKIT::File* file = filePool->get(fSetting->path);
 
@@ -52,11 +53,14 @@ SwapperLayout::SwapperLayout( MediaLayout* mediaLayout ) {
 			.setPath( preselectPath( ) )
 			.setFilters({ suffix,
 				trans->get("all_files")})
+            .showOrderControlForMultipleSelections( this->mediaLayout->settings->get<bool>( "swapper_order_selected", false ), trans->get("order selected"), [this](bool checked) {
+                this->mediaLayout->settings->set<bool>( "swapper_order_selected", checked );
+            } )
 			.openMulti();
 
 		if (!filePaths.size() || filePaths[0].empty()) return;
 
-        unsigned startPos = listView.selection();
+        unsigned startPos = listView.selection() + 1;
         unsigned pos = startPos;
 
         for(auto& filePath : filePaths) {
@@ -84,7 +88,7 @@ SwapperLayout::SwapperLayout( MediaLayout* mediaLayout ) {
                                            {{"%path%", file->getFile()}}));
 
                     if (!listView.selected()) return;
-                    auto pos = listView.selection() + archiveViewer->filesSelected;
+                    auto pos = listView.selection() + archiveViewer->filesSelected + 1;
 
                     filePool->assign(_ident(emulator, "swapper_" + std::to_string(pos)), file);
 
@@ -92,7 +96,7 @@ SwapperLayout::SwapperLayout( MediaLayout* mediaLayout ) {
                     fSetting->setPath(file->getFile());
                     fSetting->setFile(item->info.name);
                     fSetting->setId(item->id);
-                    listView.setText(pos, {std::to_string(pos), file->getFile(), item->info.name});
+                    listView.setText(pos - 1, {std::to_string(pos), file->getFile(), item->info.name});
                     (file->isArchived() || file->isReadOnly()) ? forceWP() : updateWP(false);
 
                     if (++pos == SWAPPER_SLOTS)
@@ -123,7 +127,7 @@ SwapperLayout::SwapperLayout( MediaLayout* mediaLayout ) {
                     fSetting->setPath(file->getFile());
                     fSetting->setFile(item.info.name);
                     fSetting->setId(item.id);
-                    listView.setText(pos, {std::to_string(pos), file->getFile(), item.info.name});
+                    listView.setText(pos - 1, {std::to_string(pos), file->getFile(), item.info.name});
 
                     if (pos == startPos)
                         (file->isArchived() || file->isReadOnly()) ? forceWP() : updateWP(false);
@@ -137,18 +141,22 @@ SwapperLayout::SwapperLayout( MediaLayout* mediaLayout ) {
 	
 	controls.ejectButton.onActivate = [this]() {
 		if(!listView.selected()) return;
-        clearSlot( listView.selection() );
+        clearSlot( listView.selection() + 1 );
 	};
 
-	controls.writeProtect.onToggle = [&](bool checked) {
+    controls.ejectAllButton.onActivate = [this]() {
+        for (unsigned i = 1; i < SWAPPER_SLOTS; i++)
+            clearSlot( i );
+    };
+
+	controls.writeProtect.onToggle = [this](bool checked) {
 		if(!listView.selected()) return;
-		auto pos = listView.selection();
-        auto fSetting = getSetting( pos );
+        auto fSetting = getSetting( listView.selection() + 1 );
 
         fSetting->setWriteProtect( checked );
 	};
 	
-	for(unsigned i = 0; i < SWAPPER_SLOTS; i++) {
+	for(unsigned i = 1; i < SWAPPER_SLOTS; i++) {
 		auto fSetting = getSetting( i );		
 		listView.append({std::to_string(i), fSetting->path, fSetting->file });
 	}        
@@ -157,7 +165,7 @@ SwapperLayout::SwapperLayout( MediaLayout* mediaLayout ) {
 auto SwapperLayout::loadSettings() -> void {
     listView.reset();
     
-    for (unsigned i = 0; i < SWAPPER_SLOTS; i++) {
+    for (unsigned i = 1; i < SWAPPER_SLOTS; i++) {
         auto fSetting = getSetting(i);
         fSetting->update();
         listView.append({std::to_string(i), fSetting->path, fSetting->file});
@@ -168,6 +176,7 @@ auto SwapperLayout::translate() -> void {
     listView.setHeaderText({"#", trans->get("path"), trans->get("file")});
     controls.openButton.setText(trans->get("open"));
     controls.ejectButton.setText(trans->get("eject"));
+    controls.ejectAllButton.setText(trans->get("eject all"));
 	controls.writeProtect.setText(trans->get("write_protected"));
 }
 
@@ -194,7 +203,7 @@ auto SwapperLayout::clearSlot(unsigned pos) -> void {
     auto fSetting = getSetting( pos );
     fSetting->init();
 
-    listView.setText(pos, {std::to_string(pos), "", ""});
+    listView.setText(pos - 1, {std::to_string(pos), "", ""});
     forceWP();
 }
 
