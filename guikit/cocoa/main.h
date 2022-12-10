@@ -534,10 +534,12 @@ struct pBrowserWindow {
     NSView* accessoryView = nil;
     ListView* listView = nullptr;
     std::vector<Button*> buttons;
+    std::vector<std::string> sortedFiles;
     
     auto directory() -> std::string;
-    auto file(bool save) -> std::string;
-    auto fileMulti() -> std::vector<std::string> { return {file(false)}; }
+    auto fileGeneric(bool save, bool multi = false) -> std::vector<std::string>;
+    auto file(bool save) -> std::string { return fileGeneric(save)[0]; }
+    auto fileMulti() -> std::vector<std::string> { return fileGeneric(false, true); }
     auto close() -> void;
     auto setForeground() -> void;
     auto contentViewSelection() -> unsigned;
