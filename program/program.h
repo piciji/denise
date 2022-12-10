@@ -106,6 +106,7 @@ struct Program : Emulator::Interface::Bind {
     auto jam( Emulator::Interface::Media* media = nullptr ) -> void override;
     auto setThreadPriority(Emulator::Interface::ThreadPriority priority, float minProcessingTimeInMilliSeconds, float maxProcessingTimeInMilliSeconds) -> bool override;
     auto finishStartup() -> void;
+    auto trapsNotPossible(Emulator::Interface::Media* media) -> void override;
 
     auto addCustomFont() -> void;
     auto loadImageDataWhenOk( GUIKIT::File* file, unsigned fileId, Emulator::Interface::MediaGroup* group, uint8_t*& data ) -> bool;
