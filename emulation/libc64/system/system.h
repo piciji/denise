@@ -231,6 +231,7 @@ struct System {
 
     auto checkForAutoStarter() -> bool;
     auto hintObserverMotorChange(bool state) -> void;
+    auto hintObserverLEDChange(bool state) -> void;
     auto informAboutStateChange() -> void;
 
     auto burstOrParallelUpdate() -> void;
