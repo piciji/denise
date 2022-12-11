@@ -67,7 +67,12 @@ auto States::load( std::string path, bool prependFolder ) -> void {
     
     forcePowerNextLoad = false;
 
-    program->warp.enableAutoWarp = false;
+    auto autoStartedMediaGroup = emulator->autoStartedByMediaGroup();
+
+    if (autoStartedMediaGroup)
+        program->initAutoWarp(autoStartedMediaGroup, true);
+    else
+        program->warp.enableAutoWarp = false;
 }
 
 auto States::save( std::string path, bool prependFolder ) -> void {

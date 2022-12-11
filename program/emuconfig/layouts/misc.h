@@ -47,6 +47,7 @@ struct AutostartLayout : GUIKIT::FramedVerticalLayout {
         GUIKIT::RadioBox aggressive;
         GUIKIT::CheckBox diskFirstFile;
         GUIKIT::CheckBox tapeFirstFile;
+        GUIKIT::CheckBox disableWarpWhenInput;
 
         AutoWarp();
     } autoWarp;

@@ -40,6 +40,7 @@ struct Fileloader {
     auto preselectPath( GUIKIT::Settings* settings, std::string& groupName ) -> std::string;
     auto autoload(Emulator::Interface* emulator, Emulator::Interface::Media* media, unsigned selection, bool useTraps) -> void;
     auto loadSettings(Emulator::Interface* emulator) -> void;
+    auto insertSwapDisk(Emulator::Interface* emulator, unsigned swapPos) -> void;
 };
 
 extern Fileloader* fileloader;

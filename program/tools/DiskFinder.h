@@ -55,6 +55,15 @@ struct DiskFinder {
             case 13: return "m";
             case 14: return "n";
             case 15: return "o";
+            case 16: return "p";
+            case 17: return "q";
+            case 18: return "r";
+            case 19: return "s";
+            case 20: return "t";
+            case 21: return "u";
+            case 22: return "v";
+            case 23: return "w";
+            case 24: return "x";
         }         
         
         return "";
@@ -97,11 +106,13 @@ struct DiskFinder {
         unsigned curOccurrences = 0;
         std::string useFile = "";
 		std::string useFileAlt = "";
-        std::string useFileBySize = "";
+        //std::string useFileBySize = "";
         
 		auto splittedSuffix = GUIKIT::String::split( suffix, '.' );
 		// use last suffix part only, in case og .1.D64
-		std::string tempSuffix = splittedSuffix[ splittedSuffix.size() - 1 ];				
+		std::string tempSuffix = splittedSuffix[ splittedSuffix.size() - 1 ];
+
+        unsigned maxTries = 10;
 
         while(1) {
 
@@ -136,9 +147,9 @@ struct DiskFinder {
                 if (tempFile == "")
                     continue;
                 
-                if (file.size() > useFileBySize.size()) {
-                    useFileBySize = file;
-                }
+//                if (file.size() > useFileBySize.size()) {
+//                    useFileBySize = file;
+//                }
                                     
                 GUIKIT::String::toLowerCase( tempFile );																
                 
@@ -179,10 +190,13 @@ struct DiskFinder {
 			else if (useFileAlt != "")
 				return useFileAlt;
 			
-            else if (diskPos == 0)
-                return useFileBySize;
+           // else if (diskPos == 0)
+             //   return useFileBySize;
             
-			break;
+			//break;
+
+            if (!--maxTries)
+                break;
         }
         
         return "";
@@ -209,6 +223,15 @@ struct DiskFinder {
             case 13: temp = _small ? temp + "m" : temp + "M"; break;
             case 14: temp = _small ? temp + "n" : temp + "N"; break;
             case 15: temp = _small ? temp + "o" : temp + "O"; break;
+            case 16: temp = _small ? temp + "p" : temp + "P"; break;
+            case 17: temp = _small ? temp + "q" : temp + "Q"; break;
+            case 18: temp = _small ? temp + "r" : temp + "R"; break;
+            case 19: temp = _small ? temp + "s" : temp + "S"; break;
+            case 20: temp = _small ? temp + "t" : temp + "T"; break;
+            case 21: temp = _small ? temp + "u" : temp + "U"; break;
+            case 22: temp = _small ? temp + "v" : temp + "V"; break;
+            case 23: temp = _small ? temp + "w" : temp + "W"; break;
+            case 24: temp = _small ? temp + "x" : temp + "X"; break;
             default:
                 return "";
         }

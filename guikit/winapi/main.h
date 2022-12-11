@@ -677,30 +677,31 @@ struct FileDialogEventHandler :
     public IFileDialogControlEvents,
     public IFileDialogEvents {
 
+    BrowserWindow* browserWindow;
     BrowserWindow::State* state;
     std::string filePath = "";
     IFileDialog* pDlg = nullptr;
     
     STDMETHODIMP QueryInterface(REFIID riid, void** ppvObject);
-    STDMETHODIMP_(ULONG) AddRef() { return 1; };
+    STDMETHODIMP_(ULONG) AddRef() { return 1; }
     STDMETHODIMP_(ULONG) Release() { return 1; }
 
     // IFileDialogEvents
-    STDMETHODIMP OnFileOk(IFileDialog* pfd) { return S_OK; };
-    STDMETHODIMP OnFolderChanging(IFileDialog* pfd, IShellItem* psiFolder) { return S_OK; };
-    STDMETHODIMP OnFolderChange(IFileDialog* pfd) { return S_OK; };
+    STDMETHODIMP OnFileOk(IFileDialog* pfd) { return S_OK; }
+    STDMETHODIMP OnFolderChanging(IFileDialog* pfd, IShellItem* psiFolder) { return S_OK; }
+    STDMETHODIMP OnFolderChange(IFileDialog* pfd) { return S_OK; }
     STDMETHODIMP OnSelectionChange(IFileDialog* pfd);
-    STDMETHODIMP OnShareViolation(IFileDialog* pfd, IShellItem* psi, FDE_SHAREVIOLATION_RESPONSE* pResponse) { return S_OK; };
-    STDMETHODIMP OnTypeChange(IFileDialog* pfd) { return S_OK; };
-    STDMETHODIMP OnOverwrite(IFileDialog* pfd, IShellItem* psi, FDE_OVERWRITE_RESPONSE* pResponse) { return S_OK; };
+    STDMETHODIMP OnShareViolation(IFileDialog* pfd, IShellItem* psi, FDE_SHAREVIOLATION_RESPONSE* pResponse) { return S_OK; }
+    STDMETHODIMP OnTypeChange(IFileDialog* pfd) { return S_OK; }
+    STDMETHODIMP OnOverwrite(IFileDialog* pfd, IShellItem* psi, FDE_OVERWRITE_RESPONSE* pResponse) { return S_OK; }
     
     // IFileDialogControlEvents methods
-    IFACEMETHODIMP OnItemSelected(IFileDialogCustomize* pfdc, DWORD dwIDCtl, DWORD dwIDItem) { return S_OK; };
+    IFACEMETHODIMP OnItemSelected(IFileDialogCustomize* pfdc, DWORD dwIDCtl, DWORD dwIDItem) { return S_OK; }
     IFACEMETHODIMP OnButtonClicked(IFileDialogCustomize* pfdc, DWORD dwIDCtl);
-    IFACEMETHODIMP OnCheckButtonToggled(IFileDialogCustomize*, DWORD, BOOL) { return S_OK; };
-    IFACEMETHODIMP OnControlActivating(IFileDialogCustomize* pfdc, DWORD dwIDCtl) { return S_OK; };
+    IFACEMETHODIMP OnCheckButtonToggled(IFileDialogCustomize*, DWORD, BOOL);
+    IFACEMETHODIMP OnControlActivating(IFileDialogCustomize* pfdc, DWORD dwIDCtl) { return S_OK; }
     
-    auto getFilePath(IFileDialog* pfd) -> std::string;
+    auto getFilePath(IFileDialog* pfd, std::vector<std::string>& multiples) -> std::string;
 };
 
 struct pBrowserWindow {
@@ -719,6 +720,7 @@ struct pBrowserWindow {
     HWND hDlg = nullptr;
     int lastItem = -1;
     std::vector<std::string> toolTips;
+    std::vector<std::string> selectedFiles;
 
     struct Button {
         HWND hwnd;
@@ -739,7 +741,8 @@ struct pBrowserWindow {
 
     auto directory() -> std::string;
     auto file(bool save) -> std::string;
-    auto fileVista(bool save) -> std::string;
+    auto fileMulti() -> std::vector<std::string>;
+    auto fileVista(bool save, bool multi = false) -> std::vector<std::string>;
     auto close() -> void; 
     auto setForeground() -> void;
     auto resize(HWND fileDialogView, bool init = false) -> void;

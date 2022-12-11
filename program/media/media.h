@@ -10,6 +10,8 @@ struct FileSetting;
 #include "../program.h"
 #include "../emuconfig/config.h"
 
+#define SWAPPER_SLOTS 25
+
 namespace MediaView {
 
 struct MediaLayout;
@@ -23,9 +25,12 @@ struct NavElement {
 
 struct SwapperControlLayout : GUIKIT::HorizontalLayout {
 	GUIKIT::CheckBox writeProtect;
-    GUIKIT::Widget spacer;    
+    GUIKIT::Button insertButton;
+    GUIKIT::Widget spacer;
+
+    GUIKIT::Button ejectAllButton;
+    GUIKIT::Button ejectButton;
     GUIKIT::Button openButton;
-    GUIKIT::Button ejectButton;    
     
     SwapperControlLayout();
 };
@@ -43,6 +48,9 @@ struct SwapperLayout : GUIKIT::VerticalLayout {
     auto preselectPath( ) -> std::string;
 	auto savePath( std::string path ) -> void;
     auto loadSettings() -> void;
+    auto clearSlot(unsigned pos) -> void;
+    auto updateWP(bool state, bool force = false) -> void;
+    auto forceWP() -> void { updateWP(true, true); }
     
     SwapperLayout(MediaLayout* mediaLayout);
 };

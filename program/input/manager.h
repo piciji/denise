@@ -74,7 +74,7 @@ struct Hotkey {
         ToggleFastForward, ToggleFastForwardAggressive, Presentation, Palette, Border, System, Firmware, Control,
 		SwapInputDevices, Power, SoftReset, AnyLoad,
         RunAheadUp, RunAheadDown, RunAheadToggleMode, AudioRecord, ToggleCycleRenderer, EF3Menu, Freeze, ToggleBorder,
-        SyncStatus, ThreadedRenderer, ToggleCRTCPU, ToggleCRTGPU,
+        SyncStatus, ThreadedRenderer, ToggleCRTCPU, ToggleCRTGPU, DiskSwapUp, DiskSwapDown, DiskAutoStart,
 
         Autofire = 1000,
     } id;

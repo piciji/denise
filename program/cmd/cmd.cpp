@@ -489,6 +489,8 @@ auto Cmd::collectAllowedSuffix() -> std::vector<std::string> {
     }
     
     allowedSuffix.push_back( "sav" );
+
+    GUIKIT::Vector::combine(allowedSuffix, GUIKIT::File::suppportedCompressionExtensions());
         
     return allowedSuffix;
 }

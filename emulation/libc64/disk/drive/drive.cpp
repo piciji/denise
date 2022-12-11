@@ -741,12 +741,15 @@ Drive::Drive(uint8_t number, Emulator::Interface::Media* mediaConnected ) : stru
                 }
 
                 if (structure.autoStarted)
-                    system->motorChange( _loadingState );
+                    system->hintObserverMotorChange( _loadingState );
             }
             
             // LED status change
-            if ((lines->iob ^ lines->iobOld) & 8)
+            if ((lines->iob ^ lines->iobOld) & 8) {
                 updateDeviceState();
+                if (structure.autoStarted)
+                    system->hintObserverLEDChange(lines->iob & 8);
+            }
             
         } else {
             // port A
@@ -817,7 +820,7 @@ auto Drive::updateIdleDeviceState() -> void {
     system->interface->updateDeviceState( getMediaConnected(), !readMode, (side * MAX_TRACKS_1541 * 2) + currentHalftrack + 2, false, true );
 
     if (structure.autoStarted)
-        system->motorChange( false );
+        system->hintObserverMotorChange( false );
 }
 
 auto Drive::updateBus() -> void {

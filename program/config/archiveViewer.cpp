@@ -38,10 +38,18 @@ auto ArchiveViewer::build() -> void {
         if (!item) return;
         auto fileItem = (GUIKIT::File::Item*)item->userData();
         if (fileItem->isDirectory) return;
-        setVisible(false);
+
+        if (item->text() == "-") return;
+
+        if (!multiSelection)
+            setVisible(false);
+        else
+            item->setText("-");
         
         if (onCallback)
             onCallback( fileItem );
+
+        filesSelected++;
     };
 
     onClose = [this]() {
@@ -66,7 +74,10 @@ auto ArchiveViewer::build() -> void {
     builded = true;
 }
 
-auto ArchiveViewer::setView(std::vector<GUIKIT::File::Item>& items) -> void {
+auto ArchiveViewer::setView(std::vector<GUIKIT::File::Item>& items, bool multiSelection) -> void {
+    this->multiSelection = multiSelection;
+    this->filesSelected = 0;
+
     if (!builded) {
         build();
     }

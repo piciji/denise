@@ -11,6 +11,8 @@
 #include "../cmd/cmd.h"
 #include "../firmware/manager.h"
 #include "../thread/emuThread.h"
+#include "../tools/DiskFinder.h"
+#include "../view/status.h"
 
 #define HideMouseIfWasBefore \
     if (mIsAcquiredBefore && !inputDriver->mIsAcquired() && view->fullScreen() && fileDialogPtr && fileDialogPtr->detached()) \
@@ -841,8 +843,71 @@ auto Fileloader::loadSettings(Emulator::Interface* emulator) -> void {
     }
 
     // swapper
-    for (unsigned i = 0; i < 15; i++) {
+    for (unsigned i = 1; i < SWAPPER_SLOTS; i++) {
         auto fSetting = FileSetting::getInstance( emulator, "swapper_" + std::to_string( i ) );
         fSetting->update();
     }
+}
+
+auto Fileloader::insertSwapDisk(Emulator::Interface* emulator, unsigned swapPos) -> void {
+    auto settings = program->getSettings( emulator );
+    auto mediaId = settings->get<unsigned>("access_floppy", 0u, {0u, 3u});
+    GUIKIT::File* file;
+
+    auto media = emulator->getEnabledDisk(mediaId);
+    if (!media)
+        return;
+
+    settings->set<int>("swap_pos", swapPos, false);
+
+    FileSetting* fSetting = FileSetting::getInstance( emulator, "swapper_" + std::to_string(swapPos) );
+
+    FileSetting fs;
+    if (fSetting->path.empty() || (swapPos == 0) ) {
+        fSetting = &fs;
+        // auto create
+        auto srcSetting = FileSetting::getInstance(emulator, _underscore(media->name) );
+
+        if (srcSetting->path.empty())
+            return;
+
+        DiskFinder diskFinder( srcSetting->path );
+
+        auto result = diskFinder.findNext( swapPos );
+
+        if (result != "") {
+            fSetting->file = result;
+            fSetting->path = diskFinder.filePath + result;
+            fSetting->id = 0;
+            fSetting->writeProtect = false;
+        }
+    }
+
+    file = filePool->get( fSetting->path );
+
+    GUIKIT::File::Item item;
+    item.id = fSetting->id;
+    item.info.name = fSetting->file;
+
+    if (!file || !file->exists() || !file->isSizeValid(MAX_MEDIUM_SIZE) ||
+        (file->archiveData(fSetting->id) == nullptr)
+            ) {
+        statusHandler->setMessage(trans->get("file_open_error", {{ "%path%", fSetting->file }}), 2, true);
+        return;
+    }
+
+    filePool->assign( _ident(emulator, "swapper_" + std::to_string(swapPos)), file);
+
+    auto emuView = EmuConfigView::TabWindow::getView( emulator );
+    if (emuView && emuView->mediaLayout)
+        emuView->mediaLayout->insertImage( media, file, &item );
+    else
+        fileloader->insertImage( emulator, media, file, &item );
+
+    emulator->writeProtectDisk(media, (file->isArchived() || file->isReadOnly()) ? true : fSetting->writeProtect);
+
+    if (emuView && emuView->mediaLayout)
+        emuView->mediaLayout->updateWriteProtection( media, fSetting->writeProtect );
+
+    statusHandler->setMessage( trans->get("insert_floppy", {{"%drive%", media->name},{"%file%", fSetting->file}}) );
 }

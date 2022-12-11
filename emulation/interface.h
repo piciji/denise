@@ -319,13 +319,14 @@ struct Interface {
         virtual auto exit( int code ) -> void {}
         virtual auto midScreenCallback( ) -> void {}
         virtual auto questionToWrite(Media*) -> bool { return false; }
-        virtual auto informDriveLoading(bool) -> void {}
+        virtual auto hintAutoWarp(uint8_t) -> void {}
         virtual auto autoStartFinish(bool) -> void {}
         virtual auto mixDriveSound( Media*, DriveSound, uint8_t ) -> void {}
         virtual auto jam(Media*) -> void {}
         virtual auto setThreadPriority(ThreadPriority, float, float) -> bool { return false; }
         virtual auto informCapsLock(bool state) -> void {}
         virtual auto fpsChanged() -> void {}
+        virtual auto trapsNotPossible(Media*) -> void {}
     };
     Bind* bind = nullptr;
 
@@ -390,8 +391,8 @@ struct Interface {
         bind->exit( code );
     }
 
-    auto informDriveLoading(bool state) -> void {
-        bind->informDriveLoading( state );
+    auto hintAutoWarp(uint8_t state) -> void {
+        bind->hintAutoWarp( state );
     }
 
     auto autoStartFinish(bool soft) -> void {
@@ -409,7 +410,11 @@ struct Interface {
     auto setThreadPriority(ThreadPriority priority, float minProcessingTimeInMilliSeconds = 0.0, float maxProcessingTimeInMilliSeconds = 0.0) -> bool {
         return bind->setThreadPriority( priority, minProcessingTimeInMilliSeconds, maxProcessingTimeInMilliSeconds);
     }
-
+    
+    auto trapsNotPossible(Media* media) -> void {
+        bind->trapsNotPossible(media);
+    }
+    
     auto informCapsLock(bool state) -> void {
         bind->informCapsLock( state );
     }
@@ -567,6 +572,8 @@ struct Interface {
     virtual auto enableFloppySounds(bool state) -> void {}
     virtual auto enableTapeSounds(bool state) -> void {}
     virtual auto setTapeLoadingNoise(unsigned volume) -> void {}
+
+    virtual auto autoStartedByMediaGroup() -> MediaGroup* { return nullptr; }
     
     auto getStatsForSelectedRegion() -> Stats& {  
         return stats;
@@ -662,6 +669,21 @@ struct Interface {
                     return &mediaGroup.media[ mediaId ];
             }
         
+        return nullptr;
+    }
+
+    auto getEnabledDisk( unsigned mediaId ) -> Media* {
+        for(auto& mediaGroup : mediaGroups) {
+            if (mediaGroup.isDisk()) {
+                unsigned enabledCount = getModelValue(getModelIdOfEnabledDrives(&mediaGroup));
+                if (enabledCount > mediaGroup.media.size())
+                    enabledCount = mediaGroup.media.size();
+
+                if (enabledCount > mediaId)
+                    return &mediaGroup.media[mediaId];
+                return &mediaGroup.media[0];
+            }
+        }
         return nullptr;
     }
     

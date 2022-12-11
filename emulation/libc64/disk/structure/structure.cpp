@@ -470,7 +470,7 @@ auto DiskStructure::prepareKeyBufferActions( std::vector<uint8_t>& path, bool us
     action.waitCallback = [this](KeyBuffer::Action* action) {
         if (system->checkForAutoStarter()) {
             system->keyBuffer->reset();
-            system->interface->autoStartFinish(true);
+            system->autoStartFinish(true);
         }
     };
     system->keyBuffer->add( action );
@@ -478,7 +478,7 @@ auto DiskStructure::prepareKeyBufferActions( std::vector<uint8_t>& path, bool us
     action.callbackId = 5;
     action.waitCallback = nullptr;
     action.callback = [this]() {
-        system->interface->autoStartFinish(false);
+        system->autoStartFinish(false);
     };
     action.mode = KeyBuffer::Mode::Input;
     action.buffer = {'R', 'U', 'N', '\r'};

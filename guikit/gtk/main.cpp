@@ -78,6 +78,9 @@ auto pApplication::fetchDesktopSession() -> void {
 
     const char* currentDesktop = getenv("XDG_CURRENT_DESKTOP");
 
+    if (currentDesktop == nullptr)
+        return;
+
     if (String::findString(currentDesktop, "Cinnamon"))
         desktopSession = DesktopSession::Cinnamon;
     else if (String::findString(currentDesktop, "GNOME"))

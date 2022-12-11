@@ -13,11 +13,13 @@ struct ArchiveViewer : public GUIKIT::Window {
     GUIKIT::Image imgFolderClosed;
     GUIKIT::Image imgDocument;
     bool builded = false;
+    bool multiSelection = false;
+    unsigned filesSelected = 0;
 
     GUIKIT::Timer mtimer;
 
     auto build() -> void;
-    auto setView(std::vector<GUIKIT::File::Item>& items) -> void;
+    auto setView(std::vector<GUIKIT::File::Item>& items, bool multiSelection = false) -> void;
 	auto translate() -> void;
 };
 

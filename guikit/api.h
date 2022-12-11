@@ -1098,6 +1098,7 @@ struct BrowserWindow {
     
     auto directory() -> std::string;
     auto open() -> std::string;
+    auto openMulti() -> std::vector<std::string>;
     auto save() -> std::string;
     auto detached() -> bool;
     auto visible() -> bool;
@@ -1114,6 +1115,7 @@ struct BrowserWindow {
 	auto setNonModal() -> BrowserWindow&;
 	auto setListings( std::vector<BrowserWindow::Listing>& listings ) -> void;
     auto hideOkButton() -> void;
+    auto showOrderControlForMultipleSelections( bool checked, std::string label, std::function<void (bool checked)> onToggle ) -> BrowserWindow&;
 
     auto setTemplateId(int id) -> BrowserWindow&;
     auto addContentView(unsigned id, std::function<bool (std::string filePath, unsigned selection)> onDblClick) -> BrowserWindow&;
@@ -1137,6 +1139,13 @@ struct BrowserWindow {
 		std::string toolTip = "";
         std::function<bool (std::string filePath, unsigned selection)> onClick = nullptr;        
         unsigned id = 0; // for template usage
+    };
+
+    struct CheckButton {
+        bool checked = false;
+        std::string text = "";
+        std::string toolTip = "";
+        std::function<void (bool checked)> onToggle = nullptr;
     };
     
     // for displaying file content
@@ -1177,6 +1186,7 @@ struct BrowserWindow {
 		std::string toolTip = "";
 		bool modal = true;
         bool hideOkButton = false;
+        CheckButton* orderBySelected = nullptr;
     } state;
 
     pBrowserWindow& p;    

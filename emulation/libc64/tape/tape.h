@@ -57,6 +57,7 @@ struct Tape {
     auto getListing() -> std::vector<Emulator::Interface::Listing>&;
     auto setPosition( unsigned pos, bool find ) -> void;
     auto setMotorSound() -> void;
+    auto wasAutostarted() -> bool { return autoStarted; }
 	
 protected:
 	Emulator::Interface::Media* media; 
@@ -98,7 +99,7 @@ protected:
     unsigned fetchPos; // position in fetched chunk
     unsigned fetchSize; // size of fetched chunk
     unsigned curPos; // overall position in tap file
-	bool wobble = false;    
+	bool wobble = false;
     
     auto readHeader() -> bool;			
 	

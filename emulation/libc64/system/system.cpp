@@ -328,6 +328,11 @@ System::System(Interface* interface) {
 
     cia1->readPort = [this]( CIA::Base::Port port, CIA::Base::Lines* lines ) {
 
+        if (observer.inputFetches) {
+            if (!--observer.inputFetches)
+                observer.stateChange = true;
+        }
+
         if ( port == CIA::Base::PORTA )
             return input->readCiaPortA( lines );
 
@@ -555,6 +560,10 @@ auto System::power( bool softReset ) -> void {
         cpu->power();
         observer.enterRom = false;
         observer.memoryAccesses = 0;
+        observer.stateChange = false;
+        observer.motor = false;
+        observer.inputLock = true;
+        observer.inputFetches = 0;
     } else {
         // vic hasn't a reset line ... means no change ?
         cpu->reset();
@@ -715,8 +724,8 @@ auto System::run() -> void {
         unserializeLight();
     }
 
-    if (observer.motorChange)
-        informAboutMotorChange();
+    if (observer.stateChange)
+        informAboutStateChange();
 
     debugCart->check();
 }
@@ -939,14 +948,34 @@ auto System::checkForAutoStarter() -> bool {
     return false;
 }
 
-auto System::motorChange(bool state) -> void {
-    observer.motorChange = true;
+auto System::autoStartFinish(bool soft) -> void {
+    observer.inputLock = false;
+    interface->autoStartFinish(soft);
+}
+
+auto System::hintObserverLEDChange(bool state) -> void {
+    if (!observer.inputLock && observer.motor && state) {
+        observer.stateChange = true;
+    }
+}
+
+auto System::hintObserverMotorChange(bool state) -> void {
+    observer.stateChange = true;
+    if (!observer.inputLock && state && !observer.motor)
+        observer.inputFetches = 15;
+
     observer.motor = state;
 }
 
-auto System::informAboutMotorChange() -> void {
-    observer.motorChange = false;
-    interface->informDriveLoading( observer.motor );
+auto System::informAboutStateChange() -> void {
+    observer.stateChange = false;
+    uint8_t newState = observer.motor;
+    if (!observer.inputLock && !observer.inputFetches)  {
+        newState |= 2;
+        observer.inputFetches = 15;
+    }
+
+    interface->hintAutoWarp( newState );
 }
 
 auto System::burstOrParallelUpdate() -> void {

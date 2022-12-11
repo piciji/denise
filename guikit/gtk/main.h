@@ -668,9 +668,13 @@ struct pBrowserWindow {
 	GtkWidget* dialog = nullptr;
 	ListView* listView = nullptr;
 	std::string selectedPath = "";
+    std::vector<std::string> sortedFiles;
+    GtkWidget* orderSelectedWidget = nullptr;
 	
     auto directory() -> std::string;
-    auto file(bool save) -> std::string;
+    auto fileGeneric(bool save, bool multi = false) -> std::vector<std::string>;
+    auto file(bool save) -> std::string { return fileGeneric(save)[0]; }
+    auto fileMulti() -> std::vector<std::string> { return fileGeneric(false, true); }
 	auto close() -> void;
 	auto detached() -> bool;
 	auto visible() -> bool;
@@ -683,6 +687,7 @@ struct pBrowserWindow {
 	static auto responseHandler(GtkDialog* dialog, gint responseId, gpointer data) -> void;
     static auto closeHandler(GtkDialog* dialog, GdkEvent* event, gpointer data) -> void;
 	static auto selectionHandler(GtkFileChooser* chooser, gpointer data) -> void;
+    static auto onToggleOrder(GtkToggleButton* toggleButton, BrowserWindow* self) -> void;
 	
 	pBrowserWindow(BrowserWindow& browserWindow);
 	~pBrowserWindow();

@@ -325,6 +325,7 @@ auto Cia<model>::write( unsigned pos, uint8_t value ) -> void {
                 value &= 0x7f;
 
             timerA.control = value;
+            updatePortB();
         } break;
 
         case 0xf: {
@@ -363,9 +364,23 @@ auto Cia<model>::write( unsigned pos, uint8_t value ) -> void {
             }
 
             timerB.control = value;
+            updatePortB();
         } break;
     }
 }
+
+template<uint8_t model>
+auto Cia<model>::updatePortB() -> void {
+    lines.iob = lines.prb | ~lines.ddrb;
+    adjustBit6And7(lines.iob);
+
+    if (lines.iob != lines.iobOld) {
+        lines.prbChange = true;
+        writePort(PORTB, &lines);
+        lines.iobOld = lines.iob;
+    }
+}
+
 template<uint8_t model>
 auto Cia<model>::adjustBit6And7( uint8_t& inOut ) -> void {
     if (timerB.control & 2) {

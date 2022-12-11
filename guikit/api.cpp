@@ -1281,7 +1281,10 @@ auto Timer::setData(unsigned data) -> void {
 std::function<void ()> BrowserWindow::onCall = nullptr;
 
 BrowserWindow::BrowserWindow() : p(*new pBrowserWindow(*this)) { }
-BrowserWindow::~BrowserWindow() { delete &p; }
+BrowserWindow::~BrowserWindow() {
+    delete &p;
+    if (state.orderBySelected) delete state.orderBySelected;
+}
 
 auto BrowserWindow::directory() -> std::string {
     if (onCall) onCall();
@@ -1291,6 +1294,11 @@ auto BrowserWindow::directory() -> std::string {
 auto BrowserWindow::open() -> std::string {
 	if (onCall) onCall();
     return p.file(false);
+}
+
+auto BrowserWindow::openMulti() -> std::vector<std::string> {
+    if (onCall) onCall();
+    return p.fileMulti();
 }
 
 auto BrowserWindow::save() -> std::string {
@@ -1427,6 +1435,16 @@ auto BrowserWindow::setDefaultButtonText(std::string textOk, std::string textCan
 auto BrowserWindow::setDefaultButtonTooltip(std::string toolTip) -> BrowserWindow& {
 	state.toolTip = toolTip;
 	return *this;
+}
+
+auto BrowserWindow::showOrderControlForMultipleSelections( bool checked, std::string label, std::function<void (bool checked)> onToggle ) -> BrowserWindow& {
+    if (!state.orderBySelected)
+        state.orderBySelected = new BrowserWindow::CheckButton;
+
+    state.orderBySelected->checked = checked;
+    state.orderBySelected->text = label;
+    state.orderBySelected->onToggle = onToggle;
+    return *this;
 }
 
 auto BrowserWindow::hideOkButton() -> void {

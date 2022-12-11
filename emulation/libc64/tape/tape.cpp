@@ -35,7 +35,7 @@ Tape::Tape( Emulator::Interface::Media* mediaConnected ) : structure(this) {
                 return;
 
             if (counter >= 15)
-                system->motorChange( false );
+                system->hintObserverMotorChange( false );
         }
     };
 	
@@ -57,7 +57,7 @@ Tape::Tape( Emulator::Interface::Media* mediaConnected ) : structure(this) {
 
             if (gapsRemaining == 0) {
                 setMode(Mode::Stop); //end of tape or completely rewinded
-                system->motorChange( false );
+                system->hintObserverMotorChange( false );
             }
         }
 		
@@ -183,7 +183,7 @@ auto Tape::setMotorIn( bool state ) -> void {
             updateMotorSound();
             updateDeviceState();
             if (autoStarted)
-                system->motorChange( true );
+                system->hintObserverMotorChange( true );
             
             if (!sysTimer.has( &worker ))
                 sysTimer.add( &worker, TAPE_MOTOR_DELAY );
@@ -448,14 +448,14 @@ auto Tape::selectListing( unsigned pos, bool useTraps ) -> void {
 			action->delay = 5000; // frames
 			action->waitCallback = nullptr;
          //   system->keyBuffer->reset();
-            system->interface->autoStartFinish(true);
+            system->autoStartFinish(true);
         }
     };
     system->keyBuffer->add(action);
 
     action.callbackId = 5;
     action.callback = [this]() {
-        system->interface->autoStartFinish(true);
+        system->autoStartFinish(true);
     };
     action.waitCallback = nullptr;
     action.mode = KeyBuffer::Mode::Input;
