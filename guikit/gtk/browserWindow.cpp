@@ -1,6 +1,12 @@
 
 pBrowserWindow::pBrowserWindow(BrowserWindow& browserWindow) : browserWindow(browserWindow) {}
 
+auto pBrowserWindow::onToggleOrder(GtkToggleButton* toggleButton, BrowserWindow* self) -> void {
+    g_signal_stop_emission_by_name(G_OBJECT(self->p.orderSelectedWidget), "clicked"); // prevent closing of dialog
+    self->state.orderBySelected->checked = gtk_toggle_button_get_active(toggleButton);
+    self->state.orderBySelected->onToggle(self->state.orderBySelected->checked);
+}
+
 auto pBrowserWindow::closeHandler(GtkDialog* dialog, GdkEvent* event, gpointer data) -> void {
     pBrowserWindow* instance = (pBrowserWindow*)data;
 
@@ -36,7 +42,7 @@ auto pBrowserWindow::responseHandler(GtkDialog* dialog, gint responseId, gpointe
 			if (button.id == responseId) {
 
 				if (button.onClick) {
-					if ( button.onClick( instance->selectedPath, instance->contentViewSelection() ) )					
+					if ( button.onClick( instance->selectedPath, instance->contentViewSelection() ) )
 						instance->close();
 
 				}
@@ -61,6 +67,36 @@ auto pBrowserWindow::selectionHandler(GtkFileChooser* chooser, gpointer data) ->
 		return;
 	
 	std::string path = (std::string)fileNamePtr;
+
+    if (state.orderBySelected) {
+        std::vector<std::string> curSelectedFiles;
+        std::vector<std::string> resultFiles;
+
+        GSList* fileList = gtk_file_chooser_get_filenames(chooser);
+        for (GSList *iter = fileList; iter != nullptr; iter = g_slist_next(iter)) {
+            std::string name = static_cast<char *>(iter->data);
+            curSelectedFiles.push_back(name);
+            g_free(iter->data);
+        }
+        g_slist_free(fileList);
+
+        for(auto& selectedFile : instance->sortedFiles) { // sorted selection before
+            unsigned pos = 0;
+            for(auto& curSelectedFile : curSelectedFiles) { // unsorted current selection
+                if (selectedFile == curSelectedFile) {
+                    resultFiles.push_back( selectedFile );
+                    GUIKIT::Vector::eraseVectorPos(curSelectedFiles, pos);
+                    break;
+                }
+                pos++;
+            }
+        }
+
+        for(auto& curSelectedFile : curSelectedFiles)
+            resultFiles.push_back( curSelectedFile );
+
+        instance->sortedFiles = resultFiles;
+    }
 	
 	if (!path.empty() && path != instance->selectedPath) {
 		if (instance->listView)
@@ -81,7 +117,7 @@ auto pBrowserWindow::selectionHandler(GtkFileChooser* chooser, gpointer data) ->
             }
 		}
         instance->selectedPath = path;
-    }  
+    }
 }
 
 auto pBrowserWindow::setListings( std::vector<BrowserWindow::Listing>& listings ) -> void {
@@ -96,7 +132,8 @@ auto pBrowserWindow::setListings( std::vector<BrowserWindow::Listing>& listings 
     }
 }
 
-auto pBrowserWindow::file(bool save) -> std::string {
+auto pBrowserWindow::fileGeneric(bool save, bool multi) -> std::vector<std::string> {
+    std::vector<std::string> out;
     std::string name  = "";
 	auto& state = browserWindow.state;
 
@@ -117,9 +154,17 @@ auto pBrowserWindow::file(bool save) -> std::string {
     if(!state.path.empty())
         gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(dialog), state.path.c_str());
 
-	gtk_dialog_add_button( (GtkDialog*)dialog, _cancel, GTK_RESPONSE_CANCEL );	
-	
-	for(auto& button : state.buttons)		
+    if (state.orderBySelected) {
+        orderSelectedWidget = gtk_check_button_new_with_label( state.orderBySelected->text.c_str() );
+        gtk_widget_show(orderSelectedWidget);
+        gtk_dialog_add_action_widget((GtkDialog*)dialog, orderSelectedWidget, 100);
+        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(orderSelectedWidget), state.orderBySelected->checked);
+        g_signal_connect(G_OBJECT(orderSelectedWidget), "toggled", G_CALLBACK(pBrowserWindow::onToggleOrder), (gpointer)&browserWindow);
+    }
+
+	gtk_dialog_add_button( (GtkDialog*)dialog, _cancel, GTK_RESPONSE_CANCEL );
+
+	for(auto& button : state.buttons)
 		gtk_dialog_add_button( (GtkDialog*)dialog, button.text.c_str(), button.id );
 
     gtk_dialog_add_button( (GtkDialog*)dialog, _ok, GTK_RESPONSE_ACCEPT );
@@ -149,17 +194,48 @@ auto pBrowserWindow::file(bool save) -> std::string {
     }
 	
 	g_signal_connect(dialog, "selection-changed", G_CALLBACK(pBrowserWindow::selectionHandler), (gpointer)this);	
-	
-	if (state.modal) {		
+
+    if (multi) {
+        sortedFiles.clear();
+        gtk_file_chooser_set_select_multiple(GTK_FILE_CHOOSER(dialog), true);
+
+        if(gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
+            GSList* fileList = gtk_file_chooser_get_filenames(GTK_FILE_CHOOSER(dialog));
+
+            for (GSList* iter = fileList; iter != nullptr; iter = g_slist_next(iter)) {
+                name = static_cast<char*>(iter->data);
+                out.push_back(name);
+                g_free(iter->data);
+            }
+
+            g_slist_free(fileList);
+
+            if (state.orderBySelected && state.orderBySelected->checked && sortedFiles.size()) {
+                std::vector<std::string> temp;
+
+                for (auto& sSortedFile : sortedFiles) {
+                    for(auto& sFile : out ) {
+                        if (GUIKIT::String::findString(sFile, sSortedFile))
+                            temp.push_back( sFile );
+                    }
+                }
+                out = temp;
+            }
+        }
+
+        close();
+    } else if (state.modal) {
 		if(gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
 			char* temp = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
 			name = temp;
 			g_free(temp);
 		}   
-
+        out.push_back(name);
 		close();
-	} else
-		gtk_widget_show_all( GTK_WIDGET(dialog) );
+	} else {
+        out.push_back(name);
+        gtk_widget_show_all(GTK_WIDGET(dialog));
+    }
 
     if (state.hideOkButton) {
         // allow to add Ok button first and hide later, otherwise the double click action doesn't work
@@ -168,7 +244,7 @@ auto pBrowserWindow::file(bool save) -> std::string {
             gtk_widget_set_visible(okButton, false);
     }
 	
-    return name;	
+    return out;
 }
 
 auto pBrowserWindow::createPreview() -> GtkWidget* {

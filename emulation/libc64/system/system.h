@@ -231,7 +231,7 @@ struct System {
 
     auto checkForAutoStarter() -> bool;
     auto hintObserverMotorChange(bool state) -> void;
-    auto hintObserverInputRequested() -> void;
+    auto hintObserverLEDChange(bool state) -> void;
     auto informAboutStateChange() -> void;
 
     auto burstOrParallelUpdate() -> void;
@@ -248,6 +248,7 @@ struct System {
     auto tapeNoiseEnabled() -> bool { return tapeNoise.enabled && !runAhead.pos; }
     auto tapeNoiseSetSample( unsigned duration ) -> void;
     auto setAudioRefresh() -> void;
+    auto autoStartFinish(bool soft) -> void;
 };
 
 extern System* system;

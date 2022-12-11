@@ -1,6 +1,5 @@
 
 #include "manager.h"
-#include "../tools/DiskFinder.h"
 #include "../view/status.h"
 #include "../audio/manager.h"
 #include "../thread/emuThread.h"
@@ -46,6 +45,11 @@ auto InputManager::setHotkeys() -> void {
     hotkeys.push_back( {Hotkey::Id::DiskSwap7, "Disk_swapper_call7"} );
     hotkeys.push_back( {Hotkey::Id::DiskSwap8, "Disk_swapper_call8"} );
     hotkeys.push_back( {Hotkey::Id::DiskSwap9, "Disk_swapper_call9"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwap10, "Disk_swapper_call10"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwap11, "Disk_swapper_call11"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwap12, "Disk_swapper_call12"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwap13, "Disk_swapper_call13"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwap14, "Disk_swapper_call14"} );
 }
 
 auto InputManager::setCustomHotkeys() -> void {
@@ -546,20 +550,13 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
         case Hotkey::DiskSwap0: case Hotkey::DiskSwap1: case Hotkey::DiskSwap2:
         case Hotkey::DiskSwap3: case Hotkey::DiskSwap4: case Hotkey::DiskSwap5:
         case Hotkey::DiskSwap6: case Hotkey::DiskSwap7: case Hotkey::DiskSwap8:
-        case Hotkey::DiskSwap9: case Hotkey::DiskSwapUp: case Hotkey::DiskSwapDown: {
+        case Hotkey::DiskSwap9: case Hotkey::DiskSwap10: case Hotkey::DiskSwap11:
+        case Hotkey::DiskSwap12: case Hotkey::DiskSwap13: case Hotkey::DiskSwap14:
+        case Hotkey::DiskSwapUp: case Hotkey::DiskSwapDown: {
             if (!activeEmulator)
                 break;
 
-            auto mediaId = settings->get<unsigned>("access_floppy", 0u, {0u, 3u});
-            GUIKIT::File* file;
-            uint8_t* data;
-
-            emuThread->lock();
-            auto media = activeEmulator->getEnabledDisk(mediaId);
-            if (!media)
-                break;
-
-            int swapPos = settings->get<int>("swap pos", 1u);
+            int swapPos = settings->get<int>("swap_pos", 1u);
 
             if (id == Hotkey::DiskSwapUp)
                 swapPos++;
@@ -568,62 +565,11 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             else
                 swapPos = id - Hotkey::DiskSwap0;
 
-            if (swapPos < 0) swapPos = 24;
-            else if (swapPos > 24) swapPos = 0;
+            if (swapPos < 0) swapPos = SWAPPER_SLOTS - 1;
+            else if (swapPos >= SWAPPER_SLOTS) swapPos = 0;
 
-            settings->set<int>("swap pos", swapPos, false);
-
-            FileSetting* fSetting = FileSetting::getInstance( activeEmulator, "swapper_" + std::to_string(swapPos) );
-            
-            FileSetting fs;
-            if (fSetting->path.empty()) {                
-                fSetting = &fs;
-                // auto create 
-                auto srcSetting = FileSetting::getInstance(activeEmulator, _underscore(media->name) );
-                
-                if (srcSetting->path.empty())
-                    break;
-                
-                DiskFinder diskFinder( srcSetting->path );
-                
-                auto result = diskFinder.findNext( swapPos );
-
-                if (result != "") {
-                    fSetting->file = result;
-                    fSetting->path = diskFinder.filePath + result;
-                    fSetting->id = 0;
-                    fSetting->writeProtect = false;
-                }                                               
-            }
-            
-            file = filePool->get( fSetting->path );
-
-            GUIKIT::File::Item item;
-            item.id = fSetting->id;
-            item.info.name = fSetting->file;
-
-            if (!file || !file->exists() || !file->isSizeValid(MAX_MEDIUM_SIZE) ||
-                ((data = file->archiveData(fSetting->id)) == nullptr)
-            ) {  
-                statusHandler->setMessage(trans->get("file_open_error", {{ "%path%", fSetting->file }}), 2, true);
-                break;
-            }
-
-            filePool->assign( _ident(activeEmulator, "swapper_" + std::to_string(swapPos)), file);
-
-            auto emuView = EmuConfigView::TabWindow::getView( activeEmulator );
-            if (emuView && emuView->mediaLayout)
-                emuView->mediaLayout->insertImage( media, file, &item );
-            else
-                fileloader->insertImage( activeEmulator, media, file, &item );
-
-            activeEmulator->writeProtectDisk(media, (file->isArchived() || file->isReadOnly()) ? true : fSetting->writeProtect);
-
-            if (emuView && emuView->mediaLayout)
-                emuView->mediaLayout->updateWriteProtection( media, fSetting->writeProtect );
-
-            statusHandler->setMessage( trans->get("insert_floppy", {{"%drive%", media->name},{"%file%", fSetting->file}}) );
-
+            emuThread->lock();
+            fileloader->insertSwapDisk(activeEmulator, swapPos);
             break;
         }
         case Hotkey::Autofire: {

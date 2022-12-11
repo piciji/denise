@@ -119,12 +119,13 @@ struct KeyBuffer {
                     action.waitCallback = [](Action* action) {
                         if (system->checkForAutoStarter()) {
                             system->keyBuffer->reset();
-                            system->interface->autoStartFinish(true);
-                        } };
+                            system->autoStartFinish(true);
+                        }
+                    };
 
                 else if (action.callbackId == 5)
                     action.callback = [this]() {
-                        system->interface->autoStartFinish(false);
+                        system->autoStartFinish(false);
                     };
                 
                 queue.push_back( action );
@@ -206,7 +207,7 @@ struct KeyBuffer {
                     }
                     
                     // don't do any further actions
-                    system->interface->autoStartFinish(true);
+                    system->autoStartFinish(true);
                     reset();
                     return;
                     

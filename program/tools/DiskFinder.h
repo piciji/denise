@@ -106,11 +106,13 @@ struct DiskFinder {
         unsigned curOccurrences = 0;
         std::string useFile = "";
 		std::string useFileAlt = "";
-        std::string useFileBySize = "";
+        //std::string useFileBySize = "";
         
 		auto splittedSuffix = GUIKIT::String::split( suffix, '.' );
 		// use last suffix part only, in case og .1.D64
-		std::string tempSuffix = splittedSuffix[ splittedSuffix.size() - 1 ];				
+		std::string tempSuffix = splittedSuffix[ splittedSuffix.size() - 1 ];
+
+        unsigned maxTries = 10;
 
         while(1) {
 
@@ -145,9 +147,9 @@ struct DiskFinder {
                 if (tempFile == "")
                     continue;
                 
-                if (file.size() > useFileBySize.size()) {
-                    useFileBySize = file;
-                }
+//                if (file.size() > useFileBySize.size()) {
+//                    useFileBySize = file;
+//                }
                                     
                 GUIKIT::String::toLowerCase( tempFile );																
                 
@@ -188,10 +190,13 @@ struct DiskFinder {
 			else if (useFileAlt != "")
 				return useFileAlt;
 			
-            else if (diskPos == 0)
-                return useFileBySize;
+           // else if (diskPos == 0)
+             //   return useFileBySize;
             
-			break;
+			//break;
+
+            if (!--maxTries)
+                break;
         }
         
         return "";

@@ -745,8 +745,11 @@ Drive::Drive(uint8_t number, Emulator::Interface::Media* mediaConnected ) : stru
             }
             
             // LED status change
-            if ((lines->iob ^ lines->iobOld) & 8)
+            if ((lines->iob ^ lines->iobOld) & 8) {
                 updateDeviceState();
+                if (structure.autoStarted)
+                    system->hintObserverLEDChange(lines->iob & 8);
+            }
             
         } else {
             // port A

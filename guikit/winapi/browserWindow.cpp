@@ -7,19 +7,46 @@
 HWND pBrowserWindow::dummyParent = nullptr;
 
 STDMETHODIMP FileDialogEventHandler::OnSelectionChange ( IFileDialog* pfd ) {
-    std::string path = getFilePath(pfd);
-    
+    std::vector<std::string> curSelectedFiles;
+    std::vector<std::string> resultFiles;
+    std::string path = getFilePath(pfd, curSelectedFiles);
+
   //  if (!path.empty() && path != filePath) {
         if (state && state->onSelectionChange)
             state->onSelectionChange(path);
 
         filePath = path;
+        pBrowserWindow& p = browserWindow->p;
+
+        if (state->orderBySelected) {
+            for(auto& selectedFile : p.selectedFiles) { // sorted selection before
+                unsigned pos = 0;
+                for(auto& curSelectedFile : curSelectedFiles) { // unsorted current selection
+                    if (selectedFile == curSelectedFile) {
+                        resultFiles.push_back( selectedFile );
+                        GUIKIT::Vector::eraseVectorPos(curSelectedFiles, pos);
+                        break;
+                    }
+                    pos++;
+                }
+            }
+
+            // if more than one file was added to selection (shift key)
+            std::sort(curSelectedFiles.begin(), curSelectedFiles.end(), [](std::string& a, std::string& b) -> bool
+            { return a < b; });
+
+            for(auto& curSelectedFile : curSelectedFiles)
+                resultFiles.push_back( curSelectedFile );
+
+            p.selectedFiles = resultFiles;
+        }
+
    // }  
 
     return S_OK;
 }
 
-auto FileDialogEventHandler::getFilePath( IFileDialog* pfd ) -> std::string {
+auto FileDialogEventHandler::getFilePath( IFileDialog* pfd, std::vector<std::string>& multiples ) -> std::string {
     
     if (!pfd)
         return "";
@@ -46,10 +73,16 @@ auto FileDialogEventHandler::getFilePath( IFileDialog* pfd ) -> std::string {
         
     if ( SUCCEEDED(hr)) {
         
-        std::string name = utf8_t(pwsz);       
-
+        std::string name = utf8_t(pwsz);
         path += "/" + name;
-        
+
+        auto temp = GUIKIT::String::split(name, '\"');
+
+        for(auto& test : temp) {
+            if (test != " ")
+                multiples.push_back(test);
+        }
+
         CoTaskMemFree ( pwsz );
     }    
     
@@ -87,6 +120,17 @@ IFACEMETHODIMP FileDialogEventHandler::OnButtonClicked ( IFileDialogCustomize* p
     return S_OK;
 }
 
+IFACEMETHODIMP FileDialogEventHandler::OnCheckButtonToggled(IFileDialogCustomize* pfdc, DWORD dwIDCtl, BOOL bChecked) {
+    if (dwIDCtl == 2000) {
+        if (state->orderBySelected) {
+            state->orderBySelected->checked = bChecked;
+            state->orderBySelected->onToggle(bChecked);
+        }
+    }
+
+    return S_OK;
+}
+
 auto pBrowserWindow::getIFileParent() -> HWND {
     if (pDlg) {   
         IOleWindow* pWindow;
@@ -103,10 +147,14 @@ auto pBrowserWindow::getIFileParent() -> HWND {
     return nullptr;
 }
 
-auto pBrowserWindow::fileVista(bool save) -> std::string {
+auto pBrowserWindow::fileVista(bool save, bool multi) -> std::vector<std::string> {
     auto& state = browserWindow.state;
     std::string name = "";
-    HRESULT hr;      
+    std::vector<std::string> out;
+    HRESULT hr;
+
+    if (save)
+        multi = false;
 
     COMDLG_FILTERSPEC* aFileTypes = new COMDLG_FILTERSPEC[state.filters.size()];
 
@@ -140,13 +188,14 @@ auto pBrowserWindow::fileVista(bool save) -> std::string {
             IID_IFileOpenDialog, reinterpret_cast<void**>(&pDlg));
     
     if ( FAILED(hr) )
-        return "";        
+        return {""};
     
     if (!state.textOk.empty())
         pDlg->SetOkButtonLabel( (LPCWSTR)utf16_t(state.textOk) );    
     
     pDialogEventHandler = new FileDialogEventHandler;    
     pDialogEventHandler->state = &state;
+    pDialogEventHandler->browserWindow = &browserWindow;
     pDialogEventHandler->pDlg = pDlg;
     
     pDlg->SetFileTypes ( state.filters.size(), aFileTypes );
@@ -170,21 +219,36 @@ auto pBrowserWindow::fileVista(bool save) -> std::string {
     
     pDlg->SetTitle ( wtitle );
     pDlg->SetFolder( location );
-        
-    if (state.buttons.size() > 0) {        
-        IFileDialogCustomize* pDlgc = nullptr;
+
+    if (multi) {
+        DWORD dwFlags;
+        pDlg->GetOptions(&dwFlags);
+        pDlg->SetOptions(dwFlags | FOS_ALLOWMULTISELECT);
+    }
+
+    IFileDialogCustomize* pDlgc = nullptr;
+    if (state.buttons.size() > 0) {
         hr = pDlg->QueryInterface(IID_IFileDialogCustomize, reinterpret_cast<void**>(&pDlgc) );
 
         if ( SUCCEEDED(hr) ) {
-            
             unsigned i = 0;
             for(auto& button : state.buttons) {                                
                 pDlgc->AddPushButton(1000 + i++, utf16_t(button.text) );
             }
         }    
-    }    
-    
-    pDlg->Advise(pDialogEventHandler, &cookie);  
+    }
+
+    if (state.orderBySelected) {
+        if (!pDlgc)
+            hr = pDlg->QueryInterface(IID_IFileDialogCustomize, reinterpret_cast<void**>(&pDlgc) );
+
+        if ( SUCCEEDED(hr) ) {
+            pDlgc->AddCheckButton(2000, utf16_t(state.orderBySelected->text), state.orderBySelected->checked );
+        }
+    }
+
+    selectedFiles.clear();
+    pDlg->Advise(pDialogEventHandler, &cookie);
 
     if (dummyParent)
         SetWindowLongPtr(dummyParent, GWLP_USERDATA, (LONG_PTR)this);
@@ -192,26 +256,71 @@ auto pBrowserWindow::fileVista(bool save) -> std::string {
     hr = pDlg->Show ( (state.window && state.modal) ? state.window->p.hwnd : dummyParent );
     
     if(!pDlg || !SUCCEEDED(hr))
-        return "";     
+        return {""};
     
     pDlg->Unadvise(cookie);  
-    
-    IShellItem* pItem;
 
-    hr = pDlg->GetResult ( &pItem );
+    if (!multi) {
+        IShellItem* pItem = nullptr;
 
-    if ( SUCCEEDED(hr) ) {
-        LPOLESTR pwsz = NULL;
-
-        hr = pItem->GetDisplayName ( SIGDN_FILESYSPATH, &pwsz );
+        hr = pDlg->GetResult( &pItem );
 
         if ( SUCCEEDED(hr) ) {
-            name = utf8_t(pwsz);
-            std::replace( name.begin(), name.end(), '\\', '/');
-            CoTaskMemFree ( pwsz );
+            LPOLESTR pwsz = NULL;
+
+            hr = pItem->GetDisplayName ( SIGDN_FILESYSPATH, &pwsz );
+
+            if ( SUCCEEDED(hr) ) {
+                name = utf8_t(pwsz);
+                std::replace( name.begin(), name.end(), '\\', '/');
+                CoTaskMemFree ( pwsz );
+            }
         }
+        if(pItem) pItem->Release();
+        out.push_back(name);
+
+    } else {
+        IShellItemArray* pItems = nullptr;
+        hr = reinterpret_cast<IFileOpenDialog*>(pDlg)->GetResults( &pItems );
+
+        if ( SUCCEEDED(hr) ) {
+            DWORD elements;
+            pItems->GetCount(&elements);
+
+            for (unsigned i = 0; i < elements; i++) {
+                IShellItem* pItem;
+
+                pItems->GetItemAt(i, &pItem);
+                LPOLESTR pwsz = NULL;
+
+                if (pItem) {
+                    hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pwsz);
+
+                    if (SUCCEEDED(hr)) {
+                        name = utf8_t(pwsz);
+                        std::replace(name.begin(), name.end(), '\\', '/');
+                        CoTaskMemFree(pwsz);
+                        out.push_back(name);
+                    }
+                }
+            }
+
+            if (state.orderBySelected && state.orderBySelected->checked && selectedFiles.size()) {
+                std::vector<std::string> temp;
+
+                for (auto& sSortedFile : selectedFiles) {
+                    for(auto& sFile : out ) {
+                        if (GUIKIT::String::findString(sFile, sSortedFile))
+                            temp.push_back( sFile );
+                    }
+                }
+                out = temp;
+            }
+
+        }
+        if(pItems) pItems->Release();
     }
-                        
+
     if (pDialogEventHandler)
         delete pDialogEventHandler;
     pDialogEventHandler = nullptr;
@@ -220,16 +329,96 @@ auto pBrowserWindow::fileVista(bool save) -> std::string {
     pDlg = nullptr;
     dialogHwnd = nullptr;
     
-    return name;
+    return out;
 }
 
 // legacy mode
+auto pBrowserWindow::fileMulti() -> std::vector<std::string> {
+    std::vector<std::string> out;
+    auto& state = browserWindow.state;
+
+    if (pApplication::version >= WindowsVista)
+        return fileVista(false, true);
+
+    pApplication::currentWorkingDirectory(); //unfortunately file dialog overwrites cwd, so get it before, if not already done
+    std::string path = state.path;
+    utf16_t wtitle(state.title.c_str());
+    std::replace( path.begin(), path.end(), '/', '\\');
+    utf16_t wpath(path.c_str());
+    std::string filters = "";
+
+    for(auto& filter : state.filters) {
+        std::vector<std::string> tokens = String::split(filter, '(');
+
+        if(tokens.size() != 2) continue;
+        std::string part = tokens.at(1);
+        part.pop_back();
+        String::delSpaces(part);
+        std::replace( part.begin(), part.end(), ',', ';');
+        filters += filter + "\t" + part + "\t";
+    }
+
+    utf16_t wfilters(filters.c_str());
+    wchar_t wname[2048] = L"";
+
+    wchar_t* p = wfilters;
+    while(*p != L'\0') {
+        if(*p == L'\t') *p = L'\0';
+        p++;
+    }
+
+    if(!path.empty()) {
+        //clear COMDLG32 MRU (most recently used) file list
+        //this is required in order for lpstrInitialDir to be honored in Windows 7 and above
+        SHDeleteKeyW(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\ComDlg32\\LastVisitedPidlMRU");
+        SHDeleteKeyW(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\ComDlg32\\OpenSavePidlMRU");
+    }
+
+    OPENFILENAME ofn;
+    memset(&ofn, 0, sizeof(OPENFILENAME));
+    ofn.lStructSize = sizeof(OPENFILENAME);
+    ofn.hwndOwner = state.window->p.hwnd;
+    ofn.lpstrFilter = wfilters;
+    ofn.lpstrInitialDir = wpath;
+    ofn.lpstrFile = wname;
+    ofn.lpstrTitle = wtitle;
+    ofn.nMaxFile = PATH_MAX;
+    ofn.hInstance = GetModuleHandle(0);
+    ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY | OFN_ENABLESIZING | OFN_ALLOWMULTISELECT;
+    ofn.lpstrDefExt = L"";
+
+    bool result = GetOpenFileName(&ofn);
+    if(!result) return out;
+
+    std::string append;
+    p = wname;
+    std::wstring pathList = p;
+    p += lstrlenW(p) + 1;
+
+    if ( *p == 0 ) {
+        append = utf8_t( pathList.c_str() );
+        std::replace( append.begin(), append.end(), '\\', '/');
+        out.push_back( append );
+    } else {
+        for ( ; *p != 0; ) {
+            std::wstring fileName = p;
+            append = utf8_t( ( pathList + L"\\" + fileName ).c_str() );
+            std::replace( append.begin(), append.end(), '\\', '/');
+            out.push_back( append );
+            p += fileName.size() + 1;
+        }
+    }
+
+    dialogHwnd = nullptr;
+    return out;
+}
+
 auto pBrowserWindow::file(bool save) -> std::string {
     
     auto& state = browserWindow.state;
     
     if (!state.contentView.id && (pApplication::version >= WindowsVista))
-        return fileVista(save);
+        return fileVista(save)[0];
     
     pApplication::currentWorkingDirectory(); //unfortunately file dialog overwrites cwd, so get it before, if not already done
     std::string path = state.path;

@@ -692,6 +692,11 @@ auto Program::jam( Emulator::Interface::Media* media ) -> void {
     emuThread->unlockStatus();
 }
 
+auto Program::trapsNotPossible(Emulator::Interface::Media* media) -> void {
+    if (media && media->group->isDisk() && activeEmulator)
+        fileloader->autoload(activeEmulator, media, 0, false );
+}
+
 auto Program::getLastUsedEmu() -> Emulator::Interface* {
 	
 	auto ident = globalSettings->get<std::string>("last_used_emu", "");
