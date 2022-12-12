@@ -17,6 +17,8 @@ struct Interface : Emulator::Interface  {
         ModelIdRegion,
         ModelIdDiskDrivesConnected,
         ModelIdSampleFetch,
+        ModelIdChipMem,
+        ModelIdSlowMem,
     };
 
     enum MediaGroupId {
@@ -86,8 +88,6 @@ struct Interface : Emulator::Interface  {
     auto fastForward(unsigned config) -> void;
     auto getForward() -> unsigned;
 
-    auto setMemory(MemoryType* memoryType, unsigned memoryId) -> void;
-
     auto sendKeyChange(bool pressed, Device::Input* input) -> void;
     auto informAboutKeyUpdate() -> void;
     auto setLineCallback(bool state, unsigned scanline) -> void;
@@ -95,7 +95,6 @@ struct Interface : Emulator::Interface  {
 
 private:
     auto prepareDevices() -> void;
-    auto prepareMemory() -> void;
     auto prepareMedia() -> void;
     auto preparePalettes() -> void;
     auto prepareModels() -> void;

@@ -4,6 +4,7 @@
 #include "../cpu/m68000.h"
 #include "audio.cpp"
 #include "filter.cpp"
+#include "drive.cpp"
 #include "../system/system.h"
 #include "../input/input.h"
 #include "../input/controlPort/controlPort.h"

@@ -1,6 +1,7 @@
 
 #include "interface.h"
 #include "system/system.h"
+#include "disk/disk.h"
 #include <cstring>
 #include <cstdlib>
 
@@ -14,7 +15,6 @@ Interface::Interface() : Emulator::Interface( "Amiga" ) {
     prepareFirmware();
     prepareDevices();
     prepareModels();
-    prepareMemory();
     preparePalettes();
     prepareExpansions();
 
@@ -32,6 +32,9 @@ auto Interface::prepareModels() -> void {
     models.push_back({ModelIdLowPassFilter, "Low Pass Filter", Model::Type::Switch, Model::Purpose::AudioSettings, 1}); //0 - off, 1 - on, means software decides
     models.push_back({ModelIdRegion, "Region", Model::Type::Combo, Model::Purpose::GraphicChip, 0, {0, 1}, { "PAL", "NTSC" }});
     models.push_back({ModelIdDiskDrivesConnected, "Disk Drives", Model::Type::Combo, Model::Purpose::DriveSettings, 1, {0, 4}, { "0", "1", "2", "3", "4" }});
+
+    models.push_back({ModelIdChipMem, "Chip Mem", Model::Type::Radio, Model::Purpose::Memory, 1, {0, 3}, { "256", "512", "1024", "2048" }});
+    models.push_back({ModelIdChipMem, "Slow Mem", Model::Type::Radio, Model::Purpose::Memory, 0, {0, 4}, { "0", "512", "1024", "1536", "1792" }});
 
 }
 
@@ -61,34 +64,6 @@ auto Interface::prepareMedia() -> void {
             media.secondary = false;
         }
     }
-}
-
-auto Interface::prepareMemory() -> void {
-    memoryTypes.push_back( {0, "Chip", 1} ); // built in memory
-    memoryTypes.push_back( {1, "Slow", 0} ); // extra memory slot in trapdoor of amiga, not expansion port
-    // memoryTypes.push_back( {2, "Fast", 0} ); // fast mem defined by inserted expansion
-
-    {   auto& memory = memoryTypes[0].memory;
-        memory.push_back( {0, 256} );
-        memory.push_back( {1, 512} );
-        memory.push_back( {2, 1024} );
-        memory.push_back( {3, 2048} );
-    }
-
-    {   auto& memory = memoryTypes[1].memory;
-        memory.push_back( {0, 0} );
-        memory.push_back( {1, 512} );
-        memory.push_back( {2, 1024} );
-        memory.push_back( {3, 1536} );
-        memory.push_back( {4, 1792} );
-    }
-
-//    {   auto& memory = memoryTypes[2].memory;
-//        memory.push_back( {0, 1024} );
-//        memory.push_back( {1, 2048} );
-//        memory.push_back( {2, 4096} );
-//        memory.push_back( {3, 8192} );
-//    }
 }
 
 auto Interface::prepareExpansions() -> void {
@@ -302,18 +277,6 @@ auto Interface::getCursorPosition( Device* device, int16_t& x, int16_t& y ) -> b
     return system->input.getCursorPosition( device, x, y );
 }
 
-auto Interface::setMemory(MemoryType* memoryType, unsigned memoryId) -> void {
-    if (!memoryType)
-        return;
-
-    if (memoryId >= memoryType->memory.size())
-        memoryId = memoryType->defaultMemoryId;
-
-    auto memory = getMemoryById(*memoryType, memoryId);
-
-    system->agnus.setMemory( memoryType->id, memory->size );
-}
-
 auto Interface::setFirmware(unsigned typeId, uint8_t* data, unsigned size, bool allowPatching) -> void {
     if (typeId >= firmwares.size()) return;
 
@@ -383,6 +346,12 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
             break;
         case ModelIdDiskDrivesConnected:
             break;
+        case ModelIdChipMem:
+            system->setChipmem(value);
+            break;
+        case ModelIdSlowMem:
+            system->setSlowmem(value);
+            break;
     }
 }
 
@@ -398,6 +367,10 @@ auto Interface::getModelValue(unsigned modelId) -> int {
             return system->paula.getResampleQuality();
         case ModelIdDiskDrivesConnected:
             return 0;
+        case ModelIdChipMem:
+            return system->getChipmem();
+        case ModelIdSlowMem:
+            return system->getSlowmem();
     }
 
     return 0;
@@ -431,7 +404,7 @@ auto Interface::ejectDisk(Media* media) -> void {
 
 auto Interface::createDiskImage(unsigned typeId, bool hd, std::string name, bool ffs) -> Data {
 
-    return {nullptr, 0};
+    return Disk::create( (Disk::Type) typeId, hd, name, ffs );
 }
 
 //auto Interface::createHardDisk(std::function<void (uint8_t* buffer, unsigned length, unsigned offset)> onCreate, unsigned size, std::string name) -> void {

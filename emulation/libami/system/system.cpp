@@ -299,4 +299,54 @@ auto System::setFastForward( unsigned config ) -> void {
    // updateDriveSounds();
 }
 
+auto System::setChipmem(unsigned value) -> void {
+    unsigned size;
+
+    switch(value) {
+        case 0: size = 256 * 1024; break;
+        default:
+        case 1: size = 512 * 1024; break;
+        case 2: size = 1024 * 1024; break;
+        case 3: size = 2048 * 1024; break;
+    }
+
+    agnus.setChipmem(size);
+}
+
+auto System::getChipmem() -> unsigned {
+    switch (agnus.chipMemMask + 1) {
+        case 256 * 1024: return 0;
+        case 512 * 1024: return 1;
+        case 1024 * 1024: return 2;
+        case 2048 * 1024: return 3;
+    }
+    return 1;
+}
+
+auto System::setSlowmem(unsigned value) -> void {
+    unsigned size;
+
+    switch(value) {
+        default:
+        case 0: size = 0; break;
+        case 1: size = 512 * 1024; break;
+        case 2: size = 1024 * 1024; break;
+        case 3: size = 1536 * 1024; break;
+        case 4: size = 1792 * 1024; break;
+    }
+
+    agnus.setSlowmem(size);
+}
+
+auto System::getSlowmem() -> unsigned {
+    switch (agnus.slowMemSize) {
+        case 0: return 0;
+        case 512 * 1024: return 1;
+        case 1024 * 1024: return 2;
+        case 1536 * 1024: return 3;
+        case 1792 * 1024: return 4;
+    }
+    return 0;
+}
+
 }

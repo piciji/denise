@@ -194,46 +194,41 @@ auto Agnus::writeWord(uint32_t adr, uint16_t value) -> void {
     dataBus = value;
 }
 
-auto Agnus::setMemory(unsigned typeId, unsigned size) -> void {
-    switch (typeId) {
-        case 0: // Chip mem
-        default: {
-            if (size == 0)
-                size = 512 * 1024;
-            else if (size > (2 * 1024 * 1024))
-                size = 2 * 1024 * 1024;
-            else
-                size = Emulator::powerOfTwo(size);
+auto Agnus::setChipmem(unsigned size) -> void {
+    if (size == 0)
+        size = 512 * 1024;
+    else if (size > (2 * 1024 * 1024))
+        size = 2 * 1024 * 1024;
+    else
+        size = Emulator::powerOfTwo(size);
 
-            unsigned mask = size - 1;
+    unsigned mask = size - 1;
 
-            if (mask == chipMemMask)
-                break;
+    if (mask == chipMemMask)
+        return;
 
-            if (chipMem)
-                delete[] chipMem;
+    if (chipMem)
+        delete[] chipMem;
 
-            chipMem = new uint8_t[size];
-            chipMemMask = mask;
-        } break;
+    chipMem = new uint8_t[size];
+    chipMemMask = mask;
+}
 
-        case 1: { // Slow mem
-            if (size > (1792 * 1024))
-                size = 1792 * 1024;
+auto Agnus::setSlowmem(unsigned size) -> void {
+    if (size > (1792 * 1024))
+        size = 1792 * 1024;
 
-            if (size == slowMemSize)
-                break;
+    if (size == slowMemSize)
+        return;
 
-            if (slowMem) {
-                delete[] slowMem;
-                slowMem = nullptr;
-            }
-
-            if (size)
-                slowMem = new uint8_t[size];
-            slowMemSize = size;
-        } break;
+    if (slowMem) {
+        delete[] slowMem;
+        slowMem = nullptr;
     }
+
+    if (size)
+        slowMem = new uint8_t[size];
+    slowMemSize = size;
 }
 
 auto Agnus::rememberChipMem(uint32_t adr) -> void {

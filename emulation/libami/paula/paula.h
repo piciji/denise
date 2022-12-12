@@ -3,6 +3,8 @@
 
 #include <cstdint>
 #include <functional>
+#include "../../interface.h"
+#include "../disk/disk.h"
 
 namespace Emulator {
     struct Serializer;
@@ -37,6 +39,13 @@ struct Paula {
     bool vBlankIntr;
     bool enableFilter;
     bool useLedFilter;
+
+    struct Drive {
+        Emulator::Interface::Media* media;
+        Disk disk;
+
+    } drives[4];
+    std::vector<Drive*> drivesEnabled;
 
     struct {
         uint8_t cntX0;

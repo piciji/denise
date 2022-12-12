@@ -199,9 +199,10 @@ struct Agnus : Emulator::Events<6> {
 
     auto power(bool softReset) -> void;
     auto powerOff() -> void;
-    auto setMemory(unsigned typeId, unsigned size) -> void;
     auto mapMemory() -> void;
     auto setOVL(bool state) -> void;
+    auto setChipmem(unsigned size) -> void;
+    auto setSlowmem(unsigned size) -> void;
 
     auto readByte(uint32_t adr) -> uint8_t;
     auto writeByte(uint32_t adr, uint8_t value) -> void;

@@ -223,7 +223,7 @@ struct Interface {
 		unsigned id;
 		std::string name;		
 		enum Type : unsigned { Switch, Range, Hex, Radio, Combo, Slider } type;
-		enum Purpose : unsigned { Cpu, GraphicChip, SoundChip, Cia, AudioSettings, AudioResampler, Misc, DriveSettings, Performance, Hidden } purpose;
+		enum Purpose : unsigned { Cpu, GraphicChip, SoundChip, Cia, AudioSettings, AudioResampler, Misc, DriveSettings, Performance, Hidden, Memory } purpose;
 		int defaultValue;
 		std::vector<int> range;
 		std::vector<std::string> options;

@@ -78,6 +78,11 @@ struct System {
     auto unserialize(uint8_t* data, unsigned size) -> bool;
     auto serializeAll(Emulator::Serializer& s) -> void;
     auto serialize(Emulator::Serializer& s) -> void;
+
+    auto setChipmem(unsigned value) -> void;
+    auto getChipmem() -> unsigned;
+    auto setSlowmem(unsigned value) -> void;
+    auto getSlowmem() -> unsigned;
 };
 
 extern System* system;
