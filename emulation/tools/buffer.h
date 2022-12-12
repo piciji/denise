@@ -29,7 +29,7 @@ template<typename T> static auto copyBufferToInt( uint8_t* buf ) -> T {
 // big endian
 template<typename T> static auto copyIntToBufferBigEndian( uint8_t* buf, T value ) -> void {    
 
-    unsigned shift = (sizeof(T) - 1) << 3;
+    constexpr unsigned shift = (sizeof(T) - 1) << 3;
     
     for( unsigned i = 0; i < sizeof(T); i++ ) {        
         
