@@ -543,6 +543,10 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             auto mediaId = settings->get<unsigned>("access_floppy", 0u, {0u, 3u});
             auto media = emulator->getEnabledDisk(mediaId);
 
+            auto fSetting = FileSetting::getInstance( emulator, _underscore(media->name ) );
+            if (fSetting->path.empty())
+                break;
+
             if (media)
                 fileloader->autoload(emulator, media, 0, settings->get<bool>("autostart_traps_on_dblclick", false) );
         } break;

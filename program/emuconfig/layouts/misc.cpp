@@ -133,11 +133,27 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) {
             _settings->set<bool>("auto_warp_disk_first_file", checked);
 
             autostartLayout->autoWarp.disableWarpWhenInput.setEnabled( !checked );
+
+            emuThread->lock();
+            if (activeEmulator == emulator) {
+                auto autoStartedMediaGroup = emulator->autoStartedByMediaGroup();
+                if (autoStartedMediaGroup && autoStartedMediaGroup->isDisk())
+                    program->initAutoWarp(autoStartedMediaGroup, true);
+            }
+            emuThread->unlock();
         };
 
         autostartLayout->autoWarp.tapeFirstFile.onToggle = [this](bool checked) {
 
             _settings->set<bool>("auto_warp_tape_first_file", checked);
+
+            emuThread->lock();
+            if (activeEmulator == emulator) {
+                auto autoStartedMediaGroup = emulator->autoStartedByMediaGroup();
+                if (autoStartedMediaGroup && autoStartedMediaGroup->isTape())
+                    program->initAutoWarp(autoStartedMediaGroup, true);
+            }
+            emuThread->unlock();
         };
 
         autostartLayout->autoWarp.disableWarpWhenInput.onToggle = [this](bool checked) {

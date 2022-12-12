@@ -186,10 +186,13 @@ auto SwapperLayout::loadSettings() -> void {
 auto SwapperLayout::translate() -> void {
     listView.setHeaderText({"#", trans->get("path"), trans->get("file")});
     controls.openButton.setText(trans->get("open"));
+    controls.openButton.setTooltip(trans->get("swapper open hint"));
     controls.insertButton.setText(trans->get("insert and load"));
     controls.ejectButton.setText(trans->get("eject"));
     controls.ejectAllButton.setText(trans->get("eject all"));
 	controls.writeProtect.setText(trans->get("write_protected"));
+
+    listView.setTooltip( trans->get("swapper multi hint") );
 }
 
 auto SwapperLayout::getSetting( unsigned pos ) -> FileSetting* {
