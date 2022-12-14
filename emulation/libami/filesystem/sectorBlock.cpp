@@ -37,13 +37,55 @@ auto SectorBlock::init() -> void {
 
 auto SectorBlock::setName(std::string name) -> void {
 
+    switch(type) {
+        case ROOT_BLOCK:
+            if (name == "") name = "empty";
+            writeName(-80, name, 30);
+            break;
+    }
 }
 
+auto SectorBlock::setBitmapBlockPtr(unsigned pos, unsigned value) -> void {
+    switch(type) {
+        case ROOT_BLOCK:
+            if (pos < 25)
+                write32((pos - 49) << 2, value);
+            break;
+    }
+}
+
+auto SectorBlock::setBitmapExtBlock(unsigned value) -> void {
+    switch(type) {
+        case ROOT_BLOCK:
+            write32(-96, value);
+            break;
+    }
+}
+
+
 auto SectorBlock::write32(int offset, uint32_t value) -> void {
+    Emulator::copyIntToBufferBigEndian<uint32_t>( getAdrPtr(offset), value);
+}
+
+inline auto SectorBlock::getAdrPtr(int offset) -> uint8_t* {
     if (offset >= 0)
-        Emulator::copyIntToBufferBigEndian<uint32_t>(data + offset, value);
-    else
-        Emulator::copyIntToBufferBigEndian<uint32_t>(data + bSize + offset, value);
+        return data + offset;
+    return data + bSize + offset;
+}
+
+auto SectorBlock::writeName(int offset, std::string name, uint8_t allocatedSize) -> void {
+    auto str = name.c_str();
+    uint8_t* ptr = getAdrPtr(offset);
+    uint8_t strSize = std::min(allocatedSize, (uint8_t)std::strlen(str));
+    *ptr++ = strSize;
+    std::memset(ptr, 0, allocatedSize);
+
+    for (unsigned i = 0; i < strSize; i++) {
+        if (str[i] == ':' || str[i] == '/')
+            *ptr++ = '_';
+        else
+            *ptr++ = str[i];
+    }
 }
 
 auto SectorBlock::writeDate(time_t unixTS, int offset) -> void {

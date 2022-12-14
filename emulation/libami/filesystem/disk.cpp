@@ -1,5 +1,6 @@
 
 #include "disk.h"
+#include "sectorBlock.h"
 
 #define LIBAMI_FLOPPY_REVOLUTION_LENGTH_PAL 101339 //bits per revolution
 #define LIBAMI_FLOPPY_REVOLUTION_LENGTH_NTSC 102272 //bits per revolution
@@ -73,6 +74,11 @@ auto Disk::create( Type type, bool hd, std::string name, bool ffs ) -> Emulator:
     std::memset(data, 0, size);
 
     if (type == ADF) {
+        SectorBlock bootBlock(SectorBlock::Type::BOOT_BLOCK, 0, ffs);
+
+        SectorBlock rootBlock(SectorBlock::Type::ROOT_BLOCK, size / 2);
+        rootBlock.setName(name);
+
         std::strcpy ((char*)data, "DOS");
         data[3] = ffs ? 1 : 0;
         writeRootblock(data + _size / 2, _size / 1024, name, hd);
@@ -96,18 +102,14 @@ auto Disk::create( Type type, bool hd, std::string name, bool ffs ) -> Emulator:
 }
 
 auto Disk::writeRootblock(uint8_t* data, int blocksize, std::string name, bool hd) -> void {
-    data[3] = 2;
-    data[12+3] = 0x48;
-    data[312] = data[313] = data[314] = data[315] = 0xff;
+
+
+
     data[316+2] = (blocksize + 1) >> 8;
     data[316+3] = (blocksize + 1) & 0xff;
 
-    if (name == "") name = "empty";
-    data[432] = name.size();
-    std::strcpy ( (char*)data + 433, name.c_str() );
 
-    data[508 + 3] = 1;
-    writeDiskDate (data + 420);
+
     memcpy (data + 472, data + 420, 3 * 4);
     memcpy (data + 484, data + 420, 3 * 4);
     writeDiskChecksum (data, data + 20);
