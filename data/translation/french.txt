@@ -709,3 +709,4 @@ select_swapper_image =
 insert and load =
 swapper open hint =
 swapper multi hint =
+swapper multi hint tooltip =

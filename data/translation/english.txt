@@ -708,4 +708,5 @@ order selected = pass selected files in click order
 select_swapper_image = select disk image(s) ... (multiple selection with CTRL)
 insert and load = Insert and Load
 swapper open hint = Individual slots can also be filled by double-clicking on the respective list element.
-swapper multi hint = You can also select multiple files at once by holding down the CTRL key in the file dialog. Selected floppy disk images are then distributed to continuous slots of the swapper.
+swapper multi hint = multiple selection possible
+swapper multi hint tooltip = You can also select multiple files at once by holding down the CTRL key in the file dialog. Selected floppy disk images are then distributed to continuous slots of the swapper.

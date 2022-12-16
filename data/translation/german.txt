@@ -708,4 +708,5 @@ order selected = Übernahme in Klick-Reihenfolge
 select_swapper_image = Diskettenabbild(er) auswählen ... (Mehrfachauswahl mit STRG)
 insert and load = Einlegen und Laden
 swapper open hint = Einzelne Slots können auch per Doppelklick, auf das jeweilige Listen-Element, befüllt werden.
-swapper multi hint = Es können auch mehrere Dateien auf einmal ausgewählt werden, indem man die STRG Taste im Datei Dialog gedrückt hält. Ausgewählte Diskettenabbilder werden dann auf fortlaufende Slots des Wechslers verteilt.
+swapper multi hint = Mehrfachauswahl möglich
+swapper multi hint tooltip = Es können auch mehrere Dateien auf einmal ausgewählt werden, indem man die STRG Taste im Datei Dialog gedrückt hält. Ausgewählte Diskettenabbilder werden dann auf fortlaufende Slots des Wechslers verteilt.

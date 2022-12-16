@@ -41,6 +41,7 @@ struct SwapperLayout : GUIKIT::VerticalLayout {
     Emulator::Interface* emulator;
     
     GUIKIT::ListView listView;
+    GUIKIT::Label info;
     SwapperControlLayout controls;
 
     auto translate() -> void;

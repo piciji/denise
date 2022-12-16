@@ -86,6 +86,7 @@ struct MiscLayout : GUIKIT::VerticalLayout {
     auto setRunAheadPerformance(bool state) -> void;
     auto setRunAhead(unsigned pos, bool force = true) -> void;
     auto loadSettings() -> void;
+    auto initAutowarp(Emulator::Interface::MediaGroup* forGroup = nullptr) -> void;
     
     MiscLayout(TabWindow* tabWindow);
 };

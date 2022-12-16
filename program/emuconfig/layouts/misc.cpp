@@ -116,16 +116,22 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) {
         autostartLayout->autoWarp.off.onActivate = [this]() {
 
             _settings->set<unsigned>("auto_warp", 0);
+
+            initAutowarp();
         };
 
         autostartLayout->autoWarp.normal.onActivate = [this]() {
 
             _settings->set<unsigned>("auto_warp", 1);
+
+            initAutowarp();
         };
 
         autostartLayout->autoWarp.aggressive.onActivate = [this]() {
 
             _settings->set<unsigned>("auto_warp", 2);
+
+            initAutowarp();
         };
 
         autostartLayout->autoWarp.diskFirstFile.onToggle = [this](bool checked) {
@@ -134,40 +140,21 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) {
 
             autostartLayout->autoWarp.disableWarpWhenInput.setEnabled( !checked );
 
-            emuThread->lock();
-            if (activeEmulator == emulator) {
-                auto autoStartedMediaGroup = emulator->autoStartedByMediaGroup();
-                if (autoStartedMediaGroup && autoStartedMediaGroup->isDisk())
-                    program->initAutoWarp(autoStartedMediaGroup, true);
-            }
-            emuThread->unlock();
+            initAutowarp( emulator->getDiskMediaGroup() );
         };
 
         autostartLayout->autoWarp.tapeFirstFile.onToggle = [this](bool checked) {
 
             _settings->set<bool>("auto_warp_tape_first_file", checked);
 
-            emuThread->lock();
-            if (activeEmulator == emulator) {
-                auto autoStartedMediaGroup = emulator->autoStartedByMediaGroup();
-                if (autoStartedMediaGroup && autoStartedMediaGroup->isTape())
-                    program->initAutoWarp(autoStartedMediaGroup, true);
-            }
-            emuThread->unlock();
+            initAutowarp( emulator->getTapeMediaGroup() );
         };
 
         autostartLayout->autoWarp.disableWarpWhenInput.onToggle = [this](bool checked) {
 
             _settings->set<bool>("auto_warp_off_input", checked);
-            emuThread->lock();
-            if (activeEmulator == emulator) {
-                auto autoStartedMediaGroup = emulator->autoStartedByMediaGroup();
 
-                if (autoStartedMediaGroup && autoStartedMediaGroup->isDisk())
-                    program->warp.inputControlled = checked;
-            }
-
-            emuThread->unlock();
+            initAutowarp( emulator->getDiskMediaGroup() );
         };
 
         autostartLayout->startWrapper.option.tapeWithStandardKernal.onToggle = [this](bool checked) {
@@ -390,6 +377,21 @@ auto MiscLayout::translate() -> void {
     speedLayout.fps.setText( trans->get("FPS") );
     speedLayout.percent.setText( trans->get("Percent") );
     speedLayout.apply.setText( trans->get("enable") );
+}
+
+auto MiscLayout::initAutowarp(Emulator::Interface::MediaGroup* forGroup) -> void {
+    if (!activeEmulator)
+        return;
+
+    emuThread->lock();
+    if (activeEmulator == emulator) {
+        auto autoStartedMediaGroup = emulator->autoStartedByMediaGroup();
+        if (autoStartedMediaGroup && autoStartedMediaGroup->isDrive()) {
+            if (!forGroup || (forGroup == autoStartedMediaGroup) )
+                program->initAutoWarp(autoStartedMediaGroup, true);
+        }
+    }
+    emuThread->unlock();
 }
 
 auto MiscLayout::loadSettings() -> void {

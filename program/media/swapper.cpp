@@ -17,9 +17,11 @@ SwapperLayout::SwapperLayout( MediaLayout* mediaLayout ) {
     
     setMargin(10);
 	listView.setHeaderVisible();
-	listView.setHeaderText({"", "", ""});	
+	listView.setHeaderText({"", "", ""});
+    info.setForegroundColor(0xff4500);
 
-    append(listView,{~0u, ~0u}, 10);
+    append(listView,{~0u, ~0u}, 5);
+    append(info,{0u, 0u}, 10);
     append(controls,{~0u, 0u});
 	
 	listView.onChange = [this]() {
@@ -192,7 +194,8 @@ auto SwapperLayout::translate() -> void {
     controls.ejectAllButton.setText(trans->get("eject all"));
 	controls.writeProtect.setText(trans->get("write_protected"));
 
-    listView.setTooltip( trans->get("swapper multi hint") );
+    info.setText( trans->get("swapper multi hint") );
+    info.setTooltip( trans->get("swapper multi hint tooltip") );
 }
 
 auto SwapperLayout::getSetting( unsigned pos ) -> FileSetting* {
