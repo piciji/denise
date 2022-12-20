@@ -104,6 +104,7 @@ DiskCreatorLayout::DiskCreatorLayout( Emulator::Interface* emulator, Emulator::I
     if (dynamic_cast<LIBAMI::Interface*>(emulator)) {
         append(fastFileSystem, {0u, 0u}, 5);
         append(highDensity, {0u, 0u}, 5);
+        append(bootable, {0u, 0u}, 5);
     }
     
     append(diskLabelName, {0u, 0u}, 5);

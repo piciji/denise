@@ -58,7 +58,7 @@ struct Interface : Emulator::Interface  {
     auto writeProtectDisk(Media* media, bool state) -> void;
     auto isWriteProtectedDisk(Media* media) -> bool;
     auto ejectDisk(Media* media) -> void;
-    auto createDiskImage(unsigned typeId, bool hd = false, std::string name = "", bool ffs = false) -> Data;
+    auto createDiskImage(unsigned typeId, std::string name = "", bool hd = false, bool ffs = false, bool bootable = false) -> Data;
 
     //savestates
     auto checkstate(uint8_t* data, unsigned size) -> bool;

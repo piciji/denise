@@ -138,6 +138,7 @@ struct DiskCreatorLayout : GUIKIT::FramedHorizontalLayout {
     GUIKIT::ComboButton format;
     GUIKIT::CheckBox fastFileSystem;
     GUIKIT::CheckBox highDensity;
+    GUIKIT::CheckBox bootable;
     GUIKIT::Label diskLabelName;
     GUIKIT::LineEdit diskLabel;
     GUIKIT::Label insertLabel;

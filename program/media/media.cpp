@@ -596,12 +596,12 @@ auto MediaLayout::createImage( Emulator::Interface::MediaGroup* mediaGroup ) -> 
         
         unsigned typeId = diskCreatorLayout->format.userData();
         bool hd = diskCreatorLayout->highDensity.checked();
+        bool bootable = diskCreatorLayout->bootable.checked();
+        bool useFFS = diskCreatorLayout->fastFileSystem.checked();
+        std::string diskName = diskCreatorLayout->diskLabel.text();
         insertId = diskCreatorLayout->insertDevice.userData();
         
-        Emulator::Interface::Data _data = emulator->createDiskImage( typeId, hd,
-            diskCreatorLayout->diskLabel.text(),
-            diskCreatorLayout->fastFileSystem.checked()
-        );
+        Emulator::Interface::Data _data = emulator->createDiskImage( typeId, diskName, hd, useFFS, bootable );
 
         data = _data.ptr;
         size = _data.size;
@@ -927,6 +927,7 @@ auto MediaLayout::translate() -> void {
         diskCreatorLayout->formatName.setText(trans->get("format",{}, true));
         diskCreatorLayout->fastFileSystem.setText(trans->get("ffs"));
         diskCreatorLayout->highDensity.setText(trans->get("high_density"));
+        diskCreatorLayout->bootable.setText(trans->get("bootable"));
         diskCreatorLayout->diskLabelName.setText(trans->get("disk label",{}, true));
         diskCreatorLayout->insertLabel.setText(trans->get("insert",{}, true));
         diskCreatorLayout->button.setText(trans->get("create"));

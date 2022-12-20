@@ -1,140 +1,139 @@
 
 #include "disk.h"
-#include "sectorBlock.h"
+#include "filesystem.h"
+#include "../../tools/buffer.h"
+#include "adf.cpp"
+#include "ext.cpp"
+#include "../agnus/agnus.h"
+#include "../system/system.h"
 
 #define LIBAMI_FLOPPY_REVOLUTION_LENGTH_PAL 101339 //bits per revolution
 #define LIBAMI_FLOPPY_REVOLUTION_LENGTH_NTSC 102272 //bits per revolution
 
 namespace LIBAMI {
 
-auto Disk::attach(uint8_t* data, unsigned size) -> bool {
-    rawData = data;
-    rawSize = size;
+Disk::Disk(Agnus& agnus) : agnus(agnus) {}
 
-    if (size < 32)
+Disk::~Disk() {
+    for(unsigned i = 0; i < LIBAMI_MAX_TRACKS; i++) {
+        Track& track = tracks[i];
+        if (track.data)
+            delete[] track.data;
+    }
+}
+
+auto Disk::attach(uint8_t* data, unsigned size) -> bool {
+    if (!analyze(data, size))
         return false;
 
-    type = (std::memcmp(data, "RAW", 3) == 0) ? Type::RAW : Type::ADF;
-
-    (type == Type::RAW) ? readRawHeader() : readAdfHeader();
+    switch(type) {
+        case Type::ADF:
+            prepareADF(data, size);
+            break;
+        case Type::EXT:
+            prepareEXT(data, size);
+            break;
+        default:
+            return false;
+    }
 
     return true;
 }
 
-auto Disk::readRawHeader() -> void {
-    trackCount = rawData[4];
-    hd = rawData[5];
-    unsigned offset = 32 + 166;
-    uint8_t* ptr = rawData;
-    ptr += 32;
+auto Disk::analyze(uint8_t* data, unsigned size) -> bool {
+    if (analyzeEXT(data, size))
+        return true;
 
-    for(unsigned i = 0; i < trackCount; i++) {
-        Track& track = tracks[i];
-        track.offset = offset;
-        track.formatted = *ptr++ ? true : false;
-        offset += getRawTrackSize(hd);
-    }
+    if (analyzeADF(data, size))
+        return true;
+
+    return false;
 }
 
-auto Disk::readAdfHeader() -> void {
-    uint8_t sectors;
-    trackCount = 0;
-    hd = false;
+auto Disk::storeWrittenTracks() -> void {
+    if (type == Type::EXT) {
+        if (EXTImageNeedsCompleteRebuild()) {
+            unsigned extSize = getEXTCreationImageSize();
+            uint8_t* extData = createEXT(extSize);
+            write( extData, extSize, 0 );
+            delete[] extData;
+            return;
+        }
+    } else if (type == Type::ADF)
+        markAppendedADFTracks();
 
-    if ( rawSize > (160 * 11 * 512 + 511) ) {
-        for (unsigned i = 80; i <= 83; i++) {
-            if (rawSize == i * 22 * 512 * 2) { // HD
-                hd = true;
-                trackCount = rawSize / (512 * (sectors = 22));
-                break;
-            } if (rawSize == i * 11 * 512 * 2) { // >80 cyl DD
-                trackCount = rawSize / (512 * (sectors = 11));
-                break;
+    unsigned sectors = hd ? 22 : 11;
+    unsigned trackLength = 0;
+    uint8_t buffer[sectors * 512];
+
+    for(unsigned i = 0; i < LIBAMI_MAX_TRACKS; i++) {
+        Track& track = tracks[i];
+        if (track.written & 1) {
+            if (type == Type::ADF) {
+                decodeTrack(track, buffer);
+                write(buffer, sectors * 512, sectors * 512 * i);
+            } else if (type == Type::EXT) {
+                write(track.data, track.length, 12 + trackCount * 12 + trackLength);
             }
+            track.written = 0;
         }
-        if (trackCount == 0) {
-            trackCount = rawSize / (512 * (sectors = 22));
-            hd = true;
-        }
-    } else {
-        trackCount = rawSize / (512 * (sectors = 11));
-    }
-
-    for(unsigned i = 0; i < trackCount; i++) {
-        Track& track = tracks[i];
-        track.offset = i * 512 * sectors;
-        track.formatted = true;
+        trackLength += track.length;
     }
 }
 
-auto Disk::create( Type type, bool hd, std::string name, bool ffs ) -> Emulator::Interface::Data {
-    unsigned size = getImageSize(type, hd);
+auto Disk::create( Type type, std::string name, bool hd, bool ffs, bool bootable ) -> Emulator::Interface::Data {
+    Disk disk(system->agnus);
+    disk.hd = hd;
+    unsigned size = disk.getADFCreationImageSize();
 
     uint8_t* data = new uint8_t[size];
     std::memset(data, 0, size);
 
-    if (type == ADF) {
-        SectorBlock bootBlock(SectorBlock::Type::BOOT_BLOCK, 0, ffs);
+    Filesystem fs(ffs ? Filesystem::Structure::FFS : Filesystem::Structure::OFS, size);
+    fs.format(name, bootable);
+    fs.exportMedia(data, size);
 
-        SectorBlock rootBlock(SectorBlock::Type::ROOT_BLOCK, size / 2);
-        rootBlock.setName(name);
+    if (type == EXT) {
+        disk.attach(data, size);
 
-        std::strcpy ((char*)data, "DOS");
-        data[3] = ffs ? 1 : 0;
-        writeRootblock(data + _size / 2, _size / 1024, name, hd);
-    } else { //RAW
-        unsigned rawTrackSize = getRawTrackSize( hd );
-        strcpy((char*)data, "RAW");
-        data[4] = 166;
-        data[5] = hd ? 1 : 0;
-        data[6] = rawTrackSize >> 8;
-        data[7] = rawTrackSize & 0xff;
+        unsigned extSize = disk.getEXTCreationImageSize();
+        uint8_t* extData = disk.createEXT(extSize);
+        delete[] data;
 
-        if ( ffs || (name != "") ) {
-            u8* target = data + 32 + 166;
-            strcpy ((char*)target, "DOS");
-            target[3] = ffs ? 1 : 0;
-
-            target += 80 * rawTrackSize;
-            writeRootblock(target, 80 * 11 * (hd ? 2 : 1), name, hd);
-        }
+        return {extData, extSize};
     }
+
+    return {data, size};
 }
 
-auto Disk::writeRootblock(uint8_t* data, int blocksize, std::string name, bool hd) -> void {
+auto Disk::getListing() -> std::vector<Emulator::Interface::Listing>& {
 
-
-
-    data[316+2] = (blocksize + 1) >> 8;
-    data[316+3] = (blocksize + 1) & 0xff;
-
-
-
-    memcpy (data + 472, data + 420, 3 * 4);
-    memcpy (data + 484, data + 420, 3 * 4);
-    writeDiskChecksum (data, data + 20);
-    /* bitmap block */
-    memset (data + 512 + 4, 0xff, 2 * blocksize / 8);
-    data[512 + (!hd ? 0x72 : 0xdc) ] = 0x3f;
-
-    writeDiskChecksum (data + 512, data + 512);
 }
 
-auto Disk::getImageSize(Type type, bool hd) -> unsigned {
-    unsigned size = 0;
-
-    if (type == RAW) {
-        size = 32 + 166 + 83 * 2 * getRawTrackSize( hd );
-    } else if (type == ADF) {
-        size = 11 * 512 * 80 * 2;
-        if (hd) size <<= 1;
+auto Disk::initTrack(Track& track, unsigned newLength) -> void {
+    if (!track.data) {
+        track.data = new uint8_t[newLength];
+    } else if (newLength != track.length) {
+        delete[] track.data;
+        track.data = new uint8_t[newLength];
     }
-    return size;
+
+    std::memset( track.data, 0xaa, newLength );
+    track.length = newLength;
+    track.bits = getTrackBitLength();
+    track.written = 0;
 }
 
-auto Disk::getRawTrackSize( bool hd ) -> unsigned {
-    static unsigned _size = LIBAMI_FLOPPY_REVOLUTION_LENGTH_NTSC / 8;
-    return _size << hd;
+auto Disk::getTrackBitLength() -> unsigned {
+    return (agnus.ntsc ? LIBAMI_FLOPPY_REVOLUTION_LENGTH_NTSC : LIBAMI_FLOPPY_REVOLUTION_LENGTH_PAL) << hd;
+}
+
+auto Disk::getTrackByteLength() -> unsigned {
+    return (getTrackBitLength() + 7) / 8;
+}
+
+auto Disk::serialize(Emulator::Serializer& s, bool written) -> void {
+
 }
 
 }

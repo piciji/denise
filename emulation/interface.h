@@ -346,7 +346,6 @@ struct Interface {
         bind->audioFlush();
     }
 
-    //return color format is native
     auto videoRefresh(const uint16_t* frame, unsigned width, unsigned height, unsigned linePitch, uint8_t interlace) -> void {
         bind->videoRefresh(frame, width, height, linePitch, interlace);
     }
@@ -445,7 +444,7 @@ struct Interface {
     virtual auto writeProtectDisk(Media* media, bool state) -> void {}
     virtual auto isWriteProtectedDisk(Media* media) -> bool { return false; }
     virtual auto ejectDisk(Media* media) -> void { }
-	virtual auto createDiskImage(unsigned typeId, bool hd = false, std::string name = "", bool ffs = false) -> Data { return {nullptr, 0}; }
+	virtual auto createDiskImage(unsigned typeId, std::string name = "", bool hd = false, bool ffs = false, bool bootable = false) -> Data { return {nullptr, 0}; }
     virtual auto getDiskListing(Media* media, bool alternateLoad) -> std::vector<Listing> { return {}; }
     virtual auto getDiskPreview(uint8_t* data, unsigned size, Media* media = nullptr, bool alternateLoad = false) -> std::vector<Listing> { return {}; }
     virtual auto selectDiskListing(Media* media, unsigned pos, bool useTraps = false) -> void { }

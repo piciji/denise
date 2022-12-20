@@ -1,7 +1,7 @@
 
 #include "interface.h"
 #include "system/system.h"
-#include "disk/disk.h"
+#include "filesystem/disk.h"
 #include <cstring>
 #include <cstdlib>
 
@@ -39,7 +39,7 @@ auto Interface::prepareModels() -> void {
 }
 
 auto Interface::prepareMedia() -> void {
-    mediaGroups.push_back({MediaGroupIdDisk, "disk", MediaGroup::Type::Disk, {"adf", "adz"}, {"adf"} });
+    mediaGroups.push_back({MediaGroupIdDisk, "disk", MediaGroup::Type::Disk, {"adf", "adz"}, {"adf", "ext.adf"} });
     // mediaGroups.push_back({MediaGroupIdHardDisk, "hd", MediaGroup::Type::HardDisk, {"hdf"}, {"hdf"} });
 
     {   auto& group = mediaGroups[MediaGroupIdDisk];
@@ -402,9 +402,9 @@ auto Interface::ejectDisk(Media* media) -> void {
         return;
 }
 
-auto Interface::createDiskImage(unsigned typeId, bool hd, std::string name, bool ffs) -> Data {
+auto Interface::createDiskImage(unsigned typeId, std::string name, bool hd, bool ffs, bool bootable) -> Data {
 
-    return Disk::create( (Disk::Type) typeId, hd, name, ffs );
+    return Disk::create( (Disk::Type) typeId, name, hd, ffs, bootable );
 }
 
 //auto Interface::createHardDisk(std::function<void (uint8_t* buffer, unsigned length, unsigned offset)> onCreate, unsigned size, std::string name) -> void {

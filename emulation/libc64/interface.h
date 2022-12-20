@@ -89,7 +89,7 @@ struct Interface : Emulator::Interface {
 	auto writeProtectDisk(Media* media, bool state) -> void;
     auto isWriteProtectedDisk(Media* media) -> bool;
 	auto ejectDisk(Media* media) -> void;
-	auto createDiskImage(unsigned typeId, bool hd = false, std::string name = "", bool ffs = false) -> Data;
+	auto createDiskImage(unsigned typeId, std::string name = "", bool hd = false, bool ffs = false, bool bootable = false) -> Data;
     auto getDiskListing(Media* media, bool alternateLoad = false) -> std::vector<Emulator::Interface::Listing>;
     auto getDiskPreview(uint8_t* data, unsigned size, Media* media = nullptr, bool alternateLoad = false) -> std::vector<Emulator::Interface::Listing>;
     auto selectDiskListing(Media* media, unsigned pos, bool useTraps = false) -> void;

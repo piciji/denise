@@ -921,7 +921,7 @@ auto Interface::hideDrive(Media* media) -> void {
     iecBus->hideDrive( media );
 }
 
-auto Interface::createDiskImage(unsigned typeId, bool hd, std::string name, bool ffs) -> Data {
+auto Interface::createDiskImage(unsigned typeId, std::string name, bool hd, bool ffs, bool bootable) -> Data {
 	
     return DiskStructure::create( (DiskStructure::Type) typeId, name );
 }
