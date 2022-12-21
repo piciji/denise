@@ -4,7 +4,6 @@
 #include <cstdint>
 #include <functional>
 #include "../../interface.h"
-#include "../disk/disk.h"
 
 namespace Emulator {
     struct Serializer;
@@ -15,9 +14,10 @@ namespace LIBAMI {
 struct Agnus;
 struct Cpu;
 struct Input;
+struct Disk;
 
 struct Paula {
-    Paula(Agnus& agnus, Cpu& cpu, Input& input);
+    Paula(Agnus& agnus, Cpu& cpu, Input& input, Disk& disk0, Disk& disk1, Disk& disk2, Disk& disk3);
 
     using EventCallback = std::function<void(uint8_t, uint16_t)>;
 
@@ -41,9 +41,8 @@ struct Paula {
     bool useLedFilter;
 
     struct Drive {
+        Disk& disk;
         Emulator::Interface::Media* media;
-        Disk disk;
-
     } drives[4];
     std::vector<Drive*> drivesEnabled;
 

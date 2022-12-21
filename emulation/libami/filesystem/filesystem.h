@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <string>
 #include <cstdint>
+#include <stack>
 #include "sectorBlock.h"
 #include "../interface.h"
 
@@ -14,7 +15,7 @@ struct SectorBlock;
 
 struct Filesystem {
     enum class Structure { OFS, FFS } structure;
-    Filesystem(Structure structure, unsigned size, unsigned bSize = 512);
+    Filesystem(unsigned size, Structure structure = Structure::OFS, unsigned bSize = 512);
     ~Filesystem();
 
     unsigned bSize;
@@ -34,12 +35,13 @@ struct Filesystem {
     auto calculateChecksums() -> void;
     auto addBootblock() -> void;
 
-    auto getDirectory() -> Emulator::Interface::Listing&;
-    auto traverseDir( SectorBlock* from, std::vector<SectorBlock*>& storage, Emulator::Interface::Listing* listing ) -> void;
+    auto getDirectory() ->  std::vector<Emulator::Interface::Listing>;
+    auto getPathRaw(SectorBlock* block) -> std::vector<uint16_t>;
+    auto traverse( SectorBlock* from, std::stack<SectorBlock*>& result ) -> void;
 
-    auto getBmExtBlock(unsigned ref) -> SectorBlock*;
+    auto getBitmapExtBlock(unsigned ref) -> SectorBlock*;
     auto getBitmapBlock(unsigned ref) -> SectorBlock*;
-    auto getHashChainBlock(unsigned ref) -> SectorBlock*;
+    auto getHashTableBlock(unsigned ref) -> SectorBlock*;
     auto getBlock(unsigned ref) -> SectorBlock*;
 
     auto getRootBlockRef() -> unsigned { return blockCount >> 1; }
@@ -53,6 +55,10 @@ struct Filesystem {
     template<typename T>
     static auto find(std::vector<T>& v, T element) -> bool {
         return std::find(v.begin(), v.end(), element) != v.end();
+    }
+    template<typename T>
+    static auto combine(std::vector<T>& target, const std::vector<T>& source) -> void {
+        target.insert( target.begin(), source.begin(), source.end() );
     }
 };
 

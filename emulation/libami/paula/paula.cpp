@@ -65,7 +65,11 @@
 
 namespace LIBAMI {
 
-Paula::Paula(Agnus& agnus, Cpu& cpu, Input& input) : agnus(agnus), cpu(cpu), input(input) {
+Paula::Paula(Agnus& agnus, Cpu& cpu, Input& input, Disk& disk0, Disk& disk1, Disk& disk2, Disk& disk3) :
+agnus(agnus),
+drives { {disk0}, {disk1}, {disk2}, {disk3} },
+cpu(cpu),
+input(input) {
 
     callbackStateMachine = [&](uint8_t job, uint16_t data) {
         Channel& cha0 = channels[0];

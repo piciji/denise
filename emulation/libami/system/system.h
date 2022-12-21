@@ -9,6 +9,7 @@
 #include "../agnus/agnus.h"
 #include "../video/denise.h"
 #include "../paula/paula.h"
+#include "../filesystem/disk.h"
 #include "../../tools/crop.h"
 
 namespace LIBAMI {
@@ -23,6 +24,7 @@ struct System {
     Agnus agnus;
     Denise denise;
     Paula paula;
+    Disk disks[4];
 
     Emulator::Crop<uint16_t> crop;
 

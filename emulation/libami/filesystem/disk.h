@@ -38,7 +38,7 @@ struct Disk {
     Disk(Agnus& agnus);
     ~Disk();
 
-    enum Type { ADF, EXT } type;
+    enum Type { ADF, EXT, Unknown = -1 } type;
 
     std::function<unsigned (uint8_t*, unsigned, unsigned)> write = [](uint8_t* buffer, unsigned length, unsigned offset){ return 0; };
 
@@ -54,7 +54,12 @@ struct Disk {
     uint8_t trackCount;
     Track tracks[ LIBAMI_MAX_TRACKS ];
 
+    uint8_t* rawData = nullptr;
+    unsigned rawSize = 0;
+    bool writeProtected = false;
+
     auto attach(uint8_t* data, unsigned size) -> bool;
+    auto detach() -> void;
     auto analyze(uint8_t* data, unsigned size) -> bool;
     auto analyzeEXT(uint8_t* data, unsigned size) -> bool;
     auto analyzeADF(uint8_t* data, unsigned size) -> bool;
@@ -65,7 +70,7 @@ struct Disk {
 
     auto storeWrittenTracks() -> void;
 
-    auto getListing() -> std::vector<Emulator::Interface::Listing>&;
+    auto getListing() -> std::vector<Emulator::Interface::Listing>;
 
     auto serialize(Emulator::Serializer& s, bool written) -> void;
 
@@ -87,7 +92,7 @@ struct Disk {
     auto EXTImageNeedsCompleteRebuild() -> bool;
 
     static auto create( Type type, std::string name, bool hd, bool ffs, bool bootable ) -> Emulator::Interface::Data;
-
+    static auto getPreview(uint8_t* data, unsigned size) -> std::vector<Emulator::Interface::Listing>;
 
 };
 

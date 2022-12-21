@@ -386,26 +386,46 @@ auto Interface::getModelIdOfEnabledDrives(MediaGroup* group) -> unsigned {
 auto Interface::insertDisk(Media* media, uint8_t* data, unsigned size, bool loadGracefully) -> void {
     if (!media || !media->group->isDisk())
         return;
+
+    system->disks[ media->id ].attach(data, size);
 }
 
 auto Interface::writeProtectDisk(Media* media, bool state) -> void {
     if (!media || !media->group->isDisk())
         return;
+
+    system->disks[ media->id ].writeProtected = state;
 }
 
 auto Interface::isWriteProtectedDisk(Media* media) -> bool {
-    return false;
+    if (!media || !media->group->isDisk())
+        return false;
+
+    return system->disks[ media->id ].writeProtected;
 }
 
 auto Interface::ejectDisk(Media* media) -> void {
     if (!media || !media->group->isDisk())
         return;
+
+    system->disks[ media->id ].detach();
 }
 
 auto Interface::createDiskImage(unsigned typeId, std::string name, bool hd, bool ffs, bool bootable) -> Data {
-
     return Disk::create( (Disk::Type) typeId, name, hd, ffs, bootable );
 }
+
+auto Interface::getDiskListing(Media* media, bool alternateLoad) -> std::vector<Emulator::Interface::Listing> {
+    if (!media || !media->group->isDisk())
+        return {};
+
+    return system->disks[ media->id ].getListing();
+}
+
+auto Interface::getDiskPreview(uint8_t* data, unsigned size, Media* media, bool alternateLoad) -> std::vector<Emulator::Interface::Listing> {
+    return Disk::getPreview(data, size);
+}
+
 
 //auto Interface::createHardDisk(std::function<void (uint8_t* buffer, unsigned length, unsigned offset)> onCreate, unsigned size, std::string name) -> void {
 //    unsigned bufferLength = 10u * 1024u * 1024u;

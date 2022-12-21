@@ -37,7 +37,17 @@ auto Disk::attach(uint8_t* data, unsigned size) -> bool {
             return false;
     }
 
+    rawData = data;
+    rawSize = size;
+
     return true;
+}
+
+auto Disk::detach() -> void {
+    rawData = nullptr;
+    rawSize = 0;
+    type = Type::Unknown;
+    writeProtected = false;
 }
 
 auto Disk::analyze(uint8_t* data, unsigned size) -> bool {
@@ -89,7 +99,7 @@ auto Disk::create( Type type, std::string name, bool hd, bool ffs, bool bootable
     uint8_t* data = new uint8_t[size];
     std::memset(data, 0, size);
 
-    Filesystem fs(ffs ? Filesystem::Structure::FFS : Filesystem::Structure::OFS, size);
+    Filesystem fs(size, ffs ? Filesystem::Structure::FFS : Filesystem::Structure::OFS);
     fs.format(name, bootable);
     fs.exportMedia(data, size);
 
@@ -106,8 +116,41 @@ auto Disk::create( Type type, std::string name, bool hd, bool ffs, bool bootable
     return {data, size};
 }
 
-auto Disk::getListing() -> std::vector<Emulator::Interface::Listing>& {
+auto Disk::getListing() -> std::vector<Emulator::Interface::Listing> {
+    uint8_t* data = rawData;
+    unsigned size = rawSize;
 
+    if (!rawData)
+        return {};
+
+    if (type == Type::EXT) {
+        unsigned trackSize = (hd ? 22 : 11) * 512;
+        size = trackCount * trackSize;
+        data = new uint8_t[size];
+
+        for(unsigned i = 0; i < trackCount; i++) {
+            Track& track = tracks[i];
+            decodeTrack(track, data + i * trackSize);
+        }
+    }
+
+    Filesystem fs(size);
+    if (fs.importMedia( data, size )) {
+        if (type == Type::EXT)
+            delete[] data;
+
+        return fs.getDirectory();
+    }
+    return {};
+}
+
+auto Disk::getPreview(uint8_t* data, unsigned size) -> std::vector<Emulator::Interface::Listing> {
+    Disk disk(system->agnus);
+
+    if (!disk.attach( data, size ))
+        return {};
+
+    return disk.getListing();
 }
 
 auto Disk::initTrack(Track& track, unsigned newLength) -> void {

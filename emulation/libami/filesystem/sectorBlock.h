@@ -5,6 +5,7 @@
 #include <ctime>
 #include <string>
 #include <cstring>
+#include <vector>
 
 namespace LIBAMI {
 
@@ -17,6 +18,7 @@ struct SectorBlock {
     ~SectorBlock();
 
     unsigned nr;
+    int depth;
     Filesystem& filesystem;
 
     uint8_t* data = nullptr;
@@ -24,13 +26,14 @@ struct SectorBlock {
     auto init() -> void;
     auto setName(std::string name) -> void;
     auto getName() -> std::string;
-    auto setBitmapBlockPtr(unsigned pos, unsigned value) -> void;
-    auto getBitmapBlockPtr(unsigned pos) -> unsigned;
+    auto getNameRaw(bool indentByDepth = false) -> std::vector<uint16_t>;
+    auto setBitmapBlock(unsigned pos, unsigned value) -> void;
+    auto getBitmapBlock(unsigned pos) -> unsigned;
     auto setBitmapExtBlock(unsigned value) -> void;
     auto getBitmapExtBlock() -> unsigned;
     auto getParentDir() -> unsigned;
-    auto getHashRef(unsigned pos) -> unsigned;
-    auto getHashChainRef() -> unsigned;
+    auto getHash(unsigned pos) -> unsigned;
+    auto getHashChain() -> unsigned;
 
     auto calcChecksum() -> unsigned;
     auto exportBlock(uint8_t* data) -> void;
@@ -38,13 +41,16 @@ struct SectorBlock {
 
     auto bSize() -> unsigned;
     auto getAdrPtr(int offset) -> uint8_t*;
-    auto write32(int offset, uint32_t value) -> void;
-    auto read32(int offset) -> unsigned;
-    auto writeName(int offset, std::string name, uint8_t allocatedSize) -> void;
-    auto readName(int offset, uint8_t allocatedSize) -> std::string;
-    auto writeDate(time_t unixTS, int offset) -> void;
+    auto write(int offset, uint32_t value) -> void;
+    auto read(int offset) -> unsigned;
     auto getChecksumOffset() -> int;
     auto hashTableEntries() -> unsigned;
+
+protected:
+    auto readName(int offset, uint8_t allocatedSize) -> std::string;
+    auto readNameRaw(int offset, uint8_t allocatedSize, bool indentByDepth = false) -> std::vector<uint16_t>;
+    auto writeName(int offset, std::string name, uint8_t allocatedSize) -> void;
+    auto writeDate(time_t unixTS, int offset) -> void;
 
 };
 

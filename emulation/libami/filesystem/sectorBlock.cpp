@@ -13,6 +13,7 @@ SectorBlock::~SectorBlock() {
 SectorBlock::SectorBlock(Filesystem& filesystem, Type type, unsigned nr) : filesystem(filesystem) {
     this->type = type;
     this->nr = nr;
+    this->depth = 0;
 
     if (type != Type::EMPTY_BLOCK)
         data = new uint8_t[filesystem.bSize];
@@ -23,13 +24,13 @@ SectorBlock::SectorBlock(Filesystem& filesystem, Type type, unsigned nr) : files
 auto SectorBlock::init() -> void {
     switch(type) {
         case ROOT_BLOCK: {
-            write32(0, 2);
-            write32(12, (bSize() >> 2) - 56);
-            write32(-200, (uint32_t) -1);
+            write(0, 2);
+            write(12, (bSize() >> 2) - 56);
+            write(-200, (uint32_t) -1);
             time_t unixTS = std::time(nullptr);
             writeDate(unixTS, -28); // creation date
             writeDate(unixTS, -92); // modification date
-            write32(-4, 1); // ST_ROOT
+            write(-4, 1); // ST_ROOT
 
         } break;
         case BOOT_BLOCK:
@@ -38,26 +39,25 @@ auto SectorBlock::init() -> void {
                 data[1] = 'O';
                 data[2] = 'S';
                 data[3] = filesystem.structure == Filesystem::Structure::FFS ? 1 : 0;
-                write32(8, 880); // for HD too
+                write(8, 880); // for HD too, todo: Hard disk ???
             }
             break;
         case DIR_BLOCK:
-            write32(0, 2);
-            write32(4, nr);
-            write32(-4, 2);
+            write(0, 2);
+            write(4, nr);
+            write(-4, 2);
             writeDate(std::time(nullptr), -92); // access date
             break;
         case FILE_HEADER_BLOCK:
-            write32(0, 2);
-            write32(4, nr);
-            write32(-4, (uint32_t)-3);
+            write(0, 2);
+            write(4, nr);
+            write(-4, (uint32_t)-3);
             writeDate(std::time(nullptr), -92); // access date
             break;
     }
 }
 
 auto SectorBlock::setName(std::string name) -> void {
-
     switch(type) {
         case ROOT_BLOCK:
         case DIR_BLOCK:
@@ -79,39 +79,48 @@ auto SectorBlock::getName() -> std::string {
     }
 }
 
-auto SectorBlock::setBitmapBlockPtr(unsigned pos, unsigned value) -> void {
+auto SectorBlock::getNameRaw(bool indentByDepth) -> std::vector<uint16_t> {
+    switch(type) {
+        case ROOT_BLOCK:
+        case DIR_BLOCK:
+        case FILE_HEADER_BLOCK:
+            return readNameRaw(-80, 30, indentByDepth);
+        default:
+            return {};
+    }
+}
+
+auto SectorBlock::setBitmapBlock(unsigned pos, unsigned value) -> void {
     switch(type) {
         case ROOT_BLOCK:
             if (pos < 25)
-                write32((pos - 49) << 2, value);
+                write((pos - 49) << 2, value);
             break;
         case BITMAP_EXT_BLOCK:
-            write32(pos << 2, value);
+            write(pos << 2, value);
             break;
     }
 }
 
-auto SectorBlock::getBitmapBlockPtr(unsigned pos) -> unsigned {
+auto SectorBlock::getBitmapBlock(unsigned pos) -> unsigned {
     switch(type) {
         case ROOT_BLOCK:
             if (pos < 25)
-                return read32((pos - 49) << 2);
-            return 0;
-        case BITMAP_EXT_BLOCK:
-            return read32(pos << 2);
-
+                return read((pos - 49) << 2);
         default:
             return 0;
+        case BITMAP_EXT_BLOCK:
+            return read(pos << 2);
     }
 }
 
 auto SectorBlock::setBitmapExtBlock(unsigned value) -> void {
     switch(type) {
         case ROOT_BLOCK:
-            write32(-96, value);
+            write(-96, value);
             break;
         case BITMAP_EXT_BLOCK:
-            write32(-4, value);
+            write(-4, value);
             break;
     }
 }
@@ -119,9 +128,9 @@ auto SectorBlock::setBitmapExtBlock(unsigned value) -> void {
 auto SectorBlock::getBitmapExtBlock() -> unsigned {
     switch(type) {
         case ROOT_BLOCK:
-            return read32(-96);
+            return read(-96);
         case BITMAP_EXT_BLOCK:
-            return read32(-4);
+            return read(-4);
 
         default:
             return 0;
@@ -132,29 +141,28 @@ auto SectorBlock::getParentDir() -> unsigned {
     switch(type) {
         case FILE_HEADER_BLOCK:
         case DIR_BLOCK:
-            return read32(-12);
+            return read(-12);
 
         default:
             return 0;
     }
 }
 
-auto SectorBlock::getHashRef(unsigned pos) -> unsigned {
+auto SectorBlock::getHash(unsigned pos) -> unsigned {
     switch (type) {
         case DIR_BLOCK:
             if (pos < hashTableEntries())
-                return read32( (6 + pos) << 2 );
-            return 0;
+                return read( (6 + pos) << 2 );
         default:
             return 0;
     }
 }
 
-auto SectorBlock::getHashChainRef() -> unsigned {
+auto SectorBlock::getHashChain() -> unsigned {
     switch (type) {
         case DIR_BLOCK:
         case FILE_HEADER_BLOCK:
-            return read32(-16);
+            return read(-16);
 
         default:
             return 0;
@@ -174,7 +182,6 @@ auto SectorBlock::getChecksumOffset() -> int {
         case BITMAP_BLOCK:
             return 0;
     }
-
     return -1;
 }
 
@@ -187,32 +194,32 @@ auto SectorBlock::calcChecksum() -> unsigned {
 
     if (type == BOOT_BLOCK) {
         if (nr == 0)
-            write32(offset, 0);
+            write(offset, 0);
         else
-            result = read32(offset);
+            result = read(offset);
 
         for (unsigned i = 0; i < bSize(); i += 4) {
             precsum = result;
-            result += read32(i);
+            result += read(i);
             if (result < precsum) result++;
         }
 
     } else {
-        write32(offset, 0);
+        write(offset, 0);
         for (unsigned i = 0; i < bSize(); i += 4)
-            result += read32(i);
+            result += read(i);
     }
 
     result = ~result;
-    write32( offset, result );
+    write( offset, result );
     return result;
 }
 
-auto SectorBlock::write32(int offset, uint32_t value) -> void {
+auto SectorBlock::write(int offset, uint32_t value) -> void {
     Emulator::copyIntToBufferBigEndian<uint32_t>( getAdrPtr(offset), value);
 }
 
-auto SectorBlock::read32(int offset) -> unsigned {
+auto SectorBlock::read(int offset) -> unsigned {
     return Emulator::copyBufferToIntBigEndian<uint32_t>( getAdrPtr(offset) );
 }
 
@@ -222,12 +229,57 @@ inline auto SectorBlock::getAdrPtr(int offset) -> uint8_t* {
     return data + bSize() + offset;
 }
 
+auto SectorBlock::bSize() -> unsigned {
+    return filesystem.bSize;
+}
+
+auto SectorBlock::exportBlock(uint8_t* data) -> void {
+    if (type == Type::EMPTY_BLOCK)
+        std::memset(data, 0, bSize());
+    else
+        std::memcpy(data, this->data, bSize());
+}
+
+auto SectorBlock::importBlock(uint8_t* data) -> void {
+    if (this->data)
+        std::memcpy(this->data, data, bSize());
+}
+
+auto SectorBlock::hashTableEntries() -> unsigned {
+    switch (type) {
+        case ROOT_BLOCK:
+        case DIR_BLOCK:
+            return 72;
+
+        default:
+            return 0;
+    }
+}
+
 auto SectorBlock::readName(int offset, uint8_t allocatedSize) -> std::string {
     std::string out;
     uint8_t* ptr = getAdrPtr(offset);
     uint8_t size = *ptr++;
     uint8_t strSize = std::min(allocatedSize, size);
     out.assign(ptr, ptr + strSize);
+    return out;
+}
+
+auto SectorBlock::readNameRaw(int offset, uint8_t allocatedSize, bool indentByDepth) -> std::vector<uint16_t> {
+    uint8_t* ptr = getAdrPtr(offset);
+    uint8_t size = *ptr++;
+    uint8_t strSize = std::min(allocatedSize, size);
+    int _depth = indentByDepth ? depth : 0;
+    if (_depth < 0) _depth = 0;
+
+    std::vector<uint16_t> out(strSize + _depth);
+
+    for (unsigned i = 0; i < _depth; i++)
+        out[i] = ' ';
+
+    for(unsigned i = 0; i < strSize; i++)
+        out[i + _depth] = *ptr++;
+
     return out;
 }
 
@@ -258,36 +310,9 @@ auto SectorBlock::writeDate(time_t unixTS, int offset) -> void {
     unixTS -= mins * 60;
     unsigned ticks = unixTS * 50;
 
-    write32(offset, days);
-    write32(offset + 4, mins);
-    write32(offset + 8, ticks);
-}
-
-auto SectorBlock::bSize() -> unsigned {
-    return filesystem.bSize;
-}
-
-auto SectorBlock::exportBlock(uint8_t* data) -> void {
-    if (type == Type::EMPTY_BLOCK)
-        std::memset(data, 0, bSize());
-    else
-        std::memcpy(data, this->data, bSize());
-}
-
-auto SectorBlock::importBlock(uint8_t* data) -> void {
-    if (this->data)
-        std::memcpy(this->data, data, bSize());
-}
-
-auto SectorBlock::hashTableEntries() -> unsigned {
-    switch (type) {
-        case ROOT_BLOCK:
-        case DIR_BLOCK:
-            return 72;
-
-        default:
-            return 0;
-    }
+    write(offset, days);
+    write(offset + 4, mins);
+    write(offset + 8, ticks);
 }
 
 }

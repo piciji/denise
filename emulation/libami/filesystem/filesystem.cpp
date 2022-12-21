@@ -4,7 +4,7 @@
 
 namespace LIBAMI {
 
-Filesystem::Filesystem(Structure structure, unsigned size, unsigned bSize) {
+Filesystem::Filesystem(unsigned size, Structure structure, unsigned bSize) {
     this->structure = structure;
     this->bSize = bSize;
     this->blockCount = (size + (bSize - 1)) / bSize;
@@ -52,7 +52,7 @@ auto Filesystem::importMedia(uint8_t* data, unsigned size) -> bool {
         rootBlock = blocks[getRootBlockRef()];
 
     for(unsigned i = 0; i < 25; i++) {
-        auto bmRef = rootBlock->getBitmapBlockPtr(i);
+        auto bmRef = rootBlock->getBitmapBlock(i);
 
         if (bmRef && bmRef < blockCount) {
             if (blocks[bmRef]) delete[] blocks[bmRef];
@@ -68,7 +68,7 @@ auto Filesystem::importMedia(uint8_t* data, unsigned size) -> bool {
         blocks[extRef] = new SectorBlock(*this, SectorBlock::Type::BITMAP_EXT_BLOCK, extRef);
         blocks[extRef]->importBlock( data + extRef * bSize );
         for(unsigned i = 0; i < countBitmapPointersEachExtBlock(); i++) {
-            auto bmRef = blocks[extRef]->getBitmapBlockPtr(i);
+            auto bmRef = blocks[extRef]->getBitmapBlock(i);
             if (bmRef && bmRef < blockCount) {
                 if (blocks[bmRef]) delete[] blocks[bmRef];
                 blocks[bmRef] = new SectorBlock(*this, SectorBlock::Type::BITMAP_BLOCK, bmRef);
@@ -86,8 +86,8 @@ auto Filesystem::predictType(unsigned ref, uint8_t* buffer) -> SectorBlock::Type
 
     SectorBlock testBlock(*this, SectorBlock::Type::EMPTY_BLOCK, ~0);
     testBlock.data = buffer;
-    unsigned type = testBlock.read32( 0 );
-    unsigned subType = testBlock.read32( -4 );
+    unsigned type = testBlock.read( 0 );
+    unsigned subType = testBlock.read( -4 );
 
     if (type == 2 && subType == 1) return SectorBlock::Type::ROOT_BLOCK;
     if (type == 2 && subType == 2) return SectorBlock::Type::DIR_BLOCK;
@@ -97,27 +97,68 @@ auto Filesystem::predictType(unsigned ref, uint8_t* buffer) -> SectorBlock::Type
     return SectorBlock::Type::EMPTY_BLOCK;
 }
 
-auto Filesystem::getDirectory() -> Emulator::Interface::Listing& {
-    std::vector<SectorBlock*> storage;
-    Emulator::Interface::Listing listing;
-    traverseDir( getBlock( getRootBlockRef() ), storage, &listing);
+auto Filesystem::getDirectory() -> std::vector<Emulator::Interface::Listing> {
+    std::stack<SectorBlock*> dir;
+    std::vector<SectorBlock*> sanityCheck; // prevent endless iterations
+    std::vector<Emulator::Interface::Listing> listing;
+    auto rootBlock = getBlock( getRootBlockRef() );
+    rootBlock->depth = -1;
+    traverse( rootBlock, dir );
+
+    while(dir.size()) {
+        auto block = dir.top();
+        dir.pop();
+
+        if (!find(sanityCheck, block)) {
+            sanityCheck.push_back( block );
+            listing.push_back({block->nr, block->getNameRaw(true), getPathRaw(block)});
+
+            if (block->type == SectorBlock::Type::DIR_BLOCK)
+                traverse( block, dir );
+        }
+    }
     return listing;
 }
 
-auto Filesystem::traverseDir( SectorBlock* from, std::vector<SectorBlock*>& storage, Emulator::Interface::Listing* listing ) -> void {
+auto Filesystem::getPathRaw(SectorBlock* block) -> std::vector<uint16_t> {
+    std::vector<uint16_t> out;
+    std::vector<SectorBlock*> sanityCheck; // prevent endless iterations
+
+    while(block) {
+        if (!getHashTableBlock(block->nr))
+            break;
+
+        if (find(sanityCheck, block))
+            break;
+        sanityCheck.push_back( block );
+
+        auto name = block->getNameRaw();
+
+        if (out.size()) {
+            name.push_back('/');
+            combine(out, name);
+        } else
+            out = name;
+
+        block = getBlock( block->getParentDir() );
+    }
+
+    return out;
+}
+
+auto Filesystem::traverse( SectorBlock* from, std::stack<SectorBlock*>& result ) -> void {
+    std::vector<SectorBlock*> sanityCheck; // prevent endless iterations
     if (!from)
         return;
 
-    for (int i = from->hashTableEntries(); i >= 0; i--) {
-        for(SectorBlock* block = getHashChainBlock( from->getHashRef(i) ); block; block = getBlock(block->getHashChainRef())) {
-            if (find(storage, block))
+    for (int i = from->hashTableEntries(); i <= 0 ; i--) {
+        for(SectorBlock* block = getHashTableBlock( from->getHash(i) ); block; block = getHashTableBlock(block->getHashChain())) {
+            if (find(sanityCheck, block))
                 break;
-            storage.push_back( block );
 
-            listing->childs.push_back({block->nr});
-
-            if (block->type == SectorBlock::Type::DIR_BLOCK)
-                traverseDir(block, storage, &listing->childs.back());
+            block->depth = from->depth + 1;
+            result.push( block );
+            sanityCheck.push_back( block );
         }
     }
 }
@@ -244,27 +285,27 @@ auto Filesystem::accessBitmapAllocation(unsigned ref, int update) -> bool {
 auto Filesystem::referenceBitmaps() -> void {
     unsigned i = 0;
     unsigned j = countBitmapPointersEachExtBlock();
-    auto block = blocks[getRootBlockRef()]; // no sanity checking needed
+    auto block = blocks[getRootBlockRef()];
 
     for(auto& blockRef : bmBlockRefs) {
         if (i < 25) {
-            block->setBitmapBlockPtr(i, blockRef);
+            block->setBitmapBlock(i, blockRef);
             i++;
         } else {
             if (j == countBitmapPointersEachExtBlock()) {
                 j = 0;
-                block = getBmExtBlock( block->getBitmapExtBlock() ); // sanity checking is usefull here
+                block = getBitmapExtBlock( block->getBitmapExtBlock() );
                 if (!block)
                     return;
             }
 
-            block->setBitmapBlockPtr(j, blockRef);
+            block->setBitmapBlock(j, blockRef);
             j++;
         }
     }
 }
 
-auto Filesystem::getBmExtBlock(unsigned ref) -> SectorBlock* {
+auto Filesystem::getBitmapExtBlock(unsigned ref) -> SectorBlock* {
     if ((ref >= blockCount) || (blocks[ref]->type != SectorBlock::Type::BITMAP_EXT_BLOCK))
         return nullptr;
 
@@ -278,7 +319,7 @@ auto Filesystem::getBitmapBlock(unsigned ref) -> SectorBlock* {
     return blocks[ref];
 }
 
-auto Filesystem::getHashChainBlock(unsigned ref) -> SectorBlock* {
+auto Filesystem::getHashTableBlock(unsigned ref) -> SectorBlock* {
     if ((ref >= blockCount) || (blocks[ref]->type != SectorBlock::Type::FILE_HEADER_BLOCK && blocks[ref]->type != SectorBlock::Type::DIR_BLOCK))
         return nullptr;
 

@@ -14,7 +14,8 @@ cia1(1),
 cia2(2),
 cpu(agnus),
 denise(agnus, input),
-paula(agnus, cpu, input),
+disks { {agnus}, {agnus}, {agnus}, {agnus} },
+paula(agnus, cpu, input, disks[0], disks[1], disks[2], disks[3]),
 agnus(cpu, denise, paula, cia1, cia2, input),
 input(agnus, cia1, interface) {
 
