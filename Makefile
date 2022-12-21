@@ -4,6 +4,7 @@
 # gprof := 1
 
 DEBUG ?= 0
+FileAssociations ?= 0
 Arch ?=
 
 name := Denise
@@ -268,6 +269,8 @@ endif
 
 .PHONY: help
 help:
+	@echo Options: DEBUG=[0\|1] FileAssociations=[0\|1] Arch=[arm64-apple-macos11\|...]
+	@echo Targets:
 	@grep -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
 	| sed -n 's/^\(.*\): \(.*\)##\(.*\)/\1\3/p' \
 	| column -t  -s ' '
@@ -322,12 +325,12 @@ install: ## Install
 	fi
 	install -m 644 data/img/$(loname).png $(prefix)/share/icons/$(loname).png
 	install -m 644 data/$(loname).desktop $(prefix)/share/applications/$(loname).desktop
-	@echo "Install file associations? [y/n]"; \
-	read line; if [ $$line = "y" ]; then \
-	    install -m 644 data/application-x-$(loname).xml $(prefix)/share/mime/packages/application-x-$(loname).xml; \
-	    if [ $(shell which update-mime-database) ]; then update-mime-database $(prefix)/share/mime; fi; \
-	    if [ $(shell which update-desktop-database) ]; then update-desktop-database $(prefix)/share/applications; fi; \
-	fi
+
+    ifeq ($(FileAssociations), 1)
+	install -m 644 data/application-x-$(loname).xml $(prefix)/share/mime/packages/application-x-$(loname).xml
+	if [ $(shell which update-mime-database) ]; then update-mime-database $(prefix)/share/mime; fi;
+	if [ $(shell which update-desktop-database) ]; then update-desktop-database $(prefix)/share/applications; fi;
+    endif
 	install -m 644 data/$(translationFolder)/* $(prefix)/share/$(loname)/$(translationFolder)
 	install -m 644 data/$(dataFolder)/* $(prefix)/share/$(loname)/$(dataFolder)
 	install -m 644 data/$(fontFolder)/*.ttf $(prefix)/share/$(loname)/$(fontFolder)
