@@ -960,7 +960,9 @@ auto System::hintObserverLEDChange(bool state) -> void {
 }
 
 auto System::hintObserverMotorChange(bool state) -> void {
-    observer.stateChange = true;
+    if (!traps->installed && kernalBootComplete)
+        observer.stateChange = true;
+
     if (!observer.inputLock && state && !observer.motor)
         observer.inputFetches = 15;
 

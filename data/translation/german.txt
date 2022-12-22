@@ -710,3 +710,5 @@ insert and load = Einlegen und Laden
 swapper open hint = Einzelne Slots können auch per Doppelklick, auf das jeweilige Listen-Element, befüllt werden.
 swapper multi hint = Mehrfachauswahl möglich
 swapper multi hint tooltip = Es können auch mehrere Dateien auf einmal ausgewählt werden, indem man die STRG Taste im Datei Dialog gedrückt hält. Ausgewählte Diskettenabbilder werden dann auf fortlaufende Slots des Wechslers verteilt.
+Speeder Traps = VDT + Schnelllader
+Speeder Traps tooltip = Schnelllader und VDT werden kombiniert verwendet, wenn angehakt. Andernfalls werden aktivierte Schnelllader nicht verwendet, wenn mit VDT gestartet wird.

@@ -710,3 +710,5 @@ insert and load =
 swapper open hint =
 swapper multi hint =
 swapper multi hint tooltip =
+Speeder Traps =
+Speeder Traps tooltip =

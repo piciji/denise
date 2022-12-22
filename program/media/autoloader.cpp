@@ -197,19 +197,26 @@ auto Autoloader::postProcessing() -> void {
         if (!useExpansion)
             program->removeExpansion();
 
+        bool trapsWithSpeeder = trapped && mediaGroup->isDisk() && settings->get<bool>("autostart_speeder_traps", false);
+
         useExpansion = ddControl.emulator->getExpansion();
         if (trapped && (useExpansion && !useExpansion->isEmpty()))
             trapped = false;
         else if (forceStandardKernal) {
             // temporary disable any speeders
-            FirmwareManager::getInstance( ddControl.emulator )->insertDefault();
+            auto fManager = FirmwareManager::getInstance( ddControl.emulator );
+            if (fManager->getStoreLevelInUse() > 0)
+                fManager->insertDefault( trapsWithSpeeder );
         }
 
         if (mediaGroup->selected) {
             ddControl.emulator->selectListing(mediaGroup->selected, ddControl.selection, ddControl.fileName, trapped);
             fSetting = FileSetting::getInstance( ddControl.emulator, _underscore(mediaGroup->selected->name) );
         } else {
-            ddControl.emulator->selectListing(&mediaGroup->media[0], ddControl.selection, ddControl.fileName, trapped);
+            uint8_t useTraps = trapped;
+            if (trapsWithSpeeder) useTraps |= 0x80;
+
+            ddControl.emulator->selectListing(&mediaGroup->media[0], ddControl.selection, ddControl.fileName, useTraps);
             fSetting = FileSetting::getInstance( ddControl.emulator, _underscore(mediaGroup->media[0].name) );
         }
         

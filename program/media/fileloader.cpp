@@ -635,7 +635,7 @@ auto Fileloader::insertFile( Emulator::Interface* emulator, Emulator::Interface:
     return true;
 }
 
-auto Fileloader::autoload(Emulator::Interface* emulator, Emulator::Interface::Media* media, unsigned selection, bool useTraps) -> void {
+auto Fileloader::autoload(Emulator::Interface* emulator, Emulator::Interface::Media* media, unsigned selection, bool trapped) -> void {
     auto mediaGroup = media->group;
     auto settings = program->getSettings( emulator );
     auto emuView = EmuConfigView::TabWindow::getView( emulator );
@@ -661,11 +661,17 @@ auto Fileloader::autoload(Emulator::Interface* emulator, Emulator::Interface::Me
     }
 
     auto useExpansion = emulator->getExpansion();
-    if (useTraps && (useExpansion && !useExpansion->isEmpty()))
-        useTraps = false;
+    if (trapped && (useExpansion && !useExpansion->isEmpty()))
+        trapped = false;
 
-    if (forceStandardKernal || useTraps) {
-        FirmwareManager::getInstance( emulator )->insertDefault();
+    bool trapsWithSpeeder = trapped && mediaGroup->isDisk() && settings->get<bool>("autostart_speeder_traps", false);
+    uint8_t useTraps = trapped;
+    if (trapsWithSpeeder) useTraps |= 0x80;
+
+    if (forceStandardKernal || trapped) {
+        auto fManager = FirmwareManager::getInstance( emulator );
+        if (fManager->getStoreLevelInUse() > 0)
+            fManager->insertDefault( trapsWithSpeeder );
     }
 
     if (mediaGroup->selected)

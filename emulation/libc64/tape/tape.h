@@ -48,7 +48,7 @@ struct Tape {
 	auto createTap( unsigned& imageSize ) -> uint8_t*;
     auto serialize(Emulator::Serializer& s) -> void;
     auto serializeLight(Emulator::Serializer& s) -> void;
-    auto selectListing( unsigned pos, bool useTraps = false ) -> void;
+    auto selectListing( unsigned pos, uint8_t useTraps = 0 ) -> void;
 	auto setWobble(bool state) -> void;
 	auto hasWobble() -> bool { return wobble; }
     auto getMedia() -> Emulator::Interface::Media* { return media; }

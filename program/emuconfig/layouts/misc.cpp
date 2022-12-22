@@ -76,8 +76,14 @@ AutostartLayout::StartWrapper::Start::Start() {
 }
 
 AutostartLayout::StartWrapper::Option::Option() {
-    append(loadWithColumn, {0u, 0u}, 5 );
+    append(diskOptions, {0u, 0u}, 5 );
     append(tapeWithStandardKernal, {0u, 0u} );
+}
+
+AutostartLayout::StartWrapper::Option::DiskOptions::DiskOptions() {
+    append(loadWithColumn, {0u, 0u}, 5 );
+    append(speederTraps, {0u, 0u}, 10 );
+    setAlignment( 0.5 );
 }
 
 AutostartLayout::AutostartLayout() {
@@ -161,8 +167,12 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) {
             _settings->set<bool>("autostart_tape_standard_kernal", checked);
         };
 
-        autostartLayout->startWrapper.option.loadWithColumn.onToggle = [this](bool checked) {
+        autostartLayout->startWrapper.option.diskOptions.loadWithColumn.onToggle = [this](bool checked) {
             _settings->set<bool>("autostart_load_with_column", checked);
+        };
+
+        autostartLayout->startWrapper.option.diskOptions.speederTraps.onToggle = [this](bool checked) {
+            _settings->set<bool>("autostart_speeder_traps", checked);
         };
 
         autostartLayout->startWrapper.start.diskTrapsOnDblClick.onToggle = [this](bool checked) {
@@ -367,7 +377,9 @@ auto MiscLayout::translate() -> void {
         autostartLayout->autoWarp.disableWarpWhenInput.setTooltip( trans->get("disable warp when input tooltip") );
 
         autostartLayout->startWrapper.option.tapeWithStandardKernal.setText(trans->get("tape default kernal"));
-        autostartLayout->startWrapper.option.loadWithColumn.setText( "Load \":*\"" );
+        autostartLayout->startWrapper.option.diskOptions.loadWithColumn.setText( "Load \":*\"" );
+        autostartLayout->startWrapper.option.diskOptions.speederTraps.setText( trans->get("Speeder Traps") );
+        autostartLayout->startWrapper.option.diskOptions.speederTraps.setTooltip( trans->get("Speeder Traps tooltip") );
         autostartLayout->startWrapper.start.diskTrapsOnDblClick.setText(trans->get("VDT Disk Autostart on dblclick"));
         autostartLayout->startWrapper.start.tapeTrapsOnDblClick.setText(trans->get("VDT Tape Autostart on dblclick"));
     }
@@ -416,7 +428,9 @@ auto MiscLayout::loadSettings() -> void {
 
         autostartLayout->startWrapper.option.tapeWithStandardKernal.setChecked( _settings->get<bool>("autostart_tape_standard_kernal", false));
 
-        autostartLayout->startWrapper.option.loadWithColumn.setChecked(_settings->get<bool>("autostart_load_with_column", false));
+        autostartLayout->startWrapper.option.diskOptions.loadWithColumn.setChecked(_settings->get<bool>("autostart_load_with_column", false));
+
+        autostartLayout->startWrapper.option.diskOptions.speederTraps.setChecked(_settings->get<bool>("autostart_speeder_traps", false));
 
         autostartLayout->startWrapper.start.diskTrapsOnDblClick.setChecked(_settings->get<bool>("autostart_traps_on_dblclick", false));
 

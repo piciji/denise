@@ -96,11 +96,12 @@ auto Traps::handler() -> bool {
     return false;
 }
 
-auto Traps::reset() -> void {
+auto Traps::reset(bool sendFinishEvent) -> void {
     unsigned int i, j;
     Serial* p;
     static BaseDevice* emptyDevice = new BaseDevice;
     auto connectedDrives = iecBus->drivesEnabled.size();
+    this->sendFinishEvent = sendFinishEvent;
 
     SerialPtr = 0;
     for (i = 0; i < 16; i++) {
@@ -211,7 +212,7 @@ auto Traps::receive() -> void {
         //system->interface->log("eof");
         uninstall();
         Serial *p = &serialdevices[device & 0x0f];
-        p->device->finish();
+        p->device->finish(sendFinishEvent);
     }
 
     cpu->regA = data;

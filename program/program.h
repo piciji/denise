@@ -87,6 +87,8 @@ struct Program : Emulator::Interface::Bind {
     auto getCustomSettingsFolder( Emulator::Interface* emulator, bool createFolder = false ) -> std::string;
     auto initEmulator( Emulator::Interface* emulator ) -> void;
     auto setMemoryPattern( Emulator::Interface* emulator ) -> void;
+    auto getC64ModelValue(LIBC64::Interface::ModelId modelId) -> int;
+    auto getAMIModelValue(LIBAMI::Interface::ModelId modelId) -> int;
 
     auto init() -> void;
     auto addEmulators() -> void;
@@ -106,7 +108,7 @@ struct Program : Emulator::Interface::Bind {
     auto jam( Emulator::Interface::Media* media = nullptr ) -> void override;
     auto setThreadPriority(Emulator::Interface::ThreadPriority priority, float minProcessingTimeInMilliSeconds, float maxProcessingTimeInMilliSeconds) -> bool override;
     auto finishStartup() -> void;
-    auto trapsNotPossible(Emulator::Interface::Media* media) -> void override;
+    auto trapsResult(Emulator::Interface::Media* media, bool error) -> void override;
 
     auto addCustomFont() -> void;
     auto loadImageDataWhenOk( GUIKIT::File* file, unsigned fileId, Emulator::Interface::MediaGroup* group, uint8_t*& data ) -> bool;

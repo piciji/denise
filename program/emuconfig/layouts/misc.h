@@ -61,7 +61,12 @@ struct AutostartLayout : GUIKIT::FramedVerticalLayout {
         } start;
 
         struct Option : GUIKIT::VerticalLayout {
-            GUIKIT::CheckBox loadWithColumn;
+            struct DiskOptions : GUIKIT::HorizontalLayout {
+                GUIKIT::CheckBox loadWithColumn;
+                GUIKIT::CheckBox speederTraps;
+
+                DiskOptions();
+            } diskOptions;
             GUIKIT::CheckBox tapeWithStandardKernal;
 
             Option();
