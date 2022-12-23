@@ -956,6 +956,7 @@ auto System::autoStartFinish(bool soft) -> void {
 auto System::hintObserverLEDChange(bool state) -> void {
     if (!observer.inputLock && observer.motor && state) {
         observer.stateChange = true;
+        observer.inputFetches = 15;
     }
 }
 
@@ -972,10 +973,8 @@ auto System::hintObserverMotorChange(bool state) -> void {
 auto System::informAboutStateChange() -> void {
     observer.stateChange = false;
     uint8_t newState = observer.motor;
-    if (!observer.inputLock && !observer.inputFetches)  {
+    if (!observer.inputLock && !observer.inputFetches)
         newState |= 2;
-        observer.inputFetches = 15;
-    }
 
     interface->hintAutoWarp( newState );
 }
