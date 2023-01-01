@@ -5,17 +5,22 @@
 
 namespace LIBAMI {
 
+//struct System;
+
 struct Interface : Emulator::Interface  {
 
     Interface();
-
     ~Interface() {}
+  //  System* system = nullptr;
 
     enum ModelId {
         ModelIdSystem,
         ModelIdLowPassFilter,
         ModelIdRegion,
         ModelIdDiskDrivesConnected,
+        ModelIdDiskDriveWobble,
+        ModelIdDiskDriveStepperSeekTime,
+        ModelIdDiskDriveSpeed,
         ModelIdSampleFetch,
         ModelIdChipMem,
         ModelIdSlowMem,
@@ -90,6 +95,8 @@ struct Interface : Emulator::Interface  {
 
     auto fastForward(unsigned config) -> void;
     auto getForward() -> unsigned;
+
+    auto enableFloppySounds(bool state) -> void;
 
     auto sendKeyChange(bool pressed, Device::Input* input) -> void;
     auto informAboutKeyUpdate() -> void;

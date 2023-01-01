@@ -9,7 +9,7 @@
 #include "../agnus/agnus.h"
 #include "../video/denise.h"
 #include "../paula/paula.h"
-#include "../filesystem/disk.h"
+#include "../drive/diskDrive.h"
 #include "../../tools/crop.h"
 
 namespace LIBAMI {
@@ -24,7 +24,7 @@ struct System {
     Agnus agnus;
     Denise denise;
     Paula paula;
-    Disk disks[4];
+    DiskDrive diskDrives[4];
 
     Emulator::Crop<uint16_t> crop;
 
@@ -45,10 +45,7 @@ struct System {
         Emulator::MemSerializer serializer;
     } runAhead;
 
-    struct {
-        bool requestFloppy;
-        bool useFloppy;
-    } driveSounds;
+    bool requestFloppySound = false;
 
     bool leaveEmulation = false;
     bool powerOn = false;
@@ -66,10 +63,13 @@ struct System {
     auto setModel(uint8_t model) -> void;
     auto getModel() -> uint8_t;
     auto updateStats() -> void;
+    auto updateDriveSounds() -> void;
+    auto setFloppySounds(bool state) -> void;
 
     auto setRegion( Interface::Region region ) -> void;
     auto setResampleQuality( int value ) -> void;
     auto setFastForward( unsigned config ) -> void;
+    auto setRunAhead(unsigned frames) -> void;
     auto hintSlowSpeed(bool state) -> void;
 
     auto calcSerializationSize() -> void;
@@ -85,6 +85,9 @@ struct System {
     auto getChipmem() -> unsigned;
     auto setSlowmem(unsigned value) -> void;
     auto getSlowmem() -> unsigned;
+
+    auto setDrivesEnabled( uint8_t count ) -> void;
+    auto getDrivesEnabled() -> uint8_t;
 };
 
 extern System* system;

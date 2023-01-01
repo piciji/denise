@@ -4,6 +4,7 @@ namespace LIBAMI {
 template<bool byteAccess> auto Agnus::readCustom(uint16_t adr, bool triggeredByWrite) -> uint16_t {
 
     switch(adr) {
+        // case 0: bltddat (not accessible for CPU)
         case 2:
             if (getActiveEvent<Agnus::EVENT_ONE_CYCLE_DELAY>() == Agnus::BLT_BUSY_DELAY)
                 return dmaCon | (1 << 14) | (blitter.zero << 13);
@@ -13,6 +14,8 @@ template<bool byteAccess> auto Agnus::readCustom(uint16_t adr, bool triggeredByW
             return POSR(false);
         case 6:
             return POSR(true);
+
+        // case 8: dskdatr (not accessible for CPU)
 
         case 0xa:
             return denise.joy0Dat();
@@ -34,6 +37,9 @@ template<bool byteAccess> auto Agnus::readCustom(uint16_t adr, bool triggeredByW
 
         case 0x16:
             return paula.potGoR();
+
+        case 0x1a:
+            return paula.getDskBytR();
 
         case 0x1c:
             return paula.getIntena();
@@ -57,6 +63,17 @@ template<bool byteAccess> auto Agnus::readCustom(uint16_t adr, bool triggeredByW
 auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> void {
 
     switch(adr) {
+        case 0x20:
+            updateEventAndExecuteExistingBefore<EVENT_ONE_CYCLE_DELAY>(PTR_DSK_H, 1, value);
+            break;
+        case 0x22:
+            updateEventAndExecuteExistingBefore<EVENT_ONE_CYCLE_DELAY>(PTR_DSK_L, 1, value);
+            break;
+        case 0x24:
+            paula.setDskLen(value);
+            break;
+        case 0x26: // dskdat (not accessible for CPU)
+            break;
         case 0x28:
             if (hPos == 2 || hPos == 4 || hPos == 6 || hPos == 8)
                 // ref pointer is pipelined a cycle before usage and can't be written in such cycles
@@ -144,6 +161,9 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
             break;
         case 0x74:
             blitter.setBltADat(value);
+            break;
+        case 0x7e:
+            paula.setDskSync(value);
             break;
         case 0x80:
             copper.setCOP1LCH(value);

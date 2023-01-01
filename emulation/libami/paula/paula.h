@@ -14,10 +14,12 @@ namespace LIBAMI {
 struct Agnus;
 struct Cpu;
 struct Input;
-struct Disk;
+struct DiskDrive;
 
 struct Paula {
-    Paula(Agnus& agnus, Cpu& cpu, Input& input, Disk& disk0, Disk& disk1, Disk& disk2, Disk& disk3);
+    Paula(Agnus& agnus, Cpu& cpu, Input& input, DiskDrive& disk0, DiskDrive& disk1, DiskDrive& disk2, DiskDrive& disk3);
+
+    enum class DiskState { OFF, READ, WAIT_SYNC, WRITE } diskState;
 
     using EventCallback = std::function<void(uint8_t, uint16_t)>;
 
@@ -40,11 +42,23 @@ struct Paula {
     bool enableFilter;
     bool useLedFilter;
 
-    struct Drive {
-        Disk& disk;
-        Emulator::Interface::Media* media;
-    } drives[4];
-    std::vector<Drive*> drivesEnabled;
+    DiskDrive& disk0;
+    DiskDrive& disk1;
+    DiskDrive& disk2;
+    DiskDrive& disk3;
+
+    uint16_t dskLen;
+    uint16_t dskSync;
+    uint16_t dskTansferLength;
+    uint64_t fifo;
+    uint8_t fifoPos;
+    bool fifoWritten;
+    uint64_t dskEventCycle;
+    uint64_t dskSyncCycle;
+    uint16_t dskShifter;
+    uint8_t dskShifterPos;
+    uint8_t pulseWidth;
+    uint8_t dmaCycles;
 
     struct {
         uint8_t cntX0;
@@ -119,7 +133,12 @@ struct Paula {
     auto setIntreq(uint16_t value) -> void;
     auto getIntreq() -> uint16_t;
     auto setAdkCon(uint16_t  value) -> void;
-    auto getAdkCon() -> uint16_t ;
+    auto getAdkCon() -> uint16_t;
+    auto getDskBytR() -> uint16_t;
+    auto wordSync() -> bool const { return adkcon & 0x400; }
+    auto msbSync() -> bool const { return adkcon & 0x200; }
+    auto fast() -> bool const { return adkcon & 0x100; }
+
     template<uint8_t nr> auto audxDat(uint16_t value) -> void;
     template<uint8_t nr> auto audxLen(uint16_t value) -> void;
     template<uint8_t nr> auto audxPer(uint16_t value) -> void;
@@ -133,6 +152,24 @@ struct Paula {
     auto setInt2(bool state) -> void;
     auto setInt6(bool state) -> void;
     auto pulseInt3() -> void;
+    auto setDskSyncInt() -> void;
+    auto setDskBlkInt() -> void;
+
+    auto setDskLen(uint16_t value) -> void;
+    auto setDskDat(uint16_t value) -> void;
+    auto setDskSync(uint16_t value) -> void;
+    auto dskDatR() -> uint16_t;
+    auto setFdcEvent() -> void;
+    auto fdcWriteMode() -> bool { return diskState == DiskState::WRITE; }
+    auto setDskState(DiskState next) -> void;
+
+    inline auto resetFifo() -> void;
+    auto getFromFifo() -> uint16_t;
+    auto addToFifo(uint16_t data) -> bool;
+    auto addBit(bool bit) -> void;
+
+    auto handleFDControllerRead(DiskDrive& disk) -> void;
+    auto handleFDControllerWrite() -> void;
 
     auto progressPot() -> void;
     auto updateModulation() -> void;

@@ -1,7 +1,7 @@
 
 #include "interface.h"
 #include "system/system.h"
-#include "filesystem/disk.h"
+#include "drive/diskStructure.h"
 #include <cstring>
 #include <cstdlib>
 
@@ -32,6 +32,10 @@ auto Interface::prepareModels() -> void {
     models.push_back({ModelIdLowPassFilter, "Low Pass Filter", Model::Type::Switch, Model::Purpose::AudioSettings, 1}); //0 - off, 1 - on, means software decides
     models.push_back({ModelIdRegion, "Region", Model::Type::Combo, Model::Purpose::GraphicChip, 0, {0, 1}, { "PAL", "NTSC" }});
     models.push_back({ModelIdDiskDrivesConnected, "Disk Drives", Model::Type::Combo, Model::Purpose::DriveSettings, 1, {0, 4}, { "0", "1", "2", "3", "4" }});
+    models.push_back({ModelIdDiskDriveSpeed, "Disk Speed", Model::Type::Slider, Model::Purpose::DriveSettings, 30000, {27500, 32500}, {}, 500, 100.0 });
+    models.push_back({ModelIdDiskDriveWobble, "Disk Wobble", Model::Type::Slider, Model::Purpose::DriveSettings, 50, {0, 500}, {}, 50, 100.0 });
+    models.push_back({ModelIdDiskDriveStepperSeekTime, "Stepper Seek Time", Model::Type::Slider, Model::Purpose::DriveSettings, 0, {0, 160}, {}, 160, 10.0 });
+
 
     models.push_back({ModelIdChipMem, "Chip Mem", Model::Type::Radio, Model::Purpose::Memory, 1, {0, 3}, { "256", "512", "1024", "2048" }});
     models.push_back({ModelIdChipMem, "Slow Mem", Model::Type::Radio, Model::Purpose::Memory, 0, {0, 4}, { "0", "512", "1024", "1536", "1792" }});
@@ -300,9 +304,7 @@ auto Interface::run() -> void {
 }
 
 auto Interface::runAhead(unsigned frames) -> void {
-    system->runAhead.frames = frames;
-    system->input.updateSampling();
-    // system->updateDriveSounds();
+    system->setRunAhead(frames);
 }
 
 auto Interface::runAheadPerformance(bool state) -> void {
@@ -345,6 +347,16 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
             system->setResampleQuality( value );
             break;
         case ModelIdDiskDrivesConnected:
+            system->setDrivesEnabled(value);
+            break;
+        case ModelIdDiskDriveWobble:
+            DiskDrive::setWobble( value );
+            break;
+        case ModelIdDiskDriveStepperSeekTime:
+            DiskDrive::setStepperSeekTime( value );
+            break;
+        case ModelIdDiskDriveSpeed:
+            DiskDrive::setSpeed( value );
             break;
         case ModelIdChipMem:
             system->setChipmem(value);
@@ -357,20 +369,16 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
 
 auto Interface::getModelValue(unsigned modelId) -> int {
     switch (modelId) {
-        case ModelIdSystem:
-            return (int)system->getModel();
-        case ModelIdRegion:
-            return (int)system->agnus.ntsc;
-        case ModelIdLowPassFilter:
-            return (int)system->paula.enableFilter;
-        case ModelIdSampleFetch:
-            return system->paula.getResampleQuality();
-        case ModelIdDiskDrivesConnected:
-            return 0;
-        case ModelIdChipMem:
-            return system->getChipmem();
-        case ModelIdSlowMem:
-            return system->getSlowmem();
+        case ModelIdSystem:                         return (int)system->getModel();
+        case ModelIdRegion:                         return (int)system->agnus.ntsc;
+        case ModelIdLowPassFilter:                  return (int)system->paula.enableFilter;
+        case ModelIdSampleFetch:                    return system->paula.getResampleQuality();
+        case ModelIdDiskDrivesConnected:            return system->getDrivesEnabled();
+        case ModelIdDiskDriveWobble:                return (int)DiskDrive::wobble;
+        case ModelIdDiskDriveSpeed:                 return (int)DiskDrive::rpm;
+        case ModelIdDiskDriveStepperSeekTime:       return (int)(DiskDrive::stepperSeekTimeBase);
+        case ModelIdChipMem:                        return system->getChipmem();
+        case ModelIdSlowMem:                        return system->getSlowmem();
     }
 
     return 0;
@@ -387,43 +395,43 @@ auto Interface::insertDisk(Media* media, uint8_t* data, unsigned size, bool load
     if (!media || !media->group->isDisk())
         return;
 
-    system->disks[ media->id ].attach(data, size);
+    system->diskDrives[ media->id ].attach(data, size);
 }
 
 auto Interface::writeProtectDisk(Media* media, bool state) -> void {
     if (!media || !media->group->isDisk())
         return;
 
-    system->disks[ media->id ].writeProtected = state;
+    system->diskDrives[ media->id ].structure.writeProtected = state;
 }
 
 auto Interface::isWriteProtectedDisk(Media* media) -> bool {
     if (!media || !media->group->isDisk())
         return false;
 
-    return system->disks[ media->id ].writeProtected;
+    return system->diskDrives[ media->id ].structure.writeProtected;
 }
 
 auto Interface::ejectDisk(Media* media) -> void {
     if (!media || !media->group->isDisk())
         return;
 
-    system->disks[ media->id ].detach();
+    system->diskDrives[ media->id ].detach();
 }
 
 auto Interface::createDiskImage(unsigned typeId, std::string name, bool hd, bool ffs, bool bootable) -> Data {
-    return Disk::create( (Disk::Type) typeId, name, hd, ffs, bootable );
+    return DiskStructure::create( (DiskStructure::Type) typeId, name, hd, ffs, bootable );
 }
 
 auto Interface::getDiskListing(Media* media, bool alternateLoad) -> std::vector<Emulator::Interface::Listing> {
     if (!media || !media->group->isDisk())
         return {};
 
-    return system->disks[ media->id ].getListing();
+    return system->diskDrives[ media->id ].structure.getListing();
 }
 
 auto Interface::getDiskPreview(uint8_t* data, unsigned size, Media* media, bool alternateLoad) -> std::vector<Emulator::Interface::Listing> {
-    return Disk::getPreview(data, size);
+    return DiskStructure::getPreview(data, size);
 }
 
 
@@ -510,6 +518,10 @@ auto Interface::requestImmediateReturn() -> void {
 
 auto Interface::setInputSampling(uint8_t mode) -> void {
     system->input.setSampling( mode );
+}
+
+auto Interface::enableFloppySounds(bool state) -> void {
+    system->setFloppySounds( state );
 }
 
 auto Interface::fastForward(unsigned config) -> void {

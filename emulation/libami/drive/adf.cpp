@@ -1,7 +1,7 @@
 
 namespace LIBAMI {
 
-auto Disk::analyzeADF(uint8_t* data, unsigned size) -> bool {
+auto DiskStructure::analyzeADF(uint8_t* data, unsigned size) -> bool {
     size &= ~511;
 
     for (unsigned i = 80; i <= 84; i++) {
@@ -21,7 +21,7 @@ auto Disk::analyzeADF(uint8_t* data, unsigned size) -> bool {
     return false;
 }
 
-auto Disk::prepareADF(uint8_t* data, unsigned size) -> void {
+auto DiskStructure::prepareADF(uint8_t* data, unsigned size) -> void {
     unsigned bytes = getTrackByteLength();
     unsigned sectors = hd ? 22 : 11;
 
@@ -34,7 +34,7 @@ auto Disk::prepareADF(uint8_t* data, unsigned size) -> void {
     }
 }
 
-auto Disk::encodeTrack(Track& track, unsigned trackNr, uint8_t* userData) -> void {
+auto DiskStructure::encodeTrack(Track& track, unsigned trackNr, uint8_t* userData) -> void {
     uint8_t* ptr;
     unsigned sectors = hd ? 22 : 11;
     // init with data bit zero for complete revolution, means clock bit is always one, because of the ring nature previous data bit is always zero
@@ -84,7 +84,7 @@ auto Disk::encodeTrack(Track& track, unsigned trackNr, uint8_t* userData) -> voi
     }
 }
 
-auto Disk::separateOddEven(uint8_t* dst, uint8_t src[], unsigned size) -> void {
+auto DiskStructure::separateOddEven(uint8_t* dst, uint8_t src[], unsigned size) -> void {
     // seperate odd/even bits to make room for clock bits
     for(unsigned i = 0; i < size; i++) {
         dst[i] = (src[i] >> 1) & 0x55;
@@ -92,7 +92,7 @@ auto Disk::separateOddEven(uint8_t* dst, uint8_t src[], unsigned size) -> void {
     }
 }
 
-auto Disk::decodeTrack(Track& track, uint8_t* userData) -> void {
+auto DiskStructure::decodeTrack(Track& track, uint8_t* userData) -> void {
     uint8_t* ptr = track.data;
     unsigned length = track.length;
     unsigned sectors = hd ? 22 : 11;
@@ -135,7 +135,7 @@ auto Disk::decodeTrack(Track& track, uint8_t* userData) -> void {
     }
 }
 
-auto Disk::joinOddEven(uint8_t* dst, uint8_t* src, unsigned size) -> void {
+auto DiskStructure::joinOddEven(uint8_t* dst, uint8_t* src, unsigned size) -> void {
     for (unsigned i = 0; i < size; i++) {
         dst[i] = ((src[i] & 0x55) << 1) | (src[i + size] & 0x55);
     }
@@ -155,7 +155,7 @@ auto Disk::joinOddEven(uint8_t* dst, uint8_t* src, unsigned size) -> void {
 // Since there are never two ones right next to each other, the bit cell can be reduced from 4 micro to 2 without the flow change too tight.
 // and thus achieve a doubling of the data density from FM to MFM
 
-auto Disk::addClockBits( uint16_t* raw, unsigned words) -> void {
+auto DiskStructure::addClockBits( uint16_t* raw, unsigned words) -> void {
     bool dataZeroBefore = false; // last data bit of sync pattern 0x4489 is "one"
     int i;
     uint16_t word;
@@ -179,13 +179,13 @@ auto Disk::addClockBits( uint16_t* raw, unsigned words) -> void {
     }
 }
 
-auto Disk::getADFCreationImageSize() -> unsigned {
+auto DiskStructure::getADFCreationImageSize() -> unsigned {
     unsigned size = 11 * 512 * 160;
     if (hd) size <<= 1;
     return size;
 }
 
-auto Disk::markAppendedADFTracks() -> void {
+auto DiskStructure::markAppendedADFTracks() -> void {
     bool appended = false;
 
     for(int i = LIBAMI_MAX_TRACKS; i > 0 ; i--) {

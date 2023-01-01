@@ -21,12 +21,12 @@ include data/Makefile
 
 objects := program view config emuconfig emumodel mediaview archiveviewer states firmware cmd statusbar
 objects += input audio video palette shader bass reverb panning audiorecord wavwriter sinc cosine cosineSSE driveSounds
-objects += guikit libami libC64 autoloader fileloader renderthread emuthread
+objects += guikit libAmi libC64 autoloader fileloader renderthread emuthread
 objects += driver
 ifeq ($(platform),windows)
     objects += dinput5 dinput7 dinput8 xaudio27 xaudio28 xaudio29
 endif
-objects += m68000 m68000Core systemAMI agnusAMI inputAMI controlPortAMI keyboardAMI blitter copper denise paula diskStructureAmi sectorBlockAmi filesystemAMI
+objects += m68000 m68000Core systemAmi agnusAmi inputAmi controlPortAmi keyboardAmi blitter copper denise paula diskDriveAmi diskStructureAmi sectorBlockAmi filesystemAmi
 objects += m6510 ciaBase cia6526 ciaNew vicIIBase vicIICycle vicIIFast systemC64 sid chamberlin tapeC64 tapeStructureC64 inputC64 controlPortC64 acia
 objects += cartC64 gameCartC64 freezerC64 reuC64 easyFlashC64 easyFlash3C64 retroReplayC64 gmod2C64 clipboardC64 geoRamC64 fastloaderC64
 objects += m6502 via iec prg64 driveC64 diskStructureC64 firmwareC64 pia traps64 virtualDrive64 wd1770
@@ -125,7 +125,7 @@ endif
 obj/renderthread.o: driver/video/thread/renderThread.cpp
 obj/emuthread.o:		program/thread/emuThread.cpp
 
-obj/libami.o:	emulation/libami/interface.cpp
+obj/libAmi.o:	emulation/libami/interface.cpp
 obj/libC64.o:	emulation/libc64/interface.cpp
 obj/m6510.o:	emulation/libc64/m6510/m6510.cpp
 obj/m6502.o:	emulation/libc64/disk/cpu/m6502.cpp
@@ -136,18 +136,19 @@ obj/ciaNew.o:	emulation/cia/new/cia.cpp
 
 obj/m68000Core.o:	emulation/libami/cpu/m68000/m68000.cpp
 obj/m68000.o:	emulation/libami/cpu/m68000.cpp
-obj/agnusAMI.o:	emulation/libami/agnus/agnus.cpp
+obj/agnusAmi.o:	emulation/libami/agnus/agnus.cpp
 obj/blitter.o:	emulation/libami/agnus/blitter.cpp
 obj/copper.o:	emulation/libami/agnus/copper.cpp
 obj/denise.o:	emulation/libami/video/denise.cpp
 obj/paula.o:	emulation/libami/paula/paula.cpp
-obj/systemAMI.o: emulation/libami/system/system.cpp
-obj/inputAMI.o:	emulation/libami/input/input.cpp
-obj/controlPortAMI.o: emulation/libami/input/controlPort/controlPort.cpp
-obj/keyboardAMI.o: emulation/libami/input/keyboard/keyboard.cpp
-obj/diskStructureAmi.o: emulation/libami/filesystem/disk.cpp
-obj/sectorBlockAmi.o: emulation/libami/filesystem/sectorBlock.cpp
-obj/filesystemAMI.o: emulation/libami/filesystem/filesystem.cpp
+obj/systemAmi.o: emulation/libami/system/system.cpp
+obj/inputAmi.o:	emulation/libami/input/input.cpp
+obj/controlPortAmi.o: emulation/libami/input/controlPort/controlPort.cpp
+obj/keyboardAmi.o: emulation/libami/input/keyboard/keyboard.cpp
+obj/diskDriveAmi.o: emulation/libami/drive/diskDrive.cpp
+obj/diskStructureAmi.o: emulation/libami/drive/diskStructure.cpp
+obj/sectorBlockAmi.o: emulation/libami/drive/sectorBlock.cpp
+obj/filesystemAmi.o: emulation/libami/drive/filesystem.cpp
 
 obj/vicIIBase.o:emulation/libc64/vicII/base.cpp
 obj/vicIICycle.o:emulation/libc64/vicII/vicII.cpp

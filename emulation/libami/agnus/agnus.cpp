@@ -36,6 +36,8 @@ Agnus::Agnus(Cpu& cpu, Denise& denise, Paula& paula, Cia<MOS_8520>& cia1, Cia<MO
             case PTR_BLT_C_L: blitter.setBltCptL(data); break;
             case PTR_BLT_D_H: blitter.setBltDptH(data); break;
             case PTR_BLT_D_L: blitter.setBltDptL(data); break;
+            case PTR_DSK_H: setDskPtH(data); break;
+            case PTR_DSK_L: setDskPtL(data); break;
             case DMACON: dmaCon = dmaConImm; break;
             case BLT_INIT: blitter.initBlit(); break;
             case BLT_BUSY_DELAY: break;
@@ -146,7 +148,7 @@ auto Agnus::power(bool softReset) -> void {
     setOVL(true);
 
     if (model == OCS_A1000) {
-        powerSupply.init((ntsc ? FREQUENCY_NTSC : FREQUENCY_PAL) >> 3, ntsc ? 60 : 50);
+        powerSupply.init(frequency(), ntsc ? 60 : 50);
         updateEvent<EVENT_POWER_SUPPLY>(~0, powerSupply.nextTickCount());
     } else
         setEventInactive<EVENT_POWER_SUPPLY>();
@@ -327,11 +329,17 @@ inline auto Agnus::dmaCycle() -> void {
             break;
 
         case 0xb:
+            if (dmal & 3)
+                diskTransfer(dmal & 2);
             break;
         case 0xd:
+            if (dmal & 0xc)
+                diskTransfer(dmal & 8);
             bplQueue = 0; // hsync start
             break;
         case 0xf:
+            if (dmal & 0x30)
+                diskTransfer(dmal & 0x20);
             break;
 
         case 0x11:

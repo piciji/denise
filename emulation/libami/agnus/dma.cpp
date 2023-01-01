@@ -82,6 +82,17 @@ auto Agnus::setBpl6ptL(uint16_t value) -> void {
     bpl6pt |= value & 0xfffe;
 }
 
+auto Agnus::setDskPtH(uint16_t value) -> void {
+    dskpt &= 0xffff;
+    dskpt |= value << 16;
+    dskpt &= chipMemMask;
+}
+
+auto Agnus::setDskPtL(uint16_t value) -> void {
+    dskpt &= ~0xffff;
+    dskpt |= value & 0xfffe;
+}
+
 template<uint8_t pos, bool addMod> auto Agnus::fetchPlane() -> void {
     if constexpr ( pos == 1) {
         dataBus = _swapWord(*(uint16_t*) (chipMem + bpl1pt));
@@ -452,6 +463,24 @@ template<uint8_t num, bool first> auto Agnus::spriteControl() -> void {
     }
 };
 
+auto Agnus::diskTransfer(bool writeMode) -> void {
+    if (writeMode) {
+        dataBus = _swapWord(*(uint16_t*) (chipMem + dskpt));
+        paula.setDskDat(dataBus);
+    } else {
+        uint16_t value = paula.dskDatR();
+        *(uint16_t*)(chipMem + dskpt) = _swapWord(value);
+        dataBus = value;
+    }
+
+    if ((getActiveEvent<EVENT_ONE_CYCLE_DELAY>() & ~1) == PTR_DSK_H)
+        setEventInactive<EVENT_ONE_CYCLE_DELAY>();
+
+    dskpt += 2;
+    dskpt &= chipMemMask;
+    busUsage = BUS_USAGE_DMAL;
+}
+
 template<uint8_t nr> auto Agnus::fetchSample(bool reset) -> void {
     AudioDmaChannel& cha = audioDmaChannels[nr];
 
@@ -465,6 +494,8 @@ template<uint8_t nr> auto Agnus::fetchSample(bool reset) -> void {
     cha.ptr &= chipMemMask;
 
     paula.audxDat<nr>( dataBus ); // put on RGA BUS
+
+    busUsage = BUS_USAGE_DMAL;
 }
 
 template<uint8_t nr, uint8_t target> inline auto Agnus::fetchSprite() -> void {

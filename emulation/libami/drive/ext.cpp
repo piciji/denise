@@ -1,7 +1,7 @@
 
 namespace LIBAMI {
 
-auto Disk::analyzeEXT(uint8_t *data, unsigned size) -> bool {
+auto DiskStructure::analyzeEXT(uint8_t *data, unsigned size) -> bool {
     if (size < 12)
         return false;
 
@@ -20,7 +20,7 @@ auto Disk::analyzeEXT(uint8_t *data, unsigned size) -> bool {
     return true;
 }
 
-auto Disk::prepareEXT(uint8_t *data, unsigned size) -> void {
+auto DiskStructure::prepareEXT(uint8_t *data, unsigned size) -> void {
     hd = false;
     uint8_t *ptr = data + 12;
     unsigned dataOffset = 12 + trackCount * 12;
@@ -70,7 +70,7 @@ auto Disk::prepareEXT(uint8_t *data, unsigned size) -> void {
     }
 }
 
-auto Disk::createEXT(unsigned size) -> uint8_t* {
+auto DiskStructure::createEXT(unsigned size) -> uint8_t* {
     uint8_t* dest = new uint8_t[size];
     std::memset(dest, 0, size);
 
@@ -96,7 +96,7 @@ auto Disk::createEXT(unsigned size) -> uint8_t* {
     return dest;
 }
 
-auto Disk::EXTImageNeedsCompleteRebuild() -> bool {
+auto DiskStructure::EXTImageNeedsCompleteRebuild() -> bool {
     for (int i = LIBAMI_MAX_TRACKS; i > 0; i--) {
         Track& track = tracks[i - 1];
 
@@ -109,7 +109,7 @@ auto Disk::EXTImageNeedsCompleteRebuild() -> bool {
     return false;
 }
 
-auto Disk::getEXTCreationImageSize() -> unsigned {
+auto DiskStructure::getEXTCreationImageSize() -> unsigned {
     unsigned size = 0;
     for (unsigned i = 0; i < trackCount; i++) {
         Track& track = tracks[i];

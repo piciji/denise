@@ -10,16 +10,15 @@ namespace LIBAMI {
 System* system = nullptr;
 
 System::System(Interface* interface) :
+interface(interface),
 cia1(1),
 cia2(2),
 cpu(agnus),
 denise(agnus, input),
-disks { {agnus}, {agnus}, {agnus}, {agnus} },
-paula(agnus, cpu, input, disks[0], disks[1], disks[2], disks[3]),
+diskDrives { {0, this, agnus, cia2}, {1, this, agnus, cia2}, {2, this, agnus, cia2}, {3, this, agnus, cia2} },
+paula(agnus, cpu, input, diskDrives[0], diskDrives[1], diskDrives[2], diskDrives[3]),
 agnus(cpu, denise, paula, cia1, cia2, input),
 input(agnus, cia1, interface) {
-
-    this->interface = interface;
 
     cia1.serialOut = [this](bool spLine, bool cntLine) {
         // Keyboard computer is not interested in CNT line changes, triggered by CIA
@@ -29,8 +28,14 @@ input(agnus, cia1, interface) {
 
     cia1.readPort = [this]( Cia<MOS_8520>::Port port, Cia<MOS_8520>::Lines* lines ) {
 
-        if ( port == Cia<MOS_8520>::PORTA )
-            return (uint8_t)(input.readCiaPortA( ) & lines->ioa);
+        if ( port == Cia<MOS_8520>::PORTA ) {
+            uint8_t out = lines->ioa & input.readCiaPortA();
+            for(auto& drive : diskDrives) {
+                if (drive.connected)
+                    out &= drive.readCiaPortA();
+            }
+            return out;
+        }
 
         return (uint8_t)0xff;
     };
@@ -58,6 +63,11 @@ input(agnus, cia1, interface) {
 
         if ( port == Cia<MOS_8520>::PORTA ) {
             cia2.setCNTAndSP( lines->ioa & 2, lines->ioa & 1 );
+        } else if (lines->iob != lines->iobOld) {
+            for(auto& drive : diskDrives) {
+                if (drive.connected)
+                    drive.writeCiaPortB( lines->iob, lines->iobOld );
+            }
         }
     };
 
@@ -111,12 +121,17 @@ auto System::power(bool softReset, bool resetInstruction) -> void {
     cia2.reset();
     input.reset();
 
+    for(auto& drive : diskDrives)
+        drive.power();
+
     powerOn = true;
 }
 
 auto System::powerOff() -> void {
     powerOn = false;
     agnus.powerOff();
+    for(auto& drive : diskDrives)
+        drive.powerOff();
     updateStats();
 }
 
@@ -162,6 +177,10 @@ auto System::run() -> void {
 
         unserializeLight();
     }
+
+    DiskDrive::randomizeRpm(agnus.frequency());
+    for(auto& drive : diskDrives)
+        drive.updateRpm();
 
     agnus.setEventInactive<Agnus::EVENT_LEAVE_EMULATION>();
 }
@@ -292,12 +311,29 @@ auto System::setResampleQuality( int value ) -> void {
     updateStats();
 }
 
+auto System::setRunAhead(unsigned frames) -> void {
+    runAhead.frames = frames;
+    input.updateSampling();
+    updateDriveSounds();
+}
+
 auto System::setFastForward( unsigned config ) -> void {
     fastForward.config = config | (fastForward.config & (unsigned)Interface::FastForward::SlowSpeed);
     paula.disableAudioOut(config & (unsigned) Emulator::Interface::FastForward::NoAudioOut);
     denise.disableSequencer(config & (unsigned) Emulator::Interface::FastForward::NoVideoSequencer);
-    //disk.setFastForward(config & (unsigned) Emulator::Interface::FastForward::NoVideoSequencer);
-   // updateDriveSounds();
+    updateDriveSounds();
+}
+
+auto System::setFloppySounds(bool state) -> void {
+    requestFloppySound = state;
+    updateDriveSounds();
+}
+
+auto System::updateDriveSounds() -> void {
+    bool state = requestFloppySound && !fastForward.config && !runAhead.frames;
+
+    for(auto& drive : diskDrives)
+        drive.enableSounds(state);
 }
 
 auto System::setChipmem(unsigned value) -> void {
@@ -348,6 +384,19 @@ auto System::getSlowmem() -> unsigned {
         case 1792 * 1024: return 4;
     }
     return 0;
+}
+
+auto System::setDrivesEnabled( uint8_t count ) -> void {
+    for( auto& drive : diskDrives )
+        drive.connected = drive.number < count;
+}
+
+auto System::getDrivesEnabled() -> uint8_t {
+    uint8_t out = 0;
+    for( auto& drive : diskDrives )
+        if (drive.connected) out++;
+
+    return out;
 }
 
 }

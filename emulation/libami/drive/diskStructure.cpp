@@ -1,5 +1,5 @@
 
-#include "disk.h"
+#include "diskStructure.h"
 #include "filesystem.h"
 #include "../../tools/buffer.h"
 #include "adf.cpp"
@@ -12,9 +12,9 @@
 
 namespace LIBAMI {
 
-Disk::Disk(Agnus& agnus) : agnus(agnus) {}
+DiskStructure::DiskStructure(Agnus& agnus) : agnus(agnus) {}
 
-Disk::~Disk() {
+DiskStructure::~DiskStructure() {
     for(unsigned i = 0; i < LIBAMI_MAX_TRACKS; i++) {
         Track& track = tracks[i];
         if (track.data)
@@ -22,7 +22,7 @@ Disk::~Disk() {
     }
 }
 
-auto Disk::attach(uint8_t* data, unsigned size) -> bool {
+auto DiskStructure::attach(uint8_t* data, unsigned size) -> bool {
     if (!analyze(data, size))
         return false;
 
@@ -43,14 +43,14 @@ auto Disk::attach(uint8_t* data, unsigned size) -> bool {
     return true;
 }
 
-auto Disk::detach() -> void {
+auto DiskStructure::detach() -> void {
     rawData = nullptr;
     rawSize = 0;
     type = Type::Unknown;
     writeProtected = false;
 }
 
-auto Disk::analyze(uint8_t* data, unsigned size) -> bool {
+auto DiskStructure::analyze(uint8_t* data, unsigned size) -> bool {
     if (analyzeEXT(data, size))
         return true;
 
@@ -60,7 +60,7 @@ auto Disk::analyze(uint8_t* data, unsigned size) -> bool {
     return false;
 }
 
-auto Disk::storeWrittenTracks() -> void {
+auto DiskStructure::storeWrittenTracks() -> void {
     if (type == Type::EXT) {
         if (EXTImageNeedsCompleteRebuild()) {
             unsigned extSize = getEXTCreationImageSize();
@@ -91,8 +91,8 @@ auto Disk::storeWrittenTracks() -> void {
     }
 }
 
-auto Disk::create( Type type, std::string name, bool hd, bool ffs, bool bootable ) -> Emulator::Interface::Data {
-    Disk disk(system->agnus);
+auto DiskStructure::create( Type type, std::string name, bool hd, bool ffs, bool bootable ) -> Emulator::Interface::Data {
+    DiskStructure disk(system->agnus);
     disk.hd = hd;
     unsigned size = disk.getADFCreationImageSize();
 
@@ -116,7 +116,7 @@ auto Disk::create( Type type, std::string name, bool hd, bool ffs, bool bootable
     return {data, size};
 }
 
-auto Disk::getListing() -> std::vector<Emulator::Interface::Listing> {
+auto DiskStructure::getListing() -> std::vector<Emulator::Interface::Listing> {
     uint8_t* data = rawData;
     unsigned size = rawSize;
 
@@ -144,8 +144,8 @@ auto Disk::getListing() -> std::vector<Emulator::Interface::Listing> {
     return {};
 }
 
-auto Disk::getPreview(uint8_t* data, unsigned size) -> std::vector<Emulator::Interface::Listing> {
-    Disk disk(system->agnus);
+auto DiskStructure::getPreview(uint8_t* data, unsigned size) -> std::vector<Emulator::Interface::Listing> {
+    DiskStructure disk(system->agnus);
 
     if (!disk.attach( data, size ))
         return {};
@@ -153,7 +153,7 @@ auto Disk::getPreview(uint8_t* data, unsigned size) -> std::vector<Emulator::Int
     return disk.getListing();
 }
 
-auto Disk::initTrack(Track& track, unsigned newLength) -> void {
+auto DiskStructure::initTrack(Track& track, unsigned newLength) -> void {
     if (!track.data) {
         track.data = new uint8_t[newLength];
     } else if (newLength != track.length) {
@@ -167,15 +167,15 @@ auto Disk::initTrack(Track& track, unsigned newLength) -> void {
     track.written = 0;
 }
 
-auto Disk::getTrackBitLength() -> unsigned {
+auto DiskStructure::getTrackBitLength() -> unsigned {
     return (agnus.ntsc ? LIBAMI_FLOPPY_REVOLUTION_LENGTH_NTSC : LIBAMI_FLOPPY_REVOLUTION_LENGTH_PAL) << hd;
 }
 
-auto Disk::getTrackByteLength() -> unsigned {
+auto DiskStructure::getTrackByteLength() -> unsigned {
     return (getTrackBitLength() + 7) / 8;
 }
 
-auto Disk::serialize(Emulator::Serializer& s, bool written) -> void {
+auto DiskStructure::serialize(Emulator::Serializer& s, bool written) -> void {
 
 }
 

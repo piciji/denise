@@ -46,12 +46,13 @@ struct Agnus : Emulator::Events<6> {
 
     enum { DMA_None = 0, DMACON = 1,
            PTR_BLT_A_H, PTR_BLT_A_L, PTR_BLT_B_H, PTR_BLT_B_L, PTR_BLT_C_H, PTR_BLT_C_L, PTR_BLT_D_H, PTR_BLT_D_L,
+           PTR_DSK_H, PTR_DSK_L,
            BLT_INIT, BLT_BUSY_DELAY,
     };
 
     enum { ACT_BLITTER = 1, ACT_COPPER = 2, ACT_BPL = 4, ACT_SPRITE = 8, ACT_IRQ_DELAY = 16 };
 
-    enum { BUS_FREE, BUS_USAGE_BPL, BUS_USAGE_SPRITE, BUS_USAGE_BLITTER, BUS_USAGE_COPPER, BUS_USAGE_CPU, BUS_USAGE_REFRESH, BUS_USAGE_AUDIO };
+    enum { BUS_FREE, BUS_USAGE_BPL, BUS_USAGE_SPRITE, BUS_USAGE_BLITTER, BUS_USAGE_COPPER, BUS_USAGE_CPU, BUS_USAGE_REFRESH, BUS_USAGE_DMAL };
 
     enum { PAL, NTSC };
 
@@ -116,6 +117,7 @@ struct Agnus : Emulator::Events<6> {
         uint32_t ptrLatch;
     } audioDmaChannels[4];
 
+    uint32_t dskpt;
 
     // need this for runAhead
     struct MemChange {
@@ -250,6 +252,9 @@ struct Agnus : Emulator::Events<6> {
     auto setBpl6ptH(uint16_t value) -> void;
     auto setBpl6ptL(uint16_t value) -> void;
 
+    auto setDskPtH(uint16_t value) -> void;
+    auto setDskPtL(uint16_t value) -> void;
+
     auto initCiaClock() -> void;
     auto dmaControl(uint16_t data) -> void;
 
@@ -275,6 +280,8 @@ struct Agnus : Emulator::Events<6> {
     template<uint8_t nr> auto fetchSample(bool reset) -> void;
     template<uint8_t nr> auto setAudPtH(uint16_t value) -> void;
     template<uint8_t nr> auto setAudPtL(uint16_t value) -> void;
+
+    auto diskTransfer(bool writeMode) -> void;
 
     auto observeFrameDuration() -> void;
     auto resetFps() -> void;

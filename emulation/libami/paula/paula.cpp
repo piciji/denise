@@ -4,7 +4,7 @@
 #include "../cpu/m68000.h"
 #include "audio.cpp"
 #include "filter.cpp"
-#include "drive.cpp"
+#include "fdc.cpp"
 #include "../system/system.h"
 #include "../input/input.h"
 #include "../input/controlPort/controlPort.h"
@@ -56,7 +56,15 @@
 #define INT_AUD3_3 0x800000000
 #define INT_AUD3_4 0x1000000000
 
-#define INT_MASK (INT3_1 | INT6_1 | INT_VBL_1 | INT_UPD_1 | INT_AUD0_1 | INT_AUD1_1 | INT_AUD2_1 | INT_AUD3_1)
+#define DSK_BLK_1 0x2000000000
+#define DSK_BLK_2 0x4000000000
+#define DSK_BLK_3 0x8000000000
+
+#define DSK_SYNC_1 0x10000000000
+#define DSK_SYNC_2 0x20000000000
+#define DSK_SYNC_3 0x40000000000
+
+#define INT_MASK (INT3_1 | INT6_1 | INT_VBL_1 | INT_UPD_1 | INT_AUD0_1 | INT_AUD1_1 | INT_AUD2_1 | INT_AUD3_1 | DSK_BLK_1 | DSK_SYNC_1)
 
 // todo: To determine the correct interrupt delay within Paula, it must be taken into account that the CPU only tests for interrupts in certain DMA cycles.
 // The CPU emulation synchronizes in multiples of DMA cycles (= 2 cycles). The limit of when an interrupt is detected or not happens after an odd number of CPU cycles.
@@ -65,9 +73,12 @@
 
 namespace LIBAMI {
 
-Paula::Paula(Agnus& agnus, Cpu& cpu, Input& input, Disk& disk0, Disk& disk1, Disk& disk2, Disk& disk3) :
+Paula::Paula(Agnus& agnus, Cpu& cpu, Input& input, DiskDrive& disk0, DiskDrive& disk1, DiskDrive& disk2, DiskDrive& disk3) :
 agnus(agnus),
-drives { {disk0}, {disk1}, {disk2}, {disk3} },
+disk0(disk0),
+disk1(disk1),
+disk2(disk2),
+disk3(disk3),
 cpu(cpu),
 input(input) {
 
@@ -106,7 +117,27 @@ auto Paula::dmal() -> uint16_t {
             cha.dsr = false;
         }
     }
+
     out <<= 6;
+    if (dmaDisk) { // now ??? or sooner when puting readed data to FIFO
+        if (diskState == DiskState::READ) {
+            switch(fifoPos) {
+                case 1: out |= 1; break;
+                case 2: out |= 5; break;
+                case 3: out |= 21; break;
+                default: break;
+            }
+        } else if (diskState == DiskState::WRITE) {
+            switch(fifoPos) {
+                case 0: out |= 63; break;
+                case 1: out |= 15; break;
+                case 2: out |= 3; break;
+                default: break;
+            }
+            if (dskTansferLength == 2) out &= ~48;
+            else if (dskTansferLength == 1) out &= ~60;
+        }
+    }
 
     return out;
 }
@@ -149,6 +180,14 @@ template<uint8_t nr> auto Paula::setIntAud() -> void {
 
 auto Paula::pulseInt3() -> void { // Blitter (Agnus generates one DMA cycle pulse)
     irqDelay |= INT3_1;
+}
+
+auto Paula::setDskSyncInt() -> void {
+    irqDelay |= DSK_SYNC_1;
+}
+
+auto Paula::setDskBlkInt() -> void {
+    irqDelay |= DSK_BLK_1;
 }
 
 auto Paula::strhor() -> void {
@@ -467,7 +506,8 @@ auto Paula::process() -> void {
 
     if (irqDelay) {
         uint64_t _irqDelay = irqDelay;
-        if (_irqDelay & (INT2_5 | INT3_5 | INT6_5 | INT_VBL_4 | INT_UPD_2 | INT_AUD0_4 | INT_AUD1_4 | INT_AUD2_4 | INT_AUD3_4)) {
+        if (_irqDelay & (   INT2_5 | INT3_5 | INT6_5 | INT_VBL_4 | INT_UPD_2 | INT_AUD0_4 |
+                            INT_AUD1_4 | INT_AUD2_4 | INT_AUD3_4 | DSK_BLK_3 | DSK_SYNC_3)) {
 
             if (_irqDelay & INT2_5) // CIA 1
                 intreq |= 8;
@@ -486,11 +526,38 @@ auto Paula::process() -> void {
                 intreq |= 0x400;
             if (_irqDelay & INT6_5) // CIA 2
                 intreq |= 0x2000;
+            if (_irqDelay & DSK_BLK_3)
+                intreq |= 2;
+            if (_irqDelay & DSK_SYNC_3)
+                intreq |= 0x1000;
 
             updateInt();
         }
 
         irqDelay = (irqDelay << 1) & ~INT_MASK;
+    }
+
+    if (dskEventCycle == agnus.clock) {
+        switch (diskState) {
+            case DiskState::READ:
+            case DiskState::WAIT_SYNC:
+                if (disk0.connected && disk0.selected)
+                    handleFDControllerRead(disk0);
+                else if (disk1.connected && disk1.selected)
+                    handleFDControllerRead(disk1);
+                else if (disk2.connected && disk2.selected)
+                    handleFDControllerRead(disk2);
+                else if (disk3.connected && disk3.selected)
+                    handleFDControllerRead(disk3);
+                break;
+            case DiskState::WRITE:
+                handleFDControllerWrite();
+                break;
+            default:
+                dmaCycles = 0;
+                break;
+        }
+        dskEventCycle = agnus.clock + dmaCycles;
     }
 
     if (sampleCycle == agnus.clock) {
