@@ -1,9 +1,9 @@
 
 #pragma once
 
-#include "../../interface.h"
 #include "diskStructure.h"
 #include "../../cia/new/cia.h"
+#include "../../tools/rand.h"
 
 namespace Emulator {
     struct Serializer;
@@ -18,7 +18,6 @@ struct Interface;
 
 struct DiskDrive {
     DiskDrive(uint8_t number, System* system, Agnus& agnus, Cia<MOS_8520>& cia);
-    ~DiskDrive() {}
 
     auto attach(uint8_t* data, unsigned size) -> bool;
     auto detach() -> void;
@@ -33,10 +32,12 @@ struct DiskDrive {
     Cia<MOS_8520>& cia;
     DiskStructure structure;
     Emulator::Interface::Media* media;
-    bool selected;
-    bool motor;
-    bool connected;
-    bool inserted;
+    bool selected = false;
+    bool motor = false;
+    bool connected = false;
+    bool inserted = false;
+    Emulator::Rand randomizer;
+    unsigned randCounter;
 
     uint8_t idPos;
     uint64_t motorClock;
@@ -53,17 +54,17 @@ struct DiskDrive {
     unsigned headOffset;
     unsigned refCyclesPerRevolution;
 
-    uint32_t accum;
+    int accum;
 
     uint64_t stepClock; // minimum delay between steps
     uint64_t stepSettleClock; // time to read reliable from next track
     uint8_t nextStep;
+    unsigned stepperSeekTime;
 
     static unsigned rpm;
     static unsigned wobble;
     static unsigned refCyclesPerRevolutionBase;
     static unsigned stepperSeekTimeBase;
-    unsigned stepperSeekTime;
 
     auto writeCiaPortB(uint8_t value, uint8_t oldValue) -> void;
     auto readCiaPortA() -> uint8_t;
@@ -74,15 +75,20 @@ struct DiskDrive {
     auto updateTrack() -> void;
     auto progressStepper() -> void;
 
-    auto readADF() -> uint8_t;
-    auto writeADF(uint8_t data) -> void;
-    auto readEXT(uint8_t& dmaCycles) -> bool;
-    auto writeEXT(unsigned dmaCycles, bool bit) -> void;
+    auto readByte(uint16_t& dmaCycles) -> uint8_t;
+    auto readBit(uint16_t& dmaCycles) -> bool;
+    auto writeBit(bool state) -> void;
+    auto adjustHead(int offset) -> void;
 
-    auto readBit() -> bool;
-    auto writeBit(bool bit) -> void;
+    auto getDummyTrack() -> DiskStructure::Track*;
+
+    auto instantWrite(unsigned words, uint16_t syncWord, bool needSync) -> uint8_t;
+    auto instantRead(unsigned words, uint16_t syncWord, bool needSync) -> uint8_t;
+
     auto updateDeviceState() -> void;
     auto enableSounds(bool state) -> void;
+    auto write() -> void;
+    auto serialize(Emulator::Serializer& s) -> void;
 
     auto updateRpm() -> void;
     static auto randomizeRpm(unsigned frequency) -> void;

@@ -3,7 +3,6 @@
 
 #include <cstdint>
 #include <functional>
-#include "../../interface.h"
 
 namespace Emulator {
     struct Serializer;
@@ -11,18 +10,20 @@ namespace Emulator {
 
 namespace LIBAMI {
 
+struct System;
 struct Agnus;
 struct Cpu;
 struct Input;
 struct DiskDrive;
 
 struct Paula {
-    Paula(Agnus& agnus, Cpu& cpu, Input& input, DiskDrive& disk0, DiskDrive& disk1, DiskDrive& disk2, DiskDrive& disk3);
+    Paula(System* system, Agnus& agnus, Cpu& cpu, Input& input, DiskDrive& disk0, DiskDrive& disk1, DiskDrive& disk2, DiskDrive& disk3);
 
-    enum class DiskState { OFF, READ, WAIT_SYNC, WRITE } diskState;
+    enum class DiskState { OFF, WAIT_SYNC_READ, WAIT_SYNC_WRITE, READ, WRITE } diskState;
 
     using EventCallback = std::function<void(uint8_t, uint16_t)>;
 
+    System* system;
     Agnus& agnus;
     Cpu& cpu;
     Input& input;
@@ -46,19 +47,22 @@ struct Paula {
     DiskDrive& disk1;
     DiskDrive& disk2;
     DiskDrive& disk3;
+    DiskDrive* activeDrive = nullptr;
 
     uint16_t dskLen;
     uint16_t dskSync;
     uint16_t dskTansferLength;
     uint64_t fifo;
     uint8_t fifoPos;
-    bool fifoWritten;
     uint64_t dskEventCycle;
     uint64_t dskSyncCycle;
     uint16_t dskShifter;
     uint8_t dskShifterPos;
-    uint8_t pulseWidth;
-    uint8_t dmaCycles;
+    uint16_t dmaCycles;
+    uint16_t dskBytr;
+
+    bool lockFDC; // for runahead
+    uint8_t turbo = 0;
 
     struct {
         uint8_t cntX0;
@@ -119,7 +123,7 @@ struct Paula {
     auto process() -> void;
     auto power() -> void;
     auto powerOff() -> void;
-    auto serialize(Emulator::Serializer& s, bool light = false) -> void;
+    auto serialize(Emulator::Serializer& s, uint8_t runAheadFrames = 0) -> void;
     auto disableAudioOut(bool state) -> void;
     auto setLedFilter(bool state) -> void;
     auto setFilter() -> void;
@@ -138,6 +142,9 @@ struct Paula {
     auto wordSync() -> bool const { return adkcon & 0x400; }
     auto msbSync() -> bool const { return adkcon & 0x200; }
     auto fast() -> bool const { return adkcon & 0x100; }
+    auto useInstantDriveAccess() -> bool { return turbo == 4; }
+    auto instantDriveAccess() -> void;
+    auto finishDMA(bool delayed = false) -> void;
 
     template<uint8_t nr> auto audxDat(uint16_t value) -> void;
     template<uint8_t nr> auto audxLen(uint16_t value) -> void;
@@ -153,7 +160,7 @@ struct Paula {
     auto setInt6(bool state) -> void;
     auto pulseInt3() -> void;
     auto setDskSyncInt() -> void;
-    auto setDskBlkInt() -> void;
+    auto setDskBlkInt(bool delayed = false) -> void;
 
     auto setDskLen(uint16_t value) -> void;
     auto setDskDat(uint16_t value) -> void;
@@ -163,12 +170,10 @@ struct Paula {
     auto fdcWriteMode() -> bool { return diskState == DiskState::WRITE; }
     auto setDskState(DiskState next) -> void;
 
-    inline auto resetFifo() -> void;
-    auto getFromFifo() -> uint16_t;
-    auto addToFifo(uint16_t data) -> bool;
-    auto addBit(bool bit) -> void;
+    auto getFromFifo(uint16_t& data) -> bool;
+    auto addToFifo(uint16_t data) -> void;
 
-    auto handleFDControllerRead(DiskDrive& disk) -> void;
+    template<bool readWord = false, bool waitTurbo = false> auto handleFDControllerRead() -> void;
     auto handleFDControllerWrite() -> void;
 
     auto progressPot() -> void;

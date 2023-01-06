@@ -37,7 +37,7 @@ auto DiskStructure::prepareEXT(uint8_t *data, unsigned size) -> void {
             length = (ptr[5] << 16) | (ptr[6] << 8) | ptr[7]; // ignore the MSB for sanity reasons
             bits = (ptr[9] << 16) | (ptr[10] << 8) | ptr[11]; // ignore the MSB for sanity reasons
 
-            initTrack(track, mfmTrack ? length : getTrackByteLength());
+            initTrack(track, mfmTrack ? length : getTrackByteLength(), mfmTrack ? bits : getTrackBitLength());
             if (!mfmTrack) track.written = 0x80;
 
             if ((dataOffset + length) >= size)
@@ -49,15 +49,16 @@ auto DiskStructure::prepareEXT(uint8_t *data, unsigned size) -> void {
         }
 
         if (mfmTrack) {
-            if (bits > (length * 8))
+            if (bits > (length * 8)) {
                 bits = length * 8;
+                track.bits = bits;
+            }
 
             if (!hd && (bits > (13000 * 8)))
                 hd = true; // ((512 + 32) * 11) * 2 (Clock + Data bit) = 11968 + a few more gap bytes
 
             std::memcpy(track.data, data + dataOffset, track.length);
 
-            track.bits = bits;
         } else {
             if (!hd && (bits > (6000 * 8))) hd = true;
 

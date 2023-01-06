@@ -5,13 +5,12 @@
 
 namespace LIBAMI {
 
-//struct System;
+struct System;
 
 struct Interface : Emulator::Interface  {
 
     Interface();
-    ~Interface() {}
-  //  System* system = nullptr;
+    System* system = nullptr;
 
     enum ModelId {
         ModelIdSystem,
@@ -21,6 +20,7 @@ struct Interface : Emulator::Interface  {
         ModelIdDiskDriveWobble,
         ModelIdDiskDriveStepperSeekTime,
         ModelIdDiskDriveSpeed,
+        ModelIdDiskTurbo,
         ModelIdSampleFetch,
         ModelIdChipMem,
         ModelIdSlowMem,

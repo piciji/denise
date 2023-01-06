@@ -15,6 +15,7 @@
 #include "agnus.h"
 #include "../../tools/sanitizer.h"
 #include "../system/system.h"
+#include "../interface.h"
 #include "memory.cpp"
 #include "register.cpp"
 #include "dma.cpp"
@@ -22,11 +23,12 @@
 
 namespace LIBAMI {
 
-Agnus::Agnus(Cpu& cpu, Denise& denise, Paula& paula, Cia<MOS_8520>& cia1, Cia<MOS_8520>& cia2, Input& input)
-: cpu(cpu), denise(denise), paula(paula), cia1(cia1), cia2(cia2), input(input), blitter(*this), copper(*this) {
+Agnus::Agnus(System* system, Cpu& cpu, Denise& denise, Paula& paula, Cia<MOS_8520>& cia1, Cia<MOS_8520>& cia2, Input& input)
+: system(system), cpu(cpu), denise(denise), paula(paula), cia1(cia1), cia2(cia2), input(input), blitter(*this), copper(*this) {
+
+    this->interface = system->interface;
 
     oneCycleDelay = [&](uint8_t job, uint16_t data) {
-
         switch (job) {
             case PTR_BLT_A_H: blitter.setBltAptH(data); break;
             case PTR_BLT_A_L: blitter.setBltAptL(data); break;
@@ -330,16 +332,16 @@ inline auto Agnus::dmaCycle() -> void {
 
         case 0xb:
             if (dmal & 3)
-                diskTransfer(dmal & 2);
+                diskDma(dmal & 2);
             break;
         case 0xd:
             if (dmal & 0xc)
-                diskTransfer(dmal & 8);
+                diskDma(dmal & 8);
             bplQueue = 0; // hsync start
             break;
         case 0xf:
             if (dmal & 0x30)
-                diskTransfer(dmal & 0x20);
+                diskDma(dmal & 0x20);
             break;
 
         case 0x11:
@@ -700,7 +702,7 @@ auto Agnus::observeFrameDuration() -> void {
         fpsChange = 1; // reset to "typical" in next frame, if the beam position has not been changed again.
 
         system->updateStats();
-        system->interface->fpsChanged();
+        interface->fpsChanged();
 
     } else if (fpsChange & 1) { // typical, e.g. lace change
         double linesPerField;
@@ -725,7 +727,7 @@ auto Agnus::observeFrameDuration() -> void {
 
         fpsChange = 0;
         system->updateStats();
-        system->interface->fpsChanged();
+        interface->fpsChanged();
     }
 
     frameClock = clock;

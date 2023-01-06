@@ -15,14 +15,16 @@ struct Cia;
 
 namespace LIBAMI {
 
+struct System;
+struct Interface;
 struct ControlPort;
 struct Agnus;
 
 struct Input {
+    Input(System* system, Agnus& agnus, Cia<MOS_8520>& cia1);
 
-    Input(Agnus& agnus, Cia<MOS_8520>& cia1, Emulator::Interface* interface);
-
-    Emulator::Interface* interface;
+    System* system;
+    Interface* interface;
     Agnus& agnus;
     Cia<MOS_8520>& cia1;
     ControlPort* controlPort1 = nullptr;

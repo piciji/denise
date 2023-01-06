@@ -2,7 +2,6 @@
 #pragma once
 
 #include <cstdint>
-#include "../interface.h"
 #include "../input/input.h"
 #include "../../cia/new/cia.h"
 #include "../cpu/m68000.h"
@@ -13,6 +12,8 @@
 #include "../../tools/crop.h"
 
 namespace LIBAMI {
+
+struct Interface;
 
 struct System {
 
@@ -25,6 +26,7 @@ struct System {
     Denise denise;
     Paula paula;
     DiskDrive diskDrives[4];
+    DiskDrive dummyDrive;
 
     Emulator::Crop<uint16_t> crop;
 
@@ -66,7 +68,7 @@ struct System {
     auto updateDriveSounds() -> void;
     auto setFloppySounds(bool state) -> void;
 
-    auto setRegion( Interface::Region region ) -> void;
+    auto setRegion( int region ) -> void;
     auto setResampleQuality( int value ) -> void;
     auto setFastForward( unsigned config ) -> void;
     auto setRunAhead(unsigned frames) -> void;
@@ -89,8 +91,6 @@ struct System {
     auto setDrivesEnabled( uint8_t count ) -> void;
     auto getDrivesEnabled() -> uint8_t;
 };
-
-extern System* system;
 
 
 }

@@ -30,6 +30,8 @@
 
 namespace LIBAMI {
 
+struct System;
+struct Interface;
 struct Cpu;
 struct Denise;
 struct Paula;
@@ -37,7 +39,7 @@ struct Input;
 
 struct Agnus : Emulator::Events<6> {
 
-    Agnus(Cpu& cpu, Denise& denise, Paula& paula, Cia<MOS_8520>& cia1, Cia<MOS_8520>& cia2, Input& input);
+    Agnus(System* system, Cpu& cpu, Denise& denise, Paula& paula, Cia<MOS_8520>& cia1, Cia<MOS_8520>& cia2, Input& input);
     ~Agnus();
 
     enum { Unmapped, CHIP_MEM, SLOW_MEM, KICK_ROM, EXT_ROM, WOM, MMIO_CUSTOM, MMIO_CIA, MMIO_RTC };
@@ -60,6 +62,8 @@ struct Agnus : Emulator::Events<6> {
 
     enum Model { OCS_A1000 = 1, OCS = 2, ECS = 4, AGA = 8 } model = OCS;
 
+    System* system;
+    Interface* interface;
     Cpu& cpu;
     Denise& denise;
     Paula& paula;
@@ -281,7 +285,9 @@ struct Agnus : Emulator::Events<6> {
     template<uint8_t nr> auto setAudPtH(uint16_t value) -> void;
     template<uint8_t nr> auto setAudPtL(uint16_t value) -> void;
 
-    auto diskTransfer(bool writeMode) -> void;
+    auto diskDma(bool writeMode) -> void;
+    auto fakeDiskDma(uint16_t word) -> void;
+    auto fakeDiskDma() -> uint16_t;
 
     auto observeFrameDuration() -> void;
     auto resetFps() -> void;

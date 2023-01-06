@@ -22,7 +22,10 @@ auto System::calcSerializationSize() -> void {
 
 auto System::serialize(unsigned& size) -> uint8_t* {
 
-    // disk->updateSerializationSize();
+    for(auto& drive : diskDrives) {
+        if (drive.connected && drive.written)
+            drive.structure.updateSerializationSize();
+    }
 
     Emulator::Serializer s( serializationSize );
 
@@ -89,35 +92,33 @@ auto System::unserialize(uint8_t* data, unsigned size) -> bool {
 
     serializeAll(s);
 
-    // remapCpu();
-
-    // updateDriveSounds();
+    updateDriveSounds();
 
     return true;
 }
 
 auto System::serializeAll(Emulator::Serializer& s) -> void {
 
-
-
     serialize( s );
+    agnus.serialize( s );
     cia1.serialize( s );
     cia2.serialize( s );
     denise.serialize( s );
     paula.serialize( s );
 
-    //disk.serialize( s );
+    for(auto& drive : diskDrives)
+        drive.serialize(s);
+
     input.serialize( s );
-    //agnus.serialize( s );
 }
 
 auto System::serialize(Emulator::Serializer& s) -> void {
 
-//    s.array( ram, 64 * 1024 );
+
 
     s.integer( serializationSize );
 
-    // powerSupply.serialize( s );
+
     cpu.serialize( s );
 }
 
@@ -130,16 +131,18 @@ auto System::serializeLight() -> void {
     s.setMode( Emulator::Serializer::Mode::Save );
 
     serialize(s);
+    agnus.serialize(s);
     cia1.serialize(s);
     cia2.serialize(s);
     denise.serialize(s);
-    paula.serialize(s, runAhead.frames > 1);
+    paula.serialize(s, runAhead.frames);
 
-    //disk.serializeLight(s);
     input.serialize(s);
 
-
-    //sysTimer.serialize(s);
+    for(auto& drive : diskDrives) {
+        s.integer(drive.connected);
+        drive.connected = false;
+    }
 }
 
 auto System::unserializeLight() -> void {
@@ -147,21 +150,17 @@ auto System::unserializeLight() -> void {
     auto& s = runAhead.serializer;
 
     s.setMode( Emulator::Serializer::Mode::Load );
-    //uint8_t _mode = mode;
 
     serialize(s);
     cia1.serialize(s);
     cia2.serialize(s);
     denise.serialize(s);
-    paula.serialize(s, runAhead.frames > 1);
+    paula.serialize(s, runAhead.frames);
 
-    //disk.serializeLight(s);
     input.serialize(s);
 
-    //sysTimer.serialize(s);
-
-    //if (mode != _mode)
-      //  remapCpu();
+    for(auto& drive : diskDrives)
+        s.integer(drive.connected);
 }
 
 }

@@ -73,7 +73,8 @@
 
 namespace LIBAMI {
 
-Paula::Paula(Agnus& agnus, Cpu& cpu, Input& input, DiskDrive& disk0, DiskDrive& disk1, DiskDrive& disk2, DiskDrive& disk3) :
+Paula::Paula(System* system, Agnus& agnus, Cpu& cpu, Input& input, DiskDrive& disk0, DiskDrive& disk1, DiskDrive& disk2, DiskDrive& disk3) :
+system(system),
 agnus(agnus),
 disk0(disk0),
 disk1(disk1),
@@ -119,7 +120,7 @@ auto Paula::dmal() -> uint16_t {
     }
 
     out <<= 6;
-    if (dmaDisk) { // now ??? or sooner when puting readed data to FIFO
+    if (!lockFDC) {
         if (diskState == DiskState::READ) {
             switch(fifoPos) {
                 case 1: out |= 1; break;
@@ -186,8 +187,8 @@ auto Paula::setDskSyncInt() -> void {
     irqDelay |= DSK_SYNC_1;
 }
 
-auto Paula::setDskBlkInt() -> void {
-    irqDelay |= DSK_BLK_1;
+auto Paula::setDskBlkInt(bool delayed) -> void {
+    irqDelay |= delayed ? DSK_BLK_1 : DSK_BLK_2;
 }
 
 auto Paula::strhor() -> void {
@@ -384,10 +385,10 @@ auto Paula::updateInt() -> void {
 }
 
 auto Paula::powerOff() -> void {
-
+    lockFDC = false;
 }
 
-auto Paula::serialize(Emulator::Serializer& s, bool light) -> void {
+auto Paula::serialize(Emulator::Serializer& s, uint8_t runAheadFrames) -> void {
     s.integer(intena);
     s.integer(intreq);
     s.integer(adkcon);
@@ -433,7 +434,8 @@ auto Paula::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer(sampleCycle);
     s.integer(dmaDisk);
 
-    if (!light) {
+
+    if (runAheadFrames < 2) {
         s.floatingpoint(filters[0].rc1);
         s.floatingpoint(filters[0].rc2);
         s.floatingpoint(filters[0].rc3);
@@ -448,6 +450,30 @@ auto Paula::serialize(Emulator::Serializer& s, bool light) -> void {
         s.floatingpoint(filter1A0);
         s.floatingpoint(filter2A0);
         s.floatingpoint(filterA0);
+    }
+
+    if (runAheadFrames) {
+        s.integer(dskEventCycle);
+
+        if (s.mode() == Emulator::Serializer::Mode::Save) {
+            lockFDC = true;
+            dskEventCycle = 0;
+        } else {
+            lockFDC = false;
+        }
+    } else {
+        s.integer(dskLen);
+        s.integer(dskSync);
+        s.integer(dskTansferLength);
+        s.integer(fifo);
+        s.integer(fifoPos);
+        s.integer(dskEventCycle);
+        s.integer(dskSyncCycle);
+        s.integer(dskShifter);
+        s.integer(dskShifterPos);
+        s.integer(dmaCycles);
+        s.integer(dskBytr);
+        s.integer(turbo);
     }
 }
 
@@ -500,6 +526,19 @@ auto Paula::power() -> void {
     filters[1].reset();
 
     sampleCycle = agnus.clock + sampleLimit;
+
+    dskLen = 0;
+    dskSync = 0;
+    dskTansferLength = 0;
+    fifo = 0;
+    fifoPos = 0;
+    dskEventCycle = 0;
+    dskSyncCycle = 0;
+    dskShifter = 0;
+    dskShifterPos = 0;
+    dmaCycles = 0;
+    dskBytr = 0;
+    lockFDC = false;
 }
 
 auto Paula::process() -> void {
@@ -539,21 +578,32 @@ auto Paula::process() -> void {
 
     if (dskEventCycle == agnus.clock) {
         switch (diskState) {
+            case DiskState::WAIT_SYNC_READ:
+            case DiskState::WAIT_SYNC_WRITE:
+                if (turbo) {
+                    handleFDControllerRead<false, true>();
+                    break;
+                }
+                // fallthrough
             case DiskState::READ:
-            case DiskState::WAIT_SYNC:
-                if (disk0.connected && disk0.selected)
-                    handleFDControllerRead(disk0);
-                else if (disk1.connected && disk1.selected)
-                    handleFDControllerRead(disk1);
-                else if (disk2.connected && disk2.selected)
-                    handleFDControllerRead(disk2);
-                else if (disk3.connected && disk3.selected)
-                    handleFDControllerRead(disk3);
+                handleFDControllerRead();
                 break;
-            case DiskState::WRITE:
+            case DiskState::WRITE: {
                 handleFDControllerWrite();
-                break;
+                if (turbo && dmaDisk) {
+                    uint8_t repeat = (1 << turbo) - 1;
+                    do {
+                        if (!dskTansferLength)
+                            break;
+                        if (dskShifterPos == 1)
+                            addToFifo( agnus.fakeDiskDma() );
+                        handleFDControllerWrite();
+                    } while (--repeat);
+                }
+            } break;
             default:
+                if (useInstantDriveAccess())
+                    setDskBlkInt();
                 dmaCycles = 0;
                 break;
         }

@@ -463,7 +463,7 @@ template<uint8_t num, bool first> auto Agnus::spriteControl() -> void {
     }
 };
 
-auto Agnus::diskTransfer(bool writeMode) -> void {
+auto Agnus::diskDma(bool writeMode) -> void {
     if (writeMode) {
         dataBus = _swapWord(*(uint16_t*) (chipMem + dskpt));
         paula.setDskDat(dataBus);
@@ -479,6 +479,19 @@ auto Agnus::diskTransfer(bool writeMode) -> void {
     dskpt += 2;
     dskpt &= chipMemMask;
     busUsage = BUS_USAGE_DMAL;
+}
+
+auto Agnus::fakeDiskDma(uint16_t word) -> void {
+    *(uint16_t*)(chipMem + dskpt) = _swapWord(word);
+    dskpt += 2;
+    dskpt &= chipMemMask;
+}
+
+auto Agnus::fakeDiskDma() -> uint16_t {
+    dataBus = _swapWord(*(uint16_t*) (chipMem + dskpt));
+    dskpt += 2;
+    dskpt &= chipMemMask;
+    return dataBus;
 }
 
 template<uint8_t nr> auto Agnus::fetchSample(bool reset) -> void {

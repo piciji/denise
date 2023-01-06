@@ -10,7 +10,7 @@
 
 namespace LIBAMI {
 
-Denise::Denise(Agnus& agnus, Input& input) : agnus(agnus), input(input) {
+Denise::Denise(System* system, Agnus& agnus, Input& input) : system(system), agnus(agnus), input(input) {
     frameBuffer = new uint16_t[LINE_BUFFER_WIDTH * LINE_BUFFER_HEIGHT];
     lineCallback.use = false;
     lineCallback.line = 0;

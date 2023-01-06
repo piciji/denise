@@ -35,6 +35,7 @@ auto Interface::prepareModels() -> void {
     models.push_back({ModelIdDiskDriveSpeed, "Disk Speed", Model::Type::Slider, Model::Purpose::DriveSettings, 30000, {27500, 32500}, {}, 500, 100.0 });
     models.push_back({ModelIdDiskDriveWobble, "Disk Wobble", Model::Type::Slider, Model::Purpose::DriveSettings, 50, {0, 500}, {}, 50, 100.0 });
     models.push_back({ModelIdDiskDriveStepperSeekTime, "Stepper Seek Time", Model::Type::Slider, Model::Purpose::DriveSettings, 0, {0, 160}, {}, 160, 10.0 });
+    models.push_back({ModelIdDiskTurbo, "Disk Turbo", Model::Type::Radio, Model::Purpose::DriveSettings, 0, {0, 4}, { "100", "200", "400", "800", "MAX" }});
 
 
     models.push_back({ModelIdChipMem, "Chip Mem", Model::Type::Radio, Model::Purpose::Memory, 1, {0, 3}, { "256", "512", "1024", "2048" }});
@@ -338,7 +339,7 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
             system->setModel( value );
             break;
         case ModelIdRegion:
-            system->setRegion( (Region)value );
+            system->setRegion( value );
             break;
         case ModelIdLowPassFilter:
             system->paula.enableFilter = (bool)value;
@@ -352,11 +353,14 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
         case ModelIdDiskDriveWobble:
             DiskDrive::setWobble( value );
             break;
+        case ModelIdDiskDriveSpeed:
+            DiskDrive::setSpeed( value );
+            break;
         case ModelIdDiskDriveStepperSeekTime:
             DiskDrive::setStepperSeekTime( value );
             break;
-        case ModelIdDiskDriveSpeed:
-            DiskDrive::setSpeed( value );
+        case ModelIdDiskTurbo:
+            system->paula.turbo = value;
             break;
         case ModelIdChipMem:
             system->setChipmem(value);
@@ -377,6 +381,7 @@ auto Interface::getModelValue(unsigned modelId) -> int {
         case ModelIdDiskDriveWobble:                return (int)DiskDrive::wobble;
         case ModelIdDiskDriveSpeed:                 return (int)DiskDrive::rpm;
         case ModelIdDiskDriveStepperSeekTime:       return (int)(DiskDrive::stepperSeekTimeBase);
+        case ModelIdDiskTurbo:                      return (int)system->paula.turbo;
         case ModelIdChipMem:                        return system->getChipmem();
         case ModelIdSlowMem:                        return system->getSlowmem();
     }
@@ -420,7 +425,7 @@ auto Interface::ejectDisk(Media* media) -> void {
 }
 
 auto Interface::createDiskImage(unsigned typeId, std::string name, bool hd, bool ffs, bool bootable) -> Data {
-    return DiskStructure::create( (DiskStructure::Type) typeId, name, hd, ffs, bootable );
+    return DiskStructure::create( system, (DiskStructure::Type) typeId, name, hd, ffs, bootable );
 }
 
 auto Interface::getDiskListing(Media* media, bool alternateLoad) -> std::vector<Emulator::Interface::Listing> {
@@ -431,7 +436,7 @@ auto Interface::getDiskListing(Media* media, bool alternateLoad) -> std::vector<
 }
 
 auto Interface::getDiskPreview(uint8_t* data, unsigned size, Media* media, bool alternateLoad) -> std::vector<Emulator::Interface::Listing> {
-    return DiskStructure::getPreview(data, size);
+    return DiskStructure::getPreview( system, data, size);
 }
 
 

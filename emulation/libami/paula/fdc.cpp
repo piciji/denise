@@ -1,20 +1,20 @@
 
 // Floppy Disc Controller
 
-// Paula communicates with the drives via 3 lines. Read, Write, write enable
+// Paula communicates with the drives via 3 lines. Read, Write, Write enable
 // Each change in the magnetic flux causes an edge on the reading pin.
 // Paula now measures the elapsed time to determine whether the bit sequence 101, 1001 or 10001 was received.
-// Paula knows the Agnus beat. (the drive doesn't) Thus, the measured times are multiples of ~280 ns (PAL).
+// Depending on whether "fast" or "slow" is selected in "adkcon", the time until a zero is pushed into the bitstream varies
+// if there are no flux change.
+// Paula knows the Agnus beat. (the drive doesn't) Thus, the measured times are multiples of ~280 ns (differs between PAL/NTSC).
 // Prolonged sequences without magnetization, such as 100001, are dangerous because they can cause random flux changes (not on disc).
 // Therefore, these sequences are not valid GCR or MFM (weak bits) and the reason why GCR/MFM encoding is needed at all.
 //
 // Paula doesn't know which drives are connected or selected. There is simply no data coming from/going to these drives.
-// However, the emulation distinguishes 2 approaches in terms of accuracy for ADF and EXT ADF respectively. So we need to know it in context of FDC.
-// If more than one drive is selected, there are too many edges at the read line and no meaningful data stream can be determined.
 // Write operations are possible simultaneously to multiple drives. Reading multiple drives at the same time does not lead to a meaningful result.
 //
 // For the sake of simplicity, the rotation of the floppy disk is driven here. In reality, the drive does not know the Agnus clock
-// and rotates at 300 RPM. Depending on the length of the bit cells on the floppy disk, a certain number of flux changes become visible to Paula.
+// and rotates at 300 RPM. Depending on the width of the bitcells on the floppy disk, a certain number of flux changes become visible to Paula.
 // Based on the elapsed Agnus cycles, the rotation time can be calculated without Paula being able to impose a speed on the drive.
 
 // The controller writes one bit in 7 DMA cycles. ADFs are copyable and must therefore meet this standard.
@@ -34,32 +34,50 @@
 // e.g. PAL: 1.97356 us or 3.94712 us (if slow mode is selected in controller)
 
 // precompensation is uninteresting for emulation, beacuse it doesn't change bitcell width but
-// advance or delays the flux transition within the bit cell in order to optimize the distance
+// advance or delays the flux transition within the bitcell in order to optimize the distance
 // between 2 adjacent transitions
 
 // Since ADF's do not contain copy protections, it is sufficient to transfer them byte by byte, especially in terms of emulation speed.
 
 // In contrast to the ADF, EXT ADF does not contain the user data, but the encoded data (GCR or MFM).
-// Basically, these are not flux change data, but can be interpreted as such and thus allow the handling of various copy protections.
-// This is done by the fact that due to the track bit lengths given in the header of the file, the bit cell width can be determined,
-// which may well deviate from the standard bit cell width, see ADF. The emulation takes this into account and allows
-// the duration of the bit cells determined in this way to elapse before the next bit can be read.
-// The bit cell width is manipulated by setting additional bits in the GAP area of the disc.
+// These are not flux change data, but some copy protections can already be handled.
+// This is done by the fact that due to the track bit lengths given in the header of the file, the bitcell width can be determined,
+// which may well deviate from the standard bitcell width, see ADF. The emulation takes this into account and allows
+// the duration of the bitcells determined in this way to elapse before the next bit can be read.
+// The bitcell width is manipulated by setting additional bits in the GAP area of the disc.
 // Copy protections that test the sectors for a certain reading time (different from the fixed one, that the drive can write)
 // can be successfully operated with this.
-// However, the EXT format does not contain any information about reconstructing variable bit cell widths within a track.
-// This requires a real flux change format.
-// Another limitation of the EXT format is writing to tracks that do not have a standard bit cell width.
-// The emulation will no longer change the previously defined bit cell width when writing the track.
+// However, the EXT format does not contain any information about reconstructing variable bitcell widths within a track.
+// Fuzzy bits also cannot be imaged with EXT ADF.
+// Both requires a real flux change format.
+
+// fuzzy bits
+// The controller can only determine the correct number of zeros between two flux changes,
+// if the bitcell width does not deviate too far from the standard. Some copy protections take advantage of this by writing flux changes
+// at a distance of 5 us. The controller reads this in as episode 101 or as episode 1001. The controller itself is purely digital
+// and does not cause fluctuations but the drive motor does. If the data is written regularly, i.e. with about 4 us,
+// the controller always reads back the same sequence and a copy can thus be recognized.
+
+// Another limitation of the EXT format is writing to tracks that do not have a standard bitcell width
+// or by writing a custom bitcell width because of adjusted motor speed.
+// Adjusting motor speed is the only way to write a custom bitcell width with Amiga drives.
+// The emulation will no longer change the previously defined bitcell width when writing the track later.
 // This is technically complex/impossible, since a track can also be partially written.
-// Then the track would have to be shortened to the standard bit cell width, which could lead to data loss.
+// Then the track would have to be shortened to the standard bitcell width, which could lead to data loss.
+// In addition, the correct amount of bits would have to be written into the GAP area of the track to get the corresponding bitcell width.
+// To do this, you would have to know in advance how much is written. To display this in EXT format would be silly.
 // In this case, it is better to leave the current number of bits. Practically, this should not be a problem,
-// since newly created EXT ADF discs already have the standard bit cell width and games with copy protections write savegames
+// since newly created EXT ADF discs already have the standard bitcell width and games with copy protections write savegames
 // to empty or standard length tracks. Even if not, reading the data would not fail, since only the reading time varies.
-// a real flux change format doesn't have this limitation. you can write tracks partially with a different bitcell width.
+// a real flux change format doesn't have this limitation. you can write tracks partially with a standard bitcell
+// width or motor adjusted custom bitcell width on tracks with a different bitcell width.
+
+// For EXT ADF, the "adkcon" setting "slow" or "fast" only plays a role when writing. When reading, the bit sequence is already fixed.
+// Only with a flow change format does this setting also play a role when reading. Based on this, the number of zeros is determined,
+// which are pushed into the bit stream between 2 flux changes.
 
 // The controller has no idea if it is an HD or DD disk. High density is only achieved by halving the rotational speed.
-// This happens automatically when the drive detects an HD disk.
+// This happens automatically when the HD drive detects an HD disk.
 // Halving the speed means writing double amount of data on same surface.
 // Reading needs halving the speed too, otherwise the Controller (DMA) could not handle the double amount of data.
 
@@ -68,78 +86,89 @@
 
 namespace LIBAMI {
 
-auto Paula::getDskBytR() -> uint16_t {
-    uint16_t out = fifo & 0xff;
-
-    if (fifoWritten) out |= 0x8000;
-    if ((dskLen & 0x8000) && dmaDisk) out |= 0x4000;
-    if (dskLen & 0x4000) out |= 0x2000;
-    if (dskSyncCycle) {
-        if((agnus.clock - dskSyncCycle) < (!fast() ? 15 : 8) ) out |= 0x1000;
-        else dskSyncCycle = 0;
-    }
-
-    fifoWritten = false;
-    return out;
-}
-
 auto Paula::setDskLen(uint16_t value) -> void {
+    if (lockFDC)
+        return;
     uint16_t oldValue = dskLen;
     dskTansferLength = value & 0x3fff;
     dskLen = value;
+    bool start = false;
 
     if (value & oldValue & 0x8000) {
-        if (dskTansferLength == 0) {
-            setDskBlkInt();
-            setDskState(DiskState::OFF);
-            dskEventCycle = 0;
-            return;
-        }
+        if ((diskState == DiskState::READ || diskState == DiskState::WAIT_SYNC_READ) && !(value & 0x4000))
+            return; // keep state
 
-        if (value & oldValue & 0x4000)
-            setDskState(DiskState::WRITE);
-        else
-            setDskState(wordSync() ? DiskState::WAIT_SYNC : DiskState::READ);
-
-        setFdcEvent();
+        setDskState(wordSync() ? DiskState::WAIT_SYNC_READ : DiskState::READ);
+        start = true;
     } else if (!(value & 0x8000)) {
         setDskState(DiskState::OFF);
         dskTansferLength = 0;
         dskEventCycle = 0;
-    } else
         return;
+    }
 
-    resetFifo();
+    if (!wordSync() && (dskTansferLength == 0)) {
+        finishDMA();
+        return;
+    }
+
+    if (value & oldValue & 0x4000) {
+        if(dskTansferLength == 0)
+            return;
+        if (diskState == DiskState::WRITE || diskState == DiskState::WAIT_SYNC_WRITE)
+            return; // keep state
+
+        setDskState(wordSync() ? DiskState::WAIT_SYNC_WRITE : DiskState::WRITE);
+        if (!wordSync()) {
+            if (!getFromFifo(dskShifter))
+                dskShifter = 0;
+        }
+        start = true;
+    }
+
+    if (start) {
+        fifoPos = 0;
+        dskShifterPos = 0;
+        useInstantDriveAccess() ? instantDriveAccess() : setFdcEvent();
+    }
+}
+
+auto Paula::finishDMA(bool delayed) -> void {
+    setDskBlkInt(delayed);
+    dskLen = 0;
+    dskTansferLength = 0;
+    setDskState(DiskState::OFF);
+    dskEventCycle = 0;
 }
 
 auto Paula::setFdcEvent() -> void {
-    dmaCycles = 0;
-    uint8_t state = 0;
+    if ( ((activeDrive->structure.type == DiskStructure::ADF) || (activeDrive->structure.type == DiskStructure::Unknown))
+        && (diskState != DiskState::WRITE))
+        dmaCycles = 7 * 8;
+    else
+        dmaCycles = !fast() ? 14 : 7;
 
-    if (disk0.connected && disk0.selected)
-        state |= (disk0.structure.type == DiskStructure::EXT) ? 2 : 1;
-    else if (disk1.connected && disk1.selected) {
-        if (!state || (diskState == DiskState::WRITE))
-            state |= (disk1.structure.type == DiskStructure::EXT) ? 2 : 1;
-    } else if (disk2.connected && disk2.selected) {
-        if (!state || (diskState == DiskState::WRITE))
-            state |= (disk2.structure.type == DiskStructure::EXT) ? 2 : 1;
-    } else if (disk3.connected && disk3.selected) {
-        if (!state || (diskState == DiskState::WRITE))
-            state |= (disk3.structure.type == DiskStructure::EXT) ? 2 : 1;
+    dskEventCycle = agnus.clock + dmaCycles;
+}
+
+auto Paula::getDskBytR() -> uint16_t {
+    uint16_t out = dskBytr & 0x80ff;
+    dskBytr &= ~0x8000;
+    if (dmaDisk && (diskState != DiskState::OFF)) out |= 0x4000;
+    if (dskLen & 0x4000) out |= 0x2000;
+    if (dskSyncCycle) {
+        if((agnus.clock - dskSyncCycle) <= (!fast() ? 14 : 7) ) out |= 0x1000;
+        else dskSyncCycle = 0;
     }
-
-    if (state & 2) dmaCycles = diskState == DiskState::WRITE ? 7 : 8;
-    else if (state & 1) dmaCycles = 7 * 8;
-
-    if (!fast() && (state & 2)) dmaCycles <<= 1;
-
-    dskEventCycle = dmaCycles ? (agnus.clock + dmaCycles) : 0;
-    pulseWidth = 0;
+    return out;
 }
 
 auto Paula::setDskSync(uint16_t value) -> void {
-    dskSync = value;
+    if (dskSync != value) {
+        dskSync = value;
+        if (dskSync == dskShifter)
+            setDskSyncInt();
+    }
 }
 
 auto Paula::setDskDat(uint16_t value) -> void {
@@ -147,241 +176,225 @@ auto Paula::setDskDat(uint16_t value) -> void {
 }
 
 auto Paula::dskDatR() -> uint16_t {
-    uint16_t out = getFromFifo();
+    uint8_t repeat = 1 << turbo;
+    uint16_t out = 0;
+    bool waitMode = (diskState == DiskState::WAIT_SYNC_READ) || (diskState == DiskState::WAIT_SYNC_WRITE);
 
-    if (dskTansferLength) {
-        if (!--dskTansferLength) {
-            setDskBlkInt();
-            setDskState(DiskState::OFF);
+    do {
+        if(getFromFifo(out)) {
+            if (dskTansferLength) {
+                if (!--dskTansferLength) {
+                    finishDMA(true);
+                    break;
+                }
+            }
+            if ( (repeat == 1) || waitMode)
+                break;
+            agnus.fakeDiskDma(out);
+            repeat--;
         }
-    }
+
+        handleFDControllerRead<true>();
+    } while (1);
+
     return out;
 }
 
-auto Paula::handleFDControllerRead(DiskDrive& disk) -> void {
-    if (disk.structure.type == DiskStructure::ADF) {
-        if (dmaCycles != (7 * 8)) {
-            // Basically, it is possible to change the selected drive while reading.
-            // This, of course, will not lead to any meaningful result. (for consistency only)
-            dmaCycles = 7 * 8;
-            dskShifterPos = 0;
-        }
-        // For ADF it is sufficient to read byte by byte. There is no reason to waste performance here.
-        uint8_t data = disk.readADF();
-        for(int i = 7; i >= 0; i--) {
-            dskShifter = (dskShifter << 1) | ((data >> i) & 1);
-            if ((dskShifter & 0xf) == 0)
-                // weak bits: more than 3 zeros in a row could cause random flux
-                // like EXT handling this should happen on drive side, not controller.
-                // can only happen, if track is written later on
-                dskShifter |= 1;
+auto Paula::instantDriveAccess() -> void {
+    uint8_t out = 0;
 
-            if (dskShifter == dskSync) {
-                setDskSyncInt();
-                dskSyncCycle = agnus.clock;
+    switch(diskState) {
+        case DiskState::WAIT_SYNC_READ:
+        case DiskState::READ:
+            out = activeDrive->instantRead(dskTansferLength, dskSync, diskState == DiskState::WAIT_SYNC_READ);
+            break;
+        case DiskState::WAIT_SYNC_WRITE:
+        case DiskState::WRITE: { // no support for multi selected drives
+            out = activeDrive->instantWrite(dskTansferLength, dskSync, diskState == DiskState::WAIT_SYNC_WRITE);
+        } break;
+        default:
+            return;
+    }
 
-                if (diskState == DiskState::WAIT_SYNC) {
-                    setDskState(DiskState::READ);
-                    resetFifo();
-                    return;
+    if (out & 1) setDskSyncInt();
+    if (out & 2)
+        dskEventCycle = agnus.clock + 450;
+    else
+        dskEventCycle = 0;
+
+    setDskState(DiskState::OFF);
+}
+
+template<bool readWord, bool waitTurbo> auto Paula::handleFDControllerRead() -> void {
+    unsigned iterations;
+    // Paula has no idea if a drive is selected or its motor is running.
+    // If neither applies, a dummy drive is used, which does not transmit any flux changes to Paula.
+    // this way "activeDrive" is always set, so no sanity checking needed.
+
+    switch(activeDrive->structure.type) {
+        case DiskStructure::Unknown:
+        case DiskStructure::ADF: { // msbsync and !fast unemulated, because don't make sense
+            uint8_t byte;
+            if constexpr (readWord) iterations = 2;
+            else if constexpr (waitTurbo) iterations = 1 << turbo;
+
+            do {
+                byte = activeDrive->readByte(dmaCycles);
+                for (int i = 7; i >= 0; i--) {
+                    dskShifter = (dskShifter << 1) | ((byte >> i) & 1);
+
+                    // ADF's can only contain invalid MFM (too long zero sequences) during "write" processes.
+                    // The next time you insert the disc, this will be "fixed" automatically.
+                    // Too long zero sequences lead to random flux changes due to oscillation,
+                    // which are not included on the disc, called weak bits
+                    // this should happen on drive side, not controller.
+                    // For performance reasons, we do it here, but we have to pay attention to whether the disk motor is running.
+                    // If not, there is no oscillation, same as if drive is not "selected" by CIA. Paula DKRD Pin does not change its state.
+                    if (((dskShifter & 0xf) == 0) && activeDrive->motor)
+                        dskShifter |= 1;
+
+                    if (dskShifter == dskSync) {
+                        setDskSyncInt();
+                        // When reading "DiskbytR" the sync status is displayed 2 (fast) or 4 (slow) micro seconds,
+                        // i.e. until the next bit follows and the sync status is probably no longer given.
+                        // Since whole bytes are read in one piece, we have to store a timestamp to calculate the duration of one bit.
+                        // An exact emulation is not possible with ADF but also not necessary.
+                        // It would be possible that the sync status still exists after the next bit.
+                        // But this can only be determined every 8 bits. In EXT ADF, the behavior will be emulated exactly.
+                        // However, it makes no practical sense to switch to bitwise because of such situations and thus slow down the emulation.
+                        dskSyncCycle = agnus.clock;
+
+                        if (diskState == DiskState::WAIT_SYNC_READ || diskState == DiskState::WAIT_SYNC_WRITE) {
+                            if constexpr (waitTurbo) iterations = 1;
+                            setDskState(diskState == DiskState::WAIT_SYNC_READ ? DiskState::READ : DiskState::WRITE);
+                            dskShifterPos = 0;
+                            if (diskState == DiskState::WRITE) {
+                                dmaCycles = 7;
+                                if (!getFromFifo(dskShifter))
+                                    dskShifter = 0;
+                                // Basically, even in ADF format, the sync word can be shifted by a few bits. However, this can only happen when writing the track
+                                // and before the floppy disk is inserted again. Therefore, when writing ADFs, we switch to bitwise mode and possibly correct the head
+                                // by a few bits before switching, because when reading the head is driven forward by multiples of 8.
+                                if(i) activeDrive->adjustHead(-i);
+                                break;
+                            }
+                            continue;
+                        }
+                    }
+
+                    if (byte != 0 && byte != 0xff)
+                        dskBytr = byte | 0x8000;
+
+                    if (++dskShifterPos == 16) {
+                        dskShifterPos = 0;
+                        if (dmaDisk && (diskState == DiskState::READ))
+                            addToFifo(dskShifter);
+                    }
                 }
-            }
-        }
-        dskShifterPos += 8;
-        if (dskShifterPos == 16) {
-            addToFifo(dskShifter);
-            dskShifterPos = 0;
-        }
-        return;
-    }
-    // ext adf handling (GCR or MFM stream)
-    if (dmaCycles == (7 * 8)) {
-        // same as above (for consistency only)
-        dmaCycles = fast() ? 8 : 16;
-        pulseWidth = 0;
-    }
+            } while((readWord || waitTurbo) && --iterations);
+        } break;
+        case DiskStructure::EXT: {
+            bool bit;
+            if constexpr (readWord) iterations = 16;
+            else if constexpr (waitTurbo) iterations = 1 << turbo;
 
-    if (disk.readEXT(dmaCycles)) {
-        if (pulseWidth & 1) {
-            // fuzzy bits (todo check ranges)
-            // The controller can only determine the correct number of zeros between two flux changes,
-            // if the bit cell width does not deviate too far from the standard. Some copy protections take advantage of this by writing flux changes
-            // at a distance of 5 us. The controller reads this in as episode 101 or as episode 1001. The controller itself is purely digital
-            // and does not cause fluctuations but the drive motor does. If the data is written regularly, i.e. with about 4 us,
-            // the controller always reads back the same sequence and a copy can thus be recognized.
-            if (rand() & 1) addBit(false);
+            do {
+                if constexpr (readWord || waitTurbo) iterations--;
+                bit = activeDrive->readBit(dmaCycles);
+                dskShifter <<= 1;
+                dskShifter |= bit;
 
-            addBit(true);
-        } else if (pulseWidth == 0) {
-            // too tight, flux not accepted
-            addBit(false);
-        } else
-            addBit(true);
+                if (msbSync()) { // Apple GCR
+                    // the MSB of each byte has to be a one, if not, "framing" is wrong and controller skips all zero bits.
+                    if (((dskShifterPos & 7) == 0) && ((dskShifter & 1) == 0)) {
+                        dskShifter >>= 1;
+                        if (readWord && iterations) continue;
+                        else break;
+                    }
+                } else if (dskShifter == dskSync) {
+                    setDskSyncInt();
+                    dskSyncCycle = agnus.clock;
 
-        dmaCycles = (fast() ? 8 : 16) - dmaCycles;
-        pulseWidth = 0;
-    } else {
-        // for simplicity all example calculations are done with 280 ns per DMA cycle. emulation considers PAL and NTSC timing for reading/writing
-        switch(pulseWidth++) {
-            case 0: dmaCycles = 4; break;                           // 2.240 + 1.120 = 3.360
-            case 1: dmaCycles = 4; addBit(false); break;            // 3.360 + 1.120 = 4.480    // 10x
-                // fuzzy bits (4 or 6 micro)
-            case 2: dmaCycles = 3; break;                           // 4.480 + 0.840 = 5.320
-            case 3: dmaCycles = 4; addBit(false); break;            // 5.320 + 1.120 = 6.440    // 100x
-                // fuzzy bits (6 or 8 micro)
-            case 4: dmaCycles = 3; break;                           // 6.440 + 0.840 = 7.280
-            case 5: dmaCycles = 4; addBit(false); break;            // 7.280 + 1.120 = 8.400    // 1000x
-                // following cases missing magnetization for a long period
-            case 6: dmaCycles = 3;                                  // 8.400 + 0.840 = 9.240
-                // random amount of zeros until oscilation (flux transition not on disc)
-                if (rand() & 1) pulseWidth = 9;
-                break;
-            case 7: dmaCycles = 4; addBit(false); break;            // 9.240 + 1.120 = 10.360
-            case 8: dmaCycles = 3; break;                           // 10.360 + 0.840 = 11.200
-            case 9: dmaCycles = 4; addBit(false); break;            // 11.200 + 1.120 = 12.320
-            case 10: dmaCycles = 3;                                 // 12.320 + 0.840 = 13.160
-                if (rand() & 1) pulseWidth = 13;
-                break;
-            case 11: dmaCycles = 4; addBit(false); break;           // 13.160 + 1.120 = 14.280
-            case 12: dmaCycles = 3; break;                          // 14.280 + 0.840 = 15.120
-            case 13: dmaCycles = 4;                                 // 15.120 + 1.120 = 16.240
-                // random flux transition (weak bits)
-                // this is not entirely true. it is not the controller that produces the random flux transitions, but the drive.
-                // we handle it here for performance and complexity reasons
-                addBit(true);
-                pulseWidth = 0;
-                break;
-        }
-        if (!fast()) {
-            dmaCycles <<= 1;
-            if (pulseWidth & 1) dmaCycles += 1;
-        }
+                    if (diskState == DiskState::WAIT_SYNC_READ || diskState == DiskState::WAIT_SYNC_WRITE) {
+                        setDskState(diskState == DiskState::WAIT_SYNC_READ ? DiskState::READ : DiskState::WRITE);
+                        dskShifterPos = 0;
+                        if (diskState == DiskState::WRITE) {
+                            if (!getFromFifo(dskShifter))
+                                dskShifter = 0;
+                            break;
+                        }
+
+                        if (waitTurbo) break;
+                        else if (readWord && iterations) continue;
+                        else break;
+                    }
+                }
+
+                if ((dskShifterPos & 7) == 7) {
+                    uint8_t byte = dskShifter & 0xff;
+                    if (byte != 0 && byte != 0xff)
+                        dskBytr = byte | 0x8000;
+                }
+
+                if (++dskShifterPos == 16) {
+                    dskShifterPos = 0;
+                    if (dmaDisk && (diskState == DiskState::READ))
+                        addToFifo(dskShifter);
+                }
+            } while((readWord || waitTurbo) && iterations);
+        } break;
     }
 }
 
 auto Paula::handleFDControllerWrite() -> void {
-    if (dmaCycles == 7 || dmaCycles == 14) { // EXT or ADF/EXT mixed
-        if (dskShifterPos == 0)
-            dskShifter = getFromFifo();
+    if (!dmaDisk)
+        return;
 
-        // paula would send data to all connected drives, because it doesn't know which ones are selected.
-        // we check this for performance reasons.
-        // the controller can only write with two fixed speeds. copy protections recognize this by measuring time when reading back.
-        if (disk0.connected && disk0.selected) {
-            if (disk0.structure.type == DiskStructure::EXT) disk0.writeEXT(dmaCycles, dskShifter & (1 << (15 - dskShifterPos)));
-            else if (dskShifterPos == 7)    disk0.writeADF(dskShifter >> 8);
-            else if (dskShifterPos == 15)   disk0.writeADF(dskShifter & 0xff);
-        } if (disk1.connected && disk1.selected) {
-            if (disk1.structure.type == DiskStructure::EXT) disk1.writeEXT(dmaCycles, dskShifter & (1 << (15 - dskShifterPos)));
-            else if (dskShifterPos == 7)    disk1.writeADF(dskShifter >> 8);
-            else if (dskShifterPos == 15)   disk1.writeADF(dskShifter & 0xff);
-        } if (disk2.connected && disk2.selected) {
-            if (disk2.structure.type == DiskStructure::EXT) disk2.writeEXT(dmaCycles, dskShifter & (1 << (15 - dskShifterPos)));
-            else if (dskShifterPos == 7)    disk2.writeADF(dskShifter >> 8);
-            else if (dskShifterPos == 15)   disk2.writeADF(dskShifter & 0xff);
-        } if (disk3.connected && disk3.selected) {
-            if (disk3.structure.type == DiskStructure::EXT) disk3.writeEXT(dmaCycles, dskShifter & (1 << (15 - dskShifterPos)));
-            else if (dskShifterPos == 7)    disk3.writeADF(dskShifter >> 8);
-            else if (dskShifterPos == 15)   disk3.writeADF(dskShifter & 0xff);
-        }
+    // paula would send data to all connected and selected drives.
+    // we check this in context of Paula for performance reasons.
+    // the controller can only write with two fixed speeds. copy protections recognize this by measuring time when reading back.
+    // adjusting motor speed would result in different bit cell width too. (not emulated in ADF and EXT ADF ... simply not possible)
+    bool state = dskShifter & (1 << (dskShifterPos - 1));
+    if (disk0.connected && disk0.selected)
+        disk0.writeBit(state);
+    if (disk1.connected && disk1.selected)
+        disk1.writeBit(state);
+    if (disk2.connected && disk2.selected)
+        disk2.writeBit(state);
+    if (disk3.connected && disk3.selected)
+        disk3.writeBit(state);
 
+
+    if (dskShifterPos != 16) {
         if (++dskShifterPos == 16) {
-            dskShifterPos = 0;
             if (dskTansferLength) {
-                if (!--dskTansferLength) {
-                    setDskBlkInt();
-                    setDskState(DiskState::OFF);
-                }
+                if (!--dskTansferLength)
+                    return finishDMA();
             }
         }
-    } else { // ADF only
-        // only if all writing devices use ADF discs
-        uint8_t data;
-        if (dskShifterPos == 0) {
-            dskShifter = getFromFifo();
-            data = dskShifter >> 8;
-            dskShifterPos = 8;
-        } else { // == 8
-            data = dskShifter & 0xff;
-            dskShifterPos = 0;
-            if (dskTansferLength) {
-                if (!--dskTansferLength) {
-                    setDskBlkInt();
-                    setDskState(DiskState::OFF);
-                }
-            }
-        }
-        if (disk0.connected && disk0.selected) {
-            // if an EXT disc is selected while writing, but at the start time all discs were ADF,
-            // it is now switched to bitwise. This certainly does not lead to any meaningful behavior even on a real device,
-            // but must be taken into account for consistency reasons.
-            if (disk0.structure.type == DiskStructure::EXT) dmaCycles = fast() ? 7 : 14;
-            else disk0.writeADF(data);
-        }
-        if (disk1.connected && disk1.selected) {
-            if (disk1.structure.type == DiskStructure::EXT) dmaCycles = fast() ? 7 : 14;
-            else disk1.writeADF(data);
-        }
-        if (disk2.connected && disk2.selected) {
-            if (disk2.structure.type == DiskStructure::EXT) dmaCycles = fast() ? 7 : 14;
-            else disk2.writeADF(data);
-        }
-        if (disk3.connected && disk3.selected) {
-            if (disk3.structure.type == DiskStructure::EXT) dmaCycles = fast() ? 7 : 14;
-            else disk3.writeADF(data);
-        }
+    }
+
+    if (dskShifterPos == 16) {
+        if (getFromFifo(dskShifter))    dskShifterPos = 0;
+        else                            dskShifter = 0;
     }
 }
 
-auto Paula::addBit(bool bit) -> void {
-    dskShifter <<= 1;
-    dskShifter |= bit;
-
-    if (msbSync()) { // Apple GCR
-        // the MSB of each byte has to be a one, if not, "framing" is wrong and controller skips all zero bits.
-        if (((dskShifterPos & 7) == 0) && ((dskShifter & 1) == 0)) {
-            dskShifter >>= 1;
-            return;
-        }
-    } else if (dskShifter == dskSync) {
-        setDskSyncInt();
-        dskSyncCycle = agnus.clock;
-
-        if (diskState == DiskState::WAIT_SYNC) {
-            setDskState(DiskState::READ);
-            resetFifo();
-            return;
-        }
-    }
-
-    if (++dskShifterPos == 16) {
-        dskShifterPos = 0;
-        addToFifo(dskShifter);
-    }
-}
-
-auto Paula::getFromFifo() -> uint16_t {
+inline auto Paula::getFromFifo(uint16_t& data) -> bool {
     if (fifoPos < 1)
-        return 0; // underflow
+        return false; // underflow
 
     fifoPos -= 1;
-    return (fifo >> (fifoPos << 4)) & 0xffff;
-}
-
-auto Paula::addToFifo(uint16_t data) -> bool {
-    if (fifoPos == 3)
-        return false; // overflow
-
-    fifo = (fifo << 16) | data;
-    fifoPos++;
-    fifoWritten = true;
+    data = (fifo >> (fifoPos << 4)) & 0xffff;
     return true;
 }
 
-inline auto Paula::resetFifo() -> void {
-    fifoPos = 0;
-    dskShifterPos = 0;
-    dskSyncCycle = 0;
+inline auto Paula::addToFifo(uint16_t data) -> void {
+    if (fifoPos == 3)
+        fifoPos = 2; // overflow
+
+    fifo = (fifo << 16) | data;
+    fifoPos++;
 }
 
 auto Paula::setDskState(DiskState next) -> void {

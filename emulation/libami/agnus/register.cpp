@@ -64,10 +64,16 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
 
     switch(adr) {
         case 0x20:
-            updateEventAndExecuteExistingBefore<EVENT_ONE_CYCLE_DELAY>(PTR_DSK_H, 1, value);
+            if (paula.turbo)
+                setDskPtH(value);
+            else
+                updateEventAndExecuteExistingBefore<EVENT_ONE_CYCLE_DELAY>(PTR_DSK_H, 1, value);
             break;
         case 0x22:
-            updateEventAndExecuteExistingBefore<EVENT_ONE_CYCLE_DELAY>(PTR_DSK_L, 1, value);
+            if (paula.turbo)
+                setDskPtL(value);
+            else
+                updateEventAndExecuteExistingBefore<EVENT_ONE_CYCLE_DELAY>(PTR_DSK_L, 1, value);
             break;
         case 0x24:
             paula.setDskLen(value);

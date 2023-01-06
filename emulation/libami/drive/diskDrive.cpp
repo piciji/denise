@@ -2,7 +2,9 @@
 #include "diskDrive.h"
 #include "../agnus/agnus.h"
 #include "../paula/paula.h"
+#include "../interface.h"
 #include "../system/system.h"
+#include "instantDiskDrive.cpp"
 
 #define LIBAMI_MOTOR_ACCELERATION_CYCLES agnus.msecToDMACycles(360)
 #define LIBAMI_MOTOR_DECELERATION_CYCLES agnus.msecToDMACycles(480)
@@ -14,9 +16,10 @@ namespace LIBAMI {
 typedef Emulator::Interface::DriveSound DriveSound;
 
 DiskDrive::DiskDrive(uint8_t number, System* system, Agnus& agnus, Cia<MOS_8520>& cia)
-: system(system), number(number), agnus(agnus), cia(cia), structure(agnus) {
-    this->interface = system->interface;
+: number(number), system(system), agnus(agnus), cia(cia), structure(agnus) {
+    interface = system->interface;
     media = &interface->mediaGroups[Interface::MediaGroupIdDisk].media[number];
+    track = getDummyTrack();
 }
 
 unsigned DiskDrive::rpm = 30000;
@@ -26,7 +29,7 @@ unsigned DiskDrive::stepperSeekTimeBase = 0;
 // updated each frame, depends on region
 unsigned DiskDrive::refCyclesPerRevolutionBase = 709379;
 
-auto DiskDrive::readADF() -> uint8_t {
+auto DiskDrive::readByte(uint16_t& dmaCycles) -> uint8_t {
     // todo: simulate deceleration more realistic (like d64)
     // e.g. there are some C64 games which expect to read some data from disc after motor has stopped.
     if ((!motor && (motorSpeed < 20)) || !inserted )
@@ -34,58 +37,42 @@ auto DiskDrive::readADF() -> uint8_t {
 
     if (stepSettleClock) progressStepper();
 
-    uint8_t data = track->data[headOffset]; // no sanity check needed, all possible tracks were created before
+    unsigned refCyclesPerRevolutionScaled = refCyclesPerRevolution << 3;
+    accum += track->bits * dmaCycles;
+    accum -= refCyclesPerRevolutionScaled;
 
-    if (++headOffset == track->length) {
+    unsigned todo = refCyclesPerRevolutionScaled - accum;
+    // Depending on the current motor speed, it is determined how many DMA cycles are necessary until the next byte is read.
+    // That way, we don't have to work with fractional numbers. carry is remembered in "accum".
+    dmaCycles = (todo + track->bits - 1) / track->bits;
+
+    unsigned byteOffset = (headOffset + 7) >> 3;
+    uint8_t byte = track->data[byteOffset];
+
+    if (++byteOffset >= track->length) {
         headOffset = 0;
         cia.setFlag();
-    }
+    } else
+        headOffset = byteOffset << 3;
 
-    return data;
+    return byte;
 }
 
-auto DiskDrive::writeADF(uint8_t data) -> void {
-    if ((!motor && (motorSpeed < 20)) || !inserted )
-        return;
-
-    if (stepSettleClock) progressStepper();
-
-    unsigned offset = headOffset;
-    if (++headOffset == track->length) {
-        headOffset = 0;
-        cia.setFlag();
-    }
-
-    if (structure.writeProtected)
-        return;
-
-    track->data[offset] = data;
-
-    if (!written)
-        written = true;
-
-    track->written |= 1; // track data has changed, host have to write back
-}
-
-auto DiskDrive::readEXT(uint8_t& dmaCycles) -> bool {
+auto DiskDrive::readBit(uint16_t& dmaCycles) -> bool {
     if ((!motor && (motorSpeed < 20)) || !inserted )
         return false;
 
     if (stepSettleClock) progressStepper();
 
+    // track bit field in header determines bitcell width
     accum += track->bits * dmaCycles;
+    accum -= refCyclesPerRevolution;
 
-    // track bit field in header determines bit cell width
-    if (accum >= refCyclesPerRevolution) {
-        accum -= refCyclesPerRevolution;
-        dmaCycles = accum / track->bits;
-        return readBit();
-    }
+    unsigned todo = refCyclesPerRevolution - accum;
+    // Depending on the current motor speed and bit cell width noted in the header, it is determined how many DMA cycles are necessary
+    // until the next bit is read. That way, we don't have to work with fractional numbers. Transfer is remembered in "accum".
+    dmaCycles = (todo + track->bits - 1) / track->bits;
 
-    return false;
-}
-
-inline auto DiskDrive::readBit() -> bool {
     unsigned byte = headOffset >> 3;
     uint8_t bit = (~headOffset) & 7; // msb is next
 
@@ -95,33 +82,40 @@ inline auto DiskDrive::readBit() -> bool {
         cia.setFlag();
     }
 
-    return (track->data[byte] >> bit) & 1;
+    bool state = (track->data[byte] >> bit) & 1;
+
+    // weak bits
+    if (state)
+        randCounter = ( (randomizer.xorShift() >> 16 ) & 7) + 51; // 14.5 - 16.5
+    else {
+        if (dmaCycles >= randCounter) {
+            state = true; // oscilation
+            randCounter = ( (randomizer.xorShift() >> 16 ) % 31) + 44;
+        } else
+            randCounter -= dmaCycles;
+    }
+
+    return state;
 }
 
-auto DiskDrive::writeEXT(unsigned dmaCycles, bool bit) -> void {
+auto DiskDrive::writeBit(bool state) -> void {
     if ((!motor && (motorSpeed < 20)) || !inserted )
         return;
 
     if (stepSettleClock) progressStepper();
 
-    accum += track->bits * dmaCycles;
+    // no support for writing a custom bitcell width while adjusting motor speed.
+    // basically possible in EXT ADF, but only with compromises ... see explanation in fdc.cpp
+    accum = 0;
 
-    if (accum >= refCyclesPerRevolution) {
-        accum -= refCyclesPerRevolution;
-    }
-
-    // controller writes with a fixed bit cell width
-    writeBit(bit);
-}
-
-inline auto DiskDrive::writeBit( bool state ) -> void {
     unsigned byte = headOffset >> 3;
     uint8_t bit = (~headOffset) & 7; // msb is next
 
     headOffset++;
-
-    if ( headOffset >= track->bits )
-        headOffset = 0; // wrap around the ring buffer
+    if ( headOffset >= track->bits ) {
+        headOffset = 0;
+        cia.setFlag();
+    }
 
     if (structure.writeProtected)
         return;
@@ -133,8 +127,20 @@ inline auto DiskDrive::writeBit( bool state ) -> void {
 
     if (!written)
         written = true;
-
     track->written |= 1; // track data has changed, host have to write back
+}
+
+auto DiskDrive::adjustHead(int offset) -> void {
+    if (offset >= 0) {
+        headOffset += offset;
+        if (headOffset >= track->bits)
+            headOffset -= track->bits;
+    } else {
+        if (headOffset >= offset)
+            headOffset -= offset;
+        else
+            headOffset = track->bits - (offset - headOffset);
+    }
 }
 
 auto DiskDrive::progressStepper() -> void {
@@ -151,32 +157,68 @@ auto DiskDrive::attach(uint8_t* data, unsigned size) -> bool {
 
     inserted = true;
     stepSettleClock = 0;
+    accum = 0;
     updateRpm();
 
     if (driveSound && system->powerOn)
         interface->mixDriveSound( media, DriveSound::FloppyInsert );
 
+    updateTrack();
     return true;
 }
 
 auto DiskDrive::detach() -> void {
+    write();
     structure.detach();
     dskChangeClock = agnus.clock;
     stepSettleClock = 0;
-
     if (driveSound && inserted && system->powerOn)
         interface->mixDriveSound( media, DriveSound::FloppyEject );
 
     dskChange = true;
     inserted = false;
+    track = getDummyTrack();
+}
+
+auto DiskDrive::write() -> void {
+    if (!written)
+        return;
+
+    written = false;
+
+    if (structure.serializationSize) {
+        system->serializationSize -= structure.serializationSize;
+        structure.serializationSize = 0;
+    }
+
+    if (!inserted)
+        return;
+
+    if (!interface->questionToWrite(media))
+        return;
+
+    structure.storeWrittenTracks();
 }
 
 auto DiskDrive::power() -> void {
+    selected = false;
+    motor = false;
+    idPos = 0;
+    motorClock = 0;
+    motorSpeed = 0;
     dskChangeClock = 0;
     dskChange = true;
-    motor = false;
     stepClock = agnus.clock;
+    stepSettleClock = 0;
+    nextStep = 0;
+    cylinder = 0;
+    side = 0;
+    headOffset = 0;
+    accum = 0;
     stepperSeekTime = (stepperSeekTimeBase * agnus.frequency()) / 10000;
+    structure.serializationSize = 0;
+    randomizer.initXorShift( 0x1234abcd );
+    randCounter = ~0;
 
     if (driveSound && inserted && !system->powerOn)
         interface->mixDriveSound(media, DriveSound::FloppyInsert);
@@ -184,6 +226,7 @@ auto DiskDrive::power() -> void {
 
 auto DiskDrive::powerOff() -> void {
     motor = false;
+    write();
 }
 
 auto DiskDrive::readCiaPortA() -> uint8_t {
@@ -303,6 +346,8 @@ auto DiskDrive::step(bool dir, bool updTrack) -> void {
 
     if (updTrack)
         updateTrack();
+
+    randCounter = ~0;
 }
 
 inline auto DiskDrive::updateTrack() -> void {
@@ -355,6 +400,50 @@ auto DiskDrive::enableSounds(bool state) -> void {
 
     if (state && motor)
         interface->mixDriveSound( media, DriveSound::FloppySpin );
+}
+
+auto DiskDrive::getDummyTrack() -> DiskStructure::Track* {
+    static DiskStructure::Track* dummyTrack = nullptr;
+
+    if (!dummyTrack) { // one time init, instance doesn't matter
+        dummyTrack = new DiskStructure::Track;
+        structure.initTrack( *dummyTrack );
+    }
+
+    return dummyTrack;
+}
+
+auto DiskDrive::serialize(Emulator::Serializer& s) -> void {
+    s.integer(connected);
+    if (!connected)
+        return;
+
+    s.integer(selected);
+    s.integer(motor);
+    s.integer(inserted);
+    s.integer(idPos);
+    s.integer(motorClock);
+    s.integer(motorSpeed);
+    s.integer(dskChangeClock);
+    s.integer(dskChange);
+    s.integer(written);
+    s.integer(cylinder);
+    s.integer(side);
+    s.integer(headOffset);
+    s.integer(refCyclesPerRevolution);
+    s.integer(accum);
+    s.integer(stepClock);
+    s.integer(stepSettleClock);
+    s.integer(nextStep);
+    s.integer(stepperSeekTime);
+    s.integer(randomizer.xorShift32);
+    s.integer(randCounter);
+
+    if (s.mode() == Emulator::Serializer::Mode::Load) {
+        updateTrack();
+    }
+
+    structure.serialize( s, written );
 }
 
 }

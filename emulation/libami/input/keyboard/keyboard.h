@@ -1,12 +1,12 @@
 
 #pragma once
 
+#include "../../../interface.h"
+#include "../../../tools/circularBuffer.h"
+
 namespace Emulator {
     struct Serializer;
 }
-
-#include "../../../interface.h"
-#include "../../../tools/circularBuffer.h"
 
 #define MOS_8520 1
 template<uint8_t model>

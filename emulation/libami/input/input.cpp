@@ -2,6 +2,7 @@
 #include "input.h"
 #include "controlPort/controlPort.h"
 #include "../system/system.h"
+#include "../interface.h"
 #include "../agnus/agnus.h"
 #include "../../tools/bits.h"
 
@@ -12,8 +13,9 @@
 
 namespace LIBAMI {
 
-Input::Input(Agnus& agnus, Cia<MOS_8520>& cia1, Emulator::Interface* interface) : cia1(cia1), agnus(agnus), keyboard(interface, agnus, cia1) {
-    this->interface = interface;
+Input::Input(System* system, Agnus& agnus, Cia<MOS_8520>& cia1)
+: system(system), cia1(cia1), agnus(agnus), keyboard(interface, agnus, cia1) {
+    this->interface = system->interface;
 
     controlPort1 = new ControlPort(interface);
     controlPort2 = new ControlPort(interface);
@@ -51,7 +53,7 @@ auto Input::readDenisePortB() -> uint16_t {
 
 auto Input::checkForEmergencyPoll() -> void {
     if (sampling.emergencyPolling) {
-        system->interface->jitPoll(0);
+        interface->jitPoll(0);
         sampling.emergencyPolling = false;
     }
 }
@@ -59,12 +61,12 @@ auto Input::checkForEmergencyPoll() -> void {
 inline auto Input::jitPoll() -> void {
 
     if (sampling.allow && (sampling.emergencyPolling || (sampling.mode == Dynamic_Sampling) || (sampling.midscreen < 2))) {
-        if (system->interface->jitPoll(sampling.emergencyPolling ? 0 : (sampling.mode == Restricted_Dynamic_Sampling ? 5 : -1))) {
+        if (interface->jitPoll(sampling.emergencyPolling ? 0 : (sampling.mode == Restricted_Dynamic_Sampling ? 5 : -1))) {
             sampling.emergencyPolling = false;
             sampling.midscreen++;
             controlPort1->poll();
             controlPort2->poll();
-            //system->interface->log(vicII->getVcounter(), false);
+            //interface->log(vicII->getVcounter(), false);
         }
     }
 }
@@ -72,8 +74,8 @@ inline auto Input::jitPoll() -> void {
 auto Input::initFrame() -> void {
 
     // bool jitDisable = !sampling.allow || (sampling.midscreen == 0);
-    //system->interface->log("jit ", true);
-    //system->interface->log( !jitDisable ? "on" : "off", false );
+    //interface->log("jit ", true);
+    //interface->log( !jitDisable ? "on" : "off", false );
 
     if (!sampling.allow) {
         controlPort1->poll();
@@ -189,12 +191,12 @@ auto Input::serialize(Emulator::Serializer& s) -> void {
 
     keyboard.serialize( s );
 
-    for( auto& connector : system->interface->connectors ) {
+    for( auto& connector : interface->connectors ) {
 
         Interface::Device* device = getConnectedDevice( &connector );
 
         if (!device)
-            device = system->interface->getUnplugDevice();
+            device = interface->getUnplugDevice();
 
         unsigned deviceId = device->id;
 
@@ -205,7 +207,7 @@ auto Input::serialize(Emulator::Serializer& s) -> void {
             if (deviceId != device->id) {
                 // state was generated with another connected device.
                 // we need to connect the requested device.
-                device = system->interface->getDevice( deviceId );
+                device = interface->getDevice( deviceId );
 
                 connectControlport( &connector, device );
             }

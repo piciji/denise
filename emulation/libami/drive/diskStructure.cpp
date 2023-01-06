@@ -12,7 +12,9 @@
 
 namespace LIBAMI {
 
-DiskStructure::DiskStructure(Agnus& agnus) : agnus(agnus) {}
+DiskStructure::DiskStructure(Agnus& agnus) : agnus(agnus) {
+    writeProtected = true;
+}
 
 DiskStructure::~DiskStructure() {
     for(unsigned i = 0; i < LIBAMI_MAX_TRACKS; i++) {
@@ -48,6 +50,7 @@ auto DiskStructure::detach() -> void {
     rawSize = 0;
     type = Type::Unknown;
     writeProtected = false;
+    hd = false;
 }
 
 auto DiskStructure::analyze(uint8_t* data, unsigned size) -> bool {
@@ -80,6 +83,7 @@ auto DiskStructure::storeWrittenTracks() -> void {
         Track& track = tracks[i];
         if (track.written & 1) {
             if (type == Type::ADF) {
+                std::memset(buffer, 0, sectors * 512);
                 decodeTrack(track, buffer);
                 write(buffer, sectors * 512, sectors * 512 * i);
             } else if (type == Type::EXT) {
@@ -91,7 +95,7 @@ auto DiskStructure::storeWrittenTracks() -> void {
     }
 }
 
-auto DiskStructure::create( Type type, std::string name, bool hd, bool ffs, bool bootable ) -> Emulator::Interface::Data {
+auto DiskStructure::create( System* system, Type type, std::string name, bool hd, bool ffs, bool bootable ) -> Emulator::Interface::Data {
     DiskStructure disk(system->agnus);
     disk.hd = hd;
     unsigned size = disk.getADFCreationImageSize();
@@ -144,7 +148,7 @@ auto DiskStructure::getListing() -> std::vector<Emulator::Interface::Listing> {
     return {};
 }
 
-auto DiskStructure::getPreview(uint8_t* data, unsigned size) -> std::vector<Emulator::Interface::Listing> {
+auto DiskStructure::getPreview(System* system, uint8_t* data, unsigned size) -> std::vector<Emulator::Interface::Listing> {
     DiskStructure disk(system->agnus);
 
     if (!disk.attach( data, size ))
@@ -153,7 +157,10 @@ auto DiskStructure::getPreview(uint8_t* data, unsigned size) -> std::vector<Emul
     return disk.getListing();
 }
 
-auto DiskStructure::initTrack(Track& track, unsigned newLength) -> void {
+auto DiskStructure::initTrack(Track& track, unsigned newLength, unsigned bits) -> void {
+    if (!newLength)
+        newLength = getTrackByteLength();
+
     if (!track.data) {
         track.data = new uint8_t[newLength];
     } else if (newLength != track.length) {
@@ -161,9 +168,9 @@ auto DiskStructure::initTrack(Track& track, unsigned newLength) -> void {
         track.data = new uint8_t[newLength];
     }
 
-    std::memset( track.data, 0xaa, newLength );
+    std::memset( track.data, 0, newLength );
     track.length = newLength;
-    track.bits = getTrackBitLength();
+    track.bits = bits == 0 ? getTrackBitLength() : bits;
     track.written = 0;
 }
 
@@ -175,8 +182,60 @@ auto DiskStructure::getTrackByteLength() -> unsigned {
     return (getTrackBitLength() + 7) / 8;
 }
 
-auto DiskStructure::serialize(Emulator::Serializer& s, bool written) -> void {
+auto DiskStructure::updateSerializationSize() -> void {
+    if (serializationSize)
+        agnus.system->serializationSize -= serializationSize;
 
+    serializationSize = 0;
+    for (unsigned i = 0; i < LIBAMI_MAX_TRACKS; i++) {
+        Track& track = tracks[i];
+        serializationSize += 1;
+        if (!(track.written & 1))
+            continue;
+
+        serializationSize += 4 + 4 + track.length;
+    }
+
+    agnus.system->serializationSize += serializationSize;
+}
+
+auto DiskStructure::serialize(Emulator::Serializer& s, bool written) -> void {
+    s.integer( (int&)type );
+    s.integer( hd );
+    s.integer( trackCount );
+    s.integer( rawSize );
+    s.integer( writeProtected );
+    s.integer( serializationSize );
+
+    if (!written || (s.mode() == Emulator::Serializer::Mode::Size))
+        return;
+
+    for (unsigned i = 0; i < LIBAMI_MAX_TRACKS; i++) {
+        Track& track = tracks[i];
+        s.integer(track.written);
+
+        if (!(track.written & 1))
+            continue;
+
+        unsigned _trackLength = track.length;
+        s.integer(track.length);
+        s.integer(track.bits);
+
+        if (s.mode() == Emulator::Serializer::Mode::Load) {
+            if (_trackLength != track.length) {
+                if (track.data)
+                    delete[] track.data;
+
+                track.data = nullptr;
+
+                if (track.length)
+                    track.data = new uint8_t[track.length];
+            }
+        }
+
+        if (track.length)
+            s.array(track.data, track.length);
+    }
 }
 
 }

@@ -92,47 +92,58 @@ auto DiskStructure::separateOddEven(uint8_t* dst, uint8_t src[], unsigned size) 
     }
 }
 
+auto DiskStructure::shiftData(uint8_t* dst, uint8_t* src, unsigned size, uint8_t shift) -> void {
+    for (unsigned i = 0; i < size; ++i, ++src, ++dst)
+        *dst = ((*src) << shift) | (*(src + 1) >> (8 - shift));
+}
+
 auto DiskStructure::decodeTrack(Track& track, uint8_t* userData) -> void {
-    uint8_t* ptr = track.data;
     unsigned length = track.length;
     unsigned sectors = hd ? 22 : 11;
-    unsigned syncMark;
-    unsigned sector = 0;
+    uint32_t compare;
+    bool match;
+    uint8_t temp;
     unsigned index = 0;
-    std::vector<unsigned> syncs(sectors);
+    unsigned b = 0;
+    uint8_t buffer[64 + 1024];
+    uint8_t* ptr = new uint8_t[track.length + 1100];
+    std::memcpy(ptr, track.data, track.length);
+    std::memcpy(ptr + track.length, track.data, 1100); // overflow
+    compare = Emulator::copyBufferToIntBigEndian<uint32_t>( ptr + track.length - 4 );
 
-    while((length >= 4) && (sector < sectors)) {
-        syncMark = Emulator::copyBufferToIntBigEndian<uint32_t>( &ptr[index++] );
-        length -= 1;
+    while(1) {
+        temp = *(ptr + index);
+        if (b) temp <<= b;
+        match = false;
+        for(; b < 8; b++) {
+            if (compare == 0x44894489) {
+                match = true;
+                break;
+            }
+            compare = (compare << 1) | (temp >> 7);
+            temp <<= 1;
+        }
 
-        if (syncMark != 0x44894489)
-            continue;
+        if (match) {
+            shiftData(buffer, ptr + index, 64 + 1024, b);
 
-        index += 3;
-        length -= 3;
-        syncs[sector++] = index;
+            uint8_t info[4];
+            joinOddEven(info, buffer, 4);
+            uint8_t sector = info[2];
+            if (sector < sectors)
+                joinOddEven(userData + sector * 512, buffer + 64, 512);
+
+            index += 64 + 1024;
+            compare = 0;
+            if (index >= length)
+                break;
+        } else {
+            if (++index >= length)
+                break;
+            b = 0;
+        }
     }
-
-    length = track.length;
-
-    for (auto& sectorIndex : syncs) {
-        uint8_t info[4];
-
-        if ( (sectorIndex + 8) > length)
-            continue;
-
-        joinOddEven(info, ptr + sectorIndex, 4);
-
-        sector = info[2];
-
-        if (sector >= sectors)
-            continue;
-
-        if ( (sectorIndex + 64 + 1024) > length)
-            continue;
-
-        joinOddEven(userData + sector * 512, ptr + sectorIndex + 64, 512);
-    }
+    delete[] ptr;
 }
 
 auto DiskStructure::joinOddEven(uint8_t* dst, uint8_t* src, unsigned size) -> void {
@@ -152,7 +163,7 @@ auto DiskStructure::joinOddEven(uint8_t* dst, uint8_t* src, unsigned size) -> vo
 // 1		=> 01 [2 + 2 micro]
 // 0		=> 10 or 00 (if previous data bit is 1)  [2 + 2 micro]
 //
-// Since there are never two ones right next to each other, the bit cell can be reduced from 4 micro to 2 without the flow change too tight.
+// Since there are never two "ones" (flux changes) right next to each other, the bitcell can be reduced from 4 micro to 2 without the flux change too tight.
 // and thus achieve a doubling of the data density from FM to MFM
 
 auto DiskStructure::addClockBits( uint16_t* raw, unsigned words) -> void {

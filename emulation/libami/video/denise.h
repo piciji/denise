@@ -9,15 +9,17 @@ namespace Emulator {
 
 namespace LIBAMI {
 
+struct System;
 struct Agnus;
 struct Input;
 
 // A1000 + OCS Denise, todo: ECS Denise
 struct Denise {
-    Denise(Agnus& agnus, Input& input);
+    Denise(System* system, Agnus& agnus, Input& input);
     ~Denise();
 
     enum Model : uint8_t { OCS_A1000_NO_EHB = 1, OCS_A1000 = 2, OCS = 4 } model = OCS;
+    System* system;
     Agnus& agnus;
     Input& input;
 

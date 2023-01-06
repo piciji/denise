@@ -1,5 +1,6 @@
 
 #include "system.h"
+#include "../interface.h"
 #include "../input/input.h"
 #include "../../tools/sanitizer.h"
 #include  "../../tools/macros.h"
@@ -7,18 +8,17 @@
 
 namespace LIBAMI {
 
-System* system = nullptr;
-
 System::System(Interface* interface) :
 interface(interface),
 cia1(1),
 cia2(2),
 cpu(agnus),
-denise(agnus, input),
+denise(this, agnus, input),
+dummyDrive(~0, this, agnus, cia2),
 diskDrives { {0, this, agnus, cia2}, {1, this, agnus, cia2}, {2, this, agnus, cia2}, {3, this, agnus, cia2} },
-paula(agnus, cpu, input, diskDrives[0], diskDrives[1], diskDrives[2], diskDrives[3]),
-agnus(cpu, denise, paula, cia1, cia2, input),
-input(agnus, cia1, interface) {
+paula(this, agnus, cpu, input, diskDrives[0], diskDrives[1], diskDrives[2], diskDrives[3]),
+agnus(this, cpu, denise, paula, cia1, cia2, input),
+input(this, agnus, cia1) {
 
     cia1.serialOut = [this](bool spLine, bool cntLine) {
         // Keyboard computer is not interested in CNT line changes, triggered by CIA
@@ -63,11 +63,18 @@ input(agnus, cia1, interface) {
 
         if ( port == Cia<MOS_8520>::PORTA ) {
             cia2.setCNTAndSP( lines->ioa & 2, lines->ioa & 1 );
+
         } else if (lines->iob != lines->iobOld) {
+            paula.activeDrive = nullptr;
             for(auto& drive : diskDrives) {
-                if (drive.connected)
-                    drive.writeCiaPortB( lines->iob, lines->iobOld );
+                if (drive.connected) {
+                    drive.writeCiaPortB(lines->iob, lines->iobOld);
+                    if (!paula.activeDrive && drive.selected)
+                        paula.activeDrive = &drive;
+                }
             }
+            if (!paula.activeDrive)
+                paula.activeDrive = &dummyDrive;
         }
     };
 
@@ -96,6 +103,9 @@ input(agnus, cia1, interface) {
         left = denise.crop.left;
         right = denise.crop.right;
     };
+
+    dummyDrive.power();
+    paula.activeDrive = &dummyDrive;
 }
 
 auto System::power(bool softReset, bool resetInstruction) -> void {
@@ -299,8 +309,8 @@ auto System::hintSlowSpeed(bool state) -> void {
         fastForward.config &= ~(unsigned)Interface::FastForward::SlowSpeed;
 }
 
-auto System::setRegion( Interface::Region region ) -> void {
-    agnus.ntsc = region == Interface::Region::Ntsc;
+auto System::setRegion( int region ) -> void {
+    agnus.ntsc = (Interface::Region)region == Interface::Region::Ntsc;
     paula.setFilter();
     agnus.resetFps();
     updateStats();
