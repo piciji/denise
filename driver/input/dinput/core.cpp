@@ -245,6 +245,10 @@ struct DI_IDENT_CORE : DI_IDENT {
 	}
 	
     auto term() -> void {
+        if(workerThread) {
+            DeleteCriticalSection(&criticalSection);
+            TerminateThread(workerThread, 0);
+        }
 		dxRelease(din);
 		dxRelease(dinKey);
 		dxRelease(dinMouse);
@@ -261,10 +265,6 @@ struct DI_IDENT_CORE : DI_IDENT {
 		if(hidMouse) delete hidMouse, hidMouse = nullptr;
 		if(hidKeyboard) delete hidKeyboard, hidKeyboard = nullptr;	
 		if(hwndHotPlug) DestroyWindow(hwndHotPlug), hwndHotPlug = nullptr;
-        if(workerThread) {
-            DeleteCriticalSection(&criticalSection);
-            TerminateThread(workerThread, 0);
-        }
         if(changeHandler) CloseHandle(changeHandler), changeHandler = nullptr;
 	}
 
