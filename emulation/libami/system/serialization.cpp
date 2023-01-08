@@ -99,27 +99,17 @@ auto System::unserialize(uint8_t* data, unsigned size) -> bool {
 
 auto System::serializeAll(Emulator::Serializer& s) -> void {
 
-    serialize( s );
+    s.integer( serializationSize );
+    cpu.serialize( s );
     agnus.serialize( s );
     cia1.serialize( s );
     cia2.serialize( s );
     denise.serialize( s );
     paula.serialize( s );
+    input.serialize( s );
 
     for(auto& drive : diskDrives)
         drive.serialize(s);
-
-    input.serialize( s );
-}
-
-auto System::serialize(Emulator::Serializer& s) -> void {
-
-
-
-    s.integer( serializationSize );
-
-
-    cpu.serialize( s );
 }
 
 // for runahead
@@ -130,19 +120,16 @@ auto System::serializeLight() -> void {
     s.setData( serializationSize );
     s.setMode( Emulator::Serializer::Mode::Save );
 
-    serialize(s);
+    cpu.serialize(s);
     agnus.serialize(s);
     cia1.serialize(s);
     cia2.serialize(s);
     denise.serialize(s);
-    paula.serialize(s, runAhead.frames);
-
+    paula.serialize(s, runAhead.frames > 1);
     input.serialize(s);
 
-    for(auto& drive : diskDrives) {
-        s.integer(drive.connected);
-        drive.connected = false;
-    }
+    for(auto& drive : diskDrives)
+        drive.serialize(s, true);
 }
 
 auto System::unserializeLight() -> void {
@@ -151,16 +138,16 @@ auto System::unserializeLight() -> void {
 
     s.setMode( Emulator::Serializer::Mode::Load );
 
-    serialize(s);
+    cpu.serialize(s);
+    agnus.serialize(s);
     cia1.serialize(s);
     cia2.serialize(s);
     denise.serialize(s);
-    paula.serialize(s, runAhead.frames);
-
+    paula.serialize(s, runAhead.frames > 1);
     input.serialize(s);
 
     for(auto& drive : diskDrives)
-        s.integer(drive.connected);
+        drive.serialize(s, true);
 }
 
 }

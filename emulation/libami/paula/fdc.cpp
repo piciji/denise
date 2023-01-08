@@ -87,8 +87,6 @@
 namespace LIBAMI {
 
 auto Paula::setDskLen(uint16_t value) -> void {
-    if (lockFDC)
-        return;
     uint16_t oldValue = dskLen;
     dskTansferLength = value & 0x3fff;
     dskLen = value;
@@ -206,11 +204,13 @@ auto Paula::instantDriveAccess() -> void {
     switch(diskState) {
         case DiskState::WAIT_SYNC_READ:
         case DiskState::READ:
-            out = activeDrive->instantRead(dskTansferLength, dskSync, diskState == DiskState::WAIT_SYNC_READ);
+            if (!system->runAhead.frames || (system->runAhead.frames == system->runAhead.pos))
+                out = activeDrive->instantRead(dskTansferLength, dskSync, diskState == DiskState::WAIT_SYNC_READ);
             break;
         case DiskState::WAIT_SYNC_WRITE:
         case DiskState::WRITE: { // no support for multi selected drives
-            out = activeDrive->instantWrite(dskTansferLength, dskSync, diskState == DiskState::WAIT_SYNC_WRITE);
+            if (!system->runAhead.frames || (system->runAhead.frames == system->runAhead.pos))
+                out = activeDrive->instantWrite(dskTansferLength, dskSync, diskState == DiskState::WAIT_SYNC_WRITE);
         } break;
         default:
             return;
@@ -274,7 +274,7 @@ template<bool readWord, bool waitTurbo> auto Paula::handleFDControllerRead() -> 
                                     dskShifter = 0;
                                 // Basically, even in ADF format, the sync word can be shifted by a few bits. However, this can only happen when writing the track
                                 // and before the floppy disk is inserted again. Therefore, when writing ADFs, we switch to bitwise mode and possibly correct the head
-                                // by a few bits before switching, because when reading the head is driven forward by multiples of 8.
+                                // according the sync word by a few bits before switching, because when reading the head is driven forward by multiples of 8.
                                 if(i) activeDrive->adjustHead(-i);
                                 break;
                             }
@@ -363,7 +363,6 @@ auto Paula::handleFDControllerWrite() -> void {
         disk2.writeBit(state);
     if (disk3.connected && disk3.selected)
         disk3.writeBit(state);
-
 
     if (dskShifterPos != 16) {
         if (++dskShifterPos == 16) {

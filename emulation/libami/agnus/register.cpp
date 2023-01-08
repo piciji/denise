@@ -365,9 +365,9 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
             bplCon0 = value & ~0xb1;
 
             if (bplState) {
-                bplCycle &= ~0x30; // lores
-                if (bplCon0 & 0x40) bplCycle |= 0x20; // shires
-                else if (bplCon0 & 0x8000) bplCycle |= 0x10; // hires
+                bplCycle &= ~(BPL_HIRES | BPL_SHIRES); // lores
+                if (ecsAndHigher() && (bplCon0 & 0x40)) bplCycle |= BPL_SHIRES;
+                else if (bplCon0 & 0x8000) bplCycle |= BPL_HIRES;
             }
             updateHarddis();
             denise.setBplCon0(value);
@@ -395,52 +395,52 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
         case 0x11a: denise.setBpl6Dat(value); break;
 
         case 0x120:
-            if ((sprQueue & 0x87) != 0x80) setSpr1ptH<0>(value);
+            if ((sprQueue & 0x87) != 0x80) setSprptH<0>(value);
             break;
         case 0x122:
-            if ((sprQueue & 0x87) != 0x80) setSpr1ptL<0>(value);
+            if ((sprQueue & 0x87) != 0x80) setSprptL<0>(value);
             break;
         case 0x124:
-            if ((sprQueue & 0x87) != 0x81) setSpr1ptH<1>(value);
+            if ((sprQueue & 0x87) != 0x81) setSprptH<1>(value);
             break;
         case 0x126:
-            if ((sprQueue & 0x87) != 0x81) setSpr1ptL<1>(value);
+            if ((sprQueue & 0x87) != 0x81) setSprptL<1>(value);
             break;
         case 0x128:
-            if ((sprQueue & 0x87) != 0x82) setSpr1ptH<2>(value);
+            if ((sprQueue & 0x87) != 0x82) setSprptH<2>(value);
             break;
         case 0x12a:
-            if ((sprQueue & 0x87) != 0x82) setSpr1ptL<2>(value);
+            if ((sprQueue & 0x87) != 0x82) setSprptL<2>(value);
             break;
         case 0x12c:
-            if ((sprQueue & 0x87) != 0x83) setSpr1ptH<3>(value);
+            if ((sprQueue & 0x87) != 0x83) setSprptH<3>(value);
             break;
         case 0x12e:
-            if ((sprQueue & 0x87) != 0x83) setSpr1ptL<3>(value);
+            if ((sprQueue & 0x87) != 0x83) setSprptL<3>(value);
             break;
         case 0x130:
-            if ((sprQueue & 0x87) != 0x84) setSpr1ptH<4>(value);
+            if ((sprQueue & 0x87) != 0x84) setSprptH<4>(value);
             break;
         case 0x132:
-            if ((sprQueue & 0x87) != 0x84) setSpr1ptL<4>(value);
+            if ((sprQueue & 0x87) != 0x84) setSprptL<4>(value);
             break;
         case 0x134:
-            if ((sprQueue & 0x87) != 0x85) setSpr1ptH<5>(value);
+            if ((sprQueue & 0x87) != 0x85) setSprptH<5>(value);
             break;
         case 0x136:
-            if ((sprQueue & 0x87) != 0x85) setSpr1ptL<5>(value);
+            if ((sprQueue & 0x87) != 0x85) setSprptL<5>(value);
             break;
         case 0x138:
-            if ((sprQueue & 0x87) != 0x86) setSpr1ptH<6>(value);
+            if ((sprQueue & 0x87) != 0x86) setSprptH<6>(value);
             break;
         case 0x13a:
-            if ((sprQueue & 0x87) != 0x86) setSpr1ptL<6>(value);
+            if ((sprQueue & 0x87) != 0x86) setSprptL<6>(value);
             break;
         case 0x13c:
-            if ((sprQueue & 0x87) != 0x87) setSpr1ptH<7>(value);
+            if ((sprQueue & 0x87) != 0x87) setSprptH<7>(value);
             break;
         case 0x13e:
-            if ((sprQueue & 0x87) != 0x87) setSpr1ptL<7>(value);
+            if ((sprQueue & 0x87) != 0x87) setSprptL<7>(value);
             break;
 
         case 0x180: case 0x182: case 0x184: case 0x186: case 0x188: case 0x18a:
@@ -470,7 +470,7 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
 #define SPRCTL(nr) \
     sprites[nr].ctl = value; \
     denise.setSprCtl(nr, value); \
-    SPRxCTL<nr>();
+    updateSpriteV<nr>();
 
         case 0x142: SPRCTL(0) break;
         case 0x14a: SPRCTL(1) break;
@@ -484,7 +484,7 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
 #define SPRPOS(nr) \
     sprites[nr].pos = value; \
     denise.setSprPos(nr, value); \
-    SPRxCTL<nr>();
+    updateSpriteV<nr>();
 
         case 0x140: SPRPOS(0) break;
         case 0x148: SPRPOS(1) break;

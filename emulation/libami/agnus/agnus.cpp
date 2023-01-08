@@ -17,8 +17,9 @@
 #include "../system/system.h"
 #include "../interface.h"
 #include "memory.cpp"
-#include "register.cpp"
 #include "dma.cpp"
+#include "graphics.cpp"
+#include "register.cpp"
 
 
 namespace LIBAMI {
@@ -29,6 +30,7 @@ Agnus::Agnus(System* system, Cpu& cpu, Denise& denise, Paula& paula, Cia<MOS_852
     this->interface = system->interface;
 
     oneCycleDelay = [&](uint8_t job, uint16_t data) {
+        // only events that cannot occur in parallel
         switch (job) {
             case PTR_BLT_A_H: blitter.setBltAptH(data); break;
             case PTR_BLT_A_L: blitter.setBltAptL(data); break;
@@ -100,6 +102,7 @@ Agnus::Agnus(System* system, Cpu& cpu, Denise& denise, Paula& paula, Cia<MOS_852
 
     wom = new uint8_t[256 * 1024];
     ntsc = false;
+    resetFps();
 }
 
 Agnus::~Agnus() {
@@ -123,31 +126,97 @@ auto Agnus::power(bool softReset) -> void {
     auto resetDelay = getEventDelay<EVENT_KBD>();
     clearEvents();
 
+    actions = 0;
+    busUsage = BUS_FREE;
     hPos = 4;
     vPos = 0;
+    vStart = 0;
+    vStop = 0;
+    dmal = 0;
+    frameClock = 0;
+    fpsChange = 0;
+
+    vBlankEnd = false;
+    vBlankEndNext = false;
+    vBlank = true;
+    vBlankStart = false;
+    sprInhibited = false;
+
+    lines = ntsc ? 261 : 311;
+    vTotal = 0;
+    vBStrt = 0;
+    vBStop = 0;
+    hTotal = 0;
+    beamCon = 0;
+
+    for(uint8_t i = 0; i < 8; i++) {
+        Sprite& spr = sprites[i];
+        spr.ptr = 0;
+        spr.pos = 0;
+        spr.ctl = 0;
+        spr.vStart = 0;
+        spr.vStop = 0;
+        spr.fetchData = false;
+        spr.enable = false;
+    }
+
+    for(uint8_t i = 0; i < 4; i++) {
+        AudioDmaChannel& cha = audioDmaChannels[i];
+        cha.ptr = 0;
+        cha.ptrLatch = 0;
+    }
+
+    chipMemChangePos = 0;
+    slowMemChangePos = 0;
+    trackMemChanges = false;
+
+    ddfStart = false;
+    ddfStop = false;
+
+    bpl1pt = bpl2pt = bpl3pt = bpl4pt = bpl5pt = bpl6pt = 0;
+    bpl1Mod = bpl2Mod = 0;
+
+    if (!chipMem)
+        setChipmem(chipMemMask = 0x7ffff);
+
+    dataBus = 0;
+    dmaCon = 0;
+    dmaConImm = 0;
+    bplCon0 = 0;
+    countWaitCycles = 0;
+    rDmaPtr = 0;
+
     lol = false;
+    lof = false;
     lolToggle = ntsc;
     updateEvent<EVENT_HTOTAL>(0, 0xe2);
-    lof = false;
-    lines = ntsc ? 261 : 311;
-    rDmaPtr = 0;
+
+    initVCounter = false;
+    shortLineBefore = true;
+    stopFetching = false;
+    bplCycle = 0;
+    bplQueue = 0;
+    sprQueue = 0;
+    ddfStartMatch = false;
     harddisH = false;
     harddisV = false;
+    ddfEnableBefore = false;
+    bplState = 0;
+    hardStop = false;
+    diwFlipFlop = false;
 
     if (!softReset) {
-        resetFromKeyboard = 0;
         womLock = false;
+        resetFromKeyboard = 0;
         std::memset(wom, 0, 256 * 1024);
     } else {
         if (resetFromKeyboard && resetDelay)
             updateEvent<EVENT_KBD>(Keyboard::KBD_Hardreset, resetDelay);
     }
 
-    denise.power();
     blitter.reset();
     copper.reset();
     mapMemory();
-    setOVL(true);
 
     if (model == OCS_A1000) {
         powerSupply.init(frequency(), ntsc ? 60 : 50);
@@ -161,7 +230,7 @@ auto Agnus::power(bool softReset) -> void {
     if (model == OCS_A1000)
         denise.model = ntsc ? Denise::Model::OCS_A1000_NO_EHB : Denise::Model::OCS_A1000;
 
-    trackMemChanges = false; // for RA only
+    updateEvent<EVENT_HTOTAL>(0, 0xe2 );
 }
 
 auto Agnus::powerOff() -> void {
@@ -412,7 +481,7 @@ inline auto Agnus::dmaCycle() -> void {
     }
 
     processEvents();
-    bplStartStop();
+    bplControl();
     denise.process();
     paula.process();
 
@@ -499,122 +568,6 @@ auto Agnus::sync(uint16_t cycles) -> void {
 auto Agnus::iackCycle(uint8_t level, uint8_t& vector) -> uint8_t {
     vector = 24 + level;
     return M68FAMILY::M68000::USER_VECTOR;
-}
-
-auto Agnus::canCopperUseBus() -> bool {
-    if (busUsage != BUS_FREE)
-        return false; // a higher DMA
-
-    if (!useCopperDMA())
-        return false;
-
-    return true;
-};
-
-auto Agnus::allocateCopper() -> bool {
-    if (canCopperUseBus()) {
-        busUsage = BUS_USAGE_COPPER;
-        return true;
-    }
-    return false;
-}
-
-auto Agnus::fetchCopperDma(uint32_t adr, uint16_t& result) -> bool {
-    if(!canCopperUseBus())
-        return false;
-
-    busUsage = BUS_USAGE_COPPER;
-
-    result = _swapWord(*(uint16_t*)(chipMem + (adr & chipMemMask)));
-
-    dataBus = result;
-
-    return true;
-}
-
-auto Agnus::fetchCopperDmaNoBUSCheck(uint32_t adr, uint16_t& result) -> void {
-
-    busUsage = BUS_USAGE_COPPER;
-
-    result = _swapWord(*(uint16_t*)(chipMem + (adr & chipMemMask)));
-
-    dataBus = result;
-}
-
-auto Agnus::canBlitterUseBus() -> bool {
-    if (busUsage != BUS_FREE)
-        return false; // a higher DMA
-
-    if (!useBlitterDMA())
-        return false; // blitter get stuck
-
-    if (!blitterNasty() && (countWaitCycles >= 3))
-        return false; // if blitter has no priority over CPU all wait cycles matter, not only the cycles when blitter can proceed
-
-    return true;
-};
-
-template<uint8_t ptrEvent> auto Agnus::fetchBlitterDma(uint32_t adr, uint16_t& result) -> bool {
-    if(!canBlitterUseBus())
-        return false;
-
-    busUsage = BUS_USAGE_BLITTER;
-
-    result = _swapWord(*(uint16_t*)(chipMem + (adr & chipMemMask)));
-
-    dataBus = result;
-
-    // if a modified pointer is used in the next cycle, the change is ignored.
-    if ((getActiveEvent<EVENT_ONE_CYCLE_DELAY>() & ~1) == ptrEvent)
-        setEventInactive<EVENT_ONE_CYCLE_DELAY>();
-
-    return true;
-}
-
-auto Agnus::writeBlitterDma(uint32_t adr, uint16_t value) -> bool {
-    if(!canBlitterUseBus())
-        return false;
-
-    busUsage = BUS_USAGE_BLITTER;
-
-    adr &= chipMemMask;
-    if (trackMemChanges)
-        rememberChipMem(adr);
-
-    *(uint16_t*)(chipMem + adr) = _swapWord(value);
-
-    dataBus = value;
-
-    if ((getActiveEvent<EVENT_ONE_CYCLE_DELAY>() & ~1) == PTR_BLT_D_H)
-        setEventInactive<EVENT_ONE_CYCLE_DELAY>();
-
-    return true;
-}
-
-template<uint8_t ptrEvent> auto Agnus::fetchBlitterDmaNoBUSCheck(uint32_t adr, uint16_t& result) -> void {
-    busUsage = BUS_USAGE_BLITTER;
-
-    result = _swapWord(*(uint16_t*)(chipMem + (adr & chipMemMask)));
-
-    dataBus = result;
-
-    if ((getActiveEvent<EVENT_ONE_CYCLE_DELAY>() & ~1) == ptrEvent)
-        setEventInactive<EVENT_ONE_CYCLE_DELAY>();
-}
-
-auto Agnus::writeBlitterDmaNoBUSCheck(uint32_t adr, uint16_t value) -> void {
-    busUsage = BUS_USAGE_BLITTER;
-
-    adr &= chipMemMask;
-    if (trackMemChanges)
-        rememberChipMem(adr);
-
-    *(uint16_t*)(chipMem + adr) = _swapWord(value);
-
-    dataBus = value;
-
-    if ((getActiveEvent<EVENT_ONE_CYCLE_DELAY>() & ~1) == PTR_BLT_D_H)
-        setEventInactive<EVENT_ONE_CYCLE_DELAY>();
 }
 
 auto Agnus::setRefPtr(uint16_t value) -> void {
@@ -741,11 +694,13 @@ auto Agnus::resetFps() -> void {
 }
 
 auto Agnus::serialize(Emulator::Serializer& s, bool light) -> void {
-
+    s.integer((uint8_t&)model);
     s.integer(actions);
     s.integer(busUsage);
     s.integer(hPos);
     s.integer(vPos);
+    s.integer(vStart);
+    s.integer(vStop);
     s.integer(dmal);
     s.floatingpoint(fps);
     s.integer(frameClock);
@@ -779,6 +734,7 @@ auto Agnus::serialize(Emulator::Serializer& s, bool light) -> void {
         s.integer(cha.ptrLatch);
     }
 
+    s.integer(dskpt);
     s.integer(ddfStart);
     s.integer(ddfStop);
     s.integer(bpl1pt);
@@ -790,8 +746,6 @@ auto Agnus::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer(bpl1Mod);
     s.integer(bpl2Mod);
 
-    s.integer(chipMemMask);
-    s.integer(slowMemSize);
     s.integer(kickRomMask);
     s.integer(extRomMask);
     s.integer(useRTC);
@@ -823,14 +777,27 @@ auto Agnus::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer(hardStop);
     s.integer(diwFlipFlop);
 
-    s.array(mapper);
+    s.array(&mapper[0], 8); // OVL
+    s.array(&mapper[0xf8], 4); // WOM
 
     if (!light) {
+        if (s.mode() == Emulator::Serializer::Mode::Load) {
+            unsigned _chipMemMask;
+            unsigned _slowMemSize;
+            s.integer(_chipMemMask);
+            s.integer(_slowMemSize);
 
+            setChipmem(_chipMemMask + 1);
+            setSlowmem(_slowMemSize);
+        } else {
+            s.integer(chipMemMask);
+            s.integer(slowMemSize);
+        }
 
         s.array(chipMem, chipMemMask + 1);
         if (slowMemSize)
             s.array(slowMem, slowMemSize);
+
         if (model == OCS_A1000)
             s.array(wom, 256 * 1024);
 

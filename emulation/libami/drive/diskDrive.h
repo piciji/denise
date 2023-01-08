@@ -88,7 +88,7 @@ struct DiskDrive {
     auto updateDeviceState() -> void;
     auto enableSounds(bool state) -> void;
     auto write() -> void;
-    auto serialize(Emulator::Serializer& s) -> void;
+    auto serialize(Emulator::Serializer& s, bool light = false) -> void;
 
     auto updateRpm() -> void;
     static auto randomizeRpm(unsigned frequency) -> void;

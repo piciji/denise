@@ -37,21 +37,19 @@ input(this, agnus, cia1) {
             return out;
         }
 
-        return (uint8_t)0xff;
+        return (uint8_t)0xff; // parallel port
     };
 
     cia1.writePort = [this]( Cia<MOS_8520>::Port port, Cia<MOS_8520>::Lines* lines ) {
 
         if ( port == Cia<MOS_8520>::PORTA ) {
-         //   if (lines->ioa != lines->ioaOld)
             if ((lines->ioa ^ lines->ioaOld) & 1)
                 agnus.setOVL(lines->ioa & 1);
 
             paula.setLedFilter(lines->ioa & 2);
 
         } else {
-            //if (lines->iob != lines->iobOld)
-
+            // parallel port
         }
     };
 
@@ -117,6 +115,7 @@ auto System::power(bool softReset, bool resetInstruction) -> void {
             calcSerializationSize();
 
             cpu.power();
+            denise.power();
 
             fastForward.config = 0;
             fastForward.frameCounter = 0;
@@ -127,6 +126,7 @@ auto System::power(bool softReset, bool resetInstruction) -> void {
         }
     }
 
+    paula.power();
     cia1.reset();
     cia2.reset();
     input.reset();

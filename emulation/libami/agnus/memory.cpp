@@ -33,10 +33,10 @@ auto Agnus::readByte(uint32_t adr) -> uint8_t {
             dataBus = *(slowMem + (adr - 0xc00000));
             break;
         case KICK_ROM:
-            dataBus = *(kickRom + (adr & kickRomMask));
+            dataBus = kickRom ? *(kickRom + (adr & kickRomMask)) : 0;
             break;
         case EXT_ROM:
-            dataBus = *(extRom + (adr & extRomMask));
+            dataBus = extRom ? *(extRom + (adr & extRomMask)) : 0;
             break;
         case WOM:
             dataBus = *(wom + (adr & 0x3ffff));
@@ -82,10 +82,11 @@ auto Agnus::readWord(uint32_t adr) -> uint16_t {
             dataBus = _swapWord(*(uint16_t*)(slowMem + (adr - 0xc00000)));
             break;
         case KICK_ROM:
-            dataBus = _swapWord(*(uint16_t*)(kickRom + (adr & kickRomMask)));
+            // firmware access needs sanity checking
+            dataBus = kickRom ? _swapWord(*(uint16_t*)(kickRom + (adr & kickRomMask))) : 0;
             break;
         case EXT_ROM:
-            dataBus = _swapWord(*(uint16_t*)(extRom + (adr & extRomMask)));
+            dataBus = extRom ? _swapWord(*(uint16_t*)(extRom + (adr & extRomMask))) : 0;
             break;
         case WOM:
             dataBus = _swapWord(*(uint16_t*)(wom + (adr & 0x3ffff)));
@@ -130,7 +131,8 @@ auto Agnus::writeByte(uint32_t adr, uint8_t value) -> void {
         case KICK_ROM:
             if (model == OCS_A1000 && !womLock) {
                 womLock = true;
-                for (unsigned i = 0xf8; i <= 0xfb; i++) mapper[i] = WOM;
+                for (unsigned i = 0xf8; i <= 0xfb; i++)
+                    mapper[i] = WOM;
             }
             break;
         case EXT_ROM:
@@ -178,7 +180,8 @@ auto Agnus::writeWord(uint32_t adr, uint16_t value) -> void {
         case KICK_ROM:
             if (model == OCS_A1000 && !womLock) {
                 womLock = true;
-                for (unsigned i = 0xf8; i <= 0xfb; i++) mapper[i] = WOM;
+                for (unsigned i = 0xf8; i <= 0xfb; i++)
+                    mapper[i] = WOM;
             }
             break;
         case EXT_ROM:
@@ -236,13 +239,8 @@ auto Agnus::rememberChipMem(uint32_t adr) -> void {
     memChange->address = adr;
     memChange->value = *(uint16_t*)(chipMem + adr);
 
-    if (chipMemChangePos == chipMemChangeSize) {
-        MemChange* chipMemChangeTemp = new MemChange[chipMemChangeSize << 1];
-        std::memcpy(chipMemChangeTemp, chipMemChange, sizeof(MemChange) * chipMemChangeSize );
-        chipMemChangeSize <<= 1;
-        delete[] chipMemChange;
-        chipMemChange = chipMemChangeTemp;
-    }
+    if (chipMemChangePos == chipMemChangeSize)
+        increaseTrackMemStorage(chipMemChange, chipMemChangeSize);
 }
 
 auto Agnus::rememberSlowMem(uint32_t adr) -> void {
@@ -250,20 +248,26 @@ auto Agnus::rememberSlowMem(uint32_t adr) -> void {
     memChange->address = adr;
     memChange->value = *(uint16_t*)(slowMem + adr);
 
-    if (slowMemChangePos == slowMemChangeSize) {
-        MemChange* slowMemChangeTemp = new MemChange[slowMemChangeSize << 1];
-        std::memcpy(slowMemChangeTemp, slowMemChange, sizeof(MemChange) * slowMemChangeSize );
-        slowMemChangeSize <<= 1;
-        delete[] slowMemChange;
-        slowMemChange = slowMemChangeTemp;
-    }
+    if (slowMemChangePos == slowMemChangeSize)
+        increaseTrackMemStorage(slowMemChange, slowMemChangeSize);
+}
+
+auto Agnus::increaseTrackMemStorage(MemChange*& memChange, unsigned& size) -> void {
+    MemChange* memChangeTemp = new MemChange[size << 1];
+    std::memcpy(memChangeTemp, memChange, sizeof(MemChange) * size );
+    size <<= 1;
+    delete[] memChange;
+    memChange = memChangeTemp;
 }
 
 auto Agnus::mapMemory() -> void {
     uint8_t romAssignment = kickRom ? KICK_ROM : Unmapped;
     uint8_t romOrwomAssignment = (model == OCS_A1000) ? WOM : romAssignment;
 
-    for(unsigned i = 0; i <= 0x1f; i++) // max 2 MB (mirrored)
+    for (unsigned i = 0x0; i < 0x8; i++)
+        mapper[i] = KICK_ROM; // OVL
+
+    for(unsigned i = 8; i <= 0x1f; i++) // max 2 MB (mirrored)
         mapper[i] = CHIP_MEM;
 
     for(unsigned i = 0x20; i <= 0x9f; i++)

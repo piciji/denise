@@ -1,6 +1,4 @@
-
 /*
- *
  * missing features: BUS error
  *
  * external devices can raise BERR (BUS error) as a result of unwanted memory access. opcodes could be interrupted during each memory access.
@@ -19,7 +17,9 @@
 // #define ADR_EXC_BUS_CYCLE
 // #define TAS_SPINLOCK
 
-// to enable a faster connection, a reference can be passed as an alternative to virtual methods. Modern compilers "should" be able to devirtualize.
+// a reference can be passed as an alternative to virtual methods. Modern compilers "should" be able to devirtualize.
+// depending on Compiler, a reference could be faster
+
 #define REF Agnus
 #define REF_NS LIBAMI   // optional
 #define REF_TYPE struct // or class

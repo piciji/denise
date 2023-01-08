@@ -2,10 +2,10 @@
 #include "paula.h"
 #include "../agnus/agnus.h"
 #include "../cpu/m68000.h"
+#include "../system/system.h"
 #include "audio.cpp"
 #include "filter.cpp"
 #include "fdc.cpp"
-#include "../system/system.h"
 #include "../input/input.h"
 #include "../input/controlPort/controlPort.h"
 #include "../../tools/clamp.h"
@@ -120,24 +120,23 @@ auto Paula::dmal() -> uint16_t {
     }
 
     out <<= 6;
-    if (!lockFDC) {
-        if (diskState == DiskState::READ) {
-            switch(fifoPos) {
-                case 1: out |= 1; break;
-                case 2: out |= 5; break;
-                case 3: out |= 21; break;
-                default: break;
-            }
-        } else if (diskState == DiskState::WRITE) {
-            switch(fifoPos) {
-                case 0: out |= 63; break;
-                case 1: out |= 15; break;
-                case 2: out |= 3; break;
-                default: break;
-            }
-            if (dskTansferLength == 2) out &= ~48;
-            else if (dskTansferLength == 1) out &= ~60;
+
+    if (diskState == DiskState::READ) {
+        switch(fifoPos) {
+            case 1: out |= 1; break;
+            case 2: out |= 5; break;
+            case 3: out |= 21; break;
+            default: break;
         }
+    } else if (diskState == DiskState::WRITE) {
+        switch(fifoPos) {
+            case 0: out |= 63; break;
+            case 1: out |= 15; break;
+            case 2: out |= 3; break;
+            default: break;
+        }
+        if (dskTansferLength == 2) out &= ~48;
+        else if (dskTansferLength == 1) out &= ~60;
     }
 
     return out;
@@ -385,10 +384,10 @@ auto Paula::updateInt() -> void {
 }
 
 auto Paula::powerOff() -> void {
-    lockFDC = false;
+
 }
 
-auto Paula::serialize(Emulator::Serializer& s, uint8_t runAheadFrames) -> void {
+auto Paula::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer(intena);
     s.integer(intreq);
     s.integer(adkcon);
@@ -435,7 +434,7 @@ auto Paula::serialize(Emulator::Serializer& s, uint8_t runAheadFrames) -> void {
     s.integer(dmaDisk);
 
 
-    if (runAheadFrames < 2) {
+    if (!light) {
         s.floatingpoint(filters[0].rc1);
         s.floatingpoint(filters[0].rc2);
         s.floatingpoint(filters[0].rc3);
@@ -452,29 +451,18 @@ auto Paula::serialize(Emulator::Serializer& s, uint8_t runAheadFrames) -> void {
         s.floatingpoint(filterA0);
     }
 
-    if (runAheadFrames) {
-        s.integer(dskEventCycle);
-
-        if (s.mode() == Emulator::Serializer::Mode::Save) {
-            lockFDC = true;
-            dskEventCycle = 0;
-        } else {
-            lockFDC = false;
-        }
-    } else {
-        s.integer(dskLen);
-        s.integer(dskSync);
-        s.integer(dskTansferLength);
-        s.integer(fifo);
-        s.integer(fifoPos);
-        s.integer(dskEventCycle);
-        s.integer(dskSyncCycle);
-        s.integer(dskShifter);
-        s.integer(dskShifterPos);
-        s.integer(dmaCycles);
-        s.integer(dskBytr);
-        s.integer(turbo);
-    }
+    s.integer(dskLen);
+    s.integer(dskSync);
+    s.integer(dskTansferLength);
+    s.integer(fifo);
+    s.integer(fifoPos);
+    s.integer(dskEventCycle);
+    s.integer(dskSyncCycle);
+    s.integer(dskShifter);
+    s.integer(dskShifterPos);
+    s.integer(dmaCycles);
+    s.integer(dskBytr);
+    s.integer(turbo);
 }
 
 auto Paula::power() -> void {
@@ -538,7 +526,6 @@ auto Paula::power() -> void {
     dskShifterPos = 0;
     dmaCycles = 0;
     dskBytr = 0;
-    lockFDC = false;
 }
 
 auto Paula::process() -> void {

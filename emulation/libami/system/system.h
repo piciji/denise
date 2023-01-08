@@ -81,7 +81,6 @@ struct System {
     auto checkSerialization(uint8_t* data, unsigned size) -> bool;
     auto unserialize(uint8_t* data, unsigned size) -> bool;
     auto serializeAll(Emulator::Serializer& s) -> void;
-    auto serialize(Emulator::Serializer& s) -> void;
 
     auto setChipmem(unsigned value) -> void;
     auto getChipmem() -> unsigned;
@@ -90,6 +89,8 @@ struct System {
 
     auto setDrivesEnabled( uint8_t count ) -> void;
     auto getDrivesEnabled() -> uint8_t;
+
+    auto displayFrame() -> const bool { return !runAhead.pos; }
 };
 
 

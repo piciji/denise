@@ -79,8 +79,8 @@ struct Agnus : Emulator::Events<6> {
     Emulator::EventCallback leaveEmulation;
     Emulator::EventCallback countDownPowerSupply;
     Emulator::EventCallback eventHTotal;
-    uint8_t actions = 0;
 
+    uint8_t actions = 0;
     uint8_t mapper[256] = {0};
     uint8_t busUsage;
     uint8_t hPos;
@@ -103,7 +103,6 @@ struct Agnus : Emulator::Events<6> {
     uint16_t vBStrt;
     uint16_t vBStop;
     uint8_t hTotal;
-
     uint16_t beamCon;
 
     struct Sprite {
@@ -188,7 +187,6 @@ struct Agnus : Emulator::Events<6> {
     bool ddfEnableBefore;
     uint8_t bplState;
     bool hardStop;
-
     bool diwFlipFlop;
 
     auto frequency() -> unsigned;
@@ -266,13 +264,13 @@ struct Agnus : Emulator::Events<6> {
     template<bool onlyProgressQueue = false> auto fetchPlanes() -> void;
     template<uint8_t pos, bool addMod> auto fetchPlane() -> void;
     template<uint8_t num, bool first> auto spriteControl() -> void;
-    auto bplStartStop() -> void;
+    auto bplControl() -> void;
     auto fetchSprites() -> void;
     template<uint8_t nr, uint8_t target> auto fetchSprite() -> void;
-    template<uint8_t nr> auto SPRxCTL() -> void;
+    template<uint8_t nr> auto updateSpriteV() -> void;
 
-    template<uint8_t num> auto setSpr1ptH(uint16_t value) -> void;
-    template<uint8_t num> auto setSpr1ptL(uint16_t value) -> void;
+    template<uint8_t num> auto setSprptH(uint16_t value) -> void;
+    template<uint8_t num> auto setSprptL(uint16_t value) -> void;
     auto updateHarddis() -> void;
     auto isEquLine() -> bool;
     auto updateVdiw() -> void;
@@ -287,6 +285,7 @@ struct Agnus : Emulator::Events<6> {
 
     auto diskDma(bool writeMode) -> void;
     auto fakeDiskDma(uint16_t word) -> void;
+    auto fakeDiskDmaNoTracking(uint16_t word) -> void;
     auto fakeDiskDma() -> uint16_t;
 
     auto observeFrameDuration() -> void;
@@ -297,6 +296,7 @@ struct Agnus : Emulator::Events<6> {
 
     auto rememberChipMem(uint32_t adr) -> void;
     auto rememberSlowMem(uint32_t adr) -> void;
+    auto increaseTrackMemStorage(MemChange*& memChange, unsigned& size) -> void;
 };
 
 }

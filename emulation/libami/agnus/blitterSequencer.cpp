@@ -85,17 +85,17 @@ auto Blitter::process() -> void {
 
         // cycle 1
         _mF_nD(0x81) _mF_nD(0x91) _mF_nD(0xa1) _mF_nD(0xb1) _mF_nD(0xc1) _mF_nD(0xd1) _mF_nD(0xe1) _mF_nD(0xf1)
-            blockMode<BLT_FetchA, 2>(); break;
+            blockMode<BLT_FETCH_A, 2>(); break;
         _mF_D(0x81) _mF_D(0x91) _mF_D(0xa1) _mF_D(0xb1) _mF_D(0xc1) _mF_D(0xd1) _mF_D(0xe1) _mF_D(0xf1)
-            blockMode<BLT_FetchA | BLT_DESC, 2>(); break;
+            blockMode<BLT_FETCH_A | BLT_DESC, 2>(); break;
         _nF_nD_SO(0x81) _nF_nD_SO(0x91) _nF_nD_SO(0xa1) _nF_nD_SO(0xb1) _nF_nD_SO(0xc1) _nF_nD_SO(0xd1) _nF_nD_SO(0xe1) _nF_nD_SO(0xf1)
-            blockMode<BLT_CALC | BLT_FetchA, 2>(); break;
+            blockMode<BLT_CALC | BLT_FETCH_A, 2>(); break;
         _F_D_SO(0x81) _F_D_SO(0x91) _F_D_SO(0xa1) _F_D_SO(0xb1) _F_D_SO(0xc1) _F_D_SO(0xd1) _F_D_SO(0xe1) _F_D_SO(0xf1)
-            blockMode<BLT_CALC | BLT_FetchA | BLT_FILL | BLT_DESC, 2>(); break;
+            blockMode<BLT_CALC | BLT_FETCH_A | BLT_FILL | BLT_DESC, 2>(); break;
         _F_nD_SO(0x81) _F_nD_SO(0x91) _F_nD_SO(0xa1) _F_nD_SO(0xb1) _F_nD_SO(0xc1) _F_nD_SO(0xd1) _F_nD_SO(0xe1) _F_nD_SO(0xf1)
-            blockMode<BLT_CALC | BLT_FetchA | BLT_FILL, 2>(); break;
+            blockMode<BLT_CALC | BLT_FETCH_A | BLT_FILL, 2>(); break;
         _nF_D_SO(0x81) _nF_D_SO(0x91) _nF_D_SO(0xa1) _nF_D_SO(0xb1) _nF_D_SO(0xc1) _nF_D_SO(0xd1) _nF_D_SO(0xe1) _nF_D_SO(0xf1)
-            blockMode<BLT_CALC | BLT_FetchA | BLT_DESC, 2>(); break;
+            blockMode<BLT_CALC | BLT_FETCH_A | BLT_DESC, 2>(); break;
 
         _mF_mD(0x01) _mF_mD(0x11) _mF_mD(0x21) _mF_mD(0x31) _mF_mD(0x41) _mF_mD(0x51) _mF_mD(0x61) _mF_mD(0x71)
             blockMode<BLT_NONE, 2>(); break;
@@ -106,83 +106,83 @@ auto Blitter::process() -> void {
 
         // cycle 2
         _mF_nD_mSO(0x42) _mF_nD_mSO(0x52) _mF_nD_mSO(0x62) _mF_nD_mSO(0x72) _mF_nD_mSO(0xc2) _mF_nD_mSO(0xd2) _mF_nD_mSO(0xe2) _mF_nD_mSO(0xf2)
-            blockMode<BLT_ShiftA | BLT_FetchB, 3>(); break;
+            blockMode<BLT_SHIFT_A | BLT_FETCH_B, 3>(); break;
         _mF_D_mSO(0x42) _mF_D_mSO(0x52) _mF_D_mSO(0x62) _mF_D_mSO(0x72) _mF_D_mSO(0xc2) _mF_D_mSO(0xd2) _mF_D_mSO(0xe2) _mF_D_mSO(0xf2)
-            blockMode<BLT_ShiftA | BLT_FetchB | BLT_DESC, 3>(); break;
+            blockMode<BLT_SHIFT_A | BLT_FETCH_B | BLT_DESC, 3>(); break;
 
         _mF_nD_mSO(0x02) _mF_nD_mSO(0x82)
-            blockMode<BLT_ShiftA | BLT_NEXT>(); break;
+            blockMode<BLT_SHIFT_A | BLT_NEXT>(); break;
         _mF_D_mSO(0x02) _mF_D_mSO(0x82)
-            blockMode<BLT_ShiftA | BLT_NEXT | BLT_DESC>(); break;
+            blockMode<BLT_SHIFT_A | BLT_NEXT | BLT_DESC>(); break;
 
         _mF_nD_mSO(0x22) _mF_nD_mSO(0xa2)
-            blockMode<BLT_ShiftA | BLT_FetchC | BLT_NEXT>(); break;
+            blockMode<BLT_SHIFT_A | BLT_FETCH_C | BLT_NEXT>(); break;
         _mF_D_mSO(0x22) _mF_D_mSO(0xa2)
-            blockMode<BLT_ShiftA | BLT_FetchC | BLT_NEXT | BLT_DESC>(); break;
+            blockMode<BLT_SHIFT_A | BLT_FETCH_C | BLT_NEXT | BLT_DESC>(); break;
 
         _mF_nD_mSO(0x32) _mF_nD_mSO(0xb2)
-            blockMode<BLT_ShiftA | BLT_FetchC, 3>(); break;
+            blockMode<BLT_SHIFT_A | BLT_FETCH_C, 3>(); break;
         _mF_D_mSO(0x32) _mF_D_mSO(0xb2)
-            blockMode<BLT_ShiftA | BLT_FetchC | BLT_DESC, 3>(); break;
+            blockMode<BLT_SHIFT_A | BLT_FETCH_C | BLT_DESC, 3>(); break;
 
         _nF_nD_SO(0x12) _nF_nD_SO(0x92)
-            blockMode<BLT_ShiftA | BLT_WriteD | BLT_NEXT>(); break;
+            blockMode<BLT_SHIFT_A | BLT_WRITE_D | BLT_NEXT>(); break;
         _nF_D_SO(0x12) _nF_D_SO(0x92)
-            blockMode<BLT_ShiftA | BLT_WriteD | BLT_DESC | BLT_NEXT>(); break;
+            blockMode<BLT_SHIFT_A | BLT_WRITE_D | BLT_DESC | BLT_NEXT>(); break;
         _F_nD_SO(0x12) _F_nD_SO(0x92)
-            blockMode<BLT_ShiftA | BLT_WriteD, 3>(); break;
+            blockMode<BLT_SHIFT_A | BLT_WRITE_D, 3>(); break;
         _F_D_SO(0x12) _F_D_SO(0x92)
-            blockMode<BLT_ShiftA | BLT_WriteD | BLT_DESC, 3>(); break;
+            blockMode<BLT_SHIFT_A | BLT_WRITE_D | BLT_DESC, 3>(); break;
         _nF_nD(0x12) _nF_nD(0x92)
-            blockMode<BLT_ShiftA | BLT_NEXT>(); break;
+            blockMode<BLT_SHIFT_A | BLT_NEXT>(); break;
         _nF_D(0x12) _nF_D(0x92)
-            blockMode<BLT_ShiftA | BLT_DESC | BLT_NEXT>(); break;
+            blockMode<BLT_SHIFT_A | BLT_DESC | BLT_NEXT>(); break;
         _F_nD(0x12) _F_nD(0x92)
-            blockMode<BLT_ShiftA, 3>(); break;
+            blockMode<BLT_SHIFT_A, 3>(); break;
         _F_D(0x12) _F_D(0x92)
-            blockMode<BLT_ShiftA | BLT_DESC, 3>(); break;
+            blockMode<BLT_SHIFT_A | BLT_DESC, 3>(); break;
 
         // cycle 3
         _mF_nD_mSO(0x43) _mF_nD_mSO(0xc3)
-            blockMode<BLT_ShiftB | BLT_NEXT>(); break;
+            blockMode<BLT_SHIFT_B | BLT_NEXT>(); break;
         _mF_D_mSO(0x43) _mF_D_mSO(0xc3)
-            blockMode<BLT_ShiftB | BLT_DESC | BLT_NEXT>(); break;
+            blockMode<BLT_SHIFT_B | BLT_DESC | BLT_NEXT>(); break;
 
         _mF_nD_mSO(0x63) _mF_nD_mSO(0xe3)
-            blockMode<BLT_ShiftB | BLT_FetchC | BLT_NEXT>(); break;
+            blockMode<BLT_SHIFT_B | BLT_FETCH_C | BLT_NEXT>(); break;
         _mF_D_mSO(0x63) _mF_D_mSO(0xe3)
-            blockMode<BLT_ShiftB | BLT_FetchC | BLT_DESC | BLT_NEXT>(); break;
+            blockMode<BLT_SHIFT_B | BLT_FETCH_C | BLT_DESC | BLT_NEXT>(); break;
 
         _mF_nD_SO(0x33) _mF_nD_SO(0xb3)
-            blockMode<BLT_WriteD | BLT_NEXT>(); break;
+            blockMode<BLT_WRITE_D | BLT_NEXT>(); break;
         _mF_D_SO(0x33) _mF_D_SO(0xb3)
-            blockMode<BLT_WriteD | BLT_DESC | BLT_NEXT>(); break;
+            blockMode<BLT_WRITE_D | BLT_DESC | BLT_NEXT>(); break;
         _mF_nD(0x33) _mF_nD(0xb3)
             blockMode<BLT_NEXT>(); break;
         _mF_D(0x33) _mF_D(0xb3)
             blockMode<BLT_DESC | BLT_NEXT>(); break;
 
         _nF_nD(0x53) _nF_nD(0xd3)
-            blockMode<BLT_ShiftB | BLT_NEXT>(); break;
+            blockMode<BLT_SHIFT_B | BLT_NEXT>(); break;
         _nF_D(0x53) _nF_D(0xd3)
-            blockMode<BLT_ShiftB | BLT_DESC | BLT_NEXT>(); break;
+            blockMode<BLT_SHIFT_B | BLT_DESC | BLT_NEXT>(); break;
         _F_nD(0x53) _F_nD(0xd3)
-            blockMode<BLT_ShiftB, 4>(); break;
+            blockMode<BLT_SHIFT_B, 4>(); break;
         _F_D(0x53) _F_D(0xd3)
-            blockMode<BLT_ShiftB | BLT_DESC, 4>(); break;
+            blockMode<BLT_SHIFT_B | BLT_DESC, 4>(); break;
         _nF_nD_SO(0x53) _nF_nD_SO(0xd3)
-            blockMode<BLT_ShiftB | BLT_WriteD | BLT_NEXT>(); break;
+            blockMode<BLT_SHIFT_B | BLT_WRITE_D | BLT_NEXT>(); break;
         _nF_D_SO(0x53) _nF_D_SO(0xd3)
-            blockMode<BLT_ShiftB | BLT_WriteD | BLT_DESC | BLT_NEXT>(); break;
+            blockMode<BLT_SHIFT_B | BLT_WRITE_D | BLT_DESC | BLT_NEXT>(); break;
         _F_nD_SO(0x53) _F_nD_SO(0xd3)
-            blockMode<BLT_ShiftB | BLT_WriteD, 4>(); break;
+            blockMode<BLT_SHIFT_B | BLT_WRITE_D, 4>(); break;
         _F_D_SO(0x53) _F_D_SO(0xd3)
-            blockMode<BLT_ShiftB | BLT_WriteD | BLT_DESC, 4>(); break;
+            blockMode<BLT_SHIFT_B | BLT_WRITE_D | BLT_DESC, 4>(); break;
 
         _mF_nD_mSO(0x73) _mF_nD_mSO(0xf3)
-            blockMode<BLT_ShiftB | BLT_FetchC, 4>(); break;
+            blockMode<BLT_SHIFT_B | BLT_FETCH_C, 4>(); break;
         _mF_D_mSO(0x73) _mF_D_mSO(0xf3)
-            blockMode<BLT_ShiftB | BLT_FetchC | BLT_DESC, 4>(); break;
+            blockMode<BLT_SHIFT_B | BLT_FETCH_C | BLT_DESC, 4>(); break;
 
         _F_mD_mSO(0x13) _F_mD_mSO(0x93)
             blockMode<BLT_NEXT>(); break;
@@ -194,9 +194,9 @@ auto Blitter::process() -> void {
         _mF_mD(0x74) _mF_mD(0xf4)
             blockMode<BLT_NEXT>(); break;
         _mF_nD_SO(0x74) _mF_nD_SO(0xf4)
-            blockMode<BLT_WriteD | BLT_NEXT>(); break;
+            blockMode<BLT_WRITE_D | BLT_NEXT>(); break;
         _mF_D_SO(0x74) _mF_D_SO(0xf4)
-            blockMode<BLT_WriteD | BLT_DESC | BLT_NEXT>(); break;
+            blockMode<BLT_WRITE_D | BLT_DESC | BLT_NEXT>(); break;
 
         // cycle 5
         _nF_mD_mSO(0x05) _nF_mD_mSO(0x25) _nF_mD_mSO(0x45) _nF_mD_mSO(0x65) _nF_mD_mSO(0x85) _nF_mD_mSO(0xa5) _nF_mD_mSO(0xc5) _nF_mD_mSO(0xe5)
@@ -215,30 +215,30 @@ auto Blitter::process() -> void {
 
         // cycle 6
         _mF_nD_mSO(0x16) _mF_nD_mSO(0x36) _mF_nD_mSO(0x56) _mF_nD_mSO(0x76) _mF_nD_mSO(0x96) _mF_nD_mSO(0xb6) _mF_nD_mSO(0xd6) _mF_nD_mSO(0xf6)
-            blockMode<BLT_WriteD>();
+            blockMode<BLT_WRITE_D>();
             startBlit(); break;
         _mF_D_mSO(0x16) _mF_D_mSO(0x36) _mF_D_mSO(0x56) _mF_D_mSO(0x76) _mF_D_mSO(0x96) _mF_D_mSO(0xb6) _mF_D_mSO(0xd6) _mF_D_mSO(0xf6)
-            blockMode<BLT_WriteD | BLT_DESC>();
+            blockMode<BLT_WRITE_D | BLT_DESC>();
             startBlit(); break;
 
 // line draw for a horizontal blit size of two
 
         // cycle 1
         _L_SO(0x81) _L_SO(0x91) _L_SO(0xa1) _L_SO(0xb1) _L_SO(0xc1) _L_SO(0xd1) _L_SO(0xe1) _L_SO(0xf1)
-            lineMode<BLT_BH | BLT_UPDATE_SIGN | BLT_ShiftA, 2>(); break;
+            lineMode<BLT_BH | BLT_UPDATE_SIGN | BLT_SHIFT_A, 2>(); break;
         _L_SO(0x01) _L_SO(0x11) _L_SO(0x21) _L_SO(0x31) _L_SO(0x41) _L_SO(0x51) _L_SO(0x61) _L_SO(0x71)
-            lineMode<BLT_UPDATE_SIGN | BLT_ShiftA, 2>(); break;
+            lineMode<BLT_UPDATE_SIGN | BLT_SHIFT_A, 2>(); break;
         _L(0x81) _L(0x91) _L(0xa1) _L(0xb1) _L(0xc1) _L(0xd1) _L(0xe1) _L(0xf1)
         _L(0x01) _L(0x11) _L(0x21) _L(0x31) _L(0x41) _L(0x51) _L(0x61) _L(0x71)
-            lineMode<BLT_ShiftA, 2>(); break;
+            lineMode<BLT_SHIFT_A, 2>(); break;
 
         // cycle 2
         _L_mSO(0x42) _L_mSO(0x52) _L_mSO(0x62) _L_mSO(0x72) _L_mSO(0xc2) _L_mSO(0xd2) _L_mSO(0xe2) _L_mSO(0xf2)
-            lineMode<BLT_FetchB, 3>(); break;
+            lineMode<BLT_FETCH_B, 3>(); break;
         _L_mSO(0x22) _L_mSO(0x32) _L_mSO(0xa2) _L_mSO(0xb2)
-            lineMode<BLT_FetchC | BLT_ShiftB, 3>(); break;
+            lineMode<BLT_FETCH_C | BLT_SHIFT_B, 3>(); break;
         _L_mSO(0x02) _L_mSO(0x12) _L_mSO(0x82) _L_mSO(0x92)
-            lineMode<BLT_ShiftB, 3>(); break;
+            lineMode<BLT_SHIFT_B, 3>(); break;
 
         // cycle 3
         _L_mSO(0x03) _L_mSO(0x13) _L_mSO(0x83) _L_mSO(0x93)
@@ -246,15 +246,15 @@ auto Blitter::process() -> void {
         _L_mSO(0x23) _L_mSO(0x33) _L_mSO(0xa3) _L_mSO(0xb3)
             lineMode<BLT_CALC | BLT_LINE_X, 4>(); break;
         _L_mSO(0x43) _L_mSO(0x53) _L_mSO(0xc3) _L_mSO(0xd3)
-            lineMode<BLT_ShiftB, 4>(); break;
+            lineMode<BLT_SHIFT_B, 4>(); break;
         _L_mSO(0x63) _L_mSO(0x73) _L_mSO(0xe3) _L_mSO(0xf3)
-            lineMode<BLT_FetchC | BLT_ShiftB, 4>(); break;
+            lineMode<BLT_FETCH_C | BLT_SHIFT_B, 4>(); break;
 
         // cycle 4
         _L_mSO(0x04) _L_mSO(0x14) _L_mSO(0x84) _L_mSO(0x94)
             lineMode<BLT_NEXT>(); break;
         _L_mSO(0x24) _L_mSO(0x34) _L_mSO(0xa4) _L_mSO(0xb4)
-            lineMode<BLT_WriteD | BLT_LINE_Y | BLT_NEXT>(); break;
+            lineMode<BLT_WRITE_D | BLT_LINE_Y | BLT_NEXT>(); break;
         _L_mSO(0x44) _L_mSO(0x54) _L_mSO(0xc4) _L_mSO(0xd4)
             lineMode<BLT_CALC, 5>(); break;
         _L_mSO(0x64) _L_mSO(0x74) _L_mSO(0xe4) _L_mSO(0xf4)
@@ -262,11 +262,11 @@ auto Blitter::process() -> void {
 
         // cycle 5
         _L_mSO(0x45) _L_mSO(0x55) _L_mSO(0x65) _L_mSO(0x75) _L_mSO(0xc5) _L_mSO(0xd5) _L_mSO(0xe5) _L_mSO(0xf5)
-            lineMode<BLT_FetchB | BLT_B_MOD, 6>(); break;
+            lineMode<BLT_FETCH_B | BLT_B_MOD, 6>(); break;
 
         // cycle 6
         _L_mSO(0x66) _L_mSO(0x76) _L_mSO(0xe6) _L_mSO(0xf6)
-            lineMode<BLT_WriteD | BLT_LINE_Y | BLT_NEXT>(); break;
+            lineMode<BLT_WRITE_D | BLT_LINE_Y | BLT_NEXT>(); break;
         _L_mSO(0x46) _L_mSO(0x56) _L_mSO(0xc6) _L_mSO(0xd6)
             lineMode<BLT_NEXT>(); break;
     }

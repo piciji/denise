@@ -13,18 +13,21 @@ namespace LIBAMI {
 
 struct Agnus;
 struct Copper;
+struct Paula;
 
 struct Blitter {
 
-    enum { BLT_NONE = 0, BLT_FetchA = 1, BLT_FetchB = 2, BLT_FetchC = 4, BLT_WriteD = 8,
-            BLT_ShiftA = 0x10, BLT_ShiftB = 0x20, BLT_CALC = 0x40, BLT_FILL = 0x80,
+    enum { BLT_NONE = 0, BLT_FETCH_A = 1, BLT_FETCH_B = 2, BLT_FETCH_C = 4, BLT_WRITE_D = 8,
+            BLT_SHIFT_A = 0x10, BLT_SHIFT_B = 0x20, BLT_CALC = 0x40, BLT_FILL = 0x80,
             BLT_NEXT = 0x100, BLT_DESC = 0x200,
-            BLT_BH = 0x400, BLT_LINE_X = 0x800, BLT_LINE_Y = 0x1000, BLT_B_MOD = 0x2000, BLT_UPDATE_SIGN = 0x4000, BLT_IDLE = 0x8000 };
+            BLT_BH = 0x400, BLT_LINE_X = 0x800, BLT_LINE_Y = 0x1000,
+            BLT_B_MOD = 0x2000, BLT_UPDATE_SIGN = 0x4000, BLT_IDLE = 0x8000 };
 
     Blitter(Agnus& agnus);
 
     Agnus& agnus;
     Copper& copper;
+    Paula& paula;
 
     uint16_t fill[1024];
     uint8_t channels[1024];

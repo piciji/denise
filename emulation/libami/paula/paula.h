@@ -61,7 +61,6 @@ struct Paula {
     uint16_t dmaCycles;
     uint16_t dskBytr;
 
-    bool lockFDC; // for runahead
     uint8_t turbo = 0;
 
     struct {
@@ -123,7 +122,7 @@ struct Paula {
     auto process() -> void;
     auto power() -> void;
     auto powerOff() -> void;
-    auto serialize(Emulator::Serializer& s, uint8_t runAheadFrames = 0) -> void;
+    auto serialize(Emulator::Serializer& s, bool light = false) -> void;
     auto disableAudioOut(bool state) -> void;
     auto setLedFilter(bool state) -> void;
     auto setFilter() -> void;

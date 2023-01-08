@@ -14,7 +14,7 @@ namespace LIBAMI {
 
 template<uint16_t jobs, uint8_t nextCycle> auto Blitter::blockMode() -> void {
 
-    if constexpr (jobs & BLT_FetchA) {
+    if constexpr (jobs & BLT_FETCH_A) {
         if (!agnus.fetchBlitterDma<Agnus::PTR_BLT_A_H>(bltApt, bltAdat))
             return;
 
@@ -25,7 +25,7 @@ template<uint16_t jobs, uint8_t nextCycle> auto Blitter::blockMode() -> void {
             if constexpr (jobs & BLT_DESC)  bltApt += -bltAmod;
             else                            bltApt += bltAmod;
         }
-    } else if constexpr (jobs & BLT_FetchB) {
+    } else if constexpr (jobs & BLT_FETCH_B) {
         if (!agnus.fetchBlitterDma<Agnus::PTR_BLT_B_H>(bltBpt, bltBdat))
             return;
 
@@ -36,7 +36,7 @@ template<uint16_t jobs, uint8_t nextCycle> auto Blitter::blockMode() -> void {
             if constexpr (jobs & BLT_DESC)  bltBpt += -bltBmod;
             else                            bltBpt += bltBmod;
         }
-    } else if constexpr (jobs & BLT_FetchC) {
+    } else if constexpr (jobs & BLT_FETCH_C) {
         if (!agnus.fetchBlitterDma<Agnus::PTR_BLT_C_H>(bltCpt, bltCdat))
             return;
 
@@ -47,7 +47,7 @@ template<uint16_t jobs, uint8_t nextCycle> auto Blitter::blockMode() -> void {
             if constexpr (jobs & BLT_DESC)  bltCpt += -bltCmod;
             else                            bltCpt += bltCmod;
         }
-    } else if constexpr ( jobs & BLT_WriteD ) {
+    } else if constexpr ( jobs & BLT_WRITE_D ) {
         if (!agnus.writeBlitterDma(bltDpt, doff ? agnus.dataBus : bltDdat))
             return;
 
@@ -68,7 +68,7 @@ template<uint16_t jobs, uint8_t nextCycle> auto Blitter::blockMode() -> void {
             finish();
     }
 
-    if constexpr (jobs & BLT_ShiftA) {
+    if constexpr (jobs & BLT_SHIFT_A) {
         if (curW == bltSizeW)   bltAdat &= bltAfwm;
         if (curW == 1)          bltAdat &= bltAlwm;
 
@@ -79,7 +79,7 @@ template<uint16_t jobs, uint8_t nextCycle> auto Blitter::blockMode() -> void {
 
         bltADatOld = bltAdat;
 
-    } else if constexpr (jobs & BLT_ShiftB) {
+    } else if constexpr (jobs & BLT_SHIFT_B) {
         if (jobs & BLT_DESC)
             bltBDatShifted = ((bltBdat << 16) | bltBDatOld) >> (16 - SHIFTB);
         else
@@ -156,18 +156,18 @@ template<uint16_t jobs, uint8_t nextCycle> auto Blitter::blockMode() -> void {
 
 template<uint16_t jobs, uint8_t nextCycle> auto Blitter::lineMode() -> void {
 
-    if constexpr (jobs & BLT_FetchB) {
+    if constexpr (jobs & BLT_FETCH_B) {
         if (!agnus.fetchBlitterDma<Agnus::PTR_BLT_B_H>(bltBpt, bltBdat))
             return;
 
         if constexpr (jobs & BLT_B_MOD)
             bltBpt += bltBmod;
 
-    } else if constexpr (jobs & BLT_FetchC) {
+    } else if constexpr (jobs & BLT_FETCH_C) {
         if (!agnus.fetchBlitterDma<Agnus::PTR_BLT_C_H>(bltCpt, bltCdat))
             return;
 
-    } else if constexpr (jobs & BLT_WriteD) {
+    } else if constexpr (jobs & BLT_WRITE_D) {
         if (writeLineDot) {
             if (!agnus.writeBlitterDma(bltDpt, doff ? agnus.dataBus : bltDdat))
                 return;
@@ -179,14 +179,14 @@ template<uint16_t jobs, uint8_t nextCycle> auto Blitter::lineMode() -> void {
             return;
     }
 
-    if constexpr (jobs & BLT_ShiftA) {
+    if constexpr (jobs & BLT_SHIFT_A) {
         bltADatShifted = (bltAdat & bltAfwm) >> SHIFTA;
 
         // should get his own job name
         writeLineDot = !(bltcon1 & BLT_SING) || !oneDotPerLine;
         oneDotPerLine = true;
 
-    } else if constexpr (jobs & BLT_ShiftB) {
+    } else if constexpr (jobs & BLT_SHIFT_B) {
         bltBDatShifted = ((bltBdat << 16) | bltBdat) >> SHIFTB;
 
         if ((bltcon1 & 0xf000) == 0) {

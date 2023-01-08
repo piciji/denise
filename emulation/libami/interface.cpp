@@ -22,8 +22,8 @@ Interface::Interface() : Emulator::Interface( "Amiga" ) {
 }
 
 auto Interface::prepareFirmware() -> void {
-    firmwares.push_back({FirmwareIdKick, "Kickrom"});
-    firmwares.push_back({FirmwareIdExt, "Extrom"});
+    firmwares.push_back({FirmwareIdKick, "Aros-Kick"});
+    firmwares.push_back({FirmwareIdExt, "Aros-Ext"});
 }
 
 auto Interface::prepareModels() -> void {
@@ -37,10 +37,8 @@ auto Interface::prepareModels() -> void {
     models.push_back({ModelIdDiskDriveStepperSeekTime, "Stepper Seek Time", Model::Type::Slider, Model::Purpose::DriveSettings, 0, {0, 160}, {}, 160, 10.0 });
     models.push_back({ModelIdDiskTurbo, "Disk Turbo", Model::Type::Radio, Model::Purpose::DriveSettings, 0, {0, 4}, { "100", "200", "400", "800", "MAX" }});
 
-
     models.push_back({ModelIdChipMem, "Chip Mem", Model::Type::Radio, Model::Purpose::Memory, 1, {0, 3}, { "256", "512", "1024", "2048" }});
     models.push_back({ModelIdChipMem, "Slow Mem", Model::Type::Radio, Model::Purpose::Memory, 0, {0, 4}, { "0", "512", "1024", "1536", "1792" }});
-
 }
 
 auto Interface::prepareMedia() -> void {

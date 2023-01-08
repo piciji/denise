@@ -1,14 +1,13 @@
 
 #include "m68000.h"
-
+#include "../agnus/agnus.h"
+#include "../../tools/serializer.h"
 
 namespace LIBAMI {
 
 Cpu::Cpu(Agnus& agnus) : M68FAMILY::M68000(agnus) {
 
 }
-
-
 
 auto Cpu::serialize(Emulator::Serializer& s) -> void {
     s.array(regsD);

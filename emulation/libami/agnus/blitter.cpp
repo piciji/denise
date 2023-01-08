@@ -13,7 +13,7 @@
 
 namespace LIBAMI {
 
-Blitter::Blitter(Agnus& agnus) : agnus(agnus), copper(agnus.copper) {
+Blitter::Blitter(Agnus& agnus) : agnus(agnus), copper(agnus.copper), paula(agnus.paula) {
     preFill();
     prepareChannel();
 }
@@ -219,7 +219,7 @@ auto Blitter::activateLLEWhenNeeded(uint8_t bltRegister, uint16_t value) -> void
 }
 
 auto Blitter::finish() -> void {
-    agnus.paula.pulseInt3();
+    paula.pulseInt3();
     busy = false;
     copper.blitterBusyUpdate();
     agnus.updateEventAndExecuteExistingBefore<Agnus::EVENT_ONE_CYCLE_DELAY>(Agnus::BLT_BUSY_DELAY, 1);

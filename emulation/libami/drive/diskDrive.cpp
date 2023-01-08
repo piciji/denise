@@ -160,7 +160,7 @@ auto DiskDrive::attach(uint8_t* data, unsigned size) -> bool {
     accum = 0;
     updateRpm();
 
-    if (driveSound && system->powerOn)
+    if (driveSound && system->powerOn && system->displayFrame())
         interface->mixDriveSound( media, DriveSound::FloppyInsert );
 
     updateTrack();
@@ -172,7 +172,7 @@ auto DiskDrive::detach() -> void {
     structure.detach();
     dskChangeClock = agnus.clock;
     stepSettleClock = 0;
-    if (driveSound && inserted && system->powerOn)
+    if (driveSound && inserted && system->powerOn && system->displayFrame())
         interface->mixDriveSound( media, DriveSound::FloppyEject );
 
     dskChange = true;
@@ -318,8 +318,9 @@ auto DiskDrive::setMotor(bool state) -> void {
     motorSpeed = getMotorSpeed();
     motorClock = agnus.clock;
     motor = state;
+
     updateDeviceState();
-    if (driveSound)
+    if (driveSound && system->displayFrame())
         interface->mixDriveSound( media, state ? DriveSound::FloppySpinUp : DriveSound::FloppySpinDown );
 }
 
@@ -341,7 +342,7 @@ auto DiskDrive::step(bool dir, bool updTrack) -> void {
 
     stepClock = agnus.clock;
 
-    if (driveSound)
+    if (driveSound && system->displayFrame())
         interface->mixDriveSound( media, DriveSound::FloppyStep, (cylinder << 1) | side );
 
     if (updTrack)
@@ -391,7 +392,7 @@ auto DiskDrive::setStepperSeekTime( unsigned stepperSeekTimeScaled ) -> void {
 auto DiskDrive::updateDeviceState() -> void {
     // drive LED is hardwired to motor state
     // FDC (Paula) enables write mode if drive is selected
-    if (connected && selected)
+    if (connected && selected && system->displayFrame())
         interface->updateDeviceState( media, agnus.paula.fdcWriteMode(), (cylinder << 1) | side, motor, !motor );
 }
 
@@ -413,7 +414,7 @@ auto DiskDrive::getDummyTrack() -> DiskStructure::Track* {
     return dummyTrack;
 }
 
-auto DiskDrive::serialize(Emulator::Serializer& s) -> void {
+auto DiskDrive::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer(connected);
     if (!connected)
         return;
@@ -439,9 +440,11 @@ auto DiskDrive::serialize(Emulator::Serializer& s) -> void {
     s.integer(randomizer.xorShift32);
     s.integer(randCounter);
 
-    if (s.mode() == Emulator::Serializer::Mode::Load) {
+    if (light)
+        return;
+
+    if (s.mode() == Emulator::Serializer::Mode::Load)
         updateTrack();
-    }
 
     structure.serialize( s, written );
 }
