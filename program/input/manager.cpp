@@ -18,6 +18,7 @@ bool InputManager::urgentUpdate = true;
 std::vector<Hid::Device*> InputManager::hidDevices;
 std::vector<InputManager::DeviceRemap> InputManager::remapDevices;
 std::vector<Hotkey> InputManager::hotkeys;
+std::vector<Hotkey> InputManager::hiddenHotkeys;
 std::vector<KeyboardLayout> InputManager::keyboardLayouts = { 
     {KeyboardLayout::Type::Fr, "french", "fr"},
     {KeyboardLayout::Type::De, "german", "de"},

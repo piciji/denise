@@ -629,8 +629,7 @@ auto Program::autoStartFinish(bool soft) -> void {
     if (soft && warp.motorControlled)
         return;
 
-    videoDriver->freeContext();
-    fastForward( false );
+    InputManager::activateHiddenHotkey( Hotkey::Id::FastForwardOff );
 }
 
 auto Program::hintAutoWarp(uint8_t state) -> void {
@@ -647,11 +646,10 @@ auto Program::hintAutoWarp(uint8_t state) -> void {
             suggestWarp = false;
     }
 
-    if (warp.active == suggestWarp)
-        return;
-
-    videoDriver->freeContext();
-    fastForward( suggestWarp, warp.aggressive );
+    if (suggestWarp)
+        InputManager::activateHiddenHotkey( Hotkey::Id::FastForward );
+    else
+        InputManager::activateHiddenHotkey( Hotkey::Id::FastForwardOff );
 }
 
 auto Program::initAutoWarp(Emulator::Interface::MediaGroup* mediaGroup, bool initOnly) -> void {

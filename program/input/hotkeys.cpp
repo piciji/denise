@@ -50,6 +50,10 @@ auto InputManager::setHotkeys() -> void {
     hotkeys.push_back( {Hotkey::Id::DiskSwap12, "Disk_swapper_call12"} );
     hotkeys.push_back( {Hotkey::Id::DiskSwap13, "Disk_swapper_call13"} );
     hotkeys.push_back( {Hotkey::Id::DiskSwap14, "Disk_swapper_call14"} );
+
+    // not assignable, not saveable
+    hiddenHotkeys.push_back( {Hotkey::Id::FastForward, ""} );
+    hiddenHotkeys.push_back( {Hotkey::Id::FastForwardOff, ""} );
 }
 
 auto InputManager::setCustomHotkeys() -> void {
@@ -213,7 +217,21 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             emuThread->lock();
             program->toggleFastForward( id == Hotkey::Id::ToggleFastForwardAggressive );
             break;
-        
+
+        case Hotkey::Id::FastForward:
+            if (!program->warp.active) {
+                emuThread->lock();
+                program->fastForward(true, program->warp.aggressive);
+            }
+            break;
+
+        case Hotkey::Id::FastForwardOff:
+            if (program->warp.active) {
+                emuThread->lock();
+                program->fastForward(false);
+            }
+            break;
+
         case Hotkey::Id::Fullscreen:
             emuThread->lock();
             view->switchFullScreen( !view->fullScreen() );
@@ -607,13 +625,10 @@ auto InputManager::pollHotkeys() -> void {
     hotkeyTriggers.clear();
     emuThread->unlockHotkeys();
 
-    if (!Program::hasFocus()) {
-        return;
-    }
-
 	std::vector<InputMapping*> useTrigger;
 	InputMapping* viewOpen = nullptr;
 	InputMapping* fastForward = nullptr;
+    InputMapping* fastForwardAutostart = nullptr;
 	InputMapping* stateHandler = nullptr;
 	InputMapping* deviceSwapper = nullptr;
 	InputMapping* starter = nullptr;
@@ -627,6 +642,11 @@ auto InputManager::pollHotkeys() -> void {
     for( auto trigger : _hotkeyTriggers ) {
 		
 		switch(trigger->hotkeyId) {
+            case Hotkey::Id::FastForward:
+            case Hotkey::Id::FastForwardOff:
+                fastForwardAutostart = trigger; // use last event
+                break;
+
 			case Hotkey::Id::SwapInputDevices:
 				if (!deviceSwapper)
 					deviceSwapper = trigger;				
@@ -700,12 +720,19 @@ auto InputManager::pollHotkeys() -> void {
 				break;			
 		}		
 	}
+
+    if (!fastForwardAutostart || fastForward) {
+        if (!Program::hasFocus())
+            return;
+    }
 	
 	if (viewOpen)
 		useTrigger.push_back( viewOpen );
 
 	if(fastForward)
 		useTrigger.push_back( fastForward );
+    else if(fastForwardAutostart)
+        useTrigger.push_back( fastForwardAutostart );
 	
 	if(stateHandler)
 		useTrigger.push_back( stateHandler );
@@ -744,7 +771,18 @@ auto InputManager::activateHotkey(Hotkey::Id id, Emulator::Interface* emulator) 
 				return;
 			}
 		}
-	}	
+	}
+}
+
+auto InputManager::activateHiddenHotkey(Hotkey::Id id) -> void {
+    for (auto& item: hiddenHotkeys) {
+        if (item.id == id) {
+            emuThread->lockHotkeys();
+            hotkeyTriggers.push_back((InputMapping*) item.guid);
+            emuThread->unlockHotkeys();
+            break;
+        }
+    }
 }
 
 auto InputManager::unmapHotkeys() -> void {
