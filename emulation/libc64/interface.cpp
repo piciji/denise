@@ -79,7 +79,7 @@ auto Interface::prepareMedia() -> void {
     mediaGroups.push_back({MediaGroupIdExpansionGeoRam, "GeoRam", MediaGroup::Type::Expansion, {"bin"}, {"bin"} });
     mediaGroups.push_back({MediaGroupIdExpansionReu, "REU", MediaGroup::Type::Expansion, {"bin", "crt", "prg", "reu"}, {""} });
     mediaGroups.push_back({MediaGroupIdExpansionRS232, "RS-232", MediaGroup::Type::Expansion });
-    mediaGroups.push_back({MediaGroupIdExpansionFastloader, "Fast Loader", MediaGroup::Type::Expansion });
+    mediaGroups.push_back({MediaGroupIdExpansionFastloader, "Fast Loader", MediaGroup::Type::Expansion,{"bin", "rom"} });
         	
 
 	{   auto& group = mediaGroups[MediaGroupIdDisk];
@@ -945,7 +945,7 @@ auto Interface::getDiskPreview(uint8_t* data, unsigned size, Media* media, bool 
     return structure.getListing(alternateLoad);
 }
 
-auto Interface::selectDiskListing(Media* media, unsigned pos, bool useTraps) -> void {
+auto Interface::selectDiskListing(Media* media, unsigned pos, uint8_t useTraps) -> void {
     
     if (!media || !media->group->isDisk())
         return;
@@ -953,7 +953,7 @@ auto Interface::selectDiskListing(Media* media, unsigned pos, bool useTraps) -> 
     iecBus->selectListing( media, pos, useTraps );
 }
 
-auto Interface::selectDiskListing(Media* media, std::string fileName, bool useTraps) -> void {
+auto Interface::selectDiskListing(Media* media, std::string fileName, uint8_t useTraps) -> void {
 
     if (!media || !media->group->isDisk())
         return;
@@ -1020,7 +1020,7 @@ auto Interface::getTapePreview(uint8_t* data, unsigned size, Media* media) -> st
     return structure.getListing();
 }
 
-auto Interface::selectTapeListing(Media* media, unsigned pos, bool useTraps) -> void {
+auto Interface::selectTapeListing(Media* media, unsigned pos, uint8_t useTraps) -> void {
 	
 	tape->selectListing( pos, useTraps );
 }

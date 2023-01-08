@@ -206,6 +206,12 @@ auto InputManager::setMappings() -> void {
         
         mapper->generateAlternate( globalSettings );
     }
+
+    for(auto& item : hiddenHotkeys) {
+        InputMapping* mapper = new InputMapping;
+        mapper->hotkeyId = item.id;
+        item.guid = (uintptr_t) mapper;
+    }
 }
 
 auto InputManager::autoAssign( KeyboardLayout::Type type, bool keyboardOnly ) -> void {

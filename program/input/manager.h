@@ -75,6 +75,7 @@ struct Hotkey {
 		SwapInputDevices, Power, SoftReset, AnyLoad,
         RunAheadUp, RunAheadDown, RunAheadToggleMode, AudioRecord, ToggleCycleRenderer, EF3Menu, Freeze, ToggleBorder,
         SyncStatus, ThreadedRenderer, ToggleCRTCPU, ToggleCRTGPU, DiskSwapUp, DiskSwapDown, DiskAutoStart,
+        FastForward, FastForwardOff,
 
         Autofire = 1000,
     } id;
@@ -97,7 +98,8 @@ struct InputManager {
     InputManager(Emulator::Interface* emulator = nullptr);
         
 	static const unsigned MaxMappings = 4;
-	static std::vector<Hotkey> hotkeys;    
+	static std::vector<Hotkey> hotkeys;
+    static std::vector<Hotkey> hiddenHotkeys;
     static InputMapping* captureObject;
     static unsigned retry;
 	static std::vector<Hid::Device*> hidDevices;
@@ -123,7 +125,7 @@ struct InputManager {
         bool updated = false;
         GUIKIT::Position pos;
     } uiMouse;
-    
+
 	std::vector<Hotkey> customHotkeys;
 	Emulator::Interface* emulator = nullptr;
 	std::vector<InputMapping*> mappings;
@@ -154,6 +156,7 @@ struct InputManager {
 	static auto poll() -> void;
 	static auto pollHotkeys() -> void;
 	static auto activateHotkey(Hotkey::Id id, Emulator::Interface* emulator = nullptr) -> void;
+    static auto activateHiddenHotkey(Hotkey::Id id) -> void;
     static auto fireHotkey(InputMapping* trigger) -> void;
 	static auto unmapHotkeys() -> void;
     static auto assumeLayoutType() -> KeyboardLayout::Type;

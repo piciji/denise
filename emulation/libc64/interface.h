@@ -92,8 +92,8 @@ struct Interface : Emulator::Interface {
 	auto createDiskImage(unsigned typeId, std::string name = "", bool hd = false, bool ffs = false, bool bootable = false) -> Data;
     auto getDiskListing(Media* media, bool alternateLoad = false) -> std::vector<Emulator::Interface::Listing>;
     auto getDiskPreview(uint8_t* data, unsigned size, Media* media = nullptr, bool alternateLoad = false) -> std::vector<Emulator::Interface::Listing>;
-    auto selectDiskListing(Media* media, unsigned pos, bool useTraps = false) -> void;
-    auto selectDiskListing(Media* media, std::string fileName, bool useTraps = false) -> void;
+    auto selectDiskListing(Media* media, unsigned pos, uint8_t useTraps = 0) -> void;
+    auto selectDiskListing(Media* media, std::string fileName, uint8_t useTraps = 0) -> void;
     auto resetDrive(Media* media) -> void;
     auto hideDrive(Media* media) -> void;
     
@@ -107,7 +107,7 @@ struct Interface : Emulator::Interface {
     auto getTapeControl(Media* media) -> TapeMode;
     auto getTapeListing(Media* media) -> std::vector<Emulator::Interface::Listing>;
     auto getTapePreview(uint8_t* data, unsigned size, Media* media = nullptr) -> std::vector<Emulator::Interface::Listing>;
-    auto selectTapeListing(Media* media, unsigned pos, bool useTraps = false) -> void;
+    auto selectTapeListing(Media* media, unsigned pos, uint8_t useTraps = 0) -> void;
 
 	//expansion handling
 	auto insertExpansionImage(Media* media, uint8_t* data, unsigned size) -> void;

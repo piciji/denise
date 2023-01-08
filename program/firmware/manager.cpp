@@ -62,7 +62,7 @@ auto FirmwareManager::useImage(Emulator::Interface::Firmware* firmware, unsigned
     auto activeImage = findActiveImage( firmware );
     
     if (!activeImage) {
-        imagesActive.push_back({ firmware, image->data, image->size });
+        imagesActive.push_back({ firmware, image->data, image->size, storeLevel });
         
     } else {
         
@@ -73,6 +73,7 @@ auto FirmwareManager::useImage(Emulator::Interface::Firmware* firmware, unsigned
         
         activeImage->data = image->data;
         activeImage->size = image->size;
+        activeImage->storeLevel = storeLevel;
     }     
     
     emulator->setFirmware(firmware->id, image->data, image->size, storeLevel == 0);
@@ -175,26 +176,42 @@ auto FirmwareManager::getInstance( Emulator::Interface* emulator ) -> FirmwareMa
 	return nullptr;
 }
 
-auto FirmwareManager::insertDefault() -> void {
+auto FirmwareManager::insertDefault(bool onlyKernal) -> void {
 
     for (auto& firmware : emulator->firmwares ) {
 
-        insertFirmware( &firmware, 0 );
+        if (!onlyKernal || (firmware.id == 0))
+            insertFirmware(&firmware, 0);
     }
 }
 
-auto FirmwareManager::insert() -> std::vector<std::string> {
+auto FirmwareManager::insert(bool onlyKernal) -> std::vector<std::string> {
     
     missingFirmware.clear();
     
     auto storeLevel = program->getSettings(emulator)->get<unsigned>( "use_firmware", 0 ); 
     
     for (auto& firmware : emulator->firmwares ) {
-        
-        insertFirmware( &firmware, storeLevel );
+
+        if (!onlyKernal || (firmware.id == 0))
+            insertFirmware(&firmware, storeLevel);
     }   
     
     return missingFirmware;
+}
+
+auto FirmwareManager::getStoreLevelInConfig() -> unsigned {
+    static GUIKIT::Setting* setting = program->getSettings(emulator)->getOrInit("use_firmware", 0);
+    return (unsigned)*setting;
+}
+
+auto FirmwareManager::getStoreLevelInUse() -> unsigned {
+    for (auto& firmware : emulator->firmwares ) {
+        auto image = findActiveImage(&firmware);
+        if (image)
+            return image->storeLevel;
+    }
+    return 0;
 }
 
 auto FirmwareManager::loadImage( Emulator::Interface::Firmware* firmware, unsigned storeLevel ) -> bool {

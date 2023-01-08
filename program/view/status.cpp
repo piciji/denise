@@ -35,7 +35,7 @@ auto StatusHandler::setMessage(std::string txt, unsigned duration, bool critical
         if (duration == 0)
             duration = 1;
 
-        duration *= (unsigned)fpsCounter.fps;
+        duration *= (unsigned)audioManager->inputFPS;
     }
 
     message.txt = txt;

@@ -637,7 +637,7 @@ auto VirtualDrive::vdrive_set_last_read(unsigned int track, unsigned int sector,
     memcpy(last_read_buffer, buffer, 256);
 }
 
-auto VirtualDrive::finish() -> void {
+auto VirtualDrive::finish(bool sendFinishEvent) -> void {
     uint8_t bam[256];
     uint8_t id[2];
 
@@ -657,6 +657,11 @@ auto VirtualDrive::finish() -> void {
         structure->drive->currentHalftrack = last_read_track * 2 - 2 + 1;
 
         structure->drive->changeHalfTrack( 0 );
+    }
+
+    if (sendFinishEvent) {
+        finishEvent = [this]() { system->interface->trapsResult(structure->media, false); };
+        sysTimer.add(&finishEvent, 15);
     }
 }
 
@@ -1505,7 +1510,7 @@ auto VirtualDrive::vdrive_command_memory_read(const uint8_t *buf, uint16_t addr,
 
 auto VirtualDrive::vdrive_command_memory_exec(const uint8_t *buf, uint16_t addr, unsigned int length) -> int {
     //system->interface->log("vdrive command execute");
-    system->interface->trapsNotPossible(structure->media);
+    system->interface->trapsResult(structure->media, true);
     system->leaveEmulation = true;
 
     if (length < 5) {

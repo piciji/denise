@@ -61,7 +61,12 @@ struct AutostartLayout : GUIKIT::FramedVerticalLayout {
         } start;
 
         struct Option : GUIKIT::VerticalLayout {
-            GUIKIT::CheckBox loadWithColumn;
+            struct DiskOptions : GUIKIT::HorizontalLayout {
+                GUIKIT::CheckBox loadWithColumn;
+                GUIKIT::CheckBox speederTraps;
+
+                DiskOptions();
+            } diskOptions;
             GUIKIT::CheckBox tapeWithStandardKernal;
 
             Option();
@@ -86,6 +91,7 @@ struct MiscLayout : GUIKIT::VerticalLayout {
     auto setRunAheadPerformance(bool state) -> void;
     auto setRunAhead(unsigned pos, bool force = true) -> void;
     auto loadSettings() -> void;
+    auto initAutowarp(Emulator::Interface::MediaGroup* forGroup = nullptr) -> void;
     
     MiscLayout(TabWindow* tabWindow);
 };

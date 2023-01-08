@@ -30,6 +30,7 @@ namespace LIBC64 {
         int SerialPtr;
 
         bool installed = false;
+        bool sendFinishEvent = false;
 
         uint8_t device;
         uint8_t secondary;
@@ -61,7 +62,7 @@ namespace LIBC64 {
         auto open(unsigned int device, uint8_t secondary) -> void;
         auto write(unsigned int device, uint8_t secondary, uint8_t data) -> void;
         auto read(unsigned int device, uint8_t secondary) -> uint8_t;
-        auto reset() -> void;
+        auto reset(bool sendFinishEvent) -> void;
 
         auto listentalkSecondary(uint8_t b) -> void;
         auto testForComplexTapeLoader() -> bool;

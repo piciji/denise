@@ -54,7 +54,7 @@ struct IecBus {
     
     auto updatePort() -> void;
     auto waitForDrives() -> void;
-    auto syncDrives( int direction = 0, bool ciaAccess = false ) -> void;
+    auto syncDrives( int direction = 0, bool ciaAccess = false ) -> bool;
     auto syncDrivesEachCycle( ) -> void;
     auto resetTicks() -> void;
     auto setDrivesEnabled( uint8_t count ) -> void;
@@ -71,8 +71,8 @@ struct IecBus {
     auto writeProtect( Emulator::Interface::Media* media, bool state ) -> void;    
     auto isWriteProtected( Emulator::Interface::Media* media ) -> bool;    
     auto getDiskListing(Emulator::Interface::Media* media, bool loadWithColumn = false) -> std::vector<Emulator::Interface::Listing>&;
-    auto selectListing( Emulator::Interface::Media* media, unsigned pos, bool useTraps = false ) -> void;
-    auto selectListing( Emulator::Interface::Media* media,  std::string fileName, bool useTraps = false ) -> void;
+    auto selectListing( Emulator::Interface::Media* media, unsigned pos, uint8_t useTraps = 0 ) -> void;
+    auto selectListing( Emulator::Interface::Media* media,  std::string fileName, uint8_t useTraps = 0 ) -> void;
     auto serialize(Emulator::Serializer& s) -> void;
     auto serializeLight(Emulator::Serializer& s) -> void;
     auto setPowerThread( bool state ) -> void;

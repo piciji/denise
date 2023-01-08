@@ -629,8 +629,7 @@ auto Program::autoStartFinish(bool soft) -> void {
     if (soft && warp.motorControlled)
         return;
 
-    videoDriver->freeContext();
-    fastForward( false );
+    InputManager::activateHiddenHotkey( Hotkey::Id::FastForwardOff );
 }
 
 auto Program::hintAutoWarp(uint8_t state) -> void {
@@ -647,11 +646,10 @@ auto Program::hintAutoWarp(uint8_t state) -> void {
             suggestWarp = false;
     }
 
-    if (warp.active == suggestWarp)
-        return;
-
-    videoDriver->freeContext();
-    fastForward( suggestWarp, warp.aggressive );
+    if (suggestWarp)
+        InputManager::activateHiddenHotkey( Hotkey::Id::FastForward );
+    else
+        InputManager::activateHiddenHotkey( Hotkey::Id::FastForwardOff );
 }
 
 auto Program::initAutoWarp(Emulator::Interface::MediaGroup* mediaGroup, bool initOnly) -> void {
@@ -692,9 +690,17 @@ auto Program::jam( Emulator::Interface::Media* media ) -> void {
     emuThread->unlockStatus();
 }
 
-auto Program::trapsNotPossible(Emulator::Interface::Media* media) -> void {
-    if (media && media->group->isDisk() && activeEmulator)
-        fileloader->autoload(activeEmulator, media, 0, false );
+auto Program::trapsResult(Emulator::Interface::Media* media, bool error) -> void {
+    if (activeEmulator && media && media->group->isDisk()) {
+        if (error)
+            fileloader->autoload(activeEmulator, media, 0, false );
+        else {
+            auto manager = FirmwareManager::getInstance( activeEmulator );
+            if (manager->getStoreLevelInConfig() != 0) {
+                manager->insert(true);
+            }
+        }
+    }
 }
 
 auto Program::getLastUsedEmu() -> Emulator::Interface* {
@@ -735,4 +741,16 @@ auto Program::setThreadPriority( Emulator::Interface::ThreadPriority priority, f
     }
 
     return result;
+}
+
+auto Program::getC64ModelValue(LIBC64::Interface::ModelId modelId) -> int {
+    if (activeEmulator && dynamic_cast<LIBC64::Interface*>(activeEmulator))
+        return activeEmulator->getModelValue(modelId);
+    return 0;
+}
+
+auto Program::getAMIModelValue(LIBAMI::Interface::ModelId modelId) -> int {
+    if (activeEmulator && dynamic_cast<LIBAMI::Interface*>(activeEmulator))
+        return activeEmulator->getModelValue(modelId);
+    return 0;
 }

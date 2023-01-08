@@ -206,6 +206,9 @@ struct VirtualDrive : BaseDevice {
     unsigned int last_read_track, last_read_sector;
     uint8_t last_read_buffer[256];
 
+    using Callback = std::function<void ()>;
+    Callback finishEvent;
+
     auto vdrive_command_set_error(int code, unsigned int track, unsigned int sector) -> int;
     auto cbmdos_command_parse_plus(cbmdos_cmd_parse_plus_t *cmd_parse) -> unsigned int;
     auto iec_open_read_directory(unsigned int secondary, cbmdos_cmd_parse_plus_t *cmd_parse) -> int;
@@ -235,7 +238,7 @@ struct VirtualDrive : BaseDevice {
     auto open(const uint8_t* name, unsigned int length, unsigned int secondary) -> int;
     auto close(unsigned int secondary) -> int;
 
-    auto finish() -> void;
+    auto finish(bool sendFinishEvent) -> void;
     auto reset() -> void;
 };
 

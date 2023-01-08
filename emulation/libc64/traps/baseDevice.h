@@ -27,7 +27,7 @@ struct BaseDevice {
 
     virtual auto listen(unsigned int secondary) -> void {}
 
-    virtual auto finish() -> void {}
+    virtual auto finish(bool sendFinishEvent) -> void {}
 
     virtual auto reset() -> void {}
 

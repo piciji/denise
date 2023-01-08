@@ -397,7 +397,7 @@ auto Tape::getListing() -> std::vector<Emulator::Interface::Listing>& {
     return structure.getListing();
 }
 
-auto Tape::selectListing( unsigned pos, bool useTraps ) -> void {
+auto Tape::selectListing( unsigned pos, uint8_t useTraps ) -> void {
 
     if (pos == 0)
         pos = 1;

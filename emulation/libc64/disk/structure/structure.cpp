@@ -404,7 +404,7 @@ auto DiskStructure::buildLoadCommand( std::vector<uint8_t> loadPath, bool forSho
 	return loadPath;
 }
 
-auto DiskStructure::selectListing( std::string fileName, bool useTraps ) -> void {
+auto DiskStructure::selectListing( std::string fileName, uint8_t useTraps ) -> void {
 
     Emulator::PetciiConversion petciiConversion;
 
@@ -417,7 +417,7 @@ auto DiskStructure::selectListing( std::string fileName, bool useTraps ) -> void
     prepareKeyBufferActions( petcii, useTraps );
 }
 
-auto DiskStructure::selectListing( unsigned pos, bool useTraps ) -> void {
+auto DiskStructure::selectListing( unsigned pos, uint8_t useTraps ) -> void {
 
     std::vector<uint8_t> path;
     if (pos < listings.size())
@@ -428,7 +428,7 @@ auto DiskStructure::selectListing( unsigned pos, bool useTraps ) -> void {
     prepareKeyBufferActions( path, useTraps );
 }
 
-auto DiskStructure::prepareKeyBufferActions( std::vector<uint8_t>& path, bool useTraps ) -> void {
+auto DiskStructure::prepareKeyBufferActions( std::vector<uint8_t>& path, uint8_t useTraps ) -> void {
 	
     KeyBuffer::Action action;
     
@@ -487,14 +487,16 @@ auto DiskStructure::prepareKeyBufferActions( std::vector<uint8_t>& path, bool us
     autoStarted = true;
 
     if (useTraps) {
-        // override a possible speeder
-        drive->extendedMemoryMap = false;
-        system->secondDriveCable.parallelPossible = false;
-        system->burstOrParallelUpdate();
+        if (!(useTraps & 0x80)) {
+            // override a possible speeder
+            drive->extendedMemoryMap = false;
+            system->secondDriveCable.parallelPossible = false;
+            system->burstOrParallelUpdate();
+            drive->setFirmwareByType();
+        }
         traps->installSerial();
-        traps->reset();
+        traps->reset(useTraps & 0x80);
         system->keyBuffer->forceDefaultKernalDelay(); // a possible speeder use shorter boot time
-        drive->setFirmwareByType();
     }
 }
 

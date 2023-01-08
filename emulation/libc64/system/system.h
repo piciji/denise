@@ -249,6 +249,7 @@ struct System {
     auto tapeNoiseSetSample( unsigned duration ) -> void;
     auto setAudioRefresh() -> void;
     auto autoStartFinish(bool soft) -> void;
+    auto jam(Emulator::Interface::Media* media = nullptr) -> void;
 };
 
 extern System* system;
