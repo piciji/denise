@@ -485,7 +485,7 @@ auto M6510::process() -> void {
 	READ( 0xfffe )			\
 	READ( 0xfffe )			\
 	READ( 0xffff )			\
-    system->interface->jam();\
+    system->jam();          \
 	killed = true;
     
 #define TRAPPED_KILL    \

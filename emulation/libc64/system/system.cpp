@@ -1142,4 +1142,9 @@ auto System::setAudioRefresh() -> void {
     }
 }
 
+auto System::jam(Emulator::Interface::Media* media) -> void {
+    if (!runAhead.frames || (runAhead.frames == runAhead.pos))
+        interface->jam(media);
+}
+
 }
