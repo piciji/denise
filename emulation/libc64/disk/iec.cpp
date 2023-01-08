@@ -199,6 +199,8 @@ inline auto IecBus::waitForDrives() -> void {
 }
 
 auto IecBus::syncDrivesEachCycle( ) -> void {
+    if (!drivesConnected)
+        return;
 
     for (auto drive : drivesEnabled) {
         drive->cycleCounter -= drive->frequency;
@@ -209,15 +211,15 @@ auto IecBus::syncDrivesEachCycle( ) -> void {
     run();
 }
 
-auto IecBus::syncDrives( int direction, bool ciaAccess ) -> void {
+auto IecBus::syncDrives( int direction, bool ciaAccess ) -> bool {
     // no disk drives connected
     if ( drivesConnected == 0 )
-        return;
+        return false;
       
     unsigned _delay = sysTimer.fallBackCycles( sysClock );
     
     if (!ciaAccess && (_delay < (cpuBurner ? 100 : 3000) ) )
-        return;
+        return true;
     
     if (threaded)
         waitForDrives();
@@ -249,10 +251,12 @@ auto IecBus::syncDrives( int direction, bool ciaAccess ) -> void {
         if (!cpuBurner)
             cv.notify_one();
     }
+    return true;
 }
 
 auto IecBus::serialShift(bool bit) -> void {
-    syncDrives(1, true);
+    if (!syncDrives(1, true))
+        return;
 
     for (auto drive : drivesEnabled) {
         if (!drive->dataDirection)
@@ -261,9 +265,10 @@ auto IecBus::serialShift(bool bit) -> void {
 }
 
 auto IecBus::readParallelWithHandshake() -> uint8_t {
-    syncDrives(0, true);
-
     uint8_t out = 0xff;
+    if(!syncDrives(0, true))
+        return out;
+
     for (auto drive : drivesEnabled) {
         if (drive->operation & DRIVE_HAS_PIA) {
             if (drive->speeder == 10) {
@@ -292,9 +297,10 @@ auto IecBus::readParallelWithHandshake() -> uint8_t {
 }
 
 auto IecBus::readParallel() -> uint8_t {
-    syncDrives(0, true);
-
     uint8_t out = 0xff;
+    if (!syncDrives(0, true))
+        return out;
+
     for (auto drive : drivesEnabled) {
         if (drive->operation & DRIVE_HAS_PIA) {
             if (drive->speeder == 10) {
@@ -317,7 +323,8 @@ auto IecBus::readParallel() -> uint8_t {
 }
 
 auto IecBus::writeParallelHandshake() -> void {
-    syncDrives(0, true);
+    if (!syncDrives(0, true))
+        return;
 
     for (auto drive : drivesEnabled) {
         if (drive->operation & DRIVE_HAS_PIA) {
@@ -369,7 +376,7 @@ auto IecBus::power() -> void {
 
 auto IecBus::writeCia( uint8_t byte ) -> bool {
     // let drives catch up
-    syncDrives( 1, true );
+    bool result = syncDrives( 1, true );
     
     bool atnBefore = atnOut;
     // for better readability we put out signals on separate variables
@@ -377,7 +384,7 @@ auto IecBus::writeCia( uint8_t byte ) -> bool {
     clockOut = (byte >> 4) & 1;
     dataOut = (byte >> 5) & 1;
     
-    if (drivesConnected) {
+    if (result) {
         if (atnBefore != atnOut) { 
             for( auto drive : drivesEnabled ) {
                 // attention please :-) there is a transition of ca1 pin ( via 1 chip )
