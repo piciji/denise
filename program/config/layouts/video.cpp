@@ -117,6 +117,10 @@ VideoLayout::VideoLayout() {
         updateDriverPropsVisibility();
 
         emuThread->lock();
+        // disable fastforward before, otherwise if threaded CPU CRT is selected, the midline callback would be active with fastforward.
+        // fastforward will not render all frames but mid scanline callback runs without finishing the frame
+        // todo: solve this better, more self-acting
+        program->fastForward(false);
         for (auto emulator : emulators) {
             program->getSettings(emulator)->set<std::string>( "shader", "");
             auto vManager = VideoManager::getInstance(emulator);
