@@ -414,6 +414,7 @@ struct Interface {
     
     auto trapsNotPossible(Media* media) -> void {
         bind->trapsNotPossible(media);
+    }
 
     auto trapsResult(Media* media, bool error) -> void {
         bind->trapsResult(media, error);

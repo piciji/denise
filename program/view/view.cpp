@@ -502,8 +502,11 @@ auto View::setConnectors() -> void {
     removeMenuTree( &controlMenu );
     
     for(auto& iM : inputMenus) {
-        
+
         iM.inputDevices.clear();
+        bool useCore = globalSettings->get<bool>("core_" + iM.emulator->ident, true);
+        if (!useCore)
+            continue;
         
         auto emulator = iM.emulator;
         
@@ -554,9 +557,6 @@ auto View::setConnectors() -> void {
                 checkItem->setChecked();
 
             controlMenu.append(*connectorMenu);
-            
-            if ( !dynamic_cast<LIBC64::Interface*>(emulator))
-                connectorMenu->setEnabled(false);
         }
         
         inputItem = new GUIKIT::MenuItem;
@@ -932,11 +932,9 @@ auto View::buildMenu() -> void {
         sM.system->append( *sM.shaderMenu );		
         
         sysMenus.push_back( sM );
-        
-        if ( dynamic_cast<LIBAMI::Interface*>(emulator))        
-            sM.system->setEnabled( false );
-        
-        append( *sM.system );
+
+        if (globalSettings->get<bool>("core_" + emulator->ident, true))
+            append( *sM.system );
             
         InputMenu iM;
         iM.emulator = emulator;
@@ -1685,4 +1683,31 @@ auto View::threadedRendererWasToggled(bool state) -> void {
     view->adaptiveSyncItem.setEnabled(vsync && !state);
     view->vrrItem.setEnabled(state || !(vsync && adaptive));
     view->dynamicRateControl.setEnabled((vsync || vrr) && !state);
+}
+
+auto View::updateEmuUsage() -> void {
+    remove(optionsMenu);
+    remove(editMenu);
+    remove(controlMenu);
+
+    for(auto& sysMenu : sysMenus)
+        remove(*sysMenu.system);
+
+    for(auto emulator : emulators) {
+        bool useCore = globalSettings->get<bool>("core_" + emulator->ident, true);
+        if (!useCore)
+            continue;
+
+        for(auto& sysMenu : sysMenus) {
+            if (sysMenu.emulator == emulator) {
+                append( *sysMenu.system );
+                break;
+            }
+        }
+    }
+
+    setConnectors();
+    append(controlMenu);
+    append(editMenu);
+    append(optionsMenu);
 }

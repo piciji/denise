@@ -15,6 +15,17 @@ struct SwitchesLayout : GUIKIT::FramedVerticalLayout {
     SwitchesLayout();
 };
 
+struct EmuSelectionLayout : GUIKIT::FramedHorizontalLayout {
+    struct Core {
+        GUIKIT::CheckBox* checkBox;
+        Emulator::Interface* emulator;
+    };
+
+    std::vector<Core> cores;
+
+    EmuSelectionLayout();
+};
+
 struct PreviewLayout : GUIKIT::FramedVerticalLayout {
     
     struct Top : GUIKIT::HorizontalLayout {
@@ -71,6 +82,7 @@ struct SettingsLayout : GUIKIT::VerticalLayout {
     SwitchesLayout switches;    
     AboutLayout about;    
     PreviewLayout previewLayout;
+    EmuSelectionLayout emuSelection;
     std::vector<GUIKIT::Image*> images;
     GUIKIT::Timer previewTimer;
     std::vector<std::string> langIdents;

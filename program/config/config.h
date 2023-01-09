@@ -4,6 +4,10 @@
 struct Message;
 struct InputMapping;
 
+namespace Emulator {
+    struct Interface;
+}
+
 #include "../../guikit/api.h"
 
 namespace ConfigView {

@@ -38,6 +38,19 @@ SwitchesLayout::SwitchesLayout() {
     threadedEmu.setForegroundColor( 0xff4500 );
 }
 
+EmuSelectionLayout::EmuSelectionLayout() {
+    for(auto emu : emulators) {
+        auto box = new GUIKIT::CheckBox;
+        box->setText( emu->ident );
+
+        cores.push_back( {box, emu} );
+        append(*box, {0u, 0u}, 10);
+    }
+    setPadding(10);
+    setFont(GUIKIT::Font::system("bold"));
+    setAlignment(0.5);
+}
+
 PreviewLayout::PreviewLayout() {
     setPadding(10);
     setFont(GUIKIT::Font::system("bold"));
@@ -94,9 +107,41 @@ SettingsLayout::SettingsLayout() {
     
     upperLayout.append(lang, {~0u, ~0u}, 10);
     upperLayout.append(switches, {~0u, 0u});
-    append(upperLayout, {~0u, 0u}, 10);  
+    append(upperLayout, {~0u, 0u}, 10);
+    append(emuSelection, {~0u, 0u}, 10);
     append(previewLayout, {~0u, 0u}, 10);
     append(about, {~0u, 0u});    
+
+    for(auto& core : emuSelection.cores) {
+        auto checkBox = core.checkBox;
+        auto emulator = core.emulator;
+
+        core.checkBox->onToggle = [this, checkBox, emulator](bool checked) {
+            globalSettings->set<bool>("core_" + emulator->ident, checked);
+
+            if (!checked) {
+                bool atLeastOneIsChecked = false;
+                EmuSelectionLayout::Core* altCore = nullptr;
+
+                for(auto& core : emuSelection.cores) {
+                    if (!altCore && (core.checkBox != checkBox))
+                        altCore = &core;
+
+                    if (core.checkBox->checked())
+                        atLeastOneIsChecked = true;
+                }
+
+                if (!atLeastOneIsChecked && altCore) {
+                    altCore->checkBox->setChecked();
+                    globalSettings->set<bool>("core_" + altCore->emulator->ident, true);
+                }
+            }
+            view->updateEmuUsage();
+        };
+
+        bool useCore = globalSettings->get<bool>("core_" + emulator->ident, true);
+        checkBox->setChecked(useCore);
+    }
 
 	switches.autostartDragnDrop.setChecked(globalSettings->get<bool>("autostart_dragndrop", false));
     switches.autostartDragnDrop.onToggle = [&](bool checked) {
@@ -448,6 +493,7 @@ auto SettingsLayout::translate() -> void {
     previewLayout.bottom.dialog.setText( trans->get("Dialog Preview")  );
     previewLayout.bottom.dialogWidth.name.setText( trans->get("Width", {}, true) );
     previewLayout.bottom.dialogHeight.name.setText( trans->get("Height", {}, true) );
-    
+
+    emuSelection.setText( trans->get("Core Selection") );
 }
 
