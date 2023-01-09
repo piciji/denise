@@ -317,28 +317,28 @@ VideoLayout::VideoLayout() {
     videoFps.options.Zero.onActivate = [this]() {
         emuThread->lock();
         globalSettings->set<unsigned>("fps_decimal_point", 0);
-        statusHandler->statusBar->updateDimension( 15, "1000" );
+        statusHandler->statusBar->updateDimension( 0, "1000" );
         emuThread->unlock();
     };
     videoFps.options.One.setText("1");
     videoFps.options.One.onActivate = [this]() {
         emuThread->lock();
         globalSettings->set<unsigned>("fps_decimal_point", 1);
-        statusHandler->statusBar->updateDimension( 15, "1000.9" );
+        statusHandler->statusBar->updateDimension( 0, "1000.9" );
         emuThread->unlock();
     };
     videoFps.options.Two.setText("2");
     videoFps.options.Two.onActivate = [this]() {
         emuThread->lock();
         globalSettings->set<unsigned>("fps_decimal_point", 2);
-        statusHandler->statusBar->updateDimension( 15, "1000.99" );
+        statusHandler->statusBar->updateDimension( 0, "1000.99" );
         emuThread->unlock();
     };
     videoFps.options.Three.setText("3");
     videoFps.options.Three.onActivate = [this]() {
         emuThread->lock();
         globalSettings->set<unsigned>("fps_decimal_point", 3);
-        statusHandler->statusBar->updateDimension( 15, "1000.999" );
+        statusHandler->statusBar->updateDimension( 0, "1000.999" );
         emuThread->unlock();
     };
 

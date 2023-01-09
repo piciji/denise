@@ -270,8 +270,21 @@ auto HorizontalLayout::setGeometry(Geometry containerGeometry) -> void {
         minimumWidth += child.spacing;
     }
 
+    unsigned singleWidth = 0;
+    unsigned left = 0;
+    if (maximumWidthCounter) {
+        singleWidth = (geometry.width - minimumWidth) / maximumWidthCounter;
+        left = (geometry.width - minimumWidth) - (singleWidth * maximumWidthCounter);
+    }
+
     for(auto& child : children) {
-        if(child.size.width  == Size::Maximum) child.size.width  = (geometry.width - minimumWidth) / maximumWidthCounter;
+        if(child.size.width == Size::Maximum) {
+            if (left) {
+                child.size.width = singleWidth + 1;
+                left--;
+            } else
+                child.size.width = singleWidth;
+        }
         if(child.size.height == Size::Maximum) child.size.height = geometry.height;
     }
 
