@@ -59,6 +59,8 @@ struct Cmd {
     auto printHelp() -> void;
     
     auto saveExitScreenshot() -> void;
+
+    auto recommendPlaceholder() -> bool { return !debug && !noGui && !autoload; }
 };
 
 extern Cmd* cmd;

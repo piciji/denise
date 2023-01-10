@@ -92,7 +92,17 @@ auto Program::finishStartup() -> void {
     initAudio();
     initVideo();
 
+    if (cmd->recommendPlaceholder())
+        view->loadPlaceholder();
+
     cmd->autoloadImages();
+
+    if (!activeEmulator)
+        power(getLastUsedEmu());
+
+    if (VideoManager::placeHolderFrames)
+        view->setPointerCursor();
+
 	initUserInterface();
 }
 
@@ -173,8 +183,6 @@ auto Program::init() -> void {
 
 	if (!cmd->debug)
         addCustomFont();
-        
-    isRunning = isPause = false;
 }
 
 auto Program::initEmulator( Emulator::Interface* emulator ) -> void {
@@ -213,6 +221,7 @@ auto Program::setMemoryPattern(Emulator::Interface* emulator) -> void {
 }
 
 auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
+    isPause = false;
     bool emuSwap = activeEmulator != emulator;
     powerOff();
     
@@ -308,7 +317,6 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
 		filePool->unloadOrphaned();
 
 		audioManager->power();
-		view->renderPlaceholder(true);
 
 		if (emuSwap)
 			setVideoFilter();
@@ -334,18 +342,11 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
 	}
 	
 	activeEmulator->power();
-	isRunning = true;
-	isPause = false;
 
     hintExclusiveFullscreen( );
 }
 
 auto Program::reset( Emulator::Interface* emulator ) -> void {
-	if (!isRunning) {
-		power(emulator);
-		return;
-	}
-
 	emulator->reset();
 }
 
@@ -378,8 +379,6 @@ auto Program::powerOff() -> void {
         if (auto inputManager = InputManager::getManager(activeEmulator))
             inputManager->resetTouchlessAutofire();
 	}
-	isRunning = false;
-    isPause = false;
 	
 	if (!cmd->noGui) {
         view->updatePauseCheck();
@@ -410,7 +409,7 @@ auto Program::powerOff() -> void {
 
 auto Program::loopNoGui() -> void {
 
-	while (isRunning)
+	while (!GUIKIT::Application::isQuit)
 		activeEmulator->run();
 }
 
@@ -421,7 +420,7 @@ auto Program::loop() -> void {
 
     InputManager::poll();
 
-	if( willRun() ){
+	if( willRun() ) {
 		unsigned frames = loopFrames;
 		
 		if (frames) {
@@ -435,11 +434,9 @@ auto Program::loop() -> void {
 			activeEmulator->run();
 	}
 	else {
-      //  if (!emuThread->enabled && GUIKIT::Application::exitCode)
-        //    return view->onClose();
-        
+        GUIKIT::System::sleep( 10 );
+        videoDriver->redraw();
 		audioDriver->clear();
-		GUIKIT::System::sleep( 20 );
 		VideoManager::updateWhenNotRunning();
 	}
 
@@ -457,7 +454,7 @@ auto Program::loopUserInterface() -> void {
 auto Program::willRun() -> bool {
 	static auto pauseFocusLoss = globalSettings->getOrInit("pause_focus_loss", false);
 	
-	if (!isRunning || isPause) return false;
+	if (isPause) return false;
 	if (focused) return true;
 	//no focus
 	if (*pauseFocusLoss) return false;
@@ -482,7 +479,6 @@ auto Program::quit() -> void {
     powerOff();
     if (statusHandler)
         statusHandler->clearUpdates();
-    emuThread->unlock();
     delete emuThread;
 
     if (!cmd->debug) {

@@ -64,6 +64,7 @@ struct VideoManager {
     static bool shaderInputPrecision;
     static uint8_t frameRenderPos;
     static uint8_t frameRenderTrigger;
+    static unsigned placeHolderFrames;
 	
     static auto setCrtThreaded(bool state) -> void;
     static auto setShaderInputPrecision(bool state) -> void;

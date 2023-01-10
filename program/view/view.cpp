@@ -109,11 +109,10 @@ auto View::build() -> void {
         }
 
         if (fullScreen() || requestFullscreenSwitch || (sizeMode != GUIKIT::Window::SIZE_MODE::Default)) {
-            placeholderTimer.setData( sizeMode == GUIKIT::Window::SIZE_MODE::Maximized ? 1 : 0 );
             updateViewport();
 
         } else {
-            if (activeVideoManager && emuThread->enabled && !program->isPause) {
+            if (activeVideoManager && emuThread->enabled /*&& !program->isPause*/) {
                 videoDriver->lockResize();
                 updateViewport();
                 videoDriver->unlockResize();
@@ -121,7 +120,7 @@ auto View::build() -> void {
                 updateViewport();
       
 			if (activeVideoManager) {
-                if (!emuThread->enabled || program->isPause) {
+                if (!emuThread->enabled /*|| program->isPause*/) {
                     activeVideoManager->waitForCrtRenderer();
                     emuThread->lock();
                     videoDriver->redraw();
@@ -255,16 +254,6 @@ auto View::build() -> void {
 			displayChangeTimer.setEnabled();
 		}
     };
-        
-	placeholderTimer.setInterval(40);
-	placeholderTimer.onFinished = [this]() {
-		placeholderTimer.setEnabled(false);
-		renderPlaceholder();
-        if (placeholderTimer.data()) { // dirty hack when maximizing
-            renderPlaceholder();
-            placeholderTimer.setData(0);
-        }
-	};
 	
 	anyloadTimer.setInterval(40);
     displayChangeTimer.setInterval(500);
@@ -283,7 +272,6 @@ auto View::build() -> void {
 		}
 
         VideoManager::setSynchronize();
-		placeholderTimer.setEnabled(true);
 		requestFullscreenSwitch = false;
         emuThread->unlock();
     };
@@ -311,34 +299,38 @@ auto View::build() -> void {
     };
 	
 	viewport.onMousePress = [this](GUIKIT::Mouse::Button button) {
-		
-		if (program->isRunning || (button != GUIKIT::Mouse::Button::Left))
-			return;
+        if ((button == GUIKIT::Mouse::Button::Left) && VideoManager::placeHolderFrames) {
+            emuThread->lock();
 
-        emuThread->lock();
-		if (cursorForPlaceholderInUpperTriangle()) {
-			program->power( program->getEmulator("C64") );
-		} else {
-			
-		}
-        emuThread->unlock();
+            int result = cursorForPlaceholderInUpperTriangle();
+            if (result != -1) {
+                VideoManager::placeHolderFrames = 0;
+                setDefaultCursor();
+            }
+
+            if (result == 1)
+                program->power(program->getEmulator("C64"));
+            //else if (result == 0)
+              //  program->power(program->getEmulator("Amiga"));
+
+            emuThread->unlock();
+        }
 	};
     
     viewport.onMouseMove = [this](GUIKIT::Position& pos) {
-        
-        if (program->isRunning)
+        if (!VideoManager::placeHolderFrames)
             return;
-                        
-        if (cursorForPlaceholderInUpperTriangle(pos)) {
-            view->setPointerCursor();
-		} else {
-            view->setDefaultCursor();
-		}
+
+        int result = cursorForPlaceholderInUpperTriangle(pos);
+
+        if (result == -1)
+            setDefaultCursor();
+        else
+            setPointerCursor();
     };
 	
 	viewport.onMouseLeave = []() {
-		if (!program->isRunning)
-			view->setDefaultCursor();
+
 	};
 	
     setDragnDrop();        
@@ -382,7 +374,7 @@ auto View::setDragnDrop() -> void {
 
 auto View::switchFullScreen(bool fullScreen, bool forceUnacquire) -> void {
 	requestFullscreenSwitch = true;
-    if(!forceUnacquire && fullScreen && program->isRunning) {
+    if(!forceUnacquire && fullScreen) {
         if (GUIKIT::Application::isCocoa()) {
             cursorHideTimer.setEnabled();
         } else
@@ -445,7 +437,6 @@ auto View::updateViewport() -> void {
     geometry.x = geometry.y = 0;
 
 	viewport.setGeometry( geometry );
-    placeholderTimer.setEnabled(true);
 }
 
 auto View::checkInputDevice( Emulator::Interface* emulator, Emulator::Interface::Connector* connector, Emulator::Interface::Device* device ) -> void {
@@ -694,8 +685,6 @@ auto View::loadImages() -> void {
 	freezeImage.setResourceId( ID_FREEZE );
     menuImage.loadPng((uint8_t*)Icons::menu, sizeof(Icons::menu));
 	menuImage.setResourceId( ID_MENU );
-	poweroffImage.loadPng((uint8_t*)Icons::shutdown, sizeof(Icons::shutdown));
-	poweroffImage.setResourceId( ID_SHUTDOWN );
     firmwareImage.loadPng((uint8_t*)Icons::memory, sizeof(Icons::memory));
 	firmwareImage.setResourceId( ID_MEMORY );
     driveImage.loadPng((uint8_t*)Icons::drive, sizeof(Icons::drive));
@@ -1106,25 +1095,7 @@ auto View::buildMenu() -> void {
     saveItem.setIcon(diskImage);
     optionsMenu.append(saveItem);
 		
-	optionsMenu.append(*GUIKIT::MenuSeparator::getInstance());	
-
-	poweroff.setIcon( poweroffImage );
-	poweroff.onActivate = [this]() {
-        emuThread->lock();
-		program->powerOff();
-        emuThread->unlock();
-
-		videoDriver->setFilter( DRIVER::Video::Filter::Linear );
-		this->updateViewport();
-
-		if (cursorForPlaceholderInUpperTriangle()) {
-			view->setPointerCursor();
-		} else {
-			view->setDefaultCursor();
-		}
-	};	
-	optionsMenu.append( poweroff );   
-	
+	optionsMenu.append(*GUIKIT::MenuSeparator::getInstance());
 	
 	if(!GUIKIT::Application::isCocoa()) {
 
@@ -1483,8 +1454,6 @@ auto View::translate() -> void {
     
     saveItem.setText( trans->get("save_preferences"));
     exit.setText(trans->get("Exit"));
-	
-	poweroff.setText(trans->get("power_off"));
 	
 	tapeControlMenu.setText( trans->get("Datasette") );
     insertTapeItem.setText( trans->get("insert") );

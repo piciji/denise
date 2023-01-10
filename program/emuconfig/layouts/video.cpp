@@ -321,7 +321,7 @@ base( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) )
         emuThread->unlock();
 	};
 	
-	base.option.linearInterpolation.setChecked( globalSettings->get<unsigned>("video_filter", 1u, {0u, 1u}) );
+	base.option.linearInterpolation.setChecked( _settings->get<unsigned>("video_filter", 1u, {0u, 1u}) );
         
     mask.type.apertureMask.onActivate = [this]() {
         _settings->set<unsigned>( "video_mask_type" + this->sliderIdent(), (unsigned)VideoManager::MaskType::Aperture);

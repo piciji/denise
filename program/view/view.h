@@ -6,7 +6,6 @@
 
 struct View : public GUIKIT::Window {
     Message* message;
-	GUIKIT::Timer placeholderTimer;
 	GUIKIT::Timer anyloadTimer;
 	GUIKIT::Timer displayChangeTimer;
     GUIKIT::Timer priorityTimer;
@@ -63,12 +62,12 @@ struct View : public GUIKIT::Window {
     auto setCursor( Emulator::Interface* emulator ) -> void;
     auto setDragnDrop() -> void;
     auto getSysMenu( Emulator::Interface* emulator ) -> SystemMenu*;
-    auto cursorForPlaceholderInUpperTriangle(GUIKIT::Position p) -> bool;
-    auto cursorForPlaceholderInUpperTriangle() -> bool;
+    auto cursorForPlaceholderInUpperTriangle(GUIKIT::Position p) -> int;
+    auto cursorForPlaceholderInUpperTriangle() -> int;
     auto loadImages() -> void;
     
     auto loadPlaceholder() -> void;
-    auto renderPlaceholder(bool blackScreen = false) -> void;
+    auto renderPlaceholder() -> bool;
     auto togglePause() -> void;
     auto updatePauseCheck() -> void;
     auto updateFastforwardCheck() -> void;
@@ -116,8 +115,7 @@ struct View : public GUIKIT::Window {
 
         GUIKIT::MenuItem settingsItem;		
         GUIKIT::MenuItem saveItem;	
-		
-		GUIKIT::MenuItem poweroff;
+
 		GUIKIT::MenuItem exit; 
 
 	GUIKIT::Menu tapeControlMenu;
@@ -147,7 +145,6 @@ struct View : public GUIKIT::Window {
     } diskControlMenus[4];
 		
     GUIKIT::Image powerImage;
-    GUIKIT::Image poweroffImage;
     GUIKIT::Image freezeImage;
     GUIKIT::Image menuImage;
     GUIKIT::Image firmwareImage;

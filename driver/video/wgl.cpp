@@ -100,11 +100,13 @@ struct WGL : Video, OpenGL, RenderThread {
     }
     
 	auto setFilter(Filter filter) -> void {
+        if (settings.filter == filter)
+            return;
+        settings.filter = filter;
         wait();
-        makeCurrent();
-		settings.filter = filter;
+     //   makeCurrent();
 		OpenGL::filter = filter == Filter::Linear ? GL_LINEAR : GL_NEAREST;
-        clearCurrent();
+//        clearCurrent();
 	}
 
     auto lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height) -> bool {

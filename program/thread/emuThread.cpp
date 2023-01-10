@@ -34,6 +34,7 @@ auto EmuThread::enable(bool state) -> void {
         initWorker();
     } else {
         kill = true;
+        unlock();
         while (kill) {
             std::this_thread::yield();
         }
@@ -75,12 +76,6 @@ auto EmuThread::initWorker() -> void {
 
         while (1) {
 
-            if (kill) {
-				videoDriver->freeContext();
-                kill = false;                
-                return;
-            }
-
             if (freeContext) {
                 freeContext = false;
                 videoDriver->freeContext();
@@ -93,6 +88,12 @@ auto EmuThread::initWorker() -> void {
                 while(acknowledged) {
                     std::this_thread::yield();
                 }
+            }
+
+            if (kill) {
+                videoDriver->freeContext();
+                kill = false;
+                return;
             }
 
             if (updateBorder && activeEmulator) {

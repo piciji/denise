@@ -48,8 +48,7 @@ struct Message;
 struct InputManager;
 
 struct Program : Emulator::Interface::Bind {
-    bool isRunning;
-	bool isPause;
+	bool isPause = false;
     static bool focused;
 
 	unsigned loopFrames = 0;
@@ -143,7 +142,7 @@ struct Program : Emulator::Interface::Bind {
 	auto videoRefresh8(const uint8_t* frame, unsigned width, unsigned height, unsigned linePitch) -> void override;
 	auto hintExclusiveFullscreen() -> void;
     auto canExclusiveFullscreen() -> bool;
-    auto setVideoFilter() -> void;   
+    auto setVideoFilter(bool driverOnly = false) -> void;
 	auto updateCrop( Emulator::Interface* emulator ) -> void;
     auto setPalette( Emulator::Interface* emulator ) -> void;
     auto midScreenCallback() -> void override;

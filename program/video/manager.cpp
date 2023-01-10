@@ -20,6 +20,7 @@ bool VideoManager::crtThreaded = true;
 bool VideoManager::shaderInputPrecision = false;
 uint8_t VideoManager::frameRenderPos = 0;
 uint8_t VideoManager::frameRenderTrigger = 1;
+unsigned VideoManager::placeHolderFrames = 0;
 
 std::vector<VideoManager*> videoManagers;
 
@@ -647,7 +648,15 @@ template<typename T> auto VideoManager::renderFrame(const T* src, unsigned width
 
     frameRenderPos = 0;
 
-	if ( !useCrtMode() ) {
+    if (placeHolderFrames) {
+        if ((placeHolderFrames & 3) == 0)
+            view->renderPlaceholder();
+        if (!--placeHolderFrames) {
+            program->setVideoFilter(true);
+            view->setDefaultCursor();
+        }
+        return;
+    } else if ( crtMode == CrtMode::None ) {
 		if (!videoDriver->lock(gpuData, gpuPitch, width, height))
 			return; 
 		
@@ -867,7 +876,7 @@ auto VideoManager::renderMidScreen( ) -> void {
 	if (!colorTableUpdated)
 		reinitCrtThread();
 	
-	if (!re->dest || frameRenderPos)
+	if (!re->dest || frameRenderPos || placeHolderFrames)
 		return;	
 
 	re->ready.store(1);

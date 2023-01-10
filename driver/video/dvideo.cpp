@@ -48,7 +48,7 @@ struct DVideo : Video, RenderThread {
 
     struct {
         bool synchronize;
-        Filter filter = Video::Filter::Nearest;
+        Filter filter = Video::Filter::Linear;
         std::vector<ShaderPass*> passes = {};
         HWND handle;
         HWND parent;

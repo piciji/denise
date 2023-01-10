@@ -191,7 +191,8 @@ auto Autoloader::postProcessing() -> void {
                     emuView->systemLayout->setExpansion( useExpansion );
 			}
 		}
-        
+
+        VideoManager::placeHolderFrames = 0;
         program->power( ddControl.emulator, emuView != nullptr );
 
         if (!useExpansion)

@@ -16,7 +16,7 @@ auto Program::initVideo() -> void {
     
     VideoManager::setSynchronize();
     VideoManager::setHardSync();
-    //setVideoFilter();
+    setVideoFilter();
     setVideoDimension();
     updateFullscreenSetting();
 	    
@@ -24,8 +24,6 @@ auto Program::initVideo() -> void {
         delete videoDriver;
         videoDriver = new DRIVER::Video;
     }
-	
-	videoDriver->setFilter( DRIVER::Video::Filter::Linear );
 
     if (activeVideoManager)
         activeVideoManager->reinitCrtThread(true);
@@ -41,11 +39,6 @@ auto Program::initVideo() -> void {
 	
 	VideoManager::setShaderInputPrecision( globalSettings->get<bool>("shader_input_precision", false) );
 	VideoManager::setCrtThreaded( globalSettings->get<bool>("crt_threaded", true) );
-
-	if (!cmd->debug) {
-		view->loadPlaceholder();
-        view->renderPlaceholder();
-	}
 }
 
 auto Program::setVideoDimension() -> void {
@@ -96,7 +89,7 @@ auto Program::videoRefresh8(const uint8_t* frame, unsigned width, unsigned heigh
 
 auto Program::canExclusiveFullscreen() -> bool {
 
-    return isRunning
+    return !isPause
         && globalSettings->get<bool>("exclusive_fullscreen", false)
         && !globalSettings->get<bool>("threaded_emu", false);
 }
@@ -109,11 +102,11 @@ auto Program::hintExclusiveFullscreen() -> void {
         videoDriver->hintExclusiveFullscreen( false );
 }
 
-auto Program::setVideoFilter() -> void {
-	if (activeEmulator)			
+auto Program::setVideoFilter(bool driverOnly) -> void {
+	if (activeEmulator)
 		videoDriver->setFilter( (DRIVER::Video::Filter)getSettings( activeEmulator )->get<unsigned>("video_filter", 1u, {0u, 1u}) );
 	
-	if (activeVideoManager)
+	if (!driverOnly && activeVideoManager)
         activeVideoManager->shader.recreate = true;
 }
 

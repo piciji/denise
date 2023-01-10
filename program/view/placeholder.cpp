@@ -1,5 +1,8 @@
 
 auto View::loadPlaceholder() -> void {
+    bool splashScreen = globalSettings->get<bool>("splash_screen", true);
+    if (!splashScreen)
+        return;
 
 	if (!placeholder.empty())
 		return;
@@ -15,56 +18,42 @@ auto View::loadPlaceholder() -> void {
 		return;	
 	
 	if (!placeholder.loadPng( data, file.getSize() ))
-		return;			
+		return;
+
+    VideoManager::placeHolderFrames = 84;
 }
 
-auto View::renderPlaceholder(bool blackScreen) -> void {
+auto View::renderPlaceholder() -> bool {
+    if (GUIKIT::Application::isQuit)
+		return false;
 
-	if (cmd->debug || cmd->noGui || cmd->autoload || cmd->attach || program->isRunning || GUIKIT::Application::isQuit)
-		return;
-	
+    videoDriver->setFilter( DRIVER::Video::Filter::Linear );
+
 	unsigned gpu_pitch;
     unsigned* gpu_data = 0;
     unsigned _w, _h;
-	uint8_t* data = placeholder.data;	
-	
-	if (!blackScreen && !placeholder.empty()) {
-        bool _needLock = emuThread->enabled && !emuThread->locked();
 
-        if (_needLock)
-            emuThread->lock();
+    if (placeholder.empty())
+        return false;
 
-		if (videoDriver->lock(gpu_data, gpu_pitch, placeholder.width, placeholder.height)) {
+	uint8_t* data = placeholder.data;
 
-			for (_h = 0; _h < placeholder.height; _h++) {
-				for (_w = 0; _w < placeholder.width; _w++) {
-					*gpu_data++ = data[0] << 16 | data[1] << 8 | data[2];
-					data += 4;
-				}
-				gpu_data += gpu_pitch - (placeholder.width );
-			}
+    if (videoDriver->lock(gpu_data, gpu_pitch, placeholder.width, placeholder.height)) {
+        for (_h = 0; _h < placeholder.height; _h++) {
+            for (_w = 0; _w < placeholder.width; _w++) {
+                *gpu_data++ = data[0] << 16 | data[1] << 8 | data[2];
+                data += 4;
+            }
+            gpu_data += gpu_pitch - (placeholder.width );
+        }
 
-            videoDriver->unlockAndRedraw(true, true);
-		}
+        videoDriver->unlockAndRedraw(true);
+    }
 
-        if (_needLock)
-            emuThread->unlock();
-	} else { // blackscreen
-		if (videoDriver->lock(gpu_data, gpu_pitch, 256, 256)) {
-
-			for (_h = 0; _h < 256; _h++) {
-				for (_w = 0; _w < 256; _w++) {
-					*gpu_data++ = 0;
-				}
-				gpu_data += gpu_pitch - 256;
-			}
-
-            videoDriver->unlockAndRedraw(true, true);
-		}
-	}
+    return true;
 }
 
-auto View::cursorForPlaceholderInUpperTriangle(GUIKIT::Position p) -> bool {
+auto View::cursorForPlaceholderInUpperTriangle(GUIKIT::Position p) -> int {
 
     DRIVER::Viewport& viewport = videoDriver->getViewport();
     signed _w = viewport.width;
@@ -73,15 +62,15 @@ auto View::cursorForPlaceholderInUpperTriangle(GUIKIT::Position p) -> bool {
     if (p.x >= viewport.x)
         p.x -= viewport.x;
     else
-        return false;
+        return -1;
 
     if (p.y >= viewport.y)
         p.y -= viewport.y;
     else
-        return false;
+        return -1;
 
 	if (p.x > _w || p.y > _h)
-		return false;
+		return -1;
 
     GUIKIT::Position a(0,0);
     GUIKIT::Position b(_w * 1.55, 0);
@@ -89,10 +78,10 @@ auto View::cursorForPlaceholderInUpperTriangle(GUIKIT::Position p) -> bool {
 
     return (((a.y - b.y) * (p.x - a.x) + (b.x - a.x) * (p.y - a.y)) < 0 ||
     ((b.y - c.y) * (p.x - b.x) + (c.x - b.x) * (p.y - b.y)) < 0 ||
-    ((c.y - a.y) * (p.x - c.x) + (a.x - c.x) * (p.y - c.y)) < 0) ? false : true;        
+    ((c.y - a.y) * (p.x - c.x) + (a.x - c.x) * (p.y - c.y)) < 0) ? 0 : 1;
 }
 
-auto View::cursorForPlaceholderInUpperTriangle() -> bool {
+auto View::cursorForPlaceholderInUpperTriangle() -> int {
 
     return cursorForPlaceholderInUpperTriangle( viewport.getMousePosition() );
 }

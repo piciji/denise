@@ -105,7 +105,7 @@ struct OpenGL : OpenGLProgram {
         bool synchronize = false;
         bool hardSync = false;
         bool threaded = false;
-        Video::Filter filter = Video::Filter::Nearest;
+        Video::Filter filter = Video::Filter::Linear;
         std::vector<ShaderPass*> passes = {};
 
         float aspectWidth = 1.0;

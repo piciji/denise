@@ -256,7 +256,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
                 inputDriver->mUnacquire();					
             } else if (view->fullScreen()) {
                 inputDriver->mAcquire();
-            } else if (program->isRunning && program->isAnalogDeviceConnected()) {
+            } else if (!program->isPause && program->isAnalogDeviceConnected()) {
                 inputDriver->mAcquire();
             }
             break;
