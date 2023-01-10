@@ -632,6 +632,10 @@ auto pWindow::applyMaximizeCorrection(Geometry& geo) -> void {
 auto pWindow::setFullScreen(bool fullScreen) -> void {
     if (!window.resizable()) return;
     locked = true;
+    HWND taskbar = NULL;
+    if (!IsAppThemed())
+        taskbar = FindWindow(L"Shell_TrayWnd", NULL);
+
     if(!fullScreen) {
         SetWindowLongPtr(hwnd, GWL_STYLE, WS_VISIBLE | WS_CLIPCHILDREN | (window.resizable() ? ResizableStyle : FixedStyle) | (unfullscreenZoomed ? WS_MAXIMIZE : 0));
 		SetWindowLongPtr(hwnd, GWL_EXSTYLE, (GetWindowLongPtr(hwnd, GWL_EXSTYLE) & ~WS_EX_APPWINDOW));
@@ -658,6 +662,11 @@ auto pWindow::setFullScreen(bool fullScreen) -> void {
             geometry.x + margin.x, geometry.y + margin.y,
             geometry.width - margin.width, geometry.height - margin.height
         });
+    }
+
+    if (taskbar != NULL) {
+        ShowWindow(taskbar, fullScreen ? SW_HIDE : SW_SHOW);
+        UpdateWindow(taskbar);
     }
     //window.statusBar()->p.setComposited( !fullScreen );
     locked = false;

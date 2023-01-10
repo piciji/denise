@@ -100,6 +100,8 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
     Emulator::Interface* emulator = trigger->inputManager ? trigger->inputManager->emulator : nullptr;
     Hotkey::Id id = (Hotkey::Id)trigger->hotkeyId;
 
+
+
     typedef LIBC64::Interface C64Interface;
     typedef LIBAMI::Interface AmigaInterface;
     
@@ -255,9 +257,14 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             if (inputDriver->mIsAcquired()) {
                 inputDriver->mUnacquire();					
             } else if (view->fullScreen()) {
-                inputDriver->mAcquire();
+                // dinput needs this, when grab button is mapped to mouse
+                view->cursorHideTimer.setInterval(150);
+                view->cursorHideTimer.setEnabled();
+                //inputDriver->mAcquire();
             } else if (program->isRunning && program->isAnalogDeviceConnected()) {
-                inputDriver->mAcquire();
+                view->cursorHideTimer.setInterval(150);
+                view->cursorHideTimer.setEnabled();
+                // inputDriver->mAcquire();
             }
             break;
         case Hotkey::Id::DiskSwapper:
