@@ -444,6 +444,11 @@ auto CALLBACK pWindow::wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam
 			} else if (LOWORD(wparam) == WA_INACTIVE) {                
                 if(window.onMinimize)
                     window.onMinimize();
+				
+				if (XPOrBelowOrWin7InXPMode()) {
+					HWND taskbar = FindWindow(L"Shell_TrayWnd", NULL);
+					if(taskbar && !IsWindowVisible(taskbar)) ShowWindow(taskbar, SW_SHOW);
+				}
 			}
 			break;
 		case WM_ACTIVATEAPP:
@@ -632,9 +637,6 @@ auto pWindow::applyMaximizeCorrection(Geometry& geo) -> void {
 auto pWindow::setFullScreen(bool fullScreen) -> void {
     if (!window.resizable()) return;
     locked = true;
-    HWND taskbar = NULL;
-    if (!IsAppThemed())
-        taskbar = FindWindow(L"Shell_TrayWnd", NULL);
 
     if(!fullScreen) {
         SetWindowLongPtr(hwnd, GWL_STYLE, WS_VISIBLE | WS_CLIPCHILDREN | (window.resizable() ? ResizableStyle : FixedStyle) | (unfullscreenZoomed ? WS_MAXIMIZE : 0));
@@ -664,10 +666,6 @@ auto pWindow::setFullScreen(bool fullScreen) -> void {
         });
     }
 
-    if (taskbar != NULL) {
-        ShowWindow(taskbar, fullScreen ? SW_HIDE : SW_SHOW);
-        UpdateWindow(taskbar);
-    }
     //window.statusBar()->p.setComposited( !fullScreen );
     locked = false;
     if(window.onSize) window.onSize(Window::SIZE_MODE::Default);
