@@ -915,7 +915,7 @@ auto System::VicMidScreenCallback() -> void {
 
     input->drawCursor(true);
 
-    interface->midScreenCallback();
+    interface->midScreenCallback(0);
 }
 
 auto System::pasteText( std::string buffer ) -> void {

@@ -137,9 +137,15 @@ struct TapeCreatorLayout : GUIKIT::FramedHorizontalLayout {
 struct DiskCreatorLayout : GUIKIT::FramedHorizontalLayout {
     GUIKIT::Label formatName;
     GUIKIT::ComboButton format;
-    GUIKIT::CheckBox fastFileSystem;
-    GUIKIT::CheckBox highDensity;
-    GUIKIT::CheckBox bootable;
+
+    struct Options : GUIKIT::VerticalLayout {
+        GUIKIT::CheckBox fastFileSystem;
+        GUIKIT::CheckBox highDensity;
+        GUIKIT::CheckBox bootable;
+
+        Options();
+    } options;
+
     GUIKIT::Label diskLabelName;
     GUIKIT::LineEdit diskLabel;
     GUIKIT::Label insertLabel;

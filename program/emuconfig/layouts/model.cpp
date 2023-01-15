@@ -114,8 +114,9 @@ auto ModelLayout::build( TabWindow* tabWindow, Emulator::Interface* emulator, st
         
         blockPos++;
     }    
-	
-	update( *line, 0 );
+
+    if (line)
+	    update( *line, 0 );
 }
 
 auto ModelLayout::setEvents( ) -> void {
@@ -459,11 +460,13 @@ auto ModelLayout::stepRange(unsigned id, int step) -> int {
 
 auto ModelLayout::translate( std::string theme ) -> void {
     
-    setText( trans->get( theme ) );
+    setText( trans->getA( theme ) );
 
-    controlLayout.label.setText( trans->get("all") );
-    controlLayout.firstAll.setText( "8580" );
-    controlLayout.secondAll.setText( "6581" ); 
+    if (GUIKIT::Vector::find(purposes, Emulator::Interface::Model::AudioSettings)) {
+        controlLayout.label.setText(trans->getA("all"));
+        controlLayout.firstAll.setText("8580");
+        controlLayout.secondAll.setText("6581");
+    }
     
     for (auto line : lines) {
         for (auto block : line->blocks) {
@@ -473,29 +476,29 @@ auto ModelLayout::translate( std::string theme ) -> void {
             std::string name = getIdent( model, tooltip );
 
             if (model->isSwitch()) {
-                block->checkBox->setText(trans->get( name ));
-                block->checkBox->setTooltip(trans->get(tooltip));
+                block->checkBox->setText(trans->getA( name ));
+                block->checkBox->setTooltip(trans->getA(tooltip));
 
             } else if (model->isRadio()) {
                 unsigned pos = 0;
                 for (auto option : block->options) {
-                    option->setText(trans->get(model->options[pos++]));
+                    option->setText(trans->getA(model->options[pos++]));
                 }
 
             } else if (model->isCombo()) {
                 unsigned pos = 0;
                 for (auto option : model->options) {
-                    block->combo->setText(pos++, trans->get(option));
+                    block->combo->setText(pos++, trans->getA(option));
                 }
 
             } else if (model->isSlider()) {
-                block->sliderLayout->name.setText(trans->get( name, {}, true ));
-                block->sliderLayout->name.setTooltip(trans->get(tooltip));
+                block->sliderLayout->name.setText(trans->getA( name, true ));
+                block->sliderLayout->name.setTooltip(trans->getA(tooltip));
             }
 
             if (block->label) {
-                block->label->setText(trans->get(name, {}, model->isRadio() || model->isCombo()));
-                block->label->setTooltip(trans->get(tooltip));
+                block->label->setText(trans->getA(name, model->isRadio() || model->isCombo()));
+                block->label->setTooltip(trans->getA(tooltip));
             }
         }
     }
@@ -595,6 +598,22 @@ auto ModelLayout::applyCustomStuff( Line::Block* block, Emulator::Interface::Mod
             case LIBC64::Interface::ModelIdDiskThread:
             case LIBC64::Interface::ModelIdDiskOnDemand:
                 program->fastForward(false);
+                break;
+        }
+    } else {
+        switch(model->id) {
+            case LIBAMI::Interface::ModelIdDiskDrivesConnected:
+                if(tabWindow->mediaLayout)
+                    tabWindow->mediaLayout->updateVisibility( emulator->getDiskMediaGroup(), block->combo->selection() );
+            case LIBAMI::Interface::ModelIdChipMem:
+            case LIBAMI::Interface::ModelIdSlowMem:
+            case LIBAMI::Interface::ModelIdSystem:
+            case LIBAMI::Interface::ModelIdRegion:
+                if (this->emulator == activeEmulator)
+                    program->power(activeEmulator);
+                break;
+            case LIBAMI::Interface::ModelIdSampleFetch:
+                audioManager->setResampler();
                 break;
         }
     }
@@ -838,70 +857,38 @@ auto ModelLayout::getBlock( unsigned modelId ) -> Line::Block* {
 auto ModelLayout::getIdent( Emulator::Interface::Model* model, std::string& tooltip ) -> std::string {
     
     std::string name = model->name;
-        
-    switch(model->id) {
-        case LIBC64::Interface::ModelIdSid:
-            if (!GUIKIT::Vector::find(purposes, Emulator::Interface::Model::AudioSettings))
-                name = "SID";
-        case LIBC64::Interface::ModelIdSid2:
-        case LIBC64::Interface::ModelIdSid3:
-        case LIBC64::Interface::ModelIdSid4:
-        case LIBC64::Interface::ModelIdSid5:
-        case LIBC64::Interface::ModelIdSid6:
-        case LIBC64::Interface::ModelIdSid7:
-        case LIBC64::Interface::ModelIdSid8:            
-            tooltip = "SID tooltip";
-            break;
-            
-        case LIBC64::Interface::ModelIdSid1Adr:
-        case LIBC64::Interface::ModelIdSid2Adr:
-        case LIBC64::Interface::ModelIdSid3Adr:
-        case LIBC64::Interface::ModelIdSid4Adr:
-        case LIBC64::Interface::ModelIdSid5Adr:
-        case LIBC64::Interface::ModelIdSid6Adr:
-        case LIBC64::Interface::ModelIdSid7Adr:
-        case LIBC64::Interface::ModelIdSid8Adr:
-            name = "Address";
-            tooltip = name + " tooltip";
-            break;
-            
-        case LIBC64::Interface::ModelIdSid1Left:
-        case LIBC64::Interface::ModelIdSid2Left:
-        case LIBC64::Interface::ModelIdSid3Left:
-        case LIBC64::Interface::ModelIdSid4Left:
-        case LIBC64::Interface::ModelIdSid5Left:
-        case LIBC64::Interface::ModelIdSid6Left:
-        case LIBC64::Interface::ModelIdSid7Left:
-        case LIBC64::Interface::ModelIdSid8Left:
-            name = "Left Channel";
-            tooltip = name + " tooltip";
-            break;
-            
-        case LIBC64::Interface::ModelIdSid1Right:
-        case LIBC64::Interface::ModelIdSid2Right:
-        case LIBC64::Interface::ModelIdSid3Right:
-        case LIBC64::Interface::ModelIdSid4Right:
-        case LIBC64::Interface::ModelIdSid5Right:
-        case LIBC64::Interface::ModelIdSid6Right:
-        case LIBC64::Interface::ModelIdSid7Right:
-        case LIBC64::Interface::ModelIdSid8Right:
-            name = "Right Channel";
-            tooltip = name + " tooltip";
-            break;
 
-        case LIBC64::Interface::ModelIdDriveRam20To3F:
-        case LIBC64::Interface::ModelIdDriveRam40To5F:
-        case LIBC64::Interface::ModelIdDriveRam60To7F:
-        case LIBC64::Interface::ModelIdDriveRam80To9F:
-        case LIBC64::Interface::ModelIdDriveRamA0ToBF:
-        case LIBC64::Interface::ModelIdDriveFastLoader:
-            tooltip = "";
-            break;
+    if (dynamic_cast<LIBC64::Interface*>(emulator)) {
+        switch (model->id) {
+            case LIBC64::Interface::ModelIdSid:
+                if (!GUIKIT::Vector::find(purposes, Emulator::Interface::Model::AudioSettings))
+                    name = "SID";
+            case LIBC64::Interface::ModelIdSid2:
+            case LIBC64::Interface::ModelIdSid3:
+            case LIBC64::Interface::ModelIdSid4:
+            case LIBC64::Interface::ModelIdSid5:
+            case LIBC64::Interface::ModelIdSid6:
+            case LIBC64::Interface::ModelIdSid7:
+            case LIBC64::Interface::ModelIdSid8:
+                tooltip = "SID tooltip";
+                break;
 
-        default:
-            tooltip = name + " tooltip";
-            break;
-    }        
+            case LIBC64::Interface::ModelIdDriveRam20To3F:
+            case LIBC64::Interface::ModelIdDriveRam40To5F:
+            case LIBC64::Interface::ModelIdDriveRam60To7F:
+            case LIBC64::Interface::ModelIdDriveRam80To9F:
+            case LIBC64::Interface::ModelIdDriveRamA0ToBF:
+            case LIBC64::Interface::ModelIdDriveFastLoader:
+                tooltip = "";
+                break;
+
+            default:
+                tooltip = name + " tooltip";
+                break;
+        }
+    } else if (dynamic_cast<LIBAMI::Interface*>(emulator)) {
+        tooltip = name + " tooltip";
+    }
     
     return name;
 }

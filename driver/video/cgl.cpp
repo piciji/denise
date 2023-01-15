@@ -97,6 +97,13 @@ struct CGL : public Video, OpenGL, RenderThread {
         }
     }
 
+    auto lockReuse() -> bool {
+        if (settings.threaded)
+            return RenderThread::lockReuse();
+
+        return true;
+    }
+
     auto lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height) -> bool {
         if (settings.threaded)
             return RenderThread::lock(data, pitch, _width, _height);

@@ -178,8 +178,7 @@ auto Shader::loadInternal() -> void {
             internalPasses.push_back(pass);
         }
 
-        if (vManager->isC64() && vManager->useRfModulation() ) {
-            // check if amiga rf modulation causes luma latencies
+        if (vManager->useRfModulation() ) {
             pass = new ShaderPass;
             addBaseProps(pass);
             pass->fragment = buildLumaLatency();
@@ -221,7 +220,7 @@ auto Shader::loadInternal() -> void {
 		pass->relativeHeight = 100;
 		internalPasses.push_back(pass);
 
-        if (vManager->scanlines) {
+        if (vManager->scanlines && !vManager->lace.active) {
             pass = new ShaderPass;
             pass->primary = false;
             addBaseProps(pass);
@@ -272,7 +271,7 @@ auto Shader::loadInternal() -> void {
         addBaseProps(pass);
 		pass->ident = "crop";
         // remove first non visible line. it was needed as delay line to calculate first visible line
-        pass->crop.top = (vManager->scanlines || vManager->bloomGlow) ? 2 : 1;
+        pass->crop.top = (vManager->scanlines || vManager->bloomGlow || vManager->lace.active) ? 2 : 1;
         // same here, we have some pixel offscreen to calculate bandwidth reduction
 		pass->crop.left = SHADER_OFFSCREEN_WIDTH << 1;
 		pass->crop.right = SHADER_OFFSCREEN_WIDTH << 1;
@@ -293,6 +292,29 @@ auto Shader::loadInternal() -> void {
 		pass->ident = "primary";
 		pass->filter = filter == 1 ? "linear" : "nearest";
 		internalPasses.push_back( pass );
+
+        if (vManager->bloomGlow) {
+            pass = new ShaderPass;
+            pass->primary = false;
+            addBaseProps(pass);
+            pass->fragment = buildBloom(true);
+            pass->ident = "bloomPhase1";
+            pass->relativeWidth = 100;
+            pass->relativeHeight = 100;
+            pass->filter = filter == 1 ? "linear" : "nearest";
+            pass->mipmap = true;
+            internalPasses.push_back(pass);
+
+            pass = new ShaderPass;
+            pass->primary = false;
+            addBaseProps(pass);
+            pass->fragment = buildBloom(false);
+            pass->ident = "bloom";
+            pass->relativeWidth = 100;
+            pass->relativeHeight = 100;
+            pass->filter = "nearest";
+            internalPasses.push_back(pass);
+        }
     }
 
 	// post shading runs after external shaders
@@ -545,7 +567,8 @@ auto Shader::clean(std::vector<ShaderPass*>& passes) -> void {
 }
 
 auto Shader::buildOutputEncoding() -> std::string {
-    
+    bool c64Glitches = vManager->isC64() && vManager->useLineGlitch();
+
 	std::string out = R"(
         #version 150
         
@@ -555,7 +578,7 @@ auto Shader::buildOutputEncoding() -> std::string {
         uniform vec4 targetSize;
     )";
     
-    if (vManager->isC64() && vManager->useLineGlitch()) {
+    if (c64Glitches) {
         out += R"(
 			uniform float CAS;
 			uniform float RAS;
@@ -600,7 +623,7 @@ auto Shader::buildOutputEncoding() -> std::string {
 
     out += rgbToLumaChroma; 
     
-    if (vManager->isC64() && vManager->useLineGlitch()) {
+    if (c64Glitches) {
 
         if (vManager->firSharp == 0)
             out += "float xposF = texCoord.x * targetSize.x;";
@@ -657,8 +680,13 @@ auto Shader::buildOutputEncoding() -> std::string {
 //    )";
 	
     if (vManager->pal) {
-        out += R"( int oddLineFrame = int(floor(mod(texCoord.y * targetSize.y, 2.0))); )";
-        out += "fragColor=vec4( mix(yuvOdd, yuvEven, oddLineFrame ^ oddLine), 1.0 ); ";
+        if (vManager->lace.active) {
+            out += R"( int oddLineFrame = int((floor(texCoord.y * targetSize.y) >> 1) & 1); )"; // e, e, o, o, e, e, o, o, ...
+            out += "fragColor=vec4( mix(yuvOdd, yuvEven, oddLineFrame ^ oddLineI), 1.0 ); ";
+        } else {
+            out += R"( int oddLineFrame = int(floor(mod(texCoord.y * targetSize.y, 2.0))); )";  // e, o, e, o, e, o, ...
+            out += "fragColor=vec4( mix(yuvOdd, yuvEven, oddLineFrame ^ oddLine), 1.0 ); ";
+        }
     } else
         out += "fragColor=vec4(yuvEven, 1.0); ";
 
@@ -940,11 +968,21 @@ auto Shader::buildDelayLineAndConvertToRgb() -> std::string {
 	)";
 		
 	if (vManager->pal) {
-			
-        out += R"( 
+
+        if (vManager->lace.active)
+            out += R"(
+				int lineFactor = int((floor(texCoord.y * targetSize.y) >> 1) & 1);
+				vec3 yuv = (texture(source[0], texCoord.xy).xyz);
+				vec3 yuvLineBefore = (texture(source[0], texCoord.xy + vec2(0.0, -2.0 / targetSize.y )).xyz);
+			)";
+        else
+            out += R"(
 				int lineFactor = int(floor(mod(texCoord.y * targetSize.y, 2.0)));
 				vec3 yuv = (texture(source[0], texCoord.xy).xyz);
-				vec3 yuvLineBefore = (texture(source[0], texCoord.xy + vec2(0.0, -1.0 / targetSize.y )).xyz);      
+				vec3 yuvLineBefore = (texture(source[0], texCoord.xy + vec2(0.0, -1.0 / targetSize.y )).xyz);
+			)";
+
+        out += R"(
 				vec2 merged = vec2(yuv.y + yuvLineBefore.y, yuv.z + yuvLineBefore.z) * mix(hanoverBars, hanoverBarsAlt, lineFactor ^ oddLine) * 0.5;
 				vec3 color = vec3(yuv.x, merged.x, merged.y) * mat3(1.0,0.0,1.140251,1.0,-0.39393070,-0.58080921,1.0,2.0283976,0.0);
 				fragColor = vec4(color, 1.0);
@@ -1244,7 +1282,10 @@ auto Shader::transferDelayLine() -> void {
 
     setAttribute("delayLine", "hanoverBars", _hanBar);
     setAttribute("delayLine", "hanoverBarsAlt", _hanBarAlt);
-    setAttribute("delayLine", "oddLine", (int) (vManager->emulator->cropTop() & 1));   
+    if (vManager->lace.active)
+        setAttribute("delayLine", "oddLine", (int)((vManager->emulator->cropTop() >> 1) & 1));
+    else
+        setAttribute("delayLine", "oddLine", (int) (vManager->emulator->cropTop() & 1));
 }
 
 auto Shader::transferGammaAndScanlines() -> void {
@@ -1264,7 +1305,10 @@ auto Shader::transferOutputEncoding() -> void {
 
     setAttribute("outputEncoding", "rotU", rotU);
     setAttribute("outputEncoding", "rotV", rotV);
-    setAttribute("outputEncoding", "oddLine", (int)(vManager->emulator->cropTop() & 1) );
+    if (vManager->lace.active)
+        setAttribute("outputEncoding", "oddLine", (int)((vManager->emulator->cropTop() >> 1) & 1) );
+    else
+        setAttribute("outputEncoding", "oddLine", (int)(vManager->emulator->cropTop() & 1 ) );
 
     if (!vManager->isC64())
         return;

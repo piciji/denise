@@ -30,6 +30,7 @@ struct Video {
   
     virtual auto init(uintptr_t handle) -> bool { return true; }
     virtual auto term() -> void {}
+    virtual auto lockReuse() -> bool { return false; }
     virtual auto lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height) -> bool { return false; }
     virtual auto lock(float*& data, unsigned& pitch, unsigned _width, unsigned _height) -> bool { return false; }
     virtual auto lock(int32_t*& data, unsigned& pitch, unsigned _width, unsigned _height) -> bool { return false; }

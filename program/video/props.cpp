@@ -226,6 +226,11 @@ auto VideoManager::setCrtRealGamma(bool state) -> void {
     shader.recreate = true;
 }
 
+auto VideoManager::setInterlaceMode(unsigned mode) -> void {
+    interlaceMode = mode;
+    colorTableUpdated = false;
+}
+
 auto VideoManager::setFirFilterLength( unsigned length ) -> void {
     firTaps = length;
     shader.recreate = true;
@@ -283,7 +288,8 @@ auto VideoManager::resetSettings() -> void {
     auto modeIdent = getModeIdent();
     
     settings->remove( "video_new_luma" + modeIdent );
-    settings->remove( "video_crt_real_gamma" + modeIdent );
+    settings->remove( "video_tv_gamma" + modeIdent );
+    settings->remove( "video_interlace" + modeIdent );
     settings->remove( "video_saturation" + modeIdent );
     settings->remove( "video_brightness" + modeIdent );
     settings->remove( "video_gamma" + modeIdent );
@@ -357,15 +363,15 @@ auto VideoManager::getModeIdent() -> std::string {
 
 auto VideoManager::getSettings() -> std::tuple<VPARAMST> {
     
-    bool _useSpectrum = settings->get<bool>("video_spectrum", true);    
-    //unsigned _region = settings->get<unsigned>("video_region"), 0u,{0u, 1u});
+    bool _useSpectrum = settings->get<bool>("video_spectrum", true);
 	unsigned _region = emulator->getRegionEncoding();
 	bool _pal = _region == Emulator::Interface::Region::Pal;
 	
     unsigned _crtMode = settings->get<unsigned>("video_crt", (unsigned)CrtMode::None, {0u, 2u});
 
     auto modeIdent = getModeIdent();
-    
+
+    unsigned _interlace = settings->get<unsigned>("video_interlace" + modeIdent, 0, {0u, 1u});
     unsigned _saturation = settings->get<unsigned>("video_saturation" + modeIdent, (_pal && _crtMode) ? 110u : 100u,{0u, 200u});
     unsigned _contrast = settings->get<unsigned>("video_contrast" + modeIdent, 100u,{0u, 200u});
     unsigned _gamma = settings->get<unsigned>("video_gamma" + modeIdent, 100u,{0u, 200u});
@@ -374,7 +380,7 @@ auto VideoManager::getSettings() -> std::tuple<VPARAMST> {
     float _phaseError = settings->get<float>("video_phase_error" + modeIdent, _pal ? 22.5 : 0,{-45.0, 45.0});
     bool _usePhaseError = settings->get<bool>("video_phase_error_use" + modeIdent, true);
     bool _newLuma = settings->get<bool>("video_new_luma" + modeIdent, true);
-    bool _crtRealGamma = settings->get<bool>("video_crt_real_gamma" + modeIdent, false);
+    bool _tvGamma = settings->get<bool>("video_tv_gamma" + modeIdent, false);
     int _hanoverBars = settings->get<int>("video_hanover_bars" + modeIdent, _crtMode == (unsigned)CrtMode::Gpu ? 20 : -20, {-100, 100});
     bool _useHanoverBars = settings->get<bool>("video_hanover_bars_use" + modeIdent, true);
     unsigned _blur = settings->get<unsigned>("video_blur" + modeIdent, 30,{0, 100});
@@ -443,6 +449,7 @@ auto VideoManager::reloadSettings() -> void {
     setGamma(_gamma);
     setPhase(_phase);
     setNewLuma(_newLuma);
+    setInterlaceMode(_interlace);
     setPhaseError(_usePhaseError ? _phaseError : 0 );
     setHanoverBars( _useHanoverBars ? _hanoverBars : 0);
     setScanlines(_useScanlines ? _scanlines : 0);
@@ -480,7 +487,7 @@ auto VideoManager::reloadSettings() -> void {
     useColorSpectrum(_useSpectrum);
     setCrtMode( (CrtMode)_crtMode );
     
-    setCrtRealGamma( _crtRealGamma );
+    setCrtRealGamma( _tvGamma );
 	
 	// update only, crt mode could be changed
     VideoManager::setCrtThreaded( VideoManager::crtThreaded );

@@ -23,18 +23,25 @@ VideoOptionLayout::VideoOptionLayout(bool withSpectrum) {
     
     if (withSpectrum) {
         append(newLuma, {0u, 0u}, 10);    	    
-        append(crtRealGamma, {0u, 0u}, 10);    
+        append(tvGamma, {0u, 0u}, 10);
+    } else {
+        append(interlaceNatural, {0u, 0u}, 10);
+        append(interlaceHold, {0u, 0u}, 10);
+        append(tvGamma, {0u, 0u}, 10);
     }
-	
+
 	append(linearInterpolation, {0u, 0u});
-    
+
+    GUIKIT::RadioBox::setGroup(interlaceNatural, interlaceHold);
+
     setAlignment(0.5);
 }
 
 VideoBaseLayout::VideoBaseLayout(bool withSpectrum) :
 mode(withSpectrum),
 option(withSpectrum),
-phase("°", false) 
+phase("°", false),
+scanlines("%", true)
 {
     append(mode, {~0u, 0u}, 2);
     append(option, {~0u, 0u}, 2);
@@ -45,32 +52,31 @@ phase("°", false)
     append(saturation, {~0u, 0u}, 2);        
     append(contrast, {~0u, 0u}, 2);     
     append(brightness, {~0u, 0u}, 2);
-    append(gamma, {~0u, 0u});    
+    append(gamma, {~0u, 0u}, 2);
+    append(scanlines,{~0u, 0u});
 
     saturation.slider.setLength(201);
     gamma.slider.setLength(251);
     brightness.slider.setLength(201);
     contrast.slider.setLength(201);
     phase.slider.setLength(361);
+    scanlines.slider.setLength(101);
     
     setFont(GUIKIT::Font::system("bold"));    
     setPadding(8);
 }
 
-VideoCrtLayout::VideoCrtLayout() : 
+VideoEncodingLayout::VideoEncodingLayout() :
 phaseError("°", true),
 hanoverBars("%", true),
-scanlines("%", true),
 blur("%", true)
 {
     append(phaseError,{~0u, 0u}, 2);
     append(hanoverBars,{~0u, 0u}, 2);
-    append(scanlines,{~0u, 0u}, 2);
     append(blur,{~0u, 0u});
     
     phaseError.slider.setLength(181); // -45° <-> 45°  ( 0.5 steps )
 	hanoverBars.slider.setLength(201); // saturation change -100% <-> 100%
-	scanlines.slider.setLength(101);
 	blur.slider.setLength(101);
     
     setFont(GUIKIT::Font::system("bold"));    
@@ -235,7 +241,7 @@ base( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) )
     setPadding(10);
 
     tab1.append(base, {~0u, 0u}, 5);
-    tab1.append(crt, {~0u, 0u}, 5);
+    tab1.append(encoding, {~0u, 0u}, 5);
 	tab1.append(hf, {~0u, 0u});
     
     tab2.append(gpuBase, {~0u, 0u}, 10);
@@ -256,12 +262,12 @@ base( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) )
     setSliderAction<unsigned>( &base.brightness, "brightness", [this](unsigned value) { vManager()->setBrightness( value ); } );
     setSliderAction<unsigned>( &base.contrast, "contrast", [this](unsigned value) { vManager()->setContrast( value ); } );
     setSliderAction<int>( &base.phase, "phase", [this](int value) { vManager()->setPhase( value ); }, [this](unsigned position) { return (int)position - 180; } );
-    setSliderAction<unsigned>( &crt.scanlines, "scanlines", [this](unsigned value) { vManager()->setScanlines( value ); },
+    setSliderAction<unsigned>( &base.scanlines, "scanlines", [this](unsigned value) { vManager()->setScanlines( value ); },
         [this](unsigned position) { return std::max(position, 1u); } );
-    setSliderAction<unsigned>( &crt.blur, "blur", [this](unsigned value) { vManager()->setBlur( value ); } );
-    setSliderAction<float>( &crt.phaseError, "phase_error", [this](float value) { vManager()->setPhaseError( value ); },
+    setSliderAction<unsigned>( &encoding.blur, "blur", [this](unsigned value) { vManager()->setBlur( value ); } );
+    setSliderAction<float>( &encoding.phaseError, "phase_error", [this](float value) { vManager()->setPhaseError( value ); },
         [this](unsigned position) { return (float)((int)position - 90) / 2.0f; } );          
-    setSliderAction<int>( &crt.hanoverBars, "hanover_bars", [this](int value) { vManager()->setHanoverBars( value ); }, [this](unsigned position) { return (int)position - 100; } );
+    setSliderAction<int>( &encoding.hanoverBars, "hanover_bars", [this](int value) { vManager()->setHanoverBars( value ); }, [this](unsigned position) { return (int)position - 100; } );
     setSliderAction<float>( &mask.pitch, "mask_pitch", [this](float value) { vManager()->setMaskPitch( value ); },
         [this](unsigned position) { return (float)position / 100.0f; } );  
     setSliderAction<unsigned>( &mask.dpi, "mask_dpi", [this](unsigned value) { vManager()->setMaskDpi( value ); } );
@@ -306,12 +312,22 @@ base( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) )
     
     base.option.newLuma.onToggle = [this](bool checked) {
         _settings->set<bool>( "video_new_luma" + this->sliderIdent(), checked);
-        vManager()->updateData<bool>("video_new_luma", checked);
+        vManager()->updateData<bool>("new_luma", checked);
+    };
+
+    base.option.interlaceNatural.onActivate = [this]() {
+        _settings->set<unsigned>( "video_interlace" + this->sliderIdent(), 0);
+        vManager()->updateData<unsigned>("interlace", 0);
+    };
+
+    base.option.interlaceHold.onActivate = [this]() {
+        _settings->set<unsigned>( "video_interlace" + this->sliderIdent(), 1);
+        vManager()->updateData<unsigned>("interlace", 1);
     };
     
-    base.option.crtRealGamma.onToggle = [this](bool checked) {
-        _settings->set<bool>( "video_crt_real_gamma" + this->sliderIdent(), checked);
-        vManager()->updateData<bool>("video_crt_real_gamma", checked);
+    base.option.tvGamma.onToggle = [this](bool checked) {
+        _settings->set<bool>( "video_tv_gamma" + this->sliderIdent(), checked);
+        vManager()->updateData<bool>("tv_gamma", checked);
     };
 	
 	base.option.linearInterpolation.onToggle = [this](bool checked) {
@@ -325,17 +341,17 @@ base( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) )
         
     mask.type.apertureMask.onActivate = [this]() {
         _settings->set<unsigned>( "video_mask_type" + this->sliderIdent(), (unsigned)VideoManager::MaskType::Aperture);
-        vManager()->updateData<unsigned>("video_mask_type", (unsigned)VideoManager::MaskType::Aperture);
+        vManager()->updateData<unsigned>("mask_type", (unsigned)VideoManager::MaskType::Aperture);
     };
 
     mask.type.shadowMask.onActivate = [this]() {
         _settings->set<unsigned>( "video_mask_type" + this->sliderIdent(), (unsigned)VideoManager::MaskType::ShadowMask);
-        vManager()->updateData<unsigned>("video_mask_type", (unsigned)VideoManager::MaskType::ShadowMask);
+        vManager()->updateData<unsigned>("mask_type", (unsigned)VideoManager::MaskType::ShadowMask);
     };
     
     mask.type.slotMask.onActivate = [this]() {
         _settings->set<unsigned>( "video_mask_type" + this->sliderIdent(), (unsigned)VideoManager::MaskType::SlotMask);
-        vManager()->updateData<unsigned>("video_mask_type", (unsigned)VideoManager::MaskType::SlotMask);
+        vManager()->updateData<unsigned>("mask_type", (unsigned)VideoManager::MaskType::SlotMask);
     };
     
     base.mode.reset.onActivate = [this]() {
@@ -385,30 +401,30 @@ base( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) )
     
     gpuBase.option.distortionHires.onToggle = [this](bool checked) {
         _settings->set<bool>("video_distortion_hires" + this->sliderIdent(), checked);
-        vManager()->updateData<bool>("video_distortion_hires", checked);
+        vManager()->updateData<bool>("distortion_hires", checked);
     };
     
     gpuBase.option.hires.onToggle = [this](bool checked) {
         _settings->set<bool>("video_hires" + this->sliderIdent(), checked);
-        vManager()->updateData<bool>("video_hires", checked);
+        vManager()->updateData<bool>("hires", checked);
     };
 	
     gpuBase.firSharp.sharpLeft.onActivate = [this]() {
         
         _settings->set<int>("video_fir_filter_sharp" + this->sliderIdent(), -1);
-        vManager()->updateData<int>("video_fir_filter_sharp", -1);
+        vManager()->updateData<int>("fir_filter_sharp", -1);
     };
 
     gpuBase.firSharp.sharpRight.onActivate = [this]() {
 
         _settings->set<int>("video_fir_filter_sharp" + this->sliderIdent(), 1);
-        vManager()->updateData<int>("video_fir_filter_sharp", 1);
+        vManager()->updateData<int>("fir_filter_sharp", 1);
     };
 
     gpuBase.firSharp.natural.onActivate = [this]() {
 
         _settings->set<int>("video_fir_filter_sharp" + this->sliderIdent(), 0);
-        vManager()->updateData<int>("video_fir_filter_sharp", 0);
+        vManager()->updateData<int>("fir_filter_sharp", 0);
     };
     
     vicIIGlitch.toggleAll.onActivate = [this]() {
@@ -446,8 +462,6 @@ template<typename T> auto VideoLayout::setSliderAction( SliderLayout* layout, st
                 mask.setEnabled( checked );
                 layout->active.setEnabled();
                 gpuBase.luminance.setEnabled( !checked );
-            } else if (layout == &crtGlitch.radialDistortion) {
-                gpuBase.option.distortionHires.setEnabled( checked );
             } else if (layout == &bloom.glow) {
                 bloom.setEnabled( checked );
                 layout->active.setEnabled();	
@@ -489,7 +503,8 @@ auto VideoLayout::updatePresets(bool reloadDriver) -> void {
         VideoManager::getInstance( emulator )->reloadSettings();
     
 	base.option.newLuma.setChecked( _newLuma );
-    base.option.crtRealGamma.setChecked( _crtRealGamma );	
+    (_interlace == 0) ? base.option.interlaceNatural.setChecked() : base.option.interlaceHold.setChecked();
+    base.option.tvGamma.setChecked( _tvGamma );
     base.saturation.slider.setPosition(_saturation);
     base.saturation.value.setText(std::to_string(_saturation) + " %");
     base.gamma.slider.setPosition(_gamma - 30 );
@@ -499,20 +514,20 @@ auto VideoLayout::updatePresets(bool reloadDriver) -> void {
     base.contrast.slider.setPosition(_contrast);
     base.contrast.value.setText(std::to_string(_contrast) + " %");
     base.phase.slider.setPosition(_phase + 180);
-    base.phase.value.setText(std::to_string(_phase) + " °");           
+    base.phase.value.setText(std::to_string(_phase) + " °");
+    base.scanlines.active.setChecked( _useScanlines );
+    base.scanlines.slider.setPosition( _scanlines );
+    base.scanlines.value.setText( std::to_string(_scanlines) + " %" );
 	// crt
-    crt.phaseError.active.setChecked( _usePhaseError );	
-    crt.phaseError.slider.setPosition( int(_phaseError * 2.0) + 90);
-    crt.phaseError.value.setText( GUIKIT::String::formatFloatingPoint(_phaseError, 1) + " °");
-    crt.hanoverBars.active.setChecked( _useHanoverBars );	
-    crt.hanoverBars.slider.setPosition( _hanoverBars + 100 );
-    crt.hanoverBars.value.setText( std::to_string(_hanoverBars) + " %" );	
-	crt.scanlines.active.setChecked( _useScanlines );	
-    crt.scanlines.slider.setPosition( _scanlines );
-    crt.scanlines.value.setText( std::to_string(_scanlines) + " %" );	
-    crt.blur.active.setChecked( _useBlur );	
-    crt.blur.slider.setPosition( _blur );
-    crt.blur.value.setText( std::to_string(_blur) + " %" );	
+    encoding.phaseError.active.setChecked( _usePhaseError );
+    encoding.phaseError.slider.setPosition( int(_phaseError * 2.0) + 90);
+    encoding.phaseError.value.setText( GUIKIT::String::formatFloatingPoint(_phaseError, 1) + " °");
+    encoding.hanoverBars.active.setChecked( _useHanoverBars );
+    encoding.hanoverBars.slider.setPosition( _hanoverBars + 100 );
+    encoding.hanoverBars.value.setText( std::to_string(_hanoverBars) + " %" );
+    encoding.blur.active.setChecked( _useBlur );
+    encoding.blur.slider.setPosition( _blur );
+    encoding.blur.value.setText( std::to_string(_blur) + " %" );
 	hf.lumaRise.active.setChecked( _useLumaRise );	
     hf.lumaRise.slider.setPosition( (unsigned)((_lumaRise - 1.0) * 10.0) );
     hf.lumaRise.value.setText( GUIKIT::String::formatFloatingPoint(_lumaRise, 1) + " px" );
@@ -609,24 +624,24 @@ auto VideoLayout::updateVisibillity() -> void {
         base.phase.setEnabled(false);
         base.option.newLuma.setEnabled(false);        
     }
+    base.scanlines.slider.setEnabled( base.scanlines.active.checked() );
 		
     bool crtChecked = base.mode.crtCpu.checked() || base.mode.crtGpu.checked();
-    bool crtGpuChecked = base.mode.crtGpu.checked();        
-    
-	crt.setEnabled( crtChecked );
+    bool crtGpuChecked = base.mode.crtGpu.checked();
+
+    encoding.setEnabled( crtChecked );
     hf.setEnabled( crtChecked );
     
     if (crtChecked) {
-        crt.phaseError.slider.setEnabled( crt.phaseError.active.checked() );
-        crt.hanoverBars.setEnabled( _pal );
-        crt.hanoverBars.slider.setEnabled( _pal && crt.hanoverBars.active.checked() );	
-        crt.scanlines.slider.setEnabled( crt.scanlines.active.checked() );
-        crt.blur.slider.setEnabled(  crt.blur.active.checked() );
+        encoding.phaseError.slider.setEnabled( encoding.phaseError.active.checked() );
+        encoding.hanoverBars.setEnabled( _pal );
+        encoding.hanoverBars.slider.setEnabled( _pal && encoding.hanoverBars.active.checked() );
+        encoding.blur.slider.setEnabled(  encoding.blur.active.checked() );
         hf.lumaRise.slider.setEnabled( hf.lumaRise.active.checked() );
         hf.lumaFall.slider.setEnabled( hf.lumaFall.active.checked() );
     }
     
-    base.option.crtRealGamma.setEnabled( crtChecked && base.mode.palette.checked() && _pal );
+    base.option.tvGamma.setEnabled( crtChecked && base.mode.palette.checked() && _pal );
 	
     if (videoDriver->shaderFormat() != DRIVER::Video::ShaderType::GLSL) {
         if (videoDriver->shaderFormat() == DRIVER::Video::ShaderType::HLSL) {
@@ -648,11 +663,11 @@ auto VideoLayout::updateVisibillity() -> void {
     
     if ( crtGpuChecked )
         // crt with gpu don't use blur setting
-        crt.blur.setEnabled( false );
+        encoding.blur.setEnabled( false );
     
     gpuBase.option.hires.setEnabled();
-    gpuBase.option.distortionHires.setEnabled( crtGlitch.radialDistortion.active.checked() );
-    
+    gpuBase.option.distortionHires.setEnabled();
+
     mask.setEnabled( mask.level.active.checked() );
     mask.level.active.setEnabled();    
 	
@@ -661,19 +676,19 @@ auto VideoLayout::updateVisibillity() -> void {
 
     gpuBase.luminance.setEnabled( !mask.level.active.checked() );
     gpuBase.lightFromCenter.setEnabled();
-    gpuBase.lightFromCenter.slider.setEnabled( gpuBase.lightFromCenter.active.checked() );    
+    gpuBase.lightFromCenter.slider.setEnabled( gpuBase.lightFromCenter.active.checked() );
+
+    bloom.setEnabled( bloom.glow.active.checked() );
+    bloom.glow.active.setEnabled();
+    bloom.weight.slider.setEnabled( bloom.weight.active.checked() );
 
     // only enabled, when crt over gpu active
 	
 	if (crtGpuChecked) {	
 		crtGlitch.lumaNoise.slider.setEnabled( crtGlitch.lumaNoise.active.checked() );
 		crtGlitch.chromaNoise.slider.setEnabled( crtGlitch.chromaNoise.active.checked() );
-		crtGlitch.randomLineOffset.slider.setEnabled( crtGlitch.randomLineOffset.active.checked() );	
-	
-		bloom.setEnabled( bloom.glow.active.checked() );
-		bloom.glow.active.setEnabled();					
-		bloom.weight.slider.setEnabled( bloom.weight.active.checked() );				
-		
+		crtGlitch.randomLineOffset.slider.setEnabled( crtGlitch.randomLineOffset.active.checked() );
+
 		vicIIGlitch.aec.slider.setEnabled( dynamic_cast<LIBC64::Interface*>(emulator) && vicIIGlitch.aec.active.checked() );
 		vicIIGlitch.ba.slider.setEnabled( dynamic_cast<LIBC64::Interface*>(emulator) && vicIIGlitch.ba.active.checked() );
 		vicIIGlitch.phi0.slider.setEnabled( dynamic_cast<LIBC64::Interface*>(emulator) && vicIIGlitch.phi0.active.checked() );
@@ -694,31 +709,34 @@ auto VideoLayout::translate() -> void {
     base.contrast.name.setText( trans->get("contrast", {}, true) );
     base.phase.name.setText( trans->get("phase", {}, true) );
     base.option.newLuma.setText( trans->get("new_luma") );
-    base.option.crtRealGamma.setText( trans->get("crt_real_gamma") );
+    base.option.interlaceNatural.setText( trans->get("interlace natural") );
+    base.option.interlaceHold.setText( trans->get("interlace hold") );
+    base.option.tvGamma.setText( trans->get("TV gamma") );
 	base.option.linearInterpolation.setText( trans->get("linear_interpolation") );
     base.mode.palette.setText( trans->get("palette") );
     base.mode.spectrum.setText( trans->get("color_spectrum") );    
     base.mode.reset.setText( trans->get("reset") );	
-    base.mode.crtNone.setText( trans->get("crt_none") );
+    base.mode.crtNone.setText( trans->get("RGB") );
     base.mode.crtCpu.setText( trans->get("crt_cpu") );
     base.mode.crtGpu.setText( trans->get("crt_gpu") );
-	
-    crt.setText(trans->get("crt_emulation"));
-	crt.phaseError.active.setText( trans->get("phase_error", {}, true) );
-	crt.hanoverBars.active.setText( trans->get("hanover_bars", {}, true) );
-	crt.scanlines.active.setText( trans->get("scanlines", {}, true) );
-	crt.blur.active.setText( trans->get("blur", {}, true) );
+    base.scanlines.active.setText( trans->get("scanlines", {}, true) );
+
+    encoding.setText(trans->get("color encoding"));
+    encoding.phaseError.active.setText( trans->get("phase_error", {}, true) );
+    encoding.hanoverBars.active.setText( trans->get("hanover_bars", {}, true) );
+    encoding.blur.active.setText( trans->get("blur", {}, true) );
 	hf.setText(trans->get("rf_modulation"));
 	hf.lumaRise.active.setText( trans->get("luma_rise", {}, true) );
     hf.lumaFall.active.setText( trans->get("luma_fall", {}, true) );
 
     gpuBase.setText(trans->get("GPU"));
     gpuBase.option.distortionHires.setText( trans->get("distortion_hires") );
+    gpuBase.option.distortionHires.setTooltip( trans->get("distortion hires tooltip") );
     gpuBase.option.hires.setText( trans->get("hires") );
-    gpuBase.firFilter.name.setText( trans->get("fir_filter_length", {}, true) );
-    gpuBase.firSharp.sharpLeft.setText( trans->get("fir_filter_sharp_left") );
-    gpuBase.firSharp.sharpRight.setText( trans->get("fir_filter_sharp_right") );
-    gpuBase.firSharp.natural.setText( trans->get("fir_filter_natural") );    
+    gpuBase.firFilter.name.setText( trans->get("fir filter blur", {}, true) );
+    gpuBase.firSharp.sharpLeft.setText( trans->get("fir filter left") );
+    gpuBase.firSharp.sharpRight.setText( trans->get("fir filter right") );
+    gpuBase.firSharp.natural.setText( trans->get("fir filter natural") );
     gpuBase.luminance.name.setText( trans->get("luminance", {}, true) );
     gpuBase.lightFromCenter.active.setText( trans->get("light_from_center", {}, true) );
     
@@ -752,7 +770,7 @@ auto VideoLayout::translate() -> void {
     vicIIGlitch.ras.active.setText(trans->get("ras_glitch",{}, true));
     vicIIGlitch.cas.active.setText(trans->get("cas_glitch",{}, true));
     
-    SliderLayout::scale({&base.saturation, &base.gamma, &base.brightness, &base.contrast, &base.phase, &crt.phaseError, &crt.hanoverBars, &crt.scanlines, &crt.blur, &hf.lumaRise, &hf.lumaFall},
+    SliderLayout::scale({&base.saturation, &base.gamma, &base.brightness, &base.contrast, &base.phase, &base.scanlines, &encoding.phaseError, &encoding.hanoverBars, &encoding.blur, &hf.lumaRise, &hf.lumaFall},
         "-100 %");
     unsigned neededWidth = SliderLayout::scale({&gpuBase.firFilter, &gpuBase.lightFromCenter, &gpuBase.luminance, &mask.level, &mask.luminance, &mask.dpi, &mask.pitch, &bloom.glow, &bloom.radius, &bloom.variance, &bloom.weight},
         "0.00 mm", mask.type.type.minimumSize().width );

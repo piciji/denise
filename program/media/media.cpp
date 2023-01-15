@@ -205,8 +205,11 @@ auto MediaLayout::build() -> void {
     if (dynamic_cast<LIBC64::Interface*>(emulator)) {
         moduleFrame.append(useTraps, {0u, 0u}, 10);
     }
-    moduleFrame.append( bootCart, {0u, 0u}, 10 );
-    moduleFrame.append( deactivateCart, {0u, 0u} );
+
+    if (emulator->expansions.size() > 1) {
+        moduleFrame.append(bootCart, {0u, 0u}, 10);
+        moduleFrame.append(deactivateCart, {0u, 0u});
+    }
     moduleFrame.setPadding(10);
     moduleFrame.setFont(GUIKIT::Font::system("bold"));
 
@@ -595,9 +598,9 @@ auto MediaLayout::createImage( Emulator::Interface::MediaGroup* mediaGroup ) -> 
         suffix = diskCreatorLayout->format.text();
         
         unsigned typeId = diskCreatorLayout->format.userData();
-        bool hd = diskCreatorLayout->highDensity.checked();
-        bool bootable = diskCreatorLayout->bootable.checked();
-        bool useFFS = diskCreatorLayout->fastFileSystem.checked();
+        bool hd = diskCreatorLayout->options.highDensity.checked();
+        bool bootable = diskCreatorLayout->options.bootable.checked();
+        bool useFFS = diskCreatorLayout->options.fastFileSystem.checked();
         std::string diskName = diskCreatorLayout->diskLabel.text();
         insertId = diskCreatorLayout->insertDevice.userData();
         
@@ -925,9 +928,9 @@ auto MediaLayout::translate() -> void {
         diskCreatorLayout->setText( trans->get("disc_creator") );
 
         diskCreatorLayout->formatName.setText(trans->get("format",{}, true));
-        diskCreatorLayout->fastFileSystem.setText(trans->get("ffs"));
-        diskCreatorLayout->highDensity.setText(trans->get("high_density"));
-        diskCreatorLayout->bootable.setText(trans->get("bootable"));
+        diskCreatorLayout->options.fastFileSystem.setText(trans->get("ffs"));
+        diskCreatorLayout->options.highDensity.setText(trans->get("high_density"));
+        diskCreatorLayout->options.bootable.setText(trans->get("bootable"));
         diskCreatorLayout->diskLabelName.setText(trans->get("disk label",{}, true));
         diskCreatorLayout->insertLabel.setText(trans->get("insert",{}, true));
         diskCreatorLayout->button.setText(trans->get("create"));

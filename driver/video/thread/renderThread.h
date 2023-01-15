@@ -56,6 +56,7 @@ namespace DRIVER {
         auto lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height) -> bool;
         auto lock(int32_t*& data, unsigned& pitch, unsigned _width, unsigned _height) -> bool;
         auto lock(float*& data, unsigned& pitch, unsigned _width, unsigned _height) -> bool;
+        auto lockReuse() -> bool;
         auto unlock(bool disallowShader = false) -> void;
         auto reset() -> void;
         auto wait() -> void;

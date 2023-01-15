@@ -22,23 +22,24 @@ Interface::Interface() : Emulator::Interface( "Amiga" ) {
 }
 
 auto Interface::prepareFirmware() -> void {
-    firmwares.push_back({FirmwareIdKick, "Aros-Kick"});
-    firmwares.push_back({FirmwareIdExt, "Aros-Ext"});
+    firmwares.push_back({FirmwareIdKick, "Kickrom"});
+    firmwares.push_back({FirmwareIdExt, "Extrom"});
 }
 
 auto Interface::prepareModels() -> void {
 
-    models.push_back({ModelIdSystem, "System", Model::Type::Radio, Model::Purpose::Misc, 1, {0, 2}, {"A1000", "A500 (Full OCS)", "A500 (ECS Agnus, OCS Denise)"} });
+    models.push_back({ModelIdSystem, "Sub Models", Model::Type::Radio, Model::Purpose::SubModels, 1, {0, 2}, {"A1000", "A500 (Full OCS)", "A500 (ECS Agnus, OCS Denise)"} });
+    models.push_back({ModelIdSampleFetch, "PAULA Sample Interval", Model::Type::Radio, Model::Purpose::AudioResampler, 7, {0, 11}, {"8", "16", "24", "32", "40", "48", "56", "64", "80", "96", "112", "128"}});
     models.push_back({ModelIdLowPassFilter, "Low Pass Filter", Model::Type::Switch, Model::Purpose::AudioSettings, 1}); //0 - off, 1 - on, means software decides
-    models.push_back({ModelIdRegion, "Region", Model::Type::Combo, Model::Purpose::GraphicChip, 0, {0, 1}, { "PAL", "NTSC" }});
+    models.push_back({ModelIdRegion, "Region", Model::Type::Radio, Model::Purpose::GraphicChip, 0, {0, 1}, { "PAL", "NTSC" }});
     models.push_back({ModelIdDiskDrivesConnected, "Disk Drives", Model::Type::Combo, Model::Purpose::DriveSettings, 1, {0, 4}, { "0", "1", "2", "3", "4" }});
     models.push_back({ModelIdDiskDriveSpeed, "Disk Speed", Model::Type::Slider, Model::Purpose::DriveSettings, 30000, {27500, 32500}, {}, 500, 100.0 });
     models.push_back({ModelIdDiskDriveWobble, "Disk Wobble", Model::Type::Slider, Model::Purpose::DriveSettings, 50, {0, 500}, {}, 50, 100.0 });
     models.push_back({ModelIdDiskDriveStepperSeekTime, "Stepper Seek Time", Model::Type::Slider, Model::Purpose::DriveSettings, 0, {0, 160}, {}, 160, 10.0 });
-    models.push_back({ModelIdDiskTurbo, "Disk Turbo", Model::Type::Radio, Model::Purpose::DriveSettings, 0, {0, 4}, { "100", "200", "400", "800", "MAX" }});
+    models.push_back({ModelIdDiskTurbo, "Disk Turbo", Model::Type::Radio, Model::Purpose::DriveSettings, 0, {0, 4}, { "1x", "2x", "4x", "8x", "MAX" }});
 
-    models.push_back({ModelIdChipMem, "Chip Mem", Model::Type::Radio, Model::Purpose::Memory, 1, {0, 3}, { "256", "512", "1024", "2048" }});
-    models.push_back({ModelIdChipMem, "Slow Mem", Model::Type::Radio, Model::Purpose::Memory, 0, {0, 4}, { "0", "512", "1024", "1536", "1792" }});
+    models.push_back({ModelIdChipMem, "Chip Mem", Model::Type::Radio, Model::Purpose::Memory, 1, {0, 3}, { "256 Kb", "512 Kb", "1 MB", "2 MB" }});
+    models.push_back({ModelIdChipMem, "Slow Mem", Model::Type::Radio, Model::Purpose::Memory, 0, {0, 4}, { "none", "512 KB", "1 MB", "1.5 MB", "1.75 MB" }});
 }
 
 auto Interface::prepareMedia() -> void {

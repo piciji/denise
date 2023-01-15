@@ -1,4 +1,19 @@
 
+auto Translation::getA(std::string ident, bool addColon) -> std::string {
+    std::string out = String::trim( ident );
+    String::toLowerCase( ident );
+
+    for(auto& data : list) {
+        if(data.ident == ident)
+            return data.text + (addColon ? ":" : "");
+    }
+
+    if (String::foundSubStr(ident, "tooltip"))
+        return "";
+
+    return out + (addColon ? ":" : "");
+}
+
 auto Translation::get(std::string ident, const std::vector<std::vector<std::string>>& replaces, bool addColon) -> std::string {
     std::string out = String::trim( ident );
     std::string _ident = out;

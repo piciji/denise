@@ -44,6 +44,7 @@ struct SystemLayout : GUIKIT::VerticalLayout {
     GUIKIT::VerticalLayout rightLayout;
 
     MemoryLayout memoryLayout;
+    ModelLayout memoryNewModelLayout;
     ModelLayout modelLayout;
     ModelLayout driveModelLayout;
     ModelLayout performanceModelLayout;

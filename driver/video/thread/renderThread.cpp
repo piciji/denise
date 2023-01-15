@@ -36,6 +36,23 @@ namespace DRIVER {
         return true;
     }
 
+    auto RenderThread::lockReuse() -> bool {
+        accessMutex.lock();
+
+        if (frames == RENDER_BUFFER_COUNT) {
+            accessMutex.unlock();
+            return false;
+        }
+
+        if (fetchPos)
+            fetchPos--;
+        else
+            fetchPos = RENDER_BUFFER_COUNT - 1;
+
+        accessMutex.unlock();
+        return true;
+    }
+
     auto RenderThread::lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height) -> bool {
 
         if (!prepareBuffer(_width, _height))
@@ -135,6 +152,7 @@ namespace DRIVER {
     }
 
     auto RenderThread::getBufferToRender() -> RenderBuffer* {
+        unsigned _fetchPos;
         accessMutex.lock();
 
         if (!frames) {
@@ -142,12 +160,14 @@ namespace DRIVER {
             return nullptr;
         }
 
-        accessMutex.unlock();
-
         if (fetchPos == RENDER_BUFFER_COUNT)
             fetchPos = 0;
 
-        return &renderBuffers[fetchPos++];
+        _fetchPos = fetchPos++;
+
+        accessMutex.unlock();
+
+        return &renderBuffers[_fetchPos];
     }
     
     auto RenderThread::getLastBufferToRender() -> RenderBuffer* {

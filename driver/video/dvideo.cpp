@@ -656,6 +656,13 @@ struct DVideo : Video, RenderThread {
         }
     }
 
+    auto lockReuse() -> bool {
+        if (settings.threaded)
+            return RenderThread::lockReuse();
+
+        return true;
+    }
+
     auto lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height) -> bool {
         resizeMutex.lock();
 

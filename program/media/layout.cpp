@@ -88,6 +88,12 @@ MediaGroupLayout::MediaGroupLayout( Emulator::Interface::MediaGroup* mediaGroup,
     setFont(GUIKIT::Font::system("bold"));
 }
 
+DiskCreatorLayout::Options::Options() {
+    append(fastFileSystem, {0u, 0u}, 2);
+    append(highDensity, {0u, 0u}, 2);
+    append(bootable, {0u, 0u});
+}
+
 DiskCreatorLayout::DiskCreatorLayout( Emulator::Interface* emulator, Emulator::Interface::MediaGroup* mediaGroup ) {
 
     unsigned formatId = 0;
@@ -102,9 +108,7 @@ DiskCreatorLayout::DiskCreatorLayout( Emulator::Interface* emulator, Emulator::I
     append(format, {0u, 0u}, 10);
     
     if (dynamic_cast<LIBAMI::Interface*>(emulator)) {
-        append(fastFileSystem, {0u, 0u}, 5);
-        append(highDensity, {0u, 0u}, 5);
-        append(bootable, {0u, 0u}, 5);
+        append(options, {0u, 0u}, 10);
     }
     
     append(diskLabelName, {0u, 0u}, 5);

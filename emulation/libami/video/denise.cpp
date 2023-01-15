@@ -5,8 +5,8 @@
 
 #define LINE_BUFFER_WIDTH 1024
 #define LINE_BUFFER_HEIGHT 600
-
 #define LINE_MAX_WIDTH 384
+#define LINE_RENDER_OFFSET 5 // needed to avoid sanity checking for CRT emulation later on
 
 namespace LIBAMI {
 
@@ -125,15 +125,15 @@ auto Denise::startHblank() -> void {
     if (endFrame) {
         endFrame--;
         if (!endFrame) {
-            if (useInterlace & 0x80)
+            if (useInterlace)
                 lineVCounter--;
 
             unsigned width = hiresFrame ? (LINE_MAX_WIDTH << 1) : LINE_MAX_WIDTH;
 
-            system->videoRefresh(frameBuffer, width, lineVCounter, LINE_BUFFER_WIDTH - width, useInterlace);
+            system->videoRefresh(frameBuffer + LINE_RENDER_OFFSET, width, lineVCounter, LINE_BUFFER_WIDTH - width, useInterlace);
         }
     } else if (lineCallback.use && (lineVCounter == lineCallback.line)) {
-        system->videoMidScreenCallback();
+        system->videoMidScreenCallback(useInterlace);
     }
 }
 
@@ -148,15 +148,20 @@ auto Denise::endHblank() -> void {
             hiresFrame = hires ? 1 : 0; // can switch to hires mid frame
             // Denise doesn't need to know if Interlace is active. However, in order to arrange the resulting image in memory,
             // we need this information here.
-            useInterlace = (agnus.lace() ? 0x80 : 0) | agnus.lof;
-            if (agnus.lof)
-                lineVCounter = 1;
+            if (agnus.lace()) {
+                if (agnus.lof) {
+                    useInterlace = 2;
+                    lineVCounter = 1;
+                } else
+                    useInterlace = 1;
+            } else
+                useInterlace = 0;
         }
 
         if (lineVCounter >= LINE_BUFFER_HEIGHT) // could happen, if Agnus beam position has been changed
             lineVCounter = LINE_BUFFER_HEIGHT - 1;
 
-        linePtr = frameBuffer + lineVCounter * LINE_BUFFER_WIDTH;
+        linePtr = frameBuffer + lineVCounter * LINE_BUFFER_WIDTH + LINE_RENDER_OFFSET;
         lineVCounter += (useInterlace & 0x80) ? 2 : 1;
     }
 }

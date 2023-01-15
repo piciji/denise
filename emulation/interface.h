@@ -223,7 +223,7 @@ struct Interface {
 		unsigned id;
 		std::string name;		
 		enum Type : unsigned { Switch, Range, Hex, Radio, Combo, Slider } type;
-		enum Purpose : unsigned { Cpu, GraphicChip, SoundChip, Cia, AudioSettings, AudioResampler, Misc, DriveSettings, Performance, Hidden, Memory } purpose;
+		enum Purpose : unsigned { Cpu, GraphicChip, SoundChip, Cia, AudioSettings, AudioResampler, Misc, DriveSettings, Performance, Hidden, Memory, SubModels } purpose;
 		int defaultValue;
 		std::vector<int> range;
 		std::vector<std::string> options;
@@ -317,7 +317,7 @@ struct Interface {
         virtual auto updateDeviceState(Media*, bool, unsigned, bool, bool ) -> void {}
         virtual auto log(std::string, bool) -> void {} //for debugging
         virtual auto exit( int code ) -> void {}
-        virtual auto midScreenCallback( ) -> void {}
+        virtual auto midScreenCallback(uint8_t) -> void {}
         virtual auto questionToWrite(Media*) -> bool { return false; }
         virtual auto hintAutoWarp(uint8_t) -> void {}
         virtual auto autoStartFinish(bool) -> void {}
@@ -356,8 +356,8 @@ struct Interface {
         bind->videoRefresh8(frame, width, height, linePitch);
     }
     
-    auto midScreenCallback() -> void {
-        bind->midScreenCallback();
+    auto midScreenCallback(uint8_t interlace) -> void {
+        bind->midScreenCallback(interlace);
     }
 
     auto readMedia(Media* media, uint8_t* buffer, unsigned length, unsigned offset) -> unsigned {

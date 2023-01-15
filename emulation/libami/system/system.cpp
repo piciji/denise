@@ -91,7 +91,7 @@ input(this, agnus, cia1) {
             left <<= 1;
             right <<= 1;
         }
-        if (denise.useInterlace & 0x80) {
+        if (denise.useInterlace) {
             top <<= 1;
             bottom <<= 1;
         }
@@ -260,13 +260,13 @@ auto System::audioRefresh(int16_t left, int16_t right) -> void {
     }
 }
 
-auto System::videoMidScreenCallback() -> void {
+auto System::videoMidScreenCallback(uint8_t interlace) -> void {
     if (runAhead.pos)
         return;
 
   //  input.drawCursor(true);
 
-    interface->midScreenCallback();
+    interface->midScreenCallback(interlace);
 }
 
 auto System::setModel(uint8_t model) -> void {

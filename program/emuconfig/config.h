@@ -46,7 +46,8 @@ struct TabWindow : public GUIKIT::Window {
     VideoLayout* videoLayout = nullptr;
     PaletteLayout* paletteLayout = nullptr;
     MiscLayout* miscLayout = nullptr;
-    GUIKIT::Settings* settings = nullptr;    
+    GUIKIT::Settings* settings = nullptr;
+    std::vector<Layout> tabIdents;
 
     GUIKIT::TabFrameLayout tab;
     
@@ -68,7 +69,11 @@ struct TabWindow : public GUIKIT::Window {
     auto show(Layout layout) -> void;
 	auto showDelayed(Layout layout) -> void;
     auto setLayout(Layout layout) -> void;
+    auto prepareLayout(unsigned tabPos) -> void;
+    auto prepareLayout(Layout layout, unsigned tabPos) -> void;
     auto prepareLayout(Layout layout) -> void;
+    auto appendTab(Layout layout, GUIKIT::Image& image) -> void;
+    auto getTabPos(Layout layout) -> int;
 	static auto getView( Emulator::Interface* emulator, bool createIfNotExist = false ) -> TabWindow*;
 
     TabWindow(Emulator::Interface* emulator);

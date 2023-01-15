@@ -241,7 +241,6 @@ struct GLX : public Video, OpenGL, RenderThread {
             return RenderThread::lock(data, pitch, _width, _height);
 
         // resizing could generate 2 "makeCurrent" in a row without "clear" in between,
-        // mainly during opening APP with attached file (which start emulation)
         bool _useResizing = useResizing;
         if (_useResizing)
             resizeMutex.lock();
@@ -279,7 +278,14 @@ struct GLX : public Video, OpenGL, RenderThread {
 
         return OpenGL::lock(data, pitch);
     }
-    
+
+    auto lockReuse() -> bool {
+        if (settings.threaded)
+            return RenderThread::lockReuse();
+
+        return true;
+    }
+
     auto lock(int32_t*& data, unsigned& pitch, unsigned _width, unsigned _height) -> bool {
         if (settings.threaded)
             return RenderThread::lock(data, pitch, _width, _height);

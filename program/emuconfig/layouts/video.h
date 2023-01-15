@@ -13,8 +13,10 @@ struct VideoModeLayout : GUIKIT::HorizontalLayout {
 };
 
 struct VideoOptionLayout : GUIKIT::HorizontalLayout {
-    GUIKIT::CheckBox newLuma;     
-    GUIKIT::CheckBox crtRealGamma;
+    GUIKIT::CheckBox newLuma;
+    GUIKIT::RadioBox interlaceNatural;
+    GUIKIT::RadioBox interlaceHold;
+    GUIKIT::CheckBox tvGamma;
 	GUIKIT::CheckBox linearInterpolation;
     
     VideoOptionLayout(bool withSpectrum);
@@ -28,18 +30,18 @@ struct VideoBaseLayout : GUIKIT::FramedVerticalLayout {
     SliderLayout gamma;
     SliderLayout brightness;        	
     SliderLayout contrast;   
-    SliderLayout phase;  
+    SliderLayout phase;
+    SliderLayout scanlines;
     
     VideoBaseLayout(bool withSpectrum);
 };
 
-struct VideoCrtLayout : GUIKIT::FramedVerticalLayout {
+struct VideoEncodingLayout : GUIKIT::FramedVerticalLayout {
     SliderLayout phaseError; 
     SliderLayout hanoverBars;
-    SliderLayout scanlines;
-    SliderLayout blur;   
-    
-    VideoCrtLayout();
+    SliderLayout blur;
+
+    VideoEncodingLayout();
 };
 
 struct VideoHFLayout : GUIKIT::FramedVerticalLayout {
@@ -131,7 +133,7 @@ struct VideoLayout : GUIKIT::TabFrameLayout {
     
     GUIKIT::VerticalLayout tab1;
         VideoBaseLayout base;
-        VideoCrtLayout crt;
+        VideoEncodingLayout encoding;
 		VideoHFLayout hf;
 
     GUIKIT::VerticalLayout tab2;

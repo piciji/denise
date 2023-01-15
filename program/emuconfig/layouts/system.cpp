@@ -2,7 +2,10 @@
 auto ExpansionLayout::build( Emulator::Interface* emulator ) -> void {
     unsigned blocksPerLine = 4;
     auto& expansions = emulator->expansions;
-    
+
+    if (expansions.size() <= 1)
+        return;
+
     Line* line = nullptr;
     unsigned i = 0;
     unsigned lineCount = (expansions.size() / blocksPerLine);
@@ -52,7 +55,8 @@ MemoryLayout::MemoryLayout() {
 
 auto MemoryLayout::build( Emulator::Interface* emulator ) -> void {
     auto& memoryTypes = emulator->memoryTypes;
-    
+    if (memoryTypes.empty()) return;
+
     for(auto& memoryType : memoryTypes ) {                
         auto block = new Block();
         blocks.push_back( block );
@@ -66,6 +70,7 @@ auto MemoryLayout::build( Emulator::Interface* emulator ) -> void {
 SystemLayout::SystemLayout(TabWindow* tabWindow) {
     this->tabWindow = tabWindow;
     this->emulator = tabWindow->emulator;
+    std::vector<unsigned> dim;
     
     memorySliderReset.setInterval(500);
     
@@ -78,35 +83,55 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
         
         memorySliderReset.setEnabled(false);
     };
-    
+
+    if (dynamic_cast<LIBC64::Interface*>(emulator))
+        dim = { 3, 3, 3 };
+    else
+        dim = { 1, 1, };
+
     memoryLayout.build( emulator );
     modelLayout.build( tabWindow, emulator,
     {Emulator::Interface::Model::Purpose::Cpu, Emulator::Interface::Model::Purpose::GraphicChip, Emulator::Interface::Model::Purpose::SoundChip,
-    Emulator::Interface::Model::Purpose::Cia, Emulator::Interface::Model::Purpose::Misc}, { 3, 3, 3 } );
+    Emulator::Interface::Model::Purpose::Cia, Emulator::Interface::Model::Purpose::SubModels, Emulator::Interface::Model::Purpose::Misc}, dim );
 
-    driveModelLayout.build( tabWindow, emulator, {Emulator::Interface::Model::Purpose::DriveSettings}, { 2, 1, 1, 1, 3, 2, 2, 1, 2 } );
+    if (dynamic_cast<LIBC64::Interface*>(emulator))
+        dim = { 2, 1, 1, 1, 3, 2, 2, 1, 2 };
+    else
+        dim = { 1, 1, 1, 1, 1 };
+
+    memoryNewModelLayout.build( tabWindow, emulator, {Emulator::Interface::Model::Purpose::Memory}, { 1, 1 } );
+    driveModelLayout.build( tabWindow, emulator, {Emulator::Interface::Model::Purpose::DriveSettings}, dim );
     performanceModelLayout.build( tabWindow, emulator, {Emulator::Interface::Model::Purpose::Performance}, { 3 } );
 
     expansionLayout.build( emulator );
 
     setMargin(10);
-    
-    leftLayout.append(expansionLayout, {~0u, 0u}, 10);
-    leftLayout.append(memoryLayout, {~0u, 0u});
+
+    if (!expansionLayout.lines.empty())
+        leftLayout.append(expansionLayout, {~0u, 0u}, 10);
+
+    if (memoryNewModelLayout.hasElements())
+        leftLayout.append(memoryNewModelLayout, {~0u, 0u}, 10);
+    else if (!memoryLayout.blocks.empty())
+        leftLayout.append(memoryLayout, {~0u, 0u});
     
     upperLayout.append(leftLayout, {~0u, 0u}, 10);
-    rightLayout.append(driveModelLayout, {~0u, 0u}, 10);
+
+    if (driveModelLayout.hasElements())
+        rightLayout.append(driveModelLayout, {~0u, 0u}, 10);
 
     upperLayout.append(rightLayout, {~0u, 0u});
 
     append(upperLayout, {~0u, 0u}, 10);
     
-    if (modelLayout.lines.size() > 0)
+    if (modelLayout.hasElements())
         append(modelLayout, {~0u, 0u}, 10);
 
-    append(performanceModelLayout, {~0u, 0u});
+    if (performanceModelLayout.hasElements())
+        append(performanceModelLayout, {~0u, 0u});
 
     modelLayout.setEvents();
+    memoryNewModelLayout.setEvents();
     driveModelLayout.setEvents();
     performanceModelLayout.setEvents();
 		
@@ -150,6 +175,7 @@ auto SystemLayout::translate() -> void {
     modelLayout.translate();
     driveModelLayout.translate( "drives" );
     performanceModelLayout.translate( "accuracy and performance" );
+    memoryNewModelLayout.translate( "memory" );
     
     expansionLayout.setText( trans->get("expansion_port") );
     

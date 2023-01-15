@@ -39,7 +39,7 @@ struct AudioDriveLayout : GUIKIT::FramedVerticalLayout {
 
     SliderLayout tapeNoiseVolume;
 
-    AudioDriveLayout();
+    AudioDriveLayout(Emulator::Interface* emulator);
 };
 
 struct BassControlLayout : GUIKIT::FramedVerticalLayout {
@@ -129,7 +129,7 @@ struct AudioLayout : GUIKIT::HorizontalLayout {
     BassControlLayout bass;
     ReverbControlLayout reverb;
     PanningControlLayout panning;
-    AudioDriveLayout driveLayout;
+    AudioDriveLayout* driveLayout;
     
     AudioRecordLayout audioRecord;
     

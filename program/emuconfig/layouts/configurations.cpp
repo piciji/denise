@@ -165,20 +165,25 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
     this->emulator = tabWindow->emulator;
     
     setMargin(10);
+    if(dynamic_cast<LIBC64::Interface*>(emulator))
+        memoryPattern = new MemoryPatternLayout(tabWindow);
     
     moduleList.setHeaderText( { "" } );
     moduleList.setHeaderVisible( false );     
     moduleList.append( {"settings"} );
     moduleList.append( {"states"} );
-    moduleList.append( {"memory"} );
+    if (memoryPattern)
+        moduleList.append( {"memory"} );
     
     settingsImage.loadPng((uint8_t*)Icons::settings, sizeof(Icons::settings));
     scriptImage.loadPng((uint8_t*)Icons::script, sizeof(Icons::script));
-    memImage.loadPng((uint8_t*)Icons::memory, sizeof(Icons::memory));
+    if (memoryPattern)
+        memImage.loadPng((uint8_t*)Icons::memory, sizeof(Icons::memory));
     
     moduleList.setImage(0, 0, settingsImage);
     moduleList.setImage(1, 0, scriptImage);
-    moduleList.setImage(2, 0, memImage);
+    if (memoryPattern)
+        moduleList.setImage(2, 0, memImage);
     
     moduleList.setSelection(0);
     moduleFrame.append( moduleList, { GUIKIT::Font::scale(140), GUIKIT::Font::scale(100)} );
@@ -207,9 +212,6 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
     statesFrame.append( stateFast, {~0u, ~0u}, 5 );
     statesFrame.append( stateDirect, {~0u, 0u}, 5 );    
     statesFrame.append( stateFolder, {~0u, 0u} );
-    
-    if(dynamic_cast<LIBC64::Interface*>(emulator))
-        memoryPattern = new MemoryPatternLayout(tabWindow);
 
     append( moduleSwitch, {~0u, ~0u} );
     moduleSwitch.setLayout( 0, settingsFrame, {~0u, ~0u} );
@@ -883,7 +885,8 @@ auto ConfigurationsLayout::translate() -> void {
     
     moduleList.setText( 0, 0, trans->get( "settings" ) ); 
     moduleList.setText( 1, 0, trans->get( "states" ) );
-    moduleList.setText( 2, 0, trans->get( "memory" ) );
+    if (memoryPattern)
+        moduleList.setText( 2, 0, trans->get( "memory" ) );
     
     moduleFrame.setText( trans->get("selection") );
     

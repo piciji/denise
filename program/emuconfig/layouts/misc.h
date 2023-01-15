@@ -49,7 +49,7 @@ struct AutostartLayout : GUIKIT::FramedVerticalLayout {
         GUIKIT::CheckBox tapeFirstFile;
         GUIKIT::CheckBox disableWarpWhenInput;
 
-        AutoWarp();
+        AutoWarp(Emulator::Interface* emulator);
     } autoWarp;
 
     struct StartWrapper : GUIKIT::HorizontalLayout {
@@ -73,9 +73,11 @@ struct AutostartLayout : GUIKIT::FramedVerticalLayout {
         } option;
 
         StartWrapper();
-    } startWrapper;
+    };
 
-    AutostartLayout();
+    StartWrapper* startWrapper = nullptr;
+
+    AutostartLayout(Emulator::Interface* emulator);
 };
 
 struct MiscLayout : GUIKIT::VerticalLayout {

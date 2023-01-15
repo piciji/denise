@@ -45,6 +45,8 @@ struct ModelLayout : GUIKIT::FramedVerticalLayout {
     
     auto setEvents( ) -> void;
 
+    auto hasElements() -> bool { return !lines.empty(); }
+
     auto updateWidget( Line::Block* block ) -> void;
     
     auto updateWidget( unsigned id ) -> void;

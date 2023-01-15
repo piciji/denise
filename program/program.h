@@ -145,7 +145,7 @@ struct Program : Emulator::Interface::Bind {
     auto setVideoFilter(bool driverOnly = false) -> void;
 	auto updateCrop( Emulator::Interface* emulator ) -> void;
     auto setPalette( Emulator::Interface* emulator ) -> void;
-    auto midScreenCallback() -> void override;
+    auto midScreenCallback(uint8_t interlace) -> void override;
     auto toggleFastForward(bool aggressive) -> void;
     auto fastForward( bool activate, bool aggressive = false ) -> void;
     auto updateOverallSynchronize() -> void;
