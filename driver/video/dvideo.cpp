@@ -320,8 +320,11 @@ struct DVideo : Video, RenderThread {
 
     auto init(bool disallowExclusiveFullscreen = false) -> bool {
         int adapterId = -1;
+		HWND taskbar = NULL;
+		if (XPMode)
+			taskbar = FindWindow(L"Shell_TrayWnd", NULL);
         term();
-
+	
         if (monPos == 0) {
             EnumDisplayMonitors(NULL, NULL, MonitorEnumProc, (LPARAM)NULL );
         }
@@ -343,12 +346,15 @@ struct DVideo : Video, RenderThread {
             adapterId = getFullscreenAdapter(handle);
 
             if (adapterId >= 0) {
-                exclusiveFullscreen = true;
+                exclusiveFullscreen = true;				
+				showTaskbar(taskbar, false);
             } else {
                 handle = settings.handle;
             }
         }
-
+		if (!exclusiveFullscreen )
+			showTaskbar(taskbar, true);
+		
         ZeroMemory(&d3dpp, sizeof (d3dpp));
 
         d3dpp.hDeviceWindow = handle;
@@ -411,6 +417,21 @@ struct DVideo : Video, RenderThread {
         return init(true);
     }
 
+	auto showTaskbar(HWND taskbar, bool state) -> void {
+		
+		if (taskbar != NULL) {
+			if (!state && IsWindowVisible(taskbar)) {
+				HMONITOR hMon = MonitorFromWindow( settings.handle, MONITOR_DEFAULTTONEAREST);
+				const POINT ptZero = { 0, 0 };
+				
+				if (hMon == MonitorFromPoint(ptZero, MONITOR_DEFAULTTOPRIMARY))
+					ShowWindow(taskbar, SW_HIDE);
+			
+			} else if (state && !IsWindowVisible(taskbar))
+				ShowWindow(taskbar, SW_SHOW);
+		}
+	}
+	
     auto unlockAndRedraw(bool disallowShader = false, bool freeContext = false) -> void {
 
         if (settings.threaded) {
