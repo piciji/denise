@@ -151,6 +151,7 @@ auto SectorBlock::getParentDir() -> unsigned {
 auto SectorBlock::getHash(unsigned pos) -> unsigned {
     switch (type) {
         case DIR_BLOCK:
+        case ROOT_BLOCK:
             if (pos < hashTableEntries())
                 return read( (6 + pos) << 2 );
         default:
@@ -269,16 +270,26 @@ auto SectorBlock::readNameRaw(int offset, uint8_t allocatedSize, bool indentByDe
     uint8_t* ptr = getAdrPtr(offset);
     uint8_t size = *ptr++;
     uint8_t strSize = std::min(allocatedSize, size);
-    int _depth = indentByDepth ? depth : 0;
-    if (_depth < 0) _depth = 0;
+    std::vector<uint16_t> out;
 
-    std::vector<uint16_t> out(strSize + _depth);
+    if (indentByDepth) {
+        int _depth = depth;
+        if (_depth < 0) _depth = 0;
+        out.resize(strSize + _depth);
+        for (unsigned i = 0; i < _depth; i++)
+            out[i] = ' ';
 
-    for (unsigned i = 0; i < _depth; i++)
-        out[i] = ' ';
+        for(unsigned i = 0; i < strSize; i++)
+            out[i + _depth] = *ptr++;
 
-    for(unsigned i = 0; i < strSize; i++)
-        out[i + _depth] = *ptr++;
+        if (type == Type::DIR_BLOCK)
+            out.push_back(0x2b02);
+
+    } else {
+        out.resize(strSize);
+        for(unsigned i = 0; i < strSize; i++)
+            out[i] = *ptr++;
+    }
 
     return out;
 }

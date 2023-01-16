@@ -133,6 +133,8 @@ struct Mouse {
 
 struct CustomFont {
 	std::string name;
+    void* refPtr = nullptr;
+    unsigned modifier = 0;
 	uint8_t* data = nullptr;
 	unsigned size;
     std::string filePath;
@@ -259,7 +261,7 @@ struct Window : Base {
     auto applyMaximizeCorrection(Geometry& geo) -> void;
 	
 	static auto addCustomFont( CustomFont* customFont ) -> bool;
-	static auto countCustomFonts() -> unsigned;
+	static auto getCustomFont(void* refPtr) -> CustomFont*;
 
     struct {
         bool resizable = true;

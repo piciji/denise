@@ -56,7 +56,8 @@ AutostartLayout::AutoWarp::AutoWarp(Emulator::Interface* emulator) {
     append(off, {0u, 0u}, 10 );
     append(normal, {0u, 0u}, 10 );
     append(aggressive, {0u, 0u}, 25 );
-    append(diskFirstFile, {0u, 0u}, 10);
+    if (dynamic_cast<LIBC64::Interface*>(emulator))
+        append(diskFirstFile, {0u, 0u}, 10);
 
     if (emulator->getTapeMediaGroup())
         append(tapeFirstFile, {0u, 0u}, 10);
@@ -176,6 +177,8 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) {
 
         autostartLayout->startWrapper->option.diskOptions.loadWithColumn.onToggle = [this](bool checked) {
             _settings->set<bool>("autostart_load_with_column", checked);
+            if (dynamic_cast<LIBC64::Interface*>(emulator))
+                ((LIBC64::Interface*)emulator)->loadWithColumn(checked);
         };
 
         autostartLayout->startWrapper->option.diskOptions.speederTraps.onToggle = [this](bool checked) {

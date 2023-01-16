@@ -322,6 +322,8 @@ auto DiskDrive::setMotor(bool state) -> void {
     updateDeviceState();
     if (driveSound && system->displayFrame())
         interface->mixDriveSound( media, state ? DriveSound::FloppySpinUp : DriveSound::FloppySpinDown );
+
+    system->hintObserverMotorChange( motor );
 }
 
 auto DiskDrive::step(bool dir, bool updTrack) -> void {
@@ -416,7 +418,7 @@ auto DiskDrive::getDummyTrack() -> DiskStructure::Track* {
 
 auto DiskDrive::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer(connected);
-    if (!connected)
+    if (!connected && light)
         return;
 
     s.integer(selected);

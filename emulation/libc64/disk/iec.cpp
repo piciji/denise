@@ -578,9 +578,9 @@ auto IecBus::isWriteProtected( Emulator::Interface::Media* media ) -> bool {
     return drives[ media->id ]->writeProtected;
 }
 
-auto IecBus::getDiskListing(Emulator::Interface::Media* media, bool loadWithColumn) -> std::vector<Emulator::Interface::Listing>& {
+auto IecBus::getDiskListing(Emulator::Interface::Media* media) -> std::vector<Emulator::Interface::Listing>& {
     
-    return drives[ media->id ]->structure.getListing( loadWithColumn );
+    return drives[ media->id ]->structure.getListing( );
 }
 
 auto IecBus::selectListing( Emulator::Interface::Media* media, unsigned pos, uint8_t useTraps ) -> void {

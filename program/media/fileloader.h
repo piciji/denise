@@ -29,11 +29,11 @@ struct Fileloader {
     auto load(Emulator::Interface* emulator, Emulator::Interface::Media* media) -> void;
     auto eject(Emulator::Interface* emulator, Emulator::Interface::MediaGroup* mediaGroup, bool secondaryOnly) -> void;
     auto eject(Emulator::Interface* emulator, Emulator::Interface::Media* media) -> void;
-    auto applyPreviewFont(unsigned fontSize) -> void;
+    auto applyPreviewFont(Emulator::Interface* emulator, unsigned fontSize) -> void;
     auto previewFile( std::string filePath, Emulator::Interface* emulator, Emulator::Interface::Media* media = nullptr ) -> std::vector<GUIKIT::BrowserWindow::Listing>;
-    auto showC64Listing( Emulator::Interface* emulator, Emulator::Interface::MediaGroup* mediaGroup ) -> bool;
+    auto showListing( Emulator::Interface* emulator, Emulator::Interface::MediaGroup* mediaGroup ) -> bool;
     auto resetPreview(Emulator::Interface* emulator, bool light = false) -> void;
-    auto convertListing( std::vector<Emulator::Interface::Listing>& emuListings ) -> std::vector<GUIKIT::BrowserWindow::Listing>;
+    auto convertListing( Emulator::Interface* emulator, std::vector<Emulator::Interface::Listing>& emuListings ) -> std::vector<GUIKIT::BrowserWindow::Listing>;
     auto insertFile( Emulator::Interface* emulator, Emulator::Interface::Media* media, std::string filePath, uint8_t autoLoad = 0, unsigned selection = 0 ) -> bool;
     auto insertImage( Emulator::Interface* emulator, Emulator::Interface::Media* media, GUIKIT::File* file, GUIKIT::File::Item* item, bool fromState = false) -> void;
     auto insertCurrentPreview(Emulator::Interface::MediaGroup* mediaGroup) -> void;

@@ -451,8 +451,8 @@ struct Interface {
     virtual auto isWriteProtectedDisk(Media* media) -> bool { return false; }
     virtual auto ejectDisk(Media* media) -> void { }
 	virtual auto createDiskImage(unsigned typeId, std::string name = "", bool hd = false, bool ffs = false, bool bootable = false) -> Data { return {nullptr, 0}; }
-    virtual auto getDiskListing(Media* media, bool alternateLoad) -> std::vector<Listing> { return {}; }
-    virtual auto getDiskPreview(uint8_t* data, unsigned size, Media* media = nullptr, bool alternateLoad = false) -> std::vector<Listing> { return {}; }
+    virtual auto getDiskListing(Media* media) -> std::vector<Listing> { return {}; }
+    virtual auto getDiskPreview(uint8_t* data, unsigned size, Media* media = nullptr) -> std::vector<Listing> { return {}; }
     virtual auto selectDiskListing(Media* media, unsigned pos, uint8_t useTraps = 0) -> void { }
     virtual auto selectDiskListing(Media* media, std::string fileName, uint8_t useTraps = 0) -> void { }
     virtual auto resetDrive(Media* media) -> void { }
@@ -634,10 +634,10 @@ struct Interface {
 		}		
 	}
     
-    auto getListing(Media* media, bool alternateLoad = false) -> std::vector<Listing> {
+    auto getListing(Media* media) -> std::vector<Listing> {
         switch(media->group->type) {
 			case MediaGroup::Type::Disk:
-                return getDiskListing( media, alternateLoad );
+                return getDiskListing( media );
 			case MediaGroup::Type::Tape:
                 return getTapeListing( media );
 			case MediaGroup::Type::Program:

@@ -244,7 +244,7 @@ struct MediaLayout : GUIKIT::HorizontalLayout {
     auto preparePaths() -> void;	
     auto updateListing( Emulator::Interface::Media* media ) -> void;
 	auto savePath( std::string& groupName, std::string path ) -> void;
-    auto showC64Listing( MediaGroupLayout* layout ) -> bool;
+    auto showListing( MediaGroupLayout* layout ) -> bool;
     auto createImage( Emulator::Interface::MediaGroup* mediaGroup ) -> void;
     auto showMediaGroupLayout( Emulator::Interface::MediaGroup* mediaGroup ) -> void;
     auto getMediaGroupLayout( Emulator::Interface::MediaGroup* mediaGroup ) -> MediaGroupLayout*;   

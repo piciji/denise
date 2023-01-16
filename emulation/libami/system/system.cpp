@@ -29,6 +29,11 @@ input(this, agnus, cia1) {
     cia1.readPort = [this]( Cia<MOS_8520>::Port port, Cia<MOS_8520>::Lines* lines ) {
 
         if ( port == Cia<MOS_8520>::PORTA ) {
+            if (observer.inputFetches) {
+                if (!--observer.inputFetches)
+                    observer.stateChange = true;
+            }
+
             uint8_t out = lines->ioa & input.readCiaPortA();
             for(auto& drive : diskDrives) {
                 if (drive.connected)
@@ -191,6 +196,9 @@ auto System::run() -> void {
     DiskDrive::randomizeRpm(agnus.frequency());
     for(auto& drive : diskDrives)
         drive.updateRpm();
+
+    if (observer.stateChange)
+        informAboutStateChange();
 
     agnus.setEventInactive<Agnus::EVENT_LEAVE_EMULATION>();
 }
@@ -407,6 +415,32 @@ auto System::getDrivesEnabled() -> uint8_t {
         if (drive.connected) out++;
 
     return out;
+}
+
+auto System::hintObserverMotorChange(bool state) -> void {
+    if (!state) {
+        for(auto& drive : diskDrives) {
+            if (drive.connected && drive.motor) {
+                state = true;
+                break;
+            }
+        }
+    }
+
+    if (state && !observer.motor)
+        observer.inputFetches = 15;
+
+    observer.motor = state;
+    observer.stateChange = true;
+}
+
+auto System::informAboutStateChange() -> void {
+    observer.stateChange = false;
+    uint8_t newState = observer.motor;
+    if (!observer.inputFetches)
+        newState |= 2;
+
+    interface->hintAutoWarp( newState );
 }
 
 }

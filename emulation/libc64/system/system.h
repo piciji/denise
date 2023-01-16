@@ -110,6 +110,10 @@ struct System {
     bool kernalBootComplete = false;
     bool powerOn = false;
     bool cycleRendererNextBoot = false;
+
+    // petscii will be converted to ascii or screencodes to be viewed in host
+    bool convertToScreencode = false;
+    bool loadWithColumn = false;
     
     struct {
         unsigned config = 0;

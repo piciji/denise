@@ -91,14 +91,16 @@ auto Fileloader::load(Emulator::Interface* emulator, Emulator::Interface::Media*
         }, IDC_BUTTON1 );
     }
 
-    if (!*alternateFileDialog && dynamic_cast<LIBC64::Interface*>(emulator)) {
+    if (!*alternateFileDialog) {
         fileDialogPtr->addContentView(IDC_LIST, [this, media, emulator, settings](std::string filePath, unsigned selection) {
             auto _useTraps = false;
 
-            if (media->group->isTape())
-                _useTraps = settings->get<bool>("autostart_tape_traps_on_dblclick", false);
-            if (media->group->isDisk())
-                _useTraps = settings->get<bool>("autostart_traps_on_dblclick", false);
+            if (dynamic_cast<LIBC64::Interface*>(emulator)) {
+                if (media->group->isTape())
+                    _useTraps = settings->get<bool>("autostart_tape_traps_on_dblclick", false);
+                if (media->group->isDisk())
+                    _useTraps = settings->get<bool>("autostart_traps_on_dblclick", false);
+            }
 
             if (filePath.empty())
                 return false;
@@ -110,16 +112,19 @@ auto Fileloader::load(Emulator::Interface* emulator, Emulator::Interface::Media*
             return insertFile(emulator, media, filePath, _a, selection);
         });
 
-        applyPreviewFont( globalSettings->get<unsigned>("dialog_software_preview_fontsize", 11, {6, 14}) );
+        applyPreviewFont( emulator, globalSettings->get<unsigned>("dialog_software_preview_fontsize", 11, {6, 14}) );
         fileDialogPtr->setContentViewWidth( globalSettings->get<unsigned>("dialog_software_preview_width", 450, {200, 600}) );
         fileDialogPtr->setContentViewHeight( globalSettings->get<unsigned>("dialog_software_preview_height", 200, {100, 600}) );
 
         auto videoManager = VideoManager::getInstance( emulator );
-        fileDialogPtr->setContentViewBackground( videoManager->getC64Background() );
-        fileDialogPtr->setContentViewForeground( videoManager->getC64Foreground() );
+        unsigned foregroundColor = videoManager->getForegroundColor();
+        unsigned backgroundColor = videoManager->getBackgroundColor();
+
+        fileDialogPtr->setContentViewBackground( backgroundColor );
+        fileDialogPtr->setContentViewForeground( foregroundColor );
 
         if (globalSettings->get<bool>("software_preview_commodore_hi", true ))
-            fileDialogPtr->setContentViewSelection( videoManager->getC64Background(), videoManager->getC64Foreground() );
+            fileDialogPtr->setContentViewSelection( backgroundColor, foregroundColor );
 
         fileDialogPtr->setContentViewColorTooltips(true);
     }
@@ -153,9 +158,10 @@ auto Fileloader::load(Emulator::Interface* emulator, Emulator::Interface::Media*
 auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore ) -> void {
 	auto settings = program->getSettings( emulator );
     static GUIKIT::Setting* alternateFileDialog = globalSettings->getOrInit("alternate_software_preview", false);
-	static GUIKIT::Setting* diskTrapped = settings->getOrInit("autostart_traps_on_dblclick", false);
-	static GUIKIT::Setting* tapeTrapped = settings->getOrInit("autostart_tape_traps_on_dblclick", false);
-	
+    bool trapped = false;
+    if (dynamic_cast<LIBC64::Interface*>(emulator))
+        trapped = settings->get("autostart_traps_on_dblclick", false) || settings->get("autostart_tape_traps_on_dblclick", false);
+
     auto emuView = EmuConfigView::TabWindow::getView( emulator );
 
     if (*alternateFileDialog && emuView && emuView->visible()) {
@@ -172,7 +178,7 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
 
     fileDialogPtr->setTemplateId( IDD_FILE_TEMPLATE );
 
-    if (!*alternateFileDialog && dynamic_cast<LIBC64::Interface*>(emulator)) {
+    if (!*alternateFileDialog) {
         fileDialogPtr->addContentView( IDC_LIST, [this, settings, emulator, mIsAcquiredBefore](std::string filePath, unsigned selection) {
 
             if (filePath.empty())
@@ -192,16 +198,18 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
             return true;
         } );
 
-        applyPreviewFont( globalSettings->get<unsigned>("dialog_software_preview_fontsize", 11, {6, 14}) );
+        applyPreviewFont( emulator, globalSettings->get<unsigned>("dialog_software_preview_fontsize", 11, {6, 14}) );
         fileDialogPtr->setContentViewWidth( globalSettings->get<unsigned>("dialog_software_preview_width", 450, {200, 600}) );
         fileDialogPtr->setContentViewHeight( globalSettings->get<unsigned>("dialog_software_preview_height", 200, {100, 600}) );
 
         auto videoManager = VideoManager::getInstance( emulator );
-        fileDialogPtr->setContentViewBackground( videoManager->getC64Background() );
-        fileDialogPtr->setContentViewForeground( videoManager->getC64Foreground() );
+        unsigned foregroundColor = videoManager->getForegroundColor();
+        unsigned backgroundColor = videoManager->getBackgroundColor();
+        fileDialogPtr->setContentViewBackground( backgroundColor );
+        fileDialogPtr->setContentViewForeground( foregroundColor );
 
         if (globalSettings->get<bool>("software_preview_commodore_hi", true ))
-            fileDialogPtr->setContentViewSelection( videoManager->getC64Background(), videoManager->getC64Foreground() );
+            fileDialogPtr->setContentViewSelection( backgroundColor, foregroundColor );
 
         fileDialogPtr->setContentViewColorTooltips(true);
     }
@@ -256,7 +264,7 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
             return true;
         }, IDC_BUTTON1 );
 		
-        if (*diskTrapped || *tapeTrapped) {
+        if (trapped) {
             fileDialogPtr->addCustomButton( trans->get( "Autostart" ), [this, emulator, settings, mIsAcquiredBefore](std::string filePath, unsigned selection) {
 
                 if (filePath.empty())
@@ -301,7 +309,7 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
     fileDialogPtr->resizeTemplate( true, -6 );   
 
     std::string buttonTxt = "Autostart";
-    if (*diskTrapped || *tapeTrapped) {
+    if (trapped) {
         if (!*alternateFileDialog) {
             fileDialogPtr->hideOkButton();
             buttonTxt = "Ok";
@@ -339,26 +347,24 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
         inputDriver->mAcquire();
 }
 
-auto Fileloader::applyPreviewFont(unsigned fontSize) -> void {
+auto Fileloader::applyPreviewFont(Emulator::Interface* emulator, unsigned fontSize) -> void {
+    auto customFont = GUIKIT::Window::getCustomFont(emulator);
 
-    if (GUIKIT::Window::countCustomFonts())
-        fileDialogPtr->setContentViewFont("C64 Pro, " + std::to_string(fontSize), true);
+    if (customFont)
+        fileDialogPtr->setContentViewFont(customFont->name + ", " + std::to_string(fontSize), true);
     else
         fileDialogPtr->setContentViewFont(GUIKIT::Font::system(fontSize));
 }
 
 auto Fileloader::previewFile( std::string filePath, Emulator::Interface* emulator, Emulator::Interface::Media* media ) -> std::vector<GUIKIT::BrowserWindow::Listing> {
 
-    auto settings = program->getSettings( emulator );
     static GUIKIT::Setting* alternateFileDialog = globalSettings->getOrInit("alternate_software_preview", false);
-    bool loadWithColumn = settings->get<bool>("autostart_load_with_column", false);
-
     Emulator::Interface::MediaGroup* mediaGroup = nullptr;
 
     if (media) {
         mediaGroup = media->group;
 
-        if ( !showC64Listing(emulator, mediaGroup) ) {
+        if ( !showListing(emulator, mediaGroup) ) {
             queuePreview.lastMedia = nullptr;
             return {};
         }
@@ -374,7 +380,7 @@ auto Fileloader::previewFile( std::string filePath, Emulator::Interface* emulato
     lck.unlock();
 
     if (!previewTimer.onFinished) {
-        previewTimer.onFinished = [this, settings]() {
+        previewTimer.onFinished = [this]() {
             std::unique_lock<std::mutex> lck(previewMutex);
             Emulator::Interface* emulator = queuePreview.emulator;
             uint8_t _status = queuePreview.status;
@@ -410,8 +416,9 @@ auto Fileloader::previewFile( std::string filePath, Emulator::Interface* emulato
                 if (fileDialogPtr)
                     fileDialogPtr->setListings(listings);
 
-                if ((queuePreview.status & 16) && listings.size())
-                    settings->set<std::string>("anyload_path", GUIKIT::File::getPath( queuePreview.filePath ) );
+                if ((queuePreview.status & 16) && listings.size()) {
+                    program->getSettings( emulator )->set<std::string>("anyload_path", GUIKIT::File::getPath(filePath));
+                }
 
                 if (*alternateFileDialog && emuView) {
                     emuView->setLayout( EmuConfigView::TabWindow::Layout::Media );
@@ -443,7 +450,7 @@ auto Fileloader::previewFile( std::string filePath, Emulator::Interface* emulato
     if (_status & 1)
         return {};
 
-    std::thread worker( [this, loadWithColumn] {
+    std::thread worker( [this] {
 
         while(1) {
             queuePreview.status &= ~2;
@@ -503,7 +510,7 @@ auto Fileloader::previewFile( std::string filePath, Emulator::Interface* emulato
 
                 if (mediaGroup.isDisk()) {
                     if ( GUIKIT::Vector::find( mediaGroup.suffix, extension ) ) {
-                        listings = emulator->getDiskPreview(data, file.archiveDataSize(0), media, loadWithColumn);
+                        listings = emulator->getDiskPreview(data, file.archiveDataSize(0), media);
                         group = &mediaGroup;
                         break;
                     }
@@ -535,7 +542,7 @@ auto Fileloader::previewFile( std::string filePath, Emulator::Interface* emulato
                 break;
             }
 
-            auto convertedListings = convertListing( listings );
+            auto convertedListings = convertListing( emulator, listings );
 
             lck.lock();
             queuePreview.listings = convertedListings;
@@ -720,7 +727,7 @@ auto Fileloader::insertImage(Emulator::Interface* emulator, Emulator::Interface:
             settings->set<unsigned>( _underscore(media->name) + "_pcb", 0);
     }
 
-    emulator->getListing(media, settings->get<bool>("autostart_load_with_column", false));
+    emulator->getListing(media);
 
     if (!fromState && view && activeEmulator && mediaGroup->isTape())
         view->updateTapeIcons();
@@ -749,10 +756,10 @@ auto Fileloader::insertImage(Emulator::Interface* emulator, Emulator::Interface:
     }
 }
 
-auto Fileloader::convertListing( std::vector<Emulator::Interface::Listing>& emuListings ) -> std::vector<GUIKIT::BrowserWindow::Listing> {
+auto Fileloader::convertListing( Emulator::Interface* emulator, std::vector<Emulator::Interface::Listing>& emuListings ) -> std::vector<GUIKIT::BrowserWindow::Listing> {
 
     std::vector<GUIKIT::BrowserWindow::Listing> list;
-    bool useCustomFont = GUIKIT::Window::countCustomFonts();
+    auto customFont = GUIKIT::Window::getCustomFont(emulator);
 
     bool useTooltips = globalSettings->get<bool>("software_preview_tooltips", true );
 
@@ -765,8 +772,8 @@ auto Fileloader::convertListing( std::vector<Emulator::Interface::Listing>& emuL
         for (auto& code : listing.line ) {
 
             unsigned useCode = code;
-            if (useCustomFont)
-                useCode |= 0xee << 8;
+            if (customFont)
+                useCode |= customFont->modifier;
 
             GUIKIT::Utf8::encode(useCode, utf8);
         }
@@ -779,8 +786,8 @@ auto Fileloader::convertListing( std::vector<Emulator::Interface::Listing>& emuL
             for (auto& code : listing.loadCommand ) {
 
                 unsigned useCode = code;
-                if (useCustomFont)
-                    useCode |= 0xee << 8;
+                if (customFont)
+                    useCode |= customFont->modifier;
 
                 GUIKIT::Utf8::encode(useCode, utf8);
             }
@@ -794,10 +801,7 @@ auto Fileloader::convertListing( std::vector<Emulator::Interface::Listing>& emuL
     return list;
 }
 
-auto Fileloader::showC64Listing( Emulator::Interface* emulator, Emulator::Interface::MediaGroup* mediaGroup ) -> bool {
-
-    if ( !dynamic_cast<LIBC64::Interface*>(emulator) )
-        return false;
+auto Fileloader::showListing( Emulator::Interface* emulator, Emulator::Interface::MediaGroup* mediaGroup ) -> bool {
 
     if ( mediaGroup->isDrive() || mediaGroup->isProgram())
         return true;

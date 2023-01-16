@@ -55,7 +55,7 @@ auto Filesystem::importMedia(uint8_t* data, unsigned size) -> bool {
         auto bmRef = rootBlock->getBitmapBlock(i);
 
         if (bmRef && bmRef < blockCount) {
-            if (blocks[bmRef]) delete[] blocks[bmRef];
+            if (blocks[bmRef]) delete blocks[bmRef];
             blocks[bmRef] = new SectorBlock(*this, SectorBlock::Type::BITMAP_BLOCK, bmRef);
             blocks[bmRef]->importBlock( data + bmRef * bSize );
             bmBlockRefs.push_back(bmRef);
@@ -64,13 +64,13 @@ auto Filesystem::importMedia(uint8_t* data, unsigned size) -> bool {
 
     auto extRef = rootBlock->getBitmapExtBlock();
     while(extRef && extRef < blockCount) {
-        if (blocks[extRef]) delete[] blocks[extRef];
+        if (blocks[extRef]) delete blocks[extRef];
         blocks[extRef] = new SectorBlock(*this, SectorBlock::Type::BITMAP_EXT_BLOCK, extRef);
         blocks[extRef]->importBlock( data + extRef * bSize );
         for(unsigned i = 0; i < countBitmapPointersEachExtBlock(); i++) {
             auto bmRef = blocks[extRef]->getBitmapBlock(i);
             if (bmRef && bmRef < blockCount) {
-                if (blocks[bmRef]) delete[] blocks[bmRef];
+                if (blocks[bmRef]) delete blocks[bmRef];
                 blocks[bmRef] = new SectorBlock(*this, SectorBlock::Type::BITMAP_BLOCK, bmRef);
                 blocks[bmRef]->importBlock(data + bmRef * bSize);
                 bmBlockRefs.push_back(bmRef);
@@ -88,6 +88,7 @@ auto Filesystem::predictType(unsigned ref, uint8_t* buffer) -> SectorBlock::Type
     testBlock.data = buffer;
     unsigned type = testBlock.read( 0 );
     unsigned subType = testBlock.read( -4 );
+    testBlock.data = nullptr;
 
     if (type == 2 && subType == 1) return SectorBlock::Type::ROOT_BLOCK;
     if (type == 2 && subType == 2) return SectorBlock::Type::DIR_BLOCK;
@@ -151,7 +152,7 @@ auto Filesystem::traverse( SectorBlock* from, std::stack<SectorBlock*>& result )
     if (!from)
         return;
 
-    for (int i = from->hashTableEntries(); i <= 0 ; i--) {
+    for (int i = from->hashTableEntries(); i >= 0; i--) {
         for(SectorBlock* block = getHashTableBlock( from->getHash(i) ); block; block = getHashTableBlock(block->getHashChain())) {
             if (find(sanityCheck, block))
                 break;

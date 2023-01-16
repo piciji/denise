@@ -138,7 +138,7 @@ auto Prg::getMemory(unsigned& prgSize) -> uint8_t* {
 
 auto Prg::createListing() -> void {        
     Emulator::C64Listing listing;
-    listing.convertToScreencode = system->interface->convertToScreencode;
+    listing.convertToScreencode = system->convertToScreencode;
 
     unsigned id = 0;
 

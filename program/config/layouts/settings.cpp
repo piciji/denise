@@ -304,13 +304,13 @@ auto SettingsLayout::removePreview() -> void {
 }
 
 auto SettingsLayout::setPreviewContent() -> void {
-    
-    bool useCustomFont = GUIKIT::Window::countCustomFonts() > 0;
+
+    auto customFont = GUIKIT::Window::getCustomFont(program->getEmulator("C64"));
 
     auto fontSize = globalSettings->get<unsigned>("dialog_software_preview_fontsize", 11, {6, 14});
     
-    if (useCustomFont)
-        previewLayout.previewBox.setFont("C64 Pro, " + std::to_string(fontSize), true);  
+    if (customFont)
+        previewLayout.previewBox.setFont(customFont->name + ", " + std::to_string(fontSize), true);
     else
         previewLayout.previewBox.setFont( GUIKIT::Font::system(fontSize) );          
     
@@ -322,7 +322,7 @@ auto SettingsLayout::setPreviewContent() -> void {
     std::vector<uint8_t> line = {0x30, 0x20, 0x20, 0x20, 0x20, 0x22, 0x20, 0x44, 0x45, 0x4e, 0x49, 0x53, 0x45, 0x20, 0x20, 0x44, 0x45, 0x4e, 0x49, 0x53, 0x45, 0x20, 0x22, 0x20, 0x50, 0x52, 0x47, 0x3c};
     std::vector<uint8_t> tooltipLine = { 0x4c, 0x4f, 0x41, 0x44, 0x20, 0x22, 0x44, 0x45, 0x4e, 0x49, 0x53, 0x45, 0x22, 0x2c, 0x38, 0x2c, 0x31 };
     
-    if(useCustomFont) {
+    if(customFont) {
         line = {0x30, 0x20, 0x20, 0x20, 0x20, 0x22, 0x20, 4, 5, 0xe, 9, 0x13, 5, 0x20, 0x20, 4, 5, 0xe, 9, 0x13, 5, 0x20, 0x22, 0x20, 0x10, 0x12, 7, 0x3c};
         tooltipLine = { 0x0c, 0x0f, 0x01, 0x04, 0x20, 0x22, 0x4, 0x5, 0xe, 0x9, 0x13, 0x5, 0x22, 0x2c, 0x38, 0x2c, 0x31 };
     }
@@ -332,8 +332,8 @@ auto SettingsLayout::setPreviewContent() -> void {
     for (auto& code : line) {
 
         unsigned useCode = code;
-        if (useCustomFont)
-            useCode |= 0xee << 8;
+        if (customFont)
+            useCode |= customFont->modifier;
 
         GUIKIT::Utf8::encode(useCode, utf8);
     }
@@ -347,8 +347,8 @@ auto SettingsLayout::setPreviewContent() -> void {
         for (auto& code : tooltipLine) {
 
             unsigned useCode = code;
-            if (useCustomFont)
-                useCode |= 0xee << 8;
+            if (customFont)
+                useCode |= customFont->modifier;
 
             GUIKIT::Utf8::encode(useCode, utf8);
         }

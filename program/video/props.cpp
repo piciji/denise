@@ -17,20 +17,18 @@ auto VideoManager::setCrtThreaded(bool state) -> void {
 auto VideoManager::setShaderInputPrecision(bool state) -> void {
     shaderInputPrecision = state;
     for (auto videoManager : videoManagers) {
-        videoManager->colorTableUpdated = false;
-		videoManager->shader.recreate = true;
-    }    
+        videoManager->requestUpdate(true);
+    }
 }
 
 auto VideoManager::usePal(bool state) -> void {
-	pal = state;        
-	shader.recreate = true;
-    colorTableUpdated = false;
+	pal = state;
+    requestUpdate(true);
 }
 
 auto VideoManager::useColorSpectrum(bool state) -> void {       
     colorSpectrum = !isC64() ? false : state;
-    colorTableUpdated = false;
+    requestUpdate();
 }
 
 auto VideoManager::setCrtMode(CrtMode _mode) -> void {        
@@ -40,8 +38,7 @@ auto VideoManager::setCrtMode(CrtMode _mode) -> void {
 
 	emulator->setLineCallback( useRenderThread );
 	reinitCrtThread();
-	shader.recreate = true;
-    colorTableUpdated = false;
+    requestUpdate(true);
 
     if (!program->warp.active)
         enableCrtThread(useRenderThread && (this == activeVideoManager));
@@ -51,43 +48,43 @@ auto VideoManager::setPalette(Emulator::Interface::Palette* palette) -> void {
     this->palette = palette;
     
     if (!colorSpectrum)
-        colorTableUpdated = false;	
+        requestUpdate();
 }
 
 auto VideoManager::setSaturation(unsigned saturation) -> void {
     this->saturation = (double)saturation / 100.0;
-    colorTableUpdated = false;
+    requestUpdate();
 }
 
 auto VideoManager::setContrast(unsigned contrast) -> void {
     this->contrast = (double)contrast / 100.0;
-    colorTableUpdated = false;
+    requestUpdate();
 }
 
 auto VideoManager::setBrightness(unsigned brightness) -> void {
     this->brightness = (double)brightness - 100.0;
-    colorTableUpdated = false;
+    requestUpdate();
 }
 
 auto VideoManager::setGamma(unsigned gamma) -> void {
     this->gamma = (double)gamma / 100.0;
-    colorTableUpdated = false;
+    requestUpdate();
 }
 
 auto VideoManager::setNewLuma(bool state) -> void {    
     newLuma = state;
-	colorTableUpdated = false;
+    requestUpdate();
 }
 
 auto VideoManager::setPhase( int degree ) -> void {
     phase = degree;
-	colorTableUpdated = false;
+    requestUpdate();
 }
 
 auto VideoManager::setPhaseError( float phaseError ) -> void {
     this->phaseError = (double)phaseError;
 	shader.transferOutputEncoding();
-    colorTableUpdated = false;
+    requestUpdate();
 }
 
 auto VideoManager::setHanoverBars( int hanoverBars ) -> void {
@@ -103,32 +100,31 @@ auto VideoManager::setHanoverBars( int hanoverBars ) -> void {
     
 	shader.setAttribute( "delayLine", "hanoverBars", (float)(100 + _oddSat) / 100.0f );
     shader.setAttribute( "delayLine", "hanoverBarsAlt", shaderAlt );
-    colorTableUpdated = false;
+    requestUpdate();
 }
 
 auto VideoManager::setBlur( unsigned blur ) -> void {
     this->blur = (double)blur / 50.0;
-    colorTableUpdated = false;
-	shader.recreate = true;
+    requestUpdate(true);
 }
 
 auto VideoManager::setLumaRise( float pixel ) -> void {
 
 	updateShader("lumaLatency", "lumaRise", lumaRise, pixel == 0.0 ? 0.0 : (double)(1.0 / (double)pixel));
-	colorTableUpdated = false;
+    requestUpdate();
 }
 
 auto VideoManager::setLumaFall( float pixel ) -> void {
 
 	updateShader("lumaLatency", "lumaFall", lumaFall, pixel == 0.0 ? 0.0 : (double)(1.0 / (double)pixel) );
-	colorTableUpdated = false;
+    requestUpdate();
 }
 
 auto VideoManager::setScanlines(unsigned intensity) -> void {
     waitForCrtRenderer();
     updateShader( "", "gammaAndScanlines", scanlines, (uint8_t)intensity );
     this->scanlines = intensity;
-    colorTableUpdated = false;
+    requestUpdate();
     reinitCrtThread();
 }
 // shader only features
@@ -222,13 +218,12 @@ auto VideoManager::smoothIntensity( float intensity ) -> float {
 
 auto VideoManager::setCrtRealGamma(bool state) -> void {
     crtRealGamma = state;
-    colorTableUpdated = false;
-    shader.recreate = true;
+    requestUpdate(true);
 }
 
 auto VideoManager::setInterlaceMode(unsigned mode) -> void {
     interlaceMode = mode;
-    colorTableUpdated = false;
+    requestUpdate();
 }
 
 auto VideoManager::setFirFilterLength( unsigned length ) -> void {
@@ -499,4 +494,11 @@ auto VideoManager::reloadSettings() -> void {
 auto VideoManager::applyMeta() -> void {
     
     emulator->videoAddMeta( (crtMode == CrtMode::Gpu) && (aecGlitch > 0.0 || baGlitch > 0.0) );
+}
+
+auto VideoManager::requestUpdate(bool withShader) -> void {
+    colorTableUpdated = false;
+    if (withShader)
+        shader.recreate = true;
+    needAUpdate = true;
 }

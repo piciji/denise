@@ -71,6 +71,7 @@ struct VideoManager {
     static uint8_t frameRenderPos;
     static uint8_t frameRenderTrigger;
     static unsigned placeHolderFrames;
+    static bool needAUpdate;
 	
     static auto setCrtThreaded(bool state) -> void;
     static auto setShaderInputPrecision(bool state) -> void;
@@ -91,8 +92,8 @@ struct VideoManager {
 
     std::vector<DataUpdates> dataUpdates;
     bool dataUpdatesPending;
-    unsigned softwareViewForegroundColor;
-    unsigned softwareViewBackgroundColor;
+    unsigned softwareViewForegroundColorRef;
+    unsigned softwareViewBackgroundColorRef;
 
     struct {
         bool active = false;
@@ -203,13 +204,14 @@ struct VideoManager {
     bool rgbCable = false;
     bool colorTableUpdated = false;
     inline auto needUpdate() -> bool { return !colorTableUpdated; }
+    auto requestUpdate(bool withShader = false) -> void;
     auto useCrtMode() -> bool;
  
     auto isC64() -> bool;
 	auto isAmiga() -> bool;
     auto generateC64ColorSpectrum() -> void;
-    auto getC64Foreground() -> unsigned;
-    auto getC64Background() -> unsigned;
+    auto getForegroundColor() -> unsigned;
+    auto getBackgroundColor() -> unsigned;
        
     auto uclamp8(double x) -> uint8_t;
     auto convertRGBToYIQ(ColorLumaChroma* dest, ColorRgb* src) -> void;
@@ -253,7 +255,7 @@ struct VideoManager {
     auto renderMidScreen(uint8_t interlace) -> void;
     
     static auto getInstance( Emulator::Interface* emulator ) -> VideoManager*;
-	static auto updateWhenNotRunning() -> void;
+	static auto updateAll() -> void;
     
     auto useRfModulation() -> bool;
     auto useLineGlitch() -> bool;

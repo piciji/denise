@@ -321,21 +321,19 @@ auto MediaGroupLayout::build() -> void {
     
     append(blockContainer, {~0u, 0u}, 2);
 
-    if ( dynamic_cast<LIBC64::Interface*>(mediaLayout->emulator)) {
-		listings.setHeaderText( { "" } );
-		listings.setHeaderVisible( false );
-        listings.colorRowTooltips( true );
+    listings.setHeaderText( { "" } );
+    listings.setHeaderVisible( false );
+    listings.colorRowTooltips( true );
 
-        unsigned _fontSize = globalSettings->get<unsigned>("software_preview_fontsize", 12, {6, 14});
-        
-        applyFont(_fontSize);
-        
-        if ( mediaGroup->isProgram( ) || mediaGroup->isTape() )
-            append( inject, {0u, 0u}, 3 );
-            
-        if ( mediaGroup->isProgram( ) || mediaGroup->isDrive() )
-            append( listings, {~0u, ~0u} );
-	}
+    unsigned _fontSize = globalSettings->get<unsigned>("software_preview_fontsize", 12, {6, 14});
+
+    applyFont(_fontSize);
+
+    if ( mediaGroup->isProgram( ) || mediaGroup->isTape() )
+        append( inject, {0u, 0u}, 3 );
+
+    if ( mediaGroup->isProgram( ) || mediaGroup->isDrive() )
+        append( listings, {~0u, ~0u} );
 }
 
 auto MediaGroupLayout::setJumperSettings(Emulator::Interface::Media* media) -> void {
@@ -358,10 +356,12 @@ auto MediaGroupLayout::setJumperSettings(Emulator::Interface::Media* media) -> v
 
 auto MediaGroupLayout::applyFont(unsigned fontSize) -> void {
 
-    if (GUIKIT::Window::countCustomFonts())
-        listings.setFont("C64 Pro, " + std::to_string(fontSize), true);
+    auto customFont = GUIKIT::Window::getCustomFont(mediaLayout->emulator);
+
+    if (customFont)
+        listings.setFont(customFont->name + ", " + std::to_string(fontSize), true);
     else
-        listings.setFont(GUIKIT::Font::system(fontSize));     
+        listings.setFont(GUIKIT::Font::system(fontSize));
 }
 
 auto MediaGroupLayout::loadSettings() -> void {

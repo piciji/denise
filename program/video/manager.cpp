@@ -21,6 +21,7 @@ bool VideoManager::shaderInputPrecision = false;
 uint8_t VideoManager::frameRenderPos = 0;
 uint8_t VideoManager::frameRenderTrigger = 1;
 unsigned VideoManager::placeHolderFrames = 0;
+bool VideoManager::needAUpdate = true;
 
 std::vector<VideoManager*> videoManagers;
 
@@ -34,15 +35,15 @@ auto VideoManager::getInstance( Emulator::Interface* emulator ) -> VideoManager*
 	return nullptr;
 }
 
-auto VideoManager::updateWhenNotRunning() -> void {
-	
-	for (auto videoManager : videoManagers) {
+auto VideoManager::updateAll() -> void {
+    for (auto videoManager: videoManagers) {
         if (videoManager->dataUpdatesPending)
             videoManager->applyDataUpdates();
 
-		if (videoManager->needUpdate())
-			videoManager->update();
-	}
+        if (videoManager->needUpdate())
+            videoManager->update();
+    }
+    needAUpdate = false;
 }
 
 auto VideoManager::setFrameRender(uint8_t limit) -> void {
@@ -63,13 +64,17 @@ VideoManager::VideoManager(Emulator::Interface* emulator) : shader(this) {
 	if (isC64()) {
         countColorBits = 4;
 		use16BitSrc = false;
+        softwareViewForegroundColorRef = 14;
+        softwareViewBackgroundColorRef = 6;
 		
 	} else if (isAmiga()) {
         countColorBits = 12;
 		use16BitSrc = true;
         tempDestHold = new uint32_t[ 1024 * 768 ];
+        softwareViewForegroundColorRef = 4095;
+        softwareViewBackgroundColorRef = 90;
 	}
-	
+
     gamma = 1.0;
     contrast = 1.0;
     brightness = 1.0;
@@ -170,12 +175,9 @@ auto VideoManager::update() -> void {
 }
 
 auto VideoManager::updateListingColors() -> void {
-    if (!isC64())
-        return;
-
     emuThread->lockPaletteForSoftwareView();
-    softwareViewForegroundColor = colorTable[14];
-    softwareViewBackgroundColor = colorTable[6];
+    unsigned softwareViewForegroundColor = colorTable[softwareViewForegroundColorRef];
+    unsigned softwareViewBackgroundColor = colorTable[softwareViewBackgroundColorRef];
     emuThread->unlockPaletteForSoftwareView();
 
     if (emuThread->enabled) {
@@ -189,16 +191,16 @@ auto VideoManager::updateListingColors() -> void {
         emuView->mediaLayout->colorListing( softwareViewForegroundColor, softwareViewBackgroundColor );
 }
 
-auto VideoManager::getC64Foreground() -> unsigned {
+auto VideoManager::getForegroundColor() -> unsigned {
     emuThread->lockPaletteForSoftwareView();
-    unsigned _color = softwareViewForegroundColor;
+    unsigned _color = colorTable[softwareViewForegroundColorRef];
     emuThread->unlockPaletteForSoftwareView();
     return _color;
 }
 
-auto VideoManager::getC64Background() -> unsigned {
+auto VideoManager::getBackgroundColor() -> unsigned {
     emuThread->lockPaletteForSoftwareView();
-    unsigned _color = softwareViewBackgroundColor;
+    unsigned _color = colorTable[softwareViewBackgroundColorRef];
     emuThread->unlockPaletteForSoftwareView();
     return _color;
 }
@@ -617,12 +619,8 @@ template<typename T, bool interlace, bool field> auto VideoManager::renderFrame(
     unsigned* gpuData;
 	float* gpuDataFloat;
 
-    if (dataUpdatesPending) {
-        applyDataUpdates();
-    }
-
-    if ( needUpdate() )
-        update();
+    if (needAUpdate)
+        updateAll();
 
     if (lace.active != interlace) {
         unsigned ts = Chronos::getTimestampInSeconds();
@@ -1588,6 +1586,7 @@ template<typename T> auto VideoManager::updateData(std::string ident, T data) ->
     emuThread->lockVideo();
     dataUpdates.push_back( dataUpdate );
     dataUpdatesPending = true;
+    needAUpdate = true;
     emuThread->unlockVideo();
 }
 

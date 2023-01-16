@@ -253,10 +253,8 @@ auto MediaLayout::build() -> void {
     tvi->setUserData( (uintptr_t)(navElements.size() ) );
     navElements.push_back( { tvi, nullptr, (Layout*)&pathsLayout } );
 
-    if (dynamic_cast<LIBC64::Interface*>(emulator)) {
-        auto videoManager = VideoManager::getInstance(emulator);
-        colorListing(videoManager->getC64Foreground(), videoManager->getC64Background());
-    }
+    auto videoManager = VideoManager::getInstance(emulator);
+    colorListing(videoManager->getForegroundColor(), videoManager->getBackgroundColor());
 }
 
 auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
@@ -353,7 +351,7 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
                     block->header.inUse.setChecked();
                 }
                 
-                if ( showC64Listing( layout ) )
+                if ( showListing( layout ) )
                     layout->updateListing( block );                
             };
 
@@ -381,7 +379,7 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
                 
                 settings->set<unsigned>( _underscore(layout->mediaGroup->name) + "_selected", block->media->id);
                 
-                if ( showC64Listing( layout ) )
+                if ( showListing( layout ) )
                     layout->updateListing( block );                
             };
             
@@ -446,7 +444,7 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
             }
         }
 
-		if ( showC64Listing( layout ) ) { //preload last listing
+		if ( showListing( layout ) ) { //preload last listing
 			GUIKIT::File* file = filePool->get( fSetting->path );
 			uint8_t* data;
 
@@ -460,7 +458,7 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
                     emulator->insertMedium(block->media, data, file->archiveDataSize(fSetting->id));
                 }
 
-                block->listings = emulator->getListing( block->media, settings->get<bool>("autostart_load_with_column", false) );
+                block->listings = emulator->getListing( block->media );
 
                 if (mediaGroup->selected ) {
                     if (mediaGroup->selected == block->media)
@@ -472,7 +470,7 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
 		}
 	}
     
-    if ( showC64Listing( layout ) ) {
+    if ( showListing( layout ) ) {
 
         layout->listings.onActivate = [this, layout]( ) {
             
@@ -838,13 +836,13 @@ auto MediaLayout::updateListing( Emulator::Interface::Media* media ) -> void {
     if (!mediaGroupLayout)
         return;
                 
-    if ( !showC64Listing( mediaGroupLayout ) )
+    if ( !showListing( mediaGroupLayout ) )
         return;
 
     for( auto block : mediaGroupLayout->blocks ) {
 
         if ( block->media == media ) {
-            block->listings = emulator->getListing( media, settings->get<bool>("autostart_load_with_column", false) );
+            block->listings = emulator->getListing( media );
 
             if ( mediaGroupLayout->selectedBlock->media == media )
                 mediaGroupLayout->updateListing( block );
@@ -986,11 +984,8 @@ auto MediaLayout::getMediaGroupTransIdent( Emulator::Interface::MediaGroup* medi
     return ident;
 }
 
-auto MediaLayout::showC64Listing( MediaGroupLayout* layout ) -> bool {
-    
-    if ( !dynamic_cast<LIBC64::Interface*>(emulator) )
-        return false;
-    
+auto MediaLayout::showListing( MediaGroupLayout* layout ) -> bool {
+
     auto mediaGroup = layout->mediaGroup;
     
     if ( mediaGroup->isDrive() || mediaGroup->isProgram())
@@ -1020,7 +1015,7 @@ auto MediaLayout::ejectImage( MediaGroupLayout::Block* block ) -> void {
 
     auto fSetting = FileSetting::getInstance( emulator, _underscore(media->name ) );
 
-    if ( showC64Listing( layout ) ) {
+    if ( showListing( layout ) ) {
         block->listings.clear();
 
         if (layout->selectedBlock->media == media)
@@ -1080,9 +1075,9 @@ auto MediaLayout::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* fil
         }
     }
 
-    if (showC64Listing(layout)) {
+    if (showListing(layout)) {
         block->listings.clear();
-        block->listings = emulator->getListing(media, settings->get<bool>("autostart_load_with_column", false));
+        block->listings = emulator->getListing(media);
         layout->selectedBlock = block;
         layout->updateListing(block);
     }
@@ -1157,7 +1152,7 @@ auto MediaLayout::getActiveLayout() -> MediaGroupLayout* {
 auto MediaLayout::colorListing( unsigned foregroundColor, unsigned backgroundColor ) -> void {
 
     for (auto& nav : navElements) {
-        if (nav.mediaGroupLayout && showC64Listing( nav.mediaGroupLayout ) ) {
+        if (nav.mediaGroupLayout && showListing( nav.mediaGroupLayout ) ) {
             nav.mediaGroupLayout->listings.setForegroundColor( foregroundColor );
             nav.mediaGroupLayout->listings.setBackgroundColor( backgroundColor );
 
@@ -1172,7 +1167,7 @@ auto MediaLayout::colorListing( unsigned foregroundColor, unsigned backgroundCol
 auto MediaLayout::selectionColorListing( ) -> void {
 
     for (auto& nav : navElements) {
-        if (nav.mediaGroupLayout && showC64Listing( nav.mediaGroupLayout ) ) {
+        if (nav.mediaGroupLayout && showListing( nav.mediaGroupLayout ) ) {
             if (globalSettings->get<bool>("software_preview_commodore_hi", true ))
                 nav.mediaGroupLayout->listings.setSelectionColor(
                     nav.mediaGroupLayout->listings.backgroundColor(), nav.mediaGroupLayout->listings.foregroundColor() );
@@ -1325,7 +1320,7 @@ auto MediaLayout::resetPreview( bool light ) -> void {
         if (!nav.mediaGroupLayout)
             continue;
         
-        if (!showC64Listing( nav.mediaGroupLayout ))
+        if (!showListing( nav.mediaGroupLayout ))
             continue;
         
         if (!light)
@@ -1346,6 +1341,7 @@ auto MediaLayout::resetPreview( bool light ) -> void {
 auto MediaLayout::convertListing( std::vector<Emulator::Interface::Listing>& emuListings, bool loadCommand ) -> std::vector<std::string> {
 
     std::vector<std::string> list;
+    auto customFont = GUIKIT::Window::getCustomFont(emulator);
     
     for (auto& listing : emuListings) {
 
@@ -1354,8 +1350,8 @@ auto MediaLayout::convertListing( std::vector<Emulator::Interface::Listing>& emu
         for (auto& code : (loadCommand ? listing.loadCommand : listing.line) ) {
 
 			unsigned useCode = code;
-            if (GUIKIT::Window::countCustomFonts())
-                useCode |= 0xee << 8;
+            if (customFont)
+                useCode |= customFont->modifier;
 			
             GUIKIT::Utf8::encode(useCode, utf8);
         }
@@ -1367,10 +1363,7 @@ auto MediaLayout::convertListing( std::vector<Emulator::Interface::Listing>& emu
 }
 
 auto MediaLayout::updateListingFont( unsigned fontSize ) -> void {
-    
-    if ( !dynamic_cast<LIBC64::Interface*>(emulator)) 
-        return;
-    
+
     for(auto& nav : navElements) {
         if (nav.mediaGroupLayout)
             nav.mediaGroupLayout->applyFont( fontSize );
@@ -1378,12 +1371,9 @@ auto MediaLayout::updateListingFont( unsigned fontSize ) -> void {
 }
 
 auto MediaLayout::updateListings( ) -> void {
-    
-    if ( !dynamic_cast<LIBC64::Interface*>(emulator)) 
-        return;
-    
+
     for(auto& nav : navElements) {
-        if (nav.mediaGroupLayout && showC64Listing( nav.mediaGroupLayout ) )
+        if (nav.mediaGroupLayout && showListing( nav.mediaGroupLayout ) )
             nav.mediaGroupLayout->updateListing( nav.mediaGroupLayout->selectedBlock );
     }
 }
@@ -1425,7 +1415,7 @@ auto MediaLayout::loadSettings() -> void {
             
             updateMediaBlock(block, fSetting);
 
-            if ( showC64Listing( layout ) ) {
+            if ( showListing( layout ) ) {
                 
                 GUIKIT::File* file = filePool->get(fSetting->path);
                 uint8_t* data;
@@ -1435,7 +1425,7 @@ auto MediaLayout::loadSettings() -> void {
                     if (!mediaGroup->isProgram())
                         filePool->assign(_ident(emulator, block->media->name + "store"), file);
                     emulator->insertMedium(block->media, data, file->archiveDataSize(fSetting->id));
-                    block->listings = emulator->getListing(block->media, settings->get<bool>("autostart_load_with_column", false));
+                    block->listings = emulator->getListing(block->media);
 
                     if (mediaGroup->selected) {
                         if (mediaGroup->selected == block->media)

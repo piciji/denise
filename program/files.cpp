@@ -417,11 +417,30 @@ auto Program::getSettings( Emulator::Interface* emulator ) -> GUIKIT::Settings* 
 }
 
 auto Program::addCustomFont() -> void {
-    GUIKIT::CustomFont* font = new GUIKIT::CustomFont;
-    font->name = "C64 Pro";
-    font->data = (uint8_t*)Fonts::c64Pro;
-    font->size = sizeof(Fonts::c64Pro);
-    font->filePath = fontFolder() + "C64_Pro-STYLE121.ttf";
-    bool useCustomFont = GUIKIT::Window::addCustomFont( font );
-    ((LIBC64::Interface*) getEmulator("C64"))->convertPetsciiToScreencode( useCustomFont );
+    GUIKIT::CustomFont* font;
+
+    for(auto emulator : emulators) {
+        if ( dynamic_cast<LIBC64::Interface*>(emulator)) {
+            font = new GUIKIT::CustomFont;
+            font->name = "C64 Pro";
+            font->refPtr = (void*)emulator;
+            font->data = (uint8_t*) Fonts::c64Pro;
+            font->size = sizeof(Fonts::c64Pro);
+            font->filePath = fontFolder() + "C64_Pro-STYLE121.ttf";
+            font->modifier = 0xee << 8;
+            bool useCustomFont = GUIKIT::Window::addCustomFont( font );
+            ((LIBC64::Interface*) emulator)->convertPetsciiToScreencode(useCustomFont);
+            ((LIBC64::Interface*) emulator)->loadWithColumn( getSettings(emulator)->get<bool>("autostart_load_with_column") );
+
+        } else if ( dynamic_cast<LIBAMI::Interface*>(emulator)) {
+            font = new GUIKIT::CustomFont;
+            font->name = "Amiga Forever Pro";
+            font->refPtr = (void*)emulator;
+            font->data = (uint8_t*)Fonts::amigaForeverPro;
+            font->size = sizeof(Fonts::amigaForeverPro);
+            font->filePath = fontFolder() + "amiga4ever pro.ttf";
+            font->modifier = 0;
+            GUIKIT::Window::addCustomFont( font );
+        }
+    }
 }

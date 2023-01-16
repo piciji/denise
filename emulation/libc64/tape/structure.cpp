@@ -53,7 +53,7 @@ auto TapeStructure::getListing( ) -> std::vector<Emulator::Interface::Listing>& 
 
     curFileEntry = nullptr;
 
-    listing.convertToScreencode = system->interface->convertToScreencode;
+    listing.convertToScreencode = system->convertToScreencode;
 
     listings.push_back( {id++, listing.buildHeadline( &head[0] ) } );
 

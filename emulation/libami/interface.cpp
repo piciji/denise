@@ -389,7 +389,7 @@ auto Interface::getModelValue(unsigned modelId) -> int {
 }
 
 auto Interface::getModelIdOfEnabledDrives(MediaGroup* group) -> unsigned {
-    if (group->isDisk())
+    if (group && group->isDisk())
         return ModelIdDiskDrivesConnected;
 
     return ~0;
@@ -427,14 +427,14 @@ auto Interface::createDiskImage(unsigned typeId, std::string name, bool hd, bool
     return DiskStructure::create( system, (DiskStructure::Type) typeId, name, hd, ffs, bootable );
 }
 
-auto Interface::getDiskListing(Media* media, bool alternateLoad) -> std::vector<Emulator::Interface::Listing> {
+auto Interface::getDiskListing(Media* media) -> std::vector<Emulator::Interface::Listing> {
     if (!media || !media->group->isDisk())
         return {};
 
     return system->diskDrives[ media->id ].structure.getListing();
 }
 
-auto Interface::getDiskPreview(uint8_t* data, unsigned size, Media* media, bool alternateLoad) -> std::vector<Emulator::Interface::Listing> {
+auto Interface::getDiskPreview(uint8_t* data, unsigned size, Media* media) -> std::vector<Emulator::Interface::Listing> {
     return DiskStructure::getPreview( system, data, size);
 }
 

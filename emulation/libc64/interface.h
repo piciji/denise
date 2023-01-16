@@ -60,10 +60,7 @@ struct Interface : Emulator::Interface {
     };
     
     static const std::string Version;
-    
-    // petscii will be converted to ascii or screencodes to be viewed in host
-    bool convertToScreencode = false;
- 
+
 	//controls
 	auto connect(unsigned connectorId, unsigned deviceId) -> void;
     auto connect(Connector* connector, Device* device) -> void;
@@ -83,6 +80,7 @@ struct Interface : Emulator::Interface {
     auto setMonitorFpsRatio(double ratio) -> void;
 	
     auto convertPetsciiToScreencode(bool state) -> void;
+    auto loadWithColumn(bool state) -> void;
 
 	//disk drive handling
 	auto insertDisk(Media* media, uint8_t* data, unsigned size, bool loadGracefully = false) -> void;
@@ -90,8 +88,8 @@ struct Interface : Emulator::Interface {
     auto isWriteProtectedDisk(Media* media) -> bool;
 	auto ejectDisk(Media* media) -> void;
 	auto createDiskImage(unsigned typeId, std::string name = "", bool hd = false, bool ffs = false, bool bootable = false) -> Data;
-    auto getDiskListing(Media* media, bool alternateLoad = false) -> std::vector<Emulator::Interface::Listing>;
-    auto getDiskPreview(uint8_t* data, unsigned size, Media* media = nullptr, bool alternateLoad = false) -> std::vector<Emulator::Interface::Listing>;
+    auto getDiskListing(Media* media) -> std::vector<Emulator::Interface::Listing>;
+    auto getDiskPreview(uint8_t* data, unsigned size, Media* media = nullptr) -> std::vector<Emulator::Interface::Listing>;
     auto selectDiskListing(Media* media, unsigned pos, uint8_t useTraps = 0) -> void;
     auto selectDiskListing(Media* media, std::string fileName, uint8_t useTraps = 0) -> void;
     auto resetDrive(Media* media) -> void;

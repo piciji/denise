@@ -605,6 +605,7 @@ auto ModelLayout::applyCustomStuff( Line::Block* block, Emulator::Interface::Mod
             case LIBAMI::Interface::ModelIdDiskDrivesConnected:
                 if(tabWindow->mediaLayout)
                     tabWindow->mediaLayout->updateVisibility( emulator->getDiskMediaGroup(), block->combo->selection() );
+                break;
             case LIBAMI::Interface::ModelIdChipMem:
             case LIBAMI::Interface::ModelIdSlowMem:
             case LIBAMI::Interface::ModelIdSystem:

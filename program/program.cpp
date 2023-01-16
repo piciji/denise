@@ -437,7 +437,8 @@ auto Program::loop() -> void {
         GUIKIT::System::sleep( 10 );
         videoDriver->redraw();
 		audioDriver->clear();
-		VideoManager::updateWhenNotRunning();
+        if (VideoManager::needAUpdate)
+            VideoManager::updateAll();
 	}
 
     if (statusHandler->hasUpdates())

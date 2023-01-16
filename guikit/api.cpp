@@ -215,8 +215,12 @@ auto Window::addCustomFont( CustomFont* customFont ) -> bool {
 	return ok;
 }
 
-auto Window::countCustomFonts() -> unsigned {
-    return customFonts.size();
+auto Window::getCustomFont(void* refPtr) -> CustomFont* {
+    for(auto cF : customFonts) {
+        if (cF->refPtr == refPtr)
+            return cF;
+    }
+    return nullptr;
 }
 
 auto Window::setWidgetFont(const std::string& font) -> void {

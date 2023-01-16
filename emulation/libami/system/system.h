@@ -47,6 +47,12 @@ struct System {
         Emulator::MemSerializer serializer;
     } runAhead;
 
+    struct {
+        bool stateChange = false;
+        bool motor;
+        uint8_t inputFetches = 0;
+    } observer;
+
     bool requestFloppySound = false;
 
     bool leaveEmulation = false;
@@ -89,6 +95,9 @@ struct System {
 
     auto setDrivesEnabled( uint8_t count ) -> void;
     auto getDrivesEnabled() -> uint8_t;
+
+    auto hintObserverMotorChange(bool state) -> void;
+    auto informAboutStateChange() -> void;
 
     auto displayFrame() -> const bool { return !runAhead.pos; }
 };

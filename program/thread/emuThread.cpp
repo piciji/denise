@@ -166,7 +166,7 @@ auto EmuThread::handleUIEvents() -> void {
         auto vManager = VideoManager::getInstance( emulator );
 
         if (emuView && emuView->mediaLayout)
-            emuView->mediaLayout->colorListing( vManager->getC64Foreground(), vManager->getC64Background() );
+            emuView->mediaLayout->colorListing( vManager->getForegroundColor(), vManager->getBackgroundColor() );
     }
 }
 

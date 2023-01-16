@@ -926,15 +926,15 @@ auto Interface::createDiskImage(unsigned typeId, std::string name, bool hd, bool
     return DiskStructure::create( (DiskStructure::Type) typeId, name );
 }
 
-auto Interface::getDiskListing(Media* media, bool alternateLoad) -> std::vector<Emulator::Interface::Listing> {
+auto Interface::getDiskListing(Media* media) -> std::vector<Emulator::Interface::Listing> {
     
     if (!media || !media->group->isDisk())
         return {};
     
-    return iecBus->getDiskListing( media, alternateLoad );
+    return iecBus->getDiskListing( media );
 }
 
-auto Interface::getDiskPreview(uint8_t* data, unsigned size, Media* media, bool alternateLoad) -> std::vector<Emulator::Interface::Listing> {
+auto Interface::getDiskPreview(uint8_t* data, unsigned size, Media* media) -> std::vector<Emulator::Interface::Listing> {
     
     DiskStructure structure;
 	structure.number = media ? media->id : 0;
@@ -942,7 +942,7 @@ auto Interface::getDiskPreview(uint8_t* data, unsigned size, Media* media, bool 
     if (!structure.attach( data, size, false ))
         return {};
         
-    return structure.getListing(alternateLoad);
+    return structure.getListing();
 }
 
 auto Interface::selectDiskListing(Media* media, unsigned pos, uint8_t useTraps) -> void {
@@ -1228,8 +1228,11 @@ auto Interface::selectProgramListing(Media* media, unsigned pos) -> bool {
 }
 
 auto Interface::convertPetsciiToScreencode(bool state) -> void {
-    
-    convertToScreencode = state;
+    system->convertToScreencode = state;
+}
+
+auto Interface::loadWithColumn(bool state) -> void {
+    system->loadWithColumn = state;
 }
 
 auto Interface::savestate(unsigned& size) -> uint8_t* {
@@ -1752,12 +1755,13 @@ auto Interface::prepareSocket( Media* media, std::string address, std::string po
 }
 
 auto Interface::getModelIdOfEnabledDrives(MediaGroup* group) -> unsigned {
-    if (group->isDisk())
-        return ModelIdDiskDrivesConnected;
+    if (group) {
+        if (group->isDisk())
+            return ModelIdDiskDrivesConnected;
 
-    if (group->isTape())
-        return ModelIdTapeDrivesConnected;
-
+        if (group->isTape())
+            return ModelIdTapeDrivesConnected;
+    }
     return ~0;
 }
 
