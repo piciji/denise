@@ -326,9 +326,7 @@ struct Interface {
         virtual auto setThreadPriority(ThreadPriority, float, float) -> bool { return false; }
         virtual auto informCapsLock(bool state) -> void {}
         virtual auto fpsChanged() -> void {}
-        virtual auto trapsNotPossible(Media*) -> void {}
         virtual auto trapsResult(Media*, bool error) -> void {}
-
     };
     Bind* bind = nullptr;
 
@@ -410,10 +408,6 @@ struct Interface {
 
     auto setThreadPriority(ThreadPriority priority, float minProcessingTimeInMilliSeconds = 0.0, float maxProcessingTimeInMilliSeconds = 0.0) -> bool {
         return bind->setThreadPriority( priority, minProcessingTimeInMilliSeconds, maxProcessingTimeInMilliSeconds);
-    }
-    
-    auto trapsNotPossible(Media* media) -> void {
-        bind->trapsNotPossible(media);
     }
 
     auto trapsResult(Media* media, bool error) -> void {
