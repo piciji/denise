@@ -15,8 +15,10 @@ SectorBlock::SectorBlock(Filesystem& filesystem, Type type, unsigned nr) : files
     this->nr = nr;
     this->depth = 0;
 
-    if (type != Type::EMPTY_BLOCK)
+    if (type != Type::EMPTY_BLOCK) {
         data = new uint8_t[filesystem.bSize];
+        std::memset(data, 0, bSize());
+    }
 
     init();
 }
@@ -39,7 +41,6 @@ auto SectorBlock::init() -> void {
                 data[1] = 'O';
                 data[2] = 'S';
                 data[3] = filesystem.structure == Filesystem::Structure::FFS ? 1 : 0;
-                write(8, 880); // for HD too, todo: Hard disk ???
             }
             break;
         case DIR_BLOCK:
@@ -173,7 +174,9 @@ auto SectorBlock::getHashChain() -> unsigned {
 auto SectorBlock::getChecksumOffset() -> int {
     switch(type) {
         case BOOT_BLOCK:
-            return 4;
+            if (nr == 0)
+                return 4;
+            break;
 
         case ROOT_BLOCK:
         case DIR_BLOCK:
@@ -194,10 +197,7 @@ auto SectorBlock::calcChecksum() -> unsigned {
         return 0;
 
     if (type == BOOT_BLOCK) {
-        if (nr == 0)
-            write(offset, 0);
-        else
-            result = read(offset);
+        write(offset, 0);
 
         for (unsigned i = 0; i < bSize(); i += 4) {
             precsum = result;
@@ -205,13 +205,27 @@ auto SectorBlock::calcChecksum() -> unsigned {
             if (result < precsum) result++;
         }
 
+        auto second = filesystem.blocks[1];
+        if (second) {
+            for (unsigned i = 0; i < bSize(); i += 4) {
+                precsum = result;
+                result += second->read(i);
+                if (result < precsum) result++;
+            }
+        }
+        if (result == read(0)) // no Bootblock, we don't calculate the checksum from first 4 bytes only
+            return 0;
+
+        result = ~result;
     } else {
         write(offset, 0);
         for (unsigned i = 0; i < bSize(); i += 4)
             result += read(i);
+
+        result = ~result;
+        result += 1;
     }
 
-    result = ~result;
     write( offset, result );
     return result;
 }

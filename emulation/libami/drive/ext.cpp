@@ -74,24 +74,25 @@ auto DiskStructure::prepareEXT(uint8_t *data, unsigned size) -> void {
 auto DiskStructure::createEXT(unsigned size) -> uint8_t* {
     uint8_t* dest = new uint8_t[size];
     std::memset(dest, 0, size);
+    uint8_t* ptr = dest;
 
-    std::memcpy(dest, "UAE-1ADF", 8);
-    dest[11] = trackCount;
-    dest += 12;
+    std::memcpy(ptr, "UAE-1ADF", 8);
+    ptr[11] = trackCount;
+    ptr += 12;
 
     for (unsigned i = 0; i < trackCount; i++) {
         Track& track = tracks[i];
 
-        dest[3] = 1; // MFM
-        Emulator::copyIntToBufferBigEndian<uint32_t>(&dest[4], track.length);
-        Emulator::copyIntToBufferBigEndian<uint32_t>(&dest[8], track.bits);
-        dest += 12;
+        ptr[3] = 1; // MFM
+        Emulator::copyIntToBufferBigEndian<uint32_t>(&ptr[4], track.length);
+        Emulator::copyIntToBufferBigEndian<uint32_t>(&ptr[8], track.bits);
+        ptr += 12;
     }
 
     for (unsigned i = 0; i < trackCount; i++) {
         Track& track = tracks[i];
-        std::memcpy(dest, track.data, track.length);
-        dest += track.length;
+        std::memcpy(ptr, track.data, track.length);
+        ptr += track.length;
         track.written = 0;
     }
     return dest;

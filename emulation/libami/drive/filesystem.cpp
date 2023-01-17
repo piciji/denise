@@ -171,7 +171,7 @@ auto Filesystem::format(std::string name, bool bootblock) -> void {
 
     blocks[0] = new SectorBlock(*this, SectorBlock::Type::BOOT_BLOCK, 0);
     blocks[1] = new SectorBlock(*this, SectorBlock::Type::BOOT_BLOCK, 1);
-    blocks[rootBlockRef] = new SectorBlock(*this, SectorBlock::Type::BOOT_BLOCK, rootBlockRef);
+    blocks[rootBlockRef] = new SectorBlock(*this, SectorBlock::Type::ROOT_BLOCK, rootBlockRef);
 
     unsigned countBitmapBlocks = (blockCount + countBitsEachBitmapBlock() - 1) / countBitsEachBitmapBlock();
     for (unsigned i = 0; i < countBitmapBlocks; i++) {
@@ -226,8 +226,12 @@ auto Filesystem::addBootblock() -> void {
         0x61, 0x72, 0x79, 0x00, 0x65, 0x78, 0x70, 0x61, 0x6e, 0x73, 0x69, 0x6f,
         0x6e, 0x2e, 0x6c, 0x69, 0x62, 0x72, 0x61, 0x72, 0x79 };
 
-    if (blocks[0])
-        std::memcpy( blocks[0]->data + 12, structure == Structure::OFS ? os13 : os20, structure == Structure::OFS ? sizeof(os13) : sizeof(os20) );
+    auto block = blocks[0];
+    if (block) {
+        block->data[10] = 0x3;  // root block: 880, for HD block sizes too ???
+        block->data[11] = 0x70;
+        std::memcpy( block->data + 12, structure == Structure::OFS ? os13 : os20, structure == Structure::OFS ? sizeof(os13) : sizeof(os20) );
+    }
 }
 
 auto Filesystem::calculateChecksums() -> void {
@@ -260,11 +264,11 @@ auto Filesystem::accessBitmapAllocation(unsigned ref, int update) -> bool {
         return false;
 
     ref %= countBitsEachBitmapBlock();
-    unsigned byte = ref / 8;
-    unsigned bit = ref % 8;
+    unsigned byte = ref >> 3;
+    unsigned bit = ref & 7;
 
     // reverse byte order in long word chunks
-    switch (byte % 4) {
+    switch (byte & 3) {
         case 0: byte += 3; break;
         case 1: byte += 1; break;
         case 2: byte -= 1; break;

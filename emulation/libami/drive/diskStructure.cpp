@@ -124,7 +124,7 @@ auto DiskStructure::getListing() -> std::vector<Emulator::Interface::Listing> {
     uint8_t* data = rawData;
     unsigned size = rawSize;
 
-    if (!rawData)
+    if (!data)
         return {};
 
     if (type == Type::EXT) {
