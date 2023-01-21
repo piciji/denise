@@ -39,7 +39,7 @@ auto Interface::prepareModels() -> void {
     models.push_back({ModelIdDiskTurbo, "Disk Turbo", Model::Type::Radio, Model::Purpose::DriveSettings, 0, {0, 4}, { "1x", "2x", "4x", "8x", "MAX" }});
 
     models.push_back({ModelIdChipMem, "Chip Mem", Model::Type::Radio, Model::Purpose::Memory, 1, {0, 3}, { "256 Kb", "512 Kb", "1 MB", "2 MB" }});
-    models.push_back({ModelIdChipMem, "Slow Mem", Model::Type::Radio, Model::Purpose::Memory, 0, {0, 4}, { "none", "512 KB", "1 MB", "1.5 MB", "1.75 MB" }});
+    models.push_back({ModelIdSlowMem, "Slow Mem", Model::Type::Radio, Model::Purpose::Memory, 0, {0, 4}, { "none", "512 KB", "1 MB", "1.5 MB", "1.75 MB" }});
 }
 
 auto Interface::prepareMedia() -> void {

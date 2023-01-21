@@ -21,7 +21,6 @@
 #include "graphics.cpp"
 #include "register.cpp"
 
-
 namespace LIBAMI {
 
 Agnus::Agnus(System* system, Cpu& cpu, Denise& denise, Paula& paula, Cia<MOS_8520>& cia1, Cia<MOS_8520>& cia2, Input& input)
@@ -29,6 +28,22 @@ Agnus::Agnus(System* system, Cpu& cpu, Denise& denise, Paula& paula, Cia<MOS_852
 
     this->interface = system->interface;
 
+    chipMemChangeSize = slowMemChangeSize = 10 * 1024;
+    chipMemChange = new MemChange[chipMemChangeSize];
+    slowMemChange = new MemChange[slowMemChangeSize];
+
+    wom = new uint8_t[256 * 1024];
+    ntsc = false;
+    resetFps();
+}
+
+Agnus::~Agnus() {
+    delete[] chipMemChange;
+    delete[] slowMemChange;
+    delete[] wom;
+}
+
+auto Agnus::prepareEvents() -> void {
     oneCycleDelay = [&](uint8_t job, uint16_t data) {
         // only events that cannot occur in parallel
         switch (job) {
@@ -46,6 +61,7 @@ Agnus::Agnus(System* system, Cpu& cpu, Denise& denise, Paula& paula, Cia<MOS_852
             case BLT_INIT: blitter.initBlit(); break;
             case BLT_BUSY_DELAY: break;
         }
+        setEventInactive<Agnus::EVENT_ONE_CYCLE_DELAY>();
     };
 
     addEvent<Agnus::EVENT_ONE_CYCLE_DELAY>( &oneCycleDelay );
@@ -56,6 +72,7 @@ Agnus::Agnus(System* system, Cpu& cpu, Denise& denise, Paula& paula, Cia<MOS_852
         // control must be returned in a timely manner.
         // todo: blank screen in such cases
         system->leaveEmulation = true;
+        setEventInactive<Agnus::EVENT_LEAVE_EMULATION>();
     };
 
     addEvent<Agnus::EVENT_LEAVE_EMULATION>( &leaveEmulation );
@@ -69,13 +86,13 @@ Agnus::Agnus(System* system, Cpu& cpu, Denise& denise, Paula& paula, Cia<MOS_852
     addEvent<Agnus::EVENT_POWER_SUPPLY>( &countDownPowerSupply );
 
     eventHTotal = [&](uint8_t job, uint16_t data) {
-        if (job == 0) {
+        if (job == 1) {
             if (vPos == (lines + lof) ) {
                 if (lace()) lof ^= 1;
                 initVCounter = true;
                 lines = (beamCon & VARBEAMEN) ? vTotal : (ntsc ? 261 : 311);
             }
-            updateEvent<EVENT_HTOTAL>(1, 1);
+            updateEvent<EVENT_HTOTAL>(2, 1);
         } else {
             if (!lol) {
                 actions &= ~ACT_COPPER; // "even" cycle 0 after a short line is not usable by Copper, otherwise Copper would progress 2 cycles in a row.
@@ -90,25 +107,11 @@ Agnus::Agnus(System* system, Cpu& cpu, Denise& denise, Paula& paula, Cia<MOS_852
 
             hPos = 0;
             if (lolToggle) lol ^= 1;
-            updateEvent<EVENT_HTOTAL>(0, (beamCon & VARBEAMEN) ? (hTotal + lol) : (0xe2 + lol) );
+            updateEvent<EVENT_HTOTAL>(1, (beamCon & VARBEAMEN) ? (hTotal + lol) : (0xe2 + lol) );
         }
     };
 
     addEvent<Agnus::EVENT_HTOTAL>( &eventHTotal );
-
-    chipMemChangeSize = slowMemChangeSize = 10 * 1024;
-    chipMemChange = new MemChange[chipMemChangeSize];
-    slowMemChange = new MemChange[slowMemChangeSize];
-
-    wom = new uint8_t[256 * 1024];
-    ntsc = false;
-    resetFps();
-}
-
-Agnus::~Agnus() {
-    delete[] chipMemChange;
-    delete[] slowMemChange;
-    delete[] wom;
 }
 
 auto Agnus::frequency() -> unsigned {
@@ -166,6 +169,7 @@ auto Agnus::power(bool softReset) -> void {
         cha.ptrLatch = 0;
     }
 
+    dskpt = 0;
     chipMemChangePos = 0;
     slowMemChangePos = 0;
     trackMemChanges = false;
@@ -189,7 +193,6 @@ auto Agnus::power(bool softReset) -> void {
     lol = false;
     lof = false;
     lolToggle = ntsc;
-    updateEvent<EVENT_HTOTAL>(0, 0xe2);
 
     initVCounter = false;
     shortLineBefore = true;
@@ -230,7 +233,7 @@ auto Agnus::power(bool softReset) -> void {
     if (model == OCS_A1000)
         denise.model = ntsc ? Denise::Model::OCS_A1000_NO_EHB : Denise::Model::OCS_A1000;
 
-    updateEvent<EVENT_HTOTAL>(0, 0xe2 );
+    updateEvent<EVENT_HTOTAL>(1, 0xe2 );
 }
 
 auto Agnus::powerOff() -> void {
@@ -565,9 +568,9 @@ auto Agnus::sync(uint16_t cycles) -> void {
     }
 }
 
-auto Agnus::iackCycle(uint8_t level, uint8_t& vector) -> uint8_t {
+auto Agnus::iackCycle(uint8_t level, uint8_t& vector) -> int {
     vector = 24 + level;
-    return M68FAMILY::M68000::USER_VECTOR;
+    return 0;
 }
 
 auto Agnus::setRefPtr(uint16_t value) -> void {

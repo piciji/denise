@@ -20,6 +20,10 @@ paula(this, agnus, cpu, input, diskDrives[0], diskDrives[1], diskDrives[2], disk
 agnus(this, cpu, denise, paula, cia1, cia2, input),
 input(this, agnus, cia1) {
 
+    agnus.prepareEvents();
+    paula.prepareEvents();
+    input.keyboard.prepareEvents();
+
     cia1.serialOut = [this](bool spLine, bool cntLine) {
         // Keyboard computer is not interested in CNT line changes, triggered by CIA
         input.keyboard.handshake(spLine);
@@ -169,8 +173,9 @@ auto System::run() -> void {
 
     labelRunAhead:
 
-    while( !leaveEmulation )
+    while( !leaveEmulation ) {
         cpu.process();
+    }
 
     if (useRunAhead) {
         if (runAhead.frames == runAhead.pos) {

@@ -175,8 +175,6 @@ struct Agnus : Emulator::Events<6> {
 
     bool initVCounter;
     bool shortLineBefore;
-    bool womLock = false;
-    uint8_t resetFromKeyboard = 0;
     bool stopFetching;
     uint16_t bplCycle;
     uint32_t bplQueue;
@@ -189,6 +187,10 @@ struct Agnus : Emulator::Events<6> {
     bool hardStop;
     bool diwFlipFlop;
 
+    bool womLock = false;
+    uint8_t resetFromKeyboard = 0;
+
+    auto prepareEvents() -> void;
     auto frequency() -> unsigned;
     auto ecsAndHigher() -> bool const { return model & (Model::ECS | Model::AGA); }
     auto ecs() -> bool const { return model == Model::ECS; }
@@ -215,7 +217,7 @@ struct Agnus : Emulator::Events<6> {
     auto sync(uint16_t cycles) -> void;
     auto dmaCycle() -> void;
     auto addWaitstatesToCPU() -> void;
-    auto iackCycle(uint8_t level, uint8_t& vector) -> uint8_t;
+    auto iackCycle(uint8_t level, uint8_t& vector) -> int;
     auto resetOut() -> void;
     auto pullResetLine(bool state = true) -> void;
 

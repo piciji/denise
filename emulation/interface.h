@@ -304,7 +304,7 @@ struct Interface {
 
     //callbacks
     struct Bind {
-        virtual auto jitPoll(int delay) -> bool { return false; }
+        virtual auto jitPoll(int) -> bool { return false; }
         virtual auto inputPoll(uint16_t, uint16_t) -> int16_t { return 0; }
 		virtual auto videoRefresh8(const uint8_t*, unsigned, unsigned, unsigned) -> void {}
         virtual auto videoRefresh(const uint16_t*, unsigned, unsigned, unsigned, uint8_t) -> void {}
@@ -324,7 +324,7 @@ struct Interface {
         virtual auto mixDriveSound( Media*, DriveSound, uint8_t ) -> void {}
         virtual auto jam(Media*) -> void {}
         virtual auto setThreadPriority(ThreadPriority, float, float) -> bool { return false; }
-        virtual auto informCapsLock(bool state) -> void {}
+        virtual auto informCapsLock(bool) -> void {}
         virtual auto fpsChanged() -> void {}
         virtual auto trapsResult(Media*, bool error) -> void {}
     };

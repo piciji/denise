@@ -45,11 +45,11 @@ struct Keyboard {
     Emulator::Interface::Device* device = nullptr;
 
     auto reset() -> void;
-    auto setDevice( Emulator::Interface::Device* device ) -> void;
     auto sendKeyChange(bool pressed, Emulator::Interface::Device::Input* input) -> void;
     auto handshake(bool spLine) -> void;
     auto sendCode(uint8_t code) -> void;
     auto resync() -> void;
+    auto prepareEvents() -> void;
 
     auto serialize( Emulator::Serializer& s ) -> void;
 };

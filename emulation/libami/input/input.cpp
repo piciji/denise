@@ -14,23 +14,14 @@
 namespace LIBAMI {
 
 Input::Input(System* system, Agnus& agnus, Cia<MOS_8520>& cia1)
-: system(system), cia1(cia1), agnus(agnus), keyboard(interface, agnus, cia1) {
+: system(system), cia1(cia1), agnus(agnus), keyboard(system->interface, agnus, cia1) {
     this->interface = system->interface;
 
     controlPort1 = new ControlPort(interface);
     controlPort2 = new ControlPort(interface);
-
-    for( auto& device : interface->devices ) {
-        if (device.isKeyboard()) {
-            keyboard.setDevice( &device );
-            break;
-        }
-    }
 }
 
 auto Input::readCiaPortA( ) -> uint8_t {
- //   this->lines = lines;
-
     jitPoll();
     uint8_t out = controlPort1->readButton1() << 6;
     out |= controlPort2->readButton1() << 7;
@@ -91,40 +82,7 @@ auto Input::drawCursor(bool midScreen) -> void {
     controlPort2->draw( midScreen );
 }
 
-
-
-auto Input::readPotX() -> uint8_t {
-
-    switch(potMask) {
-        case 1:
-            return controlPort1->getPotX();
-        case 2:
-            return controlPort2->getPotX();
-        case 3:
-            return controlPort1->getPotX() & controlPort2->getPotX();
-        default:
-            return 0xff;
-    }
-}
-
-auto Input::readPotY() -> uint8_t {
-
-    switch(potMask) {
-        case 1:
-            return controlPort1->getPotY();
-        case 2:
-            return controlPort2->getPotY();
-        case 3:
-            return controlPort1->getPotY() & controlPort2->getPotY();
-        default:
-            return 0xff;
-    }
-}
-
 auto Input::reset() -> void {
-    //lines = nullptr;
-    potMask = 1;
-
     if (!agnus.resetFromKeyboard)
         keyboard.reset();
 
@@ -184,10 +142,6 @@ auto Input::getCursorPosition( Emulator::Interface::Device* device, int16_t& x, 
 }
 
 auto Input::serialize(Emulator::Serializer& s) -> void {
-
-    s.integer( potMask );
-
-   // this->lines = &cia1.lines;
 
     keyboard.serialize( s );
 

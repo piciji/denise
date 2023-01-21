@@ -18,11 +18,13 @@ const uint8_t Keyboard::keymap[] = {
         0x40, 0x41, 0x42, 0x44, 0x45, 0x46, 0x60, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x5f,
         0x1a, 0x1b, 0x29, 0x38, 0x39, 0x3a, 0x0d, 0x2a, 0x2b, 0x30, 0x00, 0x0b, 0x0c };
 
-Keyboard::Keyboard(Emulator::Interface* interface, Agnus& agnus, Cia<MOS_8520>& cia) : agnus(agnus), cia(cia) {
-    this->interface = interface;
+Keyboard::Keyboard(Emulator::Interface* interface, Agnus& agnus, Cia<MOS_8520>& cia)
+: interface(interface), agnus(agnus), cia(cia) {
 
     queue.resize(10);
+}
 
+auto Keyboard::prepareEvents() -> void {
     callback = [&](uint8_t job, uint16_t data) {
 
         switch (job) {
@@ -66,12 +68,16 @@ Keyboard::Keyboard(Emulator::Interface* interface, Agnus& agnus, Cia<MOS_8520>& 
                 break;
 
             case KBD_Hardreset:
-                if ( keyState[0x63] && keyState[0x66] && keyState[0x67] );
+                if ( keyState[0x63] && keyState[0x66] && keyState[0x67] ) {
                     // at least one key needs to be released
-                else {
+                    agnus.setEventInactive<Agnus::EVENT_KBD>();
+                } else {
                     agnus.pullResetLine(false);
                     reset();
                 }
+                break;
+            default:
+                agnus.setEventInactive<Agnus::EVENT_KBD>();
                 break;
         }
     };
@@ -153,13 +159,6 @@ auto Keyboard::reset() -> void {
     queue.reset();
     // bypass keyboard selftest
     agnus.updateEvent<Agnus::EVENT_KBD>(KBD_Selftest, agnus.msecToDMACycles(1000));
-}
-
-auto Keyboard::setDevice( Emulator::Interface::Device* device ) -> void {
-    if (!device->isKeyboard())
-        return;
-
-    this->device = device;
 }
 
 auto Keyboard::sendKeyChange(bool pressed, Emulator::Interface::Device::Input* input) -> void {

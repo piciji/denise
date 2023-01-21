@@ -41,31 +41,35 @@ struct Events {
 
     template<uint8_t Channel>
     auto updateEvent(uint8_t job, unsigned delay, uint16_t data = 0) -> void {
-        delay += clock;
+        uint64_t absClock = clock + delay;
 
         Event& event = eventStore[Channel];
         event.job = job;
-        event.clock = delay;
+        event.clock = absClock;
         event.data = data;
 
-        if (delay < nextClock)
-            nextClock = delay;
+        if (nextClock <= clock)
+            nextClock = absClock;
+        else if (absClock < nextClock)
+            nextClock = absClock;
     }
 
     template<uint8_t Channel>
     auto updateEventDelayOrNew(uint8_t job, unsigned delay, uint16_t data = 0) -> void {
-        delay += clock;
+        uint64_t absClock = clock + delay;
 
         Event& event = eventStore[Channel];
-        event.clock = delay;
+        event.clock = absClock;
 
         if (!event.job) {
             event.job = job;
             event.data = data;
         }
 
-        if (delay < nextClock)
-            nextClock = delay;
+        if (nextClock <= clock)
+            nextClock = absClock;
+        else if (absClock < nextClock)
+            nextClock = absClock;
     }
 
     template<uint8_t Channel>
@@ -84,7 +88,6 @@ struct Events {
 
         if (event.job) {
             (*event.callback)(event.job, event.data);
-            event.job = 0;
         }
     }
 
@@ -123,7 +126,7 @@ struct Events {
     }
 
     auto clearEvents() -> void {
-        for(uint8_t Channel = 0; Channel < Channels; Channel++) {
+        for(unsigned Channel = 0; Channel < Channels; Channel++) {
             Event& event = eventStore[Channel];
             event.job = 0;
         }
@@ -146,19 +149,21 @@ protected:
     }
 
 private:
-    template<uint8_t Channel = Channels>
+    template<uint8_t Channel = Channels - 1>
     inline auto unroll() -> void {
         Event& event = eventStore[Channel];
 
         if (event.job) {
             if (event.clock == clock) {
                 (*event.callback)(event.job, event.data);
-                event.job = 0;
             } else {
-                if (clock == nextClock)
-                    nextClock = event.clock;
-                else if (event.clock < nextClock)
-                    nextClock = event.clock;
+                if (clock == nextClock) {
+                    if (event.clock > nextClock)
+                        nextClock = event.clock;
+                } else if (event.clock > clock) {
+                    if (event.clock < nextClock)
+                        nextClock = event.clock;
+                }
             }
         }
 

@@ -16,7 +16,7 @@ template<uint8_t Inst, uint8_t Size, bool SingleShift> auto M68000::shifter(uint
                 c = false;
                 v = false;
                 if (shift >= bits<Size>()) {
-                    c = shift == bits<Size>() ? data & 1 : 0;
+                    c = (shift == bits<Size>()) ? (data & 1) : 0;
                     v = data != 0;
                     data = 0;
                     x = c;
@@ -217,11 +217,18 @@ template<uint8_t Inst, uint8_t Size> auto M68000::bcd(uint32_t src, uint32_t des
 }
 
 template<uint8_t Inst, uint8_t Size> auto M68000::arithmetic(uint32_t src, uint32_t dest) -> uint32_t {
-    uint64_t result;
+    if constexpr ((Size == Long) && ((Inst == Add) || (Inst == Addx) || (Inst == Sub) || (Inst == Subx) || (Inst == Cmp)))
+        return arithmeticT<uint64_t, int64_t, Inst, Size>(src, dest);
+    else
+        return arithmeticT<uint32_t, int32_t, Inst, Size>(src, dest);
+}
+
+template<typename T, typename TSign, uint8_t Inst, uint8_t Size> auto M68000::arithmeticT(uint32_t src, uint32_t dest) -> uint32_t {
+    T result;
 
     switch (Inst) {
         case Add: {
-            result = src + dest;
+            result = (TSign)src + (TSign)dest;
             c = carry<Size>(result);
             v = negative<Size>((src ^ result) & (dest ^ result));
             z = zero<Size>(result);
@@ -230,7 +237,7 @@ template<uint8_t Inst, uint8_t Size> auto M68000::arithmetic(uint32_t src, uint3
         } break;
 
         case Addx: {
-            result = src + dest + x;
+            result = (TSign)src + (TSign)dest + (TSign)x;
             c = carry<Size>(result);
             v = negative<Size>((src ^ result) & (dest ^ result));
             if (clip<Size>(result)) z = 0;
@@ -239,7 +246,7 @@ template<uint8_t Inst, uint8_t Size> auto M68000::arithmetic(uint32_t src, uint3
         } break;
 
         case Sub: {
-            result = dest - src;
+            result = (TSign)dest - (TSign)src;
             c = carry<Size>(result);
             v = negative<Size>((dest ^ src) & (dest ^ result));
             z = zero<Size>(result);
@@ -248,7 +255,7 @@ template<uint8_t Inst, uint8_t Size> auto M68000::arithmetic(uint32_t src, uint3
         } break;
 
         case Subx: {
-            result = dest - src - x;
+            result = (TSign)dest - (TSign)src - (TSign)x;
             c = carry<Size>(result);
             v = negative<Size>((dest ^ src) & (dest ^ result));
             if (clip<Size>(result)) z = 0;
@@ -257,7 +264,7 @@ template<uint8_t Inst, uint8_t Size> auto M68000::arithmetic(uint32_t src, uint3
         } break;
 
         case Cmp: {
-            result = dest - src;
+            result = (TSign)dest - (TSign)src;
             c = carry<Size>(result);
             v = negative<Size>((dest ^ src) & (dest ^ result));
             z = zero<Size>(result);

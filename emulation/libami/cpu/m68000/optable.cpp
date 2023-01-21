@@ -1,18 +1,12 @@
 
 #include "m68000.h"
 
-#define _bindEA(id, F, I, M, S) { \
-    opTable[id] = &M68000::op##F<I, M, S>; \
-}
-
-#define _bind(id, F, I, S) { \
-    opTable[id] = &M68000::op##F<I, S>; \
-}
-
 enum { S6 = 6, S8 = 8, S12 = 12, SO /* second operand */ = 1 << 4, O_16 = 2 << 4, O_256 = 4 << 4 };
 enum { DR = 1, AR = 2, AI = 4, AIPI = 8, AIPD = 16, AID = 32, AII = 64, AS = 128, AL = 256, PCD = 512, PCI = 1024, IM = 2048,
-        ADR_TYPICAL = AI | AIPI | AIPD | AID | AII | AS | AL, ADR_FULL = ADR_TYPICAL | PCD | PCI | IM
-};
+        ADR_TYPICAL = AI | AIPI | AIPD | AID | AII | AS | AL, ADR_FULL = ADR_TYPICAL | PCD | PCI | IM };
+
+#define _bindEA(id, F, I, M, S) { opTable[id] = &M68000::op##F<I, M, S>; }
+#define _bind(id, F, I, S) { opTable[id] = &M68000::op##F<I, S>; }
 
 #define _M_( op, F, I, M, S ) { \
     for (uint8_t j = 0; j < 8; j++) { \
@@ -34,7 +28,7 @@ enum { DR = 1, AR = 2, AI = 4, AIPI = 8, AIPD = 16, AID = 32, AII = 64, AS = 128
 #define _EA_( op, flags, F, I, M, S ) { \
     uint8_t _b = 0, _w = 0, _l = 0;   \
     uint8_t _s = (flags) & 15;          \
-    if (_s) _l = _s == 8 ? 1 : 2, _w = _s == 6 ? 1 : _s == 8 ? 0 : 3, _b = _s == 6 ? 0 : 1;  \
+    if (_s) _l = _s == 8 ? 1 : 2, _w = _s == 6 ? 1 : (_s == 8 ? 0 : 3), _b = _s == 6 ? 0 : 1;  \
     for (uint8_t i = 0; i < (((flags) & SO) ? 8 : 1); i++) {                                  \
         if ((S) & Byte) { _M_( op | i << 9 | _b << _s, F, I, (M), Byte ) } \
         if ((S) & Word) { _M_( op | i << 9 | _w << _s, F, I, (M), Word ) } \
@@ -43,14 +37,14 @@ enum { DR = 1, AR = 2, AI = 4, AIPI = 8, AIPD = 16, AID = 32, AII = 64, AS = 128
 }
 
 #define _B_( op, flags, F, I, S ) { \
-    uint16_t os = (flags & O_256) ? 256 : ((flags & O_16) ? 16 : 8); \
+    uint16_t os = ((flags) & O_256) ? 256 : (((flags) & O_16) ? 16 : 8); \
     uint8_t _b = 0, _w = 0, _l = 0;   \
     uint8_t _s = (flags) & 15;          \
-    if (_s) _l = _s == 8 ? 1 : 2, _w = _s == 6 ? 1 : _s == 8 ? 0 : 3, _b = _s == 6 ? 0 : 1;  \
+    if (_s) _l = _s == 8 ? 1 : 2, _w = _s == 6 ? 1 : (_s == 8 ? 0 : 3), _b = _s == 6 ? 0 : 1;  \
     for (uint8_t i = 0; i < (((flags) & SO) ? 8 : 1); i++) {                                  \
         if ((S) & Byte) { for(uint16_t j = 0; j < os; j++) _bind( op | i << 9 | _b << _s | j, F, I, Byte ) } \
-        if ((S) & Word) { for(uint16_t j = 0; j < os; j++) _bind( op | i << 9 | _b << _s | j, F, I, Word ) } \
-        if ((S) & Long) { for(uint16_t j = 0; j < os; j++) _bind( op | i << 9 | _b << _s | j, F, I, Long ) } \
+        if ((S) & Word) { for(uint16_t j = 0; j < os; j++) _bind( op | i << 9 | _w << _s | j, F, I, Word ) } \
+        if ((S) & Long) { for(uint16_t j = 0; j < os; j++) _bind( op | i << 9 | _l << _s | j, F, I, Long ) } \
     } \
 }
 
@@ -356,13 +350,13 @@ auto M68000::build() -> void {
 
     // addq
     o = parse("0101 ---0 ss-- ----");
-    _EA_( o, S6 | SO, ArithmeticQ, Add, ADR_TYPICAL | DR | AR, WL )
     _EA_( o, S6 | SO, ArithmeticQ, Add, ADR_TYPICAL | DR , BWL )
+    _EA_( o, S6 | SO, ArithmeticQ, Add, AR, WL )
 
     // subq
     o = parse("0101 ---1 ss-- ----");
-    _EA_( o, S6 | SO, ArithmeticQ, Sub, ADR_TYPICAL | DR | AR, WL )
     _EA_( o, S6 | SO, ArithmeticQ, Sub, ADR_TYPICAL | DR , BWL )
+    _EA_( o, S6 | SO, ArithmeticQ, Sub, AR, WL )
 
     // moveq
     o = parse("0111 ---0 ---- ----");

@@ -6,6 +6,8 @@
 namespace LIBAMI {
 
 auto Agnus::readByte(uint32_t adr) -> uint8_t {
+    adr &= 0xffffff;
+
     switch( mapper[adr >> 16] ) {
         case CHIP_MEM:
             addWaitstatesToCPU();
@@ -50,6 +52,7 @@ auto Agnus::readByte(uint32_t adr) -> uint8_t {
 }
 
 auto Agnus::readWord(uint32_t adr) -> uint16_t {
+    adr &= 0xffffff;
     // 68k is big endian, modern architecture is little endian
     switch( mapper[adr >> 16] ) {
         case CHIP_MEM:
@@ -100,6 +103,8 @@ auto Agnus::readWord(uint32_t adr) -> uint16_t {
 }
 
 auto Agnus::writeByte(uint32_t adr, uint8_t value) -> void {
+    adr &= 0xffffff;
+
     switch( mapper[adr >> 16] ) {
         case CHIP_MEM:
             addWaitstatesToCPU();
@@ -149,6 +154,8 @@ auto Agnus::writeByte(uint32_t adr, uint8_t value) -> void {
 }
 
 auto Agnus::writeWord(uint32_t adr, uint16_t value) -> void {
+    adr &= 0xffffff;
+
     switch( mapper[adr >> 16] ) {
         case CHIP_MEM:
             addWaitstatesToCPU();

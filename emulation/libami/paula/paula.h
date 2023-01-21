@@ -126,6 +126,7 @@ struct Paula {
     auto disableAudioOut(bool state) -> void;
     auto setLedFilter(bool state) -> void;
     auto setFilter() -> void;
+    auto prepareEvents() -> void;
 
     auto pot0Dat() -> uint16_t;
     auto pot1Dat() -> uint16_t;

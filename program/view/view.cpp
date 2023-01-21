@@ -310,8 +310,8 @@ auto View::build() -> void {
 
             if (result == 1)
                 program->power(program->getEmulator("C64"));
-            //else if (result == 0)
-              //  program->power(program->getEmulator("Amiga"));
+            else if (result == 0)
+                program->power(program->getEmulator("Amiga"));
 
             emuThread->unlock();
         }

@@ -14,6 +14,7 @@
 #define READ_BYTE       REF_CALL readByte
 #define WRITE_WORD      REF_CALL writeWord
 #define WRITE_BYTE      REF_CALL writeByte
+
 #ifdef FC_SUPPORT
 #define READ_WORD_PRG   REF_CALL readWordPRG
 #define READ_BYTE_PRG   REF_CALL readBytePRG
@@ -21,6 +22,7 @@
 #define READ_WORD_PRG   READ_WORD
 #define READ_BYTE_PRG   READ_BYTE
 #endif
+
 #define SYNC            REF_CALL sync
 #define IACK_CYCLE      REF_CALL iackCycle
 #define RESET_OUT       REF_CALL resetOut
@@ -71,7 +73,7 @@ auto M68000::process()->void {
         }
 
         if (control & ResetRoutine)
-            return resetRoutine();
+            resetRoutine();
     }
     
     (this->*opTable[ird])(ird);

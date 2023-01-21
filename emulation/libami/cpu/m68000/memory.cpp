@@ -176,7 +176,7 @@ template<uint8_t Size, uint8_t Flags> auto M68000::write(uint32_t adr, uint32_t 
 }
 
 template<uint8_t Mode, uint8_t Size, uint8_t Flags> auto M68000::readEA(uint8_t reg, uint32_t& result, uint32_t& ea) -> bool {
-    ea = calcEA<Size, Mode, Flags>(reg);
+    ea = calcEA<Mode, Size, Flags>(reg);
     
     if (Mode == DataRegisterDirect)
         return result = readRegD<Size>( reg ), true;
@@ -192,7 +192,7 @@ template<uint8_t Mode, uint8_t Size, uint8_t Flags> auto M68000::readEA(uint8_t 
         return addressExceptionEA<Mode, Size>(ea), false;
 
     if constexpr (Mode == AddressRegisterIndirectWithPostIncrement)
-        writeRegA(reg, ea + (reg == 7 && Size == Byte) ? 2 : Size);
+        writeRegA(reg, ea + ((reg == 7 && Size == Byte) ? 2 : Size));
 
     return result = read<Size, Flags OR_FC_EA_PRG>(ea), true;
 }

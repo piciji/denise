@@ -30,8 +30,6 @@ struct Input {
     ControlPort* controlPort1 = nullptr;
     ControlPort* controlPort2 = nullptr;
     Keyboard keyboard;
-  //  Cia::Lines* lines = nullptr;
-    uint8_t potMask;
 
     enum SamplingMode { Static_Sampling = 0, Restricted_Dynamic_Sampling = 1, Dynamic_Sampling = 2 };
 

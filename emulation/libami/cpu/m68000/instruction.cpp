@@ -36,7 +36,7 @@ template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opShift(uint16_t
 template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opBit(uint16_t opcode) -> void {
     uint32_t result, ea;
     uint8_t reg = (opcode >> 9) & 7;
-    uint8_t bits = Size == Long ? regsD[ reg ] & 31 : regsD[ reg ] & 7;
+    uint8_t bits = (Size == Long) ? (regsD[ reg ] & 31) : (regsD[ reg ] & 7);
 
     if (!readEA<Mode, Size>(opcode & 7, result, ea))
         return;
@@ -51,7 +51,7 @@ template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opBit(uint16_t o
 
 template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opImmBit(uint16_t opcode) -> void {
     uint32_t result, ea;
-    uint8_t bits = Size == Long ? irc & 31 : irc & 7;
+    uint8_t bits = (Size == Long) ? (irc & 31) : (irc & 7);
     readExtensionWord();
 
     if (!readEA<Mode, Size>(opcode & 7, result, ea))
@@ -200,7 +200,7 @@ template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opArithmeticA(ui
     if constexpr( Size == Word || isDirectMode<Mode>() ) SYNC(4);
     else SYNC(2);
 
-    writeRegA(reg, Inst == Adda ? (result + readRegA<Long>(reg)) : (readRegA<Long>(reg) - result) );
+    writeRegA(reg, (Inst == Adda) ? (result + readRegA<Long>(reg)) : (readRegA<Long>(reg) - result) );
 }
 
 template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opCmpa(uint16_t opcode) -> void {
@@ -329,7 +329,7 @@ template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opMove(uint16_t 
         }
 
         if constexpr (Inst == AddressRegisterIndirectWithPostIncrement)
-            writeRegA(reg, ea + (reg == 7 && Size == Byte) ? 2 : Size);
+            writeRegA(reg, ea + ((reg == 7 && Size == Byte) ? 2 : Size));
 
         if constexpr (Inst == AddressRegisterIndirectWithPreDecrement) {
             if constexpr (Size == Long)
@@ -404,7 +404,7 @@ template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opArithmeticQ(ui
 
     prefetch<SampleIPL>();
     if (Mode == AddressRegisterDirect)
-        result = Inst == Add ? result + operand : result - operand;
+        result = Inst == Add ? (result + operand) : (result - operand);
     else
         result = arithmetic<Inst, Size>( operand, result);
 
@@ -417,7 +417,7 @@ template<uint8_t Inst, uint8_t Size> auto M68000::opMoveQ(uint16_t opcode) -> vo
 
     prefetch<SampleIPL>();
     defaultFlags<Byte>(data);
-    writeRegD((opcode >> 9) & 7, (int32_t)data);
+    writeRegD((opcode >> 9) & 7, (int32_t)(int8_t)data);
 }
 
 template<uint8_t Inst, uint8_t Size> auto M68000::opBcc(uint16_t opcode) -> void {
@@ -444,9 +444,9 @@ template<uint8_t Inst, uint8_t Size> auto M68000::opBsr(uint16_t opcode) -> void
     sp -= 4;
 
     if (misaligned<Long>(sp))
-        return addressException(sp, pc, SF_DATA, (Size == Word ? pc + 2 : pc) >> 16 );
+        return addressException(sp, pc, SF_DATA, (Size == Word ? (pc + 2) : pc) >> 16 );
 
-    write<Long, Reverse>( sp, Size == Word ? pc + 2 : pc); // stack PC of next opcode
+    write<Long, Reverse>( sp, Size == Word ? (pc + 2) : pc); // stack PC of next opcode
 
     pc += (Size == Word) ? (int16_t)irc : (int8_t)(opcode & 0xff);
     if (misaligned<Long>(pc))
@@ -468,9 +468,9 @@ template<uint8_t Inst, uint8_t Size> auto M68000::opDbcc(uint16_t opcode) -> voi
 
         firstPrefetch(); // assumes branch is taken, hence prefetch from new PC. (in order to speed up most likely case)
         uint16_t word = readRegD<Word>(reg);
+        writeRegD<Word>( reg, word - 1);
         
         if (word) { // while prefetching, CPU finds out if branch is really taken
-            writeRegD<Word>( reg, word - 1);
             prefetch<SampleIPL>();
             return;
         }
@@ -488,7 +488,7 @@ template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opJmp(uint16_t o
     if constexpr(Mode == AbsoluteShort || isDisplacementMode<Mode>())   SYNC(2);
 
     if (misaligned<Long>(adr))
-        return addressException(adr, (Mode == AbsoluteLong) ? pc - 2 : pc, SF_READ | SF_PRG);
+        return addressException(adr, (Mode == AbsoluteLong) ? (pc - 2) : pc, SF_READ | SF_PRG);
 
     pc = adr;
     fullPrefetch<SampleIPL>();
@@ -559,7 +559,7 @@ template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opMovemToReg(uin
     uint32_t ea = calcEA<Mode, Size>(opcode & 7);
 
     if (misaligned<Long>(ea))
-        return addressException(ea, isIndexMode<Mode>() ? pc - 2 : pc + 2, SF_READ | (isPcMode<Mode>() ? SF_PRG : SF_DATA ));
+        return addressException(ea, isIndexMode<Mode>() ? (pc - 2) : (pc + 2), SF_READ | (isPcMode<Mode>() ? SF_PRG : SF_DATA ));
 
     if constexpr(Mode == AddressRegisterIndirectWithPostIncrement)
         sampleInterrupt();
@@ -669,7 +669,7 @@ template<uint8_t Inst, uint8_t Size> auto M68000::opArithmeticXEa(uint16_t opcod
 
     if (misaligned<Size>(ea)) {
         if constexpr(Size == Word) writeRegA(srcReg, ea);
-        return addressException(Size == Long ? ea + 2 : ea, pc + 2, SF_READ | SF_DATA);
+        return addressException(Size == Long ? (ea + 2) : ea, pc + 2, SF_READ | SF_DATA);
     }
 
     writeRegA(srcReg, ea);
@@ -680,7 +680,7 @@ template<uint8_t Inst, uint8_t Size> auto M68000::opArithmeticXEa(uint16_t opcod
 
     if (misaligned<Size>(ea)) {
         if constexpr(Size == Word) writeRegA(destReg, ea);
-        return addressException(Size == Long ? ea + 2 : ea, pc + 2, SF_READ | SF_DATA);
+        return addressException(Size == Long ? (ea + 2) : ea, pc + 2, SF_READ | SF_DATA);
     }
 
     writeRegA(destReg, ea);

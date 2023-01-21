@@ -303,4 +303,6 @@ auto SystemLayout::loadSettings() -> void {
     driveModelLayout.updateWidgets();
 
     performanceModelLayout.updateWidgets();
+
+    memoryNewModelLayout.updateWidgets();
 }

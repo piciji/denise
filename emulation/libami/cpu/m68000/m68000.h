@@ -105,7 +105,7 @@ protected:
     uint8_t control;
 
 public:
-    enum { USER_VECTOR, AUTO_VECTOR, SPURIOUS };
+    enum { USER_VECTOR = 0, AUTO_VECTOR = 1, UNINITIALIZED = 2,  SPURIOUS = -1};
 
     auto process() -> void;
     auto setInterrupt( uint8_t level ) -> void;
@@ -167,7 +167,7 @@ protected:
     // uninitialized vector (technically a user-vectored interrupt)
     // 15 is a Motorola convention, a recommendation to the interrupt controllers if the peripheral has not been initialized with an appropriate vector.
     // external device puts vector on Data BUS.
-    virtual auto iackCycle(uint8_t level, uint8_t& vector) -> uint8_t {
+    virtual auto iackCycle(uint8_t level, uint8_t& vector) -> int {
         vector = 15;
         return USER_VECTOR;
     }
@@ -306,6 +306,7 @@ private:
     }
 
     template<uint8_t Inst, uint8_t Size> auto arithmetic(uint32_t src, uint32_t dest) -> uint32_t;
+    template<typename T, typename TSign, uint8_t Inst, uint8_t Size> auto arithmeticT(uint32_t src, uint32_t dest) -> uint32_t;
     template<uint8_t Inst, uint8_t Size> auto bcd(uint32_t src, uint32_t dest) -> uint8_t;
     template<uint8_t Inst> auto testCondition() -> bool;
     

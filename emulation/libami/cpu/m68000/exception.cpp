@@ -99,13 +99,13 @@ auto M68000::getInterruptVector(uint8_t level) -> uint8_t {
     uint8_t vector;
 
     SYNC(2);
-    uint8_t terminate = IACK_CYCLE( level, vector );
+    int terminate = IACK_CYCLE( level, vector );
 
-    if (terminate & USER_VECTOR) {
+    if (terminate == USER_VECTOR) {
         // user vector presented on data BUS (64 - 255), but CPU allows user vectors < 64 too (e.g. Amiga)
-    } else if (terminate & AUTO_VECTOR) {
+    } else if (terminate == AUTO_VECTOR) {
         vector = 24 + level;
-    } else if (terminate & SPURIOUS) {
+    } else if (terminate == SPURIOUS) {
         // external device responds with BUS error, to inform that noise triggered IPL.
         vector = 24;
     } else // uninitialized

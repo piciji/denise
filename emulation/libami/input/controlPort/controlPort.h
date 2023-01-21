@@ -19,8 +19,6 @@ struct ControlPort {
     auto readButton1( ) -> uint8_t { return 1; }
     auto readDirection( ) -> uint16_t { return 0; }
 
-
-
     auto getPotX() -> uint8_t { return 0xff; }
     auto getPotY() -> uint8_t { return 0xff; }
 

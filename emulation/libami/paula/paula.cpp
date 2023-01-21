@@ -1,7 +1,6 @@
 
 #include "paula.h"
 #include "../agnus/agnus.h"
-#include "../cpu/m68000.h"
 #include "../system/system.h"
 #include "audio.cpp"
 #include "filter.cpp"
@@ -82,8 +81,14 @@ disk2(disk2),
 disk3(disk3),
 cpu(cpu),
 input(input) {
+    sampleLimit = 0;
+    enableFilter = true;
+}
 
+auto Paula::prepareEvents() -> void {
     callbackStateMachine = [&](uint8_t job, uint16_t data) {
+        agnus.setEventInactive<Agnus::EVENT_AUDIO_STATE>();
+
         Channel& cha0 = channels[0];
         Channel& cha1 = channels[1];
         Channel& cha2 = channels[2];
@@ -97,9 +102,6 @@ input(input) {
     };
 
     agnus.addEvent<Agnus::EVENT_AUDIO_STATE>( &callbackStateMachine );
-
-    sampleLimit = 0;
-    enableFilter = true;
 }
 
 auto Paula::dmal() -> uint16_t {
@@ -395,6 +397,7 @@ auto Paula::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer(int2Current);
     s.integer(int6Current);
     s.integer(vBlankIntr);
+    s.integer(enableFilter);
     s.integer(useLedFilter);
     s.integer(pot.cntX0);
     s.integer(pot.cntY0);
@@ -463,6 +466,18 @@ auto Paula::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer(dmaCycles);
     s.integer(dskBytr);
     s.integer(turbo);
+
+    uint8_t driveNum = activeDrive->number;
+    s.integer(driveNum);
+    if (driveNum != activeDrive->number) {
+        switch(driveNum) {
+            case 0: activeDrive = &disk0; break;
+            case 1: activeDrive = &disk1; break;
+            case 2: activeDrive = &disk2; break;
+            case 3: activeDrive = &disk3; break;
+            default: activeDrive = &system->dummyDrive; break;
+        }
+    }
 }
 
 auto Paula::power() -> void {
