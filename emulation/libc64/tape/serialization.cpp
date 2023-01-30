@@ -3,7 +3,7 @@
 
 namespace LIBC64 {
     
-auto Tape::serialize(Emulator::Serializer& s) -> void {    
+auto Tape::serialize(Emulator::Serializer& s, bool light) -> void {
     
     s.integer( enabled );    
 
@@ -37,18 +37,13 @@ auto Tape::serialize(Emulator::Serializer& s) -> void {
     s.integer( autoStarted );
     s.integer( wobble );
 
+    if (light)
+        return;
+
     if (s.mode() == Emulator::Serializer::Mode::Load) {
         updateDeviceState();
     }
 }
 
-auto Tape::serializeLight(Emulator::Serializer& s) -> void {
-    
-    s.integer( enabled );  
-    
-    if (s.mode() == Emulator::Serializer::Mode::Save) {
-        enabled = false;
-    }
-}
 
 }

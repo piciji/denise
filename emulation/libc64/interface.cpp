@@ -945,20 +945,20 @@ auto Interface::getDiskPreview(uint8_t* data, unsigned size, Media* media, bool 
     return structure.getListing(alternateLoad);
 }
 
-auto Interface::selectDiskListing(Media* media, unsigned pos, uint8_t useTraps) -> void {
+auto Interface::selectDiskListing(Media* media, unsigned pos, uint8_t options) -> void {
     
     if (!media || !media->group->isDisk())
         return;
     
-    iecBus->selectListing( media, pos, useTraps );
+    iecBus->selectListing( media, pos, options );
 }
 
-auto Interface::selectDiskListing(Media* media, std::string fileName, uint8_t useTraps) -> void {
+auto Interface::selectDiskListing(Media* media, std::string fileName, uint8_t options) -> void {
 
     if (!media || !media->group->isDisk())
         return;
 
-    iecBus->selectListing( media, fileName, useTraps );
+    iecBus->selectListing( media, fileName, options );
 }
 
 auto Interface::insertTape(Media* media, uint8_t* data, unsigned size) -> void {
@@ -1020,9 +1020,9 @@ auto Interface::getTapePreview(uint8_t* data, unsigned size, Media* media) -> st
     return structure.getListing();
 }
 
-auto Interface::selectTapeListing(Media* media, unsigned pos, uint8_t useTraps) -> void {
+auto Interface::selectTapeListing(Media* media, unsigned pos, uint8_t options) -> void {
 	
-	tape->selectListing( pos, useTraps );
+	tape->selectListing( pos, options );
 }
 
 auto Interface::createTapeImage(unsigned& imageSize) -> uint8_t* {

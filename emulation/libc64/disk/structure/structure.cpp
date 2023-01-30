@@ -16,6 +16,7 @@
 #include "../../expansionPort/gameCart/warpSpeed.h"
 #include "../../expansionPort/gameCart/mach5.h"
 #include "../../expansionPort/gameCart/supergames.h"
+#include "../../input/input.h"
 
 namespace LIBC64 {
     
@@ -404,7 +405,7 @@ auto DiskStructure::buildLoadCommand( std::vector<uint8_t> loadPath, bool forSho
 	return loadPath;
 }
 
-auto DiskStructure::selectListing( std::string fileName, uint8_t useTraps ) -> void {
+auto DiskStructure::selectListing( std::string fileName, uint8_t options ) -> void {
 
     Emulator::PetciiConversion petciiConversion;
 
@@ -414,10 +415,10 @@ auto DiskStructure::selectListing( std::string fileName, uint8_t useTraps ) -> v
 
     petcii = buildLoadCommand(petcii);
 
-    prepareKeyBufferActions( petcii, useTraps );
+    prepareKeyBufferActions( petcii, options );
 }
 
-auto DiskStructure::selectListing( unsigned pos, uint8_t useTraps ) -> void {
+auto DiskStructure::selectListing( unsigned pos, uint8_t options ) -> void {
 
     std::vector<uint8_t> path;
     if (pos < listings.size())
@@ -425,18 +426,19 @@ auto DiskStructure::selectListing( unsigned pos, uint8_t useTraps ) -> void {
     else
         path = buildLoadCommand({'*'});
 
-    prepareKeyBufferActions( path, useTraps );
+    prepareKeyBufferActions( path, options );
 }
 
-auto DiskStructure::prepareKeyBufferActions( std::vector<uint8_t>& path, uint8_t useTraps ) -> void {
+auto DiskStructure::prepareKeyBufferActions( std::vector<uint8_t>& path, uint8_t options ) -> void {
 	
     KeyBuffer::Action action;
     
     action.mode = KeyBuffer::Mode::Input;
     action.buffer = path;
     system->keyBuffer->add( action );
+    bool mafiosino = dynamic_cast<SuperGames*>(expansionPort) && dynamic_cast<SuperGames*>(expansionPort)->mafiosino;
 
-    if (dynamic_cast<SuperGames*>(expansionPort) && dynamic_cast<SuperGames*>(expansionPort)->mafiosino) {
+    if (mafiosino) {
         action.mode = KeyBuffer::Mode::WaitFor;
         action.buffer = {};
         action.blinkingCursor = true;
@@ -444,7 +446,7 @@ auto DiskStructure::prepareKeyBufferActions( std::vector<uint8_t>& path, uint8_t
         system->keyBuffer->add(action);
 
     } else if (!system->secondDriveCable.burstRequested && !dynamic_cast<Mach5*>(expansionPort)) {
-        if (!useTraps) {
+        if (!(options & 1)) {
             action.mode = KeyBuffer::Mode::WaitFor;
             action.buffer = {'S', 'E', 'A', 'R', 'C', 'H', 'I', 'N', 'G'};
             action.blinkingCursor = false;
@@ -480,24 +482,46 @@ auto DiskStructure::prepareKeyBufferActions( std::vector<uint8_t>& path, uint8_t
     action.callback = [this]() {
         system->autoStartFinish(false);
     };
-    action.mode = KeyBuffer::Mode::Input;
-    action.buffer = {'R', 'U', 'N', '\r'};
+
+    if (mafiosino) {
+        action.mode = KeyBuffer::Mode::WaitDelay;
+        action.waitCallback = [](KeyBuffer::Action* action) {
+            system->input->setKeycode(0, 5); // F3
+        };
+        action.delay = 1;
+    } else {
+        action.mode = KeyBuffer::Mode::Input;
+        action.buffer = {'R', 'U', 'N', '\r'};
+    }
     system->keyBuffer->add( action );
 
     autoStarted = true;
 
-    if (useTraps) {
-        if (!(useTraps & 0x80)) {
-            // override a possible speeder
-            drive->extendedMemoryMap = false;
-            system->secondDriveCable.parallelPossible = false;
-            system->burstOrParallelUpdate();
-            drive->setFirmwareByType();
-        }
+    if (options & 0x80) { // override a possible speeder
+        drive->extendedMemoryMap = false;
+        system->secondDriveCable.parallelPossible = false;
+        system->burstOrParallelUpdate();
+        drive->setFirmwareByType();
+    }
+
+    if (options & 1) { // traps
         traps->installSerial();
-        traps->reset(useTraps & 0x80);
+        traps->reset( options & 2 ); // trap send success event to host, error event will be always send
         system->keyBuffer->forceDefaultKernalDelay(); // a possible speeder use shorter boot time
     }
+
+//    if (useTraps) {
+//        if (!(useTraps & 0x80)) {
+//            // override a possible speeder
+//            drive->extendedMemoryMap = false;
+//            system->secondDriveCable.parallelPossible = false;
+//            system->burstOrParallelUpdate();
+//            drive->setFirmwareByType();
+//        }
+//        traps->installSerial();
+//        traps->reset(useTraps & 0x80);
+//        system->keyBuffer->forceDefaultKernalDelay(); // a possible speeder use shorter boot time
+//    }
 }
 
 auto DiskStructure::create( Type newType, std::string diskName ) -> Emulator::Interface::Data {

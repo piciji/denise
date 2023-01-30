@@ -170,8 +170,11 @@ struct KeyBuffer {
                 if (!action.delay)
                     break;
 
-                if (++action.position != action.delay )
+                if (++action.position != action.delay ) {
+                    if (action.waitCallback)
+                        action.waitCallback(&action);
                     return;
+                }
                                                         
             } break;
             

@@ -289,4 +289,8 @@ auto Input::serialize(Emulator::Serializer& s) -> void {
         sampling.midscreen = 0;
 }
 
+auto Input::setKeycode(uint8_t row, uint8_t col) -> void {
+    keyboard.setKeycode(row, col);
+}
+
 }

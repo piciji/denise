@@ -194,7 +194,7 @@ auto System::serializeLight() -> void {
     cia2->serialize(s);
     vicII->serialize(s);
 	Sid::searializeActiveSids( s, runAhead.frames > 1 );
-    tape->serializeLight(s);
+    tape->serialize(s, true);
     iecBus->serializeLight(s);
     input->serialize(s);
     expansionPort->serialize( s );
@@ -214,7 +214,7 @@ auto System::unserializeLight() -> void {
     cia2->serialize(s);
     vicII->serialize(s);
     Sid::searializeActiveSids( s, runAhead.frames > 1 );
-    tape->serializeLight(s);
+    tape->serialize(s, true);
     iecBus->serializeLight(s);
     input->serialize(s);
     expansionPort->serialize( s );

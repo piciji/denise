@@ -108,9 +108,9 @@ struct DiskStructure {
     auto detach() -> void;
     auto createListing( bool loadWithColumn = false ) -> void;
     auto getListing( bool loadWithColumn = false ) -> std::vector<Emulator::Interface::Listing>&;
-    auto selectListing( unsigned pos, uint8_t useTraps = 0 ) -> void;
-    auto selectListing( std::string fileName, uint8_t useTraps = 0 ) -> void;
-    auto prepareKeyBufferActions( std::vector<uint8_t>& path, uint8_t useTraps = 0 ) -> void;
+    auto selectListing( unsigned pos, uint8_t options = 0 ) -> void;
+    auto selectListing( std::string fileName, uint8_t options = 0 ) -> void;
+    auto prepareKeyBufferActions( std::vector<uint8_t>& path, uint8_t options = 0 ) -> void;
 	auto buildLoadCommand( std::vector<uint8_t> loadPath, bool forShow = false ) -> std::vector<uint8_t>;
     auto clearTrackData() -> void;
     auto getLogicalTrack(uint8_t _track, int offset) -> uint8_t;

@@ -45,7 +45,7 @@ struct SuperGames : GameCart {
 		
 		uint8_t mafioPattern[] = { 0x4d, 0x41, 0x46, 0x49, 0x4f };
 		uint8_t* mafioPatternLast = mafioPattern + sizeof(mafioPattern);
-		uint8_t* dataLast = data + std::min<unsigned>(2048, size);
+		uint8_t* dataLast = data + std::min<unsigned>(2048 << 2, size);
 
 		uint8_t* result = std::search(data, dataLast, mafioPattern, mafioPatternLast);
 		

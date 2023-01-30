@@ -583,14 +583,14 @@ auto IecBus::getDiskListing(Emulator::Interface::Media* media, bool loadWithColu
     return drives[ media->id ]->structure.getListing( loadWithColumn );
 }
 
-auto IecBus::selectListing( Emulator::Interface::Media* media, unsigned pos, uint8_t useTraps ) -> void {
+auto IecBus::selectListing( Emulator::Interface::Media* media, unsigned pos, uint8_t options ) -> void {
     
-    drives[ media->id ]->structure.selectListing( pos, useTraps );
+    drives[ media->id ]->structure.selectListing( pos, options );
 }
 
-auto IecBus::selectListing( Emulator::Interface::Media* media,  std::string fileName, uint8_t useTraps ) -> void {
+auto IecBus::selectListing( Emulator::Interface::Media* media,  std::string fileName, uint8_t options ) -> void {
 
-    drives[ media->id ]->structure.selectListing( fileName, useTraps );
+    drives[ media->id ]->structure.selectListing( fileName, options );
 }
 
 auto IecBus::wasAutostarted() -> bool {

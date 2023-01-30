@@ -635,7 +635,7 @@ auto Fileloader::insertFile( Emulator::Interface* emulator, Emulator::Interface:
     return true;
 }
 
-auto Fileloader::autoload(Emulator::Interface* emulator, Emulator::Interface::Media* media, unsigned selection, bool trapped) -> void {
+auto Fileloader::autoload(Emulator::Interface* emulator, Emulator::Interface::Media* media, unsigned selection, bool trapped, bool forceOverrideSpeeder) -> void {
     auto mediaGroup = media->group;
     auto settings = program->getSettings( emulator );
     auto emuView = EmuConfigView::TabWindow::getView( emulator );
@@ -665,19 +665,20 @@ auto Fileloader::autoload(Emulator::Interface* emulator, Emulator::Interface::Me
         trapped = false;
 
     bool trapsWithSpeeder = trapped && mediaGroup->isDisk() && settings->get<bool>("autostart_speeder_traps", false);
-    uint8_t useTraps = trapped;
-    if (trapsWithSpeeder) useTraps |= 0x80;
+    uint8_t options = (uint8_t)trapped;
+    if ((trapped && !trapsWithSpeeder) || forceOverrideSpeeder) options |= 0x80;
+    if (trapped && trapsWithSpeeder) options |= 2;
 
-    if (forceStandardKernal || trapped) {
+    if (forceStandardKernal || trapped || forceOverrideSpeeder) {
         auto fManager = FirmwareManager::getInstance( emulator );
         if (fManager->getStoreLevelInUse() > 0)
             fManager->insertDefault( trapsWithSpeeder );
     }
 
     if (mediaGroup->selected)
-        emulator->selectListing(mediaGroup->selected, selection, "", useTraps);
+        emulator->selectListing(mediaGroup->selected, selection, "", options);
     else
-        emulator->selectListing(media, selection, "", useTraps);
+        emulator->selectListing(media, selection, "", options);
 
     if (emuView) {
         auto fSetting = FileSetting::getInstance(emulator, _underscore(media->name) );
