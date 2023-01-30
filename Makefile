@@ -33,7 +33,7 @@ objects += cartC64 gameCartC64 freezerC64 reuC64 easyFlashC64 easyFlash3C64 retr
 objects += m6502 via iec prg64 driveC64 diskStructureC64 firmwareC64 pia traps64 virtualDrive64 wd1770
 objects += m93c86 mx29lv640eb icons logos fonts socket fpaq0
 
-#objects += m68000 m68000Core
+objects += m68000 m68000Core
 
 deps = $(objects)
 

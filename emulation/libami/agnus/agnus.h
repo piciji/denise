@@ -299,6 +299,8 @@ struct Agnus : Emulator::Events<6> {
     auto rememberChipMem(uint32_t adr) -> void;
     auto rememberSlowMem(uint32_t adr) -> void;
     auto increaseTrackMemStorage(MemChange*& memChange, unsigned& size) -> void;
+
+    auto log(uint32_t adr, uint16_t value, bool isWrite) -> void;
 };
 
 }

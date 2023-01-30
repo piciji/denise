@@ -175,6 +175,7 @@ auto System::run() -> void {
 
     while( !leaveEmulation ) {
         cpu.process();
+       // cpu.logState();
     }
 
     if (useRunAhead) {

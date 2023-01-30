@@ -230,7 +230,7 @@ auto DiskDrive::powerOff() -> void {
 }
 
 auto DiskDrive::readCiaPortA() -> uint8_t {
-    uint8_t out = 0xff;
+    uint8_t out = 0x3c;
 
     if (selected) {
         auto speed = getMotorSpeed();

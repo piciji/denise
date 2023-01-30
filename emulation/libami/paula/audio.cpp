@@ -239,10 +239,6 @@ auto Paula::getResampleQuality( ) -> uint8_t {
     _unreachable
 }
 
-auto Paula::disableAudioOut(bool state) -> void {
-    audioOut = state;
-}
-
 template auto Paula::audxDat<0>(uint16_t value) -> void;
 template auto Paula::audxDat<1>(uint16_t value) -> void;
 template auto Paula::audxDat<2>(uint16_t value) -> void;

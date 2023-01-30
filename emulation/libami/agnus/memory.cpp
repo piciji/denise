@@ -3,6 +3,8 @@
 
 #define eCyclePosition  10 - (((eClockCycle - clock) & 0xffffffff) << 1)
 
+//#define LOG_CPU_ACCESS
+
 namespace LIBAMI {
 
 auto Agnus::readByte(uint32_t adr) -> uint8_t {
@@ -18,7 +20,7 @@ auto Agnus::readByte(uint32_t adr) -> uint8_t {
             if (adr & 1)
                 dataBus = (uint8_t)readCustom<true>(adr & 0x1fe);
             else
-                dataBus = (uint8_t)(readCustom<true>(adr) >> 8);
+                dataBus = (uint8_t)(readCustom<true>(adr & 0x1fe) >> 8);
             break;
         case MMIO_CIA: {
             sync( cpu.internalWaitCyclesBasedOnEClock<2>( eCyclePosition ) );
@@ -48,6 +50,9 @@ auto Agnus::readByte(uint32_t adr) -> uint8_t {
         case Unmapped:
             break;
     }
+#ifdef LOG_CPU_ACCESS
+    log(adr, dataBus, 0);
+#endif
     return (uint8_t)dataBus;
 }
 
@@ -99,6 +104,9 @@ auto Agnus::readWord(uint32_t adr) -> uint16_t {
         case Unmapped:
             break;
     }
+#ifdef LOG_CPU_ACCESS
+    log(adr, dataBus, 0);
+#endif
     return dataBus;
 }
 
@@ -151,6 +159,9 @@ auto Agnus::writeByte(uint32_t adr, uint8_t value) -> void {
             break;
     }
     dataBus = value;
+#ifdef LOG_CPU_ACCESS
+    log(adr, dataBus, 1);
+#endif
 }
 
 auto Agnus::writeWord(uint32_t adr, uint16_t value) -> void {
@@ -202,6 +213,9 @@ auto Agnus::writeWord(uint32_t adr, uint16_t value) -> void {
             break;
     }
     dataBus = value;
+#ifdef LOG_CPU_ACCESS
+    log(adr, dataBus, 1);
+#endif
 }
 
 auto Agnus::setChipmem(unsigned size) -> void {
@@ -332,6 +346,35 @@ auto Agnus::setOVL(bool state) -> void {
     } else {
         for (unsigned i = 0x0; i < 0x8; i++)
             mapper[i] = CHIP_MEM;
+    }
+}
+
+auto Agnus::log(uint32_t adr, uint16_t value, bool isWrite) -> void {
+    uint8_t static logOn = 0;
+
+    if (logOn != 2) {
+        switch( mapper[adr >> 16] ) {
+            case CHIP_MEM:
+                system->interface->log("A", true);
+                break;
+            case MMIO_CUSTOM:
+                system->interface->log("M", true);
+                break;
+            case MMIO_CIA:
+                system->interface->log("C", true);
+                break;
+            case KICK_ROM:
+                system->interface->log("R", true);
+                break;
+        }
+
+        system->interface->log(isWrite ? "w" : "r", 0);
+        system->interface->log(adr,0,1);
+        system->interface->log(value,0,1);
+
+        system->interface->log("-",0);
+        system->interface->log(vPos,0,1);
+        //system->interface->log(hPos,0,1);
     }
 }
 

@@ -54,7 +54,7 @@ template<uint16_t jobs, uint8_t nextCycle> auto Blitter::blockMode() -> void {
         if constexpr (jobs & BLT_DESC)  bltDpt += -2;
         else                            bltDpt += 2;
 
-        if (curW == 1) {
+        if (curW == bltSizeW) {
             if constexpr (jobs & BLT_DESC)  bltDpt += -bltDmod;
             else                            bltDpt += bltDmod;
         }
@@ -69,15 +69,16 @@ template<uint16_t jobs, uint8_t nextCycle> auto Blitter::blockMode() -> void {
     }
 
     if constexpr (jobs & BLT_SHIFT_A) {
-        if (curW == bltSizeW)   bltAdat &= bltAfwm;
-        if (curW == 1)          bltAdat &= bltAlwm;
+        uint16_t mask = 0xffff;
+        if (curW == bltSizeW)   mask &= bltAfwm;
+        if (curW == 1)          mask &= bltAlwm;
 
         if constexpr (jobs & BLT_DESC)
-            bltADatShifted = ((bltAdat << 16) | bltADatOld) >> (16 - SHIFTA);
+            bltADatShifted = (((bltAdat & mask) << 16) | bltADatOld) >> (16 - SHIFTA);
         else
-            bltADatShifted = ((bltADatOld << 16) | bltAdat) >> SHIFTA;
+            bltADatShifted = ((bltADatOld << 16) | (bltAdat & mask) ) >> SHIFTA;
 
-        bltADatOld = bltAdat;
+        bltADatOld = bltAdat & mask;
 
     } else if constexpr (jobs & BLT_SHIFT_B) {
         if (jobs & BLT_DESC)

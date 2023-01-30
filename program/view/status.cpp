@@ -304,7 +304,7 @@ auto StatusHandler::update() -> void {
 
                         name += (deviceState.position & 1) ? ".5" : ".0";
                     } else
-                        name += GUIKIT::String::prependZero( std::to_string( deviceState.position ), 2 );                
+                        name += " " + GUIKIT::String::prependZero( std::to_string( deviceState.position ), 2 );
 
                     updateText(media->id * 2 + 1, name);
 

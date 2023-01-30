@@ -287,7 +287,7 @@ auto Copper::reset() -> void {
     prevState = Off;
     skipped = false;
     cdang = 0x80;
-    useCop1 = false;
+    useCop1 = true;
     ir1 = ir2 = 0;
     cop1lc = cop2lc = 0;
     copPtr = 0;

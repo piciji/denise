@@ -25,7 +25,6 @@ struct Denise {
 
     uint16_t hPos; // 9 bit counter
     uint16_t colors[64];
-    uint8_t ready;
     bool hires;
     bool ham;
     bool doublePlayfield;
@@ -51,15 +50,17 @@ struct Denise {
 
     uint16_t clxDat;
 
+    uint8_t ready;
     uint8_t delayPf1;
     uint8_t delayPf2;
+    uint8_t bplCon1;
     bool enableDisplay;
 
     uint16_t* frameBuffer;
     uint16_t* linePtr;
     unsigned linePos;
     uint16_t lineVCounter;
-    bool enableSequencer;
+    bool enableSequencer = true;
 
     struct Sprite {
         uint16_t datA;
@@ -126,7 +127,8 @@ struct Denise {
     auto setBpl5Dat(uint16_t value) -> void { bpl5dat = value; }
     auto setBpl6Dat(uint16_t value) -> void { bpl6dat = value; }
 
-    auto processDelay() -> void;
+    auto processDelayPf1() -> void;
+    auto processDelayPf2() -> void;
     template<bool useHires> auto processPixel() -> void;
     auto startHblank() -> void;
     auto endHblank() -> void;

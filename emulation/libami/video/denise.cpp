@@ -12,6 +12,7 @@ namespace LIBAMI {
 
 Denise::Denise(System* system, Agnus& agnus, Input& input) : system(system), agnus(agnus), input(input) {
     frameBuffer = new uint16_t[LINE_BUFFER_WIDTH * LINE_BUFFER_HEIGHT];
+    linePtr = frameBuffer;
     lineCallback.use = false;
     lineCallback.line = 0;
 }
@@ -31,7 +32,6 @@ auto Denise::joy1Dat() -> uint16_t {
 auto Denise::power() -> void {
     hPos = 2;
     std::fill_n(colors, 64, 0);
-    ready = 0;
     hires = false;
     ham = false;
     doublePlayfield = false;
@@ -48,14 +48,15 @@ auto Denise::power() -> void {
     shifterBClxPolarity = 0;
 
     clxDat = 0;
+    ready = 0;
     delayPf1 = 0;
     delayPf2 = 0;
+    bplCon1 = 0;
     enableDisplay = false;
 
     linePtr = frameBuffer;
     lineVCounter = 0;
     linePos = 0;
-    enableSequencer = true;
 
     for (unsigned i = 0; i < 8; i++) {
         sprites[i].datA = 0;
@@ -89,6 +90,8 @@ auto Denise::setBpl1Dat(uint16_t value) -> void {
     bpl1dat = value;
     if (!hBlank) {
         enableDisplay = true;
+        delayPf1 = bplCon1 & 0xf;
+        delayPf2 = (bplCon1 >> 4) & 0xf;
         ready = 1 | 2;
         updateCropLeft();
     }
@@ -249,8 +252,7 @@ auto Denise::setBplCon0( uint16_t value ) -> void {
 }
 
 auto Denise::setBplCon1( uint16_t value ) -> void {
-    delayPf1 = value & 0xf;
-    delayPf2 = (value >> 4) & 0xf;
+    bplCon1 = value;
 }
 
 auto Denise::setBplCon2( uint16_t value ) -> void {
@@ -270,40 +272,51 @@ auto Denise::setBplCon2( uint16_t value ) -> void {
         pf2PrioIllegal = false;
 }
 
-inline auto Denise::processDelay() -> void {
-    if (ready & 1) {
-        if ((hPos & 0xf) == delayPf1) {
-            if (activePlanes >= 5) {
-                shifterA |= (unsigned long long)bpl1dat << 32;
-                shifterA |= bpl3dat << 16;
-                if (!hires)
-                    shifterA |= bpl5dat;
-            } else if (activePlanes >= 3) {
-                shifterA |= (unsigned long long)bpl1dat << 32;
-                shifterA |= bpl3dat << 16;
-            } else if (activePlanes >= 1) {
-                shifterA |= (unsigned long long)bpl1dat << 32;
-            }
-            ready &= ~1;
+inline auto Denise::processDelayPf1() -> void {
+    if (!delayPf1) {
+        if (activePlanes >= 5) {
+            shifterA |= (unsigned long long)bpl1dat << 32;
+            shifterA |= bpl3dat << 16;
+            if (!hires)
+                shifterA |= bpl5dat;
+        } else if (activePlanes >= 3) {
+            shifterA |= (unsigned long long)bpl1dat << 32;
+            shifterA |= bpl3dat << 16;
+        } else if (activePlanes >= 1) {
+            shifterA |= (unsigned long long)bpl1dat << 32;
         }
-    }
-    if (ready & 2) {
-        if ((hPos & 0xf) == delayPf2) {
-            if (activePlanes >= 6) {
-                shifterB |= (unsigned long long)bpl2dat << 32;
-                shifterB |= bpl4dat << 16;
-                if (!hires)
-                    shifterB |= bpl6dat;
-            } else if (activePlanes >= 4) {
-                shifterB |= (unsigned long long)bpl2dat << 32;
-                shifterB |= bpl4dat << 16;
-            } else if (activePlanes >= 2) {
-                shifterB |= (unsigned long long)bpl2dat << 32;
-            }
-            ready &= ~2;
-        }
-    }
+        ready &= ~1;
+    } else
+        delayPf1--;
 }
+
+inline auto Denise::processDelayPf2() -> void {
+    if (!delayPf2) {
+        if (activePlanes >= 6) {
+            shifterB |= (unsigned long long)bpl2dat << 32;
+            shifterB |= bpl4dat << 16;
+            if (!hires)
+                shifterB |= bpl6dat;
+        } else if (activePlanes >= 4) {
+            shifterB |= (unsigned long long)bpl2dat << 32;
+            shifterB |= bpl4dat << 16;
+        } else if (activePlanes >= 2) {
+            shifterB |= (unsigned long long)bpl2dat << 32;
+        }
+        ready &= ~2;
+    } else
+        delayPf2--;
+}
+
+#define SPF(v1) \
+    if (!pf2NoCol && !pf1NoCol)             clxDat |= (v1 << 5) | (v1 << 1) | 1; \
+    else if (!pf2NoCol)                     clxDat |= (v1 << 5); \
+    else if (!pf1NoCol && doublePlayfield)  clxDat |= (v1 << 1);
+
+#define SPF2(v1, v2) \
+    if (!pf2NoCol && !pf1NoCol)             clxDat |= (v1 << 5) | (v1 << 1) | (v2 << 9) | 1; \
+    else if (!pf2NoCol)                     clxDat |= (v1 << 5) | (v2 << 9); \
+    else if (!pf1NoCol && doublePlayfield)  clxDat |= (v1 << 1) | (v2 << 9);
 
 template<bool useHires> auto Denise::processPixel() -> void {
     uint8_t sprGroup = 0;
@@ -385,16 +398,6 @@ template<bool useHires> auto Denise::processPixel() -> void {
     // todo: influence illegal pf2 prio modes clxDat calculation
     bool pf1NoCol = shifterAClxEna & (shifterA ^ shifterAClxPolarity);
     bool pf2NoCol = shifterBClxEna & (shifterB ^ shifterBClxPolarity);
-
-#define SPF(v1) \
-    if (!pf2NoCol && !pf1NoCol)             clxDat |= (v1 << 5) | (v1 << 1) | 1; \
-    else if (!pf2NoCol)                     clxDat |= (v1 << 5); \
-    else if (!pf1NoCol && doublePlayfield)  clxDat |= (v1 << 1);
-
-#define SPF2(v1, v2) \
-    if (!pf2NoCol && !pf1NoCol)             clxDat |= (v1 << 5) | (v1 << 1) | (v2 << 9) | 1; \
-    else if (!pf2NoCol)                     clxDat |= (v1 << 5) | (v2 << 9); \
-    else if (!pf1NoCol && doublePlayfield)  clxDat |= (v1 << 1) | (v2 << 9);
 
     switch(sprGroup) {
         case 0: if (!pf2NoCol && !pf1NoCol) clxDat |= 1; break;
@@ -592,8 +595,12 @@ auto Denise::process() -> void {
         if (hires)
             processPixel<true>();
 
-        if (ready)
-            processDelay();
+        if (ready) {
+            if (ready & 1)
+                processDelayPf1();
+            if (ready & 2)
+                processDelayPf2();
+        }
 
         hPos++;
 
@@ -601,8 +608,12 @@ auto Denise::process() -> void {
         if (hires)
             processPixel<true>();
 
-        if (ready)
-            processDelay();
+        if (ready) {
+            if (ready & 1)
+                processDelayPf1();
+            if (ready & 2)
+                processDelayPf2();
+        }
 
         hPos++;
     } else
@@ -660,7 +671,6 @@ auto Denise::serialize(Emulator::Serializer& s) -> void {
     s.integer((uint8_t&)model);
     s.integer(hPos);
     s.array( colors );
-    s.integer(ready);
     s.integer(hires);
     s.integer(ham);
     s.integer(doublePlayfield);
@@ -680,12 +690,13 @@ auto Denise::serialize(Emulator::Serializer& s) -> void {
     s.integer(shifterAClxPolarity);
     s.integer(shifterBClxPolarity);
     s.integer(clxDat);
+    s.integer(ready);
     s.integer(delayPf1);
     s.integer(delayPf2);
+    s.integer(bplCon1);
     s.integer(enableDisplay);
     s.integer(linePos);
     s.integer(lineVCounter);
-    s.integer(enableSequencer);
 
     for(unsigned i = 0; i < 8; i++) {
         Sprite& spr = sprites[i];

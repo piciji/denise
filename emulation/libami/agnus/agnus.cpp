@@ -107,7 +107,8 @@ auto Agnus::prepareEvents() -> void {
 
             hPos = 0;
             if (lolToggle) lol ^= 1;
-            updateEvent<EVENT_HTOTAL>(1, (beamCon & VARBEAMEN) ? (hTotal + lol) : (0xe2 + lol) );
+            if(ERSY == 0)
+                updateEvent<EVENT_HTOTAL>(1, (beamCon & VARBEAMEN) ? (hTotal + lol) : (0xe2 + lol) );
         }
     };
 
@@ -191,7 +192,7 @@ auto Agnus::power(bool softReset) -> void {
     rDmaPtr = 0;
 
     lol = false;
-    lof = false;
+    lof = true;
     lolToggle = ntsc;
 
     initVCounter = false;
@@ -233,7 +234,7 @@ auto Agnus::power(bool softReset) -> void {
     if (model == OCS_A1000)
         denise.model = ntsc ? Denise::Model::OCS_A1000_NO_EHB : Denise::Model::OCS_A1000;
 
-    updateEvent<EVENT_HTOTAL>(1, 0xe2 );
+    updateEvent<EVENT_HTOTAL>(1, 0xe2 - hPos );
 }
 
 auto Agnus::powerOff() -> void {
@@ -312,7 +313,7 @@ auto Agnus::updateVCounter() -> void {
             vBlank = true;
             vBlankStart = true;
         }
-        copper.strobeCOPJMP(false, Trigger_Vsync);
+        copper.strobeCOPJMP(true, Trigger_Vsync);
     } else {
         vPos++;
         vPos &= ecsAndHigher() ? 0x7ff : 0x1ff; // register change of VPos could lead to a wrap around of 9-bit (OCS Agnus) counter.
@@ -424,7 +425,7 @@ inline auto Agnus::dmaCycle() -> void {
             if (dmal & 0x300)
                 fetchSample<1>( dmal & 0x100 );
 
-            if (!lof && vPos == (ntsc ? 6 : 5) ) {
+            if (!lof && (vPos == (ntsc ? 6 : 5) ) ) {
                 if (model != OCS_A1000) cia1.tod(); // hardwired vsync end
             }
             break;
@@ -475,7 +476,7 @@ inline auto Agnus::dmaCycle() -> void {
             break;
 
         case 0x85:
-            if (lof && vPos == (ntsc ? 6 : 5) ) {
+            if (lof && (vPos == (ntsc ? 6 : 5) ) ) {
                 if (model != OCS_A1000) cia1.tod();
             }
             break;
@@ -521,7 +522,7 @@ inline auto Agnus::dmaCycle() -> void {
 }
 
 auto Agnus::POSR(bool vhpos) -> uint16_t {
-    auto h = hPos + 1;
+    uint8_t h = hPos + 1;
     auto v = vPos;
     auto _lol = lol;
     auto _lof = lof;
@@ -608,13 +609,14 @@ auto Agnus::isEquLine() -> bool {
 }
 
 auto Agnus::setDiwStrt(uint16_t value) -> void {
-    vStart = value & 0xff;
+    vStart = (value >> 8) & 0xff;
     updateVdiw();
 }
 
 auto Agnus::setDiwStop(uint16_t value) -> void {
-    vStop = value & 0xff;
-    if ((value & 0x80) == 0)
+    vStop = (value >> 8) & 0xff;
+
+    if ((vStop & 0x80) == 0)
         vStop |= 0x100;
     updateVdiw();
 }

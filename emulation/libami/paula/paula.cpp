@@ -524,7 +524,6 @@ auto Paula::power() -> void {
     }
 
     dmaDisk = false;
-    audioOut = true;
     filters[0].reset();
     filters[1].reset();
 

@@ -312,6 +312,9 @@ auto Agnus::writeBlitterDma(uint32_t adr, uint16_t value) -> bool {
 
     dataBus = value;
 
+    //system->interface->log(adr,1,1);
+    //system->interface->log(value,0,1);
+
     if ((getActiveEvent<EVENT_ONE_CYCLE_DELAY>() & ~1) == PTR_BLT_D_H)
         setEventInactive<EVENT_ONE_CYCLE_DELAY>();
 
@@ -337,6 +340,9 @@ auto Agnus::writeBlitterDmaNoBUSCheck(uint32_t adr, uint16_t value) -> void {
         rememberChipMem(adr);
 
     *(uint16_t*)(chipMem + adr) = _swapWord(value);
+
+    //system->interface->log(adr,1,1);
+    //system->interface->log(value,0,1);
 
     dataBus = value;
 

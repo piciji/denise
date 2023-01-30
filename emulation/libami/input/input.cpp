@@ -23,7 +23,8 @@ Input::Input(System* system, Agnus& agnus, Cia<MOS_8520>& cia1)
 
 auto Input::readCiaPortA( ) -> uint8_t {
     jitPoll();
-    uint8_t out = controlPort1->readButton1() << 6;
+    uint8_t out = 0x3f;
+    out |= controlPort1->readButton1() << 6;
     out |= controlPort2->readButton1() << 7;
     return out;
 }

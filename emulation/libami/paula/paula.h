@@ -105,7 +105,7 @@ struct Paula {
     uint64_t sampleCycle;
 
     bool dmaDisk;
-    bool audioOut;
+    bool audioOut = true;
 
     struct Filter {
         float rc1, rc2, rc3, rc4, rc5;
@@ -123,7 +123,7 @@ struct Paula {
     auto power() -> void;
     auto powerOff() -> void;
     auto serialize(Emulator::Serializer& s, bool light = false) -> void;
-    auto disableAudioOut(bool state) -> void;
+    auto disableAudioOut(bool state) -> void { audioOut = !state; }
     auto setLedFilter(bool state) -> void;
     auto setFilter() -> void;
     auto prepareEvents() -> void;

@@ -137,15 +137,16 @@ auto Blitter::stateMachine() -> void {
         }
     } else { // block mode
         if ((skipB && (shifter & STAGE_X)) || (shifter & STAGE_B)) {
-            if (curW == bltSizeW)   bltAdat &= bltAfwm;
-            if (curW == 1)          bltAdat &= bltAlwm;
+            uint16_t mask = 0xffff;
+            if (curW == bltSizeW)   mask &= bltAfwm;
+            if (curW == 1)          mask &= bltAlwm;
 
             if (desc)
-                bltADatShifted = ((bltAdat << 16) | bltADatOld) >> (16 - SHIFTA);
+                bltADatShifted = (((bltAdat & mask) << 16) | bltADatOld) >> (16 - SHIFTA);
             else
-                bltADatShifted = ((bltADatOld << 16) | bltAdat) >> SHIFTA;
+                bltADatShifted = ((bltADatOld << 16) | (bltAdat & mask)) >> SHIFTA;
 
-            bltADatOld = bltAdat;
+            bltADatOld = bltAdat & mask;
         }
 
         if ((shifter & BLT_B) && (shifter & STAGE_X)) {
@@ -195,7 +196,7 @@ auto Blitter::stateMachine() -> void {
             if (desc)  bltDpt += -2;
             else       bltDpt += 2;
 
-            if (curW == 1) {
+            if (curW == bltSizeW) {
                 if (desc)  bltDpt += -bltDmod;
                 else       bltDpt += bltDmod;
             }

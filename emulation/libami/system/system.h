@@ -5,6 +5,7 @@
 #include "../input/input.h"
 #include "../../cia/new/cia.h"
 #include "../cpu/m68000.h"
+//#include "../altCpu/cpu.h"
 #include "../agnus/agnus.h"
 #include "../video/denise.h"
 #include "../paula/paula.h"
