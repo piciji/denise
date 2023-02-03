@@ -19,7 +19,7 @@ struct DiskDrive;
 struct Paula {
     Paula(System* system, Agnus& agnus, Cpu& cpu, Input& input, DiskDrive& disk0, DiskDrive& disk1, DiskDrive& disk2, DiskDrive& disk3);
 
-    enum class DiskState { OFF, WAIT_SYNC_READ, WAIT_SYNC_WRITE, READ, WRITE } diskState;
+    enum class DiskState { OFF, WAIT_SYNC_READ, WAIT_SYNC_WRITE, READ, WRITE, INSTANT_BLK_INT } diskState;
 
     using EventCallback = std::function<void(uint8_t, uint16_t)>;
 
@@ -169,6 +169,7 @@ struct Paula {
     auto setFdcEvent() -> void;
     auto fdcWriteMode() -> bool { return diskState == DiskState::WRITE; }
     auto setDskState(DiskState next) -> void;
+    auto processDiskIdleCycles() -> void;
 
     auto getFromFifo(uint16_t& data) -> bool;
     auto addToFifo(uint16_t data) -> void;

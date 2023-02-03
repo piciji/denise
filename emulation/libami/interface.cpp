@@ -35,7 +35,8 @@ auto Interface::prepareModels() -> void {
     models.push_back({ModelIdDiskDrivesConnected, "Disk Drives", Model::Type::Combo, Model::Purpose::DriveSettings, 1, {0, 4}, { "0", "1", "2", "3", "4" }});
     models.push_back({ModelIdDiskDriveSpeed, "Disk Speed", Model::Type::Slider, Model::Purpose::DriveSettings, 30000, {27500, 32500}, {}, 500, 100.0 });
     models.push_back({ModelIdDiskDriveWobble, "Disk Wobble", Model::Type::Slider, Model::Purpose::DriveSettings, 50, {0, 500}, {}, 50, 100.0 });
-    models.push_back({ModelIdDiskDriveStepperSeekTime, "Stepper Seek Time", Model::Type::Slider, Model::Purpose::DriveSettings, 0, {0, 160}, {}, 160, 10.0 });
+    models.push_back({ModelIdDiskDriveStepperSeekTime, "Stepper Seek Time", Model::Type::Slider, Model::Purpose::DriveSettings, 0, {0, 180}, {}, 180, 10.0 });
+    models.push_back({ModelIdDiskDriveStepperMinTime, "Stepper Minimum Time", Model::Type::Slider, Model::Purpose::DriveSettings, 0, {0, 30}, {}, 30, 10.0 });
     models.push_back({ModelIdDiskTurbo, "Disk Turbo", Model::Type::Radio, Model::Purpose::DriveSettings, 0, {0, 4}, { "1x", "2x", "4x", "8x", "MAX" }});
 
     models.push_back({ModelIdChipMem, "Chip Mem", Model::Type::Radio, Model::Purpose::Memory, 1, {0, 3}, { "256 Kb", "512 Kb", "1 MB", "2 MB" }});
@@ -358,6 +359,9 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
         case ModelIdDiskDriveStepperSeekTime:
             DiskDrive::setStepperSeekTime( value );
             break;
+        case ModelIdDiskDriveStepperMinTime:
+            DiskDrive::setStepperMinTime( value );
+            break;
         case ModelIdDiskTurbo:
             system->paula.turbo = value;
             break;
@@ -380,6 +384,7 @@ auto Interface::getModelValue(unsigned modelId) -> int {
         case ModelIdDiskDriveWobble:                return (int)DiskDrive::wobble;
         case ModelIdDiskDriveSpeed:                 return (int)DiskDrive::rpm;
         case ModelIdDiskDriveStepperSeekTime:       return (int)(DiskDrive::stepperSeekTimeBase);
+        case ModelIdDiskDriveStepperMinTime:       return (int)(DiskDrive::stepperMinTimeBase);
         case ModelIdDiskTurbo:                      return (int)system->paula.turbo;
         case ModelIdChipMem:                        return system->getChipmem();
         case ModelIdSlowMem:                        return system->getSlowmem();

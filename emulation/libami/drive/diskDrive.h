@@ -60,11 +60,13 @@ struct DiskDrive {
     uint64_t stepSettleClock; // time to read reliable from next track
     uint8_t nextStep;
     unsigned stepperSeekTime;
+    unsigned stepperMinTime;
 
     static unsigned rpm;
     static unsigned wobble;
     static unsigned refCyclesPerRevolutionBase;
     static unsigned stepperSeekTimeBase;
+    static unsigned stepperMinTimeBase;
 
     auto writeCiaPortB(uint8_t value, uint8_t oldValue) -> void;
     auto readCiaPortA() -> uint8_t;
@@ -75,10 +77,11 @@ struct DiskDrive {
     auto updateTrack() -> void;
     auto progressStepper() -> void;
 
-    auto readByte(uint16_t& dmaCycles) -> uint8_t;
-    auto readBit(uint16_t& dmaCycles) -> bool;
+    auto readByte(uint16_t& dmaCycles, bool upd) -> uint8_t;
+    auto readBit(uint16_t& dmaCycles, bool upd) -> bool;
     auto writeBit(bool state) -> void;
     auto adjustHead(int offset) -> void;
+    auto rotate(unsigned dmaCycles) -> void;
 
     auto getDummyTrack() -> DiskStructure::Track*;
 
@@ -95,6 +98,7 @@ struct DiskDrive {
     static auto setSpeed( unsigned rpmScaled ) -> void;
     static auto setWobble( unsigned wobbleScaled ) -> void;
     static auto setStepperSeekTime( unsigned stepperSeekTimeScaled ) -> void;
+    static auto setStepperMinTime( unsigned stepperMinTimeScaled ) -> void;
 };
 
 }

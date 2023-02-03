@@ -64,7 +64,7 @@ struct DiskStructure {
     auto shiftData(uint8_t* dst, uint8_t* src, unsigned size, uint8_t shift) -> void;
 
     auto addClockBits( uint16_t* raw, unsigned words) -> void;
-    auto separateOddEven(uint8_t* dst, uint8_t src[], unsigned size) -> void;
+    auto separateOddEven(uint8_t* dst, uint8_t* src, unsigned size) -> void;
     auto joinOddEven(uint8_t* dst, uint8_t* src, unsigned size) -> void;
 
     auto getTrackBitLength() -> unsigned;

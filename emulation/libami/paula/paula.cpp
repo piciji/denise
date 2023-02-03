@@ -471,11 +471,11 @@ auto Paula::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer(driveNum);
     if (driveNum != activeDrive->number) {
         switch(driveNum) {
+            default:
             case 0: activeDrive = &disk0; break;
             case 1: activeDrive = &disk1; break;
             case 2: activeDrive = &disk2; break;
             case 3: activeDrive = &disk3; break;
-            default: activeDrive = &system->dummyDrive; break;
         }
     }
 }
@@ -534,12 +534,13 @@ auto Paula::power() -> void {
     dskTansferLength = 0;
     fifo = 0;
     fifoPos = 0;
-    dskEventCycle = 0;
+    dskEventCycle = agnus.clock + FDC_IDLE;
     dskSyncCycle = 0;
     dskShifter = 0;
     dskShifterPos = 0;
     dmaCycles = 0;
     dskBytr = 0;
+    diskState = DiskState::OFF;
 }
 
 auto Paula::process() -> void {
@@ -581,10 +582,8 @@ auto Paula::process() -> void {
         switch (diskState) {
             case DiskState::WAIT_SYNC_READ:
             case DiskState::WAIT_SYNC_WRITE:
-                if (turbo) {
+                if (turbo)
                     handleFDControllerRead<false, true>();
-                    break;
-                }
                 // fallthrough
             case DiskState::READ:
                 handleFDControllerRead();
@@ -602,10 +601,14 @@ auto Paula::process() -> void {
                     } while (--repeat);
                 }
             } break;
-            default:
+            case DiskState::INSTANT_BLK_INT:
                 if (useInstantDriveAccess())
                     setDskBlkInt();
-                dmaCycles = 0;
+                diskState = DiskState::OFF;
+            default:
+                activeDrive->rotate(dmaCycles); // rotate if motor is running, doesn't matter if drive selected or FDC is idling
+                dmaCycles = FDC_IDLE;
+                // todo: rotate other connected drives too
                 break;
         }
         dskEventCycle = agnus.clock + dmaCycles;

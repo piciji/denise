@@ -579,9 +579,7 @@ auto View::setConnectors() -> void {
         
         inputItem->setIcon(swapperImage);
         controlMenu.append(*inputItem);
-        if ( !dynamic_cast<LIBC64::Interface*>(emulator))
-            inputItem->setEnabled(false);
-        
+
         inputItem = new GUIKIT::MenuItem;
         inputItem->setText(emulator->ident + " " + trans->get("config") );
 
@@ -591,8 +589,6 @@ auto View::setConnectors() -> void {
         };
         inputItem->setIcon(toolsImage);
         controlMenu.append(*inputItem);
-        if ( !dynamic_cast<LIBC64::Interface*>(emulator))
-            inputItem->setEnabled(false);
 
         controlMenu.append( *new GUIKIT::MenuSeparator );
     }

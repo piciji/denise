@@ -80,6 +80,8 @@ struct ModelLayout : GUIKIT::FramedVerticalLayout {
     auto updateBurstVisibillity() -> void;
 
     auto getAlignedWidth(Emulator::Interface::Model* model = nullptr) -> unsigned;
+
+    auto getUnit(unsigned id) -> std::string;
     
     ModelLayout();
 };

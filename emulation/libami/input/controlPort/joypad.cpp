@@ -9,7 +9,7 @@ struct Joypad : ControlPort {
 
     auto readButton1( ) -> uint8_t {
 
-        return !interface->inputPoll( device->id, 4 );
+        return interface->inputPoll( device->id, 4 );
     }
 
     auto readDirection( ) -> uint16_t {

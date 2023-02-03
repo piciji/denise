@@ -27,7 +27,6 @@ struct System {
     Denise denise;
     Paula paula;
     DiskDrive diskDrives[4];
-    DiskDrive dummyDrive;
 
     Emulator::Crop<uint16_t> crop;
 

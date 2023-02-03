@@ -130,6 +130,12 @@ auto Agnus::power(bool softReset) -> void {
     auto resetDelay = getEventDelay<EVENT_KBD>();
     clearEvents();
 
+    std::memset(chipMem, 0x0, chipMemMask + 1);
+    if (slowMemSize)
+        std::memset(slowMem, 0, slowMemSize);
+    if (model == OCS_A1000)
+        std::memset(wom, 0, 256 * 1024);
+
     actions = 0;
     busUsage = BUS_FREE;
     hPos = 4;

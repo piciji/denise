@@ -193,12 +193,8 @@ auto ModelLayout::setEvents( ) -> void {
                     }
 
                     std::string unit = "";
-                    if (model->isDriveSettings()) {
-                        if (dynamic_cast<LIBC64::Interface*>(this->emulator) && (model->id == LIBC64::Interface::ModelIdDiskDriveStepperSeekTime))
-                            unit = " ms";
-                        else
-                            unit = " RPM";
-                    }
+                    if (model->isDriveSettings())
+                        unit = getUnit(model->id);
 
                     block->sliderLayout->value.setText( displayText + unit );
 
@@ -319,12 +315,8 @@ auto ModelLayout::updateWidget( Line::Block* block ) -> void {
             displayText = GUIKIT::String::formatFloatingPoint( (float) val / model->scaler, 2);
 
         std::string unit = "";
-        if (model->isDriveSettings()) {
-            if (dynamic_cast<LIBC64::Interface*>(this->emulator) && (model->id == LIBC64::Interface::ModelIdDiskDriveStepperSeekTime))
-                unit = " ms";
-            else
-                unit = " RPM";
-        }
+        if (model->isDriveSettings())
+            unit = getUnit(model->id);
 
         block->sliderLayout->value.setText( displayText + unit );
         
@@ -892,6 +884,18 @@ auto ModelLayout::getIdent( Emulator::Interface::Model* model, std::string& tool
     }
     
     return name;
+}
+
+auto ModelLayout::getUnit(unsigned id) -> std::string {
+    if (dynamic_cast<LIBC64::Interface*>(this->emulator)) {
+        if (id == LIBC64::Interface::ModelIdDiskDriveStepperSeekTime)
+            return " ms";
+    } else {
+        if (id == LIBAMI::Interface::ModelIdDiskDriveStepperSeekTime || id == LIBAMI::Interface::ModelIdDiskDriveStepperMinTime)
+            return " ms";
+    }
+
+    return " RPM";
 }
 
 }

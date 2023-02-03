@@ -16,21 +16,21 @@ struct ControlPort {
 
     static auto create( Emulator::Interface* interface, Emulator::Interface::Device* device ) -> ControlPort*;
 
-    auto readButton1( ) -> uint8_t { return 1; }
-    auto readDirection( ) -> uint16_t { return 0; }
+    virtual auto readButton1( ) -> uint8_t { return 0; }
+    virtual auto readDirection( ) -> uint16_t { return 0; }
 
-    auto getPotX() -> uint8_t { return 0xff; }
-    auto getPotY() -> uint8_t { return 0xff; }
+    virtual auto getPotX() -> uint8_t { return 0xff; }
+    virtual auto getPotY() -> uint8_t { return 0xff; }
 
-    auto reset() -> void {}
-    auto poll() -> void {}
-    auto draw(bool midScreen = false) -> void {}
+    virtual auto reset() -> void {}
+    virtual auto poll() -> void {}
+    virtual auto draw(bool midScreen = false) -> void {}
 
-    auto getCursorPosition( int16_t& x, int16_t& y ) -> bool { return false; }
+    virtual auto getCursorPosition( int16_t& x, int16_t& y ) -> bool { return false; }
 
-    auto serialize(Emulator::Serializer& s) -> void;
+    virtual auto serialize(Emulator::Serializer& s) -> void;
 
-    auto useJitPolling() -> bool { return true; }
+    virtual auto useJitPolling() -> bool { return true; }
 };
 
 }

@@ -84,6 +84,8 @@
 #include "paula.h"
 #include "../drive/diskDrive.h"
 
+#define FDC_IDLE (56 << 2)
+
 namespace LIBAMI {
 
 auto Paula::setDskLen(uint16_t value) -> void {
@@ -101,11 +103,14 @@ auto Paula::setDskLen(uint16_t value) -> void {
     } else if (!(value & 0x8000)) {
         setDskState(DiskState::OFF);
         dskTansferLength = 0;
-        dskEventCycle = 0;
+        processDiskIdleCycles();
+        dmaCycles = FDC_IDLE;
+        dskEventCycle = agnus.clock + dmaCycles;
         return;
     }
 
     if (!wordSync() && (dskTansferLength == 0)) {
+        processDiskIdleCycles();
         finishDMA();
         return;
     }
@@ -127,6 +132,7 @@ auto Paula::setDskLen(uint16_t value) -> void {
     if (start) {
         fifoPos = 0;
         dskShifterPos = 0;
+        processDiskIdleCycles();
         useInstantDriveAccess() ? instantDriveAccess() : setFdcEvent();
     }
 }
@@ -134,9 +140,11 @@ auto Paula::setDskLen(uint16_t value) -> void {
 auto Paula::finishDMA(bool delayed) -> void {
     setDskBlkInt(delayed);
     dskLen = 0;
+    agnus.dmal = 0; // prevent endless loop in turbo mode
     dskTansferLength = 0;
     setDskState(DiskState::OFF);
-    dskEventCycle = 0;
+    dmaCycles = FDC_IDLE;
+    dskEventCycle = agnus.clock + dmaCycles;
 }
 
 auto Paula::setFdcEvent() -> void {
@@ -174,9 +182,8 @@ auto Paula::setDskDat(uint16_t value) -> void {
 }
 
 auto Paula::dskDatR() -> uint16_t {
-    uint8_t repeat = 1 << turbo;
+    uint8_t repeat = 1 << ((diskState == DiskState::READ) ? turbo : 0);
     uint16_t out = 0;
-    bool waitMode = (diskState == DiskState::WAIT_SYNC_READ) || (diskState == DiskState::WAIT_SYNC_WRITE);
 
     do {
         if(getFromFifo(out)) {
@@ -186,7 +193,7 @@ auto Paula::dskDatR() -> uint16_t {
                     break;
                 }
             }
-            if ( (repeat == 1) || waitMode)
+            if (repeat == 1)
                 break;
             agnus.fakeDiskDma(out);
             repeat--;
@@ -216,13 +223,20 @@ auto Paula::instantDriveAccess() -> void {
             return;
     }
 
-    if (out & 1) setDskSyncInt();
-    if (out & 2)
-        dskEventCycle = agnus.clock + 450;
-    else
-        dskEventCycle = 0;
+    if (out & 1)
+        setDskSyncInt();
 
-    setDskState(DiskState::OFF);
+    if (out & 2) {
+        dmaCycles = 450;
+        setDskState(DiskState::INSTANT_BLK_INT);
+    } else {
+        dmaCycles = FDC_IDLE;
+        setDskState(DiskState::OFF);
+    }
+
+    dskLen = 0;
+    dskTansferLength = 0;
+    dskEventCycle = agnus.clock + dmaCycles;
 }
 
 template<bool readWord, bool waitTurbo> auto Paula::handleFDControllerRead() -> void {
@@ -239,7 +253,11 @@ template<bool readWord, bool waitTurbo> auto Paula::handleFDControllerRead() -> 
             else if constexpr (waitTurbo) iterations = 1 << turbo;
 
             do {
-                byte = activeDrive->readByte(dmaCycles);
+                byte = activeDrive->readByte(dmaCycles, !(readWord || waitTurbo) );
+
+                if (byte != 0 && byte != 0xff)
+                    dskBytr = byte | 0x8000;
+
                 for (int i = 7; i >= 0; i--) {
                     dskShifter = (dskShifter << 1) | ((byte >> i) & 1);
 
@@ -268,6 +286,7 @@ template<bool readWord, bool waitTurbo> auto Paula::handleFDControllerRead() -> 
                             if constexpr (waitTurbo) iterations = 1;
                             setDskState(diskState == DiskState::WAIT_SYNC_READ ? DiskState::READ : DiskState::WRITE);
                             dskShifterPos = 0;
+
                             if (diskState == DiskState::WRITE) {
                                 dmaCycles = 7;
                                 if (!getFromFifo(dskShifter))
@@ -281,9 +300,6 @@ template<bool readWord, bool waitTurbo> auto Paula::handleFDControllerRead() -> 
                             continue;
                         }
                     }
-
-                    if (byte != 0 && byte != 0xff)
-                        dskBytr = byte | 0x8000;
 
                     if (++dskShifterPos == 16) {
                         dskShifterPos = 0;
@@ -300,7 +316,7 @@ template<bool readWord, bool waitTurbo> auto Paula::handleFDControllerRead() -> 
 
             do {
                 if constexpr (readWord || waitTurbo) iterations--;
-                bit = activeDrive->readBit(dmaCycles);
+                bit = activeDrive->readBit(dmaCycles, !(readWord || waitTurbo));
                 dskShifter <<= 1;
                 dskShifter |= bit;
 
@@ -318,15 +334,12 @@ template<bool readWord, bool waitTurbo> auto Paula::handleFDControllerRead() -> 
                     if (diskState == DiskState::WAIT_SYNC_READ || diskState == DiskState::WAIT_SYNC_WRITE) {
                         setDskState(diskState == DiskState::WAIT_SYNC_READ ? DiskState::READ : DiskState::WRITE);
                         dskShifterPos = 0;
+
                         if (diskState == DiskState::WRITE) {
                             if (!getFromFifo(dskShifter))
                                 dskShifter = 0;
-                            break;
                         }
-
-                        if (waitTurbo) break;
-                        else if (readWord && iterations) continue;
-                        else break;
+                        break;
                     }
                 }
 
@@ -355,13 +368,13 @@ auto Paula::handleFDControllerWrite() -> void {
     // the controller can only write with two fixed speeds. copy protections recognize this by measuring time when reading back.
     // adjusting motor speed would result in different bit cell width too. (not emulated in ADF and EXT ADF ... simply not possible)
     bool state = dskShifter & (1 << (dskShifterPos - 1));
-    if (disk0.connected && disk0.selected)
+    if (disk0.connected)
         disk0.writeBit(state);
-    if (disk1.connected && disk1.selected)
+    if (disk1.connected)
         disk1.writeBit(state);
-    if (disk2.connected && disk2.selected)
+    if (disk2.connected)
         disk2.writeBit(state);
-    if (disk3.connected && disk3.selected)
+    if (disk3.connected)
         disk3.writeBit(state);
 
     if (dskShifterPos != 16) {
@@ -411,6 +424,18 @@ auto Paula::setDskState(DiskState next) -> void {
     }
 
     diskState = next;
+}
+
+auto Paula::processDiskIdleCycles() -> void {
+    if (dskEventCycle < agnus.clock)
+        return;
+
+    unsigned temp = (unsigned)(dskEventCycle - agnus.clock);
+
+    if (temp >= dmaCycles)
+        return;
+
+    activeDrive->rotate( dmaCycles - temp );
 }
 
 }

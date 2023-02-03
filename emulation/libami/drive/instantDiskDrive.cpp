@@ -22,7 +22,7 @@ auto DiskDrive::instantWrite(unsigned words, uint16_t syncWord, bool needSync) -
         step(nextStep, true);
     }
 
-    if (!motor || !inserted) {
+    if (!motor || !inserted || !selected) {
         if (needSync)
             return syncWord ? 0 : 3;
         return 2;
@@ -100,10 +100,21 @@ auto DiskDrive::instantRead(unsigned words, uint16_t syncWord, bool needSync) ->
         step(nextStep, true);
     }
 
-    if (!motor || !inserted) {
-        if (needSync)
-            return syncWord ? 0 : 3;
-        return 2;
+    if (!motor || !inserted || !selected) {
+        if (syncWord && needSync)
+            return 0;
+
+        do {
+            offset += 2;
+            if (offset >= length) {
+                offset -= length;
+                cia.setFlag();
+            }
+
+            agnus.fakeDiskDmaNoTracking(0);
+        } while (--words);
+
+        return !syncWord ? 3 : 2;
     }
 
     do {
@@ -124,9 +135,11 @@ auto DiskDrive::instantRead(unsigned words, uint16_t syncWord, bool needSync) ->
             shifter = (shifter << 1) | ((word >> b) & 1);
             if (shifter == syncWord) {
                 out |= 1;
-                synced = true;
-                pos = 0;
-                continue;
+                if (!synced) {
+                    pos = 0;
+                    synced = true;
+                    continue;
+                }
             }
             if (++pos == 16) {
                 pos = 0;

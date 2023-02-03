@@ -2,10 +2,10 @@
 #include "diskStructure.h"
 #include "filesystem.h"
 #include "../../tools/buffer.h"
-#include "adf.cpp"
-#include "ext.cpp"
 #include "../agnus/agnus.h"
 #include "../system/system.h"
+#include "adf.cpp"
+#include "ext.cpp"
 
 #define LIBAMI_FLOPPY_REVOLUTION_LENGTH_PAL 101339 //bits per revolution
 #define LIBAMI_FLOPPY_REVOLUTION_LENGTH_NTSC 102272 //bits per revolution
@@ -168,7 +168,7 @@ auto DiskStructure::initTrack(Track& track, unsigned newLength, unsigned bits) -
         track.data = new uint8_t[newLength];
     }
 
-    std::memset( track.data, 0, newLength );
+    std::memset( track.data, 0xaa, newLength );
     track.length = newLength;
     track.bits = bits == 0 ? getTrackBitLength() : bits;
     track.written = 0;

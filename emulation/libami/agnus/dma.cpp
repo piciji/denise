@@ -157,6 +157,10 @@ auto Agnus::diskDma(bool writeMode) -> void {
 
         *(uint16_t*)(chipMem + dskpt) = _swapWord(value);
         dataBus = value;
+
+//        system->interface->log("d",1);
+//        system->interface->log(dskpt,0,1);
+//        system->interface->log(value,0,1);
     }
 
     if ((getActiveEvent<EVENT_ONE_CYCLE_DELAY>() & ~1) == PTR_DSK_H)
@@ -177,9 +181,11 @@ auto Agnus::fakeDiskDma(uint16_t word) -> void {
 }
 
 auto Agnus::fakeDiskDmaNoTracking(uint16_t word) -> void {
-    *(uint16_t*)(chipMem + dskpt) = _swapWord(word);
-    dskpt += 2;
-    dskpt &= chipMemMask;
+    if (paula.dmaDisk) {
+        *(uint16_t*) (chipMem + dskpt) = _swapWord(word);
+        dskpt += 2;
+        dskpt &= chipMemMask;
+    }
 }
 
 auto Agnus::fakeDiskDma() -> uint16_t {
@@ -289,6 +295,16 @@ template<uint8_t ptrEvent> auto Agnus::fetchBlitterDma(uint32_t adr, uint16_t& r
 
     result = _swapWord(*(uint16_t*)(chipMem + (adr & chipMemMask)));
 
+//    if (ptrEvent == PTR_BLT_A_H)
+//        system->interface->log("b_a",1);
+//    else if (ptrEvent == PTR_BLT_B_H)
+//        system->interface->log("b_b",1);
+//    else if (ptrEvent == PTR_BLT_C_H)
+//        system->interface->log("b_c",1);
+//
+//    system->interface->log(adr,0,1);
+//    system->interface->log(result,0,1);
+
     dataBus = result;
 
     // if a modified pointer is used in the next cycle, the change is ignored.
@@ -312,8 +328,9 @@ auto Agnus::writeBlitterDma(uint32_t adr, uint16_t value) -> bool {
 
     dataBus = value;
 
-    //system->interface->log(adr,1,1);
-    //system->interface->log(value,0,1);
+//    system->interface->log("b_d",1);
+//    system->interface->log(adr,0,1);
+//    system->interface->log(value,0,1);
 
     if ((getActiveEvent<EVENT_ONE_CYCLE_DELAY>() & ~1) == PTR_BLT_D_H)
         setEventInactive<EVENT_ONE_CYCLE_DELAY>();
@@ -341,8 +358,8 @@ auto Agnus::writeBlitterDmaNoBUSCheck(uint32_t adr, uint16_t value) -> void {
 
     *(uint16_t*)(chipMem + adr) = _swapWord(value);
 
-    //system->interface->log(adr,1,1);
-    //system->interface->log(value,0,1);
+//    system->interface->log(adr,1,1);
+//    system->interface->log(value,0,1);
 
     dataBus = value;
 

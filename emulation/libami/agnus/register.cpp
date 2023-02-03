@@ -18,12 +18,10 @@ template<bool byteAccess> auto Agnus::readCustom(uint16_t adr, bool triggeredByW
         // case 8: dskdatr (not accessible for CPU)
 
         case 0xa:
-            return 0;
-            //return denise.joy0Dat();
+            return denise.joy0Dat();
 
         case 0xc:
-            return 0;
-            //return denise.joy1Dat();
+            return denise.joy1Dat();
 
         case 0xe:
             return denise.getClxDat();
@@ -32,16 +30,13 @@ template<bool byteAccess> auto Agnus::readCustom(uint16_t adr, bool triggeredByW
             return paula.getAdkCon();
 
         case 0x12:
-            return 0;
-            //return paula.pot0Dat();
+            return paula.pot0Dat();
 
         case 0x14:
-            return 0;
-            //return paula.pot1Dat();
+            return paula.pot1Dat();
 
         case 0x16:
-            return 0;
-            //return paula.potGoR();
+            return paula.potGoR();
 
         case 0x1a:
             return paula.getDskBytR();

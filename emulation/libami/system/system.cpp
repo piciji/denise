@@ -14,7 +14,6 @@ cia1(1),
 cia2(2),
 cpu(agnus),
 denise(this, agnus, input),
-dummyDrive(~0, this, agnus, cia2),
 diskDrives { {0, this, agnus, cia2}, {1, this, agnus, cia2}, {2, this, agnus, cia2}, {3, this, agnus, cia2} },
 paula(this, agnus, cpu, input, diskDrives[0], diskDrives[1], diskDrives[2], diskDrives[3]),
 agnus(this, cpu, denise, paula, cia1, cia2, input),
@@ -38,15 +37,18 @@ input(this, agnus, cia1) {
                     observer.stateChange = true;
             }
 
-            uint8_t out = lines->ioa & input.readCiaPortA();
+            uint8_t out = input.readCiaPortA();
+
             for(auto& drive : diskDrives) {
                 if (drive.connected)
                     out &= drive.readCiaPortA();
             }
+
+            out = (lines->pra & lines->ddra) | (out & ~lines->ddra);
             return out;
         }
 
-        return (uint8_t)0xff; // parallel port
+        return lines->iob; // parallel port
     };
 
     cia1.writePort = [this]( Cia<MOS_8520>::Port port, Cia<MOS_8520>::Lines* lines ) {
@@ -81,7 +83,7 @@ input(this, agnus, cia1) {
                 }
             }
             if (!paula.activeDrive)
-                paula.activeDrive = &dummyDrive;
+                paula.activeDrive = &diskDrives[0];
         }
     };
 
@@ -111,8 +113,7 @@ input(this, agnus, cia1) {
         right = denise.crop.right;
     };
 
-    dummyDrive.power();
-    paula.activeDrive = &dummyDrive;
+    paula.activeDrive = &diskDrives[0];
 }
 
 auto System::power(bool softReset, bool resetInstruction) -> void {

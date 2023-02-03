@@ -29,8 +29,15 @@ auto DiskStructure::prepareADF(uint8_t* data, unsigned size) -> void {
         Track& track = tracks[i];
         initTrack(track, bytes);
 
-        if (i < trackCount)
-            encodeTrack( track, i, data + (i * sectors * 512) );
+        if (i < trackCount) {
+            encodeTrack(track, i, data + (i * sectors * 512));
+
+//            agnus.system->interface->log( "t", 1 );
+//            agnus.system->interface->log( i, 0, 1 );
+//            for(unsigned j = 0; j < track.length; j++) {
+//                agnus.system->interface->log( track.data[(j & 1) ? (j - 1) : (j + 1)], ((j % 30) == 0) ? 1 : 0, 1 );
+//            }
+        }
     }
 }
 
@@ -47,10 +54,13 @@ auto DiskStructure::encodeTrack(Track& track, unsigned trackNr, uint8_t* userDat
         ptr[0] = lastDataWasAOne ? 0x2a : 0xaa;
         ptr[1] = ptr[2] = ptr[3] = 0xaa;
         ptr[4] = 0x44, ptr[5] = 0x89; // encoded byte 0xa1
-        ptr[6] = 0x44, ptr[7] = 0x89; // encoded byte 0xa1
+        ptr[6] = 0x44, ptr[7] = 0x89;
 
         buffer[0] = 0xff, buffer[1] = trackNr, buffer[2] = sector, buffer[3] = sectors - sector;
-        separateOddEven( &ptr[8], buffer, 4 );
+        separateOddEven( &ptr[8], &buffer[0], 4 );
+
+        for(unsigned i = 16; i < 48; i++)
+            ptr[i] = 0xaa;
 
         std::memset(buffer, 0, 4);
         for(unsigned i = 8; i < 48; i += 4) {
@@ -84,7 +94,7 @@ auto DiskStructure::encodeTrack(Track& track, unsigned trackNr, uint8_t* userDat
     }
 }
 
-auto DiskStructure::separateOddEven(uint8_t* dst, uint8_t src[], unsigned size) -> void {
+auto DiskStructure::separateOddEven(uint8_t* dst, uint8_t* src, unsigned size) -> void {
     // seperate odd/even bits to make room for clock bits
     for(unsigned i = 0; i < size; i++) {
         dst[i] = (src[i] >> 1) & 0x55;
@@ -172,7 +182,7 @@ auto DiskStructure::addClockBits( uint16_t* raw, unsigned words) -> void {
     uint16_t word;
 
     while (words--) {
-        word = *raw;
+        word = _swapWord(*raw);
         word &= 0x5555; // set all clock bits to zero
 
         for(i = 14; i >= 0; i -= 2) {
@@ -180,12 +190,12 @@ auto DiskStructure::addClockBits( uint16_t* raw, unsigned words) -> void {
                 dataZeroBefore = false;
             else { // data bit "zero"
                 if (dataZeroBefore)
-                    word|= 2 << i; // in MFM clock bit becomes "one" only, if data bit 0 follows another data bit 0
+                    word |= 2 << i; // in MFM clock bit becomes "one" only, if data bit 0 follows another data bit 0
 
                 dataZeroBefore = true;
             }
         }
-        *raw = word;
+        *raw = _swapWord(word);
         raw++;
     }
 }
