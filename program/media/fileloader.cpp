@@ -13,6 +13,7 @@
 #include "../thread/emuThread.h"
 #include "../tools/DiskFinder.h"
 #include "../view/status.h"
+#include "../audio/manager.h"
 
 #define HideMouseIfWasBefore \
     if (mIsAcquiredBefore && !inputDriver->mIsAcquired() && view->fullScreen() && fileDialogPtr && fileDialogPtr->detached()) \
@@ -679,6 +680,9 @@ auto Fileloader::autoload(Emulator::Interface* emulator, Emulator::Interface::Me
         emulator->selectListing(mediaGroup->selected, selection, "", options);
     else
         emulator->selectListing(media, selection, "", options);
+
+    if (audioManager)
+        audioManager->drive.reset(mediaGroup, true);
 
     if (emuView) {
         auto fSetting = FileSetting::getInstance(emulator, _underscore(media->name) );

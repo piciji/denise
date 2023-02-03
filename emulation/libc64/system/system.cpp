@@ -776,7 +776,7 @@ auto System::setTapeSounds(bool state) -> void {
 }
 
 auto System::updateDriveSounds() -> void {
-    driveSounds.useFloppy = driveSounds.requestFloppy && !fastForward.config && !runAhead.frames;
+    driveSounds.useFloppy = driveSounds.requestFloppy && !fastForward.config /* && !runAhead.frames */;
     driveSounds.useTape = driveSounds.requestTape && !fastForward.config /*&& !runAhead.frames*/;
 
     if (powerOn) {

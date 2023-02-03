@@ -10,6 +10,7 @@
 #include "../cmd/cmd.h"
 #include "../states/states.h"
 #include "../firmware/manager.h"
+#include "../audio/manager.h"
 
 Autoloader* autoloader = nullptr;
 
@@ -222,6 +223,9 @@ auto Autoloader::postProcessing() -> void {
             ddControl.emulator->selectListing(&mediaGroup->media[0], ddControl.selection, ddControl.fileName, options);
             fSetting = FileSetting::getInstance( ddControl.emulator, _underscore(mediaGroup->media[0].name) );
         }
+
+        if (audioManager)
+            audioManager->drive.reset(mediaGroup, true);
         
         if (fSetting)
             program->updateSaveIdent( ddControl.emulator, fSetting->file);

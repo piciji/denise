@@ -712,4 +712,4 @@ swapper multi hint = multiple selection possible
 swapper multi hint tooltip = You can also select multiple files at once by holding down the CTRL key in the file dialog. Selected floppy disk images are then distributed to continuous slots of the swapper.
 Speeder Traps = VDT + Fast Loader
 Speeder Traps tooltip = Fast Loader and VDT are used in combination when checked. Otherwise, enabled Fast Loaders will not be used when starting with VDT.
-switchable by Hotkey = umschaltbar per Hotkey
+switchable by Hotkey = switchable by Hotkey

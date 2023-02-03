@@ -77,7 +77,7 @@ struct Drive {
     auto mixSound(float* buffer, unsigned bufferSize) -> void;
 
     auto getSound(DriveSound soundId, Emulator::Interface* emulator) -> Sound*;
-    auto reset(Emulator::Interface::MediaGroup* group = nullptr) -> void;
+    auto reset(Emulator::Interface::MediaGroup* group = nullptr, bool exclude = false) -> void;
     auto loaded(Emulator::Interface* emulator, Emulator::Interface::MediaGroup* group) -> bool;
     auto unload(Emulator::Interface* emulator, Emulator::Interface::MediaGroup* group) -> void;
     auto unload() -> void;
