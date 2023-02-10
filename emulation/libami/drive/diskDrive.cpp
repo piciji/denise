@@ -182,7 +182,7 @@ auto DiskDrive::adjustHead(int offset) -> void {
 }
 
 auto DiskDrive::progressStepper() -> void {
-    uint64_t delay = agnus.fallBackCycles(stepSettleClock);
+    int64_t delay = agnus.fallBackCycles(stepSettleClock);
     if (delay >= stepperSeekTime) {
         // Continuous stepping can be done very quickly.
         // The last step, however, requires about 10 ms until data can be reliably read.
@@ -340,7 +340,7 @@ auto DiskDrive::getId() -> unsigned { // no emulation of a HD drive with inserte
 }
 
 auto DiskDrive::getMotorSpeed() -> unsigned {
-    auto cycles = agnus.fallBackCycles(motorClock);
+    int64_t cycles = agnus.fallBackCycles(motorClock);
     int percent;
 
     if (motor) {

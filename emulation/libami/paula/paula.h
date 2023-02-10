@@ -21,14 +21,10 @@ struct Paula {
 
     enum class DiskState { OFF, WAIT_SYNC_READ, WAIT_SYNC_WRITE, READ, WRITE, INSTANT_BLK_INT } diskState;
 
-    using EventCallback = std::function<void(uint8_t, uint16_t)>;
-
     System* system;
     Agnus& agnus;
     Cpu& cpu;
     Input& input;
-
-    EventCallback callbackStateMachine;
 
     uint16_t intena;
     uint16_t intreq;
@@ -76,6 +72,7 @@ struct Paula {
 
         uint16_t go;
         uint8_t dischargeCounter;
+        bool running;
     } pot;
 
     struct Channel {
@@ -84,9 +81,8 @@ struct Paula {
         bool dsr;
         bool intreq2;
 
-        uint64_t clock;
+        int64_t clock;
         uint8_t state;
-        uint16_t per;
         uint16_t perLatch;
         uint16_t len;
         uint16_t lenLatch;
@@ -126,7 +122,7 @@ struct Paula {
     auto disableAudioOut(bool state) -> void { audioOut = !state; }
     auto setLedFilter(bool state) -> void;
     auto setFilter() -> void;
-    auto prepareEvents() -> void;
+    auto audioEvent() -> void;
 
     auto pot0Dat() -> uint16_t;
     auto pot1Dat() -> uint16_t;
@@ -146,7 +142,7 @@ struct Paula {
     auto instantDriveAccess() -> void;
     auto finishDMA(bool delayed = false) -> void;
 
-    template<uint8_t nr> auto audxDat(uint16_t value) -> void;
+    template<uint8_t nr, bool dma> auto audxDat(uint16_t value) -> void;
     template<uint8_t nr> auto audxLen(uint16_t value) -> void;
     template<uint8_t nr> auto audxPer(uint16_t value) -> void;
     template<uint8_t nr> auto audxVol(uint16_t value) -> void;
@@ -183,8 +179,8 @@ struct Paula {
     template<uint8_t nr> auto pbufld2() -> void;
     auto updateInt() -> void;
     auto updateAudioEvent() -> void;
-    template<uint8_t nr> auto stateMainloop() -> void;
-    template<uint8_t nr> auto percntrld() -> void;
+    template<uint8_t nr> auto stateMachine() -> void;
+    template<uint8_t nr, bool dma> auto percntrld() -> void;
     template<uint8_t nr> auto toggleAudioDMA( ) -> void;
     template<uint8_t nr> auto addSample( uint8_t sample ) -> void;
 

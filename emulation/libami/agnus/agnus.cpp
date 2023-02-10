@@ -16,6 +16,7 @@
 #include "../../tools/sanitizer.h"
 #include "../system/system.h"
 #include "../interface.h"
+#include "events.cpp"
 #include "memory.cpp"
 #include "dma.cpp"
 #include "graphics.cpp"
@@ -43,78 +44,6 @@ Agnus::~Agnus() {
     delete[] wom;
 }
 
-auto Agnus::prepareEvents() -> void {
-    oneCycleDelay = [&](uint8_t job, uint16_t data) {
-        // only events that cannot occur in parallel
-        switch (job) {
-            case PTR_BLT_A_H: blitter.setBltAptH(data); break;
-            case PTR_BLT_A_L: blitter.setBltAptL(data); break;
-            case PTR_BLT_B_H: blitter.setBltBptH(data); break;
-            case PTR_BLT_B_L: blitter.setBltBptL(data); break;
-            case PTR_BLT_C_H: blitter.setBltCptH(data); break;
-            case PTR_BLT_C_L: blitter.setBltCptL(data); break;
-            case PTR_BLT_D_H: blitter.setBltDptH(data); break;
-            case PTR_BLT_D_L: blitter.setBltDptL(data); break;
-            case PTR_DSK_H: setDskPtH(data); break;
-            case PTR_DSK_L: setDskPtL(data); break;
-            case DMACON: dmaCon = dmaConImm; break;
-            case BLT_INIT: blitter.initBlit(); break;
-            case BLT_BUSY_DELAY: break;
-        }
-        setEventInactive<Agnus::EVENT_ONE_CYCLE_DELAY>();
-    };
-
-    addEvent<Agnus::EVENT_ONE_CYCLE_DELAY>( &oneCycleDelay );
-
-    leaveEmulation = [&](uint8_t job, uint16_t data) {
-        // When a frame is fully calculated, control is given back to the user interface.
-        // Frequent changes in position (VHPOSW) can cause this to never happen or only after a very long time. In order to keep the user interface responsive,
-        // control must be returned in a timely manner.
-        // todo: blank screen in such cases
-        system->leaveEmulation = true;
-        setEventInactive<Agnus::EVENT_LEAVE_EMULATION>();
-    };
-
-    addEvent<Agnus::EVENT_LEAVE_EMULATION>( &leaveEmulation );
-
-    countDownPowerSupply = [&](uint8_t job, uint16_t data) {
-        cia1.tod( );
-
-        updateEvent<EVENT_POWER_SUPPLY>(~0, powerSupply.nextTickCount());
-    };
-
-    addEvent<Agnus::EVENT_POWER_SUPPLY>( &countDownPowerSupply );
-
-    eventHTotal = [&](uint8_t job, uint16_t data) {
-        if (job == 1) {
-            if (vPos == (lines + lof) ) {
-                if (lace()) lof ^= 1;
-                initVCounter = true;
-                lines = (beamCon & VARBEAMEN) ? vTotal : (ntsc ? 261 : 311);
-            }
-            updateEvent<EVENT_HTOTAL>(2, 1);
-        } else {
-            if (!lol) {
-                actions &= ~ACT_COPPER; // "even" cycle 0 after a short line is not usable by Copper, otherwise Copper would progress 2 cycles in a row.
-                if (actions & ACT_BPL) {
-                    fetchPlanes<true>();
-                    actions &= ~ACT_BPL;
-                }
-
-                shortLineBefore = true;
-            } else
-                shortLineBefore = false;
-
-            hPos = 0;
-            if (lolToggle) lol ^= 1;
-            if(ERSY == 0)
-                updateEvent<EVENT_HTOTAL>(1, (beamCon & VARBEAMEN) ? (hTotal + lol) : (0xe2 + lol) );
-        }
-    };
-
-    addEvent<Agnus::EVENT_HTOTAL>( &eventHTotal );
-}
-
 auto Agnus::frequency() -> unsigned {
     return (ntsc ? FREQUENCY_NTSC : FREQUENCY_PAL) >> 3;
 }
@@ -127,7 +56,7 @@ auto Agnus::dmaControl(uint16_t data) -> void {
 }
 
 auto Agnus::power(bool softReset) -> void {
-    auto resetDelay = getEventDelay<EVENT_KBD>();
+    unsigned resetDelay = hasActiveEvent<EVENT_KBD>() ? getEventDelay<EVENT_KBD>() : 0;
     clearEvents();
 
     std::memset(chipMem, 0x0, chipMemMask + 1);
@@ -221,7 +150,7 @@ auto Agnus::power(bool softReset) -> void {
         std::memset(wom, 0, 256 * 1024);
     } else {
         if (resetFromKeyboard && resetDelay)
-            updateEvent<EVENT_KBD>(Keyboard::KBD_Hardreset, resetDelay);
+            input.keyboard.addEvent(Keyboard::KBD_Hardreset, resetDelay);
     }
 
     blitter.reset();
@@ -230,7 +159,7 @@ auto Agnus::power(bool softReset) -> void {
 
     if (model == OCS_A1000) {
         powerSupply.init(frequency(), ntsc ? 60 : 50);
-        updateEvent<EVENT_POWER_SUPPLY>(~0, powerSupply.nextTickCount());
+        updateEvent<EVENT_POWER_SUPPLY>(powerSupply.nextTickCount());
     } else
         setEventInactive<EVENT_POWER_SUPPLY>();
 
@@ -240,7 +169,8 @@ auto Agnus::power(bool softReset) -> void {
     if (model == OCS_A1000)
         denise.model = ntsc ? Denise::Model::OCS_A1000_NO_EHB : Denise::Model::OCS_A1000;
 
-    updateEvent<EVENT_HTOTAL>(1, 0xe2 - hPos );
+    hTotalFirst = true;
+    updateEvent<EVENT_HTOTAL>(0xe2 - hPos);
 }
 
 auto Agnus::powerOff() -> void {
@@ -270,13 +200,14 @@ auto Agnus::waitKeyboardReset() -> void {
         resetFromKeyboard |= 0x80;
     }
 
-    updateEvent<EVENT_LEAVE_EMULATION>(~0, 150000);
+    updateEvent<EVENT_LEAVE_EMULATION>(150000);
 
     while(true) { // CPU and most chips on hold, Denise hasn't a reset line
         input.checkForEmergencyPoll(); // wait for releasing reset key combination
-        processEvents();
+        if (++clock == nextClock)
+            processEvents(clock);
 
-        if (leaveEmulation)
+        if (system->leaveEmulation)
             break;
 
         if (!resetFromKeyboard) {
@@ -349,13 +280,14 @@ auto Agnus::updateVCounter() -> void {
 inline auto Agnus::dmaCycle() -> void {
     busUsage = BUS_FREE;
 
+    // de-adjust HRM DMA view by 4 cycles to Beam position.
     switch(++hPos) {
         case 1:
             if (ERSY) {
                 hPos = 0; // need external sync to proceed
 
-                if (!getActiveEvent<EVENT_LEAVE_EMULATION>())
-                    updateEvent<EVENT_LEAVE_EMULATION>(~0, 150000);
+                if (!hasActiveEvent<EVENT_LEAVE_EMULATION>())
+                    updateEvent<EVENT_LEAVE_EMULATION>(150000);
 
             } else {
                 if (bplState || bplQueue)
@@ -369,17 +301,7 @@ inline auto Agnus::dmaCycle() -> void {
             actions |= ACT_COPPER;
             break;
 
-        case 3: // de-adjust HRM DMA view by 4 (-1 + 4) cycles to Beam position
-            if (isEquLine()) {
-                denise.strequ();
-                paula.strequ();
-            } else if (vBlank) {
-                denise.strvbl();
-                paula.strvbl();
-            } else {
-                denise.strhor();
-                paula.strhor();
-            }
+        case 3:
         case 5:
             if (ecsAndHigher() && lol && (hPos == 5) ) {
                 // todo strlong (OCS denise ignores it)
@@ -404,8 +326,21 @@ inline auto Agnus::dmaCycle() -> void {
             break;
 
         case 4:
-            // DMAL is inserted serial bit by bit (14 cycles). It is ok to do this in one step,
-            // because the value of all bits is fixed at the time of the first push.
+            // This happens one cycle earlier. Due to the emulator design, "strobe" happens at the beginning
+            // of the cycle, before all other processes. However, the result only applies in this (next to strobe) cycle.
+            // That's why we do this at the beginning of this cycle.
+            if (isEquLine()) {
+                denise.strequ();
+                paula.strequ();
+            } else if (vBlank) {
+                denise.strvbl();
+                paula.strvbl();
+            } else {
+                denise.strhor();
+                paula.strhor();
+            }
+            // DMAL is fetched serial bit by bit (14 cycles). It is ok to do this in one step,
+            // because the value of all bits is fixed (really ?) at the time of the first push.
             dmal = paula.dmal();
             break;
 
@@ -442,32 +377,32 @@ inline auto Agnus::dmaCycle() -> void {
         case 0x17:
             if (dmal & 0x3000)
                 fetchSample<3>( dmal & 0x1000 );
-            break;
 
-        case 0x16: if (!vBlank) spriteControl<0, true>(); break;
+            if (!vBlank) spriteControl<0, true>();
+            break;
         case 0x18:
             hardStop = false;
+            break;
+        case 0x19:
             if (!vBlank) spriteControl<0, false>();
             break;
-        case 0x1a: if (!vBlank) spriteControl<1, true>(); break;
-        case 0x1c: if (!vBlank) spriteControl<1, false>(); break;
-        case 0x1e: if (!vBlank) spriteControl<2, true>(); break;
-        case 0x20: if (!vBlank) spriteControl<2, false>(); break;
-        case 0x22: if (!vBlank) spriteControl<3, true>(); break;
+        case 0x1b: if (!vBlank) spriteControl<1, true>(); break;
+        case 0x1d: if (!vBlank) spriteControl<1, false>(); break;
+        case 0x1f: if (!vBlank) spriteControl<2, true>(); break;
+        case 0x21: if (!vBlank) spriteControl<2, false>(); break;
+        case 0x23: if (!vBlank) spriteControl<3, true>(); break;
         case 0x24: // hsync end
             cia2.tod();
-            if (!vBlank) spriteControl<3, false>();
             break;
-        case 0x26: if (!vBlank) spriteControl<4, true>(); break;
-        case 0x28: if (!vBlank) spriteControl<4, false>(); break;
-        case 0x2a: if (!vBlank) spriteControl<5, true>(); break;
-        case 0x2c: if (!vBlank) spriteControl<5, false>(); break;
-        case 0x2e: if (!vBlank) spriteControl<6, true>(); break;
-        case 0x30: if (!vBlank) spriteControl<6, false>(); break;
-        case 0x32: if (!vBlank) spriteControl<7, true>(); break;
-        case 0x34: if (!vBlank) spriteControl<7, false>(); break;
-        case 0x35:
-            break;
+        case 0x25: if (!vBlank) spriteControl<3, false>(); break;
+        case 0x27: if (!vBlank) spriteControl<4, true>(); break;
+        case 0x29: if (!vBlank) spriteControl<4, false>(); break;
+        case 0x2b: if (!vBlank) spriteControl<5, true>(); break;
+        case 0x2d: if (!vBlank) spriteControl<5, false>(); break;
+        case 0x2f: if (!vBlank) spriteControl<6, true>(); break;
+        case 0x31: if (!vBlank) spriteControl<6, false>(); break;
+        case 0x33: if (!vBlank) spriteControl<7, true>(); break;
+        case 0x35: if (!vBlank) spriteControl<7, false>(); break;
 
         case 0x38: actions &= ~ACT_SPRITE; break;
 
@@ -490,7 +425,9 @@ inline auto Agnus::dmaCycle() -> void {
         // register change of HPos could lead to a wrap around of counter.
     }
 
-    processEvents();
+    if (++clock == nextClock)
+        processEvents(clock);
+
     bplControl();
     denise.process();
     paula.process();
@@ -643,12 +580,14 @@ auto Agnus::updateVdiw() -> void {
     if ((vPos == vStart) && !hardLimit) {
         if (!diwFlipFlop) {
             diwFlipFlop = true;
+            denise.updateCropTop();
         }
     }
 
     if ((vPos == vStop) || hardLimit) {
         if (diwFlipFlop) {
             diwFlipFlop = false;
+            denise.updateCropBottom();
         }
     }
 }
@@ -837,7 +776,14 @@ auto Agnus::serialize(Emulator::Serializer& s, bool light) -> void {
     blitter.serialize(s);
     copper.serialize(s);
     powerSupply.serialize(s);
-    serializeEvents(s);
+
+    s.integer( oneCycleJob );
+    s.integer( oneCycleData );
+    s.integer( hTotalFirst );
+
+    s.integer( clock );
+    s.integer( nextClock );
+    s.array(eventClock, EVENT_CHANNELS);
 }
 
 template auto Agnus::fetchBlitterDmaNoBUSCheck<Agnus::PTR_BLT_A_H>(uint32_t adr, uint16_t& result) -> void;
@@ -847,5 +793,14 @@ template auto Agnus::fetchBlitterDmaNoBUSCheck<Agnus::PTR_BLT_C_H>(uint32_t adr,
 template auto Agnus::fetchBlitterDma<Agnus::PTR_BLT_A_H>(uint32_t adr, uint16_t& result) -> bool;
 template auto Agnus::fetchBlitterDma<Agnus::PTR_BLT_B_H>(uint32_t adr, uint16_t& result) -> bool;
 template auto Agnus::fetchBlitterDma<Agnus::PTR_BLT_C_H>(uint32_t adr, uint16_t& result) -> bool;
+
+template auto Agnus::setEventInactive<Agnus::EVENT_KBD>() -> void;
+template auto Agnus::updateEvent<Agnus::EVENT_KBD>(int delay) -> void;
+
+template auto Agnus::setEventInactive<Agnus::EVENT_AUDIO_STATE>() -> void;
+template auto Agnus::updateEvent<Agnus::EVENT_AUDIO_STATE>(int delay) -> void;
+
+template auto Agnus::updateEvent<Agnus::EVENT_ONE_CYCLE_DELAY, true>( int delay ) -> void;
+template auto Agnus::updateEventAbs<Agnus::EVENT_AUDIO_STATE>(int64_t absClock) -> void;
 
 }

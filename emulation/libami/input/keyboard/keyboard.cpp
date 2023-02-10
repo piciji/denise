@@ -20,69 +20,68 @@ const uint8_t Keyboard::keymap[] = {
 
 Keyboard::Keyboard(Emulator::Interface* interface, Agnus& agnus, Cia<MOS_8520>& cia)
 : interface(interface), agnus(agnus), cia(cia) {
-
     queue.resize(10);
 }
 
-auto Keyboard::prepareEvents() -> void {
-    callback = [&](uint8_t job, uint16_t data) {
+auto Keyboard::addEvent(State _state, unsigned delay) -> void {
+    agnus.updateEvent<Agnus::EVENT_KBD>( delay );
+    waitState = _state;
+}
 
-        switch (job) {
-            case KBD_Selftest:
-                resync();
-                break;
+auto Keyboard::processEvent() -> void {
+    switch (waitState) {
+        case KBD_Selftest:
+            resync();
+            break;
 
-            case KBD_Transfer:
-                if (shiftPos == 0) // finish
-                    // set SP line high (logical 0)
-                    // there is no emulation of SP line without context of CNT, because it's sampled only when CNT is rising
-                    // wait for handshake
-                    agnus.updateEvent<Agnus::EVENT_KBD>(KBD_Wait_For_Timeout, agnus.msecToDMACycles(143));
-                else
-                    // put next bit onto SP line
-                    agnus.updateEvent<Agnus::EVENT_KBD>(KBD_Transfer1, agnus.usecToDMACycles(20));
-                break;
+        case KBD_Transfer:
+            if (shiftPos == 0) // finish
+                // set SP line high (logical 0)
+                // there is no emulation of SP line without context of CNT, because it's sampled only when CNT is rising
+                // wait for handshake
+                addEvent(KBD_Wait_For_Timeout, agnus.msecToDMACycles(143) );
+            else
+                // put next bit onto SP line
+                addEvent(KBD_Transfer1, agnus.usecToDMACycles(20));
+            break;
 
-            case KBD_Transfer1:
-                cia.setCNTAndSP(false);
-                agnus.updateEvent<Agnus::EVENT_KBD>(KBD_Transfer2, agnus.usecToDMACycles(20));
-                break;
+        case KBD_Transfer1:
+            cia.setCNTAndSP(false);
+            addEvent(KBD_Transfer2, agnus.usecToDMACycles(20));
+            break;
 
-            case KBD_Transfer2:
-                // CIA process state of SP line, when CNT is rising and serial direction is input
-                cia.setCNTAndSP(true, shiftOut & 0x80);
-                shiftOut <<= 1;
-                shiftPos--;
-                agnus.updateEvent<Agnus::EVENT_KBD>(KBD_Transfer, agnus.usecToDMACycles(20));
-                break;
+        case KBD_Transfer2:
+            // CIA process state of SP line, when CNT is rising and serial direction is input
+            cia.setCNTAndSP(true, shiftOut & 0x80);
+            shiftOut <<= 1;
+            shiftPos--;
+            addEvent(KBD_Transfer, agnus.usecToDMACycles(20));
+            break;
 
-            case KBD_Wait_For_Timeout:
-                if (state != KBD_Selftest) {
-                    // todo: check behaviour for double fault, assume re transmit of 0xf9 and faulted key stroke
-                    if (state != KBD_Lost_Sync_Init && state != KBD_Lost_Sync_Transmit)
-                        memState = state; // remember state to resume later on
+        case KBD_Wait_For_Timeout:
+            if (state != KBD_Selftest) {
+                // todo: check behaviour for double fault, assume re transmit of 0xf9 and faulted key stroke
+                if (state != KBD_Lost_Sync_Init && state != KBD_Lost_Sync_Transmit)
+                    memState = state; // remember state to resume later on
 
-                    state = KBD_Lost_Sync_Init;
-                }
-                resync();
-                break;
+                state = KBD_Lost_Sync_Init;
+            }
+            resync();
+            break;
 
-            case KBD_Hardreset:
-                if ( keyState[0x63] && keyState[0x66] && keyState[0x67] ) {
-                    // at least one key needs to be released
-                    agnus.setEventInactive<Agnus::EVENT_KBD>();
-                } else {
-                    agnus.pullResetLine(false);
-                    reset();
-                }
-                break;
-            default:
+        case KBD_Hardreset:
+            if ( keyState[0x63] && keyState[0x66] && keyState[0x67] ) {
+                // at least one key needs to be released
                 agnus.setEventInactive<Agnus::EVENT_KBD>();
-                break;
-        }
-    };
-
-    agnus.addEvent<Agnus::EVENT_KBD>( &callback );
+            } else {
+                agnus.pullResetLine(false);
+                reset();
+            }
+            break;
+        default:
+            agnus.setEventInactive<Agnus::EVENT_KBD>();
+            break;
+    }
 }
 
 auto Keyboard::handshake(bool spLine) -> void {
@@ -94,7 +93,7 @@ auto Keyboard::handshake(bool spLine) -> void {
         handshakeClock = agnus.clock;
     else { // CIA switches back to input.
         if (agnus.fallBackCycles(handshakeClock) > agnus.usecToDMACycles(1)) { // recognized
-            if (agnus.getActiveEvent<Agnus::EVENT_KBD>() == KBD_Wait_For_Timeout) {
+            if (agnus.hasActiveEvent<Agnus::EVENT_KBD>() && (waitState == KBD_Wait_For_Timeout)) {
                 if (overflow) {
                     overflow = false;
                     sendCode( 0xfa );
@@ -137,13 +136,13 @@ auto Keyboard::sendCode(uint8_t code) -> void {
     shiftPos = 8;
     // press/release Bit is sent last
     shiftOut = ~((code << 1) | (code >> 7)) & 0xff;
-    agnus.updateEvent<Agnus::EVENT_KBD>(KBD_Transfer, agnus.usecToDMACycles(20));
+    addEvent(KBD_Transfer, agnus.usecToDMACycles(20));
 }
 
 auto Keyboard::resync() -> void {
     shiftPos = 1;
     shiftOut = 0;  // SP line to 0 (logical 1)
-    agnus.updateEvent<Agnus::EVENT_KBD>(KBD_Transfer, agnus.usecToDMACycles(20));
+    addEvent(KBD_Transfer, agnus.usecToDMACycles(20));
 }
 
 auto Keyboard::reset() -> void {
@@ -158,7 +157,7 @@ auto Keyboard::reset() -> void {
     interface->informCapsLock( true );
     queue.reset();
     // bypass keyboard selftest
-    agnus.updateEvent<Agnus::EVENT_KBD>(KBD_Selftest, agnus.msecToDMACycles(1000));
+    addEvent(KBD_Selftest, agnus.msecToDMACycles(1000));
 }
 
 auto Keyboard::sendKeyChange(bool pressed, Emulator::Interface::Device::Input* input) -> void {
@@ -183,10 +182,10 @@ auto Keyboard::sendKeyChange(bool pressed, Emulator::Interface::Device::Input* i
     if ( keyState[0x63] && keyState[0x66] && keyState[0x67] ) { // independant from normal processing with overflow check
         if (!hardReset) {
             hardReset = true;
-            agnus.updateEvent<Agnus::EVENT_KBD>(KBD_Hardreset, agnus.msecToDMACycles(500));
+            addEvent(KBD_Hardreset, agnus.msecToDMACycles(500));
             agnus.pullResetLine();
         }
-    } else if (hardReset && (agnus.getActiveEvent<Agnus::EVENT_KBD>() != KBD_Hardreset)) {// 500 ms minimum
+    } else if (hardReset && agnus.hasActiveEvent<Agnus::EVENT_KBD>() && (waitState != KBD_Hardreset)) {// 500 ms minimum
         agnus.pullResetLine(false);
         reset();
     }
@@ -211,7 +210,7 @@ auto Keyboard::sendKeyChange(bool pressed, Emulator::Interface::Device::Input* i
             stroke |= 0x80;
     }
 
-    if (agnus.getActiveEvent<Agnus::EVENT_KBD>())
+    if (agnus.hasActiveEvent<Agnus::EVENT_KBD>())
         queue.write(stroke);
     else
         sendCode(stroke);
@@ -227,6 +226,7 @@ auto Keyboard::serialize( Emulator::Serializer& s ) -> void {
     s.integer(hardReset);
     s.integer( (uint8_t&)state);
     s.integer( (uint8_t&)memState);
+    s.integer( (uint8_t&)waitState);
     queue.serialize(s);
     // don't serialize keystate
 }

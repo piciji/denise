@@ -21,7 +21,7 @@ Blitter::Blitter(Agnus& agnus) : agnus(agnus), copper(agnus.copper), paula(agnus
 auto Blitter::prepareBlit() -> void {
     zero = true;
     busy = agnus.model != Agnus::OCS_A1000;
-    agnus.updateEventAndExecuteExistingBefore<Agnus::EVENT_ONE_CYCLE_DELAY>(Agnus::BLT_INIT, 2);
+    agnus.addOneCycleEventA(Agnus::BLT_INIT, 2);
 }
 
 auto Blitter::initBlit() -> void {
@@ -222,7 +222,7 @@ auto Blitter::finish() -> void {
     paula.pulseInt3();
     busy = false;
     copper.blitterBusyUpdate();
-    agnus.updateEventAndExecuteExistingBefore<Agnus::EVENT_ONE_CYCLE_DELAY>(Agnus::BLT_BUSY_DELAY, 1);
+    agnus.addOneCycleEventA(Agnus::BLT_BUSY_DELAY, 1);
 }
 
 auto Blitter::reset() -> void {

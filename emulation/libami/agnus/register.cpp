@@ -6,7 +6,7 @@ template<bool byteAccess> auto Agnus::readCustom(uint16_t adr, bool triggeredByW
     switch(adr) {
         // case 0: bltddat (not accessible for CPU)
         case 2:
-            if (getActiveEvent<Agnus::EVENT_ONE_CYCLE_DELAY>() == Agnus::BLT_BUSY_DELAY)
+            if (hasActiveEvent<Agnus::EVENT_ONE_CYCLE_DELAY>() && (oneCycleJob == Agnus::BLT_BUSY_DELAY))
                 return dmaCon | (1 << 14) | (blitter.zero << 13);
 
             return dmaCon | (blitter.busy << 14) | (blitter.zero << 13);
@@ -67,13 +67,13 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
             if (paula.turbo)
                 setDskPtH(value);
             else
-                updateEventAndExecuteExistingBefore<EVENT_ONE_CYCLE_DELAY>(PTR_DSK_H, 1, value);
+                addOneCycleEvent(PTR_DSK_H, value, 1);
             break;
         case 0x22:
             if (paula.turbo)
                 setDskPtL(value);
             else
-                updateEventAndExecuteExistingBefore<EVENT_ONE_CYCLE_DELAY>(PTR_DSK_L, 1, value);
+                addOneCycleEvent(PTR_DSK_L, value, 1);
             break;
         case 0x24:
             paula.setDskLen(value);
@@ -93,7 +93,7 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
             break;
 
         case 0x34:
-            //paula.potGo(value);
+            paula.potGo(value);
             break;
 
         case 0x40:
@@ -109,28 +109,28 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
             blitter.setBltAlwm(value);
             break;
         case 0x48:
-            updateEventAndExecuteExistingBefore<EVENT_ONE_CYCLE_DELAY>(PTR_BLT_C_H, 2, value);
+            addOneCycleEvent(PTR_BLT_C_H, value);
             break;
         case 0x4a:
-            updateEventAndExecuteExistingBefore<EVENT_ONE_CYCLE_DELAY>(PTR_BLT_C_L, 2, value);
+            addOneCycleEvent(PTR_BLT_C_L, value);
             break;
         case 0x4c:
-            updateEventAndExecuteExistingBefore<EVENT_ONE_CYCLE_DELAY>(PTR_BLT_B_H, 2, value);
+            addOneCycleEvent(PTR_BLT_B_H, value);
             break;
         case 0x4e:
-            updateEventAndExecuteExistingBefore<EVENT_ONE_CYCLE_DELAY>(PTR_BLT_B_L, 2, value);
+            addOneCycleEvent(PTR_BLT_B_L, value);
             break;
         case 0x50:
-            updateEventAndExecuteExistingBefore<EVENT_ONE_CYCLE_DELAY>(PTR_BLT_A_H, 2, value);
+            addOneCycleEvent(PTR_BLT_A_H, value);
             break;
         case 0x52:
-            updateEventAndExecuteExistingBefore<EVENT_ONE_CYCLE_DELAY>(PTR_BLT_A_L, 2, value);
+            addOneCycleEvent(PTR_BLT_A_L, value);
             break;
         case 0x54:
-            updateEventAndExecuteExistingBefore<EVENT_ONE_CYCLE_DELAY>(PTR_BLT_D_H, 2, value);
+            addOneCycleEvent(PTR_BLT_D_H, value);
             break;
         case 0x56:
-            updateEventAndExecuteExistingBefore<EVENT_ONE_CYCLE_DELAY>(PTR_BLT_D_L, 2, value);
+            addOneCycleEvent(PTR_BLT_D_L, value);
             break;
         case 0x58:
             blitter.setBltSize(value);
@@ -227,7 +227,8 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
 
             // for performance reasons BLitter/Copper DMA usage is determined in the execution cycle.
             // Therefore, the change will only be visible in the cycle after next.
-            updateEventAndExecuteExistingBefore<EVENT_ONE_CYCLE_DELAY>(DMACON, 2, value);
+
+            addOneCycleEvent(DMACON, value);
 
             if ((dmaCon ^ dmaConImm) & 0x21f)
                 paula.dmaCon( dmaConImm );
@@ -235,7 +236,7 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
         } break;
 
         case 0x98:
-            denise.setClxCon(value);
+            denise.setClxCon((uint64_t)value);
             break;
 
         case 0x9a:
@@ -299,28 +300,28 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
         case 0xa4: paula.audxLen<0>(value); break;
         case 0xa6: paula.audxPer<0>(value); break;
         case 0xa8: paula.audxVol<0>(value); break;
-        case 0xaa: paula.audxDat<0>(value); break;
+        case 0xaa: paula.audxDat<0,false>(value); break;
 
         case 0xb0: setAudPtH<1>(value); break;
         case 0xb2: setAudPtL<1>(value); break;
         case 0xb4: paula.audxLen<1>(value); break;
         case 0xb6: paula.audxPer<1>(value); break;
         case 0xb8: paula.audxVol<1>(value); break;
-        case 0xba: paula.audxDat<1>(value); break;
+        case 0xba: paula.audxDat<1,false>(value); break;
 
         case 0xc0: setAudPtH<2>(value); break;
         case 0xc2: setAudPtL<2>(value); break;
         case 0xc4: paula.audxLen<2>(value); break;
         case 0xc6: paula.audxPer<2>(value); break;
         case 0xc8: paula.audxVol<2>(value); break;
-        case 0xca: paula.audxDat<2>(value); break;
+        case 0xca: paula.audxDat<2,false>(value); break;
 
         case 0xd0: setAudPtH<3>(value); break;
         case 0xd2: setAudPtL<3>(value); break;
         case 0xd4: paula.audxLen<3>(value); break;
         case 0xd6: paula.audxPer<3>(value); break;
         case 0xd8: paula.audxVol<3>(value); break;
-        case 0xda: paula.audxDat<3>(value); break;
+        case 0xda: paula.audxDat<3,false>(value); break;
 
         case 0xe0:
             if ((bplQueue & 7) != 1) setBpl1ptH(value);
@@ -364,7 +365,8 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
 
             if (ERSY) {
                 if ((value & 2) == 0) {
-                    updateEvent<EVENT_HTOTAL>(1, (beamCon & VARBEAMEN) ? (hTotal + lol) : (0xe2 + lol) );
+                    if (!hasActiveEvent<EVENT_HTOTAL>())
+                        updateEvent<EVENT_HTOTAL>((beamCon & VARBEAMEN) ? (hTotal + lol) : (0xe2 + lol) );
                 }
             }
 
@@ -393,7 +395,9 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
             bpl2Mod = (int16_t)value;
             break;
 
-        case 0x110: denise.setBpl1Dat(value); break;
+        case 0x110:
+            denise.setBpl1Dat(value);
+            break;
         case 0x112: denise.setBpl2Dat(value); break;
         case 0x114: denise.setBpl3Dat(value); break;
         case 0x116: denise.setBpl4Dat(value); break;

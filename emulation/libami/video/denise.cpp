@@ -2,6 +2,7 @@
 #include "denise.h"
 #include "../agnus/agnus.h"
 #include "../system/system.h"
+#include "../interface.h"
 
 #define LINE_BUFFER_WIDTH 1024
 #define LINE_BUFFER_HEIGHT 600
@@ -40,6 +41,8 @@ auto Denise::power() -> void {
 
     shifterA = 0;
     shifterB = 0;
+    bpl1dat = bpl2dat = bpl3dat = bpl4dat = bpl5dat = bpl6dat = 0;
+    dat1 = dat2 = dat3 = dat4 = dat5 = dat6 = 0;
 
     shifterAClxEna = 0;
     shifterBClxEna = 0;
@@ -79,10 +82,9 @@ auto Denise::power() -> void {
     endFrame = 0;
     vBlank = true;
     hBlank = true;
+    borderFlipFlop = true;
     hiresFrame = 0;
-
-    crop.left = 0;
-    crop.right = 0;
+    crop.reset();
 }
 
 // Denise listen for addresses, puted on RGA BUS
@@ -90,10 +92,7 @@ auto Denise::setBpl1Dat(uint16_t value) -> void {
     bpl1dat = value;
     if (!hBlank) {
         enableDisplay = true;
-        delayPf1 = bplCon1 & 0xf;
-        delayPf2 = (bplCon1 >> 4) & 0xf;
-        ready = 1 | 2;
-        updateCropLeft();
+        ready |= 0x80;
     }
 }
 
@@ -124,6 +123,8 @@ auto Denise::strvbl() -> void {
 
 auto Denise::startHblank() -> void {
     hBlank = true;
+    enableDisplay = false;
+    borderFlipFlop = true;
 
     if (endFrame) {
         endFrame--;
@@ -131,6 +132,7 @@ auto Denise::startHblank() -> void {
             if (useInterlace)
                 lineVCounter--;
 
+            crop.bottom = (lineVCounter > crop.bottom) ? (lineVCounter - crop.bottom) : 0;
             unsigned width = hiresFrame ? (LINE_MAX_WIDTH << 1) : LINE_MAX_WIDTH;
 
             system->videoRefresh(frameBuffer + LINE_RENDER_OFFSET, width, lineVCounter, LINE_BUFFER_WIDTH - width, useInterlace);
@@ -146,8 +148,8 @@ auto Denise::endHblank() -> void {
     if (!vBlank || endFrame) {
         hBlank = false;
         if (lineVCounter == 0) {
-            crop.left = 0;
-            crop.right = 0;
+            crop.reset();
+
             hiresFrame = hires ? 1 : 0; // can switch to hires mid frame
             // Denise doesn't need to know if Interlace is active. However, in order to arrange the resulting image in memory,
             // we need this information here.
@@ -191,12 +193,12 @@ auto Denise::setColor( uint8_t pos, uint16_t value ) -> void {
     }
 }
 
-auto Denise::setClxCon(uint16_t value) -> void {
-    shifterAClxEna = ((value & 0x40ULL) << 41) | ((value & 0x100) << 23) | ((value & 0x400) << 5);
-    shifterBClxEna = ((value & 0x80ULL) << 40) | ((value & 0x200) << 22) | ((value & 0x800) << 4);
+auto Denise::setClxCon(uint64_t value) -> void {
+    shifterAClxEna = ((value & 0x40) << 41) | ((value & 0x100) << 23) | ((value & 0x400) << 5);
+    shifterBClxEna = ((value & 0x80) << 40) | ((value & 0x200) << 22) | ((value & 0x800) << 4);
 
-    shifterAClxPolarity = ((value & 1ULL) << 47) | ((value & 4) << 29) | ((value & 16) << 11);
-    shifterBClxPolarity = ((value & 2ULL) << 46) | ((value & 8) << 28) | ((value & 32) << 10);
+    shifterAClxPolarity = ((value & 1) << 47) | ((value & 4) << 29) | ((value & 16) << 11);
+    shifterBClxPolarity = ((value & 2) << 46) | ((value & 8) << 28) | ((value & 32) << 10);
 
     sprClxMask = 0x55; // even sprites are always allowed
     for (unsigned i = 0; i < 4; i++ ) {
@@ -272,40 +274,54 @@ auto Denise::setBplCon2( uint16_t value ) -> void {
         pf2PrioIllegal = false;
 }
 
-inline auto Denise::processDelayPf1() -> void {
-    if (!delayPf1) {
+template<bool useHires> inline auto Denise::processDelayPf1() -> void {
+    //if (!delayPf1) {
+    uint16_t mask = useHires ? 7 : 15;
+
+    if ((hPos & mask) == delayPf1) {
         if (activePlanes >= 5) {
-            shifterA |= (unsigned long long)bpl1dat << 32;
-            shifterA |= bpl3dat << 16;
+            shifterA |= (uint64_t)dat1 << 32;
+            shifterA |= (uint64_t)dat3 << 16;
             if (!hires)
-                shifterA |= bpl5dat;
+                shifterA |= (uint64_t)dat5;
         } else if (activePlanes >= 3) {
-            shifterA |= (unsigned long long)bpl1dat << 32;
-            shifterA |= bpl3dat << 16;
+            shifterA |= (uint64_t)dat1 << 32;
+            shifterA |= (uint64_t)dat3 << 16;
         } else if (activePlanes >= 1) {
-            shifterA |= (unsigned long long)bpl1dat << 32;
+            shifterA |= (uint64_t)dat1 << 32;
         }
         ready &= ~1;
-    } else
-        delayPf1--;
+    } /*else {
+        if constexpr (useHires)
+            delayPf1 -= 2;
+        else
+            delayPf1--;
+    }*/
 }
 
-inline auto Denise::processDelayPf2() -> void {
-    if (!delayPf2) {
+template<bool useHires> inline auto Denise::processDelayPf2() -> void {
+    uint16_t mask = useHires ? 7 : 15;
+
+    //if (!delayPf2) {
+    if ((hPos & mask) == delayPf2) {
         if (activePlanes >= 6) {
-            shifterB |= (unsigned long long)bpl2dat << 32;
-            shifterB |= bpl4dat << 16;
+            shifterB |= (uint64_t)dat2 << 32;
+            shifterB |= (uint64_t)dat4 << 16;
             if (!hires)
-                shifterB |= bpl6dat;
+                shifterB |= (uint64_t)dat6;
         } else if (activePlanes >= 4) {
-            shifterB |= (unsigned long long)bpl2dat << 32;
-            shifterB |= bpl4dat << 16;
+            shifterB |= (uint64_t)dat2 << 32;
+            shifterB |= (uint64_t)dat4 << 16;
         } else if (activePlanes >= 2) {
-            shifterB |= (unsigned long long)bpl2dat << 32;
+            shifterB |= (uint64_t)dat2 << 32;
         }
         ready &= ~2;
-    } else
-        delayPf2--;
+    } /*else {
+        if constexpr (useHires)
+            delayPf2 -= 2;
+        else
+            delayPf2--;
+    }*/
 }
 
 #define SPF(v1) \
@@ -319,11 +335,11 @@ inline auto Denise::processDelayPf2() -> void {
     else if (!pf1NoCol && doublePlayfield)  clxDat |= (v1 << 1) | (v2 << 9);
 
 template<bool useHires> auto Denise::processPixel() -> void {
-    uint8_t sprGroup = 0;
-    uint8_t sprPrio = 0;
-    uint16_t sprData = 0;
-    uint8_t colIndex = 0;
-    uint8_t colIndex2 = 0;
+    uint8_t sprGroup;
+    uint8_t sprPrio;
+    uint16_t sprData;
+    uint8_t colIndex;
+    uint8_t colIndex2;
     uint16_t color;
     bool _ham = ham;
 
@@ -336,7 +352,59 @@ template<bool useHires> auto Denise::processPixel() -> void {
     Sprite& spr6 = sprites[6];
     Sprite& spr7 = sprites[7];
 
-    if constexpr (!useHires) { // two hires pixels in a row use same hpos, no need to compare same values again
+    for(int p = 0; p < 2; p++) {
+        sprGroup = 0;
+        sprData = 0;
+        sprPrio = 0;
+
+        if (spr0.shift) {
+            sprData |= ((spr0.shift & 0x80000000) >> 31) | ((spr0.shift & 0x8000) >> 14);
+            if ((sprData & 3) && (sprClxMask & 1) ) sprGroup |= 1;
+            spr0.shift = (spr0.shift << 1) & ~(0x10000);
+        }
+
+        if (spr1.shift) {
+            sprData |= ((spr1.shift & 0x80000000) >> 29) | ((spr1.shift & 0x8000) >> 12);
+            if ((sprData & 0xc) && (sprClxMask & 2) ) sprGroup |= 1;
+            spr1.shift = (spr1.shift << 1) & ~(0x10000);
+        }
+
+        if (spr2.shift) {
+            sprData |= ((spr2.shift & 0x80000000) >> 27) | ((spr2.shift & 0x8000) >> 10);
+            if ((sprData & 0x30) && (sprClxMask & 4) ) sprGroup |= 2;
+            spr2.shift = (spr2.shift << 1) & ~(0x10000);
+        }
+
+        if (spr3.shift) {
+            sprData |= ((spr3.shift & 0x80000000) >> 25) | ((spr3.shift & 0x8000) >> 8);
+            if ((sprData & 0xc0) && (sprClxMask & 8) ) sprGroup |= 2;
+            spr3.shift = (spr3.shift << 1) & ~(0x10000);
+        }
+
+        if (spr4.shift) {
+            sprData |= ((spr4.shift & 0x80000000) >> 23) | ((spr4.shift & 0x8000) >> 6);
+            if ((sprData & 0x300) && (sprClxMask & 0x10) ) sprGroup |= 4;
+            spr4.shift = (spr4.shift << 1) & ~(0x10000);
+        }
+
+        if (spr5.shift) {
+            sprData |= ((spr5.shift & 0x80000000) >> 21) | ((spr5.shift & 0x8000) >> 4);
+            if ((sprData & 0xc00) && (sprClxMask & 0x20) ) sprGroup |= 4;
+            spr5.shift = (spr5.shift << 1) & ~(0x10000);
+        }
+
+        if (spr6.shift) {
+            sprData |= ((spr6.shift & 0x80000000) >> 19) | ((spr6.shift & 0x8000) >> 2);
+            if ((sprData & 0x3000) && (sprClxMask & 0x40) ) sprGroup |= 8;
+            spr6.shift = (spr6.shift << 1) & ~(0x10000);
+        }
+
+        if (spr7.shift) {
+            sprData |= ((spr7.shift & 0x80000000) >> 17) | ((spr7.shift & 0x8000) >> 0);
+            if ((sprData & 0xc000) && (sprClxMask & 0x80) ) sprGroup |= 8;
+            spr7.shift = (spr7.shift << 1) & ~(0x10000);
+        }
+
         if (spr0.armed && (hPos == spr0.x)) spr0.shift = (spr0.datA << 16) | spr0.datB;
         if (spr1.armed && (hPos == spr1.x)) spr1.shift = (spr1.datA << 16) | spr1.datB;
         if (spr2.armed && (hPos == spr2.x)) spr2.shift = (spr2.datA << 16) | spr2.datB;
@@ -345,277 +413,227 @@ template<bool useHires> auto Denise::processPixel() -> void {
         if (spr5.armed && (hPos == spr5.x)) spr5.shift = (spr5.datA << 16) | spr5.datB;
         if (spr6.armed && (hPos == spr6.x)) spr6.shift = (spr6.datA << 16) | spr6.datB;
         if (spr7.armed && (hPos == spr7.x)) spr7.shift = (spr7.datA << 16) | spr7.datB;
-    }
 
-    if (spr0.shift) {
-        sprData |= ((spr0.shift & 0x80000000) >> 31) | ((spr0.shift & 0x8000) >> 14);
-        if ((sprData & 3) && (sprClxMask & 1) ) sprGroup |= 1;
-        spr0.shift = (spr0.shift << 1) & ~(0x10000);
-    }
-
-    if (spr1.shift) {
-        sprData |= ((spr1.shift & 0x80000000) >> 29) | ((spr1.shift & 0x8000) >> 12);
-        if ((sprData & 0xc) && (sprClxMask & 2) ) sprGroup |= 1;
-        spr1.shift = (spr1.shift << 1) & ~(0x10000);
-    }
-
-    if (spr2.shift) {
-        sprData |= ((spr2.shift & 0x80000000) >> 27) | ((spr2.shift & 0x8000) >> 10);
-        if ((sprData & 0x30) && (sprClxMask & 4) ) sprGroup |= 2;
-        spr2.shift = (spr2.shift << 1) & ~(0x10000);
-    }
-
-    if (spr3.shift) {
-        sprData |= ((spr3.shift & 0x80000000) >> 25) | ((spr3.shift & 0x8000) >> 8);
-        if ((sprData & 0xc0) && (sprClxMask & 8) ) sprGroup |= 2;
-        spr3.shift = (spr3.shift << 1) & ~(0x10000);
-    }
-
-    if (spr4.shift) {
-        sprData |= ((spr4.shift & 0x80000000) >> 23) | ((spr4.shift & 0x8000) >> 6);
-        if ((sprData & 0x300) && (sprClxMask & 0x10) ) sprGroup |= 4;
-        spr4.shift = (spr4.shift << 1) & ~(0x10000);
-    }
-
-    if (spr5.shift) {
-        sprData |= ((spr5.shift & 0x80000000) >> 21) | ((spr5.shift & 0x8000) >> 4);
-        if ((sprData & 0xc00) && (sprClxMask & 0x20) ) sprGroup |= 4;
-        spr5.shift = (spr5.shift << 1) & ~(0x10000);
-    }
-
-    if (spr6.shift) {
-        sprData |= ((spr6.shift & 0x80000000) >> 19) | ((spr6.shift & 0x8000) >> 2);
-        if ((sprData & 0x3000) && (sprClxMask & 0x40) ) sprGroup |= 8;
-        spr6.shift = (spr6.shift << 1) & ~(0x10000);
-    }
-
-    if (spr7.shift) {
-        sprData |= ((spr7.shift & 0x80000000) >> 17) | ((spr7.shift & 0x8000) >> 0);
-        if ((sprData & 0xc000) && (sprClxMask & 0x80) ) sprGroup |= 8;
-        spr7.shift = (spr7.shift << 1) & ~(0x10000);
-    }
-
-    // todo: influence illegal pf2 prio modes clxDat calculation
-    bool pf1NoCol = shifterAClxEna & (shifterA ^ shifterAClxPolarity);
-    bool pf2NoCol = shifterBClxEna & (shifterB ^ shifterBClxPolarity);
-
-    switch(sprGroup) {
-        case 0: if (!pf2NoCol && !pf1NoCol) clxDat |= 1; break;
-        case 1: SPF(1) break;
-        case 2: SPF(2) break;
-        case 3: SPF2(3, 1) break;
-        case 4: SPF(4) break;
-        case 5: SPF2(5, 2) break;
-        case 6: SPF2(6, 8) break;
-        case 7: SPF2(7, 11) break;
-        case 8: SPF(8) break;
-        case 9: SPF2(9, 4) break;
-        case 10: SPF2(10, 13) break;
-        case 11: SPF2(11, 21) break;
-        case 12: SPF2(12, 14) break;
-        case 13: SPF2(13, 38) break;
-        case 14: SPF2(14, 56) break;
-        case 15: SPF2(15, 63) break;
-    }
-
-    if (shifterA | shifterB) {
-        if (doublePlayfield) {
-            colIndex = (shifterA >> 47) | ((shifterA >> 30) & 2) | ((shifterA >> 13) & 4);
-            colIndex2 = (shifterB >> 47) | ((shifterB >> 30) & 2) | ((shifterB >> 13) & 4);
-
-            if (colIndex2)
-                colIndex2 |= 8;
-
-            if (_ham) {
-                uint8_t colIndexHam = (colIndex2 && (!colIndex || pf2PrioOverPf1)) ? colIndex2 : colIndex;
-
-                switch( ((colIndex2 & 4) >> 1) | ((colIndex & 4) >> 2) ) {
-                    case 0: hamColor = colors[ colIndexHam ]; break;
-                    case 1: hamColor = (hamColor & 0xff0) | colIndexHam; break;
-                    case 2: hamColor = (hamColor & 0x0ff) | (colIndexHam << 8); break;
-                    case 3: hamColor = (hamColor & 0xf0f) | (colIndexHam << 4); break;
+        if (sprData) {
+            if (sprData & 0xf) { // Spr 0/1
+                if (spr1.attached) {
+                    sprData = (sprData & 0xf) + 16;
+                } else {
+                    if (sprData & 3)
+                        sprData = (sprData & 3) + 16;
+                    else
+                        sprData = ((sprData >> 2) & 3) + 16;
                 }
-            }
-        } else {
-            colIndex = (shifterA >> 47) | ((shifterB >> 46) & 2) | ((shifterA >> 29) & 4)
-                       | ((shifterB >> 28) & 8) | ((shifterA >> 11) & 16) | ((shifterB >> 10) & 32);
-
-            if (_ham) {
-                switch(colIndex & 0x30) {
-                    case 0:     hamColor = colors[ colIndex & 0xf ]; break;
-                    case 0x10:  hamColor = (hamColor & 0xff0) | (colIndex & 0xf); break;
-                    case 0x20:  hamColor = (hamColor & 0x0ff) | ((colIndex & 0xf) << 8); break;
-                    case 0x30:  hamColor = (hamColor & 0xf0f) | ((colIndex & 0xf) << 4); break;
+            } else if (sprData & 0xf0) { // Spr 2/3
+                if (spr3.attached) {
+                    sprData = ((sprData & 0xf0) >> 4) + 16;
+                } else {
+                    if (sprData & 0x30)
+                        sprData = ((sprData >> 4) & 3) + 20;
+                    else
+                        sprData = ((sprData >> 6) & 3) + 20;
                 }
-            } else if (pf2PrioIllegal && (colIndex & 0x10)) {
-                colIndex &= 0x30;
+                sprPrio = 1;
+            } else if (sprData & 0xf00) { // Spr 4/5
+                if (spr5.attached) {
+                    sprData = ((sprData & 0xf00) >> 8) + 16;
+                } else {
+                    if (sprData & 0x300)
+                        sprData = ((sprData >> 8) & 3) + 24;
+                    else
+                        sprData = ((sprData >> 10) & 3) + 24;
+                }
+                sprPrio = 2;
+            } else { // Spr 6/7
+                if (spr7.attached) {
+                    sprData = ((sprData & 0xf000) >> 12) + 16;
+                } else {
+                    if (sprData & 0x3000)
+                        sprData = ((sprData >> 12) & 3) + 28;
+                    else
+                        sprData = ((sprData >> 14) & 3) + 28;
+                }
+                sprPrio = 3;
             }
         }
 
-        shifterA = (shifterA << 1) & ~(0x1000100010000);
-        shifterB = (shifterB << 1) & ~(0x1000100010000);
-    }
-
-    if constexpr (!useHires) {
-        if (!enableDisplay && (hPos == hStart)) {
-            enableDisplay = true;
-            if (!hBlank)
-                updateCropLeft();
-        }
-    }
-
-    if (enableDisplay) {
-        if constexpr (!useHires) {
+        if (!borderFlipFlop) {
             if (hPos == hStop) {
-                enableDisplay = false;
+                borderFlipFlop = true;
                 if (!hBlank)
                     updateCropRight();
-                colIndex = colIndex2 = 0;
-                _ham = false;
-                if (model & (OCS_A1000 | OCS_A1000_NO_EHB) );
-                else
-                    sprData = 0;
+            }
+        } else {
+            if (!hBlank && (hPos == hStart)) {
+                borderFlipFlop = false;
+                updateCropLeft();
             }
         }
 
-        if (!hBlank) {
-            if (sprData) {
-                if (sprData & 0xf) { // Spr 0/1
-                    if (spr1.attached) {
-                        sprData = (sprData & 0xf) + 16;
-                    } else {
-                        if (sprData & 3)
-                            sprData = (sprData & 3) + 16;
-                        else
-                            sprData = ((sprData >> 2) & 3) + 16;
-                    }
-                } else if (sprData & 0xf0) { // Spr 2/3
-                    if (spr3.attached) {
-                        sprData = ((sprData & 0xf0) >> 4) + 16;
-                    } else {
-                        if (sprData & 0x30)
-                            sprData = ((sprData >> 4) & 3) + 20;
-                        else
-                            sprData = ((sprData >> 6) & 3) + 20;
-                    }
-                    sprPrio = 1;
-                } else if (sprData & 0xf00) { // Spr 4/5
-                    if (spr5.attached) {
-                        sprData = ((sprData & 0xf00) >> 8) + 16;
-                    } else {
-                        if (sprData & 0x300)
-                            sprData = ((sprData >> 8) & 3) + 24;
-                        else
-                            sprData = ((sprData >> 10) & 3) + 24;
-                    }
-                    sprPrio = 2;
-                } else { // Spr 6/7
-                    if (spr7.attached) {
-                        sprData = ((sprData & 0xf000) >> 12) + 16;
-                    } else {
-                        if (sprData & 0x3000)
-                            sprData = ((sprData >> 12) & 3) + 28;
-                        else
-                            sprData = ((sprData >> 14) & 3) + 28;
-                    }
-                    sprPrio = 3;
-                }
+        for(int h = 0; h < (useHires ? 2 : 1); h++) {
+            colIndex = 0;
+            colIndex2 = 0;
+            // todo: influence illegal pf2 prio modes clxDat calculation
+            bool pf1NoCol = shifterAClxEna & (shifterA ^ shifterAClxPolarity);
+            bool pf2NoCol = shifterBClxEna & (shifterB ^ shifterBClxPolarity);
 
+            switch(sprGroup) {
+                case 0: if (!pf2NoCol && !pf1NoCol) clxDat |= 1; break;
+                case 1: SPF(1) break;
+                case 2: SPF(2) break;
+                case 3: SPF2(3, 1) break;
+                case 4: SPF(4) break;
+                case 5: SPF2(5, 2) break;
+                case 6: SPF2(6, 8) break;
+                case 7: SPF2(7, 11) break;
+                case 8: SPF(8) break;
+                case 9: SPF2(9, 4) break;
+                case 10: SPF2(10, 13) break;
+                case 11: SPF2(11, 21) break;
+                case 12: SPF2(12, 14) break;
+                case 13: SPF2(13, 38) break;
+                case 14: SPF2(14, 56) break;
+                case 15: SPF2(15, 63) break;
+            }
+
+            if (shifterA | shifterB) {
                 if (doublePlayfield) {
-                    if (!colIndex && !colIndex2) // both playfields are transparent
-                        color = colors[sprData];
-                    else if (!colIndex) { // playfield 1 is transparent
-                        if (sprPrio < pf2Prio)
-                            color = colors[sprData];
-                        else
-                            color = colors[pf2PrioIllegal ? 0 : colIndex2];
-                    } else if (!colIndex2) { // playfield 2 is transparent
-                        if (sprPrio < pf1Prio)
-                            color = colors[sprData];
-                        else
-                            color = colors[pf1PrioIllegal ? 0 : colIndex];
-                    } else { // both playfields are non transparent
-                        if ((sprPrio >= pf1Prio) && (sprPrio >= pf2Prio)) { // sprite behind playfields
-                            if (pf2PrioOverPf1)
-                                color = colors[pf2PrioIllegal ? 0 : colIndex2];
-                            else
-                                color = colors[pf1PrioIllegal ? 0 : colIndex];
-                        } else if ((sprPrio < pf1Prio) && (sprPrio < pf2Prio)) { // sprite before playfields
-                            color = colors[sprData];
-                        } else { // sprite between playfields
-                            if (pf1Prio > pf2Prio)
-                                color = colors[pf2PrioIllegal ? 0 : colIndex2];
-                            else
-                                color = colors[pf1PrioIllegal ? 0 : colIndex];
+                    colIndex = (shifterA >> 47) | ((shifterA >> 30) & 2) | ((shifterA >> 13) & 4);
+                    colIndex2 = (shifterB >> 47) | ((shifterB >> 30) & 2) | ((shifterB >> 13) & 4);
+
+                    if (colIndex2)
+                        colIndex2 |= 8;
+
+                    if (_ham) {
+                        uint8_t colIndexHam = (colIndex2 && (!colIndex || pf2PrioOverPf1)) ? colIndex2 : colIndex;
+
+                        switch( ((colIndex2 & 4) >> 1) | ((colIndex & 4) >> 2) ) {
+                            case 0: hamColor = colors[ colIndexHam ]; break;
+                            case 1: hamColor = (hamColor & 0xff0) | colIndexHam; break;
+                            case 2: hamColor = (hamColor & 0x0ff) | (colIndexHam << 8); break;
+                            case 3: hamColor = (hamColor & 0xf0f) | (colIndexHam << 4); break;
                         }
                     }
                 } else {
+                    colIndex = (shifterA >> 47) | ((shifterB >> 46) & 2) | ((shifterA >> 29) & 4)
+                               | ((shifterB >> 28) & 8) | ((shifterA >> 11) & 16) | ((shifterB >> 10) & 32);
+
                     if (_ham) {
-                        if (sprPrio < pf2Prio)
-                            color = colors[sprData];
-                        else
-                            color = hamColor;
-                    } else {
-                        if (!colIndex || (sprPrio < pf2Prio))
-                            color = colors[sprData];
-                        else
-                            color = colors[colIndex];
+                        switch(colIndex & 0x30) {
+                            case 0:     hamColor = colors[ colIndex & 0xf ]; break;
+                            case 0x10:  hamColor = (hamColor & 0xff0) | (colIndex & 0xf); break;
+                            case 0x20:  hamColor = (hamColor & 0x0ff) | ((colIndex & 0xf) << 8); break;
+                            case 0x30:  hamColor = (hamColor & 0xf0f) | ((colIndex & 0xf) << 4); break;
+                        }
+                    } else if (pf2PrioIllegal && (colIndex & 0x10)) {
+                        colIndex &= 0x30;
                     }
                 }
 
-            } else { // no sprite data
-                if (doublePlayfield) {
-                    if (colIndex2 && (!colIndex || pf2PrioOverPf1)) {
-                        color = colors[pf2PrioIllegal ? 0 : colIndex2];
-                    } else
-                        color = colors[pf1PrioIllegal ? 0 : colIndex];
-                } else {
-                    color = _ham ? hamColor : colors[colIndex];
-                }
+                shifterA = (shifterA << 1) & ~(0x1000100010000);
+                shifterB = (shifterB << 1) & ~(0x1000100010000);
             }
-        } else
-            color = 0; // blank
-    } else
-        color = hBlank ? 0 : colors[0]; // border
 
-    *(linePtr + linePos++) = color;
+            if (!borderFlipFlop && enableDisplay) {
+                if (sprData) {
+                    if (doublePlayfield) {
+                        if (!colIndex && !colIndex2) // both playfields are transparent
+                            color = colors[sprData];
+                        else if (!colIndex) { // playfield 1 is transparent
+                            if (sprPrio < pf2Prio)
+                                color = colors[sprData];
+                            else
+                                color = colors[pf2PrioIllegal ? 0 : colIndex2];
+                        } else if (!colIndex2) { // playfield 2 is transparent
+                            if (sprPrio < pf1Prio)
+                                color = colors[sprData];
+                            else
+                                color = colors[pf1PrioIllegal ? 0 : colIndex];
+                        } else { // both playfields are non transparent
+                            if ((sprPrio >= pf1Prio) && (sprPrio >= pf2Prio)) { // sprite behind playfields
+                                if (pf2PrioOverPf1)
+                                    color = colors[pf2PrioIllegal ? 0 : colIndex2];
+                                else
+                                    color = colors[pf1PrioIllegal ? 0 : colIndex];
+                            } else if ((sprPrio < pf1Prio) && (sprPrio < pf2Prio)) { // sprite before playfields
+                                color = colors[sprData];
+                            } else { // sprite between playfields
+                                if (pf1Prio > pf2Prio)
+                                    color = colors[pf2PrioIllegal ? 0 : colIndex2];
+                                else
+                                    color = colors[pf1PrioIllegal ? 0 : colIndex];
+                            }
+                        }
+                    } else {
+                        if (_ham) {
+                            if (sprPrio < pf2Prio)
+                                color = colors[sprData];
+                            else
+                                color = hamColor;
+                        } else {
+                            if (!colIndex || (sprPrio < pf2Prio))
+                                color = colors[sprData];
+                            else
+                                color = colors[colIndex];
+                        }
+                    }
 
-    if constexpr(!useHires) {
-        if (hiresFrame & 0x80) // lores frame with hires content
+                } else { // no sprite data
+                    if (doublePlayfield) {
+                        if (colIndex2 && (!colIndex || pf2PrioOverPf1)) {
+                            color = colors[pf2PrioIllegal ? 0 : colIndex2];
+                        } else
+                            color = colors[pf1PrioIllegal ? 0 : colIndex];
+                    } else {
+                        color = _ham ? hamColor : colors[colIndex];
+                    }
+                }
+            } else
+                color = hBlank ? 0 : colors[0];
+
             *(linePtr + linePos++) = color;
-    }
 
-    // if agnus misses strobe
-    linePos &= LINE_BUFFER_WIDTH - 1;
+            if constexpr(!useHires) {
+                if (hiresFrame & 0x80) // lores frame with hires content
+                    *(linePtr + linePos++) = color;
+            }
+
+            // if agnus misses strobe
+            linePos &= LINE_BUFFER_WIDTH - 1;
+        }
+
+        if (ready & 3) {
+            if (ready & 1) processDelayPf1<useHires>();
+            if (ready & 2) processDelayPf2<useHires>();
+        }
+
+        hPos++;
+    }
 }
 
 auto Denise::process() -> void {
     if (enableSequencer) {
-        processPixel<false>();
-        if (hires)
-            processPixel<true>();
+        if (hires) processPixel<true>();
+        else processPixel<false>();
 
-        if (ready) {
-            if (ready & 1)
-                processDelayPf1();
-            if (ready & 2)
-                processDelayPf2();
+        if (ready & 0x80) {
+            delayPf1 = bplCon1 & 0xf;
+            delayPf2 = (bplCon1 >> 4) & 0xf;
+            if (hires) {
+                //delayPf1 &= ~1;
+                //delayPf2 &= ~1;
+                delayPf1 >>= 1;
+                delayPf2 >>= 1;
+            }
+            dat1 = bpl1dat;
+            dat2 = bpl2dat;
+            dat3 = bpl3dat;
+            dat4 = bpl4dat;
+            dat5 = bpl5dat;
+            dat6 = bpl6dat;
+            ready = 1 | 2;
         }
 
-        hPos++;
-
-        processPixel<false>();
-        if (hires)
-            processPixel<true>();
-
-        if (ready) {
-            if (ready & 1)
-                processDelayPf1();
-            if (ready & 2)
-                processDelayPf2();
-        }
-
-        hPos++;
     } else
         hPos += 2;
 
@@ -623,7 +641,7 @@ auto Denise::process() -> void {
 
     // OCS Denise has no CSYNC input
     if (hBlank) {
-        if (hPos == 96)
+        if (hPos == 94)     // 456 - 2 - 384 (CRT Monitor) = 70 blanking pixel
             endHblank();
     } else {
         if (hPos == 24)
@@ -636,34 +654,46 @@ auto Denise::switchToHiresMidframe() -> void {
     unsigned xStart;
 
     for (int y = 0; y < lineVCounter; y++) {
-        curLinePtr = frameBuffer + y * LINE_BUFFER_WIDTH;
-        xStart = curLinePtr != linePtr ? LINE_MAX_WIDTH : linePos - 1;
+        curLinePtr = frameBuffer + y * LINE_BUFFER_WIDTH + LINE_RENDER_OFFSET;
+        xStart = curLinePtr != linePtr ? (LINE_MAX_WIDTH - 1) : (linePos - 1);
 
         doubleLoresPixel( curLinePtr, xStart );
     }
+    linePos <<= 1;
 }
 
 inline auto Denise::doubleLoresPixel(uint16_t* _ptr, unsigned _xStart) -> void {
+    uint16_t p;
     for (int _x = _xStart; _x >= 0; _x--) {
-        *( _ptr + (_x * 2 + 1) ) = *( _ptr + _x );
-        *( _ptr + (_x * 2) ) = *( _ptr + _x );
+        p = *( _ptr + _x );
+        *( _ptr + (_x * 2 + 1) ) = p;
+        *( _ptr + (_x * 2) ) = p;
     }
 }
 
-auto Denise::updateCropLeft() -> void {
+auto Denise::updateCropTop() -> void {
+    if (!crop.top && (lineVCounter < 100))
+        crop.top = lineVCounter;
+}
 
-    if (!crop.left || (crop.left > linePos))
-        crop.left = hiresFrame ? linePos << 1 : linePos;
+auto Denise::updateCropBottom() -> void {
+    if (!crop.bottom)
+        crop.bottom = lineVCounter;
+}
+
+auto Denise::updateCropLeft() -> void {
+    if (!crop.left && (lineVCounter == 100))
+        crop.left = linePos + 1;
 }
 
 auto Denise::updateCropRight() -> void {
     unsigned diff = 0;
-    unsigned limit = hiresFrame ? LINE_MAX_WIDTH << 1 : LINE_MAX_WIDTH;
+    unsigned limit = hiresFrame ? (LINE_MAX_WIDTH << 1) : LINE_MAX_WIDTH;
 
     if (limit > linePos)
         diff = limit - linePos;
 
-    if (!crop.right || (crop.right > diff))
+    if (!crop.right && (lineVCounter == 100))
         crop.right = diff;
 }
 
@@ -683,6 +713,12 @@ auto Denise::serialize(Emulator::Serializer& s) -> void {
     s.integer(bpl4dat);
     s.integer(bpl5dat);
     s.integer(bpl6dat);
+    s.integer(dat1);
+    s.integer(dat2);
+    s.integer(dat3);
+    s.integer(dat4);
+    s.integer(dat5);
+    s.integer(dat6);
     s.integer(shifterA);
     s.integer(shifterB);
     s.integer(shifterAClxEna);
@@ -695,6 +731,7 @@ auto Denise::serialize(Emulator::Serializer& s) -> void {
     s.integer(delayPf2);
     s.integer(bplCon1);
     s.integer(enableDisplay);
+    s.integer(borderFlipFlop);
     s.integer(linePos);
     s.integer(lineVCounter);
 
@@ -710,6 +747,8 @@ auto Denise::serialize(Emulator::Serializer& s) -> void {
 
     s.integer(crop.left);
     s.integer(crop.right);
+    s.integer(crop.top);
+    s.integer(crop.bottom);
     s.integer(sprClxMask);
     s.integer(pf2PrioOverPf1);
     s.integer(pf1Prio);

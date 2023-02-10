@@ -19,10 +19,6 @@ paula(this, agnus, cpu, input, diskDrives[0], diskDrives[1], diskDrives[2], disk
 agnus(this, cpu, denise, paula, cia1, cia2, input),
 input(this, agnus, cia1) {
 
-    agnus.prepareEvents();
-    paula.prepareEvents();
-    input.keyboard.prepareEvents();
-
     cia1.serialOut = [this](bool spLine, bool cntLine) {
         // Keyboard computer is not interested in CNT line changes, triggered by CIA
         input.keyboard.handshake(spLine);
@@ -92,11 +88,11 @@ input(this, agnus, cia1) {
     };
 
     crop.monitorBorderCallback = [this](unsigned& top, unsigned& bottom, unsigned& left, unsigned& right) {
-        left = 21; // 384 CRT monitor, 342 CRT TV
-        right = 21;
+        left = 20; // 384 CRT monitor, 344 CRT TV
+        right = 20;
 
         top = agnus.ntsc ? 5 : 7;
-        bottom = agnus.ntsc ? 1 : 14;
+        bottom = agnus.ntsc ? 5 : 7;
 
         if (denise.hiresFrame) {
             left <<= 1;
@@ -111,6 +107,8 @@ input(this, agnus, cia1) {
     crop.removeBorderCallback = [this](unsigned& top, unsigned& bottom, unsigned& left, unsigned& right) {
         left = denise.crop.left;
         right = denise.crop.right;
+        top = denise.crop.top;
+        bottom = denise.crop.bottom;
     };
 
     paula.activeDrive = &diskDrives[0];

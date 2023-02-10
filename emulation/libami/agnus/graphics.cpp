@@ -87,42 +87,42 @@ template<bool onlyProgressQueue> auto Agnus::fetchPlanes() -> void {
                 break;
 
             UseBpl4(1) UseBpl5(1) UseBpl6(1) UseBpl7(1)
-                bplQueue |= 4 << 24; break;
+                bplQueue |= 4 << 8; break;
 
             UseBpl4Mod(1) UseBpl5Mod(1) UseBpl6Mod(1) UseBpl7Mod(1)
-                bplQueue |= 0x84 << 24; break;
+                bplQueue |= 0x84 << 8; break;
 
             UseBpl6(2)
-                bplQueue |= 6 << 24; break;
+                bplQueue |= 6 << 8; break;
 
             UseBpl6Mod(2)
-                bplQueue |= 0x86 << 24; break;
+                bplQueue |= 0x86 << 8; break;
 
             UseBpl2(3) UseBpl3(3) UseBpl4(3) UseBpl5(3) UseBpl6(3) UseBpl7(3)
-                bplQueue |= 2 << 24; break;
+                bplQueue |= 2 << 8; break;
 
             UseBpl2Mod(3) UseBpl3Mod(3) UseBpl4Mod(3) UseBpl5Mod(3) UseBpl6Mod(3) UseBpl7Mod(3)
-                bplQueue |= 0x82 << 24; break;
+                bplQueue |= 0x82 << 8; break;
 
             ALL_BPL(4) ALL_BPL_MOD(4)
                 break;
 
             UseBpl3(5) UseBpl4(5) UseBpl5(5) UseBpl6(5) UseBpl7(5)
-                bplQueue |= 3 << 24; break;
+                bplQueue |= 3 << 8; break;
 
             UseBpl3Mod(5) UseBpl4Mod(5) UseBpl5Mod(5) UseBpl6Mod(5) UseBpl7Mod(5)
-                bplQueue |= 0x83 << 24; break;
+                bplQueue |= 0x83 << 8; break;
 
             UseBpl5(6) UseBpl6(6)
-                bplQueue |= 5 << 24; break;
+                bplQueue |= 5 << 8; break;
 
             UseBpl5Mod(6) UseBpl6Mod(6)
-                bplQueue |= 0x85 << 24; break;
+                bplQueue |= 0x85 << 8; break;
 
             UseBpl1(7) UseBpl2(7) UseBpl3(7) UseBpl4(7) UseBpl5(7) UseBpl6(7) UseBpl7(7)
             UseBplHires1(7) UseBplHires2(7) UseBplHires3(7) UseBplHires4(7) UseBplHires5(7) UseBplHires6(7) UseBplHires7(7)
             UseBplSHires1(7) UseBplSHires2(7) UseBplSHires3(7) UseBplSHires4(7) UseBplSHires5(7) UseBplSHires6(7) UseBplSHires7(7)
-                bplQueue |= 1 << 24;
+                bplQueue |= 1 << 8;
             UseBpl0(7) UseBplHires0(7) UseBplSHires0(7)
                 bplCycle &= ~15;
                 if (stopFetching)
@@ -132,7 +132,7 @@ template<bool onlyProgressQueue> auto Agnus::fetchPlanes() -> void {
             UseBpl1Mod(7) UseBpl2Mod(7) UseBpl3Mod(7) UseBpl4Mod(7) UseBpl5Mod(7) UseBpl6Mod(7) UseBpl7Mod(7)
             UseBplHires1Mod(7) UseBplHires2Mod(7) UseBplHires3Mod(7) UseBplHires4Mod(7) UseBplHires5Mod(7) UseBplHires6Mod(7) UseBplHires7Mod(7)
             UseBplSHires1Mod(7) UseBplSHires2Mod(7) UseBplSHires3Mod(7) UseBplSHires4Mod(7) UseBplSHires5Mod(7) UseBplSHires6Mod(7) UseBplSHires7Mod(7)
-                bplQueue |= 0x81 << 24;
+                bplQueue |= 0x81 << 8;
             UseBpl0Mod(7) UseBplHires0Mod(7) UseBplSHires0Mod(7)
                 stopFetching = false;
                 bplCycle = BPL_QUEUE;
@@ -144,67 +144,67 @@ template<bool onlyProgressQueue> auto Agnus::fetchPlanes() -> void {
 // hires
             UseBplHires4(0) UseBplHires5(0) UseBplHires6(0) UseBplHires7(0)
             UseBplHires4Mod(0) UseBplHires5Mod(0) UseBplHires6Mod(0) UseBplHires7Mod(0)
-                bplQueue |= 4 << 24; break;
+                bplQueue |= 4 << 8; break;
 
             UseBplHires2(1) UseBplHires3(1) UseBplHires4(1) UseBplHires5(1) UseBplHires6(1) UseBplHires7(1)
             UseBplHires2Mod(1) UseBplHires3Mod(1) UseBplHires4Mod(1) UseBplHires5Mod(1) UseBplHires6Mod(1) UseBplHires7Mod(1)
-                bplQueue |= 2 << 24; break;
+                bplQueue |= 2 << 8; break;
 
             UseBplHires3(2) UseBplHires4(2) UseBplHires5(2) UseBplHires6(2) UseBplHires7(2)
             UseBplHires3Mod(2) UseBplHires4Mod(2) UseBplHires5Mod(2) UseBplHires6Mod(2) UseBplHires7Mod(2)
-                bplQueue |= 3 << 24; break;
+                bplQueue |= 3 << 8; break;
 
             UseBplHires1(3) UseBplHires2(3) UseBplHires3(3) UseBplHires4(3) UseBplHires5(3) UseBplHires6(3) UseBplHires7(3)
             UseBplHires1Mod(3) UseBplHires2Mod(3) UseBplHires3Mod(3) UseBplHires4Mod(3) UseBplHires5Mod(3) UseBplHires6Mod(3) UseBplHires7Mod(3)
-                bplQueue |= 1 << 24; break;
+                bplQueue |= 1 << 8; break;
 
             UseBplHires4(4) UseBplHires5(4) UseBplHires6(4) UseBplHires7(4)
-                bplQueue |= 4 << 24; break;
+                bplQueue |= 4 << 8; break;
 
             UseBplHires4Mod(4) UseBplHires5Mod(4) UseBplHires6Mod(4) UseBplHires7Mod(4)
-                bplQueue |= 0x84 << 24; break;
+                bplQueue |= 0x84 << 8; break;
 
             UseBplHires2(5) UseBplHires3(5) UseBplHires4(5) UseBplHires5(5) UseBplHires6(5) UseBplHires7(5)
-                bplQueue |= 2 << 24; break;
+                bplQueue |= 2 << 8; break;
 
             UseBplHires2Mod(5) UseBplHires3Mod(5) UseBplHires4Mod(5) UseBplHires5Mod(5) UseBplHires6Mod(5) UseBplHires7Mod(5)
-                bplQueue |= 0x82 << 24; break;
+                bplQueue |= 0x82 << 8; break;
 
             UseBplHires3(6) UseBplHires4(6) UseBplHires5(6) UseBplHires6(6) UseBplHires7(6)
-                bplQueue |= 3 << 24; break;
+                bplQueue |= 3 << 8; break;
 
             UseBplHires3Mod(6) UseBplHires4Mod(6) UseBplHires5Mod(6) UseBplHires6Mod(6) UseBplHires7Mod(6)
-                bplQueue |= 0x83 << 24; break;
+                bplQueue |= 0x83 << 8; break;
 // shires
             UseBplSHires2(0) UseBplSHires3(0) UseBplSHires4(0) UseBplSHires5(0) UseBplSHires6(0) UseBplSHires7(0)
             UseBplSHires2Mod(0) UseBplSHires3Mod(0) UseBplSHires4Mod(0) UseBplSHires5Mod(0) UseBplSHires6Mod(0) UseBplSHires7Mod(0)
-                bplQueue |= 2 << 24; break;
+                bplQueue |= 2 << 8; break;
 
             UseBplSHires1(1) UseBplSHires2(1) UseBplSHires3(1) UseBplSHires4(1) UseBplSHires5(1) UseBplSHires6(1) UseBplSHires7(1)
             UseBplSHires1Mod(1) UseBplSHires2Mod(1) UseBplSHires3Mod(1) UseBplSHires4Mod(1) UseBplSHires5Mod(1) UseBplSHires6Mod(1) UseBplSHires7Mod(1)
-                bplQueue |= 1 << 24; break;
+                bplQueue |= 1 << 8; break;
 
             UseBplSHires2(2) UseBplSHires3(2) UseBplSHires4(2) UseBplSHires5(2) UseBplSHires6(2) UseBplSHires7(2)
             UseBplSHires2Mod(2) UseBplSHires3Mod(2) UseBplSHires4Mod(2) UseBplSHires5Mod(2) UseBplSHires6Mod(2) UseBplSHires7Mod(2)
-                bplQueue |= 2 << 24; break;
+                bplQueue |= 2 << 8; break;
 
             UseBplSHires1(3) UseBplSHires2(3) UseBplSHires3(3) UseBplSHires4(3) UseBplSHires5(3) UseBplSHires6(3) UseBplSHires7(3)
             UseBplSHires1Mod(3) UseBplSHires2Mod(3) UseBplSHires3Mod(3) UseBplSHires4Mod(3) UseBplSHires5Mod(3) UseBplSHires6Mod(3) UseBplSHires7Mod(3)
-                bplQueue |= 1 << 24; break;
+                bplQueue |= 1 << 8; break;
 
             UseBplSHires2(4) UseBplSHires3(4) UseBplSHires4(4) UseBplSHires5(4) UseBplSHires6(4) UseBplSHires7(4)
             UseBplSHires2Mod(4) UseBplSHires3Mod(4) UseBplSHires4Mod(4) UseBplSHires5Mod(4) UseBplSHires6Mod(4) UseBplSHires7Mod(4)
-                bplQueue |= 2 << 24; break;
+                bplQueue |= 2 << 8; break;
 
             UseBplSHires1(5) UseBplSHires2(5) UseBplSHires3(5) UseBplSHires4(5) UseBplSHires5(5) UseBplSHires6(5) UseBplSHires7(5)
             UseBplSHires1Mod(5) UseBplSHires2Mod(5) UseBplSHires3Mod(5) UseBplSHires4Mod(5) UseBplSHires5Mod(5) UseBplSHires6Mod(5) UseBplSHires7Mod(5)
-                bplQueue |= 1 << 24; break;
+                bplQueue |= 1 << 8; break;
 
             UseBplSHires2(6) UseBplSHires3(6) UseBplSHires4(6) UseBplSHires5(6) UseBplSHires6(6) UseBplSHires7(6)
-                bplQueue |= 2 << 24; break;
+                bplQueue |= 2 << 8; break;
 
             UseBplSHires2Mod(6) UseBplSHires3Mod(6) UseBplSHires4Mod(6) UseBplSHires5Mod(6) UseBplSHires6Mod(6) UseBplSHires7Mod(6)
-                bplQueue |= 0x82 << 24; break;
+                bplQueue |= 0x82 << 8; break;
         }
     }
 
@@ -363,12 +363,12 @@ template<uint8_t num, bool first> auto Agnus::spriteControl() -> void {
             actions |= ACT_SPRITE;
 
             if (first)
-                sprQueue |= ((0x80 | num) << 24);
+                sprQueue |= ((0x80 | num) << 16);
             else
-                sprQueue |= ((0xc0 | num) << 24);
+                sprQueue |= ((0xc0 | num) << 16);
 
             if (!spr.fetchData)
-                sprQueue |= 0x20 << 24;
+                sprQueue |= 0x20 << 16;
         }
     }
 

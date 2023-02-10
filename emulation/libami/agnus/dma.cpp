@@ -163,8 +163,7 @@ auto Agnus::diskDma(bool writeMode) -> void {
 //        system->interface->log(value,0,1);
     }
 
-    if ((getActiveEvent<EVENT_ONE_CYCLE_DELAY>() & ~1) == PTR_DSK_H)
-        setEventInactive<EVENT_ONE_CYCLE_DELAY>();
+    inactivateOneCycleEvent(Agnus::PTR_DSK_H);
 
     dskpt += 2;
     dskpt &= chipMemMask;
@@ -207,7 +206,7 @@ template<uint8_t nr> auto Agnus::fetchSample(bool reset) -> void {
 
     cha.ptr &= chipMemMask;
 
-    paula.audxDat<nr>( dataBus ); // put on RGA BUS
+    paula.audxDat<nr, true>( dataBus ); // put on RGA BUS
 
     busUsage = BUS_USAGE_DMAL;
 }
@@ -308,8 +307,7 @@ template<uint8_t ptrEvent> auto Agnus::fetchBlitterDma(uint32_t adr, uint16_t& r
     dataBus = result;
 
     // if a modified pointer is used in the next cycle, the change is ignored.
-    if ((getActiveEvent<EVENT_ONE_CYCLE_DELAY>() & ~1) == ptrEvent)
-        setEventInactive<EVENT_ONE_CYCLE_DELAY>();
+    inactivateOneCycleEvent(ptrEvent);
 
     return true;
 }
@@ -332,8 +330,7 @@ auto Agnus::writeBlitterDma(uint32_t adr, uint16_t value) -> bool {
 //    system->interface->log(adr,0,1);
 //    system->interface->log(value,0,1);
 
-    if ((getActiveEvent<EVENT_ONE_CYCLE_DELAY>() & ~1) == PTR_BLT_D_H)
-        setEventInactive<EVENT_ONE_CYCLE_DELAY>();
+    inactivateOneCycleEvent(PTR_BLT_D_H);
 
     return true;
 }
@@ -345,8 +342,7 @@ template<uint8_t ptrEvent> auto Agnus::fetchBlitterDmaNoBUSCheck(uint32_t adr, u
 
     dataBus = result;
 
-    if ((getActiveEvent<EVENT_ONE_CYCLE_DELAY>() & ~1) == ptrEvent)
-        setEventInactive<EVENT_ONE_CYCLE_DELAY>();
+    inactivateOneCycleEvent(ptrEvent);
 }
 
 auto Agnus::writeBlitterDmaNoBUSCheck(uint32_t adr, uint16_t value) -> void {
@@ -363,8 +359,7 @@ auto Agnus::writeBlitterDmaNoBUSCheck(uint32_t adr, uint16_t value) -> void {
 
     dataBus = value;
 
-    if ((getActiveEvent<EVENT_ONE_CYCLE_DELAY>() & ~1) == PTR_BLT_D_H)
-        setEventInactive<EVENT_ONE_CYCLE_DELAY>();
+    inactivateOneCycleEvent(PTR_BLT_D_H);
 }
 
 }

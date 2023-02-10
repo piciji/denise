@@ -5,9 +5,7 @@
 #include "audio.cpp"
 #include "filter.cpp"
 #include "fdc.cpp"
-#include "../input/input.h"
-#include "../input/controlPort/controlPort.h"
-#include "../../tools/clamp.h"
+#include "pot.cpp"
 
 #define INT2_1 1
 #define INT2_2 2
@@ -85,39 +83,20 @@ input(input) {
     enableFilter = true;
 }
 
-auto Paula::prepareEvents() -> void {
-    callbackStateMachine = [&](uint8_t job, uint16_t data) {
-        agnus.setEventInactive<Agnus::EVENT_AUDIO_STATE>();
-
-        Channel& cha0 = channels[0];
-        Channel& cha1 = channels[1];
-        Channel& cha2 = channels[2];
-        Channel& cha3 = channels[3];
-        uint64_t clock = agnus.clock;
-
-        if (cha0.clock == clock) stateMainloop<0>();
-        if (cha1.clock == clock) stateMainloop<1>();
-        if (cha2.clock == clock) stateMainloop<2>();
-        if (cha3.clock == clock) stateMainloop<3>();
-    };
-
-    agnus.addEvent<Agnus::EVENT_AUDIO_STATE>( &callbackStateMachine );
-}
-
 auto Paula::dmal() -> uint16_t {
     uint16_t out = 0;
 
     for(uint8_t nr = 0; nr < 4; nr++) {
         Channel& cha = channels[nr];
 
-        if (cha.dr) {
+        if (cha.dsr) {
             out |= 1 << (nr << 1);
-            cha.dr = false;
+            cha.dsr = false;
         }
 
-        if (cha.dsr) {
+        if (cha.dr) {
             out |= 1 << ((nr << 1) + 1);
-            cha.dsr = false;
+            cha.dr = false;
         }
     }
 
@@ -196,7 +175,8 @@ auto Paula::strhor() -> void {
     if (vBlankIntr)
         vBlankIntr = false;
 
-    progressPot();
+    if (pot.running)
+        progressPot();
 }
 
 auto Paula::strequ() -> void {
@@ -204,11 +184,14 @@ auto Paula::strequ() -> void {
         vBlankIntr = true;
         irqDelay |= INT_VBL_1;
     }
-    progressPot();
+
+    if (pot.running)
+        progressPot();
 }
 
 auto Paula::strvbl() -> void {
-    progressPot();
+    if (pot.running)
+        progressPot();
 }
 
 auto Paula::getIntena() -> uint16_t {
@@ -252,94 +235,6 @@ auto Paula::setIntreq(uint16_t value) -> void {
 
     irqDelay |= INT_UPD_1;
 }
-
-#define POT_DIR_X0 0x200
-#define POT_DIR_Y0 0x800
-#define POT_DIR_X1 0x2000
-#define POT_DIR_Y1 0x8000
-
-#define POT_DAT_X0 0x100
-#define POT_DAT_Y0 0x400
-#define POT_DAT_X1 0x1000
-#define POT_DAT_Y1 0x4000
-
-auto Paula::pot0Dat() -> uint16_t {
-    return (pot.cntY0 << 8) | pot.cntX0;
-}
-
-auto Paula::pot1Dat() -> uint16_t {
-    return (pot.cntY1 << 8) | pot.cntX1;
-}
-
-auto Paula::potGoR() -> uint16_t {
-    uint16_t out = 0;
-    if (pot.capX0 == 255) out |= POT_DAT_X0;
-    if (pot.capY0 == 255) out |= POT_DAT_Y0;
-    if (pot.capX1 == 255) out |= POT_DAT_X1;
-    if (pot.capY1 == 255) out |= POT_DAT_Y1;
-
-    return out;
-}
-
-auto Paula::progressPot() -> void {
-    uint16_t sum;
-
-    if (pot.dischargeCounter) {
-        if (--pot.dischargeCounter)  {
-            // probably not fully discharged after a single line
-            if ((pot.go & POT_DIR_X0) == 0) pot.capX0 = 0;
-            if ((pot.go & POT_DIR_Y0) == 0) pot.capY0 = 0;
-            if ((pot.go & POT_DIR_X1) == 0) pot.capX1 = 0;
-            if ((pot.go & POT_DIR_Y1) == 0) pot.capY1 = 0;
-        }
-    } else {
-        // charge unit is not connected in output mode
-        if (pot.capX0 != 255) {
-            pot.cntX0++;
-            if ((pot.go & POT_DIR_X0) == 0) {
-                sum = pot.capX0 + input.controlPort1->getPotX();
-                pot.capX0 = sum > 0xff ? 0xff : sum;
-            }
-        }
-        if (pot.capY0 != 255) {
-            pot.cntY0++;
-            if ((pot.go & POT_DIR_Y0) == 0) {
-                sum = pot.capY0 + input.controlPort1->getPotY();
-                pot.capY0 = sum > 0xff ? 0xff : sum;
-            }
-        }
-        if (pot.capX1 != 255) {
-            pot.cntX1++;
-            if ((pot.go & POT_DIR_X1) == 0) {
-                sum = pot.capX1 + input.controlPort2->getPotX();
-                pot.capX1 = sum > 0xff ? 0xff : sum;
-            }
-        }
-        if (pot.capY1 != 255) {
-            pot.cntY1++;
-            if ((pot.go & POT_DIR_Y1) == 0) {
-                sum = pot.capY1 + input.controlPort2->getPotY();
-                pot.capY1 = sum > 0xff ? 0xff : sum;
-            }
-        }
-    }
-}
-
-auto Paula::potGo(uint16_t value) -> void {
-    pot.go = value;
-
-    // charge/discharge fast in output mode, hence counter is free running in output + lo and stopped in output + hi
-    if (pot.go & POT_DIR_X0) pot.capX0 = (pot.go & POT_DAT_X0) ? 255 : 0;
-    if (pot.go & POT_DIR_Y0) pot.capY0 = (pot.go & POT_DAT_Y0) ? 255 : 0;
-    if (pot.go & POT_DIR_X1) pot.capX1 = (pot.go & POT_DAT_X1) ? 255 : 0;
-    if (pot.go & POT_DIR_Y1) pot.capY1 = (pot.go & POT_DAT_Y1) ? 255 : 0;
-
-    if (value & 1) {
-        pot.cntY0 = pot.cntX0 = pot.cntY1 = pot.cntX1 = 0;
-        pot.dischargeCounter = agnus.ntsc ? 7 : 8;
-    }
-}
-
 
 auto Paula::dmaCon(uint16_t value) -> void {
     // Audio and Disk DMA usage will be evaluated only by Paula
@@ -418,7 +313,6 @@ auto Paula::serialize(Emulator::Serializer& s, bool light) -> void {
         s.integer(cha.intreq2);
         s.integer(cha.clock);
         s.integer(cha.state);
-        s.integer(cha.per);
         s.integer(cha.perLatch);
         s.integer(cha.len);
         s.integer(cha.lenLatch);
@@ -493,11 +387,12 @@ auto Paula::power() -> void {
     pot.cntY0 = 0;
     pot.cntX1 = 0;
     pot.cntY1 = 0;
-    pot.capX0 = 0;
-    pot.capY0 = 0;
-    pot.capX1 = 0;
-    pot.capY1 = 0;
+    pot.capX0 = 0xff;
+    pot.capY0 = 0xff;
+    pot.capX1 = 0xff;
+    pot.capY1 = 0xff;
     pot.go = 0;
+    pot.running = false;
     pot.dischargeCounter = 0;
 
     for(uint8_t c = 0; c < 4; c++) {
@@ -507,9 +402,8 @@ auto Paula::power() -> void {
         cha.dr = false;
         cha.dsr = false;
         cha.intreq2 = false;
-        cha.clock = 0;
+        cha.clock = INT64_MAX;
         cha.state = 0;
-        cha.per = 0;
         cha.perLatch = 0;
         cha.len = 0;
         cha.lenLatch = 0;
@@ -520,7 +414,7 @@ auto Paula::power() -> void {
         cha.sample = 0;
         cha.audav = false;
         cha.audap = false;
-        cha.napnav = false;
+        cha.napnav = true;
     }
 
     dmaDisk = false;

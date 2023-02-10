@@ -5,7 +5,6 @@
 #include "joypad.cpp"
 #include "mouse.cpp"
 
-
 namespace LIBAMI  {
 
 ControlPort::ControlPort( Emulator::Interface* interface, Emulator::Interface::Device* device ) {
@@ -22,8 +21,8 @@ auto ControlPort::create( Emulator::Interface* interface, Emulator::Interface::D
     if (device->isJoypad())
         return new Joypad( interface, device );
 
-    //if ( device->isMouse() && device->name.find( "1351" ) != std::string::npos )
-      //  return new Mouse1351( device );
+    if ( device->isMouse())
+        return new Mouse( interface, device );
 
     return new ControlPort( interface, device );
 }

@@ -211,8 +211,7 @@ template<uint16_t jobs, uint8_t nextCycle> auto Blitter::lineMode() -> void {
         // There is now no DMA access here, so a floating pointer change must now be executed prematurely.
         // it is not necessary to check whether it is the correct pointer, because e.g. the pointer for sprites is not used
         // in this cycle if the emulation is at this point and at the end of the cycle the event would be triggered anyway.
-        if ((agnus.getActiveEvent<Agnus::EVENT_ONE_CYCLE_DELAY>() & ~1) == Agnus::PTR_BLT_C_H)
-            agnus.forceEvent<Agnus::EVENT_ONE_CYCLE_DELAY>();
+        agnus.forceOneCycleEvent(Agnus::PTR_BLT_C_H);
 
 #define LINE_DECX   { if ((bltcon0 & 0xf000) == 0) { \
                         bltCpt -= 2;    \
@@ -234,8 +233,7 @@ template<uint16_t jobs, uint8_t nextCycle> auto Blitter::lineMode() -> void {
             }
         }
     } else if constexpr (jobs & BLT_LINE_Y) { // happens only if channel C is in use
-        if ((agnus.getActiveEvent<Agnus::EVENT_ONE_CYCLE_DELAY>() & ~1) == Agnus::PTR_BLT_C_H)
-            agnus.forceEvent<Agnus::EVENT_ONE_CYCLE_DELAY>();
+        agnus.forceOneCycleEvent(Agnus::PTR_BLT_C_H);
 
         if (!(bltcon1 & BLT_SUD)) {
             if (bltcon1 & BLT_AUL)
@@ -258,8 +256,7 @@ template<uint16_t jobs, uint8_t nextCycle> auto Blitter::lineMode() -> void {
 
     // following two jobs occur after first shift out, like the first D-Write in block mode
     if constexpr (jobs & BLT_BH) { // Bresenham slope logic, happens only if channel A is in use
-        if ((agnus.getActiveEvent<Agnus::EVENT_ONE_CYCLE_DELAY>() & ~1) == Agnus::PTR_BLT_A_H)
-            agnus.forceEvent<Agnus::EVENT_ONE_CYCLE_DELAY>();
+        agnus.forceOneCycleEvent(Agnus::PTR_BLT_A_H);
 
         if (bltcon1 & BLT_SIGN)
             bltApt += (int16_t)bltBmod;

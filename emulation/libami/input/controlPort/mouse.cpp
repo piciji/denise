@@ -33,7 +33,7 @@ struct Mouse : AnalogControl {
 
     auto readButton1( ) -> uint8_t {
 
-        return !interface->inputPoll( device->id, 2 );
+        return interface->inputPoll( device->id, 2 );
     }
 
     auto getPotY() -> uint8_t {

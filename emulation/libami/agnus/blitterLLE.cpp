@@ -55,8 +55,7 @@ auto Blitter::stateMachine() -> void {
             if (curW == bltSizeW) { // first
                 if (shifter & AT_LEAST_ONE_SHIFTOUT) {
                     if (shifter & BLT_A) { // use A
-                        if ((agnus.getActiveEvent<Agnus::EVENT_ONE_CYCLE_DELAY>() & ~1) == Agnus::PTR_BLT_A_H)
-                            agnus.forceEvent<Agnus::EVENT_ONE_CYCLE_DELAY>();
+                        agnus.forceOneCycleEvent(Agnus::PTR_BLT_A_H);
 
                         if (bltcon1 & BLT_SIGN)
                             bltApt += (int16_t) bltBmod;
@@ -74,8 +73,7 @@ auto Blitter::stateMachine() -> void {
                 oneDotPerLine = true;
             } else if ((curW + 1) == bltSizeW) { // second only (means "last" by typical horizontal size), never when horizontal size is one
                 if (shifter & BLT_C) {
-                    if ((agnus.getActiveEvent<Agnus::EVENT_ONE_CYCLE_DELAY>() & ~1) == Agnus::PTR_BLT_C_H)
-                        agnus.forceEvent<Agnus::EVENT_ONE_CYCLE_DELAY>();
+                    agnus.forceOneCycleEvent(Agnus::PTR_BLT_C_H);
 
                     if (bltcon1 & BLT_SUD) {
                         if (bltcon1 & BLT_AUL)  LINE_DECX
@@ -111,8 +109,7 @@ auto Blitter::stateMachine() -> void {
                     if (writeLineDot)
                         agnus.writeBlitterDmaNoBUSCheck(bltDpt, doff ? agnus.dataBus : bltDdat); // second or last ?
 
-                    if ((agnus.getActiveEvent<Agnus::EVENT_ONE_CYCLE_DELAY>() & ~1) == Agnus::PTR_BLT_C_H)
-                        agnus.forceEvent<Agnus::EVENT_ONE_CYCLE_DELAY>();
+                    agnus.forceOneCycleEvent(Agnus::PTR_BLT_C_H);
 
                     if (!(bltcon1 & BLT_SUD)) {
                         if (bltcon1 & BLT_AUL)

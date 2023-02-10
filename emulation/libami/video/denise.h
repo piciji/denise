@@ -39,8 +39,15 @@ struct Denise {
     uint16_t bpl5dat;
     uint16_t bpl6dat;
 
-    uint64_t shifterA; // playfield 1: planes 1, 3, 5
-    uint64_t shifterB; // playfield 2: planes 2, 4, 6
+    uint16_t dat1;
+    uint16_t dat2;
+    uint16_t dat3;
+    uint16_t dat4;
+    uint16_t dat5;
+    uint16_t dat6;
+
+    int64_t shifterA; // playfield 1: planes 1, 3, 5
+    int64_t shifterB; // playfield 2: planes 2, 4, 6
 
     uint64_t shifterAClxEna;
     uint64_t shifterBClxEna;
@@ -55,6 +62,7 @@ struct Denise {
     uint8_t delayPf2;
     uint8_t bplCon1;
     bool enableDisplay;
+    bool borderFlipFlop;
 
     uint16_t* frameBuffer;
     uint16_t* linePtr;
@@ -72,8 +80,14 @@ struct Denise {
     } sprites[8];
 
     struct {
-        unsigned left;
-        unsigned right;
+        uint16_t left;
+        uint16_t right;
+        uint16_t top;
+        uint16_t bottom;
+
+        auto reset() -> void {
+            left = right = top = bottom = 0;
+        }
     } crop;
 
     struct {
@@ -110,7 +124,7 @@ struct Denise {
 
     auto setDiwStrt(uint16_t value) -> void;
     auto setDiwStop(uint16_t value) -> void;
-    auto setClxCon(uint16_t value) -> void;
+    auto setClxCon(uint64_t value) -> void;
     auto getClxDat() -> uint16_t;
     auto setColor(uint8_t pos, uint16_t value ) -> void;
     auto setBplCon0(uint16_t value ) -> void;
@@ -127,8 +141,8 @@ struct Denise {
     auto setBpl5Dat(uint16_t value) -> void { bpl5dat = value; }
     auto setBpl6Dat(uint16_t value) -> void { bpl6dat = value; }
 
-    auto processDelayPf1() -> void;
-    auto processDelayPf2() -> void;
+    template<bool useHires> auto processDelayPf1() -> void;
+    template<bool useHires> auto processDelayPf2() -> void;
     template<bool useHires> auto processPixel() -> void;
     auto startHblank() -> void;
     auto endHblank() -> void;
@@ -136,6 +150,8 @@ struct Denise {
     inline auto doubleLoresPixel(uint16_t* _ptr, unsigned _xStart) -> void;
     auto updateCropLeft() -> void;
     auto updateCropRight() -> void;
+    auto updateCropTop() -> void;
+    auto updateCropBottom() -> void;
 };
 
 }

@@ -4,7 +4,6 @@
 #include "blitter.h"
 #include "copper.h"
 #include "../../cia/new/cia.h"
-#include "../../tools/events.h"
 #include "../../tools/powersupply.h"
 
 /**
@@ -37,14 +36,14 @@ struct Denise;
 struct Paula;
 struct Input;
 
-struct Agnus : Emulator::Events<6> {
+struct Agnus {
 
     Agnus(System* system, Cpu& cpu, Denise& denise, Paula& paula, Cia<MOS_8520>& cia1, Cia<MOS_8520>& cia2, Input& input);
     ~Agnus();
 
     enum { Unmapped, CHIP_MEM, SLOW_MEM, KICK_ROM, EXT_ROM, WOM, MMIO_CUSTOM, MMIO_CIA, MMIO_RTC };
 
-    enum { EVENT_KBD, EVENT_ONE_CYCLE_DELAY, EVENT_LEAVE_EMULATION, EVENT_POWER_SUPPLY, EVENT_AUDIO_STATE, EVENT_HTOTAL };
+    enum { EVENT_KBD, EVENT_ONE_CYCLE_DELAY, EVENT_LEAVE_EMULATION, EVENT_POWER_SUPPLY, EVENT_AUDIO_STATE, EVENT_HTOTAL, EVENT_CHANNELS };
 
     enum { DMA_None = 0, DMACON = 1,
            PTR_BLT_A_H, PTR_BLT_A_L, PTR_BLT_B_H, PTR_BLT_B_L, PTR_BLT_C_H, PTR_BLT_C_L, PTR_BLT_D_H, PTR_BLT_D_L,
@@ -62,6 +61,14 @@ struct Agnus : Emulator::Events<6> {
 
     enum Model { OCS_A1000 = 1, OCS = 2, ECS = 4, AGA = 8 } model = OCS;
 
+    int64_t eventClock[EVENT_CHANNELS];
+    int64_t clock;
+    int64_t nextClock;
+
+    uint8_t oneCycleJob;
+    uint16_t oneCycleData;
+    bool hTotalFirst;
+
     System* system;
     Interface* interface;
     Cpu& cpu;
@@ -74,11 +81,6 @@ struct Agnus : Emulator::Events<6> {
     Emulator::PowerSupply powerSupply;
     Blitter blitter;
     Copper copper;
-
-    Emulator::EventCallback oneCycleDelay;
-    Emulator::EventCallback leaveEmulation;
-    Emulator::EventCallback countDownPowerSupply;
-    Emulator::EventCallback eventHTotal;
 
     uint8_t actions = 0;
     uint8_t mapper[256] = {0};
@@ -167,7 +169,7 @@ struct Agnus : Emulator::Events<6> {
     unsigned countWaitCycles;
     uint32_t rDmaPtr;
 
-    uint64_t eClockCycle;
+    int64_t eClockCycle;
     bool lol;
     bool lof;
     bool lolToggle;
@@ -190,7 +192,6 @@ struct Agnus : Emulator::Events<6> {
     bool womLock = false;
     uint8_t resetFromKeyboard = 0;
 
-    auto prepareEvents() -> void;
     auto frequency() -> unsigned;
     auto ecsAndHigher() -> bool const { return model & (Model::ECS | Model::AGA); }
     auto ecs() -> bool const { return model == Model::ECS; }
@@ -301,6 +302,33 @@ struct Agnus : Emulator::Events<6> {
     auto increaseTrackMemStorage(MemChange*& memChange, unsigned& size) -> void;
 
     auto log(uint32_t adr, uint16_t value, bool isWrite) -> void;
+
+    template<uint8_t Channel, bool executeCurEvent = false> auto updateEvent(int delay) -> void;
+    template<uint8_t Channel, bool executeCurEvent = false> auto updateEventAbs(int64_t absClock) -> void;
+    template<uint8_t Channel> auto setEventInactive() -> void {
+        eventClock[Channel] = INT64_MAX;
+    }
+    auto fallBackCycles( int64_t lastClock ) -> int64_t {
+        return clock - lastClock;
+    }
+    template<uint8_t Channel> auto hasActiveEvent() -> bool {
+        return eventClock[Channel] != INT64_MAX;
+    }
+
+    auto processEvents(int64_t curClock) -> void;
+    auto clearEvents() -> void;
+    auto processOneCycleEvent(uint8_t job, uint16_t data) -> void;
+    template<uint8_t Channel> auto getEventDelay() -> unsigned;
+    inline auto addOneCycleEvent(uint8_t job, uint16_t data, int delay = 2) -> void;
+    inline auto addOneCycleEventA(uint8_t job, int delay) -> void {
+        updateEvent<EVENT_ONE_CYCLE_DELAY, true>( delay );
+        oneCycleJob = job;
+    }
+    auto forceOneCycleEvent(uint8_t job) -> void;
+    auto inactivateOneCycleEvent(uint8_t job) -> void;
+    auto powerSupplyEvent() -> void;
+    auto leaveEmulationEvent() -> void;
+    auto HTotalEvent() -> void;
 };
 
 }

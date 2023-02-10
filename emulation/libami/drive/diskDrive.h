@@ -40,10 +40,10 @@ struct DiskDrive {
     unsigned randCounter;
 
     uint8_t idPos;
-    uint64_t motorClock;
+    int64_t motorClock;
     unsigned motorSpeed;
 
-    uint64_t dskChangeClock;
+    int64_t dskChangeClock;
     bool dskChange;
     bool written;
     bool driveSound;
@@ -56,8 +56,8 @@ struct DiskDrive {
 
     int accum;
 
-    uint64_t stepClock; // minimum delay between steps
-    uint64_t stepSettleClock; // time to read reliable from next track
+    int64_t stepClock; // minimum delay between steps
+    int64_t stepSettleClock; // time to read reliable from next track
     uint8_t nextStep;
     unsigned stepperSeekTime;
     unsigned stepperMinTime;
