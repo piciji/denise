@@ -143,14 +143,7 @@ auto States::loadFirmwarePaths( GUIKIT::Settings* loadSettings ) -> void {
         storeSetting->path = setting->path;
         storeSetting->setSaveable( false );
 
-        if (firmwareManager->loadImage( &firmware, storeLevel ))
-            firmwareManager->useImage( &firmware, storeLevel );
-        else {
-            // load default firmware if
-            // 1. no custom firmware was submitted in savestate
-            // 2. path of custom firmware is not working anymore
-            firmwareManager->insertFirmware(&firmware, 0);
-        }
+        firmwareManager->insertFirmware(&firmware, storeLevel);
     }
 
     if (!firmwareManager->missingFirmware.empty())

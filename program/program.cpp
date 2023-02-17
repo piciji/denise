@@ -155,7 +155,7 @@ auto Program::addEmulators() -> void {
 
         states.push_back( new States( emulator ) );
         
-        firmwareManagers.push_back( new FirmwareManager( emulator ) );    
+        firmwareManagers.push_back( new FirmwareManager( emulator, emulatorC64 == emulator ) );
         
         videoManagers.push_back( new VideoManager( emulator ) );
         
@@ -388,7 +388,7 @@ auto Program::powerOff() -> void {
 		statusHandler->clear();
 		if (activeVideoManager)
 			activeVideoManager->powerOff();
-		videoDriver->clear();
+		//videoDriver->clear(); // check and remove permanently
         videoDriver->hintExclusiveFullscreen( false );
 		audioDriver->clear();
 		audioManager->powerOff();

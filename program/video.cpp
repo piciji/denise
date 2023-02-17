@@ -183,7 +183,10 @@ auto Program::fastForward( bool activate, bool aggressive ) -> void {
     VideoManager::CrtMode crtMode = (VideoManager::CrtMode)settings->get<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::None, {0u, 2u});
 
     if (activate) {
-        VideoManager::placeHolderFrames = 0;
+        if (VideoManager::placeHolderFrames) {
+            VideoManager::placeHolderFrames = 0;
+            view->setDefaultCursor();
+        }
         warp.active = true;
         warp.aggressive = aggressive;
         VideoManager::setFrameRender(1);

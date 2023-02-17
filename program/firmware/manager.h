@@ -22,6 +22,7 @@ struct FirmwareManager {
     std::vector<Image> imagesActive;
     
     std::vector<std::string> missingFirmware;
+    bool fallbackToDefaultFirmware = true;
     
     auto useImage(Emulator::Interface::Firmware* firmware, unsigned storeLevel) -> bool;
     auto addImage( Emulator::Interface::Firmware* firmware, unsigned storeLevel, uint8_t* data, unsigned size) -> void;
@@ -40,7 +41,7 @@ struct FirmwareManager {
     auto reload() -> void;
     
     static auto getInstance( Emulator::Interface* emulator ) -> FirmwareManager*;
-    FirmwareManager(Emulator::Interface* emulator);
+    FirmwareManager(Emulator::Interface* emulator, bool fallbackToDefaultFirmware);
     ~FirmwareManager();
 };
 

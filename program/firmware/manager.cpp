@@ -8,8 +8,9 @@
 
 std::vector<FirmwareManager*> firmwareManagers;
 
-FirmwareManager::FirmwareManager(Emulator::Interface* emulator) {
+FirmwareManager::FirmwareManager(Emulator::Interface* emulator, bool fallbackToDefaultFirmware) {
     this->emulator = emulator;
+    this->fallbackToDefaultFirmware = fallbackToDefaultFirmware;
 }
 
 FirmwareManager::~FirmwareManager() {
@@ -115,23 +116,26 @@ auto FirmwareManager::swapIn(Emulator::Interface::Firmware* firmware, unsigned s
 
 auto FirmwareManager::insertFirmware(Emulator::Interface::Firmware* firmware, unsigned storeLevel) -> void {
     
-    while(1) {                               
+    while(1) {
 
-        if (useImage( firmware, storeLevel))
-            break;
+        if (storeLevel <= maxSets) { // savestates use a store level higher than max level. don't use such images without reloading before
+            if (useImage(firmware, storeLevel))
+                return;
+        }
 
         if (loadImage( firmware, storeLevel)) {
             if (useImage( firmware, storeLevel))
-                break;
+                return;
         }
 
-        if (storeLevel == 0)
-            // already default firmware
+        if ( (storeLevel == 0) || !fallbackToDefaultFirmware)
             break;
 
         // switch back to default firmware and try again
         storeLevel = 0;
-    }     
+    }
+
+    emulator->setFirmware(firmware->id, nullptr, 0, 0);
 }
 
 auto FirmwareManager::dataInStore( Image* forImage ) -> bool {
