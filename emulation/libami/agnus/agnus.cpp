@@ -292,20 +292,24 @@ inline auto Agnus::dmaCycle() -> void {
             } else {
                 if (bplState || bplQueue)
                     actions |= ACT_BPL;
+
+                if (shortLineBefore)
+                    copper.cycle1();
             }
             break;
 
         case 2:
             updateVCounter();
             updateVdiw();
-            actions |= ACT_COPPER;
+            actions |= ACT_COPPER; // if Copper waits for next line
             break;
 
-        case 3:
+
         case 5:
-            if (ecsAndHigher() && lol && (hPos == 5) ) {
+            if (ecsAndHigher() && lol) {
                 // todo strlong (OCS denise ignores it)
             }
+        case 3:
         case 7:
         case 9:
             // for AGA chipset, DRAM use internal refresh counter. AGA chipset only triggers Refresh but can't control the refresh position.
@@ -455,7 +459,7 @@ inline auto Agnus::dmaCycle() -> void {
 
     if (eClockCycle == clock) {
         // CIA accesses must be tuned to E-Clock. One CIA BUS cycle corresponds to 2 + [6,8,10,12,14] + 2 CPU cycles.
-        // The programming is coordinated in such a way that the CIA is first driven forward and then the register access takes place.
+        // The programming is coordinated in such a way t   hat the CIA is first driven forward and then the register access takes place.
         // Tests, that evaluate CIA timers are difficult because while waiting for access, the CIA internally progresses 1 or 2 cycles.
         // To make matters worse, the E-Clock phase can change with each cold start.
         eClockCycle = clock + 5;
@@ -548,7 +552,7 @@ auto Agnus::isEquLine() -> bool {
     if (ntsc)
         return vPos <= 10;
 
-    return vPos <= (lof ? 9 : 8);
+    return vPos < (lof ? 9 : 8);
 }
 
 auto Agnus::setDiwStrt(uint16_t value) -> void {
@@ -802,5 +806,11 @@ template auto Agnus::updateEvent<Agnus::EVENT_AUDIO_STATE>(int delay) -> void;
 
 template auto Agnus::updateEvent<Agnus::EVENT_ONE_CYCLE_DELAY, true>( int delay ) -> void;
 template auto Agnus::updateEventAbs<Agnus::EVENT_AUDIO_STATE>(int64_t absClock) -> void;
+
+template auto Agnus::allocateCopper<false>() -> bool;
+template auto Agnus::allocateCopper<true>() -> bool;
+
+template auto Agnus::canCopperUseBus<false>() -> bool;
+template auto Agnus::canCopperUseBus<true>() -> bool;
 
 }

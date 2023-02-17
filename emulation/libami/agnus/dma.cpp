@@ -157,10 +157,6 @@ auto Agnus::diskDma(bool writeMode) -> void {
 
         *(uint16_t*)(chipMem + dskpt) = _swapWord(value);
         dataBus = value;
-
-//        system->interface->log("d",1);
-//        system->interface->log(dskpt,0,1);
-//        system->interface->log(value,0,1);
     }
 
     inactivateOneCycleEvent(Agnus::PTR_DSK_H);
@@ -233,9 +229,14 @@ template<uint8_t nr, uint8_t target> inline auto Agnus::fetchSprite() -> void {
     busUsage = BUS_USAGE_SPRITE;
 }
 
-auto Agnus::canCopperUseBus() -> bool {
-    if (busUsage != BUS_FREE)
-        return false; // a higher DMA
+template<bool oddCycle1> auto Agnus::canCopperUseBus() -> bool {
+    if constexpr (oddCycle1) {
+        if (bplQueue & 0xff)
+            return false; // a higher DMA
+    } else {
+        if (busUsage != BUS_FREE)
+            return false; // a higher DMA
+    }
 
     if (!useCopperDMA())
         return false;
@@ -243,8 +244,8 @@ auto Agnus::canCopperUseBus() -> bool {
     return true;
 };
 
-auto Agnus::allocateCopper() -> bool {
-    if (canCopperUseBus()) {
+template<bool oddCycle1> auto Agnus::allocateCopper() -> bool {
+    if (canCopperUseBus<oddCycle1>()) {
         busUsage = BUS_USAGE_COPPER;
         return true;
     }
@@ -294,16 +295,6 @@ template<uint8_t ptrEvent> auto Agnus::fetchBlitterDma(uint32_t adr, uint16_t& r
 
     result = _swapWord(*(uint16_t*)(chipMem + (adr & chipMemMask)));
 
-//    if (ptrEvent == PTR_BLT_A_H)
-//        system->interface->log("b_a",1);
-//    else if (ptrEvent == PTR_BLT_B_H)
-//        system->interface->log("b_b",1);
-//    else if (ptrEvent == PTR_BLT_C_H)
-//        system->interface->log("b_c",1);
-//
-//    system->interface->log(adr,0,1);
-//    system->interface->log(result,0,1);
-
     dataBus = result;
 
     // if a modified pointer is used in the next cycle, the change is ignored.
@@ -325,10 +316,6 @@ auto Agnus::writeBlitterDma(uint32_t adr, uint16_t value) -> bool {
     *(uint16_t*)(chipMem + adr) = _swapWord(value);
 
     dataBus = value;
-
-//    system->interface->log("b_d",1);
-//    system->interface->log(adr,0,1);
-//    system->interface->log(value,0,1);
 
     inactivateOneCycleEvent(PTR_BLT_D_H);
 
@@ -353,9 +340,6 @@ auto Agnus::writeBlitterDmaNoBUSCheck(uint32_t adr, uint16_t value) -> void {
         rememberChipMem(adr);
 
     *(uint16_t*)(chipMem + adr) = _swapWord(value);
-
-//    system->interface->log(adr,1,1);
-//    system->interface->log(value,0,1);
 
     dataBus = value;
 

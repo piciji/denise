@@ -4,8 +4,8 @@
 #include "../../tools/serializer.h"
 #include "../interface.h"
 
-#define CPU_LOG_START 1500000
-#define CPU_LOG_COUNT 5000000
+#define CPU_LOG_START 0
+#define CPU_LOG_COUNT 2000000
 
 namespace LIBAMI {
 

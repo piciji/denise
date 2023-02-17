@@ -187,17 +187,18 @@ template<uint8_t Inst> auto M68000::cyclesDiv(uint32_t dividend, uint16_t diviso
         uint32_t hdivisor = divisor << 16;
         unsigned cycles = 36 << 1; // minimum: 3 + (15 * 2) + 2 + 1
 
-        for (uint8_t i = 0; i < 15; i++) {
+        for (int i = 0; i < 15; i++) {
+
             if ((int32_t) dividend < 0) {
                 dividend <<= 1;
                 dividend -= hdivisor;
             } else {
                 dividend <<= 1;
-                cycles += 4;
                 if (dividend >= hdivisor) {
                     dividend -= hdivisor;
-                    cycles -= 2;
-                }
+                    cycles += 2;
+                } else
+                    cycles += 4;
             }
         }
         SYNC( cycles );
@@ -215,7 +216,7 @@ template<uint8_t Inst> auto M68000::cyclesDiv(uint32_t dividend, uint16_t diviso
         }
 
         uint32_t aquot = std::abs(_dividend) / std::abs(_divisor);
-        for (uint8_t i = 0; i < 15; i++) {
+        for (int i = 0; i < 15; i++) {
             if ( (int16_t)aquot >= 0)
                 mcycles++;
 

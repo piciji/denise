@@ -222,7 +222,7 @@ template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opMul(uint16_t o
         return;
 
     prefetch<SampleIPL>();
-    cyclesMul<Mulu>(result);
+    cyclesMul<Inst>(result);
     if constexpr(Inst == Mulu)  result = result * readRegD<Word>(reg);
     else                        result = (int16_t)result * (int16_t)readRegD<Word>(reg);
 

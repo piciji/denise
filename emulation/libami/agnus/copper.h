@@ -20,28 +20,31 @@ struct Copper {
     // 0x80 allocate Copper if BUS is free
     // 0x40 allocate Copper if BUS is free and no long gap
     enum State {
-        Off                         = 0,
-        Strobe0                     = 1 | 0x80,
-        Strobe0Self                 = 2 | 0x80,
-        Strobe1                     = 3,
-        Strobe2                     = 4 | 0x40,
-        Strobe3                     = 5 | 0x80,
-        Strobe2Vsync                = 6 | 0x80,
-        Strobe3Vsync                = 7 | 0x80,
-        Strobe4Vsync                = 8 | 0x80,
-        Strobe5Vsync                = 9 | 0x80,
-        Strobe1Unaligned            = 10,
-        Strobe2Unaligned            = 11,
-        Strobe3Unaligned            = 12 | 0x80,
-        Read1                       = 13 | 0x80,
-        Read1AfterSkip              = 14 | 0x80,
-        Read2                       = 15 | 0x80,
-        Skip1                       = 16,
-        Skip2                       = 17,
-        Wait1                       = 18,
-        Wait2                       = 19,
-        Wait3                       = 20,
-        Wait4                       = 21
+        Off                             = 0,
+
+        Strobe_VBL_1                    = 1,
+        Strobe_VBL_2                    = 2 | 0x80,
+        Strobe_VBL_3                    = 3,
+        Strobe_VBL_4                    = 4 | 0x80,
+        Strobe_VBL_5                    = 5,
+        Strobe_VBL_6                    = 6 | 0x80,
+        Strobe_VBL_7                    = 7 | 0x80,
+
+        Strobe_CPU_1                    = 8,
+        Strobe_CPU_2                    = 9 | 0x40,
+        Strobe_CPU_3                    = 10,
+        Strobe_CPU_4                    = 11,
+        Strobe_CPU_5                    = 12 | 0x80,
+        Strobe_CPU_6                    = 13,
+
+        Read1                           = 14 | 0x80,
+        Read2                           = 15 | 0x80,
+        Skip1                           = 16,
+        Skip2                           = 17,
+        Wait1                           = 18,
+        Wait2                           = 19,
+        Wait3                           = 20,
+        Wait4                           = 21
     } state, prevState;
 
     Agnus& agnus;
@@ -76,6 +79,7 @@ struct Copper {
     auto setCOP2LCL(uint16_t value) -> void;
 
     auto strobeCOPJMP(bool firstLocation, uint8_t triggeredBy ) -> void;
+    auto cycle1() -> void;
 
     auto blitterBusyUpdate() -> void;
     auto allocationCycle() -> bool;

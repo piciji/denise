@@ -19,6 +19,8 @@ struct Denise {
     ~Denise();
 
     enum Model : uint8_t { OCS_A1000_NO_EHB = 1, OCS_A1000 = 2, OCS = 4 } model = OCS;
+    enum { PF1_SHIFT = 1, PF2_SHIFT = 2, INIT_HPOS = 4, RESET_HPOS = 8, BPL1_WRITTEN = 0x10 };
+
     System* system;
     Agnus& agnus;
     Input& input;
@@ -57,7 +59,7 @@ struct Denise {
 
     uint16_t clxDat;
 
-    uint8_t ready;
+    unsigned actions; // Bits 0: PF1 shift, 1: PF2 shift, 2: init hpos reset, 3: reset hpos, 4: bpl1dat written
     uint8_t delayPf1;
     uint8_t delayPf2;
     uint8_t bplCon1;

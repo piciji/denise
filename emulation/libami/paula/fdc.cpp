@@ -126,6 +126,7 @@ auto Paula::setDskLen(uint16_t value) -> void {
             if (!getFromFifo(dskShifter))
                 dskShifter = 0;
         }
+        dskBytr &= ~0x8000;
         start = true;
     }
 
@@ -254,9 +255,7 @@ template<bool readWord, bool waitTurbo> auto Paula::handleFDControllerRead() -> 
 
             do {
                 byte = activeDrive->readByte(dmaCycles, !(readWord || waitTurbo) );
-
-                if (byte != 0 && byte != 0xff)
-                    dskBytr = byte | 0x8000;
+                dskBytr = byte | 0x8000;
 
                 for (int i = 7; i >= 0; i--) {
                     dskShifter = (dskShifter << 1) | ((byte >> i) & 1);
@@ -345,8 +344,7 @@ template<bool readWord, bool waitTurbo> auto Paula::handleFDControllerRead() -> 
 
                 if ((dskShifterPos & 7) == 7) {
                     uint8_t byte = dskShifter & 0xff;
-                    if (byte != 0 && byte != 0xff)
-                        dskBytr = byte | 0x8000;
+                    dskBytr = byte | 0x8000;
                 }
 
                 if (++dskShifterPos == 16) {
@@ -385,6 +383,9 @@ auto Paula::handleFDControllerWrite() -> void {
             }
         }
     }
+
+    if (((dskShifterPos & 7) == 7) && (dskLen & 0x8000))
+        dskBytr = 0x8000;
 
     if (dskShifterPos == 16) {
         if (getFromFifo(dskShifter))    dskShifterPos = 0;

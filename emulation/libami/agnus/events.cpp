@@ -138,6 +138,7 @@ auto Agnus::HTotalEvent() -> void {
         }
         updateEvent<EVENT_HTOTAL>(1);
         hTotalFirst = false;
+
     } else {
         if (!lol) {
             actions &= ~ACT_COPPER; // "even" cycle 0 after a short line is not usable by Copper, otherwise Copper would progress 2 cycles in a row.
@@ -152,9 +153,9 @@ auto Agnus::HTotalEvent() -> void {
 
         hPos = 0;
         if (lolToggle) lol ^= 1;
-        if(ERSY == 0)
-            updateEvent<EVENT_HTOTAL>((beamCon & VARBEAMEN) ? (hTotal + lol) : (0xe2 + lol) );
-        else
+        if(ERSY == 0) {
+            updateEvent<EVENT_HTOTAL>((beamCon & VARBEAMEN) ? (hTotal + lol) : (0xe2 + lol));
+        } else
             setEventInactive<EVENT_HTOTAL>();
         hTotalFirst = true;
     }

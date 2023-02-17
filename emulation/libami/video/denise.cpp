@@ -51,7 +51,7 @@ auto Denise::power() -> void {
     shifterBClxPolarity = 0;
 
     clxDat = 0;
-    ready = 0;
+    actions = 0;
     delayPf1 = 0;
     delayPf2 = 0;
     bplCon1 = 0;
@@ -90,14 +90,14 @@ auto Denise::power() -> void {
 // Denise listen for addresses, puted on RGA BUS
 auto Denise::setBpl1Dat(uint16_t value) -> void {
     bpl1dat = value;
-    if (!hBlank) {
+    if (!hBlank && enableSequencer) {
         enableDisplay = true;
-        ready |= 0x80;
+        actions |= BPL1_WRITTEN;
     }
 }
 
 auto Denise::strhor() -> void {
-    hPos = 2;
+    actions |= INIT_HPOS;
     if (vBlank) {
         lineVCounter = 0;
         vBlank = false;
@@ -114,7 +114,7 @@ auto Denise::strequ() -> void {
 
 auto Denise::strvbl() -> void {
     // Denise has no vcounter
-    hPos = 2;
+    actions |= INIT_HPOS;
     if (!vBlank) {
         endFrame = model == OCS ? 2 : 1;
         vBlank = true;
@@ -275,9 +275,11 @@ auto Denise::setBplCon2( uint16_t value ) -> void {
 }
 
 template<bool useHires> inline auto Denise::processDelayPf1() -> void {
-    //if (!delayPf1) {
-    uint16_t mask = useHires ? 7 : 15;
+    // This is not a delay, as HRM implies. The comparison takes place with Denise horizontal position.
+    // For this reason, unexpected shifts occur when "ddfstart" is not a multiple of 8.
+    // Was a counter too expensive ?
 
+    constexpr uint16_t mask = useHires ? 7 : 15;
     if ((hPos & mask) == delayPf1) {
         if (activePlanes >= 5) {
             shifterA |= (uint64_t)dat1 << 32;
@@ -290,19 +292,13 @@ template<bool useHires> inline auto Denise::processDelayPf1() -> void {
         } else if (activePlanes >= 1) {
             shifterA |= (uint64_t)dat1 << 32;
         }
-        ready &= ~1;
-    } /*else {
-        if constexpr (useHires)
-            delayPf1 -= 2;
-        else
-            delayPf1--;
-    }*/
+        actions &= ~PF1_SHIFT;
+    }
 }
 
 template<bool useHires> inline auto Denise::processDelayPf2() -> void {
-    uint16_t mask = useHires ? 7 : 15;
+    constexpr uint16_t mask = useHires ? 7 : 15;
 
-    //if (!delayPf2) {
     if ((hPos & mask) == delayPf2) {
         if (activePlanes >= 6) {
             shifterB |= (uint64_t)dat2 << 32;
@@ -315,13 +311,8 @@ template<bool useHires> inline auto Denise::processDelayPf2() -> void {
         } else if (activePlanes >= 2) {
             shifterB |= (uint64_t)dat2 << 32;
         }
-        ready &= ~2;
-    } /*else {
-        if constexpr (useHires)
-            delayPf2 -= 2;
-        else
-            delayPf2--;
-    }*/
+        actions &= ~PF2_SHIFT;
+    }
 }
 
 #define SPF(v1) \
@@ -602,9 +593,9 @@ template<bool useHires> auto Denise::processPixel() -> void {
             linePos &= LINE_BUFFER_WIDTH - 1;
         }
 
-        if (ready & 3) {
-            if (ready & 1) processDelayPf1<useHires>();
-            if (ready & 2) processDelayPf2<useHires>();
+        if (actions & (PF1_SHIFT | PF2_SHIFT) ) {
+            if (actions & PF1_SHIFT) processDelayPf1<useHires>();
+            if (actions & PF2_SHIFT) processDelayPf2<useHires>();
         }
 
         hPos++;
@@ -615,13 +606,16 @@ auto Denise::process() -> void {
     if (enableSequencer) {
         if (hires) processPixel<true>();
         else processPixel<false>();
+    } else
+        hPos += 2;
 
-        if (ready & 0x80) {
+    if (actions & (BPL1_WRITTEN | INIT_HPOS | RESET_HPOS)) {
+        unsigned _actions = actions;
+
+        if (_actions & BPL1_WRITTEN) {
             delayPf1 = bplCon1 & 0xf;
             delayPf2 = (bplCon1 >> 4) & 0xf;
             if (hires) {
-                //delayPf1 &= ~1;
-                //delayPf2 &= ~1;
                 delayPf1 >>= 1;
                 delayPf2 >>= 1;
             }
@@ -631,11 +625,18 @@ auto Denise::process() -> void {
             dat4 = bpl4dat;
             dat5 = bpl5dat;
             dat6 = bpl6dat;
-            ready = 1 | 2;
+            actions &= ~BPL1_WRITTEN;
+            actions |= (PF1_SHIFT | PF2_SHIFT);
         }
 
-    } else
-        hPos += 2;
+        if (_actions & INIT_HPOS) {
+            actions &= ~INIT_HPOS;
+            actions |= RESET_HPOS;
+        } else if (_actions & RESET_HPOS) {
+            hPos = 2;
+            actions &= ~RESET_HPOS;
+        }
+    }
 
     hPos &= 0x1ff; // wrap around when strEqu
 
@@ -726,7 +727,7 @@ auto Denise::serialize(Emulator::Serializer& s) -> void {
     s.integer(shifterAClxPolarity);
     s.integer(shifterBClxPolarity);
     s.integer(clxDat);
-    s.integer(ready);
+    s.integer(actions);
     s.integer(delayPf1);
     s.integer(delayPf2);
     s.integer(bplCon1);

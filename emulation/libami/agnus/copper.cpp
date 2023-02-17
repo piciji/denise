@@ -7,10 +7,23 @@ namespace LIBAMI {
 Copper::Copper(Agnus& agnus) : agnus(agnus), blitter(agnus.blitter) {}
 
 inline auto Copper::allocationCycle() -> bool {
+    // if strobe interrupts Copper, an already requested DMA access will be used and saves a Copper cycle
     if (prevState & (0x40 | 0x80))
         return ((prevState & 0x80) != 0) || !agnus.copperLongGap();
 
     return false;
+}
+
+auto Copper::cycle1() -> void { // only gets here, if short line before
+    // Copper requests BUS each second cycle, so we end here in a NON Copper cycle
+    // if DMA is requested, it does nothing, but prevents Blitter und CPU to use it (waste cycle)
+    // following Copper cycle 2 handles the request.
+    if(state == Strobe_CPU_6) {
+        if (prevState & 0x80)
+            agnus.allocateCopper<true>();
+    } else if (state & 0x80) {
+        agnus.allocateCopper<true>();
+    }
 }
 
 auto Copper::process() -> void {
@@ -18,97 +31,98 @@ auto Copper::process() -> void {
     switch(state) {
         case Off:
             break;
-        case Strobe0: // CPU writes to CopJmp
-            // when CPU writes to CopJmp an already pipelined DMA access consumes a cycle, but do nothing
-            if (allocationCycle())
-                agnus.allocateCopper();
-
-            state = Strobe1;
+// Strobe Vblank
+        case Strobe_VBL_1:
+            state = Strobe_VBL_2;
+            if (!allocationCycle())
+                break;
+            // take over already requested DMA
+            // fallthrough
+        case Strobe_VBL_2:
+            if (agnus.fetchCopperDma(copPtr, ir2)) {
+                if (useCop1)    copPtr = cop1lc;
+                else            copPtr = cop2lc;
+                state = Read1;
+            }
             break;
-        case Strobe0Self: // Copper writes to CopJmp
-            if (agnus.canCopperUseBus()) {
-                // when Copper writes to register the next cycle would be Read1, if BUS is free. a Copper Write to CopJmp can't prevent a possible pipelined Read1 cycle
-                agnus.fetchCopperDmaNoBUSCheck(copPtr, ir1);
+        case Strobe_VBL_3:
+            state = Strobe_VBL_4;
+            if (!allocationCycle())
+                break;
+        case Strobe_VBL_4:
+            if (agnus.fetchCopperDma(copPtr, ir1)) {
                 copPtr += 2;
-                state = Strobe3;
-            } else
-                state = Strobe2;
+                if (useCop1)    copPtr = cop1lc;
+                else            copPtr = cop2lc;
+                state = Strobe_VBL_7;
+            }
             break;
-        case Strobe1: // Copper or CPU write to CopJmp when Copper is waiting
-            state = Strobe2;
+        case Strobe_VBL_5:
+            state = Strobe_VBL_6;
+            if (!allocationCycle())
+                break;
+        case Strobe_VBL_6:
+            if (agnus.fetchCopperDma(copPtr, ir2)) {
+                if (useCop1)    copPtr = cop1lc;
+                else            copPtr = cop2lc;
+                state = Strobe_VBL_7;
+            }
             break;
-        case Strobe2:
+        case Strobe_VBL_7:
+            if (agnus.allocateCopper())
+                state = Read1;
+            break;
+// Strobe Wait
+        case Strobe_CPU_1:
+            state = Strobe_CPU_2;
+            break;
+        case Strobe_CPU_2:
             if (agnus.canCopperUseBus()) {
-                if (agnus.copperLongGap()) { // two wait cycles in a row between Strobe1 and Strobe2, instead of one
+                if (agnus.copperLongGap()) {
                     if (useCop1)    copPtr = cop1lc;
                     else            copPtr = cop2lc;
                     state = Read1;
                 } else {
-                    agnus.fetchCopperDmaNoBUSCheck(copPtr, ir1);
+                    agnus.fetchCopperDmaNoBUSCheck(copPtr, ir1); // can not happen in cycle 1 (short lines only)
                     copPtr += 2;
-                    state = Strobe3;
+                    state = Strobe_VBL_2;
                 }
             } else
-                state = Strobe3;
+                state = Strobe_VBL_2;
             break;
-        case Strobe2Vsync: // Vsync triggers CopJmp
-            state = Strobe3;
-            if (!allocationCycle())
+// Strobe Wait Unaligned
+        case Strobe_CPU_3:
+            state = Strobe_CPU_4;
+            break;
+        case Strobe_CPU_4:
+            if (!agnus.canCopperUseBus()) {
+                state = Strobe_VBL_2;
                 break;
-            // fallthrough
-        case Strobe3:
-            if (agnus.fetchCopperDma(copPtr, ir2)) {
-                if (useCop1)    copPtr = cop1lc;
-                else            copPtr = cop2lc;
-                state = Read1;
             }
-            break;
-
-        case Strobe3Vsync: // Vsync triggers CopJmp when Copper read instructions
-            state = Strobe4Vsync;
-            if (!allocationCycle())
-                break;
+            state = Strobe_CPU_5;
             // fallthrough
-        case Strobe4Vsync:
-            if (agnus.fetchCopperDma(copPtr, ir2)) {
-                if (useCop1)    copPtr = cop1lc;
-                else            copPtr = cop2lc;
-                state = Strobe5Vsync;
-            }
-            break;
-
-        case Strobe5Vsync:
-            if (agnus.allocateCopper())
-                state = Read1;
-            break;
-
-        case Strobe1Unaligned: // CPU write to CopJmp when Copper is waiting (the write happens between the Copper cycles)
-            state = Strobe2Unaligned;
-            break;
-
-        case Strobe2Unaligned:
-            if (agnus.canCopperUseBus())
-                state = Strobe3Unaligned;
-            else
-                state = Strobe3;
-            break;
-
-        case Strobe3Unaligned:
+        case Strobe_CPU_5:
             if (agnus.allocateCopper()) {
                 if (useCop1)    copPtr = cop1lc;
                 else            copPtr = cop2lc;
                 state = Read1;
             }
             break;
+// Strobe Read
+        case Strobe_CPU_6:
+            if (allocationCycle())
+                agnus.allocateCopper();
 
+            state = Strobe_CPU_1;
+            break;
+
+// normal operation
         case Read1:
-        case Read1AfterSkip:
             if (agnus.fetchCopperDma(copPtr, ir1)) {
                 copPtr += 2;
                 state = Read2;
             }
             break;
-
         case Read2:
             if (agnus.fetchCopperDma(copPtr, ir2)) {
                 copPtr += 2;
@@ -137,10 +151,10 @@ auto Copper::process() -> void {
 
                     if (reg == 0x88) {
                         useCop1 = true;
-                        state = Strobe2;
+                        state = Strobe_CPU_2;
                     } else if (reg == 0x8a) {
                         useCop1 = false;
-                        state = Strobe2;
+                        state = Strobe_CPU_2;
                     } else {
                         agnus.writeCustom(reg, ir2, Agnus::Trigger_Copper);
                         state = Read1;
@@ -154,11 +168,12 @@ auto Copper::process() -> void {
             break;
         case Skip2:
             if (agnus.canCopperUseBus()) {
-                skipped = !compare<false>();
-                state = Read1AfterSkip;
+                skipped = compare<false>();
+                state = Read1;
             }
             break;
         case Wait1:
+            // needs a free cycle before wait (not allocated)
             if (agnus.canCopperUseBus()) {
                 if (compare()) {
                     state = Wait3;
@@ -181,6 +196,7 @@ auto Copper::process() -> void {
             }
             break;
         case Wait3:
+            // needs a free cycle after wait (not allocated)
             if (agnus.canCopperUseBus())
                 state = Read1;
             break;
@@ -194,18 +210,7 @@ auto Copper::blitterBusyUpdate() -> void {
     if (ir2 & 0x8000)
         return; // don't wait for Blitter
 
-    // it seems a Blitter Busy change is detected in non Copper cycle too.
-    agnus.actions |= Agnus::ACT_COPPER;
-
-    if (state == Read1AfterSkip) {
-        skipped = !compare<false>();
-    } else if (state == Wait2) {
-        if (compare())
-            state = Wait3;
-    } else if (state == Wait3) {
-        if (!compare())
-            state = Wait2;
-    }
+    agnus.actions |= Agnus::ACT_COPPER; // wake up Copper
 }
 
 template<bool wait> auto Copper::compare() -> bool {
@@ -231,8 +236,13 @@ template<bool wait> auto Copper::compare() -> bool {
     if (vPos > comp.vPos)
         return true;
 
-    if (hPos >= comp.hPos)
+    if (hPos >= comp.hPos) {
+        if (comp.hPos && !agnus.lol && (agnus.hPos == 0xe2))
+            // copper compares with the not yet increased horizontal counter, except in the last cycle of a short line. The counter has already jumped to 0 here.
+            return false;
+
         return true;
+    }
 
     return false;
 }
@@ -262,23 +272,23 @@ auto Copper::strobeCOPJMP(bool firstLocation, uint8_t triggeredBy) -> void {
 
     if (triggeredBy == Agnus::Trigger_Vsync) {
         prevState = state;
-        if (state == Read1 || state == Read2 || state == Read1AfterSkip)
-            state = Strobe3Vsync;
-        else
-            state = Strobe2Vsync;
-    } else if ((state == Wait1 || state == Wait2 || state == Wait4) && agnus.useCopperDMA()) {
-        if (triggeredBy == Agnus::Trigger_Copper)
-            state = Strobe1;
-        else
-            state = (agnus.hPos & 1) ? Strobe1Unaligned : Strobe1;
-    } else if (triggeredBy == Agnus::Trigger_CPU) {
-        prevState = state;
-        state = Strobe0;
-    } else /*if (triggeredBy == Agnus::Trigger_Copper) */ {
-        state = Strobe0Self;
+
+        if (state == Read1) state = Strobe_VBL_3;
+        else if (state == Read2) state = Strobe_VBL_5;
+        else state = Strobe_VBL_1;
+
+    } else { // from CPU
+        if ((state == Wait1 || state == Wait2 || state == Wait4) && agnus.useCopperDMA())
+            state = (agnus.hPos & 1) ? Strobe_CPU_3 : Strobe_CPU_1;
+        else {
+            prevState = state;
+            state = Strobe_CPU_6;
+        }
     }
+    // access from Copper will be handled in "Read2" state
 
     useCop1 = firstLocation;
+    skipped = false;
     agnus.actions |= Agnus::ACT_COPPER;
 }
 

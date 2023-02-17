@@ -38,11 +38,11 @@ auto DiskDrive::readByte(uint16_t& dmaCycles, bool upd) -> uint8_t {
     if (stepSettleClock) progressStepper();
 
     if (upd) {
-        unsigned refCyclesPerRevolutionScaled = refCyclesPerRevolution << 3;
+        int refCyclesPerRevolutionScaled = refCyclesPerRevolution << 3;
         accum += track->bits * dmaCycles;
         accum -= refCyclesPerRevolutionScaled;
 
-        unsigned todo = refCyclesPerRevolutionScaled - accum;
+        int todo = refCyclesPerRevolutionScaled - accum;
         // Depending on the current motor speed, it is determined how many DMA cycles are necessary until the next byte is read.
         // That way, we don't have to work with fractional numbers. carry is remembered in "accum".
 
@@ -105,7 +105,7 @@ auto DiskDrive::readBit(uint16_t& dmaCycles, bool upd) -> bool {
         unsigned todo = refCyclesPerRevolution - accum;
         // Depending on the current motor speed and bit cell width noted in the header, it is determined how many DMA cycles are necessary
         // until the next bit is read. That way, we don't have to work with fractional numbers. Transfer is remembered in "accum".
-        dmaCycles = (todo + track->bits - 1) / track->bits;
+        dmaCycles = (todo + (track->bits >> 1) ) / track->bits;
     }
 
     unsigned byte = headOffset >> 3;
@@ -405,6 +405,7 @@ auto DiskDrive::step(bool dir, bool updTrack) -> void {
 }
 
 inline auto DiskDrive::updateTrack() -> void {
+    accum = 0;
     track = &structure.tracks[(cylinder << 1) | side];
     updateDeviceState();
 }

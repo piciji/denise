@@ -7,9 +7,6 @@
 #include "adf.cpp"
 #include "ext.cpp"
 
-#define LIBAMI_FLOPPY_REVOLUTION_LENGTH_PAL 101339 //bits per revolution
-#define LIBAMI_FLOPPY_REVOLUTION_LENGTH_NTSC 102272 //bits per revolution
-
 namespace LIBAMI {
 
 DiskStructure::DiskStructure(Agnus& agnus) : agnus(agnus) {

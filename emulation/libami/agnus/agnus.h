@@ -229,8 +229,8 @@ struct Agnus {
     template<bool byteAccess = false> auto readCustom(uint16_t adr, bool triggeredByWrite = false) -> uint16_t;
 
     auto canBlitterUseBus() -> bool;
-    auto canCopperUseBus() -> bool;
-    auto allocateCopper() -> bool;
+    template<bool oddCycle1 = false> auto canCopperUseBus() -> bool;
+    template<bool oddCycle1 = false> auto allocateCopper() -> bool;
     template<uint8_t ptrEvent> auto fetchBlitterDma(uint32_t adr, uint16_t& result) -> bool;
     auto fetchCopperDma(uint32_t adr, uint16_t& result) -> bool;
     auto fetchCopperDmaNoBUSCheck(uint32_t adr, uint16_t& result) -> void;

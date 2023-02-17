@@ -38,17 +38,17 @@ template<uint8_t Inst, uint8_t Size, bool SingleShift> auto M68000::shifter(uint
                 x = c;
             } else {
                 c = false;
-                uint8_t sign = (data & msb<Size>()) >> (bits<Size>() - 1);
+                int sign = (data & msb<Size>()) >> (bits<Size>() - 1);
                 
                 if (shift >= bits<Size>()) {
-                    data = msb<Size>() & (uint32_t)(0 - sign);
+                    data = mask<Size>() & (uint32_t)(0 - sign);
                     c = sign;
                     x = c;
                 } else if (shift) {
                     data >>= (shift - 1);
                     c = data & 1;
                     data >>= 1;
-                    data |= (msb<Size>() << (bits<Size>() - shift)) & (uint32_t)(0 - sign);
+                    data |= (mask<Size>() << (bits<Size>() - shift)) & (uint32_t)(0 - sign);
                     x = c;
                 }
             }
@@ -138,8 +138,8 @@ template<uint8_t Inst, uint8_t Size, bool SingleShift> auto M68000::shifter(uint
                 data = (data << 1) | x;
                 x = c;
             } else {
+                applyRoxRange<Size>(shift);
                 if (shift) {
-                    applyRoxRange<Size>(shift);
                     uint32_t lo = data >> (bits<Size>() - shift);
                     data = (((data << 1) | x) << (shift - 1)) | (lo >> 1);
                     c = lo & 1;
@@ -158,8 +158,8 @@ template<uint8_t Inst, uint8_t Size, bool SingleShift> auto M68000::shifter(uint
                 
                 x = c;
             } else {
+                applyRoxRange<Size>(shift);
                 if (shift) {
-                    applyRoxRange<Size>(shift);
                     uint32_t hi = (data << 1) | x;
                     hi <<= bits<Size>() - shift;
                     data >>= shift - 1;

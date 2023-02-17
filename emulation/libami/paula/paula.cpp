@@ -182,7 +182,7 @@ auto Paula::strhor() -> void {
 auto Paula::strequ() -> void {
     if (!vBlankIntr) {
         vBlankIntr = true;
-        irqDelay |= INT_VBL_1;
+        irqDelay |= INT_VBL_2;
     }
 
     if (pot.running)
@@ -503,6 +503,7 @@ auto Paula::process() -> void {
                 activeDrive->rotate(dmaCycles); // rotate if motor is running, doesn't matter if drive selected or FDC is idling
                 dmaCycles = FDC_IDLE;
                 // todo: rotate other connected drives too
+                // todo: update diskbytr, depending which drives are selected, enabled and rotating (motor)
                 break;
         }
         dskEventCycle = agnus.clock + dmaCycles;
