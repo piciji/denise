@@ -63,19 +63,19 @@ template<uint8_t Size> constexpr auto M68000::bits() -> uint8_t {
     if constexpr (Size == Long) return 32;
 }
 
-template<uint8_t Size> auto M68000::readRegD(uint8_t reg) -> uint32_t {
+template<uint8_t Size> auto M68000::readRegD(int reg) -> uint32_t {
     return clip<Size>( regsD[reg] );
 }
 
-template<uint8_t Size> auto M68000::writeRegD(uint8_t reg, uint32_t data) -> void {
+template<uint8_t Size> auto M68000::writeRegD(int reg, uint32_t data) -> void {
     regsD[reg] = (regsD[reg] & inverseMask<Size>()) | (data & mask<Size>());
 }
 
-template<uint8_t Size> auto M68000::readRegA(uint8_t reg) -> uint32_t {
+template<uint8_t Size> auto M68000::readRegA(int reg) -> uint32_t {
     return clip<Size>( regsA[reg] );
 }
 
-auto M68000::writeRegA(uint8_t reg, uint32_t data) -> void {
+auto M68000::writeRegA(int reg, uint32_t data) -> void {
     regsA[reg] = data;
 }
 
@@ -175,7 +175,7 @@ template<uint8_t Size, uint8_t Flags> auto M68000::write(uint32_t adr, uint32_t 
     SYNC(2);
 }
 
-template<uint8_t Mode, uint8_t Size, uint8_t Flags> auto M68000::readEA(uint8_t reg, uint32_t& result, uint32_t& ea) -> bool {
+template<uint8_t Mode, uint8_t Size, uint8_t Flags> auto M68000::readEA(int reg, uint32_t& result, uint32_t& ea) -> bool {
     ea = calcEA<Mode, Size, Flags>(reg);
     
     if (Mode == DataRegisterDirect)
@@ -206,7 +206,7 @@ template<uint8_t Mode, uint8_t Size, uint8_t Flags> auto M68000::writeEA(uint32_
         write<Size, Flags>(ea, data);
 }
 
-template<uint8_t Mode, uint8_t Size, uint8_t Flags> auto M68000::calcEA(uint8_t reg) -> uint32_t {
+template<uint8_t Mode, uint8_t Size, uint8_t Flags> auto M68000::calcEA(int reg) -> uint32_t {
     uint32_t adr;
     
     switch(Mode) {

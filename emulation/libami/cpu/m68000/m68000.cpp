@@ -162,7 +162,7 @@ auto M68000::setHalt() -> void {
     control |= Halt;
 }
 
-template<uint8_t Inst> auto M68000::cyclesBit(uint8_t bit) -> void {
+template<uint8_t Inst> auto M68000::cyclesBit(int bit) -> void {
     switch(Inst) {
         case Btst: SYNC(2); break;
         case Bclr: SYNC( bit > 15 ? 6 : 4); break;
@@ -262,7 +262,7 @@ template<uint8_t Mode, uint8_t destMode, uint8_t Size> auto M68000::setMoveCCWhe
 }
 
 auto M68000::firstMovemWrite( uint16_t mask, unsigned shift, bool reverseOrder) -> uint16_t {
-    for(unsigned i = 0; i < 16; i++) {
+    for(int i = 0; i < 16; i++) {
         if ((mask >> i) & 1) {
             if (reverseOrder)
                 return (((i > 7) ? regsA[i - 8] : regsD[i]) >> shift) & 0xffff;
@@ -273,7 +273,7 @@ auto M68000::firstMovemWrite( uint16_t mask, unsigned shift, bool reverseOrder) 
     return ~0;
 }
 
-template<uint8_t phaseShift> auto M68000::internalWaitCyclesBasedOnMainClockCycles(unsigned clockCycles) -> uint8_t {
+template<uint8_t phaseShift> auto M68000::internalWaitCyclesBasedOnMainClockCycles(int clockCycles) -> uint8_t {
     // get E-Clock cycle position from continous main clock cycle counter.
     // keep in mind, that a wrap around of cycle counter distort E-Clock phase. handle the wrap around manually!
     return internalWaitCyclesBasedOnEClock<phaseShift>( clockCycles % 10 );
@@ -281,7 +281,7 @@ template<uint8_t phaseShift> auto M68000::internalWaitCyclesBasedOnMainClockCycl
 
 // initial phase shift of E-Clock at power up (cold start) is non deterministic.
 // keep phase shift after reset
-template<> auto M68000::internalWaitCyclesBasedOnEClock<0>(uint8_t eCyclePos) -> uint8_t {
+template<> auto M68000::internalWaitCyclesBasedOnEClock<0>(int eCyclePos) -> uint8_t {
     if (eCyclePos == 1) return 7;
     if (eCyclePos == 2) return 6;
     if (eCyclePos == 3) return 15;
@@ -294,7 +294,7 @@ template<> auto M68000::internalWaitCyclesBasedOnEClock<0>(uint8_t eCyclePos) ->
     /*if (eCyclePos == 0)*/ return 8;
 }
 
-template<> auto M68000::internalWaitCyclesBasedOnEClock<2>(uint8_t eCyclePos) -> uint8_t {
+template<> auto M68000::internalWaitCyclesBasedOnEClock<2>(int eCyclePos) -> uint8_t {
     if (eCyclePos == 1) return 9;
     if (eCyclePos == 2) return 8;
     if (eCyclePos == 3) return 7;
@@ -307,7 +307,7 @@ template<> auto M68000::internalWaitCyclesBasedOnEClock<2>(uint8_t eCyclePos) ->
     /*if (eCyclePos == 0)*/ return 10;
 }
 
-template<> auto M68000::internalWaitCyclesBasedOnEClock<4>(uint8_t eCyclePos) -> uint8_t {
+template<> auto M68000::internalWaitCyclesBasedOnEClock<4>(int eCyclePos) -> uint8_t {
     if (eCyclePos == 1) return 11;
     if (eCyclePos == 2) return 10;
     if (eCyclePos == 3) return 9;
@@ -320,7 +320,7 @@ template<> auto M68000::internalWaitCyclesBasedOnEClock<4>(uint8_t eCyclePos) ->
     /*if (eCyclePos == 0)*/ return 12;
 }
 
-template<> auto M68000::internalWaitCyclesBasedOnEClock<6>(uint8_t eCyclePos) -> uint8_t {
+template<> auto M68000::internalWaitCyclesBasedOnEClock<6>(int eCyclePos) -> uint8_t {
     if (eCyclePos == 1) return 13;
     if (eCyclePos == 2) return 12;
     if (eCyclePos == 3) return 11;
@@ -333,7 +333,7 @@ template<> auto M68000::internalWaitCyclesBasedOnEClock<6>(uint8_t eCyclePos) ->
     /*if (eCyclePos == 0)*/ return 14;
 }
 
-template<> auto M68000::internalWaitCyclesBasedOnEClock<8>(uint8_t eCyclePos) -> uint8_t {
+template<> auto M68000::internalWaitCyclesBasedOnEClock<8>(int eCyclePos) -> uint8_t {
     if (eCyclePos == 1) return 15;
     if (eCyclePos == 2) return 14;
     if (eCyclePos == 3) return 13;

@@ -3,7 +3,7 @@
 
 namespace M68FAMILY {
 
-template<uint8_t Inst, uint8_t Size, bool SingleShift> auto M68000::shifter(uint32_t data, uint8_t shift) -> uint32_t {
+template<uint8_t Inst, uint8_t Size, bool SingleShift> auto M68000::shifter(uint32_t data, int shift) -> uint32_t {
     switch(Inst) {
         case Asl: {
             if (SingleShift) {
@@ -295,7 +295,7 @@ template<typename T, typename TSign, uint8_t Inst, uint8_t Size> auto M68000::ar
     return result;
 }
 
-template<uint8_t Inst> auto M68000::bit(uint32_t data, uint8_t bit) -> uint32_t {
+template<uint8_t Inst> auto M68000::bit(uint32_t data, int bit) -> uint32_t {
     z = 1 ^ ((data >> bit) & 1);
 
     switch (Inst) {
@@ -354,7 +354,7 @@ template<uint8_t Size> auto M68000::defaultFlags(uint32_t data) -> void {
     z = zero<Size>(data);
 }
 
-template<uint8_t Size> auto M68000::applyRoxRange(uint8_t& shift) -> void {
+template<uint8_t Size> auto M68000::applyRoxRange(int& shift) -> void {
     switch(Size) {
         case Byte:
             if (shift >= 36) shift -= 36;

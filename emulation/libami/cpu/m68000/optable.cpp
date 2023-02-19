@@ -9,7 +9,7 @@ enum { DR = 1, AR = 2, AI = 4, AIPI = 8, AIPD = 16, AID = 32, AII = 64, AS = 128
 #define _bind(id, F, I, S) { opTable[id] = &M68000::op##F<I, S>; }
 
 #define _M_( op, F, I, M, S ) { \
-    for (uint8_t j = 0; j < 8; j++) { \
+    for (int j = 0; j < 8; j++) { \
         if (M & DR)     _bindEA((op) | 0 << 3 | j, F, I, DataRegisterDirect, S) \
         if (M & AR)     _bindEA((op) | 1 << 3 | j, F, I, AddressRegisterDirect, S) \
         if (M & AI)     _bindEA((op) | 2 << 3 | j, F, I, AddressRegisterIndirect, S) \
@@ -26,10 +26,10 @@ enum { DR = 1, AR = 2, AI = 4, AIPI = 8, AIPD = 16, AID = 32, AII = 64, AS = 128
 }
 
 #define _EA_( op, flags, F, I, M, S ) { \
-    uint8_t _b = 0, _w = 0, _l = 0;   \
-    uint8_t _s = (flags) & 15;          \
+    int _b = 0, _w = 0, _l = 0;   \
+    int _s = (flags) & 15;          \
     if (_s) _l = _s == 8 ? 1 : 2, _w = _s == 6 ? 1 : (_s == 8 ? 0 : 3), _b = _s == 6 ? 0 : 1;  \
-    for (uint8_t i = 0; i < (((flags) & SO) ? 8 : 1); i++) {                                  \
+    for (int i = 0; i < (((flags) & SO) ? 8 : 1); i++) {                                  \
         if ((S) & Byte) { _M_( op | i << 9 | _b << _s, F, I, (M), Byte ) } \
         if ((S) & Word) { _M_( op | i << 9 | _w << _s, F, I, (M), Word ) } \
         if ((S) & Long) { _M_( op | i << 9 | _l << _s, F, I, (M), Long ) } \
@@ -37,11 +37,11 @@ enum { DR = 1, AR = 2, AI = 4, AIPI = 8, AIPD = 16, AID = 32, AII = 64, AS = 128
 }
 
 #define _B_( op, flags, F, I, S ) { \
-    uint16_t os = ((flags) & O_256) ? 256 : (((flags) & O_16) ? 16 : 8); \
-    uint8_t _b = 0, _w = 0, _l = 0;   \
-    uint8_t _s = (flags) & 15;          \
+    int os = ((flags) & O_256) ? 256 : (((flags) & O_16) ? 16 : 8); \
+    int _b = 0, _w = 0, _l = 0;   \
+    int _s = (flags) & 15;          \
     if (_s) _l = _s == 8 ? 1 : 2, _w = _s == 6 ? 1 : (_s == 8 ? 0 : 3), _b = _s == 6 ? 0 : 1;  \
-    for (uint8_t i = 0; i < (((flags) & SO) ? 8 : 1); i++) {                                  \
+    for (int i = 0; i < (((flags) & SO) ? 8 : 1); i++) {                                  \
         if ((S) & Byte) { for(uint16_t j = 0; j < os; j++) _bind( op | i << 9 | _b << _s | j, F, I, Byte ) } \
         if ((S) & Word) { for(uint16_t j = 0; j < os; j++) _bind( op | i << 9 | _w << _s | j, F, I, Word ) } \
         if ((S) & Long) { for(uint16_t j = 0; j < os; j++) _bind( op | i << 9 | _l << _s | j, F, I, Long ) } \
@@ -600,7 +600,7 @@ auto M68000::build() -> void {
     _B_( o | (0 << 6), SO, Movep, ToMem, Word )
     _B_( o | (1 << 6), SO, Movep, ToMem, Long )
 
-    for (unsigned i = 0; i < 0x1000; i++) {
+    for (int i = 0; i < 0x1000; i++) {
         opTable[(0xa << 12) | i] = &M68000::lineA;
         opTable[(0xf << 12) | i] = &M68000::lineF;
     }
@@ -608,7 +608,7 @@ auto M68000::build() -> void {
     mulCycleLookup = new uint8_t[0x10000];
     mulCycleLookup[0] = 34;
 
-    for( unsigned i = 0; i < 0x10000; i ++ ) {
+    for( int i = 0; i < 0x10000; i ++ ) {
         mulCycleLookup[i] = ((i & 1) << 1) + mulCycleLookup[i / 2];
 
         if (!opTable[i]) // note: initialized with zero in header file

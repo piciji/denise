@@ -118,8 +118,8 @@ public:
     auto getSR() -> uint16_t;
 
     // use this to calculate the needed wait states by terminating a BUS cycle with VPA line
-    template<uint8_t phaseShift = 0> auto internalWaitCyclesBasedOnEClock(uint8_t eCyclePos) -> uint8_t;
-    template<uint8_t phaseShift = 0> auto internalWaitCyclesBasedOnMainClockCycles(unsigned clockCycles) -> uint8_t;
+    template<uint8_t phaseShift = 0> auto internalWaitCyclesBasedOnEClock(int eCyclePos) -> uint8_t;
+    template<uint8_t phaseShift = 0> auto internalWaitCyclesBasedOnMainClockCycles(int clockCycles) -> uint8_t;
     
 protected:
 #ifndef REF
@@ -207,11 +207,11 @@ private:
     auto setSuperVisor(bool state = true) -> void;
     template<uint8_t Size = Word> auto misaligned(uint32_t adr) -> bool;
 
-    template<uint8_t Size = Long> inline auto readRegD(uint8_t reg) -> uint32_t;
-    template<uint8_t Size = Long> inline auto writeRegD(uint8_t reg, uint32_t data) -> void;
+    template<uint8_t Size = Long> inline auto readRegD(int reg) -> uint32_t;
+    template<uint8_t Size = Long> inline auto writeRegD(int reg, uint32_t data) -> void;
     
-    template<uint8_t Size = Long> inline auto readRegA(uint8_t reg) -> uint32_t;
-    inline auto writeRegA(uint8_t reg, uint32_t data) -> void;
+    template<uint8_t Size = Long> inline auto readRegA(int reg) -> uint32_t;
+    inline auto writeRegA(int reg, uint32_t data) -> void;
 
     template<uint8_t Size, uint8_t Flags = 0> auto read(uint32_t adr) -> uint32_t;
     template<uint8_t Size, uint8_t Flags = 0> auto write(uint32_t adr, uint32_t data) -> void;
@@ -220,8 +220,8 @@ private:
     template<uint8_t Flags = None> auto fullPrefetch() -> void;
     template<uint8_t Flags = None> inline auto readExtensionWord() -> void;
     
-    template<uint8_t Mode, uint8_t Size, uint8_t Flags = None> auto calcEA(uint8_t reg) -> uint32_t;
-    template<uint8_t Mode, uint8_t Size, uint8_t Flags = None> auto readEA(uint8_t reg, uint32_t& result, uint32_t& ea) -> bool;
+    template<uint8_t Mode, uint8_t Size, uint8_t Flags = None> auto calcEA(int reg) -> uint32_t;
+    template<uint8_t Mode, uint8_t Size, uint8_t Flags = None> auto readEA(int reg, uint32_t& result, uint32_t& ea) -> bool;
     template<uint8_t Mode, uint8_t Size, uint8_t Flags = None> auto writeEA(uint32_t ea, uint32_t data) -> void;
 
     auto parse(const char* s, uint16_t sum = 0) -> uint16_t;
@@ -298,8 +298,8 @@ private:
     auto opRts(uint16_t opcode) -> void;
     auto opStop(uint16_t opcode) -> void;
 
-    template<uint8_t Inst> auto bit(uint32_t data, uint8_t bit) -> uint32_t;
-    template<uint8_t Inst, uint8_t Size, bool SingleShift = false> auto shifter(uint32_t data, uint8_t shift) -> uint32_t;
+    template<uint8_t Inst> auto bit(uint32_t data, int bit) -> uint32_t;
+    template<uint8_t Inst, uint8_t Size, bool SingleShift = false> auto shifter(uint32_t data, int shift) -> uint32_t;
     
     template<uint8_t Inst> auto singleShifter(uint32_t data) -> uint32_t {
         return shifter<Inst, Word, true>( data, 1 );
@@ -310,7 +310,7 @@ private:
     template<uint8_t Inst, uint8_t Size> auto bcd(uint32_t src, uint32_t dest) -> uint8_t;
     template<uint8_t Inst> auto testCondition() -> bool;
     
-    template<uint8_t Size> auto applyRoxRange(uint8_t& shift) -> void;
+    template<uint8_t Size> auto applyRoxRange(int& shift) -> void;
     template<uint8_t Size> auto defaultFlags(uint32_t data) -> void;
     template<uint8_t Mode, uint8_t destMode, uint8_t Size> auto setMoveCCWhenAddressError(uint32_t data) -> void;
 
@@ -333,7 +333,7 @@ private:
     template<uint8_t Inst> auto ccr(uint8_t data) -> void;
     template<uint8_t Inst> auto sr(uint16_t data) -> void;
     
-    template<uint8_t Inst> auto cyclesBit(uint8_t bit) -> void;
+    template<uint8_t Inst> auto cyclesBit(int bit) -> void;
     template<uint8_t Inst> auto cyclesMul(uint16_t data) -> void;
     template<uint8_t Inst> auto cyclesDiv(uint32_t dividend, uint16_t divisor) -> void;
 

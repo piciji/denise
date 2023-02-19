@@ -1,7 +1,7 @@
 
 #include "agnus.h"
 
-#define eCyclePosition  10 - (((eClockCycle - clock) & 0xffffffff) << 1)
+#define eCyclePosition  10 - ((eClockCycle - clock) << 1)
 
 namespace LIBAMI {
 

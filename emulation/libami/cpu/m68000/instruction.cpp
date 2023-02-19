@@ -4,7 +4,7 @@
 namespace M68FAMILY {
 
 template<uint8_t Inst, uint8_t Size> auto M68000::opImmShift(uint16_t opcode) -> void {
-    uint8_t reg = opcode & 7;
+    int reg = opcode & 7;
     uint8_t shift = (opcode >> 9) & 7;
     if (shift == 0) shift = 8;
 
@@ -15,8 +15,8 @@ template<uint8_t Inst, uint8_t Size> auto M68000::opImmShift(uint16_t opcode) ->
 }
 
 template<uint8_t Inst, uint8_t Size> auto M68000::opRegShift(uint16_t opcode) -> void {
-    uint8_t reg = opcode & 7;
-    uint8_t shift = readRegD( (opcode >> 9) & 7 ) & 63;
+    int reg = opcode & 7;
+    int shift = readRegD( (opcode >> 9) & 7 ) & 63;
 
     prefetch<SampleIPL>();
     uint32_t result = shifter<Inst, Size>(readRegD<Size>( reg ), shift );
@@ -35,8 +35,8 @@ template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opShift(uint16_t
 
 template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opBit(uint16_t opcode) -> void {
     uint32_t result, ea;
-    uint8_t reg = (opcode >> 9) & 7;
-    uint8_t bits = (Size == Long) ? (regsD[ reg ] & 31) : (regsD[ reg ] & 7);
+    int reg = (opcode >> 9) & 7;
+    int bits = (Size == Long) ? (regsD[ reg ] & 31) : (regsD[ reg ] & 7);
 
     if (!readEA<Mode, Size>(opcode & 7, result, ea))
         return;
@@ -54,7 +54,7 @@ template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opBit(uint16_t o
 
 template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opImmBit(uint16_t opcode) -> void {
     uint32_t result, ea;
-    uint8_t bits = (Size == Long) ? (irc & 31) : (irc & 7);
+    int bits = (Size == Long) ? (irc & 31) : (irc & 7);
     readExtensionWord();
 
     if (!readEA<Mode, Size>(opcode & 7, result, ea))
@@ -153,7 +153,7 @@ template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opTst(uint16_t o
 
 template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opArithmetic(uint16_t opcode) -> void {
     uint32_t result, ea;
-    uint8_t reg = (opcode >> 9) & 7;
+    int reg = (opcode >> 9) & 7;
     if (!readEA<Mode, Size>(opcode & 7, result, ea))
         return;
 
@@ -169,7 +169,7 @@ template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opArithmetic(uin
 
 template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opCmp(uint16_t opcode) -> void {
     uint32_t result, ea;
-    uint8_t reg = (opcode >> 9) & 7;
+    int reg = (opcode >> 9) & 7;
     if (!readEA<Mode, Size>(opcode & 7, result, ea))
         return;
 
@@ -180,7 +180,7 @@ template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opCmp(uint16_t o
 
 template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opArithmeticEA(uint16_t opcode) -> void {
     uint32_t result, ea;
-    uint8_t reg = (opcode >> 9) & 7;
+    int reg = (opcode >> 9) & 7;
     if (!readEA<Mode, Size>(opcode & 7, result, ea))
         return;
 
@@ -193,7 +193,7 @@ template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opArithmeticEA(u
 
 template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opArithmeticA(uint16_t opcode) -> void {
     uint32_t result, ea;
-    uint8_t reg = (opcode >> 9) & 7;
+    int reg = (opcode >> 9) & 7;
     if (!readEA<Mode, Size>(opcode & 7, result, ea))
         return;
 
@@ -208,7 +208,7 @@ template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opArithmeticA(ui
 
 template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opCmpa(uint16_t opcode) -> void {
     uint32_t result, ea;
-    uint8_t reg = (opcode >> 9) & 7;
+    int reg = (opcode >> 9) & 7;
     if (!readEA<Mode, Size>(opcode & 7, result, ea))
         return;
 
@@ -220,7 +220,7 @@ template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opCmpa(uint16_t 
 
 template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opMul(uint16_t opcode) -> void {
     uint32_t result, ea;
-    uint8_t reg = (opcode >> 9) & 7;
+    int reg = (opcode >> 9) & 7;
     if (!readEA<Mode, Word>(opcode & 7, result, ea))
         return;
 
@@ -235,7 +235,7 @@ template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opMul(uint16_t o
 
 template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opDiv(uint16_t opcode) -> void {
     uint32_t result, divisor, ea;
-    uint8_t reg = (opcode >> 9) & 7;
+    int reg = (opcode >> 9) & 7;
     if (!readEA<Mode, Word>(opcode & 7, divisor, ea))
         return;
 
@@ -301,7 +301,7 @@ template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opDiv(uint16_t o
 template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opMove(uint16_t opcode) -> void {
     // Inst is target Mode
     uint32_t result, ea;
-    uint8_t reg = (opcode >> 9) & 7;
+    int reg = (opcode >> 9) & 7;
     if (!readEA<Mode, Size>(opcode & 7, result, ea))
         return;
 
@@ -370,7 +370,7 @@ template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opMove(uint16_t 
 
 template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opMoveA(uint16_t opcode) -> void {
     uint32_t result, ea;
-    uint8_t reg = (opcode >> 9) & 7;
+    int reg = (opcode >> 9) & 7;
     if (!readEA<Mode, Size>(opcode & 7, result, ea))
         return;
     
@@ -399,7 +399,7 @@ template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opArithmeticI(ui
 
 template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opArithmeticQ(uint16_t opcode) -> void {
     uint32_t result, ea;
-    uint8_t operand = (opcode >> 9) & 7;
+    uint32_t operand = (opcode >> 9) & 7;
     if (operand == 0) operand = 8;
 
     if (!readEA<Mode, Mode == AddressRegisterDirect ? Long : Size>(opcode & 7, result, ea))
@@ -460,7 +460,7 @@ template<uint8_t Inst, uint8_t Size> auto M68000::opBsr(uint16_t opcode) -> void
 
 template<uint8_t Inst, uint8_t Size> auto M68000::opDbcc(uint16_t opcode) -> void {
     SYNC(2);
-    uint8_t reg = opcode & 7;
+    int reg = opcode & 7;
     uint32_t memPC = pc;
     
     if (!testCondition<Inst>()) {
@@ -652,7 +652,7 @@ template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opMovemToEa(uint
 }
 
 template<uint8_t Inst, uint8_t Size> auto M68000::opArithmeticX(uint16_t opcode) -> void {
-    uint8_t destReg = (opcode >> 9) & 7;
+    int destReg = (opcode >> 9) & 7;
 
     prefetch<SampleIPL>();
     if constexpr(Size == Long)  SYNC(4);
@@ -663,8 +663,8 @@ template<uint8_t Inst, uint8_t Size> auto M68000::opArithmeticX(uint16_t opcode)
 
 template<uint8_t Inst, uint8_t Size> auto M68000::opArithmeticXEa(uint16_t opcode) -> void {
     uint32_t result, dest, ea;
-    uint8_t srcReg = opcode & 7;
-    uint8_t destReg = (opcode >> 9) & 7;
+    int srcReg = opcode & 7;
+    int destReg = (opcode >> 9) & 7;
 
     ea = readRegA( srcReg );
     ea -= (Size == Byte && srcReg == 7) ? 2 : Size;
@@ -702,8 +702,8 @@ template<uint8_t Inst, uint8_t Size> auto M68000::opArithmeticXEa(uint16_t opcod
 
 template<uint8_t Inst, uint8_t Size> auto M68000::opCmpm(uint16_t opcode) -> void {
     uint32_t result, dest, ea;
-    uint8_t srcReg = opcode & 7;
-    uint8_t destReg = (opcode >> 9) & 7;
+    int srcReg = opcode & 7;
+    int destReg = (opcode >> 9) & 7;
 
     ea = readRegA( srcReg );
     if (misaligned<Size>(ea))
@@ -745,7 +745,7 @@ template<uint8_t Inst, uint8_t Size> auto M68000::opSr(uint16_t opcode) -> void 
 
 template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opChk(uint16_t opcode) -> void {
     uint32_t result, ea;
-    uint8_t reg = (opcode >> 9) & 7;
+    int reg = (opcode >> 9) & 7;
     if (!readEA<Mode, Size>(opcode & 7, result, ea))
         return;
 
