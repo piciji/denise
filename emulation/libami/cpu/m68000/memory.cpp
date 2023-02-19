@@ -234,8 +234,13 @@ template<uint8_t Mode, uint8_t Size, uint8_t Flags> auto M68000::calcEA(uint8_t 
             
         case AddressRegisterIndirectWithIndex: {
             SYNC(2);
-            uint32_t dispReg = readRegD( (irc & 0x7000) >> 12 );
-            adr = readRegA( reg ) + (!(irc & 0x800) ? (int16_t)dispReg : dispReg) + (int8_t)(irc & 0xff);
+
+            int index = (irc >> 12) & 7;
+            uint32_t dispReg = (irc & 0x8000) ? readRegA( index ) : readRegD( index );
+            uint32_t an = readRegA( reg );
+            int8_t d = (int8_t)irc;
+
+            adr = (int64_t)an + (int64_t)((irc & 0x800) ? dispReg : (int16_t)dispReg) + (int64_t)d;
 
             if constexpr((Flags & SkipExtension) == 0) readExtensionWord();
             return adr;
@@ -259,8 +264,12 @@ template<uint8_t Mode, uint8_t Size, uint8_t Flags> auto M68000::calcEA(uint8_t 
             
         case ProgramCounterIndirectWithIndex: {
             SYNC(2);
-            uint32_t dispReg = readRegD( (irc & 0x7000) >> 12 );
-            adr = pc + (!(irc & 0x800) ? (int16_t)dispReg : dispReg) + (int8_t)(irc & 0xff);
+
+            int index = (irc >> 12) & 7;
+            uint32_t dispReg = (irc & 0x8000) ? readRegA( index ) : readRegD( index );
+            int8_t d = (int8_t)irc;
+
+            adr = (int64_t)pc + (int64_t)((irc & 0x800) ? dispReg : (int16_t)dispReg) + (int64_t)d;
 
             if constexpr((Flags & SkipExtension) == 0) readExtensionWord();
             return adr;

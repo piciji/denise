@@ -23,6 +23,8 @@ DiskDrive::DiskDrive(uint8_t number, System* system, Agnus& agnus, Cia<MOS_8520>
 
 unsigned DiskDrive::rpm = 30000;
 unsigned DiskDrive::wobble = 50;
+int DiskDrive::wobblePos = 0;
+int DiskDrive::wobbleLimit = 25;
 unsigned DiskDrive::stepperSeekTimeBase = 0;
 unsigned DiskDrive::stepperMinTimeBase = 0;
 // PAL: 28375160 (master clock) / 8 (to DMA clock) / 5 (revs per sec)
@@ -46,7 +48,7 @@ auto DiskDrive::readByte(uint16_t& dmaCycles, bool upd) -> uint8_t {
         // Depending on the current motor speed, it is determined how many DMA cycles are necessary until the next byte is read.
         // That way, we don't have to work with fractional numbers. carry is remembered in "accum".
 
-        dmaCycles = (todo + track->bits - 1) / track->bits;
+        dmaCycles = (todo + (track->bits >> 1)) / track->bits;
     }
     unsigned byteOffset = (headOffset + 7) >> 3;
     uint8_t byte = track->data[byteOffset];
@@ -63,9 +65,11 @@ auto DiskDrive::readByte(uint16_t& dmaCycles, bool upd) -> uint8_t {
     return byte;
 }
 
-auto DiskDrive::rotate(unsigned dmaCycles) -> void {
-    if (!motor || !inserted)
+auto DiskDrive::rotate(unsigned dmaCycles, bool reset) -> void {
+    if (!motor || !inserted || !dmaCycles) {
+        if (reset) accum = 0;
         return;
+    }
 
     if (stepSettleClock) progressStepper();
 
@@ -89,6 +93,7 @@ auto DiskDrive::rotate(unsigned dmaCycles) -> void {
         } else
             break;
     }
+    if (reset) accum = 0;
 }
 
 auto DiskDrive::readBit(uint16_t& dmaCycles, bool upd) -> bool {
@@ -199,6 +204,8 @@ auto DiskDrive::attach(uint8_t* data, unsigned size) -> bool {
     inserted = true;
     stepSettleClock = 0;
     accum = 0;
+    wobblePos = 0;
+    wobbleLimit = wobble >> 1;
     updateRpm();
 
     if (driveSound && system->powerOn && system->displayFrame())
@@ -261,6 +268,8 @@ auto DiskDrive::power() -> void {
     structure.serializationSize = 0;
     randomizer.initXorShift( 0x1234abcd );
     randCounter = ~0;
+    wobblePos = 0;
+    wobbleLimit = wobble >> 1;
 
     if (driveSound && inserted && !system->powerOn)
         interface->mixDriveSound(media, DriveSound::FloppyInsert);
@@ -421,6 +430,8 @@ auto DiskDrive::setSpeed(unsigned rpmScaled) -> void {
 
 auto DiskDrive::setWobble(unsigned wobbleScaled) -> void {
     wobble = wobbleScaled;
+    wobblePos = 0;
+    wobbleLimit = wobble >> 1;
 }
 
 auto DiskDrive::randomizeRpm(unsigned frequency) -> void {
@@ -432,11 +443,29 @@ auto DiskDrive::randomizeRpm(unsigned frequency) -> void {
     // generating random integer numbers is easier, lets scale up
     // 0.5 rpm * 100 = 50
     // 300 rpm * 100 = 30000
-    unsigned adjusted = rpm + (rand() % (wobble + 1) ) - (wobble / 2);
+    //unsigned adjusted = rpm + (rand() % (wobble + 1) ) - (wobble / 2);
 
-    // drive speed is 300 rounds per minute, means 300 / 60 = 5 rounds per second.
     unsigned long long cyclesPerRevolution = frequency / 5;
-    refCyclesPerRevolutionBase = (30000ULL * cyclesPerRevolution) / adjusted;
+
+    if (wobble) {
+        if (wobbleLimit < 0) { // neg
+            if (--wobblePos < wobbleLimit) {
+                wobbleLimit = wobble >> 1;
+            }
+        } else {
+            if (++wobblePos > wobbleLimit) {
+                wobbleLimit = -(int)(wobble >> 1);
+            }
+        }
+
+        unsigned adjusted = rpm + wobblePos;
+
+        // drive speed is 300 rounds per minute, means 300 / 60 = 5 rounds per second.
+        refCyclesPerRevolutionBase = (30000ULL * cyclesPerRevolution) / adjusted;
+    } else {
+
+        refCyclesPerRevolutionBase = (30000ULL * cyclesPerRevolution) / rpm;
+    }
 }
 
 auto DiskDrive::setStepperSeekTime( unsigned stepperSeekTimeScaled ) -> void {

@@ -45,7 +45,7 @@ M68000::~M68000() {
 
 auto M68000::process()->void {
 
-    if (control) { // for performance only
+    if (control) {
         if (control & Halt)
             return SYNC(4);
 

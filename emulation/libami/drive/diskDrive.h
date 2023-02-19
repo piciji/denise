@@ -64,6 +64,9 @@ struct DiskDrive {
 
     static unsigned rpm;
     static unsigned wobble;
+    static int wobblePos;
+    static int wobbleLimit;
+
     static unsigned refCyclesPerRevolutionBase;
     static unsigned stepperSeekTimeBase;
     static unsigned stepperMinTimeBase;
@@ -81,7 +84,7 @@ struct DiskDrive {
     auto readBit(uint16_t& dmaCycles, bool upd) -> bool;
     auto writeBit(bool state) -> void;
     auto adjustHead(int offset) -> void;
-    auto rotate(unsigned dmaCycles) -> void;
+    auto rotate(unsigned dmaCycles, bool reset = false) -> void;
 
     auto getDummyTrack() -> DiskStructure::Track*;
 

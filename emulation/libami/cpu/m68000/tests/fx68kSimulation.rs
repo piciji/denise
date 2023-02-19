@@ -1,8 +1,8 @@
-# Copyright notice: The following tests are based on the 68k simulator from emoon. https://github.com/emoon/fx68k
+// Copyright notice: The following tests are based on the 68k simulator from emoon. https://github.com/emoon/fx68k
 
-# This is not an automated overall test, but many individual tests and serve more as a template.
-# The tests of the individual instructions include what I tested last and thus only reflect the last test state of the respective instructions.
-# The real point is to have to adjust as little as possible in another test.
+// This is not an automated overall test, but many individual tests and serve more as a template.
+// The tests of the individual instructions include what I tested last and thus only reflect the last test state of the respective instructions.
+// The real point is to have to adjust as little as possible in another test.
 
 
 #![allow(clippy::borrowed_box, clippy::transmute_ptr_to_ref)]

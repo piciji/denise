@@ -12,6 +12,8 @@
 #include "../drive/diskDrive.h"
 #include "../../tools/crop.h"
 
+//#define LOG_CPU_STATE
+
 namespace LIBAMI {
 
 struct Interface;

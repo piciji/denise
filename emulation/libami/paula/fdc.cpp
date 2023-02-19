@@ -434,9 +434,11 @@ auto Paula::processDiskIdleCycles() -> void {
     unsigned temp = (unsigned)(dskEventCycle - agnus.clock);
 
     if (temp >= dmaCycles)
-        return;
+        temp = 0;
+    else
+        temp = dmaCycles - temp;
 
-    activeDrive->rotate( dmaCycles - temp );
+    activeDrive->rotate( temp, true );
 }
 
 }

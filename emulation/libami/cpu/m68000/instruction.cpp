@@ -40,7 +40,10 @@ template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opBit(uint16_t o
 
     if (!readEA<Mode, Size>(opcode & 7, result, ea))
         return;
-    
+
+//    if (Mode == AbsoluteLong && pc == 0xfe5a78 && regsA[0] == 0xdff000 && regsD[6] == 0 && regsA[1] == 0xfe5a50)
+//        int f=3;
+
     result = bit<Inst>(result, bits);
     prefetch<SampleIPL>();
 
@@ -210,7 +213,7 @@ template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opCmpa(uint16_t 
         return;
 
     result = sign<Size>(result);
-    arithmetic<Cmp, Size>( result, readRegA<Long>(reg) );
+    arithmetic<Cmp, Long>( result, readRegA<Long>(reg) );
     prefetch<SampleIPL>();
     SYNC( 2 );
 }

@@ -26,6 +26,7 @@ struct Cpu : M68FAMILY::M68000 {
     auto getStatus() -> uint16_t;
 
     auto logState() -> void;
+    auto logWrite(unsigned adr, unsigned val) -> void;
 };
 
 }

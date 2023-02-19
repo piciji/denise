@@ -4,8 +4,9 @@
 #include "../../tools/serializer.h"
 #include "../interface.h"
 
-#define CPU_LOG_START 0
-#define CPU_LOG_COUNT 2000000
+#define CPU_LOG_START 88000000
+#define CPU_LOG_COUNT 500000
+
 
 namespace LIBAMI {
 
@@ -54,10 +55,23 @@ auto Cpu::logState() -> void {
     ref.interface->log("A", false);
     for(unsigned i = 0; i < 8; i++)
         ref.interface->log(regsA[i], false, true);
+
 //    ref.interface->log("USP", false);
 //    ref.interface->log(usp, false, true);
 //    ref.interface->log("SSP", false);
 //    ref.interface->log(ssp, false, true);
+}
+
+auto Cpu::logWrite(unsigned adr, unsigned val) -> void {
+    if (logCounter == (CPU_LOG_COUNT + CPU_LOG_START) )
+        return;
+
+    if (logCounter < CPU_LOG_START)
+        return;
+
+    ref.interface->log("W:", false);
+    ref.interface->log(adr, false, true);
+    ref.interface->log(val, false, true);
 }
 
 auto Cpu::serialize(Emulator::Serializer& s) -> void {

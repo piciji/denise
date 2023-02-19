@@ -301,8 +301,6 @@ struct Agnus {
     auto rememberSlowMem(uint32_t adr) -> void;
     auto increaseTrackMemStorage(MemChange*& memChange, unsigned& size) -> void;
 
-    auto log(uint32_t adr, uint16_t value, bool isWrite) -> void;
-
     template<uint8_t Channel, bool executeCurEvent = false> auto updateEvent(int delay) -> void;
     template<uint8_t Channel, bool executeCurEvent = false> auto updateEventAbs(int64_t absClock) -> void;
     template<uint8_t Channel> auto setEventInactive() -> void {
