@@ -43,13 +43,14 @@ auto DiskStructure::prepareADF(uint8_t* data, unsigned size) -> void {
 
 auto DiskStructure::encodeTrack(Track& track, unsigned trackNr, uint8_t* userData) -> void {
     uint8_t* ptr;
-    unsigned sectors = hd ? 22 : 11;
+    int sectors = hd ? 22 : 11;
     // init with data bit zero for complete revolution, means clock bit is always one, because of the ring nature previous data bit is always zero
     bool lastDataWasAOne = false;
     uint8_t buffer[512];
+    int gap = track.length - (sectors * 544 * 2);
 
-    for( uint8_t sector = 0; sector < sectors; sector++ ) {
-        ptr = track.data + sector * 544 * 2;
+    for( int sector = 0; sector < sectors; sector++ ) {
+        ptr = track.data + gap + sector * 544 * 2;
 
         ptr[0] = lastDataWasAOne ? 0x2a : 0xaa;
         ptr[1] = ptr[2] = ptr[3] = 0xaa;
@@ -88,10 +89,8 @@ auto DiskStructure::encodeTrack(Track& track, unsigned trackNr, uint8_t* userDat
         addClockBits(((uint16_t*)ptr) + 4, 512 + 32 - 4 );
     }
 
-    if (lastDataWasAOne) {
-        ptr = track.data + sectors * 544 * 2;
-        *ptr &= 0x7f;
-    }
+    if (lastDataWasAOne)
+        track.data[0] &= 0x7f;
 }
 
 auto DiskStructure::separateOddEven(uint8_t* dst, uint8_t* src, unsigned size) -> void {

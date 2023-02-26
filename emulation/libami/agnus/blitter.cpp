@@ -219,7 +219,6 @@ auto Blitter::activateLLEWhenNeeded(uint8_t bltRegister, uint16_t value) -> void
 }
 
 auto Blitter::finish() -> void {
-    paula.pulseInt3();
     busy = false;
     copper.blitterBusyUpdate();
     agnus.addOneCycleEventA(Agnus::BLT_BUSY_DELAY, 1);

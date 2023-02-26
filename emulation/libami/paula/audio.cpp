@@ -1,6 +1,5 @@
 
 #define AUDxIR(nr) setIntAud<nr>();
-#define AUDxIR_ALT(nr) setIntAudMoreDelayed<nr>();
 #define AUDxIP(nr) (intreq & (0x80 << nr))
 #define volcntrld() cha.vol = (int8_t)cha.volLatch;
 #define lencntrld() cha.len = cha.lenLatch;
@@ -162,11 +161,11 @@ template<uint8_t nr> auto Paula::stateMachine() -> void {
             if (cha.dma) {
                 cha.dr = true;
                 if (cha.intreq2) {
-                    AUDxIR_ALT(nr)
+                    AUDxIR(nr)
                     cha.intreq2 = false;
                 }
             } else
-                AUDxIR_ALT(nr)
+                AUDxIR(nr)
         }
         addSample<nr>( cha.buffer & 0xff );
         cha.state = 3;
@@ -181,11 +180,11 @@ template<uint8_t nr> auto Paula::stateMachine() -> void {
                 if (cha.dma) {
                     cha.dr = true;
                     if (cha.intreq2) {
-                        AUDxIR_ALT(nr)
+                        AUDxIR(nr)
                         cha.intreq2 = false;
                     }
                 } else
-                    AUDxIR_ALT(nr)
+                    AUDxIR(nr)
             }
             addSample<nr>( cha.buffer >> 8 );
             cha.state = 2;

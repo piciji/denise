@@ -91,6 +91,7 @@ auto Cia<model>::todIncrement() -> void {
                 } else {
                     tickCounter = 4;
                     todc++;
+                    todc &= 0xffffff;
                 }
                 break;
             case 3:     // 8 cycles

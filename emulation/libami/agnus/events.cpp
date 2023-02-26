@@ -110,7 +110,9 @@ auto Agnus::processOneCycleEvent(uint8_t job, uint16_t data) -> void {
         case PTR_DSK_L: setDskPtL(data); break;
         case DMACON: dmaCon = dmaConImm; break;
         case BLT_INIT: blitter.initBlit(); break;
-        case BLT_BUSY_DELAY: break;
+        case BLT_BUSY_DELAY:
+            paula.pulseInt3();
+            break;
     }
     setEventInactive<EVENT_ONE_CYCLE_DELAY>();
 }

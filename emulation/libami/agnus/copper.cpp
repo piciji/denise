@@ -278,9 +278,10 @@ auto Copper::strobeCOPJMP(bool firstLocation, uint8_t triggeredBy) -> void {
         else state = Strobe_VBL_1;
 
     } else { // from CPU
-        if ((state == Wait1 || state == Wait2 || state == Wait4) && agnus.useCopperDMA())
+
+        if ((state == Wait1 || state == Wait2 || state == Wait4) && agnus.useCopperDMA()) {
             state = (agnus.hPos & 1) ? Strobe_CPU_3 : Strobe_CPU_1;
-        else {
+        } else {
             prevState = state;
             state = Strobe_CPU_6;
         }

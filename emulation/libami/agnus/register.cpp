@@ -373,7 +373,8 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
             bplCon0 = value & ~0xb1;
 
             if (bplState) {
-                bplCycle &= ~(BPL_HIRES | BPL_SHIRES); // lores
+                bplCycle &= BPL_QUEUE | BPL_ADD_MOD;
+                bplCycle |= (bplCon0 >> 4) & 0x700;
                 if (ecsAndHigher() && (bplCon0 & 0x40)) bplCycle |= BPL_SHIRES;
                 else if (bplCon0 & 0x8000) bplCycle |= BPL_HIRES;
             }

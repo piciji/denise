@@ -34,7 +34,7 @@ unsigned DiskDrive::refCyclesPerRevolutionBase = 709379;
 auto DiskDrive::readByte(uint16_t& dmaCycles, bool upd) -> uint8_t {
     // todo: simulate deceleration more realistic (like d64)
     // e.g. there are some C64 games which expect to read some data from disc after motor has stopped.
-    if ((!motor && (motorSpeed < 20)) || !inserted )
+    if ((!motor && (motorSpeed < 20)) || !inserted)
         return 0;
 
     if (stepSettleClock) progressStepper();
@@ -50,12 +50,13 @@ auto DiskDrive::readByte(uint16_t& dmaCycles, bool upd) -> uint8_t {
 
         dmaCycles = (todo + (track->bits >> 1)) / track->bits;
     }
-    unsigned byteOffset = (headOffset + 7) >> 3;
+    unsigned byteOffset = headOffset >> 3;
     uint8_t byte = track->data[byteOffset];
 
     if (++byteOffset >= track->length) {
         headOffset = 0;
-        cia.setFlag();
+        if (selected)
+            cia.setFlag();
     } else
         headOffset = byteOffset << 3;
 
@@ -67,7 +68,8 @@ auto DiskDrive::readByte(uint16_t& dmaCycles, bool upd) -> uint8_t {
 
 auto DiskDrive::rotate(unsigned dmaCycles, bool reset) -> void {
     if (!motor || !inserted || !dmaCycles) {
-        if (reset) accum = 0;
+        if (reset)
+            accum = 0;
         return;
     }
 
@@ -82,18 +84,23 @@ auto DiskDrive::rotate(unsigned dmaCycles, bool reset) -> void {
             headOffset += 8;
             if (headOffset >= track->bits) {
                 headOffset -= track->bits;
-                cia.setFlag();
+                if (selected)
+                    cia.setFlag();
             }
-        } else if (accum >= refCyclesPerRevolution) {
-            accum -= refCyclesPerRevolution;
-            if (++headOffset >= track->bits) {
-                headOffset = 0;
-                cia.setFlag();
-            }
-        } else
-            break;
+        } else {
+            if (accum >= refCyclesPerRevolution) {
+                accum -= refCyclesPerRevolution;
+                if (++headOffset >= track->bits) {
+                    headOffset = 0;
+                    if (selected)
+                        cia.setFlag();
+                }
+            } else
+                break;
+        }
     }
-    if (reset) accum = 0;
+    if (reset)
+        accum = 0;
 }
 
 auto DiskDrive::readBit(uint16_t& dmaCycles, bool upd) -> bool {

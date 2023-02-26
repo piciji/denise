@@ -104,6 +104,8 @@ struct Interface : Emulator::Interface  {
     auto setLineCallback(bool state, unsigned scanline) -> void;
     auto requestImmediateReturn() -> void;
 
+    auto needExternalKeyUpdates() -> bool { return true; }
+
 private:
     auto prepareDevices() -> void;
     auto prepareMedia() -> void;

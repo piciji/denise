@@ -327,6 +327,9 @@ struct Agnus {
     auto powerSupplyEvent() -> void;
     auto leaveEmulationEvent() -> void;
     auto HTotalEvent() -> void;
+
+    auto logDmaUsage(bool waitForCpu = false) -> void;
+    auto logDmaCondition() -> bool;
 };
 
 }

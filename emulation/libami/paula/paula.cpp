@@ -7,66 +7,10 @@
 #include "fdc.cpp"
 #include "pot.cpp"
 
-#define INT2_1 1
-#define INT2_2 2
-#define INT2_3 4
-#define INT2_4 8
-#define INT2_5 0x10
-
-#define INT3_1 0x20
-#define INT3_2 0x40
-#define INT3_3 0x80
-#define INT3_4 0x100
-#define INT3_5 0x200
-
-#define INT6_1 0x400
-#define INT6_2 0x800
-#define INT6_3 0x1000
-#define INT6_4 0x2000
-#define INT6_5 0x4000
-
-#define INT_VBL_1 0x8000
-#define INT_VBL_2 0x10000
-#define INT_VBL_3 0x20000
-#define INT_VBL_4 0x40000
-
-#define INT_UPD_1 0x80000
-#define INT_UPD_2 0x100000
-
-#define INT_AUD0_1 0x200000
-#define INT_AUD0_2 0x400000
-#define INT_AUD0_3 0x800000
-#define INT_AUD0_4 0x1000000
-
-#define INT_AUD1_1 0x2000000
-#define INT_AUD1_2 0x4000000
-#define INT_AUD1_3 0x8000000
-#define INT_AUD1_4 0x10000000
-
-#define INT_AUD2_1 0x20000000
-#define INT_AUD2_2 0x40000000
-#define INT_AUD2_3 0x80000000
-#define INT_AUD2_4 0x100000000
-
-#define INT_AUD3_1 0x200000000
-#define INT_AUD3_2 0x400000000
-#define INT_AUD3_3 0x800000000
-#define INT_AUD3_4 0x1000000000
-
-#define DSK_BLK_1 0x2000000000
-#define DSK_BLK_2 0x4000000000
-#define DSK_BLK_3 0x8000000000
-
-#define DSK_SYNC_1 0x10000000000
-#define DSK_SYNC_2 0x20000000000
-#define DSK_SYNC_3 0x40000000000
-
-#define INT_MASK (INT3_1 | INT6_1 | INT_VBL_1 | INT_UPD_1 | INT_AUD0_1 | INT_AUD1_1 | INT_AUD2_1 | INT_AUD3_1 | DSK_BLK_1 | DSK_SYNC_1)
-
-// todo: To determine the correct interrupt delay within Paula, it must be taken into account that the CPU only tests for interrupts in certain DMA cycles.
+// todo: To determine the correct interrupt delay within Paula, it must be taken into account that the CPU only tests for interrupts in certain cycles.
 // The CPU emulation synchronizes in multiples of DMA cycles (= 2 cycles). The limit of when an interrupt is detected or not happens after an odd number of CPU cycles.
 // If the interrupt happens in the 2nd half of the DMA cycle, it is not recognized, although the CPU evaluates IPL in this DMA cycle.
-// Synchronization after each CPU cycle slows down emulation. It is more performant to change the IPL pins one DMA cycle later.
+// Synchronization after each CPU cycle slows down emulation. It is more performant to change the IPL pins one DMA cycle later in such situations.
 
 namespace LIBAMI {
 
@@ -123,52 +67,54 @@ auto Paula::dmal() -> uint16_t {
     return out;
 }
 
+auto Paula::pulseInt3() -> void { // Blitter (Agnus generates one DMA cycle pulse)
+    intreq |= 0x40;
+    prepareIpl();
+}
+
 auto Paula::setInt2(bool state) -> void { // CIA 1
-    if (state && !int2Current)
-        irqDelay |= INT2_1;
+    // CIAs don't generate a pulse like blitter. Paula checks here on a flank. Note that as long as the interrupt signal enters Paula,
+    // the CIA lines cannot be reset when writing "intreq".
+
+    if (state && !int2Current) {
+        intreq |= 8;
+        prepareIpl();
+    }
 
     int2Current = state;
 }
 
 auto Paula::setInt6(bool state) -> void { // CIA 2
-    if (state && !int6Current)
-        irqDelay |= INT6_1;
+    if (state && !int6Current) {
+        intreq |= 0x2000;
+        prepareIpl();
+    }
 
     int6Current = state;
 }
 
-template<uint8_t nr> auto Paula::setIntAudMoreDelayed() -> void {
-    if constexpr (nr == 0)
-        irqDelay |= INT_AUD0_1;
-    else if constexpr (nr == 1)
-        irqDelay |= INT_AUD1_1;
-    else if constexpr (nr == 2)
-        irqDelay |= INT_AUD2_1;
-    else if constexpr (nr == 3)
-        irqDelay |= INT_AUD3_1;
-}
-
 template<uint8_t nr> auto Paula::setIntAud() -> void {
     if constexpr (nr == 0)
-        irqDelay |= INT_AUD0_2;
+        intreq |= 0x100;
     else if constexpr (nr == 1)
-        irqDelay |= INT_AUD1_2;
+        intreq |= 0x400;
     else if constexpr (nr == 2)
-        irqDelay |= INT_AUD2_2;
+        intreq |= 0x80;
     else if constexpr (nr == 3)
-        irqDelay |= INT_AUD3_2;
-}
+        intreq |= 0x200;
 
-auto Paula::pulseInt3() -> void { // Blitter (Agnus generates one DMA cycle pulse)
-    irqDelay |= INT3_1;
+    prepareIpl();
 }
 
 auto Paula::setDskSyncInt() -> void {
-    irqDelay |= DSK_SYNC_1;
+    intreq |= 0x1000;
+
+    prepareIpl();
 }
 
 auto Paula::setDskBlkInt(bool delayed) -> void {
-    irqDelay |= delayed ? DSK_BLK_1 : DSK_BLK_2;
+    intreq |= 2;
+    prepareIpl();
 }
 
 auto Paula::strhor() -> void {
@@ -182,7 +128,8 @@ auto Paula::strhor() -> void {
 auto Paula::strequ() -> void {
     if (!vBlankIntr) {
         vBlankIntr = true;
-        irqDelay |= INT_VBL_2;
+        intreq |= 0x20;
+        prepareIpl();
     }
 
     if (pot.running)
@@ -224,7 +171,7 @@ auto Paula::setIntena(uint16_t value) -> void {
     else
         intena &= ~value;
 
-    irqDelay |= INT_UPD_1;
+    prepareIpl();
 }
 
 auto Paula::setIntreq(uint16_t value) -> void {
@@ -233,7 +180,10 @@ auto Paula::setIntreq(uint16_t value) -> void {
     else
         intreq &= ~value;
 
-    irqDelay |= INT_UPD_1;
+    if (int2Current) intreq |= 8;
+    if (int6Current) intreq |= 0x2000;
+
+    prepareIpl();
 }
 
 auto Paula::dmaCon(uint16_t value) -> void {
@@ -258,28 +208,6 @@ auto Paula::dmaCon(uint16_t value) -> void {
     dmaDisk = (value & 0x210) == 0x210;
 }
 
-auto Paula::updateInt() -> void {
-    uint8_t level = 0;
-    uint16_t intMask = intreq & intena;
-
-    if (intMask && (intena & 0x4000)) {
-        if (intMask & (0x4000 | 0x2000))
-            level = 6;
-        else if (intMask & (0x1000 | 0x0800))
-            level = 5;
-        else if (intMask & (0x0400 | 0x0200 | 0x0100 | 0x0080))
-            level = 4;
-        else if (intMask & (0x0040 | 0x0020 | 0x0010))
-            level = 3;
-        else if (intMask & 0x0008)
-            level = 2;
-        else if (intMask & (0x0001 | 0x0002 | 0x0004))
-            level = 1;
-    }
-
-    cpu.setInterrupt( level );
-}
-
 auto Paula::powerOff() -> void {
 
 }
@@ -288,7 +216,6 @@ auto Paula::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer(intena);
     s.integer(intreq);
     s.integer(adkcon);
-    s.integer(irqDelay);
     s.integer(int2Current);
     s.integer(int6Current);
     s.integer(vBlankIntr);
@@ -360,6 +287,8 @@ auto Paula::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer(dmaCycles);
     s.integer(dskBytr);
     s.integer(turbo);
+    s.integer(ipl);
+    s.integer(iplCounter);
 
     uint8_t driveNum = activeDrive->number;
     s.integer(driveNum);
@@ -378,7 +307,6 @@ auto Paula::power() -> void {
     intena = 0;
     intreq = 0;
     adkcon = 0;
-    irqDelay = 0;
     int2Current = false;
     int6Current = false;
     vBlankIntr = true;
@@ -435,41 +363,54 @@ auto Paula::power() -> void {
     dmaCycles = 0;
     dskBytr = 0;
     diskState = DiskState::OFF;
+    iplCounter = 0;
+    ipl = 0;
+}
+
+auto Paula::prepareIpl() -> void {
+    int level = 0;
+    uint16_t intMask = intreq & intena;
+
+    if (intMask && (intena & 0x4000)) {
+        if (intMask & (0x4000 | 0x2000))
+            level = 6;
+        else if (intMask & (0x1000 | 0x0800))
+            level = 5;
+        else if (intMask & (0x0400 | 0x0200 | 0x0100 | 0x0080))
+            level = 4;
+        else if (intMask & (0x0040 | 0x0020 | 0x0010))
+            level = 3;
+        else if (intMask & 0x0008)
+            level = 2;
+        else if (intMask & (0x0001 | 0x0002 | 0x0004))
+            level = 1;
+    }
+
+    int lastIPL = ipl & 0x7;
+
+    if (level != lastIPL) {
+        // todo: check exact delays
+        ipl = (ipl & ~0xff) | level;
+
+        if (((lastIPL & 1) && !(level & 1)) ||
+            ((lastIPL & 2) && !(level & 2)) ||
+            ((lastIPL & 4) && !(level & 4)) );
+            // from WinUAE changelog it seems to matter if a bit is set or cleared.
+            // CPU detect IRQs in the first half of DMA (CCK) Sample cycle (confimed with fx68k)
+            // This means that a delay of only one CPU cycle is enough to miss this sample cycle and you have to wait for the sample point in the next opcode.
+        else
+            ipl = (ipl & ~0xff00) | (level << 8);
+
+        iplCounter = 4;
+    }
 }
 
 auto Paula::process() -> void {
 
-    if (irqDelay) {
-        uint64_t _irqDelay = irqDelay;
-        if (_irqDelay & (   INT2_5 | INT3_5 | INT6_5 | INT_VBL_4 | INT_UPD_2 | INT_AUD0_4 |
-                            INT_AUD1_4 | INT_AUD2_4 | INT_AUD3_4 | DSK_BLK_3 | DSK_SYNC_3)) {
-
-            if (_irqDelay & INT2_5) // CIA 1
-                intreq |= 8;
-
-            if (_irqDelay & INT_VBL_4)
-                intreq |= 0x20;
-            if (_irqDelay & INT3_5)
-                intreq |= 0x40;
-            if (_irqDelay & INT_AUD2_4)
-                intreq |= 0x80;
-            if (_irqDelay & INT_AUD0_4)
-                intreq |= 0x100;
-            if (_irqDelay & INT_AUD3_4)
-                intreq |= 0x200;
-            if (_irqDelay & INT_AUD1_4)
-                intreq |= 0x400;
-            if (_irqDelay & INT6_5) // CIA 2
-                intreq |= 0x2000;
-            if (_irqDelay & DSK_BLK_3)
-                intreq |= 2;
-            if (_irqDelay & DSK_SYNC_3)
-                intreq |= 0x1000;
-
-            updateInt();
-        }
-
-        irqDelay = (irqDelay << 1) & ~INT_MASK;
+    if (iplCounter) {
+        cpu.setInterrupt( (ipl >> 24) & 7 );
+        ipl = (ipl << 8) | (ipl & 0xff);
+        iplCounter--;
     }
 
     if (dskEventCycle == agnus.clock) {
@@ -503,7 +444,7 @@ auto Paula::process() -> void {
                 activeDrive->rotate(dmaCycles); // rotate if motor is running, doesn't matter if drive selected or FDC is idling
                 dmaCycles = FDC_IDLE;
                 // todo: rotate other connected drives too
-                // todo: update diskbytr, depending which drives are selected, enabled and rotating (motor)
+                // todo: update diskbytr and dsksync, depending which drives are selected, enabled and rotating (motor)
                 break;
         }
         dskEventCycle = agnus.clock + dmaCycles;

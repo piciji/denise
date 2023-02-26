@@ -30,8 +30,6 @@ struct Paula {
     uint16_t intreq;
     uint16_t adkcon;
 
-    uint64_t irqDelay;
-
     bool int2Current;
     bool int6Current;
 
@@ -56,6 +54,9 @@ struct Paula {
     uint8_t dskShifterPos;
     uint16_t dmaCycles;
     uint16_t dskBytr;
+
+    int ipl;
+    int iplCounter;
 
     uint8_t turbo = 0;
 
@@ -158,6 +159,8 @@ struct Paula {
     auto setDskSyncInt() -> void;
     auto setDskBlkInt(bool delayed = false) -> void;
 
+    auto prepareIpl() -> void;
+
     auto setDskLen(uint16_t value) -> void;
     auto setDskDat(uint16_t value) -> void;
     auto setDskSync(uint16_t value) -> void;
@@ -177,7 +180,6 @@ struct Paula {
     auto updateModulation() -> void;
     template<uint8_t nr> auto pbufld1() -> void;
     template<uint8_t nr> auto pbufld2() -> void;
-    auto updateInt() -> void;
     auto updateAudioEvent() -> void;
     template<uint8_t nr> auto stateMachine() -> void;
     template<uint8_t nr, bool dma> auto percntrld() -> void;
@@ -190,7 +192,6 @@ struct Paula {
     auto calcFilter(float sampleFrequency, unsigned cutoffFrequency) -> float;
     template<uint8_t channel> auto lowPassfilter(int32_t sample) -> int32_t;
 
-    template<uint8_t nr> auto setIntAudMoreDelayed() -> void;
     template<uint8_t nr> auto setIntAud() -> void;
 };
 

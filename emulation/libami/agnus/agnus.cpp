@@ -11,6 +11,7 @@
 
 #define FREQUENCY_PAL   28375160
 #define FREQUENCY_NTSC  28636360
+//#define LOG_DMA_USAGE
 
 #include "agnus.h"
 #include "../../tools/sanitizer.h"
@@ -21,6 +22,7 @@
 #include "dma.cpp"
 #include "graphics.cpp"
 #include "register.cpp"
+#include "log.cpp"
 
 namespace LIBAMI {
 
@@ -123,7 +125,7 @@ auto Agnus::power(bool softReset) -> void {
     dmaCon = 0;
     dmaConImm = 0;
     bplCon0 = 0;
-    countWaitCycles = 0;
+    countWaitCycles = 1;
     rDmaPtr = 0;
 
     lol = false;
@@ -223,10 +225,21 @@ auto Agnus::addWaitstatesToCPU() -> void {
     while (busUsage != BUS_FREE) {
         dmaCycle();
         countWaitCycles++;
+
+#ifdef LOG_DMA_USAGE
+        logDmaUsage();
+#endif
     }
 
-    countWaitCycles = 0;
+    // in non nasty mode, CPU gets BUS after 3 wait cycles.
+    // note: first wait cycle already happened when entering this function, because CPU executes "sync" one DMA cylce ahead
+    // to find out if BUS is free for a possible read/write
+    countWaitCycles = 1;
     busUsage = BUS_USAGE_CPU;
+
+#ifdef LOG_DMA_USAGE
+    logDmaUsage(true);
+#endif
 }
 
 auto Agnus::updateVCounter() -> void {
@@ -513,6 +526,9 @@ auto Agnus::sync(uint16_t cycles) -> void {
     while( cycles ) {
         dmaCycle();
         cycles -= 2;
+#ifdef LOG_DMA_USAGE
+        logDmaUsage();
+#endif
     }
 }
 

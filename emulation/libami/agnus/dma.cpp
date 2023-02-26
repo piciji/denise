@@ -281,7 +281,7 @@ auto Agnus::canBlitterUseBus() -> bool {
     if (!useBlitterDMA())
         return false; // blitter get stuck
 
-    if (!blitterNasty() && (countWaitCycles >= 3))
+    if (!blitterNasty() && (countWaitCycles > 2))
         return false; // if blitter has no priority over CPU all wait cycles matter, not only the cycles when blitter can proceed
 
     return true;

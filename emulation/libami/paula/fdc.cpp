@@ -5,7 +5,7 @@
 // Each change in the magnetic flux causes an edge on the reading pin.
 // Paula now measures the elapsed time to determine whether the bit sequence 101, 1001 or 10001 was received.
 // Depending on whether "fast" or "slow" is selected in "adkcon", the time until a zero is pushed into the bitstream varies
-// if there are no flux change.
+// if there are no flux changes.
 // Paula knows the Agnus beat. (the drive doesn't) Thus, the measured times are multiples of ~280 ns (differs between PAL/NTSC).
 // Prolonged sequences without magnetization, such as 100001, are dangerous because they can cause random flux changes (not on disc).
 // Therefore, these sequences are not valid GCR or MFM (weak bits) and the reason why GCR/MFM encoding is needed at all.
@@ -29,8 +29,8 @@
 // NTSC: 0.2 s / 1.95556 us = 102272 bits = 12784 bytes per revolution
 
 // all above is valid only for reading standard amiga written disks or writing disks.
-// a sophisticated device for generating original disks can write bits with a variable bitcell
-// width, so timing can change each bitcell. The amiga drives can only write a fixed bitcell width, see above
+// a sophisticated device for generating original disks can write bits with a variable bitcell width,
+// so timing can change each bitcell. The amiga drives can only write a fixed bitcell width, see above
 // e.g. PAL: 1.97356 us or 3.94712 us (if slow mode is selected in controller)
 
 // precompensation is uninteresting for emulation, beacuse it doesn't change bitcell width but
@@ -69,11 +69,11 @@
 // In this case, it is better to leave the current number of bits. Practically, this should not be a problem,
 // since newly created EXT ADF discs already have the standard bitcell width and games with copy protections write savegames
 // to empty or standard length tracks. Even if not, reading the data would not fail, since only the reading time varies.
-// a real flux change format doesn't have this limitation. you can write tracks partially with a standard bitcell
-// width or motor adjusted custom bitcell width on tracks with a different bitcell width.
+// a real flux change format doesn't have this limitation. you can write tracks partially with a any bitcell
+// width or motor adjusted bitcell width on tracks with a different bitcell width.
 
 // For EXT ADF, the "adkcon" setting "slow" or "fast" only plays a role when writing. When reading, the bit sequence is already fixed.
-// Only with a flow change format does this setting also play a role when reading. Based on this, the number of zeros is determined,
+// Only with a flux change format does this setting also play a role when reading. Based on this, the number of zeros is determined,
 // which are pushed into the bit stream between 2 flux changes.
 
 // The controller has no idea if it is an HD or DD disk. High density is only achieved by halving the rotational speed.
@@ -84,7 +84,7 @@
 #include "paula.h"
 #include "../drive/diskDrive.h"
 
-#define FDC_IDLE (56 << 2)
+#define FDC_IDLE (56 << 3)
 
 namespace LIBAMI {
 
@@ -133,6 +133,7 @@ auto Paula::setDskLen(uint16_t value) -> void {
     if (start) {
         fifoPos = 0;
         dskShifterPos = 0;
+        dskShifter = 0;
         processDiskIdleCycles();
         useInstantDriveAccess() ? instantDriveAccess() : setFdcEvent();
     }
@@ -228,7 +229,7 @@ auto Paula::instantDriveAccess() -> void {
         setDskSyncInt();
 
     if (out & 2) {
-        dmaCycles = 450;
+        dmaCycles = 450; // some more delay, to increase compatibility ?
         setDskState(DiskState::INSTANT_BLK_INT);
     } else {
         dmaCycles = FDC_IDLE;
@@ -243,12 +244,10 @@ auto Paula::instantDriveAccess() -> void {
 template<bool readWord, bool waitTurbo> auto Paula::handleFDControllerRead() -> void {
     unsigned iterations;
     // Paula has no idea if a drive is selected or its motor is running.
-    // If neither applies, a dummy drive is used, which does not transmit any flux changes to Paula.
-    // this way "activeDrive" is always set, so no sanity checking needed.
 
     switch(activeDrive->structure.type) {
         case DiskStructure::Unknown:
-        case DiskStructure::ADF: { // msbsync and !fast unemulated, because don't make sense
+        case DiskStructure::ADF: { // msbsync and !fast unemulated, because don't make sense in context of ADF
             uint8_t byte;
             if constexpr (readWord) iterations = 2;
             else if constexpr (waitTurbo) iterations = 1 << turbo;
@@ -259,16 +258,11 @@ template<bool readWord, bool waitTurbo> auto Paula::handleFDControllerRead() -> 
 
                 for (int i = 7; i >= 0; i--) {
                     dskShifter = (dskShifter << 1) | ((byte >> i) & 1);
-
-                    // ADF's can only contain invalid MFM (too long zero sequences) during "write" processes.
+                    // ADF's can only contain invalid MFM (too long zero sequences) during "write" processes. (e.g. hiscore)
                     // The next time you insert the disc, this will be "fixed" automatically.
                     // Too long zero sequences lead to random flux changes due to oscillation,
-                    // which are not included on the disc, called weak bits
-                    // this should happen on drive side, not controller.
-                    // For performance reasons, we do it here, but we have to pay attention to whether the disk motor is running.
-                    // If not, there is no oscillation, same as if drive is not "selected" by CIA. Paula DKRD Pin does not change its state.
-                    if (((dskShifter & 0xf) == 0) && activeDrive->motor)
-                        dskShifter |= 1;
+                    // which are not included on the disc, called weak bits.
+                    // This is not meaningfully possible for ADF.
 
                     if (dskShifter == dskSync) {
                         setDskSyncInt();
@@ -292,7 +286,7 @@ template<bool readWord, bool waitTurbo> auto Paula::handleFDControllerRead() -> 
                                     dskShifter = 0;
                                 // Basically, even in ADF format, the sync word can be shifted by a few bits. However, this can only happen when writing the track
                                 // and before the floppy disk is inserted again. Therefore, when writing ADFs, we switch to bitwise mode and possibly correct the head
-                                // according the sync word by a few bits before switching, because when reading the head is driven forward by multiples of 8.
+                                // according the sync word by a few bits before switching to "bitwise".
                                 if(i) activeDrive->adjustHead(-i);
                                 break;
                             }
@@ -362,7 +356,6 @@ auto Paula::handleFDControllerWrite() -> void {
         return;
 
     // paula would send data to all connected and selected drives.
-    // we check this in context of Paula for performance reasons.
     // the controller can only write with two fixed speeds. copy protections recognize this by measuring time when reading back.
     // adjusting motor speed would result in different bit cell width too. (not emulated in ADF and EXT ADF ... simply not possible)
     bool state = dskShifter & (1 << (dskShifterPos - 1));
