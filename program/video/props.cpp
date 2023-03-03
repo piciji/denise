@@ -127,6 +127,12 @@ auto VideoManager::setScanlines(unsigned intensity) -> void {
     requestUpdate();
     reinitCrtThread();
 }
+
+auto VideoManager::setInterlace(unsigned intensity) -> void {
+    this->interlaceDecay = intensity;
+    requestUpdate();
+}
+
 // shader only features
 auto VideoManager::setBloomGlow( unsigned intensity ) -> void {
 	updateShader("bloom", "glow", bloomGlow, (float)intensity / 100.0f);
@@ -221,11 +227,6 @@ auto VideoManager::setCrtRealGamma(bool state) -> void {
     requestUpdate(true);
 }
 
-auto VideoManager::setInterlaceMode(unsigned mode) -> void {
-    interlaceMode = mode;
-    requestUpdate();
-}
-
 auto VideoManager::setFirFilterLength( unsigned length ) -> void {
     firTaps = length;
     shader.recreate = true;
@@ -284,7 +285,6 @@ auto VideoManager::resetSettings() -> void {
     
     settings->remove( "video_new_luma" + modeIdent );
     settings->remove( "video_tv_gamma" + modeIdent );
-    settings->remove( "video_interlace" + modeIdent );
     settings->remove( "video_saturation" + modeIdent );
     settings->remove( "video_brightness" + modeIdent );
     settings->remove( "video_gamma" + modeIdent );
@@ -297,6 +297,9 @@ auto VideoManager::resetSettings() -> void {
     settings->remove( "video_phase_error" + modeIdent );
     settings->remove( "video_scanlines_use" + modeIdent );
     settings->remove( "video_scanlines" + modeIdent );
+    settings->remove( "video_interlace_use" + modeIdent );
+    settings->remove( "video_interlace" + modeIdent );
+
     settings->remove( "video_blur_use" + modeIdent );
     settings->remove( "video_blur" + modeIdent );
     settings->remove( "video_luma_rise_use" + modeIdent );
@@ -366,7 +369,6 @@ auto VideoManager::getSettings() -> std::tuple<VPARAMST> {
 
     auto modeIdent = getModeIdent();
 
-    unsigned _interlace = settings->get<unsigned>("video_interlace" + modeIdent, 0, {0u, 1u});
     unsigned _saturation = settings->get<unsigned>("video_saturation" + modeIdent, (_pal && _crtMode) ? 110u : 100u,{0u, 200u});
     unsigned _contrast = settings->get<unsigned>("video_contrast" + modeIdent, 100u,{0u, 200u});
     unsigned _gamma = settings->get<unsigned>("video_gamma" + modeIdent, 100u,{0u, 200u});
@@ -381,8 +383,11 @@ auto VideoManager::getSettings() -> std::tuple<VPARAMST> {
     unsigned _blur = settings->get<unsigned>("video_blur" + modeIdent, 30,{0, 100});
     bool _useBlur = settings->get<bool>("video_blur_use" + modeIdent, true);
     bool _useScanlines = settings->get<bool>("video_scanlines_use" + modeIdent, false);
-    unsigned _scanlines = settings->get<unsigned>("video_scanlines" + modeIdent, 33,{0, 100});        
-	bool _useLumaRise = settings->get<bool>("video_luma_rise_use" + modeIdent, true);
+    unsigned _scanlines = settings->get<unsigned>("video_scanlines" + modeIdent, 33, {0, 100});
+    bool _useInterlace = settings->get<bool>("video_interlace_use" + modeIdent, true);
+    unsigned _interlace = settings->get<unsigned>("video_interlace" + modeIdent, 30, {0u, 100});
+
+    bool _useLumaRise = settings->get<bool>("video_luma_rise_use" + modeIdent, true);
 	float _lumaRise = settings->get<float>("video_luma_rise" + modeIdent, 2.0, {1.0, 4.0}); 
 	bool _useLumaFall = settings->get<bool>("video_luma_fall_use" + modeIdent, true);
 	float _lumaFall = settings->get<float>("video_luma_fall" + modeIdent, 1.2, {1.0, 4.0});      
@@ -444,10 +449,10 @@ auto VideoManager::reloadSettings() -> void {
     setGamma(_gamma);
     setPhase(_phase);
     setNewLuma(_newLuma);
-    setInterlaceMode(_interlace);
     setPhaseError(_usePhaseError ? _phaseError : 0 );
     setHanoverBars( _useHanoverBars ? _hanoverBars : 0);
     setScanlines(_useScanlines ? _scanlines : 0);
+    setInterlace(_useInterlace ? _interlace : 0);
     setBlur( _useBlur ? _blur : 0 );    
 	setLumaRise( _useLumaRise ? _lumaRise : 0.0 );
 	setLumaFall( _useLumaFall ? _lumaFall : 0.0 );

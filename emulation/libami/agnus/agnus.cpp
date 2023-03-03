@@ -61,11 +61,16 @@ auto Agnus::power(bool softReset) -> void {
     unsigned resetDelay = hasActiveEvent<EVENT_KBD>() ? getEventDelay<EVENT_KBD>() : 0;
     clearEvents();
 
-    std::memset(chipMem, 0x0, chipMemMask + 1);
-    if (slowMemSize)
-        std::memset(slowMem, 0, slowMemSize);
-    if (model == OCS_A1000)
-        std::memset(wom, 0, 256 * 1024);
+    if (!chipMem)
+        setChipmem(512 * 1024);
+
+    if (!softReset) {
+        std::memset(chipMem, 0x0, chipMemMask + 1);
+        if (slowMemSize)
+            std::memset(slowMem, 0, slowMemSize);
+        if (model == OCS_A1000)
+            std::memset(wom, 0, 256 * 1024);
+    }
 
     actions = 0;
     busUsage = BUS_FREE;
@@ -118,9 +123,6 @@ auto Agnus::power(bool softReset) -> void {
     bpl1pt = bpl2pt = bpl3pt = bpl4pt = bpl5pt = bpl6pt = 0;
     bpl1Mod = bpl2Mod = 0;
 
-    if (!chipMem)
-        setChipmem(chipMemMask = 0x7ffff);
-
     dataBus = 0;
     dmaCon = 0;
     dmaConImm = 0;
@@ -131,6 +133,7 @@ auto Agnus::power(bool softReset) -> void {
     lol = false;
     lof = true;
     lolToggle = ntsc;
+    laceMode = 0;
 
     initVCounter = false;
     shortLineBefore = true;
@@ -138,7 +141,7 @@ auto Agnus::power(bool softReset) -> void {
     bplCycle = 0;
     bplQueue = 0;
     sprQueue = 0;
-    ddfStartMatch = false;
+    ddfStartMatch = 0;
     harddisH = false;
     harddisV = false;
     ddfEnableBefore = false;
@@ -149,7 +152,6 @@ auto Agnus::power(bool softReset) -> void {
     if (!softReset) {
         womLock = false;
         resetFromKeyboard = 0;
-        std::memset(wom, 0, 256 * 1024);
     } else {
         if (resetFromKeyboard && resetDelay)
             input.keyboard.addEvent(Keyboard::KBD_Hardreset, resetDelay);
@@ -303,9 +305,6 @@ inline auto Agnus::dmaCycle() -> void {
                     updateEvent<EVENT_LEAVE_EMULATION>(150000);
 
             } else {
-                if (bplState || bplQueue)
-                    actions |= ACT_BPL;
-
                 if (shortLineBefore)
                     copper.cycle1();
             }
@@ -631,7 +630,7 @@ auto Agnus::observeFrameDuration() -> void {
         double linesPerField;
         double cyclesPerLine;
 
-        if (lace())
+        if (laceMode)
             linesPerField = lines + 1.5;
         else
             linesPerField = lines + (lof ? 2.0 : 1.0);
@@ -730,6 +729,7 @@ auto Agnus::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer(lof);
     s.integer(lolToggle);
     s.integer(ntsc);
+    s.integer(laceMode);
 
     s.integer(initVCounter);
     s.integer(shortLineBefore);
@@ -822,6 +822,8 @@ template auto Agnus::updateEvent<Agnus::EVENT_AUDIO_STATE>(int delay) -> void;
 
 template auto Agnus::updateEvent<Agnus::EVENT_ONE_CYCLE_DELAY, true>( int delay ) -> void;
 template auto Agnus::updateEventAbs<Agnus::EVENT_AUDIO_STATE>(int64_t absClock) -> void;
+
+template auto Agnus::updateEvent<Agnus::EVENT_SERIAL>( int delay ) -> void;
 
 template auto Agnus::allocateCopper<false>() -> bool;
 template auto Agnus::allocateCopper<true>() -> bool;

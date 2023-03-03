@@ -6,6 +6,7 @@
 #include "filter.cpp"
 #include "fdc.cpp"
 #include "pot.cpp"
+#include "serial.cpp"
 
 // todo: To determine the correct interrupt delay within Paula, it must be taken into account that the CPU only tests for interrupts in certain cycles.
 // The CPU emulation synchronizes in multiples of DMA cycles (= 2 cycles). The limit of when an interrupt is detected or not happens after an odd number of CPU cycles.
@@ -95,13 +96,13 @@ auto Paula::setInt6(bool state) -> void { // CIA 2
 
 template<uint8_t nr> auto Paula::setIntAud() -> void {
     if constexpr (nr == 0)
-        intreq |= 0x100;
-    else if constexpr (nr == 1)
-        intreq |= 0x400;
-    else if constexpr (nr == 2)
         intreq |= 0x80;
-    else if constexpr (nr == 3)
+    else if constexpr (nr == 1)
+        intreq |= 0x100;
+    else if constexpr (nr == 2)
         intreq |= 0x200;
+    else if constexpr (nr == 3)
+        intreq |= 0x400;
 
     prepareIpl();
 }
@@ -112,8 +113,13 @@ auto Paula::setDskSyncInt() -> void {
     prepareIpl();
 }
 
-auto Paula::setDskBlkInt(bool delayed) -> void {
+auto Paula::setDskBlkInt() -> void {
     intreq |= 2;
+    prepareIpl();
+}
+
+auto Paula::setTbeInt() -> void {
+    intreq |= 1;
     prepareIpl();
 }
 
@@ -290,6 +296,10 @@ auto Paula::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer(ipl);
     s.integer(iplCounter);
 
+    s.integer(serPer);
+    s.integer(serDat);
+    s.integer(serShifter);
+
     uint8_t driveNum = activeDrive->number;
     s.integer(driveNum);
     if (driveNum != activeDrive->number) {
@@ -365,6 +375,10 @@ auto Paula::power() -> void {
     diskState = DiskState::OFF;
     iplCounter = 0;
     ipl = 0;
+
+    serDat = 0;
+    serPer = 0;
+    serShifter = 0;
 }
 
 auto Paula::prepareIpl() -> void {
@@ -374,15 +388,15 @@ auto Paula::prepareIpl() -> void {
     if (intMask && (intena & 0x4000)) {
         if (intMask & (0x4000 | 0x2000))
             level = 6;
-        else if (intMask & (0x1000 | 0x0800))
+        else if (intMask & (0x1000 | 0x800))
             level = 5;
-        else if (intMask & (0x0400 | 0x0200 | 0x0100 | 0x0080))
+        else if (intMask & (0x400 | 0x200 | 0x100 | 0x80))
             level = 4;
-        else if (intMask & (0x0040 | 0x0020 | 0x0010))
+        else if (intMask & (0x40 | 0x20 | 0x10))
             level = 3;
-        else if (intMask & 0x0008)
+        else if (intMask & 8)
             level = 2;
-        else if (intMask & (0x0001 | 0x0002 | 0x0004))
+        else if (intMask & (1 | 2 | 4))
             level = 1;
     }
 

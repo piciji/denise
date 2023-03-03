@@ -30,7 +30,7 @@ struct Denise {
     bool hires;
     bool ham;
     bool doublePlayfield;
-    uint8_t useInterlace;
+    uint8_t laceMode;
     uint8_t activePlanes;
     uint16_t hamColor;
 
@@ -68,8 +68,8 @@ struct Denise {
 
     uint16_t* frameBuffer;
     uint16_t* linePtr;
-    unsigned linePos;
-    uint16_t lineVCounter;
+    int linePos;
+    int lineVCounter;
     bool enableSequencer = true;
 
     struct Sprite {
@@ -82,10 +82,10 @@ struct Denise {
     } sprites[8];
 
     struct {
-        uint16_t left;
-        uint16_t right;
-        uint16_t top;
-        uint16_t bottom;
+        int left;
+        int right;
+        int top;
+        int bottom;
 
         auto reset() -> void {
             left = right = top = bottom = 0;
@@ -154,6 +154,7 @@ struct Denise {
     auto updateCropRight() -> void;
     auto updateCropTop() -> void;
     auto updateCropBottom() -> void;
+    auto sanitizeCrop(int width, int height) -> void;
 };
 
 }

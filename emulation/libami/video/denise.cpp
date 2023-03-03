@@ -8,6 +8,7 @@
 #define LINE_BUFFER_HEIGHT 600
 #define LINE_MAX_WIDTH 384
 #define LINE_RENDER_OFFSET 5 // needed to avoid sanity checking for CRT emulation later on
+#define LINE_CROP_TEST 150
 
 namespace LIBAMI {
 
@@ -36,7 +37,7 @@ auto Denise::power() -> void {
     hires = false;
     ham = false;
     doublePlayfield = false;
-    useInterlace = 0;
+    laceMode = 0;
     activePlanes = 0;
 
     shifterA = 0;
@@ -129,16 +130,17 @@ auto Denise::startHblank() -> void {
     if (endFrame) {
         endFrame--;
         if (!endFrame) {
-            if (useInterlace)
+            if (laceMode & 1)
                 lineVCounter--;
 
             crop.bottom = (lineVCounter > crop.bottom) ? (lineVCounter - crop.bottom) : 0;
-            unsigned width = hiresFrame ? (LINE_MAX_WIDTH << 1) : LINE_MAX_WIDTH;
+            int width = hiresFrame ? (LINE_MAX_WIDTH << 1) : LINE_MAX_WIDTH;
+            sanitizeCrop(width, lineVCounter);
 
-            system->videoRefresh(frameBuffer + LINE_RENDER_OFFSET, width, lineVCounter, LINE_BUFFER_WIDTH - width, useInterlace);
+            system->videoRefresh(frameBuffer + LINE_RENDER_OFFSET, width, lineVCounter, LINE_BUFFER_WIDTH - width, laceMode);
         }
     } else if (lineCallback.use && (lineVCounter == lineCallback.line)) {
-        system->videoMidScreenCallback(useInterlace);
+        system->videoMidScreenCallback(laceMode);
     }
 }
 
@@ -151,23 +153,18 @@ auto Denise::endHblank() -> void {
             crop.reset();
 
             hiresFrame = hires ? 1 : 0; // can switch to hires mid frame
-            // Denise doesn't need to know if Interlace is active. However, in order to arrange the resulting image in memory,
-            // we need this information here.
-            if (agnus.lace()) {
-                if (agnus.lof) {
-                    useInterlace = 2;
-                    lineVCounter = 1;
-                } else
-                    useInterlace = 1;
-            } else
-                useInterlace = 0;
+            // Denise doesn't need to know of interlace or vertical position.
+            // However, in order to arrange the resulting image in memory, we need this information here.
+            laceMode = agnus.laceMode;
+            if (laceMode & 2)
+                lineVCounter = 1;
         }
 
         if (lineVCounter >= LINE_BUFFER_HEIGHT) // could happen, if Agnus beam position has been changed
             lineVCounter = LINE_BUFFER_HEIGHT - 1;
 
         linePtr = frameBuffer + lineVCounter * LINE_BUFFER_WIDTH + LINE_RENDER_OFFSET;
-        lineVCounter += (useInterlace & 0x80) ? 2 : 1;
+        lineVCounter += laceMode ? 2 : 1;
     }
 }
 
@@ -284,8 +281,7 @@ template<bool useHires> inline auto Denise::processDelayPf1() -> void {
         if (activePlanes >= 5) {
             shifterA |= (uint64_t)dat1 << 32;
             shifterA |= (uint64_t)dat3 << 16;
-            if (!hires)
-                shifterA |= (uint64_t)dat5;
+            shifterA |= (uint64_t)dat5;
         } else if (activePlanes >= 3) {
             shifterA |= (uint64_t)dat1 << 32;
             shifterA |= (uint64_t)dat3 << 16;
@@ -303,8 +299,7 @@ template<bool useHires> inline auto Denise::processDelayPf2() -> void {
         if (activePlanes >= 6) {
             shifterB |= (uint64_t)dat2 << 32;
             shifterB |= (uint64_t)dat4 << 16;
-            if (!hires)
-                shifterB |= (uint64_t)dat6;
+            shifterB |= (uint64_t)dat6;
         } else if (activePlanes >= 4) {
             shifterB |= (uint64_t)dat2 << 32;
             shifterB |= (uint64_t)dat4 << 16;
@@ -451,13 +446,15 @@ template<bool useHires> auto Denise::processPixel() -> void {
         if (!borderFlipFlop) {
             if (hPos == hStop) {
                 borderFlipFlop = true;
-                if (!hBlank)
+                if (!hBlank && !crop.right && (lineVCounter == LINE_CROP_TEST))
                     updateCropRight();
             }
         } else {
             if (!hBlank && (hPos == hStart)) {
                 borderFlipFlop = false;
-                updateCropLeft();
+
+                if (!crop.left && (lineVCounter == LINE_CROP_TEST))
+                    updateCropLeft();
             }
         }
 
@@ -531,22 +528,22 @@ template<bool useHires> auto Denise::processPixel() -> void {
                         if (!colIndex && !colIndex2) // both playfields are transparent
                             color = colors[sprData];
                         else if (!colIndex) { // playfield 1 is transparent
-                            if (sprPrio < pf2Prio)
+                            if (sprPrio <= pf2Prio)
                                 color = colors[sprData];
                             else
                                 color = colors[pf2PrioIllegal ? 0 : colIndex2];
                         } else if (!colIndex2) { // playfield 2 is transparent
-                            if (sprPrio < pf1Prio)
+                            if (sprPrio <= pf1Prio)
                                 color = colors[sprData];
                             else
                                 color = colors[pf1PrioIllegal ? 0 : colIndex];
                         } else { // both playfields are non transparent
-                            if ((sprPrio >= pf1Prio) && (sprPrio >= pf2Prio)) { // sprite behind playfields
+                            if ((sprPrio > pf1Prio) && (sprPrio > pf2Prio)) { // sprite behind playfields
                                 if (pf2PrioOverPf1)
                                     color = colors[pf2PrioIllegal ? 0 : colIndex2];
                                 else
                                     color = colors[pf1PrioIllegal ? 0 : colIndex];
-                            } else if ((sprPrio < pf1Prio) && (sprPrio < pf2Prio)) { // sprite before playfields
+                            } else if ((sprPrio <= pf1Prio) && (sprPrio <= pf2Prio)) { // sprite before playfields
                                 color = colors[sprData];
                             } else { // sprite between playfields
                                 if (pf1Prio > pf2Prio)
@@ -557,12 +554,12 @@ template<bool useHires> auto Denise::processPixel() -> void {
                         }
                     } else {
                         if (_ham) {
-                            if (sprPrio < pf2Prio)
+                            if (sprPrio <= pf2Prio)
                                 color = colors[sprData];
                             else
                                 color = hamColor;
                         } else {
-                            if (!colIndex || (sprPrio < pf2Prio))
+                            if (!colIndex || (sprPrio <= pf2Prio))
                                 color = colors[sprData];
                             else
                                 color = colors[colIndex];
@@ -616,8 +613,8 @@ auto Denise::process() -> void {
             delayPf1 = bplCon1 & 0xf;
             delayPf2 = (bplCon1 >> 4) & 0xf;
             if (hires) {
-                delayPf1 >>= 1;
-                delayPf2 >>= 1;
+                delayPf1 &= 7;
+                delayPf2 &= 7;
             }
             dat1 = bpl1dat;
             dat2 = bpl2dat;
@@ -640,12 +637,12 @@ auto Denise::process() -> void {
 
     hPos &= 0x1ff; // wrap around when strEqu
 
-    // OCS Denise has no CSYNC input
+    // OCS Denise has no CSYNC input, hblank is hardcoded
     if (hBlank) {
-        if (hPos == 94)     // 456 - 2 - 384 (CRT Monitor) = 70 blanking pixel
+        if (hPos == 84)     // 456 - 2 - 384 (CRT Monitor) = 70 blanking pixel
             endHblank();
     } else {
-        if (hPos == 24)
+        if (hPos == 14)
             startHblank();
     }
 }
@@ -653,8 +650,10 @@ auto Denise::process() -> void {
 auto Denise::switchToHiresMidframe() -> void {
     uint16_t* curLinePtr;
     unsigned xStart;
+    int y = (laceMode & 2) ? 1 : 0;
+    int inc = laceMode ? 2 : 1;
 
-    for (int y = 0; y < lineVCounter; y++) {
+    for (; y < lineVCounter; y = y + inc ) {
         curLinePtr = frameBuffer + y * LINE_BUFFER_WIDTH + LINE_RENDER_OFFSET;
         xStart = curLinePtr != linePtr ? (LINE_MAX_WIDTH - 1) : (linePos - 1);
 
@@ -673,7 +672,7 @@ inline auto Denise::doubleLoresPixel(uint16_t* _ptr, unsigned _xStart) -> void {
 }
 
 auto Denise::updateCropTop() -> void {
-    if (!crop.top && (lineVCounter < 100))
+    if (!crop.top)
         crop.top = lineVCounter;
 }
 
@@ -683,8 +682,7 @@ auto Denise::updateCropBottom() -> void {
 }
 
 auto Denise::updateCropLeft() -> void {
-    if (!crop.left && (lineVCounter == 100))
-        crop.left = linePos + 1;
+    crop.left = linePos;
 }
 
 auto Denise::updateCropRight() -> void {
@@ -694,8 +692,21 @@ auto Denise::updateCropRight() -> void {
     if (limit > linePos)
         diff = limit - linePos;
 
-    if (!crop.right && (lineVCounter == 100))
-        crop.right = diff;
+    crop.right = diff;
+}
+
+auto Denise::sanitizeCrop(int width, int height) -> void {
+    width >>= 1;
+    height >>= 1;
+
+    if (!enableSequencer || laceMode )
+        crop.reset();
+    else {
+        if (crop.left > width) crop.left = 0;
+        if (crop.right > width) crop.right = 0;
+        if (crop.top > height) crop.top = 0;
+        if (crop.bottom > height) crop.bottom = 0;
+    }
 }
 
 auto Denise::serialize(Emulator::Serializer& s) -> void {
@@ -705,7 +716,7 @@ auto Denise::serialize(Emulator::Serializer& s) -> void {
     s.integer(hires);
     s.integer(ham);
     s.integer(doublePlayfield);
-    s.integer(useInterlace);
+    s.integer(laceMode);
     s.integer(activePlanes);
     s.integer(hamColor);
     s.integer(bpl1dat);

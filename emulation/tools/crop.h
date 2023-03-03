@@ -118,10 +118,14 @@ struct Crop {
 	auto correct( unsigned width, unsigned height ) -> void {
 		
 		unsigned _correctedHeight = roundUp( (double)croppedWidth * (double)height / (double)width );
+        unsigned diff;
 
 		if (_correctedHeight >= croppedHeight) {
 
-			top -= roundUp(((double) _correctedHeight - (double) croppedHeight) / 2.0);
+			diff = roundUp(((double) _correctedHeight - (double) croppedHeight) / 2.0);
+
+            if (diff <= top ) top -= diff;
+            else top = 0;
 
 			croppedHeight = _correctedHeight;
 
@@ -130,9 +134,12 @@ struct Crop {
 		
 		unsigned _correctedWidth = roundUp( (double)croppedHeight * (double)width / (double)height );
 		
-		left -= roundUp( ( (double)_correctedWidth - (double)croppedWidth) / 2.0 );
-		
-		croppedWidth = _correctedWidth;
+		diff = roundUp( ( (double)_correctedWidth - (double)croppedWidth) / 2.0 );
+
+        if (diff <= left ) left -= diff;
+        else left = 0;
+
+        croppedWidth = _correctedWidth;
 	}
 };
 

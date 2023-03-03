@@ -140,7 +140,7 @@ auto Paula::setDskLen(uint16_t value) -> void {
 }
 
 auto Paula::finishDMA(bool delayed) -> void {
-    setDskBlkInt(delayed);
+    setDskBlkInt();
     dskLen = 0;
     agnus.dmal = 0; // prevent endless loop in turbo mode
     dskTansferLength = 0;
@@ -258,11 +258,6 @@ template<bool readWord, bool waitTurbo> auto Paula::handleFDControllerRead() -> 
 
                 for (int i = 7; i >= 0; i--) {
                     dskShifter = (dskShifter << 1) | ((byte >> i) & 1);
-                    // ADF's can only contain invalid MFM (too long zero sequences) during "write" processes. (e.g. hiscore)
-                    // The next time you insert the disc, this will be "fixed" automatically.
-                    // Too long zero sequences lead to random flux changes due to oscillation,
-                    // which are not included on the disc, called weak bits.
-                    // This is not meaningfully possible for ADF.
 
                     if (dskShifter == dskSync) {
                         setDskSyncInt();
@@ -424,7 +419,7 @@ auto Paula::processDiskIdleCycles() -> void {
     if (dskEventCycle < agnus.clock)
         return;
 
-    unsigned temp = (unsigned)(dskEventCycle - agnus.clock);
+    int temp = (int)(dskEventCycle - agnus.clock);
 
     if (temp >= dmaCycles)
         temp = 0;

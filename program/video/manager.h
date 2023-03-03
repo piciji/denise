@@ -7,7 +7,7 @@
 #include <condition_variable>
 #include "shader.h"
 
-#define VPARAMS _useSpectrum, _crtMode, _region, _interlace, \
+#define VPARAMS _useSpectrum, _crtMode, _region, _useInterlace, _interlace, \
     _saturation, _contrast, _gamma, _brightness, _phase, _usePhaseError, _phaseError,  \
     _newLuma, _tvGamma, _hanoverBars, _useHanoverBars, \
     _useBlur, _blur, _useScanlines, _scanlines, _useLumaRise, _lumaRise, _useLumaFall, _lumaFall, \
@@ -18,7 +18,7 @@
     _hires, _distortionHires, _maskType, _luminance, _useLightFromCenter, _lightFromCenter, \
     _useRandomLineOffset, _randomLineOffset
 
-#define VPARAMST bool, unsigned, unsigned, unsigned, \
+#define VPARAMST bool, unsigned, unsigned, bool, unsigned, \
     unsigned, unsigned, unsigned, unsigned, int, bool, float, \
     bool, bool, int, bool, \
     bool, unsigned, bool, unsigned, bool, float, bool, float, \
@@ -138,7 +138,7 @@ struct VideoManager {
 	
     bool colorSpectrum;
     bool pal;
-    unsigned interlaceMode;
+    unsigned interlaceDecay;
     
     double saturation;
     double contrast;
@@ -271,12 +271,12 @@ struct VideoManager {
     auto setContrast(unsigned contrast) -> void;
     auto setNewLuma(bool state) -> void;
     auto setCrtRealGamma(bool state) -> void;
-    auto setInterlaceMode(unsigned mode) -> void;
     auto setPhase( int degree ) -> void;
     auto setPhaseError(float phaseError) -> void;
     auto setHanoverBars( int saturationDelta ) -> void;
     auto setBlur( unsigned blur ) -> void;
     auto setScanlines(unsigned intensity) -> void;
+    auto setInterlace(unsigned intensity) -> void;
     
     auto setBloomGlow( unsigned intensity ) -> void;
     auto setBloomRadius( unsigned intensity ) -> void;

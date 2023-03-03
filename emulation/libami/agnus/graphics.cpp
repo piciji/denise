@@ -7,6 +7,7 @@ namespace LIBAMI {
 #define BPL_SHIRES 0x20
 #define BPL_ADD_MOD 0x40
 #define BPL_QUEUE 0x8000
+#define BPL_CYCLE_MASK 0xf
 
 #define UseBpl0(c)  case c | 0x000:
 #define UseBpl1(c)  case c | 0x100:
@@ -260,7 +261,7 @@ auto Agnus::bplControl() -> void {
         }
 
         if (_hPos == ddfStart)
-            ddfStartMatch = (ddfStartMatch != 1) ? 0x81 : 1;
+            ddfStartMatch = 1;
 
         if (_hPos == ddfStop) {
             if (bplState)
@@ -271,7 +272,7 @@ auto Agnus::bplControl() -> void {
         }
 
         if (!(_hPos & 1)) {
-            bool ddfEnable = useBitplaneDMA() && diwFlipFlop && (ddfStartMatch == 1) && (!hardStop || harddisH);
+            bool ddfEnable = useBitplaneDMA() && diwFlipFlop && (ddfStartMatch & 1) && (!hardStop || harddisH);
             if (!bplState && ddfEnable && !ddfEnableBefore) {
                 bplState = 1;
                 sprInhibited = true;

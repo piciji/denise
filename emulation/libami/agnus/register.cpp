@@ -38,6 +38,9 @@ template<bool byteAccess> auto Agnus::readCustom(uint16_t adr, bool triggeredByW
         case 0x16:
             return paula.potGoR();
 
+        case 0x18:
+            return paula.getSerdatR();
+
         case 0x1a:
             return paula.getDskBytR();
 
@@ -90,6 +93,14 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
 
         case 0x2e:
             copper.setCopCon(value);
+            break;
+
+        case 0x30:
+            paula.setSerdat(value);
+            break;
+
+        case 0x32:
+            paula.setSerper(value);
             break;
 
         case 0x34:
@@ -206,7 +217,7 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
             auto _ddfStart = ddfStart;
             ddfStart = value & (ecsAndHigher() ? 0xfe : 0xfc);
             // when changing ddfStart in same cycle as hPos matches old ddfStart ... there is no match
-            if (!ecsAndHigher() || ((ddfStartMatch & 0x80) && (_ddfStart == hPos))) {
+            if (!ecsAndHigher() || (_ddfStart == hPos)) {
                 ddfStartMatch = 0; // ecs
                 if (bplState == 1) {
                     bplState = 0;
@@ -360,8 +371,9 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
             if ((bplQueue & 7) != 6) setBpl6ptL(value);
             break;
         case 0x100: {
-            if ((value ^ bplCon0) & 4) // lace change
+            if ((value ^ bplCon0) & 4) { // lace change
                 fpsChange |= 1;
+            }
 
             if (ERSY) {
                 if ((value & 2) == 0) {
@@ -373,7 +385,7 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
             bplCon0 = value & ~0xb1;
 
             if (bplState) {
-                bplCycle &= BPL_QUEUE | BPL_ADD_MOD;
+                bplCycle &= BPL_QUEUE | BPL_ADD_MOD | BPL_CYCLE_MASK;
                 bplCycle |= (bplCon0 >> 4) & 0x700;
                 if (ecsAndHigher() && (bplCon0 & 0x40)) bplCycle |= BPL_SHIRES;
                 else if (bplCon0 & 0x8000) bplCycle |= BPL_HIRES;

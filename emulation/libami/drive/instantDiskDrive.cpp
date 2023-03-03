@@ -94,6 +94,7 @@ auto DiskDrive::instantRead(unsigned words, uint16_t syncWord, bool needSync) ->
     int b;
     unsigned pos = 0;
     uint8_t out = 0;
+    bool rand = false;
 
     if (stepSettleClock) {
         stepSettleClock = 0;
@@ -130,6 +131,17 @@ auto DiskDrive::instantRead(unsigned words, uint16_t syncWord, bool needSync) ->
             if (!synced) overflow = true;
             cia.setFlag();
         }
+
+        if (!word) {
+            if (rand) { // continous oscilations
+                for (int i = 0; i < 16; i++)
+                    word |= ((randomizer.xorShift() >> 16 ) & 1) << i;
+            } else {
+                word |= 0x155;
+                rand = 1; // first oscilation
+            }
+        } else
+            rand = 0;
 
         for(b = 15; b >= 0; b--) {
             shifter = (shifter << 1) | ((word >> b) & 1);

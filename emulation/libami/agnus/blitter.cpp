@@ -262,7 +262,7 @@ auto Blitter::setBltCon1(uint16_t value) -> void {
     activateLLEWhenNeeded( 0x42, value );
     bltcon1 = value;
     desc = value & 2;
-    doff = agnus.ecs() && (bltcon1 & 0x80);
+    doff = agnus.ecsAndHigher() && (bltcon1 & 0x80);
 
     if (flags == LLE)
         shifter |= STAGE_CHANGE;

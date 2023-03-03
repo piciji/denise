@@ -45,6 +45,9 @@ auto Agnus::processEvents(int64_t curClock) -> void {
     if (curClock == eventClock[EVENT_AUDIO_STATE])
         paula.audioEvent();
 
+    if (curClock == eventClock[EVENT_SERIAL])
+        paula.serialEvent();
+
     int64_t next = eventClock[EVENT_KBD];
     if (eventClock[EVENT_ONE_CYCLE_DELAY] < next)
         next = eventClock[EVENT_ONE_CYCLE_DELAY];
@@ -56,6 +59,8 @@ auto Agnus::processEvents(int64_t curClock) -> void {
         next = eventClock[EVENT_AUDIO_STATE];
     if (eventClock[EVENT_HTOTAL] < next)
         next = eventClock[EVENT_HTOTAL];
+    if (eventClock[EVENT_SERIAL] < next)
+        next = eventClock[EVENT_SERIAL];
 
     nextClock = next;
 }
@@ -134,22 +139,31 @@ auto Agnus::leaveEmulationEvent() -> void {
 auto Agnus::HTotalEvent() -> void {
     if (hTotalFirst) {
         if (vPos == (lines + lof) ) {
-            if (lace()) lof ^= 1;
+            if (lace()) {
+                lof ^= 1;
+                laceMode = lof ? 1 : 2;
+            } else
+                laceMode = 0;
             initVCounter = true;
             lines = (beamCon & VARBEAMEN) ? vTotal : (ntsc ? 261 : 311);
         }
         updateEvent<EVENT_HTOTAL>(1);
         hTotalFirst = false;
-
-    } else {
         if (!lol) {
-            actions &= ~ACT_COPPER; // "even" cycle 0 after a short line is not usable by Copper, otherwise Copper would progress 2 cycles in a row.
             if (actions & ACT_BPL) {
                 fetchPlanes<true>();
                 actions &= ~ACT_BPL;
             }
+        }
+
+    } else {
+        if (!lol) {
+            actions &= ~ACT_COPPER; // "even" cycle 0 after a short line is not usable by Copper, otherwise Copper would progress 2 cycles in a row.
 
             shortLineBefore = true;
+
+            if (bplState || bplQueue)
+                actions |= ACT_BPL;
         } else
             shortLineBefore = false;
 

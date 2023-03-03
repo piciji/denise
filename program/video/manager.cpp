@@ -669,7 +669,7 @@ template<typename T, bool interlace, bool field> auto VideoManager::renderFrame(
         return;
 
     } else if ( crtMode == CrtMode::None ) {
-        if (interlace && !field && interlaceMode) { // hold each second frame, flicker free but not like a CRT would do
+        if (interlace && !field && !interlaceDecay) { // hold each second frame, flicker free but not like a CRT would do
             if (!videoDriver->lockReuse())
                 return;
         } else {
@@ -683,7 +683,7 @@ template<typename T, bool interlace, bool field> auto VideoManager::renderFrame(
         srcPitch -= SHADER_OFFSCREEN_WIDTH << 1;
         src -= SHADER_OFFSCREEN_WIDTH;
 
-        if (interlace && !field && interlaceMode) {
+        if (interlace && !field && !interlaceDecay) {
             if (!videoDriver->lockReuse())
                 return;
         } else {
@@ -704,7 +704,7 @@ template<typename T, bool interlace, bool field> auto VideoManager::renderFrame(
         }
 
 	} else if (crtThreaded) {
-        if (interlace && !field && interlaceMode) {
+        if (interlace && !field && !interlaceDecay) {
             renderCrtThreaded<T, interlace, field>(width, height, src, srcPitch, 0, 0);
 
             if (!videoDriver->lockReuse())
@@ -717,7 +717,7 @@ template<typename T, bool interlace, bool field> auto VideoManager::renderFrame(
         }
 
     } else {
-        if (interlace && !field && interlaceMode) {
+        if (interlace && !field && !interlaceDecay) {
             renderCrt<T, interlace, field>(width, height, src, srcPitch, 0, 0); // reuse old frame, render in hidden buffer
 
             if (!videoDriver->lockReuse())
@@ -739,13 +739,11 @@ template<typename T, bool interlace, bool field> inline auto VideoManager::rende
     if constexpr (interlace) {
         unsigned color;
         ColorRgbLight colorDecayed;
-        unsigned decay = 64; // simulate phosphor decay
+        unsigned iRate = (100 - interlaceDecay); // simulate phosphor decay
 
         for(unsigned h = 0; h < height; h++) {
 
-            if (!interlaceMode && ((!field && (h & 1)) || (field && !(h & 1)))) {
-                if ((h & 31) == (field ? 0 : 1))
-                    decay += 5;
+            if ((iRate != 100) && ((!field && (h & 1)) || (field && !(h & 1)))) {
 
                 for (unsigned w = 0; w < width; w++) {
                     color = colorTable[*src++ & mask];
@@ -753,12 +751,9 @@ template<typename T, bool interlace, bool field> inline auto VideoManager::rende
                     colorDecayed.g = (color >> 8) & 0xff;
                     colorDecayed.b = (color >> 0) & 0xff;
 
-                    if (colorDecayed.r < decay) colorDecayed.r = 0;
-                    else colorDecayed.r -= decay;
-                    if (colorDecayed.g < decay) colorDecayed.g = 0;
-                    else colorDecayed.g -= decay;
-                    if (colorDecayed.b < decay) colorDecayed.b = 0;
-                    else colorDecayed.b -= decay;
+                    colorDecayed.r = (colorDecayed.r * iRate) / 100;
+                    colorDecayed.g = (colorDecayed.g * iRate) / 100;
+                    colorDecayed.b = (colorDecayed.b * iRate) / 100;
 
                     *dest++ = colorDecayed.r << 16 | colorDecayed.g << 8 | colorDecayed.b;
                 }
@@ -892,7 +887,9 @@ template<typename T, bool interlace, bool field> inline auto VideoManager::rende
             src -= width + srcPitch;
     }
 
-    if (interlace && !interlaceMode) {
+    if (interlace && interlaceDecay) {
+        float iRate = (float)(100 - interlaceDecay);
+
         for (unsigned h = 0; h < height; h++) {
             if (field == (h & 1)) {
                 for (unsigned w = 0; w < width; w++) {
@@ -904,13 +901,10 @@ template<typename T, bool interlace, bool field> inline auto VideoManager::rende
                     *dest++ = _src >> metaShift;
                 }
             } else {
-                if ((h & 31) == (field ? 30 : 31))
-                    decay += 0.05;
-
                 for (unsigned w = 0; w < width; w++) {
                     _src = *src++;
 
-                    *dest++ = lumaChromaTable[_src & mask].y_n - decay;
+                    *dest++ = lumaChromaTable[_src & mask].y_n * iRate / 100.0;
                     *dest++ = lumaChromaTable[_src & mask].u_i_n;
                     *dest++ = lumaChromaTable[_src & mask].v_q_n;
                     *dest++ = _src >> metaShift;
@@ -1204,7 +1198,7 @@ template<typename T, bool interlace, bool field> auto VideoManager::renderCrtThr
 		
 		re1->oddLine = re->oddLine;
         re1->options = getRenderOptions<interlace, field>();
-        re1->fieldDest = (interlaceMode ? tempDest : tempDestHold) + destOffset;
+        re1->fieldDest = (!interlaceDecay ? tempDest : tempDestHold) + destOffset;
 
         if (use16BitSrc)
             renderCrtSelection<uint16_t>( re1 );
@@ -1226,7 +1220,7 @@ template<typename T, bool interlace, bool field> auto VideoManager::renderCrtThr
 	re->dest = tempDest;
 	re->scanlineDest = nullptr;
 	re->oddLine = (cropTop >> interlace) & 1;
-    re->fieldDest = interlaceMode ? nullptr : tempDestHold;
+    re->fieldDest = !interlaceDecay ? nullptr : tempDestHold;
 	
 	if (!pal)
 		re->reuseFirstLine = false;		
@@ -1606,6 +1600,7 @@ auto VideoManager::applyDataUpdates() -> void {
         else if (dataUpdate.ident == "contrast")            setContrast( dataUpdate.dataU );
         else if (dataUpdate.ident == "phase")               setPhase( dataUpdate.dataI );
         else if (dataUpdate.ident == "scanlines")           setScanlines( dataUpdate.dataU );
+        else if (dataUpdate.ident == "interlace")           setInterlace( dataUpdate.dataU );
         else if (dataUpdate.ident == "blur")                setBlur( dataUpdate.dataU );
         else if (dataUpdate.ident == "phase_error")         setPhaseError( dataUpdate.dataF );
         else if (dataUpdate.ident == "hanover_bars")        setHanoverBars( dataUpdate.dataI );
@@ -1634,7 +1629,6 @@ auto VideoManager::applyDataUpdates() -> void {
 
         else if (dataUpdate.ident == "new_luma")          setNewLuma( dataUpdate.dataB );
         else if (dataUpdate.ident == "tv_gamma")          setCrtRealGamma( dataUpdate.dataB );
-        else if (dataUpdate.ident == "interlace")         setInterlaceMode( dataUpdate.dataU );
         else if (dataUpdate.ident == "mask_type")         setMaskType( (MaskType)dataUpdate.dataU );
         else if (dataUpdate.ident == "distortion_hires")  useDistortionHires( dataUpdate.dataB );
         else if (dataUpdate.ident == "hires")             useHires( dataUpdate.dataB );
@@ -1661,7 +1655,7 @@ template<bool interlace, bool field> auto VideoManager::getRenderOptions() -> ui
     if (interlace) {
         options |= 4;
         if (field) options |= 8;
-        if (interlaceMode) options |= 16;
+        if (!interlaceDecay) options |= 16;
     }
     return options;
 }

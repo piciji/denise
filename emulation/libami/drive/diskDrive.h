@@ -37,7 +37,7 @@ struct DiskDrive {
     bool connected = false;
     bool inserted = false;
     Emulator::Rand randomizer;
-    unsigned randCounter;
+    int randCounter;
 
     uint8_t idPos;
     int64_t motorClock;
@@ -80,11 +80,11 @@ struct DiskDrive {
     auto updateTrack() -> void;
     auto progressStepper() -> void;
 
-    auto readByte(uint16_t& dmaCycles, bool upd) -> uint8_t;
-    auto readBit(uint16_t& dmaCycles, bool upd) -> bool;
+    auto readByte(int& dmaCycles, bool upd) -> uint8_t;
+    auto readBit(int& dmaCycles, bool upd) -> bool;
     auto writeBit(bool state) -> void;
     auto adjustHead(int offset) -> void;
-    auto rotate(unsigned dmaCycles, bool reset = false) -> void;
+    auto rotate(int dmaCycles, bool reset = false) -> void;
 
     auto getDummyTrack() -> DiskStructure::Track*;
 

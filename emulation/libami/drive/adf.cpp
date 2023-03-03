@@ -27,9 +27,11 @@ auto DiskStructure::prepareADF(uint8_t* data, unsigned size) -> void {
 
     for(unsigned i = 0; i < LIBAMI_MAX_TRACKS; i++) {
         Track& track = tracks[i];
-        initTrack(track, bytes);
+        bool hasData = i < trackCount;
 
-        if (i < trackCount) {
+        initTrack(track, bytes, 0, hasData ? 0xaa : 0);
+
+        if (hasData) {
             encodeTrack(track, i, data + (i * sectors * 512));
 
 //            agnus.system->interface->log( "t", 1 );
@@ -44,7 +46,6 @@ auto DiskStructure::prepareADF(uint8_t* data, unsigned size) -> void {
 auto DiskStructure::encodeTrack(Track& track, unsigned trackNr, uint8_t* userData) -> void {
     uint8_t* ptr;
     int sectors = hd ? 22 : 11;
-    // init with data bit zero for complete revolution, means clock bit is always one, because of the ring nature previous data bit is always zero
     bool lastDataWasAOne = false;
     uint8_t buffer[512];
     int gap = track.length - (sectors * 544 * 2);

@@ -721,5 +721,4 @@ color encoding =
 TV gamma =
 RGB =
 distortion hires tooltip =
-interlace natural =
-interlace hold =
+interlace =

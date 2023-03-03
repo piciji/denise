@@ -69,7 +69,7 @@ struct DiskStructure {
 
     auto getTrackBitLength() -> unsigned;
     auto getTrackByteLength() -> unsigned;
-    auto initTrack(Track& track, unsigned newLength = 0, unsigned bits = 0) -> void;
+    auto initTrack(Track& track, unsigned newLength = 0, unsigned bits = 0, uint8_t initVal = 0) -> void;
 
     auto getADFCreationImageSize() -> unsigned;
     auto getEXTCreationImageSize() -> unsigned;

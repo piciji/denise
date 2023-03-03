@@ -14,8 +14,6 @@ struct VideoModeLayout : GUIKIT::HorizontalLayout {
 
 struct VideoOptionLayout : GUIKIT::HorizontalLayout {
     GUIKIT::CheckBox newLuma;
-    GUIKIT::RadioBox interlaceNatural;
-    GUIKIT::RadioBox interlaceHold;
     GUIKIT::CheckBox tvGamma;
 	GUIKIT::CheckBox linearInterpolation;
     
@@ -32,6 +30,7 @@ struct VideoBaseLayout : GUIKIT::FramedVerticalLayout {
     SliderLayout contrast;   
     SliderLayout phase;
     SliderLayout scanlines;
+    SliderLayout interlace;
     
     VideoBaseLayout(bool withSpectrum);
 };

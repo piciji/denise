@@ -35,10 +35,10 @@ auto Agnus::readByte(uint32_t adr) -> uint8_t {
             dataBus = *(slowMem + (adr - 0xc00000));
             break;
         case KICK_ROM:
-            dataBus = kickRom ? *(kickRom + (adr & kickRomMask)) : 0;
+            dataBus = *(kickRom + (adr & kickRomMask));
             break;
         case EXT_ROM:
-            dataBus = extRom ? *(extRom + (adr & extRomMask)) : 0;
+            dataBus = *(extRom + (adr & extRomMask));
             break;
         case WOM:
             dataBus = *(wom + (adr & 0x3ffff));
@@ -87,10 +87,10 @@ auto Agnus::readWord(uint32_t adr) -> uint16_t {
             break;
         case KICK_ROM:
             // firmware access needs sanity checking
-            dataBus = kickRom ? _swapWord(*(uint16_t*)(kickRom + (adr & kickRomMask))) : 0;
+            dataBus = _swapWord(*(uint16_t*)(kickRom + (adr & kickRomMask)));
             break;
         case EXT_ROM:
-            dataBus = extRom ? _swapWord(*(uint16_t*)(extRom + (adr & extRomMask))) : 0;
+            dataBus = _swapWord(*(uint16_t*)(extRom + (adr & extRomMask)));
             break;
         case WOM:
             dataBus = _swapWord(*(uint16_t*)(wom + (adr & 0x3ffff)));
@@ -138,11 +138,8 @@ auto Agnus::writeByte(uint32_t adr, uint8_t value) -> void {
             *(slowMem + adr) = value;
             break;
         case KICK_ROM:
-            if (model == OCS_A1000 && !womLock) {
-                womLock = true;
-                for (unsigned i = 0xf8; i <= 0xfb; i++)
-                    mapper[i] = WOM;
-            }
+            if ( (model == OCS_A1000) && !womLock)
+                lockWom();
             break;
         case EXT_ROM:
             break;
@@ -191,11 +188,8 @@ auto Agnus::writeWord(uint32_t adr, uint16_t value) -> void {
             *(uint16_t*)(slowMem + adr) = _swapWord(value);
             break;
         case KICK_ROM:
-            if (model == OCS_A1000 && !womLock) {
-                womLock = true;
-                for (unsigned i = 0xf8; i <= 0xfb; i++)
-                    mapper[i] = WOM;
-            }
+            if ( (model == OCS_A1000) && !womLock)
+                lockWom();
             break;
         case EXT_ROM:
             break;
@@ -277,27 +271,26 @@ auto Agnus::mapMemory() -> void {
     uint8_t romAssignment = kickRom ? KICK_ROM : Unmapped;
     uint8_t romOrwomAssignment = (model == OCS_A1000) ? WOM : romAssignment;
 
-    for (unsigned i = 0x0; i < 0x8; i++)
-        mapper[i] = KICK_ROM; // OVL
+    // 0 - 7: OVL, assigned later
 
-    for(unsigned i = 8; i <= 0x1f; i++) // max 2 MB (mirrored)
+    for(int i = 8; i <= 0x1f; i++) // max 2 MB (mirrored)
         mapper[i] = CHIP_MEM;
 
-    for(unsigned i = 0x20; i <= 0x9f; i++)
+    for(int i = 0x20; i <= 0x9f; i++)
         mapper[i] = Unmapped; // auto config (e.g. fast ram)
 
-    for(unsigned i = 0xa0; i <= 0xbe; i++)
+    for(int i = 0xa0; i <= 0xbe; i++)
         mapper[i] = MMIO_CIA; // CIA mirror or overmap for Zorro 2 IO expansion
 
     mapper[0xbf] = MMIO_CIA;
 
-    for(unsigned i = 0xc0; i <= 0xdb; i++)
+    for(int i = 0xc0; i <= 0xdb; i++)
         mapper[i] = MMIO_CUSTOM; // mirror
 
     if (slowMem) { // overmap slow mem (max. 1.75 MB, not mirrored)
         uint8_t page = slowMemSize / (64 * 1024);
 
-        for(unsigned i = 0xc0; i < (0xc0 + page); i++)
+        for(int i = 0xc0; i < (0xc0 + page); i++)
             mapper[i] = SLOW_MEM;
     }
 
@@ -305,40 +298,52 @@ auto Agnus::mapMemory() -> void {
 
     mapper[0xdd] = Unmapped;
 
-    for (unsigned i = 0xde; i <= 0xdf; i++)
+    for (int i = 0xde; i <= 0xdf; i++)
         mapper[i] = MMIO_CUSTOM;
 
     if (extRom) { // AROS
-        for (unsigned i = 0xe0; i <= 0xe7; i++)
+        for (int i = 0xe0; i <= 0xe7; i++)
             mapper[i] = EXT_ROM;
     } else {
-        for (unsigned i = 0xe0; i <= 0xe7; i++)
+        for (int i = 0xe0; i <= 0xe7; i++)
             mapper[i] = romAssignment; // mirror
     }
 
-    for(unsigned i = 0xe8; i <= 0xef; i++)
+    for(int i = 0xe8; i <= 0xef; i++)
         mapper[i] = Unmapped; // auto config
 
-    for(unsigned i = 0xf0; i <= 0xf7; i++)
+    for(int i = 0xf0; i <= 0xf7; i++)
         mapper[i] = Unmapped; // extended ROM, CD32
 
-    for (unsigned i = 0xf8; i <= 0xff; i++)
+    for (int i = 0xf8; i <= 0xff; i++)
         mapper[i] = romOrwomAssignment;
 
     if ((model == OCS_A1000) && !womLock) {
-        for (unsigned i = 0xf8; i <= 0xfb; i++)
+        for (int i = 0xf8; i <= 0xfb; i++)
             mapper[i] = romAssignment;
     }
+
+    setOVL(true);
 }
 
 auto Agnus::setOVL(bool state) -> void {
     if (state) {
-        for (unsigned i = 0x0; i < 0x8; i++)
-            mapper[i] = KICK_ROM;
+        for (int i = 0x0; i < 0x8; i++)
+            mapper[i] = mapper[0xf8 + i];
     } else {
-        for (unsigned i = 0x0; i < 0x8; i++)
+        for (int i = 0x0; i < 0x8; i++)
             mapper[i] = CHIP_MEM;
     }
+}
+
+auto Agnus::lockWom() -> void {
+    for (int i = 0xf8; i <= 0xfb; i++)
+        mapper[i] = WOM;
+
+    if (mapper[0] != CHIP_MEM)
+        setOVL(true);
+
+    womLock = true;
 }
 
 }

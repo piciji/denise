@@ -43,7 +43,7 @@ struct Agnus {
 
     enum { Unmapped, CHIP_MEM, SLOW_MEM, KICK_ROM, EXT_ROM, WOM, MMIO_CUSTOM, MMIO_CIA, MMIO_RTC };
 
-    enum { EVENT_KBD, EVENT_ONE_CYCLE_DELAY, EVENT_LEAVE_EMULATION, EVENT_POWER_SUPPLY, EVENT_AUDIO_STATE, EVENT_HTOTAL, EVENT_CHANNELS };
+    enum { EVENT_KBD, EVENT_ONE_CYCLE_DELAY, EVENT_LEAVE_EMULATION, EVENT_POWER_SUPPLY, EVENT_AUDIO_STATE, EVENT_HTOTAL, EVENT_SERIAL, EVENT_CHANNELS };
 
     enum { DMA_None = 0, DMACON = 1,
            PTR_BLT_A_H, PTR_BLT_A_L, PTR_BLT_B_H, PTR_BLT_B_L, PTR_BLT_C_H, PTR_BLT_C_L, PTR_BLT_D_H, PTR_BLT_D_L,
@@ -174,6 +174,7 @@ struct Agnus {
     bool lof;
     bool lolToggle;
     bool ntsc;
+    uint8_t laceMode;
 
     bool initVCounter;
     bool shortLineBefore;
@@ -208,6 +209,7 @@ struct Agnus {
     auto powerOff() -> void;
     auto mapMemory() -> void;
     auto setOVL(bool state) -> void;
+    auto lockWom() -> void;
     auto setChipmem(unsigned size) -> void;
     auto setSlowmem(unsigned size) -> void;
 

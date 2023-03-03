@@ -25,14 +25,10 @@ VideoOptionLayout::VideoOptionLayout(bool withSpectrum) {
         append(newLuma, {0u, 0u}, 10);    	    
         append(tvGamma, {0u, 0u}, 10);
     } else {
-        append(interlaceNatural, {0u, 0u}, 10);
-        append(interlaceHold, {0u, 0u}, 10);
         append(tvGamma, {0u, 0u}, 10);
     }
 
 	append(linearInterpolation, {0u, 0u});
-
-    GUIKIT::RadioBox::setGroup(interlaceNatural, interlaceHold);
 
     setAlignment(0.5);
 }
@@ -41,7 +37,8 @@ VideoBaseLayout::VideoBaseLayout(bool withSpectrum) :
 mode(withSpectrum),
 option(withSpectrum),
 phase("°", false),
-scanlines("%", true)
+scanlines("%", true),
+interlace("%", true)
 {
     append(mode, {~0u, 0u}, 2);
     append(option, {~0u, 0u}, 2);
@@ -53,7 +50,9 @@ scanlines("%", true)
     append(contrast, {~0u, 0u}, 2);     
     append(brightness, {~0u, 0u}, 2);
     append(gamma, {~0u, 0u}, 2);
-    append(scanlines,{~0u, 0u});
+    append(scanlines,{~0u, 0u}, 2);
+    if (!withSpectrum)
+        append(interlace,{~0u, 0u});
 
     saturation.slider.setLength(201);
     gamma.slider.setLength(251);
@@ -61,6 +60,7 @@ scanlines("%", true)
     contrast.slider.setLength(201);
     phase.slider.setLength(361);
     scanlines.slider.setLength(101);
+    interlace.slider.setLength(101);
     
     setFont(GUIKIT::Font::system("bold"));    
     setPadding(8);
@@ -264,6 +264,8 @@ base( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) )
     setSliderAction<int>( &base.phase, "phase", [this](int value) { vManager()->setPhase( value ); }, [this](unsigned position) { return (int)position - 180; } );
     setSliderAction<unsigned>( &base.scanlines, "scanlines", [this](unsigned value) { vManager()->setScanlines( value ); },
         [this](unsigned position) { return std::max(position, 1u); } );
+    setSliderAction<unsigned>( &base.interlace, "interlace", [this](unsigned value) { vManager()->setInterlace( value ); },
+        [this](unsigned position) { return std::max(position, 1u); } );
     setSliderAction<unsigned>( &encoding.blur, "blur", [this](unsigned value) { vManager()->setBlur( value ); } );
     setSliderAction<float>( &encoding.phaseError, "phase_error", [this](float value) { vManager()->setPhaseError( value ); },
         [this](unsigned position) { return (float)((int)position - 90) / 2.0f; } );          
@@ -315,16 +317,6 @@ base( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) )
         vManager()->updateData<bool>("new_luma", checked);
     };
 
-    base.option.interlaceNatural.onActivate = [this]() {
-        _settings->set<unsigned>( "video_interlace" + this->sliderIdent(), 0);
-        vManager()->updateData<unsigned>("interlace", 0);
-    };
-
-    base.option.interlaceHold.onActivate = [this]() {
-        _settings->set<unsigned>( "video_interlace" + this->sliderIdent(), 1);
-        vManager()->updateData<unsigned>("interlace", 1);
-    };
-    
     base.option.tvGamma.onToggle = [this](bool checked) {
         _settings->set<bool>( "video_tv_gamma" + this->sliderIdent(), checked);
         vManager()->updateData<bool>("tv_gamma", checked);
@@ -503,7 +495,6 @@ auto VideoLayout::updatePresets(bool reloadDriver) -> void {
         VideoManager::getInstance( emulator )->reloadSettings();
     
 	base.option.newLuma.setChecked( _newLuma );
-    (_interlace == 0) ? base.option.interlaceNatural.setChecked() : base.option.interlaceHold.setChecked();
     base.option.tvGamma.setChecked( _tvGamma );
     base.saturation.slider.setPosition(_saturation);
     base.saturation.value.setText(std::to_string(_saturation) + " %");
@@ -518,6 +509,9 @@ auto VideoLayout::updatePresets(bool reloadDriver) -> void {
     base.scanlines.active.setChecked( _useScanlines );
     base.scanlines.slider.setPosition( _scanlines );
     base.scanlines.value.setText( std::to_string(_scanlines) + " %" );
+    base.interlace.active.setChecked( _useInterlace );
+    base.interlace.slider.setPosition( _interlace );
+    base.interlace.value.setText( std::to_string(_interlace) + " %" );
 	// crt
     encoding.phaseError.active.setChecked( _usePhaseError );
     encoding.phaseError.slider.setPosition( int(_phaseError * 2.0) + 90);
@@ -625,6 +619,7 @@ auto VideoLayout::updateVisibillity() -> void {
         base.option.newLuma.setEnabled(false);        
     }
     base.scanlines.slider.setEnabled( base.scanlines.active.checked() );
+    base.interlace.slider.setEnabled( base.interlace.active.checked() );
 		
     bool crtChecked = base.mode.crtCpu.checked() || base.mode.crtGpu.checked();
     bool crtGpuChecked = base.mode.crtGpu.checked();
@@ -709,8 +704,6 @@ auto VideoLayout::translate() -> void {
     base.contrast.name.setText( trans->get("contrast", {}, true) );
     base.phase.name.setText( trans->get("phase", {}, true) );
     base.option.newLuma.setText( trans->get("new_luma") );
-    base.option.interlaceNatural.setText( trans->get("interlace natural") );
-    base.option.interlaceHold.setText( trans->get("interlace hold") );
     base.option.tvGamma.setText( trans->get("TV gamma") );
 	base.option.linearInterpolation.setText( trans->get("linear_interpolation") );
     base.mode.palette.setText( trans->get("palette") );
@@ -720,6 +713,7 @@ auto VideoLayout::translate() -> void {
     base.mode.crtCpu.setText( trans->get("crt_cpu") );
     base.mode.crtGpu.setText( trans->get("crt_gpu") );
     base.scanlines.active.setText( trans->get("scanlines", {}, true) );
+    base.interlace.active.setText( trans->get("interlace", {}, true) );
 
     encoding.setText(trans->get("color encoding"));
     encoding.phaseError.active.setText( trans->get("phase_error", {}, true) );
@@ -770,7 +764,7 @@ auto VideoLayout::translate() -> void {
     vicIIGlitch.ras.active.setText(trans->get("ras_glitch",{}, true));
     vicIIGlitch.cas.active.setText(trans->get("cas_glitch",{}, true));
     
-    SliderLayout::scale({&base.saturation, &base.gamma, &base.brightness, &base.contrast, &base.phase, &base.scanlines, &encoding.phaseError, &encoding.hanoverBars, &encoding.blur, &hf.lumaRise, &hf.lumaFall},
+    SliderLayout::scale({&base.saturation, &base.gamma, &base.brightness, &base.contrast, &base.phase, &base.scanlines, &base.interlace, &encoding.phaseError, &encoding.hanoverBars, &encoding.blur, &hf.lumaRise, &hf.lumaFall},
         "-100 %");
     unsigned neededWidth = SliderLayout::scale({&gpuBase.firFilter, &gpuBase.lightFromCenter, &gpuBase.luminance, &mask.level, &mask.luminance, &mask.dpi, &mask.pitch, &bloom.glow, &bloom.radius, &bloom.variance, &bloom.weight},
         "0.00 mm", mask.type.type.minimumSize().width );

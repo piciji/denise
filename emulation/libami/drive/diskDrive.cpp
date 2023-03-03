@@ -31,7 +31,7 @@ unsigned DiskDrive::stepperMinTimeBase = 0;
 // updated each frame, depends on region
 unsigned DiskDrive::refCyclesPerRevolutionBase = 709379;
 
-auto DiskDrive::readByte(uint16_t& dmaCycles, bool upd) -> uint8_t {
+auto DiskDrive::readByte(int& dmaCycles, bool upd) -> uint8_t {
     // todo: simulate deceleration more realistic (like d64)
     // e.g. there are some C64 games which expect to read some data from disc after motor has stopped.
     if ((!motor && (motorSpeed < 20)) || !inserted)
@@ -63,10 +63,23 @@ auto DiskDrive::readByte(uint16_t& dmaCycles, bool upd) -> uint8_t {
     if (!selected)
         return 0;
 
+    // weak bits (no magnetization) for tracks, which are not included in ADF
+    // encoded ADF has always valid MFM, so there are no longer sequences with zeros than 10001
+    if (!byte) {
+        if (randCounter) { // continous oscilations
+            for (int i = 0; i < 8; i++)
+                byte |= ((randomizer.xorShift() >> 16 ) & 1) << i;
+        } else {
+            byte |= 1;
+            randCounter = 1; // first oscilation
+        }
+    } else
+        randCounter = 0;
+
     return byte;
 }
 
-auto DiskDrive::rotate(unsigned dmaCycles, bool reset) -> void {
+auto DiskDrive::rotate(int dmaCycles, bool reset) -> void {
     if (!motor || !inserted || !dmaCycles) {
         if (reset)
             accum = 0;
@@ -103,7 +116,7 @@ auto DiskDrive::rotate(unsigned dmaCycles, bool reset) -> void {
         accum = 0;
 }
 
-auto DiskDrive::readBit(uint16_t& dmaCycles, bool upd) -> bool {
+auto DiskDrive::readBit(int& dmaCycles, bool upd) -> bool {
     if ((!motor && (motorSpeed < 20)) || !inserted )
         return false;
 
@@ -134,13 +147,15 @@ auto DiskDrive::readBit(uint16_t& dmaCycles, bool upd) -> bool {
 
     bool state = (track->data[byte] >> bit) & 1;
 
-    // weak bits
+    // weak bits (no magnetization)
     if (state)
-        randCounter = ( (randomizer.xorShift() >> 16 ) & 7) + 51; // 14.5 - 16.5
-    else {
+        // after a flux change it takes a while until first oscilation happens.
+        randCounter = ( (randomizer.xorShift() >> 16 ) & 7) + 51; // 14.5 - 16.5 us
+    else if (randCounter) {
         if (dmaCycles >= randCounter) {
             state = true; // oscilation
-            randCounter = ( (randomizer.xorShift() >> 16 ) % 31) + 44;
+            // continous oscilation without any new flux change happens much faster
+            randCounter = ( (randomizer.xorShift() >> 16 ) & 7) + (7 - (dmaCycles - randCounter) );
         } else
             randCounter -= dmaCycles;
     }
@@ -274,7 +289,7 @@ auto DiskDrive::power() -> void {
     stepperMinTime = (stepperMinTimeBase * agnus.frequency()) / 10000;
     structure.serializationSize = 0;
     randomizer.initXorShift( 0x1234abcd );
-    randCounter = ~0;
+    randCounter = 0;
     wobblePos = 0;
     wobbleLimit = wobble >> 1;
 
@@ -417,7 +432,7 @@ auto DiskDrive::step(bool dir, bool updTrack) -> void {
     if (updTrack)
         updateTrack();
 
-    randCounter = ~0;
+    randCounter = 0;
 }
 
 inline auto DiskDrive::updateTrack() -> void {

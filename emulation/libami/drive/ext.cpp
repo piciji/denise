@@ -37,7 +37,7 @@ auto DiskStructure::prepareEXT(uint8_t *data, unsigned size) -> void {
             length = (ptr[5] << 16) | (ptr[6] << 8) | ptr[7]; // ignore the MSB for sanity reasons
             bits = (ptr[9] << 16) | (ptr[10] << 8) | ptr[11]; // ignore the MSB for sanity reasons
 
-            initTrack(track, mfmTrack ? length : getTrackByteLength(), mfmTrack ? bits : getTrackBitLength());
+            initTrack(track, mfmTrack ? length : getTrackByteLength(), mfmTrack ? bits : getTrackBitLength(), 0xaa);
             if (!mfmTrack) track.written = 0x80;
 
             if ((dataOffset + length) >= size)

@@ -154,7 +154,7 @@ auto DiskStructure::getPreview(System* system, uint8_t* data, unsigned size) -> 
     return disk.getListing();
 }
 
-auto DiskStructure::initTrack(Track& track, unsigned newLength, unsigned bits) -> void {
+auto DiskStructure::initTrack(Track& track, unsigned newLength, unsigned bits, uint8_t initVal) -> void {
     if (!newLength)
         newLength = getTrackByteLength();
 
@@ -165,7 +165,7 @@ auto DiskStructure::initTrack(Track& track, unsigned newLength, unsigned bits) -
         track.data = new uint8_t[newLength];
     }
 
-    std::memset( track.data, 0xaa, newLength );
+    std::memset( track.data, initVal, newLength );
     track.length = newLength;
     track.bits = bits == 0 ? getTrackBitLength() : bits;
     track.written = 0;

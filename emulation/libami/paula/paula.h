@@ -48,15 +48,19 @@ struct Paula {
     uint16_t dskTansferLength;
     uint64_t fifo;
     uint8_t fifoPos;
-    uint64_t dskEventCycle;
-    uint64_t dskSyncCycle;
+    int64_t dskEventCycle;
+    int64_t dskSyncCycle;
     uint16_t dskShifter;
     uint8_t dskShifterPos;
-    uint16_t dmaCycles;
+    int dmaCycles;
     uint16_t dskBytr;
 
     int ipl;
     int iplCounter;
+
+    uint16_t serDat;
+    uint16_t serPer;
+    int serShifter;
 
     uint8_t turbo = 0;
 
@@ -157,7 +161,8 @@ struct Paula {
     auto setInt6(bool state) -> void;
     auto pulseInt3() -> void;
     auto setDskSyncInt() -> void;
-    auto setDskBlkInt(bool delayed = false) -> void;
+    auto setDskBlkInt() -> void;
+    auto setTbeInt() -> void;
 
     auto prepareIpl() -> void;
 
@@ -193,6 +198,12 @@ struct Paula {
     template<uint8_t channel> auto lowPassfilter(int32_t sample) -> int32_t;
 
     template<uint8_t nr> auto setIntAud() -> void;
+
+    auto serialEvent() -> void;
+    auto getSerdatR() -> uint16_t;
+    auto setSerdat(uint16_t value) -> void;
+    auto setSerper(uint16_t value) -> void;
+    auto prepareTransfer() -> void;
 };
 
 }

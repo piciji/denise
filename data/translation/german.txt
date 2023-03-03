@@ -721,5 +721,4 @@ color encoding = PAL/NTSC Encoding
 TV gamma = TV Gamma
 RGB = RGB
 distortion hires tooltip = radiale Verzerrung kann zum Auftreten des Moiré-Effekt führen. Eine Verdoppelung der Auflösung reduziert diesen Effekt, jedoch auf Kosten zusätzlicher Performance.
-interlace natural = Interlace (natürlich)
-interlace hold = Interlace (halten)
+interlace = Interlace

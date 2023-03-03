@@ -88,17 +88,18 @@ input(this, agnus, cia1) {
     };
 
     crop.monitorBorderCallback = [this](unsigned& top, unsigned& bottom, unsigned& left, unsigned& right) {
-        left = 20; // 384 CRT monitor, 344 CRT TV
-        right = 20;
-
-        top = agnus.ntsc ? 5 : 7;
-        bottom = agnus.ntsc ? 5 : 7;
+        left = 30; // 384 CRT monitor, 344 CRT TV
+        right = 10;
 
         if (denise.hiresFrame) {
             left <<= 1;
             right <<= 1;
         }
-        if (denise.useInterlace) {
+
+        top = agnus.ntsc ? 5 : 7;
+        bottom = agnus.ntsc ? 5 : 7;
+
+        if (denise.laceMode) {
             top <<= 1;
             bottom <<= 1;
         }
