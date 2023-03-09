@@ -211,17 +211,13 @@ template<uint8_t nr, uint8_t target> inline auto Agnus::fetchSprite() -> void {
     dataBus = _swapWord(*(uint16_t*) (chipMem + sprites[nr].ptr));
 
     if constexpr (target == 0) {
-        denise.setSprDatA(nr, dataBus );
+        addOneCycleEvent(SPR_DATA0 + nr, dataBus);
     } else if constexpr (target == 1) {
-        denise.setSprDatB(nr, dataBus );
+        addOneCycleEvent(SPR_DATB0 + nr, dataBus);
     } else if constexpr (target == 2) {
-        sprites[nr].pos = dataBus;
-        updateSpriteV<nr>();
-        denise.setSprPos( nr, sprites[nr].pos );
+        addOneCycleEvent(SPR_POS0 + nr, dataBus);
     } else {
-        sprites[nr].ctl = dataBus;
-        updateSpriteV<nr>();
-        denise.setSprCtl( nr, sprites[nr].ctl );
+        addOneCycleEvent(SPR_CTL0 + nr, dataBus);
     }
 
     sprites[nr].ptr += 2;
@@ -297,7 +293,7 @@ template<uint8_t ptrEvent> auto Agnus::fetchBlitterDma(uint32_t adr, uint16_t& r
 
     dataBus = result;
 
-    // if a modified pointer is used in the next cycle, the change is ignored.
+    // if a modified pointer is used for DMA in the next cycle, the change is ignored.
     inactivateOneCycleEvent(ptrEvent);
 
     return true;

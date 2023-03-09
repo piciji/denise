@@ -102,7 +102,7 @@ protected:
 
     uint8_t iplPins;
     uint8_t iplSample;
-    uint8_t control;
+    int control;
 
 public:
     enum { USER_VECTOR = 0, AUTO_VECTOR = 1, UNINITIALIZED = 2,  SPURIOUS = -1};
@@ -128,7 +128,7 @@ protected:
     // sync to external devices in reasonable steps (until possible wait states could happen)
     // don't process any wait states in this method, because simply you have no hint if it is an internal cycle or not.
     // internal cycles can't be prolonged with wait states, only third CPU cycle of BUS cycle.
-    virtual auto sync(uint16_t cycles) -> void {}
+    virtual auto sync(unsigned cycles) -> void {}
     // methods to handle BUS cycles and wait states
     // each BUS cycle is terminated with DTACK, VPA or BERR line.
     // if it's not terminated until half of third cycle (S4) within BUS cycle, wait states will be added. (full CPU cycles)

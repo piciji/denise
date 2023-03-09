@@ -183,10 +183,7 @@ auto Program::fastForward( bool activate, bool aggressive ) -> void {
     VideoManager::CrtMode crtMode = (VideoManager::CrtMode)settings->get<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::None, {0u, 2u});
 
     if (activate) {
-        if (VideoManager::placeHolderFrames) {
-            VideoManager::placeHolderFrames = 0;
-            view->setDefaultCursor();
-        }
+        VideoManager::hidePlaceHolder();
         warp.active = true;
         warp.aggressive = aggressive;
         VideoManager::setFrameRender(1);
@@ -264,4 +261,8 @@ auto Program::updateFullscreenSetting() -> void {
         view->setFullscreenSetting( true, _display, _setting );
 
     program->hintExclusiveFullscreen();
+}
+
+auto Program::fpsChanged() -> void {
+    fpsChangeTimer.setEnabled();
 }

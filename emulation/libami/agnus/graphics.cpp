@@ -380,17 +380,27 @@ template<uint8_t num, bool first> auto Agnus::spriteControl() -> void {
 }
 
 template<uint8_t nr> auto Agnus::updateSpriteV() -> void {
-    Sprite* spr = &sprites[nr];
+    Sprite& spr = sprites[nr];
 
-    spr->vStart = spr->pos >> 8;
-    spr->vStop = spr->ctl >> 8;
+    spr.vStart = spr.pos >> 8;
+    spr.vStop = spr.ctl >> 8;
 
-    if (spr->ctl & 4) spr->vStart |= 0x100;
-    if (spr->ctl & 2) spr->vStop |= 0x100;
+    if (spr.ctl & 4) spr.vStart |= 0x100;
+    if (spr.ctl & 2) spr.vStop |= 0x100;
 
     if (ecsAndHigher()) {
-        if (spr->ctl & 0x40) spr->vStart |= 0x200;
-        if (spr->ctl & 0x20) spr->vStop |= 0x200;
+        if (spr.ctl & 0x40) spr.vStart |= 0x200;
+        if (spr.ctl & 0x20) spr.vStop |= 0x200;
+    }
+
+    if (!vBlank && !vBlankEnd) {
+        if (vPos == spr.vStart) { // important if "change" happens between first and second DMA of a sprite (e.g. S. Beast jump flicker)
+            spr.fetchData = true;
+            spr.enable = true;
+        }
+        if (vPos == spr.vStop) {
+            spr.enable = false;
+        }
     }
 }
 

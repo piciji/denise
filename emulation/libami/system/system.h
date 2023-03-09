@@ -89,6 +89,7 @@ struct System {
     auto checkSerialization(uint8_t* data, unsigned size) -> bool;
     auto unserialize(uint8_t* data, unsigned size) -> bool;
     auto serializeAll(Emulator::Serializer& s) -> void;
+    auto serialize(Emulator::Serializer& s) -> void;
 
     auto setChipmem(unsigned value) -> void;
     auto getChipmem() -> unsigned;

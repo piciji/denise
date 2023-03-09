@@ -1324,7 +1324,7 @@ auto View::updateSpeedLabels(bool force) -> void {
 
             float value;
             bool percent;
-            view->getSpeed(i, value, percent);
+            getSpeed(i, value, percent);
 
             if (percent) {
                 label = GUIKIT::String::formatFloatingPoint(value, 3, true) + " %";
@@ -1600,7 +1600,7 @@ auto View::getSpeed(unsigned pos, float& speed, bool& percent) -> void {
         case 1: speed = stats.isPal() ? 50.0 : 60.0; break;
         case 2: speed = 5.0; break;
         case 3: speed = 25.0; break;
-        case 4: speed = stats.isPal() ? 60.0 : 50.0; break;
+        case 4: speed = stats.isPal() ? 60.0 : 50.0; break; // alternate
         case 5: speed = 70.0; break;
         case 6: speed = 75.0; break;
         case 7: speed = 80.0; break;

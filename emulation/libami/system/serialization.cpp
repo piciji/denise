@@ -93,13 +93,13 @@ auto System::unserialize(uint8_t* data, unsigned size) -> bool {
     serializeAll(s);
 
     updateDriveSounds();
+    updateStats();
 
     return true;
 }
 
 auto System::serializeAll(Emulator::Serializer& s) -> void {
-
-    s.integer( serializationSize );
+    serialize( s );
     cpu.serialize( s );
     agnus.serialize( s );
     cia1.serialize( s );
@@ -112,6 +112,14 @@ auto System::serializeAll(Emulator::Serializer& s) -> void {
         drive.serialize(s);
 }
 
+auto System::serialize(Emulator::Serializer& s) -> void {
+    s.integer( serializationSize );
+
+    s.integer( observer.stateChange );
+    s.integer( observer.motor );
+    s.integer( observer.inputFetches );
+}
+
 // for runahead
 auto System::serializeLight() -> void {
 
@@ -120,6 +128,7 @@ auto System::serializeLight() -> void {
     s.setData( serializationSize );
     s.setMode( Emulator::Serializer::Mode::Save );
 
+    serialize(s);
     cpu.serialize(s);
     agnus.serialize(s);
     cia1.serialize(s);
@@ -138,6 +147,7 @@ auto System::unserializeLight() -> void {
 
     s.setMode( Emulator::Serializer::Mode::Load );
 
+    serialize(s);
     cpu.serialize(s);
     agnus.serialize(s);
     cia1.serialize(s);

@@ -311,11 +311,14 @@ auto System::getModel() -> uint8_t {
 }
 
 auto System::updateStats() -> void {
-    interface->stats.region = agnus.ntsc ? Interface::Region::Ntsc : Interface::Region::Pal;
+    // interface->stats.region = agnus.ntsc ? Interface::Region::Ntsc : Interface::Region::Pal;
     interface->stats.sampleIntervall = paula.sampleLimit;
     interface->stats.sampleRate = (double)agnus.frequency() / (double)paula.sampleLimit;
     interface->stats.fps = agnus.fps;
     interface->stats.stereoSound = true;
+
+    // when software force a PAL Amiga to output NTSC and vice versa
+    interface->stats.region = (agnus.fps > 55.0) ? Interface::Region::Ntsc : Interface::Region::Pal;
 }
 
 auto System::hintSlowSpeed(bool state) -> void {

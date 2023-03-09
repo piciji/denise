@@ -1,8 +1,14 @@
 
-#define AUDxIR(nr) setIntAud<nr>();
+#define AUDxIR(nr, dma) scheduleIntreqAud<nr, dma>();
 #define AUDxIP(nr) (intreq & (0x80 << nr))
 #define volcntrld() cha.vol = (int8_t)cha.volLatch;
 #define lencntrld() cha.len = cha.lenLatch;
+#define dmasen() if (cha.len == 1) cha.dsr = true; \
+                 else cha.dr = true;
+#define notLenfin() (cha.len != 1)
+#define lencount() cha.len--;
+#define penhi() addSample<nr>( cha.buffer >> 8 );
+#define penlo() addSample<nr>( cha.buffer & 0xff );
 
 namespace LIBAMI {
 
@@ -13,34 +19,45 @@ auto Paula::audioEvent() -> void {
     Channel& cha3 = channels[3];
     int64_t clock = agnus.clock;
 
-    if (cha0.clock == clock) {
-        cha0.clock = INT64_MAX;
-        stateMachine<0>();
+    if (cha0.percount == clock) {
+        cha0.percount = INT64_MAX;
+        perfin<0>();
     }
-    if (cha1.clock == clock) {
-        cha1.clock = INT64_MAX;
-        stateMachine<1>();
+    if (cha1.percount == clock) {
+        cha1.percount = INT64_MAX;
+        perfin<1>();
     }
-    if (cha2.clock == clock) {
-        cha2.clock = INT64_MAX;
-        stateMachine<2>();
+    if (cha2.percount == clock) {
+        cha2.percount = INT64_MAX;
+        perfin<2>();
     }
-    if (cha3.clock == clock) {
-        cha3.clock = INT64_MAX;
-        stateMachine<3>();
+    if (cha3.percount == clock) {
+        cha3.percount = INT64_MAX;
+        perfin<3>();
     }
-    updateAudioEvent();
+
+    int64_t nextClock = cha0.percount;
+    if (cha1.percount < nextClock)
+        nextClock = cha1.percount;
+
+    if (cha2.percount < nextClock)
+        nextClock = cha2.percount;
+
+    if (cha3.percount < nextClock)
+        nextClock = cha3.percount;
+
+    agnus.updateEventAbs<Agnus::EVENT_AUDIO_STATE>(nextClock);
 }
 
 template<uint8_t nr> auto Paula::toggleAudioDMA( ) -> void {
     Channel& cha = channels[nr];
 
-    if (cha.dma) {
+    if (cha.AUDxON) {
         if (cha.state == 0) {
             lencntrld()
             // if state 0 is not left or changed to state 1, "percntrld" is constantly reloaded. For performance reasons,
             // we do not do this. This should not be a problem because "percntrld" is reloaded before reaching state 2.
-            cha.dsr = true;
+            cha.dsr = true; // schematics: except for this case, dmasen is true only when LENFIN = 1 ... means always true
             cha.dr = true;
             cha.state = 1;
         }
@@ -48,8 +65,7 @@ template<uint8_t nr> auto Paula::toggleAudioDMA( ) -> void {
         if (cha.state == 1 || cha.state == 5)
             cha.state = 0;
     }
-
-    // state 2 and 3 do not react immediately to a DMA state change, only after "percount" has been counted down.
+    // state 2 and 3 do not react immediately to a DMA state change, only when "perfin"
 }
 
 auto Paula::updateModulation() -> void {
@@ -65,48 +81,44 @@ template<uint8_t nr, bool dma> auto Paula::audxDat(uint16_t value) -> void {
     Channel& cha = channels[nr];
     cha.dat = value;
 
-    if (cha.dma) {
+    if (cha.AUDxON) {
         if (cha.state == 2 || cha.state == 3) {
-            if (cha.len != 1) {
-                cha.len--;
+            if (notLenfin()) {
+                lencount()
             } else {
                 lencntrld()
-                cha.dsr = true;
                 cha.intreq2 = true;
             }
 
         } else if (cha.state == 1) {
-            AUDxIR(nr)
+            AUDxIR(nr, dma)
+            dmasen()
 
-            if (cha.len != 1) {
-                cha.len--;
-                cha.dr = true;
-            } else
-                cha.dsr = true;
+            if (notLenfin())
+                lencount()
 
             cha.state = 5;
         } else if (cha.state == 5) {
-            percntrld<nr, dma>();
-            updateAudioEvent();
+            percntrld<nr, dma, true>();
             volcntrld()
             pbufld1<nr>();
 
-            if (cha.napnav)
-                cha.dr = true;
+            if (cha.napnav) {
+                dmasen()
+            }
 
-            addSample<nr>( cha.buffer >> 8 );
+            penhi()
             cha.state = 2;
         }
 
     } else {
         if (cha.state == 0) {
             if (!AUDxIP(nr)) {
-                percntrld<nr, dma>();
-                updateAudioEvent();
+                percntrld<nr, dma, true>();
                 volcntrld()
                 pbufld1<nr>();
-                AUDxIR(nr)
-                addSample<nr>( cha.buffer >> 8 );
+                AUDxIR(nr, dma)
+                penhi()
                 cha.state = 2;
             }
         }
@@ -151,78 +163,66 @@ template<uint8_t nr> auto Paula::pbufld2() -> void {
     audxPer<nr + 1>(cha.dat);
 }
 
-template<uint8_t nr> auto Paula::stateMachine() -> void {
+template<uint8_t nr> auto Paula::perfin() -> void {
     Channel& cha = channels[nr];
 
     if (cha.state == 2) {
-        percntrld<nr, false>();
+        percntrld<nr, false, false>();
         if (cha.audap) {
             pbufld2<nr>();
-            if (cha.dma) {
-                cha.dr = true;
+            if (cha.AUDxON) {
+                dmasen()
+
                 if (cha.intreq2) {
-                    AUDxIR(nr)
+                    AUDxIR(nr, false)
                     cha.intreq2 = false;
                 }
             } else
-                AUDxIR(nr)
+                AUDxIR(nr, false)
         }
-        addSample<nr>( cha.buffer & 0xff );
+        penlo()
         cha.state = 3;
 
     } else if (cha.state == 3) {
-        if (cha.dma || !AUDxIP(nr)) {
-            percntrld<nr, false>();
+        if (cha.AUDxON || !AUDxIP(nr)) {
+            percntrld<nr, false, false>();
             volcntrld()
             pbufld1<nr>();
 
             if (cha.napnav) {
-                if (cha.dma) {
-                    cha.dr = true;
+                if (cha.AUDxON) {
+                    dmasen()
+
                     if (cha.intreq2) {
-                        AUDxIR(nr)
+                        AUDxIR(nr, false)
                         cha.intreq2 = false;
                     }
                 } else
-                    AUDxIR(nr)
+                    AUDxIR(nr, false)
             }
-            addSample<nr>( cha.buffer >> 8 );
+            penhi()
             cha.state = 2;
         } else {
             cha.state = 0;
             cha.intreq2 = false;
-            cha.clock = INT64_MAX;
+            cha.percount = INT64_MAX;
         }
     }
 }
 
-template<uint8_t nr, bool dma> auto Paula::percntrld() -> void {
+template<uint8_t nr, bool dma, bool updEvent> auto Paula::percntrld() -> void {
     Channel& cha = channels[nr];
-    cha.clock = agnus.clock + (int64_t)(cha.perLatch ? cha.perLatch : 0x10000);
+    cha.percount = agnus.clock + (int64_t)(cha.perLatch ? cha.perLatch : 0x10000);
     if constexpr (dma) // happens before event handler
-        cha.clock += 1;
+        cha.percount += 1;
+
+    if constexpr (updEvent) {
+        if (cha.percount < agnus.eventClock[Agnus::EVENT_AUDIO_STATE])
+            agnus.updateEventAbs<Agnus::EVENT_AUDIO_STATE>(cha.percount);
+    }
 }
 
-auto Paula::updateAudioEvent() -> void {
-    Channel& cha0 = channels[0];
-    Channel& cha1 = channels[1];
-    Channel& cha2 = channels[2];
-    Channel& cha3 = channels[3];
-    int64_t nextClock = cha0.clock;
-
-    if (cha1.clock < nextClock)
-        nextClock = cha1.clock;
-
-    if (cha2.clock < nextClock)
-        nextClock = cha2.clock;
-
-    if (cha3.clock < nextClock)
-        nextClock = cha3.clock;
-
-    agnus.updateEventAbs<Agnus::EVENT_AUDIO_STATE>(nextClock);
-}
-
-auto Paula::setResampleQuality( uint8_t val ) -> void {
+auto Paula::setResampleQuality( int val ) -> void {
     uint8_t sampleLimitBefore = sampleLimit;
 
     switch(val) {
@@ -245,7 +245,7 @@ auto Paula::setResampleQuality( uint8_t val ) -> void {
         setFilter();
 }
 
-auto Paula::getResampleQuality( ) -> uint8_t {
+auto Paula::getResampleQuality( ) -> int {
     switch(sampleLimit) {
         case 8: return 0;
         case 16: return 1;

@@ -23,6 +23,7 @@
 #include "graphics.cpp"
 #include "register.cpp"
 #include "log.cpp"
+#include "serialization.cpp"
 
 namespace LIBAMI {
 
@@ -515,13 +516,10 @@ auto Agnus::POSR(bool vhpos) -> uint16_t {
     return ((v >> 8) & 1) | (_lof << 15) | (ntsc << 12);
 }
 
-auto Agnus::sync(uint16_t cycles) -> void {
+auto Agnus::sync(unsigned cycles) -> void {
     // triggers DMA cycle following current CPU micro cycle.
-    // means it is always a DMA cycle ahead of CPU to find out if next cycle is usable for CPU, otherwise we have to take back
-    // "sync" of second micro of current BUS cycle to apply right amount of cycles
+    // means it is always a DMA cycle ahead of CPU to find out if next cycle is usable for CPU
 
-    // register accesses happen after DMA for that cycle, because a written value can't be used this cycle.
-    // a register read is more problematic, because it could wrongly read back changes of this cycle. handle this manually
     while( cycles ) {
         dmaCycle();
         cycles -= 2;
@@ -657,153 +655,9 @@ auto Agnus::observeFrameDuration() -> void {
 
 auto Agnus::resetFps() -> void {
     if (ntsc)
-        fps = (double)frequency() / (227.5 * 262.0); // start with lol toggling
+        fps = (double)frequency() / (227.5 * 263.0); // start with lol toggling
     else
-        fps = (double)frequency() / (227.0 * 312.0);
-}
-
-auto Agnus::serialize(Emulator::Serializer& s, bool light) -> void {
-    s.integer((uint8_t&)model);
-    s.integer(actions);
-    s.integer(busUsage);
-    s.integer(hPos);
-    s.integer(vPos);
-    s.integer(vStart);
-    s.integer(vStop);
-    s.integer(dmal);
-    s.floatingpoint(fps);
-    s.integer(frameClock);
-    s.integer(fpsChange);
-    s.integer(vBlankEnd);
-    s.integer(vBlankEndNext);
-    s.integer(vBlank);
-    s.integer(vBlankStart);
-    s.integer(sprInhibited);
-    s.integer(lines);
-    s.integer(vTotal);
-    s.integer(vBStrt);
-    s.integer(vBStop);
-    s.integer(hTotal);
-    s.integer(beamCon);
-
-    for(uint8_t i = 0; i < 8; i++) {
-        Sprite& spr = sprites[i];
-        s.integer(spr.ptr);
-        s.integer(spr.pos);
-        s.integer(spr.ctl);
-        s.integer(spr.vStart);
-        s.integer(spr.vStop);
-        s.integer(spr.fetchData);
-        s.integer(spr.enable);
-    }
-
-    for(uint8_t i = 0; i < 4; i++) {
-        AudioDmaChannel& cha = audioDmaChannels[i];
-        s.integer(cha.ptr);
-        s.integer(cha.ptrLatch);
-    }
-
-    s.integer(dskpt);
-    s.integer(ddfStart);
-    s.integer(ddfStop);
-    s.integer(bpl1pt);
-    s.integer(bpl2pt);
-    s.integer(bpl3pt);
-    s.integer(bpl4pt);
-    s.integer(bpl5pt);
-    s.integer(bpl6pt);
-    s.integer(bpl1Mod);
-    s.integer(bpl2Mod);
-
-    s.integer(kickRomMask);
-    s.integer(extRomMask);
-    s.integer(useRTC);
-    s.integer(dataBus);
-    s.integer(dmaCon);
-    s.integer(dmaConImm);
-    s.integer(bplCon0);
-    s.integer(countWaitCycles);
-    s.integer(rDmaPtr);
-    s.integer(eClockCycle);
-    s.integer(lol);
-    s.integer(lof);
-    s.integer(lolToggle);
-    s.integer(ntsc);
-    s.integer(laceMode);
-
-    s.integer(initVCounter);
-    s.integer(shortLineBefore);
-    s.integer(womLock);
-    s.integer(resetFromKeyboard);
-    s.integer(stopFetching);
-    s.integer(bplCycle);
-    s.integer(bplQueue);
-    s.integer(sprQueue);
-    s.integer(ddfStartMatch);
-    s.integer(harddisH);
-    s.integer(harddisV);
-    s.integer(ddfEnableBefore);
-    s.integer(bplState);
-    s.integer(hardStop);
-    s.integer(diwFlipFlop);
-
-    s.array(&mapper[0], 8); // OVL
-    s.array(&mapper[0xf8], 4); // WOM
-
-    if (!light) {
-        if (s.mode() == Emulator::Serializer::Mode::Load) {
-            unsigned _chipMemMask;
-            unsigned _slowMemSize;
-            s.integer(_chipMemMask);
-            s.integer(_slowMemSize);
-
-            setChipmem(_chipMemMask + 1);
-            setSlowmem(_slowMemSize);
-        } else {
-            s.integer(chipMemMask);
-            s.integer(slowMemSize);
-        }
-
-        s.array(chipMem, chipMemMask + 1);
-        if (slowMemSize)
-            s.array(slowMem, slowMemSize);
-
-        if (model == OCS_A1000)
-            s.array(wom, 256 * 1024);
-
-    } else {
-        if (s.mode() == Emulator::Serializer::Mode::Load) {
-            MemChange* ptr;
-            if (chipMemChangePos) {
-                for (int i = chipMemChangePos - 1; i >= 0; i--) {
-                    ptr = &chipMemChange[i];
-                    *(uint16_t*)(chipMem + ptr->address) = ptr->value;
-                }
-            }
-            if (slowMemChangePos) {
-                for (int i = slowMemChangePos - 1; i >= 0; i--) {
-                    ptr = &slowMemChange[i];
-                    *(uint16_t*)(slowMem + ptr->address) = ptr->value;
-                }
-            }
-            trackMemChanges = false;
-        } else {
-            chipMemChangePos = slowMemChangePos = 0;
-            trackMemChanges = true;
-        }
-    }
-
-    blitter.serialize(s);
-    copper.serialize(s);
-    powerSupply.serialize(s);
-
-    s.integer( oneCycleJob );
-    s.integer( oneCycleData );
-    s.integer( hTotalFirst );
-
-    s.integer( clock );
-    s.integer( nextClock );
-    s.array(eventClock, EVENT_CHANNELS);
+        fps = (double)frequency() / (227.0 * 313.0);
 }
 
 template auto Agnus::fetchBlitterDmaNoBUSCheck<Agnus::PTR_BLT_A_H>(uint32_t adr, uint16_t& result) -> void;
@@ -824,6 +678,8 @@ template auto Agnus::updateEvent<Agnus::EVENT_ONE_CYCLE_DELAY, true>( int delay 
 template auto Agnus::updateEventAbs<Agnus::EVENT_AUDIO_STATE>(int64_t absClock) -> void;
 
 template auto Agnus::updateEvent<Agnus::EVENT_SERIAL>( int delay ) -> void;
+
+template auto Agnus::updateEventAbs<Agnus::EVENT_INTREQ>(int64_t absClock) -> void;
 
 template auto Agnus::allocateCopper<false>() -> bool;
 template auto Agnus::allocateCopper<true>() -> bool;

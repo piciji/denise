@@ -229,7 +229,7 @@ auto Paula::instantDriveAccess() -> void {
         setDskSyncInt();
 
     if (out & 2) {
-        dmaCycles = 450; // some more delay, to increase compatibility ?
+        dmaCycles = 120; // some more delay, to increase compatibility. e.g. Jim Power
         setDskState(DiskState::INSTANT_BLK_INT);
     } else {
         dmaCycles = FDC_IDLE;

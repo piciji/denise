@@ -72,6 +72,16 @@ Program::Program() {
 	logger = new Logger;
 	filePool = new FilePool(10);
 
+    fpsChangeTimer.setInterval(1000);
+    fpsChangeTimer.onFinished = [this]() {
+        if (audioManager)
+            audioManager->setResampler();
+        if (view)
+            view->updateSpeedLabels(true);
+
+        fpsChangeTimer.setEnabled(false);
+    };
+
     addEmulators();
     init();
 

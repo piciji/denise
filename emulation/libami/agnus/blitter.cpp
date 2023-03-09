@@ -18,12 +18,6 @@ Blitter::Blitter(Agnus& agnus) : agnus(agnus), copper(agnus.copper), paula(agnus
     prepareChannel();
 }
 
-auto Blitter::prepareBlit() -> void {
-    zero = true;
-    busy = agnus.model != Agnus::OCS_A1000;
-    agnus.addOneCycleEventA(Agnus::BLT_INIT, 2);
-}
-
 auto Blitter::initBlit() -> void {
     bltADatOld = 0;
     bltBDatOld = 0;
@@ -31,7 +25,7 @@ auto Blitter::initBlit() -> void {
     curH = bltSizeH;
     // when the cycle after writing to blit size is calculation of "Final D" or later, then last D will be written (if allowed),
     // otherwise a running Blit ends here. line draw always ends here.
-    if ((flags & (LINE_MODE | LLE)) || (flags & 7) < 6)
+    if ((flags & (LINE_MODE | LLE)) || ((flags & 7) < 6))
         flags = 0;
 
     restartTimer = 2;
@@ -221,7 +215,7 @@ auto Blitter::activateLLEWhenNeeded(uint8_t bltRegister, uint16_t value) -> void
 auto Blitter::finish() -> void {
     busy = false;
     copper.blitterBusyUpdate();
-    agnus.addOneCycleEventA(Agnus::BLT_BUSY_DELAY, 1);
+    paula.scheduleIntreqBlt(); // Agnus generates one DMA cycle pulse
 }
 
 auto Blitter::reset() -> void {
@@ -332,7 +326,8 @@ auto Blitter::setBltSize(uint16_t value) -> void {
     if (!bltSizeH) bltSizeH = 1024;
     if (!bltSizeW) bltSizeW = 64;
 
-    prepareBlit();
+    zero = true;
+    busy = agnus.model != Agnus::OCS_A1000;
 }
 
 auto Blitter::setBltSizeV(uint16_t value) -> void {
@@ -344,7 +339,8 @@ auto Blitter::setBltSizeH(uint16_t value) -> void {
     bltSizeW = value & 0x7ff;
     if (!bltSizeW) bltSizeW = 0x800;
 
-    prepareBlit();
+    zero = true;
+    busy = agnus.model != Agnus::OCS_A1000;
 }
 
 auto Blitter::setBltCMod(uint16_t value) -> void {

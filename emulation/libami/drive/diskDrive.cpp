@@ -465,7 +465,7 @@ auto DiskDrive::randomizeRpm(unsigned frequency) -> void {
     // generating random integer numbers is easier, lets scale up
     // 0.5 rpm * 100 = 50
     // 300 rpm * 100 = 30000
-    //unsigned adjusted = rpm + (rand() % (wobble + 1) ) - (wobble / 2);
+    // unsigned adjusted = rpm + (rand() % (wobble + 1) ) - (wobble / 2);
 
     unsigned long long cyclesPerRevolution = frequency / 5;
 
@@ -500,7 +500,6 @@ auto DiskDrive::setStepperMinTime( unsigned stepperMinTimeScaled ) -> void {
 
 auto DiskDrive::updateDeviceState() -> void {
     // drive LED is hardwired to motor state
-    // FDC (Paula) enables write mode if drive is selected
     if (connected && selected && system->displayFrame())
         interface->updateDeviceState( media, agnus.paula.fdcWriteMode(), (cylinder << 1) | side, motor, !motor );
 }
@@ -550,11 +549,25 @@ auto DiskDrive::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer(randomizer.xorShift32);
     s.integer(randCounter);
 
+    if (s.mode() == Emulator::Serializer::Mode::Load)
+        track = &structure.tracks[(cylinder << 1) | side];
+
     if (light)
         return;
 
-    if (s.mode() == Emulator::Serializer::Mode::Load)
-        updateTrack();
+    if (number == 0) {
+        s.integer(DiskDrive::rpm);
+        s.integer(DiskDrive::wobble);
+        s.integer(DiskDrive::wobblePos);
+        s.integer(DiskDrive::wobbleLimit);
+        s.integer(DiskDrive::refCyclesPerRevolutionBase);
+        s.integer(DiskDrive::stepperSeekTimeBase);
+        s.integer(DiskDrive::stepperMinTimeBase);
+    }
+
+    if (s.mode() == Emulator::Serializer::Mode::Load) {
+        updateDeviceState();
+    }
 
     structure.serialize( s, written );
 }

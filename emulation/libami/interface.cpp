@@ -384,7 +384,7 @@ auto Interface::getModelValue(unsigned modelId) -> int {
         case ModelIdDiskDriveWobble:                return (int)DiskDrive::wobble;
         case ModelIdDiskDriveSpeed:                 return (int)DiskDrive::rpm;
         case ModelIdDiskDriveStepperSeekTime:       return (int)(DiskDrive::stepperSeekTimeBase);
-        case ModelIdDiskDriveStepperMinTime:       return (int)(DiskDrive::stepperMinTimeBase);
+        case ModelIdDiskDriveStepperMinTime:        return (int)(DiskDrive::stepperMinTimeBase);
         case ModelIdDiskTurbo:                      return (int)system->paula.turbo;
         case ModelIdChipMem:                        return system->getChipmem();
         case ModelIdSlowMem:                        return system->getSlowmem();

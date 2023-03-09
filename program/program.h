@@ -52,6 +52,7 @@ struct Program : Emulator::Interface::Bind {
     static bool focused;
 
 	unsigned loopFrames = 0;
+    GUIKIT::Timer fpsChangeTimer;
 
 	struct {
         bool active = false;
@@ -150,6 +151,7 @@ struct Program : Emulator::Interface::Bind {
     auto fastForward( bool activate, bool aggressive = false ) -> void;
     auto updateOverallSynchronize() -> void;
     auto updateFullscreenSetting() -> void;
+    auto fpsChanged() -> void override;
 	
     //input
     auto initInput() -> void;

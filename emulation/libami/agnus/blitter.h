@@ -93,7 +93,6 @@ struct Blitter {
     auto prepareChannel() -> void;
     auto process() -> void;
     auto reset() -> void;
-    auto prepareBlit() -> void;
     auto initBlit() -> void;
     auto startBlit() -> void;
     auto finish() -> void;

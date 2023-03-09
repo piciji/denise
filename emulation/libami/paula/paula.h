@@ -58,6 +58,13 @@ struct Paula {
     int ipl;
     int iplCounter;
 
+    int64_t intreqAud0Clock;
+    int64_t intreqAud1Clock;
+    int64_t intreqAud2Clock;
+    int64_t intreqAud3Clock;
+    int64_t intreqBltClock;
+    int64_t intreqTbeClock;
+
     uint16_t serDat;
     uint16_t serPer;
     int serShifter;
@@ -81,12 +88,12 @@ struct Paula {
     } pot;
 
     struct Channel {
-        bool dma;
+        bool AUDxON;
         bool dr;
         bool dsr;
         bool intreq2;
 
-        int64_t clock;
+        int64_t percount;
         uint8_t state;
         uint16_t perLatch;
         uint16_t len;
@@ -103,7 +110,7 @@ struct Paula {
     } channels[4];
 
     uint8_t sampleLimit;
-    uint64_t sampleCycle;
+    int64_t sampleCycle;
 
     bool dmaDisk;
     bool audioOut = true;
@@ -159,12 +166,15 @@ struct Paula {
     auto dmal() -> uint16_t; // Paula transfers DMA usage bit by bit to Agnus (clocked each DMA cycle)
     auto setInt2(bool state) -> void;
     auto setInt6(bool state) -> void;
-    auto pulseInt3() -> void;
     auto setDskSyncInt() -> void;
     auto setDskBlkInt() -> void;
-    auto setTbeInt() -> void;
+    auto setVblInt() -> void;
 
     auto prepareIpl() -> void;
+    auto intreqEvent() -> void;
+    template<uint8_t nr, bool dma> auto scheduleIntreqAud() -> void;
+    auto scheduleIntreqBlt() -> void;
+    auto scheduleIntreqTbe() -> void;
 
     auto setDskLen(uint16_t value) -> void;
     auto setDskDat(uint16_t value) -> void;
@@ -185,19 +195,16 @@ struct Paula {
     auto updateModulation() -> void;
     template<uint8_t nr> auto pbufld1() -> void;
     template<uint8_t nr> auto pbufld2() -> void;
-    auto updateAudioEvent() -> void;
-    template<uint8_t nr> auto stateMachine() -> void;
-    template<uint8_t nr, bool dma> auto percntrld() -> void;
+    template<uint8_t nr> auto perfin() -> void;
+    template<uint8_t nr, bool dma, bool updEvent> auto percntrld() -> void;
     template<uint8_t nr> auto toggleAudioDMA( ) -> void;
     template<uint8_t nr> auto addSample( uint8_t sample ) -> void;
 
-    auto setResampleQuality( uint8_t val ) -> void;
-    auto getResampleQuality( ) -> uint8_t;
+    auto setResampleQuality( int val ) -> void;
+    auto getResampleQuality( ) -> int;
 
     auto calcFilter(float sampleFrequency, unsigned cutoffFrequency) -> float;
     template<uint8_t channel> auto lowPassfilter(int32_t sample) -> int32_t;
-
-    template<uint8_t nr> auto setIntAud() -> void;
 
     auto serialEvent() -> void;
     auto getSerdatR() -> uint16_t;

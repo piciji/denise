@@ -48,6 +48,9 @@ auto Agnus::processEvents(int64_t curClock) -> void {
     if (curClock == eventClock[EVENT_SERIAL])
         paula.serialEvent();
 
+    if (curClock == eventClock[EVENT_INTREQ])
+        paula.intreqEvent();
+
     int64_t next = eventClock[EVENT_KBD];
     if (eventClock[EVENT_ONE_CYCLE_DELAY] < next)
         next = eventClock[EVENT_ONE_CYCLE_DELAY];
@@ -61,6 +64,8 @@ auto Agnus::processEvents(int64_t curClock) -> void {
         next = eventClock[EVENT_HTOTAL];
     if (eventClock[EVENT_SERIAL] < next)
         next = eventClock[EVENT_SERIAL];
+    if (eventClock[EVENT_INTREQ] < next)
+        next = eventClock[EVENT_INTREQ];
 
     nextClock = next;
 }
@@ -81,27 +86,37 @@ auto Agnus::getEventDelay() -> unsigned {
     return 0;
 }
 
-auto Agnus::addOneCycleEvent(uint8_t job, uint16_t data, int delay) -> void {
+auto Agnus::addOneCycleEvent(int job, uint16_t data, int delay) -> void {
     updateEvent<EVENT_ONE_CYCLE_DELAY, true>( delay );
     oneCycleJob = job;
     oneCycleData = data;
 }
 
-auto Agnus::forceOneCycleEvent(uint8_t job) -> void {
+auto Agnus::forceOneCycleEvent(int job) -> void {
     if (hasActiveEvent<EVENT_ONE_CYCLE_DELAY>()) {
         if ((oneCycleJob & ~1) == job)
             processOneCycleEvent(job, oneCycleData);
     }
 }
 
-auto Agnus::inactivateOneCycleEvent(uint8_t job) -> void {
+auto Agnus::inactivateOneCycleEvent(int job) -> void {
     if (hasActiveEvent<EVENT_ONE_CYCLE_DELAY>()) {
         if ((oneCycleJob & ~1) == job)
             setEventInactive<EVENT_ONE_CYCLE_DELAY>();
     }
 }
 
-auto Agnus::processOneCycleEvent(uint8_t job, uint16_t data) -> void {
+#define SPRCTL(nr) \
+    sprites[nr].ctl = data; \
+    denise.setSprCtl(nr, data); \
+    updateSpriteV<nr>();
+
+#define SPRPOS(nr) \
+    sprites[nr].pos = data; \
+    denise.setSprPos(nr, data); \
+    updateSpriteV<nr>();
+
+auto Agnus::processOneCycleEvent(int job, uint16_t data) -> void {
     switch (job) {
         case PTR_BLT_A_H: blitter.setBltAptH(data); break;
         case PTR_BLT_A_L: blitter.setBltAptL(data); break;
@@ -115,9 +130,43 @@ auto Agnus::processOneCycleEvent(uint8_t job, uint16_t data) -> void {
         case PTR_DSK_L: setDskPtL(data); break;
         case DMACON: dmaCon = dmaConImm; break;
         case BLT_INIT: blitter.initBlit(); break;
-        case BLT_BUSY_DELAY:
-            paula.pulseInt3();
-            break;
+
+        case SPR_DATA0: denise.setSprDatA(0, data); break;
+        case SPR_DATA1: denise.setSprDatA(1, data); break;
+        case SPR_DATA2: denise.setSprDatA(2, data); break;
+        case SPR_DATA3: denise.setSprDatA(3, data); break;
+        case SPR_DATA4: denise.setSprDatA(4, data); break;
+        case SPR_DATA5: denise.setSprDatA(5, data); break;
+        case SPR_DATA6: denise.setSprDatA(6, data); break;
+        case SPR_DATA7: denise.setSprDatA(7, data); break;
+
+        case SPR_DATB0: denise.setSprDatB(0, data); break;
+        case SPR_DATB1: denise.setSprDatB(1, data); break;
+        case SPR_DATB2: denise.setSprDatB(2, data); break;
+        case SPR_DATB3: denise.setSprDatB(3, data); break;
+        case SPR_DATB4: denise.setSprDatB(4, data); break;
+        case SPR_DATB5: denise.setSprDatB(5, data); break;
+        case SPR_DATB6: denise.setSprDatB(6, data); break;
+        case SPR_DATB7: denise.setSprDatB(7, data); break;
+
+        case SPR_CTL0: SPRCTL(0) break;
+        case SPR_CTL1: SPRCTL(1) break;
+        case SPR_CTL2: SPRCTL(2) break;
+        case SPR_CTL3: SPRCTL(3) break;
+        case SPR_CTL4: SPRCTL(4) break;
+        case SPR_CTL5: SPRCTL(5) break;
+        case SPR_CTL6: SPRCTL(6) break;
+        case SPR_CTL7: SPRCTL(7) break;
+
+        case SPR_POS0: SPRPOS(0) break;
+        case SPR_POS1: SPRPOS(1) break;
+        case SPR_POS2: SPRPOS(2) break;
+        case SPR_POS3: SPRPOS(3) break;
+        case SPR_POS4: SPRPOS(4) break;
+        case SPR_POS5: SPRPOS(5) break;
+        case SPR_POS6: SPRPOS(6) break;
+        case SPR_POS7: SPRPOS(7) break;
+        case BPL_CON2: denise.setBplCon2(data); break;
     }
     setEventInactive<EVENT_ONE_CYCLE_DELAY>();
 }

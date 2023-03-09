@@ -1660,6 +1660,13 @@ template<bool interlace, bool field> auto VideoManager::getRenderOptions() -> ui
     return options;
 }
 
+auto VideoManager::hidePlaceHolder() -> void {
+    if (placeHolderFrames) {
+        placeHolderFrames = 0;
+        view->setDefaultCursor();
+    }
+}
+
 auto VideoManager::free() -> void {
     if (colorTable)
         delete[] colorTable;

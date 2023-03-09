@@ -1,8 +1,22 @@
 
+// The audio filters are analog and outside the Paula chip. For the sake of simplicity, these are described in the context of Paula.
+
+/*
+* UAE - The Un*x Amiga Emulator
+*
+* Paula audio emulation
+*
+* Copyright 1995, 1996, 1997 Bernd Schmidt
+* Copyright 1996 Marcus Sundberg
+* Copyright 1996 Manfred Thole
+* Copyright 2006 Toni Wilen
+*
+* new filter algorithm and anti&sinc interpolators by Antti S. Lankila
+*
+*/
+
 #include "paula.h"
 #include <cmath>
-
-// The audio filters are analog and outside the Paula chip. For the sake of simplicity, these are described in the context of Paula.
 
 namespace LIBAMI {
 
@@ -26,7 +40,7 @@ auto Paula::calcFilter(float sampleFrequency, unsigned cutoffFrequency) -> float
     if (cutoffFrequency >= (sampleFrequency / 2) )
         return 1.0;
 
-    double omega = 2.0 * 3.14159265358979323846 * (double)cutoffFrequency / (double)sampleFrequency;
+    double omega = 2.0 * M_PI * (double)cutoffFrequency / (double)sampleFrequency;
     return (float)(1.0 / (1.0 + 1.0 / ( std::tan (omega / 2.0) * 2.0) ));
 }
 

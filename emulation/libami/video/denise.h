@@ -59,7 +59,7 @@ struct Denise {
 
     uint16_t clxDat;
 
-    unsigned actions; // Bits 0: PF1 shift, 1: PF2 shift, 2: init hpos reset, 3: reset hpos, 4: bpl1dat written
+    int actions; // Bits 0: PF1 shift, 1: PF2 shift, 2: init hpos reset, 3: reset hpos, 4: bpl1dat written
     uint8_t delayPf1;
     uint8_t delayPf2;
     uint8_t bplCon1;

@@ -43,15 +43,19 @@ struct Agnus {
 
     enum { Unmapped, CHIP_MEM, SLOW_MEM, KICK_ROM, EXT_ROM, WOM, MMIO_CUSTOM, MMIO_CIA, MMIO_RTC };
 
-    enum { EVENT_KBD, EVENT_ONE_CYCLE_DELAY, EVENT_LEAVE_EMULATION, EVENT_POWER_SUPPLY, EVENT_AUDIO_STATE, EVENT_HTOTAL, EVENT_SERIAL, EVENT_CHANNELS };
+    enum { EVENT_KBD, EVENT_ONE_CYCLE_DELAY, EVENT_LEAVE_EMULATION, EVENT_POWER_SUPPLY, EVENT_AUDIO_STATE, EVENT_HTOTAL, EVENT_SERIAL, EVENT_INTREQ, EVENT_CHANNELS };
 
-    enum { DMA_None = 0, DMACON = 1,
+    enum { BLT_INIT = 0, DMACON = 1,
            PTR_BLT_A_H, PTR_BLT_A_L, PTR_BLT_B_H, PTR_BLT_B_L, PTR_BLT_C_H, PTR_BLT_C_L, PTR_BLT_D_H, PTR_BLT_D_L,
            PTR_DSK_H, PTR_DSK_L,
-           BLT_INIT, BLT_BUSY_DELAY,
+           SPR_DATA0, SPR_DATA1, SPR_DATA2, SPR_DATA3, SPR_DATA4, SPR_DATA5, SPR_DATA6, SPR_DATA7,
+           SPR_DATB0, SPR_DATB1, SPR_DATB2, SPR_DATB3, SPR_DATB4, SPR_DATB5, SPR_DATB6, SPR_DATB7,
+           SPR_CTL0, SPR_CTL1, SPR_CTL2, SPR_CTL3, SPR_CTL4, SPR_CTL5, SPR_CTL6, SPR_CTL7,
+           SPR_POS0, SPR_POS1, SPR_POS2, SPR_POS3, SPR_POS4, SPR_POS5, SPR_POS6, SPR_POS7,
+           BPL_CON2,
     };
 
-    enum { ACT_BLITTER = 1, ACT_COPPER = 2, ACT_BPL = 4, ACT_SPRITE = 8, ACT_IRQ_DELAY = 16 };
+    enum { ACT_BLITTER = 1, ACT_COPPER = 2, ACT_BPL = 4, ACT_SPRITE = 8 };
 
     enum { BUS_FREE, BUS_USAGE_BPL, BUS_USAGE_SPRITE, BUS_USAGE_BLITTER, BUS_USAGE_COPPER, BUS_USAGE_CPU, BUS_USAGE_REFRESH, BUS_USAGE_DMAL };
 
@@ -60,14 +64,6 @@ struct Agnus {
     enum { Trigger_Read, Trigger_CPU, Trigger_Copper, Trigger_Vsync };
 
     enum Model { OCS_A1000 = 1, OCS = 2, ECS = 4, AGA = 8 } model = OCS;
-
-    int64_t eventClock[EVENT_CHANNELS];
-    int64_t clock;
-    int64_t nextClock;
-
-    uint8_t oneCycleJob;
-    uint16_t oneCycleData;
-    bool hTotalFirst;
 
     System* system;
     Interface* interface;
@@ -82,7 +78,15 @@ struct Agnus {
     Blitter blitter;
     Copper copper;
 
-    uint8_t actions = 0;
+    int64_t eventClock[EVENT_CHANNELS];
+    int64_t clock;
+    int64_t nextClock;
+
+    int oneCycleJob;
+    uint16_t oneCycleData;
+    bool hTotalFirst;
+
+    int actions = 0;
     uint8_t mapper[256] = {0};
     uint8_t busUsage;
     uint8_t hPos;
@@ -217,7 +221,7 @@ struct Agnus {
     auto writeByte(uint32_t adr, uint8_t value) -> void;
     auto readWord(uint32_t adr) -> uint16_t;
     auto writeWord(uint32_t adr, uint16_t value) -> void;
-    auto sync(uint16_t cycles) -> void;
+    auto sync(unsigned cycles) -> void;
     auto dmaCycle() -> void;
     auto addWaitstatesToCPU() -> void;
     auto iackCycle(uint8_t level, uint8_t& vector) -> int;
@@ -317,15 +321,11 @@ struct Agnus {
 
     auto processEvents(int64_t curClock) -> void;
     auto clearEvents() -> void;
-    auto processOneCycleEvent(uint8_t job, uint16_t data) -> void;
+    auto processOneCycleEvent(int job, uint16_t data) -> void;
     template<uint8_t Channel> auto getEventDelay() -> unsigned;
-    inline auto addOneCycleEvent(uint8_t job, uint16_t data, int delay = 2) -> void;
-    inline auto addOneCycleEventA(uint8_t job, int delay) -> void {
-        updateEvent<EVENT_ONE_CYCLE_DELAY, true>( delay );
-        oneCycleJob = job;
-    }
-    auto forceOneCycleEvent(uint8_t job) -> void;
-    auto inactivateOneCycleEvent(uint8_t job) -> void;
+    inline auto addOneCycleEvent(int job, uint16_t data = 0, int delay = 2) -> void;
+    auto forceOneCycleEvent(int job) -> void;
+    auto inactivateOneCycleEvent(int job) -> void;
     auto powerSupplyEvent() -> void;
     auto leaveEmulationEvent() -> void;
     auto HTotalEvent() -> void;

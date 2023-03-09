@@ -520,7 +520,8 @@ template<bool useHires> auto Denise::processPixel() -> void {
 
                 shifterA = (shifterA << 1) & ~(0x1000100010000);
                 shifterB = (shifterB << 1) & ~(0x1000100010000);
-            }
+            } else if (_ham)
+                hamColor = colors[ 0 ];
 
             if (!borderFlipFlop && enableDisplay) {
                 if (sprData) {
@@ -528,12 +529,12 @@ template<bool useHires> auto Denise::processPixel() -> void {
                         if (!colIndex && !colIndex2) // both playfields are transparent
                             color = colors[sprData];
                         else if (!colIndex) { // playfield 1 is transparent
-                            if (sprPrio <= pf2Prio)
+                            if (sprPrio < pf2Prio)
                                 color = colors[sprData];
                             else
                                 color = colors[pf2PrioIllegal ? 0 : colIndex2];
                         } else if (!colIndex2) { // playfield 2 is transparent
-                            if (sprPrio <= pf1Prio)
+                            if (sprPrio < pf1Prio)
                                 color = colors[sprData];
                             else
                                 color = colors[pf1PrioIllegal ? 0 : colIndex];
@@ -543,7 +544,7 @@ template<bool useHires> auto Denise::processPixel() -> void {
                                     color = colors[pf2PrioIllegal ? 0 : colIndex2];
                                 else
                                     color = colors[pf1PrioIllegal ? 0 : colIndex];
-                            } else if ((sprPrio <= pf1Prio) && (sprPrio <= pf2Prio)) { // sprite before playfields
+                            } else if ((sprPrio < pf1Prio) && (sprPrio < pf2Prio)) { // sprite before playfields
                                 color = colors[sprData];
                             } else { // sprite between playfields
                                 if (pf1Prio > pf2Prio)
@@ -747,7 +748,7 @@ auto Denise::serialize(Emulator::Serializer& s) -> void {
     s.integer(linePos);
     s.integer(lineVCounter);
 
-    for(unsigned i = 0; i < 8; i++) {
+    for(int i = 0; i < 8; i++) {
         Sprite& spr = sprites[i];
         s.integer(spr.datA);
         s.integer(spr.datB);

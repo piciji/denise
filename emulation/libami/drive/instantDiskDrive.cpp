@@ -87,10 +87,10 @@ auto DiskDrive::instantWrite(unsigned words, uint16_t syncWord, bool needSync) -
 auto DiskDrive::instantRead(unsigned words, uint16_t syncWord, bool needSync) -> uint8_t {
     uint16_t word;
     bool synced = !needSync;
-    unsigned offset = 0;
+    unsigned offset = headOffset >> 3;
     unsigned length = track->length;
     uint16_t shifter;
-    bool overflow = false;
+    int overflow = 0;
     int b;
     unsigned pos = 0;
     uint8_t out = 0;
@@ -122,13 +122,19 @@ auto DiskDrive::instantRead(unsigned words, uint16_t syncWord, bool needSync) ->
         word = track->data[offset] << 8;
         if (++offset == length) {
             offset = 0;
-            if (!synced) overflow = true;
+            if (!synced) {
+                if (++overflow == 2)
+                    break; // there was no sync pattern found
+            }
             cia.setFlag();
         }
         word |= track->data[offset];
         if (++offset == length) {
             offset = 0;
-            if (!synced) overflow = true;
+            if (!synced) {
+                if (++overflow == 2)
+                    break;
+            }
             cia.setFlag();
         }
 
@@ -161,12 +167,11 @@ auto DiskDrive::instantRead(unsigned words, uint16_t syncWord, bool needSync) ->
                 }
             }
         }
-        if (overflow && (offset > 1))
-            return out; // looks for sync pattern forever, no dskblk intr
-
     } while (words);
 
-    return out | 2;
+    headOffset = offset << 3; // increase compatibility, e.g. Licence to kill
+
+    return out | (words == 0 ? 2 : 0);
 }
 
 }

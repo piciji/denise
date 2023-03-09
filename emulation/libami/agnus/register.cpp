@@ -6,7 +6,7 @@ template<bool byteAccess> auto Agnus::readCustom(uint16_t adr, bool triggeredByW
     switch(adr) {
         // case 0: bltddat (not accessible for CPU)
         case 2:
-            if (hasActiveEvent<Agnus::EVENT_ONE_CYCLE_DELAY>() && (oneCycleJob == Agnus::BLT_BUSY_DELAY))
+            if (paula.intreqBltClock != INT64_MAX )
                 return dmaCon | (1 << 14) | (blitter.zero << 13);
 
             return dmaCon | (blitter.busy << 14) | (blitter.zero << 13);
@@ -145,6 +145,7 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
             break;
         case 0x58:
             blitter.setBltSize(value);
+            addOneCycleEvent(BLT_INIT);
             break;
         case 0x5a:
             if (ecsAndHigher())
@@ -155,8 +156,10 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
                 blitter.setBltSizeV(value);
             break;
         case 0x5e:
-            if (ecsAndHigher())
+            if (ecsAndHigher()) {
                 blitter.setBltSizeH(value);
+                addOneCycleEvent(BLT_INIT);
+            }
             break;
         case 0x60:
             blitter.setBltCMod(value);
@@ -398,7 +401,8 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
             denise.setBplCon1(value);
             break;
         case 0x104:
-            denise.setBplCon2(value);
+            //denise.setBplCon2(value);
+            addOneCycleEvent(BPL_CON2, value);
             break;
 
         case 0x108:
@@ -490,51 +494,41 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
             }
             break;
 
-#define SPRCTL(nr) \
-    sprites[nr].ctl = value; \
-    denise.setSprCtl(nr, value); \
-    updateSpriteV<nr>();
+        case 0x140: addOneCycleEvent(SPR_POS0, value); break;
+        case 0x148: addOneCycleEvent(SPR_POS1, value); break;
+        case 0x150: addOneCycleEvent(SPR_POS2, value); break;
+        case 0x158: addOneCycleEvent(SPR_POS3, value); break;
+        case 0x160: addOneCycleEvent(SPR_POS4, value); break;
+        case 0x168: addOneCycleEvent(SPR_POS5, value); break;
+        case 0x170: addOneCycleEvent(SPR_POS6, value); break;
+        case 0x178: addOneCycleEvent(SPR_POS7, value); break;
 
-        case 0x142: SPRCTL(0) break;
-        case 0x14a: SPRCTL(1) break;
-        case 0x152: SPRCTL(2) break;
-        case 0x15a: SPRCTL(3) break;
-        case 0x162: SPRCTL(4) break;
-        case 0x16a: SPRCTL(5) break;
-        case 0x172: SPRCTL(6) break;
-        case 0x17a: SPRCTL(7) break;
+        case 0x142: addOneCycleEvent(SPR_CTL0, value); break;
+        case 0x14a: addOneCycleEvent(SPR_CTL1, value); break;
+        case 0x152: addOneCycleEvent(SPR_CTL2, value); break;
+        case 0x15a: addOneCycleEvent(SPR_CTL3, value); break;
+        case 0x162: addOneCycleEvent(SPR_CTL4, value); break;
+        case 0x16a: addOneCycleEvent(SPR_CTL5, value); break;
+        case 0x172: addOneCycleEvent(SPR_CTL6, value); break;
+        case 0x17a: addOneCycleEvent(SPR_CTL7, value); break;
 
-#define SPRPOS(nr) \
-    sprites[nr].pos = value; \
-    denise.setSprPos(nr, value); \
-    updateSpriteV<nr>();
+        case 0x144: addOneCycleEvent(SPR_DATA0, value); break;
+        case 0x14c: addOneCycleEvent(SPR_DATA1, value); break;
+        case 0x154: addOneCycleEvent(SPR_DATA2, value); break;
+        case 0x15c: addOneCycleEvent(SPR_DATA3, value); break;
+        case 0x164: addOneCycleEvent(SPR_DATA4, value); break;
+        case 0x16c: addOneCycleEvent(SPR_DATA5, value); break;
+        case 0x174: addOneCycleEvent(SPR_DATA6, value); break;
+        case 0x17c: addOneCycleEvent(SPR_DATA7, value); break;
 
-        case 0x140: SPRPOS(0) break;
-        case 0x148: SPRPOS(1) break;
-        case 0x150: SPRPOS(2) break;
-        case 0x158: SPRPOS(3) break;
-        case 0x160: SPRPOS(4) break;
-        case 0x168: SPRPOS(5) break;
-        case 0x170: SPRPOS(6) break;
-        case 0x178: SPRPOS(7) break;
-
-        case 0x144: denise.setSprDatA(0, value); break;
-        case 0x14c: denise.setSprDatA(1, value); break;
-        case 0x154: denise.setSprDatA(2, value); break;
-        case 0x15c: denise.setSprDatA(3, value); break;
-        case 0x164: denise.setSprDatA(4, value); break;
-        case 0x16c: denise.setSprDatA(5, value); break;
-        case 0x174: denise.setSprDatA(6, value); break;
-        case 0x17c: denise.setSprDatA(7, value); break;
-
-        case 0x146: denise.setSprDatB(0, value); break;
-        case 0x14e: denise.setSprDatB(1, value); break;
-        case 0x156: denise.setSprDatB(2, value); break;
-        case 0x15e: denise.setSprDatB(3, value); break;
-        case 0x166: denise.setSprDatB(4, value); break;
-        case 0x16e: denise.setSprDatB(5, value); break;
-        case 0x176: denise.setSprDatB(6, value); break;
-        case 0x17e: denise.setSprDatB(7, value); break;
+        case 0x146: addOneCycleEvent(SPR_DATB0, value); break;
+        case 0x14e: addOneCycleEvent(SPR_DATB1, value); break;
+        case 0x156: addOneCycleEvent(SPR_DATB2, value); break;
+        case 0x15e: addOneCycleEvent(SPR_DATB3, value); break;
+        case 0x166: addOneCycleEvent(SPR_DATB4, value); break;
+        case 0x16e: addOneCycleEvent(SPR_DATB5, value); break;
+        case 0x176: addOneCycleEvent(SPR_DATB6, value); break;
+        case 0x17e: addOneCycleEvent(SPR_DATB7, value); break;
 
         case 0x1c0:
             if (ecsAndHigher()) {

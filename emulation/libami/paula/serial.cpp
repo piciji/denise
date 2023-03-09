@@ -1,5 +1,5 @@
 
-#include "../interface.h"
+// todo: receive data
 
 #define PULSE_WIDTH ((serPer & 0x7fff) + 1)
 
@@ -49,7 +49,7 @@ auto Paula::prepareTransfer() -> void {
 
     serShifter <<= 1; // one start bit is mandatory
 
-    setTbeInt();
+    scheduleIntreqTbe();
 }
 
 }

@@ -73,6 +73,8 @@ auto States::load( std::string path, bool prependFolder ) -> void {
         program->initAutoWarp(autoStartedMediaGroup, true);
     else
         program->warp.enableAutoWarp = false;
+
+    VideoManager::hidePlaceHolder();
 }
 
 auto States::save( std::string path, bool prependFolder ) -> void {

@@ -2,16 +2,14 @@
 #include "paula.h"
 #include "../agnus/agnus.h"
 #include "../system/system.h"
+#include "../interface.h"
+#include "irq.cpp"
 #include "audio.cpp"
 #include "filter.cpp"
 #include "fdc.cpp"
 #include "pot.cpp"
 #include "serial.cpp"
 
-// todo: To determine the correct interrupt delay within Paula, it must be taken into account that the CPU only tests for interrupts in certain cycles.
-// The CPU emulation synchronizes in multiples of DMA cycles (= 2 cycles). The limit of when an interrupt is detected or not happens after an odd number of CPU cycles.
-// If the interrupt happens in the 2nd half of the DMA cycle, it is not recognized, although the CPU evaluates IPL in this DMA cycle.
-// Synchronization after each CPU cycle slows down emulation. It is more performant to change the IPL pins one DMA cycle later in such situations.
 
 namespace LIBAMI {
 
@@ -68,61 +66,6 @@ auto Paula::dmal() -> uint16_t {
     return out;
 }
 
-auto Paula::pulseInt3() -> void { // Blitter (Agnus generates one DMA cycle pulse)
-    intreq |= 0x40;
-    prepareIpl();
-}
-
-auto Paula::setInt2(bool state) -> void { // CIA 1
-    // CIAs don't generate a pulse like blitter. Paula checks here on a flank. Note that as long as the interrupt signal enters Paula,
-    // the CIA lines cannot be reset when writing "intreq".
-
-    if (state && !int2Current) {
-        intreq |= 8;
-        prepareIpl();
-    }
-
-    int2Current = state;
-}
-
-auto Paula::setInt6(bool state) -> void { // CIA 2
-    if (state && !int6Current) {
-        intreq |= 0x2000;
-        prepareIpl();
-    }
-
-    int6Current = state;
-}
-
-template<uint8_t nr> auto Paula::setIntAud() -> void {
-    if constexpr (nr == 0)
-        intreq |= 0x80;
-    else if constexpr (nr == 1)
-        intreq |= 0x100;
-    else if constexpr (nr == 2)
-        intreq |= 0x200;
-    else if constexpr (nr == 3)
-        intreq |= 0x400;
-
-    prepareIpl();
-}
-
-auto Paula::setDskSyncInt() -> void {
-    intreq |= 0x1000;
-
-    prepareIpl();
-}
-
-auto Paula::setDskBlkInt() -> void {
-    intreq |= 2;
-    prepareIpl();
-}
-
-auto Paula::setTbeInt() -> void {
-    intreq |= 1;
-    prepareIpl();
-}
-
 auto Paula::strhor() -> void {
     if (vBlankIntr)
         vBlankIntr = false;
@@ -134,8 +77,7 @@ auto Paula::strhor() -> void {
 auto Paula::strequ() -> void {
     if (!vBlankIntr) {
         vBlankIntr = true;
-        intreq |= 0x20;
-        prepareIpl();
+        setVblInt();
     }
 
     if (pot.running)
@@ -171,43 +113,22 @@ auto Paula::setAdkCon(uint16_t value) -> void {
         updateModulation();
 }
 
-auto Paula::setIntena(uint16_t value) -> void {
-    if (value & 0x8000)
-        intena |= value & 0x7fff;
-    else
-        intena &= ~value;
-
-    prepareIpl();
-}
-
-auto Paula::setIntreq(uint16_t value) -> void {
-    if (value & 0x8000)
-        intreq |= value & 0x7fff;
-    else
-        intreq &= ~value;
-
-    if (int2Current) intreq |= 8;
-    if (int6Current) intreq |= 0x2000;
-
-    prepareIpl();
-}
-
 auto Paula::dmaCon(uint16_t value) -> void {
     // Audio and Disk DMA usage will be evaluated only by Paula
-    if (channels[0].dma != ((value & 0x201) == 0x201)) {
-        channels[0].dma ^= 1;
+    if (channels[0].AUDxON != ((value & 0x201) == 0x201)) {
+        channels[0].AUDxON ^= 1;
         toggleAudioDMA<0>();
     }
-    if (channels[1].dma != ((value & 0x202) == 0x202)) {
-        channels[1].dma ^= 1;
+    if (channels[1].AUDxON != ((value & 0x202) == 0x202)) {
+        channels[1].AUDxON ^= 1;
         toggleAudioDMA<1>();
     }
-    if (channels[2].dma != ((value & 0x204) == 0x204)) {
-        channels[2].dma ^= 1;
+    if (channels[2].AUDxON != ((value & 0x204) == 0x204)) {
+        channels[2].AUDxON ^= 1;
         toggleAudioDMA<2>();
     }
-    if (channels[3].dma != ((value & 0x208) == 0x208)) {
-        channels[3].dma ^= 1;
+    if (channels[3].AUDxON != ((value & 0x208) == 0x208)) {
+        channels[3].AUDxON ^= 1;
         toggleAudioDMA<3>();
     }
 
@@ -219,6 +140,7 @@ auto Paula::powerOff() -> void {
 }
 
 auto Paula::serialize(Emulator::Serializer& s, bool light) -> void {
+    s.integer((uint8_t&)diskState);
     s.integer(intena);
     s.integer(intreq);
     s.integer(adkcon);
@@ -227,6 +149,35 @@ auto Paula::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer(vBlankIntr);
     s.integer(enableFilter);
     s.integer(useLedFilter);
+
+    s.integer(dskLen);
+    s.integer(dskSync);
+    s.integer(dskTansferLength);
+    s.integer(fifo);
+    s.integer(fifoPos);
+    s.integer(dskEventCycle);
+    s.integer(dskSyncCycle);
+    s.integer(dskShifter);
+    s.integer(dskShifterPos);
+    s.integer(dmaCycles);
+    s.integer(dskBytr);
+
+    s.integer(ipl);
+    s.integer(iplCounter);
+
+    s.integer(intreqAud0Clock);
+    s.integer(intreqAud1Clock);
+    s.integer(intreqAud2Clock);
+    s.integer(intreqAud3Clock);
+    s.integer(intreqBltClock);
+    s.integer(intreqTbeClock);
+
+    s.integer(serPer);
+    s.integer(serDat);
+    s.integer(serShifter);
+
+    s.integer(turbo);
+
     s.integer(pot.cntX0);
     s.integer(pot.cntY0);
     s.integer(pot.cntX1);
@@ -237,14 +188,15 @@ auto Paula::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer(pot.capY1);
     s.integer(pot.go);
     s.integer(pot.dischargeCounter);
+    s.integer(pot.running);
 
-    for(uint8_t c = 0; c < 4; c++) {
+    for(int c = 0; c < 4; c++) {
         Channel& cha = channels[c];
-        s.integer(cha.dma);
+        s.integer(cha.AUDxON);
         s.integer(cha.dr);
         s.integer(cha.dsr);
         s.integer(cha.intreq2);
-        s.integer(cha.clock);
+        s.integer(cha.percount);
         s.integer(cha.state);
         s.integer(cha.perLatch);
         s.integer(cha.len);
@@ -263,7 +215,6 @@ auto Paula::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer(sampleCycle);
     s.integer(dmaDisk);
 
-
     if (!light) {
         s.floatingpoint(filters[0].rc1);
         s.floatingpoint(filters[0].rc2);
@@ -280,25 +231,6 @@ auto Paula::serialize(Emulator::Serializer& s, bool light) -> void {
         s.floatingpoint(filter2A0);
         s.floatingpoint(filterA0);
     }
-
-    s.integer(dskLen);
-    s.integer(dskSync);
-    s.integer(dskTansferLength);
-    s.integer(fifo);
-    s.integer(fifoPos);
-    s.integer(dskEventCycle);
-    s.integer(dskSyncCycle);
-    s.integer(dskShifter);
-    s.integer(dskShifterPos);
-    s.integer(dmaCycles);
-    s.integer(dskBytr);
-    s.integer(turbo);
-    s.integer(ipl);
-    s.integer(iplCounter);
-
-    s.integer(serPer);
-    s.integer(serDat);
-    s.integer(serShifter);
 
     uint8_t driveNum = activeDrive->number;
     s.integer(driveNum);
@@ -336,11 +268,11 @@ auto Paula::power() -> void {
     for(uint8_t c = 0; c < 4; c++) {
         Channel& cha = channels[c];
 
-        cha.dma = false;
+        cha.AUDxON = false;
         cha.dr = false;
         cha.dsr = false;
         cha.intreq2 = false;
-        cha.clock = INT64_MAX;
+        cha.percount = INT64_MAX;
         cha.state = 0;
         cha.perLatch = 0;
         cha.len = 0;
@@ -375,48 +307,16 @@ auto Paula::power() -> void {
     diskState = DiskState::OFF;
     iplCounter = 0;
     ipl = 0;
+    intreqAud0Clock = INT64_MAX;
+    intreqAud1Clock = INT64_MAX;
+    intreqAud2Clock = INT64_MAX;
+    intreqAud3Clock = INT64_MAX;
+    intreqBltClock = INT64_MAX;
+    intreqTbeClock = INT64_MAX;
 
     serDat = 0;
     serPer = 0;
     serShifter = 0;
-}
-
-auto Paula::prepareIpl() -> void {
-    int level = 0;
-    uint16_t intMask = intreq & intena;
-
-    if (intMask && (intena & 0x4000)) {
-        if (intMask & (0x4000 | 0x2000))
-            level = 6;
-        else if (intMask & (0x1000 | 0x800))
-            level = 5;
-        else if (intMask & (0x400 | 0x200 | 0x100 | 0x80))
-            level = 4;
-        else if (intMask & (0x40 | 0x20 | 0x10))
-            level = 3;
-        else if (intMask & 8)
-            level = 2;
-        else if (intMask & (1 | 2 | 4))
-            level = 1;
-    }
-
-    int lastIPL = ipl & 0x7;
-
-    if (level != lastIPL) {
-        // todo: check exact delays
-        ipl = (ipl & ~0xff) | level;
-
-        if (((lastIPL & 1) && !(level & 1)) ||
-            ((lastIPL & 2) && !(level & 2)) ||
-            ((lastIPL & 4) && !(level & 4)) );
-            // from WinUAE changelog it seems to matter if a bit is set or cleared.
-            // CPU detect IRQs in the first half of DMA (CCK) Sample cycle (confimed with fx68k)
-            // This means that a delay of only one CPU cycle is enough to miss this sample cycle and you have to wait for the sample point in the next opcode.
-        else
-            ipl = (ipl & ~0xff00) | (level << 8);
-
-        iplCounter = 4;
-    }
 }
 
 auto Paula::process() -> void {

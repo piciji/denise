@@ -311,6 +311,7 @@ auto Copper::serialize(Emulator::Serializer& s) -> void {
     s.integer(useCop1);
     s.integer(cop1lc);
     s.integer(cop2lc);
+    s.integer(copPtr);
     s.integer(ir1);
     s.integer(ir2);
     s.integer(comp.hPos);
