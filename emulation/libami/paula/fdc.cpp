@@ -122,18 +122,13 @@ auto Paula::setDskLen(uint16_t value) -> void {
             return; // keep state
 
         setDskState(wordSync() ? DiskState::WAIT_SYNC_WRITE : DiskState::WRITE);
-        if (!wordSync()) {
-            if (!getFromFifo(dskShifter))
-                dskShifter = 0;
-        }
         dskBytr &= ~0x8000;
         start = true;
     }
 
     if (start) {
         fifoPos = 0;
-        dskShifterPos = 0;
-        dskShifter = 0;
+        dskShifterPos = (diskState == DiskState::WRITE) ? 16 : 0;
         processDiskIdleCycles();
         useInstantDriveAccess() ? instantDriveAccess() : setFdcEvent();
     }
@@ -150,8 +145,7 @@ auto Paula::finishDMA(bool delayed) -> void {
 }
 
 auto Paula::setFdcEvent() -> void {
-    if ( ((activeDrive->structure.type == DiskStructure::ADF) || (activeDrive->structure.type == DiskStructure::Unknown))
-        && (diskState != DiskState::WRITE))
+    if ((activeDrive->structure.type == DiskStructure::ADF) || (activeDrive->structure.type == DiskStructure::Unknown))
         dmaCycles = 7 * 8;
     else
         dmaCycles = !fast() ? 14 : 7;
@@ -276,13 +270,7 @@ template<bool readWord, bool waitTurbo> auto Paula::handleFDControllerRead() -> 
                             dskShifterPos = 0;
 
                             if (diskState == DiskState::WRITE) {
-                                dmaCycles = 7;
-                                if (!getFromFifo(dskShifter))
-                                    dskShifter = 0;
-                                // Basically, even in ADF format, the sync word can be shifted by a few bits. However, this can only happen when writing the track
-                                // and before the floppy disk is inserted again. Therefore, when writing ADFs, we switch to bitwise mode and possibly correct the head
-                                // according the sync word by a few bits before switching to "bitwise".
-                                if(i) activeDrive->adjustHead(-i);
+                                dskShifterPos = 16;
                                 break;
                             }
                             continue;
@@ -297,7 +285,8 @@ template<bool readWord, bool waitTurbo> auto Paula::handleFDControllerRead() -> 
                 }
             } while((readWord || waitTurbo) && --iterations);
         } break;
-        case DiskStructure::EXT: {
+        case DiskStructure::EXT:
+        case DiskStructure::EXT2: {
             bool bit;
             if constexpr (readWord) iterations = 16;
             else if constexpr (waitTurbo) iterations = 1 << turbo;
@@ -323,10 +312,8 @@ template<bool readWord, bool waitTurbo> auto Paula::handleFDControllerRead() -> 
                         setDskState(diskState == DiskState::WAIT_SYNC_READ ? DiskState::READ : DiskState::WRITE);
                         dskShifterPos = 0;
 
-                        if (diskState == DiskState::WRITE) {
-                            if (!getFromFifo(dskShifter))
-                                dskShifter = 0;
-                        }
+                        if (diskState == DiskState::WRITE)
+                            dskShifterPos = 16;
                         break;
                     }
                 }
@@ -347,37 +334,83 @@ template<bool readWord, bool waitTurbo> auto Paula::handleFDControllerRead() -> 
 }
 
 auto Paula::handleFDControllerWrite() -> void {
-    if (!dmaDisk)
-        return;
-
     // paula would send data to all connected and selected drives.
     // the controller can only write with two fixed speeds. copy protections recognize this by measuring time when reading back.
     // adjusting motor speed would result in different bit cell width too. (not emulated in ADF and EXT ADF ... simply not possible)
-    bool state = dskShifter & (1 << (dskShifterPos - 1));
-    if (disk0.connected)
-        disk0.writeBit(state);
-    if (disk1.connected)
-        disk1.writeBit(state);
-    if (disk2.connected)
-        disk2.writeBit(state);
-    if (disk3.connected)
-        disk3.writeBit(state);
 
-    if (dskShifterPos != 16) {
-        if (++dskShifterPos == 16) {
-            if (dskTansferLength) {
-                if (!--dskTansferLength)
-                    return finishDMA();
+    if (!dmaDisk)
+        return;
+
+    switch(activeDrive->structure.type) {
+        case DiskStructure::Unknown:
+        case DiskStructure::ADF: {
+            uint8_t byte = 0;
+
+            if (dskShifterPos != 16) {
+                if (dskShifterPos == 0) {
+                    byte = dskShifter >> 8;
+                    if (dskLen & 0x8000)
+                        dskBytr = 0x8000;
+                } else {
+                    byte = dskShifter & 0xff;
+                }
             }
-        }
+
+            if (disk0.connected)
+                disk0.writeByte(byte);
+            if (disk1.connected)
+                disk1.writeByte(byte);
+            if (disk2.connected)
+                disk2.writeByte(byte);
+            if (disk3.connected)
+                disk3.writeByte(byte);
+
+            if (dskShifterPos == 8) {
+                if (dskTansferLength) {
+                    if (!--dskTansferLength)
+                        return finishDMA();
+                }
+            }
+
+            if (dskShifterPos != 16)
+                dskShifterPos += 8;
+        } break;
+        case DiskStructure::EXT:
+        case DiskStructure::EXT2: {
+            bool state = false;
+
+            if (dskShifterPos != 16)
+                state = dskShifter & (1 << (15 - dskShifterPos));
+
+            if (disk0.connected)
+                disk0.writeBit(state);
+            if (disk1.connected)
+                disk1.writeBit(state);
+            if (disk2.connected)
+                disk2.writeBit(state);
+            if (disk3.connected)
+                disk3.writeBit(state);
+
+            if (dskShifterPos != 16) {
+                if (++dskShifterPos == 16) {
+                    if (dskTansferLength) {
+                        if (!--dskTansferLength)
+                            return finishDMA();
+                    }
+                }
+            }
+
+            if (((dskShifterPos & 7) == 7) && (dskLen & 0x8000))
+                dskBytr = 0x8000;
+
+        } break;
     }
 
-    if (((dskShifterPos & 7) == 7) && (dskLen & 0x8000))
-        dskBytr = 0x8000;
-
     if (dskShifterPos == 16) {
-        if (getFromFifo(dskShifter))    dskShifterPos = 0;
-        else                            dskShifter = 0;
+        if (getFromFifo(dskShifter))
+            dskShifterPos = 0;
+        else
+            dskShifter = 0;
     }
 }
 
@@ -399,20 +432,16 @@ inline auto Paula::addToFifo(uint16_t data) -> void {
 }
 
 auto Paula::setDskState(DiskState next) -> void {
-    bool upd = false;
-    if ((diskState != DiskState::WRITE) && (next == DiskState::WRITE))
-        upd = true;
-    else if ((diskState == DiskState::WRITE) && (next != DiskState::WRITE))
-        upd = true;
+    bool writeBefore = diskState == DiskState::WRITE || diskState == DiskState::WAIT_SYNC_WRITE;
+    bool writeAfter = next == DiskState::WRITE || next == DiskState::WAIT_SYNC_WRITE;
+    diskState = next;
 
-    if (upd) {
+    if (writeBefore != writeAfter) {
         if (disk0.connected) disk0.updateDeviceState();
         if (disk1.connected) disk1.updateDeviceState();
         if (disk2.connected) disk2.updateDeviceState();
         if (disk3.connected) disk3.updateDeviceState();
     }
-
-    diskState = next;
 }
 
 auto Paula::processDiskIdleCycles() -> void {

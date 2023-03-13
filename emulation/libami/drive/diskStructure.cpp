@@ -6,6 +6,7 @@
 #include "../system/system.h"
 #include "adf.cpp"
 #include "ext.cpp"
+#include "ext2.cpp"
 
 namespace LIBAMI {
 
@@ -32,6 +33,9 @@ auto DiskStructure::attach(uint8_t* data, unsigned size) -> bool {
         case Type::EXT:
             prepareEXT(data, size);
             break;
+        case Type::EXT2:
+            prepareEXT2(data, size);
+            break;
         default:
             return false;
     }
@@ -54,6 +58,9 @@ auto DiskStructure::analyze(uint8_t* data, unsigned size) -> bool {
     if (analyzeEXT(data, size))
         return true;
 
+    if (analyzeEXT2(data, size))
+        return true;
+
     if (analyzeADF(data, size))
         return true;
 
@@ -61,10 +68,10 @@ auto DiskStructure::analyze(uint8_t* data, unsigned size) -> bool {
 }
 
 auto DiskStructure::storeWrittenTracks() -> void {
-    if (type == Type::EXT) {
-        if (EXTImageNeedsCompleteRebuild()) {
-            unsigned extSize = getEXTCreationImageSize();
-            uint8_t* extData = createEXT(extSize);
+    if (type == Type::EXT || type == Type::EXT2) {
+        if (EXT2ImageNeedsCompleteRebuild()) {
+            unsigned extSize = getEXT2CreationImageSize();
+            uint8_t* extData = createEXT2(extSize);
             write( extData, extSize, 0 );
             delete[] extData;
             return;
@@ -84,11 +91,13 @@ auto DiskStructure::storeWrittenTracks() -> void {
                 decodeTrack(track, buffer);
                 write(buffer, sectors * 512, sectors * 512 * i);
             } else if (type == Type::EXT) {
+                write(track.data, track.length, 8 + trackCount * 4 + trackLength);
+            } else if (type == Type::EXT2) {
                 write(track.data, track.length, 12 + trackCount * 12 + trackLength);
             }
             track.written = 0;
         }
-        trackLength += track.length;
+        trackLength += track.storage;
     }
 }
 
@@ -104,11 +113,12 @@ auto DiskStructure::create( System* system, Type type, std::string name, bool hd
     fs.format(name, bootable);
     fs.exportMedia(data, size);
 
-    if (type == EXT) {
+    // we do not want to encourage the user to create EXT1.
+    if (type == EXT2) {
         disk.attach(data, size);
 
-        unsigned extSize = disk.getEXTCreationImageSize();
-        uint8_t* extData = disk.createEXT(extSize);
+        unsigned extSize = disk.getEXT2CreationImageSize();
+        uint8_t* extData = disk.createEXT2(extSize);
         delete[] data;
 
         return {extData, extSize};
@@ -124,7 +134,7 @@ auto DiskStructure::getListing() -> std::vector<Emulator::Interface::Listing> {
     if (!data)
         return {};
 
-    if (type == Type::EXT) {
+    if (type == Type::EXT || type == Type::EXT2) {
         unsigned trackSize = (hd ? 22 : 11) * 512;
         size = trackCount * trackSize;
         data = new uint8_t[size];
@@ -137,7 +147,7 @@ auto DiskStructure::getListing() -> std::vector<Emulator::Interface::Listing> {
 
     Filesystem fs(size);
     if (fs.importMedia( data, size )) {
-        if (type == Type::EXT)
+        if (type == Type::EXT || type == Type::EXT2)
             delete[] data;
 
         return fs.getDirectory();
@@ -190,7 +200,7 @@ auto DiskStructure::updateSerializationSize() -> void {
         if (!(track.written & 1))
             continue;
 
-        serializationSize += 4 + 4 + track.length;
+        serializationSize += 4 + 4 + 4 + track.length;
     }
 
     agnus.system->serializationSize += serializationSize;
@@ -217,6 +227,7 @@ auto DiskStructure::serialize(Emulator::Serializer& s, bool written) -> void {
         unsigned _trackLength = track.length;
         s.integer(track.length);
         s.integer(track.bits);
+        s.integer(track.storage);
 
         if (s.mode() == Emulator::Serializer::Mode::Load) {
             if (_trackLength != track.length) {

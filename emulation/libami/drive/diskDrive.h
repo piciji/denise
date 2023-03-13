@@ -81,9 +81,9 @@ struct DiskDrive {
     auto progressStepper() -> void;
 
     auto readByte(int& dmaCycles, bool upd) -> uint8_t;
+    auto writeByte(uint8_t byte) -> void;
     auto readBit(int& dmaCycles, bool upd) -> bool;
     auto writeBit(bool state) -> void;
-    auto adjustHead(int offset) -> void;
     auto rotate(int dmaCycles, bool reset = false) -> void;
 
     auto getDummyTrack() -> DiskStructure::Track*;

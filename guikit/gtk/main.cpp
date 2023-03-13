@@ -274,7 +274,7 @@ pWindow::pWindow(Window& window, Window::Hints hints) : window(window) {
 //	if(!visual) visual = gdk_screen_get_system_visual(gdk_screen_get_default());
 	//if(visual) gtk_widget_set_visual(widget, visual);
 	
-	gtk_widget_add_events(widget, GDK_BUTTON_PRESS_MASK | GDK_CONFIGURE);
+	gtk_widget_add_events(widget, (gint)GDK_BUTTON_PRESS_MASK | (gint)GDK_CONFIGURE);
     gtk_widget_set_app_paintable(widget, true);
 
     verticalLayout = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);

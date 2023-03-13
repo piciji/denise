@@ -181,7 +181,7 @@ struct Paula {
     auto setDskSync(uint16_t value) -> void;
     auto dskDatR() -> uint16_t;
     auto setFdcEvent() -> void;
-    auto fdcWriteMode() -> bool { return diskState == DiskState::WRITE; }
+    auto fdcWriteMode() -> bool { return diskState == DiskState::WRITE || diskState == DiskState::WAIT_SYNC_WRITE; }
     auto setDskState(DiskState next) -> void;
     auto processDiskIdleCycles() -> void;
 

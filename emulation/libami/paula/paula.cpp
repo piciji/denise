@@ -47,8 +47,8 @@ auto Paula::dmal() -> uint16_t {
 
     if (diskState == DiskState::READ) {
         switch(fifoPos) {
-            case 1: out |= 1; break;
-            case 2: out |= 5; break;
+            case 1: out |= 16; break;
+            case 2: out |= 20; break;
             case 3: out |= 21; break;
             default: break;
         }
@@ -344,7 +344,7 @@ auto Paula::process() -> void {
                     do {
                         if (!dskTansferLength)
                             break;
-                        if (dskShifterPos == 1)
+                        if (!dskShifterPos)
                             addToFifo( agnus.fakeDiskDma() );
                         handleFDControllerWrite();
                     } while (--repeat);

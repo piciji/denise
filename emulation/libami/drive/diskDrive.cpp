@@ -19,6 +19,11 @@ DiskDrive::DiskDrive(uint8_t number, System* system, Agnus& agnus, Cia<MOS_8520>
     interface = system->interface;
     media = &interface->mediaGroups[Interface::MediaGroupIdDisk].media[number];
     track = getDummyTrack();
+
+    structure.write = [this, system](uint8_t* buffer, unsigned length, unsigned offset) {
+
+        return system->interface->writeMedia( media, buffer, length, offset );
+    };
 }
 
 unsigned DiskDrive::rpm = 30000;
@@ -79,6 +84,36 @@ auto DiskDrive::readByte(int& dmaCycles, bool upd) -> uint8_t {
     return byte;
 }
 
+auto DiskDrive::writeByte(uint8_t byte) -> void {
+    if ((!motor && (motorSpeed < 20)) || !inserted )
+        return;
+
+    if (stepSettleClock) progressStepper();
+
+    // no support for writing a custom bitcell width while adjusting motor speed.
+    // basically possible in EXT ADF, but only with compromises ... see explanation in fdc.cpp
+    accum = 0;
+
+    unsigned byteOffset = headOffset >> 3;
+    unsigned curOffset = byteOffset;
+
+    if (++byteOffset >= track->length) {
+        headOffset = 0;
+        if (selected)
+            cia.setFlag();
+    } else
+        headOffset = byteOffset << 3;
+
+    if (!selected || structure.writeProtected)
+        return;
+
+    track->data[curOffset] = byte;
+
+    if (!written)
+        written = true;
+    track->written |= 1; // track data has changed, host have to write back
+}
+
 auto DiskDrive::rotate(int dmaCycles, bool reset) -> void {
     if (!motor || !inserted || !dmaCycles) {
         if (reset)
@@ -95,7 +130,7 @@ auto DiskDrive::rotate(int dmaCycles, bool reset) -> void {
         if (accum >= refCyclesPerRevolutionScaled) {
             accum -= refCyclesPerRevolutionScaled;
             headOffset += 8;
-            if (headOffset >= track->bits) {
+            if (headOffset >= (track->length << 3)) {
                 headOffset -= track->bits;
                 if (selected)
                     cia.setFlag();
@@ -103,7 +138,7 @@ auto DiskDrive::rotate(int dmaCycles, bool reset) -> void {
         } else {
             if (accum >= refCyclesPerRevolution) {
                 accum -= refCyclesPerRevolution;
-                if (++headOffset >= track->bits) {
+                if (++headOffset >= (track->length << 3)) {
                     headOffset = 0;
                     if (selected)
                         cia.setFlag();
@@ -137,9 +172,10 @@ auto DiskDrive::readBit(int& dmaCycles, bool upd) -> bool {
     uint8_t bit = (~headOffset) & 7; // msb is next
 
     headOffset++;
-    if ( headOffset >= track->bits ) {
+    if ( headOffset >= (track->length << 3) ) {
         headOffset = 0;
-        cia.setFlag();
+        if (selected)
+            cia.setFlag();
     }
 
     if (!selected)
@@ -177,9 +213,10 @@ auto DiskDrive::writeBit(bool state) -> void {
     uint8_t bit = (~headOffset) & 7; // msb is next
 
     headOffset++;
-    if ( headOffset >= track->bits ) {
+    if ( headOffset >= (track->length << 3) ) {
         headOffset = 0;
-        cia.setFlag();
+        if (selected)
+            cia.setFlag();
     }
 
     if (!selected || structure.writeProtected)
@@ -193,19 +230,6 @@ auto DiskDrive::writeBit(bool state) -> void {
     if (!written)
         written = true;
     track->written |= 1; // track data has changed, host have to write back
-}
-
-auto DiskDrive::adjustHead(int offset) -> void {
-    if (offset >= 0) {
-        headOffset += offset;
-        if (headOffset >= track->bits)
-            headOffset -= track->bits;
-    } else {
-        if (headOffset >= offset)
-            headOffset -= offset;
-        else
-            headOffset = track->bits - (offset - headOffset);
-    }
 }
 
 auto DiskDrive::progressStepper() -> void {

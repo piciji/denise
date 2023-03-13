@@ -22,7 +22,7 @@ struct DiskStructure {
     DiskStructure(Agnus& agnus);
     ~DiskStructure();
 
-    enum Type { ADF, EXT, Unknown = -1 } type = Unknown;
+    enum Type { ADF, EXT2, EXT, Unknown = -1 } type = Unknown;
 
     std::function<unsigned (uint8_t*, unsigned, unsigned)> write = [](uint8_t* buffer, unsigned length, unsigned offset){ return 0; };
 
@@ -30,6 +30,7 @@ struct DiskStructure {
         uint8_t* data = nullptr;
         unsigned length = 0;
         unsigned bits = 0;
+        unsigned storage = 0; // ext adf track space
         uint8_t written = 0; // MSB: if set and track has changed, the entire image must be rewritten
     };
 
@@ -47,11 +48,13 @@ struct DiskStructure {
     auto detach() -> void;
     auto analyze(uint8_t* data, unsigned size) -> bool;
     auto analyzeEXT(uint8_t* data, unsigned size) -> bool;
+    auto analyzeEXT2(uint8_t* data, unsigned size) -> bool;
     auto analyzeADF(uint8_t* data, unsigned size) -> bool;
 
     auto prepareADF(uint8_t* data, unsigned size) -> void;
     auto prepareEXT(uint8_t* data, unsigned size) -> void;
-    auto createEXT(unsigned size) -> uint8_t*;
+    auto prepareEXT2(uint8_t* data, unsigned size) -> void;
+    auto createEXT2(unsigned size) -> uint8_t*;
 
     auto storeWrittenTracks() -> void;
 
@@ -72,10 +75,10 @@ struct DiskStructure {
     auto initTrack(Track& track, unsigned newLength = 0, unsigned bits = 0, uint8_t initVal = 0) -> void;
 
     auto getADFCreationImageSize() -> unsigned;
-    auto getEXTCreationImageSize() -> unsigned;
+    auto getEXT2CreationImageSize() -> unsigned;
 
     auto markAppendedADFTracks() -> void;
-    auto EXTImageNeedsCompleteRebuild() -> bool;
+    auto EXT2ImageNeedsCompleteRebuild() -> bool;
 
     auto updateSerializationSize() -> void;
 

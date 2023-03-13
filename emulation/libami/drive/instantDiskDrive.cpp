@@ -9,10 +9,10 @@ auto DiskDrive::instantWrite(unsigned words, uint16_t syncWord, bool needSync) -
     uint8_t byte;
     uint16_t word;
     bool synced = !needSync;
-    unsigned offset = 0;
+    unsigned offset = headOffset >> 3;
     unsigned length = track->length;
     uint16_t shifter;
-    bool overflow = false;
+    int overflow = 0;
     int b;
     unsigned pos = 0;
     uint8_t out = 0;
@@ -32,7 +32,9 @@ auto DiskDrive::instantWrite(unsigned words, uint16_t syncWord, bool needSync) -
         byte = track->data[offset];
 
         for(b = 7; b >= 0; b--) {
-            shifter = (shifter << 1) | ((byte >> b) & 1);
+            shifter = (shifter << 1) | (byte & 0x80);
+            byte <<= 1;
+
             if (shifter == syncWord) {
                 out |= 1;
                 synced = true;
@@ -40,6 +42,7 @@ auto DiskDrive::instantWrite(unsigned words, uint16_t syncWord, bool needSync) -
                 pos = b; // bit wise
                 if (pos) {
                     byte = track->data[offset] >> pos;
+                    pos = 8 - pos;
                     goto Next;
                 }
                 break;
@@ -48,10 +51,12 @@ auto DiskDrive::instantWrite(unsigned words, uint16_t syncWord, bool needSync) -
 
         if (++offset == length) {
             offset = 0;
-            overflow = true;
+            if (!synced) {
+                if (++overflow == 2)
+                    break; // there was no sync pattern found
+            }
             cia.setFlag();
-        } else if (overflow && (offset > 1))
-            return out; // looks for sync pattern forever, no dskblk intr
+        }
     }
 
     Next:
@@ -79,6 +84,7 @@ auto DiskDrive::instantWrite(unsigned words, uint16_t syncWord, bool needSync) -
     if (pos)
         track->data[offset] = (track->data[offset] & ~(0xff << (8 - pos))) | byte << (8 - pos);
 
+    headOffset = offset << 3;
     written = true;
     track->written |= 1;
     return out | 2;

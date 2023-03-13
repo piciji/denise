@@ -97,6 +97,7 @@ template<bool changeTrigger> auto InputManager::update() -> void {
     uint8_t changeState;
     uiMouse.updated = false;
     InputMapping* useMapping;
+    Emulator::Interface::Device* emuDevice;
 	
     updateAndTrigger();    
     
@@ -175,9 +176,16 @@ template<bool changeTrigger> auto InputManager::update() -> void {
                 value = mapping->adjustDigitalValue<false>( hid );
 				
 				if ( value != 0) {
+                    emuDevice = mapping->emuDevice;
+                    if (emuDevice) {
+                        if (!Program::focused && !hid.device->isJoypad() )
+                            continue;
+                        if (emuDevice->isMouse() && !inputDriver->mIsAcquired())
+                            continue;
+                    }
 
-                    if (!Program::focused && mapping->emuDevice && !hid.device->isJoypad() )
-                        continue;
+                  //  if (!Program::focused && mapping->emuDevice && !hid.device->isJoypad() )
+                    //    continue;
 
                     if (hid.disable)
                         continue;
@@ -230,8 +238,16 @@ template<bool changeTrigger> auto InputManager::update() -> void {
                 } else if (mapping->adjustDigitalValue<true>(hid) == 0)
                     atLeastOneKeyHasSwitched = true;
 
-                if (!Program::focused && mapping->emuDevice && !hid.device->isJoypad() )
-                    goto Next;
+                //if (!Program::focused && mapping->emuDevice && !hid.device->isJoypad() )
+                  //  goto Next;
+
+                emuDevice = mapping->emuDevice;
+                if (emuDevice) {
+                    if (!Program::focused && !hid.device->isJoypad() )
+                        goto Next;
+                    if (emuDevice->isMouse() && !inputDriver->mIsAcquired())
+                        goto Next;
+                }
             }
 
             if (!aSwitch || atLeastOneKeyHasSwitched) {

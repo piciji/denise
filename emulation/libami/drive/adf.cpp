@@ -102,11 +102,6 @@ auto DiskStructure::separateOddEven(uint8_t* dst, uint8_t* src, unsigned size) -
     }
 }
 
-auto DiskStructure::shiftData(uint8_t* dst, uint8_t* src, unsigned size, uint8_t shift) -> void {
-    for (unsigned i = 0; i < size; ++i, ++src, ++dst)
-        *dst = ((*src) << shift) | (*(src + 1) >> (8 - shift));
-}
-
 auto DiskStructure::decodeTrack(Track& track, uint8_t* userData) -> void {
     unsigned length = track.length;
     unsigned sectors = hd ? 22 : 11;
@@ -135,15 +130,15 @@ auto DiskStructure::decodeTrack(Track& track, uint8_t* userData) -> void {
         }
 
         if (match) {
-            shiftData(buffer, ptr + index, 64 + 1024, b);
+            shiftData(buffer, ptr + index, 56 + 1024 + (b ? 1 : 0), b);
 
             uint8_t info[4];
             joinOddEven(info, buffer, 4);
             uint8_t sector = info[2];
             if (sector < sectors)
-                joinOddEven(userData + sector * 512, buffer + 64, 512);
+                joinOddEven(userData + sector * 512, buffer + 56, 512);
 
-            index += 64 + 1024;
+            index += 56 + 1024;
             compare = 0;
             if (index >= length)
                 break;
@@ -156,7 +151,12 @@ auto DiskStructure::decodeTrack(Track& track, uint8_t* userData) -> void {
     delete[] ptr;
 }
 
-auto DiskStructure::joinOddEven(uint8_t* dst, uint8_t* src, unsigned size) -> void {
+auto DiskStructure::shiftData(uint8_t* dst, uint8_t* src, unsigned size, uint8_t shift) -> void {
+    for (unsigned i = 0; i < size; ++i, ++src, ++dst)
+        *dst = ((*src) << shift) | (*(src + 1) >> (8 - shift));
+}
+
+auto DiskStructure::joinOddEven(uint8_t* dst, uint8_t* src, unsigned size) -> void { // remove clock bits
     for (unsigned i = 0; i < size; i++) {
         dst[i] = ((src[i] & 0x55) << 1) | (src[i + size] & 0x55);
     }
@@ -217,7 +217,8 @@ auto DiskStructure::markAppendedADFTracks() -> void {
                 track.written = 1;
             else if (track.written)
                 appended = true;
-        }
+        } else
+            break;
     }
 }
 

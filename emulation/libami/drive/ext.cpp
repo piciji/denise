@@ -1,124 +1,70 @@
 
 namespace LIBAMI {
 
-auto DiskStructure::analyzeEXT(uint8_t *data, unsigned size) -> bool {
-    if (size < 12)
+// Write processes (e.g. Hiscores) are problematic due to the sync word (track header) and therefore complex to program.
+// For this reason, a write operation converts to EXT2. The same happens when the floppy disk is formatted
+// or a completely different program is applied with XCopy.
+
+auto DiskStructure::analyzeEXT(uint8_t* data, unsigned size) -> bool {
+    if (size < 8)
         return false;
 
-    if (std::memcmp(data, "UAE-1ADF", 8))
+    if (std::memcmp(data, "UAE--ADF", 8))
         return false;
 
-    unsigned _trackCount = (data[10] << 8) | data[11];
-
-    if (size < (12 + _trackCount * 12))
+    if (size < (8 + 160 * 4))
         return false;
 
-    trackCount = _trackCount;
+    trackCount = 160;
 
     type = Type::EXT;
 
     return true;
 }
 
-auto DiskStructure::prepareEXT(uint8_t *data, unsigned size) -> void {
+auto DiskStructure::prepareEXT(uint8_t* data, unsigned size) -> void {
     hd = false;
-    uint8_t *ptr = data + 12;
-    unsigned dataOffset = 12 + trackCount * 12;
+    uint8_t* ptr = data + 8;
+    unsigned dataOffset = 8 + trackCount * 4;
 
-    bool mfmTrack;
-    unsigned length;
-    unsigned bits;
+    uint16_t syncWord;
+    unsigned storage;
 
     for (unsigned i = 0; i < LIBAMI_MAX_TRACKS; i++) {
-        Track &track = tracks[i];
+        Track& track = tracks[i];
 
         if (i < trackCount) {
-            mfmTrack = ptr[3];
-            length = (ptr[5] << 16) | (ptr[6] << 8) | ptr[7]; // ignore the MSB for sanity reasons
-            bits = (ptr[9] << 16) | (ptr[10] << 8) | ptr[11]; // ignore the MSB for sanity reasons
+            syncWord = (ptr[0] << 8) | ptr[1];
+            storage = (ptr[2] << 8) | ptr[3];
 
-            initTrack(track, mfmTrack ? length : getTrackByteLength(), mfmTrack ? bits : getTrackBitLength(), 0xaa);
-            if (!mfmTrack) track.written = 0x80;
+            if ((dataOffset + storage) <= size) {
 
-            if ((dataOffset + length) >= size)
-                goto Next;
-        } else {
-            initTrack(track, getTrackByteLength());
-            track.written = 0x80;
-            continue;
-        }
+                if (!syncWord) { // ADF
+                    initTrack(track, getTrackByteLength(), 0, 0xaa);
+                    if (storage >= (512 * 11))
+                        encodeTrack(track, i, data + dataOffset);
 
-        if (mfmTrack) {
-            if (bits > (length * 8)) {
-                bits = length * 8;
-                track.bits = bits;
+                } else {
+                    initTrack(track, storage + 2, (storage + 2) << 3, 0xaa);
+                    std::memcpy(track.data + 2, data + dataOffset, storage);
+                    Emulator::copyIntToBufferBigEndian<uint16_t>(&track.data[0], syncWord);
+                }
+                track.storage = storage;
+
+            } else {
+                initTrack(track, getTrackByteLength());
             }
 
-            if (!hd && (bits > (13000 * 8)))
-                hd = true; // ((512 + 32) * 11) * 2 (Clock + Data bit) = 11968 + a few more gap bytes
-
-            std::memcpy(track.data, data + dataOffset, track.length);
+            ptr += 4;
+            dataOffset += storage;
 
         } else {
-            if (!hd && (bits > (6000 * 8))) hd = true;
-
-            if (length >= ((512 * 11) << hd)) // minimum length, otherwise encoding will crash hard
-                encodeTrack(track, i, data + dataOffset);
+            initTrack(track, getTrackByteLength());
         }
-        Next:
-        ptr += 12;
-        dataOffset += length;
+
+        // if any track is written, we recreate the whole image as EXT2 for simplicity
+        track.written = 0x80;
     }
-}
-
-auto DiskStructure::createEXT(unsigned size) -> uint8_t* {
-    uint8_t* dest = new uint8_t[size];
-    std::memset(dest, 0, size);
-    uint8_t* ptr = dest;
-
-    std::memcpy(ptr, "UAE-1ADF", 8);
-    ptr[11] = trackCount;
-    ptr += 12;
-
-    for (unsigned i = 0; i < trackCount; i++) {
-        Track& track = tracks[i];
-
-        ptr[3] = 1; // MFM
-        Emulator::copyIntToBufferBigEndian<uint32_t>(&ptr[4], track.length);
-        Emulator::copyIntToBufferBigEndian<uint32_t>(&ptr[8], track.bits);
-        ptr += 12;
-    }
-
-    for (unsigned i = 0; i < trackCount; i++) {
-        Track& track = tracks[i];
-        std::memcpy(ptr, track.data, track.length);
-        ptr += track.length;
-        track.written = 0;
-    }
-    return dest;
-}
-
-auto DiskStructure::EXTImageNeedsCompleteRebuild() -> bool {
-    for (int i = LIBAMI_MAX_TRACKS; i > 0; i--) {
-        Track& track = tracks[i - 1];
-
-        if ((track.written & 0x81) == 0x81) {
-            if (i > trackCount)
-                trackCount = i;
-            return true;
-        }
-    }
-    return false;
-}
-
-auto DiskStructure::getEXTCreationImageSize() -> unsigned {
-    unsigned size = 0;
-    for (unsigned i = 0; i < trackCount; i++) {
-        Track& track = tracks[i];
-        size += track.length;
-    }
-
-    return 12 + trackCount * 12 + size;
 }
 
 }
