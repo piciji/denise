@@ -24,14 +24,16 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
 * Dynamic Rate Control (DRC) formula is copyrighted by RetroArch.
 * cosine resampler is copyrighted by RetroArch.
 * sinc resampler is copyrighted by RetroArch.
-* C64 TrueType v1.2.1/Style font is used for listing content in a gui listview
+* C64 TrueType v1.2.1/Style font is copyrighted by https://style64.org/c64-truetype
 * freetype is a library for opengl to render text fonts https://www.freetype.org/
 * bundled opengl Shader were created by following copyright holders: guest(r) - guest.r@gmail.com
 * application logo and icon were created by Retrofan
 * french translation was created by Ben
 * japanese translation was created by Ulgon
 * hungarian translation was created by Ferenc
+* spanish translation was created by thecodeblasters
 * Chamberlin Filter is copyrighted by Hoxs64.
 * fpaq0 - Stationary order 0 file compressor by Matt Mahoney
 * P64 format is copyrighted by BeRo
 * taken Floppy Sounds from Trackers-World.NET ([Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)) samples were cutted
+* Amiga Fonts is copyrighted by rewtnull https://github.com/rewtnull/amigafonts 

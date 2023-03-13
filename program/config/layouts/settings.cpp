@@ -310,7 +310,7 @@ auto SettingsLayout::setPreviewContent() -> void {
     auto fontSize = globalSettings->get<unsigned>("dialog_software_preview_fontsize", 11, {6, 14});
     
     if (customFont)
-        previewLayout.previewBox.setFont(customFont->name + ", " + std::to_string(fontSize), true);
+        previewLayout.previewBox.setFont(customFont->name + ", " + std::to_string(fontSize + customFont->sizeAdjust), true);
     else
         previewLayout.previewBox.setFont( GUIKIT::Font::system(fontSize) );          
     

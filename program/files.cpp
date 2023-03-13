@@ -434,11 +434,19 @@ auto Program::addCustomFont() -> void {
 
         } else if ( dynamic_cast<LIBAMI::Interface*>(emulator)) {
             font = new GUIKIT::CustomFont;
-            font->name = "Amiga Forever Pro";
+            font->name = "TopazPlus a500a1000a2000";
+            //font->name = "Topaz a500a1000a2000";
             font->refPtr = (void*)emulator;
-            font->data = (uint8_t*)Fonts::amigaForeverPro;
-            font->size = sizeof(Fonts::amigaForeverPro);
-            font->filePath = fontFolder() + "amiga4ever pro.ttf";
+
+            font->data = (uint8_t*)Fonts::amigaTopazPlus;
+            font->size = sizeof(Fonts::amigaTopazPlus);
+            font->filePath = fontFolder() + "TopazPlus_a500_v1.0.ttf";
+
+//            font->data = (uint8_t*)Fonts::amigaTopaz;
+//            font->size = sizeof(Fonts::amigaTopaz);
+//            font->filePath = fontFolder() + "Topaz_a500_v1.0.ttf";
+
+            font->sizeAdjust = 1;
             font->modifier = 0;
             GUIKIT::Window::addCustomFont( font );
         }

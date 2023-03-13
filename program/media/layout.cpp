@@ -359,7 +359,7 @@ auto MediaGroupLayout::applyFont(unsigned fontSize) -> void {
     auto customFont = GUIKIT::Window::getCustomFont(mediaLayout->emulator);
 
     if (customFont)
-        listings.setFont(customFont->name + ", " + std::to_string(fontSize), true);
+        listings.setFont(customFont->name + ", " + std::to_string(fontSize + customFont->sizeAdjust), true);
     else
         listings.setFont(GUIKIT::Font::system(fontSize));
 }

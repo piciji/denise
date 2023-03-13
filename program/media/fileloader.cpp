@@ -351,7 +351,7 @@ auto Fileloader::applyPreviewFont(Emulator::Interface* emulator, unsigned fontSi
     auto customFont = GUIKIT::Window::getCustomFont(emulator);
 
     if (customFont)
-        fileDialogPtr->setContentViewFont(customFont->name + ", " + std::to_string(fontSize), true);
+        fileDialogPtr->setContentViewFont(customFont->name + ", " + std::to_string(fontSize + customFont->sizeAdjust), true);
     else
         fileDialogPtr->setContentViewFont(GUIKIT::Font::system(fontSize));
 }

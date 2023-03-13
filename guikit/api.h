@@ -138,6 +138,7 @@ struct CustomFont {
 	uint8_t* data = nullptr;
 	unsigned size;
     std::string filePath;
+    int sizeAdjust = 0;
 };
 
 struct Application {    
