@@ -1354,6 +1354,17 @@ auto View::showSpeedMenu( bool show ) -> void {
     show ? append( speedControlMenu ) : remove( speedControlMenu );
 }
 
+auto View::updateDiskMenu() -> void {
+    bool showResetAndHide = dynamic_cast<LIBC64::Interface*>(activeEmulator);
+
+    for(auto& d : diskControlMenus) {
+        if (d.reset.enabled() != showResetAndHide) {
+            d.reset.setEnabled(showResetAndHide);
+            d.inactive.setEnabled(showResetAndHide);
+        }
+    }
+}
+
 auto View::showTapeMenu( bool show, Emulator::Interface::TapeMode mode ) -> void {
         
     if (show)

@@ -105,6 +105,7 @@ struct Interface : Emulator::Interface  {
     auto requestImmediateReturn() -> void;
 
     auto needExternalKeyUpdates() -> bool { return true; }
+    auto autoStartedByMediaGroup() -> MediaGroup*;
 
 private:
     auto prepareDevices() -> void;

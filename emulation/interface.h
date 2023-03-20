@@ -346,16 +346,16 @@ struct Interface {
         bind->audioFlush();
     }
 
-    auto videoRefresh(const uint16_t* frame, unsigned width, unsigned height, unsigned linePitch, uint8_t interlace) -> void {
-        bind->videoRefresh(frame, width, height, linePitch, interlace);
+    auto videoRefresh(const uint16_t* frame, unsigned width, unsigned height, unsigned linePitch, uint8_t options) -> void {
+        bind->videoRefresh(frame, width, height, linePitch, options);
     }
 	
 	auto videoRefresh8(const uint8_t* frame, unsigned width, unsigned height, unsigned linePitch) -> void {
         bind->videoRefresh8(frame, width, height, linePitch);
     }
     
-    auto midScreenCallback(uint8_t interlace) -> void {
-        bind->midScreenCallback(interlace);
+    auto midScreenCallback(uint8_t options) -> void {
+        bind->midScreenCallback(options);
     }
 
     auto readMedia(Media* media, uint8_t* buffer, unsigned length, unsigned offset) -> unsigned {

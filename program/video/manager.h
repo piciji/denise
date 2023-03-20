@@ -95,12 +95,6 @@ struct VideoManager {
     unsigned softwareViewForegroundColorRef;
     unsigned softwareViewBackgroundColorRef;
 
-    struct {
-        bool active = false;
-        bool field = false;
-        unsigned lastSwitchTs = 0;
-    } lace;
-
     struct Render {        
         unsigned width;
         unsigned height;
@@ -110,8 +104,7 @@ struct VideoManager {
         unsigned destPitch;
         unsigned* scanlineDest;
         unsigned* fieldDest;
-        bool oddLine;
-        bool reuseFirstLine;
+        uint8_t oddLine;
         std::atomic<bool> ready;
         std::atomic<bool> kill;
         std::condition_variable cv;
@@ -121,8 +114,8 @@ struct VideoManager {
 
     uint32_t* tempDest = nullptr;
     uint32_t* tempDestHold = nullptr;
-    ColorLumaChroma delayLine[ 512 ];
-	ColorRgb lineBefore[ 512 ];
+    ColorLumaChroma delayLine[ 1024 ];
+	ColorRgb lineBefore[ 1024 ];
     
     Emulator::Interface* emulator;
     GUIKIT::Settings* settings;
@@ -134,7 +127,6 @@ struct VideoManager {
     auto reinitCrtThread( bool initMem = false ) -> void;
 
     unsigned countColorBits;
-	bool use16BitSrc;
 	
     bool colorSpectrum;
     bool pal;
@@ -221,12 +213,12 @@ struct VideoManager {
     template<typename T, bool interlace = false, bool field = false> auto renderToLumaChroma(unsigned width, unsigned height, const T* src, unsigned srcPitch, float* dest, unsigned destPitch) -> void;
     template<typename T, bool interlace = false, bool field = false> auto renderToRgb(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch) -> void;
     template<typename T, bool interlace = false, bool field = false> inline auto renderToRgbNoGamma(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch) -> void;
-    template<typename T, bool interlace = false, bool field = false> auto renderFrame(const T* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
-    template<typename T> inline auto renderCrtSelection(Render* re) -> void;
-    template<typename T, bool interlace = false, bool field = false> auto renderCrt(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch ) -> void;
-    template<typename T, bool interlace = false, bool field = false> auto renderCrtThreaded(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch ) -> void;
+    template<typename T, uint8_t options = 0> auto renderFrame(const T* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
+    template<typename T> inline auto renderCrtSelection(Render& re) -> void;
+    template<typename T, uint8_t options = 0> auto renderCrt(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch ) -> void;
+    template<typename T, uint8_t options = 0> auto renderCrtThreaded(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch ) -> void;
     template<typename T> auto renderCrtThreadedBlank(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch ) -> void;
-    template<bool interlace, bool field> auto getRenderOptions() -> uint8_t;
+    template<uint8_t options> auto getRenderOptions() -> uint8_t;
     auto convertYUVToRGB(ColorRgb* dest, ColorLumaChroma* src) -> void;
     auto convertYIQToRGB(ColorRgb* dest, ColorLumaChroma* src) -> void;
     auto update() -> void;
@@ -244,21 +236,21 @@ struct VideoManager {
     auto convertLumaChromaToInteger() -> void;
     auto convertPaletteToLumaChroma() -> void;
     auto preCalcGamma() -> void;
-    auto preCalcRfModulation() -> void;
-    template<bool _16bitSrc> auto createWorker(Render* re) -> void;
+    auto preCalcLumaDelay() -> void;
+    template<typename T> auto createWorker(Render* re) -> void;
     auto enableCrtThread( bool state) -> void;
     auto updateCrtThreads() -> void;
 	auto waitForCrtRenderer() -> void;
-    template<uint8_t options, typename T> auto renderPalCrt( Render* re ) -> void;
-    template<uint8_t options, typename T> auto renderNtscCrt( Render* re ) -> void;
-    auto powerOff() -> void;    
-    auto renderMidScreen(uint8_t interlace) -> void;
+    template<uint8_t options, typename T> auto renderPalCrt( Render& re ) -> void;
+    template<uint8_t options, typename T> auto renderNtscCrt( Render& re ) -> void;
+    auto powerOff() -> void;
+    template<uint8_t options> auto renderMidScreen() -> void;
     
     static auto getInstance( Emulator::Interface* emulator ) -> VideoManager*;
 	static auto updateAll() -> void;
     static auto hidePlaceHolder() -> void;
     
-    auto useRfModulation() -> bool;
+    auto useLumaDelay() -> bool;
     auto useLineGlitch() -> bool;
     auto usePostShading() -> bool;
     // seter props

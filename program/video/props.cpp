@@ -387,9 +387,9 @@ auto VideoManager::getSettings() -> std::tuple<VPARAMST> {
     bool _useInterlace = settings->get<bool>("video_interlace_use" + modeIdent, true);
     unsigned _interlace = settings->get<unsigned>("video_interlace" + modeIdent, 30, {0u, 100});
 
-    bool _useLumaRise = settings->get<bool>("video_luma_rise_use" + modeIdent, true);
+    bool _useLumaRise = settings->get<bool>("video_luma_rise_use" + modeIdent, isC64());
 	float _lumaRise = settings->get<float>("video_luma_rise" + modeIdent, 2.0, {1.0, 4.0}); 
-	bool _useLumaFall = settings->get<bool>("video_luma_fall_use" + modeIdent, true);
+	bool _useLumaFall = settings->get<bool>("video_luma_fall_use" + modeIdent, isC64());
 	float _lumaFall = settings->get<float>("video_luma_fall" + modeIdent, 1.2, {1.0, 4.0});      
     
     bool _useChromaNoise = settings->get<bool>("video_chroma_noise_use" + modeIdent, false);

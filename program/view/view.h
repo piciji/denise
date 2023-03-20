@@ -72,6 +72,7 @@ struct View : public GUIKIT::Window {
     auto updatePauseCheck() -> void;
     auto updateFastforwardCheck() -> void;
     auto updateEmuUsage() -> void;
+    auto updateDiskMenu() -> void;
 
     GUIKIT::Viewport viewport;    
     

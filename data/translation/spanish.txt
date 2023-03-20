@@ -722,3 +722,4 @@ TV gamma =
 RGB =
 distortion hires tooltip =
 interlace =
+luma delay =

@@ -58,18 +58,15 @@ VideoManager::VideoManager(Emulator::Interface* emulator) : shader(this) {
     this->colorCount = this->palette->paletteColors.size();        
 
     countColorBits = 0;
-	use16BitSrc = true;
     workerCreated = false;
 	
 	if (isC64()) {
         countColorBits = 4;
-		use16BitSrc = false;
         softwareViewForegroundColorRef = 14;
         softwareViewBackgroundColorRef = 6;
 		
 	} else if (isAmiga()) {
         countColorBits = 12;
-		use16BitSrc = true;
         tempDestHold = new uint32_t[ 1024 * 768 ];
         softwareViewForegroundColorRef = 4095;
         softwareViewBackgroundColorRef = 90;
@@ -159,8 +156,8 @@ auto VideoManager::update() -> void {
     if ( useCrtMode() ) {
         preCalcGamma();
 		
-		if (useRfModulation())
-			preCalcRfModulation();
+		if ((countColorBits == 4) && useLumaDelay())
+            preCalcLumaDelay();
         
         if (crtMode == CrtMode::Cpu) {
             injectPhaseTransferError();
@@ -530,7 +527,7 @@ auto VideoManager::convertLumaChromaToInteger() -> void {
 		evenTable[c].v_q_s = (int32_t) (evenTable[c].v_q * double(1 << 8) + (evenTable[c].v_q < 0 ? -0.5 : 0.5));
         
         // we scale up with 11 bits instead of 8, why ? read on
-        // after chroma subsampling (adding 4 pixel), the saling of chroma increases to 10 bits
+        // after chroma subsampling (adding 4 pixel), the scaling of chroma increases to 10 bits
         // and after adding the final pixel to delayed pixel the scaling of chroma increases to 11 bits.
         // chroma and luma need to be scaled the same in order to apply math on it.
         // average color (horizontal) = (pixel1 + pixel2 + pixel3 + pixel4) / 4
@@ -555,7 +552,7 @@ auto VideoManager::convertLumaChromaToInteger() -> void {
 	}
 }
 
-auto VideoManager::preCalcRfModulation() -> void {
+auto VideoManager::preCalcLumaDelay() -> void {
 	
 	double yStep[4];
 	double y;
@@ -613,24 +610,22 @@ auto VideoManager::preCalcRfModulation() -> void {
 	}
 }
 
-template<typename T, bool interlace, bool field> auto VideoManager::renderFrame(const T* src, unsigned width, unsigned height, unsigned srcPitch ) -> void {
+template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* src, unsigned width, unsigned height, unsigned srcPitch ) -> void {
 
 	unsigned gpuPitch;
     unsigned* gpuData;
 	float* gpuDataFloat;
+    constexpr bool interlace = options & 3;
+    constexpr bool field = options & 2;
+    constexpr bool hires = options & 4;
 
     if (needAUpdate)
         updateAll();
 
-    if (lace.active != interlace) {
-        unsigned ts = Chronos::getTimestampInSeconds();
-        if ((ts - lace.lastSwitchTs) >= 1) {
-            lace.active = interlace;
-            lace.field = field;
-            if (crtMode == CrtMode::Gpu)
-                shader.recreate = true;
-            lace.lastSwitchTs = ts;
-        }
+    if (shader.lace != interlace) {
+        shader.lace = interlace;
+        if (crtMode == CrtMode::Gpu)
+            shader.recreate = true;
     }
     
     if ( shader.recreate ) {
@@ -673,7 +668,7 @@ template<typename T, bool interlace, bool field> auto VideoManager::renderFrame(
             if (!videoDriver->lockReuse())
                 return;
         } else {
-            if (!videoDriver->lock(gpuData, gpuPitch, width, (!interlace && scanlines) ? (height << 1) : height))
+            if (!videoDriver->lock(gpuData, gpuPitch, width, (!interlace && scanlines) ? ((height << 1) - 1) : height))
                 return;
 
             renderToRgb<T, interlace, field>(width, height, src, srcPitch, gpuData, gpuPitch - width);
@@ -687,8 +682,6 @@ template<typename T, bool interlace, bool field> auto VideoManager::renderFrame(
             if (!videoDriver->lockReuse())
                 return;
         } else {
-            // we need delay line before first visible line to calculate mixed line in pal
-            // hence height + 1
             if (shaderInputPrecision) {
                 if (!videoDriver->lock(gpuDataFloat, gpuPitch, width, height + (interlace ? 2 : 1)))
                     return;
@@ -705,28 +698,28 @@ template<typename T, bool interlace, bool field> auto VideoManager::renderFrame(
 
 	} else if (crtThreaded) {
         if (interlace && !field && !interlaceDecay) {
-            renderCrtThreaded<T, interlace, field>(width, height, src, srcPitch, 0, 0);
+            renderCrtThreaded<T, options>(width, height, src, srcPitch, 0, 0);
 
             if (!videoDriver->lockReuse())
                 return;
         } else {
-            if (!videoDriver->lock(gpuData, gpuPitch, width, (scanlines && !interlace) ? (height << 1) : height ))
+            if (!videoDriver->lock(gpuData, gpuPitch, width, (scanlines && !interlace) ? ((height << 1) - 1) : height ))
                 renderCrtThreadedBlank(width, height, src, srcPitch, gpuData, gpuPitch - width);
             else
-                renderCrtThreaded<T, interlace, field>(width, height, src, srcPitch, gpuData, gpuPitch - width);
+                renderCrtThreaded<T, options>(width, height, src, srcPitch, gpuData, gpuPitch - width);
         }
 
     } else {
         if (interlace && !field && !interlaceDecay) {
-            renderCrt<T, interlace, field>(width, height, src, srcPitch, 0, 0); // reuse old frame, render in hidden buffer
+            renderCrt<T, options>(width, height, src, srcPitch, 0, 0); // reuse old frame, render in hidden buffer
 
             if (!videoDriver->lockReuse())
                 return;
         } else {
-            if (!videoDriver->lock(gpuData, gpuPitch, width, (scanlines && !interlace) ? (height << 1) : height))
+            if (!videoDriver->lock(gpuData, gpuPitch, width, (scanlines && !interlace) ? ((height << 1) - 1) : height))
                 return;
 
-            renderCrt<T, interlace, field>(width, height, src, srcPitch, gpuData, gpuPitch - width);
+            renderCrt<T, options>(width, height, src, srcPitch, gpuData, gpuPitch - width);
         }
 	}		           
 
@@ -817,74 +810,91 @@ template<typename T, bool interlace, bool field> inline auto VideoManager::rende
 }
 
 template<typename T, bool interlace, bool field> inline auto VideoManager::renderToRgbNoGamma(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch) -> void {
-    // todo: interlace phosphor decay
-	T _src;
-    unsigned cropTop = this->emulator->cropTop();
+    const T* srcDelay = src;
+    T colorNative;
     unsigned metaShift = countColorBits;
     unsigned mask = (1 << metaShift) - 1;
+    unsigned cropTop = this->emulator->cropTop();
+    uint32_t color;
+    ColorRgbLight colorI;
 
-    if (cropTop) {
-        src -= width + srcPitch;
+    if(cropTop) {
+        srcDelay -= width + srcPitch;
         if constexpr (interlace)
-            src -= width + srcPitch;
+            srcDelay -= width + srcPitch;
     }
 
-    for (unsigned i = 0; i <= interlace; i++) {
+    for (int i = 0; i <= interlace; i++) {
         for (unsigned w = 0; w < width; w++) {
-            _src = *src++;
-            *dest++ = colorTableNoGamma[_src & mask] | ((_src >> metaShift) << 24);
+            colorNative = *srcDelay++;
+            *dest++ = colorTableNoGamma[colorNative & mask] | ((colorNative >> metaShift) << 24);
         }
-        src += srcPitch;
         dest += destPitch;
+        srcDelay += srcPitch;
     }
 
-    if (!cropTop) {
-        src -= width + srcPitch;
-        if constexpr (interlace)
-            src -= width + srcPitch;
-    }
-    
-	for(unsigned h = 0; h < height; h++) {
-		for(unsigned w = 0; w < width; w++) {
-            _src = *src++;
-            *dest++ = colorTableNoGamma[ _src & mask ] | ((_src >> metaShift) << 24);
+    if (interlace && interlaceDecay) {
+        int iRate = 100 - interlaceDecay;
+
+        for (unsigned h = 0; h < height; h++) {
+            if (field == (h & 1)) {
+                for (unsigned w = 0; w < width; w++) {
+                    colorNative = *src++;
+                    *dest++ = colorTableNoGamma[colorNative & mask] | ((colorNative >> metaShift) << 24);
+                }
+            } else {
+                for (unsigned w = 0; w < width; w++) {
+                    colorNative = *src++;
+                    color = colorTableNoGamma[colorNative & mask];
+
+                    colorI.r = (((color >> 16) & 0xff) * iRate) / 100;
+                    colorI.g = (((color >> 8) & 0xff) * iRate) / 100;
+                    colorI.b = (((color >> 0) & 0xff) * iRate) / 100;
+
+                    *dest++ =  ((colorNative >> metaShift) << 24) | colorI.r << 16 | colorI.g << 8 | colorI.b;
+                }
+            }
+
+            src += srcPitch;
+            dest += destPitch;
         }
-		src += srcPitch;
-		dest += destPitch;
-	}
+    } else {
+        for (unsigned h = 0; h < height; h++) {
+            for (unsigned w = 0; w < width; w++) {
+                colorNative = *src++;
+                *dest++ = colorTableNoGamma[colorNative & mask] | ((colorNative >> metaShift) << 24);
+            }
+            src += srcPitch;
+            dest += destPitch;
+        }
+    }
 }
 
 template<typename T, bool interlace, bool field> inline auto VideoManager::renderToLumaChroma(unsigned width, unsigned height, const T* src, unsigned srcPitch, float* dest, unsigned destPitch) -> void {
-	T _src;
+	const T* srcDelay = src;
+    T color;
 	unsigned _dp = destPitch * 4;
     unsigned metaShift = countColorBits;
     unsigned mask = (1 << metaShift) - 1;
     unsigned cropTop = this->emulator->cropTop();
-    float decay = 0.3;
-    
-    if (cropTop) {
-        src -= width + srcPitch;
+
+    if(cropTop) {
+        srcDelay -= width + srcPitch;
         if constexpr (interlace)
-            src -= width + srcPitch;
+            srcDelay -= width + srcPitch;
     }
 
-    for (unsigned i = 0; i <= interlace; i++) {
-        for (unsigned w = 0; w < width; w++) {
-            _src = *src++;
+    for (int i = 0; i <= interlace; i++) {
+        for (unsigned w = 0; w < width; w++) { // delayline
+            color = *srcDelay++;
 
-            *dest++ = lumaChromaTable[_src & mask].y_n;
-            *dest++ = lumaChromaTable[_src & mask].u_i_n;
-            *dest++ = lumaChromaTable[_src & mask].v_q_n;
-            *dest++ = _src >> metaShift; // aec, ba
+            *dest++ = lumaChromaTable[color & mask].y_n;
+            *dest++ = lumaChromaTable[color & mask].u_i_n;
+            *dest++ = lumaChromaTable[color & mask].v_q_n;
+            *dest++ = color >> metaShift; // aec, ba
         }
-        src += srcPitch;
         dest += _dp;
-    }
-
-    if (!cropTop) {
-        src -= width + srcPitch;
-        if constexpr (interlace)
-            src -= width + srcPitch;
+        srcDelay += srcPitch;
     }
 
     if (interlace && interlaceDecay) {
@@ -893,21 +903,21 @@ template<typename T, bool interlace, bool field> inline auto VideoManager::rende
         for (unsigned h = 0; h < height; h++) {
             if (field == (h & 1)) {
                 for (unsigned w = 0; w < width; w++) {
-                    _src = *src++;
+                    color = *src++;
 
-                    *dest++ = lumaChromaTable[_src & mask].y_n;
-                    *dest++ = lumaChromaTable[_src & mask].u_i_n;
-                    *dest++ = lumaChromaTable[_src & mask].v_q_n;
-                    *dest++ = _src >> metaShift;
+                    *dest++ = lumaChromaTable[color & mask].y_n;
+                    *dest++ = lumaChromaTable[color & mask].u_i_n;
+                    *dest++ = lumaChromaTable[color & mask].v_q_n;
+                    *dest++ = color >> metaShift;
                 }
             } else {
                 for (unsigned w = 0; w < width; w++) {
-                    _src = *src++;
+                    color = *src++;
 
-                    *dest++ = lumaChromaTable[_src & mask].y_n * iRate / 100.0;
-                    *dest++ = lumaChromaTable[_src & mask].u_i_n;
-                    *dest++ = lumaChromaTable[_src & mask].v_q_n;
-                    *dest++ = _src >> metaShift;
+                    *dest++ = lumaChromaTable[color & mask].y_n * iRate / 100.0;
+                    *dest++ = lumaChromaTable[color & mask].u_i_n;
+                    *dest++ = lumaChromaTable[color & mask].v_q_n;
+                    *dest++ = color >> metaShift;
                 }
             }
 
@@ -917,12 +927,12 @@ template<typename T, bool interlace, bool field> inline auto VideoManager::rende
     } else {
         for (unsigned h = 0; h < height; h++) {
             for (unsigned w = 0; w < width; w++) {
-                _src = *src++;
+                color = *src++;
 
-                *dest++ = lumaChromaTable[_src & mask].y_n;
-                *dest++ = lumaChromaTable[_src & mask].u_i_n;
-                *dest++ = lumaChromaTable[_src & mask].v_q_n;
-                *dest++ = _src >> metaShift;
+                *dest++ = lumaChromaTable[color & mask].y_n;
+                *dest++ = lumaChromaTable[color & mask].u_i_n;
+                *dest++ = lumaChromaTable[color & mask].v_q_n;
+                *dest++ = color >> metaShift;
             }
 
             src += srcPitch;
@@ -961,10 +971,10 @@ auto VideoManager::enableCrtThread( bool state) -> void {
                 std::this_thread::yield();
             }
 
-            if (use16BitSrc)
-                createWorker<true>( re );
+            if (countColorBits > 8)
+                createWorker<uint16_t>( re );
             else
-                createWorker<false>( re );
+                createWorker<uint8_t>( re );
 
         } else {
             re->kill = true;
@@ -975,7 +985,7 @@ auto VideoManager::enableCrtThread( bool state) -> void {
     workerCreated = state;
 }
 
-template<bool _16bitSrc> auto VideoManager::createWorker(Render* re) -> void {
+template<typename T> auto VideoManager::createWorker(Render* re) -> void {
 
     std::thread worker([this, re] {
 
@@ -1001,11 +1011,8 @@ template<bool _16bitSrc> auto VideoManager::createWorker(Render* re) -> void {
 					break;
 				}
             }
-			
-            if constexpr (_16bitSrc)
-                renderCrtSelection<uint16_t>( re );
-            else
-                renderCrtSelection<uint8_t>( re );
+
+            renderCrtSelection<T>( *re );
         }
     });
 
@@ -1025,7 +1032,7 @@ auto VideoManager::waitForCrtRenderer() -> void {
 }
 
 // half screen
-auto VideoManager::renderMidScreen(uint8_t interlace) -> void {
+template<uint8_t options> auto VideoManager::renderMidScreen() -> void {
 	
 	Render* re = &render[0];
 	
@@ -1035,12 +1042,7 @@ auto VideoManager::renderMidScreen(uint8_t interlace) -> void {
 	if (!re->dest || frameRenderPos || placeHolderFrames)
 		return;
 
-    if (!interlace)
-        re->options = getRenderOptions<false, false>();
-    else if (interlace == 1)
-        re->options = getRenderOptions<true, false>();
-    else if (interlace == 2)
-        re->options = getRenderOptions<true, true>();
+    re->options = getRenderOptions<options>();
 
 	re->ready.store(1);
 	re->cv.notify_one();
@@ -1051,41 +1053,30 @@ auto VideoManager::reinitCrtThread( bool initMem ) -> void {
     Render* re = &render[0];
     re->dest = nullptr;
 
-    if (initMem)
-        std::memset(tempDest, 0, 512 * 768 * 4);
+    if (initMem) {
+        std::memset(tempDest, 0, 1024 * 768 * 4);
+    }
 }
 
-template<typename T, bool interlace, bool field> auto VideoManager::renderCrt(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch ) -> void {
-	unsigned cropTop = this->emulator->cropTop();    
-	Render* re = &render[0];
-	re->width = width;
-    re->height = height;
-	re->srcPitch = srcPitch;
-	re->destPitch = destPitch;
-    re->oddLine = (cropTop >> interlace) & 1;
-	re->src = (uint8_t*)src;
-    re->options = getRenderOptions<interlace, field>();
-    re->fieldDest = tempDest;
-	re->dest = dest ? dest : tempDest;
-	re->scanlineDest = nullptr;
-	
-	if (!pal)
-		re->reuseFirstLine = false;
-	else if (cropTop) {
-		re->reuseFirstLine = false;
-        unsigned offset = re->width + re->srcPitch;
-        if (use16BitSrc) offset <<= 1;
-        re->src -= offset;
-        if (interlace && !field)
-            re->src -= offset;
-	} else
-		re->reuseFirstLine = true;
-	
+template<typename T, uint8_t options> auto VideoManager::renderCrt(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch ) -> void {
+    constexpr bool interlace = options & 3;
+    unsigned cropTop = this->emulator->cropTop();
+    Render& re = render[0];
+	re.width = width;
+    re.height = height;
+	re.srcPitch = srcPitch;
+	re.destPitch = destPitch;
+    re.options = getRenderOptions<options>();
+    re.fieldDest = tempDest;
+	re.dest = dest ? dest : tempDest;
+	re.scanlineDest = nullptr;
+    re.oddLine = !cropTop ? 0x80 : ((cropTop >> interlace) & 1);
+    re.src = (uint8_t*)src;
 	renderCrtSelection<T>( re );
 }
 
-template<typename T> inline auto VideoManager::renderCrtSelection(Render* re) -> void {
-    switch(re->options) {
+template<typename T> inline auto VideoManager::renderCrtSelection(Render& re) -> void {
+    switch(re.options & 0x1f) {
         default:
         case 0: pal ? renderPalCrt<0, T>(re) : renderNtscCrt<0, T>(re); break;
         case 1: pal ? renderPalCrt<1, T>(re) : renderNtscCrt<1, T>(re); break; // Scanlines
@@ -1112,10 +1103,10 @@ auto VideoManager::useCrtMode() -> bool {
 
 auto VideoManager::usePostShading() -> bool {
 	
-	return bloomGlow > 0.0 ||  maskLevel > 0.0 || radialDistortion > 0.0 || lightFromCenter > 0.0 || (maskLevel ? maskLuminance : luminance) != 1.0;
+	return bloomGlow > 0.0 || maskLevel > 0.0 || radialDistortion > 0.0 || lightFromCenter > 0.0 || (maskLevel ? maskLuminance : luminance) != 1.0;
 }
 
-auto VideoManager::useRfModulation() -> bool {
+auto VideoManager::useLumaDelay() -> bool {
 	
 	return lumaFall > 0.0 || lumaRise > 0.0;
 }
@@ -1126,7 +1117,6 @@ auto VideoManager::useLineGlitch() -> bool {
 }
 
 template<typename T> auto VideoManager::renderCrtThreadedBlank(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch ) -> void {
-    // static unsigned scaler = (2.0 / 3.0) * 256.0;
     Render* re = &render[0];
 
     while (re->ready.load())
@@ -1135,107 +1125,68 @@ template<typename T> auto VideoManager::renderCrtThreadedBlank(unsigned width, u
     re->dest = nullptr;
     re->fieldDest = nullptr;
     re->scanlineDest = nullptr;
-//    unsigned cropTop = this->emulator->cropTop();
-//    unsigned heightFirstHalfScreen = (height * scaler) >> 8;
-//    unsigned destOffset = (width + destPitch) * (heightFirstHalfScreen << (scanlines ? 1 : 0));
-//
-//    emulator->setLineCallback( true, cropTop + heightFirstHalfScreen );
-//
-//    re->height = heightFirstHalfScreen;
-//    re->width = width;
-//    re->srcPitch = srcPitch;
-//    re->destPitch = destPitch;
-//    re->src = (uint8_t*)src;
-//    re->dest = nullptr;
-//    re->scanlineDest = nullptr;
-//    re->oddLine = cropTop & 1;
-//
-//    if (!pal)
-//        re->reuseFirstLine = false;
-//    else if (cropTop) {
-//        re->reuseFirstLine = false;
-//        if (use16BitSrc)
-//            re->src -= (re->width + re->srcPitch) << 1;
-//        else
-//            re->src -= re->width + re->srcPitch;
-//    } else
-//        re->reuseFirstLine = true;
 }
 
-template<typename T, bool interlace, bool field> auto VideoManager::renderCrtThreaded(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch ) -> void {
+template<typename T, uint8_t options> auto VideoManager::renderCrtThreaded(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch ) -> void {
+    constexpr bool interlace = options & 3;
+    constexpr bool field = options & 2;
+    constexpr bool hires = options & 4;
+
     static unsigned scaler = (2.0 / 3.0) * 256.0;
-	Render* re = &render[0];
-	Render* re1 = &render[1];
+	Render& re = render[0];
+	Render& re1 = render[1];
+    re1.options = getRenderOptions<options>();
 	
     unsigned cropTop = this->emulator->cropTop();     
     unsigned heightFirstHalfScreen = ((height * scaler) >> 8) & ~1;
 	unsigned destOffset = (width + destPitch) * (heightFirstHalfScreen << ((!interlace && scanlines) ? 1 : 0));
     
-    if (!re->dest) {
-        while (re->ready.load())
+    if (!re.dest || (re.options != re1.options) ) {
+        while (re.ready.load())
             std::this_thread::yield();
         
-        renderCrt<T, interlace, field>( width, height, src, srcPitch, dest, destPitch );
-        re->dest = nullptr;
+        renderCrt<T, options>( width, height, src, srcPitch, dest, destPitch );
+        re.dest = nullptr;
         
     } else {                
-        re1->width = width;        
-        re1->srcPitch = srcPitch;
-        re1->destPitch = destPitch;
-        re1->height = height - heightFirstHalfScreen;
+        re1.width = width;
+        re1.srcPitch = srcPitch;
+        re1.destPitch = destPitch;
+        re1.height = height - heightFirstHalfScreen;
 		
-		re1->dest = dest ? (dest + destOffset) : (tempDest + destOffset);
+		re1.dest = dest ? (dest + destOffset) : (tempDest + destOffset);
         if (!interlace && scanlines) {
             destOffset -= width + destPitch;
-            re1->scanlineDest = dest + destOffset;
+            re1.scanlineDest = dest + destOffset;
         } else
-		    re1->scanlineDest = nullptr;
+		    re1.scanlineDest = nullptr;
 
-        while (re->ready.load())
+        while (re.ready.load())
             std::this_thread::yield();
         
-		re1->src = re->src;
-		
-		re1->oddLine = re->oddLine;
-        re1->options = getRenderOptions<interlace, field>();
-        re1->fieldDest = (!interlaceDecay ? tempDest : tempDestHold) + destOffset;
-
-        if (use16BitSrc)
-            renderCrtSelection<uint16_t>( re1 );
-        else
-            renderCrtSelection<uint8_t>( re1 );
+		re1.src = re.src;
+		re1.oddLine = re.oddLine;
+        re1.fieldDest = (!interlaceDecay ? tempDest : tempDestHold) + destOffset;
+        renderCrtSelection<T>( re1 );
 	}
     
     emulator->setLineCallback( true, cropTop + heightFirstHalfScreen );
-	
-	//copy result to already locked gpu	
-	if (dest && re->dest)
-		std::memcpy(dest, tempDest, destOffset << 2);    
+
+	if (dest && re.dest)
+		std::memcpy(dest, tempDest, destOffset << 2);
 			
-	re->height = heightFirstHalfScreen;
-	re->width = width;        
-	re->srcPitch = srcPitch;
-	re->destPitch = destPitch;
-	re->src = (uint8_t*)src;
-	re->dest = tempDest;
-	re->scanlineDest = nullptr;
-	re->oddLine = (cropTop >> interlace) & 1;
-    re->fieldDest = !interlaceDecay ? nullptr : tempDestHold;
-	
-	if (!pal)
-		re->reuseFirstLine = false;		
-	else if (cropTop) {
-		re->reuseFirstLine = false;
-        unsigned offset = re->width + re->srcPitch;
-        if (use16BitSrc) offset <<= 1;
-        re->src -= offset;
-        if (interlace && field) // we need field for next frame
-            re->src -= offset;
-	} else
-		re->reuseFirstLine = true;			
+	re.height = heightFirstHalfScreen;
+	re.width = width;
+	re.srcPitch = srcPitch;
+	re.destPitch = destPitch;
+	re.src = (uint8_t*)src;
+	re.dest = tempDest;
+	re.scanlineDest = nullptr;
+    re.oddLine = !cropTop ? 0x80 : ((cropTop >> interlace) & 1);
+    re.fieldDest = !interlaceDecay ? tempDest : tempDestHold;
 }
 
-template<uint8_t options, typename T> auto VideoManager::renderPalCrt( Render* re ) -> void {
+template<uint8_t options, typename T> auto VideoManager::renderPalCrt( Render& re ) -> void {
     
 	static int32_t x1 = (int32_t) (((double) 1.0 / (double) 0.493) * double(1 << 8) + 0.5);
     static int32_t x2 = (int32_t) (((double) 1.0 / (double) 0.877) * double(1 << 8) + 0.5);
@@ -1243,14 +1194,15 @@ template<uint8_t options, typename T> auto VideoManager::renderPalCrt( Render* r
     static int32_t x4 = (int32_t) (0.58080920903109757400461150856936 * double(1 << 8) + 0.5);
 
     constexpr bool withScanlines = options & 1;
-    constexpr bool rfModulation = options & 2;
+    constexpr bool lumaDelay = options & 2;
     constexpr bool interlace = options & 4;
     constexpr bool field = options & 8;
-    constexpr bool iMode = options & 16;
+    constexpr bool iHold = options & 16;
 
-	bool secondHalf = re == &render[1];
+	bool secondHalf = &re == &render[1];
+    unsigned iRate = (100 - interlaceDecay);
 	
-	const T* _src = (T*)re->src;
+	const T* _src = (T*)re.src;
 	
 	ColorLumaChroma* lineTable;
 	ColorRgb* lineBeforeDest = nullptr;
@@ -1258,63 +1210,64 @@ template<uint8_t options, typename T> auto VideoManager::renderPalCrt( Render* r
 	ColorLumaChroma yuv;
     ColorRgbLight colorI;
 	int32_t uSubSample, vSubSample;
-    unsigned decay = 64; // simulate phosphor decay
     unsigned mask = (1 << countColorBits) - 1;
 	
 	if (!secondHalf) {
-		_src -= 2;   
+		_src -= 2;
+        const T* srcDelay = _src;
 
-		if (re->reuseFirstLine)
-			lineTable = oddTable;
-		else
-			lineTable = !re->oddLine ? oddTable : evenTable;
+        if (re.oddLine & 0x80) { // there is no line before, so we reuse this line for delay line
+            lineTable = oddTable;
+            re.oddLine = 0;
+            if (interlace && field)
+                srcDelay += re.width + re.srcPitch;
+        } else {
+            lineTable = !re.oddLine ? oddTable : evenTable;
+            srcDelay -= re.width + re.srcPitch;
+            if (interlace)
+                srcDelay -= re.width + re.srcPitch;
+        }
 
-		uSubSample = lineTable[ _src[0] & mask ].u_i_s + lineTable[ _src[1] & mask ].u_i_s + lineTable[ _src[2] & mask ].u_i_s;
-		vSubSample = lineTable[ _src[0] & mask ].v_q_s + lineTable[ _src[1] & mask ].v_q_s + lineTable[ _src[2] & mask ].v_q_s;
+        lineTable = !re.oddLine ? oddTable : evenTable;
+
+		uSubSample = lineTable[ srcDelay[0] & mask ].u_i_s + lineTable[ srcDelay[1] & mask ].u_i_s + lineTable[ srcDelay[2] & mask ].u_i_s;
+		vSubSample = lineTable[ srcDelay[0] & mask ].v_q_s + lineTable[ srcDelay[1] & mask ].v_q_s + lineTable[ srcDelay[2] & mask ].v_q_s;
 
 		// delay line	
-		for (unsigned w = 0; w < re->width; w++) {
-			uSubSample += lineTable[ _src[3] & mask ].u_i_s;
-			vSubSample += lineTable[ _src[3] & mask ].v_q_s;
+		for (unsigned w = 0; w < re.width; w++) {
+			uSubSample += lineTable[ srcDelay[3] & mask ].u_i_s;
+			vSubSample += lineTable[ srcDelay[3] & mask ].v_q_s;
 
 			delayLine[w].u_i_s = uSubSample;
 			delayLine[w].v_q_s = vSubSample;
 
-			uSubSample -= lineTable[ _src[0] & mask ].u_i_s;				
-			vSubSample -= lineTable[ _src[0] & mask ].v_q_s;   
+			uSubSample -= lineTable[ srcDelay[0] & mask ].u_i_s;
+			vSubSample -= lineTable[ srcDelay[0] & mask ].v_q_s;
 
-			_src++;
+            srcDelay++;
 		}
-
-		if (re->reuseFirstLine)
-			_src -= re->width;
-		else
-			_src += re->srcPitch;                         	
 	}
 	
-	for(unsigned h = 0; h < re->height; h++) {		
+	for(unsigned h = 0; h < re.height; h++) {
 
         if (interlace && ((!field && (h & 1)) || (field && !(h & 1)))) {
-            if (!iMode || field) {
-                if (re->fieldDest) {
-                    if ((h & 31) == (field ? 30 : 31))
-                        decay += 5;
-
-                    std::memcpy(re->dest, re->fieldDest, re->width * 4);
-                    re->fieldDest += re->width;
+            if (!iHold || field) {
+                if (re.fieldDest) {
+                    std::memcpy(re.dest, re.fieldDest, re.width * 4);
+                    re.fieldDest += re.width;
                 }
             }
-            _src += re->width;
-            re->dest += re->width;
+            _src += re.width;
+            re.dest += re.width;
 
         } else {
-            lineTable = re->oddLine ? oddTable : evenTable;
+            lineTable = re.oddLine ? oddTable : evenTable;
             lineBeforeDest = &lineBefore[0];
 
             uSubSample = lineTable[ _src[0] & mask ].u_i_s + lineTable[ _src[1] & mask ].u_i_s + lineTable[ _src[2] & mask ].u_i_s;
             vSubSample = lineTable[ _src[0] & mask ].v_q_s + lineTable[ _src[1] & mask ].v_q_s + lineTable[ _src[2] & mask ].v_q_s;
 
-            for(unsigned w = 0; w < re->width; w++) {
+            for(unsigned w = 0; w < re.width; w++) {
 
                 uSubSample += lineTable[ _src[3] & mask ].u_i_s;
                 vSubSample += lineTable[ _src[3] & mask ].v_q_s;
@@ -1322,7 +1275,7 @@ template<uint8_t options, typename T> auto VideoManager::renderPalCrt( Render* r
                 yuv.u_i_s = uSubSample + delayLine[w].u_i_s;
                 yuv.v_q_s = vSubSample + delayLine[w].v_q_s;
 
-                if (!rfModulation)
+                if (!lumaDelay)
                     yuv.y_s = lineTable[ _src[1] & mask ].y_s_blur + lineTable[ _src[2] & mask ].y_s + lineTable[ _src[3] & mask ].y_s_blur;
 
                 else {
@@ -1336,7 +1289,7 @@ template<uint8_t options, typename T> auto VideoManager::renderPalCrt( Render* r
                 delayLine[w].u_i_s = uSubSample;
                 delayLine[w].v_q_s = vSubSample;
 
-                if (re->oddLine) {
+                if (re.oddLine) {
                     yuv.u_i_s = (yuv.u_i_s * this->hanoverBars) >> 7;
                     yuv.v_q_s = (yuv.v_q_s * this->hanoverBars) >> 7;
 
@@ -1353,24 +1306,20 @@ template<uint8_t options, typename T> auto VideoManager::renderPalCrt( Render* r
                     colorI.r = preCalc[ r + 256 ];
                     colorI.g = preCalc[ g + 256 ];
                     colorI.b = preCalc[ b + 256 ];
-                    *re->dest++ = 255 << 24 | colorI.r << 16 | colorI.g << 8 | colorI.b;
+                    *re.dest++ = 255 << 24 | colorI.r << 16 | colorI.g << 8 | colorI.b;
 
-                    if (!iMode) {
-                        if (colorI.r < decay) colorI.r = 0;
-                        else colorI.r -= decay;
-                        if (colorI.g < decay) colorI.g = 0;
-                        else colorI.g -= decay;
-                        if (colorI.b < decay) colorI.b = 0;
-                        else colorI.b -= decay;
-
-                        *re->fieldDest++ = 255 << 24 | colorI.r << 16 | colorI.g << 8 | colorI.b;
+                    if (!iHold) {
+                        colorI.r = (colorI.r * iRate) / 100;
+                        colorI.g = (colorI.g * iRate) / 100;
+                        colorI.b = (colorI.b * iRate) / 100;
+                        *re.fieldDest++ = 255 << 24 | colorI.r << 16 | colorI.g << 8 | colorI.b;
                     }
                 } else
-                    *re->dest++ = 255 << 24 | preCalc[ r + 256 ] << 16 | preCalc[ g + 256 ] << 8 | preCalc[ b + 256 ];
+                    *re.dest++ = 255 << 24 | preCalc[ r + 256 ] << 16 | preCalc[ g + 256 ] << 8 | preCalc[ b + 256 ];
 
                 if constexpr (withScanlines) {
-                    if (re->scanlineDest) {
-                        *re->scanlineDest++ = 255 << 24 | preCalcScanline[r + lineBeforeDest->rInt + 512] << 16
+                    if (re.scanlineDest) {
+                        *re.scanlineDest++ = 255 << 24 | preCalcScanline[r + lineBeforeDest->rInt + 512] << 16
                                               | preCalcScanline[g + lineBeforeDest->gInt + 512] << 8
                                               | preCalcScanline[b + lineBeforeDest->bInt + 512];
                     }
@@ -1386,25 +1335,28 @@ template<uint8_t options, typename T> auto VideoManager::renderPalCrt( Render* r
 
                 _src++;
             }
-            re->oddLine ^= 1;
+
+            if constexpr (interlace && iHold)
+                re.fieldDest += re.width;
+
+            re.oddLine ^= 1;
 		}
-		_src += re->srcPitch;	
-		re->dest += re->destPitch;
+		_src += re.srcPitch;
+		re.dest += re.destPitch;
 
         if constexpr (interlace) {
-            if constexpr (!iMode || field)
-                re->fieldDest += re->destPitch;
+            re.fieldDest += re.destPitch;
 
         } else if constexpr (withScanlines) {
-			re->scanlineDest = re->dest;
-			re->dest +=	re->width + re->destPitch;			
+			re.scanlineDest = re.dest;
+			re.dest +=	re.width + re.destPitch;
 		}
 	}	
 	
-	re->src = (uint8_t*)_src;
+	re.src = (uint8_t*)_src;
 }
 
-template<uint8_t options, typename T> auto VideoManager::renderNtscCrt( Render* re ) -> void {
+template<uint8_t options, typename T> auto VideoManager::renderNtscCrt( Render& re ) -> void {
 	
 	static int32_t x1 = (int32_t) (1.630 * double(1 << 8) + 0.5);
     static int32_t x2 = (int32_t) (0.317 * double(1 << 8) + 0.5);
@@ -1414,38 +1366,35 @@ template<uint8_t options, typename T> auto VideoManager::renderNtscCrt( Render* 
 	static int32_t x6 = (int32_t) (1.677 * double(1 << 8) + 0.5);
 
     constexpr bool withScanlines = options & 1;
-    constexpr bool rfModulation = options & 2;
+    constexpr bool lumaDelay = options & 2;
     constexpr bool interlace = options & 4;
     constexpr bool field = options & 8;
-    constexpr bool iMode = options & 16;
+    constexpr bool iHold = options & 16;
 
 	ColorRgb rgb;
 	ColorLumaChroma yiq;
     ColorRgbLight colorI;
 	ColorRgb* lineBeforeDest = nullptr;
-    unsigned decay = 64; // simulate phosphor decay
     unsigned mask = (1 << countColorBits) - 1;
 	
 	int32_t iSubSample, qSubSample;	
-	bool secondHalf = re == &render[1];
-	const T* _src = (T*)re->src;
+	bool secondHalf = &re == &render[1];
+    unsigned iRate = (100 - interlaceDecay);
+	const T* _src = (T*)re.src;
 	
 	if (!secondHalf) {
 		_src -= 2;       	                       	
 	}
 	
-	for(unsigned h = 0; h < re->height; h++) {				
+	for(unsigned h = 0; h < re.height; h++) {
 
         if (interlace && ((!field && (h & 1)) || (field && !(h & 1)))) {
-            if (!iMode || field) {
-                if ((h & 31) == (field ? 30 : 31))
-                    decay += 5;
-
-                std::memcpy(re->dest, re->fieldDest, re->width * 4);
-                re->fieldDest += re->width;
+            if (!iHold || field) {
+                std::memcpy(re.dest, re.fieldDest, re.width * 4);
+                re.fieldDest += re.width;
             }
-            _src += re->width;
-            re->dest += re->width;
+            _src += re.width;
+            re.dest += re.width;
 
         } else {
             iSubSample = evenTable[ _src[0] & mask ].u_i_s + evenTable[ _src[1] & mask ].u_i_s + evenTable[ _src[2] & mask ].u_i_s;
@@ -1453,7 +1402,7 @@ template<uint8_t options, typename T> auto VideoManager::renderNtscCrt( Render* 
 
             lineBeforeDest = &lineBefore[0];
 
-            for(unsigned w = 0; w < re->width; w++) {
+            for(unsigned w = 0; w < re.width; w++) {
 
                 iSubSample += evenTable[ _src[3] & mask ].u_i_s;
                 qSubSample += evenTable[ _src[3] & mask ].v_q_s;
@@ -1461,7 +1410,7 @@ template<uint8_t options, typename T> auto VideoManager::renderNtscCrt( Render* 
                 yiq.u_i_s = iSubSample;
                 yiq.v_q_s = qSubSample;
 
-                if (!rfModulation)
+                if (!lumaDelay)
                     yiq.y_s = evenTable[ _src[1] & mask ].y_s_blur + evenTable[ _src[2] & mask ].y_s + evenTable[ _src[3] & mask ].y_s_blur;
                 else {
                     uint16_t _pos = ((_src[-1] & mask) << 12) | ((_src[0] & mask) << 8) | ((_src[1] & mask) << 4) | (_src[2] & mask);
@@ -1479,24 +1428,20 @@ template<uint8_t options, typename T> auto VideoManager::renderNtscCrt( Render* 
                     colorI.r = preCalc[ r + 256 ];
                     colorI.g = preCalc[ g + 256 ];
                     colorI.b = preCalc[ b + 256 ];
-                    *re->dest++ = 255 << 24 | colorI.r << 16 | colorI.g << 8 | colorI.b;
+                    *re.dest++ = 255 << 24 | colorI.r << 16 | colorI.g << 8 | colorI.b;
 
-                    if (!iMode) {
-                        if (colorI.r < decay) colorI.r = 0;
-                        else colorI.r -= decay;
-                        if (colorI.g < decay) colorI.g = 0;
-                        else colorI.g -= decay;
-                        if (colorI.b < decay) colorI.b = 0;
-                        else colorI.b -= decay;
-
-                        *re->fieldDest++ = 255 << 24 | colorI.r << 16 | colorI.g << 8 | colorI.b;
+                    if (!iHold) {
+                        colorI.r = (colorI.r * iRate) / 100;
+                        colorI.g = (colorI.g * iRate) / 100;
+                        colorI.b = (colorI.b * iRate) / 100;
+                        *re.fieldDest++ = 255 << 24 | colorI.r << 16 | colorI.g << 8 | colorI.b;
                     }
                 } else
-                    *re->dest++ = 255 << 24 | preCalc[ r + 256 ] << 16 | preCalc[ g + 256 ] << 8 | preCalc[ b + 256 ];
+                    *re.dest++ = 255 << 24 | preCalc[ r + 256 ] << 16 | preCalc[ g + 256 ] << 8 | preCalc[ b + 256 ];
 
                 if constexpr (withScanlines) {
-                    if ( re->scanlineDest) {
-                        *re->scanlineDest++ = 255 << 24 | preCalcScanline[r + lineBeforeDest->rInt + 512] << 16
+                    if ( re.scanlineDest) {
+                        *re.scanlineDest++ = 255 << 24 | preCalcScanline[r + lineBeforeDest->rInt + 512] << 16
                               | preCalcScanline[g + lineBeforeDest->gInt + 512] << 8
                               | preCalcScanline[b + lineBeforeDest->bInt + 512];
                     }
@@ -1512,22 +1457,24 @@ template<uint8_t options, typename T> auto VideoManager::renderNtscCrt( Render* 
 
                 _src++;
             }
+
+            if constexpr (interlace && iHold)
+                re.fieldDest += re.width;
         }
 		
-		_src += re->srcPitch;
-		re->dest += re->destPitch;
+		_src += re.srcPitch;
+		re.dest += re.destPitch;
 
         if constexpr (interlace) {
-            if constexpr (!iMode || field)
-                re->fieldDest += re->destPitch;
+            re.fieldDest += re.destPitch;
 
         } else if constexpr (withScanlines) {
-			re->scanlineDest = re->dest;
-			re->dest +=	re->width + re->destPitch;			
+            re.scanlineDest = re.dest;
+			re.dest +=	re.width + re.destPitch;
 		}
 	}
 	
-	re->src = (uint8_t*)_src;
+	re.src = (uint8_t*)_src;
 }
 
 auto VideoManager::convertRGBToYIQ(ColorLumaChroma* dest, ColorRgb* src) -> void {
@@ -1561,6 +1508,7 @@ auto VideoManager::convertYIQToRGB(ColorRgb* dest, ColorLumaChroma* src) -> void
 auto VideoManager::powerOff() -> void {
 	reinitCrtThread();
     currentHeight = 0;
+    shader.lace = false;
 }
 
 template<typename T> auto VideoManager::updateData(std::string ident, T data) -> void {
@@ -1648,16 +1596,21 @@ inline auto VideoManager::uclamp8(double x) -> uint8_t {
     return std::min( std::max((int)(x + 0.5), 0), 255 );
 }
 
-template<bool interlace, bool field> auto VideoManager::getRenderOptions() -> uint8_t {
-    uint8_t options = 0;
-    if (scanlines && !interlace) options |= 1; // surpress user requested scanlines
-    if (useRfModulation()) options |= 2;
+template<uint8_t options> auto VideoManager::getRenderOptions() -> uint8_t {
+    uint8_t out = 0;
+    constexpr bool interlace = options & 3;
+    constexpr bool field = options & 2;
+    constexpr bool hires = options & 4;
+
+    if (scanlines && !interlace) out |= 1; // surpress user requested scanlines if software requests interlace
+    if ((countColorBits == 4) && useLumaDelay()) out |= 2;
     if (interlace) {
-        options |= 4;
-        if (field) options |= 8;
-        if (!interlaceDecay) options |= 16;
+        out |= 4;
+        if (field) out |= 8;
+        if (!interlaceDecay) out |= 16;
     }
-    return options;
+    if (hires) out |= 32;
+    return out;
 }
 
 auto VideoManager::hidePlaceHolder() -> void {
@@ -1699,9 +1652,19 @@ VideoManager::~VideoManager() {
 }
 
 template auto VideoManager::renderFrame<uint8_t>(const uint8_t* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
-template auto VideoManager::renderFrame<uint16_t>(const uint16_t* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
-template auto VideoManager::renderFrame<uint16_t, true>(const uint16_t* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
-template auto VideoManager::renderFrame<uint16_t, true, true>(const uint16_t* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
+template auto VideoManager::renderFrame<uint16_t, 0>(const uint16_t* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
+template auto VideoManager::renderFrame<uint16_t, 1>(const uint16_t* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
+template auto VideoManager::renderFrame<uint16_t, 2>(const uint16_t* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
+template auto VideoManager::renderFrame<uint16_t, 4>(const uint16_t* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
+template auto VideoManager::renderFrame<uint16_t, 5>(const uint16_t* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
+template auto VideoManager::renderFrame<uint16_t, 6>(const uint16_t* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
+template auto VideoManager::renderMidScreen<0>() -> void;
+template auto VideoManager::renderMidScreen<1>() -> void;
+template auto VideoManager::renderMidScreen<2>() -> void;
+template auto VideoManager::renderMidScreen<4>() -> void;
+template auto VideoManager::renderMidScreen<5>() -> void;
+template auto VideoManager::renderMidScreen<6>() -> void;
+
 template auto VideoManager::updateData<bool>(std::string ident, bool data) -> void;
 template auto VideoManager::updateData<int>(std::string ident, int data) -> void;
 template auto VideoManager::updateData<unsigned>(std::string ident, unsigned data) -> void;

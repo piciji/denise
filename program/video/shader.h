@@ -20,6 +20,7 @@ struct Shader {
     ShaderPass* primaryPass = nullptr;
     bool externalLoaded = false;
     bool recreate = true;
+    bool lace = false;
     GUIKIT::Image imageAperture;
     GUIKIT::Image imageShadowMask;
     GUIKIT::Image imageSlotMask;    

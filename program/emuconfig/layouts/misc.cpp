@@ -434,7 +434,7 @@ auto MiscLayout::loadSettings() -> void {
 
         autostartLayout->autoWarp.disableWarpWhenInput.setChecked(_settings->get<bool>("auto_warp_off_input", false));
 
-        autostartLayout->autoWarp.disableWarpWhenInput.setEnabled( !autostartLayout->autoWarp.diskFirstFile.checked() );
+        autostartLayout->autoWarp.disableWarpWhenInput.setEnabled( dynamic_cast<LIBAMI::Interface*>(emulator) || !autostartLayout->autoWarp.diskFirstFile.checked() );
 
         autostartLayout->autoWarp.tapeFirstFile.setChecked(_settings->get<bool>("auto_warp_tape_first_file", false));
 

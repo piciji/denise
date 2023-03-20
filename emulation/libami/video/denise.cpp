@@ -16,6 +16,7 @@ Denise::Denise(System* system, Agnus& agnus, Input& input) : system(system), agn
     frameBuffer = new uint16_t[LINE_BUFFER_WIDTH * LINE_BUFFER_HEIGHT];
     linePtr = frameBuffer;
     lineCallback.use = false;
+    lineCallback.called = true;
     lineCallback.line = 0;
 }
 
@@ -137,10 +138,11 @@ auto Denise::startHblank() -> void {
             int width = hiresFrame ? (LINE_MAX_WIDTH << 1) : LINE_MAX_WIDTH;
             sanitizeCrop(width, lineVCounter);
 
-            system->videoRefresh(frameBuffer + LINE_RENDER_OFFSET, width, lineVCounter, LINE_BUFFER_WIDTH - width, laceMode);
+            system->videoRefresh(frameBuffer + LINE_RENDER_OFFSET, width, lineVCounter, LINE_BUFFER_WIDTH - width, laceMode | (hiresFrame ? 4 : 0));
         }
-    } else if (lineCallback.use && (lineVCounter == lineCallback.line)) {
-        system->videoMidScreenCallback(laceMode);
+    } else if (!lineCallback.called && (lineVCounter >= lineCallback.line)) {
+        system->videoMidScreenCallback(laceMode | (hiresFrame ? 4 : 0) );
+        lineCallback.called = true;
     }
 }
 
@@ -158,6 +160,8 @@ auto Denise::endHblank() -> void {
             laceMode = agnus.laceMode;
             if (laceMode & 2)
                 lineVCounter = 1;
+
+            lineCallback.called = !lineCallback.use;
         }
 
         if (lineVCounter >= LINE_BUFFER_HEIGHT) // could happen, if Agnus beam position has been changed
@@ -673,13 +677,18 @@ inline auto Denise::doubleLoresPixel(uint16_t* _ptr, unsigned _xStart) -> void {
 }
 
 auto Denise::updateCropTop() -> void {
-    if (!crop.top)
+    if (!crop.top) {
         crop.top = lineVCounter;
+        if (crop.top && (laceMode & 2))
+            crop.top -= 1;
+    }
 }
 
 auto Denise::updateCropBottom() -> void {
     if (!crop.bottom)
         crop.bottom = lineVCounter;
+    if (crop.bottom && (laceMode & 2))
+        crop.bottom -= 1;
 }
 
 auto Denise::updateCropLeft() -> void {

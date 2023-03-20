@@ -541,4 +541,9 @@ auto Interface::getForward() -> unsigned {
     return system->fastForward.config;
 }
 
+auto Interface::autoStartedByMediaGroup() -> MediaGroup* {
+
+    return getDiskMediaGroup();
+}
+
 }

@@ -42,7 +42,7 @@ struct Crop {
 	unsigned left;
 	unsigned right;
 		
-	auto updateBorder( ) -> bool {		
+	auto updateBorder(uint8_t options ) -> bool {
         
 		if ( settings.type == CropType::Off ) {
             top = left = right = bottom = 0;
@@ -60,19 +60,37 @@ struct Crop {
 			left = settings.left;
 			right = settings.left;
 			bottom = settings.left;
+
+            if (options & 3) {
+                top <<= 1;
+                bottom <<= 1;
+            }
+            if (options & 4) {
+                left <<= 1;
+                right <<= 1;
+            }
 			
 		} else if( settings.type == CropType::Free ) {			
 			top = settings.top;
 			left = settings.left;
 			right = settings.right;
 			bottom = settings.bottom;
+
+            if (options & 3) {
+                top <<= 1;
+                bottom <<= 1;
+            }
+            if (options & 4) {
+                left <<= 1;
+                right <<= 1;
+            }
 		}
 		return true;
 	}
 	
-	auto apply(T*& frame, unsigned& width, unsigned& height, unsigned& linePitch) -> void {
+	auto apply(T*& frame, unsigned& width, unsigned& height, unsigned& linePitch, uint8_t options = 0) -> void {
 		
-		if ( !updateBorder() ) {
+		if ( !updateBorder(options) ) {
             memoryLatest( frame, width, height, linePitch );
 			return;
 		}

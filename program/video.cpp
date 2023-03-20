@@ -60,12 +60,20 @@ auto Program::getVideoDriver() -> std::string {
 	return DRIVER::Video::preferred();
 }
 
-auto Program::midScreenCallback(uint8_t interlace) -> void {
+auto Program::midScreenCallback(uint8_t options) -> void {
 
-    activeVideoManager->renderMidScreen(interlace);
+    switch(options) {
+        case 0: activeVideoManager->renderMidScreen<0>(); break;
+        case 1: activeVideoManager->renderMidScreen<1>(); break;
+        case 2: activeVideoManager->renderMidScreen<2>(); break;
+
+        case 4: activeVideoManager->renderMidScreen<4>(); break;
+        case 5: activeVideoManager->renderMidScreen<5>(); break;
+        case 6: activeVideoManager->renderMidScreen<6>(); break;
+    }
 }
 
-auto Program::videoRefresh(const uint16_t* frame, unsigned width, unsigned height, unsigned linePitch, uint8_t interlace) -> void {
+auto Program::videoRefresh(const uint16_t* frame, unsigned width, unsigned height, unsigned linePitch, uint8_t options) -> void {
 
 	if (cmd->noGui)
 		return;
@@ -73,10 +81,14 @@ auto Program::videoRefresh(const uint16_t* frame, unsigned width, unsigned heigh
     statusHandler->updateFrameCounter();
 	
     if (frame) {
-        switch(interlace) {
-            case 0: activeVideoManager->renderFrame<uint16_t>(frame, width, height, linePitch); break;
-            case 1: activeVideoManager->renderFrame<uint16_t, true>(frame, width, height, linePitch); break;
-            case 2: activeVideoManager->renderFrame<uint16_t, true, true>(frame, width, height, linePitch); break;
+        switch(options) {
+            case 0: activeVideoManager->renderFrame<uint16_t, 0>(frame, width, height, linePitch); break;
+            case 1: activeVideoManager->renderFrame<uint16_t, 1>(frame, width, height, linePitch); break;
+            case 2: activeVideoManager->renderFrame<uint16_t, 2>(frame, width, height, linePitch); break;
+
+            case 4: activeVideoManager->renderFrame<uint16_t, 4>(frame, width, height, linePitch); break;
+            case 5: activeVideoManager->renderFrame<uint16_t, 5>(frame, width, height, linePitch); break;
+            case 6: activeVideoManager->renderFrame<uint16_t, 6>(frame, width, height, linePitch); break;
         }
     }
 }

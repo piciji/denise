@@ -349,6 +349,8 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
         statusHandler->resetFrameCounter();
 
         view->updateSpeedLabels();
+
+        view->updateDiskMenu();
 	}
 	
 	activeEmulator->power();
@@ -669,7 +671,11 @@ auto Program::initAutoWarp(Emulator::Interface::MediaGroup* mediaGroup, bool ini
 
     if (warp.enableAutoWarp) {
         if (mediaGroup->isDisk()) {
-            warp.motorControlled = !program->getSettings(activeEmulator)->get<bool>("auto_warp_disk_first_file", true);
+            if (dynamic_cast<LIBC64::Interface*>(activeEmulator))
+                warp.motorControlled = !program->getSettings(activeEmulator)->get<bool>("auto_warp_disk_first_file", true);
+            else
+                warp.motorControlled = true;
+
             warp.inputControlled = program->getSettings(activeEmulator)->get<bool>("auto_warp_off_input", false);
         } else {
             warp.motorControlled = !program->getSettings(activeEmulator)->get<bool>("auto_warp_tape_first_file", false);

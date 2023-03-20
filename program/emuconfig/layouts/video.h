@@ -43,11 +43,11 @@ struct VideoEncodingLayout : GUIKIT::FramedVerticalLayout {
     VideoEncodingLayout();
 };
 
-struct VideoHFLayout : GUIKIT::FramedVerticalLayout {
+struct VideoLumaDelayLayout : GUIKIT::FramedVerticalLayout {
     SliderLayout lumaRise;
     SliderLayout lumaFall;
-	
-	VideoHFLayout();
+
+    VideoLumaDelayLayout();
 };
 
 struct VideoFirSharpLayout : GUIKIT::HorizontalLayout {   
@@ -133,7 +133,7 @@ struct VideoLayout : GUIKIT::TabFrameLayout {
     GUIKIT::VerticalLayout tab1;
         VideoBaseLayout base;
         VideoEncodingLayout encoding;
-		VideoHFLayout hf;
+        VideoLumaDelayLayout lumaDelay;
 
     GUIKIT::VerticalLayout tab2;
         VideoGpuBaseLayout gpuBase;

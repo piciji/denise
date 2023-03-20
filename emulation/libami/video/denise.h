@@ -95,6 +95,7 @@ struct Denise {
     struct {
         bool use;
         unsigned line;
+        bool called;
     } lineCallback;
 
     uint8_t sprClxMask;

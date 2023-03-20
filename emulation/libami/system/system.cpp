@@ -28,11 +28,6 @@ input(this, agnus, cia1) {
     cia1.readPort = [this]( Cia<MOS_8520>::Port port, Cia<MOS_8520>::Lines* lines ) {
 
         if ( port == Cia<MOS_8520>::PORTA ) {
-            if (observer.inputFetches) {
-                if (!--observer.inputFetches)
-                    observer.stateChange = true;
-            }
-
             uint8_t out = input.readCiaPortA();
 
             for(auto& drive : diskDrives) {
@@ -239,9 +234,9 @@ auto System::setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> void 
     }
 }
 
-auto System::videoRefresh( uint16_t* frame, unsigned width, unsigned height, unsigned linePitch, uint8_t interlace) -> void {
+auto System::videoRefresh( uint16_t* frame, unsigned width, unsigned height, unsigned linePitch, uint8_t options) -> void {
     if (!runAhead.pos && frame) {
-        crop.apply( frame, width, height, linePitch );
+        crop.apply( frame, width, height, linePitch, options );
         // for lightguns
         // input.drawCursor();
     }
@@ -264,7 +259,7 @@ auto System::videoRefresh( uint16_t* frame, unsigned width, unsigned height, uns
     }
 
     if (!runAhead.pos) {
-        this->interface->videoRefresh(frame, width, height, linePitch, interlace);
+        this->interface->videoRefresh(frame, width, height, linePitch, options);
     }
 
     leaveEmulation = true;
@@ -276,13 +271,13 @@ auto System::audioRefresh(int16_t left, int16_t right) -> void {
     }
 }
 
-auto System::videoMidScreenCallback(uint8_t interlace) -> void {
+auto System::videoMidScreenCallback(uint8_t options) -> void {
     if (runAhead.pos)
         return;
 
   //  input.drawCursor(true);
 
-    interface->midScreenCallback(interlace);
+    interface->midScreenCallback(options);
 }
 
 auto System::setModel(uint8_t model) -> void {
@@ -428,10 +423,17 @@ auto System::getDrivesEnabled() -> uint8_t {
     return out;
 }
 
+auto System::observeInputFetches() -> void {
+    if (observer.inputFetches) {
+        if (!--observer.inputFetches)
+            observer.stateChange = true;
+    }
+}
+
 auto System::hintObserverMotorChange(bool state) -> void {
     if (!state) {
         for(auto& drive : diskDrives) {
-            if (drive.connected && drive.motor) {
+            if (drive.connected && drive.motor && drive.selected) {
                 state = true;
                 break;
             }

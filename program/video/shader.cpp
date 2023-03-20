@@ -178,7 +178,7 @@ auto Shader::loadInternal() -> void {
             internalPasses.push_back(pass);
         }
 
-        if (vManager->useRfModulation() ) {
+        if (vManager->useLumaDelay() ) {
             pass = new ShaderPass;
             addBaseProps(pass);
             pass->fragment = buildLumaLatency();
@@ -220,7 +220,7 @@ auto Shader::loadInternal() -> void {
 		pass->relativeHeight = 100;
 		internalPasses.push_back(pass);
 
-        if (vManager->scanlines && !vManager->lace.active) {
+        if (vManager->scanlines && !lace) {
             pass = new ShaderPass;
             pass->primary = false;
             addBaseProps(pass);
@@ -250,7 +250,7 @@ auto Shader::loadInternal() -> void {
             pass->fragment = buildBloom(true);
             pass->ident = "bloomPhase1";
             pass->relativeWidth = 100;
-            pass->relativeHeight = vManager->scanlines ? 100 : 200;
+            pass->relativeHeight = (vManager->scanlines || lace) ? 100 : 200;
             pass->filter = filter == 1 ? "linear" : "nearest";
             pass->mipmap = true;
             internalPasses.push_back(pass);
@@ -270,8 +270,9 @@ auto Shader::loadInternal() -> void {
         pass->primary = false;
         addBaseProps(pass);
 		pass->ident = "crop";
-        // remove first non visible line. it was needed as delay line to calculate first visible line
-        pass->crop.top = (vManager->scanlines || vManager->bloomGlow || vManager->lace.active) ? 2 : 1;
+        // remove first non visible line(s). it was needed as delay line to calculate first visible line
+        pass->crop.top = (vManager->scanlines || vManager->bloomGlow || lace) ? 2 : 1;
+        pass->crop.bottom = (vManager->scanlines && !lace) ? 1 : 0;
         // same here, we have some pixel offscreen to calculate bandwidth reduction
 		pass->crop.left = SHADER_OFFSCREEN_WIDTH << 1;
 		pass->crop.right = SHADER_OFFSCREEN_WIDTH << 1;
@@ -350,14 +351,16 @@ auto Shader::loadInternal() -> void {
 auto Shader::normaliseDimension( unsigned& widthScale, unsigned& heightScale ) -> void {
 
     if (vManager->crtMode == VideoManager::CrtMode::Gpu) {
-        if (vManager->scanlines || vManager->bloomGlow);
+        if (vManager->scanlines || vManager->bloomGlow || lace);
 		else
             heightScale <<= 1;            
     } else {            
         widthScale <<= 1;
 
-        if (!vManager->useCrtMode() || !vManager->scanlines) 
-            heightScale <<= 1;            
+        //if (!vManager->useCrtMode() || !vManager->scanlines)
+        if (vManager->scanlines || lace);
+        else
+            heightScale <<= 1;
     }
 }
 
@@ -680,9 +683,9 @@ auto Shader::buildOutputEncoding() -> std::string {
 //    )";
 	
     if (vManager->pal) {
-        if (vManager->lace.active) {
-            out += R"( int oddLineFrame = int((floor(texCoord.y * targetSize.y) >> 1) & 1); )"; // e, e, o, o, e, e, o, o, ...
-            out += "fragColor=vec4( mix(yuvOdd, yuvEven, oddLineFrame ^ oddLineI), 1.0 ); ";
+        if (lace) {
+            out += R"( int oddLineFrame = int(floor(mod(floor(texCoord.y * targetSize.y / 2.0), 2.0))); )"; // e, e, o, o, e, e, o, o, ...
+            out += "fragColor=vec4( mix(yuvOdd, yuvEven, oddLineFrame ^ oddLine), 1.0 ); ";
         } else {
             out += R"( int oddLineFrame = int(floor(mod(texCoord.y * targetSize.y, 2.0))); )";  // e, o, e, o, e, o, ...
             out += "fragColor=vec4( mix(yuvOdd, yuvEven, oddLineFrame ^ oddLine), 1.0 ); ";
@@ -969,9 +972,9 @@ auto Shader::buildDelayLineAndConvertToRgb() -> std::string {
 		
 	if (vManager->pal) {
 
-        if (vManager->lace.active)
+        if (lace)
             out += R"(
-				int lineFactor = int((floor(texCoord.y * targetSize.y) >> 1) & 1);
+				int lineFactor = int(floor(mod(floor(texCoord.y * targetSize.y / 2.0), 2.0)));
 				vec3 yuv = (texture(source[0], texCoord.xy).xyz);
 				vec3 yuvLineBefore = (texture(source[0], texCoord.xy + vec2(0.0, -2.0 / targetSize.y )).xyz);
 			)";
@@ -1282,7 +1285,7 @@ auto Shader::transferDelayLine() -> void {
 
     setAttribute("delayLine", "hanoverBars", _hanBar);
     setAttribute("delayLine", "hanoverBarsAlt", _hanBarAlt);
-    if (vManager->lace.active)
+    if (lace)
         setAttribute("delayLine", "oddLine", (int)((vManager->emulator->cropTop() >> 1) & 1));
     else
         setAttribute("delayLine", "oddLine", (int) (vManager->emulator->cropTop() & 1));
@@ -1290,7 +1293,7 @@ auto Shader::transferDelayLine() -> void {
 
 auto Shader::transferGammaAndScanlines() -> void {
     
-    if (vManager->scanlines) {
+    if (vManager->scanlines && !lace) {
         videoDriver->setShaderAttribute("scanlines", "gammaWithShade", &vManager->preCalcScanlineF[0], 512 * 3);    
         videoDriver->setShaderAttribute("scanlines", "gamma", &vManager->preCalcF[0], 256 * 3);
                
@@ -1305,7 +1308,7 @@ auto Shader::transferOutputEncoding() -> void {
 
     setAttribute("outputEncoding", "rotU", rotU);
     setAttribute("outputEncoding", "rotV", rotV);
-    if (vManager->lace.active)
+    if (lace)
         setAttribute("outputEncoding", "oddLine", (int)((vManager->emulator->cropTop() >> 1) & 1) );
     else
         setAttribute("outputEncoding", "oddLine", (int)(vManager->emulator->cropTop() & 1 ) );
@@ -1332,10 +1335,6 @@ auto Shader::transferNoise() -> void {
 }
 
 auto Shader::transferLumaLatency() -> void {
-        
-    if (!vManager->isC64())
-        return;
-    
 	setAttribute("lumaLatency", "lumaRise", vManager->lumaRise == 0.0 ? 1.0f : (float)vManager->lumaRise );
     setAttribute("lumaLatency", "lumaFall", vManager->lumaFall == 0.0 ? 1.0f : (float)vManager->lumaFall );   
 }
@@ -1373,7 +1372,7 @@ auto Shader::transferMaskTexture() -> void {
 	}
 	
 	if (useImage)
-		videoDriver->setShaderAttribute( "crtMask", "maskLayer", (uint32_t*)useImage->data, useImage->width, useImage->height );		
+		videoDriver->setShaderAttribute( "crtMask", "maskLayer", (uint32_t*)useImage->data, useImage->width, useImage->height );
 }
 
 auto Shader::transferMask() -> void {

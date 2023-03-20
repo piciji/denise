@@ -16,11 +16,14 @@ auto VideoManager::setSynchronize() -> void {
     if (!activeEmulator)
         return;
 
+    if (vrr && vsync)
+        vsync = false;
+
     if (audioDriver->hasSynchronized()) {
         if (vsync && adaptive) {
             if (!threadedRenderer) {
                 float monitorFrequency = GUIKIT::Monitor::getCurrentRefreshRate();
-                vrr = false;
+                // vrr = false;
                 float ratio = (float)audioManager->inputFPS / monitorFrequency;
                 float intpart;
                 float fractpart = std::modf (ratio, &intpart);

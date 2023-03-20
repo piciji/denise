@@ -37,6 +37,7 @@ auto Input::readDenisePortA() -> uint16_t {
 }
 
 auto Input::readDenisePortB() -> uint16_t {
+    system->observeInputFetches();
     jitPoll();
     uint16_t out = 0;
     out |= controlPort2->readDirection();
