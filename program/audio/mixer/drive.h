@@ -34,6 +34,8 @@ struct Drive {
         FloppyStepShort25, FloppyStepShort26, FloppyStepShort27, FloppyStepShort28, FloppyStepShort29, FloppyStepShort30, FloppyStepShort31, FloppyStepShort32,
         FloppyStepShort33, FloppyStepShort34, FloppyStepShort35, FloppyStepShort36, FloppyStepShort37, FloppyStepShort38, FloppyStepShort39, FloppyStepShort40,
         FloppyStepShort41, FloppyStepShort42,
+
+        FloppyStepSeek = 200,
     };
 
     struct Assign {
@@ -65,6 +67,7 @@ struct Drive {
         unsigned secondOffset;
         unsigned thirdOffset;
         uint8_t state;      // bit 0,1,2: step counter, bit 7: detach+attach
+        GUIKIT::Timer* stepSilence;
 
         Sound* steps[42];
         Sound* stepsShort[42];

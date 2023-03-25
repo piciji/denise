@@ -71,6 +71,8 @@ namespace Mixer {
         floppyAssigns.push_back( { DriveSound::FloppyStepShort37, "stepshort37" } ); floppyAssigns.push_back( { DriveSound::FloppyStepShort38, "stepshort38" } );
         floppyAssigns.push_back( { DriveSound::FloppyStepShort39, "stepshort39" } ); floppyAssigns.push_back( { DriveSound::FloppyStepShort40, "stepshort40" } );
         floppyAssigns.push_back( { DriveSound::FloppyStepShort41, "stepshort41" } ); floppyAssigns.push_back( { DriveSound::FloppyStepShort42, "stepshort42" } );
+
+        floppyAssigns.push_back( { DriveSound::FloppyStepSeek, "stepseek" } );
     }
 
     Drive::~Drive() {
@@ -164,7 +166,6 @@ namespace Mixer {
                 for (unsigned i = 0; i < bufferSize; i += 2) {
                     if (device.thirdOffset == sound->size) {
                         device.thirdOffset = 0;
-                        device.third = nullptr;
 
                         if (device.media->group->isTape()) {
                             if (device.state & 0x1f) {
@@ -178,7 +179,11 @@ namespace Mixer {
                             }
                         }
 
-                        break;
+                        if ( device.stepSilence && (device.third->id == FloppyStepSeek) );
+                        else {
+                            device.third = nullptr;
+                            break;
+                        }
                     }
 
                     _f = sound->data[device.thirdOffset++] * sound->volume;
@@ -216,7 +221,7 @@ namespace Mixer {
         }
 
         if (!device) {
-            devices.push_back({emulator, media, nullptr, nullptr,  nullptr, 0, 0, 0, 0});
+            devices.push_back({emulator, media, nullptr, nullptr,  nullptr, 0, 0, 0, 0, nullptr});
             device = &devices.back();
 
             if (media->group->isDisk())
@@ -288,7 +293,6 @@ namespace Mixer {
                         lastStep = Chronos::getTimestampInMilliseconds();
                         break;
                     }
-                  //  device->state &= ~7;
                 }
 
                 sound = device->steps[data >> 1];
@@ -299,25 +303,51 @@ namespace Mixer {
                     }
                 }
 
-                device->third = sound;
-                device->thirdOffset = 0;
                 ts = Chronos::getTimestampInMilliseconds();
                 delta = ts - lastStep;
 
-                if (delta < 12) {
-                    //stepCounts = (device->state + 1) & 7;
+                if (device->stepSilence) {
+                    Sound* soundSeek = nullptr;
+                    if ( (delta < 12) && device->third) {
+                        if (device->third->id != FloppyStepSeek) {
+                            soundSeek = getSound( FloppyStepSeek, emulator );
+                            if (soundSeek && soundSeek->data) {
+                                device->third = soundSeek;
+                                device->thirdOffset = 0;
+                                sound = nullptr;
+                            }
+                        } else {
+                            sound = nullptr;
+                            device->stepSilence->setEnabled();
+                        }
+                    } else {
+                        if (device->stepSilence->enabled())
+                            device->stepSilence->setEnabled(false);
+                    }
 
-                    //if (stepCounts > 2) {
+                    if (sound) {
+                        device->third = sound;
+                        device->thirdOffset = 0;
+                    }
+
+                } else { // Short
+                    device->third = sound;
+                    device->thirdOffset = 0;
+
+                    if (delta < 12) {
+                        //stepCounts = (device->state + 1) & 7;
+                        //if (stepCounts > 2) {
                         sound = device->stepsShort[data >> 1];
                         if (sound && sound->data) {
                             device->third = sound;
-                           // logger->log("short");
+                            // logger->log("short");
                         }
-                    //} else {
-                    //    device->state = (device->state & ~7) | stepCounts;
-                    //}
-                } //else
-                   // device->state &= ~7;
+                        //} else {
+                        //    device->state = (device->state & ~7) | stepCounts;
+                        //}
+                    } //else
+                    // device->state &= ~7;
+                }
 
                 lastStep = ts;
                 break;
@@ -634,6 +664,22 @@ namespace Mixer {
                 soundShort = device.stepsShort[t];
             }
         }
+
+        //device.fastStepMode = dynamic_cast<LIBC64::Interface*>( device.emulator ) ? FastStepMode::Short : FastStepMode::Seek;
+
+        if (dynamic_cast<LIBAMI::Interface*>( device.emulator ) && !device.stepSilence) {
+            device.stepSilence = new GUIKIT::Timer;
+
+            device.stepSilence->setInterval(30);
+            Device* _d = &device;
+            device.stepSilence->onFinished = [_d]() {
+                _d->stepSilence->setEnabled(false);
+                if (_d->third && _d->third->id == FloppyStepSeek) {
+                    _d->third = nullptr;
+                    _d->thirdOffset = 0;
+                }
+            };
+        }
     }
 
     auto Drive::reset(Emulator::Interface::MediaGroup* group) -> void {
@@ -646,6 +692,8 @@ namespace Mixer {
                 device.secondOffset = 0;
                 device.thirdOffset = 0;
                 device.state = 0;
+                if (device.stepSilence && device.stepSilence->enabled())
+                    device.stepSilence->setEnabled(false);
             }
         }
     }
