@@ -74,7 +74,7 @@ struct Hotkey {
         ToggleFastForward, ToggleFastForwardAggressive, Presentation, Palette, Border, System, Firmware, Control,
 		SwapInputDevices, Power, SoftReset, AnyLoad,
         RunAheadUp, RunAheadDown, RunAheadToggleMode, AudioRecord, ToggleCycleRenderer, EF3Menu, Freeze, ToggleBorder,
-        SyncStatus, ThreadedRenderer, ToggleCRTCPU, ToggleCRTGPU, DiskSwapUp, DiskSwapDown, DiskAutoStart,
+        SyncStatus, ThreadedRenderer, ToggleSCVideo, ToggleSCVideoGPU, DiskSwapUp, DiskSwapDown, DiskAutoStart,
         FastForward, FastForwardOff,
 
         Autofire = 1000,
@@ -148,7 +148,7 @@ struct InputManager {
 	static auto setHotkeys() -> void;
 	static auto setMappings() -> void;    
 	static auto autoAssignHotkeys() -> void;
-    static auto automap( KeyboardLayout::Type type, Emulator::Interface::Key key ) -> std::vector<std::vector<Hid::Key>>;
+    static auto automap( KeyboardLayout::Type type, Emulator::Interface::Key key, Emulator::Interface* emulator ) -> std::vector<std::vector<Hid::Key>>;
 	static auto bindHidsGlobal() -> void;
 	static auto capture(InputMapping* _captureObject) -> void;
     static auto capture( bool overwriteExisting = false ) -> bool;
@@ -171,6 +171,7 @@ struct InputManager {
     static auto preventSharingOfAutoFireMappings(InputMapping* captureObject, InputMapping::Assign& captureHid) -> void;
 	
     auto autoAssign( KeyboardLayout::Type type, bool keyboardOnly = true ) -> void;
+    auto autoAssign( Emulator::Interface::Device& device ) -> void;
 	auto addMapping(InputMapping* mapping) -> void;
     auto addMappingInUse(InputMapping* mapping) -> void;
     template<bool changeTrigger = false> auto update() -> void;

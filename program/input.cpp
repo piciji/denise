@@ -62,8 +62,20 @@ auto Program::informCapsLock(bool state) -> void {
 }
 
 auto Program::getDevice( Emulator::Interface* emulator, Emulator::Interface::Connector* connector ) -> Emulator::Interface::Device* {
-    
-    unsigned deviceId = getSettings(emulator)->get<unsigned>( _underscore(connector->name), 0);
+    unsigned defaultDevice = 0;
+
+    for(auto& device : emulator->devices) {
+        if (device.isJoypad() && connector->isPort2()) {
+            defaultDevice = device.id;
+            break;
+        }
+        if (device.isMouse() && dynamic_cast<LIBAMI::Interface*>( emulator ) && connector->isPort1()) {
+            defaultDevice = device.id;
+            break;
+        }
+    }
+
+    unsigned deviceId = getSettings(emulator)->get<unsigned>( _underscore(connector->name), defaultDevice);
     
     return emulator->getDevice( deviceId );      
 }

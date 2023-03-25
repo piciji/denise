@@ -44,9 +44,9 @@ struct InputControl : GUIKIT::HorizontalLayout {
 };
 
 struct InputMapControl : GUIKIT::HorizontalLayout {
+    GUIKIT::Button automap;
     GUIKIT::Label keyLayoutLabel;
     GUIKIT::ComboButton keyLayout;
-    GUIKIT::Button automap;
     SliderLayout analogSensitivity;
     GUIKIT::Button reset;
     
@@ -109,6 +109,7 @@ struct InputLayout : GUIKIT::VerticalLayout {
     auto updateAutofireFrequency() -> void;
     auto updateMiscSettings() -> void;
     auto updatedAutofireButtonHints() -> void;
+    auto isAutomapEnabled(Emulator::Interface::Device& device) -> bool;
 
     InputSelector selector;
     InputControl control;

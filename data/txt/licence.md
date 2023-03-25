@@ -18,7 +18,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
 
 # copyright holders
 
-* module "driver" is based of "ruby" used in actual higan, it's rewritten
+* module "driver" is based of "ruby" used in higan, it's rewritten
 * "Sid" emulation code, especially SID filter, is taken from VICE http://vice-emu.sourceforge.net
 * "VIC-II" cycle emulation code is based on VICE implementation http://vice-emu.sourceforge.net
 * Dynamic Rate Control (DRC) formula is copyrighted by RetroArch.
@@ -35,5 +35,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
 * Chamberlin Filter is copyrighted by Hoxs64.
 * fpaq0 - Stationary order 0 file compressor by Matt Mahoney
 * P64 format is copyrighted by BeRo
-* taken Floppy Sounds from Trackers-World.NET ([Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)) samples were cutted
-* Amiga Fonts is copyrighted by rewtnull https://github.com/rewtnull/amigafonts 
+* Floppy Sounds are taken from Trackers-World.NET ([Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)) samples were cutted
+* Amiga Fonts is copyrighted by rewtnull https://github.com/rewtnull/amigafonts
+* Amiga low pass audio filter is taken from WinUAE https://github.com/tonioni/WinUAE

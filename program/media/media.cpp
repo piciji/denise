@@ -201,7 +201,7 @@ auto MediaLayout::build() -> void {
 		bindSelectorAction( mediaGroupLayout );
     }
 
-    moduleFrame.append( mediaTree, { GUIKIT::Font::scale(170), GUIKIT::Font::scale(300)}, 10 );
+    moduleFrame.append( mediaTree, { GUIKIT::Font::scale(170), GUIKIT::Font::scale(300)}, dynamic_cast<LIBC64::Interface*>(emulator) ? 10 : 0 );
     if (dynamic_cast<LIBC64::Interface*>(emulator)) {
         moduleFrame.append(useTraps, {0u, 0u}, 10);
     }
@@ -1110,7 +1110,7 @@ auto MediaLayout::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* fil
     updateMediaBlock(block, fSetting);
     
     if (!fromState && mediaGroup->isDrive())
-        program->updateSaveIdent( emulator, fSetting->file );
+        program->updateSaveIdent( emulator, file );
 }
 
 auto MediaLayout::getMediaGroupLayout( Emulator::Interface::MediaGroup* mediaGroup ) -> MediaGroupLayout* {

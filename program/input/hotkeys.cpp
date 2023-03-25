@@ -29,8 +29,8 @@ auto InputManager::setHotkeys() -> void {
     hotkeys.push_back( {Hotkey::Id::SyncStatus, "Sync status"} );
     hotkeys.push_back( {Hotkey::Id::ThreadedRenderer, "Threaded Renderer"} );
 
-    hotkeys.push_back( {Hotkey::Id::ToggleCRTCPU, "toggle CRT CPU"} );
-    hotkeys.push_back( {Hotkey::Id::ToggleCRTGPU, "toggle CRT GPU"} );
+    hotkeys.push_back( {Hotkey::Id::ToggleSCVideo, "toggle S/C-Video"} );
+    hotkeys.push_back( {Hotkey::Id::ToggleSCVideoGPU, "toggle S/C-Video GPU"} );
 
     hotkeys.push_back( {Hotkey::Id::FloppyAccess, "select_disk_drive"} );
     hotkeys.push_back( {Hotkey::Id::DiskSwapUp, "Disk_swapper_up"} );
@@ -193,6 +193,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
         
 		case Hotkey::Id::SwapInputDevices: {
             emuThread->lock();
+            auto settings = program->getSettings( emulator );
 			auto connector1 = emulator->getConnector( 0 );
             auto connectedDevice1 = emulator->getConnectedDevice( connector1 );
             
@@ -258,6 +259,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
                 inputDriver->mAcquire();
             } else if (!program->isPause && program->isAnalogDeviceConnected()) {
                 inputDriver->mAcquire();
+                view->setFocused();
             }
             break;
         case Hotkey::Id::DiskSwapper:
@@ -301,19 +303,19 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             emuThread->lock();
             VideoManager::setSynchronize();
         } break;
-        case Hotkey::Id::ToggleCRTGPU:
+        case Hotkey::Id::ToggleSCVideoGPU:
             if(videoDriver->shaderFormat() != DRIVER::Video::ShaderType::GLSL)
                 break;
-        case Hotkey::Id::ToggleCRTCPU: {
+        case Hotkey::Id::ToggleSCVideo: {
             if (!activeEmulator)
                 break;
             emuThread->lock();
-            unsigned _mode = (id == Hotkey::Id::ToggleCRTCPU) ? (unsigned)VideoManager::CrtMode::Cpu : (unsigned)VideoManager::CrtMode::Gpu;
+            unsigned _mode = (id == Hotkey::Id::ToggleSCVideo) ? (unsigned)VideoManager::CrtMode::Cpu : (unsigned)VideoManager::CrtMode::Gpu;
             unsigned _current = settings->get<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::None);
 
-            if (id == Hotkey::Id::ToggleCRTCPU && _current == (unsigned)VideoManager::CrtMode::Cpu) {
+            if (id == Hotkey::Id::ToggleSCVideo && _current == (unsigned)VideoManager::CrtMode::Cpu) {
                 _mode = (unsigned)VideoManager::CrtMode::None;
-            } else if (id == Hotkey::Id::ToggleCRTGPU && _current == (unsigned)VideoManager::CrtMode::Gpu) {
+            } else if (id == Hotkey::Id::ToggleSCVideoGPU && _current == (unsigned)VideoManager::CrtMode::Gpu) {
                 _mode = (unsigned)VideoManager::CrtMode::None;
             }
 
@@ -558,6 +560,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
 
         case Hotkey::DiskAutoStart: {
             emuThread->lock();
+            auto settings = program->getSettings( emulator );
             auto mediaId = settings->get<unsigned>("access_floppy", 0u, {0u, 3u});
             auto media = emulator->getEnabledDisk(mediaId);
 
@@ -761,7 +764,7 @@ auto InputManager::activateHotkey(Hotkey::Id id, Emulator::Interface* emulator) 
 		
 		for( auto mapping : manager->mappings ) {
 			
-			if (mapping->emuDevice)
+			if (mapping->emuDevice || (mapping->inputManager->emulator != emulator) )
 				continue;
 			
 			if (mapping->hotkeyId == id) {

@@ -668,7 +668,10 @@ auto Fileloader::autoload(Emulator::Interface* emulator, Emulator::Interface::Me
     }
 
     auto useExpansion = emulator->getExpansion();
-    if (trapped && (useExpansion && !useExpansion->isEmpty()))
+
+    if (!dynamic_cast<LIBC64::Interface*>(emulator) )
+        trapped = false;
+    else if (trapped && (useExpansion && !useExpansion->isEmpty()))
         trapped = false;
 
     bool trapsWithSpeeder = trapped && mediaGroup->isDisk() && settings->get<bool>("autostart_speeder_traps", false);
@@ -688,8 +691,10 @@ auto Fileloader::autoload(Emulator::Interface* emulator, Emulator::Interface::Me
 
     if (emuView) {
         auto fSetting = FileSetting::getInstance(emulator, _underscore(media->name) );
-        if (fSetting)
-            program->updateSaveIdent(emulator, fSetting->file);
+        if (fSetting) {
+            GUIKIT::File temp( fSetting->path );
+            program->updateSaveIdent(emulator, &temp);
+        }
     }
 
     if (mediaGroup->isTape())
@@ -752,7 +757,7 @@ auto Fileloader::insertImage(Emulator::Interface* emulator, Emulator::Interface:
             States::getInstance(emulator)->forcePowerNextLoad = true;
 
         if (!fromState && mediaGroup->isDrive())
-            program->updateSaveIdent( emulator, fSetting->file );
+            program->updateSaveIdent( emulator, file );
     }
 }
 

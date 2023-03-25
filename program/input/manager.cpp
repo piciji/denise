@@ -90,22 +90,18 @@ template<bool changeTrigger> auto InputManager::update() -> void {
     unsigned ignoreBelow = 0;
     std::vector<InputMapping*> shadows;
     std::vector<InputMapping*> illegals;
+    std::vector<InputMapping*> changed;
     bool hasShadow = false;
     bool hasIllegal = false;
     bool aSwitch;
     unsigned hidSize;
-    uint8_t changeState;
     uiMouse.updated = false;
     InputMapping* useMapping;
     Emulator::Interface::Device* emuDevice;
 	
     updateAndTrigger();    
     
-	for(auto mapping : mappingsInUse) {		       
-
-        if constexpr (changeTrigger)
-            changeState = 0;
-
+	for(auto mapping : mappingsInUse) {
         useMapping = mapping;
         if (mapping->parent)
             useMapping = mapping->parent;
@@ -117,7 +113,7 @@ template<bool changeTrigger> auto InputManager::update() -> void {
 
             if constexpr (changeTrigger) {
                 if (useMapping->state)
-                    changeState = 1;
+                    changed.insert(changed.begin(), useMapping);
             }
 
             useMapping->state = 0;
@@ -200,13 +196,18 @@ template<bool changeTrigger> auto InputManager::update() -> void {
                         emuThread->lockHotkeys();
                         hotkeyTriggers.push_back(useMapping);
                         emuThread->unlockHotkeys();
+                        if constexpr (changeTrigger)
+                            activeEmulator->sendKeyChange(0, nullptr);
                         break;
                     } else if (useMapping->autoFire && Program::focused) {
                         handleAutofire(mapping, useMapping, mapping->adjustDigitalValue<true>(hid) == 0);
                     } else {
                         useMapping->state = value;
-                        if constexpr (changeTrigger)
-                            changeState ^= 0x81;
+                        if constexpr (changeTrigger) {
+                            if (!GUIKIT::Vector::eraseVectorElement(changed, useMapping)) {
+                                changed.push_back(useMapping);
+                            }
+                        }
                     }
 
                     if (useMapping->illegalMapping && !oppositeDirections) {
@@ -265,12 +266,16 @@ template<bool changeTrigger> auto InputManager::update() -> void {
                     emuThread->lockHotkeys();
                     hotkeyTriggers.push_back(useMapping);
                     emuThread->unlockHotkeys();
+                    if constexpr (changeTrigger)
+                        activeEmulator->sendKeyChange(0, nullptr);
                 } else if (useMapping->autoFire && Program::focused) {
                     handleAutofire(mapping, useMapping, atLeastOneKeyHasSwitched);
                 } else {
                     useMapping->state = 1;
-                    if constexpr (changeTrigger)
-                        changeState ^= 0x81;
+                    if constexpr (changeTrigger) {
+                        if (!GUIKIT::Vector::eraseVectorElement(changed, useMapping))
+                            changed.push_back(useMapping);
+                    }
                 }
 
                 for (auto shadow : useMapping->shadowMap) {
@@ -287,18 +292,6 @@ template<bool changeTrigger> auto InputManager::update() -> void {
 		}
         
         Next:
-        if constexpr (changeTrigger) {
-            if (changeState & 1) {
-                if (!aSwitch && useMapping->emuDevice->isKeyboard()) {
-                    //statusHandler->setMessage(changeState & 0x80 ? "press" : "release");
-                    if (useMapping->shadowMap.size()) {
-                        for (auto shadow: useMapping->shadowMap)
-                            activeEmulator->sendKeyChange(changeState & 0x80, shadow->emuInput);
-                    } else
-                        activeEmulator->sendKeyChange(changeState & 0x80, useMapping->emuInput);
-                }
-            }
-        }
         continue;
 	}
 
@@ -306,6 +299,14 @@ template<bool changeTrigger> auto InputManager::update() -> void {
         if (hasShadow) {
             for (auto shadow: shadows)
                 shadow->state = shadow->virtualLinked->state;
+        }
+    } else {
+        for(auto cMapping : changed) {
+            if (cMapping->shadowMap.size()) {
+                for (auto shadow: cMapping->shadowMap)
+                    activeEmulator->sendKeyChange(cMapping->state, shadow->emuInput);
+            } else
+                activeEmulator->sendKeyChange(cMapping->state, cMapping->emuInput);
         }
     }
 

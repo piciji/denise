@@ -30,7 +30,7 @@ struct Keyboard {
     Keyboard(Emulator::Interface* interface, Agnus& agnus, Cia<MOS_8520>& cia);
     Agnus& agnus;
     Cia<MOS_8520>& cia;
-    uint64_t handshakeClock;
+    int64_t handshakeClock;
     uint8_t shiftOut;
     uint8_t shiftPos;
     uint8_t curCode;

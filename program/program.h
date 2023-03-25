@@ -119,13 +119,13 @@ struct Program : Emulator::Interface::Bind {
     auto errorMediumSize(GUIKIT::File* file, Message* message ) -> void;
     auto errorFirmwareSize(GUIKIT::File::Item* item, Message* message ) -> void;
     auto setExpansionSelection( Emulator::Interface* emulator ) -> void;
-    auto updateSaveIdent(Emulator::Interface::Media* media, std::string file = "") -> void;
+    auto updateSaveIdent(Emulator::Interface::Media* media, GUIKIT::File* file = nullptr) -> void;
 	auto getLastUsedEmu() -> Emulator::Interface*;
 	auto getEmulator( std::string ident ) -> Emulator::Interface*;
     auto removeExpansion( bool bootableOnly = true ) -> void;
     auto prepareSocket(Emulator::Interface::Media* media, Emulator::Interface* emulator, std::string address) -> void;
     auto initAutoWarp(Emulator::Interface::MediaGroup* mediaGroup, bool initOnly = false) -> void;
-    auto updateSaveIdent(Emulator::Interface* emulator, std::string fileName) -> void;
+    auto updateSaveIdent(Emulator::Interface* emulator, GUIKIT::File* file) -> void;
     auto initUserInterface() -> void;
     
     //audio

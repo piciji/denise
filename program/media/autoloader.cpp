@@ -41,7 +41,7 @@ auto Autoloader::postProcessing() -> void {
     
     if (ddControl.saveFile) {
 
-        program->updateSaveIdent( ddControl.emulator, ddControl.saveFile->getFileName( false ) );
+        program->updateSaveIdent( ddControl.emulator, ddControl.saveFile );
 
         filePool->assign("savestate", nullptr);
         
@@ -116,6 +116,9 @@ auto Autoloader::postProcessing() -> void {
                 trapped = settings->get<bool>("autostart_tape_traps_on_dblclick", false);
         }
     }
+
+    if (!dynamic_cast<LIBC64::Interface*>(ddControl.emulator) )
+        trapped = false;
 
     if (trapped) // traps require standard kernals
         forceStandardKernal = true;
@@ -221,8 +224,10 @@ auto Autoloader::postProcessing() -> void {
             fSetting = FileSetting::getInstance( ddControl.emulator, _underscore(mediaGroup->media[0].name) );
         }
         
-        if (fSetting)
-            program->updateSaveIdent( ddControl.emulator, fSetting->file);
+        if (fSetting) {
+            GUIKIT::File temp(fSetting->path);
+            program->updateSaveIdent(ddControl.emulator, &temp);
+        }
         
 		if (view) {
 			if (mediaGroup->isTape())

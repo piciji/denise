@@ -76,9 +76,9 @@ InputControl::InputControl() {
 }
 
 InputMapControl::InputMapControl() : analogSensitivity("%") {
+    append(automap, {0u, 0u}, 5);
     append(keyLayoutLabel, {0u, 0u}, 5);
     append(keyLayout, {0u, 0u}, 10);
-    append(automap, {0u, 0u}, 10);
     append(analogSensitivity, {~0u, 0u}, 10);
     append(reset, {0u, 0u});    
     
@@ -265,10 +265,14 @@ InputLayout::InputLayout(TabWindow* tabWindow) : autofireControl(tabWindow->emul
     };
 
     mapControl.automap.onActivate = [&]() {
-        
+        if (hotkeyMode())
+            return;
+
         auto selection = mapControl.keyLayout.selection();
+
+        auto& device = emulator->devices[ deviceId() ];
         
-        if (hotkeyMode() || selection == 0)
+        if (!isAutomapEnabled(device))
             return;
         
         if ( mes->question( trans->get("layout_map_question") ) ) {
@@ -277,9 +281,12 @@ InputLayout::InputLayout(TabWindow* tabWindow) : autofireControl(tabWindow->emul
             InputManager::getManager( this->emulator )->unmapDevice( deviceId() );                
             
             auto type = mapControl.keyLayout.userData( selection );
-            
-            InputManager::getManager( this->emulator )->autoAssign( (KeyboardLayout::Type)type, true );
-            
+
+            if (device.isKeyboard())
+                InputManager::getManager( this->emulator )->autoAssign( (KeyboardLayout::Type)type, true );
+            else
+                InputManager::getManager( this->emulator )->autoAssign( device );
+
             InputManager::getManager( this->emulator )->updateMappingsInUse();
             
             update();
@@ -485,11 +492,18 @@ auto InputLayout::loadInputList(unsigned deviceId) -> void {
     inputList.unlockRedraw();
     
     mapControl.keyLayout.setEnabled( device.isKeyboard() );    
-    mapControl.automap.setEnabled( device.isKeyboard() && mapControl.keyLayout.selection() != 0 );
+    mapControl.automap.setEnabled( isAutomapEnabled(device) );
     
     updateConnectorButtons();
     enableConnectorButtons();
     updateAnalogSensitivity();
+}
+
+auto InputLayout::isAutomapEnabled(Emulator::Interface::Device& device) -> bool {
+    if (device.isKeyboard())
+        return mapControl.keyLayout.selection() != 0;
+
+    return device.isMouse() || device.isLightDevice() || device.isPaddles();
 }
 
 auto InputLayout::loadHotkeyList() -> void {
@@ -620,7 +634,7 @@ auto InputLayout::translate() -> void {
     
     mapControl.keyLayoutLabel.setText( trans->get("layout", {}, true) );
     mapControl.keyLayout.setTooltip( trans->get("keyboard_layout_tip") );
-    mapControl.automap.setText( trans->get("assign") );
+    mapControl.automap.setText( trans->get("automap") );
     mapControl.analogSensitivity.name.setText( trans->get("analog_sensitivity", {}, true) );
     
     assigner.overwriteRadio.setText( trans->get("overwrite") );
@@ -628,7 +642,7 @@ auto InputLayout::translate() -> void {
     assigner.assignLabel.setText( trans->get("assignment", {}, true) );
     
     unsigned i = 0;
-    mapControl.keyLayout.setText( i++, trans->get("generic"));
+    mapControl.keyLayout.setText( i++, trans->get("positional"));
     for ( auto& keyboardLayout : InputManager::keyboardLayouts ) {
         mapControl.keyLayout.setText( i++, trans->get( keyboardLayout.language ) + " ( " + keyboardLayout.code + " )" );
     }

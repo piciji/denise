@@ -161,6 +161,20 @@ auto Keyboard::reset() -> void {
 }
 
 auto Keyboard::sendKeyChange(bool pressed, Emulator::Interface::Device::Input* input) -> void {
+    if (!input) {
+        for(int i = 0; i < sizeof(keyState); i++) { // release all
+            if (keyState[i]) {
+                if (agnus.hasActiveEvent<Agnus::EVENT_KBD>())
+                    queue.write(0x80 | i);
+                else
+                    sendCode(0x80 | i);
+
+                keyState[i] = 0;
+            }
+        }
+        return;
+    }
+
     uint8_t stroke = keymap[input->id];
 
     if (pressed) {

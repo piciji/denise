@@ -1,26 +1,24 @@
 
 VideoModeLayout::VideoModeLayout(bool withSpectrum) {
-    
     if (withSpectrum) {
         append(palette,{0u, 0u}, 10);
         append(spectrum,{0u, 0u}, 20);
     }
     
-    append(crtNone,{0u, 0u}, 10);
-    append(crtCpu,{0u, 0u}, 10);
-    append(crtGpu,{0u, 0u});    
+    append(rgb,{0u, 0u}, 10);
+    append(svideoCpu,{0u, 0u}, 10);
+    append(svideoGpu,{0u, 0u});
     	
     append(spacer,{~0u, 0u});
     append(reset,{0u, 0u});
 
     GUIKIT::RadioBox::setGroup(palette, spectrum);
-    GUIKIT::RadioBox::setGroup(crtNone, crtCpu, crtGpu);    
+    GUIKIT::RadioBox::setGroup(rgb, svideoCpu, svideoGpu);
 
     setAlignment(0.5);
 }
 
 VideoOptionLayout::VideoOptionLayout(bool withSpectrum) {
-    
     if (withSpectrum) {
         append(newLuma, {0u, 0u}, 10);    	    
         append(tvGamma, {0u, 0u}, 10);
@@ -38,8 +36,7 @@ mode(withSpectrum),
 option(withSpectrum),
 phase("°", false),
 scanlines("%", true),
-interlace("%", true)
-{
+interlace("%", true) {
     append(mode, {~0u, 0u}, 2);
     append(option, {~0u, 0u}, 2);
         
@@ -69,8 +66,7 @@ interlace("%", true)
 VideoEncodingLayout::VideoEncodingLayout() :
 phaseError("°", true),
 hanoverBars("%", true),
-blur("%", true)
-{
+blur("%", true) {
     append(phaseError,{~0u, 0u}, 2);
     append(hanoverBars,{~0u, 0u}, 2);
     append(blur,{~0u, 0u});
@@ -85,8 +81,7 @@ blur("%", true)
 
 VideoLumaDelayLayout::VideoLumaDelayLayout() :
 lumaRise("px", true),
-lumaFall("px", true)
-{
+lumaFall("px", true) {
 	append(lumaRise,{~0u, 0u}, 2);
     append(lumaFall,{~0u, 0u});
 	
@@ -97,8 +92,7 @@ lumaFall("px", true)
     setPadding(8);
 }
 
-VideoFirSharpLayout::VideoFirSharpLayout() {
-    
+VideoSubsamplingLayout::FirSharpLayout::FirSharpLayout() {
     append(sharpLeft, {0u, 0u}, 10);
     append(natural, {0u, 0u}, 10);
     append(sharpRight, {0u, 0u});
@@ -108,11 +102,25 @@ VideoFirSharpLayout::VideoFirSharpLayout() {
     setAlignment(0.5);
 }
 
-VideoGpuOptionLayout::VideoGpuOptionLayout() {
+VideoGpuMiscLayout::Options::Options() {
     append(hires, {0u, 0u}, 15);
     append(distortionHires, {0u, 0u});
     
     setAlignment(0.5);
+}
+
+VideoGpuMiscLayout::VideoGpuMiscLayout() :
+luminance("%", false),
+lightFromCenter("%", true) {
+    append(options, {~0u, 0u}, 3);
+    append(lightFromCenter, {~0u, 0u}, 2);
+    append(luminance, {~0u, 0u});
+
+    lightFromCenter.slider.setLength(301);
+    luminance.slider.setLength(501);
+
+    setPadding(8);
+    setFont(GUIKIT::Font::system("bold"));
 }
 
 VideoMaskTypeLayout::VideoMaskTypeLayout() {
@@ -126,20 +134,13 @@ VideoMaskTypeLayout::VideoMaskTypeLayout() {
     setAlignment(0.5);
 }
 
-VideoGpuBaseLayout::VideoGpuBaseLayout() :
-firFilter("", false),
-luminance("%", false),
-lightFromCenter("%", true) {    
-    append(option, {~0u, 0u}, 3);
+VideoSubsamplingLayout::VideoSubsamplingLayout() :
+firFilter("", false) {
     append(firSharp, {~0u, 0u}, 2);
     append(firFilter, {~0u, 0u}, 2);
-    append(lightFromCenter, {~0u, 0u}, 2);
-    append(luminance, {~0u, 0u});  
-    
+
     firFilter.slider.setLength(11);
-    lightFromCenter.slider.setLength(301);
-    luminance.slider.setLength(501);
-    
+
     setPadding(8);
     setFont(GUIKIT::Font::system("bold"));  
 }
@@ -243,8 +244,9 @@ base( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) )
     tab1.append(base, {~0u, 0u}, 5);
     tab1.append(encoding, {~0u, 0u}, 5);
 	tab1.append(lumaDelay, {~0u, 0u});
-    
-    tab2.append(gpuBase, {~0u, 0u}, 10);
+
+    tab2.append(gpuMisc, {~0u, 0u}, 10);
+    tab2.append(subsampling, {~0u, 0u}, 10);
     tab2.append(mask, {~0u, 0u}, 10);
 	tab2.append(bloom, {~0u, 0u});    
         
@@ -276,7 +278,7 @@ base( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) )
     setSliderAction<unsigned>( &mask.level, "mask_level", [this](unsigned value) { vManager()->setMaskLevel( value ); },
         [this](unsigned position) { return std::max(position, 1u); } );
     setSliderAction<unsigned>( &mask.luminance, "mask_luminance", [this](unsigned value) { vManager()->setMaskLuminance( value ); } );
-    setSliderAction<unsigned>( &gpuBase.firFilter, "fir_filter_length", [this](unsigned value) { vManager()->setFirFilterLength( value ); },
+    setSliderAction<unsigned>( &subsampling.firFilter, "fir_filter_length", [this](unsigned value) { vManager()->setFirFilterLength( value ); },
         [this](unsigned position) { return position * 2 + 1; } );  
     setSliderAction<float>( &crtGlitch.lumaNoise, "luma_noise", [this](float value) { vManager()->setLumaNoise( value ); },
         [this](unsigned position) { return (float)std::max(position, 1u) / 10.0f; });
@@ -298,9 +300,9 @@ base( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) )
         [this](unsigned position) { return ((float)std::max(position, 1u) / 10.0f) + 1.0f; } );
     setSliderAction<float>( &lumaDelay.lumaFall, "luma_fall", [this](float value) { vManager()->setLumaFall( value ); },
         [this](unsigned position) { return ((float)std::max(position, 1u) / 10.0f) + 1.0f; } );
-    setSliderAction<unsigned>( &gpuBase.lightFromCenter, "light_from_center", [this](unsigned value) { vManager()->setLightFromCenter( value ); },
+    setSliderAction<unsigned>( &gpuMisc.lightFromCenter, "light_from_center", [this](unsigned value) { vManager()->setLightFromCenter( value ); },
         [this](unsigned position) { return std::max(position, 1u); } );
-    setSliderAction<unsigned>( &gpuBase.luminance, "luminance", [this](unsigned value) { vManager()->setLuminance( value ); } );
+    setSliderAction<unsigned>( &gpuMisc.luminance, "luminance", [this](unsigned value) { vManager()->setLuminance( value ); } );
 	setSliderAction<unsigned>( &bloom.glow, "bloom_glow", [this](unsigned value) { vManager()->setBloomGlow( value ); },
         [this](unsigned position) { return std::max(position, 1u); } );
 	setSliderAction<float>( &bloom.variance, "bloom_variance", [this](float value) { vManager()->setBloomVariance( value ); },
@@ -367,7 +369,7 @@ base( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) )
         emuThread->unlock();
     };       
 
-    base.mode.crtNone.onActivate = [this]() {
+    base.mode.rgb.onActivate = [this]() {
         _settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::None);
         emuThread->lock();
         program->fastForward( false );
@@ -375,7 +377,7 @@ base( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) )
         emuThread->unlock();
     };
     
-    base.mode.crtCpu.onActivate = [this]() {
+    base.mode.svideoCpu.onActivate = [this]() {
         _settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::Cpu);
         emuThread->lock();
         program->fastForward( false );
@@ -383,37 +385,37 @@ base( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) )
         emuThread->unlock();
     };
     
-    base.mode.crtGpu.onActivate = [this]() {
+    base.mode.svideoGpu.onActivate = [this]() {
         _settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::Gpu);
         emuThread->lock();
         program->fastForward( false );
 		updatePresets();
         emuThread->unlock();
-    };    
-    
-    gpuBase.option.distortionHires.onToggle = [this](bool checked) {
+    };
+
+    gpuMisc.options.distortionHires.onToggle = [this](bool checked) {
         _settings->set<bool>("video_distortion_hires" + this->sliderIdent(), checked);
         vManager()->updateData<bool>("distortion_hires", checked);
     };
-    
-    gpuBase.option.hires.onToggle = [this](bool checked) {
+
+    gpuMisc.options.hires.onToggle = [this](bool checked) {
         _settings->set<bool>("video_hires" + this->sliderIdent(), checked);
         vManager()->updateData<bool>("hires", checked);
     };
-	
-    gpuBase.firSharp.sharpLeft.onActivate = [this]() {
+
+    subsampling.firSharp.sharpLeft.onActivate = [this]() {
         
         _settings->set<int>("video_fir_filter_sharp" + this->sliderIdent(), -1);
         vManager()->updateData<int>("fir_filter_sharp", -1);
     };
 
-    gpuBase.firSharp.sharpRight.onActivate = [this]() {
+    subsampling.firSharp.sharpRight.onActivate = [this]() {
 
         _settings->set<int>("video_fir_filter_sharp" + this->sliderIdent(), 1);
         vManager()->updateData<int>("fir_filter_sharp", 1);
     };
 
-    gpuBase.firSharp.natural.onActivate = [this]() {
+    subsampling.firSharp.natural.onActivate = [this]() {
 
         _settings->set<int>("video_fir_filter_sharp" + this->sliderIdent(), 0);
         vManager()->updateData<int>("fir_filter_sharp", 0);
@@ -453,7 +455,7 @@ template<typename T> auto VideoLayout::setSliderAction( SliderLayout* layout, st
             if (layout == &mask.level) {                
                 mask.setEnabled( checked );
                 layout->active.setEnabled();
-                gpuBase.luminance.setEnabled( !checked );
+                gpuMisc.luminance.setEnabled( !checked );
             } else if (layout == &bloom.glow) {
                 bloom.setEnabled( checked );
                 layout->active.setEnabled();	
@@ -530,18 +532,18 @@ auto VideoLayout::updatePresets(bool reloadDriver) -> void {
     lumaDelay.lumaFall.value.setText( GUIKIT::String::formatFloatingPoint(_lumaFall, 1) + " px" );
 
     // shader features    
-    crtGlitch.chromaNoise.active.setChecked( _useChromaNoise );	
+    crtGlitch.chromaNoise.active.setChecked( _useChromaNoise );
     crtGlitch.chromaNoise.slider.setPosition( (unsigned)(_chromaNoise * 10.0) );
     crtGlitch.chromaNoise.value.setText( GUIKIT::String::formatFloatingPoint(_chromaNoise, 1) + " %" );
     crtGlitch.lumaNoise.active.setChecked(_useLumaNoise);
     crtGlitch.lumaNoise.slider.setPosition((unsigned)(_lumaNoise * 10.0));
-    crtGlitch.lumaNoise.value.setText(GUIKIT::String::formatFloatingPoint(_lumaNoise, 1) + " %");    
-    crtGlitch.radialDistortion.active.setChecked( _useRadialDistortion );	
+    crtGlitch.lumaNoise.value.setText(GUIKIT::String::formatFloatingPoint(_lumaNoise, 1) + " %");
+    crtGlitch.radialDistortion.active.setChecked( _useRadialDistortion );
     crtGlitch.radialDistortion.slider.setPosition( _radialDistortion );
     crtGlitch.radialDistortion.value.setText( std::to_string(_radialDistortion) + " %" );
-    crtGlitch.randomLineOffset.active.setChecked( _useRandomLineOffset );	
+    crtGlitch.randomLineOffset.active.setChecked( _useRandomLineOffset );
     crtGlitch.randomLineOffset.slider.setPosition( (unsigned)(_randomLineOffset * 100.0) );
-    crtGlitch.randomLineOffset.value.setText( GUIKIT::String::formatFloatingPoint(_randomLineOffset, 2) + " %" );   
+    crtGlitch.randomLineOffset.value.setText( GUIKIT::String::formatFloatingPoint(_randomLineOffset, 2) + " %" );
     
 	mask.level.active.setChecked( _useMaskLevel );
     mask.level.slider.setPosition( _maskLevel );
@@ -579,23 +581,23 @@ auto VideoLayout::updatePresets(bool reloadDriver) -> void {
     vicIIGlitch.cas.active.setChecked( _useCasGlitch );	
     vicIIGlitch.cas.slider.setPosition( (unsigned)(_casGlitch * 10.0) );
     vicIIGlitch.cas.value.setText( GUIKIT::String::formatFloatingPoint(_casGlitch, 1) + " %" );
-    
-    gpuBase.option.distortionHires.setChecked( _distortionHires );
-    gpuBase.option.hires.setChecked( _hires );
-    gpuBase.luminance.slider.setPosition( _luminance );
-    gpuBase.luminance.value.setText( std::to_string(_luminance) + " %" );
-    gpuBase.lightFromCenter.active.setChecked( _useLightFromCenter );	
-    gpuBase.lightFromCenter.slider.setPosition( _lightFromCenter );
-    gpuBase.lightFromCenter.value.setText( std::to_string(_lightFromCenter) + " %" );    
-    gpuBase.firFilter.slider.setPosition( (unsigned)(_firFilterLength / 2) );
-    gpuBase.firFilter.value.setText( std::to_string( _firFilterLength ) );
+
+    gpuMisc.options.distortionHires.setChecked( _distortionHires );
+    gpuMisc.options.hires.setChecked( _hires );
+    gpuMisc.luminance.slider.setPosition( _luminance );
+    gpuMisc.luminance.value.setText( std::to_string(_luminance) + " %" );
+    gpuMisc.lightFromCenter.active.setChecked( _useLightFromCenter );
+    gpuMisc.lightFromCenter.slider.setPosition( _lightFromCenter );
+    gpuMisc.lightFromCenter.value.setText( std::to_string(_lightFromCenter) + " %" );
+    subsampling.firFilter.slider.setPosition( (unsigned)(_firFilterLength / 2) );
+    subsampling.firFilter.value.setText( std::to_string( _firFilterLength ) );
     
     if (_firFilterSharp == -1)
-        gpuBase.firSharp.sharpLeft.setChecked();
+        subsampling.firSharp.sharpLeft.setChecked();
     else if (_firFilterSharp == 1)
-        gpuBase.firSharp.sharpRight.setChecked();
+        subsampling.firSharp.sharpRight.setChecked();
     else
-        gpuBase.firSharp.natural.setChecked();
+        subsampling.firSharp.natural.setChecked();
         
     if ( _maskType == (unsigned)VideoManager::MaskType::ShadowMask )    
         mask.type.shadowMask.setChecked();
@@ -622,8 +624,8 @@ auto VideoLayout::updateVisibillity() -> void {
     base.scanlines.slider.setEnabled( base.scanlines.active.checked() );
     base.interlace.slider.setEnabled( base.interlace.active.checked() );
 		
-    bool crtChecked = base.mode.crtCpu.checked() || base.mode.crtGpu.checked();
-    bool crtGpuChecked = base.mode.crtGpu.checked();
+    bool crtChecked = base.mode.svideoCpu.checked() || base.mode.svideoGpu.checked();
+    bool crtGpuChecked = base.mode.svideoGpu.checked();
 
     encoding.setEnabled( crtChecked );
     lumaDelay.setEnabled( (isC64 && crtChecked) || crtGpuChecked );
@@ -645,10 +647,10 @@ auto VideoLayout::updateVisibillity() -> void {
     if (videoDriver->shaderFormat() != DRIVER::Video::ShaderType::GLSL) {
         if (videoDriver->shaderFormat() == DRIVER::Video::ShaderType::HLSL) {
             if(crtGpuChecked) {
-                base.mode.crtCpu.setChecked();
+                base.mode.svideoCpu.setChecked();
                 _settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::Cpu);
             }
-			base.mode.crtGpu.setEnabled(false);
+			base.mode.svideoGpu.setEnabled(false);
         }
                     
         tab2.setEnabled(false);
@@ -656,32 +658,33 @@ auto VideoLayout::updateVisibillity() -> void {
         return;
     }
     
-    base.mode.crtGpu.setEnabled();
+    base.mode.svideoGpu.setEnabled();
     tab2.setEnabled(crtGpuChecked);
     tab3.setEnabled(crtGpuChecked);
     
     if ( crtGpuChecked )
         // crt with gpu don't use blur setting
         encoding.blur.setEnabled( false );
-    
-    gpuBase.option.hires.setEnabled();
-    gpuBase.option.distortionHires.setEnabled();
+
+    gpuMisc.setEnabled();
+    gpuMisc.options.hires.setEnabled();
+    gpuMisc.options.distortionHires.setEnabled();
 
     mask.setEnabled( mask.level.active.checked() );
     mask.level.active.setEnabled();    
 	
     crtGlitch.radialDistortion.setEnabled();
-    crtGlitch.radialDistortion.slider.setEnabled( crtGlitch.radialDistortion.active.checked() );  
+    crtGlitch.radialDistortion.slider.setEnabled( crtGlitch.radialDistortion.active.checked() );
 
-    gpuBase.luminance.setEnabled( !mask.level.active.checked() );
-    gpuBase.lightFromCenter.setEnabled();
-    gpuBase.lightFromCenter.slider.setEnabled( gpuBase.lightFromCenter.active.checked() );
+    gpuMisc.luminance.setEnabled( !mask.level.active.checked() );
+    gpuMisc.lightFromCenter.setEnabled();
+    gpuMisc.lightFromCenter.slider.setEnabled( gpuMisc.lightFromCenter.active.checked() );
 
     bloom.setEnabled( bloom.glow.active.checked() );
     bloom.glow.active.setEnabled();
     bloom.weight.slider.setEnabled( bloom.weight.active.checked() );
 
-    // only enabled, when crt over gpu active
+    // only enabled, when GPU active
 	
 	if (crtGpuChecked) {	
 		crtGlitch.lumaNoise.slider.setEnabled( crtGlitch.lumaNoise.active.checked() );
@@ -698,8 +701,8 @@ auto VideoLayout::updateVisibillity() -> void {
 
 auto VideoLayout::translate() -> void {
     setHeader(0, trans->get("view") );
-    setHeader(1, trans->get("crt_shader") );
-    setHeader(2, trans->get("crt_shader 2") );
+    setHeader(1, trans->get("shader") );
+    setHeader(2, trans->get("shader 2") );
     
     base.setText(trans->get("view"));	
     base.saturation.name.setText( trans->get("saturation", {}, true) );
@@ -713,9 +716,11 @@ auto VideoLayout::translate() -> void {
     base.mode.palette.setText( trans->get("palette") );
     base.mode.spectrum.setText( trans->get("color_spectrum") );    
     base.mode.reset.setText( trans->get("reset") );	
-    base.mode.crtNone.setText( trans->get("RGB") );
-    base.mode.crtCpu.setText( trans->get("crt_cpu") );
-    base.mode.crtGpu.setText( trans->get("crt_gpu") );
+    base.mode.rgb.setText( trans->get("RGB") );
+    base.mode.svideoCpu.setText( trans->get("S/C-Video") );
+    base.mode.svideoCpu.setTooltip( trans->get("S/C-Video tooltip") );
+    base.mode.svideoGpu.setText( trans->get("S/C-Video on GPU") );
+    base.mode.svideoGpu.setTooltip( trans->get("S/C-Video tooltip") );
     base.scanlines.active.setText( trans->get("scanlines", {}, true) );
     base.interlace.active.setText( trans->get("interlace", {}, true) );
 
@@ -727,18 +732,20 @@ auto VideoLayout::translate() -> void {
     lumaDelay.lumaRise.active.setText( trans->get("luma_rise", {}, true) );
     lumaDelay.lumaFall.active.setText( trans->get("luma_fall", {}, true) );
 
-    gpuBase.setText(trans->get("GPU"));
-    gpuBase.option.distortionHires.setText( trans->get("distortion_hires") );
-    gpuBase.option.distortionHires.setTooltip( trans->get("distortion hires tooltip") );
-    gpuBase.option.hires.setText( trans->get("hires") );
-    gpuBase.firFilter.name.setText( trans->get("fir filter blur", {}, true) );
-    gpuBase.firSharp.sharpLeft.setText( trans->get("fir filter left") );
-    gpuBase.firSharp.sharpRight.setText( trans->get("fir filter right") );
-    gpuBase.firSharp.natural.setText( trans->get("fir filter natural") );
-    gpuBase.luminance.name.setText( trans->get("luminance", {}, true) );
-    gpuBase.lightFromCenter.active.setText( trans->get("light_from_center", {}, true) );
-    
-	mask.setText( trans->get("mask") );
+    gpuMisc.setText(trans->get("generic"));
+    gpuMisc.options.distortionHires.setText( trans->get("distortion_hires") );
+    gpuMisc.options.distortionHires.setTooltip( trans->get("distortion hires tooltip") );
+    gpuMisc.options.hires.setText( trans->get("hires") );
+    gpuMisc.luminance.name.setText( trans->get("luminance", {}, true) );
+    gpuMisc.lightFromCenter.active.setText( trans->get("light_from_center", {}, true) );
+
+    subsampling.setText(trans->get("chroma subsampling"));
+    subsampling.firFilter.name.setText( trans->get("fir filter blur", {}, true) );
+    subsampling.firSharp.sharpLeft.setText( trans->get("fir filter left") );
+    subsampling.firSharp.sharpRight.setText( trans->get("fir filter right") );
+    subsampling.firSharp.natural.setText( trans->get("fir filter natural") );
+
+    mask.setText( trans->get("mask") );
     mask.type.type.setText( trans->get("type", {}, true) );
     mask.type.apertureMask.setText( trans->get("aperture_mask") );
     mask.type.shadowMask.setText( trans->get("shadow_mask") );
@@ -770,7 +777,7 @@ auto VideoLayout::translate() -> void {
     
     SliderLayout::scale({&base.saturation, &base.gamma, &base.brightness, &base.contrast, &base.phase, &base.scanlines, &base.interlace, &encoding.phaseError, &encoding.hanoverBars, &encoding.blur, &lumaDelay.lumaRise, &lumaDelay.lumaFall},
         "-100 %");
-    unsigned neededWidth = SliderLayout::scale({&gpuBase.firFilter, &gpuBase.lightFromCenter, &gpuBase.luminance, &mask.level, &mask.luminance, &mask.dpi, &mask.pitch, &bloom.glow, &bloom.radius, &bloom.variance, &bloom.weight},
+    unsigned neededWidth = SliderLayout::scale({&subsampling.firFilter, &gpuMisc.lightFromCenter, &gpuMisc.luminance, &mask.level, &mask.luminance, &mask.dpi, &mask.pitch, &bloom.glow, &bloom.radius, &bloom.variance, &bloom.weight},
         "0.00 mm", mask.type.type.minimumSize().width );
     SliderLayout::scale({&crtGlitch.lumaNoise, &crtGlitch.chromaNoise, &crtGlitch.randomLineOffset, &crtGlitch.radialDistortion, &vicIIGlitch.aec, &vicIIGlitch.ba, &vicIIGlitch.phi0, &vicIIGlitch.ras, &vicIIGlitch.cas},
         "100.0 %");
@@ -785,9 +792,9 @@ auto VideoLayout::sliderIdent() -> std::string {
     if (dynamic_cast<LIBC64::Interface*>(emulator) && base.mode.spectrum.checked())
         ident += "_spectrum";
 	
-	if (base.mode.crtCpu.checked())
+	if (base.mode.svideoCpu.checked())
 		ident += "_crtcpu";
-	else if (base.mode.crtGpu.checked())
+	else if (base.mode.svideoGpu.checked())
 		ident += "_crtgpu";
     		
 	return ident;
@@ -797,11 +804,11 @@ auto VideoLayout::loadSettings(bool init) -> void {
     VideoManager::CrtMode crtMode = (VideoManager::CrtMode)_settings->get<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::None, {0u, 2u});
     
     if (crtMode == VideoManager::CrtMode::Gpu)
-        base.mode.crtGpu.setChecked();
+        base.mode.svideoGpu.setChecked();
     else if (crtMode == VideoManager::CrtMode::Cpu)
-        base.mode.crtCpu.setChecked();
+        base.mode.svideoCpu.setChecked();
     else
-        base.mode.crtNone.setChecked();    
+        base.mode.rgb.setChecked();
     
     if (dynamic_cast<LIBC64::Interface*>(emulator) && _settings->get<bool>( "video_spectrum", true) )
         base.mode.spectrum.setChecked();

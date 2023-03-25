@@ -265,7 +265,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
 
         auto selectedMedia = mediaGroup.selected;
 
-        for(auto& media : mediaGroup.media) {            
+        for(auto& media : mediaGroup.media) {
             
             if (selectedMedia && !media.secondary && (selectedMedia != &media) )
                 // only one media element at a time can be used for this group
@@ -276,7 +276,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
             media.guid = (uintptr_t)(nullptr);
 
             if (!IPMode) {
-                GUIKIT::File *file = filePool->get(fSetting->path);
+                GUIKIT::File* file = filePool->get(fSetting->path);
                 if (!file)
                     continue;
 
@@ -300,6 +300,9 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
                     filePool->assign(_ident(emulator, media.name), file);
                 }
 
+                if (regular)
+                    updateSaveIdent(&media, file);
+
             } else { // IP socket mode
                 program->prepareSocket( &media, emulator, fSetting->path );
             }
@@ -313,9 +316,6 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
                     emulator->setExpansionJumper( &media, jumper.id, state );
                 }
             }
-            
-            if (regular && !IPMode)
-                updateSaveIdent( &media, fSetting->file );
         }
     }
     

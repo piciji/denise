@@ -1,6 +1,6 @@
 
 namespace LIBAMI {
-
+// inspired by vAmiga, a 64 bit event counter is used.
 // By means of 8 byte counters no overflow handling is necessary. Theoretically, this could run into an overflow
 // with constant use of savestates. It has been thousands of years. The use of signed variables is faster,
 // because the compiler does not incorporate overflow handling from itself.
@@ -117,6 +117,7 @@ auto Agnus::inactivateOneCycleEvent(int job) -> void {
     updateSpriteV<nr>();
 
 auto Agnus::processOneCycleEvent(int job, uint16_t data) -> void {
+    // Only jobs that do not hinder each other are allowed in. A newly added job runs a running job immediately.
     switch (job) {
         case PTR_BLT_A_H: blitter.setBltAptH(data); break;
         case PTR_BLT_A_L: blitter.setBltAptL(data); break;

@@ -213,7 +213,7 @@ auto SectorBlock::calcChecksum() -> unsigned {
                 if (result < precsum) result++;
             }
         }
-        if (result == read(0)) // no Bootblock, we don't calculate the checksum from first 4 bytes only
+        if (result == read(0)) // no Bootblock
             return 0;
 
         result = ~result;

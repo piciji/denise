@@ -3,7 +3,7 @@
 
 typedef Emulator::Interface::Key EmuKey;
 
-auto InputManager::automap( KeyboardLayout::Type type, Emulator::Interface::Key key ) -> std::vector<std::vector<Hid::Key>> {
+auto InputManager::automap( KeyboardLayout::Type type, Emulator::Interface::Key key, Emulator::Interface* emulator ) -> std::vector<std::vector<Hid::Key>> {
     
     // Note: the Hid key identifier correspond to the uk layout (reference layout) .
     // for other layouts you have to translate the visible key to the uk key at a given position
@@ -25,9 +25,9 @@ auto InputManager::automap( KeyboardLayout::Type type, Emulator::Interface::Key 
                 if ( key == EmuKey::Shared2 ) return {{Hid::Key::Slash, Hid::Key::ShiftRight}};
                 if ( key == EmuKey::Shared6 ) return {{Hid::Key::Equal}};
                 if ( key == EmuKey::Shared8 ) return {{Hid::Key::NumberSign}};
-                if ( key == EmuKey::ShiftAnd1 ) return {{Hid::Key::D8}};
-                if ( key == EmuKey::ShiftAnd3 ) return {{Hid::Key::NumberSign, Hid::Key::ShiftRight}};
-                if ( key == EmuKey::ShiftAnd0 ) return {{Hid::Key::Slash}};
+//                if ( key == EmuKey::ShiftAnd1 ) return {{Hid::Key::D8}};
+//                if ( key == EmuKey::ShiftAnd3 ) return {{Hid::Key::NumberSign, Hid::Key::ShiftRight}};
+//                if ( key == EmuKey::ShiftAnd0 ) return {{Hid::Key::Slash}};
                 if ( key == EmuKey::ShiftShared2 ) return {{Hid::Key::ClosedSquareBracket, Hid::Key::ShiftRight}};
                 if ( key == EmuKey::ShiftShared3 ) return {{Hid::Key::Grave, Hid::Key::ShiftRight}};
                 if ( key == EmuKey::ShiftShared6 ) return {{Hid::Key::Equal, Hid::Key::ShiftRight}};
@@ -56,7 +56,19 @@ auto InputManager::automap( KeyboardLayout::Type type, Emulator::Interface::Key 
                 break;
         }
     }
-    
+
+    if ((type == KeyboardLayout::Type::De) && dynamic_cast<LIBAMI::Interface*>(emulator)) {
+        if (key == EmuKey::Y) return {{Hid::Key::Z}};
+        if (key == EmuKey::Z) return {{Hid::Key::Y}};
+    } else if ((type == KeyboardLayout::Type::Fr) && dynamic_cast<LIBAMI::Interface*>(emulator)) {
+        if (key == EmuKey::A) return {{Hid::Key::Q}};
+        if (key == EmuKey::Q) return {{Hid::Key::A}};
+        if (key == EmuKey::W) return {{Hid::Key::Z}};
+        if (key == EmuKey::Z) return {{Hid::Key::W}};
+        if (key == EmuKey::M) return {{Hid::Key::Semicolon}};
+        if (key == EmuKey::Shared3) return {{Hid::Key::M}};
+    }
+
     if ( key == EmuKey::A ) return {{Hid::Key::A}};
     if ( key == EmuKey::B ) return {{Hid::Key::B}};
     if ( key == EmuKey::C ) return {{Hid::Key::C}};
@@ -83,7 +95,7 @@ auto InputManager::automap( KeyboardLayout::Type type, Emulator::Interface::Key 
     if ( key == EmuKey::X ) return {{Hid::Key::X}};
     if ( key == EmuKey::Y ) return {{Hid::Key::Y}};
     if ( key == EmuKey::Z ) return {{Hid::Key::Z}};
-        
+
     if ( key == EmuKey::F1 ) return {{Hid::Key::F1}};
     if ( key == EmuKey::F2 ) return {{Hid::Key::F2}};
     if ( key == EmuKey::F3 ) return {{Hid::Key::F3}};
@@ -143,16 +155,29 @@ auto InputManager::automap( KeyboardLayout::Type type, Emulator::Interface::Key 
     
     switch(type) {
         case KeyboardLayout::Type::Fr:
-            if ( key == EmuKey::D0 ) return {{Hid::Key::D0, Hid::Key::ShiftRight}, {Hid::Key::D0, Hid::Key::ShiftLeft}};
-            if ( key == EmuKey::D1 ) return {{Hid::Key::D1, Hid::Key::ShiftRight}, {Hid::Key::D1, Hid::Key::ShiftLeft}};
-            if ( key == EmuKey::D2 ) return {{Hid::Key::D2, Hid::Key::ShiftRight}, {Hid::Key::D2, Hid::Key::ShiftLeft}};
-            if ( key == EmuKey::D3 ) return {{Hid::Key::D3, Hid::Key::ShiftRight}, {Hid::Key::D3, Hid::Key::ShiftLeft}};
-            if ( key == EmuKey::D4 ) return {{Hid::Key::D4, Hid::Key::ShiftRight}, {Hid::Key::D4, Hid::Key::ShiftLeft}};
-            if ( key == EmuKey::D5 ) return {{Hid::Key::D5, Hid::Key::ShiftRight}, {Hid::Key::D5, Hid::Key::ShiftLeft}};
-            if ( key == EmuKey::D6 ) return {{Hid::Key::D6, Hid::Key::ShiftRight}, {Hid::Key::D6, Hid::Key::ShiftLeft}};
-            if ( key == EmuKey::D7 ) return {{Hid::Key::D7, Hid::Key::ShiftRight}, {Hid::Key::D7, Hid::Key::ShiftLeft}};
-            if ( key == EmuKey::D8 ) return {{Hid::Key::D8, Hid::Key::ShiftRight}, {Hid::Key::D8, Hid::Key::ShiftLeft}};
-            if ( key == EmuKey::D9 ) return {{Hid::Key::D9, Hid::Key::ShiftRight}, {Hid::Key::D9, Hid::Key::ShiftLeft}};
+            if (dynamic_cast<LIBC64::Interface*>(emulator)) {
+                if ( key == EmuKey::D0 ) return {{Hid::Key::D0, Hid::Key::ShiftRight}, {Hid::Key::D0, Hid::Key::ShiftLeft}};
+                if ( key == EmuKey::D1 ) return {{Hid::Key::D1, Hid::Key::ShiftRight}, {Hid::Key::D1, Hid::Key::ShiftLeft}};
+                if ( key == EmuKey::D2 ) return {{Hid::Key::D2, Hid::Key::ShiftRight}, {Hid::Key::D2, Hid::Key::ShiftLeft}};
+                if ( key == EmuKey::D3 ) return {{Hid::Key::D3, Hid::Key::ShiftRight}, {Hid::Key::D3, Hid::Key::ShiftLeft}};
+                if ( key == EmuKey::D4 ) return {{Hid::Key::D4, Hid::Key::ShiftRight}, {Hid::Key::D4, Hid::Key::ShiftLeft}};
+                if ( key == EmuKey::D5 ) return {{Hid::Key::D5, Hid::Key::ShiftRight}, {Hid::Key::D5, Hid::Key::ShiftLeft}};
+                if ( key == EmuKey::D6 ) return {{Hid::Key::D6, Hid::Key::ShiftRight}, {Hid::Key::D6, Hid::Key::ShiftLeft}};
+                if ( key == EmuKey::D7 ) return {{Hid::Key::D7, Hid::Key::ShiftRight}, {Hid::Key::D7, Hid::Key::ShiftLeft}};
+                if ( key == EmuKey::D8 ) return {{Hid::Key::D8, Hid::Key::ShiftRight}, {Hid::Key::D8, Hid::Key::ShiftLeft}};
+                if ( key == EmuKey::D9 ) return {{Hid::Key::D9, Hid::Key::ShiftRight}, {Hid::Key::D9, Hid::Key::ShiftLeft}};
+            } else {
+                if (key == EmuKey::D0) return {{Hid::Key::D0}};
+                if (key == EmuKey::D1) return {{Hid::Key::D1}};
+                if (key == EmuKey::D2) return {{Hid::Key::D2}};
+                if (key == EmuKey::D3) return {{Hid::Key::D3}};
+                if (key == EmuKey::D4) return {{Hid::Key::D4}};
+                if (key == EmuKey::D5) return {{Hid::Key::D5}};
+                if (key == EmuKey::D6) return {{Hid::Key::Slash, Hid::Key::ShiftRight}};
+                if (key == EmuKey::D7) return {{Hid::Key::D7}};
+                if (key == EmuKey::D8) return {{Hid::Key::Slash}};
+                if (key == EmuKey::D9) return {{Hid::Key::D9}};
+            }
 
             if ( key == EmuKey::Plus ) return {{Hid::Key::Equal, Hid::Key::ShiftRight}, {Hid::Key::Equal, Hid::Key::ShiftLeft}};
             if ( key == EmuKey::Minus ) return {{Hid::Key::D6}};
@@ -175,32 +200,38 @@ auto InputManager::automap( KeyboardLayout::Type type, Emulator::Interface::Key 
             if ( key == EmuKey::QuestionMark ) return {{Hid::Key::Semicolon, Hid::Key::ShiftRight}, {Hid::Key::Semicolon, Hid::Key::ShiftLeft}};
             if ( key == EmuKey::Pipe ) return {{Hid::Key::D6, Hid::Key::AltRight}};
             if ( key == EmuKey::NumLock ) return {{Hid::Key::D5, Hid::Key::AltRight}};
-            if ( key == EmuKey::ScrollLock ) return {{Hid::Key::Minus, Hid::Key::AltRight}};  
-            if ( key == EmuKey::Shared1 ) return {{Hid::Key::D7}};
-            if ( key == EmuKey::Shared2 ) return {{Hid::Key::Equal, Hid::Key::ShiftRight}};
-            if ( key == EmuKey::Shared3 ) return {{Hid::Key::D7, Hid::Key::AltRight, Hid::Key::O }};
-            if ( key == EmuKey::Shared4 ) return {{Hid::Key::Semicolon}};
-            if ( key == EmuKey::Shared5 ) return {{Hid::Key::Comma, Hid::Key::ShiftRight}};
-            if ( key == EmuKey::Shared6 ) return {{Hid::Key::D6}};
-            if ( key == EmuKey::Shared7 ) return {{Hid::Key::D8, Hid::Key::AltRight}}; 
-            if ( key == EmuKey::Shared8 ) return {{Hid::Key::D7, Hid::Key::AltRight}};
-            if ( key == EmuKey::Shared9 ) return {{Hid::Key::D0}};
-            if ( key == EmuKey::Shared10 ) return {{Hid::Key::D2}};
-            if ( key == EmuKey::Shared11 ) return {{Hid::Key::D7, Hid::Key::AltRight, Hid::Key::I}};
-            if ( key == EmuKey::Shared12 ) return {{Hid::Key::Apostrophe}};
-            if ( key == EmuKey::Shared13 ) return {{Hid::Key::Backslash}};
+            if ( key == EmuKey::ScrollLock ) return {{Hid::Key::Minus, Hid::Key::AltRight}};
+
+            if ( key == EmuKey::Shared1 ) return {{Hid::Key::OpenSquareBracket}};
+            if ( key == EmuKey::Shared2 ) return {{Hid::Key::ClosedSquareBracket}};
+
+            if ( key == EmuKey::Shared4 ) return {{Hid::Key::Comma}};
+            if ( key == EmuKey::Shared5 ) return {{Hid::Key::Period}};
+            if ( key == EmuKey::Shared6 ) return {{Hid::Key::Equal}};
+            if ( key == EmuKey::Shared7 ) return {{Hid::Key::D8, Hid::Key::AltRight}};
+            if ( key == EmuKey::Shared8 ) return {{Hid::Key::Apostrophe}};
+            if ( key == EmuKey::Shared9 ) return {{Hid::Key::ShiftRight, Hid::Key::NumberSign}};
+            if ( key == EmuKey::Shared10 ) return {{Hid::Key::Backslash}};
+            if ( key == EmuKey::Shared11 ) return {{Hid::Key::D7, Hid::Key::AltRight}};
+            if ( key == EmuKey::Shared12 ) return {{Hid::Key::Minus}};
+            if ( key == EmuKey::Shared13 ) return {{Hid::Key::D6}};
+
             if ( key == EmuKey::ShiftShared2 ) return {{Hid::Key::NumberSign}};
-            if ( key == EmuKey::ShiftShared3 ) return {{Hid::Key::D0, Hid::Key::AltRight}};
-            if ( key == EmuKey::ShiftShared4 ) return {{Hid::Key::Comma, Hid::Key::Comma}};
-            if ( key == EmuKey::ShiftShared5 ) return {{Hid::Key::Period, Hid::Key::Period}};
-            if ( key == EmuKey::ShiftShared6 ) return {{Hid::Key::D8}};
+            if ( key == EmuKey::ShiftShared4 ) return {{Hid::Key::Comma, Hid::Key::ShiftRight}};
+            if ( key == EmuKey::ShiftShared5 ) return {{Hid::Key::Period, Hid::Key::ShiftRight}};
+            if ( key == EmuKey::ShiftShared6 ) return {{Hid::Key::Equal, Hid::Key::ShiftRight}};
             if ( key == EmuKey::ShiftShared7 ) return {{Hid::Key::D6, Hid::Key::AltRight}};
-            if ( key == EmuKey::ShiftShared8 ) return {{Hid::Key::D2, Hid::Key::AltRight}};
-            if ( key == EmuKey::ShiftShared9 ) return {{Hid::Key::D3, Hid::Key::AltRight}};
-            if ( key == EmuKey::ShiftShared10 ) return {{Hid::Key::Semicolon, Hid::Key::AltRight}};
-            if ( key == EmuKey::ShiftShared11 ) return {{Hid::Key::D9, Hid::Key::AltRight}};
-            if ( key == EmuKey::ShiftShared12 ) return {{Hid::Key::D9, Hid::Key::AltRight}};   
-            if ( key == EmuKey::ShiftShared13 ) return {{Hid::Key::Backslash, Hid::Key::ShiftRight}};
+            if ( key == EmuKey::ShiftShared8 ) return {{Hid::Key::Apostrophe, Hid::Key::ShiftRight}};
+            if ( key == EmuKey::ShiftShared9 ) return {{Hid::Key::ClosedSquareBracket, Hid::Key::ShiftRight}};
+            if ( key == EmuKey::ShiftShared10 ) return {{Hid::Key::Backslash, Hid::Key::ShiftRight}};
+            if ( key == EmuKey::ShiftShared11 ) return {{Hid::Key::D2, Hid::Key::AltRight}};
+            if ( key == EmuKey::ShiftShared12 ) return {{Hid::Key::Minus, Hid::Key::ShiftRight}};
+            if ( key == EmuKey::ShiftShared13 ) return {{Hid::Key::D8}};
+            if ( key == EmuKey::ShiftAnd6 ) return {{Hid::Key::ShiftRight, Hid::Key::D6}};
+            if ( key == EmuKey::ShiftAnd8 ) return {{Hid::Key::ShiftRight, Hid::Key::D8}};
+            if ( key == EmuKey::AltAndShift2 ) return {{Hid::Key::AltRight, Hid::Key::D0}};
+            if ( key == EmuKey::AltAndShift3 ) return {{Hid::Key::AltRight, Hid::Key::D3}};
+
             if ( key == EmuKey::ShiftNumLock ) return {{Hid::Key::D4, Hid::Key::AltRight}};
             if ( key == EmuKey::ShiftScrollLock ) return {{Hid::Key::Equal, Hid::Key::AltRight}};
             if ( key == EmuKey::Comma ) return {{Hid::Key::Semicolon}};
@@ -210,16 +241,6 @@ auto InputManager::automap( KeyboardLayout::Type type, Emulator::Interface::Key 
             if ( key == EmuKey::ExclamationMark ) return {{Hid::Key::Slash}};
             if ( key == EmuKey::DoubleQuotes ) return {{Hid::Key::D3}};
             if ( key == EmuKey::Dollar ) return {{Hid::Key::ClosedSquareBracket}};
-            if ( key == EmuKey::ShiftAnd1 ) return {{Hid::Key::Slash}};
-            if ( key == EmuKey::ShiftAnd2 ) return {{Hid::Key::D3}};
-            if ( key == EmuKey::ShiftAnd3 ) return {{Hid::Key::ClosedSquareBracket, Hid::Key::ShiftRight}};
-            if ( key == EmuKey::ShiftAnd4 ) return {{Hid::Key::ClosedSquareBracket}};
-            if ( key == EmuKey::ShiftAnd5 ) return {{Hid::Key::Apostrophe, Hid::Key::ShiftRight}};
-            if ( key == EmuKey::ShiftAnd6 ) return {{Hid::Key::D1}};
-            if ( key == EmuKey::ShiftAnd7 ) return {{Hid::Key::Period, Hid::Key::ShiftRight}};
-            if ( key == EmuKey::ShiftAnd8 ) return {{Hid::Key::D5}};
-            if ( key == EmuKey::ShiftAnd9 ) return {{Hid::Key::Minus}};
-            if ( key == EmuKey::ShiftAnd0 ) return {{Hid::Key::Equal}};
             break;
         case KeyboardLayout::Type::De:
             if (key == EmuKey::D0) return {{Hid::Key::D0}};
@@ -262,15 +283,16 @@ auto InputManager::automap( KeyboardLayout::Type type, Emulator::Interface::Key 
             if ( key == EmuKey::Shared5 ) return {{Hid::Key::Period}};
             if ( key == EmuKey::Shared6 ) return {{Hid::Key::Slash}};
             if ( key == EmuKey::Shared7 ) return {{Hid::Key::Minus, Hid::Key::AltRight}};     
-            if ( key == EmuKey::Shared8 ) return {{Hid::Key::Equal, Hid::Key::ShiftRight}};
-            if ( key == EmuKey::Shared9 ) return {{Hid::Key::Apostrophe}};
-            if ( key == EmuKey::Shared10 ) return {{Hid::Key::Minus}};
-            if ( key == EmuKey::Shared11 ) return {{Hid::Key::Equal}};
-            if ( key == EmuKey::Shared12 ) return {{Hid::Key::NumberSign}};
-            if ( key == EmuKey::Shared13 ) return {{Hid::Key::Backslash}};
+            if ( key == EmuKey::Shared8 ) return {{Hid::Key::Apostrophe}};
+            if ( key == EmuKey::Shared9 ) return {{Hid::Key::NumberSign}};
+            if ( key == EmuKey::Shared10 ) return {{Hid::Key::Backslash}};
+            if ( key == EmuKey::Shared11 ) return {{Hid::Key::Equal, Hid::Key::ShiftRight}};
+            if ( key == EmuKey::Shared12 ) return {{Hid::Key::Minus}};
+
             if ( key == EmuKey::ShiftShared7 ) return {{Hid::Key::Backslash, Hid::Key::AltRight}};
-            if ( key == EmuKey::ShiftShared8 ) return {{Hid::Key::ClosedSquareBracket, Hid::Key::AltRight}};
-            if ( key == EmuKey::ShiftShared12 ) return {{Hid::Key::Grave}};    
+            if ( key == EmuKey::ShiftShared9 ) return {{Hid::Key::Grave}};
+            if ( key == EmuKey::ShiftShared10 ) return {{Hid::Key::Backslash, Hid::Key::ShiftRight}};
+            if ( key == EmuKey::ShiftShared11 ) return {{Hid::Key::ClosedSquareBracket, Hid::Key::AltRight}};
             if ( key == EmuKey::ShiftShared13 ) return {{Hid::Key::Backslash, Hid::Key::ShiftRight}};    
             if ( key == EmuKey::ShiftNumLock ) return {{Hid::Key::D7, Hid::Key::AltRight}};
             if ( key == EmuKey::ShiftScrollLock ) return {{Hid::Key::D0, Hid::Key::AltRight}};
@@ -283,9 +305,11 @@ auto InputManager::automap( KeyboardLayout::Type type, Emulator::Interface::Key 
             if ( key == EmuKey::Pound ) return {{Hid::Key::Backslash}};
             if ( key == EmuKey::At ) return {{Hid::Key::D2, Hid::Key::ShiftRight}, {Hid::Key::D2, Hid::Key::ShiftLeft}};
             if ( key == EmuKey::DoubleQuotes ) return {{Hid::Key::Apostrophe, Hid::Key::ShiftRight}, {Hid::Key::Apostrophe, Hid::Key::ShiftLeft}};
-            if ( key == EmuKey::NumberSign ) return {{Hid::Key::D3, Hid::Key::ShiftRight}, {Hid::Key::D3, Hid::Key::ShiftLeft}};          
-            if ( key == EmuKey::Shared9 ) return {{Hid::Key::Apostrophe}};
-            if ( key == EmuKey::ShiftShared8 ) return {{}};
+            if ( key == EmuKey::NumberSign ) return {{Hid::Key::D3, Hid::Key::ShiftRight}, {Hid::Key::D3, Hid::Key::ShiftLeft}};
+            if ( key == EmuKey::Shared7 ) return {{Hid::Key::NumberSign}};
+            if ( key == EmuKey::Shared8 ) return {{Hid::Key::Grave}};
+            if ( key == EmuKey::ShiftShared8 ) return {{Hid::Key::Apostrophe, Hid::Key::ShiftRight}};
+            if ( key == EmuKey::ShiftShared11) return {{Hid::Key::Grave, Hid::Key::ShiftRight}};
             
         case KeyboardLayout::Type::Uk:
             if (key == EmuKey::D0) return {{Hid::Key::D0}};
@@ -325,11 +349,13 @@ auto InputManager::automap( KeyboardLayout::Type type, Emulator::Interface::Key 
             if ( key == EmuKey::Shared5 ) return {{Hid::Key::Period}};
             if ( key == EmuKey::Shared6 ) return {{Hid::Key::Slash}};
             if ( key == EmuKey::Shared7 ) return {{Hid::Key::Backslash}};   
-            if ( key == EmuKey::Shared8 ) return {{Hid::Key::Grave}};
-            if ( key == EmuKey::Shared9 ) return {{Hid::Key::NumberSign}};
-            if ( key == EmuKey::Shared10 ) return {{Hid::Key::Minus}};
-            if ( key == EmuKey::Shared11 ) return {{Hid::Key::Equal}};
-            if ( key == EmuKey::ShiftShared8 ) return {{Hid::Key::NumberSign, Hid::Key::ShiftRight}};   
+            if ( key == EmuKey::Shared8 ) return {{Hid::Key::NumberSign}};
+            if ( key == EmuKey::Shared11 ) return {{Hid::Key::Apostrophe}};
+            if ( key == EmuKey::Shared12 ) return {{Hid::Key::Minus}};
+            if ( key == EmuKey::Shared13 ) return {{Hid::Key::Equal}};
+
+            if ( key == EmuKey::ShiftShared8) return {{Hid::Key::Apostrophe, Hid::Key::ShiftRight}};
+            if ( key == EmuKey::ShiftShared11) return {{Hid::Key::NumberSign, Hid::Key::ShiftRight}};
             if ( key == EmuKey::Period ) return {{Hid::Key::Period}};
             if ( key == EmuKey::Comma ) return {{Hid::Key::Comma}};     
             break;

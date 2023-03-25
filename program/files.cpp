@@ -166,7 +166,7 @@ auto Program::setExpansionSelection( Emulator::Interface* emulator ) -> void {
     }
 }
 
-auto Program::updateSaveIdent(Emulator::Interface::Media* media, std::string file) -> void {
+auto Program::updateSaveIdent(Emulator::Interface::Media* media, GUIKIT::File* file) -> void {
     
     static Emulator::Interface::Media* _media = nullptr;
     
@@ -183,17 +183,33 @@ auto Program::updateSaveIdent(Emulator::Interface::Media* media, std::string fil
     }
 }
 
-auto Program::updateSaveIdent( Emulator::Interface* emulator, std::string fileName ) -> void {
+auto Program::updateSaveIdent( Emulator::Interface* emulator, GUIKIT::File* file ) -> void {
     auto settings = getSettings( emulator );
-    std::size_t end = fileName.find_last_of(".");
-    if (end != std::string::npos)
-        fileName = fileName.erase(end);
+    std::string filePath = file->getPath();
+    std::string fileName = file->getFileName(true, true);
 
     // for wav record
     settings->set<std::string>( "record_ident", fileName, false);
 
     if (!settings->get<bool>( "auto_save_ident", true))
         return;
+
+    std::string tempFn = fileName;
+
+    while(1) {
+        if (tempFn.size() < 5)
+            break;
+
+        tempFn.pop_back();
+
+        auto list = GUIKIT::File::getFolderListAlt( filePath, tempFn, 3 );
+
+        if (list.size() < 2)
+            continue;
+
+        fileName = GUIKIT::String::trim( tempFn );
+        break;
+    }
 
     settings->set<std::string>( "save_ident", fileName);
     settings->set<unsigned>( "save_slot", 0);

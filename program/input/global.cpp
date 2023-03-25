@@ -214,6 +214,49 @@ auto InputManager::setMappings() -> void {
     }
 }
 
+auto InputManager::autoAssign( Emulator::Interface::Device& device ) -> void {
+    if(!emulator)
+        return;
+
+    for (auto& input : device.inputs) {
+        auto mapper = (InputMapping*) input.guid;
+        auto setting = mapper->setting->value;
+
+        std::vector<std::vector<Hid::Key>> keys;
+
+        for (auto hidDevice : hidDevices) {
+            if (hidDevice->isKeyboard())
+                continue;
+
+            if (hidDevice->isJoypad() && (device.isMouse() || device.isLightDevice() || device.isPaddles() ))
+                continue;
+
+            for(auto& group : hidDevice->groups) {
+                for(auto& hidInput : group.inputs) {
+                    if ( device.isJoypad() ) {
+                        if (matchButtons(&input, &hidInput)) {
+                            mapper->hids.clear();
+                            mapper->hids.push_back( {hidDevice, &group, &hidInput, 0, 0} );
+                            mapper->anded = 0;
+                            break;
+                        }
+                    } else if (matchButtons(&input, &hidInput) || (input.name.find(hidInput.name) != std::string::npos) ) {
+                        mapper->hids.clear();
+                        mapper->hids.push_back( {hidDevice, &group, &hidInput, 0, 0} );
+                        mapper->anded = 0;
+                        break;
+                    }
+                }
+            }
+        }
+
+        mapper->updateSetting();
+        if (mapper->alternate)
+            mapper->alternate->updateSetting();
+    }
+
+}
+
 auto InputManager::autoAssign( KeyboardLayout::Type type, bool keyboardOnly ) -> void {
     
     if(!emulator)
@@ -231,7 +274,7 @@ auto InputManager::autoAssign( KeyboardLayout::Type type, bool keyboardOnly ) ->
             
             std::vector<std::vector<Hid::Key>> keys;
             if (device.isKeyboard())
-                keys = automap( type, input.key );
+                keys = automap( type, input.key, emulator );
 
             for (auto hidDevice : hidDevices) {
                 if ( (hidDevice->isKeyboard() && device.isKeyboard()) || 

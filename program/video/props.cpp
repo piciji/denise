@@ -366,6 +366,7 @@ auto VideoManager::getSettings() -> std::tuple<VPARAMST> {
 	bool _pal = _region == Emulator::Interface::Region::Pal;
 	
     unsigned _crtMode = settings->get<unsigned>("video_crt", (unsigned)CrtMode::None, {0u, 2u});
+    bool moreError = isC64();
 
     auto modeIdent = getModeIdent();
 
@@ -374,11 +375,11 @@ auto VideoManager::getSettings() -> std::tuple<VPARAMST> {
     unsigned _gamma = settings->get<unsigned>("video_gamma" + modeIdent, 100u,{0u, 200u});
     unsigned _brightness = settings->get<unsigned>("video_brightness" + modeIdent, 100u,{30u, 280u});
     int _phase = settings->get<int>("video_phase" + modeIdent, 0,{-180, 180});
-    float _phaseError = settings->get<float>("video_phase_error" + modeIdent, _pal ? 22.5 : 0,{-45.0, 45.0});
+    float _phaseError = settings->get<float>("video_phase_error" + modeIdent, _pal ? (moreError ? 22.5 : 3.5 ) : 0, {-45.0, 45.0});
     bool _usePhaseError = settings->get<bool>("video_phase_error_use" + modeIdent, true);
     bool _newLuma = settings->get<bool>("video_new_luma" + modeIdent, true);
     bool _tvGamma = settings->get<bool>("video_tv_gamma" + modeIdent, false);
-    int _hanoverBars = settings->get<int>("video_hanover_bars" + modeIdent, _crtMode == (unsigned)CrtMode::Gpu ? 20 : -20, {-100, 100});
+    int _hanoverBars = settings->get<int>("video_hanover_bars" + modeIdent, _crtMode == (unsigned)CrtMode::Gpu ? (10 << moreError) : (-10 << moreError), {-100, 100});
     bool _useHanoverBars = settings->get<bool>("video_hanover_bars_use" + modeIdent, true);
     unsigned _blur = settings->get<unsigned>("video_blur" + modeIdent, 30,{0, 100});
     bool _useBlur = settings->get<bool>("video_blur_use" + modeIdent, true);
@@ -387,9 +388,9 @@ auto VideoManager::getSettings() -> std::tuple<VPARAMST> {
     bool _useInterlace = settings->get<bool>("video_interlace_use" + modeIdent, true);
     unsigned _interlace = settings->get<unsigned>("video_interlace" + modeIdent, 30, {0u, 100});
 
-    bool _useLumaRise = settings->get<bool>("video_luma_rise_use" + modeIdent, isC64());
+    bool _useLumaRise = settings->get<bool>("video_luma_rise_use" + modeIdent, moreError);
 	float _lumaRise = settings->get<float>("video_luma_rise" + modeIdent, 2.0, {1.0, 4.0}); 
-	bool _useLumaFall = settings->get<bool>("video_luma_fall_use" + modeIdent, isC64());
+	bool _useLumaFall = settings->get<bool>("video_luma_fall_use" + modeIdent, moreError);
 	float _lumaFall = settings->get<float>("video_luma_fall" + modeIdent, 1.2, {1.0, 4.0});      
     
     bool _useChromaNoise = settings->get<bool>("video_chroma_noise_use" + modeIdent, false);

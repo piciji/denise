@@ -126,106 +126,144 @@ auto Interface::prepareDevices() -> void {
     }
 
     {   Device device{ id++, "Keyboard", Device::Type::Keyboard };
-        device.inputs.push_back( {0, "A", Key::A} ); device.inputs.push_back( {1, "B", Key::B} );
-        device.inputs.push_back( {2, "C", Key::C} ); device.inputs.push_back( {3, "D", Key::D} );
-        device.inputs.push_back( {4, "E", Key::E} ); device.inputs.push_back( {5, "F", Key::F} );
-        device.inputs.push_back( {6, "G", Key::G} ); device.inputs.push_back( {7, "H", Key::H} );
-        device.inputs.push_back( {8, "I", Key::I} ); device.inputs.push_back( {9, "J", Key::J} );
-        device.inputs.push_back( {10, "K", Key::K} ); device.inputs.push_back( {11, "L", Key::L} );
-        device.inputs.push_back( {12, "M", Key::M} ); device.inputs.push_back( {13, "N", Key::N} );
-        device.inputs.push_back( {14, "O", Key::O} ); device.inputs.push_back( {15, "P", Key::P} );
-        device.inputs.push_back( {16, "Q", Key::Q} ); device.inputs.push_back( {17, "R", Key::R} );
-        device.inputs.push_back( {18, "S", Key::S} ); device.inputs.push_back( {19, "T", Key::T} );
-        device.inputs.push_back( {20, "U", Key::U} ); device.inputs.push_back( {21, "V", Key::V} );
-        device.inputs.push_back( {22, "W", Key::W} ); device.inputs.push_back( {23, "X", Key::X} );
-        device.inputs.push_back( {24, "Y", Key::Y} ); device.inputs.push_back( {25, "Z", Key::Z} );
+        device.inputs.push_back( {0, "A (Q)", Key::A, {{Device::Layout::Uk, "A"}, {Device::Layout::Us, "A"}, {Device::Layout::De, "A"}, {Device::Layout::Fr, "Q"}} } );
+        device.inputs.push_back( {1, "B", Key::B } );
+        device.inputs.push_back( {2, "C", Key::C } );
+        device.inputs.push_back( {3, "D", Key::D } );
+        device.inputs.push_back( {4, "E", Key::E } );
+        device.inputs.push_back( {5, "F", Key::F } );
+        device.inputs.push_back( {6, "G", Key::G } );
+        device.inputs.push_back( {7, "H", Key::H } );
+        device.inputs.push_back( {8, "I", Key::I } );
+        device.inputs.push_back( {9, "J", Key::J } );
+        device.inputs.push_back( {10, "K", Key::K } );
+        device.inputs.push_back( {11, "L", Key::L } );
+        device.inputs.push_back( {12, "M (,)", Key::M, { {Device::Layout::Uk, "M"}, {Device::Layout::Us, "M"}, {Device::Layout::De, "M"}, {Device::Layout::Fr, ","}} });
+        device.inputs.push_back( {13, "N", Key::N } );
+        device.inputs.push_back( {14, "O", Key::O } );
+        device.inputs.push_back( {15, "P", Key::P } );
+        device.inputs.push_back( {16, "Q (A)", Key::Q, { {Device::Layout::Uk, "Q"}, {Device::Layout::Us, "Q"}, {Device::Layout::De, "Q"}, {Device::Layout::Fr, "A"}}} );
+        device.inputs.push_back( {17, "R", Key::R } );
+        device.inputs.push_back( {18, "S", Key::S } );
+        device.inputs.push_back( {19, "T", Key::T } );
+        device.inputs.push_back( {20, "U", Key::U } );
+        device.inputs.push_back( {21, "V", Key::V } );
+        device.inputs.push_back( {22, "W (Z)", Key::W, { {Device::Layout::Uk, "W"}, {Device::Layout::Us, "W"}, {Device::Layout::De, "W"}, {Device::Layout::Fr, "Z"}}} );
+        device.inputs.push_back( {23, "X", Key::X } );
+        device.inputs.push_back( {24, "Y (Z)", Key::Y, { {Device::Layout::Uk, "Y"}, {Device::Layout::Us, "Y"}, {Device::Layout::De, "Z"},  {Device::Layout::Fr, "Y"} }} );
+        device.inputs.push_back( {25, "Z (Y W)", Key::Z, { {Device::Layout::Uk, "Z"}, {Device::Layout::Us, "Z"}, {Device::Layout::De, "Y"}, {Device::Layout::Fr, "W"} }} );
 
-        device.inputs.push_back( {26, "0", Key::D0} ); device.inputs.push_back( {27, "1", Key::D1} );
-        device.inputs.push_back( {28, "2", Key::D2} ); device.inputs.push_back( {29, "3", Key::D3} );
-        device.inputs.push_back( {30, "4", Key::D4} ); device.inputs.push_back( {31, "5", Key::D5} );
-        device.inputs.push_back( {32, "6", Key::D6} ); device.inputs.push_back( {33, "7", Key::D7} );
-        device.inputs.push_back( {34, "8", Key::D8} ); device.inputs.push_back( {35, "9", Key::D9} );
+        device.inputs.push_back( {26, "0", Key::D0, { {Device::Layout::Uk, "0"}, {Device::Layout::Us, "0"}, {Device::Layout::De, "0"}, {Device::Layout::Fr, "à"}} } );
+        device.inputs.push_back( {27, "1", Key::D1, { {Device::Layout::Uk, "1"}, {Device::Layout::Us, "1"}, {Device::Layout::De, "1"}, {Device::Layout::Fr, "&"}}} );
+        device.inputs.push_back( {28, "2", Key::D2, { {Device::Layout::Uk, "2"}, {Device::Layout::Us, "2"}, {Device::Layout::De, "2"}, {Device::Layout::Fr, "é"}}} );
+        device.inputs.push_back( {29, "3", Key::D3, { {Device::Layout::Uk, "3"}, {Device::Layout::Us, "3"}, {Device::Layout::De, "3"}, {Device::Layout::Fr, "\""}}} );
+        device.inputs.push_back( {30, "4", Key::D4, { {Device::Layout::Uk, "4"}, {Device::Layout::Us, "4"}, {Device::Layout::De, "4"}, {Device::Layout::Fr, "´"}}} );
+        device.inputs.push_back( {31, "5", Key::D5, { {Device::Layout::Uk, "5"}, {Device::Layout::Us, "5"}, {Device::Layout::De, "5"}, {Device::Layout::Fr, "("}}} );
+        device.inputs.push_back( {32, "6", Key::D6, { {Device::Layout::Uk, "6"}, {Device::Layout::Us, "6"}, {Device::Layout::De, "6"}, {Device::Layout::Fr, "§"}}} );
+        device.inputs.push_back( {33, "7", Key::D7, { {Device::Layout::Uk, "7"}, {Device::Layout::Us, "7"}, {Device::Layout::De, "7"}, {Device::Layout::Fr, "è"}}} );
+        device.inputs.push_back( {34, "8", Key::D8, { {Device::Layout::Uk, "8"}, {Device::Layout::Us, "8"}, {Device::Layout::De, "8"}, {Device::Layout::Fr, "!"}}} );
+        device.inputs.push_back( {35, "9", Key::D9, { {Device::Layout::Uk, "9"}, {Device::Layout::Us, "9"}, {Device::Layout::De, "9"}, {Device::Layout::Fr, "ç"}}} );
 
-        device.inputs.push_back( {36, "Keypad 0", Key::NumPad0} ); device.inputs.push_back( {37, "Keypad 1", Key::NumPad1} );
-        device.inputs.push_back( {38, "Keypad 2", Key::NumPad2} ); device.inputs.push_back( {39, "Keypad 3", Key::NumPad3} );
-        device.inputs.push_back( {40, "Keypad 4", Key::NumPad4} ); device.inputs.push_back( {41, "Keypad 5", Key::NumPad5} );
-        device.inputs.push_back( {42, "Keypad 6", Key::NumPad6} ); device.inputs.push_back( {43, "Keypad 7", Key::NumPad7} );
-        device.inputs.push_back( {44, "Keypad 8", Key::NumPad8} ); device.inputs.push_back( {45, "Keypad 9", Key::NumPad9} );
-        device.inputs.push_back( {46, "Keypad NumLock", Key::NumLock, { {Device::Layout::Uk, "Keypad ("}, {Device::Layout::Us, "Keypad ("}, {Device::Layout::De, "Keypad ["} } } );
-        device.inputs.push_back( {47, "Keypad ScrollLock", Key::ScrollLock, { {Device::Layout::Uk, "Keypad )"}, {Device::Layout::Us, "Keypad )"}, {Device::Layout::De, "Keypad ]"} }} );
+        device.inputs.push_back( {36, "Keypad 0", Key::NumPad0} );
+        device.inputs.push_back( {37, "Keypad 1", Key::NumPad1} );
+        device.inputs.push_back( {38, "Keypad 2", Key::NumPad2} );
+        device.inputs.push_back( {39, "Keypad 3", Key::NumPad3} );
+        device.inputs.push_back( {40, "Keypad 4", Key::NumPad4} );
+        device.inputs.push_back( {41, "Keypad 5", Key::NumPad5} );
+        device.inputs.push_back( {42, "Keypad 6", Key::NumPad6} );
+        device.inputs.push_back( {43, "Keypad 7", Key::NumPad7} );
+        device.inputs.push_back( {44, "Keypad 8", Key::NumPad8} );
+        device.inputs.push_back( {45, "Keypad 9", Key::NumPad9} );
+
+        device.inputs.push_back( {46, "Keypad NumLock", Key::NumLock, { {Device::Layout::Uk, "Keypad ("}, {Device::Layout::Us, "Keypad ("}, {Device::Layout::De, "Keypad ["}, {Device::Layout::Fr, "Keypad ["} } } );
+        device.inputs.push_back( {47, "Keypad ScrollLock", Key::ScrollLock, { {Device::Layout::Uk, "Keypad )"}, {Device::Layout::Us, "Keypad )"}, {Device::Layout::De, "Keypad ]"}, {Device::Layout::Fr, "Keypad ]"} }} );
         device.inputs.push_back( {48, "Keypad /", Key::NumDivide} );
         device.inputs.push_back( {49, "Keypad *", Key::NumMultiply} );
         device.inputs.push_back( {50, "Keypad -", Key::NumSubtract} );
         device.inputs.push_back( {51, "Keypad +", Key::NumAdd} );
         device.inputs.push_back( {52, "Keypad enter", Key::NumEnter} );
-        device.inputs.push_back( {53, "Keypad del", Key::NumComma} );
+        device.inputs.push_back( {53, "Keypad .", Key::NumComma} );
 
-        device.inputs.push_back( {54, "F1", Key::F1} ); device.inputs.push_back( {55, "F2", Key::F2} );
-        device.inputs.push_back( {56, "F3", Key::F3} ); device.inputs.push_back( {57, "F4", Key::F4} );
-        device.inputs.push_back( {58, "F5", Key::F5} ); device.inputs.push_back( {59, "F6", Key::F6} );
-        device.inputs.push_back( {60, "F7", Key::F7} ); device.inputs.push_back( {61, "F8", Key::F8} );
-        device.inputs.push_back( {62, "F9", Key::F9} ); device.inputs.push_back( {63, "F10", Key::F10} );
+        device.inputs.push_back( {54, "F1", Key::F1} );
+        device.inputs.push_back( {55, "F2", Key::F2} );
+        device.inputs.push_back( {56, "F3", Key::F3} );
+        device.inputs.push_back( {57, "F4", Key::F4} );
+        device.inputs.push_back( {58, "F5", Key::F5} );
+        device.inputs.push_back( {59, "F6", Key::F6} );
+        device.inputs.push_back( {60, "F7", Key::F7} );
+        device.inputs.push_back( {61, "F8", Key::F8} );
+        device.inputs.push_back( {62, "F9", Key::F9} );
+        device.inputs.push_back( {63, "F10", Key::F10} );
 
         device.inputs.push_back( {64, "Cursor Up", Key::CursorUp} );
         device.inputs.push_back( {65, "Cursor Down", Key::CursorDown} );
         device.inputs.push_back( {66, "Cursor Left", Key::CursorLeft} );
         device.inputs.push_back( {67, "Cursor Right", Key::CursorRight} );
 
-        device.inputs.push_back( {68, "Space", Key::Space} ); device.inputs.push_back( {69, "Backspace", Key::Backspace} );
-        device.inputs.push_back( {70, "Tab", Key::Tab} ); device.inputs.push_back( {71, "Return", Key::Return} );
-        device.inputs.push_back( {72, "Esc", Key::Esc} ); device.inputs.push_back( {73, "Del", Key::Del} );
-        device.inputs.push_back( {74, "Left Shift", Key::ShiftLeft} ); device.inputs.push_back( {75, "Right Shift", Key::ShiftRight} );
-        device.inputs.push_back( {76, "Capslock", Key::ShiftLock} ); device.inputs.push_back( {77, "Ctrl", Key::ControlLeft} );
-        device.inputs.push_back( {78, "Left Alt", Key::AltLeft} ); device.inputs.push_back( {79, "Right Alt", Key::AltRight} );
-        device.inputs.push_back( {80, "Left Ami", Key::SystemLeft} ); device.inputs.push_back( {81, "Right Ami", Key::SystemRight} );
+        device.inputs.push_back( {68, "Space", Key::Space} );
+        device.inputs.push_back( {69, "Backspace", Key::Backspace} );
+        device.inputs.push_back( {70, "Tab", Key::Tab} );
+        device.inputs.push_back( {71, "Return", Key::Return} );
+        device.inputs.push_back( {72, "Esc", Key::Esc} );
+        device.inputs.push_back( {73, "Del", Key::Del} );
+        device.inputs.push_back( {74, "Left Shift", Key::ShiftLeft} );
+        device.inputs.push_back( {75, "Right Shift", Key::ShiftRight} );
+        device.inputs.push_back( {76, "Capslock", Key::ShiftLock} );
+        device.inputs.push_back( {77, "Ctrl", Key::ControlLeft} );
+        device.inputs.push_back( {78, "Left Alt", Key::AltLeft} );
+        device.inputs.push_back( {79, "Right Alt", Key::AltRight} );
+        device.inputs.push_back( {80, "Left Ami", Key::SystemLeft} );
+        device.inputs.push_back( {81, "Right Ami", Key::SystemRight} );
         device.inputs.push_back( {82, "Help", Key::Help} );
-        // these keys differs between keyboard layouts, we use the uk keyboard layout for identifying the keys
-        device.inputs.push_back( {83, "shared 1", Key::Shared1, { {Device::Layout::Uk, "["}, {Device::Layout::Us, "["}, {Device::Layout::De, "ü"}, {Device::Layout::Fr, "è"} } } );
-        device.inputs.push_back( {84, "shared 2", Key::Shared2, { {Device::Layout::Uk, "]"}, {Device::Layout::Us, "]"}, {Device::Layout::De, "+"}, {Device::Layout::Fr, "+"} } } );
-        device.inputs.push_back( {85, "shared 3", Key::Shared3, { {Device::Layout::Uk, ";"}, {Device::Layout::Us, ";"}, {Device::Layout::De, "ö"}, {Device::Layout::Fr, "ò"} } } );
-        device.inputs.push_back( {86, "shared 4", Key::Shared4, { {Device::Layout::Uk, ","}, {Device::Layout::Us, ","}, {Device::Layout::De, ","}, {Device::Layout::Fr, ","} } } );
-        device.inputs.push_back( {87, "shared 5", Key::Shared5, { {Device::Layout::Uk, "."}, {Device::Layout::Us, "."}, {Device::Layout::De, "."}, {Device::Layout::Fr, "."} } } );
-        device.inputs.push_back( {88, "shared 6", Key::Shared6, { {Device::Layout::Uk, "/"}, {Device::Layout::Us, "/"}, {Device::Layout::De, "-"}, {Device::Layout::Fr, "-"} } } );
-        device.inputs.push_back( {89, "shared 7", Key::Shared7, { {Device::Layout::Uk, "\\"}, {Device::Layout::Us, "\\"}, {Device::Layout::De, "\\"}, {Device::Layout::Fr, "\\"} } } );
-        device.inputs.push_back( {90, "shared 8", Key::Shared8, { {Device::Layout::Uk, "`"}, {Device::Layout::Us, "`"}, {Device::Layout::De, "`"}, {Device::Layout::Fr, "`"} }} );
-        device.inputs.push_back( {91, "shared 9", Key::Shared9, { {Device::Layout::Uk, "#"}, {Device::Layout::Us, "´"}, {Device::Layout::De, "ä"}, {Device::Layout::Fr, "à"} } } );
-        device.inputs.push_back( {92, "shared 10", Key::Shared10, { {Device::Layout::Uk, "-"}, {Device::Layout::Us, "-"}, {Device::Layout::De, "ß"}, {Device::Layout::Fr, "´"} } } );
-        device.inputs.push_back( {93, "shared 11", Key::Shared11, { {Device::Layout::Uk, "="}, {Device::Layout::Us, "="}, {Device::Layout::De, "´"}, {Device::Layout::Fr, "ì"} } } );
+        // these keys differs between keyboard layouts
+        device.inputs.push_back( {83, "shared 1a", Key::Shared1, { {Device::Layout::Uk, "["}, {Device::Layout::Us, "["}, {Device::Layout::De, "ü"}, {Device::Layout::Fr, "^"} } } );
+        device.inputs.push_back( {84, "shared 1b", Key::Shared2, { {Device::Layout::Uk, "]"}, {Device::Layout::Us, "]"}, {Device::Layout::De, "+"}, {Device::Layout::Fr, "$"} } } );
+        device.inputs.push_back( {85, "shared 29", Key::Shared3, { {Device::Layout::Uk, ";"}, {Device::Layout::Us, ";"}, {Device::Layout::De, "ö"}, {Device::Layout::Fr, "M"} } } );
+        device.inputs.push_back( {86, "shared 38", Key::Shared4, { {Device::Layout::Uk, ","}, {Device::Layout::Us, ","}, {Device::Layout::De, ","}, {Device::Layout::Fr, ";"} } } );
+        device.inputs.push_back( {87, "shared 39", Key::Shared5, { {Device::Layout::Uk, "."}, {Device::Layout::Us, "."}, {Device::Layout::De, "."}, {Device::Layout::Fr, ":"} } } );
+        device.inputs.push_back( {88, "shared 3a", Key::Shared6, { {Device::Layout::Uk, "/"}, {Device::Layout::Us, "/"}, {Device::Layout::De, "-"}, {Device::Layout::Fr, "="} } } );
+        device.inputs.push_back( {89, "shared 0d", Key::Shared7, { {Device::Layout::Uk, "\\"}, {Device::Layout::Us, "\\"}, {Device::Layout::De, "\\"}, {Device::Layout::Fr, "\\"} } } );
+        device.inputs.push_back( {90, "shared 2a", Key::Shared8, { {Device::Layout::Uk, "#"}, {Device::Layout::Us, "´"}, {Device::Layout::De, "ä"}, {Device::Layout::Fr, "ù"} }} );
+
         // 2 more keys on some layouts, i.e. french, german layout
-        device.inputs.push_back( {94, "extra 1", Key::Shared12, { {Device::Layout::De, "#"}, {Device::Layout::Fr, "ù"} } } );
-        device.inputs.push_back( {95, "extra 2", Key::Shared13, { {Device::Layout::De, "<"}, {Device::Layout::Fr, "<"} } } );
+        device.inputs.push_back( {91, "shared 2b", Key::Shared9, { {Device::Layout::Uk, "unused"}, {Device::Layout::Us, "unused"}, {Device::Layout::De, "#"}, {Device::Layout::Fr, "µ"} } } );
+        device.inputs.push_back( {92, "shared 30", Key::Shared10, { {Device::Layout::Uk, "unused"}, {Device::Layout::Us, "unused"}, {Device::Layout::De, "<"}, {Device::Layout::Fr, "<"} } } );
+
+        device.inputs.push_back( {93, "shared 00", Key::Shared11, { {Device::Layout::Uk, "`"}, {Device::Layout::Us, "`"}, {Device::Layout::De, "`"}, {Device::Layout::Fr, "`"} } } );
+        device.inputs.push_back( {94, "shared 0b", Key::Shared12, { {Device::Layout::Uk, "-"}, {Device::Layout::Us, "-"}, {Device::Layout::De, "ß"}, {Device::Layout::Fr, ")"} } } );
+        device.inputs.push_back( {95, "shared 0c", Key::Shared13, { {Device::Layout::Uk, "="}, {Device::Layout::Us, "="}, {Device::Layout::De, "dead ´"}, {Device::Layout::Fr, "-"} } } );
 
         // virtual inputs (no physical keys)
-        // for amiga there are different layouts
-        device.addVirtual( "shift + 1", { 27, 75 }, Key::ShiftAnd1, { {Device::Layout::Uk, "!"}, {Device::Layout::Us, "!"}, {Device::Layout::De, "!"}, {Device::Layout::Fr, "!"} } );
-        device.addVirtual( "shift + 2", { 28, 75 }, Key::ShiftAnd2, { {Device::Layout::Uk, "\""}, {Device::Layout::Us, "@"}, {Device::Layout::De, "\""}, {Device::Layout::Fr, "\""} } );
-        device.addVirtual( "shift + 3", { 29, 75 }, Key::ShiftAnd3, { {Device::Layout::Uk, "£"}, {Device::Layout::Us, "#"}, {Device::Layout::De, "§"}, {Device::Layout::Fr, "£"} } );
-        device.addVirtual( "shift + 4", { 30, 75 }, Key::ShiftAnd4, { {Device::Layout::Uk, "$"}, {Device::Layout::Us, "$"}, {Device::Layout::De, "$"}, {Device::Layout::Fr, "$"} } );
-        device.addVirtual( "shift + 5", { 31, 75 }, Key::ShiftAnd5, { {Device::Layout::Uk, "%"}, {Device::Layout::Us, "%"}, {Device::Layout::De, "%"}, {Device::Layout::Fr, "%"} } );
-        device.addVirtual( "shift + 6", { 32, 75 }, Key::ShiftAnd6, { {Device::Layout::Uk, "^"}, {Device::Layout::Us, "^"}, {Device::Layout::De, "&"}, {Device::Layout::Fr, "&"} } );
-        device.addVirtual( "shift + 7", { 33, 75 }, Key::ShiftAnd7, { {Device::Layout::Uk, "&"}, {Device::Layout::Us, "&"}, {Device::Layout::De, "/"}, {Device::Layout::Fr, "/"} } );
-        device.addVirtual( "shift + 8", { 34, 75 }, Key::ShiftAnd8, { {Device::Layout::Uk, "*"}, {Device::Layout::Us, "*"}, {Device::Layout::De, "("}, {Device::Layout::Fr, "("} } );
-        device.addVirtual( "shift + 9", { 35, 75 }, Key::ShiftAnd9, { {Device::Layout::Uk, "("}, {Device::Layout::Us, "("}, {Device::Layout::De, ")"}, {Device::Layout::Fr, ")"} } );
-        device.addVirtual( "shift + 0", { 26, 75 }, Key::ShiftAnd0, { {Device::Layout::Uk, ")"}, {Device::Layout::Us, ")"}, {Device::Layout::De, "="}, {Device::Layout::Fr, "="} } );
+        device.addVirtual( "shift + 1", { 75, 27 }, Key::ShiftAnd1, { {Device::Layout::Uk, "!"}, {Device::Layout::Us, "!"}, {Device::Layout::De, "!"}, {Device::Layout::Fr, "1"} } );
+        device.addVirtual( "shift + 2", { 75, 28 }, Key::ShiftAnd2, { {Device::Layout::Uk, "\""}, {Device::Layout::Us, "@"}, {Device::Layout::De, "\""}, {Device::Layout::Fr, "2"} } );
+        device.addVirtual( "shift + 3", { 75, 29 }, Key::ShiftAnd3, { {Device::Layout::Uk, "£"}, {Device::Layout::Us, "#"}, {Device::Layout::De, "§"}, {Device::Layout::Fr, "3"} } );
+        device.addVirtual( "shift + 4", { 75, 30 }, Key::ShiftAnd4, { {Device::Layout::Uk, "$"}, {Device::Layout::Us, "$"}, {Device::Layout::De, "$"}, {Device::Layout::Fr, "4"} } );
+        device.addVirtual( "shift + 5", { 75, 31 }, Key::ShiftAnd5, { {Device::Layout::Uk, "%"}, {Device::Layout::Us, "%"}, {Device::Layout::De, "%"}, {Device::Layout::Fr, "5"} } );
+        device.addVirtual( "shift + 6", { 75, 32 }, Key::ShiftAnd6, { {Device::Layout::Uk, "^"}, {Device::Layout::Us, "^"}, {Device::Layout::De, "&"}, {Device::Layout::Fr, "6"} } );
+        device.addVirtual( "shift + 7", { 75, 33 }, Key::ShiftAnd7, { {Device::Layout::Uk, "&"}, {Device::Layout::Us, "&"}, {Device::Layout::De, "/"}, {Device::Layout::Fr, "7"} } );
+        device.addVirtual( "shift + 8", { 75, 34 }, Key::ShiftAnd8, { {Device::Layout::Uk, "*"}, {Device::Layout::Us, "*"}, {Device::Layout::De, "("}, {Device::Layout::Fr, "8"} } );
+        device.addVirtual( "shift + 9", { 75, 35 }, Key::ShiftAnd9, { {Device::Layout::Uk, "("}, {Device::Layout::Us, "("}, {Device::Layout::De, ")"}, {Device::Layout::Fr, "9"} } );
+        device.addVirtual( "shift + 0", { 75, 26 }, Key::ShiftAnd0, { {Device::Layout::Uk, ")"}, {Device::Layout::Us, ")"}, {Device::Layout::De, "="}, {Device::Layout::Fr, "0"} } );
 
-        device.addVirtual( "alt + 2", { 28, 79 }, Key::AltAnd2, { {Device::Layout::De, "@"} } );
+        device.addVirtual( "alt + shift + 2", { 79, 75, 28 }, Key::AltAndShift2, { {Device::Layout::Fr, "@"}  } );
+        device.addVirtual( "alt + shift + 3", { 79, 75, 29 }, Key::AltAndShift3, { {Device::Layout::Fr, "#"}  } );
 
-        device.addVirtual( "shift + shared 1", { 83, 75 }, Key::ShiftShared1, { {Device::Layout::Uk, "{"}, {Device::Layout::Us, "{"}, {Device::Layout::De, "shift + ü"}, {Device::Layout::Fr, "é"} } );
-        device.addVirtual( "shift + shared 2", { 84, 75 }, Key::ShiftShared2, { {Device::Layout::Uk, "}"}, {Device::Layout::Us, "}"}, {Device::Layout::De, "*"}, {Device::Layout::Fr, "*"} } );
-        device.addVirtual( "shift + shared 3", { 85, 75 }, Key::ShiftShared3, { {Device::Layout::Uk, ":"}, {Device::Layout::Us, ":"}, {Device::Layout::De, "shift + ö"}, {Device::Layout::Fr, "@"} } );
-        device.addVirtual( "shift + shared 4", { 86, 75 }, Key::ShiftShared4, { {Device::Layout::Uk, "<"}, {Device::Layout::Us, "<"}, {Device::Layout::De, ";"}, {Device::Layout::Fr, ";"} } );
-        device.addVirtual( "shift + shared 5", { 87, 75 }, Key::ShiftShared5, { {Device::Layout::Uk, ">"}, {Device::Layout::Us, ">"}, {Device::Layout::De, ":"}, {Device::Layout::Fr, ":"} } );
-        device.addVirtual( "shift + shared 6", { 88, 75 }, Key::ShiftShared6, { {Device::Layout::Uk, "?"}, {Device::Layout::Us, "?"}, {Device::Layout::De, "_"}, {Device::Layout::Fr, "_"} } );
-        device.addVirtual( "shift + shared 7", { 89, 75 }, Key::ShiftShared7, { {Device::Layout::Uk, "|"}, {Device::Layout::Us, "|"}, {Device::Layout::De, "|"}, {Device::Layout::Fr, "|"} } );
-        device.addVirtual( "shift + shared 8", { 90, 75 }, Key::ShiftShared8, { {Device::Layout::Uk, "~"}, {Device::Layout::Us, "~"}, {Device::Layout::De, "~"}, {Device::Layout::Fr, "~"} } );
-        device.addVirtual( "shift + shared 9", { 91, 75 }, Key::ShiftShared9, { {Device::Layout::Uk, "@"}, {Device::Layout::Us, "\""}, {Device::Layout::De, "shift + ä"}, {Device::Layout::Fr, "#"} } );
-        device.addVirtual( "shift + shared 10", { 92, 75 }, Key::ShiftShared10, { {Device::Layout::Uk, "_"}, {Device::Layout::Us, "_"}, {Device::Layout::De, "?"}, {Device::Layout::Fr, "?"} } );
-        device.addVirtual( "shift + shared 11", { 93, 75 }, Key::ShiftShared11, { {Device::Layout::Uk, "+"}, {Device::Layout::Us, "+"}, {Device::Layout::De, "`"}, {Device::Layout::Fr, "^"} } );
-        device.addVirtual( "shift + extra 1", { 94, 75 }, Key::ShiftShared12, { {Device::Layout::De, "^"}, {Device::Layout::Fr, "§"} } );
-        device.addVirtual( "shift + extra 2", { 95, 75 }, Key::ShiftShared13, { {Device::Layout::De, ">"}, {Device::Layout::Fr, ">"} } );
+        device.addVirtual( "shift + shared 1a", { 75, 83 }, Key::ShiftShared1, { {Device::Layout::Uk, "{"}, {Device::Layout::Us, "{"}, {Device::Layout::De, "shift + ü"}, {Device::Layout::Fr, "¨"} } );
+        device.addVirtual( "shift + shared 1b", { 75, 84 }, Key::ShiftShared2, { {Device::Layout::Uk, "}"}, {Device::Layout::Us, "}"}, {Device::Layout::De, "*"}, {Device::Layout::Fr, "*"} } );
+        device.addVirtual( "shift + shared 29", { 75, 85 }, Key::ShiftShared3, { {Device::Layout::Uk, ":"}, {Device::Layout::Us, ":"}, {Device::Layout::De, "shift + ö"}, {Device::Layout::Fr, "shift + M"} } );
+        device.addVirtual( "shift + shared 38", { 75, 86 }, Key::ShiftShared4, { {Device::Layout::Uk, "<"}, {Device::Layout::Us, "<"}, {Device::Layout::De, ";"}, {Device::Layout::Fr, "."} } );
+        device.addVirtual( "shift + shared 39", { 75, 87 }, Key::ShiftShared5, { {Device::Layout::Uk, ">"}, {Device::Layout::Us, ">"}, {Device::Layout::De, ":"}, {Device::Layout::Fr, "/"} } );
+        device.addVirtual( "shift + shared 3a", { 75, 88 }, Key::ShiftShared6, { {Device::Layout::Uk, "?"}, {Device::Layout::Us, "?"}, {Device::Layout::De, "_"}, {Device::Layout::Fr, "+"} } );
+        device.addVirtual( "shift + shared 0d", { 75, 89 }, Key::ShiftShared7, { {Device::Layout::Uk, "|"}, {Device::Layout::Us, "|"}, {Device::Layout::De, "|"}, {Device::Layout::Fr, "|"} } );
+        device.addVirtual( "shift + shared 2a", { 75, 90 }, Key::ShiftShared8, { {Device::Layout::Uk, "@"}, {Device::Layout::Us, "\""}, {Device::Layout::De, "shift + ä"}, {Device::Layout::Fr, "%"} } );
+        device.addVirtual( "shift + shared 2b", { 75, 91 }, Key::ShiftShared9, { {Device::Layout::Uk, "unused"}, {Device::Layout::Us, "unused"}, {Device::Layout::De, "^"}, {Device::Layout::Fr, "£"} } );
+        device.addVirtual( "shift + shared 30", { 75, 92 }, Key::ShiftShared10, { {Device::Layout::Uk, "unused"}, {Device::Layout::Us, "unused"}, {Device::Layout::De, ">"}, {Device::Layout::Fr, ">"} } );
+        device.addVirtual( "shift + shared 00", { 75, 93 }, Key::ShiftShared11, { {Device::Layout::Uk, "~"}, {Device::Layout::Us, "~"}, {Device::Layout::De, "~"}, {Device::Layout::Fr, "~"} } );
+        device.addVirtual( "shift + shared 0b", { 75, 94 }, Key::ShiftShared12, { {Device::Layout::Uk, "_"}, {Device::Layout::Us, "_"}, {Device::Layout::De, "?"}, {Device::Layout::Fr, "°"} } );
+        device.addVirtual( "shift + shared 0c", { 75, 95 }, Key::ShiftShared13, { {Device::Layout::Uk, "+"}, {Device::Layout::Us, "+"}, {Device::Layout::De, "`"}, {Device::Layout::Fr, "_"} } );
 
-        device.addVirtual( "shift + num lock", { 46, 75 }, Key::ShiftNumLock, { {Device::Layout::De, "Keypad {"}, {Device::Layout::Fr, "Keypad {"} } );
-        device.addVirtual( "shift + scroll lock", { 47, 75 }, Key::ShiftScrollLock, {  {Device::Layout::De, "Keypad }"}, {Device::Layout::Fr, "Keypad }"} } );
+        device.addVirtual( "shift + num lock", { 75, 46 }, Key::ShiftNumLock, { {Device::Layout::De, "Keypad {"}, {Device::Layout::Fr, "Keypad {"} } );
+        device.addVirtual( "shift + scroll lock", { 75, 47 }, Key::ShiftScrollLock, {  {Device::Layout::De, "Keypad }"}, {Device::Layout::Fr, "Keypad }"} } );
 
         devices.push_back(device);
     }

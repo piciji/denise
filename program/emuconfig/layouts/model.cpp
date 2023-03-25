@@ -598,10 +598,15 @@ auto ModelLayout::applyCustomStuff( Line::Block* block, Emulator::Interface::Mod
                 if(tabWindow->mediaLayout)
                     tabWindow->mediaLayout->updateVisibility( emulator->getDiskMediaGroup(), block->combo->selection() );
                 break;
+            case LIBAMI::Interface::ModelIdRegion:
+                if (tabWindow->videoLayout)
+                    tabWindow->videoLayout->updatePresets();
+                else if (videoDriver)
+                    VideoManager::getInstance( emulator )->reloadSettings();
+                // fallthrough
             case LIBAMI::Interface::ModelIdChipMem:
             case LIBAMI::Interface::ModelIdSlowMem:
             case LIBAMI::Interface::ModelIdSystem:
-            case LIBAMI::Interface::ModelIdRegion:
                 if (this->emulator == activeEmulator)
                     program->power(activeEmulator);
                 break;

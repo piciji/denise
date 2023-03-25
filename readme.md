@@ -13,6 +13,33 @@ Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trade
 
 # changelog
 
+## 2.0 beta
+* add Amiga emulation
+    * A1000 (OSC/ICS), A500 (Full OCS), A500 (ECS Agnus, OCS Denise)
+    * RGB or S-Video with PAL/NTSC color encoding, border cropping
+    * support all global features like: runAhead, savestates, G-Sync, configs, Warp, JIT polling, shader
+    * up to 4 disk drives with acceleration option
+    * Chipmem (2MB max), Slowmem (1.75MB max)
+    * list disk content in UI
+    * AROS firmware is preinstalled
+    * motor controlled auto warp
+    * if you only want to use one of the two emulators, Amiga or C64 core can be hidden
+* emulator now boots automatically after power on
+    * Splash screen can be disabled
+    * emulator remembers which core was used last
+* disk swapper can be filled faster due to multiple selection of files
+    * files from archives can also be added quickly
+    * if requested disk swap position is not prepared, emulator guesses the disk based on requested position and the currently inserted disk
+* windows: prevent App minification when focus loss in fullscreen
+* C64: add option to combine Virtual Device Traps (instant load first file) with floppy speeder
+* C64: improve drive motor controlled auto warp
+    * add option to stop auto warp when software requests input.
+    * some games stop drive motor too late and warp runs too long, what could leads to the loss of a life
+* C64: support magicdesk CRT's with broken header
+* Mice and other mouse-controlled devices, such as Lightguns, can now be configured with one click
+* help needed to get 
+
+
 ## 1.1.3.1
 * thanks for the countless tests and suggestions [thanks to AW182]
 * thanks for spanish translation [thanks to Muzza]

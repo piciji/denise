@@ -2,9 +2,9 @@
 struct VideoModeLayout : GUIKIT::HorizontalLayout {
     GUIKIT::RadioBox palette;
     GUIKIT::RadioBox spectrum; 
-    GUIKIT::RadioBox crtNone;
-    GUIKIT::RadioBox crtCpu;
-    GUIKIT::RadioBox crtGpu;    	
+    GUIKIT::RadioBox rgb;
+    GUIKIT::RadioBox svideoCpu;
+    GUIKIT::RadioBox svideoGpu;
 
     GUIKIT::Widget spacer;
     GUIKIT::Button reset;
@@ -50,21 +50,6 @@ struct VideoLumaDelayLayout : GUIKIT::FramedVerticalLayout {
     VideoLumaDelayLayout();
 };
 
-struct VideoFirSharpLayout : GUIKIT::HorizontalLayout {   
-    GUIKIT::RadioBox sharpLeft;
-    GUIKIT::RadioBox natural;
-    GUIKIT::RadioBox sharpRight;
-    
-    VideoFirSharpLayout();
-};
-
-struct VideoGpuOptionLayout : GUIKIT::HorizontalLayout {
-    GUIKIT::CheckBox hires;
-    GUIKIT::CheckBox distortionHires;
-    
-    VideoGpuOptionLayout();
-};
-
 struct VideoMaskTypeLayout : GUIKIT::HorizontalLayout {
     GUIKIT::Label type;
     GUIKIT::RadioBox apertureMask;
@@ -74,15 +59,33 @@ struct VideoMaskTypeLayout : GUIKIT::HorizontalLayout {
     VideoMaskTypeLayout();
 };
 
-struct VideoGpuBaseLayout : GUIKIT::FramedVerticalLayout {
-    
-    VideoGpuOptionLayout option;
-    SliderLayout firFilter;
-    VideoFirSharpLayout firSharp;
+struct VideoGpuMiscLayout : GUIKIT::FramedVerticalLayout {
+
+    struct Options : GUIKIT::HorizontalLayout {
+        GUIKIT::CheckBox hires;
+        GUIKIT::CheckBox distortionHires;
+
+        Options();
+    } options;
+
     SliderLayout lightFromCenter;
     SliderLayout luminance;
-    
-    VideoGpuBaseLayout();
+
+    VideoGpuMiscLayout();
+};
+
+struct VideoSubsamplingLayout : GUIKIT::FramedVerticalLayout {
+    SliderLayout firFilter;
+
+    struct FirSharpLayout : GUIKIT::HorizontalLayout {
+        GUIKIT::RadioBox sharpLeft;
+        GUIKIT::RadioBox natural;
+        GUIKIT::RadioBox sharpRight;
+
+        FirSharpLayout();
+    } firSharp;
+
+    VideoSubsamplingLayout();
 };
 
 struct VideoMaskLayout : GUIKIT::FramedVerticalLayout {
@@ -136,7 +139,8 @@ struct VideoLayout : GUIKIT::TabFrameLayout {
         VideoLumaDelayLayout lumaDelay;
 
     GUIKIT::VerticalLayout tab2;
-        VideoGpuBaseLayout gpuBase;
+        VideoGpuMiscLayout gpuMisc;
+        VideoSubsamplingLayout subsampling;
         VideoMaskLayout mask;
         VideoBloomLayout bloom;        
         
