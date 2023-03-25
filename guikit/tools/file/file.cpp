@@ -56,8 +56,9 @@ auto File::detectType() -> void {
     if ( String::endsWith( ext, ".zip" ) ) type = Type::Zip;
     else if ( String::endsWith( ext, ".tar.gz" ) ) type = Type::TarGz;
     else if ( String::endsWith( ext, ".gz" ) ) type = Type::Gzip;
+    else if ( String::endsWith( ext, ".adz" ) ) type = Type::Gzip;
     else if ( String::endsWith( ext, ".tar" ) ) type = Type::Tar;
-    else if ( String::endsWith( ext, ".tgz" ) ) type = Type::TarGz;    
+    else if ( String::endsWith( ext, ".tgz" ) ) type = Type::TarGz;
     else if ( String::endsWith( ext, ".z" ) ) type = Type::TarGz;
     else type = Type::Default;
 }
@@ -345,13 +346,23 @@ auto File::connectItems() -> void {
     }
 }
 
-auto File::getFileName(bool removeExtension) -> std::string {
+auto File::getFileName(bool removeExtension, bool truncateFromEnd) -> std::string {
     std::string _fn = filePath;
     std::size_t start = _fn.find_last_of("/");
-    if (start != std::string::npos) _fn = _fn.substr(start + 1);
-    if (!removeExtension) return _fn;
-    std::size_t end = _fn.find_first_of(".");
-    if (end != std::string::npos) _fn = _fn.erase(end);
+    if (start != std::string::npos)
+        _fn = _fn.substr(start + 1);
+    if (!removeExtension)
+        return _fn;
+
+    std::size_t end;
+    if (truncateFromEnd)
+        end = _fn.find_last_of(".");
+    else
+        end = _fn.find_first_of(".");
+
+    if (end != std::string::npos)
+        _fn = _fn.erase(end);
+
     return _fn;
 }
 

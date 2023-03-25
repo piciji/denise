@@ -1308,7 +1308,7 @@ struct File {
     auto exists() const -> bool { return fileInfo.exists; }
     auto getDate() const -> std::string { return fileInfo.date; }
     auto getType() const -> Type { return type; }
-    auto getFileName(bool removeExtension = false) -> std::string;
+    auto getFileName(bool removeExtension = false, bool truncateFromEnd = false) -> std::string;
     auto getPath() -> std::string;
     auto getExtension() -> std::string;
     auto getHandle() -> FILE* { return fp; }

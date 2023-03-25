@@ -32,6 +32,14 @@
     <comment>C64 Program Image</comment>
     <glob pattern="*.prg"/>
   </mime-type>
+  <mime-type type="application/x-commodore-adf">
+    <comment>Amiga Disk Image</comment>
+    <glob pattern="*.adf"/>
+  </mime-type>
+  <mime-type type="application/x-commodore-adz">
+    <comment>Amiga Disk Image</comment>
+    <glob pattern="*.adz"/>
+  </mime-type>
   <mime-type type="application/x-denise-save">
     <comment>Denise Save Image</comment>
     <glob pattern="*.sav"/>
