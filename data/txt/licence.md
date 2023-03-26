@@ -38,3 +38,5 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
 * Floppy Sounds are taken from Trackers-World.NET ([Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)) samples were cutted
 * Amiga Fonts is copyrighted by rewtnull https://github.com/rewtnull/amigafonts
 * Amiga low pass audio filter is taken from WinUAE https://github.com/tonioni/WinUAE
+* WinUAE findings for handling blitter low level emulation
+* vAmiga inspirations for a 64-bit event counter and handling file systems (sector blocks) 

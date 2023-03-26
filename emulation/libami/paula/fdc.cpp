@@ -48,6 +48,7 @@
 // Copy protections that test the sectors for a certain reading time (different from the fixed one, that the drive can write)
 // can be successfully operated with this.
 // However, the EXT format does not contain any information about reconstructing variable bitcell widths within a track.
+// Like G64, EXT ADF can only handle one custom bitcell width per track.
 // Fuzzy bits also cannot be imaged with EXT ADF.
 // Both requires a real flux change format.
 
@@ -69,7 +70,7 @@
 // In this case, it is better to leave the current number of bits. Practically, this should not be a problem,
 // since newly created EXT ADF discs already have the standard bitcell width and games with copy protections write savegames
 // to empty or standard length tracks. Even if not, reading the data would not fail, since only the reading time varies.
-// a real flux change format doesn't have this limitation. you can write tracks partially with a any bitcell
+// a real flux change format doesn't have this limitation. you can write tracks partially with any bitcell
 // width or motor adjusted bitcell width on tracks with a different bitcell width.
 
 // For EXT ADF, the "adkcon" setting "slow" or "fast" only plays a role when writing. When reading, the bit sequence is already fixed.

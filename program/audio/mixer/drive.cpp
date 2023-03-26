@@ -224,8 +224,10 @@ namespace Mixer {
             devices.push_back({emulator, media, nullptr, nullptr,  nullptr, 0, 0, 0, 0, nullptr});
             device = &devices.back();
 
-            if (media->group->isDisk())
+            if (media->group->isDisk()) {
                 assignSteps(*device);
+                setTimmer( devices.size() - 1 );
+            }
         }
 
         switch(soundId) {
@@ -315,6 +317,7 @@ namespace Mixer {
                                 device->third = soundSeek;
                                 device->thirdOffset = 0;
                                 sound = nullptr;
+                                device->stepSilence->setEnabled();
                             }
                         } else {
                             sound = nullptr;
@@ -409,7 +412,7 @@ namespace Mixer {
     }
 
     auto Drive::readPack(Emulator::Interface* emulator, Emulator::Interface::MediaGroup* group) -> void {
-        Assign* assign = nullptr;
+        Assign* assign;
         uint8_t* data;
         unsigned size;
 
@@ -436,6 +439,7 @@ namespace Mixer {
                 if (data == nullptr)
                     continue;
 
+                assign = nullptr;
                 for (auto& _assign: (group->isTape() ? tapeAssigns : floppyAssigns)) {
                     if (GUIKIT::String::toLowerCase(item.info.name) == (_assign.fileName + ".wav")) {
                         assign = &_assign;
@@ -664,19 +668,22 @@ namespace Mixer {
                 soundShort = device.stepsShort[t];
             }
         }
+    }
 
-        //device.fastStepMode = dynamic_cast<LIBC64::Interface*>( device.emulator ) ? FastStepMode::Short : FastStepMode::Seek;
+    auto Drive::setTimmer(unsigned position) -> void {
+        auto& device = devices[position];
 
         if (dynamic_cast<LIBAMI::Interface*>( device.emulator ) && !device.stepSilence) {
             device.stepSilence = new GUIKIT::Timer;
 
             device.stepSilence->setInterval(30);
-            Device* _d = &device;
-            device.stepSilence->onFinished = [_d]() {
-                _d->stepSilence->setEnabled(false);
-                if (_d->third && _d->third->id == FloppyStepSeek) {
-                    _d->third = nullptr;
-                    _d->thirdOffset = 0;
+
+            device.stepSilence->onFinished = [this, position]() {
+                auto& device = devices[position];
+                device.stepSilence->setEnabled(false);
+                if (device.third && device.third->id == FloppyStepSeek) {
+                    device.third = nullptr;
+                    device.thirdOffset = 0;
                 }
             };
         }

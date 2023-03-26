@@ -23,6 +23,7 @@ Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trade
     * list disk content in UI
     * AROS firmware is preinstalled
     * motor controlled auto warp
+    * drive sounds
     * if you only want to use one of the two emulators, Amiga or C64 core can be hidden
 * emulator now boots automatically after power on
     * Splash screen can be disabled
@@ -37,7 +38,6 @@ Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trade
     * some games stop drive motor too late and warp runs too long, what could leads to the loss of a life
 * C64: support magicdesk CRT's with broken header
 * Mice and other mouse-controlled devices, such as Lightguns, can now be configured with one click
-* help needed to get 
 
 
 ## 1.1.3.1

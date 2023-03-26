@@ -86,6 +86,7 @@ struct Drive {
     auto unload() -> void;
     auto setVolume(Emulator::Interface* emulator, Emulator::Interface::MediaGroup* group, float volume) -> void;
     auto assignSteps( Device& device ) -> void;
+    auto setTimmer(unsigned position) -> void;
 
     auto getFiles(Emulator::Interface* emulator, Emulator::Interface::MediaGroup* group, std::string& fullPath) -> std::vector<GUIKIT::File::Info>;
     static auto mix(float s1, float s2) -> float;
