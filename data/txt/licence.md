@@ -18,12 +18,11 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
 
 # copyright holders
 
-* module "driver" is based of "ruby" used in higan, it's rewritten
 * "Sid" emulation code, especially SID filter, is taken from VICE http://vice-emu.sourceforge.net
 * "VIC-II" cycle emulation code is based on VICE implementation http://vice-emu.sourceforge.net
-* Dynamic Rate Control (DRC) formula is copyrighted by RetroArch.
-* cosine resampler is copyrighted by RetroArch.
-* sinc resampler is copyrighted by RetroArch.
+* Dynamic Rate Control (DRC) formula is copyrighted by RetroArch. https://github.com/libretro/RetroArch
+* cosine resampler is copyrighted by RetroArch
+* sinc resampler is copyrighted by RetroArch
 * C64 TrueType v1.2.1/Style font is copyrighted by https://style64.org/c64-truetype
 * freetype is a library for opengl to render text fonts https://www.freetype.org/
 * bundled opengl Shader were created by following copyright holders: guest(r) - guest.r@gmail.com
@@ -32,11 +31,12 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
 * japanese translation was created by Ulgon
 * hungarian translation was created by Ferenc
 * spanish translation was created by thecodeblasters
-* Chamberlin Filter is copyrighted by Hoxs64.
+* Chamberlin Filter is copyrighted by Hoxs64
 * fpaq0 - Stationary order 0 file compressor by Matt Mahoney
 * P64 format is copyrighted by BeRo
 * Floppy Sounds are taken from Trackers-World.NET ([Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)) samples were cutted
 * Amiga Fonts is copyrighted by rewtnull https://github.com/rewtnull/amigafonts
 * Amiga low pass audio filter is taken from WinUAE https://github.com/tonioni/WinUAE
 * WinUAE findings for handling blitter low level emulation
-* vAmiga inspirations for a 64-bit event counter and handling file systems (sector blocks) 
+* vAmiga inspirations for a 64-bit event counter, 68k and handling sector blocks https://dirkwhoffmann.github.io/vAmiga/
+* 68k simulator/wrapper around FX68K from emoon https://github.com/emoon/fx68k
