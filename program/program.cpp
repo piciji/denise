@@ -328,8 +328,10 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
 
 		audioManager->power();
 
-		if (emuSwap)
-			setVideoFilter();
+		if (emuSwap) {
+            setVideoFilter();
+            statusHandler->updateDiskDriveSpace();
+        }
 
 		resetRunAhead();
 

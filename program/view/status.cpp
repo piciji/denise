@@ -252,6 +252,20 @@ auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
     statusBar->updateSeparator( 13, true );
     statusBar->updateSeparator( 14, true );
 }
+
+auto StatusHandler::updateDiskDriveSpace() -> void {
+    if (dynamic_cast<LIBAMI::Interface*>(activeEmulator)) {
+        statusBar->updateDimension( 1, "DF0 000" );
+        statusBar->updateDimension( 3, "DF1 000" );
+        statusBar->updateDimension( 5, "DF2 000" );
+        statusBar->updateDimension( 7, "DF3 000" );
+    } else {
+        statusBar->updateDimension( 1, "8 00.0" );
+        statusBar->updateDimension( 3, "9 00.0" );
+        statusBar->updateDimension( 5, "10 00.0" );
+        statusBar->updateDimension( 7, "11 00.0" );
+    }
+}
             
 auto StatusHandler::transferToOSD( std::string text ) -> void {
 	static auto option = globalSettings->getOrInit("video_screen_text", 0, {0u, 2u});

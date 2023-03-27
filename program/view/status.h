@@ -58,6 +58,7 @@ struct StatusHandler {
     auto updateText(unsigned id, std::string text, bool alignRight = false, int overrideForegroundColor = -1) -> void;
     auto updateImage(unsigned id, GUIKIT::Image* image) -> void;
     auto updateStatusBar() -> void;
+    auto updateDiskDriveSpace() -> void;
 
     GUIKIT::StatusBar* statusBar = nullptr;
     uint16_t control;

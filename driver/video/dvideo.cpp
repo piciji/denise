@@ -530,7 +530,7 @@ struct DVideo : Video, RenderThread {
         if (renderBuffer) {
             renderBuffer->sharedMutex.lock();
 
-            if (renderBuffer->updated) {
+            if (renderBuffer->updated || (inputWidth != renderBuffer->width) || (inputHeight != renderBuffer->height) ) {
                 renderBuffer->updated = false;
                 resize(inputWidth = renderBuffer->width, inputHeight = renderBuffer->height);
             }
