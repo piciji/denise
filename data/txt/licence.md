@@ -27,10 +27,10 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
 * freetype is a library for opengl to render text fonts https://www.freetype.org/
 * bundled opengl Shader were created by following copyright holders: guest(r) - guest.r@gmail.com
 * application logo and icon were created by Retrofan
-* french translation was created by Ben
-* japanese translation was created by Ulgon
-* hungarian translation was created by Ferenc
-* spanish translation was created by thecodeblasters
+* French translation was created by Ben
+* Japanese translation was created by Ulgon
+* Hungarian translation was created by Ferenc
+* Spanish translation was created by thecodeblasters
 * Chamberlin Filter is copyrighted by Hoxs64
 * fpaq0 - Stationary order 0 file compressor by Matt Mahoney
 * P64 format is copyrighted by BeRo
@@ -40,3 +40,4 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
 * WinUAE findings for handling blitter low level emulation
 * vAmiga inspirations for a 64-bit event counter, 68k and handling sector blocks https://dirkwhoffmann.github.io/vAmiga/
 * 68k simulator/wrapper around FX68K from emoon https://github.com/emoon/fx68k
+* bundled AROS kickrom and extrom  https://aros.sourceforge.io/ 

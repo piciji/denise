@@ -190,6 +190,7 @@ auto Program::fastForward( bool activate, bool aggressive ) -> void {
         return;
     
     auto settings = getSettings( activeEmulator );
+    activeVideoManager = VideoManager::getInstance( activeEmulator );
     
     unsigned forward = 0;
     VideoManager::CrtMode crtMode = (VideoManager::CrtMode)settings->get<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::None, {0u, 2u});
@@ -208,7 +209,7 @@ auto Program::fastForward( bool activate, bool aggressive ) -> void {
 
         if (crtMode != VideoManager::CrtMode::None) {
             settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::None);
-            VideoManager::getInstance( activeEmulator )->reloadSettings();
+            activeVideoManager->reloadSettings();
             settings->set<unsigned>("video_crt", (unsigned)crtMode);
         }
 
@@ -222,8 +223,9 @@ auto Program::fastForward( bool activate, bool aggressive ) -> void {
         VideoManager::setSynchronize();
 
         if (crtMode != VideoManager::CrtMode::None) {
-            VideoManager::getInstance( activeEmulator )->reloadSettings();
+            activeVideoManager->reloadSettings();
         }
+        activeVideoManager->resetTempData();
 
         if (audioManager)
             audioManager->drive.reset();

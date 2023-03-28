@@ -212,6 +212,7 @@ struct Agnus {
     auto power(bool softReset) -> void;
     auto powerOff() -> void;
     auto mapMemory() -> void;
+    auto mapRom(bool init = true) -> void;
     auto setOVL(bool state) -> void;
     auto lockWom() -> void;
     auto setChipmem(unsigned size) -> void;

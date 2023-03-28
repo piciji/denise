@@ -161,6 +161,7 @@ auto Agnus::power(bool softReset) -> void {
     blitter.reset();
     copper.reset();
     mapMemory();
+    mapRom();
 
     if (model == OCS_A1000) {
         powerSupply.init(frequency(), ntsc ? 60 : 50);

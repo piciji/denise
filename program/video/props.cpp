@@ -7,7 +7,7 @@ auto VideoManager::setCrtThreaded(bool state) -> void {
 	
 	for (auto videoManager : videoManagers) {
 		videoManager->emulator->setLineCallback( (videoManager->crtMode == CrtMode::Cpu) && crtThreaded );
-		videoManager->reinitCrtThread();
+		videoManager->reinitCrtThread(true);
 
         if (!program->warp.active)
             videoManager->enableCrtThread((videoManager->crtMode == CrtMode::Cpu) && crtThreaded && (videoManager == activeVideoManager));
@@ -37,7 +37,7 @@ auto VideoManager::setCrtMode(CrtMode _mode) -> void {
     bool useRenderThread = (_mode == CrtMode::Cpu) && crtThreaded;
 
 	emulator->setLineCallback( useRenderThread );
-	reinitCrtThread();
+	reinitCrtThread(true);
     requestUpdate(true);
 
     if (!program->warp.active)

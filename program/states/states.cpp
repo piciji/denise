@@ -529,6 +529,7 @@ auto States::updateModels() -> void {
     }
 
     auto emuView = EmuConfigView::TabWindow::getView( emulator );
+    auto activeVideoManager = VideoManager::getInstance( emulator );
 
     if (emuView) {
         if (emuView->systemLayout) {
@@ -547,13 +548,15 @@ auto States::updateModels() -> void {
     if (regionChange) {
         if (emuView && emuView->videoLayout)
             emuView->videoLayout->updatePresets();
-        else if (videoDriver)
-            VideoManager::getInstance( emulator )->reloadSettings();
+        else if (videoDriver && activeVideoManager)
+            activeVideoManager->reloadSettings();
     }
     
     if (regionChange || resamplerChange) {
         audioManager->power();
     }
+
+    activeVideoManager->resetTempData(0, true);
 }
 
 auto States::updateExpansionJumper() -> void {

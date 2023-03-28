@@ -236,9 +236,9 @@ struct GLX : public Video, OpenGL, RenderThread {
         resizeMutex.unlock();
     }
 
-	auto lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height) -> bool {
+	auto lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height, bool reuse = false) -> bool {
         if (settings.threaded)
-            return RenderThread::lock(data, pitch, _width, _height);
+            return RenderThread::lock(data, pitch, _width, _height, reuse);
 
         // resizing could generate 2 "makeCurrent" in a row without "clear" in between,
         bool _useResizing = useResizing;
@@ -258,9 +258,9 @@ struct GLX : public Video, OpenGL, RenderThread {
 		return OpenGL::lock(data, pitch);
 	}
 	
-	auto lock(float*& data, unsigned& pitch, unsigned _width, unsigned _height) -> bool {
+	auto lock(float*& data, unsigned& pitch, unsigned _width, unsigned _height, bool reuse = false) -> bool {
         if (settings.threaded)
-            return RenderThread::lock(data, pitch, _width, _height);
+            return RenderThread::lock(data, pitch, _width, _height, reuse);
 
         bool _useResizing = useResizing;
         if (_useResizing)
@@ -279,16 +279,9 @@ struct GLX : public Video, OpenGL, RenderThread {
         return OpenGL::lock(data, pitch);
     }
 
-    auto lockReuse() -> bool {
+    auto lock(int32_t*& data, unsigned& pitch, unsigned _width, unsigned _height, bool reuse = false) -> bool {
         if (settings.threaded)
-            return RenderThread::lockReuse();
-
-        return true;
-    }
-
-    auto lock(int32_t*& data, unsigned& pitch, unsigned _width, unsigned _height) -> bool {
-        if (settings.threaded)
-            return RenderThread::lock(data, pitch, _width, _height);
+            return RenderThread::lock(data, pitch, _width, _height, reuse);
 
         bool _useResizing = useResizing;
         if (_useResizing)
@@ -461,13 +454,12 @@ struct GLX : public Video, OpenGL, RenderThread {
         bool disallowShader = false;
         RenderBuffer* renderBuffer = getBufferToRender();
 
-        if (renderBuffer) {
+        if (renderBuffer && renderBuffer->data) {
             renderBuffer->sharedMutex.lock();
-            width = renderBuffer->width;
-            height = renderBuffer->height;
 
-            if (renderBuffer->updated) {
-                renderBuffer->updated = false;
+            if ( (width != renderBuffer->width) || (height != renderBuffer->height) ) {
+                width = renderBuffer->width;
+                height = renderBuffer->height;
                 createTexture(renderBuffer);
             }
 

@@ -62,12 +62,13 @@ VideoManager::VideoManager(Emulator::Interface* emulator) : shader(this) {
 	
 	if (isC64()) {
         countColorBits = 4;
+        tempDestHold = nullptr;
         softwareViewForegroundColorRef = 14;
         softwareViewBackgroundColorRef = 6;
 		
 	} else if (isAmiga()) {
         countColorBits = 12;
-        tempDestHold = new uint32_t[ 1024 * 768 ];
+        tempDestHold = new uint32_t[ 1024 * 600 ];
         softwareViewForegroundColorRef = 4095;
         softwareViewBackgroundColorRef = 90;
 	}
@@ -118,7 +119,7 @@ VideoManager::VideoManager(Emulator::Interface* emulator) : shader(this) {
 
     currentHeight = 0;
 	
-	tempDest = new uint32_t[ 1024 * 768 ];
+	tempDest = new uint32_t[ 1024 * 600 ];
 	
 	lumaRise = 1.0 / 2.0;
 	
@@ -617,7 +618,7 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
 	float* gpuDataFloat;
     constexpr bool interlace = options & 3;
     constexpr bool field = options & 2;
-    constexpr bool hires = options & 4;
+    bool iHold = interlace && !field && !interlaceDecay;
 
     if (needAUpdate)
         updateAll();
@@ -626,6 +627,8 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
         shader.lace = interlace;
         if (crtMode == CrtMode::Gpu)
             shader.recreate = true;
+        else if (interlace) {
+            resetTempData(0, true);}
     }
     
     if ( shader.recreate ) {
@@ -664,63 +667,40 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
         return;
 
     } else if ( crtMode == CrtMode::None ) {
-        if (interlace && !field && !interlaceDecay) { // hold each second frame, flicker free but not like a CRT would do
-            if (!videoDriver->lockReuse())
-                return;
-        } else {
-            if (!videoDriver->lock(gpuData, gpuPitch, width, (!interlace && scanlines) ? ((height << 1) - 1) : height))
-                return;
+        if (!videoDriver->lock(gpuData, gpuPitch, width, (!interlace && scanlines) ? ((height << 1) - 1) : height, iHold))
+            return;
 
-            renderToRgb<T, interlace, field>(width, height, src, srcPitch, gpuData, gpuPitch - width);
-        }
+        renderToRgb<T, interlace, field>(width, height, src, srcPitch, gpuData, gpuPitch - width);
+
 	} else if (crtMode == CrtMode::Gpu) {
         width += SHADER_OFFSCREEN_WIDTH << 1;
         srcPitch -= SHADER_OFFSCREEN_WIDTH << 1;
         src -= SHADER_OFFSCREEN_WIDTH;
 
-        if (interlace && !field && !interlaceDecay) {
-            if (!videoDriver->lockReuse())
+        if (shaderInputPrecision) {
+            if (!videoDriver->lock(gpuDataFloat, gpuPitch, width, height + (interlace ? 2 : 1), iHold))
                 return;
+
+            renderToLumaChroma<T, interlace, field>(width, height, src, srcPitch, gpuDataFloat, gpuPitch - width);
+
         } else {
-            if (shaderInputPrecision) {
-                if (!videoDriver->lock(gpuDataFloat, gpuPitch, width, height + (interlace ? 2 : 1)))
-                    return;
+            if (!videoDriver->lock(gpuData, gpuPitch, width, height + (interlace ? 2 : 1), iHold))
+                return;
 
-                renderToLumaChroma<T, interlace, field>(width, height, src, srcPitch, gpuDataFloat, gpuPitch - width);
-
-            } else {
-                if (!videoDriver->lock(gpuData, gpuPitch, width, height + (interlace ? 2 : 1)))
-                    return;
-
-                renderToRgbNoGamma<T, interlace, field>(width, height, src, srcPitch, gpuData, gpuPitch - width );
-            }
+            renderToRgbNoGamma<T, interlace, field>(width, height, src, srcPitch, gpuData, gpuPitch - width );
         }
 
 	} else if (crtThreaded) {
-        if (interlace && !field && !interlaceDecay) {
-            renderCrtThreaded<T, options>(width, height, src, srcPitch, 0, 0);
-
-            if (!videoDriver->lockReuse())
-                return;
-        } else {
-            if (!videoDriver->lock(gpuData, gpuPitch, width, (scanlines && !interlace) ? ((height << 1) - 1) : height ))
-                renderCrtThreadedBlank(width, height, src, srcPitch, gpuData, gpuPitch - width);
-            else
-                renderCrtThreaded<T, options>(width, height, src, srcPitch, gpuData, gpuPitch - width);
-        }
+        if (!videoDriver->lock(gpuData, gpuPitch, width, (scanlines && !interlace) ? ((height << 1) - 1) : height, iHold))
+            renderCrtThreadedBlank(width, height, src, srcPitch, iHold ? 0 : gpuData, gpuPitch - width);
+        else
+            renderCrtThreaded<T, options>(width, height, src, srcPitch, iHold ? 0 : gpuData, gpuPitch - width);
 
     } else {
-        if (interlace && !field && !interlaceDecay) {
-            renderCrt<T, options>(width, height, src, srcPitch, 0, 0); // reuse old frame, render in hidden buffer
+        if (!videoDriver->lock(gpuData, gpuPitch, width, (scanlines && !interlace) ? ((height << 1) - 1) : height, iHold))
+            return;
 
-            if (!videoDriver->lockReuse())
-                return;
-        } else {
-            if (!videoDriver->lock(gpuData, gpuPitch, width, (scanlines && !interlace) ? ((height << 1) - 1) : height))
-                return;
-
-            renderCrt<T, options>(width, height, src, srcPitch, gpuData, gpuPitch - width);
-        }
+        renderCrt<T, options>(width, height, src, srcPitch, iHold ? 0 : gpuData, gpuPitch - width);
 	}		           
 
     videoDriver->unlockAndRedraw();
@@ -733,6 +713,8 @@ template<typename T, bool interlace, bool field> inline auto VideoManager::rende
         unsigned color;
         ColorRgbLight colorDecayed;
         unsigned iRate = (100 - interlaceDecay); // simulate phosphor decay
+        if (!field && !interlaceDecay) // hold -> update full frames only
+            return;
 
         for(unsigned h = 0; h < height; h++) {
 
@@ -818,6 +800,9 @@ template<typename T, bool interlace, bool field> inline auto VideoManager::rende
     uint32_t color;
     ColorRgbLight colorI;
 
+    if (interlace && !field && !interlaceDecay) // hold -> update full frames only
+        return;
+
     if(cropTop) {
         srcDelay -= width + srcPitch;
         if constexpr (interlace)
@@ -877,6 +862,9 @@ template<typename T, bool interlace, bool field> inline auto VideoManager::rende
     unsigned metaShift = countColorBits;
     unsigned mask = (1 << metaShift) - 1;
     unsigned cropTop = this->emulator->cropTop();
+
+    if (interlace && !field && !interlaceDecay) // hold -> update full frames only
+        return;
 
     if(cropTop) {
         srcDelay -= width + srcPitch;
@@ -1044,6 +1032,11 @@ template<uint8_t options> auto VideoManager::renderMidScreen() -> void {
 
     re->options = getRenderOptions<options>();
 
+    if((re->options ^ render[1].options) & (1 | 4 | 32)) { // scanlines, interlace, hires changes
+        re->dest = nullptr; // disable treaded emulation one frame to prevent artifacts
+        return;
+    }
+
 	re->ready.store(1);
 	re->cv.notify_one();
 }
@@ -1053,9 +1046,17 @@ auto VideoManager::reinitCrtThread( bool initMem ) -> void {
     Render* re = &render[0];
     re->dest = nullptr;
 
-    if (initMem) {
-        std::memset(tempDest, 0, 1024 * 768 * 4);
-    }
+    if (initMem)
+        resetTempData();
+}
+
+auto VideoManager::resetTempData( int offset, bool onlyIfUsed ) -> void {
+    if (onlyIfUsed && (crtMode != CrtMode::Cpu))
+        return;
+
+    std::memset(tempDest + (offset * 1024), 0, 1024 * (600 - offset) * 4);
+    if (tempDestHold && (!onlyIfUsed || crtThreaded))
+        std::memset(tempDestHold + (offset * 1024), 0, 1024 * (600 - offset) * 4);
 }
 
 template<typename T, uint8_t options> auto VideoManager::renderCrt(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch ) -> void {
@@ -1130,7 +1131,6 @@ template<typename T> auto VideoManager::renderCrtThreadedBlank(unsigned width, u
 template<typename T, uint8_t options> auto VideoManager::renderCrtThreaded(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch ) -> void {
     constexpr bool interlace = options & 3;
     constexpr bool field = options & 2;
-    constexpr bool hires = options & 4;
 
     static unsigned scaler = (2.0 / 3.0) * 256.0;
 	Render& re = render[0];
@@ -1141,10 +1141,10 @@ template<typename T, uint8_t options> auto VideoManager::renderCrtThreaded(unsig
     unsigned heightFirstHalfScreen = ((height * scaler) >> 8) & ~1;
 	unsigned destOffset = (width + destPitch) * (heightFirstHalfScreen << ((!interlace && scanlines) ? 1 : 0));
     
-    if (!re.dest || (re.options != re1.options) ) {
+    if (!re.dest || ((re.options ^ re1.options) & (1 | 4 | 32)) ) { // mostly to check if midscreen callback is lores and switches to hires later on
         while (re.ready.load())
             std::this_thread::yield();
-        
+
         renderCrt<T, options>( width, height, src, srcPitch, dest, destPitch );
         re.dest = nullptr;
         
@@ -1172,8 +1172,9 @@ template<typename T, uint8_t options> auto VideoManager::renderCrtThreaded(unsig
     
     emulator->setLineCallback( true, cropTop + heightFirstHalfScreen );
 
-	if (dest && re.dest)
-		std::memcpy(dest, tempDest, destOffset << 2);
+	if (dest && re.dest) {
+        std::memcpy(dest, tempDest, destOffset << 2);
+    }
 			
 	re.height = heightFirstHalfScreen;
 	re.width = width;
@@ -1506,7 +1507,7 @@ auto VideoManager::convertYIQToRGB(ColorRgb* dest, ColorLumaChroma* src) -> void
 }
 
 auto VideoManager::powerOff() -> void {
-	reinitCrtThread();
+	reinitCrtThread(true);
     currentHeight = 0;
     shader.lace = false;
 }

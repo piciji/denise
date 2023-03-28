@@ -267,9 +267,33 @@ auto Agnus::increaseTrackMemStorage(MemChange*& memChange, unsigned& size) -> vo
     memChange = memChangeTemp;
 }
 
-auto Agnus::mapMemory() -> void {
+auto Agnus::mapRom(bool init ) -> void {
     uint8_t romAssignment = kickRom ? KICK_ROM : Unmapped;
     uint8_t romOrwomAssignment = (model == OCS_A1000) ? WOM : romAssignment;
+
+    if (extRom) { // AROS
+        for (int i = 0xe0; i <= 0xe7; i++)
+            mapper[i] = EXT_ROM;
+    } else {
+        for (int i = 0xe0; i <= 0xe7; i++)
+            mapper[i] = romAssignment; // mirror
+    }
+
+    for (int i = 0xf8; i <= 0xff; i++)
+        mapper[i] = romOrwomAssignment;
+
+    if ((model == OCS_A1000) && !womLock) {
+        for (int i = 0xf8; i <= 0xfb; i++)
+            mapper[i] = romAssignment;
+    }
+
+    if (init || (mapper[0] != CHIP_MEM))
+        setOVL(true);
+}
+
+auto Agnus::mapMemory() -> void {
+    //uint8_t romAssignment = kickRom ? KICK_ROM : Unmapped;
+    //uint8_t romOrwomAssignment = (model == OCS_A1000) ? WOM : romAssignment;
 
     // 0 - 7: OVL, assigned later
 
@@ -301,13 +325,13 @@ auto Agnus::mapMemory() -> void {
     for (int i = 0xde; i <= 0xdf; i++)
         mapper[i] = MMIO_CUSTOM;
 
-    if (extRom) { // AROS
-        for (int i = 0xe0; i <= 0xe7; i++)
-            mapper[i] = EXT_ROM;
-    } else {
-        for (int i = 0xe0; i <= 0xe7; i++)
-            mapper[i] = romAssignment; // mirror
-    }
+//    if (extRom) { // AROS
+//        for (int i = 0xe0; i <= 0xe7; i++)
+//            mapper[i] = EXT_ROM;
+//    } else {
+//        for (int i = 0xe0; i <= 0xe7; i++)
+//            mapper[i] = romAssignment; // mirror
+//    }
 
     for(int i = 0xe8; i <= 0xef; i++)
         mapper[i] = Unmapped; // auto config
@@ -315,15 +339,15 @@ auto Agnus::mapMemory() -> void {
     for(int i = 0xf0; i <= 0xf7; i++)
         mapper[i] = Unmapped; // extended ROM, CD32
 
-    for (int i = 0xf8; i <= 0xff; i++)
-        mapper[i] = romOrwomAssignment;
+//    for (int i = 0xf8; i <= 0xff; i++)
+//        mapper[i] = romOrwomAssignment;
+//
+//    if ((model == OCS_A1000) && !womLock) {
+//        for (int i = 0xf8; i <= 0xfb; i++)
+//            mapper[i] = romAssignment;
+//    }
 
-    if ((model == OCS_A1000) && !womLock) {
-        for (int i = 0xf8; i <= 0xfb; i++)
-            mapper[i] = romAssignment;
-    }
-
-    setOVL(true);
+//    setOVL(true);
 }
 
 auto Agnus::setOVL(bool state) -> void {

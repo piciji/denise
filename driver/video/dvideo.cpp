@@ -527,11 +527,12 @@ struct DVideo : Video, RenderThread {
         bool disallowShader = false;
         RenderBuffer* renderBuffer = getBufferToRender();
 
-        if (renderBuffer) {
+        if (renderBuffer && renderBuffer->data) {
             renderBuffer->sharedMutex.lock();
 
-            if (renderBuffer->updated || (inputWidth != renderBuffer->width) || (inputHeight != renderBuffer->height) ) {
-                renderBuffer->updated = false;
+            //if (renderBuffer->updated || (inputWidth != renderBuffer->width) || (inputHeight != renderBuffer->height) ) {
+            if ( (inputWidth != renderBuffer->width) || (inputHeight != renderBuffer->height) ) {
+             //   renderBuffer->updated = false;
                 resize(inputWidth = renderBuffer->width, inputHeight = renderBuffer->height);
             }
 
@@ -656,24 +657,17 @@ struct DVideo : Video, RenderThread {
         }
     }
 
-    auto lockReuse() -> bool {
-        if (settings.threaded)
-            return RenderThread::lockReuse();
-
-        return true;
-    }
-
-    auto lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height) -> bool {
+    auto lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height, bool reuse = false) -> bool {
         resizeMutex.lock();
 
-        bool result = _lock(data, pitch, _width, _height);
+        bool result = _lock(data, pitch, _width, _height, reuse);
 
         resizeMutex.unlock();
 
         return result;
     }
 
-    inline auto _lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height) -> bool {
+    inline auto _lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height, bool reuse = false) -> bool {
 
         if (settings.threaded) {
 
@@ -693,7 +687,7 @@ struct DVideo : Video, RenderThread {
                 return false;
             }
 
-            return RenderThread::lock(data, pitch, _width, _height);
+            return RenderThread::lock(data, pitch, _width, _height, reuse);
         } else {
 			if (lost && !recover()) {
 				if (!init())
@@ -707,10 +701,11 @@ struct DVideo : Video, RenderThread {
 
         if (_height != integerScalingHeight) {
             integerScalingHeight = _height;
-            if (!reset()) {
-                if (!init())
-                    return false;
-            }
+            calcDimension();
+          //  if (!reset()) {
+               // if (!init())
+                  //  return false;
+            //}
         }
 
         texture->GetSurfaceLevel(0, &surface);

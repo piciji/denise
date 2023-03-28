@@ -103,6 +103,8 @@ auto Agnus::serialize(Emulator::Serializer& s, bool light) -> void {
 
             setChipmem(_chipMemMask + 1);
             setSlowmem(_slowMemSize);
+
+            mapRom(false);
         } else {
             s.integer(chipMemMask);
             s.integer(slowMemSize);

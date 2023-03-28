@@ -1136,34 +1136,34 @@ auto View::buildMenu() -> void {
     tapeControlMenu.append( *GUIKIT::MenuSeparator::getInstance() );
 
 	tapePlayItem.onActivate = []() {
-		InputManager::activateHotkey(Hotkey::Id::PlayTape);
+		InputManager::activateHotkey(Hotkey::Id::PlayTape, activeEmulator);
 	};
 	tapeControlMenu.append( tapePlayItem );
 	
 	tapeStopItem.onActivate = []() {
-		InputManager::activateHotkey(Hotkey::Id::StopTape);
+		InputManager::activateHotkey(Hotkey::Id::StopTape, activeEmulator);
 	};
 	tapeControlMenu.append( tapeStopItem );
 	
 	tapeForwardItem.onActivate = []() {
-		InputManager::activateHotkey(Hotkey::Id::ForwardTape);
+		InputManager::activateHotkey(Hotkey::Id::ForwardTape, activeEmulator);
 	};
 	tapeControlMenu.append( tapeForwardItem );
 	
 	tapeRewindItem.onActivate = []() {
-		InputManager::activateHotkey(Hotkey::Id::RewindTape);
+		InputManager::activateHotkey(Hotkey::Id::RewindTape, activeEmulator);
 	};
 	tapeControlMenu.append( tapeRewindItem );
 	
 	tapeRecordItem.onActivate = []() {
-		InputManager::activateHotkey(Hotkey::Id::RecordTape);
+		InputManager::activateHotkey(Hotkey::Id::RecordTape, activeEmulator);
 	};
 	tapeControlMenu.append( tapeRecordItem );
 	
     tapeControlMenu.append(*GUIKIT::MenuSeparator::getInstance());	
     
 	tapeResetCounterItem.onActivate = []() {
-		InputManager::activateHotkey(Hotkey::Id::ResetTapeCounter);
+		InputManager::activateHotkey(Hotkey::Id::ResetTapeCounter, activeEmulator);
 	};
 	tapeControlMenu.append( tapeResetCounterItem );  
 

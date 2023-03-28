@@ -764,8 +764,14 @@ auto InputManager::activateHotkey(Hotkey::Id id, Emulator::Interface* emulator) 
 		
 		for( auto mapping : manager->mappings ) {
 			
-			if (mapping->emuDevice || (mapping->inputManager->emulator != emulator) )
+			if (mapping->emuDevice)
 				continue;
+
+            if (emulator && !mapping->inputManager)
+                continue;
+
+            if (emulator && mapping->inputManager->emulator != emulator)
+                continue;
 			
 			if (mapping->hotkeyId == id) {
                 emuThread->lockHotkeys();

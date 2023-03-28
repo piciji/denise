@@ -1,4 +1,5 @@
 
+#include <cstring>
 #include "renderThread.h"
 #include "../../tools/threadPriority.h"
 // #include "../../../program/tools/logger.h"
@@ -14,9 +15,9 @@ namespace DRIVER {
         reset();
     }
 
-    auto RenderThread::lock(float*& data, unsigned& pitch, unsigned _width, unsigned _height) -> bool {
+    auto RenderThread::lock(float*& data, unsigned& pitch, unsigned _width, unsigned _height, bool reuse) -> bool {
 
-        if (!prepareBuffer(_width, _height))
+        if (!prepareBuffer(_width, _height, reuse))
             return false;
 
         pitch = _width;
@@ -25,9 +26,9 @@ namespace DRIVER {
         return true;
     }
 
-    auto RenderThread::lock(int32_t*& data, unsigned& pitch, unsigned _width, unsigned _height) -> bool {
+    auto RenderThread::lock(int32_t*& data, unsigned& pitch, unsigned _width, unsigned _height, bool reuse) -> bool {
 
-        if (!prepareBuffer(_width, _height))
+        if (!prepareBuffer(_width, _height, reuse))
             return false;
 
         pitch = _width;
@@ -36,26 +37,10 @@ namespace DRIVER {
         return true;
     }
 
-    auto RenderThread::lockReuse() -> bool {
-        accessMutex.lock();
 
-        if (frames == RENDER_BUFFER_COUNT) {
-            accessMutex.unlock();
-            return false;
-        }
+    auto RenderThread::lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height, bool reuse) -> bool {
 
-        if (fetchPos)
-            fetchPos--;
-        else
-            fetchPos = RENDER_BUFFER_COUNT - 1;
-
-        accessMutex.unlock();
-        return true;
-    }
-
-    auto RenderThread::lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height) -> bool {
-
-        if (!prepareBuffer(_width, _height))
+        if (!prepareBuffer(_width, _height, reuse))
             return false;
 
         pitch = lockedBuffer->pitch;
@@ -64,7 +49,7 @@ namespace DRIVER {
         return true;
     }
 
-    auto RenderThread::prepareBuffer(unsigned _width, unsigned _height) -> bool {
+    auto RenderThread::prepareBuffer(unsigned _width, unsigned _height, bool reuse) -> bool {
 
         lockedBuffer = getBufferToDraw();
 
@@ -79,8 +64,21 @@ namespace DRIVER {
             lockedBuffer->width = _width;
             lockedBuffer->height = _height;
             lockedBuffer->pitch = calcPitch( _width );
-            lockedBuffer->updated = true;
+           // lockedBuffer->updated = true;
             resize( lockedBuffer, _width, _height );
+        }
+
+        if (reuse && fillPos) {
+            RenderBuffer* srcBuffer = &renderBuffers[(fillPos == RENDER_BUFFER_COUNT) ? 0 : fillPos];
+            if (srcBuffer->data) {
+                _width = lockedBuffer->pitch;
+                if (_width > srcBuffer->pitch)
+                    _width = srcBuffer->pitch;
+                if (_height > srcBuffer->height)
+                    _height = srcBuffer->height;
+
+                std::memcpy(lockedBuffer->data, srcBuffer->data, _width * _height * 4);
+            }
         }
 
         return true;
@@ -108,7 +106,7 @@ namespace DRIVER {
             buffer.width = 0;
             buffer.height = 0;
             buffer.pitch = 0;
-            buffer.updated = false;
+          //  buffer.updated = false;
             buffer.disallowShader = false;
         }
 
@@ -152,7 +150,6 @@ namespace DRIVER {
     }
 
     auto RenderThread::getBufferToRender() -> RenderBuffer* {
-        unsigned _fetchPos;
         accessMutex.lock();
 
         if (!frames) {
@@ -160,14 +157,12 @@ namespace DRIVER {
             return nullptr;
         }
 
+        accessMutex.unlock();
+
         if (fetchPos == RENDER_BUFFER_COUNT)
             fetchPos = 0;
 
-        _fetchPos = fetchPos++;
-
-        accessMutex.unlock();
-
-        return &renderBuffers[_fetchPos];
+        return &renderBuffers[fetchPos++];
     }
     
     auto RenderThread::getLastBufferToRender() -> RenderBuffer* {

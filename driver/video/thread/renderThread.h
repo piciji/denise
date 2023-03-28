@@ -16,7 +16,7 @@ namespace DRIVER {
         unsigned width = 0;
         unsigned height = 0;
         unsigned pitch = 0;
-        bool updated = false;
+     //   bool updated = false;
         bool disallowShader = false;
     };
 
@@ -52,11 +52,11 @@ namespace DRIVER {
         auto enable(bool state) -> void;
         auto changePriorityToRealtime(bool state) -> void;
 
-        auto prepareBuffer(unsigned _width, unsigned _height) -> bool;
-        auto lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height) -> bool;
-        auto lock(int32_t*& data, unsigned& pitch, unsigned _width, unsigned _height) -> bool;
-        auto lock(float*& data, unsigned& pitch, unsigned _width, unsigned _height) -> bool;
-        auto lockReuse() -> bool;
+        auto prepareBuffer(unsigned _width, unsigned _height, bool reuse) -> bool;
+        auto lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height, bool reuse) -> bool;
+        auto lock(int32_t*& data, unsigned& pitch, unsigned _width, unsigned _height, bool reuse) -> bool;
+        auto lock(float*& data, unsigned& pitch, unsigned _width, unsigned _height, bool reuse) -> bool;
+
         auto unlock(bool disallowShader = false) -> void;
         auto reset() -> void;
         auto wait() -> void;

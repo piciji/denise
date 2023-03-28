@@ -154,9 +154,16 @@ auto Denise::endHblank() -> void {
         if (lineVCounter == 0) {
             crop.reset();
 
-            hiresFrame = hires ? 1 : 0; // can switch to hires mid frame
+            hiresFrame = hires ? 1 : 0; // can switch to hires mid-frame
             // Denise doesn't need to know of interlace or vertical position.
             // However, in order to arrange the resulting image in memory, we need this information here.
+            if (!laceMode && agnus.laceMode) {
+                // remove old interlace data, non-lace frame wouldn't overwrite, to prevent artifacts.
+                std::memset(frameBuffer + 240 * LINE_BUFFER_WIDTH, 0, LINE_BUFFER_WIDTH * (LINE_BUFFER_HEIGHT - 240) * 2);
+            } else if (laceMode && !agnus.laceMode) {
+                lineCallback.line >>= 1;
+            }
+
             laceMode = agnus.laceMode;
             if (laceMode & 2)
                 lineVCounter = 1;

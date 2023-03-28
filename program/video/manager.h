@@ -125,6 +125,7 @@ struct VideoManager {
     uint32_t* colorTable = nullptr;
     uint32_t* colorTableNoGamma = nullptr;
     auto reinitCrtThread( bool initMem = false ) -> void;
+    auto resetTempData( int offset = 0, bool onlyIfUsed = false ) -> void;
 
     unsigned countColorBits;
 	
