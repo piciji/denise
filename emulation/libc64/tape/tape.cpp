@@ -122,7 +122,8 @@ Tape::~Tape() {
 }
 
 auto Tape::updateDeviceState() -> void {
-    system->interface->updateDeviceState( getMediaConnected(), mode == Mode::Record, counter, false, !motorIn );
+    if (system->displayFrame())
+        system->interface->updateDeviceState( getMediaConnected(), mode == Mode::Record, counter, false, !motorIn );
 }
 
 auto Tape::setMotorSound() -> void {
@@ -397,7 +398,7 @@ auto Tape::getListing() -> std::vector<Emulator::Interface::Listing>& {
     return structure.getListing();
 }
 
-auto Tape::selectListing( unsigned pos, uint8_t useTraps ) -> void {
+auto Tape::selectListing( unsigned pos, uint8_t options ) -> void {
 
     if (pos == 0)
         pos = 1;
@@ -411,7 +412,7 @@ auto Tape::selectListing( unsigned pos, uint8_t useTraps ) -> void {
 
     fetchPos = 0;
 
-    if (useTraps) {
+    if (options & 1) {
         if (!traps->testForComplexTapeLoader())
             traps->installTape();
     }

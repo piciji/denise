@@ -71,8 +71,8 @@ struct IecBus {
     auto writeProtect( Emulator::Interface::Media* media, bool state ) -> void;    
     auto isWriteProtected( Emulator::Interface::Media* media ) -> bool;    
     auto getDiskListing(Emulator::Interface::Media* media) -> std::vector<Emulator::Interface::Listing>&;
-    auto selectListing( Emulator::Interface::Media* media, unsigned pos, uint8_t useTraps = 0 ) -> void;
-    auto selectListing( Emulator::Interface::Media* media,  std::string fileName, uint8_t useTraps = 0 ) -> void;
+    auto selectListing( Emulator::Interface::Media* media, unsigned pos, uint8_t options = 0 ) -> void;
+    auto selectListing( Emulator::Interface::Media* media,  std::string fileName, uint8_t options = 0 ) -> void;
     auto serialize(Emulator::Serializer& s) -> void;
     auto serializeLight(Emulator::Serializer& s) -> void;
     auto setPowerThread( bool state ) -> void;

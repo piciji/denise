@@ -7,6 +7,7 @@ denise.xcodeproj
 .idea/
 ._*
 Build/
+emulation/libami/altCpu/
 .DS_Store
 emulation/libami/altCpu/*
 msvc/.vs/

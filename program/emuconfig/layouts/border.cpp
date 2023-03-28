@@ -1,4 +1,15 @@
 
+BorderHotkeyLayout::BorderHotkeyLayout() {
+    append( label, {0u, 0u}, 10 );
+    append( cropOff, {0u, 0u}, 10 );
+    append( cropMonitor, {0u, 0u}, 10 );
+    append( cropAuto, {0u, 0u}, 10 );
+    append( cropSemiAuto, {0u, 0u}, 10 );
+    append( cropFree, {0u, 0u} );
+
+    setAlignment(0.5);
+}
+
 BorderLayout::BorderLayout(TabWindow* tabWindow) : 
 cropLeft("px"),
 cropRight("px"),
@@ -16,7 +27,7 @@ cropBottom("px")
 	cropLayout.append( cropLeft, {~0u, 0u}, 5 );
 	cropLayout.append( cropRight, {~0u, 0u}, 5 );
 	cropLayout.append( cropTop, {~0u, 0u}, 5 );
-	cropLayout.append( cropBottom, {~0u, 0u} );	
+	cropLayout.append( cropBottom, {~0u, 0u}, 10 );
 	
 	cropLayout.setPadding(10);
 	
@@ -35,7 +46,9 @@ cropBottom("px")
 	cropType2.append( cropFree, {0u, 0u} );	
 	
 	GUIKIT::RadioBox::setGroup( cropOff, cropMonitor, cropAuto, cropSemiAuto, cropFree );
-	
+
+    cropLayout.append( borderHotkeyLayout, {0u, 0u} );
+
     typedef Emulator::Interface::CropType CropType;
     
 	cropOff.onActivate = [this]() {
@@ -95,8 +108,35 @@ cropBottom("px")
 
 		cropBottom.value.setText( std::to_string( position ) + " px" );
 	};
+
+    borderHotkeyLayout.cropOff.onToggle = [this](bool checked) {
+        updateBorderHotkeyUsage(0, checked);
+    };
+    borderHotkeyLayout.cropMonitor.onToggle = [this](bool checked) {
+        updateBorderHotkeyUsage(1, checked);
+    };
+    borderHotkeyLayout.cropAuto.onToggle = [this](bool checked) {
+        updateBorderHotkeyUsage(2, checked);
+    };
+    borderHotkeyLayout.cropSemiAuto.onToggle = [this](bool checked) {
+        updateBorderHotkeyUsage(3, checked);
+    };
+    borderHotkeyLayout.cropFree.onToggle = [this](bool checked) {
+        updateBorderHotkeyUsage(4, checked);
+    };
     	
     loadSettings();
+}
+
+auto BorderLayout::updateBorderHotkeyUsage(unsigned bit, bool checked) -> void {
+    unsigned state = _settings->get<unsigned>( "border_hotkey", ~0 );
+
+    if (checked)
+        state |= 1 << bit;
+    else
+        state &= ~(1 << bit);
+
+    _settings->set<unsigned>( "border_hotkey", state );
 }
 
 auto BorderLayout::updateCrop(std::string property, unsigned value) -> void {
@@ -128,11 +168,18 @@ auto BorderLayout::translate() -> void {
 	cropTop.name.setText( trans->get("up", {},true) );
 	cropBottom.name.setText( trans->get("down", {},true) );
 	
-	cropOff.setText( trans->get("disabled") );
-	cropMonitor.setText( trans->get("monitor") );
-	cropAuto.setText( trans->get("crop complete") );
-	cropSemiAuto.setText( trans->get("crop all sides equally") );
-	cropFree.setText( trans->get("crop each side manually") );
+	cropOff.setText( trans->get("disabled") + " (0)" );
+	cropMonitor.setText( trans->get("monitor") + " (1)" );
+	cropAuto.setText( trans->get("crop complete") + " (2)" );
+	cropSemiAuto.setText( trans->get("crop all sides equally") + " (3)" );
+	cropFree.setText( trans->get("crop each side manually") + " (4)" );
+
+    borderHotkeyLayout.label.setText( trans->get("switchable by Hotkey", {}, true) );
+    borderHotkeyLayout.cropOff.setText( "0" );
+    borderHotkeyLayout.cropMonitor.setText( "1" );
+    borderHotkeyLayout.cropAuto.setText( "2" );
+    borderHotkeyLayout.cropSemiAuto.setText( "3" );
+    borderHotkeyLayout.cropFree.setText( "4" );
 	
 	cropAspectCorrect.setText( trans->get("maintain display ratio") );
 	cropLayout.setText( trans->get("crop border") );
@@ -168,6 +215,13 @@ auto BorderLayout::loadSettings() -> void {
 
     auto valCropAC = _settings->get<bool>("crop_aspect_correct", 0);
     cropAspectCorrect.setChecked(valCropAC);
+
+    unsigned hotkeyState = _settings->get<unsigned>( "border_hotkey", ~0 );
+    borderHotkeyLayout.cropOff.setChecked( hotkeyState & 1 );
+    borderHotkeyLayout.cropMonitor.setChecked( hotkeyState & 2 );
+    borderHotkeyLayout.cropAuto.setChecked( hotkeyState & 4 );
+    borderHotkeyLayout.cropSemiAuto.setChecked( hotkeyState & 8 );
+    borderHotkeyLayout.cropFree.setChecked( hotkeyState & 16 );
     
     updateVisibillity();
 }

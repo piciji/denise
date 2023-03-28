@@ -21,6 +21,7 @@ struct Keyboard {
     
     uint8_t cols[8];
     uint8_t rows[8];
+    bool suppressPoll;
 	    
     auto setDevice( Interface::Device* device ) -> void {       
         
@@ -29,8 +30,18 @@ struct Keyboard {
 
         this->device = device;
     }
-	
+
+    auto setKeycode(uint8_t row, uint8_t col) -> void {
+        rows[row] |= 1 << col;
+        cols[col] |= 1 << row;
+        suppressPoll = true;
+    }
+
     auto poll() -> void {
+        if (suppressPoll) {
+            suppressPoll = false;
+            return;
+        }
         // update pressed key state from host, one time per frame
         bool state;
         
@@ -110,6 +121,7 @@ struct Keyboard {
 	auto reset() -> void {
 		shiftLockPressed = false;
 		shiftLock = false;
+        suppressPoll = false;
         std::memset(cols, 0, 8);
         std::memset(rows, 0, 8);
 	}

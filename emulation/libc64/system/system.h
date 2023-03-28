@@ -254,6 +254,7 @@ struct System {
     auto setAudioRefresh() -> void;
     auto autoStartFinish(bool soft) -> void;
     auto jam(Emulator::Interface::Media* media = nullptr) -> void;
+    auto displayFrame() -> const bool { return !runAhead.pos; }
 };
 
 extern System* system;

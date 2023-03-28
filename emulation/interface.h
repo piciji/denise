@@ -415,7 +415,7 @@ struct Interface {
     auto trapsResult(Media* media, bool error) -> void {
         bind->trapsResult(media, error);
     }
-    
+
     auto informCapsLock(bool state) -> void {
         bind->informCapsLock( state );
     }
@@ -428,7 +428,7 @@ struct Interface {
         bind->log(data, newLine);
     }
 
-    template<typename T> auto log(T data, bool newLine = true, bool asHex = false) -> void {			
+    template<typename T> auto log(T data, bool newLine = true, bool asHex = false) -> void {
 
         std::string out = std::to_string(data);	
 
@@ -449,8 +449,8 @@ struct Interface {
 	virtual auto createDiskImage(unsigned typeId, std::string name = "", bool hd = false, bool ffs = false, bool bootable = false) -> Data { return {nullptr, 0}; }
     virtual auto getDiskListing(Media* media) -> std::vector<Listing> { return {}; }
     virtual auto getDiskPreview(uint8_t* data, unsigned size, Media* media = nullptr) -> std::vector<Listing> { return {}; }
-    virtual auto selectDiskListing(Media* media, unsigned pos, uint8_t useTraps = 0) -> void { }
-    virtual auto selectDiskListing(Media* media, std::string fileName, uint8_t useTraps = 0) -> void { }
+    virtual auto selectDiskListing(Media* media, unsigned pos, uint8_t options = 0) -> void { }
+    virtual auto selectDiskListing(Media* media, std::string fileName, uint8_t options = 0) -> void { }
     virtual auto resetDrive(Media* media) -> void { }
     virtual auto hideDrive(Media* media) -> void { }
     
@@ -468,7 +468,7 @@ struct Interface {
 	virtual auto createTapeImage(unsigned& imageSize) -> uint8_t* { return nullptr; }
     virtual auto getTapeListing(Media* media) -> std::vector<Listing> { return {}; }
     virtual auto getTapePreview(uint8_t* data, unsigned size, Media* media = nullptr) -> std::vector<Listing> { return {}; }
-    virtual auto selectTapeListing(Media* media, unsigned pos, uint8_t useTraps = 0) -> void { }
+    virtual auto selectTapeListing(Media* media, unsigned pos, uint8_t options = 0) -> void { }
     // expansion handling
     virtual auto insertExpansionImage(Media* media, uint8_t* data, unsigned size) -> void {}
     virtual auto ejectExpansionImage(Media* media) -> void {}
@@ -644,16 +644,16 @@ struct Interface {
         return {};
     }
     
-    auto selectListing(Media* media, unsigned position, std::string fileName = "", uint8_t useTraps = 0) -> bool {
+    auto selectListing(Media* media, unsigned position, std::string fileName = "", uint8_t options = 0) -> bool {
         switch(media->group->type) {
 			case MediaGroup::Type::Disk:
 			    if (!fileName.empty() && (position == 0) )
-                    selectDiskListing( media, fileName, useTraps );
+                    selectDiskListing( media, fileName, options );
 			    else
-                    selectDiskListing( media, position, useTraps );
+                    selectDiskListing( media, position, options );
                 return true;
 			case MediaGroup::Type::Tape:
-                selectTapeListing( media, position, useTraps );
+                selectTapeListing( media, position, options );
                 return true;
 			case MediaGroup::Type::Program:
                 return selectProgramListing( media, position );

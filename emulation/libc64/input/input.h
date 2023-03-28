@@ -55,6 +55,8 @@ struct Input {
 
     auto setSampling(uint8_t mode) -> void;
     auto updateSampling() -> void;
+
+    auto setKeycode(uint8_t row, uint8_t col) -> void;
 };
 
 }

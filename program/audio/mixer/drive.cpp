@@ -689,9 +689,9 @@ namespace Mixer {
         }
     }
 
-    auto Drive::reset(Emulator::Interface::MediaGroup* group) -> void {
+    auto Drive::reset(Emulator::Interface::MediaGroup* group, bool exclude) -> void {
         for(auto& device : devices) {
-            if (!group || (group == device.media->group)) {
+            if (!group || (!exclude && (group == device.media->group)) || (exclude && (group != device.media->group)) ) {
                 device.first = nullptr;
                 device.second = nullptr;
                 device.third = nullptr;

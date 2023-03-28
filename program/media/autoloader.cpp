@@ -10,6 +10,7 @@
 #include "../cmd/cmd.h"
 #include "../states/states.h"
 #include "../firmware/manager.h"
+#include "../audio/manager.h"
 
 Autoloader* autoloader = nullptr;
 
@@ -217,12 +218,18 @@ auto Autoloader::postProcessing() -> void {
             ddControl.emulator->selectListing(mediaGroup->selected, ddControl.selection, ddControl.fileName, trapped);
             fSetting = FileSetting::getInstance( ddControl.emulator, _underscore(mediaGroup->selected->name) );
         } else {
-            uint8_t useTraps = trapped;
-            if (trapsWithSpeeder) useTraps |= 0x80;
+            uint8_t options = (uint8_t)trapped;
+            if (trapped) {
+                if (!trapsWithSpeeder)  options |= 0x80;
+                else                    options |= 2;
+            }
 
-            ddControl.emulator->selectListing(&mediaGroup->media[0], ddControl.selection, ddControl.fileName, useTraps);
+            ddControl.emulator->selectListing(&mediaGroup->media[0], ddControl.selection, ddControl.fileName, options);
             fSetting = FileSetting::getInstance( ddControl.emulator, _underscore(mediaGroup->media[0].name) );
         }
+
+        if (audioManager)
+            audioManager->drive.reset(mediaGroup, true);
         
         if (fSetting) {
             GUIKIT::File temp(fSetting->path);

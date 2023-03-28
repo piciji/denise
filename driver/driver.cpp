@@ -272,13 +272,13 @@ auto Input::available() -> std::vector<std::string> {
 }
 
 auto Input::preferred() -> std::string {
+    #ifdef DRV_RAWINPUT
+        return "RawInput";
+    #endif
+
     #ifdef DRV_DINPUT8
 		return "DirectInput 8";
 	#endif
-
-    #ifdef DRV_RAWINPUT
-		return "RawInput";
-	#endif      
         
     #ifdef DRV_DINPUT7
 		return "DirectInput 7";

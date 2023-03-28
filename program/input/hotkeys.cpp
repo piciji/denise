@@ -256,9 +256,14 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             if (inputDriver->mIsAcquired()) {
                 inputDriver->mUnacquire();					
             } else if (view->fullScreen()) {
-                inputDriver->mAcquire();
+                // dinput needs this, when grab button is mapped to mouse
+                view->cursorHideTimer.setInterval(200);
+                view->cursorHideTimer.setEnabled();
+                //inputDriver->mAcquire();
             } else if (!program->isPause && program->isAnalogDeviceConnected()) {
-                inputDriver->mAcquire();
+                view->cursorHideTimer.setInterval(200);
+                view->cursorHideTimer.setEnabled();
+                // inputDriver->mAcquire();
                 view->setFocused();
             }
             break;
@@ -359,11 +364,20 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
 
             typedef Emulator::Interface::CropType CropType;
             auto cropType = settings->get<unsigned>("crop_type", (unsigned)CropType::Off);
-            if (++cropType > 4) {
-                cropType = 0;
-            }
-            if (cropType == 3)
-                cropType = 4;
+            auto hotkeyState = settings->get<unsigned>( "border_hotkey", ~0 );
+            auto cropTypeOld = cropType;
+
+            do {
+                if (++cropType > 4)
+                    cropType = 0;
+
+                if (hotkeyState & (1 << cropType))
+                    break;
+
+            } while (cropType != cropTypeOld);
+
+            if (cropType == cropTypeOld)
+                break;
 
             auto emuView = EmuConfigView::TabWindow::getView( activeEmulator );
 
@@ -371,6 +385,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
                 if ((CropType)cropType == CropType::Off) emuView->borderLayout->cropOff.activate();
                 else if ((CropType)cropType == CropType::Monitor) emuView->borderLayout->cropMonitor.activate();
                 else if ((CropType)cropType == CropType::Auto) emuView->borderLayout->cropAuto.activate();
+                else if ((CropType)cropType == CropType::SemiAuto) emuView->borderLayout->cropSemiAuto.activate();
                 else if ((CropType)cropType == CropType::Free) emuView->borderLayout->cropFree.activate();
             } else {
                 settings->set<unsigned>("crop_type", cropType);
@@ -772,7 +787,7 @@ auto InputManager::activateHotkey(Hotkey::Id id, Emulator::Interface* emulator) 
 
             if (emulator && mapping->inputManager->emulator != emulator)
                 continue;
-			
+
 			if (mapping->hotkeyId == id) {
                 emuThread->lockHotkeys();
 				hotkeyTriggers.push_back( mapping );
