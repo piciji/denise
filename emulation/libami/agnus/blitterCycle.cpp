@@ -14,73 +14,73 @@ namespace LIBAMI {
 
 template<uint16_t jobs, uint8_t nextCycle> auto Blitter::blockMode() -> void {
 
-    if constexpr (jobs & BLT_FETCH_A) {
+    if constexpr (!!(jobs & BLT_FETCH_A)) {
         if (!agnus.fetchBlitterDma<Agnus::PTR_BLT_A_H>(bltApt, bltAdat))
             return;
 
-        if constexpr (jobs & BLT_DESC)  bltApt += -2;
-        else                            bltApt += +2;
+        if constexpr (!!(jobs & BLT_DESC))  bltApt += -2;
+        else                                bltApt += +2;
 
         if (curW == 1) {
-            if constexpr (jobs & BLT_DESC)  bltApt += -bltAmod;
-            else                            bltApt += bltAmod;
+            if constexpr (!!(jobs & BLT_DESC))  bltApt += -bltAmod;
+            else                                bltApt += bltAmod;
         }
-    } else if constexpr (jobs & BLT_FETCH_B) {
+    } else if constexpr (!!(jobs & BLT_FETCH_B)) {
         if (!agnus.fetchBlitterDma<Agnus::PTR_BLT_B_H>(bltBpt, bltBdat))
             return;
 
-        if constexpr (jobs & BLT_DESC)  bltBpt += -2;
-        else                            bltBpt += +2;
+        if constexpr (!!(jobs & BLT_DESC))  bltBpt += -2;
+        else                                bltBpt += +2;
 
         if (curW == 1) {
-            if constexpr (jobs & BLT_DESC)  bltBpt += -bltBmod;
-            else                            bltBpt += bltBmod;
+            if constexpr (!!(jobs & BLT_DESC))  bltBpt += -bltBmod;
+            else                                bltBpt += bltBmod;
         }
-    } else if constexpr (jobs & BLT_FETCH_C) {
+    } else if constexpr (!!(jobs & BLT_FETCH_C)) {
         if (!agnus.fetchBlitterDma<Agnus::PTR_BLT_C_H>(bltCpt, bltCdat))
             return;
 
-        if constexpr (jobs & BLT_DESC)  bltCpt += -2;
-        else                            bltCpt += +2;
+        if constexpr (!!(jobs & BLT_DESC))  bltCpt += -2;
+        else                                bltCpt += +2;
 
         if (curW == 1) {
-            if constexpr (jobs & BLT_DESC)  bltCpt += -bltCmod;
-            else                            bltCpt += bltCmod;
+            if constexpr (!!(jobs & BLT_DESC))  bltCpt += -bltCmod;
+            else                                bltCpt += bltCmod;
         }
-    } else if constexpr ( jobs & BLT_WRITE_D ) {
+    } else if constexpr (!!( jobs & BLT_WRITE_D )) {
         if (!agnus.writeBlitterDma(bltDpt, doff ? agnus.dataBus : bltDdat))
             return;
 
-        if constexpr (jobs & BLT_DESC)  bltDpt += -2;
-        else                            bltDpt += 2;
+        if constexpr (!!(jobs & BLT_DESC))  bltDpt += -2;
+        else                                bltDpt += 2;
 
         if (curW == bltSizeW) {
-            if constexpr (jobs & BLT_DESC)  bltDpt += -bltDmod;
-            else                            bltDpt += bltDmod;
+            if constexpr (!!(jobs & BLT_DESC))  bltDpt += -bltDmod;
+            else                                bltDpt += bltDmod;
         }
     } else if constexpr ((jobs & BLT_IDLE) == 0) {
         if (!agnus.canBlitterUseBus())
             return;
     }
 
-    if constexpr (jobs & BLT_IDLE) {
+    if constexpr (!!(jobs & BLT_IDLE)) {
         if (agnus.aga())
             finish();
     }
 
-    if constexpr (jobs & BLT_SHIFT_A) {
+    if constexpr (!!(jobs & BLT_SHIFT_A)) {
         uint16_t mask = 0xffff;
         if (curW == bltSizeW)   mask &= bltAfwm;
         if (curW == 1)          mask &= bltAlwm;
 
-        if constexpr (jobs & BLT_DESC)
+        if constexpr (!!(jobs & BLT_DESC))
             bltADatShifted = (((bltAdat & mask) << 16) | bltADatOld) >> (16 - SHIFTA);
         else
             bltADatShifted = ((bltADatOld << 16) | (bltAdat & mask) ) >> SHIFTA;
 
         bltADatOld = bltAdat & mask;
 
-    } else if constexpr (jobs & BLT_SHIFT_B) {
+    } else if constexpr (!!(jobs & BLT_SHIFT_B)) {
         if (jobs & BLT_DESC)
             bltBDatShifted = ((bltBdat << 16) | bltBDatOld) >> (16 - SHIFTB);
         else
@@ -88,10 +88,10 @@ template<uint16_t jobs, uint8_t nextCycle> auto Blitter::blockMode() -> void {
 
         bltBDatOld = bltBdat;
 
-    } else if constexpr (jobs & BLT_CALC) {
+    } else if constexpr (!!(jobs & BLT_CALC)) {
         bltDdat = doMinterm(bltcon0 & 0xff, bltADatShifted, bltBDatShifted, bltCdat);
 
-        if constexpr (jobs & BLT_FILL) {
+        if constexpr (!!(jobs & BLT_FILL)) {
             #define isExclusiveFill (bltcon1 & 0x10)
 
             uint16_t resultLo = fill[ (fillCarry << 9) | (isExclusiveFill << 4) | (bltDdat & 0xff)];
@@ -109,7 +109,7 @@ template<uint16_t jobs, uint8_t nextCycle> auto Blitter::blockMode() -> void {
         if (bltDdat) zero = false;
     }
 
-    if constexpr (jobs & BLT_NEXT) {
+    if constexpr (!!(jobs & BLT_NEXT)) {
         if (!--curW) {
             curW = bltSizeW;
 
@@ -157,18 +157,18 @@ template<uint16_t jobs, uint8_t nextCycle> auto Blitter::blockMode() -> void {
 
 template<uint16_t jobs, uint8_t nextCycle> auto Blitter::lineMode() -> void {
 
-    if constexpr (jobs & BLT_FETCH_B) {
+    if constexpr (!!(jobs & BLT_FETCH_B)) {
         if (!agnus.fetchBlitterDma<Agnus::PTR_BLT_B_H>(bltBpt, bltBdat))
             return;
 
-        if constexpr (jobs & BLT_B_MOD)
+        if constexpr (!!(jobs & BLT_B_MOD))
             bltBpt += bltBmod;
 
-    } else if constexpr (jobs & BLT_FETCH_C) {
+    } else if constexpr (!!(jobs & BLT_FETCH_C)) {
         if (!agnus.fetchBlitterDma<Agnus::PTR_BLT_C_H>(bltCpt, bltCdat))
             return;
 
-    } else if constexpr (jobs & BLT_WRITE_D) {
+    } else if constexpr (!!(jobs & BLT_WRITE_D)) {
         if (writeLineDot) {
             if (!agnus.writeBlitterDma(bltDpt, doff ? agnus.dataBus : bltDdat))
                 return;
@@ -180,14 +180,14 @@ template<uint16_t jobs, uint8_t nextCycle> auto Blitter::lineMode() -> void {
             return;
     }
 
-    if constexpr (jobs & BLT_SHIFT_A) {
+    if constexpr (!!(jobs & BLT_SHIFT_A)) {
         bltADatShifted = (bltAdat & bltAfwm) >> SHIFTA;
 
         // should get his own job name
         writeLineDot = !(bltcon1 & BLT_SING) || !oneDotPerLine;
         oneDotPerLine = true;
 
-    } else if constexpr (jobs & BLT_SHIFT_B) {
+    } else if constexpr (!!(jobs & BLT_SHIFT_B)) {
         bltBDatShifted = ((bltBdat << 16) | bltBdat) >> SHIFTB;
 
         if ((bltcon1 & 0xf000) == 0) {
@@ -196,12 +196,12 @@ template<uint16_t jobs, uint8_t nextCycle> auto Blitter::lineMode() -> void {
             bltcon1 -= 0x1000;
     }
 
-    if constexpr (jobs & BLT_CALC) {
+    if constexpr (!!(jobs & BLT_CALC)) {
         bltDdat = doMinterm(bltcon0 & 0xff, bltADatShifted, (bltBDatShifted & 1) ? 0xffff : 0, bltCdat);
         if (bltDdat) zero = false;
     }
 
-    if constexpr (jobs & BLT_LINE_X) { // happens only if channel C is in use
+    if constexpr (!!(jobs & BLT_LINE_X)) { // happens only if channel C is in use
         // all register changes of DMA pointers are executed by the emulator one cycle later.
         // if the pointer is used directly in the next cycle for DMA access, the register change is ignored.
         // however, this does not apply if the pointer is changed internally in the subsequent cycle without DMA access.
@@ -232,7 +232,7 @@ template<uint16_t jobs, uint8_t nextCycle> auto Blitter::lineMode() -> void {
                 else                    LINE_INCX
             }
         }
-    } else if constexpr (jobs & BLT_LINE_Y) { // happens only if channel C is in use
+    } else if constexpr (!!(jobs & BLT_LINE_Y)) { // happens only if channel C is in use
         agnus.forceOneCycleEvent(Agnus::PTR_BLT_C_H);
 
         if (!(bltcon1 & BLT_SUD)) {
@@ -255,7 +255,7 @@ template<uint16_t jobs, uint8_t nextCycle> auto Blitter::lineMode() -> void {
     }
 
     // following two jobs occur after first shift out, like the first D-Write in block mode
-    if constexpr (jobs & BLT_BH) { // Bresenham slope logic, happens only if channel A is in use
+    if constexpr (!!(jobs & BLT_BH)) { // Bresenham slope logic, happens only if channel A is in use
         agnus.forceOneCycleEvent(Agnus::PTR_BLT_A_H);
 
         if (bltcon1 & BLT_SIGN)
@@ -265,12 +265,12 @@ template<uint16_t jobs, uint8_t nextCycle> auto Blitter::lineMode() -> void {
     }
 
     // really occurs after first shift out or each time ?
-    if constexpr (jobs & BLT_UPDATE_SIGN) { // don't need an active channel A
+    if constexpr (!!(jobs & BLT_UPDATE_SIGN)) { // don't need an active channel A
         if (0 > (int16_t)bltApt)    bltcon1 |= BLT_SIGN;
         else                        bltcon1 &= ~BLT_SIGN;
     }
 
-    if constexpr (jobs & BLT_NEXT) {
+    if constexpr (!!(jobs & BLT_NEXT)) {
         if (!--curH) {
             finish();
             flags = 0;

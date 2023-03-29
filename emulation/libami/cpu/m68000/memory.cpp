@@ -108,7 +108,7 @@ template<uint8_t Size, uint8_t Flags> auto M68000::read(uint32_t adr) -> uint32_
             result = READ_WORD_PRG(adr & 0xffffff) << 16;
             SYNC(4);
             result |= READ_WORD_PRG((adr + 2) & 0xffffff);
-        } else if constexpr(Flags & Reverse) { // only addx.l and subx.l
+        } else if constexpr (!!(Flags & Reverse)) { // only addx.l and subx.l
             result = READ_WORD((adr + 2) & 0xffffff);
             SYNC(4);
             result |= READ_WORD(adr & 0xffffff) << 16;
