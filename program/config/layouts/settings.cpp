@@ -132,9 +132,22 @@ SettingsLayout::SettingsLayout() {
                         atLeastOneIsChecked = true;
                 }
 
-                if (!atLeastOneIsChecked && altCore) {
-                    altCore->checkBox->setChecked();
-                    globalSettings->set<bool>("core_" + altCore->emulator->ident, true);
+                if (altCore) {
+                    globalSettings->set("last_used_emu", altCore->emulator->ident);
+
+                    if (!atLeastOneIsChecked) {
+                        altCore->checkBox->setChecked();
+                        globalSettings->set<bool>("core_" + altCore->emulator->ident, true);
+                    }
+
+                    for(auto& core : emuSelection.cores) {
+                        if ( (core.emulator == activeEmulator) && !core.checkBox->checked()) {
+                            emuThread->lock();
+                            program->power(altCore->emulator);
+                            emuThread->unlock();
+                            break;
+                        }
+                    }
                 }
             }
             view->updateEmuUsage();

@@ -77,7 +77,6 @@ struct States {
     auto oneMediumOnly(Emulator::Interface::MediaGroup* group, Emulator::Interface::Media* mediaInUse) -> void;
     
     static auto getInstance( Emulator::Interface* emulator ) -> States*;
-    static auto getInstanceAuto() -> States*;    
 };
 
 extern std::vector<States*> states;

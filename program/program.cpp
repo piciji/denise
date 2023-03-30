@@ -240,6 +240,9 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
     activeVideoManager = VideoManager::getInstance( emulator );
     activeInputManager = InputManager::getManager(emulator);
     activeVideoManager->updateCrtThreads();
+    if (emuSwap)
+        activeVideoManager->shader.recreate = true;
+
     if (activeInputManager)
         activeInputManager->setupKeycodeTransfer();
 	uint8_t* data;

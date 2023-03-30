@@ -491,6 +491,7 @@ auto View::setConnectors() -> void {
     GUIKIT::MenuItem* inputItem;
     
     removeMenuTree( &controlMenu );
+    bool firstLoop = true;
     
     for(auto& iM : inputMenus) {
 
@@ -498,7 +499,12 @@ auto View::setConnectors() -> void {
         bool useCore = globalSettings->get<bool>("core_" + iM.emulator->ident, true);
         if (!useCore)
             continue;
-        
+
+        if (!firstLoop)
+            controlMenu.append( *new GUIKIT::MenuSeparator );
+        else
+            firstLoop = false;
+
         auto emulator = iM.emulator;
         
         auto settings = program->getSettings( emulator );
@@ -589,8 +595,6 @@ auto View::setConnectors() -> void {
         };
         inputItem->setIcon(toolsImage);
         controlMenu.append(*inputItem);
-
-        controlMenu.append( *new GUIKIT::MenuSeparator );
     }
 }
 
@@ -781,17 +785,18 @@ auto View::buildMenu() -> void {
             emuThread->unlock();
 	    };	
         sM.system->append( *sM.poweron );
-		
-		sM.poweronAndRemoveExpansions = new GUIKIT::MenuItem;
-        sM.poweronAndRemoveExpansions->setIcon( powerImage );
-        sM.poweronAndRemoveExpansions->onActivate = [emulator]() {
-            emuThread->lock();
-		    program->power(emulator);
-            program->removeExpansion( false );
-            emuThread->unlock();
-	    };	
-        sM.system->append( *sM.poweronAndRemoveExpansions );
 
+        if ( dynamic_cast<LIBC64::Interface*>(emulator)) {
+            sM.poweronAndRemoveExpansions = new GUIKIT::MenuItem;
+            sM.poweronAndRemoveExpansions->setIcon(powerImage);
+            sM.poweronAndRemoveExpansions->onActivate = [emulator]() {
+                emuThread->lock();
+                program->power(emulator);
+                program->removeExpansion(false);
+                emuThread->unlock();
+            };
+            sM.system->append(*sM.poweronAndRemoveExpansions);
+        }
 		        
         sM.reset = new GUIKIT::MenuItem;
         sM.reset->onActivate = [emulator]() {

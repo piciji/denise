@@ -104,10 +104,6 @@ auto States::save( std::string path, bool prependFolder ) -> void {
                 // don't inform the user. it could confuse him.
                 // it's unlikely the state file was saved but the path file didn't.
             }
-            // remember emu which generates latest savestate.
-            // while emulation is off and a state will be loaded from hotkeys
-            // the emu which generated the last state will be used.
-            globalSettings->set("fast_save_emu", emulator->ident);
         }                            
     }            
 
@@ -348,27 +344,6 @@ auto States::getInstance( Emulator::Interface* emulator ) -> States* {
 	}
     
 	return nullptr;
-}
-
-auto States::getInstanceAuto() -> States* {
-    
-    if (activeEmulator)
-        return getInstance( activeEmulator );
-    
-    // while loading by hotkeys emulation could be powered off.
-    std::string ident = globalSettings->get<std::string>("fast_save_emu", "");
-    States* defaultState = nullptr;
-    
-    for (auto state : states) {
-        
-        if (dynamic_cast<LIBC64::Interface*>(state->emulator))
-            defaultState = state;
-        
-        if (ident == state->emulator->ident)
-            return state;        
-    }
-    
-    return defaultState;
 }
 
 auto States::changeSlot( bool down ) -> void {
