@@ -196,7 +196,7 @@ auto Autoloader::postProcessing() -> void {
 			}
 		}
 
-        VideoManager::placeHolderFrames = 0;
+        VideoManager::hidePlaceHolder();
         program->power( ddControl.emulator, emuView != nullptr );
 
         if (!useExpansion)

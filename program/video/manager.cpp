@@ -660,9 +660,14 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
     if (placeHolderFrames) {
         if ((placeHolderFrames & 3) == 0)
             view->renderPlaceholder();
+
         if (!--placeHolderFrames) {
-            program->setVideoFilter(true);
-            view->setDefaultCursor();
+            if (emuThread->enabled) {
+                emuThread->dismissPlaceholder = true;
+            } else {
+                program->setVideoFilter(true);
+                view->setDefaultCursor();
+            }
         }
         return;
 
@@ -1617,6 +1622,7 @@ template<uint8_t options> auto VideoManager::getRenderOptions() -> uint8_t {
 auto VideoManager::hidePlaceHolder() -> void {
     if (placeHolderFrames) {
         placeHolderFrames = 0;
+        program->setVideoFilter(true);
         view->setDefaultCursor();
     }
 }

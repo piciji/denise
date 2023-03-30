@@ -303,10 +303,8 @@ auto View::build() -> void {
             emuThread->lock();
 
             int result = cursorForPlaceholderInUpperTriangle();
-            if (result != -1) {
-                VideoManager::placeHolderFrames = 0;
-                setDefaultCursor();
-            }
+            if (result != -1)
+                VideoManager::hidePlaceHolder();
 
             if (result == 1)
                 program->power(program->getEmulator("C64"));
@@ -1300,24 +1298,24 @@ auto View::buildMenu() -> void {
 }
 
 auto View::updateSpeedLabels(bool force) -> void {
-    static int _mode = -1;
-    static Emulator::Interface* _emulator = nullptr;
+  //  static int _mode = -1;
+  //  static Emulator::Interface* _emulator = nullptr;
     std::string label;
 
-    if (force) {
-        _mode = -1;
-        _emulator = nullptr;
-    }
+//    if (force) {
+//        _mode = -1;
+//        _emulator = nullptr;
+//    }
 
     if (!activeEmulator)
         return;
 
     auto stat = activeEmulator->getStatsForSelectedRegion();
 
-    if ( (_mode == -1) || ((int)stat.isPal() != _mode) || (_emulator != activeEmulator)) {
+  //  if ( (_mode == -1) || ((int)stat.isPal() != _mode) || (_emulator != activeEmulator)) {
 
-        _mode = (int)stat.isPal();
-        _emulator = activeEmulator;
+     //   _mode = (int)stat.isPal();
+     //   _emulator = activeEmulator;
 
         speedItems[0]->setText( GUIKIT::String::formatFloatingPoint( stat.fps, 3) + " FPS ( 100 % )");
 
@@ -1349,7 +1347,7 @@ auto View::updateSpeedLabels(bool force) -> void {
         unsigned speedProfile = settings->get<unsigned>("speed_profile", 1, {0, (unsigned)speedItems.size() - 1});
         if (!speedItems[speedProfile]->checked())
             speedItems[speedProfile]->setChecked();
-    }
+    //}
 }
 
 auto View::showSpeedMenu( bool show ) -> void {

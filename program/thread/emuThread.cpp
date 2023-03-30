@@ -15,6 +15,8 @@ EmuThread::EmuThread() {
     finishAudioRecord = false;
     pollHotkeys = false;
     updateBorder = false;
+    updateFps = false;
+    dismissPlaceholder = false;
     enabled = false;
 }
 
@@ -167,6 +169,17 @@ auto EmuThread::handleUIEvents() -> void {
 
         if (emuView && emuView->mediaLayout)
             emuView->mediaLayout->colorListing( vManager->getForegroundColor(), vManager->getBackgroundColor() );
+    }
+
+    if (updateFps) {
+        program->fpsChangeTimer.setEnabled();
+        updateFps = false;
+    }
+
+    if (dismissPlaceholder) {
+        program->setVideoFilter(true);
+        view->setDefaultCursor();
+        dismissPlaceholder = false;
     }
 }
 

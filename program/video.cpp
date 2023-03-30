@@ -278,5 +278,8 @@ auto Program::updateFullscreenSetting() -> void {
 }
 
 auto Program::fpsChanged() -> void {
-    fpsChangeTimer.setEnabled();
+    if (emuThread->enabled)
+        emuThread->updateFps = true;
+    else
+        fpsChangeTimer.setEnabled();
 }

@@ -353,7 +353,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
 
         statusHandler->resetFrameCounter();
 
-        view->updateSpeedLabels();
+        view->updateSpeedLabels(true);
 
         view->updateDiskMenu();
 	}
