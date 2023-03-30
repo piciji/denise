@@ -17,10 +17,17 @@ namespace DRIVER {
 
     auto RenderThread::lock(float*& data, unsigned& pitch, unsigned _width, unsigned _height, bool reuse) -> bool {
 
-        if (!prepareBuffer(_width, _height, reuse))
+        if (!prepareBuffer(_width, _height))
             return false;
 
-        pitch = _width;
+        if (reuse && fillPos) {
+            _width = lockedBuffer->pitch;
+            RenderBuffer* srcBuffer = getReuseBuffer(_width, _height);
+            if (srcBuffer && srcBuffer->dataFloat)
+                std::memcpy(lockedBuffer->dataFloat, srcBuffer->dataFloat, _width * _height * 4 * 4);
+        }
+
+        pitch = lockedBuffer->pitch;
         data = lockedBuffer->dataFloat;
 
         return true;
@@ -28,10 +35,17 @@ namespace DRIVER {
 
     auto RenderThread::lock(int32_t*& data, unsigned& pitch, unsigned _width, unsigned _height, bool reuse) -> bool {
 
-        if (!prepareBuffer(_width, _height, reuse))
+        if (!prepareBuffer(_width, _height))
             return false;
 
-        pitch = _width;
+        if (reuse && fillPos) {
+            _width = lockedBuffer->pitch;
+            RenderBuffer* srcBuffer = getReuseBuffer(_width, _height);
+            if (srcBuffer && srcBuffer->dataInt)
+                std::memcpy(lockedBuffer->dataInt, srcBuffer->dataInt, _width * _height * 4 * 4);
+        }
+
+        pitch = lockedBuffer->pitch;
         data = lockedBuffer->dataInt;
 
         return true;
@@ -40,8 +54,15 @@ namespace DRIVER {
 
     auto RenderThread::lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height, bool reuse) -> bool {
 
-        if (!prepareBuffer(_width, _height, reuse))
+        if (!prepareBuffer(_width, _height))
             return false;
+
+        if (reuse && fillPos) {
+            _width = lockedBuffer->pitch;
+            RenderBuffer* srcBuffer = getReuseBuffer(_width, _height);
+            if (srcBuffer && srcBuffer->data)
+                std::memcpy(lockedBuffer->data, srcBuffer->data, _width * _height * 4);
+        }
 
         pitch = lockedBuffer->pitch;
         data = lockedBuffer->data;
@@ -49,7 +70,18 @@ namespace DRIVER {
         return true;
     }
 
-    auto RenderThread::prepareBuffer(unsigned _width, unsigned _height, bool reuse) -> bool {
+    auto RenderThread::getReuseBuffer(unsigned& _width, unsigned& _height) -> RenderBuffer* {
+        RenderBuffer* srcBuffer = &renderBuffers[(fillPos == RENDER_BUFFER_COUNT) ? 0 : fillPos];
+
+        if (_width > srcBuffer->pitch)
+            _width = srcBuffer->pitch;
+        if (_height > srcBuffer->height)
+            _height = srcBuffer->height;
+
+        return srcBuffer;
+    }
+
+    auto RenderThread::prepareBuffer(unsigned _width, unsigned _height) -> bool {
 
         lockedBuffer = getBufferToDraw();
 
@@ -64,21 +96,7 @@ namespace DRIVER {
             lockedBuffer->width = _width;
             lockedBuffer->height = _height;
             lockedBuffer->pitch = calcPitch( _width );
-           // lockedBuffer->updated = true;
             resize( lockedBuffer, _width, _height );
-        }
-
-        if (reuse && fillPos) {
-            RenderBuffer* srcBuffer = &renderBuffers[(fillPos == RENDER_BUFFER_COUNT) ? 0 : fillPos];
-            if (srcBuffer->data) {
-                _width = lockedBuffer->pitch;
-                if (_width > srcBuffer->pitch)
-                    _width = srcBuffer->pitch;
-                if (_height > srcBuffer->height)
-                    _height = srcBuffer->height;
-
-                std::memcpy(lockedBuffer->data, srcBuffer->data, _width * _height * 4);
-            }
         }
 
         return true;
@@ -106,7 +124,6 @@ namespace DRIVER {
             buffer.width = 0;
             buffer.height = 0;
             buffer.pitch = 0;
-          //  buffer.updated = false;
             buffer.disallowShader = false;
         }
 

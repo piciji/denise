@@ -317,7 +317,7 @@ struct CGL : public Video, OpenGL, RenderThread {
                 bool disallowShader = false;
                 RenderBuffer* renderBuffer = getBufferToRender();
 
-                if (renderBuffer && renderBuffer->data) {
+                if (renderBuffer && renderBuffer->height) {
                     renderBuffer->sharedMutex.lock();
                     if ( (width != renderBuffer->width) || (height != renderBuffer->height) ) {
                         width = renderBuffer->width;
