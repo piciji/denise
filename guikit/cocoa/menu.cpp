@@ -1,20 +1,26 @@
 
 @implementation CocoaMenu : NSMenuItem
 
--(id) initWith {
+-(id) initWith:(GUIKIT::Menu&)menuReference {
     if(self = [super initWithTitle:@"" action:nil keyEquivalent:@""]) {        
         cocoaMenu = [[NSMenu alloc] initWithTitle:@""];
+        menuPtr = &menuReference;
         [cocoaMenu setAutoenablesItems:NO];
         [self setSubmenu:cocoaMenu];
   
-       // [cocoaMenu setDelegate:self];
-        //[cocoaMenu setTarget:self];
+        [cocoaMenu setDelegate:self];
+        //[self setTarget:self];
     }
     return self;
 }
 -(NSMenu*) cocoaMenu {
     return cocoaMenu;
 }
+
+-(void)menuWillOpen:(NSMenu*)menu {
+    if(menuPtr->onOpen) menuPtr->onOpen();
+}
+
 /*
 - (void) menuNeedsUpdate:(NSMenu*)menu {
     
@@ -149,8 +155,8 @@ auto pMenu::setIcon(Image& icon) -> void {
 
 auto pMenu::init() -> void {
     @autoreleasepool {
-        cocoaBase = [[CocoaMenu alloc] initWith];
-        cocoaBaseContext = [[CocoaMenu alloc] initWith];
+        cocoaBase = [[CocoaMenu alloc] initWith:menu];
+        cocoaBaseContext = [[CocoaMenu alloc] initWith:menu];
     }
 }
     

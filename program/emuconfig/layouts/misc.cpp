@@ -296,7 +296,7 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) {
             statusHandler->resetFrameCounter();
             emuThread->unlock();
         }
-        view->updateSpeedLabels(true);
+        view->updateSpeedLabels(!GUIKIT::Application::isCocoa());
     };
 
     speedLayout.percent.onActivate = [this]() {
@@ -308,7 +308,7 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) {
             statusHandler->resetFrameCounter();
             emuThread->unlock();
         }
-        view->updateSpeedLabels(true);
+        view->updateSpeedLabels(!GUIKIT::Application::isCocoa());
     };
 
     speedLayout.fps.onActivate = [this]() {
@@ -320,7 +320,7 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) {
             statusHandler->resetFrameCounter();
             emuThread->unlock();
         }
-        view->updateSpeedLabels(true);
+        view->updateSpeedLabels(!GUIKIT::Application::isCocoa());
     };
 
     speedLayout.apply.onActivate = [this]() {

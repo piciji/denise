@@ -13,14 +13,14 @@
     return self;
 }
 - (void)mouseDown:(NSEvent*)event {
+    if (label->p.part && label->p.part->onClick)
+        label->p.part->onClick();
+            
     if (label->p.part && label->p.part->popupMenu) {
         GUIKIT::pApplication::observeMenu([label->p.part->popupMenu->p.cocoaBase cocoaMenu]);
         
         [NSMenu popUpContextMenu: [label->p.part->popupMenu->p.cocoaBase cocoaMenu] withEvent:event forView:NULL];
     }
-    
-    if (label->p.part && label->p.part->onClick)
-        label->p.part->onClick();
 }
 
 -(void) resetCursorRects {

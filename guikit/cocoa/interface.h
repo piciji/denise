@@ -38,6 +38,7 @@
 @interface CocoaMenu : NSMenuItem <NSMenuDelegate> {
 @public
     NSMenu* cocoaMenu;
+    GUIKIT::Menu* menuPtr;
 }
 @end
 

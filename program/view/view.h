@@ -15,6 +15,7 @@ struct View : public GUIKIT::Window {
     GUIKIT::Image placeholder;
 	bool requestFullscreenSwitch = false;
     bool customResizeMode = false;
+    bool speedLabelsNeedUpdate = true;
 	
     struct SystemMenu {
         Emulator::Interface* emulator;

@@ -1173,6 +1173,11 @@ auto View::buildMenu() -> void {
     // speed menu
     speedControlMenu.setIcon( fanImage );
     speedControlMenu.showContextOnly(true);
+    speedControlMenu.onOpen = [this]() {
+        if (speedLabelsNeedUpdate) {
+            updateSpeedLabels(true);
+        }
+    };
 
     fastForwardItem.onToggle = []() {
         emuThread->lock();
@@ -1232,6 +1237,7 @@ auto View::buildMenu() -> void {
     }
 
     GUIKIT::MenuRadioItem::setGroup( speedItems );
+    append( speedControlMenu );
 
     // prepare Disk Control
     unsigned i = 0;
@@ -1298,24 +1304,16 @@ auto View::buildMenu() -> void {
 }
 
 auto View::updateSpeedLabels(bool force) -> void {
-  //  static int _mode = -1;
-  //  static Emulator::Interface* _emulator = nullptr;
     std::string label;
-
-//    if (force) {
-//        _mode = -1;
-//        _emulator = nullptr;
-//    }
-
-    if (!activeEmulator)
-        return;
-
-    auto stat = activeEmulator->getStatsForSelectedRegion();
-
-  //  if ( (_mode == -1) || ((int)stat.isPal() != _mode) || (_emulator != activeEmulator)) {
-
-     //   _mode = (int)stat.isPal();
-     //   _emulator = activeEmulator;
+    
+    if (!force) {
+        speedLabelsNeedUpdate = true;
+        
+    } else {
+        if (!activeEmulator)
+            return;
+        
+        auto stat = activeEmulator->getStatsForSelectedRegion();
 
         speedItems[0]->setText( GUIKIT::String::formatFloatingPoint( stat.fps, 3) + " FPS ( 100 % )");
 
@@ -1347,7 +1345,9 @@ auto View::updateSpeedLabels(bool force) -> void {
         unsigned speedProfile = settings->get<unsigned>("speed_profile", 1, {0, (unsigned)speedItems.size() - 1});
         if (!speedItems[speedProfile]->checked())
             speedItems[speedProfile]->setChecked();
-    //}
+            
+        speedLabelsNeedUpdate = false;
+    }
 }
 
 auto View::showSpeedMenu( bool show ) -> void {

@@ -76,9 +76,10 @@ Program::Program() {
     fpsChangeTimer.onFinished = [this]() {
         if (audioManager)
             audioManager->setResampler();
+        
         if (view)
-            view->updateSpeedLabels(true);
-
+            view->updateSpeedLabels(!GUIKIT::Application::isCocoa());
+        
         fpsChangeTimer.setEnabled(false);
     };
 
@@ -342,7 +343,6 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
 		view->setCursor( activeEmulator );
 		view->updateCartButtons( activeEmulator );
 
-        view->showSpeedMenu();
 		if (emulator->getModelValue( emulator->getModelIdOfEnabledDrives( emulator->getTapeMediaGroup() ) ) )
 			view->showTapeMenu( true );
 		// a few emulation units generate random values
@@ -353,7 +353,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
 
         statusHandler->resetFrameCounter();
 
-        view->updateSpeedLabels(true);
+        view->updateSpeedLabels(!GUIKIT::Application::isCocoa());
 
         view->updateDiskMenu();
 	}
@@ -400,7 +400,6 @@ auto Program::powerOff() -> void {
 	if (!cmd->noGui) {
         view->updatePauseCheck();
 		view->showTapeMenu( false );
-        view->showSpeedMenu( false );
         emuThread->clearEvents();
 		statusHandler->clear();
 		if (activeVideoManager)

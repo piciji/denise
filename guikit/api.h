@@ -1007,10 +1007,13 @@ struct MenuBase : Base {
     virtual ~MenuBase();
 };
 
-struct Menu : MenuBase {    
+struct Menu : MenuBase {
+    std::function<void ()> onOpen = nullptr;
+    
     auto append(MenuBase& item) -> void;
     auto remove(MenuBase& item) -> void;
     auto reset() -> void;
+    
     auto contextOnly() const -> bool { return state.contextOnly; }
     auto showContextOnly(bool contextOnly) -> void;
 
