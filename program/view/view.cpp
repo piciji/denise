@@ -1658,6 +1658,8 @@ auto View::threadedRendererWasToggled(bool state) -> void {
 }
 
 auto View::updateEmuUsage() -> void {
+    remove(tapeControlMenu);
+    remove(speedControlMenu);
     remove(optionsMenu);
     remove(editMenu);
     remove(controlMenu);
@@ -1682,4 +1684,7 @@ auto View::updateEmuUsage() -> void {
     append(controlMenu);
     append(editMenu);
     append(optionsMenu);
+    append(speedControlMenu);
+    if (activeEmulator->getModelValue( activeEmulator->getModelIdOfEnabledDrives( activeEmulator->getTapeMediaGroup() ) ))
+        append(tapeControlMenu);
 }

@@ -343,8 +343,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
 		view->setCursor( activeEmulator );
 		view->updateCartButtons( activeEmulator );
 
-		if (emulator->getModelValue( emulator->getModelIdOfEnabledDrives( emulator->getTapeMediaGroup() ) ) )
-			view->showTapeMenu( true );
+        view->showTapeMenu( emulator->getModelValue( emulator->getModelIdOfEnabledDrives( emulator->getTapeMediaGroup() ) ) );
 		// a few emulation units generate random values
 		// srand spreads a new seed for better randomness
 		srand( time( NULL ) );
@@ -399,7 +398,6 @@ auto Program::powerOff() -> void {
 	
 	if (!cmd->noGui) {
         view->updatePauseCheck();
-		view->showTapeMenu( false );
         emuThread->clearEvents();
 		statusHandler->clear();
 		if (activeVideoManager)

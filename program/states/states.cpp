@@ -395,7 +395,7 @@ auto States::updateTapeMenu() -> void {
     
     auto media = activeEmulator->getTape(0);
     if (!media)
-        return;
+        return view->showTapeMenu( false );
 
     unsigned count = emulator->getModelValue( emulator->getModelIdOfEnabledDrives(media->group) );
     
