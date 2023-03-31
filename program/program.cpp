@@ -404,7 +404,6 @@ auto Program::powerOff() -> void {
 		statusHandler->clear();
 		if (activeVideoManager)
 			activeVideoManager->powerOff();
-		//videoDriver->clear(); // check and remove permanently
         videoDriver->hintExclusiveFullscreen( false );
 		audioDriver->clear();
 		audioManager->powerOff();
@@ -451,7 +450,6 @@ auto Program::loop() -> void {
 	}
 	else {
         GUIKIT::System::sleep( 10 );
-        videoDriver->redraw();
 		audioDriver->clear();
         if (VideoManager::needAUpdate)
             VideoManager::updateAll();

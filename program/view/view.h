@@ -47,7 +47,6 @@ struct View : public GUIKIT::Window {
     auto updateDeviceSelection( Emulator::Interface* emulator ) -> void;
 	auto removeMenuTree( GUIKIT::Menu* menu = nullptr ) -> void;
 	auto showTapeMenu( bool show, Emulator::Interface::TapeMode mode = Emulator::Interface::TapeMode::Unpressed ) -> void;
-    auto showSpeedMenu( bool show = true ) -> void;
     auto updateTapeIcons( Emulator::Interface::TapeMode mode = Emulator::Interface::TapeMode::Unpressed ) -> void;
     auto updateTapeStatusIcons( Emulator::Interface::TapeMode mode ) -> void;
     auto updateCartButtons( Emulator::Interface* emulator ) -> void;

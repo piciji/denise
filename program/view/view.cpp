@@ -112,7 +112,7 @@ auto View::build() -> void {
             updateViewport();
 
         } else {
-            if (activeVideoManager && emuThread->enabled /*&& !program->isPause*/) {
+            if (activeVideoManager && emuThread->enabled && !program->isPause) {
                 videoDriver->lockResize();
                 updateViewport();
                 videoDriver->unlockResize();
@@ -120,7 +120,7 @@ auto View::build() -> void {
                 updateViewport();
       
 			if (activeVideoManager) {
-                if (!emuThread->enabled /*|| program->isPause*/) {
+                if (!emuThread->enabled || program->isPause) {
                     activeVideoManager->waitForCrtRenderer();
                     emuThread->lock();
                     videoDriver->redraw();
@@ -1348,13 +1348,6 @@ auto View::updateSpeedLabels(bool force) -> void {
             
         speedLabelsNeedUpdate = false;
     }
-}
-
-auto View::showSpeedMenu( bool show ) -> void {
-    if (show == isApended(speedControlMenu))
-        return;
-
-    show ? append( speedControlMenu ) : remove( speedControlMenu );
 }
 
 auto View::updateDiskMenu() -> void {
