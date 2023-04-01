@@ -354,7 +354,7 @@ auto System::setFloppySounds(bool state) -> void {
 }
 
 auto System::updateDriveSounds() -> void {
-    bool state = requestFloppySound && !fastForward.config && !runAhead.frames;
+    bool state = requestFloppySound && !fastForward.config;
 
     for(auto& drive : diskDrives)
         drive.enableSounds(state);
