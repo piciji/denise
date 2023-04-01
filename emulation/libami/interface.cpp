@@ -248,14 +248,16 @@ auto Interface::prepareDevices() -> void {
         device.addVirtual( "alt + shift + 2", { 79, 75, 28 }, Key::AltAndShift2, { {Device::Layout::Fr, "@"}  } );
         device.addVirtual( "alt + shift + 3", { 79, 75, 29 }, Key::AltAndShift3, { {Device::Layout::Fr, "#"}  } );
 
-        device.addVirtual( "shift + shared 1a", { 75, 83 }, Key::ShiftShared1, { {Device::Layout::Uk, "{"}, {Device::Layout::Us, "{"}, {Device::Layout::De, "shift + ü"}, {Device::Layout::Fr, "¨"} } );
+        device.addVirtual( "alt + 2", { 79, 28 }, Key::AltAnd2, { {Device::Layout::De, "@"}  } );
+
+        device.addVirtual( "shift + shared 1a", { 75, 83 }, Key::ShiftShared1, { {Device::Layout::Uk, "{"}, {Device::Layout::Us, "{"}, {Device::Layout::De, "Ü"}, {Device::Layout::Fr, "¨"} } );
         device.addVirtual( "shift + shared 1b", { 75, 84 }, Key::ShiftShared2, { {Device::Layout::Uk, "}"}, {Device::Layout::Us, "}"}, {Device::Layout::De, "*"}, {Device::Layout::Fr, "*"} } );
-        device.addVirtual( "shift + shared 29", { 75, 85 }, Key::ShiftShared3, { {Device::Layout::Uk, ":"}, {Device::Layout::Us, ":"}, {Device::Layout::De, "shift + ö"}, {Device::Layout::Fr, "shift + M"} } );
+        device.addVirtual( "shift + shared 29", { 75, 85 }, Key::ShiftShared3, { {Device::Layout::Uk, ":"}, {Device::Layout::Us, ":"}, {Device::Layout::De, "Ö"}, {Device::Layout::Fr, "M"} } );
         device.addVirtual( "shift + shared 38", { 75, 86 }, Key::ShiftShared4, { {Device::Layout::Uk, "<"}, {Device::Layout::Us, "<"}, {Device::Layout::De, ";"}, {Device::Layout::Fr, "."} } );
         device.addVirtual( "shift + shared 39", { 75, 87 }, Key::ShiftShared5, { {Device::Layout::Uk, ">"}, {Device::Layout::Us, ">"}, {Device::Layout::De, ":"}, {Device::Layout::Fr, "/"} } );
         device.addVirtual( "shift + shared 3a", { 75, 88 }, Key::ShiftShared6, { {Device::Layout::Uk, "?"}, {Device::Layout::Us, "?"}, {Device::Layout::De, "_"}, {Device::Layout::Fr, "+"} } );
         device.addVirtual( "shift + shared 0d", { 75, 89 }, Key::ShiftShared7, { {Device::Layout::Uk, "|"}, {Device::Layout::Us, "|"}, {Device::Layout::De, "|"}, {Device::Layout::Fr, "|"} } );
-        device.addVirtual( "shift + shared 2a", { 75, 90 }, Key::ShiftShared8, { {Device::Layout::Uk, "@"}, {Device::Layout::Us, "\""}, {Device::Layout::De, "shift + ä"}, {Device::Layout::Fr, "%"} } );
+        device.addVirtual( "shift + shared 2a", { 75, 90 }, Key::ShiftShared8, { {Device::Layout::Uk, "@"}, {Device::Layout::Us, "\""}, {Device::Layout::De, "Ä"}, {Device::Layout::Fr, "%"} } );
         device.addVirtual( "shift + shared 2b", { 75, 91 }, Key::ShiftShared9, { {Device::Layout::Uk, "unused"}, {Device::Layout::Us, "unused"}, {Device::Layout::De, "^"}, {Device::Layout::Fr, "£"} } );
         device.addVirtual( "shift + shared 30", { 75, 92 }, Key::ShiftShared10, { {Device::Layout::Uk, "unused"}, {Device::Layout::Us, "unused"}, {Device::Layout::De, ">"}, {Device::Layout::Fr, ">"} } );
         device.addVirtual( "shift + shared 00", { 75, 93 }, Key::ShiftShared11, { {Device::Layout::Uk, "~"}, {Device::Layout::Us, "~"}, {Device::Layout::De, "~"}, {Device::Layout::Fr, "~"} } );
