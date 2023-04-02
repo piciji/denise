@@ -160,15 +160,13 @@ auto Denise::endHblank() -> void {
             if (!laceMode && agnus.laceMode) {
                 // remove old interlace data, non-lace frame wouldn't overwrite, to prevent artifacts.
                 std::memset(frameBuffer + 240 * LINE_BUFFER_WIDTH, 0, LINE_BUFFER_WIDTH * (LINE_BUFFER_HEIGHT - 240) * 2);
-            } else if (laceMode && !agnus.laceMode) {
-                lineCallback.line >>= 1;
             }
 
             laceMode = agnus.laceMode;
             if (laceMode & 2)
                 lineVCounter = 1;
 
-            lineCallback.called = !lineCallback.use;
+            lineCallback.called = !lineCallback.use /*|| !lineCallback.line*/;
         }
 
         if (lineVCounter >= LINE_BUFFER_HEIGHT) // could happen, if Agnus beam position has been changed

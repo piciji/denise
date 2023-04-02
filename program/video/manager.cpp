@@ -645,11 +645,6 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
 		
         shader.recreate  = false;
     }
-	
-    if (height != currentHeight) {     
-        currentHeight = height;
-        reinitCrtThread();
-    }
 
     if (++frameRenderPos != frameRenderTrigger) {
         return;
@@ -1141,6 +1136,13 @@ template<typename T, uint8_t options> auto VideoManager::renderCrtThreaded(unsig
 	Render& re = render[0];
 	Render& re1 = render[1];
     re1.options = getRenderOptions<options>();
+
+    if (height != currentHeight) {
+        currentHeight = height;
+        while (re.ready.load())
+            std::this_thread::yield();
+        re.dest = nullptr;
+    }
 	
     unsigned cropTop = this->emulator->cropTop();     
     unsigned heightFirstHalfScreen = ((height * scaler) >> 8) & ~1;
