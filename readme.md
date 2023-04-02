@@ -35,7 +35,7 @@ Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trade
 * C64: add option to combine Virtual Device Traps (instant load first file) with floppy speeder
 * C64: improve drive motor controlled auto warp
     * add option to stop auto warp when software requests input.
-    * some games stop drive motor too late and warp runs too long, what could leads to the loss of a life
+    * some games stop drive motor too late and warp runs too long, what could lead to the loss of a life
 * C64: support magicdesk CRT's with broken header
 * Mice and other mouse-controlled devices, such as Lightguns, can now be configured with one click
 

@@ -112,7 +112,7 @@ template<bool changeTrigger> auto InputManager::update() -> void {
                 continue;
 
             if constexpr (changeTrigger) {
-                if (useMapping->state)
+                if (useMapping->state && useMapping->emuDevice->isKeyboard())
                     changed.insert(changed.begin(), useMapping);
             }
 
@@ -204,7 +204,7 @@ template<bool changeTrigger> auto InputManager::update() -> void {
                     } else {
                         useMapping->state = value;
                         if constexpr (changeTrigger) {
-                            if (!GUIKIT::Vector::eraseVectorElement(changed, useMapping)) {
+                            if (useMapping->emuDevice->isKeyboard() && !GUIKIT::Vector::eraseVectorElement(changed, useMapping)) {
                                 changed.push_back(useMapping);
                             }
                         }
@@ -273,7 +273,7 @@ template<bool changeTrigger> auto InputManager::update() -> void {
                 } else {
                     useMapping->state = 1;
                     if constexpr (changeTrigger) {
-                        if (!GUIKIT::Vector::eraseVectorElement(changed, useMapping))
+                        if (useMapping->emuDevice->isKeyboard() && !GUIKIT::Vector::eraseVectorElement(changed, useMapping))
                             changed.push_back(useMapping);
                     }
                 }

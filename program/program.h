@@ -25,7 +25,7 @@
 #endif
 #define SETTINGS_FILE "settings.ini"
 #define DEFAULT_TRANS_FILE "english.txt"
-#define VERSION "1.1.3.1"
+#define VERSION "2.0 beta"
 #define LICENSE "GPLv3"
 #define AUTHOR "PiCiJi"
 
