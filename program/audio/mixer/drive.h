@@ -6,11 +6,13 @@
 #include "../../../emulation/interface.h"
 #include "../../../guikit/api.h"
 
+struct AudioManager;
+
 namespace Mixer {
 
 struct Drive {
 
-    Drive();
+    Drive(AudioManager& manager);
     ~Drive();
 
     enum DriveSound { FloppyInsert = 1, FloppyEject = 2, FloppySpinUp = 3, FloppySpinDown = 4, FloppySpin = 5,
@@ -37,6 +39,8 @@ struct Drive {
 
         FloppyStepSeek = 200,
     };
+
+    AudioManager& manager;
 
     struct Assign {
         DriveSound id;
@@ -67,7 +71,7 @@ struct Drive {
         unsigned secondOffset;
         unsigned thirdOffset;
         uint8_t state;      // bit 0,1,2: step counter, bit 7: detach+attach
-        GUIKIT::Timer* stepSilence;
+        bool stepSilence;
 
         Sound* steps[42];
         Sound* stepsShort[42];
@@ -86,7 +90,8 @@ struct Drive {
     auto unload() -> void;
     auto setVolume(Emulator::Interface* emulator, Emulator::Interface::MediaGroup* group, float volume) -> void;
     auto assignSteps( Device& device ) -> void;
-    auto setTimmer(unsigned position) -> void;
+    auto initSeekStepFinishCounter(Device* device) -> void { checkSeekStepFinishCounter(device, true); }
+    auto checkSeekStepFinishCounter(Device* device, bool init = false) -> bool;
 
     auto getFiles(Emulator::Interface* emulator, Emulator::Interface::MediaGroup* group, std::string& fullPath) -> std::vector<GUIKIT::File::Info>;
     static auto mix(float s1, float s2) -> float;

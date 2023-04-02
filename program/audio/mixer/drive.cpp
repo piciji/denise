@@ -4,11 +4,12 @@
 #include "../resampler/data.h"
 #include "../resampler/sinc.h"
 #include "../../tools/chronos.h"
+#include "../manager.h"
 #include <cstring>
 
 namespace Mixer {
 
-    Drive::Drive() {
+    Drive::Drive(AudioManager& manager) : manager(manager) {
         floppyAssigns.push_back( { DriveSound::FloppyInsert, "insert" } );
         floppyAssigns.push_back( { DriveSound::FloppyEject, "eject" } );
         floppyAssigns.push_back( { DriveSound::FloppySpinUp, "spinup" } );
@@ -161,6 +162,14 @@ namespace Mixer {
             }
 
             if (device.third) {
+                if(device.third->id == FloppyStepSeek) {
+                    if (checkSeekStepFinishCounter(&device)) {
+                        device.third = nullptr;
+                        device.thirdOffset = 0;
+                        continue;
+                    }
+                }
+
                 Sound* sound = device.third;
 
                 for (unsigned i = 0; i < bufferSize; i += 2) {
@@ -179,7 +188,7 @@ namespace Mixer {
                             }
                         }
 
-                        if ( device.stepSilence && (device.third->id == FloppyStepSeek) );
+                        if (device.third->id == FloppyStepSeek);
                         else {
                             device.third = nullptr;
                             break;
@@ -221,12 +230,11 @@ namespace Mixer {
         }
 
         if (!device) {
-            devices.push_back({emulator, media, nullptr, nullptr,  nullptr, 0, 0, 0, 0, nullptr});
+            devices.push_back({emulator, media, nullptr, nullptr,  nullptr, 0, 0, 0, 0, dynamic_cast<LIBAMI::Interface*>( emulator ) ? true : false});
             device = &devices.back();
 
             if (media->group->isDisk()) {
                 assignSteps(*device);
-                setTimmer( devices.size() - 1 );
             }
         }
 
@@ -317,15 +325,11 @@ namespace Mixer {
                                 device->third = soundSeek;
                                 device->thirdOffset = 0;
                                 sound = nullptr;
-                                device->stepSilence->setEnabled();
+                                initSeekStepFinishCounter(device);
                             }
                         } else {
                             sound = nullptr;
-                            device->stepSilence->setEnabled();
                         }
-                    } else {
-                        if (device->stepSilence->enabled())
-                            device->stepSilence->setEnabled(false);
                     }
 
                     if (sound) {
@@ -670,25 +674,6 @@ namespace Mixer {
         }
     }
 
-    auto Drive::setTimmer(unsigned position) -> void {
-        auto& device = devices[position];
-
-        if (dynamic_cast<LIBAMI::Interface*>( device.emulator ) && !device.stepSilence) {
-            device.stepSilence = new GUIKIT::Timer;
-
-            device.stepSilence->setInterval(30);
-
-            device.stepSilence->onFinished = [this, position]() {
-                auto& device = devices[position];
-                device.stepSilence->setEnabled(false);
-                if (device.third && device.third->id == FloppyStepSeek) {
-                    device.third = nullptr;
-                    device.thirdOffset = 0;
-                }
-            };
-        }
-    }
-
     auto Drive::reset(Emulator::Interface::MediaGroup* group, bool exclude) -> void {
         for(auto& device : devices) {
             if (!group || (!exclude && (group == device.media->group)) || (exclude && (group != device.media->group)) ) {
@@ -699,8 +684,6 @@ namespace Mixer {
                 device.secondOffset = 0;
                 device.thirdOffset = 0;
                 device.state = 0;
-                if (device.stepSilence && device.stepSilence->enabled())
-                    device.stepSilence->setEnabled(false);
             }
         }
     }
@@ -731,6 +714,22 @@ namespace Mixer {
                 sound.data = nullptr;
             }
         }
+    }
+
+    auto Drive::checkSeekStepFinishCounter(Device* device, bool init) -> bool {
+        int counter = device->state & 31;
+        bool timeUp = false;
+
+        if (init || (counter == 0) ) {
+            counter = (128 / manager.stat.sampleIntervall) * 2;
+
+            if (!init)
+                timeUp = (Chronos::getTimestampInMilliseconds() - lastStep) > 30;
+        } else
+            counter--;
+
+        device->state = (device->state & ~31) | (counter & 31);
+        return timeUp;
     }
 
     auto Drive::setVolume(Emulator::Interface* emulator, Emulator::Interface::MediaGroup* group, float volume) -> void {

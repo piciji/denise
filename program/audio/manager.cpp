@@ -10,7 +10,7 @@
 
 AudioManager* audioManager = nullptr;
 
-AudioManager::AudioManager() {
+AudioManager::AudioManager() : drive(*this) {
     
     floatConversion = 1.0 / 32768.0;
     
