@@ -19,7 +19,7 @@ Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trade
     * RGB or S-Video with PAL/NTSC color encoding, border cropping
     * support all global features like: runAhead, savestates, G-Sync, configs, Warp, JIT polling, shader
     * up to 4 disk drives with acceleration option
-    * Chipmem (2MB max), Slowmem (1.75MB max)
+    * Chipmem, Slowmem, Fastmem
     * list disk content in UI
     * AROS firmware is preinstalled
     * motor controlled auto warp
