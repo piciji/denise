@@ -6,8 +6,8 @@ namespace M68FAMILY {
 template<uint8_t Inst, uint8_t Size, bool SingleShift> auto M68000::shifter(uint32_t data, int shift) -> uint32_t {
     switch(Inst) {
         case Asl: {
-            if (SingleShift) {
-                uint8_t sign = data & msb<Size>();
+            if constexpr(SingleShift) {
+                int sign = data & msb<Size>();
                 data <<= 1;
                 v = sign != (data & msb<Size>());
                 c = sign != 0;
@@ -21,7 +21,7 @@ template<uint8_t Inst, uint8_t Size, bool SingleShift> auto M68000::shifter(uint
                     data = 0;
                     x = c;
                 } else if (shift) {
-                    uint32_t _mask = (mask<Size>() << (bits<Size>() - shift)) & mask<Size>();
+                    uint32_t _mask = (mask<Size>() << (bits<Size>() - 1 - shift)) & mask<Size>();
                     v = ((data & _mask) != _mask) && ((data & _mask) != 0);
                     data <<= (shift - 1);
                     c = data & msb<Size>();
@@ -32,7 +32,7 @@ template<uint8_t Inst, uint8_t Size, bool SingleShift> auto M68000::shifter(uint
         } break;
         case Asr: {
             v = false; // always keeps the sign
-            if (SingleShift) {
+            if constexpr(SingleShift) {
                 c = data & 1;
                 data = (data >> 1) | (data & msb<Size>());
                 x = c;
@@ -55,7 +55,7 @@ template<uint8_t Inst, uint8_t Size, bool SingleShift> auto M68000::shifter(uint
         } break;
         case Lsl: {
             v = false;
-            if (SingleShift) {
+            if constexpr(SingleShift) {
                 c = data & msb<Size>();
                 data <<= 1;
                 x = c;
@@ -77,7 +77,7 @@ template<uint8_t Inst, uint8_t Size, bool SingleShift> auto M68000::shifter(uint
         } break;
         case Lsr: {
             v = false;
-            if (SingleShift) {
+            if constexpr(SingleShift) {
                 c = data & 1;
                 data >>= 1;
                 x = c;
@@ -99,7 +99,7 @@ template<uint8_t Inst, uint8_t Size, bool SingleShift> auto M68000::shifter(uint
         } break;
         case Rol: {
             v = false;
-            if (SingleShift) {
+            if constexpr(SingleShift) {
                 c = data & msb<Size>();
                 data = (data << 1) | c;
             } else {
@@ -115,7 +115,7 @@ template<uint8_t Inst, uint8_t Size, bool SingleShift> auto M68000::shifter(uint
         } break;
         case Ror: {
             v = false;
-            if (SingleShift) {
+            if constexpr(SingleShift) {
                 c = data & 1;
                 data >>= 1;
                 if (c)
@@ -133,7 +133,7 @@ template<uint8_t Inst, uint8_t Size, bool SingleShift> auto M68000::shifter(uint
         } break;
         case Roxl: {
             v = false;
-            if (SingleShift) {
+            if constexpr(SingleShift) {
                 c = data & msb<Size>();
                 data = (data << 1) | x;
                 x = c;
@@ -150,7 +150,7 @@ template<uint8_t Inst, uint8_t Size, bool SingleShift> auto M68000::shifter(uint
         } break;
         case Roxr: {
             v = false;
-            if (SingleShift) {
+            if constexpr(SingleShift) {
                 c = data & 1;
                 data >>= 1;
                 if (x)
@@ -179,7 +179,7 @@ template<uint8_t Inst, uint8_t Size, bool SingleShift> auto M68000::shifter(uint
     return clip<Size>(data);
 }
 
-template<uint8_t Inst, uint8_t Size> auto M68000::bcd(uint32_t src, uint32_t dest) -> uint8_t {
+template<uint8_t Inst> auto M68000::bcd(uint32_t src, uint32_t dest) -> uint8_t {
     uint16_t result;
 
     switch (Inst) {

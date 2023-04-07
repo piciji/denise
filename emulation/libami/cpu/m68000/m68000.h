@@ -54,8 +54,7 @@ protected:
     enum { Byte = 1, Word = 2, Long = 4, BWL = 7, WL = 6, BW = 3 };
     enum { Asl, Asr, Lsl, Lsr, Rol, Ror, Roxl, Roxr };
     enum { Bchg, Bset, Bclr, Btst };
-    enum { Sub, Subx, Add, Addx, Not, Cmp, And, Or, Eor };
-    enum { Abcd, Sbcd };
+    enum { Sub, Subx, Add, Addx, Not, Cmp, And, Or, Eor, Abcd, Sbcd };
     enum { Adda, Suba };
     enum { Mulu, Muls };
     enum { Divu, Divs };
@@ -272,6 +271,7 @@ private:
     template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto opMovemToEa(uint16_t opcode) -> void;
     template<uint8_t Inst, uint8_t Size> auto opArithmeticX(uint16_t opcode) -> void;
     template<uint8_t Inst, uint8_t Size> auto opArithmeticXEa(uint16_t opcode) -> void;
+    template<uint8_t Inst, uint8_t Size> auto opArithmeticBCD(uint16_t opcode) -> void;
     template<uint8_t Inst, uint8_t Size> auto opCmpm(uint16_t opcode) -> void;
     template<uint8_t Inst, uint8_t Size> auto opCcr(uint16_t opcode) -> void;
     template<uint8_t Inst, uint8_t Size> auto opSr(uint16_t opcode) -> void;
@@ -307,7 +307,7 @@ private:
 
     template<uint8_t Inst, uint8_t Size> auto arithmetic(uint32_t src, uint32_t dest) -> uint32_t;
     template<typename T, typename TSign, uint8_t Inst, uint8_t Size> auto arithmeticT(uint32_t src, uint32_t dest) -> uint32_t;
-    template<uint8_t Inst, uint8_t Size> auto bcd(uint32_t src, uint32_t dest) -> uint8_t;
+    template<uint8_t Inst> auto bcd(uint32_t src, uint32_t dest) -> uint8_t;
     template<uint8_t Inst> auto testCondition() -> bool;
     
     template<uint8_t Size> auto applyRoxRange(int& shift) -> void;
@@ -345,6 +345,7 @@ private:
     template<uint8_t Mode> constexpr static auto isPcMode() -> bool { return Mode == ProgramCounterIndirectWithIndex || Mode == ProgramCounterIndirectWithDisplacement; }
 
     auto firstMovemWrite( uint16_t mask, unsigned shift, bool reverseOrder ) -> uint16_t;
+    auto nextIsGroup1Exception() -> bool;
 };
 
 }

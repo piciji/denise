@@ -76,7 +76,8 @@ auto M68000::IRQException() -> void { // a group 1 exception
         return addressException(sp - 2, pc, SF_DATA | SF_EXC, pc & 0xffff);
 
     write<Word>(sp - 2, pc & 0xffff);
-    uint16_t vectorAdr = (uint16_t)getInterruptVector( iplSample & 7 ) << 2;
+    ird = (uint16_t)getInterruptVector( iplSample & 7 );
+    uint16_t vectorAdr = ird << 2;
     SYNC(4); // justify vector (2 shift operations)
     sp -= 6;
     write<Word>(sp + 0, SR);
@@ -128,8 +129,9 @@ template<uint8_t Mode, uint8_t Size> auto M68000::addressExceptionEA(uint32_t ea
 
 template<uint8_t Mode, uint8_t Size> auto M68000::addressExceptionMoveEA(uint32_t ea, uint32_t data) -> void {
     uint32_t _pc = pc;
+    uint8_t flags = SF_DATA;
 
-    if constexpr(Mode < AddressRegisterIndirectWithDisplacement)
+    if constexpr(Mode < AddressRegisterIndirectWithPreDecrement)
         _pc += 2;
 
     if constexpr(Mode == AddressRegisterIndirectWithPreDecrement && Size == Long)
@@ -138,7 +140,14 @@ template<uint8_t Mode, uint8_t Size> auto M68000::addressExceptionMoveEA(uint32_
     if constexpr(Size == Long && (Mode != AddressRegisterIndirectWithPreDecrement))
         data >>= 16;
 
-    addressException(ea, _pc, SF_DATA /* there is no writing to PC rel. addresses */, data);
+    if constexpr(Mode == AddressRegisterIndirectWithPreDecrement && Size != Long) {
+        // In this case, the "prefetch" happened before and TVN has already been updated.
+        // A possible address error will now stack the exception flag.
+        if (nextIsGroup1Exception())
+            flags |= SF_EXC;
+    }
+
+    addressException(ea, _pc, flags, data);
 }
 
 auto M68000::addressException(uint32_t adr, uint32_t _pc, uint8_t flags, uint16_t value) -> void {
@@ -148,7 +157,7 @@ auto M68000::addressException(uint32_t adr, uint32_t _pc, uint8_t flags, uint16_
 
     SYNC(2);
     // some periphery observe AS line only (which is asserted during address exception) and treat this as a valid BUS cycle.
-    // periphery can not see A0 (simply there is no A0 line), A0 is determined by LDS (which is not asserted)
+    // periphery can not see A0 (simply there is no A0 line), A0 is determined by LDS (which is not asserted here)
     // override following function for such periphery.
     #ifdef ADR_EXC_BUS_CYCLE
     ADR_EXC_ACCESS(!!(flags & 16), adr & ~1, flags & 3, value);

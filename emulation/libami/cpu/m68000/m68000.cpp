@@ -185,7 +185,7 @@ template<uint8_t Inst> auto M68000::cyclesMul(uint16_t data) -> void {
 template<uint8_t Inst> auto M68000::cyclesDiv(uint32_t dividend, uint16_t divisor) -> void {
     if constexpr(Inst == Divu) {
         uint32_t hdivisor = divisor << 16;
-        unsigned cycles = 36 << 1; // minimum: 3 + (15 * 2) + 2 + 1
+        int cycles = 36 << 1; // minimum: 3 + (15 * 2) + 2 + 1
 
         for (int i = 0; i < 15; i++) {
 
@@ -206,7 +206,12 @@ template<uint8_t Inst> auto M68000::cyclesDiv(uint32_t dividend, uint16_t diviso
     } else if constexpr(Inst == Divs) {
         int32_t _dividend = (int32_t)dividend;
         int16_t _divisor = (int16_t)divisor;
-        unsigned mcycles = _dividend < 0 ? 7 : 6;
+        int mcycles = _dividend < 0 ? 7 : 6;
+
+        if ((abs(_dividend) >> 16) >= abs(_divisor)) {
+            SYNC( mcycles << 1 );
+            return;
+        }
 
         mcycles += 53; // 3 * 15 + 4 + 4 (divisor < 0)
 
@@ -259,6 +264,32 @@ template<uint8_t Mode, uint8_t destMode, uint8_t Size> auto M68000::setMoveCCWhe
             }
         }
     }
+}
+
+auto M68000::nextIsGroup1Exception() -> bool {
+    auto opMethod = opTable[ird];
+
+    if ((opMethod == &M68000::lineA) || (opMethod == &M68000::lineF) || (opMethod == &M68000::illegal))
+        return true;
+
+    if (!s) {
+        if ((opMethod == &M68000::opReset) || (opMethod == &M68000::opRte) || (opMethod == &M68000::opStop) )
+            return true;
+
+        if (ird == 0x27c || ird == 0x7c || ird == 0xa7c) // opSr
+            return true;
+
+        if ((ird & 0xffc0) == 0x46c0) // opMoveToSr
+            return true;
+
+        if ((ird & 0xfff0) == 0x4e60) // opMoveUsp
+            return true;
+    }
+
+    if (control & IRQ) // todo: need to check IRQ, a pending Trace don't stack "Exception" flag
+        return true;
+
+    return false;
 }
 
 auto M68000::firstMovemWrite( uint16_t mask, unsigned shift, bool reverseOrder) -> uint16_t {

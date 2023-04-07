@@ -82,7 +82,7 @@ template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opNbcd(uint16_t 
     if (!readEA<Mode, Byte>(opcode & 7, result, ea))
         return;
 
-    result = bcd<Sbcd, Size>(result, 0);
+    result = bcd<Sbcd>(result, 0);
     prefetch<SampleIPL>();
 
     if constexpr( Mode == DataRegisterDirect ) SYNC( 2 );
@@ -281,7 +281,7 @@ template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opDiv(uint16_t o
 
     if (overflow) {
         if constexpr(Inst == Divu)  SYNC(6);
-        else                        SYNC( ((int32_t)dividend < 0) ? 14 : 12 );
+        else cyclesDiv<Inst>(dividend, divisor);
 
         v = n = true;
         c = z = false;
@@ -464,7 +464,7 @@ template<uint8_t Inst, uint8_t Size> auto M68000::opDbcc(uint16_t opcode) -> voi
         pc = memPC + (int16_t)irc;
 
         if (misaligned<Long>(pc))
-            return addressException(pc, memPC, SF_READ | SF_PRG);
+            return addressException(pc, pc + 2, SF_READ | SF_PRG);
 
         firstPrefetch(); // assumes branch is taken, hence prefetch from new PC. (in order to speed up most likely case)
         uint16_t word = readRegD<Word>(reg);
@@ -653,9 +653,17 @@ template<uint8_t Inst, uint8_t Size> auto M68000::opArithmeticX(uint16_t opcode)
 
     prefetch<SampleIPL>();
     if constexpr(Size == Long)  SYNC(4);
-    if constexpr(Inst == Abcd || Inst == Sbcd) SYNC(2);
 
     writeRegD<Size>( destReg, arithmetic<Inst, Size>(readRegD<Size>( opcode & 7 ), readRegD<Size>( destReg ) ) );
+}
+
+template<uint8_t Inst, uint8_t Size> auto M68000::opArithmeticBCD(uint16_t opcode) -> void {
+    int destReg = (opcode >> 9) & 7;
+
+    prefetch<SampleIPL>();
+    SYNC(2);
+
+    writeRegD<Size>( destReg, bcd<Inst>(readRegD<Size>( opcode & 7 ), readRegD<Size>( destReg ) ) );
 }
 
 template<uint8_t Inst, uint8_t Size> auto M68000::opArithmeticXEa(uint16_t opcode) -> void {
@@ -687,7 +695,10 @@ template<uint8_t Inst, uint8_t Size> auto M68000::opArithmeticXEa(uint16_t opcod
     if constexpr(Size != Long)  dest = read<Size, SampleIPL>(ea);
     else                        dest = read<Size, Reverse>(ea);
 
-    result = arithmetic<Inst, Size>(result, dest );
+    if constexpr(Inst == Abcd || Inst == Sbcd)
+        result = bcd<Inst>(result, dest );
+    else
+        result = arithmetic<Inst, Size>(result, dest );
 
     if constexpr(Size == Long) write<Word, SampleIPL>( ea + 2, result & 0xffff );
 
@@ -953,18 +964,17 @@ auto M68000::opTrapv(uint16_t opcode) -> void {
 template<uint8_t Inst, uint8_t Size> auto M68000::opLink(uint16_t opcode) -> void {
     int16_t displacement = (int16_t)irc;
     readExtensionWord();
-    uint32_t& sp = regsA[7];
+    uint32_t _regA = readRegA(opcode & 7);
+    uint32_t sp = regsA[7];
     sp -= 4;
+    writeRegA(opcode & 7, sp); // happens 1.5 CPU cycles after reading extension word
 
-    if (misaligned<Long>(sp)) {
-        writeRegA(opcode & 7, sp);
-        return addressException(sp, pc + 2, SF_DATA, readRegA(opcode & 7) >> 16);
-    }
+    if (misaligned<Long>(sp))
+        return addressException(sp, pc + 2, SF_DATA, _regA >> 16);
 
     sampleInterrupt();
-    write<Long, Reverse>(sp, readRegA(opcode & 7));
-    writeRegA(opcode & 7, sp);
-    sp += displacement;
+    write<Long, Reverse>(sp, _regA);
+    regsA[7] = sp + displacement; // happens 1.5 CPU cycles after "long write"
     prefetch();
 }
 

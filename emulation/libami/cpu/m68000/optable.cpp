@@ -458,11 +458,11 @@ auto M68000::build() -> void {
 
     // abcd to reg
     o = parse("1100 ---1 0000 0---");
-    _B_( o, SO, ArithmeticX, Abcd, Byte )
+    _B_( o, SO, ArithmeticBCD, Abcd, Byte )
 
     // sbcd to reg
     o = parse("1000 ---1 0000 0---");
-    _B_( o, SO, ArithmeticX, Sbcd, Byte )
+    _B_( o, SO, ArithmeticBCD, Sbcd, Byte )
 
     // addx to mem
     o = parse("1101 ---1 ss00 1---");
@@ -543,7 +543,7 @@ auto M68000::build() -> void {
 
     // link
     o = parse("0100 1110 0101 0---");
-    _B_( o, 0, Link, 0, Long )
+    _B_( o, 0, Link, 0, Word )
 
     // move to usp
     o = parse("0100 1110 0110 ----");

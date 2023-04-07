@@ -18,6 +18,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
 
 # copyright holders
 
+* module "driver" is based of "ruby" used in higan, it's rewritten
 * "Sid" emulation code, especially SID filter, is taken from VICE http://vice-emu.sourceforge.net
 * "VIC-II" cycle emulation code is based on VICE implementation http://vice-emu.sourceforge.net
 * Dynamic Rate Control (DRC) formula is copyrighted by RetroArch. https://github.com/libretro/RetroArch
