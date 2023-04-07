@@ -75,7 +75,7 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
     memorySliderReset.setInterval(500);
     
     memorySliderReset.onFinished = [this]() {
-        if (activeEmulator) {
+        if (activeEmulator == this->emulator) {
             emuThread->lock();
             program->power(activeEmulator);
             emuThread->unlock();
@@ -99,7 +99,7 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
     else
         dim = { 1, 1, 1, 1, 1, 1 };
 
-    memoryNewModelLayout.build( tabWindow, emulator, {Emulator::Interface::Model::Purpose::Memory}, { 1, 1 } );
+    memoryNewModelLayout.build( tabWindow, emulator, {Emulator::Interface::Model::Purpose::Memory}, { 1, 1, 1 } );
     driveModelLayout.build( tabWindow, emulator, {Emulator::Interface::Model::Purpose::DriveSettings}, dim );
     performanceModelLayout.build( tabWindow, emulator, {Emulator::Interface::Model::Purpose::Performance}, { 3 } );
 
@@ -157,7 +157,7 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
                 _settings->set<unsigned>( "expansion", block->expansion->id);
                 updateExpansionMemory();
 
-				if (activeEmulator) {
+				if (activeEmulator == this->emulator) {
                     emuThread->lock();
                     program->power(activeEmulator);
                     emuThread->unlock();
@@ -193,6 +193,7 @@ auto SystemLayout::translate() -> void {
     SliderLayout::scale(sliderLayouts, "1024 mb");
 
     driveModelLayout.alignSlider( "300.00 RPM" );
+    memoryNewModelLayout.alignSlider( "512 kb" );
 }
 
 auto SystemLayout::getSizeString( unsigned sizeInKb ) -> std::string {

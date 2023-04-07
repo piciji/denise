@@ -47,9 +47,25 @@ ModelLayout::Line::Block::Block(Emulator::Interface::Model* model, ModelLayout* 
     } else if (model->isSlider()) {
         sliderLayout = new ::SliderLayout;
         append(*sliderLayout, {~0u, 0u});
-        sliderLayout->updateValueWidth( std::to_string( model->range[0] < 0 ? model->range[0] : model->range[1] ) );
-        sliderLayout->slider.setLength( model->steps + 1 );
-        
+        auto& sOptions = model->options;
+        if (sOptions.size()) {
+            GUIKIT::Label tester;
+            int w = 0;
+            std::string longest = "";
+            for(auto& sOption : sOptions) {
+                tester.setText(sOption);
+                if (tester.minimumSize().width > w) {
+                    w = tester.minimumSize().width;
+                    longest = sOption;
+                }
+            }
+            sliderLayout->updateValueWidth(longest);
+            sliderLayout->slider.setLength( sOptions.size() );
+        } else {
+            sliderLayout->updateValueWidth( std::to_string( model->range[0] < 0 ? model->range[0] : model->range[1] ) );
+            sliderLayout->slider.setLength( model->steps + 1 );
+        }
+
 	} else {
         GUIKIT::LineEdit tester;
         tester.setText( model->isHex() ? "0xAA" : std::to_string(model->range[0]) );
@@ -176,23 +192,28 @@ auto ModelLayout::setEvents( ) -> void {
                 
                 block->sliderLayout->slider.onChange = [this, block, model](unsigned position) {
                     int _min = model->range[0];
-                    
                     int _max = model->range[1];
-                    
                     int range = _max - _min;
-                    
-                    int stepSize = range / model->steps;
-                    
-                    int val = position * stepSize + _min;
+                    auto& options = model->options;
+
+                    int stepSize = 1;
+                    int val = position;
+                    std::string displayText = "";
+                    std::string unit = "";
+
+                    if (!options.size()) {
+                        stepSize = range / model->steps;
+                        val = position * stepSize + _min;
+                        displayText = std::to_string(val);
+                        if (model->scaler != 1.0)
+                            displayText = GUIKIT::String::formatFloatingPoint( (float)val / model->scaler, 2);
+                    } else {
+                        if (position < options.size())
+                            displayText = options[position];
+                    }
 
                     tabWindow->settings->set<int>( _underscore(model->name), val );
 
-                    std::string displayText = std::to_string(val);
-                    if (model->scaler != 1.0) {
-                        displayText = GUIKIT::String::formatFloatingPoint( (float)val / model->scaler, 2);
-                    }
-
-                    std::string unit = "";
                     if (model->isDriveSettings())
                         unit = getUnit(model->id);
 
@@ -299,22 +320,29 @@ auto ModelLayout::updateWidget( Line::Block* block ) -> void {
         auto val = tabWindow->settings->get<int>( _underscore(model->name), model->defaultValue, model->range );
 
         int _min = model->range[0];
-
         int _max = model->range[1];
-
         int range = _max - _min;
+        auto& options = model->options;
 
-        int stepSize = range / model->steps;
+        int stepSize = 1;
+        unsigned pos = val;
+        std::string displayText = "";
+        std::string unit = "";
 
-        unsigned pos = (val - _min) / stepSize;
-        
+        if (!options.size()) {
+            stepSize = range / model->steps;
+            pos = (val - _min) / stepSize;
+            displayText = std::to_string(val);
+            if (model->scaler != 1.0)
+                displayText = GUIKIT::String::formatFloatingPoint( (float) val / model->scaler, 2);
+
+        } else {
+            if (pos < options.size())
+                displayText = options[pos];
+        }
+
         block->sliderLayout->slider.setPosition( pos );
 
-        std::string displayText = std::to_string(val);
-        if (model->scaler != 1.0)
-            displayText = GUIKIT::String::formatFloatingPoint( (float) val / model->scaler, 2);
-
-        std::string unit = "";
         if (model->isDriveSettings())
             unit = getUnit(model->id);
 
@@ -434,9 +462,13 @@ auto ModelLayout::stepRange(unsigned id, int step) -> int {
                     
                 } else if (model->isSlider()) {
                     // todo apply model scaler
-                    int stepSize = range / model->steps;
 
-                    unsigned pos = (newValue + _max) / stepSize;
+                    unsigned pos = newValue;
+
+                    if (!model->options.size()) {
+                        int stepSize = range / model->steps;
+                        pos = (newValue + _max) / stepSize;
+                    }
 
                     block->sliderLayout->slider.setPosition(pos);
                     
@@ -606,6 +638,7 @@ auto ModelLayout::applyCustomStuff( Line::Block* block, Emulator::Interface::Mod
                 // fallthrough
             case LIBAMI::Interface::ModelIdChipMem:
             case LIBAMI::Interface::ModelIdSlowMem:
+            case LIBAMI::Interface::ModelIdFastMem:
             case LIBAMI::Interface::ModelIdSystem:
                 if (this->emulator == activeEmulator)
                     program->power(activeEmulator);

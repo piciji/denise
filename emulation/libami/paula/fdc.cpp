@@ -204,16 +204,17 @@ auto Paula::dskDatR() -> uint16_t {
 
 auto Paula::instantDriveAccess() -> void {
     uint8_t out = 0;
+    bool useRunAhead = system->allowRunAhead();
 
     switch(diskState) {
         case DiskState::WAIT_SYNC_READ:
         case DiskState::READ:
-            if (!system->runAhead.frames || (system->runAhead.frames == system->runAhead.pos))
+            if (!useRunAhead || (system->runAhead.frames == system->runAhead.pos))
                 out = activeDrive->instantRead(dskTansferLength, dskSync, diskState == DiskState::WAIT_SYNC_READ);
             break;
         case DiskState::WAIT_SYNC_WRITE:
         case DiskState::WRITE: { // no support for multi selected drives
-            if (!system->runAhead.frames || (system->runAhead.frames == system->runAhead.pos))
+            if (!useRunAhead || (system->runAhead.frames == system->runAhead.pos))
                 out = activeDrive->instantWrite(dskTansferLength, dskSync, diskState == DiskState::WAIT_SYNC_WRITE);
         } break;
         default:

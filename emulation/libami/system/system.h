@@ -80,6 +80,7 @@ struct System {
     auto setResampleQuality( int value ) -> void;
     auto setFastForward( unsigned config ) -> void;
     auto setRunAhead(unsigned frames) -> void;
+    auto allowRunAhead() -> bool { return !fastForward.config && runAhead.frames && agnus.womLocked(); }
     auto hintSlowSpeed(bool state) -> void;
 
     auto calcSerializationSize() -> void;
@@ -95,6 +96,8 @@ struct System {
     auto getChipmem() -> unsigned;
     auto setSlowmem(unsigned value) -> void;
     auto getSlowmem() -> unsigned;
+    auto setFastmem(unsigned value) -> void;
+    auto getFastmem() -> unsigned;
 
     auto setDrivesEnabled( uint8_t count ) -> void;
     auto getDrivesEnabled() -> uint8_t;

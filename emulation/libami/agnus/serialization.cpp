@@ -91,6 +91,7 @@ auto Agnus::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer(diwFlipFlop);
     s.integer(womLock);
     s.integer(resetFromKeyboard);
+    s.integer(zorroBaseAdr);
 
     if (!light) {
         s.array(mapper);
@@ -98,22 +99,29 @@ auto Agnus::serialize(Emulator::Serializer& s, bool light) -> void {
         if (s.mode() == Emulator::Serializer::Mode::Load) {
             unsigned _chipMemMask;
             unsigned _slowMemSize;
+            unsigned _fastMemSize;
             s.integer(_chipMemMask);
             s.integer(_slowMemSize);
+            s.integer(_fastMemSize);
 
             setChipmem(_chipMemMask + 1);
             setSlowmem(_slowMemSize);
+            setFastmem(_fastMemSize);
 
             mapRom(false);
         } else {
             s.integer(chipMemMask);
             s.integer(slowMemSize);
+            s.integer(fastMemSize);
         }
 
         s.array(chipMem, chipMemMask + 1);
 
         if (slowMemSize)
             s.array(slowMem, slowMemSize);
+
+        if (fastMemSize)
+            s.array(fastMem, fastMemSize);
 
         if (model == OCS_A1000)
             s.array(wom, 256 * 1024);
@@ -136,9 +144,15 @@ auto Agnus::serialize(Emulator::Serializer& s, bool light) -> void {
                     *(uint16_t*)(slowMem + ptr->address) = ptr->value;
                 }
             }
+            if (fastMemChangePos) {
+                for (int i = fastMemChangePos - 1; i >= 0; i--) {
+                    ptr = &fastMemChange[i];
+                    *(uint16_t*)(fastMem + ptr->address) = ptr->value;
+                }
+            }
             trackMemChanges = false;
         } else {
-            chipMemChangePos = slowMemChangePos = 0;
+            chipMemChangePos = slowMemChangePos = fastMemChangePos = 0;
             trackMemChanges = true;
         }
     }

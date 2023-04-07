@@ -140,7 +140,6 @@ auto Paula::prepareIpl() -> void {
     int lastIPL = ipl & 0x7;
 
     if (level != lastIPL) {
-        // todo: check exact delays
         ipl = (ipl & ~0xff) | level;
 
         if (((lastIPL & 1) && !(level & 1)) ||
@@ -152,7 +151,7 @@ auto Paula::prepareIpl() -> void {
         else
             ipl = (ipl & ~0xff00) | (level << 8);
 
-        iplCounter = 4;
+        iplCounter = 3;
     }
 }
 

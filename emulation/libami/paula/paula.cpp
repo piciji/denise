@@ -322,7 +322,7 @@ auto Paula::power() -> void {
 auto Paula::process() -> void {
 
     if (iplCounter) {
-        cpu.setInterrupt( (ipl >> 24) & 7 );
+        cpu.setInterrupt( (ipl >> 16) & 7 );
         ipl = (ipl << 8) | (ipl & 0xff);
         iplCounter--;
     }

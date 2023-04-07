@@ -32,9 +32,10 @@ Agnus::Agnus(System* system, Cpu& cpu, Denise& denise, Paula& paula, Cia<MOS_852
 
     this->interface = system->interface;
 
-    chipMemChangeSize = slowMemChangeSize = 10 * 1024;
+    chipMemChangeSize = slowMemChangeSize = fastMemChangeSize = 10 * 1024;
     chipMemChange = new MemChange[chipMemChangeSize];
     slowMemChange = new MemChange[slowMemChangeSize];
+    fastMemChange = new MemChange[fastMemChangeSize];
 
     wom = new uint8_t[256 * 1024];
     ntsc = false;
@@ -44,6 +45,7 @@ Agnus::Agnus(System* system, Cpu& cpu, Denise& denise, Paula& paula, Cia<MOS_852
 Agnus::~Agnus() {
     delete[] chipMemChange;
     delete[] slowMemChange;
+    delete[] fastMemChange;
     delete[] wom;
 }
 
@@ -69,6 +71,8 @@ auto Agnus::power(bool softReset) -> void {
         std::memset(chipMem, 0x0, chipMemMask + 1);
         if (slowMemSize)
             std::memset(slowMem, 0, slowMemSize);
+        if (fastMemSize)
+            std::memset(fastMem, 0, fastMemSize);
         if (model == OCS_A1000)
             std::memset(wom, 0, 256 * 1024);
     }
@@ -116,6 +120,7 @@ auto Agnus::power(bool softReset) -> void {
     dskpt = 0;
     chipMemChangePos = 0;
     slowMemChangePos = 0;
+    fastMemChangePos = 0;
     trackMemChanges = false;
 
     ddfStart = false;
@@ -135,6 +140,7 @@ auto Agnus::power(bool softReset) -> void {
     lof = true;
     lolToggle = ntsc;
     laceMode = 0;
+    zorroBaseAdr = 0;
 
     initVCounter = false;
     shortLineBefore = true;

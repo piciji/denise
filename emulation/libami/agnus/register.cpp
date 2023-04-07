@@ -53,7 +53,8 @@ template<bool byteAccess> auto Agnus::readCustom(uint16_t adr, bool triggeredByW
         default:
             if (!triggeredByWrite) {
                 if constexpr (byteAccess)
-                    writeCustom(adr, (dataBus << 8) | (dataBus & 0xff), Trigger_Read);
+                    writeCustom(adr, dataBus, Trigger_Read);
+                    //writeCustom(adr, (dataBus << 8) | (dataBus & 0xff), Trigger_Read);
                 else
                     writeCustom(adr, dataBus, Trigger_Read);
             }
@@ -254,11 +255,11 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
             break;
 
         case 0x9a:
-            paula.setIntena(value);
+            addOneCycleEvent(INTENA, value);
             break;
 
         case 0x9c:
-            paula.setIntreq(value);
+            addOneCycleEvent(INTREQ, value);
             break;
 
         case 0x9e:
@@ -395,6 +396,7 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
             }
             updateHarddis();
             denise.setBplCon0(value);
+           // addOneCycleEvent(BPL_CON0, value);
         } break;
 
         case 0x102:

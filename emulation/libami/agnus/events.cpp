@@ -117,7 +117,7 @@ auto Agnus::inactivateOneCycleEvent(int job) -> void {
     updateSpriteV<nr>();
 
 auto Agnus::processOneCycleEvent(int job, uint16_t data) -> void {
-    // Only jobs that do not hinder each other are allowed in. A newly added job runs a running job immediately.
+    // Only jobs that do not hinder each other are allowed in. A newly added job runs a delayed job immediately.
     switch (job) {
         case PTR_BLT_A_H: blitter.setBltAptH(data); break;
         case PTR_BLT_A_L: blitter.setBltAptL(data); break;
@@ -132,6 +132,8 @@ auto Agnus::processOneCycleEvent(int job, uint16_t data) -> void {
         case DMACON: dmaCon = dmaConImm; break;
         case BLT_INIT: blitter.initBlit(); break;
 
+        // proximity alert: sprite jobs can be recorded in "fetchSprites" before the blitter processes
+        // and would update any blitter pointers or "initBlit" too early. not bad, because in this case the blitter doesn't get DMA.
         case SPR_DATA0: denise.setSprDatA(0, data); break;
         case SPR_DATA1: denise.setSprDatA(1, data); break;
         case SPR_DATA2: denise.setSprDatA(2, data); break;
@@ -167,7 +169,11 @@ auto Agnus::processOneCycleEvent(int job, uint16_t data) -> void {
         case SPR_POS5: SPRPOS(5) break;
         case SPR_POS6: SPRPOS(6) break;
         case SPR_POS7: SPRPOS(7) break;
+
+        case BPL_CON0: denise.setBplCon0(data); break;
         case BPL_CON2: denise.setBplCon2(data); break;
+        case INTREQ: paula.setIntreq(data); break;
+        case INTENA: paula.setIntena(data); break;
     }
     setEventInactive<EVENT_ONE_CYCLE_DELAY>();
 }

@@ -158,7 +158,7 @@ auto System::run() -> void {
     if (agnus.resetFromKeyboard)
         agnus.waitKeyboardReset();
 
-    bool useRunAhead = !fastForward.config && runAhead.frames && agnus.womLocked();
+    bool useRunAhead = allowRunAhead();
 
     if (useRunAhead) {
         runAhead.pos = runAhead.frames;
@@ -406,6 +406,40 @@ auto System::getSlowmem() -> unsigned {
         case 1024 * 1024: return 2;
         case 1536 * 1024: return 3;
         case 1792 * 1024: return 4;
+    }
+    return 0;
+}
+
+auto System::setFastmem(unsigned value) -> void {
+    unsigned size;
+
+    switch(value) {
+        default:
+        case 0: size = 0; break;
+        case 1: size = 64 * 1024; break;
+        case 2: size = 128 * 1024; break;
+        case 3: size = 256 * 1024; break;
+        case 4: size = 512 * 1024; break;
+        case 5: size = 1024 * 1024; break;
+        case 6: size = 2048 * 1024; break;
+        case 7: size = 4096 * 1024; break;
+        case 8: size = 8192 * 1024; break;
+    }
+
+    agnus.setFastmem(size);
+}
+
+auto System::getFastmem() -> unsigned {
+    switch (agnus.fastMemSize) {
+        case 0: return 0;
+        case 64 * 1024: return 1;
+        case 128 * 1024: return 2;
+        case 256 * 1024: return 3;
+        case 512 * 1024: return 4;
+        case 1024 * 1024: return 5;
+        case 2048 * 1024: return 6;
+        case 4096 * 1024: return 7;
+        case 8192 * 1024: return 8;
     }
     return 0;
 }

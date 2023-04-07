@@ -41,7 +41,7 @@ struct Agnus {
     Agnus(System* system, Cpu& cpu, Denise& denise, Paula& paula, Cia<MOS_8520>& cia1, Cia<MOS_8520>& cia2, Input& input);
     ~Agnus();
 
-    enum { Unmapped, CHIP_MEM, SLOW_MEM, KICK_ROM, EXT_ROM, WOM, MMIO_CUSTOM, MMIO_CIA, MMIO_RTC };
+    enum { Unmapped, CHIP_MEM, SLOW_MEM, KICK_ROM, EXT_ROM, WOM, MMIO_CUSTOM, MMIO_CIA, MMIO_RTC, AUTO_CONF, FAST_MEM };
 
     enum { EVENT_KBD, EVENT_ONE_CYCLE_DELAY, EVENT_LEAVE_EMULATION, EVENT_POWER_SUPPLY, EVENT_AUDIO_STATE, EVENT_HTOTAL, EVENT_SERIAL, EVENT_INTREQ, EVENT_CHANNELS };
 
@@ -52,7 +52,7 @@ struct Agnus {
            SPR_DATB0, SPR_DATB1, SPR_DATB2, SPR_DATB3, SPR_DATB4, SPR_DATB5, SPR_DATB6, SPR_DATB7,
            SPR_CTL0, SPR_CTL1, SPR_CTL2, SPR_CTL3, SPR_CTL4, SPR_CTL5, SPR_CTL6, SPR_CTL7,
            SPR_POS0, SPR_POS1, SPR_POS2, SPR_POS3, SPR_POS4, SPR_POS5, SPR_POS6, SPR_POS7,
-           BPL_CON2,
+           BPL_CON2, INTREQ, INTENA, BPL_CON0
     };
 
     enum { ACT_BLITTER = 1, ACT_COPPER = 2, ACT_BPL = 4, ACT_SPRITE = 8 };
@@ -136,10 +136,13 @@ struct Agnus {
 
     MemChange* chipMemChange;
     MemChange* slowMemChange;
+    MemChange* fastMemChange;
     unsigned chipMemChangeSize;
     unsigned slowMemChangeSize;
+    unsigned fastMemChangeSize;
     unsigned chipMemChangePos;
     unsigned slowMemChangePos;
+    unsigned fastMemChangePos;
     bool trackMemChanges;
 
     uint8_t ddfStart;
@@ -159,6 +162,8 @@ struct Agnus {
     unsigned chipMemMask = 0;
     uint8_t* slowMem = nullptr;
     unsigned slowMemSize = 0;
+    uint8_t* fastMem = nullptr;
+    unsigned fastMemSize = 0;
     uint8_t* kickRom = nullptr;
     unsigned kickRomMask = 0;
     uint8_t* extRom = nullptr;
@@ -196,6 +201,7 @@ struct Agnus {
 
     bool womLock = false;
     uint8_t resetFromKeyboard = 0;
+    uint32_t zorroBaseAdr = 0;
 
     auto frequency() -> unsigned;
     auto ecsAndHigher() -> bool const { return model & (Model::ECS | Model::AGA); }
@@ -217,6 +223,11 @@ struct Agnus {
     auto lockWom() -> void;
     auto setChipmem(unsigned size) -> void;
     auto setSlowmem(unsigned size) -> void;
+    auto setFastmem(unsigned size) -> void;
+
+    auto readZorro(uint32_t adr) -> uint8_t;
+    auto writeZorro(uint32_t adr, uint8_t data) -> void;
+    auto getZorroSize() -> uint8_t;
 
     auto readByte(uint32_t adr) -> uint8_t;
     auto writeByte(uint32_t adr, uint8_t value) -> void;
@@ -306,6 +317,7 @@ struct Agnus {
 
     auto rememberChipMem(uint32_t adr) -> void;
     auto rememberSlowMem(uint32_t adr) -> void;
+    auto rememberFastMem(uint32_t adr) -> void;
     auto increaseTrackMemStorage(MemChange*& memChange, unsigned& size) -> void;
 
     template<uint8_t Channel, bool executeCurEvent = false> auto updateEvent(int delay) -> void;

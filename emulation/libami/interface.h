@@ -25,6 +25,7 @@ struct Interface : Emulator::Interface  {
         ModelIdSampleFetch,
         ModelIdChipMem,
         ModelIdSlowMem,
+        ModelIdFastMem,
     };
 
     enum MediaGroupId {

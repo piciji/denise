@@ -130,7 +130,7 @@ auto System::serializeLight() -> void {
 
     serialize(s);
     cpu.serialize(s);
-    agnus.serialize(s);
+    agnus.serialize(s, true);
     cia1.serialize(s);
     cia2.serialize(s);
     denise.serialize(s);
@@ -149,7 +149,7 @@ auto System::unserializeLight() -> void {
 
     serialize(s);
     cpu.serialize(s);
-    agnus.serialize(s);
+    agnus.serialize(s, true);
     cia1.serialize(s);
     cia2.serialize(s);
     denise.serialize(s);
