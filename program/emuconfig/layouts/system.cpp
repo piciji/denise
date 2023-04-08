@@ -193,7 +193,7 @@ auto SystemLayout::translate() -> void {
     SliderLayout::scale(sliderLayouts, "1024 mb");
 
     driveModelLayout.alignSlider( "300.00 RPM" );
-    memoryNewModelLayout.alignSlider( "512 kb" );
+    memoryNewModelLayout.alignSlider( "0.00 MB" );
 }
 
 auto SystemLayout::getSizeString( unsigned sizeInKb ) -> std::string {

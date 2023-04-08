@@ -130,7 +130,7 @@ auto DiskDrive::rotate(int dmaCycles, bool reset) -> void {
         if (accum >= refCyclesPerRevolutionScaled) {
             accum -= refCyclesPerRevolutionScaled;
             headOffset += 8;
-            if (headOffset >= (track->length << 3)) {
+            if (headOffset >= track->bits) {
                 headOffset -= track->bits;
                 if (selected)
                     cia.setFlag();
@@ -138,7 +138,7 @@ auto DiskDrive::rotate(int dmaCycles, bool reset) -> void {
         } else {
             if (accum >= refCyclesPerRevolution) {
                 accum -= refCyclesPerRevolution;
-                if (++headOffset >= (track->length << 3)) {
+                if (++headOffset >= track->bits) {
                     headOffset = 0;
                     if (selected)
                         cia.setFlag();
@@ -172,7 +172,7 @@ auto DiskDrive::readBit(int& dmaCycles, bool upd) -> bool {
     uint8_t bit = (~headOffset) & 7; // msb is next
 
     headOffset++;
-    if ( headOffset >= (track->length << 3) ) {
+    if ( headOffset >= track->bits ) {
         headOffset = 0;
         if (selected)
             cia.setFlag();
@@ -213,7 +213,7 @@ auto DiskDrive::writeBit(bool state) -> void {
     uint8_t bit = (~headOffset) & 7; // msb is next
 
     headOffset++;
-    if ( headOffset >= (track->length << 3) ) {
+    if ( headOffset >= track->bits ) {
         headOffset = 0;
         if (selected)
             cia.setFlag();

@@ -101,6 +101,7 @@ auto DiskDrive::instantRead(unsigned words, uint16_t syncWord, bool needSync) ->
     unsigned pos = 0;
     uint8_t out = 0;
     bool rand = false;
+    int bitLimit;
 
     if (stepSettleClock) {
         stepSettleClock = 0;
@@ -125,6 +126,7 @@ auto DiskDrive::instantRead(unsigned words, uint16_t syncWord, bool needSync) ->
     }
 
     do {
+        bitLimit = 0;
         word = track->data[offset] << 8;
         if (++offset == length) {
             offset = 0;
@@ -133,8 +135,14 @@ auto DiskDrive::instantRead(unsigned words, uint16_t syncWord, bool needSync) ->
                     break; // there was no sync pattern found
             }
             cia.setFlag();
+
+            if (structure.type == DiskStructure::EXT || structure.type == DiskStructure::EXT2) {
+                bitLimit = (track->length << 3) - track->bits;
+                if (bitLimit > 7) bitLimit = 0;
+                word &= 0xff00 << bitLimit;
+            }
         }
-        word |= track->data[offset];
+        word |= track->data[offset] << bitLimit;
         if (++offset == length) {
             offset = 0;
             if (!synced) {
@@ -142,6 +150,11 @@ auto DiskDrive::instantRead(unsigned words, uint16_t syncWord, bool needSync) ->
                     break;
             }
             cia.setFlag();
+
+            if (structure.type == DiskStructure::EXT || structure.type == DiskStructure::EXT2) {
+                bitLimit = (track->length << 3) - track->bits;
+                if (bitLimit > 7) bitLimit = 0;
+            }
         }
 
         if (!word) {
@@ -155,7 +168,7 @@ auto DiskDrive::instantRead(unsigned words, uint16_t syncWord, bool needSync) ->
         } else
             rand = 0;
 
-        for(b = 15; b >= 0; b--) {
+        for(b = 15; b >= bitLimit; b--) {
             shifter = (shifter << 1) | ((word >> b) & 1);
             if (shifter == syncWord) {
                 out |= 1;

@@ -74,13 +74,15 @@ Program::Program() {
 
     fpsChangeTimer.setInterval(1000);
     fpsChangeTimer.onFinished = [this]() {
+        emuThread->lock();
         if (audioManager)
             audioManager->setResampler();
         
         if (view)
             view->updateSpeedLabels(!GUIKIT::Application::isCocoa());
-        
+
         fpsChangeTimer.setEnabled(false);
+        emuThread->unlock();
     };
 
     addEmulators();

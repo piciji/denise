@@ -40,7 +40,8 @@ auto DiskStructure::prepareEXT(uint8_t* data, unsigned size) -> void {
             if ((dataOffset + storage) <= size) {
 
                 if (!syncWord) { // ADF
-                    initTrack(track, getTrackByteLength(), 0, 0xaa);
+                    unsigned bytes =  getTrackByteLength();
+                    initTrack(track, bytes, bytes << 3, 0xaa);
                     if (storage >= (512 * 11))
                         encodeTrack(track, i, data + dataOffset);
 

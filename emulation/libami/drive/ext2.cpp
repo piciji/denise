@@ -37,7 +37,7 @@ auto DiskStructure::prepareEXT2(uint8_t *data, unsigned size) -> void {
             storage = (ptr[5] << 16) | (ptr[6] << 8) | ptr[7]; // ignore the MSB for sanity reasons
             bits = (ptr[9] << 16) | (ptr[10] << 8) | ptr[11]; // ignore the MSB for sanity reasons
 
-            if ((dataOffset + storage) <= size) {
+            if ( storage && bits && ((dataOffset + storage) <= size)) {
                 if (bits > (storage << 3))
                     bits = storage << 3;
 
@@ -47,7 +47,8 @@ auto DiskStructure::prepareEXT2(uint8_t *data, unsigned size) -> void {
                     if (!hd && ( bits > ((512 * 11 * 8) + (512 * 8) /* save spot */ ) ))
                         hd = true; // assume all other tracks are HD too
 
-                    initTrack(track, getTrackByteLength(), 0, 0xaa);
+                    bits = getTrackByteLength() << 3;
+                    initTrack(track, bits >> 3, bits, 0xaa);
                     if (storage >= ((512 * 11) << hd))
                         encodeTrack(track, i, data + dataOffset);
 
@@ -57,8 +58,6 @@ auto DiskStructure::prepareEXT2(uint8_t *data, unsigned size) -> void {
                     if (!hd && (bits > (13000 * 8)))
                         hd = true; // ((512 + 32) * 11) * 2 (Clock + Data bit) = 11968 + a few more gap bytes
 
-                    // Unfortunately, programs process the last byte completely, even if the number of bits is not divisible by 8.
-                    // we take the exact count of bits for timing only
                     initTrack(track, (bits + 7) / 8, bits, 0xaa);
                     std::memcpy(track.data, data + dataOffset, track.length);
                     track.written = 0;
