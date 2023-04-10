@@ -81,7 +81,7 @@ Program::Program() {
             audioManager->setResampler();
         
         if (view)
-            view->updateSpeedLabels(!GUIKIT::Application::isCocoa());
+            view->updateSpeedLabels();
 
         fpsChangeTimer.setEnabled(false);
         emuThread->unlock();
@@ -356,7 +356,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
 
         statusHandler->resetFrameCounter();
 
-        view->updateSpeedLabels(!GUIKIT::Application::isCocoa());
+        view->updateSpeedLabels();
 
         view->updateDiskMenu();
 	}

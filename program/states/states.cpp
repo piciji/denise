@@ -532,7 +532,7 @@ auto States::updateModels() -> void {
     }
 
     if (view && regionChange)
-        view->updateSpeedLabels(true);
+        view->updateSpeedLabels();
 
     activeVideoManager->resetTempData(0, true);
 }

@@ -15,7 +15,6 @@ struct View : public GUIKIT::Window {
     GUIKIT::Image placeholder;
 	bool requestFullscreenSwitch = false;
     bool customResizeMode = false;
-    bool speedLabelsNeedUpdate = true;
 	
     struct SystemMenu {
         Emulator::Interface* emulator;
@@ -201,7 +200,7 @@ struct View : public GUIKIT::Window {
     GUIKIT::Image ledGreenImage;
             	
     auto questionToWrite(Emulator::Interface::Media* media) -> bool;
-    auto updateSpeedLabels(bool force = false) -> void;
+    auto updateSpeedLabels() -> void;
     auto getSpeedBySelectedProfile(float& speed, bool& percent) -> unsigned;
     auto getSpeed(unsigned pos, float& speed, bool& percent) -> void;
     auto isMaximumSpeed() -> bool;

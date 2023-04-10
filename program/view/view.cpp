@@ -1173,11 +1173,6 @@ auto View::buildMenu() -> void {
     // speed menu
     speedControlMenu.setIcon( fanImage );
     speedControlMenu.showContextOnly(true);
-    speedControlMenu.onOpen = [this]() {
-        if (speedLabelsNeedUpdate) {
-            updateSpeedLabels(true);
-        }
-    };
 
     fastForwardItem.onToggle = []() {
         emuThread->lock();
@@ -1303,51 +1298,44 @@ auto View::buildMenu() -> void {
     }   
 }
 
-auto View::updateSpeedLabels(bool force) -> void {
+auto View::updateSpeedLabels() -> void {
     std::string label;
-    
-    if (!force) {
-        speedLabelsNeedUpdate = true;
-        
-    } else {
-        if (!activeEmulator)
-            return;
-        
-        auto stat = activeEmulator->getStatsForSelectedRegion();
 
-        speedItems[0]->setText( GUIKIT::String::formatFloatingPoint( stat.fps, 3) + " FPS ( 100 % )");
+    if (!activeEmulator)
+        return;
 
-        unsigned _size = speedItems.size();
+    auto stat = activeEmulator->getStatsForSelectedRegion();
 
-        for(unsigned i = 1; i < _size; i++) {
-            if (i == (_size - 2) ) // maximum
-                continue;
+    speedItems[0]->setText( GUIKIT::String::formatFloatingPoint( stat.fps, 3) + " FPS ( 100 % )");
 
-            float value;
-            bool percent;
-            getSpeed(i, value, percent);
+    unsigned _size = speedItems.size();
 
-            if (percent) {
-                label = GUIKIT::String::formatFloatingPoint(value, 3, true) + " %";
-            } else {
-                label = GUIKIT::String::formatFloatingPoint(value, 3, true) + " FPS";
-            }
+    for(unsigned i = 1; i < _size; i++) {
+        if (i == (_size - 2) ) // maximum
+            continue;
 
-            if (i == 1) {
-                float otherValue = (100.0 * value) / (float)stat.fps;
-                label += " ( " + GUIKIT::String::formatFloatingPoint(otherValue, 2, true) + " % )";
-            }
+        float value;
+        bool percent;
+        getSpeed(i, value, percent);
 
-            speedItems[i]->setText( label );
+        if (percent) {
+            label = GUIKIT::String::formatFloatingPoint(value, 3, true) + " %";
+        } else {
+            label = GUIKIT::String::formatFloatingPoint(value, 3, true) + " FPS";
         }
 
-        auto settings = program->getSettings( activeEmulator );
-        unsigned speedProfile = settings->get<unsigned>("speed_profile", 1, {0, (unsigned)speedItems.size() - 1});
-        if (!speedItems[speedProfile]->checked())
-            speedItems[speedProfile]->setChecked();
-            
-        speedLabelsNeedUpdate = false;
+        if (i == 1) {
+            float otherValue = (100.0 * value) / (float)stat.fps;
+            label += " ( " + GUIKIT::String::formatFloatingPoint(otherValue, 2, true) + " % )";
+        }
+
+        speedItems[i]->setText( label );
     }
+
+    auto settings = program->getSettings( activeEmulator );
+    unsigned speedProfile = settings->get<unsigned>("speed_profile", 1, {0, (unsigned)speedItems.size() - 1});
+    if (!speedItems[speedProfile]->checked())
+        speedItems[speedProfile]->setChecked();
 }
 
 auto View::updateDiskMenu() -> void {

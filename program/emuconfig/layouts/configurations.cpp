@@ -736,7 +736,7 @@ auto ConfigurationsLayout::load( std::string path, bool showError ) -> bool {
     
     loadSettings();
 
-    view->updateSpeedLabels(!GUIKIT::Application::isCocoa());
+    view->updateSpeedLabels();
 
     program->power(this->emulator);
 
