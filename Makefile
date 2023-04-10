@@ -312,12 +312,10 @@ install: ## Install
 	$(call copy,readme.md,out)
 	$(call copy,data/txt/licence.md,out)
 
-    ifneq ($(findstring openal, $(drv) ),)
     ifneq ($(findstring i686, $(shell g++ --version) ),)
-	$(call copy,"data/libs/shared/win32/*.dll",out)
+	$(call copy,"data/libs/shared/win32/D3D*.dll",out)
     else
-	$(call copy,"data/libs/shared/win64/*.dll",out)
-    endif
+	$(call copy,"data/libs/shared/win64/D3D*.dll",out)
     endif
 
     else ifeq ($(platform),macosx)
