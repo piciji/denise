@@ -12,7 +12,6 @@ auto InputManager::setHotkeys() -> void {
     hotkeys.push_back( {Hotkey::Id::Fullscreen, "Fullscreen"} );
     hotkeys.push_back( {Hotkey::Id::ToggleFastForward, "Toggle_fastforward"} );
     hotkeys.push_back( {Hotkey::Id::ToggleFastForwardAggressive, "Toggle_fastforward_aggressive"} );
-    hotkeys.push_back( {Hotkey::Id::CaptureMouse, "Capture_mouse"} );        
     
     hotkeys.push_back( {Hotkey::Id::ToggleMenu, "Toggle_menu"} );
     hotkeys.push_back( {Hotkey::Id::ToggleStatus, "Toggle_status"} );	
@@ -57,7 +56,8 @@ auto InputManager::setHotkeys() -> void {
 }
 
 auto InputManager::setCustomHotkeys() -> void {
-	
+
+    customHotkeys.push_back( {Hotkey::Id::CaptureMouse, "Capture_mouse"} );
 	customHotkeys.push_back( {Hotkey::Id::Loadstate, "Loadstate", true} );
 	customHotkeys.push_back( {Hotkey::Id::Savestate, "Savestate", true} );
 	customHotkeys.push_back( {Hotkey::Id::IncSlot, "Incslot", true} );

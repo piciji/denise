@@ -96,9 +96,11 @@ AutostartLayout::AutostartLayout(Emulator::Interface* emulator) : autoWarp(emula
     if (dynamic_cast<LIBC64::Interface*>(emulator)) {
         append(autoWarp, {0u, 0u}, 5 );
         startWrapper = new StartWrapper;
-        append(*startWrapper, {0u, 0u} );
+        append(*startWrapper, {0u, 0u}, 5 );
     } else
-        append(autoWarp, {0u, 0u} );
+        append(autoWarp, {0u, 0u}, 5 );
+
+    append(autostartDragnDrop, {~0u, 0u});
 
     setFont(GUIKIT::Font::system("bold"));
 }
@@ -112,7 +114,7 @@ RunAheadLayout::Options::Options() {
     setAlignment( 0.5 );
 }
 
-MiscLayout::MiscLayout(TabWindow* tabWindow) {
+MiscLayout::MiscLayout(TabWindow* tabWindow) : autostartLayout(tabWindow->emulator) {
     
     this->tabWindow = tabWindow;
     this->emulator = tabWindow->emulator;
@@ -122,77 +124,79 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) {
     append( speedLayout, {~0u, 0u}, 10 );
     append( inputSamplingLayout, {~0u, 0u}, 10 );
     append( runAheadLayout, {~0u, 0u}, 10 );
+    append( autostartLayout, {~0u, 0u});
 
-    autostartLayout = new AutostartLayout(this->emulator);
-    append(*autostartLayout, {~0u, 0u});
-
-    autostartLayout->autoWarp.off.onActivate = [this]() {
+    autostartLayout.autoWarp.off.onActivate = [this]() {
 
         _settings->set<unsigned>("auto_warp", 0);
 
         initAutowarp();
     };
 
-    autostartLayout->autoWarp.normal.onActivate = [this]() {
+    autostartLayout.autoWarp.normal.onActivate = [this]() {
 
         _settings->set<unsigned>("auto_warp", 1);
 
         initAutowarp();
     };
 
-    autostartLayout->autoWarp.aggressive.onActivate = [this]() {
+    autostartLayout.autoWarp.aggressive.onActivate = [this]() {
 
         _settings->set<unsigned>("auto_warp", 2);
 
         initAutowarp();
     };
 
-    autostartLayout->autoWarp.diskFirstFile.onToggle = [this](bool checked) {
+    autostartLayout.autoWarp.diskFirstFile.onToggle = [this](bool checked) {
 
         _settings->set<bool>("auto_warp_disk_first_file", checked);
 
-        autostartLayout->autoWarp.disableWarpWhenInput.setEnabled( !checked );
+        autostartLayout.autoWarp.disableWarpWhenInput.setEnabled( !checked );
 
         initAutowarp( emulator->getDiskMediaGroup() );
     };
 
-    autostartLayout->autoWarp.disableWarpWhenInput.onToggle = [this](bool checked) {
+    autostartLayout.autoWarp.disableWarpWhenInput.onToggle = [this](bool checked) {
 
         _settings->set<bool>("auto_warp_off_input", checked);
 
         initAutowarp( emulator->getDiskMediaGroup() );
     };
 
-    autostartLayout->autoWarp.tapeFirstFile.onToggle = [this](bool checked) {
+    autostartLayout.autoWarp.tapeFirstFile.onToggle = [this](bool checked) {
 
         _settings->set<bool>("auto_warp_tape_first_file", checked);
 
         initAutowarp( emulator->getTapeMediaGroup() );
     };
 
-    if (autostartLayout->startWrapper) {
-        autostartLayout->startWrapper->option.tapeWithStandardKernal.onToggle = [this](bool checked) {
+    if (autostartLayout.startWrapper) {
+        autostartLayout.startWrapper->option.tapeWithStandardKernal.onToggle = [this](bool checked) {
             _settings->set<bool>("autostart_tape_standard_kernal", checked);
         };
 
-        autostartLayout->startWrapper->option.diskOptions.loadWithColumn.onToggle = [this](bool checked) {
+        autostartLayout.startWrapper->option.diskOptions.loadWithColumn.onToggle = [this](bool checked) {
             _settings->set<bool>("autostart_load_with_column", checked);
             if (dynamic_cast<LIBC64::Interface*>(emulator))
                 ((LIBC64::Interface*)emulator)->loadWithColumn(checked);
         };
 
-        autostartLayout->startWrapper->option.diskOptions.speederTraps.onToggle = [this](bool checked) {
+        autostartLayout.startWrapper->option.diskOptions.speederTraps.onToggle = [this](bool checked) {
             _settings->set<bool>("autostart_speeder_traps", checked);
         };
 
-        autostartLayout->startWrapper->start.diskTrapsOnDblClick.onToggle = [this](bool checked) {
+        autostartLayout.startWrapper->start.diskTrapsOnDblClick.onToggle = [this](bool checked) {
             _settings->set<bool>("autostart_traps_on_dblclick", checked);
         };
 
-        autostartLayout->startWrapper->start.tapeTrapsOnDblClick.onToggle = [this](bool checked) {
+        autostartLayout.startWrapper->start.tapeTrapsOnDblClick.onToggle = [this](bool checked) {
             _settings->set<bool>("autostart_tape_traps_on_dblclick", checked);
         };
     }
+
+    autostartLayout.autostartDragnDrop.onToggle = [&](bool checked) {
+        _settings->set<bool>("autostart_dragndrop", checked);
+    };
 
     runAheadLayout.control.slider.onChange = [this](unsigned position) {
 
@@ -372,29 +376,29 @@ auto MiscLayout::translate() -> void {
 
     inputSamplingLayout.control.name.setText( trans->get("minimum rescan time", {}, true) );
 
-    if (autostartLayout) {
-        autostartLayout->setText(trans->get("Autostart"));
-        autostartLayout->autoWarp.label.setText(trans->get("Auto Warp", {}, true));
-        autostartLayout->autoWarp.aggressive.setText(trans->get("aggressive"));
-        autostartLayout->autoWarp.normal.setText(trans->get("normal"));
-        autostartLayout->autoWarp.off.setText(trans->get("off"));
+    autostartLayout.setText(trans->get("Autostart"));
+    autostartLayout.autoWarp.label.setText(trans->get("Auto Warp", {}, true));
+    autostartLayout.autoWarp.aggressive.setText(trans->get("aggressive"));
+    autostartLayout.autoWarp.normal.setText(trans->get("normal"));
+    autostartLayout.autoWarp.off.setText(trans->get("off"));
 
-        autostartLayout->autoWarp.diskFirstFile.setText(trans->get("disk warp first file"));
-        autostartLayout->autoWarp.diskFirstFile.setTooltip(trans->get("warp first file tooltip"));
-        autostartLayout->autoWarp.tapeFirstFile.setText(trans->get("tape warp first file"));
-        autostartLayout->autoWarp.tapeFirstFile.setTooltip(trans->get("warp first file tooltip"));
-        autostartLayout->autoWarp.disableWarpWhenInput.setText(trans->get("disable warp when input"));
-        autostartLayout->autoWarp.disableWarpWhenInput.setTooltip( trans->get("disable warp when input tooltip") );
+    autostartLayout.autoWarp.diskFirstFile.setText(trans->get("disk warp first file"));
+    autostartLayout.autoWarp.diskFirstFile.setTooltip(trans->get("warp first file tooltip"));
+    autostartLayout.autoWarp.tapeFirstFile.setText(trans->get("tape warp first file"));
+    autostartLayout.autoWarp.tapeFirstFile.setTooltip(trans->get("warp first file tooltip"));
+    autostartLayout.autoWarp.disableWarpWhenInput.setText(trans->get("disable warp when input"));
+    autostartLayout.autoWarp.disableWarpWhenInput.setTooltip( trans->get("disable warp when input tooltip") );
 
-        if (autostartLayout->startWrapper) {
-            autostartLayout->startWrapper->option.tapeWithStandardKernal.setText(trans->get("tape default kernal"));
-            autostartLayout->startWrapper->option.diskOptions.loadWithColumn.setText( "Load \":*\"" );
-            autostartLayout->startWrapper->option.diskOptions.speederTraps.setText( trans->get("Speeder Traps") );
-            autostartLayout->startWrapper->option.diskOptions.speederTraps.setTooltip( trans->get("Speeder Traps tooltip") );
-            autostartLayout->startWrapper->start.diskTrapsOnDblClick.setText(trans->get("VDT Disk Autostart on dblclick"));
-            autostartLayout->startWrapper->start.tapeTrapsOnDblClick.setText(trans->get("VDT Tape Autostart on dblclick"));
-        }
+    if (autostartLayout.startWrapper) {
+        autostartLayout.startWrapper->option.tapeWithStandardKernal.setText(trans->get("tape default kernal"));
+        autostartLayout.startWrapper->option.diskOptions.loadWithColumn.setText( "Load \":*\"" );
+        autostartLayout.startWrapper->option.diskOptions.speederTraps.setText( trans->get("Speeder Traps") );
+        autostartLayout.startWrapper->option.diskOptions.speederTraps.setTooltip( trans->get("Speeder Traps tooltip") );
+        autostartLayout.startWrapper->start.diskTrapsOnDblClick.setText(trans->get("VDT Disk Autostart on dblclick"));
+        autostartLayout.startWrapper->start.tapeTrapsOnDblClick.setText(trans->get("VDT Tape Autostart on dblclick"));
     }
+
+    autostartLayout.autostartDragnDrop.setText(trans->get("autostart_dragndrop"));
 
     speedLayout.setText( trans->get("Speed") );
     speedLayout.label.setText( trans->get("Set speed", {}, true) );
@@ -420,32 +424,32 @@ auto MiscLayout::initAutowarp(Emulator::Interface::MediaGroup* forGroup) -> void
 
 auto MiscLayout::loadSettings() -> void {
 
-    if (autostartLayout) {
-        unsigned autoWarp = _settings->get<unsigned>("auto_warp", 0);
+    unsigned autoWarp = _settings->get<unsigned>("auto_warp", 0);
 
-        if (autoWarp == 0)
-            autostartLayout->autoWarp.off.setChecked();
-        else if (autoWarp == 1)
-            autostartLayout->autoWarp.normal.setChecked();
-        else if (autoWarp == 2)
-            autostartLayout->autoWarp.aggressive.setChecked();
+    if (autoWarp == 0)
+        autostartLayout.autoWarp.off.setChecked();
+    else if (autoWarp == 1)
+        autostartLayout.autoWarp.normal.setChecked();
+    else if (autoWarp == 2)
+        autostartLayout.autoWarp.aggressive.setChecked();
 
-        autostartLayout->autoWarp.diskFirstFile.setChecked(_settings->get<bool>("auto_warp_disk_first_file", true));
+    autostartLayout.autoWarp.diskFirstFile.setChecked(_settings->get<bool>("auto_warp_disk_first_file", true));
 
-        autostartLayout->autoWarp.disableWarpWhenInput.setChecked(_settings->get<bool>("auto_warp_off_input", false));
+    autostartLayout.autoWarp.disableWarpWhenInput.setChecked(_settings->get<bool>("auto_warp_off_input", false));
 
-        autostartLayout->autoWarp.disableWarpWhenInput.setEnabled( dynamic_cast<LIBAMI::Interface*>(emulator) || !autostartLayout->autoWarp.diskFirstFile.checked() );
+    autostartLayout.autoWarp.disableWarpWhenInput.setEnabled( dynamic_cast<LIBAMI::Interface*>(emulator) || !autostartLayout.autoWarp.diskFirstFile.checked() );
 
-        autostartLayout->autoWarp.tapeFirstFile.setChecked(_settings->get<bool>("auto_warp_tape_first_file", false));
+    autostartLayout.autoWarp.tapeFirstFile.setChecked(_settings->get<bool>("auto_warp_tape_first_file", false));
 
-        if (autostartLayout->startWrapper) {
-            autostartLayout->startWrapper->option.tapeWithStandardKernal.setChecked( _settings->get<bool>("autostart_tape_standard_kernal", false));
-            autostartLayout->startWrapper->option.diskOptions.loadWithColumn.setChecked(_settings->get<bool>("autostart_load_with_column", false));
-            autostartLayout->startWrapper->option.diskOptions.speederTraps.setChecked(_settings->get<bool>("autostart_speeder_traps", false));
-            autostartLayout->startWrapper->start.diskTrapsOnDblClick.setChecked(_settings->get<bool>("autostart_traps_on_dblclick", false));
-            autostartLayout->startWrapper->start.tapeTrapsOnDblClick.setChecked(_settings->get<bool>("autostart_tape_traps_on_dblclick", false));
-        }
+    if (autostartLayout.startWrapper) {
+        autostartLayout.startWrapper->option.tapeWithStandardKernal.setChecked( _settings->get<bool>("autostart_tape_standard_kernal", false));
+        autostartLayout.startWrapper->option.diskOptions.loadWithColumn.setChecked(_settings->get<bool>("autostart_load_with_column", false));
+        autostartLayout.startWrapper->option.diskOptions.speederTraps.setChecked(_settings->get<bool>("autostart_speeder_traps", false));
+        autostartLayout.startWrapper->start.diskTrapsOnDblClick.setChecked(_settings->get<bool>("autostart_traps_on_dblclick", false));
+        autostartLayout.startWrapper->start.tapeTrapsOnDblClick.setChecked(_settings->get<bool>("autostart_tape_traps_on_dblclick", false));
     }
+
+    autostartLayout.autostartDragnDrop.setChecked(_settings->get<bool>("autostart_dragndrop", dynamic_cast<LIBC64::Interface*>(emulator)));
 
     setRunAheadPerformance(_settings->get<bool>("runahead_performance", false));
 

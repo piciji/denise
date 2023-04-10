@@ -146,8 +146,7 @@ struct InputManager {
 	static auto build() -> void;
 	static auto init() -> void;
 	static auto setHotkeys() -> void;
-	static auto setMappings() -> void;    
-	static auto autoAssignHotkeys() -> void;
+	static auto setMappings() -> void;
     static auto automap( KeyboardLayout::Type type, Emulator::Interface::Key key, Emulator::Interface* emulator ) -> std::vector<std::vector<Hid::Key>>;
 	static auto bindHidsGlobal() -> void;
 	static auto capture(InputMapping* _captureObject) -> void;
@@ -172,6 +171,7 @@ struct InputManager {
 	
     auto autoAssign( KeyboardLayout::Type type, bool keyboardOnly = true ) -> void;
     auto autoAssign( Emulator::Interface::Device& device ) -> void;
+    auto autoAssignHotkeys() -> void;
 	auto addMapping(InputMapping* mapping) -> void;
     auto addMappingInUse(InputMapping* mapping) -> void;
     template<bool changeTrigger = false> auto update() -> void;

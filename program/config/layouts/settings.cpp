@@ -28,7 +28,6 @@ LangLayout::LangLayout() {
 SwitchesLayout::SwitchesLayout() {
     setPadding(10);
 	append(pause, {~0u, 0u}, 3);
-    append(autostartDragnDrop, {~0u, 0u}, 3);
     append(saveSettingsOnExit, {~0u, 0u}, 3);
     append(openFullscreen, {~0u, 0u}, 3);
     append(alternateSoftwarePreview, {~0u, 0u}, 3);
@@ -157,11 +156,6 @@ SettingsLayout::SettingsLayout() {
         checkBox->setChecked(useCore);
     }
 
-	switches.autostartDragnDrop.setChecked(globalSettings->get<bool>("autostart_dragndrop", false));
-    switches.autostartDragnDrop.onToggle = [&](bool checked) {
-        globalSettings->set<bool>("autostart_dragndrop", checked);
-    };
-    
     switches.saveSettingsOnExit.setChecked(globalSettings->get<bool>("save_settings_on_exit", true));
     switches.saveSettingsOnExit.onToggle = [&](bool checked) {
         globalSettings->set<bool>("save_settings_on_exit", checked);
@@ -479,7 +473,6 @@ auto SettingsLayout::translate() -> void {
     switches.setText( trans->get("settings") );
 
 	switches.pause.setText(trans->get("pause_focus_loss"));
-    switches.autostartDragnDrop.setText(trans->get("autostart_dragndrop"));
     switches.saveSettingsOnExit.setText(trans->get("save_changes_on_exit"));
     switches.saveSettingsOnExit.setTooltip(trans->get("save changes on exit tooltip"));
     switches.openFullscreen.setText(trans->get("open_fullscreen"));

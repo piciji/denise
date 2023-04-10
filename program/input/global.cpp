@@ -23,6 +23,8 @@ auto InputManager::init() -> void {
         
         if (!manager->emulator)
             continue;
+
+        manager->autoAssignHotkeys();
         
         manager->updateAnalogSensitivity();
 
@@ -41,8 +43,7 @@ auto InputManager::init() -> void {
         
         settings->set<bool>( "automapped", true );
     }           
-        
-    autoAssignHotkeys();
+
 	bindHidsGlobal();
     activeInputManager->setupKeycodeTransfer();
 }
@@ -444,7 +445,7 @@ auto InputManager::prioritiseConnectedDevicesOverKeyboard() -> void {
 }
 
 auto InputManager::autoAssignHotkeys() -> void {
-    for (auto& hotkey : hotkeys) {
+    for (auto& hotkey : customHotkeys) {
         if (hotkey.id == Hotkey::Id::CaptureMouse) {
             auto mapper = (InputMapping*)hotkey.guid;
             auto setting = mapper->setting->value;

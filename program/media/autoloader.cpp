@@ -77,7 +77,7 @@ auto Autoloader::postProcessing() -> void {
     GUIKIT::Settings* settings = program->getSettings( ddControl.emulator );
     
     if (ddControl.mode == Mode::DragnDrop) {
-        autoStart = globalSettings->get<bool>("autostart_dragndrop", false);
+        autoStart = settings->get<bool>("autostart_dragndrop", false);
         if (!autoStart) {
             if (mediaGroup->isExpansion() || mediaGroup->isProgram())
                 autoStart = true;

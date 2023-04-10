@@ -77,6 +77,8 @@ struct AutostartLayout : GUIKIT::FramedVerticalLayout {
 
     StartWrapper* startWrapper = nullptr;
 
+    GUIKIT::CheckBox autostartDragnDrop;
+
     AutostartLayout(Emulator::Interface* emulator);
 };
 
@@ -87,7 +89,7 @@ struct MiscLayout : GUIKIT::VerticalLayout {
     SpeedLayout speedLayout;
     InputSamplingLayout inputSamplingLayout;
     RunAheadLayout runAheadLayout;
-    AutostartLayout* autostartLayout = nullptr;
+    AutostartLayout autostartLayout;
     
     auto translate() -> void;
     auto setRunAheadPerformance(bool state) -> void;
