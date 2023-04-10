@@ -91,8 +91,10 @@ input(this, agnus, cia1) {
             right <<= 1;
         }
 
-        top = agnus.ntsc ? 5 : 7;
-        bottom = agnus.ntsc ? 5 : 7;
+        bool _ntsc = this->interface->stats.isNtsc();
+
+        top = _ntsc ? 4 : 7;
+        bottom = _ntsc ? 3 : 7;
 
         if (denise.laceMode) {
             top <<= 1;
@@ -313,7 +315,7 @@ auto System::updateStats() -> void {
     interface->stats.stereoSound = true;
 
     // when software force a PAL Amiga to output NTSC and vice versa
-    interface->stats.region = (agnus.fps > 55.0) ? Interface::Region::Ntsc : Interface::Region::Pal;
+    interface->stats.region = (agnus.fps > 59.0) ? Interface::Region::Ntsc : Interface::Region::Pal;
 }
 
 auto System::hintSlowSpeed(bool state) -> void {

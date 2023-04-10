@@ -108,6 +108,10 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
             paula.potGo(value);
             break;
 
+        case 0x36:
+            denise.joyTest(value);
+            break;
+
         case 0x40:
             blitter.setBltCon0(value);
             break;
@@ -267,47 +271,47 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
             break;
 
         case 0x2a: {
-//            bool lolBefore = lol;
-//            bool lofBefore = lof;
-//            uint16_t vPosBefore = vPos;
+            bool lolBefore = lol;
+            bool lofBefore = lof;
+            uint16_t vPosBefore = vPos;
 
             lof = value & 0x8000; // could result in a wrap around of vPos
-//            vPos &= 0xff;
-//            if (ecsAndHigher()) {
-//                vPos |= (value & 7) << 8;
-//                lol = 0;
-//            } else {
-//                vPos |= (value & 1) << 8;
-//            }
-//
-//            if (lolBefore != lol || lofBefore != lof)
-//                fpsChange |= 1;
-//            if (vPosBefore != vPos)
-//                fpsChange |= 2;
-//
-//            if (!getActiveEvent<EVENT_LEAVE_EMULATION>())
-//                updateEvent<EVENT_LEAVE_EMULATION>(~0, 150000);
+            vPos &= 0xff;
+            if (ecsAndHigher()) {
+                vPos |= (value & 7) << 8;
+                lol = 0;
+            } else {
+                vPos |= (value & 1) << 8;
+            }
+
+            if (lolBefore != lol || lofBefore != lof)
+                fpsChange |= 1;
+            if (vPosBefore != vPos)
+                fpsChange |= 2;
+
+            if (!hasActiveEvent<EVENT_LEAVE_EMULATION>())
+                updateEvent<EVENT_LEAVE_EMULATION>(150000);
 
         } break;
 
         case 0x2c: {
-//            uint16_t vPosBefore = vPos;
-//            uint8_t hPosBefore = hPos;
-//
-//            hPos = value & 0xff;
-//            if (hPos)
-//                // For ease of use, the emulator increases the position at the beginning of the cycle.
-//                // However, when writing the position manually, this is a problem.
-//                hPos--;
-//
-//            vPos &= 0x300;
-//            vPos |= value >> 8;
-//
-//            if (vPosBefore != vPos || hPosBefore != hPos)
-//                fpsChange |= 2;
-//
-//            if (!getActiveEvent<EVENT_LEAVE_EMULATION>())
-//                updateEvent<EVENT_LEAVE_EMULATION>(~0, 150000);
+            uint16_t vPosBefore = vPos;
+            uint8_t hPosBefore = hPos;
+
+            hPos = value & 0xff;
+            if (hPos)
+                // For ease of use, the emulator increases the position at the beginning of the cycle.
+                // However, when writing the position manually, this is a problem.
+                hPos--;
+
+            vPos &= 0x300;
+            vPos |= value >> 8;
+
+            if (vPosBefore != vPos || hPosBefore != hPos)
+                fpsChange |= 2;
+
+            if (!hasActiveEvent<EVENT_LEAVE_EMULATION>())
+                updateEvent<EVENT_LEAVE_EMULATION>(150000);
         } break;
 
         case 0xa0: setAudPtH<0>(value); break;

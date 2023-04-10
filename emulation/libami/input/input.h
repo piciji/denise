@@ -48,6 +48,7 @@ struct Input {
 
     auto readDenisePortA() -> uint16_t;
     auto readDenisePortB() -> uint16_t;
+    auto writeDeniseJoytest(uint16_t data) -> void;
 
     auto initFrame() -> void;
 

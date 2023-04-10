@@ -72,8 +72,10 @@ Program::Program() {
 	logger = new Logger;
 	filePool = new FilePool(10);
 
-    fpsChangeTimer.setInterval(1000);
+    fpsChangeTimer.setInterval(500);
     fpsChangeTimer.onFinished = [this]() {
+        if (quitInProgress)
+            return;
         emuThread->lock();
         if (audioManager)
             audioManager->setResampler();
@@ -490,11 +492,13 @@ auto Program::hasFocus() -> bool {
 }
 
 auto Program::quit() -> void {
+    quitInProgress = true;
     emuThread->lock();
     powerOff();
     if (statusHandler)
         statusHandler->clearUpdates();
     delete emuThread;
+    fpsChangeTimer.setEnabled(false);
 
     if (!cmd->debug) {
         if (globalSettings->get<bool>("save_settings_on_exit", true))

@@ -4,6 +4,7 @@
 namespace LIBAMI {
 
 struct Joypad : ControlPort {
+    uint16_t out = 0;
 
     Joypad( Emulator::Interface* interface, Emulator::Interface::Device* device ) : ControlPort( interface, device ) {}
 
@@ -13,7 +14,7 @@ struct Joypad : ControlPort {
     }
 
     auto readDirection( ) -> uint16_t {
-        uint16_t out = 0;
+        out &= ~0x303;
 
         // 0 0 -> no press
         // 1 0 -> both press
@@ -29,12 +30,22 @@ struct Joypad : ControlPort {
         return out;
     }
 
+    auto writeJoytest(uint16_t data) -> void {
+        out &= 0x303;
+        out |= data & 0xfcfc;
+    }
+
     auto useJitPolling() -> bool {
         return true;
     }
 
     auto getPotY() -> uint8_t {
         return interface->inputPoll( device->id, 5 ) ? 0 : 0xff;
+    }
+
+    auto serialize(Emulator::Serializer& s) -> void {
+
+        s.integer(out);
     }
 };
 

@@ -254,7 +254,7 @@ auto DiskDrive::attach(uint8_t* data, unsigned size) -> bool {
     wobbleLimit = wobble >> 1;
     updateRpm();
 
-    if (driveSound && system->powerOn && system->displayFrame())
+    if (driveSound && system->powerOn && system->isDisplayFrame())
         interface->mixDriveSound( media, DriveSound::FloppyInsert );
 
     updateTrack();
@@ -266,7 +266,7 @@ auto DiskDrive::detach() -> void {
     structure.detach();
     dskChangeClock = agnus.clock;
     stepSettleClock = 0;
-    if (driveSound && inserted && system->powerOn && system->displayFrame())
+    if (driveSound && inserted && system->powerOn && system->isDisplayFrame())
         interface->mixDriveSound( media, DriveSound::FloppyEject );
 
     dskChange = true;
@@ -423,7 +423,7 @@ auto DiskDrive::setMotor(bool state) -> void {
     motor = state;
 
     updateDeviceState();
-    if (driveSound && system->displayFrame())
+    if (driveSound && system->isDisplayFrame())
         interface->mixDriveSound( media, state ? DriveSound::FloppySpinUp : DriveSound::FloppySpinDown );
 
     system->hintObserverMotorChange( motor );
@@ -450,7 +450,7 @@ auto DiskDrive::step(bool dir, bool updTrack) -> void {
 
     stepClock = agnus.clock;
 
-    if (driveSound && system->displayFrame())
+    if (driveSound && system->isDisplayFrame())
         interface->mixDriveSound( media, DriveSound::FloppyStep, cylinder );
 
     if (updTrack)
@@ -524,7 +524,7 @@ auto DiskDrive::setStepperMinTime( unsigned stepperMinTimeScaled ) -> void {
 
 auto DiskDrive::updateDeviceState() -> void {
     // drive LED is hardwired to motor state
-    if (connected && selected && system->displayFrame())
+    if (connected && selected && system->isDisplayFrame())
         interface->updateDeviceState( media, agnus.paula.fdcWriteMode(), (cylinder << 1) | side, motor, !motor );
 }
 

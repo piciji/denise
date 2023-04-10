@@ -32,7 +32,6 @@ struct Mouse : AnalogControl {
     }
 
     auto readButton1( ) -> uint8_t {
-
         return interface->inputPoll( device->id, 2 );
     }
 
@@ -41,10 +40,13 @@ struct Mouse : AnalogControl {
     }
 
     auto readDirection( ) -> uint16_t {
-
         return (posY & 0xff) << 8 | (posX & 0xff);
     }
 
+    auto writeJoytest(uint16_t data) -> void {
+        posX = (data & 0xfc) | (posX & 3);
+        posY = ((data >> 8) & 0xfc) | (posY & 3);
+    }
 
     auto reset() -> void {
 

@@ -1600,7 +1600,7 @@ auto View::getSpeed(unsigned pos, float& speed, bool& percent) -> void {
     percent = false;
     speed = 50.0;
 
-    auto stats = activeEmulator->stats;
+    auto& stats = activeEmulator->stats;
 
     switch (pos) {
         case 0: speed = stats.fps; break;

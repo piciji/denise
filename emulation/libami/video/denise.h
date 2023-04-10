@@ -124,6 +124,7 @@ struct Denise {
 
     auto joy0Dat() -> uint16_t;
     auto joy1Dat() -> uint16_t;
+    auto joyTest(uint16_t data) -> void;
 
     auto setDiwStrt(uint16_t value) -> void;
     auto setDiwStop(uint16_t value) -> void;

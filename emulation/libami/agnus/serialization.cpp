@@ -18,7 +18,7 @@ auto Agnus::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer(vStart);
     s.integer(vStop);
     s.integer(dmal);
-    s.floatingpoint(fps);
+
     s.integer(frameClock);
     s.integer(fpsChange);
     s.integer(vBlankEnd);
@@ -94,6 +94,9 @@ auto Agnus::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer(zorroBaseAdr);
 
     if (!light) {
+        auto fpsOld = fps;
+        s.floatingpoint(fps);
+
         s.array(mapper);
 
         if (s.mode() == Emulator::Serializer::Mode::Load) {
@@ -109,6 +112,9 @@ auto Agnus::serialize(Emulator::Serializer& s, bool light) -> void {
             setFastmem(_fastMemSize);
 
             mapRom(false);
+
+            if (std::fabs(fpsOld - fps) > 0.03)
+                interface->fpsChanged();
         } else {
             s.integer(chipMemMask);
             s.integer(slowMemSize);

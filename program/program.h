@@ -49,6 +49,7 @@ struct InputManager;
 
 struct Program : Emulator::Interface::Bind {
 	bool isPause = false;
+    bool quitInProgress = false;
     static bool focused;
 
 	unsigned loopFrames = 0;

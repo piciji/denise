@@ -531,6 +531,9 @@ auto States::updateModels() -> void {
         audioManager->power();
     }
 
+    if (view && regionChange)
+        view->updateSpeedLabels(true);
+
     activeVideoManager->resetTempData(0, true);
 }
 

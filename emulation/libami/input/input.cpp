@@ -37,6 +37,11 @@ auto Input::readDenisePortA() -> uint16_t {
     return out;
 }
 
+auto Input::writeDeniseJoytest(uint16_t data) -> void {
+    controlPort1->writeJoytest(data);
+    controlPort2->writeJoytest(data);
+}
+
 auto Input::readDenisePortB() -> uint16_t {
     system->observeInputFetches();
     jitPoll();

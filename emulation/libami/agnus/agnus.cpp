@@ -24,6 +24,7 @@
 #include "register.cpp"
 #include "log.cpp"
 #include "serialization.cpp"
+#include <cmath>
 
 namespace LIBAMI {
 
@@ -263,7 +264,8 @@ auto Agnus::updateVCounter() -> void {
         vBlankEndNext = false;
 
     if (initVCounter) {
-        observeFrameDuration();
+        if (system->isProcessFrame())
+            observeFrameDuration();
 
         if (!harddisV)
             diwFlipFlop = false;
@@ -619,6 +621,11 @@ auto Agnus::updateVdiw() -> void {
 auto Agnus::observeFrameDuration() -> void {
     // caution: extreme deviations lead to faulty synchronization.
 
+    if (!fpsChange)
+        return;
+
+    double fpsOld = fps;
+
     if (fpsChange & 2) { // Beam position altered
         double elapsedCycles = (double)fallBackCycles( frameClock );
         fps = (double)frequency() / elapsedCycles;
@@ -628,8 +635,11 @@ auto Agnus::observeFrameDuration() -> void {
 
         fpsChange = 1; // reset to "typical" in next frame, if the beam position has not been changed again.
 
+        //system->interface->log("fps change 2");
+        //system->interface->log(std::to_string(fps), 0);
         system->updateStats();
-        interface->fpsChanged();
+        if (std::fabs(fpsOld - fps) > 0.03)
+            interface->fpsChanged();
 
     } else if (fpsChange & 1) { // typical, e.g. lace change
         double linesPerField;
@@ -653,8 +663,12 @@ auto Agnus::observeFrameDuration() -> void {
         else if (fps > 170.0)   fps = 170.0;
 
         fpsChange = 0;
+        //system->interface->log("fps change 1");
+        //system->interface->log(std::to_string(fps), 0);
+
         system->updateStats();
-        interface->fpsChanged();
+        if (std::fabs(fpsOld - fps) > 0.03)
+            interface->fpsChanged();
     }
 
     frameClock = clock;

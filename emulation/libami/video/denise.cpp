@@ -32,6 +32,10 @@ auto Denise::joy1Dat() -> uint16_t {
     return input.readDenisePortB();
 }
 
+auto Denise::joyTest(uint16_t data) -> void {
+    input.writeDeniseJoytest(data);
+}
+
 auto Denise::power() -> void {
     hPos = 2;
     std::fill_n(colors, 64, 0);
@@ -126,7 +130,7 @@ auto Denise::strvbl() -> void {
 auto Denise::startHblank() -> void {
     hBlank = true;
     enableDisplay = false;
-    borderFlipFlop = true;
+    //borderFlipFlop = true;
 
     if (endFrame) {
         endFrame--;
@@ -267,17 +271,8 @@ auto Denise::setBplCon2( uint16_t value ) -> void {
     pf1Prio = value & 7;
     pf2Prio = (value >> 3) & 7;
     pf2PrioOverPf1 = (value >> 6) & 1;
-    if (pf1Prio > 4) {
-        pf1PrioIllegal = true;
-        pf1Prio = 0;
-    } else
-        pf1PrioIllegal = false;
-
-    if (pf2Prio > 4) {
-        pf2PrioIllegal = true;
-        pf2Prio = 0;
-    } else
-        pf2PrioIllegal = false;
+    pf1PrioIllegal = pf1Prio > 4;
+    pf2PrioIllegal = pf2Prio > 4;
 }
 
 template<bool useHires> inline auto Denise::processDelayPf1() -> void {
@@ -459,7 +454,7 @@ template<bool useHires> auto Denise::processPixel() -> void {
                     updateCropRight();
             }
         } else {
-            if (!hBlank && (hPos == hStart)) {
+            if (hPos == hStart) {
                 borderFlipFlop = false;
 
                 if (!crop.left && (lineVCounter == LINE_CROP_TEST))

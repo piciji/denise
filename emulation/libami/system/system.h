@@ -80,7 +80,7 @@ struct System {
     auto setResampleQuality( int value ) -> void;
     auto setFastForward( unsigned config ) -> void;
     auto setRunAhead(unsigned frames) -> void;
-    auto allowRunAhead() -> bool { return !fastForward.config && runAhead.frames && agnus.womLocked(); }
+    auto allowRunAhead() -> const bool { return !fastForward.config && runAhead.frames && agnus.womLocked(); }
     auto hintSlowSpeed(bool state) -> void;
 
     auto calcSerializationSize() -> void;
@@ -106,7 +106,8 @@ struct System {
     auto observeInputFetches() -> void;
     auto informAboutStateChange() -> void;
 
-    auto displayFrame() -> const bool { return !runAhead.pos; }
+    auto isDisplayFrame() -> const bool { return !runAhead.pos; }
+    auto isProcessFrame() -> const bool { return !allowRunAhead() || (runAhead.frames == runAhead.pos); }
 };
 
 

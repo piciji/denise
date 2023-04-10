@@ -278,6 +278,9 @@ auto Program::updateFullscreenSetting() -> void {
 }
 
 auto Program::fpsChanged() -> void {
+    if (quitInProgress)
+        return;
+
     if (emuThread->enabled)
         emuThread->updateFps = true;
     else
