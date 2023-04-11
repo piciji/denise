@@ -209,7 +209,8 @@ auto Program::fastForward( bool activate, bool aggressive ) -> void {
 
         if (crtMode != VideoManager::CrtMode::None) {
             settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::None);
-            activeVideoManager->reloadSettings();
+            if (activeVideoManager)
+                activeVideoManager->reloadSettings();
             settings->set<unsigned>("video_crt", (unsigned)crtMode);
         }
 
@@ -222,10 +223,12 @@ auto Program::fastForward( bool activate, bool aggressive ) -> void {
 
         VideoManager::setSynchronize();
 
-        if (crtMode != VideoManager::CrtMode::None) {
-            activeVideoManager->reloadSettings();
+        if (activeVideoManager) {
+            if (crtMode != VideoManager::CrtMode::None)
+                activeVideoManager->reloadSettings();
+
+            activeVideoManager->resetTempData();
         }
-        activeVideoManager->resetTempData();
 
         if (audioManager)
             audioManager->drive.reset();

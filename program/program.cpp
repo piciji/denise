@@ -244,9 +244,12 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
     auto settings = getSettings( emulator );
     activeVideoManager = VideoManager::getInstance( emulator );
     activeInputManager = InputManager::getManager(emulator);
-    activeVideoManager->updateCrtThreads();
-    if (emuSwap)
-        activeVideoManager->shader.recreate = true;
+
+    if (activeVideoManager) {
+        activeVideoManager->updateCrtThreads();
+        if (emuSwap)
+            activeVideoManager->shader.recreate = true;
+    }
 
     if (activeInputManager)
         activeInputManager->setupKeycodeTransfer();
