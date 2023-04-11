@@ -559,12 +559,12 @@ template<bool useHires> auto Denise::processPixel() -> void {
                         }
                     } else {
                         if (_ham) {
-                            if (sprPrio <= pf2Prio)
+                            if (sprPrio < pf2Prio)
                                 color = colors[sprData];
                             else
                                 color = hamColor;
                         } else {
-                            if (!colIndex || (sprPrio <= pf2Prio))
+                            if (!colIndex || (sprPrio < pf2Prio))
                                 color = colors[sprData];
                             else
                                 color = colors[colIndex];
