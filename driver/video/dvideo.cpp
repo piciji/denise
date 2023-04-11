@@ -795,7 +795,7 @@ struct DVideo : Video, RenderThread {
     auto setFilter(Filter filter) -> void {
         if (filter == settings.filter)
             return;
-
+        wait();
         settings.filter = filter;
         updateFilter();
     }
