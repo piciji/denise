@@ -27,11 +27,9 @@ auto Paula::pot1Dat() -> uint16_t {
 auto Paula::potGoR() -> uint16_t {
     uint16_t out = 0;
 
-    if (pot.go & POT_DIR_X0) pot.capX0 = input.controlPort1->getPotX();
-    if (pot.go & POT_DIR_Y0) pot.capY0 = input.controlPort1->getPotY();
-    if (pot.go & POT_DIR_X1) pot.capX1 = input.controlPort2->getPotX();
-    if (pot.go & POT_DIR_Y1) pot.capY1 = input.controlPort2->getPotY();
+    input.observePot(pot.capX0, pot.capY0, pot.capX1, pot.capY1);
 
+    // POTGOR will produce a 0 if the button is pressed, a 1 if it is not.
     if (pot.capX0 == 255) out |= POT_DAT_X0;
     if (pot.capY0 == 255) out |= POT_DAT_Y0;
     if (pot.capX1 == 255) out |= POT_DAT_X1;
@@ -43,10 +41,10 @@ auto Paula::potGoR() -> uint16_t {
 auto Paula::potGo(uint16_t value) -> void {
     pot.go = value;
 
-    if (pot.go & POT_DIR_X0) pot.capX0 = (pot.go & POT_DAT_X0) ? 255 : 0;
-    if (pot.go & POT_DIR_Y0) pot.capY0 = (pot.go & POT_DAT_Y0) ? 255 : 0;
-    if (pot.go & POT_DIR_X1) pot.capX1 = (pot.go & POT_DAT_X1) ? 255 : 0;
-    if (pot.go & POT_DIR_Y1) pot.capY1 = (pot.go & POT_DAT_Y1) ? 255 : 0;
+    if (value & POT_DIR_X0) pot.capX0 = (value & POT_DAT_X0) ? 255 : 0;
+    if (value & POT_DIR_Y0) pot.capY0 = (value & POT_DAT_Y0) ? 255 : 0;
+    if (value & POT_DIR_X1) pot.capX1 = (value & POT_DAT_X1) ? 255 : 0;
+    if (value & POT_DIR_Y1) pot.capY1 = (value & POT_DAT_Y1) ? 255 : 0;
 
     if (value & 1) {
         pot.cntY0 = pot.cntX0 = pot.cntY1 = pot.cntX1 = 0;

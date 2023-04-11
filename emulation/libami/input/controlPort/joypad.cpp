@@ -39,8 +39,8 @@ struct Joypad : ControlPort {
         return true;
     }
 
-    auto getPotY() -> uint8_t {
-        return interface->inputPoll( device->id, 5 ) ? 0 : 0xff;
+    auto observePot(uint8_t& x, uint8_t& y) -> void {
+        y = interface->inputPoll( device->id, 5 ) ? 0 : 0xff;
     }
 
     auto serialize(Emulator::Serializer& s) -> void {

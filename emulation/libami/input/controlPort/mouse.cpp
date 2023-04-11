@@ -35,8 +35,8 @@ struct Mouse : AnalogControl {
         return interface->inputPoll( device->id, 2 );
     }
 
-    auto getPotY() -> uint8_t {
-        return interface->inputPoll( device->id, 3 ) ? 0 : 0xff;
+    auto observePot(uint8_t& x, uint8_t& y) -> void {
+        y = interface->inputPoll( device->id, 3 ) ? 0 : 0xff;
     }
 
     auto readDirection( ) -> uint16_t {

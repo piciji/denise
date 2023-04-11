@@ -50,6 +50,12 @@ auto Input::readDenisePortB() -> uint16_t {
     return out;
 }
 
+auto Input::observePot(uint8_t& x0, uint8_t& y0, uint8_t& x1, uint8_t& y1) -> void {
+    jitPoll();
+    controlPort1->observePot(x0, y0);
+    controlPort2->observePot(x1, y1);
+}
+
 auto Input::checkForEmergencyPoll() -> void {
     if (sampling.emergencyPolling) {
         interface->jitPoll(0);

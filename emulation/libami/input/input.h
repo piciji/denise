@@ -50,6 +50,8 @@ struct Input {
     auto readDenisePortB() -> uint16_t;
     auto writeDeniseJoytest(uint16_t data) -> void;
 
+    auto observePot(uint8_t& x0, uint8_t& y0, uint8_t& x1, uint8_t& y1) -> void;
+
     auto initFrame() -> void;
 
     auto reset() -> void;
@@ -57,9 +59,6 @@ struct Input {
     auto jitPoll() -> void;
 
     auto checkForEmergencyPoll() -> void;
-
-    auto readPotX() -> uint8_t;
-    auto readPotY() -> uint8_t;
 
     auto drawCursor(bool midScreen = false) -> void;
     auto serialize(Emulator::Serializer& s) -> void;

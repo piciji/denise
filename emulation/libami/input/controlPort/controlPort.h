@@ -20,8 +20,10 @@ struct ControlPort {
     virtual auto readDirection( ) -> uint16_t { return 0; }
     virtual auto writeJoytest(uint16_t data) -> void {}
 
-    virtual auto getPotX() -> uint8_t { return 0xff; }
-    virtual auto getPotY() -> uint8_t { return 0xff; }
+    virtual auto getPotX() -> uint8_t { return 0; }
+    virtual auto getPotY() -> uint8_t { return 0; }
+
+    virtual auto observePot(uint8_t& x, uint8_t& y) -> void {}
 
     virtual auto reset() -> void {}
     virtual auto poll() -> void {}
