@@ -726,3 +726,4 @@ toggle S/C-Video = S/C-Video umschalten
 toggle S/C-Video GPU = S/C-Video (GPU) umschalten
 positional = positional
 switchable by Hotkey = umschaltbar per Hotkey
+Stepper Access Time = Schrittmotor Zugriffszeit

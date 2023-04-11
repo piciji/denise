@@ -726,3 +726,4 @@ toggle S/C-Video =
 toggle S/C-Video GPU =
 positional =
 switchable by Hotkey =
+Stepper Access Time =

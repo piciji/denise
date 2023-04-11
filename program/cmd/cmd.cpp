@@ -8,11 +8,18 @@
 auto Cmd::set(int argc, char** argv) -> void {        	
 	
 	std::string arg;
-	
+    std::string configIdent = "";
+
     for (unsigned i = 0; i < argc; i++) {
         
 		arg = (std::string)argv[i];
-		
+
+        if (configIdent != "") {
+            setCustomConfig(configIdent, arg);
+            configIdent = "";
+            continue;
+        }
+
 		if ( arg == "-no-driver" ) {
 			noDriver = true;
 			
@@ -33,9 +40,16 @@ auto Cmd::set(int argc, char** argv) -> void {
             versionRequested = true;
         
         else if ( arg == "--version" )
-            versionRequested = true;	
+            versionRequested = true;
+
+        else if ( arg == "-config-c64" )
+            configIdent = "C64";
+
+        else if ( arg == "-config-amiga" )
+            configIdent = "Amiga";
+
 		else
-			arguments.push_back( arg );
+            arguments.push_back(arg);
     }
 }
 
@@ -69,6 +83,8 @@ auto Cmd::printHelp() -> void {
     options.push_back({"-attach10", "Attach disk image in Device 10", "<image path>"});
     options.push_back({"-attach11", "Attach disk image in Device 11", "<image path>"});
 
+    options.push_back({"-config-c64", "Load C64 config", "<config path>"});
+    options.push_back({"-config-amiga", "Load Amiga config", "<config path>"});
 	options.push_back({"-vic-6569R3", "Select VIC-II 6569R3 and PAL mode", ""});
 	options.push_back({"-vic-8565", "Select VIC-II 8565 and PAL mode", ""});
 	options.push_back({"-vic-6567R8", "Select VIC-II 6567R8 and NTSC mode", ""});
@@ -583,6 +599,34 @@ auto Cmd::setGeoRamSize(std::string arg) -> void {
             settings->set<unsigned>( "expansion", expansion.id);
         }
     }       
+}
+
+auto Cmd::setCustomConfig(std::string& ident, std::string path) -> void {
+    std::replace( path.begin(), path.end(), '\\', '/');
+    configs.push_back({ident, path});
+}
+
+auto Cmd::getCustomConfig(Emulator::Interface* emulator) -> std::string {
+    for(auto& config : configs) {
+        if (config.ident == emulator->ident)
+            return config.path;
+    }
+    return "";
+}
+
+auto Cmd::hasCustomConfig(Emulator::Interface* emulator) -> bool {
+    for(auto& config : configs) {
+        if (config.ident == emulator->ident)
+            return config.path != "";
+    }
+    return false;
+}
+
+auto Cmd::removeCustomConfig(Emulator::Interface* emulator) -> void {
+    for(auto& config : configs) {
+        if (config.ident == emulator->ident)
+            config.path = "";
+    }
 }
 
 auto Cmd::saveExitScreenshot() -> void {        

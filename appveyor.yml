@@ -18,7 +18,6 @@ branches:
   only:
     - master
     - /v\d*\.\d*\.\d*/
-    - amiga500
   
 environment:
   matrix:

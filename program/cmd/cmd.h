@@ -17,8 +17,13 @@ struct Cmd {
         Emulator::Interface::Media* media;
         std::string path;
     };
-
     std::vector<Attachments> attachments;
+
+    struct Configs {
+        std::string ident;
+        std::string path;
+    };
+    std::vector<Configs> configs;
 
     bool autoload = false;
     bool attach = false;
@@ -55,6 +60,14 @@ struct Cmd {
 	auto setLaxMagic(std::string arg) -> void;
 	
 	auto setAutoStartPrg(std::string arg) -> void;
+
+    auto setCustomConfig(std::string& ident, std::string path) -> void;
+
+    auto hasCustomConfig(Emulator::Interface* emulator) -> bool;
+
+    auto getCustomConfig(Emulator::Interface* emulator) -> std::string;
+
+    auto removeCustomConfig(Emulator::Interface* emulator) -> void;
     
     auto printHelp() -> void;
     

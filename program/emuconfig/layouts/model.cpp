@@ -929,7 +929,7 @@ auto ModelLayout::getUnit(unsigned id) -> std::string {
         if (id == LIBC64::Interface::ModelIdDiskDriveStepperSeekTime)
             return " ms";
     } else {
-        if (id == LIBAMI::Interface::ModelIdDiskDriveStepperSeekTime || id == LIBAMI::Interface::ModelIdDiskDriveStepperMinTime)
+        if (id == LIBAMI::Interface::ModelIdDiskDriveStepperSeekTime || id == LIBAMI::Interface::ModelIdDiskDriveStepperAccessTime)
             return " ms";
     }
 

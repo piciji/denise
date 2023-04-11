@@ -448,6 +448,13 @@ auto Interface::preparePalettes() -> void {
         {"Medium Gray", 0x929292}, {"Light Green", 0xaff188}, {"Light Blue", 0x8d80f1}, {"Light Gray", 0xb6b6b6}
     } });
 
+    palettes.push_back({ 17, "Ccs64 Dark External", false, {
+        {"Black", 0}, {"White", 0xfffeff}, {"Red", 0x672e20}, {"Cyan", 0x6ca8ba},
+        {"Purple", 0x70348a}, {"Green", 0x528f3a}, {"Blue", 0x2d1e7d}, {"Yellow", 0xbfcf69},
+        {"Orange", 0x6f4919}, {"Brown", 0x3c3100}, {"Light Red", 0x9f6354}, {"Dark Gray", 0x3e3d3e},
+        {"Medium Gray", 0x696869}, {"Light Green", 0x9bdd82}, {"Light Blue", 0x6958bf}, {"Light Gray", 0x999899}
+    } });
+
     for( auto& palette : palettes )
         for( auto& paletteColor : palette.paletteColors )
             paletteColor.updateChannels();

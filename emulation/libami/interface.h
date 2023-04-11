@@ -19,7 +19,7 @@ struct Interface : Emulator::Interface  {
         ModelIdDiskDrivesConnected,
         ModelIdDiskDriveWobble,
         ModelIdDiskDriveStepperSeekTime,
-        ModelIdDiskDriveStepperMinTime,
+        ModelIdDiskDriveStepperAccessTime,
         ModelIdDiskDriveSpeed,
         ModelIdDiskTurbo,
         ModelIdSampleFetch,

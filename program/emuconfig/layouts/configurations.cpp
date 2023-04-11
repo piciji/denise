@@ -332,8 +332,8 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
     };
 
     settings.active.standardButton.onActivate = [this]() {
-        
-        if ("" == globalSettings->get<std::string>( emulator->ident + "_custom_settings", ""))
+
+        if (!cmd->hasCustomConfig(emulator) && ("" == globalSettings->get<std::string>( emulator->ident + "_custom_settings", "")))
             return;
 
         emuThread->lock();
@@ -346,6 +346,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         }
 
         globalSettings->set<std::string>(emulator->ident + "_custom_settings", "");
+        cmd->removeCustomConfig(emulator);
         settings.active.fileLabel.setText( trans->get("default") );
 
         emuThread->unlock();
@@ -366,6 +367,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         emuThread->lock();
         if (this->load( path )) {
             globalSettings->set<std::string>(emulator->ident + "_custom_settings", fileName);
+            cmd->removeCustomConfig(emulator);
             settings.active.fileLabel.setText( fileName );
         }
         emuThread->unlock();
@@ -376,6 +378,9 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         std::string fileName;
         
         if (!_list.selected()) {
+            if (cmd->hasCustomConfig(emulator))
+                return;
+
             fileName = globalSettings->get<std::string>(emulator->ident + "_custom_settings", "");
             if (fileName == "")
                 return;
@@ -422,6 +427,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         if (_settings->save( path)) {
             mes->information( trans->get("file_creation_success", {{"%path%", path}}) );
             globalSettings->set(emulator->ident + "_custom_settings", fileName);
+            cmd->removeCustomConfig(emulator);
             settings.active.fileLabel.setText( fileName );
             updateSettingsList();
             
@@ -454,7 +460,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
             mes->error( trans->get("file deletion error", {{"%path%", path}}) );
         else {
 			
-			if (fileName == globalSettings->get<std::string>(emulator->ident + "_custom_settings", "")) {
+			if (!cmd->hasCustomConfig(emulator) && (fileName == globalSettings->get<std::string>(emulator->ident + "_custom_settings", ""))) {
                 globalSettings->set<std::string>(emulator->ident + "_custom_settings", "");
 
                 emuThread->lock();
@@ -485,7 +491,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         if (path.empty())
             return;
         
-        if (globalSettings->get<std::string>(emulator->ident + "_custom_settings", "") != "")
+        if (!cmd->hasCustomConfig(emulator) && (globalSettings->get<std::string>(emulator->ident + "_custom_settings", "") != ""))
             settings.active.standardButton.onActivate();
 
         settingsFolder.pathEdit.setEnabled();
@@ -497,7 +503,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
     };
 
     settingsFolder.standard.onActivate = [this]() {
-        if (globalSettings->get<std::string>(emulator->ident + "_custom_settings", "") != "")
+        if (!cmd->hasCustomConfig(emulator) && (globalSettings->get<std::string>(emulator->ident + "_custom_settings", "") != ""))
             settings.active.standardButton.onActivate();
 
         settingsFolder.pathEdit.setText( "" );
@@ -516,7 +522,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
     settingsFolder.pathEdit.setText( _settingsPath == "" ? trans->get("home folder") : _settingsPath );
     settingsFolder.pathEdit.setEnabled(_settingsPath != "");
 
-    if (!settings.startWithLastConfigCheckbox.checked())
+    if (!settings.startWithLastConfigCheckbox.checked() || cmd->hasCustomConfig(emulator))
         settings.active.fileLabel.setText(trans->get("default"));
     else
         settings.active.fileLabel.setText( GUIKIT::String::getFileName( globalSettings->get<std::string>(emulator->ident + "_custom_settings", trans->get("default"))));
@@ -890,7 +896,7 @@ auto ConfigurationsLayout::translate() -> void {
     
     moduleFrame.setText( trans->get("selection") );
     
-    if (globalSettings->get<std::string>( emulator->ident + "_custom_settings", "" ) == "")
+    if (cmd->hasCustomConfig(emulator) || (globalSettings->get<std::string>( emulator->ident + "_custom_settings", "" ) == ""))
         settings.active.fileLabel.setText( trans->get("default") );
     
     if(memoryPattern) {

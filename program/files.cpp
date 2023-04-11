@@ -302,25 +302,30 @@ auto Program::saveSettings(bool onExit) -> void {
         
         if (guid) {
             Emulator::Interface* emulator = (Emulator::Interface*)guid;
-                                   
-            path = globalSettings->get<std::string>(emulator->ident + "_custom_settings", "");
 
-            if (path == "") {
-                path = settingsFileFromEmuFolder(emulator->ident + "_");
+            path = cmd->getCustomConfig(emulator);
+            if (!path.empty()) {
+                if (onExit)
+                    continue;
+            } else {
+                path = globalSettings->get<std::string>(emulator->ident + "_custom_settings", "");
 
-                GUIKIT::File file(path);
-                if (!file.exists())
-                    path = settingsFile(emulator->ident + "_");
+                if (path == "") {
+                    path = settingsFileFromEmuFolder(emulator->ident + "_");
 
-            } else if (onExit)
-                continue;
-            else {
-                // remove absolute path (deprecated)
-                path = GUIKIT::String::getFileName(path);
+                    GUIKIT::File file(path);
+                    if (!file.exists())
+                        path = settingsFile(emulator->ident + "_");
 
-                path = getCustomSettingsFolder(emulator) + path;
+                } else if (onExit)
+                    continue;
+                else {
+                    // remove absolute path (deprecated)
+                    path = GUIKIT::String::getFileName(path);
+
+                    path = getCustomSettingsFolder(emulator) + path;
+                }
             }
-            
         } else {
             path = settingsFileFromEmuFolder("global_");
 
@@ -346,6 +351,16 @@ auto Program::loadSettings() -> void {
 
         if (guid) {
             Emulator::Interface* emulator = (Emulator::Interface*)guid;
+
+            std::string customConfig = cmd->getCustomConfig(emulator);
+
+            if (!customConfig.empty()) {
+                if (settings->load(customConfig))
+                    continue;
+                else
+                    cmd->removeCustomConfig(emulator);
+            }
+
             bool lastUsed = globalSettings->get<bool>( emulator->ident + "_load_last_settings" );
 
             if (lastUsed) {
