@@ -495,8 +495,8 @@ auto pWindow::restore() -> void {
 }
 
 auto pWindow::setResizable(bool resizable) -> void {
-    SetWindowLongPtr(hwnd, GWL_STYLE, resizable ? ResizableStyle : FixedStyle);
-    if( !window.fullScreen() ) setGeometry(window.state.geometry);
+    SetWindowLongPtr(hwnd, GWL_STYLE, WS_VISIBLE | (window.fullScreen() ? 0 : WS_CLIPCHILDREN) | (resizable ? ResizableStyle : FixedStyle));
+    if(window.visible() && !window.fullScreen() ) setGeometry(window.state.geometry);
 }
 
 auto pWindow::setTitle(std::string text) -> void {
@@ -635,7 +635,6 @@ auto pWindow::applyMaximizeCorrection(Geometry& geo) -> void {
 }
 
 auto pWindow::setFullScreen(bool fullScreen) -> void {
-    if (!window.resizable()) return;
     locked = true;
 
     if(!fullScreen) {

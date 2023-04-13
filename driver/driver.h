@@ -64,7 +64,7 @@ struct Video {
     virtual auto hasVRR() -> bool { return false; }
     virtual auto changeThreadPriorityToRealtime(bool state) -> void {}
 
-    virtual auto setAspectCorrection(float width, float height, bool integerScaling = false) -> void {}
+    virtual auto setRatio(int mode, bool integerScaling) -> void {} // mode: 0: off, 1: TV, 2: Native
     auto getViewport() -> Viewport& { return viewport; }
 
     virtual auto shaderFormat() -> ShaderType { return ShaderType::NotSupported; }

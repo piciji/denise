@@ -39,7 +39,7 @@ namespace EmuConfigView {
 #include "layouts/configurations.cpp"
 #include "layouts/video.cpp"
 #include "layouts/audio.cpp"
-#include "layouts/border.cpp"
+#include "layouts/geometry.cpp"
 #include "layouts/firmware.cpp"
 #include "layouts/palette.cpp"
 #include "layouts/misc.cpp"
@@ -106,7 +106,7 @@ auto TabWindow::build() -> void {
 
     appendTab(Layout::Audio, volumeImage);
     appendTab(Layout::Firmware, memoryImage);
-    appendTab(Layout::Border, cropImage);
+    appendTab(Layout::Geometry, cropImage);
     appendTab(Layout::Misc, miscImage);
 	
 	if (tellMeShouldICreateTheUIRightAway()) {
@@ -120,7 +120,7 @@ auto TabWindow::build() -> void {
 			paletteLayout = new PaletteLayout( this );
 
 		audioLayout = new AudioLayout( this );
-		borderLayout = new BorderLayout( this );
+        geometryLayout = new GeometryLayout( this );
 		miscLayout = new MiscLayout( this );
 		mediaLayout->build();
 		
@@ -134,7 +134,7 @@ auto TabWindow::build() -> void {
 
 		tab.setLayout( getTabPos(Layout::Audio), *audioLayout, {~0u, ~0u}, false );
 		tab.setLayout( getTabPos(Layout::Firmware), *firmwareLayout, {~0u, ~0u}, false );
-		tab.setLayout( getTabPos(Layout::Border), *borderLayout, {~0u, ~0u}, false );
+		tab.setLayout( getTabPos(Layout::Geometry), *geometryLayout, {~0u, ~0u}, false );
 		tab.setLayout( getTabPos(Layout::Misc), *miscLayout, {~0u, ~0u} );
 	}
     
@@ -185,7 +185,7 @@ auto TabWindow::translate() -> void {
     if(mediaLayout) mediaLayout->translate();
     if(configurationsLayout) configurationsLayout->translate();
     if(firmwareLayout) firmwareLayout->translate();
-    if(borderLayout) borderLayout->translate();
+    if(geometryLayout) geometryLayout->translate();
     if(videoLayout) videoLayout->translate();
     if(paletteLayout) paletteLayout->translate();
     if(audioLayout) audioLayout->translate();
@@ -196,7 +196,7 @@ auto TabWindow::translate() -> void {
     tab.setHeader( getTabPos(Layout::Media), trans->get("software"));
     tab.setHeader( getTabPos(Layout::Configurations), trans->get("configurations"));
     tab.setHeader( getTabPos(Layout::Firmware), trans->get("firmware"));
-    tab.setHeader( getTabPos(Layout::Border), trans->get("border"));
+    tab.setHeader( getTabPos(Layout::Geometry), trans->get("geometry"));
     tab.setHeader( getTabPos(Layout::Presentation), trans->get("presentation"));
     tab.setHeader( getTabPos(Layout::Misc), trans->get("miscellaneous"));
 
@@ -292,11 +292,11 @@ auto TabWindow::prepareLayout(Layout layout, unsigned tabPos) -> void {
                 audioLayout->translate();
                 tab.setLayout( tabPos, *audioLayout, {~0u, ~0u} );
             } break;
-        case Layout::Border:
-            if (!borderLayout) {
-                borderLayout = new BorderLayout( this );
-                borderLayout->translate();
-                tab.setLayout( tabPos, *borderLayout, {~0u, ~0u} );
+        case Layout::Geometry:
+            if (!geometryLayout) {
+                geometryLayout = new GeometryLayout( this );
+                geometryLayout->translate();
+                tab.setLayout( tabPos, *geometryLayout, {~0u, ~0u} );
             } break;
         case Layout::Misc:
             if (!miscLayout) {

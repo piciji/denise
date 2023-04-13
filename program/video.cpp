@@ -41,13 +41,16 @@ auto Program::initVideo() -> void {
 	VideoManager::setCrtThreaded( globalSettings->get<bool>("crt_threaded", true) );
 }
 
-auto Program::setVideoDimension() -> void {
-    bool integerScaling = globalSettings->get<bool>("integer_scaling", false);
+auto Program::setVideoDimension(Emulator::Interface* emulator) -> void {
+    if (!activeEmulator || (emulator && (emulator != activeEmulator)))
+        return;
 
-    if (globalSettings->get<bool>("aspect_correct", true)) {
-        videoDriver->setAspectCorrection( 4.0, 3.0, integerScaling);
-    } else
-        videoDriver->setAspectCorrection( 1.0, 1.0, integerScaling);
+    auto settings = program->getSettings( activeEmulator );
+
+    int aspectMode = settings->get<int>("aspect_mode", 1, {0, 2});
+    bool integerScaling = settings->get<bool>("integer_scaling", false);
+
+    videoDriver->setRatio( aspectMode, integerScaling );
 }
 
 auto Program::getVideoDriver() -> std::string {

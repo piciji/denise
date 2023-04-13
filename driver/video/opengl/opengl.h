@@ -108,8 +108,7 @@ struct OpenGL : OpenGLProgram {
         Video::Filter filter = Video::Filter::Linear;
         std::vector<ShaderPass*> passes = {};
 
-        float aspectWidth = 1.0;
-        float aspectHeight = 1.0;
+        int aspectMode = 1;
         bool integerScaling = false;
 
         bool vrr = false;
@@ -144,6 +143,7 @@ struct OpenGL : OpenGLProgram {
     int outputTop = 0;
 	bool initialized = false;
     unsigned integerScalingHeight = 0;
+    unsigned integerScalingWidth = 0;
     unsigned windowWidth = 0;
     unsigned windowHeight = 0;
     bool useShader = false;

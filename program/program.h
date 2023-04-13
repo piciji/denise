@@ -137,7 +137,7 @@ struct Program : Emulator::Interface::Bind {
     auto mixDriveSound( Emulator::Interface::Media* media, Emulator::Interface::DriveSound driveSound, uint8_t data = 0) -> void override;
     
     //video
-    auto setVideoDimension() -> void;
+    auto setVideoDimension(Emulator::Interface* emulator = nullptr) -> void;
     auto initVideo() -> void;
 	auto getVideoDriver() -> std::string;
     auto videoRefresh(const uint16_t* frame, unsigned width, unsigned height, unsigned linePitch, uint8_t interlace) -> void override;

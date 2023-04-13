@@ -18,9 +18,8 @@ InScreenTextLayout::InScreenTextLayout() {
 }
 
 VideoGeometryLayout::VideoGeometryLayout() {
-	append( aspectCorrect, {0u, 0u}, 5 );
-    append( aspectCorrectResizing, {0u, 0u}, 5 );
-	append( integerScaling, {0u, 0u} );
+    append( aspectCorrectResizing, {0u, 0u}, 0 );
+    //append( resizableWindow, {0u, 0u} );
 	
 	setPadding(10);
 	setFont(GUIKIT::Font::system("bold"));
@@ -375,15 +374,6 @@ VideoLayout::VideoLayout() {
     if(globalSettings->get("video_screen_text", 0) == 1) screenTextLayout.option2.setChecked();
     if(globalSettings->get("video_screen_text", 0) == 2) screenTextLayout.option3.setChecked();
 
-    videoGeometry.aspectCorrect.setChecked( globalSettings->get<bool>("aspect_correct", true) );
-    videoGeometry.aspectCorrect.onToggle = [&](bool checked) {
-        emuThread->lock();
-        globalSettings->set<bool>("aspect_correct", checked);
-        program->setVideoDimension();
-        view->updateViewport();
-        emuThread->unlock();
-    };
-
     videoGeometry.aspectCorrectResizing.setChecked( globalSettings->get<bool>("aspect_correct_resizing", false) );
     videoGeometry.aspectCorrectResizing.onToggle = [&](bool checked) {
         emuThread->lock();
@@ -396,15 +386,14 @@ VideoLayout::VideoLayout() {
         emuThread->unlock();
     };
 
-	videoGeometry.integerScaling.setChecked( globalSettings->get<bool>("integer_scaling", false) );
-    videoGeometry.integerScaling.onToggle = [&](bool checked) {
+    videoGeometry.resizableWindow.setChecked( globalSettings->get<bool>("window_resizable", true) );
+    videoGeometry.resizableWindow.onToggle = [&](bool checked) {
         emuThread->lock();
-        globalSettings->set<bool>("integer_scaling", checked);
-        program->setVideoDimension();
-        view->updateViewport();
+        globalSettings->set<bool>("window_resizable", checked);
+        view->setResizable(checked);
         emuThread->unlock();
     };
-	
+
 	crtEmulation.threadMode.setChecked( globalSettings->get<bool>("crt_threaded", true) );
 	crtEmulation.threadMode.onToggle = [this](bool checked) {
         emuThread->lock();
@@ -444,9 +433,8 @@ auto VideoLayout::translate() -> void {
     crtEmulation.setText( trans->get("crt_emulation") );
 	
 	videoGeometry.setText(trans->get("geometry"));
-	videoGeometry.aspectCorrect.setText(trans->get("aspect_ratio"));
     videoGeometry.aspectCorrectResizing.setText(trans->get("resize aspect corrected"));
-	videoGeometry.integerScaling.setText(trans->get("integer_scaling"));
+    videoGeometry.resizableWindow.setText(trans->get("resizable window"));
     
     driverLayout.name.setText( trans->get("driver", {}, true) );
     

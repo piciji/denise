@@ -112,6 +112,9 @@ auto Program::finishStartup() -> void {
 
     cmd->autoloadImages();
 
+    if (GUIKIT::Application::exitCode || GUIKIT::Application::isQuit)
+        return;
+
     if (!activeEmulator)
         power(getLastUsedEmu());
 
@@ -342,6 +345,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
 		if (emuSwap) {
             setVideoFilter();
             statusHandler->updateDiskDriveSpace();
+            setVideoDimension(activeEmulator);
         }
 
 		resetRunAhead();

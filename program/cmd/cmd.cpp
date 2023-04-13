@@ -83,6 +83,11 @@ auto Cmd::printHelp() -> void {
     options.push_back({"-attach10", "Attach disk image in Device 10", "<image path>"});
     options.push_back({"-attach11", "Attach disk image in Device 11", "<image path>"});
 
+    options.push_back({"-attachDF0", "Attach disk image in Device DF0", "<image path>"});
+    options.push_back({"-attachDF1", "Attach disk image in Device DF1", "<image path>"});
+    options.push_back({"-attachDF2", "Attach disk image in Device DF2", "<image path>"});
+    options.push_back({"-attachDF3", "Attach disk image in Device DF3", "<image path>"});
+
     options.push_back({"-config-c64", "Load C64 config", "<config path>"});
     options.push_back({"-config-amiga", "Load Amiga config", "<config path>"});
 	options.push_back({"-vic-6569R3", "Select VIC-II 6569R3 and PAL mode", ""});
@@ -138,6 +143,7 @@ auto Cmd::parse() -> void {
 	bool fastTestbench = false;
     typedef Emulator::Interface EmuInt;
 	auto emuC64 = program->getEmulator("C64");
+    auto emuAmiga = program->getEmulator("Amiga");
 	auto diskGroup = emuC64->getDiskMediaGroup();
 	unsigned cycles = 0;
     GUIKIT::Settings* settingsC64 = program->getSettings( emuC64 );
@@ -147,7 +153,7 @@ auto Cmd::parse() -> void {
 	bool hasDefaultTest = false;
 	bool emulateD64WithMoreAccuracy = false; // use G64 emulation
     bool useCustomICGlueLogic = false;
-    Emulator::Interface::Media* attachMediaC64 = nullptr;
+    Emulator::Interface::Media* attachMedia = nullptr;
 
     for( auto& arg : arguments ) {
         if (limitCyclesNext) {
@@ -193,9 +199,9 @@ auto Cmd::parse() -> void {
             continue;
 		}
 
-        if (attachMediaC64) {
-            attachments.push_back({emuC64, attachMediaC64, arg});
-            attachMediaC64 = nullptr;
+        if (attachMedia) {
+            attachments.push_back({(Emulator::Interface*)attachMedia->guid, attachMedia, arg});
+            attachMedia = nullptr;
             continue;
         }
         
@@ -263,16 +269,33 @@ auto Cmd::parse() -> void {
             autostartPrgNext = true;
 
         } else if (arg == "-attach8") {
-            attachMediaC64 = emuC64->getDisk(0);
+            attachMedia = emuC64->getDisk(0);
+            attachMedia->guid = (uintptr_t)emuC64;
         } else if (arg == "-attach9") {
-            attachMediaC64 = emuC64->getDisk(1);
+            attachMedia = emuC64->getDisk(1);
+            attachMedia->guid = (uintptr_t)emuC64;
         } else if (arg == "-attach10") {
-            attachMediaC64 = emuC64->getDisk(2);
+            attachMedia = emuC64->getDisk(2);
+            attachMedia->guid = (uintptr_t)emuC64;
         } else if (arg == "-attach11") {
-            attachMediaC64 = emuC64->getDisk(3);
+            attachMedia = emuC64->getDisk(3);
+            attachMedia->guid = (uintptr_t)emuC64;
         } else if (arg == "-attach1") {
-            attachMediaC64 = emuC64->getTape(0);
+            attachMedia = emuC64->getTape(0);
+            attachMedia->guid = (uintptr_t)emuC64;
 
+        } else if (arg == "-attachDF0") {
+            attachMedia = emuAmiga->getDisk(0);
+            attachMedia->guid = (uintptr_t)emuAmiga;
+        } else if (arg == "-attachDF1") {
+            attachMedia = emuAmiga->getDisk(1);
+            attachMedia->guid = (uintptr_t)emuAmiga;
+        } else if (arg == "-attachDF2") {
+            attachMedia = emuAmiga->getDisk(2);
+            attachMedia->guid = (uintptr_t)emuAmiga;
+        } else if (arg == "-attachDF3") {
+            attachMedia = emuAmiga->getDisk(3);
+            attachMedia->guid = (uintptr_t)emuAmiga;
         } else {
             std::string temp = arg;
             GUIKIT::String::toLowerCase( temp );
@@ -447,7 +470,10 @@ auto Cmd::autoloadImages() -> void {
     if (debug) {
         autoloader->init( arguments, true, Autoloader::Mode::AutoStart, 1 );
     } else {
-        autoloader->init( arguments, true, Autoloader::Mode::AutoStart, 0, diskListing );
+        if (!diskListing.empty() && GUIKIT::String::isNumber(diskListing))
+            autoloader->init( arguments, true, Autoloader::Mode::AutoStart, std::stoi(diskListing) );
+        else
+            autoloader->init( arguments, true, Autoloader::Mode::AutoStart, 0, diskListing );
     }
 
     autoloader->loadFiles();

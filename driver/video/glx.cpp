@@ -247,6 +247,7 @@ struct GLX : public Video, OpenGL, RenderThread {
 
         makeCurrent(true);
         if (OpenGL::size(_width, _height)) {
+            integerScalingWidth = _width;
             integerScalingHeight = _height;
             calcViewport();
         }
@@ -268,6 +269,7 @@ struct GLX : public Video, OpenGL, RenderThread {
 
         makeCurrent(true);
         if (OpenGL::size(_width, _height)) {
+            integerScalingWidth = _width;
             integerScalingHeight = _height;
             calcViewport();
         }
@@ -289,6 +291,7 @@ struct GLX : public Video, OpenGL, RenderThread {
 
         makeCurrent(true);
         if (OpenGL::size(_width, _height)) {
+            integerScalingWidth = _width;
             integerScalingHeight = _height;
             calcViewport();
         }
@@ -302,7 +305,7 @@ struct GLX : public Video, OpenGL, RenderThread {
 
     auto resize(RenderBuffer* _buffer, unsigned _width, unsigned _height) -> void {
         OpenGL::resize( _buffer, _width, _height );
-
+        integerScalingWidth = _width;
         integerScalingHeight = _height;
         calcViewport();
     }
@@ -526,10 +529,12 @@ struct GLX : public Video, OpenGL, RenderThread {
         glXMakeCurrent(display, glxwindow, glxcontext);
     }
 
-    auto setAspectCorrection(float width, float height, bool integerScaling) -> void {
+    auto setRatio(int mode, bool integerScaling) -> void { // mode: 0: off, 1: TV, 2: Native
+        if (settings.aspectMode == mode && settings.integerScaling == integerScaling)
+            return;
+
         wait();
-        settings.aspectWidth = width;
-        settings.aspectHeight = height;
+        settings.aspectMode = mode;
         settings.integerScaling = integerScaling;
 
         calcViewport();

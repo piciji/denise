@@ -311,6 +311,8 @@ auto Window::getCustomFullscreenRefreshRate() -> float {
 }
 
 auto Window::setResizable(bool resizable) -> void {
+    if (state.resizable == resizable)
+        return;
     state.resizable = resizable;
     p.setResizable(resizable);
 }

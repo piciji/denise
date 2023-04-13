@@ -20,7 +20,7 @@ typedef HRESULT (WINAPI *FN_EndBufferedPaint) (HPAINTBUFFER hBufferedPaint, BOOL
 
 namespace GUIKIT {
 
-#define FixedStyle WS_SYSMENU | WS_CAPTION | WS_MINIMIZEBOX | WS_BORDER
+#define FixedStyle WS_SYSMENU | WS_CAPTION | WS_MINIMIZEBOX | WS_MAXIMIZEBOX
 #define ResizableStyle WS_SYSMENU | WS_CAPTION | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_THICKFRAME
 	
 static const unsigned Windows2000  = 0x0500;

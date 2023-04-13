@@ -5,7 +5,7 @@ auto OpenGL::calcViewport() -> void {
     outputTop = 0;
     outputLeft = 0;
 
-    bool integerScaling = settings.integerScaling;
+    bool integerScaling = settings.integerScaling || (settings.aspectMode == 2);
     int _height = integerScalingHeight;
 
     if ((integerScalingHeight == 0) || (outputHeight < integerScalingHeight))
@@ -22,9 +22,9 @@ auto OpenGL::calcViewport() -> void {
         outputHeight = _height;
     }
 
-    if (settings.aspectWidth != 1.0) {
-        float _aspectWidth = settings.aspectWidth;
-        float _aspectHeight = settings.aspectHeight;
+    if (settings.aspectMode == 1) {
+        float _aspectWidth = 4.0;
+        float _aspectHeight = 3.0;
 
         while(1) {
             _height = outputHeight;
@@ -53,6 +53,21 @@ auto OpenGL::calcViewport() -> void {
 
             break;
         }
+    } else if (settings.aspectMode == 2) { // Native
+        int _width = integerScalingWidth;
+
+        if (_width > outputWidth)
+            _width = outputWidth;
+        else {
+            while (outputWidth > _width)
+                _width += integerScalingWidth;
+
+            while (_width > outputWidth)
+                _width -= integerScalingWidth;
+        }
+
+        outputLeft = (outputWidth - _width) / 2;
+        outputWidth = _width;
     }
 
     viewport.x = outputLeft;

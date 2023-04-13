@@ -27,6 +27,7 @@ auto InputManager::setHotkeys() -> void {
 
     hotkeys.push_back( {Hotkey::Id::SyncStatus, "Sync status"} );
     hotkeys.push_back( {Hotkey::Id::ThreadedRenderer, "Threaded Renderer"} );
+    hotkeys.push_back( {Hotkey::Id::Quit, "exit"} );
 
     hotkeys.push_back( {Hotkey::Id::ToggleSCVideo, "toggle S/C-Video"} );
     hotkeys.push_back( {Hotkey::Id::ToggleSCVideoGPU, "toggle S/C-Video GPU"} );
@@ -91,7 +92,7 @@ auto InputManager::setCustomHotkeys() -> void {
 	customHotkeys.push_back( {Hotkey::Id::Presentation, "Presentation", true} );
 	customHotkeys.push_back( {Hotkey::Id::Palette, "Palette", true} );
     customHotkeys.push_back( {Hotkey::Id::Firmware, "Firmware", true} );
-	customHotkeys.push_back( {Hotkey::Id::Border, "Border", true} );
+	customHotkeys.push_back( {Hotkey::Id::Geometry, "Geometry", true} );
     customHotkeys.push_back( {Hotkey::Id::DiskSwapper, "Disk_swapper", true} );
     customHotkeys.push_back( {Hotkey::Id::DiskAutoStart, "Disk_autostart", true} );
 }
@@ -237,6 +238,17 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             emuThread->lock();
             view->switchFullScreen( !view->fullScreen() );
             break;
+
+        case Hotkey::Id::Quit: {
+            auto tempTimer = new GUIKIT::Timer;
+            tempTimer->setInterval(5);
+            tempTimer->onFinished = [tempTimer]() {
+                tempTimer->setEnabled(false);
+                view->exit.onActivate();
+                delete tempTimer;
+            };
+            tempTimer->setEnabled();
+        } break;
 			
 		case Hotkey::Power:
             emuThread->lock();
@@ -271,7 +283,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
         case Hotkey::Id::Software:
         case Hotkey::Id::Presentation:
         case Hotkey::Id::Palette:
-        case Hotkey::Id::Border:
+        case Hotkey::Id::Geometry:
         case Hotkey::Id::Firmware:
         case Hotkey::Id::System:
         case Hotkey::Id::Control:
@@ -381,12 +393,12 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
 
             auto emuView = EmuConfigView::TabWindow::getView( activeEmulator );
 
-            if (emuView && emuView->borderLayout) {
-                if ((CropType)cropType == CropType::Off) emuView->borderLayout->cropOff.activate();
-                else if ((CropType)cropType == CropType::Monitor) emuView->borderLayout->cropMonitor.activate();
-                else if ((CropType)cropType == CropType::Auto) emuView->borderLayout->cropAuto.activate();
-                else if ((CropType)cropType == CropType::SemiAuto) emuView->borderLayout->cropSemiAuto.activate();
-                else if ((CropType)cropType == CropType::Free) emuView->borderLayout->cropFree.activate();
+            if (emuView && emuView->geometryLayout) {
+                if ((CropType)cropType == CropType::Off) emuView->geometryLayout->cropLayout.type1.cropOff.activate();
+                else if ((CropType)cropType == CropType::Monitor) emuView->geometryLayout->cropLayout.type1.cropMonitor.activate();
+                else if ((CropType)cropType == CropType::Auto) emuView->geometryLayout->cropLayout.type1.cropAuto.activate();
+                else if ((CropType)cropType == CropType::SemiAuto) emuView->geometryLayout->cropLayout.type2.cropSemiAuto.activate();
+                else if ((CropType)cropType == CropType::Free) emuView->geometryLayout->cropLayout.type2.cropFree.activate();
             } else {
                 settings->set<unsigned>("crop_type", cropType);
                 emuThread->lock();
@@ -677,7 +689,7 @@ auto InputManager::pollHotkeys() -> void {
 			case Hotkey::Id::Software:
 			case Hotkey::Id::Presentation:
 			case Hotkey::Id::Palette:
-			case Hotkey::Id::Border:
+			case Hotkey::Id::Geometry:
 			case Hotkey::Id::Firmware:
 			case Hotkey::Id::System:
 			case Hotkey::Id::Control:
@@ -847,8 +859,8 @@ auto InputManager::openMenu( Emulator::Interface* emulator, Hotkey::Id id ) -> v
     switch(id) {
         case Hotkey::Id::Presentation:
             emuView->showDelayed( EmuConfigView::TabWindow::Layout::Presentation ); break;
-        case Hotkey::Id::Border:
-            emuView->showDelayed( EmuConfigView::TabWindow::Layout::Border ); break;
+        case Hotkey::Id::Geometry:
+            emuView->showDelayed( EmuConfigView::TabWindow::Layout::Geometry ); break;
         case Hotkey::Id::Palette:
             emuView->showDelayed( EmuConfigView::TabWindow::Layout::Palette ); break;
         case Hotkey::Id::DiskSwapper:

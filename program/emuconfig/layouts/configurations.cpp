@@ -718,7 +718,7 @@ auto ConfigurationsLayout::load( std::string path, bool showError ) -> bool {
     
     if(this->tabWindow->audioLayout) this->tabWindow->audioLayout->loadSettings();
 
-    if(this->tabWindow->borderLayout) this->tabWindow->borderLayout->loadSettings();
+    if(this->tabWindow->geometryLayout) this->tabWindow->geometryLayout->loadSettings();
 
     if(this->tabWindow->firmwareLayout) this->tabWindow->firmwareLayout->loadSettings();
 

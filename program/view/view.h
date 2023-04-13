@@ -33,7 +33,7 @@ struct View : public GUIKIT::Window {
         GUIKIT::Menu* shaderMenu;
         GUIKIT::MenuItem* presentation;
         GUIKIT::MenuItem* palette;
-        GUIKIT::MenuItem* border;
+        GUIKIT::MenuItem* geometry;
         GUIKIT::MenuItem* misc;
     };
 

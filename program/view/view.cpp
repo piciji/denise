@@ -22,6 +22,7 @@ View::View() : GUIKIT::Window(GUIKIT::Window::Hints::Video) {
 
 auto View::build() -> void {
     setTitle( APP_NAME " " VERSION );
+    //setResizable( globalSettings->get<bool>("window_resizable", true) );
     setBackgroundColor(0);
     cocoa.setDisableIconsInTopMenu(true);
 
@@ -897,13 +898,13 @@ auto View::buildMenu() -> void {
         };
         sM.system->append( *sM.firmware );
 
-        sM.border = new GUIKIT::MenuItem;
-        sM.border->setIcon( cropImage );
-        sM.border->onActivate = [emulator]() {
+        sM.geometry = new GUIKIT::MenuItem;
+        sM.geometry->setIcon( cropImage );
+        sM.geometry->onActivate = [emulator]() {
             auto emuView = EmuConfigView::TabWindow::getView( emulator, true );
-            emuView->show(EmuConfigView::TabWindow::Layout::Border);
+            emuView->show(EmuConfigView::TabWindow::Layout::Geometry);
         };
-        sM.system->append( *sM.border );
+        sM.system->append( *sM.geometry );
 
         sM.misc = new GUIKIT::MenuItem;
         sM.misc->setIcon( toolsImage );
@@ -1413,7 +1414,7 @@ auto View::translate() -> void {
         sysMenu.configurations->setText(trans->get("Configurations"));
         sysMenu.presentation->setText(trans->get("Presentation"));
         sysMenu.palette->setText(trans->get("Palette"));
-        sysMenu.border->setText(trans->get("Border"));
+        sysMenu.geometry->setText(trans->get("Geometry"));
         sysMenu.misc->setText(trans->get("miscellaneous"));
 
         sysMenu.shaderMenu->setText(trans->get("Shader"));            
