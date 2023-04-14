@@ -686,10 +686,10 @@ auto System::run() -> void {
     cpu->setNmi(nmiIncomming != 0);
     iecBus->randomizeRpm();
 
-    bool useRunAhead = !fastForward.config && runAhead.frames && !traps->installed
+    runAhead.active = !fastForward.config && runAhead.frames && !traps->installed
         && !keyBuffer->isPrgInjectionInQueue() && !iecBus->diskInsertInProgress;
 
-    if (useRunAhead) {
+    if (runAhead.active) {
         runAhead.pos = runAhead.frames;
         vicII->disableSequencer( runAhead.performance );
         Sid::disableAudioOut( runAhead.frames > 1 );
@@ -703,7 +703,7 @@ auto System::run() -> void {
             iecBus->syncDrives();
     }
 
-    if (useRunAhead) {
+    if (runAhead.active) {
         if (runAhead.frames == runAhead.pos) {
             serializeLight();
         }
@@ -1143,7 +1143,7 @@ auto System::setAudioRefresh() -> void {
 }
 
 auto System::jam(Emulator::Interface::Media* media) -> void {
-    if (!runAhead.frames || (runAhead.frames == runAhead.pos))
+    if (processFrame())
         interface->jam(media);
 }
 

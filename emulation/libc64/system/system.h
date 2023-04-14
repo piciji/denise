@@ -126,6 +126,7 @@ struct System {
         unsigned pos = 0;
         bool performance = false;
         bool preventJit = true;
+		bool active = false;
         Emulator::MemSerializer serializer;
     } runAhead;
     
@@ -255,6 +256,7 @@ struct System {
     auto autoStartFinish(bool soft) -> void;
     auto jam(Emulator::Interface::Media* media = nullptr) -> void;
     auto displayFrame() -> const bool { return !runAhead.pos; }
+	auto processFrame() -> const bool { return !runAhead.active || (runAhead.frames == runAhead.pos); }
 };
 
 extern System* system;

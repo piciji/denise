@@ -245,7 +245,6 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             tempTimer->onFinished = [tempTimer]() {
                 tempTimer->setEnabled(false);
                 view->exit.onActivate();
-                delete tempTimer;
             };
             tempTimer->setEnabled();
         } break;

@@ -122,7 +122,7 @@ Tape::~Tape() {
 }
 
 auto Tape::updateDeviceState() -> void {
-    if (system->displayFrame())
+    if (system->processFrame())
         system->interface->updateDeviceState( getMediaConnected(), mode == Mode::Record, counter, false, !motorIn );
 }
 

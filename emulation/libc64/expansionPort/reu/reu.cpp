@@ -195,7 +195,7 @@ auto Reu::reset(bool softReset) -> void {
     intMask = 0x1f;    
     control = 0x3f;
     
-    reg.transferLength = 0xffff;    
+    reg.transferLength = 0xffff;
     reg.reuAddr = 0;
     reg.hostAddr = 0;
     
@@ -223,8 +223,12 @@ inline auto Reu::writeReu(uint8_t value) -> void {
 
     reuAddr &= dramWrapAround;
     
-    if (reuAddr < size)        
+    if (reuAddr < size) {
+        if (memChangeTracker.enabled())
+            memChangeTracker.remember(reuAddr, data);
+
         data[reuAddr] = value;
+    }
 }
 
 inline auto Reu::incrementAddresses() -> void {
@@ -587,16 +591,23 @@ auto Reu::writeUltimaxA0( uint16_t addr, uint8_t data ) -> void {
 }
 
 auto Reu::serialize(Emulator::Serializer& s) -> void {
-        
     unsigned _size = size;
+    bool light = s.lightUsage();
     
     s.integer( _size );
     if ( s.mode() == Emulator::Serializer::Mode::Load ) {
-        // when size mismatches, recreate
-        prepareRam( _size >> 10 );
+        if (light)
+            memChangeTracker.applyAndDisable(data);
+        else
+            prepareRam( _size >> 10 ); // when size mismatches, recreate
+
+    } else {
+        if (light)
+            memChangeTracker.enable();
     }
-    
-    s.array( data, size );
+
+    if (!light)
+        s.array( data, size );
     
     s.integer( status );
     s.integer( command );

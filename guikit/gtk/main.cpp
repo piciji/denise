@@ -721,7 +721,7 @@ auto pWindow::setForeground() -> void {
 }
 
 auto pWindow::setFullScreen(bool fullScreen) -> void {
-    if (!window.resizable()) return;
+    //if (!window.resizable()) return;
     locked = true;
     requestFullscreenToggle = true;
     timer.setEnabled();

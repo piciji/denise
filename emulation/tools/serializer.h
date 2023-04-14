@@ -27,7 +27,7 @@ struct Serializer {
         return _capacity;
     }
     
-    auto lightUsage() -> bool { return false; }
+    virtual auto lightUsage() -> bool { return false; }
 
     template<typename T> auto floatingpoint(T& value) -> Serializer& {
         

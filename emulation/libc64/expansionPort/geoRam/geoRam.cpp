@@ -21,8 +21,12 @@ auto GeoRam::isBootable( ) -> bool {
 }
 
 auto GeoRam::writeIo1( uint16_t addr, uint8_t value ) -> void {
-	
-	data[(blockOf16k << 14) + (page << 8) + (addr & 0xff)] = value;
+    unsigned _addr = (blockOf16k << 14) + (page << 8) + (addr & 0xff);
+
+    if (memChangeTracker.enabled())
+        memChangeTracker.remember(_addr, data);
+
+	data[_addr] = value;
 	dirty = true;
 }
 
@@ -122,18 +126,23 @@ auto GeoRam::createImage(unsigned& imageSize, uint8_t id) -> uint8_t* {
 }
 
 auto GeoRam::serialize(Emulator::Serializer& s) -> void {
-	
-	//if (!s.lightUsage()) {
-		unsigned _size = size;
+    unsigned _size = size;
+    bool light = s.lightUsage();
 
-		s.integer(_size);
-		if (s.mode() == Emulator::Serializer::Mode::Load) {
-			// when size mismatches, recreate
-			prepareRam(_size >> 10);
-		}
+    s.integer(_size);
+    if (s.mode() == Emulator::Serializer::Mode::Load) {
+        if (light)
+            memChangeTracker.applyAndDisable(data);
+        else
+            prepareRam(_size >> 10); // when size mismatches, recreate
+    } else {
+        if (light)
+            memChangeTracker.enable();
+    }
 
+    if (!light)
 		s.array(data, size);
-	//}
+
 	s.integer( blockOf16k );
 	s.integer( page );
 	s.integer( dirty );
