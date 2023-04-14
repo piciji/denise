@@ -17,9 +17,25 @@ InScreenTextLayout::InScreenTextLayout() {
     setFont(GUIKIT::Font::system("bold"));
 }
 
+VideoGeometryLayout::Dimension::Dimension() {
+    append(label, {0u, 0u}, 5);
+    append(width, {50, 0u}, 10);
+    append(height, {50, 0u});
+
+    setAlignment(0.5);
+}
+
+VideoGeometryLayout::Control::Control() {
+    append(refresh, {0u, 0u}, 5);
+    append(apply, {0u, 0u});
+
+    setAlignment(0.5);
+}
+
 VideoGeometryLayout::VideoGeometryLayout() {
-    append( aspectCorrectResizing, {0u, 0u}, 0 );
-    //append( resizableWindow, {0u, 0u} );
+    append( aspectCorrectResizing, {0u, 0u}, 5 );
+    append( dimension, {0u, 0u}, 5 );
+    append( control, {0u, 0u} );
 	
 	setPadding(10);
 	setFont(GUIKIT::Font::system("bold"));
@@ -386,11 +402,45 @@ VideoLayout::VideoLayout() {
         emuThread->unlock();
     };
 
-    videoGeometry.resizableWindow.setChecked( globalSettings->get<bool>("window_resizable", true) );
-    videoGeometry.resizableWindow.onToggle = [&](bool checked) {
+    videoGeometry.dimension.width.onChange = [this]() {
+        int val = videoGeometry.dimension.width.value();
+        if (val < 100) val = 100;
+        globalSettings->set<unsigned>("view_hold_width", val);
+    };
+    videoGeometry.dimension.width.setValue( globalSettings->get<unsigned>("view_hold_width", 800) );
+
+    videoGeometry.dimension.height.onChange = [this]() {
+        int val = videoGeometry.dimension.height.value();
+        if (val < 100) val = 100;
+        globalSettings->set<unsigned>("view_hold_height", val);
+    };
+    videoGeometry.dimension.height.setValue( globalSettings->get<unsigned>("view_hold_height", 600) );
+
+    videoGeometry.control.refresh.onActivate = [this]() {
+        if (view->fullScreen())
+            return;
+
         emuThread->lock();
-        globalSettings->set<bool>("window_resizable", checked);
-        view->setResizable(checked);
+        auto w = globalSettings->get<unsigned>("screen_width", 800);
+        auto h = globalSettings->get<unsigned>("screen_height", 600);
+
+        globalSettings->set<unsigned>("view_hold_width", w);
+        globalSettings->set<unsigned>("view_hold_height", h);
+
+        videoGeometry.dimension.width.setValue(w);
+        videoGeometry.dimension.height.setValue(h);
+        emuThread->unlock();
+    };
+
+    videoGeometry.control.apply.onActivate = [this]() {
+        if (view->fullScreen())
+            return;
+
+        emuThread->lock();
+        globalSettings->set<unsigned>("screen_width", globalSettings->get<unsigned>("view_hold_width", 800));
+        globalSettings->set<unsigned>("screen_height", globalSettings->get<unsigned>("view_hold_height", 600));
+
+        view->updateGeometry(true);
         emuThread->unlock();
     };
 
@@ -434,7 +484,9 @@ auto VideoLayout::translate() -> void {
 	
 	videoGeometry.setText(trans->get("geometry"));
     videoGeometry.aspectCorrectResizing.setText(trans->get("resize aspect corrected"));
-    videoGeometry.resizableWindow.setText(trans->get("resizable window"));
+    videoGeometry.dimension.label.setText(trans->getA("resolution", true));
+    videoGeometry.control.refresh.setText(trans->getA("refresh"));
+    videoGeometry.control.apply.setText(trans->getA("apply"));
     
     driverLayout.name.setText( trans->get("driver", {}, true) );
     
@@ -449,7 +501,6 @@ auto VideoLayout::translate() -> void {
     videoFps.setText( trans->get("FPS") );
     videoFps.updateDelay.name.setText( trans->get("Refresh", {}, true) );
     videoFps.options.labelDecimalPlace.setText( trans->get("Decimal Place", {}, true) );
-
 }
 
 auto VideoLayout::updateDriverPropsVisibility() -> void {

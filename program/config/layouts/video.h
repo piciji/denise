@@ -16,7 +16,21 @@ struct CrtEmulationLayout : GUIKIT::FramedVerticalLayout {
 
 struct VideoGeometryLayout : GUIKIT::FramedVerticalLayout {
     GUIKIT::CheckBox aspectCorrectResizing;
-    GUIKIT::CheckBox resizableWindow;
+
+    struct Dimension : GUIKIT::HorizontalLayout {
+        GUIKIT::Label label;
+        GUIKIT::LineEdit width;
+        GUIKIT::LineEdit height;
+
+        Dimension();
+    } dimension;
+
+    struct Control : GUIKIT::HorizontalLayout {
+        GUIKIT::Button refresh;
+        GUIKIT::Button apply;
+
+        Control();
+    } control;
 
     VideoGeometryLayout();
 };

@@ -733,3 +733,4 @@ CRT TV = CRT TV
 Native =
 Native tooltip =
 resizable window =
+resolution =

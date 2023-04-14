@@ -22,7 +22,6 @@ View::View() : GUIKIT::Window(GUIKIT::Window::Hints::Video) {
 
 auto View::build() -> void {
     setTitle( APP_NAME " " VERSION );
-    //setResizable( globalSettings->get<bool>("window_resizable", true) );
     setBackgroundColor(0);
     cocoa.setDisableIconsInTopMenu(true);
 
@@ -30,19 +29,21 @@ auto View::build() -> void {
         setAspectRatio( {4,3} );
     else
         setAspectRatio( {0,0} );
-    
-    GUIKIT::Geometry defaultGeometry = {100, 100, 800, 600};
-    
-    GUIKIT::Geometry geometry = {globalSettings->get<int>("screen_x", defaultGeometry.x)
-        ,globalSettings->get<int>("screen_y", defaultGeometry.y)
-        ,globalSettings->get<unsigned>("screen_width", defaultGeometry.width)
-        ,globalSettings->get<unsigned>("screen_height", defaultGeometry.height)
-    };
-    
-    setGeometry( geometry );
-    
-    if (isOffscreen())        
-        setGeometry( defaultGeometry );    
+
+    updateGeometry();
+
+//    GUIKIT::Geometry defaultGeometry = {100, 100, 800, 600};
+//
+//    GUIKIT::Geometry geometry = {globalSettings->get<int>("screen_x", defaultGeometry.x)
+//        ,globalSettings->get<int>("screen_y", defaultGeometry.y)
+//        ,globalSettings->get<unsigned>("screen_width", defaultGeometry.width)
+//        ,globalSettings->get<unsigned>("screen_height", defaultGeometry.height)
+//    };
+//
+//    setGeometry( geometry );
+//
+//    if (isOffscreen())
+//        setGeometry( defaultGeometry );
     
     append(viewport);
     
@@ -1676,4 +1677,22 @@ auto View::updateEmuUsage() -> void {
     append(speedControlMenu);
     if (activeEmulator->getModelValue( activeEmulator->getModelIdOfEnabledDrives( activeEmulator->getTapeMediaGroup() ) ))
         append(tapeControlMenu);
+}
+
+auto View::updateGeometry(bool withViewport) -> void {
+    GUIKIT::Geometry defaultGeometry = {100, 100, 800, 600};
+
+    GUIKIT::Geometry geometry = {globalSettings->get<int>("screen_x", defaultGeometry.x)
+            ,globalSettings->get<int>("screen_y", defaultGeometry.y)
+            ,globalSettings->get<unsigned>("screen_width", defaultGeometry.width)
+            ,globalSettings->get<unsigned>("screen_height", defaultGeometry.height)
+    };
+
+    setGeometry( geometry );
+
+    if (isOffscreen())
+        setGeometry( defaultGeometry );
+
+    if (withViewport)
+        updateViewport();
 }

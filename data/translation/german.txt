@@ -733,3 +733,4 @@ CRT TV = CRT TV
 Native = Ursprünglich
 Native tooltip = Auf Kosten des korrekten Seitenverhältnisses sind Weite und Höhe Vielfache der nativen Auflösung.
 resizable window = Fenstergröße veränderbar
+resolution = Auflösung
