@@ -45,7 +45,7 @@ auto InputManager::init() -> void {
     }           
 
 	bindHidsGlobal();
-    activeInputManager->setupKeycodeTransfer();
+    //activeInputManager->setupKeycodeTransfer();
 }
 
 auto InputManager::assumeLayoutType() -> KeyboardLayout::Type {
@@ -111,7 +111,7 @@ auto InputManager::setMappings() -> void {
     Emulator::Interface::Device::Input* alternateInput;
 
 	for (auto manager : inputManagers) {
-		if (manager->emulator) {		
+		if (manager->emulator) {
             auto settings = program->getSettings( manager->emulator );
             
             for (auto& device : manager->emulator->devices) {  

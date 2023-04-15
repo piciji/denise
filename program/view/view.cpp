@@ -31,19 +31,6 @@ auto View::build() -> void {
         setAspectRatio( {0,0} );
 
     updateGeometry();
-
-//    GUIKIT::Geometry defaultGeometry = {100, 100, 800, 600};
-//
-//    GUIKIT::Geometry geometry = {globalSettings->get<int>("screen_x", defaultGeometry.x)
-//        ,globalSettings->get<int>("screen_y", defaultGeometry.y)
-//        ,globalSettings->get<unsigned>("screen_width", defaultGeometry.width)
-//        ,globalSettings->get<unsigned>("screen_height", defaultGeometry.height)
-//    };
-//
-//    setGeometry( geometry );
-//
-//    if (isOffscreen())
-//        setGeometry( defaultGeometry );
     
     append(viewport);
     
