@@ -155,6 +155,9 @@ struct Application {
     static auto isWinApi() -> bool;
 	static auto requestClipboardText() -> void;
     static auto setClipboardText( std::string text ) -> void;
+#ifdef _WIN32
+    static auto getUtf8CmdLine(std::vector<std::string>& out) -> bool;
+#endif
 
     static bool isQuit;
     static int exitCode;

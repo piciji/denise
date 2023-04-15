@@ -120,7 +120,11 @@ auto Application::requestClipboardText() -> void {
 auto Application::setClipboardText( std::string text ) -> void {
     pApplication::setClipboardText( text );
 }
-
+#ifdef _WIN32
+auto Application::getUtf8CmdLine(std::vector<std::string>& out) -> bool {
+    return pApplication::getUtf8CmdLine(out);
+}
+#endif
 //window
 std::vector<CustomFont*> Window::customFonts;
 

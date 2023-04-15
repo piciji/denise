@@ -5,11 +5,8 @@
 #include "../program.h"
 
 struct Cmd {
-    
-    Cmd(int argc, char** argv) {        
-        set(argc, argv);
-    }          
-    
+    Cmd(int argc, char** argv);
+
     std::vector<std::string> arguments;
 
     struct Attachments {
@@ -36,8 +33,6 @@ struct Cmd {
 	uint8_t autostartPrg = 1;
     std::string screenshotPath = "";
     std::string diskListing = "";
-    
-    auto set(int argc, char** argv) -> void;
     
     auto parse() -> void;
     

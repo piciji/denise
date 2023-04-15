@@ -13,7 +13,7 @@ Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trade
 
 # changelog
 
-## 2.0 beta
+## 2.0
 * add Amiga emulation
     * A1000 (OSC/ICS), A500 (Full OCS), A500 (ECS Agnus, OCS Denise)
     * RGB or S-Video with PAL/NTSC color encoding, border cropping
@@ -24,6 +24,7 @@ Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trade
     * AROS firmware is preinstalled
     * motor controlled auto warp
     * drive sounds
+    * support custom frequencies like B.C. Kid (56.4 Hz)
     * if you only want to use one of the two emulators, Amiga or C64 core can be hidden
 * emulator now boots automatically after power on
     * Splash screen can be disabled
@@ -34,11 +35,11 @@ Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trade
 * windows: prevent App minification when focus loss in fullscreen
 * C64: add option to combine Virtual Device Traps (instant load first file) with floppy speeder
 * C64: improve drive motor controlled auto warp
-    * add option to stop auto warp when software requests input.
+    * add option to stop auto warp when software requests input, because
     * some games stop drive motor too late and warp runs too long, what could lead to the loss of a life
 * C64: support magicdesk CRT's with broken header
+* C64: fix runahead slowdown with REU/GeoRAM when using a lot of memory, e.g. REU 16 MB
 * Mice and other mouse-controlled devices, such as Lightguns, can now be configured with one click
-
 
 ## 1.1.3.1
 * thanks for the countless tests and suggestions [thanks to AW182]

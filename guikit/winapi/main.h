@@ -41,6 +41,7 @@ struct pApplication {
     static auto currentWorkingDirectory() -> std::string;
 	static auto requestClipboardText() -> void;
     static auto setClipboardText( std::string text ) -> void;
+    static auto getUtf8CmdLine(std::vector<std::string>& out) -> bool;
 	
     static std::string cwd; //current working directory
 	static unsigned version;

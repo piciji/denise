@@ -73,6 +73,20 @@ auto pApplication::quit() -> void {
         FreeLibrary(uxTheme);
 }
 
+auto pApplication::getUtf8CmdLine(std::vector<std::string>& out) -> bool {
+    LPWSTR* szArglist;
+    int nArgs;
+    szArglist = CommandLineToArgvW(GetCommandLineW(), &nArgs);
+    if( NULL == szArglist )
+        return false;
+
+    for( int i = 0; i < nArgs; i++) {
+        out.push_back( utf8_t(szArglist[i]) );
+    }
+
+    return true;
+}
+
 std::string pApplication::cwd = "";
 unsigned pApplication::version = 0;
 

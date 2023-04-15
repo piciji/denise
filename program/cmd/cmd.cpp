@@ -5,14 +5,24 @@
 #include "../media/fileloader.h"
 #include "../thread/emuThread.h"
 
-auto Cmd::set(int argc, char** argv) -> void {        	
-	
+Cmd::Cmd(int argc, char** argv) {
+    if (!argv)
+        return;
+
 	std::string arg;
     std::string configIdent = "";
+    std::vector<std::string> out;
+
+#ifdef _WIN32
+    if (GUIKIT::Application::getUtf8CmdLine(out))
+        argc = out.size();
+#endif
 
     for (unsigned i = 0; i < argc; i++) {
-        
-		arg = (std::string)argv[i];
+        if (out.size())
+            arg = out[i];
+        else
+            arg = (std::string)argv[i];
 
         if (configIdent != "") {
             setCustomConfig(configIdent, arg);
