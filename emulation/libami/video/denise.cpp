@@ -138,7 +138,9 @@ auto Denise::startHblank() -> void {
             if (laceMode & 1)
                 lineVCounter--;
 
-            crop.bottom = (lineVCounter > crop.bottom) ? (lineVCounter - crop.bottom) : 0;
+			if (lineVCounter < 100) // could happen, if Agnus beam position has been changed or uncontrolled register usage
+				lineVCounter = 100;
+			
             int width = hiresFrame ? (LINE_MAX_WIDTH << 1) : LINE_MAX_WIDTH;
             sanitizeCrop(width, lineVCounter);
 
@@ -706,6 +708,8 @@ auto Denise::updateCropRight() -> void {
 }
 
 auto Denise::sanitizeCrop(int width, int height) -> void {
+	crop.bottom = (height > crop.bottom) ? (height - crop.bottom) : 0;
+	
     width >>= 1;
     height >>= 1;
 
