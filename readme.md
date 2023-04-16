@@ -19,7 +19,7 @@ Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trade
     * RGB or S-Video with PAL/NTSC color encoding, border cropping
     * support all global features like: runAhead, savestates, G-Sync, configs, Warp, JIT polling, shader
     * up to 4 disk drives with acceleration option
-    * Chipmem, Slowmem, Fastmem
+    * Chipram, Slowram, Fastram
     * list disk content in UI
     * AROS firmware is preinstalled
     * motor controlled auto warp
@@ -40,6 +40,9 @@ Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trade
 * C64: support magicdesk CRT's with broken header
 * C64: fix runahead slowdown with REU/GeoRAM when using a lot of memory, e.g. REU 16 MB
 * Mice and other mouse-controlled devices, such as Lightguns, can now be configured with one click
+* Dutch Translation
+    * someone created a ticket and offered a Dutch translation for Denise. Unfortunately, I reacted too late
+    * and the creator certainly never read the answer. If you're reading this. Yes, I am interested and in other languages too, of course. 
 
 ## 1.1.3.1
 * thanks for the countless tests and suggestions [thanks to AW182]

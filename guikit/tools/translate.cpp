@@ -4,8 +4,12 @@ auto Translation::getA(std::string ident, bool addColon) -> std::string {
     String::toLowerCase( ident );
 
     for(auto& data : list) {
-        if(data.ident == ident)
+        if(data.ident == ident) {
+            if (data.text.empty())
+                break;
+
             return data.text + (addColon ? ":" : "");
+        }
     }
 
     if (String::foundSubStr(ident, "tooltip"))

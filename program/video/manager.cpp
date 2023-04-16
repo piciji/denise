@@ -631,7 +631,7 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
             resetTempData(0, true);}
     }
     
-    if ( shader.recreate ) {
+    if ( !placeHolderFrames && shader.recreate ) {
         shader.loadInternal();
         
         bool error = false;        

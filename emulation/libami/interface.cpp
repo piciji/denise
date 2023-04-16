@@ -39,9 +39,9 @@ auto Interface::prepareModels() -> void {
     models.push_back({ModelIdDiskDriveStepperAccessTime, "Stepper Access Time", Model::Type::Slider, Model::Purpose::DriveSettings, 0, {0, 30}, {}, 30, 10.0 });
     models.push_back({ModelIdDiskTurbo, "Disk Turbo", Model::Type::Radio, Model::Purpose::DriveSettings, 0, {0, 4}, { "1x", "2x", "4x", "8x", "MAX" }});
 
-    models.push_back({ModelIdChipMem, "Chip Mem", Model::Type::Slider, Model::Purpose::Memory, 1, {0, 3}, { "256 KB", "512 KB", "1 MB", "2 MB" }});
-    models.push_back({ModelIdSlowMem, "Slow Mem", Model::Type::Slider, Model::Purpose::Memory, 1, {0, 4}, { "0", "512 KB", "1 MB", "1.5 MB", "1.75 MB" }});
-    models.push_back({ModelIdFastMem, "Fast Mem", Model::Type::Slider, Model::Purpose::Memory, 0, {0, 8}, { "0", "64 KB", "128 KB", "256 KB", "512 KB", "1 MB", "2 MB", "4 MB", "8 MB" }});
+    models.push_back({ModelIdChipMem, "Chipram", Model::Type::Slider, Model::Purpose::Memory, 1, {0, 3}, { "256 KB", "512 KB", "1 MB", "2 MB" }});
+    models.push_back({ModelIdSlowMem, "Slowram", Model::Type::Slider, Model::Purpose::Memory, 1, {0, 4}, { "0", "512 KB", "1 MB", "1.5 MB", "1.75 MB" }});
+    models.push_back({ModelIdFastMem, "Fastram", Model::Type::Slider, Model::Purpose::Memory, 0, {0, 8}, { "0", "64 KB", "128 KB", "256 KB", "512 KB", "1 MB", "2 MB", "4 MB", "8 MB" }});
 }
 
 auto Interface::prepareMedia() -> void {
