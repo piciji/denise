@@ -213,19 +213,18 @@ auto Agnus::waitKeyboardReset() -> void {
         resetFromKeyboard |= 0x80;
     }
 
-    updateEvent<EVENT_LEAVE_EMULATION>(150000);
+    updateEvent<EVENT_LEAVE_EMULATION>(100000);
 
     while(true) { // CPU and most chips on hold, Denise hasn't a reset line
-        input.checkForEmergencyPoll(); // wait for releasing reset key combination
-        if (++clock == nextClock)
-            processEvents(clock);
+        dmaCycle();
 
-        if (system->leaveEmulation)
-            break;
-
+        input.checkForEmergencyPoll();
         if (!resetFromKeyboard) {
-            initCiaClock();
-            setEventInactive<Agnus::EVENT_LEAVE_EMULATION>();
+            system->power(true);
+            break;
+        }
+
+        if (system->leaveEmulation) {
             break;
         }
     }

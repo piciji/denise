@@ -199,7 +199,7 @@ auto Keyboard::sendKeyChange(bool pressed, Emulator::Interface::Device::Input* i
             addEvent(KBD_Hardreset, agnus.msecToDMACycles(500));
             agnus.pullResetLine();
         }
-    } else if (hardReset && agnus.hasActiveEvent<Agnus::EVENT_KBD>() && (waitState != KBD_Hardreset)) {// 500 ms minimum
+    } else if (hardReset && (!agnus.hasActiveEvent<Agnus::EVENT_KBD>() || (waitState != KBD_Hardreset))) {// 500 ms minimum
         agnus.pullResetLine(false);
         reset();
     }

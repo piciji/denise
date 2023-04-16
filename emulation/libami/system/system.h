@@ -80,7 +80,7 @@ struct System {
     auto setResampleQuality( int value ) -> void;
     auto setFastForward( unsigned config ) -> void;
     auto setRunAhead(unsigned frames) -> void;
-    auto allowRunAhead() -> const bool { return !fastForward.config && runAhead.frames && agnus.womLocked(); }
+    auto allowRunAhead() -> const bool { return !fastForward.config && runAhead.frames && !agnus.resetFromKeyboard && agnus.womLocked(); }
     auto hintSlowSpeed(bool state) -> void;
 
     auto calcSerializationSize() -> void;
