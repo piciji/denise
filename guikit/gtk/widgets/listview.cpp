@@ -217,10 +217,10 @@ auto pListView::onPress(GtkTreeView* treeView, GdkEventButton* event, ListView* 
 }
 
 auto pListView::onChange(GtkTreeView* treeView, ListView* self) -> void {
-    if (!self->p.pressed)
-        return;
-
-    self->p.pressed = false;
+//    if (!self->p.pressed)
+//        return;
+//
+//    self->p.pressed = false;
 
     GtkTreeIter iter;
     if(!gtk_tree_selection_get_selected(gtk_tree_view_get_selection(treeView), 0, &iter)) return;

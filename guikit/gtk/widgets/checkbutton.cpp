@@ -1,7 +1,7 @@
 
 auto pCheckButton::minimumSize() -> Size {
     Size size = getMinimumSize();
-    return {size.width + 8, size.height};
+    return {size.width, size.height};
 }
 
 auto pCheckButton::setChecked(bool checked) -> void {

@@ -30,7 +30,7 @@ AutofireControl::AutofireControl(Emulator::Interface* emulator) : autofireSlider
 }
 
 InputSelector::InputSelector() {
-    append(device, {~0u, 0u}, 20);
+    append(device, {0u, 0u}, 20);
 	append(hotkeys, {0u, 0u});
 	append(spacer, {~0u, 0u});
     append(plugin, {0u, 0u}, 10);

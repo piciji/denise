@@ -26,7 +26,7 @@ VideoGeometryLayout::Dimension::Dimension() {
 }
 
 VideoGeometryLayout::Control::Control() {
-    append(refresh, {0u, 0u}, 5);
+    append(refresh, {0u, 0u}, 10);
     append(apply, {0u, 0u});
 
     setAlignment(0.5);

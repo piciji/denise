@@ -32,6 +32,8 @@ inline auto pWidget::getMinimumSize() -> Size {
     if (calculatedMinimumSize.updated)
         return calculatedMinimumSize.minimumSize;
 
+    gtk_widget_set_size_request(gtkWidget, 0, 0);
+
     gint minimumHeight;
     gint naturalHeight;
     gtk_widget_get_preferred_height(gtkWidget, &minimumHeight, &naturalHeight);
