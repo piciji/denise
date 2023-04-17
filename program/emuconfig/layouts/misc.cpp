@@ -451,7 +451,7 @@ auto MiscLayout::loadSettings() -> void {
 
     autostartLayout.autostartDragnDrop.setChecked(_settings->get<bool>("autostart_dragndrop", dynamic_cast<LIBC64::Interface*>(emulator)));
 
-    setRunAheadPerformance(_settings->get<bool>("runahead_performance", false));
+    setRunAheadPerformance(_settings->get<bool>("runahead_performance", dynamic_cast<LIBAMI::Interface*>(emulator)));
 
     runAheadLayout.options.disableOnPower.setChecked(_settings->get<bool>("runahead_disable", true));
 

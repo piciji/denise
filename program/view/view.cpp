@@ -793,17 +793,18 @@ auto View::buildMenu() -> void {
 	    };	
         sM.reset->setIcon( powerImage );
         sM.system->append( *sM.reset );
-        sM.freeze = new GUIKIT::MenuItem;
-        sM.freeze->setIcon( freezeImage );
-        sM.freeze->onActivate = [emulator]() {
-            emuThread->lock();
-		    emulator->freezeButton();
-            emuThread->unlock();
-	    };	
-        sM.freeze->setEnabled(false);
-        sM.system->append( *sM.freeze );
 
         if ( dynamic_cast<LIBC64::Interface*>(emulator)) {
+            sM.freeze = new GUIKIT::MenuItem;
+            sM.freeze->setIcon( freezeImage );
+            sM.freeze->onActivate = [emulator]() {
+                emuThread->lock();
+                emulator->freezeButton();
+                emuThread->unlock();
+            };
+            sM.freeze->setEnabled(false);
+            sM.system->append( *sM.freeze );
+
             sM.menu = new GUIKIT::MenuItem;
             sM.menu->setIcon( menuImage );
             sM.menu->onActivate = [emulator]() {
@@ -813,8 +814,10 @@ auto View::buildMenu() -> void {
             };
             sM.menu->setEnabled(false);
             sM.system->append(*sM.menu);
-        } else
+        } else {
             sM.menu = nullptr;
+            sM.freeze = nullptr;
+        }
 
         sM.system->append(*GUIKIT::MenuSeparator::getInstance());
 		
@@ -1389,8 +1392,9 @@ auto View::translate() -> void {
         sysMenu.system->setText(sysMenu.emulator->ident);
         sysMenu.poweron->setText(trans->get("Hard Reset"));
 		sysMenu.poweronAndRemoveExpansions->setText(trans->get("Hard Reset + Unplug Cart"));
-        sysMenu.reset->setText(trans->get("Soft Reset"));        
-        sysMenu.freeze->setText(trans->get("Freeze"));
+        sysMenu.reset->setText(trans->get("Soft Reset"));
+        if (sysMenu.freeze)
+            sysMenu.freeze->setText(trans->get("Freeze"));
         if (sysMenu.menu)
             sysMenu.menu->setText(trans->get("cartridge button"));
         sysMenu.loadSoftware->setText(trans->get("load software"));
@@ -1531,8 +1535,10 @@ auto View::updateCartButtons( Emulator::Interface* emulator ) -> void {
     for (auto& sM : sysMenus) {
          state = (sM.emulator == emulator) && emulator->hasFreezeButton();
 
-        if (sM.freeze->enabled() != state)
-            sM.freeze->setEnabled( state );
+        if (sM.freeze) {
+            if (sM.freeze->enabled() != state)
+                sM.freeze->setEnabled(state);
+        }
 
         if (!sM.menu)
             continue;

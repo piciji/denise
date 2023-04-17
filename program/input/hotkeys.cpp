@@ -178,7 +178,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             if (!activeEmulator)
                 break;
             
-            bool state = settings->get<bool>( "runahead_performance", false);
+            bool state = settings->get<bool>( "runahead_performance", dynamic_cast<LIBAMI::Interface*>(activeEmulator));
             state ^= 1;
             settings->set<bool>( "runahead_performance", state);
             emuThread->lock();

@@ -178,7 +178,7 @@ auto Program::setRunAhead(Emulator::Interface* emulator) -> void {
     
     emulator->runAhead( settings->get<unsigned>( "runahead", 0, {0u, 10u}) );
     
-    emulator->runAheadPerformance( settings->get<bool>( "runahead_performance", false) );
+    emulator->runAheadPerformance( settings->get<bool>( "runahead_performance", dynamic_cast<LIBAMI::Interface*>(emulator)) );
 
     emulator->runAheadPreventJit( settings->get<bool>( "runahead_prevent_jit", true ) );
 }
