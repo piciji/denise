@@ -140,6 +140,12 @@ auto System::power(bool softReset, bool resetInstruction) -> void {
     for(auto& drive : diskDrives)
         drive.power();
 
+    if (resetInstruction || softReset) {
+        agnus.resetFps();
+        updateStats();
+        interface->fpsChanged();
+    }
+
     powerOn = true;
 }
 

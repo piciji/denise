@@ -40,9 +40,15 @@ Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trade
 * C64: support magicdesk CRT's with broken header
 * C64: fix runahead slowdown with REU/GeoRAM when using a lot of memory, e.g. REU 16 MB
 * Mice and other mouse-controlled devices, such as Lightguns, can now be configured with one click
+* 
+* [NOTES]
 * Dutch Translation
     * someone created a ticket and offered a Dutch translation for Denise. Unfortunately, I reacted too late
-    * and the creator certainly never read the answer. If you're reading this. Yes, I am interested and in other languages too, of course. 
+    * and the creator certainly never read the answer. If you're reading this. Yes, I am interested and in other languages too, of course.
+* VRR (G-Sync, FreeSync)
+    * [Windows] keep in mind that the old DirectX9 video driver can apply VRR only in "exclusive" fullscreen (not in windows, not in normal fullscreen)
+    * [Linux,macOS] keep in mind that VRR works only in fullscreen mode [not an emulator limitation]
+    
 
 ## 1.1.3.1
 * thanks for the countless tests and suggestions [thanks to AW182]
