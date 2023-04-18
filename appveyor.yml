@@ -228,6 +228,7 @@ for:
     - sh: ./configure --host=arm64-apple-macos11 --enable-static --without-zlib --without-bzip2 --without-png && make && make install
     - sh: cd ..
     - sh: install -m 755 data/libs/static/macArm/libfreetype.a /usr/local/lib/
+    - sh: install -m 755 data/libs/shared/macArm/libfreetype.6.dylib /usr/local/lib/
     - sh: make Arch=arm64-apple-macos11 && make install
 
   after_build:
