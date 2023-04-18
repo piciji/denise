@@ -124,6 +124,9 @@ auto Program::absoluteMouseToEmu( Emulator::Interface* emulator ) -> GUIKIT::Pos
     // GUIKIT::Geometry geometry = view->viewport.geometry();
     DRIVER::Viewport& viewport = videoDriver->getViewport();
 
+    if (!viewport.width || !viewport.height)
+        return absPos;
+
     if (absPos.x > viewport.x)
         absPos.x -= viewport.x;
     else
