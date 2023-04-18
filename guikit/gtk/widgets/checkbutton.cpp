@@ -1,7 +1,7 @@
 
 auto pCheckButton::minimumSize() -> Size {
     Size size = getMinimumSize();
-    return {size.width, size.height};
+    return {size.width + 8, size.height}; // GTK + BSD need some padding
 }
 
 auto pCheckButton::setChecked(bool checked) -> void {
