@@ -172,19 +172,19 @@ for:
       - image: macos
       
   install:      
-    - sh: test -e freetype-2.11.1.tar.gz && echo "File exists" || curl -L https://download.savannah.gnu.org/releases/freetype/freetype-2.11.1.tar.gz --output freetype-2.11.1.tar.gz
-    - tar -zxf freetype-2.11.1.tar.gz
+    - sh: test -e freetype-2.13.0.tar.gz && echo "File exists" || curl -L https://download.savannah.gnu.org/releases/freetype/freetype-2.13.0.tar.gz --output freetype-2.13.0.tar.gz
+    - tar -zxf freetype-2.13.0.tar.gz
     - sh: sudo python -m pip install biplist
     - sh: sudo pip install dmgbuild
     
   cache:
-    - freetype-2.11.1.tar.gz
+    - freetype-2.13.0.tar.gz
     
   before_build:
     - sh: export MACOSX_DEPLOYMENT_TARGET=10.9
     
   build_script:
-    - sh: cd freetype-2.11.1
+    - sh: cd freetype-2.13.0
     - sh: ./configure --enable-static --without-zlib --without-bzip2 --without-png && make && make install
     - sh: cd ..  
     - sh: make && make install

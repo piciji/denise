@@ -267,11 +267,7 @@ ifeq ($(platform),macosx)
 	$(strip $(compiler) -o out/$(name).app/Contents/MacOS/$(name) $(objects) $(link))
 	
     ifneq ($(findstring freetype,$(drv)),)
-    ifneq ($(findstring arm64,$(Arch)),)
-	install -m 755 data/libs/shared/macArm/libfreetype.6.dylib out/$(name).app/Contents/Frameworks/
-    else
-	install -m 755 data/libs/shared/mac/libfreetype.6.dylib out/$(name).app/Contents/Frameworks/
-    endif
+	install -m 755 /usr/local/lib/libfreetype.6.dylib out/$(name).app/Contents/Frameworks/
 	install_name_tool -id @executable_path/../Frameworks/libfreetype.6.dylib out/$(name).app/Contents/Frameworks/libfreetype.6.dylib
 	install_name_tool -change `otool -D /usr/local/lib/libfreetype.6.dylib | cut -d':' -f2` @executable_path/../Frameworks/libfreetype.6.dylib out/$(name).app/Contents/MacOS/$(name)
     endif
