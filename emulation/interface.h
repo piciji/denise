@@ -435,7 +435,7 @@ struct Interface {
         if (asHex) {
             out = "0x";
             char hex[8];
-            sprintf( hex, "%x", data );
+            sprintf_s( hex, "%x", data );
             out += (std::string)hex;
         }
         bind->log(out, newLine);

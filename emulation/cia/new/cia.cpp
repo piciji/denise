@@ -507,8 +507,8 @@ template auto Cia<MOS_8520>::tod() -> void;
 
 template auto Cia<MOS_6526>::serialIn(bool spLine) -> void;
 template auto Cia<MOS_8520>::serialIn(bool spLine) -> void;
-template auto Cia<MOS_6526>::setCNTAndSP(bool cntLine, bool spLine = false) -> void;
-template auto Cia<MOS_8520>::setCNTAndSP(bool cntLine, bool spLine = false) -> void;
+template auto Cia<MOS_6526>::setCNTAndSP(bool cntLine, bool spLine) -> void;
+template auto Cia<MOS_8520>::setCNTAndSP(bool cntLine, bool spLine) -> void;
 
 template auto Cia<MOS_6526>::setFlag() -> void;
 template auto Cia<MOS_8520>::setFlag() -> void;

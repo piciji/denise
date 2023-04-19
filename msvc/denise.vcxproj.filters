@@ -227,6 +227,39 @@
     <Filter Include="data\fonts">
       <UniqueIdentifier>{8f540149-3aee-4fa1-9674-10ab1bd0d948}</UniqueIdentifier>
     </Filter>
+    <Filter Include="emulation\libami\agnus">
+      <UniqueIdentifier>{7f4773fa-bac0-424d-8519-1ca9e784ab75}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="emulation\libami\cpu">
+      <UniqueIdentifier>{cbcded14-13d1-46c7-81ec-5bd3909f84f0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="emulation\libami\cpu\m68000">
+      <UniqueIdentifier>{96692d35-f35a-4c96-8d87-c103aca4f9f8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="emulation\libami\drive">
+      <UniqueIdentifier>{b4350c25-42d9-487d-adbd-8e8fdf99dbac}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="emulation\libami\input">
+      <UniqueIdentifier>{fc2e2210-5df0-4310-a271-954904ba5d5a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="emulation\libami\input\controlPort">
+      <UniqueIdentifier>{b5b08201-af25-4f2d-8d1b-e362f390c80e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="emulation\libami\input\keyboard">
+      <UniqueIdentifier>{52ddc5f2-0331-466a-a26f-68057e86c8e1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="emulation\libami\paula">
+      <UniqueIdentifier>{e0472387-cfa9-4ee5-9777-06166a17754b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="emulation\libami\system">
+      <UniqueIdentifier>{d7472411-6f30-408a-a60a-b9cfd7e53b03}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="emulation\libami\video">
+      <UniqueIdentifier>{499999a4-9f73-4b93-9c8f-03279e2d5e8c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="emulation\cia\new">
+      <UniqueIdentifier>{c2c09395-7e79-4410-a59a-6f50b233c2eb}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\emulation\interface.h">
@@ -828,6 +861,60 @@
     </ClInclude>
     <ClInclude Include="..\emulation\libc64\tape\structure.h">
       <Filter>emulation\libc64\tape</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libami\agnus\agnus.h">
+      <Filter>emulation\libami\agnus</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libami\agnus\blitter.h">
+      <Filter>emulation\libami\agnus</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libami\agnus\copper.h">
+      <Filter>emulation\libami\agnus</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libami\cpu\m68000.h">
+      <Filter>emulation\libami\cpu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libami\cpu\m68000\m68000.h">
+      <Filter>emulation\libami\cpu\m68000</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libami\drive\diskDrive.h">
+      <Filter>emulation\libami\drive</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libami\drive\diskStructure.h">
+      <Filter>emulation\libami\drive</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libami\drive\filesystem.h">
+      <Filter>emulation\libami\drive</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libami\drive\sectorBlock.h">
+      <Filter>emulation\libami\drive</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libami\input\input.h">
+      <Filter>emulation\libami\input</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libami\input\controlPort\analogControl.h">
+      <Filter>emulation\libami\input\controlPort</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libami\input\controlPort\controlPort.h">
+      <Filter>emulation\libami\input\controlPort</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libami\input\keyboard\keyboard.h">
+      <Filter>emulation\libami\input\keyboard</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libami\paula\paula.h">
+      <Filter>emulation\libami\paula</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libami\system\system.h">
+      <Filter>emulation\libami\system</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libami\video\denise.h">
+      <Filter>emulation\libami\video</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\cia\new\cia.h">
+      <Filter>emulation\cia\new</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\cia\new\defines.h">
+      <Filter>emulation\cia\new</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -1493,6 +1580,147 @@
     </ClCompile>
     <ClCompile Include="..\emulation\libc64\tape\structure.cpp">
       <Filter>emulation\libc64\tape</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\agnus\agnus.cpp">
+      <Filter>emulation\libami\agnus</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\agnus\blitter.cpp">
+      <Filter>emulation\libami\agnus</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\agnus\blitterCycle.cpp">
+      <Filter>emulation\libami\agnus</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\agnus\blitterLLE.cpp">
+      <Filter>emulation\libami\agnus</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\agnus\blitterSequencer.cpp">
+      <Filter>emulation\libami\agnus</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\agnus\copper.cpp">
+      <Filter>emulation\libami\agnus</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\agnus\dma.cpp">
+      <Filter>emulation\libami\agnus</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\agnus\events.cpp">
+      <Filter>emulation\libami\agnus</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\agnus\graphics.cpp">
+      <Filter>emulation\libami\agnus</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\agnus\log.cpp">
+      <Filter>emulation\libami\agnus</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\agnus\memory.cpp">
+      <Filter>emulation\libami\agnus</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\agnus\minterm.cpp">
+      <Filter>emulation\libami\agnus</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\agnus\register.cpp">
+      <Filter>emulation\libami\agnus</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\agnus\serialization.cpp">
+      <Filter>emulation\libami\agnus</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\cpu\m68000.cpp">
+      <Filter>emulation\libami\cpu</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\cpu\m68000\alu.cpp">
+      <Filter>emulation\libami\cpu\m68000</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\cpu\m68000\exception.cpp">
+      <Filter>emulation\libami\cpu\m68000</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\cpu\m68000\instruction.cpp">
+      <Filter>emulation\libami\cpu\m68000</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\cpu\m68000\m68000.cpp">
+      <Filter>emulation\libami\cpu\m68000</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\cpu\m68000\memory.cpp">
+      <Filter>emulation\libami\cpu\m68000</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\cpu\m68000\optable.cpp">
+      <Filter>emulation\libami\cpu\m68000</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\drive\adf.cpp">
+      <Filter>emulation\libami\drive</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\drive\diskDrive.cpp">
+      <Filter>emulation\libami\drive</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\drive\diskStructure.cpp">
+      <Filter>emulation\libami\drive</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\drive\ext.cpp">
+      <Filter>emulation\libami\drive</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\drive\ext2.cpp">
+      <Filter>emulation\libami\drive</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\drive\filesystem.cpp">
+      <Filter>emulation\libami\drive</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\drive\instantDiskDrive.cpp">
+      <Filter>emulation\libami\drive</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\drive\sectorBlock.cpp">
+      <Filter>emulation\libami\drive</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\input\input.cpp">
+      <Filter>emulation\libami\input</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\input\controlPort\controlPort.cpp">
+      <Filter>emulation\libami\input\controlPort</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\input\controlPort\joypad.cpp">
+      <Filter>emulation\libami\input\controlPort</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\input\controlPort\mouse.cpp">
+      <Filter>emulation\libami\input\controlPort</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\input\keyboard\keyboard.cpp">
+      <Filter>emulation\libami\input\keyboard</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\paula\audio.cpp">
+      <Filter>emulation\libami\paula</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\paula\fdc.cpp">
+      <Filter>emulation\libami\paula</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\paula\filter.cpp">
+      <Filter>emulation\libami\paula</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\paula\irq.cpp">
+      <Filter>emulation\libami\paula</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\paula\paula.cpp">
+      <Filter>emulation\libami\paula</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\paula\pot.cpp">
+      <Filter>emulation\libami\paula</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\paula\serial.cpp">
+      <Filter>emulation\libami\paula</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\system\serialization.cpp">
+      <Filter>emulation\libami\system</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\system\system.cpp">
+      <Filter>emulation\libami\system</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\video\denise.cpp">
+      <Filter>emulation\libami\video</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\cia\new\cia.cpp">
+      <Filter>emulation\cia\new</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\cia\new\register.cpp">
+      <Filter>emulation\cia\new</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\cia\new\tod.cpp">
+      <Filter>emulation\cia\new</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

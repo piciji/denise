@@ -81,7 +81,7 @@ auto DiskStructure::storeWrittenTracks() -> void {
 
     unsigned sectors = hd ? 22 : 11;
     unsigned trackLength = 0;
-    uint8_t buffer[sectors * 512];
+    uint8_t* buffer = new uint8_t[sectors * 512];
 
     for(unsigned i = 0; i < LIBAMI_MAX_TRACKS; i++) {
         Track& track = tracks[i];
@@ -99,6 +99,7 @@ auto DiskStructure::storeWrittenTracks() -> void {
         }
         trackLength += track.storage;
     }
+    delete[] buffer;
 }
 
 auto DiskStructure::create( System* system, Type type, std::string name, bool hd, bool ffs, bool bootable ) -> Emulator::Interface::Data {

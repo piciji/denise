@@ -142,7 +142,7 @@ auto InputManager::automap( KeyboardLayout::Type type, Emulator::Interface::Key 
     if ( key == EmuKey::AltLeft ) return {{Hid::Key::AltLeft}};
     if ( key == EmuKey::AltRight ) return {{Hid::Key::AltRight}};
     if ( key == EmuKey::SystemLeft ) return {{Hid::Key::SuperLeft}};
-    if ( key == EmuKey::SystemRight ) return {{ GUIKIT::Application::isGtk() ? Hid::Key::Menu : Hid::Key::SuperRight}};
+    if ( key == EmuKey::SystemRight ) return {{ !GUIKIT::Application::isCocoa() ? Hid::Key::Menu : Hid::Key::SuperRight}};
     
     if ( key == EmuKey::NumPad0 ) return {{Hid::Key::NumPad0}};
     if ( key == EmuKey::NumPad1 ) return {{Hid::Key::NumPad1}};
