@@ -42,11 +42,15 @@ Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trade
 * Mice and other mouse-controlled devices, such as Lightguns, can now be configured with one click
 * 
 * [NOTES]
+* Mouse Capturing
+    * In order to operate the Amiga/C64 mouse, it must first be captured. The middle mouse button is designed for this purpose by default. Of course, another key or key combination can also be used for this.
+    * Press the "Hotkeys" button under Control / Amiga Configuration. A double click on the first entry "capture mouse" allows you to assign a new key(s).
 * Dutch Translation
     * someone created a ticket and offered a Dutch translation for Denise. Unfortunately, I reacted too late
     * and the creator certainly never read the answer. If you're reading this. Yes, I am interested and in other languages too, of course.
 * VRR (G-Sync, FreeSync)
     * [Windows] keep in mind that the old DirectX9 video driver can apply VRR only in "exclusive" fullscreen (not in windows, not in normal fullscreen)
+    * [Windows] for VRR you should select openGL driver in Denise. So it works in window and fullscreeen mode
     * [Linux,macOS] keep in mind that VRR works only in fullscreen mode [not an emulator limitation]
     
 
