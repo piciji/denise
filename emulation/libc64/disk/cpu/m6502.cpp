@@ -39,9 +39,6 @@ auto M6502::reset() -> void {
 }
 
 auto M6502::resetRoutine() -> void {
-	
-	uint8_t dataBus;
-	
 	READ( pc )
 	READ( pc )
 	READ( pc )

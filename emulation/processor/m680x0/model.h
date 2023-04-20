@@ -1,4 +1,6 @@
 
+// All code in this folder is out of date.
+
 /**
  * 68000 emulation should be feature complete
  * 
