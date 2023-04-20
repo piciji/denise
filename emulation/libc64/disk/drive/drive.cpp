@@ -321,7 +321,7 @@ auto Drive::cpuRead(uint16_t addr) -> uint8_t {
         else if ((addr & 0x9c00) == 0x1c00)
             return via2->read(addr);
 
-        return addr >> 8;
+        return cpu->dataBus;
     }
 
     // 157x
@@ -400,7 +400,7 @@ auto Drive::cpuRead(uint16_t addr) -> uint8_t {
         return wd1770->read(addr);
     }
 
-    return addr >> 8;
+    return cpu->dataBus;
 }
 
 Drive::Drive(uint8_t number, Emulator::Interface::Media* mediaConnected ) : structure(this) {
