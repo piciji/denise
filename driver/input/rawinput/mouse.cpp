@@ -7,7 +7,10 @@ struct RawMouse {
     struct Mouse {
         HANDLE handle = nullptr;
         HANDLE ntHandle = nullptr;
-        
+
+        signed lastX = 0;
+        signed lastY = 0;
+
         signed relativeX = 0;
         signed relativeY = 0;
         signed relativeZ = 0;
@@ -98,6 +101,7 @@ struct RawMouse {
 	auto update(RAWINPUT* input) -> void {
 
         Mouse* pMouse = nullptr;
+        auto& iMouse = input->data.mouse;
 
         for (auto& mouse : mice) {
             if (mouse.handle == input->header.hDevice) {
@@ -108,25 +112,40 @@ struct RawMouse {
         if (!pMouse)
             return;                
         
-		if ((input->data.mouse.usFlags & 1) == MOUSE_MOVE_RELATIVE) {
-			pMouse->relativeX += input->data.mouse.lLastX;
-			pMouse->relativeY += input->data.mouse.lLastY;
+		if ((iMouse.usFlags & 1) == MOUSE_MOVE_RELATIVE) {
+			pMouse->relativeX += iMouse.lLastX;
+			pMouse->relativeY += iMouse.lLastY;
+
+		} else if (iMouse.lLastX || iMouse.lLastY) {
+            bool vDesktop = (iMouse.usFlags & MOUSE_VIRTUAL_DESKTOP) ? true : false;
+            int w = GetSystemMetrics(vDesktop ? SM_CXVIRTUALSCREEN : SM_CXSCREEN);
+            int h = GetSystemMetrics(vDesktop ? SM_CYVIRTUALSCREEN : SM_CYSCREEN);
+            int x = (int)(((float)iMouse.lLastX / 65535.0f) * w);
+            int y = (int)(((float)iMouse.lLastY / 65535.0f) * h);
+
+            pMouse->relativeX += (int)(x - pMouse->lastX);
+            pMouse->relativeY += (int)(y - pMouse->lastY);
+
+            pMouse->lastX = x;
+            pMouse->lastY = y;
+        }
+
+        auto bFlags = iMouse.usButtonFlags;
+
+		if (bFlags & RI_MOUSE_WHEEL) {
+			pMouse->relativeZ += (int16_t) iMouse.usButtonData;
 		}
 
-		if (input->data.mouse.usButtonFlags & RI_MOUSE_WHEEL) {
-			pMouse->relativeZ += (int16_t) input->data.mouse.usButtonData;
-		}
-
-		if (input->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_1_DOWN) pMouse->buttons[0] = 1;
-		if (input->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_1_UP) pMouse->buttons[0] = 0;
-		if (input->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_2_DOWN) pMouse->buttons[1] = 1;
-		if (input->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_2_UP) pMouse->buttons[1] = 0;
-		if (input->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_3_DOWN) pMouse->buttons[2] = 1;
-		if (input->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_3_UP) pMouse->buttons[2] = 0;
-		if (input->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_4_DOWN) pMouse->buttons[3] = 1;
-		if (input->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_4_UP) pMouse->buttons[3] = 0;
-		if (input->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_5_DOWN) pMouse->buttons[4] = 1;
-		if (input->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_5_UP) pMouse->buttons[4] = 0;
+		if (bFlags & RI_MOUSE_BUTTON_1_DOWN) pMouse->buttons[0] = 1;
+		if (bFlags & RI_MOUSE_BUTTON_1_UP) pMouse->buttons[0] = 0;
+		if (bFlags & RI_MOUSE_BUTTON_2_DOWN) pMouse->buttons[1] = 1;
+		if (bFlags & RI_MOUSE_BUTTON_2_UP) pMouse->buttons[1] = 0;
+		if (bFlags & RI_MOUSE_BUTTON_3_DOWN) pMouse->buttons[2] = 1;
+		if (bFlags & RI_MOUSE_BUTTON_3_UP) pMouse->buttons[2] = 0;
+		if (bFlags & RI_MOUSE_BUTTON_4_DOWN) pMouse->buttons[3] = 1;
+		if (bFlags & RI_MOUSE_BUTTON_4_UP) pMouse->buttons[3] = 0;
+		if (bFlags & RI_MOUSE_BUTTON_5_DOWN) pMouse->buttons[4] = 1;
+		if (bFlags & RI_MOUSE_BUTTON_5_UP) pMouse->buttons[4] = 0;
 	}
 
 	auto poll(std::vector<Hid::Device*>& devices) -> void {
