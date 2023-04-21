@@ -152,12 +152,6 @@ auto Program::addEmulators() -> void {
     emulatorAmi->bind = this;
     emulators.push_back( emulatorAmi );
 
-//    // this manager includes only hotkeys (when emulation is inactive)
-//	if (!cmd->noGui) {
-//        activeInputManager = new InputManager();
-//        inputManagers.push_back(activeInputManager);
-//    }
-    
     for( auto emulator : emulators ) {
         auto settings = new GUIKIT::Settings;
 
@@ -425,9 +419,6 @@ auto Program::powerOff() -> void {
 
     activeEmulator = nullptr;
     activeVideoManager = nullptr;
-//    activeInputManager = InputManager::getManager(nullptr); // there is a manager, when no emulation is active ... because of hotkey handling
-//    if (activeInputManager)
-//        activeInputManager->setupKeycodeTransfer();
     warp.enableAutoWarp = false;
 }
 
