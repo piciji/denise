@@ -17,6 +17,7 @@ stack: python 3.8
 branches:
   only:
     - master
+    - /v\d*\.\d*/
     - /v\d*\.\d*\.\d*/
   
 environment:
