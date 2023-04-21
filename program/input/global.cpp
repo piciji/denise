@@ -457,7 +457,7 @@ auto InputManager::autoAssignHotkeys() -> void {
 					for (auto& hidInput : hidDevice->group(Hid::Mouse::GroupID::Button).inputs) {
 						if ( hidInput.name.find("Middle") != std::string::npos ) {
 							mapper->hids.push_back( {hidDevice, &hidDevice->group(Hid::Mouse::GroupID::Button), &hidInput, 0, 0} );
-							mapper->anded = 1;
+							mapper->anded = false;
 							mapper->updateSetting();
 							break;
 						}

@@ -30,7 +30,7 @@ template<typename T> auto uniqueDeviceId(std::vector<T>& devices, uint64_t id) -
 }
 
 template<typename T> auto uniqueDeviceName(std::vector<T>& devices, std::string name, unsigned i = 1) -> std::string {
-	std::string cmpname = i == 1 ? name : name + "." + std::to_string(i);
+	std::string cmpname = i == 1 ? name : name + std::to_string(i);
 	
 	for (auto& device : devices) {
 		if (device.hid->name == cmpname)

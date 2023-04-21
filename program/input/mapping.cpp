@@ -163,10 +163,11 @@ auto InputMapping::informChange(Assign& hid) -> void {
 	}	
 }
 
+#define _transhr(part) trans->get( GUIKIT::String::capitalizeA( part ) )
+
 auto InputMapping::getDescription() -> std::string {
 	std::string out = "";
-	
-	#define _transhr(part) trans->get( GUIKIT::String::capitalize( part ) )	
+
 	unsigned pos = 0;    
     
 	for(auto& hid : hids) {
@@ -195,10 +196,10 @@ auto InputMapping::getDescription() -> std::string {
     
     if (hasUnknownAssignment)
         out += trans->get("unknown_device");
-	
-	#undef _transhr
+
 	return out;	
 }
+#undef _transhr
 
 auto InputMapping::swapLinker() -> void {
         
