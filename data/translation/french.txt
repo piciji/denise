@@ -736,3 +736,4 @@ Threaded Emulation tooltip = L'émulation dans un thread supplémentaire permet 
 Chip Mem = Puce RAM
 Fast Mem = RAM Rapide
 Slow Mem = RAM Lente
+RTC = Real Time Clock

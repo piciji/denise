@@ -107,6 +107,7 @@ auto System::serializeAll(Emulator::Serializer& s) -> void {
     denise.serialize( s );
     paula.serialize( s );
     input.serialize( s );
+    rtc.serialize( s );
 
     for(auto& drive : diskDrives)
         drive.serialize(s);

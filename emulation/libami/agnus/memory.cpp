@@ -47,6 +47,7 @@ auto Agnus::readByte(uint32_t adr) -> uint8_t {
             dataBus = *(wom + (adr & 0x3ffff));
             break;
         case MMIO_RTC:
+            dataBus = (adr & 1) ? rtc.read( (adr >> 2) & 0xf, system->isProcessFrame() ) : (dataBus >> 8);
             break;
         case AUTO_CONF:
             dataBus = readZorro(adr);
@@ -103,6 +104,8 @@ auto Agnus::readWord(uint32_t adr) -> uint16_t {
             dataBus = _swapWord(*(uint16_t*)(wom + (adr & 0x3ffff)));
             break;
         case MMIO_RTC:
+            dataBus &= ~0xff;
+            dataBus |= rtc.read( (adr >> 2) & 0xf, system->isProcessFrame() );
             break;
         case AUTO_CONF:
             dataBus = readZorro(adr) << 8;
@@ -162,6 +165,8 @@ auto Agnus::writeByte(uint32_t adr, uint8_t value) -> void {
             if (!womLock) *(wom + (adr & 0x3ffff)) = value;
             break;
         case MMIO_RTC:
+            if ((adr & 1) && system->isProcessFrame())
+                rtc.write( (adr >> 2) & 0xf, value );
             break;
         case AUTO_CONF:
             writeZorro(adr, value);
@@ -220,6 +225,8 @@ auto Agnus::writeWord(uint32_t adr, uint16_t value) -> void {
             if (!womLock) *(uint16_t*)(wom + (adr & 0x3ffff)) = _swapWord(value);
             break;
         case MMIO_RTC:
+            if (system->isProcessFrame())
+                rtc.write( (adr >> 2) & 0xf, value & 0xff );
             break;
         case AUTO_CONF:
             writeZorro(adr, value >> 8);
@@ -366,7 +373,17 @@ auto Agnus::mapMemory() -> void {
             mapper[i] = SLOW_MEM;
     }
 
-    mapper[0xdc] = useRTC ? MMIO_RTC : MMIO_CUSTOM;
+    if (useRTC) {
+        if (model == OCS_A1000) {
+            for (int i = 0xd8; i <= 0xdb; i++)
+                mapper[i] = MMIO_RTC;
+
+            mapper[0xdc] = MMIO_CUSTOM;
+        } else
+            mapper[0xdc] = MMIO_RTC;
+    } else {
+        mapper[0xdc] = MMIO_CUSTOM;
+    }
 
     mapper[0xdd] = Unmapped;
 

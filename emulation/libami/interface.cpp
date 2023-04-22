@@ -7,7 +7,7 @@
 
 namespace LIBAMI {
 
-const std::string Interface::Version = "201";
+const std::string Interface::Version = "202";
 
 Interface::Interface() : Emulator::Interface( "Amiga" ) {
 
@@ -42,6 +42,8 @@ auto Interface::prepareModels() -> void {
     models.push_back({ModelIdChipMem, "Chip Mem", Model::Type::Slider, Model::Purpose::Memory, 1, {0, 3}, { "256 KB", "512 KB", "1 MB", "2 MB" }});
     models.push_back({ModelIdSlowMem, "Slow Mem", Model::Type::Slider, Model::Purpose::Memory, 1, {0, 4}, { "0", "512 KB", "1 MB", "1.5 MB", "1.75 MB" }});
     models.push_back({ModelIdFastMem, "Fast Mem", Model::Type::Slider, Model::Purpose::Memory, 0, {0, 8}, { "0", "64 KB", "128 KB", "256 KB", "512 KB", "1 MB", "2 MB", "4 MB", "8 MB" }});
+
+    models.push_back({ModelIdRTC, "RTC", Model::Type::Switch, Model::Purpose::Misc, 0});
 }
 
 auto Interface::prepareMedia() -> void {
@@ -415,6 +417,9 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
         case ModelIdFastMem:
             system->setFastmem(value);
             break;
+        case ModelIdRTC:
+            system->setRTC(value);
+            break;
     }
 }
 
@@ -433,6 +438,7 @@ auto Interface::getModelValue(unsigned modelId) -> int {
         case ModelIdChipMem:                        return system->getChipmem();
         case ModelIdSlowMem:                        return system->getSlowmem();
         case ModelIdFastMem:                        return system->getFastmem();
+        case ModelIdRTC:                            return system->useRTC();
     }
 
     return 0;

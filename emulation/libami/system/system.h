@@ -10,6 +10,7 @@
 #include "../video/denise.h"
 #include "../paula/paula.h"
 #include "../drive/diskDrive.h"
+#include "rtc.h"
 #include "../../tools/crop.h"
 
 //#define LOG_CPU_STATE
@@ -28,6 +29,7 @@ struct System {
     Agnus agnus;
     Denise denise;
     Paula paula;
+    RTC rtc;
     DiskDrive diskDrives[4];
 
     Emulator::Crop<uint16_t> crop;
@@ -75,6 +77,8 @@ struct System {
     auto updateStats() -> void;
     auto updateDriveSounds() -> void;
     auto setFloppySounds(bool state) -> void;
+    auto setRTC(bool state) -> void;
+    auto useRTC() -> bool;
 
     auto setRegion( int region ) -> void;
     auto setResampleQuality( int value ) -> void;

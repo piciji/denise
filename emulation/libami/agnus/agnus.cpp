@@ -28,8 +28,8 @@
 
 namespace LIBAMI {
 
-Agnus::Agnus(System* system, Cpu& cpu, Denise& denise, Paula& paula, Cia<MOS_8520>& cia1, Cia<MOS_8520>& cia2, Input& input)
-: system(system), cpu(cpu), denise(denise), paula(paula), cia1(cia1), cia2(cia2), input(input), blitter(*this), copper(*this) {
+Agnus::Agnus(System* system, Cpu& cpu, Denise& denise, Paula& paula, Cia<MOS_8520>& cia1, Cia<MOS_8520>& cia2, Input& input, RTC& rtc)
+: system(system), cpu(cpu), denise(denise), paula(paula), cia1(cia1), cia2(cia2), input(input), rtc(rtc), blitter(*this), copper(*this) {
 
     this->interface = system->interface;
 

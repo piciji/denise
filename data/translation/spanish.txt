@@ -736,3 +736,4 @@ Threaded Emulation tooltip = La emulación en un subproceso adicional evita que 
 Chip Mem = Memoria chip
 Fast Mem = Memoria rápida
 Slow Mem = memoria lenta
+RTC = Real Time Clock

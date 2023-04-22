@@ -27,7 +27,7 @@ objects += driver
 ifeq ($(platform),windows)
     objects += dinput5 dinput7 dinput8 xaudio27 xaudio28 xaudio29
 endif
-objects += systemAmi agnusAmi inputAmi controlPortAmi keyboardAmi blitter copper denise paula diskDriveAmi diskStructureAmi sectorBlockAmi filesystemAmi
+objects += systemAmi agnusAmi inputAmi controlPortAmi keyboardAmi blitter copper denise paula diskDriveAmi diskStructureAmi sectorBlockAmi filesystemAmi rtcAmi
 objects += m6510 ciaBase cia6526 ciaNew vicIIBase vicIICycle vicIIFast systemC64 sid chamberlin tapeC64 tapeStructureC64 inputC64 controlPortC64 acia
 objects += cartC64 gameCartC64 freezerC64 reuC64 easyFlashC64 easyFlash3C64 retroReplayC64 gmod2C64 clipboardC64 geoRamC64 fastloaderC64
 objects += m6502 via iec prg64 driveC64 diskStructureC64 firmwareC64 pia traps64 virtualDrive64 wd1770
@@ -152,6 +152,7 @@ obj/diskDriveAmi.o: emulation/libami/drive/diskDrive.cpp
 obj/diskStructureAmi.o: emulation/libami/drive/diskStructure.cpp
 obj/sectorBlockAmi.o: emulation/libami/drive/sectorBlock.cpp
 obj/filesystemAmi.o: emulation/libami/drive/filesystem.cpp
+obj/rtcAmi.o: emulation/libami/system/rtc.cpp
 
 obj/vicIIBase.o:emulation/libc64/vicII/base.cpp
 obj/vicIICycle.o:emulation/libc64/vicII/vicII.cpp

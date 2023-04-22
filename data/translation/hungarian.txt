@@ -736,3 +736,4 @@ Threaded Emulation tooltip = Az emuláció egy további szálban megakadályozza
 Chip Mem = Chip RAM
 Fast Mem = Gyors RAM
 Slow Mem = Lassú RAM
+RTC = Real Time Clock

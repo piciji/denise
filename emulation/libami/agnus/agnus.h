@@ -35,10 +35,11 @@ struct Cpu;
 struct Denise;
 struct Paula;
 struct Input;
+struct RTC;
 
 struct Agnus {
 
-    Agnus(System* system, Cpu& cpu, Denise& denise, Paula& paula, Cia<MOS_8520>& cia1, Cia<MOS_8520>& cia2, Input& input);
+    Agnus(System* system, Cpu& cpu, Denise& denise, Paula& paula, Cia<MOS_8520>& cia1, Cia<MOS_8520>& cia2, Input& input, RTC& rtc);
     ~Agnus();
 
     enum { Unmapped, CHIP_MEM, SLOW_MEM, KICK_ROM, EXT_ROM, WOM, MMIO_CUSTOM, MMIO_CIA, MMIO_RTC, AUTO_CONF, FAST_MEM };
@@ -70,6 +71,7 @@ struct Agnus {
     Cpu& cpu;
     Denise& denise;
     Paula& paula;
+    RTC& rtc;
     Input& input;
     Cia<MOS_8520>& cia1;
     Cia<MOS_8520>& cia2;
@@ -242,6 +244,8 @@ struct Agnus {
 
     auto msecToDMACycles(unsigned ms) -> unsigned { return 3550 * ms; } // average for PAL/NTSC, todo: check if more accuracy is needed
     auto usecToDMACycles(unsigned us) -> unsigned { return 3.55f * (float)us + 0.5f; }
+
+    auto dmaCyclesToSec(int64_t cycles) -> unsigned { return cycles / 3'550'000; }
 
     auto writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy = Trigger_CPU) -> void;
     template<bool byteAccess = false> auto readCustom(uint16_t adr, bool triggeredByWrite = false) -> uint16_t;

@@ -16,8 +16,9 @@ cpu(agnus),
 denise(this, agnus, input),
 diskDrives { {0, this, agnus, cia2}, {1, this, agnus, cia2}, {2, this, agnus, cia2}, {3, this, agnus, cia2} },
 paula(this, agnus, cpu, input, diskDrives[0], diskDrives[1], diskDrives[2], diskDrives[3]),
-agnus(this, cpu, denise, paula, cia1, cia2, input),
-input(this, agnus, cia1) {
+agnus(this, cpu, denise, paula, cia1, cia2, input, rtc),
+input(this, agnus, cia1),
+rtc(agnus) {
 
     cia1.serialOut = [this](bool spLine, bool cntLine) {
         // Keyboard computer is not interested in CNT line changes, triggered by CIA
@@ -136,6 +137,7 @@ auto System::power(bool softReset, bool resetInstruction) -> void {
     cia1.reset();
     cia2.reset();
     input.reset();
+    rtc.reset(softReset);
 
     for(auto& drive : diskDrives)
         drive.power();
@@ -496,6 +498,14 @@ auto System::informAboutStateChange() -> void {
         newState |= 2;
 
     interface->hintAutoWarp( newState );
+}
+
+auto System::setRTC(bool state) -> void {
+    agnus.useRTC = state;
+}
+
+auto System::useRTC() -> bool {
+    return agnus.useRTC;
 }
 
 }
