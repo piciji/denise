@@ -916,6 +916,9 @@
     <ClInclude Include="..\emulation\cia\new\defines.h">
       <Filter>emulation\cia\new</Filter>
     </ClInclude>
+    <ClInclude Include="..\emulation\libami\system\rtc.h">
+      <Filter>emulation\libami\system</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\emulation\cia\base.cpp">
@@ -1721,6 +1724,9 @@
     </ClCompile>
     <ClCompile Include="..\emulation\cia\new\tod.cpp">
       <Filter>emulation\cia\new</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\system\rtc.cpp">
+      <Filter>emulation\libami\system</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

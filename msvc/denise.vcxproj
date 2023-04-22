@@ -73,6 +73,7 @@
     <ClInclude Include="..\emulation\libami\input\keyboard\keyboard.h" />
     <ClInclude Include="..\emulation\libami\interface.h" />
     <ClInclude Include="..\emulation\libami\paula\paula.h" />
+    <ClInclude Include="..\emulation\libami\system\rtc.h" />
     <ClInclude Include="..\emulation\libami\system\system.h" />
     <ClInclude Include="..\emulation\libami\video\denise.h" />
     <ClInclude Include="..\emulation\libc64\disk\cia\cia8520.h" />
@@ -477,6 +478,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="..\emulation\libami\system\rtc.cpp" />
     <ClCompile Include="..\emulation\libami\system\serialization.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>

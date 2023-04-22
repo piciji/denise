@@ -54,29 +54,36 @@ auto RTC::chipTime() -> time_t {
 
 auto RTC::updateRegs() -> void {
     time_t time = chipTime();
-    std::tm t;
-    localtime_r(&time, &t);
+    std::tm* t;
 
-    regs[0x0] = t.tm_sec % 10;
-    regs[0x1] = t.tm_sec / 10;
-    regs[0x2] = t.tm_min % 10;
-    regs[0x3] = t.tm_min / 10;
-    regs[0x4] = t.tm_hour % 10;
-    regs[0x5] = t.tm_hour / 10;
+    #ifdef _MSC_VER
+        std::tm tx;
+        localtime_s(&tx, &time);
+        t = &tx;
+    #else
+        t = localtime(&time);
+    #endif
 
-    if ( (t.tm_hour >= 12) && ((regs[0xf] & 4) == 0)) {
-        regs[4] = (t.tm_hour - 12) % 10;
-        regs[5] = (t.tm_hour - 12) / 10;
+    regs[0x0] = t->tm_sec % 10;
+    regs[0x1] = t->tm_sec / 10;
+    regs[0x2] = t->tm_min % 10;
+    regs[0x3] = t->tm_min / 10;
+    regs[0x4] = t->tm_hour % 10;
+    regs[0x5] = t->tm_hour / 10;
+
+    if ( (t->tm_hour >= 12) && ((regs[0xf] & 4) == 0)) {
+        regs[4] = (t->tm_hour - 12) % 10;
+        regs[5] = (t->tm_hour - 12) / 10;
         regs[5] |= 4; // AM/PM
     }
 
-    regs[0x6] = t.tm_mday % 10;
-    regs[0x7] = t.tm_mday / 10;
-    regs[0x8] = (t.tm_mon + 1) % 10;
-    regs[0x9] = (t.tm_mon + 1) / 10;
-    regs[0xa] = t.tm_year % 10;
-    regs[0xb] = t.tm_year / 10;
-    regs[0xc] = t.tm_wday;
+    regs[0x6] = t->tm_mday % 10;
+    regs[0x7] = t->tm_mday / 10;
+    regs[0x8] = (t->tm_mon + 1) % 10;
+    regs[0x9] = (t->tm_mon + 1) / 10;
+    regs[0xa] = t->tm_year % 10;
+    regs[0xb] = t->tm_year / 10;
+    regs[0xc] = t->tm_wday;
 }
 
 auto RTC::calcDiff() -> void {
