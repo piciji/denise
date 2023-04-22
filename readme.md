@@ -40,8 +40,8 @@ Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trade
 * C64: support magicdesk CRT's with broken header
 * C64: fix runahead slowdown with REU/GeoRAM when using a lot of memory, e.g. REU 16 MB
 * Mice and other mouse-controlled devices, such as Lightguns, can now be configured with one click
-* 
-* [NOTES]
+
+## NOTES
 * Mouse Capturing
     * In order to operate the Amiga/C64 mouse, it must first be captured. The middle mouse button is designed for this purpose by default. Of course, another key or key combination can also be used for this.
     * Press the "Hotkeys" button under Control / Amiga Configuration. A double click on the first entry "capture mouse" allows you to assign a new key(s).
